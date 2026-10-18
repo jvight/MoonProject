@@ -61,13 +61,20 @@ namespace MoonProject.World.Editor
         public static void BuildGroundMaterial()
         {
             MoonProject.Art.Editor.R1MaterialLibrary.BuildMaterials();
-            var material = new Material(LoadShader(WorldPaths.GroundShader));
-            material.SetTexture("_BaseMap", LoadTexture(WorldPaths.RegolithAlbedoTexture));
-            material.SetTexture("_BumpMap", LoadTexture(WorldPaths.RegolithNormalTexture));
-            material.SetTexture("_MaskMap", LoadTexture(WorldPaths.RegolithMaskTexture));
-            material.SetTexture("_RockMap", LoadTexture(WorldPaths.BasaltAlbedoTexture));
-            material.SetTexture("_RockBumpMap", LoadTexture(WorldPaths.BasaltNormalTexture));
-            material.SetTexture("_RockMaskMap", LoadTexture(WorldPaths.BasaltMaskTexture));
+            Shader groundShader = LoadShader(WorldPaths.GroundShader);
+            Texture2D regolithAlbedo = LoadTexture(WorldPaths.RegolithAlbedoTexture);
+            Texture2D regolithNormal = LoadTexture(WorldPaths.RegolithNormalTexture);
+            Texture2D regolithMask = LoadTexture(WorldPaths.RegolithMaskTexture);
+            Texture2D basaltAlbedo = LoadTexture(WorldPaths.BasaltAlbedoTexture);
+            Texture2D basaltNormal = LoadTexture(WorldPaths.BasaltNormalTexture);
+            Texture2D basaltMask = LoadTexture(WorldPaths.BasaltMaskTexture);
+            var material = new Material(groundShader);
+            material.SetTexture("_BaseMap", regolithAlbedo);
+            material.SetTexture("_BumpMap", regolithNormal);
+            material.SetTexture("_MaskMap", regolithMask);
+            material.SetTexture("_RockMap", basaltAlbedo);
+            material.SetTexture("_RockBumpMap", basaltNormal);
+            material.SetTexture("_RockMaskMap", basaltMask);
             GeneratedAssets.CreateOrReplace(material, WorldPaths.GroundMaterial);
             AssetDatabase.SaveAssets();
         }
@@ -89,7 +96,9 @@ namespace MoonProject.World.Editor
         public static void BuildSkyMaterials()
         {
             GeneratedAssets.CreateOrReplace(new Material(LoadShader(WorldPaths.SkyShader)), WorldPaths.SkyMaterial);
-            GeneratedAssets.CreateOrReplace(new Material(LoadShader(WorldPaths.EarthShader)), WorldPaths.EarthMaterial);
+            var earthMaterial = new Material(LoadShader(WorldPaths.EarthShader));
+            earthMaterial.SetTexture("_EarthAlbedoMap", LoadTexture(WorldPaths.EarthAlbedoTexture));
+            GeneratedAssets.CreateOrReplace(earthMaterial, WorldPaths.EarthMaterial);
             AssetDatabase.SaveAssets();
         }
 

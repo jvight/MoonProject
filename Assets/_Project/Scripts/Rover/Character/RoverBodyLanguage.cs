@@ -174,7 +174,7 @@ namespace MoonProject.Rover
         private float _openingPoseBlend;
         private float _openingYawDeg;
         private float _openingPitchDeg;
-        private float _openingRollDeg;
+        private bool _openingLevels;
         private Color _eyeLightRestColor = Color.white;
         private Vector3 _eyeLightRestLocalPos;
         private bool _initialized;
@@ -573,12 +573,16 @@ namespace MoonProject.Rover
         /// Poses 07's neck and head directly for the opening sequence: bowed while it sleeps, then lifted into the
         /// opening's one shot of its face, with each check's head motion on top.
         /// </summary>
-        public void PoseOpeningHead(float yawDeg, float pitchDeg, float rollDeg, float blend)
+        /// <param name="levels">
+        /// Roll the head toward level as the inventory's close-up does (<see cref="SetScreenInspectCounterRoll"/>), so the
+        /// face sits exactly where that close-up's composer expects it.
+        /// </param>
+        public void PoseOpeningHead(float yawDeg, float pitchDeg, float blend, bool levels)
         {
             _openingPoseBlend = Mathf.Clamp01(blend);
             _openingYawDeg = yawDeg;
             _openingPitchDeg = pitchDeg;
-            _openingRollDeg = rollDeg;
+            _openingLevels = levels;
             if (_openingPoseBlend >= 0.999f)
             {
                 _yaw.Reset(yawDeg);
@@ -598,7 +602,7 @@ namespace MoonProject.Rover
             _mood.SetWakeLid(0f, 0f);
             _wakeTilt = 0f;
             _openingPoseBlend = 0f;
-            _openingRollDeg = 0f;
+            _openingLevels = false;
         }
 
         /// <summary>One blink of the eyes on 07's face (the wake's ready performance).</summary>
@@ -1062,7 +1066,7 @@ namespace MoonProject.Rover
 
             Quaternion pitchedHeadLocal = _headRest * Quaternion.AngleAxis(-pitch, Vector3.right);
             float inspectRoll = 0f;
-            if (inspect > 0f && _head.parent != null)
+            if ((inspect > 0f || _openingLevels) && _head.parent != null)
             {
                 Quaternion pitchedHeadWorld = _head.parent.rotation * pitchedHeadLocal;
                 inspectRoll = ComputeInspectHeadCounterRoll(
@@ -1073,7 +1077,7 @@ namespace MoonProject.Rover
 
             float idleRoll = _wakeTilt + _chirpPose.HeadRoll;
             float baseRoll = Mathf.Lerp(idleRoll, inspectRoll, inspect);
-            float roll = opening > 0f ? Mathf.Lerp(baseRoll, _openingRollDeg, opening) : baseRoll;
+            float roll = opening > 0f ? Mathf.Lerp(baseRoll, _openingLevels ? inspectRoll : 0f, opening) : baseRoll;
             _head.localRotation = pitchedHeadLocal * Quaternion.AngleAxis(roll, Vector3.forward);
             if (_cutterTurret != null)
             {

@@ -753,6 +753,62 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator AnUnlearnedCut_With07ArrivingToFaceTheSeal_ShowsECutWithinTheNormalDwell(
+            [Values(true, false)] bool ready)
+        {
+            const float ArrivalSeconds = 2f;
+            const float Reveal = 0.5f;
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            _rig.Ui.Ledger.RecordLookTaught();
+            _rig.Ui.Ledger.RecordDriveTaught();
+            _rig.Ui.Ledger.RecordHoldChipShown();
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Fakes.Speed = 3f;
+            Events.Publish(new NextStepChanged("next.v2.cut_optics"));
+            yield return Seconds(ArrivalSeconds);
+
+            // 07 stops 4.5 m from the seal and faces it: the cut is the step's verb. Ready, its prompt teaches; not
+            // ready yet (the beam still busy), the step's own chip has to say it.
+            var seal = new Vector3(0.4f, 0.5f, 4.5f);
+            _rig.Fakes.Speed = 0f;
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Salvage, seal, ready);
+            _rig.Fakes.HasTarget = true;
+            _rig.Fakes.CutPoint = seal;
+            _rig.Fakes.Material = SalvageMaterial.Optics;
+            float dwell = _rig.Tuning.Prompts.Find(InteractionKind.Salvage).DwellSeconds;
+            float arrived = Time.realtimeSinceStartup;
+            float shownAfter = -1f;
+            while (Time.realtimeSinceStartup - arrived < 4f && shownAfter < 0f)
+            {
+                yield return null;
+                bool prompt = _rig.Ui.Prompt.IsVisible
+                    && _rig.Ui.Layout.PromptWord.text == Text(UiKeys.Hint(InteractionKind.Salvage));
+                bool chip = _rig.Ui.LookUp.IsVisible && _rig.Ui.Layout.LookHintWord.text == Text("ui.verb.cut");
+                if (prompt || chip)
+                {
+                    shownAfter = Time.realtimeSinceStartup - arrived;
+                }
+            }
+
+            Assert.GreaterOrEqual(shownAfter, 0f, "E Cut never showed at the seal");
+            Assert.LessOrEqual(shownAfter, dwell + Reveal, $"E Cut showed only after {shownAfter:0.00} s at the seal");
+
+            // 07 turns away: once the prompt has gone it holds no stale words.
+            _rig.Fakes.PrimaryHint = InteractionHint.None;
+            float left = Time.realtimeSinceStartup;
+            while (_rig.Ui.Prompt.IsVisible && Time.realtimeSinceStartup - left < 4f)
+            {
+                yield return null;
+            }
+
+            yield return null;
+            Assert.IsFalse(_rig.Ui.Prompt.IsVisible);
+            Assert.AreEqual(string.Empty, _rig.Ui.Layout.PromptWord.text, "a hidden prompt holds no words");
+        }
+
+        [UnityTest]
         public IEnumerator TheHandOverFromTheLineToAnUnlearnedVerb_IsNeverBlank_TheLineGoesOnlyOnceThePromptIsComing()
         {
             InputSystem.AddDevice<Keyboard>();

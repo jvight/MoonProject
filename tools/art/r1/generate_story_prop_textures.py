@@ -374,6 +374,107 @@ def _build_cargo_crate_label(w: int = 512, h: int = 128) -> Image.Image:
     return albedo.resize((w, h), resample=Image.Resampling.LANCZOS)
 
 
+def _bootprint_height_m(w: int, h: int, width_m: float, length_m: float) -> np.ndarray:
+    """Height field in metres (rows along +V, row 0 at v = 0) of two crossing trails of lunar boot prints.
+
+    Each print is ~30 cm long with an oval boot outline (narrow heel, broad ball) and chevron cleats pointing to the
+    toe, pressed ~1 cm deep with a faint push-off ridge. Every print gets a small seeded turn and shift. The strip tiles
+    along V, so offsets wrap, the stride is an even number of steps, and no print crosses v = 0 / 1.
+    """
+    u = (np.arange(w, dtype=np.float64) + 0.5) / w
+    v = (np.arange(h, dtype=np.float64) + 0.5) / h
+    x_m = (u - 0.5)[None, :] * width_m
+    y_m = v[:, None] * length_m
+    height = np.zeros((h, w))
+    rng = np.random.default_rng(1969)
+    half_len = 0.150
+    steps = 4
+    # (first print v, heading: +1 walks +V and -1 walks -V, lateral sway amplitude in metres)
+    trails = ((0.07, 1.0, 0.16), (0.19, -1.0, -0.16))
+    for first_v, heading, sway in trails:
+        for step in range(steps):
+            sv = first_v + step / steps
+            side = 1.0 if step % 2 == 0 else -1.0
+            path_x = sway * np.sin(2.0 * np.pi * sv)
+            slope = sway * 2.0 * np.pi * np.cos(2.0 * np.pi * sv) / length_m
+            cx = path_x + side * heading * 0.085 + rng.uniform(-0.015, 0.015)
+            cy = sv * length_m + rng.uniform(-0.015, 0.015)
+            yaw = np.arctan(slope) + side * heading * 0.06 + rng.uniform(-0.10, 0.10)
+            dy = (y_m - cy + 0.5 * length_m) % length_m - 0.5 * length_m
+            dx = x_m - cx
+            ca, sa = np.cos(yaw), np.sin(yaw)
+            lx = (dx * ca - dy * sa) * heading * side
+            ly = (dx * sa + dy * ca) * heading
+            t = np.clip(ly / half_len, -1.0, 1.0)
+            half_w = 0.052 + 0.016 * (t + 1.0) * 0.5 - 0.005 * np.exp(-(((t + 0.15) / 0.25) ** 2))
+            r = np.sqrt((lx / half_w) ** 2 + (ly / half_len) ** 2)
+            inside = np.clip((1.10 - r) / 0.22, 0.0, 1.0)
+            inside = inside * inside * (3.0 - 2.0 * inside)
+            chevron = ly - 0.55 * np.abs(lx)
+            cleat = np.clip((0.5 + 0.5 * np.cos(2.0 * np.pi * chevron / 0.030) - 0.35) / 0.3, 0.0, 1.0)
+            cleat *= np.clip((0.95 - r) / 0.15, 0.0, 1.0)
+            sole = -inside * (0.011 + 0.002 * t - 0.0035 * cleat)
+            ridge = 0.0018 * np.exp(-(((r - 1.18) / 0.13) ** 2)) * (1.0 + 0.6 * np.clip(t, 0.0, 1.0))
+            height += sole + ridge
+    return height
+
+
+def _blur_tiling_v(a: np.ndarray, sigma_px: float) -> np.ndarray:
+    """Separable Gaussian blur that wraps along V (rows) and clamps along U (columns)."""
+    radius = int(np.ceil(sigma_px * 3.0))
+    k = np.exp(-0.5 * (np.arange(-radius, radius + 1) / sigma_px) ** 2)
+    k /= k.sum()
+    rows = np.zeros_like(a)
+    for i, kv in enumerate(k):
+        rows += kv * np.roll(a, i - radius, axis=0)
+    padded = np.pad(rows, ((0, 0), (radius, radius)), mode="edge")
+    out = np.zeros_like(a)
+    for i, kv in enumerate(k):
+        out += kv * padded[:, i : i + a.shape[1]]
+    return out
+
+
+def _smoothstep01(x: np.ndarray) -> np.ndarray:
+    x = np.clip(x, 0.0, 1.0)
+    return x * x * (3.0 - 2.0 * x)
+
+
+def _build_bootprint_trail_pair(
+    w: int = 512, h: int = 1536, width_m: float = 0.95, length_m: float = 3.0
+) -> tuple[Image.Image, Image.Image]:
+    """Generate the ground-imprint maps for Decal_BootprintTrail (MoonProject/R1/GroundImprint).
+
+    Normal: tangent-space relief of the prints (+X = +U, +Y = +V), softened by time. Albedo: R = a faint linear
+    compaction darkening stored in sRGB, A = a mask that fades the imprint out over the strip's sides and ends so it
+    has no edge on the ground. The imprint never paints a colour of its own, so these are the only inputs.
+    """
+    height = _blur_tiling_v(_bootprint_height_m(w, h, width_m, length_m), 1.6)
+    dh_du = (np.roll(height, -1, axis=1) - np.roll(height, 1, axis=1)) / (2.0 * width_m / w)
+    dh_du[:, 0] = 0.0
+    dh_du[:, -1] = 0.0
+    dh_dv = (np.roll(height, -1, axis=0) - np.roll(height, 1, axis=0)) / (2.0 * length_m / h)
+    normal = np.stack([-dh_du, -dh_dv, np.ones_like(height)], axis=-1)
+    normal /= np.linalg.norm(normal, axis=-1, keepdims=True)
+
+    u = (np.arange(w) + 0.5) / w
+    v = (np.arange(h) + 0.5) / h
+    fade_u = _smoothstep01(np.minimum(u, 1.0 - u) / 0.12)
+    fade_v = _smoothstep01(np.minimum(v, 1.0 - v) / 0.02)
+    mask = fade_v[:, None] * fade_u[None, :]
+    linear_tint = 1.0 - 0.05 * np.clip(-height / 0.011, 0.0, 1.0)
+    tint = np.where(
+        linear_tint <= 0.0031308, linear_tint * 12.92, 1.055 * np.power(linear_tint, 1.0 / 2.4) - 0.055
+    )
+
+    def to_rgba8(rgba: np.ndarray) -> np.ndarray:
+        # PIL row 0 is the top of the image, which Unity samples at v = 1
+        return np.clip(np.rint(rgba[::-1] * 255.0), 0, 255).astype(np.uint8)
+
+    alb = np.stack([tint, tint, tint, mask], axis=-1)
+    nrm = np.concatenate([0.5 + 0.5 * normal, np.ones_like(height)[..., None]], axis=-1)
+    return Image.fromarray(to_rgba8(alb), mode="RGBA"), Image.fromarray(to_rgba8(nrm), mode="RGBA")
+
+
 def main() -> None:
     repo_root = Path(__file__).resolve().parents[3]
     out_dir = repo_root / "Assets" / "_Project" / "Art" / "R1" / "Textures"
@@ -399,6 +500,9 @@ def main() -> None:
 
     cc_alb = _build_cargo_crate_label(512, 128)
     cc_alb.save(out_dir / "T_R1_CargoCrateLabel_Albedo.png", compress_level=9)
+    bp_alb, bp_norm = _build_bootprint_trail_pair()
+    bp_alb.save(out_dir / "T_R1_BootprintTrail_Albedo.png", compress_level=9)
+    bp_norm.save(out_dir / "T_R1_BootprintTrail_Normal.png", compress_level=9)
     print(f"Saved story prop textures to {out_dir}")
 
 

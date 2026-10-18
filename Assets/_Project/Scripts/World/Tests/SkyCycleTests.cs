@@ -427,6 +427,31 @@ namespace MoonProject.World.Tests
             }
         }
 
+        [Test]
+        public void EarthAndTerrainShaders_ExposeSingleStylizedLookPropertiesWithoutVariants()
+        {
+            Shader earthShader = UnityEditor.AssetDatabase.LoadAssetAtPath<Shader>("Assets/_Project/Shaders/World/LofiEarth.shader");
+            Shader terrainShader = UnityEditor.AssetDatabase.LoadAssetAtPath<Shader>("Assets/_Project/Shaders/World/R1Terrain.shader");
+            Assert.IsNotNull(earthShader, "MoonProject/World/LofiEarth shader must exist.");
+            Assert.IsNotNull(terrainShader, "MoonProject/World/R1Terrain shader must exist.");
+
+            var earthMat = new Material(earthShader);
+            var terrainMat = new Material(terrainShader);
+            try
+            {
+                Assert.IsTrue(earthMat.HasProperty("_EarthAlbedoMap"));
+                Assert.IsFalse(earthMat.HasProperty("_EarthVariant"));
+                Assert.IsTrue(terrainMat.HasProperty("_BaseMap"));
+                Assert.IsTrue(terrainMat.HasProperty("_RockMap"));
+                Assert.IsFalse(terrainMat.HasProperty("_TerrainVariant"));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(earthMat);
+                UnityEngine.Object.DestroyImmediate(terrainMat);
+            }
+        }
+
         [Serializable]
         private sealed class DummySaveData
         {

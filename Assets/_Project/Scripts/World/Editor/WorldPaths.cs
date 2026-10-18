@@ -31,6 +31,7 @@ namespace MoonProject.World.Editor
         public const string SkyShader = "Assets/_Project/Shaders/World/LofiSky.shader";
         public const string EarthShader = "Assets/_Project/Shaders/World/LofiEarth.shader";
         public const string GroundShader = "Assets/_Project/Shaders/World/R1Terrain.shader";
+        public const string EarthAlbedoTexture = "Assets/_Project/Art/R1/Textures/T_R1_Earth_Albedo.png";
         public const string RegolithAlbedoTexture = "Assets/_Project/Art/R1/Textures/T_R1_Regolith_Albedo.png";
         public const string RegolithNormalTexture = "Assets/_Project/Art/R1/Textures/T_R1_Regolith_Normal.png";
         public const string RegolithMaskTexture = "Assets/_Project/Art/R1/Textures/T_R1_Regolith_Mask.png";

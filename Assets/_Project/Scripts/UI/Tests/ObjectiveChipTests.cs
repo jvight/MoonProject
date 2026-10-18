@@ -36,6 +36,19 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
+        public void TheVerbIsAtHand_OnlyWhileItsOwnKindOfTargetIsInFront_ReadyOrNot()
+        {
+            _chip.SetKey(OpeningKeys.CutOptics);
+            Assert.IsTrue(_chip.AtHand(InteractionKind.Salvage), "the seal in front: the cut is at hand");
+            Assert.IsFalse(_chip.AtHand(InteractionKind.Scan), "another verb's target is not");
+            Assert.IsFalse(_chip.AtHand(InteractionKind.None));
+            _chip.SetKey(OpeningKeys.FitIgniter);
+            Assert.IsFalse(_chip.AtHand(InteractionKind.Salvage), "a verb on 07's screen has no target in the world");
+            _chip.SetKey(OpeningKeys.DriveToLander);
+            Assert.IsFalse(_chip.AtHand(InteractionKind.Scan), "a step without a verb has nothing at hand");
+        }
+
+        [Test]
         public void TheChip_ShowsWithItsLine_AndOnlyThen()
         {
             _chip.SetKey(OpeningKeys.BuildPad);

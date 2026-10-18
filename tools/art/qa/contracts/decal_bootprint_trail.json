@@ -1,0 +1,23 @@
+{
+  "model": "decal_bootprint_trail",
+  "pivot_tolerance": 0.02,
+  "scale_tolerance": 0.001,
+  "require_vertex_colors": true,
+  "allow_boundary_edges": false,
+  "max_triangles": 4000,
+  "max_meshes": 2,
+  "max_draw_calls": 4,
+  "bounds": {
+    "size": [0.95, 3.0, 0.12],
+    "tolerance": 0.01,
+    "min_size": [0.93, 2.98, 0.11],
+    "max_size": [0.97, 3.02, 0.13]
+  },
+  "nodes": {
+    "Decal_BootprintTrail": { "pivot": [0.0, 0.0, 0.0] },
+    "TrailSheet": { "pivot": [0.0, 0.0, 0.0] },
+    "Start_Anchor": { "pivot": [0.0, -1.50, 0.0] },
+    "End_Anchor": { "pivot": [0.0, 1.50, 0.0] },
+    "Center_Anchor": { "pivot": [0.0, 0.0, 0.0] }
+  }
+}

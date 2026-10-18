@@ -42,6 +42,12 @@ namespace MoonProject.Art.Tests
             ("cable_splice_box.json", "Props/Cable_Splice_Box.fbx"),
             ("prop_old_lander.json", "Props/Prop_OldLander.fbx"),
             ("decal_old_lander_blast.json", "Props/Decal_OldLanderBlast.fbx"),
+            ("prop_mission_flag.json", "Props/Prop_MissionFlag.fbx"),
+            ("prop_seismic_station.json", "Props/Prop_SeismicStation.fbx"),
+            ("prop_retroreflector.json", "Props/Prop_Retroreflector.fbx"),
+            ("prop_survey_tripod.json", "Props/Prop_SurveyTripod.fbx"),
+            ("prop_sample_rack.json", "Props/Prop_SampleRack.fbx"),
+            ("decal_bootprint_trail.json", "Props/Decal_BootprintTrail.fbx"),
         };
 
         [Serializable]
@@ -712,6 +718,208 @@ namespace MoonProject.Art.Tests
             finally
             {
                 UnityEngine.Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        public void PropMissionFlag_HasSunBleachedFlagSheet_BoxCollider_AndZeroEmission()
+        {
+            GameObject flagPrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.PropMissionFlagPrefabPath);
+            Assert.IsNotNull(flagPrefab.transform.Find("FlagPole"), "Prop_MissionFlag missing FlagPole.");
+            Transform flagSheet = flagPrefab.transform.Find("FlagSheet");
+            Assert.IsNotNull(flagSheet, "Prop_MissionFlag missing FlagSheet.");
+            Assert.IsNotNull(flagPrefab.transform.Find("Base_Anchor"), "Prop_MissionFlag missing Base_Anchor.");
+            Assert.IsNotNull(flagPrefab.transform.Find("Flag_Anchor"), "Prop_MissionFlag missing Flag_Anchor.");
+
+            BoxCollider box = flagPrefab.GetComponent<BoxCollider>();
+            Assert.IsNotNull(box, "Prop_MissionFlag must have a simple BoxCollider on root.");
+            Vector3 boxSize = ColliderSizeInPrefabAxes(flagPrefab, box);
+            Assert.Greater(boxSize.x, 0.80f);
+            Assert.Greater(boxSize.y, 1.45f);
+
+            Renderer sheetRenderer = flagSheet.GetComponent<Renderer>();
+            Assert.IsNotNull(sheetRenderer);
+            bool foundStripeMat = false;
+            foreach (Material m in sheetRenderer.sharedMaterials)
+            {
+                Assert.IsNotNull(m);
+                if (m.name == R1StoryPropsBuilder.MissionFlagStripeMaterialName)
+                {
+                    foundStripeMat = true;
+                }
+            }
+
+            Assert.IsTrue(foundStripeMat, "Prop_MissionFlag FlagSheet must use R1_MissionFlagStripe for faint sun-bleached stripes.");
+            AssertNoEmissiveMaterials(flagPrefab);
+        }
+
+        [Test]
+        public void PropSeismicStation_HasGoldFoilShroud_Cable_SquatCentralBox_DeadStatusLamp_AndBoxCollider()
+        {
+            GameObject seisPrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.PropSeismicStationPrefabPath);
+            Transform shroud = seisPrefab.transform.Find("FoilShroud");
+            Assert.IsNotNull(shroud, "Prop_SeismicStation missing FoilShroud.");
+            Assert.IsNotNull(seisPrefab.transform.Find("SeismometerUnit"), "Prop_SeismicStation missing SeismometerUnit.");
+            Assert.IsNotNull(seisPrefab.transform.Find("UmbilicalCable"), "Prop_SeismicStation missing UmbilicalCable.");
+            Assert.IsNotNull(seisPrefab.transform.Find("CentralBox"), "Prop_SeismicStation missing CentralBox.");
+            Transform deadLamp = seisPrefab.transform.Find("DeadStatusLamp");
+            Assert.IsNotNull(deadLamp, "Prop_SeismicStation missing DeadStatusLamp.");
+            Assert.IsNotNull(seisPrefab.transform.Find("Seismometer_Anchor"), "Prop_SeismicStation missing Seismometer_Anchor.");
+            Assert.IsNotNull(seisPrefab.transform.Find("CentralBox_Anchor"), "Prop_SeismicStation missing CentralBox_Anchor.");
+            Assert.IsNotNull(seisPrefab.transform.Find("StatusLamp_Dead"), "Prop_SeismicStation missing StatusLamp_Dead.");
+
+            BoxCollider box = seisPrefab.GetComponent<BoxCollider>();
+            Assert.IsNotNull(box, "Prop_SeismicStation must have a simple BoxCollider on root.");
+            Vector3 boxSize = ColliderSizeInPrefabAxes(seisPrefab, box);
+            Assert.Greater(boxSize.x, 1.0f);
+
+            bool hasGoldFoil = false;
+            foreach (Material m in shroud.GetComponent<Renderer>().sharedMaterials)
+            {
+                if (m != null && m.name == R1MaterialRecipes.GoldFoilSlot)
+                {
+                    hasGoldFoil = true;
+                }
+            }
+
+            Assert.IsTrue(hasGoldFoil, "Prop_SeismicStation FoilShroud must use R1_GoldFoil.");
+            AssertNoEmissiveMaterials(seisPrefab);
+        }
+
+        [Test]
+        public void PropRetroreflector_HasTilted10x10CornerCubePrismArray_Legs_AndBoxCollider()
+        {
+            GameObject retroPrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.PropRetroreflectorPrefabPath);
+            Assert.IsNotNull(retroPrefab.transform.Find("SupportStand"), "Prop_Retroreflector missing SupportStand.");
+            Assert.IsNotNull(retroPrefab.transform.Find("PanelHousing"), "Prop_Retroreflector missing PanelHousing.");
+            Transform prismArray = retroPrefab.transform.Find("PrismArray");
+            Assert.IsNotNull(prismArray, "Prop_Retroreflector missing PrismArray.");
+            Assert.IsNotNull(retroPrefab.transform.Find("Base_Anchor"), "Prop_Retroreflector missing Base_Anchor.");
+            Assert.IsNotNull(retroPrefab.transform.Find("Array_Anchor"), "Prop_Retroreflector missing Array_Anchor.");
+
+            BoxCollider box = retroPrefab.GetComponent<BoxCollider>();
+            Assert.IsNotNull(box, "Prop_Retroreflector must have a simple BoxCollider on root.");
+            Vector3 boxSize = ColliderSizeInPrefabAxes(retroPrefab, box);
+            Assert.Greater(boxSize.x, 0.50f);
+
+            Mesh prismMesh = prismArray.GetComponent<MeshFilter>().sharedMesh;
+            Assert.IsNotNull(prismMesh);
+            Assert.GreaterOrEqual(prismMesh.triangles.Length / 3, 600,
+                "PrismArray must contain sculpted 10x10 corner-cube prism facets.");
+
+            bool hasWindowGlint = false;
+            foreach (Material m in prismArray.GetComponent<Renderer>().sharedMaterials)
+            {
+                if (m != null && m.name == R1StoryPropsBuilder.IceCoreWindowMaterialName)
+                {
+                    hasWindowGlint = true;
+                }
+            }
+
+            Assert.IsTrue(hasWindowGlint, "Prop_Retroreflector PrismArray must use high-glint optical window material.");
+            AssertNoEmissiveMaterials(retroPrefab);
+        }
+
+        [Test]
+        public void PropSurveyTripod_IsFallenWithTheodoliteHead_BuckledLeg_AndBoxCollider()
+        {
+            GameObject tripodPrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.PropSurveyTripodPrefabPath);
+            Assert.IsNotNull(tripodPrefab.transform.Find("TripodFrame"), "Prop_SurveyTripod missing TripodFrame.");
+            Assert.IsNotNull(tripodPrefab.transform.Find("BuckledLeg"), "Prop_SurveyTripod missing BuckledLeg.");
+            Assert.IsNotNull(tripodPrefab.transform.Find("TheodoliteHead"), "Prop_SurveyTripod missing TheodoliteHead.");
+            Assert.IsNotNull(tripodPrefab.transform.Find("Base_Anchor"), "Prop_SurveyTripod missing Base_Anchor.");
+            Assert.IsNotNull(tripodPrefab.transform.Find("Head_Anchor"), "Prop_SurveyTripod missing Head_Anchor.");
+            Assert.IsNotNull(tripodPrefab.transform.Find("BuckledKnee_Anchor"), "Prop_SurveyTripod missing BuckledKnee_Anchor.");
+
+            BoxCollider box = tripodPrefab.GetComponent<BoxCollider>();
+            Assert.IsNotNull(box, "Prop_SurveyTripod must have a simple BoxCollider on root.");
+            Vector3 boxSize = ColliderSizeInPrefabAxes(tripodPrefab, box);
+            Assert.Greater(boxSize.x, boxSize.y * 2.5f,
+                "Prop_SurveyTripod must be fallen horizontally on the ground (width much greater than height).");
+
+            AssertNoEmissiveMaterials(tripodPrefab);
+        }
+
+        [Test]
+        public void PropSampleRack_HasRack_Rake_Tongs_Scoop_TwoRackedTubes_OneFallenTube_AndBoxCollider()
+        {
+            GameObject rackPrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.PropSampleRackPrefabPath);
+            Assert.IsNotNull(rackPrefab.transform.Find("RackFrame"), "Prop_SampleRack missing RackFrame.");
+            Assert.IsNotNull(rackPrefab.transform.Find("ToolRake"), "Prop_SampleRack missing ToolRake.");
+            Assert.IsNotNull(rackPrefab.transform.Find("ToolTongs"), "Prop_SampleRack missing ToolTongs.");
+            Assert.IsNotNull(rackPrefab.transform.Find("ToolScoop"), "Prop_SampleRack missing ToolScoop.");
+            Assert.IsNotNull(rackPrefab.transform.Find("CoreTubesRacked"), "Prop_SampleRack missing CoreTubesRacked.");
+            Assert.IsNotNull(rackPrefab.transform.Find("CoreTubeFallen"), "Prop_SampleRack missing CoreTubeFallen.");
+            Assert.IsNotNull(rackPrefab.transform.Find("Base_Anchor"), "Prop_SampleRack missing Base_Anchor.");
+            Assert.IsNotNull(rackPrefab.transform.Find("Tools_Anchor"), "Prop_SampleRack missing Tools_Anchor.");
+            Assert.IsNotNull(rackPrefab.transform.Find("FallenTube_Anchor"), "Prop_SampleRack missing FallenTube_Anchor.");
+
+            BoxCollider box = rackPrefab.GetComponent<BoxCollider>();
+            Assert.IsNotNull(box, "Prop_SampleRack must have a simple BoxCollider on root.");
+            Vector3 boxSize = ColliderSizeInPrefabAxes(rackPrefab, box);
+            Assert.Greater(boxSize.x, 0.70f);
+            Assert.Greater(boxSize.y, 0.75f);
+
+            AssertNoEmissiveMaterials(rackPrefab);
+        }
+
+        [Test]
+        public void DecalBootprintTrail_HasTileablePathAnchors_BootprintMaterial_AndNoCollider()
+        {
+            GameObject decalPrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.DecalBootprintTrailPrefabPath);
+            Transform trailSheet = decalPrefab.transform.Find("TrailSheet");
+            Assert.IsNotNull(trailSheet, "Decal_BootprintTrail missing TrailSheet.");
+            Transform startAnchor = decalPrefab.transform.Find("Start_Anchor");
+            Transform endAnchor = decalPrefab.transform.Find("End_Anchor");
+            Assert.IsNotNull(startAnchor, "Decal_BootprintTrail missing Start_Anchor.");
+            Assert.IsNotNull(endAnchor, "Decal_BootprintTrail missing End_Anchor.");
+            Assert.IsNotNull(decalPrefab.transform.Find("Center_Anchor"), "Decal_BootprintTrail missing Center_Anchor.");
+            Assert.AreEqual(3.0f, Vector3.Distance(startAnchor.localPosition, endAnchor.localPosition), 0.02f,
+                "Decal_BootprintTrail Start_Anchor to End_Anchor span must be 3.0 m for seamless path tiling.");
+
+            Assert.AreEqual(0, decalPrefab.GetComponentsInChildren<Collider>(true).Length,
+                "Decal_BootprintTrail is a ground imprint and must not collide; even a low lip along a long trail bumps 07's wheels.");
+
+            Renderer renderer = trailSheet.GetComponent<Renderer>();
+            Assert.IsNotNull(renderer);
+            Material mat = renderer.sharedMaterial;
+            Assert.IsNotNull(mat);
+            Assert.AreEqual(R1StoryPropsBuilder.BootprintTrailMaterialName, mat.name);
+            Assert.AreEqual(R1StoryPropsBuilder.GroundImprintShaderName, mat.shader.name,
+                "R1_BootprintTrail must project through the ground-imprint shader, not paint a slab of its own.");
+            Assert.IsTrue(mat.shader.isSupported, "MoonProject/R1/GroundImprint must compile.");
+            Assert.IsNotNull(mat.GetTexture("_BaseMap"), "R1_BootprintTrail must have _BaseMap assigned.");
+            Assert.IsNotNull(mat.GetTexture("_BumpMap"), "R1_BootprintTrail must have _BumpMap assigned.");
+
+            AssertNoEmissiveMaterials(decalPrefab);
+        }
+
+        /// <summary>
+        /// The collider is fitted in the FBX root's local axes, and that root carries Blender's +90 deg X axis
+        /// conversion, so its local Z is the prop's height; rotate the size into the prefab's Y-up axes.
+        /// </summary>
+        private static Vector3 ColliderSizeInPrefabAxes(GameObject prefab, BoxCollider box)
+        {
+            Vector3 size = prefab.transform.localRotation * box.size;
+            return new Vector3(Mathf.Abs(size.x), Mathf.Abs(size.y), Mathf.Abs(size.z));
+        }
+
+        private static void AssertNoEmissiveMaterials(GameObject prefab)
+        {
+            Renderer[] renderers = prefab.GetComponentsInChildren<Renderer>(true);
+            foreach (Renderer r in renderers)
+            {
+                foreach (Material m in r.sharedMaterials)
+                {
+                    Assert.IsNotNull(m);
+                    Assert.AreNotEqual(R1MaterialRecipes.LampAmberSlot, m.name,
+                        $"Prefab '{prefab.name}' must have no lit R1_LampAmber material slots.");
+                    if (m.HasProperty("_EmissionStrength"))
+                    {
+                        Assert.AreEqual(0f, m.GetFloat("_EmissionStrength"), 1e-4f,
+                            $"Prefab '{prefab.name}' material '{m.name}' must have zero emission.");
+                    }
+                }
             }
         }
 

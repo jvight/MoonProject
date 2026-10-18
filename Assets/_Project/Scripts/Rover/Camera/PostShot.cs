@@ -20,42 +20,19 @@ namespace MoonProject.Rover
     }
 
     /// <summary>
-    /// The camera of 07's wake as pure functions. First one fixed three-quarter front view aimed at 07's face from a
-    /// little below, far enough that all of 07 is in frame as it wakes; once the self-test prints, the camera creeps
-    /// straight in along its own view line until the face fills <see cref="PostSettings.FaceFill"/> of the frame's
-    /// height, so the lines read. It never turns, cuts or follows a part there. After the checks it makes exactly two
-    /// eased moves: back and out diagonally to a wide front three-quarter (<see cref="Wide"/>, <see cref="PullBack"/>),
-    /// and round 07 to the chase frame (<see cref="Round"/>), never past it. 07's position, face point and heading are
-    /// inputs, so every pose is testable.
+    /// The camera of 07's wake after the self-test, as pure functions: the wide front three-quarter for the ready
+    /// performance (<see cref="Wide"/>), the one eased move back and out to it from the face close-up
+    /// (<see cref="PullBack"/>), and the one eased move round 07 to the chase frame (<see cref="Round"/>), never past
+    /// it. The close-up itself is the inventory's (<see cref="RoverCameraRig.TryComposeFaceShot"/>). 07's position and
+    /// heading are inputs, so every pose is testable.
     /// </summary>
     public sealed class PostShot
     {
         private readonly PostSettings _settings;
-        private readonly float _faceHeight;
 
-        /// <param name="faceHeight">Height (m) of 07's CRT face screen, the thing the push-in frames.</param>
-        public PostShot(PostSettings settings, float faceHeight)
+        public PostShot(PostSettings settings)
         {
             _settings = settings ?? throw new System.ArgumentNullException(nameof(settings));
-            _faceHeight = faceHeight > 0f
-                ? faceHeight
-                : throw new System.ArgumentOutOfRangeException(nameof(faceHeight), "the face needs a height");
-        }
-
-        /// <summary>How far (m) the camera stands from the face at the end of the push-in.</summary>
-        public float CloseDistance =>
-            _faceHeight / (_settings.FaceFill * 2f * Mathf.Tan(0.5f * _settings.ShotFov * Mathf.Deg2Rad));
-
-        /// <summary>
-        /// The shot at <paramref name="push01"/> of the push-in (0 wide on all of 07, 1 close on the face), looking at
-        /// <paramref name="face"/>: the rotation and the lens never change, only the distance along the view line.
-        /// </summary>
-        public ShotPose At(Vector3 face, float headingDeg, float push01)
-        {
-            Vector3 back = Back(headingDeg);
-            float ease = WakeOpening.SmoothStepC2(0f, 1f, Mathf.Clamp01(push01));
-            float distance = Mathf.Lerp(_settings.ShotDistance, Mathf.Min(CloseDistance, _settings.ShotDistance), ease);
-            return new ShotPose(face + back * distance, Quaternion.LookRotation(-back, Vector3.up), _settings.ShotFov);
         }
 
         /// <summary>The wide front three-quarter for the ready performance: all of 07 in frame, a little from above.</summary>
@@ -65,7 +42,7 @@ namespace MoonProject.Rover
             Vector3 back = Quaternion.Euler(-_settings.WideElevation, headingDeg + _settings.WideSideYaw, 0f)
                 * Vector3.forward;
             return new ShotPose(look + back * _settings.WideDistance, Quaternion.LookRotation(-back, Vector3.up),
-                _settings.ShotFov);
+                _settings.WideFov);
         }
 
         /// <summary>The first move, at <paramref name="t"/> (0..1): eased in a straight line from the close-up to the wide shot.</summary>
@@ -100,22 +77,6 @@ namespace MoonProject.Rover
             Quaternion rotation = ease >= 1f ? chase.Rotation
                 : look.sqrMagnitude > 1e-6f ? Quaternion.LookRotation(look, Vector3.up) : chase.Rotation;
             return new ShotPose(position, rotation, Mathf.Lerp(wide.Fov, chase.Fov, ease));
-        }
-
-        /// <summary>
-        /// Where the shot's camera is as (yaw, pitch) deg from 07's heading, seen from <paramref name="face"/>: where
-        /// 07's head turns to look into the shot.
-        /// </summary>
-        public Vector2 FaceAngles(float headingDeg)
-        {
-            Quaternion toLocal = Quaternion.Inverse(Quaternion.Euler(0f, headingDeg, 0f));
-            return LensGaze.Angles(toLocal * Back(headingDeg));
-        }
-
-        /// <summary>The direction from the face back to the camera: round from 07's front, a little below.</summary>
-        private Vector3 Back(float headingDeg)
-        {
-            return Quaternion.Euler(-_settings.ShotElevation, headingDeg + _settings.ShotSideYaw, 0f) * Vector3.forward;
         }
     }
 }

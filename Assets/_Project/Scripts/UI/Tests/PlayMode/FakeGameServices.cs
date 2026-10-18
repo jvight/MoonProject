@@ -27,7 +27,8 @@ namespace MoonProject.UI.PlayModeTests
 
         public Vector3 Velocity => Vector3.zero;
 
-        public float Speed => 0f;
+        /// <summary>07's speed (m/s), set by a test (0: standing still).</summary>
+        public float Speed { get; set; }
 
         public float NormalizedSpeed => 0f;
 

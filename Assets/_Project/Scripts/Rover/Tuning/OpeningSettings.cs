@@ -4,7 +4,7 @@ using UnityEngine;
 namespace MoonProject.Rover
 {
     /// <summary>
-    /// 07's wake and the title's camera (docs/features/M3-09): how 07's lid rests and blinks, how heavy its neck is,
+    /// 07's wake and the title's camera (docs/features/M3-09): how 07's lid rests and blinks,
     /// how its lamps power up, the fade to black from the title and the short wake; the power-on self-test seen on
     /// its face is <see cref="Post"/>. Untouched, the opening must stay at or under 45 s.
     /// </summary>
@@ -23,27 +23,6 @@ namespace MoonProject.Rover
         [Tooltip("Lowest openness in the wake's blink.")]
         [Range(0f, 0.5f)]
         [SerializeField] private float _blinkLow = 0.25f;
-
-        [Header("Gaze (deg, relative to 07's heading)")]
-        [Tooltip("Gaze pitch while 07 still sleeps, before its eyes open: a little below level, the head bowed.")]
-        [Range(-30f, 10f)]
-        [SerializeField] private float _bowedPitch = -2f;
-
-        [Tooltip("Soft yaw limit either way.")]
-        [Range(20f, 120f)]
-        [SerializeField] private float _yawLimit = 70f;
-
-        [Tooltip("Lowest pitch of the soft limit.")]
-        [Range(-45f, 0f)]
-        [SerializeField] private float _pitchDownLimit = -15f;
-
-        [Tooltip("Highest pitch of the soft limit.")]
-        [Range(10f, 80f)]
-        [SerializeField] private float _pitchUpLimit = 50f;
-
-        [Tooltip("Neck response (Hz): low and critically damped, an old neck.")]
-        [Range(0.1f, 2f)]
-        [SerializeField] private float _neckFrequency = 0.6f;
 
         [Header("07's body at the antenna check")]
         [Tooltip("Strength of the solar wing's sigh as 07 blinks.")]
@@ -117,11 +96,6 @@ namespace MoonProject.Rover
         public float LidRest => _lidRest;
         public float BlinkSeconds => _blinkSeconds;
         public float BlinkLow => _blinkLow;
-        public float BowedPitch => _bowedPitch;
-        public float YawLimit => _yawLimit;
-        public float PitchDownLimit => _pitchDownLimit;
-        public float PitchUpLimit => _pitchUpLimit;
-        public float NeckFrequency => _neckFrequency;
         public float BlinkSigh => _blinkSigh;
         public PostSettings Post => _post;
         public int LampFlickerCount => _lampFlickerCount;

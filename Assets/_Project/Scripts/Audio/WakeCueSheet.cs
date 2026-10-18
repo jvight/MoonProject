@@ -5,8 +5,8 @@ namespace MoonProject.Audio
 {
     /// <summary>
     /// Which of 07's wake cues each <see cref="WakeBeat"/> plays (docs/design/cutscenes.md §1.2), plain C# so the sheet
-    /// is testable: the thump in the black and the faint ghost chord, a lid tick as the picture opens and as the eyes
-    /// open, and a soft tick as the short wake stirs.
+    /// is testable: the thump in the black and the faint ghost chord, a lid tick as the picture opens on 07's face and
+    /// as its eyes come back after the self-test, and a soft tick as the short wake stirs.
     /// </summary>
     public sealed class WakeCueSheet
     {
@@ -40,7 +40,7 @@ namespace MoonProject.Audio
                     calls[count++] = new WakeCueCall(WakeCueKind.Ghost, 0, _settings.CrackleGhostDelay,
                         _settings.GhostFaint);
                     break;
-                case WakeBeat.PictureOpens:
+                case WakeBeat.ChecksBegin:
                     calls[count++] = new WakeCueCall(WakeCueKind.Tick, TickA2, 0f, _settings.Tick);
                     break;
                 case WakeBeat.EyesOpen:

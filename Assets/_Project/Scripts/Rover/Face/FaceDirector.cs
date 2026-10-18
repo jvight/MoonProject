@@ -200,10 +200,10 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// Handles a <see cref="WakeBeat"/> from the opening sequence. When the opening holds the CRT dark, the boot
-        /// sequence starts as 07's eyes open (<see cref="WakeBeat.EyesOpen"/>), before the self-test prints; standalone wake
-        /// sequences start at <see cref="WakeBeat.Crackle"/> / <see cref="WakeBeat.Stirred"/>. <see cref="WakeBeat.Blinked"/>
-        /// triggers a slow wake blink and a curious glance at Earth.
+        /// Handles a <see cref="WakeBeat"/> from the opening sequence. When the opening holds the CRT dark (its self-test
+        /// prints on the dark face), the boot sequence starts as 07's eyes come back after the checks
+        /// (<see cref="WakeBeat.EyesOpen"/>); standalone wake sequences start at <see cref="WakeBeat.Crackle"/> /
+        /// <see cref="WakeBeat.Stirred"/>.
         /// </summary>
         public void OnWakeBeat(WakeBeat beat)
         {
@@ -230,14 +230,6 @@ namespace MoonProject.Rover
             {
                 _pendingFreshSessionBoot = false;
                 StartWakeBoot();
-            }
-
-            if (beat == WakeBeat.Blinked)
-            {
-                _state.SlowBlink();
-                _wakeBlinkCount++;
-                TriggerBeat(BeatKind.EarthGlance, _tuning.EarthGlanceHoldSeconds);
-                FlushStateCues();
             }
         }
 
