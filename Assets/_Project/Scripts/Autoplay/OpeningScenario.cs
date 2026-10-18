@@ -17,8 +17,6 @@ namespace MoonProject.Autoplay
     /// </summary>
     public sealed class OpeningScenario
     {
-        public const string LastBeat = "B3";
-
         private const float BootTimeoutSeconds = 60f;
         private const float TitleAttemptSeconds = 1.5f;
         private const int TitleAttempts = 12;
@@ -31,7 +29,11 @@ namespace MoonProject.Autoplay
         private const float LanderCargoRadius = 25f;
         private const float ScanStandOff = 3.5f;
         private const float ScanArriveRadius = 1.5f;
-        private const float ScanLookTimeoutSeconds = 5f;
+        private const float ScanLookTimeoutSeconds = 12f;
+
+        /// <summary>Seconds without the chip after which the bot shifts 07 a hair, as a player fidgets.</summary>
+        private const float NudgeSeconds = 3f;
+        private const float TraceSeconds = 1f;
         private const float ScanAllowanceSeconds = 8f;
         private const float FollowSeconds = 6f;
 
@@ -124,24 +126,24 @@ namespace MoonProject.Autoplay
                 FollowSeconds, "the objective line to say '" + OpeningKeys.ScanLander + "'");
             var chips = new List<string>();
             ScanField scans = _bot.World.Gameplay.Scans;
-            while (!_bot.Failed && _bot.World.Gameplay.Opening.Flow.Current == OpeningKeys.ScanLander)
+            ScanFragment next;
+            while (!_bot.Failed && (next = NextCargoFragment(scans)) != null)
             {
-                ScanFragment next = NearestCargoFragment(scans);
-                if (next == null)
-                {
-                    _bot.Fail("no unscanned fragment in the lander's cargo, but the objective line still says '" +
-                              OpeningKeys.ScanLander + "'.");
-                    break;
-                }
-
                 yield return ScanOne(scans, next, chips);
                 yield return _bot.Wait(0.5f);
             }
 
             if (!_bot.Failed)
             {
-                yield return _bot.Until(() => _bot.World.Gameplay.Opening.Flow.Current == OpeningKeys.CollectParts,
-                    FollowSeconds, "the objective line to move on to '" + OpeningKeys.CollectParts + "'");
+                yield return _bot.Until(() => _bot.World.Gameplay.Opening.Flow.Current != OpeningKeys.ScanLander,
+                    FollowSeconds, "the objective line to move on from '" + OpeningKeys.ScanLander + "'");
+            }
+
+            string line = _bot.World.Gameplay.Opening.Flow.Current;
+            if (!_bot.Failed && line != OpeningKeys.CollectParts)
+            {
+                _bot.Warn("after the scan the objective line says '" + line + "', not '" + OpeningKeys.CollectParts +
+                          "' (opening-v2 B4).");
             }
 
             _bot.EndBeat("both fragments scanned (chips seen: " + string.Join("; ", chips) + ")");
@@ -155,43 +157,82 @@ namespace MoonProject.Autoplay
             yield return _bot.DriveTo(point + away * ScanStandOff, ScanArriveRadius, fragment.FragmentId, DriveTimeoutSeconds);
             yield return _bot.TurnToward(point, fragment.FragmentId);
             yield return _bot.LookAt(point, fragment.FragmentId);
-            yield return _bot.Until(() => scans.Candidate == fragment, ScanLookTimeoutSeconds,
-                "the brackets and the Scan chip on " + fragment.FragmentId);
+            UiProbe ui = _bot.World.Ui;
+            float deadline = Time.unscaledTime + ScanLookTimeoutSeconds;
+            float nudgeAt = Time.unscaledTime + NudgeSeconds;
+            float traceAt = 0f;
+            int nudges = 0;
+            while (!_bot.Failed && !(_bot.KeepLookingAt(point) && scans.Candidate == fragment &&
+                                     ui.ChipGlyph().Length > 0))
+            {
+                if (Time.unscaledTime > deadline)
+                {
+                    if (scans.Candidate != fragment || ui.RawChipGlyph().Length == 0)
+                    {
+                        _bot.Fail("timed out after " + ScanLookTimeoutSeconds.ToString("0", CultureInfo.InvariantCulture) +
+                                  " s waiting for the brackets on " + fragment.FragmentId + " (candidate " +
+                                  (scans.Candidate != null ? scans.Candidate.FragmentId : "none") + "; " +
+                                  ui.DescribeChip() + "). " + _bot.Where());
+                        yield break;
+                    }
+
+                    _bot.Warn("the Scan chip never showed on " + fragment.FragmentId + " in " +
+                              ScanLookTimeoutSeconds.ToString("0", CultureInfo.InvariantCulture) +
+                              " s while 07 stood in range with the objective line up (" + ui.DescribeChip() +
+                              "); the bot pressed the key the hidden chip carries.");
+                    break;
+                }
+
+                if (Time.unscaledTime > traceAt)
+                {
+                    traceAt = Time.unscaledTime + TraceSeconds;
+                    Debug.Log("Autoplay: waiting for the Scan chip on " + fragment.FragmentId + ": " +
+                              DriveSteering.FlatDistance(_bot.World.Rover.Position, point).ToString("0.0", CultureInfo.InvariantCulture) +
+                              " m away, candidate " + (scans.Candidate != null ? scans.Candidate.FragmentId : "none") +
+                              ", objective '" + ui.ObjectiveLine() + "', " + ui.DescribeChip());
+                }
+
+                if (Time.unscaledTime > nudgeAt)
+                {
+                    nudgeAt = Time.unscaledTime + NudgeSeconds;
+                    yield return _bot.Tap(nudges++ % 2 == 0 ? Key.W : Key.S);
+                }
+
+                yield return null;
+            }
+
             if (_bot.Failed)
             {
                 yield break;
             }
 
-            UiProbe ui = _bot.World.Ui;
-            chips.Add(ui.Chip());
-            if (!GlyphKeys.TryResolve(ui.ChipGlyph(), out Key key))
+            string glyph = ui.RawChipGlyph();
+            chips.Add(ui.Chip().Length > 0 ? ui.Chip() : "(hidden) " + glyph);
+            if (!GlyphKeys.TryResolve(glyph, out Key key))
             {
-                _bot.Fail("the prompt chip names a key the bot does not know: '" + ui.ChipGlyph() + "'.");
+                _bot.Fail("the prompt chip names a key the bot does not know: '" + glyph + "'.");
                 yield break;
             }
 
-            yield return _bot.Hold(key, () => fragment.Scanned, scans.Tuning.Seconds(fragment.Size) + ScanAllowanceSeconds,
+            yield return _bot.Hold(key, () =>
+                {
+                    _bot.KeepLookingAt(point);
+                    return fragment.Scanned;
+                }, scans.Tuning.Seconds(fragment.Size) + ScanAllowanceSeconds,
                 "held " + key + " to scan " + fragment.FragmentId);
         }
 
-        private ScanFragment NearestCargoFragment(ScanField scans)
+        /// <summary>The next unscanned fragment of the lander's cargo, in the order the blueprint numbers them.</summary>
+        private ScanFragment NextCargoFragment(ScanField scans)
         {
             Vector3 lander = Lander().Position;
-            Vector3 here = _bot.World.Rover.Position;
             ScanFragment best = null;
-            float bestDistance = float.MaxValue;
             foreach (ScanFragment fragment in scans.Fragments)
             {
-                if (fragment.Scanned || DriveSteering.FlatDistance(fragment.Point, lander) > LanderCargoRadius)
-                {
-                    continue;
-                }
-
-                float distance = DriveSteering.FlatDistance(fragment.Point, here);
-                if (distance < bestDistance)
+                if (!fragment.Scanned && DriveSteering.FlatDistance(fragment.Point, lander) <= LanderCargoRadius &&
+                    (best == null || fragment.Index < best.Index))
                 {
                     best = fragment;
-                    bestDistance = distance;
                 }
             }
 

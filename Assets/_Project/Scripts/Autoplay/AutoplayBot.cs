@@ -27,6 +27,7 @@ namespace MoonProject.Autoplay
         private readonly BeatLog _beats;
         private readonly Action<string> _screenshot;
         private readonly ThrottleGate _gate = new ThrottleGate();
+        private readonly System.Collections.Generic.List<string> _warnings = new System.Collections.Generic.List<string>();
         private string _beatId;
         private string _beatTitle;
         private float _beatStart;
@@ -54,11 +55,18 @@ namespace MoonProject.Autoplay
             Failure = Failure ?? reason;
         }
 
+        /// <summary>Notes something wrong that did not stop the run: it shows in the beat's reason.</summary>
+        public void Warn(string warning)
+        {
+            _warnings.Add(warning);
+        }
+
         public void BeginBeat(string id, string title)
         {
             _beatId = id;
             _beatTitle = title;
             _beatStart = Time.unscaledTime;
+            _warnings.Clear();
             Activity = id + " " + title;
         }
 
@@ -68,13 +76,19 @@ namespace MoonProject.Autoplay
             string objective = _world.Refresh() && _world.Ui != null ? _world.Ui.ObjectiveLine() : string.Empty;
             string chip = _world.Refresh() && _world.Ui != null ? _world.Ui.Chip() : string.Empty;
             bool passed = !Failed;
-            _beats.Add(new BeatResult(_beatId, _beatTitle, passed, passed ? passNote : Failure,
+            string note = passed ? passNote : Failure;
+            if (_warnings.Count > 0)
+            {
+                note += " WARNING: " + string.Join(" ", _warnings);
+            }
+
+            _beats.Add(new BeatResult(_beatId, _beatTitle, passed, note,
                 Time.unscaledTime - _beatStart, objective, chip));
             _screenshot(_beatId + (passed ? "-done" : "-failed"));
         }
 
         /// <summary>Waits until <paramref name="condition"/> holds; fails the run when it does not within the timeout.</summary>
-        public IEnumerator Until(Func<bool> condition, float timeoutSeconds, string what)
+        public IEnumerator Until(Func<bool> condition, float timeoutSeconds, string what, Func<string> detail = null)
         {
             float deadline = Time.unscaledTime + timeoutSeconds;
             while (!Failed && !condition())
@@ -82,7 +96,7 @@ namespace MoonProject.Autoplay
                 if (Time.unscaledTime > deadline)
                 {
                     Fail($"timed out after {timeoutSeconds.ToString("0", CultureInfo.InvariantCulture)} s waiting for " +
-                         $"{what}. {Where()}");
+                         $"{what}. {(detail != null ? detail() + " " : string.Empty)}{Where()}");
                     yield break;
                 }
 
@@ -230,6 +244,19 @@ namespace MoonProject.Autoplay
                 _input.Look(new Vector2(LookSteering.Pixels(yaw), LookSteering.Pixels(pitch)));
                 yield return null;
             }
+        }
+
+        /// <summary>
+        /// One frame's mouse movement toward <paramref name="point"/>, true when the view is on it: called every frame
+        /// of a wait that needs the view to stay there, as a player's hand keeps correcting.
+        /// </summary>
+        public bool KeepLookingAt(Vector3 point)
+        {
+            Transform view = _world.View.Camera.transform;
+            float yaw = LookSteering.YawError(view.position, view.forward, point);
+            float pitch = LookSteering.PitchError(view.position, view.forward, point);
+            _input.Look(new Vector2(LookSteering.Pixels(yaw), LookSteering.Pixels(pitch)));
+            return Mathf.Abs(yaw) <= LookSteering.ToleranceDegrees && Mathf.Abs(pitch) <= LookSteering.ToleranceDegrees;
         }
 
         /// <summary>Where 07 is and how it moves, for a failure message and the slow-frame log.</summary>

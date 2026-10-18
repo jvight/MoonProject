@@ -25,6 +25,7 @@ namespace MoonProject.Autoplay
         private readonly FrameTimeLog _frames = new FrameTimeLog();
         private readonly List<string> _screenshots = new List<string>();
         private readonly List<string> _errors = new List<string>();
+        private readonly Queue<string> _shotQueue = new Queue<string>();
         private AutoplayOptions _options;
         private AutoplayWorld _world;
         private VirtualInput _input;
@@ -71,6 +72,7 @@ namespace MoonProject.Autoplay
                 return;
             }
 
+            TakeQueuedShot();
             float milliseconds = Time.unscaledDeltaTime * 1000f;
             _frames.Record(Time.unscaledTime - _startedAt, milliseconds,
                 milliseconds > FrameTimeLog.ThresholdMilliseconds ? _bot.Where() : string.Empty);
@@ -104,6 +106,12 @@ namespace MoonProject.Autoplay
             _finished = true;
             _bot.Shutdown();
             Shot("end");
+            while (_shotQueue.Count > 0)
+            {
+                TakeQueuedShot();
+                yield return null;
+            }
+
             for (int i = 0; i < SettleFrames; i++)
             {
                 yield return null;
@@ -128,9 +136,20 @@ namespace MoonProject.Autoplay
             Application.Quit(passed ? 0 : 1);
         }
 
+        /// <summary>Asks for a screenshot; the engine writes one per frame, so they are taken in turn.</summary>
         private void Shot(string label)
         {
-            string name = _shotNumber.ToString("00", CultureInfo.InvariantCulture) + "-" + label + ".png";
+            _shotQueue.Enqueue(label);
+        }
+
+        private void TakeQueuedShot()
+        {
+            if (_shotQueue.Count == 0)
+            {
+                return;
+            }
+
+            string name = _shotNumber.ToString("00", CultureInfo.InvariantCulture) + "-" + _shotQueue.Dequeue() + ".png";
             _shotNumber++;
             ScreenCapture.CaptureScreenshot(Path.Combine(_options.OutDirectory, ScreenshotFolder, name));
             _screenshots.Add(ScreenshotFolder + "/" + name);
