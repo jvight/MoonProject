@@ -383,6 +383,93 @@ def _build_cable_stub(root) -> None:
     ruins_common.to_ruin_object(mb, "CableStub", parent=root)
 
 
+def _wing_proxy_points(
+    wing_cx: float,
+    wing_cz: float,
+    wing_w: float,
+    wing_d: float,
+    tilt_deg: float,
+    yaw_deg: float,
+    roll_deg: float,
+) -> List[Tuple[float, float, float]]:
+    """Return 10 points for a grounded convex wedge following the tilted solar wing frame and its gold-foil backing."""
+    rot_b = Euler(
+        (
+            math.radians(tilt_deg),
+            math.radians(roll_deg),
+            math.radians(-yaw_deg),
+        ),
+        "XYZ",
+    ).to_matrix()
+    cy = 0.06 + (wing_d * 0.5) * math.sin(math.radians(abs(tilt_deg)))
+
+    def wing_pt(lx: float, ly: float, lz: float) -> Tuple[float, float, float]:
+        rb = rot_b @ Vector((lx, lz, ly))
+        return (wing_cx + rb.x, max(0.02, cy + rb.z), wing_cz + rb.y)
+
+    hw = wing_w * 0.49
+    hd = wing_d * 0.49
+    pts: List[Tuple[float, float, float]] = []
+    for lx in (-hw, hw):
+        for lz in (-hd, hd):
+            for ly in (-0.034, 0.040):
+                pts.append(wing_pt(lx, ly, lz))
+        bx, _, bz = wing_pt(lx * 0.94, -0.034, hd * 0.92)
+        pts.append((bx, 0.025, bz))
+    return pts
+
+
+def _build_collision_proxies(root) -> None:
+    """Build UCX_<Part>_<n> convex collision proxies (<= 32 faces each) for FallenSolarArray."""
+    ruins_common.add_convex_proxy(
+        root,
+        "UCX_ToppledGearbox_1",
+        ruins_common.convex_box_points_u(
+            center_u=(0.02, 0.44, 0.03),
+            size_u=(1.42, 0.84, 1.06),
+            rot_deg_u=(8.0, -14.0, 0.0),
+            clip_min_y_u=0.02,
+        ),
+    )
+    ruins_common.add_convex_proxy(
+        root,
+        "UCX_SolarWingLeft_1",
+        _wing_proxy_points(
+            wing_cx=-2.02,
+            wing_cz=0.12,
+            wing_w=2.44,
+            wing_d=1.68,
+            tilt_deg=26.0,
+            yaw_deg=8.0,
+            roll_deg=-4.0,
+        ),
+    )
+    ruins_common.add_convex_proxy(
+        root,
+        "UCX_SolarWingRight_1",
+        _wing_proxy_points(
+            wing_cx=2.04,
+            wing_cz=-0.16,
+            wing_w=2.44,
+            wing_d=1.68,
+            tilt_deg=28.0,
+            yaw_deg=-10.0,
+            roll_deg=-5.0,
+        ),
+    )
+    ruins_common.add_convex_proxy(
+        root,
+        "UCX_CableStub_1",
+        ruins_common.convex_strut_points_u(
+            p0_u=(-0.22, 0.16, 0.36),
+            p1_u=(-0.70, 0.10, 1.23),
+            half_w=0.07,
+            half_d=0.07,
+            clip_min_y_u=0.03,
+        ),
+    )
+
+
 def build(skip_renders: bool = False) -> None:
     ruins_common.reset_ruins_scene()
     root = r1kit.create_root("FallenSolarArray")
@@ -411,6 +498,7 @@ def build(skip_renders: bool = False) -> None:
         roll_deg=-5.0,
     )
     _build_cable_stub(root)
+    _build_collision_proxies(root)
 
     # Scan points as empties named Scan_<n>
     r1kit.add_empty("Scan_1", (0.12, 0.82, -0.05), parent=root)    # Toppled cream-and-orange gearbox
@@ -430,4 +518,4 @@ def build(skip_renders: bool = False) -> None:
 
 
 if __name__ == "__main__":
-    build()
+    build(skip_renders="--skip-renders" in sys.argv)
