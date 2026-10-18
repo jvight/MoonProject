@@ -20,8 +20,6 @@ Shader "MoonProject/Art/LofiHologram"
         _Invalid("Invalid Placement (0..1)", Range(0.0, 1.0)) = 0.0
         _StageFade("Stage Fade (0..1)", Range(0.0, 1.0)) = 1.0
         _BloomCeiling("Bloom Safe Ceiling", Range(0.5, 1.24)) = 1.10
-        _BlueprintMode("Blueprint Line Mode (0..1)", Range(0.0, 1.0)) = 0.0
-        _PrintClipY("Print Clip World Y", Float) = 9999.0
     }
 
     SubShader
@@ -67,8 +65,6 @@ Shader "MoonProject/Art/LofiHologram"
                 half _Invalid;
                 half _StageFade;
                 half _BloomCeiling;
-                half _BlueprintMode;
-                float _PrintClipY;
             CBUFFER_END
 
             struct Attributes
@@ -108,11 +104,6 @@ Shader "MoonProject/Art/LofiHologram"
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-                if (input.positionWS.y > _PrintClipY)
-                {
-                    discard;
-                }
-
                 float normLenSq = dot(input.normalWS, input.normalWS);
                 float3 normal = normLenSq > 1e-6 ? input.normalWS * rsqrt(normLenSq) : float3(0.0, 1.0, 0.0);
                 float3 viewRaw = GetWorldSpaceViewDir(input.positionWS);
@@ -129,12 +120,8 @@ Shader "MoonProject/Art/LofiHologram"
 
                 // Calm low-frequency vertical gradient + subtle slow breathing instead of busy scanlines
                 float calmBreath = 0.94 + 0.06 * sin(_Time.y * max((float)_ScanSpeed, 0.5) * 2.0);
-                float contourPhase = frac(input.positionWS.y * 3.5);
-                float fwContour = max(fwidth(input.positionWS.y * 3.5), 1e-3);
-                half contourLine = (half)(1.0 - smoothstep(fwContour * 0.8, fwContour * 2.0, abs(contourPhase - 0.5)));
 
                 half invalid = saturate(_Invalid);
-                half blueprint = saturate(_BlueprintMode);
 
                 // Valid state: calm soft teal body with crisp teal-amber rim; Invalid state: warm amber-coral alert
                 half3 validTone = lerp(_BaseColor.rgb, half3(0.32h, 0.88h, 0.84h), 0.25h);
@@ -151,18 +138,6 @@ Shader "MoonProject/Art/LofiHologram"
 
                 half3 color = lerp(validRgb, invalidRgb, invalid);
                 half alpha = lerp(_Alpha * 0.68h, _RimAlpha, edgeWeight) * saturate(_StageFade);
-
-                // Blueprint mode (Variant B): crisp warm amber line drawing on dark translucent backing
-                if (blueprint > 0.001h)
-                {
-                    half lineMask = saturate(max(featureLine * 1.15h, max(fresnel * 0.92h, contourLine * 0.55h)));
-                    half3 bpLineColor = lerp(_RimColor.rgb, invalidTone, invalid) * (_RimIntensity * 1.12h);
-                    half3 bpFillColor = _RimColor.rgb * 0.14h;
-                    half3 bpRgb = lerp(bpFillColor, bpLineColor, lineMask);
-                    half bpAlpha = lerp(0.10h, 0.92h, lineMask) * saturate(_StageFade);
-                    color = lerp(color, bpRgb, blueprint);
-                    alpha = lerp(alpha, bpAlpha, blueprint);
-                }
 
                 if (any(isnan(color)) || any(isinf(color)))
                 {

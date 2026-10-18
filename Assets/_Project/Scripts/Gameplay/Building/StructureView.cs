@@ -52,44 +52,26 @@ namespace MoonProject.Gameplay
         private Vector3[] _stageBaseLocalPos;
         private Quaternion[] _stageBaseLocalRot;
         private Vector3[] _stageBaseScale;
-        private Vector2[] _stageWorldYOffset;
         private Bounds[] _stageLocalBounds;
         private Vector3[] _stageHingePivot;
         private EmissionGlow[] _lampGlows;
         private Color[] _lampBaseColors;
         private MaterialPropertyBlock _mpb;
 
-        private int _propBuildRevealMode;
-        private int _propBuildRevealProgress;
         private int _propBuildStageHeat;
-        private int _propBuildBoundsY;
+        private int _propBuildSeamY;
         private int _propBuildSeamPointWS;
-        private int _propBlueprintMode;
-        private int _propPrintClipY;
-        private int _propStageFade;
 
         private Transform _compactStackRoot;
         private Transform _stackArmLeft;
         private Transform _stackArmRight;
         private Transform _stackCap;
 
-        private Transform _blueprintGroundRoot;
-        private Renderer[] _blueprintGroundRenderers;
-        private Transform _printLayerRoot;
-        private Transform _printLayerBar;
-        private Transform _printLayerBead;
-        private Renderer[] _printLayerRenderers;
-        private Material _hologramValidMat;
-        private Material _hologramInvalidMat;
-
-        private BuildEffectVariant _variant = BuildEffectVariant.AssembledBy07;
-        private bool _liveVariantActive;
+        private bool _liveBuild;
         private float _settleThumpMeters = 0.042f;
         private float _dropElapsed = 1f;
         private float _settleElapsed = -1f;
         private float _lampCascadeElapsed = -1f;
-        private float _localMinY;
-        private float _localMaxY = 1.55f;
 
         private bool _initialized;
         private float _buildProgress01;
@@ -115,8 +97,6 @@ namespace MoonProject.Gameplay
         public bool LampsLit => LampIntensity > 0.01f;
 
         public IReadOnlyList<Collider> Colliders => _colliders;
-
-        public BuildEffectVariant Variant => _variant;
 
         /// <summary>Populates serialized references at build time (<c>GameplayContentBuilder</c>).</summary>
         public void Populate(
@@ -198,17 +178,10 @@ namespace MoonProject.Gameplay
                 _stageSeams = new StageWeldSeam[stageCount];
             }
 
-            _hologramValidMat = hologramValid;
-            _hologramInvalidMat = hologramInvalid;
             _mpb = new MaterialPropertyBlock();
-            _propBuildRevealMode = Shader.PropertyToID("_BuildRevealMode");
-            _propBuildRevealProgress = Shader.PropertyToID("_BuildRevealProgress");
             _propBuildStageHeat = Shader.PropertyToID("_BuildStageHeat");
-            _propBuildBoundsY = Shader.PropertyToID("_BuildBoundsY");
+            _propBuildSeamY = Shader.PropertyToID("_BuildSeamY");
             _propBuildSeamPointWS = Shader.PropertyToID("_BuildSeamPointWS");
-            _propBlueprintMode = Shader.PropertyToID("_BlueprintMode");
-            _propPrintClipY = Shader.PropertyToID("_PrintClipY");
-            _propStageFade = Shader.PropertyToID("_StageFade");
 
             _stageRenderers = new StageRendererCache[stageCount][];
             _stageSubParts = new SubPartPose[stageCount][];
@@ -218,13 +191,9 @@ namespace MoonProject.Gameplay
             _stageBaseLocalPos = new Vector3[stageCount];
             _stageBaseLocalRot = new Quaternion[stageCount];
             _stageBaseScale = new Vector3[stageCount];
-            _stageWorldYOffset = new Vector2[stageCount];
             _stageLocalBounds = new Bounds[stageCount];
             _stageHingePivot = new Vector3[stageCount];
             _stageSeams = BuildStageSeams(_stageRoots, transform);
-
-            bool hasAnyBounds = false;
-            Bounds fullLocalBounds = default;
 
             for (int s = 0; s < stageCount; s++)
             {
@@ -285,7 +254,6 @@ namespace MoonProject.Gameplay
                     if (renderer.TryGetComponent(out MeshFilter mf) && mf.sharedMesh != null)
                     {
                         EncapsulateCorners(mf.sharedMesh.bounds, renderer.transform, transform, true, ref stageBounds, ref hasStageBounds);
-                        EncapsulateCorners(mf.sharedMesh.bounds, renderer.transform, transform, true, ref fullLocalBounds, ref hasAnyBounds);
                     }
 
                     Material[] solidMats = renderer.sharedMaterials;
@@ -305,9 +273,6 @@ namespace MoonProject.Gameplay
                 _stageHingePivot[s] = hasStageBounds
                     ? new Vector3(stageBounds.center.x, stageBounds.min.y + 0.04f, stageBounds.center.z)
                     : Vector3.zero;
-                _stageWorldYOffset[s] = hasStageBounds
-                    ? new Vector2(stageBounds.min.y, Mathf.Max(stageBounds.max.y, stageBounds.min.y + 0.1f))
-                    : new Vector2(0f, 1.2f);
 
                 if (stageRoot.Find("WeldSeam") == null || !_stageSeams[s].IsValid)
                 {
@@ -323,12 +288,6 @@ namespace MoonProject.Gameplay
 
                 _stageRenderers[s] = caches;
                 _stageIsSolid[s] = true;
-            }
-
-            if (hasAnyBounds)
-            {
-                _localMinY = fullLocalBounds.min.y;
-                _localMaxY = Mathf.Max(fullLocalBounds.max.y, _localMinY + 0.2f);
             }
 
             int lampCount = _lampRenderers != null ? _lampRenderers.Length : 0;
@@ -356,25 +315,22 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// Configures the active <see cref="BuildEffectVariant"/> and settle thump amplitude for live gameplay builds.
+        /// A placed structure 07 builds in play (<paramref name="liveBuild"/>) is assembled by 07: parts unfold from the
+        /// dropped hardware stack as it welds and settle with a thump of <paramref name="settleThumpMeters"/>. A restored
+        /// one simply stands.
         /// </summary>
-        public void ConfigureVariant(BuildEffectVariant variant, bool liveBuild, float settleThumpMeters = 0.042f)
+        public void ConfigureLiveBuild(bool liveBuild, float settleThumpMeters)
         {
-            _variant = variant;
-            _liveVariantActive = liveBuild;
-            _settleThumpMeters = Mathf.Clamp(settleThumpMeters, 0.01f, 0.15f);
-            if (!_initialized)
+            _liveBuild = liveBuild;
+            _settleThumpMeters = settleThumpMeters;
+            if (!_initialized || IsGhost)
             {
                 return;
             }
 
-            if (IsGhost)
+            if (_liveBuild)
             {
-                ApplyGhostVariantProperties(IsGhostValid);
-            }
-            else if (_liveVariantActive)
-            {
-                if (_variant == BuildEffectVariant.AssembledBy07 && _buildProgress01 < 0.99f)
+                if (_buildProgress01 < 0.99f)
                 {
                     EnsureCompactStack();
                     if (_buildProgress01 <= 0.02f)
@@ -383,7 +339,7 @@ namespace MoonProject.Gameplay
                     }
                 }
 
-                RefreshVariantVisuals();
+                RefreshAssembly();
             }
         }
 
@@ -404,14 +360,8 @@ namespace MoonProject.Gameplay
                 _compactStackRoot.gameObject.SetActive(false);
             }
 
-            if (_printLayerRoot != null)
-            {
-                _printLayerRoot.gameObject.SetActive(false);
-            }
-
             if (IsGhost && IsGhostValid == valid && SolidStageCount == 0)
             {
-                ApplyGhostVariantProperties(valid);
                 return;
             }
 
@@ -447,8 +397,6 @@ namespace MoonProject.Gameplay
                     }
                 }
             }
-
-            ApplyGhostVariantProperties(valid);
         }
 
         /// <summary>Sets build progress immediately for tests and restore flows.</summary>
@@ -540,16 +488,6 @@ namespace MoonProject.Gameplay
                     {
                         _compactStackRoot.gameObject.SetActive(false);
                     }
-
-                    if (_blueprintGroundRoot != null)
-                    {
-                        _blueprintGroundRoot.gameObject.SetActive(false);
-                    }
-
-                    if (_printLayerRoot != null)
-                    {
-                        _printLayerRoot.gameObject.SetActive(false);
-                    }
                 }
                 else if (!wasBuilt)
                 {
@@ -570,9 +508,9 @@ namespace MoonProject.Gameplay
                 }
             }
 
-            if (_liveVariantActive && !instant)
+            if (_liveBuild && !instant)
             {
-                RefreshVariantVisuals();
+                RefreshAssembly();
             }
 
             return newlySolidCount;
@@ -642,7 +580,7 @@ namespace MoonProject.Gameplay
                     if (Mathf.Abs(_stageScale[s] - 1f) > 1e-4f)
                     {
                         _stageScale[s] = Damp.Toward(_stageScale[s], 1f, StageScaleHalfLife, deltaTime);
-                        if (!_liveVariantActive && _stageRoots[s] != null)
+                        if (!_liveBuild && _stageRoots[s] != null)
                         {
                             _stageRoots[s].localScale = _stageBaseScale[s] * _stageScale[s];
                         }
@@ -664,9 +602,9 @@ namespace MoonProject.Gameplay
                 }
             }
 
-            if (_liveVariantActive && _deconstructProgress01 <= 0f)
+            if (_liveBuild && _deconstructProgress01 <= 0f)
             {
-                RefreshVariantVisuals();
+                RefreshAssembly();
             }
 
             if (SolidStageCount == stageCount && (_lampGlows.Length > 0 || _statusLight != null))
@@ -740,17 +678,6 @@ namespace MoonProject.Gameplay
         /// <summary>World-space focus point for 07's weld beam on the active stage, progressing along its seam.</summary>
         public Vector3 GetActiveWeldPoint()
         {
-            if (_liveVariantActive && _variant == BuildEffectVariant.PrintedInPlace)
-            {
-                float prog = Mathf.Clamp01(_buildProgress01);
-                float slicedProg = Mathf.Ceil(Mathf.Max(0.025f, prog) * 40f) / 40f;
-                GetPrintCrossSection(slicedProg, out float centerX, out float centerZ, out float halfSpanX);
-                float localY = Mathf.Lerp(_localMinY + 0.03f, _localMaxY - 0.03f, slicedProg);
-                float sweep = Mathf.Sin(prog * 12f * Mathf.PI);
-                float localX = centerX + sweep * halfSpanX * 0.85f;
-                return transform.TransformPoint(new Vector3(localX, localY, centerZ));
-            }
-
             GetStageWeldSeam(SolidStageCount, _activeSeamPoints, out _);
             float stageT = GetActiveStageProgress01(_buildProgress01);
             Vector3 local = stageT <= 0.5f
@@ -759,56 +686,11 @@ namespace MoonProject.Gameplay
             return transform.TransformPoint(local);
         }
 
-        private void GetPrintCrossSection(float height01, out float centerX, out float centerZ, out float halfSpanX)
-        {
-            if (_stageLocalBounds == null || _stageLocalBounds.Length == 0)
-            {
-                centerX = 0f;
-                centerZ = 0f;
-                halfSpanX = 0.45f;
-                return;
-            }
-
-            Bounds deckBounds = _stageLocalBounds[0];
-            Bounds upperBounds = _stageLocalBounds.Length > 2 ? _stageLocalBounds[2] : _stageLocalBounds[_stageLocalBounds.Length - 1];
-            float blendToUpper = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((height01 - 0.18f) / 0.14f));
-            centerX = Mathf.Lerp(deckBounds.center.x, upperBounds.center.x, blendToUpper);
-            float deckZ = Mathf.Lerp(deckBounds.min.z + 0.28f, deckBounds.max.z - 0.28f, Mathf.Clamp01(height01 / 0.24f));
-            float upperZ = upperBounds.min.z + 0.06f;
-            centerZ = Mathf.Lerp(deckZ, upperZ, blendToUpper);
-            float deckHalfW = Mathf.Clamp(deckBounds.extents.x * 0.68f, 0.24f, 0.68f);
-            float upperHalfW = Mathf.Clamp(upperBounds.extents.x * 0.82f, 0.12f, 0.28f);
-            halfSpanX = Mathf.Lerp(deckHalfW, upperHalfW, blendToUpper);
-        }
-
-        private void ApplyGhostVariantProperties(bool valid)
-        {
-            bool isBlueprint = _variant == BuildEffectVariant.BlueprintIntoMetal;
-            float bpMode = isBlueprint ? (valid ? 0.52f : 0.88f) : 0f;
-            StepBlueprintGround(isBlueprint, valid, bpMode, 0.96f);
-
-            int stageCount = _stageRenderers.Length;
-            for (int s = 0; s < stageCount; s++)
-            {
-                StageRendererCache[] caches = _stageRenderers[s];
-                for (int r = 0; r < caches.Length; r++)
-                {
-                    Renderer renderer = caches[r].Renderer;
-                    if (renderer == null)
-                    {
-                        continue;
-                    }
-
-                    renderer.GetPropertyBlock(_mpb);
-                    _mpb.SetFloat(_propBlueprintMode, bpMode);
-                    _mpb.SetFloat(_propPrintClipY, 9999f);
-                    _mpb.SetFloat(_propStageFade, valid ? 1f : 0.95f);
-                    renderer.SetPropertyBlock(_mpb);
-                }
-            }
-        }
-
-        private void RefreshVariantVisuals()
+        /// <summary>
+        /// Assembled by 07: completed stages and the one being welded stand in their R1 metal, the active stage
+        /// unfolding from the hardware stack as its weld goes, every stage's seam cooling from the weld's heat.
+        /// </summary>
+        private void RefreshAssembly()
         {
             int stageCount = _stageRoots.Length;
             int targetSolid = SolidStageCount;
@@ -829,10 +711,7 @@ namespace MoonProject.Gameplay
                 settleScaleMul = new Vector3(stretch, squash, stretch);
             }
 
-            if (_variant == BuildEffectVariant.AssembledBy07)
             {
-                StepBlueprintGround(false, true, 0f, 0f);
-                StepPrintLayerGuide(false, 0f, 0f);
                 StepCompactStack(isBuilt);
                 for (int s = 0; s < stageCount; s++)
                 {
@@ -847,7 +726,7 @@ namespace MoonProject.Gameplay
                         continue;
                     }
 
-                    // Variant A renders both completed stages and the actively unfolding stage with physical R1 metal
+                    // Completed stages and the one unfolding as it welds both stand in their R1 metal
                     ApplyStageMaterials(s, solid: true);
 
                     float unfold01 = s < targetSolid
@@ -860,381 +739,8 @@ namespace MoonProject.Gameplay
                         : Mathf.Clamp01((activeStageT - 0.15f) / 0.85f);
                     StageWeldSeam seam = ResolveStageSeam(s);
                     float seamWorldY = transform.TransformPoint(seam.Middle).y;
-                    ApplyStageShaderBlock(
-                        s,
-                        revealMode: 3f,
-                        revealProgress: 1f,
-                        stageHeat: heat,
-                        minY: transform.position.y + _stageWorldYOffset[s].x,
-                        maxY: transform.position.y + _stageWorldYOffset[s].y,
-                        seamRef: seamWorldY,
-                        seamPointWS: activeWeldWS,
-                        seamRadius: 0.72f);
+                    ApplyStageShaderBlock(s, heat, seamWorldY, activeWeldWS, 0.72f);
                 }
-            }
-            else if (_variant == BuildEffectVariant.BlueprintIntoMetal)
-            {
-                if (_compactStackRoot != null && _compactStackRoot.gameObject.activeSelf)
-                {
-                    _compactStackRoot.gameObject.SetActive(false);
-                }
-
-                StepPrintLayerGuide(false, 0f, 0f);
-                float bpFade = isBuilt ? 0f : Mathf.Clamp01(1f - (_buildProgress01 - 0.82f) / 0.18f);
-                StepBlueprintGround(!isBuilt && bpFade > 0.01f, true, 1f, bpFade);
-
-                for (int s = 0; s < stageCount; s++)
-                {
-                    ResetStagePoseToBase(s);
-                    if (_stageRoots[s] != null)
-                    {
-                        if (!_stageRoots[s].gameObject.activeSelf)
-                        {
-                            _stageRoots[s].gameObject.SetActive(true);
-                        }
-
-                        _stageRoots[s].localPosition = _stageBaseLocalPos[s] + new Vector3(0f, settleOffsetY, 0f);
-                        _stageRoots[s].localScale = Vector3.Scale(_stageBaseScale[s] * _stageScale[s], settleScaleMul);
-                    }
-
-                    float sMinY = transform.position.y + _stageWorldYOffset[s].x;
-                    float sMaxY = transform.position.y + _stageWorldYOffset[s].y;
-
-                    if (s < targetSolid)
-                    {
-                        // Completed section: 100% solid R1 metal with cooling weld edge heat
-                        ApplyStageMaterials(s, solid: true);
-                        ApplyStageShaderBlock(
-                            s,
-                            revealMode: 1f,
-                            revealProgress: 1f,
-                            stageHeat: _stageHeat[s],
-                            minY: sMinY,
-                            maxY: sMaxY,
-                            seamRef: transform.position.x,
-                            seamPointWS: activeWeldWS,
-                            seamRadius: 0.85f);
-                    }
-                    else if (s == targetSolid)
-                    {
-                        // Active welding section: R1 metal fills into the amber blueprint line drawing with a glowing edge
-                        ApplyStageMaterials(s, solid: true);
-                        ApplyStageShaderBlock(
-                            s,
-                            revealMode: 1f,
-                            revealProgress: Mathf.Clamp01(activeStageT),
-                            stageHeat: Mathf.Clamp01(0.35f + 0.65f * activeStageT),
-                            minY: sMinY,
-                            maxY: sMaxY,
-                            seamRef: transform.position.x,
-                            seamPointWS: activeWeldWS,
-                            seamRadius: 0.90f);
-                    }
-                    else
-                    {
-                        // Unwelded future section: crisp warm amber architectural blueprint line drawing
-                        ApplyStageMaterials(s, solid: false);
-                        ApplyStageHologramBlock(s, blueprintMode: 1f, printClipY: 9999f, stageFade: 0.92f);
-                    }
-                }
-            }
-            else
-            {
-                StepBlueprintGround(false, true, 0f, 0f);
-                if (_compactStackRoot != null && _compactStackRoot.gameObject.activeSelf)
-                {
-                    _compactStackRoot.gameObject.SetActive(false);
-                }
-
-                float printProg = isBuilt ? 1f : Mathf.Clamp(_buildProgress01, 0.03f, 0.995f);
-                StepPrintLayerGuide(!isBuilt && _buildProgress01 > 0.001f, printProg, settleOffsetY);
-
-                float worldMinY = transform.position.y + _localMinY + settleOffsetY;
-                float worldMaxY = transform.position.y + _localMaxY + settleOffsetY;
-                float sliceWorldY = Mathf.Lerp(worldMinY, worldMaxY, Mathf.Ceil(printProg * 40f) / 40f);
-
-                for (int s = 0; s < stageCount; s++)
-                {
-                    ResetStagePoseToBase(s);
-                    if (_stageRoots[s] != null)
-                    {
-                        if (!_stageRoots[s].gameObject.activeSelf)
-                        {
-                            _stageRoots[s].gameObject.SetActive(true);
-                        }
-
-                        _stageRoots[s].localPosition = _stageBaseLocalPos[s] + new Vector3(0f, settleOffsetY, 0f);
-                        _stageRoots[s].localScale = Vector3.Scale(_stageBaseScale[s] * _stageScale[s], settleScaleMul);
-                    }
-
-                    float residualCapHeat = (isBuilt && s == stageCount - 1) ? _stageHeat[s] * 0.45f : 0f;
-                    ApplyStageMaterials(s, solid: true);
-                    ApplyStageShaderBlock(
-                        s,
-                        revealMode: 2f,
-                        revealProgress: printProg,
-                        stageHeat: residualCapHeat,
-                        minY: worldMinY,
-                        maxY: worldMaxY,
-                        seamRef: sliceWorldY,
-                        seamPointWS: activeWeldWS,
-                        seamRadius: 0.38f);
-                }
-            }
-        }
-
-        private void EnsurePrintLayerGuide()
-        {
-            if (_printLayerRoot != null)
-            {
-                return;
-            }
-
-            var rootGo = new GameObject("PrintLayerGuide");
-            rootGo.transform.SetParent(transform, false);
-            _printLayerRoot = rootGo.transform;
-
-            var barRootGo = new GameObject("PrintLayerBar");
-            barRootGo.transform.SetParent(_printLayerRoot, false);
-            _printLayerBar = barRootGo.transform;
-
-            var renderers = new List<Renderer>(6);
-
-            // Horizontal additive layer line filament
-            AddPrintGuidePart(
-                renderers,
-                _printLayerBar,
-                "LayerFilament",
-                Vector3.zero,
-                new Vector3(1.52f, 0.015f, 0.018f));
-            AddPrintGuidePart(
-                renderers,
-                _printLayerBar,
-                "LayerTickL",
-                new Vector3(-0.77f, 0f, 0f),
-                new Vector3(0.024f, 0.048f, 0.14f));
-            AddPrintGuidePart(
-                renderers,
-                _printLayerBar,
-                "LayerTickR",
-                new Vector3(0.77f, 0f, 0f),
-                new Vector3(0.024f, 0.048f, 0.14f));
-
-            // Travelling molten weld bead along the layer line
-            GameObject beadGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            beadGo.name = "LayerWeldBead";
-            if (beadGo.TryGetComponent(out Collider col))
-            {
-                DestroySafe(col);
-            }
-
-            beadGo.transform.SetParent(_printLayerBar, false);
-            beadGo.transform.localScale = new Vector3(0.18f, 0.026f, 0.032f);
-            _printLayerBead = beadGo.transform;
-            if (beadGo.TryGetComponent(out Renderer beadRenderer))
-            {
-                beadRenderer.sharedMaterial = _hologramInvalidMat;
-                renderers.Add(beadRenderer);
-            }
-
-            _printLayerRenderers = renderers.ToArray();
-        }
-
-        private void AddPrintGuidePart(
-            List<Renderer> list,
-            Transform parent,
-            string partName,
-            Vector3 localPos,
-            Vector3 localScale)
-        {
-            GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            go.name = partName;
-            if (go.TryGetComponent(out Collider col))
-            {
-                DestroySafe(col);
-            }
-
-            go.transform.SetParent(parent, false);
-            go.transform.localPosition = localPos;
-            go.transform.localScale = localScale;
-            if (go.TryGetComponent(out Renderer r))
-            {
-                r.sharedMaterial = _hologramInvalidMat;
-                list.Add(r);
-            }
-        }
-
-        private void StepPrintLayerGuide(bool visible, float progress01, float settleOffsetY)
-        {
-            if (!visible)
-            {
-                if (_printLayerRoot != null && _printLayerRoot.gameObject.activeSelf)
-                {
-                    _printLayerRoot.gameObject.SetActive(false);
-                }
-
-                return;
-            }
-
-            EnsurePrintLayerGuide();
-            if (!_printLayerRoot.gameObject.activeSelf)
-            {
-                _printLayerRoot.gameObject.SetActive(true);
-            }
-
-            float slicedProg = Mathf.Ceil(Mathf.Clamp01(progress01) * 40f) / 40f;
-            GetPrintCrossSection(slicedProg, out float centerX, out float centerZ, out float halfSpanX);
-            float localY = Mathf.Lerp(_localMinY + 0.03f, _localMaxY - 0.03f, slicedProg) + settleOffsetY;
-            float widthScale = Mathf.Clamp((halfSpanX * 2f) / 1.48f, 0.28f, 1.08f);
-
-            if (_printLayerBar != null)
-            {
-                _printLayerBar.localPosition = new Vector3(centerX, localY, centerZ);
-                _printLayerBar.localScale = new Vector3(widthScale, 1f, 1f);
-            }
-
-            if (_printLayerBead != null)
-            {
-                float sweep = Mathf.Sin(progress01 * 12f * Mathf.PI);
-                _printLayerBead.localPosition = new Vector3(sweep * 0.56f, 0f, -0.01f);
-            }
-
-            for (int i = 0; i < _printLayerRenderers.Length; i++)
-            {
-                Renderer r = _printLayerRenderers[i];
-                if (r == null)
-                {
-                    continue;
-                }
-
-                r.GetPropertyBlock(_mpb);
-                _mpb.SetFloat(_propBlueprintMode, 1f);
-                _mpb.SetFloat(_propPrintClipY, 9999f);
-                _mpb.SetFloat(_propStageFade, 1.35f);
-                r.SetPropertyBlock(_mpb);
-            }
-        }
-
-        private void ApplyStageHologramBlock(int stageIndex, float blueprintMode, float printClipY, float stageFade)
-        {
-            StageRendererCache[] caches = _stageRenderers[stageIndex];
-            for (int r = 0; r < caches.Length; r++)
-            {
-                Renderer renderer = caches[r].Renderer;
-                if (renderer == null)
-                {
-                    continue;
-                }
-
-                renderer.GetPropertyBlock(_mpb);
-                _mpb.SetFloat(_propBlueprintMode, blueprintMode);
-                _mpb.SetFloat(_propPrintClipY, printClipY);
-                _mpb.SetFloat(_propStageFade, stageFade);
-                renderer.SetPropertyBlock(_mpb);
-            }
-        }
-
-        private void EnsureBlueprintGround()
-        {
-            if (_blueprintGroundRoot != null)
-            {
-                return;
-            }
-
-            var rootGo = new GameObject("BlueprintGroundApron");
-            rootGo.transform.SetParent(transform, false);
-            _blueprintGroundRoot = rootGo.transform;
-
-            var renderers = new List<Renderer>(16);
-            const float y = 0.016f;
-            const float lineW = 0.032f;
-            const float lineH = 0.006f;
-
-            // Outer survey square (2.86m x 2.86m)
-            AddBlueprintLine(renderers, "BP_Outer_N", new Vector3(0f, y, 1.43f), new Vector3(2.86f, lineH, lineW), 0f);
-            AddBlueprintLine(renderers, "BP_Outer_S", new Vector3(0f, y, -1.43f), new Vector3(2.86f, lineH, lineW), 0f);
-            AddBlueprintLine(renderers, "BP_Outer_E", new Vector3(1.43f, y, 0f), new Vector3(lineW, lineH, 2.86f), 0f);
-            AddBlueprintLine(renderers, "BP_Outer_W", new Vector3(-1.43f, y, 0f), new Vector3(lineW, lineH, 2.86f), 0f);
-
-            // Inner charging bay square (1.76m x 1.76m)
-            AddBlueprintLine(renderers, "BP_Inner_N", new Vector3(0f, y, 0.88f), new Vector3(1.76f, lineH, lineW * 0.85f), 0f);
-            AddBlueprintLine(renderers, "BP_Inner_S", new Vector3(0f, y, -0.88f), new Vector3(1.76f, lineH, lineW * 0.85f), 0f);
-            AddBlueprintLine(renderers, "BP_Inner_E", new Vector3(0.88f, y, 0f), new Vector3(lineW * 0.85f, lineH, 1.76f), 0f);
-            AddBlueprintLine(renderers, "BP_Inner_W", new Vector3(-0.88f, y, 0f), new Vector3(lineW * 0.85f, lineH, 1.76f), 0f);
-
-            // Diagonal corner callout ticks & center datum crosshairs
-            AddBlueprintLine(renderers, "BP_Diag_NE", new Vector3(1.15f, y, 1.15f), new Vector3(lineW * 0.8f, lineH, 0.72f), 45f);
-            AddBlueprintLine(renderers, "BP_Diag_NW", new Vector3(-1.15f, y, 1.15f), new Vector3(lineW * 0.8f, lineH, 0.72f), -45f);
-            AddBlueprintLine(renderers, "BP_Diag_SE", new Vector3(1.15f, y, -1.15f), new Vector3(lineW * 0.8f, lineH, 0.72f), -45f);
-            AddBlueprintLine(renderers, "BP_Diag_SW", new Vector3(-1.15f, y, -1.15f), new Vector3(lineW * 0.8f, lineH, 0.72f), 45f);
-            AddBlueprintLine(renderers, "BP_Cross_X", new Vector3(0f, y, 0f), new Vector3(2.50f, lineH, lineW * 0.65f), 0f);
-            AddBlueprintLine(renderers, "BP_Cross_Z", new Vector3(0f, y, 0f), new Vector3(lineW * 0.65f, lineH, 2.50f), 0f);
-
-            _blueprintGroundRenderers = renderers.ToArray();
-        }
-
-        private void AddBlueprintLine(
-            List<Renderer> list,
-            string lineName,
-            Vector3 localPos,
-            Vector3 localScale,
-            float yaw)
-        {
-            GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            go.name = lineName;
-            if (go.TryGetComponent(out Collider col))
-            {
-                DestroySafe(col);
-            }
-
-            go.transform.SetParent(_blueprintGroundRoot, false);
-            go.transform.localPosition = localPos;
-            go.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
-            go.transform.localScale = localScale;
-            if (go.TryGetComponent(out Renderer r))
-            {
-                r.sharedMaterial = _hologramValidMat;
-                list.Add(r);
-            }
-        }
-
-        private void StepBlueprintGround(bool visible, bool valid, float blueprintMode, float stageFade)
-        {
-            if (!visible)
-            {
-                if (_blueprintGroundRoot != null && _blueprintGroundRoot.gameObject.activeSelf)
-                {
-                    _blueprintGroundRoot.gameObject.SetActive(false);
-                }
-
-                return;
-            }
-
-            EnsureBlueprintGround();
-            if (!_blueprintGroundRoot.gameObject.activeSelf)
-            {
-                _blueprintGroundRoot.gameObject.SetActive(true);
-            }
-
-            Material mat = valid ? _hologramValidMat : _hologramInvalidMat;
-            for (int i = 0; i < _blueprintGroundRenderers.Length; i++)
-            {
-                Renderer r = _blueprintGroundRenderers[i];
-                if (r == null)
-                {
-                    continue;
-                }
-
-                if (r.sharedMaterial != mat)
-                {
-                    r.sharedMaterial = mat;
-                }
-
-                r.GetPropertyBlock(_mpb);
-                _mpb.SetFloat(_propBlueprintMode, blueprintMode);
-                _mpb.SetFloat(_propPrintClipY, 9999f);
-                _mpb.SetFloat(_propStageFade, stageFade);
-                r.SetPropertyBlock(_mpb);
             }
         }
 
@@ -1561,17 +1067,12 @@ namespace MoonProject.Gameplay
 
         private void ApplyStageShaderBlock(
             int stageIndex,
-            float revealMode,
-            float revealProgress,
             float stageHeat,
-            float minY,
-            float maxY,
-            float seamRef,
+            float seamY,
             Vector3 seamPointWS,
             float seamRadius)
         {
             StageRendererCache[] caches = _stageRenderers[stageIndex];
-            var boundsVec = new Vector4(minY, maxY, seamRef, 0f);
             var seamVec = new Vector4(seamPointWS.x, seamPointWS.y, seamPointWS.z, seamRadius);
             for (int r = 0; r < caches.Length; r++)
             {
@@ -1582,10 +1083,8 @@ namespace MoonProject.Gameplay
                 }
 
                 renderer.GetPropertyBlock(_mpb);
-                _mpb.SetFloat(_propBuildRevealMode, revealMode);
-                _mpb.SetFloat(_propBuildRevealProgress, revealProgress);
                 _mpb.SetFloat(_propBuildStageHeat, stageHeat);
-                _mpb.SetVector(_propBuildBoundsY, boundsVec);
+                _mpb.SetFloat(_propBuildSeamY, seamY);
                 _mpb.SetVector(_propBuildSeamPointWS, seamVec);
                 renderer.SetPropertyBlock(_mpb);
             }
@@ -1603,8 +1102,6 @@ namespace MoonProject.Gameplay
                 }
 
                 renderer.GetPropertyBlock(_mpb);
-                _mpb.SetFloat(_propBuildRevealMode, 0f);
-                _mpb.SetFloat(_propBuildRevealProgress, 1f);
                 _mpb.SetFloat(_propBuildStageHeat, 0f);
                 renderer.SetPropertyBlock(_mpb);
             }

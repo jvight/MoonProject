@@ -53,11 +53,9 @@ Shader "MoonProject/R1/Lit"
         _ScanProgress("Scan Progress", Range(0.0, 1.0)) = 0.0
         _Dissolve("Scan Dissolve", Range(0.0, 1.0)) = 0.0
 
-        [Header(Build Effect Variants)]
-        _BuildRevealMode("Build Reveal Mode", Float) = 0.0
-        _BuildRevealProgress("Build Reveal Progress", Range(0.0, 1.0)) = 1.0
+        [Header(Build Weld Heat)]
         _BuildStageHeat("Build Stage Seam Heat", Range(0.0, 1.0)) = 0.0
-        _BuildBoundsY("Build World Y Bounds", Vector) = (0, 2, 0, 0)
+        _BuildSeamY("Build Seam World Y", Float) = 0.0
         _BuildSeamPointWS("Build Seam Focus Point WS", Vector) = (0, 0, 0, 0.6)
     }
 
@@ -143,7 +141,6 @@ Shader "MoonProject/R1/Lit"
             {
                 float4 positionCS : SV_POSITION;
                 float2 uv         : TEXCOORD0;
-                float3 positionWS : TEXCOORD1;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
@@ -172,7 +169,6 @@ Shader "MoonProject/R1/Lit"
             #endif
                 output.positionCS = positionCS;
                 output.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
-                output.positionWS = positionWS;
                 return output;
             }
 
@@ -180,16 +176,6 @@ Shader "MoonProject/R1/Lit"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-                if (_BuildRevealMode > 1.5h && _BuildRevealMode < 2.5h)
-                {
-                    float minY = _BuildBoundsY.x;
-                    float spanY = max(_BuildBoundsY.y - minY, 0.05);
-                    float h = (input.positionWS.y - minY) / spanY;
-                    if (h > (float)_BuildRevealProgress + 0.005)
-                    {
-                        discard;
-                    }
-                }
                 return 0;
             }
             ENDHLSL
@@ -223,7 +209,6 @@ Shader "MoonProject/R1/Lit"
             {
                 float4 positionCS : SV_POSITION;
                 float2 uv         : TEXCOORD0;
-                float3 positionWS : TEXCOORD1;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
@@ -236,7 +221,6 @@ Shader "MoonProject/R1/Lit"
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
                 output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
                 output.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
-                output.positionWS = TransformObjectToWorld(input.positionOS.xyz);
                 return output;
             }
 
@@ -244,16 +228,6 @@ Shader "MoonProject/R1/Lit"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-                if (_BuildRevealMode > 1.5h && _BuildRevealMode < 2.5h)
-                {
-                    float minY = _BuildBoundsY.x;
-                    float spanY = max(_BuildBoundsY.y - minY, 0.05);
-                    float h = (input.positionWS.y - minY) / spanY;
-                    if (h > (float)_BuildRevealProgress + 0.005)
-                    {
-                        discard;
-                    }
-                }
                 return 0;
             }
             ENDHLSL
@@ -290,7 +264,6 @@ Shader "MoonProject/R1/Lit"
                 float2 uv         : TEXCOORD0;
                 float3 normalWS   : TEXCOORD1;
                 float4 tangentWS  : TEXCOORD2;
-                float3 positionWS : TEXCOORD3;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
@@ -307,7 +280,6 @@ Shader "MoonProject/R1/Lit"
                 output.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
                 output.normalWS = normInputs.normalWS;
                 output.tangentWS = float4(normInputs.tangentWS, input.tangentOS.w * GetOddNegativeScale());
-                output.positionWS = TransformObjectToWorld(input.positionOS.xyz);
                 return output;
             }
 
@@ -315,17 +287,6 @@ Shader "MoonProject/R1/Lit"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-
-                if (_BuildRevealMode > 1.5h && _BuildRevealMode < 2.5h)
-                {
-                    float minY = _BuildBoundsY.x;
-                    float spanY = max(_BuildBoundsY.y - minY, 0.05);
-                    float h = (input.positionWS.y - minY) / spanY;
-                    if (h > (float)_BuildRevealProgress + 0.005)
-                    {
-                        discard;
-                    }
-                }
 
                 half4 packedNormal = SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, input.uv);
                 half3 normalTS = UnpackNormalScale(packedNormal, _BumpScale);
