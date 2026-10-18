@@ -28,6 +28,12 @@ namespace MoonProject.Gameplay
         private const float InvalidGhostFade = 0.95f;
         private const float LampCascadeStep = 0.065f;
 
+        /// <summary>The stage whose cross-section the print's upper layers follow (the deck is stage 0).</summary>
+        private const int UpperStageIndex = 2;
+
+        /// <summary>Build progress past which a live print shows its layer guide.</summary>
+        private const float PrintGuideShownAfter = 0.001f;
+
         [Tooltip("Stable structure definition id (e.g. charging_pad, solar_array, power_pylon).")]
         [SerializeField] private string _structureId = string.Empty;
 
@@ -78,7 +84,7 @@ namespace MoonProject.Gameplay
         private Material _hologramInvalidMat;
 
         private bool _liveBuild;
-        private float _settleThumpMeters = 0.042f;
+        private BuildingTuning _tuning;
         private float _settleElapsed = -1f;
         private float _lampCascadeElapsed = -1f;
         private float _localMinY;
@@ -317,13 +323,13 @@ namespace MoonProject.Gameplay
 
         /// <summary>
         /// A placed structure 07 builds in play (<paramref name="liveBuild"/>) is printed in place: it rises layer by
-        /// layer under a bright layer line the weld beam rides, and settles with a thump of
-        /// <paramref name="settleThumpMeters"/>. A restored one simply stands.
+        /// layer under a bright layer line the weld beam rides, and settles with a thump, all shaped by
+        /// <paramref name="tuning"/>. A restored one simply stands.
         /// </summary>
-        public void ConfigureLiveBuild(bool liveBuild, float settleThumpMeters)
+        public void ConfigureLiveBuild(bool liveBuild, BuildingTuning tuning)
         {
+            _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
             _liveBuild = liveBuild;
-            _settleThumpMeters = settleThumpMeters;
             if (_initialized && !IsGhost && _liveBuild)
             {
                 RefreshPrint();
@@ -710,10 +716,30 @@ namespace MoonProject.Gameplay
         /// </summary>
         private Vector3 PrintCentre()
         {
-            float slicedProg = Mathf.Ceil(Mathf.Max(0.025f, Mathf.Clamp01(_buildProgress01)) * 40f) / 40f;
+            float slicedProg = PrintSlice(Mathf.Max(_tuning.PrintWeldFloor, Mathf.Clamp01(_buildProgress01)));
             GetPrintCrossSection(slicedProg, out float centerX, out float centerZ, out _);
-            float localY = Mathf.Lerp(_localMinY + 0.03f, _localMaxY - 0.03f, slicedProg);
-            return transform.TransformPoint(new Vector3(centerX, localY, centerZ));
+            return transform.TransformPoint(new Vector3(centerX, PrintLayerLocalY(slicedProg), centerZ));
+        }
+
+        /// <summary><paramref name="progress01"/> stepped up to the top of the layer it is printing.</summary>
+        private float PrintSlice(float progress01)
+        {
+            int layers = _tuning.PrintLayers;
+            return Mathf.Ceil(Mathf.Clamp01(progress01) * layers) / layers;
+        }
+
+        /// <summary>The layer line's local height at <paramref name="slice01"/> of the print.</summary>
+        private float PrintLayerLocalY(float slice01)
+        {
+            float inset = _tuning.PrintLayerInset;
+            return Mathf.Lerp(_localMinY + inset, _localMaxY - inset, slice01);
+        }
+
+        /// <summary>Where the weld point and bead stand across the layer (-1..1) at <paramref name="progress01"/>.
+        /// </summary>
+        private float PrintSweep(float progress01)
+        {
+            return Mathf.Sin(progress01 * _tuning.PrintSweepCycles * 2f * Mathf.PI);
         }
 
         /// <summary>A live build still rising under its layer line.</summary>
@@ -768,12 +794,10 @@ namespace MoonProject.Gameplay
             if (_liveBuild && !IsGhost)
             {
                 float prog = Mathf.Clamp01(_buildProgress01);
-                float slicedProg = Mathf.Ceil(Mathf.Max(0.025f, prog) * 40f) / 40f;
+                float slicedProg = PrintSlice(Mathf.Max(_tuning.PrintWeldFloor, prog));
                 GetPrintCrossSection(slicedProg, out float centerX, out float centerZ, out float halfSpanX);
-                float localY = Mathf.Lerp(_localMinY + 0.03f, _localMaxY - 0.03f, slicedProg);
-                float sweep = Mathf.Sin(prog * 12f * Mathf.PI);
-                float localX = centerX + sweep * halfSpanX * 0.85f;
-                return transform.TransformPoint(new Vector3(localX, localY, centerZ));
+                float localX = centerX + PrintSweep(prog) * halfSpanX * _tuning.PrintWeldSweepShare;
+                return transform.TransformPoint(new Vector3(localX, PrintLayerLocalY(slicedProg), centerZ));
             }
 
             GetStageWeldSeam(SolidStageCount, _activeSeamPoints, out _);
@@ -790,19 +814,27 @@ namespace MoonProject.Gameplay
             {
                 centerX = 0f;
                 centerZ = 0f;
-                halfSpanX = 0.45f;
+                halfSpanX = _tuning.PrintFallbackHalfWidth;
                 return;
             }
 
             Bounds deckBounds = _stageLocalBounds[0];
-            Bounds upperBounds = _stageLocalBounds.Length > 2 ? _stageLocalBounds[2] : _stageLocalBounds[_stageLocalBounds.Length - 1];
-            float blendToUpper = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((height01 - 0.18f) / 0.14f));
+            Bounds upperBounds = _stageLocalBounds.Length > UpperStageIndex
+                ? _stageLocalBounds[UpperStageIndex]
+                : _stageLocalBounds[_stageLocalBounds.Length - 1];
+            Vector2 upperBlend = _tuning.PrintUpperBlend;
+            float blendToUpper = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(upperBlend.x, upperBlend.y, height01));
             centerX = Mathf.Lerp(deckBounds.center.x, upperBounds.center.x, blendToUpper);
-            float deckZ = Mathf.Lerp(deckBounds.min.z + 0.28f, deckBounds.max.z - 0.28f, Mathf.Clamp01(height01 / 0.24f));
-            float upperZ = upperBounds.min.z + 0.06f;
+            float deckInset = _tuning.PrintDeckInset;
+            float deckZ = Mathf.Lerp(deckBounds.min.z + deckInset, deckBounds.max.z - deckInset,
+                Mathf.Clamp01(height01 / _tuning.PrintDeckTravel));
+            float upperZ = upperBounds.min.z + _tuning.PrintUpperInset;
             centerZ = Mathf.Lerp(deckZ, upperZ, blendToUpper);
-            float deckHalfW = Mathf.Clamp(deckBounds.extents.x * 0.68f, 0.24f, 0.68f);
-            float upperHalfW = Mathf.Clamp(upperBounds.extents.x * 0.82f, 0.12f, 0.28f);
+            Vector2 deckRange = _tuning.PrintDeckHalfWidth;
+            Vector2 upperRange = _tuning.PrintUpperHalfWidth;
+            float deckHalfW = Mathf.Clamp(deckBounds.extents.x * _tuning.PrintDeckWidthShare, deckRange.x, deckRange.y);
+            float upperHalfW = Mathf.Clamp(upperBounds.extents.x * _tuning.PrintUpperWidthShare, upperRange.x,
+                upperRange.y);
             halfSpanX = Mathf.Lerp(deckHalfW, upperHalfW, blendToUpper);
         }
 
@@ -846,20 +878,21 @@ namespace MoonProject.Gameplay
             if (_settleElapsed >= 0f && _settleElapsed < SettleDuration)
             {
                 float u = _settleElapsed / SettleDuration;
-                float damp = Mathf.Exp(-u * 4.8f);
-                float wave = Mathf.Sin(u * Mathf.PI * 2.2f);
-                settleOffsetY = -_settleThumpMeters * wave * damp;
-                float squash = 1f - 0.032f * wave * damp;
-                float stretch = 1f + 0.018f * wave * damp;
+                float damp = Mathf.Exp(-u * _tuning.SettleDamping);
+                float wave = Mathf.Sin(u * Mathf.PI * _tuning.SettleHalfWaves);
+                settleOffsetY = -_tuning.SettleThumpMeters * wave * damp;
+                float squash = 1f - _tuning.SettleSquash * wave * damp;
+                float stretch = 1f + _tuning.SettleStretch * wave * damp;
                 settleScaleMul = new Vector3(stretch, squash, stretch);
             }
 
-            float printProg = isBuilt ? 1f : Mathf.Clamp(_buildProgress01, 0.03f, 0.995f);
-            StepPrintLayerGuide(!isBuilt && _buildProgress01 > 0.001f, printProg, settleOffsetY);
+            Vector2 shown = _tuning.PrintShownRange;
+            float printProg = isBuilt ? 1f : Mathf.Clamp(_buildProgress01, shown.x, shown.y);
+            StepPrintLayerGuide(!isBuilt && _buildProgress01 > PrintGuideShownAfter, printProg, settleOffsetY);
 
             float worldMinY = transform.position.y + _localMinY + settleOffsetY;
             float worldMaxY = transform.position.y + _localMaxY + settleOffsetY;
-            float sliceWorldY = Mathf.Lerp(worldMinY, worldMaxY, Mathf.Ceil(printProg * 40f) / 40f);
+            float sliceWorldY = Mathf.Lerp(worldMinY, worldMaxY, PrintSlice(printProg));
 
             for (int s = 0; s < stageCount; s++)
             {
@@ -875,7 +908,7 @@ namespace MoonProject.Gameplay
                     _stageRoots[s].localScale = Vector3.Scale(_stageBaseScale[s] * _stageScale[s], settleScaleMul);
                 }
 
-                float residualCapHeat = (isBuilt && s == stageCount - 1) ? _stageHeat[s] * 0.45f : 0f;
+                float residualCapHeat = (isBuilt && s == stageCount - 1) ? _stageHeat[s] * _tuning.PrintResidualHeat : 0f;
                 ApplyStageMaterials(s, solid: true);
                 ApplyStageShaderBlock(
                     s,
@@ -885,7 +918,7 @@ namespace MoonProject.Gameplay
                     maxY: worldMaxY,
                     seamRef: sliceWorldY,
                     seamPointWS: activeWeldWS,
-                    seamRadius: 0.38f);
+                    seamRadius: _tuning.PrintSeamRadius);
             }
         }
 
@@ -907,46 +940,23 @@ namespace MoonProject.Gameplay
             var renderers = new List<Renderer>(6);
 
             // Horizontal additive layer line filament
-            AddPrintGuidePart(
-                renderers,
-                _printLayerBar,
-                "LayerFilament",
-                Vector3.zero,
-                new Vector3(1.52f, 0.015f, 0.018f));
-            AddPrintGuidePart(
-                renderers,
-                _printLayerBar,
-                "LayerTickL",
-                new Vector3(-0.77f, 0f, 0f),
-                new Vector3(0.024f, 0.048f, 0.14f));
-            AddPrintGuidePart(
-                renderers,
-                _printLayerBar,
-                "LayerTickR",
-                new Vector3(0.77f, 0f, 0f),
-                new Vector3(0.024f, 0.048f, 0.14f));
+            Vector3 tickOffset = new Vector3(_tuning.GuideTickOffset, 0f, 0f);
+            AddPrintGuidePart(renderers, _printLayerBar, "LayerFilament", Vector3.zero, _tuning.GuideFilamentSize);
+            AddPrintGuidePart(renderers, _printLayerBar, "LayerTickL", -tickOffset, _tuning.GuideTickSize);
+            AddPrintGuidePart(renderers, _printLayerBar, "LayerTickR", tickOffset, _tuning.GuideTickSize);
 
             // Travelling molten weld bead along the layer line
-            GameObject beadGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            beadGo.name = "LayerWeldBead";
-            if (beadGo.TryGetComponent(out Collider col))
-            {
-                DestroySafe(col);
-            }
-
-            beadGo.transform.SetParent(_printLayerBar, false);
-            beadGo.transform.localScale = new Vector3(0.18f, 0.026f, 0.032f);
-            _printLayerBead = beadGo.transform;
-            if (beadGo.TryGetComponent(out Renderer beadRenderer))
-            {
-                beadRenderer.sharedMaterial = _hologramInvalidMat;
-                renderers.Add(beadRenderer);
-            }
+            _printLayerBead = AddPrintGuidePart(
+                renderers,
+                _printLayerBar,
+                "LayerWeldBead",
+                Vector3.zero,
+                _tuning.GuideBeadSize);
 
             _printLayerRenderers = renderers.ToArray();
         }
 
-        private void AddPrintGuidePart(
+        private Transform AddPrintGuidePart(
             List<Renderer> list,
             Transform parent,
             string partName,
@@ -968,6 +978,8 @@ namespace MoonProject.Gameplay
                 r.sharedMaterial = _hologramInvalidMat;
                 list.Add(r);
             }
+
+            return go.transform;
         }
 
         private void StepPrintLayerGuide(bool visible, float progress01, float settleOffsetY)
@@ -988,10 +1000,11 @@ namespace MoonProject.Gameplay
                 _printLayerRoot.gameObject.SetActive(true);
             }
 
-            float slicedProg = Mathf.Ceil(Mathf.Clamp01(progress01) * 40f) / 40f;
+            float slicedProg = PrintSlice(progress01);
             GetPrintCrossSection(slicedProg, out float centerX, out float centerZ, out float halfSpanX);
-            float localY = Mathf.Lerp(_localMinY + 0.03f, _localMaxY - 0.03f, slicedProg) + settleOffsetY;
-            float widthScale = Mathf.Clamp((halfSpanX * 2f) / 1.48f, 0.28f, 1.08f);
+            float localY = PrintLayerLocalY(slicedProg) + settleOffsetY;
+            Vector2 scaleRange = _tuning.GuideScaleRange;
+            float widthScale = Mathf.Clamp(halfSpanX * 2f / _tuning.GuideReferenceWidth, scaleRange.x, scaleRange.y);
 
             if (_printLayerBar != null)
             {
@@ -1001,8 +1014,10 @@ namespace MoonProject.Gameplay
 
             if (_printLayerBead != null)
             {
-                float sweep = Mathf.Sin(progress01 * 12f * Mathf.PI);
-                _printLayerBead.localPosition = new Vector3(sweep * 0.56f, 0f, -0.01f);
+                _printLayerBead.localPosition = new Vector3(
+                    PrintSweep(progress01) * _tuning.PrintBeadSweep,
+                    0f,
+                    -_tuning.PrintBeadDepth);
             }
 
             for (int i = 0; i < _printLayerRenderers.Length; i++)
@@ -1015,7 +1030,7 @@ namespace MoonProject.Gameplay
 
                 r.GetPropertyBlock(_mpb);
                 _mpb.SetFloat(_propBlueprintMode, 1f);
-                _mpb.SetFloat(_propStageFade, 1.35f);
+                _mpb.SetFloat(_propStageFade, _tuning.GuideBrightness);
                 r.SetPropertyBlock(_mpb);
             }
         }

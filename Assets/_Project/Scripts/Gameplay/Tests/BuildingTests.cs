@@ -1174,7 +1174,7 @@ namespace MoonProject.Gameplay.Tests
                 Assert.IsTrue(pad.TryGetComponent(out StructureView view));
                 Assert.IsTrue(view.Initialize(validHolo, invalidHolo));
                 view.SetPlacedState(0f, instant: true);
-                view.ConfigureLiveBuild(true, _tuning.SettleThumpMeters);
+                view.ConfigureLiveBuild(true, _tuning);
                 view.SetPlacedState(0.10f, instant: false);
                 float y10 = view.GetActiveWeldPoint().y;
                 view.SetPlacedState(0.50f, instant: false);
