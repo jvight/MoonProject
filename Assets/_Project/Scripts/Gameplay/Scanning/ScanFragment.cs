@@ -48,6 +48,12 @@ namespace MoonProject.Gameplay
             StoryKey = storyKey;
             _solid = FindClosestRenderer();
             _surface = GatherSurface(surfaceRoot != null ? surfaceRoot : HostOf(target), _solid);
+            string unshown = WhyItCannotShowTheScan(_solid);
+            if (unshown != null)
+            {
+                Debug.LogError($"Scan target {fragmentId} ({PathOf(target)}): {unshown}, so its scan would draw " +
+                    "nothing.", target);
+            }
         }
 
         /// <summary>"&lt;set id&gt;.&lt;n&gt;" (e.g. "ruin.FallenSolarArray.0") or "story.&lt;id&gt;". Saved: never
@@ -215,6 +221,51 @@ namespace MoonProject.Gameplay
 
             local = solid.bounds;
             return Matrix4x4.identity;
+        }
+
+        /// <summary>
+        /// Why <paramref name="solid"/> cannot draw a scan (no renderer, or a material whose shader has no
+        /// <c>_ScanProgress</c>/<c>_Dissolve</c>), or null when every one of its materials can.
+        /// </summary>
+        internal static string WhyItCannotShowTheScan(Renderer solid)
+        {
+            if (solid == null)
+            {
+                return "no renderer on its host shows it";
+            }
+
+            Material[] materials = solid.sharedMaterials;
+            if (materials.Length == 0)
+            {
+                return $"its renderer {solid.name} has no material";
+            }
+
+            foreach (Material material in materials)
+            {
+                if (material == null)
+                {
+                    return $"its renderer {solid.name} has an empty material slot";
+                }
+
+                if (!material.HasProperty(ProgressId) || !material.HasProperty(DissolveId))
+                {
+                    return $"material {material.name} on {solid.name} uses {material.shader.name}, which has no " +
+                           "_ScanProgress/_Dissolve";
+                }
+            }
+
+            return null;
+        }
+
+        private static string PathOf(Transform node)
+        {
+            string path = node.name;
+            for (Transform up = node.parent; up != null; up = up.parent)
+            {
+                path = up.name + "/" + path;
+            }
+
+            return path;
         }
 
         private static Transform HostOf(Transform target)
