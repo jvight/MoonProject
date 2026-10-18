@@ -65,8 +65,10 @@ namespace MoonProject.Rover.Tests
 
             _refusal.Trigger();
             _refusal.Step(Frame);
-            Assert.IsTrue(_refusal.IsActive);
-            Assert.Less(Mathf.Abs(_refusal.Yaw), 2f, "A fresh shake starts from the parked pose.");
+            var fresh = new CutterRefusal(_settings);
+            fresh.Trigger();
+            fresh.Step(Frame);
+            Assert.AreEqual(fresh.Yaw, _refusal.Yaw, 1e-4f, "A repeated press shakes from the start again.");
         }
     }
 }

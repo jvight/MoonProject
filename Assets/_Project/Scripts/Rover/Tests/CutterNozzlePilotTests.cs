@@ -83,7 +83,7 @@ namespace MoonProject.Rover.Tests
             Settle();
             CutterNozzleSettings settings = _tuning.CutterNozzle;
             Assert.AreEqual(settings.PilotCoreGlow, _device.CoreGlow01, 1e-3f);
-            Assert.AreEqual(settings.PilotSpillIntensity, _device.SpillLightIntensity, 1e-3f);
+            Assert.AreEqual(settings.PilotCoreGlow * settings.ReleaseSpillIntensity, _device.SpillLightIntensity, 1e-3f);
             Assert.Less(_device.CoreGlow01, settings.ChargeInitialCoreGlow, "Smaller than a charge-up.");
             Assert.AreEqual(0f, _device.IrisOpen01, 1e-4f, "The iris stays shut.");
         }

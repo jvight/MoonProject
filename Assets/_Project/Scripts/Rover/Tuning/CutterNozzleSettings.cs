@@ -111,14 +111,10 @@ namespace MoonProject.Rover
         [SerializeField] private float _releaseSpillIntensity = 0.96f;
 
         [Header("Pilot light (cutter online)")]
-        [Tooltip("Core glow (0..1) of the small steady pilot light while the cutter works and is idle; the offline " +
-                 "nozzle is dark.")]
+        [Tooltip("Core glow (0..1) of the small steady pilot light while the cutter works and is idle (its spill " +
+                 "light follows at the release scale); the offline nozzle is dark.")]
         [Range(0f, 0.5f)]
         [SerializeField] private float _pilotCoreGlow = 0.14f;
-
-        [Tooltip("Spill point-light intensity of the pilot light on the chest chassis.")]
-        [Range(0f, 1f)]
-        [SerializeField] private float _pilotSpillIntensity = 0.12f;
 
         [Header("Spill light")]
         [Tooltip("Range (m) of the warm nozzle spill point light.")]
@@ -180,8 +176,6 @@ namespace MoonProject.Rover
         public float ReleaseSpillIntensity => _releaseSpillIntensity;
 
         public float PilotCoreGlow => _pilotCoreGlow;
-
-        public float PilotSpillIntensity => _pilotSpillIntensity;
 
         public float SpillRange => _spillRange;
 

@@ -289,9 +289,7 @@ namespace MoonProject.Rover
             }
             else
             {
-                targetSpill = _online
-                    ? Mathf.Max(settings.PilotSpillIntensity, _coreGlow01 * settings.ReleaseSpillIntensity)
-                    : _coreGlow01 * settings.ReleaseSpillIntensity;
+                targetSpill = _coreGlow01 * settings.ReleaseSpillIntensity;
             }
 
             _spillLight.range = settings.SpillRange;

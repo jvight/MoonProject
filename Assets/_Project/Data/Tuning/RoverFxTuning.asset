@@ -90,4 +90,3 @@ MonoBehaviour:
     _spillRange: 0.55
     _spillForwardOffset: 0.03
     _pilotCoreGlow: 0.14
-    _pilotSpillIntensity: 0.12
