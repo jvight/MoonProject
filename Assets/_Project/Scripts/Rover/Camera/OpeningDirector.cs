@@ -36,8 +36,11 @@ namespace MoonProject.Rover
         /// <summary>Drive input below this (stick magnitude) is drift, not the player driving.</summary>
         private const float DriveEpsilon = 0.05f;
 
-        /// <summary>Share of the push after which the camera's heading eases onto the lens' own gaze.</summary>
-        private const float PushGazeFrom = 0.6f;
+        /// <summary>
+        /// Share of the push after which the camera's heading swings onto the lens' own gaze (up to 180 degrees round
+        /// from looking at the lens): only once the picture has faded to black.
+        /// </summary>
+        private const float PushGazeFrom = 0.93f;
 
         /// <summary>Frames the brain keeps its cut blend after the lens camera goes live.</summary>
         private const int CutFrameCount = 2;

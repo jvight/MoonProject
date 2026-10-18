@@ -117,6 +117,13 @@ namespace MoonProject.World
             _overlay.SetPropertyBlock(_block);
             _overlay.enabled = true;
 
+            if (!_readoutComposed)
+            {
+                // Composed here, in the lens' first (dark) frames, not when the readout first shows: building the text
+                // mesh and its glyphs there cost a 65 ms frame in plain view.
+                ComposeReadout();
+            }
+
             ShowReadout(state.Readout01, look);
             _focus.focusDistance.Override(_model.FocusDistance);
             _volume.weight = 1f;
