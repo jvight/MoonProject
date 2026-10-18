@@ -20,8 +20,7 @@ Shader "MoonProject/Art/LofiHologram"
         _Invalid("Invalid Placement (0..1)", Range(0.0, 1.0)) = 0.0
         _StageFade("Stage Fade (0..1)", Range(0.0, 1.0)) = 1.0
         _BloomCeiling("Bloom Safe Ceiling", Range(0.5, 1.24)) = 1.10
-        _BlueprintMode("Blueprint Line Mode (0..1)", Range(0.0, 1.0)) = 0.0
-        _PrintClipY("Print Clip World Y", Float) = 9999.0
+        _BlueprintMode("Line Drawing Mode (0..1)", Range(0.0, 1.0)) = 0.0
     }
 
     SubShader
@@ -68,7 +67,6 @@ Shader "MoonProject/Art/LofiHologram"
                 half _StageFade;
                 half _BloomCeiling;
                 half _BlueprintMode;
-                float _PrintClipY;
             CBUFFER_END
 
             struct Attributes
@@ -107,11 +105,6 @@ Shader "MoonProject/Art/LofiHologram"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-
-                if (input.positionWS.y > _PrintClipY)
-                {
-                    discard;
-                }
 
                 float normLenSq = dot(input.normalWS, input.normalWS);
                 float3 normal = normLenSq > 1e-6 ? input.normalWS * rsqrt(normLenSq) : float3(0.0, 1.0, 0.0);
@@ -152,7 +145,7 @@ Shader "MoonProject/Art/LofiHologram"
                 half3 color = lerp(validRgb, invalidRgb, invalid);
                 half alpha = lerp(_Alpha * 0.68h, _RimAlpha, edgeWeight) * saturate(_StageFade);
 
-                // Blueprint mode (Variant B): crisp warm amber line drawing on dark translucent backing
+                // Line drawing mode (the print guide's layer bar): crisp warm amber lines on a dark translucent backing
                 if (blueprint > 0.001h)
                 {
                     half lineMask = saturate(max(featureLine * 1.15h, max(fresnel * 0.92h, contourLine * 0.55h)));

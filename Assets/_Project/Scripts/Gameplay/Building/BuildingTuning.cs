@@ -5,31 +5,13 @@ using UnityEngine;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// Selects which physical build-effect preset is used when 07 places and welds a base structure.
-    /// </summary>
-    public enum BuildEffectVariant
-    {
-        /// <summary>Variant A: Parts unfold on hinges and self-raising arms from a compact stack dropped by 07, then weld seams cool white -> orange -> dark.</summary>
-        AssembledBy07 = 0,
-
-        /// <summary>Variant B: Clean amber architectural line drawing on the ground that fills with real metal section by section with glowing cooling edges.</summary>
-        BlueprintIntoMetal = 1,
-
-        /// <summary>Variant C: Additive slice-by-slice build-up from the ground with a bright rising layer line tracked by 07's weld beam.</summary>
-        PrintedInPlace = 2
-    }
-
-    /// <summary>
     /// Designer-facing tuning for 07's freeform base building (0.5.7): placement distance bounds from 07, soft-snap
     /// distance and angle tolerances, welding range and the weld's beam and sparks, deconstruction material refund
-    /// share, build-effect variant preset, and the optional playtest unlock list applied at initialization.
+    /// share, and the optional playtest unlock list applied at initialization.
     /// </summary>
     [CreateAssetMenu(menuName = "MoonProject/Gameplay/Building Tuning", fileName = "BuildingTuning")]
     public sealed class BuildingTuning : ScriptableObject
     {
-        [Tooltip("Active build-effect presentation variant (AssembledBy07, BlueprintIntoMetal, or PrintedInPlace).")]
-        [SerializeField] private BuildEffectVariant _buildEffectVariant = BuildEffectVariant.AssembledBy07;
-
         [Tooltip("Closest horizontal distance (m) from 07's pivot at which a structure centre may be placed.")]
         [Range(0.5f, 10f)] [SerializeField] private float _minPlacementDistance = 2.0f;
 
@@ -72,8 +54,6 @@ namespace MoonProject.Gameplay
         [Tooltip("Structure IDs unlocked at game start for playtesting (kept empty in production).")]
         [SerializeField] private string[] _playtestUnlockedIds = Array.Empty<string>();
 
-        public BuildEffectVariant Variant => _buildEffectVariant;
-
         public float MinPlacementDistance => _minPlacementDistance;
 
         public float MaxPlacementDistance => _maxPlacementDistance;
@@ -95,12 +75,6 @@ namespace MoonProject.Gameplay
         public float SettleThumpMeters => _settleThumpMeters;
 
         public int SettleDustRingCount => _settleDustRingCount;
-
-        /// <summary>Switches the active <see cref="BuildEffectVariant"/> preset at runtime or in capture tests.</summary>
-        public void SetVariant(BuildEffectVariant variant)
-        {
-            _buildEffectVariant = variant;
-        }
 
 
         /// <summary>

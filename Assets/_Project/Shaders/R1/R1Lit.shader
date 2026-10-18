@@ -53,9 +53,9 @@ Shader "MoonProject/R1/Lit"
         _ScanProgress("Scan Progress", Range(0.0, 1.0)) = 0.0
         _Dissolve("Scan Dissolve", Range(0.0, 1.0)) = 0.0
 
-        [Header(Build Effect Variants)]
-        _BuildRevealMode("Build Reveal Mode", Float) = 0.0
-        _BuildRevealProgress("Build Reveal Progress", Range(0.0, 1.0)) = 1.0
+        [Header(Build Print)]
+        _BuildPrint("Build Printing (0 or 1)", Float) = 0.0
+        _BuildRevealProgress("Build Print Progress", Range(0.0, 1.0)) = 1.0
         _BuildStageHeat("Build Stage Seam Heat", Range(0.0, 1.0)) = 0.0
         _BuildBoundsY("Build World Y Bounds", Vector) = (0, 2, 0, 0)
         _BuildSeamPointWS("Build Seam Focus Point WS", Vector) = (0, 0, 0, 0.6)
@@ -180,7 +180,7 @@ Shader "MoonProject/R1/Lit"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-                if (_BuildRevealMode > 1.5h && _BuildRevealMode < 2.5h)
+                if (_BuildPrint > 0.5h)
                 {
                     float minY = _BuildBoundsY.x;
                     float spanY = max(_BuildBoundsY.y - minY, 0.05);
@@ -244,7 +244,7 @@ Shader "MoonProject/R1/Lit"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-                if (_BuildRevealMode > 1.5h && _BuildRevealMode < 2.5h)
+                if (_BuildPrint > 0.5h)
                 {
                     float minY = _BuildBoundsY.x;
                     float spanY = max(_BuildBoundsY.y - minY, 0.05);
@@ -316,7 +316,7 @@ Shader "MoonProject/R1/Lit"
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-                if (_BuildRevealMode > 1.5h && _BuildRevealMode < 2.5h)
+                if (_BuildPrint > 0.5h)
                 {
                     float minY = _BuildBoundsY.x;
                     float spanY = max(_BuildBoundsY.y - minY, 0.05);

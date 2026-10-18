@@ -1028,7 +1028,6 @@ namespace MoonProject.Gameplay
 
             _activeGhost.transform.SetPositionAndRotation(_ghostPosition, Quaternion.Euler(0f, _ghostYaw, 0f));
             bool valid = _controller.CandidateReason == PlacementReason.Valid && _controller.CanAffordSelected;
-            _activeGhost.ConfigureVariant(_tuning.Variant, liveBuild: true, _tuning.SettleThumpMeters);
             _activeGhost.SetGhostMode(valid);
         }
 
@@ -1053,11 +1052,6 @@ namespace MoonProject.Gameplay
                 if (!_viewsById.TryGetValue(placed.InstanceId, out StructureView view) || view == null)
                 {
                     continue;
-                }
-
-                if (view.Variant != _tuning.Variant)
-                {
-                    view.ConfigureVariant(_tuning.Variant, liveBuild: true, _tuning.SettleThumpMeters);
                 }
 
                 int newlySolid = view.SetPlacedState(placed.BuildProgress01, instant: false);
@@ -1121,17 +1115,12 @@ namespace MoonProject.Gameplay
                 ? placed.BuildProgress01
                 : 0f;
             view.SetPlacedState(initialProgress, instant: true);
-            view.ConfigureVariant(_tuning.Variant, liveBuild: !e.Restored, _tuning.SettleThumpMeters);
+            view.ConfigureLiveBuild(!e.Restored, _tuning.SettleThumpMeters);
             RegisterManagedColliders(view, true);
             _viewsById[e.InstanceId] = view;
 
             if (!e.Restored)
             {
-                if (_weldDebris != null && _tuning.Variant == BuildEffectVariant.AssembledBy07)
-                {
-                    _weldDebris.Ring(e.Position, 8, 0.45f);
-                }
-
                 _save?.SaveNow();
             }
         }

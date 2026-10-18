@@ -144,7 +144,7 @@ void R1ApplyBuildEffect(
     float3 normalWS,
     half edgeCurvature)
 {
-    if (_BuildRevealMode < 0.5h && _BuildStageHeat <= 0.001h)
+    if (_BuildPrint < 0.5h && _BuildStageHeat <= 0.001h)
     {
         return;
     }
@@ -159,51 +159,9 @@ void R1ApplyBuildEffect(
     float distToSeam = length(positionWS - seamPos);
     half seamProximity = (half)saturate(1.0 - distToSeam / seamRadius);
 
-    // Mode 1: Variant B — "Blueprint into metal"
-    // Unwelded portion renders as a crisp amber line drawing; real PBR metal fills section by section with a glowing edge.
-    if (_BuildRevealMode > 0.5h && _BuildRevealMode < 1.5h)
-    {
-        float minY = _BuildBoundsY.x;
-        float maxY = max(_BuildBoundsY.y, minY + 0.05);
-        float normY = saturate((positionWS.y - minY) / (maxY - minY));
-        float radialSweep = saturate((positionWS.x - (_BuildBoundsY.z - 1.4)) / 2.8);
-        float sectionCoord = saturate(normY * 0.62 + radialSweep * 0.38);
-        float fillFront = (float)_BuildRevealProgress;
-
-        if (sectionCoord > fillFront)
-        {
-            float3 viewDir = GetWorldSpaceNormalizeViewDir(positionWS);
-            half fresnel = PositivePow(max(1.0h - saturate((half)dot(normalWS, viewDir)), 0.001h), 2.0h);
-            float gridPhaseX = abs(frac(positionWS.x * 4.0) - 0.5);
-            float gridPhaseZ = abs(frac(positionWS.z * 4.0) - 0.5);
-            half gridLine = (half)(1.0 - smoothstep(0.02, 0.06, min(gridPhaseX, gridPhaseZ)));
-            half bpLine = saturate(max(featureLine * 1.15h, max(fresnel * 0.85h, gridLine * 0.45h)));
-            half3 amberInk = half3(1.02h, 0.66h, 0.20h);
-            half3 slatePaper = half3(0.05h, 0.04h, 0.03h);
-            color = lerp(slatePaper, amberInk, bpLine);
-
-            float leadDist = sectionCoord - fillFront;
-            if (leadDist < 0.045)
-            {
-                half preHeat = (half)saturate(1.0 - leadDist / 0.045) * 0.65h;
-                color += R1ThermalGlow(preHeat) * preHeat;
-            }
-            return;
-        }
-
-        float trailDist = fillFront - sectionCoord;
-        float edgeBand = 0.20;
-        if (trailDist < edgeBand && fillFront < 0.998)
-        {
-            half frontHeat = (half)saturate(1.0 - trailDist / edgeBand);
-            frontHeat = saturate(frontHeat * (0.78h + 0.35h * featureLine) + seamProximity * 0.25h);
-            half3 glow = R1ThermalGlow(frontHeat);
-            color = lerp(color, glow, saturate(frontHeat * 0.92h)) + glow * (frontHeat * frontHeat * 0.35h);
-        }
-    }
-    // Mode 2: Variant C — "Printed in place"
-    // Layered build-up from the ground slice by slice, with a bright rising layer line and cooling terrace band below.
-    else if (_BuildRevealMode > 1.5h && _BuildRevealMode < 2.5h)
+    // Printed in place: layered build-up from the ground slice by slice, with a bright rising layer line and a
+    // cooling terrace band below.
+    if (_BuildPrint > 0.5h)
     {
         float minY = _BuildBoundsY.x;
         float spanY = max(_BuildBoundsY.y - minY, 0.05);
@@ -235,8 +193,8 @@ void R1ApplyBuildEffect(
         }
     }
 
-    // Mode 3 (Variant A — "Assembled by 07") & residual stage seam cooling across all variants:
-    // Bright weld core at the active seam point that cools white -> orange -> red -> dark along the stage bevels.
+    // The seam's residual heat: a bright weld core at the seam point cooling white -> orange -> red -> dark along
+    // the stage bevels.
     if (_BuildStageHeat > 0.001h)
     {
         float seamYDist = abs(positionWS.y - _BuildBoundsY.z);
