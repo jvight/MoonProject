@@ -99,6 +99,9 @@ namespace MoonProject.Gameplay
         /// <summary>The ruins' and the lander's scan targets, scanned to learn structures (0.5.5 §1).</summary>
         public ScanField Scans { get; private set; }
 
+        /// <summary>Scan tuning preset and surface/beam look variant (<see cref="ScanVariant"/>).</summary>
+        public ScanTuning ScanTuning => _scanTuning;
+
         /// <summary>The recovery protocol's rows (docs/features/M3-21).</summary>
         public RecoveryProgress Recovery { get; private set; }
 
