@@ -109,9 +109,9 @@ namespace MoonProject.Autoplay.Tests
         {
             var beats = new BeatLog();
             Assert.IsFalse(beats.Passed, "no beats is not a pass");
-            beats.Add(new BeatResult("B0", "Wake", true, "woke", 5f, "line", "E Scan"));
+            beats.Add(new BeatResult("B0", "Wake", true, "woke", 5f, "line", "E Scan", "Sunlit"));
             Assert.IsTrue(beats.Passed);
-            beats.Add(new BeatResult("B2", "Drive", false, "stuck at the ridge", 30f, string.Empty, string.Empty));
+            beats.Add(new BeatResult("B2", "Drive", false, "stuck at the ridge", 30f, string.Empty, string.Empty, "Sunset"));
             Assert.IsFalse(beats.Passed);
             string report = beats.Render("opening", "build 1", 40f, new FrameTimeLog(), new[] { "screenshots/00-B0.png" }, string.Empty);
             StringAssert.Contains("**Result: FAIL**", report);

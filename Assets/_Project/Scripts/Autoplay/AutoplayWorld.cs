@@ -16,6 +16,7 @@ namespace MoonProject.Autoplay
         private GameBootstrap _bootstrap;
         private GameplaySystem _gameplay;
         private UIDocument _document;
+        private UIDocument _faceDocument;
         private UiProbe _ui;
 
         /// <summary>True when a booted game is present; the other members are valid only then.</summary>
@@ -23,21 +24,54 @@ namespace MoonProject.Autoplay
         {
             if (_bootstrap != null && _bootstrap.Context != null && _gameplay != null && _document != null)
             {
+                _ui?.UseFace(FaceRoot());
                 return true;
             }
 
             _bootstrap = null;
             _gameplay = null;
             _document = null;
+            _faceDocument = null;
             _ui = null;
             foreach (GameObject root in SceneManager.GetActiveScene().GetRootGameObjects())
             {
                 _bootstrap = _bootstrap != null ? _bootstrap : root.GetComponent<GameBootstrap>();
                 _gameplay = _gameplay != null ? _gameplay : root.GetComponentInChildren<GameplaySystem>(true);
-                _document = _document != null ? _document : root.GetComponentInChildren<UIDocument>(true);
+                foreach (UIDocument document in root.GetComponentsInChildren<UIDocument>(true))
+                {
+                    VisualElement tree = document.rootVisualElement;
+                    if (tree == null)
+                    {
+                        continue;
+                    }
+
+                    _document = _document != null ? _document : tree.Q(UiProbe.ObjectiveLineName) != null ? document : null;
+                    _faceDocument = _faceDocument != null ? _faceDocument
+                        : tree.Q(UiProbe.FaceDevicePrefix + 0) != null ? document : null;
+                }
             }
 
             return _bootstrap != null && _bootstrap.Context != null && _gameplay != null && _document != null;
+        }
+
+        private VisualElement FaceRoot()
+        {
+            if (_faceDocument == null && _document != null)
+            {
+                foreach (GameObject root in SceneManager.GetActiveScene().GetRootGameObjects())
+                {
+                    foreach (UIDocument document in root.GetComponentsInChildren<UIDocument>(true))
+                    {
+                        if (document.rootVisualElement != null &&
+                            document.rootVisualElement.Q(UiProbe.FaceDevicePrefix + 0) != null)
+                        {
+                            _faceDocument = document;
+                        }
+                    }
+                }
+            }
+
+            return _faceDocument != null ? _faceDocument.rootVisualElement : null;
         }
 
         public GameContext Context => _bootstrap.Context;
@@ -59,7 +93,7 @@ namespace MoonProject.Autoplay
             {
                 if (_ui == null && _document.rootVisualElement != null && _document.rootVisualElement.childCount > 0)
                 {
-                    _ui = new UiProbe(_document.rootVisualElement);
+                    _ui = new UiProbe(_document.rootVisualElement, FaceRoot());
                 }
 
                 return _ui;

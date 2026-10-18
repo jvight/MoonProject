@@ -37,9 +37,14 @@ namespace MoonProject.Autoplay
         private const float ScanAllowanceSeconds = 8f;
         private const float FollowSeconds = 6f;
 
+        /// <summary>Seconds the base may take to become night-ready: a sunset that comes first leaves the array idle, so the bank never charges.</summary>
+        private const float NightReadySeconds = 150f;
+
         private readonly AutoplayBot _bot;
         private readonly string _untilBeat;
         private bool _awoke;
+        private OpeningBase _base;
+        private string _lastBeat;
 
         public OpeningScenario(AutoplayBot bot, string untilBeat)
         {
@@ -49,29 +54,40 @@ namespace MoonProject.Autoplay
 
         public IEnumerator Run()
         {
+            _base = new OpeningBase(_bot);
             yield return Boot();
-            if (_bot.Failed || Reached("B0"))
+            _base.Listen();
+            foreach (Func<IEnumerator> beat in new Func<IEnumerator>[]
+                     {
+                         Drive, Scan, CollectParts, BuildThePad, ChargeAndFit, TheRuins, BuildTheArray,
+                         TheHabitat, Nightfall, TheTower,
+                     })
             {
-                yield break;
+                if (_bot.Failed || Reached(_lastBeat))
+                {
+                    break;
+                }
+
+                yield return beat();
             }
 
-            yield return Drive();
-            if (_bot.Failed || Reached("B2"))
-            {
-                yield break;
-            }
-
-            yield return Scan();
+            _base.Stop();
         }
 
         private bool Reached(string beat)
         {
-            return string.Equals(_untilBeat, beat, StringComparison.OrdinalIgnoreCase);
+            return beat != null && string.Equals(_untilBeat, beat, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private void Begin(string id, string title)
+        {
+            _lastBeat = id;
+            _bot.BeginBeat(id, title);
         }
 
         private IEnumerator Boot()
         {
-            _bot.BeginBeat("B0", "New game and the eclipse wake");
+            Begin("B0", "New game and the eclipse wake");
             yield return _bot.Until(() => _bot.World.Refresh() && _bot.World.Ui != null, BootTimeoutSeconds,
                 "the game to boot");
             if (_bot.Failed)
@@ -104,7 +120,7 @@ namespace MoonProject.Autoplay
 
         private IEnumerator Drive()
         {
-            _bot.BeginBeat("B2", "Drive to the lander");
+            Begin("B2", "Drive to the lander");
             yield return _bot.Until(() => _bot.World.Refresh() && _bot.World.Gameplay.Opening.Flow.Current ==
                 OpeningKeys.DriveToLander, LineTimeoutSeconds, "the objective line to say '" + OpeningKeys.DriveToLander + "'");
             if (!_bot.Failed)
@@ -121,7 +137,7 @@ namespace MoonProject.Autoplay
 
         private IEnumerator Scan()
         {
-            _bot.BeginBeat("B3", "Scan the lander's cargo");
+            Begin("B3", "Scan the lander's cargo");
             yield return _bot.Until(() => _bot.World.Gameplay.Opening.Flow.Current == OpeningKeys.ScanLander,
                 FollowSeconds, "the objective line to say '" + OpeningKeys.ScanLander + "'");
             var chips = new List<string>();
@@ -220,6 +236,92 @@ namespace MoonProject.Autoplay
                     return fragment.Scanned;
                 }, scans.Tuning.Seconds(fragment.Size) + ScanAllowanceSeconds,
                 "held " + key + " to scan " + fragment.FragmentId);
+        }
+
+        private IEnumerator CollectParts()
+        {
+            Begin("B4", "Collect the lander's open crate");
+            yield return _base.CollectTheOpenCrate();
+            if (!_bot.Failed)
+            {
+                yield return _base.ExpectLine(OpeningKeys.BuildPad, "B5: the hold covers the pad");
+            }
+
+            _bot.EndBeat("07 took the open crate's parts and the spare igniter");
+        }
+
+        private IEnumerator BuildThePad()
+        {
+            Begin("B5", "Build the charging pad");
+            yield return _base.Build(StructureIds.ChargingPad, _base.Pad());
+            _bot.EndBeat("the pad was placed and welded with the build keys");
+        }
+
+        private IEnumerator ChargeAndFit()
+        {
+            Begin("B6", "Charge on the pad and fit the igniter");
+            yield return _base.ExpectLine(OpeningKeys.Charge, "B6");
+            yield return _base.ChargeOnThePad(StructureIds.ChargingPad);
+            _bot.EndBeat("07 charged on the pad and fitted the igniter on its face screen");
+        }
+
+        private IEnumerator TheRuins()
+        {
+            Begin("B7", "The Lumen ruins: scan the array and the airlock, cut the lockers");
+            yield return _base.ExpectLine(OpeningKeys.FindSolar, "B7: the reserve is spent");
+            yield return _base.DriveToTheRuinsGate("the Lumen ruins");
+            yield return _base.ScanTheSet("ruin.FallenSolarArray");
+            yield return _base.ReadTheAirlockPanel();
+            yield return _base.CutTheCrates("KenjiWorkshop");
+            _bot.EndBeat("the fallen array scanned, the airlock panel read, the workshop lockers cut");
+        }
+
+        private IEnumerator BuildTheArray()
+        {
+            Begin("B8", "Build the solar array");
+            yield return _base.ExpectLine(OpeningKeys.BuildSolar, "B8: the array's cost is covered");
+            yield return _base.DriveToTheRuinsGate("out of the Lumen ruins");
+            yield return _base.Build(StructureIds.SolarArray, _base.Pad() + Vector3.right * OpeningBase.Spacing);
+            yield return _base.UntilReached(OpeningMilestone.PowerOn, "the PowerOn milestone");
+            _bot.EndBeat("the array stands and the base has power");
+        }
+
+        private IEnumerator TheHabitat()
+        {
+            Begin("B9", "The habitat: scan the modules, cut the cable reel, build the battery bank");
+            yield return _base.ExpectLine(OpeningKeys.BuildBatteryBank, "B9: night is coming");
+            yield return _base.ScanTheSet("ruin.HabitatModules");
+            yield return _base.CutTheCrates("HabitatModules");
+            yield return _base.DriveToTheRuinsGate("out of the Lumen ruins");
+            yield return _base.Build(StructureIds.BatteryBank, _base.Pad() + Vector3.left * OpeningBase.Spacing);
+            yield return _base.UntilReached(OpeningMilestone.NightReady, "the NightReady milestone",
+                NightReadySeconds);
+            if (!_bot.Failed && _bot.World.Context.Get<ISunlight>().Phase != SkyPhase.Sunlit)
+            {
+                _bot.Warn("the base became night-ready only after the sun had set (sky " +
+                          _bot.World.Context.Get<ISunlight>().Phase + "): the array stood idle through the dusk.");
+            }
+            _bot.EndBeat("the battery bank stands and the base is night-ready");
+        }
+
+        private IEnumerator Nightfall()
+        {
+            Begin("B10", "The first nightfall");
+            yield return _base.TheFirstNightfall();
+            _bot.EndBeat("the first night fell on a lit base");
+        }
+
+        private IEnumerator TheTower()
+        {
+            Begin("B11", "The radio tower and the antenna mast");
+            yield return _base.ExpectLine(OpeningKeys.ScanTower, "B11: after nightfall");
+            yield return _base.CutTheCrates("RadioTower");
+            yield return _base.ScanTheSet("ruin.RadioTower");
+            yield return _base.ExpectLine(OpeningKeys.BuildMast, "B11");
+            yield return _base.DriveToTheRuinsGate("out of the Lumen ruins");
+            yield return _base.Build(StructureIds.AntennaMast, _base.Pad() + Vector3.back * OpeningBase.Spacing);
+            yield return _base.UntilReached(OpeningMilestone.SignalWest, "the SignalWest milestone");
+            _bot.EndBeat("the mast stands and the west signal answered");
         }
 
         /// <summary>The next unscanned fragment of the lander's cargo, in the order the blueprint numbers them.</summary>

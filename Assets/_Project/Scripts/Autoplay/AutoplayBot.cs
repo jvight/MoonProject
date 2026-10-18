@@ -3,6 +3,7 @@ using System.Collections;
 using System.Globalization;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using MoonProject.Core;
 
 namespace MoonProject.Autoplay
 {
@@ -76,6 +77,7 @@ namespace MoonProject.Autoplay
             string objective = _world.Refresh() && _world.Ui != null ? _world.Ui.ObjectiveLine() : string.Empty;
             string chip = _world.Refresh() && _world.Ui != null ? _world.Ui.Chip() : string.Empty;
             bool passed = !Failed;
+            string sky = _world.Refresh() ? _world.Context.Get<ISunlight>().Phase.ToString() : string.Empty;
             string note = passed ? passNote : Failure;
             if (_warnings.Count > 0)
             {
@@ -83,7 +85,7 @@ namespace MoonProject.Autoplay
             }
 
             _beats.Add(new BeatResult(_beatId, _beatTitle, passed, note,
-                Time.unscaledTime - _beatStart, objective, chip));
+                Time.unscaledTime - _beatStart, objective, chip, sky));
             _screenshot(_beatId + (passed ? "-done" : "-failed"));
         }
 
@@ -122,10 +124,11 @@ namespace MoonProject.Autoplay
         }
 
         /// <summary>Holds <paramref name="key"/> until <paramref name="done"/> holds, then lets go.</summary>
-        public IEnumerator Hold(Key key, Func<bool> done, float timeoutSeconds, string what)
+        public IEnumerator Hold(Key key, Func<bool> done, float timeoutSeconds, string what,
+            Func<string> detail = null)
         {
             _input.Set(key, true);
-            yield return Until(done, timeoutSeconds, what);
+            yield return Until(done, timeoutSeconds, what, detail);
             _input.Set(key, false);
             yield return null;
         }
