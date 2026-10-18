@@ -65,6 +65,12 @@ namespace MoonProject.Art.Editor
         public const string PadFragmentCoilPlatePrefabPath = PropsModelsFolder + "/PadFragment_CoilPlate.prefab";
         public const string PadFragmentGuideRailPrefabPath = PropsModelsFolder + "/PadFragment_GuideRail.prefab";
         public const string IceCoreTubePrefabPath = PropsModelsFolder + "/IceCoreTube.prefab";
+        public const string CableStraight2mPrefabPath = PropsModelsFolder + "/Cable_Straight_2m.prefab";
+        public const string CableBend45PrefabPath = PropsModelsFolder + "/Cable_Bend_45.prefab";
+        public const string CableBend90PrefabPath = PropsModelsFolder + "/Cable_Bend_90.prefab";
+        public const string CableBrokenEndPrefabPath = PropsModelsFolder + "/Cable_BrokenEnd.prefab";
+        public const string CablePlugPrefabPath = PropsModelsFolder + "/Cable_Plug.prefab";
+        public const string CableSpliceBoxPrefabPath = PropsModelsFolder + "/Cable_Splice_Box.prefab";
         public const string HabitatModulesPrefabPath = ArtPaths.R1ModelsFolder + "/Ruins/HabitatModules.prefab";
 
         /// <summary>Loads the <c>MoonProject/R1/SignalPillar</c> shader asset.</summary>
