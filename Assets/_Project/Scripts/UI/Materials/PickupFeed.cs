@@ -32,10 +32,13 @@ namespace MoonProject.UI
         private readonly IMaterialCatalog _catalog;
         private readonly MaterialTally _tally;
         private readonly Row[] _rows;
+        private readonly RoverDiagramData _diagram;
+        private readonly PartRows _partLogic;
+        private readonly PartRow[] _partRows;
         private bool _armed;
 
         public PickupFeed(UiLayout layout, PickupFeedSettings settings, IntText numbers, ILocalization localization,
-            IMaterialStock stock, IMaterialCatalog catalog, EventBus events)
+            IMaterialStock stock, IMaterialCatalog catalog, EventBus events, RoverDiagramData diagram)
         {
             if (layout == null)
             {
@@ -48,12 +51,20 @@ namespace MoonProject.UI
             _stock = stock ?? throw new ArgumentNullException(nameof(stock));
             _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
             _events = events ?? throw new ArgumentNullException(nameof(events));
+            _diagram = diagram ?? throw new ArgumentNullException(nameof(diagram));
             _tally = new MaterialTally(settings);
             layout.PickupFeed.Clear();
             _rows = new Row[settings.MaxRows];
             for (int i = 0; i < _rows.Length; i++)
             {
                 _rows[i] = BuildRow(layout.PickupFeed);
+            }
+
+            _partLogic = new PartRows(settings.PartRows, settings.PartLingerSeconds);
+            _partRows = new PartRow[settings.PartRows];
+            for (int i = 0; i < _partRows.Length; i++)
+            {
+                _partRows[i] = BuildPartRow(layout.PickupFeed);
             }
         }
 
@@ -70,8 +81,49 @@ namespace MoonProject.UI
                     }
                 }
 
+                for (int i = 0; i < _partRows.Length; i++)
+                {
+                    if (!_partRows[i].Reveal.IsHidden)
+                    {
+                        return true;
+                    }
+                }
+
                 return false;
             }
+        }
+
+        /// <summary>True while story part <paramref name="partId"/> has a row up (or easing).</summary>
+        public bool IsShowingPart(string partId)
+        {
+            PartRow row = ShowingPart(partId);
+            return row != null && !row.Reveal.IsHidden;
+        }
+
+        /// <summary>The words on story part <paramref name="partId"/>'s row (tests and captures).</summary>
+        public string PartText(string partId)
+        {
+            return ShowingPart(partId).Name.text;
+        }
+
+        /// <summary>
+        /// 07 took story part <paramref name="partId"/> into its hold: the same glass row as a material, with the part's
+        /// icon and "+ name" (no count: a part is one thing).
+        /// </summary>
+        public void PartCollected(string partId)
+        {
+            int index = _partLogic.Claim(partId, out bool opened);
+            PartRow row = _partRows[index];
+            if (opened)
+            {
+                row.PartId = partId;
+                row.Shape = _diagram.GetPartIcon(partId);
+                row.Icon.MarkDirtyRepaint();
+                WritePartName(row);
+                row.Reveal.Snap(false);
+            }
+
+            row.Reveal.Show();
         }
 
         /// <summary>True while <paramref name="material"/> has a row up (or easing).</summary>
@@ -113,6 +165,14 @@ namespace MoonProject.UI
                 if (_rows[i].Active)
                 {
                     _rows[i].Name.text = _localization.Get(_catalog.NameKey(_rows[i].Material));
+                }
+            }
+
+            for (int i = 0; i < _partRows.Length; i++)
+            {
+                if (_partLogic.IsActive(i))
+                {
+                    WritePartName(_partRows[i]);
                 }
             }
         }
@@ -161,6 +221,80 @@ namespace MoonProject.UI
             {
                 TickRow(_rows[i], deltaTime);
             }
+
+            TickParts(deltaTime);
+        }
+
+        private void TickParts(float deltaTime)
+        {
+            _partLogic.Tick(deltaTime);
+            for (int i = 0; i < _partRows.Length; i++)
+            {
+                if (!_partLogic.IsActive(i))
+                {
+                    continue;
+                }
+
+                PartRow row = _partRows[i];
+                if (row.Reveal.Target && _partLogic.ShouldFade(i))
+                {
+                    row.Reveal.Hide();
+                }
+
+                row.Reveal.Tick(deltaTime);
+                if (row.Reveal.IsHidden && !row.Reveal.Target)
+                {
+                    _partLogic.Release(i);
+                    row.PartId = null;
+                    continue;
+                }
+
+                float slide = -_settings.SlideDistance * (1f - Mathf.Clamp01(row.Reveal.Visibility));
+                if (Mathf.Abs(slide - row.WrittenSlide) > WriteEpsilon)
+                {
+                    row.Body.style.translate = new StyleTranslate(new Translate(slide, 0f));
+                    row.WrittenSlide = slide;
+                }
+            }
+        }
+
+        private PartRow BuildPartRow(VisualElement feed)
+        {
+            var root = new VisualElement { pickingMode = PickingMode.Ignore };
+            root.AddToClassList(RowClass);
+            var body = new VisualElement { pickingMode = PickingMode.Ignore };
+            body.AddToClassList(RowClass + "__body");
+            var icon = new VisualElement { pickingMode = PickingMode.Ignore };
+            icon.AddToClassList(RowClass + "__part-icon");
+            var name = new Label { pickingMode = PickingMode.Ignore };
+            name.AddToClassList(RowClass + "__name");
+            body.Add(icon);
+            body.Add(name);
+            root.Add(body);
+            feed.Add(root);
+            var reveal = new Reveal(root, _settings.Reveal);
+            reveal.Snap(false);
+            var row = new PartRow(reveal, body, icon, name);
+            icon.generateVisualContent += row.PaintIcon;
+            return row;
+        }
+
+        private PartRow ShowingPart(string partId)
+        {
+            for (int i = 0; i < _partRows.Length; i++)
+            {
+                if (string.Equals(_partRows[i].PartId, partId, StringComparison.Ordinal))
+                {
+                    return _partRows[i];
+                }
+            }
+
+            return null;
+        }
+
+        private void WritePartName(PartRow row)
+        {
+            row.Name.text = string.Concat("+ ", _localization.Get(UiKeys.PickupName(row.PartId)));
         }
 
         private Row BuildRow(VisualElement feed)
@@ -347,6 +481,45 @@ namespace MoonProject.UI
                     int toCome = remaining + units - 1 - unit;
                     _events.Publish(new StockCountTicked(material, last - (units - 1 - unit), toCome));
                 }
+            }
+        }
+
+        /// <summary>A story part's row: the part's diagram icon and "+ name" on the same glass as a material row.</summary>
+        private sealed class PartRow
+        {
+            public PartRow(Reveal reveal, VisualElement body, VisualElement icon, Label name)
+            {
+                Reveal = reveal;
+                Body = body;
+                Icon = icon;
+                Name = name;
+            }
+
+            public Reveal Reveal { get; }
+
+            public VisualElement Body { get; }
+
+            public VisualElement Icon { get; }
+
+            public Label Name { get; }
+
+            public string PartId { get; set; }
+
+            public UiIconShape Shape { get; set; }
+
+            public float WrittenSlide { get; set; } = float.NaN;
+
+            public void PaintIcon(MeshGenerationContext context)
+            {
+                Rect rect = Icon.contentRect;
+                if (PartId == null || rect.width < 1f)
+                {
+                    return;
+                }
+
+                UiIconShape shape = Shape;
+                UiIconPainter.Draw(context.painter2D, in shape, rect.center,
+                    Mathf.Min(rect.width, rect.height), UiIconState.Lit);
             }
         }
 

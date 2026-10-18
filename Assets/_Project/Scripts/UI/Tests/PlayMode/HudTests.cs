@@ -221,6 +221,62 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator SevenTab_HoverArrowsAndClicks_SelectVisibly_WithATick_AndTheCutterExplainsItsFault()
+        {
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            Boot();
+            _rig.Ui.Ledger.RecordHoldBooted();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Fakes.Hold.Set(8, new MaterialSlot(SalvageMaterial.Metal, 4, 4),
+                new MaterialSlot(SalvageMaterial.Wiring, 2, 4));
+            var cues = new System.Collections.Generic.List<UiCueKind>();
+            Events.Subscribe<UiCue>(cue => cues.Add(cue.Kind));
+            yield return Seconds(0.3f);
+
+            yield return Tap(keyboard.tabKey);
+            yield return Seconds(0.6f);
+            FaceInventoryView view = _rig.Ui.Cargo.View;
+            float scale = _rig.Ui.Cargo.PanelRect.width / FaceInventoryView.ReferenceWidth;
+            Assert.AreEqual(0, view.FocusedHoldCell, "it opens on the first thing in the hold");
+            StringAssert.Contains(Text("material.metal"), view.TooltipNameText, "and the info box names it");
+
+            cues.Clear();
+            view.Navigate(NavigationMoveEvent.Direction.Right);
+            Assert.AreEqual(1, view.FocusedHoldCell, "an arrow moves the selection");
+            Assert.AreEqual(Text("material.wiring"), view.TooltipNameText, "the info box follows it");
+            CollectionAssert.Contains(cues, UiCueKind.FocusMove, "with a soft tick");
+
+            cues.Clear();
+            Vector2 emptyCell = FaceInventoryView.GetHoldCellReferenceRect(5).center * scale;
+            view.PointerMoveAtPanel(emptyCell);
+            Assert.AreEqual(5, view.FocusedHoldCell, "the hover selects the empty slot under the pointer");
+            Assert.AreEqual(Text(UiKeys.CargoEmptyName), view.TooltipNameText, "an empty slot says so");
+            CollectionAssert.Contains(cues, UiCueKind.FocusMove);
+
+            cues.Clear();
+            yield return null;
+            view.PointerDownAtPanel(FaceInventoryView.GetHoldCellReferenceRect(2).center * scale);
+            Assert.AreEqual(2, view.FocusedHoldCell, "a click selects");
+            CollectionAssert.Contains(cues, UiCueKind.Confirm, "and answers with a tick");
+
+            cues.Clear();
+            yield return null;
+            view.PointerDownAtPanel(FaceDevices.CenterOf(FaceDevices.Cutter) * scale);
+            Assert.AreEqual(FaceDevices.Cutter, view.FocusedDeviceIndex);
+            Assert.AreEqual(Text("ui.device.cutter.fault"), view.TooltipDescText, "the cutter's fault is explained");
+            CollectionAssert.Contains(cues, UiCueKind.Confirm);
+            Assert.AreEqual(0, _rig.Fakes.Systems.Fits, "off the pad a click only explains");
+
+            _rig.Fakes.Systems.CanFitIgniter = true;
+            yield return Seconds(0.3f);
+            yield return Tap(keyboard.tabKey);
+            yield return Seconds(0.5f);
+            yield return Tap(keyboard.tabKey);
+            yield return Seconds(0.5f);
+            Assert.AreEqual(FaceDevices.Cutter, view.FocusedDeviceIndex, "it opens on the cutter while it offers the igniter");
+        }
+
+        [UnityTest]
         public IEnumerator SevenTab_InEnglishAndVietnamese_At1080pAnd720p_TiersBadgesAndDevicesFitWithoutOverlap()
         {
             Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
@@ -538,18 +594,52 @@ namespace MoonProject.UI.PlayModeTests
             while (Time.realtimeSinceStartup < until)
             {
                 readoutSeen |= _rig.Ui.Readout.IsVisible;
-                int up = (_rig.Ui.Prompt.IsVisible ? 1 : 0) + (_rig.Ui.LookUp.IsVisible ? 1 : 0) +
+                int up = (_rig.Ui.Prompt.IsVisible ? 1 : 0) + (_rig.Ui.LookUp.ShowsPrompt ? 1 : 0) +
                          (_rig.Ui.Readout.IsVisible ? 1 : 0) + (_rig.Ui.UnlockCard.IsVisible ? 1 : 0) +
                          (_rig.Ui.Objective.IsVisible ? 1 : 0);
                 shownFrames += up > 0 ? 1 : 0;
                 Assert.LessOrEqual(up, 1, "one guidance element at a time: prompt " + _rig.Ui.Prompt.IsVisible + ", look-up " +
-                    _rig.Ui.LookUp.IsVisible + ", readout " + _rig.Ui.Readout.IsVisible + ", unlock " +
+                    _rig.Ui.LookUp.ShowsPrompt + ", readout " + _rig.Ui.Readout.IsVisible + ", unlock " +
                     _rig.Ui.UnlockCard.IsVisible + ", objective " + _rig.Ui.Objective.IsVisible);
                 yield return null;
             }
 
             Assert.IsTrue(readoutSeen, "the boot diagnostics came first, or the test proves nothing");
             Assert.Greater(shownFrames, 0, "the scene did guide, or the test proves nothing");
+        }
+
+        [UnityTest]
+        public IEnumerator TheVerbChip_BelongsToTheObjective_ShowsItsRealKey_AndRetiresOnTheFirstUse()
+        {
+            Boot();
+            _rig.Ui.Ledger.RecordLookTaught();
+            _rig.Ui.Ledger.RecordDriveTaught();
+            _rig.Ui.Ledger.RecordHoldChipShown();
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            Events.Publish(new NextStepChanged("next.v2.scan_lander"));
+            float limit = Time.realtimeSinceStartup + 12f;
+            while (!_rig.Ui.LookUp.IsVisible && Time.realtimeSinceStartup < limit)
+            {
+                yield return null;
+            }
+
+            Assert.IsTrue(_rig.Ui.Objective.ShowsObjective, "the line is up");
+            Assert.IsTrue(_rig.Ui.LookUp.IsVisible, "and its chip with it");
+            Assert.IsFalse(_rig.Ui.LookUp.ShowsPrompt, "the chip is the objective's, not a prompt of its own");
+            Assert.AreEqual(Text("ui.verb.scan"), _rig.Ui.Layout.LookHintWord.text);
+            Assert.AreEqual("E", _rig.Ui.Layout.LookHintGlyphLabel.text, "the real key of the scan beam");
+            Assert.AreEqual(GuidanceKind.Objective, _rig.Ui.Slot.Granted, "one guidance element holds the slot");
+
+            Events.Publish(new ScanStarted("lander.fragment.1", Vector3.zero));
+            limit = Time.realtimeSinceStartup + 4f;
+            while (_rig.Ui.LookUp.IsVisible && Time.realtimeSinceStartup < limit)
+            {
+                yield return null;
+            }
+
+            Assert.IsFalse(_rig.Ui.LookUp.IsVisible, "the first scan retires the chip");
+            Assert.IsTrue(_rig.Ui.Objective.ShowsObjective, "the line stays until the step is done");
         }
 
         private void Boot()

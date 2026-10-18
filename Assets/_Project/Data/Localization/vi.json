@@ -312,7 +312,7 @@
         },
         {
             "key": "hint.build",
-            "text": "Chế tạo"
+            "text": "Hàn"
         },
         {
             "key": "hint.scan",
@@ -888,7 +888,7 @@
         },
         {
             "key": "ui.device.cutter.fault",
-            "text": "Mất bộ đánh lửa. Lắp bộ dự phòng trên bệ."
+            "text": "Cần bộ đánh lửa. Lắp khi đỗ trên bệ sạc."
         },
         {
             "key": "ui.device.cutter.fit",
@@ -949,6 +949,50 @@
         {
             "key": "pickup.part.icecore.job",
             "text": "Mẫu lõi băng, 1988"
+        },
+        {
+            "key": "ui.title.language_question",
+            "text": "Language · Ngôn ngữ"
+        },
+        {
+            "key": "ui.verb.scan",
+            "text": "Quét"
+        },
+        {
+            "key": "ui.verb.cut",
+            "text": "Cắt"
+        },
+        {
+            "key": "ui.verb.build",
+            "text": "Dựng"
+        },
+        {
+            "key": "ui.verb.fit",
+            "text": "Lắp"
+        },
+        {
+            "key": "ui.cargo.more_slots",
+            "text": "+{0} ô về sau"
+        },
+        {
+            "key": "ui.cargo.empty_name",
+            "text": "Ô trống"
+        },
+        {
+            "key": "ui.cargo.empty_desc",
+            "text": "Phụ tùng và vật liệu nhặt được sẽ cất ở đây."
+        },
+        {
+            "key": "ui.face.close",
+            "text": "Đóng"
+        },
+        {
+            "key": "ui.face.move",
+            "text": "Di chuyển"
+        },
+        {
+            "key": "ui.face.select",
+            "text": "Chọn"
         }
     ]
 }
