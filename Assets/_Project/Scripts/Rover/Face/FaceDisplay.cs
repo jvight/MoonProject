@@ -198,6 +198,19 @@ namespace MoonProject.Rover
             ApplyToRenderer();
         }
 
+        /// <summary>Shows <paramref name="contentTexture"/> on the CRT as a plain readout, or ends it when null.</summary>
+        public void SetReadout(Texture contentTexture)
+        {
+            EnsureState();
+            if (contentTexture != null)
+            {
+                _contentTexture = contentTexture;
+            }
+
+            _state.SetReadout(contentTexture != null);
+            ApplyToRenderer();
+        }
+
         /// <summary>Immediately snaps the CRT screen content mode without playing the transition choreography.</summary>
         public void SnapToScreenMode(bool open, Texture contentTexture = null)
         {

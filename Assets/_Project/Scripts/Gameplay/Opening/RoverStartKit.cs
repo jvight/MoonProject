@@ -40,8 +40,7 @@ namespace MoonProject.Gameplay
         /// <summary>The cutter has its igniter: it cuts.</summary>
         public bool IgniterFitted { get; private set; }
 
-        /// <summary>The spare igniter's story-part id.</summary>
-        public string Igniter => _igniter;
+        public string IgniterPartId => _igniter;
 
         /// <summary>The spare igniter is in the hold.</summary>
         public bool CarriesIgniter => _hold.HasPart(_igniter);
