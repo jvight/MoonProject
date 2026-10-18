@@ -94,8 +94,8 @@ namespace MoonProject.World.Editor
         }
 
         /// <summary>
-        /// The landed lander's amber emergency beacon (opening v2 §4): a LofiBeaconHalo in its colour, and the cable
-        /// markers' small halo, dark until the Begin wave lights it.
+        /// The landed lander's amber emergency beacon (opening v2 §4): a LofiBeaconHalo in its colour, the cable
+        /// clips' small halo (its brightness set per clip by the beacon) and the tear's cold spark.
         /// </summary>
         [MoonBuilder("World/Lander Beacon", 240)]
         public static void BuildLanderBeacon()
@@ -113,6 +113,12 @@ namespace MoonProject.World.Editor
             markerHalo.SetFloat("_Radius", beacon.MarkerHaloRadius);
             markerHalo.SetFloat("_MinAngleTan", 0f);
             GeneratedAssets.CreateOrReplace(markerHalo, WorldPaths.CableMarkerHaloMaterial);
+            var spark = new Material(LoadShader(WorldPaths.BeaconHaloShader));
+            spark.SetColor("_Color", beacon.SparkColor);
+            spark.SetFloat("_Intensity", 0f);
+            spark.SetFloat("_Radius", beacon.SparkRadius);
+            spark.SetFloat("_MinAngleTan", 0f);
+            GeneratedAssets.CreateOrReplace(spark, WorldPaths.CableTearSparkMaterial);
             AssetDatabase.SaveAssets();
         }
 

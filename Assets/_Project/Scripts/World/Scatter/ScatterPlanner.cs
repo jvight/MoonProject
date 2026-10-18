@@ -146,7 +146,7 @@ namespace MoonProject.World
                 chance *= _settings.LaneKeptPebbles;
             }
 
-            return Mathf.Clamp01(chance);
+            return Mathf.Clamp01(_surface.Shaping.Blast.ScatterChance(x, z, chance, true));
         }
 
         /// <summary>Chance (0..1) that a boulder site at (x, z) holds a boulder.</summary>
@@ -180,7 +180,7 @@ namespace MoonProject.World
             float talusCluster = _settings.TalusBoulders * talus * SmoothMath.Smootherstep(0.62f, 0.88f, cluster);
 
             float chance = openSparse + rimCluster + trailCluster + talusCluster;
-            return Mathf.Clamp01(chance);
+            return Mathf.Clamp01(_surface.Shaping.Blast.ScatterChance(x, z, chance, false));
         }
 
         /// <summary>

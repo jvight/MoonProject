@@ -99,6 +99,11 @@ Shader "MoonProject/World/R1Terrain"
             float4 _MoonReachRing;
             half4 _MoonReachRingColor;
 
+            // The lander's blast-swept zone (World's BlastZoneShaderGlobals): xy = centre (world x, z), z = radius,
+            // w = edge band (m). Look: x = albedo lift, y = ray lift, z = ray count, w = ray length (m).
+            float4 _MoonBlastZone;
+            float4 _MoonBlastLook;
+
             // 0 in Earthlight (soft wrapped fill so craters don't go pitch black),
             // 1 in DirectSun (crisp lunar shadow contrast). Driven by SkyController.
             float _MoonSunlitGround;
@@ -340,6 +345,45 @@ Shader "MoonProject/World/R1Terrain"
                 return light.color * (half)(spec * atten);
             }
 
+            float BlastRayHash(float around, float along)
+            {
+                return frac(sin(dot(float2(around, along), float2(12.9898, 78.233))) * 43758.5453);
+            }
+
+            // Value noise round the circle (period = ray count, so the rays close without a seam) and along each ray.
+            float BlastRayNoise(float around, float along, float rays)
+            {
+                float2 cell = floor(float2(around, along));
+                float2 t = frac(float2(around, along));
+                t = t * t * (3.0 - 2.0 * t);
+                float a0 = fmod(cell.x + rays, rays);
+                float a1 = fmod(cell.x + 1.0 + rays, rays);
+                float near = lerp(BlastRayHash(a0, cell.y), BlastRayHash(a1, cell.y), t.x);
+                float far = lerp(BlastRayHash(a0, cell.y + 1.0), BlastRayHash(a1, cell.y + 1.0), t.x);
+                return lerp(near, far, t.y);
+            }
+
+            // The lander's descent engine swept the regolith outward: lighter dust in long rays, fingering out at the
+            // zone's edge (the Apollo sites' halo). 1 = untouched.
+            half BlastSweepTone(float3 positionWS)
+            {
+                float2 fromLander = positionWS.xz - _MoonBlastZone.xy;
+                float radius = length(fromLander);
+                if (_MoonBlastZone.z <= 0.001 || radius > _MoonBlastZone.z + _MoonBlastZone.w)
+                {
+                    return 1.0h;
+                }
+
+                float rays = max(1.0, _MoonBlastLook.z);
+                float around = (atan2(fromLander.y, fromLander.x) * 0.15915494 + 0.5) * rays;
+                float along = radius / max(0.1, _MoonBlastLook.w);
+                float ray = smoothstep(0.2, 0.8, BlastRayNoise(around, along, rays) * 0.65
+                    + BlastRayNoise(around * 2.0, along * 0.5 + 17.0, rays * 2.0) * 0.35);
+                float edge = _MoonBlastZone.z - _MoonBlastZone.w;
+                half swept = 1.0h - (half)smoothstep(edge, _MoonBlastZone.z, radius - (ray - 0.5) * _MoonBlastZone.w);
+                return 1.0h + swept * (half)(_MoonBlastLook.x + _MoonBlastLook.y * (ray * 2.0 - 1.0));
+            }
+
             half4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_INSTANCE_ID(input);
@@ -497,6 +541,8 @@ Shader "MoonProject/World/R1Terrain"
                     half detailStrength = _DetailAlbedoStrength * macroWeight * (0.35h + 0.65h * nearWeight);
                     baseAlbedo *= lerp(1.0h.xxx, regolithCentered, detailStrength);
                 }
+
+                baseAlbedo *= BlastSweepTone(input.positionWS);
 
                 float4 shadowCoord = TransformWorldToShadowCoord(input.positionWS);
                 Light mainLight = GetMainLight(shadowCoord);
