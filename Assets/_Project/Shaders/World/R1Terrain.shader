@@ -249,25 +249,33 @@ Shader "MoonProject/World/R1Terrain"
                             dirLocal.x * rotCosSin.x + dirLocal.y * rotCosSin.y,
                             -dirLocal.x * rotCosSin.y + dirLocal.y * rotCosSin.x);
 
-                        // Concave bowl (u < 1) meeting a soft raised rim cushion (1 <= u < 1.92) at crest u = 1
+                        // Paraboloid concave bowl (u < 0.86) smoothly rounding over the raised rim crest (u = 1.0)
+                        // onto a soft outer ejecta flank (1.0 < u < 1.85). Linear slope (-u) near the center prevents
+                        // any flat central dot or dark bullseye ring.
                         float bowlSlope;
-                        if (u < 1.0)
+                        if (u < 0.86)
                         {
-                            bowlSlope = -sin(u * 3.14159265) * (0.85 + 0.55 * u) * 1.48;
+                            bowlSlope = -u * (1.05 - 0.18 * u);
+                        }
+                        else if (u < 1.0)
+                        {
+                            float tRim = (u - 0.86) / 0.14;
+                            float smoothRim = 1.0 - tRim * tRim * (3.0 - 2.0 * tRim);
+                            bowlSlope = -0.86 * (1.05 - 0.18 * 0.86) * smoothRim;
                         }
                         else
                         {
-                            float w = saturate((u - 1.0) / 0.92);
-                            bowlSlope = sin(w * 3.14159265) * (1.0 - w * 0.45) * 0.78;
+                            float w = saturate((u - 1.0) / 0.85);
+                            bowlSlope = sin(w * 3.14159265) * (1.0 - w * 0.48) * 0.44;
                         }
 
-                        float sizeWeight = lerp(0.65, 1.0, saturate((rad - radMin) / max(radMax - radMin, 1e-3)));
+                        float sizeWeight = lerp(0.60, 1.0, saturate((rad - radMin) / max(radMax - radMin, 1e-3)));
                         normDelta += (half2)(dirWS * (bowlSlope * normalStrength * sizeWeight));
 
-                        // Soft raised rim brightening around u ~ 1.06 and gentle bowl interior shading
-                        float softRim = exp(-(u - 1.06) * (u - 1.06) * 8.5);
+                        // Subtle raised rim brightening around u ~ 1.05 and gentle bowl cavity AO (never dark polka-dot rings)
+                        float softRim = exp(-(u - 1.05) * (u - 1.05) * 9.0);
                         float bowlInterior = saturate(1.0 - u * u);
-                        albedoMod *= (half)(1.0 + (softRim * rimBright - bowlInterior * bowlAo * 0.32) * sizeWeight);
+                        albedoMod *= (half)(1.0 + (softRim * rimBright - bowlInterior * bowlAo * 0.18) * sizeWeight);
                         aoMod *= (half)(1.0 - bowlInterior * bowlAo * sizeWeight);
                     }
                 }
@@ -313,11 +321,11 @@ Shader "MoonProject/World/R1Terrain"
                 return lerp(lerp(a, b, t.x), lerp(c, d, t.x), t.y);
             }
 
-            // Near-to-chase-field craters (0-62 m): irregular clustered small craters + a few medium ones with soft raised rims,
-            // clearly readable from 07's chase camera height, with sparse open stretches between clusters.
+            // Near-to-chase-field craters (0-58 m): irregular clustered small craters + a few medium ones with soft raised rims,
+            // clearly readable from 07's chase camera height, with calm sparse stretches between clusters.
             half4 SampleNearMicroRelief(float2 wp, float camDist)
             {
-                half microFade = 1.0h - (half)smoothstep(28.0, 62.0, camDist);
+                half microFade = 1.0h - (half)smoothstep(26.0, 58.0, camDist);
                 if (microFade <= 0.001h)
                 {
                     return half4(0.0h, 0.0h, 1.0h, 1.0h);
@@ -330,45 +338,45 @@ Shader "MoonProject/World/R1Terrain"
                 // Domain warp and multi-scale clustering so craters group irregularly in pockets and leave sparse open patches
                 float2 warp = float2(
                     BlastNoise(wp * 0.16 + float2(3.7, 11.3)) - 0.5,
-                    BlastNoise(wp * 0.16 + float2(19.1, 7.9)) - 0.5) * 0.36;
-                float c1 = BlastNoise(wp * 0.055 + float2(13.1, 29.7));
-                float c2 = BlastNoise(wp * 0.022 + float2(41.3, 17.9));
-                float c3 = BlastNoise(wp * 0.115 + float2(7.4, 53.1));
-                float clusterField = c1 * 0.48 + c2 * 0.36 + c3 * 0.16;
+                    BlastNoise(wp * 0.16 + float2(19.1, 7.9)) - 0.5) * 0.34;
+                float c1 = BlastNoise(wp * 0.055 + float2(15.4, 23.1));
+                float c2 = BlastNoise(wp * 0.024 + float2(37.8, 11.6));
+                float c3 = BlastNoise(wp * 0.125 + float2(9.2, 47.5));
+                float clusterField = c1 * 0.46 + c2 * 0.34 + c3 * 0.20;
                 float clusterMask = smoothstep(0.28, 0.70, clusterField);
-                float densePocket = smoothstep(0.50, 0.78, clusterField);
+                float densePocket = smoothstep(0.46, 0.76, clusterField);
 
-                // Scale A: Small craters (~1.55 m cells, diameter ~0.18–0.58 m), sparse in open dust (0.08) and clustered in pockets (0.54)
+                // Scale A: Small craters (~1.85 m cells, diameter ~0.18–0.52 m), sparse in open dust (0.08) and clustered in pockets (0.44)
                 AccumulateScatteredCraters2x2(
-                    wp * 0.64 + warp,
+                    wp * 0.54 + warp + float2(6.3, 14.2),
                     float2(1.0, 0.0),
-                    lerp(0.08, 0.54, clusterMask),
-                    0.058, 0.188, 1.75,
-                    1.12, 0.065, 0.11,
+                    lerp(0.08, 0.44, clusterMask),
+                    0.048, 0.138, 1.72,
+                    0.85, 0.044, 0.068,
                     normDelta, albedoMod, aoMod);
 
-                // Scale B: Tightly clustered small secondary pits (~0.98 m rotated cells, diameter ~0.11–0.34 m) inside pockets
+                // Scale B: Clustered tiny secondary pits (~1.05 m rotated cells, diameter ~0.10–0.28 m) inside pockets
                 float2 wpRotA = float2(wp.x * 0.7986 - wp.y * 0.6018, wp.x * 0.6018 + wp.y * 0.7986);
                 half pocketFade = 1.0h - (half)smoothstep(18.0, 42.0, camDist);
                 if (pocketFade > 0.01h)
                 {
                     AccumulateScatteredCraters2x2(
-                        wpRotA * 1.02 + warp * 1.15 + float2(17.3, 31.9),
+                        wpRotA * 0.95 + warp * 1.10 + float2(17.3, 31.9),
                         float2(0.7986, 0.6018),
-                        lerp(0.03, 0.48, densePocket),
-                        0.055, 0.172, 1.85,
-                        0.92 * pocketFade, 0.052 * pocketFade, 0.095 * pocketFade,
+                        lerp(0.03, 0.38, densePocket),
+                        0.044, 0.125, 1.82,
+                        0.70 * pocketFade, 0.035 * pocketFade, 0.054 * pocketFade,
                         normDelta, albedoMod, aoMod);
                 }
 
-                // Scale C: A few medium craters with soft raised rims (~3.7 m rotated cells, diameter ~0.55–1.50 m)
+                // Scale C: A few medium craters with soft raised rims (~4.5 m rotated cells, diameter ~0.55–1.30 m)
                 float2 wpRotB = float2(wp.x * 0.5878 + wp.y * 0.8090, -wp.x * 0.8090 + wp.y * 0.5878);
                 AccumulateScatteredCraters2x2(
-                    wpRotB * 0.27 + warp * 0.55 + float2(23.4, 9.1),
+                    wpRotB * 0.22 + warp * 0.50 + float2(27.8, 13.4),
                     float2(0.5878, -0.8090),
-                    lerp(0.06, 0.30, clusterMask),
-                    0.075, 0.205, 1.55,
-                    1.26, 0.082, 0.135,
+                    lerp(0.06, 0.24, clusterMask),
+                    0.058, 0.140, 1.62,
+                    0.90, 0.052, 0.075,
                     normDelta, albedoMod, aoMod);
 
                 // Soft 3D tyre ruts where 07 drives off the ChargingPad toward the lander and basin.
@@ -441,67 +449,74 @@ Shader "MoonProject/World/R1Terrain"
                 return 1.0h + level * (half)(_MoonBlastHalo.x * halo + _MoonBlastRays.x * ray * share);
             }
 
-            // Evaluates a family of short, discontinuous, broken rocky ledges using a 2D staggered fault-block grid.
-            // Over half of the cells have zero ledge occupancy (pure regolith), active cells span only 6-12 m before
-            // pinching out, adjacent cells have independent vertical fault offsets so they never form continuous contour
-            // lines or dune ripples, and internal vertical cleavage cracks split each outcrop into angular rock blocks.
-            void EvaluateBrokenRockLedgeFamily(
-                float yBedding,
-                float xAlong,
+            // Scatters discrete, short, discontinuous angular broken rocky ledges in a 2x2 cell neighborhood.
+            // Each rock outcrop is an asymmetric stepped rock block (upward-tilted upper bench + steep outward-tilted
+            // rock scarp broken by vertical cleavage joints), with NO dark perimeter ring so it reads as 3D fractured rock.
+            void AccumulateBrokenRockLedges2x2(
+                float2 ledgeCoord,
                 float2 wpRot,
-                float seedOffset,
-                out half riserOut,
-                out half benchOut,
-                out half jointOut)
+                float occupancy,
+                inout half scarpFaceOut,
+                inout half ledgeLipOut,
+                inout half creviceOut)
             {
-                float rowId = floor(yBedding);
-                float f = frac(yBedding);
-
-                // Stagger columns per row so broken ledges never align vertically
-                float xStaggered = xAlong + rowId * 0.57 + seedOffset;
-                float colId = floor(xStaggered);
-                float u = frac(xStaggered);
-
-                float3 h = Hash23(float2(colId + seedOffset * 13.7, rowId + seedOffset * 7.3));
-
-                // Discontinuous occupancy: ~54% of cells are regolith gaps; only ~46% hold a broken rock ledge
-                if (h.z >= 0.46)
+                float2 startCell = floor(ledgeCoord - 0.5);
+                [unroll]
+                for (int iy = 0; iy <= 1; iy++)
                 {
-                    riserOut = 0.0h;
-                    benchOut = 0.0h;
-                    jointOut = 0.0h;
-                    return;
+                    [unroll]
+                    for (int ix = 0; ix <= 1; ix++)
+                    {
+                        float2 cell = startCell + float2(ix, iy);
+                        float3 h = Hash23(cell);
+                        if (h.z >= occupancy)
+                        {
+                            continue;
+                        }
+
+                        // Full 2D random offset in both strike and elevation so ledges stagger organically
+                        float2 jitter = float2(frac(h.x * 13.37 + h.y * 5.19), frac(h.y * 17.73 + h.z * 9.41)) - 0.5;
+                        float2 center = cell + 0.5 + jitter * float2(0.72, 0.80);
+                        float2 d = ledgeCoord - center;
+
+                        // Per-outcrop dip tilt (-9 deg to +9 deg) + angular craggy rock displacement
+                        float tilt = (h.x - 0.5) * 0.30;
+                        float cragA = BlastNoise(wpRot * 0.22 + cell * 3.7) - 0.5;
+                        float cragB = BlastNoise(wpRot * 0.55 + cell * 7.3) - 0.5;
+                        float2 dTilted = float2(d.x + cragA * 0.08, d.y + d.x * tilt + cragA * 0.12 + cragB * 0.08);
+
+                        float radX = lerp(0.22, 0.42, frac(h.y * 9.3));
+                        float uX = dTilted.x / radX;
+                        if (abs(uX) >= 1.0)
+                        {
+                            continue;
+                        }
+
+                        // Blocky trapezoidal horizontal slab envelope broken by sharp vertical cleavage joints
+                        float envX = saturate((1.0 - abs(uX)) * 2.6);
+                        float jointWave = abs(frac(uX * lerp(1.2, 2.2, h.z) + h.x * 3.1 + cragB * 0.35) - 0.5);
+                        half jointBreak = (half)smoothstep(0.05, 0.14, jointWave);
+
+                        float radY = lerp(0.14, 0.26, frac(h.x * 11.7));
+                        float localHalfY = radY * (0.45 + 0.55 * envX);
+                        float uY = dTilted.y / max(localHalfY, 1e-3);
+                        if (abs(uY) >= 1.25)
+                        {
+                            continue;
+                        }
+
+                        // Asymmetric stepped rock profile:
+                        // - Upper shelf/lip (uY in [0.05, 0.95]) tilts upward to catch grazing sunlight
+                        // - Lower steep scarp face (uY in [-0.95, 0.25]) tilts outward/downward as exposed rock
+                        half lip = (half)(smoothstep(0.05, 0.38, uY) * (1.0 - smoothstep(0.55, 1.05, uY)) * envX) * jointBreak;
+                        half scarp = (half)(smoothstep(-0.95, -0.35, uY) * (1.0 - smoothstep(0.05, 0.45, uY)) * envX) * jointBreak;
+                        half jointCrevice = (half)(smoothstep(-0.60, 0.20, uY) * (1.0 - smoothstep(0.20, 0.70, uY)) * envX) * (1.0h - jointBreak);
+
+                        scarpFaceOut = max(scarpFaceOut, scarp);
+                        ledgeLipOut = max(ledgeLipOut, lip);
+                        creviceOut = max(creviceOut, jointCrevice);
+                    }
                 }
-
-                // Short lateral segment within the block (pinches out into regolith at both ends)
-                float uStart = lerp(0.08, 0.22, h.x);
-                float uEnd = lerp(0.76, 0.92, h.y);
-                half lateralSeg = (half)(smoothstep(uStart, uStart + 0.07, u) * (1.0 - smoothstep(uEnd - 0.07, uEnd, u)));
-
-                // Per-block vertical fault offset + jagged rock edge noise so ledges are angular, never smooth waves
-                float edgeJag = (BlastNoise(wpRot * 0.14 + float2(colId * 3.7, rowId * 5.3)) - 0.5) * 0.12;
-                float faultShift = (h.x - 0.5) * 0.34 + edgeJag;
-                float fLocal = f + faultShift;
-
-                float riserBot = lerp(0.18, 0.34, h.y);
-                float riserTop = riserBot + lerp(0.22, 0.36, frac(h.x * 7.13));
-                float benchTop = min(0.92, riserTop + lerp(0.10, 0.18, frac(h.z * 11.3)));
-
-                // Crisp angular step transitions (0.028 width) for sharp fractured rock faces
-                half riser = (half)(smoothstep(riserBot - 0.028, riserBot + 0.028, fLocal)
-                                  * (1.0 - smoothstep(riserTop - 0.028, riserTop + 0.028, fLocal)));
-                half bench = (half)(smoothstep(riserTop - 0.024, riserTop + 0.024, fLocal)
-                                  * (1.0 - smoothstep(benchTop - 0.028, benchTop + 0.028, fLocal)));
-
-                // Internal vertical cleavage joints split each 8-12 m ledge into 2-3 angular rock blocks
-                float jointCoord = u * lerp(2.3, 3.7, frac(h.y * 9.1)) + h.x * 4.1 + edgeJag * 1.8;
-                float crackDist = abs(frac(jointCoord) - 0.5);
-                half jointCrack = (half)(1.0 - smoothstep(0.035, 0.115, crackDist));
-                half blockSolid = 1.0h - jointCrack * 0.78h;
-
-                riserOut = riser * lateralSeg * blockSolid;
-                benchOut = bench * lateralSeg * blockSolid;
-                jointOut = riser * lateralSeg * jointCrack;
             }
 
             // Multi-scale crater decals across BOTH the flat plain and the mountain slopes:
@@ -524,65 +539,65 @@ Shader "MoonProject/World/R1Terrain"
                 float2 warpSmall = float2(
                     BlastNoise(sp * 0.11 + float2(21.7, 5.3)) - 0.5,
                     BlastNoise(sp * 0.11 + float2(8.9, 31.1)) - 0.5);
-                float2 warp = warpLarge * 0.48 + warpSmall * 0.20;
+                float2 warp = warpLarge * 0.45 + warpSmall * 0.18;
 
                 // Irregular spatial clustering: dense clusters in some regions, sparse open regolith in others
-                float clusterA = BlastNoise(sp * 0.026 + float2(7.3, 19.1));
-                float clusterB = BlastNoise(sp * 0.0105 + float2(29.4, 5.7));
-                float clusterC = BlastNoise(sp * 0.058 + float2(43.1, 11.3));
+                float clusterA = BlastNoise(sp * 0.028 + float2(11.3, 24.1));
+                float clusterB = BlastNoise(sp * 0.0115 + float2(33.4, 8.7));
+                float clusterC = BlastNoise(sp * 0.062 + float2(47.1, 15.3));
                 float clusterField = clusterA * 0.46 + clusterB * 0.34 + clusterC * 0.20;
-                float clusterGate = smoothstep(0.28, 0.72, clusterField);
-                float denseGate = smoothstep(0.48, 0.78, clusterField);
+                float clusterGate = smoothstep(0.28, 0.70, clusterField);
+                float denseGate = smoothstep(0.46, 0.76, clusterField);
 
-                // Keep craters visible on both flat plains (1.0) and mountain slopes (0.78)
-                half slopePresence = lerp(1.0h, 0.78h, slopeFactor);
+                // Keep craters clearly visible on both flat plains (1.0) and mountain slopes (0.92)
+                half slopePresence = lerp(1.0h, 0.92h, slopeFactor);
 
                 half2 normDelta = half2(0.0h, 0.0h);
                 half albedoMod = 1.0h;
                 half aoMod = 1.0h;
 
-                // Scale 1 (Small Craters on Plain & Slopes): ~4.4 m warped cells, diameter ~0.48–1.55 m
+                // Scale 1 (Small Craters on Plain & Slopes): ~5.0 m warped cells, diameter ~0.48–1.35 m
                 float2 spRotA = float2(sp.x * 0.7986 - sp.y * 0.6018, sp.x * 0.6018 + sp.y * 0.7986);
-                half fadeSmall = (1.0h - (half)smoothstep(185.0, 340.0, camDist)) * slopePresence;
+                half fadeSmall = (1.0h - (half)smoothstep(190.0, 350.0, camDist)) * slopePresence;
                 if (fadeSmall > 0.01h)
                 {
-                    float occSmall = lerp(0.07, 0.48, clusterGate);
+                    float occSmall = lerp(0.08, 0.44, clusterGate);
                     AccumulateScatteredCraters2x2(
-                        spRotA * 0.225 + warp * 1.05 + float2(13.7, 27.9),
+                        spRotA * 0.198 + warp * 0.95 + float2(15.7, 29.3),
                         float2(0.7986, 0.6018),
-                        occSmall, 0.054, 0.176, 1.70,
-                        1.08 * fadeSmall,
-                        0.068 * fadeSmall, 0.125 * fadeSmall,
+                        occSmall, 0.048, 0.132, 1.72,
+                        0.85 * fadeSmall,
+                        0.044 * fadeSmall, 0.068 * fadeSmall,
                         normDelta, albedoMod, aoMod);
                 }
 
-                // Scale 1B (Clustered Small Slope/Plain Pits): ~2.8 m warped cells, diameter ~0.30–0.95 m, active at 20-210 m
+                // Scale 1B (Clustered Small Slope/Plain Pits): ~3.0 m warped cells, diameter ~0.28–0.80 m, active at 20-230 m
                 float2 spRotC = float2(sp.x * 0.9063 + sp.y * 0.4226, -sp.x * 0.4226 + sp.y * 0.9063);
-                half fadeClusterSmall = (1.0h - (half)smoothstep(155.0, 240.0, camDist)) * slopePresence;
+                half fadeClusterSmall = (1.0h - (half)smoothstep(165.0, 250.0, camDist)) * slopePresence;
                 if (fadeClusterSmall > 0.01h)
                 {
-                    float occCluster = lerp(0.04, 0.44, denseGate);
+                    float occCluster = lerp(0.04, 0.38, denseGate);
                     AccumulateScatteredCraters2x2(
-                        spRotC * 0.355 + warp * 1.25 + float2(31.2, 14.8),
+                        spRotC * 0.33 + warp * 1.10 + float2(31.2, 14.8),
                         float2(0.9063, -0.4226),
-                        occCluster, 0.052, 0.168, 1.80,
-                        0.96 * fadeClusterSmall,
-                        0.058 * fadeClusterSmall, 0.110 * fadeClusterSmall,
+                        occCluster, 0.045, 0.125, 1.80,
+                        0.76 * fadeClusterSmall,
+                        0.038 * fadeClusterSmall, 0.058 * fadeClusterSmall,
                         normDelta, albedoMod, aoMod);
                 }
 
-                // Scale 2 (Medium Craters with Soft Raised Rims): ~10.8 m warped cells, diameter ~1.25–3.6 m
+                // Scale 2 (A Few Medium Craters with Soft Raised Rims): ~12.2 m warped cells, diameter ~1.15–2.9 m
                 float2 spRotB = float2(sp.x * 0.5878 + sp.y * 0.8090, -sp.x * 0.8090 + sp.y * 0.5878);
                 half fadeMed = (1.0h - (half)smoothstep(240.0, 480.0, camDist)) * slopePresence;
                 if (fadeMed > 0.01h)
                 {
-                    float occMed = lerp(0.05, 0.28, smoothstep(0.34, 0.76, clusterB * 0.6 + clusterA * 0.4));
+                    float occMed = lerp(0.045, 0.22, smoothstep(0.34, 0.74, clusterB * 0.6 + clusterA * 0.4));
                     AccumulateScatteredCraters2x2(
-                        spRotB * 0.092 + warp * 0.65 + float2(19.4, 7.2),
+                        spRotB * 0.082 + warp * 0.58 + float2(21.4, 9.2),
                         float2(0.5878, -0.8090),
-                        occMed, 0.062, 0.172, 1.58,
-                        1.15 * fadeMed,
-                        0.078 * fadeMed, 0.145 * fadeMed,
+                        occMed, 0.050, 0.124, 1.65,
+                        0.88 * fadeMed,
+                        0.048 * fadeMed, 0.070 * fadeMed,
                         normDelta, albedoMod, aoMod);
                 }
 
@@ -637,12 +652,12 @@ Shader "MoonProject/World/R1Terrain"
                 // In Earthlight (sunlit == 0), signed normal relief (deltaNdotL) carves both sunlit rims and shadowed bowls
                 // so craters and broken rock ledges read crisply even under broad Earthshine.
                 half earthWrap = saturate(ndotl * 0.84h + 0.16h);
-                half earthRelief = clamp(deltaNdotL * 1.55h, -0.38h, 0.58h);
+                half earthRelief = clamp(deltaNdotL * 1.55h, -0.38h, 0.55h);
                 half earthDiffuse = saturate(pow(earthWrap, 1.15h) * 1.06h + earthRelief);
 
                 // At low sun (sunlit > 0), the 0.5-deg solar disc carves a razor-crisp terminator across ridges, ledges, and craters.
-                half terminatorKnee = smoothstep(-0.005h, 0.030h, ndotl);
-                half grazingContrast = pow(saturate(ndotl + 0.004h), 1.08h) * terminatorKnee;
+                half terminatorKnee = smoothstep(-0.006h, 0.032h, ndotl);
+                half grazingContrast = pow(saturate(ndotl + 0.005h), 1.08h) * terminatorKnee;
 
                 // Lunar opposition / Lommel-Seeliger balance on flat floors while slopes and craters keep crisp relief contrast.
                 half ndotv = max(0.22h, saturate(dot(normalWS, viewDirWS)));
@@ -651,7 +666,7 @@ Shader "MoonProject/World/R1Terrain"
 
                 // Accentuate grazing sunlit ridge crests, crater rims, and rock-ledge lips near the terminator.
                 half terminatorZone = smoothstep(-0.04h, 0.06h, geomNdotL) * (1.0h - smoothstep(0.06h, 0.40h, geomNdotL));
-                half ridgeCrestBoost = saturate(deltaNdotL) * (0.35h + terminatorZone * 0.55h);
+                half ridgeCrestBoost = saturate(deltaNdotL) * (0.35h + terminatorZone * 0.52h);
                 sunDiffuse += ridgeCrestBoost;
 
                 half highlandDiffuse = lerp(earthDiffuse, sunDiffuse, sunlit);
@@ -667,15 +682,15 @@ Shader "MoonProject/World/R1Terrain"
 
                 // Graphic rim-light along convex ridge crests and broken ledge lips
                 half rimGrazing = pow(1.0h - saturate(dot(normalWS, viewDirWS)), 2.2h) * smoothstep(-0.04h, 0.14h, ndotl);
-                half painterlyRidgeStroke = (ridgeCrestMask * smoothstep(-0.02h, 0.10h, ndotl) * 0.30h) + rimGrazing * slopeFactor * 0.16h;
+                half painterlyRidgeStroke = (ridgeCrestMask * smoothstep(-0.02h, 0.10h, ndotl) * 0.28h) + rimGrazing * slopeFactor * 0.16h;
                 half stylizedDiffuse = lerp(highlandDiffuse, painterlyRamp, 0.45h) + painterlyRidgeStroke;
 
                 // Micro-cavity AO self-shadows craters, broken rock ledges, and cleavage joints.
-                half directCavity = lerp(1.0h, microAo, 0.46h + 0.28h * sunlit);
+                half directCavity = lerp(1.0h, microAo, 0.44h + 0.26h * sunlit);
                 half diffuse = stylizedDiffuse * directCavity;
 
-                // Crisp deep lunar shadows in DirectSun (shadowFloor = 0.015) so terminators are high-contrast
-                half shadowFloor = lerp(0.16h, 0.015h, sunlit);
+                // Crisp lunar shadows in DirectSun (shadowFloor = 0.042) so shadowed slopes stay dark while retaining subtle form
+                half shadowFloor = lerp(0.18h, 0.042h, sunlit);
                 half atten = max(light.shadowAttenuation, shadowFloor) * light.distanceAttenuation;
 
                 // Neutralize warm golden-hour / dawn sun tint so lunar regolith always reads as neutral cool grey, never beige-brown
@@ -710,7 +725,7 @@ Shader "MoonProject/World/R1Terrain"
                 half3 vertexLinear = SRGBToLinear(input.color.rgb) * _BaseColor.rgb;
                 half vLuma = dot(vertexLinear, half3(0.2126h, 0.7152h, 0.0722h));
                 half vNorm = smoothstep(0.025h, 0.22h, vLuma);
-                half lunarReflectance = lerp(0.122h, 0.158h, vNorm);
+                half lunarReflectance = lerp(0.124h, 0.158h, vNorm);
 
                 // Cool neutral silver-slate compensation neutralizes post-processing warm split-toning (_splitHighlights / _gain)
                 // so regolith is true neutral cool grey with zero beige-brown cast.
@@ -737,7 +752,7 @@ Shader "MoonProject/World/R1Terrain"
                 // Slope geological structure:
                 // - Gentle slopes and talus chutes hold lighter cool-grey regolith.
                 // - Steep faces expose darker fractured basalt rock.
-                // - Strata appear as BROKEN rocky ledges (short 6-12 m discontinuous faulted segments, never continuous ripples).
+                // - Strata appear as BROKEN rocky ledges (short, discontinuous 2x2 scattered rock outcrops, never continuous contour lines).
                 UNITY_BRANCH
                 if (slopeFactor > 0.005h && hillDetailWeight > 0.005h)
                 {
@@ -754,49 +769,50 @@ Shader "MoonProject/World/R1Terrain"
                         + (BlastNoise(wpRot2 * 0.038 + float2(13.4, 5.8)) - 0.5) * 1.6;
                     float chuteNoise = BlastNoise(float2(chuteAzimuth, wp3.y * 0.012 + 3.7)) * 0.62
                         + BlastNoise(float2(chuteAzimuth * 2.1 + 11.4, wp3.y * 0.028)) * 0.38;
-                    half talusChute = (half)smoothstep(0.44, 0.72, chuteNoise);
+                    half talusChute = (half)smoothstep(0.42, 0.70, chuteNoise);
 
                     // Irregular rocky outcrop patches on steeper faces
-                    float patchNoise = BlastNoise(wpRot1 * 0.032 + float2(wp3.y * 0.025, 11.7)) * 0.60
-                                     + BlastNoise(wpRot2 * 0.075 + float2(19.3, wp3.y * 0.055)) * 0.40;
-                    half rockPatch = (half)smoothstep(0.36, 0.66, patchNoise);
+                    float patchNoise = BlastNoise(wpRot1 * 0.030 + float2(wp3.y * 0.024, 11.7)) * 0.60
+                                     + BlastNoise(wpRot2 * 0.072 + float2(19.3, wp3.y * 0.052)) * 0.40;
+                    half rockPatch = (half)smoothstep(0.34, 0.64, patchNoise);
 
-                    // 2. Broken rocky ledges:
-                    // Predominantly horizontal elevation bedding with low-frequency fault offsets (NO radial slope-parallel tilt)
+                    // 2. Short, discontinuous, staggered broken rocky ledges via 2x2 cell scatter (zero continuous lines)
                     half strataDistFade = 1.0h - (half)smoothstep(220.0, 520.0, camDist);
-                    float faultBroad = (BlastNoise(wpRot1 * 0.0085 + float2(13.7, 29.3)) - 0.5) * 14.0;
-                    float faultMid = (BlastNoise(wpRot2 * 0.022 + float2(41.9, 7.1)) - 0.5) * 5.5;
-                    float yBeddingBase = wp3.y + wp3.x * 0.05 - wp3.z * 0.04 + faultBroad + faultMid;
+                    float faultBroad = (BlastNoise(wpRot1 * 0.012 + float2(13.7, 29.3)) - 0.5) * 14.0;
+                    float faultMid = (BlastNoise(wpRot2 * 0.028 + float2(41.9, 7.1)) - 0.5) * 5.8;
+                    float yBeddingBase = wp3.y + wp3.x * 0.04 - wp3.z * 0.03 + faultBroad + faultMid;
 
-                    // Family A: Major broken rock ledges (~7.5 m vertical spacing, ~13.5 m block length)
-                    half majRiser, majBench, majJoint;
-                    EvaluateBrokenRockLedgeFamily(
-                        yBeddingBase * 0.132,
-                        wpRot1.x * 0.074 + wpRot2.y * 0.025,
+                    float ledgeOccupancy = lerp(0.16, 0.54, saturate((float)rockPatch * 0.65 + (float)steepFaceMask * 0.55));
+
+                    half majScarp = 0.0h, majLip = 0.0h, majCrevice = 0.0h;
+                    // Family A: Major short broken rock ledges (~16 m horizontal cell x ~7.5 m vertical cell -> 5-10 m ledge segments)
+                    AccumulateBrokenRockLedges2x2(
+                        float2(wpRot1.x * 0.062 + wpRot2.y * 0.026 + faultMid * 0.04, yBeddingBase * 0.134),
                         wpRot1,
-                        1.0,
-                        majRiser, majBench, majJoint);
+                        ledgeOccupancy,
+                        majScarp, majLip, majCrevice);
 
-                    // Family B: Secondary broken rock ledges (~4.2 m vertical spacing, ~8.5 m block length)
-                    half minRiser, minBench, minJoint;
-                    EvaluateBrokenRockLedgeFamily(
-                        (yBeddingBase + faultMid * 0.6) * 0.235,
-                        wpRot2.x * 0.118 - wpRot1.y * 0.035,
+                    half minScarp = 0.0h, minLip = 0.0h, minCrevice = 0.0h;
+                    // Family B: Secondary short broken rock ledges (~9.5 m horizontal cell x ~4.4 m vertical cell -> 3-6 m ledge segments)
+                    AccumulateBrokenRockLedges2x2(
+                        float2(wpRot2.x * 0.104 - wpRot1.y * 0.038 + 19.7, (yBeddingBase + faultMid * 0.65) * 0.228 + 7.3),
                         wpRot2,
-                        17.3,
-                        minRiser, minBench, minJoint);
+                        ledgeOccupancy * 0.88,
+                        minScarp, minLip, minCrevice);
 
                     half minorWeight = strataDistFade * 0.78h;
-                    // Ledges emerge on rocky slopes and break up completely inside regolith-filled talus chutes
-                    half ledgeSlopeGate = (half)smoothstep(0.10, 0.48, slopeFactor) * (1.0h - talusChute * 0.78h);
+                    // Ledges crop out on rocky/steep faces and break up inside regolith-filled talus chutes
+                    half ledgeSlopeGate = (half)smoothstep(0.14, 0.48, slopeFactor)
+                        * (half)smoothstep(0.18, 0.58, rockPatch + steepFaceMask * 0.50h)
+                        * (1.0h - talusChute * 0.80h);
 
-                    half terraceRiser = saturate(majRiser + minRiser * minorWeight) * ledgeSlopeGate;
-                    half terraceBench = saturate(majBench + minBench * minorWeight) * ledgeSlopeGate * (1.0h - terraceRiser * 0.80h);
-                    half rockJoint = saturate(majJoint + minJoint * minorWeight) * ledgeSlopeGate;
+                    half terraceRiser = saturate(majScarp + minScarp * minorWeight) * ledgeSlopeGate;
+                    half terraceBench = saturate(majLip + minLip * minorWeight) * ledgeSlopeGate * (1.0h - terraceRiser * 0.40h);
+                    half rockJoint = saturate(majCrevice + minCrevice * minorWeight) * ledgeSlopeGate;
 
-                    // 3. Exposed dark rock mask vs lighter gentle regolith mask
-                    half exposedRockMask = saturate((steepFaceMask * (0.65h + 0.35h * rockPatch) + terraceRiser * 0.85h + slopeFactor * rockPatch * (1.0h - gentleSlopeMask) * 0.45h) * (1.0h - talusChute * 0.65h) * hillDetailWeight);
-                    half gentleRegolithMask = saturate((gentleSlopeMask * 0.75h + talusChute * 0.65h + terraceBench * 0.55h) * (1.0h - terraceRiser) * hillDetailWeight);
+                    // 3. Exposed dark rock mask on steep faces/ledges vs lighter regolith mask on gentle slopes/chutes
+                    half exposedRockMask = saturate((steepFaceMask * (0.76h + 0.24h * rockPatch) + terraceRiser * 0.85h + slopeFactor * rockPatch * (1.0h - gentleSlopeMask) * 0.54h) * (1.0h - talusChute * 0.68h) * hillDetailWeight);
+                    half gentleRegolithMask = saturate((gentleSlopeMask * 0.88h + talusChute * 0.78h) * (1.0h - exposedRockMask * 0.86h) * hillDetailWeight);
 
                     // Triplanar basalt rock texture + normal map on exposed steep rock and broken ledges
                     half3 blendWeights = abs(geomNormalWS);
@@ -808,42 +824,42 @@ Shader "MoonProject/World/R1Terrain"
                     half3 rockAlbZ = SAMPLE_TEXTURE2D(_RockMap, sampler_RockMap, rockUV.xy).rgb;
                     half3 rockTexAlbedo = rockAlbX * blendWeights.x + rockAlbZ * blendWeights.z + SAMPLE_TEXTURE2D(_RockMap, sampler_RockMap, rockUV.xz).rgb * blendWeights.y;
                     half rockTexLuma = dot(rockTexAlbedo, half3(0.2126h, 0.7152h, 0.0722h));
-                    half rockTexDetail = clamp(rockTexLuma / 0.48h, 0.72h, 1.28h);
+                    half rockTexDetail = clamp(rockTexLuma / 0.48h, 0.74h, 1.26h);
 
-                    half rockBumpScale = _RockBumpScale * (0.35h + 0.65h * exposedRockMask) * hillDetailWeight;
+                    half rockBumpScale = _RockBumpScale * (0.40h + 0.60h * exposedRockMask) * hillDetailWeight;
                     half3 rockNormX = UnpackNormalScale(SAMPLE_TEXTURE2D(_RockBumpMap, sampler_RockBumpMap, rockUV.zy), rockBumpScale);
                     half3 rockNormZ = UnpackNormalScale(SAMPLE_TEXTURE2D(_RockBumpMap, sampler_RockBumpMap, rockUV.xy), rockBumpScale);
                     half2 triplanarRockXY = rockNormX.xy * blendWeights.x + rockNormZ.xy * blendWeights.z;
 
                     // Angular procedural rock-cleavage facet normals on outcrops and ledges
-                    float rEps = 0.42;
-                    float rH0 = (BlastNoise(wpRot1 * 0.15 + float2(wp3.y * 0.09, 3.1)) - 0.5) * 0.60
-                              + (BlastNoise(wpRot2 * 0.36 + float2(11.7, wp3.y * 0.21)) - 0.5) * 0.40;
-                    float rHx = (BlastNoise((wpRot1 + float2(rEps, 0.0)) * 0.15 + float2(wp3.y * 0.09, 3.1)) - 0.5) * 0.60
-                              + (BlastNoise((wpRot2 + float2(rEps, 0.0)) * 0.36 + float2(11.7, wp3.y * 0.21)) - 0.5) * 0.40;
-                    float rHz = (BlastNoise((wpRot1 + float2(0.0, rEps)) * 0.15 + float2(wp3.y * 0.09, 3.1)) - 0.5) * 0.60
-                              + (BlastNoise((wpRot2 + float2(0.0, rEps)) * 0.36 + float2(11.7, wp3.y * 0.21)) - 0.5) * 0.40;
-                    half2 rockFractureXY = half2(rHx - rH0, rHz - rH0) * (2.65h * (0.30h * slopeFactor + 0.70h * exposedRockMask) * hillDetailWeight) + triplanarRockXY * 0.65h;
+                    float rEps = 0.40;
+                    float rH0 = (BlastNoise(wpRot1 * 0.16 + float2(wp3.y * 0.10, 3.1)) - 0.5) * 0.60
+                              + (BlastNoise(wpRot2 * 0.38 + float2(11.7, wp3.y * 0.22)) - 0.5) * 0.40;
+                    float rHx = (BlastNoise((wpRot1 + float2(rEps, 0.0)) * 0.16 + float2(wp3.y * 0.10, 3.1)) - 0.5) * 0.60
+                              + (BlastNoise((wpRot2 + float2(rEps, 0.0)) * 0.38 + float2(11.7, wp3.y * 0.22)) - 0.5) * 0.40;
+                    float rHz = (BlastNoise((wpRot1 + float2(0.0, rEps)) * 0.16 + float2(wp3.y * 0.10, 3.1)) - 0.5) * 0.60
+                              + (BlastNoise((wpRot2 + float2(0.0, rEps)) * 0.38 + float2(11.7, wp3.y * 0.22)) - 0.5) * 0.40;
+                    half2 rockFractureXY = half2(rHx - rH0, rHz - rH0) * (2.80h * (0.28h * slopeFactor + 0.72h * exposedRockMask) * hillDetailWeight) + triplanarRockXY * 0.70h;
 
-                    // Strong 3D stepped rock-ledge normal bevels: cliff risers tilt sharply outward/downward, benches tilt upward
+                    // 3D stepped rock-ledge normal bevels: scarp faces tilt outward/downward, upper lips tilt upward to catch sunlight
                     half strataFadeWeight = lerp(0.35h, 1.0h, strataDistFade) * hillDetailWeight;
                     half3 horizOutward = SafeNormalize(float3(geomNormalWS.x, 0.0, geomNormalWS.z));
                     half3 ledgeNormalOffset = (
-                        horizOutward * (terraceRiser * 0.78h - terraceBench * 0.42h) +
-                        half3(0.0h, terraceBench * 0.88h - terraceRiser * 0.72h, 0.0h) -
-                        tangentWS * (rockJoint * 0.55h)
-                    ) * ( saturate(slopeFactor * 1.35h) * strataFadeWeight );
+                        horizOutward * (terraceRiser * 0.78h - terraceBench * 0.36h) +
+                        half3(0.0h, terraceBench * 0.86h - terraceRiser * 0.62h, 0.0h) -
+                        tangentWS * (rockJoint * 0.42h)
+                    ) * (saturate(slopeFactor * 1.35h) * strataFadeWeight);
 
-                    // Clear tonal separation: lighter regolith on gentle slopes/benches vs darker exposed rock on steep faces/risers
+                    // Clear geological tonal contrast: lighter regolith on gentle slopes vs darker exposed rock on steep faces & broken ledges
                     half slopeAlbedoMod = 1.0h;
-                    slopeAlbedoMod = lerp(slopeAlbedoMod, 1.18h, gentleRegolithMask);
-                    slopeAlbedoMod = lerp(slopeAlbedoMod, 0.56h * rockTexDetail, exposedRockMask);
-                    slopeAlbedoMod = lerp(slopeAlbedoMod, 0.44h * rockTexDetail, terraceRiser * strataFadeWeight);
-                    slopeAlbedoMod = lerp(slopeAlbedoMod, 1.24h, terraceBench * strataFadeWeight * 0.85h);
-                    slopeAlbedoMod = lerp(slopeAlbedoMod, 0.36h, rockJoint * strataFadeWeight * 0.85h);
+                    slopeAlbedoMod = lerp(slopeAlbedoMod, 1.20h, gentleRegolithMask);
+                    slopeAlbedoMod = lerp(slopeAlbedoMod, 0.58h * rockTexDetail, exposedRockMask);
+                    slopeAlbedoMod = lerp(slopeAlbedoMod, 0.64h * rockTexDetail, terraceRiser * strataFadeWeight);
+                    slopeAlbedoMod = lerp(slopeAlbedoMod, 1.08h, terraceBench * strataFadeWeight * 0.65h);
+                    slopeAlbedoMod = lerp(slopeAlbedoMod, 0.56h * rockTexDetail, rockJoint * strataFadeWeight * 0.65h);
 
                     // Cool neutral slate-basalt tint on dark exposed rock (never warm brown)
-                    half3 darkRockTint = lerp(half3(1.0h, 1.0h, 1.0h), half3(0.88h, 0.94h, 1.06h), saturate(exposedRockMask * 0.75h + terraceRiser * 0.50h));
+                    half3 darkRockTint = lerp(half3(1.0h, 1.0h, 1.0h), half3(0.89h, 0.94h, 1.05h), saturate(exposedRockMask * 0.70h + terraceRiser * 0.45h));
 
                     half3 dNdx = ddx(geomNormalWS);
                     half3 dNdy = ddy(geomNormalWS);
@@ -851,7 +867,7 @@ Shader "MoonProject/World/R1Terrain"
                     half ridgeRib = (half)smoothstep(0.45, 0.82, 1.0 - chuteNoise);
 
                     half heightCrest = saturate((half)((wp3.y - 18.0) / 55.0));
-                    ridgeCrestMask = saturate((geomCurvature * 0.50h + ridgeRib * 0.35h + terraceBench * 0.55h * strataFadeWeight) * (0.45h + 0.55h * heightCrest) * slopeFactor) * hillDetailWeight;
+                    ridgeCrestMask = saturate((geomCurvature * 0.50h + ridgeRib * 0.35h + terraceBench * 0.45h * strataFadeWeight) * (0.45h + 0.55h * heightCrest) * slopeFactor) * hillDetailWeight;
 
                     normalWS = normalize(
                         geomNormalWS +
@@ -860,9 +876,9 @@ Shader "MoonProject/World/R1Terrain"
                         bitangentWS * rockFractureXY.y);
 
                     baseAlbedo *= slopeAlbedoMod * darkRockTint;
-                    half strataCavityAo = lerp(1.0h, 0.52h, saturate(terraceRiser * 0.75h + rockJoint * 0.95h) * strataFadeWeight);
-                    microAo = min(microAo, min(lerp(1.0h, 0.78h, exposedRockMask * (1.0h - terraceBench)), strataCavityAo));
-                    smoothness = max(smoothness, exposedRockMask * 0.085h);
+                    half strataCavityAo = lerp(1.0h, 0.72h, saturate(terraceRiser * 0.45h + rockJoint * 0.75h) * strataFadeWeight);
+                    microAo = min(microAo, min(lerp(1.0h, 0.82h, exposedRockMask * (1.0h - terraceBench)), strataCavityAo));
+                    smoothness = max(smoothness, exposedRockMask * 0.080h);
                 }
 
                 // Multi-scale regolith detail normal and near-to-chase-field crater relief
@@ -886,7 +902,7 @@ Shader "MoonProject/World/R1Terrain"
                     half3 farNormal = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, uvFar), macroBumpStrength * 0.80h);
                     half3 midNormal = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, uvMid), 0.44h * midDetailWeight * slopeNormalBoost);
 
-                    // Evaluate near-to-chase-field craters (0-62 m) without double-multiplying by nearWeight
+                    // Evaluate near-to-chase-field craters (0-58 m) without double-multiplying by nearWeight
                     half4 microRelief = SampleNearMicroRelief(wp, camDist);
                     baseAlbedo *= microRelief.z;
                     microAo = min(microAo, microRelief.w);
@@ -958,11 +974,10 @@ Shader "MoonProject/World/R1Terrain"
                     half ambientAo = microAo;
                 #endif
 
-                // Sky-dome / Earthshine directional normal relief on slopes and craters so upward/sunward faces catch light
-                // and steep cliff risers/crevices/bowls self-shadow.
+                // Subtle sky-dome / Earthshine directional normal relief so craters and ledges read cleanly without glowing bars in shadow
                 half deltaNdotLAmb = dot(normalWS, mainLight.direction) - dot(geomNormalWS, mainLight.direction);
-                half craterAmbRelief = clamp(1.0h + deltaNdotLAmb * 0.55h, 0.64h, 1.28h);
-                half skyLedgeRelief = lerp(craterAmbRelief, clamp(1.0h + (normalWS.y - geomNormalWS.y) * 1.65h + deltaNdotLAmb * 0.45h - (1.0h - microAo) * 0.55h, 0.48h, 1.42h), slopeFactor * 0.88h);
+                half craterAmbRelief = clamp(1.0h + deltaNdotLAmb * 0.42h, 0.72h, 1.22h);
+                half skyLedgeRelief = lerp(craterAmbRelief, clamp(1.0h + (normalWS.y - geomNormalWS.y) * 0.65h + deltaNdotLAmb * 0.35h - (1.0h - microAo) * 0.35h, 0.72h, 1.18h), slopeFactor * 0.80h);
                 half3 rawSH = SampleSH(normalWS);
                 half shLuma = dot(rawSH, half3(0.2126h, 0.7152h, 0.0722h));
                 half3 coolSH = lerp(rawSH, shLuma * half3(0.90h, 0.97h, 1.10h), 0.80h);
