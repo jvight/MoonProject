@@ -680,7 +680,7 @@
         },
         {
             "key": "next.v2.scan_lander",
-            "text": "Scan the lander's cargo for a blueprint."
+            "text": "Scan the two parts in the open crate by the lander."
         },
         {
             "key": "next.v2.collect_parts",
@@ -713,6 +713,10 @@
         {
             "key": "next.v2.build_battery_bank",
             "text": "Night is coming. Build a battery bank."
+        },
+        {
+            "key": "next.v2.move_battery_bank",
+            "text": "Move the battery bank closer to the pad."
         },
         {
             "key": "next.v2.scan_tower",

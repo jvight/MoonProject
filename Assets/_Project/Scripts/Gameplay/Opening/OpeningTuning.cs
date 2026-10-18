@@ -36,12 +36,13 @@ namespace MoonProject.Gameplay
         [Tooltip("The open crate whose cargo 07 scans for the pad's blueprint (B3) and then collects (B4).")]
         [SerializeField] private string _cargoCrate = "supply.lander.open";
 
-        [Tooltip("Where the charging pad's fragments lie in the cargo crate's frame (x right, y up, z its front): " +
-                 "Scan_1..N in order, each on its fragment, so the scan draws on a real mesh.")]
+        [Tooltip("Where the charging pad's fragments lie in the cargo crate's frame (x right, y up, z its front), " +
+                 "in metres from its foot whatever its scale: Scan_1..N in order, each on its fragment, so the scan " +
+                 "draws on a real mesh. They rest on top of the crate's packed contents, showing above its rim.")]
         [SerializeField] private Vector3[] _cargoScanPoints =
         {
-            new Vector3(-0.12f, 0.3f, 0.08f),
-            new Vector3(0.12f, 0.3f, 0.08f),
+            new Vector3(-0.27f, 0.58f, 0f),
+            new Vector3(0.28f, 0.58f, 0f),
         };
 
         [Tooltip("Art's pad fragments lying in the cargo crate, one per scan point in order (PadFragment_CoilPlate, " +
@@ -57,10 +58,30 @@ namespace MoonProject.Gameplay
                  "to it).")]
         [Range(1f, 8f)] [SerializeField] private float _collectReach = 3.5f;
 
-        [Tooltip("Metres from 07 within which an open crate that still holds something shows Art's soft warm rim " +
-                 "glow (none further: the lander's beacon and the cable lead 07 there, and loot never glows across " +
-                 "the basin).")]
-        [Range(5f, 60f)] [SerializeField] private float _crateRimReach = 28f;
+        [Tooltip("Metres from 07 within which an open crate that still holds something starts to show Art's soft " +
+                 "warm rim glow (none further: the lander's beacon and the cable lead 07 there, and loot never glows " +
+                 "across the basin).")]
+        [Range(5f, 60f)] [SerializeField] private float _crateRimReach = 30f;
+
+        [Tooltip("Metres inside the rim's reach over which its glow comes up to full as 07 drives in.")]
+        [Range(1f, 20f)] [SerializeField] private float _crateRimBand = 8f;
+
+        [Tooltip("Seconds the rim glow takes to warm fully or cool off (once the crate is emptied).")]
+        [Range(0.1f, 4f)] [SerializeField] private float _crateRimFadeSeconds = 1.2f;
+
+        [Tooltip("Times Art's rim glow strength the rim shows at full (a soft warm line that reads in the eclipse " +
+                 "from the cable, never a beacon).")]
+        [Range(0.5f, 4f)] [SerializeField] private float _crateRimStrength = 2.5f;
+
+        [Tooltip("Intensity of the small warm light the rim casts into the crate at full glow (the rim line " +
+                 "alone sits below the crate's walls from 07's camera).")]
+        [Range(0f, 8f)] [SerializeField] private float _crateRimLightIntensity = 2f;
+
+        [Tooltip("Metres the rim's warm light reaches: the crate and what lies in it, never the ground around.")]
+        [Range(0.5f, 5f)] [SerializeField] private float _crateRimLightRange = 1.6f;
+
+        [Tooltip("Metres above the rim the warm light hangs, so it washes the parts on top and the inner walls.")]
+        [Range(0f, 2f)] [SerializeField] private float _crateRimLightLift = 0.5f;
 
         [Header("The recovery protocol (§2)")]
         [Tooltip("The rows after Power: their lamps, dark through the opening.")]
@@ -77,8 +98,8 @@ namespace MoonProject.Gameplay
                 new Recipe(3, 1, 0)),
             new SupplyCache("supply.midway", "place.midway", new Vector3(1.5f, 0f, 0f), -20f, "Crate_S",
                 new Recipe(2, 1, 0)),
-            new SupplyCache("supply.lander.open", OpeningField.LanderPortFrame, new Vector3(2.2f, 0f, -1.8f), 180f,
-                ContainerKinds.CrateMOpen, new Recipe(2, 1, 0), true, new[] { "part.igniter", "part.icecore" }),
+            new SupplyCache("supply.lander.open", OpeningField.LanderPortFrame, new Vector3(4.2f, 0f, -1.4f), -135f,
+                ContainerKinds.CrateMOpen, new Recipe(2, 1, 0), true, new[] { "part.igniter", "part.icecore" }, 2f),
             new SupplyCache("supply.habitat.reel", "HabitatModules", new Vector3(-3f, 0f, -6f), 207f, "Crate_M",
                 new Recipe(6, 4, 0)),
             new SupplyCache("supply.workshop.a", "KenjiWorkshop", new Vector3(-2.5f, 0f, -5f), -140f, "Crate_S",
@@ -112,6 +133,18 @@ namespace MoonProject.Gameplay
         public string IgniterPart => _igniterPart;
         public float CollectReach => _collectReach;
         public float CrateRimReach => _crateRimReach;
+
+        public float CrateRimBand => _crateRimBand;
+
+        public float CrateRimFadeSeconds => _crateRimFadeSeconds;
+
+        public float CrateRimStrength => _crateRimStrength;
+
+        public float CrateRimLightIntensity => _crateRimLightIntensity;
+
+        public float CrateRimLightRange => _crateRimLightRange;
+
+        public float CrateRimLightLift => _crateRimLightLift;
         public RecoveryLamps RecoveryLamps => _recoveryLamps;
     }
 }

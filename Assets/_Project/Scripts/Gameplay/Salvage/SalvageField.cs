@@ -43,6 +43,7 @@ namespace MoonProject.Gameplay
         private InputReader _input;
         private BeamWork _beamWork;
         private Cutter _cutter;
+        private ScanField _scans;
         private SalvageSite _firedAt;
         private float _firedTime = float.NegativeInfinity;
         private float _slideLeft;
@@ -158,6 +159,27 @@ namespace MoonProject.Gameplay
 
         /// <summary>07's scan lens emitter: the scan beam and ribbon connect to it.</summary>
         public Vector3 ScanEmitter => _rig.ScanOrigin.position;
+
+        public bool TryScanContact(Vector3 lens, out Vector3 point, out Vector3 normal)
+        {
+            if (_scans == null)
+            {
+                point = lens;
+                normal = Vector3.up;
+                return false;
+            }
+
+            return _scans.TryBeamContact(lens, out point, out normal);
+        }
+
+        /// <summary>The cut's and the scan's feel kit (tests read where its beams end).</summary>
+        internal FeelVfx Feel => _feel;
+
+        /// <summary>The scans whose beam the feel kit draws (they are made after this field).</summary>
+        internal void ConnectScans(ScanField scans)
+        {
+            _scans = scans ?? throw new ArgumentNullException(nameof(scans));
+        }
 
         /// <summary>The aimed piece's CutPoint, the space its cut line lives in (it tumbles with the piece).</summary>
         public Transform CutPiece => Aimed != null ? Aimed.CutPoint : null;

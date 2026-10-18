@@ -65,6 +65,9 @@ namespace MoonProject.Art.Editor
 
                     CaptureDeliverable7_OpenCrateAndFragments(capturesDir, false);
                     CaptureDeliverable7_OpenCrateAndFragments(capturesDir, true);
+
+                    CaptureDeliverable8_CableKit(capturesDir, false);
+                    CaptureDeliverable8_CableKit(capturesDir, true);
                 }
                 finally
                 {
@@ -76,6 +79,39 @@ namespace MoonProject.Art.Editor
                 foreach (string png in Directory.GetFiles(capturesDir, "r1props_*.png"))
                 {
                     File.Copy(png, Path.Combine(batchOutDir, Path.GetFileName(png)), true);
+                }
+
+                return true;
+            });
+        }
+
+        /// <summary>
+        /// Dedicated fast batch entry point for capturing the 6-piece R1 ground power-cable kit
+        /// (<c>Cable_Straight_2m</c>, <c>Cable_Bend_45</c>, <c>Cable_Bend_90</c>, <c>Cable_BrokenEnd</c>,
+        /// <c>Cable_Plug</c>, <c>Cable_Splice_Box</c>) laid out next to Rover 07 in Day C and in Eclipse light:
+        /// <c>python tools/unity_batch.py exec --project . --method MoonProject.Art.Editor.R1StoryPropsCapture.CaptureCableKit</c>
+        /// </summary>
+        public static void CaptureCableKit()
+        {
+            BatchRunner.Run(nameof(CaptureCableKit), args =>
+            {
+                AssetDatabase.Refresh();
+                R1MaterialLibrary.BuildMaterials();
+                R1ModelBuilder.Build();
+
+                string capturesDir = Path.GetFullPath("Logs/captures");
+                Directory.CreateDirectory(capturesDir);
+
+                bool prevAsync = ShaderUtil.allowAsyncCompilation;
+                ShaderUtil.allowAsyncCompilation = false;
+                try
+                {
+                    CaptureDeliverable8_CableKit(capturesDir, false);
+                    CaptureDeliverable8_CableKit(capturesDir, true);
+                }
+                finally
+                {
+                    ShaderUtil.allowAsyncCompilation = prevAsync;
                 }
 
                 return true;
@@ -386,6 +422,73 @@ namespace MoonProject.Art.Editor
                     36f,
                     bg,
                     Path.Combine(outDir, $"r1props_10_crate_m_open_3m_{suffix}.png"));
+            }
+            finally
+            {
+                temp.Dispose();
+            }
+        }
+
+        private static void CaptureDeliverable8_CableKit(string outDir, bool nightEclipse)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(temp, nightEclipse);
+                if (!nightEclipse && RenderSettings.sun != null)
+                {
+                    RenderSettings.sun.intensity = 2.0f;
+                    RenderSettings.sun.transform.rotation = Quaternion.Euler(26f, -32f, 0f);
+                }
+
+                // Rover 07 positioned on the right at (1.35, 0, 0.20) in 3/4 front view (yaw -138 deg) facing the cable kit:
+                // its Day C shadow falls off-screen to +X while its CRT face and headlamps point across the kit.
+                GameObject rover = SpawnRover07(temp, new Vector3(1.35f, 0f, 0.20f), -138f, nightEclipse);
+
+                // DeadChargingPost on the front-left (-1.35, 0, -0.55) so its shadow falls behind the kit (-Z), with Cable_Plug seated
+                SpawnProp(R1StoryPropsBuilder.DeadChargingPostPrefabPath, new Vector3(-1.35f, 0f, 0.55f), 165f, temp);
+                SpawnProp(R1StoryPropsBuilder.CablePlugPrefabPath, new Vector3(-1.14f, 0f, -0.24f), -15f, temp);
+
+                // Sunlit foreground layout of all 6 cable kit pieces next to Rover 07:
+                // 1. Cable_Straight_2m running across the front showing regolith sinkage, top dust layer, and centered stake
+                SpawnProp(R1StoryPropsBuilder.CableStraight2mPrefabPath, new Vector3(-0.05f, 0f, -0.68f), 90f, temp);
+
+                // 2. Cable_Bend_45 and Cable_Bend_90 flanking the upper row with their ground stakes
+                SpawnProp(R1StoryPropsBuilder.CableBend45PrefabPath, new Vector3(-0.45f, 0f, 0.12f), 35f, temp);
+                SpawnProp(R1StoryPropsBuilder.CableBend90PrefabPath, new Vector3(0.28f, 0f, 0.15f), -45f, temp);
+
+                // 3. Cable_Plug in foreground-left showing the cream/orange handle, grey locking collar, and copper barrel + 3 pins
+                SpawnProp(R1StoryPropsBuilder.CablePlugPrefabPath, new Vector3(-0.52f, 0f, -0.32f), 125f, temp);
+
+                // 4. Cable_Splice_Box in foreground-center showing dusty cream/orange housing, gold foil, and dead dark-glass lamp
+                SpawnProp(R1StoryPropsBuilder.CableSpliceBoxPrefabPath, new Vector3(0.06f, 0f, -0.28f), 78f, temp);
+
+                // 5. Cable_BrokenEnd in foreground-right showing cracked sleeve and splayed R1_Copper strands
+                SpawnProp(R1StoryPropsBuilder.CableBrokenEndPrefabPath, new Vector3(0.65f, 0f, -0.28f), -135f, temp);
+
+                if (nightEclipse)
+                {
+                    AddRoverHeadlamps(rover.transform, new Vector3(0.02f, 0.12f, -0.32f), temp);
+                }
+
+                string suffix = nightEclipse ? "eclipse" : "dayC";
+
+                // 1. Full kit overview next to Rover 07
+                RenderShot(
+                    new Vector3(0.05f, 1.52f, -2.75f),
+                    new Vector3(0.05f, 0.30f, -0.15f),
+                    46f,
+                    bg,
+                    Path.Combine(outDir, $"r1props_cable_kit_{suffix}.png"));
+
+                // 2. Close-up detail shot of Cable_Plug, Cable_Splice_Box, Cable_BrokenEnd, and staked Cable_Straight_2m
+                RenderShot(
+                    new Vector3(0.04f, 0.88f, -1.65f),
+                    new Vector3(0.05f, 0.12f, -0.32f),
+                    40f,
+                    bg,
+                    Path.Combine(outDir, $"r1props_cable_kit_detail_{suffix}.png"));
             }
             finally
             {

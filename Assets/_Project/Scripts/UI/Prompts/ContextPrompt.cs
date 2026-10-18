@@ -96,13 +96,14 @@ namespace MoonProject.UI
 
         /// <param name="deltaTime">Unscaled seconds since the last tick.</param>
         /// <param name="gateOpen">False while something else has the player's attention.</param>
+        /// <param name="slotGranted">The guidance slot lets the chip show (the dwell runs without it).</param>
         /// <param name="primary">The gameplay's most relevant action right now.</param>
         /// <param name="device">The active device, for the glyph.</param>
         /// <param name="panelSize">Size of the UI panel (the screen in panel units).</param>
-        public void Tick(float deltaTime, bool gateOpen, InteractionHint primary, InputDeviceKind device,
-            Vector2 panelSize)
+        public void Tick(float deltaTime, bool gateOpen, bool slotGranted, InteractionHint primary,
+            InputDeviceKind device, Vector2 panelSize)
         {
-            _director.Step(deltaTime, gateOpen, primary, _reveal.IsHidden);
+            _director.Step(deltaTime, gateOpen, primary, _reveal.IsHidden, slotGranted);
             PromptEntry entry = _director.Entry;
             if (entry != null)
             {

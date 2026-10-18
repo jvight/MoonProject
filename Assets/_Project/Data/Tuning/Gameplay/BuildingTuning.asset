@@ -21,5 +21,14 @@ MonoBehaviour:
   _apronGlowFadeSeconds: 0.8
   _ghostAheadMetres: 4.5
   _apronSnapRadius: 3
+  _settleThumpMeters: 0.042
+  _settleDustRingCount: 18
+  _linkHeight: 0.6
+  _linkSag: 0.35
+  _linkWidth: 0.05
+  _linkColor: {r: 1, g: 0.62, b: 0.25, a: 0.9}
+  _looseLength: 1.2
+  _looseColor: {r: 0.55, g: 0.5, b: 0.46, a: 0.75}
+  _loosePlugWidth: 0.14
   _startingKnownIds: []
   _playtestUnlockedIds: []

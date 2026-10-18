@@ -421,15 +421,16 @@ namespace MoonProject.Gameplay.Tests
                 battery.StoreWattHours,
                 battery.ConnectionRadius,
                 storedWattHours: 240f));
+            // The mast stands past the bank's own reach: only a source or a pylon can bring it into the bank's grid.
             grid.AddNode(new PowerNode(
                 2,
-                new Vector3(3f, 0f, 0f),
+                new Vector3(battery.ConnectionRadius + 2f, 0f, 0f),
                 mast.ProduceWatts,
                 mast.ConsumeWatts,
                 mast.StoreWattHours,
                 mast.ConnectionRadius));
 
-            Assert.IsFalse(grid.AreConnected(1, 2), "Battery bank without a source or pylon does not form a grid.");
+            Assert.IsFalse(grid.AreConnected(1, 2), "A consumer past the bank's reach is not in its grid.");
             grid.Step(PowerGrid.SecondsPerHour * 0.5f, sunlight01: 0f);
             Assert.AreEqual(0f, grid.GetSupplyRatio(2), 1e-4f, "Consumer next to isolated battery receives 0 supply.");
             Assert.AreEqual(240f, grid.GetStoredWattHours(1), 1e-4f, "Isolated battery does not discharge.");
@@ -1154,6 +1155,48 @@ namespace MoonProject.Gameplay.Tests
             finally
             {
                 Object.DestroyImmediate(matCatalog);
+            }
+        }
+
+        [Test]
+        public void ALiveBuild_IsPrintedInPlace_ItsLayerLineRising_AndItsGuideGoesOnceItStands()
+        {
+            Shader shader = Shader.Find("Universal Render Pipeline/Lit");
+            Assert.IsNotNull(shader);
+            var validHolo = new Material(shader);
+            var invalidHolo = new Material(shader);
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                GameplayAssetPaths.RuntimeStructurePrefab(StructureIds.ChargingPad));
+            Assert.IsNotNull(prefab);
+            GameObject pad = Object.Instantiate(prefab);
+            try
+            {
+                Assert.IsTrue(pad.TryGetComponent(out StructureView view));
+                Assert.IsTrue(view.Initialize(validHolo, invalidHolo));
+                view.SetPlacedState(0f, instant: true);
+                view.ConfigureLiveBuild(true, _tuning);
+                view.SetPlacedState(0.10f, instant: false);
+                float y10 = view.GetActiveWeldPoint().y;
+                view.SetPlacedState(0.50f, instant: false);
+                float y50 = view.GetActiveWeldPoint().y;
+                view.SetPlacedState(0.90f, instant: false);
+                float y90 = view.GetActiveWeldPoint().y;
+                Assert.Greater(y50, y10, "the layer line the weld rides rises with the print (10% -> 50%)");
+                Assert.Greater(y90, y50, "the layer line the weld rides rises with the print (50% -> 90%)");
+
+                Transform guide = pad.transform.Find("PrintLayerGuide");
+                Assert.IsNotNull(guide, "the print guide's bar rides the layer line");
+                Assert.IsTrue(guide.gameObject.activeSelf);
+
+                view.SetPlacedState(1f, instant: false);
+                Assert.IsFalse(guide.gameObject.activeSelf, "the guide is gone once the structure stands");
+                Assert.IsTrue(view.LampsLit);
+            }
+            finally
+            {
+                Object.DestroyImmediate(pad);
+                Object.DestroyImmediate(validHolo);
+                Object.DestroyImmediate(invalidHolo);
             }
         }
     }

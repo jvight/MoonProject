@@ -267,7 +267,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return CutTheCrates("HabitatModules", "the habitat's cable reel");
             yield return DriveTo(RuinsGate(), 3f, "out of the Lumen ruins");
             yield return Build(StructureIds.BatteryBank, pad + Vector3.left * BaseSpacing, "B9: the battery bank");
-            yield return UntilReached(OpeningMilestone.NightReady, "night-ready: the bank holds charge");
+            yield return UntilReached(OpeningMilestone.NightReady, "night-ready: the bank is built and wired to the pad");
             yield return TheFirstNightfall();
             yield return ExpectLine(OpeningKeys.ScanTower, "B11: after nightfall");
             yield return CutTheCrates("RadioTower", "the tower's dish-frame panels");

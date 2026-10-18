@@ -27,6 +27,7 @@ namespace MoonProject.World.Editor
 
         /// <summary>The small halo each cable marker lamp blooms with as the Begin wave passes.</summary>
         public const string CableMarkerHaloMaterial = GeneratedRoot + "/M_CableMarkerHalo.mat";
+        public const string CableTearSparkMaterial = GeneratedRoot + "/M_CableTearSpark.mat";
         public const string SkyShader = "Assets/_Project/Shaders/World/LofiSky.shader";
         public const string EarthShader = "Assets/_Project/Shaders/World/LofiEarth.shader";
         public const string GroundShader = "Assets/_Project/Shaders/World/R1Terrain.shader";
@@ -55,8 +56,11 @@ namespace MoonProject.World.Editor
         /// <summary>Art's R1 story props for the opening (Generated/Art/R1/Models/Props, opening v2 §4).</summary>
         public const string R1PropsFolder = "Assets/_Project/Generated/Art/R1/Models/Props/";
         public const string DeadChargingPostPrefab = R1PropsFolder + "DeadChargingPost.prefab";
-        public const string GroundCableSegmentPrefab = R1PropsFolder + "GroundCableSegment.prefab";
-        public const string GroundCableEndPrefab = R1PropsFolder + "GroundCableEnd.prefab";
+        public const string CableStraightPrefab = R1PropsFolder + "Cable_Straight_2m.prefab";
+        public const string CableBend45Prefab = R1PropsFolder + "Cable_Bend_45.prefab";
+        public const string CableBrokenEndPrefab = R1PropsFolder + "Cable_BrokenEnd.prefab";
+        public const string CablePlugPrefab = R1PropsFolder + "Cable_Plug.prefab";
+        public const string CableSpliceBoxPrefab = R1PropsFolder + "Cable_Splice_Box.prefab";
         public const string LanderServicePortPrefab = R1PropsFolder + "LanderServicePort.prefab";
         public const string LanderBeaconPrefab = R1PropsFolder + "LanderBeacon.prefab";
         public const string BuildApronMarkingsPrefab = R1PropsFolder + "BuildApronMarkings.prefab";

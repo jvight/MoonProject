@@ -31,6 +31,7 @@ namespace MoonProject.UI
         private float _shownAway;
         private float _showTime;
         private bool _ending;
+        private bool _pending;
 
         public PromptDirector(PromptSettings settings, PromptLedger ledger)
         {
@@ -66,23 +67,32 @@ namespace MoonProject.UI
         /// </summary>
         public bool Started { get; private set; }
 
+        /// <summary>
+        /// True while a prompt is up, or one has run its dwell and waits only for the guidance slot: the slot is
+        /// claimed when the prompt can start at once, so the element before it never leaves the screen early.
+        /// </summary>
+        public bool ReadyToShow => WantsShown || _pending;
+
         /// <param name="deltaTime">Unscaled seconds since the last step.</param>
         /// <param name="gateOpen">
-        /// False while anything else has the player's attention (pause, opening, cards, panel).
+        /// False while anything else has the player's attention (pause, opening, cards, panel): the dwell runs only
+        /// while it is open.
         /// </param>
         /// <param name="primary">The gameplay's most relevant action right now.</param>
         /// <param name="chipHidden">True once the chip is fully faded out.</param>
-        public void Step(float deltaTime, bool gateOpen, InteractionHint primary, bool chipHidden)
+        /// <param name="slotGranted">The guidance slot lets the prompt show; without it a ready prompt waits.</param>
+        public void Step(float deltaTime, bool gateOpen, InteractionHint primary, bool chipHidden, bool slotGranted)
         {
             _now += deltaTime;
             Started = false;
+            _pending = false;
             InteractionKind desired = Desire(deltaTime, gateOpen, primary);
 
             if (Displayed != InteractionKind.None && !_ending)
             {
                 _showTime += deltaTime;
                 // Out of reach for a moment keeps the prompt; another target in reach replaces it at once.
-                _shownAway = desired == Displayed ? 0f : _shownAway + deltaTime;
+                _shownAway = desired == Displayed && slotGranted ? 0f : _shownAway + deltaTime;
                 bool otherTarget = primary.Kind != InteractionKind.None && primary.Kind != Displayed;
                 if (otherTarget || _shownAway > _settings.DwellGraceSeconds || _showTime >= _settings.MaxShowSeconds)
                 {
@@ -104,7 +114,8 @@ namespace MoonProject.UI
             Displayed = InteractionKind.None;
             Entry = null;
             _ending = false;
-            if (desired == InteractionKind.None)
+            _pending = desired != InteractionKind.None && !slotGranted;
+            if (desired == InteractionKind.None || !slotGranted)
             {
                 return;
             }
