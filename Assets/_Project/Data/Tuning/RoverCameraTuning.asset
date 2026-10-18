@@ -301,7 +301,7 @@ MonoBehaviour:
     _hesitateYaw: 3
     _peakLift: 1
     _earthBelow: 4
-    _landerLookHeight: 3
+    _postLookHeight: 1.2
     _beaconHeight: 6
     _lensForward: 0.44
     _lensNearClip: 0.22

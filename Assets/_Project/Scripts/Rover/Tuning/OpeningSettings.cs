@@ -33,11 +33,11 @@ namespace MoonProject.Rover
         [Range(0.8f, 3f)]
         [SerializeField] private float _flickerSeconds = 1f;
 
-        [Tooltip("O6: the look at the sleeping home.")]
+        [Tooltip("O6: the look at the dead charging post and its cable.")]
         [Range(1f, 8f)]
         [SerializeField] private float _gazeHomeSeconds = 1.8f;
 
-        [Tooltip("O7: the look at the tower's pilot; long enough to hold through one of its blinks.")]
+        [Tooltip("O7: the look at the lander's amber beacon, the warm point that leads.")]
         [Range(1f, 8f)]
         [SerializeField] private float _gazePilotSeconds = 1.5f;
 
@@ -227,9 +227,9 @@ namespace MoonProject.Rover
         [Range(0f, 12f)]
         [SerializeField] private float _earthBelow = 4f;
 
-        [Tooltip("Height (m) above the lander's base the gaze looks at: its dark windows.")]
-        [Range(0f, 10f)]
-        [SerializeField] private float _landerLookHeight = 3f;
+        [Tooltip("Height (m) above the wake point the first gaze looks at: the dead charging post.")]
+        [Range(0f, 4f)]
+        [SerializeField] private float _postLookHeight = 1.2f;
 
         [Tooltip("Height (m) of The Peak's red beacon above its summit (IWorldLayout.PeakPosition).")]
         [Range(0f, 30f)]
@@ -400,7 +400,7 @@ namespace MoonProject.Rover
         public float HesitateYaw => _hesitateYaw;
         public float PeakLift => _peakLift;
         public float EarthBelow => _earthBelow;
-        public float LanderLookHeight => _landerLookHeight;
+        public float PostLookHeight => _postLookHeight;
         public float BeaconHeight => _beaconHeight;
         public float LensForward => _lensForward;
         public float LensNearClip => _lensNearClip;

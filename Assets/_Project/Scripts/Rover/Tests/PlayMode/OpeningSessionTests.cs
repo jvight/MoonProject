@@ -41,6 +41,7 @@ namespace MoonProject.Rover.PlayModeTests
         private const int KeyFrameWidth = 1920;
         private const int KeyFrameHeight = 1080;
         private const float BootTimeout = 30f;
+        private const float GazeTolerance = 6f;
         private const float TitleQuietSeconds = 4f;
         private const float MaxUntouched = 45f;
         private const float TargetUntouched = 20f;
@@ -164,6 +165,7 @@ namespace MoonProject.Rover.PlayModeTests
             var taken = new bool[shots.Length];
             var keyTaken = new bool[keyShots.Length];
             int nextStripIndex = 0;
+            bool postChecked = false;
             float crackleStarted = -1f;
             float started = Time.time;
             while (!_beats.Contains(WakeBeat.ChaseFrame))
@@ -179,6 +181,12 @@ namespace MoonProject.Rover.PlayModeTests
                 {
                     Assert.IsTrue(_body.FaceDirector.Director.IsHoldingDarkForOpening, "CRT stays dark while in the lens");
                     Assert.AreEqual(0, _body.FaceDirector.Director.BootCount, "face does not boot while in the lens");
+                }
+
+                if (!postChecked && script.Phase == OpeningPhase.GazeHome && script.PhaseTime >= 0.7f * script.PhaseLength)
+                {
+                    postChecked = true;
+                    AssertGazeAtTheWakePost(script);
                 }
 
                 for (int i = 0; i < shots.Length; i++)
@@ -691,6 +699,18 @@ namespace MoonProject.Rover.PlayModeTests
                 "reloaded scene starts the opening inside O1 without showing the title again");
             Assert.AreNotEqual(OpeningPhase.PushIn, _director.Script.Phase,
                 "the push-in already happened before the reload");
+        }
+
+        /// <summary>O6 looks at the dead charging post where 07 woke (its yaw within a few degrees).</summary>
+        private void AssertGazeAtTheWakePost(OpeningScript script)
+        {
+            Assert.IsTrue(_context.Get<IWorldAnchors>().TryGet(WorldAnchorIds.PlaceWake, out WorldAnchor wake));
+            Vector3 forward = _rover.Rotation * Vector3.forward;
+            forward.y = 0f;
+            Quaternion heading = Quaternion.LookRotation(forward);
+            Vector3 lens = _context.Get<IRoverRig>().ScanOrigin.position;
+            Vector2 expected = LensGaze.Angles(Quaternion.Inverse(heading) * (wake.Position - lens));
+            Assert.AreEqual(expected.x, script.Gaze.Yaw, GazeTolerance, "O6 looks at the dead charging post");
         }
 
         /// <summary>A hidden title element leaves layout (display none) with its opacity as it was.</summary>
