@@ -52,7 +52,7 @@ sound everything (in D major pentatonic), keep it warm and calm. When in doubt, 
 ## Unity editor access
 - Only the Director drives the running editor (Unity MCP `ai-game-developer`, port 25906) on the main project.
 - Workers verify with compile_check, EditMode-testable logic, and (when available) `tools/unity_batch.py`,
-  which runs a headless Unity on the worker's own worktree (serialised by a lock — one batch Unity at a time).
+  which runs a headless Unity on the worker's own worktree (machine-wide slots: up to 3 batch Unity at once, MOON_BATCH_SLOTS; one per worktree).
 
 ## Reporting (end of every worker task)
 Report: what changed (files, commits), verification evidence (compile_check result, tests, captures/metrics),
