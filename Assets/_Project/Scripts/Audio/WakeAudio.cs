@@ -240,7 +240,7 @@ namespace MoonProject.Audio
                     break;
             }
 
-            int count = _sheet.CuesFor(reached.Beat, reached.Hurried, _calls);
+            int count = _sheet.CuesFor(reached.Beat, _calls);
             for (int i = 0; i < count; i++)
             {
                 if (_calls[i].Delay > 0f)

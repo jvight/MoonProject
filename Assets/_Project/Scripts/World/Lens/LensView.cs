@@ -6,12 +6,11 @@ using MoonProject.Core;
 namespace MoonProject.World
 {
     /// <summary>
-    /// The picture through 07's own eye (docs/design/cutscenes.md §1.8), registered as <see cref="ILensView"/>. While
+    /// The picture darkened by 07's lid (docs/design/cutscenes.md §1.8), registered as <see cref="ILensView"/>. While
     /// Rover applies a state it owns two things of its own: a global URP volume above the world's look whose depth of
-    /// field follows the lens' focus and whose exposure adds the eye's gain to the world's own, and a quad held in front of the view camera whose shader draws the curved soft
-    /// lid, the exposure dips and roll band, the warm lift and the dust speck (<see cref="LensViewModel"/>), and, while
-    /// Released,
-    /// both switch off and the world's own look is untouched: this never edits the world's post-processing profile.
+    /// field follows the lens' focus and whose exposure adds the eye's gain to the world's own, and a quad held in
+    /// front of the view camera whose shader draws the curved soft lid (<see cref="LensViewModel"/>). Released, both
+    /// switch off and the world's own look is untouched: this never edits the world's post-processing profile.
     /// The view camera is registered by Rover after World initialises, so it is picked up on the first apply.
     /// </summary>
     [DisallowMultipleComponent]
@@ -23,19 +22,11 @@ namespace MoonProject.World
         private static readonly int LidEdgeId = Shader.PropertyToID("_LidEdge");
         private static readonly int LidSoftnessId = Shader.PropertyToID("_LidSoftness");
         private static readonly int LidCurveId = Shader.PropertyToID("_LidCurve");
-        private static readonly int DipId = Shader.PropertyToID("_Dip");
-        private static readonly int RollBandId = Shader.PropertyToID("_RollBand");
-        private static readonly int RollHeightId = Shader.PropertyToID("_RollHeight");
-        private static readonly int RollDarknessId = Shader.PropertyToID("_RollDarkness");
-        private static readonly int WarmId = Shader.PropertyToID("_Warm");
-        private static readonly int SpeckId = Shader.PropertyToID("_Speck");
-        private static readonly int SpeckLookId = Shader.PropertyToID("_SpeckLook");
-        private static readonly int SpeckRimColorId = Shader.PropertyToID("_SpeckRimColor");
 
         [Tooltip("World settings (Assets/_Project/Data/Tuning/WorldSettings.asset); the lens look is its LensView block.")]
         [SerializeField] private WorldSettings _settings;
 
-        [Tooltip("MoonProject/World/LofiLensView: draws the lid, dips, roll band, warm lift and speck.")]
+        [Tooltip("MoonProject/World/LofiLensView: draws the lid.")]
         [SerializeField] private Shader _shader;
 
         private GameContext _context;
@@ -81,21 +72,11 @@ namespace MoonProject.World
                 return;
             }
 
-            _model.Step(state, Time.deltaTime);
+            _model.Step(state);
             LensViewSettings look = _settings.LensView;
             _block.SetFloat(LidEdgeId, _model.LidEdge);
             _block.SetFloat(LidSoftnessId, look.LidSoftness);
             _block.SetFloat(LidCurveId, look.LidCurve);
-            _block.SetFloat(DipId, _model.Dip);
-            _block.SetFloat(RollBandId, _model.RollBand);
-            _block.SetFloat(RollHeightId, look.RollBandHeight);
-            _block.SetFloat(RollDarknessId, look.RollBandDarkness);
-            Color warm = look.WarmTint * (look.WarmLift * _model.Warmth);
-            _block.SetVector(WarmId, new Vector4(warm.r, warm.g, warm.b, 0f));
-            Vector2 speck = state.SpeckOffset;
-            _block.SetVector(SpeckId, new Vector4(speck.x, speck.y, look.SpeckRadius, _model.SpeckSharpness));
-            _block.SetVector(SpeckLookId, new Vector4(look.SpeckDarkness, look.SpeckRim, look.SpeckBlurGrowth, 0f));
-            _block.SetColor(SpeckRimColorId, look.SpeckRimColor);
             _overlay.SetPropertyBlock(_block);
             _overlay.enabled = true;
 
