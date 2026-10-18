@@ -267,6 +267,7 @@ MonoBehaviour:
     _rimFaceShade: 0.48
     _crestZone: 0.88
     _crestBlend: 0.05
+    _terrainVariant: 0
   _scatter:
     _extentRadius: 370
     _padClearance: 3.5

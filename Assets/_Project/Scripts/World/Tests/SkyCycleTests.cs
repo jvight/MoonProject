@@ -427,6 +427,50 @@ namespace MoonProject.World.Tests
             }
         }
 
+        [Test]
+        public void EarthAndTerrainLookVariants_SwitchGlobalsAndExposeShaderProperties()
+        {
+            var sky = new SkySettings();
+            var paint = new TerrainPaintSettings();
+            Assert.AreEqual(EarthLookVariant.BlueMarble, sky.EarthVariant);
+            Assert.AreEqual(TerrainLookVariant.HighlandRealism, paint.TerrainVariant);
+
+            sky.SetEarthVariant(EarthLookVariant.Current);
+            Assert.AreEqual(-1f, Shader.GetGlobalFloat("_MoonEarthVariant"), ValueTolerance);
+            sky.SetEarthVariant(EarthLookVariant.Stylized);
+            Assert.AreEqual(1f, Shader.GetGlobalFloat("_MoonEarthVariant"), ValueTolerance);
+            sky.SetEarthVariant(EarthLookVariant.BlueMarble);
+            Assert.AreEqual(0f, Shader.GetGlobalFloat("_MoonEarthVariant"), ValueTolerance);
+
+            paint.SetTerrainVariant(TerrainLookVariant.Current);
+            Assert.AreEqual(-1f, Shader.GetGlobalFloat("_MoonTerrainVariant"), ValueTolerance);
+            paint.SetTerrainVariant(TerrainLookVariant.Stylized);
+            Assert.AreEqual(1f, Shader.GetGlobalFloat("_MoonTerrainVariant"), ValueTolerance);
+            paint.SetTerrainVariant(TerrainLookVariant.HighlandRealism);
+            Assert.AreEqual(0f, Shader.GetGlobalFloat("_MoonTerrainVariant"), ValueTolerance);
+
+            Shader earthShader = UnityEditor.AssetDatabase.LoadAssetAtPath<Shader>("Assets/_Project/Shaders/World/LofiEarth.shader");
+            Shader terrainShader = UnityEditor.AssetDatabase.LoadAssetAtPath<Shader>("Assets/_Project/Shaders/World/R1Terrain.shader");
+            Assert.IsNotNull(earthShader, "MoonProject/World/LofiEarth shader must exist.");
+            Assert.IsNotNull(terrainShader, "MoonProject/World/R1Terrain shader must exist.");
+
+            var earthMat = new Material(earthShader);
+            var terrainMat = new Material(terrainShader);
+            try
+            {
+                Assert.IsTrue(earthMat.HasProperty("_EarthAlbedoMap"));
+                Assert.IsTrue(earthMat.HasProperty("_EarthVariant"));
+                Assert.IsTrue(terrainMat.HasProperty("_BaseMap"));
+                Assert.IsTrue(terrainMat.HasProperty("_RockMap"));
+                Assert.IsTrue(terrainMat.HasProperty("_TerrainVariant"));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(earthMat);
+                UnityEngine.Object.DestroyImmediate(terrainMat);
+            }
+        }
+
         [Serializable]
         private sealed class DummySaveData
         {

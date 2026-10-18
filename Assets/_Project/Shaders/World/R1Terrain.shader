@@ -718,7 +718,8 @@ Shader "MoonProject/World/R1Terrain"
             }
 
             // Multi-scale non-repeating macro albedo variation across 25 m – 1200 m (ejecta blankets, mare/highland patches).
-            half SampleMacroRegolithVariation(float3 wp3, half slopeFactor)
+            // When stylized > 0 (Terrain B), quantizes the continuous variation into crisper graphic regolith & contour bands.
+            half SampleMacroRegolithVariation(float3 wp3, half slopeFactor, half stylized)
             {
                 float2 wp = wp3.xz;
                 float2 wpRot1 = float2(wp.x * 0.80 - wp.y * 0.60, wp.x * 0.60 + wp.y * 0.80);
@@ -736,10 +737,24 @@ Shader "MoonProject/World/R1Terrain"
                 // Higher elevations / highland ridges carry slightly brighter anorthositic regolith on gentle crests,
                 // while steeper flanks strip down to darker bedrock in the slope block.
                 float heightLift = saturate(wp3.y / 110.0) * (1.0 - slopeFactor * 0.85) * 0.08;
-                return (half)clamp(1.0 + combined + heightLift, 0.76, 1.26);
+                half smoothVar = (half)clamp(1.0 + combined + heightLift, 0.76, 1.26);
+
+                if (stylized <= 0.001h)
+                {
+                    return smoothVar;
+                }
+
+                // Terrain B: crisper graphic regolith bands & contour rings across basin floor and foothills
+                float patchPhase = (combined + 0.38) * 5.2;
+                float patchStepped = (floor(patchPhase) + smoothstep(0.70, 0.92, frac(patchPhase))) / 5.2 - 0.38;
+                float contourPhase = wp3.y * 0.135 + (n140 - 0.5) * 2.4 + (n38 - 0.5) * 0.85;
+                float contourBand = smoothstep(0.62, 0.74, frac(contourPhase)) - smoothstep(0.18, 0.30, frac(contourPhase)) * 0.65;
+                half crispVar = (half)clamp(1.0 + patchStepped * 1.25 + contourBand * 0.11 + heightLift * 1.2, 0.72, 1.32);
+                return lerp(smoothVar, crispVar, stylized);
             }
 
-            // Sharper terminator shading on ridges at low sun / grazing earthlight for Terrain A ("Highland realism").
+            // Sharper terminator shading on ridges at low sun / grazing earthlight for Terrain A ("Highland realism"),
+            // with stepped painterly ridge-crest lighting when stylized > 0 for Terrain B.
             half3 MainSunDiffuseHighland(
                 Light light,
                 half3 normalWS,
@@ -747,7 +762,9 @@ Shader "MoonProject/World/R1Terrain"
                 half3 viewDirWS,
                 half sunlit,
                 half microAo,
-                half slopeFactor)
+                half slopeFactor,
+                half ridgeCrestMask,
+                half stylized)
             {
                 half ndotl = dot(normalWS, light.direction);
                 half geomNdotL = dot(geomNormalWS, light.direction);
@@ -767,6 +784,22 @@ Shader "MoonProject/World/R1Terrain"
                 half ridgeCrestBoost = saturate(ndotl - geomNdotL * 0.85h) * terminatorZone * 0.45h;
                 highlandDiffuse += ridgeCrestBoost;
 
+                // Terrain B ("Stronger stylization"): stepped painterly terminator bands & rim-lit ridge crests
+                if (stylized > 0.001h)
+                {
+                    half band1 = smoothstep(-0.01h, 0.04h, ndotl);
+                    half band2 = smoothstep(0.16h, 0.23h, ndotl);
+                    half band3 = smoothstep(0.42h, 0.50h, ndotl);
+                    half band4 = smoothstep(0.68h, 0.76h, ndotl);
+                    half painterlyRamp = band1 * 0.26h + band2 * 0.30h + band3 * 0.28h + band4 * 0.24h;
+
+                    // Graphic rim-light along convex ridge crests and grazing silhouettes
+                    half rimGrazing = pow(1.0h - saturate(dot(normalWS, viewDirWS)), 2.4h) * smoothstep(-0.08h, 0.18h, ndotl);
+                    half painterlyRidgeStroke = (ridgeCrestMask * smoothstep(0.01h, 0.14h, ndotl) * 0.34h) + rimGrazing * slopeFactor * 0.22h;
+                    half stylizedDiffuse = lerp(highlandDiffuse, painterlyRamp, 0.62h) + painterlyRidgeStroke;
+                    highlandDiffuse = lerp(highlandDiffuse, stylizedDiffuse, stylized);
+                }
+
                 // Subtle cool fill in deep shadow under Earthlight so unlit craters remain readable without washing out ridges.
                 half earthlightTail = smoothstep(-0.22h, 0.02h, ndotl) * 0.045h * (1.0h - sunlit);
                 half diffuse = highlandDiffuse + earthlightTail;
@@ -784,11 +817,15 @@ Shader "MoonProject/World/R1Terrain"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
 
-                // Preserve exact pre-pass terrain look when _MoonTerrainVariant < -0.5 for baseline comparison captures.
-                if (_MoonTerrainVariant < -0.5)
+                float activeVariant = (_TerrainVariant >= -0.5) ? _TerrainVariant : _MoonTerrainVariant;
+
+                // Preserve exact pre-pass terrain look when activeVariant < -0.5 for baseline comparison captures.
+                if (activeVariant < -0.5)
                 {
                     return FragCurrent(input);
                 }
+
+                half stylized = saturate((half)activeVariant);
 
                 half3 geomNormalWS = NormalizeNormalPerPixel(input.normalWS);
                 half3 viewDirWS = GetWorldSpaceNormalizeViewDir(input.positionWS);
@@ -811,16 +848,27 @@ Shader "MoonProject/World/R1Terrain"
                 half3 vertexLinear = SRGBToLinear(input.color.rgb) * _BaseColor.rgb;
                 half vLuma = dot(vertexLinear, half3(0.2126h, 0.7152h, 0.0722h));
                 half lunarReflectance = pow(max(vLuma / 0.225h, 0.01h), 1.16h) * 0.126h;
+
+                // In Terrain B (stylized), quantize the vertex-painted tonal gradient into crisper graphic value bands.
+                if (stylized > 0.001h)
+                {
+                    half vBandPhase = saturate(vLuma / 0.34h) * 5.5h;
+                    half vQuantized = (floor(vBandPhase) + smoothstep(0.66h, 0.90h, frac(vBandPhase))) / 5.5h;
+                    half stylizedReflectance = pow(max(vQuantized * 0.34h / 0.225h, 0.01h), 1.22h) * 0.128h;
+                    lunarReflectance = lerp(lunarReflectance, stylizedReflectance, stylized * 0.65h);
+                }
+
                 // Cool neutral silver-slate compensation neutralizes post-processing warm split-toning & sunlit haze.
                 half3 coolNeutralTint = lerp(half3(0.91h, 0.96h, 1.07h), half3(0.86h, 0.95h, 1.12h), sunlit * 0.65h);
                 half3 baseAlbedo = lerp(vertexLinear * 0.56h, lunarReflectance * coolNeutralTint, 0.90h);
 
-                // Multi-scale macro albedo variation across 25 m – 1200 m.
-                baseAlbedo *= SampleMacroRegolithVariation(input.positionWS, slopeFactor);
+                // Multi-scale macro albedo variation across 25 m – 1200 m (smooth in A, crisper contour/patch bands in B).
+                baseAlbedo *= SampleMacroRegolithVariation(input.positionWS, slopeFactor, stylized);
 
                 half3 normalWS = geomNormalWS;
                 half microAo = 1.0h;
                 half smoothness = 0.04h;
+                half ridgeCrestMask = 0.0h;
 
                 // Construct world-space tangent frame aligned with +X (U) and +Z (V) around the smooth terrain normal.
                 half3 tangentWS = normalize(half3(1.0h, 0.0h, 0.0h) - geomNormalWS * geomNormalWS.x);
@@ -888,11 +936,6 @@ Shader "MoonProject/World/R1Terrain"
                     half2 triTsXY = (triFineXY * 0.65h + triMacroXY * 0.85h) * (0.48h * slopeFactor + 0.72h * outcropMask) * hillDetailWeight;
 
                     half terraceTilt = (terraceRiser * 0.24h - terraceBench * 0.15h) * slopeFactor * hillDetailWeight;
-                    normalWS = normalize(
-                        geomNormalWS +
-                        half3(0.0h, -terraceTilt, 0.0h) +
-                        tangentWS * triTsXY.x -
-                        bitangentWS * triTsXY.y);
 
                     // Darker rocky regolith on steeper slopes (0.54x on sheer basalt outcrops, contrasted by lighter talus chutes)
                     half3 rockCentered = clamp(rockTex / max(0.08h, dot(rockTex, half3(0.333h, 0.333h, 0.333h))), 0.72h, 1.28h);
@@ -902,6 +945,67 @@ Shader "MoonProject/World/R1Terrain"
 
                     // Cool dark basalt tint on exposed rock so steep ridges read as dark lunar bedrock
                     half3 darkRockTint = lerp(half3(1.0h, 1.0h, 1.0h), half3(0.88h, 0.92h, 1.04h), outcropMask * 0.65h);
+
+                    // Terrain B ("Stronger stylization: crisper bands, painterly ridges"):
+                    if (stylized > 0.001h)
+                    {
+                        // A) Crisper horizontal & dipping geological strata bands across rim walls and The Peak
+                        float strataPrimary = wp3.y * 0.092 + (slumpNoise1 - 0.750) * 3.8 + (striationRaw - 0.750) * 1.1;
+                        float strataSecondary = wp3.y * 0.235 + (slumpNoise2 - 0.750) * 2.4;
+                        float sFrac1 = frac(strataPrimary);
+                        float sFrac2 = frac(strataSecondary);
+
+                        half crispRiser1 = (half)(smoothstep(0.36, 0.43, sFrac1) * (1.0 - smoothstep(0.76, 0.83, sFrac1)));
+                        half crispLedge1 = (half)(smoothstep(0.76, 0.82, sFrac1) * (1.0 - smoothstep(0.92, 0.98, sFrac1)));
+                        half crispBand2 = (half)(smoothstep(0.45, 0.53, sFrac2) * (1.0 - smoothstep(0.82, 0.90, sFrac2)));
+
+                        // Sharp alternating dark basalt & bright anorthosite rock bands
+                        half crispBandMod = lerp(1.0h, 0.62h, crispRiser1 * 0.85h + crispBand2 * 0.35h);
+                        crispBandMod = lerp(crispBandMod, 1.28h, crispLedge1 * 0.85h);
+                        slopeDarken = lerp(slopeDarken, slopeDarken * crispBandMod, stylized * saturate(slopeFactor * 1.25h));
+
+                        // Stronger stepped terrace tilt on each band boundary so strata shelves catch crisp light
+                        half crispTilt = (crispRiser1 * 0.42h - crispLedge1 * 0.34h + (crispBand2 - 0.5h) * 0.18h) * slopeFactor * hillDetailWeight;
+                        terraceTilt = lerp(terraceTilt, crispTilt, stylized * 0.82h);
+
+                        // B) Painterly ridges: chiseled directional brush-stroke facets & luminous ridge arête highlights
+                        half3 dNdx = ddx(geomNormalWS);
+                        half3 dNdy = ddy(geomNormalWS);
+                        half geomCurvature = saturate((length(dNdx) + length(dNdy)) * 20.0h);
+
+                        // Painterly brush facets aligned with ridge spurs and downslope ribs
+                        float2 strokeCoord = float2(
+                            (wp3.x * geomNormalWS.z - wp3.z * geomNormalWS.x) * 0.055,
+                            wp3.y * 0.032 + (slumpNoise1 - 0.750) * 3.0);
+                        float strokePhase = strokeCoord.x * 2.2 + (BlastNoise(strokeCoord * 1.8 + float2(7.3, 13.1)) - 0.5) * 1.6;
+                        float strokeCell = floor(strokePhase);
+                        float strokeFrac = frac(strokePhase);
+                        half facetStep = (half)(Hash23(float2(strokeCell, floor(strokeCoord.y * 2.5))).x - 0.5) * 2.0h;
+                        half ridgeRib = (half)(1.0 - abs(strokeFrac * 2.0 - 1.0));
+                        ridgeRib = smoothstep(0.35h, 0.88h, ridgeRib);
+
+                        // Chiseled normal bevels on painterly ridge spurs
+                        half2 painterlyBevelXY = half2(facetStep * 0.48h, (ridgeRib - 0.5h) * 0.42h) * slopeFactor * hillDetailWeight;
+                        triTsXY = lerp(triTsXY, triTsXY * 0.75h + painterlyBevelXY, stylized * 0.80h);
+
+                        // Ridge crest mask combines screen-space convex break, ridge rib crest, and upper rim elevation
+                        half heightCrest = saturate((half)((wp3.y - 18.0) / 55.0));
+                        ridgeCrestMask = saturate((geomCurvature * 0.55h + ridgeRib * 0.52h + crispLedge1 * 0.38h) * (0.45h + 0.55h * heightCrest) * slopeFactor) * hillDetailWeight;
+
+                        // Luminous cool silver-ivory painterly highlight along ridge crests, deeper slate in gullies
+                        half3 painterlyCrestTint = half3(1.16h, 1.20h, 1.28h);
+                        half3 painterlyGullyTint = half3(0.74h, 0.80h, 0.94h);
+                        half gullyMask = saturate((1.0h - ridgeRib) * (1.0h - talusChute) * slopeFactor);
+                        darkRockTint = lerp(darkRockTint, darkRockTint * lerp(1.0h.xxx, painterlyGullyTint, gullyMask * 0.75h), stylized);
+                        darkRockTint = lerp(darkRockTint, painterlyCrestTint, stylized * ridgeCrestMask * 0.68h);
+                    }
+
+                    normalWS = normalize(
+                        geomNormalWS +
+                        half3(0.0h, -terraceTilt, 0.0h) +
+                        tangentWS * triTsXY.x -
+                        bitangentWS * triTsXY.y);
+
                     baseAlbedo *= slopeDarken * darkRockTint * lerp(1.0h.xxx, rockCentered, outcropMask * 0.58h);
                     microAo = min(microAo, lerp(1.0h, 0.76h, outcropMask));
                     smoothness = max(smoothness, outcropMask * 0.075h);
@@ -997,7 +1101,7 @@ Shader "MoonProject/World/R1Terrain"
                 #endif
 
                 half3 ambient = SampleSH(normalWS) * ambientAo * half3(0.92h, 0.96h, 1.06h);
-                half3 lighting = ambient + MainSunDiffuseHighland(mainLight, normalWS, geomNormalWS, viewDirWS, sunlit, microAo, slopeFactor);
+                half3 lighting = ambient + MainSunDiffuseHighland(mainLight, normalWS, geomNormalWS, viewDirWS, sunlit, microAo, slopeFactor, ridgeCrestMask, stylized);
                 half3 specular = RegolithMicroSpecular(mainLight, normalWS, viewDirWS, smoothness);
 
                 #if defined(_ADDITIONAL_LIGHTS)
@@ -1038,7 +1142,6 @@ Shader "MoonProject/World/R1Terrain"
                 }
 
                 color = clamp(color, 0.0h, 32.0h);
-                half3 preAtmo = color;
                 color = MoonAtmosphere(color, input.positionWS, input.fogFactor);
                 // Keep distant sunlit horizon haze cool-neutral on lunar terrain so golden hour doesn't turn regolith warm beige.
                 half atmoLuma = dot(color, half3(0.2126h, 0.7152h, 0.0722h));

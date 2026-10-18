@@ -61,16 +61,44 @@ namespace MoonProject.World.Editor
         public static void BuildGroundMaterial()
         {
             MoonProject.Art.Editor.R1MaterialLibrary.BuildMaterials();
-            var material = new Material(LoadShader(WorldPaths.GroundShader));
-            material.SetTexture("_BaseMap", LoadTexture(WorldPaths.RegolithAlbedoTexture));
-            material.SetTexture("_BumpMap", LoadTexture(WorldPaths.RegolithNormalTexture));
-            material.SetTexture("_MaskMap", LoadTexture(WorldPaths.RegolithMaskTexture));
-            material.SetTexture("_RockMap", LoadTexture(WorldPaths.BasaltAlbedoTexture));
-            material.SetTexture("_RockBumpMap", LoadTexture(WorldPaths.BasaltNormalTexture));
-            material.SetTexture("_RockMaskMap", LoadTexture(WorldPaths.BasaltMaskTexture));
-            material.SetFloat("_TerrainVariant", -1f);
-            GeneratedAssets.CreateOrReplace(material, WorldPaths.GroundMaterial);
+            Shader groundShader = LoadShader(WorldPaths.GroundShader);
+            Texture2D regolithAlbedo = LoadTexture(WorldPaths.RegolithAlbedoTexture);
+            Texture2D regolithNormal = LoadTexture(WorldPaths.RegolithNormalTexture);
+            Texture2D regolithMask = LoadTexture(WorldPaths.RegolithMaskTexture);
+            Texture2D basaltAlbedo = LoadTexture(WorldPaths.BasaltAlbedoTexture);
+            Texture2D basaltNormal = LoadTexture(WorldPaths.BasaltNormalTexture);
+            Texture2D basaltMask = LoadTexture(WorldPaths.BasaltMaskTexture);
+            GeneratedAssets.CreateOrReplace(
+                CreateGroundMaterial(groundShader, regolithAlbedo, regolithNormal, regolithMask, basaltAlbedo, basaltNormal, basaltMask, -1f),
+                WorldPaths.GroundMaterial);
+            GeneratedAssets.CreateOrReplace(
+                CreateGroundMaterial(groundShader, regolithAlbedo, regolithNormal, regolithMask, basaltAlbedo, basaltNormal, basaltMask, 0f),
+                WorldPaths.GroundMaterialA);
+            GeneratedAssets.CreateOrReplace(
+                CreateGroundMaterial(groundShader, regolithAlbedo, regolithNormal, regolithMask, basaltAlbedo, basaltNormal, basaltMask, 1f),
+                WorldPaths.GroundMaterialB);
             AssetDatabase.SaveAssets();
+        }
+
+        private static Material CreateGroundMaterial(
+            Shader shader,
+            Texture2D regolithAlbedo,
+            Texture2D regolithNormal,
+            Texture2D regolithMask,
+            Texture2D basaltAlbedo,
+            Texture2D basaltNormal,
+            Texture2D basaltMask,
+            float variant)
+        {
+            var material = new Material(shader);
+            material.SetTexture("_BaseMap", regolithAlbedo);
+            material.SetTexture("_BumpMap", regolithNormal);
+            material.SetTexture("_MaskMap", regolithMask);
+            material.SetTexture("_RockMap", basaltAlbedo);
+            material.SetTexture("_RockBumpMap", basaltNormal);
+            material.SetTexture("_RockMaskMap", basaltMask);
+            material.SetFloat("_TerrainVariant", variant);
+            return material;
         }
 
         /// <summary>The marks pressed into the dust (M3-18 V4): the rover's track shader with World's tint and fade.</summary>

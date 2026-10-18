@@ -3,9 +3,10 @@ using UnityEngine;
 
 namespace MoonProject.World
 {
-    /// <summary>Switchable look variants for Earth (R1 moonlook pass).</summary>
+    /// <summary>Switchable look variants for Earth (R1 moonlook pass: Current = legacy pre-pass, BlueMarble = Earth A, Stylized = Earth A2).</summary>
     public enum EarthLookVariant
     {
+        Current = -1,
         BlueMarble = 0,
         Stylized = 1
     }
@@ -230,6 +231,14 @@ namespace MoonProject.World
         public float MilkyWayWidth => _milkyWayWidth;
         public float MilkyWayIntensity => _milkyWayIntensity;
         public EarthLookVariant EarthVariant => _earthVariant;
+
+        /// <summary>Switches the active Earth look variant and updates the global shader property immediately.</summary>
+        public void SetEarthVariant(EarthLookVariant variant)
+        {
+            _earthVariant = variant;
+            Shader.SetGlobalFloat("_MoonEarthVariant", (float)variant);
+        }
+
         public float EarthBearing => _earthBearing;
         public float EarthElevation => _earthElevation;
         public float EarthDiameter => _earthDiameter;
