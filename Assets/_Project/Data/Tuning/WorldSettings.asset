@@ -175,6 +175,15 @@ MonoBehaviour:
       _midwayBearing: 336
       _midwayDistance: 98.5
       _midwayRadius: 6
+      _blastZone:
+        _radius: 34
+        _edgeBand: 9
+        _albedoLift: 0.45
+        _rayLift: 0.22
+        _rayCount: 56
+        _rayLength: 14
+        _edgePebbles: 0.55
+        _edgePileWidth: 8
     _craterField:
       _cellSize: 18
       _density: 0.7
