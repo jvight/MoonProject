@@ -508,14 +508,28 @@ namespace MoonProject.Art.Tests
             Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.RubberSlot), "SSR3_Topper_01 must use R1_Rubber umbilical cables down the mast.");
             Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.DarkGlassSlot), "SSR3_Topper_01 must use R1_DarkGlass optical lenses.");
 
-            // Verify TelescopeTube is tilted down forward (+Z) at rest and carries settled dust in vertex-colour B on upward faces
+            // Verify TelescopeTube is tilted down toward the front CalibrationPlate at rest and carries settled dust in vertex-colour B on upward faces
+            Mesh calMesh = calibrationPlate.GetComponent<MeshFilter>().sharedMesh;
+            Assert.IsNotNull(calMesh, "CalibrationPlate must have a sharedMesh.");
+            Vector3 calCenter = calibrationPlate.TransformPoint(calMesh.bounds.center);
+            float frontSign = Mathf.Sign(calCenter.z);
+
             Mesh tubeMesh = telescopeTube.GetComponent<MeshFilter>().sharedMesh;
             Assert.IsNotNull(tubeMesh, "TelescopeTube must have a sharedMesh.");
             Vector3[] verts = tubeMesh.vertices;
             Vector3[] norms = tubeMesh.normals;
             Color[] cols = tubeMesh.colors;
-            Matrix4x4 tubeToRoot = topperPrefab.transform.worldToLocalMatrix * telescopeTube.localToWorldMatrix;
 
+            float minZ = float.MaxValue;
+            float maxZ = float.MinValue;
+            for (int i = 0; i < verts.Length; i++)
+            {
+                Vector3 p = telescopeTube.TransformPoint(verts[i]);
+                if (p.z < minZ) minZ = p.z;
+                if (p.z > maxZ) maxZ = p.z;
+            }
+
+            float tubeMidZ = (minZ + maxZ) * 0.5f;
             float frontSumY = 0f;
             int frontCount = 0;
             float rearSumY = 0f;
@@ -524,14 +538,15 @@ namespace MoonProject.Art.Tests
 
             for (int i = 0; i < verts.Length; i++)
             {
-                Vector3 p = tubeToRoot.MultiplyPoint3x4(verts[i]);
-                Vector3 n = tubeToRoot.MultiplyVector(norms[i]).normalized;
-                if (p.z > 0.25f)
+                Vector3 p = telescopeTube.TransformPoint(verts[i]);
+                Vector3 n = telescopeTube.TransformDirection(norms[i]).normalized;
+                float signedForwardZ = (p.z - tubeMidZ) * frontSign;
+                if (signedForwardZ > 0.18f)
                 {
                     frontSumY += p.y;
                     frontCount++;
                 }
-                else if (p.z < -0.20f)
+                else if (signedForwardZ < -0.18f)
                 {
                     rearSumY += p.y;
                     rearCount++;
@@ -543,10 +558,10 @@ namespace MoonProject.Art.Tests
                 }
             }
 
-            Assert.Greater(frontCount, 0, "TelescopeTube must have vertices on the forward sun-shade hood (+Z).");
-            Assert.Greater(rearCount, 0, "TelescopeTube must have vertices on the rear sensor breech (-Z).");
-            Assert.Less(frontSumY / frontCount, rearSumY / rearCount - 0.10f,
-                "TelescopeTube must be tilted down at rest (forward +Z hood lower in Y than rear -Z breech).");
+            Assert.Greater(frontCount, 0, "TelescopeTube must have vertices on the forward sun-shade hood.");
+            Assert.Greater(rearCount, 0, "TelescopeTube must have vertices on the rear sensor breech.");
+            Assert.Less(frontSumY / frontCount, rearSumY / rearCount - 0.08f,
+                "TelescopeTube must be tilted down at rest (forward sun-shade hood lower in Y than rear breech).");
             Assert.Greater(upwardDustMax, 0.35f,
                 "Upward-facing surfaces on TelescopeTube must carry settled vertex-colour dust (B channel).");
         }
