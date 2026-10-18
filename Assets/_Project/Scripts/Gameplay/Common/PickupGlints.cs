@@ -116,6 +116,14 @@ namespace MoonProject.Gameplay
         /// <summary>Adds the glint of a pickup resting at <paramref name="piece"/>, on its own phase.</summary>
         public void Add(Vector3 piece, float phase)
         {
+            Add(piece, phase, 1f);
+        }
+
+        /// <summary>
+        /// Adds a glint at <paramref name="strength"/> (0..1) of a pickup's: a quiet one its owner fades in itself.
+        /// </summary>
+        public void Add(Vector3 piece, float phase, float strength)
+        {
             if (_count == _capacity || _veiled <= 0f)
             {
                 return;
@@ -131,7 +139,7 @@ namespace MoonProject.Gameplay
 
             float maxDistance = _tuning.GlintMaxDistance;
             float fade = Ease.Step(_tuning.GlintFadeNear, _tuning.GlintFadeFar, distance) *
-                         (1f - Ease.Step(maxDistance * FarFadeStart, maxDistance, distance)) * _veiled;
+                         (1f - Ease.Step(maxDistance * FarFadeStart, maxDistance, distance)) * _veiled * strength;
             if (fade <= 0f)
             {
                 return;

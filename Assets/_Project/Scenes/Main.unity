@@ -43874,6 +43874,7 @@ MonoBehaviour:
   - {fileID: 3238022173580426130}
   - {fileID: 3174264158425137435}
   - {fileID: 3103971954088862836}
+  _landerPort: {fileID: 2942263687204587172}
 --- !u!1 &4239237658541880525 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8576379797742029215, guid: 60d59f55155b3294e8837db95f0e15dd, type: 3}

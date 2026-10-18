@@ -71,13 +71,15 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             yield return ScanSet("ruin." + ScanTuning.LanderCargoId, 2);
             Assert.IsTrue(known.IsKnown(StructureIds.ChargingPad), "the cargo bay's two fragments teach the pad");
-            Assert.AreEqual(OpeningKeys.CollectParts, opening.Flow.Current, "the hold does not cover the pad yet");
+            Assert.That(opening.Flow.Current, Is.EqualTo(OpeningKeys.CollectParts).Or.EqualTo(OpeningKeys.BuildPad),
+                "the cargo crate gives nothing while its fragments are scanned; once they are, 07 collects it " +
+                "(at once when it stands in reach)");
 
             RoverStartKit kit = _fixture.Gameplay.StartKit;
             Assert.AreEqual(RoverSystemState.Fault, kit.StateOf(RoverSystem.Cutter), "no igniter: the cutter is FAULT");
             yield return PlaceAt(_fixture.Gameplay.Containers.Find("supply.lander.open").CutPoint.position);
             Assert.IsTrue(kit.CarriesIgniter, "B4: the lander's open crate gives the spare igniter");
-            Assert.AreEqual(1, _parts.Count, "with its pickup note");
+            Assert.AreEqual(2, _parts.Count, "with a pickup note each: the igniter and Ines's ice core");
             CargoHold hold = _fixture.Gameplay.Materials.Hold;
             Assert.AreEqual(4, hold.Units(SalvageMaterial.Metal), "07's Metal 2 and the crate's 2");
             Assert.AreEqual(2, hold.Units(SalvageMaterial.Wiring), "07's Wiring 1 and the crate's 1");
@@ -193,7 +195,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             SupplyCaches caches = _fixture.Gameplay.Opening.Caches;
-            Assert.AreEqual(12, caches.Count, "the opening's crates (opening-v2 §4, §10)");
+            Assert.AreEqual(9, caches.Count, "the opening's crates (opening-v2 §4, §10; none loose by the lander)");
             SealedContainer crate = _fixture.Gameplay.Containers.Find("supply.wake");
             Assert.IsNotNull(crate, "the wake crate is a sealed container the cutter opens");
             _fixture.Gameplay.Containers.StandOpen("supply.wake");

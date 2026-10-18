@@ -941,6 +941,14 @@
         {
             "key": "hint.pickup",
             "text": "Pick up"
+        },
+        {
+            "key": "pickup.part.icecore",
+            "text": "CORE 41 · H₂O"
+        },
+        {
+            "key": "pickup.part.icecore.job",
+            "text": "Ice core sample, 1988"
         }
     ]
 }
