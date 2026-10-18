@@ -1036,7 +1036,7 @@
         },
         {
             "key": "post.cutter.fault",
-            "text": "FAULT · NO IGNITER → PARTS: LANDER"
+            "text": "FAULT · NO IGNITER · PARTS: LANDER"
         },
         {
             "key": "post.solar_wing",
