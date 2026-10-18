@@ -33,8 +33,8 @@ def _entries():
     for cue, variants in voice.GESTURES.items():
         yield (cue, "voice", " / ".join(g.description for g in variants),
                (lambda lib, gen, v, name=cue: voice.render(lib, gen, name, v)), len(variants), VOICE_LUFS, False)
-    for cue, fn in boot.STEPS.items():
-        yield cue, "boot", (fn.__doc__ or "").strip(), (lambda lib, gen, v, f=fn: f(lib, gen)), 1, BOOT_LUFS, False
+    for cue, (fn, count) in boot.SOUNDS.items():
+        yield cue, "boot", (fn.__doc__ or "").strip(), fn, count, BOOT_LUFS, False
     for cue, (fn, count) in build.SOUNDS.items():
         yield cue, "build", (fn.__doc__ or "").strip(), fn, count, TARGETS[cue], cue == "build_weld_loop"
 
