@@ -19,6 +19,7 @@ namespace MoonProject.Art.Editor
         public const string PropsModelsFolder = ArtPaths.R1ModelsFolder + "/Props";
 
         public const string CableMarkerAmberMaterialName = "R1_CableMarkerAmber";
+        public const string CrateRimGlowAmberMaterialName = "R1_CrateRimGlowAmber";
         public const string LanderBeaconAmberMaterialName = "R1_LanderBeaconAmber";
         public const string LanderReserveReadoutMaterialName = "R1_LanderReserveReadout";
         public const string BuildApronOutlineMaterialName = "R1_BuildApronOutline";
@@ -27,6 +28,7 @@ namespace MoonProject.Art.Editor
         public const string PeakBeaconRedMaterialName = "R1_PeakBeaconRed";
 
         public const string CableMarkerAmberMaterialPath = ArtPaths.R1MaterialsFolder + "/" + CableMarkerAmberMaterialName + ".mat";
+        public const string CrateRimGlowAmberMaterialPath = ArtPaths.R1MaterialsFolder + "/" + CrateRimGlowAmberMaterialName + ".mat";
         public const string LanderBeaconAmberMaterialPath = ArtPaths.R1MaterialsFolder + "/" + LanderBeaconAmberMaterialName + ".mat";
         public const string LanderReserveReadoutMaterialPath = ArtPaths.R1MaterialsFolder + "/" + LanderReserveReadoutMaterialName + ".mat";
         public const string BuildApronOutlineMaterialPath = ArtPaths.R1MaterialsFolder + "/" + BuildApronOutlineMaterialName + ".mat";
@@ -51,6 +53,9 @@ namespace MoonProject.Art.Editor
         public const string DeadAntennaMastPrefabPath = PropsModelsFolder + "/DeadAntennaMast.prefab";
         public const string SignalPillarPrefabPath = PropsModelsFolder + "/SignalPillar.prefab";
         public const string PeakBeaconPrefabPath = PropsModelsFolder + "/PeakBeacon.prefab";
+        public const string CrateMOpenPrefabPath = ArtPaths.R1ModelsFolder + "/Crates/Crate_M_Open.prefab";
+        public const string PadFragmentCoilPlatePrefabPath = PropsModelsFolder + "/PadFragment_CoilPlate.prefab";
+        public const string PadFragmentGuideRailPrefabPath = PropsModelsFolder + "/PadFragment_GuideRail.prefab";
         public const string HabitatModulesPrefabPath = ArtPaths.R1ModelsFolder + "/Ruins/HabitatModules.prefab";
 
         /// <summary>Loads the <c>MoonProject/R1/SignalPillar</c> shader asset.</summary>
@@ -161,6 +166,16 @@ namespace MoonProject.Art.Editor
             peakBeaconRedMat.SetFloat("_HotCoreThreshold", 0.88f);
             peakBeaconRedMat.SetFloat("_HotCorePeak", 1.48f);
             GeneratedAssets.CreateOrReplace(peakBeaconRedMat, PeakBeaconRedMaterialPath);
+
+            // 8. R1_CrateRimGlowAmber: faint warm inner glow strip on open crate rim (emission well below bloom threshold)
+            Material crateRimGlowMat = R1MaterialLibrary.CreateMaterial(r1Lit, lampSpec);
+            crateRimGlowMat.name = CrateRimGlowAmberMaterialName;
+            crateRimGlowMat.SetColor("_EmissionColor", new Color(0.98f, 0.64f, 0.24f, 1f));
+            crateRimGlowMat.SetFloat("_EmissionStrength", 0.34f);
+            crateRimGlowMat.SetFloat("_BloomSafeMax", 0.44f);
+            crateRimGlowMat.SetFloat("_HotCoreThreshold", 0.98f);
+            crateRimGlowMat.SetFloat("_HotCorePeak", 0.48f);
+            GeneratedAssets.CreateOrReplace(crateRimGlowMat, CrateRimGlowAmberMaterialPath);
         }
 
         /// <summary>
@@ -177,6 +192,12 @@ namespace MoonProject.Art.Editor
             if (modelPath.EndsWith("/GroundCableSegment.fbx", StringComparison.Ordinal))
             {
                 ReplaceRendererSlotMaterial(root, "MarkerLamp", R1MaterialRecipes.LampAmberSlot, LoadOrBuildMaterial(CableMarkerAmberMaterialPath));
+            }
+            else if (modelPath.EndsWith("/Crate_M_Open.fbx", StringComparison.Ordinal))
+            {
+                Material rimMat = LoadOrBuildMaterial(CrateRimGlowAmberMaterialPath);
+                ReplaceRendererSlotMaterial(root, "RimGlow", R1MaterialRecipes.LampAmberSlot, rimMat);
+                ReplaceRendererSlotMaterial(root, "Lid/Seal", R1MaterialRecipes.LampAmberSlot, rimMat);
             }
             else if (modelPath.EndsWith("/LanderServicePort.fbx", StringComparison.Ordinal))
             {
