@@ -51,8 +51,7 @@ namespace MoonProject.Rover.Editor
             Assign(serialized, "_lensCamera", lensCamera);
             Transform lander = context.WorldRoot.transform.Find(LanderName) ?? throw new InvalidOperationException(
                 $"No '{LanderName}' under {context.WorldRoot.name}: the opening's gaze needs it; rebuild the World.");
-            Assign(serialized, "_lander", lander);
-            Assign(serialized, "_pilot", Find(lander, BeaconName));
+            Assign(serialized, "_beacon", Find(lander, BeaconName));
             serialized.ApplyModifiedPropertiesWithoutUndo();
             context.AddSystem(director);
         }

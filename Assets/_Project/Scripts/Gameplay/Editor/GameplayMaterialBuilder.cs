@@ -27,10 +27,8 @@ namespace MoonProject.Gameplay.Editor
             Shader glint = LoadShader(GameplayAssetPaths.GlintShader);
 
             var visuals = ScriptableObject.CreateInstance<GameplayVisuals>();
-            visuals.Populate(Write(shader, GlowRole.WeldBeam), Write(shader, GlowRole.Flash),
-                Write(shader, GlowRole.PieceHalo),
-                GeneratedAssets.CreateOrReplace(GlintMaterials.CreatePart(glint), GameplayAssetPaths.PartGlintMaterial),
-                Write(shader, GlowRole.Spark));
+            visuals.Populate(Write(shader, GlowRole.Flash), Write(shader, GlowRole.PieceHalo),
+                GeneratedAssets.CreateOrReplace(GlintMaterials.CreatePart(glint), GameplayAssetPaths.PartGlintMaterial));
             visuals.PopulateContainers(CrateModels());
             visuals.PopulateHologram(HologramMaterialBuilder.LoadMaterial(false),
                 HologramMaterialBuilder.LoadMaterial(true));

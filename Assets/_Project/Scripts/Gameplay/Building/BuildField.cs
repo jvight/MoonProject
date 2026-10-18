@@ -16,7 +16,7 @@ namespace MoonProject.Gameplay
     /// beats, and handles hold-to-deconstruct. Allocation-free per frame.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class BuildField : MonoBehaviour
+    public sealed class BuildField : MonoBehaviour, ICutterAimOwner
     {
         private const float GhostGlideHalfLife = 0.045f;
         private const float GhostYawHalfLife = 0.04f;
@@ -55,9 +55,13 @@ namespace MoonProject.Gameplay
 
         private Transform _structuresRoot;
         private Transform _ghostsRoot;
-        private Transform _sparkSocket;
-        private RepairBeam _beam;
-        private WeldSparks _sparks;
+        private CutBeam _weldBeam;
+        private LightPulse _weldLight;
+        private VacuumDebris _weldDebris;
+        private HeatSeam _weldSeam;
+        private readonly Vector3[] _seamLine = new Vector3[3];
+        private int _seamInstanceId;
+        private int _seamStageIndex = -1;
 
         private StructureView _activeGhost;
         private string _activeGhostId;
@@ -101,14 +105,23 @@ namespace MoonProject.Gameplay
         /// <summary>World-space prompt anchor of the hovered structure.</summary>
         public Vector3 HoveredPosition { get; private set; }
 
-        /// <summary>Current weld beam level (for tests and inspection).</summary>
-        public float WeldBeamLevel => _beam != null ? _beam.Level : 0f;
+        /// <summary>Current weld beam reach level (for tests and inspection).</summary>
+        public float WeldBeamLevel => _weldBeam != null ? _weldBeam.Reach : 0f;
 
         /// <summary>World-space origin point of the weld beam (for tests and inspection).</summary>
-        public Vector3 WeldBeamStart => _beam != null ? _beam.Start : Vector3.zero;
+        public Vector3 WeldBeamStart => _weldBeam != null ? _weldBeam.Start : Vector3.zero;
+
+        /// <summary>Number of rendered layers in the weld beam (core + sheath + halo).</summary>
+        public int WeldBeamLayerCount => _weldBeam != null ? _weldBeam.LayerCount : 0;
+
+        /// <summary>Current intensity of the warm flickering weld light.</summary>
+        public float WeldLightIntensity => _weldLight != null ? _weldLight.Intensity : 0f;
+
+        /// <summary>Current heat level on the welded structure's active stage seam.</summary>
+        public float WeldSeamHeat => _weldSeam != null && _weldSeam.Piece != null ? _weldSeam.HeatAt(0) : 0f;
 
         /// <summary>Live weld spark particle count (for tests and inspection).</summary>
-        public int SparkCount => _sparks.ParticleCount;
+        public int SparkCount => _weldDebris != null ? _weldDebris.ParticleCount : 0;
 
         internal void Wire(BuildingTuning tuning, StructureCatalog catalog)
         {
@@ -162,12 +175,13 @@ namespace MoonProject.Gameplay
             _ghostsRoot = new GameObject("PlacementGhosts").transform;
             _ghostsRoot.SetParent(transform, false);
 
-            _sparkSocket = new GameObject("WeldSparkSocket").transform;
-            _sparkSocket.SetParent(transform, false);
-
-            _beam = new RepairBeam("BuildWeldBeam", transform, _visuals.WeldBeam, _tuning.WeldStitchRate,
-                _tuning.WeldStitchSpread);
-            _sparks = new WeldSparks(_sparkSocket, _tuning, _visuals.Spark);
+            var vfxRoot = new GameObject("BuildWeldVfx").transform;
+            vfxRoot.SetParent(transform, false);
+            FeelVfxTuning feelTuning = _visuals.FeelTuning;
+            _weldBeam = new CutBeam(vfxRoot, feelTuning, _visuals.BeamCore, _visuals.BeamSheath);
+            _weldLight = new LightPulse("BuildWeldLight", vfxRoot, feelTuning.CutLightColor, feelTuning.CutRange);
+            _weldDebris = new VacuumDebris(vfxRoot, feelTuning, _visuals.FeelSprite);
+            _weldSeam = new HeatSeam(vfxRoot, feelTuning, _visuals.HeatSeam);
 
             PrewarmGhosts();
 
@@ -317,27 +331,101 @@ namespace MoonProject.Gameplay
                 return;
             }
 
-            StepInput(now, deltaTime);
+            bool wasOpen = _controller.IsOpen || _waitExcavateRelease;
+            if (wasOpen)
+            {
+                _input.SetModeOwner(this, true);
+            }
+
+            StepInput(now, deltaTime, out bool excavateHeld);
+
+            bool ownsInput = _controller.IsOpen || _waitExcavateRelease;
+            _input.SetModeOwner(this, ownsInput);
 
             bool weldingNow = _controller.State == BuildModeState.Welding && _controller.ActiveWeldInstanceId > 0;
             Vector3 weldPoint = weldingNow ? WeldPointOf(_controller.ActiveWeldInstanceId) : Vector3.zero;
-            _beam.Step(weldingNow, weldingNow, _rig.CutterOrigin.position, weldPoint, now, deltaTime);
-            StepWeldLoopAudio(weldingNow, weldPoint);
-            SetHold(weldingNow);
+            SetHold(_controller.IsOpen || weldingNow);
             StepGaze(weldingNow, weldPoint);
+            bool activelyWelding = weldingNow && excavateHeld && _beamWork.MayStart &&
+                                   (_rig == null || _rig.HasCutterLineOfSight(weldPoint));
+            StepWeldVfx(weldingNow, activelyWelding, weldPoint, deltaTime);
+            StepWeldLoopAudio(activelyWelding, weldPoint);
 
             _placedBase.StepPower(deltaTime, 1f);
             StepPlacedViews(deltaTime);
         }
 
-        private void StepInput(float now, float deltaTime)
+        private void StepWeldVfx(bool weldingNow, bool activelyWelding, Vector3 weldPoint, float deltaTime)
+        {
+            StructureView view = null;
+            if (weldingNow)
+            {
+                int activeId = _controller.ActiveWeldInstanceId;
+                if (_viewsById.TryGetValue(activeId, out view) && view != null)
+                {
+                    int stageIndex = Mathf.Clamp(view.SolidStageCount, 0, Mathf.Max(0, view.StageCount - 1));
+                    if (_seamInstanceId != activeId || _seamStageIndex != stageIndex || _weldSeam.Piece != view.transform)
+                    {
+                        view.GetStageWeldSeam(stageIndex, _seamLine, out Vector3 seamNormal);
+                        _weldSeam.Begin(view.transform, _seamLine, seamNormal);
+                        _seamInstanceId = activeId;
+                        _seamStageIndex = stageIndex;
+                    }
+                }
+            }
+            else if (_seamInstanceId != 0)
+            {
+                _weldSeam.Clear();
+                _seamInstanceId = 0;
+                _seamStageIndex = -1;
+            }
+
+            FeelVfxTuning feelTuning = _visuals.FeelTuning;
+            float vfxDt = activelyWelding ? Mathf.Max(deltaTime, 1e-4f) : deltaTime;
+            if (activelyWelding)
+            {
+                float stageProgress = view != null
+                    ? view.GetActiveStageProgress01(_controller.ActiveWeldProgress01)
+                    : _controller.ActiveWeldProgress01;
+                if (_weldSeam.Piece != null)
+                {
+                    _weldSeam.Cut(Mathf.Max(0.05f, stageProgress));
+                }
+
+                _weldBeam.Extend();
+                _weldLight.MoveTo(weldPoint);
+                _weldLight.Flicker(feelTuning.CutFlicker, feelTuning.CutFlickerRate);
+                _weldLight.Ramp(feelTuning.CutLight, feelTuning.ExtendSeconds, false);
+                _weldDebris.Spray(weldPoint, Vector3.up, stageProgress);
+            }
+            else
+            {
+                _weldBeam.Retract();
+                _weldLight.Ramp(0f, feelTuning.CutFadeSeconds, false);
+                _weldDebris.StopSpray();
+            }
+
+            _weldSeam.Step(vfxDt);
+            _weldBeam.Step(vfxDt, _rig.CutterOrigin.position, weldPoint);
+            _weldLight.Step(vfxDt);
+            _weldDebris.Step(vfxDt);
+        }
+
+        private void StepInput(float now, float deltaTime, out bool excavateHeld)
         {
             bool buildPressed = _input.BuildPressed;
             bool cancelPressed = _input.Menu.CancelPressed;
+            bool modeOwned = _input.HasModeOwner;
+            Vector2 drive = modeOwned ? _input.ModeDrive(this) : _input.Drive;
             Vector2 nav = _input.Menu.Navigate;
-            bool excavatePressed = _input.ExcavatePressed;
-            bool excavateHeld = _input.ExcavateHeld;
-            float winch = _input.Winch;
+            if (drive.sqrMagnitude > nav.sqrMagnitude)
+            {
+                nav = drive;
+            }
+
+            bool excavatePressed = modeOwned ? _input.ModeExcavatePressed(this) : _input.ExcavatePressed;
+            excavateHeld = modeOwned ? _input.ModeExcavateHeld(this) : _input.ExcavateHeld;
+            float winch = modeOwned ? _input.ModeWinch(this) : _input.Winch;
             bool deconstructHeld = _input.DeconstructHeld;
 
             if (!excavateHeld)
@@ -355,6 +443,10 @@ namespace MoonProject.Gameplay
 
                 _controller.ToggleBuildMode();
                 _waitExcavateRelease = excavateHeld;
+                if (_controller.IsOpen || _waitExcavateRelease)
+                {
+                    _input.SetModeOwner(this, true);
+                }
             }
             else if (cancelPressed && _controller.IsOpen)
             {
@@ -365,6 +457,7 @@ namespace MoonProject.Gameplay
                 }
 
                 _controller.Close();
+                _waitExcavateRelease = excavateHeld;
             }
 
             switch (_controller.State)
@@ -499,6 +592,7 @@ namespace MoonProject.Gameplay
                 if (_controller.TryConfirmPlacement(_terrain, roverPosition, out int placedId, out _))
                 {
                     HideAllGhosts();
+                    StepGaze(true, WeldPointOf(placedId));
                     BeginWeldPresentation(placedId);
                     _waitExcavateRelease = !excavateHeld;
                 }
@@ -525,8 +619,16 @@ namespace MoonProject.Gameplay
                 BeginWeldPresentation(activeId);
             }
 
+            Vector3 weldPoint = WeldPointOf(activeId);
+            StepGaze(true, weldPoint);
             bool canWeld = excavateHeld && _beamWork.MayStart;
-            _controller.StepWelding(deltaTime, _rover.Position, canWeld, out bool completedNow, out bool cancelledNow);
+            bool hasLineOfSight = canWeld && (_rig == null || _rig.HasCutterLineOfSight(weldPoint));
+            _controller.StepWelding(
+                hasLineOfSight ? deltaTime : 0f,
+                _rover.Position,
+                canWeld,
+                out bool completedNow,
+                out bool cancelledNow);
 
             if (cancelledNow)
             {
@@ -538,7 +640,7 @@ namespace MoonProject.Gameplay
                 _weldingInstanceId = 0;
                 _waitExcavateRelease = excavateHeld;
             }
-            else if (canWeld)
+            else if (hasLineOfSight)
             {
                 _beamWork.Weld(deltaTime);
             }
@@ -994,8 +1096,12 @@ namespace MoonProject.Gameplay
 
         private void BurstSparksAt(Vector3 worldPoint)
         {
-            _sparkSocket.position = worldPoint;
-            _sparks.Burst();
+            if (_weldDebris == null || _visuals == null || _visuals.FeelTuning == null)
+            {
+                return;
+            }
+
+            _weldDebris.Vent(worldPoint, Vector3.up, _visuals.FeelTuning.VentSparks);
         }
 
         private void RegisterManagedColliders(StructureView view, bool add)
@@ -1100,6 +1206,7 @@ namespace MoonProject.Gameplay
                 return;
             }
 
+            _input?.SetModeOwner(this, false);
             StepWeldLoopAudio(false, Vector3.zero);
             SetHold(false);
             if (_gazing && _rig != null)

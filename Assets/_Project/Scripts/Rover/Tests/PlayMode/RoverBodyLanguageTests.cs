@@ -197,7 +197,9 @@ namespace MoonProject.Rover.PlayModeTests
             yield return Wait(1f);
 
             EventBus events = _rover.Context.Events;
-            Vector3 sealOnRight = _rover.Controller.Position + Vector3.right * 6f + Vector3.forward * 2f;
+            Vector3 startPosition = _rover.Controller.Position;
+            Quaternion startRotation = Quaternion.Euler(0f, _rover.Controller.Heading, 0f);
+            Vector3 sealOnRight = startPosition + Vector3.right * 6f + Vector3.forward * 2f;
             events.Publish(new FeelBeat(FeelKind.Cut, FeelPhase.Anticipate, sealOnRight, Vector3.back, 0f, 0.5f));
             events.Publish(new FeelBeat(FeelKind.Cut, FeelPhase.Act, sealOnRight, Vector3.back, 0f, 0f));
             yield return Wait(1f);
@@ -207,6 +209,10 @@ namespace MoonProject.Rover.PlayModeTests
             yield return Wait(4f);
             Assert.AreEqual(0f, NeckYaw, 5f,
                 "After a seal cut completes without Collect.Reward, 07 releases cut gaze and looks ahead again.");
+
+            // The cut turned the whole body toward the seal; the dig below is staged from the starting pose.
+            _rover.Context.Get<IRoverPlacement>().PlaceAt(startPosition, startRotation);
+            yield return Wait(1f);
 
             Vector3 relicOnRight = _rover.Controller.Position + Vector3.right * 6f + Vector3.forward * 2f;
             events.Publish(new FeelBeat(FeelKind.Dig, FeelPhase.Anticipate, relicOnRight, Vector3.up, 0f, 0.5f));

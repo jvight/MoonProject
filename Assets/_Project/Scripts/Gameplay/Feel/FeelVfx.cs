@@ -143,8 +143,29 @@ namespace MoonProject.Gameplay
             }
         }
 
+        private Vector3 _cutPoint;
+        private Vector3 _cutNormal = Vector3.up;
+
+        private Vector3 ActiveCutPoint =>
+            _seam != null && _seam.Piece != null ? _seam.HotPoint
+            : _anchors.CutPoint != Vector3.zero ? _anchors.CutPoint
+            : _cutPoint;
+
+        private Vector3 ActiveCutNormal =>
+            _anchors.CutPoint != Vector3.zero ? _anchors.CutNormal : _cutNormal;
+
         private void HandleCut(FeelBeat beat)
         {
+            if (beat.Phase != FeelPhase.Follow && beat.Position != Vector3.zero)
+            {
+                _cutPoint = beat.Position;
+            }
+
+            if (beat.Phase != FeelPhase.Follow && beat.Normal.sqrMagnitude > 1e-6f)
+            {
+                _cutNormal = beat.Normal;
+            }
+
             switch (beat.Phase)
             {
                 case FeelPhase.Anticipate:
@@ -172,12 +193,12 @@ namespace MoonProject.Gameplay
         public void Step(float deltaTime)
         {
             Vector3 emitter = _anchors.Emitter;
-            Vector3 target = _seam != null && _seam.Piece != null ? _seam.HotPoint : _anchors.CutPoint;
+            Vector3 target = ActiveCutPoint;
             _charge.Step(deltaTime, emitter);
             _beam.Step(deltaTime, emitter, target);
             if (_cutting)
             {
-                _debris.Spray(target, _anchors.CutNormal, _progress);
+                _debris.Spray(target, ActiveCutNormal, _progress);
                 _cutLight.MoveTo(target);
             }
 
@@ -209,6 +230,7 @@ namespace MoonProject.Gameplay
             Transform piece = _anchors.CutPiece;
             if (piece == null)
             {
+                _seam?.Clear();
                 _seam = null;
                 return;
             }
@@ -221,7 +243,7 @@ namespace MoonProject.Gameplay
             _ignited = true;
             _cutting = true;
             Vector3 emitter = _anchors.Emitter;
-            Vector3 cut = _anchors.CutPoint;
+            Vector3 cut = ActiveCutPoint;
             _charge.Ignite();
             _beam.Extend();
             Flash(emitter, _tuning.FlashRadius * 2f, _tuning.FlashSeconds);
@@ -234,7 +256,7 @@ namespace MoonProject.Gameplay
             _cutLight.Ramp(_tuning.CutLight, _tuning.ExtendSeconds, false);
             _progress = 0f;
             _seam?.Cut(0f);
-            _debris.Spray(cut, _anchors.CutNormal, 0f);
+            _debris.Spray(cut, ActiveCutNormal, 0f);
         }
 
         private void Cancel()
@@ -250,7 +272,7 @@ namespace MoonProject.Gameplay
 
         private void Crack()
         {
-            Vector3 end = _seam != null && _seam.Piece != null ? _seam.HotPoint : _anchors.CutPoint;
+            Vector3 end = ActiveCutPoint;
             Flash(end, _tuning.FlashRadius, _tuning.CrackFlashSeconds);
             _cutLight.Ramp(_cutLight.Level * _tuning.CrackSpike, 0f, false);
             Vector3 emitter = _anchors.Emitter;
