@@ -6,7 +6,7 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// A story scan on an R1 ruin piece or basin prop (docs/design/opening-v2.md B7, the habitat's airlock panel;
-    /// basin-dressing.md Â§4, the Scout): Art's mesh node 07 scans like a fragment, which teaches nothing and pays
+    /// basin-dressing.md §4, the Scout): Art's mesh node 07 scans like a fragment, which teaches nothing and pays
     /// nothing; scanned, its readout shows on 07's CRT (<see cref="Core.Events.StoryScanned"/>). Once per save.
     /// </summary>
     [Serializable]
