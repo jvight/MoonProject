@@ -121,7 +121,7 @@ namespace MoonProject.World.PlayModeTests
         private const float PeakChange = 0.01f;
         private const float FirstNightSeconds = 300f;
         private static readonly Vector2 FrontDoorTrailStart = new Vector2(27f, 147f);
-        private static readonly Vector2 FrontDoorTrailEnd = new Vector2(80f, 182f);
+        private static readonly Vector2 FrontDoorTrailEnd = new Vector2(79.5f, 185.5f);
         private static readonly Vector2 TrailStart = new Vector2(27f, 147f);
         private static readonly Vector2 TrailBend = new Vector2(42.7f, 148.6f);
         private const float ReflectorLookHeight = 0.3f;
@@ -641,6 +641,8 @@ namespace MoonProject.World.PlayModeTests
                 ReportPeaks(camera, scoutProp, "eclipse", laneEye, apronEye, scoutLook);
                 ReportPeaks(camera, reflector, "eclipse, the retroreflector", laneEye, apronEye,
                     reflector.position + Vector3.up * ReflectorLookHeight);
+                Shoot(camera, LookPose("eclipse-apron-glint", apronEye,
+                    reflector.position + Vector3.up * ReflectorLookHeight, ScoutApronFov));
 
                 context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.FirstCharge, true));
                 yield return new WaitForSeconds(BlastSettleSeconds);
