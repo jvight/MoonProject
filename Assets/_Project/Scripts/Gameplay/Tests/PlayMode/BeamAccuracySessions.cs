@@ -89,7 +89,6 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>Metres in front of 07 a structure is welded in the framing test: right at its nose.</summary>
         private const float WeldAhead = 3f;
-        private const int MaxMenuSteps = 8;
         private const float FramingSettleSeconds = 2f;
         private const float ShotDelaySeconds = 0.2f;
         private const float CentralShare = 0.7f;
