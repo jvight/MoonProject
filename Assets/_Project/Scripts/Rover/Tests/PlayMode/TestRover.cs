@@ -29,6 +29,10 @@ namespace MoonProject.Rover.PlayModeTests
         /// <summary>The battery's flank lamps stand-in spacing along the stripe.</summary>
         private const float FlankLampSpacing = 0.06f;
 
+        /// <summary>The real headlamp glass material as the stand-in body's second slot, as on the built Body mesh.</summary>
+        private const string LampGlassMaterialPath = "Assets/_Project/Generated/Art/R1/Materials/R1_LampAmber.mat";
+        private const int LampGlassSlot = 1;
+
         /// <summary>The charge-up's cell stand-ins on the deck: their offset, height and spacing.</summary>
         private const float CellX = 0.2f;
         private const float CellY = 0.62f;
@@ -186,7 +190,15 @@ namespace MoonProject.Rover.PlayModeTests
             Material material = world.Material;
 
             Transform bodyNode = Node(RoverModelNodes.Body, model, Vector3.zero);
-            Shape(PrimitiveType.Cube, bodyNode, new Vector3(0f, 0.8f, 0f), new Vector3(1.3f, 0.55f, 1.9f), material);
+            var bodyMesh = Shape(PrimitiveType.Cube, bodyNode, new Vector3(0f, 0.8f, 0f), new Vector3(1.3f, 0.55f, 1.9f),
+                material).GetComponent<MeshRenderer>();
+            var lampGlass = AssetDatabase.LoadAssetAtPath<Material>(LampGlassMaterialPath);
+            if (lampGlass == null)
+            {
+                throw new InvalidOperationException($"TestRover: no headlamp glass material at {LampGlassMaterialPath}.");
+            }
+
+            bodyMesh.sharedMaterials = new[] { material, lampGlass };
             var wheels = new Object[RoverModelNodes.WheelCount];
             var arms = new Object[RoverModelNodes.WheelCount];
             var shocks = new Object[RoverModelNodes.WheelCount];
@@ -285,7 +297,8 @@ namespace MoonProject.Rover.PlayModeTests
             var fx = fxHost.gameObject.AddComponent<RoverWheelFx>();
 
             Assign(rig, ("_tuning", rigTuning), ("_chassis", chassis), ("_antenna", antenna));
-            Assign(roadLight, ("_tuning", rigTuning), ("_headlamp", headlamp));
+            Assign(roadLight, ("_tuning", rigTuning), ("_headlamp", headlamp), ("_lampBody", bodyMesh));
+            SetInt(roadLight, "_lampGlassSlot", LampGlassSlot);
             AssignArray(rig, "_wheels", wheels);
             AssignArray(rig, "_arms", arms);
             AssignArray(rig, "_shocks", shocks);
@@ -533,6 +546,15 @@ namespace MoonProject.Rover.PlayModeTests
                 property.objectReferenceValue = value;
             }
 
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void SetInt(Object target, string field, int value)
+        {
+            var serialized = new SerializedObject(target);
+            SerializedProperty property = serialized.FindProperty(field)
+                ?? throw new InvalidOperationException($"{target.GetType().Name} has no field {field}.");
+            property.intValue = value;
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
