@@ -1,0 +1,21 @@
+{
+    "name": "MoonProject.Autoplay",
+    "rootNamespace": "MoonProject.Autoplay",
+    "references": [
+        "MoonProject.Core",
+        "MoonProject.App",
+        "MoonProject.Gameplay",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "DEVELOPMENT_BUILD || LUNARION_AUTOPLAY"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
