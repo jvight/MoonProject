@@ -551,6 +551,9 @@ MonoBehaviour:
     _focalLength: 60
     _aperture: 1.6
     _nearestFocus: 0.1
+    _wakeGain: 1.5
+    _gainHoldLid: 0.2
+    _gainGoneLid: 0.65
     _readoutColor: {r: 1, g: 0.86, b: 0.62, a: 1}
     _readoutOpacity: 0.55
     _readoutLineHeight: 0.026
