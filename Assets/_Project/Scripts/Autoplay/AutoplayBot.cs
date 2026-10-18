@@ -222,6 +222,17 @@ namespace MoonProject.Autoplay
             yield return Until(() => Rover().Speed < 0.3f, 4f, "07 to stop turning");
         }
 
+        /// <summary>Backs 07 straight up (S held) until <paramref name="done"/> holds, as a player reverses off.</summary>
+        public IEnumerator BackOff(Func<bool> done, float timeoutSeconds, string what)
+        {
+            Activity = "backing off " + what;
+            ReleaseDrive();
+            _input.Set(Key.S, true);
+            yield return Until(done, timeoutSeconds, "07 to back off " + what);
+            _input.Set(Key.S, false);
+            yield return Until(() => Rover().Speed < 0.3f, 4f, "07 to stop backing off");
+        }
+
         /// <summary>Moves the mouse until the view's centre is on <paramref name="point"/>.</summary>
         public IEnumerator LookAt(Vector3 point, string what)
         {
