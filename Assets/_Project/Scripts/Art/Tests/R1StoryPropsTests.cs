@@ -864,7 +864,7 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
-        public void DecalBootprintTrail_HasTileablePathAnchors_BootprintMaterial_AndBoxCollider()
+        public void DecalBootprintTrail_HasTileablePathAnchors_BootprintMaterial_AndNoCollider()
         {
             GameObject decalPrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.DecalBootprintTrailPrefabPath);
             Transform trailSheet = decalPrefab.transform.Find("TrailSheet");
@@ -877,11 +877,8 @@ namespace MoonProject.Art.Tests
             Assert.AreEqual(3.0f, Vector3.Distance(startAnchor.localPosition, endAnchor.localPosition), 0.02f,
                 "Decal_BootprintTrail Start_Anchor to End_Anchor span must be 3.0 m for seamless path tiling.");
 
-            BoxCollider box = decalPrefab.GetComponent<BoxCollider>();
-            Assert.IsNotNull(box, "Decal_BootprintTrail must have a simple BoxCollider on root.");
-            Vector3 boxSize = ColliderSizeInPrefabAxes(decalPrefab, box);
-            Assert.AreEqual(0.95f, boxSize.x, 0.03f);
-            Assert.AreEqual(3.00f, boxSize.z, 0.03f);
+            Assert.AreEqual(0, decalPrefab.GetComponentsInChildren<Collider>(true).Length,
+                "Decal_BootprintTrail is a ground imprint and must not collide; even a low lip along a long trail bumps 07's wheels.");
 
             Renderer renderer = trailSheet.GetComponent<Renderer>();
             Assert.IsNotNull(renderer);
