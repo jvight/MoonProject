@@ -736,7 +736,7 @@
         },
         {
             "key": "next.v2.collect_parts",
-            "text": "Collect the parts from the lander's open crate."
+            "text": "Collect the parts from the open crate by the lander's service port."
         },
         {
             "key": "next.v2.build_pad",
