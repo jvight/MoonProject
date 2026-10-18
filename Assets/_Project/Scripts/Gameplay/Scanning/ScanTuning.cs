@@ -111,10 +111,10 @@ namespace MoonProject.Gameplay
         [Range(0.05f, 0.85f)] [SerializeField] private float _beamLensPeakAlpha = 0.68f;
 
         [Tooltip("Very low additive alpha in the middle of the scan beam wedge (almost invisible in the middle).")]
-        [Range(0.005f, 0.15f)] [SerializeField] private float _beamMidAlpha = 0.018f;
+        [Range(0.005f, 0.15f)] [SerializeField] private float _beamMidAlpha = 0.06f;
 
         [Tooltip("Additive alpha where the far edge of the scan beam wedge meets the current surface scan line on the target.")]
-        [Range(0.04f, 0.65f)] [SerializeField] private float _beamContactAlpha = 0.42f;
+        [Range(0.04f, 0.65f)] [SerializeField] private float _beamContactAlpha = 0.6f;
 
         [Tooltip("Fine scanline band density inside the scan beam wedge.")]
         [Range(12f, 120f)] [SerializeField] private float _beamScanlineDensity = 42f;
@@ -152,6 +152,10 @@ namespace MoonProject.Gameplay
         [Tooltip("Downward lunar gravity acceleration (m/s^2, 1/6 g = 1.62) for the ballistic dust grains along the scan path.")]
         [Range(0.2f, 5f)] [SerializeField] private float _pathGlintGravity = 1.62f;
 
+        [Tooltip("The finer shape of the scan's light: the cheek lens, the wedge's fan, the data ticks, the dust " +
+                 "glints and the closing ribbon.")]
+        [SerializeField] private ScanBeamLook _beamLook = new ScanBeamLook();
+
         [Header("Lumen station ruins (RUINS-WORLD, opening-v2 §4)")]
         [Tooltip("Each R1 ruin piece's Scan_1..N targets and the structure blueprints it teaches once every one of " +
                  "them is scanned (the workshop and the scatter teach nothing: they hold lockers and panels).")]
@@ -170,12 +174,14 @@ namespace MoonProject.Gameplay
         [SerializeField] private RuinScanSet _landerCargo = new RuinScanSet(LanderCargoId,
             new[] { StructureIds.ChargingPad }, ScanSize.Medium, ScanSize.Medium);
 
-        [Tooltip("Story scans on the ruin pieces (opening-v2 B7): Art's mesh nodes whose readout the CRT shows once " +
-                 "scanned; they teach and pay nothing.")]
+        [Tooltip("Story scans on the ruin pieces (opening-v2 B7) and the basin's story props (basin dressing Â§4): " +
+                 "Art's mesh nodes whose readout the CRT shows once scanned; they teach and pay nothing.")]
         [SerializeField] private StoryScan[] _stories =
         {
             new StoryScan("airlock", "HabitatModules", "AirlockPanel", "story.airlock_panel", ScanSize.Small,
                 new Vector3(0f, -0.3f, 0f)),
+            new StoryScan("scout3", "Prop_OldLander", "Spaceframe", "scan.scout3.manifest", ScanSize.Medium,
+                Vector3.zero),
         };
 
         private static readonly int ScanLineColorShaderId = Shader.PropertyToID("_MoonScanLineColor");
@@ -230,6 +236,7 @@ namespace MoonProject.Gameplay
         public float PathGlintAlpha => _pathGlintAlpha;
         public float PathGlintLifetime => _pathGlintLifetime;
         public float PathGlintGravity => _pathGlintGravity;
+        public ScanBeamLook BeamLook => _beamLook;
 
         /// <summary>Pushes the wireframe reveal and completion ping tuning to shader globals (zero GC).</summary>
         public void ApplyShaderGlobals()

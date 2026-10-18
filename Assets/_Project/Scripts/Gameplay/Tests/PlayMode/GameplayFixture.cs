@@ -26,11 +26,15 @@ namespace MoonProject.Gameplay.PlayModeTests
         public const string ShaderPath = "Assets/_Project/Shaders/Gameplay/SoftGlow.shader";
         public const string GlintShaderPath = "Assets/_Project/Shaders/Gameplay/Glint.shader";
 
+        /// <summary>Art's R1 surface: the stand-in ruins and pad fragments show their scans on it.</summary>
+        public const string R1LitShaderPath = "Assets/_Project/Shaders/R1/R1Lit.shader";
+
         public static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "gameplay-captures"));
 
         private readonly List<Object> _created = new List<Object>();
         private readonly InputActionAsset _controls;
+        private Material _scanSurface;
 
         private GameplayFixture(InputActionAsset controls, string saveSlot)
         {
@@ -158,6 +162,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             OpeningTuning = Asset<OpeningTuning>();
             CargoTuning = Asset<CargoTuning>();
 
+            _scanSurface = Track(new Material(LoadShader(R1LitShaderPath)));
             var visuals = Asset<GameplayVisuals>();
             Shader shader = LoadShader(ShaderPath);
             visuals.Populate(GlowMaterial(shader, GlowRole.Flash), GlowMaterial(shader, GlowRole.PieceHalo),
@@ -295,11 +300,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             for (int i = 0; i < pieces.Length; i++)
             {
                 Transform piece = Node(pieces[i].Id, parent, new Vector3(95f, 0f, 185f) + pieces[i].Offset);
-                Named(Block(piece, new Vector3(0f, 0.6f, 0f), new Vector3(2.4f, 1.2f, 2.4f)), "Body");
+                ShowsScans(Named(Block(piece, new Vector3(0f, 0.6f, 0f), new Vector3(2.4f, 1.2f, 2.4f)), "Body"));
                 if (pieces[i].Id == "HabitatModules")
                 {
-                    Named(Block(piece, new Vector3(-1.6f, 1.1f, -1.25f), new Vector3(0.5f, 0.6f, 0.05f)),
-                        "AirlockPanel");
+                    ShowsScans(Named(Block(piece, new Vector3(-1.6f, 1.1f, -1.25f), new Vector3(0.5f, 0.6f, 0.05f)),
+                        "AirlockPanel"));
                 }
 
                 for (int t = 1; t <= pieces[i].Targets; t++)
@@ -387,6 +392,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private GameObject FragmentTemplate(string name)
         {
             GameObject fragment = Template("PadFragment_" + name, new Vector3(0.3f, 0.04f, 0.2f));
+            ShowsScans(fragment.transform.GetChild(0));
             Node("Scan_1", fragment.transform, Vector3.up * 0.04f);
             return fragment;
         }
@@ -431,6 +437,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             block.transform.localPosition = localPosition;
             block.transform.localScale = size;
             return block.transform;
+        }
+
+        private void ShowsScans(Transform part)
+        {
+            part.GetComponent<Renderer>().sharedMaterial = _scanSurface;
         }
 
         private GameObject Template(string name, Vector3 size)

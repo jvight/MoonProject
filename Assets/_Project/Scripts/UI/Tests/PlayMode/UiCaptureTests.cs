@@ -552,8 +552,8 @@ namespace MoonProject.UI.PlayModeTests
             Directory.CreateDirectory(folder);
             context.Events.Publish(new RoverAwoke(Vector3.zero, false));
             context.Events.Publish(new NextStepChanged("next.v2.drive_lander"));
-            context.Events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle, false));
-            context.Events.Publish(new RoverWakeBeatReached(WakeBeat.GazeEarth, false));
+            context.Events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle));
+            context.Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame));
             yield return new WaitForSecondsRealtime(_tuning.Guidance.Readout.FadeIn + 0.5f);
             Assert.IsTrue(ui.Readout.IsVisible && ui.Readout.Showing == ReadoutKind.Boot,
                 "the boot diagnostics show when 07's lens opens");
@@ -565,7 +565,7 @@ namespace MoonProject.UI.PlayModeTests
             Assert.IsTrue(ui.Readout.IsFlashing(1 + (int)RoverSystem.Cutter), "a refused cut flashes the cutter's line");
             yield return Capture(camera, folder, "49a_boot_cutter_refused");
 
-            context.Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame, false));
+            context.Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame));
             yield return new WaitForSecondsRealtime(_tuning.Guidance.BootHoldSeconds +
                                                     _tuning.Guidance.Readout.FadeOut + _tuning.Guidance.Line.FadeIn +
                                                     _tuning.Guidance.ObjectiveDelaySeconds + 2.5f);

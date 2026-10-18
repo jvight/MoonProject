@@ -2173,19 +2173,16 @@
       "files": [
         "Assets/_Project/Audio/SFX/2D/lid_tick_a2.wav",
         "Assets/_Project/Audio/SFX/2D/lid_tick_d3.wav",
-        "Assets/_Project/Audio/SFX/2D/lid_tick_a4.wav",
         "Assets/_Project/Audio/SFX/2D/lid_tick_d5.wav"
       ],
       "variantLabels": [
         "a2",
         "d3",
-        "a4",
         "d5"
       ],
       "sha256": [
         "e2699bd5c176b41aa2a2e661321f11bc8eb2b5efe579617a498179936d4d3010",
         "58bed0c9eb8b3f90f69f1bb3547f5c409d09fbcef53ee887dedfc40af44efc27",
-        "578b478faa3d4c7194131613022476cc3315b1e0244585d162047e0f5fa3c264",
         "51d32df454ddb3dd2b01f7e4d54a032525c93eac3f8422918f353afbd46a0dd9"
       ],
       "volumeMin": 0.6,
@@ -2197,34 +2194,7 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": true,
-      "notes": "Felted servo tick of 07's lid or lens: A2, D3 (lid stages), A4 (focus lands), D5 (the blink)."
-    },
-    {
-      "id": "lens_whine",
-      "category": "tick_2d",
-      "milestone": "M3",
-      "bus": "Sfx",
-      "spatial": false,
-      "loop": false,
-      "files": [
-        "Assets/_Project/Audio/SFX/2D/lens_whine.wav"
-      ],
-      "variantLabels": [
-        "lens_whine"
-      ],
-      "sha256": [
-        "2a1284a2282e7f4fd84dc0b11445b54f72d671f5939510446a6c92f458008733"
-      ],
-      "volumeMin": 0.5,
-      "volumeMax": 0.5,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -28.0,
-      "loudnessMode": "momentary",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": false,
-      "notes": "O4: 07's lens motor hunting, a thin whine gliding E4 to F#4 over a faint gear flutter."
+      "notes": "Felted servo tick of 07's lid: A2 (picture opens), D3 (eyes open), D5 (the short wake)."
     },
     {
       "id": "neck_servo",

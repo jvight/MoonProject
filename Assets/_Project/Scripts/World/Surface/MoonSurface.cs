@@ -714,9 +714,9 @@ namespace MoonProject.World
                 seeded++;
             }
 
-            // Seeded craters first, play bowls last: indices of seeded craters stay stable when bowls are edited.
-            // Seeded craters on a site are dropped only now, so every other crater lies where it always did: the
-            // impact and the flat footprints erase the older ground beneath them.
+            // Seeded craters first, then play bowls, the Scout's crater last: indices of seeded craters stay stable
+            // when bowls are edited. Seeded craters on a site are dropped only now, so every other crater lies where
+            // it always did: the impact, the Scout's crater and the flat footprints erase the older ground beneath.
             var ordered = new List<Crater>(placed.Count);
             for (int i = bowls.Length; i < placed.Count; i++)
             {
@@ -731,17 +731,21 @@ namespace MoonProject.World
                 ordered.Add(placed[i]);
             }
 
+            SiteSettings sites = settings.Sites;
+            ordered.Add(new Crater(sites.ScoutCraterCenter, sites.ScoutCraterRadius, sites.ScoutCraterDepth,
+                sites.ScoutCraterRim, settings.CraterRimWidth, false));
             return ordered.ToArray();
         }
 
         /// <summary>
-        /// True when a seeded crater would reach into Kestrel-3's impact or a flat footprint under the opening's
-        /// places (the ruins, the lander and the build apron).
+        /// True when a seeded crater would reach into Kestrel-3's impact, the Scout's crater or a flat footprint under
+        /// the opening's places (the ruins, the lander and the build apron).
         /// </summary>
         private bool OnASite(Crater crater, SiteSettings sites)
         {
             float blend = sites.FootprintBlend;
             return _kestrel.Overlaps(crater.Center, crater.OuterRadius)
+                || Reaches(crater, sites.ScoutCraterCenter, sites.ScoutCraterRadius)
                 || Reaches(crater, sites.RuinsCenter, sites.RuinsRadius + blend)
                 || Reaches(crater, sites.LanderCenter, sites.LanderRadius + blend)
                 || Reaches(crater, sites.ApronCenter, sites.ApronRadius + blend);

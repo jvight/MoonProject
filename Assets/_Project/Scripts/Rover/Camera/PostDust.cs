@@ -17,7 +17,7 @@ namespace MoonProject.Rover
     /// <summary>
     /// How much of the long-sleep regolith coat is still on each part of 07 during its wake, as a pure model
     /// (EditMode-tested): the whole coat is on from the black until the checks; each part sheds most of it while its
-    /// own check moves it; the start's shiver shakes off the rest. It also counts what has fallen, so the opening
+    /// own check moves it; the ready performance's shiver shakes off the rest. It also counts what has fallen, so the opening
     /// can drop a puff of dust at the part each time enough has gone.
     /// </summary>
     public sealed class PostDust
@@ -39,7 +39,10 @@ namespace MoonProject.Rover
             return _levels[(int)zone];
         }
 
-        /// <summary>Sets every part's coat for this moment of the wake, and counts what fell since the last call.</summary>
+        /// <summary>
+        /// Sets every part's coat for this moment of the wake, and counts what fell since the last call:
+        /// <paramref name="progress01"/> is the check's progress during the checks and the performance's during it.
+        /// </summary>
         public void Update(OpeningPhase phase, BootCheckStep step, float progress01)
         {
             for (int i = 0; i < ZoneCount; i++)
@@ -77,14 +80,17 @@ namespace MoonProject.Rover
             switch (phase)
             {
                 case OpeningPhase.FadeOut:
-                case OpeningPhase.Crackle:
-                case OpeningPhase.LidCrack:
-                case OpeningPhase.LidHalf:
-                case OpeningPhase.Hunt:
-                case OpeningPhase.PullOut:
+                case OpeningPhase.Dark:
+                case OpeningPhase.FadeIn:
+                case OpeningPhase.EyesOpen:
                     return 1f;
                 case OpeningPhase.Post:
                     return DuringChecks(zone, step, p);
+                case OpeningPhase.Ready:
+                case OpeningPhase.PullBack:
+                    return _settings.DustSegmentOf(zone).Rest;
+                case OpeningPhase.Perform:
+                    return _settings.DustSegmentOf(zone).Rest * (1f - PostMotions.ShiverProgress(p));
                 default:
                     return 0f;
             }
@@ -93,11 +99,6 @@ namespace MoonProject.Rover
         private float DuringChecks(DustZone zone, BootCheckStep step, float p)
         {
             PostDustSegment segment = _settings.DustSegmentOf(zone);
-            if (step == BootCheckStep.Begin)
-            {
-                return segment.Rest * (1f - PostMotions.ShiverProgress(p));
-            }
-
             if (step < segment.Step)
             {
                 return 1f;

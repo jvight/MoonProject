@@ -220,9 +220,21 @@ namespace MoonProject.Rover
             _display.SetReadout(contentTexture);
         }
 
+        /// <summary>One plain blink of the eyes on the face (the wake's ready performance).</summary>
+        public void Blink()
+        {
+            if (_director == null)
+            {
+                Debug.LogError("RoverFaceDirector.Blink: no FaceDirector is wired.", this);
+                return;
+            }
+
+            _director.Blink();
+        }
+
         /// <summary>
-        /// Holds the CRT screen completely dark while 07 is asleep on the title or while the camera is inside the scan lens,
-        /// until the end of the self-test's checks (<see cref="WakeBeat.OverShoulder"/>) starts the CRT boot sequence.
+        /// Holds the CRT screen completely dark while 07 is asleep on the title and in the opening's black, until its eyes
+        /// open (<see cref="WakeBeat.EyesOpen"/>) and start the CRT boot sequence.
         /// </summary>
         public void SetOpeningDarkHold(bool hold)
         {

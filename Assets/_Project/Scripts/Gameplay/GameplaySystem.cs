@@ -52,6 +52,9 @@ namespace MoonProject.Gameplay
         [SerializeField] private BuildField _building;
         [SerializeField] private Transform[] _ruins = Array.Empty<Transform>();
 
+        [Tooltip("World's story props in the basin ([World]/BasinProps, e.g. the Scout): hosts of story scans only.")]
+        [SerializeField] private Transform[] _storyProps = Array.Empty<Transform>();
+
         [Tooltip("World's service port on the lander ([World]/Lander/ServicePort): the open crate stands at it.")]
         [SerializeField] private Transform _landerPort;
 
@@ -164,6 +167,11 @@ namespace MoonProject.Gameplay
             _ruins = ruins ?? Array.Empty<Transform>();
         }
 
+        internal void WireStoryProps(Transform[] storyProps)
+        {
+            _storyProps = storyProps ?? Array.Empty<Transform>();
+        }
+
         internal void WireLanderPort(Transform landerPort)
         {
             _landerPort = landerPort;
@@ -237,8 +245,9 @@ namespace MoonProject.Gameplay
             _salvage.ConnectScans(Scans);
             ApronGlow = new ApronGlow(_apronOutline, _building.Tuning.ApronGlowFadeSeconds);
             _building.MarkApron(_apronOutline.bounds.center);
-            Hints = new InteractionHints(_salvage, Containers, Scans, _building, services.Beam, Cutter,
+            var hints = new InteractionHints(_salvage, Containers, Scans, _building, services.Beam, Cutter,
                 services.Pickups);
+            Hints = hints;
             Recovery = new RecoveryProgress(context.Events, PowerLamps, PowerSteps, _openingTuning.RecoveryLamps);
             _flowTokens.Add(context.Events.Subscribe<ChargingChanged>(OnChargingChanged));
             context.Register<IMaterialStock>(Materials);
@@ -248,6 +257,7 @@ namespace MoonProject.Gameplay
             context.Register<IRoverSystems>(StartKit);
             context.Register<ISalvageStatus>(_salvage);
             context.Register<IInteractionHints>(Hints);
+            context.Register<IInteractionFocus>(hints);
             context.Register<IRoverBattery>(_battery.Model);
             context.Register<IBuildEnergy>(_battery);
             context.Register<IBeamStatus>(services.Beam);
@@ -310,7 +320,8 @@ namespace MoonProject.Gameplay
         private ScanField NewScans(GameplayServices services)
         {
             var scans = new ScanField(_scanTuning, services, KnownStructures, OtherVerbOnOffer);
-            string problem = AddRuins(scans) ?? scans.AddRuin(_scanTuning.LanderCargo, Opening.LanderCargo);
+            string problem = AddRuins(scans) ?? AddStoryProps(scans)
+                ?? scans.AddRuin(_scanTuning.LanderCargo, Opening.LanderCargo);
             if (problem != null)
             {
                 Debug.LogError($"{nameof(GameplaySystem)}: scanning: {problem} (opening-v2 §1).", this);
@@ -341,7 +352,31 @@ namespace MoonProject.Gameplay
 
                 foreach (StoryScan story in _scanTuning.Stories)
                 {
-                    string problem = story.RuinId == ruin.name ? scans.AddStory(story, ruin) : null;
+                    string problem = story.HostId == ruin.name ? scans.AddStory(story, ruin) : null;
+                    if (problem != null)
+                    {
+                        return problem;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>The story scans on World's basin props (basin dressing Â§2: the Scout).</summary>
+        private string AddStoryProps(ScanField scans)
+        {
+            for (int i = 0; i < _storyProps.Length; i++)
+            {
+                Transform prop = _storyProps[i];
+                if (prop == null)
+                {
+                    return "a story prop transform in _storyProps is null";
+                }
+
+                foreach (StoryScan story in _scanTuning.Stories)
+                {
+                    string problem = story.HostId == prop.name ? scans.AddStory(story, prop) : null;
                     if (problem != null)
                     {
                         return problem;

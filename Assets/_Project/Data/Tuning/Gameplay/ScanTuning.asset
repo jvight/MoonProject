@@ -68,8 +68,8 @@ MonoBehaviour:
   _beamLensWidth: 0.064
   _beamTargetWidthShare: 0.85
   _beamLensPeakAlpha: 0.68
-  _beamMidAlpha: 0.018
-  _beamContactAlpha: 0.42
+  _beamMidAlpha: 0.06
+  _beamContactAlpha: 0.6
   _beamScanlineDensity: 42
   _beamScanlineContrast: 0.48
   _lensIrisSize: 0.138
@@ -107,3 +107,9 @@ MonoBehaviour:
     _textKey: story.airlock_panel
     _size: 0
     _offset: {x: 0, y: -0.3, z: 0}
+  - _storyId: scout3
+    _ruinId: Prop_OldLander
+    _node: Spaceframe
+    _textKey: scan.scout3.manifest
+    _size: 1
+    _offset: {x: 0, y: 0, z: 0}

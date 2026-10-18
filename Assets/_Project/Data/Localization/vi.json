@@ -427,18 +427,6 @@
             "text": "Về màn hình chính"
         },
         {
-            "key": "lens.boot.signal",
-            "text": "TÍN HIỆU QUỸ ĐẠO · ĐÃ NHẬN"
-        },
-        {
-            "key": "lens.boot.uplink",
-            "text": "ĐƯỜNG TRUYỀN · MẤT KẾT NỐI"
-        },
-        {
-            "key": "lens.boot.recovery",
-            "text": "BẮT ĐẦU KHÔI PHỤC"
-        },
-        {
             "key": "ui.settings.text_size",
             "text": "Cỡ chữ"
         },
@@ -885,6 +873,10 @@
         {
             "key": "story.airlock_panel",
             "text": "NIÊM PHONG NHÀ Ở · KHOÁ · 28/10/1988\nÁO VŨ TRỤ 01-04 · NGOẠI TUYẾN · 29/10/1988 · 04:12"
+        },
+        {
+            "key": "scan.scout3.manifest",
+            "text": "SCOUT 3 · TÀU ĐỔ BỘ MỀM · HẠ CÁNH 1967\nMÁY QUAY, GẦU XÚC · ĐÃ THÁO NĂM 1971"
         },
         {
             "key": "build.energy.card",

@@ -33,6 +33,10 @@ namespace MoonProject.World
             MidwayCenter = settings.MidwayCenter;
             MidwayRadius = settings.MidwayRadius;
             WakePost = settings.WakePost;
+            ScoutSpot = settings.ScoutSpot;
+            ScoutCraterCenter = settings.ScoutCraterCenter;
+            ScoutCraterRadius = settings.ScoutCraterRadius;
+            Blast = new BlastZone(Lander.Center, settings.BlastZone);
 
             _shapes = new[] { Ruins, Lander, Apron };
             _reachSq = new float[_shapes.Length];
@@ -63,6 +67,18 @@ namespace MoonProject.World
 
         /// <summary>Opening v2: where 07's dead charging post stands on the old pad (already flat, not shaped).</summary>
         public Vector2 WakePost { get; }
+
+        /// <summary>Basin dressing: where the Scout stands, on its small crater's inner wall (not shaped here).</summary>
+        public Vector2 ScoutSpot { get; }
+
+        /// <summary>Basin dressing: the centre of the Scout's crater (one of <see cref="MoonSurface.Craters"/>).</summary>
+        public Vector2 ScoutCraterCenter { get; }
+
+        /// <summary>Basin dressing: the Scout crater's radius, metres.</summary>
+        public float ScoutCraterRadius { get; }
+
+        /// <summary>Opening v2: the lander's blast-swept zone round its footprint.</summary>
+        public BlastZone Blast { get; }
 
         /// <summary>The ground at (x, z) after shaping, given its natural <paramref name="height"/> there.</summary>
         public float Apply(float x, float z, float height)

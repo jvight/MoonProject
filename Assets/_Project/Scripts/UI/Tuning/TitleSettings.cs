@@ -191,6 +191,23 @@ namespace MoonProject.UI
         [Tooltip("The dark drawn over everything before New Game, Quit to title or Quit, and lifted after a boot.")]
         [SerializeField] private RevealSettings _curtain = new RevealSettings(0.9f, 1.4f, 0f, 1f, 1f, 1f);
 
+        [Tooltip("A frame at most this long (ms) counts as steady when the boot's dark waits for the engine's first " +
+                 "long frames to pass.")]
+        [Range(16f, 100f)]
+        [SerializeField] private float _bootSteadyMilliseconds = 40f;
+
+        [Tooltip("Steady frames in a row the boot's dark waits for before it lifts.")]
+        [Range(3, 60)]
+        [SerializeField] private int _bootSteadyFrames = 12;
+
+        [Tooltip("Least seconds the boot's dark stays up, so a fast start is still one calm black beat.")]
+        [Range(0f, 3f)]
+        [SerializeField] private float _bootMinSeconds = 0.5f;
+
+        [Tooltip("Most seconds the boot's dark waits for steady frames before it lifts anyway.")]
+        [Range(2f, 15f)]
+        [SerializeField] private float _bootMaxSeconds = 8f;
+
         [Tooltip("How much of the menu blur the world takes behind the title (the pause takes all of it).")]
         [Range(0f, 1f)]
         [SerializeField] private float _backdropWeight = 0.55f;
@@ -512,6 +529,14 @@ namespace MoonProject.UI
         public RevealSettings Curtain => _curtain;
 
         public float BackdropWeight => _backdropWeight;
+
+        public float BootSteadyMilliseconds => _bootSteadyMilliseconds;
+
+        public int BootSteadyFrames => _bootSteadyFrames;
+
+        public float BootMinSeconds => _bootMinSeconds;
+
+        public float BootMaxSeconds => _bootMaxSeconds;
 
         public float HandOffSeconds => _handOffSeconds;
 

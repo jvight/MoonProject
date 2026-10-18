@@ -51,7 +51,7 @@ namespace MoonProject.Gameplay
         private float _sweepSeconds;
 
         public FeelVfx(Transform parent, FeelVfxTuning tuning, GameplayVisuals visuals, EventBus events,
-            IFeelAnchors anchors, ScanTuning scanTuning = null)
+            IFeelAnchors anchors, ScanTuning scanTuning)
         {
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
             _anchors = anchors ?? throw new ArgumentNullException(nameof(anchors));

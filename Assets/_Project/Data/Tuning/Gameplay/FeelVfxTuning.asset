@@ -91,8 +91,6 @@ MonoBehaviour:
   _scanCoreColor: {r: 0.28, g: 0.95, b: 1, a: 0.72}
   _scanLensCoreSize: 0.055
   _scanLensCoreAlpha: 0.3
-  _scanLensHaloSize: 0.11
-  _scanLensHaloAlpha: 0.06
   _scanContactSize: 0.09
   _scanContactAlpha: 0.05
   _scanRibbonDelay: 0.08
@@ -104,4 +102,3 @@ MonoBehaviour:
   _scanRibbonColor: {r: 0.35, g: 0.95, b: 1, a: 0.24}
   _scanFlareSeconds: 0.14
   _scanFlareSize: 0.14
-  _scanFlareLight: 0.25

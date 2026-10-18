@@ -242,9 +242,8 @@ namespace MoonProject.UI.PlayModeTests
             string language = _rig.Ui.Localization.Language;
             _rig.Ui.Localization.SetLanguage("vi");
             _rig.Fakes.Sun.SecondsToSunset = 25f * 60f;
-            events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle, false));
-            events.Publish(new RoverWakeBeatReached(WakeBeat.GazeEarth, false));
-            events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame, false));
+            events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle));
+            events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame));
             yield return Seconds(3f);
             Assert.IsTrue(_rig.Ui.Readout.IsVisible, "the boot diagnostics are up for the fit check");
             Assert.IsTrue(_rig.Ui.SunArc.IsVisible, "and so is the Sun's arc");

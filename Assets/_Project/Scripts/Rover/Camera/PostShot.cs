@@ -1,5 +1,4 @@
 using UnityEngine;
-using MoonProject.Core;
 
 namespace MoonProject.Rover
 {
@@ -21,102 +20,102 @@ namespace MoonProject.Rover
     }
 
     /// <summary>
-    /// The camera of 07's power-on self-test as pure functions: a three-quarter front close shot that keeps the CRT
-    /// face and the body in frame, eased toward the part each check is testing, then (at the start) round toward the
-    /// way the head looks at the beacon. 07's position and heading are inputs, so the shot is testable.
+    /// The camera of 07's wake as pure functions. First one fixed three-quarter front view aimed at 07's face from a
+    /// little below, far enough that all of 07 is in frame as it wakes; once the self-test prints, the camera creeps
+    /// straight in along its own view line until the face fills <see cref="PostSettings.FaceFill"/> of the frame's
+    /// height, so the lines read. It never turns, cuts or follows a part there. After the checks it makes exactly two
+    /// eased moves: back and out diagonally to a wide front three-quarter (<see cref="Wide"/>, <see cref="PullBack"/>),
+    /// and round 07 to the chase frame (<see cref="Round"/>), never past it. 07's position, face point and heading are
+    /// inputs, so every pose is testable.
     /// </summary>
     public sealed class PostShot
     {
         private readonly PostSettings _settings;
+        private readonly float _faceHeight;
 
-        public PostShot(PostSettings settings)
+        /// <param name="faceHeight">Height (m) of 07's CRT face screen, the thing the push-in frames.</param>
+        public PostShot(PostSettings settings, float faceHeight)
         {
             _settings = settings ?? throw new System.ArgumentNullException(nameof(settings));
+            _faceHeight = faceHeight > 0f
+                ? faceHeight
+                : throw new System.ArgumentOutOfRangeException(nameof(faceHeight), "the face needs a height");
         }
 
-        /// <summary>The whole-body three-quarter shot the pull-out arrives at and the first check starts from.</summary>
-        public ShotPose Base(Vector3 body, float headingDeg)
+        /// <summary>How far (m) the camera stands from the face at the end of the push-in.</summary>
+        public float CloseDistance =>
+            _faceHeight / (_settings.FaceFill * 2f * Mathf.Tan(0.5f * _settings.ShotFov * Mathf.Deg2Rad));
+
+        /// <summary>
+        /// The shot at <paramref name="push01"/> of the push-in (0 wide on all of 07, 1 close on the face), looking at
+        /// <paramref name="face"/>: the rotation and the lens never change, only the distance along the view line.
+        /// </summary>
+        public ShotPose At(Vector3 face, float headingDeg, float push01)
         {
-            PostFocus start = _settings.BaseFocus;
-            return Compose(body, headingDeg, start.Local, start.Distance, start.Height, _settings.ShotSideYaw + start.SideYaw);
+            Vector3 back = Back(headingDeg);
+            float ease = WakeOpening.SmoothStepC2(0f, 1f, Mathf.Clamp01(push01));
+            float distance = Mathf.Lerp(_settings.ShotDistance, Mathf.Min(CloseDistance, _settings.ShotDistance), ease);
+            return new ShotPose(face + back * distance, Quaternion.LookRotation(-back, Vector3.up), _settings.ShotFov);
+        }
+
+        /// <summary>The wide front three-quarter for the ready performance: all of 07 in frame, a little from above.</summary>
+        public ShotPose Wide(Vector3 body, float headingDeg)
+        {
+            Vector3 look = body + Vector3.up * _settings.WideLookHeight;
+            Vector3 back = Quaternion.Euler(-_settings.WideElevation, headingDeg + _settings.WideSideYaw, 0f)
+                * Vector3.forward;
+            return new ShotPose(look + back * _settings.WideDistance, Quaternion.LookRotation(-back, Vector3.up),
+                _settings.ShotFov);
+        }
+
+        /// <summary>The first move, at <paramref name="t"/> (0..1): eased in a straight line from the close-up to the wide shot.</summary>
+        public static ShotPose PullBack(in ShotPose close, in ShotPose wide, float t)
+        {
+            float ease = WakeOpening.SmoothStepC2(0f, 1f, Mathf.Clamp01(t));
+            return new ShotPose(Vector3.Lerp(close.Position, wide.Position, ease),
+                Quaternion.Slerp(close.Rotation, wide.Rotation, ease), Mathf.Lerp(close.Fov, wide.Fov, ease));
         }
 
         /// <summary>
-        /// The shot at progress <paramref name="p"/> of the check <paramref name="step"/>. The camera is on a check's
-        /// part at the middle of the check and eases from one part to the next between the middles, so it is always
-        /// drifting slowly and never has to hurry across a short check.
+        /// The second move, at <paramref name="t"/> (0..1): eased round 07's upright axis through
+        /// <paramref name="body"/> from the wide shot to <paramref name="chase"/> the short way, its distance and height
+        /// blending on the way, looking at a point that slides from the wide shot's subject to the chase frame's. It
+        /// ends exactly on the chase frame and never swings past it.
         /// </summary>
-        public ShotPose At(Vector3 body, float headingDeg, BootCheckStep step, float p)
+        public static ShotPose Round(in ShotPose wide, in ShotPose chase, Vector3 body, float t)
         {
-            float length = _settings.SecondsOf(step);
-            PostFocus here = _settings.FocusOf(step);
-            PostFocus other;
-            float u;
-            if (p < 0.5f)
-            {
-                // The pull-out arrives on the base shot exactly where the first check begins.
-                float previousLength = step == BootCheckStep.Lens ? 0f : _settings.SecondsOf(step - 1);
-                other = step == BootCheckStep.Lens ? _settings.BaseFocus : _settings.FocusOf(step - 1);
-                u = (p * length + 0.5f * previousLength) / (0.5f * (previousLength + length));
-                u = 1f - Mathf.Clamp01(u);
-            }
-            else
-            {
-                bool last = step == BootCheckStep.Begin;
-                float nextLength = last ? length : _settings.SecondsOf(step + 1);
-                other = last ? here : _settings.FocusOf(step + 1);
-                u = Mathf.Clamp01((p - 0.5f) * length / (0.5f * (length + nextLength)));
-            }
+            float ease = WakeOpening.SmoothStepC2(0f, 1f, Mathf.Clamp01(t));
+            Vector3 from = wide.Position - body;
+            Vector3 to = chase.Position - body;
+            float fromYaw = Mathf.Atan2(from.x, from.z) * Mathf.Rad2Deg;
+            float toYaw = Mathf.Atan2(to.x, to.z) * Mathf.Rad2Deg;
+            float yaw = fromYaw + Mathf.DeltaAngle(fromYaw, toYaw) * ease;
+            float radius = Mathf.Lerp(new Vector2(from.x, from.z).magnitude, new Vector2(to.x, to.z).magnitude, ease);
+            float height = Mathf.Lerp(from.y, to.y, ease);
+            Vector3 position = body + Quaternion.Euler(0f, yaw, 0f) * Vector3.forward * radius + Vector3.up * height;
 
-            float ease = WakeOpening.SmoothStepC2(0f, 1f, u);
-            Vector3 local = Vector3.Lerp(here.Local, other.Local, ease);
-            float distance = Mathf.Lerp(here.Distance, other.Distance, ease);
-            float height = Mathf.Lerp(here.Height, other.Height, ease);
-            float side = _settings.ShotSideYaw + Mathf.Lerp(here.SideYaw, other.SideYaw, ease);
-
-            return Compose(body, headingDeg, local, distance, height, side);
+            Vector3 wideLook = wide.Position + wide.Rotation * Vector3.forward * from.magnitude;
+            Vector3 chaseLook = chase.Position + chase.Rotation * Vector3.forward * to.magnitude;
+            Vector3 look = Vector3.Lerp(wideLook, chaseLook, ease) - position;
+            Quaternion rotation = ease >= 1f ? chase.Rotation
+                : look.sqrMagnitude > 1e-6f ? Quaternion.LookRotation(look, Vector3.up) : chase.Rotation;
+            return new ShotPose(position, rotation, Mathf.Lerp(wide.Fov, chase.Fov, ease));
         }
 
         /// <summary>
-        /// The start: as the head turns toward the beacon the camera leaves the part it was on and goes over 07's
-        /// shoulder, so the beacon is in frame when the head has finished turning.
+        /// Where the shot's camera is as (yaw, pitch) deg from 07's heading, seen from <paramref name="face"/>: where
+        /// 07's head turns to look into the shot.
         /// </summary>
-        public ShotPose AtBegin(Vector3 body, float headingDeg, Vector3 beacon, float p)
+        public Vector2 FaceAngles(float headingDeg)
         {
-            float turn = WakeOpening.SmoothStepC2(0f, 1f, PostMotions.BeaconTurn(p));
-            return Blend(At(body, headingDeg, BootCheckStep.Begin, p), OverShoulder(body, headingDeg, beacon), turn);
+            Quaternion toLocal = Quaternion.Inverse(Quaternion.Euler(0f, headingDeg, 0f));
+            return LensGaze.Angles(toLocal * Back(headingDeg));
         }
 
-        /// <summary>
-        /// The shot after the checks: behind and beside 07, looking at <paramref name="beacon"/>, where the camera
-        /// settles before it eases into the chase frame.
-        /// </summary>
-        public ShotPose OverShoulder(Vector3 body, float headingDeg, Vector3 beacon)
+        /// <summary>The direction from the face back to the camera: round from 07's front, a little below.</summary>
+        private Vector3 Back(float headingDeg)
         {
-            Quaternion heading = Quaternion.Euler(0f, headingDeg, 0f);
-            Vector3 position = body + heading * new Vector3(_settings.OverShoulderSide, _settings.OverShoulderHeight,
-                -_settings.OverShoulderBack);
-            Vector3 look = beacon - position;
-            Quaternion rotation = look.sqrMagnitude > 1e-6f ? Quaternion.LookRotation(look, Vector3.up) : heading;
-            return new ShotPose(position, rotation, _settings.ShotFov);
-        }
-
-        /// <summary>Blends two poses with an eased weight; the rotation takes the short way.</summary>
-        public static ShotPose Blend(in ShotPose from, in ShotPose to, float t)
-        {
-            return new ShotPose(Vector3.Lerp(from.Position, to.Position, t), Quaternion.Slerp(from.Rotation, to.Rotation, t),
-                Mathf.Lerp(from.Fov, to.Fov, t));
-        }
-
-        private ShotPose Compose(Vector3 body, float headingDeg, Vector3 focusLocal, float distanceScale, float height,
-            float sideYaw)
-        {
-            Quaternion heading = Quaternion.Euler(0f, headingDeg, 0f);
-            Vector3 focus = body + heading * focusLocal;
-            Quaternion around = Quaternion.Euler(0f, headingDeg + sideYaw, 0f);
-            float distance = _settings.ShotDistance * distanceScale;
-            Vector3 position = new Vector3(focus.x, body.y + height, focus.z) + around * (Vector3.forward * distance);
-            return new ShotPose(position, Quaternion.LookRotation(focus - position, Vector3.up), _settings.ShotFov);
+            return Quaternion.Euler(-_settings.ShotElevation, headingDeg + _settings.ShotSideYaw, 0f) * Vector3.forward;
         }
     }
 }

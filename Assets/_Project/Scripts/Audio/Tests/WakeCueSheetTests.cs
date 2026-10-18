@@ -18,14 +18,12 @@ namespace MoonProject.Audio.Tests
         }
 
         [TestCase(WakeBeat.Crackle, WakeCueKind.Thump)]
-        [TestCase(WakeBeat.LidCracked, WakeCueKind.Tick)]
-        [TestCase(WakeBeat.LidHalf, WakeCueKind.Tick)]
-        [TestCase(WakeBeat.FocusHunting, WakeCueKind.Whine)]
-        [TestCase(WakeBeat.FocusSettled, WakeCueKind.Tick)]
+        [TestCase(WakeBeat.PictureOpens, WakeCueKind.Tick)]
+        [TestCase(WakeBeat.EyesOpen, WakeCueKind.Tick)]
         [TestCase(WakeBeat.Stirred, WakeCueKind.Tick)]
         public void EveryVoicedBeat_PlaysItsCueAtOnce(WakeBeat beat, WakeCueKind first)
         {
-            int count = _sheet.CuesFor(beat, false, _calls);
+            int count = _sheet.CuesFor(beat, _calls);
 
             Assert.GreaterOrEqual(count, 1);
             Assert.AreEqual(first, _calls[0].Kind);
@@ -33,46 +31,32 @@ namespace MoonProject.Audio.Tests
         }
 
         [Test]
-        public void TheLidStagesTickLowThenHigher_TheFocusLandsHigher_TheShortWakeHighest()
+        public void ThePictureTicksLow_TheEyesHigher_TheShortWakeHighest()
         {
-            _sheet.CuesFor(WakeBeat.LidCracked, false, _calls);
+            _sheet.CuesFor(WakeBeat.PictureOpens, _calls);
             Assert.AreEqual(WakeCueSheet.TickA2, _calls[0].Variant);
-            _sheet.CuesFor(WakeBeat.LidHalf, false, _calls);
+            _sheet.CuesFor(WakeBeat.EyesOpen, _calls);
             Assert.AreEqual(WakeCueSheet.TickD3, _calls[0].Variant);
-            _sheet.CuesFor(WakeBeat.FocusSettled, false, _calls);
-            Assert.AreEqual(WakeCueSheet.TickA4, _calls[0].Variant);
-            _sheet.CuesFor(WakeBeat.Stirred, false, _calls);
+            _sheet.CuesFor(WakeBeat.Stirred, _calls);
             Assert.AreEqual(WakeCueSheet.TickD5, _calls[0].Variant);
         }
 
         [Test]
         public void TheGhostChordSurfacesFaintly_AMomentIntoTheBlack()
         {
-            Assert.AreEqual(2, _sheet.CuesFor(WakeBeat.Crackle, false, _calls));
+            Assert.AreEqual(2, _sheet.CuesFor(WakeBeat.Crackle, _calls));
             Assert.AreEqual(WakeCueKind.Ghost, _calls[1].Kind);
             Assert.Greater(_calls[1].Delay, 0f, "after the thump");
             Assert.AreEqual(_settings.GhostFaint, _calls[1].Volume, 1e-6f);
         }
 
-        [Test]
-        public void Hurried_IsSofter_AndLeavesTheGhostChordOut()
-        {
-            int calm = _sheet.CuesFor(WakeBeat.Crackle, false, _calls);
-            float calmThump = _calls[0].Volume;
-            int hurried = _sheet.CuesFor(WakeBeat.Crackle, true, _calls);
-
-            Assert.AreEqual(calm - 1, hurried, "no ghost chord when hurried");
-            Assert.Less(_calls[0].Volume, calmThump);
-        }
-
         [TestCase(WakeBeat.FadedOut)]
-        [TestCase(WakeBeat.PullingOut)]
-        [TestCase(WakeBeat.PulledOut)]
-        [TestCase(WakeBeat.OverShoulder)]
+        [TestCase(WakeBeat.ChecksBegin)]
+        [TestCase(WakeBeat.Blinked)]
         [TestCase(WakeBeat.ChaseFrame)]
         public void CameraBeats_PlayNoCueOfTheirOwn(WakeBeat beat)
         {
-            Assert.AreEqual(0, _sheet.CuesFor(beat, false, _calls));
+            Assert.AreEqual(0, _sheet.CuesFor(beat, _calls));
         }
     }
 }

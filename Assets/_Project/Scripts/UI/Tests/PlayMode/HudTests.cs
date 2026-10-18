@@ -533,8 +533,8 @@ namespace MoonProject.UI.PlayModeTests
             yield return null;
             Events.Publish(new RoverAwoke(Vector3.zero, false));
             Events.Publish(new NextStepChanged("next.v2.drive_lander"));
-            Events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle, false));
-            Events.Publish(new RoverWakeBeatReached(WakeBeat.GazeEarth, false));
+            Events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle));
+            Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame));
             yield return Seconds(_rig.Tuning.Guidance.Readout.FadeIn + 0.4f);
             ReadoutView readout = _rig.Ui.Readout;
             Assert.IsTrue(readout.IsVisible);
@@ -555,7 +555,7 @@ namespace MoonProject.UI.PlayModeTests
             yield return null;
             StringAssert.EndsWith(Text("ui.system.state.ok"), readout.LineText(cutterLine), "the line turns OK");
 
-            Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame, false));
+            Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame));
             float limit = Time.realtimeSinceStartup + 12f;
             while (!_rig.Ui.Objective.ShowsObjective && Time.realtimeSinceStartup < limit)
             {
@@ -619,9 +619,8 @@ namespace MoonProject.UI.PlayModeTests
             yield return null;
             Events.Publish(new RoverAwoke(Vector3.zero, false));
             Events.Publish(new NextStepChanged("next.v2.drive_lander"));
-            Events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle, false));
-            Events.Publish(new RoverWakeBeatReached(WakeBeat.GazeEarth, false));
-            Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame, false));
+            Events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle));
+            Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame));
             Events.Publish(new TickerLine("battery.low.lander"));
             _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Build, new Vector3(0f, 0f, 10f), true);
             int shownFrames = 0;

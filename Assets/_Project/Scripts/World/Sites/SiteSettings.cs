@@ -82,6 +82,43 @@ namespace MoonProject.World
         [Range(3f, 12f)]
         [SerializeField] private float _midwayRadius = 6f;
 
+        [Tooltip("The lander's blast-swept zone round its footprint: why rovers, and 07's old post, stand outside it.")]
+        [SerializeField] private BlastZoneSettings _blastZone = new BlastZoneSettings();
+
+        [Header("The Scout, the 1967 soft lander, and its small crater (basin dressing §2)")]
+        [Tooltip("Bearing of the Scout from the build apron, degrees: the first day's last-light Sun (137.7 degrees, " +
+            "SE, at OpeningSkyPacing.LastLightTime), so at last light its long shadow points straight at the base.")]
+        [Range(0f, 360f)]
+        [SerializeField] private float _scoutBearing = 137.7f;
+
+        [Tooltip("Distance of the Scout from the build apron, metres: far enough that only its shadow at last light " +
+            "points the player to it, near enough that the shadow reads from the apron.")]
+        [Range(40f, 300f)]
+        [SerializeField] private float _scoutDistance = 80f;
+
+        [Tooltip("Bearing from the Scout to its crater's centre, degrees: it came to rest on the crater's inner wall " +
+            "facing the last-light Sun, so its shadow runs up the near wall and out over the rim toward the base.")]
+        [Range(0f, 360f)]
+        [SerializeField] private float _scoutCraterBearing = 317.7f;
+
+        [Tooltip("How far down the wall from the Scout the crater's centre lies, metres: about 0.7 of the radius, " +
+            "where the wall leans ~8 degrees.")]
+        [Range(0f, 12f)]
+        [SerializeField] private float _scoutCraterOffset = 7f;
+
+        [Tooltip("Radius of the Scout's crater where its wall meets the rim crest, metres.")]
+        [Range(4f, 16f)]
+        [SerializeField] private float _scoutCraterRadius = 10f;
+
+        [Tooltip("Depth of the Scout's crater floor below the plain, metres: shallow enough that its wall stays " +
+            "drivable (under 12 degrees at its steepest).")]
+        [Range(0.2f, 4f)]
+        [SerializeField] private float _scoutCraterDepth = 1.1f;
+
+        [Tooltip("Height of the Scout crater's low rim crest above the plain, metres.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _scoutCraterRim = 0.3f;
+
         public float FootprintBlend => _footprintBlend;
         public Vector2 WakePost => _wakePost;
         public Vector2 LanderCenter => MoonSurface.BearingToDirection(_landerBearing) * _landerDistance;
@@ -94,6 +131,13 @@ namespace MoonProject.World
         public float RuinsRadius => _ruinsRadius;
         public float RuinsBlend => _ruinsBlend;
         public KestrelSettings Kestrel => _kestrel;
+        public BlastZoneSettings BlastZone => _blastZone;
+        public Vector2 ScoutSpot => ApronCenter + MoonSurface.BearingToDirection(_scoutBearing) * _scoutDistance;
+        public Vector2 ScoutCraterCenter =>
+            ScoutSpot + MoonSurface.BearingToDirection(_scoutCraterBearing) * _scoutCraterOffset;
+        public float ScoutCraterRadius => _scoutCraterRadius;
+        public float ScoutCraterDepth => _scoutCraterDepth;
+        public float ScoutCraterRim => _scoutCraterRim;
 
         /// <summary>Returns null when the settings are consistent, otherwise the problem.</summary>
         public string Validate()
@@ -101,6 +145,11 @@ namespace MoonProject.World
             if (_ruinsRadius + _footprintBlend > _ruinsDistance)
             {
                 return "Sites: the ruins cluster reaches back to the base.";
+            }
+
+            if (_scoutCraterOffset >= _scoutCraterRadius)
+            {
+                return "Sites: the Scout stands outside its own crater.";
             }
 
             return _kestrel.Validate();

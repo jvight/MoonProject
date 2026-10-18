@@ -146,7 +146,7 @@ namespace MoonProject.Gameplay
             Renderer panel = node != null ? node.GetComponentInChildren<Renderer>() : null;
             if (panel == null)
             {
-                return $"'{story.RuinId}' has no '{story.Node}' node with a renderer (story scan {story.FragmentId})";
+                return $"'{story.HostId}' has no '{story.Node}' node with a renderer (story scan {story.FragmentId})";
             }
 
             if (Find(story.FragmentId) != null)
@@ -157,7 +157,7 @@ namespace MoonProject.Gameplay
             Transform target = new GameObject(story.FragmentId).transform;
             target.SetParent(node, false);
             target.position = panel.bounds.center + story.Offset;
-            _fragments.Add(ScanFragment.ForStoryTarget(story, story.RuinId, target, ruinRoot));
+            _fragments.Add(ScanFragment.ForStoryTarget(story, story.HostId, target, ruinRoot));
             return null;
         }
 
@@ -412,6 +412,26 @@ namespace MoonProject.Gameplay
 
             ScanFragment looked = LookedAt(out _);
             return looked != null ? looked : nearest;
+        }
+
+        /// <summary>
+        /// Writes the points of every unscanned target in reach of 07 into <paramref name="points"/> (as many as fit)
+        /// and returns how many.
+        /// </summary>
+        public int CopyInReach(Vector3[] points)
+        {
+            float reachSq = _tuning.Reach * _tuning.Reach;
+            int count = 0;
+            for (int i = 0; i < _fragments.Count && count < points.Length; i++)
+            {
+                ScanFragment fragment = _fragments[i];
+                if (!fragment.Scanned && (fragment.Point - _rover.Position).sqrMagnitude <= reachSq)
+                {
+                    points[count++] = fragment.Point;
+                }
+            }
+
+            return count;
         }
 
         /// <summary>
