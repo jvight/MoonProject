@@ -51,6 +51,41 @@
         0.0
       ]
     },
+    "UCX_ModuleA_Main_1": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "UCX_BellowsJoints_1": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "UCX_ModuleB_Lab_1": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "UCX_BellowsJoints_2": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "UCX_ModuleC_Crushed_1": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
     "Scan_1": {
       "pivot": [
         -3.45,

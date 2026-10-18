@@ -780,99 +780,287 @@ def apply_signage_uvs(root: bpy.types.Object) -> None:
         mesh.update()
 
 
-def bake_ruins_vertex_colors(root: bpy.types.Object, footprint_radius: float = 3.5) -> None:
-    """Bake R1 vertex colors (R=AO, G=EdgeWear, B=RegolithDust, A=1) with top dust & edge wear."""
-    r1kit.bake_vertex_colors(root, footprint_radius=footprint_radius)
+def convex_box_points_u(
+    center_u: Tuple[float, float, float],
+    size_u: Tuple[float, float, float],
+    rot_deg_u: Tuple[float, float, float] = (0.0, 0.0, 0.0),
+    top_scale_xz: Tuple[float, float] = (1.0, 1.0),
+    clip_min_y_u: Optional[float] = None,
+) -> List[Tuple[float, float, float]]:
+    """Return 8 corner points in Unity coordinates for an oriented/tapered convex box (6 quad faces, 12 tris)."""
+    cx, cy, cz = center_u
+    hx, hy, hz = size_u[0] * 0.5, size_u[1] * 0.5, size_u[2] * 0.5
+    rot_b = _rot_matrix_b(rot_deg_u)
+    pts: List[Tuple[float, float, float]] = []
+    for sy in (-1.0, 1.0):
+        tx = top_scale_xz[0] if sy > 0.0 else 1.0
+        tz = top_scale_xz[1] if sy > 0.0 else 1.0
+        for sx in (-1.0, 1.0):
+            for sz in (-1.0, 1.0):
+                local_b = Vector((sx * hx * tx, sz * hz * tz, sy * hy))
+                rb = rot_b @ local_b
+                ux = cx + rb.x
+                uy = cy + rb.z
+                uz = cz + rb.y
+                if clip_min_y_u is not None and uy < clip_min_y_u:
+                    uy = clip_min_y_u
+                pts.append((ux, uy, uz))
+    return pts
 
-    objs = [o for o in r1kit.collect_hierarchy(root) if o.type == "MESH" and o.data is not None]
-    z_min, z_max = 0.0, 2.5
-    for obj in objs:
-        mw = obj.matrix_world
-        for v in obj.data.vertices:
-            wz = (mw @ v.co).z
-            if wz > z_max:
-                z_max = wz
-    z_span = max(0.5, z_max - z_min)
 
-    for obj in objs:
-        mesh = obj.data
-        col_attr = mesh.color_attributes.get(r1kit.VCOL_ATTRIBUTE_NAME)
-        if col_attr is None:
-            continue
+def convex_prism_points_u(
+    center_u: Tuple[float, float, float],
+    radius_a: float,
+    radius_b: float,
+    length: float,
+    axis: str = "x",
+    segs: int = 8,
+    rot_deg_u: Tuple[float, float, float] = (0.0, 0.0, 0.0),
+    clip_min_y_u: Optional[float] = None,
+    scale_pos_end: Tuple[float, float] = (1.0, 1.0),
+) -> List[Tuple[float, float, float]]:
+    """Return 2*segs points in Unity coordinates for a convex cylinder/frustum prism (segs=8 -> 10 faces, 28 tris)."""
+    axis_u = axis.upper()
+    if axis_u == "X":
+        align_mat = Matrix.Rotation(math.pi / 2.0, 3, "Y")
+    elif axis_u == "Z":
+        align_mat = Matrix.Rotation(-math.pi / 2.0, 3, "X")
+    else:
+        align_mat = Matrix.Identity(3)
 
-        mw = obj.matrix_world
-        rot_mw = mw.to_3x3()
+    rot_b = _rot_matrix_b(rot_deg_u) @ align_mat
+    cx, cy, cz = center_u
+    half_len = length * 0.5
+    pts: List[Tuple[float, float, float]] = []
+    for end_sign in (-1.0, 1.0):
+        sa = scale_pos_end[0] if end_sign > 0.0 else 1.0
+        sb = scale_pos_end[1] if end_sign > 0.0 else 1.0
+        lz = end_sign * half_len
+        for s in range(segs):
+            ang = (2.0 * math.pi * s) / segs + (math.pi / segs)
+            lx = radius_a * sa * math.cos(ang)
+            ly = radius_b * sb * math.sin(ang)
+            rb = rot_b @ Vector((lx, ly, lz))
+            ux = cx + rb.x
+            uy = cy + rb.z
+            uz = cz + rb.y
+            if clip_min_y_u is not None and uy < clip_min_y_u:
+                uy = clip_min_y_u
+            pts.append((ux, uy, uz))
+    return pts
 
-        bm = bmesh.new()
-        bm.from_mesh(mesh)
-        bm.verts.ensure_lookup_table()
-        bm.edges.ensure_lookup_table()
 
-        vert_top_dust = np.zeros(len(bm.verts), dtype=np.float32)
-        vert_wear_boost = np.zeros(len(bm.verts), dtype=np.float32)
-        vert_cavity_ao = np.ones(len(bm.verts), dtype=np.float32)
+def convex_strut_points_u(
+    p0_u: Tuple[float, float, float],
+    p1_u: Tuple[float, float, float],
+    half_w: float,
+    half_d: float,
+    clip_min_y_u: Optional[float] = None,
+) -> List[Tuple[float, float, float]]:
+    """Return 8 corner points in Unity coordinates for an oriented rectangular beam connecting p0_u and p1_u."""
+    v0 = Vector(p0_u)
+    v1 = Vector(p1_u)
+    spine = (v1 - v0).normalized()
+    ref = Vector((0.0, 0.0, 1.0)) if abs(spine.z) < 0.9 else Vector((1.0, 0.0, 0.0))
+    right = ref.cross(spine).normalized()
+    up = spine.cross(right).normalized()
+    pts: List[Tuple[float, float, float]] = []
+    for end_v in (v0, v1):
+        for sr in (-1.0, 1.0):
+            for su in (-1.0, 1.0):
+                p = end_v + right * (sr * half_w) + up * (su * half_d)
+                uy = max(clip_min_y_u, p.y) if clip_min_y_u is not None else p.y
+                pts.append((p.x, uy, p.z))
+    return pts
 
-        for v in bm.verts:
-            wpos = mw @ v.co
-            wnorm = (rot_mw @ v.normal).normalized()
-            up_factor = max(0.0, wnorm.z)
-            height_01 = max(0.0, min(1.0, (wpos.z - z_min) / z_span))
-            top_dust = (up_factor ** 1.35) * (0.56 + 0.24 * (1.0 - height_01))
-            vert_top_dust[v.index] = top_dust
 
-            convex_sum = 0.0
-            concave_sum = 0.0
-            cnt = 0
-            for e in v.link_edges:
-                if e.is_manifold:
-                    ang = e.calc_face_angle_signed(0.0)
-                    if ang > 0.08:
-                        convex_sum += min(1.0, ang / 1.05)
-                    elif ang < -0.05:
-                        concave_sum += min(1.0, (-ang) / 0.85)
-                    cnt += 1
-            wear = (convex_sum / max(1, cnt)) * 1.25
-            if up_factor > 0.25:
-                wear += 0.05
-            vert_wear_boost[v.index] = max(0.0, min(1.0, wear))
-            if concave_sum > 0.0:
-                vert_cavity_ao[v.index] = max(0.35, 1.0 - (concave_sum / max(1, cnt)) * 0.85)
-                vert_top_dust[v.index] = min(1.0, vert_top_dust[v.index] + (concave_sum / max(1, cnt)) * 0.45)
+def add_convex_proxy(
+    root: bpy.types.Object,
+    name: str,
+    points_u: Sequence[Tuple[float, float, float]],
+    mat: str = "R1_GreyMetal",
+) -> bpy.types.Object:
+    """Build a closed, outward-wound convex hull collision proxy (`UCX_<Part>_<n>`) with <= 32 faces."""
+    if not name.startswith("UCX_"):
+        raise ValueError(f"Collision proxy name '{name}' must start with 'UCX_'.")
+    if len(points_u) < 4:
+        raise ValueError(f"Collision proxy '{name}' requires at least 4 non-coplanar points.")
 
+    bm = bmesh.new()
+    for ux, uy, uz in points_u:
+        bm.verts.new(r1kit.u_pos(ux, uy, uz))
+    bm.verts.ensure_lookup_table()
+
+    res = bmesh.ops.convex_hull(bm, input=list(bm.verts))
+    hull_geom = set(res.get("geom", []))
+    unused = [v for v in list(bm.verts) if v not in hull_geom]
+    if unused:
+        bmesh.ops.delete(bm, geom=unused, context="VERTS")
+
+    bmesh.ops.remove_doubles(bm, verts=list(bm.verts), dist=0.002)
+    bmesh.ops.dissolve_limit(
+        bm,
+        angle_limit=math.radians(2.5),
+        use_dissolve_boundaries=False,
+        verts=list(bm.verts),
+        edges=list(bm.edges),
+    )
+    bmesh.ops.recalc_face_normals(bm, faces=list(bm.faces))
+    r1kit.ensure_outward_normals(bm)
+
+    for f in bm.faces:
+        f.material_index = 0
+        f.smooth = False
+
+    poly_count = len(bm.faces)
+    tri_count = sum(max(1, len(f.verts) - 2) for f in bm.faces)
+    if poly_count > 32 or tri_count > 32:
         bm.free()
+        raise ValueError(
+            f"Collision proxy '{name}' exceeds <= 32 faces contract: {poly_count} polygons, {tri_count} triangles."
+        )
 
-        num_loops = len(mesh.loops)
-        rgba = np.ones(num_loops * 4, dtype=np.float32)
-        col_attr.data.foreach_get("color", rgba)
-        rgba = rgba.reshape(-1, 4)
+    non_manifold = [e for e in bm.edges if not e.is_manifold]
+    concave = [e for e in bm.edges if e.is_manifold and e.calc_face_angle_signed(0.0) < -1e-3]
+    if non_manifold or concave:
+        bm.free()
+        raise ValueError(
+            f"Collision proxy '{name}' is not a valid closed convex hull "
+            f"(non_manifold={len(non_manifold)}, concave={len(concave)})."
+        )
 
-        is_airlock_panel = obj.name == "AirlockPanel"
-        mat_names = [m.name if m else "" for m in mesh.materials]
-        signage_mat_idx = mat_names.index("R1_Signage") if "R1_Signage" in mat_names else -1
+    mesh = bpy.data.meshes.new(name)
+    bm.to_mesh(mesh)
+    bm.free()
 
-        for poly in mesh.polygons:
-            if is_airlock_panel and poly.material_index == signage_mat_idx:
-                for li in poly.loop_indices:
-                    rgba[li, 0] = 1.0
-                    rgba[li, 1] = 0.0
-                    rgba[li, 2] = 0.0
-                    rgba[li, 3] = 1.0
+    mat_dict = r1kit.ensure_materials(use_vertex_color_shading=False)
+    mesh.materials.append(mat_dict[mat])
+    mesh.update()
+
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.context.collection.objects.link(obj)
+    obj.location = (0.0, 0.0, 0.0)
+    obj.rotation_euler = (0.0, 0.0, 0.0)
+    obj.scale = (1.0, 1.0, 1.0)
+    obj.parent = root
+    r1kit.apply_triplanar_uvs(obj, texel_scale=0.85)
+    r1kit._init_solid_vcol(obj, (1.0, 0.0, 0.0, 1.0))
+    return obj
+
+
+def bake_ruins_vertex_colors(root: bpy.types.Object, footprint_radius: float = 3.5) -> None:
+    """Bake R1 vertex colors (R=AO, G=EdgeWear, B=RegolithDust, A=1) on render meshes while isolating UCX_* proxies."""
+    ucx_objs = [
+        o for o in r1kit.collect_hierarchy(root) if o.type == "MESH" and o.name.startswith("UCX_")
+    ]
+    for ucx in ucx_objs:
+        ucx.parent = None
+        ucx.hide_render = True
+        ucx.hide_viewport = True
+
+    try:
+        r1kit.bake_vertex_colors(root, footprint_radius=footprint_radius)
+
+        objs = [
+            o
+            for o in r1kit.collect_hierarchy(root)
+            if o.type == "MESH" and o.data is not None and not o.name.startswith("UCX_")
+        ]
+        z_min, z_max = 0.0, 2.5
+        for obj in objs:
+            mw = obj.matrix_world
+            for v in obj.data.vertices:
+                wz = (mw @ v.co).z
+                if wz > z_max:
+                    z_max = wz
+        z_span = max(0.5, z_max - z_min)
+
+        for obj in objs:
+            mesh = obj.data
+            col_attr = mesh.color_attributes.get(r1kit.VCOL_ATTRIBUTE_NAME)
+            if col_attr is None:
                 continue
-            poly_wnorm = (rot_mw @ poly.normal).normalized()
-            face_up_dust = (max(0.0, poly_wnorm.z) ** 1.4) * 0.50
-            for li in poly.loop_indices:
-                vi = mesh.loops[li].vertex_index
-                r, g, b, _ = rgba[li]
-                new_r = max(0.0, min(1.0, float(r) * float(vert_cavity_ao[vi])))
-                new_g = min(1.0, max(float(g), float(vert_wear_boost[vi])))
-                new_b = min(1.0, max(float(b), float(vert_top_dust[vi]), float(face_up_dust)))
-                rgba[li, 0] = new_r
-                rgba[li, 1] = new_g
-                rgba[li, 2] = new_b
-                rgba[li, 3] = 1.0
 
-        col_attr.data.foreach_set("color", rgba.reshape(-1))
-        mesh.update()
+            mw = obj.matrix_world
+            rot_mw = mw.to_3x3()
+
+            bm = bmesh.new()
+            bm.from_mesh(mesh)
+            bm.verts.ensure_lookup_table()
+            bm.edges.ensure_lookup_table()
+
+            vert_top_dust = np.zeros(len(bm.verts), dtype=np.float32)
+            vert_wear_boost = np.zeros(len(bm.verts), dtype=np.float32)
+            vert_cavity_ao = np.ones(len(bm.verts), dtype=np.float32)
+
+            for v in bm.verts:
+                wpos = mw @ v.co
+                wnorm = (rot_mw @ v.normal).normalized()
+                up_factor = max(0.0, wnorm.z)
+                height_01 = max(0.0, min(1.0, (wpos.z - z_min) / z_span))
+                top_dust = (up_factor ** 1.35) * (0.56 + 0.24 * (1.0 - height_01))
+                vert_top_dust[v.index] = top_dust
+
+                convex_sum = 0.0
+                concave_sum = 0.0
+                cnt = 0
+                for e in v.link_edges:
+                    if e.is_manifold:
+                        ang = e.calc_face_angle_signed(0.0)
+                        if ang > 0.08:
+                            convex_sum += min(1.0, ang / 1.05)
+                        elif ang < -0.05:
+                            concave_sum += min(1.0, (-ang) / 0.85)
+                        cnt += 1
+                wear = (convex_sum / max(1, cnt)) * 1.25
+                if up_factor > 0.25:
+                    wear += 0.05
+                vert_wear_boost[v.index] = max(0.0, min(1.0, wear))
+                if concave_sum > 0.0:
+                    vert_cavity_ao[v.index] = max(0.35, 1.0 - (concave_sum / max(1, cnt)) * 0.85)
+                    vert_top_dust[v.index] = min(1.0, vert_top_dust[v.index] + (concave_sum / max(1, cnt)) * 0.45)
+
+            bm.free()
+
+            num_loops = len(mesh.loops)
+            rgba = np.ones(num_loops * 4, dtype=np.float32)
+            col_attr.data.foreach_get("color", rgba)
+            rgba = rgba.reshape(-1, 4)
+
+            is_airlock_panel = obj.name == "AirlockPanel"
+            mat_names = [m.name if m else "" for m in mesh.materials]
+            signage_mat_idx = mat_names.index("R1_Signage") if "R1_Signage" in mat_names else -1
+
+            for poly in mesh.polygons:
+                if is_airlock_panel and poly.material_index == signage_mat_idx:
+                    for li in poly.loop_indices:
+                        rgba[li, 0] = 1.0
+                        rgba[li, 1] = 0.0
+                        rgba[li, 2] = 0.0
+                        rgba[li, 3] = 1.0
+                    continue
+                poly_wnorm = (rot_mw @ poly.normal).normalized()
+                face_up_dust = (max(0.0, poly_wnorm.z) ** 1.4) * 0.50
+                for li in poly.loop_indices:
+                    vi = mesh.loops[li].vertex_index
+                    r, g, b, _ = rgba[li]
+                    new_r = max(0.0, min(1.0, float(r) * float(vert_cavity_ao[vi])))
+                    new_g = min(1.0, max(float(g), float(vert_wear_boost[vi])))
+                    new_b = min(1.0, max(float(b), float(vert_top_dust[vi]), float(face_up_dust)))
+                    rgba[li, 0] = new_r
+                    rgba[li, 1] = new_g
+                    rgba[li, 2] = new_b
+                    rgba[li, 3] = 1.0
+
+            col_attr.data.foreach_set("color", rgba.reshape(-1))
+            mesh.update()
+    finally:
+        for ucx in ucx_objs:
+            ucx.parent = root
+            ucx.hide_render = False
+            ucx.hide_viewport = False
+            r1kit.apply_triplanar_uvs(ucx, texel_scale=0.85)
+            r1kit._init_solid_vcol(ucx, (1.0, 0.0, 0.0, 1.0))
 
 
 def _draw_np_seg(
@@ -1278,6 +1466,12 @@ def render_ruin_day_night(
     RENDERS_DIR.mkdir(parents=True, exist_ok=True)
     attach_signage_texture_for_render(use_vertex_color_shading=True)
 
+    ucx_objs = [
+        o for o in r1kit.collect_hierarchy(root) if o.type == "MESH" and o.name.startswith("UCX_")
+    ]
+    for ucx in ucx_objs:
+        ucx.hide_render = True
+
     scene = bpy.context.scene
     _configure_fast_cycles(scene, res[0], res[1])
 
@@ -1420,9 +1614,153 @@ def render_ruin_day_night(
     bpy.data.lights.remove(rim_data)
     bpy.data.materials.remove(gmat)
     bpy.data.worlds.remove(world)
+    for ucx in ucx_objs:
+        ucx.hide_render = False
     r1kit.ensure_materials(use_vertex_color_shading=False)
 
     return dawn_path, night_path
+
+
+def render_ruin_collision_wireframe(
+    root: bpy.types.Object,
+    slug: str,
+    cam_angle_deg: float = 32.0,
+    cam_elev_deg: float = 18.0,
+    res: Tuple[int, int] = (1024, 768),
+) -> Path:
+    """Render `<slug>_collision_wireframe.png` showing the UCX_* convex collision proxies in wireframe over the ruin."""
+    RENDERS_DIR.mkdir(parents=True, exist_ok=True)
+    attach_signage_texture_for_render(use_vertex_color_shading=True)
+
+    ucx_objs = [
+        o for o in r1kit.collect_hierarchy(root) if o.type == "MESH" and o.name.startswith("UCX_")
+    ]
+    for ucx in ucx_objs:
+        ucx.hide_render = True
+
+    wire_palette = [
+        (0.10, 1.00, 0.35, 1.0),  # Neon lime green
+        (0.00, 0.90, 1.00, 1.0),  # Bright cyan
+        (1.00, 0.72, 0.05, 1.0),  # Warm amber gold
+        (1.00, 0.30, 0.80, 1.0),  # Bright magenta
+        (0.45, 1.00, 0.15, 1.0),  # Chartreuse
+        (0.25, 0.65, 1.00, 1.0),  # Electric sky blue
+        (1.00, 0.42, 0.20, 1.0),  # Coral orange
+        (0.75, 0.40, 1.00, 1.0),  # Violet
+    ]
+
+    scene = bpy.context.scene
+    _configure_fast_cycles(scene, res[0], res[1])
+    scene.cycles.samples = 24
+    scene.render.use_freestyle = False
+
+    temp_wire_objs: List[bpy.types.Object] = []
+    temp_wire_meshes: List[bpy.types.Mesh] = []
+    temp_wire_mats: List[bpy.types.Material] = []
+
+    for idx, ucx in enumerate(ucx_objs):
+        col = wire_palette[idx % len(wire_palette)]
+        wmat = bpy.data.materials.new(f"_UCXWireMat_{idx}")
+        wmat.use_nodes = True
+        wbsdf = next(n for n in wmat.node_tree.nodes if n.type == "BSDF_PRINCIPLED")
+        wbsdf.inputs["Base Color"].default_value = col
+        wbsdf.inputs["Roughness"].default_value = 0.25
+        if "Emission Color" in wbsdf.inputs:
+            wbsdf.inputs["Emission Color"].default_value = col
+        if "Emission Strength" in wbsdf.inputs:
+            wbsdf.inputs["Emission Strength"].default_value = 3.2
+        temp_wire_mats.append(wmat)
+
+        wmesh = ucx.data.copy()
+        if len(wmesh.vertices) > 0:
+            cent = sum((v.co.copy() for v in wmesh.vertices), Vector((0.0, 0.0, 0.0))) / len(wmesh.vertices)
+            for v in wmesh.vertices:
+                delta = v.co - cent
+                if delta.length > 1e-4:
+                    v.co = v.co + delta.normalized() * 0.075
+            wmesh.update()
+        wmesh.materials.clear()
+        wmesh.materials.append(wmat)
+        temp_wire_meshes.append(wmesh)
+
+        wobj = bpy.data.objects.new(f"_Wire_{ucx.name}", wmesh)
+        wobj.matrix_world = ucx.matrix_world.copy()
+        scene.collection.objects.link(wobj)
+        mod = wobj.modifiers.new("UCXWire", type="WIREFRAME")
+        mod.thickness = 0.030
+        mod.use_replace = True
+        mod.use_even_offset = True
+        mod.use_boundary = True
+        mod.offset = 0.0
+        temp_wire_objs.append(wobj)
+
+    cam_data = bpy.data.cameras.new("RuinWireCam")
+    cam_data.lens = 40.0
+    cam_obj = bpy.data.objects.new("RuinWireCam", cam_data)
+    scene.collection.objects.link(cam_obj)
+    scene.camera = cam_obj
+
+    center, max_dim, min_z = _frame_camera_on_root(cam_obj, root, cam_angle_deg, cam_elev_deg, distance_scale=1.04)
+
+    bpy.ops.mesh.primitive_grid_add(
+        x_subdivisions=24,
+        y_subdivisions=24,
+        size=max_dim * 6.0,
+        location=(center.x, center.y, min(0.0, min_z)),
+    )
+    ground = bpy.context.active_object
+    ground.name = "_RuinWireGround"
+    gmat = bpy.data.materials.new("_RuinWireGroundMat")
+    gmat.use_nodes = True
+    gbsdf = next(n for n in gmat.node_tree.nodes if n.type == "BSDF_PRINCIPLED")
+    gbsdf.inputs["Base Color"].default_value = (0.14, 0.15, 0.18, 1.0)
+    gbsdf.inputs["Roughness"].default_value = 0.94
+    ground.data.materials.append(gmat)
+
+    world = bpy.data.worlds.new("_RuinWireWorld")
+    scene.world = world
+    setup_lunar_world_shader(
+        world,
+        sky_cam_rgba=(0.006, 0.009, 0.022, 1.0),
+        sky_fill_rgba=(0.14, 0.18, 0.30, 1.0),
+        fill_strength=0.95,
+    )
+
+    sun_data = bpy.data.lights.new("WireSunKey", type="SUN")
+    sun_data.energy = 4.6
+    sun_data.color = (1.0, 0.86, 0.68)
+    sun_data.angle = math.radians(2.0)
+    sun_obj = bpy.data.objects.new("WireSunKey", sun_data)
+    sun_obj.rotation_euler = (math.radians(65.0), math.radians(6.0), math.radians(-42.0))
+    scene.collection.objects.link(sun_obj)
+
+    fill_data = bpy.data.lights.new("WireSkyFill", type="SUN")
+    fill_data.energy = 1.6
+    fill_data.color = (0.62, 0.76, 0.98)
+    fill_data.angle = math.radians(28.0)
+    fill_obj = bpy.data.objects.new("WireSkyFill", fill_data)
+    fill_obj.rotation_euler = (math.radians(46.0), 0.0, math.radians(132.0))
+    scene.collection.objects.link(fill_obj)
+
+    wire_path = RENDERS_DIR / f"{slug}_collision_wireframe.png"
+    scene.render.filepath = str(wire_path)
+    bpy.ops.render.render(write_still=True)
+
+    for obj in [cam_obj, ground, sun_obj, fill_obj] + temp_wire_objs:
+        bpy.data.objects.remove(obj, do_unlink=True)
+    for wmesh in temp_wire_meshes:
+        bpy.data.meshes.remove(wmesh)
+    for wmat in temp_wire_mats:
+        bpy.data.materials.remove(wmat)
+    bpy.data.cameras.remove(cam_data)
+    bpy.data.lights.remove(sun_data)
+    bpy.data.lights.remove(fill_data)
+    bpy.data.materials.remove(gmat)
+    bpy.data.worlds.remove(world)
+    for ucx in ucx_objs:
+        ucx.hide_render = False
+    r1kit.ensure_materials(use_vertex_color_shading=False)
+    return wire_path
 
 
 def finalize_ruin_and_export(
@@ -1442,6 +1780,18 @@ def finalize_ruin_and_export(
 
     fbx_path = RUINS_FBX_DIR / fbx_name
     r1kit.export_fbx(root, fbx_path)
+
+    has_ucx = any(
+        o.type == "MESH" and o.name.startswith("UCX_") for o in r1kit.collect_hierarchy(root)
+    )
+    if has_ucx and "--no-wireframe" not in sys.argv:
+        render_ruin_collision_wireframe(
+            root,
+            slug=slug,
+            cam_angle_deg=cam_angle_deg,
+            cam_elev_deg=cam_elev_deg,
+            res=res,
+        )
 
     dawn_path = RENDERS_DIR / f"{slug}_dawn.png"
     night_path = RENDERS_DIR / f"{slug}_night.png"
