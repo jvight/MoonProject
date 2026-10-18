@@ -85,7 +85,7 @@ MonoBehaviour:
     _prop: {fileID: 0}
   - _id: supply.workshop.a
     _anchorId: KenjiWorkshop
-    _offset: {x: -2.5, y: 0, z: -3}
+    _offset: {x: -2.5, y: 0, z: -5}
     _yaw: -140
     _container: Crate_S
     _yield:
@@ -97,7 +97,7 @@ MonoBehaviour:
     _prop: {fileID: 0}
   - _id: supply.workshop.b
     _anchorId: KenjiWorkshop
-    _offset: {x: 2.5, y: 0, z: -3}
+    _offset: {x: 2.5, y: 0, z: -5}
     _yaw: 140
     _container: Crate_S
     _yield:

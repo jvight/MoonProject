@@ -85,6 +85,7 @@ namespace MoonProject.Gameplay
                 root.SetPositionAndRotation(SurfaceRules.OnSurface(services.Terrain, spot.x, spot.z),
                     level * prefab.transform.localRotation);
                 _levels.Add(level);
+                MakeSolid(root);
                 SealedContainer container = SealedContainer.Read(cache.Id, ContainerKinds.Of(cache.Container), root,
                     SealedContainer.LidPath, SealedContainer.ItemSocketPath, Always, out string problem)
                     ?? throw new InvalidOperationException(problem);
@@ -386,6 +387,36 @@ namespace MoonProject.Gameplay
             {
                 shown.SetActive(visible);
             }
+        }
+
+        /// <summary>
+        /// A crate 07 bumps into rather than drives through: a box round what it shows, on the Prop layer, unless Art
+        /// gave it colliders of its own.
+        /// </summary>
+        private static void MakeSolid(Transform root)
+        {
+            if (root.GetComponentInChildren<Collider>() != null)
+            {
+                return;
+            }
+
+            Renderer[] renderers = root.GetComponentsInChildren<Renderer>();
+            if (renderers.Length == 0)
+            {
+                throw new InvalidOperationException($"Supply crate '{root.name}' shows no mesh to stand solid on.");
+            }
+
+            Bounds shown = renderers[0].bounds;
+            for (int i = 1; i < renderers.Length; i++)
+            {
+                shown.Encapsulate(renderers[i].bounds);
+            }
+
+            var box = root.gameObject.AddComponent<BoxCollider>();
+            box.center = root.InverseTransformPoint(shown.center);
+            Vector3 size = root.InverseTransformVector(shown.size);
+            box.size = new Vector3(Mathf.Abs(size.x), Mathf.Abs(size.y), Mathf.Abs(size.z));
+            root.gameObject.layer = Layers.Prop;
         }
 
         /// <summary>The crate's child called <paramref name="name"/>, at any depth, or null (only some crates have it).
