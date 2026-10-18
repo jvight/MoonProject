@@ -96,9 +96,14 @@ namespace MoonProject.Rover
         private IRoverStillness _stillness;
         private GameContext _context;
         private readonly PropSightLine _sight = new PropSightLine();
+        /// <summary>Most points the framing keeps in view at once.</summary>
+        private const int MaxFocusPoints = 8;
+
         private readonly HeldShot _held = new HeldShot();
         private TargetFraming _framing;
+        /// <summary>Gameplay registers it after this rig initialises, so it is looked up until it is there.</summary>
         private IInteractionFocus _focus;
+        private readonly Vector3[] _focusPoints = new Vector3[MaxFocusPoints];
         private bool _evening;
         private BeamFraming _beam;
         private bool _charging;
@@ -143,6 +148,9 @@ namespace MoonProject.Rover
 
         /// <summary>The dock's evening, when it is open or easing (capture sessions).</summary>
         public HeldShot Held => _held;
+
+        /// <summary>The camera's move to show what 07 scans (for tests and tooling).</summary>
+        public TargetFraming Framing => _framing;
 
         public float SkyLift => _stargaze != null ? _stargaze.Lift : 0f;
 
@@ -224,7 +232,6 @@ namespace MoonProject.Rover
             _input = context.Input;
             _orbitState = new CameraOrbit(_tuning);
             _framing = new TargetFraming(_tuning);
-            context.TryGet(out _focus);
             _stargaze = new Stargaze(_tuning);
             _opening = new WakeOpening(_tuning);
             _wide = new WideShot(_tuning.WideShot);
@@ -801,7 +808,7 @@ namespace MoonProject.Rover
         private void PlaceTarget(float deltaTime = 0f, bool snap = true)
         {
             float targetHeight = _tuning.TargetHeight + _wallCompression * _tuning.WallMaxTargetLift;
-            Vector3 point = _rover.Position + Vector3.up * targetHeight + _momentShift;
+            Vector3 point = _rover.Position + Vector3.up * targetHeight + _momentShift + _framing.Shift;
             float cut = _beam.Framing.Weight;
             if (cut > 0f)
             {
@@ -829,13 +836,19 @@ namespace MoonProject.Rover
 
         private void StepTargetFraming(Vector2 look, float deltaTime)
         {
-            Vector3 point = Vector3.zero;
-            bool hasTarget = _focus != null && _focus.TryGetFocus(out point);
-            bool mayFrame = !_moment.IsActive && _wide.Weight <= 0f && _held.Weight <= 0f
+            if (_focus == null)
+            {
+                _context.TryGet(out _focus);
+            }
+
+            int targetCount = _focus != null ? _focus.CopyFocus(_focusPoints) : 0;
+            bool mayFrame = _wide.Weight <= 0f && _held.Weight <= 0f
                 && !_faceInspectOpen && _faceInspectWeight <= 0f && !_opening.IsActive && !_crawling;
-            float viewYaw = RoverYaw() + _momentYaw + _orbitState.YawOffset;
-            _framing.Step(new TargetFramingInput(hasTarget, _rover.Position, point, viewYaw, _rover.Speed,
-                look.sqrMagnitude > 0f, mayFrame), deltaTime);
+            ChaseOrbit(out float yaw, out float elevation, out float radius);
+            _framing.Step(new TargetFramingInput(_rover.Position, RoverYaw(), _focusPoints, targetCount,
+                _target.position - _framing.Shift, RoverYaw() + _momentYaw + yaw, elevation, radius,
+                _orbitState.FieldOfView, _viewCamera.aspect, _rover.Speed, look.sqrMagnitude > 0f, mayFrame),
+                deltaTime);
         }
 
         private Vector2 ReadLook(float deltaTime)
@@ -845,15 +858,29 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
+        /// The chase orbit before any shot or framing moves it: the player's view and 07's moments, then the beam
+        /// work's framing; <paramref name="yaw"/> is from 07's heading.
+        /// </summary>
+        private void ChaseOrbit(out float yaw, out float elevation, out float radius)
+        {
+            yaw = _orbitState.YawOffset * (1f - _moment.Weight);
+            elevation = _orbitState.Elevation + _momentLift + _wallCompression * _tuning.WallMaxPitchLift
+                - _crawl * _tuning.CrawlLower;
+            radius = _tuning.Distance * (1f + _momentPullBack) * (1f + _crawl * _tuning.CrawlPullBack);
+            float cutFrame = _beam.Framing.Weight;
+            if (cutFrame > 0f)
+            {
+                BlendCutFraming(cutFrame, ref yaw, ref elevation, ref radius);
+            }
+        }
+
+        /// <summary>
         /// The chase orbit (player look, recentering, moments) blended toward the wide shot's frame and its breathing
         /// by the wide shot's weight; at weight 0 it is exactly the chase camera.
         /// </summary>
         private void ApplyOrbit()
         {
-            float yaw = _orbitState.YawOffset * (1f - _moment.Weight) + _framing.YawOffset;
-            float elevation = _orbitState.Elevation + _framing.Elevation + _momentLift + _wallCompression * _tuning.WallMaxPitchLift
-                - _crawl * _tuning.CrawlLower;
-            float radius = _tuning.Distance * (1f + _momentPullBack) * (1f + _crawl * _tuning.CrawlPullBack);
+            ChaseOrbit(out float yaw, out float elevation, out float radius);
             float fov = _orbitState.FieldOfView;
             Vector2 screen = _tuning.ScreenPosition;
             float wide = _wide.Weight;
@@ -883,11 +910,9 @@ namespace MoonProject.Rover
                 BlendHeldShot(framed, ref yaw, ref elevation, ref radius, ref fov, ref screen);
             }
 
-            float cutFrame = _beam.Framing.Weight;
-            if (cutFrame > 0f)
-            {
-                BlendCutFraming(cutFrame, ref yaw, ref elevation, ref radius);
-            }
+            yaw += _framing.YawOffset;
+            elevation += _framing.Elevation;
+            radius *= _framing.RadiusScale;
 
             float wake = _opening.Weight;
             float wakeFaceWeight = 0f;

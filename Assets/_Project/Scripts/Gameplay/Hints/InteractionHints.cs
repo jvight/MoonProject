@@ -9,6 +9,11 @@ namespace MoonProject.Gameplay
     /// </summary>
     public sealed class InteractionHints : IInteractionHints, IInteractionFocus
     {
+        private const int MaxFocusPoints = 16;
+
+        /// <summary>Scan points closer than this (squared, m) to the primary one are the primary one.</summary>
+        private const float SamePointSqr = 0.0025f;
+
         private static readonly InteractionKind[] Priority =
         {
             InteractionKind.PickUp, InteractionKind.Build, InteractionKind.Salvage, InteractionKind.Scan,
@@ -22,6 +27,7 @@ namespace MoonProject.Gameplay
         private readonly BeamWork _beam;
         private readonly Cutter _cutter;
         private readonly PickupReach _pickups;
+        private readonly Vector3[] _scanBuffer = new Vector3[MaxFocusPoints];
 
         /// <param name="beam">
         /// 07's beam work: while new work sleeps (the crawl, docs/features/M3-20) a beam verb's hint shows as not ready.
@@ -55,12 +61,35 @@ namespace MoonProject.Gameplay
             }
         }
 
-        /// <summary>The place of the most relevant action now: where the camera keeps its view clear of 07's body.</summary>
-        public bool TryGetFocus(out Vector3 point)
+        /// <summary>
+        /// The place of the most relevant action now, then (for a scan) every other target in reach: what the camera
+        /// keeps clear of 07's body.
+        /// </summary>
+        public int CopyFocus(Vector3[] points)
         {
             InteractionHint hint = Primary;
-            point = hint.Position;
-            return hint.Kind != InteractionKind.None;
+            if (hint.Kind == InteractionKind.None || points.Length == 0)
+            {
+                return 0;
+            }
+
+            points[0] = hint.Position;
+            if (hint.Kind != InteractionKind.Scan)
+            {
+                return 1;
+            }
+
+            int count = _scans.CopyInReach(_scanBuffer);
+            int written = 1;
+            for (int i = 0; i < count && written < points.Length; i++)
+            {
+                if ((_scanBuffer[i] - hint.Position).sqrMagnitude > SamePointSqr)
+                {
+                    points[written++] = _scanBuffer[i];
+                }
+            }
+
+            return written;
         }
 
         public bool TryGet(InteractionKind kind, out InteractionHint hint)

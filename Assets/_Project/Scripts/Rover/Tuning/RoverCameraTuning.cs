@@ -196,7 +196,7 @@ namespace MoonProject.Rover
         [SerializeField] private float _followMaxRate = 45f;
 
         [Header("Target framing")]
-        [Tooltip("07 stopped or slower than this (m/s) near a scan or interaction target lets the camera lift to show it.")]
+        [Tooltip("07 stopped or slower than this (m/s) near a scan or interaction target lets the camera move to show it.")]
         [Range(0f, 3f)]
         [SerializeField] private float _framingMaxSpeed = 1f;
 
@@ -209,29 +209,57 @@ namespace MoonProject.Rover
         [Range(10f, 120f)]
         [SerializeField] private float _framingViewCone = 70f;
 
-        [Tooltip("Seconds 07 must be slow and the view still before the camera starts to lift.")]
+        [Tooltip("Seconds 07 must be slow and the view still before the camera starts to move.")]
         [Range(0f, 5f)]
-        [SerializeField] private float _framingEngageDelay = 1f;
+        [SerializeField] private float _framingEngageDelay = 0.5f;
 
-        [Tooltip("Extra camera elevation (deg) at full framing, so the target shows over 07's body.")]
-        [Range(0f, 40f)]
-        [SerializeField] private float _framingLift = 14f;
+        [Tooltip("Most extra camera elevation (deg) the framing may add, so the target shows over 07's body.")]
+        [Range(0f, 60f)]
+        [SerializeField] private float _framingLift = 25f;
 
-        [Tooltip("Extra yaw (deg) at full framing, toward the side the target is on.")]
-        [Range(0f, 40f)]
-        [SerializeField] private float _framingYaw = 12f;
+        [Tooltip("Most the camera may swing (deg) to either side of 07 to see past its body.")]
+        [Range(0f, 90f)]
+        [SerializeField] private float _framingYaw = 80f;
 
-        [Tooltip("Angle (deg) between the view and the target at which the sideways shift reaches its full amount.")]
-        [Range(5f, 90f)]
-        [SerializeField] private float _framingSideFullAngle = 25f;
+        [Tooltip("Closest the camera may pull in, as a share of its normal distance, to see over 07's shoulder.")]
+        [Range(0.2f, 1f)]
+        [SerializeField] private float _framingMinRadiusScale = 0.6f;
 
-        [Tooltip("Half-life (s) of the sideways shift following the target's side.")]
+        [Tooltip("Steps each of swing, lift and pull-in is searched in, from none to its most; more is finer.")]
+        [Range(2, 12)]
+        [SerializeField] private int _framingSearchSteps = 8;
+
+        [Tooltip("How far the camera's look-at point moves from 07 toward the target (0 = stays on 07): the view then rests on the target, so it stays the thing E scans or uses.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _framingLookShare = 0.6f;
+
+        [Tooltip("07's body as the framing sees it: width (m).")]
+        [Range(0.5f, 3f)]
+        [SerializeField] private float _framingBodyWidth = 1.47f;
+
+        [Tooltip("07's body as the framing sees it: length (m).")]
+        [Range(0.5f, 4f)]
+        [SerializeField] private float _framingBodyLength = 2f;
+
+        [Tooltip("07's body as the framing sees it: height to the top of its head (m).")]
+        [Range(0.5f, 3f)]
+        [SerializeField] private float _framingBodyHeight = 1.53f;
+
+        [Tooltip("Metres the sight line must clear 07's body by.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _framingBodyClearance = 0.2f;
+
+        [Tooltip("The target must sit inside this central share of the screen (0.7 = the middle 70%).")]
+        [Range(0.2f, 1f)]
+        [SerializeField] private float _framingCentralShare = 0.7f;
+
+        [Tooltip("Half-life (s) of the camera easing toward the framing it found.")]
         [Range(0.1f, 3f)]
-        [SerializeField] private float _framingSideHalfLife = 0.6f;
+        [SerializeField] private float _framingSolveHalfLife = 0.3f;
 
         [Tooltip("Seconds the framing takes to ease in: slow and soft.")]
         [Range(0.5f, 8f)]
-        [SerializeField] private float _framingRampSeconds = 3f;
+        [SerializeField] private float _framingRampSeconds = 1.5f;
 
         [Tooltip("Seconds the framing takes to ease out when 07 drives off, the target goes or the player looks.")]
         [Range(0.3f, 6f)]
@@ -720,9 +748,23 @@ namespace MoonProject.Rover
 
         public float FramingYaw => _framingYaw;
 
-        public float FramingSideFullAngle => _framingSideFullAngle;
+        public float FramingMinRadiusScale => _framingMinRadiusScale;
 
-        public float FramingSideHalfLife => _framingSideHalfLife;
+        public int FramingSearchSteps => _framingSearchSteps;
+
+        public float FramingLookShare => _framingLookShare;
+
+        public float FramingBodyWidth => _framingBodyWidth;
+
+        public float FramingBodyLength => _framingBodyLength;
+
+        public float FramingBodyHeight => _framingBodyHeight;
+
+        public float FramingBodyClearance => _framingBodyClearance;
+
+        public float FramingCentralShare => _framingCentralShare;
+
+        public float FramingSolveHalfLife => _framingSolveHalfLife;
 
         public float FramingRampSeconds => _framingRampSeconds;
 
