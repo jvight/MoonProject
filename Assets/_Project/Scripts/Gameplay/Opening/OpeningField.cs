@@ -20,6 +20,7 @@ namespace MoonProject.Gameplay
         public const string LanderPortFrame = "lander.port";
 
         private const string CargoTargetPrefix = "Scan_";
+        private const string CargoFragmentPrefix = "CargoFragment_";
 
         private readonly OpeningTuning _tuning;
         private readonly IRoverState _rover;
@@ -76,7 +77,7 @@ namespace MoonProject.Gameplay
             }
 
             Caches = new SupplyCaches(tuning, FrameOf, parent, services, containers, crateReach);
-            LanderCargo = CargoBay(Caches.RootOf(tuning.CargoCrate));
+            LanderCargo = CargoBay(Caches.RootOf(tuning.CargoCrate), Caches.LevelOf(tuning.CargoCrate));
             Flow = new OpeningFlow(services.Events, this);
         }
 
@@ -184,6 +185,19 @@ namespace MoonProject.Gameplay
             Caches.Dispose();
         }
 
+        private static Transform FindNode(Transform root, string name)
+        {
+            foreach (Transform node in root.GetComponentsInChildren<Transform>(true))
+            {
+                if (node.name == name)
+                {
+                    return node;
+                }
+            }
+
+            return null;
+        }
+
         private Transform FrameOf(string id)
         {
             return _frames.TryGetValue(id, out Transform frame) ? frame : null;
@@ -211,15 +225,32 @@ namespace MoonProject.Gameplay
             return frame;
         }
 
-        /// <summary>The cargo crate's Scan_1..N points in its own frame, on what it holds.</summary>
-        private Transform CargoBay(Transform crate)
+        /// <summary>
+        /// Art's pad fragments lying in the cargo crate, at the scan points in its <paramref name="level"/> frame; each
+        /// fragment's own Scan_1 node becomes the set's Scan_1..N in order.
+        /// </summary>
+        private Transform CargoBay(Transform crate, Quaternion level)
         {
+            IReadOnlyList<GameObject> fragments = _tuning.CargoFragments;
+            if (fragments.Count != _tuning.CargoScanPoints.Count)
+            {
+                throw new InvalidOperationException($"OpeningTuning has {fragments.Count} cargo fragments for " +
+                                                    $"{_tuning.CargoScanPoints.Count} cargo scan points.");
+            }
+
             for (int i = 0; i < _tuning.CargoScanPoints.Count; i++)
             {
-                Transform point = new GameObject(CargoTargetPrefix + (i + 1).ToString(CultureInfo.InvariantCulture))
-                    .transform;
-                point.SetParent(crate, false);
-                point.localPosition = _tuning.CargoScanPoints[i];
+                string number = (i + 1).ToString(CultureInfo.InvariantCulture);
+                Transform rest = new GameObject(CargoFragmentPrefix + number).transform;
+                rest.SetParent(crate, false);
+                rest.SetPositionAndRotation(crate.position + level * _tuning.CargoScanPoints[i], level);
+                GameObject fragment = fragments[i] != null ? fragments[i] : throw new InvalidOperationException(
+                    $"OpeningTuning's cargo fragment {i + 1} is not assigned.");
+                Transform piece = UnityEngine.Object.Instantiate(fragment, rest, false).transform;
+                piece.localPosition = Vector3.zero;
+                Transform target = FindNode(piece, CargoTargetPrefix + "1") ?? throw new InvalidOperationException(
+                    $"Art's pad fragment '{fragment.name}' has no {CargoTargetPrefix}1 node.");
+                target.name = CargoTargetPrefix + number;
             }
 
             return crate;

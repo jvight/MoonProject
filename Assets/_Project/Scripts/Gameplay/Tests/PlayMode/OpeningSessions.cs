@@ -319,7 +319,10 @@ namespace MoonProject.Gameplay.PlayModeTests
                 _fixture.ScanTuning.Seconds(fragment.Size) + PressTimeout);
             Release(_keyboard.eKey);
             yield return null;
-            Assert.IsTrue(fragment.Scanned, fragment.FragmentId);
+            ScanField scans = _fixture.Gameplay.Scans;
+            Assert.IsTrue(fragment.Scanned, $"{fragment.FragmentId} at {fragment.Point}: candidate " +
+                $"{scans.Candidate?.FragmentId ?? "none"}, scanning {scans.Scanning?.FragmentId ?? "none"}, primary " +
+                $"hint {_fixture.Gameplay.Hints.Primary.Kind}");
         }
     }
 }
