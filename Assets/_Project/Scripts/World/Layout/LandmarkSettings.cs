@@ -81,13 +81,14 @@ namespace MoonProject.World
         [SerializeField] private float _scoutBlastSink = 0.03f;
 
         [Header("The crew's traces (basin dressing §2)")]
-        [Tooltip("Art's crew-trace props (Generated/Art/R1/Models/Props) by the opening's places: the mission flag and " +
-            "the retroreflector framing the ruins' front door, the seismic station past the workshop, and the survey " +
-            "tripod the last landing knocked over on the blast ridge, its legs pointing away from the lander.")]
+        [Tooltip("Art's crew-trace props (Generated/Art/R1/Models/Props) by the opening's places: the mission flag at " +
+            "the ruins' front door, in The Peak's golden-hour shadow; the retroreflector beside trail A on the sunlit " +
+            "plain at that shadow's edge, where a ranging target has open sky; the seismic station past the workshop; " +
+            "and the survey tripod the last landing knocked over on the blast ridge, legs pointing away from the lander.")]
         [SerializeField] private PropPlacement[] _crewTraces =
         {
             new PropPlacement(WorldAnchorIds.PlaceRuins, "Prop_MissionFlag", new Vector2(-13.6f, 3f), 218f, 0.05f),
-            new PropPlacement(WorldAnchorIds.PlaceRuins, "Prop_Retroreflector", new Vector2(-14.1f, -8f), 112f, 0.03f),
+            new PropPlacement(WorldAnchorIds.PlaceLander, "Prop_Retroreflector", new Vector2(17.85f, 0.18f), 112f, 0.03f),
             new PropPlacement(WorldAnchorIds.PlaceRuins, "Prop_SeismicStation", new Vector2(32.9f, -2f), 31f, 0.03f),
             new PropPlacement(WorldAnchorIds.PlaceLander, "Prop_SurveyTripod", new Vector2(-37.9f, -0.2f), 180f, 0.05f),
         };
@@ -112,7 +113,7 @@ namespace MoonProject.World
         {
             new Vector2(27f, 147f),
             new Vector2(42.7f, 148.6f),
-            new Vector2(80f, 182f),
+            new Vector2(79.5f, 185.5f),
         };
 
         [Tooltip("How far each bootprint tile wanders off the trail's line, metres: a walked path, not a ruler.")]

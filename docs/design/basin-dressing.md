@@ -33,7 +33,7 @@ and holds at golden hour at **346.5°, 16.9° up** (NNW) (B6–B8). After power-
 |---|---|---|---|---|---|
 | **Wake cable + ruts** (exists) | guide line B2 | wake → lander | B0 | the cable wave runs ahead in the dark | fed 07's post |
 | **Lander beacon** (exists) | lure B0–B5 | (35, 160) | B0 | the only warm light in the eclipse | emergency beacon |
-| **Laser retroreflector panel** | lure **B6→B7** | (81, 177), ruins' west edge | B6, from the pad | a soft glint pulses as 07 or the camera moves. Face normal ≈ **292°**, tilted ~**12°** up: halfway between the Sun (346.5°, 16.9° up) and the pad (241° from the panel, 76 m). So the Sun's mirror lands on the apron. Glint off at < 35 m and after power-on | ranging target for landers on approach, so it faces the landing field |
+| **Laser retroreflector panel** | lure **B6→B7** | (52.8, 160.4), beside trail A at The Peak's shade edge (§7) | B6, from the pad | a soft glint pulses as 07 or the camera moves. Face normal ≈ **292°**, tilted ~**12°** up: halfway between the Sun (346.5°, 16.9° up) and the pad (241° from the panel, 76 m). So the Sun's mirror lands on the apron. Glint off at < 35 m and after power-on | ranging target for landers on approach, so it faces the landing field |
 | **Bootprint trail A** (decal) | guide line **B7** | apron edge (27, 147) → (80, 182), ~63 m at 56° | B6 (sunlight) | the golden Sun rakes in from the left, so the prints cast tiny shadows. The trail ends between the flag and the glint | the crew's daily walk from the lander to the station |
 | **Mission flag** (horizontal rod) | quiet texture, awe | (81.5, 188), 8 m west of the habitat | B7 arrival | with the reflector, it frames the trail's end like a front door. Bleached white against the dark habitat | planted when Lumen opened |
 | **Fallen survey tripod** | quiet texture | (−3, 160), 38 m west of the lander | B6, from the pad | lies at the blast zone's pebble ridge, legs pointing **away** from the lander | the last landing's blast knocked it over (it reinforces World's blast halo) |
@@ -143,11 +143,14 @@ Measured with the real opening holds (`OpeningSkyPacing`, World `BasinDressingTe
   crater's north rim), and trail A in 3 m imprint tiles. The trail bends at (42.7, 148.6) to stay off the lander's
   footprint (the straight line passed 6.7 m from its centre). Art's own colliders on the props; the imprints have
   none. The geophone line has no model yet, so it is not placed.
-- **Retroreflector:** the panel turns on its hinge, aimed by the real golden-hour Sun (346.5°, 16.9° up) halfway to
-  07's chase eye over the apron: face ~292°, ~12° up.
-- **Blocker, open: The Peak shades the ruins at golden hour.** Toward the golden-hour Sun, The Peak stands 18.5–21°
-  above the front door, the flag and the retroreflector (16.9° Sun); the shade's edge crosses trail A near
-  (65–70, 170). So the reflector has no Sun to mirror, and the trail's far end reads only where the Sun reaches it.
-  Options: move the reflector (and the trail's end) out to the sunlit plain west of ~(65, 170); raise the
-  golden-hour hold above The Peak (~21°+); or let the shade be the beat, with trail A leading from the sunlit apron
-  into The Peak's shadow at the ruins.
+- **The Peak shades the ruins at golden hour** (it stands 18.5–21° high toward the 346.5° Sun from the front door;
+  the Sun is 16.9° up; the shade's edge crosses trail A near (60–65, 165)). **Ruling (Director, 2026-10-19):** no
+  sky change; the shade is the beat. You leave the light and enter the old station.
+- **Retroreflector moved out of the shade** to the sunlit plain beside trail A at **(52.8, 160.4)**, 1.2 m off the
+  prints, the Sun 0.5° clear of the ridge: a ranging target needs open sky, so it never belonged in the ruins' shadow.
+  (The ruled window (60–64, 166–170) sits within 0.2° of the ridge line; the shadow map put the panel in shade there.)
+  Its panel turns on its hinge so one family of its prism facets (by their shading normals) lies halfway between the
+  golden-hour Sun and 07's chase eye over the apron. Measured from the apron at golden hour: a small, steady glint that
+  blooms (luma 0.86, +0.74 over the ground). In the eclipse the panel reads dark from the apron and the lane: Earth
+  (338°) is 8.5° from the Sun, and its mirror misses the eye.
+- **Trail A** now ends at the flag (79.5, 185.5), deep in the shade; the reflector's glint pulls the player onto it.
