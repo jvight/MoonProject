@@ -111,5 +111,13 @@ namespace MoonProject.Rover.Tests
             _look.GentleCamera = true;
             Assert.AreEqual(_tuning.GentleMinSensitivity, _look.Sensitivity);
         }
+
+        [Test]
+        public void TheMouseOrbitsTheCameraOnlyWhileTheCursorIsLocked()
+        {
+            var delta = new Vector2(12f, -7f);
+            Assert.AreEqual(delta, LookSettings.MouseDelta(delta, true));
+            Assert.AreEqual(Vector2.zero, LookSettings.MouseDelta(delta, false), "a free cursor moves a pointer, not the camera");
+        }
     }
 }

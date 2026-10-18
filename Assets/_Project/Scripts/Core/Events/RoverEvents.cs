@@ -317,4 +317,28 @@ namespace MoonProject.Core.Events
     public readonly struct BootCheckFinished
     {
     }
+
+    /// <summary>
+    /// One audible or visible tick inside a self-test check: a wheel's twitch (Wheels 0..3), a lamp flicker (Lamps 0..2,
+    /// then the ramp as index 3), a spark (Cutter 0..2) with the beacon blinking in sync (Cutter 3..5), the head's sweep
+    /// and nod (Head 0, 1), the motor's shudder and creep (Motor 0, 1), the wing's jerk, stall and fold (SolarWing 0..2),
+    /// the antenna (Antenna 0 starts to rise, 1 the signal), the cells (Battery 0) and the start (Begin 0 the head
+    /// turn, 1 the dust shiver, 2 the headlamps). <see cref="Progress01"/> runs 0 to 1 over the continuous ones (the
+    /// lamp ramp, the cell fill, the antenna's rise), published about ten times a second; it is 0 for the rest.
+    /// </summary>
+    public readonly struct BootCheckPulse
+    {
+        public BootCheckPulse(BootCheckStep step, int index, float progress01)
+        {
+            Step = step;
+            Index = index;
+            Progress01 = progress01;
+        }
+
+        public BootCheckStep Step { get; }
+
+        public int Index { get; }
+
+        public float Progress01 { get; }
+    }
 }

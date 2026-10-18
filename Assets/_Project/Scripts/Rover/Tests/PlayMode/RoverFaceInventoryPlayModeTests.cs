@@ -37,6 +37,7 @@ namespace MoonProject.Rover.PlayModeTests
         private const int CaptureHeight = 900;
         private const float FrameTime = 1f / 60f;
         private const float WakeTimeout = 20f;
+        private const float PowerOnTimeout = 60f;
         private const float SunriseTimeout = 35f;
         private const float OpenGroundOffset = 12f;
 
@@ -706,6 +707,14 @@ namespace MoonProject.Rover.PlayModeTests
             while (!_awake || _body.Mood.Wake.Sleep > 0.05f)
             {
                 Assert.Less(Time.time - start, WakeTimeout, "07 must finish waking in the real scene.");
+                yield return null;
+            }
+
+            // A new game's wake is the power-on self-test: 07 is held still and the CRT is the opening's until it ends.
+            float released = Time.time;
+            while (_rover.IsHeldStill)
+            {
+                Assert.Less(Time.time - released, PowerOnTimeout, "07 must be handed to the player after its power-on self-test.");
                 yield return null;
             }
         }

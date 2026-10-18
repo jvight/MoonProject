@@ -61,6 +61,7 @@ namespace MoonProject.Rover
         private float _sagHalfLife = 1f;
         private Vector3 _antennaRestPosition;
         private float _antennaLift;
+        private PostBodyMotion _post;
         private Vector3 _lastPosition;
         private Renderer[] _lowerBodyRenderers;
         private MaterialPropertyBlock _dustBlock;
@@ -273,6 +274,11 @@ namespace MoonProject.Rover
         }
 
         /// <summary>An extra chassis squash (m/s downward when negative), e.g. a hard-landing "oof".</summary>
+        public void SetPostMotion(in PostBodyMotion motion)
+        {
+            _post = motion;
+        }
+
         public void KickHeave(float metresPerSecond)
         {
             _jelly.KickHeave(metresPerSecond);
@@ -439,7 +445,8 @@ namespace MoonProject.Rover
             Vector3 pivot = Vector3.up * _tuning.LeanPivotHeight;
             float nudgePitch = _nudge != null ? _nudge.Pitch : 0f;
             Vector3 nudge = (_nudge != null ? new Vector3(0f, _nudge.Heave, _nudge.Surge) : Vector3.zero)
-                + Vector3.down * _sag + Vector3.up * (_brace != null ? _brace.Heave : 0f);
+                + Vector3.down * _sag + Vector3.up * (_brace != null ? _brace.Heave : 0f)
+                + new Vector3(0f, _post.Shudder, _post.Lurch);
             Quaternion lean = GroundPlaneFit.Tilt(_jelly.Pitch - nudgePitch, _jelly.Roll);
             _chassis.localPosition = _chassisRestPosition + pivot - lean * pivot + Vector3.up * _jelly.Heave + nudge;
             _chassis.localRotation = lean * _chassisRestRotation;
@@ -494,7 +501,7 @@ namespace MoonProject.Rover
                 wheel.localPosition = rest + Vector3.up * _wheelSuspension[i].Value;
                 wheel.localRotation = Quaternion.AngleAxis(steer * _wheelSteerFactors[i], Vector3.up)
                     * _wheelRestRotations[i]
-                    * Quaternion.AngleAxis(_wheelSpin[i], Vector3.right);
+                    * Quaternion.AngleAxis(_wheelSpin[i] + _post.Wheel(i), Vector3.right);
             }
         }
     }

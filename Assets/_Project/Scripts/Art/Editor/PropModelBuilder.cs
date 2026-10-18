@@ -17,12 +17,6 @@ namespace MoonProject.Art.Editor
         public const int OrangeBeadPatchVariants = OrangeBeadMeshes.PatchVariants;
 
         /// <summary>
-        /// Kenji's crashed test jumper at the chasm's near lip (0.5.5 §1.3), <c>JumperWreck</c>: its root on the ground,
-        /// +Z its nose toward the chasm, holding <c>FragmentSocket_HoverJump_0..2</c> on its frame and the rubble.
-        /// </summary>
-        public const string JumperWreckName = "JumperWreck";
-
-        /// <summary>
         /// A small rockfall slumped against a canyon alcove wall (0.5.5 Bell parts): its root on the ground, -Z against
         /// the wall, +Z its front with a dark hollow gap holding an empty <c>DigSpot</c> (+Y up) where a buried part lies.
         /// </summary>
@@ -42,7 +36,6 @@ namespace MoonProject.Art.Editor
                 ModelPrefabWriter.Write(CreateOrangeBeadPatch(i), ArtPaths.PropFolder, material);
             }
 
-            ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateJumperWreck()), ArtPaths.PropFolder, material);
             ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateRockfallPocket()), ArtPaths.PropFolder, material);
 
             AssetDatabase.SaveAssets();
@@ -58,19 +51,6 @@ namespace MoonProject.Art.Editor
             var root = new ModelNode(RockfallPocketName, Vector3.zero,
                 new ModelMesh(RockfallPocketName, LootContainerMeshes.RockfallPocket()));
             root.Add(new ModelNode(DigSpotName, LootContainerMeshes.RockfallDigSpot, Quaternion.identity));
-            return root;
-        }
-
-        public static ModelNode CreateJumperWreck()
-        {
-            var root = new ModelNode(JumperWreckName, Vector3.zero,
-                new ModelMesh(JumperWreckName, ScanSiteMeshes.JumperWreck()));
-            for (int i = 0; i < 3; i++)
-            {
-                Vector3 at = ScanSiteMeshes.JumperSocket(i, out Quaternion rotation);
-                root.Add(new ModelNode(SiteModelBuilder.FragmentSocketPrefix + "HoverJump_" + i, at, rotation));
-            }
-
             return root;
         }
 

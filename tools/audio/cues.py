@@ -16,6 +16,8 @@ from synth.fm import two_op
 from synth.loop import periodic
 
 import base_cues as base
+from sampled import boot as sampled_boot
+from sampled import picks
 import feel_cues as feel
 
 
@@ -63,6 +65,7 @@ class Cue:
     milestone: str = "M1"
     variant_labels: tuple = ()
     tonal: bool = False  # the dominant pitch must be D major pentatonic (checked by analyze_audio)
+    sampled: bool = False  # rendered from the external sound library (sampled/picks.py); needs --library
 
     def labels(self) -> list:
         """One label per variant: the given labels, else 01, 02... (a single variant is labelled with the id)."""
@@ -644,10 +647,9 @@ def radio_carrier(_variant, gen):
     return periodic(0.05 * tone + 0.03 * hiss, lambda x: filters.highpass(filters.lowpass(x, 3600.0), 200.0))
 
 
-GHOST_CHORD_LABELS = ("faint", "clearer", "long")
 GHOST_CHORD_NOTES = ("D3", "A3", "E4")
 GHOST_CHORD_BAR_S = 3.0
-GHOST_CHORD_BAND = {"faint": 1600.0, "clearer": 2200.0, "long": 2800.0}
+GHOST_CHORD_BAND_HZ = 1600.0
 
 
 def _rhodes(freq, duration):
@@ -658,19 +660,15 @@ def _rhodes(freq, duration):
     return (body + 0.05 * tine) * envelope.ar(n, 0.004, duration * 4.0)
 
 
-def ghost_chord(variant, gen):
-    """A ghost of the music inside the static (O1 faint, O7 a hair clearer, O9 two bars and clearest): a soft Rhodes
-    chord D-A-E heard through an old radio band with tape wow, surfacing out of nothing and sinking back."""
-    label = GHOST_CHORD_LABELS[variant]
-    bars = 2 if label == "long" else 1
-    duration = GHOST_CHORD_BAR_S * bars + 0.6
+def ghost_chord(_variant, gen):
+    """A ghost of the music inside the static as 07 wakes (O1): a soft Rhodes chord D-A-E heard faintly through an old
+    radio band with tape wow, surfacing out of nothing and sinking back."""
+    duration = GHOST_CHORD_BAR_S + 0.6
     n = samples(duration)
     chord = np.zeros(n)
-    for bar in range(bars):
-        for i, note in enumerate(GHOST_CHORD_NOTES):
-            strike = _rhodes(note_freq(note), duration - bar * GHOST_CHORD_BAR_S)
-            place(chord, (0.8 if bar else 1.0) * strike, samples(bar * GHOST_CHORD_BAR_S + 0.03 * i))
-    radio = filters.lowpass(filters.highpass(chord, 320.0), GHOST_CHORD_BAND[label])
+    for i, note in enumerate(GHOST_CHORD_NOTES):
+        place(chord, _rhodes(note_freq(note), duration), samples(0.03 * i))
+    radio = filters.lowpass(filters.highpass(chord, 320.0), GHOST_CHORD_BAND_HZ)
     radio = effects.wow_flutter(radio, wow_cents=9.0, wow_rate=0.5, flutter_cents=3.0, drift_cents=4.0, gen=gen)
     surface = envelope.segments(n, [(0.0, 0.0), (0.45 * duration, 1.0), (0.6 * duration, 0.85), (duration, 0.0)],
                                 shape="smooth")
@@ -721,17 +719,6 @@ def lens_whine(_variant, gen):
     return filters.lowpass(0.12 * whine + 0.02 * gears, 3000.0) * shape
 
 
-def hum_dropout(_variant, gen):
-    """07 coming on (O5): its lamp hum on D3 falters, cuts out for a beat and comes back steady."""
-    n = samples(1.8)
-    hum = osc.additive(n, note_freq("D3"), [(1, 1.0), (2, 0.45), (3, 0.18)])
-    shape = envelope.segments(n, [(0.0, 0.0), (0.12, 0.7), (0.4, 0.55), (0.46, 0.0), (0.8, 0.0), (0.95, 1.0),
-                                  (1.3, 0.85), (1.8, 0.0)], shape="smooth")
-    buzz = filters.bandpass(noise.white(n, gen), 1150.0, 6.0)
-    buzz = buzz / max(float(np.std(buzz)), 1e-9)
-    return filters.lowpass(0.2 * hum * shape + 0.01 * buzz * shape, 2400.0)
-
-
 def neck_servo(_variant, gen):
     """07's old neck turning its head (O6-O9): a soft servo whirr whose faint whine lifts from D5 to E5."""
     n = samples(1.6)
@@ -740,19 +727,6 @@ def neck_servo(_variant, gen):
     whirr = whirr / max(float(np.std(whirr)), 1e-9)
     shape = envelope.segments(n, [(0.0, 0.0), (0.3, 1.0), (1.1, 0.8), (1.6, 0.0)], shape="smooth")
     return filters.highpass(filters.lowpass(0.02 * whine + 0.1 * whirr, 3200.0), 120.0) * shape
-
-
-def hm_chirp(_variant, gen):
-    """07's first blink (O11): a small two-note hm?, A4 falling to F#4, soft and a little nasal."""
-    n = samples(0.75)
-    t = np.arange(n) / SAMPLE_RATE
-    high = note_freq("A4")
-    low = note_freq("F#4")
-    freq = np.where(t < 0.18, high, np.where(t < 0.3, high + (low - high) * (t - 0.18) / 0.12, low))
-    voice = filters.peaking(osc.additive(n, freq, [(1, 1.0), (2, 0.35), (3, 0.12)]), 1100.0, 5.0, 1.2)
-    shape = envelope.segments(n, [(0.0, 0.0), (0.04, 1.0), (0.17, 0.7), (0.22, 0.45), (0.32, 0.9), (0.55, 0.6),
-                                  (0.75, 0.0)], shape="smooth")
-    return 0.25 * filters.lowpass(voice, 2600.0) * shape
 
 
 CUES = (
@@ -771,22 +745,30 @@ CUES = (
         notes="Full: the walls lowering and settling, two soft ticks on A and D."),
     Cue("dock_walls_drop", "tick_3d", feel.dock_walls_drop, volume=(0.5, 0.5), milestone="M3",
         notes="Driving off early: the walls drop at once, a quick soft fall."),
-    Cue("chirp_affirm", "oneshot_3d", feel.CHIRP_RENDERS["affirm"], variants=feel.CHIRP_VARIANTS, volume=(0.55, 0.55),
-        milestone="M3", notes="07's machine voice, affirm (feel-pass 7.2); syllables in chirp_syllables.json."),
-    Cue("chirp_happy", "oneshot_3d", feel.CHIRP_RENDERS["happy"], variants=feel.CHIRP_VARIANTS, volume=(0.55, 0.55),
-        milestone="M3", notes="07's machine voice, happy (feel-pass 7.2); syllables in chirp_syllables.json."),
-    Cue("chirp_proud", "oneshot_3d", feel.CHIRP_RENDERS["proud"], variants=feel.CHIRP_VARIANTS, volume=(0.55, 0.55),
-        milestone="M3", notes="07's machine voice, proud (feel-pass 7.2); syllables in chirp_syllables.json."),
-    Cue("chirp_curious", "oneshot_3d", feel.CHIRP_RENDERS["curious"], variants=feel.CHIRP_VARIANTS, volume=(0.55, 0.55),
-        milestone="M3", notes="07's machine voice, curious (feel-pass 7.2); syllables in chirp_syllables.json."),
-    Cue("chirp_worried", "oneshot_3d", feel.CHIRP_RENDERS["worried"], variants=feel.CHIRP_VARIANTS, volume=(0.55, 0.55),
-        milestone="M3", notes="07's machine voice, worried (feel-pass 7.2); syllables in chirp_syllables.json."),
-    Cue("chirp_tired", "oneshot_3d", feel.CHIRP_RENDERS["tired"], variants=feel.CHIRP_VARIANTS, volume=(0.55, 0.55),
-        milestone="M3", notes="07's machine voice, tired (feel-pass 7.2); syllables in chirp_syllables.json."),
-    Cue("chirp_relieved", "oneshot_3d", feel.CHIRP_RENDERS["relieved"], variants=feel.CHIRP_VARIANTS, volume=(0.55, 0.55),
-        milestone="M3", notes="07's machine voice, relieved (feel-pass 7.2); syllables in chirp_syllables.json."),
-    Cue("chirp_greeting", "oneshot_3d", feel.CHIRP_RENDERS["greeting"], variants=feel.CHIRP_VARIANTS, volume=(0.55, 0.55),
-        milestone="M3", notes="07's machine voice, greeting (feel-pass 7.2); syllables in chirp_syllables.json."),
+    Cue("chirp_affirm", "oneshot_3d", picks.renderer("chirp_affirm"), volume=(0.55, 0.55), milestone="M3",
+        sampled=True, notes="07's voice, affirm: an annunciator gesture from a real motor whine (sampled/picks.py); "
+                            "syllables in chirp_syllables.json."),
+    Cue("chirp_happy", "oneshot_3d", picks.renderer("chirp_happy"), volume=(0.55, 0.55), milestone="M3",
+        sampled=True, notes="07's voice, happy: an annunciator gesture from a real motor whine (sampled/picks.py); "
+                            "syllables in chirp_syllables.json."),
+    Cue("chirp_proud", "oneshot_3d", picks.renderer("chirp_proud"), volume=(0.55, 0.55), milestone="M3",
+        sampled=True, notes="07's voice, proud: an annunciator gesture from a real motor whine (sampled/picks.py); "
+                            "syllables in chirp_syllables.json."),
+    Cue("chirp_curious", "oneshot_3d", picks.renderer("chirp_curious"), volume=(0.55, 0.55), milestone="M3",
+        sampled=True, notes="07's voice, curious: an annunciator gesture from a real motor whine (sampled/picks.py); "
+                            "syllables in chirp_syllables.json."),
+    Cue("chirp_worried", "oneshot_3d", picks.renderer("chirp_worried"), volume=(0.55, 0.55), milestone="M3",
+        sampled=True, notes="07's voice, worried: an annunciator gesture from a real motor whine (sampled/picks.py); "
+                            "syllables in chirp_syllables.json."),
+    Cue("chirp_tired", "oneshot_3d", picks.renderer("chirp_tired"), volume=(0.55, 0.55), milestone="M3",
+        sampled=True, notes="07's voice, tired: an annunciator gesture from a real motor whine (sampled/picks.py); "
+                            "syllables in chirp_syllables.json."),
+    Cue("chirp_relieved", "oneshot_3d", picks.renderer("chirp_relieved"), volume=(0.55, 0.55), milestone="M3",
+        sampled=True, notes="07's voice, relieved: an annunciator gesture from a real motor whine (sampled/picks.py); "
+                            "syllables in chirp_syllables.json."),
+    Cue("chirp_greeting", "oneshot_3d", picks.renderer("chirp_greeting"), volume=(0.55, 0.55), milestone="M3",
+        sampled=True, notes="07's voice, greeting: an annunciator gesture from a real motor whine (sampled/picks.py); "
+                            "syllables in chirp_syllables.json."),
     Cue("part_pick", "tick_2d", feel.part_pick, volume=(0.45, 0.45), milestone="M3",
         notes="0.5.5: picking a part up in the 07 tab: a light tick rising E5 -> A5."),
     Cue("part_drop", "tick_2d", feel.part_drop, volume=(0.45, 0.45), milestone="M3",
@@ -835,9 +817,77 @@ CUES = (
         notes="07 lifting a part (Collect Act): a soft servo whirr rising A2 -> D3."),
     Cue("pickup_clunk", "tick_3d", feel.pickup_clunk, volume=(0.8, 0.8), milestone="M3",
         notes="The part seating on 07's back (Collect Impact): a solid little clunk on D."),
-    Cue("structure_power_on", "oneshot_3d", base.structure_power_on, volume=(0.6, 0.6), milestone="M3",
-        tonal=True, notes="Opening v2 B8: a structure taking power: a relay thunk, a transformer swell D2 -> A2, "
-                          "its lamp blooming on D5."),
+    Cue("build_place", "oneshot_3d", picks.renderer("build_place"), volume=(0.68, 0.68), milestone="M3", sampled=True,
+        notes="A frame set down on regolith: an instrument case dropped, a steel ring tuned to D2, the feet latching."),
+    Cue("build_snap", "tick_3d", picks.renderer("build_snap"), volume=(0.9, 0.9), milestone="M3", sampled=True,
+        notes="The ghost aligning: a latch button and a vintage click, a ball detent dropping into its seat."),
+    Cue("build_weld_loop", "loop_3d", picks.renderer("build_weld_loop"), loop=True, volume=(0.72, 0.72),
+        milestone="M3", sampled=True, notes="The weld: a real arc buzz slowed and warmed, sparse crackle, a low hum on "
+                                            "D. 4 s seamless."),
+    Cue("build_structure_complete", "oneshot_3d", picks.renderer("build_structure_complete"), volume=(0.71, 0.71),
+        milestone="M3", sampled=True, notes="The last weld cools: a case latch, a relay and 07's done tone onto A."),
+    Cue("structure_power_on", "oneshot_3d", picks.renderer("structure_power_on"), volume=(0.6, 0.6), milestone="M3",
+        sampled=True, notes="Opening v2 B8: power reaching a structure: a radio's power latch, a mains hum swelling "
+                            "from D onto A, its lamp switching on."),
+    Cue("boot_lens", "oneshot_3d", picks.renderer("boot_lens"), variants=sampled_boot.SOUNDS["boot_lens"][1],
+        volume=(0.6, 0.6), milestone="M3", sampled=True,
+        notes="New Game self-test, the iris ratchets and the focus motor hunts onto A (on Started)."),
+    Cue("boot_lamp_flicker", "tick_3d", picks.renderer("boot_lamp_flicker"), variants=sampled_boot.SOUNDS["boot_lamp_flicker"][1],
+        volume=(0.9, 0.9), milestone="M3", sampled=True,
+        notes="New Game self-test, a lamp flicker: relay, spark, a bark of hum (Pulse 0..2)."),
+    Cue("boot_lamp_ramp", "oneshot_3d", picks.renderer("boot_lamp_ramp"), variants=sampled_boot.SOUNDS["boot_lamp_ramp"][1],
+        volume=(0.55, 0.55), milestone="M3", sampled=True,
+        notes="New Game self-test, the lamp switch and the circuit ramping onto D (Pulse 3)."),
+    Cue("boot_head_sweep", "oneshot_3d", picks.renderer("boot_head_sweep"), variants=sampled_boot.SOUNDS["boot_head_sweep"][1],
+        volume=(0.6, 0.6), milestone="M3", sampled=True,
+        notes="New Game self-test, the head servo sweeping out and back, grit (Pulse 0)."),
+    Cue("boot_head_nod", "oneshot_3d", picks.renderer("boot_head_nod"), variants=sampled_boot.SOUNDS["boot_head_nod"][1],
+        volume=(0.5, 0.5), milestone="M3", sampled=True,
+        notes="New Game self-test, the nod and a latch seating (Pulse 1)."),
+    Cue("boot_wheel", "oneshot_3d", picks.renderer("boot_wheel"), variants=sampled_boot.SOUNDS["boot_wheel"][1],
+        volume=(0.55, 0.55), milestone="M3", sampled=True,
+        notes="New Game self-test, one wheel twitch: a gear grunt and a clunk, each wheel its own (Pulse 0..3)."),
+    Cue("boot_motor_shudder", "oneshot_3d", picks.renderer("boot_motor_shudder"), variants=sampled_boot.SOUNDS["boot_motor_shudder"][1],
+        volume=(0.6, 0.6), milestone="M3", sampled=True,
+        notes="New Game self-test, the drive motor shuddering up (Pulse 0)."),
+    Cue("boot_motor_creep", "oneshot_3d", picks.renderer("boot_motor_creep"), variants=sampled_boot.SOUNDS["boot_motor_creep"][1],
+        volume=(0.4, 0.4), milestone="M3", sampled=True,
+        notes="New Game self-test, the creep forward: wheels grinding regolith (Pulse 1)."),
+    Cue("boot_cutter_spark", "oneshot_3d", picks.renderer("boot_cutter_spark"), variants=sampled_boot.SOUNDS["boot_cutter_spark"][1],
+        volume=(0.5, 0.5), milestone="M3", sampled=True,
+        notes="New Game self-test, an ignition attempt that fizzles, weaker each time (Pulse 0..2)."),
+    Cue("boot_wing_jerk", "oneshot_3d", picks.renderer("boot_wing_jerk"), variants=sampled_boot.SOUNDS["boot_wing_jerk"][1],
+        volume=(0.6, 0.6), milestone="M3", sampled=True,
+        notes="New Game self-test, the wing straining and jerking half open (Pulse 0)."),
+    Cue("boot_wing_stall", "oneshot_3d", picks.renderer("boot_wing_stall"), variants=sampled_boot.SOUNDS["boot_wing_stall"][1],
+        volume=(0.5, 0.5), milestone="M3", sampled=True,
+        notes="New Game self-test, the wing grinding against the jam (Pulse 1)."),
+    Cue("boot_wing_fold", "oneshot_3d", picks.renderer("boot_wing_fold"), variants=sampled_boot.SOUNDS["boot_wing_fold"][1],
+        volume=(0.55, 0.55), milestone="M3", sampled=True,
+        notes="New Game self-test, the wing folding back, a latch (Pulse 2)."),
+    Cue("boot_antenna_rise", "oneshot_3d", picks.renderer("boot_antenna_rise"), variants=sampled_boot.SOUNDS["boot_antenna_rise"][1],
+        volume=(0.55, 0.55), milestone="M3", sampled=True,
+        notes="New Game self-test, the mast running up its sprung tape and latching (Pulse 0)."),
+    Cue("boot_antenna_signal", "oneshot_3d", picks.renderer("boot_antenna_signal"), variants=sampled_boot.SOUNDS["boot_antenna_signal"][1],
+        volume=(0.45, 0.45), milestone="M3", sampled=True,
+        notes="New Game self-test, orbit hiss swelling in, receive only (Pulse 1)."),
+    Cue("boot_battery", "oneshot_3d", picks.renderer("boot_battery"), variants=sampled_boot.SOUNDS["boot_battery"][1],
+        volume=(0.45, 0.45), milestone="M3", sampled=True,
+        notes="New Game self-test, the charge whine rising as the cells fill (on Started)."),
+    Cue("boot_assembly", "oneshot_3d", picks.renderer("boot_assembly"), variants=sampled_boot.SOUNDS["boot_assembly"][1],
+        volume=(0.6, 0.6), milestone="M3", sampled=True,
+        notes="New Game self-test, a latch and a short rising query: no blueprints (on Started)."),
+    Cue("boot_begin_turn", "oneshot_3d", picks.renderer("boot_begin_turn"), variants=sampled_boot.SOUNDS["boot_begin_turn"][1],
+        volume=(0.55, 0.55), milestone="M3", sampled=True,
+        notes="New Game self-test, the head turning to the beacon (Pulse 0)."),
+    Cue("boot_begin_shiver", "oneshot_3d", picks.renderer("boot_begin_shiver"), variants=sampled_boot.SOUNDS["boot_begin_shiver"][1],
+        volume=(0.45, 0.45), milestone="M3", sampled=True,
+        notes="New Game self-test, the dust shiver (Pulse 1)."),
+    Cue("boot_begin_lamps", "oneshot_3d", picks.renderer("boot_begin_lamps"), variants=sampled_boot.SOUNDS["boot_begin_lamps"][1],
+        volume=(0.6, 0.6), milestone="M3", sampled=True,
+        notes="New Game self-test, the headlamps and a D F# A ready chord (Pulse 2)."),
+    Cue("boot_fault", "oneshot_3d", picks.renderer("boot_fault"), volume=(0.55, 0.55), milestone="M3", sampled=True,
+        notes="The self-test's fault result (the cutter): 07's short strain-and-choke on low B."),
     Cue("base_lamp_on", "oneshot_3d", base.base_lamp_on, variants=len(base.BASE_LAMP_NOTES), volume=(0.5, 0.5),
         milestone="M3", tonal=True, notes="Opening v2 B10: a base lamp coming on at nightfall: a muted filament "
                                           "switch and a warm glow on its step (D4 .. F#5)."),
@@ -854,9 +904,8 @@ CUES = (
     Cue("asleep_static", "radio_2d", asleep_static, loop=True, file_stem="asleep_static_loop", volume=(0.6, 0.6),
         milestone="M3", notes="The radio asleep, out of tune (title, 07's opening): narrow-band hiss, a faint "
                               "wandering A5 whistle, odd crackle pops. 8 s seamless."),
-    Cue("ghost_chord", "radio_fx_2d", ghost_chord, variants=len(GHOST_CHORD_LABELS), variant_labels=GHOST_CHORD_LABELS,
-        volume=(0.6, 0.6), fade_out=0.4, milestone="M3", tonal=True,
-        notes="A ghost Rhodes chord D-A-E surfacing through the static: O1 faint, O7 clearer, O9 two bars."),
+    Cue("ghost_chord", "radio_fx_2d", ghost_chord, volume=(0.6, 0.6), fade_out=0.4, milestone="M3", tonal=True,
+        notes="A ghost Rhodes chord D-A-E surfacing faintly through the static as 07 wakes (O1)."),
     Cue("wake_power_thump", "stinger_2d", wake_power_thump, volume=(0.5, 0.5), fade_out=0.3, milestone="M3",
         notes="O1: 07's systems thump on inside the black, a soft D2 hum easing up under it."),
     Cue("lid_tick", "tick_2d", lid_tick, variants=len(LID_TICK_NOTES), variant_labels=LID_TICK_LABELS,
@@ -864,12 +913,8 @@ CUES = (
         notes="Felted servo tick of 07's lid or lens: A2, D3 (lid stages), A4 (focus lands), D5 (the blink)."),
     Cue("lens_whine", "tick_2d", lens_whine, volume=(0.5, 0.5), fade_out=0.2, milestone="M3",
         notes="O4: 07's lens motor hunting, a thin whine gliding E4 to F#4 over a faint gear flutter."),
-    Cue("hum_dropout", "tick_2d", hum_dropout, volume=(0.6, 0.6), fade_out=0.2, milestone="M3", tonal=True,
-        notes="O5: 07's lamp hum on D3 falters, drops out for a beat and returns steady."),
     Cue("neck_servo", "tick_2d", neck_servo, volume=(0.5, 0.5), fade_out=0.2, milestone="M3",
         notes="O6-O9: 07's old neck turning, a soft whirr with a faint whine lifting D5 to E5."),
-    Cue("hm_chirp", "stinger_2d", hm_chirp, volume=(0.45, 0.45), fade_out=0.1, milestone="M3", tonal=True,
-        notes="O11: 07's first blink, a small two-note hm? from A4 falling to F#4."),
     Cue("rover_hum", "loop_3d", rover_hum, loop=True, file_stem="rover_hum_loop", volume=(0.55, 0.55),
         hf_cutoff=6000.0, hf_max_db=-45.0,
         tonal=True, notes="D2 electric hum, 4 s seamless; content < 3 kHz so AudioSource.pitch 0.5..2 stays clean."),

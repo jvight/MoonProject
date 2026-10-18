@@ -99,15 +99,9 @@ MonoBehaviour:
     _pitchMax: 1
   - _id: chirp_affirm
     _clips:
-    - {fileID: 8300000, guid: 6aa87c66863c46f4c88e0bcca966c079, type: 3}
-    - {fileID: 8300000, guid: a1e60ba99f35bc24cbadf0b892252a08, type: 3}
-    - {fileID: 8300000, guid: 107e6a00faccc354ba6be91fe046cce1, type: 3}
-    - {fileID: 8300000, guid: 6dd0acaa6ad346e45b686152b853b245, type: 3}
+    - {fileID: 8300000, guid: 4e40785950c65b0458a33c84889d9192, type: 3}
     _variantLabels:
-    - 01
-    - 02
-    - 03
-    - 04
+    - chirp_affirm
     _bus: 2
     _spatial: 1
     _loop: 0
@@ -117,15 +111,9 @@ MonoBehaviour:
     _pitchMax: 1
   - _id: chirp_happy
     _clips:
-    - {fileID: 8300000, guid: b1e5627d17aec6e40ab0c74179d79a77, type: 3}
-    - {fileID: 8300000, guid: 95601d517b9c5eb49a973da2f79f03a8, type: 3}
-    - {fileID: 8300000, guid: 65e241b78c66e3d4cb72e9f254a4bb4b, type: 3}
-    - {fileID: 8300000, guid: 8ff0151ae9e1d7d4a8921cf1b65ff0cb, type: 3}
+    - {fileID: 8300000, guid: 35dcc270ae6c8a54a90f632f2e1f4ce7, type: 3}
     _variantLabels:
-    - 01
-    - 02
-    - 03
-    - 04
+    - chirp_happy
     _bus: 2
     _spatial: 1
     _loop: 0
@@ -135,15 +123,9 @@ MonoBehaviour:
     _pitchMax: 1
   - _id: chirp_proud
     _clips:
-    - {fileID: 8300000, guid: 15fb6d305cd99af42b197fb63e7447fc, type: 3}
-    - {fileID: 8300000, guid: 9c3e5d3c6a84de54d9b23d588d003977, type: 3}
-    - {fileID: 8300000, guid: 12b6855e3094c394e927b5e5dabc906c, type: 3}
-    - {fileID: 8300000, guid: 4bc83c387daf8b94eb1916dc798f2e19, type: 3}
+    - {fileID: 8300000, guid: 2ef90160dbdb98c4b9939d1c330fe536, type: 3}
     _variantLabels:
-    - 01
-    - 02
-    - 03
-    - 04
+    - chirp_proud
     _bus: 2
     _spatial: 1
     _loop: 0
@@ -153,15 +135,9 @@ MonoBehaviour:
     _pitchMax: 1
   - _id: chirp_curious
     _clips:
-    - {fileID: 8300000, guid: 09b75930aa6b97f4183f3ebe821aebb9, type: 3}
-    - {fileID: 8300000, guid: cffae0d7731f2ee45976f6ac84c5bf56, type: 3}
-    - {fileID: 8300000, guid: f154a496ca2c895478bf49eea977d39d, type: 3}
-    - {fileID: 8300000, guid: 5428f027b02b3eb4697e367348874a20, type: 3}
+    - {fileID: 8300000, guid: e75acbfda7ced2744a2e563e1657244b, type: 3}
     _variantLabels:
-    - 01
-    - 02
-    - 03
-    - 04
+    - chirp_curious
     _bus: 2
     _spatial: 1
     _loop: 0
@@ -171,15 +147,9 @@ MonoBehaviour:
     _pitchMax: 1
   - _id: chirp_worried
     _clips:
-    - {fileID: 8300000, guid: 99562a730dfadef4f973a19d29edc5a2, type: 3}
-    - {fileID: 8300000, guid: 8226f0fa2ab338f47bbc9aabbe93cf1b, type: 3}
-    - {fileID: 8300000, guid: 192c33ab2a6a3024a9b6bf31f60007cf, type: 3}
-    - {fileID: 8300000, guid: 4e53c1ec60ecb3a409876a491ef57fe1, type: 3}
+    - {fileID: 8300000, guid: 7a1cd8bc5b602aa429279d8a687a8020, type: 3}
     _variantLabels:
-    - 01
-    - 02
-    - 03
-    - 04
+    - chirp_worried
     _bus: 2
     _spatial: 1
     _loop: 0
@@ -189,15 +159,9 @@ MonoBehaviour:
     _pitchMax: 1
   - _id: chirp_tired
     _clips:
-    - {fileID: 8300000, guid: 9d68468f748ad5b4d9207b629e720667, type: 3}
-    - {fileID: 8300000, guid: 25533e2238daed4469a5be0fc094ffb9, type: 3}
-    - {fileID: 8300000, guid: 7f96069105fd53e4c9d8b2f2ff732d67, type: 3}
-    - {fileID: 8300000, guid: 992954b4f5f3b9b4fad878bfaf774ed5, type: 3}
+    - {fileID: 8300000, guid: 800309a184363e1458b67d70c01be7a1, type: 3}
     _variantLabels:
-    - 01
-    - 02
-    - 03
-    - 04
+    - chirp_tired
     _bus: 2
     _spatial: 1
     _loop: 0
@@ -207,15 +171,9 @@ MonoBehaviour:
     _pitchMax: 1
   - _id: chirp_relieved
     _clips:
-    - {fileID: 8300000, guid: b6a547b24098889418522e228056a481, type: 3}
-    - {fileID: 8300000, guid: 49cd7b289432b534fa85616637afe6ce, type: 3}
-    - {fileID: 8300000, guid: 2a6b21daee17f8845a6ecc41d7691ab7, type: 3}
-    - {fileID: 8300000, guid: 506d2555de4c1a64b8ba08ef9526e958, type: 3}
+    - {fileID: 8300000, guid: 398f099f0c53f1b4bbf1578ba796bdb4, type: 3}
     _variantLabels:
-    - 01
-    - 02
-    - 03
-    - 04
+    - chirp_relieved
     _bus: 2
     _spatial: 1
     _loop: 0
@@ -225,15 +183,9 @@ MonoBehaviour:
     _pitchMax: 1
   - _id: chirp_greeting
     _clips:
-    - {fileID: 8300000, guid: 84ceb361ba437994994199287331ee13, type: 3}
-    - {fileID: 8300000, guid: a3bc7ca025266084c92097aaa3aa814f, type: 3}
-    - {fileID: 8300000, guid: c265d1c1150fa9c4c9fa0a35d263bad5, type: 3}
-    - {fileID: 8300000, guid: aba360a4da0cc3344b180e9ef83e843d, type: 3}
+    - {fileID: 8300000, guid: 51d7cd4e6164c814482adc0a6badcb93, type: 3}
     _variantLabels:
-    - 01
-    - 02
-    - 03
-    - 04
+    - chirp_greeting
     _bus: 2
     _spatial: 1
     _loop: 0
@@ -559,6 +511,54 @@ MonoBehaviour:
     _volumeMax: 0.8
     _pitchMin: 1
     _pitchMax: 1
+  - _id: build_place
+    _clips:
+    - {fileID: 8300000, guid: 8d950e018fb4f2242952c723639aa0f3, type: 3}
+    _variantLabels:
+    - build_place
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.68
+    _volumeMax: 0.68
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: build_snap
+    _clips:
+    - {fileID: 8300000, guid: 6519fabb7bd21aa4a9c97ee11e93b0b2, type: 3}
+    _variantLabels:
+    - build_snap
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.9
+    _volumeMax: 0.9
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: build_weld_loop
+    _clips:
+    - {fileID: 8300000, guid: a7bb665f812470d4a8622fe5e8b9cd15, type: 3}
+    _variantLabels:
+    - build_weld_loop
+    _bus: 2
+    _spatial: 1
+    _loop: 1
+    _volumeMin: 0.72
+    _volumeMax: 0.72
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: build_structure_complete
+    _clips:
+    - {fileID: 8300000, guid: 1b258d0cf15c6af42a61afa36edd93e6, type: 3}
+    _variantLabels:
+    - build_structure_complete
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.71
+    _volumeMax: 0.71
+    _pitchMin: 1
+    _pitchMax: 1
   - _id: structure_power_on
     _clips:
     - {fileID: 8300000, guid: 417613c8e0eff2e49b9b8b1596ceba1d, type: 3}
@@ -569,6 +569,260 @@ MonoBehaviour:
     _loop: 0
     _volumeMin: 0.6
     _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_lens
+    _clips:
+    - {fileID: 8300000, guid: 67eb7c3e5e23cab43bf838ed7131fac9, type: 3}
+    _variantLabels:
+    - boot_lens
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_lamp_flicker
+    _clips:
+    - {fileID: 8300000, guid: 0f6695d5dfc05ee47b83e6abb557242d, type: 3}
+    - {fileID: 8300000, guid: 11e512afd91a93f45829a4c6c093b178, type: 3}
+    - {fileID: 8300000, guid: 470b6889f44f13545b1508359aa6cd4a, type: 3}
+    _variantLabels:
+    - 01
+    - 02
+    - 03
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.9
+    _volumeMax: 0.9
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_lamp_ramp
+    _clips:
+    - {fileID: 8300000, guid: 2b8e5bbb07d830e429035c3a3d0a058e, type: 3}
+    _variantLabels:
+    - boot_lamp_ramp
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.55
+    _volumeMax: 0.55
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_head_sweep
+    _clips:
+    - {fileID: 8300000, guid: cc08cd209deae8a479af792d06f5fc94, type: 3}
+    _variantLabels:
+    - boot_head_sweep
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_head_nod
+    _clips:
+    - {fileID: 8300000, guid: 25674ca829fb8fa4fa935110c14fe792, type: 3}
+    _variantLabels:
+    - boot_head_nod
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_wheel
+    _clips:
+    - {fileID: 8300000, guid: 751ce241e03efa44d98586ce92e7582d, type: 3}
+    - {fileID: 8300000, guid: 8e3215e76ff86ee40b1140df72f2851c, type: 3}
+    - {fileID: 8300000, guid: 96105efb33ad7804f946f46b8502bfcd, type: 3}
+    - {fileID: 8300000, guid: a637b17dd9c88414b86d374fdd61a03c, type: 3}
+    _variantLabels:
+    - 01
+    - 02
+    - 03
+    - 04
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.55
+    _volumeMax: 0.55
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_motor_shudder
+    _clips:
+    - {fileID: 8300000, guid: 9e1ddb59470954d43a09148dd9c0ca68, type: 3}
+    _variantLabels:
+    - boot_motor_shudder
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_motor_creep
+    _clips:
+    - {fileID: 8300000, guid: 2d9f857376f97c541a70e88484c8013d, type: 3}
+    _variantLabels:
+    - boot_motor_creep
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.4
+    _volumeMax: 0.4
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_cutter_spark
+    _clips:
+    - {fileID: 8300000, guid: 6fb9827ca3232834c880cd74e5075ddf, type: 3}
+    - {fileID: 8300000, guid: 930af23a85216484291c42d4f8d78597, type: 3}
+    - {fileID: 8300000, guid: d6395c1cb51ec664e8c457be174ec807, type: 3}
+    _variantLabels:
+    - 01
+    - 02
+    - 03
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_wing_jerk
+    _clips:
+    - {fileID: 8300000, guid: 999a122ab2d856344b4cc60c5f78884f, type: 3}
+    _variantLabels:
+    - boot_wing_jerk
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_wing_stall
+    _clips:
+    - {fileID: 8300000, guid: 68b2246a24fb4574da19b50ef9dc0244, type: 3}
+    _variantLabels:
+    - boot_wing_stall
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_wing_fold
+    _clips:
+    - {fileID: 8300000, guid: fa9f4553d8f842c42a2a93021143faca, type: 3}
+    _variantLabels:
+    - boot_wing_fold
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.55
+    _volumeMax: 0.55
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_antenna_rise
+    _clips:
+    - {fileID: 8300000, guid: e8f74e6e82f59de4b9eb5cf63ad87313, type: 3}
+    _variantLabels:
+    - boot_antenna_rise
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.55
+    _volumeMax: 0.55
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_antenna_signal
+    _clips:
+    - {fileID: 8300000, guid: 3f45bee0bca50a445a9d61edec9ea677, type: 3}
+    _variantLabels:
+    - boot_antenna_signal
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.45
+    _volumeMax: 0.45
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_battery
+    _clips:
+    - {fileID: 8300000, guid: 612b7b529c31df64a91705e7cd9292ce, type: 3}
+    _variantLabels:
+    - boot_battery
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.45
+    _volumeMax: 0.45
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_assembly
+    _clips:
+    - {fileID: 8300000, guid: 910114d929f79194c9c94acb48457e15, type: 3}
+    _variantLabels:
+    - boot_assembly
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_begin_turn
+    _clips:
+    - {fileID: 8300000, guid: c8f40ad06c836f64d8ced2e27d500469, type: 3}
+    _variantLabels:
+    - boot_begin_turn
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.55
+    _volumeMax: 0.55
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_begin_shiver
+    _clips:
+    - {fileID: 8300000, guid: e7b1a43b1c0024e4fa99e066fec02882, type: 3}
+    _variantLabels:
+    - boot_begin_shiver
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.45
+    _volumeMax: 0.45
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_begin_lamps
+    _clips:
+    - {fileID: 8300000, guid: 52d79c17e5242ec40b4d3b3d6ae8cc7e, type: 3}
+    _variantLabels:
+    - boot_begin_lamps
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_fault
+    _clips:
+    - {fileID: 8300000, guid: e3b20cdc5ee6a1641a93b1c73893ecee, type: 3}
+    _variantLabels:
+    - boot_fault
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.55
+    _volumeMax: 0.55
     _pitchMin: 1
     _pitchMax: 1
   - _id: base_lamp_on
@@ -681,13 +935,9 @@ MonoBehaviour:
     _pitchMax: 1
   - _id: ghost_chord
     _clips:
-    - {fileID: 8300000, guid: 107473ecf5e05d64487a97c83a6e8e31, type: 3}
-    - {fileID: 8300000, guid: 0972646efc677fe4c918fdcee6eba7a9, type: 3}
-    - {fileID: 8300000, guid: 1012565b780302c478b8aef7257b6cd6, type: 3}
+    - {fileID: 8300000, guid: bc98fb5b64ea6cc4290d1e38cdc308dc, type: 3}
     _variantLabels:
-    - faint
-    - clearer
-    - long
+    - ghost_chord
     _bus: 1
     _spatial: 0
     _loop: 0
@@ -737,18 +987,6 @@ MonoBehaviour:
     _volumeMax: 0.5
     _pitchMin: 1
     _pitchMax: 1
-  - _id: hum_dropout
-    _clips:
-    - {fileID: 8300000, guid: 7df4ed02c1fd6e745a1c2694f723a7b1, type: 3}
-    _variantLabels:
-    - hum_dropout
-    _bus: 2
-    _spatial: 0
-    _loop: 0
-    _volumeMin: 0.6
-    _volumeMax: 0.6
-    _pitchMin: 1
-    _pitchMax: 1
   - _id: neck_servo
     _clips:
     - {fileID: 8300000, guid: cd153dc823f3392488c8997aef401c58, type: 3}
@@ -759,18 +997,6 @@ MonoBehaviour:
     _loop: 0
     _volumeMin: 0.5
     _volumeMax: 0.5
-    _pitchMin: 1
-    _pitchMax: 1
-  - _id: hm_chirp
-    _clips:
-    - {fileID: 8300000, guid: 3a800a90e5816e147805a8e8ac48e7f6, type: 3}
-    _variantLabels:
-    - hm_chirp
-    _bus: 2
-    _spatial: 0
-    _loop: 0
-    _volumeMin: 0.45
-    _volumeMax: 0.45
     _pitchMin: 1
     _pitchMax: 1
   - _id: rover_hum
@@ -1289,18 +1515,6 @@ MonoBehaviour:
     _volumeMax: 0.64
     _pitchMin: 1
     _pitchMax: 1
-  - _id: build_snap
-    _clips:
-    - {fileID: 8300000, guid: 8a8315141d5d6be686192350c3c56d4d, type: 3}
-    _variantLabels:
-    - build_snap
-    _bus: 2
-    _spatial: 1
-    _loop: 0
-    _volumeMin: 0.68
-    _volumeMax: 0.68
-    _pitchMin: 1
-    _pitchMax: 1
   - _id: build_invalid
     _clips:
     - {fileID: 8300000, guid: eca4fbd7b50ad3c2e9b4ff5a7e0f257f, type: 3}
@@ -1309,30 +1523,6 @@ MonoBehaviour:
     _bus: 2
     _spatial: 1
     _loop: 0
-    _volumeMin: 0.68
-    _volumeMax: 0.68
-    _pitchMin: 1
-    _pitchMax: 1
-  - _id: build_place
-    _clips:
-    - {fileID: 8300000, guid: a2e43712a4fb82306f37e73734714f4e, type: 3}
-    _variantLabels:
-    - build_place
-    _bus: 2
-    _spatial: 1
-    _loop: 0
-    _volumeMin: 0.76
-    _volumeMax: 0.76
-    _pitchMin: 1
-    _pitchMax: 1
-  - _id: build_weld_loop
-    _clips:
-    - {fileID: 8300000, guid: 20cbf0502b4d58e47dc9866c3bc0720c, type: 3}
-    _variantLabels:
-    - build_weld_loop
-    _bus: 2
-    _spatial: 1
-    _loop: 1
     _volumeMin: 0.68
     _volumeMax: 0.68
     _pitchMin: 1
@@ -1347,18 +1537,6 @@ MonoBehaviour:
     _loop: 0
     _volumeMin: 0.74
     _volumeMax: 0.74
-    _pitchMin: 1
-    _pitchMax: 1
-  - _id: build_structure_complete
-    _clips:
-    - {fileID: 8300000, guid: 1286b18cf709594df20bbca617e3a515, type: 3}
-    _variantLabels:
-    - build_structure_complete
-    _bus: 2
-    _spatial: 1
-    _loop: 0
-    _volumeMin: 0.76
-    _volumeMax: 0.76
     _pitchMin: 1
     _pitchMax: 1
   - _id: build_deconstruct

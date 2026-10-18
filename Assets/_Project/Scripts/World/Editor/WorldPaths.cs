@@ -24,6 +24,9 @@ namespace MoonProject.World.Editor
         public const string BeaconHaloShader = "Assets/_Project/Shaders/World/LofiBeaconHalo.shader";
         /// <summary>The landed lander's amber emergency beacon's halo (opening v2 §4).</summary>
         public const string LanderBeaconMaterial = GeneratedRoot + "/M_LanderBeacon.mat";
+
+        /// <summary>The small halo each cable marker lamp blooms with as the Begin wave passes.</summary>
+        public const string CableMarkerHaloMaterial = GeneratedRoot + "/M_CableMarkerHalo.mat";
         public const string SkyShader = "Assets/_Project/Shaders/World/LofiSky.shader";
         public const string EarthShader = "Assets/_Project/Shaders/World/LofiEarth.shader";
         public const string GroundShader = "Assets/_Project/Shaders/World/R1Terrain.shader";

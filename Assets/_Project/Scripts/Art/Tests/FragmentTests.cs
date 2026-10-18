@@ -21,11 +21,11 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
-        public void TheEighteenFragments_ComeInTheSpecsSets()
+        public void TheFifteenFragments_ComeInTheSpecsSets()
         {
-            Assert.AreEqual(18, FragmentBuilder.Sets.Sum(set => set.Count));
+            Assert.AreEqual(15, FragmentBuilder.Sets.Sum(set => set.Count));
             CollectionAssert.AreEquivalent(
-                new[] { "CargoCradle", "WarmHeadlamp", "HoverJump", "BoostCoils", "CellPack", "FocusLens", "SideBins" },
+                new[] { "CargoCradle", "WarmHeadlamp", "BoostCoils", "CellPack", "FocusLens", "SideBins" },
                 FragmentBuilder.Sets.Select(set => set.Blueprint));
         }
 
@@ -76,18 +76,5 @@ namespace MoonProject.Art.Tests
             Assert.IsFalse(MeshChecks.Swatches(hut.Mesh.Geometry).Any(Palette.IsEmissive));
         }
 
-        [Test]
-        public void JumperWreck_HoldsTheHoverJumpFragments_OnItsFrameAndRubble()
-        {
-            ModelNode wreck = PropModelBuilder.CreateJumperWreck();
-            MeshChecks.AssertWellFormed(wreck.Mesh.Geometry);
-            Assert.IsFalse(MeshChecks.Swatches(wreck.Mesh.Geometry).Any(Palette.IsEmissive), "nothing glows");
-            for (int i = 0; i < 3; i++)
-            {
-                string name = SiteModelBuilder.FragmentSocketPrefix + "HoverJump_" + i;
-                ModelNode socket = wreck.Children.Single(n => n.Name == name);
-                Assert.Greater(socket.LocalPosition.y, 0.2f, "on the jumper's deck, not the dust");
-            }
-        }
     }
 }

@@ -6,7 +6,7 @@ using MoonProject.Core.Events;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// 07 v3's equipment socket anchor positions, wheel centres, and the 30 parsed SVG icons (<see cref="UiIconShape"/>)
+    /// 07 v3's equipment socket anchor positions, wheel centres, and the 25 parsed SVG icons (<see cref="UiIconShape"/>)
     /// extracted at build time from <c>Assets/_Project/Generated/Art/R1/Models/Rover/RoverModel.prefab</c> and
     /// <c>Assets/_Project/UI/Icons/</c> by <c>UI/Rover Diagram</c>, and the face's own art from
     /// <c>Assets/_Project/Art/UI/Face/</c>: 07's three-quarter line drawing, where its lines sit in the image, the point
@@ -30,7 +30,7 @@ namespace MoonProject.UI
         [Tooltip("Root-local wheel centres on 07 v3 (Wheel_FL, Wheel_FR, Wheel_RL, Wheel_RR).")]
         [SerializeField] private Vector3[] _wheels = Array.Empty<Vector3>();
 
-        [Tooltip("The 30 parsed 64x64 vector icons (item_*.svg and kit_*.svg) drawn by FaceInventoryView.")]
+        [Tooltip("The 25 parsed 64x64 vector icons (item_*.svg and kit_*.svg) drawn by FaceInventoryView.")]
         [SerializeField] private UiIconShape[] _icons = Array.Empty<UiIconShape>();
 
         [Tooltip("The face's parsed icons (FaceIconIds, scaled from their 256 viewBox to 64) drawn by FaceInventoryView.")]
@@ -152,7 +152,7 @@ namespace MoonProject.UI
         }
 
         /// <summary>
-        /// Null when all 12 socket positions, 4 wheel centres, the 30 icons and the face's drawing, anchors and icons
+        /// Null when all 12 socket positions, 4 wheel centres, the 25 icons and the face's drawing, anchors and icons
         /// are present and populated.
         /// </summary>
         public string Validate()

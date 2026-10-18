@@ -60,9 +60,17 @@ namespace MoonProject.Rover
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
             _settings = tuning.Opening;
             _gaze = new LensGaze(_settings);
-            _post = new PostSequencer(_settings.Post);
+            Lamps = new LampPowerUp(_settings);
+            Motions = new PostMotions(_settings.Post);
+            _post = new PostSequencer(_settings.Post, Lamps);
             Reset();
         }
+
+        /// <summary>07's lamps: dark while it sleeps, then the lamps check's flicker and ramp.</summary>
+        public LampPowerUp Lamps { get; }
+
+        /// <summary>What 07 does in each check, as functions of <see cref="PostProgress01"/>.</summary>
+        public PostMotions Motions { get; }
 
         public OpeningPhase Phase { get; private set; }
 
@@ -269,13 +277,18 @@ namespace MoonProject.Rover
 
         private void PublishPost(PostEventKind kind, BootCheckStep step, BootCheckResult result)
         {
+            PublishPost(new PostEvent(kind, step, result));
+        }
+
+        private void PublishPost(PostEvent postEvent)
+        {
             if (_postCount == PostEventCapacity)
             {
                 _postHead = (_postHead + 1) % PostEventCapacity;
                 _postCount--;
             }
 
-            _postEvents[(_postHead + _postCount) % PostEventCapacity] = new PostEvent(kind, step, result);
+            _postEvents[(_postHead + _postCount) % PostEventCapacity] = postEvent;
             _postCount++;
         }
 
@@ -394,7 +407,7 @@ namespace MoonProject.Rover
         {
             while (_post.TryTake(out PostEvent postEvent))
             {
-                PublishPost(postEvent.Kind, postEvent.Step, postEvent.Result);
+                PublishPost(postEvent);
             }
         }
 

@@ -201,22 +201,13 @@
       "spatial": true,
       "loop": false,
       "files": [
-        "Assets/_Project/Audio/SFX/chirp_affirm_01.wav",
-        "Assets/_Project/Audio/SFX/chirp_affirm_02.wav",
-        "Assets/_Project/Audio/SFX/chirp_affirm_03.wav",
-        "Assets/_Project/Audio/SFX/chirp_affirm_04.wav"
+        "Assets/_Project/Audio/SFX/chirp_affirm.wav"
       ],
       "variantLabels": [
-        "01",
-        "02",
-        "03",
-        "04"
+        "chirp_affirm"
       ],
       "sha256": [
-        "ed8bca0cff200bbfa845d952cd32abdaa9a26c3f3e910d4522a8522a8b1dc4f5",
-        "d96b43634e121ed6f948185d0c081588f5914c2347d51051d055b40f4409a7fa",
-        "d4d52b5797c14bde868811a6276ab2be10090210c39c445b5096e1f6a16262ec",
-        "1e4fb3bd03320fcd0b2cfed40d7a90ae53302b064fde9c24f43d39785340a24e"
+        "7ea5beaf9a89400d532a37bee5b665fb96c97737e2982310337bc0bcb3417b68"
       ],
       "volumeMin": 0.55,
       "volumeMax": 0.55,
@@ -227,7 +218,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "07's machine voice, affirm (feel-pass 7.2); syllables in chirp_syllables.json."
+      "notes": "07's voice, affirm: an annunciator gesture from a real motor whine (sampled/picks.py); syllables in chirp_syllables.json.",
+      "source": "sampled",
+      "pick": "voice_ack v2"
     },
     {
       "id": "chirp_happy",
@@ -237,22 +230,13 @@
       "spatial": true,
       "loop": false,
       "files": [
-        "Assets/_Project/Audio/SFX/chirp_happy_01.wav",
-        "Assets/_Project/Audio/SFX/chirp_happy_02.wav",
-        "Assets/_Project/Audio/SFX/chirp_happy_03.wav",
-        "Assets/_Project/Audio/SFX/chirp_happy_04.wav"
+        "Assets/_Project/Audio/SFX/chirp_happy.wav"
       ],
       "variantLabels": [
-        "01",
-        "02",
-        "03",
-        "04"
+        "chirp_happy"
       ],
       "sha256": [
-        "5429c7bdf19c114d768f2af338a213bdb54b8c4c5c8416dcbcc7346e86460249",
-        "c99934468807e0ac23826b5835552fbac8f6cf7b57f5022598ed1e3b7022fbc8",
-        "a4fee6dab9e02873ec6b31542cf557159bdf6f25683665599319a9210231d5b5",
-        "3976239556bfc5c5cdb627578a6f95514c56757710107aa075517cf25acde58b"
+        "8d7e4c707b7b44105a3a38cfc3f6272efdfd03f9266fc10f752c978979c6f196"
       ],
       "volumeMin": 0.55,
       "volumeMax": 0.55,
@@ -263,7 +247,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "07's machine voice, happy (feel-pass 7.2); syllables in chirp_syllables.json."
+      "notes": "07's voice, happy: an annunciator gesture from a real motor whine (sampled/picks.py); syllables in chirp_syllables.json.",
+      "source": "sampled",
+      "pick": "voice_done v2"
     },
     {
       "id": "chirp_proud",
@@ -273,22 +259,13 @@
       "spatial": true,
       "loop": false,
       "files": [
-        "Assets/_Project/Audio/SFX/chirp_proud_01.wav",
-        "Assets/_Project/Audio/SFX/chirp_proud_02.wav",
-        "Assets/_Project/Audio/SFX/chirp_proud_03.wav",
-        "Assets/_Project/Audio/SFX/chirp_proud_04.wav"
+        "Assets/_Project/Audio/SFX/chirp_proud.wav"
       ],
       "variantLabels": [
-        "01",
-        "02",
-        "03",
-        "04"
+        "chirp_proud"
       ],
       "sha256": [
-        "c752b1bd488aacb330ffca08faa520360fa8add1634738541094ddf5ad7543de",
-        "05316fcaca4bba00bc071b3c9f136da09586957511e927bfa8a236bdd04326b6",
-        "25cd88e5c4e5f5f805cd17a666294a9d4b288738eeed5385218e29fd5d6267c5",
-        "4a0010d1b95559a743c515a763e42af8dcad2d0596f0d3aed9a81a7576326629"
+        "8ea560739af6caec5e617d38b34f572c5815362cbd99250568ff62ea51323896"
       ],
       "volumeMin": 0.55,
       "volumeMax": 0.55,
@@ -299,7 +276,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "07's machine voice, proud (feel-pass 7.2); syllables in chirp_syllables.json."
+      "notes": "07's voice, proud: an annunciator gesture from a real motor whine (sampled/picks.py); syllables in chirp_syllables.json.",
+      "source": "sampled",
+      "pick": "voice_done v1"
     },
     {
       "id": "chirp_curious",
@@ -309,22 +288,13 @@
       "spatial": true,
       "loop": false,
       "files": [
-        "Assets/_Project/Audio/SFX/chirp_curious_01.wav",
-        "Assets/_Project/Audio/SFX/chirp_curious_02.wav",
-        "Assets/_Project/Audio/SFX/chirp_curious_03.wav",
-        "Assets/_Project/Audio/SFX/chirp_curious_04.wav"
+        "Assets/_Project/Audio/SFX/chirp_curious.wav"
       ],
       "variantLabels": [
-        "01",
-        "02",
-        "03",
-        "04"
+        "chirp_curious"
       ],
       "sha256": [
-        "19bea323889620fa01793494463b6a22d35677b302ff395f04380294e467a815",
-        "6f6cd56f1ba6b27e9b90edce7c6d74853c0dd9ad65f877d92fd5a10a297cf9db",
-        "a3a2aa2c1e08a9b91dedbc3afd572e9ce6780ab6b901b25642cac1422b3fc35f",
-        "6b53ac7453790a45c56138634e511fe728328242b59a75199e5be6fff0461e20"
+        "0f3c9d54ba805bd77ad2883e13052571d2870253fd841ef294e43da49afbe4d4"
       ],
       "volumeMin": 0.55,
       "volumeMax": 0.55,
@@ -335,7 +305,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "07's machine voice, curious (feel-pass 7.2); syllables in chirp_syllables.json."
+      "notes": "07's voice, curious: an annunciator gesture from a real motor whine (sampled/picks.py); syllables in chirp_syllables.json.",
+      "source": "sampled",
+      "pick": "voice_query v2"
     },
     {
       "id": "chirp_worried",
@@ -345,22 +317,13 @@
       "spatial": true,
       "loop": false,
       "files": [
-        "Assets/_Project/Audio/SFX/chirp_worried_01.wav",
-        "Assets/_Project/Audio/SFX/chirp_worried_02.wav",
-        "Assets/_Project/Audio/SFX/chirp_worried_03.wav",
-        "Assets/_Project/Audio/SFX/chirp_worried_04.wav"
+        "Assets/_Project/Audio/SFX/chirp_worried.wav"
       ],
       "variantLabels": [
-        "01",
-        "02",
-        "03",
-        "04"
+        "chirp_worried"
       ],
       "sha256": [
-        "aee9ae6162f27b43101474f7cb6bb99701885e74818d736cdd17d0bad21ae9ed",
-        "5f01ecbbd79344c7b84e5ff3b1fcea80f5fbe34aead09fcb942b360c577dd437",
-        "a619fb85378c3db3d695bd944eac44cabf663873dd8eae02bb07c1a3b70eeda3",
-        "168fc0c443e5ee798a03794363636341031c013b2213a0fdebbbfa586cc6dec4"
+        "5d1ad3e0d0baadb2eafdd37923bcc4beb492c4e9d525a770df95cd84c0ab9c91"
       ],
       "volumeMin": 0.55,
       "volumeMax": 0.55,
@@ -371,7 +334,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "07's machine voice, worried (feel-pass 7.2); syllables in chirp_syllables.json."
+      "notes": "07's voice, worried: an annunciator gesture from a real motor whine (sampled/picks.py); syllables in chirp_syllables.json.",
+      "source": "sampled",
+      "pick": "voice_fault v1"
     },
     {
       "id": "chirp_tired",
@@ -381,22 +346,13 @@
       "spatial": true,
       "loop": false,
       "files": [
-        "Assets/_Project/Audio/SFX/chirp_tired_01.wav",
-        "Assets/_Project/Audio/SFX/chirp_tired_02.wav",
-        "Assets/_Project/Audio/SFX/chirp_tired_03.wav",
-        "Assets/_Project/Audio/SFX/chirp_tired_04.wav"
+        "Assets/_Project/Audio/SFX/chirp_tired.wav"
       ],
       "variantLabels": [
-        "01",
-        "02",
-        "03",
-        "04"
+        "chirp_tired"
       ],
       "sha256": [
-        "81d394969b0eae36416d585cf4074a6d29a796002b853b8d19c9f6d29ad00358",
-        "0ee70db3d1f1da4441b168ad630a6803b8ae66b13874e7d329e6c1007d3c988b",
-        "b29c8f81c841023e74f44b2967caf5e42913a7d51dec6ec5e2d984707b26fc55",
-        "3df5192502aeed6645d137a9086cc5ee2efc7b32a405e7c2dada035b4e51026e"
+        "613b22591a240fd524cb0109990ad07710fccf1cd40873e77154e1803e523a39"
       ],
       "volumeMin": 0.55,
       "volumeMax": 0.55,
@@ -407,7 +363,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "07's machine voice, tired (feel-pass 7.2); syllables in chirp_syllables.json."
+      "notes": "07's voice, tired: an annunciator gesture from a real motor whine (sampled/picks.py); syllables in chirp_syllables.json.",
+      "source": "sampled",
+      "pick": "voice_ack v3"
     },
     {
       "id": "chirp_relieved",
@@ -417,22 +375,13 @@
       "spatial": true,
       "loop": false,
       "files": [
-        "Assets/_Project/Audio/SFX/chirp_relieved_01.wav",
-        "Assets/_Project/Audio/SFX/chirp_relieved_02.wav",
-        "Assets/_Project/Audio/SFX/chirp_relieved_03.wav",
-        "Assets/_Project/Audio/SFX/chirp_relieved_04.wav"
+        "Assets/_Project/Audio/SFX/chirp_relieved.wav"
       ],
       "variantLabels": [
-        "01",
-        "02",
-        "03",
-        "04"
+        "chirp_relieved"
       ],
       "sha256": [
-        "ef9ba5d1bf23d6cf8c8d87ccc28bd0a7a3d1c69f5c19a5f7ee173ca6efc8c869",
-        "4c4bcc7304b4fb68db692e8b3040f233e065a21c490c6571a2030fc7d6b7d269",
-        "012a7c4970283fe4ad8906ee6840fe78bac9787ae353e14e291e9f7388f56503",
-        "687e46116c1539e2d8d6d342f1ef7fdc87a7a69459a25d1a2471cc5541eb7b46"
+        "83f3ac3c8bd650acd2c4ad016f3f3c24584e9dcef3706bcd47e0a5857936f756"
       ],
       "volumeMin": 0.55,
       "volumeMax": 0.55,
@@ -443,7 +392,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "07's machine voice, relieved (feel-pass 7.2); syllables in chirp_syllables.json."
+      "notes": "07's voice, relieved: an annunciator gesture from a real motor whine (sampled/picks.py); syllables in chirp_syllables.json.",
+      "source": "sampled",
+      "pick": "voice_done v3"
     },
     {
       "id": "chirp_greeting",
@@ -453,22 +404,13 @@
       "spatial": true,
       "loop": false,
       "files": [
-        "Assets/_Project/Audio/SFX/chirp_greeting_01.wav",
-        "Assets/_Project/Audio/SFX/chirp_greeting_02.wav",
-        "Assets/_Project/Audio/SFX/chirp_greeting_03.wav",
-        "Assets/_Project/Audio/SFX/chirp_greeting_04.wav"
+        "Assets/_Project/Audio/SFX/chirp_greeting.wav"
       ],
       "variantLabels": [
-        "01",
-        "02",
-        "03",
-        "04"
+        "chirp_greeting"
       ],
       "sha256": [
-        "220aa64feb89ad3146a84d1a2f48794d472324f74998dd854be014ad062a915c",
-        "e9beda51379d78b6ddc1dd7f530bc3522c2b774be9c74fbf04cab59ded0dff23",
-        "89c037dbd0cda45f1538304bf5fbb04cda03c0d750d48f39410c0acef4fa9ebe",
-        "b5936132641670444e1cde6f2e278af548810dc224ea4241f8513e5d9f0449f2"
+        "ec4faea00e30a83712bd0f21389a2bbd53a8ca13b491ff9f346bce19c8c1c511"
       ],
       "volumeMin": 0.55,
       "volumeMax": 0.55,
@@ -479,7 +421,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "07's machine voice, greeting (feel-pass 7.2); syllables in chirp_syllables.json."
+      "notes": "07's voice, greeting: an annunciator gesture from a real motor whine (sampled/picks.py); syllables in chirp_syllables.json.",
+      "source": "sampled",
+      "pick": "voice_query v1"
     },
     {
       "id": "part_pick",
@@ -1166,6 +1110,122 @@
       "notes": "The part seating on 07's back (Collect Impact): a solid little clunk on D."
     },
     {
+      "id": "build_place",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/build_place.wav"
+      ],
+      "variantLabels": [
+        "build_place"
+      ],
+      "sha256": [
+        "cd35720debc8893b0a9d27eae342b20914fa03d86ac32fdb6b989ed2db5b3959"
+      ],
+      "volumeMin": 0.68,
+      "volumeMax": 0.68,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "A frame set down on regolith: an instrument case dropped, a steel ring tuned to D2, the feet latching.",
+      "source": "sampled",
+      "pick": "build_place v1"
+    },
+    {
+      "id": "build_snap",
+      "category": "tick_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/build_snap.wav"
+      ],
+      "variantLabels": [
+        "build_snap"
+      ],
+      "sha256": [
+        "abb6c406cd51297410b3b43ae3aca9ff5a0434ab777cac237048a7f1f7c6d21c"
+      ],
+      "volumeMin": 0.9,
+      "volumeMax": 0.9,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -26.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The ghost aligning: a latch button and a vintage click, a ball detent dropping into its seat.",
+      "source": "sampled",
+      "pick": "build_snap v1"
+    },
+    {
+      "id": "build_weld_loop",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/build_weld_loop.wav"
+      ],
+      "variantLabels": [
+        "build_weld_loop"
+      ],
+      "sha256": [
+        "b1d913a9ba67e81556438cc85cce76d6a2d545a8601c755ef1f43d6673d3981a"
+      ],
+      "volumeMin": 0.72,
+      "volumeMax": 0.72,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The weld: a real arc buzz slowed and warmed, sparse crackle, a low hum on D. 4 s seamless.",
+      "source": "sampled",
+      "pick": "build_weld_loop v1"
+    },
+    {
+      "id": "build_structure_complete",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/build_structure_complete.wav"
+      ],
+      "variantLabels": [
+        "build_structure_complete"
+      ],
+      "sha256": [
+        "a2050cc277bd3ccf3a0552dec733bf25a7ce9c6def34f53d57b0f98a84785ab6"
+      ],
+      "volumeMin": 0.71,
+      "volumeMax": 0.71,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The last weld cools: a case latch, a relay and 07's done tone onto A.",
+      "source": "sampled",
+      "pick": "build_structure_complete v1"
+    },
+    {
       "id": "structure_power_on",
       "category": "oneshot_3d",
       "milestone": "M3",
@@ -1179,7 +1239,7 @@
         "structure_power_on"
       ],
       "sha256": [
-        "ae93bbc8dd0f2e7f3be302ccc7d97860785f1ae4e611687616a22c70b9ed3dfa"
+        "ff186b38fca81a45046f36c8c9e1a36421c3b3be41d0a9b0e3c03cc8d2ae465b"
       ],
       "volumeMin": 0.6,
       "volumeMax": 0.6,
@@ -1189,8 +1249,611 @@
       "loudnessMode": "momentary",
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
-      "tonal": true,
-      "notes": "Opening v2 B8: a structure taking power: a relay thunk, a transformer swell D2 -> A2, its lamp blooming on D5."
+      "tonal": false,
+      "notes": "Opening v2 B8: power reaching a structure: a radio's power latch, a mains hum swelling from D onto A, its lamp switching on.",
+      "source": "sampled",
+      "pick": "structure_power_on v1"
+    },
+    {
+      "id": "boot_lens",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/boot_lens.wav"
+      ],
+      "variantLabels": [
+        "boot_lens"
+      ],
+      "sha256": [
+        "15e3ae1d72faf039b6f28ebf2f299c192abcfad7e74ba6788095208d57d9edcc"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "New Game self-test, the iris ratchets and the focus motor hunts onto A (on Started).",
+      "source": "sampled",
+      "pick": "boot_lens"
+    },
+    {
+      "id": "boot_lamp_flicker",
+      "category": "tick_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/boot_lamp_flicker_01.wav",
+        "Assets/_Project/Audio/SFX/boot_lamp_flicker_02.wav",
+        "Assets/_Project/Audio/SFX/boot_lamp_flicker_03.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03"
+      ],
+      "sha256": [
+        "e8c0902200d3fd08c0142b2c4575878566d275731a8228355bac065cf9ac1031",
+        "e45c546d1a34a03ce0a69657ae6ef0417b1653048f727921570091782bff0f0c",
+        "1ae024aebc7ce25a842ba157dbfadcfb883f411c1217c14289d4fe30a54e8a1b"
+      ],
+      "volumeMin": 0.9,
+      "volumeMax": 0.9,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -26.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "New Game self-test, a lamp flicker: relay, spark, a bark of hum (Pulse 0..2).",
+      "source": "sampled",
+      "pick": "boot_lamp_flicker"
+    },
+    {
+      "id": "boot_lamp_ramp",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/boot_lamp_ramp.wav"
+      ],
+      "variantLabels": [
+        "boot_lamp_ramp"
+      ],
+      "sha256": [
+        "bc460ae89b51a4185cac6f937c9dbc68e4f5edcac4b5b26c965519f94fbc60e1"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "New Game self-test, the lamp switch and the circuit ramping onto D (Pulse 3).",
+      "source": "sampled",
+      "pick": "boot_lamp_ramp"
+    },
+    {
+      "id": "boot_head_sweep",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/boot_head_sweep.wav"
+      ],
+      "variantLabels": [
+        "boot_head_sweep"
+      ],
+      "sha256": [
+        "ecce02496fb676ec323962a888277f8f45e2b1f91fa9fb4b96a7a5ac56d47bcd"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "New Game self-test, the head servo sweeping out and back, grit (Pulse 0).",
+      "source": "sampled",
+      "pick": "boot_head_sweep"
+    },
+    {
+      "id": "boot_head_nod",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/boot_head_nod.wav"
+      ],
+      "variantLabels": [
+        "boot_head_nod"
+      ],
+      "sha256": [
+        "abc3849740e3d1d4af77aba0b966dc9831cea41d1666201c9cdc815ff9d2f6c8"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "New Game self-test, the nod and a latch seating (Pulse 1).",
+      "source": "sampled",
+      "pick": "boot_head_nod"
+    },
+    {
+      "id": "boot_wheel",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/boot_wheel_01.wav",
+        "Assets/_Project/Audio/SFX/boot_wheel_02.wav",
+        "Assets/_Project/Audio/SFX/boot_wheel_03.wav",
+        "Assets/_Project/Audio/SFX/boot_wheel_04.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03",
+        "04"
+      ],
+      "sha256": [
+        "0ac845d6cb2bdaea9bb4dec5501cb72f253f61e735b5a73ca8628fc83425bf0f",
+        "3849417b44de8160c5028e3ba54f2fa5f1420373e8bd5ef5c41aab6ba5a4f25c",
+        "c6708521f5391c1cb3cc122630749daf488662af1191ff299516af4a161d39c5",
+        "18430dfebb8dbaa71597e11c8f662a58fb62259fc08cc7a8ed3ea1a106c2a831"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "New Game self-test, one wheel twitch: a gear grunt and a clunk, each wheel its own (Pulse 0..3).",
+      "source": "sampled",
+      "pick": "boot_wheel"
+    },
+    {
+      "id": "boot_motor_shudder",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/boot_motor_shudder.wav"
+      ],
+      "variantLabels": [
+        "boot_motor_shudder"
+      ],
+      "sha256": [
+        "63f91d14585510ea5ab685637bf83f6606a613ded3fe2cc3f37c58dd60999bfc"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "New Game self-test, the drive motor shuddering up (Pulse 0).",
+      "source": "sampled",
+      "pick": "boot_motor_shudder"
+    },
+    {
+      "id": "boot_motor_creep",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/boot_motor_creep.wav"
+      ],
+      "variantLabels": [
+        "boot_motor_creep"
+      ],
+      "sha256": [
+        "3ec6b62c8918e15028d432a69a8f65de6907c89674bb8f5449dea8c739611aca"
+      ],
+      "volumeMin": 0.4,
+      "volumeMax": 0.4,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "New Game self-test, the creep forward: wheels grinding regolith (Pulse 1).",
+      "source": "sampled",
+      "pick": "boot_motor_creep"
+    },
+    {
+      "id": "boot_cutter_spark",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/boot_cutter_spark_01.wav",
+        "Assets/_Project/Audio/SFX/boot_cutter_spark_02.wav",
+        "Assets/_Project/Audio/SFX/boot_cutter_spark_03.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03"
+      ],
+      "sha256": [
+        "28941bfb1f43748b4d7c995b23c34c3167f5de95657f1ba47465ad47d6769920",
+        "7e85323bc581ca2264bc963ea0e9f8e7c2fddf54d60fa9eee9143b28330219d8",
+        "7123a3992832546478731f70bb1021394227f90d53f6eb2a92fed29a9e58dc1f"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "New Game self-test, an ignition attempt that fizzles, weaker each time (Pulse 0..2).",
+      "source": "sampled",
+      "pick": "boot_cutter_spark"
+    },
+    {
+      "id": "boot_wing_jerk",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/boot_wing_jerk.wav"
+      ],
+      "variantLabels": [
+        "boot_wing_jerk"
+      ],
+      "sha256": [
+        "a9cc5417fc1cef291c5446adf3c8e619dbebeef9ce2f892cfe22a2befd016736"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "New Game self-test, the wing straining and jerking half open (Pulse 0).",
+      "source": "sampled",
+      "pick": "boot_wing_jerk"
+    },
+    {
+      "id": "boot_wing_stall",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/boot_wing_stall.wav"
+      ],
+      "variantLabels": [
+        "boot_wing_stall"
+      ],
+      "sha256": [
+        "4f3348a898dae0d28bcdde3dc0ef9c67c7aac1edfa9e828df35e607ab6850fd8"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "New Game self-test, the wing grinding against the jam (Pulse 1).",
+      "source": "sampled",
+      "pick": "boot_wing_stall"
+    },
+    {
+      "id": "boot_wing_fold",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/boot_wing_fold.wav"
+      ],
+      "variantLabels": [
+        "boot_wing_fold"
+      ],
+      "sha256": [
+        "27b56e78408947ca1dacdda9bb81a6af4bbaf0f34b1906761c40f8fdba75eb67"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "New Game self-test, the wing folding back, a latch (Pulse 2).",
+      "source": "sampled",
+      "pick": "boot_wing_fold"
+    },
+    {
+      "id": "boot_antenna_rise",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/boot_antenna_rise.wav"
+      ],
+      "variantLabels": [
+        "boot_antenna_rise"
+      ],
+      "sha256": [
+        "26b8c4ef362140a39e38c18534f6fd89200434abca9b417ce048af439561420e"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "New Game self-test, the mast running up its sprung tape and latching (Pulse 0).",
+      "source": "sampled",
+      "pick": "boot_antenna_rise"
+    },
+    {
+      "id": "boot_antenna_signal",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/boot_antenna_signal.wav"
+      ],
+      "variantLabels": [
+        "boot_antenna_signal"
+      ],
+      "sha256": [
+        "50e11e43af6ed38a836a807c5d7c3964417fc0aa85c56c3c0c9e5ac9d1efa559"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "New Game self-test, orbit hiss swelling in, receive only (Pulse 1).",
+      "source": "sampled",
+      "pick": "boot_antenna_signal"
+    },
+    {
+      "id": "boot_battery",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/boot_battery.wav"
+      ],
+      "variantLabels": [
+        "boot_battery"
+      ],
+      "sha256": [
+        "43c61f184aebc55e9d978fa9fceb080c745a45e4cd3c15fb5f9d2767c6a27e24"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "New Game self-test, the charge whine rising as the cells fill (on Started).",
+      "source": "sampled",
+      "pick": "boot_battery"
+    },
+    {
+      "id": "boot_assembly",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/boot_assembly.wav"
+      ],
+      "variantLabels": [
+        "boot_assembly"
+      ],
+      "sha256": [
+        "80167990673c50065373004d04bc7408bf410c50b70c0ca3ce85ad898403ecf9"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "New Game self-test, a latch and a short rising query: no blueprints (on Started).",
+      "source": "sampled",
+      "pick": "boot_assembly"
+    },
+    {
+      "id": "boot_begin_turn",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/boot_begin_turn.wav"
+      ],
+      "variantLabels": [
+        "boot_begin_turn"
+      ],
+      "sha256": [
+        "91c3d6154f2278df35dfabe4691c7e1bd6bcdaf3e6d94686ad85aee7468ed8cd"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "New Game self-test, the head turning to the beacon (Pulse 0).",
+      "source": "sampled",
+      "pick": "boot_begin_turn"
+    },
+    {
+      "id": "boot_begin_shiver",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/boot_begin_shiver.wav"
+      ],
+      "variantLabels": [
+        "boot_begin_shiver"
+      ],
+      "sha256": [
+        "4bfa880f52d37ac4fa0d1a55c2ac1561cbf826dd8c5a3485853e4f3ac598a3cc"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "New Game self-test, the dust shiver (Pulse 1).",
+      "source": "sampled",
+      "pick": "boot_begin_shiver"
+    },
+    {
+      "id": "boot_begin_lamps",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/boot_begin_lamps.wav"
+      ],
+      "variantLabels": [
+        "boot_begin_lamps"
+      ],
+      "sha256": [
+        "5e816565d1b9e92b8e40102de8c27e4e6a2f86a52b42935ca95abd8b49aafa70"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "New Game self-test, the headlamps and a D F# A ready chord (Pulse 2).",
+      "source": "sampled",
+      "pick": "boot_begin_lamps"
+    },
+    {
+      "id": "boot_fault",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/boot_fault.wav"
+      ],
+      "variantLabels": [
+        "boot_fault"
+      ],
+      "sha256": [
+        "4a0a7f3bb159ec0561dfe0dfded21f13b505c5b8a56adaa5d7c24455288be49e"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The self-test's fault result (the cutter): 07's short strain-and-choke on low B.",
+      "source": "sampled",
+      "pick": "voice_fault v2"
     },
     {
       "id": "base_lamp_on",
@@ -1425,19 +2088,13 @@
       "spatial": false,
       "loop": false,
       "files": [
-        "Assets/_Project/Audio/SFX/2D/ghost_chord_faint.wav",
-        "Assets/_Project/Audio/SFX/2D/ghost_chord_clearer.wav",
-        "Assets/_Project/Audio/SFX/2D/ghost_chord_long.wav"
+        "Assets/_Project/Audio/SFX/2D/ghost_chord.wav"
       ],
       "variantLabels": [
-        "faint",
-        "clearer",
-        "long"
+        "ghost_chord"
       ],
       "sha256": [
-        "de8e43ca34a4b7bb1792824a8ae6142b55cf618b0185f0d67362422ff8586317",
-        "70c3edfed40a5339afd1a337688c01700b9efd68e1b98c6b53731ae5326a83f6",
-        "cff26312a0cb53b0719ecb92b4ac6b20290be4172f781128c2c4fa127e09d106"
+        "de8e43ca34a4b7bb1792824a8ae6142b55cf618b0185f0d67362422ff8586317"
       ],
       "volumeMin": 0.6,
       "volumeMax": 0.6,
@@ -1448,7 +2105,7 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": true,
-      "notes": "A ghost Rhodes chord D-A-E surfacing through the static: O1 faint, O7 clearer, O9 two bars."
+      "notes": "A ghost Rhodes chord D-A-E surfacing faintly through the static as 07 wakes (O1)."
     },
     {
       "id": "wake_power_thump",
@@ -1541,33 +2198,6 @@
       "notes": "O4: 07's lens motor hunting, a thin whine gliding E4 to F#4 over a faint gear flutter."
     },
     {
-      "id": "hum_dropout",
-      "category": "tick_2d",
-      "milestone": "M3",
-      "bus": "Sfx",
-      "spatial": false,
-      "loop": false,
-      "files": [
-        "Assets/_Project/Audio/SFX/2D/hum_dropout.wav"
-      ],
-      "variantLabels": [
-        "hum_dropout"
-      ],
-      "sha256": [
-        "674d7a3a913c56c57b379febf0640e3c7b23418f4173289dd6491ffad8940d23"
-      ],
-      "volumeMin": 0.6,
-      "volumeMax": 0.6,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -28.0,
-      "loudnessMode": "momentary",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": true,
-      "notes": "O5: 07's lamp hum on D3 falters, drops out for a beat and returns steady."
-    },
-    {
       "id": "neck_servo",
       "category": "tick_2d",
       "milestone": "M3",
@@ -1593,33 +2223,6 @@
       "hfMaxDb": -30.0,
       "tonal": false,
       "notes": "O6-O9: 07's old neck turning, a soft whirr with a faint whine lifting D5 to E5."
-    },
-    {
-      "id": "hm_chirp",
-      "category": "stinger_2d",
-      "milestone": "M3",
-      "bus": "Sfx",
-      "spatial": false,
-      "loop": false,
-      "files": [
-        "Assets/_Project/Audio/SFX/2D/hm_chirp.wav"
-      ],
-      "variantLabels": [
-        "hm_chirp"
-      ],
-      "sha256": [
-        "13d81f9194be4bfe6d3f1348d1e5d098bd9376e3ae32b7cebb55fb41546335a4"
-      ],
-      "volumeMin": 0.45,
-      "volumeMax": 0.45,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -20.0,
-      "loudnessMode": "momentary",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": true,
-      "notes": "O11: 07's first blink, a small two-note hm? from A4 falling to F#4."
     },
     {
       "id": "rover_hum",
@@ -2747,33 +3350,6 @@
       "notes": "Bản A đúng nghĩa tiếng máy chiếu CRT (CRT projector hum) rất nhẹ và ấm, giúp người chơi di chuyển bóng công trình liên tục mà không mỏi tai."
     },
     {
-      "id": "build_snap",
-      "category": "oneshot_build",
-      "milestone": "R1",
-      "bus": "Sfx",
-      "spatial": true,
-      "loop": false,
-      "files": [
-        "Assets/_Project/Audio/SFX/R1/build_snap.wav"
-      ],
-      "variantLabels": [
-        "build_snap"
-      ],
-      "sha256": [
-        "30e43faf52530360ad76691834a8fc6751efb369572e3b4051e51587fbb65a2b"
-      ],
-      "volumeMin": 0.68,
-      "volumeMax": 0.68,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -21.5,
-      "loudnessMode": "momentary",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": true,
-      "notes": "Bản B có cảm giác cơ khí bi-lò-xo bắt vào ngàm (detent ball-lock) cực kỳ rõ ràng, phản hồi xúc giác chính xác khi căn khớp lưới xây dựng."
-    },
-    {
       "id": "build_invalid",
       "category": "oneshot_build",
       "milestone": "R1",
@@ -2801,60 +3377,6 @@
       "notes": "Bản A truyền đạt rõ 'không đặt được' bằng tiếng công tắc vướng cơ học và nhịp trầm ấm, hoàn toàn tránh tiếng buzzer điện tử khó chịu."
     },
     {
-      "id": "build_place",
-      "category": "oneshot_build",
-      "milestone": "R1",
-      "bus": "Sfx",
-      "spatial": true,
-      "loop": false,
-      "files": [
-        "Assets/_Project/Audio/SFX/R1/build_place.wav"
-      ],
-      "variantLabels": [
-        "build_place"
-      ],
-      "sha256": [
-        "d4254b37095ab2ae5279139953fca8e1c34b389e0809c2fac005cc5417a38f04"
-      ],
-      "volumeMin": 0.76,
-      "volumeMax": 0.76,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -19.0,
-      "loudnessMode": "momentary",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": true,
-      "notes": "Bản A cân bằng hoàn hảo giữa sức nặng vật lý của khung thép và âm xác nhận ấm áp của bàn đài C2."
-    },
-    {
-      "id": "build_weld_loop",
-      "category": "loop_3d",
-      "milestone": "R1",
-      "bus": "Sfx",
-      "spatial": true,
-      "loop": true,
-      "files": [
-        "Assets/_Project/Audio/SFX/R1/build_weld_loop.wav"
-      ],
-      "variantLabels": [
-        "build_weld_loop"
-      ],
-      "sha256": [
-        "d8531862cc690bf27f68c821e06cc466dd7d4f3a231e89170ddbfba184453fd6"
-      ],
-      "volumeMin": 0.68,
-      "volumeMax": 0.68,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -21.5,
-      "loudnessMode": "integrated",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": true,
-      "notes": "Bản A nghe như nghe tiếng máy hàn qua hệ thống liên lạc nội bộ bằng bóng đèn: êm, dày và lặp hoàn toàn không thấy mối nối."
-    },
-    {
       "id": "build_stage_complete",
       "category": "oneshot_build",
       "milestone": "R1",
@@ -2880,33 +3402,6 @@
       "hfMaxDb": -30.0,
       "tonal": true,
       "notes": "Bản B dùng tiếng chốt bánh cóc và búa nỉ gõ thanh đồng tạo cảm giác một tầng kết cấu vừa được khóa xong rất sảng khoái."
-    },
-    {
-      "id": "build_structure_complete",
-      "category": "oneshot_build",
-      "milestone": "R1",
-      "bus": "Sfx",
-      "spatial": true,
-      "loop": false,
-      "files": [
-        "Assets/_Project/Audio/SFX/R1/build_structure_complete.wav"
-      ],
-      "variantLabels": [
-        "build_structure_complete"
-      ],
-      "sha256": [
-        "66105664d9d06c9e4db96b57a94062c947e840201e9dff5ba829370f23093e68"
-      ],
-      "volumeMin": 0.76,
-      "volumeMax": 0.76,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -18.5,
-      "loudnessMode": "momentary",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": true,
-      "notes": "Bản A mang lại cảm giác thành tựu tròn đầy, ấm cúng đúng hình ảnh 'ngọn đèn bật sáng' trên công trình vừa hoàn thiện."
     },
     {
       "id": "build_deconstruct",

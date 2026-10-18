@@ -58,8 +58,8 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// A seal at the given cut point gives E up to another verb (a scan target the player looks at while the seal
-        /// is not in view): a crate beside 07 never silences the panel in front of it. One already being cut keeps E.
+        /// A seal at the given cut point gives E up to another verb (a scan target the player looks at more squarely
+        /// than at the seal): a crate beside 07 never silences the panel in front of it. One already being cut keeps E.
         /// </summary>
         public void YieldTo(Func<Vector3, bool> yieldsTo)
         {

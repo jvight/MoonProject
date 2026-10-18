@@ -784,160 +784,6 @@ def _build_item_specs() -> List[IconSpec]:
         fill=polyline([(32, 27.5), (36.5, 32), (32, 36.5), (27.5, 32)], closed=True),
     ))
 
-    # 14. item_tower_coil.svg -> component.tower_coil.needed / pickup.part_towercoil (StoryPartMeshes.TowerCoil)
-    # Copper coil drum on wide top/bottom spool flanges with 5 bulging torus windings and cracked side casing.
-    specs.append(IconSpec(
-        filename="item_tower_coil.svg",
-        icon_id="tower_coil",
-        kind="item",
-        localization_key="component.tower_coil.needed",
-        code_symbol="StoryPartMeshes.TowerCoil",
-        label="TOWER COIL",
-        primary=(
-            round_rect(15, 9, 39, 6, 2.5),
-            round_rect(15, 49, 39, 6, 2.5),
-            line(23, 15, 23, 49),
-            line(46, 15, 46, 49),
-            round_rect(19, 18, 31, 4.5, 2.2),
-            round_rect(19, 24.5, 31, 4.5, 2.2),
-            round_rect(19, 31, 31, 4.5, 2.2),
-            round_rect(19, 37.5, 31, 4.5, 2.2),
-            round_rect(19, 43.5, 31, 4.5, 2.2),
-            polyline([(8, 17), (13, 16), (11, 47), (6, 45)], closed=True),
-        ),
-        detail=(
-            polyline([(30, 5), (39, 5), (39, 9), (30, 9)], closed=False),
-            polyline([(12, 24), (8, 29), (11, 34), (7, 39)], closed=False),
-        ),
-        fill=circle(34.5, 7, 1.6),
-    ))
-
-    # 15. item_transformer.svg -> component.transformer.needed / pickup.part_transformer (StoryPartMeshes.Transformer)
-    # Boxy transformer with side cooling fins, two stepped ceramic insulator bushings, and a 3-strand frayed lead.
-    specs.append(IconSpec(
-        filename="item_transformer.svg",
-        icon_id="transformer",
-        kind="item",
-        localization_key="component.transformer.needed",
-        code_symbol="StoryPartMeshes.Transformer",
-        label="TRANSFORMER",
-        primary=(
-            round_rect(16, 24, 32, 30, 3.0),
-            # Left & right cooling fins
-            polyline([(9, 29), (16, 29), (16, 33), (9, 33)], closed=True),
-            polyline([(9, 38), (16, 38), (16, 42), (9, 42)], closed=True),
-            polyline([(9, 47), (16, 47), (16, 51), (9, 51)], closed=True),
-            polyline([(48, 29), (55, 29), (55, 33), (48, 33)], closed=True),
-            polyline([(48, 38), (55, 38), (55, 42), (48, 42)], closed=True),
-            polyline([(48, 47), (55, 47), (55, 51), (48, 51)], closed=True),
-            # Left & right HV insulator bushings
-            polyline([(21, 24), (21, 13), (27, 13), (27, 24)], closed=False),
-            line(24, 8, 24, 13),
-            polyline([(37, 24), (37, 13), (43, 13), (43, 24)], closed=False),
-            line(40, 8, 40, 13),
-            # Frayed lead wire from right bushing
-            cubic_chain((40, 9), [((46, 8), (49, 12), (52, 16))], closed=False),
-        ),
-        detail=(
-            line(19, 16, 29, 16),
-            line(19, 20, 29, 20),
-            line(35, 16, 45, 16),
-            line(35, 20, 45, 20),
-            line(52, 16, 57, 14),
-            line(52, 16, 57, 18),
-            line(52, 16, 55, 22),
-            polyline([(34, 30), (28, 39), (35, 39), (30, 48)], closed=False),
-        ),
-        fill=circle(22, 30, 1.8),
-    ))
-
-    # 16. item_relay_spare.svg -> component.relay_spare.needed / pickup.part_relayspare (StoryPartMeshes.RelaySpare)
-    # Small relay module with 4 front louver grille bars, angled stub arm, and tilted broken dish fragment.
-    specs.append(IconSpec(
-        filename="item_relay_spare.svg",
-        icon_id="relay_spare",
-        kind="item",
-        localization_key="component.relay_spare.needed",
-        code_symbol="StoryPartMeshes.RelaySpare",
-        label="RELAY SPARE",
-        primary=(
-            round_rect(9, 32, 28, 22, 2.5),
-            line(27, 32, 37, 21),
-            arc(42, 19, 12.0, 135, 305, closed=False),
-            polyline([(48.9, 9.2), (43.5, 14.5), (46.5, 18.5), (33.5, 27.5)], closed=False),
-            line(41, 19, 51, 11),
-        ),
-        detail=(
-            line(14, 37, 32, 37),
-            line(14, 41, 32, 41),
-            line(14, 45, 32, 45),
-            line(14, 49, 32, 49),
-            arc(51, 11, 5.5, -50, 40),
-        ),
-        fill=circle(51, 11, 2.0),
-    ))
-
-    # 17. item_tilly_cell.svg -> pickup.tilly.cell / pickup.part_tillycell (FriendPartMeshes.TillyCell)
-    # Tilly's cylindrical power cell on its side: stepped metal end-caps, + terminal stud, honey band,
-    # rectangular charge window with 3 bars, and hanging honey inventory tag.
-    specs.append(IconSpec(
-        filename="item_tilly_cell.svg",
-        icon_id="tilly_cell",
-        kind="item",
-        localization_key="pickup.tilly.cell",
-        code_symbol="FriendPartMeshes.TillyCell",
-        label="TILLY CELL",
-        primary=(
-            round_rect(12, 18, 36, 24, 4.0),
-            polyline([(12, 22), (8, 22), (8, 38), (12, 38)], closed=False),
-            polyline([(48, 22), (52, 22), (52, 38), (48, 38)], closed=False),
-            polyline([(52, 26), (57, 26), (57, 34), (52, 34)], closed=False),
-            line(18, 42, 15, 48),
-            round_rect(9, 48, 12, 7, 1.5),
-        ),
-        detail=(
-            line(21, 18, 21, 42),
-            line(25, 18, 25, 42),
-            round_rect(29, 24, 15, 12, 1.5),
-            line(34, 27, 34, 33),
-            line(39, 27, 39, 33),
-            line(16, 27, 16, 33),
-            line(13, 30, 19, 30),
-        ),
-        fill=polyline([(31, 27), (34, 27), (34, 33), (31, 33)], closed=True),
-    ))
-
-    # 18. item_bell_valve.svg -> pickup.bell.valve / pickup.part_bellvalve (FriendPartMeshes.BellValve)
-    # Bell's vacuum radio tube: glass envelope dome with getter tip, internal anode/grid/filament,
-    # stepped octal socket base with 4 bottom pins, and side honey inventory tag.
-    specs.append(IconSpec(
-        filename="item_bell_valve.svg",
-        icon_id="bell_valve",
-        kind="item",
-        localization_key="pickup.bell.valve",
-        code_symbol="FriendPartMeshes.BellValve",
-        label="BELL VALVE",
-        primary=(
-            "M20 38C20 38 20 21 20 21A12 12 0 0 1 44 21C44 21 44 38 44 38Z",
-            polyline([(29, 9.5), (32, 5.5), (35, 9.5)], closed=False),
-            polyline([(16, 38), (48, 38), (46, 48), (18, 48)], closed=True),
-            line(22, 48, 22, 56),
-            line(29, 48, 29, 56),
-            line(35, 48, 35, 56),
-            line(42, 48, 42, 56),
-            line(47, 43, 51, 43),
-            round_rect(51, 39.5, 6.5, 7.5, 1.2),
-        ),
-        detail=(
-            line(20.5, 17, 43.5, 17),
-            polyline([(25, 22), (39, 22), (39, 31), (25, 31)], closed=True),
-            line(27, 26.5, 37, 26.5),
-            polyline([(27, 38), (32, 30), (37, 38)], closed=False),
-            line(17, 43, 47, 43),
-        ),
-        fill=circle(32, 33.5, 2.0),
-    ))
-
     return specs
 
 
@@ -951,7 +797,7 @@ def _build_kit_specs() -> List[IconSpec]:
         filename="kit_cutter.svg",
         icon_id="cutter",
         kind="kit",
-        localization_key="kit.focus_lens.name",
+        localization_key="",
         code_symbol="RoverSocket.Cutter / RoverKitPiece.FocusLens",
         label="CUTTER · FOCUS LENS",
         socket_index=0,
@@ -991,7 +837,7 @@ def _build_kit_specs() -> List[IconSpec]:
         filename="kit_tether.svg",
         icon_id="tether",
         kind="kit",
-        localization_key="kit.tether_ring.name",
+        localization_key="",
         code_symbol="RoverSocket.Tether / RoverKitPiece.TetherRing",
         label="TETHER · TETHER RING",
         socket_index=1,
@@ -1018,7 +864,7 @@ def _build_kit_specs() -> List[IconSpec]:
         filename="kit_lamp.svg",
         icon_id="lamp",
         kind="kit",
-        localization_key="upgrade.rover.warm_headlamp.name",
+        localization_key="",
         code_symbol="RoverSocket.Lamp / RoverKitPiece.LampBar",
         label="LAMP · LAMP BAR",
         socket_index=2,
@@ -1051,7 +897,7 @@ def _build_kit_specs() -> List[IconSpec]:
         filename="kit_belly.svg",
         icon_id="belly",
         kind="kit",
-        localization_key="upgrade.rover.hover_jump.name",
+        localization_key="",
         code_symbol="RoverSocket.Belly / RoverKitPiece.HoverCoils",
         label="BELLY · HOVER COILS",
         socket_index=3,
@@ -1087,7 +933,7 @@ def _build_kit_specs() -> List[IconSpec]:
         filename="kit_flanks.svg",
         icon_id="flanks",
         kind="kit",
-        localization_key="upgrade.rover.boost_coils.name",
+        localization_key="",
         code_symbol="RoverSocket.Flanks / RoverKitPiece.CapacitorDrums",
         label="FLANKS · CAPACITOR DRUMS",
         socket_index=4,
@@ -1121,7 +967,7 @@ def _build_kit_specs() -> List[IconSpec]:
         filename="kit_panniers.svg",
         icon_id="panniers",
         kind="kit",
-        localization_key="kit.side_bins.name",
+        localization_key="",
         code_symbol="RoverSocket.Panniers / RoverKitPiece.SideBins",
         label="PANNIERS · SIDE BINS",
         socket_index=5,
@@ -1151,7 +997,7 @@ def _build_kit_specs() -> List[IconSpec]:
         filename="kit_back.svg",
         icon_id="back",
         kind="kit",
-        localization_key="upgrade.rover.cell_pack.name",
+        localization_key="",
         code_symbol="RoverSocket.Back / RoverKitPiece.BatterySpine",
         label="BACK · BATTERY SPINE",
         socket_index=6,
@@ -1189,7 +1035,7 @@ def _build_kit_specs() -> List[IconSpec]:
         filename="kit_hold.svg",
         icon_id="hold",
         kind="kit",
-        localization_key="upgrade.rover.cargo_cradle.name",
+        localization_key="",
         code_symbol="RoverSocket.Hold / RoverKitPiece.CargoRack",
         label="HOLD · CARGO RACK",
         socket_index=7,
@@ -1224,7 +1070,7 @@ def _build_kit_specs() -> List[IconSpec]:
         filename="kit_wing.svg",
         icon_id="wing",
         kind="kit",
-        localization_key="kit.solar_cell.name",
+        localization_key="",
         code_symbol="RoverSocket.Wing / RoverKitPiece.SolarCell",
         label="WING · SOLAR CELL",
         socket_index=8,
@@ -1253,7 +1099,7 @@ def _build_kit_specs() -> List[IconSpec]:
         filename="kit_deck.svg",
         icon_id="deck",
         kind="kit",
-        localization_key="kit.tape_deck.name",
+        localization_key="",
         code_symbol="RoverSocket.Deck / RoverKitPiece.TapeDeck",
         label="DECK · TAPE DECK",
         socket_index=9,
@@ -1303,7 +1149,7 @@ def _build_kit_specs() -> List[IconSpec]:
         filename="kit_wheels.svg",
         icon_id="wheels",
         kind="kit",
-        localization_key="ui.can.magnetic_treads.verb",
+        localization_key="",
         code_symbol="RoverSocket.Wheels / RoverAbility.MagneticTreads",
         label="WHEELS · MAG TREADS",
         socket_index=10,
@@ -1331,7 +1177,7 @@ def _build_kit_specs() -> List[IconSpec]:
         filename="kit_antenna.svg",
         icon_id="antenna",
         kind="kit",
-        localization_key="ui.can.wide_sonar.verb",
+        localization_key="",
         code_symbol="RoverSocket.Antenna / RoverAbility.WideSonar",
         label="ANTENNA · WIDE SONAR",
         socket_index=11,

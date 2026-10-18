@@ -393,15 +393,16 @@ namespace MoonProject.Gameplay
                 }
             }
 
-            ScanFragment looked = LookedAt();
+            ScanFragment looked = LookedAt(out _);
             return looked != null ? looked : nearest;
         }
 
         /// <summary>
         /// The unscanned target in reach that 07's view rests on most squarely, inside the camera cone, or null: what
-        /// the player is looking at, whatever else claims E.
+        /// the player is looking at, whatever else claims E. <paramref name="score"/> is its aim score (lower is
+        /// squarer), comparable with <see cref="InView"/>'s.
         /// </summary>
-        public ScanFragment LookedAt()
+        public ScanFragment LookedAt(out float score)
         {
             Transform view = _view.Camera.transform;
             float reachSq = _tuning.Reach * _tuning.Reach;
@@ -416,22 +417,26 @@ namespace MoonProject.Gameplay
                 }
 
                 if (AimScore.TryScore(view.position, view.forward, fragment.Point, _tuning.Cone, float.MaxValue,
-                        _tuning.DistanceWeight, out float score) && score < bestScore)
+                        _tuning.DistanceWeight, out float fragmentScore) && fragmentScore < bestScore)
                 {
-                    bestScore = score;
+                    bestScore = fragmentScore;
                     best = fragment;
                 }
             }
 
+            score = bestScore;
             return best;
         }
 
-        /// <summary>True when <paramref name="point"/> lies inside the camera cone a scan target is picked in.</summary>
-        public bool InView(Vector3 point)
+        /// <summary>
+        /// True when <paramref name="point"/> lies inside the camera cone a scan target is picked in, with its aim score
+        /// (lower is squarer).
+        /// </summary>
+        public bool InView(Vector3 point, out float score)
         {
             Transform view = _view.Camera.transform;
             return AimScore.TryScore(view.position, view.forward, point, _tuning.Cone, float.MaxValue,
-                _tuning.DistanceWeight, out _);
+                _tuning.DistanceWeight, out score);
         }
 
         private void Hold(bool hold)

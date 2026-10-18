@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Deterministically render the picked variant of every R1 cue into the game's audio folders
-and register all 37 cues in ``tools/audio/sfx_manifest.json``.
+and register all 33 cues in ``tools/audio/sfx_manifest.json``.
 
 Outputs:
-  - 36 SFX cues     -> ``Assets/_Project/Audio/SFX/R1/<cue_id>.wav``
+  - 30 SFX cues     -> ``Assets/_Project/Audio/SFX/R1/<cue_id>.wav``
   - 3 ambience beds -> ``Assets/_Project/Audio/Ambience/R1/<cue_id>.wav``
   - Manifest update -> ``tools/audio/sfx_manifest.json``
 
 Usage:
-  python tools/audio/r1/export_game.py           # render all 37 picked R1 WAVs and update sfx_manifest.json
+  python tools/audio/r1/export_game.py           # render all 33 picked R1 WAVs and update sfx_manifest.json
   python tools/audio/r1/export_game.py --check   # verify exported WAVs and sfx_manifest.json match without writing
 """
 import argparse
@@ -26,7 +26,7 @@ if str(AUDIO_TOOLS_DIR) not in sys.path:
 import numpy as np  # noqa: E402
 import soundfile as sf  # noqa: E402
 from analyze_audio import MAX_KEY_ERROR_CENTS, dominant_pitch, evaluate  # noqa: E402
-from cues import CATEGORIES, CUES  # noqa: E402
+from cues import CUES  # noqa: E402
 from synth import analysis, core  # noqa: E402
 from synth.io import quantize  # noqa: E402
 
@@ -104,33 +104,12 @@ def _file_sha256(path: Path) -> str:
 
 
 def base_manifest_entries() -> list[dict]:
-    """Build manifest entries for the non-R1 cues in ``cues.py`` using on-disk WAV SHA-256s."""
+    """Manifest entries for the non-R1 cues in ``cues.py``, from the WAVs on disk (the same entries build_sfx writes)."""
+    from build_sfx import manifest_entry
     entries: list[dict] = []
     for cue in CUES:
-        cat = CATEGORIES[cue.category]
-        files = [f"{AUDIO_ASSET_REL}/{rel}" for rel in cue.files()]
-        hashes = [_file_sha256(REPO_ROOT / f) for f in files]
-        entries.append({
-            "id": cue.id,
-            "category": cue.category,
-            "milestone": cue.milestone,
-            "bus": cat.bus,
-            "spatial": cat.spatial,
-            "loop": cue.loop,
-            "files": files,
-            "variantLabels": cue.labels(),
-            "sha256": hashes,
-            "volumeMin": cue.volume[0],
-            "volumeMax": cue.volume[1],
-            "pitchMin": cue.pitch[0],
-            "pitchMax": cue.pitch[1],
-            "targetLufs": cat.target_lufs,
-            "loudnessMode": cat.loudness_mode,
-            "hfCutoffHz": cue.hf_cutoff,
-            "hfMaxDb": cue.hf_max_db,
-            "tonal": cue.tonal,
-            "notes": cue.notes,
-        })
+        files = [{"rel": rel, "sha256": _file_sha256(REPO_ROOT / AUDIO_ASSET_REL / rel)} for rel in cue.files()]
+        entries.append(manifest_entry(cue, files))
     return entries
 
 
@@ -162,7 +141,11 @@ def _wav_meta_text(spec: CueSpec) -> str:
     is_ambience = spec.group_id == "ambience"
     load_type = 1 if is_ambience else 0
     quality = "0.6" if is_ambience else "0.8"
-    force_mono = 1 if cue_spatial(spec) else 0
+    # The importer (ImportRuleSet) rewrites the meta on every import, so the file written here is what it would
+    # write: SFX outside a /2D/ folder is forced mono (the R1 UI cues sit in SFX/R1/ too), an SFX loop is PCM so
+    # Vorbis padding cannot break its seam, ambience keeps its channels.
+    force_mono = 0 if is_ambience else 1
+    compression = 0 if not is_ambience and Path(rel).stem.endswith("_loop") else 1
     return (
         "fileFormatVersion: 2\n"
         f"guid: {guid}\n"
@@ -174,7 +157,7 @@ def _wav_meta_text(spec: CueSpec) -> str:
         f"    loadType: {load_type}\n"
         "    sampleRateSetting: 0\n"
         "    sampleRateOverride: 44100\n"
-        "    compressionFormat: 1\n"
+        f"    compressionFormat: {compression}\n"
         f"    quality: {quality}\n"
         "    conversionMode: 0\n"
         "    preloadAudioData: 1\n"
@@ -238,7 +221,7 @@ def _build_audio_library_yaml(all_cues: list[dict]) -> str:
 
 
 def export_r1(check_only: bool = False) -> tuple[list[dict], list[dict], list[str]]:
-    """Render (or check) all 37 picked R1 cues and update (or check) ``sfx_manifest.json`` and ``AudioLibrary.asset``.
+    """Render (or check) all 33 picked R1 cues and update (or check) ``sfx_manifest.json`` and ``AudioLibrary.asset``.
 
     Returns ``(r1_entries, metrics_rows, errors)``.
     """
