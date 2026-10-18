@@ -571,6 +571,150 @@ MonoBehaviour:
     _volumeMax: 0.6
     _pitchMin: 1
     _pitchMax: 1
+  - _id: boot_lens
+    _clips:
+    - {fileID: 8300000, guid: 67eb7c3e5e23cab43bf838ed7131fac9, type: 3}
+    _variantLabels:
+    - boot_lens
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_lamps
+    _clips:
+    - {fileID: 8300000, guid: 9527a15931aed994da888635de3a7f8d, type: 3}
+    _variantLabels:
+    - boot_lamps
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_head
+    _clips:
+    - {fileID: 8300000, guid: 7643f806ba738844c9165fa93f77f05c, type: 3}
+    _variantLabels:
+    - boot_head
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_wheels
+    _clips:
+    - {fileID: 8300000, guid: 11ded63824ab20f4fb36586abab27432, type: 3}
+    _variantLabels:
+    - boot_wheels
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_motor
+    _clips:
+    - {fileID: 8300000, guid: 00c145cb0fc51d940aef944892517f74, type: 3}
+    _variantLabels:
+    - boot_motor
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_cutter
+    _clips:
+    - {fileID: 8300000, guid: 6ba77be147639dc49a06544d34360c03, type: 3}
+    _variantLabels:
+    - boot_cutter
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_wing_jam
+    _clips:
+    - {fileID: 8300000, guid: fcf1d6d39f3d7de4687ed88e1f402174, type: 3}
+    _variantLabels:
+    - boot_wing_jam
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_antenna
+    _clips:
+    - {fileID: 8300000, guid: a945b394e6fef204298d9dc3e3bdcae6, type: 3}
+    _variantLabels:
+    - boot_antenna
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_battery
+    _clips:
+    - {fileID: 8300000, guid: 612b7b529c31df64a91705e7cd9292ce, type: 3}
+    _variantLabels:
+    - boot_battery
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_assembly
+    _clips:
+    - {fileID: 8300000, guid: 910114d929f79194c9c94acb48457e15, type: 3}
+    _variantLabels:
+    - boot_assembly
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_begin
+    _clips:
+    - {fileID: 8300000, guid: 1371f76da432d2c40b57f54d04112e51, type: 3}
+    _variantLabels:
+    - boot_begin
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_fault
+    _clips:
+    - {fileID: 8300000, guid: e3b20cdc5ee6a1641a93b1c73893ecee, type: 3}
+    _variantLabels:
+    - boot_fault
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.55
+    _volumeMax: 0.55
+    _pitchMin: 1
+    _pitchMax: 1
   - _id: base_lamp_on
     _clips:
     - {fileID: 8300000, guid: 4fe4c3b0df58ec34c9609991dfeb869d, type: 3}
@@ -681,13 +825,9 @@ MonoBehaviour:
     _pitchMax: 1
   - _id: ghost_chord
     _clips:
-    - {fileID: 8300000, guid: 107473ecf5e05d64487a97c83a6e8e31, type: 3}
-    - {fileID: 8300000, guid: 0972646efc677fe4c918fdcee6eba7a9, type: 3}
-    - {fileID: 8300000, guid: 1012565b780302c478b8aef7257b6cd6, type: 3}
+    - {fileID: 8300000, guid: bc98fb5b64ea6cc4290d1e38cdc308dc, type: 3}
     _variantLabels:
-    - faint
-    - clearer
-    - long
+    - ghost_chord
     _bus: 1
     _spatial: 0
     _loop: 0
@@ -737,18 +877,6 @@ MonoBehaviour:
     _volumeMax: 0.5
     _pitchMin: 1
     _pitchMax: 1
-  - _id: hum_dropout
-    _clips:
-    - {fileID: 8300000, guid: 7df4ed02c1fd6e745a1c2694f723a7b1, type: 3}
-    _variantLabels:
-    - hum_dropout
-    _bus: 2
-    _spatial: 0
-    _loop: 0
-    _volumeMin: 0.6
-    _volumeMax: 0.6
-    _pitchMin: 1
-    _pitchMax: 1
   - _id: neck_servo
     _clips:
     - {fileID: 8300000, guid: cd153dc823f3392488c8997aef401c58, type: 3}
@@ -759,18 +887,6 @@ MonoBehaviour:
     _loop: 0
     _volumeMin: 0.5
     _volumeMax: 0.5
-    _pitchMin: 1
-    _pitchMax: 1
-  - _id: hm_chirp
-    _clips:
-    - {fileID: 8300000, guid: 3a800a90e5816e147805a8e8ac48e7f6, type: 3}
-    _variantLabels:
-    - hm_chirp
-    _bus: 2
-    _spatial: 0
-    _loop: 0
-    _volumeMin: 0.45
-    _volumeMax: 0.45
     _pitchMin: 1
     _pitchMax: 1
   - _id: rover_hum
