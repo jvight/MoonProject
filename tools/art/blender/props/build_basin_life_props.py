@@ -978,9 +978,406 @@ def build_seismic_station() -> bpy.types.Object:
     return root
 
 
+def _add_corner_cube_prism_array_10x10(
+    mb: r1kit.MeshBuilder,
+    panel_origin_u: Tuple[float, float, float],
+    panel_rot_u: Tuple[float, float, float],
+    grid_span: float = 0.42,
+    prism_depth: float = 0.018,
+    slab_back_z: float = 0.012,
+    front_z: float = -0.022,
+) -> None:
+    """Build a 100% closed manifold 10x10 corner-cube retroreflector prism array (100 recessed 4-facet prisms)."""
+    bm = mb.bm
+    glass_idx = mb._mat_index("R1_DarkGlass")
+    steel_idx = mb._mat_index("R1_BareSteel")
+    grey_idx = mb._mat_index("R1_GreyMetal")
+
+    n_cells = 10
+    half = grid_span * 0.5
+    step = grid_span / n_cells
+
+    front_rim: List[List[bmesh.types.BMVert]] = []
+    back_rim: List[List[bmesh.types.BMVert]] = []
+
+    for r in range(n_cells + 1):
+        y_loc = -half + r * step
+        f_row: List[bmesh.types.BMVert] = []
+        b_row: List[bmesh.types.BMVert] = []
+        for c in range(n_cells + 1):
+            x_loc = -half + c * step
+            pf_u = _rotate_u(
+                (panel_origin_u[0] + x_loc, panel_origin_u[1] + y_loc, panel_origin_u[2] + front_z),
+                panel_rot_u,
+                panel_origin_u,
+            )
+            pb_u = _rotate_u(
+                (panel_origin_u[0] + x_loc, panel_origin_u[1] + y_loc, panel_origin_u[2] + slab_back_z),
+                panel_rot_u,
+                panel_origin_u,
+            )
+            f_row.append(bm.verts.new(mb._to_local_b(pf_u)))
+            b_row.append(bm.verts.new(mb._to_local_b(pb_u)))
+        front_rim.append(f_row)
+        back_rim.append(b_row)
+
+    faces: List[bmesh.types.BMFace] = []
+    # 10x10 = 100 recessed corner-cube prism pockets on the front (-Z) face
+    for r in range(n_cells):
+        for c in range(n_cells):
+            v00 = front_rim[r][c]
+            v10 = front_rim[r][c + 1]
+            v11 = front_rim[r + 1][c + 1]
+            v01 = front_rim[r + 1][c]
+
+            # Slightly offset corner-cube trihedral apex inside each pocket so grazing light glints across facets
+            ox = 0.0035 * (1.0 if ((r + c) % 2 == 0) else -1.0)
+            oy = 0.0035 * (1.0 if (r % 2 == 0) else -1.0)
+            cx_loc = -half + (c + 0.5) * step + ox
+            cy_loc = -half + (r + 0.5) * step + oy
+            cz_loc = front_z + prism_depth
+            pc_u = _rotate_u(
+                (panel_origin_u[0] + cx_loc, panel_origin_u[1] + cy_loc, panel_origin_u[2] + cz_loc),
+                panel_rot_u,
+                panel_origin_u,
+            )
+            vc = bm.verts.new(mb._to_local_b(pc_u))
+
+            # 4 recessed prism facets per cell (winding outward toward -Z in panel local space)
+            f_bot = bm.faces.new([v00, vc, v10])
+            f_right = bm.faces.new([v10, vc, v11])
+            f_top = bm.faces.new([v11, vc, v01])
+            f_left = bm.faces.new([v01, vc, v00])
+
+            # Assign high-glint DarkGlass to 3 facets and BareSteel specular glint to 1 facet for retroreflector catch
+            f_bot.material_index = glass_idx
+            f_right.material_index = steel_idx
+            f_top.material_index = glass_idx
+            f_left.material_index = glass_idx
+            for pf in (f_bot, f_right, f_top, f_left):
+                pf.smooth = False
+                faces.append(pf)
+
+            # Back face quad (+Z)
+            fb = bm.faces.new([back_rim[r][c], back_rim[r + 1][c], back_rim[r + 1][c + 1], back_rim[r][c + 1]])
+            fb.material_index = grey_idx
+            fb.smooth = False
+            faces.append(fb)
+
+    # Outer perimeter walls closing front_rim to back_rim
+    for idx in range(n_cells):
+        # Bottom edge (r=0)
+        f1 = bm.faces.new([front_rim[0][idx], front_rim[0][idx + 1], back_rim[0][idx + 1], back_rim[0][idx]])
+        # Top edge (r=n_cells)
+        f2 = bm.faces.new(
+            [back_rim[n_cells][idx], back_rim[n_cells][idx + 1], front_rim[n_cells][idx + 1], front_rim[n_cells][idx]]
+        )
+        # Left edge (c=0)
+        f3 = bm.faces.new([back_rim[idx][0], back_rim[idx + 1][0], front_rim[idx + 1][0], front_rim[idx][0]])
+        # Right edge (c=n_cells)
+        f4 = bm.faces.new(
+            [front_rim[idx][n_cells], front_rim[idx + 1][n_cells], back_rim[idx + 1][n_cells], back_rim[idx][n_cells]]
+        )
+        for fw in (f1, f2, f3, f4):
+            fw.material_index = grey_idx
+            fw.smooth = False
+            faces.append(fw)
+
+    r1kit.ensure_outward_normals(bm, per_shell=True)
+
+
+def build_retroreflector() -> bpy.types.Object:
+    """Build Deliverable 3: Prop_Retroreflector (~0.66 W x 0.62 D x 0.56 H m).
+
+    Tilted panel of 10x10 corner-cube prisms on legs (real lunar laser ranging);
+    catches light at grazing sun.
+    """
+    r1kit.reset_scene()
+    ensure_extended_r1_materials()
+    r1kit.ensure_materials()
+
+    root = r1kit.create_empty("Prop_Retroreflector", pivot_u=(0.0, 0.0, 0.0))
+
+    panel_piv = (0.0, 0.30, 0.0)
+    # Tilted 38 deg toward -Z / +Y so the 10x10 prism face aims toward Earth & catches low grazing sun
+    panel_rot = (-38.0, 0.0, 0.0)
+
+    def rp(x: float, y: float, z: float) -> Tuple[float, float, float]:
+        return _rotate_u((panel_piv[0] + x, panel_piv[1] + y, panel_piv[2] + z), panel_rot, panel_piv)
+
+    # 1. SupportStand: tubular A-frame legs, circular footpads in regolith, elevation trunnions, spirit level
+    stand_mb = r1kit.MeshBuilder("SupportStand", pivot_u=(0.0, 0.0, 0.0))
+
+    # 4 splayed tubular legs from the side trunnions (-0.27 / +0.27, 0.30, 0.0) down to circular footpads
+    foot_coords = [
+        (-0.29, -0.23),
+        (0.29, -0.23),
+        (-0.29, 0.23),
+        (0.29, 0.23),
+    ]
+    for fx, fz in foot_coords:
+        # Circular footpad plate + central ball-joint boss
+        stand_mb.add_cylinder(
+            center_u=(fx, 0.008, fz),
+            radius=0.044,
+            radius_top=0.036,
+            length=0.016,
+            mat="R1_GreyMetal",
+            axis_u="Y",
+            segments=12,
+            bevel=0.002,
+        )
+        stand_mb.add_cylinder(
+            center_u=(fx, 0.022, fz),
+            radius=0.016,
+            length=0.018,
+            mat="R1_Brass",
+            axis_u="Y",
+            segments=10,
+            bevel=0.002,
+        )
+        # Regolith dust ring partially burying each footpad
+        stand_mb.add_cylinder(
+            center_u=(fx, 0.003, fz),
+            radius=0.056,
+            radius_top=0.040,
+            length=0.014,
+            mat="R1_Basalt",
+            axis_u="Y",
+            segments=10,
+            bevel=0.003,
+        )
+        # Inclined leg strut up to the side trunnion hub
+        sx_hub = -0.265 if fx < 0 else 0.265
+        stand_mb.add_pipe(
+            p0_u=(fx, 0.020, fz),
+            p1_u=(sx_hub, 0.295, 0.0),
+            radius=0.012,
+            mat="R1_BareSteel",
+            segments=10,
+        )
+
+    # Lower horizontal spreader bars (left, right, and rear cross-brace)
+    for sx in (-1.0, 1.0):
+        stand_mb.add_pipe(
+            p0_u=(sx * 0.28, 0.11, -0.155),
+            p1_u=(sx * 0.28, 0.11, 0.155),
+            radius=0.010,
+            mat="R1_GreyMetal",
+            segments=8,
+        )
+    stand_mb.add_pipe(
+        p0_u=(-0.28, 0.11, 0.145),
+        p1_u=(0.28, 0.11, 0.145),
+        radius=0.010,
+        mat="R1_CreamEnamel",
+        segments=8,
+    )
+    stand_mb.add_pipe(
+        p0_u=(-0.28, 0.11, -0.145),
+        p1_u=(0.28, 0.11, -0.145),
+        radius=0.010,
+        mat="R1_OrangeStripe",
+        segments=8,
+    )
+
+    # Side elevation trunnion hubs & Brass vernier locking knobs at x = +/-0.275, y = 0.30, z = 0.0
+    for sx in (-1.0, 1.0):
+        stand_mb.add_cylinder(
+            center_u=(sx * 0.268, 0.30, 0.0),
+            radius=0.036,
+            length=0.032,
+            mat="R1_GreyMetal",
+            axis_u="X",
+            segments=14,
+            bevel=0.003,
+        )
+        stand_mb.add_cylinder(
+            center_u=(sx * 0.292, 0.30, 0.0),
+            radius=0.024,
+            length=0.022,
+            mat="R1_Brass",
+            axis_u="X",
+            segments=12,
+            bevel=0.002,
+        )
+
+    # Leveling bullseye spirit bubble & sun-compass plate on the right lower spreader bar
+    stand_mb.add_bevel_box(
+        center_u=(0.20, 0.122, -0.145),
+        size_u=(0.075, 0.018, 0.056),
+        mat="R1_GreyMetal",
+        bevel=0.002,
+        segments=1,
+    )
+    stand_mb.add_cylinder(
+        center_u=(0.20, 0.134, -0.145),
+        radius=0.018,
+        length=0.010,
+        mat="R1_Brass",
+        axis_u="Y",
+        segments=10,
+        bevel=0.0015,
+    )
+    stand_mb.add_cylinder(
+        center_u=(0.20, 0.138, -0.145),
+        radius=0.012,
+        length=0.008,
+        mat="R1_DarkGlass",
+        axis_u="Y",
+        segments=10,
+        bevel=0.001,
+    )
+    stand_mb.build_object(parent=root)
+
+    # 2. PanelHousing: tilted square optical array frame, sun-shield baffle walls, GoldFoil thermal backing, EVA handle
+    housing_mb = r1kit.MeshBuilder("PanelHousing", pivot_u=panel_piv)
+
+    # Rear aluminum/CreamEnamel backing plate behind the prism array (z_local = +0.010 to +0.038 m)
+    housing_mb.add_bevel_box(
+        center_u=rp(0.0, 0.0, 0.024),
+        size_u=(0.49, 0.49, 0.028),
+        mat="R1_CreamEnamel",
+        bevel=0.006,
+        segments=1,
+        rot_deg_u=panel_rot,
+    )
+    # Gold-foil multi-layer thermal blanket covering the rear face of the panel (z_local = +0.042 m)
+    housing_mb.add_bevel_box(
+        center_u=rp(0.0, 0.0, 0.042),
+        size_u=(0.43, 0.43, 0.014),
+        mat="R1_GoldFoil",
+        bevel=0.004,
+        segments=1,
+        rot_deg_u=panel_rot,
+    )
+
+    # 4 perimeter bezel rails & stray-light sunshade hood framing the 0.42x0.42 m 10x10 prism cavity
+    # Left & Right rails
+    for sx in (-1.0, 1.0):
+        housing_mb.add_bevel_box(
+            center_u=rp(sx * 0.230, 0.0, -0.012),
+            size_u=(0.040, 0.50, 0.056),
+            mat="R1_CreamEnamel",
+            bevel=0.004,
+            segments=1,
+            rot_deg_u=panel_rot,
+        )
+        # Inner dark anti-glare baffle lip
+        housing_mb.add_bevel_box(
+            center_u=rp(sx * 0.214, 0.0, -0.026),
+            size_u=(0.014, 0.43, 0.034),
+            mat="R1_GreyMetal",
+            bevel=0.002,
+            segments=1,
+            rot_deg_u=panel_rot,
+        )
+    # Top & Bottom rails
+    for sy in (-1.0, 1.0):
+        housing_mb.add_bevel_box(
+            center_u=rp(0.0, sy * 0.230, -0.012),
+            size_u=(0.42, 0.040, 0.056),
+            mat="R1_CreamEnamel",
+            bevel=0.004,
+            segments=1,
+            rot_deg_u=panel_rot,
+        )
+        housing_mb.add_bevel_box(
+            center_u=rp(0.0, sy * 0.214, -0.026),
+            size_u=(0.43, 0.014, 0.034),
+            mat="R1_GreyMetal",
+            bevel=0.002,
+            segments=1,
+            rot_deg_u=panel_rot,
+        )
+
+    # Upper solar-glare sunhood visor along the top (+Y_local) edge
+    housing_mb.add_bevel_box(
+        center_u=rp(0.0, 0.244, -0.052),
+        size_u=(0.49, 0.016, 0.048),
+        mat="R1_GreyMetal",
+        bevel=0.002,
+        segments=1,
+        rot_deg_u=panel_rot,
+    )
+    # Warm-orange identification corner tabs & top alignment fiducial stripe
+    housing_mb.add_bevel_box(
+        center_u=rp(0.0, 0.236, -0.041),
+        size_u=(0.18, 0.024, 0.012),
+        mat="R1_OrangeStripe",
+        bevel=0.002,
+        segments=1,
+        rot_deg_u=panel_rot,
+    )
+    for sx in (-1.0, 1.0):
+        housing_mb.add_bevel_box(
+            center_u=rp(sx * 0.232, -0.18, -0.038),
+            size_u=(0.032, 0.065, 0.012),
+            mat="R1_OrangeStripe",
+            bevel=0.002,
+            segments=1,
+            rot_deg_u=panel_rot,
+        )
+
+    # Top EVA gloved-hand carry handle bar
+    housing_mb.add_tube_path(
+        points_u=[
+            rp(-0.09, 0.245, 0.01),
+            rp(-0.09, 0.295, 0.01),
+            rp(0.09, 0.295, 0.01),
+            rp(0.09, 0.245, 0.01),
+        ],
+        radius=0.0085,
+        mat="R1_BareSteel",
+        segments=8,
+        cap_ends=True,
+    )
+    housing_mb.build_object(parent=root)
+
+    # 3. PrismArray: 10x10 = 100 corner-cube retroreflector prisms seated inside the tilted panel frame
+    prism_mb = r1kit.MeshBuilder("PrismArray", pivot_u=panel_piv)
+    _add_corner_cube_prism_array_10x10(
+        prism_mb,
+        panel_origin_u=panel_piv,
+        panel_rot_u=panel_rot,
+        grid_span=0.416,
+        prism_depth=0.018,
+        slab_back_z=0.010,
+        front_z=-0.022,
+    )
+    prism_obj = prism_mb.build_object(parent=root)
+
+    # Anchors
+    r1kit.create_empty("Base_Anchor", parent=root, pivot_u=(0.0, 0.0, 0.0))
+    r1kit.create_empty("Array_Anchor", parent=root, pivot_u=rp(0.0, 0.0, -0.022))
+
+    r1kit.apply_triplanar_uvs(root)
+    r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))
+    r1kit.bake_vertex_colors(root, footprint_radius=0.42)
+
+    # Boost vertex-color G (edge wear / crisp optical facet reflectance) and reduce B (dust) on PrismArray
+    # so the 10x10 corner-cube prisms catch grazing sun and headlamp beams crisply
+    if prism_obj.data is not None and "Col" in prism_obj.data.color_attributes:
+        attr = prism_obj.data.color_attributes["Col"]
+        for loop in prism_obj.data.loops:
+            r, g, b, a = attr.data[loop.index].color
+            attr.data[loop.index].color = (
+                max(0.82, min(1.0, r * 0.95 + 0.12)),
+                max(0.76, min(1.0, g * 0.5 + 0.65)),
+                max(0.0, min(0.14, b * 0.25)),
+                a,
+            )
+
+    fbx_path = PROPS_DIR / "Prop_Retroreflector.fbx"
+    r1kit.export_fbx(root, fbx_path, bake_space_transform=False)
+    print(f"Exported {fbx_path}")
+    return root
+
+
 BUILDERS: Dict[str, Callable[[], bpy.types.Object]] = {
     "mission_flag": build_mission_flag,
     "seismic_station": build_seismic_station,
+    "retroreflector": build_retroreflector,
 }
 
 
@@ -1008,4 +1405,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
 

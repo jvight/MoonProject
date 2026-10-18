@@ -41,6 +41,7 @@ namespace MoonProject.Art.Tests
             ("cable_splice_box.json", "Props/Cable_Splice_Box.fbx"),
             ("prop_mission_flag.json", "Props/Prop_MissionFlag.fbx"),
             ("prop_seismic_station.json", "Props/Prop_SeismicStation.fbx"),
+            ("prop_retroreflector.json", "Props/Prop_Retroreflector.fbx"),
         };
 
         [Serializable]
@@ -517,6 +518,39 @@ namespace MoonProject.Art.Tests
 
             Assert.IsTrue(hasGoldFoil, "Prop_SeismicStation FoilShroud must use R1_GoldFoil.");
             AssertNoEmissiveMaterials(seisPrefab);
+        }
+
+        [Test]
+        public void PropRetroreflector_HasTilted10x10CornerCubePrismArray_Legs_AndBoxCollider()
+        {
+            GameObject retroPrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.PropRetroreflectorPrefabPath);
+            Assert.IsNotNull(retroPrefab.transform.Find("SupportStand"), "Prop_Retroreflector missing SupportStand.");
+            Assert.IsNotNull(retroPrefab.transform.Find("PanelHousing"), "Prop_Retroreflector missing PanelHousing.");
+            Transform prismArray = retroPrefab.transform.Find("PrismArray");
+            Assert.IsNotNull(prismArray, "Prop_Retroreflector missing PrismArray.");
+            Assert.IsNotNull(retroPrefab.transform.Find("Base_Anchor"), "Prop_Retroreflector missing Base_Anchor.");
+            Assert.IsNotNull(retroPrefab.transform.Find("Array_Anchor"), "Prop_Retroreflector missing Array_Anchor.");
+
+            BoxCollider box = retroPrefab.GetComponent<BoxCollider>();
+            Assert.IsNotNull(box, "Prop_Retroreflector must have a simple BoxCollider on root.");
+            Assert.Greater(box.size.x, 0.50f);
+
+            Mesh prismMesh = prismArray.GetComponent<MeshFilter>().sharedMesh;
+            Assert.IsNotNull(prismMesh);
+            Assert.GreaterOrEqual(prismMesh.triangles.Length / 3, 600,
+                "PrismArray must contain sculpted 10x10 corner-cube prism facets.");
+
+            bool hasWindowGlint = false;
+            foreach (Material m in prismArray.GetComponent<Renderer>().sharedMaterials)
+            {
+                if (m != null && m.name == R1StoryPropsBuilder.IceCoreWindowMaterialName)
+                {
+                    hasWindowGlint = true;
+                }
+            }
+
+            Assert.IsTrue(hasWindowGlint, "Prop_Retroreflector PrismArray must use high-glint optical window material.");
+            AssertNoEmissiveMaterials(retroPrefab);
         }
 
         private static void AssertNoEmissiveMaterials(GameObject prefab)
