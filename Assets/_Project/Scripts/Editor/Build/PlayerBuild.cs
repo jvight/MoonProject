@@ -20,7 +20,8 @@ namespace MoonProject.Editor.Build
     /// Writes <c>build_info.txt</c> next to the exe. Normally run through <c>python tools/build_player.py</c>;
     /// directly:
     /// <code>python tools/unity_batch.py exec --method MoonProject.Editor.Build.PlayerBuild.BuildWindows
-    ///     [--arg out=Builds/Lunarion-Windows] [--arg builders=false]</code>
+    ///     [--arg out=Builds/Lunarion-Windows] [--arg builders=false] [--arg autoplay=true]</code>
+    /// With <c>autoplay=true</c> the player is the development variant that carries the Autoplay bot.
     /// <code>python tools/unity_batch.py exec --method MoonProject.Editor.Build.PlayerBuild.BuildShowcase
     ///     [--arg out=Builds/Lunarion-Showcase] [--arg builders=false]</code>
     /// </summary>
@@ -28,6 +29,12 @@ namespace MoonProject.Editor.Build
     {
         public const string DefaultOutput = "Builds/Lunarion-Windows";
         public const string DefaultShowcaseOutput = "Builds/Lunarion-Showcase";
+
+        /// <summary>
+        /// Scripting define that compiles the development-only Autoplay module (the bot of tools/autoplay.py) into a
+        /// player. Release builds never carry it.
+        /// </summary>
+        public const string AutoplayDefine = "LUNARION_AUTOPLAY";
         public const string ShowcaseScenePath = "Assets/_Project/Scenes/Showcase.unity";
         public const string MainBuildersPattern = "^(?!Showcase/|Showcase Scene$).*";
         public const string ShowcaseBuildersPattern = "^(?!Main Scene$).*";
@@ -39,7 +46,8 @@ namespace MoonProject.Editor.Build
         public static void BuildWindows()
         {
             BatchRunner.Run(nameof(BuildWindows), args => Build(
-                BatchArgs.ProjectPath(args.GetString("out", DefaultOutput)), args.GetBool("builders", true)));
+                BatchArgs.ProjectPath(args.GetString("out", DefaultOutput)), args.GetBool("builders", true),
+                args.GetBool("autoplay", false)));
         }
 
         public static void BuildShowcase()
@@ -49,18 +57,19 @@ namespace MoonProject.Editor.Build
         }
 
         /// <summary>Builds Main.unity into <paramref name="outputDirectory"/> (emptied first). Returns true on success.</summary>
-        public static bool Build(string outputDirectory, bool runBuilders)
+        public static bool Build(string outputDirectory, bool runBuilders, bool autoplay = false)
         {
-            return BuildScene(MainSceneBuilder.ScenePath, MainBuildersPattern, outputDirectory, runBuilders);
+            return BuildScene(MainSceneBuilder.ScenePath, MainBuildersPattern, outputDirectory, runBuilders, autoplay);
         }
 
         /// <summary>Builds Showcase.unity into <paramref name="outputDirectory"/> (emptied first). Returns true on success.</summary>
         public static bool BuildShowcasePlayer(string outputDirectory, bool runBuilders)
         {
-            return BuildScene(ShowcaseScenePath, ShowcaseBuildersPattern, outputDirectory, runBuilders);
+            return BuildScene(ShowcaseScenePath, ShowcaseBuildersPattern, outputDirectory, runBuilders, false);
         }
 
-        private static bool BuildScene(string scenePath, string builderPattern, string outputDirectory, bool runBuilders)
+        private static bool BuildScene(string scenePath, string builderPattern, string outputDirectory, bool runBuilders,
+            bool autoplay)
         {
             if (!BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.Standalone, BuildTarget.StandaloneWindows64))
             {
@@ -105,6 +114,7 @@ namespace MoonProject.Editor.Build
                 target = BuildTarget.StandaloneWindows64,
                 targetGroup = BuildTargetGroup.Standalone,
                 options = BuildOptions.None,
+                extraScriptingDefines = autoplay ? new[] { AutoplayDefine } : Array.Empty<string>(),
             };
 
             var topLevelAssets = new HashSet<string>(AssetDatabase.GetSubFolders("Assets"), StringComparer.Ordinal);

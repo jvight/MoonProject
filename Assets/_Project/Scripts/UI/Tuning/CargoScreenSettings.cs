@@ -92,21 +92,21 @@ namespace MoonProject.UI
         [Range(400f, 560f)]
         [SerializeField] private float _dividerX = 480f;
 
-        [Tooltip("Radius (px in 1152x768) of each of the 10 orbital equipment socket bubbles.")]
-        [Range(20f, 48f)]
-        [SerializeField] private float _bubbleRadius = 36f;
+        [Tooltip("Radius (px in 1152x768) of the status disc in each device frame.")]
+        [Range(12f, 32f)]
+        [SerializeField] private float _bubbleRadius = 20f;
 
         [Tooltip("Origin X (px in 1152x768) of the side-3/4 Rover 07 line-art drawing.")]
-        [Range(600f, 960f)]
-        [SerializeField] private float _roverOriginX = 804f;
+        [Range(400f, 800f)]
+        [SerializeField] private float _roverOriginX = 576f;
 
         [Tooltip("Origin Y (px in 1152x768) of the side-3/4 Rover 07 line-art ground line.")]
         [Range(300f, 620f)]
-        [SerializeField] private float _roverOriginY = 468f;
+        [SerializeField] private float _roverOriginY = 412f;
 
         [Tooltip("Scale (px per rover unit in 1152x768) of the side-3/4 Rover 07 line-art drawing.")]
         [Range(80f, 240f)]
-        [SerializeField] private float _roverScale = 156f;
+        [SerializeField] private float _roverScale = 185f;
 
         [Tooltip("Seconds a transient toast message remains visible at the bottom of the panel.")]
         [Range(1f, 8f)]
@@ -220,12 +220,12 @@ namespace MoonProject.UI
         [SerializeField] private float _focusStrokeWidth = 4.5f;
 
         [Tooltip("Size (px at 1152x768) of the icon in a hold cell.")]
-        [Range(40f, 86f)]
-        [SerializeField] private float _holdIconSize = 66f;
+        [Range(30f, 56f)]
+        [SerializeField] private float _holdIconSize = 46f;
 
-        [Tooltip("Size (px at 1152x768) of the icon in a device bubble.")]
-        [Range(30f, 70f)]
-        [SerializeField] private float _deviceIconSize = 54f;
+        [Tooltip("Size (px at 1152x768) of the icon in a device frame's status disc.")]
+        [Range(20f, 40f)]
+        [SerializeField] private float _deviceIconSize = 28f;
 
         [Tooltip("Fill of the selected hold cell or device bubble: a visible step up from the resting fill.")]
         [SerializeField] private Color32 _selectionFill = new Color32(18, 62, 68, 255);

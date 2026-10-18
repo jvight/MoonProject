@@ -323,20 +323,20 @@ namespace MoonProject.UI.PlayModeTests
                     {
                         VisualElement bubble = view.DeviceElement(i);
                         Rect box = bubble.worldBound;
-                        Assert.GreaterOrEqual(box.xMin, panel.xMin + panel.width * 0.4f,
-                            $"{lang} {w}x{h}: device {i} stays in right pane");
+                        Assert.GreaterOrEqual(box.xMin, panel.xMin - 1f, $"{lang} {w}x{h}: device {i} stays on the panel");
                         Assert.LessOrEqual(box.xMax, panel.xMax + 1f);
                         Assert.GreaterOrEqual(box.yMin, panel.yMin - 1f);
                         Assert.LessOrEqual(box.yMax, panel.yMax + 1f);
                         for (int j = i + 1; j < FaceDevices.Count; j++)
                         {
                             Assert.IsFalse(box.Overlaps(view.DeviceElement(j).worldBound),
-                                $"{lang} {w}x{h}: device {i} bubble overlaps device {j}");
+                                $"{lang} {w}x{h}: device {i} frame overlaps device {j}");
                         }
 
                         Rect state = view.DeviceStateLabel(i).worldBound;
-                        Assert.GreaterOrEqual(state.xMin, panel.xMin, $"{lang} {w}x{h}: device {i} state fits the panel");
-                        Assert.LessOrEqual(state.xMax, panel.xMax + 1f, $"{lang} {w}x{h}: device {i} state fits the panel");
+                        Assert.GreaterOrEqual(state.xMin, box.xMin, $"{lang} {w}x{h}: device {i} state stays in its frame");
+                        Assert.LessOrEqual(state.xMax, box.xMax + 1f, $"{lang} {w}x{h}: device {i} state stays in its frame");
+                        Assert.LessOrEqual(state.yMax, box.yMax + 1f, $"{lang} {w}x{h}: device {i} state stays in its frame");
                     }
                 }
             }
