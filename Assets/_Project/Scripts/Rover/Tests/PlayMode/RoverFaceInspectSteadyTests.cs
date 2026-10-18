@@ -31,8 +31,11 @@ namespace MoonProject.Rover.PlayModeTests
         private const float SettleSeconds = 4f;
         private const float SampleSeconds = 2f;
 
-        /// <summary>The most the screen's centre may wander in the frame (viewport units, 1 = the frame's height).</summary>
-        private const float MaxWander = 0.0015f;
+        /// <summary>The most the screen's pose may turn in the frame from one frame to the next once the view eases in (deg).</summary>
+        /// <summary>The shipped face-inspect settle speed (m/s).</summary>
+        private const float SettleSpeed = 0.05f;
+
+        private const float MaxFrameStep = 0.6f;
 
         private static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "captures"));
@@ -40,6 +43,7 @@ namespace MoonProject.Rover.PlayModeTests
         private GameContext _context;
         private RoverController _rover;
         private RoverBodyLanguage _body;
+        private RoverCameraRig _cameraRig;
         private Camera _view;
         private IDisposable _awokeSub;
         private bool _awake;
@@ -86,8 +90,19 @@ namespace MoonProject.Rover.PlayModeTests
             Transform screen = _body.ScreenTransform;
             Transform camera = _view.transform;
             var trace = new StringBuilder("t\tspeed\tdistance\tyaw\tpitch\troll\tviewX\tviewY\n");
+            float settleSpeed = SettleSpeed;
+            float previousPitch = 0f;
+            float previousRoll = 0f;
+            float maxStep = 0f;
+            bool eased = false;
             for (float t = 0f; t < SettleSeconds + SampleSeconds; t += FrameTime)
             {
+                if (_rover.Speed > settleSpeed)
+                {
+                    Assert.AreEqual(0f, _cameraRig.FaceInspectWeight, 1e-6f,
+                        "While 07 still brakes the camera stays in the chase frame.");
+                }
+
                 Quaternion local = Quaternion.Inverse(camera.rotation) * screen.rotation;
                 Vector3 euler = local.eulerAngles;
                 Vector3 viewport = _view.WorldToViewportPoint(screen.position);
@@ -96,11 +111,27 @@ namespace MoonProject.Rover.PlayModeTests
                     t, _rover.Speed, Vector3.Distance(camera.position, screen.position),
                     Mathf.DeltaAngle(0f, euler.y), Mathf.DeltaAngle(0f, euler.x), Mathf.DeltaAngle(0f, euler.z),
                     viewport.x, viewport.y));
+                float pitch = Mathf.DeltaAngle(0f, euler.x);
+                float roll = Mathf.DeltaAngle(0f, euler.z);
+                if (_cameraRig.FaceInspectWeight > 0.001f)
+                {
+                    if (eased)
+                    {
+                        maxStep = Mathf.Max(maxStep, Mathf.Abs(pitch - previousPitch), Mathf.Abs(roll - previousRoll));
+                    }
+
+                    eased = true;
+                }
+
+                previousPitch = pitch;
+                previousRoll = roll;
                 yield return null;
             }
 
             Directory.CreateDirectory(CaptureFolder);
             File.WriteAllText(Path.Combine(CaptureFolder, "face_inspect_steady.tsv"), trace.ToString());
+            Assert.IsTrue(eased, "The face view eases in once 07 has stopped.");
+            Assert.LessOrEqual(maxStep, MaxFrameStep, "The screen's pose never jolts from one frame to the next.");
         }
 
         private static IEnumerator Wait(float seconds)
@@ -131,11 +162,13 @@ namespace MoonProject.Rover.PlayModeTests
                 bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
                 _rover = _rover != null ? _rover : root.GetComponentInChildren<RoverController>(true);
                 _body = _body != null ? _body : root.GetComponentInChildren<RoverBodyLanguage>(true);
+                _cameraRig = _cameraRig != null ? _cameraRig : root.GetComponentInChildren<RoverCameraRig>(true);
             }
 
             Assert.IsNotNull(bootstrap);
             Assert.IsNotNull(_rover);
             Assert.IsNotNull(_body);
+            Assert.IsNotNull(_cameraRig);
             _context = bootstrap.Context;
             _view = _context.Get<IViewCamera>().Camera;
             _awokeSub = _context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
