@@ -5,12 +5,13 @@ using UnityEngine;
 namespace MoonProject.Rover.Tests
 {
     /// <summary>
-    /// The headlamp glasses follow the road light: dark when it is off, their material's own glow when it is on, in
-    /// between while it eases, and each glass keeps its own material's strength as "on".
+    /// The headlamp glasses follow the road light: their slot of the body goes dark when the light is off and back to
+    /// its material's own glow when it is on, in between while it eases, and the body's other slots are untouched.
     /// </summary>
     public sealed class HeadlampGlassTests
     {
         private const string ShaderName = "MoonProject/R1/Lit";
+        private const int LampSlot = 1;
         private static readonly int EmissionStrengthId = Shader.PropertyToID("_EmissionStrength");
 
         private readonly List<Object> _made = new List<Object>();
@@ -26,60 +27,60 @@ namespace MoonProject.Rover.Tests
             _made.Clear();
         }
 
-        private Renderer Glass(float onStrength)
+        private Material Lit(float emission)
         {
             Shader shader = Shader.Find(ShaderName);
             Assert.IsNotNull(shader, ShaderName);
             var material = new Material(shader);
-            material.SetFloat(EmissionStrengthId, onStrength);
-            var glass = new GameObject("Glass");
-            var renderer = glass.AddComponent<MeshRenderer>();
-            renderer.sharedMaterial = material;
+            material.SetFloat(EmissionStrengthId, emission);
             _made.Add(material);
-            _made.Add(glass);
+            return material;
+        }
+
+        /// <summary>A body with a hull slot and the lamp glass slot, like RoverModel's Body.</summary>
+        private Renderer Body(float lampGlow)
+        {
+            var body = new GameObject("Body");
+            _made.Add(body);
+            var renderer = body.AddComponent<MeshRenderer>();
+            renderer.sharedMaterials = new[] { Lit(0f), Lit(lampGlow) };
             return renderer;
         }
 
-        private static float Strength(Renderer glass)
+        private static float Strength(Renderer body, int slot)
         {
             var block = new MaterialPropertyBlock();
-            glass.GetPropertyBlock(block);
+            body.GetPropertyBlock(block, slot);
             return block.GetFloat(EmissionStrengthId);
         }
 
         [Test]
-        public void TheGlasses_GoDarkWithTheLamp_AndBackToTheirOwnGlow()
+        public void TheGlassSlot_GoesDarkWithTheLamp_AndBackToItsOwnGlow_LeavingTheHullAlone()
         {
-            Renderer left = Glass(1f);
-            Renderer right = Glass(1.5f);
-            Assert.IsTrue(HeadlampGlass.TryCreate(new[] { left, right }, out HeadlampGlass glow, out string problem),
-                problem);
+            Renderer body = Body(1.5f);
+            Assert.IsTrue(HeadlampGlass.TryCreate(body, LampSlot, out HeadlampGlass glow, out string problem), problem);
 
             glow.Apply(0f);
-            Assert.AreEqual(0f, Strength(left), 1e-5f, "the lamp clicked off: the glass is dark");
-            Assert.AreEqual(0f, Strength(right), 1e-5f);
+            Assert.AreEqual(0f, Strength(body, LampSlot), 1e-5f, "the lamp clicked off: the glass is dark");
+            Assert.AreEqual(0f, Strength(body, 0), 1e-5f, "the hull's slot is never written");
 
             glow.Apply(1f);
-            Assert.AreEqual(1f, Strength(left), 1e-5f, "on: the material's own glow");
-            Assert.AreEqual(1.5f, Strength(right), 1e-5f, "each glass keeps its own strength");
+            Assert.AreEqual(1.5f, Strength(body, LampSlot), 1e-5f, "on: the material's own glow");
 
             glow.Apply(0.5f);
-            Assert.AreEqual(0.5f, Strength(left), 1e-5f, "dimmed with the road light");
-            Assert.AreEqual(0.75f, Strength(right), 1e-5f);
+            Assert.AreEqual(0.75f, Strength(body, LampSlot), 1e-5f, "dimmed with the road light");
 
             glow.Apply(3f);
-            Assert.AreEqual(1f, Strength(left), 1e-5f, "never brighter than its own glow");
+            Assert.AreEqual(1.5f, Strength(body, LampSlot), 1e-5f, "never brighter than its own glow");
         }
 
         [Test]
-        public void AGlassWithoutAnEmissiveMaterial_IsRefused()
+        public void AMissingBodyOrSlot_IsRefused()
         {
-            var bare = new GameObject("Bare");
-            _made.Add(bare);
-            Renderer renderer = bare.AddComponent<MeshRenderer>();
-            Assert.IsFalse(HeadlampGlass.TryCreate(new[] { renderer }, out _, out string problem));
-            StringAssert.Contains("_EmissionStrength", problem);
-            Assert.IsFalse(HeadlampGlass.TryCreate(null, out _, out _));
+            Renderer body = Body(1f);
+            Assert.IsFalse(HeadlampGlass.TryCreate(body, 5, out _, out string problem));
+            StringAssert.Contains("slot 5", problem);
+            Assert.IsFalse(HeadlampGlass.TryCreate(null, 0, out _, out _));
         }
     }
 }
