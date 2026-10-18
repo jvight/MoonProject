@@ -38,6 +38,9 @@ namespace MoonProject.Autoplay
         private const float SealLineUp = 3f;
         private const float SealArrive = 1.5f;
         private const float SealNose = 1.2f;
+
+        // Closer than this (metres, flat) a small crate's seal lies under 07's nose, out of the chest cutter's sight.
+        private const float SealTooClose = 1f;
         private const float SealCutSeconds = 30f;
         private const float SealCandidateSeconds = 3f;
         private const int SealCandidateAttempts = 3;
@@ -291,6 +294,16 @@ namespace MoonProject.Autoplay
                 yield return _bot.DriveTo(Flat(crate.CutPoint.position), SealNose, "nose to the seal of " + cache.Id,
                     DriveSeconds);
                 yield return _bot.TurnToward(crate.CutPoint.position, "the seal of " + cache.Id);
+                if (DriveSteering.FlatDistance(crate.CutPoint.position, _bot.World.Rover.Position) < SealTooClose)
+                {
+                    // Rolled in over the seal (a small crate goes under 07's nose): the cutter in 07's chest cannot
+                    // see it there, so back off a little and face it again, as a player would.
+                    Vector3 seal = crate.CutPoint.position;
+                    yield return _bot.BackOff(() => DriveSteering.FlatDistance(seal, _bot.World.Rover.Position) >=
+                                                    SealNose, DriveSeconds, "the seal of " + cache.Id);
+                    yield return _bot.TurnToward(seal, "the seal of " + cache.Id);
+                }
+
                 yield return FirstUse("cut: hold E", crate.CutPoint.position);
                 yield return WaitForTheSealCandidate(crate.CutPoint.position, cache.Id);
                 yield return _bot.Hold(Key.E, () =>
