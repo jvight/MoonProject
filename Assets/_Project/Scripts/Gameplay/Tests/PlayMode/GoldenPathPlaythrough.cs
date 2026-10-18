@@ -473,27 +473,31 @@ namespace MoonProject.Gameplay.PlayModeTests
                        StringComparison.Ordinal));
         }
 
-        /// <summary>B4: up to the lander's open crate, which gives Metal 2, Wiring 1 and the spare igniter.</summary>
+        /// <summary>
+        /// B4: the objective line says to collect the parts; up to the lander's open crate, where a held E takes Metal 2,
+        /// Wiring 1 and the spare igniter.
+        /// </summary>
         private IEnumerator CollectTheOpenCrate()
         {
             Begin();
             SealedContainer crate = _gameplay.Containers.Find("supply.lander.open");
             Assert.IsTrue(crate.StandsOpen, "the lander's crate stands open from the start: no cutting before B6");
-            if (_gameplay.StartKit.CarriesIgniter)
+            Assert.IsFalse(_gameplay.StartKit.CarriesIgniter, "the crate gives nothing until 07 takes it");
+            yield return ExpectLine(OpeningKeys.CollectParts, "B4: the cutter is FAULT, the crate holds parts");
+            if (!_gameplay.Hints.TryGet(InteractionKind.PickUp, out _))
             {
-                // 07 scanned the cargo standing in the crate's reach: it gave its parts the moment the scan ended.
-                Assert.AreEqual(OpeningKeys.BuildPad, _gameplay.Opening.Flow.Current, "B4 is done with the scan");
-            }
-            else
-            {
-                yield return ExpectLine(OpeningKeys.CollectParts, "B4: the cutter is FAULT, the crate holds parts");
-                Vector3 front = Flat(crate.CutPoint.position + crate.Root.forward * SealStandOff);
-                yield return DriveTo(front + Flat(crate.Root.forward) * 3f, LineUpArrive,
-                    "a line-up for the open crate");
+                // Out of the crate's reach after the scan: drive up to it, as a player would.
+                Vector3 side = crate.SealSide(_context.Get<IRoverState>().Position);
+                Vector3 front = Flat(crate.CutPoint.position) + side * SealStandOff;
+                yield return DriveTo(front + side * SealLineUp, LineUpArrive, "a line-up for the open crate");
                 yield return DriveTo(front, 1f, "the open crate");
             }
 
-            yield return Until(() => _gameplay.StartKit.CarriesIgniter, FollowTimeout, "07 takes the spare igniter");
+            yield return Until(() => _gameplay.Hints.TryGet(InteractionKind.PickUp, out _), FollowTimeout,
+                "the open crate offers its parts (Pick up)");
+            Press(_keyboard.eKey);
+            yield return Until(() => _gameplay.StartKit.CarriesIgniter, FollowTimeout, "held E takes the spare igniter");
+            Release(_keyboard.eKey);
             Capture("04-the-open-crate");
             End("B4: collect the lander's open crate", $"the igniter; hold {Hold()}");
         }
@@ -513,7 +517,8 @@ namespace MoonProject.Gameplay.PlayModeTests
                     continue;
                 }
 
-                Vector3 side = ClearSide(crate.CutPoint.position, Flat(crate.Root.forward).normalized, SealStandOff,
+                Vector3 side = ClearSide(crate.CutPoint.position, crate.SealSide(_context.Get<IRoverState>().Position),
+                    SealStandOff,
                     $"{crate.Id} (its seal at {crate.CutPoint.position}; its frame {Frame(cache.AnchorId)})",
                     crate.Root);
                 Vector3 front = Flat(crate.CutPoint.position) + side * SealStandOff;

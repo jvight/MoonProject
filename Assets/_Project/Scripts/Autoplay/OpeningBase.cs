@@ -109,10 +109,20 @@ namespace MoonProject.Autoplay
             if (!G.StartKit.CarriesIgniter)
             {
                 SealedContainer crate = G.Containers.Find("supply.lander.open");
-                Vector3 front = Flat(crate.CutPoint.position + crate.Root.forward * SealStandOff);
-                yield return _bot.DriveTo(front + Flat(crate.Root.forward) * SealLineUp, LineUpArrive,
-                    "a line-up for the open crate", DriveSeconds);
-                yield return _bot.DriveTo(front, 1f, "the open crate", DriveSeconds);
+                if (!G.Hints.TryGet(InteractionKind.PickUp, out _))
+                {
+                    // Out of the crate's reach after the scan: drive up to it, as a player would.
+                    Vector3 side = crate.SealSide(_bot.World.Rover.Position);
+                    Vector3 front = Flat(crate.CutPoint.position) + side * SealStandOff;
+                    yield return _bot.DriveTo(front + side * SealLineUp, LineUpArrive,
+                        "a line-up for the open crate", DriveSeconds);
+                    yield return _bot.DriveTo(front, 1f, "the open crate", DriveSeconds);
+                }
+
+                yield return _bot.Until(() => G.Hints.TryGet(InteractionKind.PickUp, out _), FollowSeconds,
+                    "the open crate to offer its parts (Pick up)");
+                yield return _bot.Hold(Key.E, () => G.StartKit.CarriesIgniter, FollowSeconds,
+                    "E to take the parts from the open crate");
             }
 
             yield return _bot.Until(() => G.StartKit.CarriesIgniter, FollowSeconds, "07 to take the spare igniter");
@@ -268,8 +278,8 @@ namespace MoonProject.Autoplay
                     continue;
                 }
 
-                Vector3 side = ClearSide(crate.CutPoint.position, Flat(crate.Root.forward).normalized, SealStandOff,
-                    crate.Root);
+                Vector3 side = ClearSide(crate.CutPoint.position, crate.SealSide(_bot.World.Rover.Position),
+                    SealStandOff, crate.Root);
                 Vector3 front = Flat(crate.CutPoint.position) + side * SealStandOff;
                 if (Clear(crate.CutPoint.position + side * (SealStandOff + SealLineUp), crate.Root))
                 {
