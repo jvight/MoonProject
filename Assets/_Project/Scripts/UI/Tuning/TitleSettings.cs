@@ -182,21 +182,14 @@ namespace MoonProject.UI
         [Tooltip("The wordmark and subtitle easing in and out (slow in, 0.5 s out into the lens push-in).")]
         [SerializeField] private RevealSettings _reveal = new RevealSettings(2.2f, 0.5f, 14f, 0.985f, 0.6f, 0.8f);
 
+        [Tooltip("Seconds the menu, the wordmark and the title's picture fade out together when a game starts or " +
+                 "continues, while the camera is already pushing into 07's lens: one calm shot, no cut " +
+                 "(docs/design/opening-cutscene-research.md Q1).")]
+        [Range(0.1f, 2f)]
+        [SerializeField] private float _handOffSeconds = 0.6f;
+
         [Tooltip("The dark drawn over everything before New Game, Quit to title or Quit, and lifted after a boot.")]
         [SerializeField] private RevealSettings _curtain = new RevealSettings(0.9f, 1.4f, 0f, 1f, 1f, 1f);
-
-        [Tooltip("Seconds the title CRT takes to switch off like an old tube when the game starts or continues: " +
-                 "a squeeze to a line, then a dot (docs/design/opening-cutscene-research.md Q1).")]
-        [Range(0.2f, 2f)]
-        [SerializeField] private float _switchOffSeconds = 0.6f;
-
-        [Tooltip("The share of the switch-off spent squeezing the picture to a line (the rest shrinks it to a dot).")]
-        [Range(0.2f, 0.9f)]
-        [SerializeField] private float _switchOffLineShare = 0.6f;
-
-        [Tooltip("The switched-off line's height as a share of the screen's.")]
-        [Range(0.002f, 0.05f)]
-        [SerializeField] private float _switchOffLineThickness = 0.012f;
 
         [Tooltip("How much of the menu blur the world takes behind the title (the pause takes all of it).")]
         [Range(0f, 1f)]
@@ -520,11 +513,7 @@ namespace MoonProject.UI
 
         public float BackdropWeight => _backdropWeight;
 
-        public float SwitchOffSeconds => _switchOffSeconds;
-
-        public float SwitchOffLineShare => _switchOffLineShare;
-
-        public float SwitchOffLineThickness => _switchOffLineThickness;
+        public float HandOffSeconds => _handOffSeconds;
 
         public float MoonTurnPeriodSeconds => _moonTurnPeriodSeconds;
 

@@ -44,6 +44,12 @@ namespace MoonProject.Rover.Editor
 
         private const float MoteCameraFadeFar = 1.2f;
 
+        /// <summary>Authored iris blade box dimensions (m) on CutterOrigin.</summary>
+        private const float NozzleBladeLength = 0.028f;
+        private const float NozzleBladeWidth = 0.016f;
+        private const float NozzleBladeThickness = 0.004f;
+        private const float NozzleBladeEdgeWear = 0.25f;
+
         [MoonBuilder("Rover/Materials", 305)]
         public static void Build()
         {
@@ -52,7 +58,14 @@ namespace MoonProject.Rover.Editor
             BuildDustTexture();
             BuildDustMaterial();
             BuildMoteMaterial();
+            BuildNozzleMeshes();
             AssetDatabase.SaveAssets();
+        }
+
+        public static void BuildNozzleMeshes()
+        {
+            BuildNozzleBladeMesh();
+            BuildNozzleCoreMesh();
         }
 
         private static void BuildSphereMaterial()
@@ -148,6 +161,96 @@ namespace MoonProject.Rover.Editor
             BaseShaderGUI.SetupMaterialBlendMode(material);
             MaterialValidation.Validate(material);
             GeneratedAssets.CreateOrReplace(material, RoverAssetPaths.MoteMaterial);
+        }
+
+        private static void BuildNozzleBladeMesh()
+        {
+            float hx = NozzleBladeLength * 0.5f;
+            float hy = NozzleBladeWidth * 0.5f;
+            float hz = NozzleBladeThickness * 0.5f;
+            var vertices = new Vector3[]
+            {
+                // +Z front
+                new Vector3(-hx, -hy, hz), new Vector3(hx, -hy, hz), new Vector3(hx, hy, hz), new Vector3(-hx, hy, hz),
+                // -Z back
+                new Vector3(hx, -hy, -hz), new Vector3(-hx, -hy, -hz), new Vector3(-hx, hy, -hz), new Vector3(hx, hy, -hz),
+                // +Y top
+                new Vector3(-hx, hy, hz), new Vector3(hx, hy, hz), new Vector3(hx, hy, -hz), new Vector3(-hx, hy, -hz),
+                // -Y bottom
+                new Vector3(-hx, -hy, -hz), new Vector3(hx, -hy, -hz), new Vector3(hx, -hy, hz), new Vector3(-hx, -hy, hz),
+                // +X right
+                new Vector3(hx, -hy, hz), new Vector3(hx, -hy, -hz), new Vector3(hx, hy, -hz), new Vector3(hx, hy, hz),
+                // -X left
+                new Vector3(-hx, -hy, -hz), new Vector3(-hx, -hy, hz), new Vector3(-hx, hy, hz), new Vector3(-hx, hy, -hz),
+            };
+            var uvs = new Vector2[24];
+            var colors = new Color[24];
+            var triangles = new int[36];
+            var vcol = new Color(1f, NozzleBladeEdgeWear, 0f, 1f);
+            for (int face = 0; face < 6; face++)
+            {
+                int v = face * 4;
+                uvs[v + 0] = new Vector2(0f, 0f);
+                uvs[v + 1] = new Vector2(1f, 0f);
+                uvs[v + 2] = new Vector2(1f, 1f);
+                uvs[v + 3] = new Vector2(0f, 1f);
+                colors[v + 0] = vcol;
+                colors[v + 1] = vcol;
+                colors[v + 2] = vcol;
+                colors[v + 3] = vcol;
+                int t = face * 6;
+                triangles[t + 0] = v + 0;
+                triangles[t + 1] = v + 2;
+                triangles[t + 2] = v + 1;
+                triangles[t + 3] = v + 0;
+                triangles[t + 4] = v + 3;
+                triangles[t + 5] = v + 2;
+            }
+
+            var mesh = new Mesh
+            {
+                vertices = vertices,
+                uv = uvs,
+                colors = colors,
+                triangles = triangles,
+            };
+            mesh.RecalculateNormals();
+            mesh.RecalculateTangents();
+            mesh.RecalculateBounds();
+            GeneratedAssets.CreateOrReplace(mesh, RoverAssetPaths.NozzleBladeMesh);
+        }
+
+        private static void BuildNozzleCoreMesh()
+        {
+            const float h = 0.5f;
+            var vertices = new Vector3[]
+            {
+                new Vector3(-h, -h, 0f), new Vector3(h, -h, 0f), new Vector3(h, h, 0f), new Vector3(-h, h, 0f),
+                new Vector3(h, -h, 0f), new Vector3(-h, -h, 0f), new Vector3(-h, h, 0f), new Vector3(h, h, 0f),
+            };
+            var uvs = new Vector2[]
+            {
+                new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(0f, 1f),
+                new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(0f, 1f),
+            };
+            var vcol = new Color(1f, 0f, 0f, 1f);
+            var colors = new Color[] { vcol, vcol, vcol, vcol, vcol, vcol, vcol, vcol };
+            var triangles = new int[]
+            {
+                0, 1, 2, 0, 2, 3,
+                4, 5, 6, 4, 6, 7,
+            };
+            var mesh = new Mesh
+            {
+                vertices = vertices,
+                uv = uvs,
+                colors = colors,
+                triangles = triangles,
+            };
+            mesh.RecalculateNormals();
+            mesh.RecalculateTangents();
+            mesh.RecalculateBounds();
+            GeneratedAssets.CreateOrReplace(mesh, RoverAssetPaths.NozzleCoreMesh);
         }
     }
 }

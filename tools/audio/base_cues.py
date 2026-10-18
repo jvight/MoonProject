@@ -49,20 +49,3 @@ def base_lamp_on(variant, gen):
     place(mix, 0.22 * instruments.soft_pad(hz / 2.0, 1.6, attack=0.25, release_t60=0.9), samples(0.04))
     return bench.radio_bench_chain(mix, gen, hiss_level=0.003, drive_db=2.0, lp_hz=2700.0, room=0.42, wet=0.2,
                                    flutter_cents=0.0)
-
-
-def title_crt_off(_variant, gen):
-    """The title's CRT switching off (docs/design/opening-cutscene-research.md Q1/Q3): a soft tube "tock" (the
-    power switch through a bakelite case), the picture's charge collapsing as a faint falling breath, and a short
-    warm ring on D4 that the wake's D-A-E ghost chord continues. No whine, no beep."""
-    n = samples(1.4)
-    mix = np.zeros(n)
-    place(mix, 0.7 * bench.bakelite_toggle(note_freq("D4"), 0.2, gen, direction="down", decay_s=0.12, muted=True), 0)
-    place(mix, 0.5 * bench.speaker_cone_thump(note_freq("D3"), 0.35, gen, decay_s=0.22), samples(0.005))
-    collapse_n = samples(0.6)
-    pitch = osc.glide(collapse_n, note_freq("A5"), note_freq("D4"), time_constant=0.12)
-    breath = osc.additive(collapse_n, pitch, [(1, 1.0), (2, 0.2)]) * envelope.ar(collapse_n, 0.004, 0.45)
-    place(mix, 0.08 * filters.lowpass(breath, 2200.0), samples(0.01))
-    place(mix, 0.3 * bench.warm_chime_voice(note_freq("D4"), 1.2, gen, decay_s=0.9, attack_s=0.01), samples(0.03))
-    return bench.radio_bench_chain(mix, gen, hiss_level=0.003, drive_db=2.0, lp_hz=2600.0, room=0.35, wet=0.14,
-                                   flutter_cents=0.0)

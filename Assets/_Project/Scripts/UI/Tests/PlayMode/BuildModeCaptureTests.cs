@@ -201,7 +201,7 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(BuildModeState.Placing, build.State);
             FrameBehindRover(viewCamera, roverPos, Vector3.forward, distance: 4.8f, height: 2.15f, pitchDeg: 15f);
             yield return SettleUi(0.65f);
-            Assert.IsFalse(_ui.BuildStrip.IsVisible, "Build strip must hide when entering Placing state.");
+            Assert.IsTrue(_ui.BuildStrip.IsVisible, "Build strip stays visible when entering Placing state.");
             Assert.AreEqual(PlacementReason.Valid, build.Controller.CandidateReason);
             Assert.IsNotNull(build.GhostView);
             Assert.IsTrue(build.GhostView.IsGhostValid);

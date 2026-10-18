@@ -32,6 +32,7 @@ namespace MoonProject.Art.Tests
             ("crate_m_open.json", "Crates/Crate_M_Open.fbx"),
             ("pad_fragment_coil_plate.json", "Props/PadFragment_CoilPlate.fbx"),
             ("pad_fragment_guide_rail.json", "Props/PadFragment_GuideRail.fbx"),
+            ("ice_core_tube.json", "Props/IceCoreTube.fbx"),
         };
 
         [Serializable]
@@ -293,6 +294,66 @@ namespace MoonProject.Art.Tests
             GameObject guideRailPrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.PadFragmentGuideRailPrefabPath);
             Assert.IsNotNull(guideRailPrefab.transform.Find("Scan_1"), "PadFragment_GuideRail missing Scan_1.");
             Assert.IsNotNull(guideRailPrefab.GetComponent<Renderer>(), "PadFragment_GuideRail root must have a Renderer.");
+        }
+
+        [Test]
+        public void IceCoreTube_HasCenteredPivotStencilledLabelFrostEndAndWindowCoreWithoutBloom()
+        {
+            GameObject tubePrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.IceCoreTubePrefabPath);
+            Assert.IsNotNull(tubePrefab.transform.Find("CryoSleeve"), "IceCoreTube missing CryoSleeve.");
+            Assert.IsNotNull(tubePrefab.transform.Find("CoreSample"), "IceCoreTube missing CoreSample.");
+            Assert.IsNotNull(tubePrefab.transform.Find("SightWindow"), "IceCoreTube missing SightWindow.");
+            Assert.IsNotNull(tubePrefab.transform.Find("LabelPlate"), "IceCoreTube missing LabelPlate.");
+            Assert.IsNotNull(tubePrefab.transform.Find("CarryHandle"), "IceCoreTube missing CarryHandle.");
+            Assert.IsNotNull(tubePrefab.transform.Find("FrostCap"), "IceCoreTube missing FrostCap.");
+            Assert.IsNotNull(tubePrefab.transform.Find("Center_Anchor"), "IceCoreTube missing Center_Anchor.");
+            Assert.IsNotNull(tubePrefab.transform.Find("Window_Anchor"), "IceCoreTube missing Window_Anchor.");
+            Assert.IsNotNull(tubePrefab.transform.Find("Handle_Anchor"), "IceCoreTube missing Handle_Anchor.");
+            Assert.IsNotNull(tubePrefab.transform.Find("Frost_Anchor"), "IceCoreTube missing Frost_Anchor.");
+
+            Assert.AreEqual(0, tubePrefab.GetComponentsInChildren<ParticleSystem>(true).Length,
+                "IceCoreTube frost must be a material, not particles.");
+
+            Bounds meshBounds = MeshChecks.PrefabBounds(tubePrefab, tubePrefab.transform.localToWorldMatrix);
+            Assert.Less(meshBounds.center.magnitude, 0.01f,
+                "IceCoreTube pivot must be at its centre (0, 0, 0), lying on its side.");
+            Assert.AreEqual(0.45f, meshBounds.size.x, 0.015f, "IceCoreTube length must be ~0.45 m.");
+            Assert.AreEqual(0.082f, meshBounds.size.y, 0.015f, "IceCoreTube height must be ~0.08 m.");
+            Assert.AreEqual(0.082f, meshBounds.size.z, 0.015f, "IceCoreTube depth must be ~0.08 m.");
+
+            Material labelMat = tubePrefab.transform.Find("LabelPlate").GetComponent<Renderer>().sharedMaterial;
+            Assert.AreEqual(R1StoryPropsBuilder.IceCoreLabelMaterialName, labelMat.name);
+
+            Material frostMat = tubePrefab.transform.Find("FrostCap").GetComponent<Renderer>().sharedMaterial;
+            Assert.AreEqual(R1StoryPropsBuilder.IceCoreFrostMaterialName, frostMat.name);
+
+            Material coreMat = tubePrefab.transform.Find("CoreSample").GetComponent<Renderer>().sharedMaterial;
+            Assert.AreEqual(R1StoryPropsBuilder.IceCoreFrostMaterialName, coreMat.name);
+
+            Material windowMat = tubePrefab.transform.Find("SightWindow").GetComponent<Renderer>().sharedMaterial;
+            Assert.AreEqual(R1StoryPropsBuilder.IceCoreWindowMaterialName, windowMat.name);
+
+            Material[] specializedMats = { labelMat, frostMat, windowMat };
+            foreach (Material sm in specializedMats)
+            {
+                Assert.Less(sm.GetFloat("_BloomSafeMax"), Palette.BloomThreshold,
+                    $"Specialized IceCoreTube material '{sm.name}' _BloomSafeMax must stay below Palette.BloomThreshold.");
+                Assert.Less(sm.GetFloat("_HotCorePeak"), Palette.BloomThreshold,
+                    $"Specialized IceCoreTube material '{sm.name}' _HotCorePeak must stay below Palette.BloomThreshold.");
+            }
+
+            Renderer[] renderers = tubePrefab.GetComponentsInChildren<Renderer>(true);
+            foreach (Renderer r in renderers)
+            {
+                foreach (Material m in r.sharedMaterials)
+                {
+                    Assert.IsNotNull(m);
+                    Assert.AreNotEqual(R1MaterialRecipes.LampAmberSlot, m.name,
+                        "IceCoreTube must have no lit R1_LampAmber material slots.");
+                    Assert.AreEqual(0f, m.GetFloat("_EmissionStrength"), 1e-4f,
+                        $"IceCoreTube material '{m.name}' must have zero emission (relying on headlamp specular/frost catch).");
+                }
+            }
         }
 
         private static Bounds MeasureInstantiatedRendererBounds(GameObject prefab)

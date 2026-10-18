@@ -110,7 +110,6 @@ namespace MoonProject.Audio
         // Opening v2: the base powering on, its lamps at the first nightfall
         public const string StructurePowerOn = "structure_power_on";
         public const string BaseLampOn = "base_lamp_on";
-        public const string TitleCrtOff = "title_crt_off";
 
         // R1 Group 4: Machines
         public const string MachineSolarTrack = "machine_solar_track";

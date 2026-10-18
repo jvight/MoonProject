@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using MoonProject.Core;
 
 namespace MoonProject.Rover
 {
@@ -55,11 +56,17 @@ namespace MoonProject.Rover
         /// <summary>The winning request's target, if any request is active.</summary>
         public bool TryGetTop(out Vector3 worldPoint)
         {
-            return TryGetTop(out worldPoint, out _);
+            return TryGetTop(out worldPoint, out _, out _);
         }
 
         /// <summary>The winning request's target and priority, if any request is active.</summary>
         public bool TryGetTop(out Vector3 worldPoint, out int priority)
+        {
+            return TryGetTop(out worldPoint, out priority, out _);
+        }
+
+        /// <summary>The winning request's target, priority, and owner, if any request is active.</summary>
+        public bool TryGetTop(out Vector3 worldPoint, out int priority, out object owner)
         {
             int best = -1;
             for (int i = 0; i < _requests.Count; i++)
@@ -74,18 +81,46 @@ namespace MoonProject.Rover
             {
                 worldPoint = _requests[best].Point;
                 priority = _requests[best].Priority;
+                owner = _requests[best].Owner;
                 return true;
             }
 
             worldPoint = Vector3.zero;
             priority = 0;
+            owner = null;
             return false;
         }
 
         private static bool Outranks(Request candidate, Request current)
         {
-            return candidate.Priority > current.Priority
-                || (candidate.Priority == current.Priority && candidate.Sequence > current.Sequence);
+            int candRank = EffectivePriority(candidate);
+            int currRank = EffectivePriority(current);
+            if (candRank != currRank)
+            {
+                return candRank > currRank;
+            }
+
+            bool candCutter = candidate.Owner is ICutterAimOwner && candidate.Priority >= FocusPriority;
+            bool currCutter = current.Owner is ICutterAimOwner && current.Priority >= FocusPriority;
+            if (candCutter != currCutter)
+            {
+                return candCutter;
+            }
+
+            return candidate.Sequence > current.Sequence;
+        }
+
+        private const int FocusPriority = 2;
+        private const int CutterFocusEffectivePriority = 4;
+
+        private static int EffectivePriority(Request request)
+        {
+            if (request.Owner is ICutterAimOwner && request.Priority >= FocusPriority)
+            {
+                return Mathf.Max(request.Priority, CutterFocusEffectivePriority);
+            }
+
+            return request.Priority;
         }
 
         private int IndexOf(object owner)

@@ -18,6 +18,14 @@ namespace MoonProject.UI.Editor
 
         public const int FaceAnisoLevel = 4;
         public static readonly Vector2Int FaceReferenceResolution = new Vector2Int(1152, 768);
+
+        /// <summary>
+        /// The face's render texture is this many times the layout's size: the CRT glass fills most of a 1440p screen,
+        /// so a texture at layout size is magnified and blurs text and line art. The layout stays 1152x768 units; the
+        /// panel scales to the texture, so everything is drawn at this resolution.
+        /// </summary>
+        public const int FaceRenderScale = 2;
+
         private const string StyleSheet = UiAssetPaths.SourceFolder + "/GameUI.uss";
         private static readonly Vector2Int ReferenceResolution = new Vector2Int(1920, 1080);
         private static readonly Color FaceClearColor = new Color(0f, 0f, 0f, 0f);
@@ -57,7 +65,8 @@ namespace MoonProject.UI.Editor
             panel.clearColor = false;
             GeneratedAssets.CreateOrReplace(panel, UiAssetPaths.PanelSettings);
 
-            var faceTarget = new RenderTexture(FaceReferenceResolution.x, FaceReferenceResolution.y, 0,
+            var faceTarget = new RenderTexture(FaceReferenceResolution.x * FaceRenderScale,
+                FaceReferenceResolution.y * FaceRenderScale, 0,
                 RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB)
             {
                 name = "LofiLunarFaceTarget",

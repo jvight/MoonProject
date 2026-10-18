@@ -9,9 +9,6 @@ namespace MoonProject.Gameplay
     /// </summary>
     public sealed class GameplayVisuals : ScriptableObject
     {
-        [Tooltip("07's weld beam on a structure (TechGlow, additive, flowing bands).")]
-        [SerializeField] private Material _weldBeam;
-
         [Tooltip("Pickup flash where salvage folds into 07 (TechGlow, additive, fresnel ball).")]
         [SerializeField] private Material _flash;
 
@@ -20,9 +17,6 @@ namespace MoonProject.Gameplay
 
         [Tooltip("Camera-facing glints over pieces held on their wrecks (Glint shader, WarmLamp amber).")]
         [SerializeField] private Material _partGlint;
-
-        [Tooltip("A weld's sparks (WarmLamp, additive, soft round sprites).")]
-        [SerializeField] private Material _spark;
 
         [Tooltip("The feel kit's glowing sprites: charge motes, the glow bead, flashes, vacuum sparks and slag beads " +
                  "(SoftGlow, white, additive, soft round; each sprite carries its own colour).")]
@@ -50,11 +44,9 @@ namespace MoonProject.Gameplay
         [Tooltip("Invalid placement hologram material (Generated/Art/Palette/M_HologramInvalid.mat).")]
         [SerializeField] private Material _hologramInvalid;
 
-        public Material WeldBeam => _weldBeam;
         public Material Flash => _flash;
         public Material PieceHalo => _pieceHalo;
         public Material PartGlint => _partGlint;
-        public Material Spark => _spark;
         public Material FeelSprite => _feelSprite;
         public Material BeamCore => _beamCore;
         public Material BeamSheath => _beamSheath;
@@ -80,11 +72,9 @@ namespace MoonProject.Gameplay
         /// <summary>Null when every material and prefab is assigned, else the first missing one.</summary>
         public string Validate()
         {
-            return _weldBeam == null ? "weld beam material is missing"
-                : _flash == null ? "flash material is missing"
+            return _flash == null ? "flash material is missing"
                 : _pieceHalo == null ? "piece halo material is missing"
                 : _partGlint == null ? "part glint material is missing"
-                : _spark == null ? "spark material is missing"
                 : _containers == null || _containers.Length == 0 || Array.IndexOf(_containers, null) >= 0
                     ? "Art's crates are missing (run Gameplay/Materials)"
                 : _feelSprite == null ? "feel sprite material is missing (run Gameplay/FeelVfx)"
@@ -121,14 +111,11 @@ namespace MoonProject.Gameplay
             _hologramInvalid = invalid;
         }
 
-        internal void Populate(Material weldBeam, Material flash, Material pieceHalo, Material partGlint,
-            Material spark)
+        internal void Populate(Material flash, Material pieceHalo, Material partGlint)
         {
-            _weldBeam = weldBeam;
             _flash = flash;
             _pieceHalo = pieceHalo;
             _partGlint = partGlint;
-            _spark = spark;
         }
     }
 }

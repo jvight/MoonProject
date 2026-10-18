@@ -26,6 +26,9 @@ namespace MoonProject.Art.Editor
         public const string AirlockReadoutMaterialName = "R1_AirlockReadout";
         public const string SignalPillarMaterialName = "R1_SignalPillar";
         public const string PeakBeaconRedMaterialName = "R1_PeakBeaconRed";
+        public const string IceCoreLabelMaterialName = "R1_IceCoreLabel";
+        public const string IceCoreFrostMaterialName = "R1_IceCoreFrost";
+        public const string IceCoreWindowMaterialName = "R1_IceCoreWindow";
 
         public const string CableMarkerAmberMaterialPath = ArtPaths.R1MaterialsFolder + "/" + CableMarkerAmberMaterialName + ".mat";
         public const string CrateRimGlowAmberMaterialPath = ArtPaths.R1MaterialsFolder + "/" + CrateRimGlowAmberMaterialName + ".mat";
@@ -35,6 +38,9 @@ namespace MoonProject.Art.Editor
         public const string AirlockReadoutMaterialPath = ArtPaths.R1MaterialsFolder + "/" + AirlockReadoutMaterialName + ".mat";
         public const string SignalPillarMaterialPath = ArtPaths.R1MaterialsFolder + "/" + SignalPillarMaterialName + ".mat";
         public const string PeakBeaconRedMaterialPath = ArtPaths.R1MaterialsFolder + "/" + PeakBeaconRedMaterialName + ".mat";
+        public const string IceCoreLabelMaterialPath = ArtPaths.R1MaterialsFolder + "/" + IceCoreLabelMaterialName + ".mat";
+        public const string IceCoreFrostMaterialPath = ArtPaths.R1MaterialsFolder + "/" + IceCoreFrostMaterialName + ".mat";
+        public const string IceCoreWindowMaterialPath = ArtPaths.R1MaterialsFolder + "/" + IceCoreWindowMaterialName + ".mat";
 
         public const string LanderReserveAlbedoPath = R1MaterialRecipes.TexturesFolder + "/T_R1_LanderReserve_Albedo.png";
         public const string LanderReserveEmissionPath = R1MaterialRecipes.TexturesFolder + "/T_R1_LanderReserve_Emission.png";
@@ -42,6 +48,8 @@ namespace MoonProject.Art.Editor
         public const string AirlockReadoutEmissionPath = R1MaterialRecipes.TexturesFolder + "/T_R1_AirlockReadout_Emission.png";
         public const string PeakBeaconRedAlbedoPath = R1MaterialRecipes.TexturesFolder + "/T_R1_PeakBeaconRed_Albedo.png";
         public const string PeakBeaconRedEmissionPath = R1MaterialRecipes.TexturesFolder + "/T_R1_PeakBeaconRed_Emission.png";
+        public const string IceCoreLabelAlbedoPath = R1MaterialRecipes.TexturesFolder + "/T_R1_IceCoreLabel_Albedo.png";
+        public const string IceCoreFrostAlbedoPath = R1MaterialRecipes.TexturesFolder + "/T_R1_IceCoreFrost_Albedo.png";
 
         public const string DeadChargingPostPrefabPath = PropsModelsFolder + "/DeadChargingPost.prefab";
         public const string GroundCableSegmentPrefabPath = PropsModelsFolder + "/GroundCableSegment.prefab";
@@ -56,6 +64,7 @@ namespace MoonProject.Art.Editor
         public const string CrateMOpenPrefabPath = ArtPaths.R1ModelsFolder + "/Crates/Crate_M_Open.prefab";
         public const string PadFragmentCoilPlatePrefabPath = PropsModelsFolder + "/PadFragment_CoilPlate.prefab";
         public const string PadFragmentGuideRailPrefabPath = PropsModelsFolder + "/PadFragment_GuideRail.prefab";
+        public const string IceCoreTubePrefabPath = PropsModelsFolder + "/IceCoreTube.prefab";
         public const string HabitatModulesPrefabPath = ArtPaths.R1ModelsFolder + "/Ruins/HabitatModules.prefab";
 
         /// <summary>Loads the <c>MoonProject/R1/SignalPillar</c> shader asset.</summary>
@@ -83,6 +92,9 @@ namespace MoonProject.Art.Editor
             R1MaterialSpec lampSpec = R1MaterialRecipes.Get(R1MaterialSlot.LampAmber);
             R1MaterialSpec orangeSpec = R1MaterialRecipes.Get(R1MaterialSlot.OrangeStripe);
             R1MaterialSpec signageSpec = R1MaterialRecipes.Get(R1MaterialSlot.Signage);
+            R1MaterialSpec creamSpec = R1MaterialRecipes.Get(R1MaterialSlot.CreamEnamel);
+            R1MaterialSpec bareSteelSpec = R1MaterialRecipes.Get(R1MaterialSlot.BareSteel);
+            R1MaterialSpec darkGlassSpec = R1MaterialRecipes.Get(R1MaterialSlot.DarkGlass);
 
             // 1. R1_CableMarkerAmber: faint, very dim "follow me" marker every 8 m (well below bloom threshold)
             Material cableMarkerMat = R1MaterialLibrary.CreateMaterial(r1Lit, lampSpec);
@@ -176,6 +188,62 @@ namespace MoonProject.Art.Editor
             crateRimGlowMat.SetFloat("_HotCoreThreshold", 0.98f);
             crateRimGlowMat.SetFloat("_HotCorePeak", 0.48f);
             GeneratedAssets.CreateOrReplace(crateRimGlowMat, CrateRimGlowAmberMaterialPath);
+
+            // 9. R1_IceCoreLabel: stencilled cryo plaque (CORE 41 · H2O · I.V. 10/88) with zero emission
+            Material iceCoreLabelMat = R1MaterialLibrary.CreateMaterial(r1Lit, signageSpec);
+            iceCoreLabelMat.name = IceCoreLabelMaterialName;
+            iceCoreLabelMat.SetTexture("_BaseMap", LoadRequiredTexture(IceCoreLabelAlbedoPath));
+            iceCoreLabelMat.SetTexture("_EmissionMap", null);
+            iceCoreLabelMat.SetColor("_EmissionColor", Color.black);
+            iceCoreLabelMat.SetFloat("_EmissionStrength", 0.0f);
+            iceCoreLabelMat.SetFloat("_BloomSafeMax", 0.50f);
+            iceCoreLabelMat.SetFloat("_HotCorePeak", 0.60f);
+            iceCoreLabelMat.SetFloat("_DustAmount", 0.04f);
+            iceCoreLabelMat.SetFloat("_EdgeWearAmount", 0.22f);
+            iceCoreLabelMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+            GeneratedAssets.CreateOrReplace(iceCoreLabelMat, IceCoreLabelMaterialPath);
+
+            // 10. R1_IceCoreFrost: crystalline rime frost & frosted lunar ice core that catches 07's headlamps (no emission)
+            Material iceCoreFrostMat = R1MaterialLibrary.CreateMaterial(r1Lit, creamSpec);
+            iceCoreFrostMat.name = IceCoreFrostMaterialName;
+            iceCoreFrostMat.SetTexture("_BaseMap", LoadRequiredTexture(IceCoreFrostAlbedoPath));
+            iceCoreFrostMat.SetTexture("_BumpMap", LoadRequiredTexture(R1MaterialRecipes.GetNormalTexturePath(bareSteelSpec)));
+            iceCoreFrostMat.SetFloat("_BumpScale", 1.30f);
+            iceCoreFrostMat.SetFloat("_MetallicScale", 0.18f);
+            iceCoreFrostMat.SetFloat("_SmoothnessMin", 0.78f);
+            iceCoreFrostMat.SetFloat("_SmoothnessMax", 0.96f);
+            iceCoreFrostMat.SetColor("_EdgeWearColor", new Color(0.95f, 0.99f, 1.00f, 1f));
+            iceCoreFrostMat.SetFloat("_EdgeWearAmount", 0.68f);
+            iceCoreFrostMat.SetFloat("_EdgeWearSmoothness", 0.96f);
+            iceCoreFrostMat.SetColor("_DustColor", new Color(0.82f, 0.92f, 1.00f, 1f));
+            iceCoreFrostMat.SetFloat("_DustAmount", 0.24f);
+            iceCoreFrostMat.SetFloat("_DustSmoothness", 0.86f);
+            iceCoreFrostMat.SetTexture("_EmissionMap", null);
+            iceCoreFrostMat.SetColor("_EmissionColor", Color.black);
+            iceCoreFrostMat.SetFloat("_EmissionStrength", 0.0f);
+            iceCoreFrostMat.SetFloat("_BloomSafeMax", 0.35f);
+            iceCoreFrostMat.SetFloat("_HotCorePeak", 0.45f);
+            iceCoreFrostMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+            GeneratedAssets.CreateOrReplace(iceCoreFrostMat, IceCoreFrostMaterialPath);
+
+            // 11. R1_IceCoreWindow: high-glint cryo sight glass that catches 07's headlamps in eclipse dark (no emission)
+            Material iceCoreWindowMat = R1MaterialLibrary.CreateMaterial(r1Lit, darkGlassSpec);
+            iceCoreWindowMat.name = IceCoreWindowMaterialName;
+            iceCoreWindowMat.SetColor("_BaseColor", new Color(0.75f, 0.88f, 0.98f, 1f));
+            iceCoreWindowMat.SetFloat("_MetallicScale", 0.38f);
+            iceCoreWindowMat.SetFloat("_SmoothnessMin", 0.88f);
+            iceCoreWindowMat.SetFloat("_SmoothnessMax", 0.98f);
+            iceCoreWindowMat.SetColor("_EdgeWearColor", new Color(0.90f, 0.97f, 1.00f, 1f));
+            iceCoreWindowMat.SetFloat("_EdgeWearAmount", 0.62f);
+            iceCoreWindowMat.SetFloat("_EdgeWearSmoothness", 0.98f);
+            iceCoreWindowMat.SetFloat("_DustAmount", 0.03f);
+            iceCoreWindowMat.SetTexture("_EmissionMap", null);
+            iceCoreWindowMat.SetColor("_EmissionColor", Color.black);
+            iceCoreWindowMat.SetFloat("_EmissionStrength", 0.0f);
+            iceCoreWindowMat.SetFloat("_BloomSafeMax", 0.35f);
+            iceCoreWindowMat.SetFloat("_HotCorePeak", 0.45f);
+            iceCoreWindowMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+            GeneratedAssets.CreateOrReplace(iceCoreWindowMat, IceCoreWindowMaterialPath);
         }
 
         /// <summary>
@@ -229,6 +297,13 @@ namespace MoonProject.Art.Editor
             else if (modelPath.EndsWith("/PeakBeacon.fbx", StringComparison.Ordinal))
             {
                 ReplaceRendererSlotMaterial(root, "Lamp", R1MaterialRecipes.LampAmberSlot, LoadOrBuildMaterial(PeakBeaconRedMaterialPath));
+            }
+            else if (modelPath.EndsWith("/IceCoreTube.fbx", StringComparison.Ordinal))
+            {
+                ReplaceRendererSlotMaterial(root, "LabelPlate", R1MaterialRecipes.SignageSlot, LoadOrBuildMaterial(IceCoreLabelMaterialPath));
+                ReplaceRendererSlotMaterial(root, "FrostCap", R1MaterialRecipes.CreamEnamelSlot, LoadOrBuildMaterial(IceCoreFrostMaterialPath));
+                ReplaceRendererSlotMaterial(root, "CoreSample", R1MaterialRecipes.CreamEnamelSlot, LoadOrBuildMaterial(IceCoreFrostMaterialPath));
+                ReplaceRendererSlotMaterial(root, "SightWindow", R1MaterialRecipes.DarkGlassSlot, LoadOrBuildMaterial(IceCoreWindowMaterialPath));
             }
         }
 

@@ -62,6 +62,22 @@ namespace MoonProject.Rover
         public const string StitchOrigin = "StitchOrigin";
         public const string CoilSocketT1 = "CoilSocket_T1";
 
+        /// <summary>Mechanical iris blade count on the chest cutter nozzle aperture (<see cref="CutterOrigin"/>).</summary>
+        public const int NozzleBladeCount = 6;
+        public const string NozzleHotCore = "NozzleHotCore";
+        public const string NozzleSpillLight = "NozzleSpillLight";
+
+        /// <summary>Iris blade child name <paramref name="index"/> (0..5) under <see cref="CutterOrigin"/>.</summary>
+        public static string NozzleBlade(int index)
+        {
+            if (index < 0 || index >= NozzleBladeCount)
+            {
+                throw new ArgumentOutOfRangeException(nameof(index), index, "Nozzle blade index is 0..5.");
+            }
+
+            return "NozzleBlade_" + index;
+        }
+
         public const string DigScoop = "DigScoop";
         public const string ScoopArms = "ScoopArms";
         public const string ScoopBucket = "ScoopBucket";

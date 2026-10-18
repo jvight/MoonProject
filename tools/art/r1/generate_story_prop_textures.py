@@ -160,6 +160,148 @@ def _build_peak_beacon_red_pair(res: int = 128) -> tuple[Image.Image, Image.Imag
     return Image.fromarray(alb_u8, mode="RGBA"), Image.fromarray(em_u8, mode="RGB")
 
 
+def _ensure_ice_core_glyphs() -> None:
+    """Register glyph strokes needed for 'CORE 41 · H₂O · I.V. 10/88' without altering existing readouts."""
+    gsa.GLYPH_STROKES.setdefault(
+        "2",
+        [
+            (0.14, 0.24, 0.30, 0.08),
+            (0.30, 0.08, 0.70, 0.08),
+            (0.70, 0.08, 0.86, 0.22),
+            (0.86, 0.22, 0.86, 0.38),
+            (0.86, 0.38, 0.14, 0.92),
+            (0.14, 0.92, 0.88, 0.92),
+        ],
+    )
+    gsa.GLYPH_STROKES.setdefault(
+        "₂",
+        [
+            (0.18, 0.54, 0.32, 0.42),
+            (0.32, 0.42, 0.68, 0.42),
+            (0.68, 0.42, 0.82, 0.52),
+            (0.82, 0.52, 0.82, 0.64),
+            (0.82, 0.64, 0.18, 0.98),
+            (0.18, 0.98, 0.84, 0.98),
+        ],
+    )
+    gsa.GLYPH_STROKES.setdefault(
+        "/",
+        [
+            (0.20, 0.94, 0.80, 0.06),
+        ],
+    )
+
+
+def _build_ice_core_label(w: int = 512, h: int = 128) -> Image.Image:
+    """Render a 2x supersampled 1980s stencilled cryo specimen label reading 'CORE 41 · H₂O · I.V. 10/88'."""
+    _ensure_ice_core_glyphs()
+    hi_w, hi_h = w * 2, h * 2
+    albedo = Image.new("RGBA", (hi_w, hi_h), color=(*gsa.CREAM_BG, 255))
+    draw = ImageDraw.Draw(albedo)
+
+    prev_mid_dot = gsa.GLYPH_STROKES["·"]
+    prev_period = gsa.GLYPH_STROKES["."]
+    try:
+        gsa.GLYPH_STROKES["·"] = [(0.34, 0.50, 0.66, 0.50)]
+        gsa.GLYPH_STROKES["."] = [(0.36, 0.88, 0.64, 0.88)]
+
+        # Outer dark anodized border frame + inner cream specimen plate
+        draw.rounded_rectangle(
+            [6, 6, hi_w - 7, hi_h - 7],
+            radius=14,
+            fill=(*gsa.CREAM_TILE, 255),
+            outline=(*gsa.STENCIL_DARK, 255),
+            width=6,
+        )
+
+        # Top warm orange identification header band
+        header_bottom = int(hi_h * 0.29)
+        draw.rectangle([12, 12, hi_w - 13, header_bottom], fill=(*gsa.ORANGE_BAND, 255))
+        draw.line([(12, header_bottom), (hi_w - 13, header_bottom)], fill=(*gsa.STENCIL_DARK, 255), width=4)
+
+        # Sub-header stencil text inside orange band
+        gsa._draw_stencil_text(
+            draw,
+            "LUMEN HYDROLOGY · CRYO SPECIMEN",
+            cx=hi_w * 0.5,
+            cy=(12 + header_bottom) * 0.5,
+            char_w=17.0,
+            char_h=28.0,
+            stroke_w=4.2,
+            spacing=5.0,
+            color=gsa.CREAM_TILE,
+            bg_color=gsa.ORANGE_BAND,
+            stencil_bridges=True,
+        )
+
+        # Corner mounting rivet marks
+        for rx in (28, hi_w - 29):
+            for ry in (header_bottom + 20, hi_h - 24):
+                draw.ellipse([rx - 7, ry - 7, rx + 7, ry + 7], fill=(154, 160, 170, 255), outline=(*gsa.STENCIL_DARK, 255), width=2)
+
+        # Main stencilled label text: CORE 41 · H₂O · I.V. 10/88
+        gsa._draw_stencil_text(
+            draw,
+            "CORE 41 · H₂O · I.V. 10/88",
+            cx=hi_w * 0.5,
+            cy=hi_h * 0.65,
+            char_w=27.0,
+            char_h=76.0,
+            stroke_w=8.4,
+            spacing=7.5,
+            color=gsa.STENCIL_DARK,
+            bg_color=gsa.CREAM_TILE,
+            stencil_bridges=True,
+        )
+    finally:
+        gsa.GLYPH_STROKES["·"] = prev_mid_dot
+        gsa.GLYPH_STROKES["."] = prev_period
+
+    return albedo.resize((w, h), resample=Image.Resampling.LANCZOS)
+
+
+def _build_ice_core_frost_albedo(res: int = 128) -> Image.Image:
+    """Generate a two-zone 128x128 albedo map for IceCoreTube's frost end (U < 0.5) and internal frosted grey core (U >= 0.5)."""
+    y, x = np.mgrid[0:res, 0:res].astype(np.float32)
+    u = (x + 0.5) / res
+    v = (y + 0.5) / res
+
+    # Deterministic multi-frequency crystalline interference pattern (Voronoi/facet-like rime grain)
+    c1 = np.sin(u * 38.0 * np.pi + np.cos(v * 29.0 * np.pi) * 1.4)
+    c2 = np.cos(v * 44.0 * np.pi - np.sin(u * 31.0 * np.pi) * 1.6)
+    c3 = np.sin((u + v) * 64.0 * np.pi) * np.cos((u - v) * 52.0 * np.pi)
+    crystal = np.clip(0.5 + 0.24 * c1 + 0.16 * c2 + 0.14 * c3, 0.0, 1.0)
+    sparkle = np.power(crystal, 3.0)
+
+    # Zone A (U < 0.5): Crystalline white-blue rime frost on one end of the cryo sleeve
+    frost_r = 0.82 + 0.14 * crystal + 0.04 * sparkle
+    frost_g = 0.90 + 0.08 * crystal + 0.02 * sparkle
+    frost_b = 0.96 + 0.04 * crystal
+
+    # Zone B (U >= 0.5): Frosted grey lunar core sample with stratigraphic dust/ice bands along U/V
+    strata = (
+        0.50
+        + 0.22 * np.sin(u * 26.0 * np.pi)
+        + 0.15 * np.cos(u * 58.0 * np.pi + 0.7)
+        + 0.13 * np.sin(u * 110.0 * np.pi + v * 4.0 * np.pi)
+    )
+    strata = np.clip(strata, 0.0, 1.0)
+    # Subtle hydrated blue-ice mineral horizon near U = 0.74..0.80
+    h2o_band = np.exp(-(((u - 0.76) / 0.045) ** 2))
+    core_r = 0.52 + 0.20 * strata + 0.10 * crystal - 0.06 * h2o_band + 0.08 * sparkle
+    core_g = 0.58 + 0.20 * strata + 0.10 * crystal + 0.04 * h2o_band + 0.08 * sparkle
+    core_b = 0.65 + 0.20 * strata + 0.10 * crystal + 0.12 * h2o_band + 0.07 * sparkle
+
+    is_core = (u >= 0.5).astype(np.float32)
+    r = np.clip(frost_r * (1.0 - is_core) + core_r * is_core, 0.0, 1.0)
+    g = np.clip(frost_g * (1.0 - is_core) + core_g * is_core, 0.0, 1.0)
+    b = np.clip(frost_b * (1.0 - is_core) + core_b * is_core, 0.0, 1.0)
+    a = np.ones_like(r)
+
+    rgba_u8 = np.clip(np.rint(np.stack([r, g, b, a], axis=-1) * 255.0), 0, 255).astype(np.uint8)
+    return Image.fromarray(rgba_u8, mode="RGBA")
+
+
 def main() -> None:
     repo_root = Path(__file__).resolve().parents[3]
     out_dir = repo_root / "Assets" / "_Project" / "Art" / "R1" / "Textures"
@@ -176,6 +318,12 @@ def main() -> None:
     pb_alb, pb_em = _build_peak_beacon_red_pair(128)
     pb_alb.save(out_dir / "T_R1_PeakBeaconRed_Albedo.png", compress_level=9)
     pb_em.save(out_dir / "T_R1_PeakBeaconRed_Emission.png", compress_level=9)
+
+    ic_alb = _build_ice_core_label(512, 128)
+    ic_alb.save(out_dir / "T_R1_IceCoreLabel_Albedo.png", compress_level=9)
+
+    ic_frost = _build_ice_core_frost_albedo(128)
+    ic_frost.save(out_dir / "T_R1_IceCoreFrost_Albedo.png", compress_level=9)
     print(f"Saved story prop textures to {out_dir}")
 
 
