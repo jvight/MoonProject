@@ -64,6 +64,22 @@ namespace MoonProject.UI
         [Range(2f, 20f)]
         [SerializeField] private float _dragThreshold = 6f;
 
+        [Tooltip("Seconds the dragged part's icon takes to close most of the gap to the pointer (a soft follow).")]
+        [Range(0f, 0.3f)]
+        [SerializeField] private float _dragFollowSeconds = 0.05f;
+
+        [Tooltip("Seconds a refused part's icon eases back into its own slot.")]
+        [Range(0.05f, 1f)]
+        [SerializeField] private float _dragReturnSeconds = 0.32f;
+
+        [Tooltip("Seconds a fitted part's icon eases into the device that took it before it is gone.")]
+        [Range(0.05f, 1f)]
+        [SerializeField] private float _dragFitSeconds = 0.26f;
+
+        [Tooltip("Opacity of the part left behind in its slot while its icon is dragged.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _dragSourceAlpha = 0.3f;
+
         [Tooltip("Gap (px) between a socket or part and the tooltip that names it.")]
         [Range(0f, 40f)]
         [SerializeField] private float _tooltipGap = 10f;
@@ -284,6 +300,14 @@ namespace MoonProject.UI
 
         public float DragThreshold => _dragThreshold;
 
+        public float DragFollowSeconds => _dragFollowSeconds;
+
+        public float DragReturnSeconds => _dragReturnSeconds;
+
+        public float DragFitSeconds => _dragFitSeconds;
+
+        public float DragSourceAlpha => _dragSourceAlpha;
+
         public float TooltipGap => _tooltipGap;
 
         public float HoldGridX => _holdGridX;
@@ -422,6 +446,11 @@ namespace MoonProject.UI
                 _holdIconSize <= 0f || _deviceIconSize <= 0f || _pressFlashSeconds <= 0f)
             {
                 return "cargo rover diagram or leader line settings are non-positive";
+            }
+
+            if (_dragThreshold <= 0f || _dragFollowSeconds < 0f || _dragReturnSeconds <= 0f || _dragFitSeconds <= 0f)
+            {
+                return "cargo drag timings are out of range";
             }
 
             return null;

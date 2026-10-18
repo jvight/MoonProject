@@ -48,6 +48,9 @@
                     <ui:VisualElement name="next-line" class="name-tag" picking-mode="Ignore">
                         <ui:VisualElement name="next-line-shadow" class="soft-shadow soft-shadow--name" />
                         <ui:Label name="next-line-text" class="next-line__text" picking-mode="Ignore" />
+                        <ui:VisualElement name="next-line-progress" class="next-line__progress" picking-mode="Ignore">
+                            <ui:VisualElement name="next-line-progress-fill" class="next-line__progress-fill" picking-mode="Ignore" />
+                        </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement name="readout" class="readout" picking-mode="Ignore">

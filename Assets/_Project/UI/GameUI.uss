@@ -755,6 +755,24 @@ Label {
     opacity: 0.7;
 }
 
+/* The weld's bar under the build step's line: a calm cyan fill on an amber track */
+.next-line__progress {
+    height: 6px;
+    margin-top: 8px;
+    border-radius: 3px;
+    background-color: var(--moon-track);
+}
+
+.next-line__progress-fill {
+    width: 0;
+    height: 6px;
+    border-radius: 3px;
+    background-color: var(--crt-cyan-dim);
+    transition-property: width;
+    transition-duration: 0.15s;
+    transition-timing-function: ease-out-sine;
+}
+
 /* 07's cells (docs/design/first-hour-v2 6.4): a small row of pills on a glass plate, top left, one pill per cell */
 
 /* The battery dial at the bottom left */
@@ -1376,10 +1394,10 @@ Label {
     align-items: center;
 }
 
+/* Compact: the panel hugs its cards (one row for a few structures, wrapping only past the safe width) */
 .build-strip__body {
-    width: 960px;
-    max-width: 980px;
-    padding: 12px 16px;
+    max-width: 1100px;
+    padding: 12px 18px 10px 18px;
     border-radius: 10px;
     border-width: 1.5px;
     border-color: var(--glass-rim);
@@ -1387,18 +1405,22 @@ Label {
 }
 
 .build-strip__header {
-    display: none;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0 6px 4px 6px;
 }
 
 .build-strip__title {
-    font-size: 18px;
+    font-size: 20px;
     letter-spacing: 3px;
     color: var(--glass-hi);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
 .build-strip__status {
-    font-size: 17px;
+    margin-left: 32px;
+    font-size: 18px;
     letter-spacing: 1px;
     color: var(--glass-sel);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
@@ -1417,8 +1439,8 @@ Label {
 }
 
 .build-card {
-    width: 174px;
-    padding: 8px 10px 7px 10px;
+    width: 196px;
+    padding: 10px 12px 9px 12px;
     margin: 5px;
     border-radius: 7px;
     border-width: 1.5px;
@@ -1426,6 +1448,11 @@ Label {
     background-color: var(--glass-deep);
     align-items: center;
     justify-content: space-between;
+}
+
+/* The pointer over a card: its rim lights before the hover selects it */
+.build-card:hover {
+    border-color: var(--glass-rim);
 }
 
 .build-card--selected {
@@ -1447,8 +1474,8 @@ Label {
 }
 
 .build-card__icon {
-    width: 48px;
-    height: 48px;
+    width: 56px;
+    height: 56px;
     margin-bottom: 4px;
     -unity-background-scale-mode: scale-to-fit;
     -unity-background-image-tint-color: var(--moon-warm-lamp);
@@ -1467,7 +1494,7 @@ Label {
 }
 
 .build-card__name {
-    font-size: 15px;
+    font-size: 20px;
     color: var(--moon-text);
     white-space: nowrap;
     margin-bottom: 5px;
@@ -1492,14 +1519,14 @@ Label {
 }
 
 .build-card__cost .material-icon {
-    width: 16px;
-    height: 16px;
+    width: 20px;
+    height: 20px;
 }
 
 .build-card__cost .material-slot__count {
     min-width: 0;
     margin-left: 4px;
-    font-size: 14px;
+    font-size: 18px;
     color: var(--glass-hi);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Bold.asset");
 }
@@ -1514,8 +1541,8 @@ Label {
 
 /* The share of 07's battery the weld takes, under the materials: the calm cyan telemetry accent */
 .build-card__energy {
-    margin-top: 3px;
-    font-size: 13px;
+    margin-top: 4px;
+    font-size: 18px;
     color: var(--crt-cyan-dim);
     -unity-text-align: middle-center;
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
@@ -1551,13 +1578,18 @@ Label {
     flex-shrink: 0;
 }
 
+/* The key row under the cards: what picks, what leaves, on the active device */
 .build-strip__footer {
-    display: none;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    margin-top: 8px;
 }
 
 .build-strip__hint-item {
     flex-direction: row;
     align-items: center;
+    margin: 0 18px;
 }
 
 .build-strip__hint-item .glyph--small.glyph--pad {
@@ -1566,8 +1598,8 @@ Label {
 }
 
 .build-strip__hint {
-    font-size: 16px;
-    color: var(--moon-text-faint);
+    font-size: 18px;
+    color: var(--moon-text-dim);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
@@ -1580,7 +1612,7 @@ Label {
 }
 
 .build-reason__text {
-    font-size: 19px;
+    font-size: 22px;
     color: var(--moon-warm-accent);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }

@@ -611,18 +611,6 @@
             "text": "Cần dọn chỗ trước"
         },
         {
-            "key": "build.hint.rotate",
-            "text": "Xoay"
-        },
-        {
-            "key": "build.hint.snap",
-            "text": "Khớp"
-        },
-        {
-            "key": "build.hint.place",
-            "text": "Đặt"
-        },
-        {
             "key": "build.hint.weld",
             "text": "Giữ để hàn"
         },
@@ -987,12 +975,60 @@
             "text": "Đóng"
         },
         {
-            "key": "ui.face.move",
-            "text": "Di chuyển"
+            "key": "ui.face.fit",
+            "text": "Lắp"
         },
         {
-            "key": "ui.face.select",
+            "key": "ui.face.build",
+            "text": "Dựng"
+        },
+        {
+            "key": "ui.cargo.drag.not_docked",
+            "text": "Chỉ lắp được khi đỗ trên bệ sạc"
+        },
+        {
+            "key": "ui.cargo.drag.to_cutter",
+            "text": "Thả vào mỏ cắt"
+        },
+        {
+            "key": "ui.cargo.drag.nowhere",
+            "text": "07 chưa có chỗ lắp món này"
+        },
+        {
+            "key": "glyph.combo.drag_e",
+            "text": "Kéo/E"
+        },
+        {
+            "key": "glyph.combo.mouse_e",
+            "text": "Chuột/E"
+        },
+        {
+            "key": "glyph.combo.b_esc",
+            "text": "B/Esc"
+        },
+        {
+            "key": "glyph.combo.pad_y_b",
+            "text": "Y/B"
+        },
+        {
+            "key": "glyph.keyboard.b",
+            "text": "B"
+        },
+        {
+            "key": "build.hint.pick",
             "text": "Chọn"
+        },
+        {
+            "key": "build.hint.leave",
+            "text": "Thoát"
+        },
+        {
+            "key": "build.step.place",
+            "text": "Lái đến vạch sáng trên sân rồi bấm {0} để đặt"
+        },
+        {
+            "key": "build.step.weld",
+            "text": "Giữ {0} để hàn"
         }
     ]
 }
