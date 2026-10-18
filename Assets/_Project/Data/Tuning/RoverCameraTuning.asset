@@ -286,7 +286,7 @@ MonoBehaviour:
     _readoutFade: 0.4
     _speckStart: {x: -0.2, y: 0}
     _speckEnd: {x: -0.34, y: -0.7}
-    _bowedPitch: -15
+    _bowedPitch: -2
     _yawLimit: 70
     _pitchDownLimit: -15
     _pitchUpLimit: 50

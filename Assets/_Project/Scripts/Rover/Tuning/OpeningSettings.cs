@@ -167,9 +167,10 @@ namespace MoonProject.Rover
         [SerializeField] private Vector2 _speckEnd = new Vector2(-0.34f, -0.7f);
 
         [Header("Gaze (deg, relative to 07's heading)")]
-        [Tooltip("Gaze pitch while 07's head is still bowed (O1-O5): down at its dock.")]
-        [Range(-30f, 0f)]
-        [SerializeField] private float _bowedPitch = -15f;
+        [Tooltip("Gaze pitch while 07's head is still bowed (O1-O5): a little below level, so the sky and the lander's " +
+                 "beacon show through the lid's slit instead of only the ground and the cable.")]
+        [Range(-30f, 10f)]
+        [SerializeField] private float _bowedPitch = -2f;
 
         [Tooltip("Soft yaw limit either way.")]
         [Range(20f, 120f)]

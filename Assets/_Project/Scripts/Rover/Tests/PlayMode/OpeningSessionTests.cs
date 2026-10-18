@@ -200,7 +200,7 @@ namespace MoonProject.Rover.PlayModeTests
 
                 for (int i = 0; i < shots.Length; i++)
                 {
-                    if (!taken[i] && script.Phase == shots[i].Phase && script.PhaseTime >= shots[i].Share * script.PhaseLength)
+                    if (!taken[i] && PassedShot(script, shots[i].Phase, shots[i].Share))
                     {
                         taken[i] = true;
                         Capture(shots[i].Name);
@@ -209,7 +209,7 @@ namespace MoonProject.Rover.PlayModeTests
 
                 for (int i = 0; i < keyShots.Length; i++)
                 {
-                    if (!keyTaken[i] && script.Phase == keyShots[i].Phase && script.PhaseTime >= keyShots[i].Share * script.PhaseLength)
+                    if (!keyTaken[i] && PassedShot(script, keyShots[i].Phase, keyShots[i].Share))
                     {
                         keyTaken[i] = true;
                         CaptureKeyFrame(keyShots[i].Name);
@@ -720,6 +720,20 @@ namespace MoonProject.Rover.PlayModeTests
             Vector3 lens = _context.Get<IRoverRig>().ScanOrigin.position;
             Vector2 expected = LensGaze.Angles(Quaternion.Inverse(heading) * (wake.Position - lens));
             Assert.AreEqual(expected.x, script.Gaze.Yaw, GazeTolerance, "O6 looks at the dead charging post");
+        }
+
+        /// <summary>
+        /// The script is at or past <paramref name="share"/> of <paramref name="phase"/>: in it, or already in a later
+        /// phase (a long editor frame can step over a whole phase's window, which used to miss the shot).
+        /// </summary>
+        private static bool PassedShot(OpeningScript script, OpeningPhase phase, float share)
+        {
+            if (script.Phase == phase)
+            {
+                return script.PhaseTime >= share * script.PhaseLength;
+            }
+
+            return script.Phase != OpeningPhase.Idle && script.Phase != OpeningPhase.HurryLid && script.Phase > phase;
         }
 
         /// <summary>A hidden title element leaves layout (display none) with its opacity as it was.</summary>
