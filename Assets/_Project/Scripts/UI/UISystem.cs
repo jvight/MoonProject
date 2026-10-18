@@ -279,6 +279,7 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<StructureLearned>(OnStructureLearned));
             _tokens.Add(events.Subscribe<BatteryArcRevealed>(OnBatteryArcRevealed));
             _tokens.Add(events.Subscribe<StructurePlaced>(_ => _director.NotifyUsed(InteractionKind.Build)));
+            _tokens.Add(events.Subscribe<StoryPartCollected>(collected => _pickups?.PartCollected(collected.PartId)));
             _tokens.Add(events.Subscribe<StructureRemoved>(_ => _director.NotifyUsed(InteractionKind.Deconstruct)));
 
             services.Input.Menu.Enable();
@@ -336,7 +337,7 @@ namespace MoonProject.UI
             _prompt = new ContextPrompt(_layout, _tuning.Prompts, _director, services.View, _glyphs, _localization,
                 services.Events, new[] { _layout.BuildStrip });
             _pickups = new PickupFeed(_layout, _tuning.PickupFeed, _numbers, _localization, services.Materials,
-                services.Catalog, services.Events);
+                services.Catalog, services.Events, _roverDiagram);
             _salvageRing = new SalvageRing(_layout, _tuning.Salvage, _tuning.Prompts, services.Salvage, services.View);
             _buildStrip = new BuildStripView(_layout, _tuning.BuildStripReveal, _tuning.Prompts, _localization,
                 _numbers, services.Materials, services.View, services.BuildField, _structureIcons, _glyphs,

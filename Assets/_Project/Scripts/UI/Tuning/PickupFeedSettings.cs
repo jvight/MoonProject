@@ -19,6 +19,15 @@ namespace MoonProject.UI
         [Range(1, 6)]
         [SerializeField] private int _maxRows = 3;
 
+        [Tooltip("Rows for story parts (the spare igniter, a core sample), apart from the material rows: a part " +
+                 "takes a free row or the one that has rested longest.")]
+        [Range(1, 4)]
+        [SerializeField] private int _partRows = 2;
+
+        [Tooltip("Seconds a story part's row stays up before it fades (a part is read, not counted).")]
+        [Range(1f, 10f)]
+        [SerializeField] private float _partLingerSeconds = 4f;
+
         [Tooltip("Pixels (at 1080p) a row slides in from the left as it appears.")]
         [Range(0f, 200f)]
         [SerializeField] private float _slideDistance = 72f;
@@ -46,6 +55,10 @@ namespace MoonProject.UI
         public RevealSettings Reveal => _reveal;
 
         public int MaxRows => _maxRows;
+
+        public int PartRows => _partRows;
+
+        public float PartLingerSeconds => _partLingerSeconds;
 
         public float SlideDistance => _slideDistance;
 
