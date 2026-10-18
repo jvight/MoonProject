@@ -26,6 +26,9 @@ namespace MoonProject.Autoplay
         private const float DriveSeconds = 150f;
         private const float StandOff = 4f;
         private const float BaseSpacing = 7f;
+
+        /// <summary>The bank stands close to the pad, well inside the cable reach, as a sensible player places it.</summary>
+        private const float BankPadSpacing = 4.5f;
         private const float RuinsGateOffset = 10f;
         private const float ScanStandOff = 3.5f;
         private const float PanelStandOff = 2.5f;
@@ -266,7 +269,7 @@ namespace MoonProject.Autoplay
         public IEnumerator UntilReached(OpeningMilestone milestone, string what, float seconds = MilestoneSeconds)
         {
             yield return _bot.Until(() => _milestones.Exists(reached => reached.Milestone == milestone),
-                seconds, what, () => "The objective line is '" + G.Opening.Flow.Current + "'. " + BaseState());
+                seconds, what, () => "The objective line is '" + G.Opening.Flow.Current + "'." + UnlinkedReason() + " " + BaseState());
         }
 
         /// <summary>B10: the night-ready base lets the first sunset run.</summary>
@@ -289,11 +292,40 @@ namespace MoonProject.Autoplay
             {
                 text.Append(' ').Append(structure.Definition.Id).Append(" built=").Append(structure.IsBuilt)
                     .Append(" stored=").Append(structure.StoredWattHours.ToString("0.0", CultureInfo.InvariantCulture))
+                    .Append(" linked=").Append(IsLinkedToPad(structure))
                     .Append(" supply=").Append(structure.SupplyRatio.ToString("0.00", CultureInfo.InvariantCulture))
                     .Append(" at ").Append(structure.Pose.Position).Append(';');
             }
 
             return text.ToString();
+        }
+
+        private bool IsLinkedToPad(PlacedStructure structure)
+        {
+            foreach (PlacedStructure other in G.PlacedBase.Structures)
+            {
+                if (other.Definition.Id == StructureIds.ChargingPad)
+                {
+                    return other.InstanceId == structure.InstanceId ||
+                           G.PlacedBase.PowerGrid.AreConnected(structure.InstanceId, other.InstanceId);
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>Why a built structure may not work: standing but outside the pad's cable reach.</summary>
+        private string UnlinkedReason()
+        {
+            foreach (PlacedStructure structure in G.PlacedBase.Structures)
+            {
+                if (structure.IsBuilt && !IsLinkedToPad(structure))
+                {
+                    return " " + structure.Definition.Id + " is built but not linked to the pad (out of cable reach).";
+                }
+            }
+
+            return string.Empty;
         }
 
         /// <summary>Where the built structure <paramref name="structureId"/> stands (the build spot is only where 07 aimed).</summary>
@@ -317,6 +349,17 @@ namespace MoonProject.Autoplay
         }
 
         public static float Spacing => BaseSpacing;
+
+        public static float BankSpacing => BankPadSpacing;
+
+        /// <summary>The scan verb's first-use key, shared with B3's own scan loop.</summary>
+        public const string ScanVerb = "scan: hold E";
+
+        /// <summary>Records that a verb has been used, so its chip is not expected as a first-use hint again.</summary>
+        public void NoteUsed(string verb)
+        {
+            _verbsUsed.Add(verb);
+        }
 
         /// <summary>Notes a verb's chip on its first use; a missing chip is a guidance gap, not a stop.</summary>
         private IEnumerator FirstUse(string verb)
@@ -354,7 +397,7 @@ namespace MoonProject.Autoplay
             yield return _bot.TurnToward(fragment.Point, fragment.FragmentId);
             UiProbe ui = _bot.World.Ui;
             float deadline = Time.unscaledTime + ScanLookSeconds;
-            while (!_bot.Failed && !(_bot.KeepLookingAt(fragment.Point) && scans.Candidate == fragment))
+            while (!_bot.Failed && !(_bot.KeepLookingAt(fragment.Point) && OnSetCandidate(scans, fragment)))
             {
                 if (Time.unscaledTime > deadline)
                 {
@@ -366,13 +409,29 @@ namespace MoonProject.Autoplay
                 yield return null;
             }
 
-            yield return FirstUse("scan: hold E");
+            fragment = scans.Candidate;
+            yield return FirstUse(ScanVerb);
             yield return _bot.Hold(Key.E, () =>
                 {
                     _bot.KeepLookingAt(fragment.Point);
                     return fragment.Scanned;
                 }, scans.Tuning.Seconds(fragment.Size) + ScanAllowanceSeconds, "a held E to scan " + fragment.FragmentId,
                 () => "Chip '" + ui.Chip() + "'.");
+        }
+
+        /// <summary>The brackets are on this part or another unscanned part of its set: a player scans what they frame.</summary>
+        private static bool OnSetCandidate(ScanField scans, ScanFragment fragment)
+        {
+            ScanFragment candidate = scans.Candidate;
+            if (candidate == null)
+            {
+                return false;
+            }
+
+            int split = fragment.FragmentId.LastIndexOf('.');
+            return candidate == fragment || (!candidate.Scanned && split > 0 &&
+                   candidate.FragmentId.StartsWith(fragment.FragmentId.Substring(0, split + 1),
+                       System.StringComparison.Ordinal));
         }
 
         /// <summary>07's look rests on a spot near <paramref name="at"/> the placement rules accept, in rings round it.</summary>
