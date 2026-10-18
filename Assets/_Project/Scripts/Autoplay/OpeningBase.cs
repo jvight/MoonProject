@@ -152,17 +152,23 @@ namespace MoonProject.Autoplay
                 yield break;
             }
 
-            yield return _bot.Tap(Key.E);
+            string aimed = "candidate " + build.Controller.CandidatePose.Position + " is " +
+                           DriveSteering.FlatDistance(build.Controller.CandidatePose.Position, _bot.World.Rover.Position)
+                               .ToString("0.0", CultureInfo.InvariantCulture) + " m from 07 (weld range " +
+                           G.Building.Tuning.WeldRange.ToString("0.0", CultureInfo.InvariantCulture) + " m)";
             int before = G.PlacedBase.Count;
-            yield return _bot.Until(() => build.State == BuildModeState.Welding || G.PlacedBase.Count > before,
-                FollowSeconds, "E to place " + structureId, () => "State " + build.State + ", reason " +
-                                                                  build.Controller.CandidateReason + ".");
-            if (build.State == BuildModeState.Welding)
+            yield return _bot.Tap(Key.E);
+            yield return _bot.Until(() => G.PlacedBase.Count > before, FollowSeconds, "E to place " + structureId,
+                () => "State " + build.State + ", reason " + build.Controller.CandidateReason + "; " + aimed + ".");
+            if (!_bot.Failed)
             {
-                int instance = build.Controller.ActiveWeldInstanceId;
+                // The tap may already have welded a little and closed build mode; holding E at the frame welds on either way.
+                PlacedStructure frame = LastPlaced();
+                Vector3 weldPoint = frame.Pose.Position;
                 yield return _bot.Hold(Key.E, () =>
                     {
-                        return G.PlacedBase.TryGetStructure(instance, out PlacedStructure built) && built.IsBuilt;
+                        _bot.KeepLookingAt(weldPoint);
+                        return G.PlacedBase.TryGetStructure(frame.InstanceId, out PlacedStructure built) && built.IsBuilt;
                     }, definition.BuildSeconds + FollowSeconds, "a held E to weld " + structureId);
             }
 
@@ -326,6 +332,17 @@ namespace MoonProject.Autoplay
             }
 
             return string.Empty;
+        }
+
+        private PlacedStructure LastPlaced()
+        {
+            PlacedStructure last = default;
+            foreach (PlacedStructure structure in G.PlacedBase.Structures)
+            {
+                last = structure;
+            }
+
+            return last;
         }
 
         /// <summary>Where the built structure <paramref name="structureId"/> stands (the build spot is only where 07 aimed).</summary>

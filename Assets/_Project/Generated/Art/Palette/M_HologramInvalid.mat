@@ -27,6 +27,7 @@ Material:
     m_Floats:
     - _Alpha: 0.44
     - _BloomCeiling: 1.1
+    - _BlueprintMode: 0
     - _BodyIntensity: 0.52
     - _Invalid: 1
     - _RimAlpha: 0.84
