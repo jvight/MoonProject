@@ -19,9 +19,12 @@ namespace MoonProject.Rover
         /// <param name="speed">07's speed (m/s).</param>
         /// <param name="looking">The player is moving the view this frame.</param>
         /// <param name="mayFrame">Nothing else frames the view.</param>
+        /// <param name="sight">
+        /// The world's sight line (props between the camera and a target); null for none.
+        /// </param>
         public TargetFramingInput(Vector3 roverPosition, float roverYaw, Vector3[] targets, int targetCount,
             Vector3 followPoint, float viewYaw, float elevation, float radius, float fov, float aspect, float speed,
-            bool looking, bool mayFrame)
+            bool looking, bool mayFrame, ISightLine sight)
         {
             RoverPosition = roverPosition;
             RoverYaw = roverYaw;
@@ -36,6 +39,7 @@ namespace MoonProject.Rover
             Speed = speed;
             Looking = looking;
             MayFrame = mayFrame;
+            Sight = sight;
         }
 
         public Vector3 RoverPosition { get; }
@@ -65,6 +69,8 @@ namespace MoonProject.Rover
         public bool Looking { get; }
 
         public bool MayFrame { get; }
+
+        public ISightLine Sight { get; }
     }
 
     /// <summary>
@@ -79,10 +85,11 @@ namespace MoonProject.Rover
         private const float SideChangeCost = 0.25f;
         private const float AgainstTargetSideCost = 0.1f;
 
-        /// <summary>Weight of the cost of moving from where the camera already is, so a new goal is a near one.</summary>
+        /// <summary>Weight of the cost of moving from where the camera is, so a new goal is a near one.</summary>
         private const float MoveCost = 0.5f;
 
-        /// <summary>A new goal clears the body by this many times the tuned clearance, so holding it survives jitter.</summary>
+        /// <summary>A new goal clears the body by this many times the tuned clearance, so holding it survives jitter.
+        /// </summary>
         private const float PickClearanceFactor = 1.5f;
 
         private readonly RoverCameraTuning _tuning;
@@ -94,6 +101,7 @@ namespace MoonProject.Rover
         private float _lastSide;
         private Vector3 _goal = new Vector3(0f, 0f, 1f);
         private bool _hasGoal;
+        private int _goalHidden;
         private Vector3 _shift;
 
         public TargetFraming(RoverCameraTuning tuning)
@@ -226,7 +234,7 @@ namespace MoonProject.Rover
         private void Solve(in TargetFramingInput input, float deltaTime)
         {
             _shift = Smoothing.Damp(_shift, LookShift(input), _tuning.FramingSolveHalfLife, deltaTime);
-            if (_hasGoal && Shows(input, _goal.x, _goal.y, _goal.z, _tuning.FramingBodyClearance))
+            if (_hasGoal && HoldsGoal(input))
             {
                 EaseToGoal(deltaTime);
                 return;
@@ -246,6 +254,7 @@ namespace MoonProject.Rover
             float bestYaw = _tuning.FramingYaw * _lastSide;
             float bestLift = _tuning.FramingLift;
             float bestScale = _tuning.FramingMinRadiusScale;
+            int bestHidden = 0;
             for (int s = 0; s <= steps; s++)
             {
                 float scale = Mathf.Lerp(1f, _tuning.FramingMinRadiusScale, (float)s / steps);
@@ -267,12 +276,21 @@ namespace MoonProject.Rover
                             cost += AgainstTargetSideCost;
                         }
 
-                        if (cost < bestCost && Shows(input, yaw, lift, scale, pickClearance))
+                        int misses = cost < bestCost ? Misses(input, yaw, lift, scale, pickClearance) : -1;
+                        if (misses < 0)
                         {
-                            bestCost = cost;
+                            continue;
+                        }
+
+                        int hidden = misses + BlockedCount(input, yaw, lift, scale);
+                        float total = cost + _tuning.FramingHiddenCost * hidden;
+                        if (total < bestCost)
+                        {
+                            bestCost = total;
                             bestYaw = yaw;
                             bestLift = lift;
                             bestScale = scale;
+                            bestHidden = hidden;
                         }
                     }
                 }
@@ -284,16 +302,53 @@ namespace MoonProject.Rover
             }
 
             _goal = new Vector3(bestYaw, bestLift, bestScale);
+            _goalHidden = bestHidden;
             _hasGoal = true;
             EaseToGoal(deltaTime);
+        }
+
+        /// <summary>The goal still shows the main target and hides no more than it did when it was picked.</summary>
+        private bool HoldsGoal(in TargetFramingInput input)
+        {
+            int misses = Misses(input, _goal.x, _goal.y, _goal.z, _tuning.FramingBodyClearance);
+            return misses >= 0
+                && misses + BlockedCount(input, _goal.x, _goal.y, _goal.z) <= _goalHidden;
         }
 
         private void EaseToGoal(float deltaTime)
         {
             float halfLife = _tuning.FramingSolveHalfLife;
-            _yaw = Smoothing.Damp(_yaw, _goal.x, halfLife, deltaTime);
-            _lift = Smoothing.Damp(_lift, _goal.y, halfLife, deltaTime);
+            float maxStep = _tuning.FramingMaxRate * deltaTime;
+            _yaw = Mathf.MoveTowards(_yaw, Smoothing.Damp(_yaw, _goal.x, halfLife, deltaTime), maxStep);
+            _lift = Mathf.MoveTowards(_lift, Smoothing.Damp(_lift, _goal.y, halfLife, deltaTime), maxStep);
             _scale = Smoothing.Damp(_scale, _goal.z, halfLife, deltaTime);
+        }
+
+        /// <summary>
+        /// How many targets a prop or the ground hides from the camera at the given orbit, each tested up to the tuned
+        /// margin short of it: a target sits on or in the thing that holds it.
+        /// </summary>
+        private int BlockedCount(in TargetFramingInput input, float yaw, float lift, float scale)
+        {
+            if (input.Sight == null)
+            {
+                return 0;
+            }
+
+            Vector3 eye = EyePosition(input.FollowPoint + LookShift(input), input.ViewYaw + yaw,
+                input.Elevation + lift, input.Radius * scale);
+            int blocked = 0;
+            for (int i = 0; i < input.TargetCount; i++)
+            {
+                Vector3 target = input.Targets[i];
+                Vector3 end = target + (eye - target).normalized * _tuning.FramingSightMargin;
+                if (input.Sight.Clear(eye, end, 0f) < Vector3.Distance(eye, end))
+                {
+                    blocked++;
+                }
+            }
+
+            return blocked;
         }
 
         private Vector3 LookShift(in TargetFramingInput input)
@@ -301,7 +356,11 @@ namespace MoonProject.Rover
             return (input.Targets[0] - input.FollowPoint) * _tuning.FramingLookShare;
         }
 
-        private bool Shows(in TargetFramingInput input, float yaw, float lift, float scale, float clearance)
+        /// <summary>
+        /// -1 when the main target (the first) is hidden by 07's body or off the middle of the screen at the given
+        /// orbit; otherwise how many of the others are, which only cost the view and never rule it out.
+        /// </summary>
+        private int Misses(in TargetFramingInput input, float yaw, float lift, float scale, float clearance)
         {
             Vector3 look = input.FollowPoint + LookShift(input);
             Vector3 eye = EyePosition(look, input.ViewYaw + yaw, input.Elevation + lift,
@@ -310,24 +369,29 @@ namespace MoonProject.Rover
             Vector3 right = Vector3.Cross(Vector3.up, forward).normalized;
             Vector3 up = Vector3.Cross(forward, right);
             float tanVertical = Mathf.Tan(0.5f * input.Fov * Mathf.Deg2Rad) * _tuning.FramingCentralShare;
+            int misses = 0;
             for (int i = 0; i < input.TargetCount; i++)
             {
                 Vector3 target = input.Targets[i];
-                if (!BodyClear(_tuning, clearance, input.RoverPosition, input.RoverYaw, eye, target))
+                Vector3 line = target - eye;
+                float depth = Vector3.Dot(line, forward);
+                bool shown = BodyClear(_tuning, clearance, input.RoverPosition, input.RoverYaw, eye, target)
+                    && depth > 0f && Mathf.Abs(Vector3.Dot(line, right) / depth) <= tanVertical * input.Aspect
+                    && Mathf.Abs(Vector3.Dot(line, up) / depth) <= tanVertical;
+                if (shown)
                 {
-                    return false;
+                    continue;
                 }
 
-                Vector3 sight = target - eye;
-                float depth = Vector3.Dot(sight, forward);
-                if (depth <= 0f || Mathf.Abs(Vector3.Dot(sight, right) / depth) > tanVertical * input.Aspect
-                    || Mathf.Abs(Vector3.Dot(sight, up) / depth) > tanVertical)
+                if (i == 0)
                 {
-                    return false;
+                    return -1;
                 }
+
+                misses++;
             }
 
-            return true;
+            return misses;
         }
     }
 }

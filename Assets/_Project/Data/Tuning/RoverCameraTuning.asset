@@ -17,6 +17,8 @@ MonoBehaviour:
   _invertY: 0
   _minSensitivity: 0.25
   _maxSensitivity: 3
+  _maxLookYaw: 135
+  _lookYawSoftBand: 30
   _lookHalfLife: 0.05
   _distance: 7.5
   _targetHeight: 1.1
@@ -57,17 +59,20 @@ MonoBehaviour:
   _framingMaxSpeed: 1
   _framingRange: 6
   _framingViewCone: 70
-  _framingEngageDelay: 0.5
+  _framingEngageDelay: 0.4
   _framingLift: 25
   _framingYaw: 80
   _framingMinRadiusScale: 0.6
-  _framingSearchSteps: 8
+  _framingSearchSteps: 16
   _framingLookShare: 0.6
   _framingBodyWidth: 1.47
   _framingBodyLength: 2
   _framingBodyHeight: 1.53
   _framingBodyClearance: 0.2
   _framingCentralShare: 0.7
+  _framingSightMargin: 0.6
+  _framingHiddenCost: 0.8
+  _framingMaxRate: 30
   _framingSolveHalfLife: 0.3
   _framingRampSeconds: 1.5
   _framingReleaseSeconds: 1.5

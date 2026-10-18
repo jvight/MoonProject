@@ -22,6 +22,7 @@ namespace MoonProject.Rover.Tests
         private static readonly Vector3 Hidden = new Vector3(0f, 0.8f, 2.7f);
 
         private readonly Vector3[] _targets = new Vector3[1];
+        private ISightLine _sight;
         private RoverCameraTuning _tuning;
         private TargetFraming _framing;
 
@@ -45,7 +46,7 @@ namespace MoonProject.Rover.Tests
             {
                 _targets[0] = target;
                 _framing.Step(new TargetFramingInput(Rover, 0f, _targets, hasTarget ? 1 : 0, Follow, 0f, Elevation,
-                    Radius, Fov, Aspect, speed, looking, mayFrame), Frame);
+                    Radius, Fov, Aspect, speed, looking, mayFrame, _sight), Frame);
             }
         }
 
@@ -86,11 +87,72 @@ namespace MoonProject.Rover.Tests
         [Test]
         public void ATargetAlreadyInPlainView_MovesNothing()
         {
-            Run(SettleSeconds, new Vector3(2.5f, 0.8f, 2.7f));
+            Run(SettleSeconds, new Vector3(3.5f, 0.8f, 2.7f));
 
             Assert.AreEqual(0f, _framing.Elevation, Slack);
             Assert.AreEqual(0f, _framing.YawOffset, Slack);
             Assert.AreEqual(1f, _framing.RadiusScale, Slack);
+        }
+
+        [Test]
+        public void AProp_BetweenTheCameraAndTheTarget_SendsTheCameraToTheOtherSide()
+        {
+            Run(SettleSeconds, Hidden);
+            float free = _framing.YawOffset;
+            Assert.AreNotEqual(0f, free, "the body forces a swing");
+
+            _framing = new TargetFraming(_tuning);
+            _sight = new BlockedSide(-Mathf.Sign(free));
+            Run(SettleSeconds, Hidden);
+
+            Assert.AreEqual(-Mathf.Sign(free), Mathf.Sign(_framing.YawOffset), "the camera swings the clear way");
+        }
+
+        [Test]
+        public void TheSwingIsTheSmallestThatClears()
+        {
+            Run(SettleSeconds, Hidden);
+            float step = _tuning.FramingYaw / _tuning.FramingSearchSteps;
+            Vector3 eye = TargetFraming.EyePosition(Follow + _framing.Shift, Mathf.Abs(_framing.YawOffset) - step,
+                Elevation + _framing.Elevation, Radius * _framing.RadiusScale);
+
+            Assert.IsFalse(TargetFraming.BodyClear(_tuning, Rover, 0f, eye, Hidden), "one step less would not clear");
+        }
+
+        [Test]
+        public void TheSwingNeverRunsMoreThanTwiceTheTunedRate()
+        {
+            float last = 0f;
+            float fastest = 0f;
+            for (float t = 0f; t < 5f; t += Frame)
+            {
+                Run(Frame, Hidden);
+                fastest = Mathf.Max(fastest, Mathf.Abs(_framing.YawOffset - last) / Frame);
+                last = _framing.YawOffset;
+            }
+
+            Assert.LessOrEqual(fastest, 2f * _tuning.FramingMaxRate, "the goal eases at the tuned rate; the fade-in adds to it");
+        }
+
+        /// <summary>A sight line with props on one side of the camera's path (positive x times the side), as a foreground stand would be.</summary>
+        private sealed class BlockedSide : ISightLine
+        {
+            private readonly float _side;
+
+            public BlockedSide(float side)
+            {
+                _side = side;
+            }
+
+            public float Clear(Vector3 from, Vector3 to, float radius)
+            {
+                return from.x * _side > 0.5f ? 0f : Vector3.Distance(from, to);
+            }
+
+            public bool IsFree(Vector3 point, float radius)
+            {
+                return true;
+            }
         }
 
         [Test]

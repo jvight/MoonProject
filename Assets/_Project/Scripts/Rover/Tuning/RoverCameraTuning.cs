@@ -32,6 +32,16 @@ namespace MoonProject.Rover
         [Range(1f, 10f)]
         [SerializeField] private float _maxSensitivity = 3f;
 
+        [Tooltip("Furthest (deg) the player's look swings the view round from straight behind 07: the player sees 07 "
+            + "from behind or three-quarter, never head on. 07 turning under a held view may leave it further; the "
+            + "recenter brings it back.")]
+        [Range(60f, 180f)]
+        [SerializeField] private float _maxLookYaw = 135f;
+
+        [Tooltip("Degrees before the limit over which the look slows to a stop, so the view settles against it.")]
+        [Range(5f, 90f)]
+        [SerializeField] private float _lookYawSoftBand = 30f;
+
         [Tooltip("Half-life (s) smoothing the look speed, so the orbit glides instead of stepping.")]
         [Range(0f, 0.5f)]
         [SerializeField] private float _lookHalfLife = 0.05f;
@@ -211,7 +221,7 @@ namespace MoonProject.Rover
 
         [Tooltip("Seconds 07 must be slow and the view still before the camera starts to move.")]
         [Range(0f, 5f)]
-        [SerializeField] private float _framingEngageDelay = 0.5f;
+        [SerializeField] private float _framingEngageDelay = 0.4f;
 
         [Tooltip("Most extra camera elevation (deg) the framing may add, so the target shows over 07's body.")]
         [Range(0f, 60f)]
@@ -226,8 +236,8 @@ namespace MoonProject.Rover
         [SerializeField] private float _framingMinRadiusScale = 0.6f;
 
         [Tooltip("Steps each of swing, lift and pull-in is searched in, from none to its most; more is finer.")]
-        [Range(2, 12)]
-        [SerializeField] private int _framingSearchSteps = 8;
+        [Range(2, 24)]
+        [SerializeField] private int _framingSearchSteps = 16;
 
         [Tooltip("How far the camera's look-at point moves from 07 toward the target (0 = stays on 07): the view then rests on the target, so it stays the thing E scans or uses.")]
         [Range(0f, 1f)]
@@ -252,6 +262,20 @@ namespace MoonProject.Rover
         [Tooltip("The target must sit inside this central share of the screen (0.7 = the middle 70%).")]
         [Range(0.2f, 1f)]
         [SerializeField] private float _framingCentralShare = 0.7f;
+
+        [Tooltip("Metres short of a target the sight line stops when it is tested against props and ground: a target sits on or in the thing that holds it.")]
+        [Range(0f, 2f)]
+        [SerializeField] private float _framingSightMargin = 0.6f;
+
+        [Tooltip("What each target a view hides (a prop or the ground in the way, or 07's body or the screen's edge for any "
+            + "but the main target) costs it, in units where the full swing costs 1: a clearer view is preferred, but not at "
+            + "any cost in camera motion.")]
+        [Range(0f, 4f)]
+        [SerializeField] private float _framingHiddenCost = 0.8f;
+
+        [Tooltip("Fastest the framing swings or lifts the camera (deg/s): slow and soft, so the owner never sees busy camera motion.")]
+        [Range(5f, 90f)]
+        [SerializeField] private float _framingMaxRate = 30f;
 
         [Tooltip("Half-life (s) of the camera easing toward the framing it found.")]
         [Range(0.1f, 3f)]
@@ -666,6 +690,10 @@ namespace MoonProject.Rover
 
         public float GentleMinSensitivity => Mathf.Min(_gentleMinSensitivity, MaxSensitivity);
 
+        public float MaxLookYaw => _maxLookYaw;
+
+        public float LookYawSoftBand => Mathf.Min(_lookYawSoftBand, _maxLookYaw);
+
         public float LookHalfLife => _lookHalfLife;
 
         public float Distance => _distance;
@@ -763,6 +791,12 @@ namespace MoonProject.Rover
         public float FramingBodyClearance => _framingBodyClearance;
 
         public float FramingCentralShare => _framingCentralShare;
+
+        public float FramingSightMargin => _framingSightMargin;
+
+        public float FramingHiddenCost => _framingHiddenCost;
+
+        public float FramingMaxRate => _framingMaxRate;
 
         public float FramingSolveHalfLife => _framingSolveHalfLife;
 
