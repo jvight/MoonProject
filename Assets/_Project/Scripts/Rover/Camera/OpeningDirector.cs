@@ -118,7 +118,7 @@ namespace MoonProject.Rover
             _script = new OpeningScript(_tuning);
             _rig.SetWakeBody(_body);
             OpeningSettings settings = _tuning.Opening;
-            _lamps = new LampPowerUp(settings);
+            _lamps = _script.Lamps;
             _brain = _rig.Camera != null ? _rig.Camera.GetComponent<CinemachineBrain>() : null;
             CinemachineCamera chase = _rig.ChaseCamera;
             chase.StandbyUpdate = CinemachineVirtualCameraBase.StandbyUpdateMode.Always;
@@ -291,8 +291,9 @@ namespace MoonProject.Rover
             _body.SetLampPower(_lamps.Level);
 
             _script.Step(deltaTime);
-            TakeBeats();
+            // The lines first: the carrier is announced before O1's beat, while the screen is still black.
             TakePostEvents();
+            TakeBeats();
             if (_script.WantsRigEase && _rig.Opening.IsActive && !_rig.Opening.IsEasing)
             {
                 _rig.Opening.EaseOut();
@@ -358,6 +359,9 @@ namespace MoonProject.Rover
                         break;
                     case PostEventKind.Completed:
                         _events.Publish(new BootCheckCompleted(postEvent.Step, postEvent.Result));
+                        break;
+                    case PostEventKind.Pulse:
+                        _events.Publish(new BootCheckPulse(postEvent.Step, postEvent.Index, postEvent.Progress01));
                         break;
                     case PostEventKind.Finished:
                         _events.Publish(new BootCheckFinished());
