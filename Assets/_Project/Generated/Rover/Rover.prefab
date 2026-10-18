@@ -116,6 +116,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _tuning: {fileID: 11400000, guid: adde50c7ec3f1254cb40c209e6a907de, type: 2}
   _headlamp: {fileID: 7690267695561659964}
+  _lampBody: {fileID: 4685562105859151209}
+  _lampGlassSlot: 6
 --- !u!114 &7359969068745781515
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -22516,6 +22518,11 @@ Transform:
 --- !u!4 &4615192222181252045 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2283832219061353717, guid: 75ace44f4d9851344a3451fee0c31efe, type: 3}
+  m_PrefabInstance: {fileID: 6898874241504782136}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &4685562105859151209 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 2214588469869032017, guid: 75ace44f4d9851344a3451fee0c31efe, type: 3}
   m_PrefabInstance: {fileID: 6898874241504782136}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &4747505381715126522 stripped
