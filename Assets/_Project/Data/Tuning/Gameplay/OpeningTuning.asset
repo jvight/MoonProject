@@ -109,8 +109,8 @@ MonoBehaviour:
     _prop: {fileID: 0}
   - _id: supply.tower.a
     _anchorId: RadioTower
-    _offset: {x: -3, y: 0, z: -2.5}
-    _yaw: -130
+    _offset: {x: -6.5, y: 0, z: 0}
+    _yaw: -100
     _container: Crate_S
     _yield:
       _metal: 2
