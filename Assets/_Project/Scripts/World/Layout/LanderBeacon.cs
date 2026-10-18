@@ -11,9 +11,9 @@ namespace MoonProject.World
     /// along the old cable's marker lamps from 07's dead post toward it (<see cref="CableMarkerWave"/>). The scene
     /// build stands Art's beacon on the lander, hangs the halo and light on its light anchor and wires the markers in
     /// order from the post. 07's New Game self-test cues two answers (a Continue's short wake runs no self-test): the
-    /// beacon flashes sharply, its halo swelling a little, when the cutter check fails (the spare part is at the
-    /// lander), and one bright wave runs the cable when 07 begins its recovery, each marker blooming a small halo as it
-    /// passes. Allocation-free per frame.
+    /// beacon flashes sharply, its halo swelling a little, with each spark of 07's failing cutter (the spare part is at
+    /// the lander), and one bright wave runs the cable when 07 begins its recovery, each marker blooming a small halo
+    /// as it passes. Allocation-free per frame.
     /// </summary>
     public sealed class LanderBeacon : MonoBehaviour, IGameSystem
     {
@@ -41,7 +41,7 @@ namespace MoonProject.World
         [SerializeField] private Renderer[] _markerHalos = new Renderer[0];
 
         private MaterialPropertyBlock _block;
-        private IDisposable _checksCompleted;
+        private IDisposable _checkPulses;
         private IDisposable _checksStarted;
         private float _flashStart = float.NegativeInfinity;
         private float _waveStart = float.NegativeInfinity;
@@ -61,19 +61,21 @@ namespace MoonProject.World
 
             // Unity refuses to create a property block while it constructs a MonoBehaviour (a field initializer).
             _block = new MaterialPropertyBlock();
-            _checksCompleted = context.Events.Subscribe<BootCheckCompleted>(OnCheckCompleted);
+            _checkPulses = context.Events.Subscribe<BootCheckPulse>(OnCheckPulse);
             _checksStarted = context.Events.Subscribe<BootCheckStarted>(OnCheckStarted);
         }
 
         private void OnDestroy()
         {
-            _checksCompleted?.Dispose();
+            _checkPulses?.Dispose();
             _checksStarted?.Dispose();
         }
 
-        private void OnCheckCompleted(BootCheckCompleted check)
+        private void OnCheckPulse(BootCheckPulse pulse)
         {
-            if (check.Step == BootCheckStep.Cutter)
+            LanderBeaconSettings beacon = _settings.Landmarks.LanderBeacon;
+            if (pulse.Step == BootCheckStep.Cutter && pulse.Index >= beacon.FirstSparkPulse
+                && pulse.Index <= beacon.LastSparkPulse)
             {
                 _flashStart = Time.time;
             }
@@ -96,8 +98,7 @@ namespace MoonProject.World
 
             float time = Time.time;
             LanderBeaconSettings beacon = _settings.Landmarks.LanderBeacon;
-            float flash = BeaconFlash.Level(time - _flashStart, beacon.FlashCount, beacon.FlashPeriod,
-                beacon.FlashOnShare, beacon.FlashEdge);
+            float flash = BeaconFlash.Level(time - _flashStart, beacon.FlashSeconds, beacon.FlashEdgeSeconds);
             float level = Mathf.Max(LocatorBlink.Level(time, beacon.Period, beacon.Sharpness, beacon.Floor),
                 flash * beacon.FlashBoost);
             Glow(_lens, level * beacon.LensGlow);

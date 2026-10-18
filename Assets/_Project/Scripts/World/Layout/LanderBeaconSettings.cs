@@ -9,7 +9,7 @@ namespace MoonProject.World
     /// top of the hull, its lens a small HDR core just over the bloom threshold with a tight halo and a warm light,
     /// pulsing slowly and never fully dark, the brightest warm point in the wake's first frame 165 m away; and a slow
     /// wave of the old cable's marker lamps running from 07's dead post toward it, leading the eye. On a New Game the
-    /// beacon answers 07's failed cutter check with a few sharp flashes and one bright wave runs the cable when 07
+    /// beacon blinks sharply with each spark of 07's failing cutter and one bright wave runs the cable when 07
     /// begins its recovery.
     /// </summary>
     [Serializable]
@@ -79,21 +79,23 @@ namespace MoonProject.World
         [SerializeField] private float _markerWaveWidth = 0.18f;
 
         [Header("The self-test's cues (New Game only)")]
-        [Tooltip("Sharp flashes the beacon answers 07's failed cutter check with: the spare part is at the lander.")]
-        [Range(1, 6)]
-        [SerializeField] private int _flashCount = 3;
+        [Tooltip("The first of 07's cutter pulses the beacon answers with a flash (Rover's BootCheckPulse index): " +
+            "the turret's spark attempts, so the beacon blinks in sync with the sparks (the spare part is at the " +
+            "lander).")]
+        [Range(0, 10)]
+        [SerializeField] private int _firstSparkPulse = 3;
 
-        [Tooltip("Seconds from one answering flash to the next.")]
-        [Range(0.1f, 1f)]
-        [SerializeField] private float _flashPeriod = 0.32f;
+        [Tooltip("The last of 07's cutter pulses the beacon answers with a flash.")]
+        [Range(0, 10)]
+        [SerializeField] private int _lastSparkPulse = 5;
 
-        [Tooltip("Share of each period a flash is lit (0..1): short, a hard signal unlike the slow pulse.")]
-        [Range(0.1f, 0.9f)]
-        [SerializeField] private float _flashOnShare = 0.45f;
+        [Tooltip("Seconds an answering flash is lit: short, a hard signal unlike the slow pulse.")]
+        [Range(0.05f, 0.5f)]
+        [SerializeField] private float _flashSeconds = 0.15f;
 
-        [Tooltip("Share of each period a flash takes to light and to fade: small, so it reads sharp without popping.")]
-        [Range(0.01f, 0.2f)]
-        [SerializeField] private float _flashEdge = 0.05f;
+        [Tooltip("Seconds a flash takes to light and to fade: small, so it reads sharp without popping.")]
+        [Range(0.005f, 0.1f)]
+        [SerializeField] private float _flashEdgeSeconds = 0.016f;
 
         [Tooltip("How many times the slow pulse's peak the lens, halo and light reach in an answering flash.")]
         [Range(1f, 4f)]
@@ -138,10 +140,10 @@ namespace MoonProject.World
         public float MarkerRunSeconds => _markerRunSeconds;
         public float MarkerRepeatSeconds => _markerRepeatSeconds;
         public float MarkerWaveWidth => _markerWaveWidth;
-        public int FlashCount => _flashCount;
-        public float FlashPeriod => _flashPeriod;
-        public float FlashOnShare => _flashOnShare;
-        public float FlashEdge => _flashEdge;
+        public int FirstSparkPulse => _firstSparkPulse;
+        public int LastSparkPulse => _lastSparkPulse;
+        public float FlashSeconds => _flashSeconds;
+        public float FlashEdgeSeconds => _flashEdgeSeconds;
         public float FlashBoost => _flashBoost;
         public float FlashHaloSwell => _flashHaloSwell;
         public float BeginWavePulse => _beginWavePulse;
