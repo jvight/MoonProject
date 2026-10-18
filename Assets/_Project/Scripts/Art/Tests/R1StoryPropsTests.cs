@@ -371,13 +371,13 @@ namespace MoonProject.Art.Tests
             Transform sEnd = straightPrefab.transform.Find("End_Anchor");
             Assert.IsNotNull(sStart, "Cable_Straight_2m missing Start_Anchor.");
             Assert.IsNotNull(sEnd, "Cable_Straight_2m missing End_Anchor.");
-            Assert.IsNotNull(straightPrefab.transform.Find("Stake_Anchor"), "Cable_Straight_2m missing Stake_Anchor.");
+            Assert.IsNotNull(straightPrefab.transform.Find("Clip_Anchor"), "Cable_Straight_2m missing Clip_Anchor.");
             Assert.AreEqual(2.0f, Vector3.Distance(sStart.localPosition, sEnd.localPosition), 0.01f,
                 "Cable_Straight_2m Start_Anchor to End_Anchor span must be 2.0 m.");
 
-            Transform straightJacket = straightPrefab.transform.Find("CableJacket");
-            Assert.IsNotNull(straightJacket, "Cable_Straight_2m missing CableJacket.");
-            Assert.IsNotNull(straightPrefab.transform.Find("CableStake"), "Cable_Straight_2m missing CableStake.");
+            Transform straightJacket = straightPrefab.transform.Find("CableRun");
+            Assert.IsNotNull(straightJacket, "Cable_Straight_2m missing CableRun.");
+            Assert.IsNotNull(straightPrefab.transform.Find("StakeClip"), "Cable_Straight_2m missing StakeClip.");
             Mesh jacketMesh = straightJacket.GetComponent<MeshFilter>().sharedMesh;
             Assert.IsNotNull(jacketMesh);
             Assert.AreEqual(jacketMesh.vertexCount, jacketMesh.uv.Length, "CableJacket must have UV0 for top dust readability.");
@@ -396,21 +396,21 @@ namespace MoonProject.Art.Tests
             GameObject bend45Prefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.CableBend45PrefabPath);
             Assert.IsNotNull(bend45Prefab.transform.Find("Start_Anchor"), "Cable_Bend_45 missing Start_Anchor.");
             Assert.IsNotNull(bend45Prefab.transform.Find("End_Anchor"), "Cable_Bend_45 missing End_Anchor.");
-            Assert.IsNotNull(bend45Prefab.transform.Find("Stake_Anchor"), "Cable_Bend_45 missing Stake_Anchor.");
-            Assert.IsNotNull(bend45Prefab.transform.Find("CableJacket"), "Cable_Bend_45 missing CableJacket.");
-            Assert.IsNotNull(bend45Prefab.transform.Find("CableStake"), "Cable_Bend_45 missing CableStake.");
+            Assert.IsNotNull(bend45Prefab.transform.Find("Clip_Anchor"), "Cable_Bend_45 missing Clip_Anchor.");
+            Assert.IsNotNull(bend45Prefab.transform.Find("CableRun"), "Cable_Bend_45 missing CableRun.");
+            Assert.IsNotNull(bend45Prefab.transform.Find("StakeClip"), "Cable_Bend_45 missing StakeClip.");
 
             GameObject bend90Prefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.CableBend90PrefabPath);
             Assert.IsNotNull(bend90Prefab.transform.Find("Start_Anchor"), "Cable_Bend_90 missing Start_Anchor.");
             Assert.IsNotNull(bend90Prefab.transform.Find("End_Anchor"), "Cable_Bend_90 missing End_Anchor.");
-            Assert.IsNotNull(bend90Prefab.transform.Find("Stake_Anchor"), "Cable_Bend_90 missing Stake_Anchor.");
-            Assert.IsNotNull(bend90Prefab.transform.Find("CableJacket"), "Cable_Bend_90 missing CableJacket.");
-            Assert.IsNotNull(bend90Prefab.transform.Find("CableStake"), "Cable_Bend_90 missing CableStake.");
+            Assert.IsNotNull(bend90Prefab.transform.Find("Clip_Anchor"), "Cable_Bend_90 missing Clip_Anchor.");
+            Assert.IsNotNull(bend90Prefab.transform.Find("CableRun"), "Cable_Bend_90 missing CableRun.");
+            Assert.IsNotNull(bend90Prefab.transform.Find("StakeClip"), "Cable_Bend_90 missing StakeClip.");
 
             // 2. Cable_BrokenEnd
             GameObject brokenPrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.CableBrokenEndPrefabPath);
             Assert.IsNotNull(brokenPrefab.transform.Find("Start_Anchor"), "Cable_BrokenEnd missing Start_Anchor.");
-            Assert.IsNotNull(brokenPrefab.transform.Find("Tear_Anchor"), "Cable_BrokenEnd missing Tear_Anchor.");
+            Assert.IsNotNull(brokenPrefab.transform.Find("Break_Anchor"), "Cable_BrokenEnd missing Break_Anchor.");
             Assert.IsNotNull(brokenPrefab.transform.Find("CableStub"), "Cable_BrokenEnd missing CableStub.");
             Assert.IsNotNull(brokenPrefab.transform.Find("CrackedSleeve"), "Cable_BrokenEnd missing CrackedSleeve.");
             Transform frayedStrands = brokenPrefab.transform.Find("FrayedStrands");
@@ -431,9 +431,9 @@ namespace MoonProject.Art.Tests
 
             // 4. Cable_Splice_Box
             GameObject splicePrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.CableSpliceBoxPrefabPath);
-            Assert.IsNotNull(splicePrefab.transform.Find("In_Anchor"), "Cable_Splice_Box missing In_Anchor.");
-            Assert.IsNotNull(splicePrefab.transform.Find("Out_Anchor"), "Cable_Splice_Box missing Out_Anchor.");
-            Assert.IsNotNull(splicePrefab.transform.Find("Lamp_Anchor"), "Cable_Splice_Box missing Lamp_Anchor.");
+            Assert.IsNotNull(splicePrefab.transform.Find("Input_Anchor"), "Cable_Splice_Box missing Input_Anchor.");
+            Assert.IsNotNull(splicePrefab.transform.Find("Output_Anchor"), "Cable_Splice_Box missing Output_Anchor.");
+            Assert.IsNotNull(splicePrefab.transform.Find("StatusLamp_Dead"), "Cable_Splice_Box missing StatusLamp_Dead.");
             Assert.IsNotNull(splicePrefab.transform.Find("SpliceHousing"), "Cable_Splice_Box missing SpliceHousing.");
             Transform deadLamp = splicePrefab.transform.Find("DeadStatusLamp");
             Assert.IsNotNull(deadLamp, "Cable_Splice_Box missing DeadStatusLamp.");
