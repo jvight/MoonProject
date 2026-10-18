@@ -33,6 +33,9 @@ namespace MoonProject.Rover
         /// <summary>07's blinks are deterministic; the seed is its serial number.</summary>
         private const uint MoodSeed = 7u;
 
+        /// <summary>How much brighter (share) the eye glows at the focus pulse's peak in the self-test's lens check.</summary>
+        private const float PostEyeGlow = 0.6f;
+
         private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
         private static readonly int EmissionStrengthId = Shader.PropertyToID("_EmissionStrength");
 
@@ -109,6 +112,10 @@ namespace MoonProject.Rover
         private Vector3 _cutTarget;
         private CutterRefusal _cutterRefusal;
         private float _lampPower = 1f;
+        private float _postWing = -1f;
+        private float _postEye;
+        private float _postAntenna;
+        private float _postTurret;
         private float _cutterYaw;
         private float _cutterPitch;
         private bool _digging;
@@ -465,6 +472,25 @@ namespace MoonProject.Rover
         /// <summary>The lamp power the wake allows now, 0..1.</summary>
         public float LampPower01 => _lampPower;
 
+        /// <summary>
+        /// What the self-test's checks do on 07 beyond its running gear: the wing's openness (a negative value leaves it
+        /// to its mood), the antenna's extra rise (m), the cutter turret's sideways kick (deg) and the eye's focus
+        /// pulse (0..1).
+        /// </summary>
+        public void SetPostPose(float wingOpen, float antennaLift, float turretYaw, float eyeFocus)
+        {
+            _postEye = eyeFocus;
+            _postWing = wingOpen;
+            _postAntenna = antennaLift;
+            _postTurret = turretYaw;
+        }
+
+        /// <summary>The self-test's motion on the running gear (the motor's shudder and lurch, the wheels' twitches).</summary>
+        public void SetPostMotion(in PostBodyMotion motion)
+        {
+            _rig.SetPostMotion(motion);
+        }
+
         public void HoldAsleep()
         {
             _mood.Wake.Hold();
@@ -820,7 +846,7 @@ namespace MoonProject.Rover
             _cargoSag = Smoothing.Damp(_cargoSag, _cargoTarget, 0.25f, deltaTime);
             _headNudge.Step(deltaTime);
             _listen.Step(deltaTime);
-            _rig.SetAntennaLift(_listen.Lift);
+            _rig.SetAntennaLift(_listen.Lift + _postAntenna);
             _lookAround.Step(deltaTime);
             float sky = SkyLift();
             StepGaze(sky, deltaTime);
@@ -831,7 +857,7 @@ namespace MoonProject.Rover
         private void StepTools(float halfLife, float deltaTime)
         {
             _cutterRefusal.Step(deltaTime);
-            _cutterYaw = _cutterRefusal.Yaw;
+            _cutterYaw = _cutterRefusal.Yaw + _postTurret;
             _cutterPitch = _cutterRefusal.Pitch;
             _digFocus = Smoothing.Damp(_digFocus, _digging ? 1f : 0f, halfLife, deltaTime);
             _scoopKick = Smoothing.Damp(_scoopKick, 0f, halfLife, deltaTime);
@@ -1045,6 +1071,11 @@ namespace MoonProject.Rover
 
             float wingOpen = Mathf.Max(_mood.WingOpen * Mathf.Lerp(1f, battery.LowWingOpen, _tired),
                 sky * _tuning.StargazeWingOpen);
+            if (_postWing >= 0f)
+            {
+                wingOpen = _postWing;
+            }
+
             float wingAngle = Mathf.Lerp(_tuning.WingClosedAngle, _tuning.WingOpenAngle, wingOpen)
                 + _sigh * _tuning.Chirp.SighWing;
             _solarWing.localRotation = _wingRest * Quaternion.AngleAxis(wingAngle, _tuning.WingHingeAxis);
@@ -1052,7 +1083,7 @@ namespace MoonProject.Rover
             float baseEyeGlow = _mood.EyeGlow * Mathf.Lerp(1f, _tuning.StargazeEyeGlow, sky)
                 * Mathf.Lerp(1f, battery.LowEyeGlow, _tired) * Mathf.Lerp(1f, battery.CrawlEyeGlow, _crawl)
                 * Mathf.Lerp(1f, _tuning.CutFocus.EyeGlow, _cutFocus) * _chirpPose.EyeGlow
-                * (1f + _sigh * _tuning.Chirp.SighEye);
+                * (1f + _sigh * _tuning.Chirp.SighEye) * (1f + PostEyeGlow * _postEye);
             float eyeGlow = baseEyeGlow * _scanLook.EyeGlow;
             float scanOpen = _scanLook.Open;
             float inspectLightDim = 1f - _screenInspectBlend * 0.92f;

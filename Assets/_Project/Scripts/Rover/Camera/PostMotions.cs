@@ -136,6 +136,14 @@ namespace MoonProject.Rover
             }
         }
 
+        /// <summary>The eye's focus pulse (0..1) at progress <paramref name="p"/> of the lens check: it hunts near, then far, then settles.</summary>
+        public static float LensFocus(float p)
+        {
+            float near = Mathf.Sin(Mathf.PI * Mathf.Clamp01(p / 0.5f));
+            float far = 0.6f * Mathf.Sin(Mathf.PI * Mathf.Clamp01((p - 0.4f) / 0.5f));
+            return Mathf.Max(near, far);
+        }
+
         /// <summary>The neck's yaw and pitch offsets (deg) in the head check: a sweep to both sides, then a nod.</summary>
         public Vector2 Head(float p)
         {
