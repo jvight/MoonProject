@@ -78,7 +78,7 @@ namespace MoonProject.UI
         private ContextPrompt _prompt;
         private PickupFeed _pickups;
         private SalvageRing _salvageRing;
-        private readonly GuidanceSlot _slot = new GuidanceSlot();
+        private GuidanceSlot _slot;
         private readonly bool[] _guidanceWants = new bool[GuidanceSlot.KindCount];
         private readonly bool[] _guidanceShown = new bool[GuidanceSlot.KindCount];
         private CargoScreen _cargo;
@@ -336,6 +336,7 @@ namespace MoonProject.UI
             _lookUpChip = new LookUpChip(_layout, _tuning.Stargaze, _localization, _glyphs);
             _objective = new ObjectiveLine(_tuning.Guidance, _ledger);
             _objectiveView = new ObjectiveView(_layout, _tuning.Guidance, _localization);
+            _slot = new GuidanceSlot(_tuning.Guidance.HandOverSeconds);
             _lowBattery = new LowBatteryHint(_tuning.Guidance, services.Battery, _localization);
             _batteryDial = new BatteryDial(_layout, _tuning.Battery, services.Battery, services.Beam);
             _saveTick = new SaveTick(_layout, _tuning.SaveTick);
@@ -449,7 +450,7 @@ namespace MoonProject.UI
             _textScale.Apply(_player.TextScale);
             _objective.Tick(hudTime, _services.Rover.Speed, _player.Guidance, _objectiveView.ShowsObjective);
             _lowBattery.Tick(paused ? 0f : deltaTime, _objectiveView.ShowsBattery);
-            PromptHolder holder = DecideGuidance(paused);
+            PromptHolder holder = DecideGuidance(paused, hudTime);
             _unlockCard.Tick(hudTime, !cargoOpen && holder == PromptHolder.Unlock,
                 _services.Rover.Speed >= _tuning.Guidance.StillSpeed || _buildStrip.State != BuildModeState.Closed);
             _pickups.Tick(deltaTime);
@@ -466,8 +467,8 @@ namespace MoonProject.UI
             _pickUpGrace = _services.Hints.Primary.Kind == InteractionKind.PickUp
                 ? PickUpGraceSeconds
                 : Mathf.Max(0f, _pickUpGrace - deltaTime);
-            _prompt.Tick(deltaTime, PromptsOpen(paused) && holder == PromptHolder.Chip,
-                _services.Hints.Primary, device, panelSize);
+            _prompt.Tick(deltaTime, PromptsOpen(paused), holder == PromptHolder.Chip, _services.Hints.Primary, device,
+                panelSize);
             _salvageRing.Tick(deltaTime, !paused && _awake, panelSize);
             _readout.Tick(hudTime, holder == PromptHolder.Readout);
             // The look-up chip is the gentlest of the prompts: a teaching prompt that wants the screen takes it first.
@@ -569,10 +570,10 @@ namespace MoonProject.UI
         /// screen is clear. Inside the prompt kind the one already up keeps the screen, else the blueprint card, the
         /// readout and the chips take turns in that order.
         /// </summary>
-        private PromptHolder DecideGuidance(bool paused)
+        private PromptHolder DecideGuidance(bool paused, float deltaTime)
         {
             bool looks = LookHintsOpen() && (_firstPrompt.Word != HintWord.None || _holdHint.Wants(_awake && _carrying));
-            bool chipWants = (PromptsOpen(paused) && _director.Wants(_services.Hints.Primary)) || looks;
+            bool chipWants = (PromptsOpen(paused) && _director.ReadyToShow) || looks;
             bool unlockWants = !_cargo.IsOpen && _unlockCard.IsWaiting;
             bool readoutWants = ReadoutOpen(paused) && _readout.Wants;
             bool chipUp = _prompt.IsVisible || _lookUpChip.ShowsPrompt;
@@ -590,7 +591,7 @@ namespace MoonProject.UI
             _guidanceShown[(int)GuidanceKind.Prompt] = chipUp || _unlockCard.IsVisible || _readout.IsVisible;
             _guidanceShown[(int)GuidanceKind.Battery] = _objectiveView.ShowsBattery;
             _guidanceShown[(int)GuidanceKind.Objective] = _objectiveView.ShowsObjective;
-            _slot.Step(_guidanceWants, _guidanceShown);
+            _slot.Step(_guidanceWants, _guidanceShown, deltaTime);
             return _slot.Allows(GuidanceKind.Prompt) ? holder : PromptHolder.None;
         }
 

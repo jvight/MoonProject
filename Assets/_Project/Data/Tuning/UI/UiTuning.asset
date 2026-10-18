@@ -702,6 +702,7 @@ MonoBehaviour:
     _lowBatteryHoldSeconds: 8
     _teachingPatienceSeconds: 20
     _stillSpeed: 0.4
+    _handOverSeconds: 0.3
     _stillSeconds: 1.2
     _place:
       _fadeIn: 1
