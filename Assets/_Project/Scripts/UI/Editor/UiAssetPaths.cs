@@ -44,6 +44,15 @@ namespace MoonProject.UI.Editor
         /// <summary>The generated 07 v3 rover model prefab whose socket transforms feed <see cref="RoverDiagram"/>.</summary>
         public const string RoverModelPrefab = GeneratedAssets.Root + "/Art/R1/Models/Rover/RoverModel.prefab";
 
+        /// <summary>Argon's art for 07's face screen: the line drawing, its leader anchors and the face icons.</summary>
+        public const string FaceArtFolder = "Assets/_Project/Art/UI/Face";
+
+        /// <summary>07's three-quarter line drawing (2048x2048, clear around cream lines).</summary>
+        public const string FaceArt = FaceArtFolder + "/rover_07_line_3q.png";
+
+        /// <summary>The leader end points on the drawings (u, v with a top-left origin).</summary>
+        public const string FaceAnchors = FaceArtFolder + "/rover_07_anchors.json";
+
         /// <summary>07 v3's socket positions and icons for the Tab screen, built by UI/Rover Diagram.</summary>
         public const string RoverDiagram = GeneratedFolder + "/RoverDiagram.asset";
         public const string Theme = GeneratedFolder + "/LofiLunarTheme.tss";

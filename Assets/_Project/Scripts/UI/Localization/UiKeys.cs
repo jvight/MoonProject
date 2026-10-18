@@ -37,6 +37,7 @@ namespace MoonProject.UI
         public const string CargoHold = "ui.cargo.hold";
         public const string FaceTitle = "ui.face.title";
         public const string CargoMoreSlots = "ui.cargo.more_slots";
+        public const string CargoPage = "ui.cargo.page";
         public const string CargoEmptyName = "ui.cargo.empty_name";
         public const string CargoEmptyDesc = "ui.cargo.empty_desc";
         public const string FaceClose = "ui.face.close";

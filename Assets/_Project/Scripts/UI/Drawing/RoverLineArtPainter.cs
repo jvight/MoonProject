@@ -5,8 +5,8 @@ using MoonProject.Core;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// Animated or static pose parameters for <see cref="RoverLineArtPainter.DrawRover07"/>, shared by the title screen
-    /// (<see cref="TitleScenePainter"/>) and the inventory screen (<see cref="FaceInventoryView"/>).
+    /// Animated or static pose parameters for <see cref="RoverLineArtPainter.DrawRover07"/> on the title screen
+    /// (<see cref="TitleScenePainter"/>).
     /// </summary>
     internal struct RoverPose
     {
@@ -33,9 +33,9 @@ namespace MoonProject.UI
     }
 
     /// <summary>
-    /// Shared 2D vector line-art painter for Rover 07 (side-3/4 profile) and CRT vector primitives. Used by both
-    /// <see cref="TitleScenePainter"/> (driving across the turning Moon) and <see cref="FaceInventoryView"/> (the
-    /// equipment diagram with installed kit hardware highlights and socket mount anchors). Zero per-frame allocations.
+    /// 2D vector line-art painter for Rover 07 (side-3/4 profile, drawn by <see cref="TitleScenePainter"/> driving
+    /// across the turning Moon) and the CRT vector primitives the screens share, among them
+    /// <see cref="FaceInventoryView"/>'s frames, cells and leaders. Zero per-frame allocations.
     /// </summary>
     internal static class RoverLineArtPainter
     {
@@ -62,61 +62,29 @@ namespace MoonProject.UI
         /// kit hardware on 07 is highlighted.
         /// </summary>
         public static void DrawRover07(Painter2D painter, Vector2 origin, float s, in RoverPose pose,
-            TitleSettings titleSettings = null, CargoScreenSettings cargoSettings = null)
+            TitleSettings titleSettings = null)
         {
             float sc = s / RefRoverScale;
-            float wheelR = (cargoSettings != null
-                ? cargoSettings.RoverWheelRadius
-                : (titleSettings != null ? titleSettings.WheelRadius : 0.35f)) * s;
-            float rimR = (cargoSettings != null
-                ? cargoSettings.RoverWheelRimRadius
-                : (titleSettings != null ? titleSettings.WheelRimRadius : 0.185f)) * s;
-            float halfWheelbase = (cargoSettings != null
-                ? cargoSettings.RoverWheelbaseHalf
-                : (titleSettings != null ? titleSettings.WheelbaseHalf : 0.53f)) * s;
-            float farScale = cargoSettings != null
-                ? cargoSettings.RoverFarWheelScale
-                : (titleSettings != null ? titleSettings.FarWheelScale : 0.94f);
-            float farAlpha = cargoSettings != null
-                ? Mathf.Max(cargoSettings.RoverFarWheelAlpha, 0.85f)
-                : (titleSettings != null ? titleSettings.FarWheelAlpha : 0.42f);
-            Vector2 farOffsetRef = cargoSettings != null
-                ? cargoSettings.RoverFarWheelOffset
-                : new Vector2(6f, -4f);
-            int lugCount = cargoSettings != null
-                ? cargoSettings.RoverWheelLugCount
-                : (titleSettings != null ? titleSettings.WheelLugCount : 12);
-            int spokeCount = cargoSettings != null
-                ? cargoSettings.RoverWheelSpokeCount
-                : (titleSettings != null ? titleSettings.WheelSpokeCount : 6);
-            float pivotHeight = cargoSettings != null
-                ? cargoSettings.RoverBodyPivotHeight
-                : (titleSettings != null ? titleSettings.BodyPivotHeight : 0.58f);
-            float baseWingTilt = cargoSettings != null ? cargoSettings.RoverWingTilt : -0.11f;
+            float wheelR = (titleSettings != null ? titleSettings.WheelRadius : 0.35f) * s;
+            float rimR = (titleSettings != null ? titleSettings.WheelRimRadius : 0.185f) * s;
+            float halfWheelbase = (titleSettings != null ? titleSettings.WheelbaseHalf : 0.53f) * s;
+            float farScale = titleSettings != null ? titleSettings.FarWheelScale : 0.94f;
+            float farAlpha = titleSettings != null ? titleSettings.FarWheelAlpha : 0.42f;
+            Vector2 farOffsetRef = new Vector2(6f, -4f);
+            int lugCount = titleSettings != null ? titleSettings.WheelLugCount : 12;
+            int spokeCount = titleSettings != null ? titleSettings.WheelSpokeCount : 6;
+            float pivotHeight = titleSettings != null ? titleSettings.BodyPivotHeight : 0.58f;
+            float baseWingTilt = -0.11f;
 
-            Color32 bgWarm = cargoSettings != null
-                ? cargoSettings.CellBackground
-                : (titleSettings != null ? WithAlpha((Color32)titleSettings.BgWarm, 178) : DefaultBgWarm);
-            Color32 amber = cargoSettings != null
-                ? cargoSettings.AmberText
-                : (titleSettings != null ? (Color32)titleSettings.Amber : DefaultAmber);
-            Color32 amberHi = cargoSettings != null
-                ? cargoSettings.AmberBright
-                : (titleSettings != null ? (Color32)titleSettings.AmberHi : DefaultAmberHi);
+            Color32 bgWarm = titleSettings != null ? WithAlpha((Color32)titleSettings.BgWarm, 178) : DefaultBgWarm;
+            Color32 amber = titleSettings != null ? (Color32)titleSettings.Amber : DefaultAmber;
+            Color32 amberHi = titleSettings != null ? (Color32)titleSettings.AmberHi : DefaultAmberHi;
             Color32 cream = titleSettings != null ? (Color32)titleSettings.Cream : DefaultCream;
-            Color32 amberDim = cargoSettings != null
-                ? cargoSettings.AmberDim
-                : (titleSettings != null ? (Color32)titleSettings.AmberDim : DefaultAmberDim);
-            Color32 amberFaint = cargoSettings != null
-                ? cargoSettings.AmberFaint
-                : (titleSettings != null ? (Color32)titleSettings.AmberFaint : DefaultAmberFaint);
+            Color32 amberDim = titleSettings != null ? (Color32)titleSettings.AmberDim : DefaultAmberDim;
+            Color32 amberFaint = titleSettings != null ? (Color32)titleSettings.AmberFaint : DefaultAmberFaint;
             Color32 amberEdge = titleSettings != null ? (Color32)titleSettings.AmberEdge : new Color32(200, 106, 20, 255);
-            Color32 cyan = cargoSettings != null
-                ? cargoSettings.CyanAccent
-                : (titleSettings != null ? (Color32)titleSettings.Cyan : DefaultCyan);
-            Color32 cyanDim = cargoSettings != null
-                ? cargoSettings.CyanDim
-                : (titleSettings != null ? (Color32)titleSettings.CyanDim : DefaultCyanDim);
+            Color32 cyan = titleSettings != null ? (Color32)titleSettings.Cyan : DefaultCyan;
+            Color32 cyanDim = titleSettings != null ? (Color32)titleSettings.CyanDim : DefaultCyanDim;
 
             bool titleGlow = titleSettings != null;
             float outerGlowMul = titleSettings != null ? titleSettings.GlowOuterWidthMultiplier : 4.6f;
@@ -190,11 +158,8 @@ namespace MoonProject.UI
                     new Vector2(crownX, crownY - 6f * sc),
                     new Vector2(crownX + 1.35f * s, crownY + 18f * sc),
                     WithAlpha(amberFaint, 225), 1.5f);
-                if (cargoSettings == null)
-                {
-                    FillEllipse(painter, new Vector2(crownX, crownY + 2f * sc), 0.86f * s, 11f * sc, 0f,
-                        new Color32(10, 6, 3, 140));
-                }
+                FillEllipse(painter, new Vector2(crownX, crownY + 2f * sc), 0.86f * s, 11f * sc, 0f,
+                    new Color32(10, 6, 3, 140));
             }
 
             // 1. Far-side wheels (2 wheels in 3/4 depth offset, drawn behind chassis without interior disc fill)
@@ -409,11 +374,11 @@ namespace MoonProject.UI
             {
                 float maxReach = pose.AlwaysDrawHeadlampBeam
                     ? 1.58f
-                    : (cargoSettings != null ? cargoSettings.HeadlampBeamLength : 1.15f);
+                    : 1.15f;
                 float minReach = pose.AlwaysDrawHeadlampBeam ? 0.98f : Mathf.Min(0.84f, maxReach * 0.72f);
                 float sliceAlphaFloat = pose.AlwaysDrawHeadlampBeam
                     ? 0.032f
-                    : (cargoSettings != null ? cargoSettings.HeadlampBeamSliceAlpha : 0f);
+                    : 0f;
                 byte sliceAlpha = (byte)Mathf.Clamp(Mathf.RoundToInt(sliceAlphaFloat * 255f), 0, 255);
                 if (sliceAlpha > 0)
                 {
@@ -689,68 +654,6 @@ namespace MoonProject.UI
             painter.ClosePath();
         }
 
-        /// <summary>
-        /// Returns the 2D screen/canvas anchor point on Rover 07 for <paramref name="socket"/>'s leader line,
-        /// matching the side-3/4 Rover 07 geometry.
-        /// </summary>
-        public static Vector2 GetSocketMountPoint(RoverSocket socket, Vector2 origin, float s, float pitch = 0f,
-            float headNod = -0.06f, float pivotHeight = 0.58f, float wingTilt = -0.11f)
-        {
-            float sc = s / RefRoverScale;
-            float pivotOffsetY = -pivotHeight * s;
-            float cosP = Mathf.Cos(pitch);
-            float sinP = Mathf.Sin(pitch);
-            float pivotX = origin.x;
-            float pivotY = origin.y + pivotOffsetY;
-
-            Vector2 B(float bx, float by)
-            {
-                float dy = by - pivotOffsetY;
-                return new Vector2(
-                    pivotX + bx * cosP - dy * sinP,
-                    pivotY + bx * sinP + dy * cosP);
-            }
-
-            Vector2 headPivot = B(0.15f * s, -1.06f * s);
-            float headAng = pitch + headNod;
-            float cosH = Mathf.Cos(headAng);
-            float sinH = Mathf.Sin(headAng);
-            Vector2 H(float hx, float hy)
-            {
-                return new Vector2(
-                    headPivot.x + hx * cosH - hy * sinH,
-                    headPivot.y + hx * sinH + hy * cosH);
-            }
-
-            Vector2 wingPivot = B(-0.08f * s, -0.96f * s);
-            float wingAng = pitch + wingTilt;
-            float cosW = Mathf.Cos(wingAng);
-            float sinW = Mathf.Sin(wingAng);
-            Vector2 W(float wx, float wy)
-            {
-                return new Vector2(
-                    wingPivot.x + wx * cosW - wy * sinW,
-                    wingPivot.y + wx * sinW + wy * cosW);
-            }
-
-            switch (socket)
-            {
-                case RoverSocket.Wing: return W(-0.04f * s, -9f * sc);
-                case RoverSocket.Cutter: return H(0.03f * s, -0.31f * s);
-                case RoverSocket.Tether: return H(0.08f * s, -0.15f * s);
-                case RoverSocket.Lamp: return B(0.70f * s, -0.62f * s);
-                case RoverSocket.Flanks: return B(0.35f * s, -0.69f * s);
-                case RoverSocket.Belly: return B(0.06f * s, -0.36f * s);
-                case RoverSocket.Panniers: return B(-0.06f * s, -0.46f * s);
-                case RoverSocket.Hold: return B(-0.75f * s, -0.66f * s);
-                case RoverSocket.Deck: return B(-0.47f * s, -0.96f * s);
-                case RoverSocket.Back: return B(-0.24f * s, -0.96f * s);
-                case RoverSocket.Wheels: return B(0.0f, -0.35f * s);
-                case RoverSocket.Antenna: return B(-0.46f * s, -1.35f * s);
-                default: return B(0f, -0.60f * s);
-            }
-        }
-
         private static void DrawWheel(Painter2D painter, Vector2 center, float rOuter, float rRim, float angle,
             int lugCount, int spokeCount, float alphaScale, bool isFarSide, float sc, Color32 bgWarm, Color32 amber,
             Color32 amberHi, Color32 amberDim, Color32 amberEdge, bool titleGlow, float outerGlowMul,
@@ -974,21 +877,6 @@ namespace MoonProject.UI
             StrokeRect(painter, center.x - 5.5f, center.y - 1f, 11f, 8.5f, color, 1.4f);
             StrokeArc(painter, new Vector2(center.x, center.y - 1f), 3.6f, 180f, 360f, color, 1.4f);
             FillCircle(painter, new Vector2(center.x, center.y + 3.2f), 1.2f, color);
-        }
-
-        /// <summary>Draws a warning mark: a triangle with an exclamation point, centred at <paramref name="center"/>.</summary>
-        public static void DrawWarningGlyph(Painter2D painter, Vector2 center, float size, Color32 color, float width)
-        {
-            float half = size * 0.5f;
-            var top = new Vector2(center.x, center.y - half);
-            var left = new Vector2(center.x - half, center.y + half * 0.8f);
-            var right = new Vector2(center.x + half, center.y + half * 0.8f);
-            DrawLine(painter, top, left, color, width);
-            DrawLine(painter, left, right, color, width);
-            DrawLine(painter, right, top, color, width);
-            DrawLine(painter, new Vector2(center.x, center.y - half * 0.35f), new Vector2(center.x, center.y + half * 0.2f),
-                color, width);
-            FillCircle(painter, new Vector2(center.x, center.y + half * 0.5f), width * 0.7f, color);
         }
 
         /// <summary>Draws L-shaped corner bracket ticks inside rectangle <c>(x, y, w, h)</c>.</summary>

@@ -277,6 +277,42 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator SevenTab_AFullHold_TurnsItsPage_ByTheArrows_AndByAClickOnThePageCount()
+        {
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            Boot();
+            _rig.Ui.Ledger.RecordHoldBooted();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Fakes.Hold.Set(24, new MaterialSlot(SalvageMaterial.Metal, 4, 4));
+            yield return Seconds(0.3f);
+
+            yield return Tap(keyboard.tabKey);
+            yield return Seconds(0.6f);
+            FaceInventoryView view = _rig.Ui.Cargo.View;
+            float scale = _rig.Ui.Cargo.PanelRect.width / FaceInventoryView.ReferenceWidth;
+            Assert.AreEqual(0, view.HoldPage, "it opens on the first page");
+            StringAssert.EndsWith("1/2", view.PageText);
+
+            view.FocusHoldCell(FaceLayout.PageSize - 1);
+            view.Navigate(NavigationMoveEvent.Direction.Down);
+            Assert.AreEqual(FaceLayout.PageSize - 1 + FaceLayout.Columns, view.FocusedHoldCell);
+            Assert.AreEqual(1, view.HoldPage, "down past the last row turns the page");
+            StringAssert.EndsWith("2/2", view.PageText);
+            Assert.AreEqual(DisplayStyle.None, view.HoldCell(0).resolvedStyle.display, "the first page steps aside");
+
+            yield return null;
+            view.PointerDownAtPanel(FaceLayout.PageRect.center * scale);
+            Assert.AreEqual(0, view.HoldPage, "a click on the page count turns back");
+            Assert.AreEqual(0, view.FocusedHoldCell, "and selects the page's first slot");
+
+            view.FocusHoldCell(1);
+            yield return null;
+            view.PointerMoveAtPanel(FaceInventoryView.GetHoldCellReferenceRect(FaceLayout.PageSize).center * scale);
+            Assert.AreEqual(0, view.FocusedHoldCell,
+                "the pointer answers the slot shown there, never the one of the page not shown");
+        }
+
+        [UnityTest]
         public IEnumerator SevenTab_InEnglishAndVietnamese_At1080pAnd720p_TiersBadgesAndDevicesFitWithoutOverlap()
         {
             Keyboard keyboard = InputSystem.AddDevice<Keyboard>();

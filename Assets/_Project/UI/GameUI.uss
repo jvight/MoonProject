@@ -1619,8 +1619,8 @@ Label {
 }
 
 /*
- * The cargo screen (Tab / View): FaceInventoryView (1152x768, 1.5:1) — 07's 2D line-art in the middle with its four
- * devices (scan lens, cutter, two sockets) in labelled frames at the corners, the hold as a strip of slots at the foot.
+ * The cargo screen (Tab / View): FaceInventoryView (1152x768, 1.5:1) — the hold grid with the info box under it on the
+ * left, 07's line drawing with its four devices (scan lens, cutter, two sockets) in labelled frames on the right.
  */
 
 .cargo {
@@ -1638,6 +1638,11 @@ Label {
     width: 1152px;
     height: 768px;
     background-color: rgba(0, 0, 0, 0);
+}
+
+.cargo__art {
+    position: absolute;
+    -unity-background-scale-mode: stretch-to-fill;
 }
 
 .cargo__canvas,
@@ -1665,6 +1670,14 @@ Label {
 .cargo__heading--strip {
     font-size: 22px;
     letter-spacing: 2px;
+}
+
+.cargo__page {
+    position: absolute;
+    font-size: 22px;
+    -unity-text-align: middle-right;
+    color: rgb(224, 176, 94);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
 .cargo__boot {
@@ -1695,6 +1708,7 @@ Label {
     position: absolute;
     overflow: hidden;
     white-space: normal;
+    padding: 0;
     font-size: 18px;
     -unity-text-align: upper-center;
     color: rgb(242, 192, 104);
@@ -1715,21 +1729,13 @@ Label {
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
+/* The state words take their colour from the device's state (CargoScreenSettings, set by FaceInventoryView). */
 .cargo__device-state {
     position: absolute;
     font-size: 22px;
     white-space: normal;
     -unity-text-align: middle-left;
-    color: rgb(190, 150, 90);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
-}
-
-.cargo__socket--fitted .cargo__device-state {
-    color: rgb(146, 240, 252);
-}
-
-.cargo__socket--fault .cargo__device-state {
-    color: rgb(255, 214, 128);
 }
 
 .cargo__tooltip {
@@ -1760,17 +1766,17 @@ Label {
     display: none;
     position: absolute;
     justify-content: center;
-    background-color: rgb(19, 18, 16);
 }
 
 .cargo__toast-text {
+    padding-left: 20px;
     white-space: normal;
     font-size: 22px;
     color: rgb(242, 192, 104);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
-/* The one hint row that stands for the locked slots, and the key hints at the foot of the face. */
+/* The one hint row that stands for the locked slots (where the next row grows), and the key hints at the foot. */
 
 .cargo__more {
     position: absolute;
