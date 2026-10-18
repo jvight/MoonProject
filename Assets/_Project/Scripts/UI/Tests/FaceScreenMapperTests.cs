@@ -85,8 +85,8 @@ namespace MoonProject.UI.Tests
             var facePanel = AssetDatabase.LoadAssetAtPath<PanelSettings>(UiAssetPaths.FacePanelSettings);
             Assert.IsNotNull(faceTarget, $"{UiAssetPaths.FaceRenderTexture} is missing: run the UI/Theme builder");
             Assert.IsNotNull(facePanel, $"{UiAssetPaths.FacePanelSettings} is missing: run the UI/Theme builder");
-            Assert.AreEqual(1152, faceTarget.width);
-            Assert.AreEqual(768, faceTarget.height);
+            Assert.AreEqual(UiThemeBuilder.FaceReferenceResolution.x * UiThemeBuilder.FaceRenderScale, faceTarget.width);
+            Assert.AreEqual(UiThemeBuilder.FaceReferenceResolution.y * UiThemeBuilder.FaceRenderScale, faceTarget.height);
             Assert.IsTrue(faceTarget.useMipMap, "Face target RenderTexture must enable mipmaps for smooth CRT phosphor glow.");
             Assert.IsTrue(faceTarget.autoGenerateMips, "Face target RenderTexture must auto-generate mipmaps.");
             Assert.AreEqual(FilterMode.Trilinear, faceTarget.filterMode, "Face target RenderTexture must use Trilinear filtering.");
