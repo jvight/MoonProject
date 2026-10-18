@@ -16,7 +16,7 @@ namespace MoonProject.Showcase.Editor
     /// <item><description>Each of the 7 new R1 structures at 3 build stages (<c>Stage_1</c>, <c>Stage_3</c>, <c>Stage_4</c>) and with moving parts in their active pose</description></item>
     /// <item><description>The Ruins Corner at night (Earthlight + workshop/airlock/tower glow) and at dawn</description></item>
     /// <item><description>07 fully upgraded (front 3/4 and back 3/4) showing every socket-mounted kit and gift visual</description></item>
-    /// <item><description>A wide shot of the whole 15-exhibit Showcase at night</description></item>
+    /// <item><description>A wide shot of the whole 10-exhibit Showcase at night</description></item>
     /// </list>
     /// </summary>
     public static class ShowcaseCaptureSession
@@ -27,12 +27,7 @@ namespace MoonProject.Showcase.Editor
         private static readonly (ShowcaseExhibitId id, string slug)[] NewStructureExhibits =
         {
             (ShowcaseExhibitId.BatteryBank, "battery_bank"),
-            (ShowcaseExhibitId.Smelter, "smelter"),
-            (ShowcaseExhibitId.Fabricator, "fabricator"),
-            (ShowcaseExhibitId.StorageRack, "storage_rack"),
-            (ShowcaseExhibitId.UpgradeBay, "upgrade_bay"),
             (ShowcaseExhibitId.AntennaMast, "antenna_mast"),
-            (ShowcaseExhibitId.VehiclePad, "vehicle_pad"),
         };
 
         public static void CaptureAll()
@@ -148,7 +143,7 @@ namespace MoonProject.Showcase.Editor
                     controller.StepSimulation(1.6f);
                     SaveShot(cam, outDir, $"{shotNumber++:D2}_rover07_upgraded_back34.png");
 
-                    // 33: Wide shot of the whole 15-exhibit Showcase at night
+                    // 33: Wide shot of the whole 10-exhibit Showcase at night
                     controller.SelectSkyPreset(ShowcaseSkyPresetId.EarthlitNight, snapLighting: true);
                     for (int i = 0; i < controller.Exhibits.Length; i++)
                     {

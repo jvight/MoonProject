@@ -139,20 +139,6 @@ MonoBehaviour:
       _exitFootLength: 9
     _sites:
       _footprintBlend: 12
-      _depotBearing: 315
-      _depotDistance: 55
-      _depotRadius: 10
-      _drillBearing: 113
-      _drillDistance: 148.3
-      _drillRadius: 9
-      _garageBearing: 232
-      _garageDistance: 115
-      _garageRadius: 10
-      _moundBearing: 28.5
-      _moundDistance: 150
-      _moundRadius: 4
-      _moundRise: 1.6
-      _moundRun: 16
       _kestrel:
         _bearing: 356
         _distance: 185
@@ -366,12 +352,9 @@ MonoBehaviour:
     _haloMinFull: 80
   _relays:
     _padRadius: 3
-    _shoulderBearing: 250
-    _shoulderBearingSpread: 15
-    _shoulderDistance: 220
-    _shoulderDistanceSpread: 30
-    _mouthArc: -2
-    _mouthLateral: 12
+    _westMast: {x: -204.853, y: -74.56037}
+    _elderSite: {x: 265.42465, y: 84.128975}
+    _elderRadius: 4
   _atmosphere:
     _lightColor: {r: 0.92, g: 0.94, b: 1, a: 1}
     _lightIntensity: 1.95
@@ -397,97 +380,6 @@ MonoBehaviour:
     _desaturateStart: 120
     _desaturateEnd: 650
     _desaturateAmount: 0.45
-  _homeLighting:
-    _wakeStagger: 1.2
-    _wakeFade: 2.4
-    _windowSteps: 4
-    _windowStepEase: 0.35
-    _cableTravel: 1.2
-    _cableSegmentFade: 0.12
-    _cablePulsePeak: 4
-    _cablePulseSeconds: 0.6
-    _cableSteady: 0.45
-    _cablePulseLight: 6
-    _cablePulseLightRange: 4
-    _previewTravel: 2.6
-    _previewStagger: 1.3
-    _previewRise: 0.3
-    _previewTail: 1.4
-    _previewPeak: 0.75
-    _pilotPeriod: 3.5
-    _pilotSharpness: 6
-    _topLightLevel: 0.6
-    _pilotMinAngle: 0.4
-    _buildHoldTimeout: 8
-    _towerBeatRadius: 20
-    _beaconFlareGain: 3
-    _beaconFlareGrow: 4
-    _beaconFlareSeconds: 1.4
-    _beaconTurnPeriod: 7
-    _beaconSweep: 0.55
-    _beaconSweepSharpness: 4
-    _pilotIntensity: 1.4
-    _pilotRadius: 0.12
-    _pilotHaloFrom: 60
-    _pilotHaloFull: 80
-    _poolColor: {r: 1, g: 0.70980394, b: 0.2784314, a: 1}
-    _pools:
-    - _wakesWith: 0
-      _anchor: DockAnchor
-      _offset: {x: 0, y: -0.02, z: 0.8}
-      _range: 3.5
-      _intensity: 0.38
-      _disc: 1
-      _tint: {r: 0.7, g: 0.95, b: 1.35, a: 1}
-    - _wakesWith: 2
-      _anchor: Lander
-      _offset: {x: 0, y: 2.2, z: 5.6}
-      _range: 9
-      _intensity: 4
-      _disc: 0
-      _tint: {r: 1, g: 1, b: 1, a: 1}
-    - _wakesWith: 1
-      _anchor: Lander
-      _offset: {x: 0, y: 2.9, z: 0}
-      _range: 10
-      _intensity: 3
-      _disc: 0
-      _tint: {r: 1, g: 1, b: 1, a: 1}
-    - _wakesWith: 4
-      _anchor: RoverBay
-      _offset: {x: 0, y: 0.03, z: 4}
-      _range: 7
-      _intensity: 1
-      _disc: 1
-      _tint: {r: 1, g: 1, b: 1, a: 1}
-    - _wakesWith: 5
-      _anchor: BellyLift
-      _offset: {x: 0, y: 2.25, z: 1.2}
-      _range: 5.5
-      _intensity: 3.5
-      _disc: 0
-      _tint: {r: 1, g: 1, b: 1, a: 1}
-    - _wakesWith: 6
-      _anchor: Lab
-      _offset: {x: 0, y: 1.9, z: 0}
-      _range: 4.5
-      _intensity: 2.2
-      _disc: 0
-      _tint: {r: 1, g: 1, b: 1, a: 1}
-    - _wakesWith: 7
-      _anchor: BigPorthole
-      _offset: {x: -3.3, y: 3.1, z: -3.3}
-      _range: 6
-      _intensity: 1.6
-      _disc: 0
-      _tint: {r: 1, g: 1, b: 1, a: 1}
-    - _wakesWith: 2
-      _anchor: TowerAnchor
-      _offset: {x: 0, y: 2.6, z: 2.2}
-      _range: 7.5
-      _intensity: 2.6
-      _disc: 0
-      _tint: {r: 1, g: 1, b: 1, a: 1}
   _postProcessing:
     _bloomThreshold: 1.25
     _bloomIntensity: 1.1
@@ -506,7 +398,6 @@ MonoBehaviour:
     _occlusionIntensity: 1.2
     _occlusionRadius: 1.2
     _occlusionDirectLighting: 0.55
-    _wokenSplitBalance: 8
     _vignetteIntensity: 0.3
     _vignetteSmoothness: 0.5
     _vignetteColor: {r: 0.03, g: 0.035, b: 0.05, a: 1}
@@ -640,14 +531,6 @@ MonoBehaviour:
     _signalPillarSetback: 18
     _signalPillarGlow: 3.5
     _signalPillarWidth: 3
-  _scrapField:
-    _laneHalfWidth: 2.5
-    _cuttables: 4
-    _cuttableSpan: {x: 0.15, y: 0.85}
-    _cuttableOffset: 1
-    _cuttableSink: 0.15
-    _cuttableTilt: {x: 4, y: 10}
-    _dust: {r: 0.7, g: 0.68, b: 0.74, a: 1}
   _lensView:
     _lidSoftness: 0.14
     _lidCurve: 0.12

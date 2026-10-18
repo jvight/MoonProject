@@ -10,8 +10,9 @@ namespace MoonProject.World.Editor
 {
     /// <summary>
     /// The World's part of Main.unity: the earthlight and its fill, the post-processing volume, the skybox, fog and
-    /// ambient (saved into the scene), The Peak's beacon, and the <see cref="WorldSystem"/> that generates the
-    /// terrain, the rocks and Earth at boot, and the sky cycle.
+    /// ambient (saved into the scene), The Peak's beacon, the Lumen ruins, the opening's places
+    /// (<see cref="OpeningLayoutPlacer"/>) and the <see cref="WorldSystem"/> that generates the terrain, the rocks and
+    /// Earth at boot.
     /// Runs first (order 200) because rover, audio and gameplay read ITerrainQuery and IWorldLayout.
     /// </summary>
     public sealed class WorldSceneContributor : ISceneContributor
@@ -50,7 +51,6 @@ namespace MoonProject.World.Editor
             Assign(serialized, "_paletteMaterial", paletteMaterial);
             Assign(serialized, "_earthMaterial", earthMaterial);
             Assign(serialized, "_groundMarkMaterial", context.LoadAsset<Material>(WorldPaths.GroundMarkMaterial));
-            WorldPaths.AssignLandmarks(serialized);
             AssignRocks(context, serialized, "_pebbleRocks", WorldPaths.PebbleRocks);
             AssignRocks(context, serialized, "_boulderRocks", WorldPaths.BoulderRocks);
             Assign(serialized, "_earthlight", earthlight);
@@ -66,6 +66,7 @@ namespace MoonProject.World.Editor
             Assign(skySerialized, "_fillLight", fill);
             skySerialized.ApplyModifiedPropertiesWithoutUndo();
             context.AddSystem(skyCycle);
+
         }
 
         /// <summary>

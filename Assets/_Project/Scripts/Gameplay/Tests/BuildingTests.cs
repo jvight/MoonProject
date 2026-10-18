@@ -17,6 +17,15 @@ namespace MoonProject.Gameplay.Tests
 {
     public sealed class BuildingTests
     {
+        /// <summary>Metres above the pad's origin a ray starts down onto its deck.</summary>
+        private const float PadProbeHeight = 3f;
+
+        /// <summary>Metres a pad's deck may rise at most: 07's wheels climb it.</summary>
+        private const float PadDeckMostHeight = 0.5f;
+
+        /// <summary>Metres the pad's totem stands at least.</summary>
+        private const float PadTotemLeastHeight = 1f;
+
         private StructureCatalog _catalog;
         private BuildingTuning _tuning;
         private EventBus _events;
@@ -853,6 +862,41 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void TheBuiltChargingPad_Is07sToDriveOnto_ItsDeckLowAndItsTotemSolid()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                GameplayAssetPaths.RuntimeStructurePrefab(StructureIds.ChargingPad));
+            Assert.IsNotNull(prefab, "run Gameplay/Content");
+            GameObject pad = Object.Instantiate(prefab);
+            try
+            {
+                foreach (Transform part in pad.GetComponentsInChildren<Transform>(true))
+                {
+                    part.gameObject.SetActive(true);
+                }
+
+                Physics.SyncTransforms();
+                float tallest = 0f;
+                var parts = new List<string>();
+                foreach (Collider collider in pad.GetComponentsInChildren<Collider>())
+                {
+                    tallest = Mathf.Max(tallest, collider.bounds.max.y);
+                    parts.Add($"{collider.name} {collider.bounds.min.y:F2}..{collider.bounds.max.y:F2}");
+                }
+
+                Assert.IsTrue(Physics.Raycast(Vector3.up * PadProbeHeight, Vector3.down, out RaycastHit deck,
+                    PadProbeHeight * 2f), "the deck is solid under 07's parking spot");
+                Assert.Less(deck.point.y, PadDeckMostHeight,
+                    $"07 parks on a low deck, not on {deck.collider.name} ({string.Join(", ", parts)})");
+                Assert.Greater(tallest, PadTotemLeastHeight, "the totem still stands solid");
+            }
+            finally
+            {
+                Object.DestroyImmediate(pad);
+            }
+        }
+
+        [Test]
         public void BaseStructureRecipes_ExtractsFootprintAndSocketPorts_AndWiresStageRootsOnStructureView()
         {
             var testRoot = new GameObject("TestArtPrefab");
@@ -915,6 +959,18 @@ namespace MoonProject.Gameplay.Tests
                         }
 
                         Assert.IsTrue(view.Initialize(validHolo, invalidHolo));
+                        Assert.AreEqual(4, view.StageSeams.Count);
+                        var seamPoints = new Vector3[3];
+                        for (int i = 0; i < view.StageCount; i++)
+                        {
+                            view.GetStageWeldSeam(i, seamPoints, out Vector3 normal);
+                            Assert.AreEqual(1f, normal.sqrMagnitude, 1e-3f);
+                            Assert.Greater(Vector3.Distance(seamPoints[0], seamPoints[2]), 0.1f);
+                        }
+
+                        view.SetBuildProgress(0f, false);
+                        view.GetStageWeldSeam(0, seamPoints, out _);
+                        Assert.AreEqual(view.transform.TransformPoint(seamPoints[0]), view.GetActiveWeldPoint());
                     }
                 }
                 finally
@@ -1054,6 +1110,49 @@ namespace MoonProject.Gameplay.Tests
                     }
                 }
 
+                Object.DestroyImmediate(matCatalog);
+            }
+        }
+
+        [Test]
+        public void BuildModeController_TapPlaceStaysInWeldingAtZeroProgress_AndClosingAtZeroRefundsWithoutOrphanFrame()
+        {
+            var known = new KnownStructures(_catalog, _events);
+            var placedBase = new PlacedBase(_catalog, _tuning, _events, known);
+            MaterialCatalog matCatalog = CargoFixtures.Catalog();
+            try
+            {
+                MaterialStock stock = CargoFixtures.Stock(_events, matCatalog);
+                var controller = new BuildModeController(_catalog, known, placedBase, stock, _tuning);
+                TestWorld flat = TestWorld.Flat();
+                Vector3 roverPos = Vector3.zero;
+
+                known.Learn(StructureIds.ChargingPad);
+                Assert.IsTrue(controller.PickStructure(StructureIds.ChargingPad));
+                Recipe padCost = controller.SelectedStructure.BuildCost;
+                stock.Stow(padCost);
+                controller.UpdateCandidate(new Vector3(0f, 0f, 5f), roverPos, flat, propBlocked: false);
+                Assert.IsTrue(controller.TryConfirmPlacement(flat, roverPos, out int firstId, out _));
+                Assert.AreEqual(BuildModeState.Welding, controller.State);
+                Assert.AreEqual(0, stock.Metal);
+
+                // Releasing E on the next frame after tapping E to place (weldHeld = false at 0% progress)
+                // keeps BuildModeController in Welding state waiting for Hold E, instead of canceling.
+                Assert.IsTrue(controller.StepWelding(0.05f, roverPos, weldHeld: false, out bool completed, out bool cancelled));
+                Assert.IsFalse(completed);
+                Assert.IsFalse(cancelled, "Releasing E at 0% after tap-place must not cancel welding.");
+                Assert.AreEqual(BuildModeState.Welding, controller.State);
+                Assert.AreEqual(firstId, controller.ActiveWeldInstanceId);
+
+                // Backing out (Close) before any weld progress removes the 0% frame and refunds 100% of cost.
+                controller.Close();
+                Assert.AreEqual(BuildModeState.Closed, controller.State);
+                Assert.AreEqual(0, placedBase.Count, "Closing before welding must not leave an orphan 0% frame.");
+                Assert.AreEqual(padCost.Metal, stock.Metal, "Closing at 0% refunds full Metal cost.");
+                Assert.AreEqual(padCost.Wiring, stock.Wiring, "Closing at 0% refunds full Wiring cost.");
+            }
+            finally
+            {
                 Object.DestroyImmediate(matCatalog);
             }
         }

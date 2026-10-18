@@ -197,6 +197,7 @@ namespace MoonProject.Gameplay
 
             Bundles = new CargoBundles(transform, services, _salvage, _materialCatalog, _cargo);
             _salvage.ConnectHeld(Bundles);
+            _salvage.Connect(Containers);
             StartKit = new RoverStartKit(context.Events, Materials.Hold, () => PadLock != null && PadLock.OnPad,
                 _openingTuning.IgniterPart);
             Cutter.ConnectSystems(StartKit);

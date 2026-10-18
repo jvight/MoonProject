@@ -247,5 +247,100 @@ namespace MoonProject.Rover.Tests
                 Object.DestroyImmediate(root);
             }
         }
+
+        [Test]
+        public void CutterAim_FrontBesideAndBehind_TurnsBodyUntilAligned_AndRejectsSelfOccludedRays()
+        {
+            var root = new GameObject("TestCutterRoverRoot");
+            try
+            {
+                var sphere = new GameObject("PhysicsSphere");
+                sphere.transform.SetParent(root.transform, false);
+                sphere.transform.localPosition = new Vector3(0f, 0.5f, 0f);
+                var sphereCol = sphere.AddComponent<SphereCollider>();
+                sphereCol.radius = 0.5f;
+
+                var turret = new GameObject("CutterTurret").transform;
+                turret.SetParent(root.transform, false);
+                turret.localPosition = new Vector3(0f, 0.55f, 0.65f);
+
+                var cutterHead = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                cutterHead.name = "CutterHead";
+                Object.DestroyImmediate(cutterHead.GetComponent<Collider>());
+                cutterHead.transform.SetParent(turret, false);
+                cutterHead.transform.localScale = new Vector3(0.14f, 0.14f, 0.18f);
+
+                var cutterOrigin = new GameObject("CutterOrigin").transform;
+                cutterOrigin.SetParent(cutterHead.transform, false);
+                cutterOrigin.localPosition = new Vector3(0f, 0f, 0.5f);
+
+                Collider[] colliders = root.GetComponentsInChildren<Collider>(true);
+                MeshFilter[] meshes = root.GetComponentsInChildren<MeshFilter>(true);
+
+                // 1. Target directly in front: no body turn needed, has clear cutter line of sight.
+                var frontTarget = new Vector3(0.1f, 0.55f, 3.5f);
+                bool frontTurn = ScanAim.NeedsCutterBodyTurn(
+                    cutterOrigin,
+                    frontTarget,
+                    ScanAim.DefaultCutterStartTurnYawDeg,
+                    ScanAim.DefaultCutterStopTurnYawDeg,
+                    currentlyTurningBody: false,
+                    out float frontYaw);
+                Assert.IsFalse(frontTurn, "Target directly in front of the chest nozzle needs no body turn.");
+                Assert.Less(Mathf.Abs(frontYaw), ScanAim.DefaultCutterStartTurnYawDeg);
+                Assert.IsTrue(
+                    ScanAim.HasCutterLineOfSight(cutterOrigin, frontTarget, ScanAim.DefaultCutterFiringConeDeg, colliders, meshes),
+                    "Target in front of the chest nozzle has clear line of sight.");
+
+                // 2. Target beside 07 (~80 deg right): requires body turn first; no line of sight until turned.
+                var besideTarget = new Vector3(3.0f, 0.55f, 1.1f);
+                bool besideTurn = ScanAim.NeedsCutterBodyTurn(
+                    cutterOrigin,
+                    besideTarget,
+                    ScanAim.DefaultCutterStartTurnYawDeg,
+                    ScanAim.DefaultCutterStopTurnYawDeg,
+                    currentlyTurningBody: false,
+                    out float besideYaw);
+                Assert.IsTrue(besideTurn, "Target beside 07 requires a body turn because the cutter is fixed in the chest.");
+                Assert.Greater(besideYaw, 60f);
+                Assert.IsFalse(
+                    ScanAim.HasCutterLineOfSight(cutterOrigin, besideTarget, ScanAim.DefaultCutterFiringConeDeg, colliders, meshes),
+                    "Target beside 07 is outside the chest nozzle's firing cone until 07 turns.");
+
+                // 3. Target behind 07 (~160 deg): requires body turn; ray also intersects 07's SphereCollider if fired early.
+                var behindTarget = new Vector3(1.1f, 0.55f, -3.0f);
+                bool behindTurn = ScanAim.NeedsCutterBodyTurn(
+                    cutterOrigin,
+                    behindTarget,
+                    ScanAim.DefaultCutterStartTurnYawDeg,
+                    ScanAim.DefaultCutterStopTurnYawDeg,
+                    currentlyTurningBody: false,
+                    out float behindYaw);
+                Assert.IsTrue(behindTurn, "Target behind 07 must trigger a whole-body turn.");
+                Assert.Greater(Mathf.Abs(behindYaw), 140f);
+                Assert.IsFalse(
+                    ScanAim.HasCutterLineOfSight(cutterOrigin, behindTarget, ScanAim.DefaultCutterFiringConeDeg, colliders, meshes),
+                    "Target behind 07 must not have cutter line of sight before turning.");
+
+                // Once 07 turns its body to face the behind target, NeedsCutterBodyTurn becomes false and HasCutterLineOfSight becomes true.
+                root.transform.rotation = Quaternion.LookRotation(new Vector3(behindTarget.x, 0f, behindTarget.z), Vector3.up);
+                Assert.IsFalse(
+                    ScanAim.NeedsCutterBodyTurn(
+                        cutterOrigin,
+                        behindTarget,
+                        ScanAim.DefaultCutterStartTurnYawDeg,
+                        ScanAim.DefaultCutterStopTurnYawDeg,
+                        currentlyTurningBody: true,
+                        out _),
+                    "Once 07's chest faces the target within the stop threshold, the body turn finishes.");
+                Assert.IsTrue(
+                    ScanAim.HasCutterLineOfSight(cutterOrigin, behindTarget, ScanAim.DefaultCutterFiringConeDeg, colliders, meshes),
+                    "Once 07's body has turned to face the target, the chest nozzle has clear line of sight.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
     }
 }

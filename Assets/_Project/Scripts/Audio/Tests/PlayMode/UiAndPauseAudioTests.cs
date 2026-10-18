@@ -64,14 +64,6 @@ namespace MoonProject.Audio.PlayModeTests
 
             Assert.AreEqual(Enum.GetValues(typeof(UiCueKind)).Length, expected.Length + 2,
                 "the remaining kinds (HoldFill, HoldRelease) drive the hold swell, tested below");
-
-            _rig.Events.Publish(new UiTypewriterTick(UiTypeKind.Card));
-            AssertLastFlat("ui_type_card");
-            yield return null;
-
-            _rig.Events.Publish(new UiTypewriterTick(UiTypeKind.Terminal));
-            AssertLastFlat("ui_type_terminal");
-            yield return null;
         }
 
         [UnityTest]

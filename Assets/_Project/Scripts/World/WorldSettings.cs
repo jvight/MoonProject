@@ -34,14 +34,11 @@ namespace MoonProject.World
         [Tooltip("The slow red beacon on The Peak.")]
         [SerializeField] private BeaconSettings _beacon = new BeaconSettings();
 
-        [Tooltip("Where the relay masts of the station-reach network stand (M3-06).")]
+        [Tooltip("Where the old west relay mast (relay.1) and 06's spot (micro.06) stand.")]
         [SerializeField] private RelaySettings _relays = new RelaySettings();
 
         [Tooltip("Earthlight, ambient and fog.")]
         [SerializeField] private AtmosphereSettings _atmosphere = new AtmosphereSettings();
-
-        [Tooltip("How home's warm points wake with the base's power stages (M3-16).")]
-        [SerializeField] private HomeLightingSettings _homeLighting = new HomeLightingSettings();
 
         [Tooltip("Camera look, written into the URP Volume profile by the World builder.")]
         [SerializeField] private PostProcessSettings _postProcessing = new PostProcessSettings();
@@ -51,9 +48,6 @@ namespace MoonProject.World
 
         [Tooltip("Where the crew's remnants from Art's landmark kit stand (M3-18 L2, L4, L7).")]
         [SerializeField] private LandmarkSettings _landmarks = new LandmarkSettings();
-
-        [Tooltip("Kestrel-3's trail as a field of half-buried hull plates (0.5.5).")]
-        [SerializeField] private ScrapFieldSettings _scrapField = new ScrapFieldSettings();
 
         [Tooltip("The picture through 07's own eye in the opening (docs/design/cutscenes.md §1).")]
         [SerializeField] private LensViewSettings _lensView = new LensViewSettings();
@@ -81,13 +75,9 @@ namespace MoonProject.World
 
         public PostProcessSettings PostProcessing => _postProcessing;
 
-        public HomeLightingSettings HomeLighting => _homeLighting;
-
         public GroundMarkSettings GroundMarks => _groundMarks;
 
         public LandmarkSettings Landmarks => _landmarks;
-
-        public ScrapFieldSettings ScrapField => _scrapField;
 
         public LensViewSettings LensView => _lensView;
 
@@ -102,7 +92,7 @@ namespace MoonProject.World
         /// <summary>Returns null when every settings block is valid, otherwise the first problem found.</summary>
         public string Validate()
         {
-            return _surface.Validate() ?? _mesh.Validate() ?? _scatter.Validate() ?? _relays.Validate()
+            return _surface.Validate() ?? _mesh.Validate() ?? _scatter.Validate()
                 ?? _skyCycle.Validate();
         }
 

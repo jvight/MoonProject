@@ -12,7 +12,7 @@ namespace MoonProject.Showcase
     /// <summary>
     /// Top-level runtime bootstrap and input router for <c>Showcase.unity</c>. Wires <see cref="GameContext"/> with
     /// <see cref="ShowcaseInMemorySaveService"/> and <see cref="ShowcaseFocusState"/>, initializes
-    /// <see cref="WorldSystem"/> and <see cref="SkyCycleSystem"/>, and drives the 15 look-dev exhibits, camera rig,
+    /// <see cref="WorldSystem"/> and <see cref="SkyCycleSystem"/>, and drives the 10 look-dev exhibits, camera rig,
     /// slow camera tour (O key), build-stage sequences (J key), auto-demo loop (K key), time-of-day controls, and
     /// Vietnamese help panel.
     /// </summary>
@@ -48,7 +48,7 @@ namespace MoonProject.Showcase
         [Tooltip("Vietnamese UI Toolkit help overlay.")]
         [SerializeField] private ShowcaseHelpOverlay _helpOverlay;
 
-        [Tooltip("The 15 exhibit rigs in order (1..15).")]
+        [Tooltip("The 10 exhibit rigs in order (1..10).")]
         [SerializeField] private ShowcaseExhibitRig[] _exhibits = Array.Empty<ShowcaseExhibitRig>();
 
         private InputReader _inputReader;

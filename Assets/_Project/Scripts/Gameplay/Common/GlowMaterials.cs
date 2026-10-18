@@ -57,16 +57,10 @@ namespace MoonProject.Gameplay
             }
 
             Color tech = Palette.Get(PaletteSwatch.TechGlow);
-            Color warm = Palette.Get(PaletteSwatch.WarmLamp);
             Set(material, tech, edge: 0f, length: 0f, bands: 0f, speed: 0f, strength: 0f, fresnel: 0f,
                 fresnelPower: 2f, core: 0f, corePower: 1.5f, radial: 0f, additive: true, cull: CullMode.Off);
             switch (role)
             {
-                case GlowRole.WeldBeam:
-                    Set(material, tech, edge: 0.5f, length: 0.04f, bands: 6f, speed: 1.6f, strength: 0.4f,
-                        fresnel: 0f, fresnelPower: 2f, core: 0f, corePower: 1.5f, radial: 0f, additive: true,
-                        cull: CullMode.Off);
-                    break;
                 case GlowRole.Flash:
                     material.SetFloat(FresnelMixId, 0.5f);
                     material.SetFloat(FresnelPowerId, 1.5f);
@@ -75,11 +69,6 @@ namespace MoonProject.Gameplay
                     Set(material, tech, edge: 0f, length: 0f, bands: 0f, speed: 0f, strength: 0f, fresnel: 1f,
                         fresnelPower: 1.5f, core: 0f, corePower: 1.5f, radial: 0f, additive: true,
                         cull: CullMode.Front);
-                    break;
-                case GlowRole.Spark:
-                    Set(material, warm, edge: 0f, length: 0f, bands: 0f, speed: 0f, strength: 0f, fresnel: 0f,
-                        fresnelPower: 2f, core: 0f, corePower: 1.5f, radial: 1f, additive: true,
-                        cull: CullMode.Off);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(role), role, "Unknown glow role.");

@@ -56,6 +56,13 @@ namespace MoonProject.Gameplay
 
         public bool TryGet(InteractionKind kind, out InteractionHint hint)
         {
+            if (_building.State != BuildModeState.Closed &&
+                kind != InteractionKind.Build && kind != InteractionKind.Deconstruct)
+            {
+                hint = InteractionHint.None;
+                return false;
+            }
+
             switch (kind)
             {
                 case InteractionKind.PickUp:

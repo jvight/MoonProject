@@ -129,29 +129,29 @@ namespace MoonProject.Gameplay.PlayModeTests
             SetSkyClock(SunlitTimeSeconds);
             ScanField scans = _gameplay.Scans;
 
-            // First verify standard kit fragment scan in front (rover.cargo_cradle.0)
-            ScanFragment frontKit = scans.Find("rover.cargo_cradle.0");
-            Assert.IsNotNull(frontKit);
-            ActivateOnly(frontKit);
+            // First verify a ruin target scan in front (ruin.HabitatModules.0)
+            ScanFragment frontTarget = scans.Find("ruin.HabitatModules.0");
+            Assert.IsNotNull(frontTarget);
+            ActivateOnly(frontTarget);
             Vector3 spot = OpenSpot();
-            ClearNearbyProps(spot, 16f, frontKit.Root);
+            ClearNearbyProps(spot, 16f, frontTarget.Root);
 
-            Vector3 kitXZ = spot + new Vector3(-1.10f, 0f, -1.65f);
-            float kitGroundY = SampleGround(kitXZ.x, kitXZ.z);
-            PlaceRoverAndFragment(spot, -145f, frontKit, new Vector3(kitXZ.x, kitGroundY + 0.22f, kitXZ.z));
+            Vector3 frontXZ = spot + new Vector3(-1.10f, 0f, -1.65f);
+            float frontGroundY = SampleGround(frontXZ.x, frontXZ.z);
+            PlaceRoverAndFragment(spot, -145f, frontTarget, new Vector3(frontXZ.x, frontGroundY + 0.22f, frontXZ.z));
             _cameraRig.Snap();
             _cameraRig.Orbit.AdoptBearing(-10f);
             yield return WaitSeconds(0.35f);
 
-            Assert.AreSame(frontKit, scans.Candidate, "Front kit target must be selected.");
+            Assert.AreSame(frontTarget, scans.Candidate, "Front target must be selected.");
             Press(_keyboard.eKey);
             float deadline = Time.time + ScanTimeout;
-            while (!frontKit.Scanned)
+            while (!frontTarget.Scanned)
             {
-                Assert.Less(Time.time, deadline, "Front kit target scan must complete.");
-                if (scans.Scanning == frontKit)
+                Assert.Less(Time.time, deadline, "Front target scan must complete.");
+                if (scans.Scanning == frontTarget)
                 {
-                    AssertBeamClearOfRover(frontKit.Point, "front-kit");
+                    AssertBeamClearOfRover(frontTarget.Point, "front");
                 }
 
                 yield return null;
@@ -159,7 +159,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             Release(_keyboard.eKey);
             yield return WaitSeconds(1.05f);
-            Assert.IsTrue(frontKit.Scanned, "Front kit target scanned.");
+            Assert.IsTrue(frontTarget.Scanned, "Front target scanned.");
 
             // Now scan a target 6.5 m away (6-8 m) on open ground in daylight for scan_daylight.png + lens_closeup.png
             ScanFragment distantTarget = PrepareOpenGroundRuinTarget(spot, new Vector3(-2.95f, 0f, -5.79f), out float distanceMeters);
@@ -231,7 +231,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         {
             SetSkyClock(EarthlitTimeSeconds);
             ScanField scans = _gameplay.Scans;
-            ScanFragment target = scans.Find("rover.cargo_cradle.1");
+            ScanFragment target = scans.Find("ruin.HabitatModules.1");
             Assert.IsNotNull(target);
             ActivateOnly(target);
             Vector3 spot = OpenSpot();

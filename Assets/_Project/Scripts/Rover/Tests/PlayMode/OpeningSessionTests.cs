@@ -41,6 +41,7 @@ namespace MoonProject.Rover.PlayModeTests
         private const int KeyFrameWidth = 1920;
         private const int KeyFrameHeight = 1080;
         private const float BootTimeout = 30f;
+        private const float GazeTolerance = 6f;
         private const float TitleQuietSeconds = 4f;
         private const float MaxUntouched = 45f;
         private const float TargetUntouched = 20f;
@@ -164,6 +165,7 @@ namespace MoonProject.Rover.PlayModeTests
             var taken = new bool[shots.Length];
             var keyTaken = new bool[keyShots.Length];
             int nextStripIndex = 0;
+            bool postChecked = false;
             float crackleStarted = -1f;
             float started = Time.time;
             while (!_beats.Contains(WakeBeat.ChaseFrame))
@@ -179,6 +181,12 @@ namespace MoonProject.Rover.PlayModeTests
                 {
                     Assert.IsTrue(_body.FaceDirector.Director.IsHoldingDarkForOpening, "CRT stays dark while in the lens");
                     Assert.AreEqual(0, _body.FaceDirector.Director.BootCount, "face does not boot while in the lens");
+                }
+
+                if (!postChecked && script.Phase == OpeningPhase.GazeHome && script.PhaseTime >= 0.7f * script.PhaseLength)
+                {
+                    postChecked = true;
+                    AssertGazeAtTheWakePost(script);
                 }
 
                 for (int i = 0; i < shots.Length; i++)
@@ -632,7 +640,10 @@ namespace MoonProject.Rover.PlayModeTests
 
             float maxPushInFrameMs = 0f;
             float elapsed = 0f;
-            while (elapsed < 0.65f)
+            VisualElement titleCrt = document.rootVisualElement.Q<VisualElement>("title-crt");
+            Assert.IsNotNull(titleCrt);
+            float pushIn = _director.Script.PhaseLength;
+            while (IsShown(titleCrt) && elapsed < pushIn)
             {
                 yield return null;
                 float dt = Time.unscaledDeltaTime;
@@ -640,12 +651,9 @@ namespace MoonProject.Rover.PlayModeTests
                 maxPushInFrameMs = Mathf.Max(maxPushInFrameMs, dt * 1000f);
             }
 
-            VisualElement titleCrt = document.rootVisualElement.Q<VisualElement>("title-crt");
-            Assert.IsNotNull(titleCrt);
-            Assert.LessOrEqual(titleCrt.resolvedStyle.opacity, 0.05f,
-                "the title CRT fades out in 0.5 s so the 2 s push-in into 07's closed lens is visible");
+            Assert.IsFalse(IsShown(titleCrt), "the title CRT switches off before the push into 07's closed lens ends");
             Assert.AreEqual(OpeningPhase.PushIn, _director.Script.Phase,
-                "the camera is still pushing into the lens after the title has faded");
+                "the camera is still pushing into the lens after the title has gone");
 
             float reloadDeadline = Time.realtimeSinceStartup + BootTimeout;
             while (_director != null && Time.realtimeSinceStartup < reloadDeadline)
@@ -691,6 +699,24 @@ namespace MoonProject.Rover.PlayModeTests
                 "reloaded scene starts the opening inside O1 without showing the title again");
             Assert.AreNotEqual(OpeningPhase.PushIn, _director.Script.Phase,
                 "the push-in already happened before the reload");
+        }
+
+        /// <summary>O6 looks at the dead charging post where 07 woke (its yaw within a few degrees).</summary>
+        private void AssertGazeAtTheWakePost(OpeningScript script)
+        {
+            Assert.IsTrue(_context.Get<IWorldAnchors>().TryGet(WorldAnchorIds.PlaceWake, out WorldAnchor wake));
+            Vector3 forward = _rover.Rotation * Vector3.forward;
+            forward.y = 0f;
+            Quaternion heading = Quaternion.LookRotation(forward);
+            Vector3 lens = _context.Get<IRoverRig>().ScanOrigin.position;
+            Vector2 expected = LensGaze.Angles(Quaternion.Inverse(heading) * (wake.Position - lens));
+            Assert.AreEqual(expected.x, script.Gaze.Yaw, GazeTolerance, "O6 looks at the dead charging post");
+        }
+
+        /// <summary>A hidden title element leaves layout (display none) with its opacity as it was.</summary>
+        private static bool IsShown(VisualElement element)
+        {
+            return element.resolvedStyle.display != DisplayStyle.None && element.resolvedStyle.opacity > 0.05f;
         }
 
         private IEnumerator Boot(bool title)

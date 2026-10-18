@@ -36,7 +36,7 @@ namespace MoonProject.Audio
     [DisallowMultipleComponent]
     public sealed class FeelAudio : MonoBehaviour
     {
-        private const int SubscriptionCount = 16;
+        private const int SubscriptionCount = 15;
         private const float SegmentFollow = 0.5f;
         private const float SilentVolume = 0.001f;
         private const int ScanQuarters = 4;
@@ -98,7 +98,6 @@ namespace MoonProject.Audio
         private CueHandle _wallsDrop;
         private CueHandle _chargeFull;
         private CueHandle _cargoTok;
-        private CueHandle _crateLatch;
         private CueHandle _holdBoot;
         private CueHandle _holdSlot;
         private CueHandle _itemSlide;
@@ -154,7 +153,6 @@ namespace MoonProject.Audio
             _wallsDrop = director.Resolve(AudioCueIds.DockWallsDrop);
             _chargeFull = director.Resolve(AudioCueIds.DockFull);
             _cargoTok = director.Resolve(AudioCueIds.CargoTok);
-            _crateLatch = director.Resolve(AudioCueIds.CrateLatch);
             _holdBoot = director.Resolve(AudioCueIds.HoldBoot);
             _holdSlot = director.Resolve(AudioCueIds.HoldSlot);
             _itemSlide = director.Resolve(AudioCueIds.ItemSlide);
@@ -173,7 +171,7 @@ namespace MoonProject.Audio
                   undertone.IsValid && sizzle.IsValid && boost.IsValid && sweep.IsValid && charger.IsValid &&
                   _segmentSlide.IsValid && _ignite.IsValid && _crack.IsValid && _strap.IsValid &&
                   _wallsRise.IsValid && _clamp.IsValid && _wallsSettle.IsValid && _wallsDrop.IsValid &&
-                  _chargeFull.IsValid && _cargoTok.IsValid && _crateLatch.IsValid && _holdBoot.IsValid &&
+                  _chargeFull.IsValid && _cargoTok.IsValid && _holdBoot.IsValid &&
                   _holdSlot.IsValid && _itemSlide.IsValid && _sealCut.IsValid && _containerOpen.IsValid &&
                   _scanStep.IsValid && _scanLiftoff.IsValid && _sheetComplete.IsValid && _boostRelease.IsValid &&
                   _pageTick.IsValid && _saveTick.IsValid && _countTick.IsValid && _pickupLift.IsValid &&
@@ -210,13 +208,12 @@ namespace MoonProject.Audio
             _subscriptions[6] = events.Subscribe<GameSaved>(OnGameSaved);
             _subscriptions[7] = events.Subscribe<StockCountTicked>(OnStockCountTicked);
             _subscriptions[8] = events.Subscribe<CargoOverflowed>(OnCargoOverflowed);
-            _subscriptions[9] = events.Subscribe<CrewCrateOpened>(OnCrewCrateOpened);
-            _subscriptions[10] = events.Subscribe<HoldBootStarted>(OnHoldBootStarted);
-            _subscriptions[11] = events.Subscribe<HoldSlotLit>(OnHoldSlotLit);
-            _subscriptions[12] = events.Subscribe<HoldItemArrived>(OnHoldItemArrived);
-            _subscriptions[13] = events.Subscribe<ContainerOpened>(OnContainerOpened);
-            _subscriptions[14] = events.Subscribe<BlueprintCompleted>(OnBlueprintCompleted);
-            _subscriptions[15] = events.Subscribe<ContainerSealCut>(OnContainerSealCut);
+            _subscriptions[9] = events.Subscribe<HoldBootStarted>(OnHoldBootStarted);
+            _subscriptions[10] = events.Subscribe<HoldSlotLit>(OnHoldSlotLit);
+            _subscriptions[11] = events.Subscribe<HoldItemArrived>(OnHoldItemArrived);
+            _subscriptions[12] = events.Subscribe<ContainerOpened>(OnContainerOpened);
+            _subscriptions[13] = events.Subscribe<BlueprintCompleted>(OnBlueprintCompleted);
+            _subscriptions[14] = events.Subscribe<ContainerSealCut>(OnContainerSealCut);
         }
 
         private AudioSource Loop(AudioDirector director, string name, CueHandle cue, out float cueVolume)
@@ -477,11 +474,6 @@ namespace MoonProject.Audio
         private void OnCargoOverflowed(CargoOverflowed overflowed)
         {
             _director.PlayAt(_cargoTok, overflowed.Position);
-        }
-
-        private void OnCrewCrateOpened(CrewCrateOpened opened)
-        {
-            _director.PlayAt(_crateLatch, opened.Position);
         }
 
         /// <summary>The first Tab press (0.5.5 B): 07's hold powers on in the dark.</summary>

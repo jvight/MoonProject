@@ -1,13 +1,13 @@
 """Build the R1 Audio Audition Set (`Logs/audition/`).
 
 Synthesizes Variant A (closer to C2 "Radio bench") and Variant B (bolder
-electro-mechanical / acoustic idea) for all 39 R1 cues, normalizes each to its
+electro-mechanical / acoustic idea) for all 37 R1 cues, normalizes each to its
 target loudness in `tools/audio/r1/catalog.py`, verifies all quality /
 pentatonic / loop-seam / loudness gates via `tools/audio/analyze_audio.py`, and
 writes:
-- `Logs/audition/A/<cue_id>.wav` (39 Variant A WAVs)
-- `Logs/audition/B/<cue_id>.wav` (39 Variant B WAVs)
-- `Logs/audition/<cue_id>.wav` (39 recommended pick WAVs at root)
+- `Logs/audition/A/<cue_id>.wav` (37 Variant A WAVs)
+- `Logs/audition/B/<cue_id>.wav` (37 Variant B WAVs)
+- `Logs/audition/<cue_id>.wav` (37 recommended pick WAVs at root)
 - `Logs/audition/index.html` (grouped A/B audition page with Vietnamese descriptions & picks)
 - `Logs/audition/loudness.md` (loudness & acoustic verification table)
 - `Logs/audition/manifest.json` (machine-readable metrics & metadata)
@@ -612,7 +612,7 @@ def _generate_loudness_md(entries: list[dict[str, Any]], out_path: Path) -> None
 
 
 def build_all(out_dir: Path = DEFAULT_OUT_DIR, verbose: bool = True) -> dict[str, Any]:
-    """Render all 39 cues (Variants A & B), run quality checks, and write audition outputs."""
+    """Render all 37 cues (Variants A & B), run quality checks, and write audition outputs."""
     t_start = time.perf_counter()
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "A").mkdir(parents=True, exist_ok=True)

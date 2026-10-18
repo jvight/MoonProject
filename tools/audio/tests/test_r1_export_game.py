@@ -63,13 +63,13 @@ class R1ExportGameTest(unittest.TestCase):
 
     def test_check_passes_with_zero_errors(self) -> None:
         self.assertEqual(self.errors, [], f"export_r1(--check) reported errors: {self.errors}")
-        self.assertEqual(len(self.r1_entries), 39)
-        self.assertEqual(len(self.rows), 39)
+        self.assertEqual(len(self.r1_entries), 37)
+        self.assertEqual(len(self.rows), 37)
 
     def test_exported_wav_locations_and_hashes(self) -> None:
         sfx_wavs = sorted(p.name for p in SFX_R1_DIR.glob("*.wav"))
         amb_wavs = sorted(p.name for p in AMBIENCE_R1_DIR.glob("*.wav"))
-        self.assertEqual(len(sfx_wavs), 36, "Expected 36 SFX WAVs in Assets/_Project/Audio/SFX/R1/")
+        self.assertEqual(len(sfx_wavs), 34, "Expected 34 SFX WAVs in Assets/_Project/Audio/SFX/R1/")
         self.assertEqual(len(amb_wavs), 3, "Expected 3 Ambience WAVs in Assets/_Project/Audio/Ambience/R1/")
 
         for spec in CATALOG:

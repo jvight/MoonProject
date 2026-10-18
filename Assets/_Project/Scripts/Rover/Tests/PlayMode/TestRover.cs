@@ -265,6 +265,21 @@ namespace MoonProject.Rover.PlayModeTests
             var roadLight = visual.gameObject.AddComponent<RoverHeadlamp>();
             var moteSystem = Particles("LampMotes", headlamp.transform, material);
             var lampMotes = moteSystem.gameObject.AddComponent<RoverLampMotes>();
+            var nozzleDevice = visual.gameObject.AddComponent<CutterNozzleDevice>();
+            var nozzleBlades = new Transform[RoverModelNodes.NozzleBladeCount];
+            for (int i = 0; i < nozzleBlades.Length; i++)
+            {
+                Transform blade = Shape(PrimitiveType.Cube, cutterOrigin, Vector3.zero,
+                    new Vector3(0.028f, 0.016f, 0.004f), material);
+                blade.name = RoverModelNodes.NozzleBlade(i);
+                nozzleBlades[i] = blade;
+            }
+
+            Transform nozzleCore = Shape(PrimitiveType.Quad, cutterOrigin, Vector3.zero, Vector3.one * 0.012f, material);
+            nozzleCore.name = RoverModelNodes.NozzleHotCore;
+            var nozzleSpillLight = Node(RoverModelNodes.NozzleSpillLight, cutterOrigin, Vector3.zero).gameObject
+                .AddComponent<Light>();
+            nozzleSpillLight.shadows = LightShadows.None;
 
             Transform fxHost = Node("WheelFx", root.transform, Vector3.zero);
             var fx = fxHost.gameObject.AddComponent<RoverWheelFx>();
@@ -274,6 +289,9 @@ namespace MoonProject.Rover.PlayModeTests
             AssignArray(rig, "_wheels", wheels);
             AssignArray(rig, "_arms", arms);
             AssignArray(rig, "_shocks", shocks);
+            Assign(nozzleDevice, ("_tuning", fxTuning), ("_core", nozzleCore),
+                ("_coreRenderer", nozzleCore.GetComponent<MeshRenderer>()), ("_spillLight", nozzleSpillLight));
+            AssignArray(nozzleDevice, "_blades", nozzleBlades);
             Assign(fx, ("_tuning", fxTuning),
                 ("_frontSocketLeft", (Transform)wheels[0]),
                 ("_frontSocketRight", (Transform)wheels[1]),
@@ -300,7 +318,7 @@ namespace MoonProject.Rover.PlayModeTests
             AssignArray(flank, "_glasses", flankGlasses);
             Assign(controller, ("_tuning", tuning), ("_body", rigidbody), ("_sphere", collider), ("_visualRig", rig),
                 ("_wheelFx", fx), ("_lampMotes", lampMotes), ("_headlamp", roadLight),
-                ("_flankLamps", flank),
+                ("_flankLamps", flank), ("_nozzleDevice", nozzleDevice),
                 ("_tetherOrigin", eyeOrigin), ("_cutterOrigin", cutterOrigin), ("_scanOrigin", eyeOrigin),
                 ("_winchOrigin", winchOrigin), ("_scoopOrigin", scoopOrigin), ("_cargoSocket", cargo));
             Transform hatch = Node(RoverModelNodes.CargoHatch, model, new Vector3(0f, HatchY, HatchZ));

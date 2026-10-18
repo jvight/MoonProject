@@ -107,6 +107,7 @@ namespace MoonProject.Rover
         private bool _cutting;
         private bool _isCutTool;
         private Vector3 _cutTarget;
+        private CutterRefusal _cutterRefusal;
         private float _cutterYaw;
         private float _cutterPitch;
         private bool _digging;
@@ -415,6 +416,7 @@ namespace MoonProject.Rover
 
             EventBus events = context.Events;
             _chirpPose = new ChirpPose(_tuning.Chirp);
+            _cutterRefusal = new CutterRefusal(_tuning.CutFocus);
             _voice = new RoverVoice(events, _tuning.Chirp, () => Time.time);
             _events = events;
             _subscriptions = new[]
@@ -434,6 +436,7 @@ namespace MoonProject.Rover
                 events.Subscribe<ChargingChanged>(OnChargingChanged),
                 events.Subscribe<BatteryWarned>(OnBatteryWarned),
                 events.Subscribe<FeelBeat>(OnFeelBeat),
+                events.Subscribe<CutterRefused>(OnCutterRefused),
                 events.Subscribe<RoverChirpSyllable>(OnChirpSyllable),
                 events.Subscribe<BasePowerChanged>(OnBasePowerChanged),
                 events.Subscribe<FriendSpotted>(spotted => Glance(spotted.Position)),
@@ -814,22 +817,9 @@ namespace MoonProject.Rover
 
         private void StepTools(float halfLife, float deltaTime)
         {
-            float targetCutterYaw = 0f;
-            float targetCutterPitch = 0f;
-            if (_cutting && _isCutTool && _cutterTurret != null && _cutterHead != null)
-            {
-                Transform frame = _cutterTurret.parent != null ? _cutterTurret.parent : _cutterTurret;
-                Vector3 localDir = frame.InverseTransformDirection(_cutTarget - _cutterHead.position);
-                float horiz = Mathf.Sqrt(localDir.x * localDir.x + localDir.z * localDir.z);
-                if (horiz > 1e-4f || Mathf.Abs(localDir.y) > 1e-4f)
-                {
-                    targetCutterYaw = Mathf.Clamp(Mathf.Atan2(localDir.x, localDir.z) * Mathf.Rad2Deg, -55f, 55f);
-                    targetCutterPitch = Mathf.Clamp(-Mathf.Atan2(localDir.y, horiz) * Mathf.Rad2Deg, -35f, 35f);
-                }
-            }
-
-            _cutterYaw = Smoothing.Damp(_cutterYaw, targetCutterYaw, halfLife, deltaTime);
-            _cutterPitch = Smoothing.Damp(_cutterPitch, targetCutterPitch, halfLife, deltaTime);
+            _cutterRefusal.Step(deltaTime);
+            _cutterYaw = _cutterRefusal.Yaw;
+            _cutterPitch = _cutterRefusal.Pitch;
             _digFocus = Smoothing.Damp(_digFocus, _digging ? 1f : 0f, halfLife, deltaTime);
             _scoopKick = Smoothing.Damp(_scoopKick, 0f, halfLife, deltaTime);
             _winchReel = Smoothing.Damp(_winchReel, _tetherActive ? 1f : 0f, 0.15f, deltaTime);
@@ -867,6 +857,7 @@ namespace MoonProject.Rover
             float frequency;
             bool hasExplicitGaze;
             bool scanGaze = false;
+            bool cutterGaze = false;
 
             if (_lookAround.IsActive)
             {
@@ -876,11 +867,22 @@ namespace MoonProject.Rover
                 frequency = _tuning.TargetGazeFrequency;
                 hasExplicitGaze = true;
             }
-            else if (_rover.Gaze.TryGetTop(out Vector3 target, out int priority))
+            else if (_rover.Gaze.TryGetTop(out Vector3 target, out int priority, out object owner))
             {
+                const int focusGazePriority = 2;
+                if (owner is ICutterAimOwner && priority >= focusGazePriority && !_cutting && _cutEnds >= 0f)
+                {
+                    EndCutFocus();
+                }
+
                 Vector3 localFromHead = frame.InverseTransformDirection(target - _head.position);
                 ScanLookSettings scan = _tuning.ScanLook;
                 scanGaze = priority >= scan.GazePriority;
+                // The cut beat's own focus gaze outranks the field's aim request the moment the charge starts; it must
+                // keep the body turning until the nozzle is centred, not hand the turn over at the firing cone's edge.
+                bool cutterAims = owner is ICutterAimOwner && priority >= focusGazePriority
+                    || ReferenceEquals(owner, _cutOwner) && _cutting && _isCutTool;
+                cutterGaze = !scanGaze && cutterAims;
                 if (scanGaze)
                 {
                     aim = ScanAim.LensAngles(localFromHead, _lensOffsetInHead, _tuning.NeckYawLimit,
@@ -897,6 +899,17 @@ namespace MoonProject.Rover
                 else
                 {
                     aim = Aim(localFromHead);
+                    if (cutterGaze)
+                    {
+                        bool playerSteers = Mathf.Abs(_rover.DriveInput.x) > 0.1f;
+                        _scanBodyTurning = !playerSteers && ScanAim.NeedsCutterBodyTurn(
+                            _rover.CutterOrigin,
+                            target,
+                            ScanAim.DefaultCutterStartTurnYawDeg,
+                            ScanAim.DefaultCutterStopTurnYawDeg,
+                            _scanBodyTurning,
+                            out _scanBodyYawDelta);
+                    }
                 }
 
                 frequency = _tuning.TargetGazeFrequency;
@@ -912,13 +925,14 @@ namespace MoonProject.Rover
                 hasExplicitGaze = Mathf.Abs(_rover.SteerInput) > 0.01f || idle > 0.05f || sky > 0.01f;
             }
 
-            if (!scanGaze)
+            if (!scanGaze && !cutterGaze)
             {
                 _scanBodyTurning = false;
                 _scanBodyYawDelta = 0f;
             }
 
-            _scanAimBlend = Smoothing.Damp(_scanAimBlend, scanGaze ? 1f : 0f, _tuning.ScanLook.OpenHalfLife, deltaTime);
+            bool precisionAim = scanGaze || cutterGaze;
+            _scanAimBlend = Smoothing.Damp(_scanAimBlend, precisionAim ? 1f : 0f, _tuning.ScanLook.OpenHalfLife, deltaTime);
             aim.y = Mathf.Lerp(aim.y, _tuning.StargazeHeadPitch, sky * (1f - _scanAimBlend));
             float earthTurn = _sky != null ? _sky.EarthTurn * (1f - _scanAimBlend) : 0f;
             if (earthTurn > 0f)
@@ -1059,6 +1073,12 @@ namespace MoonProject.Rover
         /// brighter lens, nods at ignition, follows the piece as it tumbles, and lets go once the bundle or part is
         /// received, the follow window expires, or the player releases. The dig is answered the same way.
         /// </summary>
+        /// <summary>A press the offline cutter refused: its turret shakes, then stays parked.</summary>
+        private void OnCutterRefused(CutterRefused refused)
+        {
+            _cutterRefusal.Trigger();
+        }
+
         private void OnFeelBeat(FeelBeat beat)
         {
             CutFocusSettings focus = _tuning.CutFocus;
