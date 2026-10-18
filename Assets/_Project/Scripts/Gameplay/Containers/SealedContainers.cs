@@ -30,6 +30,8 @@ namespace MoonProject.Gameplay
         private readonly ISaveService _save;
         private readonly PickupReach _pickups;
         private readonly CutState _cut;
+        private readonly HoldLock<SealedContainer> _hold = new HoldLock<SealedContainer>();
+        private readonly Func<SealedContainer, bool> _workable;
         private Func<Vector3, bool> _yieldsTo;
         private SealedContainer _cutting;
         private bool _holding;
@@ -53,6 +55,7 @@ namespace MoonProject.Gameplay
             _beam = services.Beam;
             _save = services.Save;
             _pickups = services.Pickups;
+            _workable = Workable;
             _cut = new CutState(_events, FeelKind.Cut, cutter.ChargeSeconds, cutter.ResumeChargeSeconds,
                 salvage.Tuning.CutSteps);
         }
@@ -121,11 +124,10 @@ namespace MoonProject.Gameplay
         {
             bool busy = _salvage.Candidate != null || _salvage.Cutting != null ||
                         _pickups.TryGet(Time.frameCount, out _, out _);
-            Candidate = busy ? null : Nearest();
-            if (Candidate != null && _cutting == null && _yieldsTo != null && _yieldsTo(Candidate.CutPoint.position))
-            {
-                Candidate = null;
-            }
+            SealedContainer nearest = busy ? null : Nearest();
+            bool yielded = nearest != null && _cutting == null && _yieldsTo != null &&
+                           _yieldsTo(nearest.CutPoint.position);
+            Candidate = busy ? null : _hold.Resolve(_input.ExcavateHeld, yielded ? null : nearest, yielded, _workable);
             for (int i = 0; i < _containers.Count; i++)
             {
                 StepLid(_containers[i], now);
@@ -269,9 +271,21 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
+        /// A hold of E stays on the seal it began on while that seal can be cut: the camera and the other verbs move
+        /// as the framing follows the work, and must not take the hold away.
+        /// </summary>
+        private bool Workable(SealedContainer container)
+        {
+            return !container.Opened && container.Available &&
+                   SurfaceRules.HorizontalDistance(_rover.Position, container.CutPoint.position) <=
+                   _tuning.ContainerReach;
+        }
+
+        /// <summary>
         /// The sealed container in reach that 07 faces most squarely: two seals side by side (Tilly's sled's clamp
         /// and pod) are told apart by where 07 looks, not by a few centimetres. One outside the claim angle off 07's
-        /// heading is not offered.
+        /// heading is not offered. The one offered last keeps its place unless another is squarer by
+        /// <see cref="CargoTuning.ContainerStickyFacing"/>, so brackets never flicker between two.
         /// </summary>
         private SealedContainer Nearest()
         {
@@ -297,6 +311,11 @@ namespace MoonProject.Gameplay
                 }
 
                 float facing = toward.sqrMagnitude > 1e-6f ? Vector3.Dot(forward.normalized, toward.normalized) : 1f;
+                if (container == Candidate)
+                {
+                    facing += _tuning.ContainerStickyFacing;
+                }
+
                 if (facing > bestFacing)
                 {
                     bestFacing = facing;

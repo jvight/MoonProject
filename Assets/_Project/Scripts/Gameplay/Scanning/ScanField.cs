@@ -454,7 +454,16 @@ namespace MoonProject.Gameplay
                 }
 
                 if (AimScore.TryScore(view.position, view.forward, fragment.Point, _tuning.Cone, float.MaxValue,
-                        _tuning.DistanceWeight, out float fragmentScore) && fragmentScore < bestScore)
+                        _tuning.DistanceWeight, out float fragmentScore))
+                {
+                    fragmentScore -= fragment == Candidate ? _tuning.LookStickiness : 0f;
+                }
+                else
+                {
+                    continue;
+                }
+
+                if (fragmentScore < bestScore)
                 {
                     bestScore = fragmentScore;
                     best = fragment;

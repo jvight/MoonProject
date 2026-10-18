@@ -16,6 +16,12 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// </summary>
     public sealed class ContainerSessions : InputTestFixture
     {
+        private const float BesideSeal = 1.5f;
+        private const float EyeHeight = 1.5f;
+        private const float ScanAside = 2.5f;
+        private const float ScanLift = 0.5f;
+        private const float ColdCutTimeout = 12f;
+
         private InputActionAsset _controls;
         private GameplayFixture _fixture;
 
@@ -100,6 +106,41 @@ namespace MoonProject.Gameplay.PlayModeTests
             Release(Keyboard.current.eKey);
             yield return null;
             Assert.AreEqual(0, _fixture.Rover.HoldStillCount, "the hold lets go once the container is open");
+        }
+
+        [UnityTest]
+        public IEnumerator AHoldOnASeal_StaysOnTheSeal_WhileTheViewSwingsToAScanTarget_AndTheCutCompletes()
+        {
+            _fixture = GameplayFixture.Boot(_controls);
+            yield return null;
+            GameplaySystem gameplay = _fixture.Gameplay;
+            SealedContainer crate = gameplay.Containers.Find("supply.wake");
+            Vector3 stand = crate.CutPoint.position + crate.Root.forward * BesideSeal;
+            _fixture.Rover.Place(stand, Quaternion.LookRotation(-crate.Root.forward).eulerAngles.y);
+            ScanFragment fragment = gameplay.Scans.Find("ruin." + ScanTuning.LanderCargoId + ".0");
+            Vector3 eye = stand + Vector3.up * EyeHeight;
+            Vector3 aside = Vector3.Cross(Vector3.up, crate.Root.forward).normalized * ScanAside;
+            fragment.Root.position = crate.CutPoint.position + aside + Vector3.up * ScanLift;
+            _fixture.Rover.Aim(eye, crate.CutPoint.position);
+            yield return null;
+            yield return null;
+            Assert.AreSame(crate, gameplay.Containers.Candidate, "looking at the seal offers the seal");
+
+            Press(Keyboard.current.eKey);
+            yield return null;
+            _fixture.Rover.Aim(eye, fragment.Point);
+            yield return null;
+            Assert.AreSame(fragment, gameplay.Scans.LookedAt(out float scanScore),
+                "the swung view rests on the scan target");
+            Assert.IsTrue(!gameplay.Scans.InView(crate.CutPoint.position, out float sealScore) || scanScore < sealScore,
+                "and more squarely than on the seal: the scan would take E (the trap's set)");
+
+            yield return Waits.Until(() => crate.Opened, ColdCutTimeout);
+            Assert.AreSame(crate, gameplay.Containers.Cutting ?? gameplay.Containers.Candidate,
+                "the hold stayed on the seal while the view swung");
+            Release(Keyboard.current.eKey);
+            Assert.IsTrue(crate.Opened, "the cut completed");
+            Assert.IsFalse(fragment.Scanned, "the scan target did not take the hold");
         }
     }
 }

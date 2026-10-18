@@ -62,9 +62,14 @@ namespace MoonProject.Gameplay
         [Tooltip("07's distance (m) to the seal over which its glow eases from the near to the far level (near, far).")]
         [SerializeField] private Vector2 _containerSealFade = new Vector2(3f, 9f);
 
+        [Tooltip("How much squarer (cosine of the angle off 07's heading) another seal must face before the one offered " +
+                 "now gives way to it, so two seals side by side do not flicker.")]
+        [Range(0f, 0.5f)] [SerializeField] private float _containerStickyFacing = 0.08f;
+
         public PieceSize ContainerCut => _containerCut;
         public float ContainerClaimAngle => _containerClaimAngle;
 
+        public float ContainerStickyFacing => _containerStickyFacing;
         public float ContainerReach => _containerReach;
         public float ContainerLidSwing => _containerLidSwing;
         public float ContainerLidSeconds => _containerLidSeconds;
