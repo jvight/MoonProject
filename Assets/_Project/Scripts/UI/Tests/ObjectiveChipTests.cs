@@ -5,7 +5,7 @@ namespace MoonProject.UI.Tests
 {
     /// <summary>
     /// The objective's key chip: a step that needs a verb shows its key with its line, retires when the verb is used
-    /// in that step, and starts over on the next step that needs it.
+    /// in that step, comes back whenever the verb is on offer again, and starts over on the next step that needs it.
     /// </summary>
     public sealed class ObjectiveChipTests
     {
@@ -39,8 +39,8 @@ namespace MoonProject.UI.Tests
         public void TheChip_ShowsWithItsLine_AndOnlyThen()
         {
             _chip.SetKey(OpeningKeys.BuildPad);
-            Assert.AreEqual(HintWord.Build, _chip.Word(true, false, false));
-            Assert.AreEqual(HintWord.None, _chip.Word(false, false, false), "no line, no chip");
+            Assert.AreEqual(HintWord.Build, _chip.Word(true, false, false, InteractionKind.None));
+            Assert.AreEqual(HintWord.None, _chip.Word(false, false, false, InteractionKind.None), "no line, no chip");
         }
 
         [Test]
@@ -48,10 +48,24 @@ namespace MoonProject.UI.Tests
         {
             _chip.SetKey(OpeningKeys.BuildPad);
             _chip.Used(ObjectiveVerb.Scan);
-            Assert.AreEqual(HintWord.Build, _chip.Word(true, false, false));
+            Assert.AreEqual(HintWord.Build, _chip.Word(true, false, false, InteractionKind.None));
 
             _chip.Used(ObjectiveVerb.Build);
-            Assert.AreEqual(HintWord.None, _chip.Word(true, false, false));
+            Assert.AreEqual(HintWord.None, _chip.Word(true, false, false, InteractionKind.None));
+        }
+
+        [Test]
+        public void AUsedVerb_ComesBackWheneverItIsOnOfferAgain_LikeTheSecondFragmentOfAScan()
+        {
+            _chip.SetKey(OpeningKeys.ScanLander);
+            _chip.Used(ObjectiveVerb.Scan);
+            Assert.AreEqual(HintWord.None, _chip.Word(true, false, false, InteractionKind.None), "nothing in reach");
+            Assert.AreEqual(HintWord.Scan, _chip.Word(true, false, false, InteractionKind.Scan),
+                "the next fragment is in reach: its key shows");
+            Assert.AreEqual(HintWord.None, _chip.Word(true, false, false, InteractionKind.PickUp),
+                "another verb in reach is not this step's");
+            Assert.AreEqual(HintWord.None, _chip.Word(false, false, false, InteractionKind.Scan),
+                "it still belongs to the line");
         }
 
         [Test]
@@ -60,22 +74,24 @@ namespace MoonProject.UI.Tests
             _chip.SetKey(OpeningKeys.ScanLander);
             _chip.Used(ObjectiveVerb.Scan);
             _chip.SetKey(OpeningKeys.CollectParts);
-            Assert.AreEqual(HintWord.None, _chip.Word(true, false, false), "collecting needs no chip");
+            Assert.AreEqual(HintWord.None, _chip.Word(true, false, false, InteractionKind.None),
+                "collecting needs no chip");
 
             _chip.SetKey(OpeningKeys.FindSolar);
-            Assert.AreEqual(HintWord.Scan, _chip.Word(true, false, false));
+            Assert.AreEqual(HintWord.Scan, _chip.Word(true, false, false, InteractionKind.None));
         }
 
         [Test]
         public void FittingTheIgniter_OffersTabOnlyWhileItCanBeFittedAndTheFaceIsClosed()
         {
             _chip.SetKey(OpeningKeys.FitIgniter);
-            Assert.AreEqual(HintWord.None, _chip.Word(true, false, false), "not docked yet");
-            Assert.AreEqual(HintWord.Fit, _chip.Word(true, true, false));
-            Assert.AreEqual(HintWord.None, _chip.Word(true, true, true), "the face is open: Tab is answered");
+            Assert.AreEqual(HintWord.None, _chip.Word(true, false, false, InteractionKind.None), "not docked yet");
+            Assert.AreEqual(HintWord.Fit, _chip.Word(true, true, false, InteractionKind.None));
+            Assert.AreEqual(HintWord.None, _chip.Word(true, true, true, InteractionKind.None),
+                "the face is open: Tab is answered");
 
             _chip.Used(ObjectiveVerb.Fit);
-            Assert.AreEqual(HintWord.None, _chip.Word(true, true, false));
+            Assert.AreEqual(HintWord.None, _chip.Word(true, true, false, InteractionKind.None));
         }
     }
 }

@@ -642,6 +642,39 @@ namespace MoonProject.UI.PlayModeTests
             Assert.IsTrue(_rig.Ui.Objective.ShowsObjective, "the line stays until the step is done");
         }
 
+        [UnityTest]
+        public IEnumerator TheVerbChip_StandingStillInReachOfTheSecondFragment_ShowsWithinHalfASecond()
+        {
+            Boot();
+            _rig.Ui.Ledger.RecordLookTaught();
+            _rig.Ui.Ledger.RecordDriveTaught();
+            _rig.Ui.Ledger.RecordHoldChipShown();
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            Events.Publish(new NextStepChanged("next.v2.scan_lander"));
+            float limit = Time.realtimeSinceStartup + 12f;
+            while (!_rig.Ui.LookUp.IsVisible && Time.realtimeSinceStartup < limit)
+            {
+                yield return null;
+            }
+
+            Events.Publish(new ScanStarted("lander.fragment.1", Vector3.zero));
+            _rig.Ui.Ledger.RecordUsed(InteractionKind.Scan);
+            yield return Seconds(1.5f);
+            Assert.IsFalse(_rig.Ui.LookUp.IsVisible, "the first fragment is scanned and nothing else is in reach");
+            Assert.IsTrue(_rig.Ui.Objective.ShowsObjective, "the line is still up: one fragment is left");
+
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Scan, new Vector3(0f, 0f, 6f), true);
+            yield return Seconds(0.5f);
+            Assert.IsTrue(_rig.Ui.LookUp.IsVisible, "07 stands in reach of the second fragment: its key shows");
+            Assert.AreEqual(Text("ui.verb.scan"), _rig.Ui.Layout.LookHintWord.text);
+            Assert.IsFalse(_rig.Ui.Prompt.IsVisible, "the learned verb's prompt stays retired: one element");
+
+            _rig.Fakes.PrimaryHint = InteractionHint.None;
+            yield return Seconds(1f);
+            Assert.IsFalse(_rig.Ui.LookUp.IsVisible, "out of reach, the chip bows out again");
+        }
+
         private void Boot()
         {
             _rig = UiTestRig.Boot(_controls, _slot);

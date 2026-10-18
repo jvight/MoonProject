@@ -475,7 +475,7 @@ namespace MoonProject.UI
             // The verb chip is the objective's own: it shows only with its line, and a teaching prompt takes the chip.
             hint = hint != HintWord.None ? hint
                 : _objectiveChip.Word(_objectiveView.ShowsObjective && _objective.WantsShown,
-                    _services.Systems.CanFitIgniter, cargoOpen);
+                    _services.Systems.CanFitIgniter, cargoOpen, OfferedNow());
             _lookUpChip.Tick(deltaTime, paused ? HintWord.None : hint, device);
             _objectiveView.Tick(deltaTime, _objective, ObjectiveOpen(paused) && _slot.Allows(GuidanceKind.Objective),
                 _lowBattery, ObjectiveOpen(paused) && _slot.Allows(GuidanceKind.Battery), _buildStrip,
@@ -485,6 +485,13 @@ namespace MoonProject.UI
             _sunArc.Tick(deltaTime, hudOpen && _openingProtocol.IsPowerOn);
             _buildWasOpen = _buildStrip.State != BuildModeState.Closed;
             ApplyCursor();
+        }
+
+        /// <summary>The gameplay's action in reach and ready now, or None.</summary>
+        private InteractionKind OfferedNow()
+        {
+            InteractionHint primary = _services.Hints.Primary;
+            return primary.Ready ? primary.Kind : InteractionKind.None;
         }
 
         /// <summary>The cursor follows what the mouse is for this frame (<see cref="CursorRule"/>).</summary>
