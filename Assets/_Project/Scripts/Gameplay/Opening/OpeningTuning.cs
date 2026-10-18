@@ -85,7 +85,7 @@ namespace MoonProject.Gameplay
                 new Recipe(3, 4, 2)),
             new SupplyCache("supply.workshop.b", "KenjiWorkshop", new Vector3(2.5f, 0f, -5f), 140f, "Crate_S",
                 new Recipe(3, 4, 2)),
-            new SupplyCache("supply.tower.a", "RadioTower", new Vector3(-3f, 0f, -2.5f), -130f, "Crate_S",
+            new SupplyCache("supply.tower.a", "RadioTower", new Vector3(-6.5f, 0f, 0f), -100f, "Crate_S",
                 new Recipe(2, 0, 1)),
             new SupplyCache("supply.tower.b", "RadioTower", new Vector3(3f, 0f, -2.5f), 130f, "Crate_S",
                 new Recipe(2, 0, 1)),
