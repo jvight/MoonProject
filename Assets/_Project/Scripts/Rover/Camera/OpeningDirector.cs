@@ -36,6 +36,12 @@ namespace MoonProject.Rover
         /// <summary>Drive input below this (stick magnitude) is drift, not the player driving.</summary>
         private const float DriveEpsilon = 0.05f;
 
+        /// <summary>Share of the push after which the camera's heading eases onto the lens' own gaze.</summary>
+        private const float PushGazeFrom = 0.6f;
+
+        /// <summary>Frames the brain keeps its cut blend after the lens camera goes live.</summary>
+        private const int CutFrameCount = 2;
+
         /// <summary>Phase length or probe distance below this is treated as zero.</summary>
         private const float LengthEpsilon = 1e-4f;
 
@@ -60,6 +66,9 @@ namespace MoonProject.Rover
         private readonly object _owner = new object();
         private readonly FaceInspectSightLine _sight = new FaceInspectSightLine();
         private Vector3 _wakePost;
+        private CinemachineBrain _brain;
+        private CinemachineBlendDefinition _savedBlend;
+        private int _cutFrames;
         private OpeningScript _script;
         private LampPowerUp _lamps;
         private LookSettings _look;
@@ -131,6 +140,7 @@ namespace MoonProject.Rover
             _rig.SetWakeBody(_body);
             OpeningSettings settings = _tuning.Opening;
             _lamps = new LampPowerUp(settings);
+            _brain = _rig.Camera != null ? _rig.Camera.GetComponent<CinemachineBrain>() : null;
             CinemachineCamera chase = _rig.ChaseCamera;
             chase.StandbyUpdate = CinemachineVirtualCameraBase.StandbyUpdateMode.Always;
             _lensCamera.Priority = chase.Priority.Value + 1;
@@ -285,6 +295,11 @@ namespace MoonProject.Rover
             if (_inTitle)
             {
                 _body.HoldAsleep();
+            }
+
+            if (_cutFrames > 0 && --_cutFrames == 0)
+            {
+                _brain.DefaultBlend = _savedBlend;
             }
 
             _lamps.Step(deltaTime);
@@ -499,22 +514,23 @@ namespace MoonProject.Rover
                     ? Mathf.Clamp01(_script.PhaseTime / _script.PhaseLength)
                     : 1f;
                 float t = WakeOpening.SmoothStepC2(0f, 1f, u);
-                Vector3 desiredPos = Vector3.Lerp(_pushFrom, eye, t);
-                Vector3 stepDir = desiredPos - _pushFrom;
+                Vector3 desiredPos = PushInPath.Position(_rover.Position, _pushFrom, eye, t, settings.PushClearRadius);
+                Vector3 stepDir = desiredPos - lensOrigin;
                 float stepDist = stepDir.magnitude;
                 if (stepDist > LengthEpsilon)
                 {
-                    float clearStep = _sight.Clear(_pushFrom, desiredPos, _tuning.FaceInspectProbeRadius);
-                    position = _pushFrom + (stepDir / stepDist) * clearStep;
+                    float clearStep = _sight.Clear(lensOrigin, desiredPos, _tuning.FaceInspectProbeRadius);
+                    position = lensOrigin + (stepDir / stepDist) * clearStep;
                 }
                 else
                 {
                     position = desiredPos;
                 }
 
-                Vector3 lookDir = lensOrigin - _pushFrom;
+                Vector3 lookDir = lensOrigin - position;
                 Quaternion lookToLens = lookDir.sqrMagnitude > 1e-6f ? Quaternion.LookRotation(lookDir) : _pushFromRotation;
-                rotation = Quaternion.Slerp(_pushFromRotation, lookToLens, t);
+                Quaternion approach = Quaternion.Slerp(_pushFromRotation, lookToLens, t);
+                rotation = Quaternion.Slerp(approach, gaze, Smoothing.SmoothStep(PushGazeFrom, 1f, t));
                 fov = Mathf.Lerp(_pushFromFov, settings.LensFov, t);
                 nearClip = Mathf.Lerp(_tuning.FaceInspectNearClip, settings.LensNearClip, t);
             }
@@ -584,9 +600,45 @@ namespace MoonProject.Rover
             _lensCamera.Lens = lensSettings;
             if (!_lensCamera.enabled)
             {
+                CutToLensCamera();
                 _lensCamera.enabled = true;
                 _lensCamera.PreviousStateIsValid = false;
             }
+        }
+
+        /// <summary>
+        /// The lens camera takes the picture in one cut: the brain's default blend (a 2 s ease) would otherwise mix the
+        /// chase camera into it for the first seconds of the push, sweeping the view through 07's hull.
+        /// </summary>
+        private void CutToLensCamera()
+        {
+            if (_brain == null)
+            {
+                return;
+            }
+
+            if (_cutFrames == 0)
+            {
+                _savedBlend = _brain.DefaultBlend;
+            }
+
+            _brain.DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Styles.Cut, 0f);
+            _cutFrames = CutFrameCount;
+        }
+
+        private void RestoreBlend()
+        {
+            if (_brain != null && _cutFrames > 0)
+            {
+                _brain.DefaultBlend = _savedBlend;
+            }
+
+            _cutFrames = 0;
+        }
+
+        private void OnDisable()
+        {
+            RestoreBlend();
         }
 
         private void ApplyLens()

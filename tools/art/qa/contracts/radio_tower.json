@@ -37,6 +37,34 @@
         0.0
       ]
     },
+    "UCX_TowerBase_1": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "UCX_TowerBase_2": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "UCX_MastLeaning_1": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "UCX_Dish_1": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
     "Scan_1": {
       "pivot": [
         1.58,
