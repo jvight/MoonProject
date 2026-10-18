@@ -24,7 +24,7 @@ namespace MoonProject.Showcase.Editor
     /// <summary>
     /// Builds <c>Assets/_Project/Scenes/Showcase.unity</c> from an empty scene: sets up the real World
     /// (<see cref="WorldSystem"/>, <see cref="SkyCycleSystem"/>, <see cref="PeakBeacon"/>, post-processing
-    /// <see cref="Volume"/>), places all 15 look-dev exhibits on the central basin floor with &gt;= 12 m spacing,
+    /// <see cref="Volume"/>), places all 10 look-dev exhibits on the central basin floor with &gt;= 12 m spacing,
     /// wires all animated node paths, <c>Stage_1..4</c> roots, lamps, socket-mounted rover kits, ruin cluster pieces,
     /// camera rig, and Vietnamese UI Toolkit help overlay, and normalizes scene file IDs.
     /// </summary>
