@@ -302,6 +302,115 @@ def _build_ice_core_frost_albedo(res: int = 128) -> Image.Image:
     return Image.fromarray(rgba_u8, mode="RGBA")
 
 
+def _build_bootprint_trail_pair(w: int = 256, h: int = 512) -> tuple[Image.Image, Image.Image]:
+    """Generate V-tileable albedo and normal maps of two crossing EVA bootprint trails softened by time."""
+    y, x = np.mgrid[0:h, 0:w].astype(np.float32)
+    u = (x + 0.5) / w
+    v = (y + 0.5) / h
+
+    # Base multi-frequency periodic lunar regolith micro-relief (isotropic interference)
+    grain = (
+        0.28 * np.sin(u * 22.0 * np.pi) * np.cos(v * 44.0 * np.pi)
+        + 0.24 * np.cos(u * 48.0 * np.pi) * np.sin(v * 96.0 * np.pi)
+        + 0.24 * (
+            np.sin((u * 36.0 + v * 72.0) * np.pi) * np.cos((u * 36.0 - v * 72.0) * np.pi)
+        )
+        + 0.24 * (
+            np.cos((u * 84.0 + v * 168.0) * np.pi) * np.sin((u * 84.0 - v * 168.0) * np.pi)
+        )
+    )
+
+    height = 0.04 * grain
+    compaction = np.zeros_like(u)
+    rim_boost = np.zeros_like(u)
+
+    # Two crossing trails (Trail A and Trail B) that weave periodically across V in [0, 1)
+    trails = [
+        # (phase_v, amp_u, dir_sign, n_steps, step_offset)
+        (0.08, 0.205, 1.0, 6, 0.04),
+        (0.08, -0.205, 1.0, 6, 0.12),
+    ]
+
+    for phase_v, amp_u, dir_sign, n_steps, step_offset in trails:
+        for s_idx in range(n_steps):
+            sv = (s_idx / float(n_steps) + step_offset) % 1.0
+            side = -1.0 if (s_idx % 2 == 0) else 1.0
+            center_u = 0.50 + amp_u * np.sin(2.0 * np.pi * (sv + phase_v)) + side * 0.058
+            # Tangent slope du/dv of the trail path at sv
+            du_dv = amp_u * 2.0 * np.pi * np.cos(2.0 * np.pi * (sv + phase_v))
+            yaw = np.arctan2(du_dv * 0.32, dir_sign) + side * 0.05
+
+            # Periodic V difference so footprints near v=0/1 wrap seamlessly
+            dv = (v - sv + 0.5) % 1.0 - 0.5
+            du = u - center_u
+
+            # Scale into isotropic meter-like local coords (tile is ~0.95m wide x 3.0m long, aspect ~ 3.15)
+            dx_m = du * 0.95
+            dy_m = dv * 3.00
+
+            cos_a = float(np.cos(yaw))
+            sin_a = float(np.sin(yaw))
+            lx = dx_m * cos_a + dy_m * sin_a
+            ly = -dx_m * sin_a + dy_m * cos_a
+
+            # Slight arch taper in the middle of the EVA overshoe sole
+            half_w = 0.068 * (1.0 - 0.10 * np.exp(-((ly / 0.045) ** 2)) + 0.08 * np.clip(ly / 0.14, -1.0, 1.0))
+            half_l = 0.142
+
+            # Rounded stadium distance metric
+            qx = np.maximum(np.abs(lx) - (half_w - 0.028), 0.0) / 0.028
+            qy = np.maximum(np.abs(ly) - (half_l - 0.038), 0.0) / 0.038
+            dist = np.hypot(qx, qy)
+
+            # Softened by time (micrometeorite gardening): smooth Gaussian transitions instead of razor-sharp edges
+            inside = np.clip(1.0 - np.power(np.clip(dist, 0.0, 1.35) / 1.15, 2.4), 0.0, 1.0)
+            # Displaced regolith ejecta rim around the bootprint perimeter
+            rim = np.exp(-(((dist - 1.18) / 0.36) ** 2)) * (1.0 - 0.25 * inside)
+
+            # 7 horizontal Apollo-style trapezoidal tread ribs across the sole length
+            rib_wave = np.cos((ly / half_l) * 6.5 * np.pi)
+            ribs = 0.5 + 0.5 * np.tanh(rib_wave * 1.65)
+            # Soft weathering erosion across individual ribs
+            erosion = 0.78 + 0.22 * np.sin((lx * 35.0 + ly * 22.0 + s_idx * 1.7) * np.pi)
+            sole_depth = inside * (0.42 + 0.58 * (1.0 - ribs * erosion))
+
+            height = height - 0.52 * sole_depth + 0.22 * rim
+            compaction = np.maximum(compaction, sole_depth)
+            rim_boost = np.maximum(rim_boost, rim)
+
+    # Soft lateral fade near u=0 and u=1 so the decal strip blends into undisturbed regolith
+    edge_mask = np.sin(np.clip(u, 0.0, 1.0) * np.pi) ** 0.55
+    height *= edge_mask
+    compaction *= edge_mask
+    rim_boost *= edge_mask
+
+    # Albedo: compacted lunar dust in bootprint treads has lower backscatter (darker cool-warm grey)
+    base_r = 0.54 + 0.03 * grain - 0.21 * compaction + 0.10 * rim_boost
+    base_g = 0.55 + 0.03 * grain - 0.21 * compaction + 0.10 * rim_boost
+    base_b = 0.58 + 0.03 * grain - 0.20 * compaction + 0.10 * rim_boost
+    alb_a = np.ones_like(base_r)
+    alb_u8 = np.clip(np.rint(np.stack([base_r, base_g, base_b, alb_a], axis=-1) * 255.0), 0, 255).astype(np.uint8)
+
+    # Tangent-space normal map from periodic finite differences
+    dh_du = (np.roll(height, -1, axis=1) - np.roll(height, 1, axis=1)) * (w * 0.018)
+    dh_dv = (np.roll(height, -1, axis=0) - np.roll(height, 1, axis=0)) * (h * 0.009)
+    nx = -dh_du
+    ny = -dh_dv
+    nz = np.ones_like(nx)
+    inv_len = 1.0 / np.maximum(np.sqrt(nx * nx + ny * ny + nz * nz), 1e-6)
+    nx *= inv_len
+    ny *= inv_len
+    nz *= inv_len
+
+    norm_r = 0.5 + 0.5 * nx
+    norm_g = 0.5 + 0.5 * ny
+    norm_b = 0.5 + 0.5 * nz
+    norm_a = np.ones_like(norm_r)
+    norm_u8 = np.clip(np.rint(np.stack([norm_r, norm_g, norm_b, norm_a], axis=-1) * 255.0), 0, 255).astype(np.uint8)
+
+    return Image.fromarray(alb_u8, mode="RGBA"), Image.fromarray(norm_u8, mode="RGBA")
+
+
 def main() -> None:
     repo_root = Path(__file__).resolve().parents[3]
     out_dir = repo_root / "Assets" / "_Project" / "Art" / "R1" / "Textures"
@@ -324,6 +433,10 @@ def main() -> None:
 
     ic_frost = _build_ice_core_frost_albedo(128)
     ic_frost.save(out_dir / "T_R1_IceCoreFrost_Albedo.png", compress_level=9)
+
+    bp_alb, bp_norm = _build_bootprint_trail_pair(256, 512)
+    bp_alb.save(out_dir / "T_R1_BootprintTrail_Albedo.png", compress_level=9)
+    bp_norm.save(out_dir / "T_R1_BootprintTrail_Normal.png", compress_level=9)
     print(f"Saved story prop textures to {out_dir}")
 
 

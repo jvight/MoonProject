@@ -2239,12 +2239,253 @@ def build_sample_rack() -> bpy.types.Object:
     return root
 
 
+def _bootprint_trail_relief_u(u: float, v: float) -> Tuple[float, float, float]:
+    """Evaluate periodic (height_m, compaction, rim) at normalized (u, v) in [0, 1]^2 for the two crossing trails."""
+    grain = (
+        0.28 * math.sin(u * 22.0 * math.pi) * math.cos(v * 44.0 * math.pi)
+        + 0.24 * math.cos(u * 48.0 * math.pi) * math.sin(v * 96.0 * math.pi)
+        + 0.24 * math.sin((u * 36.0 + v * 72.0) * math.pi) * math.cos((u * 36.0 - v * 72.0) * math.pi)
+    )
+    h_val = 0.04 * grain
+    comp_max = 0.0
+    rim_max = 0.0
+
+    trails = (
+        (0.08, 0.205, 1.0, 6, 0.04),
+        (0.08, -0.205, 1.0, 6, 0.12),
+    )
+    for phase_v, amp_u, dir_sign, n_steps, step_offset in trails:
+        for s_idx in range(n_steps):
+            sv = (s_idx / float(n_steps) + step_offset) % 1.0
+            side = -1.0 if (s_idx % 2 == 0) else 1.0
+            center_u = 0.50 + amp_u * math.sin(2.0 * math.pi * (sv + phase_v)) + side * 0.058
+            du_dv = amp_u * 2.0 * math.pi * math.cos(2.0 * math.pi * (sv + phase_v))
+            yaw = math.atan2(du_dv * 0.32, dir_sign) + side * 0.05
+
+            dv = (v - sv + 0.5) % 1.0 - 0.5
+            du = u - center_u
+            dx_m = du * 0.95
+            dy_m = dv * 3.00
+
+            cos_a = math.cos(yaw)
+            sin_a = math.sin(yaw)
+            lx = dx_m * cos_a + dy_m * sin_a
+            ly = -dx_m * sin_a + dy_m * cos_a
+
+            arch = 1.0 - 0.10 * math.exp(-((ly / 0.045) ** 2)) + 0.08 * max(-1.0, min(1.0, ly / 0.14))
+            half_w = 0.068 * arch
+            half_l = 0.142
+
+            qx = max(abs(lx) - (half_w - 0.028), 0.0) / 0.028
+            qy = max(abs(ly) - (half_l - 0.038), 0.0) / 0.038
+            dist = math.hypot(qx, qy)
+
+            inside = max(0.0, min(1.0, 1.0 - (min(dist, 1.35) / 1.15) ** 2.4))
+            rim = math.exp(-(((dist - 1.18) / 0.36) ** 2)) * (1.0 - 0.25 * inside)
+
+            rib_wave = math.cos((ly / half_l) * 6.5 * math.pi)
+            ribs = 0.5 + 0.5 * math.tanh(rib_wave * 1.65)
+            erosion = 0.78 + 0.22 * math.sin((lx * 35.0 + ly * 22.0 + s_idx * 1.7) * math.pi)
+            sole_depth = inside * (0.42 + 0.58 * (1.0 - ribs * erosion))
+
+            h_val = h_val - 0.52 * sole_depth + 0.22 * rim
+            if sole_depth > comp_max:
+                comp_max = sole_depth
+            if rim > rim_max:
+                rim_max = rim
+
+    edge_mask = max(0.0, math.sin(max(0.0, min(1.0, u)) * math.pi)) ** 0.55
+    comp_max *= edge_mask
+    rim_max *= edge_mask
+    # Physical top-surface height in meters (0.002 m at feathered lateral edges, ~0.009 m nominal, up to 0.014 m on rims)
+    y_top = 0.002 + edge_mask * (0.0075 - 0.0045 * comp_max + 0.0045 * rim_max + 0.0012 * grain)
+    return y_top, comp_max, rim_max
+
+
+def _add_bootprint_trail_slab(
+    mb: r1kit.MeshBuilder,
+    width_x: float = 0.95,
+    length_z: float = 3.00,
+    nx: int = 24,
+    nz: int = 64,
+    mat: str = "R1_Signage",
+) -> None:
+    """Build a 100% closed manifold ground-decal ribbon slab with sculpted bootprint relief."""
+    bm = mb.bm
+    mat_idx = mb._mat_index(mat)
+
+    top_grid: List[List[bmesh.types.BMVert]] = []
+    bot_grid: List[List[bmesh.types.BMVert]] = []
+
+    for iz in range(nz + 1):
+        v_norm = iz / float(nz)
+        # Periodic v_eval so iz=0 and iz=nz have identical height profile for seamless path tiling
+        v_eval = 0.0 if iz == nz else v_norm
+        z_u = -0.5 * length_z + v_norm * length_z
+        t_row: List[bmesh.types.BMVert] = []
+        b_row: List[bmesh.types.BMVert] = []
+        for ix in range(nx + 1):
+            u_norm = ix / float(nx)
+            x_u = -0.5 * width_x + u_norm * width_x
+            y_top, _, _ = _bootprint_trail_relief_u(u_norm, v_eval)
+            t_row.append(bm.verts.new(mb._to_local_b((x_u, y_top, z_u))))
+            b_row.append(bm.verts.new(mb._to_local_b((x_u, 0.0, z_u))))
+        top_grid.append(t_row)
+        bot_grid.append(b_row)
+
+    faces: List[bmesh.types.BMFace] = []
+    for iz in range(nz):
+        for ix in range(nx):
+            # Top (+Y_u / +Z_b)
+            faces.append(
+                bm.faces.new(
+                    [
+                        top_grid[iz][ix],
+                        top_grid[iz + 1][ix],
+                        top_grid[iz + 1][ix + 1],
+                        top_grid[iz][ix + 1],
+                    ]
+                )
+            )
+            # Bottom (-Y_u / -Z_b)
+            faces.append(
+                bm.faces.new(
+                    [
+                        bot_grid[iz][ix],
+                        bot_grid[iz][ix + 1],
+                        bot_grid[iz + 1][ix + 1],
+                        bot_grid[iz + 1][ix],
+                    ]
+                )
+            )
+
+    # Front (-Z_u) and Back (+Z_u) end caps
+    for ix in range(nx):
+        faces.append(
+            bm.faces.new(
+                [
+                    bot_grid[0][ix],
+                    top_grid[0][ix],
+                    top_grid[0][ix + 1],
+                    bot_grid[0][ix + 1],
+                ]
+            )
+        )
+        faces.append(
+            bm.faces.new(
+                [
+                    bot_grid[nz][ix + 1],
+                    top_grid[nz][ix + 1],
+                    top_grid[nz][ix],
+                    bot_grid[nz][ix],
+                ]
+            )
+        )
+
+    # Left (-X_u) and Right (+X_u) side caps
+    for iz in range(nz):
+        faces.append(
+            bm.faces.new(
+                [
+                    bot_grid[iz + 1][0],
+                    top_grid[iz + 1][0],
+                    top_grid[iz][0],
+                    bot_grid[iz][0],
+                ]
+            )
+        )
+        faces.append(
+            bm.faces.new(
+                [
+                    bot_grid[iz][nx],
+                    top_grid[iz][nx],
+                    top_grid[iz + 1][nx],
+                    bot_grid[iz + 1][nx],
+                ]
+            )
+        )
+
+    bmesh.ops.recalc_face_normals(bm, faces=faces)
+    for f in faces:
+        f.material_index = mat_idx
+        f.smooth = True
+
+
+def _apply_bootprint_planar_uv_and_colors(
+    obj: bpy.types.Object,
+    width_x: float = 0.95,
+    length_z: float = 3.00,
+) -> None:
+    """Assign normalized [0, 1] planar top-down UVs and bake bootprint cavity/rim vertex colors."""
+    mesh = obj.data
+    if not mesh.uv_layers:
+        mesh.uv_layers.new(name="UVMap")
+    uv_layer = mesh.uv_layers.active.data
+    world_mat = obj.matrix_world
+
+    for poly in mesh.polygons:
+        for li in poly.loop_indices:
+            v_w = world_mat @ mesh.vertices[mesh.loops[li].vertex_index].co
+            # In Blender space: X_b = X_u in [-width_x/2, +width_x/2], Y_b = Z_u in [-length_z/2, +length_z/2]
+            u = max(0.0, min(1.0, (v_w.x + 0.5 * width_x) / width_x))
+            # Flip V so top of image (row 0) maps to +Y_b or match numpy image convention:
+            # Since _bootprint_trail_relief_u uses v in [0, 1] along Z_u (-1.5 -> +1.5), and PIL row y=0 is top (V=1 in OpenGL/Unity),
+            # setting uv.y = 1.0 - v aligns PIL row y with v!
+            v_rel = max(0.0, min(1.0, (v_w.y + 0.5 * length_z) / length_z))
+            uv_layer[li].uv = (u, 1.0 - v_rel)
+
+    for attr_name in ("Col", "Color"):
+        ca = mesh.color_attributes.get(attr_name)
+        if ca is None:
+            continue
+        for poly in mesh.polygons:
+            for li in poly.loop_indices:
+                v_w = world_mat @ mesh.vertices[mesh.loops[li].vertex_index].co
+                u = max(0.0, min(1.0, (v_w.x + 0.5 * width_x) / width_x))
+                v_rel = max(0.0, min(1.0, (v_w.y + 0.5 * length_z) / length_z))
+                _, comp, rim = _bootprint_trail_relief_u(u, v_rel if v_rel < 1.0 else 0.0)
+                # R = AO (darker in compressed bootprint treads), G = edge wear/rim catch, B = regolith dust
+                r = max(0.42, min(1.0, 0.90 - 0.36 * comp + 0.06 * rim))
+                g = max(0.08, min(1.0, 0.16 + 0.58 * rim))
+                b = max(0.35, min(1.0, 0.72 + 0.22 * (1.0 - comp)))
+                ca.data[li].color = (r, g, b, 1.0)
+
+
+def build_decal_bootprint_trail() -> bpy.types.Object:
+    """Build Deliverable 6: Decal_BootprintTrail (two crossing EVA bootprint trails, softened by time, tileable)."""
+    r1kit.reset_scene()
+    ensure_extended_r1_materials()
+    r1kit.ensure_materials()
+
+    root = r1kit.create_empty("Decal_BootprintTrail", pivot_u=(0.0, 0.0, 0.0))
+
+    trail_mb = r1kit.MeshBuilder("TrailSheet", pivot_u=(0.0, 0.0, 0.0))
+    _add_bootprint_trail_slab(trail_mb, width_x=0.95, length_z=3.00, nx=16, nz=44, mat="R1_Signage")
+    trail_obj = trail_mb.build_object(parent=root)
+
+    # Tileable path anchors at Z = -1.50 m and Z = +1.50 m (3.00 m stride) + Center_Anchor
+    r1kit.create_empty("Start_Anchor", parent=root, pivot_u=(0.0, 0.0, -1.50))
+    r1kit.create_empty("End_Anchor", parent=root, pivot_u=(0.0, 0.0, 1.50))
+    r1kit.create_empty("Center_Anchor", parent=root, pivot_u=(0.0, 0.0, 0.0))
+
+    r1kit.apply_triplanar_uvs(root)
+    r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))
+    r1kit.bake_vertex_colors(root, footprint_radius=1.55)
+    _apply_bootprint_planar_uv_and_colors(trail_obj, width_x=0.95, length_z=3.00)
+
+    fbx_path = PROPS_DIR / "Decal_BootprintTrail.fbx"
+    r1kit.export_fbx(root, fbx_path, bake_space_transform=False)
+    print(f"Exported {fbx_path}")
+    return root
+
+
 BUILDERS: Dict[str, Callable[[], bpy.types.Object]] = {
     "mission_flag": build_mission_flag,
     "seismic_station": build_seismic_station,
     "retroreflector": build_retroreflector,
     "survey_tripod": build_survey_tripod,
     "sample_rack": build_sample_rack,
+    "decal_bootprint_trail": build_decal_bootprint_trail,
 }
 
 

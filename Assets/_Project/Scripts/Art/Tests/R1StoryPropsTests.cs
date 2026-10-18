@@ -44,6 +44,7 @@ namespace MoonProject.Art.Tests
             ("prop_retroreflector.json", "Props/Prop_Retroreflector.fbx"),
             ("prop_survey_tripod.json", "Props/Prop_SurveyTripod.fbx"),
             ("prop_sample_rack.json", "Props/Prop_SampleRack.fbx"),
+            ("decal_bootprint_trail.json", "Props/Decal_BootprintTrail.fbx"),
         };
 
         [Serializable]
@@ -594,6 +595,36 @@ namespace MoonProject.Art.Tests
             Assert.Greater(box.size.y, 0.75f);
 
             AssertNoEmissiveMaterials(rackPrefab);
+        }
+
+        [Test]
+        public void DecalBootprintTrail_HasTileablePathAnchors_BootprintMaterial_AndBoxCollider()
+        {
+            GameObject decalPrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.DecalBootprintTrailPrefabPath);
+            Transform trailSheet = decalPrefab.transform.Find("TrailSheet");
+            Assert.IsNotNull(trailSheet, "Decal_BootprintTrail missing TrailSheet.");
+            Transform startAnchor = decalPrefab.transform.Find("Start_Anchor");
+            Transform endAnchor = decalPrefab.transform.Find("End_Anchor");
+            Assert.IsNotNull(startAnchor, "Decal_BootprintTrail missing Start_Anchor.");
+            Assert.IsNotNull(endAnchor, "Decal_BootprintTrail missing End_Anchor.");
+            Assert.IsNotNull(decalPrefab.transform.Find("Center_Anchor"), "Decal_BootprintTrail missing Center_Anchor.");
+            Assert.AreEqual(3.0f, Vector3.Distance(startAnchor.localPosition, endAnchor.localPosition), 0.02f,
+                "Decal_BootprintTrail Start_Anchor to End_Anchor span must be 3.0 m for seamless path tiling.");
+
+            BoxCollider box = decalPrefab.GetComponent<BoxCollider>();
+            Assert.IsNotNull(box, "Decal_BootprintTrail must have a simple BoxCollider on root.");
+            Assert.AreEqual(0.95f, box.size.x, 0.03f);
+            Assert.AreEqual(3.00f, box.size.z, 0.03f);
+
+            Renderer renderer = trailSheet.GetComponent<Renderer>();
+            Assert.IsNotNull(renderer);
+            Material mat = renderer.sharedMaterial;
+            Assert.IsNotNull(mat);
+            Assert.AreEqual(R1StoryPropsBuilder.BootprintTrailMaterialName, mat.name);
+            Assert.IsNotNull(mat.GetTexture("_BaseMap"), "R1_BootprintTrail must have _BaseMap assigned.");
+            Assert.IsNotNull(mat.GetTexture("_BumpMap"), "R1_BootprintTrail must have _BumpMap assigned.");
+
+            AssertNoEmissiveMaterials(decalPrefab);
         }
 
         private static void AssertNoEmissiveMaterials(GameObject prefab)

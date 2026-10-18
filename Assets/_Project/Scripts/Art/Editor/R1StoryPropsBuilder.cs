@@ -30,6 +30,7 @@ namespace MoonProject.Art.Editor
         public const string IceCoreFrostMaterialName = "R1_IceCoreFrost";
         public const string IceCoreWindowMaterialName = "R1_IceCoreWindow";
         public const string MissionFlagStripeMaterialName = "R1_MissionFlagStripe";
+        public const string BootprintTrailMaterialName = "R1_BootprintTrail";
 
         public const string CableMarkerAmberMaterialPath = ArtPaths.R1MaterialsFolder + "/" + CableMarkerAmberMaterialName + ".mat";
         public const string CrateRimGlowAmberMaterialPath = ArtPaths.R1MaterialsFolder + "/" + CrateRimGlowAmberMaterialName + ".mat";
@@ -43,6 +44,7 @@ namespace MoonProject.Art.Editor
         public const string IceCoreFrostMaterialPath = ArtPaths.R1MaterialsFolder + "/" + IceCoreFrostMaterialName + ".mat";
         public const string IceCoreWindowMaterialPath = ArtPaths.R1MaterialsFolder + "/" + IceCoreWindowMaterialName + ".mat";
         public const string MissionFlagStripeMaterialPath = ArtPaths.R1MaterialsFolder + "/" + MissionFlagStripeMaterialName + ".mat";
+        public const string BootprintTrailMaterialPath = ArtPaths.R1MaterialsFolder + "/" + BootprintTrailMaterialName + ".mat";
 
         public const string LanderReserveAlbedoPath = R1MaterialRecipes.TexturesFolder + "/T_R1_LanderReserve_Albedo.png";
         public const string LanderReserveEmissionPath = R1MaterialRecipes.TexturesFolder + "/T_R1_LanderReserve_Emission.png";
@@ -52,6 +54,8 @@ namespace MoonProject.Art.Editor
         public const string PeakBeaconRedEmissionPath = R1MaterialRecipes.TexturesFolder + "/T_R1_PeakBeaconRed_Emission.png";
         public const string IceCoreLabelAlbedoPath = R1MaterialRecipes.TexturesFolder + "/T_R1_IceCoreLabel_Albedo.png";
         public const string IceCoreFrostAlbedoPath = R1MaterialRecipes.TexturesFolder + "/T_R1_IceCoreFrost_Albedo.png";
+        public const string BootprintTrailAlbedoPath = R1MaterialRecipes.TexturesFolder + "/T_R1_BootprintTrail_Albedo.png";
+        public const string BootprintTrailNormalPath = R1MaterialRecipes.TexturesFolder + "/T_R1_BootprintTrail_Normal.png";
 
         public const string DeadChargingPostPrefabPath = PropsModelsFolder + "/DeadChargingPost.prefab";
         public const string GroundCableSegmentPrefabPath = PropsModelsFolder + "/GroundCableSegment.prefab";
@@ -79,6 +83,7 @@ namespace MoonProject.Art.Editor
         public const string PropRetroreflectorPrefabPath = PropsModelsFolder + "/Prop_Retroreflector.prefab";
         public const string PropSurveyTripodPrefabPath = PropsModelsFolder + "/Prop_SurveyTripod.prefab";
         public const string PropSampleRackPrefabPath = PropsModelsFolder + "/Prop_SampleRack.prefab";
+        public const string DecalBootprintTrailPrefabPath = PropsModelsFolder + "/Decal_BootprintTrail.prefab";
 
         /// <summary>Loads the <c>MoonProject/R1/SignalPillar</c> shader asset.</summary>
         public static Shader LoadSignalPillarShader()
@@ -286,6 +291,31 @@ namespace MoonProject.Art.Editor
             flagStripeMat.SetFloat("_EmissionStrength", 0.0f);
             flagStripeMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
             GeneratedAssets.CreateOrReplace(flagStripeMat, MissionFlagStripeMaterialPath);
+
+            // 13. R1_BootprintTrail: tileable lunar regolith ground decal of two crossing EVA bootprint trails softened by time
+            R1MaterialSpec basaltSpec = R1MaterialRecipes.Get(R1MaterialSlot.Basalt);
+            Material bootprintMat = R1MaterialLibrary.CreateMaterial(r1Lit, basaltSpec);
+            bootprintMat.name = BootprintTrailMaterialName;
+            bootprintMat.SetTexture("_BaseMap", LoadRequiredTexture(BootprintTrailAlbedoPath));
+            bootprintMat.SetColor("_BaseColor", new Color(0.92f, 0.91f, 0.90f, 1f));
+            bootprintMat.SetTexture("_BumpMap", LoadRequiredTexture(BootprintTrailNormalPath));
+            bootprintMat.SetFloat("_BumpScale", 1.45f);
+            bootprintMat.SetFloat("_MetallicScale", 0.0f);
+            bootprintMat.SetFloat("_SmoothnessMin", 0.06f);
+            bootprintMat.SetFloat("_SmoothnessMax", 0.18f);
+            bootprintMat.SetFloat("_ColorVarAmount", 0.04f);
+            bootprintMat.SetColor("_EdgeWearColor", new Color(0.68f, 0.67f, 0.66f, 1f));
+            bootprintMat.SetFloat("_EdgeWearAmount", 0.36f);
+            bootprintMat.SetFloat("_EdgeWearMetallic", 0.0f);
+            bootprintMat.SetFloat("_EdgeWearSmoothness", 0.16f);
+            bootprintMat.SetColor("_DustColor", new Color(0.56f, 0.56f, 0.58f, 1f));
+            bootprintMat.SetFloat("_DustAmount", 0.28f);
+            bootprintMat.SetFloat("_DustSmoothness", 0.10f);
+            bootprintMat.SetTexture("_EmissionMap", null);
+            bootprintMat.SetColor("_EmissionColor", Color.black);
+            bootprintMat.SetFloat("_EmissionStrength", 0.0f);
+            bootprintMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+            GeneratedAssets.CreateOrReplace(bootprintMat, BootprintTrailMaterialPath);
         }
 
         /// <summary>
@@ -371,6 +401,18 @@ namespace MoonProject.Art.Editor
             }
             else if (modelPath.EndsWith("/Prop_SampleRack.fbx", StringComparison.Ordinal))
             {
+                EnsureSimpleBoxCollider(root);
+            }
+            else if (modelPath.EndsWith("/Decal_BootprintTrail.fbx", StringComparison.Ordinal))
+            {
+                ReplaceRendererSlotMaterial(root, "TrailSheet", R1MaterialRecipes.SignageSlot, LoadOrBuildMaterial(BootprintTrailMaterialPath));
+                Renderer[] renderers = root.GetComponentsInChildren<Renderer>(true);
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    renderers[i].shadowCastingMode = ShadowCastingMode.Off;
+                    renderers[i].receiveShadows = true;
+                }
+
                 EnsureSimpleBoxCollider(root);
             }
         }
