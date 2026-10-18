@@ -31,6 +31,13 @@ namespace MoonProject.Core
         SkyPhase Phase { get; }
 
         /// <summary>
+        /// Real seconds until the Sun's lower limb meets the rim (the terrain horizon seen from home along the Sun's
+        /// bearing) at the current pace: <see cref="float.PositiveInfinity"/> while the opening holds the Sun short of
+        /// it (the eclipse, golden hour, last light), 0 once it has set.
+        /// </summary>
+        float SecondsToSunset { get; }
+
+        /// <summary>
         /// Direct sunlight reaching <paramref name="position"/> right now, 0..1: 0 when the Sun is eclipsed or hidden
         /// behind the local terrain horizon along the Sun's bearing, with a soft ramp across the horizon edge.
         /// Safe to call ~20 times per second without allocations.
