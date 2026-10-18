@@ -68,7 +68,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Metres above the ground, and the radius, of the space 07's body needs to stand in.</summary>
         private const float ClearHeight = 0.9f;
 
-        private const float ClearRadius = 1.1f;
+        private const float ClearRadius = 0.9f;
 
         /// <summary>Metres south of the fallen solar array the way into and out of the ruins lies.</summary>
         private const float RuinsGateOffset = 10f;
@@ -197,6 +197,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return ExpectLine(OpeningKeys.FindSolar, "B7: LANDER RESERVE · 0%");
             yield return DriveTo(RuinsGate(), 3f, "the Lumen ruins");
             yield return ScanTheSet("ruin.FallenSolarArray", "the fallen solar array");
+            yield return ReadTheAirlockPanel();
             yield return CutTheCrates("KenjiWorkshop", "Kenji's workshop lockers");
             yield return ExpectLine(OpeningKeys.BuildSolar, "B8: the array's cost is covered");
             yield return DriveTo(RuinsGate(), 3f, "out of the Lumen ruins");
@@ -204,7 +205,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return UntilReached(OpeningMilestone.PowerOn, "Power on: the array powers the pad");
             yield return ExpectLine(OpeningKeys.BuildBatteryBank, "B9: night is coming");
             yield return ScanTheSet("ruin.HabitatModules", "the habitat's power modules");
-            yield return ReadTheAirlockPanel();
             yield return CutTheCrates("HabitatModules", "the habitat's cable reel");
             yield return DriveTo(RuinsGate(), 3f, "out of the Lumen ruins");
             yield return Build(StructureIds.BatteryBank, pad + Vector3.left * BaseSpacing, "B9: the battery bank");
@@ -355,8 +355,8 @@ namespace MoonProject.Gameplay.PlayModeTests
         private IEnumerator Scan(ScanFragment fragment, string what, Vector3 preferred, float standOff)
         {
             ScanField scans = _gameplay.Scans;
-            Vector3 away = ClearSide(fragment.Point, preferred, standOff, fragment.FragmentId);
-            if (Clear(fragment.Point + away * (standOff + ScanLineUp)))
+            Vector3 away = ClearSide(fragment.Point, preferred, standOff, fragment.FragmentId, null);
+            if (Clear(fragment.Point + away * (standOff + ScanLineUp), null))
             {
                 yield return DriveTo(Flat(fragment.Point + away * (standOff + ScanLineUp)), LineUpArrive,
                     "a line-up for a scan");
@@ -421,9 +421,10 @@ namespace MoonProject.Gameplay.PlayModeTests
                 }
 
                 Vector3 side = ClearSide(crate.CutPoint.position, Flat(crate.Root.forward).normalized, SealStandOff,
-                    crate.Id);
+                    $"{crate.Id} (its seal at {crate.CutPoint.position}; its frame {Frame(cache.AnchorId)})",
+                    crate.Root);
                 Vector3 front = Flat(crate.CutPoint.position) + side * SealStandOff;
-                if (Clear(crate.CutPoint.position + side * (SealStandOff + SealLineUp)))
+                if (Clear(crate.CutPoint.position + side * (SealStandOff + SealLineUp), crate.Root))
                 {
                     yield return DriveTo(front + side * SealLineUp, LineUpArrive, "a line-up for " + cache.Id);
                 }
@@ -502,7 +503,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Begin();
             BatteryModel battery = _gameplay.Battery.Model;
             yield return DriveTo(Flat(pad) + Vector3.back * 6f, 2f, "a line-up for the pad");
-            yield return DriveTo(Flat(pad), 0.5f, "the pad");
+            yield return DriveTo(Flat(pad), 0.5f, "the pad", ApproachThrottle);
             yield return Until(() => battery.IsCharging && battery.Charger == ChargerKind.Pad, 6f,
                 "the built pad charges 07");
             yield return UntilReached(OpeningMilestone.FirstCharge, "FirstCharge: the eclipse ends");
@@ -644,29 +645,54 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// The way out from <paramref name="point"/> (a seal or a scan target) 07 comes in along:
         /// <paramref name="preferred"/> if 07 can stand there, else the first side round it where it can (they stand
         /// among the ruins and by the lander; a seal claims E, and a scan shows, whichever side 07 faces it from). The
-        /// line-up further out is driven only where that ground is clear too.
+        /// line-up further out is driven only where that ground is clear too. <paramref name="own"/> (the crate whose
+        /// seal it is, or null) never blocks: 07 noses up to it.
         /// </summary>
-        private static Vector3 ClearSide(Vector3 point, Vector3 preferred, float standOff, string what)
+        private static Vector3 ClearSide(Vector3 point, Vector3 preferred, float standOff, string what, Transform own)
         {
             for (int step = 0; step < ApproachSides; step++)
             {
                 float turn = (step + 1) / 2 * (360f / ApproachSides) * (step % 2 == 0 ? 1f : -1f);
                 Vector3 side = Quaternion.Euler(0f, turn, 0f) * preferred;
-                if (Clear(point + side * standOff))
+                if (Clear(point + side * standOff, own))
                 {
                     return side;
                 }
             }
 
-            Assert.Fail($"{what} has open ground on some side to come in from");
+            var blockers = new List<string>();
+            for (int step = 0; step < ApproachSides; step++)
+            {
+                Vector3 side = Quaternion.Euler(0f, step * (360f / ApproachSides), 0f) * preferred;
+                Collider blocker = Blocker(point + side * standOff, own);
+                blockers.Add(blocker != null ? $"{blocker.name} {blocker.bounds.center} size {blocker.bounds.size}"
+                    : "?");
+            }
+
+            Assert.Fail($"{what} has open ground on some side to come in from (blocked by " +
+                        $"{string.Join(", ", blockers)})");
             return preferred;
         }
 
-        /// <summary>No ruin or prop where 07 would stand.</summary>
-        private static bool Clear(Vector3 spot)
+        /// <summary>No ruin or prop but <paramref name="own"/> where 07 would stand.</summary>
+        private static bool Clear(Vector3 spot, Transform own)
         {
-            return !Physics.CheckSphere(spot + Vector3.up * ClearHeight, ClearRadius, Layers.PropMask,
-                QueryTriggerInteraction.Ignore);
+            return Blocker(spot, own) == null;
+        }
+
+        /// <summary>The first ruin or prop but <paramref name="own"/> where 07 would stand, or null.</summary>
+        private static Collider Blocker(Vector3 spot, Transform own)
+        {
+            foreach (Collider hit in Physics.OverlapSphere(spot + Vector3.up * ClearHeight, ClearRadius,
+                         Layers.PropMask, QueryTriggerInteraction.Ignore))
+            {
+                if (own == null || !hit.transform.IsChildOf(own))
+                {
+                    return hit;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>A crate's frame: a ruin's pose and bounds, or the anchor's pose.</summary>

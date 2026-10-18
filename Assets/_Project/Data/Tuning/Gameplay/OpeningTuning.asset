@@ -73,8 +73,8 @@ MonoBehaviour:
     _prop: {fileID: 703351103347903336, guid: 3a2ed291bf34a90459e85da9d8125b67, type: 3}
   - _id: supply.habitat.reel
     _anchorId: HabitatModules
-    _offset: {x: 3, y: 0, z: -6}
-    _yaw: 153
+    _offset: {x: -3, y: 0, z: -6}
+    _yaw: 207
     _container: Crate_M
     _yield:
       _metal: 6
