@@ -29,6 +29,7 @@ namespace MoonProject.Art.Editor
         public const string IceCoreLabelMaterialName = "R1_IceCoreLabel";
         public const string IceCoreFrostMaterialName = "R1_IceCoreFrost";
         public const string IceCoreWindowMaterialName = "R1_IceCoreWindow";
+        public const string MissionFlagStripeMaterialName = "R1_MissionFlagStripe";
 
         public const string CableMarkerAmberMaterialPath = ArtPaths.R1MaterialsFolder + "/" + CableMarkerAmberMaterialName + ".mat";
         public const string CrateRimGlowAmberMaterialPath = ArtPaths.R1MaterialsFolder + "/" + CrateRimGlowAmberMaterialName + ".mat";
@@ -41,6 +42,7 @@ namespace MoonProject.Art.Editor
         public const string IceCoreLabelMaterialPath = ArtPaths.R1MaterialsFolder + "/" + IceCoreLabelMaterialName + ".mat";
         public const string IceCoreFrostMaterialPath = ArtPaths.R1MaterialsFolder + "/" + IceCoreFrostMaterialName + ".mat";
         public const string IceCoreWindowMaterialPath = ArtPaths.R1MaterialsFolder + "/" + IceCoreWindowMaterialName + ".mat";
+        public const string MissionFlagStripeMaterialPath = ArtPaths.R1MaterialsFolder + "/" + MissionFlagStripeMaterialName + ".mat";
 
         public const string LanderReserveAlbedoPath = R1MaterialRecipes.TexturesFolder + "/T_R1_LanderReserve_Albedo.png";
         public const string LanderReserveEmissionPath = R1MaterialRecipes.TexturesFolder + "/T_R1_LanderReserve_Emission.png";
@@ -72,6 +74,7 @@ namespace MoonProject.Art.Editor
         public const string CablePlugPrefabPath = PropsModelsFolder + "/Cable_Plug.prefab";
         public const string CableSpliceBoxPrefabPath = PropsModelsFolder + "/Cable_Splice_Box.prefab";
         public const string HabitatModulesPrefabPath = ArtPaths.R1ModelsFolder + "/Ruins/HabitatModules.prefab";
+        public const string PropMissionFlagPrefabPath = PropsModelsFolder + "/Prop_MissionFlag.prefab";
 
         /// <summary>Loads the <c>MoonProject/R1/SignalPillar</c> shader asset.</summary>
         public static Shader LoadSignalPillarShader()
@@ -264,6 +267,21 @@ namespace MoonProject.Art.Editor
             iceCoreWindowMat.SetFloat("_HotCorePeak", 0.45f);
             iceCoreWindowMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
             GeneratedAssets.CreateOrReplace(iceCoreWindowMat, IceCoreWindowMaterialPath);
+
+            // 12. R1_MissionFlagStripe: sun-bleached faint stripe & canton trim (almost white warm grey-cream, zero emission)
+            Material flagStripeMat = R1MaterialLibrary.CreateMaterial(r1Lit, creamSpec);
+            flagStripeMat.name = MissionFlagStripeMaterialName;
+            flagStripeMat.SetColor("_BaseColor", new Color(0.84f, 0.80f, 0.74f, 1f));
+            flagStripeMat.SetColor("_EdgeWearColor", new Color(0.95f, 0.93f, 0.89f, 1f));
+            flagStripeMat.SetFloat("_EdgeWearAmount", 0.55f);
+            flagStripeMat.SetFloat("_DustAmount", 0.34f);
+            flagStripeMat.SetFloat("_SmoothnessMin", 0.08f);
+            flagStripeMat.SetFloat("_SmoothnessMax", 0.22f);
+            flagStripeMat.SetTexture("_EmissionMap", null);
+            flagStripeMat.SetColor("_EmissionColor", Color.black);
+            flagStripeMat.SetFloat("_EmissionStrength", 0.0f);
+            flagStripeMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+            GeneratedAssets.CreateOrReplace(flagStripeMat, MissionFlagStripeMaterialPath);
         }
 
         /// <summary>
@@ -329,6 +347,71 @@ namespace MoonProject.Art.Editor
             {
                 ReplaceRendererSlotMaterial(root, "FrostBlock", R1MaterialRecipes.CreamEnamelSlot, LoadOrBuildMaterial(IceCoreFrostMaterialPath));
             }
+            else if (modelPath.EndsWith("/Prop_MissionFlag.fbx", StringComparison.Ordinal))
+            {
+                ReplaceRendererSlotMaterial(root, "FlagSheet", R1MaterialRecipes.SignageSlot, LoadOrBuildMaterial(MissionFlagStripeMaterialPath));
+                EnsureSimpleBoxCollider(root);
+            }
+        }
+
+        /// <summary>
+        /// Ensures a simple <see cref="BoxCollider"/> exists on <paramref name="root"/> fitted to the combined local
+        /// mesh bounds of its hierarchy.
+        /// </summary>
+        public static BoxCollider EnsureSimpleBoxCollider(GameObject root)
+        {
+            MeshFilter[] filters = root.GetComponentsInChildren<MeshFilter>(true);
+            Matrix4x4 worldToRoot = root.transform.worldToLocalMatrix;
+            Bounds bounds = default;
+            bool hasBounds = false;
+
+            for (int i = 0; i < filters.Length; i++)
+            {
+                Mesh mesh = filters[i].sharedMesh;
+                if (mesh == null)
+                {
+                    continue;
+                }
+
+                Matrix4x4 toRoot = worldToRoot * filters[i].transform.localToWorldMatrix;
+                Bounds mb = mesh.bounds;
+                Vector3 c = mb.center;
+                Vector3 e = mb.extents;
+                for (int sx = -1; sx <= 1; sx += 2)
+                {
+                    for (int sy = -1; sy <= 1; sy += 2)
+                    {
+                        for (int sz = -1; sz <= 1; sz += 2)
+                        {
+                            Vector3 pt = toRoot.MultiplyPoint3x4(c + new Vector3(e.x * sx, e.y * sy, e.z * sz));
+                            if (!hasBounds)
+                            {
+                                bounds = new Bounds(pt, Vector3.zero);
+                                hasBounds = true;
+                            }
+                            else
+                            {
+                                bounds.Encapsulate(pt);
+                            }
+                        }
+                    }
+                }
+            }
+
+            BoxCollider collider = root.GetComponent<BoxCollider>();
+            if (collider == null)
+            {
+                collider = root.AddComponent<BoxCollider>();
+            }
+
+            if (hasBounds)
+            {
+                collider.center = bounds.center;
+                Vector3 s = bounds.size;
+                collider.size = new Vector3(Mathf.Max(0.02f, s.x), Mathf.Max(0.02f, s.y), Mathf.Max(0.02f, s.z));
+            }
+
+            return collider;
         }
 
         /// <summary>Loads a generated story-prop material, building the story-prop materials first if missing.</summary>

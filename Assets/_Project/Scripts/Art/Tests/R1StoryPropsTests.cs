@@ -39,6 +39,7 @@ namespace MoonProject.Art.Tests
             ("cable_broken_end.json", "Props/Cable_BrokenEnd.fbx"),
             ("cable_plug.json", "Props/Cable_Plug.fbx"),
             ("cable_splice_box.json", "Props/Cable_Splice_Box.fbx"),
+            ("prop_mission_flag.json", "Props/Prop_MissionFlag.fbx"),
         };
 
         [Serializable]
@@ -449,6 +450,56 @@ namespace MoonProject.Art.Tests
                         Assert.IsNotNull(m);
                         Assert.AreNotEqual(R1MaterialRecipes.LampAmberSlot, m.name,
                             $"Cable kit prefab '{allKitPrefabs[p].name}' must have no lit R1_LampAmber material slots.");
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public void PropMissionFlag_HasSunBleachedFlagSheet_BoxCollider_AndZeroEmission()
+        {
+            GameObject flagPrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.PropMissionFlagPrefabPath);
+            Assert.IsNotNull(flagPrefab.transform.Find("FlagPole"), "Prop_MissionFlag missing FlagPole.");
+            Transform flagSheet = flagPrefab.transform.Find("FlagSheet");
+            Assert.IsNotNull(flagSheet, "Prop_MissionFlag missing FlagSheet.");
+            Assert.IsNotNull(flagPrefab.transform.Find("Base_Anchor"), "Prop_MissionFlag missing Base_Anchor.");
+            Assert.IsNotNull(flagPrefab.transform.Find("Flag_Anchor"), "Prop_MissionFlag missing Flag_Anchor.");
+
+            BoxCollider box = flagPrefab.GetComponent<BoxCollider>();
+            Assert.IsNotNull(box, "Prop_MissionFlag must have a simple BoxCollider on root.");
+            Assert.Greater(box.size.x, 0.80f);
+            Assert.Greater(box.size.y, 1.45f);
+
+            Renderer sheetRenderer = flagSheet.GetComponent<Renderer>();
+            Assert.IsNotNull(sheetRenderer);
+            bool foundStripeMat = false;
+            foreach (Material m in sheetRenderer.sharedMaterials)
+            {
+                Assert.IsNotNull(m);
+                if (m.name == R1StoryPropsBuilder.MissionFlagStripeMaterialName)
+                {
+                    foundStripeMat = true;
+                }
+            }
+
+            Assert.IsTrue(foundStripeMat, "Prop_MissionFlag FlagSheet must use R1_MissionFlagStripe for faint sun-bleached stripes.");
+            AssertNoEmissiveMaterials(flagPrefab);
+        }
+
+        private static void AssertNoEmissiveMaterials(GameObject prefab)
+        {
+            Renderer[] renderers = prefab.GetComponentsInChildren<Renderer>(true);
+            foreach (Renderer r in renderers)
+            {
+                foreach (Material m in r.sharedMaterials)
+                {
+                    Assert.IsNotNull(m);
+                    Assert.AreNotEqual(R1MaterialRecipes.LampAmberSlot, m.name,
+                        $"Prefab '{prefab.name}' must have no lit R1_LampAmber material slots.");
+                    if (m.HasProperty("_EmissionStrength"))
+                    {
+                        Assert.AreEqual(0f, m.GetFloat("_EmissionStrength"), 1e-4f,
+                            $"Prefab '{prefab.name}' material '{m.name}' must have zero emission.");
                     }
                 }
             }
