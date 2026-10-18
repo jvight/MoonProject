@@ -680,7 +680,7 @@
         },
         {
             "key": "next.v2.scan_lander",
-            "text": "Quét hàng trong tàu đổ bộ để tìm bản vẽ."
+            "text": "Quét hai bộ phận trong thùng hàng mở cạnh tàu đổ bộ."
         },
         {
             "key": "next.v2.collect_parts",
@@ -713,6 +713,10 @@
         {
             "key": "next.v2.build_battery_bank",
             "text": "Đêm sắp xuống. Hãy dựng một khối pin dự trữ."
+        },
+        {
+            "key": "next.v2.move_battery_bank",
+            "text": "Đặt khối pin gần bệ sạc hơn."
         },
         {
             "key": "next.v2.scan_tower",

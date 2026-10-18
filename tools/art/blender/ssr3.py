@@ -101,6 +101,11 @@ GLYPH_RECTS: dict[str, Sequence[tuple[float, float, float, float]]] = {
         (0.50, 0.90, 0.76, 0.20),
         (0.50, 0.10, 0.76, 0.20),
     ),
+    "1": (
+        (0.54, 0.50, 0.24, 1.00),
+        (0.34, 0.86, 0.32, 0.18),
+        (0.52, 0.10, 0.72, 0.20),
+    ),
     "2": (
         (0.50, 0.90, 0.80, 0.20),
         (0.80, 0.70, 0.22, 0.44),
@@ -3882,6 +3887,843 @@ def build_elder04_combined() -> bpy.types.Object:
     return chassis_root
 
 
+# ---------------------------------------------------------------------------
+# Deliverable (agy-elder01): SSR3_Topper_01 ("Star Tracker" — Tall Folding
+# Lattice Mast, Alt-Az Yoke, Slim Telescope Tube Tilted Down at Rest with
+# Small Sun Shade Hood, Calibration Target Plate, and Cable Runs Down the Mast)
+# ---------------------------------------------------------------------------
+TOPPER_01_MAST_Z: float = -0.04
+TOPPER_01_TRUNNION_U: tuple[float, float, float] = (0.0, 1.80, TOPPER_01_MAST_Z)
+TOPPER_01_TUBE_TILT_DEG: float = 24.0  # Tilted down forward (+Z) at rest
+
+
+def _build_topper_01_lattice_mast(root: bpy.types.Object) -> bpy.types.Object:
+    """Build the tall folding 4-chord lattice mast, Kapton base collar, rear nav box, and cable runs (`LatticeMast`)."""
+    mb = r1kit.MeshBuilder("LatticeMast", pivot_u=(0.0, 0.20, TOPPER_01_MAST_Z))
+    mz = TOPPER_01_MAST_Z
+
+    # 1. Heavy steel dorsal deck mounting baseplate in the recessed payload well (y = 0.00..0.032 m)
+    mb.add_bevel_box(
+        center_u=(0.0, 0.016, 0.02),
+        size_u=(0.60, 0.032, 0.90),
+        mat="R1_BareSteel",
+        bevel=0.005,
+        segments=1,
+    )
+    mb.add_bolts(
+        [
+            (sx * 0.27, 0.032, bz)
+            for sx in (-1.0, 1.0)
+            for bz in (-0.38, 0.02, 0.42)
+        ],
+        radius=0.008,
+        height=0.010,
+        axis_u="Y",
+        mat="R1_BareSteel",
+        bevel_segments=0,
+    )
+
+    # 2. Rear navigation reference computer & star-catalog cabinet (y = 0.03..0.24 m, z = -0.30 m)
+    cab_z = -0.30
+    mb.add_bevel_box(
+        center_u=(0.0, 0.115, cab_z),
+        size_u=(0.50, 0.17, 0.22),
+        mat="R1_CreamEnamel",
+        bevel=0.010,
+        segments=2,
+    )
+    mb.add_bevel_box(
+        center_u=(0.0, 0.115, cab_z),
+        size_u=(0.506, 0.036, 0.226),
+        mat="R1_OrangeStripe",
+        bevel=0.003,
+        segments=1,
+    )
+    mb.add_bevel_box(
+        center_u=(-0.252, 0.115, cab_z),
+        size_u=(0.010, 0.095, 0.13),
+        mat="R1_SagePatch",
+        bevel=0.003,
+        segments=1,
+    )
+    mb.add_bevel_box(
+        center_u=(0.252, 0.145, cab_z),
+        size_u=(0.012, 0.048, 0.092),
+        mat="R1_DarkGlass",
+        bevel=0.003,
+        segments=1,
+    )
+    for sx in (-1.0, 1.0):
+        mb.add_vent_grille(
+            center_u=(sx * 0.250, 0.072, cab_z),
+            width=0.11,
+            height=0.042,
+            depth=0.016,
+            slat_count=3,
+            rot_deg_u=(0.0, 90.0 * sx, 0.0),
+            frame_mat="R1_GreyMetal",
+            back_mat="R1_DarkGlass",
+        )
+
+    # 3. Quilted R1_GoldFoil Kapton thermal-blanket pedestal sleeve & folding mast base hinge trunnion (y = 0.03..0.26 m)
+    mb.add_cylinder(
+        center_u=(0.0, 0.052, mz),
+        radius=0.155,
+        length=0.040,
+        mat="R1_GreyMetal",
+        axis_u="Y",
+        segments=20,
+        bevel=0.005,
+        bevel_segments=1,
+    )
+    # Multi-lobed crinkled R1_GoldFoil thermal sleeve matching Direction C's golden pedestal wrap
+    mb.add_cylinder(
+        center_u=(0.0, 0.145, mz),
+        radius=0.118,
+        radius_top=0.112,
+        length=0.150,
+        mat="R1_GoldFoil",
+        axis_u="Y",
+        segments=16,
+        bevel=0.008,
+        bevel_segments=2,
+    )
+    for ring_y, tilt_sign in ((0.105, 1.0), (0.145, -1.0), (0.185, 1.0)):
+        mb.add_torus(
+            center_u=(0.0, ring_y, mz),
+            major_radius=0.112,
+            minor_radius=0.014,
+            mat="R1_GoldFoil",
+            axis_u="Y",
+            major_segments=16,
+            minor_segments=6,
+            rot_deg_u=(tilt_sign * 3.5, 0.0, -tilt_sign * 2.5),
+        )
+    # Upper & lower machined collars clamping the gold-foil thermal sleeve
+    for col_y in (0.072, 0.222):
+        mb.add_cylinder(
+            center_u=(0.0, col_y, mz),
+            radius=0.128,
+            length=0.022,
+            mat="R1_GreyMetal",
+            axis_u="Y",
+            segments=20,
+            bevel=0.004,
+            bevel_segments=1,
+        )
+
+    # Folding mast hinge trunnion cheeks, horizontal hinge pin (y = 0.255 m), & forward screw-jack locking strut
+    hinge_y = 0.255
+    for sx in (-1.0, 1.0):
+        mb.add_bevel_box(
+            center_u=(sx * 0.108, hinge_y, mz),
+            size_u=(0.024, 0.068, 0.096),
+            mat="R1_GreyMetal",
+            bevel=0.004,
+            segments=1,
+        )
+        mb.add_cylinder(
+            center_u=(sx * 0.122, hinge_y, mz),
+            radius=0.024,
+            length=0.018,
+            mat="R1_Brass",
+            axis_u="X",
+            segments=14,
+            bevel=0.003,
+            bevel_segments=1,
+        )
+    mb.add_cylinder(
+        center_u=(0.0, hinge_y, mz),
+        radius=0.015,
+        length=0.25,
+        mat="R1_BareSteel",
+        axis_u="X",
+        segments=12,
+        bevel=0.003,
+        bevel_segments=1,
+    )
+    # Diagonal forward folding screw-jack brace from front deck clevis (z = +0.20 m) up to lower lattice bay (y = 0.56 m)
+    mb.add_bevel_box(
+        center_u=(0.0, 0.044, 0.20),
+        size_u=(0.096, 0.036, 0.068),
+        mat="R1_GreyMetal",
+        bevel=0.004,
+        segments=1,
+    )
+    mb.add_strut(
+        p0_u=(0.0, 0.052, 0.20),
+        p1_u=(0.0, 0.54, mz + 0.088),
+        width=0.026,
+        thickness=0.026,
+        mat="R1_BareSteel",
+        bevel=0.003,
+    )
+    mb.add_strut(
+        p0_u=(0.0, 0.095, 0.18),
+        p1_u=(0.0, 0.34, mz + 0.125),
+        width=0.036,
+        thickness=0.036,
+        mat="R1_Brass",
+        bevel=0.004,
+    )
+
+    # 4. Tall 4-Chord Open Lattice Mast rising from y = 0.24 m up to y = 1.62 m (Direction C tall landmark silhouette)
+    mast_y0 = 0.24
+    mast_y1 = 1.62
+    num_bays = 6
+    bay_ys = [mast_y0 + (mast_y1 - mast_y0) * (i / num_bays) for i in range(num_bays + 1)]
+
+    def _half_span_at(y_val: float) -> float:
+        t = (y_val - mast_y0) / (mast_y1 - mast_y0)
+        return 0.092 * (1.0 - t) + 0.066 * t
+
+    # 4 Corner tubular chords (`R1_GreyMetal`)
+    for sx in (-1.0, 1.0):
+        for sz in (-1.0, 1.0):
+            h0 = _half_span_at(mast_y0)
+            h1 = _half_span_at(mast_y1)
+            mb.add_strut(
+                p0_u=(sx * h0, mast_y0, mz + sz * h0),
+                p1_u=(sx * h1, mast_y1, mz + sz * h1),
+                width=0.024,
+                thickness=0.024,
+                mat="R1_GreyMetal",
+                bevel=0.004,
+            )
+
+    # Horizontal batten frames & alternating Warren-truss diagonal cross-braces across all 6 lattice bays
+    for b_idx, y_b in enumerate(bay_ys):
+        hs = _half_span_at(y_b)
+        batten_mat = "R1_Brass" if b_idx in (0, 3, num_bays) else "R1_BareSteel"
+        for sx in (-1.0, 1.0):
+            mb.add_bevel_box(
+                center_u=(sx * hs, y_b, mz),
+                size_u=(0.018, 0.020, hs * 2.0 + 0.016),
+                mat=batten_mat,
+                bevel=0.003,
+                segments=1,
+            )
+        for sz in (-1.0, 1.0):
+            mb.add_bevel_box(
+                center_u=(0.0, y_b, mz + sz * hs),
+                size_u=(hs * 2.0 + 0.016, 0.020, 0.018),
+                mat=batten_mat,
+                bevel=0.003,
+                segments=1,
+            )
+
+        if b_idx < num_bays:
+            y_next = bay_ys[b_idx + 1]
+            hs_next = _half_span_at(y_next)
+            diag_dir = 1.0 if b_idx % 2 == 0 else -1.0
+            # Left/Right flank diagonal braces
+            for sx in (-1.0, 1.0):
+                mb.add_strut(
+                    p0_u=(sx * hs, y_b, mz - diag_dir * hs),
+                    p1_u=(sx * hs_next, y_next, mz + diag_dir * hs_next),
+                    width=0.014,
+                    thickness=0.014,
+                    mat="R1_BareSteel",
+                    bevel=0.002,
+                )
+            # Front/Rear face diagonal braces
+            for sz in (-1.0, 1.0):
+                mb.add_strut(
+                    p0_u=(-diag_dir * hs, y_b, mz + sz * hs),
+                    p1_u=(diag_dir * hs_next, y_next, mz + sz * hs_next),
+                    width=0.014,
+                    thickness=0.014,
+                    mat="R1_BareSteel",
+                    bevel=0.002,
+                )
+
+    # 5. Cable runs down the mast: twin R1_Copper coaxial sensor lines & twin R1_Rubber power/encoder umbilicals
+    for sx in (-1.0, 1.0):
+        copper_pts = []
+        rubber_pts = []
+        for y_b in reversed(bay_ys):
+            hs = _half_span_at(y_b)
+            cx = sx * (hs + 0.020)
+            copper_pts.append((cx, y_b, mz + 0.026))
+            rubber_pts.append((cx, y_b, mz - 0.026))
+            # Brass cable-clamp standoff bracket at every second batten
+            mb.add_bevel_box(
+                center_u=(sx * (hs + 0.012), y_b, mz),
+                size_u=(0.022, 0.016, 0.076),
+                mat="R1_Brass",
+                bevel=0.002,
+                segments=1,
+            )
+
+        # Lower service loop from mast base into the rear navigation cabinet & brass deck glands
+        copper_pts.extend(
+            [
+                (sx * 0.135, 0.18, mz - 0.06),
+                (sx * 0.145, 0.15, cab_z + 0.115),
+            ]
+        )
+        rubber_pts.extend(
+            [
+                (sx * 0.155, 0.16, mz - 0.09),
+                (sx * 0.175, 0.09, cab_z + 0.115),
+            ]
+        )
+        mb.add_tube_path(copper_pts, radius=0.0105, mat="R1_Copper", segments=10, cap_ends=True)
+        mb.add_tube_path(rubber_pts, radius=0.0115, mat="R1_Rubber", segments=10, cap_ends=True)
+
+        # Brass cable entry glands on the front bulkhead of the rear navigation cabinet
+        for gy in (0.15, 0.09):
+            gx = sx * (0.145 if gy > 0.12 else 0.175)
+            mb.add_cylinder(
+                center_u=(gx, gy, cab_z + 0.112),
+                radius=0.018,
+                length=0.022,
+                mat="R1_Brass",
+                axis_u="Z",
+                segments=10,
+                bevel=0.002,
+                bevel_segments=1,
+            )
+
+    return mb.build_object(parent=root)
+
+
+def _build_topper_01_alt_az_yoke(root: bpy.types.Object) -> bpy.types.Object:
+    """Build the upper azimuth degree platter, U-shaped alt-az yoke fork, and zenith reference finial (`AltAzYoke`)."""
+    tx, ty, tz = TOPPER_01_TRUNNION_U
+    mb = r1kit.MeshBuilder("AltAzYoke", pivot_u=(0.0, 1.64, tz))
+
+    # 1. Masthead crown plate & rotary azimuth stage (y = 1.62..1.70 m)
+    mb.add_bevel_box(
+        center_u=(0.0, 1.628, tz),
+        size_u=(0.18, 0.022, 0.18),
+        mat="R1_GreyMetal",
+        bevel=0.004,
+        segments=1,
+    )
+    mb.add_cylinder(
+        center_u=(0.0, 1.652, tz),
+        radius=0.112,
+        length=0.032,
+        mat="R1_Brass",
+        axis_u="Y",
+        segments=24,
+        bevel=0.004,
+        bevel_segments=1,
+    )
+    mb.add_torus(
+        center_u=(0.0, 1.660, tz),
+        major_radius=0.112,
+        minor_radius=0.009,
+        mat="R1_Brass",
+        axis_u="Y",
+        major_segments=24,
+        minor_segments=6,
+    )
+    mb.add_cylinder(
+        center_u=(0.0, 1.680, tz),
+        radius=0.096,
+        length=0.026,
+        mat="R1_CreamEnamel",
+        axis_u="Y",
+        segments=20,
+        bevel=0.004,
+        bevel_segments=1,
+    )
+
+    # 2. Heavy U-shaped Alt-Az Yoke Fork Arms (`R1_Brass` & `R1_GreyMetal`) rising to trunnion axis y = 1.80 m
+    mb.add_bevel_box(
+        center_u=(0.0, 1.704, tz),
+        size_u=(0.31, 0.032, 0.096),
+        mat="R1_Brass",
+        bevel=0.006,
+        segments=1,
+    )
+    for sx in (-1.0, 1.0):
+        arm_x = sx * 0.136
+        mb.add_bevel_box(
+            center_u=(arm_x, 1.768, tz),
+            size_u=(0.034, 0.135, 0.088),
+            mat="R1_Brass",
+            bevel=0.006,
+            segments=1,
+            top_scale_xz=(0.92, 0.82),
+        )
+        # Outer grey-metal stiffening web on each yoke arm
+        mb.add_bevel_box(
+            center_u=(arm_x + sx * 0.016, 1.762, tz),
+            size_u=(0.012, 0.105, 0.052),
+            mat="R1_GreyMetal",
+            bevel=0.003,
+            segments=1,
+        )
+        # Graduated R1_Brass elevation setting-circle drum & BareSteel trunnion cap at y = ty (1.80 m)
+        mb.add_cylinder(
+            center_u=(arm_x + sx * 0.022, ty, tz),
+            radius=0.046,
+            length=0.024,
+            mat="R1_Brass",
+            axis_u="X",
+            segments=18,
+            bevel=0.004,
+            bevel_segments=1,
+        )
+        mb.add_cylinder(
+            center_u=(arm_x + sx * 0.036, ty, tz),
+            radius=0.024,
+            length=0.020,
+            mat="R1_BareSteel",
+            axis_u="X",
+            segments=12,
+            bevel=0.003,
+            bevel_segments=1,
+        )
+
+    # Horizontal trunnion axle shaft spanning the yoke
+    mb.add_cylinder(
+        center_u=(tx, ty, tz),
+        radius=0.020,
+        length=0.31,
+        mat="R1_BareSteel",
+        axis_u="X",
+        segments=14,
+        bevel=0.003,
+        bevel_segments=1,
+    )
+    # Right-hand elevation worm-gear motor drive box (`R1_SagePatch`)
+    mb.add_bevel_box(
+        center_u=(0.162, 1.745, tz - 0.042),
+        size_u=(0.038, 0.056, 0.058),
+        mat="R1_SagePatch",
+        bevel=0.004,
+        segments=1,
+    )
+
+    # 3. Masthead zenith star-reference sensor post crowning the left yoke shoulder up to y = 1.950 m (~2.60 m world Y)
+    fin_x = -0.136
+    mb.add_cylinder(
+        center_u=(fin_x, 1.885, tz),
+        radius=0.014,
+        length=0.110,
+        mat="R1_BareSteel",
+        axis_u="Y",
+        segments=12,
+        bevel=0.002,
+        bevel_segments=1,
+    )
+    mb.add_cylinder(
+        center_u=(fin_x, 1.932, tz),
+        radius=0.026,
+        length=0.018,
+        mat="R1_Brass",
+        axis_u="Y",
+        segments=14,
+        bevel=0.003,
+        bevel_segments=1,
+    )
+    mb.add_cylinder(
+        center_u=(fin_x, 1.944, tz),
+        radius=0.020,
+        radius_top=0.012,
+        length=0.012,
+        mat="R1_DarkGlass",
+        axis_u="Y",
+        segments=14,
+        bevel=0.003,
+        bevel_segments=1,
+    )
+
+    return mb.build_object(parent=root)
+
+
+def _build_topper_01_telescope_tube(root: bpy.types.Object) -> bpy.types.Object:
+    """Build the slim star-tracker telescope barrel with small sun-shade hood, tilted down at rest (`TelescopeTube`)."""
+    tx, ty, tz = TOPPER_01_TRUNNION_U
+    mb = r1kit.MeshBuilder("TelescopeTube", pivot_u=TOPPER_01_TRUNNION_U)
+
+    # Build horizontally centered on (tx, ty, tz) along Z, then pitch nose-down (+Z downward) by TOPPER_01_TUBE_TILT_DEG
+    # 1. Central R1_Brass trunnion saddle cradle & vernier clamping rings (z = tz - 0.06 .. tz + 0.06)
+    mb.add_cylinder(
+        center_u=(tx, ty, tz),
+        radius=0.090,
+        length=0.125,
+        mat="R1_Brass",
+        axis_u="Z",
+        segments=24,
+        bevel=0.005,
+        bevel_segments=1,
+    )
+    for ring_dz in (-0.052, 0.052):
+        mb.add_torus(
+            center_u=(tx, ty, tz + ring_dz),
+            major_radius=0.090,
+            minor_radius=0.009,
+            mat="R1_Brass",
+            axis_u="Z",
+            major_segments=24,
+            minor_segments=6,
+        )
+
+    # 2. Rear Star-Tracker Vidicon / Sensor Breech Housing (z = tz - 0.31 .. tz - 0.06) in R1_CreamEnamel + R1_OrangeStripe
+    mb.add_cylinder(
+        center_u=(tx, ty, tz - 0.165),
+        radius=0.078,
+        length=0.19,
+        mat="R1_CreamEnamel",
+        axis_u="Z",
+        segments=24,
+        bevel=0.006,
+        bevel_segments=1,
+    )
+    mb.add_cylinder(
+        center_u=(tx, ty, tz - 0.145),
+        radius=0.080,
+        length=0.044,
+        mat="R1_OrangeStripe",
+        axis_u="Z",
+        segments=24,
+        bevel=0.003,
+        bevel_segments=1,
+    )
+    # Rear brass micrometer focuser drum & dark unlit ocular reference port
+    mb.add_cylinder(
+        center_u=(tx, ty, tz - 0.280),
+        radius=0.058,
+        radius_top=0.068,
+        length=0.054,
+        mat="R1_Brass",
+        axis_u="Z",
+        segments=20,
+        bevel=0.005,
+        bevel_segments=1,
+    )
+    mb.add_cylinder(
+        center_u=(tx, ty, tz - 0.318),
+        radius=0.040,
+        length=0.028,
+        mat="R1_GreyMetal",
+        axis_u="Z",
+        segments=16,
+        bevel=0.003,
+        bevel_segments=1,
+    )
+    mb.add_cylinder(
+        center_u=(tx, ty, tz - 0.330),
+        radius=0.028,
+        length=0.010,
+        mat="R1_DarkGlass",
+        axis_u="Z",
+        segments=16,
+        bevel=0.002,
+        bevel_segments=1,
+    )
+    # 6 Radial bare-steel sensor cooling fins on the rear breech collar
+    for fin_i in range(6):
+        ang_deg = 60.0 * fin_i
+        ang_rad = math.radians(ang_deg)
+        mb.add_bevel_box(
+            center_u=(tx + 0.078 * math.sin(ang_rad), ty + 0.078 * math.cos(ang_rad), tz - 0.225),
+            size_u=(0.010, 0.024, 0.064),
+            mat="R1_BareSteel",
+            bevel=0.002,
+            segments=1,
+            rot_deg_u=(0.0, 0.0, -ang_deg),
+        )
+
+    # 3. Slim Forward Optical Barrel (z = tz + 0.06 .. tz + 0.34) in matte R1_GreyMetal with R1_Brass baffle collars
+    mb.add_cylinder(
+        center_u=(tx, ty, tz + 0.200),
+        radius=0.070,
+        radius_top=0.076,
+        length=0.29,
+        mat="R1_GreyMetal",
+        axis_u="Z",
+        segments=24,
+        bevel=0.005,
+        bevel_segments=1,
+    )
+    for b_z in (tz + 0.14, tz + 0.26):
+        mb.add_cylinder(
+            center_u=(tx, ty, b_z),
+            radius=0.078,
+            length=0.022,
+            mat="R1_Brass",
+            axis_u="Z",
+            segments=24,
+            bevel=0.003,
+            bevel_segments=1,
+        )
+
+    # Dorsal parallel slim star-finder scope tube (`R1_Brass` barrel + `R1_DarkGlass` front/rear lenses)
+    finder_y = ty + 0.098
+    for post_z in (tz - 0.08, tz + 0.14):
+        mb.add_bevel_box(
+            center_u=(tx, ty + 0.082, post_z),
+            size_u=(0.018, 0.028, 0.020),
+            mat="R1_BareSteel",
+            bevel=0.002,
+            segments=1,
+        )
+    mb.add_cylinder(
+        center_u=(tx, finder_y, tz + 0.03),
+        radius=0.020,
+        length=0.30,
+        mat="R1_Brass",
+        axis_u="Z",
+        segments=16,
+        bevel=0.003,
+        bevel_segments=1,
+    )
+    mb.add_cylinder(
+        center_u=(tx, finder_y, tz + 0.182),
+        radius=0.016,
+        length=0.010,
+        mat="R1_DarkGlass",
+        axis_u="Z",
+        segments=14,
+        bevel=0.002,
+        bevel_segments=1,
+    )
+
+    # 4. Small Sun Shade Hood at the front aperture (z = tz + 0.34 .. tz + 0.50) + recessed R1_DarkGlass objective lens
+    mb.add_cylinder(
+        center_u=(tx, ty, tz + 0.415),
+        radius=0.094,
+        radius_top=0.074,
+        length=0.16,
+        mat="R1_GreyMetal",
+        axis_u="Z",
+        segments=24,
+        bevel=0.005,
+        bevel_segments=1,
+    )
+    # Upper overhanging glare-shield sun visor brow on the sun shade hood
+    mb.add_bevel_box(
+        center_u=(tx, ty + 0.078, tz + 0.455),
+        size_u=(0.148, 0.022, 0.095),
+        mat="R1_GreyMetal",
+        bevel=0.004,
+        segments=1,
+        rot_deg_u=(8.0, 0.0, 0.0),
+    )
+    # Front rolled R1_Brass aperture baffle ring
+    mb.add_torus(
+        center_u=(tx, ty, tz + 0.492),
+        major_radius=0.090,
+        minor_radius=0.0075,
+        mat="R1_Brass",
+        axis_u="Z",
+        major_segments=24,
+        minor_segments=6,
+    )
+    # Deep recessed coated star-tracker objective lens (`R1_DarkGlass` + `R1_Brass` inner retaining ring)
+    mb.add_cylinder(
+        center_u=(tx, ty, tz + 0.365),
+        radius=0.068,
+        length=0.018,
+        mat="R1_DarkGlass",
+        axis_u="Z",
+        segments=20,
+        bevel=0.004,
+        bevel_segments=1,
+    )
+    mb.add_torus(
+        center_u=(tx, ty, tz + 0.376),
+        major_radius=0.064,
+        minor_radius=0.006,
+        mat="R1_Brass",
+        axis_u="Z",
+        major_segments=20,
+        minor_segments=6,
+    )
+
+    # Tilt the telescope tube downward (+Z nose down) by TOPPER_01_TUBE_TILT_DEG (24 degrees at rest)
+    _rotate_bm_around_hinge_x(mb, TOPPER_01_TRUNNION_U, TOPPER_01_TUBE_TILT_DEG)
+    return mb.build_object(parent=root)
+
+
+def _build_topper_01_calibration_plate(root: bpy.types.Object) -> bpy.types.Object:
+    """Build the front deck optical boresight / fiducial calibration target plate (`CalibrationPlate`)."""
+    px, py, pz = (0.0, 0.22, 0.42)
+    mb = r1kit.MeshBuilder("CalibrationPlate", pivot_u=(px, py, pz))
+
+    # 1. Front deck trunnion pedestal & twin support stanchions (bolted at z = 0.42 m)
+    mb.add_bevel_box(
+        center_u=(0.0, 0.042, pz),
+        size_u=(0.34, 0.024, 0.096),
+        mat="R1_GreyMetal",
+        bevel=0.004,
+        segments=1,
+    )
+    for sx in (-1.0, 1.0):
+        mb.add_strut(
+            p0_u=(sx * 0.125, 0.048, pz - 0.015),
+            p1_u=(sx * 0.125, py, pz),
+            width=0.024,
+            thickness=0.028,
+            mat="R1_BareSteel",
+            bevel=0.003,
+        )
+        mb.add_cylinder(
+            center_u=(sx * 0.138, py, pz),
+            radius=0.018,
+            length=0.020,
+            mat="R1_Brass",
+            axis_u="X",
+            segments=12,
+            bevel=0.002,
+            bevel_segments=1,
+        )
+
+    # 2. Precision Calibration Target Plate tilted upward (-28° X) toward the downward-tilted telescope
+    plate_tilt = -28.0
+    mb.add_bevel_box(
+        center_u=(0.0, py, pz),
+        size_u=(0.28, 0.20, 0.022),
+        mat="R1_CreamEnamel",
+        bevel=0.006,
+        segments=1,
+        rot_deg_u=(plate_tilt, 0.0, 0.0),
+    )
+    # Orange calibration border band on top & bottom edges of the target plate
+    for dy_off, dz_off in ((0.082, 0.040), (-0.082, -0.048)):
+        mb.add_bevel_box(
+            center_u=(0.0, py + dy_off, pz + dz_off),
+            size_u=(0.26, 0.022, 0.016),
+            mat="R1_OrangeStripe",
+            bevel=0.003,
+            segments=1,
+            rot_deg_u=(plate_tilt, 0.0, 0.0),
+        )
+    # Central dark optical flat reference mirror (`R1_DarkGlass`) & raised brass/steel fiducial crosshair
+    mb.add_bevel_box(
+        center_u=(0.0, py + 0.003, pz - 0.006),
+        size_u=(0.18, 0.12, 0.018),
+        mat="R1_DarkGlass",
+        bevel=0.003,
+        segments=1,
+        rot_deg_u=(plate_tilt, 0.0, 0.0),
+    )
+    mb.add_bevel_box(
+        center_u=(0.0, py + 0.005, pz - 0.010),
+        size_u=(0.15, 0.012, 0.014),
+        mat="R1_Brass",
+        bevel=0.002,
+        segments=1,
+        rot_deg_u=(plate_tilt, 0.0, 0.0),
+    )
+    mb.add_bevel_box(
+        center_u=(0.0, py + 0.005, pz - 0.010),
+        size_u=(0.012, 0.096, 0.014),
+        mat="R1_Brass",
+        bevel=0.002,
+        segments=1,
+        rot_deg_u=(plate_tilt, 0.0, 0.0),
+    )
+    # 4 Corner brass optical collimator studs
+    for sx in (-0.105, 0.105):
+        for dy_s, dz_s in ((0.052, 0.022), (-0.052, -0.032)):
+            mb.add_cylinder(
+                center_u=(sx, py + dy_s, pz + dz_s),
+                radius=0.012,
+                length=0.018,
+                mat="R1_Brass",
+                axis_u="Z",
+                segments=10,
+                bevel=0.002,
+                bevel_segments=1,
+                rot_deg_u=(plate_tilt, 0.0, 0.0),
+            )
+
+    return mb.build_object(parent=root)
+
+
+def _apply_ssr3_star_tracker_weathering(root: bpy.types.Object, footprint_radius: float = 0.72) -> None:
+    """Bake Cycles AO + sun-bleached edge wear (G) and settled dust on upward faces (B, material not particles)."""
+    _apply_ssr3_decades_at_rest_weathering(root, footprint_radius=footprint_radius)
+
+    mesh_objs = [o for o in r1kit.collect_hierarchy(root) if o.type == "MESH" and len(o.data.polygons) > 0]
+    for obj in mesh_objs:
+        me = obj.data
+        ca = me.color_attributes.get(r1kit.VCOL_ATTRIBUTE_NAME)
+        if ca is None:
+            continue
+
+        num_loops = len(me.loops)
+        rgba = np.ones(num_loops * 4, dtype=np.float32)
+        ca.data.foreach_get("color", rgba)
+        rgba = rgba.reshape(-1, 4)
+
+        world_mat = obj.matrix_world
+        rot_mat = world_mat.to_3x3()
+
+        loop_idx = 0
+        for poly in me.polygons:
+            wn = (rot_mat @ poly.normal).normalized()
+            up_dot = float(wn.z)
+            for l_i in poly.loop_indices:
+                v_idx = me.loops[l_i].vertex_index
+                wp = world_mat @ me.vertices[v_idx].co
+                h_z = float(wp.z)
+
+                r_ao = float(rgba[loop_idx, 0])
+                g_wear = float(rgba[loop_idx, 1])
+                b_dust = float(rgba[loop_idx, 2])
+
+                # Sun-bleached upper mast, yoke, and telescope barrel edges
+                bleach_h = max(0.0, min(1.0, (h_z - 0.15) / 1.40))
+                bleach_up = max(0.0, up_dot + 0.30)
+                g_out = float(np.clip(max(g_wear * 1.24, bleach_h * bleach_up * 0.46 * r_ao), 0.0, 1.0))
+
+                # Settled lunar dust on upward-facing surfaces of the tilted tube, sun-shade hood, and mast battens
+                upward_dust = max(0.0, (up_dot - 0.20) / 0.80) * 0.68
+                b_out = float(np.clip(max(b_dust, upward_dust), 0.0, 1.0))
+
+                rgba[loop_idx, 0] = r_ao
+                rgba[loop_idx, 1] = g_out
+                rgba[loop_idx, 2] = b_out
+                rgba[loop_idx, 3] = 1.0
+                loop_idx += 1
+
+        ca.data.foreach_set("color", rgba.reshape(-1))
+        me.update()
+
+
+def build_ssr3_topper_01() -> bpy.types.Object:
+    """Build the complete `SSR3_Topper_01` ("Star Tracker") hierarchy in the active Blender scene."""
+    root = r1kit.create_empty("SSR3_Topper_01", pivot_u=(0.0, 0.0, 0.0))
+
+    _build_topper_01_lattice_mast(root)
+    _build_topper_01_alt_az_yoke(root)
+    _build_topper_01_telescope_tube(root)
+    _build_topper_01_calibration_plate(root)
+
+    bpy.context.view_layer.update()
+    _apply_ssr3_star_tracker_weathering(root, footprint_radius=0.72)
+    return root
+
+
+def _build_unit_01_stencil(parent: bpy.types.Object) -> bpy.types.Object:
+    """Build the `Unit_Number_01` relief stencil (`01`) on both flanks at `UNIT_NUMBER_PIVOT_U`."""
+    return _build_unit_number_stencil(parent, "Unit_Number_01", "01")
+
+
+def build_elder01_combined() -> bpy.types.Object:
+    """Build the combined Elder 01 assembly (`SSR3_Chassis` + `SSR3_Topper_01` + `01` stencil) for preview rendering."""
+    chassis_root = build_ssr3_chassis()
+    topper_socket = next((o for o in chassis_root.children if o.name == "Topper_Socket"), chassis_root)
+    unit_num_socket = next((o for o in chassis_root.children if o.name == "Unit_Number"), chassis_root)
+
+    topper_root = build_ssr3_topper_01()
+    topper_root.parent = topper_socket
+    topper_root.location = (0.0, 0.0, 0.0)
+
+    _build_unit_01_stencil(unit_num_socket)
+    bpy.context.view_layer.update()
+    _apply_ssr3_star_tracker_weathering(chassis_root, footprint_radius=0.88)
+    return chassis_root
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Build SSR3 family FBXs and preview renders.")
     parser.add_argument(
@@ -3920,13 +4762,18 @@ def main(argv: list[str] | None = None) -> None:
         default=Path("Assets/_Project/Art/R1/Models/Rover/SSR3_Topper_02.fbx"),
     )
     parser.add_argument(
+        "--topper01-fbx-out",
+        type=Path,
+        default=Path("Assets/_Project/Art/R1/Models/Rover/SSR3_Topper_01.fbx"),
+    )
+    parser.add_argument(
         "--renders-dir",
         type=Path,
         default=Path("Logs/renders"),
     )
     parser.add_argument(
         "--only",
-        choices=("all", "04", "05", "06"),
+        choices=("all", "01", "02", "03", "04", "05", "06"),
         default="all",
     )
     parser.add_argument("--skip-renders", action="store_true")
@@ -3936,6 +4783,43 @@ def main(argv: list[str] | None = None) -> None:
 
     concept_a_img = Path("D:/Project/MoonProject-wt/agy-elders/Logs/concepts/ssr3_direction_a_boxy_cart.png")
     concept_c_img = Path("D:/Project/MoonProject-wt/agy-elders/Logs/concepts/ssr3_direction_c_mast_rover.png")
+
+    if args.only in ("all", "01") and not args.only_ssr3c and not args.only_topper_02:
+        # Build & export SSR3_Topper_01.fbx ("Star Tracker")
+        r1kit.reset_scene()
+        topper01_root = build_ssr3_topper_01()
+        topper01_tris = r1kit.count_triangles(topper01_root)
+        print(f"[SSR3_Topper_01] Triangles: {topper01_tris}")
+        r1kit.export_fbx(topper01_root, args.topper01_fbx_out)
+
+        if not args.skip_renders:
+            r1kit.render_structure_suite(
+                root=topper01_root,
+                slug="ssr3_topper_01",
+                out_dir=args.renders_dir,
+                target_height=1.95,
+                footprint_radius=0.72,
+                pose_rest_fn=lambda _r: None,
+                pose_active_fn=lambda _r: None,
+                cam_side_x=-1.0,
+                concept_path=concept_c_img if concept_c_img.exists() else None,
+                use_active_for_compare=False,
+            )
+
+            r1kit.reset_scene()
+            elder01_root = build_elder01_combined()
+            r1kit.render_structure_suite(
+                root=elder01_root,
+                slug="elder01",
+                out_dir=args.renders_dir,
+                target_height=2.64,
+                footprint_radius=0.92,
+                pose_rest_fn=lambda _r: None,
+                pose_active_fn=lambda _r: None,
+                cam_side_x=-1.0,
+                concept_path=concept_c_img if concept_c_img.exists() else None,
+                use_active_for_compare=False,
+            )
 
     if args.only in ("all", "06") and not args.only_ssr3c and not args.only_topper_02:
         # 1. Build & export SSR3_Chassis.fbx
@@ -4057,13 +4941,14 @@ def main(argv: list[str] | None = None) -> None:
 
     concept_img_b = Path("D:/Project/MoonProject-wt/agy-elders/Logs/concepts/ssr3_direction_b_low_crawler.png")
 
-    if args.only == "all" and not args.only_topper_02:
-        # 5. Build & export SSR3_Tracks.fbx
-        r1kit.reset_scene()
-        tracks_root = build_ssr3_tracks()
-        tracks_tris = r1kit.count_triangles(tracks_root)
-        print(f"[SSR3_Tracks] Triangles: {tracks_tris}")
-        r1kit.export_fbx(tracks_root, args.tracks_fbx_out)
+    if args.only in ("all", "03") and not args.only_topper_02:
+        if args.only == "all":
+            # 5. Build & export SSR3_Tracks.fbx
+            r1kit.reset_scene()
+            tracks_root = build_ssr3_tracks()
+            tracks_tris = r1kit.count_triangles(tracks_root)
+            print(f"[SSR3_Tracks] Triangles: {tracks_tris}")
+            r1kit.export_fbx(tracks_root, args.tracks_fbx_out)
 
         # 6. Build & export SSR3_Topper_03.fbx
         r1kit.reset_scene()
@@ -4072,7 +4957,7 @@ def main(argv: list[str] | None = None) -> None:
         print(f"[SSR3_Topper_03] Triangles: {topper03_tris}")
         r1kit.export_fbx(topper03_root, args.topper03_fbx_out)
 
-    if args.only == "all":
+    if args.only in ("all", "02"):
         # 7. Build & export SSR3_Topper_02.fbx
         r1kit.reset_scene()
         topper02_root = build_ssr3_topper_02()
@@ -4081,7 +4966,7 @@ def main(argv: list[str] | None = None) -> None:
         r1kit.export_fbx(topper02_root, args.topper02_fbx_out)
 
         if not args.skip_renders:
-            if not args.only_topper_02:
+            if args.only == "all" and not args.only_topper_02:
                 r1kit.reset_scene()
                 elder03_root = build_elder03_combined()
                 r1kit.render_structure_suite(
@@ -4112,9 +4997,7 @@ def main(argv: list[str] | None = None) -> None:
                 use_active_for_compare=False,
             )
 
+
 if __name__ == "__main__":
     cli_args = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
     main(cli_args)
-
-
-

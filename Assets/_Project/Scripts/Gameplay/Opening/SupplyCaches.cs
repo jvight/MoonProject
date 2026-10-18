@@ -42,9 +42,7 @@ namespace MoonProject.Gameplay
         private readonly float _reach;
         private readonly float _collectReach;
         private readonly IDisposable _opened;
-        private readonly float _rimReach;
-        private readonly GameObject[] _rims;
-        private readonly bool[] _rimOn;
+        private readonly CrateRimGlow[] _rims;
         private readonly GameObject[] _igniters;
         private readonly GameObject[] _metals;
         private readonly GameObject[] _wirings;
@@ -62,7 +60,6 @@ namespace MoonProject.Gameplay
 
             IReadOnlyList<SupplyCache> caches = tuning.Caches;
             float collectReach = tuning.CollectReach;
-            _rimReach = tuning.CrateRimReach;
 
             _events = services.Events;
             _stock = services.Materials;
@@ -77,6 +74,12 @@ namespace MoonProject.Gameplay
                 GameObject prefab = services.Visuals.Container(cache.Container) ?? throw new InvalidOperationException(
                     $"Art's container '{cache.Container}' for supply crate '{cache.Id}' is not in GameplayVisuals " +
                     "(run Gameplay/Materials).");
+                if (cache.Scale <= 0f)
+                {
+                    throw new InvalidOperationException(
+                        $"Supply crate '{cache.Id}' has no scale (OpeningTuning: 1 stands it at Art's size).");
+                }
+
                 Transform root = Object.Instantiate(prefab, parent).transform;
                 root.name = cache.Id;
                 Quaternion heading = Heading(frame);
@@ -84,6 +87,7 @@ namespace MoonProject.Gameplay
                 Quaternion level = heading * Quaternion.Euler(0f, cache.Yaw, 0f);
                 root.SetPositionAndRotation(SurfaceRules.OnSurface(services.Terrain, spot.x, spot.z),
                     level * prefab.transform.localRotation);
+                root.localScale = prefab.transform.localScale * cache.Scale;
                 _levels.Add(level);
                 MakeSolid(root);
                 SealedContainer container = SealedContainer.Read(cache.Id, ContainerKinds.Of(cache.Container), root,
@@ -96,8 +100,7 @@ namespace MoonProject.Gameplay
 
             _left = new Recipe[_caches.Count];
             _props = new GameObject[_caches.Count];
-            _rims = new GameObject[_caches.Count];
-            _rimOn = new bool[_caches.Count];
+            _rims = new CrateRimGlow[_caches.Count];
             _igniters = new GameObject[_caches.Count];
             _metals = new GameObject[_caches.Count];
             _wirings = new GameObject[_caches.Count];
@@ -119,15 +122,11 @@ namespace MoonProject.Gameplay
                 }
 
                 Transform root = _containers[i].Root;
-                _rims[i] = Child(root, RimGlowName);
+                GameObject rim = Child(root, RimGlowName);
+                _rims[i] = rim != null ? new CrateRimGlow(rim, RimLight(rim, root, tuning), tuning) : null;
                 _igniters[i] = Child(root, IgniterName);
                 _metals[i] = Child(root, MetalName);
                 _wirings[i] = Child(root, WiringName);
-                if (_rims[i] != null)
-                {
-                    _rims[i].SetActive(false);
-                }
-
                 ShowContents(i);
             }
 
@@ -186,7 +185,7 @@ namespace MoonProject.Gameplay
                 $"No supply crate '{id}' (OpeningTuning's caches).", nameof(id));
         }
 
-        public void Step()
+        public void Step(float deltaTime)
         {
             for (int i = 0; i < _caches.Count; i++)
             {
@@ -200,16 +199,10 @@ namespace MoonProject.Gameplay
                     holds = !IsEmpty(_left[i]) || _partLeft[i];
                 }
 
-                // The rim glows only near: the owner could not find the lander's crate at B4, and loot never
+                // The rim glows only near: the owner could not find the lander's crate at B3/B4, and loot never
                 // glows across the basin.
-                bool rim = holds && _rims[i] != null &&
-                           SurfaceRules.HorizontalDistanceSquared(_rover.Position, _containers[i].Root.position) <=
-                           _rimReach * _rimReach;
-                if (rim != _rimOn[i])
-                {
-                    _rimOn[i] = rim;
-                    _rims[i].SetActive(rim);
-                }
+                _rims[i]?.Step(holds, SurfaceRules.HorizontalDistance(_rover.Position, _containers[i].Root.position),
+                    deltaTime);
             }
         }
 
@@ -390,8 +383,9 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// A crate 07 bumps into rather than drives through: a box round what it shows, on the Prop layer, unless Art
-        /// gave it colliders of its own.
+        /// A crate 07 bumps into rather than drives through: a box round its shell (not its lid, which swings open,
+        /// nor what lies in it, so what 07 scans or takes from an open crate stays in plain view of its lens), on the
+        /// Prop layer, unless Art gave it colliders of its own.
         /// </summary>
         private static void MakeSolid(Transform root)
         {
@@ -400,23 +394,80 @@ namespace MoonProject.Gameplay
                 return;
             }
 
-            Renderer[] renderers = root.GetComponentsInChildren<Renderer>();
-            if (renderers.Length == 0)
+            // In the crate's own space, from each mesh's corners: a crate turned off the world axes would otherwise
+            // stand in a box grown round its world-aligned bounds.
+            bool any = false;
+            var shell = new Bounds();
+            foreach (MeshFilter filter in root.GetComponentsInChildren<MeshFilter>())
+            {
+                if (filter.sharedMesh == null || IsLoose(root, filter.transform))
+                {
+                    continue;
+                }
+
+                Bounds mesh = filter.sharedMesh.bounds;
+                for (int corner = 0; corner < 8; corner++)
+                {
+                    var local = new Vector3((corner & 1) == 0 ? mesh.min.x : mesh.max.x,
+                        (corner & 2) == 0 ? mesh.min.y : mesh.max.y, (corner & 4) == 0 ? mesh.min.z : mesh.max.z);
+                    Vector3 point = root.InverseTransformPoint(filter.transform.TransformPoint(local));
+                    if (any)
+                    {
+                        shell.Encapsulate(point);
+                    }
+                    else
+                    {
+                        shell = new Bounds(point, Vector3.zero);
+                        any = true;
+                    }
+                }
+            }
+
+            if (!any)
             {
                 throw new InvalidOperationException($"Supply crate '{root.name}' shows no mesh to stand solid on.");
             }
 
-            Bounds shown = renderers[0].bounds;
-            for (int i = 1; i < renderers.Length; i++)
+            var box = root.gameObject.AddComponent<BoxCollider>();
+            box.center = shell.center;
+            box.size = shell.size;
+            root.gameObject.layer = Layers.Prop;
+        }
+
+        /// <summary>
+        /// The small warm light over an open crate's rim, in the rim's own colour, off until <see cref="CrateRimGlow"/>
+        /// lights it.
+        /// </summary>
+        private static Light RimLight(GameObject rim, Transform root, OpeningTuning tuning)
+        {
+            Renderer shown = rim.GetComponentInChildren<Renderer>(true) ?? throw new InvalidOperationException(
+                $"Supply crate '{root.name}' has a rim glow with no mesh.");
+            var host = new GameObject("RimLight");
+            host.transform.SetParent(root, false);
+            host.transform.position = shown.bounds.center + Vector3.up * tuning.CrateRimLightLift;
+            var light = host.AddComponent<Light>();
+            light.type = LightType.Point;
+            light.range = tuning.CrateRimLightRange;
+            light.shadows = LightShadows.None;
+            light.intensity = 0f;
+            light.enabled = false;
+            return light;
+        }
+
+        /// <summary>The crate's lid, what lies in it or what glows on its rim: none of it its shell.</summary>
+        private static bool IsLoose(Transform root, Transform node)
+        {
+            for (; node != null && node != root; node = node.parent)
             {
-                shown.Encapsulate(renderers[i].bounds);
+                string name = node.name;
+                if (name == SealedContainer.LidPath || name == SealedContainer.ItemSocketPath ||
+                    name == RimGlowName || name == IgniterName || name == MetalName || name == WiringName)
+                {
+                    return true;
+                }
             }
 
-            var box = root.gameObject.AddComponent<BoxCollider>();
-            box.center = root.InverseTransformPoint(shown.center);
-            Vector3 size = root.InverseTransformVector(shown.size);
-            box.size = new Vector3(Mathf.Abs(size.x), Mathf.Abs(size.y), Mathf.Abs(size.z));
-            root.gameObject.layer = Layers.Prop;
+            return false;
         }
 
         /// <summary>The crate's child called <paramref name="name"/>, at any depth, or null (only some crates have it).

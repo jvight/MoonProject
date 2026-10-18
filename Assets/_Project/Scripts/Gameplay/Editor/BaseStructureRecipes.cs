@@ -17,6 +17,10 @@ namespace MoonProject.Gameplay.Editor
     /// </summary>
     internal static class BaseStructureRecipes
     {
+        // The pad's and the bank's own grid reach, metres: a bank set down beside its pad (the base's structures stand
+        // a few metres apart) always connects without a pylon.
+        private const float PadAndBankReach = 10f;
+
         private const string StagePrefix = "Stage_";
         private const string SocketPowerPrefix = "Socket_Power_";
         private const string LampAmberMaterialName = "R1_LampAmber";
@@ -34,7 +38,7 @@ namespace MoonProject.Gameplay.Editor
                 produceWatts: 0f,
                 consumeWatts: 120f,
                 storeWattHours: 0f,
-                connectionRadius: 0f,
+                connectionRadius: PadAndBankReach,
                 buildCost: new Recipe(4, 2, 0),
                 buildSeconds: 3f,
                 ports: Array.Empty<StructurePort>(),
@@ -62,7 +66,7 @@ namespace MoonProject.Gameplay.Editor
                 produceWatts: 0f,
                 consumeWatts: 0f,
                 storeWattHours: 360f,
-                connectionRadius: 0f,
+                connectionRadius: PadAndBankReach,
                 buildCost: new Recipe(3, 3, 0),
                 buildSeconds: 2.5f,
                 ports: Array.Empty<StructurePort>(),

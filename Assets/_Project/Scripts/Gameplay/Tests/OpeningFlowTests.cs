@@ -121,6 +121,24 @@ namespace MoonProject.Gameplay.Tests
             Assert.IsTrue(_flow.HasReached(OpeningMilestone.SignalWest));
         }
 
+        [Test]
+        public void ABankBuiltOffTheGrid_AsksToMoveItCloser_ThenNightReadyClearsTheLine()
+        {
+            _game.ReachedLander = true;
+            _game.Known.Add(StructureIds.ChargingPad);
+            _game.Known.Add(StructureIds.SolarArray);
+            _game.BuiltIds.Add(StructureIds.ChargingPad);
+            _game.FirstCharge = true;
+            _game.IgniterFitted = true;
+            _game.ReserveSpent = true;
+            _game.PowerOn = true;
+            Expect(OpeningKeys.BuildBatteryBank);
+            _game.BuiltIds.Add(StructureIds.BatteryBank);
+            Expect(OpeningKeys.MoveBatteryBank, "built, but the grid does not reach it");
+            _game.NightReady = true;
+            Expect(string.Empty, "moved within reach: the first nightfall says nothing");
+        }
+
         private void Expect(string key, string why = "the next step")
         {
             _flow.Tick();
