@@ -42,7 +42,7 @@ namespace MoonProject.Rover
         private int _postCount;
         private float _phaseTime;
         private float _phaseLength;
-        private float _shotClock;
+        private float _pushClock;
         private float _blinkClock;
         private float _glanceClock;
         private Vector2 _face;
@@ -119,15 +119,11 @@ namespace MoonProject.Rover
             }
         }
 
-        /// <summary>How far (0..1) through the shot's slow push-in: from the black to the end of the checks.</summary>
-        public float Push01
-        {
-            get
-            {
-                float span = _postSettings.DarkSeconds + _postSettings.FadeInSeconds + EyesOpenSeconds + _post.TotalSeconds;
-                return span > 1e-4f ? Mathf.Clamp01(_shotClock / span) : 1f;
-            }
-        }
+        /// <summary>
+        /// How far (0..1) through the shot's slow push-in toward the face: still while 07 wakes, then over
+        /// <see cref="PostSettings.PushInSeconds"/> from the first line on the face.
+        /// </summary>
+        public float Push01 => Mathf.Clamp01(_pushClock / _postSettings.PushInSeconds);
 
         /// <summary>07's body: 1 asleep (head bowed, eye dark) .. 0 awake.</summary>
         public float Sleep { get; private set; }
@@ -228,9 +224,9 @@ namespace MoonProject.Rover
 
             Elapsed += deltaTime;
             _phaseTime += deltaTime;
-            if (Phase >= OpeningPhase.Dark && Phase <= OpeningPhase.Post)
+            if (Phase == OpeningPhase.Post)
             {
-                _shotClock += deltaTime;
+                _pushClock += deltaTime;
             }
 
             AimScripted();
@@ -259,7 +255,7 @@ namespace MoonProject.Rover
             _postCount = 0;
             _phaseTime = 0f;
             _phaseLength = 0f;
-            _shotClock = 0f;
+            _pushClock = 0f;
             _blinkClock = -1f;
             _glanceClock = -1f;
             _blinked = false;
@@ -305,13 +301,13 @@ namespace MoonProject.Rover
                     Publish(WakeBeat.Crackle);
                     break;
                 case OpeningPhase.FadeIn:
-                    Publish(WakeBeat.LidCracked);
+                    Publish(WakeBeat.PictureOpens);
                     break;
                 case OpeningPhase.EyesOpen:
-                    Publish(WakeBeat.LidHalf);
+                    Publish(WakeBeat.EyesOpen);
                     break;
                 case OpeningPhase.Post:
-                    Publish(WakeBeat.PulledOut);
+                    Publish(WakeBeat.ChecksBegin);
                     _post.Begin();
                     DrainPost();
                     break;

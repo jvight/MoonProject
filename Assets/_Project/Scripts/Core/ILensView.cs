@@ -1,8 +1,9 @@
 namespace MoonProject.Core
 {
     /// <summary>
-    /// The picture through 07's own eye (docs/design/cutscenes.md §1.8), registered in the <see cref="GameContext"/>
-    /// by the World domain and driven by Rover while the camera sits in the lens. Allocation-free: safe every frame.
+    /// The picture darkened by 07's lid (docs/design/cutscenes.md §1.8), registered in the <see cref="GameContext"/>
+    /// by the World domain and driven by Rover for the opening's fades: the title's fade to black, the picture opening
+    /// on 07's face and the handover's dip. Allocation-free: safe every frame.
     /// </summary>
     public interface ILensView
     {

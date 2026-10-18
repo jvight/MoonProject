@@ -71,8 +71,8 @@ namespace MoonProject.Rover.Tests
             float midBoot = director.State.BootProgress;
             Assert.That(midBoot, Is.GreaterThan(0.1f).And.LessThan(1.0f));
 
-            director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.LidHalf, false));
-            director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.GazeHome, false));
+            director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.EyesOpen, false));
+            director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.ChecksBegin, false));
             Assert.AreEqual(1, director.BootCount, "Later wake beats in the same wake sequence must not restart Boot().");
             Assert.AreEqual(midBoot, director.State.BootProgress, 1e-5f);
 
@@ -515,7 +515,7 @@ namespace MoonProject.Rover.Tests
 
                 director.OnSceneStart(isNewGame: true);
                 director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.Crackle, false));
-                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.LidCracked, false));
+                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.PictureOpens, false));
                 director.Step(1.0f);
 
                 Assert.IsTrue(director.IsHoldingDarkForOpening, "CRT stays dark through the black and the picture opening.");
@@ -525,8 +525,8 @@ namespace MoonProject.Rover.Tests
                 Assert.AreEqual(0f, director.RearVentEmissionStrength, 1e-5f);
                 Assert.IsEmpty(cues);
 
-                // The eyes open (LidHalf): a single phosphor line flickers on and opens into two eyes
-                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.LidHalf, false));
+                // The eyes open (EyesOpen): a single phosphor line flickers on and opens into two eyes
+                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.EyesOpen, false));
                 Assert.IsFalse(director.IsHoldingDarkForOpening);
                 Assert.IsFalse(director.State.IsDarkHold);
                 Assert.AreEqual(1, director.BootCount);

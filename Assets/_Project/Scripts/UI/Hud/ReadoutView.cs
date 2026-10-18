@@ -89,8 +89,8 @@ namespace MoonProject.UI
             _bootOwed = true;
         }
 
-        /// <summary>07's lens is open (Earth's gaze, or the chase frame): the boot diagnostics show if still owed.</summary>
-        public void LensOpened()
+        /// <summary>07's wake reached the chase frame: the boot diagnostics show if still owed.</summary>
+        public void WakeFinished()
         {
             if (!_bootOwed)
             {

@@ -30,13 +30,6 @@ MonoBehaviour:
   _wakeElevation: -15
   _wakeDistance: 3.2
   _wakeScreenY: 0.22
-  _wakeLensSeconds: 2.2
-  _wakeTurnSeconds: 1.4
-  _wakeEarthElevation: 15
-  _wakeEarthDistance: 2.4
-  _wakeEarthHeight: 0.75
-  _wakeHoldSeconds: 6
-  _wakeEaseSeconds: 2
   _stargazeStartElevation: 0
   _stargazeFullElevation: -20
   _stargazeRiseHalfLife: 1.2

@@ -5,8 +5,8 @@ namespace MoonProject.Audio
 {
     /// <summary>
     /// Which of 07's wake cues each <see cref="WakeBeat"/> plays (docs/design/cutscenes.md §1.2), plain C# so the sheet
-    /// is testable: the O1 thump and the faint ghost chord, a lid tick per stage, the lens whine and the tick as focus
-    /// lands, and a soft tick as the short wake stirs. Hurried, every cue is softer and the ghost chord is left out.
+    /// is testable: the thump in the black and the faint ghost chord, a lid tick as the picture opens and as the eyes
+    /// open, and a soft tick as the short wake stirs. Hurried, every cue is softer and the ghost chord is left out.
     /// </summary>
     public sealed class WakeCueSheet
     {
@@ -15,8 +15,7 @@ namespace MoonProject.Audio
 
         public const int TickA2 = 0;
         public const int TickD3 = 1;
-        public const int TickA4 = 2;
-        public const int TickD5 = 3;
+        public const int TickD5 = 2;
 
         private readonly WakeAudioSettings _settings;
 
@@ -46,17 +45,11 @@ namespace MoonProject.Audio
                     }
 
                     break;
-                case WakeBeat.LidCracked:
+                case WakeBeat.PictureOpens:
                     calls[count++] = new WakeCueCall(WakeCueKind.Tick, TickA2, 0f, _settings.Tick * scale);
                     break;
-                case WakeBeat.LidHalf:
+                case WakeBeat.EyesOpen:
                     calls[count++] = new WakeCueCall(WakeCueKind.Tick, TickD3, 0f, _settings.Tick * scale);
-                    break;
-                case WakeBeat.FocusHunting:
-                    calls[count++] = new WakeCueCall(WakeCueKind.Whine, 0, 0f, _settings.Whine * scale);
-                    break;
-                case WakeBeat.FocusSettled:
-                    calls[count++] = new WakeCueCall(WakeCueKind.Tick, TickA4, 0f, _settings.Tick * scale);
                     break;
                 case WakeBeat.Stirred:
                     calls[count++] = new WakeCueCall(WakeCueKind.Tick, TickD5, 0f, _settings.Stir);

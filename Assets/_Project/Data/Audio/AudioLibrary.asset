@@ -973,30 +973,16 @@ MonoBehaviour:
     _clips:
     - {fileID: 8300000, guid: 4cbbbda822002cf4d834a2ab09f705df, type: 3}
     - {fileID: 8300000, guid: 4d5a17dd5a30c4c43831dde9ea3854be, type: 3}
-    - {fileID: 8300000, guid: 6c33dfd8cfb91d44d88f94047601049d, type: 3}
     - {fileID: 8300000, guid: f69a38303ebbc8c43a5721206f327cb7, type: 3}
     _variantLabels:
     - a2
     - d3
-    - a4
     - d5
     _bus: 2
     _spatial: 0
     _loop: 0
     _volumeMin: 0.6
     _volumeMax: 0.6
-    _pitchMin: 1
-    _pitchMax: 1
-  - _id: lens_whine
-    _clips:
-    - {fileID: 8300000, guid: a9c8c7ac1fde2b94e8121a5037375baf, type: 3}
-    _variantLabels:
-    - lens_whine
-    _bus: 2
-    _spatial: 0
-    _loop: 0
-    _volumeMin: 0.5
-    _volumeMax: 0.5
     _pitchMin: 1
     _pitchMax: 1
   - _id: neck_servo
