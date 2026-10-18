@@ -759,12 +759,33 @@ namespace MoonProject.Rover.PlayModeTests
         [PostBuildCleanup(typeof(RoverSessionScene))]
         public IEnumerator TransitionFrames_NewGameOverASave_ThroughTheReload()
         {
+            yield return RecordReloadTransition("new_game_over_save", true);
+        }
+
+        [UnityTest]
+        [Explicit("Real frame time of the title-to-play transition over a save, without capture overhead; run with --category OpeningTransition.")]
+        [Category("OpeningTransition")]
+        [Timeout(900000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator TransitionTiming_NewGameOverASave_ThroughTheReload()
+        {
+            yield return RecordReloadTransition("timing_over_save", false);
+        }
+
+        /// <summary>
+        /// New Game over a save, through the scene reload. With <paramref name="render"/> every frame is rendered and
+        /// saved (the capture's own cost shows in the frame times); without it only the real frame time, the phase and
+        /// the camera are logged.
+        /// </summary>
+        private IEnumerator RecordReloadTransition(string tag, bool render)
+        {
             yield return Boot(false);
             Assert.IsTrue(_context.Get<ISaveService>().SaveNow(), "a save is on disk");
             Dispose();
             yield return Boot(true);
             yield return Wait(TitleQuietSeconds);
-            string folder = Path.Combine(CaptureFolder, "transition_new_game_over_save");
+            string folder = Path.Combine(CaptureFolder, "transition_" + tag);
             if (Directory.Exists(folder))
             {
                 Directory.Delete(folder, true);
@@ -825,15 +846,19 @@ namespace MoonProject.Rover.PlayModeTests
                     continue;
                 }
 
-                Texture2D shot = FrameCapture.Render(_view, TransitionWidth, TransitionHeight);
-                Color32[] pixels = shot.GetPixels32();
+                Texture2D shot = render ? FrameCapture.Render(_view, TransitionWidth, TransitionHeight) : null;
                 float luma = 0f;
-                for (int i = 0; i < pixels.Length; i++)
+                if (shot != null)
                 {
-                    luma += (0.2126f * pixels[i].r + 0.7152f * pixels[i].g + 0.0722f * pixels[i].b) / 255f;
+                    Color32[] pixels = shot.GetPixels32();
+                    for (int i = 0; i < pixels.Length; i++)
+                    {
+                        luma += (0.2126f * pixels[i].r + 0.7152f * pixels[i].g + 0.0722f * pixels[i].b) / 255f;
+                    }
+
+                    luma /= pixels.Length;
                 }
 
-                luma /= pixels.Length;
                 Transform camera = _view.transform;
                 float distance = havePrevious ? Vector3.Distance(camera.position, previousPosition) : 0f;
                 float turn = havePrevious ? Quaternion.Angle(camera.rotation, previousRotation) : 0f;
@@ -848,13 +873,17 @@ namespace MoonProject.Rover.PlayModeTests
 
                 csv.AppendLine(string.Format(CultureInfo.InvariantCulture, "{0},{1:0.000},{2:0.0},{3},{4:0.0000},{5:0.0000},{6:0.00},{7}",
                     frame, Time.time - started, realMs, _director.Script.Phase, luma, distance, turn, beat));
-                if (frame % 3 == 0)
+                if (shot != null)
                 {
-                    File.WriteAllBytes(Path.Combine(folder, string.Format(CultureInfo.InvariantCulture, "f{0:0000}.png", frame)),
-                        shot.EncodeToPNG());
+                    if (frame % 3 == 0)
+                    {
+                        File.WriteAllBytes(Path.Combine(folder, string.Format(CultureInfo.InvariantCulture, "f{0:0000}.png", frame)),
+                            shot.EncodeToPNG());
+                    }
+
+                    Object.DestroyImmediate(shot);
                 }
 
-                Object.DestroyImmediate(shot);
                 if (reloaded && chaseAt < 0f && _beats.Contains(WakeBeat.ChaseFrame))
                 {
                     chaseAt = Time.time;
