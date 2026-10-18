@@ -531,16 +531,49 @@ namespace MoonProject.Gameplay
 
             if (excavatePressed && !_waitExcavateRelease)
             {
-                if (_controller.PickSelected())
-                {
-                    _events.Publish(new UiCue(UiCueKind.Confirm));
-                }
-
+                PickSelected();
                 _waitExcavateRelease = true;
-                _ghostPoseSeeded = false;
-                _wasSnapped = false;
-                _wasValid = true;
             }
+        }
+
+        /// <summary>
+        /// Picks the menu's structure <paramref name="index"/> as E on it would (UI's menu, clicked or confirmed): its
+        /// focus and confirm cues, then <see cref="BuildModeState.Placing"/>. False outside the menu or for an index
+        /// the menu does not hold.
+        /// </summary>
+        public bool TryPick(int index)
+        {
+            if (!_initialized || _controller.State != BuildModeState.Menu)
+            {
+                return false;
+            }
+
+            int previous = _controller.SelectedIndex;
+            if (!_controller.SelectIndex(index))
+            {
+                return false;
+            }
+
+            if (_controller.SelectedIndex != previous)
+            {
+                _events.Publish(new UiCue(UiCueKind.FocusMove));
+            }
+
+            return PickSelected();
+        }
+
+        private bool PickSelected()
+        {
+            bool picked = _controller.PickSelected();
+            if (picked)
+            {
+                _events.Publish(new UiCue(UiCueKind.Confirm));
+            }
+
+            _ghostPoseSeeded = false;
+            _wasSnapped = false;
+            _wasValid = true;
+            return picked;
         }
 
         private void StepPlacingState(

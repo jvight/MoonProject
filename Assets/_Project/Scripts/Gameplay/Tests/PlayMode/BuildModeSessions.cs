@@ -109,6 +109,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsFalse(build.TryOpen(), "TryOpen does nothing while build mode is already open.");
             yield return new WaitForSeconds(fade);
             Assert.AreEqual(1f, _gameplay.ApronGlow.Glow, 1e-3f, "The apron's outline glows while build mode is open.");
+            Assert.IsFalse(build.TryPick(build.Controller.AvailableStructures.Count), "no pick past the menu's end");
+            Assert.IsTrue(build.TryPick(0), "TryPick picks a menu structure as E on it would");
+            Assert.AreEqual(BuildModeState.Placing, build.State);
+            Assert.IsFalse(build.TryPick(0), "TryPick only picks from the menu");
             yield return Tap(_keyboard.bKey);
             Assert.AreEqual(BuildModeState.Closed, build.State, "B closes build mode TryOpen opened.");
             yield return new WaitForSeconds(fade);
