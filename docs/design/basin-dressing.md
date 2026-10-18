@@ -137,3 +137,17 @@ Measured with the real opening holds (`OpeningSkyPacing`, World `BasinDressingTe
 - **Camera and scoop:** Art's model carries both; World hides those two nodes, so only the brackets show.
 - **Not yet checked in-engine:** the glint from the apron and the ruins' front door (the retroreflector, flag and
   trail are not on main yet); the 1971 bootprint ring (no decal yet).
+
+### Crew traces and trail A (World, 2026-10-19)
+- **Placed:** flag, retroreflector, seismic station, fallen tripod, sample rack + fallen core tube (on the Scout
+  crater's north rim), and trail A in 3 m imprint tiles. The trail bends at (42.7, 148.6) to stay off the lander's
+  footprint (the straight line passed 6.7 m from its centre). Art's own colliders on the props; the imprints have
+  none. The geophone line has no model yet, so it is not placed.
+- **Retroreflector:** the panel turns on its hinge, aimed by the real golden-hour Sun (346.5°, 16.9° up) halfway to
+  07's chase eye over the apron: face ~292°, ~12° up.
+- **Blocker, open: The Peak shades the ruins at golden hour.** Toward the golden-hour Sun, The Peak stands 18.5–21°
+  above the front door, the flag and the retroreflector (16.9° Sun); the shade's edge crosses trail A near
+  (65–70, 170). So the reflector has no Sun to mirror, and the trail's far end reads only where the Sun reaches it.
+  Options: move the reflector (and the trail's end) out to the sunlit plain west of ~(65, 170); raise the
+  golden-hour hold above The Peak (~21°+); or let the shade be the beat, with trail A leading from the sunlit apron
+  into The Peak's shadow at the ruins.

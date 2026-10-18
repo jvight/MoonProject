@@ -80,6 +80,45 @@ namespace MoonProject.World
         [Range(0f, 0.2f)]
         [SerializeField] private float _scoutBlastSink = 0.03f;
 
+        [Header("The crew's traces (basin dressing §2)")]
+        [Tooltip("Art's crew-trace props (Generated/Art/R1/Models/Props) by the opening's places: the mission flag and " +
+            "the retroreflector framing the ruins' front door, the seismic station past the workshop, and the survey " +
+            "tripod the last landing knocked over on the blast ridge, its legs pointing away from the lander.")]
+        [SerializeField] private PropPlacement[] _crewTraces =
+        {
+            new PropPlacement(WorldAnchorIds.PlaceRuins, "Prop_MissionFlag", new Vector2(-13.6f, 3f), 218f, 0.05f),
+            new PropPlacement(WorldAnchorIds.PlaceRuins, "Prop_Retroreflector", new Vector2(-14.1f, -8f), 112f, 0.03f),
+            new PropPlacement(WorldAnchorIds.PlaceRuins, "Prop_SeismicStation", new Vector2(32.9f, -2f), 31f, 0.03f),
+            new PropPlacement(WorldAnchorIds.PlaceLander, "Prop_SurveyTripod", new Vector2(-37.9f, -0.2f), 180f, 0.05f),
+        };
+
+        [Tooltip("Where the sample rack stands from the Scout crater's centre (XZ, metres): on its north rim, where " +
+            "the 1971 crew cored the crater.")]
+        [SerializeField] private Vector2 _sampleRackOffset = new Vector2(0f, 10f);
+
+        [Tooltip("Yaw of the sample rack, degrees clockwise from +Z: its fallen core tube lies down the rim's outer " +
+            "slope, open end out.")]
+        [Range(0f, 360f)]
+        [SerializeField] private float _sampleRackYaw = 225f;
+
+        [Tooltip("Height above the apron of the eye the retroreflector's golden-hour glint is aimed at, metres: about " +
+            "07's chase camera. The panel turns on its hinge halfway between the Sun and that eye.")]
+        [Range(0.5f, 10f)]
+        [SerializeField] private float _reflectorEyeHeight = 3.2f;
+
+        [Tooltip("Bootprint trail A (world XZ waypoints, metres): the crew's walk from the apron's edge, round the " +
+            "lander's footprint, to the ruins' front door between the flag and the retroreflector.")]
+        [SerializeField] private Vector2[] _bootprintTrail =
+        {
+            new Vector2(27f, 147f),
+            new Vector2(42.7f, 148.6f),
+            new Vector2(80f, 182f),
+        };
+
+        [Tooltip("How far each bootprint tile wanders off the trail's line, metres: a walked path, not a ruler.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _bootprintWander = 0.3f;
+
         [Header("The west signal (opening v2 B11)")]
         [Tooltip("How far behind the dead west mast (away from the basin) the signal pillar rises, metres; it stands " +
             "hidden until Gameplay shows it when the antenna mast hears the west.")]
@@ -104,6 +143,12 @@ namespace MoonProject.World
         public float ScoutYaw => _scoutYaw;
         public float ScoutSink => _scoutSink;
         public float ScoutBlastSink => _scoutBlastSink;
+        public PropPlacement[] CrewTraces => _crewTraces;
+        public Vector2 SampleRackOffset => _sampleRackOffset;
+        public float SampleRackYaw => _sampleRackYaw;
+        public float ReflectorEyeHeight => _reflectorEyeHeight;
+        public Vector2[] BootprintTrail => _bootprintTrail;
+        public float BootprintWander => _bootprintWander;
         public float SignalPillarSetback => _signalPillarSetback;
         public float SignalPillarGlow => _signalPillarGlow;
         public float SignalPillarWidth => _signalPillarWidth;
