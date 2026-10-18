@@ -1,0 +1,75 @@
+{
+  "model": "ssr3_topper_04",
+  "pivot_tolerance": 0.02,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_BareSteel",
+    "R1_Brass",
+    "R1_Copper",
+    "R1_CreamEnamel",
+    "R1_DarkGlass",
+    "R1_GreyMetal",
+    "R1_SagePatch"
+  ],
+  "max_triangles": 22000,
+  "max_meshes": 6,
+  "max_draw_calls": 28,
+  "allow_rotation": [],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "SSR3_Topper_04": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "GasBottles": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.15
+      ]
+    },
+    "CopperLines": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.12
+      ]
+    },
+    "JumpThrusters": {
+      "pivot": [
+        0.0,
+        0.0,
+        -0.14
+      ]
+    },
+    "SuspensionKit": {
+      "pivot": [
+        0.0,
+        0.0,
+        -0.48
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      1.10,
+      1.16,
+      0.94
+    ],
+    "tolerance": 0.06,
+    "min_size": [
+      1.02,
+      1.10,
+      0.88
+    ],
+    "max_size": [
+      1.14,
+      1.22,
+      1.00
+    ]
+  }
+}

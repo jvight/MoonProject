@@ -466,6 +466,16 @@ MonoBehaviour:
       _markerRunSeconds: 4
       _markerRepeatSeconds: 9
       _markerWaveWidth: 0.18
+      _firstSparkPulse: 3
+      _lastSparkPulse: 5
+      _flashSeconds: 0.15
+      _flashEdgeSeconds: 0.016
+      _flashBoost: 3
+      _flashHaloSwell: 1.25
+      _beginWavePulse: 4
+      _markerHaloIntensity: 1.6
+      _markerHaloRadius: 0.14
+      _markerHaloFalloff: 2
     _debris:
     - _anchor: place.midway
       _id: Kestrel_HullPanel

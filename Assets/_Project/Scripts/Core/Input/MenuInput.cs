@@ -1,6 +1,8 @@
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
+using UnityEngine.InputSystem.Utilities;
 
 namespace MoonProject.Core.Input
 {
@@ -8,7 +10,9 @@ namespace MoonProject.Core.Input
     /// Typed, allocation-free view over the Controls asset's "UI" map, owned by <see cref="InputReader"/>. It stays
     /// enabled while the rover controls are disabled (pause), so Pause can always be undone. UI Toolkit receives
     /// pointer, navigation and submit events through the Input System's own UI provider; this map carries what the
-    /// game decides itself: pause, back, focus recovery and cursor recapture.
+    /// game decides itself: pause, back, focus recovery and cursor recapture. It also reads the rover map's Build and
+    /// Excavate keys while that map is off (07's face screen is up), so the face can hand over to build mode and take
+    /// the same key that fits a part in the world.
     /// </summary>
     public sealed class MenuInput
     {
@@ -21,6 +25,8 @@ namespace MoonProject.Core.Input
         private readonly InputAction _pause;
         private readonly InputAction _click;
         private readonly InputAction _cargo;
+        private readonly InputAction _roverBuild;
+        private readonly InputAction _roverUse;
 
         internal MenuInput(InputActionMap map)
         {
@@ -31,6 +37,12 @@ namespace MoonProject.Core.Input
             _pause = map.FindAction("Pause", throwIfNotFound: true);
             _click = map.FindAction("Click", throwIfNotFound: true);
             _cargo = map.FindAction("Cargo", throwIfNotFound: true);
+            InputActionMap rover = map.asset != null
+                ? map.asset.FindActionMap(InputReader.RoverMapName, throwIfNotFound: true)
+                : throw new ArgumentException("The UI map must live in the Controls asset beside the Rover map.",
+                    nameof(map));
+            _roverBuild = rover.FindAction("Build", throwIfNotFound: true);
+            _roverUse = rover.FindAction("Excavate", throwIfNotFound: true);
         }
 
         /// <summary>Current menu navigation direction (-1..1 on x and y).</summary>
@@ -79,6 +91,18 @@ namespace MoonProject.Core.Input
         /// <summary>Open or close the cargo screen (Tab, gamepad View).</summary>
         public bool CargoPressed => _cargo.WasPressedThisFrame();
 
+        /// <summary>
+        /// The rover's Build key (B, gamepad North) went down this frame, read from its controls so it counts while the
+        /// rover map is off behind a menu.
+        /// </summary>
+        public bool BuildPressed => _map.enabled && AnyPressedThisFrame(_roverBuild);
+
+        /// <summary>
+        /// The rover's Excavate key (E, gamepad West) went down this frame, read from its controls so it counts while
+        /// the rover map is off behind a menu.
+        /// </summary>
+        public bool UsePressed => _map.enabled && AnyPressedThisFrame(_roverUse);
+
         /// <summary>Primary mouse button pressed this frame (used to recapture the cursor).</summary>
         public bool ClickPressed => _click.WasPressedThisFrame();
 
@@ -110,6 +134,20 @@ namespace MoonProject.Core.Input
         }
 
         internal InputActionMap Map => _map;
+
+        private static bool AnyPressedThisFrame(InputAction action)
+        {
+            ReadOnlyArray<InputControl> controls = action.controls;
+            for (int i = 0; i < controls.Count; i++)
+            {
+                if (controls[i] is ButtonControl button && button.wasPressedThisFrame)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
 
         public void Enable()
         {

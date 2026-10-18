@@ -8,7 +8,9 @@ namespace MoonProject.World
     /// The landed cargo lander's amber emergency beacon (opening v2 §4, the opening's hook): Art's R1 LanderBeacon on
     /// top of the hull, its lens a small HDR core just over the bloom threshold with a tight halo and a warm light,
     /// pulsing slowly and never fully dark, the brightest warm point in the wake's first frame 165 m away; and a slow
-    /// wave of the old cable's marker lamps running from 07's dead post toward it, leading the eye.
+    /// wave of the old cable's marker lamps running from 07's dead post toward it, leading the eye. On a New Game the
+    /// beacon blinks sharply with each spark of 07's failing cutter and one bright wave runs the cable when 07
+    /// begins its recovery.
     /// </summary>
     [Serializable]
     public sealed class LanderBeaconSettings
@@ -76,6 +78,53 @@ namespace MoonProject.World
         [Range(0.02f, 1f)]
         [SerializeField] private float _markerWaveWidth = 0.18f;
 
+        [Header("The self-test's cues (New Game only)")]
+        [Tooltip("The first of 07's cutter pulses the beacon answers with a flash (Rover's BootCheckPulse index): " +
+            "the turret's spark attempts, so the beacon blinks in sync with the sparks (the spare part is at the " +
+            "lander).")]
+        [Range(0, 10)]
+        [SerializeField] private int _firstSparkPulse = 3;
+
+        [Tooltip("The last of 07's cutter pulses the beacon answers with a flash.")]
+        [Range(0, 10)]
+        [SerializeField] private int _lastSparkPulse = 5;
+
+        [Tooltip("Seconds an answering flash is lit: short, a hard signal unlike the slow pulse.")]
+        [Range(0.05f, 0.5f)]
+        [SerializeField] private float _flashSeconds = 0.15f;
+
+        [Tooltip("Seconds a flash takes to light and to fade: small, so it reads sharp without popping.")]
+        [Range(0.005f, 0.1f)]
+        [SerializeField] private float _flashEdgeSeconds = 0.016f;
+
+        [Tooltip("How many times the slow pulse's peak the lens, halo and light reach in an answering flash.")]
+        [Range(1f, 4f)]
+        [SerializeField] private float _flashBoost = 3f;
+
+        [Tooltip("How many times wider the halo swells at an answering flash's peak, its smallest apparent size " +
+            "too: a point that brightens from the wake, never a bloom blob.")]
+        [Range(1f, 3f)]
+        [SerializeField] private float _flashHaloSwell = 1.25f;
+
+        [Tooltip("Extra emission strength a marker lamp gains as the single wave sent when 07 begins its recovery " +
+            "passes it: brighter than the calm waves, leading 07 to the lander.")]
+        [Range(0f, 6f)]
+        [SerializeField] private float _beginWavePulse = 4f;
+
+        [Tooltip("Brightness of the small halo a marker lamp blooms with as the Begin wave passes it (the calm waves " +
+            "never light it).")]
+        [Range(0f, 4f)]
+        [SerializeField] private float _markerHaloIntensity = 1.6f;
+
+        [Tooltip("Radius of a marker lamp's halo, metres: small, a soft bloom around the lamp.")]
+        [Range(0.02f, 0.5f)]
+        [SerializeField] private float _markerHaloRadius = 0.14f;
+
+        [Tooltip("How quickly a marker's halo fades behind the wave (a power of the wave's lift): higher is a " +
+            "quicker decay.")]
+        [Range(1f, 6f)]
+        [SerializeField] private float _markerHaloFalloff = 2f;
+
         public Color Color => _color;
         public float Period => _period;
         public float Sharpness => _sharpness;
@@ -91,5 +140,15 @@ namespace MoonProject.World
         public float MarkerRunSeconds => _markerRunSeconds;
         public float MarkerRepeatSeconds => _markerRepeatSeconds;
         public float MarkerWaveWidth => _markerWaveWidth;
+        public int FirstSparkPulse => _firstSparkPulse;
+        public int LastSparkPulse => _lastSparkPulse;
+        public float FlashSeconds => _flashSeconds;
+        public float FlashEdgeSeconds => _flashEdgeSeconds;
+        public float FlashBoost => _flashBoost;
+        public float FlashHaloSwell => _flashHaloSwell;
+        public float BeginWavePulse => _beginWavePulse;
+        public float MarkerHaloIntensity => _markerHaloIntensity;
+        public float MarkerHaloRadius => _markerHaloRadius;
+        public float MarkerHaloFalloff => _markerHaloFalloff;
     }
 }

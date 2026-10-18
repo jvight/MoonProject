@@ -319,6 +319,10 @@ namespace MoonProject.Art.Editor
                 ReplaceRendererSlotMaterial(root, "CoreSample", R1MaterialRecipes.CreamEnamelSlot, LoadOrBuildMaterial(IceCoreFrostMaterialPath));
                 ReplaceRendererSlotMaterial(root, "SightWindow", R1MaterialRecipes.DarkGlassSlot, LoadOrBuildMaterial(IceCoreWindowMaterialPath));
             }
+            else if (modelPath.EndsWith("/SSR3_Topper_03.fbx", StringComparison.Ordinal))
+            {
+                ReplaceRendererSlotMaterial(root, "FrostBlock", R1MaterialRecipes.CreamEnamelSlot, LoadOrBuildMaterial(IceCoreFrostMaterialPath));
+            }
         }
 
         /// <summary>Loads a generated story-prop material, building the story-prop materials first if missing.</summary>

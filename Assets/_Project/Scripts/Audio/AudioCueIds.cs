@@ -73,9 +73,7 @@ namespace MoonProject.Audio
         public const string WakePowerThump = "wake_power_thump";
         public const string LidTick = "lid_tick";
         public const string LensWhine = "lens_whine";
-        public const string HumDropout = "hum_dropout";
         public const string NeckServo = "neck_servo";
-        public const string HmChirp = "hm_chirp";
         public const string DockChargeHum = "dock_charge_hum";
         public const string DockFull = "dock_full";
         public const string BatteryCell = "battery_cell";
@@ -110,6 +108,28 @@ namespace MoonProject.Audio
         // Opening v2: the base powering on, its lamps at the first nightfall
         public const string StructurePowerOn = "structure_power_on";
         public const string BaseLampOn = "base_lamp_on";
+
+        // The New Game self-test (sampled): the checks' motions, and the fault result
+        public const string BootLens = "boot_lens";
+        public const string BootLampFlicker = "boot_lamp_flicker";
+        public const string BootLampRamp = "boot_lamp_ramp";
+        public const string BootHeadSweep = "boot_head_sweep";
+        public const string BootHeadNod = "boot_head_nod";
+        public const string BootWheel = "boot_wheel";
+        public const string BootMotorShudder = "boot_motor_shudder";
+        public const string BootMotorCreep = "boot_motor_creep";
+        public const string BootCutterSpark = "boot_cutter_spark";
+        public const string BootWingJerk = "boot_wing_jerk";
+        public const string BootWingStall = "boot_wing_stall";
+        public const string BootWingFold = "boot_wing_fold";
+        public const string BootAntennaRise = "boot_antenna_rise";
+        public const string BootAntennaSignal = "boot_antenna_signal";
+        public const string BootBattery = "boot_battery";
+        public const string BootAssembly = "boot_assembly";
+        public const string BootBeginTurn = "boot_begin_turn";
+        public const string BootBeginShiver = "boot_begin_shiver";
+        public const string BootBeginLamps = "boot_begin_lamps";
+        public const string BootFault = "boot_fault";
 
         // R1 Group 4: Machines
         public const string MachineSolarTrack = "machine_solar_track";
