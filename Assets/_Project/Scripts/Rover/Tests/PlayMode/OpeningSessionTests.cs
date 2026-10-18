@@ -635,7 +635,7 @@ namespace MoonProject.Rover.PlayModeTests
             VisualElement titleCrt = document.rootVisualElement.Q<VisualElement>("title-crt");
             Assert.IsNotNull(titleCrt);
             float pushIn = _director.Script.PhaseLength;
-            while (titleCrt.resolvedStyle.opacity > 0.05f && elapsed < pushIn)
+            while (IsShown(titleCrt) && elapsed < pushIn)
             {
                 yield return null;
                 float dt = Time.unscaledDeltaTime;
@@ -643,8 +643,7 @@ namespace MoonProject.Rover.PlayModeTests
                 maxPushInFrameMs = Mathf.Max(maxPushInFrameMs, dt * 1000f);
             }
 
-            Assert.LessOrEqual(titleCrt.resolvedStyle.opacity, 0.05f,
-                "the title CRT switches off before the push into 07's closed lens ends");
+            Assert.IsFalse(IsShown(titleCrt), "the title CRT switches off before the push into 07's closed lens ends");
             Assert.AreEqual(OpeningPhase.PushIn, _director.Script.Phase,
                 "the camera is still pushing into the lens after the title has gone");
 
@@ -692,6 +691,12 @@ namespace MoonProject.Rover.PlayModeTests
                 "reloaded scene starts the opening inside O1 without showing the title again");
             Assert.AreNotEqual(OpeningPhase.PushIn, _director.Script.Phase,
                 "the push-in already happened before the reload");
+        }
+
+        /// <summary>A hidden title element leaves layout (display none) with its opacity as it was.</summary>
+        private static bool IsShown(VisualElement element)
+        {
+            return element.resolvedStyle.display != DisplayStyle.None && element.resolvedStyle.opacity > 0.05f;
         }
 
         private IEnumerator Boot(bool title)
