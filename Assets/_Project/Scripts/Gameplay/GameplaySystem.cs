@@ -52,6 +52,13 @@ namespace MoonProject.Gameplay
         [SerializeField] private BuildField _building;
         [SerializeField] private Transform[] _ruins = Array.Empty<Transform>();
 
+        [Tooltip("World's service port on the lander ([World]/Lander/ServicePort): the open crate stands at it.")]
+        [SerializeField] private Transform _landerPort;
+
+        [Tooltip("The bay outline on World's apron markings ([World]/OpeningProps/ApronMarkings/BayGlowOutline): it " +
+                 "glows while build mode is open.")]
+        [SerializeField] private Renderer _apronOutline;
+
         /// <summary>The recovery protocol's Power steps: the pad, solar power on, a night-ready base
         /// (opening-v2).</summary>
         private const int PowerSteps = 3;
@@ -85,6 +92,9 @@ namespace MoonProject.Gameplay
         public SealedContainers Containers { get; private set; }
 
         public IInteractionHints Hints { get; private set; }
+
+        /// <summary>The apron's bay outline, glowing while build mode is open (B5: where a base belongs).</summary>
+        public ApronGlow ApronGlow { get; private set; }
 
         /// <summary>The ruins' and the lander's scan targets, scanned to learn structures (0.5.5 §1).</summary>
         public ScanField Scans { get; private set; }
@@ -154,6 +164,16 @@ namespace MoonProject.Gameplay
             _ruins = ruins ?? Array.Empty<Transform>();
         }
 
+        internal void WireLanderPort(Transform landerPort)
+        {
+            _landerPort = landerPort;
+        }
+
+        internal void WireApronOutline(Renderer apronOutline)
+        {
+            _apronOutline = apronOutline;
+        }
+
         internal void WireCargo(MaterialCatalog catalog, CargoTuning cargo)
         {
             _materialCatalog = catalog;
@@ -205,12 +225,16 @@ namespace MoonProject.Gameplay
             _battery.ConnectStructures(_building.Catalog);
             Opening = NewOpening(context, services);
             Scans = Opening != null ? NewScans(services) : null;
+            Containers.YieldTo(ScanComesFirst);
+            _salvage.YieldTo(ScanComesFirst);
+            Opening?.Caches.HoldBack(_openingTuning.CargoCrate, CargoScanned);
             if (Scans == null)
             {
                 Fail("the opening or scanning did not stand (see its error).");
                 return;
             }
 
+            ApronGlow = new ApronGlow(_apronOutline, _building.Tuning.ApronGlowFadeSeconds);
             Hints = new InteractionHints(_salvage, Containers, Scans, _building, services.Beam, Cutter,
                 services.Pickups);
             Recovery = new RecoveryProgress(context.Events, PowerLamps, PowerSteps, _openingTuning.RecoveryLamps);
@@ -264,7 +288,7 @@ namespace MoonProject.Gameplay
             try
             {
                 var opening = new OpeningField(_openingTuning, services, _building, sunlight, Containers, _ruins,
-                    transform, _salvage.Tuning.ReachRadius, StartKit);
+                    _landerPort, transform, _salvage.Tuning.ReachRadius, StartKit);
                 _battery.ConnectPads(opening);
                 PadLock = new PadLock(context.Events, _baseTuning, _building, _battery.Model, services.Rover,
                     _openingTuning.PadChargeRadius);
@@ -326,18 +350,50 @@ namespace MoonProject.Gameplay
             return null;
         }
 
-        /// <summary>Another E verb is on offer: a scan waits for it (0.5.5 §1.2).</summary>
+        /// <summary>The lander's cargo has taught what it holds: its crate may give it up (B3 before B4).</summary>
+        private bool CargoScanned()
+        {
+            IReadOnlyList<string> taught = _scanTuning.LanderCargo.StructureIds;
+            for (int i = 0; i < taught.Count; i++)
+            {
+                if (!KnownStructures.IsKnown(taught[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Another E verb is on offer: a scan waits for it (0.5.5 §1.2), unless the player looks at a scan target more
+        /// squarely than at that verb's.
+        /// </summary>
         private bool OtherVerbOnOffer()
         {
             for (int i = 0; i < VerbsBeforeScan.Length; i++)
             {
-                if (Hints.TryGet(VerbsBeforeScan[i], out _))
+                if (Hints.TryGet(VerbsBeforeScan[i], out InteractionHint hint) && !ScanComesFirst(hint.Position))
                 {
                     return true;
                 }
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// The player looks at a scan target more squarely than at <paramref name="otherTarget"/> (or that is not in
+        /// view at all): the scan takes E, so a crate beside 07 never silences the panel in front of it.
+        /// </summary>
+        private bool ScanComesFirst(Vector3 otherTarget)
+        {
+            if (Scans == null || Scans.LookedAt(out float scanScore) == null)
+            {
+                return false;
+            }
+
+            return !Scans.InView(otherTarget, out float otherScore) || scanScore < otherScore;
         }
 
         /// <summary>07 starts a charge: the next full hold says so once more.</summary>
@@ -377,6 +433,7 @@ namespace MoonProject.Gameplay
             Scans.Step(now, deltaTime);
             Opening.Step();
             PadLock.Step(deltaTime);
+            ApronGlow.Step(_building.State != BuildModeState.Closed, deltaTime);
             Recovery.Refresh();
         }
 
@@ -427,6 +484,8 @@ namespace MoonProject.Gameplay
                 : _salvage == null ? "SalvageField is not assigned."
                 : _battery == null ? "BatteryField is not assigned."
                 : _building == null ? "BuildField is not assigned."
+                : _landerPort == null ? "The lander's service port is not assigned (rebuild the Main scene)."
+                : _apronOutline == null ? "The apron's bay outline is not assigned (rebuild the Main scene)."
                 : null;
         }
 

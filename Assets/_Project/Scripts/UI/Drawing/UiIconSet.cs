@@ -6,13 +6,13 @@ using MoonProject.Core.Events;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// The catalog of all 30 inventory and equipment vector icons (<c>item_*.svg</c> and <c>kit_*.svg</c>), built from
+    /// The catalog of all 25 inventory and equipment vector icons (<c>item_*.svg</c> and <c>kit_*.svg</c>), built from
     /// <c>Assets/_Project/UI/Icons/</c> by <c>UI/Icons</c> and drawn with <see cref="UiIconPainter"/>. Looking up an
     /// unknown id throws immediately so missing icons never fail silently.
     /// </summary>
     public sealed class UiIconSet : ScriptableObject
     {
-        public const int ExpectedIconCount = 30;
+        public const int ExpectedIconCount = 25;
 
         [SerializeField] private UiIconShape[] _icons = Array.Empty<UiIconShape>();
 
@@ -25,7 +25,7 @@ namespace MoonProject.UI
             _icons = icons ?? throw new ArgumentNullException(nameof(icons));
         }
 
-        /// <summary>Null when all 30 icons are present and valid; otherwise what is wrong.</summary>
+        /// <summary>Null when all 25 icons are present and valid; otherwise what is wrong.</summary>
         public string Validate()
         {
             return ValidateArray(_icons);
@@ -109,8 +109,8 @@ namespace MoonProject.UI
         }
 
         /// <summary>
-        /// The canonical SVG icon id for story part <paramref name="partId"/>. The spare igniter borrows the cutter's
-        /// icon until Art draws its own.
+        /// The canonical SVG icon id for story part <paramref name="partId"/>. The spare igniter and the ice core borrow
+        /// the cutter's icon until Art draws their own.
         /// </summary>
         public static string IconIdOfPart(string partId)
         {
@@ -122,6 +122,7 @@ namespace MoonProject.UI
             switch (partId)
             {
                 case "part.igniter":
+                case "part.icecore":
                     return "kit_cutter";
                 default:
                     throw new InvalidOperationException($"Story part '{partId}' has no icon id.");

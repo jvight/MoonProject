@@ -64,6 +64,22 @@ namespace MoonProject.UI
         [Range(2f, 20f)]
         [SerializeField] private float _dragThreshold = 6f;
 
+        [Tooltip("Seconds the dragged part's icon takes to close most of the gap to the pointer (a soft follow).")]
+        [Range(0f, 0.3f)]
+        [SerializeField] private float _dragFollowSeconds = 0.05f;
+
+        [Tooltip("Seconds a refused part's icon eases back into its own slot.")]
+        [Range(0.05f, 1f)]
+        [SerializeField] private float _dragReturnSeconds = 0.32f;
+
+        [Tooltip("Seconds a fitted part's icon eases into the device that took it before it is gone.")]
+        [Range(0.05f, 1f)]
+        [SerializeField] private float _dragFitSeconds = 0.26f;
+
+        [Tooltip("Opacity of the part left behind in its slot while its icon is dragged.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _dragSourceAlpha = 0.3f;
+
         [Tooltip("Gap (px) between a socket or part and the tooltip that names it.")]
         [Range(0f, 40f)]
         [SerializeField] private float _tooltipGap = 10f;
@@ -92,21 +108,21 @@ namespace MoonProject.UI
         [Range(400f, 560f)]
         [SerializeField] private float _dividerX = 480f;
 
-        [Tooltip("Radius (px in 1152x768) of each of the 10 orbital equipment socket bubbles.")]
-        [Range(20f, 48f)]
-        [SerializeField] private float _bubbleRadius = 36f;
+        [Tooltip("Radius (px in 1152x768) of the status disc in each device frame.")]
+        [Range(12f, 32f)]
+        [SerializeField] private float _bubbleRadius = 20f;
 
         [Tooltip("Origin X (px in 1152x768) of the side-3/4 Rover 07 line-art drawing.")]
-        [Range(600f, 960f)]
-        [SerializeField] private float _roverOriginX = 804f;
+        [Range(400f, 800f)]
+        [SerializeField] private float _roverOriginX = 576f;
 
         [Tooltip("Origin Y (px in 1152x768) of the side-3/4 Rover 07 line-art ground line.")]
         [Range(300f, 620f)]
-        [SerializeField] private float _roverOriginY = 468f;
+        [SerializeField] private float _roverOriginY = 412f;
 
         [Tooltip("Scale (px per rover unit in 1152x768) of the side-3/4 Rover 07 line-art drawing.")]
         [Range(80f, 240f)]
-        [SerializeField] private float _roverScale = 156f;
+        [SerializeField] private float _roverScale = 185f;
 
         [Tooltip("Seconds a transient toast message remains visible at the bottom of the panel.")]
         [Range(1f, 8f)]
@@ -178,40 +194,68 @@ namespace MoonProject.UI
 
         [Tooltip("Stroke width (px at 1152x768) for empty socket leader lines.")]
         [Range(0.5f, 3f)]
-        [SerializeField] private float _leaderEmptyWidth = 1.15f;
+        [SerializeField] private float _leaderEmptyWidth = 2f;
 
         [Tooltip("Mount anchor dot radius (px at 1152x768) on 07 for empty socket leader lines.")]
         [Range(1f, 5f)]
-        [SerializeField] private float _leaderEmptyDotRadius = 2.0f;
+        [SerializeField] private float _leaderEmptyDotRadius = 3.5f;
 
         [Tooltip("Subtle warm amber stroke (~42% alpha) for installed socket leader lines.")]
         [SerializeField] private Color32 _leaderInstalledColor = new Color32(252, 204, 118, 110);
 
         [Tooltip("Stroke width (px at 1152x768) for installed socket leader lines.")]
         [Range(0.5f, 3f)]
-        [SerializeField] private float _leaderInstalledWidth = 1.35f;
+        [SerializeField] private float _leaderInstalledWidth = 2.4f;
 
         [Tooltip("Mount anchor dot radius (px at 1152x768) on 07 for installed socket leader lines.")]
         [Range(1f, 5f)]
-        [SerializeField] private float _leaderInstalledDotRadius = 2.4f;
+        [SerializeField] private float _leaderInstalledDotRadius = 4f;
 
         [Tooltip("Bright cyan stroke for the single focused, hovered, or active drag-target socket's leader line.")]
         [SerializeField] private Color32 _leaderFocusColor = new Color32(95, 243, 255, 250);
 
         [Tooltip("Stroke width (px at 1152x768) for the focused or drag-target socket leader line.")]
         [Range(1f, 4f)]
-        [SerializeField] private float _leaderFocusWidth = 1.9f;
+        [SerializeField] private float _leaderFocusWidth = 3.2f;
 
         [Tooltip("Mount anchor dot radius (px at 1152x768) on 07 for the focused or drag-target socket leader line.")]
         [Range(1.5f, 6f)]
-        [SerializeField] private float _leaderFocusDotRadius = 3.2f;
+        [SerializeField] private float _leaderFocusDotRadius = 5.5f;
+
+        [Header("Legibility on the 2x face texture: heavier strokes, larger icons, a clear selection")]
+        [Tooltip("Stroke width (px at 1152x768) of the outline of an empty hold cell and of the grid rules.")]
+        [Range(1f, 6f)]
+        [SerializeField] private float _cellStrokeWidth = 2.4f;
+
+        [Tooltip("Stroke width (px at 1152x768) of the outline of a hold cell that holds something.")]
+        [Range(1f, 6f)]
+        [SerializeField] private float _itemStrokeWidth = 3.2f;
+
+        [Tooltip("Stroke width (px at 1152x768) of the selection ring and corner ticks on a cell or device bubble.")]
+        [Range(2f, 8f)]
+        [SerializeField] private float _focusStrokeWidth = 4.5f;
+
+        [Tooltip("Size (px at 1152x768) of the icon in a hold cell.")]
+        [Range(30f, 56f)]
+        [SerializeField] private float _holdIconSize = 46f;
+
+        [Tooltip("Size (px at 1152x768) of the icon in a device frame's status disc.")]
+        [Range(20f, 40f)]
+        [SerializeField] private float _deviceIconSize = 28f;
+
+        [Tooltip("Fill of the selected hold cell or device bubble: a visible step up from the resting fill.")]
+        [SerializeField] private Color32 _selectionFill = new Color32(18, 62, 68, 255);
+
+        [Tooltip("Fill of a cell or bubble for a moment after it is clicked.")]
+        [SerializeField] private Color32 _pressFill = new Color32(40, 128, 136, 255);
+
+        [Tooltip("Seconds the pressed fill takes to ease back to the selection fill.")]
+        [Range(0.05f, 0.6f)]
+        [SerializeField] private float _pressFlashSeconds = 0.22f;
 
         [Header("Two-colour CRT palette (amber + cyan, near-neutral warm-black background, >= 7:1 stroke contrast)")]
         [Tooltip("Near-neutral warm-black CRT fill (HSV sat <= 0.25, val ~0.075) inside an unlocked inventory cell or socket bubble.")]
         [SerializeField] private Color32 _cellBackground = new Color32(19, 18, 16, 255);
-
-        [Tooltip("Near-neutral warm-black CRT fill inside the focused, hovered, or drag-target cell or socket bubble.")]
-        [SerializeField] private Color32 _cellFocusBackground = new Color32(19, 18, 16, 255);
 
         [Tooltip("Opaque near-neutral warm-black CRT backing plate behind count badges, tooltips, and toasts.")]
         [SerializeField] private Color32 _plateBackground = new Color32(19, 18, 16, 255);
@@ -255,6 +299,14 @@ namespace MoonProject.UI
         public float HeightShare => _heightShare;
 
         public float DragThreshold => _dragThreshold;
+
+        public float DragFollowSeconds => _dragFollowSeconds;
+
+        public float DragReturnSeconds => _dragReturnSeconds;
+
+        public float DragFitSeconds => _dragFitSeconds;
+
+        public float DragSourceAlpha => _dragSourceAlpha;
 
         public float TooltipGap => _tooltipGap;
 
@@ -330,8 +382,6 @@ namespace MoonProject.UI
 
         public Color32 CellBackground => _cellBackground;
 
-        public Color32 CellFocusBackground => _cellFocusBackground;
-
         public Color32 PlateBackground => _plateBackground;
 
         public Color32 AmberBright => _amberBright;
@@ -349,6 +399,22 @@ namespace MoonProject.UI
         public Color32 CyanAccent => _cyanAccent;
 
         public Color32 CyanDim => _cyanDim;
+
+        public float CellStrokeWidth => _cellStrokeWidth;
+
+        public float ItemStrokeWidth => _itemStrokeWidth;
+
+        public float FocusStrokeWidth => _focusStrokeWidth;
+
+        public float HoldIconSize => _holdIconSize;
+
+        public float DeviceIconSize => _deviceIconSize;
+
+        public Color32 SelectionFill => _selectionFill;
+
+        public Color32 PressFill => _pressFill;
+
+        public float PressFlashSeconds => _pressFlashSeconds;
 
         public float BootTypeSeconds => _bootTypeSeconds;
 
@@ -375,9 +441,16 @@ namespace MoonProject.UI
             }
 
             if (_roverWheelRadius <= 0f || _roverWheelRimRadius <= 0f || _roverWheelbaseHalf <= 0f ||
-                _leaderEmptyWidth <= 0f || _leaderInstalledWidth <= 0f || _leaderFocusWidth <= 0f)
+                _leaderEmptyWidth <= 0f || _leaderInstalledWidth <= 0f || _leaderFocusWidth <= 0f ||
+                _cellStrokeWidth <= 0f || _itemStrokeWidth <= 0f || _focusStrokeWidth <= 0f ||
+                _holdIconSize <= 0f || _deviceIconSize <= 0f || _pressFlashSeconds <= 0f)
             {
                 return "cargo rover diagram or leader line settings are non-positive";
+            }
+
+            if (_dragThreshold <= 0f || _dragFollowSeconds < 0f || _dragReturnSeconds <= 0f || _dragFitSeconds <= 0f)
+            {
+                return "cargo drag timings are out of range";
             }
 
             return null;

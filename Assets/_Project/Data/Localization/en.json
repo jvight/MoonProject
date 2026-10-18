@@ -312,7 +312,7 @@
         },
         {
             "key": "hint.build",
-            "text": "Build"
+            "text": "Weld"
         },
         {
             "key": "hint.scan",
@@ -611,18 +611,6 @@
             "text": "Clear the ground first"
         },
         {
-            "key": "build.hint.rotate",
-            "text": "Rotate"
-        },
-        {
-            "key": "build.hint.snap",
-            "text": "Snap"
-        },
-        {
-            "key": "build.hint.place",
-            "text": "Place"
-        },
-        {
             "key": "build.hint.weld",
             "text": "Hold to weld"
         },
@@ -663,38 +651,6 @@
             "text": "A relay post that extends the base's power reach and lights the ground."
         },
         {
-            "key": "structure.smelter.name",
-            "text": "Smelter"
-        },
-        {
-            "key": "structure.smelter.desc",
-            "text": "Refines lunar ore and orange beads into alloy and glass."
-        },
-        {
-            "key": "structure.fabricator.name",
-            "text": "Fabricator"
-        },
-        {
-            "key": "structure.fabricator.desc",
-            "text": "Prints spare components and precision parts at a warm work light."
-        },
-        {
-            "key": "structure.storage_rack.name",
-            "text": "Storage Rack"
-        },
-        {
-            "key": "structure.storage_rack.desc",
-            "text": "Holds extra crates of salvaged metal, wiring, and optics at home."
-        },
-        {
-            "key": "structure.upgrade_bay.name",
-            "text": "Upgrade Bay"
-        },
-        {
-            "key": "structure.upgrade_bay.desc",
-            "text": "A gantry frame for fitting new kits and tools onto 07's chassis."
-        },
-        {
             "key": "structure.antenna_mast.name",
             "text": "Antenna Mast"
         },
@@ -703,20 +659,12 @@
             "text": "Carries the station signal farther out across the crater rim."
         },
         {
-            "key": "structure.vehicle_pad.name",
-            "text": "Vehicle Pad"
-        },
-        {
-            "key": "structure.vehicle_pad.desc",
-            "text": "A broad, level deck for parking and servicing rovers and sleds."
-        },
-        {
             "key": "build.locked",
             "text": "Blueprint not yet found"
         },
         {
-            "key": "ui.cargo.tab_seven",
-            "text": "EQUIPPED"
+            "key": "ui.face.title",
+            "text": "EQUIPMENT DIAGNOSTIC · UNIT 07 · SSR-5"
         },
         {
             "key": "ui.title.continue_note",
@@ -736,7 +684,7 @@
         },
         {
             "key": "next.v2.collect_parts",
-            "text": "Collect the parts from the lander's open crate."
+            "text": "Collect the parts from the open crate by the lander's service port."
         },
         {
             "key": "next.v2.build_pad",
@@ -888,7 +836,7 @@
         },
         {
             "key": "ui.device.cutter.fault",
-            "text": "No igniter. Fit the spare on your pad."
+            "text": "Needs an igniter. Fit it while parked on the charging pad."
         },
         {
             "key": "ui.device.cutter.fit",
@@ -941,6 +889,106 @@
         {
             "key": "hint.pickup",
             "text": "Pick up"
+        },
+        {
+            "key": "pickup.part.icecore",
+            "text": "CORE 41 · H₂O"
+        },
+        {
+            "key": "pickup.part.icecore.job",
+            "text": "Ice core sample, 1988"
+        },
+        {
+            "key": "ui.title.language_question",
+            "text": "Language · Ngôn ngữ"
+        },
+        {
+            "key": "ui.verb.scan",
+            "text": "Scan"
+        },
+        {
+            "key": "ui.verb.cut",
+            "text": "Cut"
+        },
+        {
+            "key": "ui.verb.build",
+            "text": "Build"
+        },
+        {
+            "key": "ui.verb.fit",
+            "text": "Fit"
+        },
+        {
+            "key": "ui.cargo.more_slots",
+            "text": "+{0} slots later"
+        },
+        {
+            "key": "ui.cargo.empty_name",
+            "text": "Empty slot"
+        },
+        {
+            "key": "ui.cargo.empty_desc",
+            "text": "Parts and materials you pick up are stored here."
+        },
+        {
+            "key": "ui.face.close",
+            "text": "Close"
+        },
+        {
+            "key": "ui.face.fit",
+            "text": "Fit"
+        },
+        {
+            "key": "ui.face.build",
+            "text": "Build"
+        },
+        {
+            "key": "ui.cargo.drag.not_docked",
+            "text": "Fits only while parked on the charging pad"
+        },
+        {
+            "key": "ui.cargo.drag.to_cutter",
+            "text": "Drop it on the cutter"
+        },
+        {
+            "key": "ui.cargo.drag.nowhere",
+            "text": "Nothing on 07 takes this yet"
+        },
+        {
+            "key": "glyph.combo.drag_e",
+            "text": "Drag/E"
+        },
+        {
+            "key": "glyph.combo.mouse_e",
+            "text": "Mouse/E"
+        },
+        {
+            "key": "glyph.combo.b_esc",
+            "text": "B/Esc"
+        },
+        {
+            "key": "glyph.combo.pad_y_b",
+            "text": "Y/B"
+        },
+        {
+            "key": "glyph.keyboard.b",
+            "text": "B"
+        },
+        {
+            "key": "build.hint.pick",
+            "text": "Pick"
+        },
+        {
+            "key": "build.hint.leave",
+            "text": "Leave"
+        },
+        {
+            "key": "build.step.place",
+            "text": "Drive to the glowing marks on the apron, then press {0} to place"
+        },
+        {
+            "key": "build.step.weld",
+            "text": "Hold {0} to weld"
         }
     ]
 }

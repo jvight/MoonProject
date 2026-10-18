@@ -64,6 +64,7 @@ namespace MoonProject.UI
         private HoldHint _holdHint;
         private FirstPrompt _firstPrompt;
         private LookUpChip _lookUpChip;
+        private readonly ObjectiveChip _objectiveChip = new ObjectiveChip();
         private ObjectiveLine _objective;
         private ObjectiveView _objectiveView;
         private LowBatteryHint _lowBattery;
@@ -95,6 +96,7 @@ namespace MoonProject.UI
         private bool _titleHasSave;
         private float _sinceAwake;
         private float _pickUpGrace;
+        private bool _buildWasOpen;
 
         /// <summary>The localization service this system registered (tests and editor tools read it).</summary>
         internal LocalizationService Localization => _localization;
@@ -264,7 +266,8 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<GameSaved>(OnGameSaved));
             _tokens.Add(events.Subscribe<StargazingChanged>(OnStargazingChanged));
             _tokens.Add(events.Subscribe<NextStepChanged>(OnNextStepChanged));
-            _tokens.Add(events.Subscribe<ScanStarted>(_ => _director.Yield(InteractionKind.Scan)));
+            _tokens.Add(events.Subscribe<ScanStarted>(OnScanStarted));
+            _tokens.Add(events.Subscribe<SalvageCutStarted>(_ => _objectiveChip.Used(ObjectiveVerb.Cut)));
             _tokens.Add(events.Subscribe<FragmentScanned>(_ => _director.NotifyUsed(InteractionKind.Scan)));
             _tokens.Add(events.Subscribe<RoverWakeBeatReached>(OnWakeBeat));
             _tokens.Add(events.Subscribe<LanguageChanged>(OnLanguageChanged));
@@ -277,10 +280,11 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<StructureLearned>(OnStructureLearned));
             _tokens.Add(events.Subscribe<BatteryArcRevealed>(OnBatteryArcRevealed));
             _tokens.Add(events.Subscribe<StructurePlaced>(_ => _director.NotifyUsed(InteractionKind.Build)));
+            _tokens.Add(events.Subscribe<StoryPartCollected>(collected => _pickups?.PartCollected(collected.PartId)));
             _tokens.Add(events.Subscribe<StructureRemoved>(_ => _director.NotifyUsed(InteractionKind.Deconstruct)));
 
             services.Input.Menu.Enable();
-            _cursor.Drive();
+            _cursor.Set(CursorMode.Drive);
             _composed = true;
             TryBind();
         }
@@ -322,7 +326,7 @@ namespace MoonProject.UI
                 _layout.BuildReasonAnchor);
             _holdHint = new HoldHint(_tuning.Stargaze, _ledger);
             _firstPrompt = new FirstPrompt(_tuning.Stargaze, _ledger);
-            _lookUpChip = new LookUpChip(_layout, _tuning.Stargaze, _localization);
+            _lookUpChip = new LookUpChip(_layout, _tuning.Stargaze, _localization, _glyphs);
             _objective = new ObjectiveLine(_tuning.Guidance, _ledger);
             _objectiveView = new ObjectiveView(_layout, _tuning.Guidance, _localization);
             _lowBattery = new LowBatteryHint(_tuning.Guidance, services.Battery, _localization);
@@ -334,18 +338,18 @@ namespace MoonProject.UI
             _prompt = new ContextPrompt(_layout, _tuning.Prompts, _director, services.View, _glyphs, _localization,
                 services.Events, new[] { _layout.BuildStrip });
             _pickups = new PickupFeed(_layout, _tuning.PickupFeed, _numbers, _localization, services.Materials,
-                services.Catalog, services.Events);
+                services.Catalog, services.Events, _roverDiagram);
             _salvageRing = new SalvageRing(_layout, _tuning.Salvage, _tuning.Prompts, services.Salvage, services.View);
             _buildStrip = new BuildStripView(_layout, _tuning.BuildStripReveal, _tuning.Prompts, _localization,
-                _numbers, services.Materials, services.View, services.BuildField, _structureIcons, _glyphs,
-                services.WeldEnergy);
+                _numbers, services.Materials, services.View, _glyphs, services.Events, services.BuildField,
+                _structureIcons, services.WeldEnergy);
             _cargo = new CargoScreen(_layout, _tuning.Cargo, _localization, services.Hold, services.Systems,
                 _roverDiagram, _glyphs, _numbers, services.Events, _ledger);
             BindFacePanel(root);
             _unlockCard = new UnlockCard(_layout, _tuning.UnlockCard, _localization);
             _pause = new PauseMenu(_layout, _tuning.Pause, _tuning.Title, _player, _localization, services.Input,
                 services.Events, _settings, services.Flow,
-                _numbers, _cursor, Quit,
+                _numbers, Quit,
                 new CreditsView(_layout, _tuning.Credits, _localization, _credits.text));
             _textScale = new TextScale(_document.panelSettings);
             _backdrop = new BackdropBlur(transform, _tuning.Backdrop);
@@ -371,6 +375,10 @@ namespace MoonProject.UI
             MenuInput menu = input.Menu;
             bool pausePressed = menu.PausePressed;
             bool cancelPressed = menu.CancelPressed;
+            BuildModeState build = _buildStrip.State;
+            // Esc is both Pause and Cancel: while build mode is open (or closed by this very press) it only leaves
+            // build mode, which Gameplay does; the pad's Start, which is only Pause, still pauses.
+            bool buildTookCancel = cancelPressed && (build != BuildModeState.Closed || _buildWasOpen);
             if (_pause.IsOpen)
             {
                 if (pausePressed || cancelPressed)
@@ -380,7 +388,12 @@ namespace MoonProject.UI
             }
             else if (_cargo.IsOpen)
             {
-                if (menu.CargoPressed || pausePressed || cancelPressed)
+                if (menu.BuildPressed)
+                {
+                    CloseCargo();
+                    _services.BuildField?.TryOpen();
+                }
+                else if (menu.CargoPressed || pausePressed || cancelPressed)
                 {
                     CloseCargo();
                 }
@@ -389,12 +402,12 @@ namespace MoonProject.UI
             {
                 OpenCargo();
             }
-            else if (pausePressed)
+            else if (pausePressed && !buildTookCancel)
             {
                 _pause.Open();
             }
 
-            if (!_pause.IsOpen && !_cargo.IsOpen && menu.ClickPressed)
+            if (menu.ClickPressed)
             {
                 _cursor.Recapture();
             }
@@ -436,7 +449,8 @@ namespace MoonProject.UI
 
             Rect panel = _layout.Root.layout;
             Vector2 panelSize = float.IsNaN(panel.width) ? Vector2.zero : panel.size;
-            _buildStrip?.Tick(hudTime, !paused && _awake && !cargoOpen, panelSize, device);
+            StepBuildPointer(menu);
+            _buildStrip.Tick(hudTime, !paused && _awake && !cargoOpen, panelSize, device);
             _pickUpGrace = _services.Hints.Primary.Kind == InteractionKind.PickUp
                 ? PickUpGraceSeconds
                 : Mathf.Max(0f, _pickUpGrace - deltaTime);
@@ -453,12 +467,37 @@ namespace MoonProject.UI
             _holdHint.Tick(hudTime, hintOpen && !cargoOpen && _firstPrompt.Word == HintWord.None, _awake && _carrying);
             HintWord hint = _firstPrompt.Word != HintWord.None ? _firstPrompt.Word
                 : _holdHint.WantsShown ? HintWord.Hold : HintWord.None;
+            if (BuildMenuOpen())
+            {
+                _objectiveChip.Used(ObjectiveVerb.Build);
+            }
+
+            // The verb chip is the objective's own: it shows only with its line, and a teaching prompt takes the chip.
+            hint = hint != HintWord.None ? hint
+                : _objectiveChip.Word(_objectiveView.ShowsObjective && _objective.WantsShown,
+                    _services.Systems.CanFitIgniter, cargoOpen, OfferedNow());
             _lookUpChip.Tick(deltaTime, paused ? HintWord.None : hint, device);
             _objectiveView.Tick(deltaTime, _objective, ObjectiveOpen(paused) && _slot.Allows(GuidanceKind.Objective),
-                _lowBattery, ObjectiveOpen(paused) && _slot.Allows(GuidanceKind.Battery));
+                _lowBattery, ObjectiveOpen(paused) && _slot.Allows(GuidanceKind.Battery), _buildStrip,
+                BuildStepOpen(paused) && _slot.Allows(GuidanceKind.BuildStep));
             bool hudOpen = !paused && _awake && !_inOpening && !_stargaze.IsVeiled && !cargoOpen;
             _batteryDial.Tick(deltaTime, _cellRowRevealed, hudOpen);
             _sunArc.Tick(deltaTime, hudOpen && _openingProtocol.IsPowerOn);
+            _buildWasOpen = _buildStrip.State != BuildModeState.Closed;
+            ApplyCursor();
+        }
+
+        /// <summary>The gameplay's action in reach and ready now, or None.</summary>
+        private InteractionKind OfferedNow()
+        {
+            InteractionHint primary = _services.Hints.Primary;
+            return primary.Ready ? primary.Kind : InteractionKind.None;
+        }
+
+        /// <summary>The cursor follows what the mouse is for this frame (<see cref="CursorRule"/>).</summary>
+        private void ApplyCursor()
+        {
+            _cursor.Set(CursorRule.Decide(_pause.IsOpen, _cargo.IsOpen, _buildStrip.State));
         }
 
         /// <summary>The cell row exists from the first time the charge dropped below its reveal share.</summary>
@@ -471,12 +510,18 @@ namespace MoonProject.UI
         private bool PromptsOpen(bool paused)
         {
             return !paused && _awake && !_inOpening && _sinceAwake >= _tuning.Prompts.StartDelay &&
-                   !_lookUpChip.IsVisible && !_readout.IsVisible && !BuildMenuOpen();
+                   !_lookUpChip.ShowsPrompt && !_readout.IsVisible && !BuildMenuOpen();
         }
 
         private bool ObjectiveOpen(bool paused)
         {
             return !paused && _awake && !_inOpening && !_stargaze.IsVeiled && !_cargo.IsOpen && !BuildMenuOpen();
+        }
+
+        /// <summary>The build step's line shows over the live HUD only (not paused, not behind the face screen).</summary>
+        private bool BuildStepOpen(bool paused)
+        {
+            return !paused && _awake && !_inOpening && !_cargo.IsOpen;
         }
 
         private bool LookHintsOpen()
@@ -516,16 +561,18 @@ namespace MoonProject.UI
             bool chipWants = (PromptsOpen(paused) && _director.Wants(_services.Hints.Primary)) || looks;
             bool unlockWants = !_cargo.IsOpen && _unlockCard.IsWaiting;
             bool readoutWants = ReadoutOpen(paused) && _readout.Wants;
-            bool chipUp = _prompt.IsVisible || _lookUpChip.IsVisible;
+            bool chipUp = _prompt.IsVisible || _lookUpChip.ShowsPrompt;
             PromptHolder holder = _unlockCard.IsVisible ? PromptHolder.Unlock
                 : _readout.IsVisible ? PromptHolder.Readout
                 : chipUp ? PromptHolder.Chip
                 : unlockWants ? PromptHolder.Unlock
                 : readoutWants ? PromptHolder.Readout
                 : chipWants ? PromptHolder.Chip : PromptHolder.None;
+            _guidanceWants[(int)GuidanceKind.BuildStep] = BuildStepOpen(paused) && _buildStrip.Step != BuildStep.None;
             _guidanceWants[(int)GuidanceKind.Prompt] = holder != PromptHolder.None;
             _guidanceWants[(int)GuidanceKind.Battery] = ObjectiveOpen(paused) && _lowBattery.WantsShown;
             _guidanceWants[(int)GuidanceKind.Objective] = ObjectiveOpen(paused) && _objective.WantsShown;
+            _guidanceShown[(int)GuidanceKind.BuildStep] = _objectiveView.ShowsBuildStep;
             _guidanceShown[(int)GuidanceKind.Prompt] = chipUp || _unlockCard.IsVisible || _readout.IsVisible;
             _guidanceShown[(int)GuidanceKind.Battery] = _objectiveView.ShowsBattery;
             _guidanceShown[(int)GuidanceKind.Objective] = _objectiveView.ShowsObjective;
@@ -537,6 +584,7 @@ namespace MoonProject.UI
         private const float CargoNavRepeatInterval = 0.12f;
 
         private Vector2 _lastFaceMouseScreenPos = new Vector2(float.NaN, float.NaN);
+        private Vector2 _lastBuildMouse = new Vector2(float.NaN, float.NaN);
         private NavigationMoveEvent.Direction _lastCargoNavDirection = NavigationMoveEvent.Direction.None;
         private float _cargoNavRepeatTimer;
 
@@ -684,12 +732,13 @@ namespace MoonProject.UI
                 }
             }
 
-            if (menu.SubmitPressed)
+            if (menu.SubmitPressed || menu.UsePressed)
             {
                 view.SubmitFocused();
             }
 
-            if (_faceDocument == null || _services.FaceScreen == null || !_services.FaceScreen.IsOpen)
+            bool onFace = _faceDocument != null;
+            if (onFace && (_services.FaceScreen == null || !_services.FaceScreen.IsOpen))
             {
                 return;
             }
@@ -704,17 +753,14 @@ namespace MoonProject.UI
                 ? rawMouse.sqrMagnitude > 0.01f
                 : (rawMouse - _lastFaceMouseScreenPos).sqrMagnitude > 0.01f;
             bool down = menu.ClickPressed;
-            if (!moved && !down)
+            bool up = menu.ClickReleased;
+            if (!moved && !down && !up)
             {
                 return;
             }
 
             _lastFaceMouseScreenPos = rawMouse;
-            Camera cam = _services.View?.Camera;
-            float height = cam != null && cam.pixelHeight > 0 ? cam.pixelHeight : Screen.height;
-            var uiScreenPos = new Vector2(rawMouse.x, height - rawMouse.y);
-            Vector2 panelPos = FaceScreenMapper.ScreenToPanel(uiScreenPos, cam, _services.FaceScreen, CargoScreenSize(),
-                height);
+            Vector2 panelPos = onFace ? FacePanelPoint(rawMouse) : MainPanelPoint(rawMouse) - _cargo.PanelRect.position;
             if (!float.IsNaN(panelPos.x) && !float.IsNaN(panelPos.y))
             {
                 if (down)
@@ -725,6 +771,67 @@ namespace MoonProject.UI
                 {
                     view.PointerMoveAtPanel(panelPos);
                 }
+
+                if (up)
+                {
+                    view.PointerUpAtPanel(panelPos);
+                }
+            }
+        }
+
+        /// <summary>The mouse (Input System pixels, bottom-left origin) on 07's curved face, in face panel space.</summary>
+        private Vector2 FacePanelPoint(Vector2 mouse)
+        {
+            Camera cam = _services.View?.Camera;
+            float height = cam != null && cam.pixelHeight > 0 ? cam.pixelHeight : Screen.height;
+            var uiScreenPos = new Vector2(mouse.x, height - mouse.y);
+            return FaceScreenMapper.ScreenToPanel(uiScreenPos, cam, _services.FaceScreen, CargoScreenSize(), height);
+        }
+
+        /// <summary>
+        /// The mouse (Input System pixels, bottom-left origin) in the HUD panel's space. The UI reads the mouse itself
+        /// and hands it to its views, as the face screen does, so a click never depends on UI Toolkit's own pointer
+        /// feed reaching the panel.
+        /// </summary>
+        private Vector2 MainPanelPoint(Vector2 mouse)
+        {
+            IPanel panel = _layout.Root.panel;
+            return panel == null
+                ? new Vector2(float.NaN, float.NaN)
+                : RuntimePanelUtils.ScreenToPanel(panel, new Vector2(mouse.x, Screen.height - mouse.y));
+        }
+
+        /// <summary>The build menu's cards under the mouse: a real move hovers (selects), a press picks.</summary>
+        private void StepBuildPointer(MenuInput menu)
+        {
+            if (_buildStrip.State != BuildModeState.Menu || _pause.IsOpen || _cargo.IsOpen)
+            {
+                _lastBuildMouse = new Vector2(float.NaN, float.NaN);
+                return;
+            }
+
+            Vector2 mouse = menu.PointerPosition;
+            if (float.IsNaN(mouse.x))
+            {
+                return;
+            }
+
+            bool moved = !float.IsNaN(_lastBuildMouse.x) && (mouse - _lastBuildMouse).sqrMagnitude > 0.01f;
+            _lastBuildMouse = mouse;
+            bool down = menu.ClickPressed;
+            if (!moved && !down)
+            {
+                return;
+            }
+
+            Vector2 panelPos = MainPanelPoint(mouse);
+            if (down)
+            {
+                _buildStrip.PointerDownAt(panelPos);
+            }
+            else
+            {
+                _buildStrip.PointerMoveAt(panelPos);
             }
         }
 
@@ -750,7 +857,7 @@ namespace MoonProject.UI
             _cargo.Open();
             _services.FaceScreen?.SetScreenOpen(true, FaceTargetTexture());
             _services.Input.Disable();
-            _cursor.OpenInventory();
+            ApplyCursor();
             _cargo.FocusFirst();
             _events.Publish(new UiCue(UiCueKind.Confirm));
         }
@@ -762,7 +869,7 @@ namespace MoonProject.UI
             _cargo.Close();
             _services.FaceScreen?.SetScreenOpen(false, FaceTargetTexture());
             _services.Input.Enable();
-            _cursor.CloseInventory();
+            ApplyCursor();
             _events.Publish(new UiCue(UiCueKind.Back));
         }
 
@@ -842,6 +949,14 @@ namespace MoonProject.UI
         private void OnNextStepChanged(NextStepChanged changed)
         {
             _objective.SetKey(changed.LineKey);
+            _objectiveChip.SetKey(changed.LineKey);
+        }
+
+        /// <summary>The scan beam started: the scan prompt yields to the beam, and the objective's Scan chip retires.</summary>
+        private void OnScanStarted(ScanStarted started)
+        {
+            _director.Yield(InteractionKind.Scan);
+            _objectiveChip.Used(ObjectiveVerb.Scan);
         }
 
         private void OnStructureLearned(StructureLearned learned)
@@ -941,7 +1056,7 @@ namespace MoonProject.UI
 
         private void OnApplicationFocus(bool hasFocus)
         {
-            if (hasFocus && _bound && !_pause.IsOpen)
+            if (hasFocus && _bound)
             {
                 _cursor.Recapture();
             }

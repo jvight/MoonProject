@@ -306,12 +306,14 @@ namespace MoonProject.Rover.PlayModeTests
                 "Tooltip on 07's face must display the Vietnamese material name.");
             Capture("face-inv-hover-tooltip");
             CaptureScreenshot("face_inv_hover");
+            Assert.AreEqual(SkyPhase.Eclipse, _sunlight.Phase, "Opening state must be in SkyPhase.Eclipse.");
             Capture("inventory_variant_a_night");
+            CaptureAtSize("face_inv_16x9_eclipse", 1920, 1080);
             CaptureAtSize("face_inv_16x9_night", 1920, 1080);
             CaptureAtSize("face_inv_21x9_night", 2520, 1080);
             CaptureAtSize("face_inv_4x3_night", 1440, 1080);
             CaptureWithGlassOutlineOverlay("inventory_glass_outline", faceScreen, 1920, 1080);
-            AssertLiveGlassFitAndComfort(faceScreen, "night");
+            AssertLiveGlassFitAndComfort(faceScreen, "eclipse");
             bezelRenderer.sharedMaterial = darkBezelMat;
             Capture("inventory_variant_b_night");
             bezelRenderer.sharedMaterial = creamBezelMat;
@@ -327,16 +329,20 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreEqual(2, view.FocusedHoldCell);
             yield return TapKey(_keyboard.rightArrowKey);
             Assert.AreEqual(3, view.FocusedHoldCell);
-            yield return TapKey(_keyboard.rightArrowKey);
-            Assert.AreEqual(FaceDevices.Scan, view.FocusedDeviceIndex,
-                "Navigating Right from column 3 of row 0 must focus the scan lens.");
-            yield return TapKey(_keyboard.downArrowKey);
-            Assert.AreEqual(FaceDevices.Cutter, view.FocusedDeviceIndex,
-                "Navigating Down from the scan lens must move down to the cutter.");
             yield return TapKey(_keyboard.upArrowKey);
-            Assert.AreEqual(FaceDevices.Scan, view.FocusedDeviceIndex);
+            Assert.AreEqual(FaceDevices.SocketOne, view.FocusedDeviceIndex,
+                "Navigating Up from the hold's top row must focus the frame above it, socket 1.");
+            yield return TapKey(_keyboard.upArrowKey);
+            Assert.AreEqual(FaceDevices.Scan, view.FocusedDeviceIndex, "Up from socket 1 reaches the scan lens.");
+            yield return TapKey(_keyboard.rightArrowKey);
+            Assert.AreEqual(FaceDevices.Cutter, view.FocusedDeviceIndex, "Right from the scan lens crosses to the cutter.");
+            yield return TapKey(_keyboard.downArrowKey);
+            Assert.AreEqual(FaceDevices.SocketTwo, view.FocusedDeviceIndex, "Down from the cutter reaches socket 2.");
             yield return TapKey(_keyboard.leftArrowKey);
-            Assert.AreEqual(3, view.FocusedHoldCell, "Navigating Left from the scan lens must return focus to hold cell 3.");
+            Assert.AreEqual(FaceDevices.SocketOne, view.FocusedDeviceIndex, "Left from socket 2 crosses to socket 1.");
+            yield return TapKey(_keyboard.downArrowKey);
+            Assert.AreEqual(FaceLayout.HoldEntryBelow(FaceDevices.SocketOne, view.UnlockedCellCount), view.FocusedHoldCell,
+                "Navigating Down from socket 1 must return focus to the hold below it.");
 
             // BEAT 6: Close Returns with Happy Blink (^ ^)
             int happyBlinksBefore = faceState.ClosingHappyBlinkCount;
@@ -368,23 +374,34 @@ namespace MoonProject.Rover.PlayModeTests
 
             Assert.IsFalse(_rover.IsHeldStill, "Closing the face inventory must release 07's hold-still brake.");
 
-            // DAYLIGHT CAPTURE: Release opening eclipse and advance into sunlit lunar day.
+            // GOLDEN HOUR, DAY, AND NIGHT CAPTURES: Release opening eclipse into golden hour (Sunrise), then sunlit Day and earthlit Night.
             _sunlight.ReleaseOpeningEclipse();
             float sunriseDeadline = Time.time + SunriseTimeout;
             while (_sunlight.SunlightAt(_rover.Position) < 0.95f)
             {
-                Assert.Less(Time.time, sunriseDeadline, "Sun breaks out of eclipse into lunar day.");
+                Assert.Less(Time.time, sunriseDeadline, "Sun breaks out of eclipse into golden hour.");
                 yield return null;
             }
 
             yield return WaitSeconds(2.0f);
             Assert.Greater(_sunlight.SunlightAt(_rover.Position), 0.95f);
+            Assert.AreEqual(SkyPhase.Sunrise, _sunlight.Phase, "OpeningSkyPacing holds at golden hour (SkyPhase.Sunrise) after breakout.");
 
             yield return TapTab();
             yield return WaitSeconds(0.90f);
             Assert.IsTrue(faceScreen.IsOpen);
             Assert.AreEqual(1f, faceState.ScreenContentMix, 1e-4f);
             Assert.AreEqual(0f, faceState.ScreenVerticalPinch, 1e-4f);
+            view.FocusFirst();
+            yield return null;
+            CaptureAtSize("face_inv_16x9_golden_hour", 1920, 1080);
+            AssertLiveGlassFitAndComfort(faceScreen, "golden_hour");
+
+            // Release OpeningSkyPacing hold and advance to full sunlit lunar day (t = 900s, SkyPhase.Sunlit).
+            _context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.NightReady, false));
+            SetSkyClockTime(900f, false);
+            yield return null;
+            Assert.AreEqual(SkyPhase.Sunlit, _sunlight.Phase, "Clock at 900s must be in SkyPhase.Sunlit.");
             view.ClearFocus();
             yield return null;
             Capture("face-inv-day-open");
@@ -402,6 +419,17 @@ namespace MoonProject.Rover.PlayModeTests
             Capture("inventory_variant_b");
             Capture("inventory_variant_b_day");
             bezelRenderer.sharedMaterial = creamBezelMat;
+
+            // Advance to full earthlit lunar night (t = 4800s, SkyPhase.Earthlit) and verify glass comfort and capture.
+            SetSkyClockTime(4800f, false);
+            yield return null;
+            Assert.AreEqual(SkyPhase.Earthlit, _sunlight.Phase, "Clock at 4800s must be in SkyPhase.Earthlit.");
+            CaptureAtSize("face_inv_16x9_night", 1920, 1080);
+            AssertLiveGlassFitAndComfort(faceScreen, "night");
+
+            // Restore sunlit day for the remaining chase, rock occlusion, and slope checks.
+            SetSkyClockTime(900f, false);
+            yield return null;
             view.ClearFocus();
 
             yield return TapTab();
@@ -531,10 +559,10 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.IsTrue(view.IsTooltipVisible, "Mouse hover on the 15-degree sloped screen must show the cell tooltip.");
             Assert.AreEqual(1, view.FocusedHoldCell, "Hovering hold cell 1 focuses it.");
 
-            yield return TapKey(_keyboard.sKey);
-            Assert.AreEqual(5, view.FocusedHoldCell, "WASD S must move focus down from cell 1 to cell 5.");
+            yield return TapKey(_keyboard.dKey);
+            Assert.AreEqual(2, view.FocusedHoldCell, "WASD D must move focus along the strip from cell 1 to cell 2.");
             yield return TapButton(_gamepad.dpad.left);
-            Assert.AreEqual(4, view.FocusedHoldCell, "Gamepad D-pad Left must move focus from cell 5 to cell 4.");
+            Assert.AreEqual(1, view.FocusedHoldCell, "Gamepad D-pad Left must move focus from cell 2 back to cell 1.");
 
             // Close with Esc and verify previous cursor state and gameplay input are restored.
             yield return TapKey(_keyboard.escapeKey);
@@ -572,6 +600,13 @@ namespace MoonProject.Rover.PlayModeTests
                 craft?.Invoke(equipment, new object[] { RoverKitPiece.LampBar });
                 craft?.Invoke(equipment, new object[] { RoverKitPiece.HoverCoils });
             }
+        }
+
+        private void SetSkyClockTime(float timeSeconds, bool holdingEclipse)
+        {
+            MethodInfo setClockTime = _sunlight?.GetType().GetMethod("SetClockTime", BindingFlags.Instance | BindingFlags.Public);
+            Assert.IsNotNull(setClockTime, "ISunlight implementation must expose SetClockTime(float, bool, bool).");
+            setClockTime.Invoke(_sunlight, new object[] { timeSeconds, holdingEclipse, true });
         }
 
         private GameObject CreateRockObstacle(Vector3 position)
@@ -834,26 +869,25 @@ namespace MoonProject.Rover.PlayModeTests
 
             var rects = new List<Rect>
             {
-                new Rect(72f, 42f, 376f, 22f),
-                new Rect(FaceInventoryView.RightPaneX, 42f, 568f, 22f),
-                new Rect(72f, 664f, 376f, 62f),
-                new Rect(512f, 664f, 568f, 62f),
+                new Rect(FaceLayout.Margin, FaceLayout.TitleY, FaceLayout.RightEdge - FaceLayout.Margin,
+                    FaceLayout.TitleRuleY - FaceLayout.TitleY),
+                new Rect(FaceLayout.InfoX, FaceLayout.InfoY, FaceLayout.InfoWidth, FaceLayout.InfoHeight),
+                new Rect(FaceLayout.Margin, FaceLayout.FooterY, FaceLayout.RightEdge - FaceLayout.Margin,
+                    FaceLayout.FooterHeight),
             };
 
             for (int i = 0; i < FaceInventoryView.MaxHoldCells; i++)
             {
                 rects.Add(FaceInventoryView.GetHoldCellReferenceRect(i));
+                Assert.GreaterOrEqual(
+                    FaceScreenMapper.SignedDistanceInsideGlass(FaceLayout.HoldNameRect(i), panelSize),
+                    minMargin,
+                    $"[{lightingTag}] The name under hold slot {i} must lie inside the glass safe area.");
             }
 
             for (int i = 0; i < FaceDevices.Count; i++)
             {
-                Vector2 c = FaceDevices.CenterOf(i);
-                float r = FaceInventoryView.BubbleRadius;
-                Assert.GreaterOrEqual(
-                    FaceScreenMapper.SignedDistanceInsideGlass(c, r, panelSize),
-                    minMargin,
-                    $"[{lightingTag}] Device {i} must lie inside the glass safe area with margin >= {minMargin} px.");
-                rects.Add(new Rect(c.x - r, c.y - r, 2f * r, 2f * r));
+                rects.Add(FaceLayout.DeviceFrame(i));
             }
 
             float xMin = float.PositiveInfinity;
@@ -911,6 +945,10 @@ namespace MoonProject.Rover.PlayModeTests
                 var bgLuminances = new List<float>(8192);
                 var strokeCheckCoords = new List<Vector2Int>(1024);
                 float maxBgSat = 0f;
+                float sumBgR = 0f;
+                float sumBgG = 0f;
+                float sumBgB = 0f;
+                float sumBgSat = 0f;
 
                 _view.aspect = (float)width / height;
                 try
@@ -960,6 +998,10 @@ namespace MoonProject.Rover.PlayModeTests
                                     0.25f,
                                     $"[{lightingTag}] Background pixel at panel {panelPos} must have HSV saturation <= 0.25 (got {bgSat:F3}, color={bgCol}).");
 
+                                sumBgR += bgCol.r;
+                                sumBgG += bgCol.g;
+                                sumBgB += bgCol.b;
+                                sumBgSat += bgSat;
                                 bgLuminances.Add(RelativeLuminance(bgCol));
                             }
                             else if (distInside >= minMargin + 6f && IsUiStrokeCore(uiPixels, uiW, uiH, uiX, uiY))
@@ -975,6 +1017,24 @@ namespace MoonProject.Rover.PlayModeTests
                 }
 
                 Assert.GreaterOrEqual(bgLuminances.Count, 500, $"[{lightingTag}] Must sample at least 500 pure background pixels inside the safe area.");
+                float invCount = 1f / bgLuminances.Count;
+                float avgBgR = sumBgR * invCount;
+                float avgBgG = sumBgG * invCount;
+                float avgBgB = sumBgB * invCount;
+                float avgBgSat = sumBgSat * invCount;
+                Assert.LessOrEqual(
+                    avgBgSat,
+                    0.12f,
+                    $"[{lightingTag}] Mean background HSV saturation must be <= 0.12 for a neutral warm-black glass (got {avgBgSat:F3}, rgb=({avgBgR * 255f:F1},{avgBgG * 255f:F1},{avgBgB * 255f:F1})).");
+                Assert.GreaterOrEqual(
+                    avgBgR,
+                    avgBgG,
+                    $"[{lightingTag}] Mean background R ({avgBgR * 255f:F1}) must be >= G ({avgBgG * 255f:F1}) so the glass is warm-neutral and never green/olive.");
+                Assert.GreaterOrEqual(
+                    avgBgG,
+                    avgBgB - 0.004f,
+                    $"[{lightingTag}] Mean background G ({avgBgG * 255f:F1}) must not drop below B ({avgBgB * 255f:F1}) so the glass is never blue.");
+
                 bgLuminances.Sort();
                 float medianBgLum = bgLuminances[bgLuminances.Count / 2];
                 float maxBgLum = bgLuminances[bgLuminances.Count - 1];

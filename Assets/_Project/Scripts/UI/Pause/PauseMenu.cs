@@ -11,7 +11,8 @@ namespace MoonProject.UI
 {
     /// <summary>
     /// The pause menu (Esc / gamepad Start). Opening it eases game time to a stop (the radio keeps playing on unscaled
-    /// time), turns the rover controls off and frees the cursor; resuming reverses all three. Resume, Settings
+    /// time) and turns the rover controls off (the cursor follows <see cref="IsOpen"/>, see <see cref="CursorRule"/>);
+    /// resuming reverses both. Resume, Settings
     /// (volumes, look speed, invert look, language; persisted), New game and Quit (each asks once, resting on its
     /// safe answer; see <see cref="PausePages"/>). A confirmed new game restores game time and publishes
     /// <see cref="NewGameRequested"/>: the App puts the save away and reloads. Keyboard, mouse and gamepad all
@@ -41,7 +42,6 @@ namespace MoonProject.UI
         private readonly EventBus _events;
         private readonly SettingsStore _settingsStore;
         private readonly IGameFlow _flow;
-        private readonly CursorPolicy _cursor;
         private readonly Action _quit;
         private readonly PauseClock _clock;
         private readonly Reveal _veil;
@@ -77,7 +77,7 @@ namespace MoonProject.UI
 
         public PauseMenu(UiLayout layout, PauseSettings settings, TitleSettings title, PlayerSettings player,
             ILocalization localization, InputReader input, EventBus events, SettingsStore settingsStore,
-            IGameFlow flow, IntText numbers, CursorPolicy cursor, Action quit,
+            IGameFlow flow, IntText numbers, Action quit,
             CreditsView credits)
         {
             _credits = credits ?? throw new ArgumentNullException(nameof(credits));
@@ -98,7 +98,6 @@ namespace MoonProject.UI
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _settingsStore = settingsStore ?? throw new ArgumentNullException(nameof(settingsStore));
             _flow = flow ?? throw new ArgumentNullException(nameof(flow));
-            _cursor = cursor ?? throw new ArgumentNullException(nameof(cursor));
             _quit = quit ?? throw new ArgumentNullException(nameof(quit));
             _clock = new PauseClock(settings);
 
@@ -227,7 +226,6 @@ namespace MoonProject.UI
             WriteMode();
             _clock.Pause();
             _input.Disable();
-            _cursor.Menu();
             _titleCrt.Snap(false);
             _titleCrtOverlay.Snap(false);
             _titleKeyHint.Snap(false);
@@ -253,7 +251,6 @@ namespace MoonProject.UI
             _settingsPanel.Hide();
             _clock.Resume();
             _input.Enable();
-            _cursor.Drive();
             _events.Publish(new PauseChanged(false));
             Cue(UiCueKind.MenuClose);
         }
@@ -306,7 +303,6 @@ namespace MoonProject.UI
             _pages.ResetForTitle(hasSave, chooseLanguage);
             SnapPages();
             WriteMode();
-            _cursor.Menu();
             _lockedTitleTime = false;
             _titleTime = 0f;
             Display(_layout.MenuFrame, true);
@@ -764,8 +760,29 @@ namespace MoonProject.UI
             _events.Publish(new UiCue(kind));
         }
 
+        /// <summary>
+        /// Continue or New Game pressed while the first boot's language step is still up: the step is asked again (focus
+        /// returns to the languages) instead of the press being lost.
+        /// </summary>
+        private bool LanguageStillAsked()
+        {
+            if (!IsOpen || _pages.Current != PausePage.Language)
+            {
+                return false;
+            }
+
+            _navigator.RequestFocus(PauseFocus.Language);
+            Cue(UiCueKind.Back);
+            return true;
+        }
+
         private void OnResumeClicked()
         {
+            if (LanguageStillAsked())
+            {
+                return;
+            }
+
             if (!IsOpen || _leaving != Leaving.None || _pages.Current != PausePage.Main)
             {
                 return;
@@ -869,6 +886,11 @@ namespace MoonProject.UI
         /// </summary>
         private void OnNewGameClicked()
         {
+            if (LanguageStillAsked())
+            {
+                return;
+            }
+
             if (!_pages.IsTitle || _pages.HasSave)
             {
                 Ask(PausePage.NewGame);
@@ -1005,7 +1027,6 @@ namespace MoonProject.UI
             _titleCrtOverlay.HideOver(handOff);
             _titleKeyHint.HideOver(handOff);
             _settingsPanel.Hide();
-            _cursor.Drive();
         }
 
         private void StepTitleAnimation(float timeSeconds, bool standaloneFraming)

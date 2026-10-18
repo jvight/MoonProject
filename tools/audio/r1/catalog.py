@@ -1,9 +1,9 @@
 """R1 Audio Audition Catalog — metadata, loudness targets, Vietnamese descriptions, and A/B picks.
 
-Defines all 37 cues across the 6 R1 groups:
+Defines all 33 cues across the 6 R1 groups:
 1. 07's CRT face (7 cues)
 2. The sky (3 cues)
-3. Building (8 cues)
+3. Building (4 cues; the frame place, snap, weld and complete are sampled: sampled/build.py)
 4. Machines (10 cues)
 5. The CRT UI (6 cues)
 6. Ambience beds (3 loopable 60 s cues)
@@ -53,7 +53,7 @@ class CueSpec:
 GROUPS: list[tuple[str, str, str]] = [
     ("face", "1. 07's CRT Face", "Gương mặt CRT của 07 — 7 cues"),
     ("sky", "2. The Sky", "Bầu trời Mặt Trăng & Nhật thực — 3 cues"),
-    ("building", "3. Building", "Xây dựng & Lắp ráp công trình — 8 cues"),
+    ("building", "3. Building", "Xây dựng & Lắp ráp công trình — 4 cues"),
     ("machines", "4. Machines", "Máy móc & Cơ cấu cơ điện — 10 cues"),
     ("ui", "5. The CRT UI", "Giao diện bàn đài & màn hình CRT (nhỏ nhất) — 6 cues"),
     ("ambience", "6. Ambience Beds (60 s Loopable)", "Nền không gian 60 giây lặp mượt — 3 cues"),
@@ -211,7 +211,7 @@ def _build_catalog() -> list[CueSpec]:
         ),
 
         # ===================================================================
-        # 3. BUILDING (8 cues)
+        # 3. BUILDING (4 cues)
         # ===================================================================
         CueSpec(
             cue_id="build_ghost",
@@ -228,20 +228,6 @@ def _build_catalog() -> list[CueSpec]:
             fn=build_cues.build_ghost,
         ),
         CueSpec(
-            cue_id="build_snap",
-            group_id="building",
-            group_title="3. Building",
-            category="oneshot_build",
-            loop=False,
-            target_lufs=-21.5,
-            volume=0.68,
-            desc_a_vi="Khấc xoay định vị nảy gọn cùng tiếng chốt nam châm bắt khớp ở nốt A4–D5.",
-            desc_b_vi="Chốt lò xo bi thép sập vào rãnh đồng sắc gọn với âm cộng hưởng thân gỗ ngắn F#4–B4.",
-            pick="B",
-            pick_reason="Bản B có cảm giác cơ khí bi-lò-xo bắt vào ngàm (detent ball-lock) cực kỳ rõ ràng, phản hồi xúc giác chính xác khi căn khớp lưới xây dựng.",
-            fn=build_cues.build_snap,
-        ),
-        CueSpec(
             cue_id="build_invalid",
             group_id="building",
             group_title="3. Building",
@@ -256,34 +242,6 @@ def _build_catalog() -> list[CueSpec]:
             fn=build_cues.build_invalid,
         ),
         CueSpec(
-            cue_id="build_place",
-            group_id="building",
-            group_title="3. Building",
-            category="oneshot_build",
-            loop=False,
-            target_lufs=-19.0,
-            volume=0.76,
-            desc_a_vi="Khung thép đặt xuống nền đất Mặt Trăng đầm chắc, khóa chốt và ngân ấm ở D3–A3–D4.",
-            desc_b_vi="Chốt thủy lực ép chân đế xuống nền đá kèm tiếng khóa cam thép và hồi âm thân giàn D3–F#3–A3.",
-            pick="A",
-            pick_reason="Bản A cân bằng hoàn hảo giữa sức nặng vật lý của khung thép và âm xác nhận ấm áp của bàn đài C2.",
-            fn=build_cues.build_place,
-        ),
-        CueSpec(
-            cue_id="build_weld_loop",
-            group_id="building",
-            group_title="3. Building",
-            category="loop_3d",
-            loop=True,
-            target_lufs=-21.5,
-            volume=0.68,
-            desc_a_vi="Vòng lặp 4 giây: tiếng biến áp hàn hồ quang ngân ấm ở D2–A2–D3 điểm những hạt lửa lách tách mềm như đĩa than.",
-            desc_b_vi="Vòng lặp 4 giây: mỏ hàn dây đồng cơ điện quay đều với tiếng tiếp điểm trượt và tia lửa kim loại ấm.",
-            pick="A",
-            pick_reason="Bản A nghe như nghe tiếng máy hàn qua hệ thống liên lạc nội bộ bằng bóng đèn: êm, dày và lặp hoàn toàn không thấy mối nối.",
-            fn=build_cues.build_weld_loop,
-        ),
-        CueSpec(
             cue_id="build_stage_complete",
             group_id="building",
             group_title="3. Building",
@@ -296,20 +254,6 @@ def _build_catalog() -> list[CueSpec]:
             pick="B",
             pick_reason="Bản B dùng tiếng chốt bánh cóc và búa nỉ gõ thanh đồng tạo cảm giác một tầng kết cấu vừa được khóa xong rất sảng khoái.",
             fn=build_cues.build_stage_complete,
-        ),
-        CueSpec(
-            cue_id="build_structure_complete",
-            group_id="building",
-            group_title="3. Building",
-            category="oneshot_build",
-            loop=False,
-            target_lufs=-18.5,
-            volume=0.76,
-            desc_a_vi="Công tắc chính đóng mạch, đèn báo bật sáng ấm cùng câu nhạc năm nốt D4–F#4–A4–B4–D5 ngân vang.",
-            desc_b_vi="Khóa ngàm cơ khí lớn đóng sập mở ra dàn chuông đồng & phím nỉ D4–F#4–A4–D5 tròn đầy.",
-            pick="A",
-            pick_reason="Bản A mang lại cảm giác thành tựu tròn đầy, ấm cúng đúng hình ảnh 'ngọn đèn bật sáng' trên công trình vừa hoàn thiện.",
-            fn=build_cues.build_structure_complete,
         ),
         CueSpec(
             cue_id="build_deconstruct",

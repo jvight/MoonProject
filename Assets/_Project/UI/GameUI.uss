@@ -755,6 +755,25 @@ Label {
     opacity: 0.7;
 }
 
+/* The weld's bar under the build step's line: a calm cyan fill on an amber track */
+.next-line__progress {
+    align-self: stretch;
+    height: 6px;
+    margin-top: 8px;
+    border-radius: 3px;
+    background-color: var(--moon-track);
+}
+
+.next-line__progress-fill {
+    width: 0;
+    height: 6px;
+    border-radius: 3px;
+    background-color: var(--crt-cyan-dim);
+    transition-property: width;
+    transition-duration: 0.15s;
+    transition-timing-function: ease-out-sine;
+}
+
 /* 07's cells (docs/design/first-hour-v2 6.4): a small row of pills on a glass plate, top left, one pill per cell */
 
 /* The battery dial at the bottom left */
@@ -888,6 +907,12 @@ Label {
 .pickup-row .material-icon {
     width: 26px;
     height: 26px;
+    margin-right: 12px;
+}
+
+.pickup-row__part-icon {
+    width: 34px;
+    height: 34px;
     margin-right: 12px;
 }
 
@@ -1370,10 +1395,10 @@ Label {
     align-items: center;
 }
 
+/* Compact: the panel hugs its cards (one row for a few structures, wrapping only past the safe width) */
 .build-strip__body {
-    width: 960px;
-    max-width: 980px;
-    padding: 12px 16px;
+    max-width: 1100px;
+    padding: 12px 18px 10px 18px;
     border-radius: 10px;
     border-width: 1.5px;
     border-color: var(--glass-rim);
@@ -1381,18 +1406,22 @@ Label {
 }
 
 .build-strip__header {
-    display: none;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0 6px 4px 6px;
 }
 
 .build-strip__title {
-    font-size: 18px;
+    font-size: 20px;
     letter-spacing: 3px;
     color: var(--glass-hi);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
 .build-strip__status {
-    font-size: 17px;
+    margin-left: 32px;
+    font-size: 18px;
     letter-spacing: 1px;
     color: var(--glass-sel);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
@@ -1411,8 +1440,8 @@ Label {
 }
 
 .build-card {
-    width: 174px;
-    padding: 8px 10px 7px 10px;
+    width: 196px;
+    padding: 10px 12px 9px 12px;
     margin: 5px;
     border-radius: 7px;
     border-width: 1.5px;
@@ -1422,7 +1451,13 @@ Label {
     justify-content: space-between;
 }
 
+/* The pointer over a card: its rim lights before the hover selects it */
+.build-card:hover {
+    border-color: var(--glass-rim);
+}
+
 .build-card--selected {
+    border-width: 3px;
     border-color: var(--crt-cyan-edge);
     background-color: var(--crt-cyan-fill);
 }
@@ -1440,8 +1475,8 @@ Label {
 }
 
 .build-card__icon {
-    width: 48px;
-    height: 48px;
+    width: 56px;
+    height: 56px;
     margin-bottom: 4px;
     -unity-background-scale-mode: scale-to-fit;
     -unity-background-image-tint-color: var(--moon-warm-lamp);
@@ -1460,7 +1495,7 @@ Label {
 }
 
 .build-card__name {
-    font-size: 15px;
+    font-size: 20px;
     color: var(--moon-text);
     white-space: nowrap;
     margin-bottom: 5px;
@@ -1485,14 +1520,14 @@ Label {
 }
 
 .build-card__cost .material-icon {
-    width: 16px;
-    height: 16px;
+    width: 20px;
+    height: 20px;
 }
 
 .build-card__cost .material-slot__count {
     min-width: 0;
     margin-left: 4px;
-    font-size: 14px;
+    font-size: 18px;
     color: var(--glass-hi);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Bold.asset");
 }
@@ -1507,8 +1542,8 @@ Label {
 
 /* The share of 07's battery the weld takes, under the materials: the calm cyan telemetry accent */
 .build-card__energy {
-    margin-top: 3px;
-    font-size: 13px;
+    margin-top: 4px;
+    font-size: 18px;
     color: var(--crt-cyan-dim);
     -unity-text-align: middle-center;
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
@@ -1544,13 +1579,18 @@ Label {
     flex-shrink: 0;
 }
 
+/* The key row under the cards: what picks, what leaves, on the active device */
 .build-strip__footer {
-    display: none;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    margin-top: 8px;
 }
 
 .build-strip__hint-item {
     flex-direction: row;
     align-items: center;
+    margin: 0 18px;
 }
 
 .build-strip__hint-item .glyph--small.glyph--pad {
@@ -1559,8 +1599,8 @@ Label {
 }
 
 .build-strip__hint {
-    font-size: 16px;
-    color: var(--moon-text-faint);
+    font-size: 18px;
+    color: var(--moon-text-dim);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
@@ -1573,14 +1613,14 @@ Label {
 }
 
 .build-reason__text {
-    font-size: 19px;
+    font-size: 22px;
     color: var(--moon-warm-accent);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
 /*
- * The cargo screen (Tab / View): FaceInventoryView (1152x768, 1.5:1) — 07's 4x6 hold grid on the left, 07's 2D
- * line-art and its four device bubbles (scan lens, cutter, two sockets) on the right.
+ * The cargo screen (Tab / View): FaceInventoryView (1152x768, 1.5:1) — 07's 2D line-art in the middle with its four
+ * devices (scan lens, cutter, two sockets) in labelled frames at the corners, the hold as a strip of slots at the foot.
  */
 
 .cargo {
@@ -1612,16 +1652,25 @@ Label {
 
 .cargo__heading {
     position: absolute;
-    font-size: 22px;
+    font-size: 28px;
     letter-spacing: 3px;
     color: rgb(255, 224, 152);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
+.cargo__heading--title {
+    -unity-text-align: upper-center;
+}
+
+.cargo__heading--strip {
+    font-size: 22px;
+    letter-spacing: 2px;
+}
+
 .cargo__boot {
     display: none;
     position: absolute;
-    font-size: 20px;
+    font-size: 24px;
     letter-spacing: 2px;
     color: rgb(242, 192, 104);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
@@ -1634,10 +1683,21 @@ Label {
 .cargo__badge {
     display: none;
     position: absolute;
-    right: 6px;
-    bottom: 3px;
-    font-size: 18px;
+    right: 4px;
+    bottom: 2px;
+    font-size: 20px;
     color: rgb(255, 224, 152);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
+}
+
+.cargo__cell-name {
+    display: none;
+    position: absolute;
+    overflow: hidden;
+    white-space: normal;
+    font-size: 18px;
+    -unity-text-align: upper-center;
+    color: rgb(242, 192, 104);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
@@ -1645,38 +1705,53 @@ Label {
     position: absolute;
 }
 
+.cargo__device-name {
+    position: absolute;
+    padding-left: 12px;
+    font-size: 22px;
+    letter-spacing: 1px;
+    -unity-text-align: middle-left;
+    color: rgb(255, 224, 152);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
+}
+
 .cargo__device-state {
     position: absolute;
-    left: -40px;
-    right: -40px;
-    top: 100%;
-    margin-top: 4px;
-    font-size: 17px;
-    white-space: nowrap;
-    -unity-text-align: upper-center;
-    color: rgb(242, 192, 104);
+    font-size: 22px;
+    white-space: normal;
+    -unity-text-align: middle-left;
+    color: rgb(190, 150, 90);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
+}
+
+.cargo__socket--fitted .cargo__device-state {
+    color: rgb(146, 240, 252);
+}
+
+.cargo__socket--fault .cargo__device-state {
+    color: rgb(255, 214, 128);
 }
 
 .cargo__tooltip {
     display: none;
     position: absolute;
-    padding: 6px 14px;
+    padding: 6px 18px;
     justify-content: center;
     background-color: rgb(19, 18, 16);
-    border-width: 1.5px;
+    border-width: 3px;
     border-color: rgb(95, 243, 255);
 }
 
 .cargo__tooltip-name {
-    font-size: 21px;
+    font-size: 26px;
     color: rgb(255, 224, 152);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
 .cargo__tooltip-desc {
     margin-top: 2px;
-    font-size: 19px;
+    font-size: 22px;
+    white-space: normal;
     color: rgb(242, 192, 104);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
@@ -1689,7 +1764,51 @@ Label {
 }
 
 .cargo__toast-text {
-    font-size: 19px;
+    white-space: normal;
+    font-size: 22px;
+    color: rgb(242, 192, 104);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
+}
+
+/* The one hint row that stands for the locked slots, and the key hints at the foot of the face. */
+
+.cargo__more {
+    position: absolute;
+    padding-left: 30px;
+    font-size: 22px;
+    -unity-text-align: middle-left;
+    color: rgb(224, 176, 94);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
+}
+
+.cargo__footer {
+    position: absolute;
+    flex-direction: row;
+    align-items: center;
+}
+
+.cargo__hint {
+    flex-direction: row;
+    align-items: center;
+    margin-right: 48px;
+}
+
+.cargo__key {
+    min-width: 44px;
+    height: 28px;
+    padding: 0 10px;
+    border-width: 2px;
+    border-radius: 6px;
+    border-color: rgb(255, 224, 148);
+    font-size: 22px;
+    color: rgb(255, 224, 148);
+    -unity-text-align: middle-center;
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
+}
+
+.cargo__key-word {
+    margin-left: 12px;
+    font-size: 22px;
     color: rgb(242, 192, 104);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }

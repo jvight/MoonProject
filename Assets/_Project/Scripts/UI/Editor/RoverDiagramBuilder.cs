@@ -9,7 +9,7 @@ namespace MoonProject.UI.Editor
     /// <summary>
     /// Builds <see cref="UiAssetPaths.RoverDiagram"/> by reading the equipment socket transforms from the generated
     /// 07 v3 prefab (<see cref="UiAssetPaths.RoverModelPrefab"/>; socket names in
-    /// <c>tools/art/qa/contracts/rover.json</c>) and the 30 SVG icons from <see cref="UiAssetPaths.IconsFolder"/>.
+    /// <c>tools/art/qa/contracts/rover.json</c>) and the 25 SVG icons from <see cref="UiAssetPaths.IconsFolder"/>.
     /// Fails loudly if the prefab, any socket transform, or any icon is missing.
     /// </summary>
     public static class RoverDiagramBuilder

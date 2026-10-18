@@ -9,7 +9,8 @@ namespace MoonProject.UI
     /// "Look up" shows the camera control (the right stick, or the mouse), "Drive" the drive control (the left stick,
     /// or WASD), "Hold" the cargo control (Tab, or View). <see cref="FirstPrompt"/> and
     /// <see cref="HoldHint"/> decide when it shows; a new word waits until the
-    /// chip has faded out.
+    /// chip has faded out. The verb words (Scan, Cut, Build, Fit) belong to the objective line
+    /// (<see cref="ObjectiveChip"/>): they show with it and are not a prompt of their own.
     /// </summary>
     internal sealed class LookUpChip
     {
@@ -22,11 +23,13 @@ namespace MoonProject.UI
 
         private readonly UiLayout _layout;
         private readonly ILocalization _localization;
+        private readonly GlyphLabels _labels;
         private readonly Reveal _reveal;
         private readonly GlyphView _glyph;
         private HintWord _word = HintWord.LookUp;
 
-        public LookUpChip(UiLayout layout, StargazeSettings settings, ILocalization localization)
+        public LookUpChip(UiLayout layout, StargazeSettings settings, ILocalization localization,
+            GlyphLabels labels)
         {
             if (settings == null)
             {
@@ -35,6 +38,7 @@ namespace MoonProject.UI
 
             _layout = layout ?? throw new ArgumentNullException(nameof(layout));
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
+            _labels = labels ?? throw new ArgumentNullException(nameof(labels));
             _reveal = new Reveal(layout.LookHint, settings.Hint);
             _reveal.Snap(false);
             _glyph = new GlyphView(layout.LookHintGlyph, layout.LookHintGlyphLabel);
@@ -43,6 +47,9 @@ namespace MoonProject.UI
         }
 
         public bool IsVisible => !_reveal.IsHidden;
+
+        /// <summary>True while the chip on screen is a prompt (look, drive, hold), not the objective's verb chip.</summary>
+        public bool ShowsPrompt => !_reveal.IsHidden && !IsVerb(_word);
 
         /// <param name="deltaTime">Unscaled seconds.</param>
         /// <param name="word">The word wanted (None to hide, and while the game is paused).</param>
@@ -58,7 +65,7 @@ namespace MoonProject.UI
             bool shown = word != HintWord.None && word == _word;
             if (shown)
             {
-                _glyph.Set(_localization.Get(GlyphKey(device)), device);
+                _glyph.Set(GlyphText(device), device);
             }
 
             _reveal.Set(shown);
@@ -78,15 +85,43 @@ namespace MoonProject.UI
                     return UiKeys.Drive;
                 case HintWord.Hold:
                     return UiKeys.HintHold;
+                case HintWord.Scan:
+                    return UiKeys.VerbScan;
+                case HintWord.Cut:
+                    return UiKeys.VerbCut;
+                case HintWord.Build:
+                    return UiKeys.VerbBuild;
+                case HintWord.Fit:
+                    return UiKeys.VerbFit;
                 default:
                     return UiKeys.LookUp;
+            }
+        }
+
+        private static bool IsVerb(HintWord word)
+        {
+            return word >= HintWord.Scan;
+        }
+
+        /// <summary>The key to press: the real binding for a verb, the control's cap for the look and hold words.</summary>
+        private string GlyphText(InputDeviceKind device)
+        {
+            switch (_word)
+            {
+                case HintWord.Scan:
+                case HintWord.Cut:
+                    return _labels.For(RoverAction.Excavate, device);
+                case HintWord.Build:
+                    return _labels.For(RoverAction.Build, device);
+                default:
+                    return _localization.Get(GlyphKey(device));
             }
         }
 
         private string GlyphKey(InputDeviceKind device)
         {
             bool pad = device == InputDeviceKind.Gamepad;
-            if (_word == HintWord.Hold)
+            if (_word == HintWord.Hold || _word == HintWord.Fit)
             {
                 return pad ? HoldPadGlyphKey : HoldKeysGlyphKey;
             }

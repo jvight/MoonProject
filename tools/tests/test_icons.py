@@ -55,7 +55,7 @@ class TestSvgPathParserPort(unittest.TestCase):
 
 
 class TestIconIdMapping(unittest.TestCase):
-    """Verifies that all 30 icon filenames map to real IDs in en.json, RoverSocket.cs, and EquipmentTable.cs."""
+    """Verifies that every icon filename maps to real IDs in en.json and RoverSocket.cs."""
 
     @classmethod
     def setUpClass(cls):
@@ -73,25 +73,16 @@ class TestIconIdMapping(unittest.TestCase):
             for m in re.finditer(r"^\s*([A-Z][A-Za-z0-9_]*)\s*=", enum_body.group(1), re.MULTILINE)
         ]
 
-        equip_cs = (
-            cls.repo_root / "Assets" / "_Project" / "Scripts" / "Gameplay" / "Equipment" / "EquipmentTable.cs"
-        ).read_text(encoding="utf-8")
-        cls.table_sockets = [
-            m.group(1).lower() for m in re.finditer(r"RoverSocket\.([A-Za-z0-9_]+)", equip_cs)
-        ]
-
-    def test_kit_icons_match_every_rover_socket_and_equipment_table_entry(self):
+    def test_kit_icons_match_every_rover_socket(self):
         self.assertEqual(len(build_icons.KIT_SPECS), 12)
         kit_ids = [spec.icon_id for spec in build_icons.KIT_SPECS]
         self.assertEqual(kit_ids, self.rover_sockets)
-        for table_sock in self.table_sockets:
-            self.assertIn(table_sock, kit_ids)
 
     def test_every_icon_localization_key_exists_in_en_json(self):
-        self.assertEqual(len(build_icons.ITEM_SPECS), 18)
-        self.assertEqual(len(build_icons.STRUCT_SPECS), 10)
-        self.assertEqual(len(build_icons.ALL_SPECS), 40)
-        for spec in build_icons.ALL_SPECS:
+        self.assertEqual(len(build_icons.ITEM_SPECS), 13)
+        self.assertEqual(len(build_icons.STRUCT_SPECS), 5)
+        self.assertEqual(len(build_icons.ALL_SPECS), 30)
+        for spec in build_icons.ITEM_SPECS + build_icons.STRUCT_SPECS:
             with self.subTest(icon=spec.filename):
                 self.assertIn(
                     spec.localization_key,

@@ -466,6 +466,12 @@ MonoBehaviour:
       _markerRunSeconds: 4
       _markerRepeatSeconds: 9
       _markerWaveWidth: 0.18
+      _flashCount: 3
+      _flashPeriod: 0.32
+      _flashOnShare: 0.45
+      _flashEdge: 0.05
+      _flashBoost: 2
+      _beginWavePulse: 2.4
     _debris:
     - _anchor: place.midway
       _id: Kestrel_HullPanel
@@ -551,6 +557,9 @@ MonoBehaviour:
     _focalLength: 60
     _aperture: 1.6
     _nearestFocus: 0.1
+    _wakeGain: 1.5
+    _gainHoldLid: 0.2
+    _gainGoneLid: 0.65
     _readoutColor: {r: 1, g: 0.86, b: 0.62, a: 1}
     _readoutOpacity: 0.55
     _readoutLineHeight: 0.026

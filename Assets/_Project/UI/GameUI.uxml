@@ -48,6 +48,9 @@
                     <ui:VisualElement name="next-line" class="name-tag" picking-mode="Ignore">
                         <ui:VisualElement name="next-line-shadow" class="soft-shadow soft-shadow--name" />
                         <ui:Label name="next-line-text" class="next-line__text" picking-mode="Ignore" />
+                        <ui:VisualElement name="next-line-progress" class="next-line__progress" picking-mode="Ignore">
+                            <ui:VisualElement name="next-line-progress-fill" class="next-line__progress-fill" picking-mode="Ignore" />
+                        </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement name="readout" class="readout" picking-mode="Ignore">
@@ -105,8 +108,8 @@
         <ui:VisualElement name="cargo" class="cargo" picking-mode="Ignore">
             <ui:VisualElement name="cargo-panel" class="cargo__panel" picking-mode="Ignore">
                 <ui:VisualElement name="cargo-canvas" class="cargo__canvas" picking-mode="Ignore" />
-                <ui:Label name="cargo-hold-title" class="cargo__heading loc" text="ui.cargo.hold" picking-mode="Ignore" />
-                <ui:Label name="cargo-right-title" class="cargo__heading loc" text="ui.cargo.tab_seven" picking-mode="Ignore" />
+                <ui:Label name="cargo-hold-title" class="cargo__heading cargo__heading--strip loc" text="ui.cargo.hold" picking-mode="Ignore" />
+                <ui:Label name="cargo-right-title" class="cargo__heading cargo__heading--title loc" text="ui.face.title" picking-mode="Ignore" />
                 <ui:Label name="cargo-boot" class="cargo__boot" picking-mode="Ignore" />
                 <ui:VisualElement name="cargo-hold-grid" class="cargo__grid" picking-mode="Ignore" />
                 <ui:VisualElement name="cargo-sockets" class="cargo__sockets" picking-mode="Ignore" />
@@ -116,6 +119,21 @@
                 </ui:VisualElement>
                 <ui:VisualElement name="cargo-toast" class="cargo__toast" picking-mode="Ignore">
                     <ui:Label name="cargo-toast-text" class="cargo__toast-text" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:Label name="cargo-more" class="cargo__more" picking-mode="Ignore" />
+                <ui:VisualElement name="cargo-footer" class="cargo__footer" picking-mode="Ignore">
+                    <ui:VisualElement name="cargo-hint-0" class="cargo__hint" picking-mode="Ignore">
+                        <ui:Label name="cargo-key-0" class="cargo__key" picking-mode="Ignore" />
+                        <ui:Label name="cargo-word-0" class="cargo__key-word" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="cargo-hint-1" class="cargo__hint" picking-mode="Ignore">
+                        <ui:Label name="cargo-key-1" class="cargo__key" picking-mode="Ignore" />
+                        <ui:Label name="cargo-word-1" class="cargo__key-word" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="cargo-hint-2" class="cargo__hint" picking-mode="Ignore">
+                        <ui:Label name="cargo-key-2" class="cargo__key" picking-mode="Ignore" />
+                        <ui:Label name="cargo-word-2" class="cargo__key-word" picking-mode="Ignore" />
+                    </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
@@ -163,7 +181,9 @@
                                         <ui:Button name="button-new-game-confirm" class="menu-button menu-button--quiet loc"
                                                    text="ui.title.new_game_confirm" />
                                     </ui:VisualElement>
-                                    <ui:VisualElement name="page-language" class="pause__page" />
+                                    <ui:VisualElement name="page-language" class="pause__page">
+                                        <ui:Label class="pause__question loc" text="ui.title.language_question" />
+                                    </ui:VisualElement>
                                     <ui:VisualElement name="page-quit" class="pause__page">
                                         <ui:Label class="pause__question loc" text="ui.pause.quit_question" />
                                         <ui:Label class="pause__aside loc" text="ui.pause.quit_aside" />

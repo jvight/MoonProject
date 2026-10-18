@@ -35,7 +35,7 @@ namespace MoonProject.UI.Editor
         /// <summary>The wordmark's path commands, parsed from <see cref="WordmarkSource"/> by UI/Wordmark.</summary>
         public const string Wordmark = GeneratedFolder + "/Wordmark.asset";
 
-        /// <summary>The 30 production vector icons (item_*.svg and kit_*.svg), parsed by UI/Icons.</summary>
+        /// <summary>The 25 production vector icons (item_*.svg and kit_*.svg), parsed by UI/Icons.</summary>
         public const string IconsFolder = SourceFolder + "/Icons";
 
         /// <summary>The parsed 64x64 UI vector icons asset, built by UI/Icons.</summary>

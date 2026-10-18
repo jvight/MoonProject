@@ -312,7 +312,7 @@
         },
         {
             "key": "hint.build",
-            "text": "Chế tạo"
+            "text": "Hàn"
         },
         {
             "key": "hint.scan",
@@ -611,18 +611,6 @@
             "text": "Cần dọn chỗ trước"
         },
         {
-            "key": "build.hint.rotate",
-            "text": "Xoay"
-        },
-        {
-            "key": "build.hint.snap",
-            "text": "Khớp"
-        },
-        {
-            "key": "build.hint.place",
-            "text": "Đặt"
-        },
-        {
             "key": "build.hint.weld",
             "text": "Giữ để hàn"
         },
@@ -663,38 +651,6 @@
             "text": "Cột nối mở rộng tầm điện của căn cứ và soi sáng mặt đất."
         },
         {
-            "key": "structure.smelter.name",
-            "text": "Lò luyện"
-        },
-        {
-            "key": "structure.smelter.desc",
-            "text": "Nấu quặng Mặt Trăng và hạt cam thành hợp kim cùng thủy tinh."
-        },
-        {
-            "key": "structure.fabricator.name",
-            "text": "Máy chế tạo"
-        },
-        {
-            "key": "structure.fabricator.desc",
-            "text": "Gia công linh kiện dự phòng và chi tiết chính xác dưới ánh đèn ấm."
-        },
-        {
-            "key": "structure.storage_rack.name",
-            "text": "Kệ chứa hàng"
-        },
-        {
-            "key": "structure.storage_rack.desc",
-            "text": "Chứa thêm thùng kim loại, dây dẫn và quang học thu gom về nhà."
-        },
-        {
-            "key": "structure.upgrade_bay.name",
-            "text": "Khung nâng cấp"
-        },
-        {
-            "key": "structure.upgrade_bay.desc",
-            "text": "Khung giàn để lắp thêm thiết bị và dụng cụ mới lên thân 07."
-        },
-        {
             "key": "structure.antenna_mast.name",
             "text": "Cột ăng-ten"
         },
@@ -703,20 +659,12 @@
             "text": "Truyền tín hiệu của trạm đi xa hơn qua vành miệng hố."
         },
         {
-            "key": "structure.vehicle_pad.name",
-            "text": "Bãi đỗ xe"
-        },
-        {
-            "key": "structure.vehicle_pad.desc",
-            "text": "Bệ phẳng rộng rãi để đỗ và bảo dưỡng rover cùng xe trượt."
-        },
-        {
             "key": "build.locked",
             "text": "Chưa tìm thấy bản vẽ"
         },
         {
-            "key": "ui.cargo.tab_seven",
-            "text": "TRANG BỊ"
+            "key": "ui.face.title",
+            "text": "CHẨN ĐOÁN TRANG BỊ · ĐƠN VỊ 07 · SSR-5"
         },
         {
             "key": "ui.title.continue_note",
@@ -736,7 +684,7 @@
         },
         {
             "key": "next.v2.collect_parts",
-            "text": "Lấy phụ tùng trong thùng hàng mở của tàu đổ bộ."
+            "text": "Lấy phụ tùng trong thùng hàng mở cạnh cổng dịch vụ của tàu đổ bộ."
         },
         {
             "key": "next.v2.build_pad",
@@ -888,7 +836,7 @@
         },
         {
             "key": "ui.device.cutter.fault",
-            "text": "Mất bộ đánh lửa. Lắp bộ dự phòng trên bệ."
+            "text": "Cần bộ đánh lửa. Lắp khi đỗ trên bệ sạc."
         },
         {
             "key": "ui.device.cutter.fit",
@@ -941,6 +889,106 @@
         {
             "key": "hint.pickup",
             "text": "Nhặt"
+        },
+        {
+            "key": "pickup.part.icecore",
+            "text": "LÕI BĂNG 41 · H₂O"
+        },
+        {
+            "key": "pickup.part.icecore.job",
+            "text": "Mẫu lõi băng, 1988"
+        },
+        {
+            "key": "ui.title.language_question",
+            "text": "Language · Ngôn ngữ"
+        },
+        {
+            "key": "ui.verb.scan",
+            "text": "Quét"
+        },
+        {
+            "key": "ui.verb.cut",
+            "text": "Cắt"
+        },
+        {
+            "key": "ui.verb.build",
+            "text": "Dựng"
+        },
+        {
+            "key": "ui.verb.fit",
+            "text": "Lắp"
+        },
+        {
+            "key": "ui.cargo.more_slots",
+            "text": "+{0} ô về sau"
+        },
+        {
+            "key": "ui.cargo.empty_name",
+            "text": "Ô trống"
+        },
+        {
+            "key": "ui.cargo.empty_desc",
+            "text": "Phụ tùng và vật liệu nhặt được sẽ cất ở đây."
+        },
+        {
+            "key": "ui.face.close",
+            "text": "Đóng"
+        },
+        {
+            "key": "ui.face.fit",
+            "text": "Lắp"
+        },
+        {
+            "key": "ui.face.build",
+            "text": "Dựng"
+        },
+        {
+            "key": "ui.cargo.drag.not_docked",
+            "text": "Chỉ lắp được khi đỗ trên bệ sạc"
+        },
+        {
+            "key": "ui.cargo.drag.to_cutter",
+            "text": "Thả vào mỏ cắt"
+        },
+        {
+            "key": "ui.cargo.drag.nowhere",
+            "text": "07 chưa có chỗ lắp món này"
+        },
+        {
+            "key": "glyph.combo.drag_e",
+            "text": "Kéo/E"
+        },
+        {
+            "key": "glyph.combo.mouse_e",
+            "text": "Chuột/E"
+        },
+        {
+            "key": "glyph.combo.b_esc",
+            "text": "B/Esc"
+        },
+        {
+            "key": "glyph.combo.pad_y_b",
+            "text": "Y/B"
+        },
+        {
+            "key": "glyph.keyboard.b",
+            "text": "B"
+        },
+        {
+            "key": "build.hint.pick",
+            "text": "Chọn"
+        },
+        {
+            "key": "build.hint.leave",
+            "text": "Thoát"
+        },
+        {
+            "key": "build.step.place",
+            "text": "Lái đến vạch sáng trên sân rồi bấm {0} để đặt"
+        },
+        {
+            "key": "build.step.weld",
+            "text": "Giữ {0} để hàn"
         }
     ]
 }

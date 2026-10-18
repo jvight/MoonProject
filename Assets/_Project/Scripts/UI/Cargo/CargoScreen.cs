@@ -18,6 +18,8 @@ namespace MoonProject.UI
         public const string EmptyClass = "cargo__cell--empty";
         public const string LockedClass = "cargo__cell--locked";
         public const string FittedClass = "cargo__socket--fitted";
+        public const string FaultClass = "cargo__socket--fault";
+        public const string EmptyDeviceClass = "cargo__socket--empty";
 
         private readonly VisualElement _root;
         private readonly VisualElement _panel;
@@ -176,7 +178,7 @@ namespace MoonProject.UI
                 _view.Refresh();
             }
 
-            _view.Tick(step);
+            _view.Tick(step, device);
 
             if (booting)
             {

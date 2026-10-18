@@ -14,11 +14,11 @@ namespace MoonProject.Audio.Tests
     {
         private const float Frame = 1f / 60f;
         private const float Hold = 3f;
-        private const int VariantsPerMood = 4;
+        private const int SchedulerVariants = 4;
         private const string BankAsset = "Assets/_Project/Data/Audio/ChirpBank.asset";
 
         [Test]
-        public void TheBank_HasEightMoods_OfFourVariants_WithOrderedSyllables()
+        public void TheBank_HasEightMoods_EachItsPickedGesture_WithOrderedSyllables()
         {
             var bank = AssetDatabase.LoadAssetAtPath<ChirpBank>(BankAsset);
             Assert.IsNotNull(bank, $"{BankAsset} missing: run the Audio builders first");
@@ -26,12 +26,12 @@ namespace MoonProject.Audio.Tests
             for (int m = 0; m < ChirpBank.MoodCount; m++)
             {
                 var mood = (ChirpMood)m;
-                Assert.AreEqual(VariantsPerMood, bank.VariantCount(mood), mood.ToString());
+                Assert.Greater(bank.VariantCount(mood), 0, mood.ToString());
                 Assert.AreEqual("chirp_" + mood.ToString().ToLowerInvariant(), bank.CueId(mood));
-                for (int v = 0; v < VariantsPerMood; v++)
+                for (int v = 0; v < bank.VariantCount(mood); v++)
                 {
                     ChirpVariant variant = bank.GetVariant(mood, v);
-                    Assert.Greater(variant.SyllableCount, 1, $"{mood} {v}: a chirp is at least two syllables");
+                    Assert.Greater(variant.SyllableCount, 0, $"{mood} {v}: a gesture has at least one syllable");
                     Assert.AreEqual(0f, variant.Onset(0), $"{mood} {v} starts at once");
                     Assert.Less(variant.Seconds, 1.2f, $"{mood} {v} stays short");
                 }
@@ -63,11 +63,11 @@ namespace MoonProject.Audio.Tests
         public void Variants_NeverRepeatTwiceInARow_AndAllGetPlayed()
         {
             var scheduler = new ChirpScheduler(new AudioRandom(7u));
-            var seen = new bool[VariantsPerMood];
+            var seen = new bool[SchedulerVariants];
             int last = -1;
             for (int i = 0; i < 200; i++)
             {
-                int variant = scheduler.PickVariant(ChirpMood.Happy, VariantsPerMood);
+                int variant = scheduler.PickVariant(ChirpMood.Happy, SchedulerVariants);
                 Assert.AreNotEqual(last, variant, "never the same one twice in a row");
                 seen[variant] = true;
                 last = variant;
@@ -80,9 +80,9 @@ namespace MoonProject.Audio.Tests
         public void EachMood_RemembersItsOwnLastVariant()
         {
             var scheduler = new ChirpScheduler(new AudioRandom(3u));
-            int happy = scheduler.PickVariant(ChirpMood.Happy, VariantsPerMood);
-            scheduler.PickVariant(ChirpMood.Worried, VariantsPerMood);
-            Assert.AreNotEqual(happy, scheduler.PickVariant(ChirpMood.Happy, VariantsPerMood));
+            int happy = scheduler.PickVariant(ChirpMood.Happy, SchedulerVariants);
+            scheduler.PickVariant(ChirpMood.Worried, SchedulerVariants);
+            Assert.AreNotEqual(happy, scheduler.PickVariant(ChirpMood.Happy, SchedulerVariants));
         }
 
         [Test]

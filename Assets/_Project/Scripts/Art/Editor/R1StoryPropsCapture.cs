@@ -62,6 +62,9 @@ namespace MoonProject.Art.Editor
 
                     CaptureDeliverable6_PeakBeacon(capturesDir, false);
                     CaptureDeliverable6_PeakBeacon(capturesDir, true);
+
+                    CaptureDeliverable7_OpenCrateAndFragments(capturesDir, false);
+                    CaptureDeliverable7_OpenCrateAndFragments(capturesDir, true);
                 }
                 finally
                 {
@@ -73,6 +76,38 @@ namespace MoonProject.Art.Editor
                 foreach (string png in Directory.GetFiles(capturesDir, "r1props_*.png"))
                 {
                     File.Copy(png, Path.Combine(batchOutDir, Path.GetFileName(png)), true);
+                }
+
+                return true;
+            });
+        }
+
+        /// <summary>
+        /// Dedicated fast batch entry point for capturing <c>Crate_M_Open</c>, <c>PadFragment_CoilPlate</c>,
+        /// and <c>PadFragment_GuideRail</c> next to Rover 07 in eclipse light with 07's lamps:
+        /// <c>python tools/unity_batch.py -- -executeMethod MoonProject.Art.Editor.R1StoryPropsCapture.CaptureLanderCrateAndFragments</c>
+        /// </summary>
+        public static void CaptureLanderCrateAndFragments()
+        {
+            BatchRunner.Run(nameof(CaptureLanderCrateAndFragments), args =>
+            {
+                AssetDatabase.Refresh();
+                R1MaterialLibrary.BuildMaterials();
+                R1ModelBuilder.Build();
+
+                string capturesDir = Path.GetFullPath("Logs/captures");
+                Directory.CreateDirectory(capturesDir);
+
+                bool prevAsync = ShaderUtil.allowAsyncCompilation;
+                ShaderUtil.allowAsyncCompilation = false;
+                try
+                {
+                    CaptureDeliverable7_OpenCrateAndFragments(capturesDir, false);
+                    CaptureDeliverable7_OpenCrateAndFragments(capturesDir, true);
+                }
+                finally
+                {
+                    ShaderUtil.allowAsyncCompilation = prevAsync;
                 }
 
                 return true;
@@ -295,6 +330,94 @@ namespace MoonProject.Art.Editor
             finally
             {
                 temp.Dispose();
+            }
+        }
+
+        private static void CaptureDeliverable7_OpenCrateAndFragments(string outDir, bool nightEclipse)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(temp, nightEclipse);
+                // Rover 07 positioned at (-1.55, 0, -0.35) angled toward the open crate & pad fragments
+                GameObject rover = SpawnRover07(temp, new Vector3(-1.55f, 0f, -0.35f), 118f, nightEclipse);
+
+                // Place Crate_M_Open, PadFragment_CoilPlate, and PadFragment_GuideRail in front of Rover 07's lamps
+                SpawnProp(R1StoryPropsBuilder.CrateMOpenPrefabPath, new Vector3(0.15f, 0f, -0.35f), 165f, temp);
+                SpawnProp(R1StoryPropsBuilder.PadFragmentCoilPlatePrefabPath, new Vector3(0.95f, 0f, -0.25f), 18f, temp);
+                SpawnProp(R1StoryPropsBuilder.PadFragmentGuideRailPrefabPath, new Vector3(1.55f, 0f, -0.15f), -16f, temp);
+
+                if (nightEclipse)
+                {
+                    AddRoverHeadlamps(rover.transform, new Vector3(0.75f, 0.18f, -0.25f), temp);
+                }
+
+                string suffix = nightEclipse ? "nightA" : "dayC";
+
+                // 1. Close-up of Crate_M_Open next to Rover 07 showing Igniter, MetalBundle, WiringSpool & RimGlow
+                RenderShot(
+                    new Vector3(0.05f, 0.92f, -1.65f),
+                    new Vector3(0.05f, 0.24f, -0.35f),
+                    38f,
+                    bg,
+                    Path.Combine(outDir, $"r1props_07_crate_m_open_{suffix}.png"));
+
+                // 2. Close-up of PadFragment_CoilPlate and PadFragment_GuideRail next to Rover 07
+                RenderShot(
+                    new Vector3(0.95f, 1.05f, -2.05f),
+                    new Vector3(0.95f, 0.18f, -0.22f),
+                    40f,
+                    bg,
+                    Path.Combine(outDir, $"r1props_08_pad_fragments_{suffix}.png"));
+
+                // 3. 8 m distance readability shot in eclipse dark under Rover 07's headlamps
+                RenderShot(
+                    new Vector3(-1.85f, 2.25f, -7.85f),
+                    new Vector3(0.25f, 0.35f, -0.25f),
+                    36f,
+                    bg,
+                    Path.Combine(outDir, $"r1props_09_crate_and_fragments_8m_{suffix}.png"));
+
+                // 4. 3 m distance shot of Crate_M_Open under Rover 07's headlamps
+                RenderShot(
+                    new Vector3(-0.35f, 1.35f, -3.10f),
+                    new Vector3(0.15f, 0.24f, -0.35f),
+                    36f,
+                    bg,
+                    Path.Combine(outDir, $"r1props_10_crate_m_open_3m_{suffix}.png"));
+            }
+            finally
+            {
+                temp.Dispose();
+            }
+        }
+
+        private static void AddRoverHeadlamps(
+            Transform roverTransform,
+            Vector3 targetPoint,
+            ArtLightingPreview.TemporaryObjects temp)
+        {
+            Vector3[] lampOffsets =
+            {
+                new Vector3(-0.34f, 0.88f, 0.72f),
+                new Vector3(0.34f, 0.88f, 0.72f),
+            };
+            for (int i = 0; i < lampOffsets.Length; i++)
+            {
+                Light headlamp = ArtLightingPreview.NewLight(
+                    $"Rover07Headlamp_{i}",
+                    LightType.Spot,
+                    new Color(1.00f, 0.88f, 0.68f, 1f),
+                    8.5f);
+                Vector3 worldPos = roverTransform.TransformPoint(lampOffsets[i]);
+                headlamp.transform.position = worldPos;
+                headlamp.transform.rotation = Quaternion.LookRotation((targetPoint - worldPos).normalized, Vector3.up);
+                headlamp.range = 16.0f;
+                headlamp.spotAngle = 58.0f;
+                headlamp.innerSpotAngle = 32.0f;
+                headlamp.shadows = LightShadows.Soft;
+                temp.Add(headlamp.gameObject);
             }
         }
 

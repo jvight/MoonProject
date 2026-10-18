@@ -57,6 +57,7 @@ namespace MoonProject.Gameplay
         private GlowFlashPool _flashes;
         private PickupCadence _cadence;
         private SalvagePiece _cutting;
+        private Func<Vector3, bool> _yieldsTo;
         private CutState _cut;
         private int _inFlight;
         private bool _holding;
@@ -75,6 +76,15 @@ namespace MoonProject.Gameplay
 
         /// <summary>The piece a hold of Excavate would cut now (null when none): what the prompt points at.</summary>
         public SalvagePiece Candidate { get; private set; }
+
+        /// <summary>
+        /// A piece at the given cut point gives E up to another verb (a scan target the player looks at more squarely
+        /// than at the piece). One already being cut keeps E.
+        /// </summary>
+        public void YieldTo(Func<Vector3, bool> yieldsTo)
+        {
+            _yieldsTo = yieldsTo ?? throw new ArgumentNullException(nameof(yieldsTo));
+        }
 
         /// <summary>The piece under the beam, or null.</summary>
         public SalvagePiece Cutting => _cutting;
@@ -453,7 +463,7 @@ namespace MoonProject.Gameplay
                 }
             }
 
-            return picked;
+            return picked != null && _yieldsTo != null && _yieldsTo(picked.CutPosition) ? null : picked;
         }
 
         /// <summary>

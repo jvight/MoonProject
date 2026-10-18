@@ -155,7 +155,7 @@ namespace MoonProject.Gameplay
 
             Transform target = new GameObject(story.FragmentId).transform;
             target.SetParent(node, false);
-            target.position = panel.bounds.center;
+            target.position = panel.bounds.center + story.Offset;
             _fragments.Add(ScanFragment.ForStoryTarget(story, story.RuinId, target));
             return null;
         }
@@ -369,12 +369,7 @@ namespace MoonProject.Gameplay
         /// </summary>
         private ScanFragment Pick()
         {
-            Transform view = _view.Camera.transform;
-            Vector3 eye = view.position;
-            Vector3 forward = view.forward;
             float reachSq = _tuning.Reach * _tuning.Reach;
-            ScanFragment best = null;
-            float bestScore = float.MaxValue;
             ScanFragment nearest = null;
             float nearestSq = float.MaxValue;
             for (int i = 0; i < _fragments.Count; i++)
@@ -396,16 +391,52 @@ namespace MoonProject.Gameplay
                     nearestSq = distSq;
                     nearest = fragment;
                 }
+            }
 
-                if (AimScore.TryScore(eye, forward, fragment.Point, _tuning.Cone, float.MaxValue,
-                        _tuning.DistanceWeight, out float score) && score < bestScore)
+            ScanFragment looked = LookedAt(out _);
+            return looked != null ? looked : nearest;
+        }
+
+        /// <summary>
+        /// The unscanned target in reach that 07's view rests on most squarely, inside the camera cone, or null: what
+        /// the player is looking at, whatever else claims E. <paramref name="score"/> is its aim score (lower is
+        /// squarer), comparable with <see cref="InView"/>'s.
+        /// </summary>
+        public ScanFragment LookedAt(out float score)
+        {
+            Transform view = _view.Camera.transform;
+            float reachSq = _tuning.Reach * _tuning.Reach;
+            ScanFragment best = null;
+            float bestScore = float.MaxValue;
+            for (int i = 0; i < _fragments.Count; i++)
+            {
+                ScanFragment fragment = _fragments[i];
+                if (fragment.Scanned || (fragment.Point - _rover.Position).sqrMagnitude > reachSq)
                 {
-                    bestScore = score;
+                    continue;
+                }
+
+                if (AimScore.TryScore(view.position, view.forward, fragment.Point, _tuning.Cone, float.MaxValue,
+                        _tuning.DistanceWeight, out float fragmentScore) && fragmentScore < bestScore)
+                {
+                    bestScore = fragmentScore;
                     best = fragment;
                 }
             }
 
-            return best != null ? best : nearest;
+            score = bestScore;
+            return best;
+        }
+
+        /// <summary>
+        /// True when <paramref name="point"/> lies inside the camera cone a scan target is picked in, with its aim score
+        /// (lower is squarer).
+        /// </summary>
+        public bool InView(Vector3 point, out float score)
+        {
+            Transform view = _view.Camera.transform;
+            return AimScore.TryScore(view.position, view.forward, point, _tuning.Cone, float.MaxValue,
+                _tuning.DistanceWeight, out score);
         }
 
         private void Hold(bool hold)

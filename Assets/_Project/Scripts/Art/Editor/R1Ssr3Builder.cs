@@ -29,11 +29,17 @@ namespace MoonProject.Art.Editor
         public const string Ssr3Topper06FbxPath = RoverSourceFolder + "/SSR3_Topper_06.fbx";
         public const string Ssr3Topper05FbxPath = RoverSourceFolder + "/SSR3_Topper_05.fbx";
         public const string Ssr3Topper04FbxPath = RoverSourceFolder + "/SSR3_Topper_04.fbx";
+        public const string Ssr3TracksFbxPath = RoverSourceFolder + "/SSR3_Tracks.fbx";
+        public const string Ssr3Topper03FbxPath = RoverSourceFolder + "/SSR3_Topper_03.fbx";
+        public const string Ssr3Topper02FbxPath = RoverSourceFolder + "/SSR3_Topper_02.fbx";
 
         public const string Ssr3ChassisPrefabPath = RoverGeneratedFolder + "/SSR3_Chassis.prefab";
         public const string Ssr3Topper06PrefabPath = RoverGeneratedFolder + "/SSR3_Topper_06.prefab";
         public const string Ssr3Topper05PrefabPath = RoverGeneratedFolder + "/SSR3_Topper_05.prefab";
         public const string Ssr3Topper04PrefabPath = RoverGeneratedFolder + "/SSR3_Topper_04.prefab";
+        public const string Ssr3TracksPrefabPath = RoverGeneratedFolder + "/SSR3_Tracks.prefab";
+        public const string Ssr3Topper03PrefabPath = RoverGeneratedFolder + "/SSR3_Topper_03.prefab";
+        public const string Ssr3Topper02PrefabPath = RoverGeneratedFolder + "/SSR3_Topper_02.prefab";
 
         public const string Elder06PrefabPath = RoverGeneratedFolder + "/Elder06.prefab";
         public const string Elder06UnitNumberMeshPath = RoverGeneratedFolder + "/Elder06_UnitNumber06.asset";
@@ -44,10 +50,18 @@ namespace MoonProject.Art.Editor
         public const string Elder04PrefabPath = RoverGeneratedFolder + "/Elder04.prefab";
         public const string Elder04UnitNumberMeshPath = RoverGeneratedFolder + "/Elder04_UnitNumber04.asset";
 
-        /// <summary>Vertical settle depth (~4 cm into lunar dust) applied to <c>Elder06</c>, <c>Elder05</c>, and <c>Elder04</c>.</summary>
+        public const string Elder03PrefabPath = RoverGeneratedFolder + "/Elder03.prefab";
+        public const string Elder03UnitNumberMeshPath = RoverGeneratedFolder + "/Elder03_UnitNumber03.asset";
+
+        public const string Elder02PrefabPath = RoverGeneratedFolder + "/Elder02.prefab";
+        public const string Elder02UnitNumberMeshPath = RoverGeneratedFolder + "/Elder02_UnitNumber02.asset";
+
+        /// <summary>Vertical settle depth (~4 cm into lunar dust) applied to every Elder prefab (06, 05, 04, 03 and 02).</summary>
         public const float Elder06DustSettleMeters = 0.04f;
         public const float Elder05DustSettleMeters = 0.04f;
         public const float Elder04DustSettleMeters = 0.04f;
+        public const float Elder03DustSettleMeters = 0.04f;
+        public const float Elder02DustSettleMeters = 0.04f;
 
         /// <summary>Long-travel suspension hull lift (+0.14 m Y) applied to <c>Elder04.prefab</c> above its wheels.</summary>
         public const float Elder04SuspensionLiftMeters = 0.14f;
@@ -59,7 +73,15 @@ namespace MoonProject.Art.Editor
         private static readonly int MoonHazeId = Shader.PropertyToID("_MoonHaze");
         private static readonly int MoonDesaturateId = Shader.PropertyToID("_MoonDesaturate");
 
-        // Normalized (rx, ry, rw, rh) glyph bars in [0..1] x [0..1] for '0', '4', '5', and '6'
+        private static readonly string[] ChassisWheelNodeNames =
+        {
+            "Wheel_FL",
+            "Wheel_FR",
+            "Wheel_RL",
+            "Wheel_RR",
+        };
+
+        // Normalized (rx, ry, rw, rh) glyph bars in [0..1] x [0..1] for '0', '2', '3', '4', '5', and '6'
         private static readonly Vector4[] Glyph0Rects =
         {
             new Vector4(0.18f, 0.50f, 0.22f, 0.88f),
@@ -84,6 +106,23 @@ namespace MoonProject.Art.Editor
             new Vector4(0.50f, 0.10f, 0.78f, 0.20f),
         };
 
+        private static readonly Vector4[] Glyph2Rects =
+        {
+            new Vector4(0.50f, 0.90f, 0.82f, 0.20f),
+            new Vector4(0.82f, 0.70f, 0.22f, 0.48f),
+            new Vector4(0.50f, 0.50f, 0.82f, 0.18f),
+            new Vector4(0.18f, 0.30f, 0.22f, 0.48f),
+            new Vector4(0.50f, 0.10f, 0.82f, 0.20f),
+        };
+
+        private static readonly Vector4[] Glyph3Rects =
+        {
+            new Vector4(0.50f, 0.90f, 0.82f, 0.20f),
+            new Vector4(0.82f, 0.50f, 0.22f, 0.88f),
+            new Vector4(0.54f, 0.50f, 0.68f, 0.18f),
+            new Vector4(0.50f, 0.10f, 0.82f, 0.20f),
+        };
+
         private static readonly Vector4[] Glyph6Rects =
         {
             new Vector4(0.18f, 0.50f, 0.22f, 0.88f),
@@ -100,7 +139,16 @@ namespace MoonProject.Art.Editor
             GameObject topper06Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3Topper06PrefabPath);
             GameObject topper05Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3Topper05PrefabPath);
             GameObject topper04Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3Topper04PrefabPath);
-            if (chassisPrefab == null || topper06Prefab == null || topper05Prefab == null || topper04Prefab == null)
+            GameObject tracksPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3TracksPrefabPath);
+            GameObject topper03Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3Topper03PrefabPath);
+            GameObject topper02Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3Topper02PrefabPath);
+            if (chassisPrefab == null
+                || topper06Prefab == null
+                || topper05Prefab == null
+                || topper04Prefab == null
+                || tracksPrefab == null
+                || topper03Prefab == null
+                || topper02Prefab == null)
             {
                 R1MaterialLibrary.BuildMaterials();
                 R1ModelBuilder.Build();
@@ -108,6 +156,9 @@ namespace MoonProject.Art.Editor
                 topper06Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3Topper06PrefabPath);
                 topper05Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3Topper05PrefabPath);
                 topper04Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3Topper04PrefabPath);
+                tracksPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3TracksPrefabPath);
+                topper03Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3Topper03PrefabPath);
+                topper02Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3Topper02PrefabPath);
             }
 
             if (chassisPrefab == null)
@@ -134,8 +185,27 @@ namespace MoonProject.Art.Editor
                     $"R1Ssr3Builder: Missing '{Ssr3Topper04PrefabPath}'. Ensure '{Ssr3Topper04FbxPath}' is imported.");
             }
 
+            if (tracksPrefab == null)
+            {
+                throw new InvalidOperationException(
+                    $"R1Ssr3Builder: Missing '{Ssr3TracksPrefabPath}'. Ensure '{Ssr3TracksFbxPath}' is imported.");
+            }
+
+            if (topper03Prefab == null)
+            {
+                throw new InvalidOperationException(
+                    $"R1Ssr3Builder: Missing '{Ssr3Topper03PrefabPath}'. Ensure '{Ssr3Topper03FbxPath}' is imported.");
+            }
+
+            if (topper02Prefab == null)
+            {
+                throw new InvalidOperationException(
+                    $"R1Ssr3Builder: Missing '{Ssr3Topper02PrefabPath}'. Ensure '{Ssr3Topper02FbxPath}' is imported.");
+            }
+
             BuildElderPrefab(
                 chassisPrefab,
+                null,
                 topper06Prefab,
                 "SSR3_Topper_06",
                 "Elder06",
@@ -149,6 +219,7 @@ namespace MoonProject.Art.Editor
 
             BuildElderPrefab(
                 chassisPrefab,
+                null,
                 topper05Prefab,
                 "SSR3_Topper_05",
                 "Elder05",
@@ -162,6 +233,7 @@ namespace MoonProject.Art.Editor
 
             BuildElderPrefab(
                 chassisPrefab,
+                null,
                 topper04Prefab,
                 "SSR3_Topper_04",
                 "Elder04",
@@ -172,10 +244,43 @@ namespace MoonProject.Art.Editor
                 Elder04PrefabPath,
                 Elder04DustSettleMeters,
                 hullLiftMeters: Elder04SuspensionLiftMeters);
+
+            BuildElderPrefab(
+                chassisPrefab,
+                tracksPrefab,
+                topper03Prefab,
+                "SSR3_Topper_03",
+                "Elder03",
+                "Unit_Number_03",
+                "Elder03_UnitNumber03",
+                new[] { Glyph0Rects, Glyph3Rects },
+                Elder03UnitNumberMeshPath,
+                Elder03PrefabPath,
+                Elder03DustSettleMeters,
+                hullLiftMeters: 0f);
+
+            // Elder 02 ("Shelter Floodlight Cart") uses SSR3_Tracks (Direction B low-slung crawler):
+            // 1. Matches the approved Direction B concept (ssr3_direction_b_low_crawler.png) where Elder 02 is a tracked floodlight cart.
+            // 2. Visually grounds and stabilizes the tall (~1.30 m H) top-heavy 4-dish floodlight roll bar.
+            // 3. Gives Elder 02 an unmistakable low crawler silhouette next to wheeled Rover 07 while fitting its steep lava-tube shelter approach.
+            BuildElderPrefab(
+                chassisPrefab,
+                tracksPrefab,
+                topper02Prefab,
+                "SSR3_Topper_02",
+                "Elder02",
+                "Unit_Number_02",
+                "Elder02_UnitNumber02",
+                new[] { Glyph0Rects, Glyph2Rects },
+                Elder02UnitNumberMeshPath,
+                Elder02PrefabPath,
+                Elder02DustSettleMeters,
+                hullLiftMeters: 0f);
         }
 
         private static void BuildElderPrefab(
             GameObject chassisPrefab,
+            GameObject tracksPrefab,
             GameObject topperPrefab,
             string topperNodeName,
             string elderName,
@@ -201,6 +306,26 @@ namespace MoonProject.Art.Editor
                 if (unitNumberSocket == null)
                 {
                     throw new InvalidOperationException("R1Ssr3Builder: SSR3_Chassis is missing 'Unit_Number'.");
+                }
+
+                // Optional crawler tracks replacement (Direction B)
+                if (tracksPrefab != null)
+                {
+                    for (int i = 0; i < ChassisWheelNodeNames.Length; i++)
+                    {
+                        Transform wheelNode = elderRoot.transform.Find(ChassisWheelNodeNames[i]);
+                        if (wheelNode != null)
+                        {
+                            UnityEngine.Object.DestroyImmediate(wheelNode.gameObject);
+                        }
+                    }
+
+                    GameObject tracksInstance = UnityEngine.Object.Instantiate(tracksPrefab);
+                    tracksInstance.name = "SSR3_Tracks";
+                    tracksInstance.transform.SetParent(elderRoot.transform, worldPositionStays: false);
+                    tracksInstance.transform.localPosition = Vector3.zero;
+                    tracksInstance.transform.localRotation = Quaternion.identity;
+                    tracksInstance.transform.localScale = Vector3.one;
                 }
 
                 // 1. Mount topper inside Topper_Socket
@@ -281,6 +406,10 @@ namespace MoonProject.Art.Editor
                     CaptureElderNextTo07(Elder05PrefabPath, "elder05", capturesDir, nightEclipse: true);
                     CaptureElderNextTo07(Elder04PrefabPath, "elder04", capturesDir, nightEclipse: false);
                     CaptureElderNextTo07(Elder04PrefabPath, "elder04", capturesDir, nightEclipse: true);
+                    CaptureElderNextTo07(Elder03PrefabPath, "elder03", capturesDir, nightEclipse: false);
+                    CaptureElderNextTo07(Elder03PrefabPath, "elder03", capturesDir, nightEclipse: true);
+                    CaptureElderNextTo07(Elder02PrefabPath, "elder02", capturesDir, nightEclipse: false);
+                    CaptureElderNextTo07(Elder02PrefabPath, "elder02", capturesDir, nightEclipse: true);
                 }
                 finally
                 {

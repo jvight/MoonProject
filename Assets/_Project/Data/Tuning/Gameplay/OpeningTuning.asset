@@ -18,11 +18,16 @@ MonoBehaviour:
   _reserveCells: 4
   _portCableReach: 10
   _padChargeRadius: 1.6
+  _cargoCrate: supply.lander.open
   _cargoScanPoints:
-  - {x: -1.4, y: 1.2, z: 1.8}
-  - {x: 1.2, y: 1.2, z: 2.4}
+  - {x: -0.12, y: 0.3, z: 0.08}
+  - {x: 0.12, y: 0.3, z: 0.08}
+  _cargoFragments:
+  - {fileID: 8696612848487809347, guid: 66b25dee22c9770429dcf34fd5521062, type: 3}
+  - {fileID: 7290828058333433129, guid: 5e25d1b9613bc584d807f1815f675d5f, type: 3}
   _igniterPart: part.igniter
-  _collectReach: 3
+  _collectReach: 3.5
+  _crateRimReach: 28
   _recoveryLamps:
     _link: 4
     _dish: 4
@@ -38,7 +43,8 @@ MonoBehaviour:
       _wiring: 1
       _optics: 0
     _startsOpen: 0
-    _part: 
+    _parts: []
+    _prop: {fileID: 0}
   - _id: supply.midway
     _anchorId: place.midway
     _offset: {x: 1.5, y: 0, z: 0}
@@ -49,84 +55,58 @@ MonoBehaviour:
       _wiring: 1
       _optics: 0
     _startsOpen: 0
-    _part: 
+    _parts: []
+    _prop: {fileID: 0}
   - _id: supply.lander.open
-    _anchorId: place.lander
-    _offset: {x: 6, y: 0, z: 9}
-    _yaw: -30
-    _container: Crate_M
+    _anchorId: lander.port
+    _offset: {x: 2.2, y: 0, z: -1.8}
+    _yaw: 180
+    _container: Crate_M_Open
     _yield:
       _metal: 2
       _wiring: 1
       _optics: 0
     _startsOpen: 1
-    _part: part.igniter
-  - _id: supply.lander.a
-    _anchorId: place.lander
-    _offset: {x: -5, y: 0, z: -9}
-    _yaw: 180
-    _container: Crate_M
-    _yield:
-      _metal: 3
-      _wiring: 2
-      _optics: 0
-    _startsOpen: 0
-    _part: 
-  - _id: supply.lander.b
-    _anchorId: place.lander
-    _offset: {x: 5, y: 0, z: -9}
-    _yaw: 160
-    _container: Crate_M
-    _yield:
-      _metal: 3
-      _wiring: 2
-      _optics: 0
-    _startsOpen: 0
-    _part: 
-  - _id: supply.lander.panels
-    _anchorId: place.lander
-    _offset: {x: 0, y: 0, z: -12}
-    _yaw: 0
+    _parts:
+    - part.igniter
+    - part.icecore
+    _prop: {fileID: 703351103347903336, guid: 3a2ed291bf34a90459e85da9d8125b67, type: 3}
+  - _id: supply.habitat.reel
+    _anchorId: HabitatModules
+    _offset: {x: -3, y: 0, z: -6}
+    _yaw: 207
     _container: Crate_M
     _yield:
       _metal: 6
-      _wiring: 0
-      _optics: 0
-    _startsOpen: 0
-    _part: 
-  - _id: supply.habitat.reel
-    _anchorId: HabitatModules
-    _offset: {x: 3, y: 0, z: -6}
-    _yaw: 153
-    _container: Crate_M
-    _yield:
-      _metal: 0
       _wiring: 4
       _optics: 0
     _startsOpen: 0
-    _part: 
+    _parts: []
+    _prop: {fileID: 0}
   - _id: supply.workshop.a
     _anchorId: KenjiWorkshop
-    _offset: {x: -2.5, y: 0, z: -3}
+    _offset: {x: -2.5, y: 0, z: -5}
     _yaw: -140
     _container: Crate_S
     _yield:
-      _metal: 0
-      _wiring: 2
+      _metal: 3
+      _wiring: 4
       _optics: 2
     _startsOpen: 0
-    _part: 
+    _parts: []
+    _prop: {fileID: 0}
   - _id: supply.workshop.b
     _anchorId: KenjiWorkshop
-    _offset: {x: 2.5, y: 0, z: -3}
+    _offset: {x: 2.5, y: 0, z: -5}
     _yaw: 140
     _container: Crate_S
     _yield:
-      _metal: 0
-      _wiring: 2
+      _metal: 3
+      _wiring: 4
       _optics: 2
     _startsOpen: 0
-    _part: 
+    _parts: []
+    _prop: {fileID: 0}
   - _id: supply.tower.a
     _anchorId: RadioTower
     _offset: {x: -3, y: 0, z: -2.5}
@@ -137,7 +117,8 @@ MonoBehaviour:
       _wiring: 0
       _optics: 1
     _startsOpen: 0
-    _part: 
+    _parts: []
+    _prop: {fileID: 0}
   - _id: supply.tower.b
     _anchorId: RadioTower
     _offset: {x: 3, y: 0, z: -2.5}
@@ -148,7 +129,8 @@ MonoBehaviour:
       _wiring: 0
       _optics: 1
     _startsOpen: 0
-    _part: 
+    _parts: []
+    _prop: {fileID: 0}
   - _id: supply.scatter
     _anchorId: ScatterSet
     _offset: {x: 0, y: 0, z: -3}
@@ -159,4 +141,5 @@ MonoBehaviour:
       _wiring: 0
       _optics: 0
     _startsOpen: 0
-    _part: 
+    _parts: []
+    _prop: {fileID: 0}

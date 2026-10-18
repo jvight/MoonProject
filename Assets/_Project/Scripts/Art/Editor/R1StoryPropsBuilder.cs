@@ -19,6 +19,7 @@ namespace MoonProject.Art.Editor
         public const string PropsModelsFolder = ArtPaths.R1ModelsFolder + "/Props";
 
         public const string CableMarkerAmberMaterialName = "R1_CableMarkerAmber";
+        public const string CrateRimGlowAmberMaterialName = "R1_CrateRimGlowAmber";
         public const string LanderBeaconAmberMaterialName = "R1_LanderBeaconAmber";
         public const string LanderReserveReadoutMaterialName = "R1_LanderReserveReadout";
         public const string BuildApronOutlineMaterialName = "R1_BuildApronOutline";
@@ -30,6 +31,7 @@ namespace MoonProject.Art.Editor
         public const string IceCoreWindowMaterialName = "R1_IceCoreWindow";
 
         public const string CableMarkerAmberMaterialPath = ArtPaths.R1MaterialsFolder + "/" + CableMarkerAmberMaterialName + ".mat";
+        public const string CrateRimGlowAmberMaterialPath = ArtPaths.R1MaterialsFolder + "/" + CrateRimGlowAmberMaterialName + ".mat";
         public const string LanderBeaconAmberMaterialPath = ArtPaths.R1MaterialsFolder + "/" + LanderBeaconAmberMaterialName + ".mat";
         public const string LanderReserveReadoutMaterialPath = ArtPaths.R1MaterialsFolder + "/" + LanderReserveReadoutMaterialName + ".mat";
         public const string BuildApronOutlineMaterialPath = ArtPaths.R1MaterialsFolder + "/" + BuildApronOutlineMaterialName + ".mat";
@@ -59,6 +61,9 @@ namespace MoonProject.Art.Editor
         public const string DeadAntennaMastPrefabPath = PropsModelsFolder + "/DeadAntennaMast.prefab";
         public const string SignalPillarPrefabPath = PropsModelsFolder + "/SignalPillar.prefab";
         public const string PeakBeaconPrefabPath = PropsModelsFolder + "/PeakBeacon.prefab";
+        public const string CrateMOpenPrefabPath = ArtPaths.R1ModelsFolder + "/Crates/Crate_M_Open.prefab";
+        public const string PadFragmentCoilPlatePrefabPath = PropsModelsFolder + "/PadFragment_CoilPlate.prefab";
+        public const string PadFragmentGuideRailPrefabPath = PropsModelsFolder + "/PadFragment_GuideRail.prefab";
         public const string IceCoreTubePrefabPath = PropsModelsFolder + "/IceCoreTube.prefab";
         public const string HabitatModulesPrefabPath = ArtPaths.R1ModelsFolder + "/Ruins/HabitatModules.prefab";
 
@@ -174,7 +179,31 @@ namespace MoonProject.Art.Editor
             peakBeaconRedMat.SetFloat("_HotCorePeak", 1.48f);
             GeneratedAssets.CreateOrReplace(peakBeaconRedMat, PeakBeaconRedMaterialPath);
 
-            // 8. R1_IceCoreLabel: stencilled cryo plaque (CORE 41 · H2O · I.V. 10/88) with zero emission
+            // 8. R1_CrateRimGlowAmber: soft, even, matte warm line on open crate rim (no speckles, well below bloom threshold)
+            Material crateRimGlowMat = R1MaterialLibrary.CreateMaterial(r1Lit, lampSpec);
+            crateRimGlowMat.name = CrateRimGlowAmberMaterialName;
+            crateRimGlowMat.SetTexture("_BaseMap", Texture2D.whiteTexture);
+            crateRimGlowMat.SetColor("_BaseColor", new Color(0.82f, 0.52f, 0.22f, 1f));
+            crateRimGlowMat.SetTexture("_EmissionMap", Texture2D.whiteTexture);
+            crateRimGlowMat.SetColor("_EmissionColor", new Color(0.98f, 0.64f, 0.24f, 1f));
+            crateRimGlowMat.SetFloat("_EmissionStrength", 0.34f);
+            crateRimGlowMat.SetFloat("_BloomSafeMax", 0.42f);
+            crateRimGlowMat.SetFloat("_HotCoreThreshold", 0.99f);
+            crateRimGlowMat.SetFloat("_HotCorePeak", 0.42f);
+            crateRimGlowMat.SetFloat("_BumpScale", 0.0f);
+            crateRimGlowMat.SetFloat("_MetallicScale", 0.0f);
+            crateRimGlowMat.SetFloat("_SmoothnessScale", 0.20f);
+            crateRimGlowMat.SetFloat("_SmoothnessMin", 0.08f);
+            crateRimGlowMat.SetFloat("_SmoothnessMax", 0.16f);
+            crateRimGlowMat.SetFloat("_ColorVarAmount", 0.0f);
+            crateRimGlowMat.SetFloat("_EdgeWearAmount", 0.0f);
+            crateRimGlowMat.SetFloat("_EdgeWearMetallic", 0.0f);
+            crateRimGlowMat.SetFloat("_EdgeWearSmoothness", 0.14f);
+            crateRimGlowMat.SetFloat("_DustAmount", 0.06f);
+            crateRimGlowMat.SetFloat("_DustSmoothness", 0.10f);
+            GeneratedAssets.CreateOrReplace(crateRimGlowMat, CrateRimGlowAmberMaterialPath);
+
+            // 9. R1_IceCoreLabel: stencilled cryo plaque (CORE 41 · H2O · I.V. 10/88) with zero emission
             Material iceCoreLabelMat = R1MaterialLibrary.CreateMaterial(r1Lit, signageSpec);
             iceCoreLabelMat.name = IceCoreLabelMaterialName;
             iceCoreLabelMat.SetTexture("_BaseMap", LoadRequiredTexture(IceCoreLabelAlbedoPath));
@@ -188,7 +217,7 @@ namespace MoonProject.Art.Editor
             iceCoreLabelMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
             GeneratedAssets.CreateOrReplace(iceCoreLabelMat, IceCoreLabelMaterialPath);
 
-            // 9. R1_IceCoreFrost: crystalline rime frost & frosted lunar ice core that catches 07's headlamps (no emission)
+            // 10. R1_IceCoreFrost: crystalline rime frost & frosted lunar ice core that catches 07's headlamps (no emission)
             Material iceCoreFrostMat = R1MaterialLibrary.CreateMaterial(r1Lit, creamSpec);
             iceCoreFrostMat.name = IceCoreFrostMaterialName;
             iceCoreFrostMat.SetTexture("_BaseMap", LoadRequiredTexture(IceCoreFrostAlbedoPath));
@@ -211,7 +240,7 @@ namespace MoonProject.Art.Editor
             iceCoreFrostMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
             GeneratedAssets.CreateOrReplace(iceCoreFrostMat, IceCoreFrostMaterialPath);
 
-            // 10. R1_IceCoreWindow: high-glint cryo sight glass that catches 07's headlamps in eclipse dark (no emission)
+            // 11. R1_IceCoreWindow: high-glint cryo sight glass that catches 07's headlamps in eclipse dark (no emission)
             Material iceCoreWindowMat = R1MaterialLibrary.CreateMaterial(r1Lit, darkGlassSpec);
             iceCoreWindowMat.name = IceCoreWindowMaterialName;
             iceCoreWindowMat.SetColor("_BaseColor", new Color(0.75f, 0.88f, 0.98f, 1f));
@@ -245,6 +274,12 @@ namespace MoonProject.Art.Editor
             if (modelPath.EndsWith("/GroundCableSegment.fbx", StringComparison.Ordinal))
             {
                 ReplaceRendererSlotMaterial(root, "MarkerLamp", R1MaterialRecipes.LampAmberSlot, LoadOrBuildMaterial(CableMarkerAmberMaterialPath));
+            }
+            else if (modelPath.EndsWith("/Crate_M_Open.fbx", StringComparison.Ordinal))
+            {
+                Material rimMat = LoadOrBuildMaterial(CrateRimGlowAmberMaterialPath);
+                ReplaceRendererSlotMaterial(root, "RimGlow", R1MaterialRecipes.LampAmberSlot, rimMat);
+                ReplaceRendererSlotMaterial(root, "Lid/Seal", R1MaterialRecipes.LampAmberSlot, rimMat);
             }
             else if (modelPath.EndsWith("/LanderServicePort.fbx", StringComparison.Ordinal))
             {
@@ -283,6 +318,10 @@ namespace MoonProject.Art.Editor
                 ReplaceRendererSlotMaterial(root, "FrostCap", R1MaterialRecipes.CreamEnamelSlot, LoadOrBuildMaterial(IceCoreFrostMaterialPath));
                 ReplaceRendererSlotMaterial(root, "CoreSample", R1MaterialRecipes.CreamEnamelSlot, LoadOrBuildMaterial(IceCoreFrostMaterialPath));
                 ReplaceRendererSlotMaterial(root, "SightWindow", R1MaterialRecipes.DarkGlassSlot, LoadOrBuildMaterial(IceCoreWindowMaterialPath));
+            }
+            else if (modelPath.EndsWith("/SSR3_Topper_03.fbx", StringComparison.Ordinal))
+            {
+                ReplaceRendererSlotMaterial(root, "FrostBlock", R1MaterialRecipes.CreamEnamelSlot, LoadOrBuildMaterial(IceCoreFrostMaterialPath));
             }
         }
 

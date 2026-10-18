@@ -42,7 +42,7 @@ MonoBehaviour:
   _lensBracketRange: 25
   _reach: 8
   _cone: 25
-  _distanceWeight: 0.2
+  _distanceWeight: 0
   _engageSpeed: 0.4
   _gazePriority: 25
   _aimToleranceDegrees: 8
@@ -107,6 +107,4 @@ MonoBehaviour:
     _node: AirlockPanel
     _textKey: story.airlock_panel
     _size: 0
-  _laterStructureIds:
-  - upgrade_bay
-  - vehicle_pad
+    _offset: {x: 0, y: -0.3, z: 0}

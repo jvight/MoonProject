@@ -86,7 +86,6 @@ MonoBehaviour:
     _easeIn: 1.2
     _hold: 0
     _easeOut: 1
-    _lookShare: 0.5
     _yawShare: 0.6
     _maxLookShift: 3
     _minYawSwing: 35
@@ -98,7 +97,6 @@ MonoBehaviour:
     _easeIn: 0.9
     _hold: 1
     _easeOut: 1.1
-    _lookShare: 0.35
     _yawShare: 0.85
     _maxLookShift: 2.5
     _minYawSwing: 25
@@ -110,7 +108,6 @@ MonoBehaviour:
     _easeIn: 0.8
     _hold: 0.3
     _easeOut: 1.4
-    _lookShare: 0.35
     _yawShare: 0
     _maxLookShift: 6
     _minYawSwing: 0
@@ -124,7 +121,6 @@ MonoBehaviour:
     _easeIn: 1.3
     _hold: 1.8
     _easeOut: 1.5
-    _lookShare: 0.5
     _yawShare: 0.6
     _maxLookShift: 6
     _minYawSwing: 0
@@ -136,7 +132,6 @@ MonoBehaviour:
     _easeIn: 1.2
     _hold: 0.6
     _easeOut: 1.4
-    _lookShare: 0.45
     _yawShare: 0.8
     _maxLookShift: 8
     _minYawSwing: 10
@@ -148,7 +143,6 @@ MonoBehaviour:
     _easeIn: 2
     _hold: 0.6
     _easeOut: 2
-    _lookShare: 0.3
     _yawShare: 0.4
     _maxLookShift: 5
     _minYawSwing: 0
@@ -160,7 +154,6 @@ MonoBehaviour:
     _easeIn: 3
     _hold: 2.6
     _easeOut: 2.6
-    _lookShare: 0.22
     _yawShare: 0.5
     _maxLookShift: 3
     _minYawSwing: 26
@@ -172,7 +165,6 @@ MonoBehaviour:
     _easeIn: 1.6
     _hold: 0.8
     _easeOut: 2
-    _lookShare: 0.35
     _yawShare: 0.6
     _maxLookShift: 2.5
     _minYawSwing: 20
@@ -184,7 +176,6 @@ MonoBehaviour:
     _easeIn: 1.4
     _hold: 0
     _easeOut: 1.4
-    _lookShare: 0
     _yawShare: 1
     _maxLookShift: 0
     _minYawSwing: 0
@@ -227,7 +218,6 @@ MonoBehaviour:
     _easeIn: 1.4
     _hold: 1
     _easeOut: 1.2
-    _lookShare: 0
     _yawShare: 0.5
     _maxLookShift: 0
     _minYawSwing: 0
@@ -249,60 +239,35 @@ MonoBehaviour:
   _gentleBreathRate: 0.5
   _gentleMinSensitivity: 0.15
   _opening:
-    _crackleSeconds: 1.2
-    _lidCrackSeconds: 1.1
-    _lidHalfSeconds: 1.1
-    _huntSeconds: 1.7
-    _flickerSeconds: 1
-    _gazeHomeSeconds: 1.8
-    _gazePilotSeconds: 1.5
-    _gazePeakSeconds: 1.5
-    _gazeEarthSeconds: 1.8
+    _crackleSeconds: 0.8
+    _lidCrackSeconds: 0.9
+    _lidHalfSeconds: 0.9
+    _huntSeconds: 1.4
     _pullOutSeconds: 1.8
-    _blinkShotSeconds: 2.2
     _overShoulderSeconds: 1.4
-    _lidCrack: 0.12
-    _lidHalf: 0.4
+    _lidCrack: 0.2
+    _lidHalf: 0.5
     _lidRest: 0.7
-    _lidWonder: 0.85
     _lidRiseSeconds: 0.65
     _lidSettleSeconds: 0.9
     _shudderAmount: 0.02
     _shudderWobbles: 3
-    _blinkDelay: 1.15
     _blinkSeconds: 0.55
     _blinkLow: 0.25
-    _blinkAfter: 0.75
     _focusBlur: 2.5
     _focusNear: 0.1
     _focusOvershoot: 400
     _focusSettle: 80
-    _rehuntNear: 25
-    _rehuntSeconds: 0.8
-    _dipSeconds: 0.4
-    _dipGap: 0.12
-    _secondDip: 0.8
     _readoutSeconds: 1.8
     _readoutFade: 0.4
     _speckStart: {x: -0.2, y: 0}
     _speckEnd: {x: -0.34, y: -0.7}
-    _bowedPitch: -15
+    _bowedPitch: -2
     _yawLimit: 70
     _pitchDownLimit: -15
     _pitchUpLimit: 50
-    _softZone: 18
     _neckFrequency: 0.6
-    _lookShare: 0.6
-    _attentionResume: 2
-    _earthFoundAngle: 10
-    _earthFoundSeconds: 1
-    _seenAngle: 12
-    _hesitateAfter: 1
-    _hesitateYaw: 3
-    _peakLift: 1
     _earthBelow: 4
-    _postLookHeight: 1.2
-    _beaconHeight: 6
     _lensForward: 0.44
     _lensNearClip: 0.22
     _lensFov: 58
@@ -310,17 +275,10 @@ MonoBehaviour:
     _pullOutReachAnchor: 0.5
     _pullOutOntoEarth: 0.15
     _pullOutTurnStartShare: 0.5
-    _pullOutEarthHeld: 0.4
     _lensReleaseAt: 0.2
-    _hurryLidSeconds: 0.9
-    _hurryPullOutSeconds: 1.6
-    _hurryPullOutUp: 0.6
-    _blinkTilt: 7
-    _tiltEaseSeconds: 0.45
-    _tiltHoldSeconds: 1.1
     _blinkSigh: 0.5
-    _pushInSeconds: 1.6
-    _pushDarkFrom: 0.6
+    _fadeOutSeconds: 0.6
+    _fadeOutFrom: 0.1
     _titleDriftDelay: 20
     _titleDriftYaw: 8
     _titleDriftPeriod: 48

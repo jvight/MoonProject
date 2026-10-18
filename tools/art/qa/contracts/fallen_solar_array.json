@@ -44,6 +44,34 @@
         0.0
       ]
     },
+    "UCX_ToppledGearbox_1": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "UCX_SolarWingLeft_1": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "UCX_SolarWingRight_1": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "UCX_CableStub_1": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
     "Scan_1": {
       "pivot": [
         0.12,

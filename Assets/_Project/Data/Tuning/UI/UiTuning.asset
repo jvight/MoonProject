@@ -523,10 +523,10 @@ MonoBehaviour:
     _cellGapX: 10
     _cellGapY: 8
     _dividerX: 478
-    _bubbleRadius: 36
-    _roverOriginX: 804
-    _roverOriginY: 468
-    _roverScale: 156
+    _bubbleRadius: 20
+    _roverOriginX: 576
+    _roverOriginY: 412
+    _roverScale: 185
     _toastDurationSeconds: 3.5
     _roverWheelRadius: 0.35
     _roverWheelRimRadius: 0.185
@@ -546,24 +546,21 @@ MonoBehaviour:
     _leaderEmptyColor:
       serializedVersion: 2
       rgba: 1145345740
-    _leaderEmptyWidth: 1
-    _leaderEmptyDotRadius: 2
+    _leaderEmptyWidth: 2
+    _leaderEmptyDotRadius: 3.5
     _leaderInstalledColor:
       serializedVersion: 2
       rgba: 1616031464
-    _leaderInstalledWidth: 1.25
-    _leaderInstalledDotRadius: 2.4
+    _leaderInstalledWidth: 2.4
+    _leaderInstalledDotRadius: 4
     _leaderFocusColor:
       serializedVersion: 2
       rgba: 3959419743
-    _leaderFocusWidth: 1.9
-    _leaderFocusDotRadius: 3.2
+    _leaderFocusWidth: 3.2
+    _leaderFocusDotRadius: 5.5
     _cellBackground:
       serializedVersion: 2
       rgba: 3943042066
-    _cellFocusBackground:
-      serializedVersion: 2
-      rgba: 4111866906
     _plateBackground:
       serializedVersion: 2
       rgba: 4161079566

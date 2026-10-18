@@ -174,6 +174,35 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         /// <summary>
+        /// The first boot's title (no save): the language is asked with a heading, and a New Game press that comes
+        /// before the answer asks again. Rerun on its own:
+        /// <c>python tools/unity_batch.py tests --platform playmode --filter CaptureFirstBootTitle</c>.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator CaptureFirstBootTitle()
+        {
+#if UNITY_EDITOR
+            yield return LoadMain();
+            GameContext context = FindBootstrap().Context;
+            Camera camera = context.Get<IViewCamera>().Camera;
+            UISystem ui = BuildUi(context, out _, out _);
+            yield return null;
+            string folder = Path.GetFullPath(OutputFolder);
+            Directory.CreateDirectory(folder);
+            context.Events.Publish(new TitleShown(false));
+            yield return new WaitForSecondsRealtime(_tuning.Title.Curtain.FadeOut + _tuning.Title.Reveal.FadeIn);
+            Assert.IsTrue(ui.Pause.IsChoosingLanguage);
+            Submit(ui.Layout.NewGameButton);
+            yield return new WaitForSecondsRealtime(0.4f);
+            Assert.IsTrue(ui.Pause.IsChoosingLanguage, "New Game before the answer asks the language again");
+            yield return Capture(camera, folder, "40_title_first_boot");
+#else
+            Assert.Ignore("Captures need the editor.");
+            yield break;
+#endif
+        }
+
+        /// <summary>
         /// A place's card the first time 07 comes near, then the soft next line once 07 rests, the opening's protocol
         /// readout and a recipe card while looking at the tower's hopper (M3-24 B). Rerun on its own:
         /// <c>python tools/unity_batch.py tests --platform playmode --filter CaptureGuidance</c>.

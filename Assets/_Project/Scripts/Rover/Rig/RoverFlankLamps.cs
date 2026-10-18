@@ -114,7 +114,7 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// The opening's beats: dark from the push into the lens (or from O1's crackle, after New Game's reload under
+        /// The opening's beats: dark from the fade to black (or from O1's crackle, after New Game's reload under
         /// the black), lit one by one from O5's flicker (or, when a hurried opening skips it, from the blink); the
         /// short wake lights them at once.
         /// </summary>
@@ -122,7 +122,7 @@ namespace MoonProject.Rover
         {
             switch (reached.Beat)
             {
-                case WakeBeat.PushedIn:
+                case WakeBeat.FadedOut:
                 case WakeBeat.Crackle:
                     _wakeLit = 0;
                     _wakeStart = float.PositiveInfinity;

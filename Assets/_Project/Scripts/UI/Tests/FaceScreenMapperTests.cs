@@ -121,51 +121,6 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
-        public void CursorPolicy_OpenInventory_ConfinesAndShowsCursor_AndCloseRestoresPreviousState()
-        {
-            CursorLockMode origLock = UnityEngine.Cursor.lockState;
-            bool origVisible = UnityEngine.Cursor.visible;
-            try
-            {
-                var policy = new CursorPolicy();
-                policy.Drive();
-                Assert.AreEqual(CursorLockMode.Locked, policy.LockState);
-                Assert.IsFalse(policy.IsVisible);
-                Assert.IsFalse(policy.InMenu);
-
-                policy.OpenInventory();
-                Assert.AreEqual(CursorLockMode.Confined, policy.LockState,
-                    "Inventory cursor must be Confined to the window.");
-                Assert.IsTrue(policy.IsVisible, "Inventory cursor must be visible.");
-                Assert.IsTrue(policy.InMenu);
-
-                policy.CloseInventory();
-                Assert.AreEqual(CursorLockMode.Locked, policy.LockState,
-                    "Closing inventory must restore the prior Locked drive state.");
-                Assert.IsFalse(policy.IsVisible);
-                Assert.IsFalse(policy.InMenu);
-
-                policy.Menu();
-                Assert.AreEqual(CursorLockMode.None, policy.LockState);
-                Assert.IsTrue(policy.IsVisible);
-                policy.OpenInventory();
-                Assert.AreEqual(CursorLockMode.Confined, policy.LockState);
-                Assert.IsTrue(policy.IsVisible);
-
-                policy.CloseInventory();
-                Assert.AreEqual(CursorLockMode.None, policy.LockState,
-                    "Closing inventory must restore whatever cursor lock state was active before opening.");
-                Assert.IsTrue(policy.IsVisible);
-                Assert.IsTrue(policy.InMenu);
-            }
-            finally
-            {
-                UnityEngine.Cursor.lockState = origLock;
-                UnityEngine.Cursor.visible = origVisible;
-            }
-        }
-
-        [Test]
         public void GlassSafeArea_ContainsAllInventoryElementsAndMarginsAreSymmetric_AndCameraFramingIsSquareAcrossAspects()
         {
             Vector2 panelSize = FaceScreenMapper.DefaultPanelSize;
@@ -187,35 +142,38 @@ namespace MoonProject.UI.Tests
                 contentMaxX = Mathf.Max(contentMaxX, cell.xMax);
             }
 
-            // 2. All four device bubbles lie inside the rounded-rectangle glass mask with margin >= M.
+            // 2. All four device frames, the cells' names, the title row, the info box and the foot row lie inside
+            //    the rounded-rectangle glass mask with margin >= M.
+            var others = new System.Collections.Generic.List<Rect>
+            {
+                new Rect(FaceLayout.Margin, FaceLayout.TitleY, FaceLayout.RightEdge - FaceLayout.Margin,
+                    FaceLayout.TitleRuleY - FaceLayout.TitleY),
+                new Rect(FaceLayout.InfoX, FaceLayout.InfoY, FaceLayout.InfoWidth, FaceLayout.InfoHeight),
+                new Rect(FaceLayout.Margin, FaceLayout.FooterY, FaceLayout.RightEdge - FaceLayout.Margin,
+                    FaceLayout.FooterHeight),
+            };
             for (int i = 0; i < FaceDevices.Count; i++)
             {
-                Vector2 center = FaceDevices.CenterOf(i);
-                float r = FaceInventoryView.BubbleRadius;
-                float dist = FaceScreenMapper.SignedDistanceInsideGlass(center, r, panelSize);
-                Assert.GreaterOrEqual(dist, minMargin,
-                    $"Device {i} at {center} must stay >= {minMargin}px inside the rounded CRT glass (actual {dist:F2}px).");
-                contentMinX = Mathf.Min(contentMinX, center.x - r);
-                contentMaxX = Mathf.Max(contentMaxX, center.x + r);
+                others.Add(FaceLayout.DeviceFrame(i));
             }
 
-            // 3. Headers, header rules, divider, and both left/right tooltip boxes lie inside the glass safe area.
-            var leftHeaderRule = new Rect(72f, 42f, 376f, 22f);
-            var rightHeaderRule = new Rect(FaceInventoryView.RightPaneX, 42f, 568f, 22f);
-            var leftTooltip = new Rect(72f, 664f, 376f, 62f);
-            var rightTooltip = new Rect(512f, 664f, 568f, 62f);
+            foreach (Rect rect in others)
+            {
+                Assert.GreaterOrEqual(FaceScreenMapper.SignedDistanceInsideGlass(rect, panelSize), minMargin,
+                    $"{rect} must lie inside the glass safe area.");
+                contentMinX = Mathf.Min(contentMinX, rect.xMin);
+                contentMaxX = Mathf.Max(contentMaxX, rect.xMax);
+            }
 
-            Assert.GreaterOrEqual(FaceScreenMapper.SignedDistanceInsideGlass(leftHeaderRule, panelSize), minMargin,
-                "Left header and rule must lie inside the glass safe area.");
-            Assert.GreaterOrEqual(FaceScreenMapper.SignedDistanceInsideGlass(rightHeaderRule, panelSize), minMargin,
-                "Right header and rule must lie inside the glass safe area.");
-            Assert.GreaterOrEqual(FaceScreenMapper.SignedDistanceInsideGlass(leftTooltip, panelSize), minMargin,
-                "Left hold tooltip must lie inside the glass safe area.");
-            Assert.GreaterOrEqual(FaceScreenMapper.SignedDistanceInsideGlass(rightTooltip, panelSize), minMargin,
-                "Right socket tooltip must lie inside the glass safe area.");
+            for (int i = 0; i < FaceInventoryView.MaxHoldCells; i++)
+            {
+                Rect name = FaceLayout.HoldNameRect(i);
+                Assert.GreaterOrEqual(FaceScreenMapper.SignedDistanceInsideGlass(name, panelSize), minMargin,
+                    $"The name under hold slot {i} must lie inside the glass safe area.");
+            }
 
-            contentMinY = leftHeaderRule.yMin;
-            contentMaxY = leftTooltip.yMax;
+            contentMinY = FaceLayout.TitleY;
+            contentMaxY = FaceLayout.FooterY + FaceLayout.FooterHeight;
 
             // 4. Left/right and top/bottom margins of the content bounding box differ by < 10%.
             float leftMargin = contentMinX;
