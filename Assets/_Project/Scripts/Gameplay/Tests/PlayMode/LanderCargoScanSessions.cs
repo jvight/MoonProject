@@ -60,7 +60,15 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return null;
 
             ScanField scans = _fixture.Gameplay.Scans;
-            float shellTop = crate.GetComponent<Collider>().bounds.max.y;
+            // The crate's floor and cradle stand lowest of its shell (Art keeps them below the part sockets); its
+            // walls are checked by the sightlines below.
+            float shellTop = float.MaxValue;
+            foreach (Collider shell in crate.GetComponentsInChildren<Collider>())
+            {
+                shellTop = Mathf.Min(shellTop, shell.bounds.max.y);
+            }
+
+            Assert.Less(shellTop, float.MaxValue, "the crate stands solid");
             for (int i = 0; i < 2; i++)
             {
                 ScanFragment fragment = scans.Find("ruin." + ScanTuning.LanderCargoId + "." + i);
@@ -69,7 +77,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 Assert.LessOrEqual(Flat(point - stop).magnitude, _fixture.ScanTuning.Reach,
                     $"{fragment.FragmentId} lies in scan reach of 07 at the port");
                 Assert.IsTrue(scans.InView(point, out _), $"{fragment.FragmentId} lies inside the camera cone");
-                Assert.Greater(point.y, shellTop, $"{fragment.FragmentId} shows above the crate's shell");
+                Assert.Greater(point.y, shellTop, $"{fragment.FragmentId} shows above the crate's floor");
                 AssertClear(eye, point, "the camera", fragment.FragmentId);
                 AssertClear(_fixture.Rover.ScanOrigin.position, point, "07's lens", fragment.FragmentId);
             }
