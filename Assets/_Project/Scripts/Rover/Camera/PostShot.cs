@@ -27,9 +27,6 @@ namespace MoonProject.Rover
     /// </summary>
     public sealed class PostShot
     {
-        /// <summary>Share of a check over which the focus eases from the previous check's part to its own.</summary>
-        private const float EaseShare = 0.5f;
-
         private readonly PostSettings _settings;
 
         public PostShot(PostSettings settings)
@@ -44,15 +41,37 @@ namespace MoonProject.Rover
             return Compose(body, headingDeg, start.Local, start.Distance, start.Height, _settings.ShotSideYaw);
         }
 
-        /// <summary>The shot at progress <paramref name="p"/> of the check <paramref name="step"/>.</summary>
+        /// <summary>
+        /// The shot at progress <paramref name="p"/> of the check <paramref name="step"/>. The camera is on a check's
+        /// part at the middle of the check and eases from one part to the next between the middles, so it is always
+        /// drifting slowly and never has to hurry across a short check.
+        /// </summary>
         public ShotPose At(Vector3 body, float headingDeg, BootCheckStep step, float p)
         {
-            PostFocus from = step == BootCheckStep.Lens ? _settings.BaseFocus : _settings.FocusOf(step - 1);
-            PostFocus to = _settings.FocusOf(step);
-            float ease = WakeOpening.SmoothStepC2(0f, EaseShare, p);
-            Vector3 local = Vector3.Lerp(from.Local, to.Local, ease);
-            float distance = Mathf.Lerp(from.Distance, to.Distance, ease);
-            float height = Mathf.Lerp(from.Height, to.Height, ease);
+            float length = _settings.SecondsOf(step);
+            PostFocus here = _settings.FocusOf(step);
+            PostFocus other;
+            float u;
+            if (p < 0.5f)
+            {
+                // The pull-out arrives on the base shot exactly where the first check begins.
+                float previousLength = step == BootCheckStep.Lens ? 0f : _settings.SecondsOf(step - 1);
+                other = step == BootCheckStep.Lens ? _settings.BaseFocus : _settings.FocusOf(step - 1);
+                u = (p * length + 0.5f * previousLength) / (0.5f * (previousLength + length));
+                u = 1f - Mathf.Clamp01(u);
+            }
+            else
+            {
+                bool last = step == BootCheckStep.Begin;
+                float nextLength = last ? length : _settings.SecondsOf(step + 1);
+                other = last ? here : _settings.FocusOf(step + 1);
+                u = Mathf.Clamp01((p - 0.5f) * length / (0.5f * (length + nextLength)));
+            }
+
+            float ease = WakeOpening.SmoothStepC2(0f, 1f, u);
+            Vector3 local = Vector3.Lerp(here.Local, other.Local, ease);
+            float distance = Mathf.Lerp(here.Distance, other.Distance, ease);
+            float height = Mathf.Lerp(here.Height, other.Height, ease);
             float side = _settings.ShotSideYaw;
             if (step == BootCheckStep.Begin)
             {

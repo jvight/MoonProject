@@ -44,14 +44,16 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void TheFocus_EasesFromThePreviousPart_AndThenStaysPut()
+        public void TheFocus_JoinsTheChecksWithoutAJump_AndSitsOnThePartInTheMiddle()
         {
             ShotPose early = _shot.At(Body, Heading, BootCheckStep.Cutter, 0f);
             ShotPose previous = _shot.At(Body, Heading, BootCheckStep.Motor, 1f);
             Assert.AreEqual(0f, Vector3.Distance(early.Position, previous.Position), 1e-3f, "checks join without a jump");
-            ShotPose settled = _shot.At(Body, Heading, BootCheckStep.Cutter, 0.5f);
-            ShotPose later = _shot.At(Body, Heading, BootCheckStep.Cutter, 0.9f);
-            Assert.AreEqual(0f, Vector3.Distance(settled.Position, later.Position), 1e-3f);
+            ShotPose middle = _shot.At(Body, Heading, BootCheckStep.Cutter, 0.5f);
+            PostFocus cutter = _settings.FocusOf(BootCheckStep.Cutter);
+            Vector3 focus = Body + Quaternion.Euler(0f, Heading, 0f) * cutter.Local;
+            Assert.AreEqual(1f, Vector3.Dot(middle.Rotation * Vector3.forward,
+                (focus - middle.Position).normalized), 1e-4f, "in the middle of its check the camera is on its part");
         }
 
         [Test]

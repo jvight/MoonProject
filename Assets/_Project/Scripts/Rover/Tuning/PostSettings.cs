@@ -142,7 +142,7 @@ namespace MoonProject.Rover
                  "close (a share of the shot distance) and how high (m).")]
         [SerializeField] private PostFocus[] _focus =
         {
-            new PostFocus(BootCheckStep.Lens, new Vector3(0f, 1.15f, 0.4f), 0.7f, 1.3f),
+            new PostFocus(BootCheckStep.Lens, new Vector3(0f, 0.8f, 0.3f), 1f, 1.35f),
             new PostFocus(BootCheckStep.Lamps, new Vector3(0f, 0.95f, 0.55f), 0.75f, 1.2f),
             new PostFocus(BootCheckStep.Head, new Vector3(0f, 1.15f, 0.25f), 0.8f, 1.35f),
             new PostFocus(BootCheckStep.Wheels, new Vector3(0f, 0.35f, 0.1f), 0.95f, 0.7f),
