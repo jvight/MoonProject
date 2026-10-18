@@ -8,8 +8,9 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// A scan target 07 looks at (opening-v2 §1): a <c>Scan_1..N</c> node on an R1 ruin piece (or on the lander's
     /// cargo bay), or a story scan on Art's mesh node. The nearest renderer of its host shows the scan: the cyan sweep
-    /// climbing it (<c>_ScanProgress</c>) and the close (<c>_Dissolve</c>). Plain state; <see cref="ScanField"/>
-    /// drives it. Allocation-free after construction.
+    /// climbing it (<c>_ScanProgress</c>) and the close (<c>_Dissolve</c>). The scan beam meets that renderer's real
+    /// surface: its host's colliders around it, else the box of its mesh's own bounds (<see cref="TryContact"/>).
+    /// Plain state; <see cref="ScanField"/> drives it. Allocation-free after construction.
     /// </summary>
     public sealed class ScanFragment : IScanTarget
     {
@@ -20,12 +21,20 @@ namespace MoonProject.Gameplay
 
         private const float SweepHeight = 0.7f;
 
-        private Renderer _solid;
+        /// <summary>Art's collision-only hull meshes (UCX_*): never the renderer that shows a scan.</summary>
+        private const string CollisionHullPrefix = "UCX_";
+
+        /// <summary>Metres around the shown renderer within which its host's colliders count as its surface.</summary>
+        private const float SurfaceMargin = 0.05f;
+
         private readonly Transform _target;
         private readonly MaterialPropertyBlock _block = new MaterialPropertyBlock();
+        private readonly List<Renderer> _renderers = new List<Renderer>();
+        private readonly Collider[] _surface;
+        private Renderer _solid;
 
         private ScanFragment(string fragmentId, string blueprintId, IReadOnlyList<string> structureIds, int index,
-            int count, ScanSize size, string hostId, Transform target, string storyKey)
+            int count, ScanSize size, string hostId, Transform target, Transform surfaceRoot, string storyKey)
         {
             FragmentId = fragmentId;
             BlueprintId = blueprintId;
@@ -37,7 +46,8 @@ namespace MoonProject.Gameplay
             _target = target != null ? target : throw new ArgumentNullException(nameof(target));
             Root = target;
             StoryKey = storyKey;
-            _solid = FindClosestRenderer(target);
+            _solid = FindClosestRenderer();
+            _surface = GatherSurface(surfaceRoot != null ? surfaceRoot : HostOf(target), _solid);
         }
 
         /// <summary>"&lt;set id&gt;.&lt;n&gt;" (e.g. "ruin.FallenSolarArray.0") or "story.&lt;id&gt;". Saved: never
@@ -68,6 +78,12 @@ namespace MoonProject.Gameplay
 
         public Vector3 Point => _target.position;
 
+        /// <summary>The host's colliders the scan beam lands on (empty: it lands on its mesh's bounds).</summary>
+        public IReadOnlyList<Collider> Surface => _surface;
+
+        /// <summary>The renderer that shows the scan, or null.</summary>
+        public Renderer Solid => ResolveSolid();
+
         /// <summary>The way the sweep climbs: up its host's height.</summary>
         public Vector3 SweepSpan
         {
@@ -93,17 +109,21 @@ namespace MoonProject.Gameplay
         internal int Owed { get; set; }
 
         /// <summary>Wraps a <c>Scan_1..N</c> node on an R1 ruin piece as a target of a structure set.</summary>
+        /// <param name="surfaceRoot">The ruin (or crate) whose colliders the scan beam may land on.</param>
         public static ScanFragment ForRuinTarget(string fragmentId, string blueprintId,
-            IReadOnlyList<string> structureIds, int index, int count, ScanSize size, string hostId, Transform target)
+            IReadOnlyList<string> structureIds, int index, int count, ScanSize size, string hostId, Transform target,
+            Transform surfaceRoot)
         {
-            return new ScanFragment(fragmentId, blueprintId, structureIds, index, count, size, hostId, target, null);
+            return new ScanFragment(fragmentId, blueprintId, structureIds, index, count, size, hostId, target,
+                surfaceRoot, null);
         }
 
         /// <summary>Wraps a story scan's point on Art's mesh node <paramref name="target"/>'s parent.</summary>
-        public static ScanFragment ForStoryTarget(StoryScan story, string hostId, Transform target)
+        public static ScanFragment ForStoryTarget(StoryScan story, string hostId, Transform target,
+            Transform surfaceRoot)
         {
             return new ScanFragment(story.FragmentId, story.FragmentId, Array.Empty<string>(), 0, 1, story.Size,
-                hostId, target, story.TextKey);
+                hostId, target, surfaceRoot, story.TextKey);
         }
 
         /// <summary>The sweep has climbed <paramref name="progress"/> (0..1) of it.</summary>
@@ -125,28 +145,132 @@ namespace MoonProject.Gameplay
             Apply(DissolveId, 0f);
         }
 
+        /// <summary>
+        /// Where the scan beam from <paramref name="lens"/> meets this target now: on its real surface, where the
+        /// shader draws the sweep line at its progress as seen from <paramref name="camera"/>. False when nothing shows
+        /// it.
+        /// </summary>
+        public bool TryContact(Vector3 lens, Vector3 camera, out Vector3 point, out Vector3 normal)
+        {
+            point = Point;
+            normal = Vector3.up;
+            Renderer solid = ResolveSolid();
+            if (solid == null)
+            {
+                return false;
+            }
+
+            Bounds bounds = solid.bounds;
+            Vector2 toCamera = ScanLine.TowardCamera(bounds.center, camera);
+            float height = ScanLine.Height(bounds, toCamera, Progress);
+            Vector3 aim = ScanLine.AimPoint(bounds, height);
+            if (!Hit(solid, lens, aim, out point, out normal))
+            {
+                Nearest(solid, aim, out point, out normal);
+                return true;
+            }
+
+            // Once more where the tilted line crosses the face the beam met, so the beam ends on the drawn line.
+            float drift = height - ScanLine.SweepHeightOf(point, bounds.center, toCamera);
+            Vector3 onLine = ScanLine.AimPoint(bounds, aim.y + drift);
+            if (Hit(solid, lens, onLine, out Vector3 lined, out Vector3 linedNormal))
+            {
+                point = lined;
+                normal = linedNormal;
+            }
+
+            return true;
+        }
+
+        private bool Hit(Renderer solid, Vector3 lens, Vector3 aim, out Vector3 point, out Vector3 normal)
+        {
+            return _surface.Length > 0
+                ? SurfaceAim.TryHit(_surface, lens, aim, out point, out normal)
+                : SurfaceAim.TryHitBox(BoxOf(solid, out Bounds local), local, lens, aim, out point, out normal);
+        }
+
+        private void Nearest(Renderer solid, Vector3 aim, out Vector3 point, out Vector3 normal)
+        {
+            if (!SurfaceAim.TryClosest(_surface, aim, out point, out normal))
+            {
+                SurfaceAim.ClosestOnBox(BoxOf(solid, out Bounds local), local, aim, out point, out normal);
+            }
+        }
+
+        /// <summary>The renderer's mesh bounds and the matrix carrying them (its world bounds where it has no mesh).
+        /// </summary>
+        private static Matrix4x4 BoxOf(Renderer solid, out Bounds local)
+        {
+            if (solid.TryGetComponent(out MeshFilter filter) && filter.sharedMesh != null)
+            {
+                local = filter.sharedMesh.bounds;
+                return solid.localToWorldMatrix;
+            }
+
+            if (solid is SkinnedMeshRenderer skinned)
+            {
+                local = skinned.localBounds;
+                return solid.localToWorldMatrix;
+            }
+
+            local = solid.bounds;
+            return Matrix4x4.identity;
+        }
+
+        private static Transform HostOf(Transform target)
+        {
+            return target.parent != null ? target.parent : target;
+        }
+
+        /// <summary>
+        /// The solid prop colliders under <paramref name="root"/> around <paramref name="solid"/>: a ruin's fitted hull
+        /// boxes on the part that shows the scan. One that holds the renderer with room to spare is a hull round it,
+        /// not its surface (an open crate's box round what lies in it), and is left out.
+        /// </summary>
+        private static Collider[] GatherSurface(Transform root, Renderer solid)
+        {
+            if (solid == null)
+            {
+                return Array.Empty<Collider>();
+            }
+
+            Bounds around = solid.bounds;
+            around.Expand(SurfaceMargin * 2f);
+            var surface = new List<Collider>();
+            foreach (Collider collider in root.GetComponentsInChildren<Collider>(true))
+            {
+                Bounds hull = collider.bounds;
+                if (!collider.isTrigger && collider.gameObject.layer == Layers.Prop && hull.Intersects(around) &&
+                    !(hull.Contains(around.min) && hull.Contains(around.max)))
+                {
+                    surface.Add(collider);
+                }
+            }
+
+            return surface.ToArray();
+        }
+
         private Renderer ResolveSolid()
         {
             if (_solid == null || !_solid.enabled || !_solid.gameObject.activeInHierarchy)
             {
-                _solid = FindClosestRenderer(_target);
+                _solid = FindClosestRenderer();
             }
 
             return _solid;
         }
 
-        private static Renderer FindClosestRenderer(Transform target)
+        private Renderer FindClosestRenderer()
         {
-            Transform root = target.parent != null ? target.parent : target;
-            Renderer[] renderers = root.GetComponentsInChildren<Renderer>(true);
+            HostOf(_target).GetComponentsInChildren(true, _renderers);
             Renderer best = null;
             float bestScore = float.MaxValue;
-            Vector3 point = target.position;
-            for (int i = 0; i < renderers.Length; i++)
+            Vector3 point = _target.position;
+            for (int i = 0; i < _renderers.Count; i++)
             {
-                Renderer r = renderers[i];
+                Renderer r = _renderers[i];
                 if (r == null || !r.enabled || !r.gameObject.activeInHierarchy ||
-                    r.name.StartsWith("UCX_", StringComparison.OrdinalIgnoreCase))
+                    r.name.StartsWith(CollisionHullPrefix, StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }

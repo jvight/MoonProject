@@ -204,6 +204,11 @@ namespace MoonProject.Gameplay
 
             _debris.Step(deltaTime);
             Vector3 scanEmitter = _anchors.ScanEmitter;
+            if (_scanBeam.Shown && _anchors.TryScanContact(scanEmitter, out Vector3 contact, out _))
+            {
+                _scanBeam.Meet(contact);
+            }
+
             _scanBeam.Step(deltaTime, scanEmitter);
             _scanRibbon.Step(deltaTime, scanEmitter);
             _flashLight.Step(deltaTime);

@@ -15,6 +15,12 @@ namespace MoonProject.Gameplay
         /// <summary>07's scan lens emitter, the point the scan beam and ribbon connect to.</summary>
         Vector3 ScanEmitter { get; }
 
+        /// <summary>
+        /// Where the scan beam from <paramref name="lens"/> meets its target's real surface now; false when no target
+        /// is under the beam.
+        /// </summary>
+        bool TryScanContact(Vector3 lens, out Vector3 point, out Vector3 normal);
+
         /// <summary>Where the beam meets the piece (world).</summary>
         Vector3 CutPoint { get; }
 
