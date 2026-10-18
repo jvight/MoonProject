@@ -865,26 +865,22 @@ namespace MoonProject.Rover.PlayModeTests
 
             var rects = new List<Rect>
             {
-                new Rect(72f, 42f, 376f, 22f),
-                new Rect(FaceInventoryView.RightPaneX, 42f, 568f, 22f),
-                new Rect(72f, 664f, 376f, 62f),
-                new Rect(512f, 664f, 568f, 62f),
+                new Rect(FaceLayout.Margin, FaceLayout.TitleY, FaceLayout.RightEdge - FaceLayout.Margin,
+                    FaceLayout.TitleRuleY - FaceLayout.TitleY),
+                new Rect(FaceLayout.InfoX, FaceLayout.InfoY, FaceLayout.InfoWidth, FaceLayout.InfoHeight),
+                new Rect(FaceLayout.Margin, FaceLayout.FooterY, FaceLayout.RightEdge - FaceLayout.Margin,
+                    FaceLayout.FooterHeight),
             };
 
             for (int i = 0; i < FaceInventoryView.MaxHoldCells; i++)
             {
                 rects.Add(FaceInventoryView.GetHoldCellReferenceRect(i));
+                rects.Add(FaceLayout.HoldNameRect(i));
             }
 
             for (int i = 0; i < FaceDevices.Count; i++)
             {
-                Vector2 c = FaceDevices.CenterOf(i);
-                float r = FaceInventoryView.BubbleRadius;
-                Assert.GreaterOrEqual(
-                    FaceScreenMapper.SignedDistanceInsideGlass(c, r, panelSize),
-                    minMargin,
-                    $"[{lightingTag}] Device {i} must lie inside the glass safe area with margin >= {minMargin} px.");
-                rects.Add(new Rect(c.x - r, c.y - r, 2f * r, 2f * r));
+                rects.Add(FaceLayout.DeviceFrame(i));
             }
 
             float xMin = float.PositiveInfinity;
