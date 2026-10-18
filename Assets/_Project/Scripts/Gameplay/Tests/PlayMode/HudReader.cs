@@ -7,8 +7,9 @@ namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
     /// What a player sees of UI's HUD and 07's face screen in the real Main scene, read by element name (UI's
-    /// GameUI.uxml and FaceInventoryView): the objective line, the prompt chip, the build strip and the face screen's
-    /// focused element. Shown means displayed, visible and not faded out all the way up, with text in it.
+    /// GameUI.uxml and FaceInventoryView): the objective line, the prompt chip (what 07 is in place to do), the key
+    /// chip under the line (the step's verb, or the opening's first look and drive words), the build strip and the
+    /// face screen's focused element. Shown means displayed, visible and not faded out all the way up, with text in it.
     /// </summary>
     public sealed class HudReader
     {
@@ -16,6 +17,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const string Prompt = "prompt";
         private const string PromptGlyphLabel = "prompt-glyph-label";
         private const string PromptWord = "prompt-word";
+        private const string KeyChipRoot = "look-hint";
+        private const string KeyChipGlyphLabel = "look-hint-glyph-label";
+        private const string KeyChipWord = "look-hint-word";
         private const string BuildStrip = "build-strip";
         private const string FaceDevicePrefix = "seven-device-";
 
@@ -55,19 +59,21 @@ namespace MoonProject.Gameplay.PlayModeTests
         public string Line => TextShown(_hud.Q<Label>(NextLineText));
 
         /// <summary>The prompt chip on screen with its glyph and its word, or empty.</summary>
-        public string Chip
-        {
-            get
-            {
-                if (!Shown(_hud.Q(Prompt)))
-                {
-                    return string.Empty;
-                }
+        public string Chip => ChipShown(Prompt, PromptGlyphLabel, PromptWord);
 
-                string glyph = TextShown(_hud.Q<Label>(PromptGlyphLabel));
-                string word = TextShown(_hud.Q<Label>(PromptWord));
-                return glyph.Length > 0 && word.Length > 0 ? glyph + " " + word : string.Empty;
+        /// <summary>The key chip under the objective line with its glyph and its word, or empty.</summary>
+        public string KeyChip => ChipShown(KeyChipRoot, KeyChipGlyphLabel, KeyChipWord);
+
+        private string ChipShown(string root, string glyphLabel, string wordLabel)
+        {
+            if (!Shown(_hud.Q(root)))
+            {
+                return string.Empty;
             }
+
+            string glyph = TextShown(_hud.Q<Label>(glyphLabel));
+            string word = TextShown(_hud.Q<Label>(wordLabel));
+            return glyph.Length > 0 && word.Length > 0 ? glyph + " " + word : string.Empty;
         }
 
         /// <summary>True while the build strip shows (build mode's menu or placing).</summary>

@@ -47,9 +47,11 @@ namespace MoonProject.Gameplay.PlayModeTests
     {
         private const int TestTimeoutMs = 900000;
 
-        /// <summary>Seconds the opening may take end to end (opening-v2 §6: the Playthrough runs in ≤ 10
-        /// min).</summary>
-        private const float TotalBudget = 600f;
+        /// <summary>
+        /// Seconds the opening may take end to end through the real keys, standing still for each line (the Director's
+        /// 12 min, up from opening-v2 §6's 10 for the scripted run).
+        /// </summary>
+        private const float TotalBudget = 720f;
 
         private const float StopSpeed = 0.3f;
         private const float SealStandOff = 1.6f;
@@ -166,6 +168,13 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const int PlaceRings = 4;
         private const int PlaceRingSpots = 8;
 
+        /// <summary>UI's localization keys of the verb words its chips show (UiKeys.Verb*).</summary>
+        private const string VerbScanKey = "ui.verb.scan";
+
+        private const string VerbCutKey = "ui.verb.cut";
+        private const string VerbBuildKey = "ui.verb.build";
+        private const string VerbFitKey = "ui.verb.fit";
+
         /// <summary>The face screen's device bubble of 07's cutter, where the spare igniter fits.</summary>
         private const int CutterDevice = 1;
 
@@ -181,6 +190,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private readonly List<string> _lineWaits = new List<string>();
         private readonly List<string> _guidanceGaps = new List<string>();
         private HudReader _hud;
+        private string _stepChip = string.Empty;
         private ILocalization _localization;
         private int _warnings;
         private int _crawls;
@@ -424,7 +434,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                       $"{ViewOff(fragment.Point):F0} deg off it ({View(fragment.Point)}), " +
                       $"{Vector3.Distance(Flat(fragment.Point), Flat(_rover.Position)):F2} m flat, " +
                       $"{HeadingOff(fragment.Point):F0} deg off");
-            yield return FirstUse("scan: hold E");
+            yield return FirstUse("scan: hold E", VerbScanKey);
             Press(_keyboard.eKey);
             yield return Until(() => fragment.Scanned, scans.Tuning.Seconds(fragment.Size) + ScanAllowance,
                 $"held E scans {fragment.FragmentId}");
@@ -495,7 +505,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                     yield return NoseIn(crate);
                 }
 
-                yield return FirstUse("cut: hold E");
+                yield return FirstUse("cut: hold E", VerbCutKey);
                 Press(_keyboard.eKey);
                 yield return Until(() => crate.Opened, SealCutTimeout, $"held E cuts the seal of {cache.Id}",
                     () => $"crate candidate {_gameplay.Containers.Candidate?.Id ?? "none"}, cutter ready " +
@@ -547,7 +557,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             StructureDefinition definition = build.Catalog.Find(structureId);
             Assert.IsTrue(Known(structureId), $"{structureId}'s blueprint is learned");
             yield return DriveTo(Flat(at) + Vector3.back * BuildStandOff, 1f, "beside the build spot");
-            yield return FirstUse("build: B");
+            yield return FirstUse("build: B", VerbBuildKey);
             yield return Tap(_keyboard.bKey);
             yield return Until(() => build.State == BuildModeState.Menu, FollowTimeout, "B opens the build menu");
             yield return Until(() => _hud.BuildStripShown, FollowTimeout, "the build strip shows the menu");
@@ -639,29 +649,41 @@ namespace MoonProject.Gameplay.PlayModeTests
                 $"the objective line reads '{expected}' on screen ({why})",
                 () => $"on screen: line '{_hud.Line}', chip '{_hud.Chip}'");
             _lineWaits.Add(string.Format(CultureInfo.InvariantCulture, "{0}: {1:F1} s", expected, Time.time - still));
+            float chipBy = Time.time + ChipTimeout;
+            while (_hud.KeyChip.Length == 0 && Time.time < chipBy)
+            {
+                yield return null;
+            }
+
+            _stepChip = _hud.KeyChip;
         }
 
         /// <summary>
-        /// On <paramref name="verb"/>'s first use its prompt chip shows (glyph and word) once 07 is in place for it; a
-        /// missing chip is a guidance gap the run lists at the end rather than stopping on.
+        /// On <paramref name="verb"/>'s first use a chip named it: the key chip shown with the step's line (its word,
+        /// <paramref name="wordKey"/>, UI's), or a prompt chip once 07 is in place for it. A missing chip is a guidance
+        /// gap the run lists at the end rather than stopping on.
         /// </summary>
-        private IEnumerator FirstUse(string verb)
+        private IEnumerator FirstUse(string verb, string wordKey)
         {
             if (!_verbsUsed.Add(verb))
             {
                 yield break;
             }
 
+            string word = _localization.Get(wordKey);
+            string chip = _stepChip.EndsWith(" " + word, StringComparison.Ordinal) ? _stepChip + " (with the line)"
+                : string.Empty;
             float deadline = Time.time + ChipTimeout;
-            while (_hud.Chip.Length == 0 && Time.time < deadline)
+            while (chip.Length == 0 && Time.time < deadline)
             {
+                chip = _hud.Chip;
                 yield return null;
             }
 
-            string chip = _hud.Chip;
             if (chip.Length == 0)
             {
-                _guidanceGaps.Add($"{verb}: no prompt chip on its first use (line on screen: '{_hud.Line}')");
+                _guidanceGaps.Add($"{verb}: no chip on its first use (with the line: '{_stepChip}'; line on " +
+                                  $"screen: '{_hud.Line}')");
                 Capture("gap-" + _verbsUsed.Count.ToString(CultureInfo.InvariantCulture));
             }
 
@@ -714,7 +736,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private IEnumerator FitTheIgniter()
         {
             RoverStartKit kit = _gameplay.StartKit;
-            yield return FirstUse("fit the igniter: Tab");
+            yield return FirstUse("fit the igniter: Tab", VerbFitKey);
             yield return Tap(_keyboard.tabKey);
             yield return Until(() => _hud.FaceFocus.Length > 0, FollowTimeout, "the face screen opens with a focus");
             for (int step = 0; step < MaxMenuSteps && _hud.FaceFocusedDevice != CutterDevice; step++)
