@@ -131,10 +131,18 @@ namespace MoonProject.World.Editor
         private static void StandRock(SceneBuildContext context, Transform parent, string id, Vector3 position,
             float yaw)
         {
-            GameObject rock = Stand(context, parent, id, WorldPaths.R1RockPrefab(id), position,
-                Quaternion.Euler(0f, yaw, 0f) * Vector3.forward, false);
-            rock.layer = Layers.Prop;
-            foreach (MeshFilter filter in rock.GetComponentsInChildren<MeshFilter>())
+            Stand(context, parent, id, WorldPaths.R1RockPrefab(id), position,
+                Quaternion.Euler(0f, yaw, 0f) * Vector3.forward, true);
+        }
+
+        /// <summary>
+        /// Makes a prop without authored collision proxies (the lander, the rocks, the debris and the dead machines)
+        /// solid: a convex collider on each of its meshes, on <see cref="Layers.Prop"/>.
+        /// </summary>
+        private static void Solidify(GameObject prop)
+        {
+            prop.layer = Layers.Prop;
+            foreach (MeshFilter filter in prop.GetComponentsInChildren<MeshFilter>())
             {
                 filter.gameObject.layer = Layers.Prop;
                 var collider = filter.gameObject.AddComponent<MeshCollider>();
@@ -159,7 +167,7 @@ namespace MoonProject.World.Editor
             GameObject lander = context.InstantiatePrefab(prefab, landerRoot, ground,
                 lean * facing * prefab.transform.localRotation);
             lander.name = CargoLanderName;
-            RuinColliderBuilder.Fit(lander);
+            Solidify(lander);
             return lander;
         }
 
@@ -277,7 +285,7 @@ namespace MoonProject.World.Editor
         }
 
         /// <summary>
-        /// Stands an R1 prop facing <paramref name="forward"/>; a <paramref name="solid"/> one gets fitted colliders
+        /// Stands an R1 prop facing <paramref name="forward"/>; a <paramref name="solid"/> one gets convex colliders
         /// (markings on the ground and the signal's light stay passable).
         /// </summary>
         private static GameObject Stand(SceneBuildContext context, Transform parent, string name, string prefabPath,
@@ -289,7 +297,7 @@ namespace MoonProject.World.Editor
             prop.name = name;
             if (solid)
             {
-                RuinColliderBuilder.Fit(prop);
+                Solidify(prop);
             }
 
             return prop;

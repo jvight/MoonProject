@@ -571,6 +571,74 @@ def _build_crushed_module(root) -> None:
     ruins_common.to_ruin_object(mb, "ModuleC_Crushed", parent=root)
 
 
+def _build_collision_proxies(root) -> None:
+    """Build UCX_<Part>_<n> convex collision proxies (<= 32 faces each) for HabitatModules."""
+    # ModuleA_Main hull & footings (recessed to z >= -1.28 so nothing blocks the front AirlockPanel / AirlockReadout face)
+    ruins_common.add_convex_proxy(
+        root,
+        "UCX_ModuleA_Main_1",
+        ruins_common.convex_prism_points_u(
+            center_u=(-3.45, 1.56, -0.04),
+            radius_a=1.50,
+            radius_b=1.52,
+            length=2.48,
+            axis="z",
+            segs=6,
+            clip_min_y_u=0.02,
+        ),
+    )
+    # West accordion bellows + transition tunnel connecting ModuleA_Main and ModuleB_Lab
+    ruins_common.add_convex_proxy(
+        root,
+        "UCX_BellowsJoints_1",
+        ruins_common.convex_box_points_u(
+            center_u=(-1.68, 1.52, 0.0),
+            size_u=(1.36, 3.00, 2.86),
+            top_scale_xz=(1.0, 0.88),
+            clip_min_y_u=0.02,
+        ),
+    )
+    # ModuleB_Lab hull & footings
+    ruins_common.add_convex_proxy(
+        root,
+        "UCX_ModuleB_Lab_1",
+        ruins_common.convex_prism_points_u(
+            center_u=(0.30, 1.56, 0.0),
+            radius_a=1.52,
+            radius_b=1.54,
+            length=2.74,
+            axis="x",
+            segs=6,
+            clip_min_y_u=0.02,
+        ),
+    )
+    # East accordion bellows connecting ModuleB_Lab and ModuleC_Crushed
+    ruins_common.add_convex_proxy(
+        root,
+        "UCX_BellowsJoints_2",
+        ruins_common.convex_box_points_u(
+            center_u=(2.12, 1.52, 0.0),
+            size_u=(0.94, 3.00, 2.82),
+            top_scale_xz=(1.0, 0.88),
+            clip_min_y_u=0.02,
+        ),
+    )
+    # ModuleC_Crushed hull & footings
+    ruins_common.add_convex_proxy(
+        root,
+        "UCX_ModuleC_Crushed_1",
+        ruins_common.convex_prism_points_u(
+            center_u=(4.00, 1.50, 0.0),
+            radius_a=1.48,
+            radius_b=1.46,
+            length=2.84,
+            axis="x",
+            segs=5,
+            clip_min_y_u=0.02,
+        ),
+    )
+
+
 def build(skip_renders: bool = False) -> None:
     ruins_common.reset_ruins_scene()
     root = r1kit.create_root("HabitatModules")
@@ -581,6 +649,7 @@ def build(skip_renders: bool = False) -> None:
     _build_bellows_joints(root)
     _build_lab_module(root)
     _build_crushed_module(root)
+    _build_collision_proxies(root)
 
     # Scan points as empties named Scan_<n>
     r1kit.add_empty("Scan_1", (-3.45, 2.46, -1.44), parent=root)  # AirlockPanel (`SEALED · 1988 · STANDBY`)

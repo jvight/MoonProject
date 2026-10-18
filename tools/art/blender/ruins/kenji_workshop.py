@@ -356,6 +356,96 @@ def _build_workbench_and_racks(root) -> None:
     ruins_common.to_ruin_object(mb, "WorkbenchAndRacks", parent=root)
 
 
+def _build_collision_proxies(root) -> None:
+    """Build authored convex hull collision proxies (`UCX_<Part>_<n>`, <= 32 faces each).
+
+    Leaves the 3.24 m wide x 1.98 m high front portal doorway and interior floor open so
+    Rover 07 (1.47 W x 2.01 L x 1.59 H) can drive into the workshop and scan the interior.
+    """
+    # Left lower curved side wall
+    ruins_common.add_convex_proxy(
+        root,
+        "UCX_QuonsetShell_1",
+        ruins_common.convex_box_points_u(
+            center_u=(-2.42, 1.02, 0.06),
+            size_u=(0.28, 2.00, 5.36),
+            clip_min_y_u=0.02,
+        ),
+    )
+    # Right lower curved side wall
+    ruins_common.add_convex_proxy(
+        root,
+        "UCX_QuonsetShell_2",
+        ruins_common.convex_box_points_u(
+            center_u=(2.42, 1.02, 0.06),
+            size_u=(0.28, 2.00, 5.36),
+            clip_min_y_u=0.02,
+        ),
+    )
+    # Closed rear arched bulkhead wall
+    ruins_common.add_convex_proxy(
+        root,
+        "UCX_QuonsetShell_3",
+        ruins_common.convex_box_points_u(
+            center_u=(0.0, 1.46, 2.66),
+            size_u=(4.84, 2.88, 0.20),
+            top_scale_xz=(0.72, 1.0),
+            clip_min_y_u=0.02,
+        ),
+    )
+    # Front-left portal jamb wall (leaves x in [-1.62, +1.62] open)
+    ruins_common.add_convex_proxy(
+        root,
+        "UCX_QuonsetShell_4",
+        ruins_common.convex_box_points_u(
+            center_u=(-2.03, 1.02, -2.62),
+            size_u=(0.82, 2.00, 0.20),
+            clip_min_y_u=0.02,
+        ),
+    )
+    # Front-right portal jamb wall (leaves x in [-1.62, +1.62] open)
+    ruins_common.add_convex_proxy(
+        root,
+        "UCX_QuonsetShell_5",
+        ruins_common.convex_box_points_u(
+            center_u=(2.03, 1.02, -2.62),
+            size_u=(0.82, 2.00, 0.20),
+            clip_min_y_u=0.02,
+        ),
+    )
+    # Upper roof arch & front gable lintel above y = 1.98 m (rests on side/rear/jamb walls)
+    ruins_common.add_convex_proxy(
+        root,
+        "UCX_QuonsetShell_6",
+        ruins_common.convex_box_points_u(
+            center_u=(0.0, 2.49, 0.06),
+            size_u=(4.52, 1.02, 5.36),
+            top_scale_xz=(0.56, 1.0),
+            clip_min_y_u=1.98,
+        ),
+    )
+    # Kenji's workbench on the left side of the interior (top at y = 0.94 m, below Scan_1 at y = 0.96 m)
+    ruins_common.add_convex_proxy(
+        root,
+        "UCX_WorkbenchAndRacks_1",
+        ruins_common.convex_box_points_u(
+            center_u=(-0.78, 0.48, 0.28),
+            size_u=(1.62, 0.92, 0.78),
+            clip_min_y_u=0.02,
+        ),
+    )
+    # Rear-right storage cabinet
+    ruins_common.add_convex_proxy(
+        root,
+        "UCX_WorkbenchAndRacks_2",
+        ruins_common.convex_box_points_u(
+            center_u=(1.36, 0.91, 1.65),
+            size_u=(0.70, 1.78, 0.74),
+            clip_min_y_u=0.02,
+        ),
+    )
+
+
 def build(skip_renders: bool = False) -> None:
     ruins_common.reset_ruins_scene()
     root = r1kit.create_root("KenjiWorkshop")
@@ -364,6 +454,7 @@ def build(skip_renders: bool = False) -> None:
     _build_hoist_rail(root)
     _build_hanging_lamp(root)
     _build_workbench_and_racks(root)
+    _build_collision_proxies(root)
 
     # Scan points as empties named Scan_<n>
     r1kit.add_empty("Scan_1", (-0.78, 0.96, 0.28), parent=root)   # Kenji's workbench
@@ -379,7 +470,13 @@ def build(skip_renders: bool = False) -> None:
         cam_elev_deg=7.5,
         skip_renders=skip_renders,
     )
-    print(f"[kenji_workshop] Exported {fbx_path} and rendered {dawn_path.name}, {night_path.name}")
+    wire_path = ruins_common.render_ruin_collision_wireframe(
+        root,
+        slug="kenji_workshop",
+        cam_angle_deg=-18.0,
+        cam_elev_deg=18.0,
+    )
+    print(f"[kenji_workshop] Exported {fbx_path} and rendered {dawn_path.name}, {night_path.name}, {wire_path.name}")
 
 
 if __name__ == "__main__":
