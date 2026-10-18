@@ -11,9 +11,9 @@ namespace MoonProject.World.Editor
     /// <summary>
     /// Stands opening v2's places in the scene at build time (docs/design/opening-v2.md §4), all from Art's R1 kits:
     /// the landed cargo lander with its service port and amber emergency beacon (and the <see cref="LanderBeacon"/>
-    /// that pulses it and its cable's markers), 07's dead charging post at the wake with its old cable to the port,
-    /// the port's cable to the build apron and the apron's markings, the dead west relay mast with its (hidden) signal
-    /// pillar, Kestrel-3's debris, the big boulders near the routes and the rare big boulders on the floor
+    /// that pulses it and its cable's clip halos), 07's dead charging post at the wake with its old, torn cable to
+    /// the port and the port's cable to the build apron (<see cref="GroundCableLayer"/>), the apron's markings, the
+    /// dead west relay mast with its (hidden) signal pillar, Kestrel-3's debris, the big boulders near the routes and the rare big boulders on the floor
     /// (<see cref="BigBoulderPlanner"/>). Everything solid is fitted with colliders on <see cref="Layers.Prop"/>.
     /// </summary>
     public static class OpeningLayoutPlacer
@@ -40,10 +40,6 @@ namespace MoonProject.World.Editor
         private const string BeaconLightAnchor = "Light_Anchor";
         private const string BeaconLens = "BeaconLens";
         private const string ApronCableChannel = "CableChannel_Anchor";
-        private const string SegmentStart = "Start_Anchor";
-        private const string SegmentEnd = "End_Anchor";
-        private const string SegmentMarker = "MarkerLamp";
-        private const string EndPlug = "Plug_Anchor";
         private const string PillarBeam = "PillarBeam";
 
         private const string WestMastAnchor = WorldAnchorIds.RelayPrefix + "1";
@@ -81,11 +77,14 @@ namespace MoonProject.World.Editor
                 Require(anchors, WorldAnchorIds.PlaceLander), out Matrix4x4 upright);
             GameObject port = StandPort(context, settings, surface, landerRoot, lander, upright);
             GroundCableSettings cables = landmarks.WakeCable;
-            List<Renderer> markers = LayCable(context, props, "WakeCable", surface, cables,
-                Node(post, PostCableOrigin).position, Node(port, PortWakeSocket).position);
-            LayCable(context, props, "ApronCable", surface, cables, Node(markings, ApronCableChannel).position,
+            var haloMesh = context.LoadAsset<Mesh>(WorldPaths.BeaconHaloMesh);
+            GroundCableLayer.Wiring wiring = GroundCableLayer.LayWakeCable(context, props, surface, cables,
+                Node(post, PostCableOrigin).position, Node(port, PortWakeSocket).position, haloMesh,
+                context.LoadAsset<Material>(WorldPaths.CableMarkerHaloMaterial),
+                context.LoadAsset<Material>(WorldPaths.CableTearSparkMaterial));
+            GroundCableLayer.LayApronCable(context, props, surface, cables, Node(markings, ApronCableChannel).position,
                 Node(port, PortApronSocket).position);
-            StandBeacon(context, settings, landerRoot, lander, upright, markers);
+            StandBeacon(context, settings, landerRoot, lander, upright, wiring);
 
             StandAll(context, context.CreateChild("Debris", props).transform, anchors, surface, landmarks.Debris);
             Transform boulders = context.CreateChild("Boulders", props).transform;
@@ -188,10 +187,10 @@ namespace MoonProject.World.Editor
 
         /// <summary>
         /// Art's amber beacon on top of the hull, World's tight halo and warm light at its light anchor, and the
-        /// <see cref="LanderBeacon"/> that pulses them and runs the wake cable's markers toward it.
+        /// <see cref="LanderBeacon"/> that pulses them and runs the waves along the wake cable's clip halos.
         /// </summary>
         private static void StandBeacon(SceneBuildContext context, WorldSettings settings, Transform landerRoot,
-            GameObject lander, Matrix4x4 upright, List<Renderer> markers)
+            GameObject lander, Matrix4x4 upright, GroundCableLayer.Wiring wiring)
         {
             Bounds local = LocalBounds(upright, lander);
             Vector3 top = upright.MultiplyPoint3x4(new Vector3(local.center.x, local.max.y, local.center.z));
@@ -221,77 +220,20 @@ namespace MoonProject.World.Editor
             serialized.FindProperty("_lens").objectReferenceValue = Node(beacon, BeaconLens).GetComponent<Renderer>();
             serialized.FindProperty("_halo").objectReferenceValue = haloRenderer;
             serialized.FindProperty("_light").objectReferenceValue = light;
-            SerializedProperty list = serialized.FindProperty("_markers");
-            SerializedProperty halos = serialized.FindProperty("_markerHalos");
-            list.arraySize = markers.Count;
-            halos.arraySize = markers.Count;
-            var haloMesh = context.LoadAsset<Mesh>(WorldPaths.BeaconHaloMesh);
-            var markerHalo = context.LoadAsset<Material>(WorldPaths.CableMarkerHaloMaterial);
-            for (int i = 0; i < markers.Count; i++)
-            {
-                list.GetArrayElementAtIndex(i).objectReferenceValue = markers[i];
-                halos.GetArrayElementAtIndex(i).objectReferenceValue =
-                    StandMarkerHalo(context, markers[i], haloMesh, markerHalo);
-            }
-
+            Assign(serialized.FindProperty("_postClips"), wiring.PostClips);
+            Assign(serialized.FindProperty("_landerClips"), wiring.LanderClips);
+            serialized.FindProperty("_spark").objectReferenceValue = wiring.Spark;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             context.AddSystem(pulse);
         }
 
-        /// <summary>
-        /// A marker lamp's small halo, at the lamp's drawn centre (Art's nodes pivot at their model's root).
-        /// </summary>
-        private static Renderer StandMarkerHalo(SceneBuildContext context, Renderer marker, Mesh mesh,
-            Material material)
+        private static void Assign(SerializedProperty list, Renderer[] renderers)
         {
-            GameObject halo = context.CreateChild("Halo", marker.transform);
-            halo.transform.position = marker.bounds.center;
-            halo.AddComponent<MeshFilter>().sharedMesh = mesh;
-            var renderer = halo.AddComponent<MeshRenderer>();
-            renderer.sharedMaterial = material;
-            renderer.shadowCastingMode = ShadowCastingMode.Off;
-            renderer.receiveShadows = false;
-            renderer.lightProbeUsage = LightProbeUsage.Off;
-            renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
-            return renderer;
-        }
-
-        /// <summary>
-        /// Lays Art's tileable cable segments joint to joint on the dust from <paramref name="from"/> to the ground
-        /// under a socket, and Art's cable end rising into <paramref name="socket"/>. Returns the segments' marker
-        /// lamps in order from <paramref name="from"/>.
-        /// </summary>
-        private static List<Renderer> LayCable(SceneBuildContext context, Transform parent, string name,
-            MoonSurface surface, GroundCableSettings tuning, Vector3 from, Vector3 socket)
-        {
-            var segmentPrefab = context.LoadAsset<GameObject>(WorldPaths.GroundCableSegmentPrefab);
-            var endPrefab = context.LoadAsset<GameObject>(WorldPaths.GroundCableEndPrefab);
-            float segmentLength = Vector3.Distance(Node(segmentPrefab, SegmentStart).position,
-                Node(segmentPrefab, SegmentEnd).position);
-            Vector3 plug = Node(endPrefab, EndPlug).position - Node(endPrefab, SegmentStart).position;
-            float endReach = new Vector2(plug.x, plug.z).magnitude;
-
-            Vector3 toSocket = Flat(socket - from);
-            Vector3 endStart = socket - toSocket * endReach;
-            Transform cable = context.CreateChild(name, parent).transform;
-            Vector3[] joints = CableRoute.Joints(new Vector2(from.x, from.z), new Vector2(endStart.x, endStart.z),
-                segmentLength, tuning.Wander, tuning.Bends, surface.SampleHeight);
-            var markers = new List<Renderer>(joints.Length);
-            for (int i = 1; i < joints.Length; i++)
+            list.arraySize = renderers.Length;
+            for (int i = 0; i < renderers.Length; i++)
             {
-                Vector3 span = joints[i] - joints[i - 1];
-                GameObject segment = context.InstantiatePrefab(segmentPrefab, cable, (joints[i] + joints[i - 1]) * 0.5f,
-                    Quaternion.LookRotation(span, Vector3.up) * segmentPrefab.transform.localRotation);
-                Vector3 scale = segment.transform.localScale;
-                scale.y *= span.magnitude / segmentLength;
-                segment.transform.localScale = scale;
-                markers.Add(Node(segment, SegmentMarker).GetComponent<Renderer>());
+                list.GetArrayElementAtIndex(i).objectReferenceValue = renderers[i];
             }
-
-            Vector3 last = joints[joints.Length - 1];
-            context.InstantiatePrefab(endPrefab, cable, last,
-                Quaternion.LookRotation(Flat(socket - last), Vector3.up) * endPrefab.transform.localRotation);
-            return markers;
         }
 
         private static void StandAll(SceneBuildContext context, Transform parent, WorldAnchors anchors,

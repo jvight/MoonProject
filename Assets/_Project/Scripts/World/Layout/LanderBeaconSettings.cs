@@ -57,16 +57,18 @@ namespace MoonProject.World
         [Range(2f, 40f)]
         [SerializeField] private float _lightRange = 16f;
 
-        [Tooltip("Emission strength the old cable's marker lamps rest at (R1Lit _EmissionStrength): a faint amber " +
-            "dotted line on the dust.")]
+        [Tooltip("Brightness the dim warm halo on each of the old cable's stake clips rests at: a faint amber dotted " +
+            "line on the dust.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _clipHaloRest = 0.22f;
+
+        [Tooltip("Extra brightness a clip's halo gains as the lander's calm wave passes it (lander side only: the " +
+            "cable is torn, so the wave runs from the lander out to the tear and no further).")]
         [Range(0f, 2f)]
-        [SerializeField] private float _markerGlow = 0.35f;
+        [SerializeField] private float _clipHaloPulse = 0.5f;
 
-        [Tooltip("Extra emission strength a marker lamp gains as the wave passes it.")]
-        [Range(0f, 3f)]
-        [SerializeField] private float _markerPulse = 1.2f;
-
-        [Tooltip("Seconds the wave takes to run the cable's markers from 07's post to the lander.")]
+        [Tooltip("Seconds a wave takes to run one side of the cable: the Begin wave from 07's post to the tear (the " +
+            "self-test's Begin check lasts as long), the calm wave from the lander to the tear.")]
         [Range(1f, 20f)]
         [SerializeField] private float _markerRunSeconds = 4f;
 
@@ -106,24 +108,47 @@ namespace MoonProject.World
         [Range(1f, 3f)]
         [SerializeField] private float _flashHaloSwell = 1.25f;
 
-        [Tooltip("Extra emission strength a marker lamp gains as the single wave sent when 07 begins its recovery " +
-            "passes it: brighter than the calm waves, leading 07 to the lander.")]
-        [Range(0f, 6f)]
-        [SerializeField] private float _beginWavePulse = 4f;
-
-        [Tooltip("Brightness of the small halo a marker lamp blooms with as the Begin wave passes it (the calm waves " +
-            "never light it).")]
+        [Tooltip("Extra brightness a clip's halo blooms with as the single wave sent when 07 begins its recovery " +
+            "passes it: brighter than the calm waves, from 07's post until it dies at the tear.")]
         [Range(0f, 4f)]
         [SerializeField] private float _markerHaloIntensity = 1.6f;
 
-        [Tooltip("Radius of a marker lamp's halo, metres: small, a soft bloom around the lamp.")]
+        [Tooltip("Radius of a clip's halo, metres: small, a soft bloom around the clip.")]
         [Range(0.02f, 0.5f)]
         [SerializeField] private float _markerHaloRadius = 0.14f;
 
-        [Tooltip("How quickly a marker's halo fades behind the wave (a power of the wave's lift): higher is a " +
+        [Tooltip("How quickly a clip's halo fades behind the Begin wave (a power of the wave's lift): higher is a " +
             "quicker decay.")]
         [Range(1f, 6f)]
         [SerializeField] private float _markerHaloFalloff = 2f;
+
+        [Header("The tear (the Begin wave dies there)")]
+        [Tooltip("Seconds the last clip before the tear stutters once the Begin wave reaches it, dimming out.")]
+        [Range(0.2f, 3f)]
+        [SerializeField] private float _tearStutterSeconds = 1.2f;
+
+        [Tooltip("How many times the last clip flickers in its stutter.")]
+        [Range(1, 6)]
+        [SerializeField] private int _tearStutterFlickers = 3;
+
+        [Tooltip("Seconds after the Begin wave reaches the tear that one tiny cold spark ticks off the torn copper.")]
+        [Range(0f, 2f)]
+        [SerializeField] private float _sparkDelay = 0.45f;
+
+        [Tooltip("Seconds the spark is lit: a tick, never a fizz (no smoke, no fire).")]
+        [Range(0.03f, 0.4f)]
+        [SerializeField] private float _sparkSeconds = 0.1f;
+
+        [Tooltip("Brightness of the spark's halo at its peak.")]
+        [Range(0f, 6f)]
+        [SerializeField] private float _sparkIntensity = 2.4f;
+
+        [Tooltip("Radius of the spark's halo, metres: a pin-point.")]
+        [Range(0.02f, 0.3f)]
+        [SerializeField] private float _sparkRadius = 0.07f;
+
+        [Tooltip("Colour of the spark: cold against the cable's warm amber, a dead end.")]
+        [SerializeField] private Color _sparkColor = Palette.Get(PaletteSwatch.TechGlow);
 
         public Color Color => _color;
         public float Period => _period;
@@ -135,8 +160,8 @@ namespace MoonProject.World
         public float HaloMinAngle => _haloMinAngle;
         public float LightIntensity => _lightIntensity;
         public float LightRange => _lightRange;
-        public float MarkerGlow => _markerGlow;
-        public float MarkerPulse => _markerPulse;
+        public float ClipHaloRest => _clipHaloRest;
+        public float ClipHaloPulse => _clipHaloPulse;
         public float MarkerRunSeconds => _markerRunSeconds;
         public float MarkerRepeatSeconds => _markerRepeatSeconds;
         public float MarkerWaveWidth => _markerWaveWidth;
@@ -146,9 +171,15 @@ namespace MoonProject.World
         public float FlashEdgeSeconds => _flashEdgeSeconds;
         public float FlashBoost => _flashBoost;
         public float FlashHaloSwell => _flashHaloSwell;
-        public float BeginWavePulse => _beginWavePulse;
         public float MarkerHaloIntensity => _markerHaloIntensity;
         public float MarkerHaloRadius => _markerHaloRadius;
         public float MarkerHaloFalloff => _markerHaloFalloff;
+        public float TearStutterSeconds => _tearStutterSeconds;
+        public int TearStutterFlickers => _tearStutterFlickers;
+        public float SparkDelay => _sparkDelay;
+        public float SparkSeconds => _sparkSeconds;
+        public float SparkIntensity => _sparkIntensity;
+        public float SparkRadius => _sparkRadius;
+        public Color SparkColor => _sparkColor;
     }
 }
