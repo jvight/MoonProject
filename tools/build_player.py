@@ -96,7 +96,7 @@ def build(root, out_dir, skip_builders, timeout, showcase=False, autoplay=False,
     if backend != "mono":
         cmd += ["--arg", f"backend={backend}"]
     say("building the player through unity_batch (first builds compile player shaders and take several minutes)")
-    return subprocess.run(cmd).returncode == 0
+    return procutil.run_guarded(cmd) == 0
 
 
 def copy_licenses(root, out_dir):

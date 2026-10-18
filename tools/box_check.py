@@ -38,6 +38,7 @@ import time
 from pathlib import Path
 
 import lint
+from moonbatch import procutil
 
 TOOLS = Path(__file__).resolve().parent
 GENERATED = "Assets/_Project/Generated"
@@ -167,12 +168,19 @@ def run_logged(name, cmd, cwd, log_path):
     """Runs <cmd> in <cwd>, echoing and logging its output; returns True when it exited 0."""
     say(f"{name}: {' '.join(str(c) for c in cmd[1:])}")
     log_path.parent.mkdir(parents=True, exist_ok=True)
+    guard = procutil.ProcessTreeGuard()
     with open(log_path, "w", encoding="utf-8") as log, subprocess.Popen(
             cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8",
             errors="replace") as proc:
-        for line in proc.stdout:
-            print(line, end="", flush=True)
-            log.write(line)
+        guard.attach(proc)
+        try:
+            for line in proc.stdout:
+                print(line, end="", flush=True)
+                log.write(line)
+            proc.wait()
+        finally:
+            guard.kill()
+            guard.close()
     return proc.returncode == 0
 
 

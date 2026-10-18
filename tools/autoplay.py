@@ -39,6 +39,8 @@ GRACE_SECONDS = 90
 HWND_BOTTOM = 1
 SWP_NOSIZE = 0x0001
 SWP_NOACTIVATE = 0x0010
+STARTF_USESHOWWINDOW = 0x0001
+SW_SHOWNOACTIVATE = 4
 SM_CXSCREEN = 0
 SM_CYSCREEN = 1
 
@@ -136,7 +138,11 @@ def main():
                                             args.shot_seconds)
     say(f"launching {exe.name} on save slot '{SLOT}', output {out_dir}")
     guard = procutil.ProcessTreeGuard()
-    proc = subprocess.Popen(command, cwd=str(exe.parent))
+    # The window shows without taking focus, so a run never jumps in front of what the owner is doing.
+    startup = subprocess.STARTUPINFO()
+    startup.dwFlags |= STARTF_USESHOWWINDOW
+    startup.wShowWindow = SW_SHOWNOACTIVATE
+    proc = subprocess.Popen(command, cwd=str(exe.parent), startupinfo=startup)
     guard.attach(proc)
     try:
         if not args.visible:
