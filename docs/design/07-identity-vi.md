@@ -1,4 +1,4 @@
-# 07: hồ sơ nhân dạng (bản tiếng Việt cho anh/chị)
+# 07: hồ sơ nhân dạng (bản tiếng Việt)
 
 > Bản tiếng Việt của `07-identity.md`. Câu hỏi của anh/chị: 07 là loại robot gì, vì sao con người làm ra nó, việc
 > của nó là gì, và điều gì khiến nó dần dần có vẻ có cảm xúc.
@@ -8,7 +8,8 @@
 > - "tính cách" của 07 chỉ hiện qua hành vi, không có dòng chữ nào nói nó cảm thấy gì;
 > - 07 là một cỗ máy già, trầm buồn, không phải WALL-E.
 >
-> Những tên gọi và con số mới đều là **đề xuất**.
+> **Trạng thái: ĐÃ CHỐT** theo lựa chọn của anh/chị ngày 18/10/2026 (xem mục 4). Chỉ còn cân nặng và câu chữ cụ
+> thể ở mục 3 là đề xuất.
 
 ## 1. Hồ sơ nhân dạng
 - **Tên và đời máy:** Xe Dịch vụ Trạm của Ủy ban Mặt Trăng Quốc tế (ILC), **đời SSR-5**, số máy **3-0417**. Hãng
@@ -41,7 +42,8 @@
   - La: xong việc;
   - Si trầm: lỗi.
 
-  Người chơi nghe nó qua chính thân xe 07. Đó là mã, không phải lời nói.
+  Người chơi nghe nó qua chính thân xe 07. Đó là mã, không phải lời nói. **Đã áp dụng:** các "cử chỉ giọng máy"
+  của 07 trong game mang đúng năm ý nghĩa này.
 - **Ngày bão** (28/10/1988): 07 đang dỡ hàng từ tàu đổ bộ, đỗ trên trụ sạc nhỏ giọt khuất sau thân tàu, nên được che
   khỏi bức xạ. Kenji đặt mọi xe tự hành ở chế độ **TIẾP TỤC**, và nối trụ sạc của 07 vào nguồn sạc sâu kèm lệnh **thức
   khi có sóng mang**. Ines xếp việc căn chỉnh chảo ăng-ten và gửi dữ liệu Meridian vào hàng việc khôi phục của 07.
@@ -54,7 +56,8 @@
   xe khảo sát, xe nâng hàng…) và không có ổ lắp thiết bị. Chúng là đơn vị 01–06 của Lumen, đánh số theo thứ tự Kenji
   đưa vào hoạt động trước 07. Quy trình của trạm lần lượt cử từng chiếc đi, và mỗi chiếc dừng ở chỗ nhiệm vụ của nó
   gặp trở ngại không vượt qua được. **Cả sáu đều đã nằm yên** ở nơi chúng dừng lại. 07 là chiếc duy nhất được làm ra
-  để nâng cấp được, nên nó đi được xa hơn.
+  để nâng cấp được, nên nó đi được xa hơn. Cả sáu dùng chung một khung SSR-3, mỗi chiếc gắn một bộ phận phía trên
+  cho đúng việc của nó (đã có mô hình 02–06).
 - **Số đo:**
   - cao 1,525 m tới đỉnh đầu, 1,59 m tới đỉnh ăng-ten;
   - dài 2,01 m tính cả gầu (1,76 m từ bánh trước tới bánh sau);
@@ -65,10 +68,11 @@
 
   Đứng cạnh một người (1,75 m), nó cao tới khoảng vai.
 
-## 2. Vì sao nó có vẻ có cảm xúc: ba phương án
-Người chơi không bao giờ được bảo rằng 07 có cảm xúc; họ tự nhận ra.
+## 2. Vì sao nó có vẻ có cảm xúc: đã chốt phương án A
+B và C vẫn ghi lại bên dưới như các phương án đã loại, để không ai mở lại nhầm. Người chơi không bao giờ được bảo
+rằng 07 có cảm xúc; họ tự nhận ra.
 
-### Phương án A: bộ lập lịch tự thích nghi đã "trôi" sau 36 năm *(đề xuất chọn)*
+### Phương án A: bộ lập lịch tự thích nghi đã "trôi" sau 36 năm *(đã chốt)*
 - **Cơ chế.** Xe chạy một mình nhiều tháng thường dùng một **bộ lập lịch tự thích nghi**. Nó tự học trọng số ưu tiên
   từ kết quả: điện năng, hao mòn, việc thành hay không, và một lần quét học được bao nhiêu. Ngày trước, sau mỗi đợt
   luân phiên phi hành đoàn đặt lại các trọng số. Suốt 36 năm không ai đặt lại cả.
@@ -94,7 +98,7 @@ Người chơi không bao giờ được bảo rằng 07 có cảm xúc; họ t�
   - khóc, buồn rầu hay hờn dỗi;
   - có hành vi nào không giải thích được bằng một trọng số.
 
-### Phương án B: học theo thói quen lái từ xa của phi hành đoàn
+### Phương án B (đã loại): học theo thói quen lái từ xa của phi hành đoàn
 - **Cơ chế.** Suốt bốn năm, phi hành đoàn điều khiển 07 từ xa cho những việc tinh tế, và bộ điều khiển chuyển động
   của nó học theo kiểu lái của họ.
 - **Thể hiện:**
@@ -106,11 +110,11 @@ Người chơi không bao giờ được bảo rằng 07 có cảm xúc; họ t�
 - **Rủi ro:** dễ thành rùng rợn hoặc ủy mị (như "hồn" phi hành đoàn còn trong xe), khó giữ đúng nguyên tắc của
   anh/chị.
 
-### Phương án C: bộ báo âm và bộ điều tốc hỏng vì bức xạ
+### Phương án C (đã loại): bộ báo âm và bộ điều tốc hỏng vì bức xạ
 - **Cơ chế.** Bão làm lỗi bộ tạo âm và bộ điều tốc, nên tiếng kêu lệch cao độ và nhịp, chuyển động khi giật khi chậm.
 - **Rủi ro:** không có hành trình phát triển, và sửa xe sẽ xóa luôn "tính cách" mà người chơi yêu.
 
-**Đề xuất: chọn A.** Có thể giữ động tác quét chân trời lúc bình minh như một việc hiệu chuẩn trong bộ lập lịch của
+**Đã chốt: A.** Có thể giữ động tác quét chân trời lúc bình minh như một việc hiệu chuẩn trong bộ lập lịch của
 A, không cần ý "học theo phi hành đoàn".
 
 ## 3. Người chơi biết những điều này thế nào (không thuyết minh, mỗi chỗ một dòng)
@@ -125,8 +129,9 @@ A, không cần ý "học theo phi hành đoàn".
 
 Mỗi dòng nằm trên một bề mặt người chơi quét, hoặc trong một màn hình đã có sẵn, nên không thêm yếu tố hướng dẫn nào.
 
-## 4. Câu hỏi cho anh/chị
-1. Giữ tên "SSR-5", hãng "Kessler–Arai Field Systems" và số máy 3-0417, hay đổi?
-2. Chọn phương án A (bộ lập lịch đã trôi) làm lý do 07 có vẻ có cảm xúc?
-3. Bộ báo trạng thái năm nốt làm ý nghĩa cho mọi tiếng kêu của 07?
-4. Các tiền bối 01–06 là đời SSR-3: cũ hơn, mỗi chiếc một việc, không lắp nâng cấp được?
+## 4. Anh/chị đã chốt (18/10/2026)
+1. **Tên, hãng, số máy:** giữ nguyên SSR-5, Kessler–Arai Field Systems, 3-0417.
+2. **Vì sao 07 có vẻ có cảm xúc:** phương án A, bộ lập lịch đã "trôi" sau 36 năm.
+3. **Bộ báo trạng thái năm nốt:** áp dụng; trong game đó là các cử chỉ giọng máy của 07.
+4. **Các tiền bối 01–06:** đời SSR-3, mỗi chiếc một việc, không lắp nâng cấp được; chung một khung, khác bộ phận phía
+   trên.
