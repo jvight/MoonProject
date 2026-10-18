@@ -6,18 +6,14 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
-using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
-using MoonProject.App;
 using MoonProject.Core;
-using MoonProject.Core.Events;
 using MoonProject.Gameplay;
 using MoonProject.Testing;
 using Object = UnityEngine.Object;
 #if UNITY_EDITOR
 using UnityEditor;
-using UnityEditor.SceneManagement;
 #endif
 
 namespace MoonProject.UI.PlayModeTests
@@ -43,8 +39,6 @@ namespace MoonProject.UI.PlayModeTests
     {
         private const int Width = 1600;
         private const int Height = 900;
-        private const float WakeTimeout = 25f;
-        private const float SettleSeconds = 0.6f;
         private const float EarthlitNightSeconds = 4816f;
         private const float SunlitDaySeconds = 210f;
         private const float ClearEastOffset = 18f;
@@ -53,6 +47,7 @@ namespace MoonProject.UI.PlayModeTests
         private static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "captures"));
 
+        private BuildScene _scene;
         private GameContext _context;
         private GameplaySystem _gameplay;
         private UISystem _ui;
@@ -61,7 +56,6 @@ namespace MoonProject.UI.PlayModeTests
         private PanelSettings _capturePanelSettings;
         private RenderTexture _uiTarget;
         private Keyboard _keyboard;
-        private bool _awake;
 
         public override void Setup()
         {
@@ -71,11 +65,6 @@ namespace MoonProject.UI.PlayModeTests
 
         public override void TearDown()
         {
-            if (_gameplay != null && _gameplay.Building != null && _gameplay.Building.Tuning != null)
-            {
-                _gameplay.Building.Tuning.SetPlaytestUnlockedIds();
-            }
-
             if (_document != null && _originalPanelSettings != null)
             {
                 _document.panelSettings = _originalPanelSettings;
@@ -95,16 +84,8 @@ namespace MoonProject.UI.PlayModeTests
                 _uiTarget = null;
             }
 
-            Scene scene = SceneManager.GetSceneByPath(BuildCaptureScene.ScenePath);
-            if (scene.IsValid() && scene.isLoaded)
-            {
-                foreach (GameObject root in scene.GetRootGameObjects())
-                {
-                    Object.DestroyImmediate(root);
-                }
-            }
-
-            BootstrapHarness.DeleteSaveFiles(BuildCaptureScene.SaveSlot);
+            _scene?.TearDown();
+            _scene = null;
             base.TearDown();
         }
 
@@ -392,32 +373,92 @@ namespace MoonProject.UI.PlayModeTests
             yield return CaptureComposite(viewCamera, "07-base-sunlight");
         }
 
-        private IEnumerator BootMainScene()
+        /// <summary>
+        /// The owner's walk through build mode, one step per shot (owner feedback 2026-10-18), in Vietnamese:
+        /// <c>build-step-a-menu.png</c> (the compact card row with its key row), <c>build-step-b-placing.png</c>
+        /// (the one placing line over a valid ghost), <c>build-step-b-reason.png</c> (an invalid ghost's reason chip)
+        /// and <c>build-step-c-weld.png</c> (the weld line with its bar part-way).
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(BuildCaptureScene))]
+        [PostBuildCleanup(typeof(BuildCaptureScene))]
+        public IEnumerator CaptureTheBuildSteps_MenuPlacingWelding()
         {
-            BootstrapHarness.DeleteSaveFiles(BuildCaptureScene.SaveSlot);
-#if UNITY_EDITOR
-            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(
-                BuildCaptureScene.ScenePath,
-                new LoadSceneParameters(LoadSceneMode.Single));
-            while (!loading.isDone)
+            Directory.CreateDirectory(CaptureFolder);
+            yield return BootMainScene();
+            BuildField build = _gameplay.Building;
+            var placement = _context.Get<IRoverPlacement>();
+            var terrain = _context.Get<ITerrainQuery>();
+            Camera viewCamera = _context.Get<IViewCamera>().Camera;
+            DisableCameraFollowBehaviours(viewCamera);
+
+            Vector3 basePos = _context.Get<IWorldLayout>().BasePosition;
+            Vector3 stageOrigin = new Vector3(basePos.x + ClearEastOffset, 0f, basePos.z + ClearNorthOffset);
+            stageOrigin.y = terrain.SampleHeight(stageOrigin.x, stageOrigin.z);
+            placement.PlaceAt(stageOrigin, Quaternion.LookRotation(Vector3.forward, Vector3.up));
+            SetSkyClock(SunlitDaySeconds, holdingEclipse: false);
+            yield return new WaitForSecondsRealtime(2.0f);
+
+            _scene.Unlock(new[] { StructureIds.ChargingPad, StructureIds.SolarArray, StructureIds.BatteryBank },
+                16, 8, 8);
+            _context.Get<ILocalization>().SetLanguage("vi");
+            Vector3 roverPos = _context.Get<IRoverState>().Position;
+            FrameBehindRover(viewCamera, roverPos, Vector3.forward, distance: 4.8f, height: 1.95f, pitchDeg: 13f);
+            Texture2D warmup = FrameCapture.Render(viewCamera, Width, Height);
+            Object.Destroy(warmup);
+            yield return null;
+
+            yield return Tap(_keyboard.bKey);
+            Assert.AreEqual(BuildModeState.Menu, build.State);
+            yield return SettleUi(0.8f);
+            Assert.AreEqual(3, _ui.BuildStrip.CardCount);
+            Assert.AreEqual(CursorMode.Screen, _ui.Cursor.Mode, "the cards take the mouse");
+            yield return CaptureComposite(viewCamera, "build-step-a-menu");
+
+            Vector3 validSpot = roverPos + Vector3.forward * 4.5f + Vector3.right * 1.15f;
+            validSpot.y = terrain.SampleHeight(validSpot.x, validSpot.z);
+            build.SetAimPointOverride(validSpot);
+            Assert.IsTrue(_ui.BuildStrip.Pick(1), "a click on the solar array's card picks it");
+            yield return SettleUi(1.2f);
+            Assert.AreEqual(BuildModeState.Placing, build.State);
+            Assert.IsTrue(_ui.Objective.ShowsBuildStep, "the one placing line shows");
+            Assert.AreEqual(BuildStep.Place, _ui.Objective.ShownStep);
+            Assert.AreEqual(CursorMode.Drive, _ui.Cursor.Mode, "the camera aims the ghost");
+            yield return CaptureComposite(viewCamera, "build-step-b-placing");
+
+            Vector3 tooClose = roverPos + new Vector3(1.05f, 0f, 1.10f);
+            tooClose.y = terrain.SampleHeight(tooClose.x, tooClose.z);
+            build.SetAimPointOverride(tooClose);
+            yield return SettleUi(0.8f);
+            Assert.IsTrue(_ui.BuildStrip.IsReasonVisible, "an invalid spot says why above the ghost");
+            yield return CaptureComposite(viewCamera, "build-step-b-reason");
+
+            build.SetAimPointOverride(validSpot);
+            yield return SettleUi(0.3f);
+            Press(_keyboard.eKey);
+            yield return null;
+            Assert.AreEqual(BuildModeState.Welding, build.State);
+            float deadline = Time.time + 20f;
+            while (build.Controller.ActiveWeldProgress01 < 0.4f && Time.time < deadline)
             {
                 yield return null;
             }
-#else
-            throw new NotSupportedException("BuildModeCaptureTests runs in the Editor.");
-#endif
-            GameBootstrap bootstrap = null;
-            foreach (GameObject root in SceneManager.GetSceneByPath(BuildCaptureScene.ScenePath).GetRootGameObjects())
-            {
-                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
-                _gameplay = _gameplay != null ? _gameplay : root.GetComponentInChildren<GameplaySystem>(true);
-                _ui = _ui != null ? _ui : root.GetComponentInChildren<UISystem>(true);
-            }
 
-            Assert.IsNotNull(bootstrap, "Scene has GameBootstrap.");
-            Assert.IsNotNull(_gameplay, "Scene has GameplaySystem.");
-            Assert.IsNotNull(_ui, "Scene has UISystem.");
-            _context = bootstrap.Context;
+            Assert.IsTrue(_ui.Objective.ShowsBuildStep, "the weld line shows");
+            Assert.AreEqual(BuildStep.Weld, _ui.Objective.ShownStep);
+            yield return CaptureComposite(viewCamera, "build-step-c-weld");
+            Release(_keyboard.eKey);
+            yield return null;
+        }
+
+        private IEnumerator BootMainScene()
+        {
+            _scene = new BuildScene();
+            yield return _scene.Boot();
+            _context = _scene.Context;
+            _gameplay = _scene.Gameplay;
+            _ui = _scene.Ui;
 
             _document = _ui.GetComponent<UIDocument>();
             Assert.IsNotNull(_document, "UISystem has UIDocument.");
@@ -429,19 +470,7 @@ namespace MoonProject.UI.PlayModeTests
             _capturePanelSettings.clearColor = true;
             _capturePanelSettings.colorClearValue = Color.clear;
             _document.panelSettings = _capturePanelSettings;
-
-            _awake = false;
-            using (_context.Events.Subscribe<RoverAwoke>(_ => _awake = true))
-            {
-                float deadline = Time.time + WakeTimeout;
-                while (!_awake && Time.time < deadline)
-                {
-                    yield return null;
-                }
-            }
-
-            Assert.IsTrue(_awake, "07 wakes up.");
-            yield return new WaitForSeconds(SettleSeconds);
+            yield return null;
         }
 
         private void SetSkyClock(float timeSeconds, bool holdingEclipse)

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -164,6 +165,100 @@ namespace MoonProject.UI.PlayModeTests
             Assert.IsFalse(_rig.Ui.Cargo.IsOpen, "B closes the screen for build mode");
             Assert.IsTrue(_rig.Bootstrap.Context.Input.Enabled, "the rover controls are back");
             AssertCursorCaptured("no build field here, so back to driving");
+        }
+
+        /// <summary>
+        /// The drag on 07's screen as the owner will see it, over the face's own dark: <c>face-drag-mid.png</c> (the
+        /// igniter's icon over the cutter, its slot dimmed), <c>face-drag-return.png</c> (easing home off the pad, the
+        /// info box saying why) and <c>face-drag-fit.png</c> (on the pad, easing into the cutter). PNGs land in
+        /// Logs/captures.
+        /// </summary>
+        [UnityTest]
+        [Explicit("Writes the drag captures; run with --filter FaceDragCaptures.")]
+        public IEnumerator FaceDragCaptures()
+        {
+            const int width = 1600;
+            const int height = 900;
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            _rig = UiTestRig.Boot(_controls, _slot, width, height);
+            _rig.Ui.Ledger.RecordHoldBooted();
+            _rig.Ui.Localization.SetLanguage("vi");
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Fakes.Hold.Set(7, new MaterialSlot(SalvageMaterial.Metal, 3, 4));
+            _rig.Fakes.Hold.AddPart(DropRule.SpareIgniterPart);
+            yield return Seconds(0.3f);
+            yield return Tap(keyboard.tabKey);
+            yield return Seconds(Settle);
+            FaceInventoryView view = _rig.Ui.Cargo.View;
+            float scale = _rig.Ui.Cargo.PanelRect.width / FaceInventoryView.ReferenceWidth;
+            Vector2 from = FaceInventoryView.GetHoldCellReferenceRect(1).center * scale;
+            Vector2 to = FaceDevices.CenterOf(FaceDevices.Cutter) * scale;
+
+            yield return null;
+            view.PointerDownAtPanel(from);
+            for (int i = 1; i <= 10; i++)
+            {
+                yield return null;
+                view.PointerMoveAtPanel(Vector2.Lerp(from, to, i / 10f));
+            }
+
+            yield return Seconds(0.4f);
+            Assert.AreEqual(HoldDragPhase.Dragging, view.DragPhase);
+            yield return CaptureFrame("face-drag-mid");
+
+            view.PointerUpAtPanel(to);
+            yield return Seconds(_rig.Tuning.Cargo.DragReturnSeconds * 0.4f);
+            Assert.AreEqual(HoldDragPhase.Returning, view.DragPhase);
+            yield return CaptureFrame("face-drag-return");
+            yield return Seconds(_rig.Tuning.Cargo.DragReturnSeconds);
+            yield return CaptureFrame("face-drag-reason");
+
+            _rig.Fakes.Systems.CanFitIgniter = true;
+            yield return Seconds(0.3f);
+            view.PointerDownAtPanel(from);
+            for (int i = 1; i <= 10; i++)
+            {
+                yield return null;
+                view.PointerMoveAtPanel(Vector2.Lerp(from, to, i / 10f));
+            }
+
+            yield return Seconds(0.3f);
+            view.PointerUpAtPanel(to);
+            yield return Seconds(_rig.Tuning.Cargo.DragFitSeconds * 0.4f);
+            Assert.AreEqual(HoldDragPhase.Fitting, view.DragPhase);
+            yield return CaptureFrame("face-drag-fit");
+            yield return Seconds(0.6f);
+            yield return CaptureFrame("face-drag-fitted");
+        }
+
+        /// <summary>The UI frame over the face's own dark, as a PNG in Logs/captures.</summary>
+        private IEnumerator CaptureFrame(string name)
+        {
+            yield return null;
+            RenderTexture frame = _rig.Frame;
+            var image = new Texture2D(frame.width, frame.height, TextureFormat.RGBA32, false, false);
+            RenderTexture previous = RenderTexture.active;
+            RenderTexture.active = frame;
+            image.ReadPixels(new Rect(0, 0, frame.width, frame.height), 0, 0, false);
+            image.Apply(false);
+            RenderTexture.active = previous;
+            Color32 backdrop = _rig.Tuning.Cargo.PlateBackground;
+            Color32[] pixels = image.GetPixels32();
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                Color32 ui = pixels[i];
+                int keep = 255 - ui.a;
+                pixels[i] = new Color32((byte)Mathf.Min(255, ui.r + backdrop.r * keep / 255),
+                    (byte)Mathf.Min(255, ui.g + backdrop.g * keep / 255),
+                    (byte)Mathf.Min(255, ui.b + backdrop.b * keep / 255), 255);
+            }
+
+            image.SetPixels32(pixels);
+            image.Apply(false);
+            string folder = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "captures"));
+            Directory.CreateDirectory(folder);
+            FrameCapture.WritePng(image, Path.Combine(folder, name + ".png"));
+            Object.Destroy(image);
         }
 
         /// <summary>
