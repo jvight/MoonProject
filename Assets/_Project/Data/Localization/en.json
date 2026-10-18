@@ -715,6 +715,10 @@
             "text": "Night is coming. Build a battery bank."
         },
         {
+            "key": "next.v2.move_battery_bank",
+            "text": "Move the battery bank closer to the pad."
+        },
+        {
             "key": "next.v2.scan_tower",
             "text": "Scan the radio tower for an antenna."
         },

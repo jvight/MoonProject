@@ -41,7 +41,8 @@ namespace MoonProject.Gameplay
                 () => _game.Knows(StructureIds.SolarArray));
             _steps.Add(() => _game.Covers(StructureIds.SolarArray) ? OpeningKeys.BuildSolar : OpeningKeys.CutOptics,
                 () => _game.PowerOn);
-            _steps.Add(OpeningKeys.BuildBatteryBank, () => _game.NightReady);
+            _steps.Add(() => _game.Built(StructureIds.BatteryBank) ? OpeningKeys.MoveBatteryBank
+                    : OpeningKeys.BuildBatteryBank, () => _game.NightReady);
             _steps.Add(() => _game.NightFallen ? OpeningKeys.ScanTower : string.Empty,
                 () => _game.Knows(StructureIds.AntennaMast));
             _steps.Add(OpeningKeys.BuildMast, () => _game.Built(StructureIds.AntennaMast));

@@ -715,6 +715,10 @@
             "text": "Đêm sắp xuống. Hãy dựng một khối pin dự trữ."
         },
         {
+            "key": "next.v2.move_battery_bank",
+            "text": "Đặt khối pin gần bệ sạc hơn."
+        },
+        {
             "key": "next.v2.scan_tower",
             "text": "Quét tháp radio để tìm bản vẽ ăng-ten."
         },

@@ -37,6 +37,9 @@ namespace MoonProject.Gameplay
         /// <summary>B9: "Night is coming. Build a battery bank."</summary>
         public const string BuildBatteryBank = "next.v2.build_battery_bank";
 
+        /// <summary>B9, a battery bank built but out of the grid's reach: "Move the battery bank closer to the pad."</summary>
+        public const string MoveBatteryBank = "next.v2.move_battery_bank";
+
         /// <summary>B11: "Scan the radio tower for an antenna."</summary>
         public const string ScanTower = "next.v2.scan_tower";
 
