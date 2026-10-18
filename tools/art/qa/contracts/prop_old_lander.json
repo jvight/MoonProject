@@ -1,0 +1,139 @@
+{
+  "model": "prop_old_lander",
+  "pivot_tolerance": 0.02,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_BareSteel",
+    "R1_Basalt",
+    "R1_Brass",
+    "R1_Copper",
+    "R1_CreamEnamel",
+    "R1_DarkGlass",
+    "R1_GoldFoil",
+    "R1_GreyMetal",
+    "R1_OrangeStripe",
+    "R1_Rubber",
+    "R1_SagePatch",
+    "R1_SolarCell"
+  ],
+  "max_triangles": 16000,
+  "max_meshes": 10,
+  "max_draw_calls": 40,
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "Prop_OldLander": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Spaceframe": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.85
+      ]
+    },
+    "LandingLegs": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.35
+      ]
+    },
+    "MastAndSolar": {
+      "pivot": [
+        0.0,
+        0.0,
+        2.15
+      ]
+    },
+    "TvCamera": {
+      "pivot": [
+        0.446,
+        0.3579,
+        1.3568
+      ]
+    },
+    "ScoopArm": {
+      "pivot": [
+        -0.0918,
+        0.5866,
+        0.3743
+      ]
+    },
+    "ThermalBoxes": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.9
+      ]
+    },
+    "SerialStencil": {
+      "pivot": [
+        0.0619,
+        0.5713,
+        0.8215
+      ]
+    },
+    "RemovedPartSpots": {
+      "pivot": [
+        0.0,
+        0.25,
+        0.88
+      ]
+    },
+    "Base_Anchor": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "MastTop_Anchor": {
+      "pivot": [
+        0.3314,
+        0.2014,
+        2.7755
+      ]
+    },
+    "Camera_Anchor": {
+      "pivot": [
+        0.4673,
+        0.371,
+        1.535
+      ]
+    },
+    "Scoop_Anchor": {
+      "pivot": [
+        -0.2307,
+        0.9484,
+        0.1119
+      ]
+    },
+    "RemovedSpot_1_Anchor": {
+      "pivot": [
+        0.5338,
+        0.293,
+        0.7452
+      ]
+    },
+    "RemovedSpot_2_Anchor": {
+      "pivot": [
+        -0.3622,
+        0.2993,
+        0.8316
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      2.7597,
+      2.5973,
+      3.0713
+    ],
+    "tolerance": 0.03
+  }
+}
