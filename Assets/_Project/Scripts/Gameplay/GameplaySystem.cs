@@ -237,6 +237,7 @@ namespace MoonProject.Gameplay
                 return;
             }
 
+            _salvage.ConnectScans(Scans);
             ApronGlow = new ApronGlow(_apronOutline, _building.Tuning.ApronGlowFadeSeconds);
             _building.MarkApron(_apronOutline.bounds.center);
             Hints = new InteractionHints(_salvage, Containers, Scans, _building, services.Beam, Cutter,

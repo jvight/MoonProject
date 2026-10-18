@@ -36,6 +36,14 @@ namespace MoonProject.Gameplay.Feel.Editor
 
         public Vector3 ScanEmitter => _emitter.position;
 
+        /// <summary>The capture stages no scan target: the beam draws to its beat's point.</summary>
+        public bool TryScanContact(Vector3 lens, out Vector3 point, out Vector3 normal)
+        {
+            point = lens;
+            normal = Vector3.up;
+            return false;
+        }
+
         public Vector3 CutPoint => CutPiece.TransformPoint(Along(Progress));
 
         public Vector3 CutNormal => CutPiece.TransformDirection(_faceNormal);

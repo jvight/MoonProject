@@ -38,6 +38,7 @@ namespace MoonProject.Gameplay
         private readonly Func<bool> _othersClaim;
         private readonly BeamWork _beam;
         private ScanFragment _scanning;
+        private ScanFragment _beamOn;
         private ScanFragment _aiming;
         private int _quarter;
         private int _owedMetal;
@@ -123,7 +124,7 @@ namespace MoonProject.Gameplay
                 }
 
                 _fragments.Add(ScanFragment.ForRuinTarget(id, set.BlueprintId, set.StructureIds, i, set.Count,
-                    set.Size(i), set.RuinId, target));
+                    set.Size(i), set.RuinId, target, ruinRoot));
             }
 
             return null;
@@ -156,7 +157,7 @@ namespace MoonProject.Gameplay
             Transform target = new GameObject(story.FragmentId).transform;
             target.SetParent(node, false);
             target.position = panel.bounds.center + story.Offset;
-            _fragments.Add(ScanFragment.ForStoryTarget(story, story.RuinId, target));
+            _fragments.Add(ScanFragment.ForStoryTarget(story, story.RuinId, target, ruinRoot));
             return null;
         }
 
@@ -216,6 +217,22 @@ namespace MoonProject.Gameplay
             {
                 Advance(_scanning, now, deltaTime);
             }
+        }
+
+        /// <summary>
+        /// Where the scan beam from <paramref name="lens"/> meets the target it is on (being scanned, or just scanned
+        /// while the beam fades): on its real surface, at the shader's sweep line. False before any scan.
+        /// </summary>
+        public bool TryBeamContact(Vector3 lens, out Vector3 point, out Vector3 normal)
+        {
+            if (_beamOn == null)
+            {
+                point = lens;
+                normal = Vector3.up;
+                return false;
+            }
+
+            return _beamOn.TryContact(lens, _view.Camera.transform.position, out point, out normal);
         }
 
         public ScansSaveData Capture()
@@ -579,6 +596,7 @@ namespace MoonProject.Gameplay
             float duration = _tuning.Seconds(fragment.Size);
             _tuning.ApplyShaderGlobals(duration);
             _scanning = fragment;
+            _beamOn = fragment;
             _quarter = Mathf.FloorToInt(fragment.Progress * Quarters);
             _events.Publish(new ScanStarted(fragment.FragmentId, fragment.Point));
             _events.Publish(new FeelBeat(FeelKind.Scan, FeelPhase.Anticipate, fragment.Point,

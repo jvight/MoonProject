@@ -45,6 +45,7 @@ namespace MoonProject.Gameplay
 
         private readonly Vector3[] _activeSeamPoints = new Vector3[3];
         private StageRendererCache[][] _stageRenderers;
+        private Collider[][] _stageColliders;
         private SubPartPose[][] _stageSubParts;
         private bool[] _stageIsSolid;
         private float[] _stageScale;
@@ -211,6 +212,7 @@ namespace MoonProject.Gameplay
             _propStageFade = Shader.PropertyToID("_StageFade");
 
             _stageRenderers = new StageRendererCache[stageCount][];
+            _stageColliders = new Collider[stageCount][];
             _stageSubParts = new SubPartPose[stageCount][];
             _stageIsSolid = new bool[stageCount];
             _stageScale = new float[stageCount];
@@ -322,6 +324,7 @@ namespace MoonProject.Gameplay
                 }
 
                 _stageRenderers[s] = caches;
+                _stageColliders[s] = CollidersUnder(stageRoot);
                 _stageIsSolid[s] = true;
             }
 
@@ -735,6 +738,70 @@ namespace MoonProject.Gameplay
             localPoints[1] = seam.Middle;
             localPoints[2] = seam.End;
             localNormal = seam.Normal;
+        }
+
+        /// <summary>
+        /// Where 07's weld beam from <paramref name="nozzle"/> meets the stage being welded: on its parts' own
+        /// colliders, through its seam point as the weld runs along it, else through the stage's middle as its parts
+        /// unfold. False (and the seam point) only when neither ray meets the stage.
+        /// </summary>
+        public bool TryWeldContact(Vector3 nozzle, out Vector3 point, out Vector3 normal)
+        {
+            Vector3 seam = GetActiveWeldPoint();
+            int stage = Mathf.Clamp(SolidStageCount, 0, StageCount - 1);
+            Collider[] colliders = _stageColliders[stage];
+            if (SurfaceAim.TryHit(colliders, nozzle, seam, out point, out normal) ||
+                SurfaceAim.TryHit(colliders, nozzle, StageMiddle(stage), out point, out normal))
+            {
+                return true;
+            }
+
+            point = seam;
+            normal = Vector3.up;
+            return false;
+        }
+
+        /// <summary>The middle of stage <paramref name="stage"/>'s parts as they stand now (world).</summary>
+        private Vector3 StageMiddle(int stage)
+        {
+            StageRendererCache[] caches = _stageRenderers[stage];
+            bool any = false;
+            Bounds bounds = default;
+            for (int r = 0; r < caches.Length; r++)
+            {
+                Renderer renderer = caches[r].Renderer;
+                if (renderer == null || !renderer.gameObject.activeInHierarchy)
+                {
+                    continue;
+                }
+
+                if (any)
+                {
+                    bounds.Encapsulate(renderer.bounds);
+                }
+                else
+                {
+                    bounds = renderer.bounds;
+                    any = true;
+                }
+            }
+
+            return any ? bounds.center : _stageRoots[stage].position;
+        }
+
+        /// <summary>The structure's colliders on <paramref name="stageRoot"/>'s parts.</summary>
+        private Collider[] CollidersUnder(Transform stageRoot)
+        {
+            var under = new List<Collider>();
+            for (int i = 0; i < _colliders.Length; i++)
+            {
+                if (_colliders[i] != null && _colliders[i].transform.IsChildOf(stageRoot))
+                {
+                    under.Add(_colliders[i]);
+                }
+            }
+
+            return under.ToArray();
         }
 
         /// <summary>World-space focus point for 07's weld beam on the active stage, progressing along its seam.</summary>

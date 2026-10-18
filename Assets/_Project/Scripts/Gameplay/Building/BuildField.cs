@@ -115,6 +115,9 @@ namespace MoonProject.Gameplay
         /// <summary>World-space origin point of the weld beam (for tests and inspection).</summary>
         public Vector3 WeldBeamStart => _weldBeam != null ? _weldBeam.Start : Vector3.zero;
 
+        /// <summary>Where the weld beam ends this frame (on the structure's surface once fully reached).</summary>
+        public Vector3 WeldBeamEnd => _weldBeam != null ? _weldBeam.End : Vector3.zero;
+
         /// <summary>Number of rendered layers in the weld beam (core + sheath + halo).</summary>
         public int WeldBeamLayerCount => _weldBeam != null ? _weldBeam.LayerCount : 0;
 
@@ -1190,11 +1193,13 @@ namespace MoonProject.Gameplay
             _save?.SaveNow();
         }
 
+        /// <summary>Where 07's weld beam meets structure <paramref name="instanceId"/>: its real surface.</summary>
         private Vector3 WeldPointOf(int instanceId)
         {
             if (_viewsById.TryGetValue(instanceId, out StructureView view) && view != null)
             {
-                return view.GetActiveWeldPoint();
+                view.TryWeldContact(_rig.CutterOrigin.position, out Vector3 contact, out _);
+                return contact;
             }
 
             if (_placedBase.TryGetStructure(instanceId, out PlacedStructure placed))

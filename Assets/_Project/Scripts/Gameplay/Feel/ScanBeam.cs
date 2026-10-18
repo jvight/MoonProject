@@ -132,6 +132,8 @@ namespace MoonProject.Gameplay
         private Vector3 _span;
         private Vector3 _lastLensFront;
         private Vector3 _lastContactCenter;
+        private Vector3 _contact;
+        private bool _hasContact;
         private float _lastTargetWidth;
         private float _progress;
         private float _rate;
@@ -223,10 +225,21 @@ namespace MoonProject.Gameplay
         {
             _target = target;
             _span = span;
+            _hasContact = false;
             _progress = Mathf.Clamp01(progress);
             _rate = remainingSeconds > MinFadeSeconds ? (1f - _progress) / remainingSeconds : 0f;
             _pingRemaining = 0f;
             _active = true;
+        }
+
+        /// <summary>
+        /// The beam's far end this frame: where it meets its target's real surface (set before
+        /// <see cref="Step"/>).
+        /// </summary>
+        public void Meet(Vector3 contact)
+        {
+            _contact = contact;
+            _hasContact = true;
         }
 
         /// <summary>Keeps progress in step with quarter beats.</summary>
@@ -307,7 +320,7 @@ namespace MoonProject.Gameplay
 
             float spanHeight = Mathf.Max(Mathf.Abs(_span.y), 0.36f);
             Vector3 sweepSpanVec = _span.sqrMagnitude > MinDistance ? _span : new Vector3(0f, spanHeight, 0f);
-            Vector3 lineCentre = _target + sweepSpanVec * (_progress - 0.5f);
+            Vector3 lineCentre = _hasContact ? _contact : _target + sweepSpanVec * (_progress - 0.5f);
 
             Vector3 toTarget = lineCentre - emitter;
             float dist = toTarget.magnitude;
@@ -322,8 +335,7 @@ namespace MoonProject.Gameplay
             Vector3 lensFront = cheekCenter - right * 0.008f + forward * 0.010f;
             Vector3 wedgeOrigin = emitter - right * 0.074f - forward * 0.056f;
 
-            float contactStandOff = Mathf.Min(Mathf.Clamp(spanHeight * 0.24f, 0.06f, 0.24f), dist * 0.30f);
-            Vector3 contactCenter = lineCentre - forward * contactStandOff;
+            Vector3 contactCenter = lineCentre;
             _lastLensFront = wedgeOrigin;
             _lastContactCenter = contactCenter;
 
