@@ -154,11 +154,107 @@ float MoonScanComputeEdgeMask(
     return max(max(silEdge, bevelEdge), max(ridgeEdge, boundEdge));
 }
 
-// Applies Variant A ("Profiler sweep") to the lit surface colour:
-// 1. Thin bright laser line sweeps across the object's surface, conforming to its 3D facets and bevels.
-// 2. Anti-aliased fading raster of fine contour lines behind the sweep, strictly locked to the 3D surface.
-// 3. At completion, the object's edges and blueprint contours light up in a clean blueprint line drawing that
-//    collapses inward toward the lens-facing focal point as the solid dissolves.
+// Anti-aliased 3D triplanar CAD wireframe lattice locked to world-space surface geometry.
+float MoonScanTriplanarWireframe(float3 positionWS, float3 n, float gridPitch)
+{
+    float3 p = positionWS / max(gridPitch, 0.015);
+    float3 fw = max(fwidth(p), float3(1e-4, 1e-4, 1e-4));
+    float3 dist = abs(frac(p - 0.5) - 0.5);
+    float3 halfLine = max(float3(0.11, 0.11, 0.11), fw * 0.68);
+    float3 aa = max(fw * 1.15, float3(0.04, 0.04, 0.04));
+    float3 line3 = (1.0 - smoothstep(halfLine - aa * 0.5, halfLine + aa * 0.5, dist))
+        * (1.0 - smoothstep(0.18, 0.38, fw));
+
+    float3 w = abs(n);
+    w /= max(w.x + w.y + w.z, 1e-4);
+    float planeXY = max(line3.x, line3.y);
+    float planeYZ = max(line3.y, line3.z);
+    float planeXZ = max(line3.x, line3.z);
+    float wire = planeYZ * w.x + planeXZ * w.y + planeXY * w.z;
+    float node = (line3.x * line3.y * w.z + line3.y * line3.z * w.x + line3.x * line3.z * w.y);
+    return saturate(wire + node * 0.45);
+}
+
+// Variant B ("Wireframe reveal"): the object's silhouette and key edges light up as a soft wireframe hologram
+// in CRT amber that progressively fills in from bottom to top as scanProgress rises.
+void MoonApplyWireframeReveal(
+    inout half3 color,
+    float3 positionWS,
+    float3 n,
+    half edgeCurvature,
+    float scanY,
+    float sweepY,
+    float sinSurface,
+    float fwSurface,
+    float h,
+    float2 toCamXZ,
+    float lineWidthMeters,
+    float edgeThickness,
+    float wireframeIntensity,
+    half3 lineColor,
+    half3 pingColor,
+    float gridPitch,
+    half scanProgress,
+    half dissolve)
+{
+    float prog = saturate((float)scanProgress);
+    float diss = (float)dissolve;
+    float signedBehindMeters = (sweepY - scanY) / sinSurface;
+    float revealedMask = smoothstep(-fwSurface * 1.5, fwSurface * 1.5, signedBehindMeters);
+    float activeReveal = smoothstep(0.001, 0.02, prog) * (1.0 - smoothstep(0.58, 0.82, diss));
+
+    // Progressive fill: once swept, the CRT-amber wireframe stays lit and strengthens as progress rises
+    float fillEnvelope = revealedMask * activeReveal * lerp(0.78, 1.0, prog);
+
+    float thinEdge = MoonScanComputeEdgeMask(positionWS, n, edgeCurvature, h, edgeThickness * 1.12);
+    float cadWire = MoonScanTriplanarWireframe(positionWS, n, gridPitch);
+
+    // Subtle warm-amber holographic phosphor wash on the revealed mesh surface
+    half surfLuma = clamp(dot(color, half3(0.299h, 0.587h, 0.114h)), 0.12h, 0.72h);
+    half amberWash = (half)saturate(fillEnvelope * (0.20 + 0.12 * cadWire));
+    color = lerp(color, surfLuma * half3(1.00h, 0.62h, 0.18h) + pingColor * 0.08h, amberWash);
+
+    // Soft CRT-amber wireframe hologram combining silhouette/bevel key edges and fine 3D CAD surface mesh
+    float wirePattern = max(thinEdge, cadWire * 0.58);
+    half wireWeight = (half)saturate(wirePattern * fillEnvelope * 0.92);
+    half3 amberCore = lerp(pingColor, half3(1.00h, 0.88h, 0.55h), (half)saturate(thinEdge * 0.55));
+    half3 wireTarget = amberCore * (half)(wireframeIntensity * (0.72 + 0.48 * thinEdge));
+    color = lerp(color, wireTarget, wireWeight) + pingColor * (wireWeight * (half)(wireframeIntensity * 0.18));
+
+    // Soft rising wavefront at the top edge of the wireframe reveal
+    float activeSweep = smoothstep(0.001, 0.015, prog) * (1.0 - smoothstep(0.0, 0.06, diss));
+    float surfaceDistMeters = abs(scanY - sweepY) / sinSurface;
+    float halfWidth = max(lineWidthMeters * 0.65, fwSurface * 1.35);
+    float aaWidth = fwSurface * 1.15;
+    float frontCore = (1.0 - smoothstep(halfWidth - aaWidth * 0.5, halfWidth + aaWidth * 0.8, surfaceDistMeters)) * activeSweep;
+    float frontGlow = (1.0 - smoothstep(halfWidth, halfWidth * 3.6 + aaWidth, surfaceDistMeters)) * 0.36 * activeSweep;
+    half frontMask = (half)saturate(frontCore * 0.92 + frontGlow * 1.45);
+    half3 frontColor = lerp(pingColor, lineColor, 0.22h) * (half)(wireframeIntensity * 1.12)
+        + half3(0.45h, 0.34h, 0.14h) * (half)(frontCore * frontCore);
+    color = lerp(color, frontColor, frontMask);
+
+    // Completion pulse & inward collapse of the amber wireframe hologram
+    if (dissolve > 0.001h)
+    {
+        float3 boundsMin = unity_RendererBounds_Min.xyz;
+        float3 boundsMax = unity_RendererBounds_Max.xyz;
+        float3 centre = (boundsMin + boundsMax) * 0.5;
+        float radius = max(length(boundsMax - boundsMin) * 0.5, 1e-4);
+        float3 focalPoint = centre + float3(toCamXZ.x, 0.12, toCamXZ.y) * (radius * 0.40);
+        float collapseDist = saturate(length(positionWS - focalPoint) / max(radius * 1.15, 1e-4));
+        float collapseFront = 1.0 - smoothstep(0.16, 0.76, diss);
+        float insideCollapse = 1.0 - smoothstep(collapseFront - 0.05, collapseFront + 0.05, collapseDist);
+        float collapseRing = (1.0 - smoothstep(0.0, 0.12, abs(collapseDist - collapseFront)))
+            * smoothstep(0.06, 0.18, diss) * (1.0 - smoothstep(0.64, 0.80, diss));
+
+        half pingEnv = MoonScanPingEnvelope(dissolve);
+        half closeMask = (half)saturate((wirePattern * (float)pingEnv + collapseRing * 0.85) * insideCollapse);
+        half3 closeTarget = amberCore * (half)(wireframeIntensity * 1.25);
+        color = lerp(color, closeTarget, closeMask * 0.92h) + pingColor * (closeMask * 0.32h);
+    }
+}
+
+// Applies the active surface scan variant (A: ProfilerSweep, B: WireframeReveal, C: PointScan) to the lit surface colour.
 void MoonApplySurfaceScan(
     inout half3 color,
     float3 positionWS,
@@ -174,8 +270,13 @@ void MoonApplySurfaceScan(
 
     float4 scanParams = MoonScanGetParams();
     float4 pingParams = MoonScanGetPingParams();
+    float4 variantParams = MoonScanGetVariantParams();
     half3 lineColor = MoonScanGetLineColor();
     half3 pingColor = MoonScanGetPingColor();
+
+    int variant = (int)round(variantParams.x);
+    float gridPitch = max(variantParams.y, 0.018);
+    float wireframeIntensity = max(variantParams.z, 0.2);
 
     float lineWidthMeters = max(scanParams.x, 0.004);
     float rasterSpacing = max(scanParams.y, 0.025);
@@ -195,14 +296,6 @@ void MoonApplySurfaceScan(
     float cosPlane = dot(n, planeN);
     float sinSurface = max(sqrt(saturate(1.0 - cosPlane * cosPlane)), 0.42);
 
-    // 3D surface contour warp so the laser profile line bends across facets, bevels, and curvature on the mesh
-    float contourOffset = (n.x * toCamXZ.y - n.z * toCamXZ.x) * 0.012 + ((float)edgeCurvature - 0.5) * 0.015;
-    float contouredScanY = scanY + contourOffset;
-
-    float sweepY = lerp(minScanY, maxScanY, saturate((float)scanProgress));
-    float surfaceDistMeters = abs(contouredScanY - sweepY) / sinSurface;
-    float fwSurface = max(fwidth(contouredScanY) / sinSurface, 1e-4);
-
     // Gently compress extreme close-range headlamp glare on the scanned target so scan lines stay crisp
     float activeScan = saturate(max((float)scanProgress * 8.0, (float)dissolve * 4.0));
     half peakChannel = max(color.r, max(color.g, color.b));
@@ -211,6 +304,24 @@ void MoonApplySurfaceScan(
         half compressed = 0.85h + (peakChannel - 0.85h) * 0.25h;
         color *= lerp(1.0h, compressed / max(peakChannel, 1e-4h), (half)(activeScan * 0.85));
     }
+
+    float sweepY = lerp(minScanY, maxScanY, saturate((float)scanProgress));
+    float fwSurface = max(fwidth(scanY) / sinSurface, 1e-4);
+
+    if (variant == 1)
+    {
+        MoonApplyWireframeReveal(
+            color, positionWS, n, edgeCurvature, scanY, sweepY, sinSurface, fwSurface, h, toCamXZ,
+            lineWidthMeters, edgeThickness, wireframeIntensity, lineColor, pingColor, gridPitch,
+            scanProgress, dissolve);
+        return;
+    }
+
+    // 3D surface contour warp so the laser profile line bends across facets, bevels, and curvature on the mesh
+    float contourOffset = (n.x * toCamXZ.y - n.z * toCamXZ.x) * 0.012 + ((float)edgeCurvature - 0.5) * 0.015;
+    float contouredScanY = scanY + contourOffset;
+    float surfaceDistMeters = abs(contouredScanY - sweepY) / sinSurface;
+    fwSurface = max(fwidth(contouredScanY) / sinSurface, 1e-4);
 
     float thinEdge = MoonScanComputeEdgeMask(positionWS, n, edgeCurvature, h, edgeThickness);
 

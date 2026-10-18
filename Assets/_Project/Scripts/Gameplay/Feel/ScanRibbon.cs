@@ -101,6 +101,7 @@ namespace MoonProject.Gameplay
         private void Stream(Vector3 lens, Vector3 right, Vector3 forward, float t)
         {
             int beads = _tuning.ScanRibbonBeads;
+            ScanVariant variant = _scanTuning != null ? _scanTuning.Variant : ScanVariant.ProfilerSweep;
             float shellRadius = Mathf.Clamp(Mathf.Abs(_span.y) * 0.42f, 0.16f, 0.46f);
             float baseSize = _scanTuning != null ? Mathf.Max(_scanTuning.LensMoteSize * 1.6f, 0.012f) : 0.014f;
             Color cyanColor = _scanTuning != null ? _scanTuning.ScanLineColor : _tuning.ScanRibbonColor;
@@ -127,9 +128,12 @@ namespace MoonProject.Gameplay
                 Vector3 toLens = lens - pos;
                 float distToLens = toLens.magnitude;
                 Vector3 dirToLens = distToLens > 1e-4f ? toLens / distToLens : -forward;
-                Vector3 stretch = dirToLens * (Mathf.Lerp(0.025f, 0.085f, Mathf.Sin(s * Mathf.PI)) * weight);
+                float stretchScale = variant == ScanVariant.WireframeReveal ? 0.055f : 0.085f;
+                Vector3 stretch = dirToLens * (Mathf.Lerp(0.022f, stretchScale, Mathf.Sin(s * Mathf.PI)) * weight);
 
-                Color color = Color.Lerp(cyanColor, amberColor, Mathf.Lerp(0.35f, 0.75f, 1f - s));
+                Color color = variant == ScanVariant.WireframeReveal
+                    ? Color.Lerp(amberColor, Color.white, 0.24f * toHead)
+                    : Color.Lerp(cyanColor, amberColor, Mathf.Lerp(0.35f, 0.75f, 1f - s));
                 color.a = Mathf.Min(0.22f, (_scanTuning != null ? _scanTuning.LensMoteAlpha * 0.55f : 0.16f) * weight * env);
                 _sprites.Add(pos, baseSize * weight, color, stretch);
             }
@@ -137,7 +141,9 @@ namespace MoonProject.Gameplay
             if (t > 0.35f)
             {
                 float catchWeight = Mathf.InverseLerp(0.35f, 1f, t);
-                Color lensCatch = Color.Lerp(cyanColor, amberColor, 0.55f);
+                Color lensCatch = variant == ScanVariant.WireframeReveal
+                    ? amberColor
+                    : Color.Lerp(cyanColor, amberColor, 0.55f);
                 lensCatch.a = Mathf.Min(0.28f, _tuning.ScanLensCoreAlpha * (0.75f + 0.25f * catchWeight) * env);
                 _flare.Add(lens, _tuning.ScanLensCoreSize * (1f + 0.15f * catchWeight), lensCatch, Vector3.zero);
             }
