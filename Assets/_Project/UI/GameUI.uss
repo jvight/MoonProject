@@ -1819,3 +1819,26 @@ Label {
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
+/* 07's power-on self-test on its CRT (PostView): a terminal column of typed lines; a part that fails reads amber. */
+
+.post {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    padding: 72px 96px;
+    justify-content: flex-start;
+}
+
+.post__line {
+    margin-bottom: 6px;
+    font-size: 26px;
+    white-space: nowrap;
+    color: rgb(255, 224, 152);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
+}
+
+.post__line--alert {
+    color: rgb(255, 170, 72);
+}

@@ -724,6 +724,73 @@ namespace MoonProject.UI.PlayModeTests
             return ui;
         }
 
+        /// <summary>
+        /// 07's power-on self-test typed from a replayed Rover event stream, in Vietnamese and English: the checks with
+        /// their dots, the alerts in amber, no guidance until it finishes. Rerun with --filter CapturePost.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator CapturePost_TypesEachCheck_AlertsInAmber_AndHoldsGuidanceUntilItEnds()
+        {
+#if UNITY_EDITOR
+            yield return LoadMain();
+            GameContext context = FindBootstrap().Context;
+            Camera camera = context.Get<IViewCamera>().Camera;
+            UISystem ui = BuildUi(context, out _, out _);
+            Reframe(1920, 1080);
+            FreezeWorld();
+            yield return null;
+            string folder = Path.GetFullPath(OutputFolder);
+            Directory.CreateDirectory(folder);
+            context.Events.Publish(new RoverAwoke(Vector3.zero, false));
+            foreach (string language in new[] { "vi", "en" })
+            {
+                ui.Localization.SetLanguage(language);
+                for (int i = 0; i < PostStream.Length; i++)
+                {
+                    BootCheckStep step = PostStream[i];
+                    context.Events.Publish(new BootCheckStarted(step));
+                    yield return new WaitForSecondsRealtime(PostStepSeconds * 0.7f);
+                    context.Events.Publish(new BootCheckCompleted(step, PostResults[i]));
+                    yield return new WaitForSecondsRealtime(PostStepSeconds * 0.3f);
+                    Assert.IsTrue(ui.Post.IsRunning, "the self-test runs until Rover says it is over");
+                    if (step == BootCheckStep.Cutter)
+                    {
+                        yield return Capture(camera, folder, "post_cutter_" + language);
+                    }
+                }
+
+                yield return new WaitForSecondsRealtime(0.6f);
+                Assert.IsTrue(ui.PostView.Line(PostStream.Length - 1).text.Length > 0, "the last line has typed");
+                Assert.IsTrue(ui.PostView.Line(8).ClassListContains(PostView.AlertClass), "the cutter's fault is amber");
+                yield return Capture(camera, folder, "post_done_" + language);
+                context.Events.Publish(new BootCheckFinished());
+                yield return null;
+                Assert.IsFalse(ui.Post.IsRunning);
+                yield return new WaitForSecondsRealtime(_tuning.Post.LingerSeconds + 0.3f);
+                Assert.AreEqual(DisplayStyle.None, ui.PostView.Root.resolvedStyle.display, "the log leaves the CRT");
+            }
+#else
+            Assert.Ignore("Captures need the editor.");
+            yield break;
+#endif
+        }
+
+        private const float PostStepSeconds = 0.9f;
+
+        private static readonly BootCheckStep[] PostStream =
+        {
+            BootCheckStep.Carrier, BootCheckStep.Resume, BootCheckStep.Agenda, BootCheckStep.Lens, BootCheckStep.Lamps,
+            BootCheckStep.Head, BootCheckStep.Wheels, BootCheckStep.Motor, BootCheckStep.Cutter, BootCheckStep.SolarWing,
+            BootCheckStep.Antenna, BootCheckStep.Battery, BootCheckStep.Assembly, BootCheckStep.Begin,
+        };
+
+        private static readonly BootCheckResult[] PostResults =
+        {
+            BootCheckResult.Info, BootCheckResult.Info, BootCheckResult.Info, BootCheckResult.Ok, BootCheckResult.Ok,
+            BootCheckResult.Ok, BootCheckResult.Ok, BootCheckResult.Ok, BootCheckResult.Fault, BootCheckResult.Jammed,
+            BootCheckResult.ReceiveOnly, BootCheckResult.Ok, BootCheckResult.Info, BootCheckResult.Info,
+        };
+
         private IEnumerator Capture(Camera camera, string folder, string name)
         {
             yield return null;

@@ -993,6 +993,94 @@
         {
             "key": "build.step.weld",
             "text": "Giữ {0} để hàn"
+        },
+        {
+            "key": "post.carrier",
+            "text": "SÓNG MANG · PHÁT HIỆN"
+        },
+        {
+            "key": "post.resume",
+            "text": "TIẾP TỤC · {0} NGÀY · KHÔI PHỤC HÀNG VIỆC"
+        },
+        {
+            "key": "post.agenda",
+            "text": "HÀNG VIỆC · 3 MỤC\n1. CĂN CHẢO ĂNG-TEN\n2. GỬI DỮ LIỆU KHẢO SÁT\n3. —\nVIỆC 1 · CẦN ĐIỆN"
+        },
+        {
+            "key": "post.lens",
+            "text": "ỐNG KÍNH"
+        },
+        {
+            "key": "post.lamps",
+            "text": "ĐÈN"
+        },
+        {
+            "key": "post.head",
+            "text": "CỔ · ĐẦU"
+        },
+        {
+            "key": "post.wheels",
+            "text": "BÁNH XE"
+        },
+        {
+            "key": "post.wheels.ok",
+            "text": "OK (1 BÁNH KHÁC BỘ)"
+        },
+        {
+            "key": "post.motor",
+            "text": "ĐỘNG CƠ"
+        },
+        {
+            "key": "post.cutter",
+            "text": "MỎ CẮT"
+        },
+        {
+            "key": "post.cutter.fault",
+            "text": "LỖI · MẤT BỘ ĐÁNH LỬA · PHỤ TÙNG: TÀU ĐỔ BỘ"
+        },
+        {
+            "key": "post.solar_wing",
+            "text": "CÁNH PIN"
+        },
+        {
+            "key": "post.antenna",
+            "text": "ĂNG-TEN"
+        },
+        {
+            "key": "post.battery",
+            "text": "PIN"
+        },
+        {
+            "key": "post.battery.ok",
+            "text": "{0}%"
+        },
+        {
+            "key": "post.assembly",
+            "text": "LẮP DỰNG · 0 BẢN VẼ"
+        },
+        {
+            "key": "post.begin",
+            "text": "BẮT ĐẦU KHÔI PHỤC"
+        },
+        {
+            "key": "post.result.ok",
+            "text": "OK"
+        },
+        {
+            "key": "post.result.fault",
+            "text": "LỖI"
+        },
+        {
+            "key": "post.result.jammed",
+            "text": "KẸT"
+        },
+        {
+            "key": "post.result.receive_only",
+            "text": "CHỈ NHẬN"
+        },
+        {
+            "key": "post.antenna.receive_only",
+            "text": "CHỈ NHẬN · TÍN HIỆU QUỸ ĐẠO"
         }
     ]
 }
