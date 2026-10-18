@@ -260,7 +260,7 @@ namespace MoonProject.Autoplay
                 yield return _bot.DriveTo(Flat(crate.CutPoint.position), SealNose, "nose to the seal of " + cache.Id,
                     DriveSeconds);
                 yield return _bot.TurnToward(crate.CutPoint.position, "the seal of " + cache.Id);
-                yield return FirstUse("cut: hold E");
+                yield return FirstUse("cut: hold E", crate.CutPoint.position);
                 yield return _bot.Hold(Key.E, () =>
                     {
                         _bot.KeepLookingAt(crate.CutPoint.position);
@@ -379,8 +379,8 @@ namespace MoonProject.Autoplay
             _verbsUsed.Add(verb);
         }
 
-        /// <summary>Notes a verb's chip on its first use; a missing chip is a guidance gap, not a stop.</summary>
-        private IEnumerator FirstUse(string verb)
+        /// <summary>Notes a verb's chip on its first use (the chip waits for 07's gaze on the target); a missing chip is a guidance gap, not a stop.</summary>
+        private IEnumerator FirstUse(string verb, Vector3? gaze = null)
         {
             if (!_verbsUsed.Add(verb))
             {
@@ -390,6 +390,11 @@ namespace MoonProject.Autoplay
             float deadline = Time.unscaledTime + ChipSeconds;
             while (_bot.World.Ui.Chip().Length == 0 && Time.unscaledTime < deadline)
             {
+                if (gaze.HasValue)
+                {
+                    _bot.KeepLookingAt(gaze.Value);
+                }
+
                 yield return null;
             }
 
