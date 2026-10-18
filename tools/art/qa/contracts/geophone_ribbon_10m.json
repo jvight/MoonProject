@@ -1,0 +1,80 @@
+{
+  "model": "geophone_ribbon_10m",
+  "pivot_tolerance": 0.02,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_BareSteel",
+    "R1_Basalt",
+    "R1_Brass",
+    "R1_Copper",
+    "R1_CreamEnamel",
+    "R1_GoldFoil",
+    "R1_GreyMetal",
+    "R1_OrangeStripe",
+    "R1_Rubber"
+  ],
+  "max_triangles": 4200,
+  "max_meshes": 2,
+  "max_draw_calls": 12,
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "Geophone_Ribbon_10m": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "RibbonRun": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "RibbonClips": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.005
+      ]
+    },
+    "Start_Anchor": {
+      "pivot": [
+        0.0,
+        -5.0,
+        0.005
+      ]
+    },
+    "End_Anchor": {
+      "pivot": [
+        0.0,
+        5.0,
+        0.005
+      ]
+    },
+    "Clip_Anchor": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.018
+      ]
+    },
+    "Center_Anchor": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.005
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      0.0893,
+      10.0,
+      0.0275
+    ],
+    "tolerance": 0.05
+  }
+}
