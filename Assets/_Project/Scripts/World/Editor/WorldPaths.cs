@@ -7,6 +7,8 @@ namespace MoonProject.World.Editor
         public const string Settings = "Assets/_Project/Data/Tuning/WorldSettings.asset";
         public const string SkyMaterial = GeneratedRoot + "/M_Sky.mat";
         public const string EarthMaterial = GeneratedRoot + "/M_Earth.mat";
+        public const string EarthMaterialA = GeneratedRoot + "/M_Earth_A.mat";
+        public const string EarthMaterialA2 = GeneratedRoot + "/M_Earth_A2.mat";
         public const string GroundMaterial = GeneratedRoot + "/M_Ground.mat";
         /// <summary>Marks pressed into the dust: the rover's track shader, World's tint and fade.</summary>
         public const string GroundMarkMaterial = GeneratedRoot + "/M_GroundMarks.mat";

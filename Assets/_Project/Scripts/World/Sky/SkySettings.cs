@@ -3,6 +3,13 @@ using UnityEngine;
 
 namespace MoonProject.World
 {
+    /// <summary>Switchable look variants for Earth (R1 moonlook pass).</summary>
+    public enum EarthLookVariant
+    {
+        BlueMarble = 0,
+        Stylized = 1
+    }
+
     /// <summary>
     /// The night sky: gradient, stars, milky way, shooting stars and Earth. Pushed to the sky and Earth shaders as
     /// global properties by <see cref="SkyShaderGlobals"/>; IWorldLayout.EarthDirection comes from here too.
@@ -102,6 +109,9 @@ namespace MoonProject.World
         [SerializeField] private float _milkyWayIntensity = 0.8f;
 
         [Header("Earth")]
+        [Tooltip("Switchable look variant for Earth: BlueMarble (Earth A) or Stylized painterly (Earth A2).")]
+        [SerializeField] private EarthLookVariant _earthVariant = EarthLookVariant.BlueMarble;
+
         [Tooltip("Bearing of Earth from the base, degrees clockwise from +Z. The rover starts facing +Z.")]
         [Range(0f, 360f)]
         [SerializeField] private float _earthBearing = 338f;
@@ -219,6 +229,7 @@ namespace MoonProject.World
         public Color MilkyWayColor => _milkyWayColor;
         public float MilkyWayWidth => _milkyWayWidth;
         public float MilkyWayIntensity => _milkyWayIntensity;
+        public EarthLookVariant EarthVariant => _earthVariant;
         public float EarthBearing => _earthBearing;
         public float EarthElevation => _earthElevation;
         public float EarthDiameter => _earthDiameter;

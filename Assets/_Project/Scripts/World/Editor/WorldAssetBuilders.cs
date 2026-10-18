@@ -89,12 +89,20 @@ namespace MoonProject.World.Editor
         public static void BuildSkyMaterials()
         {
             GeneratedAssets.CreateOrReplace(new Material(LoadShader(WorldPaths.SkyShader)), WorldPaths.SkyMaterial);
+            Shader earthShader = LoadShader(WorldPaths.EarthShader);
             Texture2D earthAlbedo = LoadEarthTexture(WorldPaths.EarthAlbedoTexture);
-            Material earthMaterial = new Material(LoadShader(WorldPaths.EarthShader));
-            earthMaterial.SetTexture("_EarthAlbedoMap", earthAlbedo);
-            earthMaterial.SetFloat("_EarthVariant", -1f);
-            GeneratedAssets.CreateOrReplace(earthMaterial, WorldPaths.EarthMaterial);
+            GeneratedAssets.CreateOrReplace(CreateEarthMaterial(earthShader, earthAlbedo, -1f), WorldPaths.EarthMaterial);
+            GeneratedAssets.CreateOrReplace(CreateEarthMaterial(earthShader, earthAlbedo, 0f), WorldPaths.EarthMaterialA);
+            GeneratedAssets.CreateOrReplace(CreateEarthMaterial(earthShader, earthAlbedo, 1f), WorldPaths.EarthMaterialA2);
             AssetDatabase.SaveAssets();
+        }
+
+        private static Material CreateEarthMaterial(Shader shader, Texture2D albedo, float variant)
+        {
+            var material = new Material(shader);
+            material.SetTexture("_EarthAlbedoMap", albedo);
+            material.SetFloat("_EarthVariant", variant);
+            return material;
         }
 
         /// <summary>

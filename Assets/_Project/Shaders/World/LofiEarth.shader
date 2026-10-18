@@ -298,6 +298,9 @@ Shader "MoonProject/World/LofiEarth"
                     return half4(FragCurrent(disc, z, normalLocal, normalWS, spinAngle), alpha);
                 }
 
+                // Resolve active Earth variant: 0 = Earth A ("Blue Marble"), 1 = Earth A2 ("Stylized Subnautica-like painterly").
+                float stylized = saturate(_EarthVariant >= -0.5 ? _EarthVariant : _MoonEarthVariant);
+
                 // Spin phase aligned so at opening earthlit night (t = 4816s) and static edit-mode preview,
                 // the sunlit crescent frames the Americas, Atlantic Ocean, Europe, Mediterranean, and Africa.
                 float globeAngle = abs(_MoonEarthGlow.z) > 1e-5 ? (_MoonEarthGlow.z - 2.68) : (_Time.y * _MoonEarthGlow.y);
@@ -325,6 +328,7 @@ Shader "MoonProject/World/LofiEarth"
                 // Fine 3D spherical micro-detail so coastlines, desert ergs, and mountain ranges stay crisp at any size.
                 float microA = Fbm3(gp * 16.0 + float3(2.3, 7.1, 4.9)) - 0.5;
                 float microB = Fbm3(gp * 38.0 + float3(9.4, 3.2, 11.8)) - 0.5;
+                float painterStroke = Fbm3(gp * 9.5 + float3(microA * 1.4, microB * 1.4, -microA * 1.2)) - 0.5;
 
                 float elevNorm;
                 float isLand;
@@ -336,20 +340,56 @@ Shader "MoonProject/World/LofiEarth"
                 if (earthTex.a > 0.5)
                 {
                     elevNorm = saturate((earthTex.a - 0.88) / 0.12);
-                    isLand = smoothstep(0.46, 0.53, elevNorm + microA * 0.018);
+                    float coastEdge = lerp(0.035, 0.012, stylized);
+                    isLand = smoothstep(0.495 - coastEdge, 0.495 + coastEdge, elevNorm + microA * 0.018);
                     shallowShelf = smoothstep(0.22, 0.48, elevNorm) * (1.0 - isLand);
                     mountainHeight = saturate((elevNorm - 0.54) / 0.32) * isLand;
                     polarIce = smoothstep(0.87, 0.95, elevNorm + microA * 0.02);
 
-                    // Blue Marble surface: deep sapphire ocean, turquoise shelves, rich emerald/ochre/rust continents.
+                    // --- Earth A ("Blue Marble") realistic surface ---
                     float3 texAlbedo = earthTex.rgb;
                     float3 oceanRich = texAlbedo * lerp(float3(0.82, 0.92, 1.08), _MoonEarthOcean.rgb * 1.28, 0.35);
                     float3 landRich = texAlbedo * (1.0 + microA * 0.14 + microB * 0.09);
-                    // Subtle warm desert & highland contrast boost so continents read unmistakably against ocean
                     float warmArid = saturate((texAlbedo.r - texAlbedo.g) * 3.2);
                     landRich = lerp(landRich, landRich * float3(1.12, 1.02, 0.88), warmArid * 0.45);
-                    surfaceColor = lerp(oceanRich, landRich, isLand);
-                    surfaceColor = lerp(surfaceColor, _MoonEarthCloud.rgb * 1.04, polarIce * 0.88);
+                    float3 surfaceA = lerp(oceanRich, landRich, isLand);
+                    surfaceA = lerp(surfaceA, _MoonEarthCloud.rgb * 1.04, polarIce * 0.88);
+
+                    // --- Earth A2 ("Stylized Subnautica-like painterly") surface on the same real continents ---
+                    float oceanDepth01 = saturate(elevNorm / 0.48);
+                    float steppedShelf = smoothstep(0.46, 0.58, oceanDepth01 + painterStroke * 0.08) * 0.55
+                        + smoothstep(0.70, 0.80, oceanDepth01 + painterStroke * 0.06) * 0.45;
+                    float coastReef = smoothstep(0.39, 0.485, elevNorm + painterStroke * 0.025) * (1.0 - isLand);
+                    float3 abyssOcean = float3(0.022, 0.082, 0.265);
+                    float3 ceruleanOcean = float3(0.048, 0.235, 0.535);
+                    float3 turquoiseShelf = float3(0.085, 0.545, 0.695);
+                    float3 aquaReef = float3(0.210, 0.815, 0.845);
+                    float3 oceanStylized = lerp(abyssOcean, ceruleanOcean, smoothstep(0.18, 0.62, oceanDepth01));
+                    oceanStylized = lerp(oceanStylized, turquoiseShelf, steppedShelf * 0.82);
+                    oceanStylized = lerp(oceanStylized, aquaReef, coastReef * 0.78);
+
+                    // Painterly color-blocked biomes derived from real continent chrominance + elevation terraces
+                    float greenDom = saturate((texAlbedo.g - texAlbedo.r * 0.78) * 4.2);
+                    float aridDom = saturate((texAlbedo.r - texAlbedo.g * 0.92) * 3.8);
+                    float aridTerrace = smoothstep(0.22, 0.36, aridDom + painterStroke * 0.12) * 0.52
+                        + smoothstep(0.52, 0.66, aridDom + painterStroke * 0.10) * 0.48;
+                    float3 kelpJungle = float3(0.055, 0.345, 0.185);
+                    float3 lushSteppe = float3(0.185, 0.465, 0.225);
+                    float3 terracotta = float3(0.715, 0.395, 0.215);
+                    float3 goldenDune = float3(0.915, 0.665, 0.355);
+                    float3 highlandPlum = float3(0.385, 0.315, 0.335);
+
+                    float3 landStylized = lerp(lushSteppe, kelpJungle, smoothstep(0.25, 0.68, greenDom + painterStroke * 0.10));
+                    float3 desertStylized = lerp(terracotta, goldenDune, smoothstep(-0.08, 0.12, painterStroke + microA * 0.5));
+                    landStylized = lerp(landStylized, desertStylized, aridTerrace);
+                    float mtnTerrace = smoothstep(0.16, 0.28, mountainHeight) * 0.55 + smoothstep(0.42, 0.58, mountainHeight) * 0.45;
+                    landStylized = lerp(landStylized, highlandPlum, mtnTerrace * 0.80);
+                    float3 snowStylized = float3(0.92, 0.97, 1.02);
+                    float crispIce = smoothstep(0.84, 0.90, elevNorm + painterStroke * 0.03);
+                    float3 surfaceA2 = lerp(oceanStylized, landStylized * (0.96 + 0.12 * smoothstep(-0.15, 0.15, painterStroke)), isLand);
+                    surfaceA2 = lerp(surfaceA2, snowStylized, crispIce * 0.94);
+
+                    surfaceColor = lerp(surfaceA, surfaceA2, stylized);
                 }
                 else
                 {
@@ -379,7 +419,7 @@ Shader "MoonProject/World/LofiEarth"
                 float swirlA = Fbm3(cp * 2.15 + float3(13.1, 4.7, 8.2)) - 0.5;
                 float swirlB = Fbm3(cp * 2.15 + float3(2.9, 17.5, 6.4)) - 0.5;
                 float3 cycloneWarp = float3(swirlA - swirlB * 0.35 * hemiSign, swirlB * 0.45, swirlB + swirlA * 0.35 * hemiSign);
-                float3 cloudCoord = cp * 2.75 + cycloneWarp * 0.95;
+                float3 cloudCoord = cp * 2.75 + cycloneWarp * lerp(0.95, 1.22, stylized);
 
                 float cloudMacro = Fbm3(cloudCoord);
                 float cloudDetail = Fbm3(cloudCoord * 2.55 + float3(7.7, 3.1, 11.4));
@@ -387,22 +427,35 @@ Shader "MoonProject/World/LofiEarth"
                 float tradeBelts = 0.065 * cos(cp.y * 8.8) + 0.035 * cos(cp.y * 17.0);
                 float cloudDensity = cloudMacro * 0.56 + cloudDetail * 0.30 + cloudMicro * 0.14 + tradeBelts;
 
-                float cloudWisps = smoothstep(0.47, 0.64, cloudDensity);
-                float cloudCore = smoothstep(0.56, 0.73, cloudDensity);
-                float cloudMask = saturate(cloudWisps * 0.62 + cloudCore * 0.38);
+                float cloudWispsA = smoothstep(0.47, 0.64, cloudDensity);
+                float cloudCoreA = smoothstep(0.56, 0.73, cloudDensity);
+                float cloudMaskA = saturate(cloudWispsA * 0.62 + cloudCoreA * 0.38);
+
+                // Stylized A2 clouds: sculpted painterly swirling ribbons with crisp two-tier cel edges.
+                float ribbonDensity = cloudMacro * 0.68 + cloudDetail * 0.24 + tradeBelts * 1.35;
+                float cloudRibbonOuter = smoothstep(0.51, 0.565, ribbonDensity);
+                float cloudRibbonInner = smoothstep(0.60, 0.655, ribbonDensity);
+                float cloudMaskA2 = saturate(cloudRibbonOuter * 0.58 + cloudRibbonInner * 0.42);
+
+                float cloudMask = lerp(cloudMaskA, cloudMaskA2, stylized);
+                float cloudCore = lerp(cloudCoreA, cloudRibbonInner, stylized);
 
                 // Cloud drop shadow offset away from the Sun so the cloud deck visibly floats above ocean and land.
-                float3 shadowProbe = Spin(normalize(normalLocal + sunLocal * 0.032), cs, cc);
-                float3 shadowCoord = shadowProbe * 2.75 + cycloneWarp * 0.95;
+                float3 shadowProbe = Spin(normalize(normalLocal + sunLocal * lerp(0.032, 0.038, stylized)), cs, cc);
+                float3 shadowCoord = shadowProbe * 2.75 + cycloneWarp * lerp(0.95, 1.22, stylized);
                 float shadowDensity = Fbm3(shadowCoord) * 0.58 + Fbm3(shadowCoord * 2.55 + float3(7.7, 3.1, 11.4)) * 0.42 + tradeBelts;
-                float cloudShadow = smoothstep(0.48, 0.67, shadowDensity) * (1.0 - cloudMask * 0.72);
-                surfaceColor *= 1.0 - cloudShadow * 0.42;
+                float shadowStep = lerp(smoothstep(0.48, 0.67, shadowDensity), smoothstep(0.51, 0.58, shadowDensity), stylized);
+                float cloudShadow = shadowStep * (1.0 - cloudMask * 0.72);
+                surfaceColor *= 1.0 - cloudShadow * lerp(0.42, 0.50, stylized);
 
                 // 3D cloud-top self-shading along the sun vector.
                 float cloudTopBump = (shadowDensity - cloudDensity) * 2.4;
-                float3 cloudTint = lerp(_MoonEarthCloud.rgb * float3(0.84, 0.90, 0.98), _MoonEarthCloud.rgb * 1.08,
-                    saturate(0.58 + cloudCore * 0.35 - cloudTopBump * 0.28));
-                float3 albedo = lerp(surfaceColor, cloudTint, cloudMask * 0.92);
+                float cloudShade01 = saturate(0.58 + cloudCore * 0.35 - cloudTopBump * 0.28);
+                float3 cloudTintA = lerp(_MoonEarthCloud.rgb * float3(0.84, 0.90, 0.98), _MoonEarthCloud.rgb * 1.08, cloudShade01);
+                float3 cloudTintA2 = lerp(_MoonEarthCloud.rgb * float3(0.68, 0.84, 1.02), _MoonEarthCloud.rgb * float3(1.12, 1.08, 1.00),
+                    smoothstep(0.38, 0.68, cloudShade01));
+                float3 cloudTint = lerp(cloudTintA, cloudTintA2, stylized);
+                float3 albedo = lerp(surfaceColor, cloudTint, cloudMask * lerp(0.92, 0.96, stylized));
 
                 // Soft terminator with Lommel-Seeliger + Lambert phase lighting and Rayleigh twilight scattering.
                 float ndotl = dot(normalWS, _MoonEarthSun.xyz);
@@ -410,23 +463,36 @@ Shader "MoonProject/World/LofiEarth"
                 float viewFacing = saturate(z);
                 float posNdotL = max(lerp(ndotl, topoNdotL, isLand * (1.0 - cloudMask) * 0.55), 0.0);
                 float seeliger = posNdotL / (posNdotL + viewFacing * 0.30 + 0.032);
-                float terminator = smoothstep(-0.075, 0.155, ndotl);
-                float lit = terminator * lerp(seeliger, pow(max(posNdotL, 1e-4), 0.54), 0.60);
+                float terminatorA = smoothstep(-0.075, 0.155, ndotl);
+                float litA = terminatorA * lerp(seeliger, pow(max(posNdotL, 1e-4), 0.54), 0.60);
 
-                // Subtle Rayleigh twilight scattering band across the terminator (warm amber in low clouds, cobalt in upper air).
+                // Stylized A2 phase lighting: painterly soft-stepped cel bands across the sunlit crescent.
+                float terminatorA2 = smoothstep(-0.065, 0.12, ndotl);
+                float celBand1 = smoothstep(0.00, 0.14, posNdotL);
+                float celBand2 = smoothstep(0.24, 0.48, posNdotL);
+                float litA2 = terminatorA2 * lerp(seeliger, 0.52 * celBand1 + 0.48 * celBand2, 0.58);
+                float lit = lerp(litA, litA2, stylized);
+
+                // Subtle Rayleigh twilight scattering band across the terminator (warm coral-amber in clouds, cobalt/cyan in upper air).
                 float twilightBand = smoothstep(-0.09, 0.02, ndotl) * (1.0 - smoothstep(0.01, 0.22, ndotl));
-                float3 twilightScatter = lerp(float3(0.18, 0.38, 0.82), float3(0.72, 0.42, 0.24), cloudMask * 0.55)
-                    * (twilightBand * 0.14);
+                float3 twilightColorA = lerp(float3(0.18, 0.38, 0.82), float3(0.72, 0.42, 0.24), cloudMask * 0.55);
+                float3 twilightColorA2 = lerp(float3(0.12, 0.58, 0.96), float3(0.96, 0.48, 0.26), cloudMask * 0.65);
+                float3 twilightScatter = lerp(twilightColorA, twilightColorA2, stylized) * (twilightBand * lerp(0.14, 0.22, stylized));
 
-                // Dual-lobe Cox-Munk ocean specular glint on open water clear of land, ice, and dense clouds.
+                // Ocean specular glint on open water clear of land, ice, and dense clouds.
                 float3 viewDir = _MoonEarthAxisZ.xyz;
                 float3 halfVec = normalize(_MoonEarthSun.xyz + viewDir);
                 float3 wavePerturb = float3(microA, microB, (swirlA - 0.5) * 0.5);
-                float3 waveNormal = normalize(normalWS + ToWorld(wavePerturb) * 0.085);
+                float3 waveNormal = normalize(normalWS + ToWorld(wavePerturb) * lerp(0.085, 0.055, stylized));
                 float specCos = max(dot(waveNormal, halfVec), 1e-4);
                 float openWater = (1.0 - isLand) * (1.0 - polarIce) * (1.0 - cloudMask * 0.88) * smoothstep(-0.02, 0.18, ndotl);
-                float oceanGlint = (pow(specCos, 16.0) * 0.15 + pow(specCos, 68.0) * 0.36) * openWater;
-                float3 glintColor = lerp(_MoonEarthCloud.rgb, float3(1.0, 0.96, 0.88), 0.52);
+                float glintA = (pow(specCos, 16.0) * 0.15 + pow(specCos, 68.0) * 0.36) * openWater;
+                float glintA2 = (smoothstep(0.72, 0.90, specCos) * 0.18 + smoothstep(0.91, 0.985, specCos) * 0.42) * openWater;
+                float oceanGlint = lerp(glintA, glintA2, stylized);
+                float3 glintColor = lerp(
+                    lerp(_MoonEarthCloud.rgb, float3(1.0, 0.96, 0.88), 0.52),
+                    float3(0.72, 0.98, 1.00),
+                    stylized * 0.55);
 
                 // Dark unpeopled night side (no city lights — humanity left in the 80s).
                 float3 color = (albedo * lerp(_MoonEarthSun.w, 1.0, lit) + twilightScatter) * _MoonEarthGlow.x;
@@ -434,10 +500,12 @@ Shader "MoonProject/World/LofiEarth"
 
                 // Thin blue Fresnel atmospheric limb hugging Earth's edge + soft inner Rayleigh atmospheric veil.
                 float oneMinusV = max(1.0 - viewFacing, 1e-4);
-                float thinFresnel = pow(oneMinusV, 3.6);
-                float innerRayleigh = pow(oneMinusV, 1.85) * 0.24;
+                float thinFresnel = lerp(pow(oneMinusV, 3.6), smoothstep(0.42, 0.92, oneMinusV) * 1.15, stylized * 0.65);
+                float innerRayleigh = pow(oneMinusV, 1.85) * lerp(0.24, 0.32, stylized);
                 float rim = thinFresnel + innerRayleigh;
-                float3 blueAtmo = lerp(_MoonEarthAtmosphere.rgb, float3(0.32, 0.64, 1.0), 0.46);
+                float3 blueAtmoA = lerp(_MoonEarthAtmosphere.rgb, float3(0.32, 0.64, 1.0), 0.46);
+                float3 blueAtmoA2 = lerp(_MoonEarthAtmosphere.rgb, float3(0.18, 0.78, 1.05), 0.64);
+                float3 blueAtmo = lerp(blueAtmoA, blueAtmoA2, stylized);
                 float limbLit = 0.07 + 0.93 * smoothstep(-0.14, 0.22, ndotl);
                 float3 normalRim = blueAtmo * limbLit;
 

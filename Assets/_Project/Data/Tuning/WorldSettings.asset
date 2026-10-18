@@ -335,6 +335,7 @@ MonoBehaviour:
     _milkyWayColor: {r: 0.36, g: 0.3, b: 0.6, a: 1}
     _milkyWayWidth: 0.2
     _milkyWayIntensity: 0.8
+    _earthVariant: 0
     _earthBearing: 338
     _earthElevation: 16
     _earthDiameter: 13
