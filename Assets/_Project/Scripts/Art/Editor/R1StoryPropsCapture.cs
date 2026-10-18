@@ -68,6 +68,9 @@ namespace MoonProject.Art.Editor
 
                     CaptureDeliverable8_CableKit(capturesDir, false);
                     CaptureDeliverable8_CableKit(capturesDir, true);
+
+                    CaptureDeliverable9_BasinLifeLineup(capturesDir, false);
+                    CaptureDeliverable9_BasinLifeLineup(capturesDir, true);
                 }
                 finally
                 {
@@ -79,6 +82,40 @@ namespace MoonProject.Art.Editor
                 foreach (string png in Directory.GetFiles(capturesDir, "r1props_*.png"))
                 {
                     File.Copy(png, Path.Combine(batchOutDir, Path.GetFileName(png)), true);
+                }
+
+                return true;
+            });
+        }
+
+        /// <summary>
+        /// Dedicated fast batch entry point for capturing the 6 Basin Life crew trace props
+        /// (<c>Prop_MissionFlag</c>, <c>Prop_SeismicStation</c>, <c>Prop_Retroreflector</c>,
+        /// <c>Prop_SurveyTripod</c>, <c>Prop_SampleRack</c>, <c>Decal_BootprintTrail</c>) next to Rover 07
+        /// in Day C and in Eclipse light:
+        /// <c>python tools/unity_batch.py exec --project . --method MoonProject.Art.Editor.R1StoryPropsCapture.CaptureBasinLifeLineup</c>
+        /// </summary>
+        public static void CaptureBasinLifeLineup()
+        {
+            BatchRunner.Run(nameof(CaptureBasinLifeLineup), args =>
+            {
+                AssetDatabase.Refresh();
+                R1MaterialLibrary.BuildMaterials();
+                R1ModelBuilder.Build();
+
+                string capturesDir = Path.GetFullPath("Logs/captures");
+                Directory.CreateDirectory(capturesDir);
+
+                bool prevAsync = ShaderUtil.allowAsyncCompilation;
+                ShaderUtil.allowAsyncCompilation = false;
+                try
+                {
+                    CaptureDeliverable9_BasinLifeLineup(capturesDir, false);
+                    CaptureDeliverable9_BasinLifeLineup(capturesDir, true);
+                }
+                finally
+                {
+                    ShaderUtil.allowAsyncCompilation = prevAsync;
                 }
 
                 return true;
@@ -489,6 +526,59 @@ namespace MoonProject.Art.Editor
                     40f,
                     bg,
                     Path.Combine(outDir, $"r1props_cable_kit_detail_{suffix}.png"));
+            }
+            finally
+            {
+                temp.Dispose();
+            }
+        }
+
+        private static void CaptureDeliverable9_BasinLifeLineup(string outDir, bool nightEclipse)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(temp, nightEclipse);
+                if (!nightEclipse && RenderSettings.sun != null)
+                {
+                    RenderSettings.sun.intensity = 2.0f;
+                    RenderSettings.sun.transform.rotation = Quaternion.Euler(24f, -34f, 0f);
+                }
+
+                // Rover 07 on the back-right in 3/4 front view facing the 6 Basin Life props
+                GameObject rover = SpawnRover07(temp, new Vector3(1.65f, 0f, 0.55f), -132f, nightEclipse);
+
+                // 1. Prop_MissionFlag: back-left (1.61 m tall, sun-bleached flag hanging from horizontal top rod)
+                SpawnProp(R1StoryPropsBuilder.PropMissionFlagPrefabPath, new Vector3(-1.45f, 0f, 0.40f), 12f, temp);
+
+                // 2. Prop_SampleRack: mid-left (A-frame rack with rake, tongs, scoop, 2 racked core tubes + 1 fallen tube)
+                SpawnProp(R1StoryPropsBuilder.PropSampleRackPrefabPath, new Vector3(-0.55f, 0f, 0.32f), 8f, temp);
+
+                // 3. Prop_Retroreflector: mid-center (tilted 10x10 corner-cube prism array catching grazing light)
+                SpawnProp(R1StoryPropsBuilder.PropRetroreflectorPrefabPath, new Vector3(0.35f, 0f, 0.25f), -14f, temp);
+
+                // 4. Prop_SeismicStation: front-left (GoldFoil shroud over seismometer + cable to squat central box with dead lamp)
+                SpawnProp(R1StoryPropsBuilder.PropSeismicStationPrefabPath, new Vector3(-1.05f, 0f, -0.32f), 14f, temp);
+
+                // 5. Prop_SurveyTripod: front-right (fallen survey tripod with theodolite head and buckled leg)
+                SpawnProp(R1StoryPropsBuilder.PropSurveyTripodPrefabPath, new Vector3(0.55f, 0f, -0.35f), -16f, temp);
+
+                // 6. Decal_BootprintTrail: foreground path of two crossing EVA bootprint trails softened by time
+                SpawnProp(R1StoryPropsBuilder.DecalBootprintTrailPrefabPath, new Vector3(-0.15f, 0.001f, -1.05f), 86f, temp);
+
+                if (nightEclipse)
+                {
+                    AddRoverHeadlamps(rover.transform, new Vector3(-0.15f, 0.18f, -0.25f), temp);
+                }
+
+                string suffix = nightEclipse ? "eclipse" : "dayC";
+                RenderShot(
+                    new Vector3(-0.05f, 1.55f, -3.25f),
+                    new Vector3(-0.05f, 0.35f, -0.10f),
+                    48f,
+                    bg,
+                    Path.Combine(outDir, $"r1props_basinlife_lineup_{suffix}.png"));
             }
             finally
             {
