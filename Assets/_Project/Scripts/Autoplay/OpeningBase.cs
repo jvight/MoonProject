@@ -352,6 +352,15 @@ namespace MoonProject.Autoplay
 
         public static float BankSpacing => BankPadSpacing;
 
+        /// <summary>The scan verb's first-use key, shared with B3's own scan loop.</summary>
+        public const string ScanVerb = "scan: hold E";
+
+        /// <summary>Records that a verb has been used, so its chip is not expected as a first-use hint again.</summary>
+        public void NoteUsed(string verb)
+        {
+            _verbsUsed.Add(verb);
+        }
+
         /// <summary>Notes a verb's chip on its first use; a missing chip is a guidance gap, not a stop.</summary>
         private IEnumerator FirstUse(string verb)
         {
@@ -400,7 +409,7 @@ namespace MoonProject.Autoplay
                 yield return null;
             }
 
-            yield return FirstUse("scan: hold E");
+            yield return FirstUse(ScanVerb);
             yield return _bot.Hold(Key.E, () =>
                 {
                     _bot.KeepLookingAt(fragment.Point);

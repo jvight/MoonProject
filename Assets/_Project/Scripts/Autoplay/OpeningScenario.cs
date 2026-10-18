@@ -222,6 +222,7 @@ namespace MoonProject.Autoplay
                 yield break;
             }
 
+            _base.NoteUsed(OpeningBase.ScanVerb);
             string glyph = ui.RawChipGlyph();
             chips.Add(ui.Chip().Length > 0 ? ui.Chip() : "(hidden) " + glyph);
             if (!GlyphKeys.TryResolve(glyph, out Key key))
