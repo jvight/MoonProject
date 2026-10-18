@@ -20,6 +20,10 @@ namespace MoonProject.Gameplay
         private const float StageHeatHalfLife = 0.52f;
         private const float SettleDuration = 0.44f;
 
+        /// <summary>Metres off the layer line a weld beam's end may still count as on it (and how far under it the
+        /// search looks for a part's flat top).</summary>
+        private const float LayerLineTolerance = 0.03f;
+
         /// <summary>The invalid placement ghost's hologram fade (the valid one is whole).</summary>
         private const float InvalidGhostFade = 0.95f;
         private const float LampCascadeStep = 0.065f;
@@ -417,7 +421,9 @@ namespace MoonProject.Gameplay
 
             for (int s = 0; s < stageCount; s++)
             {
-                bool shouldBeVisible = s <= targetSolid;
+                // A live print shows every stage, clipped at its print plane: they stay active, so their colliders
+                // never drop out of the physics scene between frames.
+                bool shouldBeVisible = _liveBuild || s <= targetSolid;
                 if (_stageRoots[s] != null && _stageRoots[s].gameObject.activeSelf != shouldBeVisible)
                 {
                     _stageRoots[s].gameObject.SetActive(shouldBeVisible);
@@ -657,14 +663,35 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// Where 07's weld beam from <paramref name="nozzle"/> meets the stage being welded: on its parts' own
-        /// colliders, through its seam point as the weld runs along it, else through the stage's middle as its parts
-        /// unfold, else on the part nearest the seam (a stage whose middle is air). False (and the seam point) only
-        /// when no ray meets any of its parts.
+        /// Where 07's weld beam from <paramref name="nozzle"/> meets the structure. While it prints, on its layer
+        /// line: where a level ray at the line's height meets its printed parts, toward the layer point or else
+        /// across the parts at that height or just under it (a part's flat top at the line meets no level ray; the
+        /// colliders above the line are not drawn yet, so a ray down from the nozzle could end on what is not there). Otherwise on the stage being
+        /// welded: through its seam point, else through its middle, else on the part nearest the seam (a stage whose
+        /// middle is air). False (and the layer or seam point) when no ray meets a part.
         /// </summary>
         public bool TryWeldContact(Vector3 nozzle, out Vector3 point, out Vector3 normal)
         {
             Vector3 seam = GetActiveWeldPoint();
+            if (Printing)
+            {
+                var level = new Vector3(nozzle.x, seam.y, nozzle.z);
+                if (SurfaceAim.TryHit(_colliders, level, seam, out point, out normal) ||
+                    SurfaceAim.TryHit(_colliders, level, PrintCentre(), out point, out normal) ||
+                    SurfaceAim.TryAcrossLevel(_colliders, level, seam, out point, out normal) ||
+                    SurfaceAim.TryAcrossLevel(_colliders, level + Vector3.down * LayerLineTolerance, seam, out point,
+                        out normal) ||
+                    (SurfaceAim.TryHit(_colliders, nozzle, seam, out point, out normal) &&
+                     point.y <= seam.y + LayerLineTolerance))
+                {
+                    return true;
+                }
+
+                point = seam;
+                normal = Vector3.up;
+                return false;
+            }
+
             int stage = Mathf.Clamp(SolidStageCount, 0, StageCount - 1);
             Collider[] colliders = _stageColliders[stage];
             if (SurfaceAim.TryHit(colliders, nozzle, seam, out point, out normal) ||
@@ -678,6 +705,19 @@ namespace MoonProject.Gameplay
             normal = Vector3.up;
             return false;
         }
+
+        /// <summary>The middle of the print's cross-section at its layer line (world): what stands at that height.
+        /// </summary>
+        private Vector3 PrintCentre()
+        {
+            float slicedProg = Mathf.Ceil(Mathf.Max(0.025f, Mathf.Clamp01(_buildProgress01)) * 40f) / 40f;
+            GetPrintCrossSection(slicedProg, out float centerX, out float centerZ, out _);
+            float localY = Mathf.Lerp(_localMinY + 0.03f, _localMaxY - 0.03f, slicedProg);
+            return transform.TransformPoint(new Vector3(centerX, localY, centerZ));
+        }
+
+        /// <summary>A live build still rising under its layer line.</summary>
+        private bool Printing => _liveBuild && !IsGhost && SolidStageCount < StageCount;
 
         /// <summary>The middle of stage <paramref name="stage"/>'s parts as they stand now (world).</summary>
         private Vector3 StageMiddle(int stage)

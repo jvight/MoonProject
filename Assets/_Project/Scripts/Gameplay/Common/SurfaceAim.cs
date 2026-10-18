@@ -22,6 +22,12 @@ namespace MoonProject.Gameplay
         private static readonly float[] PartGrid = { -0.8f, 0f, 0.8f };
 
         /// <summary>
+        /// Degrees between the level rays fanned across a part's footprint: at a few metres they fall a few
+        /// centimetres apart, so a thin strut standing alone at that height still meets one.
+        /// </summary>
+        public const float FanStepDegrees = 0.5f;
+
+        /// <summary>
         /// The nearest point where the ray from <paramref name="origin"/> through <paramref name="through"/> meets any
         /// enabled collider of <paramref name="colliders"/>.
         /// </summary>
@@ -112,6 +118,91 @@ namespace MoonProject.Gameplay
             }
 
             return found;
+        }
+
+        /// <summary>
+        /// Where a fan of level rays from <paramref name="origin"/>, at its height, swept across each collider's
+        /// footprint in <see cref="FanStepDegrees"/> steps meets it, the hit nearest <paramref name="near"/>: a point
+        /// on the colliders' surface at exactly that height (a layer line drawn round a structure), thin struts
+        /// included, or false where nothing stands at it.
+        /// </summary>
+        public static bool TryAcrossLevel(IReadOnlyList<Collider> colliders, Vector3 origin, Vector3 near,
+            out Vector3 point, out Vector3 normal)
+        {
+            point = near;
+            normal = Vector3.up;
+            if (colliders == null)
+            {
+                return false;
+            }
+
+            float best = float.MaxValue;
+            bool found = false;
+            for (int i = 0; i < colliders.Count; i++)
+            {
+                Collider collider = colliders[i];
+                if (collider == null || !collider.enabled || !collider.gameObject.activeInHierarchy)
+                {
+                    continue;
+                }
+
+                Bounds bounds = collider.bounds;
+                if (origin.y < bounds.min.y || origin.y > bounds.max.y)
+                {
+                    continue;
+                }
+
+                FootprintAngles(bounds, origin, out float from, out float to, out float reach);
+                for (float angle = from; angle <= to; angle += FanStepDegrees)
+                {
+                    float radians = angle * Mathf.Deg2Rad;
+                    var ray = new Ray(origin, new Vector3(Mathf.Sin(radians), 0f, Mathf.Cos(radians)));
+                    if (!collider.Raycast(ray, out RaycastHit hit, reach))
+                    {
+                        continue;
+                    }
+
+                    float distance = (hit.point - near).sqrMagnitude;
+                    if (distance < best)
+                    {
+                        best = distance;
+                        point = hit.point;
+                        normal = hit.normal;
+                        found = true;
+                    }
+                }
+            }
+
+            return found;
+        }
+
+        /// <summary>
+        /// The headings (degrees, about world up) between which <paramref name="bounds"/>' footprint lies as seen
+        /// from <paramref name="origin"/>, and how far its far side is.
+        /// </summary>
+        private static void FootprintAngles(Bounds bounds, Vector3 origin, out float from, out float to,
+            out float reach)
+        {
+            Vector3 toCentre = bounds.center - origin;
+            float centre = Mathf.Atan2(toCentre.x, toCentre.z) * Mathf.Rad2Deg;
+            from = 0f;
+            to = 0f;
+            reach = 0f;
+            for (int corner = 0; corner < 4; corner++)
+            {
+                float x = (corner & 1) == 0 ? bounds.min.x : bounds.max.x;
+                float z = (corner & 2) == 0 ? bounds.min.z : bounds.max.z;
+                float dx = x - origin.x;
+                float dz = z - origin.z;
+                float offset = Mathf.DeltaAngle(centre, Mathf.Atan2(dx, dz) * Mathf.Rad2Deg);
+                from = Mathf.Min(from, offset);
+                to = Mathf.Max(to, offset);
+                reach = Mathf.Max(reach, Mathf.Sqrt(dx * dx + dz * dz));
+            }
+
+            from += centre;
+            to += centre;
+            reach += ReachPast;
         }
 
         /// <summary>

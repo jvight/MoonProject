@@ -403,6 +403,10 @@ namespace MoonProject.Gameplay
             bool placing = _controller.State == BuildModeState.Placing;
             _input.ShareDrive(this, placing);
 
+            // The structures stand as they do this frame before the weld beam aims at one: its end meets their surface.
+            _placedBase.StepPower(deltaTime, 1f);
+            StepPlacedViews(deltaTime);
+
             bool weldingNow = _controller.State == BuildModeState.Welding && _controller.ActiveWeldInstanceId > 0;
             Vector3 weldPoint = weldingNow ? WeldPointOf(_controller.ActiveWeldInstanceId) : Vector3.zero;
             SetHold((_controller.IsOpen && !placing) || weldingNow);
@@ -411,9 +415,6 @@ namespace MoonProject.Gameplay
                                    (_rig == null || _rig.HasCutterLineOfSight(weldPoint));
             StepWeldVfx(weldingNow, activelyWelding, weldPoint, deltaTime);
             StepWeldLoopAudio(activelyWelding, weldPoint);
-
-            _placedBase.StepPower(deltaTime, 1f);
-            StepPlacedViews(deltaTime);
         }
 
         private void StepWeldVfx(bool weldingNow, bool activelyWelding, Vector3 weldPoint, float deltaTime)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.IO;
+using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -24,8 +25,9 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// scans of the lander's pad fragment, a fallen-array fragment seen at an angle and the habitat's modules, and a
     /// whole weld of the charging pad, every frame the beam is fully out its end must lie on the target: within
     /// <see cref="OnSurface"/> of the scan target's colliders (the box of its mesh where it has none) or of the pad's
-    /// own part colliders. A miss fails with the frame, the distance and the target. Each is captured
-    /// (Logs/gameplay-captures/beam-*.png).
+    /// own part colliders, the weld's riding the printed layer line. A miss fails with the frame, the distance and
+    /// the target. Each is captured from the beam's side in the eclipse and at golden hour
+    /// (Logs/gameplay-captures/beam-*-eclipse.png, -golden.png).
     /// </summary>
     [Category("BeamAccuracy")]
     public sealed class BeamAccuracySessions : InputTestFixture
@@ -35,6 +37,12 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>A scan beam this far up (0..1) counts as fully out: its end is where it meets the target.</summary>
         private const float FullBeam = 0.99f;
+
+        /// <summary>Metres the weld beam's end may lie off the printed layer line it rides.</summary>
+        private const float LayerTolerance = 0.06f;
+
+        /// <summary>Metres thick the slab is that asks whether a part stands at the layer line.</summary>
+        private const float SlabMetres = 0.02f;
 
         private const float WakeTimeout = 20f;
         private const float SettleSeconds = 0.6f;
@@ -58,11 +66,25 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float CaptureRiseMetres = 1.4f;
         private const float CaptureBackMetres = 1.2f;
 
-        private readonly Collider[] _near = new Collider[16];
+        /// <summary>The lunar clock's seconds searched for golden hour, and the step.</summary>
+        private const float GoldenSearchFrom = 60f;
+
+        private const float GoldenSearchTo = 2800f;
+        private const float GoldenSearchStep = 10f;
+
+        /// <summary>Golden hour: the target fully sunlit with the sun this low (its direction's height) or higher.
+        /// </summary>
+        private const float FullSun = 0.95f;
+
+        private const float LowSun = 0.12f;
+
+        private readonly Collider[] _near = new Collider[64];
         private Keyboard _keyboard;
         private GameContext _context;
         private GameplaySystem _gameplay;
         private bool _awake;
+        private string _atLine = string.Empty;
+        private float _goldenSeconds;
 
         public override void Setup()
         {
@@ -94,6 +116,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             BootstrapHarness.DeleteSaveFiles(PlaythroughScene.SaveSlot);
             yield return Boot();
             _gameplay.StartKit.Restore(new StartKitSaveData { igniterFitted = true });
+            _goldenSeconds = GoldenHour(_context.Get<IWorldLayout>().BasePosition);
 
             yield return ScanWhole("ruin." + ScanTuning.LanderCargoId, 0, 0f, "pad-fragment");
             yield return ScanWhole("ruin.FallenSolarArray", 1, 50f, "array-at-an-angle");
@@ -187,6 +210,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             bool captured = false;
             int frame = 0;
+            int gapFrames = 0;
             Press(_keyboard.eKey);
             float deadline = Time.time + WeldTimeout;
             while (Time.time < deadline &&
@@ -194,12 +218,27 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 yield return null;
                 frame++;
-                if (!build.IsWelding || build.WeldBeamLevel < 1f)
+                if (!build.IsWelding || build.WeldBeamLevel < 1f || view.SolidStageCount >= view.StageCount)
                 {
                     continue;
                 }
 
                 Vector3 end = build.WeldBeamEnd;
+                float layer = view.GetActiveWeldPoint().y;
+                bool standsAtLine = PartsAtHeight(view, layer);
+                if (standsAtLine)
+                {
+                    Assert.LessOrEqual(Mathf.Abs(end.y - layer), LayerTolerance,
+                        $"frame {frame}: the weld beam ends {Mathf.Abs(end.y - layer) * 100f:F1} cm off the print's " +
+                        $"layer line ({end.y:F3} vs {layer:F3}); at the line stand:{_atLine}");
+                }
+                else
+                {
+                    gapFrames++;
+                    Assert.LessOrEqual(end.y, layer + LayerTolerance,
+                        $"frame {frame}: through a gap in the pad the weld beam ends above its layer line " +
+                        $"({end.y:F3} vs {layer:F3})");
+                }
                 float off = DistanceToParts(view, end);
                 if (off > OnSurface)
                 {
@@ -219,7 +258,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             build.SetAimPointOverride(null);
             Assert.IsTrue(_gameplay.PlacedBase.TryGetStructure(id, out PlacedStructure built) && built.IsBuilt,
                 "a held E welds the pad whole");
-            Debug.Log($"[beam] pad weld: every full-beam frame within {OnSurface * 100f:F0} cm over {frame} frames");
+            Debug.Log($"[beam] pad weld: every full-beam frame within {OnSurface * 100f:F0} cm of its parts and on its " +
+                      $"layer line over {frame} frames ({gapFrames} through gaps where no part stands at the line, the " +
+                      "beam on the top of what is printed)");
         }
 
         /// <summary>Metres from <paramref name="point"/> to the scan target's surface.</summary>
@@ -250,6 +291,39 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             return nearest;
+        }
+
+        /// <summary>
+        /// True when one of the pad's parts stands at world height <paramref name="height"/> (a slab one
+        /// <see cref="SlabMetres"/> thick across its footprint meets it): the print's layer line is drawn on it.
+        /// </summary>
+        private bool PartsAtHeight(StructureView view, float height)
+        {
+            Bounds footprint = view.Colliders[0].bounds;
+            for (int c = 1; c < view.Colliders.Count; c++)
+            {
+                footprint.Encapsulate(view.Colliders[c].bounds);
+            }
+
+            var centre = new Vector3(footprint.center.x, height, footprint.center.z);
+            var half = new Vector3(footprint.extents.x, SlabMetres * 0.5f, footprint.extents.z);
+            int count = Physics.OverlapBoxNonAlloc(centre, half, _near, Quaternion.identity, ~0,
+                QueryTriggerInteraction.Ignore);
+            _atLine = string.Empty;
+            bool stands = false;
+            for (int i = 0; i < count; i++)
+            {
+                for (int c = 0; c < view.Colliders.Count; c++)
+                {
+                    if (view.Colliders[c] == _near[i])
+                    {
+                        stands = true;
+                        _atLine += $" {_near[i].name} {_near[i].bounds.min:F2}..{_near[i].bounds.max:F2}";
+                    }
+                }
+            }
+
+            return stands;
         }
 
         /// <summary>What colliders the stage being welded has, for a miss's message.</summary>
@@ -373,6 +447,42 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
+        /// The lunar clock's time (s) when the sun stands lowest while still lighting <paramref name="focus"/> fully:
+        /// golden hour.
+        /// </summary>
+        private float GoldenHour(Vector3 focus)
+        {
+            var sunlight = _context.Get<ISunlight>();
+            float best = GoldenSearchFrom;
+            float lowest = float.MaxValue;
+            for (float time = GoldenSearchFrom; time <= GoldenSearchTo; time += GoldenSearchStep)
+            {
+                SetSkyClock(time, false);
+                float height = sunlight.SunDirection.y;
+                if (sunlight.SunlightAt(focus) >= FullSun && height > LowSun && height < lowest)
+                {
+                    lowest = height;
+                    best = time;
+                }
+            }
+
+            SetSkyClock(0f, true);
+            return best;
+        }
+
+        /// <summary>
+        /// Sets World's sky clock (its SkyCycleSystem, which the Gameplay tests do not reference) to
+        /// <paramref name="seconds"/>, holding the opening eclipse or not.
+        /// </summary>
+        private void SetSkyClock(float seconds, bool holdingEclipse)
+        {
+            var sunlight = _context.Get<ISunlight>();
+            MethodInfo set = sunlight.GetType().GetMethod("SetClockTime", BindingFlags.Instance | BindingFlags.Public);
+            Assert.IsNotNull(set, "World's sky clock can be set for the captures");
+            set.Invoke(sunlight, new object[] { seconds, holdingEclipse, true });
+        }
+
+        /// <summary>
         /// The game's camera, for one frame, looking across the beam from <paramref name="start"/> to
         /// <paramref name="end"/> from its side, so both its ends and the target show.
         /// </summary>
@@ -386,8 +496,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             Vector3 side = Vector3.Cross(Vector3.up, along);
             Vector3 eye = middle + side * CaptureSideMetres + Vector3.up * CaptureRiseMetres - along * CaptureBackMetres;
             camera.SetPositionAndRotation(eye, Quaternion.LookRotation(middle - eye, Vector3.up));
-            FrameCapture.SavePng(camera.GetComponent<Camera>(), 1280, 720,
-                Path.Combine(GameplayFixture.CaptureFolder, name + ".png"));
+            var lens = camera.GetComponent<Camera>();
+            FrameCapture.SavePng(lens, 1280, 720, Path.Combine(GameplayFixture.CaptureFolder, name + "-eclipse.png"));
+            SetSkyClock(_goldenSeconds, false);
+            FrameCapture.SavePng(lens, 1280, 720, Path.Combine(GameplayFixture.CaptureFolder, name + "-golden.png"));
+            SetSkyClock(0f, true);
             camera.SetPositionAndRotation(position, rotation);
         }
 
