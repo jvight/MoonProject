@@ -99,12 +99,26 @@ namespace MoonProject.Gameplay.PlayModeTests
             int metalBeforePlace = _gameplay.Materials.Metal;
             int wiringBeforePlace = _gameplay.Materials.Wiring;
 
+            // A screen that hands over to build mode (the face screen's Build) opens it as B would, and the apron's
+            // bay outline warms while it is open and cools once it closes.
+            InputReader input = _context.Input;
+            float fade = build.Tuning.ApronGlowFadeSeconds + StepWaitSeconds;
+            Assert.IsTrue(build.TryOpen(), "TryOpen opens the build menu like the Build key.");
+            Assert.AreEqual(BuildModeState.Menu, build.State);
+            Assert.IsTrue(input.HasModeOwner, "Build mode opened by TryOpen claims input like the Build key.");
+            Assert.IsFalse(build.TryOpen(), "TryOpen does nothing while build mode is already open.");
+            yield return new WaitForSeconds(fade);
+            Assert.AreEqual(1f, _gameplay.ApronGlow.Glow, 1e-3f, "The apron's outline glows while build mode is open.");
+            yield return Tap(_keyboard.bKey);
+            Assert.AreEqual(BuildModeState.Closed, build.State, "B closes build mode TryOpen opened.");
+            yield return new WaitForSeconds(fade);
+            Assert.AreEqual(0f, _gameplay.ApronGlow.Glow, 1e-3f, "The apron's outline cools once build mode closes.");
+
             // 2. Open the build menu (B), verify input isolation (ENV-02), select charging pad (E), and tap E to place (ENV-01).
             yield return Tap(_keyboard.bKey);
             Assert.AreEqual(BuildModeState.Menu, build.State, "Build key opens the build menu.");
             Assert.IsNotNull(build.Controller.SelectedStructure);
             Assert.AreEqual(StructureIds.ChargingPad, build.Controller.SelectedStructure.Id);
-            InputReader input = _context.Input;
             Assert.IsTrue(input.HasModeOwner, "Build mode claims exclusive input ownership while open.");
 
             // ENV-02: Holding W (Drive) while Build Mode is open must not drive 07.
