@@ -42,6 +42,28 @@ namespace MoonProject.Gameplay
                  "apron's marked bay.")]
         [Range(0.5f, 8f)] [SerializeField] private float _apronSnapRadius = 3f;
 
+        [Header("The ghost's grid link preview")]
+        [Tooltip("Metres above the ground the preview cable leaves the ghost and meets the hub it would join.")]
+        [Range(0.1f, 2f)] [SerializeField] private float _linkHeight = 0.6f;
+
+        [Tooltip("Metres the in-reach cable droops at its middle: a cable lying slack, not a laser line.")]
+        [Range(0f, 2f)] [SerializeField] private float _linkSag = 0.35f;
+
+        [Tooltip("Width of the preview cable, metres.")]
+        [Range(0.01f, 0.2f)] [SerializeField] private float _linkWidth = 0.05f;
+
+        [Tooltip("Colour of the cable when the ghost would join the grid: warm amber, like the old cable's lamps.")]
+        [SerializeField] private Color _linkColor = new Color(1f, 0.62f, 0.25f, 0.9f);
+
+        [Tooltip("Metres of the loose cable end that hangs from the ghost when nothing is in reach.")]
+        [Range(0.3f, 3f)] [SerializeField] private float _looseLength = 1.2f;
+
+        [Tooltip("Colour of the loose cable end (no link): dull, so it reads as unplugged rather than warning red.")]
+        [SerializeField] private Color _looseColor = new Color(0.55f, 0.5f, 0.46f, 0.75f);
+
+        [Tooltip("Width of the loose cable's plug end, metres: a small blunt end that reads as unplugged.")]
+        [Range(0.02f, 0.4f)] [SerializeField] private float _loosePlugWidth = 0.14f;
+
         [Tooltip("Structure IDs that a new game knows by design (e.g. charging_pad), applied on a new game and saved like learned blueprints.")]
         [SerializeField] private string[] _startingKnownIds = Array.Empty<string>();
 
@@ -65,6 +87,20 @@ namespace MoonProject.Gameplay
         public float GhostAheadMetres => Mathf.Clamp(_ghostAheadMetres, _minPlacementDistance, _maxPlacementDistance);
 
         public float ApronSnapRadius => _apronSnapRadius;
+
+        public float LinkHeight => _linkHeight;
+
+        public float LinkSag => _linkSag;
+
+        public float LinkWidth => _linkWidth;
+
+        public Color LinkColor => _linkColor;
+
+        public float LooseLength => _looseLength;
+
+        public Color LooseColor => _looseColor;
+
+        public float LoosePlugWidth => _loosePlugWidth;
 
 
         /// <summary>
