@@ -103,6 +103,8 @@ namespace MoonProject.Rover
         private GameContext _context;
         private readonly PropSightLine _sight = new PropSightLine();
         private readonly HeldShot _held = new HeldShot();
+        private TargetFraming _framing;
+        private IInteractionFocus _focus;
         private bool _evening;
         private BeamFraming _beam;
         private bool _charging;
@@ -235,6 +237,8 @@ namespace MoonProject.Rover
             _events = context.Events;
             _input = context.Input;
             _orbitState = new CameraOrbit(_tuning);
+            _framing = new TargetFraming(_tuning);
+            context.TryGet(out _focus);
             _stargaze = new Stargaze(_tuning);
             _opening = new WakeOpening(_tuning);
             _wide = new WideShot(_tuning.WideShot);
@@ -505,6 +509,7 @@ namespace MoonProject.Rover
             StepMomentFraming(deltaTime);
             _beam.Framing.Step(deltaTime);
             _orbitState.Step(OrbitInput(look, recenter), deltaTime);
+            StepTargetFraming(look, deltaTime);
             StepWallCompression(deltaTime, false);
             StepFreeLookDamping(deltaTime);
             PlaceTarget(deltaTime, false);
@@ -845,6 +850,17 @@ namespace MoonProject.Rover
             _target.SetPositionAndRotation(_dampedTargetPosition, Quaternion.Euler(0f, _targetYaw, 0f));
         }
 
+        private void StepTargetFraming(Vector2 look, float deltaTime)
+        {
+            Vector3 point = Vector3.zero;
+            bool hasTarget = _focus != null && _focus.TryGetFocus(out point);
+            bool mayFrame = !_moment.IsActive && _wide.Weight <= 0f && _held.Weight <= 0f
+                && !_faceInspectOpen && _faceInspectWeight <= 0f && !_opening.IsActive && !_crawling;
+            float viewYaw = RoverYaw() + _momentYaw + _orbitState.YawOffset;
+            _framing.Step(new TargetFramingInput(hasTarget, _rover.Position, point, viewYaw, _rover.Speed,
+                look.sqrMagnitude > 0f, mayFrame), deltaTime);
+        }
+
         private Vector2 ReadLook(float deltaTime)
         {
             Vector2 mouse = LookSettings.MouseDelta(_input.LookDelta, Cursor.lockState == CursorLockMode.Locked);
@@ -857,8 +873,8 @@ namespace MoonProject.Rover
         /// </summary>
         private void ApplyOrbit()
         {
-            float yaw = _orbitState.YawOffset * (1f - _moment.Weight);
-            float elevation = _orbitState.Elevation + _momentLift + _wallCompression * _tuning.WallMaxPitchLift
+            float yaw = _orbitState.YawOffset * (1f - _moment.Weight) + _framing.YawOffset;
+            float elevation = _orbitState.Elevation + _framing.Elevation + _momentLift + _wallCompression * _tuning.WallMaxPitchLift
                 - _crawl * _tuning.CrawlLower;
             float radius = _tuning.Distance * (1f + _momentPullBack) * (1f + _crawl * _tuning.CrawlPullBack);
             float fov = _orbitState.FieldOfView;

@@ -285,29 +285,6 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void BootReadout_ShowsFromTheHuntForAboutTwoSeconds_InsideTheLens()
-        {
-            _script.BeginFull(false);
-            float first = -1f;
-            float last = -1f;
-            float t = 0f;
-            while (_script.IsRunning)
-            {
-                StepOnce();
-                t += Frame;
-                if (_script.Readout01 > 0f)
-                {
-                    Assert.IsTrue(_script.InLens, "the readout belongs to the lens stages");
-                    first = first < 0f ? t : first;
-                    last = t;
-                }
-            }
-
-            Assert.Greater(first, 0f, "the readout shows");
-            Assert.LessOrEqual(last - first, _tuning.Opening.ReadoutSeconds + 0.1f);
-        }
-
-        [Test]
         public void ShortWake_StirsAndBlinks_ReachesTheChaseWithinThreeSeconds_AndGlancesAtEarth()
         {
             _script.BeginShort();

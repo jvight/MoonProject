@@ -595,11 +595,6 @@ MonoBehaviour:
     _wakeGain: 1.5
     _gainHoldLid: 0.2
     _gainGoneLid: 0.65
-    _readoutColor: {r: 1, g: 0.86, b: 0.62, a: 1}
-    _readoutOpacity: 0.55
-    _readoutLineHeight: 0.026
-    _readoutCorner: {x: 0.07, y: 0.9}
-    _readoutDistance: 0.5
     _volumePriority: 90
   _skyCycle:
     _dayLengthSeconds: 7200

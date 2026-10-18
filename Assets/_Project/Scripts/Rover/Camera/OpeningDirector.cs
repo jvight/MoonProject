@@ -819,8 +819,7 @@ namespace MoonProject.Rover
                     ? _rig.Camera.transform.position
                     : _lensCamera.transform.position;
                 float toLens = Vector3.Distance(eyePosition, ScanLensOrigin.position);
-                state = new LensViewState(state.Lid01, toLens, state.Flicker01, state.Warmth01, state.SpeckOffset,
-                    state.Readout01);
+                state = new LensViewState(state.Lid01, toLens, state.Flicker01, state.Warmth01, state.SpeckOffset);
             }
 
             _lens.Apply(state);

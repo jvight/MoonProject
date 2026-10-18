@@ -20,7 +20,7 @@ namespace MoonProject.World.Tests
 
         private static LensViewState State(float lid, float focus = 1000f, float flicker = 0f)
         {
-            return new LensViewState(lid, focus, flicker, 0f, Vector2.zero, 0f);
+            return new LensViewState(lid, focus, flicker, 0f, Vector2.zero);
         }
 
         [Test]

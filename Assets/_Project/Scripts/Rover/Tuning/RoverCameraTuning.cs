@@ -225,6 +225,48 @@ namespace MoonProject.Rover
         [Range(5f, 180f)]
         [SerializeField] private float _followMaxRate = 45f;
 
+        [Header("Target framing")]
+        [Tooltip("07 stopped or slower than this (m/s) near a scan or interaction target lets the camera lift to show it.")]
+        [Range(0f, 3f)]
+        [SerializeField] private float _framingMaxSpeed = 1f;
+
+        [Tooltip("Metres from 07 within which a scan or interaction target is framed.")]
+        [Range(1f, 15f)]
+        [SerializeField] private float _framingRange = 6f;
+
+        [Tooltip("Half-angle (deg) of the view within which a target counts as in front of the camera; targets "
+            + "behind it are left alone.")]
+        [Range(10f, 120f)]
+        [SerializeField] private float _framingViewCone = 70f;
+
+        [Tooltip("Seconds 07 must be slow and the view still before the camera starts to lift.")]
+        [Range(0f, 5f)]
+        [SerializeField] private float _framingEngageDelay = 1f;
+
+        [Tooltip("Extra camera elevation (deg) at full framing, so the target shows over 07's body.")]
+        [Range(0f, 40f)]
+        [SerializeField] private float _framingLift = 14f;
+
+        [Tooltip("Extra yaw (deg) at full framing, toward the side the target is on.")]
+        [Range(0f, 40f)]
+        [SerializeField] private float _framingYaw = 12f;
+
+        [Tooltip("Angle (deg) between the view and the target at which the sideways shift reaches its full amount.")]
+        [Range(5f, 90f)]
+        [SerializeField] private float _framingSideFullAngle = 25f;
+
+        [Tooltip("Half-life (s) of the sideways shift following the target's side.")]
+        [Range(0.1f, 3f)]
+        [SerializeField] private float _framingSideHalfLife = 0.6f;
+
+        [Tooltip("Seconds the framing takes to ease in: slow and soft.")]
+        [Range(0.5f, 8f)]
+        [SerializeField] private float _framingRampSeconds = 3f;
+
+        [Tooltip("Seconds the framing takes to ease out when 07 drives off, the target goes or the player looks.")]
+        [Range(0.3f, 6f)]
+        [SerializeField] private float _framingReleaseSeconds = 1.5f;
+
         [Header("Downhill lift")]
         [Tooltip("Extra elevation (deg) when driving downhill, to see the slope ahead.")]
         [Range(0f, 40f)]
@@ -709,6 +751,26 @@ namespace MoonProject.Rover
         public float RecenterPitchRate => _recenterPitchRate;
 
         public float RecenterButtonSeconds => _recenterButtonSeconds;
+
+        public float FramingMaxSpeed => _framingMaxSpeed;
+
+        public float FramingRange => _framingRange;
+
+        public float FramingViewCone => _framingViewCone;
+
+        public float FramingEngageDelay => _framingEngageDelay;
+
+        public float FramingLift => _framingLift;
+
+        public float FramingYaw => _framingYaw;
+
+        public float FramingSideFullAngle => _framingSideFullAngle;
+
+        public float FramingSideHalfLife => _framingSideHalfLife;
+
+        public float FramingRampSeconds => _framingRampSeconds;
+
+        public float FramingReleaseSeconds => _framingReleaseSeconds;
 
         public float FollowHalfLife => _followHalfLife;
 

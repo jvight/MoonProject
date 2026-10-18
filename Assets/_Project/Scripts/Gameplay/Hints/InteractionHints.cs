@@ -1,12 +1,13 @@
 using System;
 using UnityEngine;
+using MoonProject.Core;
 
 namespace MoonProject.Gameplay
 {
     /// <summary>
     /// <see cref="IInteractionHints"/> read straight from the gameplay systems' state (nothing cached).
     /// </summary>
-    public sealed class InteractionHints : IInteractionHints
+    public sealed class InteractionHints : IInteractionHints, IInteractionFocus
     {
         private static readonly InteractionKind[] Priority =
         {
@@ -52,6 +53,14 @@ namespace MoonProject.Gameplay
 
                 return InteractionHint.None;
             }
+        }
+
+        /// <summary>The place of the most relevant action now: where the camera keeps its view clear of 07's body.</summary>
+        public bool TryGetFocus(out Vector3 point)
+        {
+            InteractionHint hint = Primary;
+            point = hint.Position;
+            return hint.Kind != InteractionKind.None;
         }
 
         public bool TryGet(InteractionKind kind, out InteractionHint hint)

@@ -114,25 +114,6 @@ namespace MoonProject.World
         [Range(0f, 1f)]
         [SerializeField] private float _gainGoneLid = 0.65f;
 
-        [Header("Boot readout (O5)")]
-        [Tooltip("Colour of 07's boot readout: the crew's old terminal type, warm.")]
-        [SerializeField] private Color _readoutColor = new Color(1f, 0.86f, 0.62f, 1f);
-
-        [Tooltip("Opacity of the readout at its fullest: faint.")]
-        [Range(0.05f, 1f)]
-        [SerializeField] private float _readoutOpacity = 0.55f;
-
-        [Tooltip("Height of one readout line, in viewport heights: small.")]
-        [Range(0.01f, 0.08f)]
-        [SerializeField] private float _readoutLineHeight = 0.026f;
-
-        [Tooltip("Top-left corner of the readout in the viewport (0..1 from the bottom-left), inside the lid's dark.")]
-        [SerializeField] private Vector2 _readoutCorner = new Vector2(0.07f, 0.9f);
-
-        [Tooltip("Distance (m) in front of the camera the readout is held at.")]
-        [Range(0.1f, 2f)]
-        [SerializeField] private float _readoutDistance = 0.5f;
-
         [Tooltip("Priority of the lens' own volume: above the world's look, below the pause menu's backdrop " +
             "blur (100), so a menu still blurs over the opening.")]
         [Range(1f, 99f)]
@@ -161,10 +142,5 @@ namespace MoonProject.World
         public float WakeGain => _wakeGain;
         public float GainHoldLid => _gainHoldLid;
         public float GainGoneLid => Mathf.Max(_gainGoneLid, _gainHoldLid + MinGainSpan);
-        public Color ReadoutColor => _readoutColor;
-        public float ReadoutOpacity => _readoutOpacity;
-        public float ReadoutLineHeight => _readoutLineHeight;
-        public Vector2 ReadoutCorner => _readoutCorner;
-        public float ReadoutDistance => _readoutDistance;
     }
 }
