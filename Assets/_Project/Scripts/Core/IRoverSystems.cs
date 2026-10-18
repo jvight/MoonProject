@@ -10,6 +10,9 @@ namespace MoonProject.Core
     {
         RoverSystemState StateOf(RoverSystem system);
 
+        /// <summary>The spare igniter's story-part id in 07's hold (Gameplay's tuning): the part the cutter takes.</summary>
+        string IgniterPartId { get; }
+
         /// <summary>The spare igniter is in 07's hold and 07 stands on its pad: the cutter socket takes it.</summary>
         bool CanFitIgniter { get; }
 

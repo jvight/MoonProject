@@ -26,6 +26,7 @@ namespace MoonProject.Core.Input
         private readonly InputAction _deconstruct;
         private readonly Action<InputAction.CallbackContext> _onPerformed;
         private object _modeOwner;
+        private bool _driveShared;
 
         /// <param name="actions">The Controls asset. Missing maps/actions throw immediately (wiring bug).</param>
         public InputReader(InputActionAsset actions)
@@ -66,16 +67,39 @@ namespace MoonProject.Core.Input
 
             if (active)
             {
+                _driveShared = _driveShared && ReferenceEquals(_modeOwner, owner);
                 _modeOwner = owner;
             }
             else if (ReferenceEquals(_modeOwner, owner))
             {
                 _modeOwner = null;
+                _driveShared = false;
             }
         }
 
-        /// <summary>x = steer, y = throttle, each -1..1. Consumed (zero) while a mode owner is active.</summary>
-        public Vector2 Drive => _modeOwner != null ? Vector2.zero : Vector2.ClampMagnitude(_drive.ReadValue<Vector2>(), 1f);
+        /// <summary>
+        /// The active mode owner lets Drive through to 07 (<paramref name="shared"/>) while it keeps Excavate and
+        /// Winch: build mode's placing, where 07 drives the ghost to its spot. Ignored for anyone but the owner.
+        /// </summary>
+        public void ShareDrive(object owner, bool shared)
+        {
+            if (owner == null)
+            {
+                throw new ArgumentNullException(nameof(owner));
+            }
+
+            if (ReferenceEquals(_modeOwner, owner))
+            {
+                _driveShared = shared;
+            }
+        }
+
+        /// <summary>
+        /// x = steer, y = throttle, each -1..1. Consumed (zero) while a mode owner is active, unless it shares Drive.
+        /// </summary>
+        public Vector2 Drive => _modeOwner != null && !_driveShared
+            ? Vector2.zero
+            : Vector2.ClampMagnitude(_drive.ReadValue<Vector2>(), 1f);
 
         /// <summary>Reads Drive for the active mode owner.</summary>
         public Vector2 ModeDrive(object owner) =>

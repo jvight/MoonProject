@@ -39,6 +39,15 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float ClearSpotNorthOffset = 14f;
         private const float PlaceAheadDistance = 4.6f;
 
+        /// <summary>Seconds W is held while placing: 07 drives the ghost a little way.</summary>
+        private const float RideSeconds = 0.8f;
+
+        /// <summary>Metres the riding ghost may stand off the spot ahead of 07 (07 eases to a stop).</summary>
+        private const float RideTolerance = 0.8f;
+
+        /// <summary>Metres short of the apron's centre 07's ghost rides when it is set down facing the apron.</summary>
+        private const float ApronShortfall = 1f;
+
         private GameContext _context;
         private GameplaySystem _gameplay;
         private Keyboard _keyboard;
@@ -109,6 +118,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsFalse(build.TryOpen(), "TryOpen does nothing while build mode is already open.");
             yield return new WaitForSeconds(fade);
             Assert.AreEqual(1f, _gameplay.ApronGlow.Glow, 1e-3f, "The apron's outline glows while build mode is open.");
+            Assert.IsFalse(build.TryPick(build.Controller.AvailableStructures.Count), "no pick past the menu's end");
+            Assert.IsTrue(build.TryPick(0), "TryPick picks a menu structure as E on it would");
+            Assert.AreEqual(BuildModeState.Placing, build.State);
+            Assert.IsFalse(build.TryPick(0), "TryPick only picks from the menu");
             yield return Tap(_keyboard.bKey);
             Assert.AreEqual(BuildModeState.Closed, build.State, "B closes build mode TryOpen opened.");
             yield return new WaitForSeconds(fade);
@@ -140,6 +153,38 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsNotNull(build.GhostView, "Placing state activates the hologram ghost view.");
             Assert.AreEqual(PlacementReason.Valid, build.Controller.CandidateReason);
             Assert.IsTrue(build.Controller.CanPlaceNow);
+
+            // Placing shares Drive: 07 drives the ghost, which rides ahead of it, and the charging pad's ghost settles
+            // onto the apron's bay as it nears it.
+            build.SetAimPointOverride(null);
+            var rover = _context.Get<IRoverState>();
+            Vector3 beforeRide = rover.Position;
+            Press(_keyboard.wKey);
+            yield return new WaitForSeconds(RideSeconds);
+            Assert.AreNotEqual(Vector2.zero, input.Drive, "Drive reaches 07 while placing.");
+            Assert.IsTrue(input.HasModeOwner, "Build mode still owns E while placing.");
+            Release(_keyboard.wKey);
+            yield return new WaitForSeconds(RideSeconds);
+            Assert.Greater(Vector3.Distance(rover.Position, beforeRide), 0.1f, "07 drives while placing.");
+            Vector3 heading = Flat(rover.Rotation * Vector3.forward).normalized;
+            Vector3 ahead = rover.Position + heading * build.Tuning.GhostAheadMetres;
+            Assert.Less(Vector3.Distance(Flat(build.Controller.CandidatePose.Position), Flat(ahead)), RideTolerance,
+                "The placing ghost rides in front of 07.");
+
+            Assert.IsTrue(build.ApronCentre.HasValue, "The apron's bay is marked for the pad's ghost.");
+            Vector3 apron = build.ApronCentre.Value;
+            Vector3 approach = Flat(apron - roverSpot).normalized;
+            Vector3 shortOf = apron - approach * (build.Tuning.GhostAheadMetres + ApronShortfall);
+            shortOf.y = terrain.SampleHeight(shortOf.x, shortOf.z);
+            placement.PlaceAt(shortOf, Quaternion.LookRotation(approach, Vector3.up));
+            yield return new WaitForSeconds(StepWaitSeconds);
+            Assert.Less(Vector3.Distance(Flat(build.Controller.CandidatePose.Position), Flat(apron)), 0.05f,
+                "Riding within reach of the apron, the pad's ghost settles on its bay.");
+
+            placement.PlaceAt(roverSpot, Quaternion.LookRotation(Vector3.forward, Vector3.up));
+            build.SetAimPointOverride(aimSpot);
+            yield return new WaitForSeconds(StepWaitSeconds);
+            Assert.IsTrue(build.Controller.CanPlaceNow, "Back on clear ground, the ghost can be placed.");
 
             // ENV-01: Tapping E places the structure and stays in Welding state on the next frame (never cancels at 0%).
             yield return Tap(_keyboard.eKey);
@@ -322,6 +367,11 @@ namespace MoonProject.Gameplay.PlayModeTests
 
                 Assert.IsTrue(_awake, "07 wakes up.");
             }
+        }
+
+        private static Vector3 Flat(Vector3 point)
+        {
+            return new Vector3(point.x, 0f, point.z);
         }
 
         private IEnumerator Tap(ButtonControl key)

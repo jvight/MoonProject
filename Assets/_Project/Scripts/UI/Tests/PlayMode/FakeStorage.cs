@@ -140,6 +140,8 @@ namespace MoonProject.UI.PlayModeTests
 
         public bool CanFitIgniter { get; set; }
 
+        public string IgniterPartId => "part.igniter";
+
         /// <summary>How many times the player asked to fit the igniter.</summary>
         public int Fits { get; private set; }
 
