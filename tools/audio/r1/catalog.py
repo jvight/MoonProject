@@ -1,8 +1,8 @@
 """R1 Audio Audition Catalog — metadata, loudness targets, Vietnamese descriptions, and A/B picks.
 
-Defines all 33 cues across the 6 R1 groups:
+Defines all 32 cues across the 6 R1 groups:
 1. 07's CRT face (7 cues)
-2. The sky (3 cues)
+2. The sky (2 cues; the diamond ring is sampled: sampled/sky.py)
 3. Building (4 cues; the frame place, snap, weld and complete are sampled: sampled/build.py)
 4. Machines (10 cues)
 5. The CRT UI (6 cues)
@@ -52,7 +52,7 @@ class CueSpec:
 
 GROUPS: list[tuple[str, str, str]] = [
     ("face", "1. 07's CRT Face", "Gương mặt CRT của 07 — 7 cues"),
-    ("sky", "2. The Sky", "Bầu trời Mặt Trăng & Nhật thực — 3 cues"),
+    ("sky", "2. The Sky", "Bầu trời Mặt Trăng & Nhật thực — 2 cues"),
     ("building", "3. Building", "Xây dựng & Lắp ráp công trình — 4 cues"),
     ("machines", "4. Machines", "Máy móc & Cơ cấu cơ điện — 10 cues"),
     ("ui", "5. The CRT UI", "Giao diện bàn đài & màn hình CRT (nhỏ nhất) — 6 cues"),
@@ -165,22 +165,8 @@ def _build_catalog() -> list[CueSpec]:
         ),
 
         # ===================================================================
-        # 2. THE SKY (3 cues)
+        # 2. THE SKY (2 cues)
         # ===================================================================
-        CueSpec(
-            cue_id="sky_diamond_ring",
-            group_id="sky",
-            group_title="2. The Sky",
-            category="oneshot_sky",
-            loop=False,
-            target_lufs=-20.0,
-            volume=0.74,
-            desc_a_vi="Rơ-le viễn thông điểm nhẹ mở ra chuỗi hài âm đèn A4–D5–F#5–A5 ngân rung dịu qua băng từ.",
-            desc_b_vi="Hạt bụi tĩnh điện phớt nhẹ nở thành âm thanh kính kéo cung và đàn lưỡi gà D4–A4–F#5–A5.",
-            pick="B",
-            pick_reason="Khoảnh khắc vòng kim cương nhật thực rất hợp với chất âm kính kéo cung (bowed glass) kết hợp đàn lưỡi gà của bản B: vừa kỳ ảo vừa hữu cơ.",
-            fn=sky_cues.sky_diamond_ring,
-        ),
         CueSpec(
             cue_id="sky_dawn_sweep",
             group_id="sky",

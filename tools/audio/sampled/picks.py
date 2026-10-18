@@ -12,7 +12,7 @@ import numpy as np
 
 from synth.core import note_freq
 
-from . import boot, build, dsp, voice
+from . import boot, build, dsp, sky, voice
 
 LIBRARY_ENV = "MOONPROJECT_SOUND_LIBRARY"
 
@@ -42,6 +42,11 @@ BUILD = {
 # voice but quicker than worried's).
 BOOT = tuple(boot.SOUNDS)
 BOOT_FAULT = ("voice_fault", 1)
+
+# The sky's moments -> variant of its recipe in sky.SOUNDS.
+SKY = {
+    "sky_diamond_ring": 0,
+}
 
 # 07's eye and antenna read each syllable's pitch as 0..1 between these (log).
 EYE_LOW_HZ = note_freq("D4")
@@ -73,6 +78,8 @@ def label(cue_id: str) -> str:
         return f"{BOOT_FAULT[0]} v{BOOT_FAULT[1] + 1}"
     if cue_id in BOOT:
         return cue_id
+    if cue_id in SKY:
+        return f"{cue_id} v{SKY[cue_id] + 1}"
     return f"{cue_id} v{BUILD[cue_id] + 1}"
 
 
@@ -102,8 +109,12 @@ def renderer(cue_id: str):
 
         render.__doc__ = step.__doc__
         return render
-    fn, _ = build.SOUNDS[cue_id]
-    pick = BUILD[cue_id]
+    if cue_id in SKY:
+        fn, _ = sky.SOUNDS[cue_id]
+        pick = SKY[cue_id]
+    else:
+        fn, _ = build.SOUNDS[cue_id]
+        pick = BUILD[cue_id]
 
     def render(_variant, gen):
         return fn(_library(), gen, pick)

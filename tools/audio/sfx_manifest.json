@@ -1110,6 +1110,35 @@
       "notes": "The part seating on 07's back (Collect Impact): a solid little clunk on D."
     },
     {
+      "id": "sky_diamond_ring",
+      "category": "stinger_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/sky_diamond_ring.wav"
+      ],
+      "variantLabels": [
+        "sky_diamond_ring"
+      ],
+      "sha256": [
+        "076bc88fcf6cb62085d93452568c26bcc54526ce8830f6f48f8da81ed27e16e7"
+      ],
+      "volumeMin": 0.74,
+      "volumeMax": 0.74,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -20.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Opening v2 B6: the Sun breaking out behind Earth on the first charge: bowed metal rising onto D, its octave opening like light, a breath of creak.",
+      "source": "sampled",
+      "pick": "sky_diamond_ring v1"
+    },
+    {
       "id": "build_place",
       "category": "oneshot_3d",
       "milestone": "M3",
@@ -3240,33 +3269,6 @@
       "hfMaxDb": -30.0,
       "tonal": true,
       "notes": "Bản B có tiếng servo nâng nhẹ đầu của 07 kèm hợp âm chuông đồng và phím nỉ nghe rất tự hào và sống động."
-    },
-    {
-      "id": "sky_diamond_ring",
-      "category": "oneshot_sky",
-      "milestone": "R1",
-      "bus": "Sfx",
-      "spatial": false,
-      "loop": false,
-      "files": [
-        "Assets/_Project/Audio/SFX/R1/sky_diamond_ring.wav"
-      ],
-      "variantLabels": [
-        "sky_diamond_ring"
-      ],
-      "sha256": [
-        "0ec808ec77cb407a78b78167e626db22b7b3b543bb18b684b01bcbae02097117"
-      ],
-      "volumeMin": 0.74,
-      "volumeMax": 0.74,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -20.0,
-      "loudnessMode": "momentary",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": true,
-      "notes": "Khoảnh khắc vòng kim cương nhật thực rất hợp với chất âm kính kéo cung (bowed glass) kết hợp đàn lưỡi gà của bản B: vừa kỳ ảo vừa hữu cơ."
     },
     {
       "id": "sky_dawn_sweep",
