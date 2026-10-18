@@ -41,6 +41,12 @@ namespace MoonProject.Rover.PlayModeTests
         private const int KeyFrameWidth = 1920;
         private const int KeyFrameHeight = 1080;
         private const float LanguageSettleSeconds = 1.5f;
+
+        /// <summary>The longest frame (ms) the visible part of a transition may have; the reload's black may exceed it.</summary>
+        private const float MaxVisibleFrameMs = 50f;
+
+        /// <summary>Frames after the reloaded scene is rebound that are still black (its first frames' start-up cost).</summary>
+        private const int BlackFramesAfterReload = 4;
         private const int TransitionWidth = 640;
         private const int TransitionHeight = 360;
         private const float BootTimeout = 30f;
@@ -811,7 +817,9 @@ namespace MoonProject.Rover.PlayModeTests
             Quaternion previousRotation = Quaternion.identity;
             bool havePrevious = false;
             bool reloaded = false;
+            int framesSinceRebind = -1;
             float chaseAt = -1f;
+            var visibleHitches = new StringBuilder();
             for (int frame = 0; Time.time - started < RunTimeout && frame < 6000; frame++)
             {
                 yield return null;
@@ -819,6 +827,17 @@ namespace MoonProject.Rover.PlayModeTests
                 float realMs = (real - lastReal) * 1000f;
                 lastReal = real;
                 string note = string.Empty;
+                if (framesSinceRebind >= 0)
+                {
+                    framesSinceRebind++;
+                }
+
+                bool inTheBlack = _director == null || _view == null || framesSinceRebind >= 0 && framesSinceRebind <= BlackFramesAfterReload;
+                if (render == false && realMs > MaxVisibleFrameMs && !inTheBlack)
+                {
+                    visibleHitches.AppendLine($"frame {frame} t={Time.time - started:0.000}: {realMs:0} ms");
+                }
+
                 if (_director == null || _view == null)
                 {
                     reloaded = true;
@@ -838,6 +857,7 @@ namespace MoonProject.Rover.PlayModeTests
                         Dispose();
                         Bind();
                         havePrevious = false;
+                        framesSinceRebind = 0;
                         note = "scene rebound";
                     }
 
@@ -897,6 +917,12 @@ namespace MoonProject.Rover.PlayModeTests
 
             File.WriteAllText(Path.Combine(folder, "frames.csv"), csv.ToString());
             Assert.IsTrue(reloaded, "the scene reloaded under the push");
+            if (!render)
+            {
+                Assert.AreEqual(string.Empty, visibleHitches.ToString(),
+                    $"no frame over {MaxVisibleFrameMs} ms outside the reload's black:" + System.Environment.NewLine);
+            }
+
             Assert.GreaterOrEqual(chaseAt, 0f, "the reloaded game reaches the chase frame");
         }
 
@@ -996,6 +1022,8 @@ namespace MoonProject.Rover.PlayModeTests
             float started = Time.time;
             float chaseAt = -1f;
             float lastReal = Time.realtimeSinceStartup;
+            int slowFrames = 0;
+            string firstSlow = null;
             {
                 for (int frame = 0; Time.time - started < RunTimeout; frame++)
                 {
@@ -1016,6 +1044,11 @@ namespace MoonProject.Rover.PlayModeTests
                     float real = Time.realtimeSinceStartup;
                     float realMs = (real - lastReal) * 1000f;
                     lastReal = real;
+                    if (frame > 0 && realMs > MaxVisibleFrameMs)
+                    {
+                        slowFrames++;
+                        firstSlow = firstSlow ?? $"frame {frame} at {Time.time - started:0.000} s, {realMs:0} ms";
+                    }
                     Transform camera = _view.transform;
                     float distance = Vector3.Distance(camera.position, previousPosition);
                     float turn = Quaternion.Angle(camera.rotation, previousRotation);
@@ -1062,6 +1095,10 @@ namespace MoonProject.Rover.PlayModeTests
 
             File.WriteAllText(Path.Combine(folder, "frames.csv"), csv.ToString());
             Assert.GreaterOrEqual(chaseAt, 0f, "the transition reaches the chase frame");
+            if (!render)
+            {
+                Assert.AreEqual(0, slowFrames, $"no frame over {MaxVisibleFrameMs} ms in the transition (first slow: {firstSlow})");
+            }
         }
 
         private IEnumerator Boot(bool title)
