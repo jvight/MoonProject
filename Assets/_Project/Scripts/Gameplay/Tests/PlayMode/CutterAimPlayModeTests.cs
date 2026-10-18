@@ -99,6 +99,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return BootRealScene();
             SetSkyClock(SunlitTimeSeconds);
             DisableScanCandidates();
+            ReadyTheCutter();
 
             _roverColliders = _rover.GetComponentsInChildren<Collider>(true);
             _roverMeshes = _rover.GetComponentsInChildren<MeshFilter>(true);
@@ -365,6 +366,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             return null;
+        }
+
+        private void ReadyTheCutter()
+        {
+            _gameplay.StartKit.Restore(new StartKitSaveData { igniterFitted = true });
         }
 
         private void DisableScanCandidates()

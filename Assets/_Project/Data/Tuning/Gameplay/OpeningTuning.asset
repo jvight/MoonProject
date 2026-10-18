@@ -20,13 +20,14 @@ MonoBehaviour:
   _padChargeRadius: 1.6
   _cargoCrate: supply.lander.open
   _cargoScanPoints:
-  - {x: -0.15, y: 0.3, z: 0}
-  - {x: 0.15, y: 0.3, z: 0}
+  - {x: -0.12, y: 0.3, z: 0.08}
+  - {x: 0.12, y: 0.3, z: 0.08}
+  _cargoFragments:
+  - {fileID: 8696612848487809347, guid: 66b25dee22c9770429dcf34fd5521062, type: 3}
+  - {fileID: 7290828058333433129, guid: 5e25d1b9613bc584d807f1815f675d5f, type: 3}
   _igniterPart: part.igniter
   _collectReach: 3.5
-  _crateGlintReach: 28
-  _crateGlintFull: 18
-  _crateGlintStrength: 0.35
+  _crateRimReach: 28
   _recoveryLamps:
     _link: 4
     _dish: 4
@@ -60,7 +61,7 @@ MonoBehaviour:
     _anchorId: lander.port
     _offset: {x: 1.8, y: 0, z: 1}
     _yaw: 0
-    _container: Crate_M
+    _container: Crate_M_Open
     _yield:
       _metal: 2
       _wiring: 1

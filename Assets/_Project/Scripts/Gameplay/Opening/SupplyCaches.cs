@@ -19,8 +19,11 @@ namespace MoonProject.Gameplay
     /// </summary>
     public sealed class SupplyCaches : IDisposable
     {
-        /// <summary>Metres above an open crate's root its glint shines (over its open lid).</summary>
-        private const float GlintHeight = 0.7f;
+        /// <summary>Art's open crate's children (Crate_M_Open): its soft rim glow and the contents in view.</summary>
+        private const string RimGlowName = "RimGlow";
+        private const string IgniterName = "Igniter";
+        private const string MetalName = "MetalBundle";
+        private const string WiringName = "WiringSpool";
 
         /// <summary>A frame's forward laid flat shorter than this is not a heading (it points up or down).</summary>
         private const float LevelShare = 0.5f;
@@ -31,6 +34,7 @@ namespace MoonProject.Gameplay
         private readonly Func<bool>[] _heldBack;
         private readonly bool[] _partLeft;
         private readonly GameObject[] _props;
+        private readonly List<Quaternion> _levels = new List<Quaternion>();
         private readonly EventBus _events;
         private readonly MaterialStock _stock;
         private readonly IRoverState _rover;
@@ -38,15 +42,16 @@ namespace MoonProject.Gameplay
         private readonly float _reach;
         private readonly float _collectReach;
         private readonly IDisposable _opened;
-        private readonly IViewCamera _view;
-        private readonly PickupGlints _glints;
-        private readonly float _glintReach;
-        private readonly float _glintFull;
-        private readonly float _glintStrength;
+        private readonly float _rimReach;
+        private readonly GameObject[] _rims;
+        private readonly bool[] _rimOn;
+        private readonly GameObject[] _igniters;
+        private readonly GameObject[] _metals;
+        private readonly GameObject[] _wirings;
 
         /// <param name="frames">A crate's frame by its anchor id: a world anchor or a ruin piece.</param>
         /// <param name="reach">Metres within which a cut-open crate still holding something gives the rest.</param>
-        /// <param name="tuning">The crates, the open ones' collect reach and their glint.</param>
+        /// <param name="tuning">The crates, the open ones' collect reach and their rim glow's reach.</param>
         public SupplyCaches(OpeningTuning tuning, Func<string, Transform> frames, Transform parent,
             GameplayServices services, SealedContainers containers, float reach)
         {
@@ -57,9 +62,7 @@ namespace MoonProject.Gameplay
 
             IReadOnlyList<SupplyCache> caches = tuning.Caches;
             float collectReach = tuning.CollectReach;
-            _glintReach = tuning.CrateGlintReach;
-            _glintFull = tuning.CrateGlintFull;
-            _glintStrength = tuning.CrateGlintStrength;
+            _rimReach = tuning.CrateRimReach;
 
             _events = services.Events;
             _stock = services.Materials;
@@ -67,15 +70,6 @@ namespace MoonProject.Gameplay
             _save = services.Save;
             _reach = reach;
             _collectReach = collectReach;
-            _view = services.View;
-            int open = 0;
-            foreach (SupplyCache cache in caches)
-            {
-                open += cache.StartsOpen ? 1 : 0;
-            }
-
-            _glints = new PickupGlints(parent, services.Visuals.PartGlint, services.Glints, services.GlintVeil, open,
-                Layers.Pickup);
             foreach (SupplyCache cache in caches)
             {
                 Transform frame = frames(cache.AnchorId) ?? throw new InvalidOperationException(
@@ -87,8 +81,10 @@ namespace MoonProject.Gameplay
                 root.name = cache.Id;
                 Quaternion heading = Heading(frame);
                 Vector3 spot = frame.position + heading * new Vector3(cache.Offset.x, 0f, cache.Offset.z);
+                Quaternion level = heading * Quaternion.Euler(0f, cache.Yaw, 0f);
                 root.SetPositionAndRotation(SurfaceRules.OnSurface(services.Terrain, spot.x, spot.z),
-                    heading * Quaternion.Euler(0f, cache.Yaw, 0f));
+                    level * prefab.transform.localRotation);
+                _levels.Add(level);
                 SealedContainer container = SealedContainer.Read(cache.Id, ContainerKinds.Of(cache.Container), root,
                     SealedContainer.LidPath, SealedContainer.ItemSocketPath, Always, out string problem)
                     ?? throw new InvalidOperationException(problem);
@@ -99,6 +95,11 @@ namespace MoonProject.Gameplay
 
             _left = new Recipe[_caches.Count];
             _props = new GameObject[_caches.Count];
+            _rims = new GameObject[_caches.Count];
+            _rimOn = new bool[_caches.Count];
+            _igniters = new GameObject[_caches.Count];
+            _metals = new GameObject[_caches.Count];
+            _wirings = new GameObject[_caches.Count];
             _heldBack = new Func<bool>[_caches.Count];
             _partLeft = new bool[_caches.Count];
             for (int i = 0; i < _caches.Count; i++)
@@ -113,8 +114,20 @@ namespace MoonProject.Gameplay
                 if (_caches[i].Prop != null)
                 {
                     _props[i] = Object.Instantiate(_caches[i].Prop, _containers[i].ItemSocket, false);
-                    _props[i].SetActive(_partLeft[i]);
+                    _props[i].transform.rotation = _levels[i] * _caches[i].Prop.transform.localRotation;
                 }
+
+                Transform root = _containers[i].Root;
+                _rims[i] = Child(root, RimGlowName);
+                _igniters[i] = Child(root, IgniterName);
+                _metals[i] = Child(root, MetalName);
+                _wirings[i] = Child(root, WiringName);
+                if (_rims[i] != null)
+                {
+                    _rims[i].SetActive(false);
+                }
+
+                ShowContents(i);
             }
 
             _opened = _events.Subscribe<ContainerOpened>(OnOpened);
@@ -154,6 +167,16 @@ namespace MoonProject.Gameplay
             _heldBack[index] = until ?? throw new ArgumentNullException(nameof(until));
         }
 
+        /// <summary>
+        /// The level frame crate <paramref name="id"/> stands in (y up, z its front), without its prefab's root turn.
+        /// </summary>
+        public Quaternion LevelOf(string id)
+        {
+            int index = IndexOf(id);
+            return index >= 0 ? _levels[index] : throw new ArgumentException(
+                $"No supply crate '{id}' (OpeningTuning's caches).", nameof(id));
+        }
+
         /// <summary>The crate called <paramref name="id"/>, standing in the world.</summary>
         public Transform RootOf(string id)
         {
@@ -164,7 +187,6 @@ namespace MoonProject.Gameplay
 
         public void Step()
         {
-            _glints.Begin(_view.Camera.transform.position, Time.time);
             for (int i = 0; i < _caches.Count; i++)
             {
                 bool holds = !IsEmpty(_left[i]) || _partLeft[i];
@@ -177,18 +199,17 @@ namespace MoonProject.Gameplay
                     holds = !IsEmpty(_left[i]) || _partLeft[i];
                 }
 
-                if (holds && _caches[i].StartsOpen)
+                // The rim glows only near: the owner could not find the lander's crate at B4, and loot never
+                // glows across the basin.
+                bool rim = holds && _rims[i] != null &&
+                           SurfaceRules.HorizontalDistanceSquared(_rover.Position, _containers[i].Root.position) <=
+                           _rimReach * _rimReach;
+                if (rim != _rimOn[i])
                 {
-                    // A soft warm point fading in as 07 nears the crate: the owner could not find the lander's at B4,
-                    // and loot never glows across the basin.
-                    Vector3 at = _containers[i].Root.position;
-                    float distance = SurfaceRules.HorizontalDistance(_rover.Position, at);
-                    float strength = (1f - Ease.Step(_glintFull, _glintReach, distance)) * _glintStrength;
-                    _glints.Add(at + Vector3.up * GlintHeight, i, strength);
+                    _rimOn[i] = rim;
+                    _rims[i].SetActive(rim);
                 }
             }
-
-            _glints.End();
         }
 
         public void Capture(OpeningSaveData data)
@@ -246,7 +267,7 @@ namespace MoonProject.Gameplay
 
             for (int i = 0; i < _caches.Count; i++)
             {
-                ShowProp(i);
+                ShowContents(i);
             }
 
             string[] ids = data.leftIds ?? Array.Empty<string>();
@@ -264,7 +285,6 @@ namespace MoonProject.Gameplay
         public void Dispose()
         {
             _opened.Dispose();
-            _glints.Dispose();
         }
 
         private static bool Always()
@@ -316,6 +336,8 @@ namespace MoonProject.Gameplay
             {
                 GiveParts(index, at);
             }
+
+            ShowContents(index);
         }
 
         /// <summary>
@@ -347,15 +369,38 @@ namespace MoonProject.Gameplay
 
             _events.Publish(new FeelBeat(FeelKind.Collect, FeelPhase.Reward, at, Vector3.up, 1f, 0f));
             _partLeft[index] = false;
-            ShowProp(index);
         }
 
-        private void ShowProp(int index)
+        /// <summary>What crate <paramref name="index"/> still holds stays in view; what 07 took is gone.</summary>
+        private void ShowContents(int index)
         {
-            if (_props[index] != null)
+            Show(_props[index], _partLeft[index]);
+            Show(_igniters[index], _partLeft[index]);
+            Show(_metals[index], _left[index].Metal > 0);
+            Show(_wirings[index], _left[index].Wiring > 0);
+        }
+
+        private static void Show(GameObject shown, bool visible)
+        {
+            if (shown != null && shown.activeSelf != visible)
             {
-                _props[index].SetActive(_partLeft[index]);
+                shown.SetActive(visible);
             }
+        }
+
+        /// <summary>The crate's child called <paramref name="name"/>, at any depth, or null (only some crates have it).
+        /// </summary>
+        private static GameObject Child(Transform root, string name)
+        {
+            foreach (Transform node in root.GetComponentsInChildren<Transform>(true))
+            {
+                if (node.name == name)
+                {
+                    return node.gameObject;
+                }
+            }
+
+            return null;
         }
 
         private int Take(SalvageMaterial material, int units, Vector3 at, int index)

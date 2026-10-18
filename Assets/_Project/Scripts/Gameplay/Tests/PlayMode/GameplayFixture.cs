@@ -169,7 +169,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             visuals.PopulateContainers(new[]
             {
                 CrateTemplate(ContainerKinds.CrateS, 0.6f), CrateTemplate(ContainerKinds.CrateM, 0.9f),
-                CrateTemplate(ContainerKinds.CrateL, 1.2f),
+                CrateTemplate(ContainerKinds.CrateL, 1.2f), CrateTemplate(ContainerKinds.CrateMOpen, 0.9f),
+            });
+            OpeningTuning.PopulateCargoFragments(new[]
+            {
+                FragmentTemplate("CoilPlate"), FragmentTemplate("GuideRail"),
             });
 
             var root = new GameObject("[Gameplay]");
@@ -377,6 +381,14 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// A stand-in for one of Art's R1 crates (opening-v2 §4): a body with its <c>Lid</c> hinged at the back,
         /// holding <c>CutPoint</c> and the glowing <c>Seal</c>, and the <c>ItemSocket</c> inside.
         /// </summary>
+        /// <summary>A stand-in for one of Art's pad fragments: a small plate with its Scan_1 node.</summary>
+        private GameObject FragmentTemplate(string name)
+        {
+            GameObject fragment = Template("PadFragment_" + name, new Vector3(0.3f, 0.04f, 0.2f));
+            Node("Scan_1", fragment.transform, Vector3.up * 0.04f);
+            return fragment;
+        }
+
         private GameObject CrateTemplate(string name, float width)
         {
             GameObject container = Template(name, new Vector3(width, width * 0.66f, width * 0.78f));

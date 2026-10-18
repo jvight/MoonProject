@@ -31,8 +31,9 @@ namespace MoonProject.Gameplay
         [Tooltip("Degrees off 07's view a fragment may lie and still be the one it looks at.")]
         [Range(5f, 90f)] [SerializeField] private float _cone = 25f;
 
-        [Tooltip("How much nearness weighs against looking straight at a fragment when two are in view.")]
-        [Range(0f, 1f)] [SerializeField] private float _distanceWeight = 0.2f;
+        [Tooltip("How much nearness weighs against looking straight at a fragment when two are in view (0: the one " +
+                 "nearest the view's centre wins, story panels included).")]
+        [Range(0f, 1f)] [SerializeField] private float _distanceWeight;
 
         [Tooltip("07 eases to a stop before its lens opens: the scan runs below this speed (m/s).")]
         [Range(0.05f, 2f)] [SerializeField] private float _engageSpeed = 0.4f;
@@ -176,7 +177,8 @@ namespace MoonProject.Gameplay
                  "scanned; they teach and pay nothing.")]
         [SerializeField] private StoryScan[] _stories =
         {
-            new StoryScan("airlock", "HabitatModules", "AirlockPanel", "story.airlock_panel", ScanSize.Small),
+            new StoryScan("airlock", "HabitatModules", "AirlockPanel", "story.airlock_panel", ScanSize.Small,
+                new Vector3(0f, -0.3f, 0f)),
         };
 
         private static readonly int ScanLineColorShaderId = Shader.PropertyToID("_MoonScanLineColor");
