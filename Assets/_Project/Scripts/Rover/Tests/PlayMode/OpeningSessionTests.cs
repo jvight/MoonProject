@@ -488,6 +488,7 @@ namespace MoonProject.Rover.PlayModeTests
             float maxFovChange = 0f;
             float faceFill = 0f;
             float maxFacing = 0f;
+            bool headHidden = false;
             Renderer screen = _body.FaceDirector.Display.ScreenRenderer;
             var poses = new List<(OpeningPhase Phase, Vector3 Position, Quaternion Rotation, float Seconds)>(4096);
             while (!_beats.Contains(WakeBeat.ChaseFrame))
@@ -496,6 +497,7 @@ namespace MoonProject.Rover.PlayModeTests
                 OpeningScript script = _director.Script;
                 maxBodyYaw = Mathf.Max(maxBodyYaw, Mathf.Abs(Mathf.DeltaAngle(bodyYaw, _rover.transform.eulerAngles.y)));
                 poses.Add((script.Phase, _view.transform.position, _view.transform.rotation, Time.deltaTime));
+                headHidden |= script.ShotLive && screen.shadowCastingMode == UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly;
                 bool still = script.Phase == OpeningPhase.Post;
                 if (script.Phase == OpeningPhase.Ready)
                 {
@@ -578,6 +580,7 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.LessOrEqual(behindEnd, EndSlack, "the move behind ends on the chase frame, no pop");
             Assert.LessOrEqual(behindEndTurn, EndTurnSlack, "and facing as the chase frame does");
             Assert.LessOrEqual(maxBodyYaw, BodyYawSlack, "07's body never turns during the wake, even steered");
+            Assert.IsFalse(headHidden, "07's head is never hidden from the wake's camera (the chase rig's near fade)");
             Vector3 chaseOffset = chasePos - _rover.transform.position;
             Assert.Less(Vector3.Dot(chaseOffset, _rover.transform.forward), 0f, "control starts on the chase frame behind 07");
         }

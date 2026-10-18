@@ -42,9 +42,12 @@ namespace MoonProject.Rover
         /// <summary>Half-life (s) of the antenna's rise and fall.</summary>
         private const float AntennaHalfLife = 0.15f;
 
-        /// <summary>07 put farther (m, squared) or turned more (deg) than this since the face close-up was solved: solve again.</summary>
-        private const float FaceShotMoveSqr = 1e-4f;
-        private const float FaceShotTurnDegrees = 0.5f;
+        /// <summary>
+        /// 07 put farther (m, squared) or turned more (deg) than this since the face close-up was solved: a spawn that
+        /// landed after the session began, so solve again. Smaller settling never re-solves, so the shot cannot jump.
+        /// </summary>
+        private const float FaceShotMoveSqr = 0.0625f;
+        private const float FaceShotTurnDegrees = 5f;
         [Tooltip("Camera tuning (Assets/_Project/Data/Tuning/RoverCameraTuning.asset); the opening is its Opening block.")]
         [SerializeField] private RoverCameraTuning _tuning;
 
@@ -231,7 +234,7 @@ namespace MoonProject.Rover
 
         /// <summary>
         /// The full opening. The rig holds its wake shot underneath from the start, which keeps its wide shot and
-        /// stargazing closed until the pull-back lets it go.
+        /// stargazing closed until the ready performance lets it go.
         /// </summary>
         private void BeginFull(bool fromTitle)
         {
@@ -262,7 +265,7 @@ namespace MoonProject.Rover
 
         /// <summary>
         /// The close-up of 07's face the opening shows its self-test on: the very framing the inventory opens on
-        /// (<see cref="RoverCameraRig.TryComposeFaceShot"/>), solved at 07's pose now and again only if 07 has been put
+        /// (<see cref="RoverCameraRig.TryComposeFaceShot"/>), solved at 07's pose once and again only if 07 has been put
         /// somewhere else since (a spawn that lands after the session began), so the shot never drifts or flips.
         /// </summary>
         private bool FaceShot(out FaceInspectShot shot)
@@ -542,7 +545,7 @@ namespace MoonProject.Rover
         /// <summary>
         /// The wake's camera: the inventory's face close-up through the black, the checks and the ready hold, then the
         /// pull-back to the wide shot, the performance held wide, and the move round to the chase frame. The rig is let
-        /// go behind 07 as the pull-back starts, so the chase frame has settled before the camera moves toward it; at
+        /// go behind 07 as the performance starts, so the chase frame has settled before the camera moves toward it; at
         /// the end the shot camera hands over on the very pose the chase frame has.
         /// </summary>
         private void PlaceShotCamera()
@@ -565,7 +568,8 @@ namespace MoonProject.Rover
             }
 
             OpeningPhase phase = _script.Phase;
-            if (phase >= OpeningPhase.PullBack)
+            // Not before the camera is wide: a released rig hides 07's head while the live camera is this close to it.
+            if (phase >= OpeningPhase.Perform)
             {
                 ReleaseRig();
             }
