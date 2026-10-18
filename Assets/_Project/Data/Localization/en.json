@@ -888,7 +888,7 @@
         },
         {
             "key": "ui.device.cutter.fault",
-            "text": "No igniter. Fit the spare on your pad."
+            "text": "Needs an igniter. Fit it while parked on the charging pad."
         },
         {
             "key": "ui.device.cutter.fit",
@@ -969,6 +969,30 @@
         {
             "key": "ui.verb.fit",
             "text": "Fit"
+        },
+        {
+            "key": "ui.cargo.more_slots",
+            "text": "+{0} slots later"
+        },
+        {
+            "key": "ui.cargo.empty_name",
+            "text": "Empty slot"
+        },
+        {
+            "key": "ui.cargo.empty_desc",
+            "text": "Parts and materials you pick up are stored here."
+        },
+        {
+            "key": "ui.face.close",
+            "text": "Close"
+        },
+        {
+            "key": "ui.face.move",
+            "text": "Move"
+        },
+        {
+            "key": "ui.face.select",
+            "text": "Select"
         }
     ]
 }

@@ -891,6 +891,12 @@ Label {
     margin-right: 12px;
 }
 
+.pickup-row__part-icon {
+    width: 34px;
+    height: 34px;
+    margin-right: 12px;
+}
+
 .pickup-row__name {
     flex-grow: 1;
     margin-right: 16px;
@@ -1423,6 +1429,7 @@ Label {
 }
 
 .build-card--selected {
+    border-width: 3px;
     border-color: var(--crt-cyan-edge);
     background-color: var(--crt-cyan-fill);
 }
@@ -1612,7 +1619,7 @@ Label {
 
 .cargo__heading {
     position: absolute;
-    font-size: 22px;
+    font-size: 28px;
     letter-spacing: 3px;
     color: rgb(255, 224, 152);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
@@ -1621,7 +1628,7 @@ Label {
 .cargo__boot {
     display: none;
     position: absolute;
-    font-size: 20px;
+    font-size: 24px;
     letter-spacing: 2px;
     color: rgb(242, 192, 104);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
@@ -1636,7 +1643,7 @@ Label {
     position: absolute;
     right: 6px;
     bottom: 3px;
-    font-size: 18px;
+    font-size: 24px;
     color: rgb(255, 224, 152);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
@@ -1651,7 +1658,7 @@ Label {
     right: -40px;
     top: 100%;
     margin-top: 4px;
-    font-size: 17px;
+    font-size: 22px;
     white-space: nowrap;
     -unity-text-align: upper-center;
     color: rgb(242, 192, 104);
@@ -1661,22 +1668,23 @@ Label {
 .cargo__tooltip {
     display: none;
     position: absolute;
-    padding: 6px 14px;
+    padding: 4px 18px;
     justify-content: center;
     background-color: rgb(19, 18, 16);
-    border-width: 1.5px;
+    border-width: 3px;
     border-color: rgb(95, 243, 255);
 }
 
 .cargo__tooltip-name {
-    font-size: 21px;
+    font-size: 26px;
     color: rgb(255, 224, 152);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
 .cargo__tooltip-desc {
     margin-top: 2px;
-    font-size: 19px;
+    font-size: 22px;
+    white-space: nowrap;
     color: rgb(242, 192, 104);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
@@ -1689,7 +1697,49 @@ Label {
 }
 
 .cargo__toast-text {
-    font-size: 19px;
+    font-size: 22px;
+    color: rgb(242, 192, 104);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
+}
+
+/* The one hint row that stands for the locked slots, and the key hints at the foot of the face. */
+
+.cargo__more {
+    position: absolute;
+    font-size: 22px;
+    -unity-text-align: middle-center;
+    color: rgb(224, 176, 94);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
+}
+
+.cargo__footer {
+    position: absolute;
+    flex-direction: row;
+    align-items: center;
+}
+
+.cargo__hint {
+    flex-direction: row;
+    align-items: center;
+    margin-right: 48px;
+}
+
+.cargo__key {
+    min-width: 44px;
+    height: 28px;
+    padding: 0 10px;
+    border-width: 2px;
+    border-radius: 6px;
+    border-color: rgb(255, 224, 148);
+    font-size: 22px;
+    color: rgb(255, 224, 148);
+    -unity-text-align: middle-center;
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
+}
+
+.cargo__key-word {
+    margin-left: 12px;
+    font-size: 22px;
     color: rgb(242, 192, 104);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }

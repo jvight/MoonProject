@@ -117,6 +117,21 @@
                 <ui:VisualElement name="cargo-toast" class="cargo__toast" picking-mode="Ignore">
                     <ui:Label name="cargo-toast-text" class="cargo__toast-text" picking-mode="Ignore" />
                 </ui:VisualElement>
+                <ui:Label name="cargo-more" class="cargo__more" picking-mode="Ignore" />
+                <ui:VisualElement name="cargo-footer" class="cargo__footer" picking-mode="Ignore">
+                    <ui:VisualElement name="cargo-hint-0" class="cargo__hint" picking-mode="Ignore">
+                        <ui:Label name="cargo-key-0" class="cargo__key" picking-mode="Ignore" />
+                        <ui:Label name="cargo-word-0" class="cargo__key-word" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="cargo-hint-1" class="cargo__hint" picking-mode="Ignore">
+                        <ui:Label name="cargo-key-1" class="cargo__key" picking-mode="Ignore" />
+                        <ui:Label name="cargo-word-1" class="cargo__key-word" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="cargo-hint-2" class="cargo__hint" picking-mode="Ignore">
+                        <ui:Label name="cargo-key-2" class="cargo__key" picking-mode="Ignore" />
+                        <ui:Label name="cargo-word-2" class="cargo__key-word" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement name="pause" class="pause" picking-mode="Ignore">

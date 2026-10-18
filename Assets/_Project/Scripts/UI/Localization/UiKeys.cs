@@ -36,6 +36,12 @@ namespace MoonProject.UI
         public const string RecipeRow = "ui.recipe.row";
         public const string CargoHold = "ui.cargo.hold";
         public const string CargoTabSeven = "ui.cargo.tab_seven";
+        public const string CargoMoreSlots = "ui.cargo.more_slots";
+        public const string CargoEmptyName = "ui.cargo.empty_name";
+        public const string CargoEmptyDesc = "ui.cargo.empty_desc";
+        public const string FaceClose = "ui.face.close";
+        public const string FaceMove = "ui.face.move";
+        public const string FaceSelect = "ui.face.select";
         public const string CargoWaiting = "ui.cargo.waiting";
         public const string CargoSummary = "ui.cargo.summary";
         public const string BuildStripTitle = "build.strip.title";

@@ -36,20 +36,19 @@ namespace MoonProject.UI
         public const float HoldGridX = 52f;
         public const float HoldGridY = 74f;
         public const float RightPaneX = 512f;
-        public const float CellSize = 90f;
+        public const float CellSize = 86f;
         public const float CellGapX = 12f;
-        public const float CellGapY = 6f;
+        public const float CellGapY = 4f;
         public const float DividerX = 480f;
         public const float BubbleRadius = 36f;
         public const float RoverOriginX = 804f;
         public const float RoverOriginY = 468f;
         public const float RoverScale = 156f;
 
-        public const int MaxTooltipDescriptionChars = 52;
+        public const int MaxTooltipDescriptionChars = 72;
 
         // Two-colour amber CRT palette + cyan focus accent read from CargoScreenSettings.
         private Color32 BgCell => _settings.CellBackground;
-        private Color32 BgCellFocus => _settings.CellFocusBackground;
         private Color32 AmberBright => _settings.AmberBright;
         private Color32 AmberText => _settings.AmberText;
         private Color32 AmberFaint => _settings.AmberFaint;
@@ -69,6 +68,10 @@ namespace MoonProject.UI
         private readonly Label _tooltipDesc;
         private readonly VisualElement _toast;
         private readonly Label _toastText;
+        private readonly Label _more;
+        private readonly VisualElement _footerRoot;
+        private readonly Label[] _footerKeys = new Label[FaceKeyHints.Count];
+        private readonly Label[] _footerWords = new Label[FaceKeyHints.Count];
 
         private readonly CargoScreenSettings _settings;
         private readonly ILocalization _localization;
@@ -90,6 +93,10 @@ namespace MoonProject.UI
         private int _focusedHoldCell = -1;
         private int _focusedDevice = -1;
         private bool _igniterOffered;
+        private InputDeviceKind _footerDevice = (InputDeviceKind)(-1);
+        private float _pressFlash;
+        private int _pressedHoldCell = -1;
+        private int _pressedDevice = -1;
 
         private int _lastPointerDownFrame = -1;
         private int _lastNavigationFrame = -1;
@@ -127,6 +134,13 @@ namespace MoonProject.UI
             _tooltipDesc = Require<Label>(_panel, "cargo-tooltip-desc");
             _toast = Require<VisualElement>(_panel, "cargo-toast");
             _toastText = Require<Label>(_panel, "cargo-toast-text");
+            _more = Require<Label>(_panel, "cargo-more");
+            _footerRoot = Require<VisualElement>(_panel, "cargo-footer");
+            for (int i = 0; i < FaceKeyHints.Count; i++)
+            {
+                _footerKeys[i] = Require<Label>(_panel, "cargo-key-" + i);
+                _footerWords[i] = Require<Label>(_panel, "cargo-word-" + i);
+            }
 
             _canvas.generateVisualContent += OnGenerateCanvas;
             BuildHoldCells();
@@ -243,11 +257,14 @@ namespace MoonProject.UI
         {
             _focusedHoldCell = -1;
             _focusedDevice = -1;
+            _pressFlash = 0f;
             _userInteractedDuringBoot = false;
             _handoff.Reset();
         }
 
-        public void Tick(float deltaTime)
+        /// <param name="deltaTime">Unscaled seconds.</param>
+        /// <param name="device">The active device: the foot row names its real keys.</param>
+        public void Tick(float deltaTime, InputDeviceKind device)
         {
             if (!HideForBoot)
             {
@@ -258,6 +275,29 @@ namespace MoonProject.UI
             if (offered != _igniterOffered)
             {
                 Refresh();
+            }
+
+            if (device != _footerDevice)
+            {
+                WriteFooter(device);
+            }
+
+            if (_pressFlash > 0f)
+            {
+                _pressFlash = Mathf.Max(0f, _pressFlash - deltaTime / _settings.PressFlashSeconds);
+                _canvas.MarkDirtyRepaint();
+            }
+        }
+
+        /// <summary>The foot row: each hint's keycap on <paramref name="device"/> and the word for what it does.</summary>
+        private void WriteFooter(InputDeviceKind device)
+        {
+            _footerDevice = device;
+            for (int i = 0; i < FaceKeyHints.Count; i++)
+            {
+                var hint = (FaceHint)i;
+                _footerKeys[i].text = _localization.Get(FaceKeyHints.CapKey(hint, device));
+                _footerWords[i].text = _localization.Get(FaceKeyHints.WordKey(hint));
             }
         }
 
@@ -277,6 +317,8 @@ namespace MoonProject.UI
                 _rightTitle.style.display = DisplayStyle.None;
                 _socketsRoot.style.display = DisplayStyle.None;
                 _tooltip.style.display = DisplayStyle.None;
+                _more.style.display = DisplayStyle.None;
+                _footerRoot.style.display = DisplayStyle.None;
                 for (int i = 0; i < MaxHoldCells; i++)
                 {
                     bool showBadge = i < visibleSlots && i < filledSlots && _holdStates[i].Kind == HoldCellKind.Material &&
@@ -293,6 +335,7 @@ namespace MoonProject.UI
                 _bootLabel.style.display = DisplayStyle.None;
                 _holdTitle.style.display = DisplayStyle.Flex;
                 _rightTitle.style.display = DisplayStyle.Flex;
+                _footerRoot.style.display = DisplayStyle.Flex;
                 for (int i = 0; i < MaxHoldCells; i++)
                 {
                     _holdBadges[i].style.opacity = 1f;
@@ -325,7 +368,21 @@ namespace MoonProject.UI
                     bubbleDiam * s, bubbleDiam * s);
             }
 
-            PositionBox(_toast, 76f * s, 688f * s, 1000f * s, 38f * s);
+            PositionBox(_tooltip, FaceLayout.InfoX * s, FaceLayout.InfoY * s, FaceLayout.InfoWidth * s,
+                FaceLayout.InfoHeight * s);
+            PositionBox(_toast, FaceLayout.InfoX * s, 580f * s, 376f * s, 40f * s);
+            PositionBox(_footerRoot, FaceLayout.InfoX * s, FaceLayout.FooterY * s, FaceLayout.InfoWidth * s,
+                FaceLayout.FooterHeight * s);
+            for (int i = 0; i < FaceDevices.Count; i++)
+            {
+                float center = FaceDevices.CenterOf(i).x;
+                float left = FaceLayout.DeviceStateHalfWidth(center, true);
+                float right = FaceLayout.DeviceStateHalfWidth(center, false);
+                _deviceStates[i].style.left = -(left - BubbleRadius) * s;
+                _deviceStates[i].style.right = -(right - BubbleRadius) * s;
+            }
+
+            WriteMoreRow(s);
             UpdateTooltip();
             _canvas.MarkDirtyRepaint();
         }
@@ -400,9 +457,31 @@ namespace MoonProject.UI
                 _deviceBubbles[i].EnableInClassList(CargoScreen.FittedClass, _deviceOk[i]);
             }
 
+            WriteMoreRow(_scale);
+            _footerRoot.style.display = !hideForBoot ? DisplayStyle.Flex : DisplayStyle.None;
+            if (_footerDevice >= 0)
+            {
+                WriteFooter(_footerDevice);
+            }
+
             UpdateTooltip();
             UpdateToast();
             _canvas.MarkDirtyRepaint();
+        }
+
+        /// <summary>The single hint row that says more slots come later (none once every slot is unlocked).</summary>
+        private void WriteMoreRow(float s)
+        {
+            bool shown = FaceLayout.HasMoreRow(_unlockedHoldCount) && !HideForBoot;
+            _more.style.display = shown ? DisplayStyle.Flex : DisplayStyle.None;
+            if (!shown)
+            {
+                return;
+            }
+
+            Rect row = FaceLayout.MoreRowRect(_unlockedHoldCount);
+            PositionBox(_more, row.x * s, row.y * s, row.width * s, row.height * s);
+            _more.text = string.Format(_localization.Get(UiKeys.CargoMoreSlots), _numbers.Get(LockedCellCount));
         }
 
         public void FocusFirst()
@@ -500,20 +579,25 @@ namespace MoonProject.UI
             EnsureInteractiveDuringBoot();
             _lastNavigationFrame = Time.frameCount;
             _handoff.NoteNavigation();
+            int cell = _focusedHoldCell;
+            int device = _focusedDevice;
+            bool moved = true;
             if (_focusedHoldCell >= 0 && _focusedHoldCell < _unlockedHoldCount)
             {
                 NavigateFromHoldCell(_focusedHoldCell, direction);
-                return true;
             }
-
-            if (_focusedDevice >= 0 && _focusedDevice < FaceDevices.Count)
+            else if (_focusedDevice >= 0 && _focusedDevice < FaceDevices.Count)
             {
                 NavigateFromDevice(_focusedDevice, direction);
-                return true;
+            }
+            else
+            {
+                FocusFirst();
+                moved = _focusedHoldCell >= 0 || _focusedDevice >= 0;
             }
 
-            FocusFirst();
-            return _focusedHoldCell >= 0 || _focusedDevice >= 0;
+            NoteMoved(cell != _focusedHoldCell || device != _focusedDevice);
+            return moved;
         }
 
         /// <summary>
@@ -534,7 +618,36 @@ namespace MoonProject.UI
                 return true;
             }
 
+            if (_focusedHoldCell >= 0 && _focusedHoldCell < _unlockedHoldCount)
+            {
+                _lastSubmitFrame = Time.frameCount;
+                Press(_focusedHoldCell, -1);
+                return true;
+            }
+
             return false;
+        }
+
+        /// <summary>
+        /// A press on a cell or a bubble: the selection flashes bright and settles, and one soft tick says it was
+        /// taken, whether or not the press did anything more.
+        /// </summary>
+        private void Press(int holdCell, int device)
+        {
+            _pressedHoldCell = holdCell;
+            _pressedDevice = device;
+            _pressFlash = 1f;
+            _events.Publish(new UiCue(UiCueKind.Confirm));
+            _canvas.MarkDirtyRepaint();
+        }
+
+        /// <summary>The selection moved by the keys, the pad or the hover: one softer tick.</summary>
+        private void NoteMoved(bool changed)
+        {
+            if (changed)
+            {
+                _events.Publish(new UiCue(UiCueKind.FocusMove));
+            }
         }
 
         private void SyncPendingFocus()
@@ -639,10 +752,12 @@ namespace MoonProject.UI
             }
 
             EnsureInteractiveDuringBoot();
+            bool changed = _focusedHoldCell != index;
             _focusedHoldCell = index;
             _focusedDevice = -1;
             UpdateTooltip();
             _canvas.MarkDirtyRepaint();
+            NoteMoved(changed);
         }
 
         private void OnDeviceFocus(int device)
@@ -661,7 +776,9 @@ namespace MoonProject.UI
             }
 
             EnsureInteractiveDuringBoot();
+            bool changed = _focusedDevice != device;
             OnDeviceFocus(device);
+            NoteMoved(changed);
         }
 
         private void OnHoldCellPointerDown(int index, PointerDownEvent evt)
@@ -674,6 +791,7 @@ namespace MoonProject.UI
             _lastPointerDownFrame = Time.frameCount;
             EnsureInteractiveDuringBoot();
             OnHoldCellFocus(index);
+            Press(index, -1);
         }
 
         private void OnPanelPointerMove(PointerMoveEvent evt)
@@ -693,6 +811,7 @@ namespace MoonProject.UI
             {
                 EnsureInteractiveDuringBoot();
                 OnHoldCellFocus(holdIdx);
+                Press(holdIdx, -1);
                 return;
             }
 
@@ -730,7 +849,7 @@ namespace MoonProject.UI
         {
             for (int i = 0; i < _unlockedHoldCount; i++)
             {
-                if (GetHoldCellReferenceRect(i).Contains(refPos))
+                if (FaceLayout.HoldHitRect(i).Contains(refPos))
                 {
                     return i;
                 }
@@ -741,7 +860,7 @@ namespace MoonProject.UI
 
         private static int FindDeviceAtReferencePos(Vector2 refPos)
         {
-            float hitRadius = BubbleRadius * 1.45f;
+            float hitRadius = BubbleRadius * FaceLayout.DeviceHitScale;
             float bestDistSq = hitRadius * hitRadius;
             int best = -1;
             for (int i = 0; i < FaceDevices.Count; i++)
@@ -766,9 +885,9 @@ namespace MoonProject.UI
 
             _lastSubmitFrame = Time.frameCount;
             EnsureInteractiveDuringBoot();
+            Press(-1, device);
             if (FaceDevices.OffersIgniter(device, _systems.CanFitIgniter) && _systems.TryFitIgniter())
             {
-                _events.Publish(new UiCue(UiCueKind.Confirm));
                 Refresh();
             }
         }
@@ -793,7 +912,10 @@ namespace MoonProject.UI
             EnsureInteractiveDuringBoot();
             _lastNavigationFrame = Time.frameCount;
             _handoff.NoteNavigation();
+            int cell = _focusedHoldCell;
+            int device = _focusedDevice;
             NavigateFromHoldCell(index, evt.direction);
+            NoteMoved(cell != _focusedHoldCell || device != _focusedDevice);
         }
 
         private void OnDeviceNavigationMove(int device, NavigationMoveEvent evt)
@@ -808,7 +930,10 @@ namespace MoonProject.UI
             EnsureInteractiveDuringBoot();
             _lastNavigationFrame = Time.frameCount;
             _handoff.NoteNavigation();
+            int cell = _focusedHoldCell;
+            int focused = _focusedDevice;
             NavigateFromDevice(device, evt.direction);
+            NoteMoved(cell != _focusedHoldCell || focused != _focusedDevice);
         }
 
         private void NavigateFromHoldCell(int index, NavigationMoveEvent.Direction direction)
@@ -890,17 +1015,19 @@ namespace MoonProject.UI
                 return;
             }
 
-            float s = _scale;
             if (_focusedHoldCell >= 0 && _focusedHoldCell < _unlockedHoldCount)
             {
                 HoldCellState state = _holdStates[_focusedHoldCell];
-                if (state.Kind != HoldCellKind.Empty && state.Kind != HoldCellKind.Locked)
+                if (state.Kind == HoldCellKind.Empty)
                 {
-                    string name = HoldItemName(_focusedHoldCell);
-                    string desc = HoldItemDescription(_focusedHoldCell);
-                    ShowTooltipBox(name, desc, 72f * s, 664f * s, 376f * s, 568f * s, 62f * s);
-                    return;
+                    ShowTooltipBox(_localization.Get(UiKeys.CargoEmptyName), _localization.Get(UiKeys.CargoEmptyDesc));
                 }
+                else
+                {
+                    ShowTooltipBox(HoldItemName(_focusedHoldCell), HoldItemDescription(_focusedHoldCell));
+                }
+
+                return;
             }
 
             if (_focusedDevice >= 0 && _focusedDevice < FaceDevices.Count)
@@ -908,7 +1035,7 @@ namespace MoonProject.UI
                 RoverSystemState state = _systems.StateOf(FaceDevices.SystemOf(_focusedDevice));
                 string name = _localization.Get(FaceDevices.NameKey(_focusedDevice));
                 string desc = _localization.Get(FaceDevices.DescriptionKey(_focusedDevice, state, _systems.CanFitIgniter));
-                ShowTooltipBox(name, desc, 512f * s, 664f * s, 440f * s, 568f * s, 62f * s);
+                ShowTooltipBox(name, desc);
                 return;
             }
 
@@ -929,16 +1056,11 @@ namespace MoonProject.UI
             }
         }
 
-        private void ShowTooltipBox(string name, string desc, float x, float y, float minW, float maxW, float h)
+        /// <summary>The info box under both panes: it names the selection and says in one line what it is for.</summary>
+        private void ShowTooltipBox(string name, string desc)
         {
             _tooltipName.text = name;
             _tooltipDesc.text = TruncateDescription(desc);
-            _tooltip.style.left = x;
-            _tooltip.style.top = y;
-            _tooltip.style.minWidth = minW;
-            _tooltip.style.maxWidth = maxW;
-            _tooltip.style.width = StyleKeyword.Auto;
-            _tooltip.style.height = h;
             _tooltip.style.display = DisplayStyle.Flex;
         }
 
@@ -981,20 +1103,21 @@ namespace MoonProject.UI
             if (!hideForBoot)
             {
                 // Vertical divider & header rules inside the glass safe area (no inner rectangular panel box)
+                float rule = _settings.CellStrokeWidth * s;
                 RoverLineArtPainter.DrawLine(painter, new Vector2(DividerX * s, 42f * s),
-                    new Vector2(DividerX * s, 726f * s), AmberMuted, 1.2f);
-                RoverLineArtPainter.DrawLine(painter, new Vector2(72f * s, 64f * s),
-                    new Vector2(448f * s, 64f * s), AmberMuted, 1.2f);
-                RoverLineArtPainter.DrawLine(painter, new Vector2(RightPaneX * s, 64f * s),
-                    new Vector2(1080f * s, 64f * s), AmberMuted, 1.2f);
+                    new Vector2(DividerX * s, FaceLayout.DividerBottom * s), AmberMuted, rule);
+                RoverLineArtPainter.DrawLine(painter, new Vector2(72f * s, 70f * s),
+                    new Vector2(448f * s, 70f * s), AmberMuted, rule);
+                RoverLineArtPainter.DrawLine(painter, new Vector2(RightPaneX * s, 70f * s),
+                    new Vector2(1080f * s, 70f * s), AmberMuted, rule);
             }
 
             DrawHoldGrid(painter, s);
 
             if (!hideForBoot)
             {
+                DrawMoreRow(painter, s);
                 DrawRoverAndDevices(painter, s);
-                DrawTooltipOverlay(painter, s);
                 DrawToastDot(painter, s);
             }
         }
@@ -1014,24 +1137,23 @@ namespace MoonProject.UI
 
                 if (state.Kind == HoldCellKind.Locked)
                 {
-                    RoverLineArtPainter.StrokeDashedRect(painter, cx, cy, cw, ch, AmberLocked, 1.2f, 5f * s, 4f * s);
-                    RoverLineArtPainter.DrawPadlock(painter, new Vector2(cx + cw * 0.5f, cy + ch * 0.5f), AmberLocked);
                     continue;
                 }
 
                 bool focused = !hideForBoot && i == _focusedHoldCell;
                 bool hasItem = state.Kind != HoldCellKind.Empty;
 
-                RoverLineArtPainter.FillRect(painter, cx, cy, cw, ch, focused ? BgCellFocus : BgCell);
+                RoverLineArtPainter.FillRect(painter, cx, cy, cw, ch, focused ? SelectionFillOf(i, -1) : BgCell);
                 if (focused)
                 {
-                    RoverLineArtPainter.StrokeRect(painter, cx, cy, cw, ch, Cyan, 2.0f);
-                    RoverLineArtPainter.DrawCornerTicks(painter, cx, cy, cw, ch, 8f * s, Cyan, 2.0f);
+                    float ring = _settings.FocusStrokeWidth * s;
+                    RoverLineArtPainter.StrokeRect(painter, cx, cy, cw, ch, Cyan, ring);
+                    RoverLineArtPainter.DrawCornerTicks(painter, cx, cy, cw, ch, 14f * s, Cyan, ring);
                 }
                 else
                 {
-                    RoverLineArtPainter.StrokeRect(painter, cx, cy, cw, ch,
-                        hasItem ? AmberFaint : AmberMuted, hasItem ? 1.6f : 1.2f);
+                    RoverLineArtPainter.StrokeRect(painter, cx, cy, cw, ch, hasItem ? AmberFaint : AmberMuted,
+                        (hasItem ? _settings.ItemStrokeWidth : _settings.CellStrokeWidth) * s);
                 }
 
                 if (!hasItem)
@@ -1060,14 +1182,36 @@ namespace MoonProject.UI
                 UiIconShape icon = GetHoldCellIcon(state);
                 Color32 tint = RoverLineArtPainter.WithAlpha(UiIconPainter.LitAmber, (byte)Mathf.RoundToInt(248f * bootProgress));
                 Vector2 iconCenter = new Vector2(cx + cw * 0.5f + slideX, cy + ch * 0.5f - 2f * s);
-                UiIconPainter.Draw(painter, in icon, iconCenter, 60f * s, tint);
+                UiIconPainter.Draw(painter, in icon, iconCenter, _settings.HoldIconSize * s, tint);
 
                 if (!hideForBoot && state.Kind == HoldCellKind.Material && state.Units > 1)
                 {
-                    RoverLineArtPainter.FillRect(painter, cx + cw - 34f * s, cy + ch - 28f * s, 32f * s, 26f * s,
-                        focused ? BgCellFocus : BgCell);
+                    RoverLineArtPainter.FillRect(painter, cx + cw - 40f * s, cy + ch - 34f * s, 38f * s, 32f * s,
+                        focused ? SelectionFillOf(i, -1) : BgCell);
                 }
             }
+        }
+
+        /// <summary>The one hint row that stands for every locked slot: a dashed outline and a padlock.</summary>
+        private void DrawMoreRow(Painter2D painter, float s)
+        {
+            if (!FaceLayout.HasMoreRow(_unlockedHoldCount))
+            {
+                return;
+            }
+
+            Rect row = FaceLayout.MoreRowRect(_unlockedHoldCount);
+            RoverLineArtPainter.StrokeDashedRect(painter, row.x * s, row.y * s, row.width * s, row.height * s,
+                AmberLocked, _settings.CellStrokeWidth * s, 8f * s, 6f * s);
+            RoverLineArtPainter.DrawPadlock(painter, new Vector2((row.x + 30f) * s, row.center.y * s), AmberLocked);
+        }
+
+        /// <summary>The fill of the selected cell or bubble: the selection colour, brighter just after a press.</summary>
+        private Color32 SelectionFillOf(int holdCell, int device)
+        {
+            bool pressed = _pressFlash > 0f && (holdCell >= 0 ? holdCell == _pressedHoldCell : device == _pressedDevice);
+            return pressed ? Color32.Lerp(_settings.SelectionFill, _settings.PressFill, _pressFlash)
+                : _settings.SelectionFill;
         }
 
         private UiIconShape GetHoldCellIcon(HoldCellState state)
@@ -1162,60 +1306,30 @@ namespace MoonProject.UI
                 bool focused = i == _focusedDevice;
                 bool offered = FaceDevices.OffersIgniter(i, _igniterOffered);
 
-                RoverLineArtPainter.FillCircle(painter, b, r, BgCell);
+                RoverLineArtPainter.FillCircle(painter, b, r, focused ? SelectionFillOf(-1, i) : BgCell);
                 if (focused || offered)
                 {
-                    RoverLineArtPainter.StrokeCircle(painter, b, r, Cyan, 2.2f);
+                    RoverLineArtPainter.StrokeCircle(painter, b, r, Cyan, _settings.FocusStrokeWidth * s);
                     if (offered)
                     {
-                        RoverLineArtPainter.StrokeCircle(painter, b, r - 4f * s, AmberBright, 1.6f);
+                        RoverLineArtPainter.StrokeCircle(painter, b, r - 7f * s, AmberBright,
+                            _settings.ItemStrokeWidth * s);
                     }
                 }
                 else if (ok)
                 {
-                    RoverLineArtPainter.StrokeCircle(painter, b, r, AmberBright, 2.0f);
-                    RoverLineArtPainter.StrokeCircle(painter, b, r - 3.5f * s,
-                        RoverLineArtPainter.WithAlpha(AmberText, 120), 1.0f);
+                    RoverLineArtPainter.StrokeCircle(painter, b, r, AmberBright, _settings.ItemStrokeWidth * s);
+                    RoverLineArtPainter.StrokeCircle(painter, b, r - 6f * s,
+                        RoverLineArtPainter.WithAlpha(AmberText, 120), _settings.CellStrokeWidth * 0.6f * s);
                 }
                 else
                 {
-                    RoverLineArtPainter.StrokeCircle(painter, b, r, AmberMuted, 1.3f);
+                    RoverLineArtPainter.StrokeCircle(painter, b, r, AmberMuted, _settings.CellStrokeWidth * s);
                 }
 
                 UiIconShape icon = _diagram.GetIcon(FaceDevices.MountOf(i));
                 UiIconState iconState = ok || focused || offered ? UiIconState.Lit : UiIconState.Faint;
-                UiIconPainter.Draw(painter, in icon, b, 46f * s, iconState);
-            }
-        }
-
-        private void DrawTooltipOverlay(Painter2D painter, float s)
-        {
-            if (_tooltip.style.display != DisplayStyle.Flex)
-            {
-                return;
-            }
-
-            float tx = _tooltip.style.left.value.value;
-            float ty = _tooltip.style.top.value.value;
-            float tw = _tooltip.resolvedStyle.width > 4f ? _tooltip.resolvedStyle.width : _tooltip.style.minWidth.value.value;
-
-            if (_focusedHoldCell >= 0 && _focusedHoldCell < _unlockedHoldCount)
-            {
-                Rect cell = GetHoldCellReferenceRect(_focusedHoldCell);
-                float tickX = Mathf.Clamp(cell.center.x * s, tx + 16f * s, tx + tw - 16f * s);
-                RoverLineArtPainter.DrawLine(painter, new Vector2(tickX, ty - 12f * s), new Vector2(tickX, ty),
-                    RoverLineArtPainter.WithAlpha(Cyan, 195), 1.5f);
-            }
-            else if (_focusedDevice >= 0 && _focusedDevice < FaceDevices.Count)
-            {
-                Vector2 b = FaceDevices.CenterOf(_focusedDevice);
-                if (b.y > 460f)
-                {
-                    Vector2 bs = b * s;
-                    Vector2 from = new Vector2(bs.x, bs.y + _settings.BubbleRadius * s);
-                    Vector2 to = new Vector2(Mathf.Clamp(bs.x, tx + 24f * s, tx + tw - 24f * s), ty);
-                    RoverLineArtPainter.DrawLine(painter, from, to, RoverLineArtPainter.WithAlpha(Cyan, 175), 1.3f);
-                }
+                UiIconPainter.Draw(painter, in icon, b, _settings.DeviceIconSize * s, iconState);
             }
         }
 
@@ -1226,7 +1340,7 @@ namespace MoonProject.UI
                 return;
             }
 
-            RoverLineArtPainter.FillCircle(painter, new Vector2(64f * s, 707f * s), 3.5f * s, AmberBright);
+            RoverLineArtPainter.FillCircle(painter, new Vector2(60f * s, 600f * s), 4f * s, AmberBright);
         }
 
         private Vector2 EventToReference(IPointerEvent evt)
