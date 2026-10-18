@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 using MoonProject.Core;
+using MoonProject.Gameplay.PlayModeTests;
 using Object = UnityEngine.Object;
 
 namespace MoonProject.Gameplay.Tests
@@ -20,6 +22,13 @@ namespace MoonProject.Gameplay.Tests
         private const int SweepSteps = 24;
 
         private readonly List<GameObject> _made = new List<GameObject>();
+        private Material _surface;
+
+        [SetUp]
+        public void SetUp()
+        {
+            _surface = new Material(AssetDatabase.LoadAssetAtPath<Shader>(GameplayFixture.R1LitShaderPath));
+        }
 
         [TearDown]
         public void TearDown()
@@ -30,6 +39,7 @@ namespace MoonProject.Gameplay.Tests
             }
 
             _made.Clear();
+            Object.DestroyImmediate(_surface);
         }
 
         [Test]
@@ -165,6 +175,7 @@ namespace MoonProject.Gameplay.Tests
         {
             GameObject shown = GameObject.CreatePrimitive(PrimitiveType.Cube);
             Object.DestroyImmediate(shown.GetComponent<Collider>());
+            shown.GetComponent<Renderer>().sharedMaterial = _surface;
             shown.transform.SetParent(parent, false);
             shown.transform.localPosition = localCentre;
             shown.transform.localScale = size;
