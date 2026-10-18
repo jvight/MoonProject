@@ -657,7 +657,7 @@ def _build_ssr3_body(root: bpy.types.Object) -> bpy.types.Object:
         mat="R1_Copper",
     )
 
-    # 6. Flank `ILC · SSR-3` stencil lettering on the rear half of the orange beltline + `Unit_Number` frame pad
+    # 6. Flank `ILC · SSR-3` stencil lettering on the rear half of the orange beltline
     for sx in (-1.0, 1.0):
         _add_stencil_text_flank(
             mb,
@@ -670,14 +670,6 @@ def _build_ssr3_body(root: bpy.types.Object) -> bpy.types.Object:
             relief_x=0.004,
             mat="R1_GreyMetal",
         )
-        for dz in (-0.095, 0.095):
-            mb.add_bevel_box(
-                center_u=(sx * 0.441, stripe_y, UNIT_NUMBER_PIVOT_U[2] + dz),
-                size_u=(0.004, 0.084, 0.006),
-                mat="R1_GreyMetal",
-                bevel=0.0,
-                segments=0,
-            )
 
     # 7. Brake-bent vertical panel seam channels, corner bolts/rivets, and right-flank R1_SagePatch repair plate
     for sx in (-1.0, 1.0):
@@ -936,12 +928,433 @@ def build_ssr3_chassis() -> bpy.types.Object:
     return root
 
 
+# ---------------------------------------------------------------------------
+# Deliverable 2: SSR3_Topper_06 ("Relay Keeper" — 6 Battery Cells + 6 Dark Glass Tubes + Rear Cable Reel)
+# ---------------------------------------------------------------------------
+def _build_topper_06_battery_rack(root: bpy.types.Object) -> bpy.types.Object:
+    """Build the 6-cell battery rack (`BatteryRack`) with heavy `R1_Copper` busbars and `R1_BareSteel` straps."""
+    mb = r1kit.MeshBuilder("BatteryRack", pivot_u=(0.0, 0.0, 0.20))
+
+    # 1. Base steel mounting tray sitting in the recessed dorsal deck well
+    mb.add_bevel_box(
+        center_u=(0.0, 0.016, 0.21),
+        size_u=(0.61, 0.032, 0.56),
+        mat="R1_BareSteel",
+        bevel=0.005,
+        segments=1,
+    )
+    mb.add_bolts(
+        [
+            (sx * 0.285, 0.032, cz)
+            for sx in (-1.0, 1.0)
+            for cz in (-0.03, 0.21, 0.45)
+        ],
+        radius=0.008,
+        height=0.010,
+        axis_u="Y",
+        mat="R1_BareSteel",
+        bevel_segments=0,
+    )
+
+    # 2. 6 Rectangular Industrial Battery Cells (2 columns x 3 rows = 6 cells)
+    cell_xs = (-0.15, 0.15)
+    cell_zs = (0.39, 0.21, 0.03)
+    for cx in cell_xs:
+        sx = 1.0 if cx >= 0.0 else -1.0
+        for cz in cell_zs:
+            # Main cell housing (`R1_BareSteel` light industrial steel-grey casing)
+            mb.add_bevel_box(
+                center_u=(cx, 0.105, cz),
+                size_u=(0.27, 0.16, 0.154),
+                mat="R1_BareSteel",
+                bevel=0.008,
+                segments=1,
+            )
+            # Top recessed dark terminal cover plate (`R1_GreyMetal`)
+            mb.add_bevel_box(
+                center_u=(cx, 0.188, cz),
+                size_u=(0.248, 0.014, 0.136),
+                mat="R1_GreyMetal",
+                bevel=0.004,
+                segments=1,
+            )
+            # Outer flank vertical stiffening ribs (`R1_GreyMetal`)
+            for dz in (-0.042, 0.042):
+                mb.add_bevel_box(
+                    center_u=(cx + sx * 0.136, 0.105, cz + dz),
+                    size_u=(0.008, 0.135, 0.016),
+                    mat="R1_GreyMetal",
+                    bevel=0.002,
+                    segments=1,
+                )
+
+    # Perimeter steel angle-iron hold-down strap frame wrapping the 6-cell block
+    for sx in (-1.0, 1.0):
+        mb.add_bevel_box(
+            center_u=(sx * 0.292, 0.155, 0.21),
+            size_u=(0.014, 0.024, 0.54),
+            mat="R1_GreyMetal",
+            bevel=0.003,
+            segments=1,
+        )
+    for sz_pos in (-0.055, 0.475):
+        mb.add_bevel_box(
+            center_u=(0.0, 0.155, sz_pos),
+            size_u=(0.59, 0.024, 0.014),
+            mat="R1_GreyMetal",
+            bevel=0.003,
+            segments=1,
+        )
+
+    # 3. Heavy `R1_Copper` Busbars & Tie-Down Straps across the front and top of the 6 cells
+    for cx in cell_xs:
+        # Front vertical copper busbar strap rising up the front of the battery pack
+        mb.add_bevel_box(
+            center_u=(cx, 0.105, 0.478),
+            size_u=(0.048, 0.174, 0.020),
+            mat="R1_Copper",
+            bevel=0.005,
+            segments=1,
+        )
+        # Top arched copper elbow block over the front edge
+        mb.add_bevel_box(
+            center_u=(cx, 0.194, 0.468),
+            size_u=(0.050, 0.024, 0.036),
+            mat="R1_Copper",
+            bevel=0.005,
+            segments=1,
+        )
+        # Longitudinal top copper busbar running across all 3 cell rows
+        mb.add_bevel_box(
+            center_u=(cx, 0.198, 0.21),
+            size_u=(0.044, 0.016, 0.51),
+            mat="R1_Copper",
+            bevel=0.004,
+            segments=1,
+        )
+        # Brass terminal post clamps at each cell row
+        for cz in cell_zs:
+            mb.add_cylinder(
+                center_u=(cx, 0.207, cz),
+                radius=0.018,
+                length=0.015,
+                mat="R1_Brass",
+                axis_u="Y",
+                segments=12,
+                bevel=0.002,
+                bevel_segments=1,
+            )
+
+    # Transverse copper inter-cell jumper bars & rear power feed busbar into the cable reel
+    for cz in cell_zs:
+        mb.add_bevel_box(
+            center_u=(0.0, 0.204, cz),
+            size_u=(0.34, 0.014, 0.030),
+            mat="R1_Copper",
+            bevel=0.003,
+            segments=1,
+        )
+    mb.add_bevel_box(
+        center_u=(0.0, 0.145, -0.085),
+        size_u=(0.048, 0.018, 0.095),
+        mat="R1_Copper",
+        bevel=0.003,
+        segments=1,
+    )
+
+    return mb.build_object(parent=root)
+
+
+def _build_topper_06_cell_tubes(root: bpy.types.Object) -> bpy.types.Object:
+    """Build the 6 dark glass cell status tubes (`CellTubes`) in `R1_DarkGlass` & `R1_Brass` (zero `R1_LampAmber`)."""
+    mb = r1kit.MeshBuilder("CellTubes", pivot_u=(0.0, 0.195, 0.22))
+
+    # 6 dark glass status tubes mounted atop the 6 battery cells (staggered slightly so all 6 domes read in 3/4 view)
+    tube_coords = (
+        (-0.088, 0.40),
+        (0.088, 0.37),
+        (-0.088, 0.22),
+        (0.088, 0.19),
+        (-0.088, 0.04),
+        (0.088, 0.01),
+    )
+    for tx, tz in tube_coords:
+        # Turned R1_Brass base collar ring
+        mb.add_cylinder(
+            center_u=(tx, 0.206, tz),
+            radius=0.036,
+            length=0.024,
+            mat="R1_Brass",
+            axis_u="Y",
+            segments=16,
+            bevel=0.003,
+            bevel_segments=1,
+        )
+        mb.add_torus(
+            center_u=(tx, 0.218, tz),
+            major_radius=0.034,
+            minor_radius=0.005,
+            mat="R1_Brass",
+            axis_u="Y",
+            major_segments=16,
+            minor_segments=6,
+        )
+        # Internal unlit copper electrode post at base of tube
+        mb.add_cylinder(
+            center_u=(tx, 0.232, tz),
+            radius=0.012,
+            length=0.024,
+            mat="R1_Copper",
+            axis_u="Y",
+            segments=10,
+            bevel=0.002,
+            bevel_segments=1,
+        )
+        # Tall cylindrical R1_DarkGlass vacuum status tube envelope
+        mb.add_cylinder(
+            center_u=(tx, 0.272, tz),
+            radius=0.031,
+            length=0.096,
+            mat="R1_DarkGlass",
+            axis_u="Y",
+            segments=16,
+            bevel=0.004,
+            bevel_segments=1,
+        )
+        # Domed R1_DarkGlass top cap
+        mb.add_cylinder(
+            center_u=(tx, 0.326, tz),
+            radius=0.031,
+            radius_top=0.016,
+            length=0.022,
+            mat="R1_DarkGlass",
+            axis_u="Y",
+            segments=16,
+            bevel=0.008,
+            bevel_segments=2,
+        )
+        # Top R1_Brass finial cap button
+        mb.add_cylinder(
+            center_u=(tx, 0.340, tz),
+            radius=0.012,
+            length=0.008,
+            mat="R1_Brass",
+            axis_u="Y",
+            segments=12,
+            bevel=0.002,
+            bevel_segments=1,
+        )
+
+    return mb.build_object(parent=root)
+
+
+def _build_topper_06_cable_reel(root: bpy.types.Object) -> bpy.types.Object:
+    """Build the rear flanged cable reel (`CableReel`) in `R1_SagePatch`/`R1_GreyMetal` with wound `R1_Rubber` cable."""
+    mb = r1kit.MeshBuilder("CableReel", pivot_u=(0.0, 0.195, -0.31))
+    reel_y = 0.195
+    reel_z = -0.31
+
+    # 1. Base mounting skid plate on the rear dorsal deck (`R1_GreyMetal`)
+    mb.add_bevel_box(
+        center_u=(0.0, 0.016, reel_z),
+        size_u=(0.58, 0.032, 0.35),
+        mat="R1_GreyMetal",
+        bevel=0.005,
+        segments=1,
+    )
+
+    # 2. Twin A-frame trunnion pedestals (`R1_SagePatch`) & axle journals (`R1_GreyMetal` / `R1_BareSteel`)
+    for sx in (-1.0, 1.0):
+        px = sx * 0.245
+        for leg_z in (reel_z - 0.115, reel_z + 0.115):
+            mb.add_strut(
+                p0_u=(px, 0.024, leg_z),
+                p1_u=(px, reel_y, reel_z),
+                width=0.034,
+                thickness=0.042,
+                mat="R1_SagePatch",
+                bevel=0.004,
+            )
+        mb.add_bevel_box(
+            center_u=(px, 0.105, reel_z),
+            size_u=(0.024, 0.145, 0.12),
+            mat="R1_SagePatch",
+            bevel=0.004,
+            segments=1,
+        )
+        mb.add_cylinder(
+            center_u=(sx * 0.252, reel_y, reel_z),
+            radius=0.042,
+            length=0.038,
+            mat="R1_GreyMetal",
+            axis_u="X",
+            segments=16,
+            bevel=0.004,
+            bevel_segments=1,
+        )
+        mb.add_cylinder(
+            center_u=(sx * 0.266, reel_y, reel_z),
+            radius=0.024,
+            length=0.024,
+            mat="R1_BareSteel",
+            axis_u="X",
+            segments=12,
+            bevel=0.003,
+            bevel_segments=1,
+        )
+
+    # 3. Left & Right Circular Reel Flanges (`R1_SagePatch` disc + `R1_GreyMetal` rolled rim + 6 hub bolts)
+    for sx in (-1.0, 1.0):
+        fx = sx * 0.202
+        mb.add_cylinder(
+            center_u=(fx, reel_y, reel_z),
+            radius=0.182,
+            length=0.018,
+            mat="R1_SagePatch",
+            axis_u="X",
+            segments=24,
+            bevel=0.004,
+            bevel_segments=1,
+        )
+        mb.add_torus(
+            center_u=(fx, reel_y, reel_z),
+            major_radius=0.180,
+            minor_radius=0.011,
+            mat="R1_GreyMetal",
+            axis_u="X",
+            major_segments=24,
+            minor_segments=6,
+        )
+        mb.add_cylinder(
+            center_u=(fx + sx * 0.005, reel_y, reel_z),
+            radius=0.068,
+            length=0.022,
+            mat="R1_GreyMetal",
+            axis_u="X",
+            segments=16,
+            bevel=0.003,
+            bevel_segments=1,
+        )
+        bolt_pts = [
+            (
+                fx + sx * 0.014,
+                reel_y + 0.115 * math.sin(2.0 * math.pi * b_i / 6),
+                reel_z + 0.115 * math.cos(2.0 * math.pi * b_i / 6),
+            )
+            for b_i in range(6)
+        ]
+        mb.add_bolts(
+            bolt_pts,
+            radius=0.008,
+            height=0.010,
+            axis_u="X",
+            mat="R1_BareSteel",
+            bevel_segments=0,
+        )
+
+    # 4. Wound `R1_Rubber` Cable Drum + 9 distinct wound rubber cable coils + rear brass coupler plug
+    mb.add_cylinder(
+        center_u=(0.0, reel_y, reel_z),
+        radius=0.132,
+        length=0.38,
+        mat="R1_Rubber",
+        axis_u="X",
+        segments=20,
+        bevel=0.006,
+        bevel_segments=1,
+    )
+    for coil_i in range(9):
+        cx = -0.168 + coil_i * 0.042
+        mb.add_torus(
+            center_u=(cx, reel_y, reel_z),
+            major_radius=0.130,
+            minor_radius=0.021,
+            mat="R1_Rubber",
+            axis_u="X",
+            major_segments=20,
+            minor_segments=8,
+        )
+
+    # Rear fairlead roller guide & stowed brass umbilical connector plug
+    mb.add_bevel_box(
+        center_u=(0.0, 0.055, -0.465),
+        size_u=(0.14, 0.048, 0.042),
+        mat="R1_GreyMetal",
+        bevel=0.004,
+        segments=1,
+    )
+    mb.add_cylinder(
+        center_u=(0.0, 0.055, -0.485),
+        radius=0.024,
+        length=0.036,
+        mat="R1_Brass",
+        axis_u="Z",
+        segments=14,
+        bevel=0.003,
+        bevel_segments=1,
+    )
+
+    return mb.build_object(parent=root)
+
+
+def build_ssr3_topper_06() -> bpy.types.Object:
+    """Build the complete `SSR3_Topper_06` ("Relay Keeper") hierarchy in the active Blender scene."""
+    root = r1kit.create_empty("SSR3_Topper_06", pivot_u=(0.0, 0.0, 0.0))
+
+    _build_topper_06_battery_rack(root)
+    _build_topper_06_cell_tubes(root)
+    _build_topper_06_cable_reel(root)
+
+    bpy.context.view_layer.update()
+    _apply_ssr3_decades_at_rest_weathering(root, footprint_radius=0.62)
+    return root
+
+
+def _build_unit_06_stencil(parent: bpy.types.Object) -> bpy.types.Object:
+    """Build the `Unit_Number_06` relief stencil (`06`) on both flanks at `UNIT_NUMBER_PIVOT_U`."""
+    mb = r1kit.MeshBuilder("Unit_Number_06", pivot_u=UNIT_NUMBER_PIVOT_U)
+    for sx in (-1.0, 1.0):
+        _add_stencil_text_flank(
+            mb,
+            text="06",
+            side_x=sx * 0.442,
+            center_y=UNIT_NUMBER_PIVOT_U[1],
+            center_z=UNIT_NUMBER_PIVOT_U[2],
+            char_w=0.042,
+            char_h=0.068,
+            relief_x=0.005,
+            mat="R1_GreyMetal",
+        )
+    return mb.build_object(parent=parent)
+
+
+def build_elder06_combined() -> bpy.types.Object:
+    """Build the combined Elder 06 assembly (`SSR3_Chassis` + `SSR3_Topper_06` + `06` stencil) for preview rendering."""
+    chassis_root = build_ssr3_chassis()
+    topper_socket = next((o for o in chassis_root.children if o.name == "Topper_Socket"), chassis_root)
+    unit_num_socket = next((o for o in chassis_root.children if o.name == "Unit_Number"), chassis_root)
+
+    topper_root = build_ssr3_topper_06()
+    topper_root.parent = topper_socket
+    topper_root.location = (0.0, 0.0, 0.0)
+
+    _build_unit_06_stencil(unit_num_socket)
+    bpy.context.view_layer.update()
+    _apply_ssr3_decades_at_rest_weathering(chassis_root, footprint_radius=0.88)
+    return chassis_root
+
+
 def main(argv: list[str] | None = None) -> None:
-    parser = argparse.ArgumentParser(description="Build SSR3_Chassis FBX and preview renders.")
+    parser = argparse.ArgumentParser(description="Build SSR3_Chassis and SSR3_Topper_06 FBXs and preview renders.")
     parser.add_argument(
         "--chassis-fbx-out",
         type=Path,
         default=Path("Assets/_Project/Art/R1/Models/Rover/SSR3_Chassis.fbx"),
+    )
+    parser.add_argument(
+        "--topper06-fbx-out",
+        type=Path,
+        default=Path("Assets/_Project/Art/R1/Models/Rover/SSR3_Topper_06.fbx"),
     )
     parser.add_argument(
         "--renders-dir",
@@ -951,20 +1364,45 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--skip-renders", action="store_true")
     args = parser.parse_args(argv)
 
+    concept_img = Path("D:/Project/MoonProject-wt/agy-elders/Logs/concepts/ssr3_direction_a_boxy_cart.png")
+
+    # 1. Build & export SSR3_Chassis.fbx
     r1kit.reset_scene()
     chassis_root = build_ssr3_chassis()
-    tris = r1kit.count_triangles(chassis_root)
-    print(f"[SSR3_Chassis] Triangles: {tris}")
+    chassis_tris = r1kit.count_triangles(chassis_root)
+    print(f"[SSR3_Chassis] Triangles: {chassis_tris}")
     r1kit.export_fbx(chassis_root, args.chassis_fbx_out)
 
+    # 2. Build & export SSR3_Topper_06.fbx
+    r1kit.reset_scene()
+    topper_root = build_ssr3_topper_06()
+    topper_tris = r1kit.count_triangles(topper_root)
+    print(f"[SSR3_Topper_06] Triangles: {topper_tris}")
+    r1kit.export_fbx(topper_root, args.topper06_fbx_out)
+
     if not args.skip_renders:
-        concept_img = Path("D:/Project/MoonProject-wt/agy-elders/Logs/concepts/ssr3_direction_a_boxy_cart.png")
         r1kit.render_structure_suite(
-            root=chassis_root,
-            slug="ssr3_chassis",
+            root=topper_root,
+            slug="ssr3_topper_06",
             out_dir=args.renders_dir,
-            target_height=0.75,
-            footprint_radius=0.85,
+            target_height=0.39,
+            footprint_radius=0.62,
+            pose_rest_fn=lambda _r: None,
+            pose_active_fn=lambda _r: None,
+            cam_side_x=-1.0,
+            concept_path=concept_img if concept_img.exists() else None,
+            use_active_for_compare=False,
+        )
+
+        # 3. Render combined Elder06 preview (chassis + topper + 06 stencil)
+        r1kit.reset_scene()
+        elder06_root = build_elder06_combined()
+        r1kit.render_structure_suite(
+            root=elder06_root,
+            slug="elder06",
+            out_dir=args.renders_dir,
+            target_height=1.08,
+            footprint_radius=0.88,
             pose_rest_fn=lambda _r: None,
             pose_active_fn=lambda _r: None,
             cam_side_x=-1.0,
@@ -976,3 +1414,4 @@ def main(argv: list[str] | None = None) -> None:
 if __name__ == "__main__":
     cli_args = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
     main(cli_args)
+

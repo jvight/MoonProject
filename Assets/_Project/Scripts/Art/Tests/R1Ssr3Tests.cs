@@ -13,17 +13,20 @@ namespace MoonProject.Art.Tests
     ///   <item><c>SSR3_Chassis</c> (<c>tools/art/qa/contracts/ssr3_chassis.json</c>): ~1.40 m L × 0.95 m W × 0.75 m H to deck,
     ///   4 wheels (<c>Wheel_FL</c>, <c>Wheel_FR</c>, <c>Wheel_RL</c>, <c>Wheel_RR</c>), single off-center <c>Headlamp</c> with
     ///   dark <c>R1_DarkGlass</c> lens, <c>Topper_Socket</c>, <c>Unit_Number</c>, no <c>R1_LampAmber</c>, and baked vertex colours.</item>
+    ///   <item><c>SSR3_Topper_06</c> (<c>tools/art/qa/contracts/ssr3_topper_06.json</c>): 6-cell battery rack with <c>R1_Copper</c>
+    ///   busbars (<c>BatteryRack</c>), 6 dark glass cell status tubes (<c>CellTubes</c>), rear flanged cable reel (<c>CableReel</c>)
+    ///   with wound <c>R1_Rubber</c> cable, no <c>R1_LampAmber</c>, and baked vertex colours.</item>
+    ///   <item><c>Elder06.prefab</c>: combined chassis + topper + <c>Unit_Number_06</c> (<c>06</c> stencil), settled ~4 cm into dust.</item>
     /// </list>
     /// </summary>
     public sealed class R1Ssr3Tests
     {
         private const string ContractsDir = "tools/art/qa/contracts";
-        public const string Ssr3ChassisFbxPath = "Assets/_Project/Art/R1/Models/Rover/SSR3_Chassis.fbx";
-        public const string Ssr3ChassisPrefabPath = "Assets/_Project/Generated/Art/R1/Models/Rover/SSR3_Chassis.prefab";
 
         private static readonly (string ContractFile, string FbxRelativePath)[] Ssr3Contracts =
         {
             ("ssr3_chassis.json", "Rover/SSR3_Chassis.fbx"),
+            ("ssr3_topper_06.json", "Rover/SSR3_Topper_06.fbx"),
         };
 
         [Serializable]
@@ -47,6 +50,7 @@ namespace MoonProject.Art.Tests
         {
             R1MaterialLibrary.BuildMaterials();
             R1ModelBuilder.Build();
+            R1Ssr3Builder.Build();
         }
 
         private static IEnumerable<TestCaseData> ContractCases()
@@ -84,7 +88,7 @@ namespace MoonProject.Art.Tests
         [Test]
         public void Ssr3Chassis_ExposesRequiredRigSockets_UsesDarkHeadlamp_AndHasBakedWeathering()
         {
-            GameObject chassisPrefab = MeshChecks.LoadGeneratedPrefab(Ssr3ChassisPrefabPath);
+            GameObject chassisPrefab = MeshChecks.LoadGeneratedPrefab(R1Ssr3Builder.Ssr3ChassisPrefabPath);
             Assert.IsNotNull(chassisPrefab.transform.Find("Body"), "SSR3_Chassis missing Body.");
             Assert.IsNotNull(chassisPrefab.transform.Find("Headlamp"), "SSR3_Chassis missing Headlamp.");
             Transform headlampGlass = chassisPrefab.transform.Find("Headlamp/HeadlampGlass");
@@ -104,26 +108,96 @@ namespace MoonProject.Art.Tests
             Assert.AreEqual(R1MaterialRecipes.DarkGlassSlot, glassRenderer.sharedMaterial.name,
                 "SSR3_Chassis HeadlampGlass must use dark R1_DarkGlass.");
 
-            Renderer[] renderers = chassisPrefab.GetComponentsInChildren<Renderer>(true);
-            Assert.GreaterOrEqual(renderers.Length, 7, "SSR3_Chassis must have at least 7 mesh renderers.");
+            AssertNoLampAmberAndValidVertexColors(chassisPrefab, minRenderers: 7);
+        }
+
+        [Test]
+        public void Ssr3Topper06_HasBatteryRack_DarkGlassCellTubes_AndRearCableReel()
+        {
+            GameObject topperPrefab = MeshChecks.LoadGeneratedPrefab(R1Ssr3Builder.Ssr3Topper06PrefabPath);
+            Transform batteryRack = topperPrefab.transform.Find("BatteryRack");
+            Transform cellTubes = topperPrefab.transform.Find("CellTubes");
+            Transform cableReel = topperPrefab.transform.Find("CableReel");
+
+            Assert.IsNotNull(batteryRack, "SSR3_Topper_06 missing BatteryRack.");
+            Assert.IsNotNull(cellTubes, "SSR3_Topper_06 missing CellTubes.");
+            Assert.IsNotNull(cableReel, "SSR3_Topper_06 missing CableReel.");
+
+            AssertNoLampAmberAndValidVertexColors(topperPrefab, minRenderers: 3);
+
+            var usedSlots = new HashSet<string>(StringComparer.Ordinal);
+            foreach (Renderer r in topperPrefab.GetComponentsInChildren<Renderer>(true))
+            {
+                foreach (Material m in r.sharedMaterials)
+                {
+                    usedSlots.Add(m.name);
+                }
+            }
+
+            Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.CopperSlot), "SSR3_Topper_06 must use R1_Copper busbars.");
+            Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.DarkGlassSlot), "SSR3_Topper_06 must use R1_DarkGlass cell status tubes.");
+            Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.BrassSlot), "SSR3_Topper_06 must use R1_Brass tube collars.");
+            Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.SagePatchSlot), "SSR3_Topper_06 must use R1_SagePatch cable reel flanges.");
+            Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.RubberSlot), "SSR3_Topper_06 must use R1_Rubber wound cable.");
+        }
+
+        [Test]
+        public void Elder06Prefab_CombinesChassisTopperAndUnit06Stencil_Settled4CmIntoDust()
+        {
+            GameObject elder06Prefab = MeshChecks.LoadGeneratedPrefab(R1Ssr3Builder.Elder06PrefabPath);
+            Assert.IsNotNull(elder06Prefab.transform.Find("Body"), "Elder06 missing Body.");
+            Assert.IsNotNull(elder06Prefab.transform.Find("Headlamp/HeadlampGlass"), "Elder06 missing Headlamp/HeadlampGlass.");
+            Assert.IsNotNull(elder06Prefab.transform.Find("Wheel_FL"), "Elder06 missing Wheel_FL.");
+            Assert.IsNotNull(elder06Prefab.transform.Find("Wheel_FR"), "Elder06 missing Wheel_FR.");
+            Assert.IsNotNull(elder06Prefab.transform.Find("Wheel_RL"), "Elder06 missing Wheel_RL.");
+            Assert.IsNotNull(elder06Prefab.transform.Find("Wheel_RR"), "Elder06 missing Wheel_RR.");
+
+            Transform mountedTopper = elder06Prefab.transform.Find("Topper_Socket/SSR3_Topper_06");
+            Assert.IsNotNull(mountedTopper, "Elder06 missing Topper_Socket/SSR3_Topper_06.");
+            Assert.IsNotNull(mountedTopper.Find("BatteryRack"), "Elder06 topper missing BatteryRack.");
+            Assert.IsNotNull(mountedTopper.Find("CellTubes"), "Elder06 topper missing CellTubes.");
+            Assert.IsNotNull(mountedTopper.Find("CableReel"), "Elder06 topper missing CableReel.");
+
+            Transform unit06Node = elder06Prefab.transform.Find("Unit_Number/Unit_Number_06");
+            Assert.IsNotNull(unit06Node, "Elder06 missing Unit_Number/Unit_Number_06.");
+            MeshFilter unit06Mf = unit06Node.GetComponent<MeshFilter>();
+            Assert.IsNotNull(unit06Mf, "Unit_Number_06 must have a MeshFilter.");
+            Assert.IsNotNull(unit06Mf.sharedMesh, "Unit_Number_06 must have a sharedMesh.");
+            Assert.Greater(unit06Mf.sharedMesh.vertexCount, 24, "Unit_Number_06 mesh must contain the '06' stencil geometry.");
+
+            AssertNoLampAmberAndValidVertexColors(elder06Prefab, minRenderers: 11);
+
+            Bounds elderBounds = MeasureInstantiatedRendererBounds(elder06Prefab);
+            Assert.AreEqual(-R1Ssr3Builder.Elder06DustSettleMeters, elderBounds.min.y, 0.01f,
+                "Elder06 must be settled ~4 cm (-0.04 m Y) into the lunar dust.");
+            Assert.AreEqual(1.036f, elderBounds.max.y, 0.06f,
+                "Elder06 top of cable reel / glass tubes should sit at ~1.04 m above ground.");
+        }
+
+        private static void AssertNoLampAmberAndValidVertexColors(GameObject prefab, int minRenderers)
+        {
+            Renderer[] renderers = prefab.GetComponentsInChildren<Renderer>(true);
+            Assert.GreaterOrEqual(renderers.Length, minRenderers,
+                $"Prefab '{prefab.name}' must have at least {minRenderers} mesh renderers.");
             foreach (Renderer r in renderers)
             {
                 foreach (Material m in r.sharedMaterials)
                 {
-                    Assert.IsNotNull(m, $"Null material on '{r.name}'.");
+                    Assert.IsNotNull(m, $"Null material on '{prefab.name}/{r.name}'.");
                     Assert.AreNotEqual(R1MaterialRecipes.LampAmberSlot, m.name,
-                        $"SSR3_Chassis renderer '{r.name}' must not use active R1_LampAmber.");
+                        $"'{prefab.name}/{r.name}' must not use active R1_LampAmber.");
                 }
             }
 
-            MeshFilter[] filters = chassisPrefab.GetComponentsInChildren<MeshFilter>(true);
+            MeshFilter[] filters = prefab.GetComponentsInChildren<MeshFilter>(true);
             foreach (MeshFilter mf in filters)
             {
                 Mesh mesh = mf.sharedMesh;
-                Assert.IsNotNull(mesh, $"Missing sharedMesh on '{mf.name}'.");
+                Assert.IsNotNull(mesh, $"Missing sharedMesh on '{prefab.name}/{mf.name}'.");
                 Color[] colors = mesh.colors;
-                Assert.IsNotNull(colors, $"Mesh '{mesh.name}' is missing vertex colors.");
-                Assert.AreEqual(mesh.vertexCount, colors.Length, $"Mesh '{mesh.name}' vertex color count mismatch.");
+                Assert.IsNotNull(colors, $"Mesh '{prefab.name}/{mesh.name}' is missing vertex colors.");
+                Assert.AreEqual(mesh.vertexCount, colors.Length,
+                    $"Mesh '{prefab.name}/{mesh.name}' vertex color count mismatch.");
             }
         }
 
