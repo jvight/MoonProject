@@ -148,6 +148,8 @@ namespace MoonProject.Art.Editor
 
                 renderer.sharedMaterials = mappedMats;
             }
+
+            R1ModelPostprocessor.DisableCollisionProxyRenderers(root);
         }
 
         private static string NormalizePath(string path)

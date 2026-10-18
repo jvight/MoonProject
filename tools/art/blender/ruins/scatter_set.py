@@ -253,6 +253,65 @@ def _build_oxygen_bottle_rack(root) -> None:
     ruins_common.to_ruin_object(mb, "OxygenBottleRack", parent=root)
 
 
+def _build_collision_proxies(root) -> None:
+    """Build authored convex hull collision proxies (`UCX_<Part>_<n>`, <= 32 faces each)."""
+    # 1. Sealed cargo crates on steel pallet skid
+    ruins_common.add_convex_proxy(
+        root,
+        "UCX_SealedCrates_1",
+        ruins_common.convex_box_points_u(
+            center_u=(-1.65, 0.64, 0.20),
+            size_u=(1.34, 1.26, 1.04),
+            top_scale_xz=(0.72, 0.76),
+            clip_min_y_u=0.01,
+        ),
+    )
+    # 2. Heavy A-frame umbilical cable reel & flat spare drum
+    ruins_common.add_convex_proxy(
+        root,
+        "UCX_CableReels_1",
+        ruins_common.convex_box_points_u(
+            center_u=(-0.60, 0.44, -0.78),
+            size_u=(1.12, 0.84, 0.74),
+            top_scale_xz=(0.76, 0.84),
+            clip_min_y_u=0.01,
+        ),
+    )
+    # 3. Toppled tripod S-band field relay antenna
+    ruins_common.add_convex_proxy(
+        root,
+        "UCX_ToppledAntenna_1",
+        ruins_common.convex_box_points_u(
+            center_u=(1.24, 0.34, 0.50),
+            size_u=(1.22, 0.64, 0.60),
+            rot_deg_u=(0.0, 32.0, 0.0),
+            top_scale_xz=(0.80, 0.75),
+            clip_min_y_u=0.01,
+        ),
+    )
+    # 4. Open 1980s field telemetry instrument case
+    ruins_common.add_convex_proxy(
+        root,
+        "UCX_InstrumentCase_1",
+        ruins_common.convex_box_points_u(
+            center_u=(0.22, 0.40, 0.24),
+            size_u=(0.74, 0.78, 0.58),
+            top_scale_xz=(0.92, 0.65),
+            clip_min_y_u=0.01,
+        ),
+    )
+    # 5. 4-cylinder EVA oxygen-bottle rack
+    ruins_common.add_convex_proxy(
+        root,
+        "UCX_OxygenBottleRack_1",
+        ruins_common.convex_box_points_u(
+            center_u=(1.48, 0.69, -0.68),
+            size_u=(1.18, 1.36, 0.54),
+            clip_min_y_u=0.01,
+        ),
+    )
+
+
 def build(skip_renders: bool = False) -> None:
     ruins_common.reset_ruins_scene()
     root = r1kit.create_root("ScatterSet")
@@ -262,6 +321,7 @@ def build(skip_renders: bool = False) -> None:
     _build_toppled_antenna(root)
     _build_instrument_case(root)
     _build_oxygen_bottle_rack(root)
+    _build_collision_proxies(root)
 
     # Scan points as empties named Scan_<n>
     r1kit.add_empty("Scan_1", (0.22, 0.45, 0.22), parent=root)    # Open 1980s instrument case
@@ -277,8 +337,14 @@ def build(skip_renders: bool = False) -> None:
         cam_elev_deg=22.0,
         skip_renders=skip_renders,
     )
-    print(f"[scatter_set] Exported {fbx_path} and rendered {dawn_path.name}, {night_path.name}")
+    wire_path = ruins_common.render_ruin_collision_wireframe(
+        root,
+        slug="scatter_set",
+        cam_angle_deg=26.0,
+        cam_elev_deg=24.0,
+    )
+    print(f"[scatter_set] Exported {fbx_path} and rendered {dawn_path.name}, {night_path.name}, {wire_path.name}")
 
 
 if __name__ == "__main__":
-    build()
+    build(skip_renders="--skip-renders" in sys.argv)

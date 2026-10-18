@@ -8,7 +8,7 @@ namespace MoonProject.World
     /// <summary>
     /// The picture through 07's own eye (docs/design/cutscenes.md §1.8), registered as <see cref="ILensView"/>. While
     /// Rover applies a state it owns two things of its own: a global URP volume above the world's look whose depth of
-    /// field follows the lens' focus, and a quad held in front of the view camera whose shader draws the curved soft
+    /// field follows the lens' focus and whose exposure adds the eye's gain to the world's own, and a quad held in front of the view camera whose shader draws the curved soft
     /// lid, the exposure dips and roll band, the warm lift and the dust speck (<see cref="LensViewModel"/>), and, while
     /// the opening asks, 07's faint boot readout in the lid's dark corner (localized through ILocalization). Released,
     /// both switch off and the world's own look is untouched: this never edits the world's post-processing profile.
@@ -60,6 +60,7 @@ namespace MoonProject.World
         private VolumeProfile _profile;
         private Volume _volume;
         private DepthOfField _focus;
+        private ColorAdjustments _exposure;
         private Camera _camera;
         private bool _applied;
         private TextMesh _readout;
@@ -119,14 +120,24 @@ namespace MoonProject.World
 
             ShowReadout(state.Readout01, look);
             _focus.focusDistance.Override(_model.FocusDistance);
+            _exposure.postExposure.Override(_settings.PostProcessing.PostExposure + _model.Gain);
             _volume.weight = 1f;
             _volume.enabled = true;
             _applied = true;
         }
 
+        public void Warm()
+        {
+            if (_model != null && EnsureOverlay() && !_readoutComposed)
+            {
+                ComposeReadout();
+            }
+        }
+
         public void Release()
         {
             _applied = false;
+            _model?.Reset();
             if (_overlay != null)
             {
                 _overlay.enabled = false;
@@ -155,6 +166,8 @@ namespace MoonProject.World
             _focus.focalLength.Override(look.FocalLength);
             _focus.aperture.Override(look.Aperture);
             _focus.focusDistance.Override(look.NearestFocus);
+            _exposure = _profile.Add<ColorAdjustments>();
+            _exposure.postExposure.Override(_settings.PostProcessing.PostExposure);
 
             var host = new GameObject("LensView Volume");
             host.transform.SetParent(transform, false);

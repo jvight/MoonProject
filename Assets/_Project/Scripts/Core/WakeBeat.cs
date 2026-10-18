@@ -8,8 +8,8 @@ namespace MoonProject.Core
     /// </summary>
     public enum WakeBeat
     {
-        /// <summary>New Game on the title: the camera has pushed into 07's closed lens and the picture is black.</summary>
-        PushedIn = 0,
+        /// <summary>New Game on the title: the picture has faded to black (the wake starts from there).</summary>
+        FadedOut = 0,
 
         /// <summary>O1: darkness; 07's systems thump on and the radio's static swells (RoverAwoke goes with it).</summary>
         Crackle = 1,

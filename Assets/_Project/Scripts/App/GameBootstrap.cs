@@ -48,10 +48,10 @@ namespace MoonProject.App
                  "straight into play on the save. Test runs in the editor always boot straight into play.")]
         [SerializeField] private bool _showTitle;
 
-        [Tooltip("New Game over a save: the longest (s) the reload waits for the camera to push into 07's closed lens "
-                 + "(WakeBeat.PushedIn) before it reloads anyway.")]
+        [Tooltip("New Game over a save: the longest (s) the reload waits for the picture to fade to black "
+                 + "(WakeBeat.FadedOut) before it reloads anyway.")]
         [Min(0.5f)]
-        [SerializeField] private float _pushedInTimeout = 6f;
+        [SerializeField] private float _fadedOutTimeout = 6f;
 
         private readonly GameFlow _flow = new GameFlow();
         private InputReader _input;
@@ -61,7 +61,7 @@ namespace MoonProject.App
         private IDisposable _continue;
         private IDisposable _quitToTitle;
         private IDisposable _wakeBeat;
-        private readonly PushedInGate _pushedIn = new PushedInGate();
+        private readonly FadedOutGate _fadedOut = new FadedOutGate();
         private AsyncOperation _pendingReload;
         private bool _reloading;
 #if UNITY_EDITOR
@@ -220,9 +220,9 @@ namespace MoonProject.App
         /// <summary>
         /// Over a world with no save the title is already a fresh game, so play begins here. Over a save, puts the save
         /// away (it refuses every later save, so nothing torn down writes the old progress back), notes that the next
-        /// boot starts fresh, pre-warms an async reload while the camera pushes into 07's closed lens, and activates the
-        /// reload once <see cref="WakeBeat.PushedIn"/> arrives inside O1's black: every system, the context and this
-        /// bootstrap are rebuilt without a mid-push hitch.
+        /// boot starts fresh, pre-warms an async reload while the picture fades to black, and activates the
+        /// reload once <see cref="WakeBeat.FadedOut"/> arrives inside O1's black: every system, the context and this
+        /// bootstrap are rebuilt without a visible hitch.
         /// </summary>
         private void OnNewGameRequested(NewGameRequested request)
         {
@@ -246,14 +246,14 @@ namespace MoonProject.App
             _reloading = true;
             _save.PutAway();
             _intent.Arm();
-            _pushedIn.Arm();
+            _fadedOut.Arm();
             _pendingReload = BeginAsyncReload(allowActivation: false);
         }
 
         /// <summary>The camera is inside 07's closed lens: the new game's pre-warmed reload activates in O1's black.</summary>
         private void OnWakeBeat(RoverWakeBeatReached reached)
         {
-            if (_pushedIn.Notify(reached.Beat))
+            if (_fadedOut.Notify(reached.Beat))
             {
                 ReloadForNewGame();
             }
@@ -261,13 +261,13 @@ namespace MoonProject.App
 
         private void Update()
         {
-            if (!_pushedIn.Step(Time.unscaledDeltaTime, _pushedInTimeout))
+            if (!_fadedOut.Step(Time.unscaledDeltaTime, _fadedOutTimeout))
             {
                 return;
             }
 
-            Debug.LogError($"{nameof(GameBootstrap)}: New Game waited {_pushedInTimeout} s for the camera to push " +
-                           "into 07's lens (WakeBeat.PushedIn) and reloads without it.", this);
+            Debug.LogError($"{nameof(GameBootstrap)}: New Game waited {_fadedOutTimeout} s for the camera to push " +
+                           "into 07's lens (WakeBeat.FadedOut) and reloads without it.", this);
             ReloadForNewGame();
         }
 

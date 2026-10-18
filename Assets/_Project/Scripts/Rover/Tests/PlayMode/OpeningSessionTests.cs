@@ -27,10 +27,10 @@ namespace MoonProject.Rover.PlayModeTests
 {
     /// <summary>
     /// 07's wake through its own eye in the real Main scene, with the title on (docs/design/cutscenes.md §1,
-    /// docs/features/M3-09 Part A): nothing wakes on the title; New Game pushes into the closed lens and plays the
+    /// docs/features/M3-09 Part A): nothing wakes on the title; New Game fades the title to black and plays the
     /// full opening once, untouched within 45 s; drive input reaches the chase frame within ~4 s and never holds control
     /// over ~1.5 s; Continue over a real save plays the short wake; the opening's frames allocate nothing. Frames of
-    /// both title shots, the push and every beat O1-O14 go to Logs/captures/opening/*.png with opening.md.
+    /// both title shots, the fade and every beat O1-O14 go to Logs/captures/opening/*.png with opening.md.
     /// Slow and needs a GPU: run on demand with --category OpeningSession.
     /// </summary>
     [Category("OpeningSession")]
@@ -41,6 +41,15 @@ namespace MoonProject.Rover.PlayModeTests
         private const int KeyFrameWidth = 1920;
         private const int KeyFrameHeight = 1080;
         private const float LanguageSettleSeconds = 1.5f;
+
+        /// <summary>The title CRT's switch-off (about 0.6 s) plus the fade to black leave it gone within this (s).</summary>
+        private const float TitleOffTimeout = 1.4f;
+
+        /// <summary>The longest frame (ms) the visible part of a transition may have; the reload's black may exceed it.</summary>
+        private const float MaxVisibleFrameMs = 50f;
+
+        /// <summary>Frames after the reloaded scene is rebound that are still black (its first frames' start-up cost).</summary>
+        private const int BlackFramesAfterReload = 4;
         private const int TransitionWidth = 640;
         private const int TransitionHeight = 360;
         private const float BootTimeout = 30f;
@@ -139,7 +148,7 @@ namespace MoonProject.Rover.PlayModeTests
             _context.Events.Publish(new NewGameRequested());
             var shots = new (OpeningPhase Phase, float Share, string Name)[]
             {
-                (OpeningPhase.PushIn, 0.6f, "push_in"),
+                (OpeningPhase.FadeOut, 0.6f, "fade_out"),
                 (OpeningPhase.Crackle, 0.5f, "o01_darkness"),
                 (OpeningPhase.LidCrack, 0.7f, "o02_lid_slit"),
                 (OpeningPhase.LidHalf, 0.8f, "o03_lid_half"),
@@ -194,7 +203,7 @@ namespace MoonProject.Rover.PlayModeTests
 
                 for (int i = 0; i < shots.Length; i++)
                 {
-                    if (!taken[i] && script.Phase == shots[i].Phase && script.PhaseTime >= shots[i].Share * script.PhaseLength)
+                    if (!taken[i] && PassedShot(script, shots[i].Phase, shots[i].Share))
                     {
                         taken[i] = true;
                         Capture(shots[i].Name);
@@ -203,7 +212,7 @@ namespace MoonProject.Rover.PlayModeTests
 
                 for (int i = 0; i < keyShots.Length; i++)
                 {
-                    if (!keyTaken[i] && script.Phase == keyShots[i].Phase && script.PhaseTime >= keyShots[i].Share * script.PhaseLength)
+                    if (!keyTaken[i] && PassedShot(script, keyShots[i].Phase, keyShots[i].Share))
                     {
                         keyTaken[i] = true;
                         CaptureKeyFrame(keyShots[i].Name);
@@ -232,7 +241,7 @@ namespace MoonProject.Rover.PlayModeTests
             WriteBeats();
             _report.AppendLine().AppendLine(Line("untouched opening, O1 to the chase frame (s)", chase - crackle));
             Assert.AreEqual(1, Count(WakeBeat.Crackle), "the full opening plays once");
-            Assert.AreEqual(1, Count(WakeBeat.PushedIn), "New Game pushed into the closed lens");
+            Assert.AreEqual(1, Count(WakeBeat.FadedOut), "New Game faded the picture to black");
             Assert.AreEqual(1, _awoke, "RoverAwoke goes with the crackle, once");
             Assert.AreEqual(1, _body.FaceDirector.Director.BootCount, "the CRT face boots once at the reveal");
             Assert.GreaterOrEqual(_body.FaceDirector.Director.WakeBlinkCount, 1, "the CRT face slow-blinks on Blinked");
@@ -636,40 +645,37 @@ namespace MoonProject.Rover.PlayModeTests
             }
 
             yield return null;
-            Assert.AreEqual(OpeningPhase.PushIn, _director.Script.Phase,
-                "confirming New Game over a save immediately begins the 3D camera push into 07's closed lens");
+            Assert.AreEqual(OpeningPhase.FadeOut, _director.Script.Phase,
+                "confirming New Game over a save immediately begins the fade to black");
             Assert.IsTrue(bootstrap.IsReloadPrewarmed,
-                "GameBootstrap pre-warms SceneManager/EditorSceneManager async reload during the 2 s push-in");
+                "GameBootstrap pre-warms SceneManager/EditorSceneManager async reload during the fade");
 
-            float maxPushInFrameMs = 0f;
+            float maxFadeFrameMs = 0f;
             float elapsed = 0f;
             VisualElement titleCrt = document.rootVisualElement.Q<VisualElement>("title-crt");
             Assert.IsNotNull(titleCrt);
-            float pushIn = _director.Script.PhaseLength;
-            while (IsShown(titleCrt) && elapsed < pushIn)
+            while (IsShown(titleCrt) && elapsed < TitleOffTimeout)
             {
                 yield return null;
                 float dt = Time.unscaledDeltaTime;
                 elapsed += dt;
-                maxPushInFrameMs = Mathf.Max(maxPushInFrameMs, dt * 1000f);
+                maxFadeFrameMs = Mathf.Max(maxFadeFrameMs, dt * 1000f);
             }
 
-            Assert.IsFalse(IsShown(titleCrt), "the title CRT switches off before the push into 07's closed lens ends");
-            Assert.AreEqual(OpeningPhase.PushIn, _director.Script.Phase,
-                "the camera is still pushing into the lens after the title has gone");
+            Assert.IsFalse(IsShown(titleCrt), "the title CRT has switched off by the time O1's black begins");
 
             float reloadDeadline = Time.realtimeSinceStartup + BootTimeout;
             while (_director != null && Time.realtimeSinceStartup < reloadDeadline)
             {
                 yield return null;
-                if (_director != null && _director.Script.Phase == OpeningPhase.PushIn)
+                if (_director != null && _director.Script.Phase == OpeningPhase.FadeOut)
                 {
-                    maxPushInFrameMs = Mathf.Max(maxPushInFrameMs, Time.unscaledDeltaTime * 1000f);
+                    maxFadeFrameMs = Mathf.Max(maxFadeFrameMs, Time.unscaledDeltaTime * 1000f);
                 }
             }
 
             float activationStart = Time.realtimeSinceStartup;
-            Assert.IsTrue(_director == null, "the scene reloads at WakeBeat.PushedIn inside O1's black");
+            Assert.IsTrue(_director == null, "the scene reloads at WakeBeat.FadedOut inside O1's black");
             Dispose();
 
             while (Time.realtimeSinceStartup < reloadDeadline)
@@ -693,15 +699,15 @@ namespace MoonProject.Rover.PlayModeTests
 
             float activationMs = (Time.realtimeSinceStartup - activationStart) * 1000f;
             _report.AppendLine("# New Game over a save (pre-warmed async reload)").AppendLine()
-                .AppendLine(Line("max frame time during PushIn (ms)", maxPushInFrameMs))
+                .AppendLine(Line("max frame time during the fade (ms)", maxFadeFrameMs))
                 .AppendLine(Line("pre-warmed reload activation inside O1 black (ms)", activationMs)).AppendLine();
             File.WriteAllText(Path.Combine(CaptureFolder, "opening.md"), _report.ToString());
 
             Assert.IsNotNull(_director, "reloaded scene has OpeningDirector");
             Assert.IsTrue(_director.Script.IsRunning,
                 "reloaded scene starts the opening inside O1 without showing the title again");
-            Assert.AreNotEqual(OpeningPhase.PushIn, _director.Script.Phase,
-                "the push-in already happened before the reload");
+            Assert.AreNotEqual(OpeningPhase.FadeOut, _director.Script.Phase,
+                "the fade already happened before the reload");
         }
 
         /// <summary>O6 looks at the dead charging post where 07 woke (its yaw within a few degrees).</summary>
@@ -714,6 +720,20 @@ namespace MoonProject.Rover.PlayModeTests
             Vector3 lens = _context.Get<IRoverRig>().ScanOrigin.position;
             Vector2 expected = LensGaze.Angles(Quaternion.Inverse(heading) * (wake.Position - lens));
             Assert.AreEqual(expected.x, script.Gaze.Yaw, GazeTolerance, "O6 looks at the dead charging post");
+        }
+
+        /// <summary>
+        /// The script is at or past <paramref name="share"/> of <paramref name="phase"/>: in it, or already in a later
+        /// phase (a long editor frame can step over a whole phase's window, which used to miss the shot).
+        /// </summary>
+        private static bool PassedShot(OpeningScript script, OpeningPhase phase, float share)
+        {
+            if (script.Phase == phase)
+            {
+                return script.PhaseTime >= share * script.PhaseLength;
+            }
+
+            return script.Phase != OpeningPhase.Idle && script.Phase != OpeningPhase.HurryLid && script.Phase > phase;
         }
 
         /// <summary>A hidden title element leaves layout (display none) with its opacity as it was.</summary>
@@ -751,12 +771,222 @@ namespace MoonProject.Rover.PlayModeTests
             yield return RecordTransition("continue", "button-resume");
         }
 
+        [UnityTest]
+        [Explicit("Frame-by-frame capture of the title-to-play transition; run with --category OpeningTransition.")]
+        [Category("OpeningTransition")]
+        [Timeout(900000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator TransitionFrames_NewGameOverASave_ThroughTheReload()
+        {
+            yield return RecordReloadTransition("new_game_over_save", true);
+        }
+
+        [UnityTest]
+        [Explicit("Real frame time of the title-to-play transition over a save, without capture overhead; run with --category OpeningTransition.")]
+        [Category("OpeningTransition")]
+        [Timeout(900000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator TransitionTiming_NewGameOverASave_ThroughTheReload()
+        {
+            yield return RecordReloadTransition("timing_over_save", false);
+        }
+
+        /// <summary>
+        /// New Game over a save, through the scene reload. With <paramref name="render"/> every frame is rendered and
+        /// saved (the capture's own cost shows in the frame times); without it only the real frame time, the phase and
+        /// the camera are logged.
+        /// </summary>
+        private IEnumerator RecordReloadTransition(string tag, bool render)
+        {
+            yield return Boot(false);
+            Assert.IsTrue(_context.Get<ISaveService>().SaveNow(), "a save is on disk");
+            Dispose();
+            yield return Boot(true);
+            yield return Wait(TitleQuietSeconds);
+            string folder = Path.Combine(CaptureFolder, "transition_" + tag);
+            if (Directory.Exists(folder))
+            {
+                Directory.Delete(folder, true);
+            }
+
+            Directory.CreateDirectory(folder);
+            UIDocument document = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(RoverSessionScene.ScenePath).GetRootGameObjects())
+            {
+                document = document != null ? document : root.GetComponentInChildren<UIDocument>(true);
+            }
+
+            Assert.IsNotNull(document, "the scene has its UIDocument");
+            yield return Submit(document.rootVisualElement.Q<Button>("button-new-game"));
+            yield return Wait(0.8f);
+            yield return Submit(document.rootVisualElement.Q<Button>("button-new-game-confirm"));
+            Time.captureDeltaTime = 1f / 60f;
+            var csv = new StringBuilder();
+            csv.AppendLine("frame,gameTime,realDtMs,phase,luma,camDistance,camTurnDeg,note");
+            float started = Time.time;
+            float lastReal = Time.realtimeSinceStartup;
+            Vector3 previousPosition = Vector3.zero;
+            Quaternion previousRotation = Quaternion.identity;
+            bool havePrevious = false;
+            bool reloaded = false;
+            int framesSinceRebind = -1;
+            float chaseAt = -1f;
+            var visibleHitches = new StringBuilder();
+            for (int frame = 0; Time.time - started < RunTimeout && frame < 6000; frame++)
+            {
+                yield return null;
+                float real = Time.realtimeSinceStartup;
+                float realMs = (real - lastReal) * 1000f;
+                lastReal = real;
+                string note = string.Empty;
+                if (framesSinceRebind >= 0)
+                {
+                    framesSinceRebind++;
+                }
+
+                bool inTheBlack = _director == null || _view == null || framesSinceRebind >= 0 && framesSinceRebind <= BlackFramesAfterReload;
+                if (render == false && realMs > MaxVisibleFrameMs && !inTheBlack)
+                {
+                    visibleHitches.AppendLine($"frame {frame} t={Time.time - started:0.000}: {realMs:0} ms");
+                }
+
+                if (_director == null || _view == null)
+                {
+                    reloaded = true;
+                    note = "scene reloading";
+                    Scene scene = SceneManager.GetSceneByPath(RoverSessionScene.ScenePath);
+                    OpeningDirector fresh = null;
+                    if (scene.IsValid() && scene.isLoaded)
+                    {
+                        foreach (GameObject root in scene.GetRootGameObjects())
+                        {
+                            fresh = fresh != null ? fresh : root.GetComponentInChildren<OpeningDirector>(true);
+                        }
+                    }
+
+                    if (fresh != null)
+                    {
+                        Dispose();
+                        Bind();
+                        havePrevious = false;
+                        framesSinceRebind = 0;
+                        note = "scene rebound";
+                    }
+
+                    csv.AppendLine(string.Format(CultureInfo.InvariantCulture, "{0},{1:0.000},{2:0.0},{3},-1,0,0,{4}",
+                        frame, Time.time - started, realMs, OpeningPhase.Idle, note));
+                    continue;
+                }
+
+                Texture2D shot = render ? FrameCapture.Render(_view, TransitionWidth, TransitionHeight) : null;
+                float luma = 0f;
+                if (shot != null)
+                {
+                    Color32[] pixels = shot.GetPixels32();
+                    for (int i = 0; i < pixels.Length; i++)
+                    {
+                        luma += (0.2126f * pixels[i].r + 0.7152f * pixels[i].g + 0.0722f * pixels[i].b) / 255f;
+                    }
+
+                    luma /= pixels.Length;
+                }
+
+                Transform camera = _view.transform;
+                float distance = havePrevious ? Vector3.Distance(camera.position, previousPosition) : 0f;
+                float turn = havePrevious ? Quaternion.Angle(camera.rotation, previousRotation) : 0f;
+                previousPosition = camera.position;
+                previousRotation = camera.rotation;
+                havePrevious = true;
+                string beat = string.Empty;
+                foreach (WakeBeat reached in _beats)
+                {
+                    beat = reached.ToString();
+                }
+
+                csv.AppendLine(string.Format(CultureInfo.InvariantCulture, "{0},{1:0.000},{2:0.0},{3},{4:0.0000},{5:0.0000},{6:0.00},{7}",
+                    frame, Time.time - started, realMs, _director.Script.Phase, luma, distance, turn, beat));
+                if (shot != null)
+                {
+                    if (frame % 3 == 0)
+                    {
+                        File.WriteAllBytes(Path.Combine(folder, string.Format(CultureInfo.InvariantCulture, "f{0:0000}.png", frame)),
+                            shot.EncodeToPNG());
+                    }
+
+                    Object.DestroyImmediate(shot);
+                }
+
+                if (reloaded && chaseAt < 0f && _beats.Contains(WakeBeat.ChaseFrame))
+                {
+                    chaseAt = Time.time;
+                }
+
+                if (chaseAt >= 0f && Time.time - chaseAt > 1f)
+                {
+                    break;
+                }
+            }
+
+            File.WriteAllText(Path.Combine(folder, "frames.csv"), csv.ToString());
+            Assert.IsTrue(reloaded, "the scene reloaded under the fade");
+            if (!render)
+            {
+                Assert.AreEqual(string.Empty, visibleHitches.ToString(),
+                    $"no frame over {MaxVisibleFrameMs} ms outside the reload's black:" + System.Environment.NewLine);
+            }
+
+            Assert.GreaterOrEqual(chaseAt, 0f, "the reloaded game reaches the chase frame");
+        }
+
+        private static IEnumerator Submit(Button button)
+        {
+            Assert.IsNotNull(button, "the title has the button");
+            using (NavigationSubmitEvent submit = NavigationSubmitEvent.GetPooled())
+            {
+                submit.target = button;
+                button.SendEvent(submit);
+            }
+
+            yield return null;
+        }
+
+        [UnityTest]
+        [Explicit("Real frame time of the title-to-play transition, without capture overhead; run with --category OpeningTransition.")]
+        [Category("OpeningTransition")]
+        [Timeout(600000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator TransitionTiming_NewGameFromAFreshTitle()
+        {
+            yield return Boot(true);
+            yield return Wait(TitleQuietSeconds);
+            yield return RecordTransition("timing_new_game", "button-new-game", false);
+        }
+
+        [UnityTest]
+        [Explicit("Real frame time of the title-to-play transition, without capture overhead; run with --category OpeningTransition.")]
+        [Category("OpeningTransition")]
+        [Timeout(600000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator TransitionTiming_ContinueOverASave()
+        {
+            yield return Boot(false);
+            Assert.IsTrue(_context.Get<ISaveService>().SaveNow(), "a save is on disk");
+            Dispose();
+            yield return Boot(true);
+            yield return Wait(TitleQuietSeconds);
+            yield return RecordTransition("timing_continue", "button-resume", false);
+        }
+
         /// <summary>
         /// Clicks <paramref name="buttonName"/> on the title and records every frame the player would see (the whole
         /// screen, UI included, at a quarter size) until the chase frame plus a second: a PNG every other frame and a
         /// CSV of each frame's brightness, phase and camera jump, at the game's own frame time.
         /// </summary>
-        private IEnumerator RecordTransition(string tag, string buttonName)
+        private IEnumerator RecordTransition(string tag, string buttonName, bool render = true)
         {
             string folder = Path.Combine(CaptureFolder, "transition_" + tag);
             if (Directory.Exists(folder))
@@ -789,7 +1019,7 @@ namespace MoonProject.Rover.PlayModeTests
             Button button = document.rootVisualElement.Q<Button>(buttonName);
             Assert.IsNotNull(button, buttonName);
             var csv = new StringBuilder();
-            csv.AppendLine("frame,time,phase,luma,camDistance,camTurnDeg,titleShown,uiScaleX,uiScaleY,curtain,beat");
+            csv.AppendLine("frame,time,realMs,phase,luma,camDistance,camTurnDeg,titleShown,uiScaleX,uiScaleY,curtain,beat");
             using (NavigationSubmitEvent submit = NavigationSubmitEvent.GetPooled())
             {
                 submit.target = button;
@@ -805,19 +1035,34 @@ namespace MoonProject.Rover.PlayModeTests
             int beatsSeen = 0;
             float started = Time.time;
             float chaseAt = -1f;
+            float lastReal = Time.realtimeSinceStartup;
+            int slowFrames = 0;
+            string firstSlow = null;
             {
                 for (int frame = 0; Time.time - started < RunTimeout; frame++)
                 {
                     yield return null;
-                    Texture2D shot = FrameCapture.Render(_view, TransitionWidth, TransitionHeight);
-                    Color32[] pixels = shot.GetPixels32();
+                    Texture2D shot = render ? FrameCapture.Render(_view, TransitionWidth, TransitionHeight) : null;
                     float luma = 0f;
-                    for (int i = 0; i < pixels.Length; i++)
+                    if (shot != null)
                     {
-                        luma += (0.2126f * pixels[i].r + 0.7152f * pixels[i].g + 0.0722f * pixels[i].b) / 255f;
+                        Color32[] pixels = shot.GetPixels32();
+                        for (int i = 0; i < pixels.Length; i++)
+                        {
+                            luma += (0.2126f * pixels[i].r + 0.7152f * pixels[i].g + 0.0722f * pixels[i].b) / 255f;
+                        }
+
+                        luma /= pixels.Length;
                     }
 
-                    luma /= pixels.Length;
+                    float real = Time.realtimeSinceStartup;
+                    float realMs = (real - lastReal) * 1000f;
+                    lastReal = real;
+                    if (frame > 0 && realMs > MaxVisibleFrameMs)
+                    {
+                        slowFrames++;
+                        firstSlow = firstSlow ?? $"frame {frame} at {Time.time - started:0.000} s, {realMs:0} ms";
+                    }
                     Transform camera = _view.transform;
                     float distance = Vector3.Distance(camera.position, previousPosition);
                     float turn = Quaternion.Angle(camera.rotation, previousRotation);
@@ -830,17 +1075,20 @@ namespace MoonProject.Rover.PlayModeTests
                     }
 
                     OpeningPhase phase = _director != null ? _director.Script.Phase : OpeningPhase.Idle;
-                    csv.AppendLine(string.Format(CultureInfo.InvariantCulture, "{0},{1:0.000},{2},{3:0.0000},{4:0.0000},{5:0.00},{6},{7:0.000},{8:0.000},{9:0.000},{10}",
-                        frame, Time.time - started, phase, luma, distance, turn, titleCrt != null && IsShown(titleCrt) ? 1 : 0,
+                    csv.AppendLine(string.Format(CultureInfo.InvariantCulture, "{0},{1:0.000},{2:0.0},{3},{4:0.0000},{5:0.0000},{6:0.00},{7},{8:0.000},{9:0.000},{10:0.000},{11}",
+                        frame, Time.time - started, realMs, phase, luma, distance, turn, titleCrt != null && IsShown(titleCrt) ? 1 : 0,
                         pause.resolvedStyle.scale.value.x, pause.resolvedStyle.scale.value.y,
                         curtain.resolvedStyle.display == DisplayStyle.None ? 0f : curtain.resolvedStyle.opacity, beat.Trim()));
-                    if (frame % 2 == 0)
+                    if (shot != null)
                     {
-                        File.WriteAllBytes(Path.Combine(folder, string.Format(CultureInfo.InvariantCulture, "f{0:0000}.png", frame)),
-                            shot.EncodeToPNG());
-                    }
+                        if (frame % 2 == 0)
+                        {
+                            File.WriteAllBytes(Path.Combine(folder, string.Format(CultureInfo.InvariantCulture, "f{0:0000}.png", frame)),
+                                shot.EncodeToPNG());
+                        }
 
-                    Object.DestroyImmediate(shot);
+                        Object.DestroyImmediate(shot);
+                    }
 
                     if (frame == 30)
                     {
@@ -861,6 +1109,10 @@ namespace MoonProject.Rover.PlayModeTests
 
             File.WriteAllText(Path.Combine(folder, "frames.csv"), csv.ToString());
             Assert.GreaterOrEqual(chaseAt, 0f, "the transition reaches the chase frame");
+            if (!render)
+            {
+                Assert.AreEqual(0, slowFrames, $"no frame over {MaxVisibleFrameMs} ms in the transition (first slow: {firstSlow})");
+            }
         }
 
         private IEnumerator Boot(bool title)
@@ -889,6 +1141,13 @@ namespace MoonProject.Rover.PlayModeTests
 #else
             throw new NotSupportedException("The opening session loads the scene through the editor.");
 #endif
+            Bind();
+            yield return null;
+        }
+
+        /// <summary>Finds the loaded session's systems and listens for its wake beats (again after a reload).</summary>
+        private void Bind()
+        {
             GameBootstrap bootstrap = null;
             _director = null;
             _rig = null;
@@ -916,7 +1175,6 @@ namespace MoonProject.Rover.PlayModeTests
                 _context.Events.Subscribe<RoverAwoke>(_ => _awoke++),
                 _context.Events.Subscribe<RoverWakeBeatReached>(OnBeat),
             };
-            yield return null;
         }
 
         private void OnBeat(RoverWakeBeatReached reached)

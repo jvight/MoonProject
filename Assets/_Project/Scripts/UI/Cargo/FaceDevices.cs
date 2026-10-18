@@ -30,9 +30,9 @@ namespace MoonProject.UI
         private static readonly Vector2[] Centers =
         {
             new Vector2(948f, 130f),
-            new Vector2(1000f, 228f),
+            new Vector2(1012f, 214f),
             new Vector2(1064f, 504f),
-            new Vector2(908f, 608f),
+            new Vector2(908f, 560f),
         };
 
         private static readonly string[] NameKeys =

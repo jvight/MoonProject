@@ -14,7 +14,8 @@ namespace MoonProject.Art.Editor
     /// </summary>
     public sealed class R1ModelPostprocessor : AssetPostprocessor
     {
-        public const uint PostprocessorVersion = 3;
+        public const uint PostprocessorVersion = 4;
+        public const string CollisionProxyPrefix = "UCX_";
         public const string ModelsPrefix = "Assets/_Project/Art/R1/Models/";
         public const string RocksPrefix = "Assets/_Project/Art/R1/Models/Rocks/";
         public const string TexturesPrefix = "Assets/_Project/Art/R1/Textures/";
@@ -176,6 +177,30 @@ namespace MoonProject.Art.Editor
             ValidateSlotName(slotName, NormalizePath(assetPath));
         }
 
+        /// <summary>
+        /// Disables rendering and shadow casting on authored <c>UCX_*</c> collision proxy child meshes while keeping
+        /// their <see cref="MeshFilter"/> intact for collider builders.
+        /// </summary>
+        public static void DisableCollisionProxyRenderers(GameObject root)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            Renderer[] renderers = root.GetComponentsInChildren<Renderer>(true);
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                Renderer renderer = renderers[i];
+                if (renderer != null && renderer.name.StartsWith(CollisionProxyPrefix, StringComparison.Ordinal))
+                {
+                    renderer.enabled = false;
+                    renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                    renderer.receiveShadows = false;
+                }
+            }
+        }
+
         private void OnPostprocessModel(GameObject root)
         {
             if (!IsR1ModelPath(assetPath))
@@ -183,6 +208,7 @@ namespace MoonProject.Art.Editor
                 return;
             }
 
+            DisableCollisionProxyRenderers(root);
             ValidateVertexColors(root, NormalizePath(assetPath));
         }
 

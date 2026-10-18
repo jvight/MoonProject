@@ -22,6 +22,7 @@ namespace MoonProject.Rover
         private float _held;
         private float _eased;
         private bool _hold;
+        private bool _driftFrozen;
         private float _untouched;
         private float _driftClock;
         private float _drift;
@@ -93,6 +94,7 @@ namespace MoonProject.Rover
             }
 
             _hold = held;
+            _driftFrozen = false;
             _untouched = 0f;
             _driftClock = 0f;
             _drift = 0f;
@@ -103,6 +105,15 @@ namespace MoonProject.Rover
             _eased = 0f;
             Weight = 1f;
             Turn = 0f;
+        }
+
+        /// <summary>
+        /// Keeps the title shot's swing where it is: New Game fades the picture out without moving the camera, so the
+        /// swing neither continues nor eases back.
+        /// </summary>
+        public void FreezeDrift()
+        {
+            _driftFrozen = true;
         }
 
         /// <summary>Lets beat 2 begin now: the camera eases round over 07's shoulder toward Earth.</summary>
@@ -170,6 +181,11 @@ namespace MoonProject.Rover
         /// </summary>
         private void StepDrift(float deltaTime)
         {
+            if (_driftFrozen)
+            {
+                return;
+            }
+
             OpeningSettings settings = _tuning.Opening;
             _untouched += deltaTime;
             bool drifting = _hold && _untouched >= settings.TitleDriftDelay;

@@ -200,7 +200,7 @@ namespace MoonProject.Rover
         /// </summary>
         public void OnWakeBeat(WakeBeat beat)
         {
-            if (beat == WakeBeat.PushedIn)
+            if (beat == WakeBeat.FadedOut)
             {
                 SetOpeningDarkHold(true);
                 return;

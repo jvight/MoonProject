@@ -176,7 +176,7 @@ namespace MoonProject.UI
                 _view.Refresh();
             }
 
-            _view.Tick(step);
+            _view.Tick(step, device);
 
             if (booting)
             {

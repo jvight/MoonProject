@@ -314,7 +314,7 @@ namespace MoonProject.UI.Tests
                     string desc = PartInfo.MaterialDescription(material, localization);
                     Assert.IsNotEmpty(desc);
                     Assert.LessOrEqual(desc.Length, FaceInventoryView.MaxTooltipDescriptionChars,
-                        $"{lang} {material} description exceeds 52 chars: '{desc}'");
+                        $"{lang} {material} description is too long: '{desc}'");
                 }
 
                 for (int device = 0; device < FaceDevices.Count; device++)
@@ -326,7 +326,7 @@ namespace MoonProject.UI.Tests
                             string dDesc = localization.Get(FaceDevices.DescriptionKey(device, state, canFit));
                             Assert.IsNotEmpty(dDesc);
                             Assert.LessOrEqual(dDesc.Length, FaceInventoryView.MaxTooltipDescriptionChars,
-                                $"{lang} device {device} ({state}, fit {canFit}) exceeds 52 chars: '{dDesc}'");
+                                $"{lang} device {device} ({state}, fit {canFit}) is too long: '{dDesc}'");
                         }
                     }
 
