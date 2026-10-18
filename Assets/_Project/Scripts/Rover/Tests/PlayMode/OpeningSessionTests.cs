@@ -751,6 +751,138 @@ namespace MoonProject.Rover.PlayModeTests
             yield return RecordTransition("continue", "button-resume");
         }
 
+        [UnityTest]
+        [Explicit("Frame-by-frame capture of the title-to-play transition; run with --category OpeningTransition.")]
+        [Category("OpeningTransition")]
+        [Timeout(900000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator TransitionFrames_NewGameOverASave_ThroughTheReload()
+        {
+            yield return Boot(false);
+            Assert.IsTrue(_context.Get<ISaveService>().SaveNow(), "a save is on disk");
+            Dispose();
+            yield return Boot(true);
+            yield return Wait(TitleQuietSeconds);
+            string folder = Path.Combine(CaptureFolder, "transition_new_game_over_save");
+            if (Directory.Exists(folder))
+            {
+                Directory.Delete(folder, true);
+            }
+
+            Directory.CreateDirectory(folder);
+            UIDocument document = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(RoverSessionScene.ScenePath).GetRootGameObjects())
+            {
+                document = document != null ? document : root.GetComponentInChildren<UIDocument>(true);
+            }
+
+            Assert.IsNotNull(document, "the scene has its UIDocument");
+            yield return Submit(document.rootVisualElement.Q<Button>("button-new-game"));
+            yield return Wait(0.8f);
+            yield return Submit(document.rootVisualElement.Q<Button>("button-new-game-confirm"));
+            Time.captureDeltaTime = 1f / 60f;
+            var csv = new StringBuilder();
+            csv.AppendLine("frame,gameTime,realDtMs,phase,luma,camDistance,camTurnDeg,note");
+            float started = Time.time;
+            float lastReal = Time.realtimeSinceStartup;
+            Vector3 previousPosition = Vector3.zero;
+            Quaternion previousRotation = Quaternion.identity;
+            bool havePrevious = false;
+            bool reloaded = false;
+            float chaseAt = -1f;
+            for (int frame = 0; Time.time - started < RunTimeout && frame < 6000; frame++)
+            {
+                yield return null;
+                float real = Time.realtimeSinceStartup;
+                float realMs = (real - lastReal) * 1000f;
+                lastReal = real;
+                string note = string.Empty;
+                if (_director == null || _view == null)
+                {
+                    reloaded = true;
+                    note = "scene reloading";
+                    Scene scene = SceneManager.GetSceneByPath(RoverSessionScene.ScenePath);
+                    OpeningDirector fresh = null;
+                    if (scene.IsValid() && scene.isLoaded)
+                    {
+                        foreach (GameObject root in scene.GetRootGameObjects())
+                        {
+                            fresh = fresh != null ? fresh : root.GetComponentInChildren<OpeningDirector>(true);
+                        }
+                    }
+
+                    if (fresh != null)
+                    {
+                        Dispose();
+                        Bind();
+                        havePrevious = false;
+                        note = "scene rebound";
+                    }
+
+                    csv.AppendLine(string.Format(CultureInfo.InvariantCulture, "{0},{1:0.000},{2:0.0},{3},-1,0,0,{4}",
+                        frame, Time.time - started, realMs, OpeningPhase.Idle, note));
+                    continue;
+                }
+
+                Texture2D shot = FrameCapture.Render(_view, TransitionWidth, TransitionHeight);
+                Color32[] pixels = shot.GetPixels32();
+                float luma = 0f;
+                for (int i = 0; i < pixels.Length; i++)
+                {
+                    luma += (0.2126f * pixels[i].r + 0.7152f * pixels[i].g + 0.0722f * pixels[i].b) / 255f;
+                }
+
+                luma /= pixels.Length;
+                Transform camera = _view.transform;
+                float distance = havePrevious ? Vector3.Distance(camera.position, previousPosition) : 0f;
+                float turn = havePrevious ? Quaternion.Angle(camera.rotation, previousRotation) : 0f;
+                previousPosition = camera.position;
+                previousRotation = camera.rotation;
+                havePrevious = true;
+                string beat = string.Empty;
+                foreach (WakeBeat reached in _beats)
+                {
+                    beat = reached.ToString();
+                }
+
+                csv.AppendLine(string.Format(CultureInfo.InvariantCulture, "{0},{1:0.000},{2:0.0},{3},{4:0.0000},{5:0.0000},{6:0.00},{7}",
+                    frame, Time.time - started, realMs, _director.Script.Phase, luma, distance, turn, beat));
+                if (frame % 3 == 0)
+                {
+                    File.WriteAllBytes(Path.Combine(folder, string.Format(CultureInfo.InvariantCulture, "f{0:0000}.png", frame)),
+                        shot.EncodeToPNG());
+                }
+
+                Object.DestroyImmediate(shot);
+                if (reloaded && chaseAt < 0f && _beats.Contains(WakeBeat.ChaseFrame))
+                {
+                    chaseAt = Time.time;
+                }
+
+                if (chaseAt >= 0f && Time.time - chaseAt > 1f)
+                {
+                    break;
+                }
+            }
+
+            File.WriteAllText(Path.Combine(folder, "frames.csv"), csv.ToString());
+            Assert.IsTrue(reloaded, "the scene reloaded under the push");
+            Assert.GreaterOrEqual(chaseAt, 0f, "the reloaded game reaches the chase frame");
+        }
+
+        private static IEnumerator Submit(Button button)
+        {
+            Assert.IsNotNull(button, "the title has the button");
+            using (NavigationSubmitEvent submit = NavigationSubmitEvent.GetPooled())
+            {
+                submit.target = button;
+                button.SendEvent(submit);
+            }
+
+            yield return null;
+        }
+
         /// <summary>
         /// Clicks <paramref name="buttonName"/> on the title and records every frame the player would see (the whole
         /// screen, UI included, at a quarter size) until the chase frame plus a second: a PNG every other frame and a
@@ -889,6 +1021,13 @@ namespace MoonProject.Rover.PlayModeTests
 #else
             throw new NotSupportedException("The opening session loads the scene through the editor.");
 #endif
+            Bind();
+            yield return null;
+        }
+
+        /// <summary>Finds the loaded session's systems and listens for its wake beats (again after a reload).</summary>
+        private void Bind()
+        {
             GameBootstrap bootstrap = null;
             _director = null;
             _rig = null;
@@ -916,7 +1055,6 @@ namespace MoonProject.Rover.PlayModeTests
                 _context.Events.Subscribe<RoverAwoke>(_ => _awoke++),
                 _context.Events.Subscribe<RoverWakeBeatReached>(OnBeat),
             };
-            yield return null;
         }
 
         private void OnBeat(RoverWakeBeatReached reached)

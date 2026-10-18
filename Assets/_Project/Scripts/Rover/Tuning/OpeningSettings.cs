@@ -327,6 +327,11 @@ namespace MoonProject.Rover
         [Range(0.5f, 4f)]
         [SerializeField] private float _pushInSeconds = 1.6f;
 
+        [Tooltip("The push sweeps round 07 at no less than this ground radius (m) before it closes in on the lens, so " +
+                 "a title frame behind 07 never cuts through its hull.")]
+        [Range(0.5f, 6f)]
+        [SerializeField] private float _pushClearRadius = 1.8f;
+
         [Tooltip("Share of the push after which the lens view darkens to black.")]
         [Range(0.2f, 0.95f)]
         [SerializeField] private float _pushDarkFrom = 0.6f;
@@ -441,6 +446,8 @@ namespace MoonProject.Rover
         public float LampRampSeconds => _lampRampSeconds;
         public float PushInSeconds => _pushInSeconds;
         public float PushDarkFrom => _pushDarkFrom;
+
+        public float PushClearRadius => _pushClearRadius;
 
         public float TitleFrameMinLanderDistance => _titleFrameMinLanderDistance;
         public float TitleDriftDelay => _titleDriftDelay;
