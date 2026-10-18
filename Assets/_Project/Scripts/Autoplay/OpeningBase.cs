@@ -39,6 +39,9 @@ namespace MoonProject.Autoplay
         private const float SealArrive = 1.5f;
         private const float SealNose = 1.2f;
         private const float SealCutSeconds = 30f;
+        private const float SealCandidateSeconds = 3f;
+        private const int SealCandidateAttempts = 3;
+        private const float SealNudgeMetres = 1f;
         private const float ScanLookSeconds = 12f;
         private const float ScanAllowanceSeconds = 8f;
         private const float ChipSeconds = 3f;
@@ -279,6 +282,7 @@ namespace MoonProject.Autoplay
                     DriveSeconds);
                 yield return _bot.TurnToward(crate.CutPoint.position, "the seal of " + cache.Id);
                 yield return FirstUse("cut: hold E", crate.CutPoint.position);
+                yield return WaitForTheSealCandidate(crate.CutPoint.position, cache.Id);
                 yield return _bot.Hold(Key.E, () =>
                     {
                         _bot.KeepLookingAt(crate.CutPoint.position);
@@ -289,6 +293,42 @@ namespace MoonProject.Autoplay
                 yield return _bot.Until(() => crate.StandsOpen, G.Cargo.ContainerLidSeconds + FollowSeconds,
                     cache.Id + " to stand open");
             }
+        }
+
+        /// <summary>
+        /// Holding E only cuts while the game's candidate is the seal (a scan target in range can win the brackets), so
+        /// the bot waits, gaze on the seal, until the candidate is this crate and nudges 07 to try again if not.
+        /// </summary>
+        private IEnumerator WaitForTheSealCandidate(Vector3 seal, string cacheId)
+        {
+            for (int attempt = 0; attempt < SealCandidateAttempts; attempt++)
+            {
+                float deadline = Time.unscaledTime + SealCandidateSeconds;
+                while (Time.unscaledTime < deadline && !IsSealCandidate(cacheId))
+                {
+                    _bot.KeepLookingAt(seal);
+                    yield return null;
+                }
+
+                if (IsSealCandidate(cacheId))
+                {
+                    yield break;
+                }
+
+                Vector3 away = Flat(_bot.World.Rover.Position - seal);
+                away = away.sqrMagnitude > 1e-4f ? away.normalized : Vector3.back;
+                yield return _bot.DriveTo(Flat(seal) + away * SealNudgeMetres, SealArrive, "a nudge off the seal of " + cacheId,
+                    DriveSeconds);
+                yield return _bot.DriveTo(Flat(seal), SealNose, "nose to the seal of " + cacheId, DriveSeconds);
+                yield return _bot.TurnToward(seal, "the seal of " + cacheId);
+            }
+
+            _bot.Warn("the game never made " + cacheId + " the cut candidate (chip '" + _bot.World.Ui.Chip() + "'); the bot held E anyway.");
+        }
+
+        private bool IsSealCandidate(string cacheId)
+        {
+            return G.Containers.Candidate != null && G.Containers.Candidate.Id == cacheId;
         }
 
         public IEnumerator UntilReached(OpeningMilestone milestone, string what, float seconds = MilestoneSeconds)
