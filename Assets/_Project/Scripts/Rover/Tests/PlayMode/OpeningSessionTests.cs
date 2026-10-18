@@ -40,6 +40,7 @@ namespace MoonProject.Rover.PlayModeTests
         private const int CaptureHeight = 900;
         private const int KeyFrameWidth = 1920;
         private const int KeyFrameHeight = 1080;
+        private const float LanguageSettleSeconds = 1.5f;
         private const int TransitionWidth = 640;
         private const int TransitionHeight = 360;
         private const float BootTimeout = 30f;
@@ -771,6 +772,20 @@ namespace MoonProject.Rover.PlayModeTests
             }
 
             Assert.IsNotNull(document, "the scene has its UIDocument");
+            VisualElement languagePage = document.rootVisualElement.Q<VisualElement>("page-language");
+            if (languagePage != null && IsShown(languagePage))
+            {
+                Button language = languagePage.Q<Button>();
+                Assert.IsNotNull(language, "the first boot offers its languages");
+                using (NavigationSubmitEvent choose = NavigationSubmitEvent.GetPooled())
+                {
+                    choose.target = language;
+                    language.SendEvent(choose);
+                }
+
+                yield return Wait(LanguageSettleSeconds);
+            }
+
             Button button = document.rootVisualElement.Q<Button>(buttonName);
             Assert.IsNotNull(button, buttonName);
             var csv = new StringBuilder();
