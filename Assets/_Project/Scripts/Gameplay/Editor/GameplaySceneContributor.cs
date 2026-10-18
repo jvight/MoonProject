@@ -55,6 +55,7 @@ namespace MoonProject.Gameplay.Editor
             gameplay.WireCutter(cutterTuning);
             gameplay.WireScans(scanTuning);
             gameplay.WireRuins(Ruins(context.WorldRoot.transform));
+            gameplay.WireStoryProps(StoryProps(context.WorldRoot.transform));
             gameplay.WireLanderPort(LanderPort(context.WorldRoot.transform));
             gameplay.WireApronOutline(ApronOutline(context.WorldRoot.transform));
             gameplay.WireOpening(openingTuning, baseTuning);
@@ -80,6 +81,25 @@ namespace MoonProject.Gameplay.Editor
             }
 
             return ruins;
+        }
+
+        /// <summary>World's story props in the basin under [World]/BasinProps (basin dressing Â§2): story scan hosts.</summary>
+        private static Transform[] StoryProps(Transform worldRoot)
+        {
+            Transform propsRoot = worldRoot.Find("BasinProps");
+            if (propsRoot == null)
+            {
+                throw new InvalidOperationException("Gameplay scene build: [World] has no 'BasinProps' node (the " +
+                                                    "basin's story props, basin-dressing Â§2).");
+            }
+
+            var props = new Transform[propsRoot.childCount];
+            for (int i = 0; i < props.Length; i++)
+            {
+                props[i] = propsRoot.GetChild(i);
+            }
+
+            return props;
         }
 
         /// <summary>World's service port on the lander, where the apron cable ends: the open crate's frame.</summary>

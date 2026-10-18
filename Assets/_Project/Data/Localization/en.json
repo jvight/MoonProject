@@ -875,6 +875,10 @@
             "text": "HABITAT SEAL · LOCKED · 28 OCT 1988\nSUIT 01-04 · OFFLINE · 29 OCT 1988 · 04:12"
         },
         {
+            "key": "scan.scout3.manifest",
+            "text": "SCOUT 3 · SOFT LANDER · LANDED 1967\nCAMERA, SCOOP · REMOVED 1971"
+        },
+        {
             "key": "build.energy.card",
             "text": "Battery {0}"
         },

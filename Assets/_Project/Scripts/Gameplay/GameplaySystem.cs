@@ -52,6 +52,9 @@ namespace MoonProject.Gameplay
         [SerializeField] private BuildField _building;
         [SerializeField] private Transform[] _ruins = Array.Empty<Transform>();
 
+        [Tooltip("World's story props in the basin ([World]/BasinProps, e.g. the Scout): hosts of story scans only.")]
+        [SerializeField] private Transform[] _storyProps = Array.Empty<Transform>();
+
         [Tooltip("World's service port on the lander ([World]/Lander/ServicePort): the open crate stands at it.")]
         [SerializeField] private Transform _landerPort;
 
@@ -162,6 +165,11 @@ namespace MoonProject.Gameplay
         internal void WireRuins(Transform[] ruins)
         {
             _ruins = ruins ?? Array.Empty<Transform>();
+        }
+
+        internal void WireStoryProps(Transform[] storyProps)
+        {
+            _storyProps = storyProps ?? Array.Empty<Transform>();
         }
 
         internal void WireLanderPort(Transform landerPort)
@@ -312,7 +320,8 @@ namespace MoonProject.Gameplay
         private ScanField NewScans(GameplayServices services)
         {
             var scans = new ScanField(_scanTuning, services, KnownStructures, OtherVerbOnOffer);
-            string problem = AddRuins(scans) ?? scans.AddRuin(_scanTuning.LanderCargo, Opening.LanderCargo);
+            string problem = AddRuins(scans) ?? AddStoryProps(scans)
+                ?? scans.AddRuin(_scanTuning.LanderCargo, Opening.LanderCargo);
             if (problem != null)
             {
                 Debug.LogError($"{nameof(GameplaySystem)}: scanning: {problem} (opening-v2 §1).", this);
@@ -343,7 +352,31 @@ namespace MoonProject.Gameplay
 
                 foreach (StoryScan story in _scanTuning.Stories)
                 {
-                    string problem = story.RuinId == ruin.name ? scans.AddStory(story, ruin) : null;
+                    string problem = story.HostId == ruin.name ? scans.AddStory(story, ruin) : null;
+                    if (problem != null)
+                    {
+                        return problem;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>The story scans on World's basin props (basin dressing Â§2: the Scout).</summary>
+        private string AddStoryProps(ScanField scans)
+        {
+            for (int i = 0; i < _storyProps.Length; i++)
+            {
+                Transform prop = _storyProps[i];
+                if (prop == null)
+                {
+                    return "a story prop transform in _storyProps is null";
+                }
+
+                foreach (StoryScan story in _scanTuning.Stories)
+                {
+                    string problem = story.HostId == prop.name ? scans.AddStory(story, prop) : null;
                     if (problem != null)
                     {
                         return problem;
