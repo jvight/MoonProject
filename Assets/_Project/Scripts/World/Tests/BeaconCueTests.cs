@@ -3,8 +3,8 @@ using NUnit.Framework;
 namespace MoonProject.World.Tests
 {
     /// <summary>
-    /// The lander's answers to 07's self-test: a short burst of sharp flashes that is dark before its cue and after its
-    /// last flash, and a single wave along the cable that runs from the first marker to the last once, then is gone.
+    /// The lander's answers to 07's self-test: one sharp flash per spark of the cutter, dark before its cue and after,
+    /// and a single wave along the cable that runs from the first marker to the last once, then is gone.
     /// </summary>
     public sealed class BeaconCueTests
     {
@@ -19,29 +19,18 @@ namespace MoonProject.World.Tests
         }
 
         [Test]
-        public void Flash_LightsItsCountOfSharpFlashes_ThenGoesDark()
+        public void Flash_IsOneSharpFlash_DarkBeforeItsCueAndAfter()
         {
-            float period = _beacon.FlashPeriod;
-            Assert.AreEqual(0f, Flash(-0.01f), "nothing before the cue");
-            int lit = 0;
-            for (int flash = 0; flash < _beacon.FlashCount; flash++)
-            {
-                float middleOfFlash = (flash + _beacon.FlashOnShare * 0.5f) * period;
-                float betweenFlashes = (flash + (1f + _beacon.FlashOnShare) * 0.5f) * period;
-                Assert.AreEqual(1f, Flash(middleOfFlash), 1e-4f, $"flash {flash} is fully lit");
-                Assert.AreEqual(0f, Flash(betweenFlashes), 1e-4f, $"dark after flash {flash}");
-                lit++;
-            }
-
-            Assert.AreEqual(_beacon.FlashCount, lit);
-            Assert.AreEqual(0f, Flash(_beacon.FlashCount * period + 0.01f), "dark after the last flash");
+            Assert.AreEqual(0f, Flash(-0.01f), "nothing before the spark");
+            Assert.AreEqual(1f, Flash(_beacon.FlashSeconds * 0.5f), 1e-4f, "fully lit in the middle");
+            Assert.AreEqual(0f, Flash(_beacon.FlashSeconds), "dark once it has been lit its length");
+            Assert.AreEqual(0f, Flash(_beacon.FlashSeconds + 1f), "and stays dark");
         }
 
         [Test]
         public void Flash_RisesThroughItsEdgeRatherThanPopping()
         {
-            float halfEdge = _beacon.FlashEdge * _beacon.FlashPeriod * 0.5f;
-            Assert.That(Flash(halfEdge), Is.GreaterThan(0f).And.LessThan(1f));
+            Assert.That(Flash(_beacon.FlashEdgeSeconds * 0.5f), Is.GreaterThan(0f).And.LessThan(1f));
         }
 
         [Test]
@@ -63,8 +52,7 @@ namespace MoonProject.World.Tests
 
         private float Flash(float elapsed)
         {
-            return BeaconFlash.Level(elapsed, _beacon.FlashCount, _beacon.FlashPeriod, _beacon.FlashOnShare,
-                _beacon.FlashEdge);
+            return BeaconFlash.Level(elapsed, _beacon.FlashSeconds, _beacon.FlashEdgeSeconds);
         }
     }
 }

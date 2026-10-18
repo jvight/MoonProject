@@ -292,9 +292,9 @@ namespace MoonProject.World.PlayModeTests
         }
 
         /// <summary>
-        /// 07's self-test on a real New Game: when the cutter check fails the lander's beacon answers with its sharp
-        /// flashes, and when 07 begins its recovery one bright wave runs the cable from 07's post to the lander. Strips
-        /// of frames go to Logs/world-captures/post-*.png with post-cues.md (the beacon light's intensity and the first
+        /// 07's self-test on a real New Game: the lander's beacon blinks sharply with each spark of 07's failing cutter,
+        /// and when 07 begins its recovery one bright wave runs the cable from 07's post to the lander. Strips of frames
+        /// go to Logs/world-captures/post-*.png with post-cues.md (the beacon light's intensity and the first
         /// and last markers' glow per frame).
         /// </summary>
         [UnityTest]
@@ -338,10 +338,16 @@ namespace MoonProject.World.PlayModeTests
             SerializedProperty markerList = wiring.FindProperty("_markers");
             var first = (Renderer)markerList.GetArrayElementAtIndex(0).objectReferenceValue;
             var last = (Renderer)markerList.GetArrayElementAtIndex(markerList.arraySize - 1).objectReferenceValue;
+            float cutterStartedAt = -1f;
             float cutterAt = -1f;
             float beginAt = -1f;
+            int sparkPulse = -1;
             IDisposable completed = context.Events.Subscribe<BootCheckCompleted>(check =>
                 cutterAt = check.Step == BootCheckStep.Cutter ? Time.time : cutterAt);
+            IDisposable pulses = context.Events.Subscribe<BootCheckPulse>(pulse =>
+                sparkPulse = pulse.Step == BootCheckStep.Cutter ? pulse.Index : sparkPulse);
+            IDisposable cutterStarted = context.Events.Subscribe<BootCheckStarted>(check =>
+                cutterStartedAt = check.Step == BootCheckStep.Cutter ? Time.time : cutterStartedAt);
             IDisposable started = context.Events.Subscribe<BootCheckStarted>(check =>
                 beginAt = check.Step == BootCheckStep.Begin ? Time.time : beginAt);
             var report = new StringBuilder("# 07's self-test cues (real Main scene, New Game)\n\n");
@@ -362,7 +368,7 @@ namespace MoonProject.World.PlayModeTests
 
                 context.Events.Publish(new NewGameRequested());
                 float requested = Time.time;
-                while (cutterAt < 0f)
+                while (cutterStartedAt < 0f)
                 {
                     Assert.Less(Time.time - requested, PostTimeout, "07's self-test reaches the cutter check");
                     yield return null;
@@ -376,12 +382,16 @@ namespace MoonProject.World.PlayModeTests
                 Pose fromWake = LookPose("post_beacon_wake",
                     wake + toLander * OpeningWakeLead + Vector3.up * OpeningEyeHeight,
                     lander + Vector3.up * OpeningLookHeight, OpeningFov);
-                report.AppendLine("## The beacon answers the cutter check").AppendLine()
-                    .AppendLine("| Frame | s after the check | Beacon light |").AppendLine("|---|---:|---:|");
-                float burst = tuning.FlashCount * tuning.FlashPeriod + PostTail;
+                report.AppendLine("## The beacon blinks with the cutter's sparks").AppendLine()
+                    .AppendLine("| Frame | s into the cutter check | Cutter pulse | Beacon light |")
+                    .AppendLine("|---|---:|---:|---:|");
+                float flashLevel = tuning.LightIntensity * (1f + tuning.FlashBoost) * 0.5f;
                 float brightest = 0f;
-                for (int frame = 0; Time.time - cutterAt < burst; frame++)
+                int flashes = 0;
+                bool lit = false;
+                for (int frame = 0; cutterAt < 0f || Time.time - cutterAt < PostTail; frame++)
                 {
+                    Assert.Less(Time.time - requested, PostTimeout, "the cutter check completes");
                     string name = string.Format(CultureInfo.InvariantCulture, "post-beacon-{0:00}", frame);
                     Place(camera, nearBeacon);
                     FrameCapture.SavePng(camera, CaptureWidth, CaptureHeight,
@@ -390,13 +400,16 @@ namespace MoonProject.World.PlayModeTests
                     FrameCapture.SavePng(camera, CaptureWidth, CaptureHeight,
                         Path.Combine(CaptureFolder, name + "-wake.png"));
                     brightest = Mathf.Max(brightest, light.intensity);
-                    report.AppendLine(string.Format(CultureInfo.InvariantCulture, "| {0} | {1:F2} | {2:F2} |", name,
-                        Time.time - cutterAt, light.intensity));
+                    flashes += !lit && light.intensity > flashLevel ? 1 : 0;
+                    lit = light.intensity > flashLevel;
+                    report.AppendLine(string.Format(CultureInfo.InvariantCulture, "| {0} | {1:F2} | {2} | {3:F2} |",
+                        name, Time.time - cutterStartedAt, sparkPulse, light.intensity));
                     yield return null;
                 }
 
-                Assert.Greater(brightest, tuning.LightIntensity * (1f + tuning.FlashBoost) * 0.5f,
-                    "the answering flashes outshine the slow pulse's peak");
+                Assert.Greater(brightest, flashLevel, "the answering flashes outshine the slow pulse's peak");
+                Assert.AreEqual(tuning.LastSparkPulse - tuning.FirstSparkPulse + 1, flashes,
+                    "one flash per spark of the cutter");
 
                 while (beginAt < 0f)
                 {
@@ -444,6 +457,8 @@ namespace MoonProject.World.PlayModeTests
             {
                 Time.captureDeltaTime = 0f;
                 completed.Dispose();
+                pulses.Dispose();
+                cutterStarted.Dispose();
                 started.Dispose();
                 Object.Destroy(host);
                 File.WriteAllText(Path.Combine(CaptureFolder, "post-cues.md"), report.ToString());

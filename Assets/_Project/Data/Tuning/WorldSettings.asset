@@ -466,10 +466,10 @@ MonoBehaviour:
       _markerRunSeconds: 4
       _markerRepeatSeconds: 9
       _markerWaveWidth: 0.18
-      _flashCount: 3
-      _flashPeriod: 0.32
-      _flashOnShare: 0.45
-      _flashEdge: 0.05
+      _firstSparkPulse: 3
+      _lastSparkPulse: 5
+      _flashSeconds: 0.15
+      _flashEdgeSeconds: 0.016
       _flashBoost: 3
       _flashHaloSwell: 1.25
       _beginWavePulse: 4
