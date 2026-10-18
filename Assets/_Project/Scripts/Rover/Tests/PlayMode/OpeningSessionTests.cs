@@ -57,8 +57,8 @@ namespace MoonProject.Rover.PlayModeTests
         private const float TextCheckEvery = 0.5f;
         private const float TitleQuietSeconds = 4f;
         private const float MaxUntouched = 45f;
-        private const float MinSelfTest = 27f;
-        private const float MaxSelfTest = 35f;
+        private const float MinSelfTest = 32f;
+        private const float MaxSelfTest = 40f;
 
         /// <summary>The shot may turn this little (deg) and stray this little (m) off its push-in line.</summary>
         private const float ShotAngleSlack = 0.05f;
@@ -67,6 +67,18 @@ namespace MoonProject.Rover.PlayModeTests
         /// <summary>Once pushed in, 07's face screen fills about this share of the frame's height (the lines read).</summary>
         private const float MinFaceFill = 0.3f;
         private const float MaxFaceFill = 0.45f;
+
+        /// <summary>The camera may stray this little (m) while it holds, and a move back up or miss its end this much.</summary>
+        private const float HoldSlack = 0.02f;
+        private const float MoveSlack = 0.01f;
+        private const float EndSlack = 0.08f;
+        private const float EndTurnSlack = 2f;
+
+        /// <summary>Turn speed is measured over windows this long (s): per-frame angles are float noise at batch rates.</summary>
+        private const float TurnWindow = 0.05f;
+
+        /// <summary>No camera move turns faster than this (deg/s): calm, never a whip.</summary>
+        private const float MaxTurnSpeed = 150f;
 
         /// <summary>07's body may yaw this little (deg) through the whole wake: it never turns.</summary>
         private const float BodyYawSlack = 0.5f;
@@ -187,14 +199,22 @@ namespace MoonProject.Rover.PlayModeTests
                 (OpeningPhase.FadeIn, 0.7f, "stage_2_picture_opens"),
                 (OpeningPhase.EyesOpen, 0.3f, "stage_3_face_flickers_on"),
                 (OpeningPhase.EyesOpen, 0.95f, "stage_4_eyes_awake"),
-                (OpeningPhase.Handover, 0.45f, "stage_5_handover_dip"),
-                (OpeningPhase.Handover, 0.95f, "stage_6_chase_frame"),
+                (OpeningPhase.Ready, 0.3f, "end_1_ready_readout"),
+                (OpeningPhase.Ready, 0.95f, "end_2_eyes_back"),
+                (OpeningPhase.PullBack, 0.5f, "end_3_pull_back"),
+                (OpeningPhase.Perform, 0.05f, "end_4_double_blink"),
+                (OpeningPhase.Perform, 0.32f, "end_5_lamps_off"),
+                (OpeningPhase.Perform, 0.58f, "end_6_shiver"),
+                (OpeningPhase.Perform, 0.95f, "end_7_glance"),
+                (OpeningPhase.MoveBehind, 0.5f, "end_8_move_behind"),
+                (OpeningPhase.MoveBehind, 0.98f, "end_9_chase_frame"),
             };
             var keyShots = new (OpeningPhase Phase, float Share, string Name)[]
             {
                 (OpeningPhase.EyesOpen, 0.95f, "key_01_eyes_awake"),
                 (OpeningPhase.Post, 0.5f, "key_02_lines_on_face"),
-                (OpeningPhase.Handover, 0.95f, "key_03_chase_frame"),
+                (OpeningPhase.Perform, 0.58f, "key_03_ready_performance"),
+                (OpeningPhase.MoveBehind, 0.98f, "key_04_chase_frame"),
             };
             var taken = new bool[shots.Length];
             var keyTaken = new bool[keyShots.Length];
@@ -306,7 +326,7 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreEqual(1, Count(WakeBeat.FadedOut), "New Game faded the picture to black");
             Assert.AreEqual(1, _awoke, "RoverAwoke goes with the crackle, once");
             Assert.AreEqual(1, _body.FaceDirector.Director.BootCount, "the CRT face boots once, as the eyes open");
-            Assert.That(chase - crackle, Is.InRange(MinSelfTest, MaxSelfTest), "the wake lasts about 30 s");
+            Assert.That(chase - crackle, Is.InRange(MinSelfTest, MaxSelfTest), "the wake lasts about 36 s");
             CollectionAssert.AreEqual(new[]
             {
                 BootCheckStep.Carrier, BootCheckStep.Resume, BootCheckStep.Agenda, BootCheckStep.Lens,
@@ -438,7 +458,7 @@ namespace MoonProject.Rover.PlayModeTests
         [Timeout(300000)]
         [PrebuildSetup(typeof(RoverSessionScene))]
         [PostBuildCleanup(typeof(RoverSessionScene))]
-        public IEnumerator TheWake_IsOneStillShot_TheBodyNeverTurns_AndTheChaseFrameComesInTheBlack()
+        public IEnumerator TheShotPlan_OneStillShot_ThenExactlyTwoSmoothMoves_AndTheBodyNeverTurns()
         {
             yield return Boot(true);
             _context.Events.Publish(new NewGameRequested());
@@ -449,7 +469,7 @@ namespace MoonProject.Rover.PlayModeTests
                 yield return null;
             }
 
-            // The camera cut to the shot in the black; from the picture opening on it must hold still but for the push-in.
+            // The camera cut to the shot in the black; from the picture opening on it holds still but for the push-in.
             yield return null;
             Vector3 startPos = _view.transform.position;
             Quaternion startRot = _view.transform.rotation;
@@ -461,18 +481,18 @@ namespace MoonProject.Rover.PlayModeTests
             float maxAlong = 0f;
             float maxBodyYaw = 0f;
             float maxFovChange = 0f;
-            float pictureAtCut = -1f;
-            Vector3 lastShotPos = startPos;
             float faceFill = 0f;
             Renderer screen = _body.FaceDirector.Display.ScreenRenderer;
+            var poses = new List<(OpeningPhase Phase, Vector3 Position, Quaternion Rotation, float Seconds)>(4096);
             while (!_beats.Contains(WakeBeat.ChaseFrame))
             {
                 Assert.Less(Time.time - started, RunTimeout, "the opening reaches the chase frame");
                 OpeningScript script = _director.Script;
-                bool shot = script.Phase == OpeningPhase.FadeIn || script.Phase == OpeningPhase.EyesOpen
-                    || script.Phase == OpeningPhase.Post;
                 maxBodyYaw = Mathf.Max(maxBodyYaw, Mathf.Abs(Mathf.DeltaAngle(bodyYaw, _rover.transform.eulerAngles.y)));
-                if (shot)
+                poses.Add((script.Phase, _view.transform.position, _view.transform.rotation, Time.deltaTime));
+                bool still = script.Phase == OpeningPhase.FadeIn || script.Phase == OpeningPhase.EyesOpen
+                    || script.Phase == OpeningPhase.Post;
+                if (still)
                 {
                     Vector3 offset = _view.transform.position - startPos;
                     float along = Vector3.Dot(offset, viewLine);
@@ -480,7 +500,6 @@ namespace MoonProject.Rover.PlayModeTests
                     maxOffLine = Mathf.Max(maxOffLine, (offset - along * viewLine).magnitude);
                     maxAlong = Mathf.Max(maxAlong, along);
                     maxFovChange = Mathf.Max(maxFovChange, Mathf.Abs(_view.fieldOfView - startFov));
-                    lastShotPos = _view.transform.position;
                     if (script.Phase == OpeningPhase.Post)
                     {
                         Bounds bounds = screen.bounds;
@@ -490,32 +509,182 @@ namespace MoonProject.Rover.PlayModeTests
                     }
                 }
 
-                if (pictureAtCut < 0f && script.Phase == OpeningPhase.Handover && !script.ShotLive)
-                {
-                    pictureAtCut = script.Picture01;
-                }
-
                 yield return null;
             }
 
-            _report.AppendLine("# One still shot").AppendLine()
-                .AppendLine(Line("shot turn, max (deg)", maxAngle))
-                .AppendLine(Line("shot off its push-in line, max (m)", maxOffLine))
+            // The rendered view trails the script by a frame: let the chase frame settle, then read it.
+            yield return null;
+            yield return null;
+            Vector3 chasePos = _view.transform.position;
+            Quaternion chaseRot = _view.transform.rotation;
+
+            (Vector3 Position, Quaternion Rotation) wide = Last(poses, OpeningPhase.Perform);
+            (Vector3 Position, Quaternion Rotation) close = Last(poses, OpeningPhase.Ready);
+            float readyDrift = MaxDrift(poses, OpeningPhase.Ready, close);
+            float performDrift = MaxDrift(poses, OpeningPhase.Perform, wide);
+            MoveStats pull = Move(poses, OpeningPhase.PullBack, wide.Position);
+            MoveStats behind = Move(poses, OpeningPhase.MoveBehind, chasePos);
+            float pullEnd = Vector3.Distance(pull.LastPosition, wide.Position);
+            float behindEnd = Vector3.Distance(behind.LastPosition, chasePos);
+            float behindEndTurn = Quaternion.Angle(behind.LastRotation, chaseRot);
+
+            _report.AppendLine("# The shot plan").AppendLine()
+                .AppendLine(Line("still shot turn, max (deg)", maxAngle))
+                .AppendLine(Line("still shot off its push-in line, max (m)", maxOffLine))
                 .AppendLine(Line("push-in travelled (m)", maxAlong))
                 .AppendLine(Line("face screen's share of the frame height at the end of the checks", faceFill))
-                .AppendLine(Line("lens change, max (deg)", maxFovChange))
-                .AppendLine(Line("body yaw change, max (deg)", maxBodyYaw))
-                .AppendLine(Line("picture at the cut to the chase frame (0 black)", pictureAtCut)).AppendLine();
-            Assert.LessOrEqual(maxAngle, ShotAngleSlack, "the shot never pans, tilts or orbits");
-            Assert.LessOrEqual(maxOffLine, ShotLineSlack, "the camera moves only along its view line");
+                .AppendLine(Line("lens change during the checks, max (deg)", maxFovChange))
+                .AppendLine(Line("ready hold drift, max (m)", readyDrift))
+                .AppendLine(Line("pull-back: frames", pull.Frames))
+                .AppendLine(Line("pull-back: seconds", pull.Seconds))
+                .AppendLine(Line("pull-back: backing up, max (m)", pull.MaxBackUp))
+                .AppendLine(Line("pull-back: turn speed, max (deg/s)", pull.MaxTurnSpeed))
+                .AppendLine(Line("pull-back: end off the wide shot (m)", pullEnd))
+                .AppendLine(Line("performance drift, max (m)", performDrift))
+                .AppendLine(Line("move behind: frames", behind.Frames))
+                .AppendLine(Line("move behind: seconds", behind.Seconds))
+                .AppendLine(Line("move behind: backing up, max (m)", behind.MaxBackUp))
+                .AppendLine(Line("move behind: turn speed, max (deg/s)", behind.MaxTurnSpeed))
+                .AppendLine(Line("move behind: end off the chase frame (m)", behindEnd))
+                .AppendLine(Line("move behind: end turn off the chase frame (deg)", behindEndTurn))
+                .AppendLine(Line("body yaw change, max (deg)", maxBodyYaw)).AppendLine();
+
+            Assert.LessOrEqual(maxAngle, ShotAngleSlack, "the checks' shot never pans, tilts or orbits");
+            Assert.LessOrEqual(maxOffLine, ShotLineSlack, "the camera moves only along its view line during the checks");
             Assert.Greater(maxAlong, 0f, "the camera pushes in toward the face");
             Assert.That(faceFill, Is.InRange(MinFaceFill, MaxFaceFill), "the face fills enough of the frame to read");
             Assert.LessOrEqual(maxFovChange, 1e-3f, "no zoom");
+            Assert.LessOrEqual(readyDrift, HoldSlack, "the camera holds while the readout gives way to the eyes");
+            Assert.LessOrEqual(performDrift, HoldSlack, "the camera holds still for the ready performance");
+            Assert.LessOrEqual(pull.MaxBackUp, MoveSlack, "the pull-back never backs up");
+            Assert.LessOrEqual(behind.MaxBackUp, MoveSlack, "the move behind never backs up or swings past");
+            Assert.LessOrEqual(pull.MaxTurnSpeed, MaxTurnSpeed, "the pull-back turns gently");
+            Assert.LessOrEqual(behind.MaxTurnSpeed, MaxTurnSpeed, "the move behind turns gently");
+            Assert.LessOrEqual(pullEnd, EndSlack, "the pull-back ends on the wide shot");
+            Assert.LessOrEqual(behindEnd, EndSlack, "the move behind ends on the chase frame, no pop");
+            Assert.LessOrEqual(behindEndTurn, EndTurnSlack, "and facing as the chase frame does");
             Assert.LessOrEqual(maxBodyYaw, BodyYawSlack, "07's body never turns during the wake");
-            Assert.That(pictureAtCut, Is.InRange(0f, 0.05f), "the chase frame takes over in the black");
-            Vector3 chaseOffset = _view.transform.position - _rover.transform.position;
-            Assert.Less(Vector3.Dot(chaseOffset, _rover.transform.forward), 0f, "the picture opens on the chase frame behind 07");
-            Assert.Greater(Vector3.Distance(lastShotPos, _view.transform.position), 1f, "in one cut, not a swing");
+            Vector3 chaseOffset = chasePos - _rover.transform.position;
+            Assert.Less(Vector3.Dot(chaseOffset, _rover.transform.forward), 0f, "control starts on the chase frame behind 07");
+        }
+
+        /// <summary>One eased camera move, measured frame by frame toward where it must end.</summary>
+        private readonly struct MoveStats
+        {
+            public MoveStats(float maxBackUp, float maxTurnSpeed, Vector3 lastPosition, Quaternion lastRotation,
+                int frames, float seconds)
+            {
+                Frames = frames;
+                Seconds = seconds;
+                MaxBackUp = maxBackUp;
+                MaxTurnSpeed = maxTurnSpeed;
+                LastPosition = lastPosition;
+                LastRotation = lastRotation;
+            }
+
+            public int Frames { get; }
+
+            public float Seconds { get; }
+
+            public float MaxBackUp { get; }
+
+            public float MaxTurnSpeed { get; }
+
+            public Vector3 LastPosition { get; }
+
+            public Quaternion LastRotation { get; }
+        }
+
+        private static MoveStats Move(List<(OpeningPhase Phase, Vector3 Position, Quaternion Rotation, float Seconds)> poses,
+            OpeningPhase phase, Vector3 end)
+        {
+            float backUp = 0f;
+            float turn = 0f;
+            float lastLeft = float.MaxValue;
+            Vector3 lastPosition = Vector3.zero;
+            Quaternion lastRotation = Quaternion.identity;
+            bool any = false;
+            int frames = 0;
+            float seconds = 0f;
+            float window = 0f;
+            Quaternion windowStart = Quaternion.identity;
+            for (int i = 1; i < poses.Count; i++)
+            {
+                if (poses[i].Phase != phase)
+                {
+                    continue;
+                }
+
+                float left = Vector3.Distance(poses[i].Position, end);
+                if (any)
+                {
+                    backUp = Mathf.Max(backUp, left - lastLeft);
+                    window += poses[i].Seconds;
+                    if (window >= TurnWindow)
+                    {
+                        turn = Mathf.Max(turn, Quaternion.Angle(windowStart, poses[i].Rotation) / window);
+                        window = 0f;
+                        windowStart = poses[i].Rotation;
+                    }
+                }
+                else
+                {
+                    windowStart = poses[i].Rotation;
+                }
+
+                any = true;
+                frames++;
+                seconds += poses[i].Seconds;
+                lastLeft = left;
+                lastPosition = poses[i].Position;
+                lastRotation = poses[i].Rotation;
+            }
+
+            Assert.IsTrue(any, $"the {phase} move was seen");
+            return new MoveStats(backUp, turn, lastPosition, lastRotation, frames, seconds);
+        }
+
+        private static (Vector3 Position, Quaternion Rotation) Last(
+            List<(OpeningPhase Phase, Vector3 Position, Quaternion Rotation, float Seconds)> poses, OpeningPhase phase)
+        {
+            for (int i = poses.Count - 1; i >= 0; i--)
+            {
+                if (poses[i].Phase == phase)
+                {
+                    return (poses[i].Position, poses[i].Rotation);
+                }
+            }
+
+            Assert.Fail($"{phase} was never seen");
+            return default;
+        }
+
+        /// <summary>
+        /// How far the camera strays from <paramref name="held"/> through <paramref name="phase"/>, skipping its first
+        /// frame (the rendered view trails the script by one).
+        /// </summary>
+        private static float MaxDrift(List<(OpeningPhase Phase, Vector3 Position, Quaternion Rotation, float Seconds)> poses,
+            OpeningPhase phase, (Vector3 Position, Quaternion Rotation) held)
+        {
+            float drift = 0f;
+            bool first = true;
+            for (int i = 0; i < poses.Count; i++)
+            {
+                if (poses[i].Phase != phase)
+                {
+                    first = true;
+                    continue;
+                }
+
+                if (!first)
+                {
+                    drift = Mathf.Max(drift, Vector3.Distance(poses[i].Position, held.Position));
+                }
+
+                first = false;
+            }
+
+            return drift;
         }
 
         [UnityTest]
