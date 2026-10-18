@@ -32,6 +32,7 @@ namespace MoonProject.Art.Tests
             ("ssr3_topper_02.json", "Rover/SSR3_Topper_02.fbx"),
             ("ssr3_topper_05.json", "Rover/SSR3_Topper_05.fbx"),
             ("ssr3_topper_04.json", "Rover/SSR3_Topper_04.fbx"),
+            ("ssr3_topper_01.json", "Rover/SSR3_Topper_01.fbx"),
         };
 
         [Serializable]
@@ -470,6 +471,118 @@ namespace MoonProject.Art.Tests
                 "Elder04 must be settled ~4 cm (-0.04 m Y) into the lunar dust.");
             Assert.AreEqual(1.078f, elderBounds.max.y, 0.06f,
                 "Elder04 top of lifted gas bottles should sit at ~1.08 m above ground.");
+        }
+
+        [Test]
+        public void Ssr3Topper01_HasLatticeMast_AltAzYoke_TiltedTelescopeTube_CalibrationPlate_AndBakedDustWithoutParticles()
+        {
+            GameObject topperPrefab = MeshChecks.LoadGeneratedPrefab(R1Ssr3Builder.Ssr3Topper01PrefabPath);
+            Transform latticeMast = topperPrefab.transform.Find("LatticeMast");
+            Transform altAzYoke = topperPrefab.transform.Find("AltAzYoke");
+            Transform telescopeTube = topperPrefab.transform.Find("TelescopeTube");
+            Transform calibrationPlate = topperPrefab.transform.Find("CalibrationPlate");
+
+            Assert.IsNotNull(latticeMast, "SSR3_Topper_01 missing LatticeMast.");
+            Assert.IsNotNull(altAzYoke, "SSR3_Topper_01 missing AltAzYoke.");
+            Assert.IsNotNull(telescopeTube, "SSR3_Topper_01 missing TelescopeTube.");
+            Assert.IsNotNull(calibrationPlate, "SSR3_Topper_01 missing CalibrationPlate.");
+
+            Assert.IsEmpty(topperPrefab.GetComponentsInChildren<ParticleSystem>(true),
+                "SSR3_Topper_01 must not use any ParticleSystem (dust is baked into vertex colours / material).");
+
+            AssertNoLampAmberAndValidVertexColors(topperPrefab, minRenderers: 4);
+
+            var usedSlots = new HashSet<string>(StringComparer.Ordinal);
+            foreach (Renderer r in topperPrefab.GetComponentsInChildren<Renderer>(true))
+            {
+                foreach (Material m in r.sharedMaterials)
+                {
+                    usedSlots.Add(m.name);
+                }
+            }
+
+            Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.CreamEnamelSlot), "SSR3_Topper_01 must use R1_CreamEnamel.");
+            Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.OrangeStripeSlot), "SSR3_Topper_01 must use R1_OrangeStripe.");
+            Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.BrassSlot), "SSR3_Topper_01 must use R1_Brass on alt-az yoke and collars.");
+            Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.CopperSlot), "SSR3_Topper_01 must use R1_Copper cable runs down the mast.");
+            Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.RubberSlot), "SSR3_Topper_01 must use R1_Rubber umbilical cables down the mast.");
+            Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.DarkGlassSlot), "SSR3_Topper_01 must use R1_DarkGlass optical lenses.");
+
+            // Verify TelescopeTube is tilted down forward (+Z) at rest and carries settled dust in vertex-colour B on upward faces
+            Mesh tubeMesh = telescopeTube.GetComponent<MeshFilter>().sharedMesh;
+            Assert.IsNotNull(tubeMesh, "TelescopeTube must have a sharedMesh.");
+            Vector3[] verts = tubeMesh.vertices;
+            Vector3[] norms = tubeMesh.normals;
+            Color[] cols = tubeMesh.colors;
+            Matrix4x4 tubeToRoot = topperPrefab.transform.worldToLocalMatrix * telescopeTube.localToWorldMatrix;
+
+            float frontSumY = 0f;
+            int frontCount = 0;
+            float rearSumY = 0f;
+            int rearCount = 0;
+            float upwardDustMax = 0f;
+
+            for (int i = 0; i < verts.Length; i++)
+            {
+                Vector3 p = tubeToRoot.MultiplyPoint3x4(verts[i]);
+                Vector3 n = tubeToRoot.MultiplyVector(norms[i]).normalized;
+                if (p.z > 0.25f)
+                {
+                    frontSumY += p.y;
+                    frontCount++;
+                }
+                else if (p.z < -0.20f)
+                {
+                    rearSumY += p.y;
+                    rearCount++;
+                }
+
+                if (n.y > 0.5f && cols[i].b > upwardDustMax)
+                {
+                    upwardDustMax = cols[i].b;
+                }
+            }
+
+            Assert.Greater(frontCount, 0, "TelescopeTube must have vertices on the forward sun-shade hood (+Z).");
+            Assert.Greater(rearCount, 0, "TelescopeTube must have vertices on the rear sensor breech (-Z).");
+            Assert.Less(frontSumY / frontCount, rearSumY / rearCount - 0.10f,
+                "TelescopeTube must be tilted down at rest (forward +Z hood lower in Y than rear -Z breech).");
+            Assert.Greater(upwardDustMax, 0.35f,
+                "Upward-facing surfaces on TelescopeTube must carry settled vertex-colour dust (B channel).");
+        }
+
+        [Test]
+        public void Elder01Prefab_CombinesChassisWheelsTopperAndUnit01Stencil_ReachesAbout2Point6M_Settled4CmIntoDust()
+        {
+            GameObject elder01Prefab = MeshChecks.LoadGeneratedPrefab(R1Ssr3Builder.Elder01PrefabPath);
+            Assert.IsNotNull(elder01Prefab.transform.Find("Body"), "Elder01 missing Body.");
+            Assert.IsNotNull(elder01Prefab.transform.Find("Headlamp/HeadlampGlass"), "Elder01 missing Headlamp/HeadlampGlass.");
+            Assert.IsNotNull(elder01Prefab.transform.Find("Wheel_FL"), "Elder01 missing Wheel_FL.");
+            Assert.IsNotNull(elder01Prefab.transform.Find("Wheel_FR"), "Elder01 missing Wheel_FR.");
+            Assert.IsNotNull(elder01Prefab.transform.Find("Wheel_RL"), "Elder01 missing Wheel_RL.");
+            Assert.IsNotNull(elder01Prefab.transform.Find("Wheel_RR"), "Elder01 missing Wheel_RR.");
+
+            Transform mountedTopper = elder01Prefab.transform.Find("Topper_Socket/SSR3_Topper_01");
+            Assert.IsNotNull(mountedTopper, "Elder01 missing Topper_Socket/SSR3_Topper_01.");
+            Assert.IsNotNull(mountedTopper.Find("LatticeMast"), "Elder01 topper missing LatticeMast.");
+            Assert.IsNotNull(mountedTopper.Find("AltAzYoke"), "Elder01 topper missing AltAzYoke.");
+            Assert.IsNotNull(mountedTopper.Find("TelescopeTube"), "Elder01 topper missing TelescopeTube.");
+            Assert.IsNotNull(mountedTopper.Find("CalibrationPlate"), "Elder01 topper missing CalibrationPlate.");
+
+            Transform unit01Node = elder01Prefab.transform.Find("Unit_Number/Unit_Number_01");
+            Assert.IsNotNull(unit01Node, "Elder01 missing Unit_Number/Unit_Number_01.");
+            MeshFilter unit01Mf = unit01Node.GetComponent<MeshFilter>();
+            Assert.IsNotNull(unit01Mf, "Unit_Number_01 must have a MeshFilter.");
+            Assert.IsNotNull(unit01Mf.sharedMesh, "Unit_Number_01 must have a sharedMesh.");
+            Assert.Greater(unit01Mf.sharedMesh.vertexCount, 24, "Unit_Number_01 mesh must contain the '01' stencil geometry.");
+
+            AssertNoLampAmberAndValidVertexColors(elder01Prefab, minRenderers: 12);
+
+            Bounds elderBounds = MeasureInstantiatedRendererBounds(elder01Prefab);
+            Assert.AreEqual(-R1Ssr3Builder.Elder01DustSettleMeters, elderBounds.min.y, 0.01f,
+                "Elder01 must be settled ~4 cm (-0.04 m Y) into the lunar dust.");
+            Assert.AreEqual(2.636f, elderBounds.max.y, 0.06f,
+                "Elder01 tall star-tracker mast should reach ~2.6 m above ground.");
         }
 
         private static void AssertNoLampAmberAndValidVertexColors(GameObject prefab, int minRenderers)
