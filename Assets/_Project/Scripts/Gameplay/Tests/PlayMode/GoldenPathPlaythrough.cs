@@ -256,6 +256,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return DriveTo(RuinsGate(), 3f, "the Lumen ruins");
             yield return ScanTheSet("ruin.FallenSolarArray", "the fallen solar array");
             yield return ReadTheAirlockPanel();
+            yield return ExpectLine(OpeningKeys.CutOptics, "B7: the array needs optics, the workshop's lockers hold some");
             yield return CutTheCrates("KenjiWorkshop", "Kenji's workshop lockers");
             yield return ExpectLine(OpeningKeys.BuildSolar, "B8: the array's cost is covered");
             yield return DriveTo(RuinsGate(), 3f, "out of the Lumen ruins");
@@ -682,8 +683,10 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             if (chip.Length == 0)
             {
+                InteractionHint primary = _gameplay.Hints.Primary;
                 _guidanceGaps.Add($"{verb}: no chip on its first use (with the line: '{_stepChip}'; line on " +
-                                  $"screen: '{_hud.Line}')");
+                                  $"screen: '{_hud.Line}', key chip '{_hud.KeyChip}'; primary hint {primary.Kind}, " +
+                                  $"ready {primary.Ready}; step {_gameplay.Opening.Flow.Current})");
                 Capture("gap-" + _verbsUsed.Count.ToString(CultureInfo.InvariantCulture));
             }
 
