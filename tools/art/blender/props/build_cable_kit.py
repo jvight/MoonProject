@@ -489,11 +489,271 @@ def build_cable_bend_90() -> bpy.types.Object:
     return root
 
 
+def build_cable_broken_end() -> bpy.types.Object:
+    """Build `Cable_BrokenEnd.fbx`: torn cable end with frayed copper strands and cracked sleeve (the cut that killed the post)."""
+    r1kit.reset_scene()
+    ensure_extended_r1_materials()
+    r1kit.ensure_materials()
+
+    root = r1kit.create_empty("Cable_BrokenEnd", pivot_u=(0.0, 0.0, 0.0))
+
+    # 1. CableStub: intact heavy Ø 5 cm cable lead from Start_Anchor (z = -0.45 m) to the break zone (z = +0.12 m)
+    stub = r1kit.MeshBuilder("CableStub", pivot_u=(0.0, 0.0, 0.0))
+    stub_pts: List[Tuple[float, float, float]] = [
+        (0.0, CABLE_CENTER_Y, -0.45),
+        (0.006, CABLE_CENTER_Y, -0.30),
+        (0.0, CABLE_CENTER_Y, -0.16),
+        (-0.008, CABLE_CENTER_Y + 0.002, -0.02),
+        (0.0, CABLE_CENTER_Y + 0.006, 0.12),
+    ]
+    stub.add_tube_path(stub_pts, radius=CABLE_RADIUS, mat="R1_Rubber", segments=12)
+    _add_coupling_collar(stub, (0.0, CABLE_CENTER_Y, -0.412), yaw_deg=0.0)
+    _add_armor_rib_ring(stub, (0.005, CABLE_CENTER_Y, -0.29), yaw_deg=0.0, mat="R1_Rubber")
+    _add_regolith_stake_clip(stub, (0.0, 0.0, -0.16), yaw_deg=0.0)
+    stub.build_object(parent=root)
+
+    # 2. CrackedSleeve: split cream-enamel & orange high-voltage sleeve sheared open at z = +0.02 .. +0.25 m
+    sleeve = r1kit.MeshBuilder("CrackedSleeve", pivot_u=(0.0, 0.0, 0.0))
+    # Rear intact grey-metal gland ring + orange hazard band before the fracture
+    sleeve.add_cylinder(
+        (0.0, 0.025, 0.045),
+        radius=0.033,
+        length=0.048,
+        mat="R1_GreyMetal",
+        axis_u="Z",
+        segments=12,
+        bevel=0.003,
+    )
+    sleeve.add_cylinder(
+        (0.0, 0.025, 0.082),
+        radius=0.0345,
+        length=0.028,
+        mat="R1_OrangeStripe",
+        axis_u="Z",
+        segments=12,
+        bevel=0.0025,
+    )
+
+    # Cracked, splayed-apart CreamEnamel outer conduit shell shards (split open along top & sides)
+    sleeve.add_bevel_box(
+        (-0.022, 0.038, 0.148),
+        (0.032, 0.042, 0.115),
+        mat="R1_CreamEnamel",
+        bevel=0.004,
+        segments=1,
+        rot_deg_u=(-8.0, -14.0, 18.0),
+    )
+    sleeve.add_bevel_box(
+        (0.024, 0.034, 0.142),
+        (0.030, 0.040, 0.105),
+        mat="R1_CreamEnamel",
+        bevel=0.004,
+        segments=1,
+        rot_deg_u=(-5.0, 16.0, -22.0),
+    )
+    # Lower cracked cream saddle shard resting in the regolith
+    sleeve.add_bevel_box(
+        (0.004, 0.010, 0.165),
+        (0.054, 0.020, 0.120),
+        mat="R1_CreamEnamel",
+        bevel=0.003,
+        segments=1,
+        rot_deg_u=(4.0, 5.0, 0.0),
+    )
+    # Detached cracked sleeve shard lying on the dust beside the cut
+    sleeve.add_bevel_box(
+        (0.088, 0.011, 0.235),
+        (0.036, 0.018, 0.064),
+        mat="R1_CreamEnamel",
+        bevel=0.003,
+        segments=1,
+        rot_deg_u=(6.0, 32.0, -10.0),
+    )
+    sleeve.add_bevel_box(
+        (0.088, 0.019, 0.225),
+        (0.038, 0.008, 0.024),
+        mat="R1_OrangeStripe",
+        bevel=0.0015,
+        segments=1,
+        rot_deg_u=(6.0, 32.0, -10.0),
+    )
+
+    # Peeled-back bare-steel retaining clamp strap + sheared brass bolt
+    sleeve.add_bevel_box(
+        (0.036, 0.052, 0.165),
+        (0.014, 0.036, 0.022),
+        mat="R1_BareSteel",
+        bevel=0.002,
+        segments=1,
+        rot_deg_u=(-18.0, 24.0, -35.0),
+    )
+    sleeve.add_cylinder(
+        (0.044, 0.064, 0.165),
+        radius=0.007,
+        length=0.012,
+        mat="R1_Brass",
+        axis_u="Y",
+        segments=6,
+        bevel=0.001,
+    )
+
+    # Torn inner GoldFoil Kapton thermal wrap + jagged inner Rubber core jacket at the mouth of the cut
+    sleeve.add_cylinder(
+        (0.0, 0.026, 0.165),
+        radius=0.024,
+        length=0.065,
+        mat="R1_GoldFoil",
+        axis_u="Z",
+        segments=10,
+        bevel=0.002,
+        radius_top=0.028,
+    )
+    sleeve.add_cylinder(
+        (0.0, 0.026, 0.195),
+        radius=0.021,
+        length=0.050,
+        mat="R1_Rubber",
+        axis_u="Z",
+        segments=10,
+        bevel=0.002,
+        radius_top=0.025,
+    )
+    sleeve.build_object(parent=root)
+
+    # 3. FrayedStrands: splayed multi-gauge copper power cores & braided shield wires bursting from the cut
+    strands = r1kit.MeshBuilder("FrayedStrands", pivot_u=(0.0, 0.0, 0.0))
+
+    # Three heavy twisted primary copper phase cores (radius 0.0085 m)
+    heavy_cores: Sequence[Sequence[Tuple[float, float, float]]] = (
+        (
+            (-0.006, 0.028, 0.19),
+            (-0.018, 0.044, 0.26),
+            (-0.042, 0.068, 0.33),
+            (-0.064, 0.082, 0.39),
+        ),
+        (
+            (0.008, 0.024, 0.19),
+            (0.028, 0.022, 0.27),
+            (0.058, 0.015, 0.35),
+            (0.086, 0.012, 0.42),
+        ),
+        (
+            (0.0, 0.020, 0.19),
+            (-0.012, 0.016, 0.28),
+            (-0.034, 0.011, 0.36),
+            (-0.052, 0.009, 0.44),
+        ),
+    )
+    for core_pts in heavy_cores:
+        strands.add_tube_path(core_pts, radius=0.0085, mat="R1_Copper", segments=8)
+
+    # Eight finer frayed copper conductor strands fanning out in 3D
+    fine_strands: Sequence[Sequence[Tuple[float, float, float]]] = (
+        (
+            (0.0, 0.032, 0.20),
+            (0.014, 0.058, 0.27),
+            (0.022, 0.088, 0.34),
+            (0.012, 0.098, 0.38),
+        ),
+        (
+            (-0.010, 0.026, 0.20),
+            (-0.045, 0.036, 0.27),
+            (-0.088, 0.028, 0.33),
+            (-0.118, 0.014, 0.37),
+        ),
+        (
+            (0.010, 0.028, 0.20),
+            (0.048, 0.042, 0.26),
+            (0.092, 0.038, 0.32),
+            (0.122, 0.022, 0.36),
+        ),
+        (
+            (-0.004, 0.022, 0.21),
+            (0.008, 0.018, 0.30),
+            (0.018, 0.012, 0.39),
+            (0.026, 0.008, 0.45),
+        ),
+        (
+            (0.006, 0.030, 0.20),
+            (0.032, 0.062, 0.26),
+            (0.056, 0.074, 0.31),
+        ),
+        (
+            (-0.008, 0.024, 0.20),
+            (-0.032, 0.018, 0.27),
+            (-0.072, 0.010, 0.33),
+        ),
+        (
+            (0.0, 0.034, 0.20),
+            (-0.016, 0.064, 0.25),
+            (-0.008, 0.092, 0.29),
+        ),
+        (
+            (0.012, 0.022, 0.20),
+            (0.042, 0.014, 0.26),
+            (0.068, 0.009, 0.31),
+        ),
+    )
+    for f_pts in fine_strands:
+        strands.add_tube_path(f_pts, radius=0.0048, mat="R1_Copper", segments=6)
+
+    # Three recoiled bare-steel / brass armor shield strands near the torn collar
+    shield_strands: Sequence[ Tuple[Sequence[Tuple[float, float, float]], str] ] = (
+        (
+            (
+                (-0.016, 0.034, 0.19),
+                (-0.046, 0.056, 0.22),
+                (-0.068, 0.048, 0.20),
+            ),
+            "R1_BareSteel",
+        ),
+        (
+            (
+                (0.016, 0.032, 0.19),
+                (0.052, 0.048, 0.23),
+                (0.074, 0.036, 0.25),
+            ),
+            "R1_Brass",
+        ),
+        (
+            (
+                (0.004, 0.036, 0.19),
+                (0.018, 0.068, 0.22),
+                (0.038, 0.078, 0.21),
+            ),
+            "R1_BareSteel",
+        ),
+    )
+    for s_pts, s_mat in shield_strands:
+        strands.add_tube_path(s_pts, radius=0.0042, mat=s_mat, segments=6)
+
+    strands_obj = strands.build_object(parent=root)
+
+    r1kit.create_empty("Start_Anchor", parent=root, pivot_u=(0.0, CABLE_CENTER_Y, -0.45))
+    r1kit.create_empty("Break_Anchor", parent=root, pivot_u=(0.0, 0.038, 0.28))
+    r1kit.create_empty("Clip_Anchor", parent=root, pivot_u=(0.0, 0.064, -0.16))
+
+    apply_cable_dust_uvs_and_colors(root, footprint_radius=0.35)
+
+    # Boost metallic edge-wear glint (G) and clean AO (R) on FrayedStrands so sheared copper glints in headlamp light
+    if strands_obj.data and "Col" in strands_obj.data.color_attributes:
+        attr = strands_obj.data.color_attributes["Col"]
+        for item in attr.data:
+            r, g, b, a = item.color
+            item.color = (max(0.88, r), max(0.78, g), min(0.16, b * 0.35), a)
+
+    fbx_path = PROPS_DIR / "Cable_BrokenEnd.fbx"
+    r1kit.export_fbx(root, fbx_path, bake_space_transform=False)
+    print(f"Exported {fbx_path}")
+    return root
+
+
 def main() -> None:
     PROPS_DIR.mkdir(parents=True, exist_ok=True)
     build_cable_straight_2m()
     build_cable_bend_45()
     build_cable_bend_90()
+    build_cable_broken_end()
 
 
 if __name__ == "__main__":
