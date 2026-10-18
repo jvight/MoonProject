@@ -19,6 +19,9 @@ namespace MoonProject.Gameplay
     /// </summary>
     public sealed class SupplyCaches : IDisposable
     {
+        /// <summary>A frame's forward laid flat shorter than this is not a heading (it points up or down).</summary>
+        private const float LevelShare = 0.5f;
+
         private readonly List<SupplyCache> _caches = new List<SupplyCache>();
         private readonly List<SealedContainer> _containers = new List<SealedContainer>();
         private readonly Recipe[] _left;
@@ -57,9 +60,10 @@ namespace MoonProject.Gameplay
                     "(run Gameplay/Materials).");
                 Transform root = Object.Instantiate(prefab, parent).transform;
                 root.name = cache.Id;
-                Vector3 spot = frame.TransformPoint(new Vector3(cache.Offset.x, 0f, cache.Offset.z));
+                Quaternion heading = Heading(frame);
+                Vector3 spot = frame.position + heading * new Vector3(cache.Offset.x, 0f, cache.Offset.z);
                 root.SetPositionAndRotation(SurfaceRules.OnSurface(services.Terrain, spot.x, spot.z),
-                    Quaternion.Euler(0f, frame.eulerAngles.y + cache.Yaw, 0f));
+                    heading * Quaternion.Euler(0f, cache.Yaw, 0f));
                 SealedContainer container = SealedContainer.Read(cache.Id, ContainerKinds.Of(cache.Container), root,
                     SealedContainer.LidPath, SealedContainer.ItemSocketPath, Always, out string problem)
                     ?? throw new InvalidOperationException(problem);
@@ -251,6 +255,23 @@ namespace MoonProject.Gameplay
             _events.Publish(new FeelBeat(FeelKind.Collect, FeelPhase.Reward, at, Vector3.up, 1f, 0f, material));
             _stock.Collect(material, fitted);
             return fitted;
+        }
+
+        /// <summary>
+        /// The level frame a crate's offset is in: the frame's heading on the ground. A ruin piece keeps Art's FBX
+        /// root turn (its forward points down, its up along the ground), so its heading is its up laid flat.
+        /// </summary>
+        private static Quaternion Heading(Transform frame)
+        {
+            Vector3 forward = frame.forward;
+            forward.y = 0f;
+            if (forward.sqrMagnitude < LevelShare * LevelShare)
+            {
+                forward = frame.up;
+                forward.y = 0f;
+            }
+
+            return Quaternion.LookRotation(forward.normalized, Vector3.up);
         }
     }
 }
