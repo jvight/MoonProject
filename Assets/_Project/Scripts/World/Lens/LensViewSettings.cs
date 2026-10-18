@@ -14,6 +14,9 @@ namespace MoonProject.World
         /// <summary>Smallest gap (m) between the sharp and the blurred speck distances, so the ramp never divides by 0.</summary>
         private const float MinFocusSpan = 0.01f;
 
+        /// <summary>Smallest lid span the eye's gain fades over, so the ramp never divides by 0.</summary>
+        private const float MinGainSpan = 0.01f;
+
         [Tooltip("Width of the lid's soft edge, in viewport heights. Wide and soft: the lid is far too near the " +
             "lens to ever be sharp.")]
         [Range(0.01f, 0.4f)]
@@ -93,6 +96,24 @@ namespace MoonProject.World
         [Range(0.05f, 1f)]
         [SerializeField] private float _nearestFocus = 0.1f;
 
+        [Header("Eye gain (the first lid stages in the eclipse)")]
+        [Tooltip("Exposure (EV) 07's eye adds while its lid is barely open: the eclipse is near black, so the slit " +
+            "and the half lid would show nothing; this lifts them to dim but readable (stars, Earth's copper ring, " +
+            "the lander's beacon).")]
+        [Range(0f, 4f)]
+        [SerializeField] private float _wakeGain = 1.5f;
+
+        [Tooltip("The full gain holds until the lid has opened this far (0..1; the slit opens to about 0.2, the half " +
+            "lid to about 0.5), so the near-black slit gets all of it and the half lid a little.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _gainHoldLid = 0.2f;
+
+        [Tooltip("By the time the lid has opened this far (0..1; its half-lidded rest is 0.7) the gain is gone, so the " +
+            "lens hands the world's own exposure back without a jump. A later blink never brings it back; a shut " +
+            "lid (the push into the lens, a short wake) starts it again.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _gainGoneLid = 0.65f;
+
         [Header("Boot readout (O5)")]
         [Tooltip("Colour of 07's boot readout: the crew's old terminal type, warm.")]
         [SerializeField] private Color _readoutColor = new Color(1f, 0.86f, 0.62f, 1f);
@@ -137,6 +158,9 @@ namespace MoonProject.World
         public float Aperture => _aperture;
         public float NearestFocus => _nearestFocus;
         public float VolumePriority => _volumePriority;
+        public float WakeGain => _wakeGain;
+        public float GainHoldLid => _gainHoldLid;
+        public float GainGoneLid => Mathf.Max(_gainGoneLid, _gainHoldLid + MinGainSpan);
         public Color ReadoutColor => _readoutColor;
         public float ReadoutOpacity => _readoutOpacity;
         public float ReadoutLineHeight => _readoutLineHeight;
