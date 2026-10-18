@@ -436,51 +436,57 @@ namespace MoonProject.Art.Editor
             try
             {
                 Color bg = SetupEnvironment(temp, nightEclipse);
+                if (!nightEclipse && RenderSettings.sun != null)
+                {
+                    RenderSettings.sun.intensity = 2.0f;
+                    RenderSettings.sun.transform.rotation = Quaternion.Euler(26f, -32f, 0f);
+                }
 
-                // Rover 07 positioned at (-1.55, 0, 0.35) angled forward-right toward the cable kit layout
-                GameObject rover = SpawnRover07(temp, new Vector3(-1.55f, 0f, 0.35f), 142f, nightEclipse);
+                // Rover 07 positioned on the right at (1.35, 0, 0.20) in 3/4 front view (yaw -138 deg) facing the cable kit:
+                // its Day C shadow falls off-screen to +X while its CRT face and headlamps point across the kit.
+                GameObject rover = SpawnRover07(temp, new Vector3(1.35f, 0f, 0.20f), -138f, nightEclipse);
 
-                // DeadChargingPost in background right to show Cable_Plug seated into the service/pad socket
-                SpawnProp(R1StoryPropsBuilder.DeadChargingPostPrefabPath, new Vector3(1.10f, 0f, 0.90f), 180f, temp);
-                SpawnProp(R1StoryPropsBuilder.CablePlugPrefabPath, new Vector3(1.10f, 0f, 0.08f), 0f, temp);
+                // DeadChargingPost on the front-left (-1.35, 0, -0.55) so its shadow falls behind the kit (-Z), with Cable_Plug seated
+                SpawnProp(R1StoryPropsBuilder.DeadChargingPostPrefabPath, new Vector3(-1.35f, 0f, 0.55f), 165f, temp);
+                SpawnProp(R1StoryPropsBuilder.CablePlugPrefabPath, new Vector3(-1.14f, 0f, -0.24f), -15f, temp);
 
-                // Foreground layout of all 6 cable kit pieces next to Rover 07:
+                // Sunlit foreground layout of all 6 cable kit pieces next to Rover 07:
                 // 1. Cable_Straight_2m running across the front showing regolith sinkage, top dust layer, and centered stake
-                SpawnProp(R1StoryPropsBuilder.CableStraight2mPrefabPath, new Vector3(0.05f, 0f, -0.95f), 90f, temp);
+                SpawnProp(R1StoryPropsBuilder.CableStraight2mPrefabPath, new Vector3(-0.05f, 0f, -0.68f), 90f, temp);
 
-                // 2. Cable_Bend_45 and Cable_Bend_90 flanking the middle row with their ground stakes
-                SpawnProp(R1StoryPropsBuilder.CableBend45PrefabPath, new Vector3(-0.45f, 0f, -0.25f), 35f, temp);
-                SpawnProp(R1StoryPropsBuilder.CableBend90PrefabPath, new Vector3(0.35f, 0f, -0.15f), -45f, temp);
+                // 2. Cable_Bend_45 and Cable_Bend_90 flanking the upper row with their ground stakes
+                SpawnProp(R1StoryPropsBuilder.CableBend45PrefabPath, new Vector3(-0.45f, 0f, 0.12f), 35f, temp);
+                SpawnProp(R1StoryPropsBuilder.CableBend90PrefabPath, new Vector3(0.28f, 0f, 0.15f), -45f, temp);
 
                 // 3. Cable_Plug in foreground-left showing the cream/orange handle, grey locking collar, and copper barrel + 3 pins
-                SpawnProp(R1StoryPropsBuilder.CablePlugPrefabPath, new Vector3(-0.55f, 0f, -0.68f), 125f, temp);
+                SpawnProp(R1StoryPropsBuilder.CablePlugPrefabPath, new Vector3(-0.52f, 0f, -0.32f), 125f, temp);
 
                 // 4. Cable_Splice_Box in foreground-center showing dusty cream/orange housing, gold foil, and dead dark-glass lamp
-                SpawnProp(R1StoryPropsBuilder.CableSpliceBoxPrefabPath, new Vector3(0.18f, 0f, -0.58f), 78f, temp);
+                SpawnProp(R1StoryPropsBuilder.CableSpliceBoxPrefabPath, new Vector3(0.06f, 0f, -0.28f), 78f, temp);
 
                 // 5. Cable_BrokenEnd in foreground-right showing cracked sleeve and splayed R1_Copper strands
-                SpawnProp(R1StoryPropsBuilder.CableBrokenEndPrefabPath, new Vector3(0.85f, 0f, -0.55f), -135f, temp);
+                SpawnProp(R1StoryPropsBuilder.CableBrokenEndPrefabPath, new Vector3(0.65f, 0f, -0.28f), -135f, temp);
 
                 if (nightEclipse)
                 {
-                    AddRoverHeadlamps(rover.transform, new Vector3(0.15f, 0.12f, -0.55f), temp);
+                    AddRoverHeadlamps(rover.transform, new Vector3(0.02f, 0.12f, -0.32f), temp);
                 }
 
                 string suffix = nightEclipse ? "eclipse" : "dayC";
 
                 // 1. Full kit overview next to Rover 07
                 RenderShot(
-                    new Vector3(-0.15f, 1.55f, -2.85f),
-                    new Vector3(-0.10f, 0.32f, -0.25f),
-                    44f,
+                    new Vector3(0.05f, 1.52f, -2.75f),
+                    new Vector3(0.05f, 0.30f, -0.15f),
+                    46f,
                     bg,
                     Path.Combine(outDir, $"r1props_cable_kit_{suffix}.png"));
 
                 // 2. Close-up detail shot of Cable_Plug, Cable_Splice_Box, Cable_BrokenEnd, and staked Cable_Straight_2m
                 RenderShot(
-                    new Vector3(0.12f, 0.92f, -1.95f),
-                    new Vector3(0.15f, 0.12f, -0.62f),
-                    38f,
+                    new Vector3(0.04f, 0.88f, -1.65f),
+                    new Vector3(0.05f, 0.12f, -0.32f),
+                    40f,
                     bg,
                     Path.Combine(outDir, $"r1props_cable_kit_detail_{suffix}.png"));
             }
