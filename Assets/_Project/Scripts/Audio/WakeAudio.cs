@@ -13,11 +13,14 @@ namespace MoonProject.Audio
     /// leaves (O10); it gives way to the radio's own wake over the shoulder (O12), or at the chase frame;</item>
     /// <item>each <see cref="RoverWakeBeatReached"/> plays its cues from <see cref="WakeCueSheet"/>: the thump, the
     /// ghost chord D-A-E surfacing at O1, the lid ticks, the lens whine, the focus landing, the short wake's tick;</item>
-    /// <item>the New Game self-test: each check's motion from 07 when it starts (<see cref="BootCheckStarted"/>, the
-    /// iris, the lamps, the head, the wheels, the motor, the cutter's failed ignition, the stuck wing, the antenna,
-    /// the cells, the assembly's query, the recovery's ready chord), and 07's fault voice when a check comes out
-    /// <see cref="BootCheckResult.Fault"/> (<see cref="BootCheckCompleted"/>). The black, the lid and the lens hunt
-    /// (Carrier, Resume, Agenda) are already the wake's own beats.</item>
+    /// <item>the New Game self-test, heard from 07: a check made of one motion plays it when it starts
+    /// (<see cref="BootCheckStarted"/>: the iris, the cells' charge whine, the assembly's query); a check made of
+    /// several plays each on its <see cref="BootCheckPulse"/> (the lamps' flickers and ramp, the head's sweep and nod,
+    /// each wheel, the motor's shudder and creep, the cutter's sparks, the wing's jerk, stall and fold, the antenna's
+    /// rise and signal, the recovery's turn, shiver and headlamps), once per pulse even where Rover repeats one as
+    /// progress; 07's fault voice when a check comes out <see cref="BootCheckResult.Fault"/>
+    /// (<see cref="BootCheckCompleted"/>). The black, the lid and the lens hunt (Carrier, Resume, Agenda) are the
+    /// wake's own beats, and the cells' ticks are the battery's (<see cref="BatteryAudio"/>).</item>
     /// </list>
     /// The pause menu ducks all of it with the world (<see cref="AudioDirector.WorldGain"/>), and delayed cues wait.
     /// Initialises after the <see cref="AudioDirector"/>, whose library it resolves its cues from.
@@ -27,16 +30,46 @@ namespace MoonProject.Audio
     {
         private const int PendingCapacity = 4;
 
-        /// <summary>The checks with a sound of their own (the black's Carrier, Resume and Agenda are the wake's beats).
-        /// </summary>
-        private static readonly (BootCheckStep Step, string CueId)[] CheckCueIds =
+        /// <summary>Most pulse indices one check uses (Rover's: the cutter's sparks 0..2 and beacon blinks 3..5).</summary>
+        private const int MaxPulseIndex = 8;
+
+        /// <summary>The checks of a single motion, heard as they start.</summary>
+        private static readonly (BootCheckStep Step, string CueId)[] StartCueIds =
         {
-            (BootCheckStep.Lens, AudioCueIds.BootLens), (BootCheckStep.Lamps, AudioCueIds.BootLamps),
-            (BootCheckStep.Head, AudioCueIds.BootHead), (BootCheckStep.Wheels, AudioCueIds.BootWheels),
-            (BootCheckStep.Motor, AudioCueIds.BootMotor), (BootCheckStep.Cutter, AudioCueIds.BootCutter),
-            (BootCheckStep.SolarWing, AudioCueIds.BootWingJam), (BootCheckStep.Antenna, AudioCueIds.BootAntenna),
-            (BootCheckStep.Battery, AudioCueIds.BootBattery), (BootCheckStep.Assembly, AudioCueIds.BootAssembly),
-            (BootCheckStep.Begin, AudioCueIds.BootBegin),
+            (BootCheckStep.Lens, AudioCueIds.BootLens), (BootCheckStep.Battery, AudioCueIds.BootBattery),
+            (BootCheckStep.Assembly, AudioCueIds.BootAssembly),
+        };
+
+        /// <summary>
+        /// The checks' motions on their pulses (Rover's indices), each with its variant and its share of the check
+        /// level: the flickers are uneven, the cutter's attempts weaker each time. The beacon's blinks (Cutter 3..5) are
+        /// the lander's light, not 07's, and have no sound.
+        /// </summary>
+        private static readonly PulseSound[] PulseSounds =
+        {
+            new PulseSound(BootCheckStep.Lamps, 0, AudioCueIds.BootLampFlicker, 0, 1f),
+            new PulseSound(BootCheckStep.Lamps, 1, AudioCueIds.BootLampFlicker, 1, 0.7f),
+            new PulseSound(BootCheckStep.Lamps, 2, AudioCueIds.BootLampFlicker, 2, 0.85f),
+            new PulseSound(BootCheckStep.Lamps, 3, AudioCueIds.BootLampRamp, 0, 1f),
+            new PulseSound(BootCheckStep.Head, 0, AudioCueIds.BootHeadSweep, 0, 1f),
+            new PulseSound(BootCheckStep.Head, 1, AudioCueIds.BootHeadNod, 0, 1f),
+            new PulseSound(BootCheckStep.Wheels, 0, AudioCueIds.BootWheel, 0, 1f),
+            new PulseSound(BootCheckStep.Wheels, 1, AudioCueIds.BootWheel, 1, 1f),
+            new PulseSound(BootCheckStep.Wheels, 2, AudioCueIds.BootWheel, 2, 1f),
+            new PulseSound(BootCheckStep.Wheels, 3, AudioCueIds.BootWheel, 3, 1f),
+            new PulseSound(BootCheckStep.Motor, 0, AudioCueIds.BootMotorShudder, 0, 1f),
+            new PulseSound(BootCheckStep.Motor, 1, AudioCueIds.BootMotorCreep, 0, 1f),
+            new PulseSound(BootCheckStep.Cutter, 0, AudioCueIds.BootCutterSpark, 0, 1f),
+            new PulseSound(BootCheckStep.Cutter, 1, AudioCueIds.BootCutterSpark, 1, 0.8f),
+            new PulseSound(BootCheckStep.Cutter, 2, AudioCueIds.BootCutterSpark, 2, 0.55f),
+            new PulseSound(BootCheckStep.SolarWing, 0, AudioCueIds.BootWingJerk, 0, 1f),
+            new PulseSound(BootCheckStep.SolarWing, 1, AudioCueIds.BootWingStall, 0, 1f),
+            new PulseSound(BootCheckStep.SolarWing, 2, AudioCueIds.BootWingFold, 0, 1f),
+            new PulseSound(BootCheckStep.Antenna, 0, AudioCueIds.BootAntennaRise, 0, 1f),
+            new PulseSound(BootCheckStep.Antenna, 1, AudioCueIds.BootAntennaSignal, 0, 1f),
+            new PulseSound(BootCheckStep.Begin, 0, AudioCueIds.BootBeginTurn, 0, 1f),
+            new PulseSound(BootCheckStep.Begin, 1, AudioCueIds.BootBeginShiver, 0, 1f),
+            new PulseSound(BootCheckStep.Begin, 2, AudioCueIds.BootBeginLamps, 0, 1f),
         };
 
         [Tooltip("The audio director (library, voices, buses).")]
@@ -50,6 +83,8 @@ namespace MoonProject.Audio
         private readonly float[] _pendingLeft = new float[PendingCapacity];
         private readonly CueHandle[] _cues = new CueHandle[(int)WakeCueKind.Whine + 1];
         private readonly CueHandle[] _checks = new CueHandle[(int)BootCheckStep.Begin + 1];
+        private readonly CueHandle[] _pulseCues = new CueHandle[PulseSounds.Length];
+        private readonly bool[] _pulseHeard = new bool[MaxPulseIndex];
         private IRoverState _rover;
         private CueHandle _fault;
         private WakeCueSheet _sheet;
@@ -97,10 +132,16 @@ namespace MoonProject.Audio
                 resolved &= cue.IsValid;
             }
 
-            for (int i = 0; i < CheckCueIds.Length; i++)
+            for (int i = 0; i < StartCueIds.Length; i++)
             {
-                _checks[(int)CheckCueIds[i].Step] = _director.Resolve(CheckCueIds[i].CueId);
-                resolved &= _checks[(int)CheckCueIds[i].Step].IsValid;
+                _checks[(int)StartCueIds[i].Step] = _director.Resolve(StartCueIds[i].CueId);
+                resolved &= _checks[(int)StartCueIds[i].Step].IsValid;
+            }
+
+            for (int i = 0; i < PulseSounds.Length; i++)
+            {
+                _pulseCues[i] = _director.Resolve(PulseSounds[i].CueId);
+                resolved &= _pulseCues[i].IsValid;
             }
 
             if (!resolved)
@@ -124,16 +165,43 @@ namespace MoonProject.Audio
                 events.Subscribe<PauseChanged>(OnPauseChanged),
                 events.Subscribe<BootCheckStarted>(OnCheckStarted),
                 events.Subscribe<BootCheckCompleted>(OnCheckCompleted),
+                events.Subscribe<BootCheckPulse>(OnCheckPulse),
             };
         }
 
-        /// <summary>A self-test check's motion begins: its sound, from 07 (the black's checks have none here).</summary>
+        /// <summary>A self-test check begins: a single motion sounds now, from 07; its pulses start fresh.</summary>
         private void OnCheckStarted(BootCheckStarted started)
         {
+            for (int i = 0; i < _pulseHeard.Length; i++)
+            {
+                _pulseHeard[i] = false;
+            }
+
             CueHandle cue = _checks[(int)started.Step];
             if (cue.IsValid)
             {
                 _director.PlayAt(cue, _rover.Position, _settings.Check * _director.WorldGain);
+            }
+        }
+
+        /// <summary>One of a check's motions: its sound once, the first time Rover marks that motion.</summary>
+        private void OnCheckPulse(BootCheckPulse pulse)
+        {
+            if (pulse.Index < 0 || pulse.Index >= _pulseHeard.Length || _pulseHeard[pulse.Index])
+            {
+                return;
+            }
+
+            for (int i = 0; i < PulseSounds.Length; i++)
+            {
+                PulseSound sound = PulseSounds[i];
+                if (sound.Step == pulse.Step && sound.Index == pulse.Index)
+                {
+                    _pulseHeard[pulse.Index] = true;
+                    _director.PlayVariantAt(_pulseCues[i], sound.Variant, _rover.Position,
+                        _settings.Check * sound.Share * _director.WorldGain);
+                    return;
+                }
             }
         }
 
@@ -279,6 +347,29 @@ namespace MoonProject.Audio
             {
                 subscription.Dispose();
             }
+        }
+
+        /// <summary>One motion's sound in a self-test check.</summary>
+        private readonly struct PulseSound
+        {
+            public PulseSound(BootCheckStep step, int index, string cueId, int variant, float share)
+            {
+                Step = step;
+                Index = index;
+                CueId = cueId;
+                Variant = variant;
+                Share = share;
+            }
+
+            public BootCheckStep Step { get; }
+
+            public int Index { get; }
+
+            public string CueId { get; }
+
+            public int Variant { get; }
+
+            public float Share { get; }
         }
     }
 }

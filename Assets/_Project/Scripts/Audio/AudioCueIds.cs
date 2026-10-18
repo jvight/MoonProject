@@ -109,18 +109,26 @@ namespace MoonProject.Audio
         public const string StructurePowerOn = "structure_power_on";
         public const string BaseLampOn = "base_lamp_on";
 
-        // The New Game self-test (sampled): one per check's motion, and the fault result
+        // The New Game self-test (sampled): the checks' motions, and the fault result
         public const string BootLens = "boot_lens";
-        public const string BootLamps = "boot_lamps";
-        public const string BootHead = "boot_head";
-        public const string BootWheels = "boot_wheels";
-        public const string BootMotor = "boot_motor";
-        public const string BootCutter = "boot_cutter";
-        public const string BootWingJam = "boot_wing_jam";
-        public const string BootAntenna = "boot_antenna";
+        public const string BootLampFlicker = "boot_lamp_flicker";
+        public const string BootLampRamp = "boot_lamp_ramp";
+        public const string BootHeadSweep = "boot_head_sweep";
+        public const string BootHeadNod = "boot_head_nod";
+        public const string BootWheel = "boot_wheel";
+        public const string BootMotorShudder = "boot_motor_shudder";
+        public const string BootMotorCreep = "boot_motor_creep";
+        public const string BootCutterSpark = "boot_cutter_spark";
+        public const string BootWingJerk = "boot_wing_jerk";
+        public const string BootWingStall = "boot_wing_stall";
+        public const string BootWingFold = "boot_wing_fold";
+        public const string BootAntennaRise = "boot_antenna_rise";
+        public const string BootAntennaSignal = "boot_antenna_signal";
         public const string BootBattery = "boot_battery";
         public const string BootAssembly = "boot_assembly";
-        public const string BootBegin = "boot_begin";
+        public const string BootBeginTurn = "boot_begin_turn";
+        public const string BootBeginShiver = "boot_begin_shiver";
+        public const string BootBeginLamps = "boot_begin_lamps";
         public const string BootFault = "boot_fault";
 
         // R1 Group 4: Machines

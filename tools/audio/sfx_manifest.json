@@ -1268,7 +1268,7 @@
         "boot_lens"
       ],
       "sha256": [
-        "6a80b37b207b9985794bab7c331d0dcbde48ad2524137820ed3368f1f1b8e2ad"
+        "15e3ae1d72faf039b6f28ebf2f299c192abcfad7e74ba6788095208d57d9edcc"
       ],
       "volumeMin": 0.6,
       "volumeMax": 0.6,
@@ -1279,57 +1279,63 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "New Game self-test, the iris ratchets and the focus motor hunts onto A.",
+      "notes": "New Game self-test, the iris ratchets and the focus motor hunts onto A (on Started).",
       "source": "sampled",
       "pick": "boot_lens"
     },
     {
-      "id": "boot_lamps",
-      "category": "oneshot_3d",
+      "id": "boot_lamp_flicker",
+      "category": "tick_3d",
       "milestone": "M3",
       "bus": "Sfx",
       "spatial": true,
       "loop": false,
       "files": [
-        "Assets/_Project/Audio/SFX/boot_lamps.wav"
+        "Assets/_Project/Audio/SFX/boot_lamp_flicker_01.wav",
+        "Assets/_Project/Audio/SFX/boot_lamp_flicker_02.wav",
+        "Assets/_Project/Audio/SFX/boot_lamp_flicker_03.wav"
       ],
       "variantLabels": [
-        "boot_lamps"
+        "01",
+        "02",
+        "03"
       ],
       "sha256": [
-        "04ea89a017b496ee25fd16d767a1c7685a98e839cea3fde15b04c8fccd3bfd35"
+        "e8c0902200d3fd08c0142b2c4575878566d275731a8228355bac065cf9ac1031",
+        "e45c546d1a34a03ce0a69657ae6ef0417b1653048f727921570091782bff0f0c",
+        "1ae024aebc7ce25a842ba157dbfadcfb883f411c1217c14289d4fe30a54e8a1b"
       ],
-      "volumeMin": 0.6,
-      "volumeMax": 0.6,
+      "volumeMin": 0.9,
+      "volumeMax": 0.9,
       "pitchMin": 1.0,
       "pitchMax": 1.0,
-      "targetLufs": -18.0,
+      "targetLufs": -26.0,
       "loudnessMode": "momentary",
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "New Game self-test, three uneven flickers, a gap, the lamp circuit ramping onto D.",
+      "notes": "New Game self-test, a lamp flicker: relay, spark, a bark of hum (Pulse 0..2).",
       "source": "sampled",
-      "pick": "boot_lamps"
+      "pick": "boot_lamp_flicker"
     },
     {
-      "id": "boot_head",
+      "id": "boot_lamp_ramp",
       "category": "oneshot_3d",
       "milestone": "M3",
       "bus": "Sfx",
       "spatial": true,
       "loop": false,
       "files": [
-        "Assets/_Project/Audio/SFX/boot_head.wav"
+        "Assets/_Project/Audio/SFX/boot_lamp_ramp.wav"
       ],
       "variantLabels": [
-        "boot_head"
+        "boot_lamp_ramp"
       ],
       "sha256": [
-        "2897878abe22b2c4c01cf49697e8c8581b5a99778828126310a08a3d9bc04b86"
+        "bc460ae89b51a4185cac6f937c9dbc68e4f5edcac4b5b26c965519f94fbc60e1"
       ],
-      "volumeMin": 0.6,
-      "volumeMax": 0.6,
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
       "pitchMin": 1.0,
       "pitchMax": 1.0,
       "targetLufs": -18.0,
@@ -1337,25 +1343,25 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "New Game self-test, the head servo sweeps out and back, grit, a nod.",
+      "notes": "New Game self-test, the lamp switch and the circuit ramping onto D (Pulse 3).",
       "source": "sampled",
-      "pick": "boot_head"
+      "pick": "boot_lamp_ramp"
     },
     {
-      "id": "boot_wheels",
+      "id": "boot_head_sweep",
       "category": "oneshot_3d",
       "milestone": "M3",
       "bus": "Sfx",
       "spatial": true,
       "loop": false,
       "files": [
-        "Assets/_Project/Audio/SFX/boot_wheels.wav"
+        "Assets/_Project/Audio/SFX/boot_head_sweep.wav"
       ],
       "variantLabels": [
-        "boot_wheels"
+        "boot_head_sweep"
       ],
       "sha256": [
-        "f040bca652590c8fc09aa201576653df63ddf1b5d643763bcdef5b17dabfa1d6"
+        "ecce02496fb676ec323962a888277f8f45e2b1f91fa9fb4b96a7a5ac56d47bcd"
       ],
       "volumeMin": 0.6,
       "volumeMax": 0.6,
@@ -1366,28 +1372,28 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "New Game self-test, four wheels twitch in turn, a gear grunt and a clunk each.",
+      "notes": "New Game self-test, the head servo sweeping out and back, grit (Pulse 0).",
       "source": "sampled",
-      "pick": "boot_wheels"
+      "pick": "boot_head_sweep"
     },
     {
-      "id": "boot_motor",
+      "id": "boot_head_nod",
       "category": "oneshot_3d",
       "milestone": "M3",
       "bus": "Sfx",
       "spatial": true,
       "loop": false,
       "files": [
-        "Assets/_Project/Audio/SFX/boot_motor.wav"
+        "Assets/_Project/Audio/SFX/boot_head_nod.wav"
       ],
       "variantLabels": [
-        "boot_motor"
+        "boot_head_nod"
       ],
       "sha256": [
-        "6080f23195988545e3021acf23479b49a19db38af827d2516c6622e8c167adef"
+        "abc3849740e3d1d4af77aba0b966dc9831cea41d1666201c9cdc815ff9d2f6c8"
       ],
-      "volumeMin": 0.6,
-      "volumeMax": 0.6,
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
       "pitchMin": 1.0,
       "pitchMax": 1.0,
       "targetLufs": -18.0,
@@ -1395,28 +1401,37 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "New Game self-test, the drive motor shudders up and creeps.",
+      "notes": "New Game self-test, the nod and a latch seating (Pulse 1).",
       "source": "sampled",
-      "pick": "boot_motor"
+      "pick": "boot_head_nod"
     },
     {
-      "id": "boot_cutter",
+      "id": "boot_wheel",
       "category": "oneshot_3d",
       "milestone": "M3",
       "bus": "Sfx",
       "spatial": true,
       "loop": false,
       "files": [
-        "Assets/_Project/Audio/SFX/boot_cutter.wav"
+        "Assets/_Project/Audio/SFX/boot_wheel_01.wav",
+        "Assets/_Project/Audio/SFX/boot_wheel_02.wav",
+        "Assets/_Project/Audio/SFX/boot_wheel_03.wav",
+        "Assets/_Project/Audio/SFX/boot_wheel_04.wav"
       ],
       "variantLabels": [
-        "boot_cutter"
+        "01",
+        "02",
+        "03",
+        "04"
       ],
       "sha256": [
-        "72807beeb7cfd8ac32a5dea375f359b1fab4ff1bf214a95a0b3a636a8bd1e981"
+        "0ac845d6cb2bdaea9bb4dec5501cb72f253f61e735b5a73ca8628fc83425bf0f",
+        "3849417b44de8160c5028e3ba54f2fa5f1420373e8bd5ef5c41aab6ba5a4f25c",
+        "c6708521f5391c1cb3cc122630749daf488662af1191ff299516af4a161d39c5",
+        "18430dfebb8dbaa71597e11c8f662a58fb62259fc08cc7a8ed3ea1a106c2a831"
       ],
-      "volumeMin": 0.6,
-      "volumeMax": 0.6,
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
       "pitchMin": 1.0,
       "pitchMax": 1.0,
       "targetLufs": -18.0,
@@ -1424,25 +1439,25 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "New Game self-test, three ignition attempts that fizzle.",
+      "notes": "New Game self-test, one wheel twitch: a gear grunt and a clunk, each wheel its own (Pulse 0..3).",
       "source": "sampled",
-      "pick": "boot_cutter"
+      "pick": "boot_wheel"
     },
     {
-      "id": "boot_wing_jam",
+      "id": "boot_motor_shudder",
       "category": "oneshot_3d",
       "milestone": "M3",
       "bus": "Sfx",
       "spatial": true,
       "loop": false,
       "files": [
-        "Assets/_Project/Audio/SFX/boot_wing_jam.wav"
+        "Assets/_Project/Audio/SFX/boot_motor_shudder.wav"
       ],
       "variantLabels": [
-        "boot_wing_jam"
+        "boot_motor_shudder"
       ],
       "sha256": [
-        "f4c351b80259919010615d39e976ed82f443141c3de1705a18a1df80d5b14d1d"
+        "63f91d14585510ea5ab685637bf83f6606a613ded3fe2cc3f37c58dd60999bfc"
       ],
       "volumeMin": 0.6,
       "volumeMax": 0.6,
@@ -1453,25 +1468,89 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "New Game self-test, the solar wing strains, clunks half open, stalls, folds back.",
+      "notes": "New Game self-test, the drive motor shuddering up (Pulse 0).",
       "source": "sampled",
-      "pick": "boot_wing_jam"
+      "pick": "boot_motor_shudder"
     },
     {
-      "id": "boot_antenna",
+      "id": "boot_motor_creep",
       "category": "oneshot_3d",
       "milestone": "M3",
       "bus": "Sfx",
       "spatial": true,
       "loop": false,
       "files": [
-        "Assets/_Project/Audio/SFX/boot_antenna.wav"
+        "Assets/_Project/Audio/SFX/boot_motor_creep.wav"
       ],
       "variantLabels": [
-        "boot_antenna"
+        "boot_motor_creep"
       ],
       "sha256": [
-        "abe8fdfce083b2e634d7612f97963195816f1d54821682e9903247fcdf8bd97b"
+        "3ec6b62c8918e15028d432a69a8f65de6907c89674bb8f5449dea8c739611aca"
+      ],
+      "volumeMin": 0.4,
+      "volumeMax": 0.4,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "New Game self-test, the creep forward: wheels grinding regolith (Pulse 1).",
+      "source": "sampled",
+      "pick": "boot_motor_creep"
+    },
+    {
+      "id": "boot_cutter_spark",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/boot_cutter_spark_01.wav",
+        "Assets/_Project/Audio/SFX/boot_cutter_spark_02.wav",
+        "Assets/_Project/Audio/SFX/boot_cutter_spark_03.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03"
+      ],
+      "sha256": [
+        "28941bfb1f43748b4d7c995b23c34c3167f5de95657f1ba47465ad47d6769920",
+        "7e85323bc581ca2264bc963ea0e9f8e7c2fddf54d60fa9eee9143b28330219d8",
+        "7123a3992832546478731f70bb1021394227f90d53f6eb2a92fed29a9e58dc1f"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "New Game self-test, an ignition attempt that fizzles, weaker each time (Pulse 0..2).",
+      "source": "sampled",
+      "pick": "boot_cutter_spark"
+    },
+    {
+      "id": "boot_wing_jerk",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/boot_wing_jerk.wav"
+      ],
+      "variantLabels": [
+        "boot_wing_jerk"
+      ],
+      "sha256": [
+        "a9cc5417fc1cef291c5446adf3c8e619dbebeef9ce2f892cfe22a2befd016736"
       ],
       "volumeMin": 0.6,
       "volumeMax": 0.6,
@@ -1482,9 +1561,125 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "New Game self-test, the mast runs up, latches, orbit hiss.",
+      "notes": "New Game self-test, the wing straining and jerking half open (Pulse 0).",
       "source": "sampled",
-      "pick": "boot_antenna"
+      "pick": "boot_wing_jerk"
+    },
+    {
+      "id": "boot_wing_stall",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/boot_wing_stall.wav"
+      ],
+      "variantLabels": [
+        "boot_wing_stall"
+      ],
+      "sha256": [
+        "4f3348a898dae0d28bcdde3dc0ef9c67c7aac1edfa9e828df35e607ab6850fd8"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "New Game self-test, the wing grinding against the jam (Pulse 1).",
+      "source": "sampled",
+      "pick": "boot_wing_stall"
+    },
+    {
+      "id": "boot_wing_fold",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/boot_wing_fold.wav"
+      ],
+      "variantLabels": [
+        "boot_wing_fold"
+      ],
+      "sha256": [
+        "27b56e78408947ca1dacdda9bb81a6af4bbaf0f34b1906761c40f8fdba75eb67"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "New Game self-test, the wing folding back, a latch (Pulse 2).",
+      "source": "sampled",
+      "pick": "boot_wing_fold"
+    },
+    {
+      "id": "boot_antenna_rise",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/boot_antenna_rise.wav"
+      ],
+      "variantLabels": [
+        "boot_antenna_rise"
+      ],
+      "sha256": [
+        "26b8c4ef362140a39e38c18534f6fd89200434abca9b417ce048af439561420e"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "New Game self-test, the mast running up its sprung tape and latching (Pulse 0).",
+      "source": "sampled",
+      "pick": "boot_antenna_rise"
+    },
+    {
+      "id": "boot_antenna_signal",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/boot_antenna_signal.wav"
+      ],
+      "variantLabels": [
+        "boot_antenna_signal"
+      ],
+      "sha256": [
+        "50e11e43af6ed38a836a807c5d7c3964417fc0aa85c56c3c0c9e5ac9d1efa559"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "New Game self-test, orbit hiss swelling in, receive only (Pulse 1).",
+      "source": "sampled",
+      "pick": "boot_antenna_signal"
     },
     {
       "id": "boot_battery",
@@ -1500,10 +1695,10 @@
         "boot_battery"
       ],
       "sha256": [
-        "c07a024d207b8e9283275248013c2bd7ff73d76557208b612fa47195974dc72b"
+        "43c61f184aebc55e9d978fa9fceb080c745a45e4cd3c15fb5f9d2767c6a27e24"
       ],
-      "volumeMin": 0.6,
-      "volumeMax": 0.6,
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
       "pitchMin": 1.0,
       "pitchMax": 1.0,
       "targetLufs": -18.0,
@@ -1511,7 +1706,7 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "New Game self-test, cell relays climbing A B D E over a rising whine.",
+      "notes": "New Game self-test, the charge whine rising as the cells fill (on Started).",
       "source": "sampled",
       "pick": "boot_battery"
     },
@@ -1529,7 +1724,7 @@
         "boot_assembly"
       ],
       "sha256": [
-        "e81ab3a3917f128ff6f814e4efdec170157e0d4b95ffaaf34b6264d44fa8243a"
+        "80167990673c50065373004d04bc7408bf410c50b70c0ca3ce85ad898403ecf9"
       ],
       "volumeMin": 0.6,
       "volumeMax": 0.6,
@@ -1540,25 +1735,83 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "New Game self-test, a latch and a short rising query (no blueprints).",
+      "notes": "New Game self-test, a latch and a short rising query: no blueprints (on Started).",
       "source": "sampled",
       "pick": "boot_assembly"
     },
     {
-      "id": "boot_begin",
+      "id": "boot_begin_turn",
       "category": "oneshot_3d",
       "milestone": "M3",
       "bus": "Sfx",
       "spatial": true,
       "loop": false,
       "files": [
-        "Assets/_Project/Audio/SFX/boot_begin.wav"
+        "Assets/_Project/Audio/SFX/boot_begin_turn.wav"
       ],
       "variantLabels": [
-        "boot_begin"
+        "boot_begin_turn"
       ],
       "sha256": [
-        "8b63adb29aa2e98103e6ee4a4c3f7ac1c6a512f7a106bde32013acee19cf399b"
+        "91c3d6154f2278df35dfabe4691c7e1bd6bcdaf3e6d94686ad85aee7468ed8cd"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "New Game self-test, the head turning to the beacon (Pulse 0).",
+      "source": "sampled",
+      "pick": "boot_begin_turn"
+    },
+    {
+      "id": "boot_begin_shiver",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/boot_begin_shiver.wav"
+      ],
+      "variantLabels": [
+        "boot_begin_shiver"
+      ],
+      "sha256": [
+        "4bfa880f52d37ac4fa0d1a55c2ac1561cbf826dd8c5a3485853e4f3ac598a3cc"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "New Game self-test, the dust shiver (Pulse 1).",
+      "source": "sampled",
+      "pick": "boot_begin_shiver"
+    },
+    {
+      "id": "boot_begin_lamps",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/boot_begin_lamps.wav"
+      ],
+      "variantLabels": [
+        "boot_begin_lamps"
+      ],
+      "sha256": [
+        "5e816565d1b9e92b8e40102de8c27e4e6a2f86a52b42935ca95abd8b49aafa70"
       ],
       "volumeMin": 0.6,
       "volumeMax": 0.6,
@@ -1569,9 +1822,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "New Game self-test, head turn, dust shiver, headlamps, a D F# A ready chord.",
+      "notes": "New Game self-test, the headlamps and a D F# A ready chord (Pulse 2).",
       "source": "sampled",
-      "pick": "boot_begin"
+      "pick": "boot_begin_lamps"
     },
     {
       "id": "boot_fault",

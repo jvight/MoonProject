@@ -37,9 +37,10 @@ BUILD = {
     "structure_power_on": 0,
 }
 
-# The New Game self-test: each check's motion (one recipe each, sampled/boot.py), and the cutter's fault on its
-# result (the short strain-and-choke, so it is 07's fault voice but quicker than worried's).
-BOOT = tuple(boot.STEPS)
+# The New Game self-test: each check's motions (sampled/boot.py, every variant ships: the wheels, the sparks and the
+# flickers each have their own), and the cutter's fault on its result (the short strain-and-choke, so it is 07's fault
+# voice but quicker than worried's).
+BOOT = tuple(boot.SOUNDS)
 BOOT_FAULT = ("voice_fault", 1)
 
 # 07's eye and antenna read each syllable's pitch as 0..1 between these (log).
@@ -94,10 +95,10 @@ def renderer(cue_id: str):
         render.__doc__ = f"The self-test's fault result: {voice.GESTURES[tone][pick].description}"
         return render
     if cue_id in BOOT:
-        step = boot.STEPS[cue_id]
+        step, _ = boot.SOUNDS[cue_id]
 
-        def render(_variant, gen):
-            return step(_library(), gen)
+        def render(variant, gen):
+            return step(_library(), gen, variant)
 
         render.__doc__ = step.__doc__
         return render
