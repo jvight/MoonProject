@@ -26,8 +26,7 @@ namespace MoonProject.Gameplay
         private const int MaxPathGlints = 16;
         private const int PointSlots = CorePointCount + IrisRingCount + IrisCaliperCount + MoteCount + MaxPathGlints;
         private const int LensStreakCount = 4;
-        private const int DataTickCount = 12;
-        private const int StreakSlots = LensStreakCount + DataTickCount;
+        private const int StreakSlots = LensStreakCount;
 
         private const int WedgeRings = 16;
         private const int WedgeSlices = 9;
@@ -328,13 +327,10 @@ namespace MoonProject.Gameplay
             _lastContactCenter = contactCenter;
 
             // 1. Stylised narrow scan beam wedge from 07's cheek lens to the current surface scan line on the target
-            StepWedgeMesh(wedgeOrigin, contactCenter, right, orthoUp, spanHeight, cyanColor, amberColor, sweepLevel, widthScale);
+            StepWedgeMesh(wedgeOrigin, contactCenter, right, orthoUp, spanHeight, cyanColor, sweepLevel, widthScale);
 
             // 2. No point light: a light at the lens would tint 07's cream body and head cyan during a scan
-            ScanVariant variant = _scanTuning != null ? _scanTuning.Variant : ScanVariant.ProfilerSweep;
-            Color activeTint = _pingRemaining > 0f
-                ? amberColor
-                : (variant == ScanVariant.WireframeReveal ? Color.Lerp(cyanColor, amberColor, 0.35f) : cyanColor);
+            Color activeTint = _pingRemaining > 0f ? amberColor : cyanColor;
 
             // 3. 07's cheek lens emitter core, calm outer halo, opening iris ring, and short bezel-clamped flare needles
             Color halo = activeTint;
@@ -407,17 +403,7 @@ namespace MoonProject.Gameplay
                 }
             }
 
-            // 4. Variant B ("Wireframe reveal"): small data ticks streaming along the beam from the target to the lens
-            if (variant == ScanVariant.WireframeReveal)
-            {
-                StepStreamingDataTicks(wedgeOrigin, contactCenter, right, orthoUp, cyanColor, amberColor, sweepLevel, widthScale);
-            }
-            else if (variant == ScanVariant.PointScan)
-            {
-                StepPulsingLaserLine(wedgeOrigin, contactCenter, cyanColor, amberColor, sweepLevel, widthScale);
-            }
-
-            // 5. Sparse, brief (0.1-0.3 s) tiny dust sparkles strictly within a thin band of the beam wedge,
+            // 4. Sparse, brief (0.1-0.3 s) tiny dust sparkles strictly within a thin band of the beam wedge,
             //    capped well below the bloom threshold
             StepBallisticPathGlints(wedgeOrigin, contactCenter, right, orthoUp, activeTint, sweepLevel, widthScale);
         }
@@ -429,7 +415,6 @@ namespace MoonProject.Gameplay
             Vector3 orthoUp,
             float spanHeight,
             Color cyanColor,
-            Color amberColor,
             float sweepLevel,
             float widthScale)
         {
@@ -448,7 +433,6 @@ namespace MoonProject.Gameplay
             _wedgeRenderer.enabled = true;
             Vector3 beamDir = beamVec / beamLen;
 
-            ScanVariant variant = _scanTuning != null ? _scanTuning.Variant : ScanVariant.ProfilerSweep;
             float lensWidth = (_scanTuning != null ? _scanTuning.BeamLensWidth : DefaultBeamLensWidth) * widthScale;
             float targetWidthShare = _scanTuning != null ? _scanTuning.BeamTargetWidthShare : DefaultBeamTargetWidthShare;
             float scanlineDensity = _scanTuning != null ? _scanTuning.BeamScanlineDensity : DefaultBeamScanlineDensity;
@@ -483,10 +467,7 @@ namespace MoonProject.Gameplay
                 float alongAlpha = EvaluateWedgeLongitudinalAlpha(d, beamLen) * screenClearance;
                 float lensHotMix = Mathf.Exp(-d / LensCoreDecayMeters) * 0.62f;
                 float contactHotMix = Mathf.Exp(-Mathf.Max(0f, beamLen - d) / ContactLipDecayMeters) * 0.34f;
-                Color ringColor = variant == ScanVariant.WireframeReveal
-                    ? Color.Lerp(cyanColor, amberColor, Mathf.SmoothStep(0.25f, 0.95f, u) * 0.82f)
-                    : cyanColor;
-                Color baseTint = Color.Lerp(ringColor, Color.white, Mathf.Clamp01(lensHotMix + contactHotMix));
+                Color baseTint = Color.Lerp(cyanColor, Color.white, Mathf.Clamp01(lensHotMix + contactHotMix));
 
                 // Crossed fan sheets tilted in (right, orthoUp) so the wedge fans out visibly from low
                 // chase camera angles while spanning and wrapping the surface scan line on the target.
@@ -505,9 +486,7 @@ namespace MoonProject.Gameplay
                     float v01 = (float)s / (WedgeSlices - 1);
                     float v = v01 * 2f - 1f;
                     float baseLat = Mathf.Sqrt(Mathf.Clamp01(1f - v * v * 0.85f));
-                    float lateralEnvelope = variant == ScanVariant.PointScan
-                        ? Mathf.Lerp(Mathf.Pow(Mathf.Clamp01(1f - Mathf.Abs(v)), 5.2f), baseLat, targetWrapShare * 0.72f)
-                        : Mathf.Lerp(baseLat * baseLat, baseLat, targetWrapShare);
+                    float lateralEnvelope = Mathf.Lerp(baseLat * baseLat, baseLat, targetWrapShare);
 
                     // Fine radial scanline striations inside the fan wedge
                     float radialWave = 0.5f + 0.5f * Mathf.Cos((v * 7.0f + _progress * 1.5f) * TwoPi);
@@ -545,83 +524,6 @@ namespace MoonProject.Gameplay
             _wedgeMesh.SetUVs(0, _wedgeUvs);
             _wedgeMesh.SetColors(_wedgeColors);
             _wedgeMesh.bounds = new Bounds((lensFront + contactCenter) * 0.5f, Vector3.one * (beamLen + 2f));
-        }
-
-        private void StepStreamingDataTicks(
-            Vector3 lensFront,
-            Vector3 contactCenter,
-            Vector3 right,
-            Vector3 orthoUp,
-            Color cyanColor,
-            Color amberColor,
-            float sweepLevel,
-            float widthScale)
-        {
-            Vector3 beamVec = contactCenter - lensFront;
-            float beamLen = beamVec.magnitude;
-            if (sweepLevel <= VisibleThreshold || beamLen <= 0.35f)
-            {
-                return;
-            }
-
-            Vector3 beamDir = beamVec / beamLen;
-            float pulseSpeed = _scanTuning != null ? _scanTuning.BeamPulseSpeed : 3.2f;
-            float targetHalfW = Mathf.Max(_lastTargetWidth * 0.36f, 0.08f);
-            float lensHalfW = (_scanTuning != null ? _scanTuning.BeamLensWidth : DefaultBeamLensWidth) * 0.35f * widthScale;
-
-            for (int i = 0; i < DataTickCount; i++)
-            {
-                // Stream from target (u = 0.96) toward 07's cheek lens (u = 0.06)
-                float phase = Mathf.Repeat(_elapsed * (pulseSpeed * 0.42f) + (float)i / DataTickCount, 1f);
-                float u = Mathf.Lerp(0.96f, 0.06f, phase * phase * (0.65f + 0.35f * phase));
-                float env = Mathf.Sin(phase * Mathf.PI);
-
-                float laneSign = (i & 1) == 0 ? -1f : 1f;
-                float laneShare = ((i % 3) - 1) * 0.42f + laneSign * 0.24f;
-                float halfW = Mathf.Lerp(lensHalfW, targetHalfW, u);
-                Vector3 pos = lensFront + beamDir * (u * beamLen)
-                    + right * (laneShare * halfW)
-                    + orthoUp * (Mathf.Sin(u * Mathf.PI) * 0.012f * laneSign);
-
-                float tickLen = Mathf.Lerp(0.032f, 0.068f, env) * widthScale;
-                float tickWidth = 0.011f * widthScale;
-                Color tickColor = Color.Lerp(amberColor, Color.Lerp(cyanColor, Color.white, 0.55f), (1f - u) * 0.35f);
-                tickColor.a = Mathf.Min(0.32f, 0.28f * env * sweepLevel);
-                _streaks.Add(pos, tickWidth, tickColor, -beamDir * tickLen);
-            }
-        }
-
-        private void StepPulsingLaserLine(
-            Vector3 lensFront,
-            Vector3 contactCenter,
-            Color cyanColor,
-            Color amberColor,
-            float sweepLevel,
-            float widthScale)
-        {
-            Vector3 beamVec = contactCenter - lensFront;
-            float beamLen = beamVec.magnitude;
-            if (sweepLevel <= VisibleThreshold || beamLen <= 0.35f)
-            {
-                return;
-            }
-
-            Vector3 beamDir = beamVec / beamLen;
-            float pulseSpeed = _scanTuning != null ? _scanTuning.BeamPulseSpeed : 3.2f;
-            float segLen = (beamLen / DataTickCount) * 0.62f;
-
-            for (int i = 0; i < DataTickCount; i++)
-            {
-                float u = (i + 0.5f) / DataTickCount;
-                float wave = 0.5f + 0.5f * Mathf.Sin((u * 3.5f - _elapsed * (pulseSpeed * 0.55f)) * TwoPi);
-                float endTaper = Mathf.Sin(u * Mathf.PI);
-                Vector3 pos = lensFront + beamDir * (u * beamLen);
-
-                float lineWidth = Mathf.Lerp(0.008f, 0.012f, wave) * widthScale;
-                Color pulseColor = Color.Lerp(cyanColor, Color.Lerp(amberColor, Color.white, 0.65f), wave * 0.48f);
-                pulseColor.a = Mathf.Min(0.24f, (0.09f + 0.13f * wave) * (0.45f + 0.55f * endTaper) * sweepLevel);
-                _streaks.Add(pos, lineWidth, pulseColor, beamDir * segLen);
-            }
         }
 
         private void StepBallisticPathGlints(
