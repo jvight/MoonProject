@@ -71,14 +71,21 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             yield return ScanSet("ruin." + ScanTuning.LanderCargoId, 2);
             Assert.IsTrue(known.IsKnown(StructureIds.ChargingPad), "the cargo bay's two fragments teach the pad");
-            Assert.That(opening.Flow.Current, Is.EqualTo(OpeningKeys.CollectParts).Or.EqualTo(OpeningKeys.BuildPad),
-                "the cargo crate gives nothing while its fragments are scanned; once they are, 07 collects it " +
-                "(at once when it stands in reach)");
+            Assert.AreEqual(OpeningKeys.CollectParts, opening.Flow.Current,
+                "the cargo crate gives nothing while its fragments are scanned, nor until 07 takes it: the line says " +
+                "to collect the parts");
 
             RoverStartKit kit = _fixture.Gameplay.StartKit;
             Assert.AreEqual(RoverSystemState.Fault, kit.StateOf(RoverSystem.Cutter), "no igniter: the cutter is FAULT");
             yield return PlaceAt(_fixture.Gameplay.Containers.Find("supply.lander.open").CutPoint.position);
-            Assert.IsTrue(kit.CarriesIgniter, "B4: the lander's open crate gives the spare igniter");
+            Assert.IsFalse(kit.CarriesIgniter, "in reach, the open crate only offers its parts");
+            Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.PickUp, out _), "the open crate offers Pick up");
+            Press(_keyboard.eKey);
+            yield return null;
+            yield return null;
+            Release(_keyboard.eKey);
+            yield return null;
+            Assert.IsTrue(kit.CarriesIgniter, "B4: a held E takes the spare igniter from the lander's open crate");
             Assert.AreEqual(2, _parts.Count, "with a pickup note each: the igniter and Ines's ice core");
             CargoHold hold = _fixture.Gameplay.Materials.Hold;
             Assert.AreEqual(4, hold.Units(SalvageMaterial.Metal), "07's Metal 2 and the crate's 2");
