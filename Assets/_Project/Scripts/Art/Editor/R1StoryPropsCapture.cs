@@ -75,6 +75,8 @@ namespace MoonProject.Art.Editor
                     CaptureDeliverable10_CargoCrateOpen(capturesDir, true);
                     CaptureDeliverable11_BasinLifeLineup(capturesDir, false);
                     CaptureDeliverable11_BasinLifeLineup(capturesDir, true);
+                    CaptureDeliverable12_GeophoneLine(capturesDir, false);
+                    CaptureDeliverable12_GeophoneLine(capturesDir, true);
                 }
                 finally
                 {
@@ -801,6 +803,123 @@ namespace MoonProject.Art.Editor
             finally
             {
                 temp.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Dedicated fast batch entry point for capturing the seismic station's geophone line
+        /// (<c>Prop_GeophoneLine</c>, <c>Geophone_Sensor</c>, <c>Geophone_Ribbon_10m</c>, <c>Geophone_Plug</c>)
+        /// next to <c>Prop_SeismicStation</c> and Rover 07 in Day C light:
+        /// <c>python tools/unity_batch.py exec --project . --method MoonProject.Art.Editor.R1StoryPropsCapture.CaptureGeophoneLine</c>
+        /// </summary>
+        public static void CaptureGeophoneLine()
+        {
+            BatchRunner.Run(nameof(CaptureGeophoneLine), args =>
+            {
+                AssetDatabase.Refresh();
+                R1MaterialLibrary.BuildMaterials();
+                R1ModelBuilder.Build();
+
+                string capturesDir = Path.GetFullPath("Logs/captures");
+                Directory.CreateDirectory(capturesDir);
+
+                bool prevAsync = ShaderUtil.allowAsyncCompilation;
+                ShaderUtil.allowAsyncCompilation = false;
+                try
+                {
+                    CaptureDeliverable12_GeophoneLine(capturesDir, false);
+                }
+                finally
+                {
+                    ShaderUtil.allowAsyncCompilation = prevAsync;
+                }
+
+                return true;
+            });
+        }
+
+        private static void CaptureDeliverable12_GeophoneLine(string outDir, bool nightEclipse)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(temp, nightEclipse);
+                if (!nightEclipse && RenderSettings.sun != null)
+                {
+                    RenderSettings.sun.intensity = 2.0f;
+                    RenderSettings.sun.transform.rotation = Quaternion.Euler(24f, -34f, 0f);
+                }
+
+                // Rover 07 on the back-right in 3/4 front view facing Prop_SeismicStation and the geophone line
+                GameObject rover = SpawnRover07(temp, new Vector3(1.55f, 0f, 0.45f), -136f, nightEclipse);
+
+                // Prop_SeismicStation on the left at (-1.35, 0, -0.05) so its central box sits around X = -1.0
+                SpawnProp(R1StoryPropsBuilder.PropSeismicStationPrefabPath, new Vector3(-1.35f, 0f, -0.05f), 8f, temp);
+
+                // Assembled Prop_GeophoneLine running from Prop_SeismicStation's central box (+X) across the foreground (-Z)
+                // Yaw -90 deg puts local -Z (plug at -1.35) at X = -0.95 and local +Z (Sensor_1..3) running right to X = +2.0
+                SpawnProp(R1StoryPropsBuilder.PropGeophoneLinePrefabPath, new Vector3(0.40f, 0f, -0.20f), -90f, temp);
+
+                // Modular kit pieces laid out in the foreground for close inspection:
+                // Geophone_Ribbon_10m running across the mid-ground behind the line
+                SpawnProp(R1StoryPropsBuilder.GeophoneRibbon10mPrefabPath, new Vector3(0.20f, 0f, 0.22f), 90f, temp);
+
+                // Geophone_Plug and 3 Geophone_Sensor instances (showing Stencil_1, Stencil_2, Stencil_3) in front-center
+                SpawnProp(R1StoryPropsBuilder.GeophonePlugPrefabPath, new Vector3(-0.62f, 0f, -0.58f), -70f, temp);
+
+                GameObject s1 = SpawnProp(R1StoryPropsBuilder.GeophoneSensorPrefabPath, new Vector3(-0.18f, 0f, -0.58f), 15f, temp);
+                SetOnlySensorStencilActive(s1, 1);
+
+                GameObject s2 = SpawnProp(R1StoryPropsBuilder.GeophoneSensorPrefabPath, new Vector3(0.18f, 0f, -0.58f), 0f, temp);
+                SetOnlySensorStencilActive(s2, 2);
+
+                GameObject s3 = SpawnProp(R1StoryPropsBuilder.GeophoneSensorPrefabPath, new Vector3(0.54f, 0f, -0.58f), -15f, temp);
+                SetOnlySensorStencilActive(s3, 3);
+
+                if (nightEclipse)
+                {
+                    AddRoverHeadlamps(rover.transform, new Vector3(0.05f, 0.10f, -0.35f), temp);
+                }
+
+                string suffix = nightEclipse ? "eclipse" : "dayC";
+
+                // 1. Overview shot showing Prop_SeismicStation, Rover 07, Prop_GeophoneLine, Geophone_Ribbon_10m, Geophone_Plug, and 3 sensors
+                RenderShot(
+                    new Vector3(0.05f, 1.38f, -2.55f),
+                    new Vector3(0.02f, 0.26f, -0.15f),
+                    46f,
+                    bg,
+                    Path.Combine(outDir, $"r1props_geophone_line_{suffix}.png"));
+
+                // 2. Close-up detail shot showing the 3 sensors (stencils 1/2/3, faded orange cap, 3 spikes), flat ribbon cable, and station plug
+                RenderShot(
+                    new Vector3(0.02f, 0.58f, -1.28f),
+                    new Vector3(-0.02f, 0.06f, -0.44f),
+                    38f,
+                    bg,
+                    Path.Combine(outDir, $"r1props_geophone_line_detail_{suffix}.png"));
+            }
+            finally
+            {
+                temp.Dispose();
+            }
+        }
+
+        private static void SetOnlySensorStencilActive(GameObject sensorInstance, int number)
+        {
+            if (sensorInstance == null)
+            {
+                return;
+            }
+
+            for (int i = 1; i <= 3; i++)
+            {
+                Transform stencil = sensorInstance.transform.Find($"Stencil_{i}");
+                if (stencil != null)
+                {
+                    stencil.gameObject.SetActive(i == number);
+                }
             }
         }
 

@@ -98,6 +98,10 @@ namespace MoonProject.Art.Editor
         public const string PropSurveyTripodPrefabPath = PropsModelsFolder + "/Prop_SurveyTripod.prefab";
         public const string PropSampleRackPrefabPath = PropsModelsFolder + "/Prop_SampleRack.prefab";
         public const string DecalBootprintTrailPrefabPath = PropsModelsFolder + "/Decal_BootprintTrail.prefab";
+        public const string GeophoneSensorPrefabPath = PropsModelsFolder + "/Geophone_Sensor.prefab";
+        public const string GeophoneRibbon10mPrefabPath = PropsModelsFolder + "/Geophone_Ribbon_10m.prefab";
+        public const string GeophonePlugPrefabPath = PropsModelsFolder + "/Geophone_Plug.prefab";
+        public const string PropGeophoneLinePrefabPath = PropsModelsFolder + "/Prop_GeophoneLine.prefab";
 
         /// <summary>Loads the <c>MoonProject/R1/SignalPillar</c> shader asset.</summary>
         public static Shader LoadSignalPillarShader()

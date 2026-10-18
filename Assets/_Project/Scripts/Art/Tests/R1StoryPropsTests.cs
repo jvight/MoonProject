@@ -48,6 +48,10 @@ namespace MoonProject.Art.Tests
             ("prop_survey_tripod.json", "Props/Prop_SurveyTripod.fbx"),
             ("prop_sample_rack.json", "Props/Prop_SampleRack.fbx"),
             ("decal_bootprint_trail.json", "Props/Decal_BootprintTrail.fbx"),
+            ("geophone_sensor.json", "Props/Geophone_Sensor.fbx"),
+            ("geophone_ribbon_10m.json", "Props/Geophone_Ribbon_10m.fbx"),
+            ("geophone_plug.json", "Props/Geophone_Plug.fbx"),
+            ("prop_geophone_line.json", "Props/Prop_GeophoneLine.fbx"),
         };
 
         [Serializable]
@@ -915,6 +919,114 @@ namespace MoonProject.Art.Tests
             Assert.IsNotNull(mat.GetTexture("_BumpMap"), "R1_BootprintTrail must have _BumpMap assigned.");
 
             AssertNoEmissiveMaterials(decalPrefab);
+        }
+
+        [Test]
+        public void GeophoneLine_SensorRibbonAndPlug_HaveExpectedStructureAnchorsSpikesStencilsAndZeroEmission()
+        {
+            // 1. Geophone_Sensor (~0.12 m tall squat cylinder on 3 short spikes, faded orange cap, stencil 1/2/3)
+            GameObject sensorPrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.GeophoneSensorPrefabPath);
+            Transform housing = sensorPrefab.transform.Find("SensorHousing");
+            Transform orangeCap = sensorPrefab.transform.Find("OrangeCap");
+            Transform stencil1 = sensorPrefab.transform.Find("Stencil_1");
+            Transform stencil2 = sensorPrefab.transform.Find("Stencil_2");
+            Transform stencil3 = sensorPrefab.transform.Find("Stencil_3");
+            Transform baseAnchor = sensorPrefab.transform.Find("Base_Anchor");
+            Transform sStart = sensorPrefab.transform.Find("Start_Anchor");
+            Transform sEnd = sensorPrefab.transform.Find("End_Anchor");
+            Transform capAnchor = sensorPrefab.transform.Find("Cap_Anchor");
+
+            Assert.IsNotNull(housing, "Geophone_Sensor missing SensorHousing.");
+            Assert.IsNotNull(orangeCap, "Geophone_Sensor missing OrangeCap.");
+            Assert.IsNotNull(stencil1, "Geophone_Sensor missing Stencil_1.");
+            Assert.IsNotNull(stencil2, "Geophone_Sensor missing Stencil_2.");
+            Assert.IsNotNull(stencil3, "Geophone_Sensor missing Stencil_3.");
+            Assert.IsNotNull(baseAnchor, "Geophone_Sensor missing Base_Anchor.");
+            Assert.IsNotNull(sStart, "Geophone_Sensor missing Start_Anchor.");
+            Assert.IsNotNull(sEnd, "Geophone_Sensor missing End_Anchor.");
+            Assert.IsNotNull(capAnchor, "Geophone_Sensor missing Cap_Anchor.");
+
+            Bounds sensorBounds = MeshChecks.PrefabBounds(sensorPrefab, sensorPrefab.transform.localToWorldMatrix);
+            Assert.AreEqual(0.12f, sensorBounds.size.y, 0.02f, "Geophone_Sensor height must be ~0.12 m.");
+            Assert.Less(sensorBounds.min.y, -0.005f, "Geophone_Sensor 3 short spikes must penetrate slightly below Y = 0.");
+
+            Quaternion sensorRot = sensorPrefab.transform.localRotation;
+            Vector3 capPos = sensorRot * capAnchor.localPosition;
+            Vector3 sStartPos = sensorRot * sStart.localPosition;
+            Vector3 sEndPos = sensorRot * sEnd.localPosition;
+            Assert.AreEqual(0.105f, capPos.y, 0.02f, "Geophone_Sensor Cap_Anchor must sit at top of cap (~0.105 m).");
+            Assert.AreEqual(0.18f, Vector3.Distance(sStartPos, sEndPos), 0.02f,
+                "Geophone_Sensor Start_Anchor to End_Anchor span must match the 0.18 m ribbon pass-through.");
+
+            Assert.AreEqual(R1MaterialRecipes.OrangeStripeSlot, orangeCap.GetComponent<Renderer>().sharedMaterial.name,
+                "Geophone_Sensor OrangeCap must use R1_OrangeStripe.");
+            AssertNoEmissiveMaterials(sensorPrefab);
+
+            // 2. Geophone_Ribbon_10m (10 m straight flat ribbon cable segment with Start/End anchors)
+            GameObject ribbonPrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.GeophoneRibbon10mPrefabPath);
+            Transform ribbonRun = ribbonPrefab.transform.Find("RibbonRun");
+            Transform ribbonClips = ribbonPrefab.transform.Find("RibbonClips");
+            Transform rStart = ribbonPrefab.transform.Find("Start_Anchor");
+            Transform rEnd = ribbonPrefab.transform.Find("End_Anchor");
+            Assert.IsNotNull(ribbonRun, "Geophone_Ribbon_10m missing RibbonRun.");
+            Assert.IsNotNull(ribbonClips, "Geophone_Ribbon_10m missing RibbonClips.");
+            Assert.IsNotNull(rStart, "Geophone_Ribbon_10m missing Start_Anchor.");
+            Assert.IsNotNull(rEnd, "Geophone_Ribbon_10m missing End_Anchor.");
+            Assert.IsNotNull(ribbonPrefab.transform.Find("Clip_Anchor"), "Geophone_Ribbon_10m missing Clip_Anchor.");
+            Assert.IsNotNull(ribbonPrefab.transform.Find("Center_Anchor"), "Geophone_Ribbon_10m missing Center_Anchor.");
+
+            Quaternion ribbonRot = ribbonPrefab.transform.localRotation;
+            Vector3 rStartPos = ribbonRot * rStart.localPosition;
+            Vector3 rEndPos = ribbonRot * rEnd.localPosition;
+            Assert.AreEqual(-5.0f, rStartPos.z, 0.02f, "Geophone_Ribbon_10m Start_Anchor must sit at Z = -5.0 m in prefab Y-up axes.");
+            Assert.AreEqual(5.0f, rEndPos.z, 0.02f, "Geophone_Ribbon_10m End_Anchor must sit at Z = +5.0 m in prefab Y-up axes.");
+            Assert.AreEqual(10.0f, Vector3.Distance(rStartPos, rEndPos), 0.02f,
+                "Geophone_Ribbon_10m Start_Anchor to End_Anchor span must be 10.0 m.");
+
+            Bounds ribbonBounds = MeshChecks.PrefabBounds(ribbonPrefab, ribbonPrefab.transform.localToWorldMatrix);
+            Assert.Less(ribbonBounds.size.y, 0.04f, "Geophone_Ribbon_10m must be a thin flat ribbon lying on the regolith.");
+            AssertNoEmissiveMaterials(ribbonPrefab);
+
+            // 3. Geophone_Plug (cable end plug that seats at Prop_SeismicStation)
+            GameObject plugPrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.GeophonePlugPrefabPath);
+            Assert.IsNotNull(plugPrefab.transform.Find("RibbonLead"), "Geophone_Plug missing RibbonLead.");
+            Assert.IsNotNull(plugPrefab.transform.Find("PlugHead"), "Geophone_Plug missing PlugHead.");
+            Transform pStart = plugPrefab.transform.Find("Start_Anchor");
+            Transform pPlug = plugPrefab.transform.Find("Plug_Anchor");
+            Assert.IsNotNull(pStart, "Geophone_Plug missing Start_Anchor.");
+            Assert.IsNotNull(pPlug, "Geophone_Plug missing Plug_Anchor.");
+            Assert.IsNotNull(plugPrefab.transform.Find("Handle_Anchor"), "Geophone_Plug missing Handle_Anchor.");
+
+            Quaternion plugRot = plugPrefab.transform.localRotation;
+            Vector3 pPlugPos = plugRot * pPlug.localPosition;
+            Assert.AreEqual(0.065f, pPlugPos.y, 0.02f,
+                "Geophone_Plug Plug_Anchor must sit at Y ~= 0.065 m to seat at Prop_SeismicStation.");
+            AssertNoEmissiveMaterials(plugPrefab);
+
+            // 4. Prop_GeophoneLine (assembled 3-sensor geophone line with plug + ribbon cable + Sensor_1..3)
+            GameObject linePrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.PropGeophoneLinePrefabPath);
+            Assert.IsNotNull(linePrefab.transform.Find("RibbonCable"), "Prop_GeophoneLine missing RibbonCable.");
+            Assert.IsNotNull(linePrefab.transform.Find("StationPlug"), "Prop_GeophoneLine missing StationPlug.");
+            Transform lineS1 = linePrefab.transform.Find("Sensor_1");
+            Transform lineS2 = linePrefab.transform.Find("Sensor_2");
+            Transform lineS3 = linePrefab.transform.Find("Sensor_3");
+            Assert.IsNotNull(lineS1, "Prop_GeophoneLine missing Sensor_1.");
+            Assert.IsNotNull(lineS2, "Prop_GeophoneLine missing Sensor_2.");
+            Assert.IsNotNull(lineS3, "Prop_GeophoneLine missing Sensor_3.");
+            Assert.IsNotNull(linePrefab.transform.Find("Start_Anchor"), "Prop_GeophoneLine missing Start_Anchor.");
+            Assert.IsNotNull(linePrefab.transform.Find("Plug_Anchor"), "Prop_GeophoneLine missing Plug_Anchor.");
+            Assert.IsNotNull(linePrefab.transform.Find("Sensor_1_Anchor"), "Prop_GeophoneLine missing Sensor_1_Anchor.");
+            Assert.IsNotNull(linePrefab.transform.Find("Sensor_2_Anchor"), "Prop_GeophoneLine missing Sensor_2_Anchor.");
+            Assert.IsNotNull(linePrefab.transform.Find("Sensor_3_Anchor"), "Prop_GeophoneLine missing Sensor_3_Anchor.");
+            Assert.IsNotNull(linePrefab.transform.Find("End_Anchor"), "Prop_GeophoneLine missing End_Anchor.");
+
+            Quaternion lineRot = linePrefab.transform.localRotation;
+            Vector3 l1Pos = lineRot * lineS1.localPosition;
+            Vector3 l2Pos = lineRot * lineS2.localPosition;
+            Vector3 l3Pos = lineRot * lineS3.localPosition;
+            Assert.Less(l1Pos.z, l2Pos.z, "Sensor_1 must precede Sensor_2 along the geophone line.");
+            Assert.Less(l2Pos.z, l3Pos.z, "Sensor_2 must precede Sensor_3 along the geophone line.");
+            AssertNoEmissiveMaterials(linePrefab);
         }
 
         /// <summary>
