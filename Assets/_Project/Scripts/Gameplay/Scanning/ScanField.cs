@@ -44,6 +44,7 @@ namespace MoonProject.Gameplay
         private int _owedMetal;
         private bool _holding;
         private bool _gazing;
+        private readonly BlockNotice _blocked = new BlockNotice();
         private bool _waitRelease;
         private Transform _cachedScanOrigin;
         private Transform _headTransform;
@@ -208,9 +209,16 @@ namespace MoonProject.Gameplay
             bool playerSteering = Mathf.Abs(_input.Drive.x) > 0.1f || Mathf.Abs(_rover.DriveInput.x) > 0.1f;
             Hold(wants && !playerSteering);
             bool hasLineOfSight = wants && HasLineOfSight(Candidate.Point);
-            if (wants && hasLineOfSight && _scanning == null && _rover.Speed <= _tuning.EngageSpeed)
+            bool stopped = _rover.Speed <= _tuning.EngageSpeed;
+            if (wants && hasLineOfSight && _scanning == null && stopped)
             {
                 Begin(Candidate);
+            }
+
+            if (_blocked.Report(held, wants && stopped && !hasLineOfSight))
+            {
+                _events.Publish(new InteractionBlocked(InteractionKind.Scan, Candidate.Point,
+                    BlockReason.NoLineOfSight));
             }
 
             if (_scanning != null && hasLineOfSight)

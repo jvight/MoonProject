@@ -1854,3 +1854,20 @@ Label {
 .post__line--alert {
     color: rgb(255, 170, 72);
 }
+
+.face-notice {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    justify-content: center;
+    align-items: center;
+}
+
+.face-notice__line {
+    font-size: 30px;
+    white-space: nowrap;
+    color: rgb(214, 190, 140);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
+}

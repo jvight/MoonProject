@@ -35,6 +35,7 @@ namespace MoonProject.Gameplay
         private Func<Vector3, bool> _yieldsTo;
         private SealedContainer _cutting;
         private bool _holding;
+        private readonly BlockNotice _blocked = new BlockNotice();
         private bool _gazing;
 
         /// <summary>Made before the finds' owners initialise, so each can add its containers.</summary>
@@ -148,7 +149,14 @@ namespace MoonProject.Gameplay
             SealedContainer targetContainer = _cutting ?? Candidate;
             bool hasLineOfSight = targetContainer != null &&
                                   (_rig == null || _rig.HasCutterLineOfSight(targetContainer.CutPoint.position));
-            bool engaged = wants && (_rover == null || _rover.Speed <= engageSpeed) && hasLineOfSight;
+            bool stopped = _rover == null || _rover.Speed <= engageSpeed;
+            bool engaged = wants && stopped && hasLineOfSight;
+            if (_blocked.Report(_input.ExcavateHeld, wants && stopped && targetContainer != null && !hasLineOfSight))
+            {
+                _events.Publish(new InteractionBlocked(InteractionKind.Salvage, targetContainer.CutPoint.position,
+                    BlockReason.NoLineOfSight));
+            }
+
             if (_cutting != null && (!engaged || Candidate != _cutting))
             {
                 _cut.Release(_cutting.Progress, _cutting.CutPoint.position, _cutting.CutPoint.forward);

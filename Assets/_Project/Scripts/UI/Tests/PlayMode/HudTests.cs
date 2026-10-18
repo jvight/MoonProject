@@ -817,6 +817,53 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator AHeldEWithNoLineOfSight_DimsAndShakesTheChip_And07sFaceSaysWhy_WithNoNewPanel()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            _rig.Ui.Ledger.RecordLookTaught();
+            _rig.Ui.Ledger.RecordDriveTaught();
+            _rig.Ui.Ledger.RecordHoldChipShown();
+            _rig.Ui.Ledger.RecordUsed(InteractionKind.Salvage);
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            Events.Publish(new NextStepChanged("next.v2.cut_optics"));
+            var seal = new Vector3(0.4f, 0.5f, 5f);
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Salvage, seal, true);
+            float limit = Time.realtimeSinceStartup + 12f;
+            while (!_rig.Ui.LookUp.IsVisible && Time.realtimeSinceStartup < limit)
+            {
+                yield return null;
+            }
+
+            Assert.IsTrue(_rig.Ui.LookUp.IsVisible, "the cut step's chip is up at the seal");
+            Assert.IsFalse(_rig.Ui.FaceNotice.IsShown);
+
+            Events.Publish(new InteractionBlocked(InteractionKind.Salvage, seal, BlockReason.NoLineOfSight));
+            yield return null;
+            yield return null;
+            Assert.IsTrue(_rig.Ui.FaceNotice.IsShown, "07's face answers the key");
+            Assert.AreEqual(Text(UiKeys.FaceNoLine), _rig.Ui.FaceNotice.Text);
+            Assert.Less(_rig.Ui.Layout.LookHintWord.resolvedStyle.opacity, 0.99f, "the chip dims");
+            bool moved = false;
+            float until = Time.realtimeSinceStartup + _rig.Tuning.Guidance.BlockedChipSeconds * 0.5f;
+            while (Time.realtimeSinceStartup < until)
+            {
+                moved |= System.Math.Abs(_rig.Ui.Layout.LookHint.style.translate.value.x.value) > 0.01f;
+                Assert.IsFalse(_rig.Ui.Readout.IsVisible, "no readout card for it");
+                Assert.IsFalse(_rig.Ui.Prompt.IsVisible, "no prompt for it");
+                yield return null;
+            }
+
+            Assert.IsTrue(moved, "the chip shakes a little");
+            yield return Seconds(_rig.Tuning.Guidance.BlockedChipSeconds + _rig.Tuning.Guidance.BlockedFaceSeconds);
+            Assert.IsFalse(_rig.Ui.FaceNotice.IsShown, "the face lets go");
+            Assert.AreEqual(0f, _rig.Ui.Layout.LookHint.style.translate.value.x.value, "the chip is back in place");
+            Assert.AreEqual(1f, _rig.Ui.Layout.LookHintWord.style.opacity.value, "at full");
+            Assert.AreEqual(Text(UiKeys.VerbCut), _rig.Ui.Layout.LookHintWord.text, "still naming the cut");
+        }
+
+        [UnityTest]
         public IEnumerator AnUnlearnedReadyVerb_TakesTheSlotFromTheObjectiveLine_WhenSevenNosesIntoACrate()
         {
             InputSystem.AddDevice<Keyboard>();

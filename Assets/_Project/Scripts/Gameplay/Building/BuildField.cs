@@ -78,6 +78,7 @@ namespace MoonProject.Gameplay
         private float _lastWinchSign;
         private float _nextWinchTime;
         private bool _waitExcavateRelease;
+        private readonly BlockNotice _weldBlocked = new BlockNotice();
         private int _weldingInstanceId;
         private bool _weldLoopActive;
         private Vector3 _lastWeldLoopPoint;
@@ -541,6 +542,7 @@ namespace MoonProject.Gameplay
                 _waitExcavateRelease = excavateHeld;
             }
 
+            _weldBlocked.Report(excavateHeld, false);
             switch (_controller.State)
             {
                 case BuildModeState.Menu:
@@ -737,6 +739,11 @@ namespace MoonProject.Gameplay
             StepGaze(true, weldPoint);
             bool canWeld = excavateHeld && _beamWork.MayStart;
             bool hasLineOfSight = canWeld && (_rig == null || _rig.HasCutterLineOfSight(weldPoint));
+            if (_weldBlocked.Report(excavateHeld, canWeld && !hasLineOfSight))
+            {
+                _events.Publish(new InteractionBlocked(InteractionKind.Build, weldPoint, BlockReason.NoLineOfSight));
+            }
+
             _controller.StepWelding(
                 hasLineOfSight ? deltaTime : 0f,
                 _rover.Position,

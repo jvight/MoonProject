@@ -1,4 +1,5 @@
 using System;
+using UnityEngine.UIElements;
 using MoonProject.Core;
 using MoonProject.Core.Input;
 
@@ -27,6 +28,8 @@ namespace MoonProject.UI
         private readonly Reveal _reveal;
         private readonly GlyphView _glyph;
         private HintWord _word = HintWord.LookUp;
+        private float _nudgeOffset;
+        private float _nudgeOpacity = 1f;
 
         public LookUpChip(UiLayout layout, StargazeSettings settings, ILocalization localization,
             GlyphLabels labels)
@@ -75,6 +78,21 @@ namespace MoonProject.UI
         public void Relocalize()
         {
             _layout.LookHintWord.text = _localization.Get(WordKey());
+        }
+
+        /// <summary>The blocked cue's dim and shake on the chip (0 and 1 leave it as it is).</summary>
+        public void Nudge(float offsetPixels, float opacity)
+        {
+            if (offsetPixels == _nudgeOffset && opacity == _nudgeOpacity)
+            {
+                return;
+            }
+
+            _nudgeOffset = offsetPixels;
+            _nudgeOpacity = opacity;
+            _layout.LookHint.style.translate = new Translate(offsetPixels, 0f);
+            _layout.LookHintWord.style.opacity = opacity;
+            _layout.LookHintGlyph.style.opacity = opacity;
         }
 
         private string WordKey()
