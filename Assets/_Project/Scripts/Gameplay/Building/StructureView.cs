@@ -24,6 +24,9 @@ namespace MoonProject.Gameplay
         [Tooltip("Ordered Stage_1..Stage_N root transforms for stage-by-stage assembly.")]
         [SerializeField] private Transform[] _stageRoots = Array.Empty<Transform>();
 
+        [Tooltip("Per-stage local-space weld seams resolved from each stage's WeldSeam child or renderer/mesh bounds.")]
+        [SerializeField] private StageWeldSeam[] _stageSeams = Array.Empty<StageWeldSeam>();
+
         [Tooltip("Renderers using R1_LampAmber that warm up via EmissionGlow when the structure completes.")]
         [SerializeField] private Renderer[] _lampRenderers = Array.Empty<Renderer>();
 
@@ -36,6 +39,7 @@ namespace MoonProject.Gameplay
         [Tooltip("Peak intensity for the optional warm amber point light.")]
         [SerializeField] private float _statusLightIntensity = 1.6f;
 
+        private readonly Vector3[] _activeSeamPoints = new Vector3[3];
         private StageRendererCache[][] _stageRenderers;
         private bool[] _stageIsSolid;
         private float[] _stageScale;
@@ -52,6 +56,8 @@ namespace MoonProject.Gameplay
         public int StageCount => _stageRoots != null ? _stageRoots.Length : 0;
 
         public IReadOnlyList<Transform> StageRoots => _stageRoots;
+
+        public IReadOnlyList<StageWeldSeam> StageSeams => _stageSeams;
 
         public int SolidStageCount { get; private set; }
 
@@ -73,7 +79,7 @@ namespace MoonProject.Gameplay
             Light statusLight = null,
             float statusLightIntensity = 1.6f)
         {
-            Populate(string.Empty, stageRoots, lampRenderers, colliders, statusLight, statusLightIntensity);
+            Populate(string.Empty, stageRoots, lampRenderers, colliders, statusLight, statusLightIntensity, null);
         }
 
         /// <summary>Populates serialized references at build time (<c>GameplayContentBuilder</c>).</summary>
@@ -83,7 +89,8 @@ namespace MoonProject.Gameplay
             Renderer[] lampRenderers,
             Collider[] colliders,
             Light statusLight = null,
-            float statusLightIntensity = 1.6f)
+            float statusLightIntensity = 1.6f,
+            StageWeldSeam[] stageSeams = null)
         {
             _structureId = structureId ?? string.Empty;
             _stageRoots = stageRoots ?? Array.Empty<Transform>();
@@ -91,12 +98,15 @@ namespace MoonProject.Gameplay
             _colliders = colliders ?? Array.Empty<Collider>();
             _statusLight = statusLight;
             _statusLightIntensity = statusLightIntensity;
+            _stageSeams = stageSeams != null && stageSeams.Length == _stageRoots.Length
+                ? stageSeams
+                : BuildStageSeams(_stageRoots, transform);
         }
 
         /// <summary>
         /// Pre-allocates material swap arrays for every renderer in <c>Stage_1..N</c> and <see cref="EmissionGlow"/>
-        /// wrappers for standby lamps so runtime updates never allocate. Requires <c>_stageRoots</c> to be wired at
-        /// build time; logs an error and returns <c>false</c> when missing or empty.
+        /// wrappers for standby lamps so runtime updates never allocate. Requires <c>_stageRoots</c> and stage
+        /// renderers to be wired at build time; logs an error and returns <c>false</c> when missing or empty.
         /// </summary>
         public bool Initialize(Material hologramValid, Material hologramInvalid)
         {
@@ -136,6 +146,11 @@ namespace MoonProject.Gameplay
                 }
             }
 
+            if (_stageSeams == null || _stageSeams.Length != stageCount)
+            {
+                _stageSeams = new StageWeldSeam[stageCount];
+            }
+
             _stageRenderers = new StageRendererCache[stageCount][];
             _stageIsSolid = new bool[stageCount];
             _stageScale = new float[stageCount];
@@ -148,10 +163,28 @@ namespace MoonProject.Gameplay
                 _stageBaseScale[s] = stageRoot.localScale;
 
                 Renderer[] renderers = stageRoot.GetComponentsInChildren<Renderer>(true);
+                if (renderers == null || renderers.Length == 0)
+                {
+                    Debug.LogError(
+                        $"{nameof(StructureView)} ({name}): _stageRoots[{s}] ('{stageRoot.name}') has no Renderers.",
+                        this);
+                    enabled = false;
+                    return false;
+                }
+
                 var caches = new StageRendererCache[renderers.Length];
                 for (int r = 0; r < renderers.Length; r++)
                 {
                     Renderer renderer = renderers[r];
+                    if (renderer == null)
+                    {
+                        Debug.LogError(
+                            $"{nameof(StructureView)} ({name}): _stageRoots[{s}] ('{stageRoot.name}') has a null Renderer at index {r}.",
+                            this);
+                        enabled = false;
+                        return false;
+                    }
+
                     Material[] solidMats = renderer.sharedMaterials;
                     int slotCount = solidMats != null && solidMats.Length > 0 ? solidMats.Length : 1;
                     var validMats = new Material[slotCount];
@@ -163,6 +196,15 @@ namespace MoonProject.Gameplay
                     }
 
                     caches[r] = new StageRendererCache(renderer, solidMats, validMats, invalidMats);
+                }
+
+                if (!_stageSeams[s].IsValid && !TryResolveStageSeam(stageRoot, transform, out _stageSeams[s]))
+                {
+                    Debug.LogError(
+                        $"{nameof(StructureView)} ({name}): failed to resolve weld seam for _stageRoots[{s}] ('{stageRoot.name}').",
+                        this);
+                    enabled = false;
+                    return false;
                 }
 
                 _stageRenderers[s] = caches;
@@ -184,7 +226,7 @@ namespace MoonProject.Gameplay
                 Material mat = lamp.sharedMaterial;
                 Color authored = mat != null && mat.HasProperty("_EmissionColor")
                     ? mat.GetColor("_EmissionColor").linear
-                    : new Color(1f, 0.68f, 0.25f, 1f);
+                    : Color.white;
                 _lampBaseColors[i] = authored;
             }
 
@@ -425,31 +467,238 @@ namespace MoonProject.Gameplay
             return _stageIsSolid[stageIndex];
         }
 
-        /// <summary>World-space focus point for 07's weld beam on the active stage.</summary>
-        public Vector3 GetActiveWeldPoint()
+        /// <summary>Progress (0..1) within the currently active weld stage.</summary>
+        public float GetActiveStageProgress01(float buildProgress01)
         {
-            if (_stageRoots == null || _stageRoots.Length == 0)
+            int count = StageCount;
+            if (count <= 0)
             {
-                return transform.position + Vector3.up * 0.6f;
+                return Mathf.Clamp01(buildProgress01);
             }
 
-            int activeIndex = Mathf.Clamp(SolidStageCount, 0, _stageRoots.Length - 1);
-            if (_stageRenderers != null && activeIndex < _stageRenderers.Length)
+            int solid = ComputeSolidStages(buildProgress01, count);
+            if (solid >= count)
             {
-                StageRendererCache[] caches = _stageRenderers[activeIndex];
-                if (caches != null && caches.Length > 0 && caches[0].Renderer != null)
+                return 1f;
+            }
+
+            return Mathf.Clamp01(buildProgress01 * count - solid);
+        }
+
+        /// <summary>
+        /// Populates <paramref name="localPoints"/> (length 3) with a local-space weld seam across the active stage
+        /// so <see cref="HeatSeam"/> and the weld beam sweep progressively across the stage as it welds.
+        /// </summary>
+        public void GetStageWeldSeam(int stageIndex, Vector3[] localPoints, out Vector3 localNormal)
+        {
+            if (localPoints == null || localPoints.Length < 3)
+            {
+                throw new ArgumentException("Seam point buffer must have at least 3 elements.", nameof(localPoints));
+            }
+
+            StageWeldSeam seam = ResolveStageSeam(stageIndex);
+            localPoints[0] = seam.Start;
+            localPoints[1] = seam.Middle;
+            localPoints[2] = seam.End;
+            localNormal = seam.Normal;
+        }
+
+        /// <summary>World-space focus point for 07's weld beam on the active stage, progressing along its seam.</summary>
+        public Vector3 GetActiveWeldPoint()
+        {
+            GetStageWeldSeam(SolidStageCount, _activeSeamPoints, out _);
+            float stageT = GetActiveStageProgress01(_buildProgress01);
+            Vector3 local = stageT <= 0.5f
+                ? Vector3.Lerp(_activeSeamPoints[0], _activeSeamPoints[1], stageT * 2f)
+                : Vector3.Lerp(_activeSeamPoints[1], _activeSeamPoints[2], (stageT - 0.5f) * 2f);
+            return transform.TransformPoint(local);
+        }
+
+        /// <summary>
+        /// Resolves local-space <see cref="StageWeldSeam"/> entries for every stage root in <paramref name="stageRoots"/>
+        /// relative to <paramref name="structureRoot"/>.
+        /// </summary>
+        public static StageWeldSeam[] BuildStageSeams(Transform[] stageRoots, Transform structureRoot)
+        {
+            if (stageRoots == null || stageRoots.Length == 0 || structureRoot == null)
+            {
+                return Array.Empty<StageWeldSeam>();
+            }
+
+            var seams = new StageWeldSeam[stageRoots.Length];
+            for (int i = 0; i < stageRoots.Length; i++)
+            {
+                TryResolveStageSeam(stageRoots[i], structureRoot, out seams[i]);
+            }
+
+            return seams;
+        }
+
+        /// <summary>
+        /// Resolves the local-space weld seam for <paramref name="stageRoot"/> from an authored <c>WeldSeam</c> child
+        /// if present, or from the stage's renderer/mesh bounds relative to <paramref name="structureRoot"/>.
+        /// </summary>
+        public static bool TryResolveStageSeam(
+            Transform stageRoot,
+            Transform structureRoot,
+            out StageWeldSeam seam)
+        {
+            seam = default;
+            if (stageRoot == null || structureRoot == null)
+            {
+                return false;
+            }
+
+            Transform weldSeam = stageRoot.Find("WeldSeam");
+            if (weldSeam != null)
+            {
+                Vector3 normal = structureRoot.InverseTransformDirection(weldSeam.up);
+                normal = normal.sqrMagnitude > 1e-6f ? normal.normalized : Vector3.up;
+                if (weldSeam.childCount >= 3)
                 {
-                    return caches[0].Renderer.bounds.center;
+                    Vector3 p0 = structureRoot.InverseTransformPoint(weldSeam.GetChild(0).position);
+                    Vector3 p1 = structureRoot.InverseTransformPoint(weldSeam.GetChild(1).position);
+                    Vector3 p2 = structureRoot.InverseTransformPoint(weldSeam.GetChild(2).position);
+                    seam = new StageWeldSeam(p0, p1, p2, normal);
+                    return seam.IsValid;
+                }
+
+                if (weldSeam.childCount == 2)
+                {
+                    Vector3 p0 = structureRoot.InverseTransformPoint(weldSeam.GetChild(0).position);
+                    Vector3 p2 = structureRoot.InverseTransformPoint(weldSeam.GetChild(1).position);
+                    Vector3 p1 = Vector3.Lerp(p0, p2, 0.5f);
+                    seam = new StageWeldSeam(p0, p1, p2, normal);
+                    return seam.IsValid;
+                }
+
+                Vector3 seamCenter = structureRoot.InverseTransformPoint(weldSeam.position);
+                Vector3 span = structureRoot.InverseTransformVector(weldSeam.right * weldSeam.lossyScale.x);
+                if (span.sqrMagnitude <= 1e-6f)
+                {
+                    span = Vector3.right;
+                }
+
+                seam = new StageWeldSeam(seamCenter - span, seamCenter, seamCenter + span, normal);
+                return seam.IsValid;
+            }
+
+            Renderer[] renderers = stageRoot.GetComponentsInChildren<Renderer>(true);
+            if (renderers == null || renderers.Length == 0)
+            {
+                return false;
+            }
+
+            bool hasBounds = false;
+            Bounds stageBounds = default;
+            for (int r = 0; r < renderers.Length; r++)
+            {
+                Renderer renderer = renderers[r];
+                if (renderer == null)
+                {
+                    continue;
+                }
+
+                if (renderer.TryGetComponent(out MeshFilter filter) && filter.sharedMesh != null)
+                {
+                    Bounds meshBounds = filter.sharedMesh.bounds;
+                    EncapsulateCorners(
+                        meshBounds,
+                        renderer.transform,
+                        structureRoot,
+                        localSpaceInput: true,
+                        ref stageBounds,
+                        ref hasBounds);
+                }
+                else
+                {
+                    Bounds worldBounds = renderer.bounds;
+                    EncapsulateCorners(
+                        worldBounds,
+                        renderer.transform,
+                        structureRoot,
+                        localSpaceInput: false,
+                        ref stageBounds,
+                        ref hasBounds);
                 }
             }
 
-            Transform stage = _stageRoots[activeIndex];
-            if (stage != null)
+            if (!hasBounds || stageBounds.size.sqrMagnitude <= 1e-6f)
             {
-                return stage.position + Vector3.up * (0.3f + activeIndex * 0.25f);
+                return false;
             }
 
-            return transform.position + Vector3.up * 0.6f;
+            Vector3 min = stageBounds.min;
+            Vector3 center = stageBounds.center;
+            Vector3 max = stageBounds.max;
+            seam = new StageWeldSeam(
+                new Vector3(min.x, center.y, center.z),
+                new Vector3(center.x, max.y, max.z),
+                new Vector3(max.x, center.y, center.z),
+                Vector3.up);
+            return seam.IsValid;
+        }
+
+        private StageWeldSeam ResolveStageSeam(int stageIndex)
+        {
+            if (_stageRoots == null || _stageRoots.Length == 0)
+            {
+                Debug.LogError(
+                    $"{nameof(StructureView)} ({name}): cannot resolve weld seam because _stageRoots is missing or empty.",
+                    this);
+                return default;
+            }
+
+            int idx = Mathf.Clamp(stageIndex, 0, _stageRoots.Length - 1);
+            if (_stageSeams != null && idx < _stageSeams.Length && _stageSeams[idx].IsValid)
+            {
+                return _stageSeams[idx];
+            }
+
+            if (TryResolveStageSeam(_stageRoots[idx], transform, out StageWeldSeam resolved))
+            {
+                if (_stageSeams != null && idx < _stageSeams.Length)
+                {
+                    _stageSeams[idx] = resolved;
+                }
+
+                return resolved;
+            }
+
+            Debug.LogError(
+                $"{nameof(StructureView)} ({name}): failed to resolve weld seam for stage index {idx}.",
+                this);
+            return default;
+        }
+
+        private static void EncapsulateCorners(
+            Bounds sourceBounds,
+            Transform rendererTransform,
+            Transform structureRoot,
+            bool localSpaceInput,
+            ref Bounds targetBounds,
+            ref bool hasBounds)
+        {
+            Vector3 min = sourceBounds.min;
+            Vector3 max = sourceBounds.max;
+            for (int corner = 0; corner < 8; corner++)
+            {
+                var pt = new Vector3(
+                    (corner & 1) == 0 ? min.x : max.x,
+                    (corner & 2) == 0 ? min.y : max.y,
+                    (corner & 4) == 0 ? min.z : max.z);
+                Vector3 world = localSpaceInput ? rendererTransform.TransformPoint(pt) : pt;
+                Vector3 local = structureRoot.InverseTransformPoint(world);
+                if (!hasBounds)
+                {
+                    targetBounds = new Bounds(local, Vector3.zero);
+                    hasBounds = true;
+                }
+                else
+                {
+                    targetBounds.Encapsulate(local);
+                }
+            }
         }
 
         public static int ComputeSolidStages(float progress01, int stageCount)
@@ -521,6 +770,28 @@ namespace MoonProject.Gameplay
                     col.enabled = enabled;
                 }
             }
+        }
+
+        [Serializable]
+        public struct StageWeldSeam
+        {
+            public Vector3 Start;
+            public Vector3 Middle;
+            public Vector3 End;
+            public Vector3 Normal;
+
+            public StageWeldSeam(Vector3 start, Vector3 middle, Vector3 end, Vector3 normal)
+            {
+                Start = start;
+                Middle = middle;
+                End = end;
+                Normal = normal;
+            }
+
+            public bool IsValid =>
+                (Middle - Start).sqrMagnitude > 1e-6f ||
+                (End - Middle).sqrMagnitude > 1e-6f ||
+                (End - Start).sqrMagnitude > 1e-6f;
         }
 
         private readonly struct StageRendererCache

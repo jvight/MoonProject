@@ -160,13 +160,12 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             var visuals = Asset<GameplayVisuals>();
             Shader shader = LoadShader(ShaderPath);
-            visuals.Populate(GlowMaterial(shader, GlowRole.WeldBeam), GlowMaterial(shader, GlowRole.Flash),
-                GlowMaterial(shader, GlowRole.PieceHalo), Track(GlintMaterials.CreatePart(LoadShader(GlintShaderPath))),
-                GlowMaterial(shader, GlowRole.Spark));
-            visuals.PopulateFeel(GlowMaterial(shader, GlowRole.Spark), GlowMaterial(shader, GlowRole.WeldBeam),
+            visuals.Populate(GlowMaterial(shader, GlowRole.Flash), GlowMaterial(shader, GlowRole.PieceHalo),
+                Track(GlintMaterials.CreatePart(LoadShader(GlintShaderPath))));
+            visuals.PopulateFeel(GlowMaterial(shader, GlowRole.Flash), GlowMaterial(shader, GlowRole.PieceHalo),
                 GlowMaterial(shader, GlowRole.Flash), GlowMaterial(shader, GlowRole.PieceHalo),
                 Asset<FeelVfxTuning>());
-            visuals.PopulateHologram(GlowMaterial(shader, GlowRole.WeldBeam), GlowMaterial(shader, GlowRole.Flash));
+            visuals.PopulateHologram(GlowMaterial(shader, GlowRole.PieceHalo), GlowMaterial(shader, GlowRole.Flash));
             visuals.PopulateContainers(new[]
             {
                 CrateTemplate(ContainerKinds.CrateS, 0.6f), CrateTemplate(ContainerKinds.CrateM, 0.9f),

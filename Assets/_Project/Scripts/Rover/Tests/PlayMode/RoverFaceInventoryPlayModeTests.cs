@@ -227,9 +227,9 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreEqual(CursorLockMode.Confined, _uiSystem.Cursor.LockState, "Inventory open must confine the mouse cursor to the window.");
             Assert.IsTrue(_uiSystem.Cursor.IsVisible, "Inventory open must make the mouse cursor visible.");
             Assert.AreEqual(0, view.FocusedHoldCell, "Opening inventory must place initial focus on hold cell 0.");
-            Assert.IsNotNull(_faceDisplay.ContentTexture, "FaceDisplay must receive the 1152x768 UI RenderTexture.");
-            Assert.AreEqual(1152, _faceDisplay.ContentTexture.width);
-            Assert.AreEqual(768, _faceDisplay.ContentTexture.height);
+            Assert.IsNotNull(_faceDisplay.ContentTexture, "FaceDisplay must receive the UI RenderTexture.");
+            Assert.AreEqual(2304, _faceDisplay.ContentTexture.width, "the 1152x768 layout at twice the resolution");
+            Assert.AreEqual(1536, _faceDisplay.ContentTexture.height);
             CollectionAssert.Contains(uiCues, UiCueKind.Confirm, "Opening Tab must publish UiCue(UiCueKind.Confirm).");
             Assert.AreEqual(1, holdBootStarted, "First Tab open must publish HoldBootStarted.");
             Assert.AreEqual(1, hatchCycles, "First Tab open must publish RoverHatchCycleRequested.");
@@ -396,6 +396,7 @@ namespace MoonProject.Rover.PlayModeTests
             CaptureAtSize("face_inv_16x9_day", 1920, 1080);
             CaptureAtSize("face_inv_21x9_day", 2520, 1080);
             CaptureAtSize("face_inv_4x3_day", 1440, 1080);
+            CaptureAtSize("face_inv_1440p_day", 2560, 1440);
             AssertLiveGlassFitAndComfort(faceScreen, "day");
             bezelRenderer.sharedMaterial = darkBezelMat;
             Capture("inventory_variant_b");
@@ -938,9 +939,12 @@ namespace MoonProject.Rover.PlayModeTests
                                 continue;
                             }
 
-                            int uiX = Mathf.Clamp(Mathf.RoundToInt(panelPos.x), 0, uiW - 1);
-                            int uiY = Mathf.Clamp(Mathf.RoundToInt(panelSize.y - panelPos.y), 0, uiH - 1);
-                            float neighborhoodUiLum = MaxUiLuminanceInWindow(uiPixels, uiW, uiH, uiX, uiY, 5);
+                            // The UI texture may be a multiple of the layout's size (it is drawn at twice the layout).
+                            int uiX = Mathf.Clamp(Mathf.RoundToInt(panelPos.x * uiW / panelSize.x), 0, uiW - 1);
+                            int uiY = Mathf.Clamp(Mathf.RoundToInt((panelSize.y - panelPos.y) * uiH / panelSize.y), 0,
+                                uiH - 1);
+                            float neighborhoodUiLum = MaxUiLuminanceInWindow(uiPixels, uiW, uiH, uiX, uiY,
+                                Mathf.RoundToInt(5f * uiW / panelSize.x));
 
                             if (neighborhoodUiLum < 0.008f)
                             {

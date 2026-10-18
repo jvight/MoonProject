@@ -6,8 +6,6 @@
 - ui_confirm: confirm
 - ui_cancel: cancel
 - ui_toast: toast notification
-- ui_type_card: typewriter typing on paper cards
-- ui_type_terminal: terminal typing on 07's CRT screens
 
 Each cue renders Variant A (0 = closer to C2 'Radio bench') and Variant B (1 = a bolder electro-mechanical/acoustic idea).
 All UI cues are mixed as the quietest family in the R1 set, and all tonal elements sit in D major pentatonic (D E F# A B).
@@ -155,45 +153,6 @@ def ui_toast(variant: int, gen: np.random.Generator) -> np.ndarray:
     return bench.radio_bench_chain(mix, gen, hiss_level=0.0025, drive_db=1.8, lp_hz=2800.0, wet=0.12)
 
 
-def ui_type_card(variant: int, gen: np.random.Generator) -> np.ndarray:
-    """UI typewriter keystroke on thick paper punch-cards."""
-    if variant == 0:
-        # Variant A (C2 Radio bench): mechanical typebar striking manila card on rubber platen + tiny escapement tick.
-        n = samples(0.095)
-        mix = np.zeros(n)
-        place(mix, 0.48 * bench.speaker_cone_thump(note_freq("D4"), 0.065, gen, decay_s=0.042, cone_weight=0.40), samples(0.002))
-        place(mix, 0.72 * bench.warm_chime_voice(note_freq("D4"), 0.068, gen, decay_s=0.045, attack_s=0.002), samples(0.002))
-        place(mix, 0.45 * bench.felt_latch(note_freq("D4"), 0.055, gen, decay_s=0.032, wood_body=0.65), samples(0.002))
-        place(mix, 0.26 * bench.rotary_detent(note_freq("A4"), 0.045, gen, decay_s=0.022, muted=True), samples(0.028))
-        return bench.radio_bench_chain(mix, gen, hiss_level=0.002, drive_db=1.9, lp_hz=2450.0, wet=0.04, flutter_cents=0.0)
-
-    # Variant B (Bolder idea): embossing card-punch brass die-pin into stiff cardstock + mahogany platen thud.
-    n = samples(0.098)
-    mix = np.zeros(n)
-    place(mix, 0.78 * instruments.wood_tick(note_freq("A4"), 0.072, gen, decay=0.048), samples(0.002))
-    place(mix, 0.38 * bench.paper_slide(0.038, gen, f_start=920.0, f_end=1540.0, tone_freq=note_freq("D5")), samples(0.003))
-    place(mix, 0.34 * bench.felt_latch(note_freq("A4"), 0.050, gen, decay_s=0.030), samples(0.030))
-    return bench.radio_bench_chain(mix, gen, hiss_level=0.002, drive_db=1.7, lp_hz=2500.0, wet=0.05, flutter_cents=0.0)
-
-
-def ui_type_terminal(variant: int, gen: np.random.Generator) -> np.ndarray:
-    """UI terminal typing on 07's CRT screens: reed-relay keystroke + deflection-yoke magnetic tick."""
-    if variant == 0:
-        # Variant A (C2 Radio bench): teletype reed-relay keystroke + warm CRT deflection yoke magnetic pulse (A4).
-        n = samples(0.080)
-        mix = np.zeros(n)
-        place(mix, 0.55 * bench.relay_armature(note_freq("A4"), 0.062, gen, decay_s=0.034, muted=True), samples(0.002))
-        place(mix, 0.68 * bench.warm_chime_voice(note_freq("A4"), 0.065, gen, decay_s=0.038, attack_s=0.002), samples(0.003))
-        return bench.radio_bench_chain(mix, gen, hiss_level=0.002, drive_db=2.0, lp_hz=2550.0, wet=0.05, flutter_cents=0.0)
-
-    # Variant B (Bolder idea): solenoid micro-pin tap + damped glass-faceplate phosphor-grid ring at E4/E5.
-    n = samples(0.085)
-    mix = np.zeros(n)
-    place(mix, 0.48 * bench.rotary_detent(note_freq("E4"), 0.060, gen, decay_s=0.032, muted=True), samples(0.002))
-    place(mix, 0.72 * instruments.glass_chime(note_freq("E5"), 0.068, decay=0.038), samples(0.003))
-    return bench.radio_bench_chain(mix, gen, hiss_level=0.002, drive_db=1.7, lp_hz=2650.0, wet=0.06, flutter_cents=0.0)
-
-
 UI_CUES = {
     "ui_panel_open": ui_panel_open,
     "ui_panel_close": ui_panel_close,
@@ -201,6 +160,4 @@ UI_CUES = {
     "ui_confirm": ui_confirm,
     "ui_cancel": ui_cancel,
     "ui_toast": ui_toast,
-    "ui_type_card": ui_type_card,
-    "ui_type_terminal": ui_type_terminal,
 }

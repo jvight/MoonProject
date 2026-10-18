@@ -12,7 +12,7 @@ namespace MoonProject.Rover
     /// <list type="bullet">
     /// <item>While the title is up (<see cref="IGameFlow"/>, <see cref="TitleShown"/>) 07 stays asleep. A fresh title
     /// holds the rig's lens shot on the closed lens, drifting after a while; over a save, the rig holds the wide shot
-    /// of home.</item>
+    /// of 07 where it was left (<see cref="TitleFrame"/>).</item>
     /// <item><see cref="SessionStarted"/> with a fresh game plays the full opening once: from the title the lens camera
     /// pushes into the closed lens, and that black is O1. Inside the lens the camera sits at 07's lens socket and turns
     /// with the gaze, the picture goes through <see cref="ILensView"/>, and 07's head follows; then the camera leaves
@@ -54,14 +54,12 @@ namespace MoonProject.Rover
         [Tooltip("The lens camera: a Cinemachine camera with no body or aim, placed by this each frame it is live.")]
         [SerializeField] private CinemachineCamera _lensCamera;
 
-        [Tooltip("The opening's lander (the first gaze target).")]
-        [SerializeField] private Transform _lander;
-
-        [Tooltip("The beacon on the lander's hull (the second gaze target).")]
-        [SerializeField] private Transform _pilot;
+        [Tooltip("The amber beacon on the lander's hull (the second gaze target: the warm point that leads).")]
+        [SerializeField] private Transform _beacon;
 
         private readonly object _owner = new object();
         private readonly FaceInspectSightLine _sight = new FaceInspectSightLine();
+        private Vector3 _wakePost;
         private OpeningScript _script;
         private LookSettings _look;
         private GameContext _context;
@@ -112,6 +110,15 @@ namespace MoonProject.Rover
             _rover = context.Get<IRoverState>();
             _roverRig = context.Get<IRoverRig>();
             _world = context.Get<IWorldLayout>();
+            if (!context.Get<IWorldAnchors>().TryGet(WorldAnchorIds.PlaceWake, out WorldAnchor wake))
+            {
+                Debug.LogError($"{nameof(OpeningDirector)}: the world has no '{WorldAnchorIds.PlaceWake}' anchor for " +
+                    "the opening's first gaze (the dead charging post).", this);
+                enabled = false;
+                return;
+            }
+
+            _wakePost = wake.Position;
             if (context.TryGet(out ITerrainQuery terrain))
             {
                 _sight.SetTerrain(terrain);
@@ -149,12 +156,11 @@ namespace MoonProject.Rover
 
         private bool ValidateWiring()
         {
-            bool ok = _tuning != null && _rig != null && _controller != null && _body != null && _lensCamera != null && _lander != null
-                && _pilot != null;
+            bool ok = _tuning != null && _rig != null && _controller != null && _body != null && _lensCamera != null && _beacon != null;
             if (!ok)
             {
                 Debug.LogError($"{nameof(OpeningDirector)}: tuning, rig, rover, body, lens camera or a gaze target " +
-                    "(lander, pilot) is not assigned; rebuild the Main scene.", this);
+                    "(the lander's beacon) is not assigned; rebuild the Main scene.", this);
             }
 
             return ok;
@@ -249,9 +255,9 @@ namespace MoonProject.Rover
             OpeningSettings settings = _tuning.Opening;
             Vector3 lens = ScanLensOrigin.position;
             Quaternion toLocal = Quaternion.Inverse(Heading());
-            Vector3 lander = _lander.position + Vector3.up * settings.LanderLookHeight;
+            Vector3 post = _wakePost + Vector3.up * settings.PostLookHeight;
             Vector3 beacon = _world.PeakPosition + Vector3.up * settings.BeaconHeight;
-            _script.SetTargets(LensGaze.Angles(toLocal * (lander - lens)), LensGaze.Angles(toLocal * (_pilot.position - lens)),
+            _script.SetTargets(LensGaze.Angles(toLocal * (post - lens)), LensGaze.Angles(toLocal * (_beacon.position - lens)),
                 LensGaze.Angles(toLocal * (beacon - lens)), LensGaze.Angles(toLocal * _world.EarthDirection));
         }
 

@@ -5,10 +5,6 @@ namespace MoonProject.Audio
     /// </summary>
     public static class AudioCueIds
     {
-        public const string JumpCharge = "jump_charge";
-        public const string JumpLeap = "jump_leap";
-        public const string CoilTwang = "coil_twang";
-        public const string JumpLand = "jump_land";
         public const string RoverHum = "rover_hum";
         public const string DustCrunch = "dust_crunch";
         public const string SuspensionCreak = "suspension_creak";
@@ -31,7 +27,6 @@ namespace MoonProject.Audio
         public const string CutUndertone = "cut_undertone";
         public const string SegmentSlide = "segment_slide";
         public const string CargoTok = "cargo_tok";
-        public const string CrateLatch = "crate_latch";
         public const string HoldBoot = "hold_boot";
         public const string HoldSlot = "hold_slot";
         public const string ItemSlide = "item_slide";
@@ -60,8 +55,6 @@ namespace MoonProject.Audio
         public const string UiConfirm = "ui_confirm";
         public const string UiCancel = "ui_cancel";
         public const string UiToast = "ui_toast";
-        public const string UiTypeCard = "ui_type_card";
-        public const string UiTypeTerminal = "ui_type_terminal";
         public const string UiHoldFill = "ui_hold_fill";
         public const string UiHoldComplete = "ui_hold_complete";
         public const string RoomTone = "room_tone";
@@ -88,7 +81,6 @@ namespace MoonProject.Audio
         public const string BatteryCell = "battery_cell";
         public const string BatteryLow = "battery_low";
         public const string BatterySigh = "battery_sigh";
-        public const string LeapFizzle = "leap_fizzle";
         public const string LampTick = "lamp_tick";
 
         // R1 Group 1: 07's face
@@ -118,7 +110,6 @@ namespace MoonProject.Audio
         // Opening v2: the base powering on, its lamps at the first nightfall
         public const string StructurePowerOn = "structure_power_on";
         public const string BaseLampOn = "base_lamp_on";
-        public const string TitleCrtOff = "title_crt_off";
 
         // R1 Group 4: Machines
         public const string MachineSolarTrack = "machine_solar_track";

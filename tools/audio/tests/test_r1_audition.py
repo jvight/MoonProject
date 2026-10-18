@@ -79,8 +79,6 @@ EXPECTED_CUES_BY_GROUP: dict[str, tuple[str, ...]] = {
         "ui_confirm",
         "ui_cancel",
         "ui_toast",
-        "ui_type_card",
-        "ui_type_terminal",
     ),
     "ambience": (
         "ambience_earthlit_night",
@@ -158,7 +156,6 @@ class R1AuditionTests(unittest.TestCase):
             "build_weld_loop",
             "machine_transformer_loop",
             "ui_cursor_move",
-            "ui_type_card",
         )
         with tempfile.TemporaryDirectory() as tmp:
             tmp_dir = Path(tmp)

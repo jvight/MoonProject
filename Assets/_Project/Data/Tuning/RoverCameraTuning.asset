@@ -249,7 +249,7 @@ MonoBehaviour:
   _gentleBreathRate: 0.5
   _gentleMinSensitivity: 0.15
   _opening:
-    _crackleSeconds: 1.1
+    _crackleSeconds: 1.2
     _lidCrackSeconds: 1.1
     _lidHalfSeconds: 1.1
     _huntSeconds: 1.7
@@ -301,7 +301,7 @@ MonoBehaviour:
     _hesitateYaw: 3
     _peakLift: 1
     _earthBelow: 4
-    _landerLookHeight: 3
+    _postLookHeight: 1.2
     _beaconHeight: 6
     _lensForward: 0.44
     _lensNearClip: 0.22
@@ -319,12 +319,13 @@ MonoBehaviour:
     _tiltEaseSeconds: 0.45
     _tiltHoldSeconds: 1.1
     _blinkSigh: 0.5
-    _pushInSeconds: 2
+    _pushInSeconds: 1.6
     _pushDarkFrom: 0.6
     _titleDriftDelay: 20
     _titleDriftYaw: 8
     _titleDriftPeriod: 48
     _titleDriftEase: 3
+    _titleFrameMinLanderDistance: 12
     _shortLidSeconds: 0.8
     _shortGlanceSeconds: 2
     _gazePriority: 50

@@ -72,5 +72,34 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return null;
             Assert.AreNotEqual(crate, _fixture.Gameplay.Containers.Candidate, "an open crate is never a cut");
         }
+
+        [UnityTest]
+        public IEnumerator CuttingASealedContainer_AimsTheBeamAtItsCutPoint_AndHolds07Still()
+        {
+            _fixture = GameplayFixture.Boot(_controls);
+            yield return null;
+            GameplaySystem gameplay = _fixture.Gameplay;
+            SealedContainer crate = gameplay.Containers.Find("supply.wake");
+            _fixture.Rover.Place(crate.CutPoint.position + crate.Root.forward * 1.5f,
+                Quaternion.LookRotation(-crate.Root.forward).eulerAngles.y);
+            yield return null;
+            yield return null;
+
+            Assert.AreSame(crate, gameplay.Containers.Candidate);
+            Assert.IsTrue(gameplay.Salvage.HasTarget, "salvage reports the sealed container as the cutter's target");
+            Assert.Less(Vector3.Distance(gameplay.Salvage.CutPoint, crate.CutPoint.position), 1e-3f,
+                "the cut point is the container's, not the world origin");
+
+            Press(Keyboard.current.eKey);
+            yield return Waits.Until(() => gameplay.Containers.IsCutting && gameplay.Salvage.BeamLevel > 0.1f, 3f);
+            Assert.Greater(_fixture.Rover.HoldStillCount, 0, "07 holds still while it cuts a container");
+            Assert.Less(Vector3.Distance(gameplay.Salvage.CutPoint, crate.CutPoint.position), 1e-3f,
+                "the beam stays on the container's cut point through the cut");
+
+            yield return Waits.Until(() => crate.Opened, 4f);
+            Release(Keyboard.current.eKey);
+            yield return null;
+            Assert.AreEqual(0, _fixture.Rover.HoldStillCount, "the hold lets go once the container is open");
+        }
     }
 }

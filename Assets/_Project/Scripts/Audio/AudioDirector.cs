@@ -9,9 +9,8 @@ namespace MoonProject.Audio
     /// The Audio domain's game system. Owns the volume buses (registered as <see cref="IAudioSettings"/>), pooled
     /// 3D/2D one-shot voices and the cue library, plays the landing thump on <see cref="RoverLanded"/>, eases the
     /// pause mix on <see cref="PauseChanged"/> (world loops duck, the radio moves into the cabin), and initialises
-    /// the rover, Hover-Jump, building, battery, feel and UI sounds, 07's chirps, the radio, the title music, the
-    /// ambience bed and the soundscape of solitude (with 07's small sounds). A landing that ends a leap gets the jump's
-    /// cushion instead of the thump. 2D sources bypass reverb zones. Initialise it after the World, Rover and
+    /// the rover, building, battery, feel and UI sounds, 07's chirps, the radio, the title music, the
+    /// ambience bed and the soundscape of solitude (with 07's small sounds). 2D sources bypass reverb zones. Initialise it after the World, Rover and
     /// Gameplay systems (it reads <see cref="IRoverState"/>, <see cref="IRoverRig"/> and
     /// <see cref="IWorldLayout"/>).
     /// </summary>
@@ -33,8 +32,6 @@ namespace MoonProject.Audio
         [Tooltip("Building: the placement ghost, snap, weld, structure complete and power-on.")]
         [SerializeField] private GameplayAudio _gameplay;
 
-        [Tooltip("Hover-Jump charge, leap and cushioned landing.")]
-        [SerializeField] private JumpAudio _jump;
         [SerializeField] private BatteryAudio _battery;
 
 
@@ -162,7 +159,6 @@ namespace MoonProject.Audio
             IsInitialized = true;
 
             _roverAudio.Initialize(context, this);
-            _jump.Initialize(context, this);
             _gameplay.Initialize(context, this);
             _ui.Initialize(context, this);
             _radio.Initialize(context, this);
@@ -310,10 +306,9 @@ namespace MoonProject.Audio
         }
 
         internal void Wire(AudioLibrary library, AudioMixTuning mixTuning, RoverAudio roverAudio,
-            JumpAudio jump, GameplayAudio gameplay, UiAudio ui, RadioStation radio, AmbienceBed ambience,
+            GameplayAudio gameplay, UiAudio ui, RadioStation radio, AmbienceBed ambience,
             Soundscape soundscape, RoverSmallSounds smallSounds, SalvageAudio salvage)
         {
-            _jump = jump;
             _ui = ui;
             _library = library;
             _mixTuning = mixTuning;
@@ -385,11 +380,6 @@ namespace MoonProject.Audio
 
         private void OnRoverLanded(RoverLanded landed)
         {
-            if (_jump.TryCushionLanding(landed))
-            {
-                return;
-            }
-
             ImpactSound thump = ImpactSound.ForLanding(landed.ImpactSpeed, _mixTuning);
             if (thump.Audible && _landingThump.IsValid)
             {
@@ -437,7 +427,6 @@ namespace MoonProject.Audio
             ok &= Require(_roverAudio, nameof(_roverAudio));
             ok &= Require(_gameplay, nameof(_gameplay));
             ok &= Require(_ui, nameof(_ui));
-            ok &= Require(_jump, nameof(_jump));
             ok &= Require(_radio, nameof(_radio));
             ok &= Require(_feel, nameof(_feel));
             ok &= Require(_chirps, nameof(_chirps));

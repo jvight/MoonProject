@@ -127,7 +127,7 @@ namespace MoonProject.Audio.PlayModeTests
             {
                 AudioTestRig.UpdateOf(_rig.Director), AudioTestRig.UpdateOf(_rig.RoverAudio),
                 AudioTestRig.UpdateOf(_rig.Gameplay), AudioTestRig.UpdateOf(_rig.Ui), AudioTestRig.UpdateOf(_rig.Radio),
-                AudioTestRig.UpdateOf(_rig.TitleMusic), AudioTestRig.UpdateOf(_rig.Jump),
+                AudioTestRig.UpdateOf(_rig.TitleMusic),
                 AudioTestRig.UpdateOf(_rig.Ambience), AudioTestRig.UpdateOf(_rig.Soundscape),
                 AudioTestRig.UpdateOf(_rig.SmallSounds), AudioTestRig.UpdateOf(_rig.Salvage),
                 AudioTestRig.UpdateOf(_rig.Feel),
@@ -205,12 +205,6 @@ namespace MoonProject.Audio.PlayModeTests
                         events.Publish(new RoverRecovering(Vector3.zero, Vector3.one, 0.5f));
                     }
 
-                    events.Publish(new RoverJumpCharged(frame % 5 / 4f));
-                    if (frame % 36 == 4)
-                    {
-                        events.Publish(new RoverJumpCancelled());
-                    }
-
                     break;
                 case 5:
                     events.Publish(new SkyPhaseChanged((SkyPhase)(frame / 12 % 5), 0f));
@@ -245,7 +239,6 @@ namespace MoonProject.Audio.PlayModeTests
                     events.Publish(new OpeningMilestoneReached((OpeningMilestone)(frame / 12 % 3), frame % 24 == 9));
                     break;
                 case 11:
-                    events.Publish(new RoverJumped(frame % 24 == 11 ? 1f : 0.2f));
                     events.Publish(new RoverLanded(Vector3.zero, 2.5f, 1f));
                     settings.SetVolume(AudioBus.Sfx, frame % 24 == 11 ? 0.9f : 1f);
                     break;

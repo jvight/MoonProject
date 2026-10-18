@@ -303,14 +303,27 @@ namespace MoonProject.Gameplay.Editor
             statusLight.shadows = LightShadows.None;
             statusLight.enabled = false;
 
+            Transform[] stageArray = stages.ToArray();
+            StructureView.StageWeldSeam[] stageSeams = StructureView.BuildStageSeams(stageArray, root.transform);
+            for (int s = 0; s < stageSeams.Length; s++)
+            {
+                if (!stageSeams[s].IsValid)
+                {
+                    Object.DestroyImmediate(root);
+                    throw new InvalidOperationException(
+                        $"BaseStructureRecipes: R1 structure '{r1ModelName}' stage '{stageArray[s].name}' has no renderers or valid weld seam.");
+                }
+            }
+
             var view = root.AddComponent<StructureView>();
             view.Populate(
                 structureId,
-                stages.ToArray(),
+                stageArray,
                 lampRenderers.ToArray(),
                 colliders,
                 statusLight,
-                StatusLightIntensity);
+                StatusLightIntensity,
+                stageSeams);
             return root;
         }
 

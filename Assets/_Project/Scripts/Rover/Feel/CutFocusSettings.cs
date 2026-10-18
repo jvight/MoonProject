@@ -33,6 +33,23 @@ namespace MoonProject.Rover
         [Tooltip("Ignition: the head's nod (deg down), recovering in ~250 ms.")]
         [SerializeField] private NudgeSettings _nod = new NudgeSettings(0f, 2f, 4f, 1f);
 
+        [Header("Offline cutter's refusal")]
+        [Tooltip("Seconds of the turret's shake when a press is refused because the cutter is offline.")]
+        [Range(0.2f, 1.5f)]
+        [SerializeField] private float _refusalSeconds = 0.55f;
+
+        [Tooltip("Side-to-side swing (deg) of the refusing turret, fading out.")]
+        [Range(0f, 40f)]
+        [SerializeField] private float _refusalYawDegrees = 14f;
+
+        [Tooltip("How many left-right shakes the refusal makes.")]
+        [Range(1f, 5f)]
+        [SerializeField] private float _refusalShakes = 2f;
+
+        [Tooltip("Dip (deg) the turret makes while it shakes, as if it sagged.")]
+        [Range(0f, 20f)]
+        [SerializeField] private float _refusalDipDegrees = 6f;
+
         public float EyeGlow => _eyeGlow;
 
         public float IrisNarrow => _irisNarrow;
@@ -44,5 +61,13 @@ namespace MoonProject.Rover
         public float FollowSeconds => _followSeconds;
 
         public NudgeSettings Nod => _nod;
+
+        public float RefusalSeconds => _refusalSeconds;
+
+        public float RefusalYawDegrees => _refusalYawDegrees;
+
+        public float RefusalShakes => _refusalShakes;
+
+        public float RefusalDipDegrees => _refusalDipDegrees;
     }
 }

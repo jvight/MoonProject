@@ -64,6 +64,30 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
+        public void NewGameFromTheTitle_ShowsThe_LensWithin3Seconds_AndHoldsPureBlackNoLongerThan1AndAHalf()
+        {
+            const float MaxToFirstLensImage = 3f;
+            const float MaxPureBlack = 1.5f;
+            _script.BeginFull(true);
+            float elapsed = 0f;
+            float blackStart = -1f;
+            while (_script.Phase != OpeningPhase.LidCrack && elapsed < 2f * MaxToFirstLensImage)
+            {
+                StepOnce();
+                elapsed += Frame;
+                if (_script.Phase == OpeningPhase.Crackle && blackStart < 0f)
+                {
+                    blackStart = elapsed;
+                }
+            }
+
+            Assert.AreEqual(OpeningPhase.LidCrack, _script.Phase, "The lens opens.");
+            Assert.LessOrEqual(elapsed, MaxToFirstLensImage, "The first lens image comes within 3 s of the click.");
+            Assert.Greater(blackStart, 0f, "O1 plays.");
+            Assert.LessOrEqual(elapsed - blackStart, MaxPureBlack, "O1's pure black is at most 1.5 s.");
+        }
+
+        [Test]
         public void Untouched_PlaysEveryBeatInOrder_WithinFortyFiveSeconds()
         {
             _script.BeginFull(false);

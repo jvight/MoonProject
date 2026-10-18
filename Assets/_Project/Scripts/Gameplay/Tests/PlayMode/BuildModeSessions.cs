@@ -9,6 +9,7 @@ using UnityEngine.TestTools;
 using MoonProject.App;
 using MoonProject.Core;
 using MoonProject.Core.Events;
+using MoonProject.Core.Input;
 using MoonProject.Core.Save;
 using MoonProject.Testing;
 using Object = UnityEngine.Object;
@@ -98,11 +99,26 @@ namespace MoonProject.Gameplay.PlayModeTests
             int metalBeforePlace = _gameplay.Materials.Metal;
             int wiringBeforePlace = _gameplay.Materials.Wiring;
 
-            // 2. Open the build menu (B), select the charging pad (E), and confirm placement (E).
+            // 2. Open the build menu (B), verify input isolation (ENV-02), select charging pad (E), and tap E to place (ENV-01).
             yield return Tap(_keyboard.bKey);
             Assert.AreEqual(BuildModeState.Menu, build.State, "Build key opens the build menu.");
             Assert.IsNotNull(build.Controller.SelectedStructure);
             Assert.AreEqual(StructureIds.ChargingPad, build.Controller.SelectedStructure.Id);
+            InputReader input = _context.Input;
+            Assert.IsTrue(input.HasModeOwner, "Build mode claims exclusive input ownership while open.");
+
+            // ENV-02: Holding W (Drive) while Build Mode is open must not drive 07.
+            Vector3 posBeforeDrive = _context.Get<IRoverState>().Position;
+            Press(_keyboard.wKey);
+            yield return null;
+            yield return null;
+            Assert.AreEqual(Vector2.zero, input.Drive, "InputReader.Drive is consumed while Build Mode is open.");
+            Assert.Less(
+                Vector3.Distance(_context.Get<IRoverState>().Position, posBeforeDrive),
+                0.02f,
+                "07 must not drive while Build Mode is open.");
+            Release(_keyboard.wKey);
+            yield return null;
 
             yield return Tap(_keyboard.eKey);
             Assert.AreEqual(BuildModeState.Placing, build.State, "Excavate (E) enters Placing state.");
@@ -111,9 +127,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(PlacementReason.Valid, build.Controller.CandidateReason);
             Assert.IsTrue(build.Controller.CanPlaceNow);
 
-            Press(_keyboard.eKey);
-            yield return null;
-            Assert.AreEqual(BuildModeState.Welding, build.State, "Confirming placement enters Welding state.");
+            // ENV-01: Tapping E places the structure and stays in Welding state on the next frame (never cancels at 0%).
+            yield return Tap(_keyboard.eKey);
+            Assert.AreEqual(BuildModeState.Welding, build.State, "Tapping E to place stays in Welding state awaiting Hold E.");
             Assert.AreEqual(1, _gameplay.PlacedBase.Count, "Charging pad is placed in PlacedBase.");
             Assert.AreEqual(metalBeforePlace - padCost.Metal, _gameplay.Materials.Metal, "Metal cost spent on place.");
             Assert.AreEqual(wiringBeforePlace - padCost.Wiring, _gameplay.Materials.Wiring, "Wiring cost spent on place.");
@@ -126,9 +142,18 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(4, placedView.StageCount, "Charging pad runtime prefab must have 4 wired stage roots.");
             Assert.AreEqual(0, placedView.SolidStageCount, "At 0% progress, 0 stages are solid and Stage_1 is hologram.");
 
+            // Now hold E to weld the placed structure and verify VFX-05 (3-layer beam, warm light, sparks, progressive seam).
+            Press(_keyboard.eKey);
+            yield return null;
+            yield return null;
+
             IRoverRig rig = _context.Get<IRoverRig>();
             Assert.IsNotNull(rig, "Main scene must provide IRoverRig.");
             Assert.IsNotNull(rig.CutterOrigin, "IRoverRig.CutterOrigin must be wired.");
+            Assert.AreEqual(3, build.WeldBeamLayerCount, "Structure weld reuses the 3-layer CutBeam (core + sheath + halo).");
+            Assert.Greater(build.WeldBeamLevel, 0f, "Weld beam extends during active welding.");
+            Assert.Greater(build.WeldLightIntensity, 0f, "Warm flickering weld light illuminates the structure during welding.");
+            Assert.Greater(build.WeldSeamHeat, 0f, "Progressive HeatSeam glows along the active weld stage.");
             Assert.Less(
                 Vector3.Distance(build.WeldBeamStart, rig.CutterOrigin.position),
                 0.01f,
@@ -160,6 +185,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(_gameplay.PlacedBase.TryGetStructure(placedId, out PlacedStructure finishedPad));
             Assert.IsTrue(finishedPad.IsBuilt, "Holding E welds the charging pad to 100% completion.");
             Assert.AreEqual(BuildModeState.Closed, build.State, "Completing weld returns BuildField to Closed state.");
+            Assert.IsFalse(input.HasModeOwner, "Mode ownership releases once Build Mode closes.");
             Assert.AreEqual(placedView.StageCount, placedView.SolidStageCount, "All stages are solid after welding.");
             Assert.IsTrue(placedView.LampsLit, "Finished charging pad lights its standby amber lamps.");
 

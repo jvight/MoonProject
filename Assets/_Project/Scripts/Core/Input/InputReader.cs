@@ -25,6 +25,7 @@ namespace MoonProject.Core.Input
         private readonly InputAction _build;
         private readonly InputAction _deconstruct;
         private readonly Action<InputAction.CallbackContext> _onPerformed;
+        private object _modeOwner;
 
         /// <param name="actions">The Controls asset. Missing maps/actions throw immediately (wiring bug).</param>
         public InputReader(InputActionAsset actions)
@@ -52,8 +53,33 @@ namespace MoonProject.Core.Input
             Track(Menu.Map, true);
         }
 
-        /// <summary>x = steer, y = throttle, each -1..1.</summary>
-        public Vector2 Drive => Vector2.ClampMagnitude(_drive.ReadValue<Vector2>(), 1f);
+        /// <summary>True when a modal gameplay mode (such as Build Mode) owns Drive/Excavate/Winch input.</summary>
+        public bool HasModeOwner => _modeOwner != null;
+
+        /// <summary>Claims or releases exclusive ownership of Drive, Excavate, and Winch for a modal gameplay state.</summary>
+        public void SetModeOwner(object owner, bool active)
+        {
+            if (owner == null)
+            {
+                throw new ArgumentNullException(nameof(owner));
+            }
+
+            if (active)
+            {
+                _modeOwner = owner;
+            }
+            else if (ReferenceEquals(_modeOwner, owner))
+            {
+                _modeOwner = null;
+            }
+        }
+
+        /// <summary>x = steer, y = throttle, each -1..1. Consumed (zero) while a mode owner is active.</summary>
+        public Vector2 Drive => _modeOwner != null ? Vector2.zero : Vector2.ClampMagnitude(_drive.ReadValue<Vector2>(), 1f);
+
+        /// <summary>Reads Drive for the active mode owner.</summary>
+        public Vector2 ModeDrive(object owner) =>
+            ReferenceEquals(_modeOwner, owner) ? Vector2.ClampMagnitude(_drive.ReadValue<Vector2>(), 1f) : Vector2.zero;
 
         /// <summary>Mouse movement this frame in pixels. Do not multiply by deltaTime.</summary>
         public Vector2 LookDelta => _lookDelta.ReadValue<Vector2>();
@@ -61,9 +87,15 @@ namespace MoonProject.Core.Input
         /// <summary>Gamepad look stick, -1..1. Multiply by deltaTime and a rate.</summary>
         public Vector2 LookRate => _lookRate.ReadValue<Vector2>();
 
-        public bool ExcavateHeld => _excavate.IsPressed();
+        public bool ExcavateHeld => _modeOwner == null && _excavate.IsPressed();
 
-        public bool ExcavatePressed => _excavate.WasPressedThisFrame();
+        public bool ExcavatePressed => _modeOwner == null && _excavate.WasPressedThisFrame();
+
+        /// <summary>Reads ExcavateHeld for the active mode owner.</summary>
+        public bool ModeExcavateHeld(object owner) => ReferenceEquals(_modeOwner, owner) && _excavate.IsPressed();
+
+        /// <summary>Reads ExcavatePressed for the active mode owner.</summary>
+        public bool ModeExcavatePressed(object owner) => ReferenceEquals(_modeOwner, owner) && _excavate.WasPressedThisFrame();
 
         public bool TetherHeld => _tether.IsPressed();
 
@@ -71,8 +103,11 @@ namespace MoonProject.Core.Input
 
         public bool TetherReleased => _tether.WasReleasedThisFrame();
 
-        /// <summary>Reel in (+) / out (-), -1..1 per frame (scroll notch or held d-pad).</summary>
-        public float Winch => _winch.ReadValue<float>();
+        /// <summary>Reel in (+) / out (-), -1..1 per frame (scroll notch or held d-pad). Consumed while a mode owner is active.</summary>
+        public float Winch => _modeOwner != null ? 0f : _winch.ReadValue<float>();
+
+        /// <summary>Reads Winch for the active mode owner.</summary>
+        public float ModeWinch(object owner) => ReferenceEquals(_modeOwner, owner) ? _winch.ReadValue<float>() : 0f;
 
         /// <summary>Hover-Jump charge button (hold to charge, release to leap; only once the upgrade is owned).</summary>
         public bool JumpHeld => _jump.IsPressed();
@@ -114,6 +149,7 @@ namespace MoonProject.Core.Input
         /// <summary>Turns the rover controls off; the UI map is unaffected.</summary>
         public void Disable()
         {
+            _modeOwner = null;
             _roverMap.Disable();
         }
 
@@ -141,6 +177,7 @@ namespace MoonProject.Core.Input
 
         public void Dispose()
         {
+            _modeOwner = null;
             Track(_roverMap, false);
             Track(Menu.Map, false);
             _roverMap.Disable();

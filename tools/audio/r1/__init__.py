@@ -6,6 +6,6 @@ Provides deterministic, seeded Python synthesis recipes for the R1 look-dev audi
 - Building (ghost, snap, invalid, placement, weld loop, stage complete, structure complete, deconstruct)
 - Machines (solar tracking, wings unfold/fold, pad contacts, transformer purr loop, pylon knife switch,
   cable drums, lander ramp, cargo hatch, crate lid)
-- The CRT UI (panel open/close, cursor move, confirm, cancel, toast, typing on paper cards and 07's screens)
+- The CRT UI (panel open/close, cursor move, confirm, cancel, toast)
 - Ambience beds (60 s seamless loops: earthlit night, sunlit day, eclipse)
 """

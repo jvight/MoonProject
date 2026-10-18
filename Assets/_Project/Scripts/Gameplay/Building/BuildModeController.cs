@@ -145,9 +145,21 @@ namespace MoonProject.Gameplay
             return true;
         }
 
-        /// <summary>Closes build mode from any state.</summary>
+        /// <summary>
+        /// Closes build mode from any state. If an unwelded (0%) structure is currently active in
+        /// <see cref="BuildModeState.Welding"/>, it is removed and its build cost refunded so no orphan 0% frame is left.
+        /// </summary>
         public void Close()
         {
+            if (ActiveWeldInstanceId > 0 &&
+                _placedBase.TryGetStructure(ActiveWeldInstanceId, out PlacedStructure active) &&
+                !active.IsBuilt &&
+                active.BuildProgress01 <= 0f &&
+                _placedBase.TryDeconstruct(ActiveWeldInstanceId, out Recipe refund))
+            {
+                Refund(refund);
+            }
+
             State = BuildModeState.Closed;
             ActiveWeldInstanceId = 0;
             ActiveWeldProgress01 = 0f;
@@ -395,10 +407,20 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// Steps active welding in <see cref="BuildModeState.Welding"/>. If <paramref name="weldHeld"/> is released or
-        /// 07 leaves <see cref="BuildingTuning.WeldRange"/>, welding pauses on the unfinished structure and build mode
-        /// returns to <see cref="BuildModeState.Closed"/> (<paramref name="cancelledNow"/> = true). When progress
-        /// reaches 100%, <paramref name="completedNow"/> is true and build mode closes cleanly.
+        /// Steps active welding in <see cref="BuildModeState.Welding"/>.
+        /// Intended input contract (ENV-01):
+        /// - Tap <c>E</c> (<c>Excavate</c>) in <see cref="BuildModeState.Placing"/> places the structure at 0% and enters
+        ///   <see cref="BuildModeState.Welding"/>, waiting for the player to hold <c>E</c> to weld (or holding <c>E</c>
+        ///   continuously from placement welds straight through).
+        /// - Releasing <c>E</c> before any weld progress is made (<c>BuildProgress01 == 0</c>) keeps build mode in
+        ///   <see cref="BuildModeState.Welding"/> while in range so tapping <c>E</c> to place never cancels on the next
+        ///   frame or leaves an orphan 0% frame.
+        /// - Releasing <c>E</c> after welding has progressed (<c>BuildProgress01 &gt; 0</c>) pauses welding on the
+        ///   partially welded structure and returns build mode to <see cref="BuildModeState.Closed"/>
+        ///   (<paramref name="cancelledNow"/> = true).
+        /// - Leaving <see cref="BuildingTuning.WeldRange"/> cancels welding and closes build mode (removing and refunding
+        ///   any 0% structure).
+        /// - When progress reaches 100%, <paramref name="completedNow"/> is true and build mode closes cleanly.
         /// </summary>
         public bool StepWelding(
             float deltaTime,
@@ -417,15 +439,29 @@ namespace MoonProject.Gameplay
 
             if (!_placedBase.TryGetStructure(ActiveWeldInstanceId, out PlacedStructure current) || current.IsBuilt)
             {
+                ActiveWeldInstanceId = 0;
                 Close();
                 return false;
             }
 
             float distance = SurfaceRules.HorizontalDistance(current.Pose.Position, roverPosition);
             bool inRange = distance <= _tuning.WeldRange;
-            if (!weldHeld || !inRange)
+            if (!inRange)
             {
                 _placedBase.StepWeld(ActiveWeldInstanceId, 0f, roverPosition, false);
+                cancelledNow = true;
+                Close();
+                return false;
+            }
+
+            if (!weldHeld)
+            {
+                _placedBase.StepWeld(ActiveWeldInstanceId, 0f, roverPosition, false);
+                if (current.BuildProgress01 <= 0f)
+                {
+                    return true;
+                }
+
                 cancelledNow = true;
                 Close();
                 return false;
@@ -440,6 +476,7 @@ namespace MoonProject.Gameplay
             if (completedNow)
             {
                 ActiveWeldProgress01 = 1f;
+                ActiveWeldInstanceId = 0;
                 Close();
             }
 

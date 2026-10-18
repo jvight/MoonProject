@@ -15,7 +15,7 @@ namespace MoonProject.Rover
         [Header("Holds (s), one per storyboard row")]
         [Tooltip("O1: pure black while 07's systems thump on and the static swells.")]
         [Range(0.5f, 6f)]
-        [SerializeField] private float _crackleSeconds = 1.1f;
+        [SerializeField] private float _crackleSeconds = 1.2f;
 
         [Tooltip("O2: the lid's first stage, a warm slit, and its stall.")]
         [Range(0.5f, 5f)]
@@ -33,11 +33,11 @@ namespace MoonProject.Rover
         [Range(0.8f, 3f)]
         [SerializeField] private float _flickerSeconds = 1f;
 
-        [Tooltip("O6: the look at the sleeping home.")]
+        [Tooltip("O6: the look at the dead charging post and its cable.")]
         [Range(1f, 8f)]
         [SerializeField] private float _gazeHomeSeconds = 1.8f;
 
-        [Tooltip("O7: the look at the tower's pilot; long enough to hold through one of its blinks.")]
+        [Tooltip("O7: the look at the lander's amber beacon, the warm point that leads.")]
         [Range(1f, 8f)]
         [SerializeField] private float _gazePilotSeconds = 1.5f;
 
@@ -227,9 +227,9 @@ namespace MoonProject.Rover
         [Range(0f, 12f)]
         [SerializeField] private float _earthBelow = 4f;
 
-        [Tooltip("Height (m) above the lander's base the gaze looks at: its dark windows.")]
-        [Range(0f, 10f)]
-        [SerializeField] private float _landerLookHeight = 3f;
+        [Tooltip("Height (m) above the wake point the first gaze looks at: the dead charging post.")]
+        [Range(0f, 4f)]
+        [SerializeField] private float _postLookHeight = 1.2f;
 
         [Tooltip("Height (m) of The Peak's red beacon above its summit (IWorldLayout.PeakPosition).")]
         [Range(0f, 30f)]
@@ -308,7 +308,7 @@ namespace MoonProject.Rover
         [Header("Title and the push into the lens")]
         [Tooltip("Seconds New Game takes to push from the title's lens shot into the closed lens (the reverse of O10).")]
         [Range(0.5f, 4f)]
-        [SerializeField] private float _pushInSeconds = 2f;
+        [SerializeField] private float _pushInSeconds = 1.6f;
 
         [Tooltip("Share of the push after which the lens view darkens to black.")]
         [Range(0.2f, 0.95f)]
@@ -329,6 +329,11 @@ namespace MoonProject.Rover
         [Tooltip("Seconds the drift takes to ease in, and to ease back when a choice is made (at most 1 s back).")]
         [Range(0.3f, 6f)]
         [SerializeField] private float _titleDriftEase = 3f;
+
+        [Tooltip("Over a save, the title frames 07 from behind, looking toward the lander; standing nearer than this " +
+                 "(m) to it, the frame keeps 07's own heading instead.")]
+        [Min(0f)]
+        [SerializeField] private float _titleFrameMinLanderDistance = 12f;
 
         [Header("Short wake (Continue)")]
         [Tooltip("Seconds 07's lid takes to open in one eased move.")]
@@ -395,7 +400,7 @@ namespace MoonProject.Rover
         public float HesitateYaw => _hesitateYaw;
         public float PeakLift => _peakLift;
         public float EarthBelow => _earthBelow;
-        public float LanderLookHeight => _landerLookHeight;
+        public float PostLookHeight => _postLookHeight;
         public float BeaconHeight => _beaconHeight;
         public float LensForward => _lensForward;
         public float LensNearClip => _lensNearClip;
@@ -415,6 +420,8 @@ namespace MoonProject.Rover
         public float BlinkSigh => _blinkSigh;
         public float PushInSeconds => _pushInSeconds;
         public float PushDarkFrom => _pushDarkFrom;
+
+        public float TitleFrameMinLanderDistance => _titleFrameMinLanderDistance;
         public float TitleDriftDelay => _titleDriftDelay;
         public float TitleDriftYaw => _titleDriftYaw;
         public float TitleDriftPeriod => _titleDriftPeriod;

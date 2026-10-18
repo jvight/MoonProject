@@ -25,7 +25,6 @@ namespace MoonProject.Art.Tests
             ("crate_l.json", "Crates/Crate_L.fbx"),
             ("crate_m.json", "Crates/Crate_M.fbx"),
             ("crate_s.json", "Crates/Crate_S.fbx"),
-            ("fabricator.json", "Structures/Fabricator.fbx"),
             ("fallen_solar_array.json", "Ruins/FallenSolarArray.fbx"),
             ("focus_lens.json", "Rover/FocusLens.fbx"),
             ("habitat_modules.json", "Ruins/HabitatModules.fbx"),
@@ -63,13 +62,9 @@ namespace MoonProject.Art.Tests
             ("rover.json", "Rover/RoverModel.fbx"),
             ("scan_fan.json", "Rover/ScanFan.fbx"),
             ("scatter_set.json", "Ruins/ScatterSet.fbx"),
-            ("smelter.json", "Structures/Smelter.fbx"),
             ("solar_array.json", "Structures/SolarArray.fbx"),
             ("solar_wing.json", "Rover/SolarWing.fbx"),
-            ("storage_rack.json", "Structures/StorageRack.fbx"),
             ("tape_deck.json", "Rover/Kit_TapeDeck.fbx"),
-            ("upgrade_bay.json", "Structures/UpgradeBay.fbx"),
-            ("vehicle_pad.json", "Structures/VehiclePad.fbx"),
         };
 
         [Serializable]
