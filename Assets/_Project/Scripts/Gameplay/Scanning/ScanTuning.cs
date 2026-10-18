@@ -71,10 +71,10 @@ namespace MoonProject.Gameplay
         [Range(0.1f, 2f)] [SerializeField] private float _pingEdgeIntensity = 1.25f;
 
         [Tooltip("World-space cell pitch (m) of the surface wireframe lattice  the scan reveals.")]
-        [Range(0.015f, 0.12f)] [SerializeField] private float _surfaceGridPitchMeters = 0.044f;
+        [Range(0.015f, 0.12f)] [SerializeField] private float _surfaceGridPitchMeters = 0.08f;
 
         [Tooltip("Emissive intensity of the progressive CRT-amber wireframe hologram.")]
-        [Range(0.2f, 2.0f)] [SerializeField] private float _wireframeRevealIntensity = 1.18f;
+        [Range(0.2f, 2.0f)] [SerializeField] private float _wireframeRevealIntensity = 1.7f;
 
         [Tooltip("Speed (cycles/s) of the data ticks streaming along the beam to the lens.")]
         [Range(0.5f, 8.0f)] [SerializeField] private float _beamPulseSpeed = 3.2f;
@@ -111,10 +111,10 @@ namespace MoonProject.Gameplay
         [Range(0.05f, 0.85f)] [SerializeField] private float _beamLensPeakAlpha = 0.68f;
 
         [Tooltip("Very low additive alpha in the middle of the scan beam wedge (almost invisible in the middle).")]
-        [Range(0.005f, 0.15f)] [SerializeField] private float _beamMidAlpha = 0.018f;
+        [Range(0.005f, 0.15f)] [SerializeField] private float _beamMidAlpha = 0.06f;
 
         [Tooltip("Additive alpha where the far edge of the scan beam wedge meets the current surface scan line on the target.")]
-        [Range(0.04f, 0.65f)] [SerializeField] private float _beamContactAlpha = 0.42f;
+        [Range(0.04f, 0.65f)] [SerializeField] private float _beamContactAlpha = 0.6f;
 
         [Tooltip("Fine scanline band density inside the scan beam wedge.")]
         [Range(12f, 120f)] [SerializeField] private float _beamScanlineDensity = 42f;
