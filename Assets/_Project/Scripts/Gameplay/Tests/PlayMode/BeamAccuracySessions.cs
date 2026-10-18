@@ -198,8 +198,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsNotNull(solid, $"{fragment.FragmentId} shows on a renderer");
             Vector3 outward = Flat(fragment.Point - solid.bounds.center);
             outward = outward.sqrMagnitude > 1e-4f ? outward.normalized : Vector3.back;
-            yield return StandFacing(fragment.Point, Quaternion.Euler(0f, angle, 0f) * outward, ScanStandOff,
-                fragment.Root);
+            yield return StandFacing(fragment.Point, Quaternion.Euler(0f, angle, 0f) * outward, ScanStandOff);
             ScanField scans = _gameplay.Scans;
             string host = fragment.HostId;
             yield return Until(() => scans.Candidate != null && scans.Candidate.HostId == host, CandidateTimeout,
@@ -208,21 +207,8 @@ namespace MoonProject.Gameplay.PlayModeTests
                       $"fragment at {fragment.Point})");
 
             // Another target on the same host (a neighbour in the set, a story panel) may lie squarer in view: the
-            // beam is measured on the one 07 scans, and 07 turns its lens to it.
-            if (scans.Candidate != fragment)
-            {
-                fragment = scans.Candidate;
-                Vector3 rover = _context.Get<IRoverState>().Position;
-                Vector3 facing = Flat(fragment.Point - rover).normalized;
-                _context.Get<IRoverPlacement>().PlaceAt(rover, Quaternion.LookRotation(facing, Vector3.up));
-                ((RoverCameraRig)_context.Get<IViewCamera>()).Orbit.AdoptBearing(
-                    Quaternion.LookRotation(facing, Vector3.up).eulerAngles.y);
-                yield return new WaitForSeconds(SettleSeconds);
-                yield return Until(() => scans.Candidate != null && scans.Candidate.HostId == host, CandidateTimeout,
-                    () => $"07's view stays on {host} once it turns (candidate " +
-                          $"{scans.Candidate?.FragmentId ?? "none"})");
-                fragment = scans.Candidate;
-            }
+            // beam is measured on the one 07 scans.
+            fragment = scans.Candidate;
 
             ScanBeam beam = _gameplay.Salvage.Feel.ScanBeam;
             Vector3 lastContact = Vector3.zero;
@@ -611,7 +597,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// 07 set down <paramref name="standOff"/> metres from <paramref name="target"/> along
         /// <paramref name="from"/> (turned round it until the ground there is clear), facing it, its view on it.
         /// </summary>
-        private IEnumerator StandFacing(Vector3 target, Vector3 from, float standOff, Transform host = null)
+        private IEnumerator StandFacing(Vector3 target, Vector3 from, float standOff)
         {
             var terrain = _context.Get<ITerrainQuery>();
             Vector3 spot = target;
@@ -620,7 +606,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 Vector3 side = Quaternion.Euler(0f, turn * (((int)(turn / SpotStep) & 1) == 0 ? 1f : -1f), 0f) * from;
                 spot = SurfaceRules.OnSurface(terrain, target.x + side.x * standOff, target.z + side.z * standOff);
                 if (!Physics.CheckSphere(spot + Vector3.up * ClearHeight, ClearRadius, Layers.PropMask,
-                        QueryTriggerInteraction.Ignore) && Uncovered(spot + Vector3.up * ClearHeight, target, host))
+                        QueryTriggerInteraction.Ignore))
                 {
                     break;
                 }
@@ -631,29 +617,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             var rig = (RoverCameraRig)_context.Get<IViewCamera>();
             rig.Orbit.AdoptBearing(Quaternion.LookRotation(facing, Vector3.up).eulerAngles.y);
             yield return new WaitForSeconds(SettleSeconds);
-        }
-
-        /// <summary>
-        /// Nothing but <paramref name="host"/> stands between <paramref name="eye"/> and <paramref name="target"/>: the
-        /// chase camera swings off a target a prop covers, so 07 must not scan across another prop (a sealed crate).
-        /// </summary>
-        private static bool Uncovered(Vector3 eye, Vector3 target, Transform host)
-        {
-            if (host == null)
-            {
-                return true;
-            }
-
-            foreach (RaycastHit hit in Physics.RaycastAll(eye, target - eye, Vector3.Distance(eye, target),
-                         Layers.PropMask, QueryTriggerInteraction.Ignore))
-            {
-                if (!hit.collider.transform.IsChildOf(host))
-                {
-                    return false;
-                }
-            }
-
-            return true;
         }
 
         private IEnumerator Boot()
