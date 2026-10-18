@@ -1036,7 +1036,12 @@ namespace MoonProject.UI
         private void CloseTitle()
         {
             IsOpen = false;
-            _bootGate = null;
+            if (_bootGate != null)
+            {
+                _bootGate = null;
+                _curtain.Hide();
+            }
+
             _navigator.ClearFocus();
             SaveIfChanged();
             float handOff = _handOffSeconds;
