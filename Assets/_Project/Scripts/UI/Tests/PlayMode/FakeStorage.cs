@@ -229,6 +229,8 @@ namespace MoonProject.UI.PlayModeTests
 
         public SkyPhase Phase => SkyPhase.Sunlit;
 
+        public float SecondsToSunset { get; set; } = float.PositiveInfinity;
+
         public float SunlightAt(Vector3 position)
         {
             return 1f;

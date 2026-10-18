@@ -80,6 +80,8 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public float EarthPhase => 0f;
 
+        public float SecondsToSunset => float.PositiveInfinity;
+
         public float SunlightAt(Vector3 position)
         {
             return Phase == SkyPhase.Sunlit ? 1f : 0f;
