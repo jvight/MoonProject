@@ -139,6 +139,17 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>True when <paramref name="idA"/> and <paramref name="idB"/> belong to the same connected subgrid.</summary>
+        /// <summary>
+        /// True when a node at <paramref name="a"/> with reach <paramref name="radiusA"/> and one at
+        /// <paramref name="b"/> with reach <paramref name="radiusB"/> share a grid: two nodes with reach link within the
+        /// longer one, a node without reach links to one with reach within that one's, and two without reach never link.
+        /// </summary>
+        public static bool CanLink(Vector3 a, float radiusA, Vector3 b, float radiusB)
+        {
+            float reach = Mathf.Max(radiusA, radiusB);
+            return (radiusA > 0f || radiusB > 0f) && SurfaceRules.HorizontalDistanceSquared(a, b) <= reach * reach;
+        }
+
         public bool AreConnected(int idA, int idB)
         {
             RebuildIfNeeded();
@@ -258,8 +269,7 @@ namespace MoonProject.Gameplay
                         continue;
                     }
 
-                    float reach = Mathf.Max(radiusI, radiusJ);
-                    if (SurfaceRules.HorizontalDistanceSquared(_nodes[i].Position, _nodes[j].Position) <= reach * reach)
+                    if (CanLink(_nodes[i].Position, radiusI, _nodes[j].Position, radiusJ))
                     {
                         Union(i, j);
                     }

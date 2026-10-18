@@ -42,7 +42,8 @@ namespace MoonProject.Gameplay
         [Tooltip("Electrical energy capacity stored in Watt-hours (battery banks).")]
         [Range(0f, 20000f)] [SerializeField] private float _storeWattHours;
 
-        [Tooltip("Power grid connection reach in metres (> 0 for sources and pylons that extend the grid).")]
+        [Tooltip("Power grid connection reach in metres: the array, the pylon, and the pad and bank (so a bank set " +
+            "down beside its pad always connects); 0 for a consumer that hangs on a nearby hub.")]
         [Range(0f, 100f)] [SerializeField] private float _connectionRadius;
 
         [Tooltip("Salvage materials paid to place and weld this structure.")]
