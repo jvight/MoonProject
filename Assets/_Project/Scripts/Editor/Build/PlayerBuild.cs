@@ -21,7 +21,8 @@ namespace MoonProject.Editor.Build
     /// directly:
     /// <code>python tools/unity_batch.py exec --method MoonProject.Editor.Build.PlayerBuild.BuildWindows
     ///     [--arg out=Builds/Lunarion-Windows] [--arg builders=false] [--arg autoplay=true]</code>
-    /// With <c>autoplay=true</c> the player is the development variant that carries the Autoplay bot.
+    /// With <c>autoplay=true</c> the player is the development variant that carries the Autoplay bot; with
+    /// <c>development=true</c> it is a Unity development player, so the profiler can record it.
     /// <code>python tools/unity_batch.py exec --method MoonProject.Editor.Build.PlayerBuild.BuildShowcase
     ///     [--arg out=Builds/Lunarion-Showcase] [--arg builders=false]</code>
     /// </summary>
@@ -47,7 +48,7 @@ namespace MoonProject.Editor.Build
         {
             BatchRunner.Run(nameof(BuildWindows), args => Build(
                 BatchArgs.ProjectPath(args.GetString("out", DefaultOutput)), args.GetBool("builders", true),
-                args.GetBool("autoplay", false)));
+                args.GetBool("autoplay", false), args.GetBool("development", false)));
         }
 
         public static void BuildShowcase()
@@ -57,19 +58,21 @@ namespace MoonProject.Editor.Build
         }
 
         /// <summary>Builds Main.unity into <paramref name="outputDirectory"/> (emptied first). Returns true on success.</summary>
-        public static bool Build(string outputDirectory, bool runBuilders, bool autoplay = false)
+        public static bool Build(string outputDirectory, bool runBuilders, bool autoplay = false,
+            bool development = false)
         {
-            return BuildScene(MainSceneBuilder.ScenePath, MainBuildersPattern, outputDirectory, runBuilders, autoplay);
+            return BuildScene(MainSceneBuilder.ScenePath, MainBuildersPattern, outputDirectory, runBuilders, autoplay,
+                development);
         }
 
         /// <summary>Builds Showcase.unity into <paramref name="outputDirectory"/> (emptied first). Returns true on success.</summary>
         public static bool BuildShowcasePlayer(string outputDirectory, bool runBuilders)
         {
-            return BuildScene(ShowcaseScenePath, ShowcaseBuildersPattern, outputDirectory, runBuilders, false);
+            return BuildScene(ShowcaseScenePath, ShowcaseBuildersPattern, outputDirectory, runBuilders, false, false);
         }
 
         private static bool BuildScene(string scenePath, string builderPattern, string outputDirectory, bool runBuilders,
-            bool autoplay)
+            bool autoplay, bool development)
         {
             if (!BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.Standalone, BuildTarget.StandaloneWindows64))
             {
@@ -113,7 +116,7 @@ namespace MoonProject.Editor.Build
                 locationPathName = exePath,
                 target = BuildTarget.StandaloneWindows64,
                 targetGroup = BuildTargetGroup.Standalone,
-                options = BuildOptions.None,
+                options = development ? BuildOptions.Development : BuildOptions.None,
                 extraScriptingDefines = autoplay ? new[] { AutoplayDefine } : Array.Empty<string>(),
             };
 
