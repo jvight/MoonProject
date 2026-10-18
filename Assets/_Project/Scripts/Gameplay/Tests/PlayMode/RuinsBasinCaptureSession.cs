@@ -131,9 +131,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsNotNull(build, "BuildField must be initialized.");
             Assert.IsNotNull(scans, "ScanField must be initialized.");
 
-            // Verify initial known structures: only ChargingPad is known at game start.
-            Assert.AreEqual(1, build.Known.Count, "A new game starts knowing only ChargingPad.");
-            Assert.IsTrue(build.Known.IsKnown(StructureIds.ChargingPad));
+            Assert.AreEqual(0, build.Known.Count, "A new game knows no structure (opening-v2 B3).");
+            Assert.IsTrue(build.Known.Learn(StructureIds.ChargingPad), "the pad, as the lander's cargo scan teaches it");
             Assert.IsFalse(build.Known.IsKnown(StructureIds.SolarArray));
 
             ScanFragment fallenArrayFrag = scans.Find(FallenArrayFirstFragmentId);
