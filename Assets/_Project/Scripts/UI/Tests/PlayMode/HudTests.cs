@@ -609,7 +609,7 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator NoFrame_ShowsTwoGuidanceElements()
+        public IEnumerator NoFrame_ShowsTwoGuidanceElements_SaveTheBriefCrossFadeFromTheLineToAPrompt()
         {
             Boot();
             _rig.Tune("_guidance._bootHoldSeconds", 2f);
@@ -626,17 +626,26 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Build, new Vector3(0f, 0f, 10f), true);
             int shownFrames = 0;
             bool readoutSeen = false;
+            float crossFade = 0f;
+            float crossFadeLimit = _rig.Tuning.Guidance.HandOverSeconds + _rig.Tuning.Guidance.Line.FadeOut + 0.2f;
             float until = Time.realtimeSinceStartup + 12f;
+            float last = Time.realtimeSinceStartup;
             while (Time.realtimeSinceStartup < until)
             {
+                float now = Time.realtimeSinceStartup;
                 readoutSeen |= _rig.Ui.Readout.IsVisible;
                 int up = (_rig.Ui.Prompt.IsVisible ? 1 : 0) + (_rig.Ui.LookUp.ShowsPrompt ? 1 : 0) +
                          (_rig.Ui.Readout.IsVisible ? 1 : 0) + (_rig.Ui.UnlockCard.IsVisible ? 1 : 0) +
                          (_rig.Ui.Objective.IsVisible ? 1 : 0);
                 shownFrames += up > 0 ? 1 : 0;
-                Assert.LessOrEqual(up, 1, "one guidance element at a time: prompt " + _rig.Ui.Prompt.IsVisible + ", look-up " +
-                    _rig.Ui.LookUp.ShowsPrompt + ", readout " + _rig.Ui.Readout.IsVisible + ", unlock " +
-                    _rig.Ui.UnlockCard.IsVisible + ", objective " + _rig.Ui.Objective.IsVisible);
+                bool lineToPrompt = up == 2 && _rig.Ui.Prompt.IsVisible && _rig.Ui.Objective.ShowsObjective;
+                crossFade = lineToPrompt ? crossFade + (now - last) : 0f;
+                last = now;
+                Assert.LessOrEqual(crossFade, crossFadeLimit, "the line and the prompt cross-fade only briefly");
+                Assert.LessOrEqual(lineToPrompt ? 1 : up, 1, "one guidance element at a time: prompt " +
+                    _rig.Ui.Prompt.IsVisible + ", look-up " + _rig.Ui.LookUp.ShowsPrompt + ", readout " +
+                    _rig.Ui.Readout.IsVisible + ", unlock " + _rig.Ui.UnlockCard.IsVisible + ", objective " +
+                    _rig.Ui.Objective.IsVisible);
                 yield return null;
             }
 
