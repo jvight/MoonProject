@@ -39,8 +39,9 @@ namespace MoonProject.Rover
     }
 
     /// <summary>
-    /// The checks of 07's power-on self-test after the lens has opened and the camera has pulled out, as a pure clock
-    /// (EditMode-tested): each step in its order, for its tuned seconds, announced when it starts and when it is done
+    /// The lines of 07's power-on self-test once its eyes are awake, as a pure clock (EditMode-tested): the three lines
+    /// of information (why 07 woke, the day it resumes, its agenda), then each check, every step in its order, for its
+    /// tuned seconds, announced when it starts and when it is done
     /// with its result, with the check's pulses (each wheel twitch, spark, flicker; the continuous ramps ten times a
     /// second) in between. The opening publishes the events as Core's <c>BootCheckStarted</c>/<c>Completed</c>/
     /// <c>Finished</c>, and drives each step's motion from <see cref="Current"/> and <see cref="StepProgress01"/>.
@@ -52,9 +53,12 @@ namespace MoonProject.Rover
         private const float ContinuousInterval = 0.1f;
         private const int LampRampIndex = 3;
 
-        /// <summary>The checks in order, with what each comes out as (the story, not tuning).</summary>
+        /// <summary>The lines in order, with what each comes out as (the story, not tuning).</summary>
         private static readonly (BootCheckStep Step, BootCheckResult Result)[] Checks =
         {
+            (BootCheckStep.Carrier, BootCheckResult.Info),
+            (BootCheckStep.Resume, BootCheckResult.Info),
+            (BootCheckStep.Agenda, BootCheckResult.Info),
             (BootCheckStep.Lens, BootCheckResult.Ok),
             (BootCheckStep.Lamps, BootCheckResult.Ok),
             (BootCheckStep.Head, BootCheckResult.Ok),
@@ -85,7 +89,7 @@ namespace MoonProject.Rover
             _lamps = lamps ?? throw new ArgumentNullException(nameof(lamps));
         }
 
-        /// <summary>The number of checks.</summary>
+        /// <summary>The number of lines, the information lines included.</summary>
         public static int StepCount => Checks.Length;
 
         /// <summary>True from <see cref="Begin"/> until the last step is done.</summary>
@@ -95,7 +99,7 @@ namespace MoonProject.Rover
         public bool IsFinished { get; private set; }
 
         /// <summary>The step under way (meaningful while <see cref="IsRunning"/>).</summary>
-        public BootCheckStep Current => _index >= 0 && _index < Checks.Length ? Checks[_index].Step : BootCheckStep.Lens;
+        public BootCheckStep Current => _index >= 0 && _index < Checks.Length ? Checks[_index].Step : BootCheckStep.Carrier;
 
         /// <summary>How far through the current step, 0..1.</summary>
         public float StepProgress01 => _stepLength > 1e-4f ? Mathf.Clamp01(_stepTime / _stepLength) : 1f;

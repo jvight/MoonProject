@@ -1,6 +1,9 @@
 namespace MoonProject.Rover
 {
-    /// <summary>Where <see cref="OpeningScript"/> is: the lens stages, the camera's pull-out and the power-on self-test.</summary>
+    /// <summary>
+    /// Where <see cref="OpeningScript"/> is. The full opening is one fixed shot of 07's face from the black on: the
+    /// picture opens, 07's face wakes, the self-test prints on it, and a short dip to black hands over to the chase frame.
+    /// </summary>
     public enum OpeningPhase
     {
         /// <summary>Nothing playing (before a session starts, or after the wake).</summary>
@@ -9,31 +12,22 @@ namespace MoonProject.Rover
         /// <summary>New Game on the title: the picture fades to black where the camera already is.</summary>
         FadeOut = 1,
 
-        /// <summary>O1: black, the carrier tone.</summary>
-        Crackle = 2,
+        /// <summary>Black while 07's systems thump on; the camera already waits on 07's face.</summary>
+        Dark = 2,
 
-        /// <summary>O2: the lid's first stage, a warm slit.</summary>
-        LidCrack = 3,
+        /// <summary>The picture opens from black on 07, still asleep with its face dark.</summary>
+        FadeIn = 3,
 
-        /// <summary>O3: the lid's second stage, half open with a shudder.</summary>
-        LidHalf = 4,
+        /// <summary>07's face screen flickers on, its eyes blink awake and its head lifts toward the camera.</summary>
+        EyesOpen = 4,
 
-        /// <summary>O4: the lens hunts for focus.</summary>
-        Hunt = 5,
+        /// <summary>The self-test's lines print on the face one by one while each part does its check.</summary>
+        Post = 5,
 
-        /// <summary>The camera leaves the lens for the three-quarter front shot of 07's face and body.</summary>
-        PullOut = 6,
-
-        /// <summary>The checks: lens, lamps, head, wheels, motor, cutter, solar wing, antenna, battery, assembly, start.</summary>
-        Post = 7,
-
-        /// <summary>The camera eases round from the face toward the chase frame.</summary>
-        OverShoulder = 8,
-
-        /// <summary>The camera settles into the chase frame.</summary>
-        ChaseEase = 9,
+        /// <summary>A short dip to black; the chase frame takes over in the black and the picture opens on it.</summary>
+        Handover = 6,
 
         /// <summary>Continue: the lid opens in one move with one blink while the camera eases to the chase frame.</summary>
-        ShortWake = 10,
+        ShortWake = 7,
     }
 }

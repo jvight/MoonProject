@@ -77,11 +77,9 @@ namespace MoonProject.Rover
             switch (phase)
             {
                 case OpeningPhase.FadeOut:
-                case OpeningPhase.Crackle:
-                case OpeningPhase.LidCrack:
-                case OpeningPhase.LidHalf:
-                case OpeningPhase.Hunt:
-                case OpeningPhase.PullOut:
+                case OpeningPhase.Dark:
+                case OpeningPhase.FadeIn:
+                case OpeningPhase.EyesOpen:
                     return 1f;
                 case OpeningPhase.Post:
                     return DuringChecks(zone, step, p);

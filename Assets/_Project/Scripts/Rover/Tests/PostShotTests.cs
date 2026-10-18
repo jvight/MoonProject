@@ -1,10 +1,9 @@
 using NUnit.Framework;
 using UnityEngine;
-using MoonProject.Core;
 
 namespace MoonProject.Rover.Tests
 {
-    /// <summary>The self-test's camera: in front of 07, near, eased between parts, round to the beacon at the end.</summary>
+    /// <summary>The wake's one shot: in front of 07's face, a little low, fixed but for a slow push-in of a few percent.</summary>
     public sealed class PostShotTests
     {
         private static readonly Vector3 Body = new Vector3(4f, 2f, -3f);
@@ -21,9 +20,9 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void TheBaseShot_IsInFrontOfTheRover_AndLooksBackAtIt()
+        public void TheShot_IsInFrontOfTheRover_AndLooksBackAtIt()
         {
-            ShotPose pose = _shot.Base(Body, Heading);
+            ShotPose pose = _shot.At(Body, Heading, 0f);
             Vector3 forward = Quaternion.Euler(0f, Heading, 0f) * Vector3.forward;
             Vector3 offset = pose.Position - Body;
             offset.y = 0f;
@@ -32,75 +31,60 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void TheShot_FollowsTheRoverWherever_ItIsAndWhichWayItFaces()
+        public void TheShot_IsALittleLow_LookingSoftlyUpAtTheFace()
         {
-            ShotPose a = _shot.At(Body, Heading, BootCheckStep.Wheels, 0.5f);
+            ShotPose pose = _shot.At(Body, Heading, 0f);
+            Assert.Less(pose.Position.y, Body.y + _settings.ShotLook.y, "the camera sits below the point it frames");
+            float pitch = Mathf.Asin((pose.Rotation * Vector3.forward).y) * Mathf.Rad2Deg;
+            Assert.That(pitch, Is.InRange(0f, 10f), "and tilts up only a little");
+        }
+
+        [Test]
+        public void TheShot_NeverTurns_AndOnlyCreepsInAFewPercent()
+        {
+            ShotPose start = _shot.At(Body, Heading, 0f);
+            ShotPose end = _shot.At(Body, Heading, 1f);
+            Assert.AreEqual(0f, Quaternion.Angle(start.Rotation, end.Rotation), 1e-3f, "one shot: no pan, no orbit");
+            Assert.AreEqual(start.Fov, end.Fov, 1e-5f, "no zoom");
+            Vector3 look = Body + Quaternion.Euler(0f, Heading, 0f) * _settings.ShotLook;
+            float startDistance = Vector3.Distance(start.Position, look);
+            float creep = startDistance - Vector3.Distance(end.Position, look);
+            Assert.AreEqual(_settings.PushIn * startDistance, creep, 1e-3f, "the push-in is its tuned share");
+            Assert.LessOrEqual(_settings.PushIn, 0.1f, "a few percent at most");
+            Vector3 along = (end.Position - start.Position).normalized;
+            Assert.Greater(Vector3.Dot(along, start.Rotation * Vector3.forward), 0.999f, "straight along the view");
+        }
+
+        [Test]
+        public void ThePushIn_EasesInAndOut()
+        {
+            float Step(float a, float b) => Vector3.Distance(_shot.At(Body, Heading, a).Position, _shot.At(Body, Heading, b).Position);
+            Assert.Less(Step(0f, 0.05f), Step(0.475f, 0.525f) * 0.2f, "it starts from rest");
+            Assert.Less(Step(0.95f, 1f), Step(0.475f, 0.525f) * 0.2f, "and settles to rest");
+            Assert.AreEqual(0f, Step(1f, 2f), 1e-5f, "past the end it holds");
+        }
+
+        [Test]
+        public void TheShot_FollowsTheRoverWhereverItIsAndWhichWayItFaces()
+        {
+            ShotPose a = _shot.At(Body, Heading, 0.5f);
             Vector3 shift = new Vector3(10f, 0f, 7f);
-            ShotPose b = _shot.At(Body + shift, Heading, BootCheckStep.Wheels, 0.5f);
+            ShotPose b = _shot.At(Body + shift, Heading, 0.5f);
             Assert.AreEqual(0f, Vector3.Distance(a.Position + shift, b.Position), 1e-4f);
-            ShotPose turned = _shot.At(Body, Heading + 90f, BootCheckStep.Wheels, 0.5f);
+            ShotPose turned = _shot.At(Body, Heading + 90f, 0.5f);
             Assert.AreEqual(Vector3.Distance(a.Position, Body), Vector3.Distance(turned.Position, Body), 1e-3f,
                 "turning 07 turns the camera round it at the same distance");
         }
 
         [Test]
-        public void TheFocus_JoinsTheChecksWithoutAJump_AndSitsOnThePartInTheMiddle()
+        public void TheFaceAngles_PointFromTheFaceIntoTheCamera()
         {
-            ShotPose early = _shot.At(Body, Heading, BootCheckStep.Cutter, 0f);
-            ShotPose previous = _shot.At(Body, Heading, BootCheckStep.Motor, 1f);
-            Assert.AreEqual(0f, Vector3.Distance(early.Position, previous.Position), 1e-3f, "checks join without a jump");
-            ShotPose middle = _shot.At(Body, Heading, BootCheckStep.Cutter, 0.5f);
-            PostFocus cutter = _settings.FocusOf(BootCheckStep.Cutter);
-            Vector3 focus = Body + Quaternion.Euler(0f, Heading, 0f) * cutter.Local;
-            Assert.AreEqual(1f, Vector3.Dot(middle.Rotation * Vector3.forward,
-                (focus - middle.Position).normalized), 1e-4f, "in the middle of its check the camera is on its part");
-        }
-
-        [Test]
-        public void TheCamera_NeverGetsCloserThanTheCloseShot_OrFartherThanTheFullBodyShot()
-        {
-            for (int step = (int)BootCheckStep.Lens; step <= (int)BootCheckStep.Begin; step++)
-            {
-                for (float p = 0f; p <= 1f; p += 0.25f)
-                {
-                    ShotPose pose = _shot.At(Body, Heading, (BootCheckStep)step, p);
-                    float distance = Vector3.Distance(pose.Position, Body);
-                    Assert.Greater(distance, 0.8f, $"{(BootCheckStep)step} at {p}: not inside the hull");
-                    Assert.Less(distance, 6f, $"{(BootCheckStep)step} at {p}: not lost");
-                }
-            }
-        }
-
-        [Test]
-        public void TheOverShoulderShot_LooksAtTheBeacon()
-        {
-            var beacon = new Vector3(30f, 3f, 20f);
-            ShotPose pose = _shot.OverShoulder(Body, Heading, beacon);
-            Vector3 toBeacon = (beacon - pose.Position).normalized;
-            Assert.Greater(Vector3.Dot(pose.Rotation * Vector3.forward, toBeacon), 0.999f);
-        }
-
-        [Test]
-        public void TheStart_EndsOverTheShoulderWithTheBeaconInFrame()
-        {
-            var beacon = new Vector3(30f, 3f, 20f);
-            ShotPose end = _shot.AtBegin(Body, Heading, beacon, 1f);
-            ShotPose over = _shot.OverShoulder(Body, Heading, beacon);
-            Assert.AreEqual(0f, Vector3.Distance(end.Position, over.Position), 1e-3f);
-            Vector3 toBeacon = (beacon - end.Position).normalized;
-            Assert.Greater(Vector3.Dot(end.Rotation * Vector3.forward, toBeacon), 0.999f, "the beacon is dead ahead");
-            ShotPose begin = _shot.AtBegin(Body, Heading, beacon, 0f);
-            ShotPose part = _shot.At(Body, Heading, BootCheckStep.Begin, 0f);
-            Assert.AreEqual(0f, Vector3.Distance(begin.Position, part.Position), 1e-3f, "it starts where the check's own shot is");
-        }
-
-        [Test]
-        public void Blend_StartsAtOnePose_AndEndsAtTheOther()
-        {
-            ShotPose a = _shot.Base(Body, Heading);
-            ShotPose b = _shot.OverShoulder(Body, Heading, new Vector3(30f, 3f, 20f));
-            Assert.AreEqual(0f, Vector3.Distance(PostShot.Blend(a, b, 0f).Position, a.Position), 1e-4f);
-            Assert.AreEqual(0f, Vector3.Distance(PostShot.Blend(a, b, 1f).Position, b.Position), 1e-4f);
+            Vector3 face = Body + Quaternion.Euler(0f, Heading, 0f) * new Vector3(0f, 1.2f, 0.3f);
+            Vector2 angles = _shot.FaceAngles(Body, Heading, face);
+            Vector3 direction = Quaternion.Euler(0f, Heading, 0f) * LensGaze.Direction(angles.x, angles.y);
+            Vector3 toCamera = (_shot.At(Body, Heading, 0f).Position - face).normalized;
+            Assert.Greater(Vector3.Dot(direction, toCamera), 0.999f);
+            Assert.AreEqual(_settings.ShotSideYaw, angles.x, 5f, "the head turns about as far as the shot stands round");
         }
     }
 }
