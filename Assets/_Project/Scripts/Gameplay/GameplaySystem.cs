@@ -55,6 +55,10 @@ namespace MoonProject.Gameplay
         [Tooltip("World's service port on the lander ([World]/Lander/ServicePort): the open crate stands at it.")]
         [SerializeField] private Transform _landerPort;
 
+        [Tooltip("The bay outline on World's apron markings ([World]/OpeningProps/ApronMarkings/BayGlowOutline): it " +
+                 "glows while build mode is open.")]
+        [SerializeField] private Renderer _apronOutline;
+
         /// <summary>The recovery protocol's Power steps: the pad, solar power on, a night-ready base
         /// (opening-v2).</summary>
         private const int PowerSteps = 3;
@@ -88,6 +92,9 @@ namespace MoonProject.Gameplay
         public SealedContainers Containers { get; private set; }
 
         public IInteractionHints Hints { get; private set; }
+
+        /// <summary>The apron's bay outline, glowing while build mode is open (B5: where a base belongs).</summary>
+        public ApronGlow ApronGlow { get; private set; }
 
         /// <summary>The ruins' and the lander's scan targets, scanned to learn structures (0.5.5 §1).</summary>
         public ScanField Scans { get; private set; }
@@ -162,6 +169,11 @@ namespace MoonProject.Gameplay
             _landerPort = landerPort;
         }
 
+        internal void WireApronOutline(Renderer apronOutline)
+        {
+            _apronOutline = apronOutline;
+        }
+
         internal void WireCargo(MaterialCatalog catalog, CargoTuning cargo)
         {
             _materialCatalog = catalog;
@@ -220,6 +232,7 @@ namespace MoonProject.Gameplay
                 return;
             }
 
+            ApronGlow = new ApronGlow(_apronOutline, _building.Tuning.ApronGlowFadeSeconds);
             Hints = new InteractionHints(_salvage, Containers, Scans, _building, services.Beam, Cutter,
                 services.Pickups);
             Recovery = new RecoveryProgress(context.Events, PowerLamps, PowerSteps, _openingTuning.RecoveryLamps);
@@ -401,6 +414,7 @@ namespace MoonProject.Gameplay
             Scans.Step(now, deltaTime);
             Opening.Step();
             PadLock.Step(deltaTime);
+            ApronGlow.Step(_building.State != BuildModeState.Closed, deltaTime);
             Recovery.Refresh();
         }
 
@@ -452,6 +466,7 @@ namespace MoonProject.Gameplay
                 : _battery == null ? "BatteryField is not assigned."
                 : _building == null ? "BuildField is not assigned."
                 : _landerPort == null ? "The lander's service port is not assigned (rebuild the Main scene)."
+                : _apronOutline == null ? "The apron's bay outline is not assigned (rebuild the Main scene)."
                 : null;
         }
 
