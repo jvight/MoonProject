@@ -278,4 +278,43 @@ namespace MoonProject.Core.Events
 
         public bool Hurried { get; }
     }
+
+    /// <summary>
+    /// A line of 07's power-on self-test (the New Game wake) begins: its motion starts on 07. UI prints the line in its
+    /// "checking" form, Audio plays the step's start sound. <see cref="BootCheckCompleted"/> follows.
+    /// </summary>
+    public readonly struct BootCheckStarted
+    {
+        public BootCheckStarted(BootCheckStep step)
+        {
+            Step = step;
+        }
+
+        public BootCheckStep Step { get; }
+    }
+
+    /// <summary>
+    /// A line of the self-test is done and its result known: UI settles the line (OK, FAULT, JAMMED...), Audio plays
+    /// the result's tone.
+    /// </summary>
+    public readonly struct BootCheckCompleted
+    {
+        public BootCheckCompleted(BootCheckStep step, BootCheckResult result)
+        {
+            Step = step;
+            Result = result;
+        }
+
+        public BootCheckStep Step { get; }
+
+        public BootCheckResult Result { get; }
+    }
+
+    /// <summary>
+    /// The self-test is over: control returns to the player, and the objective line may appear (only if the player
+    /// idles).
+    /// </summary>
+    public readonly struct BootCheckFinished
+    {
+    }
 }

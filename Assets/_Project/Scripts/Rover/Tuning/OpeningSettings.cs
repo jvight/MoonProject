@@ -306,6 +306,9 @@ namespace MoonProject.Rover
         [Range(0f, 1f)]
         [SerializeField] private float _blinkSigh = 0.5f;
 
+        [Header("The power-on self-test after the lens stages")]
+        [SerializeField] private PostSettings _post = new PostSettings();
+
         [Header("Lamps power up as 07 opens its eyes")]
         [Tooltip("How many uneven flickers the lamps make before the dark gap.")]
         [Range(2, 4)]
@@ -437,6 +440,7 @@ namespace MoonProject.Rover
         public float TiltEaseSeconds => _tiltEaseSeconds;
         public float TiltHoldSeconds => _tiltHoldSeconds;
         public float BlinkSigh => _blinkSigh;
+        public PostSettings Post => _post;
         public int LampFlickerCount => _lampFlickerCount;
         public float LampFlickerSeconds => _lampFlickerSeconds;
         public float LampDarkGapSeconds => _lampDarkGapSeconds;
