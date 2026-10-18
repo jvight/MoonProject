@@ -225,6 +225,7 @@ namespace MoonProject.Gameplay
             _battery.ConnectStructures(_building.Catalog);
             Opening = NewOpening(context, services);
             Scans = Opening != null ? NewScans(services) : null;
+            Containers.YieldTo(ScanComesFirst);
             Opening?.Caches.HoldBack(_openingTuning.CargoCrate, CargoScanned);
             if (Scans == null)
             {
@@ -363,18 +364,30 @@ namespace MoonProject.Gameplay
             return true;
         }
 
-        /// <summary>Another E verb is on offer: a scan waits for it (0.5.5 §1.2).</summary>
+        /// <summary>
+        /// Another E verb is on offer: a scan waits for it (0.5.5 §1.2), unless the player looks at a scan target and
+        /// not at that verb's.
+        /// </summary>
         private bool OtherVerbOnOffer()
         {
             for (int i = 0; i < VerbsBeforeScan.Length; i++)
             {
-                if (Hints.TryGet(VerbsBeforeScan[i], out _))
+                if (Hints.TryGet(VerbsBeforeScan[i], out InteractionHint hint) && !ScanComesFirst(hint.Position))
                 {
                     return true;
                 }
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// The player looks at a scan target and not at <paramref name="otherTarget"/>: the scan takes E, so a crate
+        /// beside 07 never silences the panel in front of it.
+        /// </summary>
+        private bool ScanComesFirst(Vector3 otherTarget)
+        {
+            return Scans != null && Scans.LookedAt() != null && !Scans.InView(otherTarget);
         }
 
         /// <summary>07 starts a charge: the next full hold says so once more.</summary>
