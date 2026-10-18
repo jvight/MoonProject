@@ -52,8 +52,8 @@ namespace MoonProject.UI.Tests
         public void TheChip_ShowsWithItsLine_AndOnlyThen()
         {
             _chip.SetKey(OpeningKeys.BuildPad);
-            Assert.AreEqual(HintWord.Build, _chip.Word(true, false, false, InteractionKind.None));
-            Assert.AreEqual(HintWord.None, _chip.Word(false, false, false, InteractionKind.None), "no line, no chip");
+            Assert.AreEqual(HintWord.Build, Word(true, false, false, InteractionKind.None));
+            Assert.AreEqual(HintWord.None, Word(false, false, false, InteractionKind.None), "no line, no chip");
         }
 
         [Test]
@@ -61,10 +61,10 @@ namespace MoonProject.UI.Tests
         {
             _chip.SetKey(OpeningKeys.BuildPad);
             _chip.Used(ObjectiveVerb.Scan);
-            Assert.AreEqual(HintWord.Build, _chip.Word(true, false, false, InteractionKind.None));
+            Assert.AreEqual(HintWord.Build, Word(true, false, false, InteractionKind.None));
 
             _chip.Used(ObjectiveVerb.Build);
-            Assert.AreEqual(HintWord.None, _chip.Word(true, false, false, InteractionKind.None));
+            Assert.AreEqual(HintWord.None, Word(true, false, false, InteractionKind.None));
         }
 
         [Test]
@@ -72,12 +72,12 @@ namespace MoonProject.UI.Tests
         {
             _chip.SetKey(OpeningKeys.ScanLander);
             _chip.Used(ObjectiveVerb.Scan);
-            Assert.AreEqual(HintWord.None, _chip.Word(true, false, false, InteractionKind.None), "nothing in reach");
-            Assert.AreEqual(HintWord.Scan, _chip.Word(true, false, false, InteractionKind.Scan),
+            Assert.AreEqual(HintWord.None, Word(true, false, false, InteractionKind.None), "nothing in reach");
+            Assert.AreEqual(HintWord.Scan, Word(true, false, false, InteractionKind.Scan),
                 "the next fragment is in reach: its key shows");
-            Assert.AreEqual(HintWord.None, _chip.Word(true, false, false, InteractionKind.PickUp),
+            Assert.AreEqual(HintWord.None, Word(true, false, false, InteractionKind.PickUp),
                 "another verb in reach is not this step's");
-            Assert.AreEqual(HintWord.None, _chip.Word(false, false, false, InteractionKind.Scan),
+            Assert.AreEqual(HintWord.None, Word(false, false, false, InteractionKind.Scan),
                 "it still belongs to the line");
         }
 
@@ -87,24 +87,24 @@ namespace MoonProject.UI.Tests
             _chip.SetKey(OpeningKeys.ScanLander);
             _chip.Used(ObjectiveVerb.Scan);
             _chip.SetKey(OpeningKeys.CollectParts);
-            Assert.AreEqual(HintWord.None, _chip.Word(true, false, false, InteractionKind.None),
+            Assert.AreEqual(HintWord.None, Word(true, false, false, InteractionKind.None),
                 "collecting needs no chip");
 
             _chip.SetKey(OpeningKeys.FindSolar);
-            Assert.AreEqual(HintWord.Scan, _chip.Word(true, false, false, InteractionKind.None));
+            Assert.AreEqual(HintWord.Scan, Word(true, false, false, InteractionKind.None));
         }
 
         [Test]
         public void FittingTheIgniter_OffersTabOnlyWhileItCanBeFittedAndTheFaceIsClosed()
         {
             _chip.SetKey(OpeningKeys.FitIgniter);
-            Assert.AreEqual(HintWord.None, _chip.Word(true, false, false, InteractionKind.None), "not docked yet");
-            Assert.AreEqual(HintWord.Fit, _chip.Word(true, true, false, InteractionKind.None));
-            Assert.AreEqual(HintWord.None, _chip.Word(true, true, true, InteractionKind.None),
+            Assert.AreEqual(HintWord.None, Word(true, false, false, InteractionKind.None), "not docked yet");
+            Assert.AreEqual(HintWord.Fit, Word(true, true, false, InteractionKind.None));
+            Assert.AreEqual(HintWord.None, Word(true, true, true, InteractionKind.None),
                 "the face is open: Tab is answered");
 
             _chip.Used(ObjectiveVerb.Fit);
-            Assert.AreEqual(HintWord.None, _chip.Word(true, true, false, InteractionKind.None));
+            Assert.AreEqual(HintWord.None, Word(true, true, false, InteractionKind.None));
         }
 
         [TestCase(OpeningKeys.BuildPad, "Build")]
@@ -113,8 +113,41 @@ namespace MoonProject.UI.Tests
         public void AnUnlearnedVerb_ShowsItsChipWithTheLine_BeforeAnythingIsInReach(string key, string expected)
         {
             _chip.SetKey(key);
-            Assert.AreEqual(expected, _chip.Word(true, false, false, InteractionKind.None).ToString(),
+            Assert.AreEqual(expected, Word(true, false, false, InteractionKind.None).ToString(),
                 "the step's verb shows from the moment its line is up, until its first use");
+        }
+
+        [Test]
+        public void AnETargetInReach_NamesWhatEDoesThere_NotTheStepsVerb()
+        {
+            _chip.SetKey(OpeningKeys.ScanLander);
+            Assert.AreEqual(HintWord.Cut, Word(true, false, false, InteractionKind.Salvage),
+                "a crate seal is the candidate on a scan step: E cuts it");
+            _chip.SetKey(OpeningKeys.BuildPad);
+            Assert.AreEqual(HintWord.Cut, Word(true, false, false, InteractionKind.Salvage),
+                "a cable reel on a build step: E cuts it, B is not what E does");
+            Assert.AreEqual(HintWord.Scan, Word(true, false, false, InteractionKind.Scan));
+            Assert.AreEqual(HintWord.Build, Word(true, false, false, InteractionKind.Build),
+                "a weld point is not an E verb: the step's own key stays");
+            Assert.AreEqual(HintWord.None, Word(false, false, false, InteractionKind.Salvage), "no line, no chip");
+        }
+
+        [Test]
+        public void WhileEIsHeld_TheChipNamesWhatEIsDoing_WhateverTheCandidateBecomes()
+        {
+            _chip.SetKey(OpeningKeys.ScanLander);
+            Assert.AreEqual(HintWord.Cut, Word(true, false, false, InteractionKind.Scan, InteractionKind.Salvage),
+                "cutting while a scan target slides in front: still Cut");
+            Assert.AreEqual(HintWord.Cut, Word(true, false, false, InteractionKind.None, InteractionKind.Salvage),
+                "cutting with nothing offered: still Cut");
+            Assert.AreEqual(HintWord.Scan, Word(true, false, false, InteractionKind.Salvage, InteractionKind.Scan),
+                "scanning while a seal comes into reach: still Scan");
+        }
+
+        private HintWord Word(bool lineShowing, bool canFit, bool faceOpen, InteractionKind offered,
+            InteractionKind held = InteractionKind.None)
+        {
+            return _chip.Word(lineShowing, canFit, faceOpen, offered, held);
         }
     }
 }

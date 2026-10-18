@@ -71,6 +71,7 @@ namespace MoonProject.UI
         private BatteryDial _batteryDial;
         private bool _cellRowRevealed;
         private bool _carrying;
+        private bool _scanning;
         private SaveTick _saveTick;
         private ReadoutView _readout;
         private SunArcView _sunArc;
@@ -271,7 +272,8 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<NextStepChanged>(OnNextStepChanged));
             _tokens.Add(events.Subscribe<ScanStarted>(OnScanStarted));
             _tokens.Add(events.Subscribe<SalvageCutStarted>(_ => _objectiveChip.Used(ObjectiveVerb.Cut)));
-            _tokens.Add(events.Subscribe<FragmentScanned>(_ => _director.NotifyUsed(InteractionKind.Scan)));
+            _tokens.Add(events.Subscribe<FragmentScanned>(OnFragmentScanned));
+            _tokens.Add(events.Subscribe<ScanStopped>(_ => _scanning = false));
             _tokens.Add(events.Subscribe<RoverWakeBeatReached>(OnWakeBeat));
             _tokens.Add(events.Subscribe<BootCheckStarted>(OnBootCheckStarted));
             _tokens.Add(events.Subscribe<BootCheckCompleted>(OnBootCheckCompleted));
@@ -489,7 +491,7 @@ namespace MoonProject.UI
             // The verb chip is the objective's own: it shows only with its line, and a teaching prompt takes the chip.
             hint = hint != HintWord.None ? hint
                 : _objectiveChip.Word(_objectiveView.ShowsObjective && _objective.WantsShown,
-                    _services.Systems.CanFitIgniter, cargoOpen, OfferedNow());
+                    _services.Systems.CanFitIgniter, cargoOpen, OfferedNow(), HeldNow());
             _lookUpChip.Tick(deltaTime, paused ? HintWord.None : hint, device);
             _objectiveView.Tick(deltaTime, _objective, ObjectiveOpen(paused) && _slot.Allows(GuidanceKind.Objective),
                 _lowBattery, ObjectiveOpen(paused) && _slot.Allows(GuidanceKind.Battery), _buildStrip,
@@ -506,6 +508,15 @@ namespace MoonProject.UI
         {
             InteractionHint primary = _services.Hints.Primary;
             return primary.Ready ? primary.Kind : InteractionKind.None;
+        }
+
+        /// <summary>What a held E is doing now (the cut's charge-up counts), or None.</summary>
+        private InteractionKind HeldNow()
+        {
+            ISalvageStatus salvage = _services.Salvage;
+            return salvage.IsCutting || salvage.IsBeamCharging ? InteractionKind.Salvage
+                : _scanning ? InteractionKind.Scan
+                : InteractionKind.None;
         }
 
         /// <summary>The cursor follows what the mouse is for this frame (<see cref="CursorRule"/>).</summary>
@@ -1032,8 +1043,15 @@ namespace MoonProject.UI
         }
 
         /// <summary>The scan beam started: the scan prompt yields to the beam, and the objective's Scan chip retires.</summary>
+        private void OnFragmentScanned(FragmentScanned scanned)
+        {
+            _scanning = false;
+            _director.NotifyUsed(InteractionKind.Scan);
+        }
+
         private void OnScanStarted(ScanStarted started)
         {
+            _scanning = true;
             _director.Yield(InteractionKind.Scan);
             _objectiveChip.Used(ObjectiveVerb.Scan);
         }

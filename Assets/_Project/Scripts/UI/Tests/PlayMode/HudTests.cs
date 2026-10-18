@@ -695,6 +695,7 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(GuidanceKind.Objective, _rig.Ui.Slot.Granted, "one guidance element holds the slot");
 
             Events.Publish(new ScanStarted("lander.fragment.1", Vector3.zero));
+            Events.Publish(new FragmentScanned("lander.fragment.1", "lander", 0, 2, false, 0));
             limit = Time.realtimeSinceStartup + 4f;
             while (_rig.Ui.LookUp.IsVisible && Time.realtimeSinceStartup < limit)
             {
@@ -722,6 +723,7 @@ namespace MoonProject.UI.PlayModeTests
             }
 
             Events.Publish(new ScanStarted("lander.fragment.1", Vector3.zero));
+            Events.Publish(new FragmentScanned("lander.fragment.1", "lander", 0, 2, false, 0));
             _rig.Ui.Ledger.RecordUsed(InteractionKind.Scan);
             yield return Seconds(1.5f);
             Assert.IsFalse(_rig.Ui.LookUp.IsVisible, "the first fragment is scanned and nothing else is in reach");
@@ -736,6 +738,49 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Fakes.PrimaryHint = InteractionHint.None;
             yield return Seconds(1f);
             Assert.IsFalse(_rig.Ui.LookUp.IsVisible, "out of reach, the chip bows out again");
+        }
+
+        [UnityTest]
+        public IEnumerator AtACrateSeal_WithAScanTargetAlsoInReach_TheChipReadsECut_AndHoldsItWhileEIsHeld()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            _rig.Ui.Ledger.RecordLookTaught();
+            _rig.Ui.Ledger.RecordDriveTaught();
+            _rig.Ui.Ledger.RecordHoldChipShown();
+            _rig.Ui.Ledger.RecordUsed(InteractionKind.Salvage);
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            Events.Publish(new NextStepChanged("next.v2.scan_lander"));
+            float limit = Time.realtimeSinceStartup + 12f;
+            while (!_rig.Ui.LookUp.IsVisible && Time.realtimeSinceStartup < limit)
+            {
+                yield return null;
+            }
+
+            Assert.AreEqual(Text(UiKeys.VerbScan), _rig.Ui.Layout.LookHintWord.text, "the scan step's own key first");
+            var seal = new Vector3(0.4f, 0.5f, 5f);
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Salvage, seal, true);
+            yield return UntilWord(UiKeys.VerbCut);
+            Assert.IsTrue(_rig.Ui.LookUp.IsVisible);
+            Assert.AreEqual(Text(UiKeys.VerbCut), _rig.Ui.Layout.LookHintWord.text,
+                "the crate is the candidate: the chip names what E does there");
+
+            _rig.Fakes.IsCutting = true;
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Scan, new Vector3(-0.6f, 0.4f, 5f), true);
+            float until = Time.realtimeSinceStartup + 1.5f;
+            while (Time.realtimeSinceStartup < until)
+            {
+                Assert.AreEqual(Text(UiKeys.VerbCut), _rig.Ui.Layout.LookHintWord.text,
+                    "while E cuts, the chip stays Cut even as the scan target slides in front");
+                yield return null;
+            }
+
+            _rig.Fakes.IsCutting = false;
+            _rig.Fakes.PrimaryHint = InteractionHint.None;
+            yield return UntilWord(UiKeys.VerbScan);
+            Assert.AreEqual(Text(UiKeys.VerbScan), _rig.Ui.Layout.LookHintWord.text,
+                "nothing in reach: the step's own key again");
         }
 
         [UnityTest]
@@ -873,6 +918,18 @@ namespace MoonProject.UI.PlayModeTests
         private void Boot()
         {
             _rig = UiTestRig.Boot(_controls, _slot);
+        }
+
+        /// <summary>Waits (2 s at most) for the chip to fade out its old word and show <paramref name="key"/>.</summary>
+        private IEnumerator UntilWord(string key)
+        {
+            string word = Text(key);
+            float limit = Time.realtimeSinceStartup + 2f;
+            while ((_rig.Ui.Layout.LookHintWord.text != word || !_rig.Ui.LookUp.IsVisible) &&
+                   Time.realtimeSinceStartup < limit)
+            {
+                yield return null;
+            }
         }
 
         private static IEnumerator Seconds(float seconds)
