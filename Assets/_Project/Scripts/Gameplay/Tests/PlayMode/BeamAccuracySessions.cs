@@ -27,7 +27,9 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// <see cref="OnSurface"/> of the scan target's colliders (the box of its mesh where it has none) or of the pad's
     /// own part colliders, the weld's riding the printed layer line. A miss fails with the frame, the distance and
     /// the target. Each is captured from the beam's side in the eclipse and at golden hour
-    /// (Logs/gameplay-captures/beam-*-eclipse.png, -golden.png).
+    /// (Logs/gameplay-captures/beam-*-eclipse.png, -golden.png), and each scan from the game's own chase camera at a
+    /// quarter, half and three quarters through, so its beam and wireframe can be judged as the player sees them
+    /// (scan-chase-*-25/50/75-eclipse.png, -golden.png).
     /// </summary>
     [Category("BeamAccuracy")]
     public sealed class BeamAccuracySessions : InputTestFixture
@@ -77,6 +79,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float FullSun = 0.95f;
 
         private const float LowSun = 0.12f;
+
+        /// <summary>Scan progress (0..1) at which the chase camera's view is captured.</summary>
+        private static readonly float[] ChaseMarks = { 0.25f, 0.5f, 0.75f };
 
         private readonly Collider[] _near = new Collider[64];
         private Keyboard _keyboard;
@@ -152,6 +157,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             ScanBeam beam = _gameplay.Salvage.Feel.ScanBeam;
             float worst = 0f;
             bool captured = false;
+            int chaseShot = 0;
             int frame = 0;
             Press(_keyboard.eKey);
             float deadline = Time.time + ScanTimeout;
@@ -174,6 +180,13 @@ namespace MoonProject.Gameplay.PlayModeTests
                 {
                     captured = true;
                     CaptureAcross("beam-scan-" + capture, _gameplay.Salvage.ScanEmitter, end);
+                }
+
+                if (chaseShot < ChaseMarks.Length && fragment.Progress >= ChaseMarks[chaseShot])
+                {
+                    float mark = ChaseMarks[chaseShot++];
+                    CaptureBothSkies(_context.Get<IViewCamera>().Camera,
+                        $"scan-chase-{capture}-{Mathf.RoundToInt(mark * 100f)}");
                 }
             }
 
@@ -496,12 +509,17 @@ namespace MoonProject.Gameplay.PlayModeTests
             Vector3 side = Vector3.Cross(Vector3.up, along);
             Vector3 eye = middle + side * CaptureSideMetres + Vector3.up * CaptureRiseMetres - along * CaptureBackMetres;
             camera.SetPositionAndRotation(eye, Quaternion.LookRotation(middle - eye, Vector3.up));
-            var lens = camera.GetComponent<Camera>();
+            CaptureBothSkies(camera.GetComponent<Camera>(), name);
+            camera.SetPositionAndRotation(position, rotation);
+        }
+
+        /// <summary><paramref name="lens"/>'s view now, in the eclipse and at golden hour.</summary>
+        private void CaptureBothSkies(Camera lens, string name)
+        {
             FrameCapture.SavePng(lens, 1280, 720, Path.Combine(GameplayFixture.CaptureFolder, name + "-eclipse.png"));
             SetSkyClock(_goldenSeconds, false);
             FrameCapture.SavePng(lens, 1280, 720, Path.Combine(GameplayFixture.CaptureFolder, name + "-golden.png"));
             SetSkyClock(0f, true);
-            camera.SetPositionAndRotation(position, rotation);
         }
 
         private static Vector3 Flat(Vector3 point)

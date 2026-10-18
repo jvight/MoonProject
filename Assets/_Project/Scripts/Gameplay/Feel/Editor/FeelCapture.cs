@@ -48,6 +48,9 @@ namespace MoonProject.Gameplay.Feel.Editor
         private const float RibbonShot = 0.55f;
         private const float DissolveSeconds = 0.9f;
         private const float ChaseDistance = 7.5f;
+
+        // Built by Gameplay/Tuning (GameplayAssetPaths.ScanTuning, which this editor assembly does not reference).
+        private const string ScanTuningPath = "Assets/_Project/Data/Tuning/Gameplay/ScanTuning.asset";
         private const float ChasePitch = 16f;
         private const float ChaseHeight = 1.1f;
         private const float ChaseFov = 52f;
@@ -61,7 +64,9 @@ namespace MoonProject.Gameplay.Feel.Editor
                 EditorSceneManager.OpenScene(CaptureAutomation.MainScenePath, OpenSceneMode.Single);
                 var tuning = AssetDatabase.LoadAssetAtPath<FeelVfxTuning>(FeelMaterials.TuningPath);
                 var visuals = AssetDatabase.LoadAssetAtPath<GameplayVisuals>(FeelMaterials.VisualsPath);
+                var scans = AssetDatabase.LoadAssetAtPath<ScanTuning>(ScanTuningPath);
                 string broken = tuning == null ? "the feel tuning is missing (run Gameplay/FeelVfx)"
+                    : scans == null ? "the scan tuning is missing (run Gameplay/Tuning)"
                     : visuals == null ? "GameplayVisuals is missing (run Gameplay/Materials)" : visuals.Validate();
                 if (broken != null)
                 {
@@ -72,7 +77,7 @@ namespace MoonProject.Gameplay.Feel.Editor
                 var temporary = new List<Object>();
                 try
                 {
-                    return Run(tuning, visuals, Path.Combine(args.OutputDirectory, "feel"), temporary) > 0;
+                    return Run(tuning, scans, visuals, Path.Combine(args.OutputDirectory, "feel"), temporary) > 0;
                 }
                 finally
                 {
@@ -84,7 +89,8 @@ namespace MoonProject.Gameplay.Feel.Editor
             });
         }
 
-        private static int Run(FeelVfxTuning tuning, GameplayVisuals visuals, string output, List<Object> temporary)
+        private static int Run(FeelVfxTuning tuning, ScanTuning scans, GameplayVisuals visuals, string output,
+            List<Object> temporary)
         {
             HideSceneRover();
             Vector3 ground = Ground(Spot);
@@ -103,7 +109,7 @@ namespace MoonProject.Gameplay.Feel.Editor
             var host = new GameObject("FeelCaptureHost");
             temporary.Add(host);
             var events = new EventBus();
-            var vfx = new FeelVfx(host.transform, tuning, visuals, events, anchors);
+            var vfx = new FeelVfx(host.transform, tuning, visuals, events, anchors, scans);
             var shots = new Shots(output);
             float clock = 0f;
 

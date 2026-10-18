@@ -54,7 +54,7 @@ namespace MoonProject.Gameplay.Feel.Tests
             ground.transform.localScale = Vector3.one * 4f;
             _created.Add(ground);
             var vfx = new FeelVfx(Make("Host", Vector3.zero), tuning,
-                Visuals(tuning, ground.GetComponent<Renderer>().sharedMaterial), events, anchors);
+                Visuals(tuning, ground.GetComponent<Renderer>().sharedMaterial), events, anchors, ScanTuning());
 
             Publish(events, FeelPhase.Anticipate, 0f, 0.65f);
             Publish(events, FeelPhase.Act, 0f, 0f);
@@ -130,7 +130,7 @@ namespace MoonProject.Gameplay.Feel.Tests
             GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
             _created.Add(ground);
             using var vfx = new FeelVfx(Make("Host", Vector3.zero), tuning,
-                Visuals(tuning, ground.GetComponent<Renderer>().sharedMaterial), events, anchors);
+                Visuals(tuning, ground.GetComponent<Renderer>().sharedMaterial), events, anchors, ScanTuning());
 
             events.Publish(new FeelBeat(FeelKind.Leap, FeelPhase.Impact, Vector3.zero, Vector3.up, 1f, 0f));
             Assert.AreEqual(0, vfx.Debris.Dust, "Leap must not spawn the 16-sphere glowing white ring.");
@@ -150,6 +150,13 @@ namespace MoonProject.Gameplay.Feel.Tests
         private static void Publish(EventBus events, FeelPhase phase, float strength, float seconds)
         {
             events.Publish(new FeelBeat(FeelKind.Cut, phase, Vector3.zero, Vector3.back, strength, seconds));
+        }
+
+        private ScanTuning ScanTuning()
+        {
+            var scans = ScriptableObject.CreateInstance<ScanTuning>();
+            _created.Add(scans);
+            return scans;
         }
 
         private FeelVfxTuning Tuning()
