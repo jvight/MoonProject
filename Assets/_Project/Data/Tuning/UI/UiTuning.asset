@@ -418,6 +418,8 @@ MonoBehaviour:
     _startDelay: 9
     _maxShowSeconds: 7
     _repeatCooldown: 25
+    _repeatRadius: 3
+    _dwellGraceSeconds: 0.35
     _followHalfLife: 0.08
     _screenMargin: 72
     _cardGap: 18

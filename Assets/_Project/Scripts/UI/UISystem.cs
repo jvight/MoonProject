@@ -83,6 +83,9 @@ namespace MoonProject.UI
         private readonly bool[] _guidanceShown = new bool[GuidanceSlot.KindCount];
         private CargoScreen _cargo;
         private UnlockCard _unlockCard;
+        private PostLog _postLog;
+        private PostView _postView;
+        private bool _postOnCrt;
         private EventBus _events;
         private BuildStripView _buildStrip;
         private PauseMenu _pause;
@@ -270,6 +273,10 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<SalvageCutStarted>(_ => _objectiveChip.Used(ObjectiveVerb.Cut)));
             _tokens.Add(events.Subscribe<FragmentScanned>(_ => _director.NotifyUsed(InteractionKind.Scan)));
             _tokens.Add(events.Subscribe<RoverWakeBeatReached>(OnWakeBeat));
+            _tokens.Add(events.Subscribe<BootCheckStarted>(OnBootCheckStarted));
+            _tokens.Add(events.Subscribe<BootCheckCompleted>(OnBootCheckCompleted));
+            _tokens.Add(events.Subscribe<BootCheckFinished>(_ => _postLog.Finish()));
+            _tokens.Add(events.Subscribe<BootCheckPulse>(OnBootCheckPulse));
             _tokens.Add(events.Subscribe<LanguageChanged>(OnLanguageChanged));
             _tokens.Add(events.Subscribe<TickerLine>(OnTickerLine));
             _tokens.Add(events.Subscribe<RoverSystemChanged>(OnSystemChanged));
@@ -345,7 +352,10 @@ namespace MoonProject.UI
                 _structureIcons, services.WeldEnergy);
             _cargo = new CargoScreen(_layout, _tuning.Cargo, _localization, services.Hold, services.Systems,
                 _roverDiagram, _glyphs, _numbers, services.Events, _ledger);
+            _postLog = new PostLog(_tuning.Post);
             BindFacePanel(root);
+            // The face panel takes the cargo screen when there is one; the log sits beside it either way.
+            _postView = new PostView(_layout.Cargo.parent, _postLog);
             _unlockCard = new UnlockCard(_layout, _tuning.UnlockCard, _localization);
             _pause = new PauseMenu(_layout, _tuning.Pause, _tuning.Title, _player, _localization, services.Input,
                 services.Events, _settings, services.Flow,
@@ -414,14 +424,15 @@ namespace MoonProject.UI
 
             _pause.Tick(deltaTime);
             bool paused = _pause.IsOpen;
-            SetFacePanelVisible(_cargo.IsOpen || _cargo.Openness > 0f);
+            StepPost(deltaTime);
+            SetFacePanelVisible(_cargo.IsOpen || _cargo.Openness > 0f || PostShown);
             _cargo.Tick(deltaTime, CargoScreenSize(), input.ActiveDevice);
             if (_cargo.IsOpen)
             {
                 StepCargoInput(menu, deltaTime);
             }
 
-            SetFacePanelVisible(_cargo.IsOpen || _cargo.Openness > 0f);
+            SetFacePanelVisible(_cargo.IsOpen || _cargo.Openness > 0f || PostShown);
             bool cargoOpen = _cargo.IsOpen;
             _backdrop.Set(_pause.Openness, _cargo.Openness);
             float hudTime = paused ? 0f : deltaTime;
@@ -510,13 +521,15 @@ namespace MoonProject.UI
         /// <summary>Everything but the slot that lets the teaching prompt show.</summary>
         private bool PromptsOpen(bool paused)
         {
-            return !paused && _awake && !_inOpening && _sinceAwake >= _tuning.Prompts.StartDelay &&
-                   !_lookUpChip.ShowsPrompt && !_readout.IsVisible && !BuildMenuOpen();
+            return !paused && _awake && !_inOpening && !_postLog.IsRunning &&
+                   _sinceAwake >= _tuning.Prompts.StartDelay && !_lookUpChip.ShowsPrompt && !_readout.IsVisible &&
+                   !BuildMenuOpen();
         }
 
         private bool ObjectiveOpen(bool paused)
         {
-            return !paused && _awake && !_inOpening && !_stargaze.IsVeiled && !_cargo.IsOpen && !BuildMenuOpen();
+            return !paused && _awake && !_inOpening && !_postLog.IsRunning && !_stargaze.IsVeiled && !_cargo.IsOpen &&
+                   !BuildMenuOpen();
         }
 
         /// <summary>The build step's line shows over the live HUD only (not paused, not behind the face screen).</summary>
@@ -527,12 +540,12 @@ namespace MoonProject.UI
 
         private bool LookHintsOpen()
         {
-            return !_readout.IsVisible && !BuildMenuOpen();
+            return !_postLog.IsRunning && !_readout.IsVisible && !BuildMenuOpen();
         }
 
         private bool ReadoutOpen(bool paused)
         {
-            return !paused && !_stargaze.IsVeiled && !_cargo.IsOpen;
+            return !paused && !_postLog.IsRunning && !_stargaze.IsVeiled && !_cargo.IsOpen;
         }
 
         private bool BuildMenuOpen()
@@ -588,6 +601,69 @@ namespace MoonProject.UI
         private Vector2 _lastBuildMouse = new Vector2(float.NaN, float.NaN);
         private NavigationMoveEvent.Direction _lastCargoNavDirection = NavigationMoveEvent.Direction.None;
         private float _cargoNavRepeatTimer;
+
+        /// <summary>True while 07's self-test log is on its CRT: through the checks and a short linger after.</summary>
+        private bool PostShown => _postLog.IsRunning ||
+                                  (_postLog.IsFinished && _postLog.SinceFinished < _tuning.Post.LingerSeconds);
+
+        /// <summary>Internal view of the self-test log (tests and captures).</summary>
+        internal PostLog Post => _postLog;
+
+        /// <summary>The self-test column beside the cargo screen on the face panel (tests and captures).</summary>
+        internal PostView PostView => _postView;
+
+        private void OnBootCheckStarted(BootCheckStarted started)
+        {
+            if (started.Step == BootCheckStep.Carrier || _postLog.IsFinished)
+            {
+                _postLog.Reset();
+                _postView.Clear();
+            }
+
+            _postLog.Started(started.Step, PostText.Started(started.Step, _localization, _tuning.Post.ResumeDays),
+                PostText.IsInformation(started.Step));
+            if (!_postOnCrt)
+            {
+                _postOnCrt = true;
+                _services.FaceScreen?.SetReadout(FaceTargetTexture());
+            }
+        }
+
+        private void OnBootCheckPulse(BootCheckPulse pulse)
+        {
+            if (pulse.Step == BootCheckStep.Battery && _services.Battery != null)
+            {
+                _postLog.Live(pulse.Step, PostText.Filling(_localization, pulse.Progress01 * _services.Battery.Charge01));
+            }
+        }
+
+        private void OnBootCheckCompleted(BootCheckCompleted completed)
+        {
+            float charge = _services.Battery != null ? _services.Battery.Charge01 : 0f;
+            _postLog.Completed(completed.Step, completed.Result,
+                PostText.Settled(completed.Step, completed.Result, _localization, _tuning.Post.ResumeDays, charge));
+        }
+
+        private void StepPost(float deltaTime)
+        {
+            if (_postLog.Count == 0)
+            {
+                return;
+            }
+
+            bool changed = _postLog.Tick(deltaTime);
+            if (_postOnCrt && !PostShown)
+            {
+                _postOnCrt = false;
+                _services.FaceScreen?.SetReadout(null);
+            }
+
+            _postView.SetShown(PostShown && !_cargo.IsOpen);
+            if (changed)
+            {
+                _postView.Refresh();
+            }
+        }
 
         private void BindFacePanel(VisualElement root)
         {

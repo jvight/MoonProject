@@ -88,6 +88,38 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
+        public void AnIgnoredPrompt_RestsAtItsSpot_ButANewTargetTeachesAtOnce()
+        {
+            Run(1f, Ready(InteractionKind.Salvage));
+            Run(_settings.MaxShowSeconds + 1f, Ready(InteractionKind.Salvage));
+            Assert.IsFalse(_director.WantsShown, "ignored at this crate: it rests");
+            Run(2f, Ready(InteractionKind.Salvage));
+            Assert.IsFalse(_director.WantsShown, "and does not nag at the same spot");
+
+            var fresh = new InteractionHint(InteractionKind.Salvage,
+                Site + Vector3.forward * (_settings.RepeatRadius + 2f), true);
+            Assert.IsTrue(_director.Wants(fresh), "a fresh crate is worth teaching");
+            Run(1f, fresh);
+            Assert.IsTrue(_director.WantsShown, "the player who drives straight to it sees the key");
+        }
+
+        [Test]
+        public void ATargetThatWavers_KeepsItsDwell_AndKeepsTheSlot()
+        {
+            InteractionHint cut = Ready(InteractionKind.Salvage);
+            for (int i = 0; i < 12 && !_director.WantsShown; i++)
+            {
+                Run(0.15f, cut);
+                Assert.IsTrue(_director.Wants(InteractionHint.None), "a wavering aim still holds the slot");
+                Run(0.1f, InteractionHint.None);
+            }
+
+            Assert.IsTrue(_director.WantsShown, "nosing in does not restart the dwell for ever");
+            Run(_settings.DwellGraceSeconds + 0.2f, InteractionHint.None);
+            Assert.IsFalse(_director.Wants(InteractionHint.None) && !_director.WantsShown);
+        }
+
+        [Test]
         public void APrompt_IsRetired_OnceTheActionIsLearned()
         {
             for (int i = 0; i < _settings.Find(InteractionKind.Salvage).UsesToRetire; i++)

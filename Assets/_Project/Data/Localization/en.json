@@ -993,6 +993,94 @@
         {
             "key": "build.step.weld",
             "text": "Hold {0} to weld"
+        },
+        {
+            "key": "post.carrier",
+            "text": "CARRIER · DETECTED"
+        },
+        {
+            "key": "post.resume",
+            "text": "CONTINUE · {0} DAYS · RESTORING TASK QUEUE"
+        },
+        {
+            "key": "post.agenda",
+            "text": "TASK QUEUE · 3 ITEMS\n1. ALIGN THE DISH\n2. SEND THE SURVEY DATA\n3. —\nTASK 1 · NEEDS POWER"
+        },
+        {
+            "key": "post.lens",
+            "text": "LENS"
+        },
+        {
+            "key": "post.lamps",
+            "text": "LAMPS"
+        },
+        {
+            "key": "post.head",
+            "text": "NECK · HEAD"
+        },
+        {
+            "key": "post.wheels",
+            "text": "WHEELS"
+        },
+        {
+            "key": "post.wheels.ok",
+            "text": "OK (1 MISMATCHED)"
+        },
+        {
+            "key": "post.motor",
+            "text": "MOTOR"
+        },
+        {
+            "key": "post.cutter",
+            "text": "CUTTER"
+        },
+        {
+            "key": "post.cutter.fault",
+            "text": "FAULT · NO IGNITER · SPARE: LANDER"
+        },
+        {
+            "key": "post.solar_wing",
+            "text": "SOLAR WING"
+        },
+        {
+            "key": "post.antenna",
+            "text": "ANTENNA"
+        },
+        {
+            "key": "post.battery",
+            "text": "BATTERY"
+        },
+        {
+            "key": "post.battery.ok",
+            "text": "{0}%"
+        },
+        {
+            "key": "post.assembly",
+            "text": "ASSEMBLY · 0 BLUEPRINTS"
+        },
+        {
+            "key": "post.begin",
+            "text": "BEGIN RECOVERY"
+        },
+        {
+            "key": "post.result.ok",
+            "text": "OK"
+        },
+        {
+            "key": "post.result.fault",
+            "text": "FAULT"
+        },
+        {
+            "key": "post.result.jammed",
+            "text": "JAMMED"
+        },
+        {
+            "key": "post.result.receive_only",
+            "text": "RECEIVE ONLY"
+        },
+        {
+            "key": "post.antenna.receive_only",
+            "text": "RECEIVE ONLY · ORBITAL SIGNAL"
         }
     ]
 }

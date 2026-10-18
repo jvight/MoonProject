@@ -108,6 +108,51 @@ namespace MoonProject.World
             return Mathf.Min(delta, Mathf.Max(0f, hold - time));
         }
 
+        /// <summary>
+        /// Real seconds the clock takes from <paramref name="from"/> to <paramref name="to"/> at the current pace:
+        /// each stretch of the first day at its tuned rate, <see cref="float.PositiveInfinity"/> when a hold stops it
+        /// short of <paramref name="to"/>, 0 when <paramref name="to"/> is not ahead.
+        /// </summary>
+        public float RealSecondsBetween(float from, float to)
+        {
+            if (to <= from)
+            {
+                return 0f;
+            }
+
+            if (Hold() < to)
+            {
+                return float.PositiveInfinity;
+            }
+
+            float seconds = 0f;
+            float time = from;
+            while (time < to)
+            {
+                float next = Mathf.Min(to, NextRateChange(time));
+                seconds += (next - time) / Rate(time);
+                time = next;
+            }
+
+            return seconds;
+        }
+
+        // The next clock time after `time` where the first day's pace changes (infinity once it runs normally).
+        private float NextRateChange(float time)
+        {
+            if (time < GoldenHourTime)
+            {
+                return GoldenHourTime;
+            }
+
+            if (time < LastLightTime)
+            {
+                return LastLightTime;
+            }
+
+            return time < NightfallTime ? NightfallTime : float.PositiveInfinity;
+        }
+
         private float Hold()
         {
             if (NightReady)
