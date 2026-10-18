@@ -222,14 +222,38 @@ namespace MoonProject.World.Editor
             serialized.FindProperty("_halo").objectReferenceValue = haloRenderer;
             serialized.FindProperty("_light").objectReferenceValue = light;
             SerializedProperty list = serialized.FindProperty("_markers");
+            SerializedProperty halos = serialized.FindProperty("_markerHalos");
             list.arraySize = markers.Count;
+            halos.arraySize = markers.Count;
+            var haloMesh = context.LoadAsset<Mesh>(WorldPaths.BeaconHaloMesh);
+            var markerHalo = context.LoadAsset<Material>(WorldPaths.CableMarkerHaloMaterial);
             for (int i = 0; i < markers.Count; i++)
             {
                 list.GetArrayElementAtIndex(i).objectReferenceValue = markers[i];
+                halos.GetArrayElementAtIndex(i).objectReferenceValue =
+                    StandMarkerHalo(context, markers[i], haloMesh, markerHalo);
             }
 
             serialized.ApplyModifiedPropertiesWithoutUndo();
             context.AddSystem(pulse);
+        }
+
+        /// <summary>
+        /// A marker lamp's small halo, at the lamp's drawn centre (Art's nodes pivot at their model's root).
+        /// </summary>
+        private static Renderer StandMarkerHalo(SceneBuildContext context, Renderer marker, Mesh mesh,
+            Material material)
+        {
+            GameObject halo = context.CreateChild("Halo", marker.transform);
+            halo.transform.position = marker.bounds.center;
+            halo.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var renderer = halo.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = material;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            renderer.lightProbeUsage = LightProbeUsage.Off;
+            renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+            return renderer;
         }
 
         /// <summary>

@@ -11,13 +11,16 @@ namespace MoonProject.World
     /// along the old cable's marker lamps from 07's dead post toward it (<see cref="CableMarkerWave"/>). The scene
     /// build stands Art's beacon on the lander, hangs the halo and light on its light anchor and wires the markers in
     /// order from the post. 07's New Game self-test cues two answers (a Continue's short wake runs no self-test): the
-    /// beacon flashes sharply when the cutter check fails (the spare part is at the lander), and one bright wave runs
-    /// the cable when 07 begins its recovery. Allocation-free per frame.
+    /// beacon flashes sharply, its halo swelling a little, when the cutter check fails (the spare part is at the
+    /// lander), and one bright wave runs the cable when 07 begins its recovery, each marker blooming a small halo as it
+    /// passes. Allocation-free per frame.
     /// </summary>
     public sealed class LanderBeacon : MonoBehaviour, IGameSystem
     {
         private static readonly int IntensityId = Shader.PropertyToID("_Intensity");
         private static readonly int EmissionStrengthId = Shader.PropertyToID("_EmissionStrength");
+        private static readonly int RadiusId = Shader.PropertyToID("_Radius");
+        private static readonly int MinAngleTanId = Shader.PropertyToID("_MinAngleTan");
 
         [Tooltip("World tuning (Assets/_Project/Data/Tuning/WorldSettings.asset); its landmarks' lander beacon.")]
         [SerializeField] private WorldSettings _settings;
@@ -34,6 +37,9 @@ namespace MoonProject.World
         [Tooltip("The old cable's marker lamps (GroundCableSegment/MarkerLamp), in order from 07's post to the lander.")]
         [SerializeField] private Renderer[] _markers = new Renderer[0];
 
+        [Tooltip("Each marker lamp's small halo (LofiBeaconHalo), in the markers' order: lit only by the Begin wave.")]
+        [SerializeField] private Renderer[] _markerHalos = new Renderer[0];
+
         private MaterialPropertyBlock _block;
         private IDisposable _checksCompleted;
         private IDisposable _checksStarted;
@@ -43,10 +49,12 @@ namespace MoonProject.World
         public void Initialize(GameContext context)
         {
             if (_settings == null || _lens == null || _halo == null || _light == null || _markers == null
-                || Array.IndexOf(_markers, null) >= 0)
+                || Array.IndexOf(_markers, null) >= 0 || _markerHalos == null
+                || _markerHalos.Length != _markers.Length || Array.IndexOf(_markerHalos, null) >= 0)
             {
-                Debug.LogError($"{nameof(LanderBeacon)}: World Settings, the lens, the halo, the light and every " +
-                    "cable marker must be assigned (the scene build wires them on the lander).", this);
+                Debug.LogError($"{nameof(LanderBeacon)}: World Settings, the lens, the halo, the light, every cable " +
+                    "marker and one halo per marker must be assigned (the scene build wires them on the lander).",
+                    this);
                 enabled = false;
                 return;
             }
@@ -93,8 +101,11 @@ namespace MoonProject.World
             float level = Mathf.Max(LocatorBlink.Level(time, beacon.Period, beacon.Sharpness, beacon.Floor),
                 flash * beacon.FlashBoost);
             Glow(_lens, level * beacon.LensGlow);
+            float swell = 1f + flash * (beacon.FlashHaloSwell - 1f);
             _block.Clear();
             _block.SetFloat(IntensityId, level * beacon.HaloIntensity);
+            _block.SetFloat(RadiusId, beacon.HaloRadius * swell);
+            _block.SetFloat(MinAngleTanId, Mathf.Tan(beacon.HaloMinAngle * swell * Mathf.Deg2Rad));
             _halo.SetPropertyBlock(_block);
             _light.intensity = level * beacon.LightIntensity;
             for (int i = 0; i < _markers.Length; i++)
@@ -105,6 +116,9 @@ namespace MoonProject.World
                     beacon.MarkerWaveWidth);
                 Glow(_markers[i], beacon.MarkerGlow
                     + Mathf.Max(lift * beacon.MarkerPulse, begin * beacon.BeginWavePulse));
+                _block.Clear();
+                _block.SetFloat(IntensityId, Mathf.Pow(begin, beacon.MarkerHaloFalloff) * beacon.MarkerHaloIntensity);
+                _markerHalos[i].SetPropertyBlock(_block);
             }
         }
 

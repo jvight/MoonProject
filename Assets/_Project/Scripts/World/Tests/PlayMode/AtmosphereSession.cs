@@ -63,7 +63,8 @@ namespace MoonProject.World.PlayModeTests
         private const string OpeningSignalPillar = "SignalPillar";
 
         // 07's self-test cues on a New Game (opening v2's POST): the beacon's answering flashes seen from the apron's
-        // edge, the Begin wave seen from just behind 07's post looking down the cable toward the lander.
+        // edge and from the wake, the Begin wave seen from just behind 07's post looking down the cable toward the
+        // lander.
         private const float PostTimeout = 120f;
         private const float PostBeaconEyeHeight = 5f;
         private const float PostBeaconLookHeight = 6f;
@@ -370,8 +371,11 @@ namespace MoonProject.World.PlayModeTests
                 FrameCapture.SavePng(view, CaptureWidth, CaptureHeight,
                     Path.Combine(CaptureFolder, "post-cutter-game.png"));
                 Time.captureDeltaTime = PostFrameSeconds;
-                Place(camera, LookPose("post_beacon", apron + Vector3.up * PostBeaconEyeHeight,
-                    lander + Vector3.up * PostBeaconLookHeight, PostBeaconFov));
+                Pose nearBeacon = LookPose("post_beacon", apron + Vector3.up * PostBeaconEyeHeight,
+                    lander + Vector3.up * PostBeaconLookHeight, PostBeaconFov);
+                Pose fromWake = LookPose("post_beacon_wake",
+                    wake + toLander * OpeningWakeLead + Vector3.up * OpeningEyeHeight,
+                    lander + Vector3.up * OpeningLookHeight, OpeningFov);
                 report.AppendLine("## The beacon answers the cutter check").AppendLine()
                     .AppendLine("| Frame | s after the check | Beacon light |").AppendLine("|---|---:|---:|");
                 float burst = tuning.FlashCount * tuning.FlashPeriod + PostTail;
@@ -379,8 +383,12 @@ namespace MoonProject.World.PlayModeTests
                 for (int frame = 0; Time.time - cutterAt < burst; frame++)
                 {
                     string name = string.Format(CultureInfo.InvariantCulture, "post-beacon-{0:00}", frame);
+                    Place(camera, nearBeacon);
                     FrameCapture.SavePng(camera, CaptureWidth, CaptureHeight,
                         Path.Combine(CaptureFolder, name + ".png"));
+                    Place(camera, fromWake);
+                    FrameCapture.SavePng(camera, CaptureWidth, CaptureHeight,
+                        Path.Combine(CaptureFolder, name + "-wake.png"));
                     brightest = Mathf.Max(brightest, light.intensity);
                     report.AppendLine(string.Format(CultureInfo.InvariantCulture, "| {0} | {1:F2} | {2:F2} |", name,
                         Time.time - cutterAt, light.intensity));
