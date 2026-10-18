@@ -5,9 +5,13 @@ namespace MoonProject.UI
     /// <summary>The keys the face screen's foot row names.</summary>
     internal enum FaceHint
     {
-        Close = 0,
-        Move = 1,
-        Select = 2,
+        /// <summary>Fit a part into a device: drag it there, or select and press the place key.</summary>
+        Fit = 0,
+
+        Close = 1,
+
+        /// <summary>Close the screen and open the build menu.</summary>
+        Build = 2,
     }
 
     /// <summary>
@@ -18,18 +22,18 @@ namespace MoonProject.UI
     {
         public const int Count = 3;
 
-        /// <summary>The "glyph.&lt;control&gt;" key of the control for <paramref name="hint"/> on <paramref name="device"/>.</summary>
+        /// <summary>The localization key of the keycap for <paramref name="hint"/> on <paramref name="device"/>.</summary>
         public static string CapKey(FaceHint hint, InputDeviceKind device)
         {
             bool pad = device == InputDeviceKind.Gamepad;
             switch (hint)
             {
+                case FaceHint.Fit:
+                    return pad ? "glyph.gamepad.buttonsouth" : UiKeys.KeyDragOrE;
                 case FaceHint.Close:
                     return pad ? "glyph.gamepad.select" : "glyph.keyboard.tab";
-                case FaceHint.Move:
-                    return pad ? "glyph.gamepad.dpad" : "glyph.keyboard.wasd";
                 default:
-                    return pad ? "glyph.gamepad.buttonsouth" : "glyph.keyboard.space";
+                    return pad ? "glyph.gamepad.buttonnorth" : UiKeys.KeyB;
             }
         }
 
@@ -38,12 +42,12 @@ namespace MoonProject.UI
         {
             switch (hint)
             {
+                case FaceHint.Fit:
+                    return UiKeys.FaceFit;
                 case FaceHint.Close:
                     return UiKeys.FaceClose;
-                case FaceHint.Move:
-                    return UiKeys.FaceMove;
                 default:
-                    return UiKeys.FaceSelect;
+                    return UiKeys.FaceBuild;
             }
         }
     }

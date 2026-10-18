@@ -3,99 +3,52 @@ using UnityEngine;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// The one place that manages the mouse cursor: locked and hidden while driving (mouse look), free and visible in
-    /// menus, and visible, unlocked and confined to the window while the face inventory is open. If the lock is lost
-    /// while driving (alt-tab, the editor's Escape), a click or regaining focus takes it back.
+    /// The one place that manages the mouse cursor. <see cref="UISystem"/> decides the <see cref="CursorMode"/> every
+    /// frame with <see cref="CursorRule"/> and hands it here; the cursor is only written when the mode changes, or when
+    /// a click or regained focus takes back a lock the editor or an alt-tab took away.
     /// </summary>
     internal sealed class CursorPolicy
     {
-        private bool _hasSavedInventoryState;
-        private CursorLockMode _savedLockState = CursorLockMode.Locked;
-        private bool _savedVisible;
-        private bool _savedInMenu;
+        private CursorMode _mode = CursorMode.Menu;
+        private bool _applied;
 
-        public bool InMenu { get; private set; }
+        /// <summary>The mode the cursor is in now.</summary>
+        public CursorMode Mode => _mode;
 
-        public CursorLockMode LockState { get; private set; } = CursorLockMode.None;
+        /// <summary>True while the cursor is free for a menu or a screen (not captured by the camera).</summary>
+        public bool InMenu => CursorRule.IsFree(_mode);
 
-        public bool IsVisible { get; private set; } = true;
+        public CursorLockMode LockState => CursorRule.LockOf(_mode);
 
-        public bool IsLocked => Cursor.lockState == CursorLockMode.Locked;
+        public bool IsVisible => CursorRule.IsFree(_mode);
 
-        public void Drive()
+        /// <summary>Puts the cursor in <paramref name="mode"/>; nothing is written while the mode stays the same.</summary>
+        public void Set(CursorMode mode)
         {
-            _hasSavedInventoryState = false;
-            InMenu = false;
-            LockState = CursorLockMode.Locked;
-            IsVisible = false;
-            Apply();
-        }
-
-        public void Menu()
-        {
-            _hasSavedInventoryState = false;
-            InMenu = true;
-            LockState = CursorLockMode.None;
-            IsVisible = true;
-            Apply();
-        }
-
-        /// <summary>
-        /// Saves the current cursor state and makes the cursor visible, unlocked, and confined to the game window
-        /// while the face inventory is open.
-        /// </summary>
-        public void OpenInventory()
-        {
-            if (!_hasSavedInventoryState)
+            if (_applied && mode == _mode)
             {
-                _savedLockState = LockState;
-                _savedVisible = IsVisible;
-                _savedInMenu = InMenu;
-                _hasSavedInventoryState = true;
-            }
-
-            InMenu = true;
-            LockState = CursorLockMode.Confined;
-            IsVisible = true;
-            Apply();
-        }
-
-        /// <summary>Restores the cursor state that was active before <see cref="OpenInventory"/>.</summary>
-        public void CloseInventory()
-        {
-            if (_hasSavedInventoryState)
-            {
-                _hasSavedInventoryState = false;
-                InMenu = _savedInMenu;
-                LockState = _savedLockState;
-                IsVisible = _savedVisible;
-                Apply();
                 return;
             }
 
-            Drive();
+            _mode = mode;
+            _applied = true;
+            Apply();
         }
 
-        /// <summary>Re-locks the cursor if it was lost while driving, or re-confines it if lost while in inventory.</summary>
+        /// <summary>Writes the current mode again if the cursor drifted from it (a lost lock, a lost confinement).</summary>
         public void Recapture()
         {
-            if (!InMenu && !IsLocked)
-            {
-                Apply();
-            }
-            else if (_hasSavedInventoryState && Cursor.lockState != CursorLockMode.Confined)
+            if (_applied && (Cursor.lockState != LockState || Cursor.visible != IsVisible))
             {
                 Apply();
             }
         }
 
-        /// <summary>Hands the cursor back untouched (the UI is going away).</summary>
+        /// <summary>Hands the cursor back free and visible (the UI is going away).</summary>
         public void Release()
         {
-            _hasSavedInventoryState = false;
-            InMenu = true;
-            LockState = CursorLockMode.None;
-            IsVisible = true;
+            _mode = CursorMode.Menu;
+            _applied = true;
             Apply();
         }
 

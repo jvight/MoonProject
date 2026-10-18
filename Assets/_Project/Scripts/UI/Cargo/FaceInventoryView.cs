@@ -22,7 +22,9 @@ namespace MoonProject.UI
     /// (<see cref="FaceDevices"/>: the scan lens, the cutter and two sockets) in labelled frames at the corners with
     /// a leader to each part, and the hold as a strip of slots along the foot (up to 24, in rows of eight), each
     /// item named under its slot. While the spare igniter is in the hold and 07 stands on its pad, the cutter offers
-    /// it and a confirm fits it.
+    /// it and a confirm fits it. With the mouse a part can also be dragged out of the hold (<see cref="HoldDrag"/>)
+    /// and dropped on a device: the cutter takes the igniter on the pad; any other drop eases the part home and the
+    /// info box says why (<see cref="DropRule"/>).
     /// </summary>
     public sealed class FaceInventoryView
     {
@@ -94,6 +96,10 @@ namespace MoonProject.UI
         private int _lastPointerDownFrame = -1;
         private int _lastNavigationFrame = -1;
         private readonly InputHandoff _handoff = new InputHandoff();
+        private readonly HoldDrag _drag;
+        private UiIconShape _dragIcon;
+        private int _dropReasonCell = -1;
+        private string _dropReasonKey;
         private int _lastSubmitFrame = -1;
 
         private bool _bootRunning;
@@ -114,6 +120,7 @@ namespace MoonProject.UI
             _diagram = diagram ?? throw new ArgumentNullException(nameof(diagram));
             _numbers = numbers ?? throw new ArgumentNullException(nameof(numbers));
             _events = events ?? throw new ArgumentNullException(nameof(events));
+            _drag = new HoldDrag(settings);
 
             _panel.pickingMode = PickingMode.Position;
             _canvas = Require<VisualElement>(_panel, "cargo-canvas");
@@ -140,6 +147,7 @@ namespace MoonProject.UI
             BuildDeviceBubbles();
 
             _panel.RegisterCallback<PointerMoveEvent>(OnPanelPointerMove);
+            _panel.RegisterCallback<PointerUpEvent>(OnPanelPointerUp);
         }
 
         /// <summary>Unlocked hold cell count (typically 8, 16, or 24).</summary>
@@ -158,6 +166,12 @@ namespace MoonProject.UI
         public bool IsIgniterOffered => _igniterOffered;
 
         internal int LastNavigationFrame => _lastNavigationFrame;
+
+        /// <summary>Where a drag of a hold part stands (tests and captures).</summary>
+        internal HoldDragPhase DragPhase => _drag.Phase;
+
+        /// <summary>The dragged icon's centre in the 1152x768 reference frame (tests and captures).</summary>
+        internal Vector2 DragGhost => _drag.Ghost;
 
         public string LeftHeaderText => _holdTitle.text;
 
@@ -247,6 +261,8 @@ namespace MoonProject.UI
             _pressFlash = 0f;
             _userInteractedDuringBoot = false;
             _handoff.Reset();
+            _drag.Clear();
+            ClearDropReason();
         }
 
         /// <param name="deltaTime">Unscaled seconds.</param>
@@ -272,6 +288,12 @@ namespace MoonProject.UI
             if (_pressFlash > 0f)
             {
                 _pressFlash = Mathf.Max(0f, _pressFlash - deltaTime / _settings.PressFlashSeconds);
+                _canvas.MarkDirtyRepaint();
+            }
+
+            if (_drag.ShowsGhost)
+            {
+                _drag.Step(deltaTime);
                 _canvas.MarkDirtyRepaint();
             }
         }
@@ -583,6 +605,15 @@ namespace MoonProject.UI
             HandlePointerMoveAtReferencePos(PanelToReference(panelPos));
         }
 
+        /// <summary>
+        /// Handles a pointer-up at <paramref name="panelPos"/> in panel coordinates: it ends a drag of a hold part (the
+        /// drop) or the click that never became one.
+        /// </summary>
+        public void PointerUpAtPanel(Vector2 panelPos)
+        {
+            HandlePointerUpAtReferencePos(PanelToReference(panelPos));
+        }
+
         /// <summary>Steps focus in <paramref name="direction"/> across 07's four devices and the hold strip.</summary>
         public bool Navigate(NavigationMoveEvent.Direction direction)
         {
@@ -763,6 +794,11 @@ namespace MoonProject.UI
                 return;
             }
 
+            if (index != _dropReasonCell)
+            {
+                ClearDropReason();
+            }
+
             _focusedHoldCell = index;
             _focusedDevice = -1;
             UpdateTooltip();
@@ -771,7 +807,7 @@ namespace MoonProject.UI
 
         private void OnHoldCellHover(int index)
         {
-            if (index >= _unlockedHoldCount || !_handoff.HoverMaySelect)
+            if (index >= _unlockedHoldCount || !_handoff.HoverMaySelect || _drag.Phase != HoldDragPhase.Idle)
             {
                 return;
             }
@@ -787,6 +823,7 @@ namespace MoonProject.UI
 
         private void OnDeviceFocus(int device)
         {
+            ClearDropReason();
             _focusedDevice = device;
             _focusedHoldCell = -1;
             UpdateTooltip();
@@ -795,7 +832,7 @@ namespace MoonProject.UI
 
         private void OnDeviceHover(int device)
         {
-            if (!_handoff.HoverMaySelect)
+            if (!_handoff.HoverMaySelect || _drag.Phase != HoldDragPhase.Idle)
             {
                 return;
             }
@@ -814,14 +851,85 @@ namespace MoonProject.UI
             }
 
             _lastPointerDownFrame = Time.frameCount;
+            _handoff.NoteMouse();
             EnsureInteractiveDuringBoot();
             OnHoldCellFocus(index);
             Press(index, -1);
+            if (BeginPress(index, EventToReference(evt)))
+            {
+                _panel.CapturePointer(evt.pointerId);
+            }
         }
 
         private void OnPanelPointerMove(PointerMoveEvent evt)
         {
             HandlePointerMoveAtReferencePos(EventToReference(evt));
+        }
+
+        private void OnPanelPointerUp(PointerUpEvent evt)
+        {
+            if (evt.button != 0)
+            {
+                return;
+            }
+
+            if (_panel.HasPointerCapture(evt.pointerId))
+            {
+                _panel.ReleasePointer(evt.pointerId);
+            }
+
+            HandlePointerUpAtReferencePos(EventToReference(evt));
+        }
+
+        /// <summary>A press on a cell that holds something may become a drag of it; true when it can.</summary>
+        private bool BeginPress(int cell, Vector2 refPos)
+        {
+            HoldCellKind kind = _holdStates[cell].Kind;
+            if (HideForBoot || float.IsNaN(refPos.x) || float.IsNaN(refPos.y) || kind == HoldCellKind.Empty ||
+                kind == HoldCellKind.Locked)
+            {
+                return false;
+            }
+
+            _dragIcon = GetHoldCellIcon(_holdStates[cell]);
+            _drag.Press(cell, refPos, GetHoldCellReferenceRect(cell).center);
+            return true;
+        }
+
+        /// <summary>
+        /// The drop: the cutter takes the igniter on the pad (the icon eases into it); anything else eases home and the
+        /// info box says why in one short line.
+        /// </summary>
+        private void HandlePointerUpAtReferencePos(Vector2 refPos)
+        {
+            if (float.IsNaN(refPos.x) || float.IsNaN(refPos.y) || !_drag.Release(refPos))
+            {
+                return;
+            }
+
+            int cell = _drag.Cell;
+            DropOutcome outcome = DropRule.Decide(_holdStates[cell].StoryPartId, FindDeviceAtReferencePos(refPos),
+                _systems.CanFitIgniter);
+            if (outcome == DropOutcome.Fit && _systems.TryFitIgniter())
+            {
+                _drag.Fit(FaceDevices.CenterOf(FaceDevices.Cutter));
+                _events.Publish(new UiCue(UiCueKind.PartDrop));
+                Refresh();
+                FocusDevice(FaceDevices.Cutter);
+                return;
+            }
+
+            _drag.Return();
+            _events.Publish(new UiCue(UiCueKind.PartRefuse));
+            _dropReasonCell = cell;
+            _dropReasonKey = DropRule.ReasonKey(outcome == DropOutcome.Fit ? DropOutcome.NotDocked : outcome);
+            FocusHoldCell(cell);
+        }
+
+        private void ClearDropReason()
+        {
+            _dropReasonCell = -1;
+            _dropReasonKey = null;
         }
 
         private void HandlePointerDownAtReferencePos(Vector2 refPos)
@@ -837,6 +945,7 @@ namespace MoonProject.UI
                 EnsureInteractiveDuringBoot();
                 OnHoldCellFocus(holdIdx);
                 Press(holdIdx, -1);
+                BeginPress(holdIdx, refPos);
                 return;
             }
 
@@ -853,6 +962,17 @@ namespace MoonProject.UI
         {
             if (float.IsNaN(refPos.x) || float.IsNaN(refPos.y))
             {
+                return;
+            }
+
+            if (_drag.Phase == HoldDragPhase.Pressed || _drag.Phase == HoldDragPhase.Dragging)
+            {
+                if (_drag.Move(refPos))
+                {
+                    _events.Publish(new UiCue(UiCueKind.PartPick));
+                }
+
+                _canvas.MarkDirtyRepaint();
                 return;
             }
 
@@ -1031,6 +1151,10 @@ namespace MoonProject.UI
                 {
                     ShowTooltipBox(_localization.Get(UiKeys.CargoEmptyName), _localization.Get(UiKeys.CargoEmptyDesc));
                 }
+                else if (_focusedHoldCell == _dropReasonCell && _dropReasonKey != null)
+                {
+                    ShowTooltipBox(HoldItemName(_focusedHoldCell), _localization.Get(_dropReasonKey));
+                }
                 else
                 {
                     ShowTooltipBox(HoldItemName(_focusedHoldCell), HoldItemDescription(_focusedHoldCell));
@@ -1126,7 +1250,28 @@ namespace MoonProject.UI
                 DrawMoreRow(painter, s);
                 DrawRoverAndDevices(painter, s);
                 DrawToastDot(painter, s);
+                DrawDragGhost(painter, s);
             }
+        }
+
+        /// <summary>The dragged part's icon over everything, on a cell-sized plate so it reads over the line art.</summary>
+        private void DrawDragGhost(Painter2D painter, float s)
+        {
+            if (!_drag.ShowsGhost)
+            {
+                return;
+            }
+
+            float alpha = _drag.GhostAlpha;
+            Vector2 center = _drag.Ghost * s;
+            float half = CellSize * 0.5f * s;
+            RoverLineArtPainter.FillRect(painter, center.x - half, center.y - half, half * 2f, half * 2f,
+                RoverLineArtPainter.WithAlpha(BgCell, (byte)Mathf.RoundToInt(BgCell.a * alpha)));
+            RoverLineArtPainter.StrokeRect(painter, center.x - half, center.y - half, half * 2f, half * 2f,
+                RoverLineArtPainter.WithAlpha(Cyan, (byte)Mathf.RoundToInt(Cyan.a * alpha)),
+                _settings.FocusStrokeWidth * s);
+            UiIconPainter.Draw(painter, in _dragIcon, center, _settings.HoldIconSize * s,
+                RoverLineArtPainter.WithAlpha(UiIconPainter.LitAmber, (byte)Mathf.RoundToInt(248f * alpha)));
         }
 
         private void DrawHoldGrid(Painter2D painter, float s)
@@ -1187,7 +1332,9 @@ namespace MoonProject.UI
                 }
 
                 UiIconShape icon = GetHoldCellIcon(state);
-                Color32 tint = RoverLineArtPainter.WithAlpha(UiIconPainter.LitAmber, (byte)Mathf.RoundToInt(248f * bootProgress));
+                float lifted = _drag.ShowsGhost && i == _drag.Cell ? _settings.DragSourceAlpha : 1f;
+                Color32 tint = RoverLineArtPainter.WithAlpha(UiIconPainter.LitAmber,
+                    (byte)Mathf.RoundToInt(248f * bootProgress * lifted));
                 Vector2 iconCenter = new Vector2(cx + cw * 0.5f + slideX, cy + ch * 0.5f);
                 UiIconPainter.Draw(painter, in icon, iconCenter, _settings.HoldIconSize * s, tint);
 
