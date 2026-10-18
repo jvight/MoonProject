@@ -183,13 +183,13 @@ namespace MoonProject.Rover
             }
             else
             {
-                _rig.BeginWakeOpening(true);
+                _rig.BeginWakeOpening();
             }
         }
 
         private void OnSessionStarted(SessionStarted started)
         {
-            bool fromLensShot = _inTitle && _rig.Opening.IsHeld;
+            bool fromLensShot = _inTitle && _rig.Opening.IsActive;
             WarmLens();
             _inTitle = false;
             if (_flow == null || !_flow.ShowsTitle)
@@ -264,7 +264,7 @@ namespace MoonProject.Rover
         private void StartWakeShot()
         {
             _body.PoseOpeningHead(_script.Gaze.Yaw, _script.Gaze.Pitch, 0f, 1f);
-            _rig.BeginWakeOpening(true);
+            _rig.BeginWakeOpening();
         }
 
         /// <summary>

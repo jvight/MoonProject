@@ -124,7 +124,7 @@ namespace MoonProject.Rover.Tests
             Assert.That(seconds, Is.InRange(27f, 35f), "the wake lasts about 30 s");
             CollectionAssert.AreEqual(new[]
             {
-                WakeBeat.Crackle, WakeBeat.LidCracked, WakeBeat.LidHalf, WakeBeat.Blinked, WakeBeat.PulledOut,
+                WakeBeat.Crackle, WakeBeat.PictureOpens, WakeBeat.EyesOpen, WakeBeat.Blinked, WakeBeat.ChecksBegin,
                 WakeBeat.ChaseFrame,
             }, _beats);
             Assert.IsFalse(_script.IsRunning);
@@ -140,7 +140,7 @@ namespace MoonProject.Rover.Tests
                 StepOnce();
             }
 
-            int faceOn = _beats.IndexOf(WakeBeat.LidHalf);
+            int faceOn = _beats.IndexOf(WakeBeat.EyesOpen);
             int blink = _beats.IndexOf(WakeBeat.Blinked);
             Assert.GreaterOrEqual(faceOn, 0, "the face screen flickers on");
             Assert.Greater(blink, faceOn, "the eyes blink awake after it");

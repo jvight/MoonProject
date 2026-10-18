@@ -305,13 +305,13 @@ namespace MoonProject.Rover
                     Publish(WakeBeat.Crackle);
                     break;
                 case OpeningPhase.FadeIn:
-                    Publish(WakeBeat.LidCracked);
+                    Publish(WakeBeat.PictureOpens);
                     break;
                 case OpeningPhase.EyesOpen:
-                    Publish(WakeBeat.LidHalf);
+                    Publish(WakeBeat.EyesOpen);
                     break;
                 case OpeningPhase.Post:
-                    Publish(WakeBeat.PulledOut);
+                    Publish(WakeBeat.ChecksBegin);
                     _post.Begin();
                     DrainPost();
                     break;

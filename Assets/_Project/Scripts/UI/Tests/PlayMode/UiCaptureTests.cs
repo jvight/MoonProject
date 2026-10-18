@@ -553,7 +553,7 @@ namespace MoonProject.UI.PlayModeTests
             context.Events.Publish(new RoverAwoke(Vector3.zero, false));
             context.Events.Publish(new NextStepChanged("next.v2.drive_lander"));
             context.Events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle, false));
-            context.Events.Publish(new RoverWakeBeatReached(WakeBeat.GazeEarth, false));
+            context.Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame, false));
             yield return new WaitForSecondsRealtime(_tuning.Guidance.Readout.FadeIn + 0.5f);
             Assert.IsTrue(ui.Readout.IsVisible && ui.Readout.Showing == ReadoutKind.Boot,
                 "the boot diagnostics show when 07's lens opens");

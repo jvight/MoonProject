@@ -92,7 +92,7 @@ namespace MoonProject.Rover
         [Range(10f, 120f)]
         [SerializeField] private float _titleDriftPeriod = 48f;
 
-        [Tooltip("Seconds the drift takes to ease in, and to ease back when a choice is made (at most 1 s back).")]
+        [Tooltip("Seconds the drift takes to ease in.")]
         [Range(0.3f, 6f)]
         [SerializeField] private float _titleDriftEase = 3f;
 

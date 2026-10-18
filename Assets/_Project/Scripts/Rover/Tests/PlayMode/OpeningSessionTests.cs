@@ -174,7 +174,7 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreEqual(0, _awoke, "nothing wakes while the title is up");
             Assert.AreEqual(0, _beats.Count, "no wake beat on the title");
             Assert.AreEqual(WakePhase.Asleep, _body.Mood.Wake.Phase, "07 sleeps under the title");
-            Assert.IsTrue(_rig.Opening.IsHeld, "the fresh title holds the wake shot");
+            Assert.IsTrue(_rig.Opening.IsActive, "the fresh title holds the wake shot");
             Assert.IsTrue(_body.FaceDirector.Director.IsHoldingDarkForOpening, "the CRT face is held dark under the title");
             Capture("title_fresh");
 
@@ -218,7 +218,7 @@ namespace MoonProject.Rover.PlayModeTests
                 }
 
                 FaceDirector face = _body.FaceDirector.Director;
-                if (!_beats.Contains(WakeBeat.LidHalf))
+                if (!_beats.Contains(WakeBeat.EyesOpen))
                 {
                     Assert.IsTrue(face.IsHoldingDarkForOpening, "the CRT stays dark while 07 sleeps");
                     Assert.AreEqual(0, face.BootCount, "the face does not boot before its eyes open");
