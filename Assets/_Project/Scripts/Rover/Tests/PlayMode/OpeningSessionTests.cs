@@ -222,6 +222,24 @@ namespace MoonProject.Rover.PlayModeTests
                 yield return null;
             }
 
+            for (int i = 0; i < shots.Length; i++)
+            {
+                if (!taken[i])
+                {
+                    taken[i] = true;
+                    Capture(shots[i].Name);
+                }
+            }
+
+            for (int i = 0; i < keyShots.Length; i++)
+            {
+                if (!keyTaken[i])
+                {
+                    keyTaken[i] = true;
+                    CaptureKeyFrame(keyShots[i].Name);
+                }
+            }
+
             if (crackleStarted >= 0f && nextStripIndex <= 10)
             {
                 Capture(string.Format(CultureInfo.InvariantCulture, "strip_{0:00}s", nextStripIndex * 2));

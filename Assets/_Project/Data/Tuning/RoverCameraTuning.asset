@@ -244,7 +244,7 @@ MonoBehaviour:
     _lidHalfSeconds: 0.9
     _huntSeconds: 1.4
     _pullOutSeconds: 1.8
-    _overShoulderSeconds: 1.2
+    _overShoulderSeconds: 1.4
     _lidCrack: 0.2
     _lidHalf: 0.5
     _lidRest: 0.7
