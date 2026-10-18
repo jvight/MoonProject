@@ -113,6 +113,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Metres to the side (and ahead) 07 swings out to when it comes round an obstacle.</summary>
         private const float UnstickSidestep = 3f;
 
+        /// <summary>Attempts after which the sidestep stops growing: a wide structure takes a wider berth.</summary>
+        private const int UnstickMaxGrowth = 4;
+
         private const float UnstickSidestepSeconds = 6f;
 
         /// <summary>07 stops this far (m) from a fragment, facing it, to scan it.</summary>
@@ -366,19 +369,30 @@ namespace MoonProject.Gameplay.PlayModeTests
             Begin();
             ScanField scans = _gameplay.Scans;
             int scanned = 0;
-            for (int i = 0; scans.Find(FragmentId(blueprintId, i)) != null; i++)
+            for (ScanFragment next = FirstUnscanned(scans, blueprintId); next != null;
+                 next = FirstUnscanned(scans, blueprintId))
             {
-                ScanFragment fragment = scans.Find(FragmentId(blueprintId, i));
-                if (!fragment.Scanned)
-                {
-                    yield return Scan(fragment, what);
-                    scanned++;
-                }
+                yield return Scan(next, what);
+                scanned++;
             }
 
             Assert.Greater(scanned, 0, $"{what} has fragments to scan");
             Capture("scan-" + blueprintId);
             End($"Scan {what}", $"{scanned} fragment(s)");
+        }
+
+        private static ScanFragment FirstUnscanned(ScanField scans, string blueprintId)
+        {
+            for (int i = 0; scans.Find(FragmentId(blueprintId, i)) != null; i++)
+            {
+                ScanFragment fragment = scans.Find(FragmentId(blueprintId, i));
+                if (!fragment.Scanned)
+                {
+                    return fragment;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>B7: the habitat's airlock panel, read as 07 passes it; its readout shows on the CRT.</summary>
@@ -426,7 +440,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             yield return DriveTo(Flat(fragment.Point), standOff, $"the spot facing {what}", ApproachThrottle);
             Look(fragment.Point);
-            yield return Until(() => scans.Candidate == fragment, ScanLookTimeout,
+            yield return Until(() => OnSetCandidate(scans, fragment), ScanLookTimeout,
                 $"07's view rests on {fragment.FragmentId}: its brackets and the Scan chip show",
                 () => $"scan candidate {scans.Candidate?.FragmentId ?? "none"}, primary hint " +
                       $"{_gameplay.Hints.Primary.Kind} at {_gameplay.Hints.Primary.Position} (piece " +
@@ -435,12 +449,28 @@ namespace MoonProject.Gameplay.PlayModeTests
                       $"{ViewOff(fragment.Point):F0} deg off it ({View(fragment.Point)}), " +
                       $"{Vector3.Distance(Flat(fragment.Point), Flat(_rover.Position)):F2} m flat, " +
                       $"{HeadingOff(fragment.Point):F0} deg off");
+            fragment = scans.Candidate;
             yield return FirstUse("scan: hold E", VerbScanKey);
             Press(_keyboard.eKey);
             yield return Until(() => fragment.Scanned, scans.Tuning.Seconds(fragment.Size) + ScanAllowance,
                 $"held E scans {fragment.FragmentId}");
             Release(_keyboard.eKey);
             yield return null;
+        }
+
+        /// <summary>The brackets are on this part or another unscanned part of its set: a player scans what they frame.</summary>
+        private static bool OnSetCandidate(ScanField scans, ScanFragment fragment)
+        {
+            ScanFragment candidate = scans.Candidate;
+            if (candidate == null)
+            {
+                return false;
+            }
+
+            int split = fragment.FragmentId.LastIndexOf('.');
+            return candidate == fragment || (!candidate.Scanned && split > 0 &&
+                   candidate.FragmentId.StartsWith(fragment.FragmentId.Substring(0, split + 1),
+                       StringComparison.Ordinal));
         }
 
         /// <summary>B4: up to the lander's open crate, which gives Metal 2, Wiring 1 and the spare igniter.</summary>
@@ -810,7 +840,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Vector3 toward = Flat(target - _rover.Position);
             toward = toward.sqrMagnitude > 1e-4f ? toward.normalized : Flat(_rover.Rotation * Vector3.forward);
             Vector3 side = Vector3.Cross(Vector3.up, toward) * (attempt % 2 == 0 ? -1f : 1f);
-            _pilot.GoTo(Flat(_rover.Position) + side * UnstickSidestep + toward * UnstickSidestep, 1f, maxThrottle);
+            float step = UnstickSidestep * Mathf.Min(attempt, UnstickMaxGrowth);
+            _pilot.GoTo(Flat(_rover.Position) + side * step + toward * step, 1f, maxThrottle);
             float until = Time.time + UnstickSidestepSeconds;
             while (!_pilot.Arrived && Time.time < until)
             {
