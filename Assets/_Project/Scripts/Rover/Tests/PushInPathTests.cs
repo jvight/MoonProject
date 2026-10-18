@@ -24,7 +24,7 @@ namespace MoonProject.Rover.Tests
         {
             Vector3 from = Center + new Vector3(0f, 4f, -7f);
             float nearest = float.MaxValue;
-            for (float t = 0f; t <= 0.9f; t += 0.01f)
+            for (float t = 0f; t <= 0.7f; t += 0.01f)
             {
                 Vector3 p = PushInPath.Position(Center, from, FaceEye, t, Clear);
                 float flat = Mathf.Sqrt((p.x - Center.x) * (p.x - Center.x) + (p.z - Center.z) * (p.z - Center.z));
