@@ -57,6 +57,7 @@ namespace MoonProject.UI
         private readonly float _handOffSeconds;
         private readonly Reveal _titleKeyHint;
         private readonly Reveal _curtain;
+        private BootGate _bootGate;
         private readonly TitleScenePainter _titleScenePainter;
         private readonly TitleCrtOverlayPainter _titleCrtOverlayPainter;
         private readonly Label _continueNote;
@@ -290,9 +291,11 @@ namespace MoonProject.UI
         /// <summary>
         /// The title over the live world: the wordmark and the menu ease in as the dark of a boot lifts. Continue is
         /// offered when <paramref name="hasSave"/>; the first boot (<paramref name="chooseLanguage"/>) asks for a
-        /// language first. The rover's controls are already held by App; game time keeps running.
+        /// language first. The rover's controls are already held by App; game time keeps running. With
+        /// <paramref name="afterBoot"/> the dark stays up through the engine's first long frames and lifts once frames
+        /// come steadily (<see cref="BootGate"/>), so the title fades in on a smooth frame.
         /// </summary>
-        public void OpenTitle(bool hasSave, bool chooseLanguage)
+        public void OpenTitle(bool hasSave, bool chooseLanguage, bool afterBoot = false)
         {
             if (IsOpen)
             {
@@ -313,7 +316,16 @@ namespace MoonProject.UI
             _main.Show();
             _titleScreen.Show();
             _curtain.Snap(true);
-            _curtain.Hide();
+            if (afterBoot)
+            {
+                _bootGate = new BootGate(_title.BootSteadyMilliseconds, _title.BootSteadyFrames, _title.BootMinSeconds,
+                    _title.BootMaxSeconds);
+            }
+            else
+            {
+                _curtain.Hide();
+            }
+
             _navigator.ResetOnOpen(_input.Menu.PointerPosition, _navigator.DefaultFocus(NavigationContext()));
         }
 
@@ -357,6 +369,12 @@ namespace MoonProject.UI
             _titleCrt.Tick(unscaledDeltaTime);
             _titleCrtOverlay.Tick(unscaledDeltaTime);
             _titleKeyHint.Tick(unscaledDeltaTime);
+            if (_bootGate != null && _bootGate.Tick(unscaledDeltaTime))
+            {
+                _bootGate = null;
+                _curtain.Hide();
+            }
+
             _curtain.Tick(unscaledDeltaTime);
             _credits.Tick(unscaledDeltaTime);
             if (!_titleCrt.IsHidden)
@@ -1018,6 +1036,7 @@ namespace MoonProject.UI
         private void CloseTitle()
         {
             IsOpen = false;
+            _bootGate = null;
             _navigator.ClearFocus();
             SaveIfChanged();
             float handOff = _handOffSeconds;
@@ -1052,6 +1071,7 @@ namespace MoonProject.UI
         private void Draw(Leaving leaving)
         {
             _leaving = leaving;
+            _bootGate = null;
             _navigator.ClearFocus();
             _curtain.Show();
         }

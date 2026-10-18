@@ -368,7 +368,7 @@ namespace MoonProject.UI
             if (_titleWaiting)
             {
                 _titleWaiting = false;
-                _pause.OpenTitle(_titleHasSave, !_titleHasSave);
+                _pause.OpenTitle(_titleHasSave, !_titleHasSave, afterBoot: true);
             }
         }
 
