@@ -6,14 +6,14 @@
 
 ## 0. Player experience
 - **Hook:** after the eclipse, the low Sun shows things the dark hid: a glint at the ruins, bootprints, a flag.
-- **Pull:** each find asks *who walked here, and when?* A three-legged shadow at last light asks *what is that?*
+- **Pull:** each find asks *who walked here, and when?* On the first night, a pale three-legged shape in the earthshine asks *what is that?*
 - **Hold:** the scan pages fill the Machines databank. In 0.6, power wakes the seismic station's dead lamp.
 - **Finish:** the basin tells its own history without text: the 1967 probe, the 1971 sortie, the station.
   The player knows **people were here long before 07**.
 - **Feeling:** *company in absence.* People were here, and the place still keeps their marks.
 - **Learn, then improve:** Subnautica pulls the player with silhouettes, light and wrecks. Here a lure exists only
-  when **the sky makes it physically true**: glints and shadows need the Sun, and prints show only in raking
-  light. So the world takes turns pointing, and props never shout over the critical path.
+  when **the sky makes it physically true**: glints and shadows need the Sun (or Earth at night), and prints show
+  only in raking light. So the world takes turns pointing, and props never shout over the critical path.
 
 ## 1. Rules
 1. **One lure and one guide line per beat** in the world. The objective line stays the one UI element (§3 of
@@ -39,7 +39,7 @@ and holds at golden hour at **346.5°, 16.9° up** (NNW) (B6–B8). After power-
 | **Fallen survey tripod** | quiet texture | (−3, 160), 38 m west of the lander | B6, from the pad | lies at the blast zone's pebble ridge, legs pointing **away** from the lander | the last landing's blast knocked it over (it reinforces World's blast halo) |
 | **Seismic station** (ALSEP-style, dead lamp) | lore scan + **B10 contrast** | (128, 183), 26 m past the workshop | B9, from the habitat | its little lamp is the one light that stays **dark** when the player's base lights up at nightfall | science kit stands clear of the station's dust |
 | **Geophone line** (its cable, 3 small sensors) | guide line, after the opening | (128, 183) → (205, 137), 90 m at 121° | B9 | runs straight toward the canyon mouth and **06** | an active-seismic line, laid in a straight run |
-| **Scout lander** (Surveyor-style), small crater r 10 m, 1.1 m deep, on its inner wall (~8° slope) | **curiosity lure, lore scan** | **(68.8, 81.0)**: 80 m from the pad at the last-light bearing (137.7°); 51 m off the B2 lane | **B8–B9, last light** | its **58 m spidery shadow** runs straight at the base (measured). Looking SE from the pad, the three legs stand backlit in the glare. Kept unlit and outside 07's lamp cone in B2, so the shadow is the first look at it | landed 1967 (§3) |
+| **Scout lander** (Surveyor-style), small crater r 10 m, 1.1 m deep, on its inner wall (~8° slope) | **curiosity lure, lore scan** | **(68.8, 81.0)**: 80 m SE of the pad (137.7°); 51 m off the B2 lane | **B10, the first night** | Earth (338°, 16° up) lights the side the base sees, 20° off the line of sight: from the lit base its white paint and cream planar array read as a pale, still shape, with a small steady glint on the brass yoke. No emissive: earthshine only, so it never stands out in daylight or the eclipse | landed 1967 (§3) |
 | **Bootprint ring** + short trail (fades after 25 m NW) | quiet texture at the Scout | round (68.8, 81.0) | on arrival | 1971 prints circle it; the missing camera and scoop show bare brackets | the 1971 sortie |
 | **Sample-tool rack, fallen core tube** | quiet texture | (64, 96), crater's north rim | on arrival | one tube lies downslope, open end out | the 1971 crew cored the crater |
 | **Kestrel-3** + furrow debris (exist) | optional lore, west line | crater (−13, 185); furrow (−40, 90) | B2 (rim, left) | the furrow lies right on the apron→relay.1 lane, 74 m out | foreign crash (story v4) |
@@ -47,8 +47,8 @@ and holds at golden hour at **346.5°, 16.9° up** (NNW) (B6–B8). After power-
 | **relay.1** dead mast (exists) | west lure B11 | (−205, −75) | B5 (from the apron) | B11's signal pillar rises behind it | Link's first target |
 
 **Per-beat schedule (who points):** B0–B5 beacon + cable. B6–B7 glint + trail A. B8 nothing new: the player
-builds. B8–B9 the Scout's shadow (optional, the Sun holds until NightReady so the detour costs nothing).
-B10 the dark station lamp. B11 the signal pillar west. After: the geophone line east to 06, the furrow west.
+builds. B8–B9 nothing new: the Sun sinks to last light. B10 the Scout's pale earthlit shape (optional, a quiet
+look out from the lit base), beside the dark station lamp. B11 the signal pillar west. After: the geophone line east to 06, the furrow west.
 
 **Spacing:** lane B2 (165 m): the Scout (99 m along, 51 m off), the cable tear (84 m), the furrow (100 m, 57 m off).
 Lane B7 (~63 m of trail): the glint ahead, then the ruins' front door; the tripod sits beside the base. East (ruins → 06, ~200 m): the station at 33 m, the
@@ -68,13 +68,13 @@ gap, logged below.
                  :                              : wake cable (B2 line)   x tear + splice box
                  :
                 :
-    f           :  \                            f Kestrel furrow debris
-               x:   \                           \ the Scout's shadow at last light (SSE Sun)
-               :    \
-               :     \
-              :       \
-              :       \
-             :         Sr                       S Scout lander in its crater   r sample rack
+    f           :                               f Kestrel furrow debris
+               x:                               S Scout lander (68.8, 81), pale in the earthshine at night
+               :          Sr                    r sample rack on its crater's north rim
+               :
+              :
+              :
+             :
              :
              :
             W                                   W wake + dead post;  relay.1 (-205, -75) off map, WSW
@@ -105,7 +105,7 @@ addresses 07, and the probe gets no feelings.
   - aim the reflector glint as described;
   - re-add 06 at micro.06, which also gives Rover's elder glance its target;
   - **verify with captures:** the B2 chase in the eclipse (nothing new visible); the pad at B6 (one glint);
-    the pad at last light looking SSE (the Scout's shadow and silhouette).
+    the pad on the first night looking SE (the Scout's earthlit shape).
 - **Argon:** the Scout lander (§4), its removed-part brackets, a 3-sensor geophone line, and a 1971-style bootprint
   variant (ribbed, older) beside the station-era trail.
 - **Gaps (proposed tasks):**
@@ -114,22 +114,22 @@ addresses 07, and the probe gets no feelings.
 
 ## 6. Playtest signal
 - At B7, the player drives from the pad to the ruins along trail A without reading the objective line.
-- At last light, **at least half** of first-time players turn toward the Scout's shadow within 2 min of noticing it
-  and scan it.
+- On the first night, **at least half** of first-time players drive to the Scout within 5 min of noticing its pale
+  shape from the base, and scan it.
 - No player stops at a new prop during B0–B5.
 
-## 7. In-engine check (World, 2026-10-18)
+## 7. In-engine check (World, 2026-10-18/19)
 Measured with the real opening holds (`OpeningSkyPacing`, World `BasinDressingTests`) and the stamped ground:
-- **Last light is at 137.7°, 3.0° up**, not ~160°. At (56, 27) the Scout's shadow pointed 22° off the base, and the
-  plain rising ~4 m toward the apron cut it to 27 m. 120 m out on the true bearing the Scout sat in a broad hollow
-  with the same problem. **Moved to 80 m from the apron at 137.7°, (68.8, 81.0)**, where the plain falls away toward
-  the base: on the stamped ground the shadow's geometry runs **58 m**, 0° off the line to the apron.
-- **Blocker, open:** in the real scene (AtmosphereSession `BasinProps_AreCapturedInTheirLight`) the basin floor is
-  **already in the rim's shadow at last light**. From the apron and from the Scout the rim stands **7–14° high in
-  every direction** (9.1° toward 137.7°); the last-light Sun is 3.0° up. So no prop on the floor casts a sunlit
-  shadow at last light, and the Scout lure as written cannot happen. Needs a Director call: raise last light above
-  the SE rim (~10°: a 3 m lander's shadow is then ~17 m), re-time the lure to the sink from golden hour, or give the
-  Scout another lure (an earthlit silhouette).
+- **Last light is at 137.7°, 3.0° up**, not ~160°. The Scout first moved to 80 m from the apron at 137.7°,
+  (68.8, 81.0), for a shadow toward the base; it stays there for the night lure below.
+- **The last-light shadow lure is dropped (Director ruling, 2026-10-18).** In the real scene the basin floor is
+  already in the rim's shadow at last light: the rim stands 7–14° high all round, the Sun 3.0° up. The sky stays.
+- **The Scout is the first night's earthlit lure (B10).** Earth (338°, 16° up) clears the rim over the Scout (11.4°
+  horizon) and lights it 20° off the base's line of sight. The Scout turns its planar array to 327.6°, halfway
+  between Earth and the apron. Measured from the apron at night (AtmosphereSession): its pale shape stands up to
+  +0.55 luma over the ground; 80 m out reads better than (56, 27), 120 m out. A true mirror flash of the
+  earthshine would need the array facing ~8° up; Art's array is fixed at 30° up (a hinge node would allow it).
+- **In the eclipse** the Scout is a dim far shape from the lane (51 m off it): no emissive, no flash.
 - **Crater r 10 m, 1.1 m deep** (was r ~9, 1.5): the plan's crater put a 22.5° slope on drivable ground (limit 20°).
   The crater's centre lies 7 m **toward the base** from the Scout, so its wall cancels the plain's natural fall:
   the Scout stands on a 7.9° slope, Art's built-in 8° lean on top, ~12–16° off level in all.
