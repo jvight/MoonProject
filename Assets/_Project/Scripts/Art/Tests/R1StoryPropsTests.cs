@@ -39,6 +39,8 @@ namespace MoonProject.Art.Tests
             ("cable_broken_end.json", "Props/Cable_BrokenEnd.fbx"),
             ("cable_plug.json", "Props/Cable_Plug.fbx"),
             ("cable_splice_box.json", "Props/Cable_Splice_Box.fbx"),
+            ("prop_old_lander.json", "Props/Prop_OldLander.fbx"),
+            ("decal_old_lander_blast.json", "Props/Decal_OldLanderBlast.fbx"),
         };
 
         [Serializable]
@@ -451,6 +453,86 @@ namespace MoonProject.Art.Tests
                             $"Cable kit prefab '{allKitPrefabs[p].name}' must have no lit R1_LampAmber material slots.");
                     }
                 }
+            }
+        }
+
+        [Test]
+        public void PropOldLanderAndDecalOldLanderBlast_HaveExpectedStructureCollidersMaterialsAndZeroEmission()
+        {
+            GameObject landerPrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.PropOldLanderPrefabPath);
+            string[] expectedChildren =
+            {
+                "Spaceframe",
+                "LandingLegs",
+                "MastAndSolar",
+                "TvCamera",
+                "ScoopArm",
+                "ThermalBoxes",
+                "SerialStencil",
+                "RemovedPartSpots",
+                "Base_Anchor",
+                "MastTop_Anchor",
+                "Camera_Anchor",
+                "Scoop_Anchor",
+                "RemovedSpot_1_Anchor",
+                "RemovedSpot_2_Anchor",
+            };
+            for (int i = 0; i < expectedChildren.Length; i++)
+            {
+                Assert.IsNotNull(landerPrefab.transform.Find(expectedChildren[i]),
+                    $"Prop_OldLander missing expected child '{expectedChildren[i]}'.");
+            }
+
+            // About 3 m tall, with one footpad half-buried below Y = 0
+            Bounds landerBounds = MeshChecks.PrefabBounds(landerPrefab, landerPrefab.transform.localToWorldMatrix);
+            Assert.AreEqual(3.0f, landerBounds.size.y, 0.10f, "Prop_OldLander height must be ~3.0 m.");
+            Assert.Less(landerBounds.min.y, -0.08f, "Prop_OldLander must have one footpad half-buried below Y = 0.");
+
+            // Simple BoxColliders on the prefab
+            BoxCollider[] boxColliders = landerPrefab.GetComponentsInChildren<BoxCollider>(true);
+            Assert.GreaterOrEqual(boxColliders.Length, 4, "Prop_OldLander must have simple BoxColliders.");
+
+            // ThermalBoxes uses sun-faded tan enamel material
+            Renderer thermalRenderer = landerPrefab.transform.Find("ThermalBoxes").GetComponent<Renderer>();
+            Assert.IsNotNull(thermalRenderer);
+            bool hasTanEnamel = false;
+            foreach (Material m in thermalRenderer.sharedMaterials)
+            {
+                if (m != null && m.name == R1StoryPropsBuilder.OldLanderTanEnamelMaterialName)
+                {
+                    hasTanEnamel = true;
+                }
+            }
+            Assert.IsTrue(hasTanEnamel, "Prop_OldLander ThermalBoxes must use R1_OldLanderTanEnamel (sun-faded white turned tan/brown).");
+
+            // Long-dead lander: no lit R1_LampAmber or active emission
+            Renderer[] landerRenderers = landerPrefab.GetComponentsInChildren<Renderer>(true);
+            foreach (Renderer r in landerRenderers)
+            {
+                foreach (Material m in r.sharedMaterials)
+                {
+                    Assert.IsNotNull(m);
+                    Assert.AreNotEqual(R1MaterialRecipes.LampAmberSlot, m.name,
+                        "Prop_OldLander is long dead and must have no lit R1_LampAmber material slots.");
+                    Assert.AreEqual(0f, m.GetFloat("_EmissionStrength"), 1e-4f,
+                        $"Prop_OldLander material '{m.name}' must have zero emission.");
+                }
+            }
+
+            // Decal_OldLanderBlast: BlastPatch + FootpadScuffs + Center_Anchor, shadow casting disabled
+            GameObject decalPrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.DecalOldLanderBlastPrefabPath);
+            Assert.IsNotNull(decalPrefab.transform.Find("BlastPatch"), "Decal_OldLanderBlast missing BlastPatch.");
+            Assert.IsNotNull(decalPrefab.transform.Find("FootpadScuffs"), "Decal_OldLanderBlast missing FootpadScuffs.");
+            Assert.IsNotNull(decalPrefab.transform.Find("Center_Anchor"), "Decal_OldLanderBlast missing Center_Anchor.");
+
+            Material patchMat = decalPrefab.transform.Find("BlastPatch").GetComponent<Renderer>().sharedMaterial;
+            Assert.AreEqual(R1StoryPropsBuilder.OldLanderBlastDecalMaterialName, patchMat.name);
+
+            Renderer[] decalRenderers = decalPrefab.GetComponentsInChildren<Renderer>(true);
+            foreach (Renderer r in decalRenderers)
+            {
+                Assert.AreEqual(UnityEngine.Rendering.ShadowCastingMode.Off, r.shadowCastingMode,
+                    "Decal_OldLanderBlast renderers must have shadow casting disabled.");
             }
         }
 
