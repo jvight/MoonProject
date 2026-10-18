@@ -63,106 +63,6 @@
             "text": "Guidance"
         },
         {
-            "key": "next.wake",
-            "text": "Check the radio tower."
-        },
-        {
-            "key": "next.salvage",
-            "text": "Salvage at the Supply Depot."
-        },
-        {
-            "key": "next.tower.part",
-            "text": "Cut open the depot's crate and take the Tower Coil."
-        },
-        {
-            "key": "next.tower.pad",
-            "text": "Bring the coil to the tower's pad."
-        },
-        {
-            "key": "next.signal",
-            "text": "A faint signal. Ping and follow it."
-        },
-        {
-            "key": "next.dig",
-            "text": "Dig Tilly's last part out of the dust."
-        },
-        {
-            "key": "next.friend.repair",
-            "text": "Repair Tilly."
-        },
-        {
-            "key": "next.garage",
-            "text": "Go to Kenji's Garage."
-        },
-        {
-            "key": "next.garage.scrap",
-            "text": "Clear the scrap around the garage ({0} left)."
-        },
-        {
-            "key": "next.port",
-            "text": "Park on the port's pad."
-        },
-        {
-            "key": "next.garage.crate",
-            "text": "Cut open the 07 · SPARE crate."
-        },
-        {
-            "key": "next.garage.deck",
-            "text": "Put the tape deck on the tray, then park on the pad again."
-        },
-        {
-            "key": "next.relic.dig",
-            "text": "Dig up the keepsake at the garage."
-        },
-        {
-            "key": "next.relic",
-            "text": "Tow the keepsake home."
-        },
-        {
-            "key": "next.lift.stitch",
-            "text": "Weld the lift's cable."
-        },
-        {
-            "key": "next.lift.ride",
-            "text": "Park on the lift's platform to ride up to the lab."
-        },
-        {
-            "key": "next.chasm",
-            "text": "Drive to the chasm edge and look across."
-        },
-        {
-            "key": "next.bay.wake",
-            "text": "Get the Transformer at the garage and build tower level 2."
-        },
-        {
-            "key": "next.bay",
-            "text": "Park on the bay's turntable to build."
-        },
-        {
-            "key": "next.power.part",
-            "text": "The tower's next level needs one more part."
-        },
-        {
-            "key": "next.power.carried",
-            "text": "07 has the part. Park on the tower's pad to fit it."
-        },
-        {
-            "key": "next.power.build",
-            "text": "The part is in. Now feed the tower its materials."
-        },
-        {
-            "key": "next.link.relay.0",
-            "text": "The Mound Relay is offline. Repair it."
-        },
-        {
-            "key": "next.link.relay.1",
-            "text": "The Shoulder Relay is offline. Repair it."
-        },
-        {
-            "key": "next.link",
-            "text": "Repair the offline relays on the way to the Peak."
-        },
-        {
             "key": "ui.settings.sound",
             "text": "Sound"
         },
@@ -337,30 +237,6 @@
         {
             "key": "glyph.gamepad.start",
             "text": "Start"
-        },
-        {
-            "key": "glyph.lab.turn",
-            "text": "A  D"
-        },
-        {
-            "key": "glyph.lab.turn.pad",
-            "text": "LS"
-        },
-        {
-            "key": "glyph.lab.look",
-            "text": "W"
-        },
-        {
-            "key": "glyph.lab.look.pad",
-            "text": "LS"
-        },
-        {
-            "key": "glyph.lab.down",
-            "text": "S"
-        },
-        {
-            "key": "glyph.lab.down.pad",
-            "text": "LS"
         },
         {
             "key": "hint.salvage",
@@ -551,22 +427,6 @@
             "text": "Quit to title"
         },
         {
-            "key": "crew.ro.plate",
-            "text": "Ro, on air"
-        },
-        {
-            "key": "crew.theo.plate",
-            "text": "Theo & the seedlings"
-        },
-        {
-            "key": "crew.ines.plate",
-            "text": "I. Kalani, Lead"
-        },
-        {
-            "key": "crew.kenji.plate",
-            "text": "Kenji (ask the duck)"
-        },
-        {
             "key": "lens.boot.signal",
             "text": "ORBITAL SIGNAL · DETECTED"
         },
@@ -577,14 +437,6 @@
         {
             "key": "lens.boot.recovery",
             "text": "BEGIN RECOVERY"
-        },
-        {
-            "key": "battery.low.dock",
-            "text": "Battery low. Charge at the dock at home."
-        },
-        {
-            "key": "battery.low.mast",
-            "text": "Battery low. You can charge at {0}."
         },
         {
             "key": "ui.settings.text_size",
@@ -709,34 +561,6 @@
         {
             "key": "ui.hold.boot",
             "text": "HOLD · {0} SLOTS · OK"
-        },
-        {
-            "key": "container.coil_crate",
-            "text": "Coil crate"
-        },
-        {
-            "key": "container.junction_box",
-            "text": "Junction box"
-        },
-        {
-            "key": "container.service_cabinet",
-            "text": "Service cabinet"
-        },
-        {
-            "key": "container.supply_pod",
-            "text": "Supply pod"
-        },
-        {
-            "key": "container.tape_case",
-            "text": "Ro's tape case"
-        },
-        {
-            "key": "container.spare_crate",
-            "text": "07 · SPARE"
-        },
-        {
-            "key": "container.survey_sled",
-            "text": "Tilly's sled"
         },
         {
             "key": "glyph.keyboard.tab",
@@ -913,10 +737,6 @@
         {
             "key": "next.v2.collect_parts",
             "text": "Collect the parts from the lander's open crate."
-        },
-        {
-            "key": "next.v2.cut_crates",
-            "text": "Cut the crates for metal and wiring."
         },
         {
             "key": "next.v2.build_pad",

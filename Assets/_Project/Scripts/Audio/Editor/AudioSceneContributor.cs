@@ -5,7 +5,7 @@ namespace MoonProject.Audio.Editor
 {
     /// <summary>
     /// Adds the Audio domain to Main.unity: under [Audio], an AudioDirector (the system, initialised after World, Rover
-    /// and Gameplay) wired to the library and tuning assets, plus its RoverAudio, JumpAudio, GameplayAudio, UiAudio,
+    /// and Gameplay) wired to the library and tuning assets, plus its RoverAudio, GameplayAudio, UiAudio,
     /// RadioStation, TitleMusic, FeelAudio, RoverChirpAudio, AmbienceBed, Soundscape, RoverSmallSounds, SalvageAudio
     /// and BatteryAudio parts.
     /// Voices and loop sources are created by the components at initialisation, not baked into the scene.
@@ -26,7 +26,6 @@ namespace MoonProject.Audio.Editor
             var radioTuning = context.LoadAsset<RadioTuning>(AudioAssetPaths.RadioTuning);
             var gameplayTuning = context.LoadAsset<GameplayAudioTuning>(AudioAssetPaths.GameplayTuning);
             var uiTuning = context.LoadAsset<UiAudioTuning>(AudioAssetPaths.UiTuning);
-            var jumpTuning = context.LoadAsset<JumpAudioTuning>(AudioAssetPaths.JumpTuning);
             var soundscapeTuning = context.LoadAsset<SoundscapeTuning>(AudioAssetPaths.SoundscapeTuning);
             var salvageTuning = context.LoadAsset<SalvageAudioTuning>(AudioAssetPaths.SalvageTuning);
             var feelTuning = context.LoadAsset<FeelAudioTuning>(AudioAssetPaths.FeelTuning);
@@ -34,7 +33,6 @@ namespace MoonProject.Audio.Editor
             Transform root = context.AudioRoot.transform;
             var director = context.CreateChild("AudioDirector", root).AddComponent<AudioDirector>();
             var rover = context.CreateChild("RoverAudio", root).AddComponent<RoverAudio>();
-            var jump = context.CreateChild("JumpAudio", root).AddComponent<JumpAudio>();
             var gameplay = context.CreateChild("GameplayAudio", root).AddComponent<GameplayAudio>();
             var ui = context.CreateChild("UiAudio", root).AddComponent<UiAudio>();
             var radio = context.CreateChild("RadioStation", root).AddComponent<RadioStation>();
@@ -50,7 +48,6 @@ namespace MoonProject.Audio.Editor
             rover.Wire(roverTuning);
             gameplay.Wire(gameplayTuning);
             ui.Wire(uiTuning);
-            jump.Wire(jumpTuning);
             radio.Wire(radioTuning, playlist);
             titleMusic.Wire(titleMusicLibrary);
             feel.Wire(feelTuning);
@@ -58,7 +55,7 @@ namespace MoonProject.Audio.Editor
             soundscape.Wire(soundscapeTuning);
             smallSounds.Wire(soundscapeTuning);
             salvage.Wire(salvageTuning);
-            director.Wire(library, mixTuning, rover, jump, gameplay, ui, radio, ambience, soundscape, smallSounds,
+            director.Wire(library, mixTuning, rover, gameplay, ui, radio, ambience, soundscape, smallSounds,
                 salvage);
             director.WireTitleMusic(titleMusic);
             director.WireBattery(battery);

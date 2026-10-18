@@ -17,7 +17,6 @@ namespace MoonProject.Audio.Editor
         public const string RadioTuning = DataFolder + "/RadioTuning.asset";
         public const string GameplayTuning = DataFolder + "/GameplayAudioTuning.asset";
         public const string UiTuning = DataFolder + "/UiAudioTuning.asset";
-        public const string JumpTuning = DataFolder + "/JumpAudioTuning.asset";
         public const string SoundscapeTuning = DataFolder + "/SoundscapeTuning.asset";
         public const string SalvageTuning = DataFolder + "/SalvageAudioTuning.asset";
 

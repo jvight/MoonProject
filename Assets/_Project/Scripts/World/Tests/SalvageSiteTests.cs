@@ -6,18 +6,13 @@ using MoonProject.Core;
 namespace MoonProject.World.Tests
 {
     /// <summary>
-    /// The salvage sites (docs/features/M3-13): five site anchors where their stories ask, each a flat footprint with
-    /// a clear way in from home; Kestrel-3's crater never traps (ruling 10), reads from the base and trails a long
-    /// scorched furrow; the drill rig stands on a crater rim; the lander lies past the gate; and no site crowds
-    /// another place.
+    /// The salvage site (docs/features/M3-13): Kestrel-3's crater where its story asks, with a clear way in from home;
+    /// it never traps (ruling 10), reads from the base, trails a long scorched furrow and crowds no other place; the
+    /// Lumen ruins stand flat and clear beyond the lander.
     /// </summary>
     public sealed class SalvageSiteTests
     {
-        public const string Depot = "depot";
         public const string Kestrel = "kestrel";
-        public const string Drill = "drill";
-        public const string Garage = "garage";
-        public const string Lander = "lander";
 
         private const float MinFootprint = 8f;
         private const float MaxFootprint = 14f;
@@ -27,7 +22,7 @@ namespace MoonProject.World.Tests
         private const float ApproachClearance = 3f;
         private const float ApproachStep = 0.5f;
 
-        // Kestrel-3 in the spawn first frame (yaw 355, about +-45 degrees), apart from The Peak and relay.0.
+        // Kestrel-3 in the spawn first frame (yaw 355, about +-45 degrees), apart from The Peak.
         private const float SpawnYaw = 355f;
         private const float SpawnHalfView = 40f;
         private const float MinLandmarkSeparation = 15f;
@@ -51,18 +46,12 @@ namespace MoonProject.World.Tests
         private const float OpenFloorRing = 70f;
         private static readonly Vector3 PainterLight = new Vector3(0.3f, 0.35f, 0.9f);
 
-        // The drill rig's footprint edge stands within this far of the crest of a crater at least this large.
-        private const float RimReach = 6f;
-        private const float MinRigCraterRadius = 15f;
-
         // Clear ground kept between a site's whole shaped reach and any other place.
         private const float SiteMargin = 5f;
 
         private SurfaceSettings _settings;
         private MoonSurface _surface;
         private WorldAnchors _anchors;
-
-        public static IReadOnlyList<string> Sites { get; } = new[] { Depot, Kestrel, Drill, Garage, Lander };
 
         [OneTimeSetUp]
         public void BuildOnce()
@@ -79,52 +68,40 @@ namespace MoonProject.World.Tests
         }
 
         [Test]
-        public void Sites_StandWhereTheirStoriesAsk()
+        public void Kestrel_StandsWhereItsStoryAsks()
         {
-            AssertDistance(Depot, 40f, 70f);
-            AssertDistance(Kestrel, 150f, 260f);
-            AssertDistance(Drill, 120f, 250f);
-            AssertDistance(Garage, 80f, 200f);
-            foreach (string name in Sites)
-            {
-                Assert.That(Site(name).Radius, Is.InRange(MinFootprint, MaxFootprint), $"{name}'s footprint");
-            }
+            WorldAnchor site = Site(Kestrel);
+            Assert.That(new Vector2(site.Position.x, site.Position.z).magnitude, Is.InRange(150f, 260f),
+                "distance from home");
+            Assert.That(site.Radius, Is.InRange(MinFootprint, MaxFootprint), "footprint");
         }
 
         [Test]
-        public void FloorSites_HaveAClearApproachFromHome()
+        public void Kestrel_HasAClearApproachFromHome()
         {
             List<ScatterInstance> plan = new ScatterPlanner(_surface, new ScatterSettings(), _anchors).Plan();
-            foreach (string name in Sites)
+            WorldAnchor site = Site(Kestrel);
+            var end = new Vector2(site.Position.x, site.Position.z);
+            Vector2 way = end.normalized;
+            float length = end.magnitude - site.Radius;
+            for (float d = _surface.PadRadius; d <= length; d += ApproachStep)
             {
-                if (name == Lander)
+                Vector2 p = way * d;
+                Assert.IsTrue(_surface.IsDrivable(p.x, p.y), $"the way in is blocked at {p}");
+                Assert.LessOrEqual(Slope(p), MaxDriveSlope, $"the way in is too steep at {p}");
+            }
+
+            foreach (ScatterInstance rock in plan)
+            {
+                if (rock.Kind != ScatterKind.Boulder)
                 {
                     continue;
                 }
 
-                WorldAnchor site = Site(name);
-                var end = new Vector2(site.Position.x, site.Position.z);
-                Vector2 way = end.normalized;
-                float length = end.magnitude - site.Radius;
-                for (float d = _surface.PadRadius; d <= length; d += ApproachStep)
-                {
-                    Vector2 p = way * d;
-                    Assert.IsTrue(_surface.IsDrivable(p.x, p.y), $"the way to {name} is blocked at {p}");
-                    Assert.LessOrEqual(Slope(p), MaxDriveSlope, $"the way to {name} is too steep at {p}");
-                }
-
-                foreach (ScatterInstance rock in plan)
-                {
-                    if (rock.Kind != ScatterKind.Boulder)
-                    {
-                        continue;
-                    }
-
-                    var at = new Vector2(rock.Position.x, rock.Position.z);
-                    float along = Mathf.Clamp(Vector2.Dot(at, way), 0f, length);
-                    Assert.Greater(Vector2.Distance(at, way * along), ApproachClearance + rock.Size * 0.5f,
-                        $"a boulder at {at} blocks the way to {name}");
-                }
+                var at = new Vector2(rock.Position.x, rock.Position.z);
+                float along = Mathf.Clamp(Vector2.Dot(at, way), 0f, length);
+                Assert.Greater(Vector2.Distance(at, way * along), ApproachClearance + rock.Size * 0.5f,
+                    $"a boulder at {at} blocks the way in");
             }
         }
 
@@ -150,16 +127,13 @@ namespace MoonProject.World.Tests
         }
 
         [Test]
-        public void Kestrel_ReadsFromTheBase_InTheSpawnFrame_ApartFromThePeakAndRelay0()
+        public void Kestrel_ReadsFromTheBase_InTheSpawnFrame_ApartFromThePeak()
         {
             WorldAnchor site = Site(Kestrel);
             float bearing = Bearing(site.Position);
             Assert.LessOrEqual(Mathf.Abs(Mathf.DeltaAngle(SpawnYaw, bearing)), SpawnHalfView, "outside the spawn view");
             Assert.GreaterOrEqual(Mathf.Abs(Mathf.DeltaAngle(Bearing(_surface.PeakSummit), bearing)),
                 MinLandmarkSeparation, "crowds The Peak");
-            Assert.IsTrue(_anchors.TryGet(WorldAnchorIds.RelayPrefix + 0, out WorldAnchor relay));
-            Assert.GreaterOrEqual(Mathf.Abs(Mathf.DeltaAngle(Bearing(relay.Position), bearing)),
-                MinLandmarkSeparation, "crowds relay.0");
 
             Vector3 eye = Eye();
             Assert.IsTrue(InSight(eye, site.Position + Vector3.up * WreckHeight, SightTargetClearance),
@@ -254,86 +228,42 @@ namespace MoonProject.World.Tests
         }
 
         [Test]
-        public void Drill_StandsOnACraterRim()
+        public void Kestrel_KeepsClearOfTheBase_OtherPlaces_AndThePlayFeatures()
         {
-            WorldAnchor site = Site(Drill);
+            WorldAnchor site = Site(Kestrel);
             var centre = new Vector2(site.Position.x, site.Position.z);
-            bool onRim = false;
-            foreach (Crater crater in _surface.Craters)
+            float reach = _surface.Kestrel.OuterRadius;
+            Assert.Greater(centre.magnitude - reach, _settings.PadRadius + SiteMargin, "crowds the base");
+
+            for (int i = 0; i < _anchors.Count; i++)
             {
-                float fromCrest = Vector2.Distance(centre, crater.Center) - crater.Radius;
-                onRim |= crater.Radius >= MinRigCraterRadius && fromCrest >= 0f
-                    && fromCrest <= site.Radius + RimReach;
-            }
-
-            Assert.IsTrue(onRim, "the drill rig should stand just past a large crater's rim crest");
-        }
-
-        [Test]
-        public void Sites_KeepClearOfEachOther_TheBase_TheRelays_TheCanyonsPlaces_AndThePlayFeatures()
-        {
-            foreach (string name in Sites)
-            {
-                WorldAnchor site = Site(name);
-                var centre = new Vector2(site.Position.x, site.Position.z);
-                float reach = Reach(name, site);
-                Assert.Greater(centre.magnitude - reach, _settings.PadRadius + SiteMargin, $"{name} crowds the base");
-
-                for (int i = 0; i < _anchors.Count; i++)
-                {
-                    WorldAnchor other = _anchors.Get(i);
-                    bool partOfKestrel = name == Kestrel
-                        && (other.Id == WorldAnchorIds.KestrelTrail || other.Id == WorldAnchorIds.PlaceMidway);
-                    if (other.Id == site.Id || partOfKestrel)
-                    {
-                        continue;
-                    }
-
-                    var at = new Vector2(other.Position.x, other.Position.z);
-                    Assert.Greater(Vector2.Distance(centre, at), reach + other.Radius + SiteMargin,
-                        $"{name} crowds {other.Id}");
-                    if (name == Kestrel)
-                    {
-                        Assert.Greater(FurrowDistance(at), _surface.Kestrel.FurrowHalfWidth + other.Radius + SiteMargin,
-                            $"Kestrel-3's furrow runs over {other.Id}");
-                    }
-                }
-
-                if (name == Lander)
+                WorldAnchor other = _anchors.Get(i);
+                if (other.Id == site.Id || other.Id == WorldAnchorIds.KestrelTrail
+                    || other.Id == WorldAnchorIds.PlaceMidway)
                 {
                     continue;
                 }
 
-                foreach (Ramp ramp in _surface.Ramps)
-                {
-                    Assert.Greater(Vector2.Distance(centre, ramp.Crest), reach + ramp.BoundingRadius + SiteMargin,
-                        $"{name} crowds the ramp at {ramp.Crest}");
-                }
+                var at = new Vector2(other.Position.x, other.Position.z);
+                Assert.Greater(Vector2.Distance(centre, at), reach + other.Radius + SiteMargin, $"crowds {other.Id}");
+                Assert.Greater(FurrowDistance(at), _surface.Kestrel.FurrowHalfWidth + other.Radius + SiteMargin,
+                    $"Kestrel-3's furrow runs over {other.Id}");
+            }
 
-                foreach (Crater crater in _surface.Craters)
+            foreach (Ramp ramp in _surface.Ramps)
+            {
+                Assert.Greater(Vector2.Distance(centre, ramp.Crest), reach + ramp.BoundingRadius + SiteMargin,
+                    $"crowds the ramp at {ramp.Crest}");
+            }
+
+            foreach (Crater crater in _surface.Craters)
+            {
+                if (crater.IsPlayBowl)
                 {
-                    if (crater.IsPlayBowl)
-                    {
-                        Assert.Greater(Vector2.Distance(centre, crater.Center),
-                            reach + crater.OuterRadius + SiteMargin, $"{name} crowds the bowl at {crater.Center}");
-                    }
+                    Assert.Greater(Vector2.Distance(centre, crater.Center), reach + crater.OuterRadius + SiteMargin,
+                        $"crowds the bowl at {crater.Center}");
                 }
             }
-        }
-
-        [Test]
-        public void Lander_OpensOffTheApron_PastTheTouchdownZone()
-        {
-            Canyon canyon = _surface.Canyon;
-            WorldAnchor site = Site(Lander);
-            Assert.IsTrue(canyon.MainPath.TryProject(site.Position.x, site.Position.z, out float arc,
-                out float lateral));
-            Assert.That(arc, Is.InRange(canyon.FarFaceArc + Canyon.SlabHalfDepth, canyon.ApronEndArc),
-                "the lander lies on the apron past the far face");
-            Assert.Greater(lateral * canyon.LanderSide, 0f, "the lander's bay opens opposite the ledge and the exit");
-            Assert.IsTrue(_anchors.TryGet(WorldAnchorIds.CanyonLanding, out WorldAnchor landing));
-            Assert.Greater(Vector3.Distance(site.Position, landing.Position), site.Radius + landing.Radius + SiteMargin,
-                "the lander crowds the touchdown zone");
         }
 
         [Test]
@@ -379,27 +309,6 @@ namespace MoonProject.World.Tests
                     $"{rock.Kind} at {at} lies on the lander's footprint");
                 Assert.GreaterOrEqual(Vector2.Distance(at, apron.Center), apron.Radius,
                     $"{rock.Kind} at {at} lies on the build apron");
-            }
-        }
-
-        private void AssertDistance(string name, float min, float max)
-        {
-            WorldAnchor site = Site(name);
-            Assert.That(new Vector2(site.Position.x, site.Position.z).magnitude, Is.InRange(min, max),
-                $"{name}'s distance from home");
-        }
-
-        /// <summary>How far a site's shaped ground reaches from its centre.</summary>
-        private float Reach(string name, WorldAnchor site)
-        {
-            switch (name)
-            {
-                case Kestrel:
-                    return _surface.Kestrel.OuterRadius;
-                case Lander:
-                    return site.Radius;
-                default:
-                    return site.Radius + _settings.Sites.FootprintBlend;
             }
         }
 

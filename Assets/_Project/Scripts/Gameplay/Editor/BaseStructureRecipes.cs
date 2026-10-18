@@ -212,6 +212,26 @@ namespace MoonProject.Gameplay.Editor
         /// <see cref="StructureView"/>'s <c>_stageRoots</c>, <c>_lampRenderers</c>, <c>_colliders</c>, and
         /// <c>_statusLight</c> from <paramref name="sourcePrefab"/>'s <c>Stage_1..N</c> children.
         /// </summary>
+        /// <summary>
+        /// One mesh collider per mesh, exact rather than convex (a structure never moves, so its colliders are static):
+        /// a structure is solid where its parts stand and open where they don't, so 07 drives up onto the charging
+        /// pad's low deck while its totem stays solid. A convex hull, or one box round the whole model, made the pad a
+        /// block as tall as the totem.
+        /// </summary>
+        private static Collider[] AddPartColliders(Transform model)
+        {
+            MeshFilter[] filters = model.GetComponentsInChildren<MeshFilter>(true);
+            var colliders = new Collider[filters.Length];
+            for (int i = 0; i < filters.Length; i++)
+            {
+                var collider = filters[i].gameObject.AddComponent<MeshCollider>();
+                collider.sharedMesh = filters[i].sharedMesh;
+                colliders[i] = collider;
+            }
+
+            return colliders;
+        }
+
         internal static GameObject AssembleRuntimeHierarchy(
             BuilderScratchScene scratch,
             string structureId,
@@ -233,9 +253,7 @@ namespace MoonProject.Gameplay.Editor
                     $"BaseStructureRecipes: R1 structure '{r1ModelName}' has no meshes.");
             }
 
-            var collider = root.AddComponent<BoxCollider>();
-            collider.center = bounds.center;
-            collider.size = bounds.size;
+            Collider[] colliders = AddPartColliders(model.transform);
 
             var stages = new List<Transform>(4);
             for (int stageIndex = 1; stageIndex <= 8; stageIndex++)
@@ -302,7 +320,7 @@ namespace MoonProject.Gameplay.Editor
                 structureId,
                 stageArray,
                 lampRenderers.ToArray(),
-                new Collider[] { collider },
+                colliders,
                 statusLight,
                 StatusLightIntensity,
                 stageSeams);

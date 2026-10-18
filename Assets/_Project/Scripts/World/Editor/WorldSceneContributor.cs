@@ -51,7 +51,6 @@ namespace MoonProject.World.Editor
             Assign(serialized, "_paletteMaterial", paletteMaterial);
             Assign(serialized, "_earthMaterial", earthMaterial);
             Assign(serialized, "_groundMarkMaterial", context.LoadAsset<Material>(WorldPaths.GroundMarkMaterial));
-            WorldPaths.AssignLandmarks(serialized);
             AssignRocks(context, serialized, "_pebbleRocks", WorldPaths.PebbleRocks);
             AssignRocks(context, serialized, "_boulderRocks", WorldPaths.BoulderRocks);
             Assign(serialized, "_earthlight", earthlight);

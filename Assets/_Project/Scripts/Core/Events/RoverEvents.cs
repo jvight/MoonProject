@@ -79,21 +79,6 @@ namespace MoonProject.Core.Events
         public float Duration { get; }
     }
 
-    /// <summary>
-    /// The Hover-Jump charge grew: published as charging starts (strength 0) and at each equal step up to a full charge
-    /// (1); with the default four steps that is five notes, ready for a pentatonic climb. Drives the charge hum.
-    /// </summary>
-    public readonly struct RoverJumpCharged
-    {
-        public RoverJumpCharged(float strength)
-        {
-            Strength = strength;
-        }
-
-        /// <summary>Charge so far, 0..1.</summary>
-        public float Strength { get; }
-    }
-
     /// <summary>07 leapt with the Hover-Jump. Its landing is announced by <see cref="RoverLanded"/> as usual.</summary>
     public readonly struct RoverJumped
     {
@@ -104,29 +89,6 @@ namespace MoonProject.Core.Events
 
         /// <summary>0 for a tap (small hop) .. 1 for a full charge (the big leap).</summary>
         public float Strength { get; }
-    }
-
-    /// <summary>
-    /// A Hover-Jump charge ended without a leap: 07 left the ground, the ability went away or gameplay held it still.
-    /// </summary>
-    public readonly struct RoverJumpCancelled
-    {
-    }
-
-    /// <summary>
-    /// A leap was asked for but the battery can't pay for it (<see cref="IRoverBattery.CanLeap"/> false,
-    /// docs/features/M3-20): the coils never charge, they fizzle softly at <see cref="Position"/> and 07 glances at its
-    /// flank lamps. Published by Rover once per refused press.
-    /// </summary>
-    public readonly struct RoverLeapRefused
-    {
-        public RoverLeapRefused(Vector3 position)
-        {
-            Position = position;
-        }
-
-        /// <summary>Where 07 stood (the coils under its belly).</summary>
-        public Vector3 Position { get; }
     }
 
     /// <summary>A piece of 07's visible kit or a friend's gift on 07 (docs/features/M3-11, VISION ruling 11).</summary>

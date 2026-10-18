@@ -17,7 +17,7 @@ namespace MoonProject.Audio
     [DisallowMultipleComponent]
     public sealed class BatteryAudio : MonoBehaviour
     {
-        private const int SubscriptionCount = 5;
+        private const int SubscriptionCount = 4;
 
         private readonly IDisposable[] _subscriptions = new IDisposable[SubscriptionCount];
         private AudioDirector _director;
@@ -25,7 +25,6 @@ namespace MoonProject.Audio
         private CueHandle _cell;
         private CueHandle _low;
         private CueHandle _sigh;
-        private CueHandle _fizzle;
         private CueHandle _tick;
         private int _cellNotes;
         private int _fullCells = -1;
@@ -38,9 +37,8 @@ namespace MoonProject.Audio
             _cell = director.Resolve(AudioCueIds.BatteryCell);
             _low = director.Resolve(AudioCueIds.BatteryLow);
             _sigh = director.Resolve(AudioCueIds.BatterySigh);
-            _fizzle = director.Resolve(AudioCueIds.LeapFizzle);
             _tick = director.Resolve(AudioCueIds.LampTick);
-            if (!_cell.IsValid || !_low.IsValid || !_sigh.IsValid || !_fizzle.IsValid || !_tick.IsValid)
+            if (!_cell.IsValid || !_low.IsValid || !_sigh.IsValid || !_tick.IsValid)
             {
                 enabled = false;
                 return;
@@ -52,8 +50,7 @@ namespace MoonProject.Audio
             _subscriptions[0] = context.Events.Subscribe<BatteryChanged>(OnBatteryChanged);
             _subscriptions[1] = context.Events.Subscribe<BatteryWarned>(OnWarned);
             _subscriptions[2] = context.Events.Subscribe<LowPowerChanged>(OnLowPowerChanged);
-            _subscriptions[3] = context.Events.Subscribe<RoverLeapRefused>(OnLeapRefused);
-            _subscriptions[4] = context.Events.Subscribe<FlankLampLit>(OnLampLit);
+            _subscriptions[3] = context.Events.Subscribe<FlankLampLit>(OnLampLit);
         }
 
         /// <summary>A rising cell plays its note: the cell's place in the run, D5 for the first.</summary>
@@ -85,11 +82,6 @@ namespace MoonProject.Audio
             {
                 _director.PlayAt(_sigh, _rover.Position);
             }
-        }
-
-        private void OnLeapRefused(RoverLeapRefused refused)
-        {
-            _director.PlayAt(_fizzle, refused.Position);
         }
 
         private void OnLampLit(FlankLampLit lit)
