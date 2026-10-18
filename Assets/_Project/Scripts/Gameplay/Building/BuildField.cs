@@ -1143,7 +1143,7 @@ namespace MoonProject.Gameplay
                 ? placed.BuildProgress01
                 : 0f;
             view.SetPlacedState(initialProgress, instant: true);
-            view.ConfigureLiveBuild(!e.Restored, _tuning.SettleThumpMeters);
+            view.ConfigureLiveBuild(!e.Restored, _tuning);
             RegisterManagedColliders(view, true);
             _viewsById[e.InstanceId] = view;
 

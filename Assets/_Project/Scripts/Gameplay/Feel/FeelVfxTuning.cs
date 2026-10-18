@@ -260,12 +260,6 @@ namespace MoonProject.Gameplay
         [Tooltip("Alpha of the tiny lens aperture point (the only scan point allowed just over the bloom threshold).")]
         [Range(0f, 1f)] [SerializeField] private float _scanLensCoreAlpha = 0.3f;
 
-        [Tooltip("Diameter of the soft aperture halo at 07's lens (m).")]
-        [Range(0.03f, 0.4f)] [SerializeField] private float _scanLensHaloSize = 0.11f;
-
-        [Tooltip("Alpha of the soft aperture halo at 07's lens.")]
-        [Range(0f, 1f)] [SerializeField] private float _scanLensHaloAlpha = 0.06f;
-
         [Tooltip("Diameter of the soft contact point where the scan beam meets the sweep line on the object (m).")]
         [Range(0.02f, 0.4f)] [SerializeField] private float _scanContactSize = 0.09f;
 
@@ -299,10 +293,6 @@ namespace MoonProject.Gameplay
 
         [Tooltip("The lens flare's size (m).")]
         [Range(0.05f, 0.6f)] [SerializeField] private float _scanFlareSize = 0.14f;
-
-        [Tooltip("The lens flare light's peak.")]
-        [Range(0f, 4f)] [SerializeField] private float _scanFlareLight = 0.25f;
-
 
         public int MoteCount => Mathf.Min(_moteCount, MotePool);
         public float MoteRadius => _moteRadius;
@@ -387,8 +377,6 @@ namespace MoonProject.Gameplay
         public Color ScanCoreColor => _scanCoreColor;
         public float ScanLensCoreSize => _scanLensCoreSize;
         public float ScanLensCoreAlpha => _scanLensCoreAlpha;
-        public float ScanLensHaloSize => _scanLensHaloSize;
-        public float ScanLensHaloAlpha => _scanLensHaloAlpha;
         public float ScanContactSize => _scanContactSize;
         public float ScanContactAlpha => _scanContactAlpha;
         public float ScanRibbonDelay => _scanRibbonDelay;
@@ -400,6 +388,5 @@ namespace MoonProject.Gameplay
         public Color ScanRibbonColor => _scanRibbonColor;
         public float ScanFlareSeconds => _scanFlareSeconds;
         public float ScanFlareSize => _scanFlareSize;
-        public float ScanFlareLight => _scanFlareLight;
     }
 }

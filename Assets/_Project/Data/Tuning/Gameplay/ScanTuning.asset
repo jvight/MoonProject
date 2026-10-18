@@ -68,8 +68,8 @@ MonoBehaviour:
   _beamLensWidth: 0.064
   _beamTargetWidthShare: 0.85
   _beamLensPeakAlpha: 0.68
-  _beamMidAlpha: 0.018
-  _beamContactAlpha: 0.42
+  _beamMidAlpha: 0.06
+  _beamContactAlpha: 0.6
   _beamScanlineDensity: 42
   _beamScanlineContrast: 0.48
   _lensIrisSize: 0.138

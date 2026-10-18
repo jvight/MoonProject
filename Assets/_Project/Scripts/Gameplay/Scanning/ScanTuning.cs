@@ -111,10 +111,10 @@ namespace MoonProject.Gameplay
         [Range(0.05f, 0.85f)] [SerializeField] private float _beamLensPeakAlpha = 0.68f;
 
         [Tooltip("Very low additive alpha in the middle of the scan beam wedge (almost invisible in the middle).")]
-        [Range(0.005f, 0.15f)] [SerializeField] private float _beamMidAlpha = 0.018f;
+        [Range(0.005f, 0.15f)] [SerializeField] private float _beamMidAlpha = 0.06f;
 
         [Tooltip("Additive alpha where the far edge of the scan beam wedge meets the current surface scan line on the target.")]
-        [Range(0.04f, 0.65f)] [SerializeField] private float _beamContactAlpha = 0.42f;
+        [Range(0.04f, 0.65f)] [SerializeField] private float _beamContactAlpha = 0.6f;
 
         [Tooltip("Fine scanline band density inside the scan beam wedge.")]
         [Range(12f, 120f)] [SerializeField] private float _beamScanlineDensity = 42f;
@@ -151,6 +151,10 @@ namespace MoonProject.Gameplay
 
         [Tooltip("Downward lunar gravity acceleration (m/s^2, 1/6 g = 1.62) for the ballistic dust grains along the scan path.")]
         [Range(0.2f, 5f)] [SerializeField] private float _pathGlintGravity = 1.62f;
+
+        [Tooltip("The finer shape of the scan's light: the cheek lens, the wedge's fan, the data ticks, the dust " +
+                 "glints and the closing ribbon.")]
+        [SerializeField] private ScanBeamLook _beamLook = new ScanBeamLook();
 
         [Header("Lumen station ruins (RUINS-WORLD, opening-v2 §4)")]
         [Tooltip("Each R1 ruin piece's Scan_1..N targets and the structure blueprints it teaches once every one of " +
@@ -230,6 +234,7 @@ namespace MoonProject.Gameplay
         public float PathGlintAlpha => _pathGlintAlpha;
         public float PathGlintLifetime => _pathGlintLifetime;
         public float PathGlintGravity => _pathGlintGravity;
+        public ScanBeamLook BeamLook => _beamLook;
 
         /// <summary>Pushes the wireframe reveal and completion ping tuning to shader globals (zero GC).</summary>
         public void ApplyShaderGlobals()
