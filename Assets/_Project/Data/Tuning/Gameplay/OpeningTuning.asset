@@ -69,7 +69,7 @@ MonoBehaviour:
     _parts:
     - part.igniter
     - part.icecore
-    _prop: {fileID: 0}
+    _prop: {fileID: 703351103347903336, guid: 3a2ed291bf34a90459e85da9d8125b67, type: 3}
   - _id: supply.habitat.reel
     _anchorId: HabitatModules
     _offset: {x: 3, y: 0, z: -6}

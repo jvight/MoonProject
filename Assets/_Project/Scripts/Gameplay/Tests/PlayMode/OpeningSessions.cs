@@ -72,8 +72,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return ScanSet("ruin." + ScanTuning.LanderCargoId, 2);
             Assert.IsTrue(known.IsKnown(StructureIds.ChargingPad), "the cargo bay's two fragments teach the pad");
             Assert.That(opening.Flow.Current, Is.EqualTo(OpeningKeys.CollectParts).Or.EqualTo(OpeningKeys.BuildPad),
-                "the cargo crate gives nothing while its fragments are scanned; once they are, 07 collects it (at once " +
-                "when it stands in reach)");
+                "the cargo crate gives nothing while its fragments are scanned; once they are, 07 collects it " +
+                "(at once when it stands in reach)");
 
             RoverStartKit kit = _fixture.Gameplay.StartKit;
             Assert.AreEqual(RoverSystemState.Fault, kit.StateOf(RoverSystem.Cutter), "no igniter: the cutter is FAULT");

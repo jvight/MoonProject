@@ -32,7 +32,8 @@ namespace MoonProject.Gameplay
         private readonly Dictionary<string, Transform> _frames =
             new Dictionary<string, Transform>(StringComparer.Ordinal);
 
-        /// <param name="ruins">The Lumen ruin pieces by name ([World]/Ruins/&lt;id&gt;): frames for their crates.</param>
+        /// <param name="ruins">The Lumen ruin pieces by name ([World]/Ruins/&lt;id&gt;): frames for their
+        /// crates.</param>
         /// <param name="landerPort">World's service port on the lander ([World]/Lander/ServicePort): the open crate's
         /// frame.</param>
         /// <param name="crateReach">Metres within which an open crate still holding something gives the rest.</param>
