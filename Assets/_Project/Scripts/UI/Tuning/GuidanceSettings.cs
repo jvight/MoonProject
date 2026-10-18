@@ -62,6 +62,27 @@ namespace MoonProject.UI
         [Range(0.3f, 4f)]
         [SerializeField] private float _flashSeconds = 1.2f;
 
+        [Tooltip("Seconds the verb chip stays dimmed and shakes after a held E was blocked (no line of sight), " +
+                 "easing back to full.")]
+        [Range(0.3f, 3f)]
+        [SerializeField] private float _blockedChipSeconds = 0.9f;
+
+        [Tooltip("Opacity the verb chip dims to the moment a held E is blocked.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _blockedChipOpacity = 0.45f;
+
+        [Tooltip("Pixels of the chip's sideways shake when a held E is blocked (fades out): small and soft.")]
+        [Range(0f, 20f)]
+        [SerializeField] private float _blockedShakePixels = 5f;
+
+        [Tooltip("Shakes per second of that chip shake.")]
+        [Range(1f, 12f)]
+        [SerializeField] private float _blockedShakeHertz = 5f;
+
+        [Tooltip("Seconds 07's face says why a held E did nothing (\"no line of sight\").")]
+        [Range(0.5f, 5f)]
+        [SerializeField] private float _blockedFaceSeconds = 1.8f;
+
         [Tooltip("The Sun's arc easing in and out.")]
         [SerializeField] private RevealSettings _sunArc = new RevealSettings(1.2f, 1.5f, 6f, 0.97f, 1f, 0.8f);
 
@@ -96,6 +117,16 @@ namespace MoonProject.UI
         public float StoryHoldSeconds => _storyHoldSeconds;
 
         public float FlashSeconds => _flashSeconds;
+
+        public float BlockedChipSeconds => _blockedChipSeconds;
+
+        public float BlockedChipOpacity => _blockedChipOpacity;
+
+        public float BlockedShakePixels => _blockedShakePixels;
+
+        public float BlockedShakeHertz => _blockedShakeHertz;
+
+        public float BlockedFaceSeconds => _blockedFaceSeconds;
 
         public RevealSettings SunArc => _sunArc;
 

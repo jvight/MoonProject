@@ -899,6 +899,10 @@
             "text": "Quét"
         },
         {
+            "key": "ui.face.no_line",
+            "text": "BỊ CHE KHUẤT"
+        },
+        {
             "key": "ui.verb.cut",
             "text": "Cắt"
         },
