@@ -95,7 +95,7 @@ namespace MoonProject.Audio.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator Continue_DucksTheTitleThemeUnderTheCrtTock_AndGameAudioTakesOver()
+        public IEnumerator Continue_DucksTheTitleTheme_AndGameAudioTakesOver()
         {
             _rig.Events.Publish(new TitleShown(true));
             yield return new WaitForSecondsRealtime(2.2f);
@@ -103,7 +103,6 @@ namespace MoonProject.Audio.PlayModeTests
 
             // Player selects Continue: SessionStarted(false) fires and 07 wakes.
             _rig.Events.Publish(new SessionStarted(false));
-            Assert.AreEqual("title_crt_off", _rig.Director.LastVoice.clip.name, "the tube's tock as the CRT switches off");
             _rig.Milestone(OpeningMilestone.PowerOn, true);
             _rig.Wake(true);
 
@@ -120,14 +119,13 @@ namespace MoonProject.Audio.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator NewGame_DucksTheTitleThemeUnderTheCrtTock()
+        public IEnumerator NewGame_DucksTheTitleTheme()
         {
             _rig.Events.Publish(new TitleShown(true));
             yield return new WaitForSecondsRealtime(2.2f);
             Assert.AreEqual(1f, _rig.TitleMusic.EnvelopeLevel, 1e-3f);
 
             _rig.Events.Publish(new NewGameRequested());
-            Assert.AreEqual("title_crt_off", _rig.Director.LastVoice.clip.name);
             yield return new WaitForSecondsRealtime(0.4f);
             Assert.IsTrue(_rig.TitleMusic.IsPlaying);
             Assert.Greater(_rig.TitleMusic.EnvelopeLevel, 0.2f);

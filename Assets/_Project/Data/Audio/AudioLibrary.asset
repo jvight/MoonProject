@@ -571,18 +571,6 @@ MonoBehaviour:
     _volumeMax: 0.6
     _pitchMin: 1
     _pitchMax: 1
-  - _id: title_crt_off
-    _clips:
-    - {fileID: 8300000, guid: a69657e686ed3804394b2e79d3a8ac9b, type: 3}
-    _variantLabels:
-    - title_crt_off
-    _bus: 2
-    _spatial: 0
-    _loop: 0
-    _volumeMin: 0.6
-    _volumeMax: 0.6
-    _pitchMin: 1
-    _pitchMax: 1
   - _id: base_lamp_on
     _clips:
     - {fileID: 8300000, guid: 4fe4c3b0df58ec34c9609991dfeb869d, type: 3}

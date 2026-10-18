@@ -838,9 +838,6 @@ CUES = (
     Cue("structure_power_on", "oneshot_3d", base.structure_power_on, volume=(0.6, 0.6), milestone="M3",
         tonal=True, notes="Opening v2 B8: a structure taking power: a relay thunk, a transformer swell D2 -> A2, "
                           "its lamp blooming on D5."),
-    Cue("title_crt_off", "stinger_2d", base.title_crt_off, volume=(0.6, 0.6), milestone="M3", tonal=True,
-        notes="The title CRT switching off into New Game / Continue: a soft tube tock, a falling breath and a "
-              "short warm D4 ring that the wake's ghost chord continues."),
     Cue("base_lamp_on", "oneshot_3d", base.base_lamp_on, variants=len(base.BASE_LAMP_NOTES), volume=(0.5, 0.5),
         milestone="M3", tonal=True, notes="Opening v2 B10: a base lamp coming on at nightfall: a muted filament "
                                           "switch and a warm glow on its step (D4 .. F#5)."),
