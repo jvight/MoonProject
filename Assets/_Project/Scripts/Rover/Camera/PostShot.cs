@@ -38,7 +38,7 @@ namespace MoonProject.Rover
         public ShotPose Base(Vector3 body, float headingDeg)
         {
             PostFocus start = _settings.BaseFocus;
-            return Compose(body, headingDeg, start.Local, start.Distance, start.Height, _settings.ShotSideYaw);
+            return Compose(body, headingDeg, start.Local, start.Distance, start.Height, _settings.ShotSideYaw + start.SideYaw);
         }
 
         /// <summary>
@@ -72,7 +72,7 @@ namespace MoonProject.Rover
             Vector3 local = Vector3.Lerp(here.Local, other.Local, ease);
             float distance = Mathf.Lerp(here.Distance, other.Distance, ease);
             float height = Mathf.Lerp(here.Height, other.Height, ease);
-            float side = _settings.ShotSideYaw;
+            float side = _settings.ShotSideYaw + Mathf.Lerp(here.SideYaw, other.SideYaw, ease);
             if (step == BootCheckStep.Begin)
             {
                 // The camera swings round with the head as it turns toward the beacon.
