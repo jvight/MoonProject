@@ -94,7 +94,7 @@ namespace MoonProject.Gameplay
                 ContainerKinds.CrateCargoOpen, new Recipe(2, 1, 0), true, new[] { "part.igniter", "part.icecore" }),
             new SupplyCache("supply.habitat.reel", "HabitatModules", new Vector3(-3f, 0f, -6f), 207f, "Crate_M",
                 new Recipe(6, 4, 0)),
-            new SupplyCache("supply.workshop.a", "KenjiWorkshop", new Vector3(-2.5f, 0f, -5f), -140f, "Crate_S",
+            new SupplyCache("supply.workshop.a", "KenjiWorkshop", new Vector3(5.5f, 0f, 0f), 100f, "Crate_S",
                 new Recipe(3, 4, 2)),
             new SupplyCache("supply.workshop.b", "KenjiWorkshop", new Vector3(2.5f, 0f, -5f), 140f, "Crate_S",
                 new Recipe(3, 4, 2)),
