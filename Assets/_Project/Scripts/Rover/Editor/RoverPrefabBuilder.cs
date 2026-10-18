@@ -140,6 +140,11 @@ namespace MoonProject.Rover.Editor
             HideKitEraDressing(m);
             var roadLight = visual.AddComponent<RoverHeadlamp>();
             BuildWiring.Assign(roadLight, ("_tuning", rigTuning), ("_headlamp", headlamp));
+            BuildWiring.AssignArray(roadLight, "_glasses", new Object[]
+            {
+                BuildWiring.NodeComponent<MeshRenderer>(m, RoverModelNodes.HeadlampGlassLeft),
+                BuildWiring.NodeComponent<MeshRenderer>(m, RoverModelNodes.HeadlampGlassRight),
+            });
 
             RoverFlankLamps flankLamps = BuildFlankLamps(visual, m, rigTuning);
             RoverWheelFx wheelFx = BuildWheelFx(scratch, root.transform, m, fxTuning, trackMaterial, dustMaterial);

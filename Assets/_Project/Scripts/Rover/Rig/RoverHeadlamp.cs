@@ -5,9 +5,10 @@ namespace MoonProject.Rover
 {
     /// <summary>
     /// 07's road light, one of the few things that works from the start and costs no battery: the warm spot at the
-    /// RoverModel's HeadlampSocket, set up from the rig tuning, dimmed (eased) while 07 rests on its charging pad
-    /// (<see cref="RoverController.IsDocked"/>) and while it crawls on the reserve. Ticked by
-    /// <see cref="RoverController"/> in Update.
+    /// RoverModel's HeadlampSocket and the glow of the two headlamp glasses (<see cref="HeadlampGlass"/>), set up from
+    /// the rig tuning, dimmed (eased) while 07 rests on its charging pad (<see cref="RoverController.IsDocked"/>) and
+    /// while it crawls on the reserve; the wake's lamp power switches both. Ticked by <see cref="RoverController"/> in
+    /// Update.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class RoverHeadlamp : MonoBehaviour
@@ -15,14 +16,21 @@ namespace MoonProject.Rover
         /// <summary>Level changes smaller than this are not worth writing to the light.</summary>
         private const float LevelEpsilon = 1e-4f;
 
+        /// <summary>07 has two headlamps.</summary>
+        private const int GlassCount = 2;
+
         [Tooltip("Rig tuning (Assets/_Project/Data/Tuning/RoverRigTuning.asset): 'Headlamp', 'Flank lamps'.")]
         [SerializeField] private RoverRigTuning _tuning;
 
         [Tooltip("Warm spot light under RoverModel 'HeadlampSocket' (07's road light).")]
         [SerializeField] private Light _headlamp;
 
+        [Tooltip("The headlamps' glass glow renderers (RoverModel 'Glass_L', 'Glass_R'): they light with the road light.")]
+        [SerializeField] private Renderer[] _glasses = System.Array.Empty<Renderer>();
+
         private RoverController _rover;
         private BatteryLink _battery;
+        private HeadlampGlass _glow;
         private float _baseIntensity;
         private float _level = 1f;
         private float _appliedLevel = -1f;
@@ -34,9 +42,17 @@ namespace MoonProject.Rover
         /// <summary>Checks wiring and sets the road light up; false when broken (logged).</summary>
         public bool Initialize(GameContext context, RoverController rover)
         {
-            if (_tuning == null || _headlamp == null)
+            if (_tuning == null || _headlamp == null || _glasses == null || _glasses.Length != GlassCount)
             {
-                Debug.LogError($"{nameof(RoverHeadlamp)}: the rig tuning or the Headlamp light is not assigned.", this);
+                Debug.LogError($"{nameof(RoverHeadlamp)}: the rig tuning, the Headlamp light or the two headlamp " +
+                    "glasses are not assigned; rebuild the Rover prefab.", this);
+                enabled = false;
+                return false;
+            }
+
+            if (!HeadlampGlass.TryCreate(_glasses, out _glow, out string problem))
+            {
+                Debug.LogError($"{nameof(RoverHeadlamp)}: {problem}", this);
                 enabled = false;
                 return false;
             }
@@ -77,6 +93,7 @@ namespace MoonProject.Rover
             }
 
             _headlamp.intensity = level * _baseIntensity;
+            _glow.Apply(level);
             _appliedLevel = level;
         }
     }
