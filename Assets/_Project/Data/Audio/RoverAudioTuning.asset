@@ -52,17 +52,12 @@ MonoBehaviour:
     _besidePan: 0.3
     _narrowSeconds: 4
     _crackleGhostDelay: 0.9
-    _pilotGhostDelay: 0.8
     _ghostFaint: 0.4
-    _ghostClearer: 0.6
-    _ghostLong: 0.85
     _thump: 0.8
     _tick: 0.8
     _whine: 0.7
-    _hum: 0.8
-    _servo: 0.6
-    _chirp: 0.8
-    _chirpDelay: 0.2
     _stir: 0.5
     _hurried: 0.7
+    _check: 0.8
+    _fault: 0.8
   _loopSpatialBlend: 0.75

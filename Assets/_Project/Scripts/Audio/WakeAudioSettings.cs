@@ -5,8 +5,9 @@ namespace MoonProject.Audio
 {
     /// <summary>
     /// How 07's wake sounds (docs/design/cutscenes.md §1.2): the radio's Asleep profile (quiet out-of-tune static with
-    /// a ghost Rhodes chord surfacing on cue) on the fresh title and through the opening, and 07's own small wake
-    /// cues, each keyed to a <see cref="MoonProject.Core.WakeBeat"/>. Every level is a share of the cue's own volume.
+    /// a ghost Rhodes chord surfacing on cue) on the fresh title and through the opening, 07's own small wake cues,
+    /// each keyed to a <see cref="MoonProject.Core.WakeBeat"/>, and the New Game self-test's checks. Every level is a
+    /// share of the cue's own volume.
     /// </summary>
     [Serializable]
     public sealed class WakeAudioSettings
@@ -45,21 +46,9 @@ namespace MoonProject.Audio
         [Range(0f, 3f)]
         [SerializeField] private float _crackleGhostDelay = 0.9f;
 
-        [Tooltip("O7: seconds into the look at the pilot before it surfaces again, with the pilot's light.")]
-        [Range(0f, 3f)]
-        [SerializeField] private float _pilotGhostDelay = 0.8f;
-
-        [Tooltip("O1's faint ghost (share of the cue's volume).")]
+        [Tooltip("The ghost chord's level (share of the cue's volume): faint, inside the static.")]
         [Range(0f, 1f)]
         [SerializeField] private float _ghostFaint = 0.4f;
-
-        [Tooltip("O7's ghost, a hair clearer.")]
-        [Range(0f, 1f)]
-        [SerializeField] private float _ghostClearer = 0.6f;
-
-        [Tooltip("O9's two bars, the longest and clearest.")]
-        [Range(0f, 1f)]
-        [SerializeField] private float _ghostLong = 0.85f;
 
         [Header("07's small wake cues")]
         [Tooltip("The felted power-on thump inside the black (O1).")]
@@ -74,29 +63,22 @@ namespace MoonProject.Audio
         [Range(0f, 1f)]
         [SerializeField] private float _whine = 0.7f;
 
-        [Tooltip("The lamp hum's dropout as 07 comes on.")]
-        [Range(0f, 1f)]
-        [SerializeField] private float _hum = 0.8f;
-
-        [Tooltip("The old neck's servo as the gaze turns.")]
-        [Range(0f, 1f)]
-        [SerializeField] private float _servo = 0.6f;
-
-        [Tooltip("The two-note 'hm?' with the first blink.")]
-        [Range(0f, 1f)]
-        [SerializeField] private float _chirp = 0.8f;
-
-        [Tooltip("Seconds after the blink's lid click before the 'hm?'.")]
-        [Range(0f, 1f)]
-        [SerializeField] private float _chirpDelay = 0.2f;
-
         [Tooltip("The short wake's lid tick (Continue).")]
         [Range(0f, 1f)]
         [SerializeField] private float _stir = 0.5f;
 
-        [Tooltip("Hurried by drive input, every wake cue plays this much softer, and the ghost chords are left out.")]
+        [Tooltip("Hurried by drive input, every wake cue plays this much softer, and the ghost chord is left out.")]
         [Range(0f, 1f)]
         [SerializeField] private float _hurried = 0.7f;
+
+        [Header("The self-test (New Game)")]
+        [Tooltip("Each check's motion sound (the iris, the lamps, the head, the wheels...), from 07.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _check = 0.8f;
+
+        [Tooltip("A check's fault result (the cutter): 07's short strain-and-choke.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _fault = 0.8f;
 
         public float OpeningStatic => _openingStatic;
         public float SwellSeconds => _swellSeconds;
@@ -106,18 +88,13 @@ namespace MoonProject.Audio
         public float BesidePan => _besidePan;
         public float NarrowSeconds => _narrowSeconds;
         public float CrackleGhostDelay => _crackleGhostDelay;
-        public float PilotGhostDelay => _pilotGhostDelay;
         public float GhostFaint => _ghostFaint;
-        public float GhostClearer => _ghostClearer;
-        public float GhostLong => _ghostLong;
         public float Thump => _thump;
         public float Tick => _tick;
         public float Whine => _whine;
-        public float Hum => _hum;
-        public float Servo => _servo;
-        public float Chirp => _chirp;
-        public float ChirpDelay => _chirpDelay;
         public float Stir => _stir;
         public float Hurried => _hurried;
+        public float Check => _check;
+        public float Fault => _fault;
     }
 }

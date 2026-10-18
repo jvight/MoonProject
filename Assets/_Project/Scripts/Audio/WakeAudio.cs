@@ -12,8 +12,12 @@ namespace MoonProject.Audio
     /// crackle, is heard muffled from inside 07 while the camera is in the lens and moves out beside it as the camera
     /// leaves (O10); it gives way to the radio's own wake over the shoulder (O12), or at the chase frame;</item>
     /// <item>each <see cref="RoverWakeBeatReached"/> plays its cues from <see cref="WakeCueSheet"/>: the thump, the
-    /// ghost chord D-A-E surfacing at O1, O7 and O9, the lid ticks, the lens whine, the hum's dropout, the neck servo,
-    /// the blink's click and "hm?", the short wake's tick.</item>
+    /// ghost chord D-A-E surfacing at O1, the lid ticks, the lens whine, the focus landing, the short wake's tick;</item>
+    /// <item>the New Game self-test: each check's motion from 07 when it starts (<see cref="BootCheckStarted"/>, the
+    /// iris, the lamps, the head, the wheels, the motor, the cutter's failed ignition, the stuck wing, the antenna,
+    /// the cells, the assembly's query, the recovery's ready chord), and 07's fault voice when a check comes out
+    /// <see cref="BootCheckResult.Fault"/> (<see cref="BootCheckCompleted"/>). The black, the lid and the lens hunt
+    /// (Carrier, Resume, Agenda) are already the wake's own beats.</item>
     /// </list>
     /// The pause menu ducks all of it with the world (<see cref="AudioDirector.WorldGain"/>), and delayed cues wait.
     /// Initialises after the <see cref="AudioDirector"/>, whose library it resolves its cues from.
@@ -22,6 +26,18 @@ namespace MoonProject.Audio
     public sealed class WakeAudio : MonoBehaviour, IGameSystem
     {
         private const int PendingCapacity = 4;
+
+        /// <summary>The checks with a sound of their own (the black's Carrier, Resume and Agenda are the wake's beats).
+        /// </summary>
+        private static readonly (BootCheckStep Step, string CueId)[] CheckCueIds =
+        {
+            (BootCheckStep.Lens, AudioCueIds.BootLens), (BootCheckStep.Lamps, AudioCueIds.BootLamps),
+            (BootCheckStep.Head, AudioCueIds.BootHead), (BootCheckStep.Wheels, AudioCueIds.BootWheels),
+            (BootCheckStep.Motor, AudioCueIds.BootMotor), (BootCheckStep.Cutter, AudioCueIds.BootCutter),
+            (BootCheckStep.SolarWing, AudioCueIds.BootWingJam), (BootCheckStep.Antenna, AudioCueIds.BootAntenna),
+            (BootCheckStep.Battery, AudioCueIds.BootBattery), (BootCheckStep.Assembly, AudioCueIds.BootAssembly),
+            (BootCheckStep.Begin, AudioCueIds.BootBegin),
+        };
 
         [Tooltip("The audio director (library, voices, buses).")]
         [SerializeField] private AudioDirector _director;
@@ -32,7 +48,10 @@ namespace MoonProject.Audio
         private readonly WakeCueCall[] _calls = new WakeCueCall[WakeCueSheet.MaxCalls];
         private readonly WakeCueCall[] _pending = new WakeCueCall[PendingCapacity];
         private readonly float[] _pendingLeft = new float[PendingCapacity];
-        private readonly CueHandle[] _cues = new CueHandle[(int)WakeCueKind.Chirp + 1];
+        private readonly CueHandle[] _cues = new CueHandle[(int)WakeCueKind.Whine + 1];
+        private readonly CueHandle[] _checks = new CueHandle[(int)BootCheckStep.Begin + 1];
+        private IRoverState _rover;
+        private CueHandle _fault;
         private WakeCueSheet _sheet;
         private WakeAudioSettings _settings;
         private IDisposable[] _subscriptions;
@@ -71,13 +90,17 @@ namespace MoonProject.Audio
             _cues[(int)WakeCueKind.Ghost] = _director.Resolve(AudioCueIds.GhostChord);
             _cues[(int)WakeCueKind.Tick] = _director.Resolve(AudioCueIds.LidTick);
             _cues[(int)WakeCueKind.Whine] = _director.Resolve(AudioCueIds.LensWhine);
-            _cues[(int)WakeCueKind.Hum] = _director.Resolve(AudioCueIds.HumDropout);
-            _cues[(int)WakeCueKind.Servo] = _director.Resolve(AudioCueIds.NeckServo);
-            _cues[(int)WakeCueKind.Chirp] = _director.Resolve(AudioCueIds.HmChirp);
-            bool resolved = asleep.IsValid;
+            _fault = _director.Resolve(AudioCueIds.BootFault);
+            bool resolved = asleep.IsValid && _fault.IsValid;
             foreach (CueHandle cue in _cues)
             {
                 resolved &= cue.IsValid;
+            }
+
+            for (int i = 0; i < CheckCueIds.Length; i++)
+            {
+                _checks[(int)CheckCueIds[i].Step] = _director.Resolve(CheckCueIds[i].CueId);
+                resolved &= _checks[(int)CheckCueIds[i].Step].IsValid;
             }
 
             if (!resolved)
@@ -92,13 +115,35 @@ namespace MoonProject.Audio
             _static = _director.CreateLoopSource(transform, "AsleepStatic", asleep, 0f);
             _muffle = _static.gameObject.AddComponent<AudioLowPassFilter>();
             _muffle.cutoffFrequency = _settings.InsideCutoff;
+            _rover = context.Get<IRoverState>();
             EventBus events = context.Events;
             _subscriptions = new[]
             {
                 events.Subscribe<SessionStarted>(OnSessionStarted),
                 events.Subscribe<RoverWakeBeatReached>(OnBeat),
                 events.Subscribe<PauseChanged>(OnPauseChanged),
+                events.Subscribe<BootCheckStarted>(OnCheckStarted),
+                events.Subscribe<BootCheckCompleted>(OnCheckCompleted),
             };
+        }
+
+        /// <summary>A self-test check's motion begins: its sound, from 07 (the black's checks have none here).</summary>
+        private void OnCheckStarted(BootCheckStarted started)
+        {
+            CueHandle cue = _checks[(int)started.Step];
+            if (cue.IsValid)
+            {
+                _director.PlayAt(cue, _rover.Position, _settings.Check * _director.WorldGain);
+            }
+        }
+
+        /// <summary>A check came out: only a fault speaks (the jam, the receive-only hiss are in the motions).</summary>
+        private void OnCheckCompleted(BootCheckCompleted completed)
+        {
+            if (completed.Result == BootCheckResult.Fault)
+            {
+                _director.PlayAt(_fault, _rover.Position, _settings.Fault * _director.WorldGain);
+            }
         }
 
         /// <summary>A loaded game wakes the radio its own way; the Asleep static, if it was up, gives way.</summary>

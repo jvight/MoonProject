@@ -12,7 +12,7 @@ import numpy as np
 
 from synth.core import note_freq
 
-from . import build, dsp, voice
+from . import boot, build, dsp, voice
 
 LIBRARY_ENV = "MOONPROJECT_SOUND_LIBRARY"
 
@@ -36,6 +36,11 @@ BUILD = {
     "build_structure_complete": 0,
     "structure_power_on": 0,
 }
+
+# The New Game self-test: each check's motion (one recipe each, sampled/boot.py), and the cutter's fault on its
+# result (the short strain-and-choke, so it is 07's fault voice but quicker than worried's).
+BOOT = tuple(boot.STEPS)
+BOOT_FAULT = ("voice_fault", 1)
 
 # 07's eye and antenna read each syllable's pitch as 0..1 between these (log).
 EYE_LOW_HZ = note_freq("D4")
@@ -63,6 +68,10 @@ def label(cue_id: str) -> str:
     if cue_id in VOICE:
         tone, variant = VOICE[cue_id]
         return f"{tone} v{variant + 1}"
+    if cue_id == "boot_fault":
+        return f"{BOOT_FAULT[0]} v{BOOT_FAULT[1] + 1}"
+    if cue_id in BOOT:
+        return cue_id
     return f"{cue_id} v{BUILD[cue_id] + 1}"
 
 
@@ -75,6 +84,22 @@ def renderer(cue_id: str):
             return voice.render(_library(), gen, tone, pick)
 
         render.__doc__ = f"07's voice, {cue_id}: {voice.GESTURES[tone][pick].description}"
+        return render
+    if cue_id == "boot_fault":
+        tone, pick = BOOT_FAULT
+
+        def render(_variant, gen):
+            return voice.render(_library(), gen, tone, pick)
+
+        render.__doc__ = f"The self-test's fault result: {voice.GESTURES[tone][pick].description}"
+        return render
+    if cue_id in BOOT:
+        step = boot.STEPS[cue_id]
+
+        def render(_variant, gen):
+            return step(_library(), gen)
+
+        render.__doc__ = step.__doc__
         return render
     fn, _ = build.SOUNDS[cue_id]
     pick = BUILD[cue_id]
