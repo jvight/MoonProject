@@ -448,6 +448,11 @@ namespace MoonProject.Art.Editor
                     CaptureElderNextTo07(Elder03PrefabPath, "elder03", capturesDir, nightEclipse: true);
                     CaptureElderNextTo07(Elder02PrefabPath, "elder02", capturesDir, nightEclipse: false);
                     CaptureElderNextTo07(Elder02PrefabPath, "elder02", capturesDir, nightEclipse: true);
+                    CaptureElder01NextTo07(capturesDir, nightEclipse: false);
+                    CaptureElder01NextTo07(capturesDir, nightEclipse: true);
+                    CaptureElder01NextToElder06(capturesDir);
+                    CaptureElder01NextTo07AndElder06(capturesDir);
+                    CaptureElder01At200mSilhouette(capturesDir);
                 }
                 finally
                 {
@@ -484,6 +489,126 @@ namespace MoonProject.Art.Editor
                     40f,
                     bg,
                     Path.Combine(outDir, $"{slug}_next_to_07_{suffix}.png"));
+            }
+            finally
+            {
+                temp.Dispose();
+            }
+        }
+
+        private static void CaptureElder01NextTo07(string outDir, bool nightEclipse)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupCaptureEnvironment(temp, nightEclipse);
+
+                SpawnRover07(temp, new Vector3(-0.96f, 0f, 0.05f), 156f, nightEclipse);
+                SpawnPrefabWithPrefabRotation(Elder01PrefabPath, new Vector3(0.82f, 0f, 0.08f), 148f, temp);
+
+                string suffix = nightEclipse ? "eclipse" : "dayC";
+                RenderShot(
+                    new Vector3(0.02f, 1.62f, -4.45f),
+                    new Vector3(-0.02f, 1.18f, 0.05f),
+                    42f,
+                    bg,
+                    Path.Combine(outDir, $"elder01_next_to_07_{suffix}.png"));
+            }
+            finally
+            {
+                temp.Dispose();
+            }
+        }
+
+        private static void CaptureElder01NextToElder06(string outDir)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupCaptureEnvironment(temp, nightEclipse: false);
+
+                SpawnPrefabWithPrefabRotation(Elder01PrefabPath, new Vector3(-0.78f, 0f, 0.06f), 154f, temp);
+                SpawnPrefabWithPrefabRotation(Elder06PrefabPath, new Vector3(0.78f, 0f, 0.06f), 146f, temp);
+
+                RenderShot(
+                    new Vector3(0.0f, 1.58f, -4.35f),
+                    new Vector3(0.0f, 1.15f, 0.06f),
+                    42f,
+                    bg,
+                    Path.Combine(outDir, "elder01_next_to_elder06_dayC.png"));
+            }
+            finally
+            {
+                temp.Dispose();
+            }
+        }
+
+        private static void CaptureElder01NextTo07AndElder06(string outDir)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupCaptureEnvironment(temp, nightEclipse: false);
+
+                SpawnRover07(temp, new Vector3(-1.55f, 0f, 0.05f), 156f, nightEclipse: false);
+                SpawnPrefabWithPrefabRotation(Elder01PrefabPath, new Vector3(0.05f, 0f, 0.08f), 150f, temp);
+                SpawnPrefabWithPrefabRotation(Elder06PrefabPath, new Vector3(1.48f, 0f, 0.08f), 144f, temp);
+
+                RenderShot(
+                    new Vector3(0.0f, 1.65f, -4.85f),
+                    new Vector3(0.0f, 1.18f, 0.06f),
+                    44f,
+                    bg,
+                    Path.Combine(outDir, "elder01_next_to_07_and_elder06_dayC.png"));
+            }
+            finally
+            {
+                temp.Dispose();
+            }
+        }
+
+        private static void CaptureElder01At200mSilhouette(string outDir)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupCaptureEnvironment(temp, nightEclipse: false);
+
+                // Expand floor to cover the 200 m sightline to the horizon ridge at z = 0
+                GameObject horizonFloor = GameObject.CreatePrimitive(PrimitiveType.Plane);
+                horizonFloor.name = "R1RegolithForeground200m";
+                UnityEngine.Object.DestroyImmediate(horizonFloor.GetComponent<Collider>());
+                horizonFloor.transform.position = new Vector3(0f, -0.02f, -100f);
+                horizonFloor.transform.localScale = new Vector3(40f, 1f, 20.4f);
+                horizonFloor.GetComponent<MeshRenderer>().sharedMaterial = R1MaterialLibrary.LoadMaterial(R1MaterialSlot.Basalt);
+                temp.Add(horizonFloor);
+
+                // Spawn Elder01 at (0, 0, 0) on the horizon ridge (with Rover 07 and Elder06 flanking for scale context)
+                SpawnRover07(temp, new Vector3(-2.20f, 0f, 0f), 152f, nightEclipse: false);
+                SpawnPrefabWithPrefabRotation(Elder01PrefabPath, Vector3.zero, 145f, temp);
+                SpawnPrefabWithPrefabRotation(Elder06PrefabPath, new Vector3(2.10f, 0f, 0f), 138f, temp);
+
+                // Camera at exact 200.0 m distance (z = -200 m, y = 0.85 m looking slightly up at the horizon ridge)
+                Vector3 camPos200m = new Vector3(0f, 0.85f, -200f);
+                Vector3 lookAt200m = new Vector3(0f, 1.25f, 0f);
+
+                RenderShot(
+                    camPos200m,
+                    lookAt200m,
+                    2.6f,
+                    bg,
+                    Path.Combine(outDir, "elder01_silhouette_200m_dayC.png"));
+
+                RenderShot(
+                    camPos200m,
+                    lookAt200m,
+                    10.0f,
+                    bg,
+                    Path.Combine(outDir, "elder01_silhouette_200m_wide_dayC.png"));
             }
             finally
             {
