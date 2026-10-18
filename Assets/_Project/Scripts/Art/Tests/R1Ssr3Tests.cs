@@ -30,6 +30,8 @@ namespace MoonProject.Art.Tests
             ("ssr3_tracks.json", "Rover/SSR3_Tracks.fbx"),
             ("ssr3_topper_03.json", "Rover/SSR3_Topper_03.fbx"),
             ("ssr3_topper_02.json", "Rover/SSR3_Topper_02.fbx"),
+            ("ssr3_topper_05.json", "Rover/SSR3_Topper_05.fbx"),
+            ("ssr3_topper_04.json", "Rover/SSR3_Topper_04.fbx"),
         };
 
         [Serializable]
@@ -332,6 +334,142 @@ namespace MoonProject.Art.Tests
                 "Elder02 must be settled ~4 cm (-0.04 m Y) into the lunar dust.");
             Assert.AreEqual(1.25f, elderBounds.max.y, 0.06f,
                 "Elder02 top of floodlights should sit at ~1.25 m above ground.");
+        }
+
+        [Test]
+        public void Ssr3Topper05_HasTurntable_FoldedCopperCoilMast_TwoHornFeeds_AndRfCabinet()
+        {
+            GameObject topperPrefab = MeshChecks.LoadGeneratedPrefab(R1Ssr3Builder.Ssr3Topper05PrefabPath);
+            Transform turntable = topperPrefab.transform.Find("Turntable");
+            Transform rfCabinet = topperPrefab.transform.Find("RfCabinet");
+            Transform coilMast = topperPrefab.transform.Find("CoilMast");
+            Transform hornFeeds = topperPrefab.transform.Find("HornFeeds");
+
+            Assert.IsNotNull(turntable, "SSR3_Topper_05 missing Turntable.");
+            Assert.IsNotNull(rfCabinet, "SSR3_Topper_05 missing RfCabinet.");
+            Assert.IsNotNull(coilMast, "SSR3_Topper_05 missing CoilMast.");
+            Assert.IsNotNull(hornFeeds, "SSR3_Topper_05 missing HornFeeds.");
+
+            AssertNoLampAmberAndValidVertexColors(topperPrefab, minRenderers: 4);
+
+            var usedSlots = new HashSet<string>(StringComparer.Ordinal);
+            foreach (Renderer r in topperPrefab.GetComponentsInChildren<Renderer>(true))
+            {
+                foreach (Material m in r.sharedMaterials)
+                {
+                    usedSlots.Add(m.name);
+                }
+            }
+
+            Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.CopperSlot), "SSR3_Topper_05 must use R1_Copper helical coil and coax lines.");
+            Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.BrassSlot), "SSR3_Topper_05 must use R1_Brass horn feeds and collars.");
+            Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.CreamEnamelSlot), "SSR3_Topper_05 must use R1_CreamEnamel turntable/cabinet.");
+            Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.DarkGlassSlot), "SSR3_Topper_05 must use R1_DarkGlass waveguide throats.");
+        }
+
+        [Test]
+        public void Elder05Prefab_CombinesChassisTopperAndUnit05Stencil_Settled4CmIntoDust()
+        {
+            GameObject elder05Prefab = MeshChecks.LoadGeneratedPrefab(R1Ssr3Builder.Elder05PrefabPath);
+            Assert.IsNotNull(elder05Prefab.transform.Find("Body"), "Elder05 missing Body.");
+            Assert.IsNotNull(elder05Prefab.transform.Find("Headlamp/HeadlampGlass"), "Elder05 missing Headlamp/HeadlampGlass.");
+            Assert.IsNotNull(elder05Prefab.transform.Find("Wheel_FL"), "Elder05 missing Wheel_FL.");
+            Assert.IsNotNull(elder05Prefab.transform.Find("Wheel_FR"), "Elder05 missing Wheel_FR.");
+            Assert.IsNotNull(elder05Prefab.transform.Find("Wheel_RL"), "Elder05 missing Wheel_RL.");
+            Assert.IsNotNull(elder05Prefab.transform.Find("Wheel_RR"), "Elder05 missing Wheel_RR.");
+
+            Transform mountedTopper = elder05Prefab.transform.Find("Topper_Socket/SSR3_Topper_05");
+            Assert.IsNotNull(mountedTopper, "Elder05 missing Topper_Socket/SSR3_Topper_05.");
+            Assert.IsNotNull(mountedTopper.Find("Turntable"), "Elder05 topper missing Turntable.");
+            Assert.IsNotNull(mountedTopper.Find("RfCabinet"), "Elder05 topper missing RfCabinet.");
+            Assert.IsNotNull(mountedTopper.Find("CoilMast"), "Elder05 topper missing CoilMast.");
+            Assert.IsNotNull(mountedTopper.Find("HornFeeds"), "Elder05 topper missing HornFeeds.");
+
+            Transform unit05Node = elder05Prefab.transform.Find("Unit_Number/Unit_Number_05");
+            Assert.IsNotNull(unit05Node, "Elder05 missing Unit_Number/Unit_Number_05.");
+            MeshFilter unit05Mf = unit05Node.GetComponent<MeshFilter>();
+            Assert.IsNotNull(unit05Mf, "Unit_Number_05 must have a MeshFilter.");
+            Assert.IsNotNull(unit05Mf.sharedMesh, "Unit_Number_05 must have a sharedMesh.");
+            Assert.Greater(unit05Mf.sharedMesh.vertexCount, 24, "Unit_Number_05 mesh must contain the '05' stencil geometry.");
+
+            AssertNoLampAmberAndValidVertexColors(elder05Prefab, minRenderers: 12);
+
+            Bounds elderBounds = MeasureInstantiatedRendererBounds(elder05Prefab);
+            Assert.AreEqual(-R1Ssr3Builder.Elder05DustSettleMeters, elderBounds.min.y, 0.01f,
+                "Elder05 must be settled ~4 cm (-0.04 m Y) into the lunar dust.");
+            Assert.AreEqual(1.37f, elderBounds.max.y, 0.06f,
+                "Elder05 top of half-folded copper coil mast should sit at ~1.37 m above ground.");
+        }
+
+        [Test]
+        public void Ssr3Topper04_HasGasBottles_CopperLines_JumpThrusters_AndSuspensionKit()
+        {
+            GameObject topperPrefab = MeshChecks.LoadGeneratedPrefab(R1Ssr3Builder.Ssr3Topper04PrefabPath);
+            Transform gasBottles = topperPrefab.transform.Find("GasBottles");
+            Transform copperLines = topperPrefab.transform.Find("CopperLines");
+            Transform jumpThrusters = topperPrefab.transform.Find("JumpThrusters");
+            Transform suspensionKit = topperPrefab.transform.Find("SuspensionKit");
+
+            Assert.IsNotNull(gasBottles, "SSR3_Topper_04 missing GasBottles.");
+            Assert.IsNotNull(copperLines, "SSR3_Topper_04 missing CopperLines.");
+            Assert.IsNotNull(jumpThrusters, "SSR3_Topper_04 missing JumpThrusters.");
+            Assert.IsNotNull(suspensionKit, "SSR3_Topper_04 missing SuspensionKit.");
+
+            AssertNoLampAmberAndValidVertexColors(topperPrefab, minRenderers: 4);
+
+            var usedSlots = new HashSet<string>(StringComparer.Ordinal);
+            foreach (Renderer r in topperPrefab.GetComponentsInChildren<Renderer>(true))
+            {
+                foreach (Material m in r.sharedMaterials)
+                {
+                    usedSlots.Add(m.name);
+                }
+            }
+
+            Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.BrassSlot), "SSR3_Topper_04 must use R1_Brass gas bottles and thruster bells.");
+            Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.CopperSlot), "SSR3_Topper_04 must use R1_Copper pressure lines and suspension coils.");
+            Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.DarkGlassSlot), "SSR3_Topper_04 must use R1_DarkGlass pressure gauge faces.");
+        }
+
+        [Test]
+        public void Elder04Prefab_CombinesLiftedChassisTopperAndUnit04Stencil_Settled4CmIntoDust()
+        {
+            GameObject elder04Prefab = MeshChecks.LoadGeneratedPrefab(R1Ssr3Builder.Elder04PrefabPath);
+            Assert.IsNotNull(elder04Prefab.transform.Find("Body"), "Elder04 missing Body.");
+            Assert.IsNotNull(elder04Prefab.transform.Find("Headlamp/HeadlampGlass"), "Elder04 missing Headlamp/HeadlampGlass.");
+            Assert.IsNotNull(elder04Prefab.transform.Find("Wheel_FL"), "Elder04 missing Wheel_FL.");
+            Assert.IsNotNull(elder04Prefab.transform.Find("Wheel_FR"), "Elder04 missing Wheel_FR.");
+            Assert.IsNotNull(elder04Prefab.transform.Find("Wheel_RL"), "Elder04 missing Wheel_RL.");
+            Assert.IsNotNull(elder04Prefab.transform.Find("Wheel_RR"), "Elder04 missing Wheel_RR.");
+
+            Transform topperSocket = elder04Prefab.transform.Find("Topper_Socket");
+            Assert.IsNotNull(topperSocket, "Elder04 missing Topper_Socket.");
+            Vector3 topperWorldPos = elder04Prefab.transform.TransformPoint(topperSocket.localPosition);
+            Assert.AreEqual(0.69f + R1Ssr3Builder.Elder04SuspensionLiftMeters - R1Ssr3Builder.Elder04DustSettleMeters,
+                topperWorldPos.y, 0.02f,
+                "Elder04 Topper_Socket must be lifted by the raised suspension kit (+0.14 m) minus dust settle (-0.04 m).");
+
+            Transform mountedTopper = elder04Prefab.transform.Find("Topper_Socket/SSR3_Topper_04");
+            Assert.IsNotNull(mountedTopper, "Elder04 missing Topper_Socket/SSR3_Topper_04.");
+            Assert.IsNotNull(mountedTopper.Find("GasBottles"), "Elder04 topper missing GasBottles.");
+            Assert.IsNotNull(mountedTopper.Find("CopperLines"), "Elder04 topper missing CopperLines.");
+            Assert.IsNotNull(mountedTopper.Find("JumpThrusters"), "Elder04 topper missing JumpThrusters.");
+            Assert.IsNotNull(mountedTopper.Find("SuspensionKit"), "Elder04 topper missing SuspensionKit.");
+
+            Transform unit04Node = elder04Prefab.transform.Find("Unit_Number/Unit_Number_04");
+            Assert.IsNotNull(unit04Node, "Elder04 missing Unit_Number/Unit_Number_04.");
+            MeshFilter unit04Mf = unit04Node.GetComponent<MeshFilter>();
+            Assert.IsNotNull(unit04Mf, "Unit_Number_04 must have a MeshFilter.");
+            Assert.IsNotNull(unit04Mf.sharedMesh, "Unit_Number_04 must have a sharedMesh.");
+            Assert.Greater(unit04Mf.sharedMesh.vertexCount, 24, "Unit_Number_04 mesh must contain the '04' stencil geometry.");
+
+            AssertNoLampAmberAndValidVertexColors(elder04Prefab, minRenderers: 12);
+
+            Bounds elderBounds = MeasureInstantiatedRendererBounds(elder04Prefab);
+            Assert.AreEqual(-R1Ssr3Builder.Elder04DustSettleMeters, elderBounds.min.y, 0.01f,
+                "Elder04 must be settled ~4 cm (-0.04 m Y) into the lunar dust.");
+            Assert.AreEqual(1.078f, elderBounds.max.y, 0.06f,
+                "Elder04 top of lifted gas bottles should sit at ~1.08 m above ground.");
         }
 
         private static void AssertNoLampAmberAndValidVertexColors(GameObject prefab, int minRenderers)

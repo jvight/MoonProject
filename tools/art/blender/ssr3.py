@@ -114,6 +114,18 @@ GLYPH_RECTS: dict[str, Sequence[tuple[float, float, float, float]]] = {
         (0.54, 0.50, 0.68, 0.18),
         (0.50, 0.10, 0.82, 0.20),
     ),
+    "4": (
+        (0.18, 0.68, 0.22, 0.52),
+        (0.50, 0.44, 0.82, 0.18),
+        (0.74, 0.50, 0.22, 0.88),
+    ),
+    "5": (
+        (0.50, 0.90, 0.78, 0.20),
+        (0.18, 0.70, 0.22, 0.48),
+        (0.50, 0.50, 0.78, 0.18),
+        (0.82, 0.30, 0.22, 0.48),
+        (0.50, 0.10, 0.78, 0.20),
+    ),
     "6": (
         (0.18, 0.50, 0.22, 0.88),
         (0.50, 0.90, 0.76, 0.20),
@@ -2576,6 +2588,1300 @@ def build_elder06_combined() -> bpy.types.Object:
     return chassis_root
 
 
+# ---------------------------------------------------------------------------
+# Shared Helical Coil Helper (local to MeshBuilder pivot)
+# ---------------------------------------------------------------------------
+def _add_helical_coil_u(
+    mb: r1kit.MeshBuilder,
+    center_u: tuple[float, float, float],
+    coil_radius: float,
+    wire_radius: float,
+    length: float,
+    turns: float,
+    axis_u: str,
+    mat: str,
+    segs_per_turn: int = 16,
+    wire_segs: int = 8,
+    rot_deg_u: tuple[float, float, float] = (0.0, 0.0, 0.0),
+) -> list:
+    """Append a closed 3D helical coil in MeshBuilder local space."""
+    local_center_u = (
+        center_u[0] - mb.pivot_u[0],
+        center_u[1] - mb.pivot_u[1],
+        center_u[2] - mb.pivot_u[2],
+    )
+    rot_rad = (
+        math.radians(rot_deg_u[0]),
+        math.radians(rot_deg_u[1]),
+        math.radians(rot_deg_u[2]),
+    )
+    return r1kit.append_helical_coil(
+        mb.bm,
+        coil_radius=coil_radius,
+        wire_radius=wire_radius,
+        length=length,
+        turns=turns,
+        axis=axis_u,
+        center_xyz=local_center_u,
+        segs_per_turn=segs_per_turn,
+        wire_segs=wire_segs,
+        mat_idx=mb._mat_index(mat),
+        rot_euler=rot_rad,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Deliverable 1 (agy-ssr3b): SSR3_Topper_05 ("Dish Tender" — Tall Copper Coil
+# Mast on a Turntable with Two Small Horn Feeds, Folded Half-Down, Sun-Bleached)
+# ---------------------------------------------------------------------------
+TOPPER_05_HINGE_U: tuple[float, float, float] = (0.0, 0.155, -0.02)
+TOPPER_05_FOLD_DEG: float = 50.0  # Folded half-down forward (+Z) over the dorsal deck
+
+
+def _rotate_bm_around_hinge_x(mb: r1kit.MeshBuilder, hinge_u: tuple[float, float, float], fold_deg: float) -> None:
+    """Rotate all current vertices in `mb.bm` forward (+Z in Unity) around `hinge_u` by `fold_deg` degrees."""
+    import bmesh
+    from mathutils import Matrix
+
+    rot_mat = Matrix.Rotation(-math.radians(fold_deg), 3, "X")
+    bmesh.ops.rotate(
+        mb.bm,
+        verts=list(mb.bm.verts),
+        cent=mb._to_local_b(hinge_u),
+        matrix=rot_mat,
+    )
+
+
+def _build_topper_05_turntable(root: bpy.types.Object) -> bpy.types.Object:
+    """Build the rotary azimuth turntable (`Turntable`) with degree ring, hinge trunnions, and folding jack strut."""
+    mb = r1kit.MeshBuilder("Turntable", pivot_u=(0.0, 0.06, 0.04))
+    hx, hy, hz = TOPPER_05_HINGE_U
+
+    # 1. Heavy steel deck baseplate bolted into the dorsal payload well
+    mb.add_bevel_box(
+        center_u=(0.0, 0.016, 0.08),
+        size_u=(0.58, 0.032, 0.56),
+        mat="R1_BareSteel",
+        bevel=0.005,
+        segments=1,
+    )
+    mb.add_bolts(
+        [
+            (sx * 0.26, 0.032, cz)
+            for sx in (-1.0, 1.0)
+            for cz in (-0.16, 0.08, 0.32)
+        ],
+        radius=0.008,
+        height=0.010,
+        axis_u="Y",
+        mat="R1_BareSteel",
+        bevel_segments=0,
+    )
+
+    # 2. Stationary azimuth bearing ring (`R1_GreyMetal`) + turned `R1_Brass` azimuth degree ring
+    mb.add_cylinder(
+        center_u=(0.0, 0.052, hz),
+        radius=0.225,
+        length=0.046,
+        mat="R1_GreyMetal",
+        axis_u="Y",
+        segments=24,
+        bevel=0.006,
+        bevel_segments=1,
+    )
+    mb.add_torus(
+        center_u=(0.0, 0.068, hz),
+        major_radius=0.226,
+        minor_radius=0.012,
+        mat="R1_Brass",
+        axis_u="Y",
+        major_segments=24,
+        minor_segments=8,
+    )
+    # 4 radial azimuth lock clamp dogs around the turntable perimeter
+    for ang_deg in (45.0, 135.0, 225.0, 315.0):
+        ang = math.radians(ang_deg)
+        mb.add_bevel_box(
+            center_u=(0.232 * math.sin(ang), 0.052, hz + 0.232 * math.cos(ang)),
+            size_u=(0.042, 0.038, 0.042),
+            mat="R1_BareSteel",
+            bevel=0.004,
+            segments=1,
+            rot_deg_u=(0.0, ang_deg, 0.0),
+        )
+
+    # 3. Rotating upper turntable platter (`R1_CreamEnamel` with 8 perimeter bolts)
+    mb.add_cylinder(
+        center_u=(0.0, 0.092, hz),
+        radius=0.195,
+        length=0.036,
+        mat="R1_CreamEnamel",
+        axis_u="Y",
+        segments=24,
+        bevel=0.006,
+        bevel_segments=1,
+    )
+    mb.add_bolts(
+        [
+            (0.158 * math.sin(2.0 * math.pi * i / 8), 0.110, hz + 0.158 * math.cos(2.0 * math.pi * i / 8))
+            for i in range(8)
+        ],
+        radius=0.007,
+        height=0.008,
+        axis_u="Y",
+        mat="R1_BareSteel",
+        bevel_segments=0,
+    )
+
+    # 4. Twin mast elevation trunnion cheek brackets (`R1_GreyMetal`) & horizontal hinge axle (`R1_BareSteel` / `R1_Brass`)
+    for sx in (-1.0, 1.0):
+        mb.add_bevel_box(
+            center_u=(sx * 0.076, 0.145, hz),
+            size_u=(0.028, 0.095, 0.125),
+            mat="R1_GreyMetal",
+            bevel=0.006,
+            segments=1,
+            top_scale_xz=(0.90, 0.72),
+        )
+        mb.add_cylinder(
+            center_u=(sx * 0.092, hy, hz),
+            radius=0.034,
+            length=0.022,
+            mat="R1_Brass",
+            axis_u="X",
+            segments=16,
+            bevel=0.003,
+            bevel_segments=1,
+        )
+    mb.add_cylinder(
+        center_u=(hx, hy, hz),
+        radius=0.020,
+        length=0.22,
+        mat="R1_BareSteel",
+        axis_u="X",
+        segments=14,
+        bevel=0.003,
+        bevel_segments=1,
+    )
+
+    # 5. Forward elevation screw-jack actuator & cushioned rest cradle holding the mast folded half-down
+    fold_rad = math.radians(TOPPER_05_FOLD_DEG)
+    attach_s = 0.21
+    attach_y = hy + attach_s * math.cos(fold_rad)
+    attach_z = hz + attach_s * math.sin(fold_rad)
+    clevis_u = (0.0, 0.055, 0.29)
+
+    mb.add_bevel_box(
+        center_u=(0.0, 0.048, 0.29),
+        size_u=(0.11, 0.042, 0.085),
+        mat="R1_GreyMetal",
+        bevel=0.005,
+        segments=1,
+    )
+    mb.add_strut(
+        p0_u=clevis_u,
+        p1_u=(0.0, attach_y - 0.02, attach_z),
+        width=0.036,
+        thickness=0.036,
+        mat="R1_BareSteel",
+        bevel=0.005,
+    )
+    mb.add_strut(
+        p0_u=(0.0, 0.065, 0.275),
+        p1_u=(0.0, 0.175, 0.21),
+        width=0.048,
+        thickness=0.048,
+        mat="R1_Brass",
+        bevel=0.006,
+    )
+    # Forward rubber-padded travel rest pedestal at z = 0.31 m
+    mb.add_bevel_box(
+        center_u=(0.0, 0.058, 0.32),
+        size_u=(0.16, 0.065, 0.054),
+        mat="R1_SagePatch",
+        bevel=0.005,
+        segments=1,
+    )
+    mb.add_bevel_box(
+        center_u=(0.0, 0.095, 0.32),
+        size_u=(0.14, 0.022, 0.048),
+        mat="R1_Rubber",
+        bevel=0.004,
+        segments=1,
+    )
+
+    return mb.build_object(parent=root)
+
+
+def _build_topper_05_rf_cabinet(root: bpy.types.Object) -> bpy.types.Object:
+    """Build the rear finned S-band RF transceiver cabinet (`RfCabinet`) with copper waveguide lines."""
+    mb = r1kit.MeshBuilder("RfCabinet", pivot_u=(0.0, 0.16, -0.34))
+    cab_z = -0.34
+
+    # 1. Base mounting plinth in the rear dorsal payload well
+    mb.add_bevel_box(
+        center_u=(0.0, 0.015, cab_z),
+        size_u=(0.56, 0.030, 0.32),
+        mat="R1_GreyMetal",
+        bevel=0.005,
+        segments=1,
+    )
+
+    # 2. Lower & upper stacked instrument housings (Direction C stacked transceiver boxes + Lineup 05 finned unit)
+    mb.add_bevel_box(
+        center_u=(0.0, 0.088, cab_z),
+        size_u=(0.52, 0.122, 0.28),
+        mat="R1_CreamEnamel",
+        bevel=0.010,
+        segments=2,
+    )
+    mb.add_bevel_box(
+        center_u=(0.0, 0.085, cab_z),
+        size_u=(0.526, 0.034, 0.286),
+        mat="R1_OrangeStripe",
+        bevel=0.003,
+        segments=1,
+    )
+    # Shadow seam collar between lower and upper RF decks
+    mb.add_bevel_box(
+        center_u=(0.0, 0.155, cab_z),
+        size_u=(0.49, 0.018, 0.255),
+        mat="R1_GreyMetal",
+        bevel=0.003,
+        segments=1,
+    )
+    # Upper S-band amplifier deck
+    mb.add_bevel_box(
+        center_u=(0.0, 0.220, cab_z),
+        size_u=(0.48, 0.118, 0.25),
+        mat="R1_CreamEnamel",
+        bevel=0.010,
+        segments=2,
+    )
+    # Left-flank riveted R1_SagePatch access panel & right-flank dark glass inspection meter
+    mb.add_bevel_box(
+        center_u=(-0.262, 0.088, cab_z),
+        size_u=(0.010, 0.082, 0.16),
+        mat="R1_SagePatch",
+        bevel=0.003,
+        segments=1,
+    )
+    mb.add_bevel_box(
+        center_u=(0.242, 0.220, cab_z + 0.05),
+        size_u=(0.012, 0.052, 0.084),
+        mat="R1_DarkGlass",
+        bevel=0.003,
+        segments=1,
+    )
+    for sx in (-1.0, 1.0):
+        mb.add_vent_grille(
+            center_u=(sx * 0.240, 0.220, cab_z - 0.045),
+            width=0.095,
+            height=0.062,
+            depth=0.016,
+            slat_count=3,
+            rot_deg_u=(0.0, 90.0 * sx, 0.0),
+            frame_mat="R1_GreyMetal",
+            back_mat="R1_DarkGlass",
+        )
+
+    # 3. Top & rear vertical radiative cooling heatsink fins (`R1_BareSteel`) matching Lineup 05
+    mb.add_bevel_box(
+        center_u=(0.0, 0.285, cab_z - 0.01),
+        size_u=(0.42, 0.022, 0.21),
+        mat="R1_GreyMetal",
+        bevel=0.004,
+        segments=1,
+    )
+    for fin_i in range(9):
+        fx = -0.176 + fin_i * 0.044
+        mb.add_bevel_box(
+            center_u=(fx, 0.312, cab_z - 0.01),
+            size_u=(0.012, 0.046, 0.195),
+            mat="R1_BareSteel",
+            bevel=0.002,
+            segments=1,
+        )
+        mb.add_bevel_box(
+            center_u=(fx, 0.175, cab_z - 0.146),
+            size_u=(0.012, 0.195, 0.032),
+            mat="R1_BareSteel",
+            bevel=0.002,
+            segments=1,
+        )
+
+    # 4. Twin curved `R1_Copper` coaxial waveguide feed pipes connecting `RfCabinet` into the turntable & mast
+    for sx in (-1.0, 1.0):
+        px = sx * 0.115
+        mb.add_cylinder(
+            center_u=(px, 0.225, cab_z + 0.132),
+            radius=0.024,
+            length=0.024,
+            mat="R1_Brass",
+            axis_u="Z",
+            segments=12,
+            bevel=0.003,
+            bevel_segments=1,
+        )
+        mb.add_tube_path(
+            points_u=[
+                (px, 0.225, cab_z + 0.140),
+                (px, 0.232, -0.14),
+                (sx * 0.088, 0.205, -0.07),
+                (sx * 0.068, 0.165, -0.02),
+            ],
+            radius=0.015,
+            mat="R1_Copper",
+            segments=12,
+            cap_ends=True,
+        )
+
+    return mb.build_object(parent=root)
+
+
+def _build_topper_05_coil_mast(root: bpy.types.Object) -> bpy.types.Object:
+    """Build the tall S-band copper helical coil mast (`CoilMast`), folded half-down (`50°`) over the deck."""
+    hx, hy, hz = TOPPER_05_HINGE_U
+    mb = r1kit.MeshBuilder("CoilMast", pivot_u=TOPPER_05_HINGE_U)
+
+    # Construct the mast upright along +Y above hinge (hx, hy, hz), then tilt by TOPPER_05_FOLD_DEG
+    # 1. Lower mast hinge knuckle & main structural steel column (y = hy .. hy + 0.37)
+    mb.add_cylinder(
+        center_u=(hx, hy, hz),
+        radius=0.048,
+        length=0.13,
+        mat="R1_GreyMetal",
+        axis_u="X",
+        segments=16,
+        bevel=0.005,
+        bevel_segments=1,
+    )
+    mb.add_cylinder(
+        center_u=(hx, hy + 0.185, hz),
+        radius=0.042,
+        length=0.37,
+        mat="R1_GreyMetal",
+        axis_u="Y",
+        segments=18,
+        bevel=0.004,
+        bevel_segments=1,
+    )
+    # Turned R1_Brass mast clamping collars along the lower column
+    for cy_off in (0.09, 0.20, 0.34):
+        mb.add_cylinder(
+            center_u=(hx, hy + cy_off, hz),
+            radius=0.052,
+            length=0.026,
+            mat="R1_Brass",
+            axis_u="Y",
+            segments=18,
+            bevel=0.004,
+            bevel_segments=1,
+        )
+
+    # Twin R1_Copper coaxial riser pipes running up the flanks of the lower mast column
+    for sx in (-1.0, 1.0):
+        mb.add_tube_path(
+            points_u=[
+                (sx * 0.066, hy + 0.01, hz),
+                (sx * 0.066, hy + 0.18, hz),
+                (sx * 0.066, hy + 0.35, hz),
+            ],
+            radius=0.013,
+            mat="R1_Copper",
+            segments=10,
+            cap_ends=True,
+        )
+
+    # 2. Helical S-Band Transmit Antenna Base Ground-Plane Disc & Insulator Collar (at y = hy + 0.375)
+    coil_base_y = hy + 0.375
+    mb.add_cylinder(
+        center_u=(hx, coil_base_y, hz),
+        radius=0.132,
+        length=0.022,
+        mat="R1_Brass",
+        axis_u="Y",
+        segments=24,
+        bevel=0.004,
+        bevel_segments=1,
+    )
+    mb.add_torus(
+        center_u=(hx, coil_base_y, hz),
+        major_radius=0.130,
+        minor_radius=0.009,
+        mat="R1_GreyMetal",
+        axis_u="Y",
+        major_segments=24,
+        minor_segments=6,
+    )
+    mb.add_bolts(
+        [
+            (
+                hx + 0.102 * math.sin(2.0 * math.pi * i / 6),
+                coil_base_y + 0.012,
+                hz + 0.102 * math.cos(2.0 * math.pi * i / 6),
+            )
+            for i in range(6)
+        ],
+        radius=0.007,
+        height=0.008,
+        axis_u="Y",
+        mat="R1_BareSteel",
+        bevel_segments=0,
+    )
+    # Dark glass high-voltage RF feed-through insulator collar
+    mb.add_cylinder(
+        center_u=(hx, coil_base_y + 0.024, hz),
+        radius=0.056,
+        length=0.032,
+        mat="R1_DarkGlass",
+        axis_u="Y",
+        segments=16,
+        bevel=0.004,
+        bevel_segments=1,
+    )
+
+    # 3. Central dielectric/steel support spine & 3 perimeter spacer rods through the copper helix
+    coil_len = 0.35
+    coil_center_y = coil_base_y + 0.022 + coil_len * 0.5
+    coil_top_y = coil_base_y + 0.022 + coil_len
+
+    mb.add_cylinder(
+        center_u=(hx, coil_center_y, hz),
+        radius=0.025,
+        length=coil_len + 0.04,
+        mat="R1_BareSteel",
+        axis_u="Y",
+        segments=14,
+        bevel=0.003,
+        bevel_segments=1,
+    )
+    for rod_i in range(3):
+        ang = 2.0 * math.pi * rod_i / 3.0
+        mb.add_cylinder(
+            center_u=(hx + 0.095 * math.sin(ang), coil_center_y, hz + 0.095 * math.cos(ang)),
+            radius=0.0075,
+            length=coil_len + 0.016,
+            mat="R1_GreyMetal",
+            axis_u="Y",
+            segments=8,
+            bevel=0.0015,
+            bevel_segments=1,
+        )
+
+    # 4. Tall 8.5-Turn Spun `R1_Copper` Helical Transmit Coil
+    _add_helical_coil_u(
+        mb,
+        center_u=(hx, coil_center_y, hz),
+        coil_radius=0.106,
+        wire_radius=0.0145,
+        length=coil_len - 0.018,
+        turns=8.5,
+        axis_u="Y",
+        mat="R1_Copper",
+        segs_per_turn=18,
+        wire_segs=8,
+    )
+
+    # 5. Upper R1_Brass spider ring & unlit R1_DarkGlass / R1_Brass finial cap
+    mb.add_torus(
+        center_u=(hx, coil_top_y, hz),
+        major_radius=0.096,
+        minor_radius=0.011,
+        mat="R1_Brass",
+        axis_u="Y",
+        major_segments=20,
+        minor_segments=6,
+    )
+    mb.add_cylinder(
+        center_u=(hx, coil_top_y, hz),
+        radius=0.042,
+        length=0.022,
+        mat="R1_Brass",
+        axis_u="Y",
+        segments=16,
+        bevel=0.004,
+        bevel_segments=1,
+    )
+    mb.add_cylinder(
+        center_u=(hx, coil_top_y + 0.024, hz),
+        radius=0.026,
+        radius_top=0.014,
+        length=0.032,
+        mat="R1_DarkGlass",
+        axis_u="Y",
+        segments=14,
+        bevel=0.004,
+        bevel_segments=1,
+    )
+
+    # Tilt the entire CoilMast forward (+Z) by TOPPER_05_FOLD_DEG (50 degrees, folded half-down)
+    _rotate_bm_around_hinge_x(mb, TOPPER_05_HINGE_U, TOPPER_05_FOLD_DEG)
+    return mb.build_object(parent=root)
+
+
+def _build_topper_05_horn_feeds(root: bpy.types.Object) -> bpy.types.Object:
+    """Build the two small flared brass microwave horn feeds (`HornFeeds`) mounted halfway up the folded mast."""
+    hx, hy, hz = TOPPER_05_HINGE_U
+    fold_rad = math.radians(TOPPER_05_FOLD_DEG)
+    arm_s = 0.275
+    piv_y = round(hy + arm_s * math.cos(fold_rad), 3)
+    piv_z = round(hz + arm_s * math.sin(fold_rad), 3)
+
+    mb = r1kit.MeshBuilder("HornFeeds", pivot_u=(0.0, piv_y, piv_z))
+    arm_y = hy + arm_s
+
+    # 1. Central waveguide splitter block clamped around the mast at s = 0.275 m
+    mb.add_bevel_box(
+        center_u=(hx, arm_y, hz),
+        size_u=(0.145, 0.092, 0.115),
+        mat="R1_Brass",
+        bevel=0.008,
+        segments=1,
+    )
+    mb.add_bevel_box(
+        center_u=(hx, arm_y, hz + 0.058),
+        size_u=(0.105, 0.062, 0.016),
+        mat="R1_GreyMetal",
+        bevel=0.003,
+        segments=1,
+    )
+
+    # 2. Left (-X) and Right (+X) Waveguide Arms + Flared Pyramidal Microwave Horn Feeds (Direction C)
+    for sx in (-1.0, 1.0):
+        # Horizontal cylindrical waveguide neck
+        mb.add_cylinder(
+            center_u=(sx * 0.115, arm_y, hz),
+            radius=0.028,
+            length=0.11,
+            mat="R1_Brass",
+            axis_u="X",
+            segments=16,
+            bevel=0.003,
+            bevel_segments=1,
+        )
+        # Diagonal lower support gusset strut under each waveguide arm
+        mb.add_strut(
+            p0_u=(sx * 0.048, arm_y - 0.065, hz),
+            p1_u=(sx * 0.165, arm_y - 0.015, hz),
+            width=0.022,
+            thickness=0.026,
+            mat="R1_Brass",
+            bevel=0.003,
+        )
+        # Inner throat flange ring
+        mb.add_bevel_box(
+            center_u=(sx * 0.168, arm_y, hz),
+            size_u=(0.018, 0.082, 0.096),
+            mat="R1_GreyMetal",
+            bevel=0.004,
+            segments=1,
+        )
+        # Flared pyramidal microwave feed horn body (`R1_Brass`) opening outward along +/-X
+        mb.add_bevel_box(
+            center_u=(sx * 0.245, arm_y, hz),
+            size_u=(0.074, 0.148, 0.088),
+            mat="R1_Brass",
+            bevel=0.007,
+            segments=1,
+            rot_deg_u=(0.0, 0.0, 90.0 * sx),
+            top_scale_xz=(1.88, 1.82),
+        )
+        # Outer rolled rectangular horn aperture rim (`R1_Brass`)
+        mb.add_bevel_box(
+            center_u=(sx * 0.322, arm_y, hz),
+            size_u=(0.020, 0.144, 0.168),
+            mat="R1_Brass",
+            bevel=0.005,
+            segments=1,
+        )
+        # Recessed dark waveguide throat liner (`R1_DarkGlass`) inside the horn mouth
+        mb.add_bevel_box(
+            center_u=(sx * 0.326, arm_y, hz),
+            size_u=(0.014, 0.108, 0.132),
+            mat="R1_DarkGlass",
+            bevel=0.003,
+            segments=1,
+        )
+        # Internal copper probe pin inside the dark waveguide throat
+        mb.add_cylinder(
+            center_u=(sx * 0.328, arm_y, hz),
+            radius=0.012,
+            length=0.016,
+            mat="R1_Copper",
+            axis_u="X",
+            segments=10,
+            bevel=0.002,
+            bevel_segments=1,
+        )
+        # Curved R1_Copper coaxial feed elbow into the underside of the horn throat
+        mb.add_tube_path(
+            points_u=[
+                (sx * 0.066, arm_y - 0.075, hz),
+                (sx * 0.125, arm_y - 0.068, hz),
+                (sx * 0.155, arm_y - 0.032, hz),
+            ],
+            radius=0.012,
+            mat="R1_Copper",
+            segments=10,
+            cap_ends=True,
+        )
+
+    # Tilt HornFeeds by the exact same hinge & fold angle as CoilMast
+    _rotate_bm_around_hinge_x(mb, TOPPER_05_HINGE_U, TOPPER_05_FOLD_DEG)
+    return mb.build_object(parent=root)
+
+
+def _apply_ssr3_sun_bleached_weathering(root: bpy.types.Object, footprint_radius: float = 0.68) -> None:
+    """Apply extra sun-bleached upper-surface edge wear (G) and settled lunar regolith dust (B) for Elder 05."""
+    _apply_ssr3_decades_at_rest_weathering(root, footprint_radius=footprint_radius)
+
+    mesh_objs = [o for o in r1kit.collect_hierarchy(root) if o.type == "MESH" and len(o.data.polygons) > 0]
+    for obj in mesh_objs:
+        me = obj.data
+        ca = me.color_attributes.get(r1kit.VCOL_ATTRIBUTE_NAME)
+        if ca is None:
+            continue
+
+        num_loops = len(me.loops)
+        rgba = np.ones(num_loops * 4, dtype=np.float32)
+        ca.data.foreach_get("color", rgba)
+        rgba = rgba.reshape(-1, 4)
+
+        world_mat = obj.matrix_world
+        rot_mat = world_mat.to_3x3()
+
+        loop_idx = 0
+        for poly in me.polygons:
+            wn = (rot_mat @ poly.normal).normalized()
+            up_dot = float(wn.z)
+            for l_i in poly.loop_indices:
+                v_idx = me.loops[l_i].vertex_index
+                wp = world_mat @ me.vertices[v_idx].co
+                h_z = float(wp.z)
+
+                r_ao = float(rgba[loop_idx, 0])
+                g_wear = float(rgba[loop_idx, 1])
+                b_dust = float(rgba[loop_idx, 2])
+
+                # Strong sun-bleaching on the folded mast, horn feeds, and upper RF cabinet
+                bleach_h = max(0.0, min(1.0, (h_z - 0.12) / 0.45))
+                bleach_up = max(0.0, up_dot + 0.35)
+                g_out = float(np.clip(max(g_wear * 1.28, bleach_h * bleach_up * 0.54 * r_ao), 0.0, 1.0))
+                b_out = float(np.clip(max(b_dust, max(0.0, up_dot - 0.25) * 0.68), 0.0, 1.0))
+
+                rgba[loop_idx, 0] = r_ao
+                rgba[loop_idx, 1] = g_out
+                rgba[loop_idx, 2] = b_out
+                rgba[loop_idx, 3] = 1.0
+                loop_idx += 1
+
+        ca.data.foreach_set("color", rgba.reshape(-1))
+        me.update()
+
+
+def build_ssr3_topper_05() -> bpy.types.Object:
+    """Build the complete `SSR3_Topper_05` ("Dish Tender") hierarchy in the active Blender scene."""
+    root = r1kit.create_empty("SSR3_Topper_05", pivot_u=(0.0, 0.0, 0.0))
+
+    _build_topper_05_turntable(root)
+    _build_topper_05_rf_cabinet(root)
+    _build_topper_05_coil_mast(root)
+    _build_topper_05_horn_feeds(root)
+
+    bpy.context.view_layer.update()
+    _apply_ssr3_sun_bleached_weathering(root, footprint_radius=0.68)
+    return root
+
+
+def _build_unit_05_stencil(parent: bpy.types.Object) -> bpy.types.Object:
+    """Build the `Unit_Number_05` relief stencil (`05`) on both flanks at `UNIT_NUMBER_PIVOT_U`."""
+    mb = r1kit.MeshBuilder("Unit_Number_05", pivot_u=UNIT_NUMBER_PIVOT_U)
+    for sx in (-1.0, 1.0):
+        _add_stencil_text_flank(
+            mb,
+            text="05",
+            side_x=sx * 0.442,
+            center_y=UNIT_NUMBER_PIVOT_U[1],
+            center_z=UNIT_NUMBER_PIVOT_U[2],
+            char_w=0.042,
+            char_h=0.068,
+            relief_x=0.005,
+            mat="R1_GreyMetal",
+        )
+    return mb.build_object(parent=parent)
+
+
+def build_elder05_combined() -> bpy.types.Object:
+    """Build the combined Elder 05 assembly (`SSR3_Chassis` + `SSR3_Topper_05` + `05` stencil) for preview rendering."""
+    chassis_root = build_ssr3_chassis()
+    topper_socket = next((o for o in chassis_root.children if o.name == "Topper_Socket"), chassis_root)
+    unit_num_socket = next((o for o in chassis_root.children if o.name == "Unit_Number"), chassis_root)
+
+    topper_root = build_ssr3_topper_05()
+    topper_root.parent = topper_socket
+    topper_root.location = (0.0, 0.0, 0.0)
+
+    _build_unit_05_stencil(unit_num_socket)
+    bpy.context.view_layer.update()
+    _apply_ssr3_sun_bleached_weathering(chassis_root, footprint_radius=0.88)
+    return chassis_root
+
+
+# ---------------------------------------------------------------------------
+# Deliverable 2 (agy-ssr3b): SSR3_Topper_04 ("Terrace Lift & Jumper" —
+# Pressurized Gas Bottles with Copper Lines, 4 De Laval Cold-Gas Thrusters,
+# and a Raised Long-Travel Suspension Kit)
+# ---------------------------------------------------------------------------
+TOPPER_04_SUSPENSION_LIFT_Y: float = 0.14  # Hull lift above standard wheel stance (0.14 m)
+
+
+def _add_pressurized_gas_bottle(
+    mb: r1kit.MeshBuilder,
+    center_u: tuple[float, float, float],
+    radius: float,
+    body_len: float,
+    dome_len: float,
+    mat: str = "R1_Brass",
+    strap_mat: str = "R1_GreyMetal",
+    strap_z_offsets: Sequence[float] = (-0.18, 0.18),
+) -> None:
+    """Append a horizontal Z-aligned cylindrical gas bottle with rounded dome ends and steel clamp bands."""
+    cx, cy, cz = center_u
+    mb.add_cylinder(
+        center_u=(cx, cy, cz),
+        radius=radius,
+        length=body_len,
+        mat=mat,
+        axis_u="Z",
+        segments=24,
+        bevel=min(radius * 0.34, 0.038),
+        bevel_segments=2,
+    )
+    for sz in (-1.0, 1.0):
+        dome_cz = cz + sz * (body_len * 0.5 + dome_len * 0.32)
+        r_bot = radius * 0.76 if sz > 0.0 else radius * 0.36
+        r_top = radius * 0.36 if sz > 0.0 else radius * 0.76
+        mb.add_cylinder(
+            center_u=(cx, cy, dome_cz),
+            radius=r_bot,
+            radius_top=r_top,
+            length=dome_len,
+            mat=mat,
+            axis_u="Z",
+            segments=20,
+            bevel=dome_len * 0.28,
+            bevel_segments=2,
+        )
+        # End neck boss (`R1_BareSteel`)
+        neck_cz = cz + sz * (body_len * 0.5 + dome_len * 0.85)
+        mb.add_cylinder(
+            center_u=(cx, cy, neck_cz),
+            radius=radius * 0.24,
+            length=0.026,
+            mat="R1_BareSteel",
+            axis_u="Z",
+            segments=12,
+            bevel=0.003,
+            bevel_segments=1,
+        )
+
+    for z_off in strap_z_offsets:
+        mb.add_cylinder(
+            center_u=(cx, cy, cz + z_off),
+            radius=radius + 0.006,
+            length=0.030,
+            mat=strap_mat,
+            axis_u="Z",
+            segments=24,
+            bevel=0.003,
+            bevel_segments=1,
+        )
+
+
+def _build_topper_04_gas_bottles(root: bpy.types.Object) -> bpy.types.Object:
+    """Build the twin dorsal O2 gas bottles + twin side outrigger accumulator tanks (`GasBottles`)."""
+    mb = r1kit.MeshBuilder("GasBottles", pivot_u=(0.0, 0.15, 0.0))
+
+    # 1. Dorsal steel tank cradle frame in the payload well
+    mb.add_bevel_box(
+        center_u=(0.0, 0.016, 0.0),
+        size_u=(0.62, 0.032, 0.92),
+        mat="R1_GreyMetal",
+        bevel=0.005,
+        segments=1,
+    )
+    for sz_cradle in (-0.24, 0.24):
+        mb.add_bevel_box(
+            center_u=(0.0, 0.056, sz_cradle),
+            size_u=(0.58, 0.054, 0.048),
+            mat="R1_BareSteel",
+            bevel=0.005,
+            segments=1,
+        )
+    # Central dorsal R1_SagePatch pressure regulator & service manifold housing
+    mb.add_bevel_box(
+        center_u=(0.0, 0.075, 0.0),
+        size_u=(0.12, 0.085, 0.42),
+        mat="R1_SagePatch",
+        bevel=0.006,
+        segments=1,
+    )
+    mb.add_bevel_box(
+        center_u=(0.0, 0.122, 0.0),
+        size_u=(0.095, 0.016, 0.16),
+        mat="R1_DarkGlass",
+        bevel=0.003,
+        segments=1,
+    )
+
+    # 2. Twin large dorsal brushed-brass O2 tanks (`R1_Brass`, x = +/- 0.165 m, y = 0.168 m)
+    for sx in (-1.0, 1.0):
+        _add_pressurized_gas_bottle(
+            mb,
+            center_u=(sx * 0.165, 0.168, 0.0),
+            radius=0.114,
+            body_len=0.72,
+            dome_len=0.068,
+            mat="R1_Brass",
+            strap_mat="R1_GreyMetal",
+            strap_z_offsets=(-0.24, 0.24),
+        )
+        # Saddle clamp bolts on the outer edges of the dorsal tank bands
+        mb.add_bolts(
+            [
+                (sx * 0.285, 0.115, -0.24),
+                (sx * 0.285, 0.115, 0.24),
+            ],
+            radius=0.008,
+            height=0.012,
+            axis_u="X",
+            mat="R1_BareSteel",
+            bevel_segments=0,
+        )
+
+    # 3. Twin side outrigger accumulator bottles (`R1_Brass`, x = +/- 0.448 m, y = 0.025 m)
+    for sx in (-1.0, 1.0):
+        # Outrigger steel saddle beams cantilevering over the dorsal coaming rim
+        for sz_beam in (-0.20, 0.20):
+            mb.add_bevel_box(
+                center_u=(sx * 0.355, 0.068, sz_beam),
+                size_u=(0.19, 0.032, 0.044),
+                mat="R1_GreyMetal",
+                bevel=0.004,
+                segments=1,
+            )
+            mb.add_bevel_box(
+                center_u=(sx * 0.435, 0.035, sz_beam),
+                size_u=(0.048, 0.068, 0.044),
+                mat="R1_GreyMetal",
+                bevel=0.004,
+                segments=1,
+            )
+        _add_pressurized_gas_bottle(
+            mb,
+            center_u=(sx * 0.452, 0.028, 0.0),
+            radius=0.076,
+            body_len=0.52,
+            dome_len=0.052,
+            mat="R1_Brass",
+            strap_mat="R1_GreyMetal",
+            strap_z_offsets=(-0.20, 0.20),
+        )
+        mb.add_bolts(
+            [
+                (sx * 0.532, 0.028, -0.20),
+                (sx * 0.532, 0.028, 0.20),
+            ],
+            radius=0.007,
+            height=0.010,
+            axis_u="X",
+            mat="R1_BareSteel",
+            bevel_segments=0,
+        )
+
+    return mb.build_object(parent=root)
+
+
+def _build_topper_04_copper_lines(root: bpy.types.Object) -> bpy.types.Object:
+    """Build the high-pressure `R1_Copper` gas manifold lines and brass union valves (`CopperLines`)."""
+    mb = r1kit.MeshBuilder("CopperLines", pivot_u=(0.0, 0.12, 0.0))
+
+    # Front and rear cross-manifold header blocks (`R1_Copper` + `R1_Brass`)
+    for sz in (-1.0, 1.0):
+        hz = sz * 0.435
+        mb.add_bevel_box(
+            center_u=(0.0, 0.058, hz),
+            size_u=(0.38, 0.036, 0.042),
+            mat="R1_Copper",
+            bevel=0.005,
+            segments=1,
+        )
+        for sx in (-1.0, 1.0):
+            # Valve block on each dorsal bottle dome
+            mb.add_cylinder(
+                center_u=(sx * 0.165, 0.168, sz * 0.425),
+                radius=0.024,
+                length=0.032,
+                mat="R1_Brass",
+                axis_u="Z",
+                segments=12,
+                bevel=0.003,
+                bevel_segments=1,
+            )
+            # High-pressure arched copper pipe from dorsal bottle dome down to front/rear deck header
+            mb.add_tube_path(
+                points_u=[
+                    (sx * 0.165, 0.168, sz * 0.432),
+                    (sx * 0.215, 0.155, sz * 0.485),
+                    (sx * 0.225, 0.088, sz * 0.475),
+                    (sx * 0.165, 0.062, sz * 0.435),
+                ],
+                radius=0.014,
+                mat="R1_Copper",
+                segments=10,
+                cap_ends=True,
+            )
+            # Copper feed loop from dorsal bottle out over the coaming into the side accumulator bottle dome
+            mb.add_tube_path(
+                points_u=[
+                    (sx * 0.165, 0.168, sz * 0.430),
+                    (sx * 0.295, 0.162, sz * 0.410),
+                    (sx * 0.415, 0.105, sz * 0.365),
+                    (sx * 0.452, 0.028, sz * 0.305),
+                ],
+                radius=0.013,
+                mat="R1_Copper",
+                segments=10,
+                cap_ends=True,
+            )
+            # Outer side manifold pipe running along the side accumulator bottle and feeding the De Laval thrusters
+            mb.add_tube_path(
+                points_u=[
+                    (sx * 0.452, 0.028, sz * 0.305),
+                    (sx * 0.505, -0.025, sz * 0.335),
+                    (sx * 0.485, -0.068, sz * 0.240),
+                    (sx * 0.458, -0.072, sz * 0.225),
+                ],
+                radius=0.012,
+                mat="R1_Copper",
+                segments=10,
+                cap_ends=True,
+            )
+
+    # Longitudinal side copper balance rail along each outrigger bottle
+    for sx in (-1.0, 1.0):
+        mb.add_tube_path(
+            points_u=[
+                (sx * 0.518, -0.022, -0.28),
+                (sx * 0.525, -0.022, 0.0),
+                (sx * 0.518, -0.022, 0.28),
+            ],
+            radius=0.011,
+            mat="R1_Copper",
+            segments=10,
+            cap_ends=True,
+        )
+
+    return mb.build_object(parent=root)
+
+
+def _build_topper_04_jump_thrusters(root: bpy.types.Object) -> bpy.types.Object:
+    """Build the 4 canted conical brass De Laval Cold-Gas Jump Thruster nozzles (`JumpThrusters`)."""
+    mb = r1kit.MeshBuilder("JumpThrusters", pivot_u=(0.0, -0.14, 0.0))
+
+    for sx in (-1.0, 1.0):
+        for sz in (-1.0, 1.0):
+            tx = sx * 0.456
+            tz = sz * 0.225
+            cant_deg = 8.0 * sx
+
+            # 1. Upper solenoid thruster valve & mounting bracket under the side accumulator bottle
+            mb.add_bevel_box(
+                center_u=(tx - sx * 0.018, -0.052, tz),
+                size_u=(0.068, 0.044, 0.068),
+                mat="R1_GreyMetal",
+                bevel=0.005,
+                segments=1,
+            )
+            mb.add_cylinder(
+                center_u=(tx, -0.082, tz),
+                radius=0.038,
+                length=0.034,
+                mat="R1_BareSteel",
+                axis_u="Y",
+                segments=16,
+                bevel=0.004,
+                bevel_segments=1,
+                rot_deg_u=(0.0, 0.0, cant_deg),
+            )
+
+            # 2. Canted conical R1_Brass De Laval thruster bell (radius_top=0.030 throat -> radius=0.072 exit mouth)
+            bell_x = tx + sx * 0.010
+            bell_y = -0.155
+            mb.add_cylinder(
+                center_u=(bell_x, bell_y, tz),
+                radius=0.072,
+                radius_top=0.030,
+                length=0.135,
+                mat="R1_Brass",
+                axis_u="Y",
+                segments=20,
+                bevel=0.004,
+                bevel_segments=1,
+                rot_deg_u=(0.0, 0.0, cant_deg),
+            )
+            # Mid-bell stiffening band & bottom exit lip torus
+            mb.add_torus(
+                center_u=(bell_x + sx * 0.004, bell_y - 0.020, tz),
+                major_radius=0.056,
+                minor_radius=0.006,
+                mat="R1_Brass",
+                axis_u="Y",
+                major_segments=20,
+                minor_segments=6,
+                rot_deg_u=(0.0, 0.0, cant_deg),
+            )
+            mb.add_torus(
+                center_u=(bell_x + sx * 0.009, bell_y - 0.064, tz),
+                major_radius=0.070,
+                minor_radius=0.007,
+                mat="R1_Brass",
+                axis_u="Y",
+                major_segments=20,
+                minor_segments=6,
+                rot_deg_u=(0.0, 0.0, cant_deg),
+            )
+            # Dark interior nozzle throat shadow plug (`R1_DarkGlass`) at bottom of bell
+            mb.add_cylinder(
+                center_u=(bell_x + sx * 0.008, bell_y - 0.062, tz),
+                radius=0.058,
+                length=0.012,
+                mat="R1_DarkGlass",
+                axis_u="Y",
+                segments=18,
+                bevel=0.002,
+                bevel_segments=1,
+                rot_deg_u=(0.0, 0.0, cant_deg),
+            )
+
+    return mb.build_object(parent=root)
+
+
+def _build_topper_04_suspension_kit(root: bpy.types.Object) -> bpy.types.Object:
+    """Build the raised long-travel coil-spring suspension kit & drop-belly cradle (`SuspensionKit`)."""
+    mb = r1kit.MeshBuilder("SuspensionKit", pivot_u=(0.0, -0.48, 0.0))
+
+    # In Elder04, the hull (and Topper_Socket) is lifted by TOPPER_04_SUSPENSION_LIFT_Y (+0.14 m),
+    # so the 4 wheel axle centers sit at y_local = (WHEEL_RADIUS - (0.69 + 0.14)) = -0.615 m.
+    axle_y = WHEEL_RADIUS - (TOPPER_SOCKET_PIVOT_U[1] + TOPPER_04_SUSPENSION_LIFT_Y)  # -0.615 m
+
+    # 1. Tapered central drop-belly undercarriage cradle (matching Elder 04 in ssr3_direction_a_boxy_cart.png)
+    mb.add_bevel_box(
+        center_u=(0.0, -0.465, 0.0),
+        size_u=(0.48, 0.155, 1.08),
+        mat="R1_CreamEnamel",
+        bevel=0.012,
+        segments=1,
+        top_scale_xz=(1.12, 1.08),
+    )
+    mb.add_bevel_box(
+        center_u=(0.0, -0.542, 0.0),
+        size_u=(0.46, 0.028, 1.02),
+        mat="R1_GreyMetal",
+        bevel=0.005,
+        segments=1,
+    )
+    # Front and rear angled belly skid glacis plates with center vertical seam & corner bolts
+    for sz in (-1.0, 1.0):
+        mb.add_bevel_box(
+            center_u=(0.0, -0.465, sz * 0.535),
+            size_u=(0.44, 0.145, 0.042),
+            mat="R1_CreamEnamel",
+            bevel=0.006,
+            segments=1,
+            rot_deg_u=(-sz * 18.0, 0.0, 0.0),
+        )
+        mb.add_bevel_box(
+            center_u=(0.0, -0.465, sz * 0.556),
+            size_u=(0.012, 0.135, 0.012),
+            mat="R1_GreyMetal",
+            bevel=0.002,
+            segments=1,
+            rot_deg_u=(-sz * 18.0, 0.0, 0.0),
+        )
+        mb.add_bolts(
+            [
+                (sx * 0.18, -0.42, sz * 0.552)
+                for sx in (-1.0, 1.0)
+            ]
+            + [
+                (sx * 0.18, -0.51, sz * 0.535)
+                for sx in (-1.0, 1.0)
+            ],
+            radius=0.007,
+            height=0.008,
+            axis_u="Z",
+            mat="R1_BareSteel",
+            bevel_segments=0,
+        )
+
+    # 2. 4 Long-Travel Coil-Over Shock Struts + Diagonal Wishbone Control Arms at FL, FR, RL, RR
+    for sx in (-1.0, 1.0):
+        for sz in (-1.0, 1.0):
+            wz = sz * WHEEL_BASE_Z
+            top_mount_u = (sx * 0.285, -0.345, wz)
+            knuckle_u = (sx * 0.335, axle_y + 0.012, wz)
+            mid_shock_u = (
+                0.5 * (top_mount_u[0] + knuckle_u[0]),
+                0.5 * (top_mount_u[1] + knuckle_u[1]),
+                wz,
+            )
+            shock_cant_deg = 11.0 * sx
+
+            # Upper spring-tower shroud enclosing the chassis upper strut root
+            mb.add_bevel_box(
+                center_u=(sx * 0.305, -0.335, wz),
+                size_u=(0.095, 0.095, 0.14),
+                mat="R1_GreyMetal",
+                bevel=0.006,
+                segments=1,
+            )
+            # Central telescoping steel damper shaft connecting upper tower to lower wheel knuckle
+            mb.add_strut(
+                p0_u=top_mount_u,
+                p1_u=knuckle_u,
+                width=0.032,
+                thickness=0.032,
+                mat="R1_BareSteel",
+                bevel=0.004,
+            )
+            # Upper & lower R1_Brass coil-spring perch collars
+            for perch_t in (0.14, 0.86):
+                py_p = top_mount_u[1] * (1.0 - perch_t) + knuckle_u[1] * perch_t
+                px_p = top_mount_u[0] * (1.0 - perch_t) + knuckle_u[0] * perch_t
+                mb.add_cylinder(
+                    center_u=(px_p, py_p, wz),
+                    radius=0.044,
+                    length=0.020,
+                    mat="R1_Brass",
+                    axis_u="Y",
+                    segments=16,
+                    bevel=0.003,
+                    bevel_segments=1,
+                    rot_deg_u=(0.0, 0.0, shock_cant_deg),
+                )
+            # Long-travel 7.5-turn exposed helical coil spring (`R1_GreyMetal`)
+            _add_helical_coil_u(
+                mb,
+                center_u=mid_shock_u,
+                coil_radius=0.038,
+                wire_radius=0.0085,
+                length=0.205,
+                turns=7.5,
+                axis_u="Y",
+                mat="R1_GreyMetal",
+                segs_per_turn=14,
+                wire_segs=7,
+                rot_deg_u=(0.0, 0.0, shock_cant_deg),
+            )
+
+            # Twin diagonal lower A-arm wishbone struts from the drop-belly cradle to the wheel hub knuckle
+            for arm_dz in (-0.065, 0.065):
+                mb.add_strut(
+                    p0_u=(sx * 0.205, -0.505, wz + arm_dz),
+                    p1_u=(sx * 0.335, axle_y, wz + arm_dz * 0.25),
+                    width=0.034,
+                    thickness=0.028,
+                    mat="R1_GreyMetal",
+                    bevel=0.004,
+                )
+            # Upper radius link arm stabilizing the lifted knuckle
+            mb.add_strut(
+                p0_u=(sx * 0.225, -0.415, wz - sz * 0.08),
+                p1_u=(sx * 0.330, axle_y + 0.045, wz),
+                width=0.028,
+                thickness=0.024,
+                mat="R1_BareSteel",
+                bevel=0.003,
+            )
+
+            # Heavy forged lower wheel-hub carrier knuckle at the lifted axle position
+            mb.add_bevel_box(
+                center_u=(sx * 0.340, axle_y + 0.008, wz),
+                size_u=(0.062, 0.076, 0.084),
+                mat="R1_GreyMetal",
+                bevel=0.005,
+                segments=1,
+            )
+            mb.add_cylinder(
+                center_u=(sx * 0.355, axle_y, wz),
+                radius=0.034,
+                length=0.052,
+                mat="R1_BareSteel",
+                axis_u="X",
+                segments=14,
+                bevel=0.004,
+                bevel_segments=1,
+            )
+
+    return mb.build_object(parent=root)
+
+
+def build_ssr3_topper_04() -> bpy.types.Object:
+    """Build the complete `SSR3_Topper_04` ("Terrace Lift & Jumper") hierarchy in the active Blender scene."""
+    root = r1kit.create_empty("SSR3_Topper_04", pivot_u=(0.0, 0.0, 0.0))
+
+    _build_topper_04_gas_bottles(root)
+    _build_topper_04_copper_lines(root)
+    _build_topper_04_jump_thrusters(root)
+    _build_topper_04_suspension_kit(root)
+
+    bpy.context.view_layer.update()
+    _apply_ssr3_decades_at_rest_weathering(root, footprint_radius=0.68)
+    return root
+
+
+def _build_unit_04_stencil(parent: bpy.types.Object) -> bpy.types.Object:
+    """Build the `Unit_Number_04` relief stencil (`04`) on both flanks at `UNIT_NUMBER_PIVOT_U`."""
+    mb = r1kit.MeshBuilder("Unit_Number_04", pivot_u=UNIT_NUMBER_PIVOT_U)
+    for sx in (-1.0, 1.0):
+        _add_stencil_text_flank(
+            mb,
+            text="04",
+            side_x=sx * 0.442,
+            center_y=UNIT_NUMBER_PIVOT_U[1],
+            center_z=UNIT_NUMBER_PIVOT_U[2],
+            char_w=0.042,
+            char_h=0.068,
+            relief_x=0.005,
+            mat="R1_GreyMetal",
+        )
+    return mb.build_object(parent=parent)
+
+
+def build_elder04_combined() -> bpy.types.Object:
+    """Build the combined Elder 04 assembly (`SSR3_Chassis` + `SSR3_Topper_04` + `04` stencil + lifted hull)."""
+    chassis_root = build_ssr3_chassis()
+    topper_socket = next((o for o in chassis_root.children if o.name == "Topper_Socket"), chassis_root)
+    unit_num_socket = next((o for o in chassis_root.children if o.name == "Unit_Number"), chassis_root)
+
+    topper_root = build_ssr3_topper_04()
+    topper_root.parent = topper_socket
+    topper_root.location = (0.0, 0.0, 0.0)
+
+    _build_unit_04_stencil(unit_num_socket)
+
+    # Apply the long-travel suspension lift (+0.14 m Z in Blender space) to the hull while keeping wheels on ground
+    for child in chassis_root.children:
+        if not child.name.startswith("Wheel_"):
+            child.location.z += TOPPER_04_SUSPENSION_LIFT_Y
+
+    bpy.context.view_layer.update()
+    _apply_ssr3_decades_at_rest_weathering(chassis_root, footprint_radius=0.88)
+    return chassis_root
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Build SSR3 family FBXs and preview renders.")
     parser.add_argument(
@@ -2587,6 +3893,16 @@ def main(argv: list[str] | None = None) -> None:
         "--topper06-fbx-out",
         type=Path,
         default=Path("Assets/_Project/Art/R1/Models/Rover/SSR3_Topper_06.fbx"),
+    )
+    parser.add_argument(
+        "--topper05-fbx-out",
+        type=Path,
+        default=Path("Assets/_Project/Art/R1/Models/Rover/SSR3_Topper_05.fbx"),
+    )
+    parser.add_argument(
+        "--topper04-fbx-out",
+        type=Path,
+        default=Path("Assets/_Project/Art/R1/Models/Rover/SSR3_Topper_04.fbx"),
     )
     parser.add_argument(
         "--tracks-fbx-out",
@@ -2608,14 +3924,20 @@ def main(argv: list[str] | None = None) -> None:
         type=Path,
         default=Path("Logs/renders"),
     )
+    parser.add_argument(
+        "--only",
+        choices=("all", "04", "05", "06"),
+        default="all",
+    )
     parser.add_argument("--skip-renders", action="store_true")
     parser.add_argument("--only-ssr3c", action="store_true")
     parser.add_argument("--only-topper-02", action="store_true")
     args = parser.parse_args(argv)
 
-    concept_img_b = Path("D:/Project/MoonProject-wt/agy-elders/Logs/concepts/ssr3_direction_b_low_crawler.png")
+    concept_a_img = Path("D:/Project/MoonProject-wt/agy-elders/Logs/concepts/ssr3_direction_a_boxy_cart.png")
+    concept_c_img = Path("D:/Project/MoonProject-wt/agy-elders/Logs/concepts/ssr3_direction_c_mast_rover.png")
 
-    if not args.only_ssr3c and not args.only_topper_02:
+    if args.only in ("all", "06") and not args.only_ssr3c and not args.only_topper_02:
         # 1. Build & export SSR3_Chassis.fbx
         r1kit.reset_scene()
         chassis_root = build_ssr3_chassis()
@@ -2630,37 +3952,158 @@ def main(argv: list[str] | None = None) -> None:
         print(f"[SSR3_Topper_06] Triangles: {topper06_tris}")
         r1kit.export_fbx(topper06_root, args.topper06_fbx_out)
 
-    if not args.only_topper_02:
-        # 3. Build & export SSR3_Tracks.fbx
+        if not args.skip_renders:
+            r1kit.render_structure_suite(
+                root=topper06_root,
+                slug="ssr3_topper_06",
+                out_dir=args.renders_dir,
+                target_height=0.39,
+                footprint_radius=0.62,
+                pose_rest_fn=lambda _r: None,
+                pose_active_fn=lambda _r: None,
+                cam_side_x=-1.0,
+                concept_path=concept_a_img if concept_a_img.exists() else None,
+                use_active_for_compare=False,
+            )
+
+            r1kit.reset_scene()
+            elder06_root = build_elder06_combined()
+            r1kit.render_structure_suite(
+                root=elder06_root,
+                slug="elder06",
+                out_dir=args.renders_dir,
+                target_height=1.08,
+                footprint_radius=0.88,
+                pose_rest_fn=lambda _r: None,
+                pose_active_fn=lambda _r: None,
+                cam_side_x=-1.0,
+                concept_path=concept_a_img if concept_a_img.exists() else None,
+                use_active_for_compare=False,
+            )
+
+    if args.only in ("all", "05") and not args.only_ssr3c and not args.only_topper_02:
+        # 3. Build & export SSR3_Topper_05.fbx ("Dish Tender")
+        r1kit.reset_scene()
+        topper05_root = build_ssr3_topper_05()
+        topper05_tris = r1kit.count_triangles(topper05_root)
+        print(f"[SSR3_Topper_05] Triangles: {topper05_tris}")
+        r1kit.export_fbx(topper05_root, args.topper05_fbx_out)
+
+        if not args.skip_renders:
+            r1kit.render_structure_suite(
+                root=topper05_root,
+                slug="ssr3_topper_05",
+                out_dir=args.renders_dir,
+                target_height=0.72,
+                footprint_radius=0.68,
+                pose_rest_fn=lambda _r: None,
+                pose_active_fn=lambda _r: None,
+                cam_side_x=-1.0,
+                concept_path=concept_c_img if concept_c_img.exists() else None,
+                use_active_for_compare=False,
+            )
+
+            r1kit.reset_scene()
+            elder05_root = build_elder05_combined()
+            r1kit.render_structure_suite(
+                root=elder05_root,
+                slug="elder05",
+                out_dir=args.renders_dir,
+                target_height=1.38,
+                footprint_radius=0.88,
+                pose_rest_fn=lambda _r: None,
+                pose_active_fn=lambda _r: None,
+                cam_side_x=-1.0,
+                concept_path=concept_c_img if concept_c_img.exists() else None,
+                use_active_for_compare=False,
+            )
+
+    if args.only in ("all", "04") and not args.only_ssr3c and not args.only_topper_02:
+        # 4. Build & export SSR3_Topper_04.fbx ("Terrace Lift & Jumper")
+        r1kit.reset_scene()
+        topper04_root = build_ssr3_topper_04()
+        topper04_tris = r1kit.count_triangles(topper04_root)
+        print(f"[SSR3_Topper_04] Triangles: {topper04_tris}")
+        r1kit.export_fbx(topper04_root, args.topper04_fbx_out)
+
+        if not args.skip_renders:
+            r1kit.render_structure_suite(
+                root=topper04_root,
+                slug="ssr3_topper_04",
+                out_dir=args.renders_dir,
+                target_height=0.92,
+                footprint_radius=0.72,
+                pose_rest_fn=lambda _r: None,
+                pose_active_fn=lambda _r: None,
+                cam_side_x=-1.0,
+                concept_path=concept_a_img if concept_a_img.exists() else None,
+                use_active_for_compare=False,
+            )
+
+            r1kit.reset_scene()
+            elder04_root = build_elder04_combined()
+            r1kit.render_structure_suite(
+                root=elder04_root,
+                slug="elder04",
+                out_dir=args.renders_dir,
+                target_height=1.12,
+                footprint_radius=0.92,
+                pose_rest_fn=lambda _r: None,
+                pose_active_fn=lambda _r: None,
+                cam_side_x=-1.0,
+                concept_path=concept_a_img if concept_a_img.exists() else None,
+                use_active_for_compare=False,
+            )
+
+    concept_img_b = Path("D:/Project/MoonProject-wt/agy-elders/Logs/concepts/ssr3_direction_b_low_crawler.png")
+
+    if args.only == "all" and not args.only_topper_02:
+        # 5. Build & export SSR3_Tracks.fbx
         r1kit.reset_scene()
         tracks_root = build_ssr3_tracks()
         tracks_tris = r1kit.count_triangles(tracks_root)
         print(f"[SSR3_Tracks] Triangles: {tracks_tris}")
         r1kit.export_fbx(tracks_root, args.tracks_fbx_out)
 
-        # 4. Build & export SSR3_Topper_03.fbx
+        # 6. Build & export SSR3_Topper_03.fbx
         r1kit.reset_scene()
         topper03_root = build_ssr3_topper_03()
         topper03_tris = r1kit.count_triangles(topper03_root)
         print(f"[SSR3_Topper_03] Triangles: {topper03_tris}")
         r1kit.export_fbx(topper03_root, args.topper03_fbx_out)
 
-    # 5. Build & export SSR3_Topper_02.fbx
-    r1kit.reset_scene()
-    topper02_root = build_ssr3_topper_02()
-    topper02_tris = r1kit.count_triangles(topper02_root)
-    print(f"[SSR3_Topper_02] Triangles: {topper02_tris}")
-    r1kit.export_fbx(topper02_root, args.topper02_fbx_out)
+    if args.only == "all":
+        # 7. Build & export SSR3_Topper_02.fbx
+        r1kit.reset_scene()
+        topper02_root = build_ssr3_topper_02()
+        topper02_tris = r1kit.count_triangles(topper02_root)
+        print(f"[SSR3_Topper_02] Triangles: {topper02_tris}")
+        r1kit.export_fbx(topper02_root, args.topper02_fbx_out)
 
-    if not args.skip_renders:
-        if not args.only_topper_02:
+        if not args.skip_renders:
+            if not args.only_topper_02:
+                r1kit.reset_scene()
+                elder03_root = build_elder03_combined()
+                r1kit.render_structure_suite(
+                    root=elder03_root,
+                    slug="elder03",
+                    out_dir=args.renders_dir,
+                    target_height=1.12,
+                    footprint_radius=0.88,
+                    pose_rest_fn=lambda _r: None,
+                    pose_active_fn=lambda _r: None,
+                    cam_side_x=-1.0,
+                    concept_path=concept_img_b if concept_img_b.exists() else None,
+                    use_active_for_compare=False,
+                )
+
             r1kit.reset_scene()
-            elder03_root = build_elder03_combined()
+            elder02_root = build_elder02_combined()
             r1kit.render_structure_suite(
-                root=elder03_root,
-                slug="elder03",
+                root=elder02_root,
+                slug="elder02",
                 out_dir=args.renders_dir,
-                target_height=1.12,
+                target_height=1.30,
                 footprint_radius=0.88,
                 pose_rest_fn=lambda _r: None,
                 pose_active_fn=lambda _r: None,
@@ -2668,22 +4111,6 @@ def main(argv: list[str] | None = None) -> None:
                 concept_path=concept_img_b if concept_img_b.exists() else None,
                 use_active_for_compare=False,
             )
-
-        r1kit.reset_scene()
-        elder02_root = build_elder02_combined()
-        r1kit.render_structure_suite(
-            root=elder02_root,
-            slug="elder02",
-            out_dir=args.renders_dir,
-            target_height=1.30,
-            footprint_radius=0.88,
-            pose_rest_fn=lambda _r: None,
-            pose_active_fn=lambda _r: None,
-            cam_side_x=-1.0,
-            concept_path=concept_img_b if concept_img_b.exists() else None,
-            use_active_for_compare=False,
-        )
-
 
 if __name__ == "__main__":
     cli_args = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
