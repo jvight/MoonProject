@@ -210,6 +210,13 @@ namespace MoonProject.Gameplay.Feel.Tests
 
             public Vector3 ScanEmitter => _emitter.position;
 
+            public bool TryScanContact(Vector3 lens, out Vector3 point, out Vector3 normal)
+            {
+                point = lens;
+                normal = Vector3.up;
+                return false;
+            }
+
             public Vector3 CutPoint => CutPiece.position;
 
             public Vector3 CutNormal => Vector3.back;

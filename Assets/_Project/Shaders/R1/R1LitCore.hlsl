@@ -124,6 +124,92 @@ half3 R1EvaluateBloomSafeEmission(float2 uv)
     return lerp(bodyEmission, hotCoreColor, coreFactor * saturate(_EmissionStrength));
 }
 
+half3 R1ThermalGlow(half heat)
+{
+    half h = saturate(heat);
+    half3 charColor   = half3(0.06h, 0.04h, 0.03h);
+    half3 redColor    = half3(0.62h, 0.09h, 0.02h);
+    half3 orangeColor = half3(1.18h, 0.44h, 0.06h);
+    half3 whiteColor  = half3(1.58h, 1.44h, 1.08h);
+
+    half3 c = lerp(charColor, redColor, saturate(h / 0.32h));
+    c = lerp(c, orangeColor, saturate((h - 0.32h) / 0.38h));
+    c = lerp(c, whiteColor, saturate((h - 0.70h) / 0.30h));
+    return c;
+}
+
+void R1ApplyBuildEffect(
+    inout half3 color,
+    float3 positionWS,
+    float3 normalWS,
+    half edgeCurvature)
+{
+    if (_BuildPrint < 0.5h && _BuildStageHeat <= 0.001h)
+    {
+        return;
+    }
+
+    float normGrad = length(fwidth(normalWS));
+    half bevelLine = (half)smoothstep(0.09, 0.32, normGrad);
+    half convexEdge = saturate((edgeCurvature - 0.25h) * 2.2h);
+    half featureLine = saturate(max(bevelLine, convexEdge * 0.85h));
+
+    float3 seamPos = _BuildSeamPointWS.xyz;
+    float seamRadius = max(_BuildSeamPointWS.w, 0.15);
+    float distToSeam = length(positionWS - seamPos);
+    half seamProximity = (half)saturate(1.0 - distToSeam / seamRadius);
+
+    // Printed in place: layered build-up from the ground slice by slice, with a bright rising layer line and a
+    // cooling terrace band below.
+    if (_BuildPrint > 0.5h)
+    {
+        float minY = _BuildBoundsY.x;
+        float spanY = max(_BuildBoundsY.y - minY, 0.05);
+        float h = (positionWS.y - minY) / spanY;
+        float rawProgress = (float)_BuildRevealProgress;
+
+        // Quantize into subtle additive layers (40 slices) with smooth sub-slice rise
+        float sliceCount = 40.0;
+        float sliceIdx = floor(rawProgress * sliceCount);
+        float sliceFrac = smoothstep(0.0, 1.0, frac(rawProgress * sliceCount));
+        float printFrontH = (sliceIdx + sliceFrac) / sliceCount;
+
+        if (h > printFrontH + 0.004)
+        {
+            discard;
+        }
+
+        float distBelow = max(0.0, printFrontH - h);
+        float layerBand = 0.13;
+        if (distBelow < layerBand && rawProgress < 0.998)
+        {
+            // Razor-sharp incandescent layer line at the print plane + cooling horizontal layer terraces below
+            float lineCore = 1.0 - smoothstep(0.0, 0.022, distBelow);
+            float coolBand = 1.0 - smoothstep(0.015, layerBand, distBelow);
+            float layerStriation = 0.78 + 0.22 * sin(positionWS.y * 220.0);
+            half layerHeat = (half)saturate(max(lineCore, coolBand * 0.72 * layerStriation) + seamProximity * 0.22 * coolBand);
+            half3 glow = R1ThermalGlow(layerHeat);
+            color = lerp(color, glow, saturate(layerHeat * 0.94h)) + glow * (half)(lineCore * 0.42);
+        }
+    }
+
+    // The seam's residual heat: a bright weld core at the seam point cooling white -> orange -> red -> dark along
+    // the stage bevels.
+    if (_BuildStageHeat > 0.001h)
+    {
+        float seamYDist = abs(positionWS.y - _BuildBoundsY.z);
+        half seamBand = (half)saturate(1.0 - seamYDist / 0.16);
+        half localHeat = saturate(
+            seamProximity * _BuildStageHeat * 1.15h +
+            max(featureLine, seamBand * 0.65h) * _BuildStageHeat * 0.75h);
+        if (localHeat > 0.02h)
+        {
+            half3 thermal = R1ThermalGlow(localHeat);
+            color = lerp(color, thermal, saturate(localHeat * 0.85h)) + thermal * (localHeat * localHeat * 0.30h);
+        }
+    }
+}
+
 half4 R1LitFrag(R1LitVaryings input) : SV_Target
 {
     UNITY_SETUP_INSTANCE_ID(input);
@@ -239,6 +325,7 @@ half4 R1LitFrag(R1LitVaryings input) : SV_Target
     surfaceData.clearCoatSmoothness = 0.0h;
 
     half4 color = UniversalFragmentPBR(inputData, surfaceData);
+    R1ApplyBuildEffect(color.rgb, input.positionWS, finalNormalWS, vcol.g);
     MoonApplySurfaceScan(color.rgb, input.positionWS, finalNormalWS, vcol.g, _ScanProgress, _Dissolve);
     color.rgb = MoonAtmosphere(color.rgb, input.positionWS, input.fogFactor);
     if (any(isnan(color.rgb)) || any(isinf(color.rgb)))

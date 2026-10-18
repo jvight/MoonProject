@@ -178,7 +178,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Press(_keyboard.eKey);
             bool capturedDaylight = false;
             bool capturedLensCloseup = false;
-            float earlyWedgeTargetY = float.NaN;
+            Vector3? earlyWedgeTarget = null;
             deadline = Time.time + ScanTimeout;
             while (!distantTarget.Scanned)
             {
@@ -186,20 +186,21 @@ namespace MoonProject.Gameplay.PlayModeTests
                 if (scans.Scanning == distantTarget)
                 {
                     AssertBeamClearOfRover(distantTarget.Point, "front-daylight-6.5m");
-                    if (float.IsNaN(earlyWedgeTargetY) && distantTarget.Progress >= 0.18f)
+                    if (!earlyWedgeTarget.HasValue && distantTarget.Progress >= 0.18f)
                     {
-                        earlyWedgeTargetY = AssertScanBeamWedgeActiveAndTapered();
+                        earlyWedgeTarget = AssertScanBeamWedgeActiveAndTapered();
                     }
 
                     if (!capturedDaylight && distantTarget.Progress >= 0.48f)
                     {
                         Vector4 retiredGround = Shader.GetGlobalVector(RetiredGroundStartShaderId);
                         Assert.AreEqual(0f, retiredGround.w, 1e-4f, "Retired ground scan line shader global must remain inactive.");
-                        float midWedgeTargetY = AssertScanBeamWedgeActiveAndTapered();
-                        if (!float.IsNaN(earlyWedgeTargetY))
+                        Vector3 midWedgeTarget = AssertScanBeamWedgeActiveAndTapered();
+                        if (earlyWedgeTarget.HasValue)
                         {
-                            Assert.Greater(midWedgeTargetY, earlyWedgeTargetY + 0.04f,
-                                "Scan beam wedge far edge must climb up the target with the surface scan sweep.");
+                            // Up a tall target, across a flat one's top: the far edge rides the tilted sweep line.
+                            Assert.Greater(Vector3.Distance(midWedgeTarget, earlyWedgeTarget.Value), 0.04f,
+                                "Scan beam wedge far edge must move over the target with the surface scan sweep.");
                         }
 
                         string daylightPath = Path.Combine(ScanFolder, "scan_daylight.png");
@@ -522,7 +523,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(clear, $"Scan beam ({label}) must have line of sight and never cross 07.");
         }
 
-        private float AssertScanBeamWedgeActiveAndTapered()
+        private Vector3 AssertScanBeamWedgeActiveAndTapered()
         {
             Transform wedgeTr = null;
             foreach (Transform child in _gameplay.GetComponentsInChildren<Transform>(true))
@@ -566,7 +567,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.Greater(targetAlpha, midAlpha * 2.5f, "ScanBeamWedge must brighten where it meets the target.");
             Assert.LessOrEqual(midAlpha, 0.08f, "ScanBeamWedge must have very low alpha in the middle.");
 
-            return targetCenter.y;
+            return targetCenter;
         }
 
         private void AssertNoBrightRegionOutsideLensAndTarget(

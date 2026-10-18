@@ -58,20 +58,8 @@ namespace MoonProject.Gameplay
         [Tooltip("Warm amber accent colour for the completion ping outline and lens pulse (same palette as the CRT face).")]
         [SerializeField] private Color _completionPingColor = new Color(1.00f, 0.682f, 0.220f, 1f);
 
-        [Tooltip("World-space half-width of the crisp bright scan line where the laser touches the object (m).")]
+        [Tooltip("World-space half-width of the wireframe reveal's bright rising front on the object (m).")]
         [Range(0.003f, 0.05f)] [SerializeField] private float _scanLineWidth = 0.014f;
-
-        [Tooltip("Emissive intensity of the crisp surface scan line (calm, under bloom blowout).")]
-        [Range(0.1f, 2f)] [SerializeField] private float _scanLineIntensity = 1.15f;
-
-        [Tooltip("World-space vertical spacing between anti-aliased horizontal surface raster lines (m), chosen so they never alias at chase distance.")]
-        [Range(0.02f, 0.2f)] [SerializeField] private float _rasterSpacingMeters = 0.055f;
-
-        [Tooltip("Low-contrast intensity of the swept surface raster band behind the scan line.")]
-        [Range(0.02f, 0.5f)] [SerializeField] private float _rasterContrast = 0.18f;
-
-        [Tooltip("Seconds over which the swept surface raster band fades out behind the moving scan line.")]
-        [Range(0.2f, 3f)] [SerializeField] private float _rasterFadeSeconds = 1.0f;
 
         [Tooltip("Seconds the thin anti-aliased warm-amber edge traces the object at the completion ping before fading.")]
         [Range(0.1f, 0.9f)] [SerializeField] private float _pingDurationSeconds = 0.38f;
@@ -81,6 +69,15 @@ namespace MoonProject.Gameplay
 
         [Tooltip("Emissive intensity of the warm-amber completion ping edge.")]
         [Range(0.1f, 2f)] [SerializeField] private float _pingEdgeIntensity = 1.25f;
+
+        [Tooltip("World-space cell pitch (m) of the surface wireframe lattice  the scan reveals.")]
+        [Range(0.015f, 0.12f)] [SerializeField] private float _surfaceGridPitchMeters = 0.044f;
+
+        [Tooltip("Emissive intensity of the progressive CRT-amber wireframe hologram.")]
+        [Range(0.2f, 2.0f)] [SerializeField] private float _wireframeRevealIntensity = 1.18f;
+
+        [Tooltip("Speed (cycles/s) of the data ticks streaming along the beam to the lens.")]
+        [Range(0.5f, 8.0f)] [SerializeField] private float _beamPulseSpeed = 3.2f;
 
         [Tooltip("Diameter of the soft emitter glow core at 07's scan lens (m).")]
         [Range(0.01f, 0.35f)] [SerializeField] private float _lensGlowSize = 0.072f;
@@ -114,10 +111,10 @@ namespace MoonProject.Gameplay
         [Range(0.05f, 0.85f)] [SerializeField] private float _beamLensPeakAlpha = 0.68f;
 
         [Tooltip("Very low additive alpha in the middle of the scan beam wedge (almost invisible in the middle).")]
-        [Range(0.005f, 0.15f)] [SerializeField] private float _beamMidAlpha = 0.022f;
+        [Range(0.005f, 0.15f)] [SerializeField] private float _beamMidAlpha = 0.018f;
 
         [Tooltip("Additive alpha where the far edge of the scan beam wedge meets the current surface scan line on the target.")]
-        [Range(0.04f, 0.65f)] [SerializeField] private float _beamContactAlpha = 0.38f;
+        [Range(0.04f, 0.65f)] [SerializeField] private float _beamContactAlpha = 0.42f;
 
         [Tooltip("Fine scanline band density inside the scan beam wedge.")]
         [Range(12f, 120f)] [SerializeField] private float _beamScanlineDensity = 42f;
@@ -203,13 +200,12 @@ namespace MoonProject.Gameplay
         public Color ScanLineColor => _scanLineColor;
         public Color CompletionPingColor => _completionPingColor;
         public float ScanLineWidth => _scanLineWidth;
-        public float ScanLineIntensity => _scanLineIntensity;
-        public float RasterSpacingMeters => _rasterSpacingMeters;
-        public float RasterContrast => _rasterContrast;
-        public float RasterFadeSeconds => _rasterFadeSeconds;
         public float PingDurationSeconds => _pingDurationSeconds;
         public float PingEdgeThickness => _pingEdgeThickness;
         public float PingEdgeIntensity => _pingEdgeIntensity;
+        public float SurfaceGridPitchMeters => _surfaceGridPitchMeters;
+        public float WireframeRevealIntensity => _wireframeRevealIntensity;
+        public float BeamPulseSpeed => _beamPulseSpeed;
         public float LensGlowSize => _lensGlowSize;
         public float LensGlowAlpha => _lensGlowAlpha;
         public float LensHaloSize => _lensHaloSize;
@@ -235,18 +231,15 @@ namespace MoonProject.Gameplay
         public float PathGlintLifetime => _pathGlintLifetime;
         public float PathGlintGravity => _pathGlintGravity;
 
-        /// <summary>Pushes the surface scan line, raster band, and completion ping tuning to shader globals (zero GC).</summary>
-        public void ApplyShaderGlobals(float scanDurationSeconds)
+        /// <summary>Pushes the wireframe reveal and completion ping tuning to shader globals (zero GC).</summary>
+        public void ApplyShaderGlobals()
         {
-            float duration = Mathf.Max(scanDurationSeconds, 0.25f);
-            float fadeBandShare = Mathf.Clamp(_rasterFadeSeconds / duration, 0.08f, 0.95f);
-
             Shader.SetGlobalColor(ScanLineColorShaderId, _scanLineColor.linear);
             Shader.SetGlobalColor(ScanPingColorShaderId, _completionPingColor.linear);
             Shader.SetGlobalVector(ScanParamsShaderId,
-                new Vector4(_scanLineWidth, _rasterSpacingMeters, _rasterContrast, fadeBandShare));
+                new Vector4(_scanLineWidth, _surfaceGridPitchMeters, _wireframeRevealIntensity, _pingEdgeThickness));
             Shader.SetGlobalVector(ScanPingParamsShaderId,
-                new Vector4(_scanLineIntensity, _pingDurationSeconds, _pingEdgeThickness, _pingEdgeIntensity));
+                new Vector4(_pingDurationSeconds, _pingEdgeIntensity, 0f, 0f));
         }
 
         /// <summary>Seconds a fragment of <paramref name="size"/> takes to scan with the plain eye.</summary>

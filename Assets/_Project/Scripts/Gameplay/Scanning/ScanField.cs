@@ -38,6 +38,7 @@ namespace MoonProject.Gameplay
         private readonly Func<bool> _othersClaim;
         private readonly BeamWork _beam;
         private ScanFragment _scanning;
+        private ScanFragment _beamOn;
         private ScanFragment _aiming;
         private int _quarter;
         private int _owedMetal;
@@ -71,7 +72,7 @@ namespace MoonProject.Gameplay
             _save = services.Save;
             _materials = services.Materials;
             _beam = services.Beam;
-            _tuning.ApplyShaderGlobals(_tuning.Seconds(ScanSize.Medium));
+            _tuning.ApplyShaderGlobals();
         }
 
         internal ScanField(ScanTuning tuning, EventBus events, ISaveService save, MaterialStock materials,
@@ -82,7 +83,7 @@ namespace MoonProject.Gameplay
             _save = save ?? throw new ArgumentNullException(nameof(save));
             _materials = materials ?? throw new ArgumentNullException(nameof(materials));
             _knownStructures = knownStructures ?? throw new ArgumentNullException(nameof(knownStructures));
-            _tuning.ApplyShaderGlobals(_tuning.Seconds(ScanSize.Medium));
+            _tuning.ApplyShaderGlobals();
         }
 
         public ScanTuning Tuning => _tuning;
@@ -123,7 +124,7 @@ namespace MoonProject.Gameplay
                 }
 
                 _fragments.Add(ScanFragment.ForRuinTarget(id, set.BlueprintId, set.StructureIds, i, set.Count,
-                    set.Size(i), set.RuinId, target));
+                    set.Size(i), set.RuinId, target, ruinRoot));
             }
 
             return null;
@@ -156,7 +157,7 @@ namespace MoonProject.Gameplay
             Transform target = new GameObject(story.FragmentId).transform;
             target.SetParent(node, false);
             target.position = panel.bounds.center + story.Offset;
-            _fragments.Add(ScanFragment.ForStoryTarget(story, story.RuinId, target));
+            _fragments.Add(ScanFragment.ForStoryTarget(story, story.RuinId, target, ruinRoot));
             return null;
         }
 
@@ -216,6 +217,22 @@ namespace MoonProject.Gameplay
             {
                 Advance(_scanning, now, deltaTime);
             }
+        }
+
+        /// <summary>
+        /// Where the scan beam from <paramref name="lens"/> meets the target it is on (being scanned, or just scanned
+        /// while the beam fades): on its real surface, at the shader's sweep line. False before any scan.
+        /// </summary>
+        public bool TryBeamContact(Vector3 lens, out Vector3 point, out Vector3 normal)
+        {
+            if (_beamOn == null)
+            {
+                point = lens;
+                normal = Vector3.up;
+                return false;
+            }
+
+            return _beamOn.TryContact(lens, _view.Camera.transform.position, out point, out normal);
         }
 
         public ScansSaveData Capture()
@@ -577,8 +594,9 @@ namespace MoonProject.Gameplay
         private void Begin(ScanFragment fragment)
         {
             float duration = _tuning.Seconds(fragment.Size);
-            _tuning.ApplyShaderGlobals(duration);
+            _tuning.ApplyShaderGlobals();
             _scanning = fragment;
+            _beamOn = fragment;
             _quarter = Mathf.FloorToInt(fragment.Progress * Quarters);
             _events.Publish(new ScanStarted(fragment.FragmentId, fragment.Point));
             _events.Publish(new FeelBeat(FeelKind.Scan, FeelPhase.Anticipate, fragment.Point,
@@ -588,7 +606,7 @@ namespace MoonProject.Gameplay
         private void Advance(ScanFragment fragment, float now, float deltaTime)
         {
             float duration = _tuning.Seconds(fragment.Size);
-            _tuning.ApplyShaderGlobals(duration);
+            _tuning.ApplyShaderGlobals();
             fragment.Progress = Mathf.Min(1f, fragment.Progress + deltaTime / duration);
             _beam.Scan(deltaTime);
             fragment.Draw(fragment.Progress);
@@ -656,7 +674,7 @@ namespace MoonProject.Gameplay
             string teaches = fragment.StructureIds.Count > 0 ? fragment.StructureIds[0] : fragment.BlueprintId;
             _events.Publish(new FragmentScanned(fragment.FragmentId, teaches, before, fragment.Count, known,
                 fragment.Owed));
-            _events.Publish(new FeelBeat(FeelKind.Scan, FeelPhase.Reward, fragment.Point, Vector3.up, 1f, 0f));
+            _events.Publish(new FeelBeat(FeelKind.Scan, FeelPhase.Reward, fragment.Point, fragment.SweepSpan, 1f, 0f));
             if (!known && before + 1 >= fragment.Count)
             {
                 for (string id = firstUnknown; id != null; id = NextUnlearnedStructure(fragment.StructureIds))
@@ -679,7 +697,7 @@ namespace MoonProject.Gameplay
             fragment.Scanned = true;
             fragment.ScannedAt = now;
             _events.Publish(new StoryScanned(fragment.FragmentId, fragment.StoryKey, fragment.Point));
-            _events.Publish(new FeelBeat(FeelKind.Scan, FeelPhase.Reward, fragment.Point, Vector3.up, 1f, 0f));
+            _events.Publish(new FeelBeat(FeelKind.Scan, FeelPhase.Reward, fragment.Point, fragment.SweepSpan, 1f, 0f));
             _save.SaveNow();
         }
 
