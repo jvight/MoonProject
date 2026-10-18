@@ -168,11 +168,10 @@ namespace MoonProject.Rover.Tests
             TakeAll();
             while (_script.Phase != OpeningPhase.ChaseEase && _script.IsRunning)
             {
-                StepOnce();
                 Assert.IsTrue(_script.ControlHeld, "held through the lens stages, the checks and the release");
+                StepOnce();
             }
 
-            StepOnce();
             Assert.AreEqual(OpeningPhase.ChaseEase, _script.Phase);
             Assert.IsFalse(_script.ControlHeld);
         }
