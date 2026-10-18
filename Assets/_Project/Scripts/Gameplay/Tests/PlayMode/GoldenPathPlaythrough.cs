@@ -81,7 +81,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float SealCutTimeout = 25f;
         private const float DriveTimeout = 90f;
 
-        /// <summary>Metres 07 must cover in <see cref="StuckSeconds"/> driving, or it counts as blocked.</summary>
+        /// <summary>Metres 07 must close on its target in <see cref="StuckSeconds"/>, or it counts as stuck.</summary>
         private const float StuckProgress = 0.3f;
 
         /// <summary>Seconds over which 07's progress is measured before it backs off and comes round.</summary>
@@ -511,7 +511,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _pilot.GoTo(target, arriveRadius, maxThrottle);
             float deadline = Time.time + DriveTimeout;
             int unsticks = 0;
-            Vector3 windowStart = _rover.Position;
+            float windowStart = _pilot.Distance;
             float windowEnd = Time.time + StuckSeconds;
             while (!_pilot.Arrived && Time.time < deadline)
             {
@@ -521,14 +521,14 @@ namespace MoonProject.Gameplay.PlayModeTests
                     continue;
                 }
 
-                if (SurfaceRules.HorizontalDistance(_rover.Position, windowStart) < StuckProgress)
+                if (windowStart - _pilot.Distance < StuckProgress)
                 {
-                    // Blocked by a ruin or a crate: back off and come round, as a player would.
+                    // Blocked by a ruin or a crate, or circling the spot: back off and come round, as a player would.
                     unsticks++;
                     yield return Unstick(target, arriveRadius, maxThrottle, unsticks);
                 }
 
-                windowStart = _rover.Position;
+                windowStart = _pilot.Distance;
                 windowEnd = Time.time + StuckSeconds;
             }
 
