@@ -53,7 +53,6 @@ MonoBehaviour:
     _thump: 0.8
     _tick: 0.8
     _stir: 0.5
-    _hurried: 0.7
     _check: 0.8
     _fault: 0.8
   _loopSpatialBlend: 0.75

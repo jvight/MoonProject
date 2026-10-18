@@ -29,9 +29,28 @@ namespace MoonProject.Rover
         [Range(0.2f, 3f)]
         [SerializeField] private float _eyesHoldSeconds = 1f;
 
-        [Tooltip("The soft dip to black that hands over to the chase frame: the frame changes at its darkest middle.")]
-        [Range(0.2f, 1.2f)]
-        [SerializeField] private float _handoverSeconds = 0.4f;
+        [Header("The end of the wake (s)")]
+        [Tooltip("After the last line: the readout holds its success, then gives way to the eyes. Longer than the " +
+                 "readout's own linger on the face (UI), so the eyes are back before the camera moves.")]
+        [Range(0.5f, 4f)]
+        [SerializeField] private float _readySeconds = 1.8f;
+
+        [Tooltip("Seconds into the ready hold when the eyes, back on the face, blink.")]
+        [Range(0.2f, 3f)]
+        [SerializeField] private float _readyBlinkSeconds = 1.35f;
+
+        [Tooltip("The one eased move that pulls the camera back and out diagonally to the wide front three-quarter.")]
+        [Range(1f, 4f)]
+        [SerializeField] private float _pullBackSeconds = 1.8f;
+
+        [Tooltip("The ready performance seen wide: a double blink, the headlamps clicked off and on, the last dust " +
+                 "shivered off and a glance at the lander's beacon.")]
+        [Range(1.5f, 5f)]
+        [SerializeField] private float _performSeconds = 2.6f;
+
+        [Tooltip("The one eased move round to the chase frame behind 07, after which control is the player's.")]
+        [Range(1f, 4f)]
+        [SerializeField] private float _moveBehindSeconds = 1.8f;
 
         [Header("The lines of information (s each)")]
         [Tooltip("Why 07 woke: the orbital signal.")]
@@ -87,9 +106,9 @@ namespace MoonProject.Rover
         [Range(0.3f, 3f)]
         [SerializeField] private float _assemblySeconds = 0.7f;
 
-        [Tooltip("07 glances at the lander's beacon, shivers its dust off and the recovery begins.")]
-        [Range(2f, 8f)]
-        [SerializeField] private float _beginSeconds = 4f;
+        [Tooltip("The start line: the recovery begins (its motions are the ready performance, seen wide).")]
+        [Range(0.5f, 4f)]
+        [SerializeField] private float _beginSeconds = 1.4f;
 
         [Header("The motions")]
         [Tooltip("How far (deg) the neck sweeps to each side in the head check.")]
@@ -154,7 +173,23 @@ namespace MoonProject.Rover
 
         public float EyesHoldSeconds => _eyesHoldSeconds;
 
-        public float HandoverSeconds => _handoverSeconds;
+        public float ReadySeconds => _readySeconds;
+
+        public float ReadyBlinkSeconds => Mathf.Min(_readyBlinkSeconds, _readySeconds);
+
+        public float PullBackSeconds => _pullBackSeconds;
+
+        public float PerformSeconds => _performSeconds;
+
+        public float MoveBehindSeconds => _moveBehindSeconds;
+
+        public float WideDistance => _wideDistance;
+
+        public float WideSideYaw => _wideSideYaw;
+
+        public float WideElevation => _wideElevation;
+
+        public float WideLookHeight => _wideLookHeight;
 
         [Header("The long-sleep dust")]
         [Tooltip("The lunar-dust amount of a part under the full coat (the material's own amount is the clean state).")]
@@ -246,6 +281,25 @@ namespace MoonProject.Rover
         [Tooltip("Seconds the push-in takes, eased, from the first line on the face: very slow.")]
         [Range(3f, 20f)]
         [SerializeField] private float _pushInSeconds = 9f;
+
+        [Header("The wide shot for the ready performance")]
+        [Tooltip("How far (m) the camera stands from the point it looks at once it has pulled back.")]
+        [Range(2f, 9f)]
+        [SerializeField] private float _wideDistance = 4.6f;
+
+        [Tooltip("How far (deg) round from 07's front the wide shot stands: further round than the face shot, so " +
+                 "the pull-back moves out diagonally.")]
+        [Range(0f, 80f)]
+        [SerializeField] private float _wideSideYaw = 50f;
+
+        [Tooltip("How far (deg) above the point it looks at the wide shot stands.")]
+        [Range(-10f, 25f)]
+        [SerializeField] private float _wideElevation = 8f;
+
+        [Tooltip("Height (m) above 07's ground point the wide shot looks at: the middle of the body, so all of 07 " +
+                 "is in frame.")]
+        [Range(0.3f, 1.5f)]
+        [SerializeField] private float _wideLookHeight = 0.8f;
 
         [Header("The start's glance")]
         [Tooltip("How far (deg) at most the head turns from the camera toward the lander's beacon at the start.")]

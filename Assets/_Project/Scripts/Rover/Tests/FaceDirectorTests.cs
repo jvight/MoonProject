@@ -60,7 +60,7 @@ namespace MoonProject.Rover.Tests
 
             Assert.AreEqual(0, director.BootCount, "Non-wake events and loaded-game start must never trigger Boot().");
 
-            director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.Crackle, false));
+            director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.Crackle));
             Assert.IsTrue(director.HasBootedOnWake);
             Assert.AreEqual(1, director.BootCount);
             Assert.IsTrue(director.State.IsBooting);
@@ -71,8 +71,8 @@ namespace MoonProject.Rover.Tests
             float midBoot = director.State.BootProgress;
             Assert.That(midBoot, Is.GreaterThan(0.1f).And.LessThan(1.0f));
 
-            director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.EyesOpen, false));
-            director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.ChecksBegin, false));
+            director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.EyesOpen));
+            director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.ChecksBegin));
             Assert.AreEqual(1, director.BootCount, "Later wake beats in the same wake sequence must not restart Boot().");
             Assert.AreEqual(midBoot, director.State.BootProgress, 1e-5f);
 
@@ -434,14 +434,14 @@ namespace MoonProject.Rover.Tests
                 var director = new FaceDirector(_faceTuning, _directorTuning, seed: 7, events: events);
 
                 // 1. Boot on wake
-                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.Crackle, false));
+                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.Crackle));
                 CollectionAssert.AreEqual(new[] { RoverFaceCueKind.Boot }, cues,
                     "Starting wake boot must publish RoverFaceCued(Boot).");
 
                 // Finish boot and step through wake blink
                 cues.Clear();
                 director.Step(1.5f);
-                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.Blinked, false));
+                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.Blinked));
                 CollectionAssert.Contains(cues, RoverFaceCueKind.Blink,
                     "WakeBeat.Blinked must publish RoverFaceCued(Blink).");
 
@@ -514,8 +514,8 @@ namespace MoonProject.Rover.Tests
                 Assert.AreEqual(0f, director.RearVentEmissionStrength, 1e-5f);
 
                 director.OnSceneStart(isNewGame: true);
-                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.Crackle, false));
-                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.PictureOpens, false));
+                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.Crackle));
+                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.PictureOpens));
                 director.Step(1.0f);
 
                 Assert.IsTrue(director.IsHoldingDarkForOpening, "CRT stays dark through the black and the picture opening.");
@@ -526,7 +526,7 @@ namespace MoonProject.Rover.Tests
                 Assert.IsEmpty(cues);
 
                 // The eyes open (EyesOpen): a single phosphor line flickers on and opens into two eyes
-                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.EyesOpen, false));
+                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.EyesOpen));
                 Assert.IsFalse(director.IsHoldingDarkForOpening);
                 Assert.IsFalse(director.State.IsDarkHold);
                 Assert.AreEqual(1, director.BootCount);
@@ -539,7 +539,7 @@ namespace MoonProject.Rover.Tests
 
                 // Slow blink + curious glance at Blinked
                 cues.Clear();
-                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.Blinked, false));
+                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.Blinked));
                 Assert.AreEqual(1, director.WakeBlinkCount);
                 Assert.IsTrue(director.State.IsBlinking);
                 Assert.AreEqual(FaceFeeling.Curious, director.CurrentFeeling);

@@ -18,9 +18,9 @@ namespace MoonProject.Audio
     /// (<see cref="BootCheckStarted"/>: the iris, the cells' charge whine, the assembly's query); a check made of
     /// several plays each on its <see cref="BootCheckPulse"/> (the lamps' flickers and ramp, the head's sweep and nod,
     /// each wheel, the motor's shudder and creep, the cutter's sparks, the wing's jerk, stall and fold, the antenna's
-    /// rise and signal, the recovery's turn, shiver and headlamps), once per pulse even where Rover repeats one as
-    /// progress; 07's fault voice when a check comes out <see cref="BootCheckResult.Fault"/>
-    /// (<see cref="BootCheckCompleted"/>). The lines of information (Carrier, Resume, Agenda) have no motion of their
+    /// rise and signal, and the ready performance's glance, shiver and headlamps clicked off and on), once per pulse
+    /// even where Rover repeats one as progress; 07's fault voice when a check comes out
+    /// <see cref="BootCheckResult.Fault"/> (<see cref="BootCheckCompleted"/>). The lines of information (Carrier, Resume, Agenda) have no motion of their
     /// own, and the cells' ticks are the battery's (<see cref="BatteryAudio"/>).</item>
     /// </list>
     /// The pause menu ducks all of it with the world (<see cref="AudioDirector.WorldGain"/>), and delayed cues wait.
@@ -71,6 +71,7 @@ namespace MoonProject.Audio
             new PulseSound(BootCheckStep.Begin, 0, AudioCueIds.BootBeginTurn, 0, 1f),
             new PulseSound(BootCheckStep.Begin, 1, AudioCueIds.BootBeginShiver, 0, 1f),
             new PulseSound(BootCheckStep.Begin, 2, AudioCueIds.BootBeginLamps, 0, 1f),
+            new PulseSound(BootCheckStep.Begin, 3, AudioCueIds.BootBeginLamps, 0, 0.6f),
         };
 
         [Tooltip("The audio director (library, voices, buses).")]
@@ -240,7 +241,7 @@ namespace MoonProject.Audio
                     break;
             }
 
-            int count = _sheet.CuesFor(reached.Beat, reached.Hurried, _calls);
+            int count = _sheet.CuesFor(reached.Beat, _calls);
             for (int i = 0; i < count; i++)
             {
                 if (_calls[i].Delay > 0f)

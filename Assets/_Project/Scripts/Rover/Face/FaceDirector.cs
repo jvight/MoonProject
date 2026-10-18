@@ -133,6 +133,13 @@ namespace MoonProject.Rover
         /// <summary>True when the CRT face is in (or transitioning into) screen content mode.</summary>
         public bool IsScreenModeOpen => _state.IsScreenModeOpen;
 
+        /// <summary>One plain blink of the eyes (the wake's ready performance).</summary>
+        public void Blink()
+        {
+            _state.Blink();
+            FlushStateCues();
+        }
+
         /// <summary>
         /// Enters or exits screen content mode alongside 07's feelings, playing the channel-switch transition on
         /// <see cref="FaceState"/>.

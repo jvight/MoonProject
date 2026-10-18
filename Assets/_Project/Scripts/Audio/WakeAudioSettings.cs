@@ -51,10 +51,6 @@ namespace MoonProject.Audio
         [Range(0f, 1f)]
         [SerializeField] private float _stir = 0.5f;
 
-        [Tooltip("Hurried by drive input, every wake cue plays this much softer, and the ghost chord is left out.")]
-        [Range(0f, 1f)]
-        [SerializeField] private float _hurried = 0.7f;
-
         [Header("The self-test (New Game)")]
         [Tooltip("Each check's motion sound (the iris, the lamps, the head, the wheels...), from 07.")]
         [Range(0f, 1f)]
@@ -73,7 +69,6 @@ namespace MoonProject.Audio
         public float Thump => _thump;
         public float Tick => _tick;
         public float Stir => _stir;
-        public float Hurried => _hurried;
         public float Check => _check;
         public float Fault => _fault;
     }

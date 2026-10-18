@@ -1159,6 +1159,78 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void BuildModeController_AFramePlacedBeyondWeldRange_StaysStandingUnwelded_AndHoldingEInRangeWeldsIt()
+        {
+            var known = new KnownStructures(_catalog, _events);
+            var placedBase = new PlacedBase(_catalog, _tuning, _events, known);
+            MaterialCatalog matCatalog = CargoFixtures.Catalog();
+            try
+            {
+                MaterialStock stock = CargoFixtures.Stock(_events, matCatalog);
+                var controller = new BuildModeController(_catalog, known, placedBase, stock, _tuning);
+                TestWorld flat = TestWorld.Flat();
+                Vector3 roverPos = Vector3.zero;
+
+                known.Learn(StructureIds.ChargingPad);
+                Assert.IsTrue(controller.PickStructure(StructureIds.ChargingPad));
+                stock.Stow(controller.SelectedStructure.BuildCost);
+                controller.UpdateCandidate(new Vector3(0f, 0f, 7f), roverPos, flat, propBlocked: false);
+                Assert.IsTrue(controller.TryConfirmPlacement(flat, roverPos, out int id, out _));
+
+                controller.StepWelding(0.05f, roverPos, weldHeld: true, out bool completed, out bool cancelled);
+                Assert.IsFalse(completed);
+                Assert.IsTrue(cancelled, "A frame beyond the weld range closes build mode.");
+                Assert.AreEqual(BuildModeState.Closed, controller.State);
+                Assert.AreEqual(1, placedBase.Count, "The frame stays placed: pressing E to place is never silent.");
+                Assert.AreEqual(0, stock.Metal, "The frame stays paid for: nothing is refunded.");
+                Assert.IsTrue(placedBase.TryGetStructure(id, out PlacedStructure frame));
+                Assert.IsFalse(frame.IsBuilt);
+                Assert.AreEqual(0f, frame.BuildProgress01, 1e-5f);
+
+                Vector3 nearer = new Vector3(0f, 0f, 2f);
+                Assert.IsTrue(controller.TryBeginResumeWeld(id, nearer), "07 five metres from the frame may resume it.");
+                float buildSeconds = frame.Definition.BuildSeconds;
+                controller.StepWelding(buildSeconds * 0.5f, nearer, weldHeld: true, out _, out bool cancelledNear);
+                Assert.IsFalse(cancelledNear);
+                Assert.AreEqual(0.5f, controller.ActiveWeldProgress01, 1e-4f, "Holding E in range welds the frame.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(matCatalog);
+            }
+        }
+
+        [Test]
+        public void GhostAim_TheApronSnapNeverPutsTheFrameBeyondTheWeldReach()
+        {
+            Vector3 apron = new Vector3(3f, 0f, -2f);
+            float reach = GhostAim.SnapReach(_tuning);
+            Assert.Less(reach, _tuning.WeldRange, "The snap keeps a margin inside the weld range.");
+            int snapped = 0;
+            for (float distance = 0f; distance <= 14f; distance += 0.25f)
+            {
+                for (float yaw = 0f; yaw < 360f; yaw += 15f)
+                {
+                    Vector3 rover = apron + Quaternion.Euler(0f, yaw, 0f) * Vector3.forward * distance;
+                    for (float heading = 0f; heading < 360f; heading += 15f)
+                    {
+                        Vector3 forward = Quaternion.Euler(0f, heading, 0f) * Vector3.forward;
+                        Vector3 point = GhostAim.Point(rover, forward, apron, _tuning);
+                        if (point == apron)
+                        {
+                            snapped++;
+                            Assert.LessOrEqual(SurfaceRules.HorizontalDistance(rover, apron), reach + 1e-4f);
+                        }
+                    }
+                }
+            }
+
+            Assert.Greater(snapped, 0, "The bay catches the ghost when 07 stands close and faces it.");
+            Assert.AreEqual(apron + Vector3.forward * _tuning.GhostAheadMetres,
+                GhostAim.Point(apron, Vector3.forward, null, _tuning), "Without an apron the ghost just rides ahead.");
+        }
+
+        [Test]
         public void ALiveBuild_IsPrintedInPlace_ItsLayerLineRising_AndItsGuideGoesOnceItStands()
         {
             Shader shader = Shader.Find("Universal Render Pipeline/Lit");

@@ -45,9 +45,6 @@ namespace MoonProject.Rover
         /// <summary>Phase length or probe distance below this is treated as zero.</summary>
         private const float LengthEpsilon = 1e-4f;
 
-        /// <summary>A speck beyond the glass's edges: the dimmed picture shows none.</summary>
-        private static readonly Vector2 SpeckOffGlass = new Vector2(1f, 1f);
-
         [Tooltip("Camera tuning (Assets/_Project/Data/Tuning/RoverCameraTuning.asset); the opening is its Opening block.")]
         [SerializeField] private RoverCameraTuning _tuning;
 
@@ -87,8 +84,10 @@ namespace MoonProject.Rover
         private IGameFlow _flow;
         private IDisposable[] _subscriptions;
         private Vector3 _shotFace;
+        private Vector3 _shotBody;
         private float _shotHeading;
         private bool _shotWasLive;
+        private bool _rigReleased;
         private bool _titleHasSave;
         private bool _inTitle;
         private bool _paused;
@@ -270,7 +269,9 @@ namespace MoonProject.Rover
         /// </summary>
         private void SetShot()
         {
+            _shotBody = _rover.Position;
             _shotHeading = HeadingDegrees();
+            _rigReleased = false;
             Vector2 face = _shot.FaceAngles(_shotHeading);
             _body.EvaluateScreenPose(face.x, face.y, out _shotFace, out _);
             _script.SetFaceTarget(face);
@@ -302,7 +303,7 @@ namespace MoonProject.Rover
             }
 
             _lamps.Step(deltaTime);
-            _body.SetLampPower(_lamps.Level);
+            _body.SetLampPower(_lamps.Level * PostMotions.Lamps(_script.Phase == OpeningPhase.Perform ? _script.Perform01 : 0f));
 
             _script.Step(deltaTime);
             TakeBeats();
@@ -337,7 +338,7 @@ namespace MoonProject.Rover
                         break;
                 }
 
-                _events.Publish(new RoverWakeBeatReached(beat, false));
+                _events.Publish(new RoverWakeBeatReached(beat));
             }
         }
 
@@ -363,6 +364,9 @@ namespace MoonProject.Rover
                         break;
                     case PostEventKind.Finished:
                         _events.Publish(new BootCheckFinished());
+                        break;
+                    case PostEventKind.Blink:
+                        _body.BlinkFace();
                         break;
                 }
             }
@@ -412,40 +416,40 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// The head follows the gaze (bowed in the black, then into the shot), sweeps and nods in its own check and only
-        /// glances toward the beacon at the start: the body never turns.
+        /// The head follows the gaze (bowed in the black, then into the shot), sweeps and nods in its own check, glances
+        /// toward the beacon at the end of the ready performance and is handed back to 07 as the camera moves behind
+        /// it: the body never turns.
         /// </summary>
         private void PoseHead()
         {
             float yaw = _script.Gaze.Yaw;
             float pitch = _script.Gaze.Pitch;
-            if (_script.Phase == OpeningPhase.Post)
+            if (_script.Phase == OpeningPhase.Post && _script.PostStep == BootCheckStep.Head)
             {
-                BootCheckStep step = _script.PostStep;
-                float progress = _script.PostProgress01;
-                if (step == BootCheckStep.Head)
-                {
-                    Vector2 head = _script.Motions.Head(progress);
-                    yaw += head.x;
-                    pitch += head.y;
-                }
-                else if (step == BootCheckStep.Begin)
-                {
-                    PostSettings post = _tuning.Opening.Post;
-                    Vector2 beacon = LensGaze.Angles(Quaternion.Inverse(Heading()) * (_beacon.position - ScanLensOrigin.position));
-                    float turn = PostMotions.BeaconTurn(progress);
-                    yaw += turn * Mathf.Clamp(Mathf.DeltaAngle(yaw, beacon.x), -post.BeaconGlanceYaw, post.BeaconGlanceYaw);
-                    pitch += turn * Mathf.Clamp(beacon.y - pitch, -post.BeaconGlancePitch, post.BeaconGlancePitch);
-                }
+                Vector2 head = _script.Motions.Head(_script.PostProgress01);
+                yaw += head.x;
+                pitch += head.y;
             }
 
-            _body.PoseOpeningHead(yaw, pitch, 0f, 1f);
+            float turn = PostMotions.BeaconTurn(_script.Perform01);
+            if (turn > 0f)
+            {
+                PostSettings post = _tuning.Opening.Post;
+                Vector2 beacon = LensGaze.Angles(Quaternion.Inverse(Heading()) * (_beacon.position - ScanLensOrigin.position));
+                yaw += turn * Mathf.Clamp(Mathf.DeltaAngle(yaw, beacon.x), -post.BeaconGlanceYaw, post.BeaconGlanceYaw);
+                pitch += turn * Mathf.Clamp(beacon.y - pitch, -post.BeaconGlancePitch, post.BeaconGlancePitch);
+            }
+
+            float hold = _script.Phase == OpeningPhase.MoveBehind
+                ? 1f - WakeOpening.SmoothStepC2(0f, 1f, _script.PhaseShare)
+                : 1f;
+            _body.PoseOpeningHead(yaw, pitch, 0f, hold);
         }
 
         /// <summary>
         /// What each check does on 07 beyond its head: the wheels' twitches, the motor's shudder and lurch, the
         /// cutter's flashes and turret kicks, the wing's jerk, the antenna's rise (held through the later checks and
-        /// then lowered) and the start's dust shiver.
+        /// the ready performance, then lowered as the camera moves behind) and the performance's dust shiver.
         /// </summary>
         private void ApplyPostMotion(float deltaTime)
         {
@@ -485,15 +489,17 @@ namespace MoonProject.Rover
                     case BootCheckStep.Antenna:
                         antennaTarget = motions.Antenna(p);
                         break;
-                    case BootCheckStep.Begin:
-                        motion.Shudder = PostMotions.Shiver(p) * _tuning.Opening.Post.ShudderMetres * ShiverScale;
-                        break;
                 }
 
                 if (step > BootCheckStep.Antenna)
                 {
                     antennaTarget = motions.Antenna(1f);
                 }
+            }
+            else if (_script.Phase >= OpeningPhase.Ready && _script.Phase <= OpeningPhase.Perform)
+            {
+                antennaTarget = _script.Motions.Antenna(1f);
+                motion.Shudder = PostMotions.Shiver(_script.Perform01) * _tuning.Opening.Post.ShudderMetres * ShiverScale;
             }
 
             _antennaLift = Smoothing.Damp(_antennaLift, antennaTarget, AntennaHalfLife, deltaTime);
@@ -529,8 +535,10 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// The one shot of the wake, fixed where 07 stood as it began and kept clear of the terrain; at the handover's
-        /// dark middle the rig snaps behind 07 and the shot camera lets go in one cut.
+        /// The wake's camera, fixed where 07 stood as it began: the face shot (kept clear of the terrain) through the
+        /// checks and the ready hold, then the pull-back to the wide shot, the performance held wide, and the move round
+        /// to the chase frame. The rig is let go behind 07 as the pull-back starts, so the chase frame has settled
+        /// before the camera moves toward it; at the end the shot camera hands over on the very pose the chase frame has.
         /// </summary>
         private void PlaceShotCamera()
         {
@@ -539,7 +547,7 @@ namespace MoonProject.Rover
                 if (_shotWasLive)
                 {
                     _shotWasLive = false;
-                    _rig.EndWakeOpening();
+                    ReleaseRig();
                 }
 
                 if (_lensCamera.enabled)
@@ -551,13 +559,33 @@ namespace MoonProject.Rover
                 return;
             }
 
-            ShotPose pose = _shot.At(_shotFace, _shotHeading, _script.Push01);
-            Vector3 toCamera = pose.Position - _shotFace;
-            float length = toCamera.magnitude;
-            Vector3 position = length > LengthEpsilon
-                ? _shotFace + toCamera / length * _sight.Clear(_shotFace, pose.Position, _tuning.FaceInspectProbeRadius)
-                : pose.Position;
-            _lensCamera.transform.SetPositionAndRotation(position, pose.Rotation);
+            OpeningPhase phase = _script.Phase;
+            if (phase >= OpeningPhase.PullBack)
+            {
+                ReleaseRig();
+            }
+
+            ShotPose face = FaceShot();
+            ShotPose pose;
+            switch (phase)
+            {
+                case OpeningPhase.PullBack:
+                    pose = PostShot.PullBack(face, _shot.Wide(_shotBody, _shotHeading), _script.PhaseShare);
+                    break;
+                case OpeningPhase.Perform:
+                    pose = _shot.Wide(_shotBody, _shotHeading);
+                    break;
+                case OpeningPhase.MoveBehind:
+                    CameraState chase = _rig.ChaseCamera.State;
+                    var chasePose = new ShotPose(chase.GetFinalPosition(), chase.GetFinalOrientation(), chase.Lens.FieldOfView);
+                    pose = PostShot.Round(_shot.Wide(_shotBody, _shotHeading), chasePose, _shotBody, _script.PhaseShare);
+                    break;
+                default:
+                    pose = face;
+                    break;
+            }
+
+            _lensCamera.transform.SetPositionAndRotation(pose.Position, pose.Rotation);
             LensSettings lensSettings = _lensCamera.Lens;
             lensSettings.FieldOfView = pose.Fov;
             lensSettings.NearClipPlane = _tuning.FaceInspectNearClip;
@@ -574,7 +602,8 @@ namespace MoonProject.Rover
         private void ApplyPostDust()
         {
             PostSettings post = _tuning.Opening.Post;
-            _dust.Update(_script.Phase, _script.PostStep, _script.PostProgress01);
+            float progress = _script.Phase == OpeningPhase.Perform ? _script.Perform01 : _script.PostProgress01;
+            _dust.Update(_script.Phase, _script.PostStep, progress);
             _body.SetPostDust(_dust, post.DustCoatAmount);
             while (_dust.TryTakePuff(out DustZone zone))
             {
@@ -587,11 +616,38 @@ namespace MoonProject.Rover
         {
             OpeningPhase phase = _script.Phase;
             PostSettings post = _tuning.Opening.Post;
-            float share = _script.PhaseLength > LengthEpsilon ? _script.PhaseTime / _script.PhaseLength : 1f;
+            float share = _script.PhaseShare;
             float sinceFaceOn = phase == OpeningPhase.EyesOpen ? _script.PhaseTime : post.FillRampSeconds;
             Transform screen = _body.ScreenTransform;
             _lights.Apply(_rover.Position, _world.EarthDirection, screen.position, screen.forward,
                 PostLighting.Rim(phase, share), PostLighting.Fill(phase, share, sinceFaceOn, post.FillRampSeconds));
+        }
+
+        /// <summary>The face shot at its push-in, kept clear of the terrain between the face and the camera.</summary>
+        private ShotPose FaceShot()
+        {
+            ShotPose pose = _shot.At(_shotFace, _shotHeading, _script.Push01);
+            Vector3 toCamera = pose.Position - _shotFace;
+            float length = toCamera.magnitude;
+            if (length <= LengthEpsilon)
+            {
+                return pose;
+            }
+
+            float clear = _sight.Clear(_shotFace, pose.Position, _tuning.FaceInspectProbeRadius);
+            return new ShotPose(_shotFace + toCamera / length * clear, pose.Rotation, pose.Fov);
+        }
+
+        /// <summary>Lets the rig go behind 07, once per opening.</summary>
+        private void ReleaseRig()
+        {
+            if (_rigReleased)
+            {
+                return;
+            }
+
+            _rigReleased = true;
+            _rig.EndWakeOpening();
         }
 
         private float HeadingDegrees()
@@ -672,7 +728,7 @@ namespace MoonProject.Rover
             }
 
             float toLens = Vector3.Distance(_rig.Camera.transform.position, ScanLensOrigin.position);
-            _lens.Apply(new LensViewState(_script.Picture01, toLens, 0f, 0f, SpeckOffGlass));
+            _lens.Apply(new LensViewState(_script.Picture01, toLens));
             _lensApplied = true;
         }
 

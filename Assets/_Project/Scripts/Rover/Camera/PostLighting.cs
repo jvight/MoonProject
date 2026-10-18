@@ -4,8 +4,8 @@ namespace MoonProject.Rover
 {
     /// <summary>
     /// How much of the wake's light is in at each moment, as pure functions: the earthshine rim comes in as the picture
-    /// opens and goes out in the dark middle of the handover's dip; the warm fill from 07's own screen grows as the face
-    /// wakes, so the body reads while the world stays in its eclipse.
+    /// opens and eases out as the camera moves round to the chase frame; the warm fill from 07's own screen grows as
+    /// the face wakes, so the body reads while the world stays in its eclipse.
     /// </summary>
     public static class PostLighting
     {
@@ -19,9 +19,12 @@ namespace MoonProject.Rover
                     return WakeOpening.SmoothStepC2(0f, 1f, u);
                 case OpeningPhase.EyesOpen:
                 case OpeningPhase.Post:
+                case OpeningPhase.Ready:
+                case OpeningPhase.PullBack:
+                case OpeningPhase.Perform:
                     return 1f;
-                case OpeningPhase.Handover:
-                    return u < OpeningScript.HandoverCutShare ? 1f : 0f;
+                case OpeningPhase.MoveBehind:
+                    return 1f - WakeOpening.SmoothStepC2(0f, 1f, u);
                 default:
                     return 0f;
             }
