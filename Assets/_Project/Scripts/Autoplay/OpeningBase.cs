@@ -36,6 +36,9 @@ namespace MoonProject.Autoplay
         private const float ScanArrive = 1.5f;
         private const float SealStandOff = 1.6f;
         private const float SealLineUp = 3f;
+
+        // The open ground 07 comes in from, this far beyond a seal's line-up (CrateApproachSessions keeps it clear).
+        private const float SealOpenGround = 5f;
         private const float SealArrive = 1.5f;
         private const float SealNose = 1.2f;
 
@@ -286,6 +289,10 @@ namespace MoonProject.Autoplay
                 Vector3 front = Flat(crate.CutPoint.position) + side * SealStandOff;
                 if (Clear(crate.CutPoint.position + side * (SealStandOff + SealLineUp), crate.Root))
                 {
+                    // Out to the open ground before the seal first (CrateApproachSessions keeps it clear): a
+                    // straight run between crates may cross a ruin.
+                    yield return _bot.DriveTo(front + side * (SealLineUp + SealOpenGround), LineUpArrive,
+                        "the open ground before " + cache.Id, DriveSeconds);
                     yield return _bot.DriveTo(front + side * SealLineUp, LineUpArrive, "a line-up for " + cache.Id,
                         DriveSeconds);
                 }
