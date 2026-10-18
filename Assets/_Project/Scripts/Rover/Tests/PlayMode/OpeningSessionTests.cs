@@ -57,16 +57,19 @@ namespace MoonProject.Rover.PlayModeTests
         private const float TextCheckEvery = 0.5f;
         private const float TitleQuietSeconds = 4f;
         private const float MaxUntouched = 45f;
-        private const float MinSelfTest = 32f;
-        private const float MaxSelfTest = 40f;
+        private const float MinSelfTest = 28f;
+        private const float MaxSelfTest = 36f;
 
         /// <summary>The shot may turn this little (deg) and stray this little (m) off its push-in line.</summary>
         private const float ShotAngleSlack = 0.05f;
         private const float ShotLineSlack = 0.01f;
 
-        /// <summary>Once pushed in, 07's face screen fills about this share of the frame's height (the lines read).</summary>
-        private const float MinFaceFill = 0.3f;
-        private const float MaxFaceFill = 0.45f;
+        /// <summary>The inventory's close-up: 07's face screen fills about this share of the frame's height.</summary>
+        private const float MinFaceFill = 0.5f;
+        private const float MaxFaceFill = 0.85f;
+
+        /// <summary>07's screen may face this far (deg) off the camera during a check line, its head check included.</summary>
+        private const float MaxFacingDegrees = 25f;
 
         /// <summary>The camera may stray this little (m) while it holds, and a move back up or miss its end this much.</summary>
         private const float HoldSlack = 0.02f;
@@ -196,9 +199,8 @@ namespace MoonProject.Rover.PlayModeTests
             {
                 (OpeningPhase.FadeOut, 0.6f, "fade_out"),
                 (OpeningPhase.Dark, 0.5f, "stage_1_dark"),
-                (OpeningPhase.FadeIn, 0.7f, "stage_2_picture_opens"),
-                (OpeningPhase.EyesOpen, 0.3f, "stage_3_face_flickers_on"),
-                (OpeningPhase.EyesOpen, 0.95f, "stage_4_eyes_awake"),
+                (OpeningPhase.Post, 0.03f, "stage_2_picture_opens_on_the_face"),
+                (OpeningPhase.Post, 0.12f, "stage_3_lines_on_the_face"),
                 (OpeningPhase.Ready, 0.3f, "end_1_ready_readout"),
                 (OpeningPhase.Ready, 0.95f, "end_2_eyes_back"),
                 (OpeningPhase.PullBack, 0.5f, "end_3_pull_back"),
@@ -211,7 +213,7 @@ namespace MoonProject.Rover.PlayModeTests
             };
             var keyShots = new (OpeningPhase Phase, float Share, string Name)[]
             {
-                (OpeningPhase.EyesOpen, 0.95f, "key_01_eyes_awake"),
+                (OpeningPhase.Post, 0.12f, "key_01_first_lines_on_face"),
                 (OpeningPhase.Post, 0.5f, "key_02_lines_on_face"),
                 (OpeningPhase.Perform, 0.58f, "key_03_ready_performance"),
                 (OpeningPhase.MoveBehind, 0.98f, "key_04_chase_frame"),
@@ -242,15 +244,15 @@ namespace MoonProject.Rover.PlayModeTests
                 FaceDirector face = _body.FaceDirector.Director;
                 if (!_beats.Contains(WakeBeat.EyesOpen))
                 {
-                    Assert.IsTrue(face.IsHoldingDarkForOpening, "the CRT stays dark while 07 sleeps");
-                    Assert.AreEqual(0, face.BootCount, "the face does not boot before its eyes open");
+                    Assert.IsTrue(face.IsHoldingDarkForOpening, "no eyes on the face before the checks are done");
+                    Assert.AreEqual(0, face.BootCount, "the face does not boot before its eyes come back");
                 }
 
                 if (_checksStartedList.Count > 0 && !firstLineSeen)
                 {
                     firstLineSeen = true;
-                    Assert.AreEqual(1, face.BootCount, "the face has booted before the first line");
-                    Assert.IsTrue(_beats.Contains(WakeBeat.Blinked), "and the eyes have blinked awake");
+                    Assert.IsTrue(_beats.Contains(WakeBeat.ChecksBegin), "the first line comes as the picture opens");
+                    Assert.AreEqual(0, face.BootCount, "straight into the lines: no eyes-open stage before them");
                 }
 
                 if (script.Phase == OpeningPhase.Post && script.PostStep >= BootCheckStep.Lens)
@@ -325,8 +327,8 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreEqual(1, Count(WakeBeat.Crackle), "the full opening plays once");
             Assert.AreEqual(1, Count(WakeBeat.FadedOut), "New Game faded the picture to black");
             Assert.AreEqual(1, _awoke, "RoverAwoke goes with the crackle, once");
-            Assert.AreEqual(1, _body.FaceDirector.Director.BootCount, "the CRT face boots once, as the eyes open");
-            Assert.That(chase - crackle, Is.InRange(MinSelfTest, MaxSelfTest), "the wake lasts about 36 s");
+            Assert.AreEqual(1, _body.FaceDirector.Director.BootCount, "the CRT face boots once, as the eyes come back");
+            Assert.That(chase - crackle, Is.InRange(MinSelfTest, MaxSelfTest), "the wake lasts about 32 s");
             CollectionAssert.AreEqual(new[]
             {
                 BootCheckStep.Carrier, BootCheckStep.Resume, BootCheckStep.Agenda, BootCheckStep.Lens,
@@ -458,18 +460,21 @@ namespace MoonProject.Rover.PlayModeTests
         [Timeout(300000)]
         [PrebuildSetup(typeof(RoverSessionScene))]
         [PostBuildCleanup(typeof(RoverSessionScene))]
-        public IEnumerator TheShotPlan_OneStillShot_ThenExactlyTwoSmoothMoves_AndTheBodyNeverTurns()
+        public IEnumerator TheShotPlan_TheFaceCloseUpHoldsAndFacesThe07Screen_ThenTwoSmoothMoves_AndSteeringNeverTurns07()
         {
             yield return Boot(true);
             _context.Events.Publish(new NewGameRequested());
             float started = Time.time;
-            while (_director.Script.Phase != OpeningPhase.FadeIn)
+            while (_director.Script.Phase != OpeningPhase.Post)
             {
-                Assert.Less(Time.time - started, RunTimeout, "the picture opens");
+                Assert.Less(Time.time - started, RunTimeout, "the picture opens on the face");
                 yield return null;
             }
 
-            // The camera cut to the shot in the black; from the picture opening on it holds still but for the push-in.
+            // A player steering hard while the lines print (the owner's player build: 07 turned in place under the shot).
+            Set(_gamepad.leftStick, new Vector2(1f, 0f));
+
+            // The camera cut to the close-up in the black; from the picture opening on it holds still.
             yield return null;
             Vector3 startPos = _view.transform.position;
             Quaternion startRot = _view.transform.rotation;
@@ -482,6 +487,7 @@ namespace MoonProject.Rover.PlayModeTests
             float maxBodyYaw = 0f;
             float maxFovChange = 0f;
             float faceFill = 0f;
+            float maxFacing = 0f;
             Renderer screen = _body.FaceDirector.Display.ScreenRenderer;
             var poses = new List<(OpeningPhase Phase, Vector3 Position, Quaternion Rotation, float Seconds)>(4096);
             while (!_beats.Contains(WakeBeat.ChaseFrame))
@@ -490,8 +496,11 @@ namespace MoonProject.Rover.PlayModeTests
                 OpeningScript script = _director.Script;
                 maxBodyYaw = Mathf.Max(maxBodyYaw, Mathf.Abs(Mathf.DeltaAngle(bodyYaw, _rover.transform.eulerAngles.y)));
                 poses.Add((script.Phase, _view.transform.position, _view.transform.rotation, Time.deltaTime));
-                bool still = script.Phase == OpeningPhase.FadeIn || script.Phase == OpeningPhase.EyesOpen
-                    || script.Phase == OpeningPhase.Post;
+                bool still = script.Phase == OpeningPhase.Post;
+                if (script.Phase == OpeningPhase.Ready)
+                {
+                    Set(_gamepad.leftStick, Vector2.zero);
+                }
                 if (still)
                 {
                     Vector3 offset = _view.transform.position - startPos;
@@ -502,6 +511,9 @@ namespace MoonProject.Rover.PlayModeTests
                     maxFovChange = Mathf.Max(maxFovChange, Mathf.Abs(_view.fieldOfView - startFov));
                     if (script.Phase == OpeningPhase.Post)
                     {
+                        Transform face = _body.ScreenTransform;
+                        float facing = Vector3.Angle(face.forward, _view.transform.position - face.position);
+                        maxFacing = Mathf.Max(maxFacing, facing);
                         Bounds bounds = screen.bounds;
                         Vector3 top = _view.WorldToViewportPoint(new Vector3(bounds.center.x, bounds.max.y, bounds.center.z));
                         Vector3 bottom = _view.WorldToViewportPoint(new Vector3(bounds.center.x, bounds.min.y, bounds.center.z));
@@ -531,7 +543,8 @@ namespace MoonProject.Rover.PlayModeTests
             _report.AppendLine("# The shot plan").AppendLine()
                 .AppendLine(Line("still shot turn, max (deg)", maxAngle))
                 .AppendLine(Line("still shot off its push-in line, max (m)", maxOffLine))
-                .AppendLine(Line("push-in travelled (m)", maxAlong))
+                .AppendLine(Line("close-up travel during the checks (m)", maxAlong))
+                .AppendLine(Line("face screen off the camera during the checks, max (deg)", maxFacing))
                 .AppendLine(Line("face screen's share of the frame height at the end of the checks", faceFill))
                 .AppendLine(Line("lens change during the checks, max (deg)", maxFovChange))
                 .AppendLine(Line("ready hold drift, max (m)", readyDrift))
@@ -549,9 +562,10 @@ namespace MoonProject.Rover.PlayModeTests
                 .AppendLine(Line("move behind: end turn off the chase frame (deg)", behindEndTurn))
                 .AppendLine(Line("body yaw change, max (deg)", maxBodyYaw)).AppendLine();
 
-            Assert.LessOrEqual(maxAngle, ShotAngleSlack, "the checks' shot never pans, tilts or orbits");
-            Assert.LessOrEqual(maxOffLine, ShotLineSlack, "the camera moves only along its view line during the checks");
-            Assert.Greater(maxAlong, 0f, "the camera pushes in toward the face");
+            Assert.LessOrEqual(maxAngle, ShotAngleSlack, "the close-up never pans, tilts or orbits");
+            Assert.LessOrEqual(maxOffLine, ShotLineSlack, "the close-up never slides");
+            Assert.LessOrEqual(maxAlong, ShotLineSlack, "the close-up never pushes in or out");
+            Assert.LessOrEqual(maxFacing, MaxFacingDegrees, "07's screen faces the camera through every check line");
             Assert.That(faceFill, Is.InRange(MinFaceFill, MaxFaceFill), "the face fills enough of the frame to read");
             Assert.LessOrEqual(maxFovChange, 1e-3f, "no zoom");
             Assert.LessOrEqual(readyDrift, HoldSlack, "the camera holds while the readout gives way to the eyes");
@@ -563,7 +577,7 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.LessOrEqual(pullEnd, EndSlack, "the pull-back ends on the wide shot");
             Assert.LessOrEqual(behindEnd, EndSlack, "the move behind ends on the chase frame, no pop");
             Assert.LessOrEqual(behindEndTurn, EndTurnSlack, "and facing as the chase frame does");
-            Assert.LessOrEqual(maxBodyYaw, BodyYawSlack, "07's body never turns during the wake");
+            Assert.LessOrEqual(maxBodyYaw, BodyYawSlack, "07's body never turns during the wake, even steered");
             Vector3 chaseOffset = chasePos - _rover.transform.position;
             Assert.Less(Vector3.Dot(chaseOffset, _rover.transform.forward), 0f, "control starts on the chase frame behind 07");
         }

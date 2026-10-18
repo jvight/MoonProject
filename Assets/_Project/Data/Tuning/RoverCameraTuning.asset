@@ -174,11 +174,6 @@ MonoBehaviour:
     _lidRest: 0.7
     _blinkSeconds: 0.55
     _blinkLow: 0.25
-    _bowedPitch: -2
-    _yawLimit: 70
-    _pitchDownLimit: -15
-    _pitchUpLimit: 50
-    _neckFrequency: 0.6
     _blinkSigh: 0.5
     _post:
       _lensSeconds: 1
@@ -191,9 +186,9 @@ MonoBehaviour:
       _antennaSeconds: 1.8
       _batterySeconds: 1.2
       _assemblySeconds: 0.7
-      _beginSeconds: 4
-      _headSweepDegrees: 24
-      _headNodDegrees: 9
+      _beginSeconds: 1.4
+      _headSweepDegrees: 10
+      _headNodDegrees: 5
       _wheelTwitchDegrees: 14
       _shudderMetres: 0.012
       _lurchMetres: 0.06
@@ -247,74 +242,6 @@ MonoBehaviour:
       _fillRange: 3
       _fillOffset: 0.5
       _fillRampSeconds: 2.5
-      _shotDistance: 2.6
-      _shotSideYaw: 35
-      _shotFov: 42
-      _overShoulderSide: 0.9
-      _overShoulderHeight: 1.6
-      _overShoulderBack: 2.6
-      _baseFocus:
-        _step: 3
-        _local: {x: 0, y: 0.8, z: 0.3}
-        _distance: 1
-        _height: 1.35
-        _sideYaw: 0
-      _focus:
-      - _step: 3
-        _local: {x: 0, y: 0.8, z: 0.3}
-        _distance: 1
-        _height: 1.35
-        _sideYaw: 0
-      - _step: 4
-        _local: {x: 0, y: 0.95, z: 0.55}
-        _distance: 0.75
-        _height: 1.2
-        _sideYaw: 0
-      - _step: 5
-        _local: {x: 0, y: 1.15, z: 0.25}
-        _distance: 0.8
-        _height: 1.35
-        _sideYaw: 0
-      - _step: 6
-        _local: {x: 0, y: 0.35, z: 0.1}
-        _distance: 1.1
-        _height: 0.55
-        _sideYaw: 55
-      - _step: 7
-        _local: {x: 0.2, y: 0.75, z: 0}
-        _distance: 1.3
-        _height: 0.9
-        _sideYaw: -50
-      - _step: 8
-        _local: {x: 0, y: 0.8, z: 0.6}
-        _distance: 0.62
-        _height: 0.65
-        _sideYaw: -15
-      - _step: 9
-        _local: {x: 0, y: 0.9, z: -0.3}
-        _distance: 1.2
-        _height: 1.9
-        _sideYaw: 145
-      - _step: 10
-        _local: {x: 0, y: 1.2, z: -0.25}
-        _distance: 1.05
-        _height: 1.5
-        _sideYaw: 110
-      - _step: 11
-        _local: {x: 0.55, y: 1.05, z: 0}
-        _distance: 0.8
-        _height: 1.1
-        _sideYaw: 0
-      - _step: 12
-        _local: {x: 0, y: 0.8, z: 0.3}
-        _distance: 1
-        _height: 1.35
-        _sideYaw: 0
-      - _step: 13
-        _local: {x: 0, y: 1, z: 0.3}
-        _distance: 0.9
-        _height: 1.35
-        _sideYaw: 0
     _lampFlickerCount: 3
     _lampFlickerSeconds: 0.9
     _lampDarkGapSeconds: 0.35

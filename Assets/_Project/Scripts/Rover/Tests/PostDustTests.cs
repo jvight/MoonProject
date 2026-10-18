@@ -19,7 +19,7 @@ namespace MoonProject.Rover.Tests
         [Test]
         public void TheCoat_IsFullFromTheBlackUntilTheChecks_AndOffInTheShortWake()
         {
-            foreach (OpeningPhase phase in new[] { OpeningPhase.FadeOut, OpeningPhase.Dark, OpeningPhase.FadeIn, OpeningPhase.EyesOpen })
+            foreach (OpeningPhase phase in new[] { OpeningPhase.FadeOut, OpeningPhase.Dark })
             {
                 _dust.Update(phase, BootCheckStep.Lens, 0f);
                 for (int i = 0; i < PostDust.ZoneCount; i++)
@@ -67,7 +67,7 @@ namespace MoonProject.Rover.Tests
         [Test]
         public void ThePuffs_CountWhatFell_ANewCoatOnlyLaysDown()
         {
-            _dust.Update(OpeningPhase.EyesOpen, BootCheckStep.Lens, 0f);
+            _dust.Update(OpeningPhase.Dark, BootCheckStep.Lens, 0f);
             Assert.IsFalse(_dust.TryTakePuff(out _), "laying the coat down drops nothing");
             int puffs = 0;
             for (float p = 0f; p <= 1f; p += 0.01f)

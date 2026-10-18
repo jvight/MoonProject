@@ -109,6 +109,7 @@ namespace MoonProject.Rover
         private InputReader _input;
         private IRoverDriveSource _driveSource;
         private readonly HoldRequests _holds = new HoldRequests();
+        private readonly HoldRequests _headingHolds = new HoldRequests();
         private readonly object _faceScreenHoldOwner = new object();
         private RoverCameraRig _cameraRig;
         private bool _faceScreenOpen;
@@ -258,6 +259,18 @@ namespace MoonProject.Rover
         {
             _holds.Set(owner, hold);
         }
+
+        /// <summary>
+        /// Asks 07 to keep its heading as well while any owner holds: steering is ignored (not queued), so 07 cannot
+        /// turn in place under a shot composed around it (the New Game wake). Pair it with <see cref="SetHoldStill"/>.
+        /// </summary>
+        public void SetHoldHeading(object owner, bool hold)
+        {
+            _headingHolds.Set(owner, hold);
+        }
+
+        /// <summary>True while any owner asks 07 to keep its heading.</summary>
+        public bool IsHeadingHeld => _headingHolds.IsHeld;
 
         public bool HasCutterLineOfSight(Vector3 worldPosition)
         {
@@ -852,6 +865,11 @@ namespace MoonProject.Rover
             {
                 // Ignored, not queued: the eased throttle settles to zero, so releasing eases in from rest.
                 raw.y = 0f;
+            }
+
+            if (_headingHolds.IsHeld)
+            {
+                raw.x = 0f;
             }
 
             DriveSettings drive = _tuning.Drive;

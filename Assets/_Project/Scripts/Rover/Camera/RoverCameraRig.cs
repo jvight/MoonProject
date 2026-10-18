@@ -173,13 +173,6 @@ namespace MoonProject.Rover
             return _faceInspectHasShot;
         }
 
-        /// <summary>The front face-inspect shot composed for the opening's CRT reveal, if any (for tests and tooling).</summary>
-        public bool TryGetWakeFaceShot(out FaceInspectShot shot)
-        {
-            shot = _wakeFaceShot;
-            return _hasWakeFaceShot;
-        }
-
         /// <summary>Assigns 07's <see cref="RoverBodyLanguage"/> so the wake opening can compose its front CRT reveal shot.</summary>
         public void SetWakeBody(RoverBodyLanguage bodyLanguage)
         {
@@ -679,19 +672,33 @@ namespace MoonProject.Rover
 
         private void SolveFaceInspectShot()
         {
-            if (_faceInspectBody == null || _rover == null)
+            if (_faceInspectBody != null && TryComposeFaceShot(_faceInspectBody, out FaceInspectShot shot))
             {
-                return;
+                _faceInspectShot = shot;
+                _faceInspectHasShot = true;
+            }
+        }
+
+        /// <summary>
+        /// The close-up of 07's CRT face the inventory opens on (FACE-INV), solved at 07's pose now: the composer's
+        /// camera (kept clear of terrain and rocks), its lens, and the neck yaw and head pitch 07 turns to so the screen
+        /// faces it, with the head's counter-roll set on <paramref name="body"/>. The one source of the face framing:
+        /// the inventory, the title's held frame and the New Game wake all use it.
+        /// </summary>
+        public bool TryComposeFaceShot(RoverBodyLanguage body, out FaceInspectShot shot)
+        {
+            if (body == null || _rover == null)
+            {
+                shot = default;
+                return false;
             }
 
-            _faceInspectBody.SetScreenInspectCounterRoll(
+            body.SetScreenInspectCounterRoll(
                 _tuning.FaceInspectHeadCounterRollShare,
                 _tuning.FaceInspectHeadCounterRollMax);
-            _faceInspectBody.EvaluateScreenPose(0f, _tuning.FaceInspectHeadPitch,
+            body.EvaluateScreenPose(0f, _tuning.FaceInspectHeadPitch,
                 out Vector3 baseScreenPos, out Quaternion baseScreenRot);
-            Vector3 neckPivot = _faceInspectBody.NeckTransform != null
-                ? _faceInspectBody.NeckTransform.position
-                : baseScreenPos;
+            Vector3 neckPivot = body.NeckTransform != null ? body.NeckTransform.position : baseScreenPos;
             FaceInspectShot solved = FaceInspectComposer.Solve(
                 neckPivot,
                 _rover.Rotation,
@@ -705,11 +712,11 @@ namespace MoonProject.Rover
                 _tuning.FaceInspectSideYaw,
                 _tuning.FaceInspectProbeRadius,
                 _faceSight);
-            _faceInspectBody.EvaluateScreenPose(solved.NeckYawOffset, _tuning.FaceInspectHeadPitch,
+            body.EvaluateScreenPose(solved.NeckYawOffset, _tuning.FaceInspectHeadPitch,
                 out Vector3 exactScreenPos, out Quaternion exactScreenRot);
             FaceInspectComposer.ComposePose(exactScreenPos, exactScreenRot, _tuning.FaceInspectLookOffsetY,
                 solved.Distance, out Vector3 exactFocus, out Vector3 exactEye);
-            _faceInspectShot = new FaceInspectShot(
+            shot = new FaceInspectShot(
                 exactFocus,
                 exactEye,
                 solved.Distance,
@@ -717,7 +724,7 @@ namespace MoonProject.Rover
                 solved.NeckYawOffset,
                 solved.Choice,
                 exactScreenRot * Vector3.up);
-            _faceInspectHasShot = true;
+            return true;
         }
 
         private void StepFaceInspect(float deltaTime)
@@ -1034,31 +1041,7 @@ namespace MoonProject.Rover
         /// </summary>
         private void RefreshWakeFaceShot()
         {
-            if (_faceInspectBody == null || _rover == null)
-            {
-                _hasWakeFaceShot = false;
-                return;
-            }
-
-            _faceInspectBody.EvaluateScreenPose(0f, _tuning.FaceInspectHeadPitch,
-                out Vector3 baseScreenPos, out Quaternion baseScreenRot);
-            Vector3 neckPivot = _faceInspectBody.NeckTransform != null
-                ? _faceInspectBody.NeckTransform.position
-                : baseScreenPos;
-            _wakeFaceShot = FaceInspectComposer.Solve(
-                neckPivot,
-                _rover.Rotation,
-                baseScreenPos,
-                baseScreenRot,
-                _tuning.FaceInspectScreenHeight,
-                _tuning.FaceInspectHeightFill,
-                _tuning.FaceInspectDistance,
-                _tuning.FaceInspectMinDistance,
-                _tuning.FaceInspectLookOffsetY,
-                _tuning.FaceInspectSideYaw,
-                _tuning.FaceInspectProbeRadius,
-                _faceSight);
-            _hasWakeFaceShot = true;
+            _hasWakeFaceShot = TryComposeFaceShot(_faceInspectBody, out _wakeFaceShot);
         }
 
         /// <summary>
