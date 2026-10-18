@@ -226,6 +226,7 @@ namespace MoonProject.Gameplay
             Opening = NewOpening(context, services);
             Scans = Opening != null ? NewScans(services) : null;
             Containers.YieldTo(ScanComesFirst);
+            _salvage.YieldTo(ScanComesFirst);
             Opening?.Caches.HoldBack(_openingTuning.CargoCrate, CargoScanned);
             if (Scans == null)
             {
