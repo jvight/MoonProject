@@ -1,0 +1,498 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Globalization;
+using UnityEngine;
+using UnityEngine.InputSystem;
+using MoonProject.Core;
+using MoonProject.Core.Events;
+using MoonProject.Gameplay;
+
+namespace MoonProject.Autoplay
+{
+    /// <summary>
+    /// The steps of the opening after the lander (B4..B11) played as a player does: take the lander's open crate,
+    /// build with the build key, the arrows and E, charge on the pad and fit the igniter on 07's face screen, scan and
+    /// cut among the ruins, wait out the first sunset. A step names the objective line the game must show before it
+    /// starts, and a chip that never shows on a verb's first use is listed as a guidance gap in the beat's warnings.
+    /// </summary>
+    internal sealed class OpeningBase
+    {
+        private const float FollowSeconds = 6f;
+
+        /// <summary>Seconds a milestone may take after its build: the bank, for one, has to charge first.</summary>
+        private const float MilestoneSeconds = 120f;
+        private const float LineSeconds = 15f;
+        private const float DriveSeconds = 150f;
+        private const float StandOff = 4f;
+        private const float BaseSpacing = 7f;
+        private const float RuinsGateOffset = 10f;
+        private const float ScanStandOff = 3.5f;
+        private const float PanelStandOff = 2.5f;
+        private const float ScanLineUp = 3f;
+        private const float LineUpArrive = 3f;
+        private const float ScanArrive = 1.5f;
+        private const float SealStandOff = 1.6f;
+        private const float SealLineUp = 3f;
+        private const float SealArrive = 1.5f;
+        private const float SealNose = 1.2f;
+        private const float SealCutSeconds = 30f;
+        private const float ScanLookSeconds = 12f;
+        private const float ScanAllowanceSeconds = 8f;
+        private const float ChipSeconds = 3f;
+        private const float ApproachThrottleRadius = 0.5f;
+        private const float SunsetSeconds = 300f;
+        private const float ChargeSeconds = 60f;
+        private const float ClearHeight = 0.9f;
+        private const float ClearRadius = 1.1f;
+        private const int ApproachSides = 8;
+        private const int MaxMenuSteps = 12;
+        private const float PlaceDriftMetres = 4f;
+        private const int PlaceRings = 4;
+        private const int PlaceRingSpots = 8;
+        private const float PlaceRingStep = 1.5f;
+        private const float PlaceSettleSeconds = 3f;
+        private const int SettledFrames = 8;
+        private const int CutterDevice = 1;
+
+        private readonly AutoplayBot _bot;
+        private readonly List<OpeningMilestoneReached> _milestones = new List<OpeningMilestoneReached>();
+        private readonly HashSet<string> _verbsUsed = new HashSet<string>();
+        private IDisposable _reached;
+
+        public OpeningBase(AutoplayBot bot)
+        {
+            _bot = bot;
+        }
+
+        private GameplaySystem G => _bot.World.Gameplay;
+
+        public void Listen()
+        {
+            _reached?.Dispose();
+            _reached = _bot.World.Context.Events.Subscribe<OpeningMilestoneReached>(_milestones.Add);
+        }
+
+        public void Stop()
+        {
+            _reached?.Dispose();
+            _reached = null;
+        }
+
+        /// <summary>The objective line the game must be on, and reading on screen once 07 stands still.</summary>
+        public IEnumerator ExpectLine(string key, string why)
+        {
+            yield return _bot.Until(() => G.Opening.Flow.Current == key, FollowSeconds,
+                "the objective line to be '" + key + "' (" + why + ")",
+                () => "It is '" + G.Opening.Flow.Current + "'.");
+            if (_bot.Failed || key.Length == 0)
+            {
+                yield break;
+            }
+
+            string expected = _bot.World.Context.Get<ILocalization>().Get(key);
+            yield return _bot.Until(() => _bot.World.Ui.ObjectiveLine() == expected, LineSeconds,
+                "the objective line to read '" + expected + "' on screen (" + why + ")",
+                () => "On screen: line '" + _bot.World.Ui.ObjectiveLine() + "', chip '" + _bot.World.Ui.Chip() + "'.");
+        }
+
+        /// <summary>B4: the lander's open crate gives Metal, Wiring and the spare igniter.</summary>
+        public IEnumerator CollectTheOpenCrate()
+        {
+            if (!G.StartKit.CarriesIgniter)
+            {
+                SealedContainer crate = G.Containers.Find("supply.lander.open");
+                Vector3 front = Flat(crate.CutPoint.position + crate.Root.forward * SealStandOff);
+                yield return _bot.DriveTo(front + Flat(crate.Root.forward) * SealLineUp, LineUpArrive,
+                    "a line-up for the open crate", DriveSeconds);
+                yield return _bot.DriveTo(front, 1f, "the open crate", DriveSeconds);
+            }
+
+            yield return _bot.Until(() => G.StartKit.CarriesIgniter, FollowSeconds, "07 to take the spare igniter");
+        }
+
+        /// <summary>B5, B8, B9, B11: B opens the menu, arrows pick, E takes up, 07's look finds a spot, E places and welds.</summary>
+        public IEnumerator Build(string structureId, Vector3 at)
+        {
+            BuildField build = G.Building;
+            StructureDefinition definition = build.Catalog.Find(structureId);
+            yield return _bot.Until(() => G.KnownStructures.IsKnown(structureId), FollowSeconds,
+                structureId + "'s blueprint to be learned");
+            yield return _bot.DriveTo(Flat(at) + Vector3.back * StandOff, 1f, "beside the build spot", DriveSeconds);
+            if (_bot.Failed)
+            {
+                yield break;
+            }
+
+            yield return FirstUse("build: B");
+            yield return _bot.Tap(Key.B);
+            yield return _bot.Until(() => build.State == BuildModeState.Menu, FollowSeconds, "B to open the build menu");
+            yield return _bot.Until(() => _bot.World.Ui.BuildStripShown(), FollowSeconds, "the build strip to show");
+            for (int step = 0; !_bot.Failed && step < MaxMenuSteps &&
+                                build.Controller.SelectedStructure?.Id != structureId; step++)
+            {
+                yield return _bot.Tap(Key.RightArrow);
+            }
+
+            if (build.Controller.SelectedStructure?.Id != structureId)
+            {
+                _bot.Fail("the arrows never reached " + structureId + " in the build menu.");
+                yield break;
+            }
+
+            yield return _bot.Tap(Key.E);
+            yield return _bot.Until(() => build.State == BuildModeState.Placing, FollowSeconds,
+                "E to take " + structureId + " up to place");
+            yield return LookForASpot(build, at, structureId);
+            if (_bot.Failed)
+            {
+                yield break;
+            }
+
+            yield return _bot.Tap(Key.E);
+            int before = G.PlacedBase.Count;
+            yield return _bot.Until(() => build.State == BuildModeState.Welding || G.PlacedBase.Count > before,
+                FollowSeconds, "E to place " + structureId, () => "State " + build.State + ", reason " +
+                                                                  build.Controller.CandidateReason + ".");
+            if (build.State == BuildModeState.Welding)
+            {
+                int instance = build.Controller.ActiveWeldInstanceId;
+                yield return _bot.Hold(Key.E, () =>
+                    {
+                        return G.PlacedBase.TryGetStructure(instance, out PlacedStructure built) && built.IsBuilt;
+                    }, definition.BuildSeconds + FollowSeconds, "a held E to weld " + structureId);
+            }
+
+            yield return _bot.Until(() => build.State == BuildModeState.Closed, FollowSeconds,
+                "a finished weld to close build mode");
+            Vector3 placed = PlacedPosition(structureId);
+            if (!_bot.Failed && DriveSteering.FlatDistance(placed, at) > PlaceDriftMetres)
+            {
+                _bot.Warn(structureId + " stands " + DriveSteering.FlatDistance(placed, at).ToString("0.0",
+                    CultureInfo.InvariantCulture) + " m from the spot asked for.");
+            }
+        }
+
+        /// <summary>B6: onto the pad, the dock locks 07 in, the spare igniter is fitted on the face screen, the reserve runs out.</summary>
+        public IEnumerator ChargeOnThePad(string structureId)
+        {
+            BatteryModel battery = G.Battery.Model;
+            Vector3 pad = PlacedPosition(structureId);
+            yield return _bot.DriveTo(Flat(pad) + Vector3.back * 6f, 2f, "a line-up for the pad", DriveSeconds);
+            yield return _bot.DriveTo(Flat(pad), ApproachThrottleRadius, "the pad", DriveSeconds);
+            yield return _bot.Until(() => battery.IsCharging && battery.Charger == ChargerKind.Pad, FollowSeconds,
+                "the built pad to charge 07");
+            yield return UntilReached(OpeningMilestone.FirstCharge, "the FirstCharge milestone");
+            yield return _bot.Until(() => G.PadLock.Raised, FollowSeconds, "the pad's dock lock to rise round 07");
+            yield return ExpectLine(OpeningKeys.FitIgniter, "B6: charging, the igniter in the hold");
+            if (_bot.Failed)
+            {
+                yield break;
+            }
+
+            yield return FitTheIgniter();
+            yield return _bot.Until(() => !battery.IsCharging, ChargeSeconds, "07 to charge full");
+        }
+
+        /// <summary>Every fragment of a blueprint's set, one by one.</summary>
+        public IEnumerator ScanTheSet(string setId)
+        {
+            ScanField scans = G.Scans;
+            for (int i = 0; !_bot.Failed && scans.Find(ScanField.FragmentId(setId, i)) != null; i++)
+            {
+                ScanFragment fragment = scans.Find(ScanField.FragmentId(setId, i));
+                if (!fragment.Scanned)
+                {
+                    Vector3 away = Flat(_bot.World.Rover.Position - fragment.Point);
+                    yield return Scan(fragment, away.sqrMagnitude > 1e-4f ? away.normalized : Vector3.back,
+                        ScanStandOff);
+                }
+            }
+        }
+
+        /// <summary>B7: the habitat's airlock panel, read from square on.</summary>
+        public IEnumerator ReadTheAirlockPanel()
+        {
+            ScanFragment panel = G.Scans.Find(StoryScan.IdPrefix + "airlock");
+            if (panel == null)
+            {
+                _bot.Fail("the habitat has no airlock panel to read.");
+                yield break;
+            }
+
+            Vector3 outward = Flat(panel.Point - Ruin("HabitatModules").position).normalized;
+            yield return Scan(panel, outward, PanelStandOff);
+        }
+
+        /// <summary>Cuts every sealed crate standing by <paramref name="frame"/> (an anchor or a ruin piece).</summary>
+        public IEnumerator CutTheCrates(string frame)
+        {
+            SupplyCaches caches = G.Opening.Caches;
+            for (int i = 0; !_bot.Failed && i < caches.Count; i++)
+            {
+                SupplyCache cache = caches.Get(i);
+                SealedContainer crate = G.Containers.Find(cache.Id);
+                if (cache.AnchorId != frame || crate.Opened)
+                {
+                    continue;
+                }
+
+                Vector3 side = ClearSide(crate.CutPoint.position, Flat(crate.Root.forward).normalized, SealStandOff,
+                    crate.Root);
+                Vector3 front = Flat(crate.CutPoint.position) + side * SealStandOff;
+                if (Clear(crate.CutPoint.position + side * (SealStandOff + SealLineUp), crate.Root))
+                {
+                    yield return _bot.DriveTo(front + side * SealLineUp, LineUpArrive, "a line-up for " + cache.Id,
+                        DriveSeconds);
+                }
+
+                yield return _bot.DriveTo(front, SealArrive, "the seal of " + cache.Id, DriveSeconds);
+                yield return _bot.DriveTo(Flat(crate.CutPoint.position), SealNose, "nose to the seal of " + cache.Id,
+                    DriveSeconds);
+                yield return _bot.TurnToward(crate.CutPoint.position, "the seal of " + cache.Id);
+                yield return FirstUse("cut: hold E");
+                yield return _bot.Hold(Key.E, () =>
+                    {
+                        _bot.KeepLookingAt(crate.CutPoint.position);
+                        return crate.Opened;
+                    }, SealCutSeconds, "a held E to cut the seal of " + cache.Id,
+                    () => "Crate candidate " + (G.Containers.Candidate != null ? G.Containers.Candidate.Id : "none") +
+                          ", cutter ready " + G.Cutter.Ready + ".");
+                yield return _bot.Until(() => crate.StandsOpen, G.Cargo.ContainerLidSeconds + FollowSeconds,
+                    cache.Id + " to stand open");
+            }
+        }
+
+        public IEnumerator UntilReached(OpeningMilestone milestone, string what, float seconds = MilestoneSeconds)
+        {
+            yield return _bot.Until(() => _milestones.Exists(reached => reached.Milestone == milestone),
+                seconds, what, () => "The objective line is '" + G.Opening.Flow.Current + "'. " + BaseState());
+        }
+
+        /// <summary>B10: the night-ready base lets the first sunset run.</summary>
+        public IEnumerator TheFirstNightfall()
+        {
+            var sunlight = _bot.World.Context.Get<ISunlight>();
+            yield return _bot.Until(() => sunlight.Phase == SkyPhase.Earthlit, SunsetSeconds, "the first night to fall");
+        }
+
+        public IEnumerator DriveToTheRuinsGate(string what)
+        {
+            yield return _bot.DriveTo(RuinsGate(), LineUpArrive, what, DriveSeconds);
+        }
+
+        /// <summary>The base and the sky in a line, for a failure message: what stands, what it stores, which phase.</summary>
+        private string BaseState()
+        {
+            var text = new System.Text.StringBuilder("Sky " + _bot.World.Context.Get<ISunlight>().Phase + "; base:");
+            foreach (PlacedStructure structure in G.PlacedBase.Structures)
+            {
+                text.Append(' ').Append(structure.Definition.Id).Append(" built=").Append(structure.IsBuilt)
+                    .Append(" stored=").Append(structure.StoredWattHours.ToString("0.0", CultureInfo.InvariantCulture))
+                    .Append(" supply=").Append(structure.SupplyRatio.ToString("0.00", CultureInfo.InvariantCulture))
+                    .Append(" at ").Append(structure.Pose.Position).Append(';');
+            }
+
+            return text.ToString();
+        }
+
+        /// <summary>Where the built structure <paramref name="structureId"/> stands (the build spot is only where 07 aimed).</summary>
+        private Vector3 PlacedPosition(string structureId)
+        {
+            foreach (PlacedStructure structure in G.PlacedBase.Structures)
+            {
+                if (structure.Definition.Id == structureId)
+                {
+                    return structure.Pose.Position;
+                }
+            }
+
+            _bot.Fail("no " + structureId + " stands in the base.");
+            return Vector3.zero;
+        }
+
+        public Vector3 Pad()
+        {
+            return _bot.World.Anchors.TryGet("place.apron", out WorldAnchor apron) ? apron.Position : Vector3.zero;
+        }
+
+        public static float Spacing => BaseSpacing;
+
+        /// <summary>Notes a verb's chip on its first use; a missing chip is a guidance gap, not a stop.</summary>
+        private IEnumerator FirstUse(string verb)
+        {
+            if (!_verbsUsed.Add(verb))
+            {
+                yield break;
+            }
+
+            float deadline = Time.unscaledTime + ChipSeconds;
+            while (_bot.World.Ui.Chip().Length == 0 && Time.unscaledTime < deadline)
+            {
+                yield return null;
+            }
+
+            if (_bot.World.Ui.Chip().Length == 0)
+            {
+                _bot.Warn("guidance gap: " + verb + " showed no prompt chip on its first use (line on screen: '" +
+                          _bot.World.Ui.ObjectiveLine() + "').");
+            }
+        }
+
+        private IEnumerator Scan(ScanFragment fragment, Vector3 preferred, float standOff)
+        {
+            ScanField scans = G.Scans;
+            Vector3 away = ClearSide(fragment.Point, preferred, standOff, null);
+            if (Clear(fragment.Point + away * (standOff + ScanLineUp), null))
+            {
+                yield return _bot.DriveTo(Flat(fragment.Point + away * (standOff + ScanLineUp)), LineUpArrive,
+                    "a line-up for a scan", DriveSeconds);
+            }
+
+            yield return _bot.DriveTo(Flat(fragment.Point), standOff, "the spot facing " + fragment.FragmentId,
+                DriveSeconds);
+            yield return _bot.TurnToward(fragment.Point, fragment.FragmentId);
+            UiProbe ui = _bot.World.Ui;
+            float deadline = Time.unscaledTime + ScanLookSeconds;
+            while (!_bot.Failed && !(_bot.KeepLookingAt(fragment.Point) && scans.Candidate == fragment))
+            {
+                if (Time.unscaledTime > deadline)
+                {
+                    _bot.Fail("the view never settled on " + fragment.FragmentId + " (candidate " +
+                              (scans.Candidate != null ? scans.Candidate.FragmentId : "none") + "). " + _bot.Where());
+                    yield break;
+                }
+
+                yield return null;
+            }
+
+            yield return FirstUse("scan: hold E");
+            yield return _bot.Hold(Key.E, () =>
+                {
+                    _bot.KeepLookingAt(fragment.Point);
+                    return fragment.Scanned;
+                }, scans.Tuning.Seconds(fragment.Size) + ScanAllowanceSeconds, "a held E to scan " + fragment.FragmentId,
+                () => "Chip '" + ui.Chip() + "'.");
+        }
+
+        /// <summary>07's look rests on a spot near <paramref name="at"/> the placement rules accept, in rings round it.</summary>
+        private IEnumerator LookForASpot(BuildField build, Vector3 at, string structureId)
+        {
+            var terrain = _bot.World.Context.Get<ITerrainQuery>();
+            for (int ring = 0; ring < PlaceRings; ring++)
+            {
+                for (int step = 0; step < PlaceRingSpots; step++)
+                {
+                    Vector3 spot = at + Quaternion.Euler(0f, step * 360f / PlaceRingSpots, 0f) * Vector3.forward *
+                        (ring * PlaceRingStep);
+                    Vector3 ground = SurfaceRules.OnSurface(terrain, spot.x, spot.z);
+                    float until = Time.unscaledTime + PlaceSettleSeconds;
+                    int settled = 0;
+                    while (Time.unscaledTime < until && settled < SettledFrames)
+                    {
+                        settled = _bot.KeepLookingAt(ground) ? settled + 1 : 0;
+                        yield return null;
+                    }
+
+                    if (build.Controller.CanPlaceNow)
+                    {
+                        yield break;
+                    }
+
+                    if (ring == 0)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            _bot.Fail(structureId + " found no spot near " + at + " the placement rules accept (last reason " +
+                      build.Controller.CandidateReason + ").");
+        }
+
+        /// <summary>Tab opens 07's face screen, the arrows walk the focus to the cutter's socket, Enter fits, Tab closes.</summary>
+        private IEnumerator FitTheIgniter()
+        {
+            RoverStartKit kit = G.StartKit;
+            UiProbe ui = _bot.World.Ui;
+            yield return FirstUse("fit the igniter: Tab");
+            yield return _bot.Tap(Key.Tab);
+            yield return _bot.Until(() => ui.FaceFocus().Length > 0, FollowSeconds,
+                "the face screen to open with a focus");
+            for (int step = 0; !_bot.Failed && step < MaxMenuSteps && ui.FaceFocusedDevice() != CutterDevice; step++)
+            {
+                int device = ui.FaceFocusedDevice();
+                yield return _bot.Tap(device < 0 ? Key.RightArrow : device < CutterDevice ? Key.DownArrow : Key.UpArrow);
+            }
+
+            if (ui.FaceFocusedDevice() != CutterDevice)
+            {
+                _bot.Fail("the arrows never reached the cutter's socket on the face screen (focus '" + ui.FaceFocus() +
+                          "').");
+                yield break;
+            }
+
+            yield return _bot.Tap(Key.Enter);
+            yield return _bot.Until(() => !kit.CarriesIgniter, FollowSeconds, "Enter to fit the spare igniter");
+            yield return _bot.Tap(Key.Tab);
+            var face = _bot.World.Context.Get<IRoverFaceScreen>();
+            yield return _bot.Until(() => !face.IsOpen, FollowSeconds, "Tab to close the face screen");
+        }
+
+        private static Vector3 ClearSide(Vector3 point, Vector3 preferred, float standOff, Transform own)
+        {
+            for (int step = 0; step < ApproachSides; step++)
+            {
+                float turn = (step + 1) / 2 * (360f / ApproachSides) * (step % 2 == 0 ? 1f : -1f);
+                Vector3 side = Quaternion.Euler(0f, turn, 0f) * preferred;
+                if (Clear(point + side * standOff, own))
+                {
+                    return side;
+                }
+            }
+
+            return preferred;
+        }
+
+        private static bool Clear(Vector3 spot, Transform own)
+        {
+            foreach (Collider hit in Physics.OverlapSphere(spot + Vector3.up * ClearHeight, ClearRadius,
+                         Layers.PropMask, QueryTriggerInteraction.Ignore))
+            {
+                if (own == null || !hit.transform.IsChildOf(own))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>Open ground off the ruins' south side: the way in and out among them.</summary>
+        private Vector3 RuinsGate()
+        {
+            return Flat(Ruin("FallenSolarArray").position) + Vector3.back * RuinsGateOffset;
+        }
+
+        private Transform Ruin(string id)
+        {
+            foreach (GameObject root in UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects())
+            {
+                Transform ruins = root.transform.Find("Ruins");
+                Transform piece = ruins != null ? ruins.Find(id) : null;
+                if (piece != null)
+                {
+                    return piece;
+                }
+            }
+
+            _bot.Fail("the Main scene has no ruin piece " + id + ".");
+            return _bot.World.Gameplay.transform;
+        }
+
+        private static Vector3 Flat(Vector3 v)
+        {
+            return new Vector3(v.x, 0f, v.z);
+        }
+    }
+}
