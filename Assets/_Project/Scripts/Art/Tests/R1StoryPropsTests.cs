@@ -494,7 +494,9 @@ namespace MoonProject.Art.Tests
             // Planar array exposed on its own hinge node (Array_Hinge) tilting about the mast arm axis
             Transform arrayHinge = landerPrefab.transform.Find("Array_Hinge");
             Assert.IsNotNull(arrayHinge.GetComponent<Renderer>(), "Prop_OldLander Array_Hinge must have a MeshRenderer.");
-            Assert.AreEqual(2.46f, arrayHinge.localPosition.y, 0.05f, "Prop_OldLander Array_Hinge pivot must sit on the mast arm axis.");
+            // Children sit in the FBX root's local (Blender Z-up) axes; the root's +90 deg X conversion turns them Y-up.
+            Vector3 hingeInPrefab = landerPrefab.transform.localRotation * arrayHinge.localPosition;
+            Assert.AreEqual(2.46f, hingeInPrefab.y, 0.05f, "Prop_OldLander Array_Hinge pivot must sit on the mast arm axis.");
 
             // About 3 m tall, with one footpad half-buried below Y = 0
             Bounds landerBounds = MeshChecks.PrefabBounds(landerPrefab, landerPrefab.transform.localToWorldMatrix);
