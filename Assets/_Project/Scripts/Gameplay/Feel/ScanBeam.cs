@@ -448,6 +448,7 @@ namespace MoonProject.Gameplay
 
             float lensHalfW = lensWidth * 0.5f;
             float targetHalfW = targetWidth * 0.5f;
+            float wrapRadius = Mathf.Min(Mathf.Clamp(spanHeight * 0.26f, 0.06f, 0.24f), beamLen * 0.25f);
 
             for (int r = 0; r < WedgeRings; r++)
             {
@@ -465,15 +466,16 @@ namespace MoonProject.Gameplay
                     : Mathf.SmoothStep(0.18f, 1.0f, Mathf.InverseLerp(0.115f, 0.48f, d));
                 float alongAlpha = EvaluateWedgeLongitudinalAlpha(d, beamLen) * screenClearance;
                 float lensHotMix = Mathf.Exp(-d / LensCoreDecayMeters) * 0.62f;
-                float contactHotMix = Mathf.Exp(-Mathf.Max(0f, beamLen - d) / ContactLipDecayMeters) * 0.28f;
+                float contactHotMix = Mathf.Exp(-Mathf.Max(0f, beamLen - d) / ContactLipDecayMeters) * 0.34f;
                 Color baseTint = Color.Lerp(cyanColor, Color.white, Mathf.Clamp01(lensHotMix + contactHotMix));
 
                 // Crossed fan sheets tilted in (right, orthoUp) so the wedge fans out visibly from low
-                // chase camera angles while spanning the surface scan line on the target.
-                float verticalTilt = Mathf.Lerp(0.68f, 0.38f, u);
+                // chase camera angles while spanning and wrapping the surface scan line on the target.
+                float verticalTilt = Mathf.Lerp(0.68f, 0.34f, u);
                 Vector3 sheetDir0 = (right + orthoUp * verticalTilt).normalized;
                 Vector3 sheetDir1 = (right - orthoUp * verticalTilt).normalized;
                 float sheet1AlphaShare = Mathf.Lerp(0.78f, 0.52f, u);
+                float targetWrapShare = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.68f, 1f, u));
 
                 float uvX = u;
                 int rowBase0 = r * WedgeSlices;
@@ -483,7 +485,8 @@ namespace MoonProject.Gameplay
                 {
                     float v01 = (float)s / (WedgeSlices - 1);
                     float v = v01 * 2f - 1f;
-                    float lateralEnvelope = Mathf.Sqrt(Mathf.Clamp01(1f - v * v * 0.85f));
+                    float baseLat = Mathf.Sqrt(Mathf.Clamp01(1f - v * v * 0.85f));
+                    float lateralEnvelope = Mathf.Lerp(baseLat * baseLat, baseLat, targetWrapShare);
 
                     // Fine radial scanline striations inside the fan wedge
                     float radialWave = 0.5f + 0.5f * Mathf.Cos((v * 7.0f + _progress * 1.5f) * TwoPi);
@@ -495,9 +498,11 @@ namespace MoonProject.Gameplay
                     Color c0 = baseTint;
                     c0.a = alpha0;
 
+                    // Curve the far rings forward around the 3D target hull so the contact lip wraps the object
                     float arch = (1f - v * v) * WedgeArchHeight * (1f - u * 0.5f);
+                    Vector3 wrapOffset = beamDir * (v * v * wrapRadius * targetWrapShare);
                     int idx0 = rowBase0 + s;
-                    _wedgeVertices[idx0] = ringCenter + sheetDir0 * (v * halfW) + orthoUp * arch;
+                    _wedgeVertices[idx0] = ringCenter + sheetDir0 * (v * halfW) + orthoUp * arch + wrapOffset;
                     _wedgeNormals[idx0] = orthoUp;
                     _wedgeUvs[idx0] = new Vector2(uvX, v01);
                     _wedgeColors[idx0] = c0;
@@ -507,7 +512,7 @@ namespace MoonProject.Gameplay
                     c1.a = alpha1;
 
                     int idx1 = rowBase1 + s;
-                    _wedgeVertices[idx1] = ringCenter + sheetDir1 * (v * halfW) - orthoUp * (arch * 0.5f);
+                    _wedgeVertices[idx1] = ringCenter + sheetDir1 * (v * halfW) - orthoUp * (arch * 0.5f) + wrapOffset;
                     _wedgeNormals[idx1] = orthoUp;
                     _wedgeUvs[idx1] = new Vector2(uvX, v01);
                     _wedgeColors[idx1] = c1;

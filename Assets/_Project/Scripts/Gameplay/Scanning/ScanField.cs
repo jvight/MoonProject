@@ -651,7 +651,7 @@ namespace MoonProject.Gameplay
             string teaches = fragment.StructureIds.Count > 0 ? fragment.StructureIds[0] : fragment.BlueprintId;
             _events.Publish(new FragmentScanned(fragment.FragmentId, teaches, before, fragment.Count, known,
                 fragment.Owed));
-            _events.Publish(new FeelBeat(FeelKind.Scan, FeelPhase.Reward, fragment.Point, Vector3.up, 1f, 0f));
+            _events.Publish(new FeelBeat(FeelKind.Scan, FeelPhase.Reward, fragment.Point, fragment.SweepSpan, 1f, 0f));
             if (!known && before + 1 >= fragment.Count)
             {
                 for (string id = firstUnknown; id != null; id = NextUnlearnedStructure(fragment.StructureIds))
@@ -674,7 +674,7 @@ namespace MoonProject.Gameplay
             fragment.Scanned = true;
             fragment.ScannedAt = now;
             _events.Publish(new StoryScanned(fragment.FragmentId, fragment.StoryKey, fragment.Point));
-            _events.Publish(new FeelBeat(FeelKind.Scan, FeelPhase.Reward, fragment.Point, Vector3.up, 1f, 0f));
+            _events.Publish(new FeelBeat(FeelKind.Scan, FeelPhase.Reward, fragment.Point, fragment.SweepSpan, 1f, 0f));
             _save.SaveNow();
         }
 
