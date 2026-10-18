@@ -29,6 +29,10 @@ namespace MoonProject.World
     /// </summary>
     public sealed class SunClock
     {
+        // The sunset search walks the clock in these steps, then halves the last step this many times (under 0.1 s).
+        private const float SunsetSearchStep = 10f;
+        private const int SunsetRefineSteps = 8;
+
         private const float FullCircleDegrees = 360f;
         private const float HalfCircleDegrees = 180f;
 
@@ -228,26 +232,58 @@ namespace MoonProject.World
                 return 0f;
             }
 
-            float groundY = terrain.SampleHeight(position.x, position.z);
-            float originY = Mathf.Max(position.y, groundY) + _settings.ReceiverHeight;
-            Vector2 dir = MoonSurface.BearingToDirection(Bearing);
-            float step = Mathf.Max(_settings.HorizonStep, 1f);
-            float maxDistance = _settings.HorizonDistance;
-            float maxSlope = 0f;
-            for (float distance = step; distance <= maxDistance; distance += step)
-            {
-                float sampleHeight = terrain.SampleHeight(position.x + dir.x * distance, position.z + dir.y * distance);
-                float slope = (sampleHeight - originY) / distance;
-                if (slope > maxSlope)
-                {
-                    maxSlope = slope;
-                }
-            }
-
-            float horizonElevation = Mathf.Atan(maxSlope) * Mathf.Rad2Deg;
+            float horizonElevation = HorizonElevation(terrain, position, Bearing);
             float t = Mathf.Clamp01((Elevation - horizonElevation + halfSoftness) / softness);
             float horizonFactor = t * t * (3f - 2f * t);
             return horizonFactor * (1f - EclipseFactor);
+        }
+
+        /// <summary>
+        /// The first clock time at or after <paramref name="fromSeconds"/> when the Sun's lower limb meets the terrain
+        /// horizon seen from <paramref name="position"/> along the Sun's bearing: <paramref name="fromSeconds"/> itself
+        /// when it already has, <see cref="float.PositiveInfinity"/> when it does not within a lunar day. The clock is
+        /// unchanged; the eclipse is ignored. Allocation-free.
+        /// </summary>
+        public float SunsetTimeAfter(ITerrainQuery terrain, Vector3 position, float fromSeconds)
+        {
+            if (terrain == null)
+            {
+                throw new ArgumentNullException(nameof(terrain));
+            }
+
+            if (LimbClearance(terrain, position, fromSeconds) <= 0f)
+            {
+                return fromSeconds;
+            }
+
+            float end = fromSeconds + _settings.DayLengthSeconds;
+            float above = fromSeconds;
+            for (float t = fromSeconds + SunsetSearchStep; t <= end; t += SunsetSearchStep)
+            {
+                if (LimbClearance(terrain, position, t) > 0f)
+                {
+                    above = t;
+                    continue;
+                }
+
+                float below = t;
+                for (int i = 0; i < SunsetRefineSteps; i++)
+                {
+                    float middle = (above + below) * 0.5f;
+                    if (LimbClearance(terrain, position, middle) > 0f)
+                    {
+                        above = middle;
+                    }
+                    else
+                    {
+                        below = middle;
+                    }
+                }
+
+                return below;
+            }
+
+            return float.PositiveInfinity;
         }
 
         /// <summary>The Sun's elevation, degrees, at clock time <paramref name="timeSeconds"/> (the clock is unchanged).</summary>
@@ -266,6 +302,35 @@ namespace MoonProject.World
             SunAt(timeSeconds, out float bearing, out float elevation, out _);
             return ComputeEclipseFactor(Direction(bearing, elevation), _sky.EarthDirection,
                 _settings.SunDiameter * 0.5f * Mathf.Deg2Rad, _sky.EarthDiameter * 0.5f * Mathf.Deg2Rad);
+        }
+
+        // Degrees the Sun's lower limb stands above the terrain horizon from `position` at clock time `timeSeconds`.
+        private float LimbClearance(ITerrainQuery terrain, Vector3 position, float timeSeconds)
+        {
+            SunAt(timeSeconds, out float bearing, out float elevation, out _);
+            return elevation - _settings.SunDiameter * 0.5f - HorizonElevation(terrain, position, bearing);
+        }
+
+        // The terrain horizon's elevation, degrees, seen from just above `position` along `bearing`.
+        private float HorizonElevation(ITerrainQuery terrain, Vector3 position, float bearing)
+        {
+            float groundY = terrain.SampleHeight(position.x, position.z);
+            float originY = Mathf.Max(position.y, groundY) + _settings.ReceiverHeight;
+            Vector2 dir = MoonSurface.BearingToDirection(bearing);
+            float step = Mathf.Max(_settings.HorizonStep, 1f);
+            float maxDistance = _settings.HorizonDistance;
+            float maxSlope = 0f;
+            for (float distance = step; distance <= maxDistance; distance += step)
+            {
+                float sampleHeight = terrain.SampleHeight(position.x + dir.x * distance, position.z + dir.y * distance);
+                float slope = (sampleHeight - originY) / distance;
+                if (slope > maxSlope)
+                {
+                    maxSlope = slope;
+                }
+            }
+
+            return Mathf.Atan(maxSlope) * Mathf.Rad2Deg;
         }
 
         private static Vector3 Direction(float bearing, float elevation)

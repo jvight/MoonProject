@@ -41,6 +41,8 @@ namespace MoonProject.World
         private float _lastProbeSunlight = -1f;
         private float _lastProbeLocalSunlight = -1f;
         private float _lastProbeEclipse = -1f;
+        private float _sunsetClock = float.NegativeInfinity;
+        private float _sunsetSearchedFrom = float.PositiveInfinity;
 
         public SunClock Clock => _clock;
 
@@ -95,6 +97,28 @@ namespace MoonProject.World
             {
                 EnsureSaveResolved();
                 return _clock.Phase;
+            }
+        }
+
+        public float SecondsToSunset
+        {
+            get
+            {
+                EnsureSaveResolved();
+                if (_clock.IsHoldingEclipse)
+                {
+                    return float.PositiveInfinity;
+                }
+
+                // The sunset's clock time stays right until the clock reaches it or is set back before the search.
+                float now = _clock.TimeSeconds;
+                if (now > _sunsetClock || now < _sunsetSearchedFrom)
+                {
+                    _sunsetClock = _clock.SunsetTimeAfter(_terrain, _layout.BasePosition, now);
+                    _sunsetSearchedFrom = now;
+                }
+
+                return _pacing.RealSecondsBetween(now, _sunsetClock);
             }
         }
 
