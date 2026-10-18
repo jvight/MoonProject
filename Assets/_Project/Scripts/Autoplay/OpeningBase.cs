@@ -24,7 +24,6 @@ namespace MoonProject.Autoplay
         private const float MilestoneSeconds = 120f;
         private const float LineSeconds = 15f;
         private const float DriveSeconds = 150f;
-        private const float StandOff = 4f;
         private const float BaseSpacing = 7f;
 
         /// <summary>The bank stands close to the pad, well inside the cable reach, as a sensible player places it.</summary>
@@ -50,11 +49,10 @@ namespace MoonProject.Autoplay
         private const float ClearRadius = 1.1f;
         private const int ApproachSides = 8;
         private const int MaxMenuSteps = 12;
-        private const float PlaceDriftMetres = 4f;
-        private const int PlaceRings = 4;
-        private const int PlaceRingSpots = 8;
-        private const float PlaceRingStep = 1.5f;
-        private const float PlaceSettleSeconds = 3f;
+        private const float PlaceDriftMetres = 2f;
+        private const int PlaceBearings = 6;
+        private const float PlaceBearingStepDegrees = 60f;
+        private const float PlaceStandArrive = 0.5f;
         private const int SettledFrames = 8;
         private const int CutterDevice = 1;
 
@@ -121,7 +119,10 @@ namespace MoonProject.Autoplay
             StructureDefinition definition = build.Catalog.Find(structureId);
             yield return _bot.Until(() => G.KnownStructures.IsKnown(structureId), FollowSeconds,
                 structureId + "'s blueprint to be learned");
-            yield return _bot.DriveTo(Flat(at) + Vector3.back * StandOff, 1f, "beside the build spot", DriveSeconds);
+            float ahead = build.Tuning.GhostAheadMetres;
+            yield return _bot.DriveTo(Flat(at) + Vector3.back * ahead, PlaceStandArrive, "the build spot's stand",
+                DriveSeconds);
+            yield return _bot.TurnToward(at, "the build spot");
             if (_bot.Failed)
             {
                 yield break;
@@ -146,7 +147,7 @@ namespace MoonProject.Autoplay
             yield return _bot.Tap(Key.E);
             yield return _bot.Until(() => build.State == BuildModeState.Placing, FollowSeconds,
                 "E to take " + structureId + " up to place");
-            yield return LookForASpot(build, at, structureId);
+            yield return PutTheGhostOn(build, at, structureId);
             if (_bot.Failed)
             {
                 yield break;
@@ -451,39 +452,41 @@ namespace MoonProject.Autoplay
                        System.StringComparison.Ordinal));
         }
 
-        /// <summary>07's look rests on a spot near <paramref name="at"/> the placement rules accept, in rings round it.</summary>
-        private IEnumerator LookForASpot(BuildField build, Vector3 at, string structureId)
+        /// <summary>
+        /// The placing ghost rides the tuned distance ahead of 07, so 07 stands that far from the spot on one side and
+        /// faces it; when the rules refuse the spot from there, 07 tries the other sides in turn.
+        /// </summary>
+        private IEnumerator PutTheGhostOn(BuildField build, Vector3 at, string structureId)
         {
-            var terrain = _bot.World.Context.Get<ITerrainQuery>();
-            for (int ring = 0; ring < PlaceRings; ring++)
+            float ahead = build.Tuning.GhostAheadMetres;
+            for (int attempt = 0; attempt < PlaceBearings; attempt++)
             {
-                for (int step = 0; step < PlaceRingSpots; step++)
+                if (attempt > 0)
                 {
-                    Vector3 spot = at + Quaternion.Euler(0f, step * 360f / PlaceRingSpots, 0f) * Vector3.forward *
-                        (ring * PlaceRingStep);
-                    Vector3 ground = SurfaceRules.OnSurface(terrain, spot.x, spot.z);
-                    float until = Time.unscaledTime + PlaceSettleSeconds;
-                    int settled = 0;
-                    while (Time.unscaledTime < until && settled < SettledFrames)
-                    {
-                        settled = _bot.KeepLookingAt(ground) ? settled + 1 : 0;
-                        yield return null;
-                    }
-
-                    if (build.Controller.CanPlaceNow)
+                    Vector3 side = Quaternion.Euler(0f, attempt * PlaceBearingStepDegrees, 0f) * Vector3.back;
+                    yield return _bot.DriveTo(Flat(at) + side * ahead, PlaceStandArrive, "another side of the build spot",
+                        DriveSeconds);
+                    yield return _bot.TurnToward(at, "the build spot");
+                    if (_bot.Failed)
                     {
                         yield break;
                     }
+                }
 
-                    if (ring == 0)
-                    {
-                        break;
-                    }
+                for (int frame = 0; frame < SettledFrames; frame++)
+                {
+                    yield return null;
+                }
+
+                if (build.Controller.CanPlaceNow &&
+                    DriveSteering.FlatDistance(build.Controller.CandidatePose.Position, at) <= PlaceDriftMetres)
+                {
+                    yield break;
                 }
             }
 
-            _bot.Fail(structureId + " found no spot near " + at + " the placement rules accept (last reason " +
-                      build.Controller.CandidateReason + ").");
+            _bot.Fail(structureId + " found no way to put the ghost on " + at + " (candidate " +
+                      build.Controller.CandidatePose.Position + ", last reason " + build.Controller.CandidateReason + ").");
         }
 
         /// <summary>Tab opens 07's face screen, the arrows walk the focus to the cutter's socket, Enter fits, Tab closes.</summary>
