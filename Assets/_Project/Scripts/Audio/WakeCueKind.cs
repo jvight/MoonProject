@@ -7,8 +7,5 @@ namespace MoonProject.Audio
         Ghost = 1,
         Tick = 2,
         Whine = 3,
-        Hum = 4,
-        Servo = 5,
-        Chirp = 6,
     }
 }

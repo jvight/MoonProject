@@ -22,13 +22,6 @@ namespace MoonProject.Audio.Tests
         [TestCase(WakeBeat.LidHalf, WakeCueKind.Tick)]
         [TestCase(WakeBeat.FocusHunting, WakeCueKind.Whine)]
         [TestCase(WakeBeat.FocusSettled, WakeCueKind.Tick)]
-        [TestCase(WakeBeat.Flicker, WakeCueKind.Hum)]
-        [TestCase(WakeBeat.GazeHome, WakeCueKind.Servo)]
-        [TestCase(WakeBeat.GazePilot, WakeCueKind.Servo)]
-        [TestCase(WakeBeat.GazePeak, WakeCueKind.Servo)]
-        [TestCase(WakeBeat.FarFocusSettled, WakeCueKind.Tick)]
-        [TestCase(WakeBeat.GazeEarth, WakeCueKind.Servo)]
-        [TestCase(WakeBeat.Blinked, WakeCueKind.Tick)]
         [TestCase(WakeBeat.Stirred, WakeCueKind.Tick)]
         public void EveryVoicedBeat_PlaysItsCueAtOnce(WakeBeat beat, WakeCueKind first)
         {
@@ -40,34 +33,25 @@ namespace MoonProject.Audio.Tests
         }
 
         [Test]
-        public void TheLidStagesTickLowThenHigher_AndTheBlinkClicksThenAsks()
+        public void TheLidStagesTickLowThenHigher_TheFocusLandsHigher_TheShortWakeHighest()
         {
             _sheet.CuesFor(WakeBeat.LidCracked, false, _calls);
             Assert.AreEqual(WakeCueSheet.TickA2, _calls[0].Variant);
             _sheet.CuesFor(WakeBeat.LidHalf, false, _calls);
             Assert.AreEqual(WakeCueSheet.TickD3, _calls[0].Variant);
-
-            Assert.AreEqual(2, _sheet.CuesFor(WakeBeat.Blinked, false, _calls));
+            _sheet.CuesFor(WakeBeat.FocusSettled, false, _calls);
+            Assert.AreEqual(WakeCueSheet.TickA4, _calls[0].Variant);
+            _sheet.CuesFor(WakeBeat.Stirred, false, _calls);
             Assert.AreEqual(WakeCueSheet.TickD5, _calls[0].Variant);
-            Assert.AreEqual(WakeCueKind.Chirp, _calls[1].Kind);
-            Assert.Greater(_calls[1].Delay, 0f, "the 'hm?' follows the lid's click");
         }
 
         [Test]
-        public void TheGhostChordSurfacesThreeTimes_EachClearer()
+        public void TheGhostChordSurfacesFaintly_AMomentIntoTheBlack()
         {
-            float last = 0f;
-            int lastVariant = -1;
-            foreach (WakeBeat beat in new[] { WakeBeat.Crackle, WakeBeat.GazePilot, WakeBeat.GazeEarth })
-            {
-                int count = _sheet.CuesFor(beat, false, _calls);
-                WakeCueCall ghost = _calls[count - 1];
-                Assert.AreEqual(WakeCueKind.Ghost, ghost.Kind, $"{beat} brings the ghost chord");
-                Assert.Greater(ghost.Volume, last, "each ghost is clearer than the last");
-                Assert.Greater(ghost.Variant, lastVariant);
-                last = ghost.Volume;
-                lastVariant = ghost.Variant;
-            }
+            Assert.AreEqual(2, _sheet.CuesFor(WakeBeat.Crackle, false, _calls));
+            Assert.AreEqual(WakeCueKind.Ghost, _calls[1].Kind);
+            Assert.Greater(_calls[1].Delay, 0f, "after the thump");
+            Assert.AreEqual(_settings.GhostFaint, _calls[1].Volume, 1e-6f);
         }
 
         [Test]

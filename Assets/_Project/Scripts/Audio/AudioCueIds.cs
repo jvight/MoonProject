@@ -73,9 +73,7 @@ namespace MoonProject.Audio
         public const string WakePowerThump = "wake_power_thump";
         public const string LidTick = "lid_tick";
         public const string LensWhine = "lens_whine";
-        public const string HumDropout = "hum_dropout";
         public const string NeckServo = "neck_servo";
-        public const string HmChirp = "hm_chirp";
         public const string DockChargeHum = "dock_charge_hum";
         public const string DockFull = "dock_full";
         public const string BatteryCell = "battery_cell";
@@ -110,6 +108,20 @@ namespace MoonProject.Audio
         // Opening v2: the base powering on, its lamps at the first nightfall
         public const string StructurePowerOn = "structure_power_on";
         public const string BaseLampOn = "base_lamp_on";
+
+        // The New Game self-test (sampled): one per check's motion, and the fault result
+        public const string BootLens = "boot_lens";
+        public const string BootLamps = "boot_lamps";
+        public const string BootHead = "boot_head";
+        public const string BootWheels = "boot_wheels";
+        public const string BootMotor = "boot_motor";
+        public const string BootCutter = "boot_cutter";
+        public const string BootWingJam = "boot_wing_jam";
+        public const string BootAntenna = "boot_antenna";
+        public const string BootBattery = "boot_battery";
+        public const string BootAssembly = "boot_assembly";
+        public const string BootBegin = "boot_begin";
+        public const string BootFault = "boot_fault";
 
         // R1 Group 4: Machines
         public const string MachineSolarTrack = "machine_solar_track";
