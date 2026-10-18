@@ -43,14 +43,18 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// Where the beam aims for a line at <paramref name="height"/>: the bounds' centre column at that height, kept
-        /// inside the target's own top and bottom.
+        /// Where the beam aims for a line at sweep height <paramref name="height"/>: on the tilted line itself, at a
+        /// height kept inside the target's own top and bottom and shifted toward or away from the camera by the rest
+        /// (so on a low, flat target the aim travels across its top as the line does), inside its footprint.
         /// </summary>
-        public static Vector3 AimPoint(Bounds bounds, float height)
+        public static Vector3 AimPoint(Bounds bounds, float height, Vector2 towardCamera)
         {
             float inset = bounds.size.y * AimInset;
             float y = Mathf.Clamp(height, bounds.min.y + inset, bounds.max.y - inset);
-            return new Vector3(bounds.center.x, y, bounds.center.z);
+            float reach = (bounds.extents.x * Mathf.Abs(towardCamera.x) + bounds.extents.z * Mathf.Abs(towardCamera.y)) *
+                          (1f - AimInset);
+            float along = Mathf.Clamp((y - height) / Tilt, -reach, reach);
+            return new Vector3(bounds.center.x + towardCamera.x * along, y, bounds.center.z + towardCamera.y * along);
         }
     }
 }

@@ -163,7 +163,7 @@ namespace MoonProject.Gameplay
             Bounds bounds = solid.bounds;
             Vector2 toCamera = ScanLine.TowardCamera(bounds.center, camera);
             float height = ScanLine.Height(bounds, toCamera, Progress);
-            Vector3 aim = ScanLine.AimPoint(bounds, height);
+            Vector3 aim = ScanLine.AimPoint(bounds, height, toCamera);
             if (!Hit(solid, lens, aim, out point, out normal))
             {
                 Nearest(solid, aim, out point, out normal);
@@ -172,7 +172,7 @@ namespace MoonProject.Gameplay
 
             // Once more where the tilted line crosses the face the beam met, so the beam ends on the drawn line.
             float drift = height - ScanLine.SweepHeightOf(point, bounds.center, toCamera);
-            Vector3 onLine = ScanLine.AimPoint(bounds, aim.y + drift);
+            Vector3 onLine = ScanLine.AimPoint(bounds, height + drift, toCamera);
             if (Hit(solid, lens, onLine, out Vector3 lined, out Vector3 linedNormal))
             {
                 point = lined;

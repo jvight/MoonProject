@@ -82,9 +82,14 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(0f - tilt, ScanLine.Height(bounds, toCamera, 0f), 1e-4f);
             Assert.AreEqual(2f + tilt, ScanLine.Height(bounds, toCamera, 1f), 1e-4f);
 
-            Vector3 aim = ScanLine.AimPoint(bounds, 5f);
+            Vector3 aim = ScanLine.AimPoint(bounds, 5f, toCamera);
             Assert.Less(aim.y, bounds.max.y, "the aim stays inside the target's own top");
-            Assert.AreEqual(bounds.center.x, aim.x, 1e-4f);
+            Assert.IsTrue(bounds.Contains(aim), "and inside its footprint");
+
+            float onTop = bounds.max.y + 0.1f;
+            Vector3 across = ScanLine.AimPoint(bounds, onTop, toCamera);
+            Assert.AreEqual(onTop, ScanLine.SweepHeightOf(across, bounds.center, toCamera), 1e-4f,
+                "past its top the aim travels across it, still on the tilted line");
         }
 
         [TestCase(0f, 1f, 1.2f, TestName = "AScanSweep_StaysOnASquareTarget")]
