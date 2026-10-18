@@ -306,12 +306,14 @@ namespace MoonProject.Rover.PlayModeTests
                 "Tooltip on 07's face must display the Vietnamese material name.");
             Capture("face-inv-hover-tooltip");
             CaptureScreenshot("face_inv_hover");
+            Assert.AreEqual(SkyPhase.Eclipse, _sunlight.Phase, "Opening state must be in SkyPhase.Eclipse.");
             Capture("inventory_variant_a_night");
+            CaptureAtSize("face_inv_16x9_eclipse", 1920, 1080);
             CaptureAtSize("face_inv_16x9_night", 1920, 1080);
             CaptureAtSize("face_inv_21x9_night", 2520, 1080);
             CaptureAtSize("face_inv_4x3_night", 1440, 1080);
             CaptureWithGlassOutlineOverlay("inventory_glass_outline", faceScreen, 1920, 1080);
-            AssertLiveGlassFitAndComfort(faceScreen, "night");
+            AssertLiveGlassFitAndComfort(faceScreen, "eclipse");
             bezelRenderer.sharedMaterial = darkBezelMat;
             Capture("inventory_variant_b_night");
             bezelRenderer.sharedMaterial = creamBezelMat;
@@ -368,23 +370,34 @@ namespace MoonProject.Rover.PlayModeTests
 
             Assert.IsFalse(_rover.IsHeldStill, "Closing the face inventory must release 07's hold-still brake.");
 
-            // DAYLIGHT CAPTURE: Release opening eclipse and advance into sunlit lunar day.
+            // GOLDEN HOUR, DAY, AND NIGHT CAPTURES: Release opening eclipse into golden hour (Sunrise), then sunlit Day and earthlit Night.
             _sunlight.ReleaseOpeningEclipse();
             float sunriseDeadline = Time.time + SunriseTimeout;
             while (_sunlight.SunlightAt(_rover.Position) < 0.95f)
             {
-                Assert.Less(Time.time, sunriseDeadline, "Sun breaks out of eclipse into lunar day.");
+                Assert.Less(Time.time, sunriseDeadline, "Sun breaks out of eclipse into golden hour.");
                 yield return null;
             }
 
             yield return WaitSeconds(2.0f);
             Assert.Greater(_sunlight.SunlightAt(_rover.Position), 0.95f);
+            Assert.AreEqual(SkyPhase.Sunrise, _sunlight.Phase, "OpeningSkyPacing holds at golden hour (SkyPhase.Sunrise) after breakout.");
 
             yield return TapTab();
             yield return WaitSeconds(0.90f);
             Assert.IsTrue(faceScreen.IsOpen);
             Assert.AreEqual(1f, faceState.ScreenContentMix, 1e-4f);
             Assert.AreEqual(0f, faceState.ScreenVerticalPinch, 1e-4f);
+            view.FocusFirst();
+            yield return null;
+            CaptureAtSize("face_inv_16x9_golden_hour", 1920, 1080);
+            AssertLiveGlassFitAndComfort(faceScreen, "golden_hour");
+
+            // Release OpeningSkyPacing hold and advance to full sunlit lunar day (t = 900s, SkyPhase.Sunlit).
+            _context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.NightReady, false));
+            SetSkyClockTime(900f, false);
+            yield return null;
+            Assert.AreEqual(SkyPhase.Sunlit, _sunlight.Phase, "Clock at 900s must be in SkyPhase.Sunlit.");
             view.ClearFocus();
             yield return null;
             Capture("face-inv-day-open");
@@ -402,6 +415,17 @@ namespace MoonProject.Rover.PlayModeTests
             Capture("inventory_variant_b");
             Capture("inventory_variant_b_day");
             bezelRenderer.sharedMaterial = creamBezelMat;
+
+            // Advance to full earthlit lunar night (t = 4800s, SkyPhase.Earthlit) and verify glass comfort and capture.
+            SetSkyClockTime(4800f, false);
+            yield return null;
+            Assert.AreEqual(SkyPhase.Earthlit, _sunlight.Phase, "Clock at 4800s must be in SkyPhase.Earthlit.");
+            CaptureAtSize("face_inv_16x9_night", 1920, 1080);
+            AssertLiveGlassFitAndComfort(faceScreen, "night");
+
+            // Restore sunlit day for the remaining chase, rock occlusion, and slope checks.
+            SetSkyClockTime(900f, false);
+            yield return null;
             view.ClearFocus();
 
             yield return TapTab();
@@ -572,6 +596,13 @@ namespace MoonProject.Rover.PlayModeTests
                 craft?.Invoke(equipment, new object[] { RoverKitPiece.LampBar });
                 craft?.Invoke(equipment, new object[] { RoverKitPiece.HoverCoils });
             }
+        }
+
+        private void SetSkyClockTime(float timeSeconds, bool holdingEclipse)
+        {
+            MethodInfo setClockTime = _sunlight?.GetType().GetMethod("SetClockTime", BindingFlags.Instance | BindingFlags.Public);
+            Assert.IsNotNull(setClockTime, "ISunlight implementation must expose SetClockTime(float, bool, bool).");
+            setClockTime.Invoke(_sunlight, new object[] { timeSeconds, holdingEclipse, true });
         }
 
         private GameObject CreateRockObstacle(Vector3 position)
@@ -911,6 +942,10 @@ namespace MoonProject.Rover.PlayModeTests
                 var bgLuminances = new List<float>(8192);
                 var strokeCheckCoords = new List<Vector2Int>(1024);
                 float maxBgSat = 0f;
+                float sumBgR = 0f;
+                float sumBgG = 0f;
+                float sumBgB = 0f;
+                float sumBgSat = 0f;
 
                 _view.aspect = (float)width / height;
                 try
@@ -960,6 +995,10 @@ namespace MoonProject.Rover.PlayModeTests
                                     0.25f,
                                     $"[{lightingTag}] Background pixel at panel {panelPos} must have HSV saturation <= 0.25 (got {bgSat:F3}, color={bgCol}).");
 
+                                sumBgR += bgCol.r;
+                                sumBgG += bgCol.g;
+                                sumBgB += bgCol.b;
+                                sumBgSat += bgSat;
                                 bgLuminances.Add(RelativeLuminance(bgCol));
                             }
                             else if (distInside >= minMargin + 6f && IsUiStrokeCore(uiPixels, uiW, uiH, uiX, uiY))
@@ -975,6 +1014,24 @@ namespace MoonProject.Rover.PlayModeTests
                 }
 
                 Assert.GreaterOrEqual(bgLuminances.Count, 500, $"[{lightingTag}] Must sample at least 500 pure background pixels inside the safe area.");
+                float invCount = 1f / bgLuminances.Count;
+                float avgBgR = sumBgR * invCount;
+                float avgBgG = sumBgG * invCount;
+                float avgBgB = sumBgB * invCount;
+                float avgBgSat = sumBgSat * invCount;
+                Assert.LessOrEqual(
+                    avgBgSat,
+                    0.12f,
+                    $"[{lightingTag}] Mean background HSV saturation must be <= 0.12 for a neutral warm-black glass (got {avgBgSat:F3}, rgb=({avgBgR * 255f:F1},{avgBgG * 255f:F1},{avgBgB * 255f:F1})).");
+                Assert.GreaterOrEqual(
+                    avgBgR,
+                    avgBgG,
+                    $"[{lightingTag}] Mean background R ({avgBgR * 255f:F1}) must be >= G ({avgBgG * 255f:F1}) so the glass is warm-neutral and never green/olive.");
+                Assert.GreaterOrEqual(
+                    avgBgG,
+                    avgBgB - 0.004f,
+                    $"[{lightingTag}] Mean background G ({avgBgG * 255f:F1}) must not drop below B ({avgBgB * 255f:F1}) so the glass is never blue.");
+
                 bgLuminances.Sort();
                 float medianBgLum = bgLuminances[bgLuminances.Count / 2];
                 float maxBgLum = bgLuminances[bgLuminances.Count - 1];
