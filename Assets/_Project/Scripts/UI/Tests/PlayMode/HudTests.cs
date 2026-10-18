@@ -711,6 +711,39 @@ namespace MoonProject.UI.PlayModeTests
             Assert.IsFalse(_rig.Ui.LookUp.IsVisible, "out of reach, the chip bows out again");
         }
 
+        [UnityTest]
+        public IEnumerator AnUnlearnedReadyVerb_TakesTheSlotFromTheObjectiveLine_WhenSevenNosesIntoACrate()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            _rig.Ui.Ledger.RecordLookTaught();
+            _rig.Ui.Ledger.RecordDriveTaught();
+            _rig.Ui.Ledger.RecordHoldChipShown();
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            Events.Publish(new NextStepChanged("next.v2.cut_optics"));
+            float limit = Time.realtimeSinceStartup + 12f;
+            while (!_rig.Ui.Objective.ShowsObjective && Time.realtimeSinceStartup < limit)
+            {
+                yield return null;
+            }
+
+            Assert.IsTrue(_rig.Ui.Objective.ShowsObjective, "07 stands still: the step's line is up");
+            var seal = new Vector3(0.4f, 0.5f, 5f);
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Salvage, seal, true);
+            _rig.Fakes.HasTarget = true;
+            _rig.Fakes.CutPoint = seal;
+            _rig.Fakes.Material = SalvageMaterial.Optics;
+            limit = Time.realtimeSinceStartup + 3f;
+            while (!_rig.Ui.Prompt.IsVisible && Time.realtimeSinceStartup < limit)
+            {
+                yield return null;
+            }
+
+            Assert.IsTrue(_rig.Ui.Prompt.IsVisible, "nosed in at the seal, the cut is taught within 3 s");
+            Assert.AreEqual(Text(UiKeys.Hint(InteractionKind.Salvage)), _rig.Ui.Layout.PromptWord.text);
+        }
+
         private void Boot()
         {
             _rig = UiTestRig.Boot(_controls, _slot);

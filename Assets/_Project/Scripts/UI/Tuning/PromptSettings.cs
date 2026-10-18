@@ -38,6 +38,15 @@ namespace MoonProject.UI
         [Range(0f, 120f)]
         [SerializeField] private float _repeatCooldown = 25f;
 
+        [Tooltip("Metres a new target must lie from where a prompt went away for it to teach again at once: the " +
+                 "cooldown keeps one ignored spot quiet, never a fresh crate the player drives straight to.")]
+        [Range(0.5f, 20f)]
+        [SerializeField] private float _repeatRadius = 3f;
+
+        [Tooltip("Seconds a target may drop out of reach (07 nosing in, the aim wavering) before its dwell starts over.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _dwellGraceSeconds = 0.35f;
+
         [Tooltip("Half-life (s) of the prompt following its world point on screen: it floats, never jitters.")]
         [Range(0f, 0.5f)]
         [SerializeField] private float _followHalfLife = 0.08f;
@@ -59,6 +68,10 @@ namespace MoonProject.UI
         public float MaxShowSeconds => _maxShowSeconds;
 
         public float RepeatCooldown => _repeatCooldown;
+
+        public float RepeatRadius => _repeatRadius;
+
+        public float DwellGraceSeconds => _dwellGraceSeconds;
 
         public float FollowHalfLife => _followHalfLife;
 

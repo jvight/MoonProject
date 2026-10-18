@@ -23,9 +23,12 @@ namespace MoonProject.UI
         private readonly PromptSettings _settings;
         private readonly PromptLedger _ledger;
         private readonly float[] _cooldownUntil;
+        private readonly Vector3[] _cooldownPoint;
         private float _now;
         private InteractionKind _candidate;
         private float _candidateTime;
+        private float _candidateAway;
+        private float _shownAway;
         private float _showTime;
         private bool _ending;
 
@@ -40,6 +43,7 @@ namespace MoonProject.UI
             }
 
             _cooldownUntil = new float[count];
+            _cooldownPoint = new Vector3[count];
         }
 
         /// <summary>The prompt in the chip (None when the chip is empty).</summary>
@@ -77,7 +81,10 @@ namespace MoonProject.UI
             if (Displayed != InteractionKind.None && !_ending)
             {
                 _showTime += deltaTime;
-                if (desired != Displayed || _showTime >= _settings.MaxShowSeconds)
+                // Out of reach for a moment keeps the prompt; another target in reach replaces it at once.
+                _shownAway = desired == Displayed ? 0f : _shownAway + deltaTime;
+                bool otherTarget = primary.Kind != InteractionKind.None && primary.Kind != Displayed;
+                if (otherTarget || _shownAway > _settings.DwellGraceSeconds || _showTime >= _settings.MaxShowSeconds)
                 {
                     EndShowing();
                 }
@@ -107,6 +114,7 @@ namespace MoonProject.UI
             WorldPoint = primary.Position + Vector3.up * Entry.LiftMetres;
             NounKey = primary.NounKey;
             _showTime = 0f;
+            _shownAway = 0f;
             Started = true;
             _ledger.RecordShown(desired);
         }
@@ -141,9 +149,26 @@ namespace MoonProject.UI
                 return true;
             }
 
+            if (_candidate != InteractionKind.None && _candidateAway <= _settings.DwellGraceSeconds &&
+                _ledger.ShouldTeach(_candidate))
+            {
+                return true;
+            }
+
             InteractionKind kind = primary.Kind;
             return kind != InteractionKind.None && primary.Ready && _settings.Find(kind) != null &&
-                   _ledger.ShouldTeach(kind) && _now >= _cooldownUntil[(int)kind];
+                   _ledger.ShouldTeach(kind) && !CoolingDown(kind, primary.Position);
+        }
+
+        /// <summary>
+        /// True while <paramref name="kind"/>'s prompt rests after going away unused, at the spot it went away: a
+        /// target farther than the repeat radius is a new one and teaches again at once.
+        /// </summary>
+        private bool CoolingDown(InteractionKind kind, Vector3 target)
+        {
+            int index = (int)kind;
+            return _now < _cooldownUntil[index] &&
+                   (target - _cooldownPoint[index]).sqrMagnitude <= _settings.RepeatRadius * _settings.RepeatRadius;
         }
 
         private InteractionKind Desire(float deltaTime, bool gateOpen, InteractionHint primary)
@@ -153,9 +178,7 @@ namespace MoonProject.UI
                              _settings.Find(kind) != null;
             if (!available)
             {
-                _candidate = InteractionKind.None;
-                _candidateTime = 0f;
-                return InteractionKind.None;
+                return Away(deltaTime);
             }
 
             if (kind == Displayed && !_ending)
@@ -163,11 +186,9 @@ namespace MoonProject.UI
                 return kind;
             }
 
-            if (!_ledger.ShouldTeach(kind) || _now < _cooldownUntil[(int)kind])
+            if (!_ledger.ShouldTeach(kind) || CoolingDown(kind, primary.Position))
             {
-                _candidate = InteractionKind.None;
-                _candidateTime = 0f;
-                return InteractionKind.None;
+                return Away(deltaTime);
             }
 
             if (kind != _candidate)
@@ -176,14 +197,32 @@ namespace MoonProject.UI
                 _candidateTime = 0f;
             }
 
+            _candidateAway = 0f;
             _candidateTime += deltaTime;
             return _candidateTime >= _settings.Find(kind).DwellSeconds ? kind : InteractionKind.None;
+        }
+
+        /// <summary>
+        /// Nothing to teach this frame: a target that wavers out of reach for a moment (07 nosing in, the aim
+        /// passing over another part) keeps its dwell; only a longer absence starts it over.
+        /// </summary>
+        private InteractionKind Away(float deltaTime)
+        {
+            _candidateAway += deltaTime;
+            if (_candidateAway > _settings.DwellGraceSeconds)
+            {
+                _candidate = InteractionKind.None;
+                _candidateTime = 0f;
+            }
+
+            return InteractionKind.None;
         }
 
         private void EndShowing()
         {
             _ending = true;
             _cooldownUntil[(int)Displayed] = _now + _settings.RepeatCooldown;
+            _cooldownPoint[(int)Displayed] = WorldPoint - Vector3.up * Entry.LiftMetres;
         }
     }
 }
