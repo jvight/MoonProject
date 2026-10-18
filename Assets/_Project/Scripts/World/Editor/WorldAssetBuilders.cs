@@ -89,7 +89,11 @@ namespace MoonProject.World.Editor
         public static void BuildSkyMaterials()
         {
             GeneratedAssets.CreateOrReplace(new Material(LoadShader(WorldPaths.SkyShader)), WorldPaths.SkyMaterial);
-            GeneratedAssets.CreateOrReplace(new Material(LoadShader(WorldPaths.EarthShader)), WorldPaths.EarthMaterial);
+            Texture2D earthAlbedo = LoadEarthTexture(WorldPaths.EarthAlbedoTexture);
+            Material earthMaterial = new Material(LoadShader(WorldPaths.EarthShader));
+            earthMaterial.SetTexture("_EarthAlbedoMap", earthAlbedo);
+            earthMaterial.SetFloat("_EarthVariant", -1f);
+            GeneratedAssets.CreateOrReplace(earthMaterial, WorldPaths.EarthMaterial);
             AssetDatabase.SaveAssets();
         }
 
@@ -273,6 +277,55 @@ namespace MoonProject.World.Editor
             }
 
             return shader;
+        }
+
+        private static Texture2D LoadEarthTexture(string path)
+        {
+            if (AssetDatabase.LoadAssetAtPath<Texture2D>(path) == null)
+            {
+                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
+            }
+
+            if (AssetImporter.GetAtPath(path) is TextureImporter importer)
+            {
+                bool dirty = false;
+                if (importer.wrapModeU != TextureWrapMode.Repeat)
+                {
+                    importer.wrapModeU = TextureWrapMode.Repeat;
+                    dirty = true;
+                }
+
+                if (importer.wrapModeV != TextureWrapMode.Clamp)
+                {
+                    importer.wrapModeV = TextureWrapMode.Clamp;
+                    dirty = true;
+                }
+
+                if (!importer.sRGBTexture)
+                {
+                    importer.sRGBTexture = true;
+                    dirty = true;
+                }
+
+                if (importer.alphaIsTransparency)
+                {
+                    importer.alphaIsTransparency = false;
+                    dirty = true;
+                }
+
+                if (importer.textureCompression != TextureImporterCompression.Uncompressed)
+                {
+                    importer.textureCompression = TextureImporterCompression.Uncompressed;
+                    dirty = true;
+                }
+
+                if (dirty)
+                {
+                    importer.SaveAndReimport();
+                }
+            }
+
+            return LoadTexture(path);
         }
 
         private static Texture2D LoadTexture(string path)
