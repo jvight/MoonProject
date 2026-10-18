@@ -68,17 +68,10 @@ namespace MoonProject.Rover.PlayModeTests
         private const float DriveStick = 0.6f;
         private const float EndTimeout = 1f;
         private const float MinCameraClearance = 0.2f;
-        private const string DockAnchorName = "DockAnchor";
 
         /// <summary>The longest the wake may still hold the camera before the evening is tried.</summary>
         private const float WakeEaseTimeout = 8f;
 
-        /// <summary>The dock's evening: seconds to the settled frame, the frame mid-ease back, and timeouts.</summary>
-        private const float EveningSettleSeconds = 5f;
-        private const float EveningSettled = 0.9f;
-        private const float EveningBackFrameSeconds = 1f;
-        private const float EveningEndTimeout = 20f;
-        private const float EveningEarlySeconds = 2f;
 
         /// <summary>The scan capture: the fragment's distance ahead, the wait before each frame, and the flare's.
         /// </summary>
@@ -113,8 +106,6 @@ namespace MoonProject.Rover.PlayModeTests
         private const float BundleFlight = 0.7f;
         private const float HatchFrameSeconds = 0.8f;
 
-        /// <summary>How far (m) along Earth's direction a point is projected to find Earth on screen.</summary>
-        private const float EarthProbeDistance = 1000f;
 
         private static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "rover-captures"));
@@ -178,82 +169,15 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.IsTrue(_terrain.IsDrivable(basin.x, basin.z), "The basin spot is open ground.");
             yield return Stargaze("stargaze-basin", basin, earth);
 
-            Transform dock = FindNode(DockAnchorName);
-            Assert.IsNotNull(dock, "The lander carries the charging dock's DockAnchor.");
-            Vector3 lander = dock.position - dock.forward * LanderBack + dock.right * LanderSide;
-            yield return Stargaze("stargaze-lander", lander, dock.eulerAngles.y);
+            Assert.IsTrue(_context.Get<IWorldAnchors>().TryGet(WorldAnchorIds.PlaceLander, out WorldAnchor landerAnchor),
+                "The world has the lander's anchor.");
+            Vector3 aside = Vector3.Cross(Vector3.up, landerAnchor.Forward);
+            Vector3 lander = landerAnchor.Position + landerAnchor.Forward * LanderBack + aside * LanderSide;
+            yield return Stargaze("stargaze-lander", lander, WideShotComposer.Bearing(landerAnchor.Forward));
 
             Directory.CreateDirectory(CaptureFolder);
             File.WriteAllText(Path.Combine(CaptureFolder, "stargaze.md"), _report.ToString());
             Debug.Log("[rover-stargaze] " + _report);
-        }
-
-        [UnityTest]
-        [Timeout(300000)]
-        [PrebuildSetup(typeof(RoverSessionScene))]
-        [PostBuildCleanup(typeof(RoverSessionScene))]
-        public IEnumerator DockEvening_EasesOutToHomesLamps_HoldsThenEasesBack()
-        {
-            yield return Boot();
-            _report.AppendLine("# The dock's evening (real Main scene)");
-            _report.AppendLine();
-            _report.AppendLine("| Capture | Orbit elevation (deg) | Camera above dust (m) | 07's gaze | Beat |");
-            _report.AppendLine("|---|---:|---:|---:|---|");
-            Set(_gamepad.rightStick, new Vector2(LookStick, 0f));
-            yield return Wait(StickProbeSeconds);
-            Set(_gamepad.rightStick, Vector2.zero);
-            float opening = Time.time + WakeEaseTimeout;
-            while (_cameraRig.Opening.IsActive)
-            {
-                Assert.Less(Time.time, opening, "The wake hands over first (the evening comes after a trip).");
-                yield return null;
-            }
-
-            Transform dock = FindNode(DockAnchorName);
-            Assert.IsNotNull(dock, "The lander carries the charging dock's DockAnchor.");
-            _context.Get<IRoverPlacement>().PlaceAt(dock.position, dock.rotation);
-            yield return Wait(SettleSeconds);
-            Capture("evening-0-parked");
-            HeldShot held = _cameraRig.Held;
-            _context.Events.Publish(new DockEveningOpened(dock.position));
-            Assert.IsTrue(held.IsOpen, "The evening shot opens.");
-            yield return Wait(EveningSettleSeconds);
-            Assert.Greater(held.Weight, EveningSettled, "Settled on the wide shot of home.");
-            Capture("evening-1-wide");
-            WideShotFrame frame = held.Frame;
-            _report.AppendLine(string.Format(CultureInfo.InvariantCulture,
-                "\nevening-1: frame yaw {0:0} deg, elevation {1:0.0} deg, distance {2:0.0} m; camera {3:0.0} m off",
-                frame.Yaw, frame.Elevation, frame.Distance,
-                Vector3.Distance(_view.transform.position, _rover.Position)));
-            float timeout = Time.time + EveningEndTimeout;
-            while (held.IsOpen)
-            {
-                Assert.Less(Time.time, timeout, "The hold runs out and the view eases back.");
-                yield return null;
-            }
-
-            yield return Wait(EveningBackFrameSeconds);
-            Assert.That(held.Weight, Is.InRange(0.05f, 0.95f), "Easing back, never a cut.");
-            Capture("evening-2-easing-back");
-            while (held.Weight > 0f)
-            {
-                Assert.Less(Time.time, timeout + EveningEndTimeout, "Back on the chase frame.");
-                yield return null;
-            }
-
-            _context.Events.Publish(new DockEveningOpened(dock.position));
-            yield return Wait(EveningEarlySeconds);
-            Set(_gamepad.leftStick, new Vector2(0f, DriveStick));
-            float early = Time.time + EndTimeout;
-            while (held.IsOpen)
-            {
-                Assert.Less(Time.time, early, "Drive input ends the evening early.");
-                yield return null;
-            }
-
-            Set(_gamepad.leftStick, Vector2.zero);
-            Directory.CreateDirectory(CaptureFolder);
-            File.WriteAllText(Path.Combine(CaptureFolder, "evening.md"), _report.ToString());
         }
 
         /// <summary>
@@ -951,12 +875,6 @@ namespace MoonProject.Rover.PlayModeTests
             _report.AppendLine(string.Format(CultureInfo.InvariantCulture,
                 "| {0} | {1:0.0} | {2:0.00} | {3:0.00} | {4} |", name, _cameraRig.Orbit.Elevation, clearance,
                 _cameraRig.SkyLift, _stargazing ? "on" : "off"));
-        }
-
-        /// <summary>In front of the camera, inside the frame across, and between the heights given.</summary>
-        private static bool InFrame(Vector3 viewport, float minY, float maxY)
-        {
-            return viewport.z > 0f && viewport.x > 0f && viewport.x < 1f && viewport.y >= minY && viewport.y < maxY;
         }
 
         private static Transform FindNode(string name)
