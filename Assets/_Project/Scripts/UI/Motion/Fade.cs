@@ -10,6 +10,7 @@ namespace MoonProject.UI
     internal sealed class Fade
     {
         private readonly RevealSettings _settings;
+        private float _hideSeconds = -1f;
 
         public Fade(RevealSettings settings)
         {
@@ -32,6 +33,17 @@ namespace MoonProject.UI
         public void Set(bool shown)
         {
             Target = shown;
+            _hideSeconds = -1f;
+        }
+
+        /// <summary>
+        /// Heads for hidden over <paramref name="seconds"/> instead of the settings' fade-out (one hand-off that must
+        /// match the others it runs beside); the next <see cref="Set"/> goes back to the settings.
+        /// </summary>
+        public void HideOver(float seconds)
+        {
+            Target = false;
+            _hideSeconds = seconds;
         }
 
         /// <summary>
@@ -53,7 +65,8 @@ namespace MoonProject.UI
             }
             else
             {
-                Progress = _settings.FadeOut <= 0f ? 0f : Mathf.Max(0f, Progress - deltaTime / _settings.FadeOut);
+                float fadeOut = _hideSeconds >= 0f ? _hideSeconds : _settings.FadeOut;
+                Progress = fadeOut <= 0f ? 0f : Mathf.Max(0f, Progress - deltaTime / fadeOut);
             }
 
             return before != Progress;

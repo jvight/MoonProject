@@ -54,6 +54,7 @@ namespace MoonProject.UI
         private readonly Reveal _titleScreen;
         private readonly Reveal _titleCrt;
         private readonly Reveal _titleCrtOverlay;
+        private readonly float _handOffSeconds;
         private readonly Reveal _titleKeyHint;
         private readonly Reveal _curtain;
         private readonly TitleScenePainter _titleScenePainter;
@@ -109,6 +110,7 @@ namespace MoonProject.UI
             _newGamePage = new Reveal(layout.PageNewGame, settings.Page);
             _languagePage = new Reveal(layout.PageLanguage, settings.Page);
             _titleScreen = new Reveal(layout.TitleScreen, title.Reveal);
+            _handOffSeconds = title.HandOffSeconds;
             _titleCrt = new Reveal(layout.TitleCrt, title.Reveal);
             _titleCrtOverlay = new Reveal(layout.TitleCrtOverlay, title.Reveal);
             _titleKeyHint = new Reveal(layout.TitleKeyHint, title.Reveal);
@@ -996,11 +998,12 @@ namespace MoonProject.UI
             IsOpen = false;
             _navigator.ClearFocus();
             SaveIfChanged();
-            _main.Hide();
-            _titleScreen.Hide();
-            _titleCrt.Hide();
-            _titleCrtOverlay.Hide();
-            _titleKeyHint.Hide();
+            float handOff = _handOffSeconds;
+            _main.HideOver(handOff);
+            _titleScreen.HideOver(handOff);
+            _titleCrt.HideOver(handOff);
+            _titleCrtOverlay.HideOver(handOff);
+            _titleKeyHint.HideOver(handOff);
             _settingsPanel.Hide();
             _cursor.Drive();
         }

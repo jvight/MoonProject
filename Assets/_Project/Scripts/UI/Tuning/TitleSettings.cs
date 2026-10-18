@@ -182,6 +182,12 @@ namespace MoonProject.UI
         [Tooltip("The wordmark and subtitle easing in and out (slow in, 0.5 s out into the lens push-in).")]
         [SerializeField] private RevealSettings _reveal = new RevealSettings(2.2f, 0.5f, 14f, 0.985f, 0.6f, 0.8f);
 
+        [Tooltip("Seconds the menu, the wordmark and the title's picture fade out together when a game starts or " +
+                 "continues, while the camera is already pushing into 07's lens: one calm shot, no cut " +
+                 "(docs/design/opening-cutscene-research.md Q1).")]
+        [Range(0.1f, 2f)]
+        [SerializeField] private float _handOffSeconds = 0.6f;
+
         [Tooltip("The dark drawn over everything before New Game, Quit to title or Quit, and lifted after a boot.")]
         [SerializeField] private RevealSettings _curtain = new RevealSettings(0.9f, 1.4f, 0f, 1f, 1f, 1f);
 
@@ -506,6 +512,8 @@ namespace MoonProject.UI
         public RevealSettings Curtain => _curtain;
 
         public float BackdropWeight => _backdropWeight;
+
+        public float HandOffSeconds => _handOffSeconds;
 
         public float MoonTurnPeriodSeconds => _moonTurnPeriodSeconds;
 
