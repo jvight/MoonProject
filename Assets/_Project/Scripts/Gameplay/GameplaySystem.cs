@@ -363,7 +363,7 @@ namespace MoonProject.Gameplay
             return null;
         }
 
-        /// <summary>The story scans on World's basin props (basin dressing Â§2: the Scout).</summary>
+        /// <summary>The story scans on World's basin props (basin dressing §2: the Scout).</summary>
         private string AddStoryProps(ScanField scans)
         {
             for (int i = 0; i < _storyProps.Length; i++)

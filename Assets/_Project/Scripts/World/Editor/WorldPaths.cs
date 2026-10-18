@@ -67,7 +67,7 @@ namespace MoonProject.World.Editor
         public const string DeadAntennaMastPrefab = R1PropsFolder + "DeadAntennaMast.prefab";
         public const string SignalPillarPrefab = R1PropsFolder + "SignalPillar.prefab";
 
-        /// <summary>Art's R1 Scout, the 1967 soft lander, and its old blast patch (basin dressing Â§4).</summary>
+        /// <summary>Art's R1 Scout, the 1967 soft lander, and its old blast patch (basin dressing §4).</summary>
         public const string OldLanderPrefab = R1PropsFolder + "Prop_OldLander.prefab";
         public const string OldLanderBlastPrefab = R1PropsFolder + "Decal_OldLanderBlast.prefab";
 

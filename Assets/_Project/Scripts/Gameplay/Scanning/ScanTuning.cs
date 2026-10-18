@@ -174,7 +174,7 @@ namespace MoonProject.Gameplay
         [SerializeField] private RuinScanSet _landerCargo = new RuinScanSet(LanderCargoId,
             new[] { StructureIds.ChargingPad }, ScanSize.Medium, ScanSize.Medium);
 
-        [Tooltip("Story scans on the ruin pieces (opening-v2 B7) and the basin's story props (basin dressing Â§4): " +
+        [Tooltip("Story scans on the ruin pieces (opening-v2 B7) and the basin's story props (basin dressing §4): " +
                  "Art's mesh nodes whose readout the CRT shows once scanned; they teach and pay nothing.")]
         [SerializeField] private StoryScan[] _stories =
         {

@@ -30,6 +30,7 @@ namespace MoonProject.Art.Tests
             ("signal_pillar.json", "Props/SignalPillar.fbx"),
             ("peak_beacon.json", "Props/PeakBeacon.fbx"),
             ("crate_m_open.json", "Crates/Crate_M_Open.fbx"),
+            ("crate_cargo_open.json", "Crates/Crate_Cargo_Open.fbx"),
             ("pad_fragment_coil_plate.json", "Props/PadFragment_CoilPlate.fbx"),
             ("pad_fragment_guide_rail.json", "Props/PadFragment_GuideRail.fbx"),
             ("ice_core_tube.json", "Props/IceCoreTube.fbx"),
@@ -539,6 +540,184 @@ namespace MoonProject.Art.Tests
             {
                 Assert.AreEqual(UnityEngine.Rendering.ShadowCastingMode.Off, r.shadowCastingMode,
                     "Decal_OldLanderBlast renderers must have shadow casting disabled.");
+            }
+        }
+
+        [Test]
+        public void CrateCargoOpen_HasLanderFamilyMaterials_OpenSideAndLid_RaisedPartSocketsVisibleFrom4mBehind2mUp_AndSimpleShellColliders()
+        {
+            GameObject cratePrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.CrateCargoOpenPrefabPath);
+            Assert.AreEqual(Vector3.one, cratePrefab.transform.localScale, "Crate_Cargo_Open must be true size with no code scaling.");
+
+            GameObject instance = UnityEngine.Object.Instantiate(cratePrefab);
+            try
+            {
+                // 1. Verify required nodes
+                Transform wallBack = instance.transform.Find("Wall_Back");
+                Transform wallLeft = instance.transform.Find("Wall_Left");
+                Transform wallRight = instance.transform.Find("Wall_Right");
+                Transform sidePanelOpen = instance.transform.Find("SidePanel_Open");
+                Transform lid = instance.transform.Find("Lid");
+                Transform seal = instance.transform.Find("Lid/Seal");
+                Transform cutPoint = instance.transform.Find("Lid/CutPoint");
+                Transform rimGlow = instance.transform.Find("RimGlow");
+                Transform labelPlate = instance.transform.Find("LabelPlate");
+                Transform labelBack = instance.transform.Find("LabelPlate_Back");
+                Transform labelLid = instance.transform.Find("LabelPlate_Lid");
+                Transform socket0 = instance.transform.Find("PartSocket_0");
+                Transform socket1 = instance.transform.Find("PartSocket_1");
+                Transform itemSocket = instance.transform.Find("ItemSocket");
+
+                Assert.IsNotNull(wallBack, "Crate_Cargo_Open missing Wall_Back.");
+                Assert.IsNotNull(wallLeft, "Crate_Cargo_Open missing Wall_Left.");
+                Assert.IsNotNull(wallRight, "Crate_Cargo_Open missing Wall_Right.");
+                Assert.IsNotNull(sidePanelOpen, "Crate_Cargo_Open missing SidePanel_Open.");
+                Assert.IsNotNull(lid, "Crate_Cargo_Open missing Lid.");
+                Assert.IsNotNull(seal, "Crate_Cargo_Open missing Lid/Seal.");
+                Assert.IsNotNull(cutPoint, "Crate_Cargo_Open missing Lid/CutPoint.");
+                Assert.IsNotNull(rimGlow, "Crate_Cargo_Open missing RimGlow.");
+                Assert.IsNotNull(labelPlate, "Crate_Cargo_Open missing LabelPlate.");
+                Assert.IsNotNull(labelBack, "Crate_Cargo_Open missing LabelPlate_Back.");
+                Assert.IsNotNull(labelLid, "Crate_Cargo_Open missing LabelPlate_Lid.");
+                Assert.IsNotNull(socket0, "Crate_Cargo_Open missing PartSocket_0.");
+                Assert.IsNotNull(socket1, "Crate_Cargo_Open missing PartSocket_1.");
+                Assert.IsNotNull(itemSocket, "Crate_Cargo_Open missing ItemSocket.");
+
+                Assert.IsNull(socket0.GetComponent<Renderer>(), "PartSocket_0 must be an empty transform.");
+                Assert.IsNull(socket1.GetComponent<Renderer>(), "PartSocket_1 must be an empty transform.");
+
+                // 2. Verify main crate shell + skid true size (~1.4 m long x 0.9 m wide x 0.7 m tall) sitting on ground
+                Renderer[] shellRenderers =
+                {
+                    instance.GetComponent<Renderer>(),
+                    wallBack.GetComponent<Renderer>(),
+                    wallLeft.GetComponent<Renderer>(),
+                    wallRight.GetComponent<Renderer>(),
+                };
+                Bounds shellBounds = shellRenderers[0].bounds;
+                for (int i = 1; i < shellRenderers.Length; i++)
+                {
+                    shellBounds.Encapsulate(shellRenderers[i].bounds);
+                }
+
+                Assert.AreEqual(0.0f, shellBounds.min.y, 0.015f, "Crate_Cargo_Open skid must sit on the ground (Y = 0).");
+                Assert.AreEqual(1.40f, shellBounds.size.x, 0.03f, "Crate_Cargo_Open shell length (X) must be ~1.4 m.");
+                Assert.AreEqual(0.90f, shellBounds.size.z, 0.03f, "Crate_Cargo_Open shell width (Z) must be ~0.9 m.");
+                Assert.AreEqual(0.70f, shellBounds.size.y, 0.03f, "Crate_Cargo_Open shell height (Y) must be ~0.7 m.");
+
+                // 3. Verify SidePanel_Open is hinged down to the ground and Lid is lying beside the crate on the ground
+                Bounds openPanelBounds = sidePanelOpen.GetComponent<Renderer>().bounds;
+                Assert.AreEqual(0.0f, openPanelBounds.min.y, 0.02f, "SidePanel_Open must be hinged down to the ground.");
+                Assert.Less(openPanelBounds.max.y, 0.16f, "SidePanel_Open must lie folded down open.");
+
+                Bounds lidBounds = lid.GetComponent<Renderer>().bounds;
+                Assert.AreEqual(0.0f, lidBounds.min.y, 0.02f, "Lid must lie on the ground beside the crate.");
+                Assert.Less(lidBounds.max.y, 0.12f, "Lid must lie flat on the ground.");
+                Assert.Greater(lidBounds.min.x, shellBounds.max.x - 0.02f, "Lid must lie beside the crate shell on the ground.");
+
+                // 4. Verify CargoLander family materials & LUMEN CARGO stencil plaque material
+                var matNames = new HashSet<string>();
+                foreach (Renderer r in instance.GetComponentsInChildren<Renderer>(true))
+                {
+                    foreach (Material m in r.sharedMaterials)
+                    {
+                        Assert.IsNotNull(m);
+                        matNames.Add(m.name);
+                    }
+                }
+
+                Assert.IsTrue(matNames.Contains(R1MaterialRecipes.CreamEnamelSlot), "Must use R1_CreamEnamel panels.");
+                Assert.IsTrue(matNames.Contains(R1MaterialRecipes.OrangeStripeSlot), "Must use R1_OrangeStripe stripe.");
+                Assert.IsTrue(matNames.Contains(R1MaterialRecipes.RubberSlot), "Must use R1_Rubber foam cradles & shock pads.");
+                Assert.IsTrue(matNames.Contains(R1StoryPropsBuilder.CargoCrateLabelMaterialName), "Must use R1_CargoCrateLabel stencil plaque.");
+                Assert.AreEqual(R1StoryPropsBuilder.CargoCrateLabelMaterialName, labelPlate.GetComponent<Renderer>().sharedMaterial.name);
+                Assert.AreEqual(R1StoryPropsBuilder.CrateRimGlowAmberMaterialName, rimGlow.GetComponent<Renderer>().sharedMaterial.name);
+
+                // 5. Verify PartSocket_0 and PartSocket_1 are raised so parts placed there show above the rim from 4 m behind / 2 m up
+                Assert.Greater(socket0.position.y, 0.50f, "PartSocket_0 must be raised on the internal foam cradle deck.");
+                Assert.Greater(socket1.position.y, 0.50f, "PartSocket_1 must be raised on the internal foam cradle deck.");
+
+                GameObject coilPrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.PadFragmentCoilPlatePrefabPath);
+                GameObject railPrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.PadFragmentGuideRailPrefabPath);
+                GameObject coilInst = UnityEngine.Object.Instantiate(coilPrefab, socket0.position, Quaternion.identity);
+                GameObject railInst = UnityEngine.Object.Instantiate(railPrefab, socket1.position, Quaternion.identity);
+                try
+                {
+                    Bounds coilBounds = coilInst.GetComponent<Renderer>().bounds;
+                    Bounds railBounds = railInst.GetComponent<Renderer>().bounds;
+                    const float centralRimHeight = 0.585f;
+                    Assert.Greater(coilBounds.max.y, centralRimHeight + 0.05f,
+                        "PadFragment_CoilPlate at PartSocket_0 must rise clearly above the crate rim.");
+                    Assert.Greater(railBounds.max.y, centralRimHeight + 0.10f,
+                        "PadFragment_GuideRail at PartSocket_1 must rise clearly above the crate rim.");
+
+                    // 6. Verify shell colliders are simple boxes and nothing sits over PartSocket_0 or PartSocket_1
+                    BoxCollider[] boxes = instance.GetComponentsInChildren<BoxCollider>(true);
+                    Assert.AreEqual(6, boxes.Length, "Crate_Cargo_Open shell must have 6 simple BoxColliders (skid/floor/cradle, 3 walls, open panel, lid).");
+
+                    Vector3[] checkPoints =
+                    {
+                        socket0.position + Vector3.up * 0.02f,
+                        socket1.position + Vector3.up * 0.02f,
+                        coilInst.transform.Find("Scan_1").position,
+                        railInst.transform.Find("Scan_1").position,
+                    };
+                    Vector3[] cameraPositions =
+                    {
+                        new Vector3(0f, 2f, -4f),
+                        new Vector3(0f, 2f, 4f),
+                    };
+
+                    Physics.SyncTransforms();
+                    for (int b = 0; b < boxes.Length; b++)
+                    {
+                        Bounds wb = boxes[b].bounds;
+                        for (int p = 0; p < checkPoints.Length; p++)
+                        {
+                            Assert.IsFalse(wb.Contains(checkPoints[p]),
+                                $"BoxCollider on '{boxes[b].name}' ({wb}) must not cover socket/scan point {checkPoints[p]}.");
+                        }
+                    }
+
+                    // Also verify that even if OpeningLayoutPlacer.Solidify adds convex MeshColliders to every MeshFilter,
+                    // no collider blocks the line of sight from a camera 4 m behind and 2 m up to either socket/part!
+                    foreach (MeshFilter mf in instance.GetComponentsInChildren<MeshFilter>(true))
+                    {
+                        if (mf.sharedMesh != null)
+                        {
+                            var mc = mf.gameObject.AddComponent<MeshCollider>();
+                            mc.sharedMesh = mf.sharedMesh;
+                            mc.convex = true;
+                        }
+                    }
+
+                    Physics.SyncTransforms();
+                    Collider[] allCrateColliders = instance.GetComponentsInChildren<Collider>(true);
+                    for (int c = 0; c < cameraPositions.Length; c++)
+                    {
+                        Vector3 camPos = cameraPositions[c];
+                        for (int p = 0; p < checkPoints.Length; p++)
+                        {
+                            Vector3 target = checkPoints[p];
+                            var ray = new Ray(camPos, (target - camPos).normalized);
+                            float dist = Vector3.Distance(camPos, target);
+                            for (int k = 0; k < allCrateColliders.Length; k++)
+                            {
+                                Assert.IsFalse(allCrateColliders[k].Raycast(ray, out RaycastHit hit, dist),
+                                    $"Crate collider '{allCrateColliders[k].name}' blocked sightline from {camPos} to {target} at {hit.point}.");
+                            }
+                        }
+                    }
+                }
+                finally
+                {
+                    UnityEngine.Object.DestroyImmediate(coilInst);
+                    UnityEngine.Object.DestroyImmediate(railInst);
+                }
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(instance);
             }
         }
 

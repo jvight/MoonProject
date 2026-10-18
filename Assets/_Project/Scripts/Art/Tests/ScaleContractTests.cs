@@ -22,6 +22,7 @@ namespace MoonProject.Art.Tests
             ("battery_bank.json", "Structures/BatteryBank.fbx"),
             ("cargo_lander.json", "Lander/CargoLander.fbx"),
             ("charging_pad.json", "Structures/ChargingPad.fbx"),
+            ("crate_cargo_open.json", "Crates/Crate_Cargo_Open.fbx"),
             ("crate_l.json", "Crates/Crate_L.fbx"),
             ("crate_m.json", "Crates/Crate_M.fbx"),
             ("crate_s.json", "Crates/Crate_S.fbx"),

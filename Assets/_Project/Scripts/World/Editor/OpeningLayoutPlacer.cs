@@ -14,7 +14,7 @@ namespace MoonProject.World.Editor
     /// that pulses it and its cable's clip halos), 07's dead charging post at the wake with its old, torn cable to
     /// the port and the port's cable to the build apron (<see cref="GroundCableLayer"/>), the apron's markings, the
     /// dead west relay mast with its (hidden) signal pillar, Kestrel-3's debris, the big boulders near the routes and the rare big boulders on the floor
-    /// (<see cref="BigBoulderPlanner"/>); and the basin's story props (docs/design/basin-dressing.md Â§2): the Scout
+    /// (<see cref="BigBoulderPlanner"/>); and the basin's story props (docs/design/basin-dressing.md §2): the Scout
     /// on its crater's wall. Everything solid is fitted with colliders on <see cref="Layers.Prop"/>.
     /// </summary>
     public static class OpeningLayoutPlacer
@@ -51,7 +51,7 @@ namespace MoonProject.World.Editor
         private const string ApronCableChannel = "CableChannel_Anchor";
         private const string PillarBeam = "PillarBeam";
 
-        // The Scout's parts the 1971 crew took home (basin dressing Â§4); its bare brackets stay.
+        // The Scout's parts the 1971 crew took home (basin dressing §4); its bare brackets stay.
         private static readonly string[] ScoutRemovedParts = { "TvCamera", "ScoopArm" };
 
         private const string WestMastAnchor = WorldAnchorIds.RelayPrefix + "1";
@@ -113,7 +113,7 @@ namespace MoonProject.World.Editor
         }
 
         /// <summary>
-        /// The Scout, landed in 1967 (basin dressing Â§2, Â§4): square on its small crater's inner wall, with its old
+        /// The Scout, landed in 1967 (basin dressing §2, §4): square on its small crater's inner wall, with its old
         /// blast patch laid along the slope under it. Its camera and scoop arm are gone.
         /// </summary>
         private static void StandScout(SceneBuildContext context, LandmarkSettings landmarks, MoonSurface surface,

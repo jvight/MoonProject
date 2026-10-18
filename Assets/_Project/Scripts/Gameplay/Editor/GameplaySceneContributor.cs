@@ -83,14 +83,14 @@ namespace MoonProject.Gameplay.Editor
             return ruins;
         }
 
-        /// <summary>World's story props in the basin under [World]/BasinProps (basin dressing Â§2): story scan hosts.</summary>
+        /// <summary>World's story props in the basin under [World]/BasinProps (basin dressing §2): story scan hosts.</summary>
         private static Transform[] StoryProps(Transform worldRoot)
         {
             Transform propsRoot = worldRoot.Find("BasinProps");
             if (propsRoot == null)
             {
                 throw new InvalidOperationException("Gameplay scene build: [World] has no 'BasinProps' node (the " +
-                                                    "basin's story props, basin-dressing Â§2).");
+                                                    "basin's story props, basin-dressing §2).");
             }
 
             var props = new Transform[propsRoot.childCount];

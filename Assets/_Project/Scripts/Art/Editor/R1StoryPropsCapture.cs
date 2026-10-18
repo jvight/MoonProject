@@ -71,8 +71,10 @@ namespace MoonProject.Art.Editor
 
                     CaptureDeliverable9_OldLander(capturesDir, false);
                     CaptureDeliverable9_OldLander(capturesDir, true);
-                    CaptureDeliverable10_BasinLifeLineup(capturesDir, false);
-                    CaptureDeliverable10_BasinLifeLineup(capturesDir, true);
+                    CaptureDeliverable10_CargoCrateOpen(capturesDir, false);
+                    CaptureDeliverable10_CargoCrateOpen(capturesDir, true);
+                    CaptureDeliverable11_BasinLifeLineup(capturesDir, false);
+                    CaptureDeliverable11_BasinLifeLineup(capturesDir, true);
                 }
                 finally
                 {
@@ -144,8 +146,8 @@ namespace MoonProject.Art.Editor
                 ShaderUtil.allowAsyncCompilation = false;
                 try
                 {
-                    CaptureDeliverable10_BasinLifeLineup(capturesDir, false);
-                    CaptureDeliverable10_BasinLifeLineup(capturesDir, true);
+                    CaptureDeliverable11_BasinLifeLineup(capturesDir, false);
+                    CaptureDeliverable11_BasinLifeLineup(capturesDir, true);
                 }
                 finally
                 {
@@ -179,6 +181,38 @@ namespace MoonProject.Art.Editor
                 {
                     CaptureDeliverable8_CableKit(capturesDir, false);
                     CaptureDeliverable8_CableKit(capturesDir, true);
+                }
+                finally
+                {
+                    ShaderUtil.allowAsyncCompilation = prevAsync;
+                }
+
+                return true;
+            });
+        }
+
+        /// <summary>
+        /// Dedicated fast batch entry point for capturing <c>Crate_Cargo_Open</c> next to Rover 07 in Day C and Eclipse
+        /// light, plus the 4 m behind / 2 m up socket shots:
+        /// <c>python tools/unity_batch.py -- -executeMethod MoonProject.Art.Editor.R1StoryPropsCapture.CaptureCargoCrateOpen</c>
+        /// </summary>
+        public static void CaptureCargoCrateOpen()
+        {
+            BatchRunner.Run(nameof(CaptureCargoCrateOpen), args =>
+            {
+                AssetDatabase.Refresh();
+                R1MaterialLibrary.BuildMaterials();
+                R1ModelBuilder.Build();
+
+                string capturesDir = Path.GetFullPath("Logs/captures");
+                Directory.CreateDirectory(capturesDir);
+
+                bool prevAsync = ShaderUtil.allowAsyncCompilation;
+                ShaderUtil.allowAsyncCompilation = false;
+                try
+                {
+                    CaptureDeliverable10_CargoCrateOpen(capturesDir, false);
+                    CaptureDeliverable10_CargoCrateOpen(capturesDir, true);
                 }
                 finally
                 {
@@ -631,7 +665,74 @@ namespace MoonProject.Art.Editor
             }
         }
 
-        private static void CaptureDeliverable10_BasinLifeLineup(string outDir, bool nightEclipse)
+        private static void CaptureDeliverable10_CargoCrateOpen(string outDir, bool nightEclipse)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(temp, nightEclipse);
+                // Rover 07 positioned to the left (-X) of Crate_Cargo_Open, angled toward the crate
+                GameObject rover = SpawnRover07(temp, new Vector3(-1.85f, 0f, -0.30f), 115f, nightEclipse);
+
+                // Place Crate_Cargo_Open at origin (0, 0, 0) unscaled (true size 1.4 x 0.9 x 0.7 m shell)
+                GameObject crate = SpawnProp(R1StoryPropsBuilder.CrateCargoOpenPrefabPath, Vector3.zero, 0f, temp);
+
+                if (nightEclipse)
+                {
+                    AddRoverHeadlamps(rover.transform, new Vector3(0.20f, 0.38f, 0.0f), temp);
+                }
+
+                string suffix = nightEclipse ? "nightA" : "dayC";
+
+                // 1. Crate_Cargo_Open next to Rover 07 in Day C and Eclipse light
+                RenderShot(
+                    new Vector3(-0.35f, 1.55f, -3.40f),
+                    new Vector3(-0.15f, 0.42f, 0.0f),
+                    42f,
+                    bg,
+                    Path.Combine(outDir, $"r1props_11_cargo_crate_open_{suffix}.png"));
+
+                // 2. Capture from 4 m behind (0, 2, -4) and 2 m up showing both empty sockets & foam cradle cut-outs
+                RenderShot(
+                    new Vector3(0.0f, 2.0f, -4.0f),
+                    new Vector3(0.15f, 0.38f, 0.0f),
+                    38f,
+                    bg,
+                    Path.Combine(outDir, $"r1props_12_cargo_crate_sockets_4m_2m_{suffix}.png"));
+
+                // 3. Place PadFragment_CoilPlate on PartSocket_0 and PadFragment_GuideRail on PartSocket_1
+                //    and capture from 4 m behind (0, 2, -4) and 2 m up showing both parts above the rim
+                Transform socket0 = crate.transform.Find("PartSocket_0");
+                Transform socket1 = crate.transform.Find("PartSocket_1");
+                if (socket0 != null && socket1 != null)
+                {
+                    SpawnProp(R1StoryPropsBuilder.PadFragmentCoilPlatePrefabPath, socket0.position, 0f, temp);
+                    SpawnProp(R1StoryPropsBuilder.PadFragmentGuideRailPrefabPath, socket1.position, 0f, temp);
+
+                    RenderShot(
+                        new Vector3(0.0f, 2.0f, -4.0f),
+                        new Vector3(0.15f, 0.42f, 0.0f),
+                        38f,
+                        bg,
+                        Path.Combine(outDir, $"r1props_13_cargo_crate_with_parts_4m_2m_{suffix}.png"));
+
+                    // Also capture from (0, 2, +4) behind the closed rear wall to verify above-rim visibility over Wall_Back
+                    RenderShot(
+                        new Vector3(0.0f, 2.0f, 4.0f),
+                        new Vector3(0.0f, 0.42f, 0.0f),
+                        38f,
+                        bg,
+                        Path.Combine(outDir, $"r1props_14_cargo_crate_rear_rim_4m_2m_{suffix}.png"));
+                }
+            }
+            finally
+            {
+                temp.Dispose();
+            }
+        }
+
+        private static void CaptureDeliverable11_BasinLifeLineup(string outDir, bool nightEclipse)
         {
             EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var temp = new ArtLightingPreview.TemporaryObjects();
