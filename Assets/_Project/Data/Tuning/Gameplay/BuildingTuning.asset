@@ -18,5 +18,6 @@ MonoBehaviour:
   _snapAngleDegrees: 20
   _weldRange: 6
   _deconstructRefundShare: 0.75
+  _apronGlowFadeSeconds: 0.8
   _startingKnownIds: []
   _playtestUnlockedIds: []

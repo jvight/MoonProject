@@ -30,6 +30,10 @@ namespace MoonProject.Gameplay
         [Tooltip("Share (0..1) of a structure's Recipe build cost returned when 07 deconstructs it.")]
         [Range(0f, 1f)] [SerializeField] private float _deconstructRefundShare = 0.75f;
 
+        [Tooltip("Seconds the apron's bay outline takes to warm to its glow as build mode opens, and to cool as it " +
+                 "closes: a slow breath, never a switch.")]
+        [Range(0.1f, 3f)] [SerializeField] private float _apronGlowFadeSeconds = 0.8f;
+
         [Tooltip("Structure IDs that a new game knows by design (e.g. charging_pad), applied on a new game and saved like learned blueprints.")]
         [SerializeField] private string[] _startingKnownIds = Array.Empty<string>();
 
@@ -47,6 +51,8 @@ namespace MoonProject.Gameplay
         public float WeldRange => _weldRange;
 
         public float DeconstructRefundShare => _deconstructRefundShare;
+
+        public float ApronGlowFadeSeconds => _apronGlowFadeSeconds;
 
 
         /// <summary>
