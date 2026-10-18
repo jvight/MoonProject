@@ -743,7 +743,8 @@ namespace MoonProject.Gameplay
         /// <summary>
         /// Where 07's weld beam from <paramref name="nozzle"/> meets the stage being welded: on its parts' own
         /// colliders, through its seam point as the weld runs along it, else through the stage's middle as its parts
-        /// unfold. False (and the seam point) only when neither ray meets the stage.
+        /// unfold, else on the part nearest the seam (a stage whose middle is air). False (and the seam point) only
+        /// when no ray meets any of its parts.
         /// </summary>
         public bool TryWeldContact(Vector3 nozzle, out Vector3 point, out Vector3 normal)
         {
@@ -751,7 +752,8 @@ namespace MoonProject.Gameplay
             int stage = Mathf.Clamp(SolidStageCount, 0, StageCount - 1);
             Collider[] colliders = _stageColliders[stage];
             if (SurfaceAim.TryHit(colliders, nozzle, seam, out point, out normal) ||
-                SurfaceAim.TryHit(colliders, nozzle, StageMiddle(stage), out point, out normal))
+                SurfaceAim.TryHit(colliders, nozzle, StageMiddle(stage), out point, out normal) ||
+                SurfaceAim.TryNearestPart(colliders, nozzle, seam, out point, out normal))
             {
                 return true;
             }

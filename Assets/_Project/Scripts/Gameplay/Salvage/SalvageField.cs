@@ -172,6 +172,9 @@ namespace MoonProject.Gameplay
             return _scans.TryBeamContact(lens, out point, out normal);
         }
 
+        /// <summary>The cut's and the scan's feel kit (tests read where its beams end).</summary>
+        internal FeelVfx Feel => _feel;
+
         /// <summary>The scans whose beam the feel kit draws (they are made after this field).</summary>
         internal void ConnectScans(ScanField scans)
         {
