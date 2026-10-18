@@ -912,12 +912,41 @@ namespace MoonProject.Rover.PlayModeTests
             yield return null;
         }
 
+        [UnityTest]
+        [Explicit("Real frame time of the title-to-play transition, without capture overhead; run with --category OpeningTransition.")]
+        [Category("OpeningTransition")]
+        [Timeout(600000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator TransitionTiming_NewGameFromAFreshTitle()
+        {
+            yield return Boot(true);
+            yield return Wait(TitleQuietSeconds);
+            yield return RecordTransition("timing_new_game", "button-new-game", false);
+        }
+
+        [UnityTest]
+        [Explicit("Real frame time of the title-to-play transition, without capture overhead; run with --category OpeningTransition.")]
+        [Category("OpeningTransition")]
+        [Timeout(600000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator TransitionTiming_ContinueOverASave()
+        {
+            yield return Boot(false);
+            Assert.IsTrue(_context.Get<ISaveService>().SaveNow(), "a save is on disk");
+            Dispose();
+            yield return Boot(true);
+            yield return Wait(TitleQuietSeconds);
+            yield return RecordTransition("timing_continue", "button-resume", false);
+        }
+
         /// <summary>
         /// Clicks <paramref name="buttonName"/> on the title and records every frame the player would see (the whole
         /// screen, UI included, at a quarter size) until the chase frame plus a second: a PNG every other frame and a
         /// CSV of each frame's brightness, phase and camera jump, at the game's own frame time.
         /// </summary>
-        private IEnumerator RecordTransition(string tag, string buttonName)
+        private IEnumerator RecordTransition(string tag, string buttonName, bool render = true)
         {
             string folder = Path.Combine(CaptureFolder, "transition_" + tag);
             if (Directory.Exists(folder))
@@ -950,7 +979,7 @@ namespace MoonProject.Rover.PlayModeTests
             Button button = document.rootVisualElement.Q<Button>(buttonName);
             Assert.IsNotNull(button, buttonName);
             var csv = new StringBuilder();
-            csv.AppendLine("frame,time,phase,luma,camDistance,camTurnDeg,titleShown,uiScaleX,uiScaleY,curtain,beat");
+            csv.AppendLine("frame,time,realMs,phase,luma,camDistance,camTurnDeg,titleShown,uiScaleX,uiScaleY,curtain,beat");
             using (NavigationSubmitEvent submit = NavigationSubmitEvent.GetPooled())
             {
                 submit.target = button;
@@ -966,19 +995,27 @@ namespace MoonProject.Rover.PlayModeTests
             int beatsSeen = 0;
             float started = Time.time;
             float chaseAt = -1f;
+            float lastReal = Time.realtimeSinceStartup;
             {
                 for (int frame = 0; Time.time - started < RunTimeout; frame++)
                 {
                     yield return null;
-                    Texture2D shot = FrameCapture.Render(_view, TransitionWidth, TransitionHeight);
-                    Color32[] pixels = shot.GetPixels32();
+                    Texture2D shot = render ? FrameCapture.Render(_view, TransitionWidth, TransitionHeight) : null;
                     float luma = 0f;
-                    for (int i = 0; i < pixels.Length; i++)
+                    if (shot != null)
                     {
-                        luma += (0.2126f * pixels[i].r + 0.7152f * pixels[i].g + 0.0722f * pixels[i].b) / 255f;
+                        Color32[] pixels = shot.GetPixels32();
+                        for (int i = 0; i < pixels.Length; i++)
+                        {
+                            luma += (0.2126f * pixels[i].r + 0.7152f * pixels[i].g + 0.0722f * pixels[i].b) / 255f;
+                        }
+
+                        luma /= pixels.Length;
                     }
 
-                    luma /= pixels.Length;
+                    float real = Time.realtimeSinceStartup;
+                    float realMs = (real - lastReal) * 1000f;
+                    lastReal = real;
                     Transform camera = _view.transform;
                     float distance = Vector3.Distance(camera.position, previousPosition);
                     float turn = Quaternion.Angle(camera.rotation, previousRotation);
@@ -991,17 +1028,20 @@ namespace MoonProject.Rover.PlayModeTests
                     }
 
                     OpeningPhase phase = _director != null ? _director.Script.Phase : OpeningPhase.Idle;
-                    csv.AppendLine(string.Format(CultureInfo.InvariantCulture, "{0},{1:0.000},{2},{3:0.0000},{4:0.0000},{5:0.00},{6},{7:0.000},{8:0.000},{9:0.000},{10}",
-                        frame, Time.time - started, phase, luma, distance, turn, titleCrt != null && IsShown(titleCrt) ? 1 : 0,
+                    csv.AppendLine(string.Format(CultureInfo.InvariantCulture, "{0},{1:0.000},{2:0.0},{3},{4:0.0000},{5:0.0000},{6:0.00},{7},{8:0.000},{9:0.000},{10:0.000},{11}",
+                        frame, Time.time - started, realMs, phase, luma, distance, turn, titleCrt != null && IsShown(titleCrt) ? 1 : 0,
                         pause.resolvedStyle.scale.value.x, pause.resolvedStyle.scale.value.y,
                         curtain.resolvedStyle.display == DisplayStyle.None ? 0f : curtain.resolvedStyle.opacity, beat.Trim()));
-                    if (frame % 2 == 0)
+                    if (shot != null)
                     {
-                        File.WriteAllBytes(Path.Combine(folder, string.Format(CultureInfo.InvariantCulture, "f{0:0000}.png", frame)),
-                            shot.EncodeToPNG());
-                    }
+                        if (frame % 2 == 0)
+                        {
+                            File.WriteAllBytes(Path.Combine(folder, string.Format(CultureInfo.InvariantCulture, "f{0:0000}.png", frame)),
+                                shot.EncodeToPNG());
+                        }
 
-                    Object.DestroyImmediate(shot);
+                        Object.DestroyImmediate(shot);
+                    }
 
                     if (frame == 30)
                     {
