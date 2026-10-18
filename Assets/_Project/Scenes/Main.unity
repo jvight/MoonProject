@@ -2301,6 +2301,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 2409557933635336529, guid: ce1c62d0ec0f4f54580296796f860a34, type: 3}
   m_PrefabInstance: {fileID: 2518929383178625457}
   m_PrefabAsset: {fileID: 0}
+--- !u!23 &1170521435475302056 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 3842150353173430295, guid: 23014f257a2810d4987d5dc968193cd0, type: 3}
+  m_PrefabInstance: {fileID: 3539125952162853236}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1182492586231714277
 Transform:
   m_ObjectHideFlags: 0
@@ -8427,6 +8432,7 @@ MonoBehaviour:
   - {fileID: 3174264158425137435}
   - {fileID: 3103971954088862836}
   _landerPort: {fileID: 2942263687204587172}
+  _apronOutline: {fileID: 1170521435475302056}
 --- !u!1 &4239237658541880525 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8576379797742029215, guid: 60d59f55155b3294e8837db95f0e15dd, type: 3}
