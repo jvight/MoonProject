@@ -136,14 +136,23 @@ namespace MoonProject.Editor.Build
 
             var topLevelAssets = new HashSet<string>(AssetDatabase.GetSubFolders("Assets"), StringComparer.Ordinal);
             BuildReport report;
-            PlayerSettings.SetScriptingBackend(NamedBuildTarget.Standalone, wanted);
+            bool switchBackend = wanted != backend;
+            if (switchBackend)
+            {
+                PlayerSettings.SetScriptingBackend(NamedBuildTarget.Standalone, wanted);
+            }
+
             try
             {
                 report = BuildPipeline.BuildPlayer(options);
             }
             finally
             {
-                PlayerSettings.SetScriptingBackend(NamedBuildTarget.Standalone, backend);
+                if (switchBackend)
+                {
+                    PlayerSettings.SetScriptingBackend(NamedBuildTarget.Standalone, backend);
+                }
+
                 RemoveBuildLeftovers(topLevelAssets);
             }
 
