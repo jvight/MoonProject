@@ -101,30 +101,37 @@ def build_igniter_into(
             segments=1,
         )
     # Four corner mounting lugs with hex bolts on exciter housing
-    for sx in (-0.082, -0.020):
-        for sz in (-0.028, 0.020):
+    for sx in (-0.080, -0.022):
+        for sz in (-0.024, 0.016):
             mb.add_cylinder(
-                center_u=(cx + sx, cy + 0.024, cz + sz),
-                radius=0.0045,
-                length=0.006,
+                center_u=(cx + sx, cy + 0.0245, cz + sz),
+                radius=0.0032,
+                length=0.005,
                 mat="R1_BareSteel",
                 axis_u="Y",
                 segments=6,
-                bevel=0.001,
+                bevel=0.0008,
                 bevel_segments=1,
             )
 
-    # Top stencilled specification tag plate (`R1_Signage` + `R1_Brass` bezel)
+    # Top stencilled specification tag plate (`R1_Signage` + tight `R1_Brass` bezel)
+    mb.add_bevel_box(
+        center_u=(cx - 0.052, cy + 0.0235, cz - 0.004),
+        size_u=(0.050, 0.0035, 0.038),
+        mat="R1_Brass",
+        bevel=0.001,
+        segments=1,
+    )
     ruins_common.add_signage_plate(
         mb,
-        center_u=(cx - 0.054, cy + 0.025, cz - 0.004),
-        width=0.048,
-        height=0.034,
+        center_u=(cx - 0.052, cy + 0.0245, cz - 0.004),
+        width=0.044,
+        height=0.032,
         cell_name="HAZARD",
-        rot_deg_u=(-90.0, 0.0, 0.0),
-        thickness=0.004,
-        frame_mat="R1_Brass",
-        rivets=True,
+        rot_deg_u=(90.0, 0.0, 0.0),
+        thickness=0.003,
+        frame_mat=None,
+        rivets=False,
     )
 
     # 2. High-voltage ribbed ceramic insulator stack (X: -0.014 .. +0.048)

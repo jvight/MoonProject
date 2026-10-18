@@ -238,7 +238,7 @@ def build_coil_plate() -> bpy.types.Object:
         width=0.092,
         height=0.042,
         cell_name="SEC_04",
-        rot_deg_u=(-90.0, 0.0, 0.0),
+        rot_deg_u=(90.0, 0.0, 0.0),
         thickness=0.006,
         frame_mat="R1_GreyMetal",
         rivets=True,
