@@ -19,11 +19,11 @@ namespace MoonProject.Gameplay
     /// </summary>
     public sealed class SupplyCaches : IDisposable
     {
-        /// <summary>Art's open crate's children (Crate_M_Open): its soft rim glow and the contents in view.</summary>
+        /// <summary>Art's open cargo crate's soft rim glow (Crate_Cargo_Open).</summary>
         private const string RimGlowName = "RimGlow";
-        private const string IgniterName = "Igniter";
-        private const string MetalName = "MetalBundle";
-        private const string WiringName = "WiringSpool";
+
+        /// <summary>The cargo crate's side panel, folded flat onto the ground: 07 rolls over it, so it is no shell.</summary>
+        private const string OpenPanelName = "SidePanel_Open";
 
         /// <summary>A frame's forward laid flat shorter than this is not a heading (it points up or down).</summary>
         private const float LevelShare = 0.5f;
@@ -43,9 +43,6 @@ namespace MoonProject.Gameplay
         private readonly float _collectReach;
         private readonly IDisposable _opened;
         private readonly CrateRimGlow[] _rims;
-        private readonly GameObject[] _igniters;
-        private readonly GameObject[] _metals;
-        private readonly GameObject[] _wirings;
 
         /// <param name="frames">A crate's frame by its anchor id: a world anchor or a ruin piece.</param>
         /// <param name="reach">Metres within which a cut-open crate still holding something gives the rest.</param>
@@ -74,12 +71,6 @@ namespace MoonProject.Gameplay
                 GameObject prefab = services.Visuals.Container(cache.Container) ?? throw new InvalidOperationException(
                     $"Art's container '{cache.Container}' for supply crate '{cache.Id}' is not in GameplayVisuals " +
                     "(run Gameplay/Materials).");
-                if (cache.Scale <= 0f)
-                {
-                    throw new InvalidOperationException(
-                        $"Supply crate '{cache.Id}' has no scale (OpeningTuning: 1 stands it at Art's size).");
-                }
-
                 Transform root = Object.Instantiate(prefab, parent).transform;
                 root.name = cache.Id;
                 Quaternion heading = Heading(frame);
@@ -87,7 +78,6 @@ namespace MoonProject.Gameplay
                 Quaternion level = heading * Quaternion.Euler(0f, cache.Yaw, 0f);
                 root.SetPositionAndRotation(SurfaceRules.OnSurface(services.Terrain, spot.x, spot.z),
                     level * prefab.transform.localRotation);
-                root.localScale = prefab.transform.localScale * cache.Scale;
                 _levels.Add(level);
                 MakeSolid(root);
                 SealedContainer container = SealedContainer.Read(cache.Id, ContainerKinds.Of(cache.Container), root,
@@ -101,9 +91,6 @@ namespace MoonProject.Gameplay
             _left = new Recipe[_caches.Count];
             _props = new GameObject[_caches.Count];
             _rims = new CrateRimGlow[_caches.Count];
-            _igniters = new GameObject[_caches.Count];
-            _metals = new GameObject[_caches.Count];
-            _wirings = new GameObject[_caches.Count];
             _heldBack = new Func<bool>[_caches.Count];
             _partLeft = new bool[_caches.Count];
             for (int i = 0; i < _caches.Count; i++)
@@ -124,9 +111,6 @@ namespace MoonProject.Gameplay
                 Transform root = _containers[i].Root;
                 GameObject rim = Child(root, RimGlowName);
                 _rims[i] = rim != null ? new CrateRimGlow(rim, RimLight(rim, root, tuning), tuning) : null;
-                _igniters[i] = Child(root, IgniterName);
-                _metals[i] = Child(root, MetalName);
-                _wirings[i] = Child(root, WiringName);
                 ShowContents(i);
             }
 
@@ -369,9 +353,6 @@ namespace MoonProject.Gameplay
         private void ShowContents(int index)
         {
             Show(_props[index], _partLeft[index]);
-            Show(_igniters[index], _partLeft[index]);
-            Show(_metals[index], _left[index].Metal > 0);
-            Show(_wirings[index], _left[index].Wiring > 0);
         }
 
         private static void Show(GameObject shown, bool visible)
@@ -383,9 +364,10 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// A crate 07 bumps into rather than drives through: a box round its shell (not its lid, which swings open,
-        /// nor what lies in it, so what 07 scans or takes from an open crate stays in plain view of its lens), on the
-        /// Prop layer, unless Art gave it colliders of its own.
+        /// A crate 07 bumps into rather than drives through: a box round each of its shell's meshes, in the mesh's own
+        /// space (not its lid, which swings open, nor what lies in it, so what 07 scans or takes from an open crate
+        /// stays in plain view of its lens; Art splits the cargo crate's shell so no box bridges over its sockets), on
+        /// the Prop layer, unless Art gave it colliders of its own.
         /// </summary>
         private static void MakeSolid(Transform root)
         {
@@ -394,10 +376,7 @@ namespace MoonProject.Gameplay
                 return;
             }
 
-            // In the crate's own space, from each mesh's corners: a crate turned off the world axes would otherwise
-            // stand in a box grown round its world-aligned bounds.
             bool any = false;
-            var shell = new Bounds();
             foreach (MeshFilter filter in root.GetComponentsInChildren<MeshFilter>())
             {
                 if (filter.sharedMesh == null || IsLoose(root, filter.transform))
@@ -406,21 +385,11 @@ namespace MoonProject.Gameplay
                 }
 
                 Bounds mesh = filter.sharedMesh.bounds;
-                for (int corner = 0; corner < 8; corner++)
-                {
-                    var local = new Vector3((corner & 1) == 0 ? mesh.min.x : mesh.max.x,
-                        (corner & 2) == 0 ? mesh.min.y : mesh.max.y, (corner & 4) == 0 ? mesh.min.z : mesh.max.z);
-                    Vector3 point = root.InverseTransformPoint(filter.transform.TransformPoint(local));
-                    if (any)
-                    {
-                        shell.Encapsulate(point);
-                    }
-                    else
-                    {
-                        shell = new Bounds(point, Vector3.zero);
-                        any = true;
-                    }
-                }
+                var box = filter.gameObject.AddComponent<BoxCollider>();
+                box.center = mesh.center;
+                box.size = mesh.size;
+                filter.gameObject.layer = Layers.Prop;
+                any = true;
             }
 
             if (!any)
@@ -428,9 +397,6 @@ namespace MoonProject.Gameplay
                 throw new InvalidOperationException($"Supply crate '{root.name}' shows no mesh to stand solid on.");
             }
 
-            var box = root.gameObject.AddComponent<BoxCollider>();
-            box.center = shell.center;
-            box.size = shell.size;
             root.gameObject.layer = Layers.Prop;
         }
 
@@ -454,14 +420,17 @@ namespace MoonProject.Gameplay
             return light;
         }
 
-        /// <summary>The crate's lid, what lies in it or what glows on its rim: none of it its shell.</summary>
+        /// <summary>
+        /// The crate's lid, what lies in it, what glows on its rim or its side panel folded flat on the ground: none of
+        /// it its shell.
+        /// </summary>
         private static bool IsLoose(Transform root, Transform node)
         {
             for (; node != null && node != root; node = node.parent)
             {
                 string name = node.name;
                 if (name == SealedContainer.LidPath || name == SealedContainer.ItemSocketPath ||
-                    name == RimGlowName || name == IgniterName || name == MetalName || name == WiringName)
+                    name == RimGlowName || name == OpenPanelName)
                 {
                     return true;
                 }

@@ -26,12 +26,9 @@ namespace MoonProject.Gameplay
         [Tooltip("Degrees the crate's front turns from the anchor's forward.")]
         [Range(-180f, 180f)] [SerializeField] private float _yaw;
 
-        [Tooltip("Art's R1 crate prefab name in GameplayVisuals (Crate_S, Crate_M or Crate_L).")]
+        [Tooltip("Art's R1 crate prefab name in GameplayVisuals (Crate_S, Crate_M, Crate_L or Crate_Cargo_Open), " +
+                 "stood at Art's size.")]
         [SerializeField] private string _container;
-
-        [Tooltip("Times Art's size the crate stands at (1 = as modelled; the lander's open crate is a big cargo " +
-                 "crate a first-time player can't miss beside 07).")]
-        [Range(0.5f, 2.5f)] [SerializeField] private float _scale;
 
         [Tooltip("Metal, Wiring and Optics the opened crate gives 07's hold.")]
         [SerializeField] private Recipe _yield;
@@ -47,9 +44,8 @@ namespace MoonProject.Gameplay
         [SerializeField] private GameObject _prop;
 
         public SupplyCache(string id, string anchorId, Vector3 offset, float yaw, string container, Recipe yield,
-            bool startsOpen = false, string[] parts = null, float scale = 1f)
+            bool startsOpen = false, string[] parts = null)
         {
-            _scale = scale;
             _startsOpen = startsOpen;
             _parts = parts;
             _prop = null;
@@ -71,7 +67,6 @@ namespace MoonProject.Gameplay
 
         public string Container => _container ?? string.Empty;
 
-        public float Scale => _scale;
 
         public Recipe Yield => _yield;
 
