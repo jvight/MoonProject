@@ -31,6 +31,7 @@ namespace MoonProject.Art.Editor
         public const string IceCoreWindowMaterialName = "R1_IceCoreWindow";
         public const string OldLanderTanEnamelMaterialName = "R1_OldLanderTanEnamel";
         public const string OldLanderBlastDecalMaterialName = "R1_OldLanderBlastDecal";
+        public const string CargoCrateLabelMaterialName = "R1_CargoCrateLabel";
 
         public const string CableMarkerAmberMaterialPath = ArtPaths.R1MaterialsFolder + "/" + CableMarkerAmberMaterialName + ".mat";
         public const string CrateRimGlowAmberMaterialPath = ArtPaths.R1MaterialsFolder + "/" + CrateRimGlowAmberMaterialName + ".mat";
@@ -45,6 +46,7 @@ namespace MoonProject.Art.Editor
         public const string IceCoreWindowMaterialPath = ArtPaths.R1MaterialsFolder + "/" + IceCoreWindowMaterialName + ".mat";
         public const string OldLanderTanEnamelMaterialPath = ArtPaths.R1MaterialsFolder + "/" + OldLanderTanEnamelMaterialName + ".mat";
         public const string OldLanderBlastDecalMaterialPath = ArtPaths.R1MaterialsFolder + "/" + OldLanderBlastDecalMaterialName + ".mat";
+        public const string CargoCrateLabelMaterialPath = ArtPaths.R1MaterialsFolder + "/" + CargoCrateLabelMaterialName + ".mat";
 
         public const string LanderReserveAlbedoPath = R1MaterialRecipes.TexturesFolder + "/T_R1_LanderReserve_Albedo.png";
         public const string LanderReserveEmissionPath = R1MaterialRecipes.TexturesFolder + "/T_R1_LanderReserve_Emission.png";
@@ -54,6 +56,7 @@ namespace MoonProject.Art.Editor
         public const string PeakBeaconRedEmissionPath = R1MaterialRecipes.TexturesFolder + "/T_R1_PeakBeaconRed_Emission.png";
         public const string IceCoreLabelAlbedoPath = R1MaterialRecipes.TexturesFolder + "/T_R1_IceCoreLabel_Albedo.png";
         public const string IceCoreFrostAlbedoPath = R1MaterialRecipes.TexturesFolder + "/T_R1_IceCoreFrost_Albedo.png";
+        public const string CargoCrateLabelAlbedoPath = R1MaterialRecipes.TexturesFolder + "/T_R1_CargoCrateLabel_Albedo.png";
 
         public const string DeadChargingPostPrefabPath = PropsModelsFolder + "/DeadChargingPost.prefab";
         public const string GroundCableSegmentPrefabPath = PropsModelsFolder + "/GroundCableSegment.prefab";
@@ -66,6 +69,7 @@ namespace MoonProject.Art.Editor
         public const string SignalPillarPrefabPath = PropsModelsFolder + "/SignalPillar.prefab";
         public const string PeakBeaconPrefabPath = PropsModelsFolder + "/PeakBeacon.prefab";
         public const string CrateMOpenPrefabPath = ArtPaths.R1ModelsFolder + "/Crates/Crate_M_Open.prefab";
+        public const string CrateCargoOpenPrefabPath = ArtPaths.R1ModelsFolder + "/Crates/Crate_Cargo_Open.prefab";
         public const string PadFragmentCoilPlatePrefabPath = PropsModelsFolder + "/PadFragment_CoilPlate.prefab";
         public const string PadFragmentGuideRailPrefabPath = PropsModelsFolder + "/PadFragment_GuideRail.prefab";
         public const string IceCoreTubePrefabPath = PropsModelsFolder + "/IceCoreTube.prefab";
@@ -306,6 +310,19 @@ namespace MoonProject.Art.Editor
             oldLanderBlastMat.SetFloat("_EmissionStrength", 0.0f);
             oldLanderBlastMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
             GeneratedAssets.CreateOrReplace(oldLanderBlastMat, OldLanderBlastDecalMaterialPath);
+            // 14. R1_CargoCrateLabel: stencilled lander cargo crate plaque (LUMEN CARGO / PART NO. LC-04 · PAD ASSY 01/02)
+            Material cargoCrateLabelMat = R1MaterialLibrary.CreateMaterial(r1Lit, signageSpec);
+            cargoCrateLabelMat.name = CargoCrateLabelMaterialName;
+            cargoCrateLabelMat.SetTexture("_BaseMap", LoadRequiredTexture(CargoCrateLabelAlbedoPath));
+            cargoCrateLabelMat.SetTexture("_EmissionMap", null);
+            cargoCrateLabelMat.SetColor("_EmissionColor", Color.black);
+            cargoCrateLabelMat.SetFloat("_EmissionStrength", 0.0f);
+            cargoCrateLabelMat.SetFloat("_BloomSafeMax", 0.50f);
+            cargoCrateLabelMat.SetFloat("_HotCorePeak", 0.60f);
+            cargoCrateLabelMat.SetFloat("_DustAmount", 0.04f);
+            cargoCrateLabelMat.SetFloat("_EdgeWearAmount", 0.20f);
+            cargoCrateLabelMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+            GeneratedAssets.CreateOrReplace(cargoCrateLabelMat, CargoCrateLabelMaterialPath);
         }
 
         /// <summary>
@@ -328,6 +345,17 @@ namespace MoonProject.Art.Editor
                 Material rimMat = LoadOrBuildMaterial(CrateRimGlowAmberMaterialPath);
                 ReplaceRendererSlotMaterial(root, "RimGlow", R1MaterialRecipes.LampAmberSlot, rimMat);
                 ReplaceRendererSlotMaterial(root, "Lid/Seal", R1MaterialRecipes.LampAmberSlot, rimMat);
+            }
+            else if (modelPath.EndsWith("/Crate_Cargo_Open.fbx", StringComparison.Ordinal))
+            {
+                Material rimMat = LoadOrBuildMaterial(CrateRimGlowAmberMaterialPath);
+                Material labelMat = LoadOrBuildMaterial(CargoCrateLabelMaterialPath);
+                ReplaceRendererSlotMaterial(root, "RimGlow", R1MaterialRecipes.LampAmberSlot, rimMat);
+                ReplaceRendererSlotMaterial(root, "Lid/Seal", R1MaterialRecipes.LampAmberSlot, rimMat);
+                ReplaceRendererSlotMaterial(root, "LabelPlate", R1MaterialRecipes.SignageSlot, labelMat);
+                ReplaceRendererSlotMaterial(root, "LabelPlate_Back", R1MaterialRecipes.SignageSlot, labelMat);
+                ReplaceRendererSlotMaterial(root, "LabelPlate_Lid", R1MaterialRecipes.SignageSlot, labelMat);
+                AddCargoCrateShellBoxColliders(root);
             }
             else if (modelPath.EndsWith("/LanderServicePort.fbx", StringComparison.Ordinal))
             {
@@ -506,6 +534,39 @@ namespace MoonProject.Art.Editor
                 renderers[i].shadowCastingMode = ShadowCastingMode.Off;
                 renderers[i].receiveShadows = false;
             }
+        }
+
+        private static void AddCargoCrateShellBoxColliders(GameObject root)
+        {
+            FitBoxColliderToMesh(root);
+            string[] shellNodes = { "Wall_Back", "Wall_Left", "Wall_Right", "SidePanel_Open", "Lid" };
+            for (int i = 0; i < shellNodes.Length; i++)
+            {
+                Transform child = root.transform.Find(shellNodes[i]);
+                if (child != null)
+                {
+                    FitBoxColliderToMesh(child.gameObject);
+                }
+            }
+        }
+
+        private static void FitBoxColliderToMesh(GameObject target)
+        {
+            var filter = target != null ? target.GetComponent<MeshFilter>() : null;
+            if (filter == null || filter.sharedMesh == null)
+            {
+                return;
+            }
+
+            var box = target.GetComponent<BoxCollider>();
+            if (box == null)
+            {
+                box = target.AddComponent<BoxCollider>();
+            }
+
+            Bounds bounds = filter.sharedMesh.bounds;
+            box.center = bounds.center;
+            box.size = bounds.size;
         }
     }
 }

@@ -302,6 +302,78 @@ def _build_ice_core_frost_albedo(res: int = 128) -> Image.Image:
     return Image.fromarray(rgba_u8, mode="RGBA")
 
 
+def _build_cargo_crate_label(w: int = 512, h: int = 128) -> Image.Image:
+    """Render a 2x supersampled 1980s stencilled lander cargo crate plaque reading 'LUMEN CARGO' + part number."""
+    _ensure_ice_core_glyphs()
+    hi_w, hi_h = w * 2, h * 2
+    albedo = Image.new("RGBA", (hi_w, hi_h), color=(*gsa.CREAM_BG, 255))
+    draw = ImageDraw.Draw(albedo)
+
+    prev_mid_dot = gsa.GLYPH_STROKES["·"]
+    prev_period = gsa.GLYPH_STROKES["."]
+    try:
+        gsa.GLYPH_STROKES["·"] = [(0.34, 0.50, 0.66, 0.50)]
+        gsa.GLYPH_STROKES["."] = [(0.36, 0.88, 0.64, 0.88)]
+
+        # Outer dark anodized border frame + inner cream enamel plate
+        draw.rounded_rectangle(
+            [6, 6, hi_w - 7, hi_h - 7],
+            radius=14,
+            fill=(*gsa.CREAM_TILE, 255),
+            outline=(*gsa.STENCIL_DARK, 255),
+            width=6,
+        )
+
+        # Top coral-orange identification header band with part number
+        header_bottom = int(hi_h * 0.32)
+        draw.rectangle([12, 12, hi_w - 13, header_bottom], fill=(*gsa.ORANGE_BAND, 255))
+        draw.line([(12, header_bottom), (hi_w - 13, header_bottom)], fill=(*gsa.STENCIL_DARK, 255), width=4)
+
+        gsa._draw_stencil_text(
+            draw,
+            "PART NO. LC-04 · PAD ASSY 01/02",
+            cx=hi_w * 0.5,
+            cy=(12 + header_bottom) * 0.5,
+            char_w=17.5,
+            char_h=30.0,
+            stroke_w=4.6,
+            spacing=5.5,
+            color=gsa.CREAM_TILE,
+            bg_color=gsa.ORANGE_BAND,
+            stencil_bridges=True,
+        )
+
+        # Corner mounting rivet marks
+        for rx in (28, hi_w - 29):
+            for ry in (header_bottom + 22, hi_h - 24):
+                draw.ellipse(
+                    [rx - 7, ry - 7, rx + 7, ry + 7],
+                    fill=(154, 160, 170, 255),
+                    outline=(*gsa.STENCIL_DARK, 255),
+                    width=2,
+                )
+
+        # Main bold stencilled label text: LUMEN CARGO
+        gsa._draw_stencil_text(
+            draw,
+            "LUMEN CARGO",
+            cx=hi_w * 0.5,
+            cy=hi_h * 0.67,
+            char_w=52.0,
+            char_h=92.0,
+            stroke_w=12.5,
+            spacing=14.0,
+            color=gsa.STENCIL_DARK,
+            bg_color=gsa.CREAM_TILE,
+            stencil_bridges=True,
+        )
+    finally:
+        gsa.GLYPH_STROKES["·"] = prev_mid_dot
+        gsa.GLYPH_STROKES["."] = prev_period
+
+    return albedo.resize((w, h), resample=Image.Resampling.LANCZOS)
+
+
 def main() -> None:
     repo_root = Path(__file__).resolve().parents[3]
     out_dir = repo_root / "Assets" / "_Project" / "Art" / "R1" / "Textures"
@@ -324,8 +396,12 @@ def main() -> None:
 
     ic_frost = _build_ice_core_frost_albedo(128)
     ic_frost.save(out_dir / "T_R1_IceCoreFrost_Albedo.png", compress_level=9)
+
+    cc_alb = _build_cargo_crate_label(512, 128)
+    cc_alb.save(out_dir / "T_R1_CargoCrateLabel_Albedo.png", compress_level=9)
     print(f"Saved story prop textures to {out_dir}")
 
 
 if __name__ == "__main__":
     main()
+
