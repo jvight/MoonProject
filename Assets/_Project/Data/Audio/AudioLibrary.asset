@@ -511,6 +511,18 @@ MonoBehaviour:
     _volumeMax: 0.8
     _pitchMin: 1
     _pitchMax: 1
+  - _id: sky_diamond_ring
+    _clips:
+    - {fileID: 8300000, guid: f38e74750cc8b6447923429b7d82276b, type: 3}
+    _variantLabels:
+    - sky_diamond_ring
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.74
+    _volumeMax: 0.74
+    _pitchMin: 1
+    _pitchMax: 1
   - _id: build_place
     _clips:
     - {fileID: 8300000, guid: 8d950e018fb4f2242952c723639aa0f3, type: 3}
@@ -1462,18 +1474,6 @@ MonoBehaviour:
     - face_proud
     _bus: 2
     _spatial: 1
-    _loop: 0
-    _volumeMin: 0.74
-    _volumeMax: 0.74
-    _pitchMin: 1
-    _pitchMax: 1
-  - _id: sky_diamond_ring
-    _clips:
-    - {fileID: 8300000, guid: 926a66eba147464aba6ac53862bff818, type: 3}
-    _variantLabels:
-    - sky_diamond_ring
-    _bus: 2
-    _spatial: 0
     _loop: 0
     _volumeMin: 0.74
     _volumeMax: 0.74
