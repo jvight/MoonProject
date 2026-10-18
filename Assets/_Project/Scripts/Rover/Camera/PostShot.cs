@@ -20,43 +20,56 @@ namespace MoonProject.Rover
     }
 
     /// <summary>
-    /// The one camera shot of 07's wake as pure functions: a fixed three-quarter front view of 07's face, a little low,
-    /// that only creeps in a few percent over the whole wake. It never cuts, orbits or follows a part; each check's
-    /// motion is seen from here. 07's position and heading are inputs, so the shot is testable.
+    /// The one camera shot of 07's wake as pure functions: a fixed three-quarter front view aimed at 07's face from a
+    /// little below, far enough that all of 07 is in frame as it wakes; once the self-test prints, the camera creeps
+    /// straight in along its own view line until the face fills <see cref="PostSettings.FaceFill"/> of the frame's
+    /// height, so the lines read. It never turns, cuts or follows a part. The face point and 07's heading are inputs,
+    /// so the shot is testable.
     /// </summary>
     public sealed class PostShot
     {
         private readonly PostSettings _settings;
+        private readonly float _faceHeight;
 
-        public PostShot(PostSettings settings)
+        /// <param name="faceHeight">Height (m) of 07's CRT face screen, the thing the push-in frames.</param>
+        public PostShot(PostSettings settings, float faceHeight)
         {
             _settings = settings ?? throw new System.ArgumentNullException(nameof(settings));
+            _faceHeight = faceHeight > 0f
+                ? faceHeight
+                : throw new System.ArgumentOutOfRangeException(nameof(faceHeight), "the face needs a height");
         }
 
+        /// <summary>How far (m) the camera stands from the face at the end of the push-in.</summary>
+        public float CloseDistance =>
+            _faceHeight / (_settings.FaceFill * 2f * Mathf.Tan(0.5f * _settings.ShotFov * Mathf.Deg2Rad));
+
         /// <summary>
-        /// The shot at <paramref name="push01"/> of the wake's push-in (0 at the black, 1 at the end of the checks):
-        /// the same pose throughout but for the eased creep toward the point it looks at.
+        /// The shot at <paramref name="push01"/> of the push-in (0 wide on all of 07, 1 close on the face), looking at
+        /// <paramref name="face"/>: the rotation and the lens never change, only the distance along the view line.
         /// </summary>
-        public ShotPose At(Vector3 body, float headingDeg, float push01)
+        public ShotPose At(Vector3 face, float headingDeg, float push01)
         {
-            Quaternion heading = Quaternion.Euler(0f, headingDeg, 0f);
-            Vector3 look = body + heading * _settings.ShotLook;
-            Quaternion around = Quaternion.Euler(0f, headingDeg + _settings.ShotSideYaw, 0f);
-            Vector3 start = new Vector3(look.x, body.y + _settings.ShotHeight, look.z)
-                + around * (Vector3.forward * _settings.ShotDistance);
-            float creep = _settings.PushIn * WakeOpening.SmoothStepC2(0f, 1f, Mathf.Clamp01(push01));
-            Vector3 position = Vector3.Lerp(start, look, creep);
-            return new ShotPose(position, Quaternion.LookRotation(look - start, Vector3.up), _settings.ShotFov);
+            Vector3 back = Back(headingDeg);
+            float ease = WakeOpening.SmoothStepC2(0f, 1f, Mathf.Clamp01(push01));
+            float distance = Mathf.Lerp(_settings.ShotDistance, Mathf.Min(CloseDistance, _settings.ShotDistance), ease);
+            return new ShotPose(face + back * distance, Quaternion.LookRotation(-back, Vector3.up), _settings.ShotFov);
         }
 
         /// <summary>
         /// Where the shot's camera is as (yaw, pitch) deg from 07's heading, seen from <paramref name="face"/>: where
         /// 07's head turns to look into the shot.
         /// </summary>
-        public Vector2 FaceAngles(Vector3 body, float headingDeg, Vector3 face)
+        public Vector2 FaceAngles(float headingDeg)
         {
             Quaternion toLocal = Quaternion.Inverse(Quaternion.Euler(0f, headingDeg, 0f));
-            return LensGaze.Angles(toLocal * (At(body, headingDeg, 0f).Position - face));
+            return LensGaze.Angles(toLocal * Back(headingDeg));
+        }
+
+        /// <summary>The direction from the face back to the camera: round from 07's front, a little below.</summary>
+        private Vector3 Back(float headingDeg)
+        {
+            return Quaternion.Euler(-_settings.ShotElevation, headingDeg + _settings.ShotSideYaw, 0f) * Vector3.forward;
         }
     }
 }

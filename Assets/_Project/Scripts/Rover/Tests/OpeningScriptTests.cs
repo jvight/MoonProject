@@ -215,6 +215,11 @@ namespace MoonProject.Rover.Tests
                 }
 
                 Assert.GreaterOrEqual(_script.Push01, push - 1e-6f, "the push-in never backs off");
+                if (_script.IsRunning && _script.Phase < OpeningPhase.Post)
+                {
+                    Assert.AreEqual(0f, _script.Push01, "the shot holds wide while 07 wakes");
+                }
+
                 push = _script.Push01;
                 if (wasLive && !_script.ShotLive)
                 {

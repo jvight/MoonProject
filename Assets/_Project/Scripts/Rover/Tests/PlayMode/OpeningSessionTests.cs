@@ -64,8 +64,9 @@ namespace MoonProject.Rover.PlayModeTests
         private const float ShotAngleSlack = 0.05f;
         private const float ShotLineSlack = 0.01f;
 
-        /// <summary>The push-in creeps at most this share of the shot's distance (PostSettings caps it at 10%).</summary>
-        private const float MaxPushInShare = 0.1f;
+        /// <summary>Once pushed in, 07's face screen fills about this share of the frame's height (the lines read).</summary>
+        private const float MinFaceFill = 0.3f;
+        private const float MaxFaceFill = 0.45f;
 
         /// <summary>07's body may yaw this little (deg) through the whole wake: it never turns.</summary>
         private const float BodyYawSlack = 0.5f;
@@ -192,7 +193,8 @@ namespace MoonProject.Rover.PlayModeTests
             var keyShots = new (OpeningPhase Phase, float Share, string Name)[]
             {
                 (OpeningPhase.EyesOpen, 0.95f, "key_01_eyes_awake"),
-                (OpeningPhase.Handover, 0.95f, "key_02_chase_frame"),
+                (OpeningPhase.Post, 0.5f, "key_02_lines_on_face"),
+                (OpeningPhase.Handover, 0.95f, "key_03_chase_frame"),
             };
             var taken = new bool[shots.Length];
             var keyTaken = new bool[keyShots.Length];
@@ -461,6 +463,8 @@ namespace MoonProject.Rover.PlayModeTests
             float maxFovChange = 0f;
             float pictureAtCut = -1f;
             Vector3 lastShotPos = startPos;
+            float faceFill = 0f;
+            Renderer screen = _body.FaceDirector.Display.ScreenRenderer;
             while (!_beats.Contains(WakeBeat.ChaseFrame))
             {
                 Assert.Less(Time.time - started, RunTimeout, "the opening reaches the chase frame");
@@ -477,6 +481,13 @@ namespace MoonProject.Rover.PlayModeTests
                     maxAlong = Mathf.Max(maxAlong, along);
                     maxFovChange = Mathf.Max(maxFovChange, Mathf.Abs(_view.fieldOfView - startFov));
                     lastShotPos = _view.transform.position;
+                    if (script.Phase == OpeningPhase.Post)
+                    {
+                        Bounds bounds = screen.bounds;
+                        Vector3 top = _view.WorldToViewportPoint(new Vector3(bounds.center.x, bounds.max.y, bounds.center.z));
+                        Vector3 bottom = _view.WorldToViewportPoint(new Vector3(bounds.center.x, bounds.min.y, bounds.center.z));
+                        faceFill = top.y - bottom.y;
+                    }
                 }
 
                 if (pictureAtCut < 0f && script.Phase == OpeningPhase.Handover && !script.ShotLive)
@@ -487,17 +498,18 @@ namespace MoonProject.Rover.PlayModeTests
                 yield return null;
             }
 
-            float allowedAlong = MaxPushInShare * Vector3.Distance(startPos, _rover.transform.position) + ShotLineSlack;
             _report.AppendLine("# One still shot").AppendLine()
                 .AppendLine(Line("shot turn, max (deg)", maxAngle))
                 .AppendLine(Line("shot off its push-in line, max (m)", maxOffLine))
                 .AppendLine(Line("push-in travelled (m)", maxAlong))
+                .AppendLine(Line("face screen's share of the frame height at the end of the checks", faceFill))
                 .AppendLine(Line("lens change, max (deg)", maxFovChange))
                 .AppendLine(Line("body yaw change, max (deg)", maxBodyYaw))
                 .AppendLine(Line("picture at the cut to the chase frame (0 black)", pictureAtCut)).AppendLine();
             Assert.LessOrEqual(maxAngle, ShotAngleSlack, "the shot never pans, tilts or orbits");
             Assert.LessOrEqual(maxOffLine, ShotLineSlack, "the camera moves only along its view line");
-            Assert.LessOrEqual(maxAlong, allowedAlong, "the push-in stays within its few percent");
+            Assert.Greater(maxAlong, 0f, "the camera pushes in toward the face");
+            Assert.That(faceFill, Is.InRange(MinFaceFill, MaxFaceFill), "the face fills enough of the frame to read");
             Assert.LessOrEqual(maxFovChange, 1e-3f, "no zoom");
             Assert.LessOrEqual(maxBodyYaw, BodyYawSlack, "07's body never turns during the wake");
             Assert.That(pictureAtCut, Is.InRange(0f, 0.05f), "the chase frame takes over in the black");

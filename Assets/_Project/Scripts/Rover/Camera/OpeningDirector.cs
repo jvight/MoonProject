@@ -36,9 +36,6 @@ namespace MoonProject.Rover
         /// <summary>Frames the brain keeps its cut blend after the shot camera goes live or lets go.</summary>
         private const int CutFrameCount = 2;
 
-        /// <summary>The shot's terrain probe starts this high (m) above 07's ground point.</summary>
-        private const float ProbeLift = 1f;
-
         /// <summary>The start's dust shiver shakes the chassis this many times the motor's shudder.</summary>
         private const float ShiverScale = 1.5f;
 
@@ -89,7 +86,7 @@ namespace MoonProject.Rover
         private ILensView _lens;
         private IGameFlow _flow;
         private IDisposable[] _subscriptions;
-        private Vector3 _shotBody;
+        private Vector3 _shotFace;
         private float _shotHeading;
         private bool _shotWasLive;
         private bool _titleHasSave;
@@ -129,7 +126,7 @@ namespace MoonProject.Rover
             _rig.SetWakeBody(_body);
             OpeningSettings settings = _tuning.Opening;
             _lamps = _script.Lamps;
-            _shot = new PostShot(settings.Post);
+            _shot = new PostShot(settings.Post, _tuning.FaceInspectScreenHeight);
             _lights = new PostLights(transform, settings.Post);
             _dust = new PostDust(settings.Post);
             _brain = _rig.Camera != null ? _rig.Camera.GetComponent<CinemachineBrain>() : null;
@@ -268,14 +265,15 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// Fixes the one shot where 07 stands as the opening begins (its creep and shiver must not move the camera)
-        /// and tells the script where the camera is, for the head to look into it.
+        /// Fixes the one shot as the opening begins (07's creep and shiver must not move the camera): aimed at where
+        /// 07's face will be once its head has turned into the shot, which is where the script tells the head to look.
         /// </summary>
         private void SetShot()
         {
-            _shotBody = _rover.Position;
             _shotHeading = HeadingDegrees();
-            _script.SetFaceTarget(_shot.FaceAngles(_shotBody, _shotHeading, ScanLensOrigin.position));
+            Vector2 face = _shot.FaceAngles(_shotHeading);
+            _body.EvaluateScreenPose(face.x, face.y, out _shotFace, out _);
+            _script.SetFaceTarget(face);
         }
 
         private Quaternion Heading()
@@ -553,12 +551,11 @@ namespace MoonProject.Rover
                 return;
             }
 
-            ShotPose pose = _shot.At(_shotBody, _shotHeading, _script.Push01);
-            Vector3 anchor = _shotBody + Vector3.up * ProbeLift;
-            Vector3 toCamera = pose.Position - anchor;
+            ShotPose pose = _shot.At(_shotFace, _shotHeading, _script.Push01);
+            Vector3 toCamera = pose.Position - _shotFace;
             float length = toCamera.magnitude;
             Vector3 position = length > LengthEpsilon
-                ? anchor + toCamera / length * _sight.Clear(anchor, pose.Position, _tuning.FaceInspectProbeRadius)
+                ? _shotFace + toCamera / length * _sight.Clear(_shotFace, pose.Position, _tuning.FaceInspectProbeRadius)
                 : pose.Position;
             _lensCamera.transform.SetPositionAndRotation(position, pose.Rotation);
             LensSettings lensSettings = _lensCamera.Lens;

@@ -223,7 +223,7 @@ namespace MoonProject.Rover
         [SerializeField] private float _fillRampSeconds = 2.5f;
 
         [Header("The camera: one shot for the whole wake")]
-        [Tooltip("How far (m) the camera stands from the point it looks at, before its push-in.")]
+        [Tooltip("How far (m) the camera stands from 07's face before its push-in: all of 07 in frame as it wakes.")]
         [Range(2f, 9f)]
         [SerializeField] private float _shotDistance = 5f;
 
@@ -231,21 +231,21 @@ namespace MoonProject.Rover
         [Range(0f, 60f)]
         [SerializeField] private float _shotSideYaw = 35f;
 
-        [Tooltip("The camera's height (m) above 07's ground point: a little below the face, so the shot looks up softly.")]
-        [Range(0.3f, 2f)]
-        [SerializeField] private float _shotHeight = 0.8f;
-
-        [Tooltip("The point the shot looks at, in 07's frame (x right, y up, z forward): between the face and the body, " +
-                 "so 07 sits in the middle of the frame.")]
-        [SerializeField] private Vector3 _shotLook = new Vector3(0f, 0.95f, 0.2f);
+        [Tooltip("How far (deg) above the face the camera stands; below 0 it sits a little low and looks softly up.")]
+        [Range(-15f, 10f)]
+        [SerializeField] private float _shotElevation = -6f;
 
         [Tooltip("The shot's field of view (deg).")]
         [Range(20f, 60f)]
         [SerializeField] private float _shotFov = 32f;
 
-        [Tooltip("Share of the shot distance the camera creeps in over the whole wake, eased: a few percent at most.")]
-        [Range(0f, 0.1f)]
-        [SerializeField] private float _pushIn = 0.04f;
+        [Tooltip("Share of the frame's height 07's face screen fills once the push-in has arrived: the lines read.")]
+        [Range(0.2f, 0.5f)]
+        [SerializeField] private float _faceFill = 0.375f;
+
+        [Tooltip("Seconds the push-in takes, eased, from the first line on the face: very slow.")]
+        [Range(3f, 20f)]
+        [SerializeField] private float _pushInSeconds = 9f;
 
         [Header("The start's glance")]
         [Tooltip("How far (deg) at most the head turns from the camera toward the lander's beacon at the start.")]
@@ -306,11 +306,11 @@ namespace MoonProject.Rover
 
         public float ShotFov => _shotFov;
 
-        public float ShotHeight => _shotHeight;
+        public float ShotElevation => _shotElevation;
 
-        public Vector3 ShotLook => _shotLook;
+        public float FaceFill => _faceFill;
 
-        public float PushIn => _pushIn;
+        public float PushInSeconds => _pushInSeconds;
 
         public float BeaconGlanceYaw => _beaconGlanceYaw;
 
