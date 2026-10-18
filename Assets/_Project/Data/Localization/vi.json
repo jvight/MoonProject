@@ -993,6 +993,90 @@
         {
             "key": "build.step.weld",
             "text": "Giữ {0} để hàn"
+        },
+        {
+            "key": "post.carrier",
+            "text": "SÓNG MANG · PHÁT HIỆN"
+        },
+        {
+            "key": "post.resume",
+            "text": "ĐƠN VỊ 07 · SSR-5 · TIẾP TỤC · {0} NGÀY"
+        },
+        {
+            "key": "post.agenda",
+            "text": "HÀNG VIỆC 1 · KHÔI PHỤC"
+        },
+        {
+            "key": "post.lens",
+            "text": "ỐNG KÍNH"
+        },
+        {
+            "key": "post.lamps",
+            "text": "ĐÈN"
+        },
+        {
+            "key": "post.head",
+            "text": "ĐẦU"
+        },
+        {
+            "key": "post.wheels",
+            "text": "BÁNH XE"
+        },
+        {
+            "key": "post.wheels.ok",
+            "text": "OK (1 LỆCH BỘ)"
+        },
+        {
+            "key": "post.motor",
+            "text": "ĐỘNG CƠ"
+        },
+        {
+            "key": "post.cutter",
+            "text": "MỎ CẮT"
+        },
+        {
+            "key": "post.cutter.fault",
+            "text": "LỖI · MẤT BỘ ĐÁNH LỬA → PHỤ TÙNG: TÀU ĐỔ BỘ"
+        },
+        {
+            "key": "post.solar_wing",
+            "text": "CÁNH PIN"
+        },
+        {
+            "key": "post.antenna",
+            "text": "ĂNG-TEN"
+        },
+        {
+            "key": "post.battery",
+            "text": "PIN"
+        },
+        {
+            "key": "post.battery.ok",
+            "text": "{0}%"
+        },
+        {
+            "key": "post.assembly",
+            "text": "LẮP RÁP · 0 BẢN VẼ"
+        },
+        {
+            "key": "post.begin",
+            "text": "BẮT ĐẦU KHÔI PHỤC"
+        },
+        {
+            "key": "post.result.ok",
+            "text": "OK"
+        },
+        {
+            "key": "post.result.fault",
+            "text": "LỖI"
+        },
+        {
+            "key": "post.result.jammed",
+            "text": "KẸT"
+        },
+        {
+            "key": "post.result.receive_only",
+            "text": "CHỈ NHẬN"
         }
     ]
 }
