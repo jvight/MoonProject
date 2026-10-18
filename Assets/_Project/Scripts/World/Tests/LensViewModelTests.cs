@@ -51,6 +51,37 @@ namespace MoonProject.World.Tests
         }
 
         [Test]
+        public void EyeGain_IsFullThroughTheSlit_FadesOverTheHalfLid_AndIsGoneByTheRestingLid()
+        {
+            _model.Step(State(0.12f), Frame);
+            Assert.AreEqual(_settings.WakeGain, _model.Gain, 1e-5f, "the slit gets the full gain");
+            _model.Step(State(_settings.GainHoldLid), Frame);
+            Assert.AreEqual(_settings.WakeGain, _model.Gain, 1e-5f, "the full gain holds up to its hold lid");
+            _model.Step(State(0.55f), Frame);
+            Assert.That(_model.Gain, Is.GreaterThan(0f).And.LessThan(_settings.WakeGain), "it fades on the way up");
+            _model.Step(State(_settings.GainGoneLid), Frame);
+            Assert.AreEqual(0f, _model.Gain, 1e-5f, "the resting lid sees the world's own exposure");
+        }
+
+        [Test]
+        public void EyeGain_NeverComesBackOnABlink_OnlyAfterTheLidShutsOrTheLensIsLookedThroughAgain()
+        {
+            _model.Step(State(0.7f), Frame);
+            _model.Step(State(0.25f), Frame);
+            Assert.AreEqual(0f, _model.Gain, 1e-5f, "a blink after the rest does not brighten the picture");
+
+            _model.Step(State(0f), Frame);
+            _model.Step(State(0.12f), Frame);
+            Assert.AreEqual(_settings.WakeGain, _model.Gain, 1e-5f,
+                "the push into the shut lens, then its slit: the full gain");
+
+            _model.Step(State(0.7f), Frame);
+            _model.Reset();
+            _model.Step(State(0.12f), Frame);
+            Assert.AreEqual(_settings.WakeGain, _model.Gain, 1e-5f, "a new look starts with the full gain");
+        }
+
+        [Test]
         public void DipNeverTakesMoreThanThirtyPercentOfTheLight()
         {
             for (float flicker = 0f; flicker <= 2f; flicker += 0.05f)

@@ -64,6 +64,7 @@ namespace MoonProject.UI
         private HoldHint _holdHint;
         private FirstPrompt _firstPrompt;
         private LookUpChip _lookUpChip;
+        private readonly ObjectiveChip _objectiveChip = new ObjectiveChip();
         private ObjectiveLine _objective;
         private ObjectiveView _objectiveView;
         private LowBatteryHint _lowBattery;
@@ -264,7 +265,8 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<GameSaved>(OnGameSaved));
             _tokens.Add(events.Subscribe<StargazingChanged>(OnStargazingChanged));
             _tokens.Add(events.Subscribe<NextStepChanged>(OnNextStepChanged));
-            _tokens.Add(events.Subscribe<ScanStarted>(_ => _director.Yield(InteractionKind.Scan)));
+            _tokens.Add(events.Subscribe<ScanStarted>(OnScanStarted));
+            _tokens.Add(events.Subscribe<SalvageCutStarted>(_ => _objectiveChip.Used(ObjectiveVerb.Cut)));
             _tokens.Add(events.Subscribe<FragmentScanned>(_ => _director.NotifyUsed(InteractionKind.Scan)));
             _tokens.Add(events.Subscribe<RoverWakeBeatReached>(OnWakeBeat));
             _tokens.Add(events.Subscribe<LanguageChanged>(OnLanguageChanged));
@@ -277,6 +279,7 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<StructureLearned>(OnStructureLearned));
             _tokens.Add(events.Subscribe<BatteryArcRevealed>(OnBatteryArcRevealed));
             _tokens.Add(events.Subscribe<StructurePlaced>(_ => _director.NotifyUsed(InteractionKind.Build)));
+            _tokens.Add(events.Subscribe<StoryPartCollected>(collected => _pickups?.PartCollected(collected.PartId)));
             _tokens.Add(events.Subscribe<StructureRemoved>(_ => _director.NotifyUsed(InteractionKind.Deconstruct)));
 
             services.Input.Menu.Enable();
@@ -322,7 +325,7 @@ namespace MoonProject.UI
                 _layout.BuildReasonAnchor);
             _holdHint = new HoldHint(_tuning.Stargaze, _ledger);
             _firstPrompt = new FirstPrompt(_tuning.Stargaze, _ledger);
-            _lookUpChip = new LookUpChip(_layout, _tuning.Stargaze, _localization);
+            _lookUpChip = new LookUpChip(_layout, _tuning.Stargaze, _localization, _glyphs);
             _objective = new ObjectiveLine(_tuning.Guidance, _ledger);
             _objectiveView = new ObjectiveView(_layout, _tuning.Guidance, _localization);
             _lowBattery = new LowBatteryHint(_tuning.Guidance, services.Battery, _localization);
@@ -334,7 +337,7 @@ namespace MoonProject.UI
             _prompt = new ContextPrompt(_layout, _tuning.Prompts, _director, services.View, _glyphs, _localization,
                 services.Events, new[] { _layout.BuildStrip });
             _pickups = new PickupFeed(_layout, _tuning.PickupFeed, _numbers, _localization, services.Materials,
-                services.Catalog, services.Events);
+                services.Catalog, services.Events, _roverDiagram);
             _salvageRing = new SalvageRing(_layout, _tuning.Salvage, _tuning.Prompts, services.Salvage, services.View);
             _buildStrip = new BuildStripView(_layout, _tuning.BuildStripReveal, _tuning.Prompts, _localization,
                 _numbers, services.Materials, services.View, services.BuildField, _structureIcons, _glyphs,
@@ -453,6 +456,15 @@ namespace MoonProject.UI
             _holdHint.Tick(hudTime, hintOpen && !cargoOpen && _firstPrompt.Word == HintWord.None, _awake && _carrying);
             HintWord hint = _firstPrompt.Word != HintWord.None ? _firstPrompt.Word
                 : _holdHint.WantsShown ? HintWord.Hold : HintWord.None;
+            if (BuildMenuOpen())
+            {
+                _objectiveChip.Used(ObjectiveVerb.Build);
+            }
+
+            // The verb chip is the objective's own: it shows only with its line, and a teaching prompt takes the chip.
+            hint = hint != HintWord.None ? hint
+                : _objectiveChip.Word(_objectiveView.ShowsObjective && _objective.WantsShown,
+                    _services.Systems.CanFitIgniter, cargoOpen);
             _lookUpChip.Tick(deltaTime, paused ? HintWord.None : hint, device);
             _objectiveView.Tick(deltaTime, _objective, ObjectiveOpen(paused) && _slot.Allows(GuidanceKind.Objective),
                 _lowBattery, ObjectiveOpen(paused) && _slot.Allows(GuidanceKind.Battery));
@@ -471,7 +483,7 @@ namespace MoonProject.UI
         private bool PromptsOpen(bool paused)
         {
             return !paused && _awake && !_inOpening && _sinceAwake >= _tuning.Prompts.StartDelay &&
-                   !_lookUpChip.IsVisible && !_readout.IsVisible && !BuildMenuOpen();
+                   !_lookUpChip.ShowsPrompt && !_readout.IsVisible && !BuildMenuOpen();
         }
 
         private bool ObjectiveOpen(bool paused)
@@ -516,7 +528,7 @@ namespace MoonProject.UI
             bool chipWants = (PromptsOpen(paused) && _director.Wants(_services.Hints.Primary)) || looks;
             bool unlockWants = !_cargo.IsOpen && _unlockCard.IsWaiting;
             bool readoutWants = ReadoutOpen(paused) && _readout.Wants;
-            bool chipUp = _prompt.IsVisible || _lookUpChip.IsVisible;
+            bool chipUp = _prompt.IsVisible || _lookUpChip.ShowsPrompt;
             PromptHolder holder = _unlockCard.IsVisible ? PromptHolder.Unlock
                 : _readout.IsVisible ? PromptHolder.Readout
                 : chipUp ? PromptHolder.Chip
@@ -842,6 +854,14 @@ namespace MoonProject.UI
         private void OnNextStepChanged(NextStepChanged changed)
         {
             _objective.SetKey(changed.LineKey);
+            _objectiveChip.SetKey(changed.LineKey);
+        }
+
+        /// <summary>The scan beam started: the scan prompt yields to the beam, and the objective's Scan chip retires.</summary>
+        private void OnScanStarted(ScanStarted started)
+        {
+            _director.Yield(InteractionKind.Scan);
+            _objectiveChip.Used(ObjectiveVerb.Scan);
         }
 
         private void OnStructureLearned(StructureLearned learned)

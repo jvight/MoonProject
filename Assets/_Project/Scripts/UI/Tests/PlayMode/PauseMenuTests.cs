@@ -303,10 +303,16 @@ namespace MoonProject.UI.PlayModeTests
             yield return new WaitForSecondsRealtime(Settle);
             UiLayout layout = _rig.Ui.Layout;
             Assert.IsTrue(_rig.Ui.Pause.IsChoosingLanguage);
-            var english = (Button)layout.PageLanguage[0];
-            var vietnamese = (Button)layout.PageLanguage[1];
+            var english = (Button)layout.PageLanguage[1];
+            var vietnamese = (Button)layout.PageLanguage[2];
             Assert.AreSame(english, Focused());
             Assert.AreEqual("Tiếng Việt", vietnamese.text, "each language in its own words");
+            Assert.IsInstanceOf<Label>(layout.PageLanguage[0], "a heading says what is asked");
+            Assert.AreEqual(DisplayStyle.None, layout.PageMain.resolvedStyle.display,
+                "the title's buttons are not on offer yet");
+            Submit(layout.NewGameButton);
+            Assert.IsTrue(_rig.Ui.Pause.IsChoosingLanguage, "a stray New Game press asks the language again");
+            Assert.AreSame(english, Focused());
 
             Submit(vietnamese);
             yield return new WaitForSecondsRealtime(Settle);
