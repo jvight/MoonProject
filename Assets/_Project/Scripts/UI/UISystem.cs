@@ -87,6 +87,9 @@ namespace MoonProject.UI
         private PostLog _postLog;
         private PostView _postView;
         private bool _postOnCrt;
+        private BlockedCue _blockedCue;
+        private FaceNotice _faceNotice;
+        private bool _noticeOnCrt;
         private EventBus _events;
         private BuildStripView _buildStrip;
         private PauseMenu _pause;
@@ -286,6 +289,7 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<OpeningMilestoneReached>(OnMilestoneReached));
             _tokens.Add(events.Subscribe<LanderReserveChanged>(OnLanderReserveChanged));
             _tokens.Add(events.Subscribe<StoryScanned>(OnStoryScanned));
+            _tokens.Add(events.Subscribe<InteractionBlocked>(OnInteractionBlocked));
             _tokens.Add(events.Subscribe<StructureLearned>(OnStructureLearned));
             _tokens.Add(events.Subscribe<BatteryArcRevealed>(OnBatteryArcRevealed));
             _tokens.Add(events.Subscribe<StructurePlaced>(_ => _director.NotifyUsed(InteractionKind.Build)));
@@ -359,6 +363,8 @@ namespace MoonProject.UI
             BindFacePanel(root);
             // The face panel takes the cargo screen when there is one; the log sits beside it either way.
             _postView = new PostView(_layout.Cargo.parent, _postLog);
+            _faceNotice = new FaceNotice(_layout.Cargo.parent);
+            _blockedCue = new BlockedCue(_tuning.Guidance);
             _unlockCard = new UnlockCard(_layout, _tuning.UnlockCard, _localization);
             _pause = new PauseMenu(_layout, _tuning.Pause, _tuning.Title, _player, _localization, services.Input,
                 services.Events, _settings, services.Flow,
@@ -493,6 +499,9 @@ namespace MoonProject.UI
                 : _objectiveChip.Word(_objectiveView.ShowsObjective && _objective.WantsShown,
                     _services.Systems.CanFitIgniter, cargoOpen, OfferedNow(), HeldNow());
             _lookUpChip.Tick(deltaTime, paused ? HintWord.None : hint, device);
+            _blockedCue.Tick(paused ? 0f : deltaTime);
+            _lookUpChip.Nudge(_blockedCue.ChipOffset, _blockedCue.ChipOpacity);
+            StepFaceNotice();
             _objectiveView.Tick(deltaTime, _objective, ObjectiveOpen(paused) && _slot.Allows(GuidanceKind.Objective),
                 _lowBattery, ObjectiveOpen(paused) && _slot.Allows(GuidanceKind.Battery), _buildStrip,
                 BuildStepOpen(paused) && _slot.Allows(GuidanceKind.BuildStep));
@@ -627,6 +636,9 @@ namespace MoonProject.UI
 
         /// <summary>The self-test column beside the cargo screen on the face panel (tests and captures).</summary>
         internal PostView PostView => _postView;
+
+        /// <summary>The line on 07's face that says why a held E did nothing (tests).</summary>
+        internal FaceNotice FaceNotice => _faceNotice;
 
         private void OnBootCheckStarted(BootCheckStarted started)
         {
@@ -1046,6 +1058,45 @@ namespace MoonProject.UI
         }
 
         /// <summary>The scan beam started: the scan prompt yields to the beam, and the objective's Scan chip retires.</summary>
+        /// <summary>A held E could not work: the chip and 07's face answer it quietly.</summary>
+        private void OnInteractionBlocked(InteractionBlocked blocked)
+        {
+            if (blocked.Reason == BlockReason.NoLineOfSight)
+            {
+                _blockedCue.Start();
+            }
+        }
+
+        /// <summary>
+        /// 07's face says "no line of sight" while the cue lasts, unless the self-test or the hold already has the
+        /// face; the face is handed back only if nothing else took it meanwhile.
+        /// </summary>
+        private void StepFaceNotice()
+        {
+            bool show = _blockedCue.FaceShown && !_postOnCrt && !_cargo.IsOpen;
+            if (show)
+            {
+                _faceNotice.Show(_localization.Get(UiKeys.FaceNoLine));
+                if (!_noticeOnCrt)
+                {
+                    _noticeOnCrt = true;
+                    _services.FaceScreen?.SetReadout(FaceTargetTexture());
+                }
+
+                return;
+            }
+
+            _faceNotice.SetShown(false);
+            if (_noticeOnCrt)
+            {
+                _noticeOnCrt = false;
+                if (!_postOnCrt && !_cargo.IsOpen)
+                {
+                    _services.FaceScreen?.SetReadout(null);
+                }
+            }
+        }
+
         /// <summary>A story target's scan ends here, not with <see cref="FragmentScanned"/>.</summary>
         private void OnStoryScanned(StoryScanned scanned)
         {
