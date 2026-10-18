@@ -106,9 +106,10 @@ namespace MoonProject.World.PlayModeTests
         private const float BlastSearchSeconds = 7200f;
         private const float BlastSearchStep = 20f;
         private const float BlastSettleSeconds = 2f;
-        // The basin's story props (basin dressing §2, §5): the Scout from the lane in the eclipse, from the apron at
-        // last light (07's chase behind it, a wide eye above the apron), close up, and its shadow from above; the
-        // ruins' front door from the trail's start at golden hour.
+        // The basin's story props (basin dressing §2, §5): the Scout from the lane in the eclipse, from the apron in
+        // each light and close up on the first night (07's chase behind it, a wide eye above the apron); the ruins'
+        // front door from the trail's start at golden hour. The Scout's brightest pixel is read within this many
+        // pixels of where it stands on screen; the first night is shot this long (clock seconds) after nightfall.
         private const float ScoutApronEyeHeight = 3.2f;
         private const float ScoutLookHeight = 1.5f;
         private const float ScoutCloseDistance = 9f;
@@ -116,8 +117,9 @@ namespace MoonProject.World.PlayModeTests
         private const float ScoutCloseBearingOffset = 60f;
         private const float ScoutCloseFov = 45f;
         private const float ScoutApronFov = 40f;
-        private const float ScoutOverheadHeight = 70f;
-        private const float ScoutShadowMid = 30f;
+        private const int ScoutPeakWindow = 40;
+        private const float PeakChange = 0.01f;
+        private const float FirstNightSeconds = 300f;
         private static readonly Vector2 FrontDoorTrailStart = new Vector2(27f, 147f);
         private static readonly Vector2 FrontDoorTrailEnd = new Vector2(80f, 182f);
 
@@ -538,9 +540,10 @@ namespace MoonProject.World.PlayModeTests
 
         /// <summary>
         /// The basin's story props against the real sky (basin dressing §2, §5): in the eclipse, the Scout from the
-        /// first drive's lane (nothing new may show); at golden hour, the ruins' front door from the trail's start; at
-        /// last light, the Scout's shadow from the apron (07's chase view and a wide eye), the Scout close up and its
-        /// shadow from above. The Sun stands where the opening's milestones leave it. Logs/world-captures/basin-*.png.
+        /// first drive's lane (nothing new may show); at golden hour, the ruins' front door from the trail's start; on
+        /// the first night, the Scout's earthlit glint from the apron (07's chase view and a wide eye) and close up.
+        /// The Sun stands where the opening's milestones leave it; the Scout's brightest pixel from the lane and the
+        /// apron in each light goes to the log. Logs/world-captures/basin-*.png.
         /// </summary>
         [UnityTest]
         [Timeout(600000)]
@@ -563,12 +566,22 @@ namespace MoonProject.World.PlayModeTests
             throw new NotSupportedException("The atmosphere session loads the scene through the editor.");
 #endif
             GameBootstrap bootstrap = null;
+            SkyCycleSystem sky = null;
             foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
             {
                 bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
+                sky = sky != null ? sky : root.GetComponentInChildren<SkyCycleSystem>(true);
             }
 
             Assert.IsNotNull(bootstrap, "the scene has its bootstrap");
+            Assert.IsNotNull(sky, "the scene has its sky cycle");
+            Transform scoutProp = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
+            {
+                scoutProp = scoutProp != null ? scoutProp : root.transform.Find("BasinProps/Prop_OldLander");
+            }
+
+            Assert.IsNotNull(scoutProp, "[World]/BasinProps/Prop_OldLander stands");
             GameContext context = bootstrap.Context;
             _awoke = context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
             float started = Time.time;
@@ -595,7 +608,8 @@ namespace MoonProject.World.PlayModeTests
             Vector3 closeEye = scout
                                + Quaternion.Euler(0f, ScoutCloseBearingOffset, 0f) * -toScout * ScoutCloseDistance;
             closeEye.y = terrain.SampleHeight(closeEye.x, closeEye.z) + ScoutCloseEyeHeight;
-            Vector3 shadowMid = scout - toScout * ScoutShadowMid;
+            Vector3 apronEye = apron + Vector3.up * ScoutApronEyeHeight;
+            Vector3 laneEye = onLane + Vector3.up * OpeningEyeHeight;
             Vector3 doorEye = OnGround(terrain, FrontDoorTrailStart) + Vector3.up * ScoutApronEyeHeight;
             Vector3 doorLook = OnGround(terrain, FrontDoorTrailEnd) + Vector3.up * ScoutLookHeight;
 
@@ -612,29 +626,25 @@ namespace MoonProject.World.PlayModeTests
                 rover.PlaceAt(onLane, Quaternion.LookRotation(Vector3.ProjectOnPlane(scout - onLane, Vector3.up)));
                 yield return new WaitForSeconds(BlastSettleSeconds);
                 Shoot(view, "basin-eclipse-lane-chase");
-                Shoot(camera, LookPose("eclipse-lane", onLane + Vector3.up * OpeningEyeHeight, scoutLook, OpeningFov));
+                Shoot(camera, LookPose("eclipse-lane", laneEye, scoutLook, OpeningFov));
+                ReportPeaks(camera, scoutProp, "eclipse", laneEye, apronEye, scoutLook);
 
                 context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.FirstCharge, true));
                 yield return new WaitForSeconds(BlastSettleSeconds);
                 Debug.Log($"[basin] golden hour: sun at {SunReport(context)}");
                 Shoot(camera, LookPose("golden-front-door", doorEye, doorLook, ScoutApronFov));
+                Shoot(camera, LookPose("golden-apron-scout", apronEye, scoutLook, ScoutApronFov));
+                ReportPeaks(camera, scoutProp, "golden hour", laneEye, apronEye, scoutLook);
 
-                context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.PowerOn, true));
+                context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.NightReady, true));
+                sky.SetClockTime(sky.TimeSeconds + FirstNightSeconds);
                 rover.PlaceAt(apron, Quaternion.LookRotation(toScout, Vector3.up));
                 yield return new WaitForSeconds(BlastSettleSeconds);
-                Debug.Log($"[basin] last light: sun at {SunReport(context)}; the Scout at {scout}");
-                Shoot(view, "basin-lastlight-apron-chase");
-                foreach (Pose pose in new[]
-                         {
-                             LookPose("lastlight-apron", apron + Vector3.up * ScoutApronEyeHeight, scoutLook,
-                                 ScoutApronFov),
-                             LookPose("lastlight-close", closeEye, scoutLook, ScoutCloseFov),
-                             LookPose("lastlight-overhead", shadowMid + Vector3.up * ScoutOverheadHeight,
-                                 shadowMid + toScout * LandingOverheadTilt, LandingOverheadFov),
-                         })
-                {
-                    Shoot(camera, pose);
-                }
+                Debug.Log($"[basin] first night: sun at {SunReport(context)}; the Scout at {scout}");
+                Shoot(view, "basin-night-apron-chase");
+                Shoot(camera, LookPose("night-apron", apronEye, scoutLook, ScoutApronFov));
+                Shoot(camera, LookPose("night-close", closeEye, scoutLook, ScoutCloseFov));
+                ReportPeaks(camera, scoutProp, "first night", laneEye, apronEye, scoutLook);
             }
             finally
             {
@@ -653,6 +663,81 @@ namespace MoonProject.World.PlayModeTests
         private static void Shoot(Camera camera, string name)
         {
             FrameCapture.SavePng(camera, CaptureWidth, CaptureHeight, Path.Combine(CaptureFolder, name + ".png"));
+        }
+
+        /// <summary>
+        /// What the Scout adds to the view from the lane and from the apron, to the log: its brightest pixel and how
+        /// much brighter than the ground behind it that pixel stands.
+        /// </summary>
+        private static void ReportPeaks(Camera camera, Transform prop, string light, Vector3 laneEye, Vector3 apronEye,
+            Vector3 scout)
+        {
+            Place(camera, LookPose("peak", laneEye, scout, OpeningFov));
+            Vector2 lane = Peak(camera, prop, scout);
+            Place(camera, LookPose("peak", apronEye, scout, ScoutApronFov));
+            Vector2 apron = Peak(camera, prop, scout);
+            Debug.Log($"[basin] {light}: the Scout's brightest pixel {lane.x:F3} (+{lane.y:F3} over the ground) from " +
+                      $"the lane, {apron.x:F3} (+{apron.y:F3}) from the apron (luma 0..1, display-encoded)");
+        }
+
+        /// <summary>
+        /// Within the peak window round <paramref name="at"/>, of the steady pixels <paramref name="prop"/> changes: the
+        /// brightest luma with it (x) and the largest rise over the view without it (y).
+        /// </summary>
+        private static Vector2 Peak(Camera camera, Transform prop, Vector3 at)
+        {
+            Color[] with = Window(camera, at, out int width);
+            Color[] again = Window(camera, at, out _);
+            prop.gameObject.SetActive(false);
+            Color[] without = Window(camera, at, out _);
+            prop.gameObject.SetActive(true);
+            var peak = Vector2.zero;
+            for (int i = 0; i < with.Length && width > 0; i++)
+            {
+                // The stars twinkle from frame to frame: only pixels that hold still belong to the Scout.
+                float lit = Luma(with[i]);
+                float rise = lit - Luma(without[i]);
+                if (Mathf.Abs(rise) > PeakChange && Mathf.Abs(lit - Luma(again[i])) < PeakChange)
+                {
+                    peak = new Vector2(Mathf.Max(peak.x, lit), Mathf.Max(peak.y, rise));
+                }
+            }
+
+            return peak;
+        }
+
+        private static float Luma(Color c)
+        {
+            return 0.2126f * c.r + 0.7152f * c.g + 0.0722f * c.b;
+        }
+
+        private static Color[] Window(Camera camera, Vector3 at, out int width)
+        {
+            var target = new RenderTexture(CaptureWidth, CaptureHeight, 24, RenderTextureFormat.ARGB32,
+                RenderTextureReadWrite.sRGB);
+            var pixels = new Texture2D(CaptureWidth, CaptureHeight, TextureFormat.RGBA32, false);
+            RenderTexture previous = RenderTexture.active;
+            try
+            {
+                camera.targetTexture = target;
+                camera.Render();
+                Vector3 screen = camera.WorldToScreenPoint(at);
+                RenderTexture.active = target;
+                pixels.ReadPixels(new Rect(0, 0, CaptureWidth, CaptureHeight), 0, 0);
+                int x0 = Mathf.Clamp(Mathf.RoundToInt(screen.x) - ScoutPeakWindow, 0, CaptureWidth - 1);
+                int y0 = Mathf.Clamp(Mathf.RoundToInt(screen.y) - ScoutPeakWindow, 0, CaptureHeight - 1);
+                width = Mathf.Min(ScoutPeakWindow * 2, CaptureWidth - x0);
+                int height = Mathf.Min(ScoutPeakWindow * 2, CaptureHeight - y0);
+                return pixels.GetPixels(x0, y0, width, height);
+            }
+            finally
+            {
+                RenderTexture.active = previous;
+                camera.targetTexture = null;
+                Object.Destroy(pixels);
+                target.Release();
+                Object.Destroy(target);
+            }
         }
 
         private static string SunReport(GameContext context)
