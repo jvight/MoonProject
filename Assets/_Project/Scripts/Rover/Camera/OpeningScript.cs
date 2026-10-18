@@ -277,13 +277,18 @@ namespace MoonProject.Rover
 
         private void PublishPost(PostEventKind kind, BootCheckStep step, BootCheckResult result)
         {
+            PublishPost(new PostEvent(kind, step, result));
+        }
+
+        private void PublishPost(PostEvent postEvent)
+        {
             if (_postCount == PostEventCapacity)
             {
                 _postHead = (_postHead + 1) % PostEventCapacity;
                 _postCount--;
             }
 
-            _postEvents[(_postHead + _postCount) % PostEventCapacity] = new PostEvent(kind, step, result);
+            _postEvents[(_postHead + _postCount) % PostEventCapacity] = postEvent;
             _postCount++;
         }
 
@@ -402,7 +407,7 @@ namespace MoonProject.Rover
         {
             while (_post.TryTake(out PostEvent postEvent))
             {
-                PublishPost(postEvent.Kind, postEvent.Step, postEvent.Result);
+                PublishPost(postEvent);
             }
         }
 

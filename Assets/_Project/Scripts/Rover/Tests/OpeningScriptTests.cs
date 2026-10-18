@@ -68,6 +68,28 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
+        public void TheChecksPulses_ReachTheBus_WithTheirIndexAndProgress()
+        {
+            _script.BeginFull(true);
+            RunToChase(120f);
+            bool sawIndexed = false;
+            bool sawProgress = false;
+            foreach (PostEvent line in _lines)
+            {
+                if (line.Kind != PostEventKind.Pulse)
+                {
+                    continue;
+                }
+
+                sawIndexed |= line.Step == BootCheckStep.Wheels && line.Index == 3;
+                sawProgress |= line.Step == BootCheckStep.Battery && line.Progress01 > 0.4f;
+            }
+
+            Assert.IsTrue(sawIndexed, "the fourth wheel's twitch keeps its index");
+            Assert.IsTrue(sawProgress, "the battery fill keeps its progress");
+        }
+
+        [Test]
         public void NewGameFromTheTitle_HoldsPureBlackNoLongerThan1AndAHalf_BeforeTheLidOpens()
         {
             const float MaxToFirstLensImage = 3f;

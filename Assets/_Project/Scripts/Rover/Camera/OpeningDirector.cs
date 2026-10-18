@@ -39,6 +39,9 @@ namespace MoonProject.Rover
         private const int CutFrameCount = 2;
 
         /// <summary>The head turns this far (deg) at most toward the beacon, and lifts this far.</summary>
+        /// <summary>The camera looks from, and its terrain probe starts at, this height (m) above 07's ground point.</summary>
+        private const float ProbeLift = 1f;
+
         private const float BeaconYawLimit = 70f;
         private const float BeaconPitchLimit = 12f;
 
@@ -78,6 +81,7 @@ namespace MoonProject.Rover
         private int _cutFrames;
         private OpeningScript _script;
         private LampPowerUp _lamps;
+        private PostShot _shot;
         private GameContext _context;
         private EventBus _events;
         private IRoverState _rover;
@@ -130,6 +134,7 @@ namespace MoonProject.Rover
             _rig.SetWakeBody(_body);
             OpeningSettings settings = _tuning.Opening;
             _lamps = _script.Lamps;
+            _shot = new PostShot(settings.Post);
             _brain = _rig.Camera != null ? _rig.Camera.GetComponent<CinemachineBrain>() : null;
             CinemachineCamera chase = _rig.ChaseCamera;
             chase.StandbyUpdate = CinemachineVirtualCameraBase.StandbyUpdateMode.Always;
@@ -572,11 +577,13 @@ namespace MoonProject.Rover
         private void PlaceLensCamera()
         {
             OpeningPhase phase = _script.Phase;
-            bool live = _script.InLens || phase == OpeningPhase.PullOut;
+            bool live = _script.InLens || phase == OpeningPhase.PullOut || phase == OpeningPhase.Post
+                || phase == OpeningPhase.OverShoulder || phase == OpeningPhase.ChaseEase;
             if (!live)
             {
                 if (_lensCamera.enabled)
                 {
+                    CutBlend();
                     _lensCamera.enabled = false;
                 }
 
@@ -610,23 +617,17 @@ namespace MoonProject.Rover
                 Quaternion startGaze = _pullOutFromGaze;
                 Vector3 startForward = startGaze * Vector3.forward;
 
-                CameraState chase = _rig.ChaseCamera.State;
-                FaceInspectShot wakeShot = default;
-                bool hasWakeShot = _rig.TryGetWakeFaceShot(out wakeShot);
-                Vector3 end = hasWakeShot ? wakeShot.Eye : chase.GetFinalPosition();
-                Quaternion endRot = hasWakeShot
-                    ? Quaternion.LookRotation(wakeShot.Focus - wakeShot.Eye, Vector3.up)
-                    : chase.GetFinalOrientation();
-                float endFov = hasWakeShot ? wakeShot.VerticalFov : chase.Lens.FieldOfView;
-                float endNearClip = hasWakeShot ? _tuning.FaceInspectNearClip : chase.Lens.NearClipPlane;
+                ShotPose front = _shot.Base(_rover.Position, HeadingDegrees());
+                Vector3 end = front.Position;
+                Quaternion endRot = front.Rotation;
+                float endFov = front.Fov;
+                float endNearClip = _tuning.FaceInspectNearClip;
 
                 Vector3 frontDir = (startForward + (Heading() * Vector3.forward)).normalized;
                 Vector3 reachAnchor = Vector3.Lerp(startEye, end, settings.PullOutReachAnchor);
                 Vector3 reach = reachAnchor + frontDir * settings.PullOutReach;
                 Vector3 desiredPos = Vector3.Lerp(Vector3.Lerp(startEye, reach, t), Vector3.Lerp(reach, end, t), t);
-                Vector3 probeOrigin = hasWakeShot
-                    ? Vector3.Lerp(startOrigin, wakeShot.Focus, t)
-                    : startOrigin;
+                Vector3 probeOrigin = Vector3.Lerp(startOrigin, _rover.Position + Vector3.up * ProbeLift, t);
                 Vector3 probeVec = desiredPos - probeOrigin;
                 float probeDist = probeVec.magnitude;
                 if (probeDist > LengthEpsilon)
@@ -649,6 +650,20 @@ namespace MoonProject.Rover
                 nearClip = Mathf.Lerp(settings.LensNearClip, endNearClip, t);
             }
 
+            else if (phase == OpeningPhase.Post || phase == OpeningPhase.OverShoulder || phase == OpeningPhase.ChaseEase)
+            {
+                ShotPose pose = ChecksShot(phase);
+                Vector3 anchor = _rover.Position + Vector3.up * ProbeLift;
+                Vector3 toCamera = pose.Position - anchor;
+                float length = toCamera.magnitude;
+                position = length > LengthEpsilon
+                    ? anchor + toCamera / length * _sight.Clear(anchor, pose.Position, _tuning.FaceInspectProbeRadius)
+                    : pose.Position;
+                rotation = pose.Rotation;
+                fov = pose.Fov;
+                nearClip = _tuning.FaceInspectNearClip;
+            }
+
             _lensCamera.transform.SetPositionAndRotation(position, rotation);
             LensSettings lensSettings = _lensCamera.Lens;
             lensSettings.FieldOfView = fov;
@@ -656,17 +671,50 @@ namespace MoonProject.Rover
             _lensCamera.Lens = lensSettings;
             if (!_lensCamera.enabled)
             {
-                CutToLensCamera();
+                CutBlend();
                 _lensCamera.enabled = true;
                 _lensCamera.PreviousStateIsValid = false;
             }
         }
 
         /// <summary>
+        /// The camera's pose after the pull-out: the three-quarter front shot easing toward each part as it is checked;
+        /// then over the shoulder toward the beacon, and finally into the chase frame.
+        /// </summary>
+        private ShotPose ChecksShot(OpeningPhase phase)
+        {
+            Vector3 body = _rover.Position;
+            float heading = HeadingDegrees();
+            if (phase == OpeningPhase.Post)
+            {
+                return _shot.At(body, heading, _script.PostStep, _script.PostProgress01);
+            }
+
+            float u = _script.PhaseLength > LengthEpsilon ? Mathf.Clamp01(_script.PhaseTime / _script.PhaseLength) : 1f;
+            float t = WakeOpening.SmoothStepC2(0f, 1f, u);
+            ShotPose end = _shot.At(body, heading, BootCheckStep.Begin, 1f);
+            ShotPose over = _shot.OverShoulder(body, heading, _beacon.position);
+            if (phase == OpeningPhase.OverShoulder)
+            {
+                return PostShot.Blend(end, over, t);
+            }
+
+            CameraState chase = _rig.ChaseCamera.State;
+            var chasePose = new ShotPose(chase.GetFinalPosition(), chase.GetFinalOrientation(), chase.Lens.FieldOfView);
+            return PostShot.Blend(over, chasePose, t);
+        }
+
+        private float HeadingDegrees()
+        {
+            Vector3 forward = _rover.Rotation * Vector3.forward;
+            return Mathf.Atan2(forward.x, forward.z) * Mathf.Rad2Deg;
+        }
+
+        /// <summary>
         /// The lens camera takes the picture in one cut: the brain's default blend (a 2 s ease) would otherwise mix the
         /// chase camera into it for the first seconds of the wake, showing a view between the two.
         /// </summary>
-        private void CutToLensCamera()
+        private void CutBlend()
         {
             if (_brain == null)
             {
