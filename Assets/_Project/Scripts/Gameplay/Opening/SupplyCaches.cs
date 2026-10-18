@@ -74,6 +74,12 @@ namespace MoonProject.Gameplay
                 GameObject prefab = services.Visuals.Container(cache.Container) ?? throw new InvalidOperationException(
                     $"Art's container '{cache.Container}' for supply crate '{cache.Id}' is not in GameplayVisuals " +
                     "(run Gameplay/Materials).");
+                if (cache.Scale <= 0f)
+                {
+                    throw new InvalidOperationException(
+                        $"Supply crate '{cache.Id}' has no scale (OpeningTuning: 1 stands it at Art's size).");
+                }
+
                 Transform root = Object.Instantiate(prefab, parent).transform;
                 root.name = cache.Id;
                 Quaternion heading = Heading(frame);
@@ -81,6 +87,7 @@ namespace MoonProject.Gameplay
                 Quaternion level = heading * Quaternion.Euler(0f, cache.Yaw, 0f);
                 root.SetPositionAndRotation(SurfaceRules.OnSurface(services.Terrain, spot.x, spot.z),
                     level * prefab.transform.localRotation);
+                root.localScale = prefab.transform.localScale * cache.Scale;
                 _levels.Add(level);
                 MakeSolid(root);
                 SealedContainer container = SealedContainer.Read(cache.Id, ContainerKinds.Of(cache.Container), root,

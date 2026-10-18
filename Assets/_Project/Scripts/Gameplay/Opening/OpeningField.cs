@@ -238,11 +238,15 @@ namespace MoonProject.Gameplay
                                                     $"{_tuning.CargoScanPoints.Count} cargo scan points.");
             }
 
+            // Art's fragments keep their own size however big the crate stands (OpeningTuning's crate scale).
+            Vector3 crateScale = crate.lossyScale;
+            var ownSize = new Vector3(1f / crateScale.x, 1f / crateScale.y, 1f / crateScale.z);
             for (int i = 0; i < _tuning.CargoScanPoints.Count; i++)
             {
                 string number = (i + 1).ToString(CultureInfo.InvariantCulture);
                 Transform rest = new GameObject(CargoFragmentPrefix + number).transform;
                 rest.SetParent(crate, false);
+                rest.localScale = ownSize;
                 rest.SetPositionAndRotation(crate.position + level * _tuning.CargoScanPoints[i], level);
                 GameObject fragment = fragments[i] != null ? fragments[i] : throw new InvalidOperationException(
                     $"OpeningTuning's cargo fragment {i + 1} is not assigned.");

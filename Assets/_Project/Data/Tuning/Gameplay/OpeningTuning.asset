@@ -20,8 +20,8 @@ MonoBehaviour:
   _padChargeRadius: 1.6
   _cargoCrate: supply.lander.open
   _cargoScanPoints:
-  - {x: -0.12, y: 0.3, z: 0.08}
-  - {x: 0.12, y: 0.3, z: 0.08}
+  - {x: -0.27, y: 0.58, z: 0}
+  - {x: 0.28, y: 0.58, z: 0}
   _cargoFragments:
   - {fileID: 8696612848487809347, guid: 66b25dee22c9770429dcf34fd5521062, type: 3}
   - {fileID: 7290828058333433129, guid: 5e25d1b9613bc584d807f1815f675d5f, type: 3}
@@ -44,6 +44,7 @@ MonoBehaviour:
     _offset: {x: 2.5, y: 0, z: -1.5}
     _yaw: 30
     _container: Crate_S
+    _scale: 1
     _yield:
       _metal: 3
       _wiring: 1
@@ -56,6 +57,7 @@ MonoBehaviour:
     _offset: {x: 1.5, y: 0, z: 0}
     _yaw: -20
     _container: Crate_S
+    _scale: 1
     _yield:
       _metal: 2
       _wiring: 1
@@ -65,9 +67,10 @@ MonoBehaviour:
     _prop: {fileID: 0}
   - _id: supply.lander.open
     _anchorId: lander.port
-    _offset: {x: 2.2, y: 0, z: -1.8}
-    _yaw: 180
+    _offset: {x: 4.2, y: 0, z: -1.4}
+    _yaw: -135
     _container: Crate_M_Open
+    _scale: 2
     _yield:
       _metal: 2
       _wiring: 1
@@ -82,6 +85,7 @@ MonoBehaviour:
     _offset: {x: -3, y: 0, z: -6}
     _yaw: 207
     _container: Crate_M
+    _scale: 1
     _yield:
       _metal: 6
       _wiring: 4
@@ -94,6 +98,7 @@ MonoBehaviour:
     _offset: {x: -2.5, y: 0, z: -5}
     _yaw: -140
     _container: Crate_S
+    _scale: 1
     _yield:
       _metal: 3
       _wiring: 4
@@ -106,6 +111,7 @@ MonoBehaviour:
     _offset: {x: 2.5, y: 0, z: -5}
     _yaw: 140
     _container: Crate_S
+    _scale: 1
     _yield:
       _metal: 3
       _wiring: 4
@@ -118,6 +124,7 @@ MonoBehaviour:
     _offset: {x: -6.5, y: 0, z: 0}
     _yaw: -100
     _container: Crate_S
+    _scale: 1
     _yield:
       _metal: 2
       _wiring: 0
@@ -130,6 +137,7 @@ MonoBehaviour:
     _offset: {x: 3, y: 0, z: -2.5}
     _yaw: 130
     _container: Crate_S
+    _scale: 1
     _yield:
       _metal: 2
       _wiring: 0
@@ -142,6 +150,7 @@ MonoBehaviour:
     _offset: {x: 0, y: 0, z: -3}
     _yaw: 180
     _container: Crate_M
+    _scale: 1
     _yield:
       _metal: 6
       _wiring: 0
