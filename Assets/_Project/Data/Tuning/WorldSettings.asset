@@ -195,6 +195,13 @@ MonoBehaviour:
         _levelGround: 0.95
         _edgePebbles: 0.55
         _edgePileWidth: 8
+      _scoutBearing: 137.7
+      _scoutDistance: 80
+      _scoutCraterBearing: 317.7
+      _scoutCraterOffset: 7
+      _scoutCraterRadius: 10
+      _scoutCraterDepth: 1.1
+      _scoutCraterRim: 0.3
     _craterField:
       _cellSize: 18
       _density: 0.7
@@ -569,6 +576,9 @@ MonoBehaviour:
       _offset: {x: 10, y: 30}
       _yaw: 75
       _sink: 0.8
+    _scoutYaw: 137.7
+    _scoutSink: 0.08
+    _scoutBlastSink: 0.03
     _signalPillarSetback: 18
     _signalPillarGlow: 3.5
     _signalPillarWidth: 3

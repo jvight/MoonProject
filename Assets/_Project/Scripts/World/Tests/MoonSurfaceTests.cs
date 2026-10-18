@@ -12,6 +12,8 @@ namespace MoonProject.World.Tests
 
         // Kestrel-3's impact and the flat site footprints erase the few seeded craters beneath them (M3-13).
         private const int MaxCratersErasedBySites = 4;
+        // The Scout's crater (basin dressing §2) is placed after the seeded craters and the bowls.
+        private const int ScoutCrater = 1;
 
         // The dish's blinking light on the summit plateau: what the player must see from the base.
         private const float BeaconHeightAboveSummit = 4f;
@@ -209,7 +211,7 @@ namespace MoonProject.World.Tests
         [Test]
         public void Craters_AreAllPlaced_ClearOfThePadAndInsideTheFloor()
         {
-            int erased = _settings.CraterCount + _settings.Bowls.Length - _surface.Craters.Count;
+            int erased = _settings.CraterCount + _settings.Bowls.Length + ScoutCrater - _surface.Craters.Count;
             Assert.That(erased, Is.InRange(0, MaxCratersErasedBySites), "only the craters under a site are erased");
             int bowls = 0;
             for (int i = 0; i < _surface.Craters.Count; i++)

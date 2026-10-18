@@ -174,12 +174,14 @@ namespace MoonProject.Gameplay
         [SerializeField] private RuinScanSet _landerCargo = new RuinScanSet(LanderCargoId,
             new[] { StructureIds.ChargingPad }, ScanSize.Medium, ScanSize.Medium);
 
-        [Tooltip("Story scans on the ruin pieces (opening-v2 B7): Art's mesh nodes whose readout the CRT shows once " +
-                 "scanned; they teach and pay nothing.")]
+        [Tooltip("Story scans on the ruin pieces (opening-v2 B7) and the basin's story props (basin dressing Â§4): " +
+                 "Art's mesh nodes whose readout the CRT shows once scanned; they teach and pay nothing.")]
         [SerializeField] private StoryScan[] _stories =
         {
             new StoryScan("airlock", "HabitatModules", "AirlockPanel", "story.airlock_panel", ScanSize.Small,
                 new Vector3(0f, -0.3f, 0f)),
+            new StoryScan("scout3", "Prop_OldLander", "Spaceframe", "scan.scout3.manifest", ScanSize.Medium,
+                Vector3.zero),
         };
 
         private static readonly int ScanLineColorShaderId = Shader.PropertyToID("_MoonScanLineColor");

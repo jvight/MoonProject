@@ -107,3 +107,9 @@ MonoBehaviour:
     _textKey: story.airlock_panel
     _size: 0
     _offset: {x: 0, y: -0.3, z: 0}
+  - _storyId: scout3
+    _ruinId: Prop_OldLander
+    _node: Spaceframe
+    _textKey: scan.scout3.manifest
+    _size: 1
+    _offset: {x: 0, y: 0, z: 0}

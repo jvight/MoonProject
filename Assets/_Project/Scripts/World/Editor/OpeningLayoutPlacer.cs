@@ -14,7 +14,8 @@ namespace MoonProject.World.Editor
     /// that pulses it and its cable's clip halos), 07's dead charging post at the wake with its old, torn cable to
     /// the port and the port's cable to the build apron (<see cref="GroundCableLayer"/>), the apron's markings, the
     /// dead west relay mast with its (hidden) signal pillar, Kestrel-3's debris, the big boulders near the routes and the rare big boulders on the floor
-    /// (<see cref="BigBoulderPlanner"/>). Everything solid is fitted with colliders on <see cref="Layers.Prop"/>.
+    /// (<see cref="BigBoulderPlanner"/>); and the basin's story props (docs/design/basin-dressing.md Â§2): the Scout
+    /// on its crater's wall. Everything solid is fitted with colliders on <see cref="Layers.Prop"/>.
     /// </summary>
     public static class OpeningLayoutPlacer
     {
@@ -33,6 +34,14 @@ namespace MoonProject.World.Editor
         /// <summary>The west signal pillar, hidden until Gameplay shows it (opening v2 B11).</summary>
         public const string SignalPillarName = "SignalPillar";
 
+        /// <summary>
+        /// [World]/BasinProps holds the basin's story props, each named after its R1 prefab: Gameplay hosts their
+        /// story scans by that name.
+        /// </summary>
+        public const string BasinPropsRootName = "BasinProps";
+        public const string ScoutName = "Prop_OldLander";
+        public const string ScoutBlastName = "Decal_OldLanderBlast";
+
         // Art's R1 prop nodes this layout joins (tools/art/qa/contracts).
         private const string PostCableOrigin = "CableOrigin_Anchor";
         private const string PortWakeSocket = "CableSocket";
@@ -41,6 +50,9 @@ namespace MoonProject.World.Editor
         private const string BeaconLens = "BeaconLens";
         private const string ApronCableChannel = "CableChannel_Anchor";
         private const string PillarBeam = "PillarBeam";
+
+        // The Scout's parts the 1971 crew took home (basin dressing Â§4); its bare brackets stay.
+        private static readonly string[] ScoutRemovedParts = { "TvCamera", "ScoopArm" };
 
         private const string WestMastAnchor = WorldAnchorIds.RelayPrefix + "1";
 
@@ -97,6 +109,37 @@ namespace MoonProject.World.Editor
             }
 
             StandBigBoulders(context, settings, surface, anchors, boulders);
+            StandScout(context, landmarks, surface, context.CreateChild(BasinPropsRootName, root).transform);
+        }
+
+        /// <summary>
+        /// The Scout, landed in 1967 (basin dressing Â§2, Â§4): square on its small crater's inner wall, with its old
+        /// blast patch laid along the slope under it. Its camera and scoop arm are gone.
+        /// </summary>
+        private static void StandScout(SceneBuildContext context, LandmarkSettings landmarks, MoonSurface surface,
+            Transform parent)
+        {
+            Vector2 spot = surface.Shaping.ScoutSpot;
+            Vector3 ground = Ground(surface, new Vector3(spot.x, 0f, spot.y));
+            Vector3 slope = surface.SampleNormal(spot.x, spot.y);
+            Quaternion onSlope = Quaternion.FromToRotation(Vector3.up, slope)
+                * Quaternion.Euler(0f, landmarks.ScoutYaw, 0f);
+
+            var prefab = context.LoadAsset<GameObject>(WorldPaths.OldLanderPrefab);
+            GameObject scout = context.InstantiatePrefab(prefab, parent, ground - slope * landmarks.ScoutSink,
+                onSlope * prefab.transform.localRotation);
+            scout.name = ScoutName;
+            foreach (string part in ScoutRemovedParts)
+            {
+                Node(scout, part).gameObject.SetActive(false);
+            }
+
+            Solidify(scout);
+
+            var blast = context.LoadAsset<GameObject>(WorldPaths.OldLanderBlastPrefab);
+            GameObject patch = context.InstantiatePrefab(blast, parent, ground - slope * landmarks.ScoutBlastSink,
+                onSlope * blast.transform.localRotation);
+            patch.name = ScoutBlastName;
         }
 
         /// <summary>

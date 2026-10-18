@@ -146,7 +146,7 @@ namespace MoonProject.Gameplay
             Renderer panel = node != null ? node.GetComponentInChildren<Renderer>() : null;
             if (panel == null)
             {
-                return $"'{story.RuinId}' has no '{story.Node}' node with a renderer (story scan {story.FragmentId})";
+                return $"'{story.HostId}' has no '{story.Node}' node with a renderer (story scan {story.FragmentId})";
             }
 
             if (Find(story.FragmentId) != null)
@@ -157,7 +157,7 @@ namespace MoonProject.Gameplay
             Transform target = new GameObject(story.FragmentId).transform;
             target.SetParent(node, false);
             target.position = panel.bounds.center + story.Offset;
-            _fragments.Add(ScanFragment.ForStoryTarget(story, story.RuinId, target, ruinRoot));
+            _fragments.Add(ScanFragment.ForStoryTarget(story, story.HostId, target, ruinRoot));
             return null;
         }
 

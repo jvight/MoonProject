@@ -5,9 +5,9 @@ using MoonProject.Core;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// A story scan on an R1 ruin piece (docs/design/opening-v2.md B7, the habitat's airlock panel): Art's mesh node
-    /// 07 scans like a fragment, which teaches nothing and pays nothing; scanned, its readout shows on 07's CRT
-    /// (<see cref="Core.Events.StoryScanned"/>). Once per save.
+    /// A story scan on an R1 ruin piece or basin prop (docs/design/opening-v2.md B7, the habitat's airlock panel;
+    /// basin-dressing.md Â§4, the Scout): Art's mesh node 07 scans like a fragment, which teaches nothing and pays
+    /// nothing; scanned, its readout shows on 07's CRT (<see cref="Core.Events.StoryScanned"/>). Once per save.
     /// </summary>
     [Serializable]
     public struct StoryScan
@@ -17,7 +17,8 @@ namespace MoonProject.Gameplay
         [Tooltip("The story's id, saved with the scans: never rename.")]
         [SerializeField] private string _storyId;
 
-        [Tooltip("R1 ruin piece name in [World]/Ruins it stands on (e.g. HabitatModules).")]
+        [Tooltip("The R1 piece it lies on, by name: a ruin piece in [World]/Ruins (e.g. HabitatModules) or a basin " +
+                 "prop in [World]/BasinProps (e.g. Prop_OldLander).")]
         [SerializeField] private string _ruinId;
 
         [Tooltip("Art's mesh node on the ruin piece 07 scans (its renderer's centre is the scan point).")]
@@ -43,7 +44,7 @@ namespace MoonProject.Gameplay
             _size = size;
         }
 
-        public string RuinId => _ruinId ?? string.Empty;
+        public string HostId => _ruinId ?? string.Empty;
 
         public string Node => _node ?? string.Empty;
 
