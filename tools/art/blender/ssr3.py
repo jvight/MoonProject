@@ -101,6 +101,13 @@ GLYPH_RECTS: dict[str, Sequence[tuple[float, float, float, float]]] = {
         (0.50, 0.90, 0.76, 0.20),
         (0.50, 0.10, 0.76, 0.20),
     ),
+    "2": (
+        (0.50, 0.90, 0.80, 0.20),
+        (0.80, 0.70, 0.22, 0.44),
+        (0.50, 0.50, 0.80, 0.18),
+        (0.20, 0.30, 0.22, 0.44),
+        (0.50, 0.10, 0.82, 0.20),
+    ),
     "3": (
         (0.50, 0.90, 0.82, 0.20),
         (0.82, 0.50, 0.22, 0.88),
@@ -2146,6 +2153,395 @@ def build_elder03_combined() -> bpy.types.Object:
     return chassis_root
 
 
+# ---------------------------------------------------------------------------
+# Deliverable 2: SSR3_Topper_02 ("Shelter Floodlight Cart" — Roll Bar + 4 Dish Floodlights [Lamps Dark])
+# ---------------------------------------------------------------------------
+FLOODLIGHT_X_POSITIONS: tuple[float, float, float, float] = (-0.345, -0.115, 0.115, 0.345)
+FLOODLIGHT_CENTER_Y: float = 0.495
+FLOODLIGHT_CENTER_Z: float = 0.060
+
+
+def _build_topper_02_roll_bar(root: bpy.types.Object) -> bpy.types.Object:
+    """Build the tubular steel roll bar cage, deck ballast unit, front brush guard, and 4 power cables (`RollBar`)."""
+    mb = r1kit.MeshBuilder("RollBar", pivot_u=(0.0, 0.18, 0.0))
+
+    # 1. Dorsal Deck Ballast & Power Distribution Tray (in the recessed deck well, y = 0.00..0.06 m)
+    mb.add_bevel_box(
+        center_u=(0.0, 0.020, -0.02),
+        size_u=(0.64, 0.040, 0.96),
+        mat="R1_GreyMetal",
+        bevel=0.006,
+        segments=1,
+    )
+    # Dark recessed louvered ballast panel & copper ground busbar
+    mb.add_bevel_box(
+        center_u=(0.0, 0.044, -0.04),
+        size_u=(0.52, 0.020, 0.72),
+        mat="R1_DarkGlass",
+        bevel=0.004,
+        segments=1,
+    )
+    mb.add_bevel_box(
+        center_u=(0.0, 0.056, -0.04),
+        size_u=(0.048, 0.016, 0.68),
+        mat="R1_Copper",
+        bevel=0.003,
+        segments=1,
+    )
+    # Sage-green waterproof relay junction cover box at rear of deck
+    mb.add_bevel_box(
+        center_u=(0.0, 0.072, -0.34),
+        size_u=(0.38, 0.052, 0.18),
+        mat="R1_SagePatch",
+        bevel=0.005,
+        segments=1,
+    )
+    mb.add_bolts(
+        [
+            (sx * 0.16, 0.098, bz)
+            for sx in (-1.0, 1.0)
+            for bz in (-0.40, -0.28)
+        ],
+        radius=0.007,
+        height=0.008,
+        axis_u="Y",
+        mat="R1_BareSteel",
+        bevel_segments=0,
+    )
+
+    # 2. Twin Arched Tubular Steel Roll-Bar Side Frames (`R1_GreyMetal` tubes + `R1_BareSteel` flanged collars)
+    # Side-mount bosses bolted onto the chassis flank at z = +0.125 m and z = -0.545 m (completely clear of '02' & 'ILC · SSR-3')
+    tube_r = 0.023
+    for sx in (-1.0, 1.0):
+        for leg_z, top_z in ((0.125, 0.09), (-0.545, -0.11)):
+            boss_x = sx * 0.436
+            boss_y = -0.155
+            # Flanged steel hull-side mounting collar
+            mb.add_cylinder(
+                center_u=(boss_x + sx * 0.008, boss_y, leg_z),
+                radius=0.040,
+                length=0.024,
+                mat="R1_GreyMetal",
+                axis_u="X",
+                segments=12,
+                bevel=0.004,
+                bevel_segments=1,
+            )
+            mb.add_cylinder(
+                center_u=(boss_x + sx * 0.018, boss_y, leg_z),
+                radius=0.028,
+                length=0.020,
+                mat="R1_BareSteel",
+                axis_u="X",
+                segments=10,
+                bevel=0.003,
+                bevel_segments=1,
+            )
+            # Swept tubular roll-bar arch leg rising from flank boss up to the overhead gantry rail (y = 0.345 m)
+            leg_pts = [
+                (boss_x + sx * 0.022, boss_y, leg_z),
+                (sx * 0.468, -0.095, leg_z * 0.90 + top_z * 0.10),
+                (sx * 0.460, 0.075, leg_z * 0.65 + top_z * 0.35),
+                (sx * 0.422, 0.245, leg_z * 0.32 + top_z * 0.68),
+                (sx * 0.372, 0.325, top_z),
+                (sx * 0.335, 0.345, top_z),
+            ]
+            mb.add_tube_path(leg_pts, radius=tube_r, mat="R1_GreyMetal", segments=10, cap_ends=True)
+
+        # Longitudinal upper side rail connecting front and rear arch crowns
+        mb.add_pipe(
+            p0_u=(sx * 0.355, 0.345, -0.13),
+            p1_u=(sx * 0.355, 0.345, 0.11),
+            radius=tube_r,
+            mat="R1_GreyMetal",
+            segments=10,
+        )
+        # Inner diagonal deck-brace strut from dorsal tray up to roll-bar shoulder
+        mb.add_strut(
+            p0_u=(sx * 0.255, 0.035, -0.02),
+            p1_u=(sx * 0.335, 0.335, 0.02),
+            width=0.026,
+            thickness=0.026,
+            mat="R1_BareSteel",
+            bevel=0.004,
+        )
+
+    # Transverse overhead roll-bar crossbeams (`y = 0.345 m`, `z = +0.09 m` and `z = -0.11 m`)
+    for bar_z in (0.09, -0.11):
+        mb.add_pipe(
+            p0_u=(-0.365, 0.345, bar_z),
+            p1_u=(0.365, 0.345, bar_z),
+            radius=tube_r * 1.05,
+            mat="R1_GreyMetal",
+            segments=10,
+        )
+    # Central overhead bridge tie-box joining the front and rear crossbeams under the 4 floodlights
+    mb.add_bevel_box(
+        center_u=(0.0, 0.348, -0.01),
+        size_u=(0.76, 0.038, 0.16),
+        mat="R1_GreyMetal",
+        bevel=0.006,
+        segments=1,
+    )
+
+    # 3. Front Nose Tubular Bull-Bar / Brush Guard above the front bumper (matching Elder 02 concept)
+    bull_r = 0.018
+    bull_pts = [
+        (-0.225, -0.355, 0.675),
+        (-0.225, -0.355, 0.702),
+        (-0.225, -0.175, 0.702),
+        (-0.185, -0.145, 0.702),
+        (0.185, -0.145, 0.702),
+        (0.225, -0.175, 0.702),
+        (0.225, -0.355, 0.702),
+        (0.225, -0.355, 0.675),
+    ]
+    mb.add_tube_path(bull_pts, radius=bull_r, mat="R1_GreyMetal", segments=10, cap_ends=True)
+    for sx in (-1.0, 1.0):
+        mb.add_bevel_box(
+            center_u=(sx * 0.225, -0.355, 0.680),
+            size_u=(0.048, 0.052, 0.036),
+            mat="R1_BareSteel",
+            bevel=0.004,
+            segments=1,
+        )
+
+    # 4. 4 Looped R1_Rubber Floodlight Power Cables with R1_Brass deck glands
+    for fx in FLOODLIGHT_X_POSITIONS:
+        sx = 1.0 if fx >= 0.0 else -1.0
+        # Brass waterproof cable gland on dorsal deck
+        mb.add_cylinder(
+            center_u=(fx * 0.86, 0.055, -0.09),
+            radius=0.020,
+            length=0.028,
+            mat="R1_Brass",
+            axis_u="Y",
+            segments=10,
+            bevel=0.003,
+            bevel_segments=1,
+        )
+        # Looped catenary rubber cable from back of floodlight drum down to deck gland
+        cable_pts = [
+            (fx, FLOODLIGHT_CENTER_Y - 0.065, FLOODLIGHT_CENTER_Z - 0.045),
+            (fx + sx * 0.028, 0.315, -0.065),
+            (fx + sx * 0.035, 0.215, -0.115),
+            (fx * 0.92, 0.125, -0.110),
+            (fx * 0.86, 0.058, -0.090),
+        ]
+        mb.add_tube_path(cable_pts, radius=0.0115, mat="R1_Rubber", segments=8, cap_ends=True)
+
+    return mb.build_object(parent=root)
+
+
+def _build_topper_02_floodlights(root: bpy.types.Object) -> bpy.types.Object:
+    """Build the 4 large parabolic dish floodlight housings, radial cooling fins, and trunnion yokes (`Floodlights`)."""
+    mb = r1kit.MeshBuilder("Floodlights", pivot_u=(0.0, FLOODLIGHT_CENTER_Y, FLOODLIGHT_CENTER_Z))
+
+    fy = FLOODLIGHT_CENTER_Y
+    fz = FLOODLIGHT_CENTER_Z
+    r_dish_outer = 0.106
+    r_drum = 0.072
+
+    for idx, fx in enumerate(FLOODLIGHT_X_POSITIONS):
+        # 1. Forged Steel Swivel Pedestal & U-Shaped Trunnion Yoke (`R1_BareSteel` / `R1_GreyMetal`)
+        mb.add_bevel_box(
+            center_u=(fx, 0.372, fz - 0.03),
+            size_u=(0.064, 0.026, 0.068),
+            mat="R1_BareSteel",
+            bevel=0.004,
+            segments=1,
+        )
+        # U-yoke horizontal base bar
+        mb.add_bevel_box(
+            center_u=(fx, 0.392, fz - 0.01),
+            size_u=(0.196, 0.022, 0.034),
+            mat="R1_GreyMetal",
+            bevel=0.004,
+            segments=1,
+        )
+        # Left & right vertical yoke arms rising to lamp trunnion axis (`y = fy`) + brass thumbwheels
+        for side_s in (-1.0, 1.0):
+            arm_x = fx + side_s * 0.090
+            mb.add_bevel_box(
+                center_u=(arm_x, (0.392 + fy) * 0.5, fz - 0.005),
+                size_u=(0.018, fy - 0.375, 0.032),
+                mat="R1_GreyMetal",
+                bevel=0.003,
+                segments=1,
+            )
+            mb.add_cylinder(
+                center_u=(arm_x + side_s * 0.012, fy, fz - 0.005),
+                radius=0.020,
+                length=0.018,
+                mat="R1_Brass",
+                axis_u="X",
+                segments=10,
+                bevel=0.003,
+                bevel_segments=1,
+            )
+
+        # 2. Rear Tapered Lamp Drum & 12 Radial Brass Cooling Fins (matching concept's fluted floodlight backs)
+        mb.add_cylinder(
+            center_u=(fx, fy, fz - 0.052),
+            radius=0.048,
+            radius_top=r_drum,
+            length=0.056,
+            mat="R1_GreyMetal",
+            axis_u="Z",
+            segments=16,
+            bevel=0.004,
+            bevel_segments=1,
+        )
+        mb.add_cylinder(
+            center_u=(fx, fy, fz - 0.006),
+            radius=r_drum,
+            radius_top=0.084,
+            length=0.048,
+            mat="R1_Brass",
+            axis_u="Z",
+            segments=16,
+            bevel=0.004,
+            bevel_segments=1,
+        )
+        # 12 Radial cooling fins around the rear brass bell housing
+        num_fins = 12
+        for f_i in range(num_fins):
+            ang_deg = (360.0 * f_i) / num_fins
+            ang_rad = math.radians(ang_deg)
+            fin_r = 0.074
+            fin_x = fx + fin_r * math.sin(ang_rad)
+            fin_y = fy + fin_r * math.cos(ang_rad)
+            mb.add_bevel_box(
+                center_u=(fin_x, fin_y, fz - 0.010),
+                size_u=(0.008, 0.030, 0.058),
+                mat="R1_Brass",
+                bevel=0.0015,
+                segments=1,
+                rot_deg_u=(0.0, 0.0, -ang_deg),
+            )
+
+        # 3. Deep Flared Parabolic Dish Reflector (`R1_Brass` outer bell + `R1_BareSteel` inner reflector steps)
+        mb.add_cylinder(
+            center_u=(fx, fy, fz + 0.044),
+            radius=0.084,
+            radius_top=r_dish_outer,
+            length=0.058,
+            mat="R1_Brass",
+            axis_u="Z",
+            segments=18,
+            bevel=0.005,
+            bevel_segments=1,
+        )
+        # Outer rolled spun-brass bezel torus rim at front of dish (`z = fz + 0.074`)
+        mb.add_torus(
+            center_u=(fx, fy, fz + 0.074),
+            major_radius=r_dish_outer - 0.005,
+            minor_radius=0.0085,
+            mat="R1_Brass",
+            axis_u="Z",
+            major_segments=20,
+            minor_segments=6,
+        )
+        # Inner stepped parabolic reflector rings (`R1_BareSteel` & `R1_Brass`)
+        mb.add_torus(
+            center_u=(fx, fy, fz + 0.064),
+            major_radius=0.082,
+            minor_radius=0.011,
+            mat="R1_Brass",
+            axis_u="Z",
+            major_segments=18,
+            minor_segments=6,
+        )
+        mb.add_torus(
+            center_u=(fx, fy, fz + 0.054),
+            major_radius=0.062,
+            minor_radius=0.010,
+            mat="R1_BareSteel",
+            axis_u="Z",
+            major_segments=16,
+            minor_segments=6,
+        )
+        # Central brass bulb socket collar at back of dish bowl
+        mb.add_cylinder(
+            center_u=(fx, fy, fz + 0.048),
+            radius=0.046,
+            length=0.018,
+            mat="R1_Brass",
+            axis_u="Z",
+            segments=16,
+            bevel=0.003,
+            bevel_segments=1,
+        )
+
+    return mb.build_object(parent=root)
+
+
+def _build_topper_02_floodlight_lenses(root: bpy.types.Object) -> bpy.types.Object:
+    """Build the 4 unlit dark floodlight bulbs & optical lenses (`FloodlightLenses`, strictly `R1_DarkGlass`)."""
+    mb = r1kit.MeshBuilder("FloodlightLenses", pivot_u=(0.0, FLOODLIGHT_CENTER_Y, FLOODLIGHT_CENTER_Z + 0.06))
+
+    fy = FLOODLIGHT_CENTER_Y
+    fz = FLOODLIGHT_CENTER_Z
+
+    for fx in FLOODLIGHT_X_POSITIONS:
+        # Dark recessed parabolic reflector well disc (`R1_DarkGlass`)
+        mb.add_cylinder(
+            center_u=(fx, fy, fz + 0.052),
+            radius=0.054,
+            length=0.014,
+            mat="R1_DarkGlass",
+            axis_u="Z",
+            segments=16,
+            bevel=0.003,
+            bevel_segments=1,
+        )
+        # Prominent central dark hemispherical bulb cap (`R1_DarkGlass` — lamps dark, zero R1_LampAmber)
+        mb.add_cylinder(
+            center_u=(fx, fy, fz + 0.066),
+            radius=0.040,
+            radius_top=0.022,
+            length=0.026,
+            mat="R1_DarkGlass",
+            axis_u="Z",
+            segments=16,
+            bevel=0.008,
+            bevel_segments=2,
+        )
+
+    return mb.build_object(parent=root)
+
+
+def build_ssr3_topper_02() -> bpy.types.Object:
+    """Build the complete `SSR3_Topper_02` ("Shelter Floodlight Cart") hierarchy in the active Blender scene."""
+    root = r1kit.create_empty("SSR3_Topper_02", pivot_u=(0.0, 0.0, 0.0))
+
+    _build_topper_02_roll_bar(root)
+    _build_topper_02_floodlights(root)
+    _build_topper_02_floodlight_lenses(root)
+
+    bpy.context.view_layer.update()
+    _apply_ssr3_decades_at_rest_weathering(root, footprint_radius=0.72)
+    return root
+
+
+def build_elder02_combined() -> bpy.types.Object:
+    """Build the combined Elder 02 assembly (`SSR3_Chassis` + `SSR3_Tracks` + `SSR3_Topper_02` + `02` stencil)."""
+    chassis_root = build_ssr3_chassis()
+    _replace_chassis_wheels_with_tracks(chassis_root)
+
+    topper_socket = next((o for o in chassis_root.children if o.name == "Topper_Socket"), chassis_root)
+    unit_num_socket = next((o for o in chassis_root.children if o.name == "Unit_Number"), chassis_root)
+
+    topper_root = build_ssr3_topper_02()
+    topper_root.parent = topper_socket
+    topper_root.location = (0.0, 0.0, 0.0)
+
+    _build_unit_number_stencil(unit_num_socket, "Unit_Number_02", "02")
+    bpy.context.view_layer.update()
+    _apply_ssr3_decades_at_rest_weathering(chassis_root, footprint_radius=0.88)
+    return chassis_root
+
+
 def build_ssr3_topper_06() -> bpy.types.Object:
     """Build the complete `SSR3_Topper_06` ("Relay Keeper") hierarchy in the active Blender scene."""
     root = r1kit.create_empty("SSR3_Topper_06", pivot_u=(0.0, 0.0, 0.0))
@@ -2203,18 +2599,23 @@ def main(argv: list[str] | None = None) -> None:
         default=Path("Assets/_Project/Art/R1/Models/Rover/SSR3_Topper_03.fbx"),
     )
     parser.add_argument(
+        "--topper02-fbx-out",
+        type=Path,
+        default=Path("Assets/_Project/Art/R1/Models/Rover/SSR3_Topper_02.fbx"),
+    )
+    parser.add_argument(
         "--renders-dir",
         type=Path,
         default=Path("Logs/renders"),
     )
     parser.add_argument("--skip-renders", action="store_true")
     parser.add_argument("--only-ssr3c", action="store_true")
+    parser.add_argument("--only-topper-02", action="store_true")
     args = parser.parse_args(argv)
 
-    concept_img_a = Path("D:/Project/MoonProject-wt/agy-elders/Logs/concepts/ssr3_direction_a_boxy_cart.png")
     concept_img_b = Path("D:/Project/MoonProject-wt/agy-elders/Logs/concepts/ssr3_direction_b_low_crawler.png")
 
-    if not args.only_ssr3c:
+    if not args.only_ssr3c and not args.only_topper_02:
         # 1. Build & export SSR3_Chassis.fbx
         r1kit.reset_scene()
         chassis_root = build_ssr3_chassis()
@@ -2229,28 +2630,52 @@ def main(argv: list[str] | None = None) -> None:
         print(f"[SSR3_Topper_06] Triangles: {topper06_tris}")
         r1kit.export_fbx(topper06_root, args.topper06_fbx_out)
 
-    # 3. Build & export SSR3_Tracks.fbx
-    r1kit.reset_scene()
-    tracks_root = build_ssr3_tracks()
-    tracks_tris = r1kit.count_triangles(tracks_root)
-    print(f"[SSR3_Tracks] Triangles: {tracks_tris}")
-    r1kit.export_fbx(tracks_root, args.tracks_fbx_out)
+    if not args.only_topper_02:
+        # 3. Build & export SSR3_Tracks.fbx
+        r1kit.reset_scene()
+        tracks_root = build_ssr3_tracks()
+        tracks_tris = r1kit.count_triangles(tracks_root)
+        print(f"[SSR3_Tracks] Triangles: {tracks_tris}")
+        r1kit.export_fbx(tracks_root, args.tracks_fbx_out)
 
-    # 4. Build & export SSR3_Topper_03.fbx
+        # 4. Build & export SSR3_Topper_03.fbx
+        r1kit.reset_scene()
+        topper03_root = build_ssr3_topper_03()
+        topper03_tris = r1kit.count_triangles(topper03_root)
+        print(f"[SSR3_Topper_03] Triangles: {topper03_tris}")
+        r1kit.export_fbx(topper03_root, args.topper03_fbx_out)
+
+    # 5. Build & export SSR3_Topper_02.fbx
     r1kit.reset_scene()
-    topper03_root = build_ssr3_topper_03()
-    topper03_tris = r1kit.count_triangles(topper03_root)
-    print(f"[SSR3_Topper_03] Triangles: {topper03_tris}")
-    r1kit.export_fbx(topper03_root, args.topper03_fbx_out)
+    topper02_root = build_ssr3_topper_02()
+    topper02_tris = r1kit.count_triangles(topper02_root)
+    print(f"[SSR3_Topper_02] Triangles: {topper02_tris}")
+    r1kit.export_fbx(topper02_root, args.topper02_fbx_out)
 
     if not args.skip_renders:
+        if not args.only_topper_02:
+            r1kit.reset_scene()
+            elder03_root = build_elder03_combined()
+            r1kit.render_structure_suite(
+                root=elder03_root,
+                slug="elder03",
+                out_dir=args.renders_dir,
+                target_height=1.12,
+                footprint_radius=0.88,
+                pose_rest_fn=lambda _r: None,
+                pose_active_fn=lambda _r: None,
+                cam_side_x=-1.0,
+                concept_path=concept_img_b if concept_img_b.exists() else None,
+                use_active_for_compare=False,
+            )
+
         r1kit.reset_scene()
-        elder03_root = build_elder03_combined()
+        elder02_root = build_elder02_combined()
         r1kit.render_structure_suite(
-            root=elder03_root,
-            slug="elder03",
+            root=elder02_root,
+            slug="elder02",
             out_dir=args.renders_dir,
-            target_height=1.08,
+            target_height=1.30,
             footprint_radius=0.88,
             pose_rest_fn=lambda _r: None,
             pose_active_fn=lambda _r: None,
@@ -2263,5 +2688,6 @@ def main(argv: list[str] | None = None) -> None:
 if __name__ == "__main__":
     cli_args = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
     main(cli_args)
+
 
 

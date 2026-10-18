@@ -29,6 +29,7 @@ namespace MoonProject.Art.Tests
             ("ssr3_topper_06.json", "Rover/SSR3_Topper_06.fbx"),
             ("ssr3_tracks.json", "Rover/SSR3_Tracks.fbx"),
             ("ssr3_topper_03.json", "Rover/SSR3_Topper_03.fbx"),
+            ("ssr3_topper_02.json", "Rover/SSR3_Topper_02.fbx"),
         };
 
         [Serializable]
@@ -260,6 +261,77 @@ namespace MoonProject.Art.Tests
                 "Elder03 must be settled ~4 cm (-0.04 m Y) into the lunar dust.");
             Assert.AreEqual(1.037f, elderBounds.max.y, 0.06f,
                 "Elder03 top of FrostBlock should sit at ~1.04 m above ground.");
+        }
+
+        [Test]
+        public void Ssr3Topper02_HasRollBar_FourDishFloodlights_AndDarkFloodlightLenses()
+        {
+            GameObject topper02Prefab = MeshChecks.LoadGeneratedPrefab(R1Ssr3Builder.Ssr3Topper02PrefabPath);
+            Transform rollBar = topper02Prefab.transform.Find("RollBar");
+            Transform floodlights = topper02Prefab.transform.Find("Floodlights");
+            Transform floodlightLenses = topper02Prefab.transform.Find("FloodlightLenses");
+
+            Assert.IsNotNull(rollBar, "SSR3_Topper_02 missing RollBar.");
+            Assert.IsNotNull(floodlights, "SSR3_Topper_02 missing Floodlights.");
+            Assert.IsNotNull(floodlightLenses, "SSR3_Topper_02 missing FloodlightLenses.");
+
+            Renderer lensesRenderer = floodlightLenses.GetComponent<Renderer>();
+            Assert.IsNotNull(lensesRenderer, "FloodlightLenses must have a Renderer.");
+            Assert.AreEqual(R1MaterialRecipes.DarkGlassSlot, lensesRenderer.sharedMaterial.name,
+                "SSR3_Topper_02 FloodlightLenses must use dark R1_DarkGlass (lamps dark).");
+
+            AssertNoLampAmberAndValidVertexColors(topper02Prefab, minRenderers: 3);
+
+            var usedSlots = new HashSet<string>(StringComparer.Ordinal);
+            foreach (Renderer r in topper02Prefab.GetComponentsInChildren<Renderer>(true))
+            {
+                foreach (Material m in r.sharedMaterials)
+                {
+                    usedSlots.Add(m.name);
+                }
+            }
+
+            Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.BrassSlot), "SSR3_Topper_02 must use R1_Brass parabolic dish reflectors.");
+            Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.DarkGlassSlot), "SSR3_Topper_02 must use R1_DarkGlass lenses.");
+            Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.RubberSlot), "SSR3_Topper_02 must use R1_Rubber floodlight power cables.");
+        }
+
+        [Test]
+        public void Elder02Prefab_ReplacesWheelsWithTracks_MountsTopper02AndUnit02Stencil_Settled4CmIntoDust()
+        {
+            GameObject elder02Prefab = MeshChecks.LoadGeneratedPrefab(R1Ssr3Builder.Elder02PrefabPath);
+            Assert.IsNotNull(elder02Prefab.transform.Find("Body"), "Elder02 missing Body.");
+            Assert.IsNotNull(elder02Prefab.transform.Find("Headlamp/HeadlampGlass"), "Elder02 missing Headlamp/HeadlampGlass.");
+            Assert.IsNull(elder02Prefab.transform.Find("Wheel_FL"), "Elder02 must replace Wheel_FL with SSR3_Tracks.");
+            Assert.IsNull(elder02Prefab.transform.Find("Wheel_FR"), "Elder02 must replace Wheel_FR with SSR3_Tracks.");
+            Assert.IsNull(elder02Prefab.transform.Find("Wheel_RL"), "Elder02 must replace Wheel_RL with SSR3_Tracks.");
+            Assert.IsNull(elder02Prefab.transform.Find("Wheel_RR"), "Elder02 must replace Wheel_RR with SSR3_Tracks.");
+
+            Transform mountedTracks = elder02Prefab.transform.Find("SSR3_Tracks");
+            Assert.IsNotNull(mountedTracks, "Elder02 missing SSR3_Tracks.");
+            Assert.IsNotNull(mountedTracks.Find("Track_L"), "Elder02 SSR3_Tracks missing Track_L.");
+            Assert.IsNotNull(mountedTracks.Find("Track_R"), "Elder02 SSR3_Tracks missing Track_R.");
+
+            Transform mountedTopper = elder02Prefab.transform.Find("Topper_Socket/SSR3_Topper_02");
+            Assert.IsNotNull(mountedTopper, "Elder02 missing Topper_Socket/SSR3_Topper_02.");
+            Assert.IsNotNull(mountedTopper.Find("RollBar"), "Elder02 topper missing RollBar.");
+            Assert.IsNotNull(mountedTopper.Find("Floodlights"), "Elder02 topper missing Floodlights.");
+            Assert.IsNotNull(mountedTopper.Find("FloodlightLenses"), "Elder02 topper missing FloodlightLenses.");
+
+            Transform unit02Node = elder02Prefab.transform.Find("Unit_Number/Unit_Number_02");
+            Assert.IsNotNull(unit02Node, "Elder02 missing Unit_Number/Unit_Number_02.");
+            MeshFilter unit02Mf = unit02Node.GetComponent<MeshFilter>();
+            Assert.IsNotNull(unit02Mf, "Unit_Number_02 must have a MeshFilter.");
+            Assert.IsNotNull(unit02Mf.sharedMesh, "Unit_Number_02 must have a sharedMesh.");
+            Assert.Greater(unit02Mf.sharedMesh.vertexCount, 24, "Unit_Number_02 mesh must contain the '02' stencil geometry.");
+
+            AssertNoLampAmberAndValidVertexColors(elder02Prefab, minRenderers: 9);
+
+            Bounds elderBounds = MeasureInstantiatedRendererBounds(elder02Prefab);
+            Assert.AreEqual(-R1Ssr3Builder.Elder06DustSettleMeters, elderBounds.min.y, 0.01f,
+                "Elder02 must be settled ~4 cm (-0.04 m Y) into the lunar dust.");
+            Assert.AreEqual(1.25f, elderBounds.max.y, 0.06f,
+                "Elder02 top of floodlights should sit at ~1.25 m above ground.");
         }
 
         private static void AssertNoLampAmberAndValidVertexColors(GameObject prefab, int minRenderers)

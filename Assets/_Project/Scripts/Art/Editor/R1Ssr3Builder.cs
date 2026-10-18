@@ -29,11 +29,13 @@ namespace MoonProject.Art.Editor
         public const string Ssr3Topper06FbxPath = RoverSourceFolder + "/SSR3_Topper_06.fbx";
         public const string Ssr3TracksFbxPath = RoverSourceFolder + "/SSR3_Tracks.fbx";
         public const string Ssr3Topper03FbxPath = RoverSourceFolder + "/SSR3_Topper_03.fbx";
+        public const string Ssr3Topper02FbxPath = RoverSourceFolder + "/SSR3_Topper_02.fbx";
 
         public const string Ssr3ChassisPrefabPath = RoverGeneratedFolder + "/SSR3_Chassis.prefab";
         public const string Ssr3Topper06PrefabPath = RoverGeneratedFolder + "/SSR3_Topper_06.prefab";
         public const string Ssr3TracksPrefabPath = RoverGeneratedFolder + "/SSR3_Tracks.prefab";
         public const string Ssr3Topper03PrefabPath = RoverGeneratedFolder + "/SSR3_Topper_03.prefab";
+        public const string Ssr3Topper02PrefabPath = RoverGeneratedFolder + "/SSR3_Topper_02.prefab";
 
         public const string Elder06PrefabPath = RoverGeneratedFolder + "/Elder06.prefab";
         public const string Elder06UnitNumberMeshPath = RoverGeneratedFolder + "/Elder06_UnitNumber06.asset";
@@ -41,7 +43,10 @@ namespace MoonProject.Art.Editor
         public const string Elder03PrefabPath = RoverGeneratedFolder + "/Elder03.prefab";
         public const string Elder03UnitNumberMeshPath = RoverGeneratedFolder + "/Elder03_UnitNumber03.asset";
 
-        /// <summary>Vertical settle depth (~4 cm into lunar dust) applied to <c>Elder06.prefab</c> and <c>Elder03.prefab</c>.</summary>
+        public const string Elder02PrefabPath = RoverGeneratedFolder + "/Elder02.prefab";
+        public const string Elder02UnitNumberMeshPath = RoverGeneratedFolder + "/Elder02_UnitNumber02.asset";
+
+        /// <summary>Vertical settle depth (~4 cm into lunar dust) applied to <c>Elder06.prefab</c>, <c>Elder03.prefab</c>, and <c>Elder02.prefab</c>.</summary>
         public const float Elder06DustSettleMeters = 0.04f;
 
         private const int CaptureWidth = 1440;
@@ -59,13 +64,22 @@ namespace MoonProject.Art.Editor
             "Wheel_RR",
         };
 
-        // Normalized (rx, ry, rw, rh) glyph bars in [0..1] x [0..1] for '0', '3', and '6'
+        // Normalized (rx, ry, rw, rh) glyph bars in [0..1] x [0..1] for '0', '2', '3', and '6'
         private static readonly Vector4[] Glyph0Rects =
         {
             new Vector4(0.18f, 0.50f, 0.22f, 0.88f),
             new Vector4(0.82f, 0.50f, 0.22f, 0.88f),
             new Vector4(0.50f, 0.90f, 0.76f, 0.20f),
             new Vector4(0.50f, 0.10f, 0.76f, 0.20f),
+        };
+
+        private static readonly Vector4[] Glyph2Rects =
+        {
+            new Vector4(0.50f, 0.90f, 0.82f, 0.20f),
+            new Vector4(0.82f, 0.70f, 0.22f, 0.48f),
+            new Vector4(0.50f, 0.50f, 0.82f, 0.18f),
+            new Vector4(0.18f, 0.30f, 0.22f, 0.48f),
+            new Vector4(0.50f, 0.10f, 0.82f, 0.20f),
         };
 
         private static readonly Vector4[] Glyph3Rects =
@@ -92,7 +106,12 @@ namespace MoonProject.Art.Editor
             GameObject topper06Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3Topper06PrefabPath);
             GameObject tracksPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3TracksPrefabPath);
             GameObject topper03Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3Topper03PrefabPath);
-            if (chassisPrefab == null || topper06Prefab == null || tracksPrefab == null || topper03Prefab == null)
+            GameObject topper02Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3Topper02PrefabPath);
+            if (chassisPrefab == null
+                || topper06Prefab == null
+                || tracksPrefab == null
+                || topper03Prefab == null
+                || topper02Prefab == null)
             {
                 R1MaterialLibrary.BuildMaterials();
                 R1ModelBuilder.Build();
@@ -100,6 +119,7 @@ namespace MoonProject.Art.Editor
                 topper06Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3Topper06PrefabPath);
                 tracksPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3TracksPrefabPath);
                 topper03Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3Topper03PrefabPath);
+                topper02Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3Topper02PrefabPath);
             }
 
             if (chassisPrefab == null)
@@ -126,6 +146,12 @@ namespace MoonProject.Art.Editor
                     $"R1Ssr3Builder: Missing '{Ssr3Topper03PrefabPath}'. Ensure '{Ssr3Topper03FbxPath}' is imported.");
             }
 
+            if (topper02Prefab == null)
+            {
+                throw new InvalidOperationException(
+                    $"R1Ssr3Builder: Missing '{Ssr3Topper02PrefabPath}'. Ensure '{Ssr3Topper02FbxPath}' is imported.");
+            }
+
             BuildElderPrefab(
                 chassisPrefab,
                 tracksPrefab: null,
@@ -149,6 +175,22 @@ namespace MoonProject.Art.Editor
                 secondDigitRects: Glyph3Rects,
                 elderName: "Elder03",
                 elderPrefabPath: Elder03PrefabPath);
+
+            // Elder 02 ("Shelter Floodlight Cart") uses SSR3_Tracks (Direction B low-slung crawler):
+            // 1. Matches the approved Direction B concept (ssr3_direction_b_low_crawler.png) where Elder 02 is a tracked floodlight cart.
+            // 2. Visually grounds and stabilizes the tall (~1.30 m H) top-heavy 4-dish floodlight roll bar.
+            // 3. Gives Elder 02 an unmistakable low crawler silhouette next to wheeled Rover 07 while fitting its steep lava-tube shelter approach.
+            BuildElderPrefab(
+                chassisPrefab,
+                tracksPrefab: tracksPrefab,
+                topperPrefab: topper02Prefab,
+                topperNodeName: "SSR3_Topper_02",
+                unitNumberNodeName: "Unit_Number_02",
+                unitNumberMeshName: "Elder02_UnitNumber02",
+                unitNumberMeshPath: Elder02UnitNumberMeshPath,
+                secondDigitRects: Glyph2Rects,
+                elderName: "Elder02",
+                elderPrefabPath: Elder02PrefabPath);
         }
 
         private static void BuildElderPrefab(
@@ -271,6 +313,8 @@ namespace MoonProject.Art.Editor
                     CaptureElderNextTo07(Elder06PrefabPath, "elder06", capturesDir, nightEclipse: true);
                     CaptureElderNextTo07(Elder03PrefabPath, "elder03", capturesDir, nightEclipse: false);
                     CaptureElderNextTo07(Elder03PrefabPath, "elder03", capturesDir, nightEclipse: true);
+                    CaptureElderNextTo07(Elder02PrefabPath, "elder02", capturesDir, nightEclipse: false);
+                    CaptureElderNextTo07(Elder02PrefabPath, "elder02", capturesDir, nightEclipse: true);
                 }
                 finally
                 {
