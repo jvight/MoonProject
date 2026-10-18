@@ -76,7 +76,7 @@ namespace MoonProject.Showcase
 
             if (focusedExhibit != null)
             {
-                _exhibitTitleLabel.text = $"[{focusedExhibit.NumberKey}/15] {focusedExhibit.TitleVi}";
+                _exhibitTitleLabel.text = $"[{focusedExhibit.NumberKey}/10] {focusedExhibit.TitleVi}";
                 _exhibitSubtitleLabel.text = focusedExhibit.SubtitleVi;
 
                 if (_lastRenderedExhibitId != focusedExhibit.ExhibitId)
@@ -155,7 +155,7 @@ namespace MoonProject.Showcase
             statusBox.style.borderBottomLeftRadius = 4;
             statusBox.style.borderBottomRightRadius = 4;
 
-            _exhibitTitleLabel = CreateLabel("[1/15] 07 (Rover v3)", 14, new Color(0.96f, 0.95f, 0.92f, 1f), true);
+            _exhibitTitleLabel = CreateLabel("[1/10] 07 (Rover v3)", 14, new Color(0.96f, 0.95f, 0.92f, 1f), true);
             _exhibitSubtitleLabel = CreateLabel(string.Empty, 11, new Color(0.76f, 0.80f, 0.88f, 1f), false);
             _exhibitSubtitleLabel.style.marginBottom = 4;
             _cameraModeLabel = CreateLabel("Chế độ: Quay quanh mẫu vật", 11, new Color(0.82f, 0.86f, 0.94f, 1f), false);
@@ -173,7 +173,7 @@ namespace MoonProject.Showcase
             generalHeader.style.marginBottom = 4;
             _panelRoot.Add(generalHeader);
 
-            _panelRoot.Add(CreateKeyRow("Tab / 1-6", "Chuyển qua 15 mẫu vật (Tab) / Chọn nhanh mẫu 1–6"));
+            _panelRoot.Add(CreateKeyRow("Tab / 1-6", "Chuyển qua 10 mẫu vật (Tab) / Chọn nhanh mẫu 1–6"));
             _panelRoot.Add(CreateKeyRow("O", "Bật / Tắt tham quan camera chậm (Hoàng hôn → Đêm → Nhật thực)"));
             _panelRoot.Add(CreateKeyRow("J / K", "Dựng 4 giai đoạn Stage_1..4 (J) / Tự động trình diễn Demo (K)"));
             _panelRoot.Add(CreateKeyRow("Chuột / Lăn", "Xoay quanh mẫu vật / Thu phóng khoảng cách"));

@@ -17,7 +17,6 @@ namespace MoonProject.Art.Tests
     {
         private const string FbxFolder = "Assets/_Project/Art/R1/Models/Rover/";
         private const string PrefabFolder = "Assets/_Project/Generated/Art/R1/Models/Rover/";
-        private const float TurntableRoom = 0.25f;
 
         private static readonly string[] TenKitNames =
         {
@@ -224,37 +223,6 @@ namespace MoonProject.Art.Tests
             }
         }
 
-        [Test]
-        public void KittedRover_StillFitsKenjisTurntable()
-        {
-            float radius = BaseModelBuilder.CreateRoverBay().GetDescendant("Turntable").Mesh.Geometry.Bounds.extents.x;
-            float reach = MaxHorizontalReach(_roverPrefab, Matrix4x4.identity);
-
-            (string kit, string socket)[] mounts =
-            {
-                (RoverModelBuilder.LampBarName, "HeadlampSocket"),
-                (RoverModelBuilder.CapacitorDrumName, "DrumSocket_L"),
-                (RoverModelBuilder.CapacitorDrumName, "DrumSocket_R"),
-                (RoverModelBuilder.BatterySpineName, "SpineSocket"),
-                (RoverModelBuilder.TetherRingName, "Neck/NeckLift/Head/RingSocket"),
-                (RoverModelBuilder.CargoRackName, "CargoSocket"),
-                (RoverModelBuilder.SideBinName, "BinSocket_L"),
-                (RoverModelBuilder.SideBinName, "BinSocket_R"),
-                (RoverModelBuilder.HoverCoilsName, "CoilSocket"),
-                (RoverModelBuilder.FocusLensName, "Neck/NeckLift/Head/Eye/LensSocket"),
-                (RoverModelBuilder.LensGlassName, "Neck/NeckLift/Head/Eye"),
-                (RoverModelBuilder.TapeDeckName, "Neck/NeckLift/Head/DeckSocket"),
-            };
-
-            foreach ((string kit, string socketPath) in mounts)
-            {
-                Matrix4x4 socketToRover = SocketToRoverMatrix(socketPath);
-                reach = Mathf.Max(reach, MaxHorizontalReach(LoadPrefab(kit), socketToRover));
-            }
-
-            Assert.GreaterOrEqual(radius - reach, TurntableRoom, "a kitted R1 07 still turns on the bay's turntable");
-        }
-
         private Matrix4x4 SocketToRoverMatrix(string socketPath)
         {
             Transform socket = _roverPrefab.transform.Find(socketPath);
@@ -324,11 +292,6 @@ namespace MoonProject.Art.Tests
         private Bounds MountedBounds(string kitName, string socketPath)
         {
             return MeshChecks.PrefabBounds(LoadPrefab(kitName), SocketToRoverMatrix(socketPath));
-        }
-
-        private static float MaxHorizontalReach(GameObject root, Matrix4x4 rootToRover)
-        {
-            return MeshChecks.PrefabPoints(root, rootToRover).Max(p => new Vector2(p.x, p.z).magnitude);
         }
     }
 }

@@ -14,7 +14,6 @@ from synth import effects, envelope, filters, instruments, noise, osc
 from synth.core import SAMPLE_RATE, loop_freq, note_freq, pan, pentatonic, place, samples, to_mono
 from synth.fm import two_op
 from synth.loop import periodic
-from synth.pluck import karplus_strong
 
 import base_cues as base
 import feel_cues as feel
@@ -325,91 +324,6 @@ def ui_hold_complete(_variant, gen):
     return filters.lowpass(mix, 4500.0)[:, None] * np.array([[1.0, 1.0]]) + wet
 
 
-# --------------------------------------------------------------------------------------------------- hover-jump
-
-JUMP_CHARGE_LOOP_S = 4.0
-
-
-def jump_charge(_variant, gen):
-    """The Hover-Jump charging: a soft electric hum on D4 (the runtime steps it up D E F# A B as the charge grows)
-    with a gentle tremolo and a quiet spring-creak texture underneath. Seamless; < 3.5 kHz so the climb stays clean."""
-    n = samples(JUMP_CHARGE_LOOP_S)
-    step = SAMPLE_RATE / n
-    f = loop_freq(note_freq("D4"), n)
-    hum = osc.additive(n, f, [(1, 1.0), (2, 0.28), (3, 0.1), (4, 0.04)])
-    hum += 0.45 * osc.additive(n, f + step, [(1, 1.0), (2, 0.2)], phase=0.27)
-    hum *= envelope.lfo(n, 24.0 / JUMP_CHARGE_LOOP_S, 0.12, 0.88)
-    excitation = np.zeros(n)
-    for pos in noise.event_times(n, gen, 26.0, jitter=0.6):
-        excitation[int(pos)] += gen.uniform(0.3, 1.0)
-    creak = periodic(excitation, lambda x: 0.6 * filters.bandpass(x, 310.0, 8.0) + 0.35 * filters.bandpass(
-        x, 520.0, 7.0), warmup=samples(0.5))
-    creak *= 1.0 / max(float(np.std(creak)), 1e-9) * 0.05
-    return periodic(0.3 * hum + creak, lambda x: filters.highpass(filters.lowpass(x, 3200.0), 70.0))
-
-
-JUMP_LEAP_SIZES = ("hop", "leap")
-
-
-def jump_leap(variant, gen):
-    """The leap: a soft rising 'boing' (a wobbling D4/A3 spring tone settling into tune) over a whoosh of air;
-    the hop is small and short, the leap longer and fuller."""
-    big = variant == 1
-    duration = 1.1 if big else 0.5
-    n = samples(duration)
-    base = note_freq("A3" if big else "D4")
-    t = np.arange(n) / SAMPLE_RATE
-    wobble = 1.0 + 0.05 * np.exp(-t / (0.16 if big else 0.08)) * np.sin(2.0 * math.pi * 11.0 * t)
-    rise = osc.glide(n, 0.82 * base, base, time_constant=0.05)
-    boing = osc.additive(n, rise * wobble, [(1, 1.0), (2, 0.18), (3, 0.05)])
-    boing *= envelope.ar(n, 0.006, 0.6 if big else 0.28)
-    sweep_n = samples(0.9 if big else 0.35)
-    whoosh = filters.swept(noise.pink(sweep_n, gen), "bandpass", osc.glide(sweep_n, 280.0, 1300.0), q=1.1)
-    whoosh *= envelope.segments(sweep_n, [(0.0, 0.0), (0.2 if big else 0.08, 1.0),
-                                          (0.9 if big else 0.35, 0.0)], shape="smooth")
-    whoosh = whoosh / max(float(np.std(whoosh)), 1e-9) * 0.08
-    mix = 0.55 * boing
-    place(mix, whoosh, 0, 1.0 if big else 0.6)
-    return filters.lowpass(mix, 4500.0)
-
-
-def coil_twang(variant, gen):
-    """The coils springing out on the leap: a soft plucked spring on A3/D4 with the spring's falling dispersive
-    'tw-' chirp, felt-soft."""
-    note = ("A3", "D4")[variant]
-    n = samples(0.8)
-    string = karplus_strong(n, note_freq(note), gen, decay=0.993, brightness=0.3, pick_softness=1800.0)
-    chirp_n = samples(0.09)
-    chirp = osc.sine(chirp_n, osc.glide(chirp_n, 1300.0, 320.0)) * envelope.ar(chirp_n, 0.002, 0.07)
-    mix = string.copy()
-    place(mix, chirp, 0, 0.12)
-    return filters.lowpass(mix, 4000.0)
-
-
-JUMP_LAND_SETTINGS = (
-    # thud start/end Hz, cushion T60, sproing note
-    (80.0, 52.0, 0.35, "D3"),
-    (72.0, 48.0, 0.42, "E3"),
-)
-
-
-def jump_land(variant, gen):
-    """A cushioned landing after a leap: the air cushion's soft 'pfff', a muted low thud, the springs taking the
-    weight with a little sproing, and dust settling. Much gentler than the hard landing thump."""
-    f_start, f_end, cushion_t60, spring_note = JUMP_LAND_SETTINGS[variant]
-    n = samples(1.4)
-    puff = filters.highpass(filters.lowpass(filters.lowpass(noise.pink(n, gen), 900.0), 900.0), 150.0)
-    puff *= envelope.ar(n, 0.015, cushion_t60)
-    puff = puff / max(float(np.std(puff)), 1e-9) * 0.11
-    thud = osc.sine(n, osc.glide(n, 1.4 * f_start, f_end, time_constant=0.05)) * envelope.ar(n, 0.025, 0.25)
-    t = np.arange(n) / SAMPLE_RATE
-    spring_f = note_freq(spring_note) * (1.0 + 0.03 * np.exp(-t / 0.12) * np.sin(2.0 * math.pi * 9.0 * t))
-    spring = osc.sine(n, spring_f) * envelope.ar(n, 0.02, 0.35)
-    dust = filters.lowpass(filters.highpass(noise.pink(n, gen), 1400.0), 4200.0) * envelope.ar(n, 0.06, 0.9)
-    dust = dust / max(float(np.std(dust)), 1e-9) * 0.004
-    return puff + 0.16 * thud + 0.15 * spring + dust
-
-
 # --------------------------------------------------------------------------------------------------- solitude (M3-10)
 
 ROOM_TONE_LOOP_S = 24.0
@@ -685,22 +599,6 @@ def lamp_tick(_variant, gen):
     return filters.lowpass(0.22 * tick / max(float(np.max(np.abs(tick))), 1e-9) + 0.12 * glow, 5000.0)
 
 
-def leap_fizzle(_variant, gen):
-    """A leap the battery can't pay for: the coils fizzle softly under the belly - a short sparse crackle and a
-    tiny falling D4 buzz that never becomes a boing."""
-    n = samples(0.7)
-    crackle = np.zeros(n)
-    for pos in noise.event_times(n, gen, 55.0, jitter=0.7):
-        crackle[int(pos)] += gen.uniform(0.2, 1.0)
-    crackle = filters.bandpass(crackle, 2200.0, 1.2) + 0.5 * filters.bandpass(crackle, 1100.0, 1.0)
-    crackle *= envelope.segments(n, [(0.0, 1.0), (0.45, 0.25), (0.7, 0.0)], shape="smooth")
-    crackle = crackle / max(float(np.max(np.abs(crackle))), 1e-9) * 0.2
-    buzz = osc.additive(n, osc.glide(n, note_freq("D4"), note_freq("A3"), time_constant=0.12),
-                        [(1, 1.0), (2, 0.35), (3, 0.15)])
-    buzz *= envelope.ar(n, 0.01, 0.35)
-    return filters.lowpass(crackle + 0.18 * buzz, 4200.0)
-
-
 # ---- 07's wake through its own eye (docs/design/cutscenes.md section 1) ----
 
 ASLEEP_STATIC_LOOP_S = 8.0
@@ -933,8 +831,6 @@ CUES = (
         milestone="M3", notes="The beam moving to the next cut line: a tick and a slide onto the next step."),
     Cue("cargo_tok", "tick_3d", feel.cargo_tok, volume=(0.7, 0.7), milestone="M3",
         notes="The cargo hold full (M3-25): a soft tok on the lid."),
-    Cue("crate_latch", "tick_3d", feel.crate_latch, volume=(0.6, 0.6), milestone="M3",
-        notes="A crew supply crate opened (M3-25): a latch and a soft paper rustle for the note."),
     Cue("pickup_lift", "oneshot_3d", feel.pickup_lift, volume=(0.6, 0.6), milestone="M3",
         notes="07 lifting a part (Collect Act): a soft servo whirr rising A2 -> D3."),
     Cue("pickup_clunk", "tick_3d", feel.pickup_clunk, volume=(0.8, 0.8), milestone="M3",
@@ -942,9 +838,6 @@ CUES = (
     Cue("structure_power_on", "oneshot_3d", base.structure_power_on, volume=(0.6, 0.6), milestone="M3",
         tonal=True, notes="Opening v2 B8: a structure taking power: a relay thunk, a transformer swell D2 -> A2, "
                           "its lamp blooming on D5."),
-    Cue("title_crt_off", "stinger_2d", base.title_crt_off, volume=(0.6, 0.6), milestone="M3", tonal=True,
-        notes="The title CRT switching off into New Game / Continue: a soft tube tock, a falling breath and a "
-              "short warm D4 ring that the wake's ghost chord continues."),
     Cue("base_lamp_on", "oneshot_3d", base.base_lamp_on, variants=len(base.BASE_LAMP_NOTES), volume=(0.5, 0.5),
         milestone="M3", tonal=True, notes="Opening v2 B10: a base lamp coming on at nightfall: a muted filament "
                                           "switch and a warm glow on its step (D4 .. F#5)."),
@@ -1008,17 +901,6 @@ CUES = (
               "stopped on release/complete."),
     Cue("ui_hold_complete", "ui_2d", ui_hold_complete, volume=(0.55, 0.55), fade_out=0.2, tonal=True,
         notes="UiCue HoldComplete: soft resolved D major felt-piano chord + music-box D6."),
-    Cue("jump_charge", "loop_3d", jump_charge, loop=True, file_stem="jump_charge_loop", volume=(0.45, 0.45),
-        hf_cutoff=6000.0, hf_max_db=-40.0, milestone="M3", tonal=True,
-        notes="Hover-Jump charge hum on D4 + spring creak; runtime steps it D E F# A B with the charge."),
-    Cue("jump_leap", "oneshot_3d", jump_leap, variants=len(JUMP_LEAP_SIZES), variant_labels=JUMP_LEAP_SIZES,
-        volume=(0.6, 0.6), fade_out=0.1, milestone="M3",
-        notes="Leap: soft rising boing + whoosh; 'hop' for taps, 'leap' for strong charges (volume by strength)."),
-    Cue("coil_twang", "oneshot_3d", coil_twang, variants=2, variant_labels=("A3", "D4"), volume=(0.4, 0.45),
-        fade_out=0.1, milestone="M3", tonal=True, notes="The coils springing out on a leap: soft plucked spring."),
-    Cue("jump_land", "oneshot_3d", jump_land, variants=len(JUMP_LAND_SETTINGS), volume=(0.75, 0.85),
-        pitch=(0.97, 1.03), fade_out=0.1, milestone="M3",
-        notes="Cushioned landing after a leap: air puff + muted thud + spring + dust (gentler than the thump)."),
     Cue("room_tone", "ambience_2d", room_tone, loop=True, file_stem="room_tone_loop", volume=(0.8, 0.8),
         milestone="M3", notes="Solitude room tone: wide, very soft dark air + faint D2/A2, 24 s seamless stereo."),
     Cue("rover_lamp_hum", "loop_3d", rover_lamp_hum, loop=True, file_stem="rover_lamp_hum_loop", volume=(0.5, 0.5),
@@ -1057,6 +939,4 @@ CUES = (
         notes="The battery empties: a soft power-down sigh, D4 gliding to A2 under a breath of air."),
     Cue("lamp_tick", "tick_3d", lamp_tick, volume=(0.45, 0.45), fade_out=0.03, milestone="M3",
         notes="A flank lamp lighting as 07 wakes: a tiny relay tick with a breath of filament on D6."),
-    Cue("leap_fizzle", "oneshot_3d", leap_fizzle, volume=(0.4, 0.4), fade_out=0.1, milestone="M3",
-        notes="A leap the battery can't pay for: the coils fizzle softly under the belly, a crackle and a small buzz."),
 )

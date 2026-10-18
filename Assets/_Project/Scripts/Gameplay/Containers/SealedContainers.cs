@@ -262,7 +262,7 @@ namespace MoonProject.Gameplay
         private SealedContainer Nearest()
         {
             SealedContainer best = null;
-            float reachSq = _salvage.Tuning.ReachRadius * _salvage.Tuning.ReachRadius;
+            float reachSq = _tuning.ContainerReach * _tuning.ContainerReach;
             float bestFacing = Mathf.Cos(_tuning.ContainerClaimAngle * Mathf.Deg2Rad);
             bestFacing = bestFacing > -1f ? bestFacing : float.NegativeInfinity;
             Vector3 forward = _rover.Rotation * Vector3.forward;

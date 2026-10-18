@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace MoonProject.Showcase
 {
-    /// <summary>Identifier for each of the 15 look-dev exhibits in the Showcase scene.</summary>
+    /// <summary>Identifier for each of the 10 look-dev exhibits in the Showcase scene.</summary>
     public enum ShowcaseExhibitId
     {
         Rover07 = 0,
@@ -14,13 +14,8 @@ namespace MoonProject.Showcase
         RockCluster = 5,
         Rover07Upgraded = 6,
         BatteryBank = 7,
-        Smelter = 8,
-        Fabricator = 9,
-        StorageRack = 10,
-        UpgradeBay = 11,
-        AntennaMast = 12,
-        VehiclePad = 13,
-        RuinsCorner = 14,
+        AntennaMast = 8,
+        RuinsCorner = 9,
     }
 
     /// <summary>Identifier for each of the 5 ruin prefabs arranged in the Ruins Corner exhibit.</summary>
@@ -251,8 +246,8 @@ namespace MoonProject.Showcase
         [Tooltip("Identifier of the exhibit.")]
         [SerializeField] private ShowcaseExhibitId _exhibitId;
 
-        [Tooltip("1-based index (1..15) of this exhibit; keys 1..6 jump directly to the first 6 exhibits and Tab cycles all 15.")]
-        [Range(1, 15)]
+        [Tooltip("1-based index (1..10) of this exhibit; keys 1..6 jump directly to the first 6 exhibits and Tab cycles all 10.")]
+        [Range(1, 10)]
         [SerializeField] private int _numberKey = 1;
 
         [Tooltip("Vietnamese title shown in the help overlay when focused.")]
@@ -468,7 +463,7 @@ namespace MoonProject.Showcase
         [SerializeField] private ShowcaseRuinPiecePlacement[] _ruinPieces = Array.Empty<ShowcaseRuinPiecePlacement>();
 
         [Header("Exhibits")]
-        [Tooltip("The 15 look-dev exhibits placed in the Showcase scene.")]
+        [Tooltip("The 10 look-dev exhibits placed in the Showcase scene.")]
         [SerializeField] private ShowcaseExhibitDefinition[] _exhibits = Array.Empty<ShowcaseExhibitDefinition>();
 
         public float FreeFlySpeed => _freeFlySpeed;
@@ -584,9 +579,9 @@ namespace MoonProject.Showcase
                 return "ShowcaseTuning must define all 6 sky phase presets.";
             }
 
-            if (_exhibits == null || _exhibits.Length != 15)
+            if (_exhibits == null || _exhibits.Length != 10)
             {
-                return "ShowcaseTuning must define all 15 exhibits.";
+                return "ShowcaseTuning must define all 10 exhibits.";
             }
 
             if (_ruinPieces == null || _ruinPieces.Length != 5)

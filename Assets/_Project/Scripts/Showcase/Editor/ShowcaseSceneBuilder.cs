@@ -24,7 +24,7 @@ namespace MoonProject.Showcase.Editor
     /// <summary>
     /// Builds <c>Assets/_Project/Scenes/Showcase.unity</c> from an empty scene: sets up the real World
     /// (<see cref="WorldSystem"/>, <see cref="SkyCycleSystem"/>, <see cref="PeakBeacon"/>, post-processing
-    /// <see cref="Volume"/>), places all 15 look-dev exhibits on the central basin floor with &gt;= 12 m spacing,
+    /// <see cref="Volume"/>), places all 10 look-dev exhibits on the central basin floor with &gt;= 12 m spacing,
     /// wires all animated node paths, <c>Stage_1..4</c> roots, lamps, socket-mounted rover kits, ruin cluster pieces,
     /// camera rig, and Vietnamese UI Toolkit help overlay, and normalizes scene file IDs.
     /// </summary>
@@ -187,7 +187,7 @@ namespace MoonProject.Showcase.Editor
             MoonSurface surface)
         {
             Transform exhibitsRoot = context.Root("Exhibits").transform;
-            var rigs = new ShowcaseExhibitRig[15];
+            var rigs = new ShowcaseExhibitRig[10];
 
             rigs[0] = BuildRoverExhibit(context, exhibitsRoot, tuning, surface);
             rigs[1] = BuildCargoLanderExhibit(context, exhibitsRoot, tuning, surface);
@@ -197,13 +197,8 @@ namespace MoonProject.Showcase.Editor
             rigs[5] = BuildRockClusterExhibit(context, exhibitsRoot, tuning, surface);
             rigs[6] = BuildRoverUpgradedExhibit(context, exhibitsRoot, tuning, surface);
             rigs[7] = BuildBatteryBankExhibit(context, exhibitsRoot, tuning, surface);
-            rigs[8] = BuildSmelterExhibit(context, exhibitsRoot, tuning, surface);
-            rigs[9] = BuildFabricatorExhibit(context, exhibitsRoot, tuning, surface);
-            rigs[10] = BuildStorageRackExhibit(context, exhibitsRoot, tuning, surface);
-            rigs[11] = BuildUpgradeBayExhibit(context, exhibitsRoot, tuning, surface);
-            rigs[12] = BuildAntennaMastExhibit(context, exhibitsRoot, tuning, surface);
-            rigs[13] = BuildVehiclePadExhibit(context, exhibitsRoot, tuning, surface);
-            rigs[14] = BuildRuinsCornerExhibit(context, exhibitsRoot, tuning, surface);
+            rigs[8] = BuildAntennaMastExhibit(context, exhibitsRoot, tuning, surface);
+            rigs[9] = BuildRuinsCornerExhibit(context, exhibitsRoot, tuning, surface);
 
             return rigs;
         }
@@ -698,86 +693,6 @@ namespace MoonProject.Showcase.Editor
                 lightRange: 4.8f);
         }
 
-        private static ShowcaseExhibitRig BuildSmelterExhibit(
-            SceneBuildContext context,
-            Transform parent,
-            ShowcaseTuning tuning,
-            MoonSurface surface)
-        {
-            return BuildStageStructureExhibit(
-                context,
-                parent,
-                tuning,
-                surface,
-                ShowcaseExhibitId.Smelter,
-                "Exhibit_9_Smelter",
-                ShowcasePaths.SmelterPrefab,
-                ShowcaseTriggerKey.Action3_C,
-                new Vector3(0.35f, 1.35f, -0.75f),
-                lightIntensity: 2.5f,
-                lightRange: 6.0f);
-        }
-
-        private static ShowcaseExhibitRig BuildFabricatorExhibit(
-            SceneBuildContext context,
-            Transform parent,
-            ShowcaseTuning tuning,
-            MoonSurface surface)
-        {
-            return BuildStageStructureExhibit(
-                context,
-                parent,
-                tuning,
-                surface,
-                ShowcaseExhibitId.Fabricator,
-                "Exhibit_10_Fabricator",
-                ShowcasePaths.FabricatorPrefab,
-                ShowcaseTriggerKey.Action4_V,
-                new Vector3(0f, 1.45f, 0.35f),
-                lightIntensity: 2.0f,
-                lightRange: 5.2f);
-        }
-
-        private static ShowcaseExhibitRig BuildStorageRackExhibit(
-            SceneBuildContext context,
-            Transform parent,
-            ShowcaseTuning tuning,
-            MoonSurface surface)
-        {
-            return BuildStageStructureExhibit(
-                context,
-                parent,
-                tuning,
-                surface,
-                ShowcaseExhibitId.StorageRack,
-                "Exhibit_11_StorageRack",
-                ShowcasePaths.StorageRackPrefab,
-                ShowcaseTriggerKey.Action3_C,
-                new Vector3(0f, 1.35f, 0.55f),
-                lightIntensity: 1.7f,
-                lightRange: 4.6f);
-        }
-
-        private static ShowcaseExhibitRig BuildUpgradeBayExhibit(
-            SceneBuildContext context,
-            Transform parent,
-            ShowcaseTuning tuning,
-            MoonSurface surface)
-        {
-            return BuildStageStructureExhibit(
-                context,
-                parent,
-                tuning,
-                surface,
-                ShowcaseExhibitId.UpgradeBay,
-                "Exhibit_12_UpgradeBay",
-                ShowcasePaths.UpgradeBayPrefab,
-                ShowcaseTriggerKey.Action4_V,
-                new Vector3(0f, 2.35f, 0.25f),
-                lightIntensity: 2.4f,
-                lightRange: 6.0f);
-        }
-
         private static ShowcaseExhibitRig BuildAntennaMastExhibit(
             SceneBuildContext context,
             Transform parent,
@@ -790,32 +705,12 @@ namespace MoonProject.Showcase.Editor
                 tuning,
                 surface,
                 ShowcaseExhibitId.AntennaMast,
-                "Exhibit_13_AntennaMast",
+                "Exhibit_9_AntennaMast",
                 ShowcasePaths.AntennaMastPrefab,
                 ShowcaseTriggerKey.Action4_V,
                 new Vector3(0f, 3.15f, 0.35f),
                 lightIntensity: 2.0f,
                 lightRange: 5.8f);
-        }
-
-        private static ShowcaseExhibitRig BuildVehiclePadExhibit(
-            SceneBuildContext context,
-            Transform parent,
-            ShowcaseTuning tuning,
-            MoonSurface surface)
-        {
-            return BuildStageStructureExhibit(
-                context,
-                parent,
-                tuning,
-                surface,
-                ShowcaseExhibitId.VehiclePad,
-                "Exhibit_14_VehiclePad",
-                ShowcasePaths.VehiclePadPrefab,
-                ShowcaseTriggerKey.Action4_V,
-                new Vector3(0.85f, 2.15f, 0.45f),
-                lightIntensity: 2.2f,
-                lightRange: 6.2f);
         }
 
         private static ShowcaseExhibitRig BuildStageStructureExhibit(
@@ -878,7 +773,7 @@ namespace MoonProject.Showcase.Editor
             MoonSurface surface)
         {
             ShowcaseExhibitDefinition def = tuning.FindExhibit(ShowcaseExhibitId.RuinsCorner);
-            GameObject root = CreateExhibitRoot(context, parent, "Exhibit_15_RuinsCorner", def, surface);
+            GameObject root = CreateExhibitRoot(context, parent, "Exhibit_10_RuinsCorner", def, surface);
             var rig = root.AddComponent<ShowcaseExhibitRig>();
 
             ShowcaseRuinPiecePlacement[] pieces = tuning.RuinPieces;

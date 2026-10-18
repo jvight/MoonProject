@@ -1112,33 +1112,6 @@
       "notes": "The cargo hold full (M3-25): a soft tok on the lid."
     },
     {
-      "id": "crate_latch",
-      "category": "tick_3d",
-      "milestone": "M3",
-      "bus": "Sfx",
-      "spatial": true,
-      "loop": false,
-      "files": [
-        "Assets/_Project/Audio/SFX/crate_latch.wav"
-      ],
-      "variantLabels": [
-        "crate_latch"
-      ],
-      "sha256": [
-        "96374287ca3add33e80fb886551095b1170f029a974bd7d1e1249f301f29449c"
-      ],
-      "volumeMin": 0.6,
-      "volumeMax": 0.6,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -26.0,
-      "loudnessMode": "momentary",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": false,
-      "notes": "A crew supply crate opened (M3-25): a latch and a soft paper rustle for the note."
-    },
-    {
       "id": "pickup_lift",
       "category": "oneshot_3d",
       "milestone": "M3",
@@ -1218,33 +1191,6 @@
       "hfMaxDb": -30.0,
       "tonal": true,
       "notes": "Opening v2 B8: a structure taking power: a relay thunk, a transformer swell D2 -> A2, its lamp blooming on D5."
-    },
-    {
-      "id": "title_crt_off",
-      "category": "stinger_2d",
-      "milestone": "M3",
-      "bus": "Sfx",
-      "spatial": false,
-      "loop": false,
-      "files": [
-        "Assets/_Project/Audio/SFX/2D/title_crt_off.wav"
-      ],
-      "variantLabels": [
-        "title_crt_off"
-      ],
-      "sha256": [
-        "af72e3afd726243505716d549302b26a0ed4d65edd3b6a89c0aa54a6c70688a5"
-      ],
-      "volumeMin": 0.6,
-      "volumeMax": 0.6,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -20.0,
-      "loudnessMode": "momentary",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": true,
-      "notes": "The title CRT switching off into New Game / Continue: a soft tube tock, a falling breath and a short warm D4 ring that the wake's ghost chord continues."
     },
     {
       "id": "base_lamp_on",
@@ -2033,123 +1979,6 @@
       "notes": "UiCue HoldComplete: soft resolved D major felt-piano chord + music-box D6."
     },
     {
-      "id": "jump_charge",
-      "category": "loop_3d",
-      "milestone": "M3",
-      "bus": "Sfx",
-      "spatial": true,
-      "loop": true,
-      "files": [
-        "Assets/_Project/Audio/SFX/jump_charge_loop.wav"
-      ],
-      "variantLabels": [
-        "jump_charge"
-      ],
-      "sha256": [
-        "76f9d84b4eda1c709b4cb5d194d3fecf0a30b6290e65981a7f36119354578401"
-      ],
-      "volumeMin": 0.45,
-      "volumeMax": 0.45,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -22.0,
-      "loudnessMode": "integrated",
-      "hfCutoffHz": 6000.0,
-      "hfMaxDb": -40.0,
-      "tonal": true,
-      "notes": "Hover-Jump charge hum on D4 + spring creak; runtime steps it D E F# A B with the charge."
-    },
-    {
-      "id": "jump_leap",
-      "category": "oneshot_3d",
-      "milestone": "M3",
-      "bus": "Sfx",
-      "spatial": true,
-      "loop": false,
-      "files": [
-        "Assets/_Project/Audio/SFX/jump_leap_hop.wav",
-        "Assets/_Project/Audio/SFX/jump_leap_leap.wav"
-      ],
-      "variantLabels": [
-        "hop",
-        "leap"
-      ],
-      "sha256": [
-        "a99b019c46903b41160daf98e67fb4fec08dcde700d79a662c307ca3f323a62b",
-        "209d554edd7895e95267f0984dd04903ae6d59044767a7dba053cfd53bd8acab"
-      ],
-      "volumeMin": 0.6,
-      "volumeMax": 0.6,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -18.0,
-      "loudnessMode": "momentary",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": false,
-      "notes": "Leap: soft rising boing + whoosh; 'hop' for taps, 'leap' for strong charges (volume by strength)."
-    },
-    {
-      "id": "coil_twang",
-      "category": "oneshot_3d",
-      "milestone": "M3",
-      "bus": "Sfx",
-      "spatial": true,
-      "loop": false,
-      "files": [
-        "Assets/_Project/Audio/SFX/coil_twang_A3.wav",
-        "Assets/_Project/Audio/SFX/coil_twang_D4.wav"
-      ],
-      "variantLabels": [
-        "A3",
-        "D4"
-      ],
-      "sha256": [
-        "fb01b50ff3cd2971f7d3c2e6aebdd5bf95ed283b64ef76e083630b1f1592c6bb",
-        "be582d90331dac6462294ff35127e87932d0d3a599c1f96b59519012a5580b3a"
-      ],
-      "volumeMin": 0.4,
-      "volumeMax": 0.45,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -18.0,
-      "loudnessMode": "momentary",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": true,
-      "notes": "The coils springing out on a leap: soft plucked spring."
-    },
-    {
-      "id": "jump_land",
-      "category": "oneshot_3d",
-      "milestone": "M3",
-      "bus": "Sfx",
-      "spatial": true,
-      "loop": false,
-      "files": [
-        "Assets/_Project/Audio/SFX/jump_land_01.wav",
-        "Assets/_Project/Audio/SFX/jump_land_02.wav"
-      ],
-      "variantLabels": [
-        "01",
-        "02"
-      ],
-      "sha256": [
-        "8243d0d9784f7d56c7e1ffbd6bed183afdf353bd15a3e6a5389e57d1081a1565",
-        "5787637c7c5f69f19a148a40560a3e9801dee0dc2c2b86a10496a7ace7b8c13d"
-      ],
-      "volumeMin": 0.75,
-      "volumeMax": 0.85,
-      "pitchMin": 0.97,
-      "pitchMax": 1.03,
-      "targetLufs": -18.0,
-      "loudnessMode": "momentary",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": false,
-      "notes": "Cushioned landing after a leap: air puff + muted thud + spring + dust (gentler than the thump)."
-    },
-    {
       "id": "room_tone",
       "category": "ambience_2d",
       "milestone": "M3",
@@ -2619,33 +2448,6 @@
       "hfMaxDb": -30.0,
       "tonal": false,
       "notes": "A flank lamp lighting as 07 wakes: a tiny relay tick with a breath of filament on D6."
-    },
-    {
-      "id": "leap_fizzle",
-      "category": "oneshot_3d",
-      "milestone": "M3",
-      "bus": "Sfx",
-      "spatial": true,
-      "loop": false,
-      "files": [
-        "Assets/_Project/Audio/SFX/leap_fizzle.wav"
-      ],
-      "variantLabels": [
-        "leap_fizzle"
-      ],
-      "sha256": [
-        "ca44147d2984a3fd610f26f90c42f11aa2b44738c319fbc4035076535d4236c5"
-      ],
-      "volumeMin": 0.4,
-      "volumeMax": 0.4,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -18.0,
-      "loudnessMode": "momentary",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": false,
-      "notes": "A leap the battery can't pay for: the coils fizzle softly under the belly, a crackle and a small buzz."
     },
     {
       "id": "face_boot",
@@ -3564,60 +3366,6 @@
       "hfMaxDb": -30.0,
       "tonal": true,
       "notes": "Bản B gợi hình ảnh một phiếu tin nhắn vừa trượt ra kèm tiếng chuông đồng bọc nỉ rất đặc trưng và tinh tế."
-    },
-    {
-      "id": "ui_type_card",
-      "category": "ui",
-      "milestone": "R1",
-      "bus": "Sfx",
-      "spatial": false,
-      "loop": false,
-      "files": [
-        "Assets/_Project/Audio/SFX/R1/ui_type_card.wav"
-      ],
-      "variantLabels": [
-        "ui_type_card"
-      ],
-      "sha256": [
-        "4d561338ecab986ede303ab155471e06d76f18be72a126e15572d2f725e9b9de"
-      ],
-      "volumeMin": 0.44,
-      "volumeMax": 0.44,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -30.0,
-      "loudnessMode": "momentary",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": true,
-      "notes": "Bản A có chất giấy bìa trên trục lăn cao su (rubber platen) rất đầm và ấm, gõ cả đoạn văn dài trên thẻ vẫn rất êm."
-    },
-    {
-      "id": "ui_type_terminal",
-      "category": "ui",
-      "milestone": "R1",
-      "bus": "Sfx",
-      "spatial": false,
-      "loop": false,
-      "files": [
-        "Assets/_Project/Audio/SFX/R1/ui_type_terminal.wav"
-      ],
-      "variantLabels": [
-        "ui_type_terminal"
-      ],
-      "sha256": [
-        "cff7d170fa3106fcfc8bc261bb551ffb7507e7985d71ab4e614f244c627aa893"
-      ],
-      "volumeMin": 0.44,
-      "volumeMax": 0.44,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -30.0,
-      "loudnessMode": "momentary",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": true,
-      "notes": "Bản A phân biệt rõ với tiếng gõ thẻ giấy nhờ tiếng rơ-le lá từ (reed relay) và xung cuộn lái tia trên màn hình của 07."
     },
     {
       "id": "ambience_earthlit_night",

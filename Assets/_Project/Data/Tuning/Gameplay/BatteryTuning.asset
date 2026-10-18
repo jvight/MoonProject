@@ -13,14 +13,16 @@ MonoBehaviour:
   m_Name: BatteryTuning
   m_EditorClassIdentifier: 
   _startingCells: 4
-  _metresPerCell: 120
+  _startingCharge01: 0.5
+  _metresPerCell: 350
   _uphillMultiplier: 1.5
   _downhillMultiplier: 0.5
   _fullSlope: 15
   _slopeEase: 0.5
-  _towMultiplier: 1.25
   _boostMultiplier: 2
   _beamSecondsPerCell: 60
+  _scanSecondsPerCell: 50
+  _weldSecondsPerCell: 15
   _fullLeapCost: 0.25
   _tapLeapCost: 0.05
   _drumCells: 0.25
@@ -28,18 +30,13 @@ MonoBehaviour:
   _drumRollSpeed: 3.5
   _drumRollRefill: 0.01
   _crawlCap: 0.35
-  _leadCap: 0.55
   _capEase: 0.5
-  _leadDelay: 5
-  _leadFriend: tilly
   _exitMargin: 0.25
   _trickleSecondsPerCell: 180
   _trickleCap: 1
   _trickleStill: 3
   _stillSpeed: 0.2
   _dockSecondsPerCell: 4
-  _mastSecondsPerCell: 5
-  _ringRadius: 2
   _chargeStopSpeed: 0.3
   _chargeStopHold: 0.5
   _lowThreshold: 0.3

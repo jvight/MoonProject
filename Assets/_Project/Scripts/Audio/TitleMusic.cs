@@ -9,9 +9,9 @@ namespace MoonProject.Audio
     /// Plays the dedicated title-screen theme (<see cref="TitleMusicLibrary.SelectedTrack"/>) on the Music bus.
     /// Fades in over <see cref="TitleMusicLibrary.FadeInSeconds"/> (~2 s) when <see cref="TitleShown"/> is published,
     /// keeps playing through Settings and Credits on the title screen, and fades out over
-    /// <see cref="TitleMusicLibrary.FadeOutSeconds"/> (0.8 s, under the CRT switch-off) when Continue (<see cref="SessionStarted"/>) or New Game
-    /// (<see cref="NewGameRequested"/>) begins play, with a soft tube "tock" as the CRT switches off (the static and
-    /// the power-on thump then own the black). Initialised by <see cref="AudioDirector"/>.
+    /// <see cref="TitleMusicLibrary.FadeOutSeconds"/> (0.8 s, so the wake's static and power-on thump own the black)
+    /// when Continue (<see cref="SessionStarted"/>) or New Game (<see cref="NewGameRequested"/>) begins play.
+    /// Initialised by <see cref="AudioDirector"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class TitleMusic : MonoBehaviour
@@ -26,7 +26,6 @@ namespace MoonProject.Audio
         private AudioDirector _director;
         private AudioSource _source;
         private RadioTrack _currentTrack;
-        private CueHandle _crtOff;
 
         public TitleMusicLibrary Library => _library;
         public AudioSource Source => _source;
@@ -47,13 +46,6 @@ namespace MoonProject.Audio
             if (problem != null)
             {
                 Debug.LogError($"{nameof(TitleMusic)}: invalid library ({problem}).", this);
-                enabled = false;
-                return;
-            }
-
-            _crtOff = director.Resolve(AudioCueIds.TitleCrtOff);
-            if (!_crtOff.IsValid)
-            {
                 enabled = false;
                 return;
             }
@@ -148,11 +140,6 @@ namespace MoonProject.Audio
 
         private void BeginFadeOut()
         {
-            if (_fader.IsPlaying && !_fader.IsFadingOut)
-            {
-                _director.Play2D(_crtOff);
-            }
-
             _fader.FadeOut();
             if (!_fader.IsPlaying && _source != null && _source.isPlaying)
             {

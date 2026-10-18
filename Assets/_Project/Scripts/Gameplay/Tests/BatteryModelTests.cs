@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
+using MoonProject.Gameplay.Editor;
 
 namespace MoonProject.Gameplay.Tests
 {
@@ -25,6 +27,12 @@ namespace MoonProject.Gameplay.Tests
         private readonly List<ChargingChanged> _charging = new List<ChargingChanged>();
         private readonly List<BatteryWarned> _warnings = new List<BatteryWarned>();
         private readonly List<BatteryArcRevealed> _arcs = new List<BatteryArcRevealed>();
+        /// <summary>
+        /// Metres the opening drives before the pad: the Playthrough's 168 m along the cable to the lander, and its
+        /// line-ups for the scan, the crate and the build.
+        /// </summary>
+        private const float OpeningDriveMetres = 200f;
+
         private BatteryTuning _tuning;
         private EventBus _events;
         private BatteryModel _battery;
@@ -237,16 +245,16 @@ namespace MoonProject.Gameplay.Tests
         [Test]
         public void TheOpening_FromTheHalfFullWake_LeavesAQuarterToAThird_AfterThePadWeld()
         {
-            var shipping = ScriptableObject.CreateInstance<BatteryTuning>();
+            var shipping = AssetDatabase.LoadAssetAtPath<BatteryTuning>(GameplayAssetPaths.BatteryTuning);
+            Assert.IsNotNull(shipping, "the shipped battery tuning (run Gameplay/Tuning)");
             var fresh = new BatteryModel(shipping, _events);
             Assert.AreEqual(0.5f, fresh.Charge01, 1e-5f, "07 wakes half full");
-            Drive(fresh, 200f);
+            Drive(fresh, OpeningDriveMetres);
             Step(fresh, new BatteryStep { ScanSeconds = Dt }, 5f);
             Step(fresh, new BatteryStep { WeldSeconds = Dt }, 3f);
             Assert.That(fresh.Charge01, Is.InRange(0.25f, 0.3f),
                 "the drive to the lander, its two scans and the pad weld (opening-v2 §10 balance)");
             Assert.Less(fresh.Charge01, shipping.LowThreshold, "the Low warning has landed by the pad");
-            UnityEngine.Object.DestroyImmediate(shipping);
         }
 
         [Test]
