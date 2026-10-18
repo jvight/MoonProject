@@ -42,6 +42,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>While above zero, backs straight up at this throttle (0..1), whatever the target.</summary>
         public float Reverse { get; set; }
 
+        /// <summary>While set (and no target is), turns 07 on the spot to face this point, as A/D alone do.</summary>
+        public Vector3? Face { get; set; }
+
         public bool Arrived => Target == null || Distance <= ArriveRadius;
 
         public float Distance => Target == null ? 0f : SurfaceRules.HorizontalDistance(_rover.Position, Target.Value);
@@ -53,6 +56,16 @@ namespace MoonProject.Gameplay.PlayModeTests
                 if (Reverse > 0f)
                 {
                     return new Vector2(0f, -Reverse);
+                }
+
+                if (Target == null && Face != null)
+                {
+                    Vector3 toward = Face.Value - _rover.Position;
+                    toward.y = 0f;
+                    Vector3 ahead = _rover.Rotation * Vector3.forward;
+                    ahead.y = 0f;
+                    float off = Vector3.SignedAngle(ahead, toward, Vector3.up);
+                    return new Vector2(Mathf.Clamp(off / FullLockAngle, -1f, 1f), 0f);
                 }
 
                 if (Target == null || Arrived)

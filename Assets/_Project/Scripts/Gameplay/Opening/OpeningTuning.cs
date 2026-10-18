@@ -46,8 +46,8 @@ namespace MoonProject.Gameplay
                  "takes it at B6.")]
         [SerializeField] private string _igniterPart = "part.igniter";
 
-        [Tooltip("Metres from an open crate within which 07 collects what it holds, from any side (B4: 07 drives up " +
-                 "to it).")]
+        [Tooltip("Metres from an open crate within which it offers what it holds, from any side: a held E takes it " +
+                 "(B4: 07 drives up to it and is told to take the parts).")]
         [Range(1f, 8f)] [SerializeField] private float _collectReach = 3.5f;
 
         [Tooltip("Metres from 07 within which an open crate that still holds something starts to show Art's soft " +
@@ -88,19 +88,19 @@ namespace MoonProject.Gameplay
         {
             new SupplyCache("supply.wake", "place.wake", new Vector3(2.5f, 0f, -1.5f), 30f, "Crate_S",
                 new Recipe(3, 1, 0)),
-            new SupplyCache("supply.midway", "place.midway", new Vector3(1.5f, 0f, 0f), -20f, "Crate_S",
+            new SupplyCache("supply.midway", "place.midway", new Vector3(1.5f, 0f, 0f), 67f, "Crate_S",
                 new Recipe(2, 1, 0)),
             new SupplyCache("supply.lander.open", OpeningField.LanderPortFrame, new Vector3(4.2f, 0f, -1.4f), 45f,
                 ContainerKinds.CrateCargoOpen, new Recipe(2, 1, 0), true, new[] { "part.igniter", "part.icecore" }),
-            new SupplyCache("supply.habitat.reel", "HabitatModules", new Vector3(-3f, 0f, -6f), 207f, "Crate_M",
+            new SupplyCache("supply.habitat.reel", "HabitatModules", new Vector3(-3.3f, 0f, -6.5f), 207f, "Crate_M",
                 new Recipe(6, 4, 0)),
-            new SupplyCache("supply.workshop.a", "KenjiWorkshop", new Vector3(5.5f, 0f, 0f), 100f, "Crate_S",
+            new SupplyCache("supply.workshop.a", "KenjiWorkshop", new Vector3(3.9f, 0f, -11.6f), -151f, "Crate_S",
                 new Recipe(3, 4, 2)),
             new SupplyCache("supply.workshop.b", "KenjiWorkshop", new Vector3(2.5f, 0f, -5f), 140f, "Crate_S",
                 new Recipe(3, 4, 2)),
             new SupplyCache("supply.tower.a", "RadioTower", new Vector3(-6.5f, 0f, 0f), -100f, "Crate_S",
                 new Recipe(2, 0, 1)),
-            new SupplyCache("supply.tower.b", "RadioTower", new Vector3(6.5f, 0f, 0f), 100f, "Crate_S",
+            new SupplyCache("supply.tower.b", "RadioTower", new Vector3(-5.4f, 0f, 5.6f), -143f, "Crate_S",
                 new Recipe(2, 0, 1)),
             new SupplyCache("supply.scatter", "ScatterSet", new Vector3(0f, 0f, -3f), 180f, "Crate_M",
                 new Recipe(6, 0, 0)),

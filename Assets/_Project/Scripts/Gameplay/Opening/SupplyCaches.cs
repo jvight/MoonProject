@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
+using MoonProject.Core.Input;
 using MoonProject.Core.Save;
 using Object = UnityEngine.Object;
 
@@ -12,13 +13,16 @@ namespace MoonProject.Gameplay
     /// The opening's supply crates (docs/design/opening-v2.md §4, §10; no floating loot): Art's containers stood by
     /// world anchors and Lumen ruin pieces, cut open with the cutter like any sealed container
     /// (<see cref="SealedContainers"/>), or standing open from the start (the lander's, B4: no cutting before the
-    /// igniter). As a crate stands open its yield goes into 07's hold, each material with the salvage note; an open
-    /// one gives it once 07 is within the beam's reach. What the hold has no room for stays in the crate and comes out
-    /// when 07 is back within reach with room; a story part (the spare igniter) comes out with
+    /// igniter). As a crate stands open its yield goes into 07's hold, each material with the salvage note: an open
+    /// one offers it within the collect reach and gives it on a held E (Pick up), a cut-open one gives it once 07 is
+    /// within the beam's reach. What the hold has no room for stays in the crate and comes out the same way; a story part (the spare igniter) comes out with
     /// <see cref="StoryPartCollected"/>. Allocation-free per frame.
     /// </summary>
     public sealed class SupplyCaches : IDisposable
     {
+        /// <summary>Name key of an open crate's contents, after the Pick up verb.</summary>
+        private const string CrateContentsNoun = "pickup.crate.contents";
+
         /// <summary>Art's open cargo crate's soft rim glow (Crate_Cargo_Open).</summary>
         private const string RimGlowName = "RimGlow";
 
@@ -39,6 +43,8 @@ namespace MoonProject.Gameplay
         private readonly MaterialStock _stock;
         private readonly IRoverState _rover;
         private readonly ISaveService _save;
+        private readonly InputReader _input;
+        private readonly PickupReach _pickups;
         private readonly float _reach;
         private readonly float _collectReach;
         private readonly IDisposable _opened;
@@ -62,6 +68,8 @@ namespace MoonProject.Gameplay
             _stock = services.Materials;
             _rover = services.Rover;
             _save = services.Save;
+            _input = services.Input;
+            _pickups = services.Pickups;
             _reach = reach;
             _collectReach = collectReach;
             foreach (SupplyCache cache in caches)
@@ -174,10 +182,7 @@ namespace MoonProject.Gameplay
             for (int i = 0; i < _caches.Count; i++)
             {
                 bool holds = !IsEmpty(_left[i]) || _partLeft[i];
-                float reach = _caches[i].StartsOpen ? _collectReach : _reach;
-                if (holds && (_heldBack[i] == null || _heldBack[i]()) &&
-                    SurfaceRules.HorizontalDistanceSquared(_rover.Position, _containers[i].CutPoint.position) <=
-                    reach * reach)
+                if (holds && (_heldBack[i] == null || _heldBack[i]()) && Takes(i))
                 {
                     Give(i);
                     holds = !IsEmpty(_left[i]) || _partLeft[i];
@@ -188,6 +193,23 @@ namespace MoonProject.Gameplay
                 _rims[i]?.Step(holds, SurfaceRules.HorizontalDistance(_rover.Position, _containers[i].Root.position),
                     deltaTime);
             }
+        }
+
+        /// <summary>
+        /// 07 takes what crate <paramref name="index"/> holds now: an open crate offers it within the collect reach and
+        /// gives it on a held E (B4: the player is told to take the parts, and does); a cut-open one gives the rest as
+        /// soon as 07 is back within reach.
+        /// </summary>
+        private bool Takes(int index)
+        {
+            Vector3 at = _containers[index].CutPoint.position;
+            if (!_caches[index].StartsOpen)
+            {
+                return SurfaceRules.HorizontalDistanceSquared(_rover.Position, at) <= _reach * _reach;
+            }
+
+            return _pickups.Offer(Time.frameCount, _input.ExcavateHeld, PickupReach.OpenCrates, index, at,
+                _rover.Position, _collectReach, CrateContentsNoun);
         }
 
         public void Capture(OpeningSaveData data)

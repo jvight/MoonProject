@@ -54,6 +54,11 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float TotalBudget = 720f;
 
         private const float StopSpeed = 0.3f;
+
+        // 07's cheek lens scans what lies within this many degrees of its heading; off by more after arriving, it turns
+        // on the spot until it faces the target within the tighter angle.
+        private const float LensFacing = 25f;
+        private const float FacedWithin = 8f;
         private const float SealStandOff = 1.6f;
 
         /// <summary>
@@ -450,6 +455,13 @@ namespace MoonProject.Gameplay.PlayModeTests
                       $"{Vector3.Distance(Flat(fragment.Point), Flat(_rover.Position)):F2} m flat, " +
                       $"{HeadingOff(fragment.Point):F0} deg off");
             fragment = scans.Candidate;
+            if (HeadingOff(fragment.Point) > LensFacing)
+            {
+                // 07 came to rest side-on (the stand sidesteps round the ruins): its cheek lens only scans what lies
+                // ahead of it, so it turns on the spot to face the target, as a player steers.
+                yield return FaceToward(fragment.Point, fragment.FragmentId);
+            }
+
             yield return FirstUse("scan: hold E", VerbScanKey);
             Press(_keyboard.eKey);
             yield return Until(() => fragment.Scanned, scans.Tuning.Seconds(fragment.Size) + ScanAllowance,
@@ -473,27 +485,31 @@ namespace MoonProject.Gameplay.PlayModeTests
                        StringComparison.Ordinal));
         }
 
-        /// <summary>B4: up to the lander's open crate, which gives Metal 2, Wiring 1 and the spare igniter.</summary>
+        /// <summary>
+        /// B4: the objective line says to collect the parts; up to the lander's open crate, where a held E takes Metal 2,
+        /// Wiring 1 and the spare igniter.
+        /// </summary>
         private IEnumerator CollectTheOpenCrate()
         {
             Begin();
             SealedContainer crate = _gameplay.Containers.Find("supply.lander.open");
             Assert.IsTrue(crate.StandsOpen, "the lander's crate stands open from the start: no cutting before B6");
-            if (_gameplay.StartKit.CarriesIgniter)
+            Assert.IsFalse(_gameplay.StartKit.CarriesIgniter, "the crate gives nothing until 07 takes it");
+            yield return ExpectLine(OpeningKeys.CollectParts, "B4: the cutter is FAULT, the crate holds parts");
+            if (!_gameplay.Hints.TryGet(InteractionKind.PickUp, out _))
             {
-                // 07 scanned the cargo standing in the crate's reach: it gave its parts the moment the scan ended.
-                Assert.AreEqual(OpeningKeys.BuildPad, _gameplay.Opening.Flow.Current, "B4 is done with the scan");
-            }
-            else
-            {
-                yield return ExpectLine(OpeningKeys.CollectParts, "B4: the cutter is FAULT, the crate holds parts");
-                Vector3 front = Flat(crate.CutPoint.position + crate.Root.forward * SealStandOff);
-                yield return DriveTo(front + Flat(crate.Root.forward) * 3f, LineUpArrive,
-                    "a line-up for the open crate");
+                // Out of the crate's reach after the scan: drive up to it, as a player would.
+                Vector3 side = crate.SealSide(_context.Get<IRoverState>().Position);
+                Vector3 front = Flat(crate.CutPoint.position) + side * SealStandOff;
+                yield return DriveTo(front + side * SealLineUp, LineUpArrive, "a line-up for the open crate");
                 yield return DriveTo(front, 1f, "the open crate");
             }
 
-            yield return Until(() => _gameplay.StartKit.CarriesIgniter, FollowTimeout, "07 takes the spare igniter");
+            yield return Until(() => _gameplay.Hints.TryGet(InteractionKind.PickUp, out _), FollowTimeout,
+                "the open crate offers its parts (Pick up)");
+            Press(_keyboard.eKey);
+            yield return Until(() => _gameplay.StartKit.CarriesIgniter, FollowTimeout, "held E takes the spare igniter");
+            Release(_keyboard.eKey);
             Capture("04-the-open-crate");
             End("B4: collect the lander's open crate", $"the igniter; hold {Hold()}");
         }
@@ -513,7 +529,8 @@ namespace MoonProject.Gameplay.PlayModeTests
                     continue;
                 }
 
-                Vector3 side = ClearSide(crate.CutPoint.position, Flat(crate.Root.forward).normalized, SealStandOff,
+                Vector3 side = ClearSide(crate.CutPoint.position, crate.SealSide(_context.Get<IRoverState>().Position),
+                    SealStandOff,
                     $"{crate.Id} (its seal at {crate.CutPoint.position}; its frame {Frame(cache.AnchorId)})",
                     crate.Root);
                 Vector3 front = Flat(crate.CutPoint.position) + side * SealStandOff;
@@ -902,6 +919,17 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>Turns the view to <paramref name="point"/>, as the player's mouse would.</summary>
+        /// <summary>07 turns on the spot until it faces <paramref name="point"/> within the lens's reach.</summary>
+        private IEnumerator FaceToward(Vector3 point, string what)
+        {
+            _pilot.Target = null;
+            _pilot.Face = point;
+            yield return Until(() => HeadingOff(point) <= FacedWithin, FollowTimeout, $"07 turns to face {what}");
+            _pilot.Face = null;
+            Look(point);
+            yield return Until(() => _rover.Speed < StopSpeed, FollowTimeout, $"07 comes to rest facing {what}");
+        }
+
         private void Look(Vector3 point)
         {
             var rig = (RoverCameraRig)_context.Get<IViewCamera>();
