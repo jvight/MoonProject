@@ -329,16 +329,20 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreEqual(2, view.FocusedHoldCell);
             yield return TapKey(_keyboard.rightArrowKey);
             Assert.AreEqual(3, view.FocusedHoldCell);
-            yield return TapKey(_keyboard.rightArrowKey);
-            Assert.AreEqual(FaceDevices.Scan, view.FocusedDeviceIndex,
-                "Navigating Right from column 3 of row 0 must focus the scan lens.");
-            yield return TapKey(_keyboard.downArrowKey);
-            Assert.AreEqual(FaceDevices.Cutter, view.FocusedDeviceIndex,
-                "Navigating Down from the scan lens must move down to the cutter.");
             yield return TapKey(_keyboard.upArrowKey);
-            Assert.AreEqual(FaceDevices.Scan, view.FocusedDeviceIndex);
+            Assert.AreEqual(FaceDevices.SocketOne, view.FocusedDeviceIndex,
+                "Navigating Up from the hold's top row must focus the frame above it, socket 1.");
+            yield return TapKey(_keyboard.upArrowKey);
+            Assert.AreEqual(FaceDevices.Scan, view.FocusedDeviceIndex, "Up from socket 1 reaches the scan lens.");
+            yield return TapKey(_keyboard.rightArrowKey);
+            Assert.AreEqual(FaceDevices.Cutter, view.FocusedDeviceIndex, "Right from the scan lens crosses to the cutter.");
+            yield return TapKey(_keyboard.downArrowKey);
+            Assert.AreEqual(FaceDevices.SocketTwo, view.FocusedDeviceIndex, "Down from the cutter reaches socket 2.");
             yield return TapKey(_keyboard.leftArrowKey);
-            Assert.AreEqual(3, view.FocusedHoldCell, "Navigating Left from the scan lens must return focus to hold cell 3.");
+            Assert.AreEqual(FaceDevices.SocketOne, view.FocusedDeviceIndex, "Left from socket 2 crosses to socket 1.");
+            yield return TapKey(_keyboard.downArrowKey);
+            Assert.AreEqual(FaceLayout.HoldEntryBelow(FaceDevices.SocketOne, view.UnlockedCellCount), view.FocusedHoldCell,
+                "Navigating Down from socket 1 must return focus to the hold below it.");
 
             // BEAT 6: Close Returns with Happy Blink (^ ^)
             int happyBlinksBefore = faceState.ClosingHappyBlinkCount;
@@ -555,10 +559,10 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.IsTrue(view.IsTooltipVisible, "Mouse hover on the 15-degree sloped screen must show the cell tooltip.");
             Assert.AreEqual(1, view.FocusedHoldCell, "Hovering hold cell 1 focuses it.");
 
-            yield return TapKey(_keyboard.sKey);
-            Assert.AreEqual(5, view.FocusedHoldCell, "WASD S must move focus down from cell 1 to cell 5.");
+            yield return TapKey(_keyboard.dKey);
+            Assert.AreEqual(2, view.FocusedHoldCell, "WASD D must move focus along the strip from cell 1 to cell 2.");
             yield return TapButton(_gamepad.dpad.left);
-            Assert.AreEqual(4, view.FocusedHoldCell, "Gamepad D-pad Left must move focus from cell 5 to cell 4.");
+            Assert.AreEqual(1, view.FocusedHoldCell, "Gamepad D-pad Left must move focus from cell 2 back to cell 1.");
 
             // Close with Esc and verify previous cursor state and gameplay input are restored.
             yield return TapKey(_keyboard.escapeKey);
@@ -875,7 +879,10 @@ namespace MoonProject.Rover.PlayModeTests
             for (int i = 0; i < FaceInventoryView.MaxHoldCells; i++)
             {
                 rects.Add(FaceInventoryView.GetHoldCellReferenceRect(i));
-                rects.Add(FaceLayout.HoldNameRect(i));
+                Assert.GreaterOrEqual(
+                    FaceScreenMapper.SignedDistanceInsideGlass(FaceLayout.HoldNameRect(i), panelSize),
+                    minMargin,
+                    $"[{lightingTag}] The name under hold slot {i} must lie inside the glass safe area.");
             }
 
             for (int i = 0; i < FaceDevices.Count; i++)
