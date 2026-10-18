@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e3c5446cd305c784188345303cacf98a, type: 3}
   m_Name: BuildingTuning
   m_EditorClassIdentifier: 
+  _buildEffectVariant: 0
   _minPlacementDistance: 2
   _maxPlacementDistance: 12
   _snapDistance: 0.6
@@ -21,5 +22,7 @@ MonoBehaviour:
   _apronGlowFadeSeconds: 0.8
   _ghostAheadMetres: 4.5
   _apronSnapRadius: 3
+  _settleThumpMeters: 0.042
+  _settleDustRingCount: 18
   _startingKnownIds: []
   _playtestUnlockedIds: []

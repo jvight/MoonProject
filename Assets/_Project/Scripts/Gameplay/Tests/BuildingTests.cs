@@ -1156,5 +1156,71 @@ namespace MoonProject.Gameplay.Tests
                 Object.DestroyImmediate(matCatalog);
             }
         }
+
+        [Test]
+        public void StructureView_BuildEffectVariants_SwitchCleanlyAcrossAssembledBlueprintAndPrintedInPlace()
+        {
+            Assert.AreEqual(BuildEffectVariant.AssembledBy07, _tuning.Variant);
+            _tuning.SetVariant(BuildEffectVariant.BlueprintIntoMetal);
+            Assert.AreEqual(BuildEffectVariant.BlueprintIntoMetal, _tuning.Variant);
+            _tuning.SetVariant(BuildEffectVariant.PrintedInPlace);
+            Assert.AreEqual(BuildEffectVariant.PrintedInPlace, _tuning.Variant);
+            _tuning.SetVariant(BuildEffectVariant.AssembledBy07);
+
+            Shader shader = Shader.Find("Universal Render Pipeline/Lit");
+            Assert.IsNotNull(shader);
+            var validHolo = new Material(shader);
+            var invalidHolo = new Material(shader);
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                GameplayAssetPaths.RuntimeStructurePrefab(StructureIds.ChargingPad));
+            Assert.IsNotNull(prefab);
+            GameObject pad = Object.Instantiate(prefab);
+            try
+            {
+                Assert.IsTrue(pad.TryGetComponent(out StructureView view));
+                Assert.IsTrue(view.Initialize(validHolo, invalidHolo));
+
+                // Variant A: AssembledBy07 unfolds from a dropped hardware stack
+                view.ConfigureVariant(BuildEffectVariant.AssembledBy07, liveBuild: true);
+                view.SetPlacedState(0.15f, instant: false);
+                Transform stack = pad.transform.Find("CompactHardwareStack");
+                Assert.IsNotNull(stack);
+                Assert.IsTrue(stack.gameObject.activeSelf);
+
+                // Variant B: BlueprintIntoMetal shows ground blueprint survey apron and keeps all stages visible
+                view.ConfigureVariant(BuildEffectVariant.BlueprintIntoMetal, liveBuild: true);
+                view.SetPlacedState(0.35f, instant: false);
+                Transform blueprintGround = pad.transform.Find("BlueprintGroundApron");
+                Assert.IsNotNull(blueprintGround);
+                Assert.IsTrue(blueprintGround.gameObject.activeSelf);
+                Assert.IsFalse(stack.gameObject.activeSelf);
+
+                // Variant C: PrintedInPlace rises slice-by-slice and weld point Y increases monotonically
+                view.ConfigureVariant(BuildEffectVariant.PrintedInPlace, liveBuild: true);
+                view.SetPlacedState(0.10f, instant: false);
+                float y10 = view.GetActiveWeldPoint().y;
+                view.SetPlacedState(0.50f, instant: false);
+                float y50 = view.GetActiveWeldPoint().y;
+                view.SetPlacedState(0.90f, instant: false);
+                float y90 = view.GetActiveWeldPoint().y;
+                Assert.Greater(y50, y10, "PrintedInPlace weld point rises with progress (10% -> 50%).");
+                Assert.Greater(y90, y50, "PrintedInPlace weld point rises with progress (50% -> 90%).");
+
+                Transform printGuide = pad.transform.Find("PrintLayerGuide");
+                Assert.IsNotNull(printGuide);
+                Assert.IsTrue(printGuide.gameObject.activeSelf);
+
+                // Completing the structure hides temporary build guides and lights standby lamps
+                view.SetPlacedState(1f, instant: false);
+                Assert.IsFalse(printGuide.gameObject.activeSelf);
+                Assert.IsTrue(view.LampsLit);
+            }
+            finally
+            {
+                Object.DestroyImmediate(pad);
+                Object.DestroyImmediate(validHolo);
+                Object.DestroyImmediate(invalidHolo);
+            }
+        }
     }
 }
