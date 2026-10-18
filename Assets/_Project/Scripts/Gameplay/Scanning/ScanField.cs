@@ -155,7 +155,7 @@ namespace MoonProject.Gameplay
 
             Transform target = new GameObject(story.FragmentId).transform;
             target.SetParent(node, false);
-            target.position = panel.bounds.center;
+            target.position = panel.bounds.center + story.Offset;
             _fragments.Add(ScanFragment.ForStoryTarget(story, story.RuinId, target));
             return null;
         }

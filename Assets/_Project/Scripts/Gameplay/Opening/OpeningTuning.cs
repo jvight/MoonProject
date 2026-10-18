@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -35,13 +36,17 @@ namespace MoonProject.Gameplay
         [Tooltip("The open crate whose cargo 07 scans for the pad's blueprint (B3) and then collects (B4).")]
         [SerializeField] private string _cargoCrate = "supply.lander.open";
 
-        [Tooltip("The charging pad's fragments in the cargo crate's frame (x right, y up, z its front): Scan_1..N in " +
-                 "order, on what it holds, so the scan draws on a real mesh.")]
+        [Tooltip("Where the charging pad's fragments lie in the cargo crate's frame (x right, y up, z its front): " +
+                 "Scan_1..N in order, each on its fragment, so the scan draws on a real mesh.")]
         [SerializeField] private Vector3[] _cargoScanPoints =
         {
-            new Vector3(-0.15f, 0.3f, 0f),
-            new Vector3(0.15f, 0.3f, 0f),
+            new Vector3(-0.12f, 0.3f, 0.08f),
+            new Vector3(0.12f, 0.3f, 0.08f),
         };
+
+        [Tooltip("Art's pad fragments lying in the cargo crate, one per scan point in order (PadFragment_CoilPlate, " +
+                 "PadFragment_GuideRail).")]
+        [SerializeField] private GameObject[] _cargoFragments = Array.Empty<GameObject>();
 
         [Header("The start kit (§10)")]
         [Tooltip("The spare igniter's story-part id in 07's hold: the lander's open crate holds it, the cutter " +
@@ -52,15 +57,10 @@ namespace MoonProject.Gameplay
                  "to it).")]
         [Range(1f, 8f)] [SerializeField] private float _collectReach = 3.5f;
 
-        [Tooltip("Metres from 07 within which the open crate's soft glint starts to show (none further: the lander's " +
-                 "beacon and the cable lead 07 there, and loot never glows across the basin).")]
-        [Range(5f, 60f)] [SerializeField] private float _crateGlintReach = 28f;
-
-        [Tooltip("Metres from 07 within which the open crate's glint has fully faded in.")]
-        [Range(1f, 60f)] [SerializeField] private float _crateGlintFull = 18f;
-
-        [Tooltip("The open crate's glint at full, as a share of a held piece's: a soft warm point, not a star.")]
-        [Range(0f, 1f)] [SerializeField] private float _crateGlintStrength = 0.35f;
+        [Tooltip("Metres from 07 within which an open crate that still holds something shows Art's soft warm rim " +
+                 "glow (none further: the lander's beacon and the cable lead 07 there, and loot never glows across " +
+                 "the basin).")]
+        [Range(5f, 60f)] [SerializeField] private float _crateRimReach = 28f;
 
         [Header("The recovery protocol (§2)")]
         [Tooltip("The rows after Power: their lamps, dark through the opening.")]
@@ -78,7 +78,7 @@ namespace MoonProject.Gameplay
             new SupplyCache("supply.midway", "place.midway", new Vector3(1.5f, 0f, 0f), -20f, "Crate_S",
                 new Recipe(2, 1, 0)),
             new SupplyCache("supply.lander.open", OpeningField.LanderPortFrame, new Vector3(1.8f, 0f, 1f), 0f,
-                "Crate_M", new Recipe(2, 1, 0), true, new[] { "part.igniter", "part.icecore" }),
+                ContainerKinds.CrateMOpen, new Recipe(2, 1, 0), true, new[] { "part.igniter", "part.icecore" }),
             new SupplyCache("supply.habitat.reel", "HabitatModules", new Vector3(3f, 0f, -6f), 153f, "Crate_M",
                 new Recipe(6, 4, 0)),
             new SupplyCache("supply.workshop.a", "KenjiWorkshop", new Vector3(-2.5f, 0f, -3f), -140f, "Crate_S",
@@ -93,6 +93,12 @@ namespace MoonProject.Gameplay
                 new Recipe(6, 0, 0)),
         };
 
+        /// <summary>Art's pad fragments for a tuning made in code (tests); the shipped asset names its own.</summary>
+        internal void PopulateCargoFragments(GameObject[] fragments)
+        {
+            _cargoFragments = fragments ?? throw new ArgumentNullException(nameof(fragments));
+        }
+
         public string LanderAnchor => _landerAnchor;
         public string ApronAnchor => _apronAnchor;
         public float LanderReach => _landerReach;
@@ -101,12 +107,11 @@ namespace MoonProject.Gameplay
         public float PadChargeRadius => _padChargeRadius;
         public string CargoCrate => _cargoCrate;
         public IReadOnlyList<Vector3> CargoScanPoints => _cargoScanPoints;
+        public IReadOnlyList<GameObject> CargoFragments => _cargoFragments ?? Array.Empty<GameObject>();
         public IReadOnlyList<SupplyCache> Caches => _caches;
         public string IgniterPart => _igniterPart;
         public float CollectReach => _collectReach;
-        public float CrateGlintReach => _crateGlintReach;
-        public float CrateGlintFull => Mathf.Min(_crateGlintFull, _crateGlintReach - 0.01f);
-        public float CrateGlintStrength => _crateGlintStrength;
+        public float CrateRimReach => _crateRimReach;
         public RecoveryLamps RecoveryLamps => _recoveryLamps;
     }
 }

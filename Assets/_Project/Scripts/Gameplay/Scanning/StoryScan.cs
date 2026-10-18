@@ -29,8 +29,13 @@ namespace MoonProject.Gameplay
         [Tooltip("How long it takes to scan (ScanTuning's size times).")]
         [SerializeField] private ScanSize _size;
 
-        public StoryScan(string storyId, string ruinId, string node, string textKey, ScanSize size)
+        [Tooltip("Metres (world, y up) the scan point sits from the panel's centre: clear of the ruin's own scan " +
+                 "targets, so looking at the panel picks the panel.")]
+        [SerializeField] private Vector3 _offset;
+
+        public StoryScan(string storyId, string ruinId, string node, string textKey, ScanSize size, Vector3 offset)
         {
+            _offset = offset;
             _storyId = storyId;
             _ruinId = ruinId;
             _node = node;
@@ -45,6 +50,8 @@ namespace MoonProject.Gameplay
         public string TextKey => _textKey ?? string.Empty;
 
         public ScanSize Size => _size;
+
+        public Vector3 Offset => _offset;
 
         /// <summary>"story.&lt;id&gt;": its fragment's saved id.</summary>
         public string FragmentId => IdPrefix + _storyId;
