@@ -583,11 +583,39 @@ MonoBehaviour:
     _volumeMax: 0.6
     _pitchMin: 1
     _pitchMax: 1
-  - _id: boot_lamps
+  - _id: boot_lamp_flicker
     _clips:
-    - {fileID: 8300000, guid: 9527a15931aed994da888635de3a7f8d, type: 3}
+    - {fileID: 8300000, guid: 0f6695d5dfc05ee47b83e6abb557242d, type: 3}
+    - {fileID: 8300000, guid: 11e512afd91a93f45829a4c6c093b178, type: 3}
+    - {fileID: 8300000, guid: 470b6889f44f13545b1508359aa6cd4a, type: 3}
     _variantLabels:
-    - boot_lamps
+    - 01
+    - 02
+    - 03
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.9
+    _volumeMax: 0.9
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_lamp_ramp
+    _clips:
+    - {fileID: 8300000, guid: 2b8e5bbb07d830e429035c3a3d0a058e, type: 3}
+    _variantLabels:
+    - boot_lamp_ramp
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.55
+    _volumeMax: 0.55
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_head_sweep
+    _clips:
+    - {fileID: 8300000, guid: cc08cd209deae8a479af792d06f5fc94, type: 3}
+    _variantLabels:
+    - boot_head_sweep
     _bus: 2
     _spatial: 1
     _loop: 0
@@ -595,11 +623,41 @@ MonoBehaviour:
     _volumeMax: 0.6
     _pitchMin: 1
     _pitchMax: 1
-  - _id: boot_head
+  - _id: boot_head_nod
     _clips:
-    - {fileID: 8300000, guid: 7643f806ba738844c9165fa93f77f05c, type: 3}
+    - {fileID: 8300000, guid: 25674ca829fb8fa4fa935110c14fe792, type: 3}
     _variantLabels:
-    - boot_head
+    - boot_head_nod
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_wheel
+    _clips:
+    - {fileID: 8300000, guid: 751ce241e03efa44d98586ce92e7582d, type: 3}
+    - {fileID: 8300000, guid: 8e3215e76ff86ee40b1140df72f2851c, type: 3}
+    - {fileID: 8300000, guid: 96105efb33ad7804f946f46b8502bfcd, type: 3}
+    - {fileID: 8300000, guid: a637b17dd9c88414b86d374fdd61a03c, type: 3}
+    _variantLabels:
+    - 01
+    - 02
+    - 03
+    - 04
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.55
+    _volumeMax: 0.55
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_motor_shudder
+    _clips:
+    - {fileID: 8300000, guid: 9e1ddb59470954d43a09148dd9c0ca68, type: 3}
+    _variantLabels:
+    - boot_motor_shudder
     _bus: 2
     _spatial: 1
     _loop: 0
@@ -607,11 +665,39 @@ MonoBehaviour:
     _volumeMax: 0.6
     _pitchMin: 1
     _pitchMax: 1
-  - _id: boot_wheels
+  - _id: boot_motor_creep
     _clips:
-    - {fileID: 8300000, guid: 11ded63824ab20f4fb36586abab27432, type: 3}
+    - {fileID: 8300000, guid: 2d9f857376f97c541a70e88484c8013d, type: 3}
     _variantLabels:
-    - boot_wheels
+    - boot_motor_creep
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.4
+    _volumeMax: 0.4
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_cutter_spark
+    _clips:
+    - {fileID: 8300000, guid: 6fb9827ca3232834c880cd74e5075ddf, type: 3}
+    - {fileID: 8300000, guid: 930af23a85216484291c42d4f8d78597, type: 3}
+    - {fileID: 8300000, guid: d6395c1cb51ec664e8c457be174ec807, type: 3}
+    _variantLabels:
+    - 01
+    - 02
+    - 03
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_wing_jerk
+    _clips:
+    - {fileID: 8300000, guid: 999a122ab2d856344b4cc60c5f78884f, type: 3}
+    _variantLabels:
+    - boot_wing_jerk
     _bus: 2
     _spatial: 1
     _loop: 0
@@ -619,52 +705,52 @@ MonoBehaviour:
     _volumeMax: 0.6
     _pitchMin: 1
     _pitchMax: 1
-  - _id: boot_motor
+  - _id: boot_wing_stall
     _clips:
-    - {fileID: 8300000, guid: 00c145cb0fc51d940aef944892517f74, type: 3}
+    - {fileID: 8300000, guid: 68b2246a24fb4574da19b50ef9dc0244, type: 3}
     _variantLabels:
-    - boot_motor
+    - boot_wing_stall
     _bus: 2
     _spatial: 1
     _loop: 0
-    _volumeMin: 0.6
-    _volumeMax: 0.6
+    _volumeMin: 0.5
+    _volumeMax: 0.5
     _pitchMin: 1
     _pitchMax: 1
-  - _id: boot_cutter
+  - _id: boot_wing_fold
     _clips:
-    - {fileID: 8300000, guid: 6ba77be147639dc49a06544d34360c03, type: 3}
+    - {fileID: 8300000, guid: fa9f4553d8f842c42a2a93021143faca, type: 3}
     _variantLabels:
-    - boot_cutter
+    - boot_wing_fold
     _bus: 2
     _spatial: 1
     _loop: 0
-    _volumeMin: 0.6
-    _volumeMax: 0.6
+    _volumeMin: 0.55
+    _volumeMax: 0.55
     _pitchMin: 1
     _pitchMax: 1
-  - _id: boot_wing_jam
+  - _id: boot_antenna_rise
     _clips:
-    - {fileID: 8300000, guid: fcf1d6d39f3d7de4687ed88e1f402174, type: 3}
+    - {fileID: 8300000, guid: e8f74e6e82f59de4b9eb5cf63ad87313, type: 3}
     _variantLabels:
-    - boot_wing_jam
+    - boot_antenna_rise
     _bus: 2
     _spatial: 1
     _loop: 0
-    _volumeMin: 0.6
-    _volumeMax: 0.6
+    _volumeMin: 0.55
+    _volumeMax: 0.55
     _pitchMin: 1
     _pitchMax: 1
-  - _id: boot_antenna
+  - _id: boot_antenna_signal
     _clips:
-    - {fileID: 8300000, guid: a945b394e6fef204298d9dc3e3bdcae6, type: 3}
+    - {fileID: 8300000, guid: 3f45bee0bca50a445a9d61edec9ea677, type: 3}
     _variantLabels:
-    - boot_antenna
+    - boot_antenna_signal
     _bus: 2
     _spatial: 1
     _loop: 0
-    _volumeMin: 0.6
-    _volumeMax: 0.6
+    _volumeMin: 0.45
+    _volumeMax: 0.45
     _pitchMin: 1
     _pitchMax: 1
   - _id: boot_battery
@@ -675,8 +761,8 @@ MonoBehaviour:
     _bus: 2
     _spatial: 1
     _loop: 0
-    _volumeMin: 0.6
-    _volumeMax: 0.6
+    _volumeMin: 0.45
+    _volumeMax: 0.45
     _pitchMin: 1
     _pitchMax: 1
   - _id: boot_assembly
@@ -691,11 +777,35 @@ MonoBehaviour:
     _volumeMax: 0.6
     _pitchMin: 1
     _pitchMax: 1
-  - _id: boot_begin
+  - _id: boot_begin_turn
     _clips:
-    - {fileID: 8300000, guid: 1371f76da432d2c40b57f54d04112e51, type: 3}
+    - {fileID: 8300000, guid: c8f40ad06c836f64d8ced2e27d500469, type: 3}
     _variantLabels:
-    - boot_begin
+    - boot_begin_turn
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.55
+    _volumeMax: 0.55
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_begin_shiver
+    _clips:
+    - {fileID: 8300000, guid: e7b1a43b1c0024e4fa99e066fec02882, type: 3}
+    _variantLabels:
+    - boot_begin_shiver
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.45
+    _volumeMax: 0.45
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: boot_begin_lamps
+    _clips:
+    - {fileID: 8300000, guid: 52d79c17e5242ec40b4d3b3d6ae8cc7e, type: 3}
+    _variantLabels:
+    - boot_begin_lamps
     _bus: 2
     _spatial: 1
     _loop: 0
