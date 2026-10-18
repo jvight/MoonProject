@@ -16,6 +16,12 @@ namespace MoonProject.Gameplay
         public const float ReachPast = 1.5f;
 
         /// <summary>
+        /// Where across a collider's bounds the rays toward its parts go (a 3x3x3 grid, as shares of its extents): a
+        /// part with air in its middle (rails either side of a gap) still meets one.
+        /// </summary>
+        private static readonly float[] PartGrid = { -0.8f, 0f, 0.8f };
+
+        /// <summary>
         /// The nearest point where the ray from <paramref name="origin"/> through <paramref name="through"/> meets any
         /// enabled collider of <paramref name="colliders"/>.
         /// </summary>
@@ -44,6 +50,64 @@ namespace MoonProject.Gameplay
                     point = hit.point;
                     normal = hit.normal;
                     found = true;
+                }
+            }
+
+            return found;
+        }
+
+        /// <summary>
+        /// Where rays from <paramref name="origin"/> across each collider's bounds meet it, the hit nearest
+        /// <paramref name="near"/>: a real part of a target whose middle is air (rails either side of a gap), even
+        /// where its colliders are meshes with no nearest point to ask for.
+        /// </summary>
+        public static bool TryNearestPart(IReadOnlyList<Collider> colliders, Vector3 origin, Vector3 near,
+            out Vector3 point, out Vector3 normal)
+        {
+            point = near;
+            normal = Vector3.up;
+            if (colliders == null)
+            {
+                return false;
+            }
+
+            float best = float.MaxValue;
+            bool found = false;
+            for (int i = 0; i < colliders.Count; i++)
+            {
+                Collider collider = colliders[i];
+                if (collider == null || !collider.enabled || !collider.gameObject.activeInHierarchy)
+                {
+                    continue;
+                }
+
+                Bounds bounds = collider.bounds;
+                for (int x = 0; x < PartGrid.Length; x++)
+                {
+                    for (int y = 0; y < PartGrid.Length; y++)
+                    {
+                        for (int z = 0; z < PartGrid.Length; z++)
+                        {
+                            Vector3 aim = bounds.center + Vector3.Scale(bounds.extents,
+                                new Vector3(PartGrid[x], PartGrid[y], PartGrid[z]));
+                            Vector3 toward = aim - origin;
+                            float length = toward.magnitude;
+                            if (length < 1e-4f || !collider.Raycast(new Ray(origin, toward / length),
+                                    out RaycastHit hit, length + ReachPast))
+                            {
+                                continue;
+                            }
+
+                            float distance = (hit.point - near).sqrMagnitude;
+                            if (distance < best)
+                            {
+                                best = distance;
+                                point = hit.point;
+                                normal = hit.normal;
+                                found = true;
+                            }
+                        }
+                    }
                 }
             }
 
