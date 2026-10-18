@@ -23,6 +23,7 @@ namespace MoonProject.Gameplay
         private readonly FeelSprites _flare;
         private readonly LightPulse _flareLight;
         private Vector3 _from;
+        private Vector3 _span = new Vector3(0f, 0.65f, 0f);
         private float _age = float.PositiveInfinity;
         private bool _flared;
 
@@ -53,7 +54,14 @@ namespace MoonProject.Gameplay
         /// <summary>The dissolve begins on the fragment whose scan point is <paramref name="from"/> (world).</summary>
         public void Begin(Vector3 from)
         {
+            Begin(from, new Vector3(0f, 0.65f, 0f));
+        }
+
+        /// <summary>The dissolve begins on the fragment at <paramref name="from"/> with vertical <paramref name="span"/>.</summary>
+        public void Begin(Vector3 from, Vector3 span)
+        {
             _from = from;
+            _span = span.sqrMagnitude > 1e-4f ? span : new Vector3(0f, 0.65f, 0f);
             _age = 0f;
             _flared = false;
         }
@@ -63,8 +71,11 @@ namespace MoonProject.Gameplay
         {
             Vector3 toFrom = _from - lens;
             float distance = toFrom.magnitude;
+            Vector3 forward = distance > 1e-4f ? toFrom / distance : Vector3.forward;
+            Vector3 right = Vector3.Cross(Vector3.up, forward);
+            right = right.sqrMagnitude > 1e-4f ? right.normalized : Vector3.right;
             Vector3 aperture = distance > 1e-4f
-                ? lens + (toFrom / distance) * 0.025f
+                ? lens - right * 0.074f - forward * 0.056f
                 : lens;
             _flareLight.MoveTo(aperture);
             _flareLight.Step(deltaTime);
@@ -79,7 +90,7 @@ namespace MoonProject.Gameplay
                 }
                 else if (_age >= _tuning.ScanRibbonDelay)
                 {
-                    Stream(aperture, (_age - _tuning.ScanRibbonDelay) / _tuning.ScanRibbonSeconds);
+                    Stream(aperture, right, forward, (_age - _tuning.ScanRibbonDelay) / _tuning.ScanRibbonSeconds);
                 }
             }
 
@@ -87,30 +98,57 @@ namespace MoonProject.Gameplay
             _flare.End();
         }
 
-        private void Stream(Vector3 lens, float t)
+        private void Stream(Vector3 lens, Vector3 right, Vector3 forward, float t)
         {
             int beads = _tuning.ScanRibbonBeads;
-            float radius = _scanTuning != null ? _scanTuning.LensMoteRadius : 0.042f;
-            float moteSize = _scanTuning != null ? _scanTuning.LensMoteSize : 0.014f;
-            Color baseColor = _scanTuning != null ? _scanTuning.CompletionPingColor : _tuning.ScanRibbonColor;
+            ScanVariant variant = _scanTuning != null ? _scanTuning.Variant : ScanVariant.ProfilerSweep;
+            float shellRadius = Mathf.Clamp(Mathf.Abs(_span.y) * 0.42f, 0.16f, 0.46f);
+            float baseSize = _scanTuning != null ? Mathf.Max(_scanTuning.LensMoteSize * 1.6f, 0.012f) : 0.014f;
+            Color cyanColor = _scanTuning != null ? _scanTuning.ScanLineColor : _tuning.ScanRibbonColor;
+            Color amberColor = _scanTuning != null ? _scanTuning.CompletionPingColor : _tuning.ScanRibbonColor;
+
+            // Hold on the target's 3D blueprint shell during the initial completion ping peak, then collapse into the lens
+            float collapseT = Mathf.InverseLerp(0.12f, 1.0f, Mathf.Clamp01(t));
+            Vector2 span = FeelCurves.RibbonSpan(collapseT, _tuning.ScanRibbonLength);
             float env = Mathf.Sin(Mathf.Clamp01(t) * Mathf.PI);
+
             for (int i = 0; i < beads; i++)
             {
                 float toHead = (float)i / (beads - 1);
                 float weight = Mathf.Lerp(TailShare, 1f, toHead);
-                float angle = i * 2.3999632f + t * 4f;
-                float r = radius * (1f - 0.7f * Mathf.Clamp01(t)) * (0.25f + 0.75f * toHead);
-                var offset = new Vector3(Mathf.Cos(angle) * r, Mathf.Sin(angle) * r, 0f);
-                Color color = baseColor;
-                color.a = (_scanTuning != null ? _scanTuning.LensMoteAlpha : 0.14f) * weight * env;
-                _sprites.Add(lens + offset, moteSize * weight, color, Vector3.zero);
+                float s = Mathf.Lerp(span.x, span.y, toHead);
+
+                float angle = i * 2.3999632f + collapseT * 2.2f;
+                float elev = ((i % 5) - 2f) * 0.22f;
+                Vector3 shellOffset = (right * Mathf.Cos(angle) + Vector3.up * elev - forward * (0.35f * Mathf.Sin(angle)))
+                    * (shellRadius * (1f - s * 0.88f));
+                Vector3 startPos = _from + shellOffset;
+                Vector3 pos = FeelCurves.RibbonPoint(startPos, lens, _tuning.ScanRibbonArc, s);
+
+                Vector3 toLens = lens - pos;
+                float distToLens = toLens.magnitude;
+                Vector3 dirToLens = distToLens > 1e-4f ? toLens / distToLens : -forward;
+                Vector3 stretch = variant == ScanVariant.PointScan
+                    ? Vector3.zero
+                    : dirToLens * (Mathf.Lerp(0.022f, variant == ScanVariant.WireframeReveal ? 0.055f : 0.085f, Mathf.Sin(s * Mathf.PI)) * weight);
+
+                float sizeScale = variant == ScanVariant.PointScan ? 1.35f : 1.0f;
+                Color color = variant == ScanVariant.WireframeReveal
+                    ? Color.Lerp(amberColor, Color.white, 0.24f * toHead)
+                    : (variant == ScanVariant.PointScan
+                        ? Color.Lerp(cyanColor, amberColor, 0.25f + 0.50f * (1f - toHead))
+                        : Color.Lerp(cyanColor, amberColor, Mathf.Lerp(0.35f, 0.75f, 1f - s)));
+                color.a = Mathf.Min(0.22f, (_scanTuning != null ? _scanTuning.LensMoteAlpha * 0.55f : 0.16f) * weight * env);
+                _sprites.Add(pos, baseSize * sizeScale * weight, color, stretch);
             }
 
             if (t > 0.35f)
             {
                 float catchWeight = Mathf.InverseLerp(0.35f, 1f, t);
-                Color lensCatch = baseColor;
-                lensCatch.a = _tuning.ScanLensCoreAlpha * (0.85f + 0.35f * catchWeight) * env;
+                Color lensCatch = variant == ScanVariant.WireframeReveal
+                    ? amberColor
+                    : Color.Lerp(cyanColor, amberColor, 0.55f);
+                lensCatch.a = Mathf.Min(0.28f, _tuning.ScanLensCoreAlpha * (0.75f + 0.25f * catchWeight) * env);
                 _flare.Add(lens, _tuning.ScanLensCoreSize * (1f + 0.15f * catchWeight), lensCatch, Vector3.zero);
             }
         }
@@ -120,8 +158,7 @@ namespace MoonProject.Gameplay
             if (!_flared)
             {
                 _flared = true;
-                _flareLight.Ramp(_tuning.ScanFlareLight, 0f, false);
-                _flareLight.Ramp(0f, _tuning.ScanFlareSeconds, false);
+                _flareLight.Ramp(0f, 0f, false);
             }
 
             float u = Mathf.Clamp01(t);

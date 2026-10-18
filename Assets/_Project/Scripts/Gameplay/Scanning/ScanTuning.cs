@@ -52,6 +52,9 @@ namespace MoonProject.Gameplay
         [Range(0, 12)] [SerializeField] private int _knownMetal = 3;
 
         [Header("Surface scan look (SCAN v2)")]
+        [Tooltip("Active scan look preset: ProfilerSweep (A), WireframeReveal (B), or PointScan (C).")]
+        [SerializeField] private ScanVariant _variant = ScanVariant.ProfilerSweep;
+
         [Tooltip("Cyan colour of the crisp surface scan line and low-contrast swept raster band (same palette as the face).")]
         [SerializeField] private Color _scanLineColor = new Color(0.20f, 0.86f, 0.96f, 1f);
 
@@ -65,10 +68,10 @@ namespace MoonProject.Gameplay
         [Range(0.1f, 2f)] [SerializeField] private float _scanLineIntensity = 1.15f;
 
         [Tooltip("World-space vertical spacing between anti-aliased horizontal surface raster lines (m), chosen so they never alias at chase distance.")]
-        [Range(0.02f, 0.2f)] [SerializeField] private float _rasterSpacingMeters = 0.055f;
+        [Range(0.02f, 0.2f)] [SerializeField] private float _rasterSpacingMeters = 0.048f;
 
         [Tooltip("Low-contrast intensity of the swept surface raster band behind the scan line.")]
-        [Range(0.02f, 0.5f)] [SerializeField] private float _rasterContrast = 0.18f;
+        [Range(0.02f, 0.5f)] [SerializeField] private float _rasterContrast = 0.32f;
 
         [Tooltip("Seconds over which the swept surface raster band fades out behind the moving scan line.")]
         [Range(0.2f, 3f)] [SerializeField] private float _rasterFadeSeconds = 1.0f;
@@ -81,6 +84,18 @@ namespace MoonProject.Gameplay
 
         [Tooltip("Emissive intensity of the warm-amber completion ping edge.")]
         [Range(0.1f, 2f)] [SerializeField] private float _pingEdgeIntensity = 1.25f;
+
+        [Tooltip("World-space cell pitch (m) of the surface wireframe lattice (Variant B) and surface point-cloud grid (Variant C).")]
+        [Range(0.015f, 0.12f)] [SerializeField] private float _surfaceGridPitchMeters = 0.044f;
+
+        [Tooltip("Emissive intensity of the progressive CRT-amber wireframe hologram (Variant B).")]
+        [Range(0.2f, 2.0f)] [SerializeField] private float _wireframeRevealIntensity = 1.18f;
+
+        [Tooltip("Radius share (0.1..0.48) of each surface-locked lidar dot in the scanning point grid (Variant C).")]
+        [Range(0.10f, 0.48f)] [SerializeField] private float _pointGridRadiusShare = 0.28f;
+
+        [Tooltip("Speed (cycles/s) of the data ticks streaming to the lens (Variant B) and fine laser line pulses (Variant C).")]
+        [Range(0.5f, 8.0f)] [SerializeField] private float _beamPulseSpeed = 3.2f;
 
         [Tooltip("Diameter of the soft emitter glow core at 07's scan lens (m).")]
         [Range(0.01f, 0.35f)] [SerializeField] private float _lensGlowSize = 0.072f;
@@ -114,10 +129,10 @@ namespace MoonProject.Gameplay
         [Range(0.05f, 0.85f)] [SerializeField] private float _beamLensPeakAlpha = 0.68f;
 
         [Tooltip("Very low additive alpha in the middle of the scan beam wedge (almost invisible in the middle).")]
-        [Range(0.005f, 0.15f)] [SerializeField] private float _beamMidAlpha = 0.022f;
+        [Range(0.005f, 0.15f)] [SerializeField] private float _beamMidAlpha = 0.018f;
 
         [Tooltip("Additive alpha where the far edge of the scan beam wedge meets the current surface scan line on the target.")]
-        [Range(0.04f, 0.65f)] [SerializeField] private float _beamContactAlpha = 0.38f;
+        [Range(0.04f, 0.65f)] [SerializeField] private float _beamContactAlpha = 0.42f;
 
         [Tooltip("Fine scanline band density inside the scan beam wedge.")]
         [Range(12f, 120f)] [SerializeField] private float _beamScanlineDensity = 42f;
@@ -185,6 +200,7 @@ namespace MoonProject.Gameplay
         private static readonly int ScanPingColorShaderId = Shader.PropertyToID("_MoonScanPingColor");
         private static readonly int ScanParamsShaderId = Shader.PropertyToID("_MoonScanParams");
         private static readonly int ScanPingParamsShaderId = Shader.PropertyToID("_MoonScanPingParams");
+        private static readonly int ScanVariantParamsShaderId = Shader.PropertyToID("_MoonScanVariantParams");
 
         public IReadOnlyList<RuinScanSet> Ruins => _ruins;
 
@@ -192,6 +208,7 @@ namespace MoonProject.Gameplay
         public RuinScanSet LanderCargo => _landerCargo;
 
         public IReadOnlyList<StoryScan> Stories => _stories;
+        public ScanVariant Variant => _variant;
         public float Reach => _reach;
         public float Cone => _cone;
         public float DistanceWeight => _distanceWeight;
@@ -210,6 +227,10 @@ namespace MoonProject.Gameplay
         public float PingDurationSeconds => _pingDurationSeconds;
         public float PingEdgeThickness => _pingEdgeThickness;
         public float PingEdgeIntensity => _pingEdgeIntensity;
+        public float SurfaceGridPitchMeters => _surfaceGridPitchMeters;
+        public float WireframeRevealIntensity => _wireframeRevealIntensity;
+        public float PointGridRadiusShare => _pointGridRadiusShare;
+        public float BeamPulseSpeed => _beamPulseSpeed;
         public float LensGlowSize => _lensGlowSize;
         public float LensGlowAlpha => _lensGlowAlpha;
         public float LensHaloSize => _lensHaloSize;
@@ -235,7 +256,14 @@ namespace MoonProject.Gameplay
         public float PathGlintLifetime => _pathGlintLifetime;
         public float PathGlintGravity => _pathGlintGravity;
 
-        /// <summary>Pushes the surface scan line, raster band, and completion ping tuning to shader globals (zero GC).</summary>
+        /// <summary>Switches the active scan look variant preset at runtime and refreshes shader globals (zero GC).</summary>
+        public void SetVariant(ScanVariant variant)
+        {
+            _variant = variant;
+            ApplyShaderGlobals(_mediumSeconds);
+        }
+
+        /// <summary>Pushes the surface scan line, raster band, completion ping, and variant preset tuning to shader globals (zero GC).</summary>
         public void ApplyShaderGlobals(float scanDurationSeconds)
         {
             float duration = Mathf.Max(scanDurationSeconds, 0.25f);
@@ -247,6 +275,8 @@ namespace MoonProject.Gameplay
                 new Vector4(_scanLineWidth, _rasterSpacingMeters, _rasterContrast, fadeBandShare));
             Shader.SetGlobalVector(ScanPingParamsShaderId,
                 new Vector4(_scanLineIntensity, _pingDurationSeconds, _pingEdgeThickness, _pingEdgeIntensity));
+            Shader.SetGlobalVector(ScanVariantParamsShaderId,
+                new Vector4((float)_variant, _surfaceGridPitchMeters, _wireframeRevealIntensity, _pointGridRadiusShare));
         }
 
         /// <summary>Seconds a fragment of <paramref name="size"/> takes to scan with the plain eye.</summary>

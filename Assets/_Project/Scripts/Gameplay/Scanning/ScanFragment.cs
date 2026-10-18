@@ -20,7 +20,7 @@ namespace MoonProject.Gameplay
 
         private const float SweepHeight = 0.7f;
 
-        private readonly Renderer _solid;
+        private Renderer _solid;
         private readonly Transform _target;
         private readonly MaterialPropertyBlock _block = new MaterialPropertyBlock();
 
@@ -69,7 +69,14 @@ namespace MoonProject.Gameplay
         public Vector3 Point => _target.position;
 
         /// <summary>The way the sweep climbs: up its host's height.</summary>
-        public Vector3 SweepSpan => new Vector3(0f, _solid != null ? _solid.bounds.size.y : SweepHeight, 0f);
+        public Vector3 SweepSpan
+        {
+            get
+            {
+                Renderer solid = ResolveSolid();
+                return new Vector3(0f, solid != null ? solid.bounds.size.y : SweepHeight, 0f);
+            }
+        }
 
         public float Progress { get; internal set; }
 
@@ -118,6 +125,16 @@ namespace MoonProject.Gameplay
             Apply(DissolveId, 0f);
         }
 
+        private Renderer ResolveSolid()
+        {
+            if (_solid == null || !_solid.enabled || !_solid.gameObject.activeInHierarchy)
+            {
+                _solid = FindClosestRenderer(_target);
+            }
+
+            return _solid;
+        }
+
         private static Renderer FindClosestRenderer(Transform target)
         {
             Transform root = target.parent != null ? target.parent : target;
@@ -127,12 +144,19 @@ namespace MoonProject.Gameplay
             Vector3 point = target.position;
             for (int i = 0; i < renderers.Length; i++)
             {
-                Bounds b = renderers[i].bounds;
+                Renderer r = renderers[i];
+                if (r == null || !r.enabled || !r.gameObject.activeInHierarchy ||
+                    r.name.StartsWith("UCX_", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                Bounds b = r.bounds;
                 float score = b.SqrDistance(point) * 100f + (b.center - point).sqrMagnitude;
                 if (score < bestScore)
                 {
                     bestScore = score;
-                    best = renderers[i];
+                    best = r;
                 }
             }
 
@@ -141,14 +165,15 @@ namespace MoonProject.Gameplay
 
         private void Apply(int property, float value)
         {
-            if (_solid == null)
+            Renderer solid = ResolveSolid();
+            if (solid == null)
             {
                 return;
             }
 
-            _solid.GetPropertyBlock(_block);
+            solid.GetPropertyBlock(_block);
             _block.SetFloat(property, value);
-            _solid.SetPropertyBlock(_block);
+            solid.SetPropertyBlock(_block);
         }
     }
 }
