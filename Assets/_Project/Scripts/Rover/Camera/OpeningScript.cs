@@ -50,7 +50,6 @@ namespace MoonProject.Rover
         private float _speckClock;
         private float _speckSpan;
         private float _blinkClock;
-        private float _readoutClock;
         private float _glanceClock;
         private Vector2 _earth;
         private bool _blinked;
@@ -105,12 +104,9 @@ namespace MoonProject.Rover
 
         public Vector2 SpeckOffset { get; private set; }
 
-        /// <summary>07's boot readout in the lens (O4), 0..1.</summary>
-        public float Readout01 { get; private set; }
-
         /// <summary>The state to hand <see cref="ILensView"/> while <see cref="LensActive"/>.</summary>
         public LensViewState LensState =>
-            new LensViewState(Lid01, FocusDistance, Flicker01, Warmth01, SpeckOffset, Readout01);
+            new LensViewState(Lid01, FocusDistance, Flicker01, Warmth01, SpeckOffset);
 
         /// <summary>True while the picture is seen through 07's eye (the lens view applies).</summary>
         public bool LensActive { get; private set; }
@@ -249,7 +245,6 @@ namespace MoonProject.Rover
             _phaseLength = 0f;
             _speckClock = -1f;
             _blinkClock = -1f;
-            _readoutClock = -1f;
             _glanceClock = -1f;
             _blinked = false;
             WantsRigEase = false;
@@ -315,7 +310,6 @@ namespace MoonProject.Rover
                     break;
                 case OpeningPhase.Hunt:
                     _speckClock = 0f;
-                    _readoutClock = 0f;
                     Publish(WakeBeat.FocusHunting);
                     PublishPost(PostEventKind.Started, BootCheckStep.Agenda, BootCheckResult.Info);
                     break;
@@ -420,7 +414,6 @@ namespace MoonProject.Rover
             GazeHeld = false;
             BodyLidWeight = 0f;
             Sleep = 0f;
-            Readout01 = 0f;
             Publish(WakeBeat.ChaseFrame);
         }
 
@@ -453,11 +446,6 @@ namespace MoonProject.Rover
             if (_blinkClock >= 0f)
             {
                 _blinkClock += deltaTime;
-            }
-
-            if (_readoutClock >= 0f)
-            {
-                _readoutClock += deltaTime;
             }
 
             if (_blinked)
@@ -536,7 +524,6 @@ namespace MoonProject.Rover
             }
 
             Lid01 = Mathf.Lerp(Mathf.Clamp01(lid), _settings.BlinkLow, BlinkDip());
-            Readout01 = Readout();
             FocusDistance = focus;
             Sleep = sleep;
             SpeckOffset = _speckClock < 0f
@@ -577,19 +564,6 @@ namespace MoonProject.Rover
         private static float LogLerp(float from, float to, float t)
         {
             return Mathf.Exp(Mathf.Lerp(Mathf.Log(Mathf.Max(from, 1e-3f)), Mathf.Log(Mathf.Max(to, 1e-3f)), t));
-        }
-
-        private float Readout()
-        {
-            if (_readoutClock < 0f || !InLens)
-            {
-                return 0f;
-            }
-
-            float fade = _settings.ReadoutFade;
-            float length = _settings.ReadoutSeconds;
-            return Smoothing.SmoothStep(0f, fade, _readoutClock)
-                * (1f - Smoothing.SmoothStep(length - fade, length, _readoutClock));
         }
 
         private float BlinkDip()

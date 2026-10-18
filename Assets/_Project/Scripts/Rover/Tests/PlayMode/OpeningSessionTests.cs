@@ -54,6 +54,7 @@ namespace MoonProject.Rover.PlayModeTests
         private const int TransitionHeight = 360;
         private const float BootTimeout = 30f;
         private const int BootCheckStepCount = 14;
+        private const float TextCheckEvery = 0.5f;
         private const float TitleQuietSeconds = 4f;
         private const float MaxUntouched = 45f;
         private const float MinSelfTest = 25f;
@@ -130,6 +131,26 @@ namespace MoonProject.Rover.PlayModeTests
             }
         }
 
+        /// <summary>
+        /// The boot text lives on 07's face (and the HUD), never in the world: a world-space text or canvas is drawn
+        /// huge from any free or overhead camera.
+        /// </summary>
+        private static void AssertNoWorldSpaceText()
+        {
+            foreach (TextMesh text in Object.FindObjectsByType<TextMesh>(FindObjectsInactive.Include,
+                FindObjectsSortMode.None))
+            {
+                Assert.Fail($"World-space TextMesh '{text.name}' ('{text.text}') is in the scene.");
+            }
+
+            foreach (Canvas canvas in Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include,
+                FindObjectsSortMode.None))
+            {
+                Assert.AreNotEqual(RenderMode.WorldSpace, canvas.renderMode,
+                    $"World-space canvas '{canvas.name}' is in the scene.");
+            }
+        }
+
         [UnityTest]
         [Timeout(600000)]
         [PrebuildSetup(typeof(RoverSessionScene))]
@@ -155,7 +176,6 @@ namespace MoonProject.Rover.PlayModeTests
                 (OpeningPhase.LidCrack, 0.7f, "o02_lid_slit"),
                 (OpeningPhase.LidHalf, 0.8f, "o03_lid_half"),
                 (OpeningPhase.Hunt, 0.35f, "o04_hunt_near_speck"),
-                (OpeningPhase.Hunt, 0.9f, "o04b_boot_readout"),
                 (OpeningPhase.PullOut, 0.55f, "pull_out"),
                 (OpeningPhase.PullOut, 0.9f, "pull_out_lens_glass"),
                 (OpeningPhase.OverShoulder, 0.9f, "release_over_shoulder"),
@@ -172,6 +192,7 @@ namespace MoonProject.Rover.PlayModeTests
             int nextStripIndex = 0;
             var postTaken = new bool[BootCheckStepCount];
             float crackleStarted = -1f;
+            float nextTextCheck = 0f;
             float started = Time.time;
             while (!_beats.Contains(WakeBeat.ChaseFrame))
             {
@@ -180,6 +201,12 @@ namespace MoonProject.Rover.PlayModeTests
                 if (crackleStarted < 0f && _beats.Contains(WakeBeat.Crackle))
                 {
                     crackleStarted = Time.time;
+                }
+
+                if (Time.time >= nextTextCheck)
+                {
+                    AssertNoWorldSpaceText();
+                    nextTextCheck = Time.time + TextCheckEvery;
                 }
 
                 if (script.InLens)

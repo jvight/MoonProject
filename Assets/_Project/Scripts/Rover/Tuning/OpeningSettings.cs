@@ -91,16 +91,6 @@ namespace MoonProject.Rover
         [Range(20f, 500f)]
         [SerializeField] private float _focusSettle = 80f;
 
-        [Header("Boot readout (O4)")]
-        [Tooltip("Seconds the boot readout shows in the lens, from the start of the flicker; it is never shown when "
-            + "the player hurried the wake.")]
-        [Range(0.5f, 4f)]
-        [SerializeField] private float _readoutSeconds = 1.8f;
-
-        [Tooltip("Seconds the readout takes to fade in, and again to fade out.")]
-        [Range(0.1f, 1.5f)]
-        [SerializeField] private float _readoutFade = 0.4f;
-
         [Header("Dust speck (viewport units from the frame's centre)")]
         [Tooltip("Where the speck sits on the glass when the lens first hunts: left of centre, low enough to show "
             + "under the half-open lid.")]
@@ -257,8 +247,6 @@ namespace MoonProject.Rover
         public float FocusNear => _focusNear;
         public float FocusOvershoot => _focusOvershoot;
         public float FocusSettle => _focusSettle;
-        public float ReadoutSeconds => _readoutSeconds;
-        public float ReadoutFade => Mathf.Min(_readoutFade, 0.5f * _readoutSeconds);
         public Vector2 SpeckStart => _speckStart;
         public Vector2 SpeckEnd => _speckEnd;
         public float BowedPitch => _bowedPitch;

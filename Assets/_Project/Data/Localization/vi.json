@@ -427,18 +427,6 @@
             "text": "Về màn hình chính"
         },
         {
-            "key": "lens.boot.signal",
-            "text": "TÍN HIỆU QUỸ ĐẠO · ĐÃ NHẬN"
-        },
-        {
-            "key": "lens.boot.uplink",
-            "text": "ĐƯỜNG TRUYỀN · MẤT KẾT NỐI"
-        },
-        {
-            "key": "lens.boot.recovery",
-            "text": "BẮT ĐẦU KHÔI PHỤC"
-        },
-        {
             "key": "ui.settings.text_size",
             "text": "Cỡ chữ"
         },
