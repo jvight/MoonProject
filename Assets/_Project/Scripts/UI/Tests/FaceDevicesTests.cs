@@ -1,6 +1,7 @@
 using System;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.UIElements;
 using MoonProject.Core;
 
 namespace MoonProject.UI.Tests
@@ -47,21 +48,30 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
-        public void FromTheRight_OfAHoldRow_TheNearestDeviceIsSelected()
+        public void TheKeys_FollowTheScreen_AcrossAndDownBetweenTheFourFrames()
         {
-            Assert.AreEqual(FaceDevices.Scan, FaceDevices.NearestTo(FaceDevices.CenterOf(FaceDevices.Scan).y));
-            Assert.AreEqual(FaceDevices.SocketTwo, FaceDevices.NearestTo(700f));
-            Assert.AreEqual(FaceDevices.Scan, FaceDevices.NearestTo(0f));
+            Assert.AreEqual(FaceDevices.Cutter, FaceDevices.Step(FaceDevices.Scan, NavigationMoveEvent.Direction.Right));
+            Assert.AreEqual(FaceDevices.Scan, FaceDevices.Step(FaceDevices.Cutter, NavigationMoveEvent.Direction.Left));
+            Assert.AreEqual(FaceDevices.SocketOne, FaceDevices.Step(FaceDevices.Scan, NavigationMoveEvent.Direction.Down));
+            Assert.AreEqual(FaceDevices.SocketTwo, FaceDevices.Step(FaceDevices.Cutter, NavigationMoveEvent.Direction.Down));
+            Assert.AreEqual(FaceDevices.Scan, FaceDevices.Step(FaceDevices.SocketOne, NavigationMoveEvent.Direction.Up));
+            Assert.AreEqual(FaceDevices.SocketOne, FaceDevices.Step(FaceDevices.SocketTwo, NavigationMoveEvent.Direction.Left));
+            Assert.AreEqual(FaceDevices.SocketTwo, FaceDevices.Step(FaceDevices.SocketOne, NavigationMoveEvent.Direction.Right));
+            Assert.AreEqual(-1, FaceDevices.Step(FaceDevices.SocketOne, NavigationMoveEvent.Direction.Down),
+                "down from a lower frame leads to the hold, which the view enters");
+            Assert.AreEqual(-1, FaceDevices.Step(FaceDevices.Scan, NavigationMoveEvent.Direction.Left));
         }
 
         [Test]
-        public void EveryDevice_HasANameKey_AndASlotInsideTheRightPane()
+        public void EveryDevice_HasANameKey_AndAFrameInsideTheScreenMargins()
         {
             for (int device = 0; device < FaceDevices.Count; device++)
             {
                 StringAssert.StartsWith("ui.device.", FaceDevices.NameKey(device));
-                Vector2 centre = FaceDevices.CenterOf(device);
-                Assert.Greater(centre.x, FaceInventoryView.DividerX, $"device {device} is right of the divider");
+                Rect frame = FaceLayout.DeviceFrame(device);
+                Assert.GreaterOrEqual(frame.xMin, FaceLayout.Margin, $"device {device}");
+                Assert.LessOrEqual(frame.xMax, FaceLayout.RightEdge, $"device {device}");
+                Assert.AreEqual(frame.center, FaceDevices.CenterOf(device));
             }
         }
 

@@ -523,10 +523,10 @@ MonoBehaviour:
     _cellGapX: 10
     _cellGapY: 8
     _dividerX: 478
-    _bubbleRadius: 36
-    _roverOriginX: 804
-    _roverOriginY: 468
-    _roverScale: 156
+    _bubbleRadius: 20
+    _roverOriginX: 576
+    _roverOriginY: 412
+    _roverScale: 185
     _toastDurationSeconds: 3.5
     _roverWheelRadius: 0.35
     _roverWheelRimRadius: 0.185

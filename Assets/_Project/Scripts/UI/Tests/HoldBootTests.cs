@@ -242,10 +242,9 @@ namespace MoonProject.UI.Tests
                 Rect r = FaceInventoryView.GetHoldCellReferenceRect(i);
                 Assert.AreEqual(FaceInventoryView.CellSize, r.width, 1e-3f);
                 Assert.AreEqual(FaceInventoryView.CellSize, r.height, 1e-3f);
-                Assert.GreaterOrEqual(r.xMin, FaceInventoryView.HoldGridX - 1e-3f);
-                Assert.LessOrEqual(r.xMax, FaceInventoryView.DividerX - 24f);
-                Assert.GreaterOrEqual(r.yMin, FaceInventoryView.HoldGridY - 1e-3f);
-                Assert.LessOrEqual(r.yMax, 690f);
+                Assert.GreaterOrEqual(r.xMin, FaceLayout.Margin - 1e-3f);
+                Assert.LessOrEqual(r.xMax, FaceLayout.Margin + FaceLayout.StripWidth + 1e-3f);
+                Assert.LessOrEqual(r.yMax, FaceLayout.BottomRowY + FaceLayout.CellSize + 1e-3f);
 
                 for (int j = i + 1; j < FaceInventoryView.MaxHoldCells; j++)
                 {
@@ -254,25 +253,20 @@ namespace MoonProject.UI.Tests
                 }
             }
 
-            float minDistance = FaceInventoryView.BubbleRadius * 2f + 8f;
+            CargoScreenSettings rover = AssetDatabase.LoadAssetAtPath<UiTuning>(UiAssetPaths.Tuning).Cargo;
             for (int i = 0; i < FaceDevices.Count; i++)
             {
-                Vector2 c = FaceDevices.CenterOf(i);
-                Assert.GreaterOrEqual(c.x - FaceInventoryView.BubbleRadius, FaceInventoryView.DividerX + 16f);
-                Assert.LessOrEqual(c.x + FaceInventoryView.BubbleRadius, FaceInventoryView.ReferenceWidth - 16f);
-                Assert.GreaterOrEqual(c.y - FaceInventoryView.BubbleRadius, 60f);
-                Assert.LessOrEqual(c.y + FaceInventoryView.BubbleRadius, 670f);
+                Rect frame = FaceLayout.DeviceFrame(i);
+                Assert.GreaterOrEqual(frame.xMin, FaceLayout.Margin);
+                Assert.LessOrEqual(frame.xMax, FaceLayout.RightEdge);
+                Assert.GreaterOrEqual(frame.yMin, FaceLayout.TitleRuleY);
 
                 Vector2 mount = RoverLineArtPainter.GetSocketMountPoint(FaceDevices.MountOf(i),
-                    new Vector2(FaceInventoryView.RoverOriginX, FaceInventoryView.RoverOriginY),
-                    FaceInventoryView.RoverScale);
-                Assert.Greater(Vector2.Distance(c, mount), FaceInventoryView.BubbleRadius + 6f,
-                    $"Device bubble {i} is too close to its mount point on 07");
-
-                for (int j = i + 1; j < FaceDevices.Count; j++)
+                    new Vector2(rover.RoverOriginX, rover.RoverOriginY), rover.RoverScale);
+                for (int j = 0; j < FaceDevices.Count; j++)
                 {
-                    Assert.GreaterOrEqual(Vector2.Distance(c, FaceDevices.CenterOf(j)), minDistance,
-                        $"Device bubble {i} overlaps device bubble {j}");
+                    Assert.IsFalse(FaceLayout.DeviceHitRect(j).Contains(mount),
+                        $"Device {i}'s mount point on 07 lies inside the frame of device {j}");
                 }
             }
 
@@ -300,11 +294,11 @@ namespace MoonProject.UI.Tests
 
             localization.SetLanguage("en");
             Assert.AreEqual("INVENTORY", localization.Get(UiKeys.CargoHold));
-            Assert.AreEqual("EQUIPPED", localization.Get(UiKeys.CargoTabSeven));
+            Assert.AreEqual("EQUIPMENT DIAGNOSTIC · UNIT 07 · SSR-5", localization.Get(UiKeys.FaceTitle));
 
             localization.SetLanguage("vi");
             Assert.AreEqual("KHOANG HÀNG", localization.Get(UiKeys.CargoHold));
-            Assert.AreEqual("TRANG BỊ", localization.Get(UiKeys.CargoTabSeven));
+            Assert.AreEqual("CHẨN ĐOÁN TRANG BỊ · ĐƠN VỊ 07 · SSR-5", localization.Get(UiKeys.FaceTitle));
 
             foreach (string lang in new[] { "en", "vi" })
             {
