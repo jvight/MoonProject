@@ -54,6 +54,11 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float TotalBudget = 720f;
 
         private const float StopSpeed = 0.3f;
+
+        // 07's cheek lens scans what lies within this many degrees of its heading; off by more after arriving, it turns
+        // on the spot until it faces the target within the tighter angle.
+        private const float LensFacing = 25f;
+        private const float FacedWithin = 8f;
         private const float SealStandOff = 1.6f;
 
         /// <summary>
@@ -450,6 +455,13 @@ namespace MoonProject.Gameplay.PlayModeTests
                       $"{Vector3.Distance(Flat(fragment.Point), Flat(_rover.Position)):F2} m flat, " +
                       $"{HeadingOff(fragment.Point):F0} deg off");
             fragment = scans.Candidate;
+            if (HeadingOff(fragment.Point) > LensFacing)
+            {
+                // 07 came to rest side-on (the stand sidesteps round the ruins): its cheek lens only scans what lies
+                // ahead of it, so it turns on the spot to face the target, as a player steers.
+                yield return FaceToward(fragment.Point, fragment.FragmentId);
+            }
+
             yield return FirstUse("scan: hold E", VerbScanKey);
             Press(_keyboard.eKey);
             yield return Until(() => fragment.Scanned, scans.Tuning.Seconds(fragment.Size) + ScanAllowance,
@@ -907,6 +919,17 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>Turns the view to <paramref name="point"/>, as the player's mouse would.</summary>
+        /// <summary>07 turns on the spot until it faces <paramref name="point"/> within the lens's reach.</summary>
+        private IEnumerator FaceToward(Vector3 point, string what)
+        {
+            _pilot.Target = null;
+            _pilot.Face = point;
+            yield return Until(() => HeadingOff(point) <= FacedWithin, FollowTimeout, $"07 turns to face {what}");
+            _pilot.Face = null;
+            Look(point);
+            yield return Until(() => _rover.Speed < StopSpeed, FollowTimeout, $"07 comes to rest facing {what}");
+        }
+
         private void Look(Vector3 point)
         {
             var rig = (RoverCameraRig)_context.Get<IViewCamera>();
