@@ -72,6 +72,13 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         private const float WakeTimeout = 20f;
         private const float SettleSeconds = 0.6f;
+
+        /// <summary>Holds of E tried before a scan that never begins counts as a failure.</summary>
+        private const int HoldAttempts = 3;
+
+        /// <summary>Seconds a hold of E is given to begin its scan.</summary>
+        private const float HoldBeginSeconds = 2f;
+
         private const float CandidateTimeout = 4f;
         private const float ScanTimeout = 30f;
         private const float WeldTimeout = 40f;
@@ -206,17 +213,37 @@ namespace MoonProject.Gameplay.PlayModeTests
                       $"{scans.Candidate?.FragmentId ?? "none"}, 07 at {_context.Get<IRoverState>().Position}, the " +
                       $"fragment at {fragment.Point})");
 
-            // Another target on the same host (a neighbour in the set, a story panel) may lie squarer in view: the
-            // beam is measured on the one 07 scans.
-            fragment = scans.Candidate;
-
             ScanBeam beam = _gameplay.Salvage.Feel.ScanBeam;
             Vector3 lastContact = Vector3.zero;
             float worst = 0f;
             bool captured = false;
             int chaseShot = 0;
             int frame = 0;
-            Press(_keyboard.eKey);
+
+            // The hold locks onto whatever the brackets are on as the key goes down, and the framing camera may still
+            // be swinging a neighbour on the same host (another part of the set, a story panel) into that place, one
+            // with no clear line to it yet: the player lets go and holds again, and the beam is measured on the
+            // target the scan began on.
+            for (int attempt = 0; attempt < HoldAttempts && (scans.Scanning == null || scans.Scanning.HostId != host);
+                 attempt++)
+            {
+                Press(_keyboard.eKey);
+                float begin = Time.time + HoldBeginSeconds;
+                while (scans.Scanning == null && Time.time < begin)
+                {
+                    yield return null;
+                }
+
+                if (scans.Scanning == null)
+                {
+                    Release(_keyboard.eKey);
+                    yield return new WaitForSeconds(HoldBeginSeconds);
+                }
+            }
+
+            Assert.IsNotNull(scans.Scanning, $"held E begins a scan on {host} (candidate " +
+                                             $"{scans.Candidate?.FragmentId ?? "none"})");
+            fragment = scans.Scanning;
             float deadline = Time.time + ScanTimeout;
             while (!fragment.Scanned && Time.time < deadline)
             {
