@@ -19,13 +19,18 @@ namespace MoonProject.Gameplay
     /// </summary>
     public sealed class SupplyCaches : IDisposable
     {
+        /// <summary>Metres above an open crate's root its glint shines (over its open lid).</summary>
+        private const float GlintHeight = 0.7f;
+
         /// <summary>A frame's forward laid flat shorter than this is not a heading (it points up or down).</summary>
         private const float LevelShare = 0.5f;
 
         private readonly List<SupplyCache> _caches = new List<SupplyCache>();
         private readonly List<SealedContainer> _containers = new List<SealedContainer>();
         private readonly Recipe[] _left;
+        private readonly Func<bool>[] _heldBack;
         private readonly bool[] _partLeft;
+        private readonly GameObject[] _props;
         private readonly EventBus _events;
         private readonly MaterialStock _stock;
         private readonly IRoverState _rover;
@@ -33,17 +38,28 @@ namespace MoonProject.Gameplay
         private readonly float _reach;
         private readonly float _collectReach;
         private readonly IDisposable _opened;
+        private readonly IViewCamera _view;
+        private readonly PickupGlints _glints;
+        private readonly float _glintReach;
+        private readonly float _glintFull;
+        private readonly float _glintStrength;
 
         /// <param name="frames">A crate's frame by its anchor id: a world anchor or a ruin piece.</param>
         /// <param name="reach">Metres within which a cut-open crate still holding something gives the rest.</param>
-        /// <param name="collectReach">Metres within which a crate open from the start gives what it holds.</param>
-        public SupplyCaches(IReadOnlyList<SupplyCache> caches, Func<string, Transform> frames, Transform parent,
-            GameplayServices services, SealedContainers containers, float reach, float collectReach)
+        /// <param name="tuning">The crates, the open ones' collect reach and their glint.</param>
+        public SupplyCaches(OpeningTuning tuning, Func<string, Transform> frames, Transform parent,
+            GameplayServices services, SealedContainers containers, float reach)
         {
-            if (caches == null || frames == null || services == null || containers == null)
+            if (tuning == null || frames == null || services == null || containers == null)
             {
-                throw new ArgumentNullException(nameof(caches), "The supply crates are missing an input.");
+                throw new ArgumentNullException(nameof(tuning), "The supply crates are missing an input.");
             }
+
+            IReadOnlyList<SupplyCache> caches = tuning.Caches;
+            float collectReach = tuning.CollectReach;
+            _glintReach = tuning.CrateGlintReach;
+            _glintFull = tuning.CrateGlintFull;
+            _glintStrength = tuning.CrateGlintStrength;
 
             _events = services.Events;
             _stock = services.Materials;
@@ -51,6 +67,15 @@ namespace MoonProject.Gameplay
             _save = services.Save;
             _reach = reach;
             _collectReach = collectReach;
+            _view = services.View;
+            int open = 0;
+            foreach (SupplyCache cache in caches)
+            {
+                open += cache.StartsOpen ? 1 : 0;
+            }
+
+            _glints = new PickupGlints(parent, services.Visuals.PartGlint, services.Glints, services.GlintVeil, open,
+                Layers.Pickup);
             foreach (SupplyCache cache in caches)
             {
                 Transform frame = frames(cache.AnchorId) ?? throw new InvalidOperationException(
@@ -73,6 +98,8 @@ namespace MoonProject.Gameplay
             }
 
             _left = new Recipe[_caches.Count];
+            _props = new GameObject[_caches.Count];
+            _heldBack = new Func<bool>[_caches.Count];
             _partLeft = new bool[_caches.Count];
             for (int i = 0; i < _caches.Count; i++)
             {
@@ -80,7 +107,13 @@ namespace MoonProject.Gameplay
                 {
                     containers.StandOpen(_caches[i].Id);
                     _left[i] = _caches[i].Yield;
-                    _partLeft[i] = _caches[i].Part.Length > 0;
+                    _partLeft[i] = _caches[i].Parts.Count > 0;
+                }
+
+                if (_caches[i].Prop != null)
+                {
+                    _props[i] = Object.Instantiate(_caches[i].Prop, _containers[i].ItemSocket, false);
+                    _props[i].SetActive(_partLeft[i]);
                 }
             }
 
@@ -106,18 +139,56 @@ namespace MoonProject.Gameplay
             return _partLeft[index];
         }
 
+        /// <summary>
+        /// Crate <paramref name="id"/> keeps what it holds until <paramref name="until"/> says so: the lander's cargo
+        /// crate gives nothing while 07 is still scanning the pad's fragments on it (B3 before B4).
+        /// </summary>
+        public void HoldBack(string id, Func<bool> until)
+        {
+            int index = IndexOf(id);
+            if (index < 0)
+            {
+                throw new ArgumentException($"No supply crate '{id}' (OpeningTuning's caches).", nameof(id));
+            }
+
+            _heldBack[index] = until ?? throw new ArgumentNullException(nameof(until));
+        }
+
+        /// <summary>The crate called <paramref name="id"/>, standing in the world.</summary>
+        public Transform RootOf(string id)
+        {
+            int index = IndexOf(id);
+            return index >= 0 ? _containers[index].Root : throw new ArgumentException(
+                $"No supply crate '{id}' (OpeningTuning's caches).", nameof(id));
+        }
+
         public void Step()
         {
+            _glints.Begin(_view.Camera.transform.position, Time.time);
             for (int i = 0; i < _caches.Count; i++)
             {
+                bool holds = !IsEmpty(_left[i]) || _partLeft[i];
                 float reach = _caches[i].StartsOpen ? _collectReach : _reach;
-                if ((!IsEmpty(_left[i]) || _partLeft[i]) &&
+                if (holds && (_heldBack[i] == null || _heldBack[i]()) &&
                     SurfaceRules.HorizontalDistanceSquared(_rover.Position, _containers[i].CutPoint.position) <=
                     reach * reach)
                 {
                     Give(i);
+                    holds = !IsEmpty(_left[i]) || _partLeft[i];
+                }
+
+                if (holds && _caches[i].StartsOpen)
+                {
+                    // A soft warm point fading in as 07 nears the crate: the owner could not find the lander's at B4,
+                    // and loot never glows across the basin.
+                    Vector3 at = _containers[i].Root.position;
+                    float distance = SurfaceRules.HorizontalDistance(_rover.Position, at);
+                    float strength = (1f - Ease.Step(_glintFull, _glintReach, distance)) * _glintStrength;
+                    _glints.Add(at + Vector3.up * GlintHeight, i, strength);
                 }
             }
+
+            _glints.End();
         }
 
         public void Capture(OpeningSaveData data)
@@ -169,8 +240,13 @@ namespace MoonProject.Gameplay
                 int index = IndexOf(id);
                 if (index >= 0)
                 {
-                    _partLeft[index] = _caches[index].Part.Length > 0;
+                    _partLeft[index] = _caches[index].Parts.Count > 0;
                 }
+            }
+
+            for (int i = 0; i < _caches.Count; i++)
+            {
+                ShowProp(i);
             }
 
             string[] ids = data.leftIds ?? Array.Empty<string>();
@@ -188,6 +264,7 @@ namespace MoonProject.Gameplay
         public void Dispose()
         {
             _opened.Dispose();
+            _glints.Dispose();
         }
 
         private static bool Always()
@@ -235,11 +312,49 @@ namespace MoonProject.Gameplay
             int wiring = Take(SalvageMaterial.Wiring, left.Wiring, at, index);
             int optics = Take(SalvageMaterial.Optics, left.Optics, at, index);
             _left[index] = new Recipe(left.Metal - metal, left.Wiring - wiring, left.Optics - optics);
-            if (_partLeft[index] && _stock.Hold.TryAddPart(_caches[index].Part))
+            if (_partLeft[index])
             {
-                _partLeft[index] = false;
-                _events.Publish(new StoryPartCollected(_caches[index].Part, at));
-                _events.Publish(new FeelBeat(FeelKind.Collect, FeelPhase.Reward, at, Vector3.up, 1f, 0f));
+                GiveParts(index, at);
+            }
+        }
+
+        /// <summary>
+        /// Crate <paramref name="index"/>'s story parts into 07's hold, all together once it has a slot for each
+        /// (never half: a part fitted since, like the igniter, would come back).
+        /// </summary>
+        private void GiveParts(int index, Vector3 at)
+        {
+            IReadOnlyList<string> parts = _caches[index].Parts;
+            CargoHold hold = _stock.Hold;
+            int needed = 0;
+            for (int p = 0; p < parts.Count; p++)
+            {
+                needed += hold.HasPart(parts[p]) ? 0 : 1;
+            }
+
+            if (hold.SlotCount - hold.UsedSlots < needed)
+            {
+                return;
+            }
+
+            for (int p = 0; p < parts.Count; p++)
+            {
+                if (!hold.HasPart(parts[p]) && hold.TryAddPart(parts[p]))
+                {
+                    _events.Publish(new StoryPartCollected(parts[p], at));
+                }
+            }
+
+            _events.Publish(new FeelBeat(FeelKind.Collect, FeelPhase.Reward, at, Vector3.up, 1f, 0f));
+            _partLeft[index] = false;
+            ShowProp(index);
+        }
+
+        private void ShowProp(int index)
+        {
+            if (_props[index] != null)
+            {
+                _props[index].SetActive(_partLeft[index]);
             }
         }
 

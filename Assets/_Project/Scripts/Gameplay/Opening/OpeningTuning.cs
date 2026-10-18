@@ -32,12 +32,15 @@ namespace MoonProject.Gameplay
         [Tooltip("Metres around a built pad's centre within which 07, stopped, charges on it.")]
         [Range(0.5f, 4f)] [SerializeField] private float _padChargeRadius = 1.6f;
 
-        [Tooltip("The cargo bay's scan points in the lander anchor's frame (x right, y up, z forward): the charging " +
-                 "pad's fragments, Scan_1..N in order.")]
+        [Tooltip("The open crate whose cargo 07 scans for the pad's blueprint (B3) and then collects (B4).")]
+        [SerializeField] private string _cargoCrate = "supply.lander.open";
+
+        [Tooltip("The charging pad's fragments in the cargo crate's frame (x right, y up, z its front): Scan_1..N in " +
+                 "order, on what it holds, so the scan draws on a real mesh.")]
         [SerializeField] private Vector3[] _cargoScanPoints =
         {
-            new Vector3(-1.4f, 1.2f, 1.8f),
-            new Vector3(1.2f, 1.2f, 2.4f),
+            new Vector3(-0.15f, 0.3f, 0f),
+            new Vector3(0.15f, 0.3f, 0f),
         };
 
         [Header("The start kit (§10)")]
@@ -45,8 +48,19 @@ namespace MoonProject.Gameplay
                  "takes it at B6.")]
         [SerializeField] private string _igniterPart = "part.igniter";
 
-        [Tooltip("Metres from an open crate's front within which 07 collects what it holds (B4: 07 drives up to it).")]
-        [Range(1f, 8f)] [SerializeField] private float _collectReach = 3f;
+        [Tooltip("Metres from an open crate within which 07 collects what it holds, from any side (B4: 07 drives up " +
+                 "to it).")]
+        [Range(1f, 8f)] [SerializeField] private float _collectReach = 3.5f;
+
+        [Tooltip("Metres from 07 within which the open crate's soft glint starts to show (none further: the lander's " +
+                 "beacon and the cable lead 07 there, and loot never glows across the basin).")]
+        [Range(5f, 60f)] [SerializeField] private float _crateGlintReach = 28f;
+
+        [Tooltip("Metres from 07 within which the open crate's glint has fully faded in.")]
+        [Range(1f, 60f)] [SerializeField] private float _crateGlintFull = 18f;
+
+        [Tooltip("The open crate's glint at full, as a share of a held piece's: a soft warm point, not a star.")]
+        [Range(0f, 1f)] [SerializeField] private float _crateGlintStrength = 0.35f;
 
         [Header("The recovery protocol (§2)")]
         [Tooltip("The rows after Power: their lamps, dark through the opening.")]
@@ -54,29 +68,23 @@ namespace MoonProject.Gameplay
 
         [Header("Supply (§4, §10: the lander's open crate and the sealed ones)")]
         [Tooltip("Every crate of the opening. A crate stands by a world anchor or a Lumen ruin piece " +
-                 "([World]/Ruins/<id>), in its frame. The lander's open crate (B4: Metal 2, Wiring 1 and the spare " +
-                 "igniter) stands by its cargo bay; its sealed ones stand on its far side, cut once the cutter works " +
-                 "(after B6).")]
+                 "([World]/Ruins/<id>) or the lander's service port (lander.port), in its frame. The lander's open " +
+                 "crate (B4: Metal 2, Wiring 1 and the spare igniter) stands at the port where the cable ends; the " +
+                 "sealed ones stand among the ruins, cut once the cutter works (after B6).")]
         [SerializeField] private SupplyCache[] _caches =
         {
             new SupplyCache("supply.wake", "place.wake", new Vector3(2.5f, 0f, -1.5f), 30f, "Crate_S",
                 new Recipe(3, 1, 0)),
             new SupplyCache("supply.midway", "place.midway", new Vector3(1.5f, 0f, 0f), -20f, "Crate_S",
                 new Recipe(2, 1, 0)),
-            new SupplyCache("supply.lander.open", "place.lander", new Vector3(6f, 0f, 9f), -30f, "Crate_M",
-                new Recipe(2, 1, 0), true, "part.igniter"),
-            new SupplyCache("supply.lander.a", "place.lander", new Vector3(-5f, 0f, -9f), 180f, "Crate_M",
-                new Recipe(3, 2, 0)),
-            new SupplyCache("supply.lander.b", "place.lander", new Vector3(5f, 0f, -9f), 160f, "Crate_M",
-                new Recipe(3, 2, 0)),
-            new SupplyCache("supply.lander.panels", "place.lander", new Vector3(0f, 0f, -12f), 0f, "Crate_M",
-                new Recipe(6, 0, 0)),
+            new SupplyCache("supply.lander.open", OpeningField.LanderPortFrame, new Vector3(1.8f, 0f, 1f), 0f,
+                "Crate_M", new Recipe(2, 1, 0), true, new[] { "part.igniter", "part.icecore" }),
             new SupplyCache("supply.habitat.reel", "HabitatModules", new Vector3(3f, 0f, -6f), 153f, "Crate_M",
-                new Recipe(0, 4, 0)),
+                new Recipe(6, 4, 0)),
             new SupplyCache("supply.workshop.a", "KenjiWorkshop", new Vector3(-2.5f, 0f, -3f), -140f, "Crate_S",
-                new Recipe(0, 2, 2)),
+                new Recipe(3, 4, 2)),
             new SupplyCache("supply.workshop.b", "KenjiWorkshop", new Vector3(2.5f, 0f, -3f), 140f, "Crate_S",
-                new Recipe(0, 2, 2)),
+                new Recipe(3, 4, 2)),
             new SupplyCache("supply.tower.a", "RadioTower", new Vector3(-3f, 0f, -2.5f), -130f, "Crate_S",
                 new Recipe(2, 0, 1)),
             new SupplyCache("supply.tower.b", "RadioTower", new Vector3(3f, 0f, -2.5f), 130f, "Crate_S",
@@ -91,10 +99,14 @@ namespace MoonProject.Gameplay
         public float ReserveCells => _reserveCells;
         public float PortCableReach => _portCableReach;
         public float PadChargeRadius => _padChargeRadius;
+        public string CargoCrate => _cargoCrate;
         public IReadOnlyList<Vector3> CargoScanPoints => _cargoScanPoints;
         public IReadOnlyList<SupplyCache> Caches => _caches;
         public string IgniterPart => _igniterPart;
         public float CollectReach => _collectReach;
+        public float CrateGlintReach => _crateGlintReach;
+        public float CrateGlintFull => Mathf.Min(_crateGlintFull, _crateGlintReach - 0.01f);
+        public float CrateGlintStrength => _crateGlintStrength;
         public RecoveryLamps RecoveryLamps => _recoveryLamps;
     }
 }
