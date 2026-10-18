@@ -312,7 +312,7 @@ namespace MoonProject.Audio
         {
             switch (reached.Beat)
             {
-                case WakeBeat.PushedIn:
+                case WakeBeat.FadedOut:
                 case WakeBeat.Crackle:
                     _openingHoldsRadio = true;
                     break;

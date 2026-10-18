@@ -126,6 +126,14 @@ namespace MoonProject.World
             _applied = true;
         }
 
+        public void Warm()
+        {
+            if (_model != null && EnsureOverlay() && !_readoutComposed)
+            {
+                ComposeReadout();
+            }
+        }
+
         public void Release()
         {
             _applied = false;

@@ -81,7 +81,7 @@ namespace MoonProject.Audio.Tests
             Assert.Less(_calls[0].Volume, calmThump);
         }
 
-        [TestCase(WakeBeat.PushedIn)]
+        [TestCase(WakeBeat.FadedOut)]
         [TestCase(WakeBeat.PullingOut)]
         [TestCase(WakeBeat.PulledOut)]
         [TestCase(WakeBeat.OverShoulder)]

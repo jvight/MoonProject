@@ -4,11 +4,11 @@ namespace MoonProject.App
 {
     /// <summary>
     /// New Game over a save (docs/design/cutscenes.md §1.7): the scene reload that puts the save away waits until the
-    /// camera has pushed into 07's closed lens (<see cref="WakeBeat.PushedIn"/>), so it happens inside O1's black and
+    /// picture has faded to black (<see cref="WakeBeat.FadedOut"/>), so it happens inside the black before O1 and
     /// there is never a loading screen. If the beat never comes, it gives up waiting after a while
     /// (<see cref="TimedOut"/>) so the reload is never lost.
     /// </summary>
-    public sealed class PushedInGate
+    public sealed class FadedOutGate
     {
         private float _waited;
 
@@ -28,7 +28,7 @@ namespace MoonProject.App
         /// <summary>Returns true once, when <paramref name="beat"/> opens the armed gate.</summary>
         public bool Notify(WakeBeat beat)
         {
-            if (!IsWaiting || beat != WakeBeat.PushedIn)
+            if (!IsWaiting || beat != WakeBeat.FadedOut)
             {
                 return false;
             }
