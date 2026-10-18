@@ -128,14 +128,18 @@ namespace MoonProject.Gameplay
                 Vector3 toLens = lens - pos;
                 float distToLens = toLens.magnitude;
                 Vector3 dirToLens = distToLens > 1e-4f ? toLens / distToLens : -forward;
-                float stretchScale = variant == ScanVariant.WireframeReveal ? 0.055f : 0.085f;
-                Vector3 stretch = dirToLens * (Mathf.Lerp(0.022f, stretchScale, Mathf.Sin(s * Mathf.PI)) * weight);
+                Vector3 stretch = variant == ScanVariant.PointScan
+                    ? Vector3.zero
+                    : dirToLens * (Mathf.Lerp(0.022f, variant == ScanVariant.WireframeReveal ? 0.055f : 0.085f, Mathf.Sin(s * Mathf.PI)) * weight);
 
+                float sizeScale = variant == ScanVariant.PointScan ? 1.35f : 1.0f;
                 Color color = variant == ScanVariant.WireframeReveal
                     ? Color.Lerp(amberColor, Color.white, 0.24f * toHead)
-                    : Color.Lerp(cyanColor, amberColor, Mathf.Lerp(0.35f, 0.75f, 1f - s));
+                    : (variant == ScanVariant.PointScan
+                        ? Color.Lerp(cyanColor, amberColor, 0.25f + 0.50f * (1f - toHead))
+                        : Color.Lerp(cyanColor, amberColor, Mathf.Lerp(0.35f, 0.75f, 1f - s)));
                 color.a = Mathf.Min(0.22f, (_scanTuning != null ? _scanTuning.LensMoteAlpha * 0.55f : 0.16f) * weight * env);
-                _sprites.Add(pos, baseSize * weight, color, stretch);
+                _sprites.Add(pos, baseSize * sizeScale * weight, color, stretch);
             }
 
             if (t > 0.35f)

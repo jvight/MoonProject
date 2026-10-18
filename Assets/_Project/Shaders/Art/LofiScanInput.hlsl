@@ -254,6 +254,129 @@ void MoonApplyWireframeReveal(
     }
 }
 
+// Anti-aliased 3D triplanar point-cloud dot lattice locked strictly to world-space surface geometry.
+float MoonScanSurfacePointCloud(float3 samplePosWS, float3 n, float gridPitch, float pointRadiusShare)
+{
+    float pitch = max(gridPitch, 0.018);
+    float3 p = samplePosWS / pitch;
+    float3 fw = max(fwidth(p), float3(1e-4, 1e-4, 1e-4));
+
+    float2 uvXY = frac(p.xy - 0.5) - 0.5;
+    float2 uvYZ = frac(p.yz - 0.5) - 0.5;
+    float2 uvXZ = frac(p.xz - 0.5) - 0.5;
+
+    float dXY = length(uvXY);
+    float dYZ = length(uvYZ);
+    float dXZ = length(uvXZ);
+
+    float fwXY = max(fw.x, fw.y);
+    float fwYZ = max(fw.y, fw.z);
+    float fwXZ = max(fw.x, fw.z);
+
+    float r = clamp(pointRadiusShare, 0.14, 0.42);
+    float dotXY = (1.0 - smoothstep(max(r, fwXY * 0.75) - fwXY * 0.65, max(r, fwXY * 0.75) + fwXY * 0.85, dXY))
+        * (1.0 - smoothstep(0.22, 0.44, fwXY));
+    float dotYZ = (1.0 - smoothstep(max(r, fwYZ * 0.75) - fwYZ * 0.65, max(r, fwYZ * 0.75) + fwYZ * 0.85, dYZ))
+        * (1.0 - smoothstep(0.22, 0.44, fwYZ));
+    float dotXZ = (1.0 - smoothstep(max(r, fwXZ * 0.75) - fwXZ * 0.65, max(r, fwXZ * 0.75) + fwXZ * 0.85, dXZ))
+        * (1.0 - smoothstep(0.22, 0.44, fwXZ));
+
+    float3 w = abs(n);
+    w /= max(w.x + w.y + w.z, 1e-4);
+    return saturate(dotYZ * w.x + dotXZ * w.y + dotXY * w.z);
+}
+
+// Variant C ("Point scan"): a scanning dot grid / point-cloud sweeps the object (dots stick to the 3D surface
+// and fade behind the sweep); at completion the point cloud contracts toward the lens-facing focal point.
+void MoonApplyPointScan(
+    inout half3 color,
+    float3 positionWS,
+    float3 n,
+    half edgeCurvature,
+    float scanY,
+    float sweepY,
+    float sinSurface,
+    float fwSurface,
+    float h,
+    float2 toCamXZ,
+    float lineWidthMeters,
+    float fadeBandShare,
+    float lineIntensity,
+    float edgeThickness,
+    float pingEdgeIntensity,
+    half3 lineColor,
+    half3 pingColor,
+    float gridPitch,
+    float pointRadiusShare,
+    half scanProgress,
+    half dissolve)
+{
+    float prog = saturate((float)scanProgress);
+    float diss = (float)dissolve;
+
+    float3 boundsMin = unity_RendererBounds_Min.xyz;
+    float3 boundsMax = unity_RendererBounds_Max.xyz;
+    float3 centre = (boundsMin + boundsMax) * 0.5;
+    float radius = max(length(boundsMax - boundsMin) * 0.5, 1e-4);
+    float3 focalPoint = centre + float3(toCamXZ.x, 0.12, toCamXZ.y) * (radius * 0.40);
+
+    // During completion dissolve, contract the 3D surface point cloud coordinates toward the lens-facing focal point
+    float contractShare = smoothstep(0.06, 0.72, diss) * 0.55;
+    float3 samplePosWS = lerp(positionWS, focalPoint, -contractShare);
+
+    float dotGrid = MoonScanSurfacePointCloud(samplePosWS, n, gridPitch, pointRadiusShare);
+    float thinEdge = MoonScanComputeEdgeMask(positionWS, n, edgeCurvature, h, edgeThickness * 0.95);
+    float edgeDots = thinEdge * MoonScanSurfacePointCloud(samplePosWS, n, gridPitch * 0.68, pointRadiusShare * 1.15);
+    float pointMask = saturate(max(dotGrid, edgeDots * 1.15));
+
+    float signedBehindMeters = (sweepY - scanY) / sinSurface;
+    float sweptMask = smoothstep(-fwSurface * 1.5, fwSurface * 1.5, signedBehindMeters);
+    float behindShare = (prog - h) + diss * 1.25;
+    float trailShare = clamp(fadeBandShare * 1.35, 0.16, 0.92);
+    float bandFade = (1.0 - smoothstep(0.0, trailShare, max(0.0, behindShare))) * sweptMask;
+    bandFade *= smoothstep(0.001, 0.02, prog) * (1.0 - smoothstep(0.08, 0.36, diss));
+
+    // Active sweeping front where new point-cloud dots ignite on the 3D surface
+    float activeSweep = smoothstep(0.001, 0.015, prog) * (1.0 - smoothstep(0.0, 0.06, diss));
+    float surfaceDistMeters = abs(scanY - sweepY) / sinSurface;
+    float halfWidth = max(lineWidthMeters * 0.75, fwSurface * 1.35);
+    float frontBand = (1.0 - smoothstep(halfWidth * 0.5, halfWidth * 4.2, surfaceDistMeters)) * activeSweep;
+    float fineLaserCore = (1.0 - smoothstep(halfWidth * 0.35, halfWidth * 1.15, surfaceDistMeters)) * activeSweep;
+
+    // Subtle cool-dark contrast bed behind the sweep so the glowing surface dots pop in daylight and eclipse
+    half surfLuma = clamp(dot(color, half3(0.299h, 0.587h, 0.114h)), 0.10h, 0.70h);
+    color = lerp(color, surfLuma * half3(0.42h, 0.82h, 0.94h), (half)saturate(bandFade * 0.18));
+
+    // Surface-locked point-cloud dots that ignite bright cyan-white at the sweep front and fade through warm amber
+    float dotEnvelope = saturate(pointMask * (bandFade * 0.92 + frontBand * 0.85));
+    float warmShift = saturate(behindShare / max(trailShare * 0.85, 1e-4));
+    half3 dotColor = lerp(lineColor * 1.15h + half3(0.20h, 0.35h, 0.38h) * (half)frontBand, pingColor, (half)(warmShift * 0.58));
+    half3 dotTarget = dotColor * (half)(lineIntensity * (0.85 + 0.55 * frontBand));
+    color = lerp(color, dotTarget, (half)saturate(dotEnvelope * 0.95));
+
+    // Fine laser contact line modulated by the surface point grid
+    half laserMask = (half)saturate(fineLaserCore * (0.42 + 0.58 * pointMask));
+    half3 laserTarget = lineColor * (half)(lineIntensity * 1.15) + half3(0.22h, 0.48h, 0.52h) * (half)fineLaserCore;
+    color = lerp(color, laserTarget, laserMask);
+
+    // Completion: the surface point cloud brightens and contracts into the lens-facing focal point
+    if (dissolve > 0.001h)
+    {
+        float collapseDist = saturate(length(positionWS - focalPoint) / max(radius * 1.15, 1e-4));
+        float collapseFront = 1.0 - smoothstep(0.12, 0.74, diss);
+        float insideCollapse = 1.0 - smoothstep(collapseFront - 0.05, collapseFront + 0.05, collapseDist);
+        float collapseRing = (1.0 - smoothstep(0.0, 0.12, abs(collapseDist - collapseFront)))
+            * smoothstep(0.04, 0.16, diss) * (1.0 - smoothstep(0.62, 0.78, diss));
+
+        half pingEnv = MoonScanPingEnvelope(dissolve);
+        float closeDots = saturate(max(pointMask, thinEdge * 0.75) * ((float)pingEnv * 1.15 + collapseRing));
+        half closeMask = (half)saturate(closeDots * insideCollapse);
+        half3 closeTint = lerp(lineColor, pingColor, (half)saturate(0.45 + 0.55 * collapseRing));
+        half3 closeTarget = closeTint * (half)(pingEdgeIntensity * 1.22);
+        color = lerp(color, closeTarget, closeMask * 0.92h) + closeTint * (closeMask * 0.28h);
+    }
+}
+
 // Applies the active surface scan variant (A: ProfilerSweep, B: WireframeReveal, C: PointScan) to the lit surface colour.
 void MoonApplySurfaceScan(
     inout half3 color,
@@ -277,6 +400,7 @@ void MoonApplySurfaceScan(
     int variant = (int)round(variantParams.x);
     float gridPitch = max(variantParams.y, 0.018);
     float wireframeIntensity = max(variantParams.z, 0.2);
+    float pointRadiusShare = clamp(variantParams.w, 0.12, 0.45);
 
     float lineWidthMeters = max(scanParams.x, 0.004);
     float rasterSpacing = max(scanParams.y, 0.025);
@@ -314,6 +438,15 @@ void MoonApplySurfaceScan(
             color, positionWS, n, edgeCurvature, scanY, sweepY, sinSurface, fwSurface, h, toCamXZ,
             lineWidthMeters, edgeThickness, wireframeIntensity, lineColor, pingColor, gridPitch,
             scanProgress, dissolve);
+        return;
+    }
+
+    if (variant == 2)
+    {
+        MoonApplyPointScan(
+            color, positionWS, n, edgeCurvature, scanY, sweepY, sinSurface, fwSurface, h, toCamXZ,
+            lineWidthMeters, fadeBandShare, lineIntensity, edgeThickness, pingEdgeIntensity,
+            lineColor, pingColor, gridPitch, pointRadiusShare, scanProgress, dissolve);
         return;
     }
 
