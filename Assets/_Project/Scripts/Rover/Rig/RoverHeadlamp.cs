@@ -59,23 +59,25 @@ namespace MoonProject.Rover
             _docked = docked;
         }
 
-        public void Tick(float deltaTime)
+        /// <param name="power">The lamp power the wake allows (1 normally; the flicker and ramp at wake).</param>
+        public void Tick(float deltaTime, float power)
         {
             DockSettings dock = _rover.Tuning.Dock;
             float target = _docked ? dock.LampDim : _battery.IsLowPower ? _tuning.FlankLamps.CrawlHeadlamp : 1f;
             _level = Smoothing.Damp(_level, target, dock.LampHalfLife, deltaTime);
-            ApplyLevel();
+            ApplyLevel(power);
         }
 
-        private void ApplyLevel()
+        private void ApplyLevel(float power = 1f)
         {
-            if (Mathf.Abs(_level - _appliedLevel) < LevelEpsilon)
+            float level = _level * power;
+            if (Mathf.Abs(level - _appliedLevel) < LevelEpsilon)
             {
                 return;
             }
 
-            _headlamp.intensity = _level * _baseIntensity;
-            _appliedLevel = _level;
+            _headlamp.intensity = level * _baseIntensity;
+            _appliedLevel = level;
         }
     }
 }

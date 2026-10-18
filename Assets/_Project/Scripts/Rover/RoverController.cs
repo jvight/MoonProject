@@ -965,7 +965,7 @@ namespace MoonProject.Rover
             _nozzleDevice?.Tick(deltaTime, Time.time);
             _hatch.Tick(deltaTime);
             _visualRig.Tick(deltaTime);
-            _headlamp.Tick(deltaTime);
+            _headlamp.Tick(deltaTime, _bodyLanguage != null ? _bodyLanguage.LampPower01 : 1f);
             _wheelFx.Tick();
             _lampMotes.Tick(deltaTime);
             _flankLamps.Tick(deltaTime);

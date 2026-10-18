@@ -29,6 +29,9 @@ namespace MoonProject.Art.Tests
             ("dead_antenna_mast.json", "Props/DeadAntennaMast.fbx"),
             ("signal_pillar.json", "Props/SignalPillar.fbx"),
             ("peak_beacon.json", "Props/PeakBeacon.fbx"),
+            ("crate_m_open.json", "Crates/Crate_M_Open.fbx"),
+            ("pad_fragment_coil_plate.json", "Props/PadFragment_CoilPlate.fbx"),
+            ("pad_fragment_guide_rail.json", "Props/PadFragment_GuideRail.fbx"),
             ("ice_core_tube.json", "Props/IceCoreTube.fbx"),
         };
 
@@ -255,6 +258,42 @@ namespace MoonProject.Art.Tests
 
             Material lampMat = lamp.GetComponent<Renderer>().sharedMaterial;
             Assert.AreEqual(R1StoryPropsBuilder.PeakBeaconRedMaterialName, lampMat.name);
+        }
+
+        [Test]
+        public void CrateMOpenAndPadFragments_ExposeCollectibleChildren_BloomSafeRimGlow_AndFragmentSilhouettes()
+        {
+            GameObject openCratePrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.CrateMOpenPrefabPath);
+            Assert.IsNotNull(openCratePrefab.transform.Find("Lid"), "Crate_M_Open missing Lid.");
+            Assert.IsNotNull(openCratePrefab.transform.Find("Lid/Seal"), "Crate_M_Open missing Lid/Seal.");
+            Assert.IsNotNull(openCratePrefab.transform.Find("Lid/CutPoint"), "Crate_M_Open missing Lid/CutPoint.");
+            Assert.IsNotNull(openCratePrefab.transform.Find("ItemSocket"), "Crate_M_Open missing ItemSocket.");
+
+            string[] contentItems = { "Igniter", "MetalBundle", "WiringSpool" };
+            for (int i = 0; i < contentItems.Length; i++)
+            {
+                Transform item = openCratePrefab.transform.Find(contentItems[i]);
+                Assert.IsNotNull(item, $"Crate_M_Open missing separate child '{contentItems[i]}'.");
+                Assert.IsNotNull(item.GetComponent<Renderer>(), $"Crate_M_Open/{contentItems[i]} must have a Renderer.");
+                Assert.IsNotNull(item.GetComponent<MeshFilter>(), $"Crate_M_Open/{contentItems[i]} must have a MeshFilter.");
+            }
+
+            Transform rimGlow = openCratePrefab.transform.Find("RimGlow");
+            Assert.IsNotNull(rimGlow, "Crate_M_Open missing RimGlow child.");
+            Material rimMat = rimGlow.GetComponent<Renderer>().sharedMaterial;
+            Assert.AreEqual(R1StoryPropsBuilder.CrateRimGlowAmberMaterialName, rimMat.name);
+            Assert.Less(rimMat.GetFloat("_BloomSafeMax"), Palette.BloomThreshold,
+                "Crate_M_Open RimGlow emission must stay well below bloom threshold.");
+            Assert.Less(rimMat.GetFloat("_HotCorePeak"), Palette.BloomThreshold,
+                "Crate_M_Open RimGlow hot core must stay below bloom threshold.");
+
+            GameObject coilPlatePrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.PadFragmentCoilPlatePrefabPath);
+            Assert.IsNotNull(coilPlatePrefab.transform.Find("Scan_1"), "PadFragment_CoilPlate missing Scan_1.");
+            Assert.IsNotNull(coilPlatePrefab.GetComponent<Renderer>(), "PadFragment_CoilPlate root must have a Renderer.");
+
+            GameObject guideRailPrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.PadFragmentGuideRailPrefabPath);
+            Assert.IsNotNull(guideRailPrefab.transform.Find("Scan_1"), "PadFragment_GuideRail missing Scan_1.");
+            Assert.IsNotNull(guideRailPrefab.GetComponent<Renderer>(), "PadFragment_GuideRail root must have a Renderer.");
         }
 
         [Test]

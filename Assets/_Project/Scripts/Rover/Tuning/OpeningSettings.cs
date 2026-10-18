@@ -15,19 +15,19 @@ namespace MoonProject.Rover
         [Header("Holds (s), one per storyboard row")]
         [Tooltip("O1: pure black while 07's systems thump on and the static swells.")]
         [Range(0.5f, 6f)]
-        [SerializeField] private float _crackleSeconds = 1.2f;
+        [SerializeField] private float _crackleSeconds = 0.8f;
 
         [Tooltip("O2: the lid's first stage, a warm slit, and its stall.")]
         [Range(0.5f, 5f)]
-        [SerializeField] private float _lidCrackSeconds = 1.1f;
+        [SerializeField] private float _lidCrackSeconds = 0.9f;
 
         [Tooltip("O3: the lid's second stage, up to half open with a shudder.")]
         [Range(0.5f, 5f)]
-        [SerializeField] private float _lidHalfSeconds = 1.1f;
+        [SerializeField] private float _lidHalfSeconds = 0.9f;
 
         [Tooltip("O4: the lens hunts for focus, too near, too far, then settles.")]
         [Range(1f, 6f)]
-        [SerializeField] private float _huntSeconds = 1.7f;
+        [SerializeField] private float _huntSeconds = 1.4f;
 
         [Tooltip("O5: the old electronics' two dips, roll band and warm lift.")]
         [Range(0.8f, 3f)]
@@ -64,11 +64,11 @@ namespace MoonProject.Rover
         [Header("Lid (0 shut, 0.7 rest, 1 fully open)")]
         [Tooltip("Openness of the lid's first stage (O2).")]
         [Range(0.02f, 0.3f)]
-        [SerializeField] private float _lidCrack = 0.12f;
+        [SerializeField] private float _lidCrack = 0.2f;
 
         [Tooltip("Openness of the lid's second stage (O3).")]
         [Range(0.2f, 0.6f)]
-        [SerializeField] private float _lidHalf = 0.4f;
+        [SerializeField] private float _lidHalf = 0.5f;
 
         [Tooltip("07's half-lidded rest (O5 on).")]
         [Range(0.5f, 0.9f)]
@@ -305,6 +305,23 @@ namespace MoonProject.Rover
         [Range(0f, 1f)]
         [SerializeField] private float _blinkSigh = 0.5f;
 
+        [Header("Lamps power up as 07 opens its eyes")]
+        [Tooltip("How many uneven flickers the lamps make before the dark gap.")]
+        [Range(2, 4)]
+        [SerializeField] private int _lampFlickerCount = 3;
+
+        [Tooltip("Seconds all the flickers take together.")]
+        [Range(0.3f, 3f)]
+        [SerializeField] private float _lampFlickerSeconds = 0.9f;
+
+        [Tooltip("Seconds of dark between the last flicker and the ramp.")]
+        [Range(0f, 1.5f)]
+        [SerializeField] private float _lampDarkGapSeconds = 0.35f;
+
+        [Tooltip("Seconds the lamps take to ramp smoothly to full.")]
+        [Range(0.2f, 4f)]
+        [SerializeField] private float _lampRampSeconds = 1.1f;
+
         [Header("Title and the push into the lens")]
         [Tooltip("Seconds New Game takes to push from the title's lens shot into the closed lens (the reverse of O10).")]
         [Range(0.5f, 4f)]
@@ -418,6 +435,10 @@ namespace MoonProject.Rover
         public float TiltEaseSeconds => _tiltEaseSeconds;
         public float TiltHoldSeconds => _tiltHoldSeconds;
         public float BlinkSigh => _blinkSigh;
+        public int LampFlickerCount => _lampFlickerCount;
+        public float LampFlickerSeconds => _lampFlickerSeconds;
+        public float LampDarkGapSeconds => _lampDarkGapSeconds;
+        public float LampRampSeconds => _lampRampSeconds;
         public float PushInSeconds => _pushInSeconds;
         public float PushDarkFrom => _pushDarkFrom;
 

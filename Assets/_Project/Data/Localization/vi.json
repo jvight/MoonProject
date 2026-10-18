@@ -941,6 +941,14 @@
         {
             "key": "hint.pickup",
             "text": "Nhặt"
+        },
+        {
+            "key": "pickup.part.icecore",
+            "text": "LÕI BĂNG 41 · H₂O"
+        },
+        {
+            "key": "pickup.part.icecore.job",
+            "text": "Mẫu lõi băng, 1988"
         }
     ]
 }

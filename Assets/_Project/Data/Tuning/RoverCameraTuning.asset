@@ -249,10 +249,10 @@ MonoBehaviour:
   _gentleBreathRate: 0.5
   _gentleMinSensitivity: 0.15
   _opening:
-    _crackleSeconds: 1.2
-    _lidCrackSeconds: 1.1
-    _lidHalfSeconds: 1.1
-    _huntSeconds: 1.7
+    _crackleSeconds: 0.8
+    _lidCrackSeconds: 0.9
+    _lidHalfSeconds: 0.9
+    _huntSeconds: 1.4
     _flickerSeconds: 1
     _gazeHomeSeconds: 1.8
     _gazePilotSeconds: 1.5
@@ -261,8 +261,8 @@ MonoBehaviour:
     _pullOutSeconds: 1.8
     _blinkShotSeconds: 2.2
     _overShoulderSeconds: 1.4
-    _lidCrack: 0.12
-    _lidHalf: 0.4
+    _lidCrack: 0.2
+    _lidHalf: 0.5
     _lidRest: 0.7
     _lidWonder: 0.85
     _lidRiseSeconds: 0.65

@@ -1,0 +1,56 @@
+{
+  "model": "pad_fragment_coil_plate",
+  "pivot_tolerance": 0.01,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_BareSteel",
+    "R1_Brass",
+    "R1_Copper",
+    "R1_CreamEnamel",
+    "R1_GoldFoil",
+    "R1_GreyMetal",
+    "R1_OrangeStripe",
+    "R1_Rubber",
+    "R1_Signage"
+  ],
+  "max_triangles": 6000,
+  "max_meshes": 2,
+  "max_draw_calls": 12,
+  "allow_rotation": [],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "PadFragment_CoilPlate": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Scan_1": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.06
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      0.5,
+      0.5,
+      0.12
+    ],
+    "tolerance": 0.02,
+    "min_size": [
+      0.48,
+      0.48,
+      0.1
+    ],
+    "max_size": [
+      0.52,
+      0.52,
+      0.14
+    ]
+  }
+}
