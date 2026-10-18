@@ -764,8 +764,29 @@ namespace MoonProject.UI
             _events.Publish(new UiCue(kind));
         }
 
+        /// <summary>
+        /// Continue or New Game pressed while the first boot's language step is still up: the step is asked again (focus
+        /// returns to the languages) instead of the press being lost.
+        /// </summary>
+        private bool LanguageStillAsked()
+        {
+            if (!IsOpen || _pages.Current != PausePage.Language)
+            {
+                return false;
+            }
+
+            _navigator.RequestFocus(PauseFocus.Language);
+            Cue(UiCueKind.Back);
+            return true;
+        }
+
         private void OnResumeClicked()
         {
+            if (LanguageStillAsked())
+            {
+                return;
+            }
+
             if (!IsOpen || _leaving != Leaving.None || _pages.Current != PausePage.Main)
             {
                 return;
@@ -869,6 +890,11 @@ namespace MoonProject.UI
         /// </summary>
         private void OnNewGameClicked()
         {
+            if (LanguageStillAsked())
+            {
+                return;
+            }
+
             if (!_pages.IsTitle || _pages.HasSave)
             {
                 Ask(PausePage.NewGame);

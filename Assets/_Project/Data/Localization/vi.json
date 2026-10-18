@@ -949,6 +949,10 @@
         {
             "key": "pickup.part.icecore.job",
             "text": "Mẫu lõi băng, 1988"
+        },
+        {
+            "key": "ui.title.language_question",
+            "text": "Choose your language · Chọn ngôn ngữ"
         }
     ]
 }

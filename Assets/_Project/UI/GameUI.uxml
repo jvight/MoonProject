@@ -163,7 +163,9 @@
                                         <ui:Button name="button-new-game-confirm" class="menu-button menu-button--quiet loc"
                                                    text="ui.title.new_game_confirm" />
                                     </ui:VisualElement>
-                                    <ui:VisualElement name="page-language" class="pause__page" />
+                                    <ui:VisualElement name="page-language" class="pause__page">
+                                        <ui:Label class="pause__question loc" text="ui.title.language_question" />
+                                    </ui:VisualElement>
                                     <ui:VisualElement name="page-quit" class="pause__page">
                                         <ui:Label class="pause__question loc" text="ui.pause.quit_question" />
                                         <ui:Label class="pause__aside loc" text="ui.pause.quit_aside" />
