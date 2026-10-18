@@ -9,9 +9,6 @@ namespace MoonProject.UI
     {
         None = 0,
 
-        /// <summary>The boot diagnostics of 07's systems (opening-v2 §10).</summary>
-        Boot = 1,
-
         /// <summary>One system's line (the cutter turning OK, or refusing a cut).</summary>
         System = 2,
 
@@ -103,14 +100,7 @@ namespace MoonProject.UI
                 }
             }
 
-            if (request.Kind == ReadoutKind.Boot)
-            {
-                _pending.Insert(0, request);
-            }
-            else
-            {
-                _pending.Add(request);
-            }
+            _pending.Add(request);
 
             return false;
         }
@@ -164,8 +154,6 @@ namespace MoonProject.UI
         {
             switch (kind)
             {
-                case ReadoutKind.Boot:
-                    return _settings.BootHoldSeconds;
                 case ReadoutKind.Story:
                     return _settings.StoryHoldSeconds;
                 default:

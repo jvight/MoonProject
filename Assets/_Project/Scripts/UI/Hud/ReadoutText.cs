@@ -5,14 +5,12 @@ using MoonProject.Core;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// The words of 07's readout cards (docs/design/opening-v2.md §10, §2): the boot diagnostics with their dotted
-    /// leaders, one system's line, the protocol line, the lander's reserve and the story text of a scanned panel. Pure
+    /// The words of 07's readout cards (docs/design/opening-v2.md §10, §2): one system's line with its dotted leader,
+    /// the protocol line, the lander's reserve and the story text of a scanned panel. Pure
     /// text work over <see cref="ILocalization"/>, EditMode-tested in English and Vietnamese.
     /// </summary>
     internal sealed class ReadoutText
     {
-        public const string UnitKey = "ui.system.unit";
-        public const string BatteryKey = "ui.system.battery";
         public const string ColumnKey = "ui.system.column";
         public const string ReserveKey = "ui.readout.reserve";
         public const string WheelsNoteKey = "ui.system.note.wheels";
@@ -31,25 +29,6 @@ namespace MoonProject.UI
         public ReadoutText(ILocalization localization)
         {
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
-        }
-
-        /// <summary>
-        /// Writes the boot diagnostics into <paramref name="into"/>: the unit line, one line per system in the
-        /// readout's order, the battery and, under them, the protocol line.
-        /// </summary>
-        public void Boot(ReadoutContent into, IRoverSystems systems, int blueprints, int batteryPercent,
-            ProtocolLine protocol)
-        {
-            into.Clear();
-            into.Add(_localization.Get(UnitKey), ReadoutLineStyle.Plain);
-            foreach (RoverSystem system in Enum.GetValues(typeof(RoverSystem)))
-            {
-                RoverSystemState state = systems.StateOf(system);
-                into.Add(SystemLine(system, state, blueprints), StyleOf(state), (int)system);
-            }
-
-            into.Add(LabelLine(_localization.Get(BatteryKey), batteryPercent + "%"), ReadoutLineStyle.Plain);
-            into.Add(_localization.Get(OpeningProtocol.KeyOf(protocol)), ReadoutLineStyle.Dim);
         }
 
         /// <summary>One system's line: <c>CUTTER ········ FAULT · NO IGNITER</c>.</summary>

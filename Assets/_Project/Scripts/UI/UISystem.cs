@@ -340,7 +340,7 @@ namespace MoonProject.UI
             _lowBattery = new LowBatteryHint(_tuning.Guidance, services.Battery, _localization);
             _batteryDial = new BatteryDial(_layout, _tuning.Battery, services.Battery, services.Beam);
             _saveTick = new SaveTick(_layout, _tuning.SaveTick);
-            _readout = new ReadoutView(_layout.Hud, _tuning.Guidance, _localization, services.Systems, services.Battery,
+            _readout = new ReadoutView(_layout.Hud, _tuning.Guidance, _localization, services.Systems,
                 services.BuildField, _openingProtocol);
             _sunArc = new SunArcView(_layout, _tuning.Guidance, _localization, services.Sun);
             _prompt = new ContextPrompt(_layout, _tuning.Prompts, _director, services.View, _glyphs, _localization,
@@ -1058,12 +1058,10 @@ namespace MoonProject.UI
             {
                 _inOpening = true;
                 _firstPrompt.OpeningBegan();
-                _readout.OpeningBegan();
             }
             else if (reached.Beat == WakeBeat.ChaseFrame)
             {
                 _inOpening = false;
-                _readout.WakeFinished();
                 _firstPrompt.ChaseFrameReached();
             }
         }

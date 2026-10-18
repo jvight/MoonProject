@@ -50,10 +50,6 @@ namespace MoonProject.UI
                  "panel's text) easing in and out.")]
         [SerializeField] private RevealSettings _readout = new RevealSettings(0.8f, 1.1f, 6f, 0.97f, 1f, 0.8f);
 
-        [Tooltip("Seconds the boot diagnostics rest fully visible: ten lines to read.")]
-        [Range(2f, 20f)]
-        [SerializeField] private float _bootHoldSeconds = 8f;
-
         [Tooltip("Seconds a one- or two-line readout card (the protocol line, the reserve, one system) rests.")]
         [Range(1f, 12f)]
         [SerializeField] private float _statusHoldSeconds = 4f;
@@ -94,7 +90,6 @@ namespace MoonProject.UI
 
         public RevealSettings Readout => _readout;
 
-        public float BootHoldSeconds => _bootHoldSeconds;
 
         public float StatusHoldSeconds => _statusHoldSeconds;
 

@@ -101,6 +101,9 @@ namespace MoonProject.Rover
         public const string IntakeRoller = "IntakeRoller";
 
         public const string HeadlampSocket = "HeadlampSocket";
+
+        /// <summary>The material on Body's headlamp glasses (their glow slot).</summary>
+        public const string LampGlassMaterial = "R1_LampAmber";
         public const string CargoSocket = "CargoSocket";
         public const string CradleSocket = "CradleSocket";
         public const string DustSocketLeft = "DustSocket_L";
