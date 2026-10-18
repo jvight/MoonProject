@@ -953,6 +953,22 @@
         {
             "key": "ui.title.language_question",
             "text": "Choose your language · Chọn ngôn ngữ"
+        },
+        {
+            "key": "ui.verb.scan",
+            "text": "Scan"
+        },
+        {
+            "key": "ui.verb.cut",
+            "text": "Cut"
+        },
+        {
+            "key": "ui.verb.build",
+            "text": "Build"
+        },
+        {
+            "key": "ui.verb.fit",
+            "text": "Fit"
         }
     ]
 }

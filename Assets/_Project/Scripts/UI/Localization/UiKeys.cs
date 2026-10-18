@@ -26,6 +26,10 @@ namespace MoonProject.UI
         public const string LookUp = "ui.hint.look_up";
         public const string Drive = "ui.hint.drive";
         public const string HintHold = "hint.hold";
+        public const string VerbScan = "ui.verb.scan";
+        public const string VerbCut = "ui.verb.cut";
+        public const string VerbBuild = "ui.verb.build";
+        public const string VerbFit = "ui.verb.fit";
         public const string HoldBoot = "ui.hold.boot";
         public const string ScanFragment = "scan.fragment";
         public const string ScanKnown = "scan.known";

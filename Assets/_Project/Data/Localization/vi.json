@@ -953,6 +953,22 @@
         {
             "key": "ui.title.language_question",
             "text": "Choose your language · Chọn ngôn ngữ"
+        },
+        {
+            "key": "ui.verb.scan",
+            "text": "Quét"
+        },
+        {
+            "key": "ui.verb.cut",
+            "text": "Cắt"
+        },
+        {
+            "key": "ui.verb.build",
+            "text": "Dựng"
+        },
+        {
+            "key": "ui.verb.fit",
+            "text": "Lắp"
         }
     ]
 }
