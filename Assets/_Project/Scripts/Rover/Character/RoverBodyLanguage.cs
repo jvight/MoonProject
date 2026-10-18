@@ -601,6 +601,15 @@ namespace MoonProject.Rover
             _openingRollDeg = 0f;
         }
 
+        /// <summary>One blink of the eyes on 07's face (the wake's ready performance).</summary>
+        public void BlinkFace()
+        {
+            if (_faceDirector != null)
+            {
+                _faceDirector.Blink();
+            }
+        }
+
         /// <summary>07's first blink (O11): the solar wing sighs and the antenna starts the call sign.</summary>
         public void GreetWithBlink(float sigh)
         {

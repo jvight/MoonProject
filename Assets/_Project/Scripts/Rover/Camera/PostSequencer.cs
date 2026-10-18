@@ -36,6 +36,9 @@ namespace MoonProject.Rover
         Completed = 1,
         Finished = 2,
         Pulse = 3,
+
+        /// <summary>07's face blinks (the ready performance's double blink; <see cref="PostEvent.Index"/> counts them).</summary>
+        Blink = 4,
     }
 
     /// <summary>

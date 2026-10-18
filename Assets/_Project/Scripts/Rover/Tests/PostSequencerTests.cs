@@ -173,7 +173,7 @@ namespace MoonProject.Rover.Tests
             CollectionAssert.AreEqual(new[] { 0, 3, 1, 4, 2, 5 }, pulses[BootCheckStep.Cutter], "three sparks, each with the beacon's blink");
             CollectionAssert.AreEqual(new[] { 0, 1, 2 }, pulses[BootCheckStep.SolarWing], "jerk, stall, fold");
             CollectionAssert.AreEqual(new[] { 0, 1 }, pulses[BootCheckStep.Head], "sweep, nod");
-            CollectionAssert.AreEqual(new[] { 0, 1, 2 }, pulses[BootCheckStep.Begin], "turn, shiver, headlamps");
+            Assert.IsFalse(pulses.ContainsKey(BootCheckStep.Begin), "the start's motions are the ready performance");
             Assert.IsFalse(pulses.ContainsKey(BootCheckStep.Assembly), "the assembly line has nothing to tick");
         }
 

@@ -8,8 +8,9 @@ namespace MoonProject.Rover
     /// What 07 does in each check of its power-on self-test, as pure functions of the check's progress (0..1) so each
     /// motion's shape is testable: the head's sweep and nod, each wheel's twitch, the motor's shudder and lurch, the
     /// cutter's failed ignitions with the turret's kicks, the wing's jerk-stall-fold, the antenna's rise, the cells'
-    /// fill and the start (head to the beacon, the dust shiver). The same tables say when each <c>BootCheckPulse</c>
-    /// fires, so the sounds and the motion cannot drift apart.
+    /// fill, and the ready performance after the checks (a double blink, the headlamps clicked off and on, the dust
+    /// shiver, the glance at the beacon). The same tables say when each <c>BootCheckPulse</c> fires, so the sounds and
+    /// the motion cannot drift apart.
     /// </summary>
     public sealed class PostMotions
     {
@@ -55,10 +56,22 @@ namespace MoonProject.Rover
         // Antenna: rises in the first part, then holds.
         private const float AntennaRiseShare = 0.6f;
 
-        // Begin: the head turns, then the dust shivers off, then the headlamps are on.
-        private const float TurnEnd = 0.5f;
-        private const float ShiverEnd = 0.8f;
+        // The ready performance after the checks, seen wide: a double blink, the headlamps clicked off and on, the
+        // last dust shivered off, then a glance at the beacon.
+        private const float SecondBlinkAt = 0.14f;
+        private const float LampsOffAt = 0.24f;
+        private const float LampsOnAt = 0.4f;
+        private const float ShiverStart = 0.44f;
+        private const float ShiverEnd = 0.72f;
+        private const float GlanceStart = 0.7f;
         private const float ShiverWobbles = 7f;
+
+        /// <summary>The performance's sounds as the start check's pulses (Audio voices them): glance, shiver, lamps on, lamps off.</summary>
+        private const int GlancePulse = 0;
+        private const int ShiverPulse = 1;
+        private const int LampsOnPulse = 2;
+        private const int LampsOffPulse = 3;
+        private const int PerformPulses = 4;
 
         private static readonly float[] AttemptStarts = { 0.1f, 0.4f, 0.7f };
         private static readonly float[] AttemptPeaks = { 1f, 0.8f, 0.55f };
@@ -81,8 +94,6 @@ namespace MoonProject.Rover
                 case BootCheckStep.Cutter: return 2 * AttemptCount;
                 case BootCheckStep.SolarWing: return 3;
                 case BootCheckStep.Antenna: return 1;
-                case BootCheckStep.Battery: return 0;
-                case BootCheckStep.Begin: return 3;
                 default: return 0;
             }
         }
@@ -106,8 +117,6 @@ namespace MoonProject.Rover
                     return n == 0 ? new PulseMark(0f, 0) : n == 1 ? new PulseMark(JerkEnd, 1) : new PulseMark(FoldStart, 2);
                 case BootCheckStep.Antenna:
                     return new PulseMark(0f, 0);
-                case BootCheckStep.Begin:
-                    return n == 0 ? new PulseMark(0f, 0) : n == 1 ? new PulseMark(TurnEnd, 1) : new PulseMark(ShiverEnd, 2);
                 default:
                     return default;
             }
@@ -264,27 +273,57 @@ namespace MoonProject.Rover
             return _settings.BatteryFill * Smoothing.SmoothStep(0f, 1f, p);
         }
 
-        /// <summary>How far (0..1) the head has turned toward the beacon at progress <paramref name="p"/> of the start.</summary>
+        /// <summary>The ready performance's sounds, in the order they fire.</summary>
+        public static int PerformPulseCount => PerformPulses;
+
+        /// <summary>The <paramref name="n"/>th sound of the ready performance, sorted by moment.</summary>
+        public static PulseMark PerformPulse(int n)
+        {
+            switch (n)
+            {
+                case 0: return new PulseMark(LampsOffAt, LampsOffPulse);
+                case 1: return new PulseMark(LampsOnAt, LampsOnPulse);
+                case 2: return new PulseMark(ShiverStart, ShiverPulse);
+                default: return new PulseMark(GlanceStart, GlancePulse);
+            }
+        }
+
+        /// <summary>The moments (0..1 of the performance) of its double blink.</summary>
+        public static float BlinkAt(int n)
+        {
+            return n == 0 ? 0f : SecondBlinkAt;
+        }
+
+        /// <summary>The blinks in the double blink.</summary>
+        public static int BlinkCount => 2;
+
+        /// <summary>The headlamps at progress <paramref name="p"/> of the performance: clicked off, then on again.</summary>
+        public static float Lamps(float p)
+        {
+            return p >= LampsOffAt && p < LampsOnAt ? 0f : 1f;
+        }
+
+        /// <summary>How far (0..1) the head has turned toward the beacon at progress <paramref name="p"/> of the performance.</summary>
         public static float BeaconTurn(float p)
         {
-            return Smoothing.SmoothStep(0f, TurnEnd, p);
+            return Smoothing.SmoothStep(GlanceStart, 1f, p);
         }
 
-        /// <summary>How far (0..1) the shiver has shaken the dust off by progress <paramref name="p"/> of the start.</summary>
+        /// <summary>How far (0..1) the shiver has shaken the dust off by progress <paramref name="p"/> of the performance.</summary>
         public static float ShiverProgress(float p)
         {
-            return Smoothing.SmoothStep(TurnEnd, ShiverEnd, p);
+            return Smoothing.SmoothStep(ShiverStart, ShiverEnd, p);
         }
 
-        /// <summary>The dust shiver's strength (0..1) at progress <paramref name="p"/> of the start.</summary>
+        /// <summary>The dust shiver's strength (0..1) at progress <paramref name="p"/> of the performance.</summary>
         public static float Shiver(float p)
         {
-            if (p <= TurnEnd || p >= ShiverEnd)
+            if (p <= ShiverStart || p >= ShiverEnd)
             {
                 return 0f;
             }
 
-            float u = (p - TurnEnd) / (ShiverEnd - TurnEnd);
+            float u = (p - ShiverStart) / (ShiverEnd - ShiverStart);
             return Mathf.Sin(Mathf.PI * u) * Mathf.Abs(Mathf.Sin(2f * Mathf.PI * ShiverWobbles * u));
         }
     }
