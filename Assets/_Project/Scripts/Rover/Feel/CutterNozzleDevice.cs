@@ -25,6 +25,9 @@ namespace MoonProject.Rover
         private const float FullCircleDegrees = 360f;
         private const float TwoPi = Mathf.PI * 2f;
 
+        /// <summary>How far the iris flinches open (0..1) at a full flash.</summary>
+        private const float IgnitionIris = 0.45f;
+
         private static readonly int EmissionStrengthId = Shader.PropertyToID("_EmissionStrength");
 
         [Tooltip("Rover effect tuning (Assets/_Project/Data/Tuning/RoverFxTuning.asset), 'Cutter nozzle'.")]
@@ -46,6 +49,7 @@ namespace MoonProject.Rover
         private IDisposable[] _subscriptions;
 
         private bool _online;
+        private float _flash;
         private bool _charging;
         private bool _firing;
         private float _chargeElapsed;
@@ -53,6 +57,19 @@ namespace MoonProject.Rover
         private float _irisOpen01;
         private float _coreGlow01;
         private float _phase;
+
+        /// <summary>
+        /// An ignition attempt's flash, 0..1: the core glows and the spill light kicks, as if the nozzle sparked. Set by
+        /// the self-test's cutter check; 0 leaves the device to its own state.
+        /// </summary>
+        public void SetFlash(float flash01)
+        {
+            _flash = Mathf.Clamp01(flash01);
+            if (_block != null)
+            {
+                ApplyVisuals();
+            }
+        }
 
         /// <summary>Normalized [0..1] iris opening (0 = closed, 1 = fully retracted).</summary>
         public float IrisOpen01 => _irisOpen01;
@@ -253,8 +270,10 @@ namespace MoonProject.Rover
         private void ApplyVisuals()
         {
             CutterNozzleSettings settings = _tuning.CutterNozzle;
-            float radius = Mathf.Lerp(settings.BladeClosedRadius, settings.BladeOpenRadius, _irisOpen01);
-            float twist = settings.BladeAngleOffset + settings.BladeOpenTwist * _irisOpen01;
+            float iris = Mathf.Max(_irisOpen01, _flash * IgnitionIris);
+            float glow = Mathf.Max(_coreGlow01, _flash);
+            float radius = Mathf.Lerp(settings.BladeClosedRadius, settings.BladeOpenRadius, iris);
+            float twist = settings.BladeAngleOffset + settings.BladeOpenTwist * iris;
             int count = _blades.Length;
             for (int i = 0; i < count; i++)
             {
@@ -269,11 +288,11 @@ namespace MoonProject.Rover
             float pulse = _firing
                 ? 1f + settings.FireCorePulseAmplitude * Mathf.Sin(_phase * settings.FireCorePulseRate * TwoPi)
                 : 1f;
-            float coreDiameter = Mathf.Lerp(settings.CoreRestDiameter, settings.CoreHotDiameter, _coreGlow01) * pulse;
+            float coreDiameter = Mathf.Lerp(settings.CoreRestDiameter, settings.CoreHotDiameter, glow) * pulse;
             _core.localPosition = new Vector3(0f, 0f, settings.CoreForwardOffset);
             _core.localScale = new Vector3(coreDiameter, coreDiameter, 1f);
 
-            float emissionStrength = _coreGlow01 * settings.CorePeakEmission;
+            float emissionStrength = glow * settings.CorePeakEmission;
             _block.SetFloat(EmissionStrengthId, emissionStrength);
             _coreRenderer.SetPropertyBlock(_block);
 
@@ -285,15 +304,15 @@ namespace MoonProject.Rover
             }
             else if (_charging)
             {
-                targetSpill = Mathf.Lerp(settings.ChargeMinSpillIntensity, settings.ChargeMaxSpillIntensity, _coreGlow01);
+                targetSpill = Mathf.Lerp(settings.ChargeMinSpillIntensity, settings.ChargeMaxSpillIntensity, glow);
             }
             else
             {
-                targetSpill = _coreGlow01 * settings.ReleaseSpillIntensity;
+                targetSpill = glow * settings.ReleaseSpillIntensity;
             }
 
             _spillLight.range = settings.SpillRange;
-            _spillLight.intensity = targetSpill;
+            _spillLight.intensity = Mathf.Max(targetSpill, _flash * settings.FireBaseSpillIntensity);
         }
 
         public void Dispose()

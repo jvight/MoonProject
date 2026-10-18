@@ -18,8 +18,9 @@ namespace MoonProject.Audio.PlayModeTests
         {
             _rig = new AudioTestRig();
             yield return null;
+            // A base that already has power: no hiss still clearing under the clarity these tests measure.
+            _rig.Milestone(OpeningMilestone.PowerOn, true);
             _rig.Wake(true);
-            _rig.Milestone(OpeningMilestone.PowerOn);
             float deadline = Time.realtimeSinceStartup + 3f;
             while (!_rig.Radio.MusicStarted && Time.realtimeSinceStartup < deadline)
             {

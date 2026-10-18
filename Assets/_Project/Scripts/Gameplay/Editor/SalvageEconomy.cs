@@ -10,11 +10,14 @@ namespace MoonProject.Gameplay.Editor
     /// </summary>
     internal static class SalvageEconomy
     {
-        /// <summary>Units of a salvage bundle one slot holds (docs/features/M3-25 §2.2).</summary>
-        public const int SalvageStack = 4;
+        /// <summary>
+        /// Units of a salvage bundle one slot holds (docs/features/M3-25 §2.2): ten, so the opening's handfuls sit in one
+        /// slot each instead of splitting across the hold's eight.
+        /// </summary>
+        public const int SalvageStack = 10;
 
         /// <summary>Units of a lunar ore one slot holds (M3-27: beads and ores pack denser than bundles).</summary>
-        public const int OreStack = 6;
+        public const int OreStack = 12;
 
         /// <summary>The opening's wreck (Art's Site_kestrel on site.kestrel).</summary>
         public const string Kestrel = "kestrel";

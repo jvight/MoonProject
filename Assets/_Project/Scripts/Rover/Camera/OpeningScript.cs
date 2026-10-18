@@ -60,9 +60,17 @@ namespace MoonProject.Rover
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
             _settings = tuning.Opening;
             _gaze = new LensGaze(_settings);
-            _post = new PostSequencer(_settings.Post);
+            Lamps = new LampPowerUp(_settings);
+            Motions = new PostMotions(_settings.Post);
+            _post = new PostSequencer(_settings.Post, Lamps);
             Reset();
         }
+
+        /// <summary>07's lamps: dark while it sleeps, then the lamps check's flicker and ramp.</summary>
+        public LampPowerUp Lamps { get; }
+
+        /// <summary>What 07 does in each check, as functions of <see cref="PostProgress01"/>.</summary>
+        public PostMotions Motions { get; }
 
         public OpeningPhase Phase { get; private set; }
 

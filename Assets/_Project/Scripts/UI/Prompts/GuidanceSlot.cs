@@ -6,16 +6,22 @@ namespace MoonProject.UI
     internal enum GuidanceKind
     {
         /// <summary>
+        /// The build step while 07 places or welds (<see cref="BuildSteps"/>): the player is in the middle of a task,
+        /// so its one line waits for nothing and nothing interrupts it.
+        /// </summary>
+        BuildStep = 0,
+
+        /// <summary>
         /// A chip or a card: the teaching prompt (glyph and one verb), the look/drive/hold chips, the recipe card, the
         /// blueprint-learned card.
         /// </summary>
-        Prompt = 0,
+        Prompt = 1,
 
         /// <summary>The low-battery hint: once per charge cycle, on the objective line's own line.</summary>
-        Battery = 1,
+        Battery = 2,
 
         /// <summary>The objective line: what to do next.</summary>
-        Objective = 2,
+        Objective = 3,
     }
 
     /// <summary>

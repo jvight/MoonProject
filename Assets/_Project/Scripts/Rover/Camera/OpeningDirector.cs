@@ -38,6 +38,16 @@ namespace MoonProject.Rover
         /// <summary>Frames the brain keeps its cut blend after the lens camera goes live.</summary>
         private const int CutFrameCount = 2;
 
+        /// <summary>The head turns this far (deg) at most toward the beacon, and lifts this far.</summary>
+        private const float BeaconYawLimit = 70f;
+        private const float BeaconPitchLimit = 12f;
+
+        /// <summary>The start's dust shiver shakes the chassis this many times the motor's shudder.</summary>
+        private const float ShiverScale = 1.5f;
+
+        /// <summary>Half-life (s) of the antenna's rise and fall.</summary>
+        private const float AntennaHalfLife = 0.15f;
+
         /// <summary>Phase length or probe distance below this is treated as zero.</summary>
         private const float LengthEpsilon = 1e-4f;
 
@@ -62,6 +72,7 @@ namespace MoonProject.Rover
         private readonly object _owner = new object();
         private readonly FaceInspectSightLine _sight = new FaceInspectSightLine();
         private bool _wakeWaitsForBlack;
+        private float _antennaLift;
         private CinemachineBrain _brain;
         private CinemachineBlendDefinition _savedBlend;
         private int _cutFrames;
@@ -118,7 +129,7 @@ namespace MoonProject.Rover
             _script = new OpeningScript(_tuning);
             _rig.SetWakeBody(_body);
             OpeningSettings settings = _tuning.Opening;
-            _lamps = new LampPowerUp(settings);
+            _lamps = _script.Lamps;
             _brain = _rig.Camera != null ? _rig.Camera.GetComponent<CinemachineBrain>() : null;
             CinemachineCamera chase = _rig.ChaseCamera;
             chase.StandbyUpdate = CinemachineVirtualCameraBase.StandbyUpdateMode.Always;
@@ -291,8 +302,9 @@ namespace MoonProject.Rover
             _body.SetLampPower(_lamps.Level);
 
             _script.Step(deltaTime);
-            TakeBeats();
+            // The lines first: the carrier is announced before O1's beat, while the screen is still black.
             TakePostEvents();
+            TakeBeats();
             if (_script.WantsRigEase && _rig.Opening.IsActive && !_rig.Opening.IsEasing)
             {
                 _rig.Opening.EaseOut();
@@ -300,6 +312,7 @@ namespace MoonProject.Rover
 
             HoldControl(_script.ControlHeld);
             PoseBody();
+            ApplyPostMotion(deltaTime);
             AimHead();
             PlaceLensCamera();
             ApplyLens();
@@ -358,6 +371,9 @@ namespace MoonProject.Rover
                         break;
                     case PostEventKind.Completed:
                         _events.Publish(new BootCheckCompleted(postEvent.Step, postEvent.Result));
+                        break;
+                    case PostEventKind.Pulse:
+                        _events.Publish(new BootCheckPulse(postEvent.Step, postEvent.Index, postEvent.Progress01));
                         break;
                     case PostEventKind.Finished:
                         _events.Publish(new BootCheckFinished());
@@ -430,7 +446,7 @@ namespace MoonProject.Rover
             }
             else if (phase == OpeningPhase.Post)
             {
-                _body.PoseOpeningHead(_rig.WakeFaceNeckYaw, _tuning.FaceInspectHeadPitch, 0f, 1f);
+                PoseHeadForCheck();
             }
             else if (phase == OpeningPhase.OverShoulder)
             {
@@ -441,6 +457,90 @@ namespace MoonProject.Rover
             {
                 _body.PoseOpeningHead(0f, 0f, 0f, 0f);
             }
+        }
+
+        /// <summary>The head in the checks: held to the front shot, sweeping and nodding at its check, turning to the beacon at the start.</summary>
+        private void PoseHeadForCheck()
+        {
+            float yaw = _rig.WakeFaceNeckYaw;
+            float pitch = _tuning.FaceInspectHeadPitch;
+            BootCheckStep step = _script.PostStep;
+            float progress = _script.PostProgress01;
+            if (step == BootCheckStep.Head)
+            {
+                Vector2 head = _script.Motions.Head(progress);
+                yaw += head.x;
+                pitch += head.y;
+            }
+            else if (step == BootCheckStep.Begin)
+            {
+                Vector2 beacon = LensGaze.Angles(Quaternion.Inverse(Heading()) * (_beacon.position - ScanLensOrigin.position));
+                float turn = PostMotions.BeaconTurn(progress);
+                yaw = Mathf.Lerp(yaw, Mathf.Clamp(beacon.x, -BeaconYawLimit, BeaconYawLimit), turn);
+                pitch = Mathf.Lerp(pitch, Mathf.Clamp(beacon.y, -BeaconPitchLimit, BeaconPitchLimit), turn);
+            }
+
+            _body.PoseOpeningHead(yaw, pitch, 0f, 1f);
+        }
+
+        /// <summary>
+        /// What each check does on 07 beyond its head: the wheels' twitches, the motor's shudder and lurch, the
+        /// cutter's flashes and turret kicks, the wing's jerk, the antenna's rise (held through the later checks and
+        /// then lowered) and the start's dust shiver.
+        /// </summary>
+        private void ApplyPostMotion(float deltaTime)
+        {
+            var motion = new PostBodyMotion();
+            float wing = -1f;
+            float turret = 0f;
+            float flash = 0f;
+            float antennaTarget = 0f;
+            float eyeFocus = 0f;
+            if (_script.Phase == OpeningPhase.Post)
+            {
+                PostMotions motions = _script.Motions;
+                BootCheckStep step = _script.PostStep;
+                float p = _script.PostProgress01;
+                switch (step)
+                {
+                    case BootCheckStep.Lens:
+                        eyeFocus = PostMotions.LensFocus(p);
+                        break;
+                    case BootCheckStep.Wheels:
+                        motion.Wheel0 = motions.Wheel(0, p);
+                        motion.Wheel1 = motions.Wheel(1, p);
+                        motion.Wheel2 = motions.Wheel(2, p);
+                        motion.Wheel3 = motions.Wheel(3, p);
+                        break;
+                    case BootCheckStep.Motor:
+                        motion.Shudder = motions.Shudder(p);
+                        motion.Lurch = motions.Lurch(p);
+                        break;
+                    case BootCheckStep.Cutter:
+                        turret = motions.Turret(p);
+                        flash = motions.CutterFlash(p);
+                        break;
+                    case BootCheckStep.SolarWing:
+                        wing = motions.Wing(p);
+                        break;
+                    case BootCheckStep.Antenna:
+                        antennaTarget = motions.Antenna(p);
+                        break;
+                    case BootCheckStep.Begin:
+                        motion.Shudder = PostMotions.Shiver(p) * _tuning.Opening.Post.ShudderMetres * ShiverScale;
+                        break;
+                }
+
+                if (step > BootCheckStep.Antenna)
+                {
+                    antennaTarget = motions.Antenna(1f);
+                }
+            }
+
+            _antennaLift = Smoothing.Damp(_antennaLift, antennaTarget, AntennaHalfLife, deltaTime);
+            _body.SetPostPose(wing, _antennaLift, turret, eyeFocus);
+            _body.SetPostMotion(motion);
+            _controller.NozzleDevice.SetFlash(flash);
         }
 
         private void AimHead()

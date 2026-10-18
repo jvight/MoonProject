@@ -16,20 +16,20 @@ MonoBehaviour:
   - _material: 0
     _id: metal
     _family: 0
-    _stackSize: 4
+    _stackSize: 10
     _harvestable: 1
   - _material: 1
     _id: wiring
     _family: 0
-    _stackSize: 4
+    _stackSize: 10
     _harvestable: 1
   - _material: 2
     _id: optics
     _family: 0
-    _stackSize: 4
+    _stackSize: 10
     _harvestable: 1
   - _material: 4
     _id: orange_beads
     _family: 1
-    _stackSize: 6
+    _stackSize: 12
     _harvestable: 0

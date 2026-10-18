@@ -23,6 +23,8 @@ namespace MoonProject.UI
             BatteryDialValue = Require<Label>("battery-dial-value");
             NextLineShadow = Require<VisualElement>("next-line-shadow");
             NextLineText = Require<Label>("next-line-text");
+            NextLineProgress = Require<VisualElement>("next-line-progress");
+            NextLineProgressFill = Require<VisualElement>("next-line-progress-fill");
             SunArc = Require<VisualElement>("sun-arc");
             SunArcFace = Require<VisualElement>("sun-arc-face");
             SunArcLabel = Require<Label>("sun-arc-label");
@@ -162,6 +164,11 @@ namespace MoonProject.UI
         public VisualElement NextLineShadow { get; }
 
         public Label NextLineText { get; }
+
+        /// <summary>The thin bar under the line that fills while 07 welds.</summary>
+        public VisualElement NextLineProgress { get; }
+
+        public VisualElement NextLineProgressFill { get; }
 
         /// <summary>The Sun's arc above the battery dial.</summary>
         public VisualElement SunArc { get; }

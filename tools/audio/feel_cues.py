@@ -1,14 +1,12 @@
 """0.5.2 "Satisfying" cue recipes (docs/design/feel-pass.md, polish-pass.md section 1.1): the cut's beats, the dock's
-lock, 07's machine voice and the first hour's silent events. Every pitch is D major pentatonic; peaks stay at
-mezzo-piano and each beat has at most three layers (feel-pass R10). In vacuum, sound is what 07's chassis feels
-(R11): low, close and muffled. Imported by cues.py, which lists the cues.
+lock and the first hour's silent events (07's voice is sampled: sampled/voice.py). Every pitch is D major
+pentatonic; peaks stay at mezzo-piano and each beat has at most three layers (feel-pass R10). In vacuum, sound is
+what 07's chassis feels (R11): low, close and muffled. Imported by cues.py, which lists the cues.
 """
-import math
-
 import numpy as np
 
 from synth import envelope, filters, instruments, noise, osc
-from synth.core import SAMPLE_RATE, loop_freq, note_freq, place, samples
+from synth.core import loop_freq, note_freq, place, samples
 from synth.loop import periodic
 
 # ------------------------------------------------------------------------------------------------------- the cut
@@ -111,106 +109,6 @@ def dock_walls_drop(_variant, gen):
     mix = 0.04 * fall
     place(mix, 0.3 * _tick(gen, note_freq("D3")), samples(0.24))
     return filters.lowpass(mix, 3000.0)
-
-
-# ------------------------------------------------------------------------------------------- 07 speaks machine
-# Each mood is a list of syllables (note, seconds, bend_semitones at the end). Variants move the contour along the
-# pentatonic scale or stretch it, so every variant stays in D major pentatonic.
-
-PENTA = ("D4", "E4", "F#4", "A4", "B4", "D5", "E5", "F#5", "A5", "B5", "D6", "E6")
-CHIRP_MOODS = ("affirm", "happy", "proud", "curious", "worried", "tired", "relieved", "greeting")
-CHIRP_VARIANTS = 4
-CHIRP_GAP_S = 0.03
-CHIRP_LOW_HZ = note_freq("D4")
-CHIRP_HIGH_HZ = note_freq("E6")
-CHIRP_CONTOURS = {
-    "affirm": (("A5", 0.10, 0.0), ("D6", 0.12, 0.0)),
-    "happy": (("F#5", 0.10, 0.0), ("A5", 0.09, 0.0), ("B5", 0.09, 0.0), ("D6", 0.20, 0.0)),
-    "proud": (("D5", 0.12, 0.0), ("E5", 0.12, 0.0), ("F#5", 0.12, 0.0), ("A5", 0.14, 0.0), ("D6", 0.24, 0.0)),
-    "curious": (("D5", 0.13, 0.0), ("F#5", 0.13, 0.0), ("A5", 0.18, 2.0)),
-    "worried": (("B5", 0.18, 0.0), ("F#5", 0.24, -0.5)),
-    "tired": (("A5", 0.30, 0.0), ("D5", 0.55, -1.0)),
-    "relieved": (("F#5", 0.18, 0.0), ("D5", 0.22, 0.0), ("A5", 0.24, 0.0)),
-    "greeting": (("D5", 0.13, 0.0), ("A5", 0.18, 0.0)),
-}
-CHIRP_WOBBLE = {"worried": 35.0, "tired": 20.0}
-
-
-def _shift(note: str, steps: int) -> str:
-    return PENTA[max(0, min(len(PENTA) - 1, PENTA.index(note) + steps))]
-
-
-def chirp_syllables(mood: str, variant: int) -> list:
-    """``[(onset_s, freq_hz, seconds, bend)]`` for one variant: 0 as written, 1 one step up, 2 slower and one step
-    down, 3 a touch quicker with the last note held."""
-    steps = (0, 1, -1, 0)[variant]
-    stretch = (1.0, 0.95, 1.15, 0.9)[variant]
-    syllables = []
-    onset = 0.0
-    contour = CHIRP_CONTOURS[mood]
-    for index, (note, seconds, bend) in enumerate(contour):
-        length = seconds * stretch * (1.3 if variant == 3 and index == len(contour) - 1 else 1.0)
-        syllables.append((round(onset, 4), note_freq(_shift(note, steps)), round(length, 4), bend))
-        onset += length + CHIRP_GAP_S * stretch
-    return syllables
-
-
-def chirp_pitch(freq: float) -> float:
-    """0 .. 1 where a syllable sits between D4 and E6 (log), for 07's eye and antenna."""
-    return float(np.clip(math.log(freq / CHIRP_LOW_HZ) / math.log(CHIRP_HIGH_HZ / CHIRP_LOW_HZ), 0.0, 1.0))
-
-
-def _chirp(mood: str, variant: int) -> np.ndarray:
-    syllables = chirp_syllables(mood, variant)
-    total = syllables[-1][0] + syllables[-1][2] + 0.15
-    n = samples(total)
-    freq = np.full(n, syllables[0][1])
-    gate = np.zeros(n)
-    previous = syllables[0][1]
-    for onset, hz, seconds, bend in syllables:
-        start, count = samples(onset), samples(seconds)
-        glide_n = min(count, samples(0.045))
-        segment = np.full(count, hz)
-        segment[:glide_n] = osc.glide(glide_n, previous, hz, time_constant=0.012)
-        if bend:
-            tail = samples(min(seconds, 0.12))
-            segment[-tail:] *= 2.0 ** (np.linspace(0.0, bend, tail) / 12.0)
-        freq[start:start + count] = segment
-        freq[start + count:] = segment[-1]
-        gate[start:start + count] = envelope.segments(count, [(0.0, 0.0), (0.008, 1.0), (seconds - 0.03, 0.85),
-                                                             (seconds, 0.0)], shape="smooth")
-        previous = segment[-1]
-    wobble_cents = CHIRP_WOBBLE.get(mood, 8.0)
-    t = np.arange(n) / SAMPLE_RATE
-    freq = freq * 2.0 ** (wobble_cents * np.sin(2.0 * math.pi * 6.5 * t) / 1200.0)
-    tone = 0.7 * osc.sine(n, freq) + 0.18 * osc.square(n, freq)
-    return filters.lowpass(filters.lowpass(tone * gate, 2600.0), 3200.0) * 0.5
-
-
-def _chirp_render(mood: str):
-    def render(variant, _gen):
-        return _chirp(mood, variant)
-
-    render.__doc__ = f"07's machine voice, mood {mood} (feel-pass section 7.2): sine and square through a soft " \
-                     "low-pass, 30-60 ms glides, a slight wobble."
-    return render
-
-
-CHIRP_RENDERS = {mood: _chirp_render(mood) for mood in CHIRP_MOODS}
-
-
-def chirp_bank_data() -> dict:
-    """The syllable data the game reads (tools/audio/chirp_syllables.json)."""
-    moods = []
-    for mood in CHIRP_MOODS:
-        variants = []
-        for variant in range(CHIRP_VARIANTS):
-            syllables = chirp_syllables(mood, variant)
-            variants.append({"onsets": [s[0] for s in syllables],
-                             "pitches": [round(chirp_pitch(s[1]), 4) for s in syllables],
-                             "lengths": [s[2] for s in syllables]})
-        moods.append({"mood": mood, "cue": f"chirp_{mood}", "variants": variants})
-    return {"version": 1, "moods": moods}
 
 
 # ------------------------------------------------------------------------------------- the first hour's silences

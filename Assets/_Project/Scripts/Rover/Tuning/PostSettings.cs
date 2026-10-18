@@ -56,6 +56,61 @@ namespace MoonProject.Rover
         [Range(2f, 8f)]
         [SerializeField] private float _beginSeconds = 4f;
 
+        [Header("The motions")]
+        [Tooltip("How far (deg) the neck sweeps to each side in the head check.")]
+        [Range(5f, 45f)]
+        [SerializeField] private float _headSweepDegrees = 24f;
+
+        [Tooltip("How far (deg) the head nods down.")]
+        [Range(2f, 25f)]
+        [SerializeField] private float _headNodDegrees = 9f;
+
+        [Tooltip("How far (deg) each wheel twitches forward and back.")]
+        [Range(2f, 40f)]
+        [SerializeField] private float _wheelTwitchDegrees = 14f;
+
+        [Tooltip("The motor's shudder: the chassis' vertical shake (m).")]
+        [Range(0f, 0.04f)]
+        [SerializeField] private float _shudderMetres = 0.012f;
+
+        [Tooltip("The motor's creep: how far (m) the chassis lurches forward.")]
+        [Range(0f, 0.2f)]
+        [SerializeField] private float _lurchMetres = 0.06f;
+
+        [Tooltip("How far (deg) the cutter's turret kicks sideways on each ignition attempt.")]
+        [Range(0f, 25f)]
+        [SerializeField] private float _turretKickDegrees = 10f;
+
+        [Tooltip("How far (0..1) the solar wing jerks open before it stalls.")]
+        [Range(0.2f, 0.9f)]
+        [SerializeField] private float _wingJerkOpen = 0.5f;
+
+        [Tooltip("How high (m) the antenna rises in its check.")]
+        [Range(0.02f, 0.3f)]
+        [SerializeField] private float _antennaRiseMetres = 0.12f;
+
+        [Tooltip("The cell lamps fill to this share of full (the battery's 50%).")]
+        [Range(0.1f, 1f)]
+        [SerializeField] private float _batteryFill = 0.5f;
+
+        public float HeadSweepDegrees => _headSweepDegrees;
+
+        public float HeadNodDegrees => _headNodDegrees;
+
+        public float WheelTwitchDegrees => _wheelTwitchDegrees;
+
+        public float ShudderMetres => _shudderMetres;
+
+        public float LurchMetres => _lurchMetres;
+
+        public float TurretKickDegrees => _turretKickDegrees;
+
+        public float WingJerkOpen => _wingJerkOpen;
+
+        public float AntennaRiseMetres => _antennaRiseMetres;
+
+        public float BatteryFill => _batteryFill;
+
         /// <summary>Seconds <paramref name="step"/> takes; the lens stages' steps (carrier, resume, agenda) have none here.</summary>
         public float SecondsOf(BootCheckStep step)
         {

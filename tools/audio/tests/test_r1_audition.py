@@ -52,12 +52,8 @@ EXPECTED_CUES_BY_GROUP: dict[str, tuple[str, ...]] = {
     ),
     "building": (
         "build_ghost",
-        "build_snap",
         "build_invalid",
-        "build_place",
-        "build_weld_loop",
         "build_stage_complete",
-        "build_structure_complete",
         "build_deconstruct",
     ),
     "machines": (
@@ -152,8 +148,8 @@ class R1AuditionTests(unittest.TestCase):
         sample_ids = (
             "face_boot",
             "sky_diamond_ring",
-            "build_place",
-            "build_weld_loop",
+            "build_ghost",
+            "build_stage_complete",
             "machine_transformer_loop",
             "ui_cursor_move",
         )

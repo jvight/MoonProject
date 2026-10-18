@@ -611,18 +611,6 @@
             "text": "Clear the ground first"
         },
         {
-            "key": "build.hint.rotate",
-            "text": "Rotate"
-        },
-        {
-            "key": "build.hint.snap",
-            "text": "Snap"
-        },
-        {
-            "key": "build.hint.place",
-            "text": "Place"
-        },
-        {
             "key": "build.hint.weld",
             "text": "Hold to weld"
         },
@@ -947,12 +935,60 @@
             "text": "Close"
         },
         {
-            "key": "ui.face.move",
-            "text": "Move"
+            "key": "ui.face.fit",
+            "text": "Fit"
         },
         {
-            "key": "ui.face.select",
-            "text": "Select"
+            "key": "ui.face.build",
+            "text": "Build"
+        },
+        {
+            "key": "ui.cargo.drag.not_docked",
+            "text": "Fits only while parked on the charging pad"
+        },
+        {
+            "key": "ui.cargo.drag.to_cutter",
+            "text": "Drop it on the cutter"
+        },
+        {
+            "key": "ui.cargo.drag.nowhere",
+            "text": "Nothing on 07 takes this yet"
+        },
+        {
+            "key": "glyph.combo.drag_e",
+            "text": "Drag/E"
+        },
+        {
+            "key": "glyph.combo.mouse_e",
+            "text": "Mouse/E"
+        },
+        {
+            "key": "glyph.combo.b_esc",
+            "text": "B/Esc"
+        },
+        {
+            "key": "glyph.combo.pad_y_b",
+            "text": "Y/B"
+        },
+        {
+            "key": "glyph.keyboard.b",
+            "text": "B"
+        },
+        {
+            "key": "build.hint.pick",
+            "text": "Pick"
+        },
+        {
+            "key": "build.hint.leave",
+            "text": "Leave"
+        },
+        {
+            "key": "build.step.place",
+            "text": "Drive to the glowing marks on the apron, then press {0} to place"
+        },
+        {
+            "key": "build.step.weld",
+            "text": "Hold {0} to weld"
         }
     ]
 }

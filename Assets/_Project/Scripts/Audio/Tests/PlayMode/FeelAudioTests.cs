@@ -262,19 +262,19 @@ namespace MoonProject.Audio.PlayModeTests
             var syllables = new List<RoverChirpSyllable>();
             using (_rig.Events.Subscribe<RoverChirpSyllable>(syllables.Add))
             {
-                _rig.Events.Publish(new RoverChirpRequested(ChirpMood.Proud, 0.5f));
+                _rig.Events.Publish(new RoverChirpRequested(ChirpMood.Happy, 0.5f));
                 yield return new WaitForSecondsRealtime(1.5f);
             }
 
-            Assert.AreEqual(5, syllables.Count, "Proud is a five-note flourish");
+            Assert.AreEqual(2, syllables.Count, "Happy is the done tone's two steps (B, then A)");
             for (int i = 0; i < syllables.Count; i++)
             {
-                Assert.AreEqual(ChirpMood.Proud, syllables[i].Mood);
+                Assert.AreEqual(ChirpMood.Happy, syllables[i].Mood);
                 Assert.AreEqual(i, syllables[i].Index);
                 Assert.AreEqual(syllables.Count, syllables[i].Count);
             }
 
-            Assert.Greater(syllables[4].Pitch, syllables[0].Pitch, "it rises");
+            Assert.Less(syllables[1].Pitch, syllables[0].Pitch, "it steps down onto A");
             Assert.IsFalse(_rig.Chirps.IsSpeaking);
         }
 
