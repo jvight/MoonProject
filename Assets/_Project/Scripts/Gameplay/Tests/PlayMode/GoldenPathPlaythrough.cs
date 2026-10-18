@@ -708,7 +708,8 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>
         /// On <paramref name="verb"/>'s first use a chip named it: the key chip shown with the step's line (its word,
-        /// <paramref name="wordKey"/>, UI's), or a prompt chip once 07 is in place for it. A missing chip is a guidance
+        /// <paramref name="wordKey"/>, UI's) when the line came or once 07 is in place, or a prompt chip there. The key
+        /// chip names what E does where 07 stands, so the line's first sample may name another verb. A missing chip is a guidance
         /// gap the run lists at the end rather than stopping on.
         /// </summary>
         private IEnumerator FirstUse(string verb, string wordKey)
@@ -724,7 +725,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             float deadline = Time.time + ChipTimeout;
             while (chip.Length == 0 && Time.time < deadline)
             {
-                chip = _hud.Chip;
+                string keyChip = _hud.KeyChip;
+                chip = keyChip.EndsWith(" " + word, StringComparison.Ordinal) ? keyChip + " (with the line)"
+                    : _hud.Chip;
                 yield return null;
             }
 

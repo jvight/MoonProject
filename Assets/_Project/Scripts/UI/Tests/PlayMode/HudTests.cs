@@ -864,6 +864,39 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator OnTheCutStep_TheLinesChipNamesWhatEDoesWhere07Stands_ScanByAFragment_CutAtTheSeal()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            _rig.Ui.Ledger.RecordLookTaught();
+            _rig.Ui.Ledger.RecordDriveTaught();
+            _rig.Ui.Ledger.RecordHoldChipShown();
+            _rig.Ui.Ledger.RecordUsed(InteractionKind.Scan);
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            Events.Publish(new ScanStarted("airlock_panel", Vector3.zero));
+            Events.Publish(new StoryScanned("airlock_panel", "story.airlock_panel", Vector3.zero));
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Scan, new Vector3(-1f, 0.3f, 4f), true);
+            Events.Publish(new NextStepChanged("next.v2.cut_optics"));
+            float limit = Time.realtimeSinceStartup + 12f;
+            while (!_rig.Ui.LookUp.IsVisible && Time.realtimeSinceStartup < limit)
+            {
+                yield return null;
+            }
+
+            Assert.AreEqual(Text("next.v2.cut_optics"), _rig.Ui.Layout.NextLineText.text, "the cut line is up");
+            Assert.AreEqual(Text(UiKeys.VerbScan), _rig.Ui.Layout.LookHintWord.text,
+                "by the airlock an unscanned fragment is in reach: E would scan it, and the chip says so");
+
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Salvage, new Vector3(0.4f, 0.5f, 5f), true);
+            yield return UntilWord(UiKeys.VerbCut);
+            Assert.IsTrue(_rig.Ui.LookUp.IsVisible);
+            Assert.AreEqual(Text(UiKeys.VerbCut), _rig.Ui.Layout.LookHintWord.text,
+                "at the seal the same chip, with the same line, names the cut on its first use");
+            Assert.AreEqual(Text("next.v2.cut_optics"), _rig.Ui.Layout.NextLineText.text);
+        }
+
+        [UnityTest]
         public IEnumerator AnUnlearnedReadyVerb_TakesTheSlotFromTheObjectiveLine_WhenSevenNosesIntoACrate()
         {
             InputSystem.AddDevice<Keyboard>();
