@@ -774,7 +774,7 @@ namespace MoonProject.Rover.PlayModeTests
             Button button = document.rootVisualElement.Q<Button>(buttonName);
             Assert.IsNotNull(button, buttonName);
             var csv = new StringBuilder();
-            csv.AppendLine("frame,time,phase,luma,camDistance,camTurnDeg,titleShown,beat");
+            csv.AppendLine("frame,time,phase,luma,camDistance,camTurnDeg,titleShown,uiScaleX,uiScaleY,curtain,beat");
             using (NavigationSubmitEvent submit = NavigationSubmitEvent.GetPooled())
             {
                 submit.target = button;
@@ -783,26 +783,19 @@ namespace MoonProject.Rover.PlayModeTests
 
             Time.captureDeltaTime = 1f / 60f;
             VisualElement titleCrt = document.rootVisualElement.Q<VisualElement>("title-crt");
+            VisualElement pause = document.rootVisualElement.Q<VisualElement>("pause");
+            VisualElement curtain = document.rootVisualElement.Q<VisualElement>("curtain");
             Vector3 previousPosition = _view.transform.position;
             Quaternion previousRotation = _view.transform.rotation;
             int beatsSeen = 0;
             float started = Time.time;
             float chaseAt = -1f;
-            var texture = new Texture2D(TransitionWidth, TransitionHeight, TextureFormat.RGB24, false);
-            var target = new RenderTexture(TransitionWidth, TransitionHeight, 0);
-            try
             {
                 for (int frame = 0; Time.time - started < RunTimeout; frame++)
                 {
-                    yield return new WaitForEndOfFrame();
-                    Texture2D screen = ScreenCapture.CaptureScreenshotAsTexture();
-                    Graphics.Blit(screen, target);
-                    Object.Destroy(screen);
-                    RenderTexture.active = target;
-                    texture.ReadPixels(new Rect(0, 0, TransitionWidth, TransitionHeight), 0, 0);
-                    texture.Apply();
-                    RenderTexture.active = null;
-                    Color32[] pixels = texture.GetPixels32();
+                    yield return null;
+                    Texture2D shot = FrameCapture.Render(_view, TransitionWidth, TransitionHeight);
+                    Color32[] pixels = shot.GetPixels32();
                     float luma = 0f;
                     for (int i = 0; i < pixels.Length; i++)
                     {
@@ -822,14 +815,17 @@ namespace MoonProject.Rover.PlayModeTests
                     }
 
                     OpeningPhase phase = _director != null ? _director.Script.Phase : OpeningPhase.Idle;
-                    csv.AppendLine(string.Format(CultureInfo.InvariantCulture, "{0},{1:0.000},{2},{3:0.0000},{4:0.0000},{5:0.00},{6},{7}",
+                    csv.AppendLine(string.Format(CultureInfo.InvariantCulture, "{0},{1:0.000},{2},{3:0.0000},{4:0.0000},{5:0.00},{6},{7:0.000},{8:0.000},{9:0.000},{10}",
                         frame, Time.time - started, phase, luma, distance, turn, titleCrt != null && IsShown(titleCrt) ? 1 : 0,
-                        beat.Trim()));
+                        pause.resolvedStyle.scale.value.x, pause.resolvedStyle.scale.value.y,
+                        curtain.resolvedStyle.display == DisplayStyle.None ? 0f : curtain.resolvedStyle.opacity, beat.Trim()));
                     if (frame % 2 == 0)
                     {
                         File.WriteAllBytes(Path.Combine(folder, string.Format(CultureInfo.InvariantCulture, "f{0:0000}.png", frame)),
-                            texture.EncodeToPNG());
+                            shot.EncodeToPNG());
                     }
+
+                    Object.DestroyImmediate(shot);
 
                     if (chaseAt < 0f && _beats.Contains(WakeBeat.ChaseFrame))
                     {
@@ -841,11 +837,6 @@ namespace MoonProject.Rover.PlayModeTests
                         break;
                     }
                 }
-            }
-            finally
-            {
-                Object.Destroy(texture);
-                Object.Destroy(target);
             }
 
             File.WriteAllText(Path.Combine(folder, "frames.csv"), csv.ToString());

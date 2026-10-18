@@ -4677,8 +4677,7 @@ MonoBehaviour:
   _controller: {fileID: 953178385232242997}
   _body: {fileID: 1804812808455569372}
   _lensCamera: {fileID: 2801753409270531082}
-  _lander: {fileID: 696743891845077418}
-  _pilot: {fileID: 2271471562104207450}
+  _beacon: {fileID: 2271471562104207450}
 --- !u!65 &505598966274262677
 BoxCollider:
   m_ObjectHideFlags: 0
