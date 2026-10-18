@@ -98,6 +98,27 @@ namespace MoonProject.Rover
             return Smoothing.SmoothStep(0f, 1f, (time - gap) / ramp);
         }
 
+        /// <summary>How many flickers the lamps make before the dark gap.</summary>
+        public int FlickerCount => _settings.LampFlickerCount;
+
+        /// <summary>Seconds into the sequence at which flicker <paramref name="index"/> peaks.</summary>
+        public float FlickerCenter(int index)
+        {
+            float start = 0f;
+            for (int i = 0; i < index; i++)
+            {
+                start += FlickerShare(i) * _settings.LampFlickerSeconds;
+            }
+
+            return start + 0.5f * FlickerShare(index) * _settings.LampFlickerSeconds;
+        }
+
+        /// <summary>Seconds into the sequence at which the smooth ramp begins (after the flickers and the dark gap).</summary>
+        public float RampStart => _settings.LampFlickerSeconds + _settings.LampDarkGapSeconds;
+
+        /// <summary>Seconds the smooth ramp takes.</summary>
+        public float RampSeconds => _settings.LampRampSeconds;
+
         /// <summary>The width of flicker <paramref name="index"/> as a share of the flicker span.</summary>
         public float FlickerShare(int index)
         {

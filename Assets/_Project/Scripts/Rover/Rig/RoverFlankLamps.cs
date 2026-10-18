@@ -31,6 +31,7 @@ namespace MoonProject.Rover
         private EventBus _events;
         private IDisposable _wake;
         private IDisposable _title;
+        private IDisposable _check;
         private float _wakeStart = float.NegativeInfinity;
         private int _wakeLit = RoverModelNodes.FlankLampCount;
         private MaterialPropertyBlock _block;
@@ -64,6 +65,7 @@ namespace MoonProject.Rover
             _events = context.Events;
             _wake = _events.Subscribe<RoverWakeBeatReached>(OnWakeBeat);
             _title = _events.Subscribe<TitleShown>(OnTitleShown);
+            _check = _events.Subscribe<BootCheckStarted>(OnCheckStarted);
             _block = new MaterialPropertyBlock();
             _levels = new float[RoverModelNodes.FlankLampCount];
             for (int i = 0; i < RoverModelNodes.FlankLampCount; i++)
@@ -97,7 +99,7 @@ namespace MoonProject.Rover
             }
         }
 
-        /// <summary>After O5's flicker the lamps light one by one, each with a tick, up to the battery's cells.</summary>
+        /// <summary>At the battery check the lamps light one by one, each with a tick, up to the battery's cells.</summary>
         private void StepWake(FlankLampSettings settings, float time)
         {
             if (_wakeLit >= _shownCells || time < _wakeStart)
@@ -115,8 +117,7 @@ namespace MoonProject.Rover
 
         /// <summary>
         /// The opening's beats: dark from the fade to black (or from O1's crackle, after New Game's reload under
-        /// the black), lit one by one from O5's flicker (or, when a hurried opening skips it, from the blink); the
-        /// short wake lights them at once.
+        /// the black); the short wake lights them at once, the self-test at its battery check (<see cref="OnCheckStarted"/>).
         /// </summary>
         private void OnWakeBeat(RoverWakeBeatReached reached)
         {
@@ -127,13 +128,18 @@ namespace MoonProject.Rover
                     _wakeLit = 0;
                     _wakeStart = float.PositiveInfinity;
                     break;
-                case WakeBeat.Flicker:
-                case WakeBeat.Blinked:
-                    _wakeStart = Mathf.Min(_wakeStart, Time.time);
-                    break;
                 case WakeBeat.Stirred:
                     _wakeLit = RoverModelNodes.FlankLampCount;
                     break;
+            }
+        }
+
+        /// <summary>The self-test's battery check lights the cells one by one, each with a tick, up to the battery's level.</summary>
+        private void OnCheckStarted(BootCheckStarted started)
+        {
+            if (started.Step == BootCheckStep.Battery)
+            {
+                _wakeStart = Mathf.Min(_wakeStart, Time.time);
             }
         }
 
@@ -148,6 +154,7 @@ namespace MoonProject.Rover
         {
             _wake?.Dispose();
             _title?.Dispose();
+            _check?.Dispose();
         }
 
         /// <summary>Shows one segment per cell (the rest stay hidden).</summary>

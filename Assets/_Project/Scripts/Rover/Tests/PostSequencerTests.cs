@@ -12,20 +12,26 @@ namespace MoonProject.Rover.Tests
         private PostSettings _settings;
         private PostSequencer _post;
         private readonly List<PostEvent> _events = new List<PostEvent>();
+        private readonly List<PostEvent> _all = new List<PostEvent>();
 
         [SetUp]
         public void SetUp()
         {
             _settings = new PostSettings();
-            _post = new PostSequencer(_settings);
+            _post = new PostSequencer(_settings, new LampPowerUp(new OpeningSettings()));
             _events.Clear();
+            _all.Clear();
         }
 
         private void Drain()
         {
             while (_post.TryTake(out PostEvent postEvent))
             {
-                _events.Add(postEvent);
+                _all.Add(postEvent);
+                if (postEvent.Kind != PostEventKind.Pulse)
+                {
+                    _events.Add(postEvent);
+                }
             }
         }
 
@@ -111,15 +117,144 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void ALongFrame_StillAnnouncesEveryStep()
+        public void ALongHitchyFrame_StillAnnouncesEveryLine()
         {
+            const float Hitch = 0.7f;
             _post.Begin();
             Drain();
-            _post.Step(_post.TotalSeconds + 5f);
-            Drain();
+            float guard = 0f;
+            while (!_post.IsFinished && guard < 120f)
+            {
+                _post.Step(Hitch);
+                Drain();
+                guard += Hitch;
+            }
+
             Assert.IsTrue(_post.IsFinished);
             Assert.AreEqual(PostSequencer.StepCount * 2 + 1, _events.Count);
             Assert.AreEqual(PostEventKind.Finished, _events[_events.Count - 1].Kind);
+        }
+
+        [Test]
+        public void EachCheck_PulsesItsTicks_BetweenItsStartAndItsCompletion()
+        {
+            _post.Begin();
+            Drain();
+            RunToEnd();
+            BootCheckStep current = BootCheckStep.Lens;
+            bool inside = false;
+            var pulses = new Dictionary<BootCheckStep, List<int>>();
+            foreach (PostEvent postEvent in _all)
+            {
+                if (postEvent.Kind == PostEventKind.Started)
+                {
+                    current = postEvent.Step;
+                    inside = true;
+                }
+                else if (postEvent.Kind == PostEventKind.Completed)
+                {
+                    inside = false;
+                }
+                else if (postEvent.Kind == PostEventKind.Pulse)
+                {
+                    Assert.IsTrue(inside, "a pulse comes inside its check");
+                    Assert.AreEqual(current, postEvent.Step);
+                    if (!pulses.TryGetValue(postEvent.Step, out List<int> list))
+                    {
+                        list = new List<int>();
+                        pulses[postEvent.Step] = list;
+                    }
+
+                    list.Add(postEvent.Index);
+                }
+            }
+
+            CollectionAssert.AreEqual(new[] { 0, 1, 2, 3 }, Distinct(pulses[BootCheckStep.Wheels]), "four wheel twitches");
+            CollectionAssert.AreEqual(new[] { 0, 3, 1, 4, 2, 5 }, pulses[BootCheckStep.Cutter], "three sparks, each with the beacon's blink");
+            CollectionAssert.AreEqual(new[] { 0, 1, 2 }, pulses[BootCheckStep.SolarWing], "jerk, stall, fold");
+            CollectionAssert.AreEqual(new[] { 0, 1 }, pulses[BootCheckStep.Head], "sweep, nod");
+            CollectionAssert.AreEqual(new[] { 0, 1, 2 }, pulses[BootCheckStep.Begin], "turn, shiver, headlamps");
+            Assert.IsFalse(pulses.ContainsKey(BootCheckStep.Assembly), "the assembly line has nothing to tick");
+        }
+
+        [Test]
+        public void TheLamps_PulseTheirThreeFlickers_ThenTheRampTenTimesASecond_UpToOne()
+        {
+            _post.Begin();
+            Drain();
+            RunToEnd();
+            var flickers = new List<int>();
+            var ramp = new List<float>();
+            foreach (PostEvent postEvent in _all)
+            {
+                if (postEvent.Kind == PostEventKind.Pulse && postEvent.Step == BootCheckStep.Lamps)
+                {
+                    if (postEvent.Index < 3)
+                    {
+                        flickers.Add(postEvent.Index);
+                    }
+                    else
+                    {
+                        Assert.AreEqual(3, postEvent.Index, "the ramp is index 3");
+                        ramp.Add(postEvent.Progress01);
+                    }
+                }
+            }
+
+            CollectionAssert.AreEqual(new[] { 0, 1, 2 }, flickers);
+            Assert.AreEqual(1.1f * 10f, ramp.Count, 2f, "the ramp is ticked about ten times a second");
+            Assert.AreEqual(0f, ramp[0], 1e-3f);
+            Assert.AreEqual(1f, ramp[ramp.Count - 1], 0.12f, "and ends at full");
+            for (int i = 1; i < ramp.Count; i++)
+            {
+                Assert.GreaterOrEqual(ramp[i], ramp[i - 1]);
+            }
+        }
+
+        [Test]
+        public void TheContinuousChecks_ReportProgress_FromZeroToOne()
+        {
+            _post.Begin();
+            Drain();
+            RunToEnd();
+            foreach (BootCheckStep step in new[] { BootCheckStep.Battery, BootCheckStep.Antenna })
+            {
+                float first = -1f;
+                float last = -1f;
+                int count = 0;
+                foreach (PostEvent postEvent in _all)
+                {
+                    if (postEvent.Kind == PostEventKind.Pulse && postEvent.Step == step && postEvent.Progress01 > 0f || postEvent.Kind == PostEventKind.Pulse && postEvent.Step == step && count == 0)
+                    {
+                        if (step == BootCheckStep.Antenna && postEvent.Index == 0)
+                        {
+                            continue;
+                        }
+
+                        first = first < 0f ? postEvent.Progress01 : first;
+                        last = postEvent.Progress01;
+                        count++;
+                    }
+                }
+
+                Assert.GreaterOrEqual(count, 5, $"{step}: the progress is published repeatedly");
+                Assert.AreEqual(0f, first, 1e-3f);
+                Assert.AreEqual(1f, last, 0.15f);
+            }
+        }
+
+        private static List<int> Distinct(List<int> values)
+        {
+            var seen = new List<int>();
+            foreach (int value in values)
+            {
+                if (!seen.Contains(value))
+                {
+                    seen.Add(value);
+                }
+            }
+
+            return seen;
         }
 
         [Test]

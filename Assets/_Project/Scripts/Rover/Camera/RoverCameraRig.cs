@@ -847,7 +847,8 @@ namespace MoonProject.Rover
 
         private Vector2 ReadLook(float deltaTime)
         {
-            return _look.OrbitDegrees(_input.LookDelta, _input.LookRate, deltaTime);
+            Vector2 mouse = LookSettings.MouseDelta(_input.LookDelta, Cursor.lockState == CursorLockMode.Locked);
+            return _look.OrbitDegrees(mouse, _input.LookRate, deltaTime);
         }
 
         /// <summary>
