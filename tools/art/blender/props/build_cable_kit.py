@@ -997,6 +997,294 @@ def build_cable_plug() -> bpy.types.Object:
     return root
 
 
+def build_cable_splice_box() -> bpy.types.Object:
+    """Build `Cable_Splice_Box.fbx`: small dusty R1 junction box with a dead status lamp (where a cable could be repaired later)."""
+    r1kit.reset_scene()
+    ensure_extended_r1_materials()
+    r1kit.ensure_materials()
+
+    root = r1kit.create_empty("Cable_Splice_Box", pivot_u=(0.0, 0.0, 0.0))
+
+    # 1. SpliceHousing: dusty ground junction enclosure, hinged cream lid, sage repair patch, and inline cable tails
+    box = r1kit.MeshBuilder("SpliceHousing", pivot_u=(0.0, 0.0, 0.0))
+
+    # Heavy rubber ground isolation pad slightly sunk into regolith (y = -0.005 .. +0.017 m)
+    box.add_oct_prism(
+        (0.0, 0.006, 0.0),
+        0.420,
+        0.022,
+        0.460,
+        chamfer=0.055,
+        mat="R1_Rubber",
+        bevel=0.004,
+    )
+    # Cast grey-metal lower junction tub (y = 0.015 .. 0.143 m)
+    box.add_oct_prism(
+        (0.0, 0.079, 0.0),
+        0.380,
+        0.128,
+        0.420,
+        chamfer=0.048,
+        mat="R1_GreyMetal",
+        bevel=0.010,
+    )
+
+    # Gold Kapton thermal insulation gasket strip tucked into the mid-body recess
+    box.add_bevel_box(
+        (0.0, 0.052, 0.0),
+        (0.388, 0.024, 0.300),
+        mat="R1_GoldFoil",
+        bevel=0.004,
+        segments=1,
+    )
+
+    # 4 corner hold-down mounting lugs with driven bare-steel regolith stakes & hex bolts
+    for sx in (-1.0, 1.0):
+        for sz in (-1.0, 1.0):
+            lx = sx * 0.178
+            lz = sz * 0.188
+            box.add_bevel_box(
+                (lx, 0.022, lz),
+                (0.052, 0.024, 0.052),
+                mat="R1_GreyMetal",
+                bevel=0.003,
+                segments=1,
+            )
+            box.add_cylinder(
+                (lx, 0.012, lz),
+                radius=0.011,
+                length=0.056,
+                mat="R1_BareSteel",
+                axis_u="Y",
+                segments=8,
+                bevel=0.002,
+            )
+            box.add_cylinder(
+                (lx, 0.038, lz),
+                radius=0.016,
+                length=0.008,
+                mat="R1_Brass",
+                axis_u="Y",
+                segments=8,
+                bevel=0.0015,
+            )
+            box.add_cylinder(
+                (lx, 0.046, lz),
+                radius=0.010,
+                length=0.010,
+                mat="R1_BareSteel",
+                axis_u="Y",
+                segments=6,
+                bevel=0.0015,
+            )
+
+    # Hinged 1980s cream-enamel top service lid (y = 0.140 .. 0.188 m)
+    box.add_bevel_box(
+        (0.0, 0.164, 0.0),
+        (0.356, 0.048, 0.388),
+        mat="R1_CreamEnamel",
+        bevel=0.010,
+        segments=2,
+        top_scale_xz=(0.94, 0.95),
+    )
+
+    # Front and rear warm-orange hazard trim bands across the lid edges
+    for sz in (-0.162, 0.162):
+        box.add_bevel_box(
+            (0.0, 0.166, sz),
+            (0.362, 0.046, 0.034),
+            mat="R1_OrangeStripe",
+            bevel=0.004,
+            segments=1,
+        )
+
+    # Sage-green field-repair patch riveted onto front-left lid quadrant + 4 corner rivets
+    box.add_bevel_box(
+        (-0.088, 0.189, -0.058),
+        (0.112, 0.008, 0.118),
+        mat="R1_SagePatch",
+        bevel=0.002,
+        segments=1,
+    )
+    box.add_bolts(
+        [
+            (-0.088 + rx * 0.042, 0.194, -0.058 + rz * 0.044)
+            for rx in (-1.0, 1.0)
+            for rz in (-1.0, 1.0)
+        ],
+        radius=0.0055,
+        height=0.006,
+        axis_u="Y",
+        mat="R1_BareSteel",
+    )
+
+    # Left & right heavy bare-steel side toggle latches clamping the lid shut
+    for sx in (-1.0, 1.0):
+        for lz in (-0.085, 0.085):
+            box.add_bevel_box(
+                (sx * 0.184, 0.132, lz),
+                (0.018, 0.058, 0.028),
+                mat="R1_BareSteel",
+                bevel=0.0025,
+                segments=1,
+            )
+            box.add_bevel_box(
+                (sx * 0.190, 0.112, lz),
+                (0.014, 0.022, 0.034),
+                mat="R1_OrangeStripe",
+                bevel=0.002,
+                segments=1,
+            )
+
+    # Manual isolate rotary switch & copper test terminal post on rear-right lid quadrant
+    box.add_cylinder(
+        (0.082, 0.192, 0.068),
+        radius=0.028,
+        length=0.012,
+        mat="R1_GreyMetal",
+        axis_u="Y",
+        segments=12,
+        bevel=0.002,
+    )
+    box.add_cylinder(
+        (0.082, 0.200, 0.068),
+        radius=0.020,
+        length=0.010,
+        mat="R1_Brass",
+        axis_u="Y",
+        segments=12,
+        bevel=0.002,
+    )
+    box.add_bevel_box(
+        (0.082, 0.208, 0.068),
+        (0.014, 0.012, 0.044),
+        mat="R1_BareSteel",
+        bevel=0.002,
+        segments=1,
+        rot_deg_u=(0.0, 32.0, 0.0),
+    )
+    # Recessed copper splice test post on rear-left lid quadrant
+    box.add_cylinder(
+        (-0.082, 0.192, 0.068),
+        radius=0.022,
+        length=0.010,
+        mat="R1_GreyMetal",
+        axis_u="Y",
+        segments=10,
+        bevel=0.002,
+    )
+    box.add_cylinder(
+        (-0.082, 0.200, 0.068),
+        radius=0.012,
+        length=0.016,
+        mat="R1_Copper",
+        axis_u="Y",
+        segments=10,
+        bevel=0.0015,
+    )
+
+    # Inline front (-Z) and rear (+Z) heavy cable glands & short cable tails sloping to ground (z = -0.40 .. +0.40 m)
+    for sz, yaw in ((-1.0, 0.0), (1.0, 180.0)):
+        # Gland housing on front/rear face of junction box
+        box.add_cylinder(
+            (0.0, 0.064, sz * 0.220),
+            radius=0.044,
+            length=0.036,
+            mat="R1_GreyMetal",
+            axis_u="Z",
+            segments=12,
+            bevel=0.004,
+        )
+        box.add_cylinder(
+            (0.0, 0.064, sz * 0.244),
+            radius=0.036,
+            length=0.024,
+            mat="R1_Brass",
+            axis_u="Z",
+            segments=8,
+            bevel=0.0025,
+        )
+        # Cable tail sweeping from gland (y = 0.064, z = sz * 0.245) down to ground cable height (y = 0.019, z = sz * 0.40)
+        tail_pts = [
+            (0.0, 0.064, sz * 0.240),
+            (0.0, 0.044, sz * 0.295),
+            (0.0, CABLE_CENTER_Y, sz * 0.350),
+            (0.0, CABLE_CENTER_Y, sz * 0.400),
+        ]
+        if sz < 0.0:
+            tail_pts.reverse()
+        box.add_tube_path(tail_pts, radius=CABLE_RADIUS, mat="R1_Rubber", segments=12)
+        _add_coupling_collar(box, (0.0, CABLE_CENTER_Y, sz * 0.362), yaw_deg=yaw)
+
+    box.build_object(parent=root)
+
+    # 2. DeadStatusLamp: cold, unlit dark-glass dome in brass bezel & bare-steel guard cage (NO R1_LampAmber!)
+    lamp = r1kit.MeshBuilder("DeadStatusLamp", pivot_u=(0.068, 0.188, -0.058))
+    lx, ly, lz = 0.068, 0.188, -0.058
+
+    # Machined brass lamp base bezel
+    lamp.add_cylinder(
+        (lx, ly + 0.008, lz),
+        radius=0.044,
+        length=0.016,
+        mat="R1_Brass",
+        axis_u="Y",
+        segments=12,
+        bevel=0.003,
+    )
+    # Cold dead dark-glass indicator dome (unlit R1_DarkGlass)
+    lamp.add_cylinder(
+        (lx, ly + 0.028, lz),
+        radius=0.034,
+        radius_top=0.022,
+        length=0.032,
+        mat="R1_DarkGlass",
+        axis_u="Y",
+        segments=12,
+        bevel=0.004,
+    )
+    # Bare-steel protective roll-cage hoop arching over the dead status lamp
+    for rot_cage in (0.0, 90.0):
+        lamp.add_bevel_box(
+            (lx, ly + 0.030, lz),
+            (0.088, 0.042, 0.010),
+            mat="R1_BareSteel",
+            bevel=0.002,
+            segments=1,
+            rot_deg_u=(0.0, rot_cage, 0.0),
+            top_scale_xz=(0.72, 1.0),
+        )
+
+    # Adjacent recessed dead status window next to the dome
+    lamp.add_bevel_box(
+        (0.0, ly + 0.005, -0.058),
+        (0.044, 0.010, 0.076),
+        mat="R1_GreyMetal",
+        bevel=0.002,
+        segments=1,
+    )
+    lamp.add_bevel_box(
+        (0.0, ly + 0.009, -0.058),
+        (0.030, 0.006, 0.060),
+        mat="R1_DarkGlass",
+        bevel=0.0015,
+        segments=1,
+    )
+    lamp.build_object(parent=root)
+
+    r1kit.create_empty("Input_Anchor", parent=root, pivot_u=(0.0, CABLE_CENTER_Y, -0.40))
+    r1kit.create_empty("Output_Anchor", parent=root, pivot_u=(0.0, CABLE_CENTER_Y, 0.40))
+    r1kit.create_empty("StatusLamp_Dead", parent=root, pivot_u=(0.068, 0.220, -0.058))
+    r1kit.create_empty("Repair_Anchor", parent=root, pivot_u=(0.0, 0.188, 0.0))
+
+    apply_cable_dust_uvs_and_colors(root, footprint_radius=0.42, extra_top_dust=0.40)
+
+    fbx_path = PROPS_DIR / "Cable_Splice_Box.fbx"
+    r1kit.export_fbx(root, fbx_path, bake_space_transform=False)
+    print(f"Exported {fbx_path}")
+    return root
+
+
 def main() -> None:
     PROPS_DIR.mkdir(parents=True, exist_ok=True)
     build_cable_straight_2m()
@@ -1004,6 +1292,7 @@ def main() -> None:
     build_cable_bend_90()
     build_cable_broken_end()
     build_cable_plug()
+    build_cable_splice_box()
 
 
 if __name__ == "__main__":
