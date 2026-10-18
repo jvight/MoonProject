@@ -6,6 +6,12 @@ namespace MoonProject.Core
     /// </summary>
     public interface ILensView
     {
+        /// <summary>
+        /// Builds what the view needs (its overlay, the boot readout's text) ahead of its first frame, where nobody
+        /// sees the cost: on the title, or in the black of a new game.
+        /// </summary>
+        void Warm();
+
         /// <summary>Shows the lens' state this frame; the view stays on until <see cref="Release"/>.</summary>
         void Apply(in LensViewState state);
 

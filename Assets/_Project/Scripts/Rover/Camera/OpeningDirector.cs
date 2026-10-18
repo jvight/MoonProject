@@ -95,6 +95,7 @@ namespace MoonProject.Rover
         private bool _inTitle;
         private bool _paused;
         private bool _lensApplied;
+        private bool _lensWarmed;
         private bool _lensMissing;
         private bool _gazing;
         private bool _holding;
@@ -187,6 +188,7 @@ namespace MoonProject.Rover
             _titleHasSave = shown.HasSave;
             _body.HoldAsleep();
             _lamps.HoldDark();
+            WarmLens();
             if (shown.HasSave)
             {
                 _rig.HoldTitleFrame();
@@ -200,6 +202,7 @@ namespace MoonProject.Rover
         private void OnSessionStarted(SessionStarted started)
         {
             bool fromLensShot = _inTitle && _rig.Opening.IsHeld;
+            WarmLens();
             _inTitle = false;
             if (_flow == null || !_flow.ShowsTitle)
             {
@@ -642,6 +645,16 @@ namespace MoonProject.Rover
         private void OnDisable()
         {
             RestoreBlend();
+        }
+
+        /// <summary>Has the lens view build itself now (on the title, or in a new game's black), once.</summary>
+        private void WarmLens()
+        {
+            if (!_lensWarmed && (_lens != null || _context.TryGet(out _lens)))
+            {
+                _lens.Warm();
+                _lensWarmed = true;
+            }
         }
 
         private void ApplyLens()
