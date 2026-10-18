@@ -50,6 +50,11 @@ CBUFFER_START(UnityPerMaterial)
     half   _BuildModeGlow;
     half   _ScanProgress;
     half   _Dissolve;
+    half   _BuildRevealMode;
+    half   _BuildRevealProgress;
+    half   _BuildStageHeat;
+    float4 _BuildBoundsY;
+    float4 _BuildSeamPointWS;
 CBUFFER_END
 
 #endif

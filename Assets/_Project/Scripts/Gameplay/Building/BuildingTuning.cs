@@ -5,13 +5,31 @@ using UnityEngine;
 namespace MoonProject.Gameplay
 {
     /// <summary>
+    /// Selects which physical build-effect preset is used when 07 places and welds a base structure.
+    /// </summary>
+    public enum BuildEffectVariant
+    {
+        /// <summary>Variant A: Parts unfold on hinges and self-raising arms from a compact stack dropped by 07, then weld seams cool white -> orange -> dark.</summary>
+        AssembledBy07 = 0,
+
+        /// <summary>Variant B: Clean amber architectural line drawing on the ground that fills with real metal section by section with glowing cooling edges.</summary>
+        BlueprintIntoMetal = 1,
+
+        /// <summary>Variant C: Additive slice-by-slice build-up from the ground with a bright rising layer line tracked by 07's weld beam.</summary>
+        PrintedInPlace = 2
+    }
+
+    /// <summary>
     /// Designer-facing tuning for 07's freeform base building (0.5.7): placement distance bounds from 07, soft-snap
     /// distance and angle tolerances, welding range and the weld's beam and sparks, deconstruction material refund
-    /// share, and the optional playtest unlock list applied at initialization.
+    /// share, build-effect variant preset, and the optional playtest unlock list applied at initialization.
     /// </summary>
     [CreateAssetMenu(menuName = "MoonProject/Gameplay/Building Tuning", fileName = "BuildingTuning")]
     public sealed class BuildingTuning : ScriptableObject
     {
+        [Tooltip("Active build-effect presentation variant (AssembledBy07, BlueprintIntoMetal, or PrintedInPlace).")]
+        [SerializeField] private BuildEffectVariant _buildEffectVariant = BuildEffectVariant.AssembledBy07;
+
         [Tooltip("Closest horizontal distance (m) from 07's pivot at which a structure centre may be placed.")]
         [Range(0.5f, 10f)] [SerializeField] private float _minPlacementDistance = 2.0f;
 
@@ -34,11 +52,19 @@ namespace MoonProject.Gameplay
                  "closes: a slow breath, never a switch.")]
         [Range(0.1f, 3f)] [SerializeField] private float _apronGlowFadeSeconds = 0.8f;
 
+        [Tooltip("Downward physical settle thump (m) when a structure finishes welding and locks into the regolith.")]
+        [Range(0.01f, 0.15f)] [SerializeField] private float _settleThumpMeters = 0.042f;
+
+        [Tooltip("Number of ballistic vacuum dust puffs thrown outward in a ring when a structure finishes settling.")]
+        [Range(4, 32)] [SerializeField] private int _settleDustRingCount = 18;
+
         [Tooltip("Structure IDs that a new game knows by design (e.g. charging_pad), applied on a new game and saved like learned blueprints.")]
         [SerializeField] private string[] _startingKnownIds = Array.Empty<string>();
 
         [Tooltip("Structure IDs unlocked at game start for playtesting (kept empty in production).")]
         [SerializeField] private string[] _playtestUnlockedIds = Array.Empty<string>();
+
+        public BuildEffectVariant Variant => _buildEffectVariant;
 
         public float MinPlacementDistance => _minPlacementDistance;
 
@@ -53,6 +79,16 @@ namespace MoonProject.Gameplay
         public float DeconstructRefundShare => _deconstructRefundShare;
 
         public float ApronGlowFadeSeconds => _apronGlowFadeSeconds;
+
+        public float SettleThumpMeters => _settleThumpMeters;
+
+        public int SettleDustRingCount => _settleDustRingCount;
+
+        /// <summary>Switches the active <see cref="BuildEffectVariant"/> preset at runtime or in capture tests.</summary>
+        public void SetVariant(BuildEffectVariant variant)
+        {
+            _buildEffectVariant = variant;
+        }
 
 
         /// <summary>
@@ -102,6 +138,8 @@ namespace MoonProject.Gameplay
             }
 
             _deconstructRefundShare = Mathf.Clamp01(_deconstructRefundShare);
+            _settleThumpMeters = Mathf.Clamp(_settleThumpMeters, 0.01f, 0.15f);
+            _settleDustRingCount = Mathf.Clamp(_settleDustRingCount, 4, 32);
             _startingKnownIds = SanitizeStructureIdArray(_startingKnownIds);
             _playtestUnlockedIds = SanitizeStructureIdArray(_playtestUnlockedIds);
         }
