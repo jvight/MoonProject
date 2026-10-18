@@ -57,7 +57,7 @@
 |---|---|---|---|
 | **P1** | **Mystery ladder v2 with two turns** (below) | **Very high** | S (story) + M (a few placements) |
 | **P2** | **Freeze the core and stop drift:** lock story v4 plus P1's turns, opening v2, the mounts model and the material list for one milestone; resolve the doc contradictions (the vacuum fliers, Tilly in the death flow); judge only playable builds (the owner's core-feel gate) | **Very high** | S |
-| **P3** | **Make 07's body the first 10 minutes:** fault lines on boot, fix your own cutter first, hesitation and lens attention, tones as the only voice (07-identity option A) | High | S–M |
+| **P3** | **Make 07's body the first 10 minutes:** fault lines on boot, fix your own cutter first, hesitation and lens attention, tones as the only voice (07-identity Option A, decided 2026-10-18) | High | S–M |
 | **P4** | **Emotional anchors without sentimentality** (below) | High | S–M |
 | **P5** | **Protect the identity from the catalogue:** show the player at most 3 materials per phase; present blueprints as discoveries, not a menu; cut the weakest builds (paint booth, glass-blower) if scope bites | High | S |
 | **P6** | **Visual variety first:** the L1 Sun rig, then the basin variety pass, before any new system; then the Long Mare | High | M–L |
@@ -72,6 +72,20 @@
 | **Mid-game turn (~3–4 h)** | *Where is the proof? Why did it never reach the Arks?* | Meridian's vault (0.7) shows Meridian *did* send the full survey in 1988, through its relay satellite **Kestrel-3**, which fell in the storm **with the data still in its buffer**. **The proof has been lying in the first wreck you saw, 185 m from where you woke.** Its sealed core needs the foreign adapter and the Thermal Cutter. That recontextualises the opening, and Kestrel becomes our "Aurora" (GDD v3 A2). |
 | **5 h** | *Why did the protocol choose 07, and what happened to the others?* | The elders' manifests: each SSR-3 was sent for one piece and stopped at one obstacle. |
 | **The end, the main twist** | *How did 07 get this far?* | **Every kit 07 fitted came from an elder that stopped where 07 then went on** (blueprint-fit §5: 06's cells, 04's coils, 03's cleats, 02's floods, 01's tracker). On the lab chart the six elders' tracks converge with 07's on the Peak: **the protocol didn't fail six times; it built 07 out of six attempts.** It is operational and logical, not sentimental, and it recontextualises the whole growth arc. |
+
+**Notes from the 07 identity decisions (owner, 2026-10-18; `07-identity.md`):**
+- **10 min:** the chassis plate (SSR-5, Kessler–Arai 1983) and the boot line `UNIT 07 · SSR-5 · CONTINUE · 13 148 DAYS`
+  answer "what is this machine, and how long has it slept" without text dumps. They sit on existing surfaces, so the
+  one-guidance-element rule holds.
+- **5 h:** the elders are decided as SSR-3: single-purpose, no sockets, one shared chassis with a per-job topper. The
+  manifest format is `SSR-3 · UNIT 0N · <JOB> · TASK: … · STOPPED: …`. Their toppers are the visible proof of the
+  one job each could do.
+- **The end:** the twist is logical *because* of the model lines. Each SSR-3 could carry one job's hardware and
+  could not adapt; 07 is the only SSR-5, the one with sockets, so the elders' parts fit it. That is why it got
+  further.
+- **Throughout:** Option A's fleet handshake turns the ladder into behaviour. At each elder, F# twice, no answer.
+  As masts, Meridian machines and friends come back, more handshakes are answered, and 07's scheduler drives firmer.
+  The player feels the progress before reading it anywhere.
 
 ### P4: emotional anchors (within the owner's rule)
 - **The elders' handshake:** at each elder, 07's query tone (F#) repeats twice and gets no answer, then 07 moves on.
@@ -136,7 +150,9 @@ thật sự riêng, đáng giữ và phải làm nổi lên ngay 10 phút đầu
    - **Giữa game:** dữ liệu khảo sát năm 1988 đã được Meridian gửi qua vệ tinh Kestrel-3, nhưng Kestrel rơi trong
      bão, *bộ đệm vẫn giữ dữ liệu*. Bằng chứng nằm ngay trong xác tàu đầu tiên bạn thấy, cách chỗ thức dậy 185 m.
    - **Cuối game:** mọi kit 07 lắp đều đến từ một đàn anh đã dừng ở đúng chỗ 07 đi tiếp. Giao thức không thất bại 6
-     lần; nó *dựng nên 07 từ 6 lần thử*. Logic, không sến, và làm người chơi nhìn lại cả hành trình.
+     lần; nó *dựng nên 07 từ 6 lần thử*. Logic, không sến, và làm người chơi nhìn lại cả hành trình. Hợp lý vì
+     các đàn anh là đời SSR-3, mỗi chiếc chỉ làm một việc, còn 07 là chiếc SSR-5 duy nhất có ổ lắp (đã chốt
+     18/10/2026).
 2. **Đóng băng phần lõi và dừng đổi hướng** một mốc: truyện v4 cộng hai cú xoay, opening v2, mô hình ổ, danh sách vật
    liệu. Sửa các mâu thuẫn trong tài liệu. Chỉ đánh giá trên bản chơi được.
 3. **Lấy thân 07 làm 10 phút đầu:** lỗi khi khởi động, tự sửa mỏ cắt, sự ngập ngừng, 5 nốt là giọng nói duy nhất.
