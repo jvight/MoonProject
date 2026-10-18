@@ -427,18 +427,6 @@
             "text": "Quit to title"
         },
         {
-            "key": "lens.boot.signal",
-            "text": "ORBITAL SIGNAL · DETECTED"
-        },
-        {
-            "key": "lens.boot.uplink",
-            "text": "UPLINK · OFFLINE"
-        },
-        {
-            "key": "lens.boot.recovery",
-            "text": "BEGIN RECOVERY"
-        },
-        {
             "key": "ui.settings.text_size",
             "text": "Text size"
         },

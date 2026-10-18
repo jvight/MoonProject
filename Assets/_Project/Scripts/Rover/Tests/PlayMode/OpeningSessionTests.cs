@@ -26,11 +26,11 @@ using UnityEditor.SceneManagement;
 namespace MoonProject.Rover.PlayModeTests
 {
     /// <summary>
-    /// 07's wake through its own eye in the real Main scene, with the title on (docs/design/cutscenes.md §1,
-    /// docs/features/M3-09 Part A): nothing wakes on the title; New Game fades the title to black and plays the
-    /// full opening once, untouched within 45 s; drive input reaches the chase frame within ~4 s and never holds control
-    /// over ~1.5 s; Continue over a real save plays the short wake; the opening's frames allocate nothing. Frames of
-    /// both title shots, the fade and every beat O1-O14 go to Logs/captures/opening/*.png with opening.md.
+    /// 07's wake in the real Main scene, with the title on (docs/design/opening-v2.md, docs/features/M3-09 Part A):
+    /// nothing wakes on the title; New Game fades the title to black and plays the full opening once, untouched within
+    /// 45 s, as one still shot of 07's face (no cut, orbit or body turn) with the self-test printing on the awake face;
+    /// Continue over a real save plays the short wake; the opening's frames allocate nothing. Frames of both title
+    /// shots, the fade, each stage and each check go to Logs/captures/opening/*.png with opening.md.
     /// Slow and needs a GPU: run on demand with --category OpeningSession.
     /// </summary>
     [Category("OpeningSession")]
@@ -54,10 +54,22 @@ namespace MoonProject.Rover.PlayModeTests
         private const int TransitionHeight = 360;
         private const float BootTimeout = 30f;
         private const int BootCheckStepCount = 14;
+        private const float TextCheckEvery = 0.5f;
         private const float TitleQuietSeconds = 4f;
         private const float MaxUntouched = 45f;
-        private const float MinSelfTest = 25f;
-        private const float MaxSelfTest = 31f;
+        private const float MinSelfTest = 27f;
+        private const float MaxSelfTest = 35f;
+
+        /// <summary>The shot may turn this little (deg) and stray this little (m) off its push-in line.</summary>
+        private const float ShotAngleSlack = 0.05f;
+        private const float ShotLineSlack = 0.01f;
+
+        /// <summary>Once pushed in, 07's face screen fills about this share of the frame's height (the lines read).</summary>
+        private const float MinFaceFill = 0.3f;
+        private const float MaxFaceFill = 0.45f;
+
+        /// <summary>07's body may yaw this little (deg) through the whole wake: it never turns.</summary>
+        private const float BodyYawSlack = 0.5f;
         private const float MaxHeld = 1.5f;
         private const float MaxShortWake = 3f;
         private const float RunTimeout = 70f;
@@ -130,6 +142,26 @@ namespace MoonProject.Rover.PlayModeTests
             }
         }
 
+        /// <summary>
+        /// The boot text lives on 07's face (and the HUD), never in the world: a world-space text or canvas is drawn
+        /// huge from any free or overhead camera.
+        /// </summary>
+        private static void AssertNoWorldSpaceText()
+        {
+            foreach (TextMesh text in Object.FindObjectsByType<TextMesh>(FindObjectsInactive.Include,
+                FindObjectsSortMode.None))
+            {
+                Assert.Fail($"World-space TextMesh '{text.name}' ('{text.text}') is in the scene.");
+            }
+
+            foreach (Canvas canvas in Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include,
+                FindObjectsSortMode.None))
+            {
+                Assert.AreNotEqual(RenderMode.WorldSpace, canvas.renderMode,
+                    $"World-space canvas '{canvas.name}' is in the scene.");
+            }
+        }
+
         [UnityTest]
         [Timeout(600000)]
         [PrebuildSetup(typeof(RoverSessionScene))]
@@ -143,7 +175,7 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreEqual(0, _awoke, "nothing wakes while the title is up");
             Assert.AreEqual(0, _beats.Count, "no wake beat on the title");
             Assert.AreEqual(WakePhase.Asleep, _body.Mood.Wake.Phase, "07 sleeps under the title");
-            Assert.IsTrue(_rig.Opening.IsHeld, "the fresh title holds the wake shot");
+            Assert.IsTrue(_rig.Opening.IsActive, "the fresh title holds the wake shot");
             Assert.IsTrue(_body.FaceDirector.Director.IsHoldingDarkForOpening, "the CRT face is held dark under the title");
             Capture("title_fresh");
 
@@ -151,27 +183,26 @@ namespace MoonProject.Rover.PlayModeTests
             var shots = new (OpeningPhase Phase, float Share, string Name)[]
             {
                 (OpeningPhase.FadeOut, 0.6f, "fade_out"),
-                (OpeningPhase.Crackle, 0.5f, "o01_darkness"),
-                (OpeningPhase.LidCrack, 0.7f, "o02_lid_slit"),
-                (OpeningPhase.LidHalf, 0.8f, "o03_lid_half"),
-                (OpeningPhase.Hunt, 0.35f, "o04_hunt_near_speck"),
-                (OpeningPhase.Hunt, 0.9f, "o04b_boot_readout"),
-                (OpeningPhase.PullOut, 0.55f, "pull_out"),
-                (OpeningPhase.PullOut, 0.9f, "pull_out_lens_glass"),
-                (OpeningPhase.OverShoulder, 0.9f, "release_over_shoulder"),
-                (OpeningPhase.ChaseEase, 0.95f, "chase_frame"),
+                (OpeningPhase.Dark, 0.5f, "stage_1_dark"),
+                (OpeningPhase.FadeIn, 0.7f, "stage_2_picture_opens"),
+                (OpeningPhase.EyesOpen, 0.3f, "stage_3_face_flickers_on"),
+                (OpeningPhase.EyesOpen, 0.95f, "stage_4_eyes_awake"),
+                (OpeningPhase.Handover, 0.45f, "stage_5_handover_dip"),
+                (OpeningPhase.Handover, 0.95f, "stage_6_chase_frame"),
             };
             var keyShots = new (OpeningPhase Phase, float Share, string Name)[]
             {
-                (OpeningPhase.LidHalf, 0.8f, "key_01_lens_pov_first_light"),
-                (OpeningPhase.PullOut, 0.9f, "key_02_front_shot"),
-                (OpeningPhase.ChaseEase, 0.95f, "key_03_chase_frame"),
+                (OpeningPhase.EyesOpen, 0.95f, "key_01_eyes_awake"),
+                (OpeningPhase.Post, 0.5f, "key_02_lines_on_face"),
+                (OpeningPhase.Handover, 0.95f, "key_03_chase_frame"),
             };
             var taken = new bool[shots.Length];
             var keyTaken = new bool[keyShots.Length];
             int nextStripIndex = 0;
             var postTaken = new bool[BootCheckStepCount];
             float crackleStarted = -1f;
+            bool firstLineSeen = false;
+            float nextTextCheck = 0f;
             float started = Time.time;
             while (!_beats.Contains(WakeBeat.ChaseFrame))
             {
@@ -182,10 +213,29 @@ namespace MoonProject.Rover.PlayModeTests
                     crackleStarted = Time.time;
                 }
 
-                if (script.InLens)
+                if (Time.time >= nextTextCheck)
                 {
-                    Assert.IsTrue(_body.FaceDirector.Director.IsHoldingDarkForOpening, "CRT stays dark while in the lens");
-                    Assert.AreEqual(0, _body.FaceDirector.Director.BootCount, "face does not boot while in the lens");
+                    AssertNoWorldSpaceText();
+                    nextTextCheck = Time.time + TextCheckEvery;
+                }
+
+                FaceDirector face = _body.FaceDirector.Director;
+                if (!_beats.Contains(WakeBeat.EyesOpen))
+                {
+                    Assert.IsTrue(face.IsHoldingDarkForOpening, "the CRT stays dark while 07 sleeps");
+                    Assert.AreEqual(0, face.BootCount, "the face does not boot before its eyes open");
+                }
+
+                if (_checksStartedList.Count > 0 && !firstLineSeen)
+                {
+                    firstLineSeen = true;
+                    Assert.AreEqual(1, face.BootCount, "the face has booted before the first line");
+                    Assert.IsTrue(_beats.Contains(WakeBeat.Blinked), "and the eyes have blinked awake");
+                }
+
+                if (script.Phase == OpeningPhase.Post && script.PostStep >= BootCheckStep.Lens)
+                {
+                    Assert.IsTrue(face.State.IsReadout, $"the lines print on the face ({script.PostStep})");
                 }
 
                 if (script.Phase == OpeningPhase.Post && script.PostProgress01 >= 0.6f
@@ -255,8 +305,15 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreEqual(1, Count(WakeBeat.Crackle), "the full opening plays once");
             Assert.AreEqual(1, Count(WakeBeat.FadedOut), "New Game faded the picture to black");
             Assert.AreEqual(1, _awoke, "RoverAwoke goes with the crackle, once");
-            Assert.AreEqual(1, _body.FaceDirector.Director.BootCount, "the CRT face boots once, when the checks are done");
-            Assert.That(chase - crackle, Is.InRange(MinSelfTest, MaxSelfTest), "the self-test lasts 25-30 s");
+            Assert.AreEqual(1, _body.FaceDirector.Director.BootCount, "the CRT face boots once, as the eyes open");
+            Assert.That(chase - crackle, Is.InRange(MinSelfTest, MaxSelfTest), "the wake lasts about 30 s");
+            CollectionAssert.AreEqual(new[]
+            {
+                BootCheckStep.Carrier, BootCheckStep.Resume, BootCheckStep.Agenda, BootCheckStep.Lens,
+                BootCheckStep.Lamps, BootCheckStep.Head, BootCheckStep.Wheels, BootCheckStep.Motor,
+                BootCheckStep.Cutter, BootCheckStep.SolarWing, BootCheckStep.Antenna, BootCheckStep.Battery,
+                BootCheckStep.Assembly, BootCheckStep.Begin,
+            }, _checksStartedList, "the lines print in the story's order");
             Assert.AreEqual(BootCheckStepCount, _checksStartedList.Count, "every line of the self-test is started");
             Assert.AreEqual(BootCheckStepCount, _checksCompleted.Count, "and completed");
             Assert.AreEqual(1, _checksFinished, "and the test finishes once");
@@ -381,201 +438,91 @@ namespace MoonProject.Rover.PlayModeTests
         [Timeout(300000)]
         [PrebuildSetup(typeof(RoverSessionScene))]
         [PostBuildCleanup(typeof(RoverSessionScene))]
-        public IEnumerator OpeningHandOffs_StayC1Continuous_FromPullOutThroughControl()
+        public IEnumerator TheWake_IsOneStillShot_TheBodyNeverTurns_AndTheChaseFrameComesInTheBlack()
         {
-            const float dt = 1f / 60f;
-            const float maxAllowedLinearJerk = 180f;
-            const float maxAllowedAngularAccel = 650f;
-            const float maxAllowedAngularJerk = 9000f;
-            const float maxAllowedFovAccel = 120f;
-
-            Time.captureDeltaTime = dt;
             yield return Boot(true);
             _context.Events.Publish(new NewGameRequested());
-
             float started = Time.time;
-            while (_director.Script.Phase != OpeningPhase.PullOut)
+            while (_director.Script.Phase != OpeningPhase.FadeIn)
             {
-                Assert.Less(Time.time - started, RunTimeout, "the opening reaches O10 PullOut");
+                Assert.Less(Time.time - started, RunTimeout, "the picture opens");
                 yield return null;
             }
 
-            var csv = new StringBuilder(32768);
-            csv.AppendLine(
-                "frame,timeFromPullOut,phase,phaseShare,wakeTurn,wakeWeight,posX,posY,posZ,rotX,rotY,rotZ,rotW,eulerX,eulerY,eulerZ,fov,linSpeed,linAccel,linJerk,angSpeedDeg,angAccelDeg,angJerkDeg,fovRate,fovAccel,fovJerk");
-
-            Vector3 prevPos = _view.transform.position;
-            Quaternion prevRot = _view.transform.rotation;
-            float prevFov = _view.fieldOfView;
-            Vector3 prevVel = Vector3.zero;
-            Vector3 prevLinAccel = Vector3.zero;
-            Vector3 prevAngVel = Vector3.zero;
-            Vector3 prevAngAccel = Vector3.zero;
-            float prevFovRate = 0f;
-            float prevFovAccel = 0f;
-
-            float maxLinearJerk = 0f;
-            int maxLinearJerkFrame = -1;
-            string maxLinearJerkPhase = string.Empty;
-            float maxLinearJerkTime = 0f;
-
-            float maxAngularAccel = 0f;
-            int maxAngularAccelFrame = -1;
-            string maxAngularAccelPhase = string.Empty;
-            float maxAngularAccelTime = 0f;
-
-            float maxAngularJerk = 0f;
-            int maxAngularJerkFrame = -1;
-            string maxAngularJerkPhase = string.Empty;
-            float maxAngularJerkTime = 0f;
-
-            float maxFovAccel = 0f;
-            int maxFovAccelFrame = -1;
-            string maxFovAccelPhase = string.Empty;
-
-            float pullOutStart = Time.time;
-            float chaseReachedAt = -1f;
-            int frame = 0;
-
-            while (chaseReachedAt < 0f || Time.time - chaseReachedAt < AfterChaseSeconds)
+            // The camera cut to the shot in the black; from the picture opening on it must hold still but for the push-in.
+            yield return null;
+            Vector3 startPos = _view.transform.position;
+            Quaternion startRot = _view.transform.rotation;
+            float startFov = _view.fieldOfView;
+            float bodyYaw = _rover.transform.eulerAngles.y;
+            Vector3 viewLine = startRot * Vector3.forward;
+            float maxAngle = 0f;
+            float maxOffLine = 0f;
+            float maxAlong = 0f;
+            float maxBodyYaw = 0f;
+            float maxFovChange = 0f;
+            float pictureAtCut = -1f;
+            Vector3 lastShotPos = startPos;
+            float faceFill = 0f;
+            Renderer screen = _body.FaceDirector.Display.ScreenRenderer;
+            while (!_beats.Contains(WakeBeat.ChaseFrame))
             {
-                Assert.Less(Time.time - started, RunTimeout, "the opening completes O10-O14");
-                yield return null;
-                frame++;
-
-                if (chaseReachedAt < 0f && _beats.Contains(WakeBeat.ChaseFrame))
-                {
-                    chaseReachedAt = Time.time;
-                }
-
+                Assert.Less(Time.time - started, RunTimeout, "the opening reaches the chase frame");
                 OpeningScript script = _director.Script;
-                string phaseName = chaseReachedAt >= 0f ? "O14_Control" : script.Phase.ToString();
-                float phaseShare = script.PhaseLength > 0f ? script.PhaseTime / script.PhaseLength : 1f;
-                float elapsed = Time.time - pullOutStart;
-
-                Vector3 pos = _view.transform.position;
-                Quaternion rot = _view.transform.rotation;
-                Vector3 euler = rot.eulerAngles;
-                float fov = _view.fieldOfView;
-
-                Vector3 vel = (pos - prevPos) / dt;
-                Vector3 linAccel = frame >= 2 ? (vel - prevVel) / dt : Vector3.zero;
-                Vector3 linJerkVec = frame >= 3 ? (linAccel - prevLinAccel) / dt : Vector3.zero;
-
-                Quaternion deltaRot = rot * Quaternion.Inverse(prevRot);
-                if (deltaRot.w < 0f)
+                bool shot = script.Phase == OpeningPhase.FadeIn || script.Phase == OpeningPhase.EyesOpen
+                    || script.Phase == OpeningPhase.Post;
+                maxBodyYaw = Mathf.Max(maxBodyYaw, Mathf.Abs(Mathf.DeltaAngle(bodyYaw, _rover.transform.eulerAngles.y)));
+                if (shot)
                 {
-                    deltaRot = new Quaternion(-deltaRot.x, -deltaRot.y, -deltaRot.z, -deltaRot.w);
-                }
-
-                Vector3 axisVec = new Vector3(deltaRot.x, deltaRot.y, deltaRot.z);
-                float sinHalf = axisVec.magnitude;
-                float deltaAngleDeg = 2f * Mathf.Atan2(sinHalf, deltaRot.w) * Mathf.Rad2Deg;
-                Vector3 angVel = frame >= 1 && sinHalf > 1e-8f
-                    ? (axisVec / sinHalf) * (deltaAngleDeg / dt)
-                    : Vector3.zero;
-                float angSpeed = deltaAngleDeg / dt;
-                Vector3 angAccelVec = frame >= 2 ? (angVel - prevAngVel) / dt : Vector3.zero;
-                Vector3 angJerkVec = frame >= 3 ? (angAccelVec - prevAngAccel) / dt : Vector3.zero;
-
-                float fovRate = (fov - prevFov) / dt;
-                float fovAccel = frame >= 2 ? (fovRate - prevFovRate) / dt : 0f;
-                float fovJerk = frame >= 3 ? (fovAccel - prevFovAccel) / dt : 0f;
-
-                float linSpeed = vel.magnitude;
-                float linAccelMag = linAccel.magnitude;
-                float linJerkMag = linJerkVec.magnitude;
-                float angAccelMag = angAccelVec.magnitude;
-                float angJerkMag = angJerkVec.magnitude;
-
-                csv.AppendFormat(
-                    CultureInfo.InvariantCulture,
-                    "{0},{1:0.0000},{2},{3:0.000},{4:0.000},{5:0.000},{6:0.0000},{7:0.0000},{8:0.0000},{9:0.00000},{10:0.00000},{11:0.00000},{12:0.00000},{13:0.000},{14:0.000},{15:0.000},{16:0.000},{17:0.000},{18:0.000},{19:0.000},{20:0.000},{21:0.000},{22:0.000},{23:0.000},{24:0.000},{25:0.000}\n",
-                    frame, elapsed, phaseName, phaseShare, _rig.Opening.Turn, _rig.Opening.Weight,
-                    pos.x, pos.y, pos.z, rot.x, rot.y, rot.z, rot.w, euler.x, euler.y, euler.z, fov,
-                    linSpeed, linAccelMag, linJerkMag, angSpeed, angAccelMag, angJerkMag,
-                    fovRate, Mathf.Abs(fovAccel), Mathf.Abs(fovJerk));
-
-                // Measure from the end of O10 PullOut (PullOut01 >= 0.5) through 3 s after control in O14.
-                bool inHandOffWindow = script.Phase != OpeningPhase.PullOut || script.PhaseTime >= 0.5f * script.PhaseLength;
-                if (frame >= 4 && inHandOffWindow)
-                {
-                    if (linJerkMag > maxLinearJerk)
+                    Vector3 offset = _view.transform.position - startPos;
+                    float along = Vector3.Dot(offset, viewLine);
+                    maxAngle = Mathf.Max(maxAngle, Quaternion.Angle(startRot, _view.transform.rotation));
+                    maxOffLine = Mathf.Max(maxOffLine, (offset - along * viewLine).magnitude);
+                    maxAlong = Mathf.Max(maxAlong, along);
+                    maxFovChange = Mathf.Max(maxFovChange, Mathf.Abs(_view.fieldOfView - startFov));
+                    lastShotPos = _view.transform.position;
+                    if (script.Phase == OpeningPhase.Post)
                     {
-                        maxLinearJerk = linJerkMag;
-                        maxLinearJerkFrame = frame;
-                        maxLinearJerkPhase = phaseName;
-                        maxLinearJerkTime = elapsed;
-                    }
-
-                    if (angAccelMag > maxAngularAccel)
-                    {
-                        maxAngularAccel = angAccelMag;
-                        maxAngularAccelFrame = frame;
-                        maxAngularAccelPhase = phaseName;
-                        maxAngularAccelTime = elapsed;
-                    }
-
-                    if (angJerkMag > maxAngularJerk)
-                    {
-                        maxAngularJerk = angJerkMag;
-                        maxAngularJerkFrame = frame;
-                        maxAngularJerkPhase = phaseName;
-                        maxAngularJerkTime = elapsed;
-                    }
-
-                    if (Mathf.Abs(fovAccel) > maxFovAccel)
-                    {
-                        maxFovAccel = Mathf.Abs(fovAccel);
-                        maxFovAccelFrame = frame;
-                        maxFovAccelPhase = phaseName;
+                        Bounds bounds = screen.bounds;
+                        Vector3 top = _view.WorldToViewportPoint(new Vector3(bounds.center.x, bounds.max.y, bounds.center.z));
+                        Vector3 bottom = _view.WorldToViewportPoint(new Vector3(bounds.center.x, bounds.min.y, bounds.center.z));
+                        faceFill = top.y - bottom.y;
                     }
                 }
 
-                prevPos = pos;
-                prevRot = rot;
-                prevFov = fov;
-                prevVel = vel;
-                prevLinAccel = linAccel;
-                prevAngVel = angVel;
-                prevAngAccel = angAccelVec;
-                prevFovRate = fovRate;
-                prevFovAccel = fovAccel;
+                if (pictureAtCut < 0f && script.Phase == OpeningPhase.Handover && !script.ShotLive)
+                {
+                    pictureAtCut = script.Picture01;
+                }
+
+                yield return null;
             }
 
-            Directory.CreateDirectory(CaptureFolder);
-            File.WriteAllText(Path.Combine(CaptureFolder, "opening_handoff_trace.csv"), csv.ToString());
-
-            _report.AppendLine("# Opening Hand-Off Continuity (O10 PullOut -> O14 Control)").AppendLine()
-                .AppendLine(string.Format(CultureInfo.InvariantCulture,
-                    "- maxLinearJerk: {0:0.00} m/s^3 at frame {1} (t={2:0.000}s, phase={3})",
-                    maxLinearJerk, maxLinearJerkFrame, maxLinearJerkTime, maxLinearJerkPhase))
-                .AppendLine(string.Format(CultureInfo.InvariantCulture,
-                    "- maxAngularAccel: {0:0.00} deg/s^2 at frame {1} (t={2:0.000}s, phase={3})",
-                    maxAngularAccel, maxAngularAccelFrame, maxAngularAccelTime, maxAngularAccelPhase))
-                .AppendLine(string.Format(CultureInfo.InvariantCulture,
-                    "- maxAngularJerk: {0:0.00} deg/s^3 at frame {1} (t={2:0.000}s, phase={3})",
-                    maxAngularJerk, maxAngularJerkFrame, maxAngularJerkTime, maxAngularJerkPhase))
-                .AppendLine(string.Format(CultureInfo.InvariantCulture,
-                    "- maxFovAccel: {0:0.00} deg/s^2 at frame {1} (phase={2})",
-                    maxFovAccel, maxFovAccelFrame, maxFovAccelPhase))
-                .AppendLine();
-
-            Assert.LessOrEqual(maxLinearJerk, maxAllowedLinearJerk,
-                $"Opening hand-off linear jerk spike {maxLinearJerk:0.0} m/s^3 at frame {maxLinearJerkFrame} (t={maxLinearJerkTime:0.000}s, phase={maxLinearJerkPhase}) exceeds C1 continuity bound {maxAllowedLinearJerk} m/s^3.");
-            Assert.LessOrEqual(maxAngularAccel, maxAllowedAngularAccel,
-                $"Opening hand-off angular accel spike {maxAngularAccel:0.0} deg/s^2 at frame {maxAngularAccelFrame} (t={maxAngularAccelTime:0.000}s, phase={maxAngularAccelPhase}) exceeds C1 continuity bound {maxAllowedAngularAccel} deg/s^2.");
-            Assert.LessOrEqual(maxAngularJerk, maxAllowedAngularJerk,
-                $"Opening hand-off angular jerk spike {maxAngularJerk:0.0} deg/s^3 at frame {maxAngularJerkFrame} (t={maxAngularJerkTime:0.000}s, phase={maxAngularJerkPhase}) exceeds C1 continuity bound {maxAllowedAngularJerk} deg/s^3.");
-            Assert.LessOrEqual(maxFovAccel, maxAllowedFovAccel,
-                $"Opening hand-off FOV accel spike {maxFovAccel:0.0} deg/s^2 at frame {maxFovAccelFrame} (phase={maxFovAccelPhase}) exceeds C1 continuity bound {maxAllowedFovAccel} deg/s^2.");
+            _report.AppendLine("# One still shot").AppendLine()
+                .AppendLine(Line("shot turn, max (deg)", maxAngle))
+                .AppendLine(Line("shot off its push-in line, max (m)", maxOffLine))
+                .AppendLine(Line("push-in travelled (m)", maxAlong))
+                .AppendLine(Line("face screen's share of the frame height at the end of the checks", faceFill))
+                .AppendLine(Line("lens change, max (deg)", maxFovChange))
+                .AppendLine(Line("body yaw change, max (deg)", maxBodyYaw))
+                .AppendLine(Line("picture at the cut to the chase frame (0 black)", pictureAtCut)).AppendLine();
+            Assert.LessOrEqual(maxAngle, ShotAngleSlack, "the shot never pans, tilts or orbits");
+            Assert.LessOrEqual(maxOffLine, ShotLineSlack, "the camera moves only along its view line");
+            Assert.Greater(maxAlong, 0f, "the camera pushes in toward the face");
+            Assert.That(faceFill, Is.InRange(MinFaceFill, MaxFaceFill), "the face fills enough of the frame to read");
+            Assert.LessOrEqual(maxFovChange, 1e-3f, "no zoom");
+            Assert.LessOrEqual(maxBodyYaw, BodyYawSlack, "07's body never turns during the wake");
+            Assert.That(pictureAtCut, Is.InRange(0f, 0.05f), "the chase frame takes over in the black");
+            Vector3 chaseOffset = _view.transform.position - _rover.transform.position;
+            Assert.Less(Vector3.Dot(chaseOffset, _rover.transform.forward), 0f, "the picture opens on the chase frame behind 07");
+            Assert.Greater(Vector3.Distance(lastShotPos, _view.transform.position), 1f, "in one cut, not a swing");
         }
 
         [UnityTest]
         [Timeout(300000)]
         [PrebuildSetup(typeof(RoverSessionScene))]
         [PostBuildCleanup(typeof(RoverSessionScene))]
-        public IEnumerator NewGameOverASave_FadesTitle_PushesIntoLens_AndReloadsInsideO1Black()
+        public IEnumerator NewGameOverASave_FadesTitle_AndReloadsInsideTheBlack()
         {
             yield return Boot(false);
             Assert.IsTrue(_context.Get<ISaveService>().SaveNow(), "a save is on disk");

@@ -12,7 +12,9 @@ namespace MoonProject.Gameplay.Tests
     /// <summary>
     /// The scan and weld beams end on their target's real surface, never in the air beside or past it (owner,
     /// 2026-10-18): the pure aim math, and a scan target's whole sweep on colliders at an angle, tall, low, on an
-    /// L-shaped hull whose middle is air, and on a prop with no colliders (its mesh's own box).
+    /// L-shaped hull whose middle is air, and on a prop with no colliders (its mesh's own box). Once a beam lets go
+    /// (a weld or scan done, cancelled, or its target gone) it fades where it last met its target, its end never
+    /// thrown toward a target point that went away (owner: a finished weld's beam shot off into the distance).
     /// </summary>
     public sealed class BeamAimTests
     {
@@ -20,6 +22,21 @@ namespace MoonProject.Gameplay.Tests
         private const float OnSurface = 0.01f;
 
         private const int SweepSteps = 24;
+
+        /// <summary>Metres a fading beam's end may stray from where it last met its target, and travel per frame.
+        /// </summary>
+        private const float FadeHold = 0.03f;
+
+        private const float FadeStep = 0.05f;
+        private const float Frame = 1f / 60f;
+        private const int FadeFrames = 120;
+        private const string FeelTuningPath = "Assets/_Project/Data/Tuning/Gameplay/FeelVfxTuning.asset";
+
+        private static readonly Vector3 Emitter = new Vector3(0f, 1f, 0f);
+        private static readonly Vector3 Contact = new Vector3(0.3f, 0.4f, 2.5f);
+
+        /// <summary>Where a caller's target point went once it lost its target: the world's origin, far off.</summary>
+        private static readonly Vector3 Gone = new Vector3(-180f, -20f, 240f);
 
         private readonly List<GameObject> _made = new List<GameObject>();
         private Material _surface;
@@ -145,6 +162,87 @@ namespace MoonProject.Gameplay.Tests
 
             var local = new Bounds(Vector3.zero, Vector3.one);
             Sweep(fragment, p => DistanceToBoxFace(part.localToWorldMatrix, local, p));
+        }
+
+        [Test]
+        public void AWeldBeamLettingGo_FadesWhereItLastMetItsTarget_WhateverTargetFollows()
+        {
+            var tuning = AssetDatabase.LoadAssetAtPath<FeelVfxTuning>(FeelTuningPath);
+            Assert.IsNotNull(tuning, FeelTuningPath);
+            var beam = new CutBeam(Made("Beam").transform, tuning, _surface, _surface);
+            beam.Extend();
+            for (int i = 0; i < FadeFrames && beam.Reach < 1f; i++)
+            {
+                beam.Step(Frame, Emitter, Contact);
+            }
+
+            Assert.AreEqual(1f, beam.Reach, "the beam is fully out");
+            Assert.Less(Vector3.Distance(beam.End, Contact), 1e-4f, "fully out it ends on its target");
+            beam.Retract();
+            AssertFadesInPlace(() =>
+            {
+                beam.Step(Frame, Emitter, Gone);
+                return beam.Reach > 0f;
+            }, () => beam.End, "the weld beam");
+        }
+
+        [Test]
+        public void AScanBeamCompletedOrLetGo_FadesWhereItLastMetItsTarget_WhateverContactFollows(
+            [Values(true, false)] bool completed)
+        {
+            var tuning = AssetDatabase.LoadAssetAtPath<FeelVfxTuning>(FeelTuningPath);
+            var scanTuning = AssetDatabase.LoadAssetAtPath<ScanTuning>(Editor.GameplayAssetPaths.ScanTuning);
+            Assert.IsNotNull(tuning, FeelTuningPath);
+            Assert.IsNotNull(scanTuning, Editor.GameplayAssetPaths.ScanTuning);
+            var beam = new ScanBeam(Made("ScanBeam").transform, tuning, _surface, _surface, scanTuning);
+            beam.Begin(Contact, Vector3.up, 0.5f, 2f);
+            for (int i = 0; i < FadeFrames && beam.Level < 1f; i++)
+            {
+                beam.Meet(Contact);
+                beam.Step(Frame, Emitter);
+            }
+
+            Assert.AreEqual(1f, beam.Level, 1e-3f, "the beam is fully out");
+            Assert.Less(Vector3.Distance(beam.WedgeTargetCenter, Contact), 1e-4f, "fully out it ends on its target");
+            if (completed)
+            {
+                beam.Complete();
+            }
+            else
+            {
+                beam.End();
+            }
+
+            AssertFadesInPlace(() =>
+            {
+                beam.Meet(Gone);
+                beam.Step(Frame, Emitter);
+                return beam.Shown;
+            }, () => beam.WedgeTargetCenter, completed ? "the completed scan's beam" : "the let-go scan beam");
+        }
+
+        /// <summary>
+        /// Steps a fading beam (<paramref name="step"/> says whether it still shows) until it is gone, its end
+        /// (<paramref name="end"/>) held within <see cref="FadeHold"/> of <see cref="Contact"/> and moving less than
+        /// <see cref="FadeStep"/> a frame.
+        /// </summary>
+        private static void AssertFadesInPlace(Func<bool> step, Func<Vector3> end, string what)
+        {
+            Vector3 last = end();
+            int frame = 0;
+            while (frame < FadeFrames && step())
+            {
+                frame++;
+                Vector3 now = end();
+                Assert.LessOrEqual(Vector3.Distance(now, Contact), FadeHold,
+                    $"fade frame {frame}: {what} ends at {now}, off where it last met its target {Contact}");
+                Assert.LessOrEqual(Vector3.Distance(now, last), FadeStep,
+                    $"fade frame {frame}: {what}'s end moved {Vector3.Distance(now, last) * 100f:F1} cm");
+                last = now;
+            }
+
+            Assert.Less(frame, FadeFrames, $"{what} fades out");
+            Assert.Greater(frame, 0, $"{what} shows a fade");
         }
 
         private void Sweep(ScanFragment fragment, Func<Vector3, float> distanceToSurface)

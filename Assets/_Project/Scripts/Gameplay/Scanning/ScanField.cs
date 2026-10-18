@@ -415,6 +415,26 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
+        /// Writes the points of every unscanned target in reach of 07 into <paramref name="points"/> (as many as fit)
+        /// and returns how many.
+        /// </summary>
+        public int CopyInReach(Vector3[] points)
+        {
+            float reachSq = _tuning.Reach * _tuning.Reach;
+            int count = 0;
+            for (int i = 0; i < _fragments.Count && count < points.Length; i++)
+            {
+                ScanFragment fragment = _fragments[i];
+                if (!fragment.Scanned && (fragment.Point - _rover.Position).sqrMagnitude <= reachSq)
+                {
+                    points[count++] = fragment.Point;
+                }
+            }
+
+            return count;
+        }
+
+        /// <summary>
         /// The unscanned target in reach that 07's view rests on most squarely, inside the camera cone, or null: what
         /// the player is looking at, whatever else claims E. <paramref name="score"/> is its aim score (lower is
         /// squarer), comparable with <see cref="InView"/>'s.

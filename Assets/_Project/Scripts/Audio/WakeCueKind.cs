@@ -6,6 +6,5 @@ namespace MoonProject.Audio
         Thump = 0,
         Ghost = 1,
         Tick = 2,
-        Whine = 3,
     }
 }

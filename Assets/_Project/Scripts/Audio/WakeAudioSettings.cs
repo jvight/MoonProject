@@ -13,36 +13,24 @@ namespace MoonProject.Audio
     public sealed class WakeAudioSettings
     {
         [Header("The Asleep radio (static)")]
-        [Tooltip("Static level once the crackle swells in O1 and through the look inside the lens.")]
+        [Tooltip("Static level once the crackle swells in the black, until the self-test's checks begin.")]
         [Range(0f, 1f)]
         [SerializeField] private float _openingStatic = 0.6f;
 
-        [Tooltip("Seconds of the O1 crackle swell.")]
+        [Tooltip("Seconds of the crackle's swell in the black.")]
         [Range(0.1f, 4f)]
         [SerializeField] private float _swellSeconds = 1.2f;
 
-        [Tooltip("Seconds the static takes to give way to the radio's own wake (O12, or the chase frame).")]
+        [Tooltip("Seconds the static takes to give way as the checks begin (or the chase frame, or the short wake).")]
         [Range(0.2f, 6f)]
         [SerializeField] private float _handOverSeconds = 2f;
 
-        [Tooltip("Low-pass (Hz) on the static while it is heard from inside 07.")]
+        [Tooltip("Low-pass (Hz) on the static: heard muffled, from inside 07.")]
         [Range(300f, 6000f)]
         [SerializeField] private float _insideCutoff = 1100f;
 
-        [Tooltip("Low-pass (Hz) once the camera has left the lens: the static heard beside 07.")]
-        [Range(1000f, 22000f)]
-        [SerializeField] private float _besideCutoff = 5000f;
-
-        [Tooltip("Stereo position of the static beside 07 (the radio's speaker side).")]
-        [Range(-1f, 1f)]
-        [SerializeField] private float _besidePan = 0.3f;
-
-        [Tooltip("Seconds the static takes to move from inside 07 to beside it (O10).")]
-        [Range(0.5f, 8f)]
-        [SerializeField] private float _narrowSeconds = 4f;
-
         [Header("The ghost chord (D-A-E)")]
-        [Tooltip("O1: seconds into the black before the ghost chord surfaces.")]
+        [Tooltip("Seconds into the black before the ghost chord surfaces.")]
         [Range(0f, 3f)]
         [SerializeField] private float _crackleGhostDelay = 0.9f;
 
@@ -51,25 +39,17 @@ namespace MoonProject.Audio
         [SerializeField] private float _ghostFaint = 0.4f;
 
         [Header("07's small wake cues")]
-        [Tooltip("The felted power-on thump inside the black (O1).")]
+        [Tooltip("The felted power-on thump inside the black.")]
         [Range(0f, 1f)]
         [SerializeField] private float _thump = 0.8f;
 
-        [Tooltip("The lid's servo ticks and the focus landing.")]
+        [Tooltip("The lid's servo ticks as the picture opens and as the eyes open.")]
         [Range(0f, 1f)]
         [SerializeField] private float _tick = 0.8f;
-
-        [Tooltip("The lens motor's whine while it hunts.")]
-        [Range(0f, 1f)]
-        [SerializeField] private float _whine = 0.7f;
 
         [Tooltip("The short wake's lid tick (Continue).")]
         [Range(0f, 1f)]
         [SerializeField] private float _stir = 0.5f;
-
-        [Tooltip("Hurried by drive input, every wake cue plays this much softer, and the ghost chord is left out.")]
-        [Range(0f, 1f)]
-        [SerializeField] private float _hurried = 0.7f;
 
         [Header("The self-test (New Game)")]
         [Tooltip("Each check's motion sound (the iris, the lamps, the head, the wheels...), from 07.")]
@@ -84,16 +64,11 @@ namespace MoonProject.Audio
         public float SwellSeconds => _swellSeconds;
         public float HandOverSeconds => _handOverSeconds;
         public float InsideCutoff => _insideCutoff;
-        public float BesideCutoff => _besideCutoff;
-        public float BesidePan => _besidePan;
-        public float NarrowSeconds => _narrowSeconds;
         public float CrackleGhostDelay => _crackleGhostDelay;
         public float GhostFaint => _ghostFaint;
         public float Thump => _thump;
         public float Tick => _tick;
-        public float Whine => _whine;
         public float Stir => _stir;
-        public float Hurried => _hurried;
         public float Check => _check;
         public float Fault => _fault;
     }

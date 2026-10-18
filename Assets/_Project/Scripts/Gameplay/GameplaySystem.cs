@@ -237,8 +237,9 @@ namespace MoonProject.Gameplay
             _salvage.ConnectScans(Scans);
             ApronGlow = new ApronGlow(_apronOutline, _building.Tuning.ApronGlowFadeSeconds);
             _building.MarkApron(_apronOutline.bounds.center);
-            Hints = new InteractionHints(_salvage, Containers, Scans, _building, services.Beam, Cutter,
+            var hints = new InteractionHints(_salvage, Containers, Scans, _building, services.Beam, Cutter,
                 services.Pickups);
+            Hints = hints;
             Recovery = new RecoveryProgress(context.Events, PowerLamps, PowerSteps, _openingTuning.RecoveryLamps);
             _flowTokens.Add(context.Events.Subscribe<ChargingChanged>(OnChargingChanged));
             context.Register<IMaterialStock>(Materials);
@@ -248,6 +249,7 @@ namespace MoonProject.Gameplay
             context.Register<IRoverSystems>(StartKit);
             context.Register<ISalvageStatus>(_salvage);
             context.Register<IInteractionHints>(Hints);
+            context.Register<IInteractionFocus>(hints);
             context.Register<IRoverBattery>(_battery.Model);
             context.Register<IBuildEnergy>(_battery);
             context.Register<IBeamStatus>(services.Beam);

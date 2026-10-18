@@ -30,13 +30,6 @@ MonoBehaviour:
   _wakeElevation: -15
   _wakeDistance: 3.2
   _wakeScreenY: 0.22
-  _wakeLensSeconds: 2.2
-  _wakeTurnSeconds: 1.4
-  _wakeEarthElevation: 15
-  _wakeEarthDistance: 2.4
-  _wakeEarthHeight: 0.75
-  _wakeHoldSeconds: 6
-  _wakeEaseSeconds: 2
   _stargazeStartElevation: 0
   _stargazeFullElevation: -20
   _stargazeRiseHalfLife: 1.2
@@ -61,6 +54,23 @@ MonoBehaviour:
   _recenterButtonSeconds: 0.8
   _followHalfLife: 0.27
   _followMaxRate: 45
+  _framingMaxSpeed: 1
+  _framingRange: 6
+  _framingViewCone: 70
+  _framingEngageDelay: 0.5
+  _framingLift: 25
+  _framingYaw: 80
+  _framingMinRadiusScale: 0.6
+  _framingSearchSteps: 8
+  _framingLookShare: 0.6
+  _framingBodyWidth: 1.47
+  _framingBodyLength: 2
+  _framingBodyHeight: 1.53
+  _framingBodyClearance: 0.2
+  _framingCentralShare: 0.7
+  _framingSolveHalfLife: 0.3
+  _framingRampSeconds: 1.5
+  _framingReleaseSeconds: 1.5
   _downhillLift: 10
   _downhillFullAngle: 20
   _liftHalfLife: 0.7
@@ -86,6 +96,7 @@ MonoBehaviour:
     _easeIn: 1.2
     _hold: 0
     _easeOut: 1
+    _lookShare: 0.5
     _yawShare: 0.6
     _maxLookShift: 3
     _minYawSwing: 35
@@ -97,6 +108,7 @@ MonoBehaviour:
     _easeIn: 0.9
     _hold: 1
     _easeOut: 1.1
+    _lookShare: 0.35
     _yawShare: 0.85
     _maxLookShift: 2.5
     _minYawSwing: 25
@@ -104,34 +116,11 @@ MonoBehaviour:
     _lift: 8
     _pullBack: 0.35
     _maxFocusDistance: 25
-  _leapMoment:
-    _easeIn: 0.8
-    _hold: 0.3
-    _easeOut: 1.4
-    _yawShare: 0
-    _maxLookShift: 6
-    _minYawSwing: 0
-    _maxYawSwing: 0
-    _lift: 10
-    _pullBack: 0.35
-    _maxFocusDistance: 60
-  _leapMomentMinStrength: 0.3
-  _leapLookAhead: 2
-  _upgradeMoment:
-    _easeIn: 1.3
-    _hold: 1.8
-    _easeOut: 1.5
-    _yawShare: 0.6
-    _maxLookShift: 6
-    _minYawSwing: 0
-    _maxYawSwing: 45
-    _lift: 14
-    _pullBack: 0.5
-    _maxFocusDistance: 40
   _towerMoment:
     _easeIn: 1.2
     _hold: 0.6
     _easeOut: 1.4
+    _lookShare: 0.45
     _yawShare: 0.8
     _maxLookShift: 8
     _minYawSwing: 10
@@ -143,6 +132,7 @@ MonoBehaviour:
     _easeIn: 2
     _hold: 0.6
     _easeOut: 2
+    _lookShare: 0.3
     _yawShare: 0.4
     _maxLookShift: 5
     _minYawSwing: 0
@@ -154,6 +144,7 @@ MonoBehaviour:
     _easeIn: 3
     _hold: 2.6
     _easeOut: 2.6
+    _lookShare: 0.22
     _yawShare: 0.5
     _maxLookShift: 3
     _minYawSwing: 26
@@ -165,6 +156,7 @@ MonoBehaviour:
     _easeIn: 1.6
     _hold: 0.8
     _easeOut: 2
+    _lookShare: 0.35
     _yawShare: 0.6
     _maxLookShift: 2.5
     _minYawSwing: 20
@@ -172,111 +164,161 @@ MonoBehaviour:
     _lift: -12
     _pullBack: 0.35
     _maxFocusDistance: 30
-  _bayMoment:
-    _easeIn: 1.4
-    _hold: 0
-    _easeOut: 1.4
-    _yawShare: 1
-    _maxLookShift: 0
-    _minYawSwing: 0
-    _maxYawSwing: 180
-    _lift: 0
-    _pullBack: 0.12
-    _maxFocusDistance: 40
-  _bayFraming:
-    _radius: 2
-    _hysteresis: 0.5
-    _subjectDistance: 10
-    _elevation: 9
-    _railClearance: 0.5
-    _shot:
-      _easeIn: 1.3
-      _easeOut: 1.4
-      _armDistance: 3.6
-      _armElevation: 12
-      _armFocusLift: 0.45
-      _armQuarter: 45
-      _bellyDistance: 3
-      _bellyElevation: 4
-      _bellyFocusLift: 0.05
-      _cameraRadius: 0.12
-      _bellyBearing: 20
-      _minDistance: 1.8
-      _sightRadius: 0.25
-      _sideReach: 1.9
-      _wallClearance: 0.45
-      _frameWidth: 28
-      _frameHeight: 16
-      _frameClearShare: 0.5
-      _frontPreference: 15
-      _shortfallPenalty: 20
-      _bodyHalfLength: 0.58
-      _bodyHalfWidth: 0.45
-      _bodyHeight: 0.76
-      _socketMargin: 0.35
-  _giftMoment:
-    _easeIn: 1.4
-    _hold: 1
-    _easeOut: 1.2
-    _yawShare: 0.5
-    _maxLookShift: 0
-    _minYawSwing: 0
-    _maxYawSwing: 80
-    _lift: -3
-    _pullBack: -0.15
-    _maxFocusDistance: 40
-  _kitViews:
-    _solarCell: -35
-    _freshPaint: -90
-    _tapeDeck: 60
-    _tetherRing: 155
-    _subjectDistance: 6
   _momentCancelEaseOut: 0.6
   _momentBlendHalfLife: 0.3
   _minShotBlend: 1.2
   _gentleMinShotBlend: 2
-  _gentleLeapPullBack: 0.5
   _gentleBreathRate: 0.5
   _gentleMinSensitivity: 0.15
   _opening:
-    _crackleSeconds: 0.8
-    _lidCrackSeconds: 0.9
-    _lidHalfSeconds: 0.9
-    _huntSeconds: 1.4
-    _pullOutSeconds: 1.8
-    _overShoulderSeconds: 1.4
-    _lidCrack: 0.2
-    _lidHalf: 0.5
     _lidRest: 0.7
-    _lidRiseSeconds: 0.65
-    _lidSettleSeconds: 0.9
-    _shudderAmount: 0.02
-    _shudderWobbles: 3
     _blinkSeconds: 0.55
     _blinkLow: 0.25
-    _focusBlur: 2.5
-    _focusNear: 0.1
-    _focusOvershoot: 400
-    _focusSettle: 80
-    _readoutSeconds: 1.8
-    _readoutFade: 0.4
-    _speckStart: {x: -0.2, y: 0}
-    _speckEnd: {x: -0.34, y: -0.7}
     _bowedPitch: -2
     _yawLimit: 70
     _pitchDownLimit: -15
     _pitchUpLimit: 50
     _neckFrequency: 0.6
-    _earthBelow: 4
-    _lensForward: 0.44
-    _lensNearClip: 0.22
-    _lensFov: 58
-    _pullOutReach: 0.7
-    _pullOutReachAnchor: 0.5
-    _pullOutOntoEarth: 0.15
-    _pullOutTurnStartShare: 0.5
-    _lensReleaseAt: 0.2
     _blinkSigh: 0.5
+    _post:
+      _lensSeconds: 1
+      _lampsSeconds: 2.4
+      _headSeconds: 1.8
+      _wheelsSeconds: 1.8
+      _motorSeconds: 1.6
+      _cutterSeconds: 2.4
+      _solarWingSeconds: 2
+      _antennaSeconds: 1.8
+      _batterySeconds: 1.2
+      _assemblySeconds: 0.7
+      _beginSeconds: 4
+      _headSweepDegrees: 24
+      _headNodDegrees: 9
+      _wheelTwitchDegrees: 14
+      _shudderMetres: 0.012
+      _lurchMetres: 0.06
+      _turretKickDegrees: 10
+      _wingJerkOpen: 0.5
+      _antennaRiseMetres: 0.12
+      _batteryFill: 0.5
+      _dustCoatAmount: 4
+      _dustPuffStep: 0.15
+      _dustPuffGrains: 6
+      _dustSegments:
+      - _zone: 0
+        _step: 5
+        _start: 0
+        _end: 0.8
+        _rest: 0.4
+      - _zone: 5
+        _step: 6
+        _start: 0.05
+        _end: 0.95
+        _rest: 0.35
+      - _zone: 4
+        _step: 7
+        _start: 0.2
+        _end: 0.9
+        _rest: 0.5
+      - _zone: 3
+        _step: 8
+        _start: 0.1
+        _end: 0.9
+        _rest: 0.3
+      - _zone: 1
+        _step: 9
+        _start: 0.1
+        _end: 0.9
+        _rest: 0.2
+      - _zone: 2
+        _step: 10
+        _start: 0
+        _end: 0.7
+        _rest: 0.3
+      _rimColor: {r: 0.55, g: 0.68, b: 1, a: 1}
+      _rimIntensity: 6
+      _rimRange: 9
+      _rimSpotAngle: 70
+      _rimDistance: 4
+      _rimHeight: 2.2
+      _rimAimHeight: 0.8
+      _fillColor: {r: 1, g: 0.78, b: 0.5, a: 1}
+      _fillIntensity: 1.4
+      _fillRange: 3
+      _fillOffset: 0.5
+      _fillRampSeconds: 2.5
+      _shotDistance: 2.6
+      _shotSideYaw: 35
+      _shotFov: 42
+      _overShoulderSide: 0.9
+      _overShoulderHeight: 1.6
+      _overShoulderBack: 2.6
+      _baseFocus:
+        _step: 3
+        _local: {x: 0, y: 0.8, z: 0.3}
+        _distance: 1
+        _height: 1.35
+        _sideYaw: 0
+      _focus:
+      - _step: 3
+        _local: {x: 0, y: 0.8, z: 0.3}
+        _distance: 1
+        _height: 1.35
+        _sideYaw: 0
+      - _step: 4
+        _local: {x: 0, y: 0.95, z: 0.55}
+        _distance: 0.75
+        _height: 1.2
+        _sideYaw: 0
+      - _step: 5
+        _local: {x: 0, y: 1.15, z: 0.25}
+        _distance: 0.8
+        _height: 1.35
+        _sideYaw: 0
+      - _step: 6
+        _local: {x: 0, y: 0.35, z: 0.1}
+        _distance: 1.1
+        _height: 0.55
+        _sideYaw: 55
+      - _step: 7
+        _local: {x: 0.2, y: 0.75, z: 0}
+        _distance: 1.3
+        _height: 0.9
+        _sideYaw: -50
+      - _step: 8
+        _local: {x: 0, y: 0.8, z: 0.6}
+        _distance: 0.62
+        _height: 0.65
+        _sideYaw: -15
+      - _step: 9
+        _local: {x: 0, y: 0.9, z: -0.3}
+        _distance: 1.2
+        _height: 1.9
+        _sideYaw: 145
+      - _step: 10
+        _local: {x: 0, y: 1.2, z: -0.25}
+        _distance: 1.05
+        _height: 1.5
+        _sideYaw: 110
+      - _step: 11
+        _local: {x: 0.55, y: 1.05, z: 0}
+        _distance: 0.8
+        _height: 1.1
+        _sideYaw: 0
+      - _step: 12
+        _local: {x: 0, y: 0.8, z: 0.3}
+        _distance: 1
+        _height: 1.35
+        _sideYaw: 0
+      - _step: 13
+        _local: {x: 0, y: 1, z: 0.3}
+        _distance: 0.9
+        _height: 1.35
+        _sideYaw: 0
+    _lampFlickerCount: 3
+    _lampFlickerSeconds: 0.9
+    _lampDarkGapSeconds: 0.35
+    _lampRampSeconds: 1.1
     _fadeOutSeconds: 0.6
     _fadeOutFrom: 0.1
     _titleDriftDelay: 20
@@ -321,25 +363,6 @@ MonoBehaviour:
     _breathElevationPeriod: 23
     _breathDistance: 0.04
     _breathDistancePeriod: 29
-  _lab:
-    _craneSeconds: 4.6
-    _underBellyOut: 2.4
-    _underBellyHeight: 1.3
-    _shaftOut: 1.82
-    _shaftEntryDepth: 1.3
-    _cabinRise: 0.6
-    _followAim: 0.2
-    _shoulder: 28
-    _railDrop: 0.15
-    _aimAhead: 0.8
-    _fov: 55
-    _nearClip: 0.05
-    _focusSeconds: 1.2
-    _focusDistance: 1.5
-    _focusSide: 0.55
-    _focusHeight: 0.3
-    _focusFov: 45
-    _centreSeconds: 0.8
   _eveningShot:
     _delay: 9
     _chargingDelay: 2
@@ -411,6 +434,7 @@ MonoBehaviour:
   _wallLiftHalfLife: 0.16
   _headFadeStartDistance: 1.95
   _headFadeHysteresis: 0.15
+  _faceInspectSettleSpeed: 0.05
   _faceInspectOpenSeconds: 0.55
   _faceInspectCloseSeconds: 0.5
   _faceInspectScreenHeight: 0.3687
@@ -423,3 +447,5 @@ MonoBehaviour:
   _faceInspectSideYaw: 28
   _faceInspectProbeRadius: 0.18
   _faceInspectNearClip: 0.05
+  _faceInspectHeadCounterRollShare: 0.5
+  _faceInspectHeadCounterRollMax: 8

@@ -6,10 +6,8 @@ namespace MoonProject.World
 {
     /// <summary>
     /// Turns a <see cref="LensViewState"/> into what the lens shader and the depth of field draw: the lid's edge, the
-    /// exposure dip (capped at the settings' maximum, never above 30%), the eye's gain while the lid is barely open,
-    /// where the roll band is, and how sharp the dust speck is. The roll band only travels while the picture dips, so
-    /// a flicker passes it down the frame once; the gain follows the widest the lid has opened since it was last shut
-    /// (or the last <see cref="Reset"/>), so a blink never brings it back.
+    /// focus and the eye's gain while the lid is barely open. The gain follows the widest the lid has opened since it
+    /// was last shut (or the last <see cref="Reset"/>), so a blink never brings it back.
     /// </summary>
     public sealed class LensViewModel
     {
@@ -22,26 +20,13 @@ namespace MoonProject.World
         public LensViewModel(LensViewSettings settings)
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
-            RollBand = 1f + settings.RollBandHeight;
         }
 
         /// <summary>Height of the lid's edge in the middle of the frame (viewport heights; at or below 0 = shut).</summary>
         public float LidEdge { get; private set; }
 
-        /// <summary>Fraction of the light the old electronics take away right now (0..MaxDip).</summary>
-        public float Dip { get; private set; }
-
-        /// <summary>Centre of the roll band, in viewport heights from the bottom; it starts just above the frame.</summary>
-        public float RollBand { get; private set; }
-
-        /// <summary>0 = the speck is fully blurred, 1 = it sits sharp on the glass.</summary>
-        public float SpeckSharpness { get; private set; }
-
         /// <summary>Focus distance for the depth of field (m), never nearer than the lens can hunt.</summary>
         public float FocusDistance { get; private set; }
-
-        /// <summary>How much of the warm lift shows (0..1).</summary>
-        public float Warmth { get; private set; }
 
         /// <summary>Exposure (EV) the eye adds over the world's own: full while the lid is barely open, then gone.</summary>
         public float Gain { get; private set; }
@@ -62,7 +47,7 @@ namespace MoonProject.World
             _widestLid = 0f;
         }
 
-        public void Step(in LensViewState state, float deltaTime)
+        public void Step(in LensViewState state)
         {
             LidEdge = EdgeFor(state.Lid01, _settings);
             float lid = Mathf.Clamp01(state.Lid01);
@@ -70,20 +55,7 @@ namespace MoonProject.World
             Gain = _settings.WakeGain
                 * (1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(_settings.GainHoldLid, _settings.GainGoneLid,
                     _widestLid)));
-            float flicker = Mathf.Clamp01(state.Flicker01);
-            Dip = flicker * _settings.MaxDip;
-            if (flicker > 0f)
-            {
-                float span = 1f + 2f * _settings.RollBandHeight;
-                float travelled = 1f + _settings.RollBandHeight - RollBand
-                    + flicker * _settings.RollBandSpeed * Mathf.Max(0f, deltaTime);
-                RollBand = 1f + _settings.RollBandHeight - Mathf.Repeat(travelled, span);
-            }
-
             FocusDistance = Mathf.Max(_settings.NearestFocus, state.FocusDistance);
-            SpeckSharpness = 1f - Mathf.InverseLerp(_settings.SpeckSharpDistance, _settings.SpeckBlurDistance,
-                FocusDistance);
-            Warmth = Mathf.Clamp01(state.Warmth01);
         }
     }
 }

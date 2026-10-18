@@ -5,8 +5,8 @@ namespace MoonProject.Audio
 {
     /// <summary>
     /// Which of 07's wake cues each <see cref="WakeBeat"/> plays (docs/design/cutscenes.md §1.2), plain C# so the sheet
-    /// is testable: the O1 thump and the faint ghost chord, a lid tick per stage, the lens whine and the tick as focus
-    /// lands, and a soft tick as the short wake stirs. Hurried, every cue is softer and the ghost chord is left out.
+    /// is testable: the thump in the black and the faint ghost chord, a lid tick as the picture opens and as the eyes
+    /// open, and a soft tick as the short wake stirs.
     /// </summary>
     public sealed class WakeCueSheet
     {
@@ -15,8 +15,7 @@ namespace MoonProject.Audio
 
         public const int TickA2 = 0;
         public const int TickD3 = 1;
-        public const int TickA4 = 2;
-        public const int TickD5 = 3;
+        public const int TickD5 = 2;
 
         private readonly WakeAudioSettings _settings;
 
@@ -26,7 +25,7 @@ namespace MoonProject.Audio
         }
 
         /// <summary>Writes the cues <paramref name="beat"/> plays into <paramref name="calls"/>; returns how many.</summary>
-        public int CuesFor(WakeBeat beat, bool hurried, WakeCueCall[] calls)
+        public int CuesFor(WakeBeat beat, WakeCueCall[] calls)
         {
             if (calls == null || calls.Length < MaxCalls)
             {
@@ -34,29 +33,18 @@ namespace MoonProject.Audio
             }
 
             int count = 0;
-            float scale = hurried ? _settings.Hurried : 1f;
             switch (beat)
             {
                 case WakeBeat.Crackle:
-                    calls[count++] = new WakeCueCall(WakeCueKind.Thump, 0, 0f, _settings.Thump * scale);
-                    if (!hurried)
-                    {
-                        calls[count++] = new WakeCueCall(WakeCueKind.Ghost, 0, _settings.CrackleGhostDelay,
-                            _settings.GhostFaint);
-                    }
-
+                    calls[count++] = new WakeCueCall(WakeCueKind.Thump, 0, 0f, _settings.Thump);
+                    calls[count++] = new WakeCueCall(WakeCueKind.Ghost, 0, _settings.CrackleGhostDelay,
+                        _settings.GhostFaint);
                     break;
-                case WakeBeat.LidCracked:
-                    calls[count++] = new WakeCueCall(WakeCueKind.Tick, TickA2, 0f, _settings.Tick * scale);
+                case WakeBeat.PictureOpens:
+                    calls[count++] = new WakeCueCall(WakeCueKind.Tick, TickA2, 0f, _settings.Tick);
                     break;
-                case WakeBeat.LidHalf:
-                    calls[count++] = new WakeCueCall(WakeCueKind.Tick, TickD3, 0f, _settings.Tick * scale);
-                    break;
-                case WakeBeat.FocusHunting:
-                    calls[count++] = new WakeCueCall(WakeCueKind.Whine, 0, 0f, _settings.Whine * scale);
-                    break;
-                case WakeBeat.FocusSettled:
-                    calls[count++] = new WakeCueCall(WakeCueKind.Tick, TickA4, 0f, _settings.Tick * scale);
+                case WakeBeat.EyesOpen:
+                    calls[count++] = new WakeCueCall(WakeCueKind.Tick, TickD3, 0f, _settings.Tick);
                     break;
                 case WakeBeat.Stirred:
                     calls[count++] = new WakeCueCall(WakeCueKind.Tick, TickD5, 0f, _settings.Stir);

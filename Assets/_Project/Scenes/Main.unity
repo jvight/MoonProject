@@ -16452,7 +16452,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _settings: {fileID: 11400000, guid: 3c7a28d294b9986468e4aeb35b23d7c1, type: 2}
   _shader: {fileID: 4800000, guid: 9d5b9ba22991ddc40b45f481cc4f19b9, type: 3}
-  _readoutFont: {fileID: 12800000, guid: 9f483a25d5034b141ad83eafb87f45e1, type: 3}
 --- !u!4 &3458293436884065185 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8772850120413425448, guid: 8b7abd99e47382247bf5b38ee09d45f8, type: 3}
