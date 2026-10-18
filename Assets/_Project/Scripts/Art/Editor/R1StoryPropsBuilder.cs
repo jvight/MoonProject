@@ -488,8 +488,6 @@ namespace MoonProject.Art.Editor
                     renderers[i].shadowCastingMode = ShadowCastingMode.Off;
                     renderers[i].receiveShadows = true;
                 }
-
-                EnsureSimpleBoxCollider(root);
             }
             else if (modelPath.EndsWith("/Prop_OldLander.fbx", StringComparison.Ordinal))
             {

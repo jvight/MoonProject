@@ -2244,8 +2244,8 @@ def build_decal_bootprint_trail() -> bpy.types.Object:
 
     The prints are not modelled: `TrailSheet` is the closed box that MoonProject/R1/GroundImprint projects them
     through onto whatever ground already lies inside it, so the decal shows no slab, rim or quad edge of its own. The
-    box reaches below the origin for dips in the ground and only a little above it, so the root's simple collider
-    stays a low step.
+    box reaches below the origin for dips in the ground and only a little above it. The prefab has no collider: an
+    imprint is part of the ground, never something 07's wheels can catch on.
     """
     r1kit.reset_scene()
     ensure_extended_r1_materials()
