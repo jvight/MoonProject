@@ -680,7 +680,7 @@
         },
         {
             "key": "next.v2.scan_lander",
-            "text": "Scan the lander's cargo for a blueprint."
+            "text": "Scan the two parts in the open crate by the lander."
         },
         {
             "key": "next.v2.collect_parts",
