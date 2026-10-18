@@ -14,6 +14,8 @@ namespace MoonProject.Art.Editor
     {
         public const string SignalPillarShaderName = "MoonProject/R1/SignalPillar";
         public const string SignalPillarShaderPath = "Assets/_Project/Shaders/R1/R1SignalPillar.shader";
+        public const string GroundImprintShaderName = "MoonProject/R1/GroundImprint";
+        public const string GroundImprintShaderPath = "Assets/_Project/Shaders/R1/R1GroundImprint.shader";
 
         public const string PropsSourceFolder = R1MaterialRecipes.ModelsFolder + "/Props";
         public const string PropsModelsFolder = ArtPaths.R1ModelsFolder + "/Props";
@@ -104,6 +106,19 @@ namespace MoonProject.Art.Editor
             return shader;
         }
 
+        /// <summary>Loads the <c>MoonProject/R1/GroundImprint</c> shader asset.</summary>
+        public static Shader LoadGroundImprintShader()
+        {
+            var shader = AssetDatabase.LoadAssetAtPath<Shader>(GroundImprintShaderPath);
+            if (shader == null)
+            {
+                throw new InvalidOperationException(
+                    $"R1GroundImprint shader is missing at '{GroundImprintShaderPath}' ({GroundImprintShaderName}).");
+            }
+
+            return shader;
+        }
+
         /// <summary>
         /// Builds all specialized story-prop materials under <c>Assets/_Project/Generated/Art/R1/Materials/</c>.
         /// Called automatically from <see cref="R1MaterialLibrary.BuildMaterials"/>.
@@ -112,6 +127,7 @@ namespace MoonProject.Art.Editor
         {
             Shader r1Lit = litShader ?? R1MaterialLibrary.LoadShader();
             Shader pillarShader = LoadSignalPillarShader();
+            Shader groundImprintShader = LoadGroundImprintShader();
 
             R1MaterialSpec lampSpec = R1MaterialRecipes.Get(R1MaterialSlot.LampAmber);
             R1MaterialSpec orangeSpec = R1MaterialRecipes.Get(R1MaterialSlot.OrangeStripe);
@@ -334,28 +350,19 @@ namespace MoonProject.Art.Editor
             flagStripeMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
             GeneratedAssets.CreateOrReplace(flagStripeMat, MissionFlagStripeMaterialPath);
 
-            // 15. R1_BootprintTrail: tileable lunar regolith ground decal of two crossing EVA bootprint trails softened by time
-            Material bootprintMat = R1MaterialLibrary.CreateMaterial(r1Lit, basaltSpec);
-            bootprintMat.name = BootprintTrailMaterialName;
+            // 15. R1_BootprintTrail: two crossing EVA bootprint trails, re-shading only the ground's own sunlight so the
+            //     prints keep the regolith's colour, show no edge, and read in grazing sun but fade out at high sun
+            var bootprintMat = new Material(groundImprintShader) { name = BootprintTrailMaterialName };
             bootprintMat.SetTexture("_BaseMap", LoadRequiredTexture(BootprintTrailAlbedoPath));
-            bootprintMat.SetColor("_BaseColor", new Color(0.92f, 0.91f, 0.90f, 1f));
             bootprintMat.SetTexture("_BumpMap", LoadRequiredTexture(BootprintTrailNormalPath));
-            bootprintMat.SetFloat("_BumpScale", 1.45f);
-            bootprintMat.SetFloat("_MetallicScale", 0.0f);
-            bootprintMat.SetFloat("_SmoothnessMin", 0.06f);
-            bootprintMat.SetFloat("_SmoothnessMax", 0.18f);
-            bootprintMat.SetFloat("_ColorVarAmount", 0.04f);
-            bootprintMat.SetColor("_EdgeWearColor", new Color(0.68f, 0.67f, 0.66f, 1f));
-            bootprintMat.SetFloat("_EdgeWearAmount", 0.36f);
-            bootprintMat.SetFloat("_EdgeWearMetallic", 0.0f);
-            bootprintMat.SetFloat("_EdgeWearSmoothness", 0.16f);
-            bootprintMat.SetColor("_DustColor", new Color(0.56f, 0.56f, 0.58f, 1f));
-            bootprintMat.SetFloat("_DustAmount", 0.28f);
-            bootprintMat.SetFloat("_DustSmoothness", 0.10f);
-            bootprintMat.SetTexture("_EmissionMap", null);
-            bootprintMat.SetColor("_EmissionColor", Color.black);
-            bootprintMat.SetFloat("_EmissionStrength", 0.0f);
-            bootprintMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+            bootprintMat.SetVector("_ImprintSize", new Vector4(0.95f, 3.00f, 0f, 0f));
+            bootprintMat.SetFloat("_BandBelow", 0.10f);
+            bootprintMat.SetFloat("_BandAbove", 0.02f);
+            bootprintMat.SetFloat("_ReliefStrength", 0.45f);
+            bootprintMat.SetFloat("_MaxShade", 0.25f);
+            bootprintMat.SetFloat("_GrazeStart", 0.35f);
+            bootprintMat.SetFloat("_GrazeEnd", 0.75f);
+            bootprintMat.SetFloat("_HighSunRelief", 0.15f);
             GeneratedAssets.CreateOrReplace(bootprintMat, BootprintTrailMaterialPath);
         }
 

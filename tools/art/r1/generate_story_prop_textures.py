@@ -302,113 +302,105 @@ def _build_ice_core_frost_albedo(res: int = 128) -> Image.Image:
     return Image.fromarray(rgba_u8, mode="RGBA")
 
 
-def _build_bootprint_trail_pair(w: int = 256, h: int = 512) -> tuple[Image.Image, Image.Image]:
-    """Generate V-tileable albedo and normal maps of two crossing EVA bootprint trails softened by time."""
-    y, x = np.mgrid[0:h, 0:w].astype(np.float32)
-    u = (x + 0.5) / w
-    v = (y + 0.5) / h
+def _bootprint_height_m(w: int, h: int, width_m: float, length_m: float) -> np.ndarray:
+    """Height field in metres (rows along +V, row 0 at v = 0) of two crossing trails of lunar boot prints.
 
-    # Base multi-frequency periodic lunar regolith micro-relief (isotropic interference)
-    grain = (
-        0.28 * np.sin(u * 22.0 * np.pi) * np.cos(v * 44.0 * np.pi)
-        + 0.24 * np.cos(u * 48.0 * np.pi) * np.sin(v * 96.0 * np.pi)
-        + 0.24 * (
-            np.sin((u * 36.0 + v * 72.0) * np.pi) * np.cos((u * 36.0 - v * 72.0) * np.pi)
-        )
-        + 0.24 * (
-            np.cos((u * 84.0 + v * 168.0) * np.pi) * np.sin((u * 84.0 - v * 168.0) * np.pi)
-        )
+    Each print is ~30 cm long with an oval boot outline (narrow heel, broad ball) and chevron cleats pointing to the
+    toe, pressed ~1 cm deep with a faint push-off ridge. Every print gets a small seeded turn and shift. The strip tiles
+    along V, so offsets wrap, the stride is an even number of steps, and no print crosses v = 0 / 1.
+    """
+    u = (np.arange(w, dtype=np.float64) + 0.5) / w
+    v = (np.arange(h, dtype=np.float64) + 0.5) / h
+    x_m = (u - 0.5)[None, :] * width_m
+    y_m = v[:, None] * length_m
+    height = np.zeros((h, w))
+    rng = np.random.default_rng(1969)
+    half_len = 0.150
+    steps = 4
+    # (first print v, heading: +1 walks +V and -1 walks -V, lateral sway amplitude in metres)
+    trails = ((0.07, 1.0, 0.16), (0.19, -1.0, -0.16))
+    for first_v, heading, sway in trails:
+        for step in range(steps):
+            sv = first_v + step / steps
+            side = 1.0 if step % 2 == 0 else -1.0
+            path_x = sway * np.sin(2.0 * np.pi * sv)
+            slope = sway * 2.0 * np.pi * np.cos(2.0 * np.pi * sv) / length_m
+            cx = path_x + side * heading * 0.085 + rng.uniform(-0.015, 0.015)
+            cy = sv * length_m + rng.uniform(-0.015, 0.015)
+            yaw = np.arctan(slope) + side * heading * 0.06 + rng.uniform(-0.10, 0.10)
+            dy = (y_m - cy + 0.5 * length_m) % length_m - 0.5 * length_m
+            dx = x_m - cx
+            ca, sa = np.cos(yaw), np.sin(yaw)
+            lx = (dx * ca - dy * sa) * heading * side
+            ly = (dx * sa + dy * ca) * heading
+            t = np.clip(ly / half_len, -1.0, 1.0)
+            half_w = 0.052 + 0.016 * (t + 1.0) * 0.5 - 0.005 * np.exp(-(((t + 0.15) / 0.25) ** 2))
+            r = np.sqrt((lx / half_w) ** 2 + (ly / half_len) ** 2)
+            inside = np.clip((1.10 - r) / 0.22, 0.0, 1.0)
+            inside = inside * inside * (3.0 - 2.0 * inside)
+            chevron = ly - 0.55 * np.abs(lx)
+            cleat = np.clip((0.5 + 0.5 * np.cos(2.0 * np.pi * chevron / 0.030) - 0.35) / 0.3, 0.0, 1.0)
+            cleat *= np.clip((0.95 - r) / 0.15, 0.0, 1.0)
+            sole = -inside * (0.011 + 0.002 * t - 0.0035 * cleat)
+            ridge = 0.0018 * np.exp(-(((r - 1.18) / 0.13) ** 2)) * (1.0 + 0.6 * np.clip(t, 0.0, 1.0))
+            height += sole + ridge
+    return height
+
+
+def _blur_tiling_v(a: np.ndarray, sigma_px: float) -> np.ndarray:
+    """Separable Gaussian blur that wraps along V (rows) and clamps along U (columns)."""
+    radius = int(np.ceil(sigma_px * 3.0))
+    k = np.exp(-0.5 * (np.arange(-radius, radius + 1) / sigma_px) ** 2)
+    k /= k.sum()
+    rows = np.zeros_like(a)
+    for i, kv in enumerate(k):
+        rows += kv * np.roll(a, i - radius, axis=0)
+    padded = np.pad(rows, ((0, 0), (radius, radius)), mode="edge")
+    out = np.zeros_like(a)
+    for i, kv in enumerate(k):
+        out += kv * padded[:, i : i + a.shape[1]]
+    return out
+
+
+def _smoothstep01(x: np.ndarray) -> np.ndarray:
+    x = np.clip(x, 0.0, 1.0)
+    return x * x * (3.0 - 2.0 * x)
+
+
+def _build_bootprint_trail_pair(
+    w: int = 512, h: int = 1536, width_m: float = 0.95, length_m: float = 3.0
+) -> tuple[Image.Image, Image.Image]:
+    """Generate the ground-imprint maps for Decal_BootprintTrail (MoonProject/R1/GroundImprint).
+
+    Normal: tangent-space relief of the prints (+X = +U, +Y = +V), softened by time. Albedo: R = a faint linear
+    compaction darkening stored in sRGB, A = a mask that fades the imprint out over the strip's sides and ends so it
+    has no edge on the ground. The imprint never paints a colour of its own, so these are the only inputs.
+    """
+    height = _blur_tiling_v(_bootprint_height_m(w, h, width_m, length_m), 1.6)
+    dh_du = (np.roll(height, -1, axis=1) - np.roll(height, 1, axis=1)) / (2.0 * width_m / w)
+    dh_du[:, 0] = 0.0
+    dh_du[:, -1] = 0.0
+    dh_dv = (np.roll(height, -1, axis=0) - np.roll(height, 1, axis=0)) / (2.0 * length_m / h)
+    normal = np.stack([-dh_du, -dh_dv, np.ones_like(height)], axis=-1)
+    normal /= np.linalg.norm(normal, axis=-1, keepdims=True)
+
+    u = (np.arange(w) + 0.5) / w
+    v = (np.arange(h) + 0.5) / h
+    fade_u = _smoothstep01(np.minimum(u, 1.0 - u) / 0.12)
+    fade_v = _smoothstep01(np.minimum(v, 1.0 - v) / 0.02)
+    mask = fade_v[:, None] * fade_u[None, :]
+    linear_tint = 1.0 - 0.05 * np.clip(-height / 0.011, 0.0, 1.0)
+    tint = np.where(
+        linear_tint <= 0.0031308, linear_tint * 12.92, 1.055 * np.power(linear_tint, 1.0 / 2.4) - 0.055
     )
 
-    height = 0.04 * grain
-    compaction = np.zeros_like(u)
-    rim_boost = np.zeros_like(u)
+    def to_rgba8(rgba: np.ndarray) -> np.ndarray:
+        # PIL row 0 is the top of the image, which Unity samples at v = 1
+        return np.clip(np.rint(rgba[::-1] * 255.0), 0, 255).astype(np.uint8)
 
-    # Two crossing trails (Trail A and Trail B) that weave periodically across V in [0, 1)
-    trails = [
-        # (phase_v, amp_u, dir_sign, n_steps, step_offset)
-        (0.08, 0.205, 1.0, 6, 0.04),
-        (0.08, -0.205, 1.0, 6, 0.12),
-    ]
-
-    for phase_v, amp_u, dir_sign, n_steps, step_offset in trails:
-        for s_idx in range(n_steps):
-            sv = (s_idx / float(n_steps) + step_offset) % 1.0
-            side = -1.0 if (s_idx % 2 == 0) else 1.0
-            center_u = 0.50 + amp_u * np.sin(2.0 * np.pi * (sv + phase_v)) + side * 0.058
-            # Tangent slope du/dv of the trail path at sv
-            du_dv = amp_u * 2.0 * np.pi * np.cos(2.0 * np.pi * (sv + phase_v))
-            yaw = np.arctan2(du_dv * 0.32, dir_sign) + side * 0.05
-
-            # Periodic V difference so footprints near v=0/1 wrap seamlessly
-            dv = (v - sv + 0.5) % 1.0 - 0.5
-            du = u - center_u
-
-            # Scale into isotropic meter-like local coords (tile is ~0.95m wide x 3.0m long, aspect ~ 3.15)
-            dx_m = du * 0.95
-            dy_m = dv * 3.00
-
-            cos_a = float(np.cos(yaw))
-            sin_a = float(np.sin(yaw))
-            lx = dx_m * cos_a + dy_m * sin_a
-            ly = -dx_m * sin_a + dy_m * cos_a
-
-            # Slight arch taper in the middle of the EVA overshoe sole
-            half_w = 0.068 * (1.0 - 0.10 * np.exp(-((ly / 0.045) ** 2)) + 0.08 * np.clip(ly / 0.14, -1.0, 1.0))
-            half_l = 0.142
-
-            # Rounded stadium distance metric
-            qx = np.maximum(np.abs(lx) - (half_w - 0.028), 0.0) / 0.028
-            qy = np.maximum(np.abs(ly) - (half_l - 0.038), 0.0) / 0.038
-            dist = np.hypot(qx, qy)
-
-            # Softened by time (micrometeorite gardening): smooth Gaussian transitions instead of razor-sharp edges
-            inside = np.clip(1.0 - np.power(np.clip(dist, 0.0, 1.35) / 1.15, 2.4), 0.0, 1.0)
-            # Displaced regolith ejecta rim around the bootprint perimeter
-            rim = np.exp(-(((dist - 1.18) / 0.36) ** 2)) * (1.0 - 0.25 * inside)
-
-            # 7 horizontal Apollo-style trapezoidal tread ribs across the sole length
-            rib_wave = np.cos((ly / half_l) * 6.5 * np.pi)
-            ribs = 0.5 + 0.5 * np.tanh(rib_wave * 1.65)
-            # Soft weathering erosion across individual ribs
-            erosion = 0.78 + 0.22 * np.sin((lx * 35.0 + ly * 22.0 + s_idx * 1.7) * np.pi)
-            sole_depth = inside * (0.42 + 0.58 * (1.0 - ribs * erosion))
-
-            height = height - 0.52 * sole_depth + 0.22 * rim
-            compaction = np.maximum(compaction, sole_depth)
-            rim_boost = np.maximum(rim_boost, rim)
-
-    # Soft lateral fade near u=0 and u=1 so the decal strip blends into undisturbed regolith
-    edge_mask = np.sin(np.clip(u, 0.0, 1.0) * np.pi) ** 0.55
-    height *= edge_mask
-    compaction *= edge_mask
-    rim_boost *= edge_mask
-
-    # Albedo: compacted lunar dust in bootprint treads has lower backscatter (darker cool-warm grey)
-    base_r = 0.54 + 0.03 * grain - 0.21 * compaction + 0.10 * rim_boost
-    base_g = 0.55 + 0.03 * grain - 0.21 * compaction + 0.10 * rim_boost
-    base_b = 0.58 + 0.03 * grain - 0.20 * compaction + 0.10 * rim_boost
-    alb_a = np.ones_like(base_r)
-    alb_u8 = np.clip(np.rint(np.stack([base_r, base_g, base_b, alb_a], axis=-1) * 255.0), 0, 255).astype(np.uint8)
-
-    # Tangent-space normal map from periodic finite differences
-    dh_du = (np.roll(height, -1, axis=1) - np.roll(height, 1, axis=1)) * (w * 0.018)
-    dh_dv = (np.roll(height, -1, axis=0) - np.roll(height, 1, axis=0)) * (h * 0.009)
-    nx = -dh_du
-    ny = -dh_dv
-    nz = np.ones_like(nx)
-    inv_len = 1.0 / np.maximum(np.sqrt(nx * nx + ny * ny + nz * nz), 1e-6)
-    nx *= inv_len
-    ny *= inv_len
-    nz *= inv_len
-
-    norm_r = 0.5 + 0.5 * nx
-    norm_g = 0.5 + 0.5 * ny
-    norm_b = 0.5 + 0.5 * nz
-    norm_a = np.ones_like(norm_r)
-    norm_u8 = np.clip(np.rint(np.stack([norm_r, norm_g, norm_b, norm_a], axis=-1) * 255.0), 0, 255).astype(np.uint8)
-
-    return Image.fromarray(alb_u8, mode="RGBA"), Image.fromarray(norm_u8, mode="RGBA")
+    alb = np.stack([tint, tint, tint, mask], axis=-1)
+    nrm = np.concatenate([0.5 + 0.5 * normal, np.ones_like(height)[..., None]], axis=-1)
+    return Image.fromarray(to_rgba8(alb), mode="RGBA"), Image.fromarray(to_rgba8(nrm), mode="RGBA")
 
 
 def main() -> None:
@@ -434,7 +426,7 @@ def main() -> None:
     ic_frost = _build_ice_core_frost_albedo(128)
     ic_frost.save(out_dir / "T_R1_IceCoreFrost_Albedo.png", compress_level=9)
 
-    bp_alb, bp_norm = _build_bootprint_trail_pair(256, 512)
+    bp_alb, bp_norm = _build_bootprint_trail_pair()
     bp_alb.save(out_dir / "T_R1_BootprintTrail_Albedo.png", compress_level=9)
     bp_norm.save(out_dir / "T_R1_BootprintTrail_Normal.png", compress_level=9)
     print(f"Saved story prop textures to {out_dir}")

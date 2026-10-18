@@ -709,6 +709,9 @@ namespace MoonProject.Art.Tests
             Material mat = renderer.sharedMaterial;
             Assert.IsNotNull(mat);
             Assert.AreEqual(R1StoryPropsBuilder.BootprintTrailMaterialName, mat.name);
+            Assert.AreEqual(R1StoryPropsBuilder.GroundImprintShaderName, mat.shader.name,
+                "R1_BootprintTrail must project through the ground-imprint shader, not paint a slab of its own.");
+            Assert.IsTrue(mat.shader.isSupported, "MoonProject/R1/GroundImprint must compile.");
             Assert.IsNotNull(mat.GetTexture("_BaseMap"), "R1_BootprintTrail must have _BaseMap assigned.");
             Assert.IsNotNull(mat.GetTexture("_BumpMap"), "R1_BootprintTrail must have _BumpMap assigned.");
 

@@ -662,7 +662,7 @@ namespace MoonProject.Art.Editor
                 // 5. Prop_SurveyTripod: front-right (fallen survey tripod with theodolite head and buckled leg)
                 SpawnProp(R1StoryPropsBuilder.PropSurveyTripodPrefabPath, new Vector3(0.55f, 0f, -0.35f), -16f, temp);
 
-                // 6. Decal_BootprintTrail: foreground path of two crossing EVA bootprint trails softened by time
+                // 6. Decal_BootprintTrail: foreground path of two crossing EVA bootprint trails pressed into the ground
                 SpawnProp(R1StoryPropsBuilder.DecalBootprintTrailPrefabPath, new Vector3(-0.15f, 0.001f, -1.05f), 86f, temp);
 
                 if (nightEclipse)
@@ -677,6 +677,18 @@ namespace MoonProject.Art.Editor
                     48f,
                     bg,
                     Path.Combine(outDir, $"r1props_basinlife_lineup_{suffix}.png"));
+
+                // 2. Day C only: the bootprints beside 07 with the sun 9 deg above the horizon, the light they read in
+                if (!nightEclipse && RenderSettings.sun != null)
+                {
+                    RenderSettings.sun.transform.rotation = Quaternion.Euler(9f, -34f, 0f);
+                    RenderShot(
+                        new Vector3(-0.60f, 1.05f, -2.85f),
+                        new Vector3(0.25f, 0.20f, -0.75f),
+                        46f,
+                        bg,
+                        Path.Combine(outDir, "r1props_basinlife_bootprints_grazing_dayC.png"));
+                }
             }
             finally
             {
