@@ -8,12 +8,15 @@ namespace MoonProject.Gameplay.Tests
     /// <summary>
     /// B9 night-ready (docs/design/opening-v2.md): a built battery bank wired into the powered pad's grid, never the
     /// charge it holds. At last light the array yields nothing, so a stored-charge condition could never be met; the
-    /// bank built and connected is enough, and a bank standing off the grid is not.
+    /// bank built and connected is enough, and a bank standing off the grid is not. The pad and the bank reach the grid
+    /// themselves, so a bank set down beside its pad (the autoplay bot's 7.6 m, past the array's 14 m) connects.
     /// </summary>
     public sealed class NightReadyTests
     {
-        private const float Spacing = 2f;
-        private const float OffTheGrid = 400f;
+        // The autoplay bot's B9 base (2026-10-18): the array 6.7 m east of the pad, the bank 7.6 m west of it.
+        private const float ArrayEast = 6.7f;
+        private const float BankBesidePad = 7.6f;
+        private const float OffTheGrid = 40f;
         private const float AMinute = 60f;
         private const float ReserveCells = 1f;
 
@@ -33,7 +36,7 @@ namespace MoonProject.Gameplay.Tests
             _base = new PlacedBase(_catalog, _tuning, events);
             _pads = new PadChargers(_base, new LanderPort(events, ReserveCells), Vector3.zero, _opening);
             Built(StructureIds.ChargingPad, Vector3.zero);
-            Built(StructureIds.SolarArray, Vector3.right * Spacing);
+            Built(StructureIds.SolarArray, Vector3.right * ArrayEast);
         }
 
         [TearDown]
@@ -50,9 +53,9 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void ABuiltBankWiredToThePad_IsNightReady_WithNoSupplyAndNoCharge()
+        public void ABankSetDownBesideThePad_IsNightReady_WithNoSupplyAndNoCharge()
         {
-            Built(StructureIds.BatteryBank, Vector3.left * Spacing);
+            Built(StructureIds.BatteryBank, Vector3.left * BankBesidePad);
             _base.StepPower(AMinute, 0f);
 
             Assert.IsTrue(_pads.PowerOn, "the array is wired to the pad");
@@ -78,7 +81,7 @@ namespace MoonProject.Gameplay.Tests
         public void ABankStillBeingWelded_IsNotNightReady()
         {
             _base.PlaceUnchecked(_catalog.Find(StructureIds.BatteryBank),
-                new StructurePose(Vector3.left * Spacing, 0f));
+                new StructurePose(Vector3.left * BankBesidePad, 0f));
             _base.StepPower(AMinute, 0f);
 
             Assert.IsFalse(_pads.NightReady, "only a built bank counts");

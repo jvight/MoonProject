@@ -421,15 +421,16 @@ namespace MoonProject.Gameplay.Tests
                 battery.StoreWattHours,
                 battery.ConnectionRadius,
                 storedWattHours: 240f));
+            // The mast stands past the bank's own reach: only a source or a pylon can bring it into the bank's grid.
             grid.AddNode(new PowerNode(
                 2,
-                new Vector3(3f, 0f, 0f),
+                new Vector3(battery.ConnectionRadius + 2f, 0f, 0f),
                 mast.ProduceWatts,
                 mast.ConsumeWatts,
                 mast.StoreWattHours,
                 mast.ConnectionRadius));
 
-            Assert.IsFalse(grid.AreConnected(1, 2), "Battery bank without a source or pylon does not form a grid.");
+            Assert.IsFalse(grid.AreConnected(1, 2), "A consumer past the bank's reach is not in its grid.");
             grid.Step(PowerGrid.SecondsPerHour * 0.5f, sunlight01: 0f);
             Assert.AreEqual(0f, grid.GetSupplyRatio(2), 1e-4f, "Consumer next to isolated battery receives 0 supply.");
             Assert.AreEqual(240f, grid.GetStoredWattHours(1), 1e-4f, "Isolated battery does not discharge.");
