@@ -25,22 +25,23 @@
    **No bodies, ever.** No real-world logos or flags: generic ILC white, sun-bleached.
 
 ## 2. Placement
-Sun in the opening (World `SkyCycleSettings`): it breaks out of the eclipse at ~**346°** (NNW, low) and holds there
-at golden hour (B6–B8). After power-on it sinks to **last light, low in the SSE (~160°)** (B8–B9).
+Sun in the opening (World `SkyCycleSettings`, measured in-engine 2026-10-18, see §7): it breaks out of the eclipse
+and holds at golden hour at **346.5°, 16.9° up** (NNW) (B6–B8). After power-on it sinks to **last light, 137.7°
+(SE), 3.0° up** (B8–B9).
 
 | Prop | Job | Position (x, z) | First seen | Sightline / why it reads | Why it's there (logic) |
 |---|---|---|---|---|---|
 | **Wake cable + ruts** (exists) | guide line B2 | wake → lander | B0 | the cable wave runs ahead in the dark | fed 07's post |
 | **Lander beacon** (exists) | lure B0–B5 | (35, 160) | B0 | the only warm light in the eclipse | emergency beacon |
-| **Laser retroreflector panel** | lure **B6→B7** | (81, 177), ruins' west edge | B6, from the pad | a soft glint pulses as 07 or the camera moves. Face normal ≈ **293°**, tilted ~3° up: halfway between the Sun (346°) and the pad (240° from the panel). So the Sun's mirror lands on the apron. Glint off at < 35 m and after power-on | ranging target for landers on approach, so it faces the landing field |
+| **Laser retroreflector panel** | lure **B6→B7** | (81, 177), ruins' west edge | B6, from the pad | a soft glint pulses as 07 or the camera moves. Face normal ≈ **292°**, tilted ~**12°** up: halfway between the Sun (346.5°, 16.9° up) and the pad (241° from the panel, 76 m). So the Sun's mirror lands on the apron. Glint off at < 35 m and after power-on | ranging target for landers on approach, so it faces the landing field |
 | **Bootprint trail A** (decal) | guide line **B7** | apron edge (27, 147) → (80, 182), ~63 m at 56° | B6 (sunlight) | the golden Sun rakes in from the left, so the prints cast tiny shadows. The trail ends between the flag and the glint | the crew's daily walk from the lander to the station |
 | **Mission flag** (horizontal rod) | quiet texture, awe | (81.5, 188), 8 m west of the habitat | B7 arrival | with the reflector, it frames the trail's end like a front door. Bleached white against the dark habitat | planted when Lumen opened |
 | **Fallen survey tripod** | quiet texture | (−3, 160), 38 m west of the lander | B6, from the pad | lies at the blast zone's pebble ridge, legs pointing **away** from the lander | the last landing's blast knocked it over (it reinforces World's blast halo) |
 | **Seismic station** (ALSEP-style, dead lamp) | lore scan + **B10 contrast** | (128, 183), 26 m past the workshop | B9, from the habitat | its little lamp is the one light that stays **dark** when the player's base lights up at nightfall | science kit stands clear of the station's dust |
 | **Geophone line** (its cable, 3 small sensors) | guide line, after the opening | (128, 183) → (205, 137), 90 m at 121° | B9 | runs straight toward the canyon mouth and **06** | an active-seismic line, laid in a straight run |
-| **Scout lander** (Surveyor-style), small crater r ~9 m, 1.5 m deep, tilted ~12° | **curiosity lure, lore scan** | **(56, 27)**: 120 m from the pad at the last-light bearing; 48 m off the B2 lane | **B8–B9, last light** | its **~60 m spidery shadow** reaches up the plain toward the base. Looking SSE from the pad, the three legs stand backlit in the glare. Kept unlit and outside 07's lamp cone in B2, so the shadow is the first look at it | landed 1967 (§3) |
-| **Bootprint ring** + short trail (fades after 25 m NW) | quiet texture at the Scout | round (56, 27) | on arrival | 1971 prints circle it; the missing camera and scoop show bare brackets | the 1971 sortie |
-| **Sample-tool rack, fallen core tube** | quiet texture | (60, 32), crater's north rim | on arrival | one tube lies downslope, open end out | the 1971 crew cored the crater |
+| **Scout lander** (Surveyor-style), small crater r 10 m, 1.1 m deep, on its inner wall (~8° slope) | **curiosity lure, lore scan** | **(68.8, 81.0)**: 80 m from the pad at the last-light bearing (137.7°); 51 m off the B2 lane | **B8–B9, last light** | its **58 m spidery shadow** runs straight at the base (measured). Looking SE from the pad, the three legs stand backlit in the glare. Kept unlit and outside 07's lamp cone in B2, so the shadow is the first look at it | landed 1967 (§3) |
+| **Bootprint ring** + short trail (fades after 25 m NW) | quiet texture at the Scout | round (68.8, 81.0) | on arrival | 1971 prints circle it; the missing camera and scoop show bare brackets | the 1971 sortie |
+| **Sample-tool rack, fallen core tube** | quiet texture | (64, 96), crater's north rim | on arrival | one tube lies downslope, open end out | the 1971 crew cored the crater |
 | **Kestrel-3** + furrow debris (exist) | optional lore, west line | crater (−13, 185); furrow (−40, 90) | B2 (rim, left) | the furrow lies right on the apron→relay.1 lane, 74 m out | foreign crash (story v4) |
 | **06** (SSR-3 elder, at rest) | lore scan, F# handshake ×2 | micro.06 (265, 84) | after the opening | at the geophone line's end, 80 m on, by the canyon-mouth mast | it stopped there (`07-identity.md`) |
 | **relay.1** dead mast (exists) | west lure B11 | (−205, −75) | B5 (from the apron) | B11's signal pillar rises behind it | Link's first target |
@@ -49,7 +50,7 @@ at golden hour (B6–B8). After power-on it sinks to **last light, low in the SS
 builds. B8–B9 the Scout's shadow (optional, the Sun holds until NightReady so the detour costs nothing).
 B10 the dark station lamp. B11 the signal pillar west. After: the geophone line east to 06, the furrow west.
 
-**Spacing:** lane B2 (165 m): the Scout (42 m along, 48 m off), the cable tear (84 m), the furrow (100 m, 57 m off).
+**Spacing:** lane B2 (165 m): the Scout (99 m along, 51 m off), the cable tear (84 m), the furrow (100 m, 57 m off).
 Lane B7 (~63 m of trail): the glint ahead, then the ruins' front door; the tripod sits beside the base. East (ruins → 06, ~200 m): the station at 33 m, the
 geophone end at 125 m, 06 at 200 m. West (apron → relay.1, ~310 m): the furrow at 74 m; the next point is a 0.6
 gap, logged below.
@@ -116,3 +117,23 @@ addresses 07, and the probe gets no feelings.
 - At last light, **at least half** of first-time players turn toward the Scout's shadow within 2 min of noticing it
   and scan it.
 - No player stops at a new prop during B0–B5.
+
+## 7. In-engine check (World, 2026-10-18)
+Measured with the real opening holds (`OpeningSkyPacing`, World `BasinDressingTests`) and the stamped ground:
+- **Last light is at 137.7°, 3.0° up**, not ~160°. At (56, 27) the Scout's shadow pointed 22° off the base, and the
+  plain rising ~4 m toward the apron cut it to 27 m. 120 m out on the true bearing the Scout sat in a broad hollow
+  with the same problem. **Moved to 80 m from the apron at 137.7°, (68.8, 81.0)**, where the plain falls away toward
+  the base: on the stamped ground the shadow's geometry runs **58 m**, 0° off the line to the apron.
+- **Blocker, open:** in the real scene (AtmosphereSession `BasinProps_AreCapturedInTheirLight`) the basin floor is
+  **already in the rim's shadow at last light**. From the apron and from the Scout the rim stands **7–14° high in
+  every direction** (9.1° toward 137.7°); the last-light Sun is 3.0° up. So no prop on the floor casts a sunlit
+  shadow at last light, and the Scout lure as written cannot happen. Needs a Director call: raise last light above
+  the SE rim (~10°: a 3 m lander's shadow is then ~17 m), re-time the lure to the sink from golden hour, or give the
+  Scout another lure (an earthlit silhouette).
+- **Crater r 10 m, 1.1 m deep** (was r ~9, 1.5): the plan's crater put a 22.5° slope on drivable ground (limit 20°).
+  The crater's centre lies 7 m **toward the base** from the Scout, so its wall cancels the plain's natural fall:
+  the Scout stands on a 7.9° slope, Art's built-in 8° lean on top, ~12–16° off level in all.
+- **Golden hour is at 346.5°** as planned, but **16.9° up**, so the retroreflector's face tilts ~12° up, not ~3°.
+- **Camera and scoop:** Art's model carries both; World hides those two nodes, so only the brackets show.
+- **Not yet checked in-engine:** the glint from the apron and the ruins' front door (the retroreflector, flag and
+  trail are not on main yet); the 1971 bootprint ring (no decal yet).
