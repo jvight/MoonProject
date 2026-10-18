@@ -57,7 +57,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float ApproachThrottle = 0.3f;
 
         /// <summary>Metres from the spot in front of a seal that count as there: close, so 07 faces the seal.</summary>
-        private const float SealArrive = 1f;
+        private const float SealArrive = 1.5f;
 
         /// <summary>Metres from the seal 07 noses in to, steering at it, so it ends square to the crate.</summary>
         private const float SealNose = 1.2f;
@@ -197,7 +197,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return ExpectLine(OpeningKeys.FindSolar, "B7: LANDER RESERVE · 0%");
             yield return DriveTo(RuinsGate(), 3f, "the Lumen ruins");
             yield return ScanTheSet("ruin.FallenSolarArray", "the fallen solar array");
-            yield return ReadTheAirlockPanel();
             yield return CutTheCrates("KenjiWorkshop", "Kenji's workshop lockers");
             yield return ExpectLine(OpeningKeys.BuildSolar, "B8: the array's cost is covered");
             yield return DriveTo(RuinsGate(), 3f, "out of the Lumen ruins");
@@ -205,6 +204,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return UntilReached(OpeningMilestone.PowerOn, "Power on: the array powers the pad");
             yield return ExpectLine(OpeningKeys.BuildBatteryBank, "B9: night is coming");
             yield return ScanTheSet("ruin.HabitatModules", "the habitat's power modules");
+            yield return ReadTheAirlockPanel();
             yield return CutTheCrates("HabitatModules", "the habitat's cable reel");
             yield return DriveTo(RuinsGate(), 3f, "out of the Lumen ruins");
             yield return Build(StructureIds.BatteryBank, pad + Vector3.left * BaseSpacing, "B9: the battery bank");
@@ -369,8 +369,8 @@ namespace MoonProject.Gameplay.PlayModeTests
                 () => $"scan candidate {scans.Candidate?.FragmentId ?? "none"}, primary hint " +
                       $"{_gameplay.Hints.Primary.Kind} at {_gameplay.Hints.Primary.Position} (piece " +
                       $"{_gameplay.Salvage.Candidate?.Site.Id}/{_gameplay.Salvage.Candidate?.Number}, crate " +
-                      $"{_gameplay.Containers.Candidate?.Id}), the view " +
-                      $"{ViewOff(fragment.Point):F0} deg off it, the target " +
+                      $"{_gameplay.Containers.Candidate?.Id}); the target at {fragment.Point}, the view " +
+                      $"{ViewOff(fragment.Point):F0} deg off it, " +
                       $"{Vector3.Distance(Flat(fragment.Point), Flat(_rover.Position)):F2} m flat, " +
                       $"{HeadingOff(fragment.Point):F0} deg off");
             Press(_keyboard.eKey);
