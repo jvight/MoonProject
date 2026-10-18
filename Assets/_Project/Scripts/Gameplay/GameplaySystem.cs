@@ -430,7 +430,8 @@ namespace MoonProject.Gameplay
                 return false;
             }
 
-            return !Scans.InView(otherTarget, out float otherScore) || scanScore < otherScore;
+            float margin = Scans.Candidate != null ? -Scans.Tuning.LookStickiness : Scans.Tuning.LookStickiness;
+            return !Scans.InView(otherTarget, out float otherScore) || scanScore + margin < otherScore;
         }
 
         /// <summary>07 starts a charge: the next full hold says so once more.</summary>

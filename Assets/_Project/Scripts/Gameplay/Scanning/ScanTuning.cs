@@ -31,6 +31,10 @@ namespace MoonProject.Gameplay
         [Tooltip("Degrees off 07's view a fragment may lie and still be the one it looks at.")]
         [Range(5f, 90f)] [SerializeField] private float _cone = 25f;
 
+        [Tooltip("Degrees of aim score the target (or verb) holding the prompt keeps over a rival that is only " +
+                 "slightly squarer, so the brackets do not flicker between two close targets.")]
+        [Range(0f, 15f)] [SerializeField] private float _lookStickiness = 4f;
+
         [Tooltip("How much nearness weighs against looking straight at a fragment when two are in view (0: the one " +
                  "nearest the view's centre wins, story panels included).")]
         [Range(0f, 1f)] [SerializeField] private float _distanceWeight;
@@ -197,6 +201,7 @@ namespace MoonProject.Gameplay
         public IReadOnlyList<StoryScan> Stories => _stories;
         public float Reach => _reach;
         public float Cone => _cone;
+        public float LookStickiness => _lookStickiness;
         public float DistanceWeight => _distanceWeight;
         public float EngageSpeed => _engageSpeed;
         public int GazePriority => _gazePriority;
