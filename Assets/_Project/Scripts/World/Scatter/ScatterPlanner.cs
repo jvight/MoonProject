@@ -32,7 +32,8 @@ namespace MoonProject.World
         private readonly GradientNoise _trailNoise;
         private readonly Vector2[] _laneEnds;
 
-        // Anchor spaces kept clear of rocks: x, z of the centre and its radius.
+        // Spaces kept clear of rocks, the anchors' and the Scout's crater (no flat anchor): x, z of the centre and its
+        // radius.
         private readonly Vector3[] _clearings;
         private readonly float _pebbleMaxSlopeCos;
         private readonly float _boulderMaxSlopeCos;
@@ -47,7 +48,10 @@ namespace MoonProject.World
                 throw new ArgumentNullException(nameof(anchors));
             }
 
-            _clearings = new Vector3[anchors.Count];
+            _clearings = new Vector3[anchors.Count + 1];
+            GroundShaping shaping = surface.Shaping;
+            _clearings[anchors.Count] = new Vector3(shaping.ScoutCraterCenter.x, shaping.ScoutCraterCenter.y,
+                shaping.ScoutCraterRadius);
             var placesOnTheFloor = new List<Vector2>();
             for (int i = 0; i < anchors.Count; i++)
             {

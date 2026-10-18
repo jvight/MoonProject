@@ -6,7 +6,7 @@ namespace MoonProject.World
 {
     /// <summary>
     /// Where World stands the opening's places (opening v2 §4): the Lumen station ruins cluster, the landed cargo
-    /// lander and its beacon, the old cables, Kestrel-3's debris, the big boulders and the west signal.
+    /// lander and its beacon, the old cables, Kestrel-3's debris, the big boulders, the Scout and the west signal.
     /// </summary>
     [Serializable]
     public sealed class LandmarkSettings
@@ -64,6 +64,21 @@ namespace MoonProject.World
             new PropPlacement(WorldAnchorIds.PlaceRuins, "Rock_12", new Vector2(10f, 30f), 75f, 0.8f),
         };
 
+        [Header("The Scout, the 1967 soft lander (basin dressing Â§2, Â§4)")]
+        [Tooltip("Yaw of the Scout, degrees clockwise from +Z: it stands square on its crater's wall, and the yaw " +
+            "turns Art's half-buried footpad down the slope, so it leans about 12 degrees off level in all.")]
+        [Range(0f, 360f)]
+        [SerializeField] private float _scoutYaw = 137.7f;
+
+        [Tooltip("How deep the Scout's footpads sit in the dust, metres: fifty years of settling.")]
+        [Range(0f, 0.4f)]
+        [SerializeField] private float _scoutSink = 0.08f;
+
+        [Tooltip("How far Art's blast patch sits below the dust line under the Scout, metres: it follows the slope " +
+            "and must not float off it.")]
+        [Range(0f, 0.2f)]
+        [SerializeField] private float _scoutBlastSink = 0.03f;
+
         [Header("The west signal (opening v2 B11)")]
         [Tooltip("How far behind the dead west mast (away from the basin) the signal pillar rises, metres; it stands " +
             "hidden until Gameplay shows it when the antenna mast hears the west.")]
@@ -85,6 +100,9 @@ namespace MoonProject.World
         public LanderBeaconSettings LanderBeacon => _landerBeacon;
         public PropPlacement[] Debris => _debris;
         public PropPlacement[] Boulders => _boulders;
+        public float ScoutYaw => _scoutYaw;
+        public float ScoutSink => _scoutSink;
+        public float ScoutBlastSink => _scoutBlastSink;
         public float SignalPillarSetback => _signalPillarSetback;
         public float SignalPillarGlow => _signalPillarGlow;
         public float SignalPillarWidth => _signalPillarWidth;
