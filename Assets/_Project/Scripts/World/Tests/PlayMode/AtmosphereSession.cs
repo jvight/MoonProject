@@ -122,6 +122,9 @@ namespace MoonProject.World.PlayModeTests
         private const float FirstNightSeconds = 300f;
         private static readonly Vector2 FrontDoorTrailStart = new Vector2(27f, 147f);
         private static readonly Vector2 FrontDoorTrailEnd = new Vector2(80f, 182f);
+        private static readonly Vector2 TrailStart = new Vector2(27f, 147f);
+        private static readonly Vector2 TrailBend = new Vector2(42.7f, 148.6f);
+        private const float ReflectorLookHeight = 0.3f;
 
         private static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "world-captures"));
@@ -540,10 +543,11 @@ namespace MoonProject.World.PlayModeTests
 
         /// <summary>
         /// The basin's story props against the real sky (basin dressing §2, §5): in the eclipse, the Scout from the
-        /// first drive's lane (nothing new may show); at golden hour, the ruins' front door from the trail's start; on
-        /// the first night, the Scout's earthlit glint from the apron (07's chase view and a wide eye) and close up.
-        /// The Sun stands where the opening's milestones leave it; the Scout's brightest pixel from the lane and the
-        /// apron in each light goes to the log. Logs/world-captures/basin-*.png.
+        /// first drive's lane (nothing new may show); at golden hour, the ruins' front door from the trail's start, the
+        /// retroreflector's glint from the apron and bootprint trail A; on the first night, the Scout's earthlit glint
+        /// from the apron (07's chase view and a wide eye) and close up. The Sun stands where the opening's milestones
+        /// leave it; the Scout's and the retroreflector's brightest pixels from the lane and the apron go to the log.
+        /// Logs/world-captures/basin-*.png.
         /// </summary>
         [UnityTest]
         [Timeout(600000)]
@@ -582,6 +586,13 @@ namespace MoonProject.World.PlayModeTests
             }
 
             Assert.IsNotNull(scoutProp, "[World]/BasinProps/Prop_OldLander stands");
+            Transform reflector = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
+            {
+                reflector = reflector != null ? reflector : root.transform.Find("BasinProps/Prop_Retroreflector");
+            }
+
+            Assert.IsNotNull(reflector, "[World]/BasinProps/Prop_Retroreflector stands");
             GameContext context = bootstrap.Context;
             _awoke = context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
             float started = Time.time;
@@ -628,6 +639,8 @@ namespace MoonProject.World.PlayModeTests
                 Shoot(view, "basin-eclipse-lane-chase");
                 Shoot(camera, LookPose("eclipse-lane", laneEye, scoutLook, OpeningFov));
                 ReportPeaks(camera, scoutProp, "eclipse", laneEye, apronEye, scoutLook);
+                ReportPeaks(camera, reflector, "eclipse, the retroreflector", laneEye, apronEye,
+                    reflector.position + Vector3.up * ReflectorLookHeight);
 
                 context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.FirstCharge, true));
                 yield return new WaitForSeconds(BlastSettleSeconds);
@@ -635,6 +648,12 @@ namespace MoonProject.World.PlayModeTests
                 Shoot(camera, LookPose("golden-front-door", doorEye, doorLook, ScoutApronFov));
                 Shoot(camera, LookPose("golden-apron-scout", apronEye, scoutLook, ScoutApronFov));
                 ReportPeaks(camera, scoutProp, "golden hour", laneEye, apronEye, scoutLook);
+                Vector3 glint = reflector.position + Vector3.up * ReflectorLookHeight;
+                Shoot(camera, LookPose("golden-apron-glint", apronEye, glint, ScoutApronFov));
+                Shoot(view, "basin-golden-apron-chase");
+                ReportPeaks(camera, reflector, "golden hour, the retroreflector", laneEye, apronEye, glint);
+                Shoot(camera, LookPose("golden-trail", OnGround(terrain, TrailStart) + Vector3.up * ScoutApronEyeHeight,
+                    OnGround(terrain, TrailBend) + Vector3.up * ScoutLookHeight, OpeningFov));
 
                 context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.NightReady, true));
                 sky.SetClockTime(sky.TimeSeconds + FirstNightSeconds);
@@ -666,7 +685,7 @@ namespace MoonProject.World.PlayModeTests
         }
 
         /// <summary>
-        /// What the Scout adds to the view from the lane and from the apron, to the log: its brightest pixel and how
+        /// What a prop adds to the view from the lane and from the apron, to the log: its brightest pixel and how
         /// much brighter than the ground behind it that pixel stands.
         /// </summary>
         private static void ReportPeaks(Camera camera, Transform prop, string light, Vector3 laneEye, Vector3 apronEye,
@@ -676,7 +695,7 @@ namespace MoonProject.World.PlayModeTests
             Vector2 lane = Peak(camera, prop, scout);
             Place(camera, LookPose("peak", apronEye, scout, ScoutApronFov));
             Vector2 apron = Peak(camera, prop, scout);
-            Debug.Log($"[basin] {light}: the Scout's brightest pixel {lane.x:F3} (+{lane.y:F3} over the ground) from " +
+            Debug.Log($"[basin] {light}: brightest pixel {lane.x:F3} (+{lane.y:F3} over the ground) from " +
                       $"the lane, {apron.x:F3} (+{apron.y:F3}) from the apron (luma 0..1, display-encoded)");
         }
 
