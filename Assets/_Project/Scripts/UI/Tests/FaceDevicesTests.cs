@@ -50,16 +50,63 @@ namespace MoonProject.UI.Tests
         [Test]
         public void TheKeys_FollowTheScreen_AcrossAndDownBetweenTheFourFrames()
         {
-            Assert.AreEqual(FaceDevices.Cutter, FaceDevices.Step(FaceDevices.Scan, NavigationMoveEvent.Direction.Right));
-            Assert.AreEqual(FaceDevices.Scan, FaceDevices.Step(FaceDevices.Cutter, NavigationMoveEvent.Direction.Left));
-            Assert.AreEqual(FaceDevices.SocketOne, FaceDevices.Step(FaceDevices.Scan, NavigationMoveEvent.Direction.Down));
-            Assert.AreEqual(FaceDevices.SocketTwo, FaceDevices.Step(FaceDevices.Cutter, NavigationMoveEvent.Direction.Down));
-            Assert.AreEqual(FaceDevices.Scan, FaceDevices.Step(FaceDevices.SocketOne, NavigationMoveEvent.Direction.Up));
+            Assert.AreEqual(FaceDevices.Scan, FaceDevices.Step(FaceDevices.Cutter, NavigationMoveEvent.Direction.Right));
+            Assert.AreEqual(FaceDevices.Cutter, FaceDevices.Step(FaceDevices.Scan, NavigationMoveEvent.Direction.Left));
+            Assert.AreEqual(FaceDevices.SocketOne, FaceDevices.Step(FaceDevices.Cutter, NavigationMoveEvent.Direction.Down));
+            Assert.AreEqual(FaceDevices.SocketTwo, FaceDevices.Step(FaceDevices.Scan, NavigationMoveEvent.Direction.Down));
+            Assert.AreEqual(FaceDevices.Cutter, FaceDevices.Step(FaceDevices.SocketOne, NavigationMoveEvent.Direction.Up));
+            Assert.AreEqual(FaceDevices.Scan, FaceDevices.Step(FaceDevices.SocketTwo, NavigationMoveEvent.Direction.Up));
             Assert.AreEqual(FaceDevices.SocketOne, FaceDevices.Step(FaceDevices.SocketTwo, NavigationMoveEvent.Direction.Left));
             Assert.AreEqual(FaceDevices.SocketTwo, FaceDevices.Step(FaceDevices.SocketOne, NavigationMoveEvent.Direction.Right));
-            Assert.AreEqual(-1, FaceDevices.Step(FaceDevices.SocketOne, NavigationMoveEvent.Direction.Down),
-                "down from a lower frame leads to the hold, which the view enters");
-            Assert.AreEqual(-1, FaceDevices.Step(FaceDevices.Scan, NavigationMoveEvent.Direction.Left));
+            Assert.AreEqual(-1, FaceDevices.Step(FaceDevices.Cutter, NavigationMoveEvent.Direction.Left),
+                "left from a left frame leads to the hold, which the view enters");
+            Assert.AreEqual(-1, FaceDevices.Step(FaceDevices.SocketOne, NavigationMoveEvent.Direction.Down));
+            Assert.AreEqual(-1, FaceDevices.Step(FaceDevices.Scan, NavigationMoveEvent.Direction.Up));
+            Assert.AreEqual(-1, FaceDevices.Step(FaceDevices.Scan, NavigationMoveEvent.Direction.Right));
+        }
+
+        [Test]
+        public void TheSteps_MatchWhereTheFramesStand()
+        {
+            foreach (NavigationMoveEvent.Direction direction in new[]
+                     {
+                         NavigationMoveEvent.Direction.Left, NavigationMoveEvent.Direction.Right,
+                         NavigationMoveEvent.Direction.Up, NavigationMoveEvent.Direction.Down,
+                     })
+            {
+                for (int device = 0; device < FaceDevices.Count; device++)
+                {
+                    int next = FaceDevices.Step(device, direction);
+                    if (next < 0)
+                    {
+                        continue;
+                    }
+
+                    Vector2 delta = FaceLayout.DeviceFrame(next).center - FaceLayout.DeviceFrame(device).center;
+                    bool across = direction == NavigationMoveEvent.Direction.Left ||
+                                  direction == NavigationMoveEvent.Direction.Right;
+                    float along = across ? delta.x : delta.y;
+                    bool forward = direction == NavigationMoveEvent.Direction.Right ||
+                                   direction == NavigationMoveEvent.Direction.Down;
+                    Assert.AreEqual(forward, along > 0f, $"{direction} from device {device}");
+                    Assert.AreEqual(0f, across ? delta.y : delta.x, 1e-3f, $"{direction} from device {device}");
+                }
+            }
+        }
+
+        [Test]
+        public void EachDevice_HasAFaceIcon_AndOnlyBrokenStatesReadAsFaults()
+        {
+            for (int device = 0; device < FaceDevices.Count; device++)
+            {
+                CollectionAssert.Contains(RoverDiagramData.FaceIconIds, FaceDevices.IconId(device));
+            }
+
+            Assert.IsFalse(FaceDevices.IsFaulty(RoverSystemState.Ok));
+            Assert.IsFalse(FaceDevices.IsFaulty(RoverSystemState.Empty));
+            Assert.IsTrue(FaceDevices.IsFaulty(RoverSystemState.Fault));
+            Assert.IsTrue(FaceDevices.IsFaulty(RoverSystemState.Jammed));
+            Assert.IsTrue(FaceDevices.IsFaulty(RoverSystemState.ReceiveOnly));
         }
 
         [Test]

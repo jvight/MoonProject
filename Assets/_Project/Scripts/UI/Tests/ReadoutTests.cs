@@ -299,6 +299,8 @@ namespace MoonProject.UI.Tests
         {
             public bool CanFitIgniter => false;
 
+            public string IgniterPartId => "part.igniter";
+
             public RoverSystemState StateOf(RoverSystem system)
             {
                 switch (system)

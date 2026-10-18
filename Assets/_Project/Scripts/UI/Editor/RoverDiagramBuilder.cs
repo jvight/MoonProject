@@ -9,8 +9,9 @@ namespace MoonProject.UI.Editor
     /// <summary>
     /// Builds <see cref="UiAssetPaths.RoverDiagram"/> by reading the equipment socket transforms from the generated
     /// 07 v3 prefab (<see cref="UiAssetPaths.RoverModelPrefab"/>; socket names in
-    /// <c>tools/art/qa/contracts/rover.json</c>) and the 25 SVG icons from <see cref="UiAssetPaths.IconsFolder"/>.
-    /// Fails loudly if the prefab, any socket transform, or any icon is missing.
+    /// <c>tools/art/qa/contracts/rover.json</c>), the 25 SVG icons from <see cref="UiAssetPaths.IconsFolder"/> and the
+    /// face's art from <see cref="UiAssetPaths.FaceArtFolder"/> (<see cref="FaceArtReader"/>). Fails loudly if the
+    /// prefab, any socket transform, any icon or any of the face's art is missing.
     /// </summary>
     public static class RoverDiagramBuilder
     {
@@ -56,6 +57,8 @@ namespace MoonProject.UI.Editor
             data.SetSockets(sockets);
             data.SetWheels(wheels);
             data.SetIcons(UiIconBuilder.ParseAllIcons());
+            data.SetFaceArt(FaceArtReader.LoadArt(), FaceArtReader.ReadContent(), FaceArtReader.ReadAnchors(),
+                FaceArtReader.ParseIcons());
             string problem = data.Validate();
             if (problem != null)
             {

@@ -439,7 +439,8 @@ namespace MoonProject.UI
             _objective.Tick(hudTime, _services.Rover.Speed, _player.Guidance, _objectiveView.ShowsObjective);
             _lowBattery.Tick(paused ? 0f : deltaTime, _objectiveView.ShowsBattery);
             PromptHolder holder = DecideGuidance(paused);
-            _unlockCard.Tick(hudTime, !cargoOpen && holder == PromptHolder.Unlock);
+            _unlockCard.Tick(hudTime, !cargoOpen && holder == PromptHolder.Unlock,
+                _services.Rover.Speed >= _tuning.Guidance.StillSpeed || _buildStrip.State != BuildModeState.Closed);
             _pickups.Tick(deltaTime);
             bool cutting = _services.Salvage.IsCutting;
             if (cutting)

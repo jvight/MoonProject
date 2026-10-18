@@ -440,10 +440,20 @@ namespace MoonProject.UI.PlayModeTests
             yield return LegibleShot(camera, capturesFolder, "face_inv_24_vi", report, layout.Cargo);
             File.Copy(Path.Combine(capturesFolder, "face_inv_24_vi.png"), Path.Combine(r2Folder, "face_inv_24_vi.png"), true);
 
+            ui.Cargo.View.FocusHoldCell(FaceLayout.PageSize);
+            yield return new WaitForSecondsRealtime(0.15f);
+            Assert.AreEqual(1, ui.Cargo.View.HoldPage, "the hold's second page shows the last twelve slots");
+            StringAssert.EndsWith("2/2", ui.Cargo.View.PageText, "and its heading row says so");
+            yield return LegibleShot(camera, capturesFolder, "face_inv_24_vi_page2", report, layout.Cargo);
+            ui.Cargo.View.FocusHoldCell(0);
+
             ui.Localization.SetLanguage("en");
             ui.Cargo.View.ClearFocus();
             yield return new WaitForSecondsRealtime(0.2f);
             yield return LegibleShot(camera, capturesFolder, "face_inv_24_en", report, layout.Cargo);
+            ui.Cargo.View.FocusHoldCell(FaceLayout.PageSize + 1);
+            yield return new WaitForSecondsRealtime(0.15f);
+            yield return LegibleShot(camera, capturesFolder, "face_inv_24_en_page2", report, layout.Cargo);
             File.Copy(Path.Combine(capturesFolder, "face_inv_24_en.png"), Path.Combine(r2Folder, "face_inv_24_en.png"), true);
 
             ui.Cargo.Close();

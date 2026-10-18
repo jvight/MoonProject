@@ -292,7 +292,7 @@
         },
         {
             "key": "material.superconductor",
-            "text": "Superconductor"
+            "text": "Super\u00adconductor"
         },
         {
             "key": "ui.recipe.row",
@@ -921,6 +921,10 @@
         {
             "key": "ui.cargo.more_slots",
             "text": "+{0} slots later"
+        },
+        {
+            "key": "ui.cargo.page",
+            "text": "Page {0}/{1}"
         },
         {
             "key": "ui.cargo.empty_name",

@@ -107,8 +107,10 @@
         </ui:VisualElement>
         <ui:VisualElement name="cargo" class="cargo" picking-mode="Ignore">
             <ui:VisualElement name="cargo-panel" class="cargo__panel" picking-mode="Ignore">
+                <ui:VisualElement name="cargo-art" class="cargo__art" picking-mode="Ignore" />
                 <ui:VisualElement name="cargo-canvas" class="cargo__canvas" picking-mode="Ignore" />
                 <ui:Label name="cargo-hold-title" class="cargo__heading cargo__heading--strip loc" text="ui.cargo.hold" picking-mode="Ignore" />
+                <ui:Label name="cargo-page" class="cargo__page" picking-mode="Ignore" />
                 <ui:Label name="cargo-right-title" class="cargo__heading cargo__heading--title loc" text="ui.face.title" picking-mode="Ignore" />
                 <ui:Label name="cargo-boot" class="cargo__boot" picking-mode="Ignore" />
                 <ui:VisualElement name="cargo-hold-grid" class="cargo__grid" picking-mode="Ignore" />
@@ -135,6 +137,7 @@
                         <ui:Label name="cargo-word-2" class="cargo__key-word" picking-mode="Ignore" />
                     </ui:VisualElement>
                 </ui:VisualElement>
+                <ui:VisualElement name="cargo-ghost" class="cargo__canvas" picking-mode="Ignore" />
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement name="pause" class="pause" picking-mode="Ignore">

@@ -37,6 +37,7 @@ namespace MoonProject.Rover.PlayModeTests
         private const int CaptureHeight = 900;
         private const float FrameTime = 1f / 60f;
         private const float WakeTimeout = 20f;
+        private const float PowerOnTimeout = 60f;
         private const int StockedStacks = 3;
         private const float SunriseTimeout = 35f;
         private const float OpenGroundOffset = 12f;
@@ -148,7 +149,7 @@ namespace MoonProject.Rover.PlayModeTests
             // Switch to Vietnamese (vi) so the face inventory captures show the full localized Vietnamese UI.
             _context.Get<ILocalization>().SetLanguage("vi");
 
-            // Populate hold (3 stacks: 5 Metal, 3 Wiring, 2 Optics) and equipment before placing 07 on open basin ground.
+            // Populate hold (3 stacks: 5 Metal, 3 Wiring, 2 Optics; a slot holds ten) and equipment before placing 07 on open basin ground.
             PopulateHoldAndEquipment();
 
             IWorldLayout layout = _context.Get<IWorldLayout>();
@@ -270,9 +271,7 @@ namespace MoonProject.Rover.PlayModeTests
                 || holdItemsArrived < StockedStacks
                 || affirmChirps < 1)
             {
-                Assert.Less(Time.time, bootDeadline, "Hold boot and CRT screen expansion must complete within 5 seconds: "
-                    + $"mix {faceState.ScreenContentMix}, pinch {faceState.ScreenVerticalPinch}, inspect {_cameraRig.FaceInspectWeight}, "
-                    + $"slots {holdSlotsLit}, items {holdItemsArrived}, affirm {affirmChirps}.");
+                Assert.Less(Time.time, bootDeadline, "Hold boot and CRT screen expansion must complete within 5 seconds.");
                 yield return null;
             }
 
@@ -280,7 +279,7 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreEqual(1f, faceState.ScreenContentMix, 1e-4f);
             Assert.AreEqual(0f, faceState.ScreenVerticalPinch, 1e-4f);
             Assert.AreEqual(8, holdSlotsLit, "All 8 hold slots must light during the hold boot.");
-            Assert.AreEqual(StockedStacks, holdItemsArrived, "All stocked material stacks must slide in during the hold boot.");
+            Assert.AreEqual(StockedStacks, holdItemsArrived, "Every stocked material stack must slide in during the hold boot.");
             Assert.GreaterOrEqual(affirmChirps, 1, "07 must chirp affirm when the hold boot finishes.");
 
             // Verify the mouse raycast hits Screen's MeshCollider near UV (0.5, 0.5) from the viewport center.
@@ -332,20 +331,20 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreEqual(2, view.FocusedHoldCell);
             yield return TapKey(_keyboard.rightArrowKey);
             Assert.AreEqual(3, view.FocusedHoldCell);
-            yield return TapKey(_keyboard.upArrowKey);
-            Assert.AreEqual(FaceDevices.SocketOne, view.FocusedDeviceIndex,
-                "Navigating Up from the hold's top row must focus the frame above it, socket 1.");
-            yield return TapKey(_keyboard.upArrowKey);
-            Assert.AreEqual(FaceDevices.Scan, view.FocusedDeviceIndex, "Up from socket 1 reaches the scan lens.");
             yield return TapKey(_keyboard.rightArrowKey);
-            Assert.AreEqual(FaceDevices.Cutter, view.FocusedDeviceIndex, "Right from the scan lens crosses to the cutter.");
+            Assert.AreEqual(FaceDevices.Cutter, view.FocusedDeviceIndex,
+                "Right from the end of the hold's top row must cross to the frame beside it, the cutter.");
+            yield return TapKey(_keyboard.rightArrowKey);
+            Assert.AreEqual(FaceDevices.Scan, view.FocusedDeviceIndex, "Right from the cutter crosses to the scan lens.");
             yield return TapKey(_keyboard.downArrowKey);
-            Assert.AreEqual(FaceDevices.SocketTwo, view.FocusedDeviceIndex, "Down from the cutter reaches socket 2.");
+            Assert.AreEqual(FaceDevices.SocketTwo, view.FocusedDeviceIndex, "Down from the scan lens reaches socket 2.");
             yield return TapKey(_keyboard.leftArrowKey);
             Assert.AreEqual(FaceDevices.SocketOne, view.FocusedDeviceIndex, "Left from socket 2 crosses to socket 1.");
-            yield return TapKey(_keyboard.downArrowKey);
-            Assert.AreEqual(FaceLayout.HoldEntryBelow(FaceDevices.SocketOne, view.UnlockedCellCount), view.FocusedHoldCell,
-                "Navigating Down from socket 1 must return focus to the hold below it.");
+            yield return TapKey(_keyboard.upArrowKey);
+            Assert.AreEqual(FaceDevices.Cutter, view.FocusedDeviceIndex, "Up from socket 1 reaches the cutter.");
+            yield return TapKey(_keyboard.leftArrowKey);
+            Assert.AreEqual(FaceNavigation.HoldEntryLeftOf(FaceDevices.Cutter, view.UnlockedCellCount, view.HoldPage),
+                view.FocusedHoldCell, "Navigating Left from the cutter must return focus to the hold's top row.");
 
             // BEAT 6: Close Returns with Happy Blink (^ ^)
             int happyBlinksBefore = faceState.ClosingHappyBlinkCount;
@@ -709,6 +708,14 @@ namespace MoonProject.Rover.PlayModeTests
             while (!_awake || _body.Mood.Wake.Sleep > 0.05f)
             {
                 Assert.Less(Time.time - start, WakeTimeout, "07 must finish waking in the real scene.");
+                yield return null;
+            }
+
+            // A new game's wake is the power-on self-test: 07 is held still and the CRT is the opening's until it ends.
+            float released = Time.time;
+            while (_rover.IsHeldStill)
+            {
+                Assert.Less(Time.time - released, PowerOnTimeout, "07 must be handed to the player after its power-on self-test.");
                 yield return null;
             }
         }

@@ -169,6 +169,17 @@ namespace MoonProject.UI.Editor
                         currentPoly = new List<Vector2>(32) { cur };
                         break;
 
+                    case WordmarkCommand.LineTo:
+                        if (currentPoly == null)
+                        {
+                            currentPoly = new List<Vector2>(32) { cur };
+                        }
+
+                        cur = ToPixel(values[idx], values[idx + 1], scale);
+                        idx += 2;
+                        currentPoly.Add(cur);
+                        break;
+
                     case WordmarkCommand.CubicTo:
                         Vector2 p1 = ToPixel(values[idx], values[idx + 1], scale);
                         Vector2 p2 = ToPixel(values[idx + 2], values[idx + 3], scale);

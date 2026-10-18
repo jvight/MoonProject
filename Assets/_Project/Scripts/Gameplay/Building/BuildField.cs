@@ -80,6 +80,7 @@ namespace MoonProject.Gameplay
         private bool _holding;
         private bool _gazing;
         private bool _initialized;
+        private Vector3? _apronCentre;
 
         public BuildingTuning Tuning => _tuning;
 
@@ -240,6 +241,18 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
+        /// The centre of the apron's marked bay (World's apron markings), where the charging pad's ghost settles as 07
+        /// drives it near.
+        /// </summary>
+        public void MarkApron(Vector3 centre)
+        {
+            _apronCentre = centre;
+        }
+
+        /// <summary>The apron bay's centre the charging pad's ghost settles on, or null before it is marked.</summary>
+        public Vector3? ApronCentre => _apronCentre;
+
+        /// <summary>
         /// Opens the build menu as the Build key would, for a screen that closes and hands over to build mode (the
         /// face screen's Build); false when build mode is already open or 07 knows no structure it can build yet.
         /// </summary>
@@ -356,10 +369,12 @@ namespace MoonProject.Gameplay
 
             bool ownsInput = _controller.IsOpen || _waitExcavateRelease;
             _input.SetModeOwner(this, ownsInput);
+            bool placing = _controller.State == BuildModeState.Placing;
+            _input.ShareDrive(this, placing);
 
             bool weldingNow = _controller.State == BuildModeState.Welding && _controller.ActiveWeldInstanceId > 0;
             Vector3 weldPoint = weldingNow ? WeldPointOf(_controller.ActiveWeldInstanceId) : Vector3.zero;
-            SetHold(_controller.IsOpen || weldingNow);
+            SetHold((_controller.IsOpen && !placing) || weldingNow);
             StepGaze(weldingNow, weldPoint);
             bool activelyWelding = weldingNow && excavateHeld && _beamWork.MayStart &&
                                    (_rig == null || _rig.HasCutterLineOfSight(weldPoint));
@@ -531,16 +546,49 @@ namespace MoonProject.Gameplay
 
             if (excavatePressed && !_waitExcavateRelease)
             {
-                if (_controller.PickSelected())
-                {
-                    _events.Publish(new UiCue(UiCueKind.Confirm));
-                }
-
+                PickSelected();
                 _waitExcavateRelease = true;
-                _ghostPoseSeeded = false;
-                _wasSnapped = false;
-                _wasValid = true;
             }
+        }
+
+        /// <summary>
+        /// Picks the menu's structure <paramref name="index"/> as E on it would (UI's menu, clicked or confirmed): its
+        /// focus and confirm cues, then <see cref="BuildModeState.Placing"/>. False outside the menu or for an index
+        /// the menu does not hold.
+        /// </summary>
+        public bool TryPick(int index)
+        {
+            if (!_initialized || _controller.State != BuildModeState.Menu)
+            {
+                return false;
+            }
+
+            int previous = _controller.SelectedIndex;
+            if (!_controller.SelectIndex(index))
+            {
+                return false;
+            }
+
+            if (_controller.SelectedIndex != previous)
+            {
+                _events.Publish(new UiCue(UiCueKind.FocusMove));
+            }
+
+            return PickSelected();
+        }
+
+        private bool PickSelected()
+        {
+            bool picked = _controller.PickSelected();
+            if (picked)
+            {
+                _events.Publish(new UiCue(UiCueKind.Confirm));
+            }
+
+            _ghostPoseSeeded = false;
+            _wasSnapped = false;
+            _wasValid = true;
+            return picked;
         }
 
         private void StepPlacingState(
@@ -571,7 +619,7 @@ namespace MoonProject.Gameplay
             }
 
             Vector3 roverPosition = _rover.Position;
-            Vector3 groundPoint = SampleAimPoint(roverPosition);
+            Vector3 groundPoint = SampleAimPoint(roverPosition, selected);
             var freePose = new StructurePose(groundPoint, _controller.GhostYaw);
             StructurePose snappedPose = _placedBase.SolveSnap(selected, freePose, true);
             float snappedY = _terrain.SampleHeight(snappedPose.Position.x, snappedPose.Position.z);
@@ -734,69 +782,33 @@ namespace MoonProject.Gameplay
             _events.Publish(new FeelBeat(FeelKind.Build, FeelPhase.Cancel, point, Vector3.up, progress01, 0f));
         }
 
-        private Vector3 SampleAimPoint(Vector3 roverPosition)
+        /// <summary>
+        /// Where the placing ghost stands: <see cref="BuildingTuning.GhostAheadMetres"/> in front of 07, which drives
+        /// it to its spot, settling onto the apron's bay for the charging pad once it rides within
+        /// <see cref="BuildingTuning.ApronSnapRadius"/> of it (a test's aim point wins).
+        /// </summary>
+        private Vector3 SampleAimPoint(Vector3 roverPosition, StructureDefinition selected)
         {
+            Vector3 point;
             if (_aimPointOverride.HasValue)
             {
-                Vector3 overridePt = _aimPointOverride.Value;
-                return SurfaceRules.OnSurface(_terrain, overridePt.x, overridePt.z);
-            }
-
-            float minDist = _tuning.MinPlacementDistance + 0.35f;
-            float maxDist = Mathf.Max(minDist, _tuning.MaxPlacementDistance - 0.35f);
-            float defaultDist = Mathf.Lerp(minDist, maxDist, 0.45f);
-
-            Camera cam = _view != null ? _view.Camera : null;
-            if (cam == null)
-            {
-                Vector3 ahead = roverPosition + Vector3.forward * defaultDist;
-                return SurfaceRules.OnSurface(_terrain, ahead.x, ahead.z);
-            }
-
-            Transform camTransform = cam.transform;
-            Vector3 camPos = camTransform.position;
-            Vector3 camForward = camTransform.forward;
-
-            Vector3 flatForward = new Vector3(camForward.x, 0f, camForward.z);
-            flatForward = flatForward.sqrMagnitude > 1e-6f ? flatForward.normalized : Vector3.forward;
-
-            Vector3 rawPoint = roverPosition + flatForward * defaultDist;
-            if (camForward.y < -0.05f)
-            {
-                float maxRay = _tuning.MaxPlacementDistance + 25f;
-                if (Physics.Raycast(
-                        camPos,
-                        camForward,
-                        out RaycastHit hit,
-                        maxRay,
-                        Layers.GroundMask,
-                        QueryTriggerInteraction.Ignore))
-                {
-                    rawPoint = hit.point;
-                }
-                else
-                {
-                    float heightAboveRover = camPos.y - roverPosition.y;
-                    if (heightAboveRover > 0.1f)
-                    {
-                        float t = Mathf.Clamp(heightAboveRover / -camForward.y, 0.5f, maxRay);
-                        rawPoint = camPos + camForward * t;
-                    }
-                }
+                point = _aimPointOverride.Value;
             }
             else
             {
-                float pitch01 = Mathf.InverseLerp(-0.05f, 0.20f, camForward.y);
-                float distance = Mathf.Lerp(minDist, maxDist, pitch01);
-                rawPoint = roverPosition + flatForward * distance;
+                Vector3 forward = _rover.Rotation * Vector3.forward;
+                forward.y = 0f;
+                forward = forward.sqrMagnitude > 1e-6f ? forward.normalized : Vector3.forward;
+                point = roverPosition + forward * _tuning.GhostAheadMetres;
+                if (_apronCentre.HasValue && selected.Id == StructureIds.ChargingPad &&
+                    SurfaceRules.HorizontalDistanceSquared(point, _apronCentre.Value) <=
+                    _tuning.ApronSnapRadius * _tuning.ApronSnapRadius)
+                {
+                    point = _apronCentre.Value;
+                }
             }
 
-            Vector3 horizontalOffset = new Vector3(rawPoint.x - roverPosition.x, 0f, rawPoint.z - roverPosition.z);
-            float horizontalDist = horizontalOffset.magnitude;
-            Vector3 dir = horizontalDist > 1e-4f ? horizontalOffset / horizontalDist : flatForward;
-            float clampedDist = Mathf.Clamp(horizontalDist, minDist, maxDist);
-            Vector3 clamped = roverPosition + dir * clampedDist;
-            return SurfaceRules.OnSurface(_terrain, clamped.x, clamped.z);
+            return SurfaceRules.OnSurface(_terrain, point.x, point.z);
         }
 
         private bool IsPropBlocked(StructureDefinition definition, StructurePose pose)

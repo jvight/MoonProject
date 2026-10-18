@@ -216,18 +216,17 @@ namespace MoonProject.UI.Tests
                 Assert.IsNull(shape.Validate(), $"Invalid icon for material {material}: {shape.Validate()}");
             }
 
-            for (int i = 0; i < RoverDiagramData.SocketCount; i++)
+            foreach (string id in RoverDiagramData.FaceIconIds)
             {
-                var socket = (RoverSocket)i;
-                UiIconShape socketShape = diagram.GetIcon(socket);
-                Assert.IsNull(socketShape.Validate(), $"Invalid icon for socket {socket}: {socketShape.Validate()}");
+                UiIconShape faceShape = diagram.GetIcon(id);
+                Assert.AreEqual(id, faceShape.Id);
+                Assert.IsNull(faceShape.Validate(), $"Invalid face icon {id}: {faceShape.Validate()}");
             }
 
-            foreach (string part in new[] { "part.igniter", "part.icecore" })
-            {
-                UiIconShape partShape = diagram.GetPartIcon(part);
-                Assert.IsNull(partShape.Validate(), $"Invalid icon for {part}: {partShape.Validate()}");
-            }
+            Assert.AreEqual("icon_spare_igniter", diagram.GetPartIcon("part.igniter").Id, "the igniter has its own icon");
+            Assert.AreEqual("icon_ice_core_tube", diagram.GetPartIcon("part.icecore").Id, "and so has the ice core");
+            Assert.AreEqual("icon_metal_plates", diagram.GetIcon(SalvageMaterial.Metal).Id);
+            Assert.AreEqual("icon_wiring_spool", diagram.GetIcon(SalvageMaterial.Wiring).Id);
 
             Assert.Throws<System.InvalidOperationException>(() => icons.GetIcon("item_does_not_exist"));
             Assert.Throws<System.InvalidOperationException>(() => diagram.GetIcon("kit_does_not_exist"));
@@ -237,50 +236,36 @@ namespace MoonProject.UI.Tests
         [Test]
         public void FaceInventoryLayout_CellsAndDevicesNeverOverlap_AndTextBudgetHoldsInEnAndVi()
         {
+            float gridBottom = FaceLayout.GridTop + FaceLayout.RowsPerPage * FaceLayout.RowPitch;
             for (int i = 0; i < FaceInventoryView.MaxHoldCells; i++)
             {
                 Rect r = FaceInventoryView.GetHoldCellReferenceRect(i);
                 Assert.AreEqual(FaceInventoryView.CellSize, r.width, 1e-3f);
                 Assert.AreEqual(FaceInventoryView.CellSize, r.height, 1e-3f);
                 Assert.GreaterOrEqual(r.xMin, FaceLayout.Margin - 1e-3f);
-                Assert.LessOrEqual(r.xMax, FaceLayout.Margin + FaceLayout.StripWidth + 1e-3f);
-                Assert.LessOrEqual(r.yMax, FaceLayout.BottomRowY + FaceLayout.CellSize + 1e-3f);
+                Assert.LessOrEqual(r.xMax, FaceLayout.HoldRight + 1e-3f);
+                Assert.LessOrEqual(r.yMax, gridBottom + 1e-3f);
 
                 for (int j = i + 1; j < FaceInventoryView.MaxHoldCells; j++)
                 {
-                    Assert.IsFalse(r.Overlaps(FaceInventoryView.GetHoldCellReferenceRect(j)),
-                        $"Hold cell {i} overlaps hold cell {j}");
+                    Assert.IsTrue(FaceLayout.PageOf(i) != FaceLayout.PageOf(j) ||
+                                  !r.Overlaps(FaceInventoryView.GetHoldCellReferenceRect(j)),
+                        $"Hold cell {i} overlaps hold cell {j} on their page");
                 }
             }
 
-            CargoScreenSettings rover = AssetDatabase.LoadAssetAtPath<UiTuning>(UiAssetPaths.Tuning).Cargo;
             for (int i = 0; i < FaceDevices.Count; i++)
             {
                 Rect frame = FaceLayout.DeviceFrame(i);
-                Assert.GreaterOrEqual(frame.xMin, FaceLayout.Margin);
+                Assert.GreaterOrEqual(frame.xMin, FaceLayout.HoldRight);
                 Assert.LessOrEqual(frame.xMax, FaceLayout.RightEdge);
                 Assert.GreaterOrEqual(frame.yMin, FaceLayout.TitleRuleY);
-
-                Vector2 mount = RoverLineArtPainter.GetSocketMountPoint(FaceDevices.MountOf(i),
-                    new Vector2(rover.RoverOriginX, rover.RoverOriginY), rover.RoverScale);
-                for (int j = 0; j < FaceDevices.Count; j++)
-                {
-                    Assert.IsFalse(FaceLayout.DeviceHitRect(j).Contains(mount),
-                        $"Device {i}'s mount point on 07 lies inside the frame of device {j}");
-                }
             }
 
             var uiTuning = AssetDatabase.LoadAssetAtPath<UiTuning>(UiAssetPaths.Tuning);
             Assert.IsNotNull(uiTuning);
             Assert.IsNull(uiTuning.Validate());
             CargoScreenSettings cargo = uiTuning.Cargo;
-            TitleSettings title = uiTuning.Title;
-            Assert.AreEqual(title.WheelRadius, cargo.RoverWheelRadius, 1e-4f, "Rover wheel radius matches title screen");
-            Assert.AreEqual(title.WheelRimRadius, cargo.RoverWheelRimRadius, 1e-4f, "Rover wheel rim radius matches title screen");
-            Assert.AreEqual(title.WheelbaseHalf, cargo.RoverWheelbaseHalf, 1e-4f, "Rover half-wheelbase matches title screen");
-            Assert.AreEqual(title.FarWheelScale, cargo.RoverFarWheelScale, 1e-4f, "Far wheel scale matches title screen");
-            Assert.AreEqual(title.FarWheelAlpha, cargo.RoverFarWheelAlpha, 1e-4f, "Far wheel alpha matches title screen");
-            Assert.AreEqual(new Vector2(6f, -4f), cargo.RoverFarWheelOffset, "Far wheel offset is (+6, -4) at 82px/m");
             Assert.LessOrEqual(cargo.LeaderEmptyColor.a, 78, "Empty socket leader line is faint (~25-30% alpha)");
             Assert.Greater(cargo.LeaderInstalledColor.a, cargo.LeaderEmptyColor.a,
                 "Installed socket leader is slightly brighter than empty leader");

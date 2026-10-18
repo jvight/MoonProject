@@ -19,5 +19,7 @@ MonoBehaviour:
   _weldRange: 6
   _deconstructRefundShare: 0.75
   _apronGlowFadeSeconds: 0.8
+  _ghostAheadMetres: 4.5
+  _apronSnapRadius: 3
   _startingKnownIds: []
   _playtestUnlockedIds: []

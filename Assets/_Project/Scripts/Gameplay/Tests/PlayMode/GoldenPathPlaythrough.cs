@@ -59,8 +59,22 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Metres from the spot in front of a seal that count as there: close, so 07 faces the seal.</summary>
         private const float SealArrive = 1.5f;
 
-        /// <summary>Metres from the seal 07 noses in to, steering at it, so it ends square to the crate.</summary>
+        /// <summary>
+        /// Metres from the seal at which 07, steering at it, stops nosing in even if the crate has not claimed E: a
+        /// solid crate's side (07's nose touches a small one about here).
+        /// </summary>
         private const float SealNose = 1.2f;
+
+        /// <summary>Seconds 07 may creep at a seal, steering at it, before the crate claims E.</summary>
+        private const float SealNoseSeconds = 6f;
+
+        /// <summary>Seconds 07 backs straight off a seal it could not swing onto, for room to turn.</summary>
+        private const float SealBackOffSeconds = 2f;
+
+        /// <summary>Approaches to a seal before the run gives up on its claim: a small crate can end up beside
+        /// 07.</summary>
+        private const int SealTries = 3;
+
 
         /// <summary>Sides round a crate tried for open ground to come in from, its front first.</summary>
         private const int ApproachSides = 8;
@@ -432,8 +446,17 @@ namespace MoonProject.Gameplay.PlayModeTests
                 yield return DriveTo(front, SealArrive, "the seal of " + cache.Id, ApproachThrottle,
                     () => $"the crate at {crate.Root.position} facing {crate.Root.forward}; its frame " +
                           $"{cache.AnchorId}: {Frame(cache.AnchorId)}");
-                yield return DriveTo(Flat(crate.CutPoint.position), SealNose, "nose to the seal of " + cache.Id,
-                    ApproachThrottle);
+                yield return NoseIn(crate);
+                for (int attempt = 1; attempt < SealTries && _gameplay.Containers.Candidate != crate; attempt++)
+                {
+                    // Too close to swing onto a small crate's seal: back straight off for room to turn, and nose in
+                    // again from there, as a player would.
+                    _pilot.Reverse = UnstickReverseThrottle;
+                    yield return new WaitForSeconds(SealBackOffSeconds);
+                    _pilot.Reverse = 0f;
+                    yield return NoseIn(crate);
+                }
+
                 Press(_keyboard.eKey);
                 yield return Until(() => crate.Opened, SealCutTimeout, $"held E cuts the seal of {cache.Id}",
                     () => $"crate candidate {_gameplay.Containers.Candidate?.Id ?? "none"}, cutter ready " +
@@ -453,6 +476,23 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             Assert.Greater(cut, 0, $"{what}: crates to cut");
             End($"Cut {what}", $"{cut} crate(s); hold {Hold()}");
+        }
+
+        /// <summary>
+        /// 07 creeps at <paramref name="crate"/>'s seal, steering at it, until the crate claims E (07 faces it within
+        /// reach) or 07's nose is at it; then it stops.
+        /// </summary>
+        private IEnumerator NoseIn(SealedContainer crate)
+        {
+            _pilot.GoTo(Flat(crate.CutPoint.position), SealNose, ApproachThrottle);
+            float deadline = Time.time + SealNoseSeconds;
+            while (_gameplay.Containers.Candidate != crate && !_pilot.Arrived && Time.time < deadline)
+            {
+                yield return null;
+            }
+
+            _pilot.Target = null;
+            yield return Until(() => _rover.Speed < StopSpeed, 6f, "07 comes to rest at the seal of " + crate.Id);
         }
 
         /// <summary>
