@@ -132,6 +132,7 @@ namespace MoonProject.World
             WorldAtmosphere.Apply(_settings.Atmosphere, _settings.Sky, _earthlight, _fillLight);
             SkyShaderGlobals.Apply(_settings.Sky);
             BlastZoneShaderGlobals.Apply(surface.Shaping.Blast);
+            Shader.SetGlobalFloat("_MoonTerrainVariant", 0f);
 
             _generatedRoot = new GameObject(GeneratedRootName) { hideFlags = hideFlags };
             _generatedRoot.transform.SetParent(transform, false);

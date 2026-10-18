@@ -68,6 +68,7 @@ namespace MoonProject.World.Editor
             material.SetTexture("_RockMap", LoadTexture(WorldPaths.BasaltAlbedoTexture));
             material.SetTexture("_RockBumpMap", LoadTexture(WorldPaths.BasaltNormalTexture));
             material.SetTexture("_RockMaskMap", LoadTexture(WorldPaths.BasaltMaskTexture));
+            material.SetFloat("_TerrainVariant", -1f);
             GeneratedAssets.CreateOrReplace(material, WorldPaths.GroundMaterial);
             AssetDatabase.SaveAssets();
         }
