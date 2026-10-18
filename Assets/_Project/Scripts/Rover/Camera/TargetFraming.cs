@@ -94,6 +94,7 @@ namespace MoonProject.Rover
         private float _lastSide;
         private Vector3 _goal = new Vector3(0f, 0f, 1f);
         private bool _hasGoal;
+        private Vector3 _shift;
 
         public TargetFraming(RoverCameraTuning tuning)
         {
@@ -111,6 +112,12 @@ namespace MoonProject.Rover
 
         /// <summary>Multiplier on the camera distance (1 = unchanged, less = pulled in).</summary>
         public float RadiusScale => Mathf.Lerp(1f, _scale, Weight);
+
+        /// <summary>
+        /// How far the point the camera looks at moves toward the target (m), so the view rests on what 07 scans or
+        /// uses and not on whatever else lies nearer the view's centre.
+        /// </summary>
+        public Vector3 Shift => _shift * Weight;
 
         /// <summary>The swing (deg), lift (deg) and distance scale the framing is easing toward (for tests).</summary>
         public Vector3 Goal => _goal;
@@ -199,6 +206,7 @@ namespace MoonProject.Rover
                 _scale = 1f;
                 _goal = new Vector3(0f, 0f, 1f);
                 _hasGoal = false;
+                _shift = Vector3.zero;
             }
 
             float seconds = wants ? _tuning.FramingRampSeconds : _tuning.FramingReleaseSeconds;
@@ -217,6 +225,7 @@ namespace MoonProject.Rover
         /// <summary>Finds the cheapest swing, lift and pull-in that show the target, and eases toward it.</summary>
         private void Solve(in TargetFramingInput input, float deltaTime)
         {
+            _shift = Smoothing.Damp(_shift, LookShift(input), _tuning.FramingSolveHalfLife, deltaTime);
             if (_hasGoal && Shows(input, _goal.x, _goal.y, _goal.z, _tuning.FramingBodyClearance))
             {
                 EaseToGoal(deltaTime);
@@ -287,11 +296,17 @@ namespace MoonProject.Rover
             _scale = Smoothing.Damp(_scale, _goal.z, halfLife, deltaTime);
         }
 
+        private Vector3 LookShift(in TargetFramingInput input)
+        {
+            return (input.Targets[0] - input.FollowPoint) * _tuning.FramingLookShare;
+        }
+
         private bool Shows(in TargetFramingInput input, float yaw, float lift, float scale, float clearance)
         {
-            Vector3 eye = EyePosition(input.FollowPoint, input.ViewYaw + yaw, input.Elevation + lift,
+            Vector3 look = input.FollowPoint + LookShift(input);
+            Vector3 eye = EyePosition(look, input.ViewYaw + yaw, input.Elevation + lift,
                 input.Radius * scale);
-            Vector3 forward = (input.FollowPoint - eye).normalized;
+            Vector3 forward = (look - eye).normalized;
             Vector3 right = Vector3.Cross(Vector3.up, forward).normalized;
             Vector3 up = Vector3.Cross(forward, right);
             float tanVertical = Mathf.Tan(0.5f * input.Fov * Mathf.Deg2Rad) * _tuning.FramingCentralShare;

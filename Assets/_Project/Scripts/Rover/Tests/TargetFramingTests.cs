@@ -51,7 +51,7 @@ namespace MoonProject.Rover.Tests
 
         private Vector3 FramedEye()
         {
-            return TargetFraming.EyePosition(Follow, _framing.YawOffset, Elevation + _framing.Elevation,
+            return TargetFraming.EyePosition(Follow + _framing.Shift, _framing.YawOffset, Elevation + _framing.Elevation,
                 Radius * _framing.RadiusScale);
         }
 

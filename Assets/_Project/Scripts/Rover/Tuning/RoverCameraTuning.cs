@@ -259,6 +259,10 @@ namespace MoonProject.Rover
         [Range(2, 12)]
         [SerializeField] private int _framingSearchSteps = 8;
 
+        [Tooltip("How far the camera's look-at point moves from 07 toward the target (0 = stays on 07): the view then rests on the target, so it stays the thing E scans or uses.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _framingLookShare = 0.6f;
+
         [Tooltip("07's body as the framing sees it: width (m).")]
         [Range(0.5f, 3f)]
         [SerializeField] private float _framingBodyWidth = 1.47f;
@@ -791,6 +795,8 @@ namespace MoonProject.Rover
         public float FramingMinRadiusScale => _framingMinRadiusScale;
 
         public int FramingSearchSteps => _framingSearchSteps;
+
+        public float FramingLookShare => _framingLookShare;
 
         public float FramingBodyWidth => _framingBodyWidth;
 

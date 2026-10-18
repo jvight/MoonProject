@@ -831,7 +831,7 @@ namespace MoonProject.Rover
         private void PlaceTarget(float deltaTime = 0f, bool snap = true)
         {
             float targetHeight = _tuning.TargetHeight + _wallCompression * _tuning.WallMaxTargetLift;
-            Vector3 point = _rover.Position + Vector3.up * targetHeight + _momentShift;
+            Vector3 point = _rover.Position + Vector3.up * targetHeight + _momentShift + _framing.Shift;
             float cut = _beam.Framing.Weight;
             if (cut > 0f)
             {
