@@ -59,8 +59,8 @@ MonoBehaviour:
     _prop: {fileID: 0}
   - _id: supply.lander.open
     _anchorId: lander.port
-    _offset: {x: 1.8, y: 0, z: 1}
-    _yaw: 0
+    _offset: {x: 2.2, y: 0, z: -1.8}
+    _yaw: 180
     _container: Crate_M_Open
     _yield:
       _metal: 2

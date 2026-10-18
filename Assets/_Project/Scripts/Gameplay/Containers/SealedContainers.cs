@@ -30,6 +30,7 @@ namespace MoonProject.Gameplay
         private readonly ISaveService _save;
         private readonly PickupReach _pickups;
         private readonly CutState _cut;
+        private Func<Vector3, bool> _yieldsTo;
         private SealedContainer _cutting;
         private bool _holding;
         private bool _gazing;
@@ -54,6 +55,15 @@ namespace MoonProject.Gameplay
             _pickups = services.Pickups;
             _cut = new CutState(_events, FeelKind.Cut, cutter.ChargeSeconds, cutter.ResumeChargeSeconds,
                 salvage.Tuning.CutSteps);
+        }
+
+        /// <summary>
+        /// A seal at the given cut point gives E up to another verb (a scan target the player looks at more squarely
+        /// than at the seal): a crate beside 07 never silences the panel in front of it. One already being cut keeps E.
+        /// </summary>
+        public void YieldTo(Func<Vector3, bool> yieldsTo)
+        {
+            _yieldsTo = yieldsTo ?? throw new ArgumentNullException(nameof(yieldsTo));
         }
 
         /// <summary>The sealed container a hold of E would cut now, or null.</summary>
@@ -112,6 +122,10 @@ namespace MoonProject.Gameplay
             bool busy = _salvage.Candidate != null || _salvage.Cutting != null ||
                         _pickups.TryGet(Time.frameCount, out _, out _);
             Candidate = busy ? null : Nearest();
+            if (Candidate != null && _cutting == null && _yieldsTo != null && _yieldsTo(Candidate.CutPoint.position))
+            {
+                Candidate = null;
+            }
             for (int i = 0; i < _containers.Count; i++)
             {
                 StepLid(_containers[i], now);

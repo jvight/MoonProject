@@ -534,7 +534,7 @@ namespace MoonProject.Art.Editor
 
         /// <summary>
         /// The fragments where they lie (0.5.5 §1.3): set on their sockets at the garage, the drill rig, Kestrel-3 and the
-        /// crashed lander, on relay.2's hut shelf, and round the chasm lip's crashed jumper, brackets lit.
+        /// crashed lander and on relay.2's hut shelf, brackets lit.
         /// </summary>
         private static CameraPoseSet ScanPlacesScene(TemporaryObjects temporary)
         {
@@ -558,15 +558,6 @@ namespace MoonProject.Art.Editor
                     new[] { middle.x, middle.y + 0.1f, middle.z }, 50f));
             }
 
-            Transform jumper = Instantiate(PropModelBuilder.JumperWreckName, temporary, ArtPaths.PropFolder).transform;
-            jumper.position = new Vector3(30f, 0f, 40f);
-            for (int i = 0; i < 3; i++)
-            {
-                SeatFragment(temporary, Descendant(jumper, SiteModelBuilder.FragmentSocketPrefix + "HoverJump_" + i),
-                    "HoverJump", i, InSituStages[i + 2].Progress, InSituStages[i + 2].Dissolve);
-            }
-
-            poses.Add(Pose("jumper", new[] { 32.5f, 2f, 44f }, new[] { 30f, 0.3f, 40f }, 50f));
             return Poses(poses.ToArray());
         }
 

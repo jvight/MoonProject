@@ -9,7 +9,7 @@ using MoonProject.Editor.Builders;
 namespace MoonProject.UI.Editor
 {
     /// <summary>
-    /// Builds <see cref="UiAssetPaths.Icons"/> from the 30 production SVGs in <see cref="UiAssetPaths.IconsFolder"/>
+    /// Builds <see cref="UiAssetPaths.Icons"/> from the 25 production SVGs in <see cref="UiAssetPaths.IconsFolder"/>
     /// (<c>item_*.svg</c> and <c>kit_*.svg</c>). Every path is parsed at build time via <see cref="SvgPathParser"/>.
     /// </summary>
     public static class UiIconBuilder
@@ -29,7 +29,7 @@ namespace MoonProject.UI.Editor
             GeneratedAssets.CreateOrReplace(set, UiAssetPaths.Icons);
         }
 
-        /// <summary>Parses all 30 SVG files in <see cref="UiAssetPaths.IconsFolder"/> in deterministic sorted order.</summary>
+        /// <summary>Parses all 25 SVG files in <see cref="UiAssetPaths.IconsFolder"/> in deterministic sorted order.</summary>
         public static UiIconShape[] ParseAllIcons()
         {
             if (!Directory.Exists(UiAssetPaths.IconsFolder))

@@ -499,7 +499,7 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void OpeningDarkHold_KeepsScreenDarkUntilPulledOut_ThenBootsAndSlowBlinksWithCuriousGlance()
+        public void OpeningDarkHold_KeepsScreenDarkUntilTheChecksAreDone_ThenBootsAndSlowBlinksWithCuriousGlance()
         {
             var events = new EventBus();
             var cues = new System.Collections.Generic.List<RoverFaceCueKind>();
@@ -528,13 +528,13 @@ namespace MoonProject.Rover.Tests
 
                 Assert.IsTrue(director.IsHoldingDarkForOpening, "CRT stays dark through the lens POV and pull-out.");
                 Assert.IsTrue(director.State.IsDarkHold);
-                Assert.AreEqual(0, director.BootCount, "Face must not boot before PulledOut.");
+                Assert.AreEqual(0, director.BootCount, "Face must not boot before the checks are done.");
                 Assert.AreEqual(0f, director.State.Brightness, 1e-5f);
                 Assert.AreEqual(0f, director.RearVentEmissionStrength, 1e-5f);
                 Assert.IsEmpty(cues);
 
-                // Reveal at PulledOut: single phosphor line flickers on and opens into two eyes
-                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.PulledOut, false));
+                // Reveal once the checks are done (OverShoulder): single phosphor line flickers on and opens into two eyes
+                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.OverShoulder, false));
                 Assert.IsFalse(director.IsHoldingDarkForOpening);
                 Assert.IsFalse(director.State.IsDarkHold);
                 Assert.AreEqual(1, director.BootCount);

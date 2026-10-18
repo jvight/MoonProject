@@ -53,15 +53,14 @@ namespace MoonProject.Rover.PlayModeTests
         private const int TransitionWidth = 640;
         private const int TransitionHeight = 360;
         private const float BootTimeout = 30f;
-        private const float GazeTolerance = 6f;
+        private const int BootCheckStepCount = 14;
         private const float TitleQuietSeconds = 4f;
         private const float MaxUntouched = 45f;
-        private const float TargetUntouched = 20f;
-        private const float MaxToChase = 4f;
+        private const float MinSelfTest = 25f;
+        private const float MaxSelfTest = 31f;
         private const float MaxHeld = 1.5f;
         private const float MaxShortWake = 3f;
         private const float RunTimeout = 70f;
-        private const float HurryAt = 4f;
         private const float DriveStick = 0.8f;
         private const float AfterChaseSeconds = 3f;
         private const float TitleSettleSeconds = 4f;
@@ -89,6 +88,9 @@ namespace MoonProject.Rover.PlayModeTests
         private Gamepad _gamepad;
         private IDisposable[] _subscriptions;
         private int _awoke;
+        private readonly List<BootCheckStep> _checksStartedList = new List<BootCheckStep>();
+        private readonly Dictionary<BootCheckStep, BootCheckResult> _checksCompleted = new Dictionary<BootCheckStep, BootCheckResult>();
+        private int _checksFinished;
 #if UNITY_EDITOR
         private bool _skippedTitle;
 #endif
@@ -153,31 +155,22 @@ namespace MoonProject.Rover.PlayModeTests
                 (OpeningPhase.LidCrack, 0.7f, "o02_lid_slit"),
                 (OpeningPhase.LidHalf, 0.8f, "o03_lid_half"),
                 (OpeningPhase.Hunt, 0.35f, "o04_hunt_near_speck"),
-                (OpeningPhase.Flicker, 0.3f, "o05_flicker"),
-                (OpeningPhase.Flicker, 0.7f, "o05_boot_readout"),
-                (OpeningPhase.GazeHome, 0.7f, "o06_home"),
-                (OpeningPhase.GazePilot, 0.8f, "o07_pilot"),
-                (OpeningPhase.GazePeak, 0.8f, "o08_peak"),
-                (OpeningPhase.GazeEarth, 0.85f, "o09_earth"),
-                (OpeningPhase.PullOut, 0.55f, "o10_pull_out"),
-                (OpeningPhase.PullOut, 0.9f, "o10b_lens_glass"),
-                (OpeningPhase.BlinkShot, 0.08f, "o11a_face_boot_line"),
-                (OpeningPhase.BlinkShot, 0.48f, "o11b_eyes_open"),
-                (OpeningPhase.BlinkShot, 0.68f, "o11_blink"),
-                (OpeningPhase.OverShoulder, 0.9f, "o12_over_shoulder"),
-                (OpeningPhase.ChaseEase, 0.95f, "o13_chase"),
+                (OpeningPhase.Hunt, 0.9f, "o04b_boot_readout"),
+                (OpeningPhase.PullOut, 0.55f, "pull_out"),
+                (OpeningPhase.PullOut, 0.9f, "pull_out_lens_glass"),
+                (OpeningPhase.OverShoulder, 0.9f, "release_over_shoulder"),
+                (OpeningPhase.ChaseEase, 0.95f, "chase_frame"),
             };
             var keyShots = new (OpeningPhase Phase, float Share, string Name)[]
             {
                 (OpeningPhase.LidHalf, 0.8f, "key_01_lens_pov_first_light"),
-                (OpeningPhase.BlinkShot, 0.08f, "key_02_face_boot_line"),
-                (OpeningPhase.BlinkShot, 0.48f, "key_03_eyes_open"),
-                (OpeningPhase.ChaseEase, 0.95f, "key_04_chase_frame"),
+                (OpeningPhase.PullOut, 0.9f, "key_02_front_shot"),
+                (OpeningPhase.ChaseEase, 0.95f, "key_03_chase_frame"),
             };
             var taken = new bool[shots.Length];
             var keyTaken = new bool[keyShots.Length];
             int nextStripIndex = 0;
-            bool postChecked = false;
+            var postTaken = new bool[BootCheckStepCount];
             float crackleStarted = -1f;
             float started = Time.time;
             while (!_beats.Contains(WakeBeat.ChaseFrame))
@@ -195,10 +188,11 @@ namespace MoonProject.Rover.PlayModeTests
                     Assert.AreEqual(0, _body.FaceDirector.Director.BootCount, "face does not boot while in the lens");
                 }
 
-                if (!postChecked && script.Phase == OpeningPhase.GazeHome && script.PhaseTime >= 0.7f * script.PhaseLength)
+                if (script.Phase == OpeningPhase.Post && script.PostProgress01 >= 0.6f
+                    && !postTaken[(int)script.PostStep])
                 {
-                    postChecked = true;
-                    AssertGazeAtTheWakePost(script);
+                    postTaken[(int)script.PostStep] = true;
+                    Capture("check_" + script.PostStep.ToString().ToLowerInvariant());
                 }
 
                 for (int i = 0; i < shots.Length; i++)
@@ -228,6 +222,24 @@ namespace MoonProject.Rover.PlayModeTests
                 yield return null;
             }
 
+            for (int i = 0; i < shots.Length; i++)
+            {
+                if (!taken[i])
+                {
+                    taken[i] = true;
+                    Capture(shots[i].Name);
+                }
+            }
+
+            for (int i = 0; i < keyShots.Length; i++)
+            {
+                if (!keyTaken[i])
+                {
+                    keyTaken[i] = true;
+                    CaptureKeyFrame(keyShots[i].Name);
+                }
+            }
+
             if (crackleStarted >= 0f && nextStripIndex <= 10)
             {
                 Capture(string.Format(CultureInfo.InvariantCulture, "strip_{0:00}s", nextStripIndex * 2));
@@ -243,10 +255,14 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreEqual(1, Count(WakeBeat.Crackle), "the full opening plays once");
             Assert.AreEqual(1, Count(WakeBeat.FadedOut), "New Game faded the picture to black");
             Assert.AreEqual(1, _awoke, "RoverAwoke goes with the crackle, once");
-            Assert.AreEqual(1, _body.FaceDirector.Director.BootCount, "the CRT face boots once at the reveal");
-            Assert.GreaterOrEqual(_body.FaceDirector.Director.WakeBlinkCount, 1, "the CRT face slow-blinks on Blinked");
-            Assert.LessOrEqual(chase - crackle, MaxUntouched, "the untouched opening lasts at most 45 s");
-            Assert.AreEqual(TargetUntouched, chase - crackle, 1.8f, "the untouched v3 opening is ~20 s");
+            Assert.AreEqual(1, _body.FaceDirector.Director.BootCount, "the CRT face boots once, when the checks are done");
+            Assert.That(chase - crackle, Is.InRange(MinSelfTest, MaxSelfTest), "the self-test lasts 25-30 s");
+            Assert.AreEqual(BootCheckStepCount, _checksStartedList.Count, "every line of the self-test is started");
+            Assert.AreEqual(BootCheckStepCount, _checksCompleted.Count, "and completed");
+            Assert.AreEqual(1, _checksFinished, "and the test finishes once");
+            Assert.AreEqual(BootCheckResult.Fault, _checksCompleted[BootCheckStep.Cutter]);
+            Assert.AreEqual(BootCheckResult.Jammed, _checksCompleted[BootCheckStep.SolarWing]);
+            Assert.AreEqual(BootCheckResult.ReceiveOnly, _checksCompleted[BootCheckStep.Antenna]);
             for (int i = 0; i < shots.Length; i++)
             {
                 Assert.IsTrue(taken[i], $"{shots[i].Name} was captured");
@@ -311,52 +327,6 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreEqual(0, Count(WakeBeat.Crackle), "Continue never plays the opening");
             Assert.LessOrEqual(chase, MaxShortWake, "control returns within 3 s");
             Assert.LessOrEqual(held, MaxHeld + 0.1f, "control is never held more than ~1.5 s");
-        }
-
-        [UnityTest]
-        [Timeout(300000)]
-        [PrebuildSetup(typeof(RoverSessionScene))]
-        [PostBuildCleanup(typeof(RoverSessionScene))]
-        public IEnumerator DriveInput_ReachesTheChaseFrameSoon_AndNeverHoldsControlLong()
-        {
-            yield return Boot(true);
-            _context.Events.Publish(new NewGameRequested());
-            while (!_beats.Contains(WakeBeat.Crackle))
-            {
-                yield return null;
-            }
-
-            yield return Wait(HurryAt);
-            Set(_gamepad.leftStick, new Vector2(0f, DriveStick));
-            float pressed = Time.time;
-            float held = 0f;
-            bool midCaptured = false;
-            while (!_beats.Contains(WakeBeat.ChaseFrame))
-            {
-                Assert.Less(Time.time - pressed, MaxToChase + 1f, "the hurried opening reaches the chase frame");
-                if (_rover.IsHeldStill)
-                {
-                    held = Time.time - pressed;
-                }
-
-                if (!midCaptured && _director.Script.Phase == OpeningPhase.PullOut)
-                {
-                    midCaptured = true;
-                    Capture("hurry_pull_out");
-                }
-
-                yield return null;
-            }
-
-            float chase = Time.time - pressed;
-            Set(_gamepad.leftStick, Vector2.zero);
-            _report.AppendLine("# Hurry (drive input at O3/O4)").AppendLine();
-            WriteBeats();
-            _report.AppendLine().AppendLine(Line("drive input to the chase frame (s)", chase))
-                .AppendLine(Line("control held after drive input (s)", held));
-            Assert.LessOrEqual(chase, MaxToChase + 0.1f, "drive input reaches the chase frame within ~4 s");
-            Assert.LessOrEqual(held, MaxHeld + 0.1f, "control is never held more than ~1.5 s");
-            Assert.Contains(WakeBeat.Blinked, _beats, "the blink is never skipped");
         }
 
         [UnityTest]
@@ -527,7 +497,7 @@ namespace MoonProject.Rover.PlayModeTests
                     fovRate, Mathf.Abs(fovAccel), Mathf.Abs(fovJerk));
 
                 // Measure from the end of O10 PullOut (PullOut01 >= 0.5) through 3 s after control in O14.
-                bool inHandOffWindow = script.Phase != OpeningPhase.PullOut || script.PullOut01 >= 0.5f;
+                bool inHandOffWindow = script.Phase != OpeningPhase.PullOut || script.PhaseTime >= 0.5f * script.PhaseLength;
                 if (frame >= 4 && inHandOffWindow)
                 {
                     if (linJerkMag > maxLinearJerk)
@@ -710,18 +680,6 @@ namespace MoonProject.Rover.PlayModeTests
                 "the fade already happened before the reload");
         }
 
-        /// <summary>O6 looks at the dead charging post where 07 woke (its yaw within a few degrees).</summary>
-        private void AssertGazeAtTheWakePost(OpeningScript script)
-        {
-            Assert.IsTrue(_context.Get<IWorldAnchors>().TryGet(WorldAnchorIds.PlaceWake, out WorldAnchor wake));
-            Vector3 forward = _rover.Rotation * Vector3.forward;
-            forward.y = 0f;
-            Quaternion heading = Quaternion.LookRotation(forward);
-            Vector3 lens = _context.Get<IRoverRig>().ScanOrigin.position;
-            Vector2 expected = LensGaze.Angles(Quaternion.Inverse(heading) * (wake.Position - lens));
-            Assert.AreEqual(expected.x, script.Gaze.Yaw, GazeTolerance, "O6 looks at the dead charging post");
-        }
-
         /// <summary>
         /// The script is at or past <paramref name="share"/> of <paramref name="phase"/>: in it, or already in a later
         /// phase (a long editor frame can step over a whole phase's window, which used to miss the shot).
@@ -733,7 +691,7 @@ namespace MoonProject.Rover.PlayModeTests
                 return script.PhaseTime >= share * script.PhaseLength;
             }
 
-            return script.Phase != OpeningPhase.Idle && script.Phase != OpeningPhase.HurryLid && script.Phase > phase;
+            return script.Phase != OpeningPhase.Idle && script.Phase > phase;
         }
 
         /// <summary>A hidden title element leaves layout (display none) with its opacity as it was.</summary>
@@ -1169,11 +1127,17 @@ namespace MoonProject.Rover.PlayModeTests
             _view = _context.Get<IViewCamera>().Camera;
             _beats.Clear();
             _beatTimes.Clear();
+            _checksStartedList.Clear();
+            _checksCompleted.Clear();
+            _checksFinished = 0;
             _awoke = 0;
             _subscriptions = new[]
             {
                 _context.Events.Subscribe<RoverAwoke>(_ => _awoke++),
                 _context.Events.Subscribe<RoverWakeBeatReached>(OnBeat),
+                _context.Events.Subscribe<BootCheckStarted>(started => _checksStartedList.Add(started.Step)),
+                _context.Events.Subscribe<BootCheckCompleted>(done => _checksCompleted[done.Step] = done.Result),
+                _context.Events.Subscribe<BootCheckFinished>(_ => _checksFinished++),
             };
         }
 

@@ -141,7 +141,11 @@ def _wav_meta_text(spec: CueSpec) -> str:
     is_ambience = spec.group_id == "ambience"
     load_type = 1 if is_ambience else 0
     quality = "0.6" if is_ambience else "0.8"
-    force_mono = 1 if cue_spatial(spec) else 0
+    # The importer (ImportRuleSet) rewrites the meta on every import, so the file written here is what it would
+    # write: SFX outside a /2D/ folder is forced mono (the R1 UI cues sit in SFX/R1/ too), an SFX loop is PCM so
+    # Vorbis padding cannot break its seam, ambience keeps its channels.
+    force_mono = 0 if is_ambience else 1
+    compression = 0 if not is_ambience and Path(rel).stem.endswith("_loop") else 1
     return (
         "fileFormatVersion: 2\n"
         f"guid: {guid}\n"
@@ -153,7 +157,7 @@ def _wav_meta_text(spec: CueSpec) -> str:
         f"    loadType: {load_type}\n"
         "    sampleRateSetting: 0\n"
         "    sampleRateOverride: 44100\n"
-        "    compressionFormat: 1\n"
+        f"    compressionFormat: {compression}\n"
         f"    quality: {quality}\n"
         "    conversionMode: 0\n"
         "    preloadAudioData: 1\n"

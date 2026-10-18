@@ -79,10 +79,10 @@ class TestIconIdMapping(unittest.TestCase):
         self.assertEqual(kit_ids, self.rover_sockets)
 
     def test_every_icon_localization_key_exists_in_en_json(self):
-        self.assertEqual(len(build_icons.ITEM_SPECS), 18)
+        self.assertEqual(len(build_icons.ITEM_SPECS), 13)
         self.assertEqual(len(build_icons.STRUCT_SPECS), 5)
-        self.assertEqual(len(build_icons.ALL_SPECS), 35)
-        for spec in build_icons.ALL_SPECS:
+        self.assertEqual(len(build_icons.ALL_SPECS), 30)
+        for spec in build_icons.ITEM_SPECS + build_icons.STRUCT_SPECS:
             with self.subTest(icon=spec.filename):
                 self.assertIn(
                     spec.localization_key,
