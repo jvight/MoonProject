@@ -378,6 +378,14 @@ namespace MoonProject.Art.Editor
                     36f,
                     bg,
                     Path.Combine(outDir, $"r1props_09_crate_and_fragments_8m_{suffix}.png"));
+
+                // 4. 3 m distance shot of Crate_M_Open under Rover 07's headlamps
+                RenderShot(
+                    new Vector3(-0.35f, 1.35f, -3.10f),
+                    new Vector3(0.15f, 0.24f, -0.35f),
+                    36f,
+                    bg,
+                    Path.Combine(outDir, $"r1props_10_crate_m_open_3m_{suffix}.png"));
             }
             finally
             {

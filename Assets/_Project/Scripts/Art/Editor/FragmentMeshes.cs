@@ -16,8 +16,8 @@ namespace MoonProject.Art.Editor
         /// <summary>The blueprints, named as RoverAbility's members, and how many fragments each has.</summary>
         public static readonly (string Blueprint, int Count)[] Sets =
         {
-            ("CargoCradle", 2), ("WarmHeadlamp", 2), ("HoverJump", 3), ("BoostCoils", 3), ("CellPack", 3),
-            ("FocusLens", 3), ("SideBins", 2),
+            ("CargoCradle", 2), ("WarmHeadlamp", 2), ("BoostCoils", 3), ("CellPack", 3), ("FocusLens", 3),
+            ("SideBins", 2),
         };
 
         /// <summary>How each fragment lies on its surface: a tilt about X then Z, in degrees.</summary>
@@ -38,12 +38,6 @@ namespace MoonProject.Art.Editor
                     return LampHousing();
                 case "WarmHeadlamp_1":
                     return Reflector();
-                case "HoverJump_0":
-                    return Spring(0.12f, 0.32f);
-                case "HoverJump_1":
-                    return CoilPlate();
-                case "HoverJump_2":
-                    return JumperLeg();
                 case "BoostCoils_0":
                     return Capacitor(0.18f, 0.7f, true);
                 case "BoostCoils_1":
@@ -127,47 +121,6 @@ namespace MoonProject.Art.Editor
             b.Torus(At(new Vector3(0f, 0.18f, 0.06f), new Vector3(70f, 0f, 0f)), 0.34f, 0.015f, 12, 3,
                 PaletteSwatch.Charcoal);
             SiteKit.Bar(b, new Vector3(0f, 0.04f, -0.1f), new Vector3(0.22f, 0.02f, -0.3f), 0.025f, PaletteSwatch.Metal);
-            return b;
-        }
-
-        private static LowPolyMeshBuilder Spring(float radius, float height)
-        {
-            var b = new LowPolyMeshBuilder(400);
-            int turns = Mathf.RoundToInt(height / 0.05f);
-            for (int i = 0; i < turns; i++)
-            {
-                Matrix4x4 turn = At(new Vector3(0f, 0.02f + i * height / turns, 0f), new Vector3(4f, 0f, 3f));
-                b.Torus(turn, radius, 0.012f, 10, 3, PaletteSwatch.Honey);
-            }
-
-            b.Prism(At(0f, 0.01f, 0f), radius + 0.02f, 0.02f, 10, PaletteSwatch.Charcoal);
-            return b;
-        }
-
-        private static LowPolyMeshBuilder CoilPlate()
-        {
-            var b = new LowPolyMeshBuilder(800);
-            b.Box(At(0f, 0.02f, 0f), new Vector3(0.75f, 0.04f, 0.32f), PaletteSwatch.Metal, 0.008f);
-            for (int side = -1; side <= 1; side += 2)
-            {
-                b.Append(Spring(0.1f, 0.24f), Matrix4x4.Translate(new Vector3(side * 0.22f, 0.04f, 0f)));
-            }
-
-            b.Box(At(0f, 0.05f, 0.14f), new Vector3(0.3f, 0.03f, 0.02f), PaletteSwatch.Rust);
-            return b;
-        }
-
-        private static LowPolyMeshBuilder JumperLeg()
-        {
-            var b = new LowPolyMeshBuilder(300);
-            var foot = new[] { new Vector2(0.16f, 0f), new Vector2(0.18f, 0.03f), new Vector2(0.06f, 0.06f) };
-            b.Lathe(At(Vector3.zero), foot, 10, PaletteSwatch.Metal);
-            RecipeKit.Rod(b, new Vector3(0f, 0.05f, 0f), new Vector3(0.05f, 0.62f, -0.18f), 0.03f, 6,
-                PaletteSwatch.Metal);
-            RecipeKit.Rod(b, new Vector3(0.05f, 0.62f, -0.18f), new Vector3(0.02f, 0.76f, -0.12f), 0.03f, 6,
-                PaletteSwatch.Rust);
-            b.Append(Spring(0.06f, 0.2f), Matrix4x4.TRS(new Vector3(0.02f, 0.18f, -0.05f), Quaternion.identity,
-                Vector3.one));
             return b;
         }
 

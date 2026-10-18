@@ -370,7 +370,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                       $"{_gameplay.Hints.Primary.Kind} at {_gameplay.Hints.Primary.Position} (piece " +
                       $"{_gameplay.Salvage.Candidate?.Site.Id}/{_gameplay.Salvage.Candidate?.Number}, crate " +
                       $"{_gameplay.Containers.Candidate?.Id}); the target at {fragment.Point}, the view " +
-                      $"{ViewOff(fragment.Point):F0} deg off it, " +
+                      $"{ViewOff(fragment.Point):F0} deg off it ({View(fragment.Point)}), " +
                       $"{Vector3.Distance(Flat(fragment.Point), Flat(_rover.Position)):F2} m flat, " +
                       $"{HeadingOff(fragment.Point):F0} deg off");
             Press(_keyboard.eKey);
@@ -633,11 +633,26 @@ namespace MoonProject.Gameplay.PlayModeTests
             return Vector3.Angle(view.forward, point - view.position);
         }
 
+        /// <summary>The view's turn and tilt against <paramref name="point"/>, and the orbit's own.</summary>
+        private string View(Vector3 point)
+        {
+            var rig = (RoverCameraRig)_context.Get<IViewCamera>();
+            Transform view = rig.Camera.transform;
+            Vector3 toward = point - view.position;
+            float turn = Vector3.SignedAngle(Flat(view.forward), Flat(toward), Vector3.up);
+            float tilt = Vector3.SignedAngle(Flat(view.forward), view.forward, view.right);
+            float tiltTo = Vector3.SignedAngle(Flat(toward), toward, view.right);
+            return $"turn {turn:F0} deg, view tilt {tilt:F0} vs {tiltTo:F0} deg to it, orbit bearing " +
+                   $"{rig.Orbit.Bearing:F0} pitch {rig.Orbit.Pitch:F0}, camera at {view.position}";
+        }
+
         /// <summary>Turns the view to <paramref name="point"/>, as the player's mouse would.</summary>
         private void Look(Vector3 point)
         {
             var rig = (RoverCameraRig)_context.Get<IViewCamera>();
-            Vector3 toward = Flat(point - rig.Camera.transform.position);
+            // From 07, not the camera: the orbit may hang anywhere round 07 (in front of it after a turn), and a
+            // bearing taken from there points the view away.
+            Vector3 toward = Flat(point - _rover.Position);
             rig.Orbit.AdoptBearing(Quaternion.LookRotation(toward, Vector3.up).eulerAngles.y);
         }
 

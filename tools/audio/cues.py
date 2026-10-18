@@ -16,6 +16,7 @@ from synth.fm import two_op
 from synth.loop import periodic
 
 import base_cues as base
+from sampled import picks
 import feel_cues as feel
 
 
@@ -63,6 +64,7 @@ class Cue:
     milestone: str = "M1"
     variant_labels: tuple = ()
     tonal: bool = False  # the dominant pitch must be D major pentatonic (checked by analyze_audio)
+    sampled: bool = False  # rendered from the external sound library (sampled/picks.py); needs --library
 
     def labels(self) -> list:
         """One label per variant: the given labels, else 01, 02... (a single variant is labelled with the id)."""
@@ -771,22 +773,30 @@ CUES = (
         notes="Full: the walls lowering and settling, two soft ticks on A and D."),
     Cue("dock_walls_drop", "tick_3d", feel.dock_walls_drop, volume=(0.5, 0.5), milestone="M3",
         notes="Driving off early: the walls drop at once, a quick soft fall."),
-    Cue("chirp_affirm", "oneshot_3d", feel.CHIRP_RENDERS["affirm"], variants=feel.CHIRP_VARIANTS, volume=(0.55, 0.55),
-        milestone="M3", notes="07's machine voice, affirm (feel-pass 7.2); syllables in chirp_syllables.json."),
-    Cue("chirp_happy", "oneshot_3d", feel.CHIRP_RENDERS["happy"], variants=feel.CHIRP_VARIANTS, volume=(0.55, 0.55),
-        milestone="M3", notes="07's machine voice, happy (feel-pass 7.2); syllables in chirp_syllables.json."),
-    Cue("chirp_proud", "oneshot_3d", feel.CHIRP_RENDERS["proud"], variants=feel.CHIRP_VARIANTS, volume=(0.55, 0.55),
-        milestone="M3", notes="07's machine voice, proud (feel-pass 7.2); syllables in chirp_syllables.json."),
-    Cue("chirp_curious", "oneshot_3d", feel.CHIRP_RENDERS["curious"], variants=feel.CHIRP_VARIANTS, volume=(0.55, 0.55),
-        milestone="M3", notes="07's machine voice, curious (feel-pass 7.2); syllables in chirp_syllables.json."),
-    Cue("chirp_worried", "oneshot_3d", feel.CHIRP_RENDERS["worried"], variants=feel.CHIRP_VARIANTS, volume=(0.55, 0.55),
-        milestone="M3", notes="07's machine voice, worried (feel-pass 7.2); syllables in chirp_syllables.json."),
-    Cue("chirp_tired", "oneshot_3d", feel.CHIRP_RENDERS["tired"], variants=feel.CHIRP_VARIANTS, volume=(0.55, 0.55),
-        milestone="M3", notes="07's machine voice, tired (feel-pass 7.2); syllables in chirp_syllables.json."),
-    Cue("chirp_relieved", "oneshot_3d", feel.CHIRP_RENDERS["relieved"], variants=feel.CHIRP_VARIANTS, volume=(0.55, 0.55),
-        milestone="M3", notes="07's machine voice, relieved (feel-pass 7.2); syllables in chirp_syllables.json."),
-    Cue("chirp_greeting", "oneshot_3d", feel.CHIRP_RENDERS["greeting"], variants=feel.CHIRP_VARIANTS, volume=(0.55, 0.55),
-        milestone="M3", notes="07's machine voice, greeting (feel-pass 7.2); syllables in chirp_syllables.json."),
+    Cue("chirp_affirm", "oneshot_3d", picks.renderer("chirp_affirm"), volume=(0.55, 0.55), milestone="M3",
+        sampled=True, notes="07's voice, affirm: an annunciator gesture from a real motor whine (sampled/picks.py); "
+                            "syllables in chirp_syllables.json."),
+    Cue("chirp_happy", "oneshot_3d", picks.renderer("chirp_happy"), volume=(0.55, 0.55), milestone="M3",
+        sampled=True, notes="07's voice, happy: an annunciator gesture from a real motor whine (sampled/picks.py); "
+                            "syllables in chirp_syllables.json."),
+    Cue("chirp_proud", "oneshot_3d", picks.renderer("chirp_proud"), volume=(0.55, 0.55), milestone="M3",
+        sampled=True, notes="07's voice, proud: an annunciator gesture from a real motor whine (sampled/picks.py); "
+                            "syllables in chirp_syllables.json."),
+    Cue("chirp_curious", "oneshot_3d", picks.renderer("chirp_curious"), volume=(0.55, 0.55), milestone="M3",
+        sampled=True, notes="07's voice, curious: an annunciator gesture from a real motor whine (sampled/picks.py); "
+                            "syllables in chirp_syllables.json."),
+    Cue("chirp_worried", "oneshot_3d", picks.renderer("chirp_worried"), volume=(0.55, 0.55), milestone="M3",
+        sampled=True, notes="07's voice, worried: an annunciator gesture from a real motor whine (sampled/picks.py); "
+                            "syllables in chirp_syllables.json."),
+    Cue("chirp_tired", "oneshot_3d", picks.renderer("chirp_tired"), volume=(0.55, 0.55), milestone="M3",
+        sampled=True, notes="07's voice, tired: an annunciator gesture from a real motor whine (sampled/picks.py); "
+                            "syllables in chirp_syllables.json."),
+    Cue("chirp_relieved", "oneshot_3d", picks.renderer("chirp_relieved"), volume=(0.55, 0.55), milestone="M3",
+        sampled=True, notes="07's voice, relieved: an annunciator gesture from a real motor whine (sampled/picks.py); "
+                            "syllables in chirp_syllables.json."),
+    Cue("chirp_greeting", "oneshot_3d", picks.renderer("chirp_greeting"), volume=(0.55, 0.55), milestone="M3",
+        sampled=True, notes="07's voice, greeting: an annunciator gesture from a real motor whine (sampled/picks.py); "
+                            "syllables in chirp_syllables.json."),
     Cue("part_pick", "tick_2d", feel.part_pick, volume=(0.45, 0.45), milestone="M3",
         notes="0.5.5: picking a part up in the 07 tab: a light tick rising E5 -> A5."),
     Cue("part_drop", "tick_2d", feel.part_drop, volume=(0.45, 0.45), milestone="M3",
@@ -835,9 +845,18 @@ CUES = (
         notes="07 lifting a part (Collect Act): a soft servo whirr rising A2 -> D3."),
     Cue("pickup_clunk", "tick_3d", feel.pickup_clunk, volume=(0.8, 0.8), milestone="M3",
         notes="The part seating on 07's back (Collect Impact): a solid little clunk on D."),
-    Cue("structure_power_on", "oneshot_3d", base.structure_power_on, volume=(0.6, 0.6), milestone="M3",
-        tonal=True, notes="Opening v2 B8: a structure taking power: a relay thunk, a transformer swell D2 -> A2, "
-                          "its lamp blooming on D5."),
+    Cue("build_place", "oneshot_3d", picks.renderer("build_place"), volume=(0.68, 0.68), milestone="M3", sampled=True,
+        notes="A frame set down on regolith: an instrument case dropped, a steel ring tuned to D2, the feet latching."),
+    Cue("build_snap", "tick_3d", picks.renderer("build_snap"), volume=(0.9, 0.9), milestone="M3", sampled=True,
+        notes="The ghost aligning: a latch button and a vintage click, a ball detent dropping into its seat."),
+    Cue("build_weld_loop", "loop_3d", picks.renderer("build_weld_loop"), loop=True, volume=(0.72, 0.72),
+        milestone="M3", sampled=True, notes="The weld: a real arc buzz slowed and warmed, sparse crackle, a low hum on "
+                                            "D. 4 s seamless."),
+    Cue("build_structure_complete", "oneshot_3d", picks.renderer("build_structure_complete"), volume=(0.71, 0.71),
+        milestone="M3", sampled=True, notes="The last weld cools: a case latch, a relay and 07's done tone onto A."),
+    Cue("structure_power_on", "oneshot_3d", picks.renderer("structure_power_on"), volume=(0.6, 0.6), milestone="M3",
+        sampled=True, notes="Opening v2 B8: power reaching a structure: a radio's power latch, a mains hum swelling "
+                            "from D onto A, its lamp switching on."),
     Cue("base_lamp_on", "oneshot_3d", base.base_lamp_on, variants=len(base.BASE_LAMP_NOTES), volume=(0.5, 0.5),
         milestone="M3", tonal=True, notes="Opening v2 B10: a base lamp coming on at nightfall: a muted filament "
                                           "switch and a warm glow on its step (D4 .. F#5)."),
