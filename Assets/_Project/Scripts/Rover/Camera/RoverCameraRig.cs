@@ -865,11 +865,11 @@ namespace MoonProject.Rover
             }
 
             int targetCount = _focus != null ? _focus.CopyFocus(_focusPoints) : 0;
-            bool mayFrame = !_moment.IsActive && _wide.Weight <= 0f && _held.Weight <= 0f
+            bool mayFrame = _wide.Weight <= 0f && _held.Weight <= 0f
                 && !_faceInspectOpen && _faceInspectWeight <= 0f && !_opening.IsActive && !_crawling;
-            float viewYaw = RoverYaw() + _momentYaw + _orbitState.YawOffset;
+            ChaseOrbit(out float yaw, out float elevation, out float radius);
             _framing.Step(new TargetFramingInput(_rover.Position, RoverYaw(), _focusPoints, targetCount,
-                _rover.Position + Vector3.up * _tuning.TargetHeight, viewYaw, _orbitState.Elevation, _tuning.Distance,
+                _target.position - _framing.Shift, RoverYaw() + _momentYaw + yaw, elevation, radius,
                 _orbitState.FieldOfView, _viewCamera.aspect, _rover.Speed, look.sqrMagnitude > 0f, mayFrame),
                 deltaTime);
         }
@@ -881,16 +881,29 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
+        /// The chase orbit before any shot or framing moves it: the player's view and 07's moments, then the beam
+        /// work's framing; <paramref name="yaw"/> is from 07's heading.
+        /// </summary>
+        private void ChaseOrbit(out float yaw, out float elevation, out float radius)
+        {
+            yaw = _orbitState.YawOffset * (1f - _moment.Weight);
+            elevation = _orbitState.Elevation + _momentLift + _wallCompression * _tuning.WallMaxPitchLift
+                - _crawl * _tuning.CrawlLower;
+            radius = _tuning.Distance * (1f + _momentPullBack) * (1f + _crawl * _tuning.CrawlPullBack);
+            float cutFrame = _beam.Framing.Weight;
+            if (cutFrame > 0f)
+            {
+                BlendCutFraming(cutFrame, ref yaw, ref elevation, ref radius);
+            }
+        }
+
+        /// <summary>
         /// The chase orbit (player look, recentering, moments) blended toward the wide shot's frame and its breathing
         /// by the wide shot's weight; at weight 0 it is exactly the chase camera.
         /// </summary>
         private void ApplyOrbit()
         {
-            float yaw = _orbitState.YawOffset * (1f - _moment.Weight) + _framing.YawOffset;
-            float elevation = _orbitState.Elevation + _framing.Elevation + _momentLift + _wallCompression * _tuning.WallMaxPitchLift
-                - _crawl * _tuning.CrawlLower;
-            float radius = _tuning.Distance * (1f + _momentPullBack) * (1f + _crawl * _tuning.CrawlPullBack)
-                * _framing.RadiusScale;
+            ChaseOrbit(out float yaw, out float elevation, out float radius);
             float fov = _orbitState.FieldOfView;
             Vector2 screen = _tuning.ScreenPosition;
             float wide = _wide.Weight;
@@ -920,11 +933,9 @@ namespace MoonProject.Rover
                 BlendHeldShot(framed, ref yaw, ref elevation, ref radius, ref fov, ref screen);
             }
 
-            float cutFrame = _beam.Framing.Weight;
-            if (cutFrame > 0f)
-            {
-                BlendCutFraming(cutFrame, ref yaw, ref elevation, ref radius);
-            }
+            yaw += _framing.YawOffset;
+            elevation += _framing.Elevation;
+            radius *= _framing.RadiusScale;
 
             float wake = _opening.Weight;
             float wakeFaceWeight = 0f;

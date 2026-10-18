@@ -196,12 +196,10 @@ namespace MoonProject.Gameplay.PlayModeTests
                 string first = Physics.Linecast(eye, part.Point, out RaycastHit hit, ~0, QueryTriggerInteraction.Ignore)
                     ? $"{hit.collider.name} at {F(hit.distance)} m"
                     : "clear";
-                string hider = HiddenBy07(eye, part.Point);
+                string hider = RoverSight.HiddenBy(_rover.transform, eye, part.Point);
                 bool hidden = hider != null;
 
-                float margin = (1f - CentralShare) * 0.5f;
-                bool central = screen.z > 0f && screen.x >= margin && screen.x <= 1f - margin && screen.y >= margin
-                    && screen.y <= 1f - margin;
+                bool central = RoverSight.IsCentral(_view, part.Point, CentralShare, out _);
                 report.AppendLine($"- {part.FragmentId} at {V(part.Point)}: viewport {V(screen)}, first hit {first}, " +
                                   $"hidden by 07 {hider ?? "no"}, central {central}, model says clear " +
                                   $"{_cameraRig.Framing.BodyClear(_rover.Position, Heading(), eye, part.Point)} " +
@@ -214,46 +212,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             yield return Capture("chase-framing-" + name + Suffix());
-        }
-
-        /// <summary>
-        /// The name of the piece of 07's drawn body (each mesh's own box, not its physics) standing between the camera and
-        /// the point, or null:
-        /// 07's colliders are a low chassis, so a ray against them says clear while its head hides the part.
-        /// </summary>
-        private string HiddenBy07(Vector3 eye, Vector3 point)
-        {
-            foreach (Renderer renderer in _rover.GetComponentsInChildren<Renderer>())
-            {
-                if (!renderer.enabled || !renderer.gameObject.activeInHierarchy)
-                {
-                    continue;
-                }
-
-                Bounds local;
-                if (renderer is SkinnedMeshRenderer skinned)
-                {
-                    local = skinned.localBounds;
-                }
-                else if (renderer.TryGetComponent(out MeshFilter filter) && filter.sharedMesh != null)
-                {
-                    local = filter.sharedMesh.bounds;
-                }
-                else
-                {
-                    continue;
-                }
-
-                Transform node = renderer.transform;
-                Vector3 from = node.InverseTransformPoint(eye);
-                Vector3 along = node.InverseTransformPoint(point) - from;
-                if (local.IntersectRay(new Ray(from, along), out float distance) && distance <= along.magnitude)
-                {
-                    return $"{renderer.name} local size {V(local.size)} centre {V(local.center)} scale {V(node.lossyScale)} world {V(renderer.bounds.size)}";
-                }
-            }
-
-            return null;
         }
 
         private string Suffix()

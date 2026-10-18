@@ -61,6 +61,15 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float ClearHeight = 0.9f;
         private const float ClearRadius = 0.9f;
         private const float PlaceAhead = 4.6f;
+        private const float StructureSpacing = 14f;
+
+        /// <summary>Metres in front of 07 a structure is welded in the framing test: right at its nose.</summary>
+        private const float WeldAhead = 3f;
+        private const int MaxMenuSteps = 8;
+        private const float FramingSettleSeconds = 2f;
+        private const float ShotDelaySeconds = 0.2f;
+        private const float CentralShare = 0.7f;
+        private const int MissReportLength = 1500;
 
         /// <summary>Metres to the beam's side, above it and back toward 07 a capture looks across it from.</summary>
         private const float CaptureSideMetres = 3.2f;
@@ -127,6 +136,25 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return ScanWhole("ruin.FallenSolarArray", 1, 50f, "array-at-an-angle");
             yield return ScanWhole("ruin.HabitatModules", 0, -30f, "habitat");
             yield return WeldThePad();
+        }
+
+        [UnityTest]
+        [Timeout(400000)]
+        [PrebuildSetup(typeof(PlaythroughScene))]
+        [PostBuildCleanup(typeof(PlaythroughScene))]
+        public IEnumerator WeldingEachStructure_TheChaseCameraSeesTheLayerLine_NotJust07sBack()
+        {
+            BootstrapHarness.DeleteSaveFiles(PlaythroughScene.SaveSlot);
+            yield return Boot();
+            _gameplay.StartKit.Restore(new StartKitSaveData { igniterFitted = true });
+            string[] structures =
+            {
+                StructureIds.ChargingPad, StructureIds.SolarArray, StructureIds.BatteryBank, StructureIds.AntennaMast,
+            };
+            for (int i = 0; i < structures.Length; i++)
+            {
+                yield return WeldInView(structures[i], i);
+            }
         }
 
         /// <summary>
@@ -274,6 +302,87 @@ namespace MoonProject.Gameplay.PlayModeTests
             Debug.Log($"[beam] pad weld: every full-beam frame within {OnSurface * 100f:F0} cm of its parts and on its " +
                       $"layer line over {frame} frames ({gapFrames} through gaps where no part stands at the line, the " +
                       "beam on the top of what is printed)");
+        }
+
+        /// <summary>
+        /// A structure placed in front of 07 and welded whole: once the camera has had <see cref="FramingSettleSeconds"/>
+        /// the layer line being welded is never hidden by 07's body and stays in the middle
+        /// <see cref="CentralShare"/> of the screen, every frame of the weld.
+        /// </summary>
+        private IEnumerator WeldInView(string structureId, int index)
+        {
+            BuildField build = _gameplay.Building;
+            _gameplay.KnownStructures.Learn(structureId);
+            Assert.IsTrue(build.Catalog.TryGet(structureId, out StructureDefinition definition));
+            _gameplay.Materials.Stow(definition.BuildCost);
+
+            var terrain = _context.Get<ITerrainQuery>();
+            Vector3 home = _context.Get<IWorldLayout>().BasePosition + Vector3.right * (index * StructureSpacing);
+            yield return StandFacing(home + Vector3.forward * (WeldAhead + 2f), Vector3.back, WeldAhead);
+            var rover = _context.Get<IRoverState>();
+            Vector3 spot = rover.Position + Flat(rover.Rotation * Vector3.forward).normalized * WeldAhead;
+            build.SetAimPointOverride(SurfaceRules.OnSurface(terrain, spot.x, spot.z));
+
+            yield return Tap(_keyboard.bKey);
+            Assert.AreEqual(BuildModeState.Menu, build.State, "B opens the build menu");
+            for (int step = 0; step < MaxMenuSteps && build.Controller.SelectedStructure?.Id != structureId; step++)
+            {
+                yield return Tap(_keyboard.rightArrowKey);
+            }
+
+            Assert.AreEqual(structureId, build.Controller.SelectedStructure?.Id, $"the arrows pick {structureId}");
+            yield return Tap(_keyboard.eKey);
+            Assert.AreEqual(BuildModeState.Placing, build.State);
+            yield return null;
+            yield return Tap(_keyboard.eKey);
+            Assert.AreEqual(BuildModeState.Welding, build.State, $"E places {structureId}");
+            int id = build.Controller.ActiveWeldInstanceId;
+            Assert.IsTrue(build.TryGetView(id, out StructureView view));
+
+            Camera camera = _context.Get<IViewCamera>().Camera;
+            Transform roverBody = _context.Get<IRoverState>() is Component body ? body.transform : null;
+            Assert.IsNotNull(roverBody, "07's body is a component");
+            RoverCameraRig cameraRig = Object.FindFirstObjectByType<RoverCameraRig>(FindObjectsInactive.Include);
+            int checkedFrames = 0;
+            bool shot = false;
+            var misses = new System.Text.StringBuilder();
+            float start = Time.time;
+            Press(_keyboard.eKey);
+            float deadline = Time.time + WeldTimeout;
+            while (Time.time < deadline &&
+                   !(_gameplay.PlacedBase.TryGetStructure(id, out PlacedStructure placed) && placed.IsBuilt))
+            {
+                yield return null;
+                if (Time.time - start < FramingSettleSeconds || !build.IsWelding || view.SolidStageCount >= view.StageCount)
+                {
+                    continue;
+                }
+
+                checkedFrames++;
+                if (!shot && Time.time - start >= FramingSettleSeconds + ShotDelaySeconds)
+                {
+                    shot = true;
+                    CaptureBothSkies(camera, "weld-framing-" + structureId);
+                }
+
+                Vector3 line = view.GetActiveWeldPoint();
+                string hider = RoverSight.HiddenBy(roverBody, camera.transform.position, line);
+                bool central = RoverSight.IsCentral(camera, line, CentralShare, out Vector3 viewport);
+                if ((hider != null || !central) && misses.Length < MissReportLength)
+                {
+                    misses.AppendLine($"{structureId} t {Time.time - start:F1} s: layer line {line} hidden by " +
+                                      $"{hider ?? "nothing"}, central {central} (viewport {viewport}, body {roverBody.name} {roverBody.GetType().Name}, rover state {rover.Position}, held {cameraRig.Held.Weight:F2} opening {cameraRig.Opening.IsActive} framing {cameraRig.Framing.Weight:F2} goal {cameraRig.Framing.Goal}, camera " +
+                                      $"{camera.transform.position}, 07 {roverBody.position})");
+                }
+            }
+
+            Release(_keyboard.eKey);
+            build.SetAimPointOverride(null);
+            Assert.IsTrue(_gameplay.PlacedBase.TryGetStructure(id, out PlacedStructure built) && built.IsBuilt,
+                $"a held E welds {structureId} whole");
+            Assert.Greater(checkedFrames, 0, $"{structureId}: the weld ran past the camera's settle time (the weld took " +
+                                        $"{Time.time - start:F1} s)");
+            Assert.AreEqual(string.Empty, misses.ToString(), $"The chase camera hides the weld of {structureId}:{System.Environment.NewLine}" + misses);
         }
 
         /// <summary>Metres from <paramref name="point"/> to the scan target's surface.</summary>
