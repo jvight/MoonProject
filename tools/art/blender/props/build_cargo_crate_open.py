@@ -606,8 +606,8 @@ def _build_side_panel_open(root: bpy.types.Object) -> bpy.types.Object:
             bevel=0.0015,
         )
 
-    # 2. Build the panel leaf horizontally, then pitch it down by 11.5 deg around hinge_pivot_u so its leading
-    #    edge rests on the ground at Y = 0.00 m, Z = -0.88 m!
+    # 2. Build the panel leaf horizontally, then pitch it down around hinge_pivot_u so its leading
+    #    edge rests on the ground at Y = 0.00 m.
     #    In un-tilted horizontal pose from Z = -0.44 to -0.88 (length 0.44 m), centered at Z = -0.66, Y = 0.085:
     mb.add_bevel_box(
         center_u=(0.0, 0.082, -0.66),
@@ -660,8 +660,10 @@ def _build_side_panel_open(root: bpy.types.Object) -> bpy.types.Object:
         )
 
     panel_obj = mb.build_object(parent=root)
-    # Tilt the panel leaf down by -11.5 deg around X so the leading edge kisses Y = 0.00 m on the ground
-    _rotate_mesh_around_pivot(panel_obj, hinge_pivot_u, (-11.5, 0.0, 0.0))
+    # The rotation is in Blender axes, where Unity Y is Blender Z and Unity Z is Blender Y, so a POSITIVE pitch
+    # about X lowers the -Z leading edge. 7.3 deg sets the bumper's lower rear corner (0.446 m out, 0.054 m below
+    # the hinge line) onto Y = 0.00 m: asin(0.11 / 0.449) - atan(0.054 / 0.446) = 7.3 deg.
+    _rotate_mesh_around_pivot(panel_obj, hinge_pivot_u, (7.3, 0.0, 0.0))
     return panel_obj
 
 
