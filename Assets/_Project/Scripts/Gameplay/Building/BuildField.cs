@@ -240,6 +240,21 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
+        /// Opens the build menu as the Build key would, for a screen that closes and hands over to build mode (the
+        /// face screen's Build); false when build mode is already open or 07 knows no structure it can build yet.
+        /// </summary>
+        public bool TryOpen()
+        {
+            if (!_initialized || _controller.IsOpen || !_controller.TryOpenMenu())
+            {
+                return false;
+            }
+
+            _input.SetModeOwner(this, true);
+            return true;
+        }
+
+        /// <summary>
         /// True when 07 is in <see cref="BuildModeState.Closed"/> and looking at an unfinished structure within
         /// <see cref="BuildingTuning.WeldRange"/> that can be resumed with <c>Excavate</c>.
         /// </summary>

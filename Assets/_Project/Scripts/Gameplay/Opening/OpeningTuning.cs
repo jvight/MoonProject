@@ -79,7 +79,7 @@ namespace MoonProject.Gameplay
                 new Recipe(2, 1, 0)),
             new SupplyCache("supply.lander.open", OpeningField.LanderPortFrame, new Vector3(1.8f, 0f, 1f), 0f,
                 ContainerKinds.CrateMOpen, new Recipe(2, 1, 0), true, new[] { "part.igniter", "part.icecore" }),
-            new SupplyCache("supply.habitat.reel", "HabitatModules", new Vector3(3f, 0f, -6f), 153f, "Crate_M",
+            new SupplyCache("supply.habitat.reel", "HabitatModules", new Vector3(-3f, 0f, -6f), 207f, "Crate_M",
                 new Recipe(6, 4, 0)),
             new SupplyCache("supply.workshop.a", "KenjiWorkshop", new Vector3(-2.5f, 0f, -5f), -140f, "Crate_S",
                 new Recipe(3, 4, 2)),

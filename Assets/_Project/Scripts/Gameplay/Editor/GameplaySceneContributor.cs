@@ -16,6 +16,7 @@ namespace MoonProject.Gameplay.Editor
     {
         /// <summary>World's service port under [World] (World's opening layout contract).</summary>
         private const string LanderPortPath = "Lander/ServicePort";
+        private const string ApronOutlinePath = "OpeningProps/ApronMarkings/BayGlowOutline";
 
         public int Order => 500;
 
@@ -55,6 +56,7 @@ namespace MoonProject.Gameplay.Editor
             gameplay.WireScans(scanTuning);
             gameplay.WireRuins(Ruins(context.WorldRoot.transform));
             gameplay.WireLanderPort(LanderPort(context.WorldRoot.transform));
+            gameplay.WireApronOutline(ApronOutline(context.WorldRoot.transform));
             gameplay.WireOpening(openingTuning, baseTuning);
             context.AddSystem(gameplay);
         }
@@ -91,6 +93,20 @@ namespace MoonProject.Gameplay.Editor
             }
 
             return port;
+        }
+
+        /// <summary>The bay outline on World's apron markings: it glows while build mode is open.</summary>
+        private static Renderer ApronOutline(Transform worldRoot)
+        {
+            Transform outline = worldRoot.Find(ApronOutlinePath);
+            Renderer renderer = outline != null ? outline.GetComponent<Renderer>() : null;
+            if (renderer == null)
+            {
+                throw new InvalidOperationException($"Gameplay scene build: [World] has no renderer at " +
+                                                    $"'{ApronOutlinePath}' (the apron markings' bay outline).");
+            }
+
+            return renderer;
         }
 
         private static T Part<T>(SceneBuildContext context, GameObject host, string name) where T : Component
