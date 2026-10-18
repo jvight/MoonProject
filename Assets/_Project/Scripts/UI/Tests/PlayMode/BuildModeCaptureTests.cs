@@ -74,6 +74,7 @@ namespace MoonProject.UI.PlayModeTests
             if (_gameplay != null && _gameplay.Building != null && _gameplay.Building.Tuning != null)
             {
                 _gameplay.Building.Tuning.SetPlaytestUnlockedIds();
+                _gameplay.Building.Tuning.SetVariant(BuildEffectVariant.AssembledBy07);
             }
 
             if (_document != null && _originalPanelSettings != null)
@@ -390,6 +391,282 @@ namespace MoonProject.UI.PlayModeTests
             SetSkyClock(SunlitDaySeconds, holdingEclipse: false);
             yield return SettleUi(0.35f);
             yield return CaptureComposite(viewCamera, "07-base-sunlight");
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(BuildCaptureScene))]
+        [PostBuildCleanup(typeof(BuildCaptureScene))]
+        public IEnumerator CaptureThreeBuildEffectVariantsInEclipseAndGoldenHour()
+        {
+            string vfxFramesDir = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "vfx", "frames"));
+            Directory.CreateDirectory(vfxFramesDir);
+            yield return BootMainScene();
+
+            BuildField build = _gameplay.Building;
+            Assert.IsNotNull(build, "BuildField must be wired in Main.unity.");
+
+            var placement = _context.Get<IRoverPlacement>();
+            var terrain = _context.Get<ITerrainQuery>();
+            Camera viewCamera = _context.Get<IViewCamera>().Camera;
+            Assert.IsNotNull(viewCamera, "Main scene must provide IViewCamera.Camera.");
+
+            DisableCameraFollowBehaviours(viewCamera);
+
+            Vector3 basePos = _context.Get<IWorldLayout>().BasePosition;
+            Vector3 stageOrigin = new Vector3(basePos.x + ClearEastOffset, 0f, basePos.z + ClearNorthOffset);
+            stageOrigin.y = terrain.SampleHeight(stageOrigin.x, stageOrigin.z);
+            placement.PlaceAt(stageOrigin, Quaternion.LookRotation(Vector3.forward, Vector3.up));
+            yield return new WaitForSecondsRealtime(0.4f);
+
+            build.Tuning.SetPlaytestUnlockedIds(StructureIds.ChargingPad, StructureIds.PowerPylon);
+            build.ApplyPlaytestUnlocks(restored: true);
+            build.Controller.RefreshAvailable();
+
+            Vector3 roverPos = _context.Get<IRoverState>().Position;
+            float goldenHourTime = FindGoldenHourTime(roverPos);
+
+            BuildEffectVariant[] variants =
+            {
+                BuildEffectVariant.AssembledBy07,
+                BuildEffectVariant.BlueprintIntoMetal,
+                BuildEffectVariant.PrintedInPlace,
+            };
+            string[] variantCodes = { "a", "b", "c" };
+            string[] lightCodes = { "eclipse", "golden" };
+            float[] weldSamples =
+            {
+                0.05f, 0.11f, 0.17f, 0.23f, 0.29f, 0.35f,
+                0.41f, 0.47f, 0.53f, 0.59f, 0.65f, 0.71f,
+                0.77f, 0.83f, 0.88f, 0.93f, 0.96f, 0.99f,
+            };
+
+            for (int v = 0; v < variants.Length; v++)
+            {
+                build.Tuning.SetVariant(variants[v]);
+                string vCode = variantCodes[v];
+
+                for (int l = 0; l < lightCodes.Length; l++)
+                {
+                    bool isEclipse = l == 0;
+                    string lCode = lightCodes[l];
+                    string prefix = $"variant_{vCode}_{lCode}";
+
+                    if (isEclipse)
+                    {
+                        SetSkyClock(0f, holdingEclipse: true);
+                    }
+                    else
+                    {
+                        SetSkyClock(goldenHourTime, holdingEclipse: false);
+                    }
+
+                    // Remove any previous structures so the build site is clean.
+                    while (_gameplay.PlacedBase.Count > 0)
+                    {
+                        int oldId = _gameplay.PlacedBase.StructureAt(0).InstanceId;
+                        _gameplay.PlacedBase.TryDeconstruct(oldId, out _);
+                    }
+
+                    build.Controller.Close();
+                    DrainAllMaterials();
+                    _gameplay.Materials.Collect(SalvageMaterial.Metal, 20);
+                    _gameplay.Materials.Collect(SalvageMaterial.Wiring, 10);
+                    _gameplay.Materials.Collect(SalvageMaterial.Optics, 10);
+                    _ui.Pickups.Tick(10f);
+                    yield return null;
+                    yield return null;
+
+                    Vector3 padSpot = roverPos + new Vector3(0f, 0f, 3.65f);
+                    padSpot.y = terrain.SampleHeight(padSpot.x, padSpot.z);
+
+                    Vector3 weldCamPos = roverPos + new Vector3(2.35f, 1.58f, 0.55f);
+                    Vector3 weldLookAt = roverPos + new Vector3(-0.05f, 0.52f, 2.95f);
+                    viewCamera.transform.SetPositionAndRotation(
+                        weldCamPos,
+                        Quaternion.LookRotation(weldLookAt - weldCamPos, Vector3.up));
+                    viewCamera.fieldOfView = 48f;
+
+                    // Frame 00: Valid ghost (soft teal architectural silhouette / blueprint)
+                    build.SetAimPointOverride(padSpot);
+                    Assert.IsTrue(build.Controller.PickStructure(StructureIds.ChargingPad));
+                    yield return SettleUi(0.22f);
+                    Assert.AreEqual(PlacementReason.Valid, build.Controller.CandidateReason);
+                    yield return CaptureVfxFrame(viewCamera, vfxFramesDir, $"{prefix}_00");
+
+                    // Frame 01: Invalid ghost (warm amber + world-anchored reason chip centered in view)
+                    Vector3 invalidSpot = roverPos + new Vector3(0.05f, 0f, 1.72f);
+                    invalidSpot.y = terrain.SampleHeight(invalidSpot.x, invalidSpot.z);
+                    build.SetAimPointOverride(invalidSpot);
+                    yield return SettleUi(0.22f);
+                    Assert.AreEqual(PlacementReason.TooCloseTo07, build.Controller.CandidateReason);
+                    yield return CaptureVfxFrame(viewCamera, vfxFramesDir, $"{prefix}_01");
+
+                    // Aim back at valid spot and confirm placement -> Welding state
+                    build.SetAimPointOverride(padSpot);
+                    yield return null;
+                    yield return null;
+                    Assert.AreEqual(PlacementReason.Valid, build.Controller.CandidateReason);
+                    yield return Tap(_keyboard.eKey);
+                    Assert.AreEqual(BuildModeState.Welding, build.State);
+
+                    int activeId = build.Controller.ActiveWeldInstanceId;
+                    Assert.Greater(activeId, 0);
+
+                    // Hold E to weld through 0% -> 100%, capturing 18 frames (02..19) at deterministic 60fps steps
+                    Time.captureFramerate = 60;
+                    Press(_keyboard.eKey);
+                    yield return null;
+
+                    int sampleIdx = 0;
+                    int maxFrames = 600;
+                    for (int step = 0; step < maxFrames; step++)
+                    {
+                        bool hasStruct = _gameplay.PlacedBase.TryGetStructure(activeId, out PlacedStructure st);
+                        float prog = hasStruct ? st.BuildProgress01 : 1f;
+                        while (sampleIdx < weldSamples.Length && prog >= weldSamples[sampleIdx])
+                        {
+                            int frameNum = 2 + sampleIdx;
+                            WriteVfxFrame(viewCamera, vfxFramesDir, $"{prefix}_{frameNum:D2}");
+                            sampleIdx++;
+                        }
+
+                        if (!hasStruct || st.IsBuilt)
+                        {
+                            break;
+                        }
+
+                        yield return null;
+                    }
+
+                    while (sampleIdx < weldSamples.Length)
+                    {
+                        int frameNum = 2 + sampleIdx;
+                        WriteVfxFrame(viewCamera, vfxFramesDir, $"{prefix}_{frameNum:D2}");
+                        sampleIdx++;
+                    }
+
+                    Release(_keyboard.eKey);
+                    _context.Get<IRoverRig>()?.SetGazeTarget(this, padSpot + Vector3.up * 0.15f, GazePriorities.Focus);
+
+                    // Frame 20: Immediate completion settle thump + dust ring + lamp flash (+2 frames = 0.033s)
+                    yield return null;
+                    yield return null;
+                    WriteVfxFrame(viewCamera, vfxFramesDir, $"{prefix}_20");
+
+                    // Frame 21: Rebound + expanding dust ring + lamp cascade (+7 frames = 0.117s)
+                    for (int f = 0; f < 7; f++)
+                    {
+                        yield return null;
+                    }
+
+                    WriteVfxFrame(viewCamera, vfxFramesDir, $"{prefix}_21");
+
+                    // Frame 22: Dust ring settling + cooling seams + all lamps lit (+11 frames = 0.183s)
+                    for (int f = 0; f < 11; f++)
+                    {
+                        yield return null;
+                    }
+
+                    WriteVfxFrame(viewCamera, vfxFramesDir, $"{prefix}_22");
+
+                    // Frame 23: Steady finished Charging Pad with warm amber standby lamps lit (+24 frames = 0.40s)
+                    for (int f = 0; f < 24; f++)
+                    {
+                        yield return null;
+                    }
+
+                    WriteVfxFrame(viewCamera, vfxFramesDir, $"{prefix}_23");
+                    _context.Get<IRoverRig>()?.ClearGazeTarget(this);
+                    Time.captureFramerate = 0;
+                }
+            }
+
+            Time.captureFramerate = 0;
+            build.Tuning.SetVariant(BuildEffectVariant.AssembledBy07);
+        }
+
+        private float FindGoldenHourTime(Vector3 focusPos)
+        {
+            if (!_context.TryGet(out ISunlight sunlight) || sunlight == null)
+            {
+                return SunlitDaySeconds;
+            }
+
+            float bestTime = SunlitDaySeconds;
+            float lowestSunY = 2f;
+            for (float t = 60f; t <= 2800f; t += 10f)
+            {
+                SetSkyClock(t, holdingEclipse: false);
+                float lit = sunlight.SunlightAt(focusPos);
+                float sunY = sunlight.SunDirection.y;
+                if (lit >= 0.95f && sunY > 0.12f && sunY < lowestSunY)
+                {
+                    lowestSunY = sunY;
+                    bestTime = t;
+                }
+            }
+
+            return bestTime;
+        }
+
+        private IEnumerator CaptureVfxFrame(Camera camera, string folder, string fileName)
+        {
+            WriteVfxFrame(camera, folder, fileName);
+            yield return null;
+        }
+
+        private void WriteVfxFrame(Camera camera, string folder, string fileName)
+        {
+            const int outW = Width / 2;
+            const int outH = Height / 2;
+            Texture2D world = FrameCapture.Render(camera, Width, Height);
+            var ui = new Texture2D(Width, Height, TextureFormat.RGBA32, false, false);
+            var downsampled = new Texture2D(outW, outH, TextureFormat.RGBA32, false, false);
+            RenderTexture previous = RenderTexture.active;
+            RenderTexture.active = _uiTarget;
+            ui.ReadPixels(new Rect(0, 0, Width, Height), 0, 0, false);
+            ui.Apply(false);
+            RenderTexture.active = previous;
+            try
+            {
+                Color32[] bg = world.GetPixels32();
+                Color32[] fg = ui.GetPixels32();
+                var dst = new Color32[outW * outH];
+                for (int y = 0; y < outH; y++)
+                {
+                    int row0 = (y * 2) * Width;
+                    int row1 = row0 + Width;
+                    int dstRow = y * outW;
+                    for (int x = 0; x < outW; x++)
+                    {
+                        int i00 = row0 + x * 2;
+                        int i10 = i00 + 1;
+                        int i01 = row1 + x * 2;
+                        int i11 = i01 + 1;
+                        Color32 c00 = Over(fg[i00], bg[i00]);
+                        Color32 c10 = Over(fg[i10], bg[i10]);
+                        Color32 c01 = Over(fg[i01], bg[i01]);
+                        Color32 c11 = Over(fg[i11], bg[i11]);
+                        dst[dstRow + x] = new Color32(
+                            (byte)((c00.r + c10.r + c01.r + c11.r + 2) >> 2),
+                            (byte)((c00.g + c10.g + c01.g + c11.g + 2) >> 2),
+                            (byte)((c00.b + c10.b + c01.b + c11.b + 2) >> 2),
+                            255);
+                    }
+                }
+
+                downsampled.SetPixels32(dst);
+                downsampled.Apply(false);
+                string path = Path.Combine(folder, fileName + ".png");
+                FrameCapture.WritePng(downsampled, path);
+            }
+            finally
+            {
+                Object.Destroy(world);
+                Object.Destroy(ui);
+                Object.Destroy(downsampled);
+            }
         }
 
         private IEnumerator BootMainScene()

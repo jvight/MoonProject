@@ -53,6 +53,8 @@ namespace MoonProject.Gameplay
         private Quaternion[] _stageBaseLocalRot;
         private Vector3[] _stageBaseScale;
         private Vector2[] _stageWorldYOffset;
+        private Bounds[] _stageLocalBounds;
+        private Vector3[] _stageHingePivot;
         private EmissionGlow[] _lampGlows;
         private Color[] _lampBaseColors;
         private MaterialPropertyBlock _mpb;
@@ -217,6 +219,9 @@ namespace MoonProject.Gameplay
             _stageBaseLocalRot = new Quaternion[stageCount];
             _stageBaseScale = new Vector3[stageCount];
             _stageWorldYOffset = new Vector2[stageCount];
+            _stageLocalBounds = new Bounds[stageCount];
+            _stageHingePivot = new Vector3[stageCount];
+            _stageSeams = BuildStageSeams(_stageRoots, transform);
 
             bool hasAnyBounds = false;
             Bounds fullLocalBounds = default;
@@ -235,7 +240,19 @@ namespace MoonProject.Gameplay
                 for (int c = 0; c < childCount; c++)
                 {
                     Transform child = stageRoot.GetChild(c);
-                    subParts[c] = new SubPartPose(child, child.localPosition, child.localRotation, child.localScale);
+                    Vector3 childPivot = Vector3.zero;
+                    if (child.TryGetComponent(out MeshFilter childMf) && childMf.sharedMesh != null)
+                    {
+                        Bounds cb = childMf.sharedMesh.bounds;
+                        childPivot = new Vector3(cb.center.x, cb.min.y + 0.03f, cb.center.z);
+                    }
+
+                    subParts[c] = new SubPartPose(
+                        child,
+                        child.localPosition,
+                        child.localRotation,
+                        child.localScale,
+                        childPivot);
                 }
 
                 _stageSubParts[s] = subParts;
@@ -284,6 +301,10 @@ namespace MoonProject.Gameplay
                     caches[r] = new StageRendererCache(renderer, solidMats, validMats, invalidMats);
                 }
 
+                _stageLocalBounds[s] = stageBounds;
+                _stageHingePivot[s] = hasStageBounds
+                    ? new Vector3(stageBounds.center.x, stageBounds.min.y + 0.04f, stageBounds.center.z)
+                    : Vector3.zero;
                 _stageWorldYOffset[s] = hasStageBounds
                     ? new Vector2(stageBounds.min.y, Mathf.Max(stageBounds.max.y, stageBounds.min.y + 0.1f))
                     : new Vector2(0f, 1.2f);
@@ -709,22 +730,6 @@ namespace MoonProject.Gameplay
                 throw new ArgumentException("Seam point buffer must have at least 3 elements.", nameof(localPoints));
             }
 
-            if (_liveVariantActive && _variant == BuildEffectVariant.PrintedInPlace)
-            {
-                int count = Mathf.Max(1, StageCount);
-                int clamped = Mathf.Clamp(stageIndex, 0, count - 1);
-                float h01 = Mathf.Clamp01((clamped + 0.52f) / count);
-                float localY = Mathf.Lerp(_localMinY + 0.04f, _localMaxY - 0.06f, h01);
-                float halfSpan = Mathf.Lerp(0.74f, 0.42f, h01);
-                float localZ = Mathf.Lerp(-0.46f, 0.48f, h01);
-                float dir = (clamped & 1) == 0 ? 1f : -1f;
-                localPoints[0] = new Vector3(-halfSpan * dir, localY, localZ);
-                localPoints[1] = new Vector3(0f, localY + 0.008f, localZ - 0.02f);
-                localPoints[2] = new Vector3(halfSpan * dir, localY, localZ);
-                localNormal = new Vector3(0f, 0.72f, -0.69f).normalized;
-                return;
-            }
-
             StageWeldSeam seam = ResolveStageSeam(stageIndex);
             localPoints[0] = seam.Start;
             localPoints[1] = seam.Middle;
@@ -739,12 +744,11 @@ namespace MoonProject.Gameplay
             {
                 float prog = Mathf.Clamp01(_buildProgress01);
                 float slicedProg = Mathf.Ceil(Mathf.Max(0.025f, prog) * 40f) / 40f;
+                GetPrintCrossSection(slicedProg, out float centerX, out float centerZ, out float halfSpanX);
                 float localY = Mathf.Lerp(_localMinY + 0.03f, _localMaxY - 0.03f, slicedProg);
-                float halfSpan = Mathf.Lerp(0.72f, 0.36f, slicedProg);
                 float sweep = Mathf.Sin(prog * 12f * Mathf.PI);
-                float localX = sweep * halfSpan;
-                float localZ = Mathf.Lerp(-0.46f, 0.48f, Mathf.SmoothStep(0f, 1f, slicedProg));
-                return transform.TransformPoint(new Vector3(localX, localY, localZ));
+                float localX = centerX + sweep * halfSpanX * 0.85f;
+                return transform.TransformPoint(new Vector3(localX, localY, centerZ));
             }
 
             GetStageWeldSeam(SolidStageCount, _activeSeamPoints, out _);
@@ -753,6 +757,28 @@ namespace MoonProject.Gameplay
                 ? Vector3.Lerp(_activeSeamPoints[0], _activeSeamPoints[1], stageT * 2f)
                 : Vector3.Lerp(_activeSeamPoints[1], _activeSeamPoints[2], (stageT - 0.5f) * 2f);
             return transform.TransformPoint(local);
+        }
+
+        private void GetPrintCrossSection(float height01, out float centerX, out float centerZ, out float halfSpanX)
+        {
+            if (_stageLocalBounds == null || _stageLocalBounds.Length == 0)
+            {
+                centerX = 0f;
+                centerZ = 0f;
+                halfSpanX = 0.45f;
+                return;
+            }
+
+            Bounds deckBounds = _stageLocalBounds[0];
+            Bounds upperBounds = _stageLocalBounds.Length > 2 ? _stageLocalBounds[2] : _stageLocalBounds[_stageLocalBounds.Length - 1];
+            float blendToUpper = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((height01 - 0.18f) / 0.14f));
+            centerX = Mathf.Lerp(deckBounds.center.x, upperBounds.center.x, blendToUpper);
+            float deckZ = Mathf.Lerp(deckBounds.min.z + 0.28f, deckBounds.max.z - 0.28f, Mathf.Clamp01(height01 / 0.24f));
+            float upperZ = upperBounds.min.z + 0.06f;
+            centerZ = Mathf.Lerp(deckZ, upperZ, blendToUpper);
+            float deckHalfW = Mathf.Clamp(deckBounds.extents.x * 0.68f, 0.24f, 0.68f);
+            float upperHalfW = Mathf.Clamp(upperBounds.extents.x * 0.82f, 0.12f, 0.28f);
+            halfSpanX = Mathf.Lerp(deckHalfW, upperHalfW, blendToUpper);
         }
 
         private void ApplyGhostVariantProperties(bool valid)
@@ -926,9 +952,6 @@ namespace MoonProject.Gameplay
                 float worldMinY = transform.position.y + _localMinY + settleOffsetY;
                 float worldMaxY = transform.position.y + _localMaxY + settleOffsetY;
                 float sliceWorldY = Mathf.Lerp(worldMinY, worldMaxY, Mathf.Ceil(printProg * 40f) / 40f);
-                float printHeat = isBuilt
-                    ? (_stageHeat.Length > 0 ? _stageHeat[_stageHeat.Length - 1] : 0f)
-                    : 1f;
 
                 for (int s = 0; s < stageCount; s++)
                 {
@@ -944,17 +967,18 @@ namespace MoonProject.Gameplay
                         _stageRoots[s].localScale = Vector3.Scale(_stageBaseScale[s] * _stageScale[s], settleScaleMul);
                     }
 
+                    float residualCapHeat = (isBuilt && s == stageCount - 1) ? _stageHeat[s] * 0.45f : 0f;
                     ApplyStageMaterials(s, solid: true);
                     ApplyStageShaderBlock(
                         s,
                         revealMode: 2f,
                         revealProgress: printProg,
-                        stageHeat: Mathf.Max(printHeat, _stageHeat[s]),
+                        stageHeat: residualCapHeat,
                         minY: worldMinY,
                         maxY: worldMaxY,
                         seamRef: sliceWorldY,
                         seamPointWS: activeWeldWS,
-                        seamRadius: 0.95f);
+                        seamRadius: 0.38f);
                 }
             }
         }
@@ -1059,20 +1083,20 @@ namespace MoonProject.Gameplay
             }
 
             float slicedProg = Mathf.Ceil(Mathf.Clamp01(progress01) * 40f) / 40f;
+            GetPrintCrossSection(slicedProg, out float centerX, out float centerZ, out float halfSpanX);
             float localY = Mathf.Lerp(_localMinY + 0.03f, _localMaxY - 0.03f, slicedProg) + settleOffsetY;
-            float localZ = Mathf.Lerp(-0.46f, 0.48f, Mathf.SmoothStep(0f, 1f, slicedProg));
-            float widthScale = Mathf.Lerp(1.08f, 0.62f, slicedProg);
+            float widthScale = Mathf.Clamp((halfSpanX * 2f) / 1.48f, 0.28f, 1.08f);
 
             if (_printLayerBar != null)
             {
-                _printLayerBar.localPosition = new Vector3(0f, localY, localZ);
+                _printLayerBar.localPosition = new Vector3(centerX, localY, centerZ);
                 _printLayerBar.localScale = new Vector3(widthScale, 1f, 1f);
             }
 
             if (_printLayerBead != null)
             {
                 float sweep = Mathf.Sin(progress01 * 12f * Mathf.PI);
-                _printLayerBead.localPosition = new Vector3(sweep * 0.62f, 0f, -0.01f);
+                _printLayerBead.localPosition = new Vector3(sweep * 0.56f, 0f, -0.01f);
             }
 
             for (int i = 0; i < _printLayerRenderers.Length; i++)
@@ -1231,24 +1255,31 @@ namespace MoonProject.Gameplay
             Vector3 basePos = _stageBaseLocalPos[stageIndex];
             Quaternion baseRot = _stageBaseLocalRot[stageIndex];
             Vector3 baseScale = _stageBaseScale[stageIndex];
+            Vector3 stagePivot = _stageHingePivot[stageIndex];
 
             if (stageIndex == 0)
             {
                 // Stage 1 (Foundation deck): unfolds outward from the dropped compact stack and drops into the regolith
-                var posOffset = new Vector3(0f, inv * 0.16f + settleOffsetY, -inv * 0.18f);
+                var posOffset = new Vector3(0f, inv * 0.14f + settleOffsetY, -inv * 0.12f);
                 var scaleFactor = new Vector3(
-                    Mathf.Lerp(0.42f, 1f, unfold01),
-                    Mathf.Lerp(1.30f, 1f, unfold01),
-                    Mathf.Lerp(0.42f, 1f, unfold01)) * popScale;
-                root.localPosition = basePos + posOffset;
-                root.localRotation = baseRot * Quaternion.Euler(inv * 16f, 0f, 0f);
-                root.localScale = Vector3.Scale(Vector3.Scale(baseScale, scaleFactor), settleScaleMul);
+                    Mathf.Lerp(0.45f, 1f, unfold01),
+                    Mathf.Lerp(1.22f, 1f, unfold01),
+                    Mathf.Lerp(0.45f, 1f, unfold01)) * popScale;
+                ApplyPivotPose(
+                    root,
+                    basePos,
+                    baseRot,
+                    baseScale,
+                    stagePivot,
+                    Quaternion.Euler(inv * 14f, 0f, 0f),
+                    Vector3.Scale(scaleFactor, settleScaleMul),
+                    posOffset);
             }
             else if (stageIndex == 1)
             {
-                // Stage 2 (Ramps & guide rails swing down on hinges; BollardInner frame struts self-raise upward)
-                root.localPosition = basePos + new Vector3(0f, inv * 0.08f + settleOffsetY, 0f);
-                root.localRotation = baseRot * Quaternion.Euler(-48f * inv, 0f, 0f);
+                // Stage 2 (Ramps & guide rails unfold on hinges; BollardInner frame struts self-raise upward from their base hinge)
+                root.localPosition = basePos + new Vector3(0f, settleOffsetY, 0f);
+                root.localRotation = baseRot;
                 root.localScale = Vector3.Scale(baseScale * popScale, settleScaleMul);
 
                 SubPartPose[] subs = _stageSubParts[stageIndex];
@@ -1263,28 +1294,45 @@ namespace MoonProject.Gameplay
                     bool isFrameArm = sp.Transform.name.IndexOf("Bollard", StringComparison.OrdinalIgnoreCase) >= 0;
                     if (isFrameArm)
                     {
-                        sp.Transform.localPosition = sp.BaseLocalPos + new Vector3(0f, -0.22f * inv, -0.12f * inv);
-                        sp.Transform.localRotation = sp.BaseLocalRot * Quaternion.Euler(78f * inv, 0f, 0f);
-                        sp.Transform.localScale = Vector3.Scale(
+                        ApplyPivotPose(
+                            sp.Transform,
+                            sp.BaseLocalPos,
+                            sp.BaseLocalRot,
                             sp.BaseLocalScale,
-                            new Vector3(1f, Mathf.Lerp(0.32f, 1f, unfold01), 1f));
+                            sp.HingePivot,
+                            Quaternion.Euler(72f * inv, 0f, 0f),
+                            new Vector3(1f, Mathf.Lerp(0.42f, 1f, unfold01), 1f),
+                            Vector3.zero);
                     }
                     else
                     {
-                        sp.Transform.localPosition = sp.BaseLocalPos;
-                        sp.Transform.localRotation = sp.BaseLocalRot * Quaternion.Euler(-36f * inv, 0f, 0f);
-                        sp.Transform.localScale = sp.BaseLocalScale;
+                        ApplyPivotPose(
+                            sp.Transform,
+                            sp.BaseLocalPos,
+                            sp.BaseLocalRot,
+                            sp.BaseLocalScale,
+                            sp.HingePivot,
+                            Quaternion.Euler(-38f * inv, 0f, 0f),
+                             new Vector3(Mathf.Lerp(0.76f, 1f, unfold01), 1f, Mathf.Lerp(0.72f, 1f, unfold01)),
+                            Vector3.zero);
                     }
                 }
             }
             else if (stageIndex == 2)
             {
-                // Stage 3 (Bollard curved housing & totem bezel): swings up on its rear hinge and locks onto frame arms
-                root.localPosition = basePos + new Vector3(0f, inv * 0.24f + settleOffsetY, -inv * 0.22f);
-                root.localRotation = baseRot * Quaternion.Euler(62f * inv, 0f, 0f);
-                root.localScale = Vector3.Scale(
-                    Vector3.Scale(baseScale, new Vector3(Mathf.Lerp(0.76f, 1f, unfold01), Mathf.Lerp(0.68f, 1f, unfold01), 1f)) * popScale,
+                // Stage 3 (Bollard curved housing & totem bezel): swings up on its bottom hinge and locks onto the H-frame arms
+                var scaleMul = Vector3.Scale(
+                    new Vector3(Mathf.Lerp(0.84f, 1f, unfold01), Mathf.Lerp(0.74f, 1f, unfold01), 1f) * popScale,
                     settleScaleMul);
+                ApplyPivotPose(
+                    root,
+                    basePos,
+                    baseRot,
+                    baseScale,
+                    stagePivot,
+                    Quaternion.Euler(64f * inv, 0f, 0f),
+                    scaleMul,
+                    new Vector3(0f, settleOffsetY, 0f));
             }
             else
             {
@@ -1305,24 +1353,59 @@ namespace MoonProject.Gameplay
                     string subName = sp.Transform.name;
                     if (subName.IndexOf("Contact", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
-                        sp.Transform.localPosition = sp.BaseLocalPos + new Vector3(0f, -0.15f * inv, 0f);
-                        sp.Transform.localRotation = sp.BaseLocalRot * Quaternion.Euler(42f * inv, 0f, 0f);
-                        sp.Transform.localScale = sp.BaseLocalScale;
+                        ApplyPivotPose(
+                            sp.Transform,
+                            sp.BaseLocalPos,
+                            sp.BaseLocalRot,
+                            sp.BaseLocalScale,
+                            sp.HingePivot,
+                            Quaternion.Euler(38f * inv, 0f, 0f),
+                            Vector3.one,
+                            new Vector3(0f, -0.09f * inv, 0f));
                     }
                     else if (subName.IndexOf("Louver", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
-                        sp.Transform.localPosition = sp.BaseLocalPos;
-                        sp.Transform.localRotation = sp.BaseLocalRot * Quaternion.Euler(0f, 72f * inv, 0f);
-                        sp.Transform.localScale = sp.BaseLocalScale;
+                        ApplyPivotPose(
+                            sp.Transform,
+                            sp.BaseLocalPos,
+                            sp.BaseLocalRot,
+                            sp.BaseLocalScale,
+                            sp.HingePivot,
+                            Quaternion.Euler(0f, 68f * inv, 0f),
+                            Vector3.one,
+                            Vector3.zero);
                     }
                     else
                     {
-                        sp.Transform.localPosition = sp.BaseLocalPos + new Vector3(0f, 0.06f * inv, 0f);
-                        sp.Transform.localRotation = sp.BaseLocalRot * Quaternion.Euler(-32f * inv, 0f, 0f);
-                        sp.Transform.localScale = sp.BaseLocalScale;
+                        ApplyPivotPose(
+                            sp.Transform,
+                            sp.BaseLocalPos,
+                            sp.BaseLocalRot,
+                            sp.BaseLocalScale,
+                            sp.HingePivot,
+                            Quaternion.Euler(-28f * inv, 0f, 0f),
+                            Vector3.one,
+                            new Vector3(0f, 0.04f * inv, 0f));
                     }
                 }
             }
+        }
+
+        private static void ApplyPivotPose(
+            Transform t,
+            Vector3 basePos,
+            Quaternion baseRot,
+            Vector3 baseScale,
+            Vector3 localPivot,
+            Quaternion rotDelta,
+            Vector3 scaleMul,
+            Vector3 posOffset)
+        {
+            Quaternion rot = baseRot * rotDelta;
+            Vector3 scl = Vector3.Scale(baseScale, scaleMul);
+            t.localRotation = rot;
+            t.localScale = scl;
+            t.localPosition = basePos + localPivot - (rot * Vector3.Scale(scl, localPivot)) + posOffset;
         }
 
         private void ResetStagePoseToBase(int stageIndex)
@@ -1651,6 +1734,7 @@ namespace MoonProject.Gameplay
 
             bool hasBounds = false;
             Bounds stageBounds = default;
+            float bestArea = -1f;
             for (int r = 0; r < renderers.Length; r++)
             {
                 Renderer renderer = renderers[r];
@@ -1659,6 +1743,8 @@ namespace MoonProject.Gameplay
                     continue;
                 }
 
+                bool rHas = false;
+                Bounds rBounds = default;
                 if (renderer.TryGetComponent(out MeshFilter filter) && filter.sharedMesh != null)
                 {
                     Bounds meshBounds = filter.sharedMesh.bounds;
@@ -1667,8 +1753,8 @@ namespace MoonProject.Gameplay
                         renderer.transform,
                         structureRoot,
                         localSpaceInput: true,
-                        ref stageBounds,
-                        ref hasBounds);
+                        ref rBounds,
+                        ref rHas);
                 }
                 else
                 {
@@ -1678,8 +1764,22 @@ namespace MoonProject.Gameplay
                         renderer.transform,
                         structureRoot,
                         localSpaceInput: false,
-                        ref stageBounds,
-                        ref hasBounds);
+                        ref rBounds,
+                        ref rHas);
+                }
+
+                if (!rHas)
+                {
+                    continue;
+                }
+
+                Vector3 sz = rBounds.size;
+                float area = sz.x * sz.z + sz.x * sz.y;
+                if (area > bestArea)
+                {
+                    bestArea = area;
+                    stageBounds = rBounds;
+                    hasBounds = true;
                 }
             }
 
@@ -1691,13 +1791,13 @@ namespace MoonProject.Gameplay
             Vector3 min = stageBounds.min;
             Vector3 center = stageBounds.center;
             Vector3 max = stageBounds.max;
-            float halfSpanX = Mathf.Clamp((max.x - min.x) * 0.28f, 0.22f, 0.46f);
-            float seamY = Mathf.Lerp(center.y, max.y, 0.65f) + 0.02f;
-            float seamZ = Mathf.Lerp(min.z, center.z, 0.55f);
+            float halfSpanX = Mathf.Clamp((max.x - min.x) * 0.30f, 0.08f, 0.36f);
+            float seamY = Mathf.Lerp(center.y, max.y, 0.58f) + 0.015f;
+            float seamZ = Mathf.Lerp(min.z, center.z, 0.48f);
             Vector3 seamNormal = new Vector3(0f, 0.86f, -0.51f).normalized;
             seam = new StageWeldSeam(
                 new Vector3(center.x - halfSpanX, seamY, seamZ),
-                new Vector3(center.x, seamY + 0.025f, seamZ - 0.05f),
+                new Vector3(center.x, seamY + 0.018f, seamZ - 0.03f),
                 new Vector3(center.x + halfSpanX, seamY, seamZ),
                 seamNormal);
             return seam.IsValid;
@@ -1860,12 +1960,18 @@ namespace MoonProject.Gameplay
 
         private readonly struct SubPartPose
         {
-            public SubPartPose(Transform transform, Vector3 baseLocalPos, Quaternion baseLocalRot, Vector3 baseLocalScale)
+            public SubPartPose(
+                Transform transform,
+                Vector3 baseLocalPos,
+                Quaternion baseLocalRot,
+                Vector3 baseLocalScale,
+                Vector3 hingePivot)
             {
                 Transform = transform;
                 BaseLocalPos = baseLocalPos;
                 BaseLocalRot = baseLocalRot;
                 BaseLocalScale = baseLocalScale;
+                HingePivot = hingePivot;
             }
 
             public Transform Transform { get; }
@@ -1875,6 +1981,8 @@ namespace MoonProject.Gameplay
             public Quaternion BaseLocalRot { get; }
 
             public Vector3 BaseLocalScale { get; }
+
+            public Vector3 HingePivot { get; }
         }
 
         private readonly struct StageRendererCache
