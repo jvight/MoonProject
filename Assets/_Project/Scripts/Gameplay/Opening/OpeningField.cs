@@ -16,6 +16,9 @@ namespace MoonProject.Gameplay
     /// </summary>
     public sealed class OpeningField : IOpeningProgress, IDisposable
     {
+        /// <summary>The frame of World's service port on the lander, where the apron cable ends (B4's crate).</summary>
+        public const string LanderPortFrame = "lander.port";
+
         private const string CargoTargetPrefix = "Scan_";
 
         private readonly OpeningTuning _tuning;
@@ -30,15 +33,19 @@ namespace MoonProject.Gameplay
             new Dictionary<string, Transform>(StringComparer.Ordinal);
 
         /// <param name="ruins">The Lumen ruin pieces by name ([World]/Ruins/&lt;id&gt;): frames for their
-        /// crates.</param> <param name="crateReach">Metres within which an open crate still holding something gives the
-        /// rest.</param> <param name="kit">07's start kit: the spare igniter carried and fitted (B4, B6).</param>
+        /// crates.</param>
+        /// <param name="landerPort">World's service port on the lander ([World]/Lander/ServicePort): the open crate's
+        /// frame.</param>
+        /// <param name="crateReach">Metres within which an open crate still holding something gives the rest.</param>
+        /// <param name="kit">07's start kit: the spare igniter carried and fitted (B4, B6).</param>
         public OpeningField(OpeningTuning tuning, GameplayServices services, BuildField building, ISunlight sunlight,
-            SealedContainers containers, IReadOnlyList<Transform> ruins, Transform parent, float crateReach,
-            RoverStartKit kit)
+            SealedContainers containers, IReadOnlyList<Transform> ruins, Transform landerPort, Transform parent,
+            float crateReach, RoverStartKit kit)
         {
             _kit = kit ?? throw new ArgumentNullException(nameof(kit));
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
-            if (services == null || building == null || containers == null || ruins == null || parent == null)
+            if (services == null || building == null || containers == null || ruins == null || parent == null ||
+                landerPort == null)
             {
                 throw new ArgumentNullException(nameof(services), "The opening is missing an input.");
             }
@@ -53,12 +60,13 @@ namespace MoonProject.Gameplay
                 _frames[ruin.name] = ruin;
             }
 
+            _frames[LanderPortFrame] = landerPort;
+
             WorldAnchor lander = Anchor(services.Anchors, tuning.LanderAnchor);
             WorldAnchor apron = Anchor(services.Anchors, tuning.ApronAnchor);
             _lander = lander.Position;
             Port = new LanderPort(services.Events, tuning.ReserveCells);
             Pads = new PadChargers(building.PlacedBase, Port, apron.Position, tuning);
-            LanderCargo = CargoBay(lander, parent);
             Transform frames = new GameObject("OpeningFrames").transform;
             frames.SetParent(parent, false);
             for (int i = 0; i < services.Anchors.Count; i++)
@@ -67,8 +75,8 @@ namespace MoonProject.Gameplay
                 _frames[anchor.Id] = Frame(anchor, frames);
             }
 
-            Caches = new SupplyCaches(tuning.Caches, FrameOf, parent, services, containers, crateReach,
-                tuning.CollectReach);
+            Caches = new SupplyCaches(tuning, FrameOf, parent, services, containers, crateReach);
+            LanderCargo = CargoBay(Caches.RootOf(tuning.CargoCrate));
             Flow = new OpeningFlow(services.Events, this);
         }
 
@@ -80,7 +88,8 @@ namespace MoonProject.Gameplay
 
         public OpeningFlow Flow { get; }
 
-        /// <summary>The lander cargo bay's scan host: its Scan_1..N points (the charging pad's fragments).</summary>
+        /// <summary>The lander's cargo scan host, its open crate: Scan_1..N on what it holds (the pad's fragments).
+        /// </summary>
         public Transform LanderCargo { get; }
 
         public bool NightFallenSaved { get; private set; }
@@ -202,20 +211,18 @@ namespace MoonProject.Gameplay
             return frame;
         }
 
-        /// <summary>The cargo bay's Scan_1..N points in the lander anchor's frame.</summary>
-        private Transform CargoBay(WorldAnchor lander, Transform parent)
+        /// <summary>The cargo crate's Scan_1..N points in its own frame, on what it holds.</summary>
+        private Transform CargoBay(Transform crate)
         {
-            Transform bay = Frame(lander, parent);
-            bay.name = ScanTuning.LanderCargoId;
             for (int i = 0; i < _tuning.CargoScanPoints.Count; i++)
             {
                 Transform point = new GameObject(CargoTargetPrefix + (i + 1).ToString(CultureInfo.InvariantCulture))
                     .transform;
-                point.SetParent(bay, false);
+                point.SetParent(crate, false);
                 point.localPosition = _tuning.CargoScanPoints[i];
             }
 
-            return bay;
+            return crate;
         }
     }
 }
