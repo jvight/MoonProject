@@ -19,6 +19,6 @@ end in `RESULT: PASS`; paste the result lines into the merge report.
    owner's progress is never read or written.
 
 ## Playtesting a build
-- Builds land in `Builds/LofiLunar-<version>.zip`; `build_info.txt` next to the exe names the exact commit.
+- Builds land in `Builds/Lunarion-<version>-il2cpp.zip` (IL2CPP is the default backend; `--backend mono` gives `-mono`); `build_info.txt` next to the exe names the exact commit.
 - `LofiLunar.exe -saveSlot <name>` plays on a separate save (letters, digits, `-`, `_`); without it the game uses
   the owner's `main` slot.

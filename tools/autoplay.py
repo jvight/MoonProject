@@ -120,12 +120,15 @@ def main():
     ap.add_argument("--out", help="output folder (default Logs/autoplay/<timestamp>)")
     ap.add_argument("--timeout", type=int, default=1500, help="seconds the bot may play before it fails the run")
     ap.add_argument("--shot-seconds", type=int, default=20)
+    ap.add_argument("--backend", choices=("mono", "il2cpp"), default=build_player.DEFAULT_BACKEND,
+                    help="scripting backend of the --build player; the default is the one owner builds ship with")
     ap.add_argument("--visible", action="store_true", help="leave the window where the system puts it")
     args = ap.parse_args()
 
     root = build_player.git_toplevel()
     build_dir = (root / BUILD_DIR).resolve()
-    if args.build and not build_player.build(root, build_dir, False, build_player.BUILD_TIMEOUT, autoplay=True):
+    if args.build and not build_player.build(root, build_dir, False, build_player.BUILD_TIMEOUT, autoplay=True,
+                                               backend=args.backend):
         say("RESULT: FAIL (the autoplay build failed)")
         sys.exit(1)
     exe = Path(args.exe).resolve() if args.exe else None
