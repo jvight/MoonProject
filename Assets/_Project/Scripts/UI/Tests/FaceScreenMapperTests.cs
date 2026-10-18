@@ -206,6 +206,10 @@ namespace MoonProject.UI.Tests
                 IsOpen = open;
             }
 
+            public void SetReadout(Texture contentTexture)
+            {
+            }
+
             public bool TryRaycastScreenUv(Ray ray, out Vector2 meshUv)
             {
                 meshUv = Hit ? HitUv : Vector2.zero;

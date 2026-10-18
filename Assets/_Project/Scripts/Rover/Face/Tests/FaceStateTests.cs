@@ -28,6 +28,31 @@ namespace MoonProject.Rover.Face.Tests
         }
 
         [Test]
+        public void Readout_ShowsContentLitAtOnce_EvenWhileTheOpeningHoldsTheFaceDark_AndEndsBackInTheDark()
+        {
+            var state = new FaceState(_tuning, seed: 7);
+            state.SetDarkHold(true);
+            state.Step(1f / 60f);
+            Assert.AreEqual(0f, state.Brightness, 1e-5f, "the held face is dark");
+
+            state.SetReadout(true);
+            for (int i = 0; i < 30; i++)
+            {
+                state.Step(1f / 60f);
+            }
+
+            Assert.AreEqual(1f, state.ScreenContentMix, 1e-5f, "content, not eyes");
+            Assert.AreEqual(1f, state.BootProgress, 1e-5f);
+            Assert.Greater(state.Brightness, 0.5f, "lit through the dark hold");
+            Assert.AreEqual(0, state.ScreenOpenCount, "no channel-switch choreography");
+
+            state.SetReadout(false);
+            state.Step(1f / 60f);
+            Assert.AreEqual(0f, state.ScreenContentMix, 1e-5f);
+            Assert.AreEqual(0f, state.Brightness, 1e-5f, "back to the held dark");
+        }
+
+        [Test]
         public void Easing_ConvergesTowardEachFeeling_AndMatchesPrototypeSpecs()
         {
             var state = new FaceState(_tuning, seed: 42);
