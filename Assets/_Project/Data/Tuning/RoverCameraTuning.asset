@@ -69,6 +69,7 @@ MonoBehaviour:
   _framingYaw: 80
   _framingMinRadiusScale: 0.6
   _framingSearchSteps: 8
+  _framingLookShare: 0.6
   _framingBodyWidth: 1.47
   _framingBodyLength: 2
   _framingBodyHeight: 1.53
