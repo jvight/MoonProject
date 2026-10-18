@@ -142,12 +142,22 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
+        public void TheStepsVerbAtHand_ShowsTheLineWithoutWaitingFor07ToSettle_ButNotBeforeTheDelay()
+        {
+            _line.SetKey("next.v2.cut_optics");
+            Run(_settings.ObjectiveDelaySeconds - 0.3f, Driving, false, true);
+            Assert.IsFalse(_line.WantsShown, "a new step still waits its short delay");
+            Run(0.3f + Step, Driving, false, true);
+            Assert.IsTrue(_line.WantsShown, "07 nosing up to the step's target needs no stillness");
+        }
+
+        [Test]
         public void GuidanceSwitchedOff_ShowsNothing()
         {
             _line.SetKey("next.v2.build_pad");
             for (float t = 0f; t < 10f; t += Step)
             {
-                _line.Tick(Step, Still, false, false);
+                _line.Tick(Step, Still, false, false, false);
             }
 
             Assert.IsFalse(_line.WantsShown);
@@ -173,11 +183,11 @@ namespace MoonProject.UI.Tests
             Assert.IsFalse(_line.Bright);
         }
 
-        private void Run(float seconds, float speed, bool showing = false)
+        private void Run(float seconds, float speed, bool showing = false, bool verbAtHand = false)
         {
             for (float t = 0f; t < seconds; t += Step)
             {
-                _line.Tick(Step, speed, true, showing);
+                _line.Tick(Step, speed, true, showing, verbAtHand);
             }
         }
 

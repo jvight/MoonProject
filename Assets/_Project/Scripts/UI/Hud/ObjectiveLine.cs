@@ -12,8 +12,9 @@ namespace MoonProject.UI
 
     /// <summary>
     /// The objective line's rule (docs/design/opening-v2.md §3; pure, EditMode-tested). Gameplay names the current step
-    /// as a localization key (empty: no line). The line comes 1.5 s after the step began and 07 has been still for 1 s,
-    /// rests bright for 8 s, then dims to a small line; it clears the moment the step changes (its step was done) and
+    /// as a localization key (empty: no line). The line comes 1.5 s after the step began and 07 has been still for 1 s
+    /// (at once, without the stillness, when the step's own verb has its target in front of 07: its key chip must not
+    /// wait while 07 settles at the seal), rests bright for 8 s, then dims to a small line; it clears the moment the step changes (its step was done) and
     /// re-brightens only when 07 has been still for 4 s and 90 s passed without progress. Each step's line is bright
     /// once per save: a step already shown in this save (a loaded game) shows its line dimmed.
     /// </summary>
@@ -76,7 +77,8 @@ namespace MoonProject.UI
         /// <param name="speed">07's speed, m/s.</param>
         /// <param name="enabled">The player's Guidance setting.</param>
         /// <param name="showing">The line is on screen now: the bright rest counts only then.</param>
-        public void Tick(float deltaTime, float speed, bool enabled, bool showing)
+        /// <param name="verbAtHand">The step's verb has its target in front of 07 now (it needs no settling).</param>
+        public void Tick(float deltaTime, float speed, bool enabled, bool showing, bool verbAtHand)
         {
             _still = speed < _settings.StillSpeed ? _still + deltaTime : 0f;
             _sinceKey += deltaTime;
@@ -90,7 +92,8 @@ namespace MoonProject.UI
             switch (_phase)
             {
                 case Phase.Waiting:
-                    if (_sinceKey >= _settings.ObjectiveDelaySeconds && _still >= _settings.ObjectiveStillSeconds)
+                    if (_sinceKey >= _settings.ObjectiveDelaySeconds &&
+                        (_still >= _settings.ObjectiveStillSeconds || verbAtHand))
                     {
                         _phase = _memory.Has(Key) ? Phase.Dim : Phase.Bright;
                         _memory.Add(Key);

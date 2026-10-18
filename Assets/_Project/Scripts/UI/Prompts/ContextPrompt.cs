@@ -130,6 +130,12 @@ namespace MoonProject.UI
             }
 
             _reveal.Tick(deltaTime);
+            if (entry == null && _reveal.IsHidden && _word.text.Length > 0)
+            {
+                // A hidden chip holds no words: nothing reads a stale prompt (the last one shown, out of its context).
+                _word.text = string.Empty;
+                _glyph.Set(string.Empty, device);
+            }
         }
 
         /// <summary>Eases the prompt up (or down) off any card it would sit over, and back when the card goes.</summary>

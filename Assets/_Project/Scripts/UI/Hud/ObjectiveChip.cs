@@ -57,6 +57,15 @@ namespace MoonProject.UI
             }
         }
 
+        /// <summary>
+        /// True while the step's verb has its target in front of 07 (<paramref name="primary"/> is that verb's kind,
+        /// ready or not): the line and this chip come without waiting for 07 to settle.
+        /// </summary>
+        public bool AtHand(InteractionKind primary)
+        {
+            return primary != InteractionKind.None && primary == KindOf(_verb);
+        }
+
         /// <summary>The interaction that offers <paramref name="verb"/> in the world (None for a verb on 07's screen).</summary>
         private static InteractionKind KindOf(ObjectiveVerb verb)
         {
