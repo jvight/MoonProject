@@ -61,6 +61,11 @@ namespace MoonProject.World.Editor
         // Art's retroreflector: the panel (housing and prism array) turns on its hinge on the stand.
         private const string ReflectorName = "Prop_Retroreflector";
         private const string ReflectorHousing = "PanelHousing";
+        private const string ReflectorPrisms = "PrismArray";
+
+        // Facets facing within about 1 / this of one another (unit-vector steps, ~3 degrees) mirror as one: a corner
+        // cube array repeats a few exact facings, and a smooth facet mirrors only within a degree or two of its own.
+        private const float FacetGroups = 20f;
         private static readonly string[] ReflectorPanel = { "PanelHousing", "PrismArray" };
 
         // Art's bootprint tile: its trail runs from Start_Anchor to End_Anchor.
@@ -187,19 +192,77 @@ namespace MoonProject.World.Editor
         }
 
         /// <summary>
-        /// Turns the retroreflector's panel on its hinge so its face lies halfway between <paramref name="toSun"/> and
-        /// the way to <paramref name="eye"/>: the Sun's mirror lands on the eye.
+        /// Turns the retroreflector's panel on its hinge so one of its prism facets lies halfway between
+        /// <paramref name="toSun"/> and the way to <paramref name="eye"/>: the Sun's mirror in that facet lands on the
+        /// eye. The facet set chosen is the one the panel turns least to aim, of those on its front.
         /// </summary>
         private static void AimReflector(GameObject reflector, Vector3 toSun, Vector3 eye)
         {
             Transform hinge = Node(reflector, ReflectorHousing);
-            Vector3 face = UpwardFace(hinge.GetComponent<MeshFilter>());
-            Vector3 aim = (toSun.normalized + (eye - hinge.position).normalized).normalized;
-            Quaternion.FromToRotation(face, aim).ToAngleAxis(out float angle, out Vector3 axis);
+            Vector3 front = UpwardFace(hinge.GetComponent<MeshFilter>());
+            Transform prisms = Node(reflector, ReflectorPrisms);
+            Vector3 aim = (toSun.normalized + (eye - prisms.position).normalized).normalized;
+            Vector3 facet = NearestFacet(prisms.GetComponent<MeshFilter>(), front, aim);
+            Quaternion.FromToRotation(facet, aim).ToAngleAxis(out float angle, out Vector3 axis);
             foreach (string part in ReflectorPanel)
             {
                 Node(reflector, part).RotateAround(hinge.position, axis, angle);
             }
+        }
+
+        /// <summary>
+        /// Of a prism array's facets on its <paramref name="front"/> (world space), grouped by the way they face, the
+        /// group's mean facing nearest <paramref name="aim"/>.
+        /// </summary>
+        private static Vector3 NearestFacet(MeshFilter filter, Vector3 front, Vector3 aim)
+        {
+            Mesh mesh = filter != null ? filter.sharedMesh : null;
+            if (mesh == null)
+            {
+                throw new InvalidOperationException("The retroreflector's prism array has no mesh (Art's R1 contract).");
+            }
+
+            // The facets shade by their vertex normals, so they mirror the way those face; each counts by its area.
+            Vector3[] vertices = mesh.vertices;
+            Vector3[] normals = mesh.normals;
+            int[] triangles = mesh.triangles;
+            Transform node = filter.transform;
+            var groups = new Dictionary<Vector3Int, Vector3>();
+            for (int i = 0; i < triangles.Length; i += 3)
+            {
+                Vector3 a = node.TransformPoint(vertices[triangles[i]]);
+                float area = Vector3.Cross(node.TransformPoint(vertices[triangles[i + 1]]) - a,
+                    node.TransformPoint(vertices[triangles[i + 2]]) - a).magnitude;
+                Vector3 facing = node.TransformDirection(normals[triangles[i]] + normals[triangles[i + 1]]
+                                                         + normals[triangles[i + 2]]).normalized;
+                Vector3 normal = facing * area;
+                if (Vector3.Dot(facing, front) <= 0f)
+                {
+                    continue;
+                }
+
+                var key = Vector3Int.RoundToInt(facing * FacetGroups);
+                groups[key] = groups.TryGetValue(key, out Vector3 sum) ? sum + normal : normal;
+            }
+
+            if (groups.Count == 0)
+            {
+                throw new InvalidOperationException("The retroreflector's prism array has no facet on its front.");
+            }
+
+            Vector3 best = front;
+            float nearest = float.MaxValue;
+            foreach (Vector3 sum in groups.Values)
+            {
+                float angle = Vector3.Angle(sum, aim);
+                if (angle < nearest)
+                {
+                    nearest = angle;
+                    best = sum.normalized;
+                }
+            }
+
+            return best;
         }
 
         /// <summary>The way a mesh's upward faces look, area-weighted (world space): a panel's face.</summary>

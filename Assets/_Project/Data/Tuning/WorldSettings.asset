@@ -585,9 +585,9 @@ MonoBehaviour:
       _offset: {x: -13.6, y: 3}
       _yaw: 218
       _sink: 0.05
-    - _anchor: place.ruins
+    - _anchor: place.lander
       _id: Prop_Retroreflector
-      _offset: {x: -14.1, y: -8}
+      _offset: {x: 17.85, y: 0.18}
       _yaw: 112
       _sink: 0.03
     - _anchor: place.ruins
@@ -606,7 +606,7 @@ MonoBehaviour:
     _bootprintTrail:
     - {x: 27, y: 147}
     - {x: 42.7, y: 148.6}
-    - {x: 80, y: 182}
+    - {x: 79.5, y: 185.5}
     _bootprintWander: 0.3
     _signalPillarSetback: 18
     _signalPillarGlow: 3.5

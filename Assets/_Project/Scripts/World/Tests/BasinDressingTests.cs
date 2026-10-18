@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
+using MoonProject.Core;
 
 namespace MoonProject.World.Tests
 {
@@ -21,6 +22,12 @@ namespace MoonProject.World.Tests
         // many metres of the front door between the flag and the retroreflector.
         private const float ApronEdge = 2f;
         private const float FrontDoorReach = 6f;
+
+        // The retroreflector stands within this many metres of trail A, its panel this high, and the Sun must clear
+        // the ground toward it, sampled this often (basin dressing §7).
+        private const float TrailSide = 2f;
+        private const float ReflectorPanelHeight = 0.3f;
+        private const float SunStep = 2.5f;
 
         // On the first night Earth must clear the rim over the Scout and light the side the base sees (within this
         // many degrees of the line of sight), so its pale shape reads from the apron (§2, the night lure).
@@ -128,21 +135,53 @@ namespace MoonProject.World.Tests
                 Assert.Greater(off, shaping.Lander.Radius, $"leg {i} keeps off the lander's footprint");
             }
 
-            Vector2 ruins = shaping.Ruins.Center;
-            Vector2 flag = ruins + Trace(landmarks, "Prop_MissionFlag");
-            Vector2 reflector = ruins + Trace(landmarks, "Prop_Retroreflector");
-            Vector2 door = (flag + reflector) * 0.5f;
-            Assert.Less(Vector2.Distance(trail[trail.Length - 1], door), FrontDoorReach,
-                "the trail ends between the flag and the retroreflector");
+            Vector2 flag = Trace(landmarks, "Prop_MissionFlag");
+            Assert.Less(Vector2.Distance(trail[trail.Length - 1], flag), FrontDoorReach,
+                "the trail ends at the front door, by the flag");
         }
 
-        private static Vector2 Trace(LandmarkSettings landmarks, string id)
+        [Test]
+        public void AtGoldenHour_TheRetroreflectorStandsInTheSun_BesideTrailA()
+        {
+            var landmarks = new LandmarkSettings();
+            Vector2 reflector = Trace(landmarks, "Prop_Retroreflector");
+            Vector2[] trail = landmarks.BootprintTrail;
+            float off = float.MaxValue;
+            for (int i = 1; i < trail.Length; i++)
+            {
+                Vector2 leg = trail[i] - trail[i - 1];
+                float along = Mathf.Clamp01(Vector2.Dot(reflector - trail[i - 1], leg) / leg.sqrMagnitude);
+                off = Mathf.Min(off, Vector2.Distance(reflector, trail[i - 1] + leg * along));
+            }
+
+            _clock.SetTime(_pacing.GoldenHourTime);
+            Vector2 toSun = MoonSurface.BearingToDirection(_clock.Bearing);
+            float panel = _surface.SampleHeight(reflector.x, reflector.y) + ReflectorPanelHeight;
+            float horizon = -90f;
+            for (float d = SunStep; d <= HorizonReach; d += SunStep)
+            {
+                Vector2 at = reflector + toSun * d;
+                horizon = Mathf.Max(horizon, Mathf.Atan2(_surface.SampleHeight(at.x, at.y) - panel, d) * Mathf.Rad2Deg);
+            }
+
+            TestContext.WriteLine($"the retroreflector at {reflector} stands {off:F1} m off trail A, under a " +
+                                  $"{horizon:F2} deg horizon toward the {_clock.Elevation:F2} deg golden-hour Sun");
+            Assert.Less(off, TrailSide, "the retroreflector stands beside trail A");
+            Assert.Less(horizon, _clock.Elevation, "the golden-hour Sun clears The Peak over the retroreflector");
+        }
+
+        /// <summary>A crew trace's world XZ from its anchor's place (the ruins' or the lander's centre).</summary>
+        private Vector2 Trace(LandmarkSettings landmarks, string id)
         {
             foreach (PropPlacement placement in landmarks.CrewTraces)
             {
                 if (placement.Id == id)
                 {
-                    return placement.Offset;
+                    GroundShaping shaping = _surface.Shaping;
+                    Vector2 near = placement.Anchor == WorldAnchorIds.PlaceLander ? shaping.Lander.Center
+                        : placement.Anchor == WorldAnchorIds.PlaceRuins ? shaping.Ruins.Center
+                        : throw new AssertionException($"{id} stands by an anchor this test does not know");
+                    return near + placement.Offset;
                 }
             }
 
