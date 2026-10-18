@@ -445,9 +445,13 @@ half4 CrtFacePassFragment(Varyings input) : SV_Target
         float2 contentUv = saturate(deflectedUv);
         half4 contentSample = SAMPLE_TEXTURE2D_LOD(_ContentTex, sampler_ContentTex, contentUv, 0.0) * (half)inDeflectedBounds;
 
-        float2 texelSize = _ContentTex_TexelSize.x > 0.0 ? _ContentTex_TexelSize.xy : CONTENT_FALLBACK_TEXEL_SIZE;
-        float2 tentOffset = texelSize * (glowRadius * CONTENT_TENT_RADIUS_SCALE);
-        float tightMip = max((float)_ContentGlowMip, 0.5);
+        // The halation was tuned against the 1152 x 768 layout. The content texture may be sharper than that (the UI
+        // renders it at twice the layout so text and line art stay crisp on a big screen), so the halo keeps its
+        // radius in UV and its blur by sampling that many mip levels deeper; the stroke itself is read at mip 0.
+        float2 tentOffset = CONTENT_FALLBACK_TEXEL_SIZE * (glowRadius * CONTENT_TENT_RADIUS_SCALE);
+        float sharpnessMips = _ContentTex_TexelSize.z > 0.0
+            ? log2(max(_ContentTex_TexelSize.z * CONTENT_FALLBACK_TEXEL_SIZE.x, 1.0)) : 0.0;
+        float tightMip = max((float)_ContentGlowMip, 0.5) + sharpnessMips;
         half3 tightGlow = (
             SAMPLE_TEXTURE2D_LOD(_ContentTex, sampler_ContentTex, saturate(contentUv + float2( tentOffset.x,  tentOffset.y)), tightMip).rgb +
             SAMPLE_TEXTURE2D_LOD(_ContentTex, sampler_ContentTex, saturate(contentUv + float2(-tentOffset.x,  tentOffset.y)), tightMip).rgb +
