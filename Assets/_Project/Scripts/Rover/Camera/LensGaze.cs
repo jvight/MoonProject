@@ -5,9 +5,8 @@ namespace MoonProject.Rover
 {
     /// <summary>
     /// Where 07's eye looks during the opening (docs/design/cutscenes.md §1.3), as yaw and pitch in degrees from its
-    /// heading. The aim is set by the script or nudged by the player's look; the gaze follows it on a low, critically
-    /// damped spring, an old neck. Both stay inside soft limits: the player's look meets more and more resistance in
-    /// the last stretch before a limit and stops at it.
+    /// heading. The aim is set by the script; the gaze follows it on a low, critically damped spring, an old neck, and stays
+    /// inside its limits.
     /// </summary>
     public sealed class LensGaze
     {
@@ -44,26 +43,11 @@ namespace MoonProject.Rover
             AimPitch = ClampPitch(pitch);
         }
 
-        /// <summary>The player's look this frame (deg), resisted near the limits.</summary>
-        public void Steer(Vector2 look)
-        {
-            float share = _settings.LookShare;
-            AimYaw = ClampYaw(AimYaw + Resist(look.x * share, AimYaw, -_settings.YawLimit, _settings.YawLimit));
-            AimPitch = ClampPitch(AimPitch + Resist(look.y * share, AimPitch, _settings.PitchDownLimit,
-                _settings.PitchUpLimit));
-        }
-
         public void Step(float deltaTime)
         {
             float frequency = _settings.NeckFrequency;
             _yaw.Step(AimYaw, frequency, 1f, deltaTime);
             _pitch.Step(AimPitch, frequency, 1f, deltaTime);
-        }
-
-        /// <summary>Angle (deg) between the gaze and the direction at (<paramref name="yaw"/>, <paramref name="pitch"/>).</summary>
-        public float AngleTo(float yaw, float pitch)
-        {
-            return Vector3.Angle(Direction(Yaw, Pitch), Direction(yaw, pitch));
         }
 
         /// <summary>Unit direction in 07's heading frame (+Z ahead) for a yaw and pitch in degrees.</summary>
@@ -77,13 +61,6 @@ namespace MoonProject.Rover
         {
             float flat = Mathf.Sqrt(local.x * local.x + local.z * local.z);
             return new Vector2(Mathf.Atan2(local.x, local.z) * Mathf.Rad2Deg, Mathf.Atan2(local.y, flat) * Mathf.Rad2Deg);
-        }
-
-        private float Resist(float delta, float value, float min, float max)
-        {
-            float room = delta > 0f ? max - value : value - min;
-            float give = Mathf.Clamp01(room / Mathf.Max(_settings.SoftZone, 1e-3f));
-            return delta * give * give;
         }
 
         private float ClampYaw(float yaw)

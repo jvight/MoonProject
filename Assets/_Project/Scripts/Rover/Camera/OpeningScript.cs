@@ -5,32 +5,25 @@ using MoonProject.Core;
 namespace MoonProject.Rover
 {
     /// <summary>
-    /// The opening's conductor (docs/design/cutscenes.md §1), plain C# so every rule is testable: it walks the
-    /// storyboard's rows O1-O13 and works out, each frame, how open 07's lid is, where the lens focuses, how the old
-    /// electronics flicker, where the dust speck sits, where 07 looks (<see cref="LensGaze"/>), how asleep its body
-    /// still is and when its head tilts. The beats it reaches queue up for <see cref="TryTakeBeat"/>.
+    /// The New Game wake as 07's power-on self-test, plain C# so every rule is testable. It walks the lens stages
+    /// (black, the lid's slit, half open, the focus hunt), the camera's pull-out to the three-quarter front shot, the
+    /// checks of <see cref="PostSequencer"/> and the release toward the chase frame, and works out each frame how open
+    /// 07's lid is, where the lens focuses, where the dust speck sits, where 07 looks (<see cref="LensGaze"/>) and how
+    /// asleep its body still is. The beats it reaches queue up for <see cref="TryTakeBeat"/>; the lines of the test
+    /// (carrier, resume and agenda during the lens stages, then each check) queue up for
+    /// <see cref="TryTakePostEvent"/>.
     /// <list type="bullet">
-    /// <item>Look input from O3 on steers the gaze; the scripted attention pauses and resumes a moment after the
-    /// last look, from the next target not yet seen. Holding Earth in view on one's own skips ahead to O9.</item>
-    /// <item>Drive input hurries: inside the lens the remaining lid and focus stages compress, then the camera goes
-    /// straight to the chase frame; later it eases out at once. The blink always happens, and control is held only
-    /// while 07 is still inside the lens (<see cref="ControlHeld"/>), at most the hurried lid's length after the
-    /// first drive input.</item>
+    /// <item>Not skippable: only time moves it, and 07 is held (<see cref="ControlHeld"/>) until the chase frame.</item>
     /// <item>Continue plays the short wake instead: the lid opens in one move with one blink, then a glance at
     /// Earth that never holds control.</item>
     /// </list>
-    /// The camera moves themselves (the lens camera, the rig's lens shot and its turn) are the adapter's; this says
-    /// when (<see cref="PullOut01"/>, <see cref="WantsRigEase"/>).
+    /// The camera moves themselves (the lens camera, the rig's wake shot and its turn) are the adapter's; this says
+    /// when (<see cref="WantsRigEase"/>).
     /// </summary>
     public sealed class OpeningScript
     {
         private const int BeatCapacity = 8;
-        private const float LookEpsilon = 1e-4f;
-        private const int Home = 0;
-        private const int Pilot = 1;
-        private const int Peak = 2;
-        private const int Earth = 3;
-        private const int TargetCount = 4;
+        private const int PostEventCapacity = 32;
 
         /// <summary>Share of the blink spent closing; the rest opens again, slower.</summary>
         private const float BlinkCloseShare = 0.4f;
@@ -39,38 +32,35 @@ namespace MoonProject.Rover
         private const float HuntNearAt = 0.35f;
         private const float HuntFarAt = 0.7f;
 
-        /// <summary>The hurried speck slides out this many times faster.</summary>
-        private const float HurriedSpeckRate = 4f;
-
         private readonly RoverCameraTuning _tuning;
         private readonly OpeningSettings _settings;
         private readonly LensGaze _gaze;
+        private readonly PostSequencer _post;
         private readonly WakeBeat[] _beats = new WakeBeat[BeatCapacity];
-        private readonly Vector2[] _targets = new Vector2[TargetCount];
-        private readonly bool[] _seen = new bool[TargetCount];
+        private readonly PostEvent[] _postEvents = new PostEvent[PostEventCapacity];
         private int _beatHead;
         private int _beatCount;
+        private int _postHead;
+        private int _postCount;
         private float _phaseTime;
         private float _phaseLength;
         private float _lidStart;
         private float _focusStart;
         private float _sleepStart;
-        private float _sinceLook;
-        private float _earthHeld;
         private float _speckClock;
         private float _speckSpan;
         private float _blinkClock;
-        private float _tiltClock;
         private float _readoutClock;
         private float _glanceClock;
+        private Vector2 _earth;
         private bool _blinked;
-        private bool _farFocusLanded;
 
         public OpeningScript(RoverCameraTuning tuning)
         {
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
             _settings = tuning.Opening;
             _gaze = new LensGaze(_settings);
+            _post = new PostSequencer(_settings.Post);
             Reset();
         }
 
@@ -78,9 +68,6 @@ namespace MoonProject.Rover
 
         /// <summary>True from a begin until the chase frame (the short wake's glance may run on after it).</summary>
         public bool IsRunning => Phase != OpeningPhase.Idle;
-
-        /// <summary>True once the player's drive input hurried the wake.</summary>
-        public bool Hurried { get; private set; }
 
         /// <summary>Seconds since the opening (or the short wake) began, the fade to black included.</summary>
         public float Elapsed { get; private set; }
@@ -91,18 +78,26 @@ namespace MoonProject.Rover
 
         public LensGaze Gaze => _gaze;
 
+        /// <summary>The check under way while <see cref="OpeningPhase.Post"/> runs.</summary>
+        public BootCheckStep PostStep => _post.Current;
+
+        /// <summary>How far through the current check, 0..1.</summary>
+        public float PostProgress01 => _post.StepProgress01;
+
         /// <summary>The lens view's openness: 07's lid inside the lens, the picture fading to black before O1.</summary>
         public float Lid01 { get; private set; }
 
         public float FocusDistance { get; private set; }
 
-        public float Flicker01 { get; private set; }
+        /// <summary>The old electronics' exposure dip; the self-test has none.</summary>
+        public float Flicker01 => 0f;
 
-        public float Warmth01 { get; private set; }
+        /// <summary>The brief warm tint; the self-test has none.</summary>
+        public float Warmth01 => 0f;
 
         public Vector2 SpeckOffset { get; private set; }
 
-        /// <summary>07's boot readout in the lens (O5 into O6), 0..1; never when hurried.</summary>
+        /// <summary>07's boot readout in the lens (O4), 0..1.</summary>
         public float Readout01 { get; private set; }
 
         /// <summary>The state to hand <see cref="ILensView"/> while <see cref="LensActive"/>.</summary>
@@ -112,56 +107,41 @@ namespace MoonProject.Rover
         /// <summary>True while the picture is seen through 07's eye (the lens view applies).</summary>
         public bool LensActive { get; private set; }
 
-        /// <summary>True while the camera sits at the lens socket (O1-O9 and the hurried lid).</summary>
-        public bool InLens => Phase >= OpeningPhase.Crackle && Phase <= OpeningPhase.HurryLid;
+        /// <summary>True while the camera sits at the lens socket (O1-O4).</summary>
+        public bool InLens => Phase >= OpeningPhase.Crackle && Phase <= OpeningPhase.Hunt;
 
-        /// <summary>The camera's way out of the lens, 0..1 eased (O10).</summary>
-        public float PullOut01 => Phase == OpeningPhase.PullOut ? Smoothing.SmoothStep(0f, _phaseLength, _phaseTime) : 0f;
-
-        /// <summary>The rig's lens shot should ease out to the chase frame now (O13, or a hurry after the lens).</summary>
+        /// <summary>The rig's wake shot should ease out to the chase frame now.</summary>
         public bool WantsRigEase { get; private set; }
 
         /// <summary>07's body: 1 asleep (head bowed, eye dark) .. 0 awake.</summary>
         public float Sleep { get; private set; }
 
         /// <summary>
-        /// 07's own lid openness, and how much the wake holds it: shut while the picture fades; fully open while the camera
-        /// is inside the lens, where the lens view draws the lid and the real brow-shutter would cover the camera.
+        /// 07's own lid openness, and how much the wake holds it: shut while the picture fades; fully open while the
+        /// camera is inside the lens, where the lens view draws the lid and the real brow-shutter would cover the camera.
         /// </summary>
         public float BodyLid => Phase == OpeningPhase.FadeOut ? 0f : InLens ? 1f : Lid01;
         public float BodyLidWeight { get; private set; }
 
-        /// <summary>The O11 head tilt (deg); it eases back out even after the chase frame.</summary>
-        public float HeadTilt { get; private set; }
-
-        /// <summary>The head tilt is still easing in, holding or easing out.</summary>
-        public bool TiltActive => _tiltClock >= 0f && _tiltClock < TiltSeconds;
-
-        /// <summary>07's head should follow the gaze (inside the lens, and up at Earth until the turn).</summary>
+        /// <summary>07's head should follow the gaze (inside the lens, and during the pull-out and the checks).</summary>
         public bool GazeHeld { get; private set; }
 
         /// <summary>The short wake's glance at Earth is on.</summary>
         public bool GlancingEarth => _glanceClock >= 0f && _glanceClock < _settings.ShortGlanceSeconds;
 
         /// <summary>
-        /// Control is held: while the picture fades, inside the lens (the hurried lid included) and during the short wake's
-        /// lid. Drive input inside the lens leaves at most the hurried lid's length.
+        /// Control is held from the fade to black until the camera begins to settle into the chase frame (and through
+        /// the short wake): the self-test cannot be skipped.
         /// </summary>
-        public bool ControlHeld => Phase == OpeningPhase.FadeOut || InLens || Phase == OpeningPhase.ShortWake;
+        public bool ControlHeld => Phase != OpeningPhase.Idle && Phase != OpeningPhase.ChaseEase;
 
-        /// <summary>
-        /// Where the gaze targets are, as (yaw, pitch) deg from 07's heading at its lens: the lander, the tower's
-        /// pilot, The Peak's beacon and Earth.
-        /// </summary>
-        public void SetTargets(Vector2 home, Vector2 pilot, Vector2 peak, Vector2 earth)
+        /// <summary>Where Earth is as (yaw, pitch) deg from 07's heading at its lens: the head looks there from the pull-out on.</summary>
+        public void SetEarthTarget(Vector2 earth)
         {
-            _targets[Home] = home;
-            _targets[Pilot] = pilot;
-            _targets[Peak] = peak;
-            _targets[Earth] = earth;
+            _earth = earth;
         }
 
-        /// <summary>A fresh game: the full opening, from the fade to black when the title was showing.</summary>
+        /// <summary>A fresh game: the full self-test, from the fade to black when the title was showing.</summary>
         public void BeginFull(bool fromTitle)
         {
             Reset();
@@ -199,9 +179,22 @@ namespace MoonProject.Rover
             return true;
         }
 
-        /// <param name="look">The player's look this frame (deg).</param>
-        /// <param name="drive">The player is giving drive input.</param>
-        public void Step(float deltaTime, Vector2 look, bool drive)
+        /// <summary>Takes the oldest line of the self-test reached and not yet taken.</summary>
+        public bool TryTakePostEvent(out PostEvent postEvent)
+        {
+            if (_postCount == 0)
+            {
+                postEvent = default;
+                return false;
+            }
+
+            postEvent = _postEvents[_postHead];
+            _postHead = (_postHead + 1) % PostEventCapacity;
+            _postCount--;
+            return true;
+        }
+
+        public void Step(float deltaTime)
         {
             if (deltaTime <= 0f)
             {
@@ -215,51 +208,20 @@ namespace MoonProject.Rover
 
             if (Phase == OpeningPhase.Idle)
             {
-                StepClocks(deltaTime);
-                HeadTilt = Tilt();
                 return;
             }
 
             Elapsed += deltaTime;
-            if (drive)
-            {
-                Hurry();
-            }
-
-            bool steering = AcceptsLook && look.sqrMagnitude > LookEpsilon * LookEpsilon;
-            bool wasPaused = _sinceLook < _settings.AttentionResume;
-            if (steering)
-            {
-                _gaze.Steer(look);
-                _sinceLook = 0f;
-            }
-            else
-            {
-                _sinceLook += deltaTime;
-            }
-
-            bool paused = _sinceLook < _settings.AttentionResume;
-            bool gazing = IsGazePhase(Phase);
-            if (!(gazing && paused))
-            {
-                _phaseTime += deltaTime;
-            }
-
-            TrackSeen(paused);
-            if (gazing && wasPaused && !paused)
-            {
-                ResumeAttention();
-            }
-
-            CheckEarthFound(paused, deltaTime);
-            if (!paused || !AcceptsLook)
-            {
-                AimScripted();
-            }
-
+            _phaseTime += deltaTime;
+            AimScripted();
             _gaze.Step(deltaTime);
             StepClocks(deltaTime);
-            while (Phase != OpeningPhase.Idle && _phaseTime >= _phaseLength)
+            if (Phase == OpeningPhase.Post)
+            {
+                StepPost(deltaTime);
+            }
+
+            while (Phase != OpeningPhase.Idle && Phase != OpeningPhase.Post && _phaseTime >= _phaseLength)
             {
                 Advance();
             }
@@ -267,47 +229,28 @@ namespace MoonProject.Rover
             Evaluate();
         }
 
-        private bool AcceptsLook => Phase >= OpeningPhase.LidHalf && Phase <= OpeningPhase.GazeEarth;
-
-        private static bool IsGazePhase(OpeningPhase phase)
-        {
-            return phase >= OpeningPhase.GazeHome && phase <= OpeningPhase.GazeEarth;
-        }
-
         private void Reset()
         {
             Phase = OpeningPhase.Idle;
-            Hurried = false;
             Elapsed = 0f;
             _beatHead = 0;
             _beatCount = 0;
+            _postHead = 0;
+            _postCount = 0;
             _phaseTime = 0f;
             _phaseLength = 0f;
-            _sinceLook = float.MaxValue;
-            _earthHeld = 0f;
             _speckClock = -1f;
             _blinkClock = -1f;
-            _tiltClock = -1f;
             _readoutClock = -1f;
             _glanceClock = -1f;
             _blinked = false;
-            _farFocusLanded = false;
             WantsRigEase = false;
-            for (int i = 0; i < TargetCount; i++)
-            {
-                _seen[i] = false;
-            }
-
-            _speckSpan = _settings.HuntSeconds + _settings.FlickerSeconds + _settings.GazeHomeSeconds
-                + _settings.GazePilotSeconds + _settings.GazePeakSeconds + _settings.GazeEarthSeconds;
+            _speckSpan = _settings.HuntSeconds + _settings.PullOutSeconds;
             Lid01 = 0f;
             FocusDistance = _settings.FocusBlur;
-            Flicker01 = 0f;
-            Warmth01 = 0f;
             SpeckOffset = _settings.SpeckStart;
             Sleep = 1f;
             BodyLidWeight = 0f;
-            HeadTilt = 0f;
             GazeHeld = false;
             LensActive = false;
         }
@@ -324,6 +267,18 @@ namespace MoonProject.Rover
             _beatCount++;
         }
 
+        private void PublishPost(PostEventKind kind, BootCheckStep step, BootCheckResult result)
+        {
+            if (_postCount == PostEventCapacity)
+            {
+                _postHead = (_postHead + 1) % PostEventCapacity;
+                _postCount--;
+            }
+
+            _postEvents[(_postHead + _postCount) % PostEventCapacity] = new PostEvent(kind, step, result);
+            _postCount++;
+        }
+
         private void Enter(OpeningPhase phase)
         {
             Phase = phase;
@@ -336,44 +291,29 @@ namespace MoonProject.Rover
             {
                 case OpeningPhase.Crackle:
                     Publish(WakeBeat.Crackle);
+                    PublishPost(PostEventKind.Started, BootCheckStep.Carrier, BootCheckResult.Info);
                     break;
                 case OpeningPhase.LidCrack:
                     Publish(WakeBeat.LidCracked);
+                    PublishPost(PostEventKind.Started, BootCheckStep.Resume, BootCheckResult.Info);
                     break;
                 case OpeningPhase.LidHalf:
                     Publish(WakeBeat.LidHalf);
                     break;
                 case OpeningPhase.Hunt:
                     _speckClock = 0f;
-                    Publish(WakeBeat.FocusHunting);
-                    break;
-                case OpeningPhase.Flicker:
                     _readoutClock = 0f;
-                    Publish(WakeBeat.FocusSettled);
-                    Publish(WakeBeat.Flicker);
-                    break;
-                case OpeningPhase.GazeHome:
-                    _seen[Home] = true;
-                    Publish(WakeBeat.GazeHome);
-                    break;
-                case OpeningPhase.GazePilot:
-                    _seen[Pilot] = true;
-                    Publish(WakeBeat.GazePilot);
-                    break;
-                case OpeningPhase.GazePeak:
-                    _seen[Peak] = true;
-                    _farFocusLanded = false;
-                    Publish(WakeBeat.GazePeak);
-                    break;
-                case OpeningPhase.GazeEarth:
-                    _seen[Earth] = true;
-                    Publish(WakeBeat.GazeEarth);
+                    Publish(WakeBeat.FocusHunting);
+                    PublishPost(PostEventKind.Started, BootCheckStep.Agenda, BootCheckResult.Info);
                     break;
                 case OpeningPhase.PullOut:
+                    Publish(WakeBeat.FocusSettled);
                     Publish(WakeBeat.PullingOut);
                     break;
-                case OpeningPhase.BlinkShot:
+                case OpeningPhase.Post:
                     Publish(WakeBeat.PulledOut);
+                    _post.Begin();
+                    DrainPost();
                     break;
                 case OpeningPhase.OverShoulder:
                     Publish(WakeBeat.OverShoulder);
@@ -396,14 +336,8 @@ namespace MoonProject.Rover
                 case OpeningPhase.LidCrack: return _settings.LidCrackSeconds;
                 case OpeningPhase.LidHalf: return _settings.LidHalfSeconds;
                 case OpeningPhase.Hunt: return _settings.HuntSeconds;
-                case OpeningPhase.Flicker: return _settings.FlickerSeconds;
-                case OpeningPhase.GazeHome: return _settings.GazeHomeSeconds;
-                case OpeningPhase.GazePilot: return _settings.GazePilotSeconds;
-                case OpeningPhase.GazePeak: return _settings.GazePeakSeconds;
-                case OpeningPhase.GazeEarth: return _settings.GazeEarthSeconds;
-                case OpeningPhase.HurryLid: return _settings.HurryLidSeconds;
-                case OpeningPhase.PullOut: return Hurried ? _settings.HurryPullOutSeconds : _settings.PullOutSeconds;
-                case OpeningPhase.BlinkShot: return _settings.BlinkShotSeconds;
+                case OpeningPhase.PullOut: return _settings.PullOutSeconds;
+                case OpeningPhase.Post: return _post.TotalSeconds;
                 case OpeningPhase.OverShoulder: return _settings.OverShoulderSeconds;
                 case OpeningPhase.ChaseEase: return _tuning.WakeEaseSeconds;
                 case OpeningPhase.ShortWake: return _settings.ShortLidSeconds + _settings.BlinkSeconds;
@@ -420,46 +354,22 @@ namespace MoonProject.Rover
                     Enter(OpeningPhase.Crackle);
                     break;
                 case OpeningPhase.Crackle:
+                    PublishPost(PostEventKind.Completed, BootCheckStep.Carrier, BootCheckResult.Info);
                     Enter(OpeningPhase.LidCrack);
                     break;
                 case OpeningPhase.LidCrack:
                     Enter(OpeningPhase.LidHalf);
                     break;
                 case OpeningPhase.LidHalf:
+                    PublishPost(PostEventKind.Completed, BootCheckStep.Resume, BootCheckResult.Info);
                     Enter(OpeningPhase.Hunt);
                     break;
                 case OpeningPhase.Hunt:
-                    Enter(OpeningPhase.Flicker);
-                    break;
-                case OpeningPhase.Flicker:
-                    Enter(NextAttention(Home));
-                    break;
-                case OpeningPhase.GazeHome:
-                    Enter(NextAttention(Pilot));
-                    break;
-                case OpeningPhase.GazePilot:
-                    Enter(NextAttention(Peak));
-                    break;
-                case OpeningPhase.GazePeak:
-                    Enter(OpeningPhase.GazeEarth);
-                    break;
-                case OpeningPhase.GazeEarth:
-                case OpeningPhase.HurryLid:
+                    PublishPost(PostEventKind.Completed, BootCheckStep.Agenda, BootCheckResult.Info);
                     Enter(OpeningPhase.PullOut);
                     break;
                 case OpeningPhase.PullOut:
-                    if (Hurried)
-                    {
-                        Finish();
-                    }
-                    else
-                    {
-                        Enter(OpeningPhase.BlinkShot);
-                    }
-
-                    break;
-                case OpeningPhase.BlinkShot:
-                    Enter(OpeningPhase.OverShoulder);
+                    Enter(OpeningPhase.Post);
                     break;
                 case OpeningPhase.OverShoulder:
                     Enter(OpeningPhase.ChaseEase);
@@ -467,6 +377,24 @@ namespace MoonProject.Rover
                 default:
                     Finish();
                     break;
+            }
+        }
+
+        private void StepPost(float deltaTime)
+        {
+            _post.Step(deltaTime);
+            DrainPost();
+            if (_post.IsFinished)
+            {
+                Enter(OpeningPhase.OverShoulder);
+            }
+        }
+
+        private void DrainPost()
+        {
+            while (_post.TryTake(out PostEvent postEvent))
+            {
+                PublishPost(postEvent.Kind, postEvent.Step, postEvent.Result);
             }
         }
 
@@ -483,63 +411,6 @@ namespace MoonProject.Rover
             Publish(WakeBeat.ChaseFrame);
         }
 
-        /// <summary>The first target in the attention list from <paramref name="from"/> on that is not yet seen.</summary>
-        private OpeningPhase NextAttention(int from)
-        {
-            for (int i = from; i < Earth; i++)
-            {
-                if (!_seen[i])
-                {
-                    return OpeningPhase.GazeHome + i;
-                }
-            }
-
-            return OpeningPhase.GazeEarth;
-        }
-
-        private void ResumeAttention()
-        {
-            OpeningPhase next = NextAttention(Home);
-            if (next != Phase)
-            {
-                Enter(next);
-            }
-        }
-
-        /// <summary>A target counts as seen when the player's own look passes over it (the script's own looks count as
-        /// they begin).</summary>
-        private void TrackSeen(bool playerSteering)
-        {
-            if (!AcceptsLook || !playerSteering)
-            {
-                return;
-            }
-
-            for (int i = 0; i < TargetCount; i++)
-            {
-                _seen[i] |= _gaze.AngleTo(_targets[i].x, _targets[i].y) < _settings.SeenAngle;
-            }
-        }
-
-        /// <summary>The player held Earth in view on their own: skip ahead to O9.</summary>
-        private void CheckEarthFound(bool playerSteering, float deltaTime)
-        {
-            if (!AcceptsLook || Phase == OpeningPhase.GazeEarth || !playerSteering)
-            {
-                _earthHeld = 0f;
-                return;
-            }
-
-            Vector2 earth = _targets[Earth];
-            bool inView = _gaze.AngleTo(earth.x, earth.y) < _settings.EarthFoundAngle;
-            _earthHeld = inView ? _earthHeld + deltaTime : 0f;
-            if (_earthHeld >= _settings.EarthFoundSeconds)
-            {
-                _earthHeld = 0f;
-                Enter(OpeningPhase.GazeEarth);
-            }
-        }
-
         private void AimScripted()
         {
             switch (Phase)
@@ -549,117 +420,26 @@ namespace MoonProject.Rover
                 case OpeningPhase.LidCrack:
                 case OpeningPhase.LidHalf:
                 case OpeningPhase.Hunt:
-                case OpeningPhase.Flicker:
                     _gaze.Aim(0f, _settings.BowedPitch);
                     break;
-                case OpeningPhase.GazeHome:
-                    Vector2 home = _targets[Home];
-                    float unsure = _phaseTime >= _settings.HesitateAfter
-                        ? -Mathf.Sign(home.x) * _settings.HesitateYaw
-                        : 0f;
-                    _gaze.Aim(home.x + unsure, home.y);
-                    break;
-                case OpeningPhase.GazePilot:
-                    _gaze.Aim(_targets[Pilot].x, _targets[Pilot].y);
-                    break;
-                case OpeningPhase.GazePeak:
-                    _gaze.Aim(_targets[Peak].x, _targets[Peak].y + _settings.PeakLift);
-                    break;
-                case OpeningPhase.GazeEarth:
                 case OpeningPhase.PullOut:
-                case OpeningPhase.BlinkShot:
+                case OpeningPhase.Post:
                 case OpeningPhase.OverShoulder:
-                    if (!Hurried)
-                    {
-                        _gaze.Aim(_targets[Earth].x, _targets[Earth].y - _settings.EarthBelow);
-                    }
-
+                    _gaze.Aim(_earth.x, _earth.y - _settings.EarthBelow);
                     break;
             }
         }
-
-        /// <summary>Drive input: hurry whatever is left (once). The blink is never skipped.</summary>
-        private void Hurry()
-        {
-            if (Hurried)
-            {
-                return;
-            }
-
-            switch (Phase)
-            {
-                case OpeningPhase.Crackle:
-                case OpeningPhase.LidCrack:
-                case OpeningPhase.LidHalf:
-                case OpeningPhase.Hunt:
-                case OpeningPhase.Flicker:
-                case OpeningPhase.GazeHome:
-                case OpeningPhase.GazePilot:
-                case OpeningPhase.GazePeak:
-                case OpeningPhase.GazeEarth:
-                    Hurried = true;
-                    WantsRigEase = true;
-                    Enter(OpeningPhase.HurryLid);
-                    break;
-                case OpeningPhase.PullOut:
-                    Hurried = true;
-                    WantsRigEase = true;
-                    float remaining = Mathf.Min(_phaseLength - _phaseTime, _settings.HurryPullOutSeconds);
-                    if (!_blinked)
-                    {
-                        StartBlink();
-                        remaining = Mathf.Max(remaining, _settings.BlinkSeconds);
-                    }
-
-                    _phaseLength = _phaseTime + remaining;
-                    break;
-                case OpeningPhase.BlinkShot:
-                case OpeningPhase.OverShoulder:
-                    Hurried = true;
-                    if (!_blinked)
-                    {
-                        StartBlink();
-                    }
-
-                    Enter(OpeningPhase.ChaseEase);
-                    break;
-                case OpeningPhase.ChaseEase:
-                    Hurried = true;
-                    break;
-            }
-        }
-
-        /// <summary>07's blink; the opening's (not the short wake's) brings the head tilt with it.</summary>
-        private void StartBlink()
-        {
-            _blinked = true;
-            _blinkClock = 0f;
-            if (Phase == OpeningPhase.ShortWake)
-            {
-                return;
-            }
-
-            _tiltClock = 0f;
-            Publish(WakeBeat.Blinked);
-        }
-
-        private float TiltSeconds => 2f * _settings.TiltEaseSeconds + _settings.TiltHoldSeconds;
 
         private void StepClocks(float deltaTime)
         {
             if (_speckClock >= 0f)
             {
-                _speckClock += deltaTime * (Hurried ? HurriedSpeckRate : 1f);
+                _speckClock += deltaTime;
             }
 
             if (_blinkClock >= 0f)
             {
                 _blinkClock += deltaTime;
-            }
-
-            if (_tiltClock >= 0f)
-            {
-                _tiltClock += deltaTime;
             }
 
             if (_readoutClock >= 0f)
@@ -672,23 +452,16 @@ namespace MoonProject.Rover
                 return;
             }
 
-            bool hurriedMidway = Phase == OpeningPhase.PullOut && Hurried && _phaseTime >= 0.5f * _phaseLength;
-            bool onCue = Phase == OpeningPhase.BlinkShot && _phaseTime >= _settings.BlinkDelay;
-            if (hurriedMidway || onCue)
-            {
-                StartBlink();
-            }
-
             if (Phase == OpeningPhase.ShortWake && _phaseTime >= _settings.ShortLidSeconds)
             {
-                StartBlink();
+                _blinked = true;
+                _blinkClock = 0f;
                 _glanceClock = 0f;
             }
         }
 
         private void Evaluate()
         {
-            HeadTilt = Tilt();
             if (Phase == OpeningPhase.Idle)
             {
                 return;
@@ -699,10 +472,8 @@ namespace MoonProject.Rover
             float lid = _lidStart;
             float focus = _settings.FocusSettle;
             float sleep = Mathf.Lerp(_sleepStart, 0f, Smoothing.SmoothStep(0f, rise, t));
-            Flicker01 = 0f;
-            Warmth01 = 0f;
             BodyLidWeight = 1f;
-            GazeHeld = InLens || (!Hurried && Phase >= OpeningPhase.PullOut && Phase <= OpeningPhase.OverShoulder);
+            GazeHeld = InLens || Phase >= OpeningPhase.PullOut && Phase <= OpeningPhase.OverShoulder;
             LensActive = InLens;
             switch (Phase)
             {
@@ -731,41 +502,13 @@ namespace MoonProject.Rover
                         _settings.FocusSettle);
                     sleep = 1f;
                     break;
-                case OpeningPhase.Flicker:
-                case OpeningPhase.GazeHome:
-                case OpeningPhase.GazePilot:
-                case OpeningPhase.GazePeak:
-                    lid = Mathf.Lerp(_lidStart, _settings.LidRest, Smoothing.SmoothStep(0f, _settings.LidSettleSeconds, t));
-                    focus = LogLerp(_focusStart, _settings.FocusSettle, Smoothing.SmoothStep(0f, rise, t));
-                    sleep = Mathf.Lerp(_sleepStart, 0f,
-                        Smoothing.SmoothStep(0f, _settings.FlickerSeconds + _settings.LidSettleSeconds, t));
-                    if (Phase == OpeningPhase.Flicker)
-                    {
-                        Flicker01 = Dips(t);
-                        Warmth01 = Bump(t, 0f, _phaseLength);
-                    }
-                    else if (Phase == OpeningPhase.GazePeak)
-                    {
-                        focus = Rehunt(t);
-                    }
-
-                    break;
-                case OpeningPhase.GazeEarth:
-                    lid = Mathf.Lerp(_lidStart, _settings.LidWonder, Smoothing.SmoothStep(0f, rise, t));
-                    focus = LogLerp(_focusStart, _settings.FocusSettle, Smoothing.SmoothStep(0f, rise, t));
-                    break;
-                case OpeningPhase.HurryLid:
-                    float hurry = Smoothing.SmoothStep(0f, _phaseLength, t);
-                    lid = Mathf.Lerp(_lidStart, _settings.LidRest, hurry);
-                    focus = LogLerp(_focusStart, _settings.FocusSettle, hurry);
-                    sleep = Mathf.Lerp(_sleepStart, 0f, hurry);
-                    break;
                 case OpeningPhase.PullOut:
+                    lid = Mathf.Lerp(_lidStart, _settings.LidRest, Smoothing.SmoothStep(0f, _settings.LidSettleSeconds, t));
                     LensActive = t < _settings.LensReleaseAt * _phaseLength;
                     break;
-                case OpeningPhase.BlinkShot:
-                    lid = Mathf.Lerp(_lidStart, _settings.BlinkAfter,
-                        Smoothing.SmoothStep(0f, _settings.BlinkDelay + _settings.BlinkSeconds, t));
+                case OpeningPhase.Post:
+                case OpeningPhase.OverShoulder:
+                    lid = _settings.LidRest;
                     break;
                 case OpeningPhase.ChaseEase:
                     float ease = Smoothing.SmoothStep(0f, _phaseLength, t);
@@ -786,11 +529,6 @@ namespace MoonProject.Rover
             SpeckOffset = _speckClock < 0f
                 ? _settings.SpeckStart
                 : Vector2.Lerp(_settings.SpeckStart, _settings.SpeckEnd, Smoothing.SmoothStep(0f, _speckSpan, _speckClock));
-            if (Phase == OpeningPhase.GazePeak && !_farFocusLanded && t >= _settings.RehuntSeconds)
-            {
-                _farFocusLanded = true;
-                Publish(WakeBeat.FarFocusSettled);
-            }
         }
 
         private float Shudder(float t)
@@ -804,38 +542,6 @@ namespace MoonProject.Rover
             float u = t / rise;
             return _settings.ShudderAmount * Mathf.Sin(2f * Mathf.PI * _settings.ShudderWobbles * u)
                 * Mathf.Sin(Mathf.PI * u);
-        }
-
-        /// <summary>The O5 dips: two soft raised-cosine bumps, the second a little shallower.</summary>
-        private float Dips(float t)
-        {
-            float dip = _settings.DipSeconds;
-            return Mathf.Max(Bump(t, 0f, dip), _settings.SecondDip * Bump(t, dip + _settings.DipGap, dip));
-        }
-
-        private static float Bump(float t, float start, float length)
-        {
-            float u = (t - start) / length;
-            if (u <= 0f || u >= 1f)
-            {
-                return 0f;
-            }
-
-            float s = Mathf.Sin(Mathf.PI * u);
-            return s * s;
-        }
-
-        private float Rehunt(float t)
-        {
-            float u = t / _settings.RehuntSeconds;
-            if (u >= 1f)
-            {
-                return _settings.FocusSettle;
-            }
-
-            return u < 0.5f
-                ? LogLerp(_focusStart, _settings.RehuntNear, Smoothing.SmoothStep(0f, 0.5f, u))
-                : LogLerp(_settings.RehuntNear, _settings.FocusSettle, Smoothing.SmoothStep(0.5f, 1f, u));
         }
 
         /// <summary>The hunt: from where it was, too near, overshooting far, settling.</summary>
@@ -862,7 +568,7 @@ namespace MoonProject.Rover
 
         private float Readout()
         {
-            if (_readoutClock < 0f || Hurried || !InLens)
+            if (_readoutClock < 0f || !InLens)
             {
                 return 0f;
             }
@@ -884,19 +590,6 @@ namespace MoonProject.Rover
             return u < BlinkCloseShare
                 ? Smoothing.SmoothStep(0f, BlinkCloseShare, u)
                 : 1f - Smoothing.SmoothStep(BlinkCloseShare, 1f, u);
-        }
-
-        private float Tilt()
-        {
-            if (_tiltClock < 0f)
-            {
-                return 0f;
-            }
-
-            float ease = _settings.TiltEaseSeconds;
-            float hold = _settings.TiltHoldSeconds;
-            return _settings.BlinkTilt * Smoothing.SmoothStep(0f, ease, _tiltClock)
-                * (1f - Smoothing.SmoothStep(ease + hold, 2f * ease + hold, _tiltClock));
         }
     }
 }

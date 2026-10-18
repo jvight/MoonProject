@@ -210,7 +210,7 @@ namespace MoonProject.Rover
 
         /// <summary>
         /// Holds the CRT screen completely dark while 07 is asleep on the title or while the camera is inside the scan lens,
-        /// until the front reveal beat (<see cref="WakeBeat.PulledOut"/>) starts the CRT boot sequence.
+        /// until the end of the self-test's checks (<see cref="WakeBeat.OverShoulder"/>) starts the CRT boot sequence.
         /// </summary>
         public void SetOpeningDarkHold(bool hold)
         {
