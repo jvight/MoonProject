@@ -44,6 +44,9 @@ namespace MoonProject.Editor.Build
         /// <summary>Suffix of folders Unity writes next to the player that must never ship (debug symbols).</summary>
         private const string DoNotShipSuffix = "_DoNotShip";
 
+        /// <summary>Suffix of the IL2CPP back-up folder (generated C++ and symbols, over a gigabyte) that must never ship.</summary>
+        private const string Il2CppBackUpSuffix = "_BackUpThisFolder_ButDontShipItWithYourGame";
+
         public static void BuildWindows()
         {
             BatchRunner.Run(nameof(BuildWindows), args => Build(
@@ -168,7 +171,7 @@ namespace MoonProject.Editor.Build
 
             RemoveDoNotShipFolders(outputDirectory);
             string infoPath = Path.Combine(outputDirectory, InfoFileName);
-            File.WriteAllText(infoPath, Info(version, summary, wanted), new UTF8Encoding(false));
+            File.WriteAllText(infoPath, Info(version, summary, wanted, development), new UTF8Encoding(false));
             BatchRunner.Log($"player build: {exePath}");
             return true;
         }
@@ -211,13 +214,17 @@ namespace MoonProject.Editor.Build
 
         private static void RemoveDoNotShipFolders(string outputDirectory)
         {
-            foreach (string directory in Directory.GetDirectories(outputDirectory, "*" + DoNotShipSuffix))
+            foreach (string suffix in new[] { DoNotShipSuffix, Il2CppBackUpSuffix })
             {
-                Directory.Delete(directory, true);
+                foreach (string directory in Directory.GetDirectories(outputDirectory, "*" + suffix))
+                {
+                    Directory.Delete(directory, true);
+                }
             }
         }
 
-        private static string Info(BuildVersion version, BuildSummary summary, ScriptingImplementation backend)
+        private static string Info(BuildVersion version, BuildSummary summary, ScriptingImplementation backend,
+            bool development)
         {
             var info = new StringBuilder();
             info.Append("product=").AppendLine(PlayerSettings.productName);
@@ -231,7 +238,7 @@ namespace MoonProject.Editor.Build
             info.Append("unity=").AppendLine(Application.unityVersion);
             info.AppendLine("target=StandaloneWindows64");
             info.Append("scriptingBackend=").AppendLine(backend == ScriptingImplementation.IL2CPP ? "IL2CPP" : "Mono");
-            info.AppendLine("development=false");
+            info.AppendLine(development ? "development=true" : "development=false");
             info.Append("exe=").AppendLine(ExeName() + ".exe");
             info.Append("buildSeconds=")
                 .AppendLine(summary.totalTime.TotalSeconds.ToString("0", CultureInfo.InvariantCulture));
