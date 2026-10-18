@@ -524,48 +524,66 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator Readout_BootDiagnosticsFirst_TheCutterFlashes_AndOnlyAMilestoneReachedNowShowsTheProtocolLine()
+        public IEnumerator AfterTheChaseFrame_TheFirstObjectiveLine_IsTheOnlyGuidanceElement()
         {
+            const float WatchSeconds = 6f;
             Boot();
-            _rig.Tune("_guidance._bootHoldSeconds", 1.5f);
-            _rig.Tune("_guidance._statusHoldSeconds", 1.5f);
-            int cutterLine = 1 + (int)RoverSystem.Cutter;
+            _rig.Ui.Ledger.RecordLookTaught();
+            _rig.Ui.Ledger.RecordDriveTaught();
+            _rig.Ui.Ledger.RecordHoldChipShown();
             yield return null;
             Events.Publish(new RoverAwoke(Vector3.zero, false));
             Events.Publish(new NextStepChanged("next.v2.drive_lander"));
             Events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle));
             Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame));
-            yield return Seconds(_rig.Tuning.Guidance.Readout.FadeIn + 0.4f);
-            ReadoutView readout = _rig.Ui.Readout;
-            Assert.IsTrue(readout.IsVisible);
-            Assert.AreEqual(ReadoutKind.Boot, readout.Showing, "07's diagnostics show when its lens opens");
-            Assert.AreEqual(11, readout.LineCount, "the unit, eight systems, the battery and the protocol line");
-            Assert.AreEqual(Text(ReadoutText.UnitKey), readout.LineText(0));
-            StringAssert.StartsWith(Text("ui.system.cutter"), readout.LineText(cutterLine));
-            StringAssert.EndsWith(Text("ui.system.state.fault_igniter"), readout.LineText(cutterLine));
-            Assert.AreEqual(Text("ui.readout.power_off"), readout.LineText(10));
-            Assert.IsFalse(_rig.Ui.Objective.IsVisible, "the objective line waits for the diagnostics");
-
-            Events.Publish(new CutterRefused(Vector3.zero));
-            yield return null;
-            Assert.IsTrue(readout.IsFlashing(cutterLine), "a refused cut flashes the cutter's line");
-
-            _rig.Fakes.Systems.Set(RoverSystem.Cutter, RoverSystemState.Ok);
-            Events.Publish(new RoverSystemChanged(RoverSystem.Cutter, RoverSystemState.Ok, false));
-            yield return null;
-            StringAssert.EndsWith(Text("ui.system.state.ok"), readout.LineText(cutterLine), "the line turns OK");
-
-            Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame));
             float limit = Time.realtimeSinceStartup + 12f;
             while (!_rig.Ui.Objective.ShowsObjective && Time.realtimeSinceStartup < limit)
             {
+                Assert.IsFalse(_rig.Ui.Readout.IsVisible, "no boot card: the diagnostics were on 07's face");
                 yield return null;
             }
 
-            Assert.IsTrue(_rig.Ui.Objective.ShowsObjective, "the first objective line follows the diagnostics");
-            Assert.IsFalse(readout.IsVisible);
+            Assert.IsTrue(_rig.Ui.Objective.ShowsObjective, "the first objective line comes after the wake");
             Assert.AreEqual(Text("next.v2.drive_lander"), _rig.Ui.Layout.NextLineText.text);
+            float until = Time.realtimeSinceStartup + WatchSeconds;
+            while (Time.realtimeSinceStartup < until)
+            {
+                Assert.IsFalse(_rig.Ui.Readout.IsVisible, "no readout card beside it");
+                Assert.IsFalse(_rig.Ui.Prompt.IsVisible, "no prompt beside it");
+                Assert.IsFalse(_rig.Ui.LookUp.ShowsPrompt, "no look or drive chip beside it");
+                Assert.IsFalse(_rig.Ui.UnlockCard.IsVisible, "no card beside it");
+                yield return null;
+            }
+        }
 
+        [UnityTest]
+        public IEnumerator Readout_ACutterChangeGetsItsOwnCard_AndOnlyAMilestoneReachedNowShowsTheProtocolLine()
+        {
+            Boot();
+            _rig.Tune("_guidance._statusHoldSeconds", 1.5f);
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            Events.Publish(new NextStepChanged("next.v2.drive_lander"));
+            ReadoutView readout = _rig.Ui.Readout;
+
+            Events.Publish(new CutterRefused(Vector3.zero));
+            yield return null;
+            Assert.AreEqual(ReadoutKind.System, readout.Showing, "a refused cut shows the cutter's line");
+            Assert.IsTrue(readout.IsFlashing(0), "and flashes it");
+            Assert.AreEqual(1, readout.LineCount);
+            StringAssert.StartsWith(Text("ui.system.cutter"), readout.LineText(0));
+            StringAssert.EndsWith(Text("ui.system.state.fault_igniter"), readout.LineText(0));
+
+            yield return Seconds(_rig.Tuning.Guidance.StatusHoldSeconds + _rig.Tuning.Guidance.Readout.FadeOut + 0.6f);
+            Assert.IsFalse(readout.IsVisible);
+            _rig.Fakes.Systems.Set(RoverSystem.Cutter, RoverSystemState.Ok);
+            Events.Publish(new RoverSystemChanged(RoverSystem.Cutter, RoverSystemState.Ok, false));
+            yield return Seconds(_rig.Tuning.Guidance.Readout.FadeIn + 0.4f);
+            Assert.AreEqual(ReadoutKind.System, readout.Showing, "the mended cutter gets its own card");
+            StringAssert.EndsWith(Text("ui.system.state.ok"), readout.LineText(0), "the line reads OK");
+
+            yield return Seconds(_rig.Tuning.Guidance.StatusHoldSeconds + _rig.Tuning.Guidance.Readout.FadeOut + 0.6f);
+            Assert.IsFalse(readout.IsVisible);
             Events.Publish(new OpeningMilestoneReached(OpeningMilestone.PowerOn, false));
             yield return Seconds(_rig.Tuning.Guidance.Readout.FadeIn + 0.6f);
             Assert.AreEqual(ReadoutKind.Protocol, readout.Showing, "a milestone reached now shows its line");
@@ -612,7 +630,7 @@ namespace MoonProject.UI.PlayModeTests
         public IEnumerator NoFrame_ShowsTwoGuidanceElements_SaveTheBriefCrossFadeFromTheLineToAPrompt()
         {
             Boot();
-            _rig.Tune("_guidance._bootHoldSeconds", 2f);
+            _rig.Tune("_guidance._statusHoldSeconds", 2f);
             _rig.Ui.Ledger.RecordLookTaught();
             _rig.Ui.Ledger.RecordDriveTaught();
             _rig.Ui.Ledger.RecordHoldChipShown();
@@ -621,6 +639,7 @@ namespace MoonProject.UI.PlayModeTests
             Events.Publish(new NextStepChanged("next.v2.drive_lander"));
             Events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle));
             Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame));
+            Events.Publish(new OpeningMilestoneReached(OpeningMilestone.PowerOn, false));
             Events.Publish(new TickerLine("battery.low.lander"));
             _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Build, new Vector3(0f, 0f, 10f), true);
             int shownFrames = 0;
@@ -648,7 +667,7 @@ namespace MoonProject.UI.PlayModeTests
                 yield return null;
             }
 
-            Assert.IsTrue(readoutSeen, "the boot diagnostics came first, or the test proves nothing");
+            Assert.IsTrue(readoutSeen, "the protocol card came, or the test proves nothing");
             Assert.Greater(shownFrames, 0, "the scene did guide, or the test proves nothing");
         }
 

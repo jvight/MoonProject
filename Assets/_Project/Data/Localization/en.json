@@ -727,10 +727,6 @@
             "text": "Blueprint learned: {0}"
         },
         {
-            "key": "ui.system.unit",
-            "text": "UNIT 07 · SSR-5 · CONTINUE · 13 148 DAYS"
-        },
-        {
             "key": "ui.system.wheels",
             "text": "WHEELS"
         },
@@ -761,10 +757,6 @@
         {
             "key": "ui.system.sockets",
             "text": "SOCKETS 1-2"
-        },
-        {
-            "key": "ui.system.battery",
-            "text": "BATTERY"
         },
         {
             "key": "ui.system.state.ok",

@@ -9,16 +9,16 @@ namespace MoonProject.UI.Tests
 {
     /// <summary>
     /// 07's readout (docs/design/opening-v2.md sections 2, 10): the protocol line follows the opening's milestones,
-    /// the boot diagnostics read exactly as designed in English and Vietnamese, the cards take turns and the Sun's arc
+    /// each system's line reads exactly as designed in English and Vietnamese, the cards take turns and the Sun's arc
     /// follows the Sun's height.
     /// </summary>
     public sealed class ReadoutTests
     {
         private const float Frame = 1f / 60f;
 
-        private static readonly string[] EnglishBoot =
+        /// <summary>07's start kit, one line per system in the order of <see cref="RoverSystem"/>.</summary>
+        private static readonly string[] EnglishSystems =
         {
-            "UNIT 07 · SSR-5 · CONTINUE · 13 148 DAYS",
             "WHEELS ········ OK (1 MISMATCHED)",
             "LAMPS ········· OK",
             "LENS · SCAN ··· OK",
@@ -27,13 +27,10 @@ namespace MoonProject.UI.Tests
             "SOLAR WING ···· JAMMED",
             "ANTENNA ······· RECEIVE ONLY",
             "SOCKETS 1-2 ··· EMPTY",
-            "BATTERY ······· 50%",
-            "POWER · OFFLINE",
         };
 
-        private static readonly string[] VietnameseBoot =
+        private static readonly string[] VietnameseSystems =
         {
-            "ĐƠN VỊ 07 · SSR-5 · TIẾP TỤC · 13 148 NGÀY",
             "BÁNH XE ········ OK (1 BÁNH KHÁC BỘ)",
             "ĐÈN ············ OK",
             "ỐNG KÍNH · QUÉT  OK",
@@ -42,8 +39,6 @@ namespace MoonProject.UI.Tests
             "CÁNH PIN ······· KẸT",
             "ĂNG-TEN ········ CHỈ NHẬN",
             "Ổ LẮP 1–2 ······ TRỐNG",
-            "PIN ············ 50%",
-            "NGUỒN · NGOẠI TUYẾN",
         };
 
         private LocalizationService _localization;
@@ -104,32 +99,33 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
-        public void TheBootDiagnostics_ReadExactlyAsDesigned_InEnglish()
+        public void TheSystemLines_ReadExactlyAsDesigned_InEnglish()
         {
-            AssertBoot(EnglishBoot);
+            AssertSystems(EnglishSystems);
         }
 
         [Test]
-        public void TheBootDiagnostics_ReadExactlyAsDesigned_InVietnamese()
+        public void TheSystemLines_ReadExactlyAsDesigned_InVietnamese()
         {
             _localization.SetLanguage("vi");
-            AssertBoot(VietnameseBoot);
+            AssertSystems(VietnameseSystems);
         }
 
         [Test]
-        public void TheBootDiagnostics_FitTheReadoutPlate_InBothLanguages()
+        public void TheCards_FitTheReadoutPlate_InBothLanguages()
         {
             const int plateCharacters = 52;
+            var systems = new FakeSystems();
             foreach (string language in new[] { "en", "vi" })
             {
                 _localization.SetLanguage(language);
-                var content = new ReadoutContent();
-                _text.Boot(content, new FakeSystems(), 12, 100, ProtocolLine.LinkSignalWest);
-                for (int i = 0; i < content.Count; i++)
+                foreach (RoverSystem system in System.Enum.GetValues(typeof(RoverSystem)))
                 {
-                    Assert.LessOrEqual(content.TextAt(i).Length, plateCharacters, $"{language}: '{content.TextAt(i)}'");
+                    string line = _text.SystemLine(system, systems.StateOf(system), 12);
+                    Assert.LessOrEqual(line.Length, plateCharacters, $"{language}: '{line}'");
                 }
 
+                var content = new ReadoutContent();
                 _text.Story(content, "story.airlock_panel");
                 Assert.AreEqual(2, content.Count, $"{language}: the panel's text is two lines");
                 for (int i = 0; i < content.Count; i++)
@@ -209,16 +205,6 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
-        public void TheBootDiagnostics_GoBeforeEveryOtherCard()
-        {
-            var queue = new ReadoutQueue(new GuidanceSettings());
-            queue.Offer(new ReadoutRequest(ReadoutKind.Protocol));
-            queue.Offer(new ReadoutRequest(ReadoutKind.Boot));
-            Assert.IsTrue(queue.Tick(Frame, true, true));
-            Assert.AreEqual(ReadoutKind.Boot, queue.Current.Kind);
-        }
-
-        [Test]
         public void ACardAskedForTwice_QueuesOnce_AndOneThatShowsRestsAgain()
         {
             var settings = new GuidanceSettings();
@@ -277,20 +263,15 @@ namespace MoonProject.UI.Tests
             Assert.AreEqual(12, SunArc.MinutesLeft(720f));
         }
 
-        private void AssertBoot(string[] expected)
+        private void AssertSystems(string[] expected)
         {
-            var content = new ReadoutContent();
-            _text.Boot(content, new FakeSystems(), 0, 50, ProtocolLine.PowerOffline);
-            Assert.AreEqual(expected.Length, content.Count);
-            for (int i = 0; i < expected.Length; i++)
+            var systems = new FakeSystems();
+            var all = (RoverSystem[])System.Enum.GetValues(typeof(RoverSystem));
+            Assert.AreEqual(expected.Length, all.Length, "one designed line per system");
+            for (int i = 0; i < all.Length; i++)
             {
-                Assert.AreEqual(expected[i], content.TextAt(i), $"line {i}");
+                Assert.AreEqual(expected[i], _text.SystemLine(all[i], systems.StateOf(all[i]), 0), all[i].ToString());
             }
-
-            Assert.AreEqual(ReadoutLineStyle.Fault, content.StyleAt(1 + (int)RoverSystem.Cutter));
-            Assert.AreEqual(ReadoutLineStyle.Dim, content.StyleAt(1 + (int)RoverSystem.Antenna));
-            Assert.AreEqual((int)RoverSystem.Cutter, content.SystemAt(1 + (int)RoverSystem.Cutter));
-            Assert.AreEqual(1 + (int)RoverSystem.Cutter, content.IndexOfSystem((int)RoverSystem.Cutter));
         }
 
         private static void Run(ReadoutQueue queue, float seconds, bool granted)
@@ -307,7 +288,7 @@ namespace MoonProject.UI.Tests
             return new Vector3(Mathf.Cos(radians), Mathf.Sin(radians), 0f);
         }
 
-        /// <summary>07's start kit as the boot diagnostics list it.</summary>
+        /// <summary>07's start kit (opening-v2 §10).</summary>
         private sealed class FakeSystems : IRoverSystems
         {
             public bool CanFitIgniter => false;

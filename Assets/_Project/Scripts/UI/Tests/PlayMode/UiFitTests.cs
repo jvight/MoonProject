@@ -235,17 +235,16 @@ namespace MoonProject.UI.PlayModeTests
                 });
             }
 
-            // 07's readout (the boot diagnostics, longest in Vietnamese) beside the Sun's arc and the battery dial.
+            // 07's readout (a scanned panel's two lines, longest in Vietnamese) beside the Sun's arc and the battery dial.
             _rig.Fakes.PrimaryHint = InteractionHint.None;
-            _rig.Tune("_guidance._bootHoldSeconds", 60f);
+            _rig.Tune("_guidance._storyHoldSeconds", 60f);
             events.Publish(new OpeningMilestoneReached(OpeningMilestone.PowerOn, true));
             string language = _rig.Ui.Localization.Language;
             _rig.Ui.Localization.SetLanguage("vi");
             _rig.Fakes.Sun.SecondsToSunset = 25f * 60f;
-            events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle));
-            events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame));
+            events.Publish(new StoryScanned("airlock_panel", "story.airlock_panel", Vector3.zero));
             yield return Seconds(3f);
-            Assert.IsTrue(_rig.Ui.Readout.IsVisible, "the boot diagnostics are up for the fit check");
+            Assert.IsTrue(_rig.Ui.Readout.IsVisible, "the panel's card is up for the fit check");
             Assert.IsTrue(_rig.Ui.SunArc.IsVisible, "and so is the Sun's arc");
             Assert.AreEqual(25, _rig.Ui.SunArc.ShownMinutes, "with the time the Sun has left");
             foreach (ScreenShape shape in ScreenShapes.All)

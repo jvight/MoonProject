@@ -554,24 +554,22 @@ namespace MoonProject.UI.PlayModeTests
             context.Events.Publish(new NextStepChanged("next.v2.drive_lander"));
             context.Events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle));
             context.Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame));
-            yield return new WaitForSecondsRealtime(_tuning.Guidance.Readout.FadeIn + 0.5f);
-            Assert.IsTrue(ui.Readout.IsVisible && ui.Readout.Showing == ReadoutKind.Boot,
-                "the boot diagnostics show when 07's lens opens");
-            Assert.IsFalse(ui.Objective.IsVisible, "and the objective line waits for them");
-            yield return Capture(camera, folder, "49_boot_readout");
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.Line.FadeIn +
+                                                    _tuning.Guidance.ObjectiveDelaySeconds + 2.5f);
+            Assert.IsFalse(ui.Readout.IsVisible, "no boot card: the diagnostics were on 07's face");
+            Assert.IsTrue(ui.Objective.ShowsObjective, "the first objective line stands alone");
+            yield return Capture(camera, folder, "49_objective_line");
 
             context.Events.Publish(new CutterRefused(Vector3.zero));
             yield return null;
-            Assert.IsTrue(ui.Readout.IsFlashing(1 + (int)RoverSystem.Cutter), "a refused cut flashes the cutter's line");
-            yield return Capture(camera, folder, "49a_boot_cutter_refused");
+            Assert.AreEqual(ReadoutKind.System, ui.Readout.Showing, "a refused cut shows the cutter's card");
+            Assert.IsTrue(ui.Readout.IsFlashing(0), "and flashes its line");
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.Readout.FadeIn + 0.5f);
+            yield return Capture(camera, folder, "49a_cutter_refused");
 
-            context.Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame));
-            yield return new WaitForSecondsRealtime(_tuning.Guidance.BootHoldSeconds +
-                                                    _tuning.Guidance.Readout.FadeOut + _tuning.Guidance.Line.FadeIn +
-                                                    _tuning.Guidance.ObjectiveDelaySeconds + 2.5f);
-            Assert.IsFalse(ui.Readout.IsVisible, "the diagnostics fade by themselves");
-            Assert.IsTrue(ui.Objective.ShowsObjective, "and the first objective line follows");
-            yield return Capture(camera, folder, "49b_objective_line");
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.StatusHoldSeconds +
+                                                    _tuning.Guidance.Readout.FadeOut + 0.6f);
+            Assert.IsFalse(ui.Readout.IsVisible, "the cutter's card fades by itself");
 
             context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.PowerOn, false));
             yield return new WaitForSecondsRealtime(_tuning.Guidance.Readout.FadeIn + 0.5f);

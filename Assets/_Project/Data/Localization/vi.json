@@ -727,10 +727,6 @@
             "text": "Đã học bản vẽ: {0}"
         },
         {
-            "key": "ui.system.unit",
-            "text": "ĐƠN VỊ 07 · SSR-5 · TIẾP TỤC · 13 148 NGÀY"
-        },
-        {
             "key": "ui.system.wheels",
             "text": "BÁNH XE"
         },
@@ -761,10 +757,6 @@
         {
             "key": "ui.system.sockets",
             "text": "Ổ LẮP 1–2"
-        },
-        {
-            "key": "ui.system.battery",
-            "text": "PIN"
         },
         {
             "key": "ui.system.state.ok",

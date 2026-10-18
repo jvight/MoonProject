@@ -7,10 +7,10 @@ using MoonProject.Gameplay;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// 07's readout on the screen, high on the left like its other plates (docs/design/opening-v2.md §10, §2): the boot
-    /// diagnostics when 07 first opens its lens, the protocol line when the base gets power or hears the west, the
-    /// lander's reserve once it gave out, one system's line when the cutter mends or refuses, and the text of a
-    /// scanned panel. One card at a time, in the guidance slot's prompt kind, so the objective line waits for it.
+    /// 07's readout on the screen, high on the left like its other plates (docs/design/opening-v2.md §10, §2): the
+    /// protocol line when the base gets power or hears the west, the lander's reserve once it gave out, one system's
+    /// line when the cutter mends or refuses, and the text of a scanned panel. The boot diagnostics are not here: the
+    /// New Game wake prints them on 07's own face, so the first objective after it stands alone. One card at a time, in the guidance slot's prompt kind, so the objective line waits for it.
     /// Lines are written when a card starts or changes; a frame only eases the panel and lets flashes die down.
     /// </summary>
     internal sealed class ReadoutView
@@ -23,7 +23,6 @@ namespace MoonProject.UI
         private readonly GuidanceSettings _settings;
         private readonly ILocalization _localization;
         private readonly IRoverSystems _systems;
-        private readonly IRoverBattery _battery;
         private readonly BuildField _build;
         private readonly OpeningProtocol _protocol;
         private readonly ReadoutQueue _queue;
@@ -32,12 +31,11 @@ namespace MoonProject.UI
         private readonly Reveal _reveal;
         private readonly Label[] _lines = new Label[ReadoutContent.MaxLines];
         private readonly float[] _flash = new float[ReadoutContent.MaxLines];
-        private bool _bootOwed;
         private int _reservePercent;
 
         /// <param name="build">The base building service, or null in a rig without one (no blueprints are known).</param>
         public ReadoutView(VisualElement hud, GuidanceSettings settings, ILocalization localization,
-            IRoverSystems systems, IRoverBattery battery, BuildField build, OpeningProtocol protocol)
+            IRoverSystems systems, BuildField build, OpeningProtocol protocol)
         {
             if (hud == null)
             {
@@ -47,7 +45,6 @@ namespace MoonProject.UI
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
             _systems = systems ?? throw new ArgumentNullException(nameof(systems));
-            _battery = battery ?? throw new ArgumentNullException(nameof(battery));
             _protocol = protocol ?? throw new ArgumentNullException(nameof(protocol));
             _build = build;
             _queue = new ReadoutQueue(settings);
@@ -83,24 +80,6 @@ namespace MoonProject.UI
         /// <summary>True while line <paramref name="index"/> is flashing after a change or a refusal.</summary>
         public bool IsFlashing(int index) => _flash[index] > 0f;
 
-        /// <summary>A full opening began: the boot diagnostics are owed when 07's lens opens.</summary>
-        public void OpeningBegan()
-        {
-            _bootOwed = true;
-        }
-
-        /// <summary>07's wake reached the chase frame: the boot diagnostics show if still owed.</summary>
-        public void WakeFinished()
-        {
-            if (!_bootOwed)
-            {
-                return;
-            }
-
-            _bootOwed = false;
-            _queue.Offer(new ReadoutRequest(ReadoutKind.Boot));
-        }
-
         /// <summary>The protocol line changed by a milestone reached now (not by a replayed one).</summary>
         public void ProtocolChanged()
         {
@@ -120,7 +99,7 @@ namespace MoonProject.UI
             _queue.Offer(new ReadoutRequest(ReadoutKind.Story, textKey: textKey));
         }
 
-        /// <summary>A system changed now: its line flips, on the diagnostics if they are up, else on a card of its own.</summary>
+        /// <summary>A system changed now: its line shows on a card of its own.</summary>
         public void SystemChanged(RoverSystem system)
         {
             ShowSystem(system);
@@ -171,16 +150,6 @@ namespace MoonProject.UI
 
         private void ShowSystem(RoverSystem system)
         {
-            if (_queue.IsShowing && _queue.Current.Kind == ReadoutKind.Boot)
-            {
-                int index = _content.IndexOfSystem((int)system);
-                RoverSystemState state = _systems.StateOf(system);
-                _content.Set(index, _text.SystemLine(system, state, Blueprints()), ReadoutText.StyleOf(state));
-                Apply(index);
-                Flash(index);
-                return;
-            }
-
             var request = new ReadoutRequest(ReadoutKind.System, system);
             if (_queue.Offer(request))
             {
@@ -193,15 +162,10 @@ namespace MoonProject.UI
         {
             switch (request.Kind)
             {
-                case ReadoutKind.Boot:
-                    _text.Boot(_content, _systems, Blueprints(), Mathf.RoundToInt(_battery.Charge01 * 100f),
-                        _protocol.Line);
-                    break;
                 case ReadoutKind.System:
                     RoverSystemState state = _systems.StateOf(request.System);
                     _content.Clear();
-                    _content.Add(_text.SystemLine(request.System, state, Blueprints()), ReadoutText.StyleOf(state),
-                        (int)request.System);
+                    _content.Add(_text.SystemLine(request.System, state, Blueprints()), ReadoutText.StyleOf(state));
                     break;
                 case ReadoutKind.Protocol:
                     _text.Protocol(_content, _protocol.Line);
