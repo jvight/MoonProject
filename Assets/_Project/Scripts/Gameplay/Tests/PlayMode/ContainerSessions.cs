@@ -130,9 +130,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return null;
             _fixture.Rover.Aim(eye, fragment.Point);
             yield return null;
-            Assert.IsTrue(gameplay.Scans.InView(crate.CutPoint.position, out float sealScore) &&
-                          gameplay.Scans.LookedAt(out float scanScore) == fragment && scanScore < sealScore,
-                "the swung view rests on the scan target more squarely than on the seal (the trap's set)");
+            Assert.AreSame(fragment, gameplay.Scans.LookedAt(out float scanScore),
+                "the swung view rests on the scan target");
+            Assert.IsTrue(!gameplay.Scans.InView(crate.CutPoint.position, out float sealScore) || scanScore < sealScore,
+                "and more squarely than on the seal: the scan would take E (the trap's set)");
 
             yield return Waits.Until(() => crate.Opened, ColdCutTimeout);
             Assert.AreSame(crate, gameplay.Containers.Cutting ?? gameplay.Containers.Candidate,

@@ -33,7 +33,7 @@ namespace MoonProject.Gameplay
 
         [Tooltip("Degrees of aim score the target (or verb) holding the prompt keeps over a rival that is only " +
                  "slightly squarer, so the brackets do not flicker between two close targets.")]
-        [Range(0f, 15f)] [SerializeField] private float _lookStickiness = 4f;
+        [Range(0f, 5f)] [SerializeField] private float _lookStickiness = 1f;
 
         [Tooltip("How much nearness weighs against looking straight at a fragment when two are in view (0: the one " +
                  "nearest the view's centre wins, story panels included).")]
