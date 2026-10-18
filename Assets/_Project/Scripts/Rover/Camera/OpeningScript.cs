@@ -82,7 +82,7 @@ namespace MoonProject.Rover
         /// <summary>True once the player's drive input hurried the wake.</summary>
         public bool Hurried { get; private set; }
 
-        /// <summary>Seconds since the opening (or the short wake) began, the push into the lens included.</summary>
+        /// <summary>Seconds since the opening (or the short wake) began, the fade to black included.</summary>
         public float Elapsed { get; private set; }
 
         /// <summary>Seconds into the current phase, and how long it lasts.</summary>
@@ -91,7 +91,7 @@ namespace MoonProject.Rover
 
         public LensGaze Gaze => _gaze;
 
-        /// <summary>The lens view's openness: 07's lid inside the lens, the closing glass while pushing in.</summary>
+        /// <summary>The lens view's openness: 07's lid inside the lens, the picture fading to black before O1.</summary>
         public float Lid01 { get; private set; }
 
         public float FocusDistance { get; private set; }
@@ -115,9 +115,6 @@ namespace MoonProject.Rover
         /// <summary>True while the camera sits at the lens socket (O1-O9 and the hurried lid).</summary>
         public bool InLens => Phase >= OpeningPhase.Crackle && Phase <= OpeningPhase.HurryLid;
 
-        /// <summary>The push into the closed lens, 0..1 eased (title -> O1).</summary>
-        public float PushIn01 => Phase == OpeningPhase.PushIn ? Smoothing.SmoothStep(0f, _phaseLength, _phaseTime) : 0f;
-
         /// <summary>The camera's way out of the lens, 0..1 eased (O10).</summary>
         public float PullOut01 => Phase == OpeningPhase.PullOut ? Smoothing.SmoothStep(0f, _phaseLength, _phaseTime) : 0f;
 
@@ -128,10 +125,10 @@ namespace MoonProject.Rover
         public float Sleep { get; private set; }
 
         /// <summary>
-        /// 07's own lid openness, and how much the wake holds it: shut while pushing in; fully open while the camera
+        /// 07's own lid openness, and how much the wake holds it: shut while the picture fades; fully open while the camera
         /// is inside the lens, where the lens view draws the lid and the real brow-shutter would cover the camera.
         /// </summary>
-        public float BodyLid => Phase == OpeningPhase.PushIn ? 0f : InLens ? 1f : Lid01;
+        public float BodyLid => Phase == OpeningPhase.FadeOut ? 0f : InLens ? 1f : Lid01;
         public float BodyLidWeight { get; private set; }
 
         /// <summary>The O11 head tilt (deg); it eases back out even after the chase frame.</summary>
@@ -147,10 +144,10 @@ namespace MoonProject.Rover
         public bool GlancingEarth => _glanceClock >= 0f && _glanceClock < _settings.ShortGlanceSeconds;
 
         /// <summary>
-        /// Control is held: while pushing in, inside the lens (the hurried lid included) and during the short wake's
+        /// Control is held: while the picture fades, inside the lens (the hurried lid included) and during the short wake's
         /// lid. Drive input inside the lens leaves at most the hurried lid's length.
         /// </summary>
-        public bool ControlHeld => Phase == OpeningPhase.PushIn || InLens || Phase == OpeningPhase.ShortWake;
+        public bool ControlHeld => Phase == OpeningPhase.FadeOut || InLens || Phase == OpeningPhase.ShortWake;
 
         /// <summary>
         /// Where the gaze targets are, as (yaw, pitch) deg from 07's heading at its lens: the lander, the tower's
@@ -164,12 +161,12 @@ namespace MoonProject.Rover
             _targets[Earth] = earth;
         }
 
-        /// <summary>A fresh game: the full opening, from the push into the closed lens when the title was showing.</summary>
-        public void BeginFull(bool pushIn)
+        /// <summary>A fresh game: the full opening, from the fade to black when the title was showing.</summary>
+        public void BeginFull(bool fromTitle)
         {
             Reset();
             _gaze.Reset(0f, _settings.BowedPitch);
-            Enter(pushIn ? OpeningPhase.PushIn : OpeningPhase.Crackle);
+            Enter(fromTitle ? OpeningPhase.FadeOut : OpeningPhase.Crackle);
             Evaluate();
         }
 
@@ -394,7 +391,7 @@ namespace MoonProject.Rover
         {
             switch (phase)
             {
-                case OpeningPhase.PushIn: return _settings.PushInSeconds;
+                case OpeningPhase.FadeOut: return _settings.FadeOutSeconds;
                 case OpeningPhase.Crackle: return _settings.CrackleSeconds;
                 case OpeningPhase.LidCrack: return _settings.LidCrackSeconds;
                 case OpeningPhase.LidHalf: return _settings.LidHalfSeconds;
@@ -418,8 +415,8 @@ namespace MoonProject.Rover
         {
             switch (Phase)
             {
-                case OpeningPhase.PushIn:
-                    Publish(WakeBeat.PushedIn);
+                case OpeningPhase.FadeOut:
+                    Publish(WakeBeat.FadedOut);
                     Enter(OpeningPhase.Crackle);
                     break;
                 case OpeningPhase.Crackle:
@@ -547,7 +544,7 @@ namespace MoonProject.Rover
         {
             switch (Phase)
             {
-                case OpeningPhase.PushIn:
+                case OpeningPhase.FadeOut:
                 case OpeningPhase.Crackle:
                 case OpeningPhase.LidCrack:
                 case OpeningPhase.LidHalf:
@@ -709,8 +706,8 @@ namespace MoonProject.Rover
             LensActive = InLens;
             switch (Phase)
             {
-                case OpeningPhase.PushIn:
-                    lid = 1f - Smoothing.SmoothStep(_settings.PushDarkFrom, 1f, t / _phaseLength);
+                case OpeningPhase.FadeOut:
+                    lid = 1f - Smoothing.SmoothStep(_settings.FadeOutFrom, 1f, t / _phaseLength);
                     sleep = 1f;
                     LensActive = lid < 1f;
                     break;
@@ -787,7 +784,7 @@ namespace MoonProject.Rover
             FocusDistance = focus;
             Sleep = sleep;
             SpeckOffset = _speckClock < 0f
-                ? (Phase == OpeningPhase.PushIn ? _settings.SpeckEnd : _settings.SpeckStart)
+                ? _settings.SpeckStart
                 : Vector2.Lerp(_settings.SpeckStart, _settings.SpeckEnd, Smoothing.SmoothStep(0f, _speckSpan, _speckClock));
             if (Phase == OpeningPhase.GazePeak && !_farFocusLanded && t >= _settings.RehuntSeconds)
             {

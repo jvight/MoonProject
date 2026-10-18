@@ -13,8 +13,8 @@ namespace MoonProject.Rover
     /// <item>While the title is up (<see cref="IGameFlow"/>, <see cref="TitleShown"/>) 07 stays asleep. A fresh title
     /// holds the rig's lens shot on the closed lens, drifting after a while; over a save, the rig holds the wide shot
     /// of 07 where it was left (<see cref="TitleFrame"/>).</item>
-    /// <item><see cref="SessionStarted"/> with a fresh game plays the full opening once: from the title the lens camera
-    /// pushes into the closed lens, and that black is O1. Inside the lens the camera sits at 07's lens socket and turns
+    /// <item><see cref="SessionStarted"/> with a fresh game plays the full opening once: from the title the picture
+    /// fades to black where the camera is (no camera move), and the wake starts from that black as O1. Inside the lens the camera sits at 07's lens socket and turns
     /// with the gaze, the picture goes through <see cref="ILensView"/>, and 07's head follows; then the camera leaves
     /// the lens toward the rig's lens shot (or straight to the chase frame when hurried) and the rig carries on.</item>
     /// <item>A loaded game plays the short wake: the title's frame eases back to the chase frame while 07's lid opens
@@ -35,12 +35,6 @@ namespace MoonProject.Rover
 
         /// <summary>Drive input below this (stick magnitude) is drift, not the player driving.</summary>
         private const float DriveEpsilon = 0.05f;
-
-        /// <summary>
-        /// Share of the push after which the camera's heading swings onto the lens' own gaze (up to 180 degrees round
-        /// from looking at the lens): only once the picture has faded to black.
-        /// </summary>
-        private const float PushGazeFrom = 0.93f;
 
         /// <summary>Frames the brain keeps its cut blend after the lens camera goes live.</summary>
         private const int CutFrameCount = 2;
@@ -84,9 +78,6 @@ namespace MoonProject.Rover
         private ILookSettings _lookSettings;
         private IGameFlow _flow;
         private IDisposable[] _subscriptions;
-        private Vector3 _pushFrom;
-        private Quaternion _pushFromRotation;
-        private float _pushFromFov;
         private Vector3 _pullOutFromOrigin;
         private Vector3 _pullOutFromEye;
         private Quaternion _pullOutFromGaze;
@@ -106,7 +97,7 @@ namespace MoonProject.Rover
         /// <summary>The script, for tests and captures.</summary>
         public OpeningScript Script => _script;
 
-        /// <summary>True while the lens camera has the view (pushing in, inside the lens, leaving it).</summary>
+        /// <summary>True while the lens camera has the view (inside the lens, leaving it).</summary>
         public bool LensCameraLive => _lensCamera != null && _lensCamera.enabled;
 
         private Transform ScanLensOrigin => _roverRig.ScanOrigin != null ? _roverRig.ScanOrigin : _roverRig.TetherOrigin;
@@ -227,15 +218,15 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// New Game that App answers with a reload (over a save, from the title or from play): the camera moves to
-        /// the lens shot and pushes into the closed lens; App puts the save away and reloads under the black
-        /// (<see cref="WakeBeat.PushedIn"/>). Over a fresh title App starts the session itself right after this, and
+        /// New Game that App answers with a reload (over a save, from the title or from play): the picture fades to
+        /// black where the camera is; App puts the save away and reloads under the black
+        /// (<see cref="WakeBeat.FadedOut"/>). Over a fresh title App starts the session itself right after this, and
         /// that begins the opening instead.
         /// </summary>
         private void OnNewGameRequested(NewGameRequested request)
         {
             bool freshTitle = _inTitle && !_titleHasSave;
-            if (_flow == null || !_flow.ShowsTitle || freshTitle || _script.Phase == OpeningPhase.PushIn)
+            if (_flow == null || !_flow.ShowsTitle || freshTitle || _script.Phase == OpeningPhase.FadeOut)
             {
                 return;
             }
@@ -254,21 +245,14 @@ namespace MoonProject.Rover
         /// The full opening. The rig holds its face-inspect wake shot underneath from the start, which keeps its wide
         /// shot and stargazing closed and is the frame the pull-out lands on.
         /// </summary>
-        private void BeginFull(bool pushIn)
+        private void BeginFull(bool fromTitle)
         {
             _blinkedInWake = false;
             _body.HoldOpeningScreenDark(true);
             SetTargets();
-            _script.BeginFull(pushIn);
+            _script.BeginFull(fromTitle);
             _body.PoseOpeningHead(_script.Gaze.Yaw, _script.Gaze.Pitch, 0f, 1f);
             _rig.BeginWakeOpening(true);
-            if (pushIn)
-            {
-                CameraState state = _rig.ChaseCamera.State;
-                _pushFrom = state.GetFinalPosition();
-                _pushFromRotation = state.GetFinalOrientation();
-                _pushFromFov = state.Lens.FieldOfView;
-            }
         }
 
         /// <summary>The gaze targets as (yaw, pitch) from 07's heading at its scan lens, fixed as the opening begins.</summary>
@@ -406,7 +390,7 @@ namespace MoonProject.Rover
             {
                 _body.PoseWake(_script.Sleep, _script.BodyLid, _script.BodyLidWeight, _script.HeadTilt);
                 OpeningPhase phase = _script.Phase;
-                if (phase == OpeningPhase.PushIn || _script.InLens)
+                if (phase == OpeningPhase.FadeOut || _script.InLens)
                 {
                     _body.PoseOpeningHead(_script.Gaze.Yaw, _script.Gaze.Pitch, 0f, 1f);
                 }
@@ -492,7 +476,7 @@ namespace MoonProject.Rover
         private void PlaceLensCamera()
         {
             OpeningPhase phase = _script.Phase;
-            bool live = phase == OpeningPhase.PushIn || _script.InLens || phase == OpeningPhase.PullOut;
+            bool live = _script.InLens || phase == OpeningPhase.PullOut;
             if (!live)
             {
                 if (_lensCamera.enabled)
@@ -514,33 +498,7 @@ namespace MoonProject.Rover
             Quaternion rotation = gaze;
             float fov = settings.LensFov;
             float nearClip = settings.LensNearClip;
-            if (phase == OpeningPhase.PushIn)
-            {
-                float u = _script.PhaseLength > LengthEpsilon
-                    ? Mathf.Clamp01(_script.PhaseTime / _script.PhaseLength)
-                    : 1f;
-                float t = WakeOpening.SmoothStepC2(0f, 1f, u);
-                Vector3 desiredPos = PushInPath.Position(_rover.Position, _pushFrom, eye, t, settings.PushClearRadius);
-                Vector3 stepDir = desiredPos - lensOrigin;
-                float stepDist = stepDir.magnitude;
-                if (stepDist > LengthEpsilon)
-                {
-                    float clearStep = _sight.Clear(lensOrigin, desiredPos, _tuning.FaceInspectProbeRadius);
-                    position = lensOrigin + (stepDir / stepDist) * clearStep;
-                }
-                else
-                {
-                    position = desiredPos;
-                }
-
-                Vector3 lookDir = lensOrigin - position;
-                Quaternion lookToLens = lookDir.sqrMagnitude > 1e-6f ? Quaternion.LookRotation(lookDir) : _pushFromRotation;
-                Quaternion approach = Quaternion.Slerp(_pushFromRotation, lookToLens, t);
-                rotation = Quaternion.Slerp(approach, gaze, Smoothing.SmoothStep(PushGazeFrom, 1f, t));
-                fov = Mathf.Lerp(_pushFromFov, settings.LensFov, t);
-                nearClip = Mathf.Lerp(_tuning.FaceInspectNearClip, settings.LensNearClip, t);
-            }
-            else if (phase == OpeningPhase.PullOut)
+            if (phase == OpeningPhase.PullOut)
             {
                 if (!_hasPullOutFrom)
                 {
@@ -614,7 +572,7 @@ namespace MoonProject.Rover
 
         /// <summary>
         /// The lens camera takes the picture in one cut: the brain's default blend (a 2 s ease) would otherwise mix the
-        /// chase camera into it for the first seconds of the push, sweeping the view through 07's hull.
+        /// chase camera into it for the first seconds of the wake, showing a view between the two.
         /// </summary>
         private void CutToLensCamera()
         {
@@ -684,9 +642,13 @@ namespace MoonProject.Rover
 
             LensViewState state = _script.LensState;
             OpeningPhase phase = _script.Phase;
-            if (phase == OpeningPhase.PushIn || phase == OpeningPhase.PullOut)
+            if (phase == OpeningPhase.FadeOut || phase == OpeningPhase.PullOut)
             {
-                float toLens = Vector3.Distance(_lensCamera.transform.position, ScanLensOrigin.position);
+                // The fade runs on the camera the player already sees; the pull-out on the lens camera.
+                Vector3 eyePosition = phase == OpeningPhase.FadeOut
+                    ? _rig.Camera.transform.position
+                    : _lensCamera.transform.position;
+                float toLens = Vector3.Distance(eyePosition, ScanLensOrigin.position);
                 state = new LensViewState(state.Lid01, toLens, state.Flicker01, state.Warmth01, state.SpeckOffset,
                     state.Readout01);
             }

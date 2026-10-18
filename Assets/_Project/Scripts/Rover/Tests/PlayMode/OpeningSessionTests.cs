@@ -27,10 +27,10 @@ namespace MoonProject.Rover.PlayModeTests
 {
     /// <summary>
     /// 07's wake through its own eye in the real Main scene, with the title on (docs/design/cutscenes.md §1,
-    /// docs/features/M3-09 Part A): nothing wakes on the title; New Game pushes into the closed lens and plays the
+    /// docs/features/M3-09 Part A): nothing wakes on the title; New Game fades the title to black and plays the
     /// full opening once, untouched within 45 s; drive input reaches the chase frame within ~4 s and never holds control
     /// over ~1.5 s; Continue over a real save plays the short wake; the opening's frames allocate nothing. Frames of
-    /// both title shots, the push and every beat O1-O14 go to Logs/captures/opening/*.png with opening.md.
+    /// both title shots, the fade and every beat O1-O14 go to Logs/captures/opening/*.png with opening.md.
     /// Slow and needs a GPU: run on demand with --category OpeningSession.
     /// </summary>
     [Category("OpeningSession")]
@@ -41,6 +41,9 @@ namespace MoonProject.Rover.PlayModeTests
         private const int KeyFrameWidth = 1920;
         private const int KeyFrameHeight = 1080;
         private const float LanguageSettleSeconds = 1.5f;
+
+        /// <summary>The title CRT's switch-off (about 0.6 s) plus the fade to black leave it gone within this (s).</summary>
+        private const float TitleOffTimeout = 1.4f;
 
         /// <summary>The longest frame (ms) the visible part of a transition may have; the reload's black may exceed it.</summary>
         private const float MaxVisibleFrameMs = 50f;
@@ -145,7 +148,7 @@ namespace MoonProject.Rover.PlayModeTests
             _context.Events.Publish(new NewGameRequested());
             var shots = new (OpeningPhase Phase, float Share, string Name)[]
             {
-                (OpeningPhase.PushIn, 0.6f, "push_in"),
+                (OpeningPhase.FadeOut, 0.6f, "fade_out"),
                 (OpeningPhase.Crackle, 0.5f, "o01_darkness"),
                 (OpeningPhase.LidCrack, 0.7f, "o02_lid_slit"),
                 (OpeningPhase.LidHalf, 0.8f, "o03_lid_half"),
@@ -238,7 +241,7 @@ namespace MoonProject.Rover.PlayModeTests
             WriteBeats();
             _report.AppendLine().AppendLine(Line("untouched opening, O1 to the chase frame (s)", chase - crackle));
             Assert.AreEqual(1, Count(WakeBeat.Crackle), "the full opening plays once");
-            Assert.AreEqual(1, Count(WakeBeat.PushedIn), "New Game pushed into the closed lens");
+            Assert.AreEqual(1, Count(WakeBeat.FadedOut), "New Game faded the picture to black");
             Assert.AreEqual(1, _awoke, "RoverAwoke goes with the crackle, once");
             Assert.AreEqual(1, _body.FaceDirector.Director.BootCount, "the CRT face boots once at the reveal");
             Assert.GreaterOrEqual(_body.FaceDirector.Director.WakeBlinkCount, 1, "the CRT face slow-blinks on Blinked");
@@ -642,40 +645,37 @@ namespace MoonProject.Rover.PlayModeTests
             }
 
             yield return null;
-            Assert.AreEqual(OpeningPhase.PushIn, _director.Script.Phase,
-                "confirming New Game over a save immediately begins the 3D camera push into 07's closed lens");
+            Assert.AreEqual(OpeningPhase.FadeOut, _director.Script.Phase,
+                "confirming New Game over a save immediately begins the fade to black");
             Assert.IsTrue(bootstrap.IsReloadPrewarmed,
-                "GameBootstrap pre-warms SceneManager/EditorSceneManager async reload during the 2 s push-in");
+                "GameBootstrap pre-warms SceneManager/EditorSceneManager async reload during the fade");
 
-            float maxPushInFrameMs = 0f;
+            float maxFadeFrameMs = 0f;
             float elapsed = 0f;
             VisualElement titleCrt = document.rootVisualElement.Q<VisualElement>("title-crt");
             Assert.IsNotNull(titleCrt);
-            float pushIn = _director.Script.PhaseLength;
-            while (IsShown(titleCrt) && elapsed < pushIn)
+            while (IsShown(titleCrt) && elapsed < TitleOffTimeout)
             {
                 yield return null;
                 float dt = Time.unscaledDeltaTime;
                 elapsed += dt;
-                maxPushInFrameMs = Mathf.Max(maxPushInFrameMs, dt * 1000f);
+                maxFadeFrameMs = Mathf.Max(maxFadeFrameMs, dt * 1000f);
             }
 
-            Assert.IsFalse(IsShown(titleCrt), "the title CRT switches off before the push into 07's closed lens ends");
-            Assert.AreEqual(OpeningPhase.PushIn, _director.Script.Phase,
-                "the camera is still pushing into the lens after the title has gone");
+            Assert.IsFalse(IsShown(titleCrt), "the title CRT has switched off by the time O1's black begins");
 
             float reloadDeadline = Time.realtimeSinceStartup + BootTimeout;
             while (_director != null && Time.realtimeSinceStartup < reloadDeadline)
             {
                 yield return null;
-                if (_director != null && _director.Script.Phase == OpeningPhase.PushIn)
+                if (_director != null && _director.Script.Phase == OpeningPhase.FadeOut)
                 {
-                    maxPushInFrameMs = Mathf.Max(maxPushInFrameMs, Time.unscaledDeltaTime * 1000f);
+                    maxFadeFrameMs = Mathf.Max(maxFadeFrameMs, Time.unscaledDeltaTime * 1000f);
                 }
             }
 
             float activationStart = Time.realtimeSinceStartup;
-            Assert.IsTrue(_director == null, "the scene reloads at WakeBeat.PushedIn inside O1's black");
+            Assert.IsTrue(_director == null, "the scene reloads at WakeBeat.FadedOut inside O1's black");
             Dispose();
 
             while (Time.realtimeSinceStartup < reloadDeadline)
@@ -699,15 +699,15 @@ namespace MoonProject.Rover.PlayModeTests
 
             float activationMs = (Time.realtimeSinceStartup - activationStart) * 1000f;
             _report.AppendLine("# New Game over a save (pre-warmed async reload)").AppendLine()
-                .AppendLine(Line("max frame time during PushIn (ms)", maxPushInFrameMs))
+                .AppendLine(Line("max frame time during the fade (ms)", maxFadeFrameMs))
                 .AppendLine(Line("pre-warmed reload activation inside O1 black (ms)", activationMs)).AppendLine();
             File.WriteAllText(Path.Combine(CaptureFolder, "opening.md"), _report.ToString());
 
             Assert.IsNotNull(_director, "reloaded scene has OpeningDirector");
             Assert.IsTrue(_director.Script.IsRunning,
                 "reloaded scene starts the opening inside O1 without showing the title again");
-            Assert.AreNotEqual(OpeningPhase.PushIn, _director.Script.Phase,
-                "the push-in already happened before the reload");
+            Assert.AreNotEqual(OpeningPhase.FadeOut, _director.Script.Phase,
+                "the fade already happened before the reload");
         }
 
         /// <summary>O6 looks at the dead charging post where 07 woke (its yaw within a few degrees).</summary>
@@ -930,7 +930,7 @@ namespace MoonProject.Rover.PlayModeTests
             }
 
             File.WriteAllText(Path.Combine(folder, "frames.csv"), csv.ToString());
-            Assert.IsTrue(reloaded, "the scene reloaded under the push");
+            Assert.IsTrue(reloaded, "the scene reloaded under the fade");
             if (!render)
             {
                 Assert.AreEqual(string.Empty, visibleHitches.ToString(),

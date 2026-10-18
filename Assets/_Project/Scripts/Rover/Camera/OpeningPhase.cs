@@ -6,8 +6,8 @@ namespace MoonProject.Rover
         /// <summary>Nothing playing (before a session starts, or after the wake).</summary>
         Idle = 0,
 
-        /// <summary>New Game on the title: the camera pushes into the closed lens.</summary>
-        PushIn = 1,
+        /// <summary>New Game on the title: the picture fades to black where the camera already is.</summary>
+        FadeOut = 1,
 
         Crackle = 2,
         LidCrack = 3,

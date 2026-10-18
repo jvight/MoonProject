@@ -319,8 +319,8 @@ MonoBehaviour:
     _tiltEaseSeconds: 0.45
     _tiltHoldSeconds: 1.1
     _blinkSigh: 0.5
-    _pushInSeconds: 1.6
-    _pushDarkFrom: 0.6
+    _fadeOutSeconds: 0.6
+    _fadeOutFrom: 0.1
     _titleDriftDelay: 20
     _titleDriftYaw: 8
     _titleDriftPeriod: 48

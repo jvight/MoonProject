@@ -289,7 +289,7 @@ namespace MoonProject.UI.PlayModeTests
             Submit(layout.NewGameConfirmButton);
             yield return null;
             Assert.IsFalse(_rig.Ui.Pause.IsOpen, "the title eases away so the camera can push into 07's closed lens");
-            Assert.AreEqual(1, asked, "once only: App reloads inside O1's black (WakeBeat.PushedIn)");
+            Assert.AreEqual(1, asked, "once only: App reloads inside O1's black (WakeBeat.FadedOut)");
         }
 
         [UnityTest]

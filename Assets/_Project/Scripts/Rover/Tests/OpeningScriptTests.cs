@@ -107,20 +107,20 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void FromTheTitle_PushesIntoTheLensFirst_AndItsBlackIsO1()
+        public void FromTheTitle_FadesToBlackFirst_AndThatBlackLeadsIntoO1()
         {
             _script.BeginFull(true);
             TakeBeats();
-            Assert.AreEqual(OpeningPhase.PushIn, _script.Phase);
-            Assert.AreEqual(1f, _script.Lid01, 1e-4f, "the push starts on the open picture");
+            Assert.AreEqual(OpeningPhase.FadeOut, _script.Phase);
+            Assert.AreEqual(1f, _script.Lid01, 1e-4f, "the fade starts on the open picture");
 
             while (!_beats.Contains(WakeBeat.Crackle))
             {
                 StepOnce();
             }
 
-            Assert.AreEqual(WakeBeat.PushedIn, _beats[0]);
-            Assert.AreEqual(0f, _script.Lid01, 1e-3f, "the push ends in black, which is O1");
+            Assert.AreEqual(WakeBeat.FadedOut, _beats[0]);
+            Assert.AreEqual(0f, _script.Lid01, 1e-3f, "the fade ends in black, then O1 begins");
         }
 
         [Test]

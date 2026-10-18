@@ -323,19 +323,15 @@ namespace MoonProject.Rover
         [Range(0.2f, 4f)]
         [SerializeField] private float _lampRampSeconds = 1.1f;
 
-        [Header("Title and the push into the lens")]
-        [Tooltip("Seconds New Game takes to push from the title's lens shot into the closed lens (the reverse of O10).")]
-        [Range(0.5f, 4f)]
-        [SerializeField] private float _pushInSeconds = 1.6f;
+        [Header("Title and the fade to black")]
+        [Tooltip("Seconds New Game takes to fade the title's picture to black before O1 begins; it runs with the " +
+                 "title's own switch-off.")]
+        [Range(0.3f, 2f)]
+        [SerializeField] private float _fadeOutSeconds = 0.6f;
 
-        [Tooltip("The push sweeps round 07 at no less than this ground radius (m) before it closes in on the lens, so " +
-                 "a title frame behind 07 never cuts through its hull.")]
-        [Range(0.5f, 6f)]
-        [SerializeField] private float _pushClearRadius = 1.8f;
-
-        [Tooltip("Share of the push after which the lens view darkens to black.")]
+        [Tooltip("Share of the fade-out after which the picture starts to darken to black.")]
         [Range(0.2f, 0.95f)]
-        [SerializeField] private float _pushDarkFrom = 0.6f;
+        [SerializeField] private float _fadeOutFrom = 0.1f;
 
         [Tooltip("Seconds untouched on the title before the camera starts to drift.")]
         [Range(5f, 60f)]
@@ -445,10 +441,8 @@ namespace MoonProject.Rover
         public float LampFlickerSeconds => _lampFlickerSeconds;
         public float LampDarkGapSeconds => _lampDarkGapSeconds;
         public float LampRampSeconds => _lampRampSeconds;
-        public float PushInSeconds => _pushInSeconds;
-        public float PushDarkFrom => _pushDarkFrom;
-
-        public float PushClearRadius => _pushClearRadius;
+        public float FadeOutSeconds => _fadeOutSeconds;
+        public float FadeOutFrom => _fadeOutFrom;
 
         public float TitleFrameMinLanderDistance => _titleFrameMinLanderDistance;
         public float TitleDriftDelay => _titleDriftDelay;
