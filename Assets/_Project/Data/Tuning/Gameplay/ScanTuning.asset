@@ -55,8 +55,8 @@ MonoBehaviour:
   _pingDurationSeconds: 0.38
   _pingEdgeThickness: 1.35
   _pingEdgeIntensity: 1.25
-  _surfaceGridPitchMeters: 0.08
-  _wireframeRevealIntensity: 1.7
+  _surfaceGridPitchMeters: 0.044
+  _wireframeRevealIntensity: 1.18
   _beamPulseSpeed: 3.2
   _lensGlowSize: 0.072
   _lensGlowAlpha: 0.76
