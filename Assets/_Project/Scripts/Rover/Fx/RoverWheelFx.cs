@@ -192,6 +192,16 @@ namespace MoonProject.Rover
             _trackRight.Break();
         }
 
+        /// <summary>A small soft puff of dust at <paramref name="position"/>, for coat that falls off 07.</summary>
+        public void Puff(Vector3 position, Vector3 normal, int count)
+        {
+            _landingDust.transform.SetPositionAndRotation(position, Quaternion.FromToRotation(Vector3.forward, normal));
+            ParticleSystem.MainModule main = _landingDust.main;
+            main.startSpeedMultiplier = _tuning.LandingMinSpeed;
+            main.startSizeMultiplier = _tuning.LandingMinSize;
+            _landingDust.Emit(count);
+        }
+
         private void OnLanded(RoverLanded landed)
         {
             if (!enabled || landed.ImpactSpeed < _tuning.LandingMinImpact)

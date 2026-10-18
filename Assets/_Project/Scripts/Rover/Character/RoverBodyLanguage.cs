@@ -143,6 +143,7 @@ namespace MoonProject.Rover
         private IDisposable[] _subscriptions;
         private float _glanceEnds = -1f;
         private MaterialPropertyBlock _glowBlock;
+        private RoverDustCoat _dustCoat;
         private DampedSpring _yaw;
         private DampedSpring _pitch;
         private bool _hasActiveGaze;
@@ -489,6 +490,36 @@ namespace MoonProject.Rover
         public void SetPostMotion(in PostBodyMotion motion)
         {
             _rig.SetPostMotion(motion);
+        }
+
+        /// <summary>
+        /// Lays the long-sleep regolith coat on 07 as <paramref name="dust"/> says it is, part by part; at all zero 07 is
+        /// as the driving left it. <paramref name="heavyAmount"/> is the dust amount of a part under the full coat.
+        /// </summary>
+        public void SetPostDust(PostDust dust, float heavyAmount)
+        {
+            if (_dustCoat == null)
+            {
+                _dustCoat = new RoverDustCoat(transform, _head, _solarWing, _cutterTurret, _rig.Antenna,
+                    _rig.LowerBodyRenderers);
+            }
+
+            for (int i = 0; i < PostDust.ZoneCount; i++)
+            {
+                var zone = (DustZone)i;
+                if (zone != DustZone.Wheels)
+                {
+                    _dustCoat.Set(zone, dust.Level(zone), heavyAmount);
+                }
+            }
+
+            _rig.SetPostDust(dust.Level(DustZone.Wheels), heavyAmount);
+        }
+
+        /// <summary>Where a part is, for the dust that falls off it (the coat must have been laid at least once).</summary>
+        public Vector3 DustAnchor(DustZone zone)
+        {
+            return _dustCoat.AnchorPosition(zone);
         }
 
         public void HoldAsleep()
