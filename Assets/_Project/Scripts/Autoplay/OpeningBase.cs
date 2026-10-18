@@ -397,7 +397,7 @@ namespace MoonProject.Autoplay
             yield return _bot.TurnToward(fragment.Point, fragment.FragmentId);
             UiProbe ui = _bot.World.Ui;
             float deadline = Time.unscaledTime + ScanLookSeconds;
-            while (!_bot.Failed && !(_bot.KeepLookingAt(fragment.Point) && scans.Candidate == fragment))
+            while (!_bot.Failed && !(_bot.KeepLookingAt(fragment.Point) && OnSetCandidate(scans, fragment)))
             {
                 if (Time.unscaledTime > deadline)
                 {
@@ -409,6 +409,7 @@ namespace MoonProject.Autoplay
                 yield return null;
             }
 
+            fragment = scans.Candidate;
             yield return FirstUse(ScanVerb);
             yield return _bot.Hold(Key.E, () =>
                 {
@@ -416,6 +417,21 @@ namespace MoonProject.Autoplay
                     return fragment.Scanned;
                 }, scans.Tuning.Seconds(fragment.Size) + ScanAllowanceSeconds, "a held E to scan " + fragment.FragmentId,
                 () => "Chip '" + ui.Chip() + "'.");
+        }
+
+        /// <summary>The brackets are on this part or another unscanned part of its set: a player scans what they frame.</summary>
+        private static bool OnSetCandidate(ScanField scans, ScanFragment fragment)
+        {
+            ScanFragment candidate = scans.Candidate;
+            if (candidate == null)
+            {
+                return false;
+            }
+
+            int split = fragment.FragmentId.LastIndexOf('.');
+            return candidate == fragment || (!candidate.Scanned && split > 0 &&
+                   candidate.FragmentId.StartsWith(fragment.FragmentId.Substring(0, split + 1),
+                       System.StringComparison.Ordinal));
         }
 
         /// <summary>07's look rests on a spot near <paramref name="at"/> the placement rules accept, in rings round it.</summary>

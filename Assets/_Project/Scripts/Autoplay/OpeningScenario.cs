@@ -165,6 +165,14 @@ namespace MoonProject.Autoplay
             _bot.EndBeat("both fragments scanned (chips seen: " + string.Join("; ", chips) + ")");
         }
 
+        /// <summary>The part the brackets are on: a player scans whichever cargo part is the candidate, in any order.</summary>
+        private bool OnCargoCandidate(ScanField scans, ScanFragment fragment)
+        {
+            ScanFragment candidate = scans.Candidate;
+            return candidate != null && (candidate == fragment || (!candidate.Scanned &&
+                   DriveSteering.FlatDistance(candidate.Point, Lander().Position) <= LanderCargoRadius));
+        }
+
         private IEnumerator ScanOne(ScanField scans, ScanFragment fragment, List<string> chips)
         {
             Vector3 point = fragment.Point;
@@ -178,12 +186,12 @@ namespace MoonProject.Autoplay
             float nudgeAt = Time.unscaledTime + NudgeSeconds;
             float traceAt = 0f;
             int nudges = 0;
-            while (!_bot.Failed && !(_bot.KeepLookingAt(point) && scans.Candidate == fragment &&
+            while (!_bot.Failed && !(_bot.KeepLookingAt(point) && OnCargoCandidate(scans, fragment) &&
                                      ui.ChipGlyph().Length > 0))
             {
                 if (Time.unscaledTime > deadline)
                 {
-                    if (scans.Candidate != fragment || ui.RawChipGlyph().Length == 0)
+                    if (!OnCargoCandidate(scans, fragment) || ui.RawChipGlyph().Length == 0)
                     {
                         _bot.Fail("timed out after " + ScanLookTimeoutSeconds.ToString("0", CultureInfo.InvariantCulture) +
                                   " s waiting for the brackets on " + fragment.FragmentId + " (candidate " +
@@ -220,6 +228,12 @@ namespace MoonProject.Autoplay
             if (_bot.Failed)
             {
                 yield break;
+            }
+
+            if (scans.Candidate != fragment)
+            {
+                fragment = scans.Candidate;
+                point = fragment.Point;
             }
 
             _base.NoteUsed(OpeningBase.ScanVerb);
