@@ -14,6 +14,15 @@ namespace MoonProject.Rover
         private readonly RoverCameraTuning _tuning;
         private float _sensitivity = 1f;
 
+        /// <summary>
+        /// The mouse's look this frame: only while the cursor is locked to the game. With a free cursor (UI owns that
+        /// rule) the mouse moves a pointer, not the camera; the stick is not affected.
+        /// </summary>
+        public static Vector2 MouseDelta(Vector2 delta, bool cursorLocked)
+        {
+            return cursorLocked ? delta : Vector2.zero;
+        }
+
         public LookSettings(RoverCameraTuning tuning)
         {
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
