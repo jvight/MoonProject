@@ -748,12 +748,262 @@ def build_cable_broken_end() -> bpy.types.Object:
     return root
 
 
+def build_cable_plug() -> bpy.types.Object:
+    """Build `Cable_Plug.fbx`: heavy R1 power plug end that seats into LanderServicePort and ChargingPad sockets."""
+    r1kit.reset_scene()
+    ensure_extended_r1_materials()
+    r1kit.ensure_materials()
+
+    root = r1kit.create_empty("Cable_Plug", pivot_u=(0.0, 0.0, 0.0))
+
+    # 1. CableLead: regolith cable entry (-0.46 m), heavy strain-relief anchor block (-0.14 m), and S-sweep up to y = 0.20 m
+    lead = r1kit.MeshBuilder("CableLead", pivot_u=(0.0, 0.0, 0.0))
+    lead_pts: List[Tuple[float, float, float]] = [
+        (0.0, CABLE_CENTER_Y, -0.46),
+        (0.008, CABLE_CENTER_Y, -0.31),
+        (0.0, 0.036, -0.14),
+        (-0.008, 0.068, 0.02),
+        (0.0, 0.142, 0.13),
+        (0.0, 0.200, 0.23),
+    ]
+    lead.add_tube_path(lead_pts, radius=CABLE_RADIUS, mat="R1_Rubber", segments=12)
+
+    # Input coupling collar at z = -0.422 m matching Cable_Straight_2m
+    _add_coupling_collar(lead, (0.0, CABLE_CENTER_Y, -0.422), yaw_deg=0.0)
+
+    # Heavy ground strain-relief anchor block at z = -0.14 m
+    lead.add_bevel_box(
+        (0.0, 0.005, -0.14),
+        (0.256, 0.020, 0.200),
+        mat="R1_Rubber",
+        bevel=0.004,
+        segments=1,
+    )
+    lead.add_bevel_box(
+        (0.0, 0.044, -0.14),
+        (0.232, 0.064, 0.176),
+        mat="R1_GreyMetal",
+        bevel=0.008,
+        segments=2,
+    )
+    lead.add_bevel_box(
+        (0.0, 0.084, -0.14),
+        (0.136, 0.024, 0.148),
+        mat="R1_CreamEnamel",
+        bevel=0.005,
+        segments=1,
+    )
+    lead.add_bevel_box(
+        (0.0, 0.048, -0.14),
+        (0.238, 0.022, 0.056),
+        mat="R1_OrangeStripe",
+        bevel=0.003,
+        segments=1,
+    )
+    # Driven regolith stakes & top hex anchor bolts on strain-relief block
+    for sx in (-1.0, 1.0):
+        bx = sx * 0.088
+        lead.add_cylinder(
+            (bx, 0.036, -0.14),
+            radius=0.012,
+            length=0.104,
+            mat="R1_BareSteel",
+            axis_u="Y",
+            segments=8,
+            bevel=0.002,
+        )
+        lead.add_cylinder(
+            (bx, 0.082, -0.14),
+            radius=0.018,
+            length=0.010,
+            mat="R1_Brass",
+            axis_u="Y",
+            segments=8,
+            bevel=0.0015,
+        )
+        lead.add_cylinder(
+            (bx, 0.092, -0.14),
+            radius=0.012,
+            length=0.012,
+            mat="R1_BareSteel",
+            axis_u="Y",
+            segments=6,
+            bevel=0.0015,
+        )
+
+    lead.build_object(parent=root)
+
+    # 2. PlugHead: bayonet power plug at y = 0.200 m matching ChargingPad (r=0.075 GreyMetal / r=0.052 Copper) & LanderServicePort
+    plug = r1kit.MeshBuilder("PlugHead", pivot_u=(0.0, 0.200, 0.34))
+    py = 0.200
+
+    # Tapered ribbed rubber strain-relief boot (z = 0.195 .. 0.255)
+    plug.add_cylinder(
+        (0.0, py, 0.225),
+        radius=0.036,
+        radius_top=0.058,
+        length=0.060,
+        mat="R1_Rubber",
+        axis_u="Z",
+        segments=14,
+        bevel=0.004,
+    )
+    # Main GreyMetal gland collar body (radius = 0.075 m matching ChargingPad's 0.075 m gland receptacle)
+    plug.add_cylinder(
+        (0.0, py, 0.290),
+        radius=0.075,
+        length=0.076,
+        mat="R1_GreyMetal",
+        axis_u="Z",
+        segments=16,
+        bevel=0.006,
+    )
+    # Warm-orange safety collar band
+    plug.add_cylinder(
+        (0.0, py, 0.264),
+        radius=0.077,
+        length=0.022,
+        mat="R1_OrangeStripe",
+        axis_u="Z",
+        segments=16,
+        bevel=0.003,
+    )
+    # Cream-enamel side protective grip shells on left and right of plug body
+    for sx in (-1.0, 1.0):
+        plug.add_bevel_box(
+            (sx * 0.068, py, 0.296),
+            (0.022, 0.084, 0.064),
+            mat="R1_CreamEnamel",
+            bevel=0.004,
+            segments=1,
+        )
+
+    # Top D-ring pull/latch handle for rover or EVA crew grip (y = 0.268 .. 0.316)
+    for sz in (0.266, 0.322):
+        plug.add_cylinder(
+            (0.0, py + 0.082, sz),
+            radius=0.009,
+            length=0.036,
+            mat="R1_BareSteel",
+            axis_u="Y",
+            segments=8,
+            bevel=0.0015,
+        )
+    plug.add_bevel_box(
+        (0.0, py + 0.104, 0.294),
+        (0.044, 0.022, 0.084),
+        mat="R1_OrangeStripe",
+        bevel=0.004,
+        segments=1,
+    )
+    plug.add_cylinder(
+        (0.0, py + 0.074, 0.294),
+        radius=0.012,
+        length=0.052,
+        mat="R1_Brass",
+        axis_u="X",
+        segments=8,
+        bevel=0.0015,
+    )
+
+    # Bare-steel bayonet locking ring (radius 0.070 m) + 3 radial locking lugs (90, 210, 330 deg)
+    plug.add_cylinder(
+        (0.0, py, 0.346),
+        radius=0.070,
+        length=0.038,
+        mat="R1_BareSteel",
+        axis_u="Z",
+        segments=16,
+        bevel=0.004,
+    )
+    for ang_deg in (90.0, 210.0, 330.0):
+        rad = math.radians(ang_deg)
+        lx = math.cos(rad) * 0.070
+        ly = py + math.sin(rad) * 0.070
+        plug.add_bevel_box(
+            (lx, ly, 0.348),
+            (0.018, 0.018, 0.024),
+            mat="R1_BareSteel",
+            bevel=0.002,
+            segments=1,
+            rot_deg_u=(0.0, 0.0, ang_deg),
+        )
+
+    # Brass guide collar ring (z = 0.365 .. 0.387)
+    plug.add_cylinder(
+        (0.0, py, 0.376),
+        radius=0.062,
+        length=0.022,
+        mat="R1_Brass",
+        axis_u="Z",
+        segments=16,
+        bevel=0.003,
+    )
+
+    # Heavy copper mating contact barrel (radius = 0.052 m matching ChargingPad's R1_Copper socket barrel!)
+    plug.add_cylinder(
+        (0.0, py, 0.416),
+        radius=0.052,
+        length=0.060,
+        mat="R1_Copper",
+        axis_u="Z",
+        segments=16,
+        bevel=0.004,
+    )
+    # DarkGlass front insulator well + 3 brass/copper contact pins (matching LanderServicePort / DeadChargingPost)
+    plug.add_cylinder(
+        (0.0, py, 0.448),
+        radius=0.040,
+        length=0.010,
+        mat="R1_DarkGlass",
+        axis_u="Z",
+        segments=14,
+        bevel=0.002,
+    )
+    for ang_deg in (90.0, 210.0, 330.0):
+        rad = math.radians(ang_deg)
+        px = math.cos(rad) * 0.022
+        pin_y = py + math.sin(rad) * 0.022
+        plug.add_cylinder(
+            (px, pin_y, 0.456),
+            radius=0.011,
+            length=0.010,
+            mat="R1_Brass",
+            axis_u="Z",
+            segments=8,
+            bevel=0.0015,
+        )
+        plug.add_cylinder(
+            (px, pin_y, 0.468),
+            radius=0.0075,
+            length=0.024,
+            mat="R1_Copper",
+            axis_u="Z",
+            segments=8,
+            bevel=0.0015,
+        )
+
+    plug.build_object(parent=root)
+
+    r1kit.create_empty("Start_Anchor", parent=root, pivot_u=(0.0, CABLE_CENTER_Y, -0.46))
+    r1kit.create_empty("Plug_Anchor", parent=root, pivot_u=(0.0, 0.200, 0.48))
+    r1kit.create_empty("Handle_Anchor", parent=root, pivot_u=(0.0, 0.304, 0.294))
+
+    apply_cable_dust_uvs_and_colors(root, footprint_radius=0.35)
+
+    fbx_path = PROPS_DIR / "Cable_Plug.fbx"
+    r1kit.export_fbx(root, fbx_path, bake_space_transform=False)
+    print(f"Exported {fbx_path}")
+    return root
+
+
 def main() -> None:
     PROPS_DIR.mkdir(parents=True, exist_ok=True)
     build_cable_straight_2m()
     build_cable_bend_45()
     build_cable_bend_90()
     build_cable_broken_end()
+    build_cable_plug()
 
 
 if __name__ == "__main__":
