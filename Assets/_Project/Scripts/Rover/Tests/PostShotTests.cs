@@ -81,6 +81,20 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
+        public void TheStart_EndsOverTheShoulderWithTheBeaconInFrame()
+        {
+            var beacon = new Vector3(30f, 3f, 20f);
+            ShotPose end = _shot.AtBegin(Body, Heading, beacon, 1f);
+            ShotPose over = _shot.OverShoulder(Body, Heading, beacon);
+            Assert.AreEqual(0f, Vector3.Distance(end.Position, over.Position), 1e-3f);
+            Vector3 toBeacon = (beacon - end.Position).normalized;
+            Assert.Greater(Vector3.Dot(end.Rotation * Vector3.forward, toBeacon), 0.999f, "the beacon is dead ahead");
+            ShotPose begin = _shot.AtBegin(Body, Heading, beacon, 0f);
+            ShotPose part = _shot.At(Body, Heading, BootCheckStep.Begin, 0f);
+            Assert.AreEqual(0f, Vector3.Distance(begin.Position, part.Position), 1e-3f, "it starts where the check's own shot is");
+        }
+
+        [Test]
         public void Blend_StartsAtOnePose_AndEndsAtTheOther()
         {
             ShotPose a = _shot.Base(Body, Heading);

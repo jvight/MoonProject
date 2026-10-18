@@ -73,13 +73,18 @@ namespace MoonProject.Rover
             float distance = Mathf.Lerp(here.Distance, other.Distance, ease);
             float height = Mathf.Lerp(here.Height, other.Height, ease);
             float side = _settings.ShotSideYaw + Mathf.Lerp(here.SideYaw, other.SideYaw, ease);
-            if (step == BootCheckStep.Begin)
-            {
-                // The camera swings round with the head as it turns toward the beacon.
-                side = Mathf.Lerp(side, _settings.BeginSideYaw, PostMotions.BeaconTurn(p));
-            }
 
             return Compose(body, headingDeg, local, distance, height, side);
+        }
+
+        /// <summary>
+        /// The start: as the head turns toward the beacon the camera leaves the part it was on and goes over 07's
+        /// shoulder, so the beacon is in frame when the head has finished turning.
+        /// </summary>
+        public ShotPose AtBegin(Vector3 body, float headingDeg, Vector3 beacon, float p)
+        {
+            float turn = WakeOpening.SmoothStepC2(0f, 1f, PostMotions.BeaconTurn(p));
+            return Blend(At(body, headingDeg, BootCheckStep.Begin, p), OverShoulder(body, headingDeg, beacon), turn);
         }
 
         /// <summary>

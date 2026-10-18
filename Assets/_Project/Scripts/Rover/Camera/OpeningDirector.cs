@@ -82,6 +82,7 @@ namespace MoonProject.Rover
         private OpeningScript _script;
         private LampPowerUp _lamps;
         private PostShot _shot;
+        private PostLights _lights;
         private GameContext _context;
         private EventBus _events;
         private IRoverState _rover;
@@ -135,6 +136,7 @@ namespace MoonProject.Rover
             OpeningSettings settings = _tuning.Opening;
             _lamps = _script.Lamps;
             _shot = new PostShot(settings.Post);
+            _lights = new PostLights(transform, settings.Post);
             _brain = _rig.Camera != null ? _rig.Camera.GetComponent<CinemachineBrain>() : null;
             CinemachineCamera chase = _rig.ChaseCamera;
             chase.StandbyUpdate = CinemachineVirtualCameraBase.StandbyUpdateMode.Always;
@@ -321,6 +323,7 @@ namespace MoonProject.Rover
             AimHead();
             PlaceLensCamera();
             ApplyLens();
+            ApplyPostLights();
         }
 
         private void TakeBeats()
@@ -687,21 +690,33 @@ namespace MoonProject.Rover
             float heading = HeadingDegrees();
             if (phase == OpeningPhase.Post)
             {
-                return _shot.At(body, heading, _script.PostStep, _script.PostProgress01);
+                return _script.PostStep == BootCheckStep.Begin
+                    ? _shot.AtBegin(body, heading, _beacon.position, _script.PostProgress01)
+                    : _shot.At(body, heading, _script.PostStep, _script.PostProgress01);
             }
 
             float u = _script.PhaseLength > LengthEpsilon ? Mathf.Clamp01(_script.PhaseTime / _script.PhaseLength) : 1f;
             float t = WakeOpening.SmoothStepC2(0f, 1f, u);
-            ShotPose end = _shot.At(body, heading, BootCheckStep.Begin, 1f);
             ShotPose over = _shot.OverShoulder(body, heading, _beacon.position);
             if (phase == OpeningPhase.OverShoulder)
             {
-                return PostShot.Blend(end, over, t);
+                return over;
             }
 
             CameraState chase = _rig.ChaseCamera.State;
             var chasePose = new ShotPose(chase.GetFinalPosition(), chase.GetFinalOrientation(), chase.Lens.FieldOfView);
             return PostShot.Blend(over, chasePose, t);
+        }
+
+        private void ApplyPostLights()
+        {
+            OpeningPhase phase = _script.Phase;
+            PostSettings post = _tuning.Opening.Post;
+            float share = _script.PhaseLength > LengthEpsilon ? _script.PhaseTime / _script.PhaseLength : 1f;
+            float secondsIn = phase == OpeningPhase.Post ? _script.PhaseTime : post.FillRampSeconds;
+            Transform screen = _body.ScreenTransform;
+            _lights.Apply(_rover.Position, _world.EarthDirection, screen.position, screen.forward,
+                PostLighting.Rim(phase, share), PostLighting.Fill(phase, share, secondsIn, post.FillRampSeconds));
         }
 
         private float HeadingDegrees()

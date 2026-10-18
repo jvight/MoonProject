@@ -111,6 +111,48 @@ namespace MoonProject.Rover
 
         public float BatteryFill => _batteryFill;
 
+        [Header("The light")]
+        [Tooltip("The cool earthshine-like rim that lets the body read in the eclipse.")]
+        [SerializeField] private Color _rimColor = new Color(0.55f, 0.68f, 1f);
+
+        [Tooltip("Rim intensity at full.")]
+        [Min(0f)]
+        [SerializeField] private float _rimIntensity = 6f;
+
+        [Range(2f, 20f)]
+        [SerializeField] private float _rimRange = 9f;
+
+        [Range(20f, 120f)]
+        [SerializeField] private float _rimSpotAngle = 70f;
+
+        [Tooltip("How far (m) toward Earth the rim stands from 07, and how high (m).")]
+        [Range(1f, 8f)]
+        [SerializeField] private float _rimDistance = 4f;
+
+        [Range(0f, 6f)]
+        [SerializeField] private float _rimHeight = 2.2f;
+
+        [Tooltip("The height (m) above 07's ground point the rim aims at.")]
+        [Range(0f, 2f)]
+        [SerializeField] private float _rimAimHeight = 0.8f;
+
+        [Tooltip("The warm fill that comes off 07's own screen.")]
+        [SerializeField] private Color _fillColor = new Color(1f, 0.78f, 0.5f);
+
+        [Min(0f)]
+        [SerializeField] private float _fillIntensity = 1.4f;
+
+        [Range(0.5f, 6f)]
+        [SerializeField] private float _fillRange = 3f;
+
+        [Tooltip("How far (m) in front of the screen the fill sits.")]
+        [Range(0f, 1.5f)]
+        [SerializeField] private float _fillOffset = 0.5f;
+
+        [Tooltip("Seconds after the checks start over which the fill grows in.")]
+        [Range(0.1f, 6f)]
+        [SerializeField] private float _fillRampSeconds = 2.5f;
+
         [Header("The camera")]
         [Tooltip("How far (m) the three-quarter front shot sits from the point it looks at.")]
         [Range(1f, 6f)]
@@ -123,10 +165,6 @@ namespace MoonProject.Rover
         [Tooltip("The shot's field of view (deg).")]
         [Range(20f, 70f)]
         [SerializeField] private float _shotFov = 42f;
-
-        [Tooltip("At the start the camera swings round to this side yaw (deg) as the head turns to the beacon.")]
-        [Range(-90f, 90f)]
-        [SerializeField] private float _beginSideYaw = -15f;
 
         [Tooltip("After the checks the camera settles this far (m) to 07's right, high and behind it.")]
         [SerializeField] private float _overShoulderSide = 0.9f;
@@ -145,11 +183,11 @@ namespace MoonProject.Rover
             new PostFocus(BootCheckStep.Lens, new Vector3(0f, 0.8f, 0.3f), 1f, 1.35f),
             new PostFocus(BootCheckStep.Lamps, new Vector3(0f, 0.95f, 0.55f), 0.75f, 1.2f),
             new PostFocus(BootCheckStep.Head, new Vector3(0f, 1.15f, 0.25f), 0.8f, 1.35f),
-            new PostFocus(BootCheckStep.Wheels, new Vector3(0f, 0.5f, 0.15f), 1.05f, 0.9f),
-            new PostFocus(BootCheckStep.Motor, new Vector3(0f, 0.7f, -0.2f), 1.05f, 1f, -25f),
-            new PostFocus(BootCheckStep.Cutter, new Vector3(0f, 0.85f, 0.5f), 0.75f, 1.1f),
-            new PostFocus(BootCheckStep.SolarWing, new Vector3(0f, 0.9f, -0.2f), 1.1f, 1.4f, 70f),
-            new PostFocus(BootCheckStep.Antenna, new Vector3(0f, 1.2f, -0.25f), 1.05f, 1.4f, 45f),
+            new PostFocus(BootCheckStep.Wheels, new Vector3(0f, 0.35f, 0.1f), 1.1f, 0.55f, 55f),
+            new PostFocus(BootCheckStep.Motor, new Vector3(0.2f, 0.75f, 0f), 1.3f, 0.9f, -50f),
+            new PostFocus(BootCheckStep.Cutter, new Vector3(0f, 0.8f, 0.6f), 0.62f, 0.65f, -15f),
+            new PostFocus(BootCheckStep.SolarWing, new Vector3(0f, 0.9f, -0.3f), 1.2f, 1.9f, 145f),
+            new PostFocus(BootCheckStep.Antenna, new Vector3(0f, 1.2f, -0.25f), 1.05f, 1.5f, 110f),
             new PostFocus(BootCheckStep.Battery, new Vector3(0.55f, 1.05f, 0f), 0.8f, 1.1f),
             new PostFocus(BootCheckStep.Assembly, new Vector3(0f, 0.8f, 0.3f), 1f, 1.35f),
             new PostFocus(BootCheckStep.Begin, new Vector3(0f, 1f, 0.3f), 0.9f, 1.35f),
@@ -159,9 +197,31 @@ namespace MoonProject.Rover
 
         public float ShotSideYaw => _shotSideYaw;
 
-        public float ShotFov => _shotFov;
+        public Color RimColor => _rimColor;
 
-        public float BeginSideYaw => _beginSideYaw;
+        public float RimIntensity => _rimIntensity;
+
+        public float RimRange => _rimRange;
+
+        public float RimSpotAngle => _rimSpotAngle;
+
+        public float RimDistance => _rimDistance;
+
+        public float RimHeight => _rimHeight;
+
+        public float RimAimHeight => _rimAimHeight;
+
+        public Color FillColor => _fillColor;
+
+        public float FillIntensity => _fillIntensity;
+
+        public float FillRange => _fillRange;
+
+        public float FillOffset => _fillOffset;
+
+        public float FillRampSeconds => _fillRampSeconds;
+
+        public float ShotFov => _shotFov;
 
         public float OverShoulderSide => _overShoulderSide;
 
