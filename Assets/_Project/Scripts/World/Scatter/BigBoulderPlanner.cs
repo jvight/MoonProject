@@ -89,7 +89,7 @@ namespace MoonProject.World
             return false;
         }
 
-        /// <summary>The Scout's crater (basin dressing Â§2) stays its own: no flat anchor, so checked apart.</summary>
+        /// <summary>The Scout's crater (basin dressing §2) stays its own: no flat anchor, so checked apart.</summary>
         private static bool InScoutCrater(Vector2 site, GroundShaping shaping, float clearance)
         {
             float reach = shaping.ScoutCraterRadius + clearance;

@@ -6,23 +6,22 @@ namespace MoonProject.World.Tests
 {
     /// <summary>
     /// The basin's story props against the sky that makes them lures (docs/design/basin-dressing.md §2): the Scout on
-    /// its crater's wall, clear of rocks and of the first drive's lane, and its long shadow at last light reaching up
-    /// the plain toward the base. The Sun times are the opening's real holds (<see cref="OpeningSkyPacing"/>).
+    /// its crater's wall, clear of rocks and of the first drive's lane, and lit by Earth on the first night on the side
+    /// the base sees. The Sun times are the opening's real holds (<see cref="OpeningSkyPacing"/>).
     /// </summary>
     public sealed class BasinDressingTests
     {
         // Art's Prop_OldLander contract (tools/art/qa/contracts/prop_old_lander.json): 3.07 m from footpads to dish.
         private const float ScoutHeight = 3.07f;
 
-        // The plan's rules: nothing new within 45 m of the wake-to-lander lane in the eclipse (§1 rule 2), and the
-        // shadow "reaches up the plain toward the base" (§2): within this many degrees of the line to the apron.
+        // The plan's rule: nothing new within 45 m of the wake-to-lander lane in the eclipse (§1 rule 2).
         private const float LaneKeepOut = 45f;
-        private const float ShadowAim = 15f;
 
-        // The shadow must leave the crater and run well out over the plain to be seen from the apron, 120 m off.
-        private const float MinShadowReach = 40f;
-        private const float ShadowStep = 0.25f;
-        private const float MaxShadowSearch = 200f;
+        // On the first night Earth must clear the rim over the Scout and light the side the base sees (within this
+        // many degrees of the line of sight), so its pale shape reads from the apron (§2, the night lure).
+        private const float FrontLit = 45f;
+        private const float HorizonStep = 25f;
+        private const float HorizonReach = 3000f;
 
         // The crater's inner wall where the Scout came to rest: a soft lander's slope, not a cliff.
         private const float MinWallSlope = 6f;
@@ -83,36 +82,28 @@ namespace MoonProject.World.Tests
         }
 
         [Test]
-        public void AtLastLight_TheScoutsShadow_ReachesUpThePlainTowardTheBase()
+        public void OnTheFirstNight_EarthLightsTheSideTheBaseSees()
         {
-            _clock.SetTime(_pacing.LastLightTime);
-            Vector3 sun = _clock.SunDirection;
-            var away = new Vector2(-sun.x, -sun.z);
-            away.Normalize();
-
+            var sky = new SkySettings();
             GroundShaping shaping = _surface.Shaping;
             Vector2 spot = shaping.ScoutSpot;
+            Vector2 toEarth = MoonSurface.BearingToDirection(sky.EarthBearing);
             Vector2 toApron = shaping.Apron.Center - spot;
-            float aim = Vector2.Angle(away, toApron);
-            float top = _surface.SampleHeight(spot.x, spot.y) + ScoutHeight;
-            float drop = Mathf.Tan(_clock.Elevation * Mathf.Deg2Rad);
-            float reach = 0f;
-            for (float d = ShadowStep; d < MaxShadowSearch; d += ShadowStep)
-            {
-                Vector2 at = spot + away * d;
-                if (_surface.SampleHeight(at.x, at.y) > top - d * drop)
-                {
-                    break;
-                }
+            float offSight = Vector2.Angle(toEarth, toApron);
 
-                reach = d;
+            float base0 = _surface.SampleHeight(spot.x, spot.y) + ScoutHeight;
+            float horizon = -90f;
+            for (float d = HorizonStep; d <= HorizonReach; d += HorizonStep)
+            {
+                Vector2 at = spot + toEarth * d;
+                horizon = Mathf.Max(horizon, Mathf.Atan2(_surface.SampleHeight(at.x, at.y) - base0, d) * Mathf.Rad2Deg);
             }
 
-            TestContext.WriteLine($"last light: Sun at {_clock.Bearing:F1} deg, {_clock.Elevation:F2} deg up; the " +
-                                  $"shadow runs {reach:F1} m, {aim:F1} deg off the line to the apron " +
-                                  $"({toApron.magnitude:F0} m away)");
-            Assert.Less(aim, ShadowAim, "the shadow points at the base");
-            Assert.Greater(reach, MinShadowReach, "the shadow leaves the crater and runs out over the plain");
+            TestContext.WriteLine($"first night: Earth at {sky.EarthBearing:F0} deg, {sky.EarthElevation:F0} deg up, " +
+                                  $"over a {horizon:F1} deg horizon from the Scout's dish; {offSight:F1} deg off the " +
+                                  "line to the apron");
+            Assert.Greater(sky.EarthElevation, horizon, "Earth stands clear of the rim over the Scout");
+            Assert.Less(offSight, FrontLit, "Earth lights the side of the Scout the base sees");
         }
 
         [Test]

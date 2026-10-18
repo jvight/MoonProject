@@ -86,18 +86,18 @@ namespace MoonProject.World
         [SerializeField] private BlastZoneSettings _blastZone = new BlastZoneSettings();
 
         [Header("The Scout, the 1967 soft lander, and its small crater (basin dressing §2)")]
-        [Tooltip("Bearing of the Scout from the build apron, degrees: the first day's last-light Sun (137.7 degrees, " +
-            "SE, at OpeningSkyPacing.LastLightTime), so at last light its long shadow points straight at the base.")]
+        [Tooltip("Bearing of the Scout from the build apron, degrees: SE, so on the first night Earth (338 degrees, " +
+            "16 up) lights the side it shows the base, 25 degrees off the line of sight, and its pale shape reads.")]
         [Range(0f, 360f)]
         [SerializeField] private float _scoutBearing = 137.7f;
 
-        [Tooltip("Distance of the Scout from the build apron, metres: far enough that only its shadow at last light " +
-            "points the player to it, near enough that the shadow reads from the apron.")]
+        [Tooltip("Distance of the Scout from the build apron, metres: far enough to stay a small \"what's that?\" at " +
+            "night, near enough that its earthlit shape reads from the apron (measured: 80 m beats 120 m).")]
         [Range(40f, 300f)]
         [SerializeField] private float _scoutDistance = 80f;
 
         [Tooltip("Bearing from the Scout to its crater's centre, degrees: it came to rest on the crater's inner wall " +
-            "facing the last-light Sun, so its shadow runs up the near wall and out over the rim toward the base.")]
+            "on the base's side, where the wall cancels the plain's natural fall and keeps it near level.")]
         [Range(0f, 360f)]
         [SerializeField] private float _scoutCraterBearing = 317.7f;
 
