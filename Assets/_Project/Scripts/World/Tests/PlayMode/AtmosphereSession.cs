@@ -106,7 +106,7 @@ namespace MoonProject.World.PlayModeTests
         private const float BlastSearchSeconds = 7200f;
         private const float BlastSearchStep = 20f;
         private const float BlastSettleSeconds = 2f;
-        // The basin's story props (basin dressing Â§2, Â§5): the Scout from the lane in the eclipse, from the apron at
+        // The basin's story props (basin dressing §2, §5): the Scout from the lane in the eclipse, from the apron at
         // last light (07's chase behind it, a wide eye above the apron), close up, and its shadow from above; the
         // ruins' front door from the trail's start at golden hour.
         private const float ScoutApronEyeHeight = 3.2f;
@@ -537,7 +537,7 @@ namespace MoonProject.World.PlayModeTests
         }
 
         /// <summary>
-        /// The basin's story props against the real sky (basin dressing Â§2, Â§5): in the eclipse, the Scout from the
+        /// The basin's story props against the real sky (basin dressing §2, §5): in the eclipse, the Scout from the
         /// first drive's lane (nothing new may show); at golden hour, the ruins' front door from the trail's start; at
         /// last light, the Scout's shadow from the apron (07's chase view and a wide eye), the Scout close up and its
         /// shadow from above. The Sun stands where the opening's milestones leave it. Logs/world-captures/basin-*.png.

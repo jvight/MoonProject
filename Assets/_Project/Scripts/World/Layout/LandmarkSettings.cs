@@ -64,7 +64,7 @@ namespace MoonProject.World
             new PropPlacement(WorldAnchorIds.PlaceRuins, "Rock_12", new Vector2(10f, 30f), 75f, 0.8f),
         };
 
-        [Header("The Scout, the 1967 soft lander (basin dressing Â§2, Â§4)")]
+        [Header("The Scout, the 1967 soft lander (basin dressing §2, §4)")]
         [Tooltip("Yaw of the Scout, degrees clockwise from +Z: it stands square on its crater's wall, and the yaw " +
             "turns Art's half-buried footpad down the slope, so it leans about 12 degrees off level in all.")]
         [Range(0f, 360f)]
