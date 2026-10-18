@@ -784,6 +784,39 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator OnTheCutStep_AfterAStoryScan_OrAScanWhoseEndWasLost_AReadyCutReadsECut(
+            [Values(true, false)] bool storyEnd)
+        {
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            _rig.Ui.Ledger.RecordLookTaught();
+            _rig.Ui.Ledger.RecordDriveTaught();
+            _rig.Ui.Ledger.RecordHoldChipShown();
+            _rig.Ui.Ledger.RecordUsed(InteractionKind.Salvage);
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            Events.Publish(new ScanStarted("airlock_panel", Vector3.zero));
+            if (storyEnd)
+            {
+                Events.Publish(new StoryScanned("airlock_panel", "story.airlock_panel", Vector3.zero));
+            }
+
+            yield return null;
+            Events.Publish(new NextStepChanged("next.v2.cut_optics"));
+            var seal = new Vector3(0.4f, 0.5f, 5f);
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Salvage, seal, true);
+            float limit = Time.realtimeSinceStartup + 12f;
+            while (!_rig.Ui.LookUp.IsVisible && Time.realtimeSinceStartup < limit)
+            {
+                yield return null;
+            }
+
+            Assert.IsTrue(_rig.Ui.LookUp.IsVisible, "the cut step's chip shows at the seal");
+            Assert.AreEqual(Text(UiKeys.VerbCut), _rig.Ui.Layout.LookHintWord.text,
+                "E is not held and the seal is ready: the chip reads Cut, never a scan that is over");
+        }
+
+        [UnityTest]
         public IEnumerator AnUnlearnedReadyVerb_TakesTheSlotFromTheObjectiveLine_WhenSevenNosesIntoACrate()
         {
             InputSystem.AddDevice<Keyboard>();
