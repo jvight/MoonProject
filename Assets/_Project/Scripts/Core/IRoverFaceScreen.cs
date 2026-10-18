@@ -22,6 +22,12 @@ namespace MoonProject.Core
         void SetScreenOpen(bool open, Texture contentTexture);
 
         /// <summary>
+        /// Shows <paramref name="contentTexture"/> on the CRT as a plain readout (no inspect camera, head lift or braking;
+        /// 07's eyes are off), or returns the CRT to 07's own face when it is null. For the power-on self-test's lines.
+        /// </summary>
+        void SetReadout(Texture contentTexture);
+
+        /// <summary>
         /// Casts <paramref name="ray"/> against the <c>Screen</c> <see cref="MeshCollider"/> and outputs its mesh UV
         /// (<see cref="RaycastHit.textureCoord"/>); false when the ray misses the screen.
         /// </summary>

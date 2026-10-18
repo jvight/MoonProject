@@ -50,6 +50,7 @@ namespace MoonProject.Rover
         private float _blinkElapsed;
         private float _activeBlinkDuration;
         private bool _isDarkHold;
+        private bool _isReadout;
 
         private float _elapsedTime;
 
@@ -147,6 +148,9 @@ namespace MoonProject.Rover
         /// <summary>True while the CRT is held completely dark before the opening's front reveal.</summary>
         public bool IsDarkHold => _isDarkHold;
 
+        /// <summary>True while the CRT shows a plain readout (the self-test's lines) instead of eyes.</summary>
+        public bool IsReadout => _isReadout;
+
         /// <summary>True when a blink cycle is currently in progress.</summary>
         public bool IsBlinking => _blinkElapsed < Math.Max(_activeBlinkDuration, 1e-4f);
 
@@ -235,6 +239,26 @@ namespace MoonProject.Rover
                 ScreenVerticalPinch = 0.0f;
                 ScreenLineGlow = 0.0f;
             }
+        }
+
+        /// <summary>
+        /// Shows or ends a plain readout on the CRT: content at once, no channel-switch, and lit even while the opening
+        /// holds the face dark, so the self-test can print its lines before the face wakes.
+        /// </summary>
+        public void SetReadout(bool on)
+        {
+            _isReadout = on;
+            SnapToScreenMode(on);
+            if (on)
+            {
+                BootProgress = 1.0f;
+            }
+            else if (_isDarkHold)
+            {
+                BootProgress = 0.0f;
+            }
+
+            ComposeEyesAndBrightness();
         }
 
         /// <summary>Immediately snaps the CRT screen content mode without playing the transition choreography.</summary>
@@ -440,7 +464,7 @@ namespace MoonProject.Rover
             FaceEyeParams prevRight = RightEye;
 
             _elapsedTime += deltaTime;
-            if (_isDarkHold)
+            if (_isDarkHold && !_isReadout)
             {
                 BootProgress = 0.0f;
             }
@@ -798,7 +822,7 @@ namespace MoonProject.Rover
                 0.5f + sep + combinedLx, 0.5f + combinedLy, _width, _height, effectiveOpen,
                 rightTilt, rightCut, focusSquint, _arc, _ring, _closed, combinedLx, combinedLy, rightScale);
 
-            if (_isDarkHold)
+            if (_isDarkHold && !_isReadout)
             {
                 Brightness = 0.0f;
                 VerticalJitter = 0.0f;

@@ -308,6 +308,17 @@ namespace MoonProject.Rover
             }
         }
 
+        public void SetReadout(Texture contentTexture)
+        {
+            if (_bodyLanguage == null || _bodyLanguage.FaceDirector == null)
+            {
+                Debug.LogError("RoverController.SetReadout: 07 has no face director to show the readout.", this);
+                return;
+            }
+
+            _bodyLanguage.FaceDirector.SetReadout(contentTexture);
+        }
+
         public bool TryRaycastScreenUv(Ray ray, out Vector2 meshUv)
         {
             if (_facePickingEnabled && _screenCollider != null

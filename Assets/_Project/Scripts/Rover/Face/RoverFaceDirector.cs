@@ -208,6 +208,18 @@ namespace MoonProject.Rover
             ApplyRearVent();
         }
 
+        /// <summary>Shows <paramref name="contentTexture"/> on the CRT as a plain readout, or ends it when null.</summary>
+        public void SetReadout(Texture contentTexture)
+        {
+            if (_display == null)
+            {
+                Debug.LogError("RoverFaceDirector.SetReadout: no FaceDisplay is wired.", this);
+                return;
+            }
+
+            _display.SetReadout(contentTexture);
+        }
+
         /// <summary>
         /// Holds the CRT screen completely dark while 07 is asleep on the title or while the camera is inside the scan lens,
         /// until the end of the self-test's checks (<see cref="WakeBeat.OverShoulder"/>) starts the CRT boot sequence.
