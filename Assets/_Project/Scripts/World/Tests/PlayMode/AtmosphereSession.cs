@@ -80,6 +80,15 @@ namespace MoonProject.World.PlayModeTests
         private const float PostFrameSeconds = 0.05f;
         private const float PostTail = 0.3f;
         private const string EmissionStrength = "_EmissionStrength";
+        // The landing zone: midway is this share of the drive from the wake; the zone's edge view stands this far
+        // back from the lander toward the wake and this high; the overhead hangs this high above the lander, its
+        // look nudged toward the wake so the wake-side edge shows below the lander.
+        private const float LandingMidway = 0.5f;
+        private const float LandingEdgeBack = 48f;
+        private const float LandingEdgeHeight = 14f;
+        private const float LandingOverheadHeight = 110f;
+        private const float LandingOverheadTilt = 0.01f;
+        private const float LandingOverheadFov = 50f;
 
         private static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "world-captures"));
@@ -282,6 +291,83 @@ namespace MoonProject.World.PlayModeTests
                 Place(camera, LookPose("b11_night_apron_toward_the_signal", apronEye, mast + lift, OpeningFov));
                 FrameCapture.SavePng(camera, CaptureWidth, CaptureHeight,
                     Path.Combine(CaptureFolder, "opening-b11_night_apron_toward_the_signal.png"));
+            }
+            finally
+            {
+                Object.Destroy(host);
+            }
+
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        /// <summary>
+        /// The landing zone on a real New Game (opening v2 §4): the lander's blast-swept halo and the old cable from
+        /// 07's dead post toward the lander, seen from the wake, from midway along the drive and from straight above
+        /// the lander. Logs/world-captures/landing-*.png.
+        /// </summary>
+        [UnityTest]
+        [Timeout(600000)]
+        [PrebuildSetup(typeof(CanyonSessionScene))]
+        [PostBuildCleanup(typeof(CanyonSessionScene))]
+        public IEnumerator LandingZone_IsCapturedFromTheWakeMidwayAndAbove()
+        {
+            BootstrapHarness.DeleteSaveFiles(CanyonSessionScene.SaveSlot);
+#if UNITY_EDITOR
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(CanyonSessionScene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            while (!loading.isDone)
+            {
+                yield return null;
+            }
+#else
+            throw new NotSupportedException("The atmosphere session loads the scene through the editor.");
+#endif
+            GameBootstrap bootstrap = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
+            {
+                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
+            }
+
+            Assert.IsNotNull(bootstrap, "the scene has its bootstrap");
+            GameContext context = bootstrap.Context;
+            _awoke = context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
+            float started = Time.time;
+            while (!_awake)
+            {
+                Assert.Less(Time.time - started, WakeTimeout, "07 wakes up");
+                yield return null;
+            }
+
+            yield return new WaitForSeconds(SettleSeconds);
+            IWorldAnchors anchors = context.Get<IWorldAnchors>();
+            Vector3 wake = Anchor(anchors, WorldAnchorIds.PlaceWake).Position;
+            Vector3 lander = Anchor(anchors, WorldAnchorIds.PlaceLander).Position;
+            Vector3 toLander = Vector3.ProjectOnPlane(lander - wake, Vector3.up).normalized;
+            Vector3 lift = Vector3.up * OpeningLookHeight;
+            Vector3 eye = wake + toLander * OpeningWakeLead + Vector3.up * OpeningEyeHeight;
+            Vector3 midway = Vector3.Lerp(wake, lander, LandingMidway) + Vector3.up * OpeningEyeHeight;
+            Vector3 edge = lander - toLander * LandingEdgeBack + Vector3.up * LandingEdgeHeight;
+            Camera view = context.Get<IViewCamera>().Camera;
+            var host = new GameObject("LandingReviewCamera");
+            try
+            {
+                var camera = host.AddComponent<Camera>();
+                camera.CopyFrom(view);
+                camera.enabled = false;
+                CopyPipelineSettings(view, camera);
+                foreach (Pose pose in new[]
+                         {
+                             LookPose("wake_toward_the_lander", eye, lander + lift, OpeningFov),
+                             LookPose("midway_toward_the_lander", midway, lander + lift, OpeningFov),
+                             LookPose("zone_edge_toward_the_lander", edge, lander, OpeningFov),
+                             LookPose("overhead", lander + Vector3.up * LandingOverheadHeight,
+                                 lander + toLander * LandingOverheadTilt, LandingOverheadFov),
+                         })
+                {
+                    Place(camera, pose);
+                    FrameCapture.SavePng(camera, CaptureWidth, CaptureHeight,
+                        Path.Combine(CaptureFolder, "landing-" + pose.name + ".png"));
+                }
             }
             finally
             {
