@@ -18,7 +18,7 @@ namespace MoonProject.Audio.Tests
         }
 
         [TestCase(WakeBeat.Crackle, WakeCueKind.Thump)]
-        [TestCase(WakeBeat.PictureOpens, WakeCueKind.Tick)]
+        [TestCase(WakeBeat.ChecksBegin, WakeCueKind.Tick)]
         [TestCase(WakeBeat.EyesOpen, WakeCueKind.Tick)]
         [TestCase(WakeBeat.Stirred, WakeCueKind.Tick)]
         public void EveryVoicedBeat_PlaysItsCueAtOnce(WakeBeat beat, WakeCueKind first)
@@ -33,7 +33,7 @@ namespace MoonProject.Audio.Tests
         [Test]
         public void ThePictureTicksLow_TheEyesHigher_TheShortWakeHighest()
         {
-            _sheet.CuesFor(WakeBeat.PictureOpens, _calls);
+            _sheet.CuesFor(WakeBeat.ChecksBegin, _calls);
             Assert.AreEqual(WakeCueSheet.TickA2, _calls[0].Variant);
             _sheet.CuesFor(WakeBeat.EyesOpen, _calls);
             Assert.AreEqual(WakeCueSheet.TickD3, _calls[0].Variant);
@@ -51,8 +51,6 @@ namespace MoonProject.Audio.Tests
         }
 
         [TestCase(WakeBeat.FadedOut)]
-        [TestCase(WakeBeat.ChecksBegin)]
-        [TestCase(WakeBeat.Blinked)]
         [TestCase(WakeBeat.ChaseFrame)]
         public void CameraBeats_PlayNoCueOfTheirOwn(WakeBeat beat)
         {

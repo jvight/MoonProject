@@ -15,9 +15,6 @@ namespace MoonProject.Rover
             float u = Mathf.Clamp01(phaseShare);
             switch (phase)
             {
-                case OpeningPhase.FadeIn:
-                    return WakeOpening.SmoothStepC2(0f, 1f, u);
-                case OpeningPhase.EyesOpen:
                 case OpeningPhase.Post:
                 case OpeningPhase.Ready:
                 case OpeningPhase.PullBack:
@@ -32,15 +29,10 @@ namespace MoonProject.Rover
 
         /// <summary>
         /// The share (0..1) of the screen's fill: it follows the rim, and ramps in over <paramref name="rampSeconds"/>
-        /// from the moment the face screen flickers on (<paramref name="secondsSinceFaceOn"/>).
+        /// from the moment the picture opens on the face (<paramref name="secondsSinceFaceOn"/>).
         /// </summary>
         public static float Fill(OpeningPhase phase, float phaseShare, float secondsSinceFaceOn, float rampSeconds)
         {
-            if (phase == OpeningPhase.FadeIn)
-            {
-                return 0f;
-            }
-
             float ramp = rampSeconds > 1e-4f ? WakeOpening.SmoothStepC2(0f, 1f, secondsSinceFaceOn / rampSeconds) : 1f;
             return Rim(phase, phaseShare) * ramp;
         }

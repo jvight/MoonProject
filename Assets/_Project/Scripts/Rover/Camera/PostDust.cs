@@ -81,8 +81,6 @@ namespace MoonProject.Rover
             {
                 case OpeningPhase.FadeOut:
                 case OpeningPhase.Dark:
-                case OpeningPhase.FadeIn:
-                case OpeningPhase.EyesOpen:
                     return 1f;
                 case OpeningPhase.Post:
                     return DuringChecks(zone, step, p);

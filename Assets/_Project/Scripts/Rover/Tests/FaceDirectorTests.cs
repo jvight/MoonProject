@@ -438,12 +438,11 @@ namespace MoonProject.Rover.Tests
                 CollectionAssert.AreEqual(new[] { RoverFaceCueKind.Boot }, cues,
                     "Starting wake boot must publish RoverFaceCued(Boot).");
 
-                // Finish boot and step through wake blink
+                // Finish boot and blink (the wake's ready performance)
                 cues.Clear();
                 director.Step(1.5f);
-                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.Blinked));
-                CollectionAssert.Contains(cues, RoverFaceCueKind.Blink,
-                    "WakeBeat.Blinked must publish RoverFaceCued(Blink).");
+                director.Blink();
+                CollectionAssert.Contains(cues, RoverFaceCueKind.Blink, "A blink must publish RoverFaceCued(Blink).");
 
                 // 2. Feeling changes: Happy, Worried, Asleep, Blink (unplug), Proud, Startled
                 cues.Clear();
@@ -499,7 +498,7 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void OpeningDarkHold_KeepsScreenDarkUntilTheEyesOpen_ThenBootsAndSlowBlinksWithCuriousGlance()
+        public void OpeningDarkHold_KeepsScreenDarkThroughTheChecks_ThenBootsAsTheEyesComeBack_AndBlinks()
         {
             var events = new EventBus();
             var cues = new System.Collections.Generic.List<RoverFaceCueKind>();
@@ -515,17 +514,17 @@ namespace MoonProject.Rover.Tests
 
                 director.OnSceneStart(isNewGame: true);
                 director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.Crackle));
-                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.PictureOpens));
+                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.ChecksBegin));
                 director.Step(1.0f);
 
-                Assert.IsTrue(director.IsHoldingDarkForOpening, "CRT stays dark through the black and the picture opening.");
+                Assert.IsTrue(director.IsHoldingDarkForOpening, "CRT stays dark (the readout prints on it) through the checks.");
                 Assert.IsTrue(director.State.IsDarkHold);
-                Assert.AreEqual(0, director.BootCount, "Face must not boot before the eyes open.");
+                Assert.AreEqual(0, director.BootCount, "Face must not boot before the eyes come back.");
                 Assert.AreEqual(0f, director.State.Brightness, 1e-5f);
                 Assert.AreEqual(0f, director.RearVentEmissionStrength, 1e-5f);
                 Assert.IsEmpty(cues);
 
-                // The eyes open (EyesOpen): a single phosphor line flickers on and opens into two eyes
+                // The eyes come back after the checks (EyesOpen): a phosphor line flickers on and opens into two eyes
                 director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.EyesOpen));
                 Assert.IsFalse(director.IsHoldingDarkForOpening);
                 Assert.IsFalse(director.State.IsDarkHold);
@@ -534,15 +533,13 @@ namespace MoonProject.Rover.Tests
                 CollectionAssert.AreEqual(new[] { RoverFaceCueKind.Boot }, cues);
 
                 director.Step(1.2f);
-                Assert.IsFalse(director.State.IsBooting, "Boot completes before WakeBeat.Blinked.");
+                Assert.IsFalse(director.State.IsBooting, "Boot completes before the ready performance's blinks.");
                 Assert.AreEqual(1f, director.State.BootProgress, 1e-5f);
 
-                // Slow blink + curious glance at Blinked
+                // The ready performance's blink
                 cues.Clear();
-                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.Blinked));
-                Assert.AreEqual(1, director.WakeBlinkCount);
+                director.Blink();
                 Assert.IsTrue(director.State.IsBlinking);
-                Assert.AreEqual(FaceFeeling.Curious, director.CurrentFeeling);
                 CollectionAssert.Contains(cues, RoverFaceCueKind.Blink);
             }
         }

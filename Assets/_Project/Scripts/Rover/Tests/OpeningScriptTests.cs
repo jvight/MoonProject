@@ -6,8 +6,8 @@ using MoonProject.Core;
 namespace MoonProject.Rover.Tests
 {
     /// <summary>
-    /// 07's wake as its power-on self-test seen on its face: the fade to black, the black, the picture opening, the eyes
-    /// waking before any line prints, every line announced in order and never skipped, the one shot held through the
+    /// 07's wake as its power-on self-test seen on its face: the fade to black, the black, the picture opening straight
+    /// on the face with the first line, every line announced in order and never skipped, the eyes back only after the
     /// checks, the ready hold, the two camera moves around the ready performance, and the short wake that Continue
     /// plays instead.
     /// </summary>
@@ -26,7 +26,6 @@ namespace MoonProject.Rover.Tests
         {
             _tuning = ScriptableObject.CreateInstance<RoverCameraTuning>();
             _script = new OpeningScript(_tuning);
-            _script.SetFaceTarget(new Vector2(35f, -3f));
             _beats.Clear();
             _lines.Clear();
         }
@@ -99,7 +98,7 @@ namespace MoonProject.Rover.Tests
             _script.BeginFull(true);
             float elapsed = 0f;
             float blackStart = -1f;
-            while (_script.Phase != OpeningPhase.FadeIn && elapsed < 2f * MaxToFirstImage)
+            while (_script.Phase != OpeningPhase.Post && elapsed < 2f * MaxToFirstImage)
             {
                 StepOnce();
                 elapsed += Frame;
@@ -109,30 +108,29 @@ namespace MoonProject.Rover.Tests
                 }
             }
 
-            Assert.AreEqual(OpeningPhase.FadeIn, _script.Phase, "The picture opens.");
+            Assert.AreEqual(OpeningPhase.Post, _script.Phase, "The picture opens on the face.");
             Assert.LessOrEqual(elapsed, MaxToFirstImage, "The first image comes within 3 s of the click.");
             Assert.Greater(blackStart, 0f, "The black plays.");
             Assert.LessOrEqual(elapsed - blackStart, MaxPureBlack, "The pure black is at most 1.5 s.");
         }
 
         [Test]
-        public void TheWake_RunsBlackPictureEyesChecksReadyAndBothMoves_InOrder_InAboutThirtySixSeconds()
+        public void TheWake_RunsBlackFaceChecksReadyAndBothMoves_InOrder_InAboutThirtyTwoSeconds()
         {
             _script.BeginFull(false);
             TakeAll();
             float seconds = RunToChase(60f);
 
-            Assert.That(seconds, Is.InRange(32f, 40f), "the wake lasts about 36 s");
+            Assert.That(seconds, Is.InRange(28f, 36f), "the wake lasts about 32 s");
             CollectionAssert.AreEqual(new[]
             {
-                WakeBeat.Crackle, WakeBeat.PictureOpens, WakeBeat.EyesOpen, WakeBeat.Blinked, WakeBeat.ChecksBegin,
-                WakeBeat.Blinked, WakeBeat.ChaseFrame,
+                WakeBeat.Crackle, WakeBeat.ChecksBegin, WakeBeat.EyesOpen, WakeBeat.ChaseFrame,
             }, _beats);
             Assert.IsFalse(_script.IsRunning);
         }
 
         [Test]
-        public void TheEyesOpenAndBlink_BeforeTheFirstLinePrintsOnTheFace()
+        public void ThePictureOpensOnTheFace_WithTheFirstLine_AndTheEyesComeBackOnlyAfterTheChecks()
         {
             _script.BeginFull(false);
             TakeAll();
@@ -141,14 +139,24 @@ namespace MoonProject.Rover.Tests
                 StepOnce();
             }
 
-            int faceOn = _beats.IndexOf(WakeBeat.EyesOpen);
-            int blink = _beats.IndexOf(WakeBeat.Blinked);
-            Assert.GreaterOrEqual(faceOn, 0, "the face screen flickers on");
-            Assert.Greater(blink, faceOn, "the eyes blink awake after it");
-            Assert.AreEqual(OpeningPhase.Post, _script.Phase, "only then do the lines start");
+            Assert.AreEqual(OpeningPhase.Post, _script.Phase, "the first line prints as the picture opens");
+            Assert.Less(_script.PhaseTime, 2f * Frame, "at once, with no stage before it");
             Assert.AreEqual(PostEventKind.Started, _lines[0].Kind);
             Assert.AreEqual(BootCheckStep.Carrier, _lines[0].Step, "the first line is why 07 woke");
-            Assert.AreEqual(0f, _script.Sleep, 1e-3f, "07 is awake by the first line");
+            CollectionAssert.AreEqual(new[] { WakeBeat.Crackle, WakeBeat.ChecksBegin }, _beats);
+
+            while (_script.Phase == OpeningPhase.Post)
+            {
+                StepOnce();
+                CollectionAssert.DoesNotContain(_beats, WakeBeat.EyesOpen, "no eyes while the lines print");
+            }
+
+            while (_script.Phase == OpeningPhase.Ready)
+            {
+                StepOnce();
+            }
+
+            Assert.AreEqual(WakeBeat.EyesOpen, _beats[_beats.Count - 1], "the eyes come back in the ready hold");
         }
 
         [Test]
@@ -200,12 +208,13 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void TheShot_IsLiveFromTheBlackToTheChaseFrame_AndThePushInOnlyGrows()
+        public void TheShot_IsLiveFromTheBlackToTheChaseFrame_AndThePictureOpensOnlyOnce()
         {
+            PostSettings post = _tuning.Opening.Post;
             _script.BeginFull(true);
             TakeAll();
             Assert.IsFalse(_script.ShotLive, "the fade runs on the title's own camera");
-            float push = 0f;
+            float picture = 0f;
             while (_script.IsRunning)
             {
                 StepOnce();
@@ -217,22 +226,17 @@ namespace MoonProject.Rover.Tests
                 if (_script.Phase >= OpeningPhase.Dark)
                 {
                     Assert.IsTrue(_script.ShotLive, $"the opening's camera has the view in {_script.Phase}");
-                    if (_script.Phase > OpeningPhase.FadeIn)
-                    {
-                        Assert.AreEqual(1f, _script.Picture01, 1e-4f, $"no dip to black in {_script.Phase}");
-                    }
+                    Assert.GreaterOrEqual(_script.Picture01, picture - 1e-6f, "the picture only ever opens");
+                    picture = _script.Picture01;
                 }
 
-                Assert.GreaterOrEqual(_script.Push01, push - 1e-6f, "the push-in never backs off");
-                if (_script.Phase < OpeningPhase.Post)
+                if (_script.Phase > OpeningPhase.Post
+                    || (_script.Phase == OpeningPhase.Post && _script.PhaseTime >= post.FadeInSeconds))
                 {
-                    Assert.AreEqual(0f, _script.Push01, "the shot holds wide while 07 wakes");
+                    Assert.AreEqual(1f, _script.Picture01, 1e-4f, $"no dip to black in {_script.Phase}");
                 }
-
-                push = _script.Push01;
             }
 
-            Assert.AreEqual(1f, push, 1e-3f, "the push-in completes by the end of the checks");
             Assert.IsFalse(_script.ShotLive);
         }
 
@@ -271,7 +275,7 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void TheEyesComeBackWithABlink_ThenThePerformanceBlinksTwice_ClicksTheLampsAndSoundsInOrder()
+        public void TheEyesComeBack_ThenThePerformanceBlinksTwice_ClicksTheLampsAndSoundsInOrder()
         {
             _script.BeginFull(false);
             TakeAll();
@@ -287,7 +291,7 @@ namespace MoonProject.Rover.Tests
                 StepOnce();
             }
 
-            CollectionAssert.AreEqual(new[] { WakeBeat.Blinked }, _beats, "the eyes come back to the face with a blink");
+            CollectionAssert.AreEqual(new[] { WakeBeat.EyesOpen }, _beats, "the eyes come back to the face");
             while (_script.IsRunning)
             {
                 StepOnce();
@@ -358,46 +362,24 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void TheLidStaysShutAsleep_OpensWithTheEyes_AndRestsHalfLiddedForTheChecks()
+        public void TheLidStaysShutInTheBlack_OpensWithThePicture_AndRestsHalfLiddedForTheChecks()
         {
             OpeningSettings settings = _tuning.Opening;
             _script.BeginFull(false);
-            while (_script.IsRunning && _script.Phase != OpeningPhase.Post)
+            while (_script.IsRunning && _script.Phase == OpeningPhase.Dark)
             {
+                Assert.AreEqual(0f, _script.BodyLid, 1e-5f, "asleep in the black, the lid is shut");
+                Assert.AreEqual(1f, _script.Sleep, 1e-5f);
                 StepOnce();
-                if (_script.Phase == OpeningPhase.Dark || _script.Phase == OpeningPhase.FadeIn)
-                {
-                    Assert.AreEqual(0f, _script.BodyLid, 1e-5f, "asleep, the lid is shut");
-                    Assert.AreEqual(1f, _script.Sleep, 1e-5f);
-                }
             }
 
-            for (int i = 0; i < 20; i++)
+            while (_script.Phase == OpeningPhase.Post && _script.PhaseTime < settings.Post.FadeInSeconds + 0.1f)
             {
                 StepOnce();
             }
 
             Assert.AreEqual(settings.LidRest, _script.BodyLid, 1e-3f, "the checks run half-lidded");
-        }
-
-        [Test]
-        public void TheHead_StaysBowedAsleep_ThenLiftsIntoTheShot()
-        {
-            OpeningSettings settings = _tuning.Opening;
-            _script.BeginFull(false);
-            while (_script.Phase != OpeningPhase.EyesOpen)
-            {
-                StepOnce();
-                Assert.AreEqual(settings.BowedPitch, _script.Gaze.AimPitch, 1e-4f, "bowed while asleep");
-            }
-
-            while (_script.Phase != OpeningPhase.Ready)
-            {
-                StepOnce();
-            }
-
-            Assert.AreEqual(35f, _script.Gaze.Yaw, 1f, "the head has turned into the shot");
-            Assert.AreEqual(-3f, _script.Gaze.Pitch, 1f);
+            Assert.AreEqual(0f, _script.Sleep, 1e-3f, "and awake");
         }
 
         [Test]

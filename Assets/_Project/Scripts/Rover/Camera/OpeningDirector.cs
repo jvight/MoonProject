@@ -42,9 +42,12 @@ namespace MoonProject.Rover
         /// <summary>Half-life (s) of the antenna's rise and fall.</summary>
         private const float AntennaHalfLife = 0.15f;
 
-        /// <summary>Phase length or probe distance below this is treated as zero.</summary>
-        private const float LengthEpsilon = 1e-4f;
-
+        /// <summary>
+        /// 07 put farther (m, squared) or turned more (deg) than this since the face close-up was solved: a spawn that
+        /// landed after the session began, so solve again. Smaller settling never re-solves, so the shot cannot jump.
+        /// </summary>
+        private const float FaceShotMoveSqr = 0.0625f;
+        private const float FaceShotTurnDegrees = 5f;
         [Tooltip("Camera tuning (Assets/_Project/Data/Tuning/RoverCameraTuning.asset); the opening is its Opening block.")]
         [SerializeField] private RoverCameraTuning _tuning;
 
@@ -64,7 +67,6 @@ namespace MoonProject.Rover
         [SerializeField] private Transform _beacon;
 
         private readonly object _owner = new object();
-        private readonly FaceInspectSightLine _sight = new FaceInspectSightLine();
         private bool _wakeWaitsForBlack;
         private float _antennaLift;
         private CinemachineBrain _brain;
@@ -83,9 +85,11 @@ namespace MoonProject.Rover
         private ILensView _lens;
         private IGameFlow _flow;
         private IDisposable[] _subscriptions;
-        private Vector3 _shotFace;
-        private Vector3 _shotBody;
-        private float _shotHeading;
+        private FaceInspectShot _faceShot;
+        private bool _hasFaceShot;
+        private bool _faceShotMissing;
+        private Vector3 _faceShotFrom;
+        private Quaternion _faceShotFacing;
         private bool _shotWasLive;
         private bool _rigReleased;
         private bool _titleHasSave;
@@ -116,16 +120,11 @@ namespace MoonProject.Rover
             _rover = context.Get<IRoverState>();
             _roverRig = context.Get<IRoverRig>();
             _world = context.Get<IWorldLayout>();
-            if (context.TryGet(out ITerrainQuery terrain))
-            {
-                _sight.SetTerrain(terrain);
-            }
-
             _script = new OpeningScript(_tuning);
             _rig.SetWakeBody(_body);
             OpeningSettings settings = _tuning.Opening;
             _lamps = _script.Lamps;
-            _shot = new PostShot(settings.Post, _tuning.FaceInspectScreenHeight);
+            _shot = new PostShot(settings.Post);
             _lights = new PostLights(transform, settings.Post);
             _dust = new PostDust(settings.Post);
             _brain = _rig.Camera != null ? _rig.Camera.GetComponent<CinemachineBrain>() : null;
@@ -134,7 +133,7 @@ namespace MoonProject.Rover
             _lensCamera.Priority = chase.Priority.Value + 1;
             LensSettings lens = _lensCamera.Lens;
             lens.NearClipPlane = _tuning.FaceInspectNearClip;
-            lens.FieldOfView = settings.Post.ShotFov;
+            lens.FieldOfView = settings.Post.WideFov;
             _lensCamera.Lens = lens;
             _lensCamera.enabled = false;
 
@@ -235,12 +234,13 @@ namespace MoonProject.Rover
 
         /// <summary>
         /// The full opening. The rig holds its wake shot underneath from the start, which keeps its wide shot and
-        /// stargazing closed until the handover lets it go.
+        /// stargazing closed until the ready performance lets it go.
         /// </summary>
         private void BeginFull(bool fromTitle)
         {
             _body.HoldOpeningScreenDark(true);
-            SetShot();
+            _hasFaceShot = false;
+            _rigReleased = false;
             _script.BeginFull(fromTitle);
             _wakeWaitsForBlack = fromTitle;
             if (fromTitle)
@@ -254,27 +254,42 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// Puts 07's head where the black needs it and the rig's wake shot underneath. From the title this waits until
-        /// the picture has faded to black, so nothing moves in view while the title goes.
+        /// Puts 07's head into the face close-up's pose and the rig's wake shot underneath. From the title this waits
+        /// until the picture has faded to black, so nothing moves in view while the title goes.
         /// </summary>
         private void StartWakeShot()
         {
-            _body.PoseOpeningHead(_script.Gaze.Yaw, _script.Gaze.Pitch, 0f, 1f);
+            PoseHead();
             _rig.BeginWakeOpening();
         }
 
         /// <summary>
-        /// Fixes the one shot as the opening begins (07's creep and shiver must not move the camera): aimed at where
-        /// 07's face will be once its head has turned into the shot, which is where the script tells the head to look.
+        /// The close-up of 07's face the opening shows its self-test on: the very framing the inventory opens on
+        /// (<see cref="RoverCameraRig.TryComposeFaceShot"/>), solved at 07's pose once and again only if 07 has been put
+        /// somewhere else since (a spawn that lands after the session began), so the shot never drifts or flips.
         /// </summary>
-        private void SetShot()
+        private bool FaceShot(out FaceInspectShot shot)
         {
-            _shotBody = _rover.Position;
-            _shotHeading = HeadingDegrees();
-            _rigReleased = false;
-            Vector2 face = _shot.FaceAngles(_shotHeading);
-            _body.EvaluateScreenPose(face.x, face.y, out _shotFace, out _);
-            _script.SetFaceTarget(face);
+            Vector3 position = _rover.Position;
+            Quaternion facing = _rover.Rotation;
+            bool moved = !_hasFaceShot || (position - _faceShotFrom).sqrMagnitude > FaceShotMoveSqr
+                || Quaternion.Angle(facing, _faceShotFacing) > FaceShotTurnDegrees;
+            if (moved && _rig.TryComposeFaceShot(_body, out _faceShot))
+            {
+                _hasFaceShot = true;
+                _faceShotFrom = position;
+                _faceShotFacing = facing;
+            }
+
+            if (!_hasFaceShot && !_faceShotMissing)
+            {
+                _faceShotMissing = true;
+                Debug.LogError($"{nameof(OpeningDirector)}: the rig could not compose the face close-up, so the wake " +
+                    "has no shot of 07's face. Check the camera rig's rover and body wiring.", this);
+            }
+
+            shot = _faceShot;
+            return _hasFaceShot;
         }
 
         private Quaternion Heading()
@@ -395,6 +410,8 @@ namespace MoonProject.Rover
 
             _holding = hold;
             _roverRig.SetHoldStill(_owner, hold);
+            // Held still is not enough: steering would turn 07 in place under the shots composed around it.
+            _controller.SetHoldHeading(_owner, hold);
         }
 
         private void PoseBody()
@@ -405,25 +422,25 @@ namespace MoonProject.Rover
             }
 
             _body.PoseWake(_script.Sleep, _script.BodyLid, _script.BodyLidWeight, 0f);
-            if (_script.GazeHeld)
+            if (_script.ShotLive)
             {
                 PoseHead();
             }
             else
             {
-                _body.PoseOpeningHead(0f, 0f, 0f, 0f);
+                _body.PoseOpeningHead(0f, 0f, 0f, false);
             }
         }
 
         /// <summary>
-        /// The head follows the gaze (bowed in the black, then into the shot), sweeps and nods in its own check, glances
-        /// toward the beacon at the end of the ready performance and is handed back to 07 as the camera moves behind
-        /// it: the body never turns.
+        /// The head holds the face close-up's pose (the inventory's neck yaw, head pitch and level roll) through the
+        /// checks, sweeps and nods a little in its own check, glances toward the beacon at the end of the ready
+        /// performance and is handed back to 07 as the camera moves behind it: the body never turns.
         /// </summary>
         private void PoseHead()
         {
-            float yaw = _script.Gaze.Yaw;
-            float pitch = _script.Gaze.Pitch;
+            float yaw = FaceShot(out FaceInspectShot face) ? face.NeckYawOffset : 0f;
+            float pitch = _tuning.FaceInspectHeadPitch;
             if (_script.Phase == OpeningPhase.Post && _script.PostStep == BootCheckStep.Head)
             {
                 Vector2 head = _script.Motions.Head(_script.PostProgress01);
@@ -443,7 +460,7 @@ namespace MoonProject.Rover
             float hold = _script.Phase == OpeningPhase.MoveBehind
                 ? 1f - WakeOpening.SmoothStepC2(0f, 1f, _script.PhaseShare)
                 : 1f;
-            _body.PoseOpeningHead(yaw, pitch, 0f, hold);
+            _body.PoseOpeningHead(yaw, pitch, hold, true);
         }
 
         /// <summary>
@@ -508,23 +525,14 @@ namespace MoonProject.Rover
             _controller.NozzleDevice.SetFlash(flash);
         }
 
+        /// <summary>The short wake's glance at Earth.</summary>
         private void AimHead()
         {
-            Vector3 lens = ScanLensOrigin.position;
-            bool gaze = _script.GazeHeld || _script.GlancingEarth;
+            bool gaze = _script.GlancingEarth;
             if (gaze)
             {
-                Vector3 direction;
-                if (_script.GazeHeld)
-                {
-                    direction = Heading() * LensGaze.Direction(_script.Gaze.Yaw, _script.Gaze.Pitch);
-                }
-                else
-                {
-                    direction = _world.EarthDirection;
-                }
-
-                _roverRig.SetGazeTarget(_owner, lens + direction * GazeReach, _tuning.Opening.GazePriority);
+                _roverRig.SetGazeTarget(_owner, ScanLensOrigin.position + _world.EarthDirection * GazeReach,
+                    _tuning.Opening.GazePriority);
             }
             else if (_gazing)
             {
@@ -535,10 +543,10 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// The wake's camera, fixed where 07 stood as it began: the face shot (kept clear of the terrain) through the
-        /// checks and the ready hold, then the pull-back to the wide shot, the performance held wide, and the move round
-        /// to the chase frame. The rig is let go behind 07 as the pull-back starts, so the chase frame has settled
-        /// before the camera moves toward it; at the end the shot camera hands over on the very pose the chase frame has.
+        /// The wake's camera: the inventory's face close-up through the black, the checks and the ready hold, then the
+        /// pull-back to the wide shot, the performance held wide, and the move round to the chase frame. The rig is let
+        /// go behind 07 as the performance starts, so the chase frame has settled before the camera moves toward it; at
+        /// the end the shot camera hands over on the very pose the chase frame has.
         /// </summary>
         private void PlaceShotCamera()
         {
@@ -560,25 +568,33 @@ namespace MoonProject.Rover
             }
 
             OpeningPhase phase = _script.Phase;
-            if (phase >= OpeningPhase.PullBack)
+            // Not before the camera is wide: a released rig hides 07's head while the live camera is this close to it.
+            if (phase >= OpeningPhase.Perform)
             {
                 ReleaseRig();
             }
 
-            ShotPose face = FaceShot();
+            if (!FaceShot(out FaceInspectShot faceShot))
+            {
+                return;
+            }
+
+            var face = new ShotPose(faceShot.Eye, faceShot.Rotation, faceShot.VerticalFov);
+            Vector3 body = _rover.Position;
+            float heading = HeadingDegrees();
             ShotPose pose;
             switch (phase)
             {
                 case OpeningPhase.PullBack:
-                    pose = PostShot.PullBack(face, _shot.Wide(_shotBody, _shotHeading), _script.PhaseShare);
+                    pose = PostShot.PullBack(face, _shot.Wide(body, heading), _script.PhaseShare);
                     break;
                 case OpeningPhase.Perform:
-                    pose = _shot.Wide(_shotBody, _shotHeading);
+                    pose = _shot.Wide(body, heading);
                     break;
                 case OpeningPhase.MoveBehind:
                     CameraState chase = _rig.ChaseCamera.State;
                     var chasePose = new ShotPose(chase.GetFinalPosition(), chase.GetFinalOrientation(), chase.Lens.FieldOfView);
-                    pose = PostShot.Round(_shot.Wide(_shotBody, _shotHeading), chasePose, _shotBody, _script.PhaseShare);
+                    pose = PostShot.Round(_shot.Wide(body, heading), chasePose, body, _script.PhaseShare);
                     break;
                 default:
                     pose = face;
@@ -617,25 +633,11 @@ namespace MoonProject.Rover
             OpeningPhase phase = _script.Phase;
             PostSettings post = _tuning.Opening.Post;
             float share = _script.PhaseShare;
-            float sinceFaceOn = phase == OpeningPhase.EyesOpen ? _script.PhaseTime : post.FillRampSeconds;
+            float sinceFaceOn = phase == OpeningPhase.Post ? _script.PhaseTime
+                : phase < OpeningPhase.Post ? 0f : post.FillRampSeconds;
             Transform screen = _body.ScreenTransform;
             _lights.Apply(_rover.Position, _world.EarthDirection, screen.position, screen.forward,
                 PostLighting.Rim(phase, share), PostLighting.Fill(phase, share, sinceFaceOn, post.FillRampSeconds));
-        }
-
-        /// <summary>The face shot at its push-in, kept clear of the terrain between the face and the camera.</summary>
-        private ShotPose FaceShot()
-        {
-            ShotPose pose = _shot.At(_shotFace, _shotHeading, _script.Push01);
-            Vector3 toCamera = pose.Position - _shotFace;
-            float length = toCamera.magnitude;
-            if (length <= LengthEpsilon)
-            {
-                return pose;
-            }
-
-            float clear = _sight.Clear(_shotFace, pose.Position, _tuning.FaceInspectProbeRadius);
-            return new ShotPose(_shotFace + toCamera / length * clear, pose.Rotation, pose.Fov);
         }
 
         /// <summary>Lets the rig go behind 07, once per opening.</summary>
