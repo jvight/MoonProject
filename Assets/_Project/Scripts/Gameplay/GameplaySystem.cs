@@ -235,6 +235,7 @@ namespace MoonProject.Gameplay
             }
 
             ApronGlow = new ApronGlow(_apronOutline, _building.Tuning.ApronGlowFadeSeconds);
+            _building.MarkApron(_apronOutline.bounds.center);
             Hints = new InteractionHints(_salvage, Containers, Scans, _building, services.Beam, Cutter,
                 services.Pickups);
             Recovery = new RecoveryProgress(context.Events, PowerLamps, PowerSteps, _openingTuning.RecoveryLamps);

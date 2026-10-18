@@ -34,6 +34,14 @@ namespace MoonProject.Gameplay
                  "closes: a slow breath, never a switch.")]
         [Range(0.1f, 3f)] [SerializeField] private float _apronGlowFadeSeconds = 0.8f;
 
+        [Tooltip("Metres in front of 07 the placing ghost rides while 07 drives it to its spot (kept inside the " +
+                 "placement distances).")]
+        [Range(2f, 12f)] [SerializeField] private float _ghostAheadMetres = 4.5f;
+
+        [Tooltip("Metres from the apron's centre within which the charging pad's riding ghost settles onto the " +
+                 "apron's marked bay.")]
+        [Range(0.5f, 8f)] [SerializeField] private float _apronSnapRadius = 3f;
+
         [Tooltip("Structure IDs that a new game knows by design (e.g. charging_pad), applied on a new game and saved like learned blueprints.")]
         [SerializeField] private string[] _startingKnownIds = Array.Empty<string>();
 
@@ -53,6 +61,10 @@ namespace MoonProject.Gameplay
         public float DeconstructRefundShare => _deconstructRefundShare;
 
         public float ApronGlowFadeSeconds => _apronGlowFadeSeconds;
+
+        public float GhostAheadMetres => Mathf.Clamp(_ghostAheadMetres, _minPlacementDistance, _maxPlacementDistance);
+
+        public float ApronSnapRadius => _apronSnapRadius;
 
 
         /// <summary>
