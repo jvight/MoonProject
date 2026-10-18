@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-    <path fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M31 27C31 27 34 27 34 27C34 27 34 33 34 33C34 33 31 33 31 33C31 33 31 27 31 27Z"/>
-    <path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M16 18C16 18 44 18 44 18A4 4 0 0 1 48 22C48 22 48 38 48 38A4 4 0 0 1 44 42C44 42 16 42 16 42A4 4 0 0 1 12 38C12 38 12 22 12 22A4 4 0 0 1 16 18ZM12 22C12 22 8 22 8 22C8 22 8 38 8 38C8 38 12 38 12 38M48 22C48 22 52 22 52 22C52 22 52 38 52 38C52 38 48 38 48 38M52 26C52 26 57 26 57 26C57 26 57 34 57 34C57 34 52 34 52 34M18 42C18 42 15 48 15 48M10.5 48C10.5 48 19.5 48 19.5 48A1.5 1.5 0 0 1 21 49.5C21 49.5 21 53.5 21 53.5A1.5 1.5 0 0 1 19.5 55C19.5 55 10.5 55 10.5 55A1.5 1.5 0 0 1 9 53.5C9 53.5 9 49.5 9 49.5A1.5 1.5 0 0 1 10.5 48Z"/>
-    <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M21 18C21 18 21 42 21 42M25 18C25 18 25 42 25 42M30.5 24C30.5 24 42.5 24 42.5 24A1.5 1.5 0 0 1 44 25.5C44 25.5 44 34.5 44 34.5A1.5 1.5 0 0 1 42.5 36C42.5 36 30.5 36 30.5 36A1.5 1.5 0 0 1 29 34.5C29 34.5 29 25.5 29 25.5A1.5 1.5 0 0 1 30.5 24ZM34 27C34 27 34 33 34 33M39 27C39 27 39 33 39 33M16 27C16 27 16 33 16 33M13 30C13 30 19 30 19 30"/>
-  </g>
-</svg>
