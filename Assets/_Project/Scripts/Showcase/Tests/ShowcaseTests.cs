@@ -281,10 +281,10 @@ namespace MoonProject.Showcase.Tests
             {
                 ShowcaseTuningBuilder.PopulateDefaultTuning(tuning);
                 Assert.IsNull(tuning.Validate(), "Default ShowcaseTuning must pass validation.");
-                Assert.AreEqual(15, tuning.Exhibits.Length);
+                Assert.AreEqual(10, tuning.Exhibits.Length);
                 Assert.AreEqual(5, tuning.RuinPieces.Length);
 
-                // Check minimum 12m spacing between all 15 exhibit pairs
+                // Check minimum 12m spacing between all 10 exhibit pairs
                 for (int i = 0; i < tuning.Exhibits.Length; i++)
                 {
                     for (int j = i + 1; j < tuning.Exhibits.Length; j++)
@@ -297,7 +297,7 @@ namespace MoonProject.Showcase.Tests
                     }
                 }
 
-                // Original 6 + Rover07Upgraded + 7 new R1 structures
+                // Original 6 + Rover07Upgraded + battery bank and antenna mast
                 VerifyExhibitNodePaths(tuning, ShowcaseExhibitId.Rover07, ShowcasePaths.RoverPrefab);
                 VerifyExhibitNodePaths(tuning, ShowcaseExhibitId.Rover07Upgraded, ShowcasePaths.RoverPrefab);
                 VerifyExhibitNodePaths(tuning, ShowcaseExhibitId.CargoLander, ShowcasePaths.CargoLanderPrefab);
@@ -305,12 +305,7 @@ namespace MoonProject.Showcase.Tests
                 VerifyExhibitNodePaths(tuning, ShowcaseExhibitId.SolarArray, ShowcasePaths.SolarArrayPrefab, expectFourStages: true);
                 VerifyExhibitNodePaths(tuning, ShowcaseExhibitId.PowerPylon, ShowcasePaths.PowerPylonPrefab, expectFourStages: true);
                 VerifyExhibitNodePaths(tuning, ShowcaseExhibitId.BatteryBank, ShowcasePaths.BatteryBankPrefab, expectFourStages: true);
-                VerifyExhibitNodePaths(tuning, ShowcaseExhibitId.Smelter, ShowcasePaths.SmelterPrefab, expectFourStages: true);
-                VerifyExhibitNodePaths(tuning, ShowcaseExhibitId.Fabricator, ShowcasePaths.FabricatorPrefab, expectFourStages: true);
-                VerifyExhibitNodePaths(tuning, ShowcaseExhibitId.StorageRack, ShowcasePaths.StorageRackPrefab, expectFourStages: true);
-                VerifyExhibitNodePaths(tuning, ShowcaseExhibitId.UpgradeBay, ShowcasePaths.UpgradeBayPrefab, expectFourStages: true);
                 VerifyExhibitNodePaths(tuning, ShowcaseExhibitId.AntennaMast, ShowcasePaths.AntennaMastPrefab, expectFourStages: true);
-                VerifyExhibitNodePaths(tuning, ShowcaseExhibitId.VehiclePad, ShowcasePaths.VehiclePadPrefab, expectFourStages: true);
 
                 // Ruins Corner prefabs and AirlockPanel
                 string[] ruinPrefabs =

@@ -31,9 +31,7 @@ namespace MoonProject.Art.Editor
         public const string LensGlassMaterial = PaletteFolder + "/M_LensGlass.mat";
         public const string RoverFolder = R1ModelsFolder + "/Rover";
         public const string RockFolder = Root + "/Rocks";
-        public const string BaseFolder = Root + "/Base";
         public const string RelicFolder = Root + "/Relics";
-        public const string FriendFolder = Root + "/Friends";
         public const string PickupFolder = Root + "/Pickups";
         public const string PropFolder = Root + "/Props";
         public const string RelayFolder = Root + "/Relay";
