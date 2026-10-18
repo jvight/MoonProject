@@ -144,7 +144,7 @@ namespace MoonProject.Gameplay
             Flow.Announce();
         }
 
-        public void Step()
+        public void Step(float deltaTime)
         {
             if (!Port.Reached && SurfaceRules.HorizontalDistance(_rover.Position, _lander) <= _tuning.LanderReach)
             {
@@ -156,7 +156,7 @@ namespace MoonProject.Gameplay
                 NightFallenSaved = true;
             }
 
-            Caches.Step();
+            Caches.Step(deltaTime);
             Flow.Tick();
         }
 

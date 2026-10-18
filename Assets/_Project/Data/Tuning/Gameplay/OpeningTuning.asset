@@ -27,7 +27,13 @@ MonoBehaviour:
   - {fileID: 7290828058333433129, guid: 5e25d1b9613bc584d807f1815f675d5f, type: 3}
   _igniterPart: part.igniter
   _collectReach: 3.5
-  _crateRimReach: 28
+  _crateRimReach: 30
+  _crateRimBand: 8
+  _crateRimFadeSeconds: 1.2
+  _crateRimStrength: 2.5
+  _crateRimLightIntensity: 2
+  _crateRimLightRange: 1.6
+  _crateRimLightLift: 0.5
   _recoveryLamps:
     _link: 4
     _dish: 4

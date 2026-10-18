@@ -42,9 +42,7 @@ namespace MoonProject.Gameplay
         private readonly float _reach;
         private readonly float _collectReach;
         private readonly IDisposable _opened;
-        private readonly float _rimReach;
-        private readonly GameObject[] _rims;
-        private readonly bool[] _rimOn;
+        private readonly CrateRimGlow[] _rims;
         private readonly GameObject[] _igniters;
         private readonly GameObject[] _metals;
         private readonly GameObject[] _wirings;
@@ -62,7 +60,6 @@ namespace MoonProject.Gameplay
 
             IReadOnlyList<SupplyCache> caches = tuning.Caches;
             float collectReach = tuning.CollectReach;
-            _rimReach = tuning.CrateRimReach;
 
             _events = services.Events;
             _stock = services.Materials;
@@ -96,8 +93,7 @@ namespace MoonProject.Gameplay
 
             _left = new Recipe[_caches.Count];
             _props = new GameObject[_caches.Count];
-            _rims = new GameObject[_caches.Count];
-            _rimOn = new bool[_caches.Count];
+            _rims = new CrateRimGlow[_caches.Count];
             _igniters = new GameObject[_caches.Count];
             _metals = new GameObject[_caches.Count];
             _wirings = new GameObject[_caches.Count];
@@ -119,15 +115,11 @@ namespace MoonProject.Gameplay
                 }
 
                 Transform root = _containers[i].Root;
-                _rims[i] = Child(root, RimGlowName);
+                GameObject rim = Child(root, RimGlowName);
+                _rims[i] = rim != null ? new CrateRimGlow(rim, RimLight(rim, root, tuning), tuning) : null;
                 _igniters[i] = Child(root, IgniterName);
                 _metals[i] = Child(root, MetalName);
                 _wirings[i] = Child(root, WiringName);
-                if (_rims[i] != null)
-                {
-                    _rims[i].SetActive(false);
-                }
-
                 ShowContents(i);
             }
 
@@ -186,7 +178,7 @@ namespace MoonProject.Gameplay
                 $"No supply crate '{id}' (OpeningTuning's caches).", nameof(id));
         }
 
-        public void Step()
+        public void Step(float deltaTime)
         {
             for (int i = 0; i < _caches.Count; i++)
             {
@@ -200,16 +192,10 @@ namespace MoonProject.Gameplay
                     holds = !IsEmpty(_left[i]) || _partLeft[i];
                 }
 
-                // The rim glows only near: the owner could not find the lander's crate at B4, and loot never
+                // The rim glows only near: the owner could not find the lander's crate at B3/B4, and loot never
                 // glows across the basin.
-                bool rim = holds && _rims[i] != null &&
-                           SurfaceRules.HorizontalDistanceSquared(_rover.Position, _containers[i].Root.position) <=
-                           _rimReach * _rimReach;
-                if (rim != _rimOn[i])
-                {
-                    _rimOn[i] = rim;
-                    _rims[i].SetActive(rim);
-                }
+                _rims[i]?.Step(holds, SurfaceRules.HorizontalDistance(_rover.Position, _containers[i].Root.position),
+                    deltaTime);
             }
         }
 
@@ -439,6 +425,26 @@ namespace MoonProject.Gameplay
             box.center = shell.center;
             box.size = shell.size;
             root.gameObject.layer = Layers.Prop;
+        }
+
+        /// <summary>
+        /// The small warm light over an open crate's rim, in the rim's own colour, off until <see cref="CrateRimGlow"/>
+        /// lights it.
+        /// </summary>
+        private static Light RimLight(GameObject rim, Transform root, OpeningTuning tuning)
+        {
+            Renderer shown = rim.GetComponentInChildren<Renderer>(true) ?? throw new InvalidOperationException(
+                $"Supply crate '{root.name}' has a rim glow with no mesh.");
+            var host = new GameObject("RimLight");
+            host.transform.SetParent(root, false);
+            host.transform.position = shown.bounds.center + Vector3.up * tuning.CrateRimLightLift;
+            var light = host.AddComponent<Light>();
+            light.type = LightType.Point;
+            light.range = tuning.CrateRimLightRange;
+            light.shadows = LightShadows.None;
+            light.intensity = 0f;
+            light.enabled = false;
+            return light;
         }
 
         /// <summary>The crate's lid, what lies in it or what glows on its rim: none of it its shell.</summary>
