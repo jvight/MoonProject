@@ -390,8 +390,9 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// A crate 07 bumps into rather than drives through: a box round what it shows, on the Prop layer, unless Art
-        /// gave it colliders of its own.
+        /// A crate 07 bumps into rather than drives through: a box round its shell (not its lid, which swings open,
+        /// nor what lies in it, so what 07 scans or takes from an open crate stays in plain view of its lens), on the
+        /// Prop layer, unless Art gave it colliders of its own.
         /// </summary>
         private static void MakeSolid(Transform root)
         {
@@ -400,23 +401,60 @@ namespace MoonProject.Gameplay
                 return;
             }
 
-            Renderer[] renderers = root.GetComponentsInChildren<Renderer>();
-            if (renderers.Length == 0)
+            // In the crate's own space, from each mesh's corners: a crate turned off the world axes would otherwise
+            // stand in a box grown round its world-aligned bounds.
+            bool any = false;
+            var shell = new Bounds();
+            foreach (MeshFilter filter in root.GetComponentsInChildren<MeshFilter>())
+            {
+                if (filter.sharedMesh == null || IsLoose(root, filter.transform))
+                {
+                    continue;
+                }
+
+                Bounds mesh = filter.sharedMesh.bounds;
+                for (int corner = 0; corner < 8; corner++)
+                {
+                    var local = new Vector3((corner & 1) == 0 ? mesh.min.x : mesh.max.x,
+                        (corner & 2) == 0 ? mesh.min.y : mesh.max.y, (corner & 4) == 0 ? mesh.min.z : mesh.max.z);
+                    Vector3 point = root.InverseTransformPoint(filter.transform.TransformPoint(local));
+                    if (any)
+                    {
+                        shell.Encapsulate(point);
+                    }
+                    else
+                    {
+                        shell = new Bounds(point, Vector3.zero);
+                        any = true;
+                    }
+                }
+            }
+
+            if (!any)
             {
                 throw new InvalidOperationException($"Supply crate '{root.name}' shows no mesh to stand solid on.");
             }
 
-            Bounds shown = renderers[0].bounds;
-            for (int i = 1; i < renderers.Length; i++)
+            var box = root.gameObject.AddComponent<BoxCollider>();
+            box.center = shell.center;
+            box.size = shell.size;
+            root.gameObject.layer = Layers.Prop;
+        }
+
+        /// <summary>The crate's lid, what lies in it or what glows on its rim: none of it its shell.</summary>
+        private static bool IsLoose(Transform root, Transform node)
+        {
+            for (; node != null && node != root; node = node.parent)
             {
-                shown.Encapsulate(renderers[i].bounds);
+                string name = node.name;
+                if (name == SealedContainer.LidPath || name == SealedContainer.ItemSocketPath ||
+                    name == RimGlowName || name == IgniterName || name == MetalName || name == WiringName)
+                {
+                    return true;
+                }
             }
 
-            var box = root.gameObject.AddComponent<BoxCollider>();
-            box.center = root.InverseTransformPoint(shown.center);
-            Vector3 size = root.InverseTransformVector(shown.size);
-            box.size = new Vector3(Mathf.Abs(size.x), Mathf.Abs(size.y), Mathf.Abs(size.z));
-            root.gameObject.layer = Layers.Prop;
+            return false;
         }
 
         /// <summary>The crate's child called <paramref name="name"/>, at any depth, or null (only some crates have it).
