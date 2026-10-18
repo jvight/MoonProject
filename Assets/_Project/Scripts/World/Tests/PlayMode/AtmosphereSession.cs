@@ -62,6 +62,24 @@ namespace MoonProject.World.PlayModeTests
         private const string OpeningSettingsPath = "Assets/_Project/Data/Tuning/WorldSettings.asset";
         private const string OpeningSignalPillar = "SignalPillar";
 
+        // 07's self-test cues on a New Game (opening v2's POST): the beacon's answering flashes seen from the apron's
+        // edge, the Begin wave seen from just behind 07's post looking down the cable toward the lander.
+        private const float PostTimeout = 120f;
+        private const float PostBeaconEyeHeight = 5f;
+        private const float PostBeaconLookHeight = 6f;
+        private const float PostBeaconFov = 40f;
+        private const float PostWaveEyeHeight = 7f;
+        private const float PostWaveEyeBack = 6f;
+        private const float PostWaveLookAhead = 40f;
+        private const float PostWaveFov = 55f;
+        private const float PostWaveShotSeconds = 0.25f;
+
+        // While the strips are shot, game time steps this much per frame however long a capture takes, so the
+        // flashes and the wave are filmed frame by frame.
+        private const float PostFrameSeconds = 0.05f;
+        private const float PostTail = 0.3f;
+        private const string EmissionStrength = "_EmissionStrength";
+
         private static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "world-captures"));
 
@@ -267,6 +285,163 @@ namespace MoonProject.World.PlayModeTests
             finally
             {
                 Object.Destroy(host);
+            }
+
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        /// <summary>
+        /// 07's self-test on a real New Game: when the cutter check fails the lander's beacon answers with its sharp
+        /// flashes, and when 07 begins its recovery one bright wave runs the cable from 07's post to the lander. Strips
+        /// of frames go to Logs/world-captures/post-*.png with post-cues.md (the beacon light's intensity and the first
+        /// and last markers' glow per frame).
+        /// </summary>
+        [UnityTest]
+        [Timeout(600000)]
+        [PrebuildSetup(typeof(CanyonSessionScene))]
+        [PostBuildCleanup(typeof(CanyonSessionScene))]
+        public IEnumerator PostCues_FlashTheBeaconAndRunTheCable_OnANewGame()
+        {
+            BootstrapHarness.DeleteSaveFiles(CanyonSessionScene.SaveSlot);
+#if UNITY_EDITOR
+            bool skippedTitle = SessionState.GetBool(GameBootstrap.TestRunSkipsTitleKey, false);
+            SessionState.SetBool(GameBootstrap.TestRunSkipsTitleKey, false);
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(CanyonSessionScene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            while (!loading.isDone)
+            {
+                yield return null;
+            }
+#else
+            throw new NotSupportedException("The atmosphere session loads the scene through the editor.");
+#endif
+            GameBootstrap bootstrap = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
+            {
+                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
+            }
+
+            Assert.IsNotNull(bootstrap, "the scene has its bootstrap");
+            GameContext context = bootstrap.Context;
+            LanderBeaconSettings tuning =
+                AssetDatabase.LoadAssetAtPath<WorldSettings>(OpeningSettingsPath).Landmarks.LanderBeacon;
+            LanderBeacon beacon = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
+            {
+                beacon = beacon != null ? beacon : root.GetComponentInChildren<LanderBeacon>(true);
+            }
+
+            Assert.IsNotNull(beacon, "World stood the lander's beacon");
+            var wiring = new SerializedObject(beacon);
+            var light = (Light)wiring.FindProperty("_light").objectReferenceValue;
+            SerializedProperty markerList = wiring.FindProperty("_markers");
+            var first = (Renderer)markerList.GetArrayElementAtIndex(0).objectReferenceValue;
+            var last = (Renderer)markerList.GetArrayElementAtIndex(markerList.arraySize - 1).objectReferenceValue;
+            float cutterAt = -1f;
+            float beginAt = -1f;
+            IDisposable completed = context.Events.Subscribe<BootCheckCompleted>(check =>
+                cutterAt = check.Step == BootCheckStep.Cutter ? Time.time : cutterAt);
+            IDisposable started = context.Events.Subscribe<BootCheckStarted>(check =>
+                beginAt = check.Step == BootCheckStep.Begin ? Time.time : beginAt);
+            var report = new StringBuilder("# 07's self-test cues (real Main scene, New Game)\n\n");
+            var host = new GameObject("PostReviewCamera");
+            try
+            {
+                Camera view = context.Get<IViewCamera>().Camera;
+                var camera = host.AddComponent<Camera>();
+                camera.CopyFrom(view);
+                camera.enabled = false;
+                CopyPipelineSettings(view, camera);
+                IWorldAnchors anchors = context.Get<IWorldAnchors>();
+                Vector3 wake = Anchor(anchors, WorldAnchorIds.PlaceWake).Position;
+                Vector3 lander = Anchor(anchors, WorldAnchorIds.PlaceLander).Position;
+                Vector3 apron = Anchor(anchors, WorldAnchorIds.PlaceApron).Position;
+                Vector3 toLander = Vector3.ProjectOnPlane(lander - wake, Vector3.up).normalized;
+                Directory.CreateDirectory(CaptureFolder);
+
+                context.Events.Publish(new NewGameRequested());
+                float requested = Time.time;
+                while (cutterAt < 0f)
+                {
+                    Assert.Less(Time.time - requested, PostTimeout, "07's self-test reaches the cutter check");
+                    yield return null;
+                }
+
+                FrameCapture.SavePng(view, CaptureWidth, CaptureHeight,
+                    Path.Combine(CaptureFolder, "post-cutter-game.png"));
+                Time.captureDeltaTime = PostFrameSeconds;
+                Place(camera, LookPose("post_beacon", apron + Vector3.up * PostBeaconEyeHeight,
+                    lander + Vector3.up * PostBeaconLookHeight, PostBeaconFov));
+                report.AppendLine("## The beacon answers the cutter check").AppendLine()
+                    .AppendLine("| Frame | s after the check | Beacon light |").AppendLine("|---|---:|---:|");
+                float burst = tuning.FlashCount * tuning.FlashPeriod + PostTail;
+                float brightest = 0f;
+                for (int frame = 0; Time.time - cutterAt < burst; frame++)
+                {
+                    string name = string.Format(CultureInfo.InvariantCulture, "post-beacon-{0:00}", frame);
+                    FrameCapture.SavePng(camera, CaptureWidth, CaptureHeight,
+                        Path.Combine(CaptureFolder, name + ".png"));
+                    brightest = Mathf.Max(brightest, light.intensity);
+                    report.AppendLine(string.Format(CultureInfo.InvariantCulture, "| {0} | {1:F2} | {2:F2} |", name,
+                        Time.time - cutterAt, light.intensity));
+                    yield return null;
+                }
+
+                Assert.Greater(brightest, tuning.LightIntensity * (1f + tuning.FlashBoost) * 0.5f,
+                    "the answering flashes outshine the slow pulse's peak");
+
+                while (beginAt < 0f)
+                {
+                    Assert.Less(Time.time - requested, PostTimeout, "07 begins its recovery");
+                    yield return null;
+                }
+
+                Place(camera, LookPose("post_wave", wake - toLander * PostWaveEyeBack + Vector3.up * PostWaveEyeHeight,
+                    wake + toLander * PostWaveLookAhead, PostWaveFov));
+                report.AppendLine().AppendLine("## One wave runs the cable when 07 begins").AppendLine()
+                    .AppendLine("| Frame | s after Begin | First marker | Last marker |")
+                    .AppendLine("|---|---:|---:|---:|");
+                var glow = new MaterialPropertyBlock();
+                float calmCeiling = tuning.MarkerGlow + tuning.MarkerPulse;
+                float firstPeakAt = -1f;
+                float lastPeakAt = -1f;
+                float run = tuning.MarkerRunSeconds * (1f + tuning.MarkerWaveWidth) + PostTail;
+                float nextShot = 0f;
+                for (int frame = 0; Time.time - beginAt < run;)
+                {
+                    float since = Time.time - beginAt;
+                    first.GetPropertyBlock(glow);
+                    float firstGlow = glow.GetFloat(EmissionStrength);
+                    last.GetPropertyBlock(glow);
+                    float lastGlow = glow.GetFloat(EmissionStrength);
+                    firstPeakAt = firstPeakAt < 0f && firstGlow > calmCeiling ? since : firstPeakAt;
+                    lastPeakAt = lastPeakAt < 0f && lastGlow > calmCeiling ? since : lastPeakAt;
+                    if (since >= nextShot)
+                    {
+                        string name = string.Format(CultureInfo.InvariantCulture, "post-wave-{0:00}", frame++);
+                        FrameCapture.SavePng(camera, CaptureWidth, CaptureHeight,
+                            Path.Combine(CaptureFolder, name + ".png"));
+                        report.AppendLine(string.Format(CultureInfo.InvariantCulture,
+                            "| {0} | {1:F2} | {2:F2} | {3:F2} |", name, since, firstGlow, lastGlow));
+                        nextShot += PostWaveShotSeconds;
+                    }
+
+                    yield return null;
+                }
+
+                Assert.GreaterOrEqual(firstPeakAt, 0f, "the wave lights 07's end of the cable past the calm waves");
+                Assert.Greater(lastPeakAt, firstPeakAt, "and reaches the lander's end after it");
+            }
+            finally
+            {
+                Time.captureDeltaTime = 0f;
+                completed.Dispose();
+                started.Dispose();
+                Object.Destroy(host);
+                File.WriteAllText(Path.Combine(CaptureFolder, "post-cues.md"), report.ToString());
+#if UNITY_EDITOR
+                SessionState.SetBool(GameBootstrap.TestRunSkipsTitleKey, skippedTitle);
+#endif
             }
 
             Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
