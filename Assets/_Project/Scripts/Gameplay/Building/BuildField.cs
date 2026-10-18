@@ -53,16 +53,19 @@ namespace MoonProject.Gameplay
         private PlacedBase _placedBase;
         private BuildModeController _controller;
 
+        private const int SeamSlotCount = 4;
+
         private Transform _structuresRoot;
         private Transform _ghostsRoot;
         private CutBeam _weldBeam;
         private LightPulse _weldLight;
         private VacuumDebris _weldDebris;
-        private HeatSeam _weldSeam;
+        private readonly HeatSeam[] _weldSeams = new HeatSeam[SeamSlotCount];
         private GridLinkLine _gridLink;
         private readonly Vector3[] _seamLine = new Vector3[3];
         private int _seamInstanceId;
         private int _seamStageIndex = -1;
+        private int _activeSeamSlot;
 
         private StructureView _activeGhost;
         private string _activeGhostId;
@@ -113,6 +116,9 @@ namespace MoonProject.Gameplay
         /// <summary>World-space origin point of the weld beam (for tests and inspection).</summary>
         public Vector3 WeldBeamStart => _weldBeam != null ? _weldBeam.Start : Vector3.zero;
 
+        /// <summary>Where the weld beam ends this frame (on the structure's surface once fully reached).</summary>
+        public Vector3 WeldBeamEnd => _weldBeam != null ? _weldBeam.End : Vector3.zero;
+
         /// <summary>Number of rendered layers in the weld beam (core + sheath + halo).</summary>
         public int WeldBeamLayerCount => _weldBeam != null ? _weldBeam.LayerCount : 0;
 
@@ -120,7 +126,29 @@ namespace MoonProject.Gameplay
         public float WeldLightIntensity => _weldLight != null ? _weldLight.Intensity : 0f;
 
         /// <summary>Current heat level on the welded structure's active stage seam.</summary>
-        public float WeldSeamHeat => _weldSeam != null && _weldSeam.Piece != null ? _weldSeam.HeatAt(0) : 0f;
+        public float WeldSeamHeat
+        {
+            get
+            {
+                HeatSeam active = _weldSeams[_activeSeamSlot];
+                if (active != null && active.Piece != null)
+                {
+                    return active.HeatAt(0);
+                }
+
+                float maxHeat = 0f;
+                for (int i = 0; i < SeamSlotCount; i++)
+                {
+                    HeatSeam s = _weldSeams[i];
+                    if (s != null && s.Piece != null)
+                    {
+                        maxHeat = Mathf.Max(maxHeat, s.HeatAt(0));
+                    }
+                }
+
+                return maxHeat;
+            }
+        }
 
         /// <summary>Live weld spark particle count (for tests and inspection).</summary>
         public int SparkCount => _weldDebris != null ? _weldDebris.ParticleCount : 0;
@@ -183,7 +211,11 @@ namespace MoonProject.Gameplay
             _weldBeam = new CutBeam(vfxRoot, feelTuning, _visuals.BeamCore, _visuals.BeamSheath);
             _weldLight = new LightPulse("BuildWeldLight", vfxRoot, feelTuning.CutLightColor, feelTuning.CutRange);
             _weldDebris = new VacuumDebris(vfxRoot, feelTuning, _visuals.FeelSprite);
-            _weldSeam = new HeatSeam(vfxRoot, feelTuning, _visuals.HeatSeam);
+            for (int i = 0; i < SeamSlotCount; i++)
+            {
+                _weldSeams[i] = new HeatSeam(vfxRoot, feelTuning, _visuals.HeatSeam);
+            }
+
             _gridLink = new GridLinkLine(vfxRoot, _visuals.BeamCore, _tuning);
 
             PrewarmGhosts();
@@ -374,6 +406,10 @@ namespace MoonProject.Gameplay
             bool placing = _controller.State == BuildModeState.Placing;
             _input.ShareDrive(this, placing);
 
+            // The structures stand as they do this frame before the weld beam aims at one: its end meets their surface.
+            _placedBase.StepPower(deltaTime, 1f);
+            StepPlacedViews(deltaTime);
+
             bool weldingNow = _controller.State == BuildModeState.Welding && _controller.ActiveWeldInstanceId > 0;
             Vector3 weldPoint = weldingNow ? WeldPointOf(_controller.ActiveWeldInstanceId) : Vector3.zero;
             SetHold((_controller.IsOpen && !placing) || weldingNow);
@@ -382,9 +418,6 @@ namespace MoonProject.Gameplay
                                    (_rig == null || _rig.HasCutterLineOfSight(weldPoint));
             StepWeldVfx(weldingNow, activelyWelding, weldPoint, deltaTime);
             StepWeldLoopAudio(activelyWelding, weldPoint);
-
-            _placedBase.StepPower(deltaTime, 1f);
-            StepPlacedViews(deltaTime);
         }
 
         private void StepWeldVfx(bool weldingNow, bool activelyWelding, Vector3 weldPoint, float deltaTime)
@@ -395,33 +428,45 @@ namespace MoonProject.Gameplay
                 int activeId = _controller.ActiveWeldInstanceId;
                 if (_viewsById.TryGetValue(activeId, out view) && view != null)
                 {
-                    int stageIndex = Mathf.Clamp(view.SolidStageCount, 0, Mathf.Max(0, view.StageCount - 1));
-                    if (_seamInstanceId != activeId || _seamStageIndex != stageIndex || _weldSeam.Piece != view.transform)
+                    if (_seamInstanceId != activeId)
                     {
-                        view.GetStageWeldSeam(stageIndex, _seamLine, out Vector3 seamNormal);
-                        _weldSeam.Begin(view.transform, _seamLine, seamNormal);
+                        for (int i = 0; i < SeamSlotCount; i++)
+                        {
+                            _weldSeams[i].Clear();
+                        }
+
                         _seamInstanceId = activeId;
+                        _seamStageIndex = -1;
+                    }
+
+                    int stageIndex = Mathf.Clamp(view.SolidStageCount, 0, Mathf.Max(0, view.StageCount - 1));
+                    int targetSlot = stageIndex % SeamSlotCount;
+                    if (_seamStageIndex != stageIndex || _weldSeams[targetSlot].Piece != view.transform)
+                    {
+                        if (_seamStageIndex >= 0 && _weldSeams[_activeSeamSlot].Piece == view.transform)
+                        {
+                            _weldSeams[_activeSeamSlot].Cut(1f);
+                        }
+
+                        _activeSeamSlot = targetSlot;
+                        view.GetStageWeldSeam(stageIndex, _seamLine, out Vector3 seamNormal);
+                        _weldSeams[_activeSeamSlot].Begin(view.transform, _seamLine, seamNormal);
                         _seamStageIndex = stageIndex;
                     }
                 }
             }
-            else if (_seamInstanceId != 0)
-            {
-                _weldSeam.Clear();
-                _seamInstanceId = 0;
-                _seamStageIndex = -1;
-            }
 
             FeelVfxTuning feelTuning = _visuals.FeelTuning;
             float vfxDt = activelyWelding ? Mathf.Max(deltaTime, 1e-4f) : deltaTime;
+            HeatSeam activeSeam = _weldSeams[_activeSeamSlot];
             if (activelyWelding)
             {
                 float stageProgress = view != null
                     ? view.GetActiveStageProgress01(_controller.ActiveWeldProgress01)
                     : _controller.ActiveWeldProgress01;
-                if (_weldSeam.Piece != null)
+                if (activeSeam.Piece != null)
                 {
-                    _weldSeam.Cut(Mathf.Max(0.05f, stageProgress));
+                    activeSeam.Cut(Mathf.Max(0.05f, stageProgress));
                 }
 
                 _weldBeam.Extend();
@@ -437,7 +482,11 @@ namespace MoonProject.Gameplay
                 _weldDebris.StopSpray();
             }
 
-            _weldSeam.Step(vfxDt);
+            for (int i = 0; i < SeamSlotCount; i++)
+            {
+                _weldSeams[i].Step(vfxDt);
+            }
+
             _weldBeam.Step(vfxDt, _rig.CutterOrigin.position, weldPoint);
             _weldLight.Step(vfxDt);
             _weldDebris.Step(vfxDt);
@@ -1038,6 +1087,12 @@ namespace MoonProject.Gameplay
                 {
                     Vector3 weldPoint = view.GetActiveWeldPoint();
                     BurstSparksAt(weldPoint);
+                    if (_weldDebris != null)
+                    {
+                        _weldDebris.Fall(weldPoint, 6);
+                        _weldDebris.Ring(placed.Pose.Position, 6, 0.35f);
+                    }
+
                     _events.Publish(new BuildCue(BuildCueKind.StageComplete, weldPoint));
                     _events.Publish(new FeelBeat(
                         FeelKind.Build,
@@ -1083,10 +1138,12 @@ namespace MoonProject.Gameplay
                 Destroy(instance);
                 return;
             }
+
             float initialProgress = _placedBase.TryGetStructure(e.InstanceId, out PlacedStructure placed)
                 ? placed.BuildProgress01
                 : 0f;
             view.SetPlacedState(initialProgress, instant: true);
+            view.ConfigureLiveBuild(!e.Restored, _tuning.SettleThumpMeters);
             RegisterManagedColliders(view, true);
             _viewsById[e.InstanceId] = view;
 
@@ -1103,11 +1160,21 @@ namespace MoonProject.Gameplay
             {
                 effectPoint = view.GetActiveWeldPoint();
                 view.SetPlacedState(1f, instant: e.Restored);
+                if (!e.Restored && _weldSeams[_activeSeamSlot] != null && _weldSeams[_activeSeamSlot].Piece == view.transform)
+                {
+                    _weldSeams[_activeSeamSlot].Cut(1f);
+                }
             }
 
             if (!e.Restored)
             {
                 BurstSparksAt(effectPoint);
+                if (_weldDebris != null)
+                {
+                    _weldDebris.Ring(e.Position, _tuning.SettleDustRingCount, 0.85f);
+                    _weldDebris.Fall(effectPoint, 8);
+                }
+
                 _events.Publish(new FeelBeat(FeelKind.Build, FeelPhase.Impact, effectPoint, Vector3.up, 1f, 0f));
                 _events.Publish(new FeelBeat(FeelKind.Build, FeelPhase.Reward, effectPoint, Vector3.up, 1f, 0f));
                 _events.Publish(new RoverChirpRequested(ChirpMood.Happy, 1f));
@@ -1117,6 +1184,17 @@ namespace MoonProject.Gameplay
 
         private void OnStructureRemoved(StructureRemoved e)
         {
+            if (_seamInstanceId == e.InstanceId)
+            {
+                for (int i = 0; i < SeamSlotCount; i++)
+                {
+                    _weldSeams[i].Clear();
+                }
+
+                _seamInstanceId = 0;
+                _seamStageIndex = -1;
+            }
+
             if (_viewsById.TryGetValue(e.InstanceId, out StructureView view))
             {
                 if (view != null)
@@ -1132,11 +1210,13 @@ namespace MoonProject.Gameplay
             _save?.SaveNow();
         }
 
+        /// <summary>Where 07's weld beam meets structure <paramref name="instanceId"/>: its real surface.</summary>
         private Vector3 WeldPointOf(int instanceId)
         {
             if (_viewsById.TryGetValue(instanceId, out StructureView view) && view != null)
             {
-                return view.GetActiveWeldPoint();
+                view.TryWeldContact(_rig.CutterOrigin.position, out Vector3 contact, out _);
+                return contact;
             }
 
             if (_placedBase.TryGetStructure(instanceId, out PlacedStructure placed))

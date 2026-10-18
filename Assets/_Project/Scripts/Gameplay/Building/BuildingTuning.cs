@@ -42,6 +42,12 @@ namespace MoonProject.Gameplay
                  "apron's marked bay.")]
         [Range(0.5f, 8f)] [SerializeField] private float _apronSnapRadius = 3f;
 
+        [Tooltip("Downward physical settle thump (m) when a structure finishes welding and locks into the regolith.")]
+        [Range(0.01f, 0.15f)] [SerializeField] private float _settleThumpMeters = 0.042f;
+
+        [Tooltip("Number of ballistic vacuum dust puffs thrown outward in a ring when a structure finishes settling.")]
+        [Range(4, 32)] [SerializeField] private int _settleDustRingCount = 18;
+
         [Header("The ghost's grid link preview")]
         [Tooltip("Metres above the ground the preview cable leaves the ghost and meets the hub it would join.")]
         [Range(0.1f, 2f)] [SerializeField] private float _linkHeight = 0.6f;
@@ -87,6 +93,10 @@ namespace MoonProject.Gameplay
         public float GhostAheadMetres => Mathf.Clamp(_ghostAheadMetres, _minPlacementDistance, _maxPlacementDistance);
 
         public float ApronSnapRadius => _apronSnapRadius;
+
+        public float SettleThumpMeters => _settleThumpMeters;
+
+        public int SettleDustRingCount => _settleDustRingCount;
 
         public float LinkHeight => _linkHeight;
 
@@ -150,6 +160,8 @@ namespace MoonProject.Gameplay
             }
 
             _deconstructRefundShare = Mathf.Clamp01(_deconstructRefundShare);
+            _settleThumpMeters = Mathf.Clamp(_settleThumpMeters, 0.01f, 0.15f);
+            _settleDustRingCount = Mathf.Clamp(_settleDustRingCount, 4, 32);
             _startingKnownIds = SanitizeStructureIdArray(_startingKnownIds);
             _playtestUnlockedIds = SanitizeStructureIdArray(_playtestUnlockedIds);
         }

@@ -26,7 +26,11 @@ namespace MoonProject.Gameplay
         private const int MaxPathGlints = 16;
         private const int PointSlots = CorePointCount + IrisRingCount + IrisCaliperCount + MoteCount + MaxPathGlints;
         private const int LensStreakCount = 4;
-        private const int StreakSlots = LensStreakCount;
+        private const int DataTickCount = 12;
+
+        /// <summary>Share of CRT amber in the beam's cyan while it sweeps (the wireframe it reveals is amber).</summary>
+        private const float BeamAmberShare = 0.35f;
+        private const int StreakSlots = LensStreakCount + DataTickCount;
 
         private const int WedgeRings = 16;
         private const int WedgeSlices = 9;
@@ -131,6 +135,8 @@ namespace MoonProject.Gameplay
         private Vector3 _span;
         private Vector3 _lastLensFront;
         private Vector3 _lastContactCenter;
+        private Vector3 _contact;
+        private bool _hasContact;
         private float _lastTargetWidth;
         private float _progress;
         private float _rate;
@@ -222,10 +228,21 @@ namespace MoonProject.Gameplay
         {
             _target = target;
             _span = span;
+            _hasContact = false;
             _progress = Mathf.Clamp01(progress);
             _rate = remainingSeconds > MinFadeSeconds ? (1f - _progress) / remainingSeconds : 0f;
             _pingRemaining = 0f;
             _active = true;
+        }
+
+        /// <summary>
+        /// The beam's far end this frame: where it meets its target's real surface (set before
+        /// <see cref="Step"/>).
+        /// </summary>
+        public void Meet(Vector3 contact)
+        {
+            _contact = contact;
+            _hasContact = true;
         }
 
         /// <summary>Keeps progress in step with quarter beats.</summary>
@@ -306,7 +323,7 @@ namespace MoonProject.Gameplay
 
             float spanHeight = Mathf.Max(Mathf.Abs(_span.y), 0.36f);
             Vector3 sweepSpanVec = _span.sqrMagnitude > MinDistance ? _span : new Vector3(0f, spanHeight, 0f);
-            Vector3 lineCentre = _target + sweepSpanVec * (_progress - 0.5f);
+            Vector3 lineCentre = _hasContact ? _contact : _target + sweepSpanVec * (_progress - 0.5f);
 
             Vector3 toTarget = lineCentre - emitter;
             float dist = toTarget.magnitude;
@@ -321,16 +338,15 @@ namespace MoonProject.Gameplay
             Vector3 lensFront = cheekCenter - right * 0.008f + forward * 0.010f;
             Vector3 wedgeOrigin = emitter - right * 0.074f - forward * 0.056f;
 
-            float contactStandOff = Mathf.Min(Mathf.Clamp(spanHeight * 0.24f, 0.06f, 0.24f), dist * 0.30f);
-            Vector3 contactCenter = lineCentre - forward * contactStandOff;
+            Vector3 contactCenter = lineCentre;
             _lastLensFront = wedgeOrigin;
             _lastContactCenter = contactCenter;
 
             // 1. Stylised narrow scan beam wedge from 07's cheek lens to the current surface scan line on the target
-            StepWedgeMesh(wedgeOrigin, contactCenter, right, orthoUp, spanHeight, cyanColor, sweepLevel, widthScale);
+            StepWedgeMesh(wedgeOrigin, contactCenter, right, orthoUp, spanHeight, cyanColor, amberColor, sweepLevel, widthScale);
 
             // 2. No point light: a light at the lens would tint 07's cream body and head cyan during a scan
-            Color activeTint = _pingRemaining > 0f ? amberColor : cyanColor;
+            Color activeTint = _pingRemaining > 0f ? amberColor : Color.Lerp(cyanColor, amberColor, BeamAmberShare);
 
             // 3. 07's cheek lens emitter core, calm outer halo, opening iris ring, and short bezel-clamped flare needles
             Color halo = activeTint;
@@ -396,16 +412,19 @@ namespace MoonProject.Gameplay
                     float radial = moteRadius * (0.35f + 0.65f * life01);
                     Vector3 offset = (forward * Mathf.Cos(angle) + orthoUp * Mathf.Sin(angle)) * radial
                         - right * (0.015f * life01);
-                    Color moteColor = cyanColor;
+                    Color moteColor = activeTint;
                     moteColor.a = moteAlphaBase * env * sweepLevel;
                     float size = moteSizeBase * Mathf.Lerp(0.75f, 1.08f, i & 1) * widthScale;
                     _points.Add(cheekCenter + offset, size, moteColor, Vector3.zero);
                 }
             }
 
-            // 4. Sparse, brief (0.1-0.3 s) tiny dust sparkles strictly within a thin band of the beam wedge,
+            // 4. Small data ticks streaming along the beam from the target to the lens
+            StepStreamingDataTicks(wedgeOrigin, contactCenter, right, orthoUp, cyanColor, amberColor, sweepLevel, widthScale);
+
+            // 5. Sparse, brief (0.1-0.3 s) tiny dust sparkles strictly within a thin band of the beam wedge,
             //    capped well below the bloom threshold
-            StepBallisticPathGlints(wedgeOrigin, contactCenter, right, orthoUp, cyanColor, sweepLevel, widthScale);
+            StepBallisticPathGlints(wedgeOrigin, contactCenter, right, orthoUp, activeTint, sweepLevel, widthScale);
         }
 
         private void StepWedgeMesh(
@@ -415,6 +434,7 @@ namespace MoonProject.Gameplay
             Vector3 orthoUp,
             float spanHeight,
             Color cyanColor,
+            Color amberColor,
             float sweepLevel,
             float widthScale)
         {
@@ -448,6 +468,7 @@ namespace MoonProject.Gameplay
 
             float lensHalfW = lensWidth * 0.5f;
             float targetHalfW = targetWidth * 0.5f;
+            float wrapRadius = Mathf.Min(Mathf.Clamp(spanHeight * 0.26f, 0.06f, 0.24f), beamLen * 0.25f);
 
             for (int r = 0; r < WedgeRings; r++)
             {
@@ -465,15 +486,17 @@ namespace MoonProject.Gameplay
                     : Mathf.SmoothStep(0.18f, 1.0f, Mathf.InverseLerp(0.115f, 0.48f, d));
                 float alongAlpha = EvaluateWedgeLongitudinalAlpha(d, beamLen) * screenClearance;
                 float lensHotMix = Mathf.Exp(-d / LensCoreDecayMeters) * 0.62f;
-                float contactHotMix = Mathf.Exp(-Mathf.Max(0f, beamLen - d) / ContactLipDecayMeters) * 0.28f;
-                Color baseTint = Color.Lerp(cyanColor, Color.white, Mathf.Clamp01(lensHotMix + contactHotMix));
+                float contactHotMix = Mathf.Exp(-Mathf.Max(0f, beamLen - d) / ContactLipDecayMeters) * 0.34f;
+                Color ringColor = Color.Lerp(cyanColor, amberColor, Mathf.SmoothStep(0.25f, 0.95f, u) * 0.82f);
+                Color baseTint = Color.Lerp(ringColor, Color.white, Mathf.Clamp01(lensHotMix + contactHotMix));
 
                 // Crossed fan sheets tilted in (right, orthoUp) so the wedge fans out visibly from low
-                // chase camera angles while spanning the surface scan line on the target.
-                float verticalTilt = Mathf.Lerp(0.68f, 0.38f, u);
+                // chase camera angles while spanning and wrapping the surface scan line on the target.
+                float verticalTilt = Mathf.Lerp(0.68f, 0.34f, u);
                 Vector3 sheetDir0 = (right + orthoUp * verticalTilt).normalized;
                 Vector3 sheetDir1 = (right - orthoUp * verticalTilt).normalized;
                 float sheet1AlphaShare = Mathf.Lerp(0.78f, 0.52f, u);
+                float targetWrapShare = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.68f, 1f, u));
 
                 float uvX = u;
                 int rowBase0 = r * WedgeSlices;
@@ -483,7 +506,8 @@ namespace MoonProject.Gameplay
                 {
                     float v01 = (float)s / (WedgeSlices - 1);
                     float v = v01 * 2f - 1f;
-                    float lateralEnvelope = Mathf.Sqrt(Mathf.Clamp01(1f - v * v * 0.85f));
+                    float baseLat = Mathf.Sqrt(Mathf.Clamp01(1f - v * v * 0.85f));
+                    float lateralEnvelope = Mathf.Lerp(baseLat * baseLat, baseLat, targetWrapShare);
 
                     // Fine radial scanline striations inside the fan wedge
                     float radialWave = 0.5f + 0.5f * Mathf.Cos((v * 7.0f + _progress * 1.5f) * TwoPi);
@@ -495,9 +519,11 @@ namespace MoonProject.Gameplay
                     Color c0 = baseTint;
                     c0.a = alpha0;
 
+                    // Curve the far rings forward around the 3D target hull so the contact lip wraps the object
                     float arch = (1f - v * v) * WedgeArchHeight * (1f - u * 0.5f);
+                    Vector3 wrapOffset = beamDir * (v * v * wrapRadius * targetWrapShare);
                     int idx0 = rowBase0 + s;
-                    _wedgeVertices[idx0] = ringCenter + sheetDir0 * (v * halfW) + orthoUp * arch;
+                    _wedgeVertices[idx0] = ringCenter + sheetDir0 * (v * halfW) + orthoUp * arch + wrapOffset;
                     _wedgeNormals[idx0] = orthoUp;
                     _wedgeUvs[idx0] = new Vector2(uvX, v01);
                     _wedgeColors[idx0] = c0;
@@ -507,7 +533,7 @@ namespace MoonProject.Gameplay
                     c1.a = alpha1;
 
                     int idx1 = rowBase1 + s;
-                    _wedgeVertices[idx1] = ringCenter + sheetDir1 * (v * halfW) - orthoUp * (arch * 0.5f);
+                    _wedgeVertices[idx1] = ringCenter + sheetDir1 * (v * halfW) - orthoUp * (arch * 0.5f) + wrapOffset;
                     _wedgeNormals[idx1] = orthoUp;
                     _wedgeUvs[idx1] = new Vector2(uvX, v01);
                     _wedgeColors[idx1] = c1;
@@ -519,6 +545,50 @@ namespace MoonProject.Gameplay
             _wedgeMesh.SetUVs(0, _wedgeUvs);
             _wedgeMesh.SetColors(_wedgeColors);
             _wedgeMesh.bounds = new Bounds((lensFront + contactCenter) * 0.5f, Vector3.one * (beamLen + 2f));
+        }
+
+        private void StepStreamingDataTicks(
+            Vector3 lensFront,
+            Vector3 contactCenter,
+            Vector3 right,
+            Vector3 orthoUp,
+            Color cyanColor,
+            Color amberColor,
+            float sweepLevel,
+            float widthScale)
+        {
+            Vector3 beamVec = contactCenter - lensFront;
+            float beamLen = beamVec.magnitude;
+            if (sweepLevel <= VisibleThreshold || beamLen <= 0.35f)
+            {
+                return;
+            }
+
+            Vector3 beamDir = beamVec / beamLen;
+            float pulseSpeed = _scanTuning != null ? _scanTuning.BeamPulseSpeed : 3.2f;
+            float targetHalfW = Mathf.Max(_lastTargetWidth * 0.36f, 0.08f);
+            float lensHalfW = (_scanTuning != null ? _scanTuning.BeamLensWidth : DefaultBeamLensWidth) * 0.35f * widthScale;
+
+            for (int i = 0; i < DataTickCount; i++)
+            {
+                // Stream from target (u = 0.96) toward 07's cheek lens (u = 0.06)
+                float phase = Mathf.Repeat(_elapsed * (pulseSpeed * 0.42f) + (float)i / DataTickCount, 1f);
+                float u = Mathf.Lerp(0.96f, 0.06f, phase * phase * (0.65f + 0.35f * phase));
+                float env = Mathf.Sin(phase * Mathf.PI);
+
+                float laneSign = (i & 1) == 0 ? -1f : 1f;
+                float laneShare = ((i % 3) - 1) * 0.42f + laneSign * 0.24f;
+                float halfW = Mathf.Lerp(lensHalfW, targetHalfW, u);
+                Vector3 pos = lensFront + beamDir * (u * beamLen)
+                    + right * (laneShare * halfW)
+                    + orthoUp * (Mathf.Sin(u * Mathf.PI) * 0.012f * laneSign);
+
+                float tickLen = Mathf.Lerp(0.032f, 0.068f, env) * widthScale;
+                float tickWidth = 0.011f * widthScale;
+                Color tickColor = Color.Lerp(amberColor, Color.Lerp(cyanColor, Color.white, 0.55f), (1f - u) * 0.35f);
+                tickColor.a = Mathf.Min(0.32f, 0.28f * env * sweepLevel);
+                _streaks.Add(pos, tickWidth, tickColor, -beamDir * tickLen);
+            }
         }
 
         private void StepBallisticPathGlints(
