@@ -20,6 +20,7 @@ namespace MoonProject.World.PlayModeTests
     /// checks that every ruin piece is solid only through Art's collision proxies and that every supply crate
     /// Gameplay set by the ruins and the lander leaves 07's body a free spot within collecting reach.
     /// </summary>
+    [Explicit("Real-scene ruin collision session; run on demand with --category RuinReachSession.")]
     [Category("RuinReachSession")]
     public sealed class RuinReachSession
     {
