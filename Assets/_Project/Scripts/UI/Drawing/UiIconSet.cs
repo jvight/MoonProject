@@ -109,8 +109,8 @@ namespace MoonProject.UI
         }
 
         /// <summary>
-        /// The canonical SVG icon id for story part <paramref name="partId"/>. The spare igniter borrows the cutter's
-        /// icon until Art draws its own.
+        /// The canonical SVG icon id for story part <paramref name="partId"/>. The spare igniter and the ice core borrow
+        /// the cutter's icon until Art draws their own.
         /// </summary>
         public static string IconIdOfPart(string partId)
         {
@@ -122,6 +122,7 @@ namespace MoonProject.UI
             switch (partId)
             {
                 case "part.igniter":
+                case "part.icecore":
                     return "kit_cutter";
                 default:
                     throw new InvalidOperationException($"Story part '{partId}' has no icon id.");

@@ -422,6 +422,63 @@ def _build_fallen_dish(root) -> None:
     ruins_common.to_ruin_object(mb, "Dish", parent=root)
 
 
+def _build_collision_proxies(root) -> None:
+    """Build authored convex hull collision proxies (`UCX_<Part>_<n>`, <= 32 faces each)."""
+    # 1. Low flat-topped rocky lunar basalt mound (8-sided convex frustum, 10 faces / 28 tris)
+    ruins_common.add_convex_proxy(
+        root,
+        "UCX_TowerBase_1",
+        ruins_common.convex_prism_points_u(
+            center_u=(0.0, 0.34, 0.0),
+            radius_a=2.70,
+            radius_b=1.72,
+            length=0.68,
+            axis="y",
+            segs=8,
+            scale_pos_end=(0.76, 0.76),
+            clip_min_y_u=0.01,
+        ),
+    )
+    # 2. Steel foundation plinth & snapped lower mast stub on the left of the mound
+    #    (kept behind z = -0.20 so Scan_2 at (-0.82, 1.32, -0.22) is unblocked)
+    ruins_common.add_convex_proxy(
+        root,
+        "UCX_TowerBase_2",
+        ruins_common.convex_box_points_u(
+            center_u=(-1.06, 1.22, 0.04),
+            size_u=(0.96, 1.12, 0.48),
+            top_scale_xz=(0.68, 0.72),
+            clip_min_y_u=0.64,
+        ),
+    )
+    # 3. Slender leaning steel lattice mast spine (~21 deg from vertical)
+    ruins_common.add_convex_proxy(
+        root,
+        "UCX_MastLeaning_1",
+        ruins_common.convex_strut_points_u(
+            p0_u=(-0.92, 0.88, 0.0),
+            p1_u=(1.04, 6.08, 0.06),
+            half_w=0.22,
+            half_d=0.20,
+        ),
+    )
+    # 4. Fallen parabolic dish & pedestal resting on the right side of the mound
+    ruins_common.add_convex_proxy(
+        root,
+        "UCX_Dish_1",
+        ruins_common.convex_prism_points_u(
+            center_u=(0.96, 1.44, -0.05),
+            radius_a=1.04,
+            radius_b=1.04,
+            length=0.62,
+            axis="y",
+            segs=8,
+            rot_deg_u=(18.0, 0.0, -42.0),
+            clip_min_y_u=0.64,
+        ),
+    )
+
+
 def build(skip_renders: bool = False) -> None:
     ruins_common.reset_ruins_scene()
     root = r1kit.create_root("RadioTower")
@@ -429,6 +486,7 @@ def build(skip_renders: bool = False) -> None:
     _build_tower_base(root)
     _build_leaning_mast(root)
     _build_fallen_dish(root)
+    _build_collision_proxies(root)
 
     # Scan points as empties named Scan_<n>
     r1kit.add_empty("Scan_1", (1.58, 2.06, -0.24), parent=root)   # Fallen Dish feed horn
@@ -443,8 +501,14 @@ def build(skip_renders: bool = False) -> None:
         cam_elev_deg=12.0,
         skip_renders=skip_renders,
     )
-    print(f"[radio_tower] Exported {fbx_path} and rendered {dawn_path.name}, {night_path.name}")
+    wire_path = ruins_common.render_ruin_collision_wireframe(
+        root,
+        slug="radio_tower",
+        cam_angle_deg=18.0,
+        cam_elev_deg=16.0,
+    )
+    print(f"[radio_tower] Exported {fbx_path} and rendered {dawn_path.name}, {night_path.name}, {wire_path.name}")
 
 
 if __name__ == "__main__":
-    build()
+    build(skip_renders="--skip-renders" in sys.argv)

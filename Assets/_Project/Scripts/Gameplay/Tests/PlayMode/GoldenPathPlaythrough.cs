@@ -81,7 +81,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float SealCutTimeout = 25f;
         private const float DriveTimeout = 90f;
 
-        /// <summary>Metres 07 must cover in <see cref="StuckSeconds"/> driving, or it counts as blocked.</summary>
+        /// <summary>Metres 07 must close on its target in <see cref="StuckSeconds"/>, or it counts as stuck.</summary>
         private const float StuckProgress = 0.3f;
 
         /// <summary>Seconds over which 07's progress is measured before it backs off and comes round.</summary>
@@ -97,6 +97,12 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>07 stops this far (m) from a fragment, facing it, to scan it.</summary>
         private const float ScanStandOff = 3.5f;
+
+        /// <summary>Metres from a line-up spot that count as there: it only turns 07 roughly toward its target.</summary>
+        private const float LineUpArrive = 3f;
+
+        /// <summary>Metres beyond a scan's stand-off 07 lines up first, where that ground is clear.</summary>
+        private const float ScanLineUp = 3f;
 
         /// <summary>Seconds a scan may take beyond its size's time (the press, 07 easing to a stop).</summary>
         private const float ScanAllowance = 3f;
@@ -187,7 +193,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return ExpectLine(OpeningKeys.Charge, "B6");
             yield return ChargeOnThePad(pad);
             yield return ExpectLine(OpeningKeys.FindSolar, "B7: LANDER RESERVE · 0%");
-            yield return CutTheCrates("place.lander", "the lander's sealed crates, the cutter whole");
             yield return DriveTo(RuinsGate(), 3f, "the Lumen ruins");
             yield return ScanTheSet("ruin.FallenSolarArray", "the fallen solar array");
             yield return ReadTheAirlockPanel();
@@ -337,8 +342,14 @@ namespace MoonProject.Gameplay.PlayModeTests
         {
             ScanField scans = _gameplay.Scans;
             Vector3 away = Flat(_rover.Position - fragment.Point);
-            away = away.sqrMagnitude > 1e-4f ? away.normalized : Vector3.back;
-            yield return DriveTo(Flat(fragment.Point + away * (ScanStandOff + 3f)), 2f, "a line-up for a scan");
+            away = ClearSide(fragment.Point, away.sqrMagnitude > 1e-4f ? away.normalized : Vector3.back, ScanStandOff,
+                fragment.FragmentId);
+            if (Clear(fragment.Point + away * (ScanStandOff + ScanLineUp)))
+            {
+                yield return DriveTo(Flat(fragment.Point + away * (ScanStandOff + ScanLineUp)), LineUpArrive,
+                    "a line-up for a scan");
+            }
+
             yield return DriveTo(Flat(fragment.Point), ScanStandOff, $"the spot facing {what}", ApproachThrottle);
             Look(fragment.Point);
             yield return Until(() => scans.Candidate == fragment, ScanLookTimeout,
@@ -386,11 +397,12 @@ namespace MoonProject.Gameplay.PlayModeTests
                     continue;
                 }
 
-                Vector3 side = ClearSide(crate);
+                Vector3 side = ClearSide(crate.CutPoint.position, Flat(crate.Root.forward).normalized, SealStandOff,
+                    crate.Id);
                 Vector3 front = Flat(crate.CutPoint.position) + side * SealStandOff;
                 if (Clear(crate.CutPoint.position + side * (SealStandOff + SealLineUp)))
                 {
-                    yield return DriveTo(front + side * SealLineUp, 2f, "a line-up for " + cache.Id);
+                    yield return DriveTo(front + side * SealLineUp, LineUpArrive, "a line-up for " + cache.Id);
                 }
 
                 yield return DriveTo(front, SealArrive, "the seal of " + cache.Id, ApproachThrottle,
@@ -511,7 +523,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _pilot.GoTo(target, arriveRadius, maxThrottle);
             float deadline = Time.time + DriveTimeout;
             int unsticks = 0;
-            Vector3 windowStart = _rover.Position;
+            float windowStart = _pilot.Distance;
             float windowEnd = Time.time + StuckSeconds;
             while (!_pilot.Arrived && Time.time < deadline)
             {
@@ -521,14 +533,14 @@ namespace MoonProject.Gameplay.PlayModeTests
                     continue;
                 }
 
-                if (SurfaceRules.HorizontalDistance(_rover.Position, windowStart) < StuckProgress)
+                if (windowStart - _pilot.Distance < StuckProgress)
                 {
-                    // Blocked by a ruin or a crate: back off and come round, as a player would.
+                    // Blocked by a ruin or a crate, or circling the spot: back off and come round, as a player would.
                     unsticks++;
                     yield return Unstick(target, arriveRadius, maxThrottle, unsticks);
                 }
 
-                windowStart = _rover.Position;
+                windowStart = _pilot.Distance;
                 windowEnd = Time.time + StuckSeconds;
             }
 
@@ -606,26 +618,25 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// The way out from a crate 07 comes in along: its own front if 07 can stand there, else the first side round
-        /// it where it can (crates stand among the ruins; a seal claims E whichever side 07 faces it from). The line-up
-        /// further out is driven only where that ground is clear too.
+        /// The way out from <paramref name="point"/> (a seal or a scan target) 07 comes in along:
+        /// <paramref name="preferred"/> if 07 can stand there, else the first side round it where it can (they stand
+        /// among the ruins and by the lander; a seal claims E, and a scan shows, whichever side 07 faces it from). The
+        /// line-up further out is driven only where that ground is clear too.
         /// </summary>
-        private static Vector3 ClearSide(SealedContainer crate)
+        private static Vector3 ClearSide(Vector3 point, Vector3 preferred, float standOff, string what)
         {
-            Vector3 forward = Flat(crate.Root.forward).normalized;
-            Vector3 cut = crate.CutPoint.position;
             for (int step = 0; step < ApproachSides; step++)
             {
                 float turn = (step + 1) / 2 * (360f / ApproachSides) * (step % 2 == 0 ? 1f : -1f);
-                Vector3 side = Quaternion.Euler(0f, turn, 0f) * forward;
-                if (Clear(cut + side * SealStandOff))
+                Vector3 side = Quaternion.Euler(0f, turn, 0f) * preferred;
+                if (Clear(point + side * standOff))
                 {
                     return side;
                 }
             }
 
-            Assert.Fail($"{crate.Id} has open ground on some side to come in from");
-            return forward;
+            Assert.Fail($"{what} has open ground on some side to come in from");
+            return preferred;
         }
 
         /// <summary>No ruin or prop where 07 would stand.</summary>

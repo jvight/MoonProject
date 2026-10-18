@@ -195,6 +195,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Gameplay.WireScans(ScanTuning);
             Gameplay.WireBuilding(build);
             Gameplay.WireRuins(Ruins(root.transform));
+            Gameplay.WireLanderPort(Node("ServicePort", root.transform, new Vector3(35f, 0f, 157f)));
             Gameplay.WireOpening(OpeningTuning, BaseTuning);
             root.SetActive(true);
 

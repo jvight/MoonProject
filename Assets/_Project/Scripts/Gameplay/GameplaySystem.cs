@@ -52,6 +52,9 @@ namespace MoonProject.Gameplay
         [SerializeField] private BuildField _building;
         [SerializeField] private Transform[] _ruins = Array.Empty<Transform>();
 
+        [Tooltip("World's service port on the lander ([World]/Lander/ServicePort): the open crate stands at it.")]
+        [SerializeField] private Transform _landerPort;
+
         /// <summary>The recovery protocol's Power steps: the pad, solar power on, a night-ready base
         /// (opening-v2).</summary>
         private const int PowerSteps = 3;
@@ -154,6 +157,11 @@ namespace MoonProject.Gameplay
             _ruins = ruins ?? Array.Empty<Transform>();
         }
 
+        internal void WireLanderPort(Transform landerPort)
+        {
+            _landerPort = landerPort;
+        }
+
         internal void WireCargo(MaterialCatalog catalog, CargoTuning cargo)
         {
             _materialCatalog = catalog;
@@ -205,6 +213,7 @@ namespace MoonProject.Gameplay
             _battery.ConnectStructures(_building.Catalog);
             Opening = NewOpening(context, services);
             Scans = Opening != null ? NewScans(services) : null;
+            Opening?.Caches.HoldBack(_openingTuning.CargoCrate, CargoScanned);
             if (Scans == null)
             {
                 Fail("the opening or scanning did not stand (see its error).");
@@ -264,7 +273,7 @@ namespace MoonProject.Gameplay
             try
             {
                 var opening = new OpeningField(_openingTuning, services, _building, sunlight, Containers, _ruins,
-                    transform, _salvage.Tuning.ReachRadius, StartKit);
+                    _landerPort, transform, _salvage.Tuning.ReachRadius, StartKit);
                 _battery.ConnectPads(opening);
                 PadLock = new PadLock(context.Events, _baseTuning, _building, _battery.Model, services.Rover,
                     _openingTuning.PadChargeRadius);
@@ -324,6 +333,21 @@ namespace MoonProject.Gameplay
             }
 
             return null;
+        }
+
+        /// <summary>The lander's cargo has taught what it holds: its crate may give it up (B3 before B4).</summary>
+        private bool CargoScanned()
+        {
+            IReadOnlyList<string> taught = _scanTuning.LanderCargo.StructureIds;
+            for (int i = 0; i < taught.Count; i++)
+            {
+                if (!KnownStructures.IsKnown(taught[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         /// <summary>Another E verb is on offer: a scan waits for it (0.5.5 §1.2).</summary>
@@ -427,6 +451,7 @@ namespace MoonProject.Gameplay
                 : _salvage == null ? "SalvageField is not assigned."
                 : _battery == null ? "BatteryField is not assigned."
                 : _building == null ? "BuildField is not assigned."
+                : _landerPort == null ? "The lander's service port is not assigned (rebuild the Main scene)."
                 : null;
         }
 

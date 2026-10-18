@@ -223,8 +223,11 @@ namespace MoonProject.UI.Tests
                 Assert.IsNull(socketShape.Validate(), $"Invalid icon for socket {socket}: {socketShape.Validate()}");
             }
 
-            UiIconShape partShape = diagram.GetPartIcon("part.igniter");
-            Assert.IsNull(partShape.Validate(), $"Invalid icon for the spare igniter: {partShape.Validate()}");
+            foreach (string part in new[] { "part.igniter", "part.icecore" })
+            {
+                UiIconShape partShape = diagram.GetPartIcon(part);
+                Assert.IsNull(partShape.Validate(), $"Invalid icon for {part}: {partShape.Validate()}");
+            }
 
             Assert.Throws<System.InvalidOperationException>(() => icons.GetIcon("item_does_not_exist"));
             Assert.Throws<System.InvalidOperationException>(() => diagram.GetIcon("kit_does_not_exist"));
@@ -330,9 +333,12 @@ namespace MoonProject.UI.Tests
                     Assert.IsNotEmpty(localization.Get(FaceDevices.NameKey(device)));
                 }
 
-                Assert.IsNotEmpty(PartInfo.StoryPartName("part.igniter", localization));
-                Assert.LessOrEqual(PartInfo.StoryPartDescription("part.igniter", localization).Length,
-                    FaceInventoryView.MaxTooltipDescriptionChars);
+                foreach (string part in new[] { "part.igniter", "part.icecore" })
+                {
+                    Assert.IsNotEmpty(PartInfo.StoryPartName(part, localization));
+                    Assert.LessOrEqual(PartInfo.StoryPartDescription(part, localization).Length,
+                        FaceInventoryView.MaxTooltipDescriptionChars);
+                }
             }
         }
 

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace MoonProject.Gameplay
@@ -6,7 +7,8 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// One crate of the opening's supply (docs/design/opening-v2.md §4, §10): where it stands, in a world anchor's
     /// frame, which of Art's containers it is, and what it gives 07's hold: a sealed crate when its seal is cut, an
-    /// open one (the lander's, B4) when 07 comes within reach; it may also hold a story part (the spare igniter).
+    /// open one (the lander's, B4) when 07 comes within reach; it may also hold story parts (the spare igniter, Ines's
+    /// ice core) and show one of Art's props lying in it until they are taken.
     /// </summary>
     [Serializable]
     public struct SupplyCache
@@ -33,14 +35,19 @@ namespace MoonProject.Gameplay
         [Tooltip("The crate stands open from the start: no cutting, 07 collects it within reach (the lander's, B4).")]
         [SerializeField] private bool _startsOpen;
 
-        [Tooltip("A story part the crate also holds (its id in 07's hold, e.g. the spare igniter), or empty.")]
-        [SerializeField] private string _part;
+        [Tooltip("Story parts the crate also holds (their ids in 07's hold, e.g. the spare igniter), taken together.")]
+        [SerializeField] private string[] _parts;
+
+        [Tooltip("Art's prop lying in the crate on its ItemSocket while it holds its parts (the ice-core tube), or " +
+                 "none.")]
+        [SerializeField] private GameObject _prop;
 
         public SupplyCache(string id, string anchorId, Vector3 offset, float yaw, string container, Recipe yield,
-            bool startsOpen = false, string part = null)
+            bool startsOpen = false, string[] parts = null)
         {
             _startsOpen = startsOpen;
-            _part = part;
+            _parts = parts;
+            _prop = null;
             _id = id;
             _anchorId = anchorId;
             _offset = offset;
@@ -63,6 +70,8 @@ namespace MoonProject.Gameplay
 
         public bool StartsOpen => _startsOpen;
 
-        public string Part => _part ?? string.Empty;
+        public IReadOnlyList<string> Parts => _parts ?? Array.Empty<string>();
+
+        public GameObject Prop => _prop;
     }
 }

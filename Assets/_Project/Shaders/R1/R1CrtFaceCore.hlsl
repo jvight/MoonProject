@@ -27,8 +27,9 @@ static const float2 CONTENT_FALLBACK_TEXEL_SIZE = float2(1.0 / 1152.0, 1.0 / 768
 static const float CONTENT_TENT_RADIUS_SCALE = 18.0;
 static const half CONTENT_SHOULDER_ATTEN = 0.72h;
 static const half CONTENT_DIRECT_GAIN = 1.12h;
-static const half3 CONTENT_BG_LINEAR = half3(0.0206h, 0.0204h, 0.0022h);
-static const half3 CONTENT_EDGE_LINEAR = half3(0.0192h, 0.0190h, 0.0020h);
+static const half3 CONTENT_BG_LINEAR = half3(0.0178h, 0.0170h, 0.0026h);
+static const half3 CONTENT_EDGE_LINEAR = half3(0.0162h, 0.0155h, 0.0024h);
+static const half3 CONTENT_VIGNETTE_FLOOR = half3(0.0023h, 0.0027h, 0.0040h);
 static const float GLASS_ASPECT = 1.5;
 static const float GLASS_CORNER_RADIUS_H = 0.113924;
 
@@ -472,7 +473,11 @@ half4 CrtFacePassFragment(Varyings input) : SV_Target
         // while strokes and text receive full crisp contrast (>= 7:1 everywhere).
         half strokeGate = smoothstep(0.014h, 0.045h, contentLum);
         float contentRimVig = smoothstep(0.003, -0.016, bezelSdf);
-        half3 contentBg = lerp(CONTENT_EDGE_LINEAR, CONTENT_BG_LINEAR, (half)contentRimVig);
+        float2 vigD = abs(cc) * float2(0.57, 0.675);
+        half vigFactor = (half)pow(saturate(1.0 - dot(vigD, vigD)), 2.5);
+        half3 contentBgCenter = max(CONTENT_BG_LINEAR - CONTENT_VIGNETTE_FLOOR * (1.0h - vigFactor), 0.0h) / max(vigFactor, 0.58h);
+        half3 contentBgEdge = max(CONTENT_EDGE_LINEAR - CONTENT_VIGNETTE_FLOOR * (1.0h - vigFactor), 0.0h) / max(vigFactor, 0.58h);
+        half3 contentBg = lerp(contentBgEdge, contentBgCenter, (half)contentRimVig);
         half3 warmGoldLift = half3(1.00h, 0.86h, 0.60h) * contentLum;
         half3 baseStroke = lerp(contentSample.rgb, max(contentSample.rgb, warmGoldLift), 0.42h);
         half strokeRec709 = max(dot(baseStroke, half3(0.2126h, 0.7152h, 0.0722h)), (half)1e-4);
@@ -523,7 +528,7 @@ half4 CrtFacePassFragment(Varyings input) : SV_Target
 
     half3 finalEmission = phosphorHdr * (half)(brightness * scanMod * bandBoost * bezelMask);
 
-    // Soft, small glass specular reflection near the top edge only, never over the content
+    // Soft, small glass specular reflection at the bezel edge only, never over the content
     float3 normalWS = NormalizeNormalPerVertex(input.normalWS);
     float3 viewDirWS = GetWorldSpaceNormalizeViewDir(input.positionWS);
     Light mainLight = GetMainLight();
@@ -533,8 +538,13 @@ half4 CrtFacePassFragment(Varyings input) : SV_Target
     float topSpecY = smoothstep(0.955, 0.978, jitteredUv.y) * smoothstep(0.996, 0.982, jitteredUv.y);
     float topSpecX = smoothstep(0.28, 0.06, abs(jitteredUv.x - 0.5));
     float topEdgeSpec = topSpecY * topSpecX;
-    float specFactor = lerp(pow(ndoth, specPow) * (0.25 + 0.75 * topEdgeSpec), topEdgeSpec * (0.35 + 0.65 * ndoth), contentMix);
-    half3 glassSpec = mainLight.color * (half)(specFactor * GLASS_SPECULAR_STRENGTH * lerp(1.0, 0.25, contentMix));
+    float bezelRimBand = smoothstep(-0.030, -0.012, bezelSdf) * smoothstep(0.002, -0.005, bezelSdf);
+    float topBezelBias = saturate(0.35 + 0.65 * saturate((jitteredUv.y - 0.5) * 1.6));
+    float contentBezelSpec = bezelRimBand * topBezelBias * (0.45 + 0.55 * ndoth);
+    half mainLightLum = dot(mainLight.color, half3(0.2126h, 0.7152h, 0.0722h));
+    half3 neutralSheenColor = lerp(mainLight.color, half3(1.02h, 0.98h, 0.92h) * mainLightLum, (half)(contentMix * 0.75));
+    float specFactor = lerp(pow(ndoth, specPow) * (0.25 + 0.75 * topEdgeSpec), contentBezelSpec, contentMix);
+    half3 glassSpec = neutralSheenColor * (half)(specFactor * GLASS_SPECULAR_STRENGTH * lerp(1.0, 0.22, contentMix));
 
     half3 rimBase = lerp(bgPhosphor * 0.35h, CONTENT_EDGE_LINEAR, (half)contentMix);
     half3 color = finalEmission + glassSpec + rimBase * (half)(1.0 - bezelMask);
