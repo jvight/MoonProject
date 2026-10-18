@@ -34,7 +34,8 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float WakeEaseTimeout = 8f;
         private const float StickProbeSeconds = 0.3f;
         private const float LookStick = 0.8f;
-        private const float SettleSeconds = 2f;
+        private const float SettleSeconds = 3f;
+        private const float SightMargin = 0.6f;
         private const float ReleaseSeconds = 2f;
         private const float TraceEvery = 0.25f;
 
@@ -200,13 +201,18 @@ namespace MoonProject.Gameplay.PlayModeTests
                 bool hidden = hider != null;
 
                 bool central = RoverSight.IsCentral(_view, part.Point, CentralShare, out _);
+                Vector3 stop = part.Point + (eye - part.Point).normalized * SightMargin;
+                string cover = Physics.Linecast(eye, stop, out RaycastHit coverHit, Layers.PropMask,
+                    QueryTriggerInteraction.Ignore)
+                    ? $"{coverHit.collider.name} at {F(coverHit.distance)} m"
+                    : null;
                 report.AppendLine($"- {part.FragmentId} at {V(part.Point)}: viewport {V(screen)}, first hit {first}, " +
                                   $"hidden by 07 {hider ?? "no"}, central {central}, model says clear " +
                                   $"{_cameraRig.Framing.BodyClear(_rover.Position, Heading(), eye, part.Point)} " +
                                   $"(07 yaw {F(Heading())})");
-                if (hidden || !central)
+                if (hidden || !central || cover != null)
                 {
-                    failures.AppendLine($"{name} / {part.FragmentId}: hidden by 07 {hidden}, central {central} " +
+                    failures.AppendLine($"{name} / {part.FragmentId}: hidden by 07 {hidden}, central {central}, covered by {cover ?? "nothing"} " +
                                         $"(viewport {V(screen)}, first hit {first}).");
                 }
             }

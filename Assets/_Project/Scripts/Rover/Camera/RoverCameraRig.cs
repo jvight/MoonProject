@@ -149,6 +149,12 @@ namespace MoonProject.Rover
         /// <summary>The dock's evening, when it is open or easing (capture sessions).</summary>
         public HeldShot Held => _held;
 
+        /// <summary>
+        /// Stands in for the cursor's lock state when set (the editor never reports a locked cursor, so tests and capture
+        /// tools say whether a menu has the mouse).
+        /// </summary>
+        public bool? CursorLockOverride { get; set; }
+
         /// <summary>The camera's move to show what 07 scans (for tests and tooling).</summary>
         public TargetFraming Framing => _framing;
 
@@ -573,7 +579,8 @@ namespace MoonProject.Rover
             }
 
             bool mayRecenter = !_moment.IsActive && _wide.Weight <= 0f && _held.Weight <= 0f
-                && !_faceInspectOpen && _faceInspectWeight <= 0f && !_opening.IsActive && !_crawling;
+                && !_faceInspectOpen && _faceInspectWeight <= 0f && !_opening.IsActive && !_crawling
+                && (CursorLockOverride ?? Cursor.lockState == CursorLockMode.Locked);
             return new CameraOrbitInput(look, _input.LookRate.sqrMagnitude > 0f, recenter, roverYaw, forwardSpeed,
                 _rover.DriveInput.y, _rover.NormalizedSpeed, descent, _rover.IsGrounded, mayRecenter);
         }
@@ -847,7 +854,7 @@ namespace MoonProject.Rover
             ChaseOrbit(out float yaw, out float elevation, out float radius);
             _framing.Step(new TargetFramingInput(_rover.Position, RoverYaw(), _focusPoints, targetCount,
                 _target.position - _framing.Shift, RoverYaw() + _momentYaw + yaw, elevation, radius,
-                _orbitState.FieldOfView, _viewCamera.aspect, _rover.Speed, look.sqrMagnitude > 0f, mayFrame),
+                _orbitState.FieldOfView, _viewCamera.aspect, _rover.Speed, look.sqrMagnitude > 0f, mayFrame, _sight),
                 deltaTime);
         }
 

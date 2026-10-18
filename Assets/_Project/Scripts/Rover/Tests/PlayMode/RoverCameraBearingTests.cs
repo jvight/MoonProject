@@ -20,6 +20,8 @@ namespace MoonProject.Rover.PlayModeTests
         private const float Turn = 90f;
         private const float TurnTimeout = 6f;
         private const float LogEvery = 0.1f;
+        private const float RecenterWaitSeconds = 9f;
+        private const float HeldSlack = 6f;
 
         private LunarTestPhysics _physics;
         private TestWorld _world;
@@ -53,6 +55,35 @@ namespace MoonProject.Rover.PlayModeTests
         private static float Heading(Vector3 forward)
         {
             return Mathf.Atan2(forward.x, forward.z) * Mathf.Rad2Deg;
+        }
+
+        [UnityTest]
+        public IEnumerator Recenter_NeedsTheCursorLocked_ItWaitsWhileAMenuHasTheMouse()
+        {
+            yield return Wait(2f);
+            var gamepad = InputSystem.AddDevice<Gamepad>();
+            CameraOrbit orbit = _rover.CameraRig.Orbit;
+            Set(gamepad.rightStick, new Vector2(LookStick, 0f));
+            float until = Time.time + 5f;
+            while (Mathf.Abs(orbit.YawOffset) < HeldOffset - 4f && Time.time < until)
+            {
+                yield return null;
+            }
+
+            Set(gamepad.rightStick, Vector2.zero);
+            float held = orbit.YawOffset;
+            float heldBearing = orbit.Bearing;
+            _rover.CameraRig.CursorLockOverride = false;
+            _rover.Drive.Drive = new Vector2(0f, 1f);
+            yield return Wait(RecenterWaitSeconds);
+            Assert.AreEqual(0f, Mathf.DeltaAngle(heldBearing, orbit.Bearing), HeldSlack,
+                "the view holds while the cursor is free (a menu is open)");
+            Assert.AreEqual(0f, orbit.RecenterWeight, "no recentering pull while the cursor is free");
+
+            _rover.CameraRig.CursorLockOverride = true;
+            yield return Wait(RecenterWaitSeconds);
+            _rover.Drive.Drive = Vector2.zero;
+            Assert.Less(Mathf.Abs(orbit.YawOffset), Mathf.Abs(held) - 20f, "it recenters once the cursor is locked");
         }
 
         [UnityTest]

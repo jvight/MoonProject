@@ -412,6 +412,7 @@ namespace MoonProject.Rover.PlayModeTests
             InputActionAsset actions = TestControls.Create();
             var input = new InputReader(actions);
             input.Enable();
+            cameraRig.CursorLockOverride = true;
             var rover = new TestRover(root, cameraRoot, actions, input, sphereMaterial, screenMesh, tunings)
             {
                 Controller = controller,

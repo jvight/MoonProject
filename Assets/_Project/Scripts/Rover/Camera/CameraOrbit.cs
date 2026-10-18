@@ -9,6 +9,8 @@ namespace MoonProject.Rover
     /// <list type="bullet">
     /// <item>The view's yaw is a world <see cref="Bearing"/>: 07 turning under a view the player chose never turns it.
     /// Look input is smoothed in velocity space (it glides, and never lags behind once the mouse stops).</item>
+    /// <item>The player's look stops short of facing 07 head on (the front limit): it slows over a soft band and
+    /// settles against it. 07 turning under a held view may leave it further out; the recenter brings it back.</item>
     /// <item>Sitting behind 07 with no free look since, the camera follows 07's turns, damped and capped, so a pivot
     /// slides into view and never whips round.</item>
     /// <item>Once look input has stopped for its idle delay (shorter on the stick) and 07 has driven forward above
@@ -191,9 +193,25 @@ namespace MoonProject.Rover
         {
             float follow = Smoothing.Factor(_tuning.LookHalfLife, deltaTime);
             _lookVelocity += (lookDegrees / deltaTime - _lookVelocity) * follow;
-            Bearing = Mathf.DeltaAngle(0f, Bearing + _lookVelocity.x * deltaTime);
+            Bearing = Mathf.DeltaAngle(0f, Bearing + _lookVelocity.x * LookYawShare() * deltaTime);
             Pitch = Mathf.Clamp(Pitch + _lookVelocity.y * deltaTime, _tuning.MinPitch, _tuning.MaxPitch);
             _following &= !looking;
+        }
+
+        /// <summary>
+        /// How much of the look's yaw gets through: all of it toward 07's back, fading to none over the soft band
+        /// before the front limit, so the view settles against it rather than hitting it.
+        /// </summary>
+        private float LookYawShare()
+        {
+            float offset = YawOffset;
+            if (_lookVelocity.x * offset <= 0f)
+            {
+                return 1f;
+            }
+
+            float limit = _tuning.MaxLookYaw;
+            return 1f - Smoothing.SmoothStep(limit - _tuning.LookYawSoftBand, limit, Mathf.Abs(offset));
         }
 
         /// <summary>
