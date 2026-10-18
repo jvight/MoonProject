@@ -93,6 +93,10 @@ namespace MoonProject.UI
                         painter.MoveTo(origin + new Vector2(_values[v], _values[v + 1]) * scale);
                         v += 2;
                         break;
+                    case WordmarkCommand.LineTo:
+                        painter.LineTo(origin + new Vector2(_values[v], _values[v + 1]) * scale);
+                        v += 2;
+                        break;
                     case WordmarkCommand.CubicTo:
                         painter.BezierCurveTo(
                             origin + new Vector2(_values[v], _values[v + 1]) * scale,

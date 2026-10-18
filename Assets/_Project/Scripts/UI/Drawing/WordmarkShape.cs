@@ -67,6 +67,7 @@ namespace MoonProject.UI
             switch (command)
             {
                 case WordmarkCommand.MoveTo:
+                case WordmarkCommand.LineTo:
                     return 2;
                 case WordmarkCommand.CubicTo:
                 case WordmarkCommand.ArcTo:
@@ -93,6 +94,9 @@ namespace MoonProject.UI
                 {
                     case WordmarkCommand.MoveTo:
                         painter.MoveTo(origin + Point(v) * scale);
+                        break;
+                    case WordmarkCommand.LineTo:
+                        painter.LineTo(origin + Point(v) * scale);
                         break;
                     case WordmarkCommand.CubicTo:
                         painter.BezierCurveTo(origin + Point(v) * scale, origin + Point(v + 2) * scale,

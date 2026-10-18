@@ -6,8 +6,8 @@ using UnityEngine;
 namespace MoonProject.UI.Editor
 {
     /// <summary>
-    /// Parses the SVG path data the wordmark uses into <see cref="WordmarkCommand"/>s: absolute M, C, A (circular,
-    /// unrotated) and Z, with C and A repeatable. Arcs are resolved from SVG's endpoint form to a centre, a radius and
+    /// Parses the SVG path data the wordmark and the icons use into <see cref="WordmarkCommand"/>s: absolute M, L, C,
+    /// A (circular, unrotated) and Z, with L, C and A repeatable. Arcs are resolved from SVG's endpoint form to a centre, a radius and
     /// two angles (degrees, y down) so Painter2D can draw them. Anything else is a format error, never skipped.
     /// </summary>
     public static class SvgPathParser
@@ -32,7 +32,7 @@ namespace MoonProject.UI.Editor
                 {
                     command = reader.Next();
                 }
-                else if (command != 'C' && command != 'A')
+                else if (command != 'C' && command != 'A' && command != 'L')
                 {
                     throw new FormatException($"SVG path: a number with no command at {reader.Position}.");
                 }
@@ -43,6 +43,10 @@ namespace MoonProject.UI.Editor
                         current = start = reader.Point();
                         Add(commands, values, WordmarkCommand.MoveTo, current.x, current.y);
                         command = '\0';
+                        break;
+                    case 'L':
+                        current = reader.Point();
+                        Add(commands, values, WordmarkCommand.LineTo, current.x, current.y);
                         break;
                     case 'C':
                         Vector2 first = reader.Point();

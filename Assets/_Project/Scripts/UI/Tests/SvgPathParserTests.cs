@@ -6,8 +6,9 @@ using MoonProject.UI.Editor;
 namespace MoonProject.UI.Tests
 {
     /// <summary>
-    /// The wordmark's SVG path parser: absolute moves, cubics and closes as written, repeated cubics, circular arcs
-    /// resolved to a centre and angles in the right direction, and anything unsupported refused rather than skipped.
+    /// The wordmark's and the icons' SVG path parser: absolute moves, lines, cubics and closes as written, repeated
+    /// lines and cubics, circular arcs resolved to a centre and angles in the right direction, and anything unsupported
+    /// refused rather than skipped.
     /// </summary>
     public sealed class SvgPathParserTests
     {
@@ -37,6 +38,19 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
+        public void Lines_KeepTheirPoints_AndRepeatWithoutTheLetter()
+        {
+            SvgPathParser.Parse("M 1 2 L 3 4 5.5 6 Z", _commands, _values);
+
+            Assert.That(_commands, Is.EqualTo(new[]
+            {
+                WordmarkCommand.MoveTo, WordmarkCommand.LineTo, WordmarkCommand.LineTo, WordmarkCommand.Close,
+            }));
+            Assert.That(_values, Is.EqualTo(new[] { 1f, 2f, 3f, 4f, 5.5f, 6f }).Within(Tolerance));
+            Assert.AreEqual(2, WordmarkShape.ValueCount(WordmarkCommand.LineTo));
+        }
+
+        [Test]
         public void AHalfCircle_FindsItsCentreAndSweepsClockwise()
         {
             SvgPathParser.Parse("M0 0A10 10 0 0 1 20 0", _commands, _values);
@@ -58,7 +72,8 @@ namespace MoonProject.UI.Tests
             Assert.That(arc[5], Is.EqualTo(0f));
         }
 
-        [TestCase("M0 0L10 10")]
+        [TestCase("M0 0l10 10")]
+        [TestCase("M0 0L10")]
         [TestCase("m0 0")]
         [TestCase("M0 0 5 5")]
         [TestCase("M0 0A10 5 0 0 1 20 0")]
