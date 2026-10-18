@@ -8,12 +8,13 @@ namespace MoonProject.World
     /// <summary>
     /// Pulses the landed cargo lander's amber emergency beacon (opening v2 §4): Art's R1 lens (its emission strength),
     /// World's tight halo and warm light, together in a slow <see cref="LocatorBlink"/>, and runs a calm wave of light
-    /// along the old cable's marker lamps from 07's dead post toward it (<see cref="CableMarkerWave"/>). The scene
-    /// build stands Art's beacon on the lander, hangs the halo and light on its light anchor and wires the markers in
-    /// order from the post. 07's New Game self-test cues two answers (a Continue's short wake runs no self-test): the
-    /// beacon flashes sharply, its halo swelling a little, with each spark of 07's failing cutter (the spare part is at
-    /// the lander), and one bright wave runs the cable when 07 begins its recovery, each marker blooming a small halo
-    /// as it passes. Allocation-free per frame.
+    /// along the old cable's clip halos from the lander out to the tear (<see cref="CableMarkerWave"/>): the cable is
+    /// torn, so its power gets no further. The scene build stands Art's beacon on the lander, hangs the halo and light
+    /// on its light anchor and wires each side's clip halos in order toward the tear, and the spark at the torn
+    /// copper. 07's New Game self-test cues two answers (a Continue's short wake runs no self-test): the beacon
+    /// flashes sharply, its halo swelling a little, with each spark of 07's failing cutter (the spare part is at the
+    /// lander), and one bright wave runs from 07's post when 07 begins its recovery and dies at the tear, where the
+    /// last clip stutters and a tiny cold spark ticks once (<see cref="TearCue"/>). Allocation-free per frame.
     /// </summary>
     public sealed class LanderBeacon : MonoBehaviour, IGameSystem
     {
@@ -34,11 +35,16 @@ namespace MoonProject.World
         [Tooltip("World's warm light on the beacon.")]
         [SerializeField] private Light _light;
 
-        [Tooltip("The old cable's marker lamps (GroundCableSegment/MarkerLamp), in order from 07's post to the lander.")]
-        [SerializeField] private Renderer[] _markers = new Renderer[0];
+        [Tooltip("The halos on the old cable's stake clips on 07's side of the tear (LofiBeaconHalo), in order from " +
+            "07's post to the tear: the Begin wave's path.")]
+        [SerializeField] private Renderer[] _postClips = new Renderer[0];
 
-        [Tooltip("Each marker lamp's small halo (LofiBeaconHalo), in the markers' order: lit only by the Begin wave.")]
-        [SerializeField] private Renderer[] _markerHalos = new Renderer[0];
+        [Tooltip("The halos on the cable's stake clips on the lander's side of the tear, in order from the lander's " +
+            "port to the tear: the calm waves' path.")]
+        [SerializeField] private Renderer[] _landerClips = new Renderer[0];
+
+        [Tooltip("The spark's halo at the torn copper on 07's side (LofiBeaconHalo, cold).")]
+        [SerializeField] private Renderer _spark;
 
         private MaterialPropertyBlock _block;
         private IDisposable _checkPulses;
@@ -48,13 +54,13 @@ namespace MoonProject.World
 
         public void Initialize(GameContext context)
         {
-            if (_settings == null || _lens == null || _halo == null || _light == null || _markers == null
-                || Array.IndexOf(_markers, null) >= 0 || _markerHalos == null
-                || _markerHalos.Length != _markers.Length || Array.IndexOf(_markerHalos, null) >= 0)
+            if (_settings == null || _lens == null || _halo == null || _light == null || _spark == null
+                || _postClips == null || _postClips.Length == 0 || Array.IndexOf(_postClips, null) >= 0
+                || _landerClips == null || _landerClips.Length == 0 || Array.IndexOf(_landerClips, null) >= 0)
             {
-                Debug.LogError($"{nameof(LanderBeacon)}: World Settings, the lens, the halo, the light, every cable " +
-                    "marker and one halo per marker must be assigned (the scene build wires them on the lander).",
-                    this);
+                Debug.LogError($"{nameof(LanderBeacon)}: World Settings, the lens, the halo, the light, the tear's " +
+                    "spark and the clip halos on both sides of the tear must be assigned (the scene build wires them " +
+                    "on the lander).", this);
                 enabled = false;
                 return;
             }
@@ -109,18 +115,38 @@ namespace MoonProject.World
             _block.SetFloat(MinAngleTanId, Mathf.Tan(beacon.HaloMinAngle * swell * Mathf.Deg2Rad));
             _halo.SetPropertyBlock(_block);
             _light.intensity = level * beacon.LightIntensity;
-            for (int i = 0; i < _markers.Length; i++)
+            for (int i = 0; i < _landerClips.Length; i++)
             {
-                float lift = CableMarkerWave.Lift(time, i, _markers.Length, beacon.MarkerRunSeconds,
+                float lift = CableMarkerWave.Lift(time, i, _landerClips.Length, beacon.MarkerRunSeconds,
                     beacon.MarkerRepeatSeconds, beacon.MarkerWaveWidth);
-                float begin = CableMarkerWave.Once(time - _waveStart, i, _markers.Length, beacon.MarkerRunSeconds,
-                    beacon.MarkerWaveWidth);
-                Glow(_markers[i], beacon.MarkerGlow
-                    + Mathf.Max(lift * beacon.MarkerPulse, begin * beacon.BeginWavePulse));
-                _block.Clear();
-                _block.SetFloat(IntensityId, Mathf.Pow(begin, beacon.MarkerHaloFalloff) * beacon.MarkerHaloIntensity);
-                _markerHalos[i].SetPropertyBlock(_block);
+                Halo(_landerClips[i], beacon.ClipHaloRest + lift * beacon.ClipHaloPulse);
             }
+
+            float sinceBegin = time - _waveStart;
+            int last = _postClips.Length - 1;
+            for (int i = 0; i <= last; i++)
+            {
+                float begin = CableMarkerWave.Once(sinceBegin, i, _postClips.Length, beacon.MarkerRunSeconds,
+                    beacon.MarkerWaveWidth);
+                float bloom = Mathf.Pow(begin, beacon.MarkerHaloFalloff);
+                if (i == last)
+                {
+                    bloom = Mathf.Max(bloom, TearCue.Stutter(sinceBegin, beacon.MarkerRunSeconds,
+                        beacon.TearStutterSeconds, beacon.TearStutterFlickers));
+                }
+
+                Halo(_postClips[i], beacon.ClipHaloRest + bloom * beacon.MarkerHaloIntensity);
+            }
+
+            Halo(_spark, TearCue.Spark(sinceBegin, beacon.MarkerRunSeconds, beacon.SparkDelay, beacon.SparkSeconds)
+                * beacon.SparkIntensity);
+        }
+
+        private void Halo(Renderer target, float intensity)
+        {
+            _block.Clear();
+            _block.SetFloat(IntensityId, intensity);
+            target.SetPropertyBlock(_block);
         }
 
         private void Glow(Renderer target, float strength)

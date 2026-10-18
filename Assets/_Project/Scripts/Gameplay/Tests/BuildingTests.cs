@@ -1157,5 +1157,47 @@ namespace MoonProject.Gameplay.Tests
                 Object.DestroyImmediate(matCatalog);
             }
         }
+
+        [Test]
+        public void ALiveBuild_IsPrintedInPlace_ItsLayerLineRising_AndItsGuideGoesOnceItStands()
+        {
+            Shader shader = Shader.Find("Universal Render Pipeline/Lit");
+            Assert.IsNotNull(shader);
+            var validHolo = new Material(shader);
+            var invalidHolo = new Material(shader);
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                GameplayAssetPaths.RuntimeStructurePrefab(StructureIds.ChargingPad));
+            Assert.IsNotNull(prefab);
+            GameObject pad = Object.Instantiate(prefab);
+            try
+            {
+                Assert.IsTrue(pad.TryGetComponent(out StructureView view));
+                Assert.IsTrue(view.Initialize(validHolo, invalidHolo));
+                view.SetPlacedState(0f, instant: true);
+                view.ConfigureLiveBuild(true, _tuning);
+                view.SetPlacedState(0.10f, instant: false);
+                float y10 = view.GetActiveWeldPoint().y;
+                view.SetPlacedState(0.50f, instant: false);
+                float y50 = view.GetActiveWeldPoint().y;
+                view.SetPlacedState(0.90f, instant: false);
+                float y90 = view.GetActiveWeldPoint().y;
+                Assert.Greater(y50, y10, "the layer line the weld rides rises with the print (10% -> 50%)");
+                Assert.Greater(y90, y50, "the layer line the weld rides rises with the print (50% -> 90%)");
+
+                Transform guide = pad.transform.Find("PrintLayerGuide");
+                Assert.IsNotNull(guide, "the print guide's bar rides the layer line");
+                Assert.IsTrue(guide.gameObject.activeSelf);
+
+                view.SetPlacedState(1f, instant: false);
+                Assert.IsFalse(guide.gameObject.activeSelf, "the guide is gone once the structure stands");
+                Assert.IsTrue(view.LampsLit);
+            }
+            finally
+            {
+                Object.DestroyImmediate(pad);
+                Object.DestroyImmediate(validHolo);
+                Object.DestroyImmediate(invalidHolo);
+            }
+        }
     }
 }

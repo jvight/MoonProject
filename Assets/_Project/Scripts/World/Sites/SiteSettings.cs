@@ -82,6 +82,9 @@ namespace MoonProject.World
         [Range(3f, 12f)]
         [SerializeField] private float _midwayRadius = 6f;
 
+        [Tooltip("The lander's blast-swept zone round its footprint: why rovers, and 07's old post, stand outside it.")]
+        [SerializeField] private BlastZoneSettings _blastZone = new BlastZoneSettings();
+
         public float FootprintBlend => _footprintBlend;
         public Vector2 WakePost => _wakePost;
         public Vector2 LanderCenter => MoonSurface.BearingToDirection(_landerBearing) * _landerDistance;
@@ -94,6 +97,7 @@ namespace MoonProject.World
         public float RuinsRadius => _ruinsRadius;
         public float RuinsBlend => _ruinsBlend;
         public KestrelSettings Kestrel => _kestrel;
+        public BlastZoneSettings BlastZone => _blastZone;
 
         /// <summary>Returns null when the settings are consistent, otherwise the problem.</summary>
         public string Validate()

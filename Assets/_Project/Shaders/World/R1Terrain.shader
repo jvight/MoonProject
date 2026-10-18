@@ -99,6 +99,16 @@ Shader "MoonProject/World/R1Terrain"
             float4 _MoonReachRing;
             half4 _MoonReachRingColor;
 
+            // The lander's blast-swept zone (World's BlastZoneShaderGlobals). Zone: xy = centre (world x, z),
+            // z = radius, w = edge wander (m). Halo: lift, falloff power, blotch size (m), blotch contrast. Rays: lift,
+            // sectors, chance, long chance. Ray shape: length min, max, long (m), width min (m). Ground: width max (m),
+            // level ground (normal y).
+            float4 _MoonBlastZone;
+            float4 _MoonBlastHalo;
+            float4 _MoonBlastRays;
+            float4 _MoonBlastRayShape;
+            float4 _MoonBlastGround;
+
             // 0 in Earthlight (soft wrapped fill so craters don't go pitch black),
             // 1 in DirectSun (crisp lunar shadow contrast). Driven by SkyController.
             float _MoonSunlitGround;
@@ -340,6 +350,81 @@ Shader "MoonProject/World/R1Terrain"
                 return light.color * (half)(spec * atten);
             }
 
+            float BlastHash(float2 cell)
+            {
+                return frac(sin(dot(cell, float2(12.9898, 78.233))) * 43758.5453);
+            }
+
+            // Smooth value noise in world metres (0..1), for the halo's blotchy edge and mottle.
+            float BlastNoise(float2 p)
+            {
+                float2 cell = floor(p);
+                float2 t = frac(p);
+                t = t * t * (3.0 - 2.0 * t);
+                float a = BlastHash(cell);
+                float b = BlastHash(cell + float2(1.0, 0.0));
+                float c = BlastHash(cell + float2(0.0, 1.0));
+                float d = BlastHash(cell + float2(1.0, 1.0));
+                return lerp(lerp(a, b, t.x), lerp(c, d, t.x), t.y);
+            }
+
+            // One faint ray in sector `sector` of `sectors` round the lander, or 0: some sectors hold one, at a random
+            // bearing in the sector, starting at a random radius, a random length (mostly short, a few long) and
+            // width, tapered at both ends and across.
+            float BlastRay(float sector, float sectors, float bearing, float radius, float zoneRadius)
+            {
+                float wrapped = fmod(sector + sectors, sectors);
+                float seed = wrapped * 7.31 + 3.7;
+                if (BlastHash(float2(seed, 1.0)) > _MoonBlastRays.z)
+                {
+                    return 0.0;
+                }
+
+                float rayBearing = (sector + BlastHash(float2(seed, 2.0))) / sectors * 6.2831853;
+                float span = rayBearing - bearing;
+                span -= 6.2831853 * round(span / 6.2831853);
+                float lengthPick = BlastHash(float2(seed, 3.0));
+                bool longRay = BlastHash(float2(seed, 4.0)) < _MoonBlastRays.w;
+                float rayLength = longRay ? _MoonBlastRayShape.z * (0.75 + 0.5 * lengthPick)
+                    : lerp(_MoonBlastRayShape.x, _MoonBlastRayShape.y, lengthPick);
+                float start = BlastHash(float2(seed, 5.0)) * max(0.0, zoneRadius * 0.85 - rayLength);
+                float halfWidth = 0.5 * lerp(_MoonBlastRayShape.w, _MoonBlastGround.x, BlastHash(float2(seed, 6.0)));
+                float along = saturate((radius - start) / max(rayLength, 0.01));
+                float taper = sin(along * 3.14159265) * step(start, radius) * step(radius, start + rayLength);
+                float across = abs(span) * radius / max(halfWidth * taper, 0.001);
+                return taper * saturate(1.0 - across);
+            }
+
+            // The lander's descent engine smoothed the regolith round it (World's BlastZoneSettings): a soft, diffuse
+            // brightening toward the lander with a blotchy, never-round edge, crossed by a few faint, short, uneven
+            // rays; only on level ground, nothing beyond the zone. 1 = untouched.
+            half BlastSweepTone(float3 positionWS, half normalY)
+            {
+                float2 fromLander = positionWS.xz - _MoonBlastZone.xy;
+                float radius = length(fromLander);
+                float reach = _MoonBlastZone.z + _MoonBlastZone.w;
+                if (_MoonBlastZone.z <= 0.001 || radius >= reach)
+                {
+                    return 1.0h;
+                }
+
+                float2 noiseAt = positionWS.xz / max(_MoonBlastHalo.z, 0.1);
+                float blotch = BlastNoise(noiseAt) * 0.65 + BlastNoise(noiseAt * 2.3 + 11.0) * 0.35;
+                float edge = _MoonBlastZone.z + (blotch - 0.5) * 2.0 * _MoonBlastZone.w;
+                float share = saturate(1.0 - radius / max(edge, 0.1));
+                float halo = pow(share, _MoonBlastHalo.y) * (1.0 - _MoonBlastHalo.w * (1.0 - blotch));
+
+                float sectors = max(1.0, round(_MoonBlastRays.y));
+                float bearing = atan2(fromLander.x, fromLander.y);
+                float sector = floor((bearing < 0.0 ? bearing + 6.2831853 : bearing) / 6.2831853 * sectors);
+                float ray = max(BlastRay(sector, sectors, bearing, radius, edge),
+                    max(BlastRay(sector - 1.0, sectors, bearing, radius, edge),
+                        BlastRay(sector + 1.0, sectors, bearing, radius, edge)));
+
+                half level = (half)smoothstep(_MoonBlastGround.y, 1.0, normalY);
+                return 1.0h + level * (half)(_MoonBlastHalo.x * halo + _MoonBlastRays.x * ray * share);
+            }
+
             half4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_INSTANCE_ID(input);
@@ -497,6 +582,8 @@ Shader "MoonProject/World/R1Terrain"
                     half detailStrength = _DetailAlbedoStrength * macroWeight * (0.35h + 0.65h * nearWeight);
                     baseAlbedo *= lerp(1.0h.xxx, regolithCentered, detailStrength);
                 }
+
+                baseAlbedo *= BlastSweepTone(input.positionWS, geomNormalWS.y);
 
                 float4 shadowCoord = TransformWorldToShadowCoord(input.positionWS);
                 Light mainLight = GetMainLight(shadowCoord);

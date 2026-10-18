@@ -69,17 +69,43 @@ namespace MoonProject.World.PlayModeTests
         private const float PostBeaconEyeHeight = 5f;
         private const float PostBeaconLookHeight = 6f;
         private const float PostBeaconFov = 40f;
-        private const float PostWaveEyeHeight = 7f;
+        // The Begin wave is filmed at the tear, where it dies: from a little back toward 07's post and above.
+        private const float PostWaveEyeHeight = 2.6f;
         private const float PostWaveEyeBack = 6f;
-        private const float PostWaveLookAhead = 40f;
-        private const float PostWaveFov = 55f;
+        private const float PostWaveFov = 45f;
         private const float PostWaveShotSeconds = 0.25f;
 
         // While the strips are shot, game time steps this much per frame however long a capture takes, so the
         // flashes and the wave are filmed frame by frame.
         private const float PostFrameSeconds = 0.05f;
         private const float PostTail = 0.3f;
-        private const string EmissionStrength = "_EmissionStrength";
+        private const string HaloIntensity = "_Intensity";
+        // The landing zone: midway looks at the tear from a little back toward the wake and above, the port view at
+        // the plug from in front of the port; the zone's edge view stands this far
+        // back from the lander toward the wake and this high; the overhead hangs this high above the lander, its
+        // look nudged toward the wake so the wake-side edge shows below the lander.
+        private const float LandingTearBack = 6f;
+        private const float LandingTearHeight = 2.4f;
+        private const float LandingTearFov = 45f;
+        private const float LandingPortBack = 5f;
+        private const float LandingPortHeight = 1.8f;
+        private const string PortName = "ServicePort";
+        private const float LandingEdgeBack = 48f;
+        private const float LandingEdgeHeight = 14f;
+        private const float LandingOverheadHeight = 110f;
+        private const float LandingOverheadTilt = 0.01f;
+        private const float LandingOverheadFov = 50f;
+        // The blast zone: 07 stops this far short of the lander for its chase view; golden hour is the lowest sun (at
+        // least this many degrees up) with no terrain between it and a point in the zone, searched for in steps
+        // through a day from a sunlit clock time; each light settles this long before it is shot.
+        private const float BlastChaseBack = 20f;
+        private const float BlastSunlitSeconds = 210f;
+        private const float BlastGoldenMinElevation = 4f;
+        private const float BlastShadowProbeHeight = 3f;
+        private const float BlastShadowProbeReach = 2000f;
+        private const float BlastSearchSeconds = 7200f;
+        private const float BlastSearchStep = 20f;
+        private const float BlastSettleSeconds = 2f;
 
         private static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "world-captures"));
@@ -292,6 +318,211 @@ namespace MoonProject.World.PlayModeTests
         }
 
         /// <summary>
+        /// The landing zone on a real New Game (opening v2 §4): the lander's blast-swept halo and the old, torn cable
+        /// from 07's dead post toward the lander, seen from the wake, at the tear midway, at the plug in the lander's
+        /// port, from the zone's edge and from straight above the lander. Logs/world-captures/landing-*.png.
+        /// </summary>
+        [UnityTest]
+        [Timeout(600000)]
+        [PrebuildSetup(typeof(CanyonSessionScene))]
+        [PostBuildCleanup(typeof(CanyonSessionScene))]
+        public IEnumerator LandingZone_IsCapturedFromTheWakeMidwayAndAbove()
+        {
+            BootstrapHarness.DeleteSaveFiles(CanyonSessionScene.SaveSlot);
+#if UNITY_EDITOR
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(CanyonSessionScene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            while (!loading.isDone)
+            {
+                yield return null;
+            }
+#else
+            throw new NotSupportedException("The atmosphere session loads the scene through the editor.");
+#endif
+            GameBootstrap bootstrap = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
+            {
+                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
+            }
+
+            Assert.IsNotNull(bootstrap, "the scene has its bootstrap");
+            GameContext context = bootstrap.Context;
+            _awoke = context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
+            float started = Time.time;
+            while (!_awake)
+            {
+                Assert.Less(Time.time - started, WakeTimeout, "07 wakes up");
+                yield return null;
+            }
+
+            yield return new WaitForSeconds(SettleSeconds);
+            IWorldAnchors anchors = context.Get<IWorldAnchors>();
+            Vector3 wake = Anchor(anchors, WorldAnchorIds.PlaceWake).Position;
+            Vector3 lander = Anchor(anchors, WorldAnchorIds.PlaceLander).Position;
+            Vector3 toLander = Vector3.ProjectOnPlane(lander - wake, Vector3.up).normalized;
+            Vector3 lift = Vector3.up * OpeningLookHeight;
+            Vector3 eye = wake + toLander * OpeningWakeLead + Vector3.up * OpeningEyeHeight;
+            LanderBeacon beacon = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
+            {
+                beacon = beacon != null ? beacon : root.GetComponentInChildren<LanderBeacon>(true);
+            }
+
+            Assert.IsNotNull(beacon, "World stood the lander's beacon");
+            Vector3 tear = ((Renderer)new SerializedObject(beacon).FindProperty("_spark").objectReferenceValue)
+                .transform.position;
+            Vector3 midway = tear - toLander * LandingTearBack + Vector3.up * LandingTearHeight;
+            Vector3 edge = lander - toLander * LandingEdgeBack + Vector3.up * LandingEdgeHeight;
+            Vector3 port = FindNamed(PortName).position;
+            Vector3 outward = Vector3.ProjectOnPlane(port - lander, Vector3.up).normalized;
+            Vector3 portEye = port + outward * LandingPortBack + Vector3.up * LandingPortHeight;
+            Camera view = context.Get<IViewCamera>().Camera;
+            var host = new GameObject("LandingReviewCamera");
+            try
+            {
+                var camera = host.AddComponent<Camera>();
+                camera.CopyFrom(view);
+                camera.enabled = false;
+                CopyPipelineSettings(view, camera);
+                foreach (Pose pose in new[]
+                         {
+                             LookPose("wake_toward_the_lander", eye, lander + lift, OpeningFov),
+                             LookPose("midway_at_the_tear", midway, tear, LandingTearFov),
+                             LookPose("port_plug", portEye, port, LandingTearFov),
+                             LookPose("zone_edge_toward_the_lander", edge, lander, OpeningFov),
+                             LookPose("overhead", lander + Vector3.up * LandingOverheadHeight,
+                                 lander + toLander * LandingOverheadTilt, LandingOverheadFov),
+                         })
+                {
+                    Place(camera, pose);
+                    FrameCapture.SavePng(camera, CaptureWidth, CaptureHeight,
+                        Path.Combine(CaptureFolder, "landing-" + pose.name + ".png"));
+                }
+            }
+            finally
+            {
+                Object.Destroy(host);
+            }
+
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        /// <summary>
+        /// The lander's blast-swept zone (opening v2 §4) in the eclipse and at golden hour: from 07's chase camera
+        /// stopped 20 m short of the lander, from the zone's edge and from straight above.
+        /// Logs/world-captures/blast-*.png.
+        /// </summary>
+        [UnityTest]
+        [Timeout(600000)]
+        [PrebuildSetup(typeof(CanyonSessionScene))]
+        [PostBuildCleanup(typeof(CanyonSessionScene))]
+        public IEnumerator BlastZone_IsCapturedInTheEclipseAndAtGoldenHour()
+        {
+            BootstrapHarness.DeleteSaveFiles(CanyonSessionScene.SaveSlot);
+#if UNITY_EDITOR
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(CanyonSessionScene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            while (!loading.isDone)
+            {
+                yield return null;
+            }
+#else
+            throw new NotSupportedException("The atmosphere session loads the scene through the editor.");
+#endif
+            GameBootstrap bootstrap = null;
+            SkyCycleSystem sky = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
+            {
+                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
+                sky = sky != null ? sky : root.GetComponentInChildren<SkyCycleSystem>(true);
+            }
+
+            Assert.IsNotNull(bootstrap, "the scene has its bootstrap");
+            Assert.IsNotNull(sky, "the scene has its sky cycle");
+            GameContext context = bootstrap.Context;
+            _awoke = context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
+            float started = Time.time;
+            while (!_awake)
+            {
+                Assert.Less(Time.time - started, WakeTimeout, "07 wakes up");
+                yield return null;
+            }
+
+            yield return new WaitForSeconds(SettleSeconds);
+            IWorldAnchors anchors = context.Get<IWorldAnchors>();
+            Vector3 wake = Anchor(anchors, WorldAnchorIds.PlaceWake).Position;
+            Vector3 lander = Anchor(anchors, WorldAnchorIds.PlaceLander).Position;
+            Vector3 toLander = Vector3.ProjectOnPlane(lander - wake, Vector3.up).normalized;
+            Vector3 edge = lander - toLander * LandingEdgeBack + Vector3.up * LandingEdgeHeight;
+            Vector3 chase = lander - toLander * BlastChaseBack;
+            chase.y = context.Get<ITerrainQuery>().SampleHeight(chase.x, chase.z);
+            context.Get<IRoverPlacement>().PlaceAt(chase, Quaternion.LookRotation(toLander, Vector3.up));
+            Camera view = context.Get<IViewCamera>().Camera;
+            var host = new GameObject("BlastReviewCamera");
+            try
+            {
+                var camera = host.AddComponent<Camera>();
+                camera.CopyFrom(view);
+                camera.enabled = false;
+                CopyPipelineSettings(view, camera);
+                foreach (string light in new[] { "eclipse", "golden" })
+                {
+                    if (light == "golden")
+                    {
+                        // The first charge lets the eclipse end; golden hour is the sun low over the rim after
+                        // it has stood higher.
+                        context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.FirstCharge, true));
+                        yield return null;
+                        float clock = -1f;
+                        float lowest = float.MaxValue;
+                        Vector3 above = lander - toLander * BlastChaseBack * 0.5f + Vector3.up * BlastShadowProbeHeight;
+                        for (float t = BlastSunlitSeconds; t < BlastSunlitSeconds + BlastSearchSeconds;
+                             t += BlastSearchStep)
+                        {
+                            sky.SetClockTime(t);
+                            Vector3 toSun = sky.SunDirection;
+                            float elevation = Mathf.Asin(toSun.y) * Mathf.Rad2Deg;
+                            if (elevation >= BlastGoldenMinElevation && elevation < lowest
+                                && !Physics.Raycast(above, toSun, BlastShadowProbeReach, Layers.GroundMask,
+                                    QueryTriggerInteraction.Ignore))
+                            {
+                                lowest = elevation;
+                                clock = t;
+                            }
+                        }
+
+                        Assert.GreaterOrEqual(clock, 0f, "a low sun lights the lander some time in the day");
+                        sky.SetClockTime(clock);
+                        Assert.IsFalse(sky.IsHoldingEclipse, "the eclipse has ended");
+                        Debug.Log($"[blast] golden hour: sun {lowest:F1} deg up");
+                        Debug.Log($"[blast] golden hour at clock {clock} s");
+                    }
+
+                    yield return new WaitForSeconds(BlastSettleSeconds);
+                    FrameCapture.SavePng(view, CaptureWidth, CaptureHeight,
+                        Path.Combine(CaptureFolder, "blast-" + light + "-chase.png"));
+                    foreach (Pose pose in new[]
+                             {
+                                 LookPose("edge", edge, lander, OpeningFov),
+                                 LookPose("overhead", lander + Vector3.up * LandingOverheadHeight,
+                                     lander + toLander * LandingOverheadTilt, LandingOverheadFov),
+                             })
+                    {
+                        Place(camera, pose);
+                        FrameCapture.SavePng(camera, CaptureWidth, CaptureHeight,
+                            Path.Combine(CaptureFolder, "blast-" + light + "-" + pose.name + ".png"));
+                    }
+                }
+            }
+            finally
+            {
+                Object.Destroy(host);
+            }
+
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        /// <summary>
         /// 07's self-test on a real New Game: the lander's beacon blinks sharply with each spark of 07's failing cutter,
         /// and when 07 begins its recovery one bright wave runs the cable from 07's post to the lander. Strips of frames
         /// go to Logs/world-captures/post-*.png with post-cues.md (the beacon light's intensity and the first
@@ -335,9 +566,10 @@ namespace MoonProject.World.PlayModeTests
             Assert.IsNotNull(beacon, "World stood the lander's beacon");
             var wiring = new SerializedObject(beacon);
             var light = (Light)wiring.FindProperty("_light").objectReferenceValue;
-            SerializedProperty markerList = wiring.FindProperty("_markers");
-            var first = (Renderer)markerList.GetArrayElementAtIndex(0).objectReferenceValue;
-            var last = (Renderer)markerList.GetArrayElementAtIndex(markerList.arraySize - 1).objectReferenceValue;
+            SerializedProperty postClips = wiring.FindProperty("_postClips");
+            var first = (Renderer)postClips.GetArrayElementAtIndex(0).objectReferenceValue;
+            var last = (Renderer)postClips.GetArrayElementAtIndex(postClips.arraySize - 1).objectReferenceValue;
+            var spark = (Renderer)wiring.FindProperty("_spark").objectReferenceValue;
             float cutterStartedAt = -1f;
             float cutterAt = -1f;
             float beginAt = -1f;
@@ -417,41 +649,49 @@ namespace MoonProject.World.PlayModeTests
                     yield return null;
                 }
 
-                Place(camera, LookPose("post_wave", wake - toLander * PostWaveEyeBack + Vector3.up * PostWaveEyeHeight,
-                    wake + toLander * PostWaveLookAhead, PostWaveFov));
-                report.AppendLine().AppendLine("## One wave runs the cable when 07 begins").AppendLine()
-                    .AppendLine("| Frame | s after Begin | First marker | Last marker |")
-                    .AppendLine("|---|---:|---:|---:|");
+                Vector3 tear = spark.transform.position;
+                Place(camera, LookPose("post_wave", tear - toLander * PostWaveEyeBack + Vector3.up * PostWaveEyeHeight,
+                    tear, PostWaveFov));
+                report.AppendLine().AppendLine("## One wave runs 07's side of the cable and dies at the tear")
+                    .AppendLine().AppendLine("| Frame | s after Begin | First clip | Last clip | Spark |")
+                    .AppendLine("|---|---:|---:|---:|---:|");
                 var glow = new MaterialPropertyBlock();
-                float calmCeiling = tuning.MarkerGlow + tuning.MarkerPulse;
+                float calmCeiling = tuning.ClipHaloRest + tuning.MarkerHaloIntensity * 0.5f;
                 float firstPeakAt = -1f;
                 float lastPeakAt = -1f;
-                float run = tuning.MarkerRunSeconds * (1f + tuning.MarkerWaveWidth) + PostTail;
+                float sparkAt = -1f;
+                float run = tuning.MarkerRunSeconds + tuning.SparkDelay
+                    + Mathf.Max(tuning.TearStutterSeconds, tuning.SparkSeconds) + PostTail;
                 float nextShot = 0f;
                 for (int frame = 0; Time.time - beginAt < run;)
                 {
                     float since = Time.time - beginAt;
                     first.GetPropertyBlock(glow);
-                    float firstGlow = glow.GetFloat(EmissionStrength);
+                    float firstGlow = glow.GetFloat(HaloIntensity);
                     last.GetPropertyBlock(glow);
-                    float lastGlow = glow.GetFloat(EmissionStrength);
+                    float lastGlow = glow.GetFloat(HaloIntensity);
+                    spark.GetPropertyBlock(glow);
+                    float sparkGlow = glow.GetFloat(HaloIntensity);
                     firstPeakAt = firstPeakAt < 0f && firstGlow > calmCeiling ? since : firstPeakAt;
                     lastPeakAt = lastPeakAt < 0f && lastGlow > calmCeiling ? since : lastPeakAt;
+                    sparkAt = sparkAt < 0f && sparkGlow > 0f ? since : sparkAt;
                     if (since >= nextShot)
                     {
                         string name = string.Format(CultureInfo.InvariantCulture, "post-wave-{0:00}", frame++);
                         FrameCapture.SavePng(camera, CaptureWidth, CaptureHeight,
                             Path.Combine(CaptureFolder, name + ".png"));
                         report.AppendLine(string.Format(CultureInfo.InvariantCulture,
-                            "| {0} | {1:F2} | {2:F2} | {3:F2} |", name, since, firstGlow, lastGlow));
+                            "| {0} | {1:F2} | {2:F2} | {3:F2} | {4:F2} |", name, since, firstGlow, lastGlow,
+                            sparkGlow));
                         nextShot += PostWaveShotSeconds;
                     }
 
                     yield return null;
                 }
 
-                Assert.GreaterOrEqual(firstPeakAt, 0f, "the wave lights 07's end of the cable past the calm waves");
-                Assert.Greater(lastPeakAt, firstPeakAt, "and reaches the lander's end after it");
+                Assert.GreaterOrEqual(firstPeakAt, 0f, "the wave lights 07's end of the cable");
+                Assert.Greater(lastPeakAt, firstPeakAt, "and reaches the tear after it");
+                Assert.Greater(sparkAt, lastPeakAt, "where one cold spark ticks once it has died");
             }
             finally
             {

@@ -51,7 +51,7 @@ namespace MoonProject.Gameplay
         private float _sweepSeconds;
 
         public FeelVfx(Transform parent, FeelVfxTuning tuning, GameplayVisuals visuals, EventBus events,
-            IFeelAnchors anchors, ScanTuning scanTuning = null)
+            IFeelAnchors anchors, ScanTuning scanTuning)
         {
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
             _anchors = anchors ?? throw new ArgumentNullException(nameof(anchors));
@@ -138,7 +138,7 @@ namespace MoonProject.Gameplay
                     break;
                 case FeelPhase.Reward:
                     _scanBeam.Complete();
-                    _scanRibbon.Begin(beat.Position);
+                    _scanRibbon.Begin(beat.Position, beat.Normal);
                     break;
             }
         }
@@ -204,6 +204,11 @@ namespace MoonProject.Gameplay
 
             _debris.Step(deltaTime);
             Vector3 scanEmitter = _anchors.ScanEmitter;
+            if (_scanBeam.Shown && _anchors.TryScanContact(scanEmitter, out Vector3 contact, out _))
+            {
+                _scanBeam.Meet(contact);
+            }
+
             _scanBeam.Step(deltaTime, scanEmitter);
             _scanRibbon.Step(deltaTime, scanEmitter);
             _flashLight.Step(deltaTime);

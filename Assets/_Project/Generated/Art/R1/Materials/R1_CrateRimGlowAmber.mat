@@ -43,6 +43,9 @@ Material:
     m_Floats:
     - _BloomSafeMax: 0.42
     - _BuildModeGlow: 0
+    - _BuildPrint: 0
+    - _BuildRevealProgress: 1
+    - _BuildStageHeat: 0
     - _BumpScale: 0
     - _ColorVarAmount: 0
     - _ColorVarScale: 1.8
@@ -68,6 +71,8 @@ Material:
     - _SmoothnessScale: 0.2
     m_Colors:
     - _BaseColor: {r: 0.82, g: 0.52, b: 0.22, a: 1}
+    - _BuildBoundsY: {r: 0, g: 2, b: 0, a: 0}
+    - _BuildSeamPointWS: {r: 0, g: 0, b: 0, a: 0.6}
     - _DustColor: {r: 0.46, g: 0.48, b: 0.54, a: 1}
     - _EdgeWearColor: {r: 0.86, g: 0.78, b: 0.68, a: 1}
     - _EmissionColor: {r: 0.98, g: 0.64, b: 0.24, a: 1}

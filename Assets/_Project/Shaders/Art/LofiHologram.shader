@@ -20,6 +20,7 @@ Shader "MoonProject/Art/LofiHologram"
         _Invalid("Invalid Placement (0..1)", Range(0.0, 1.0)) = 0.0
         _StageFade("Stage Fade (0..1)", Range(0.0, 1.0)) = 1.0
         _BloomCeiling("Bloom Safe Ceiling", Range(0.5, 1.24)) = 1.10
+        _BlueprintMode("Line Drawing Mode (0..1)", Range(0.0, 1.0)) = 0.0
     }
 
     SubShader
@@ -43,7 +44,7 @@ Shader "MoonProject/Art/LofiHologram"
             Cull Back
 
             HLSLPROGRAM
-            #pragma target 2.0
+            #pragma target 3.5
             #pragma vertex Vert
             #pragma fragment Frag
             #pragma multi_compile_instancing
@@ -65,12 +66,14 @@ Shader "MoonProject/Art/LofiHologram"
                 half _Invalid;
                 half _StageFade;
                 half _BloomCeiling;
+                half _BlueprintMode;
             CBUFFER_END
 
             struct Attributes
             {
                 float4 positionOS : POSITION;
                 float3 normalOS : NORMAL;
+                half4 color : COLOR;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -79,6 +82,7 @@ Shader "MoonProject/Art/LofiHologram"
                 float4 positionCS : SV_POSITION;
                 float3 positionWS : TEXCOORD0;
                 float3 normalWS : TEXCOORD1;
+                half4 vertexColor : COLOR;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
@@ -93,6 +97,7 @@ Shader "MoonProject/Art/LofiHologram"
                 output.positionCS = positions.positionCS;
                 output.positionWS = positions.positionWS;
                 output.normalWS = TransformObjectToWorldNormal(input.normalOS);
+                output.vertexColor = input.color;
                 return output;
             }
 
@@ -109,21 +114,49 @@ Shader "MoonProject/Art/LofiHologram"
                 half ndotv = clamp((half)dot(normal, view), 0.0h, 0.999h);
                 half fresnel = PositivePow(max(1.0h - ndotv, 0.001h), max(_RimPower, 0.5h));
 
-                float scanPhase = input.positionWS.y * _ScanDensity - _Time.y * _ScanSpeed;
-                half scanWave = 0.5h + 0.5h * (half)sin(scanPhase * 6.2831853);
-                half scanBand = smoothstep(0.2h, 0.9h, scanWave);
-                half shimmer = lerp(1.0h - _ScanContrast, 1.0h + _ScanContrast, scanBand);
+                // Clean architectural bevel & crease line detection (calm, zero high-frequency scanline noise)
+                float normGrad = length(fwidth(normal));
+                half bevelLine = (half)smoothstep(0.10, 0.34, normGrad);
+                half convexEdge = saturate((input.vertexColor.g - 0.28h) * 2.2h);
+                half featureLine = max(bevelLine, convexEdge * 0.75h);
+
+                // Calm low-frequency vertical gradient + subtle slow breathing instead of busy scanlines
+                float calmBreath = 0.94 + 0.06 * sin(_Time.y * max((float)_ScanSpeed, 0.5) * 2.0);
+                float contourPhase = frac(input.positionWS.y * 3.5);
+                float fwContour = max(fwidth(input.positionWS.y * 3.5), 1e-3);
+                half contourLine = (half)(1.0 - smoothstep(fwContour * 0.8, fwContour * 2.0, abs(contourPhase - 0.5)));
 
                 half invalid = saturate(_Invalid);
-                half3 bodyValid = _BaseColor.rgb * (_BodyIntensity * shimmer);
-                half3 rimValid = _RimColor.rgb * _RimIntensity;
-                half3 validRgb = lerp(bodyValid, rimValid, fresnel * 0.85h);
+                half blueprint = saturate(_BlueprintMode);
 
-                half3 bodyInvalid = _InvalidColor.rgb * (_BodyIntensity * 1.15h * shimmer);
-                half3 rimInvalid = lerp(_InvalidColor.rgb, _RimColor.rgb, 0.22h) * (_RimIntensity * 1.05h);
-                half3 invalidRgb = lerp(bodyInvalid, rimInvalid, fresnel * 0.85h);
+                // Valid state: calm soft teal body with crisp teal-amber rim; Invalid state: warm amber-coral alert
+                half3 validTone = lerp(_BaseColor.rgb, half3(0.32h, 0.88h, 0.84h), 0.25h);
+                half3 invalidTone = lerp(_InvalidColor.rgb, _RimColor.rgb, 0.52h);
+
+                half edgeWeight = saturate(fresnel * 0.78h + featureLine * 0.65h);
+                half3 bodyValid = validTone * (_BodyIntensity * (half)calmBreath * 0.82h);
+                half3 rimValid = lerp(validTone, _RimColor.rgb, 0.28h) * _RimIntensity;
+                half3 validRgb = lerp(bodyValid, rimValid, edgeWeight);
+
+                half3 bodyInvalid = invalidTone * (_BodyIntensity * 1.08h * (half)calmBreath);
+                half3 rimInvalid = lerp(_InvalidColor.rgb, _RimColor.rgb, 0.65h) * (_RimIntensity * 1.06h);
+                half3 invalidRgb = lerp(bodyInvalid, rimInvalid, edgeWeight);
 
                 half3 color = lerp(validRgb, invalidRgb, invalid);
+                half alpha = lerp(_Alpha * 0.68h, _RimAlpha, edgeWeight) * saturate(_StageFade);
+
+                // Line drawing mode (the print guide's layer bar): crisp warm amber lines on a dark translucent backing
+                if (blueprint > 0.001h)
+                {
+                    half lineMask = saturate(max(featureLine * 1.15h, max(fresnel * 0.92h, contourLine * 0.55h)));
+                    half3 bpLineColor = lerp(_RimColor.rgb, invalidTone, invalid) * (_RimIntensity * 1.12h);
+                    half3 bpFillColor = _RimColor.rgb * 0.14h;
+                    half3 bpRgb = lerp(bpFillColor, bpLineColor, lineMask);
+                    half bpAlpha = lerp(0.10h, 0.92h, lineMask) * saturate(_StageFade);
+                    color = lerp(color, bpRgb, blueprint);
+                    alpha = lerp(alpha, bpAlpha, blueprint);
+                }
+
                 if (any(isnan(color)) || any(isinf(color)))
                 {
                     color = _BaseColor.rgb * _BodyIntensity;
@@ -136,7 +169,6 @@ Shader "MoonProject/Art/LofiHologram"
                     color *= (_BloomCeiling / max(peak, 0.001h));
                 }
 
-                half alpha = lerp(_Alpha, _RimAlpha, fresnel) * saturate(0.84h + 0.16h * scanBand) * saturate(_StageFade);
                 return half4(color, saturate(alpha));
             }
             ENDHLSL

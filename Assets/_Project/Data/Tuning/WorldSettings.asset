@@ -175,6 +175,26 @@ MonoBehaviour:
       _midwayBearing: 336
       _midwayDistance: 98.5
       _midwayRadius: 6
+      _blastZone:
+        _radius: 34
+        _edgeBand: 9
+        _haloLift: 0.38
+        _haloFalloff: 1.1
+        _edgeWander: 7
+        _blotchSize: 9
+        _blotchContrast: 0.4
+        _rayLift: 0.08
+        _raySectors: 64
+        _rayChance: 0.4
+        _rayLengthMin: 3
+        _rayLengthMax: 8
+        _longRayChance: 0.12
+        _longRayLength: 14
+        _rayWidthMin: 0.4
+        _rayWidthMax: 1.4
+        _levelGround: 0.95
+        _edgePebbles: 0.55
+        _edgePileWidth: 8
     _craterField:
       _cellSize: 18
       _density: 0.7
@@ -450,6 +470,11 @@ MonoBehaviour:
       _wander: 1.6
       _bends: 3
       _portInset: 0.9
+      _tearShare: 0.5
+      _tearGap: 0.45
+      _tearKink: 14
+      _spliceSide: 1.3
+      _approachLength: 8
     _landerBeacon:
       _color: {r: 1, g: 0.70980394, b: 0.2784314, a: 1}
       _period: 3.2
@@ -461,8 +486,8 @@ MonoBehaviour:
       _haloMinAngle: 0.7
       _lightIntensity: 2.2
       _lightRange: 16
-      _markerGlow: 0.35
-      _markerPulse: 1.2
+      _clipHaloRest: 0.22
+      _clipHaloPulse: 0.5
       _markerRunSeconds: 4
       _markerRepeatSeconds: 9
       _markerWaveWidth: 0.18
@@ -472,10 +497,16 @@ MonoBehaviour:
       _flashEdgeSeconds: 0.016
       _flashBoost: 3
       _flashHaloSwell: 1.25
-      _beginWavePulse: 4
       _markerHaloIntensity: 1.6
       _markerHaloRadius: 0.14
       _markerHaloFalloff: 2
+      _tearStutterSeconds: 1.2
+      _tearStutterFlickers: 3
+      _sparkDelay: 0.45
+      _sparkSeconds: 0.1
+      _sparkIntensity: 2.4
+      _sparkRadius: 0.07
+      _sparkColor: {r: 0.62, g: 0.86, b: 1, a: 1}
     _debris:
     - _anchor: place.midway
       _id: Kestrel_HullPanel

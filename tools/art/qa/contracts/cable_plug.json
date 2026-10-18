@@ -1,0 +1,83 @@
+{
+  "model": "cable_plug",
+  "pivot_tolerance": 0.015,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_BareSteel",
+    "R1_Brass",
+    "R1_Copper",
+    "R1_CreamEnamel",
+    "R1_DarkGlass",
+    "R1_GreyMetal",
+    "R1_OrangeStripe",
+    "R1_Rubber"
+  ],
+  "max_triangles": 3500,
+  "max_meshes": 3,
+  "max_draw_calls": 16,
+  "allow_rotation": [],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "Cable_Plug": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "CableLead": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "PlugHead": {
+      "pivot": [
+        0.0,
+        0.34,
+        0.2
+      ]
+    },
+    "Start_Anchor": {
+      "pivot": [
+        0.0,
+        -0.46,
+        0.019
+      ]
+    },
+    "Plug_Anchor": {
+      "pivot": [
+        0.0,
+        0.48,
+        0.2
+      ]
+    },
+    "Handle_Anchor": {
+      "pivot": [
+        0.0,
+        0.294,
+        0.304
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      0.256,
+      0.9413,
+      0.331
+    ],
+    "tolerance": 0.025,
+    "min_size": [
+      0.22,
+      0.9,
+      0.29
+    ],
+    "max_size": [
+      0.29,
+      0.98,
+      0.37
+    ]
+  }
+}

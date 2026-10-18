@@ -131,6 +131,7 @@ namespace MoonProject.World
                 Task.Run(() => new ScatterPlanner(surface, scatterSettings, Anchors).Plan());
             WorldAtmosphere.Apply(_settings.Atmosphere, _settings.Sky, _earthlight, _fillLight);
             SkyShaderGlobals.Apply(_settings.Sky);
+            BlastZoneShaderGlobals.Apply(surface.Shaping.Blast);
 
             _generatedRoot = new GameObject(GeneratedRootName) { hideFlags = hideFlags };
             _generatedRoot.transform.SetParent(transform, false);
@@ -181,7 +182,8 @@ namespace MoonProject.World
                         : b.Size * Mathf.Lerp(0.62f, 1.85f, Hashing.ToUnit(Hashing.Mix(hk ^ 0x2468ACE0u)));
                     float sx = center2D.x + Mathf.Cos(angle) * radius;
                     float sz = center2D.y + Mathf.Sin(angle) * radius;
-                    if (OnOpeningFootprint(footprints, new Vector2(sx, sz)))
+                    if (OnOpeningFootprint(footprints, new Vector2(sx, sz))
+                        || surface.Shaping.Blast.Swept(sx, sz) > 0f)
                     {
                         continue;
                     }
