@@ -63,6 +63,12 @@ namespace MoonProject.UI
             Set(false);
         }
 
+        /// <summary>Hides over <paramref name="seconds"/> instead of the settings' fade-out time.</summary>
+        public void HideOver(float seconds)
+        {
+            _fade.HideOver(seconds);
+        }
+
         /// <summary>Jumps to the end state without motion (setup only).</summary>
         public void Snap(bool shown)
         {

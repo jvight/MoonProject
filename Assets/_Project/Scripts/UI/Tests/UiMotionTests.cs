@@ -29,6 +29,25 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
+        public void HideOver_TakesItsOwnTime_ThenTheSettingsApplyAgainOnTheNextSet()
+        {
+            var fade = new Fade(new RevealSettings(1f, 0.25f, 0f, 1f, 1f, 1f));
+            fade.Snap(true);
+
+            fade.HideOver(1f);
+            Step(fade, 0.5f);
+            Assert.IsFalse(fade.IsHidden, "the hand-off is slower than the settings' fade-out");
+            Step(fade, 0.6f);
+            Assert.IsTrue(fade.IsHidden);
+
+            fade.Set(true);
+            fade.Snap(true);
+            fade.Set(false);
+            Step(fade, 0.26f);
+            Assert.IsTrue(fade.IsHidden, "back to the settings' own fade-out");
+        }
+
+        [Test]
         public void Fade_TurningAroundMidway_ContinuesFromWhereItWas()
         {
             var fade = new Fade(new RevealSettings(1f, 1f, 0f, 1f, 1f, 1f));
