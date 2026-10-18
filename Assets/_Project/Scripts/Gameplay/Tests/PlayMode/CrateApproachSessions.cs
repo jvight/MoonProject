@@ -20,8 +20,9 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// The checkpoint bot could not reach supply.workshop.a at B7 (2026-10-19): a sealed crate a player must cut has to
     /// stand where 07 can drive up to its seal. In the real Main scene, for every sealed supply crate: 07's body (a
     /// capsule of its width and height) sweeps clear of props from a line-up in front of the seal to where it stands
-    /// to cut, the ground on the way is drivable and under the slope limit, and the seal lies far enough from every scan
-    /// target that the cut prompt and the scan never claim the same stance.
+    /// to cut, the ground on the way is drivable and under the slope limit, the cutter's line from there to the seal is
+    /// clear and the seal stands in the open (the bot could not cut supply.workshop.b inside the workshop's shell), and
+    /// the seal lies far enough from every scan target that the cut prompt and the scan never claim the same stance.
     /// </summary>
     [Category("CrateApproach")]
     public sealed class CrateApproachSessions
@@ -33,6 +34,13 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float GroundClearance = 0.15f;
         private const float SealStandOff = 1.6f;
         private const float SealLineUp = 3f;
+
+        // 07's cutter turret (docs/design/scale.md: CutterOrigin 0.73 m up, 0.72 m ahead of 07's middle): from where
+        // 07 stands to cut, its beam must reach the seal with no other prop in the way, and the seal must not lie
+        // inside another prop (a ruin's shell drawn over the crate).
+        private const float CutterHeight = 0.73f;
+        private const float CutterAhead = 0.72f;
+        private const float SealClearRadius = 0.05f;
 
         // The line-up must open onto open ground: 07 comes to it from this many metres further out without a prop in
         // its way.
@@ -128,6 +136,25 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 problems.AppendLine($"{id}: {hit.collider.name} stands between the open ground and the seal, " +
                                     $"{hit.distance:F1} m along");
+            }
+
+            Vector3 cutter = to + Flat(seal - to).normalized * CutterAhead + Vector3.up * CutterHeight;
+            foreach (RaycastHit hit2 in Physics.RaycastAll(cutter, seal - cutter, Vector3.Distance(cutter, seal),
+                         Layers.PropMask, QueryTriggerInteraction.Ignore))
+            {
+                if (!hit2.collider.transform.IsChildOf(crate))
+                {
+                    problems.AppendLine($"{id}: {hit2.collider.name} blocks the cutter's line to the seal");
+                }
+            }
+
+            foreach (Collider inside in Physics.OverlapSphere(seal, SealClearRadius, Layers.PropMask,
+                         QueryTriggerInteraction.Ignore))
+            {
+                if (!inside.transform.IsChildOf(crate))
+                {
+                    problems.AppendLine($"{id}: its seal lies inside {inside.name}");
+                }
             }
 
             for (float d = 0f; d <= path.magnitude + SealStandOff; d += SlopeStep)
