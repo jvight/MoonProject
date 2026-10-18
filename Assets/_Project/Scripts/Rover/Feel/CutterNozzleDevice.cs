@@ -242,9 +242,10 @@ namespace MoonProject.Rover
             _firing = false;
             _chargeElapsed = 0f;
             _irisOpen01 = 0f;
-            _coreGlow01 = RestGlow(_tuning.CutterNozzle);
+            _coreGlow01 = 0f;
             if (_block != null)
             {
+                _coreGlow01 = RestGlow(_tuning.CutterNozzle);
                 ApplyVisuals();
             }
         }
