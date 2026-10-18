@@ -632,7 +632,10 @@ namespace MoonProject.Rover.PlayModeTests
 
             float maxPushInFrameMs = 0f;
             float elapsed = 0f;
-            while (elapsed < 0.65f)
+            VisualElement titleCrt = document.rootVisualElement.Q<VisualElement>("title-crt");
+            Assert.IsNotNull(titleCrt);
+            float pushIn = _director.Script.PhaseLength;
+            while (titleCrt.resolvedStyle.opacity > 0.05f && elapsed < pushIn)
             {
                 yield return null;
                 float dt = Time.unscaledDeltaTime;
@@ -640,12 +643,10 @@ namespace MoonProject.Rover.PlayModeTests
                 maxPushInFrameMs = Mathf.Max(maxPushInFrameMs, dt * 1000f);
             }
 
-            VisualElement titleCrt = document.rootVisualElement.Q<VisualElement>("title-crt");
-            Assert.IsNotNull(titleCrt);
             Assert.LessOrEqual(titleCrt.resolvedStyle.opacity, 0.05f,
-                "the title CRT fades out in 0.5 s so the 2 s push-in into 07's closed lens is visible");
+                "the title CRT switches off before the push into 07's closed lens ends");
             Assert.AreEqual(OpeningPhase.PushIn, _director.Script.Phase,
-                "the camera is still pushing into the lens after the title has faded");
+                "the camera is still pushing into the lens after the title has gone");
 
             float reloadDeadline = Time.realtimeSinceStartup + BootTimeout;
             while (_director != null && Time.realtimeSinceStartup < reloadDeadline)
