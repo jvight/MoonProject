@@ -1,0 +1,52 @@
+{
+  "model": "decal_old_lander_blast",
+  "pivot_tolerance": 0.02,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_Basalt",
+    "R1_CreamEnamel"
+  ],
+  "max_triangles": 4000,
+  "max_meshes": 4,
+  "max_draw_calls": 10,
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "Decal_OldLanderBlast": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "BlastPatch": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "FootpadScuffs": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.01
+      ]
+    },
+    "Center_Anchor": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      3.1098,
+      3.0699,
+      0.056
+    ],
+    "tolerance": 0.03
+  }
+}

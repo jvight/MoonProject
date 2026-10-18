@@ -283,7 +283,7 @@ namespace MoonProject.Rover.Tests
         {
             DriveForward(Cruise);
             LookAway(2.5f);
-            Assert.Greater(Mathf.Abs(_orbit.YawOffset), 140f);
+            Assert.Greater(Mathf.Abs(_orbit.YawOffset), 120f);
             Run(_tuning.RecenterDelay - 0.5f, Vector2.zero);
 
             Run(0.5f, Vector2.zero);
@@ -294,17 +294,67 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void Recenter_A150DegreeLook_TakesAboutSixSeconds()
+        public void Recenter_FromTheFrontLimit_TakesAboutFiveSeconds()
         {
             DriveForward(Cruise);
             Run(2.5f, Right);
             Run(0.5f, Vector2.zero);
-            Assert.AreEqual(150f, _orbit.YawOffset, 5f);
+            Assert.AreEqual(_tuning.MaxLookYaw, _orbit.YawOffset, 10f);
             Run(_tuning.RecenterDelay - 0.5f, Vector2.zero);
             Run(5f, Vector2.zero);
             Assert.Greater(Mathf.Abs(_orbit.YawOffset), 5f, "Still on its way after 5 s.");
             Run(3f, Vector2.zero);
             Assert.AreEqual(0f, _orbit.YawOffset, 0.05f);
+        }
+
+        [Test]
+        public void Look_StopsShortOfFacing07HeadOn()
+        {
+            Run(8f, Right);
+            Run(1f, Vector2.zero);
+
+            Assert.LessOrEqual(Mathf.Abs(_orbit.YawOffset), _tuning.MaxLookYaw);
+            Assert.Greater(Mathf.Abs(_orbit.YawOffset), _tuning.MaxLookYaw - _tuning.LookYawSoftBand,
+                "it swings well round before the limit holds it");
+        }
+
+        [Test]
+        public void Look_SlowsOverTheSoftBand_NeverStopsDead()
+        {
+            Run(2f, Right);
+            float before = _orbit.YawOffset;
+            Run(Frame, Right);
+            float nearLimitStep = Mathf.Abs(_orbit.YawOffset - before);
+
+            _orbit.Reset(0f);
+            Run(0.5f, Right);
+            float early = _orbit.YawOffset;
+            Run(Frame, Right);
+            float openStep = Mathf.Abs(_orbit.YawOffset - early);
+
+            Assert.Less(nearLimitStep, openStep, "the look slows against the limit");
+        }
+
+        [Test]
+        public void Look_BackTowardTheRear_IsNeverHeldByTheLimit()
+        {
+            Run(8f, Right);
+            float atLimit = _orbit.YawOffset;
+            Run(1f, -Right);
+
+            Assert.Less(_orbit.YawOffset, atLimit - 5f, "the view comes back round freely");
+        }
+
+        [Test]
+        public void ATurnBy07UnderAHeldView_MayLeaveTheLimit_AndTheBearingStillHolds()
+        {
+            Run(2.2f, Right);
+            Run(0.5f, Vector2.zero);
+            float bearing = _orbit.Bearing;
+            _roverYaw += 80f;
+            Run(Frame, Vector2.zero);
+
+            Assert.AreEqual(bearing, _orbit.Bearing, 0.5f, "07 turning never turns a view the player chose");
         }
 
         [Test]
@@ -365,7 +415,7 @@ namespace MoonProject.Rover.Tests
         {
             DriveForward(Cruise);
             LookAway(3f);
-            Assert.Greater(Mathf.Abs(_orbit.YawOffset), 150f);
+            Assert.Greater(Mathf.Abs(_orbit.YawOffset), 120f);
             float before = Mathf.Abs(_orbit.YawOffset);
             Run(_tuning.RecenterDelay + 1.5f, Vector2.zero);
             Assert.Less(Mathf.Abs(_orbit.YawOffset), before);

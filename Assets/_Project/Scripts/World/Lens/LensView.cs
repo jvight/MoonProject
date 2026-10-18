@@ -6,12 +6,11 @@ using MoonProject.Core;
 namespace MoonProject.World
 {
     /// <summary>
-    /// The picture through 07's own eye (docs/design/cutscenes.md §1.8), registered as <see cref="ILensView"/>. While
+    /// The picture darkened by 07's lid (docs/design/cutscenes.md §1.8), registered as <see cref="ILensView"/>. While
     /// Rover applies a state it owns two things of its own: a global URP volume above the world's look whose depth of
-    /// field follows the lens' focus and whose exposure adds the eye's gain to the world's own, and a quad held in front of the view camera whose shader draws the curved soft
-    /// lid, the exposure dips and roll band, the warm lift and the dust speck (<see cref="LensViewModel"/>), and, while
-    /// the opening asks, 07's faint boot readout in the lid's dark corner (localized through ILocalization). Released,
-    /// both switch off and the world's own look is untouched: this never edits the world's post-processing profile.
+    /// field follows the lens' focus and whose exposure adds the eye's gain to the world's own, and a quad held in
+    /// front of the view camera whose shader draws the curved soft lid (<see cref="LensViewModel"/>). Released, both
+    /// switch off and the world's own look is untouched: this never edits the world's post-processing profile.
     /// The view camera is registered by Rover after World initialises, so it is picked up on the first apply.
     /// </summary>
     [DisallowMultipleComponent]
@@ -20,36 +19,15 @@ namespace MoonProject.World
         /// <summary>The overlay quad sits this far (m) in front of the camera, well inside the frustum.</summary>
         private const float QuadDistance = 1f;
 
-        /// <summary>The readout draws after the lens overlay, so the lid never covers it.</summary>
-        private const int ReadoutQueue = 4001;
-
-        /// <summary>Text mesh font size: a TextMesh line is about a tenth of it in local units at character size 1.</summary>
-        private const int ReadoutFontSize = 64;
-        private const float LineUnitsPerFontSize = 0.1f;
-
-        /// <summary>The readout's lines (docs/design/gdd-v3.md §8), in order.</summary>
-        private static readonly string[] ReadoutKeys = { "lens.boot.signal", "lens.boot.uplink", "lens.boot.recovery" };
-
         private static readonly int LidEdgeId = Shader.PropertyToID("_LidEdge");
         private static readonly int LidSoftnessId = Shader.PropertyToID("_LidSoftness");
         private static readonly int LidCurveId = Shader.PropertyToID("_LidCurve");
-        private static readonly int DipId = Shader.PropertyToID("_Dip");
-        private static readonly int RollBandId = Shader.PropertyToID("_RollBand");
-        private static readonly int RollHeightId = Shader.PropertyToID("_RollHeight");
-        private static readonly int RollDarknessId = Shader.PropertyToID("_RollDarkness");
-        private static readonly int WarmId = Shader.PropertyToID("_Warm");
-        private static readonly int SpeckId = Shader.PropertyToID("_Speck");
-        private static readonly int SpeckLookId = Shader.PropertyToID("_SpeckLook");
-        private static readonly int SpeckRimColorId = Shader.PropertyToID("_SpeckRimColor");
 
         [Tooltip("World settings (Assets/_Project/Data/Tuning/WorldSettings.asset); the lens look is its LensView block.")]
         [SerializeField] private WorldSettings _settings;
 
-        [Tooltip("MoonProject/World/LofiLensView: draws the lid, dips, roll band, warm lift and speck.")]
+        [Tooltip("MoonProject/World/LofiLensView: draws the lid.")]
         [SerializeField] private Shader _shader;
-
-        [Tooltip("The crew's terminal type for the boot readout (Be Vietnam Pro, so Vietnamese reads too).")]
-        [SerializeField] private Font _readoutFont;
 
         private GameContext _context;
         private LensViewModel _model;
@@ -63,11 +41,6 @@ namespace MoonProject.World
         private ColorAdjustments _exposure;
         private Camera _camera;
         private bool _applied;
-        private TextMesh _readout;
-        private MeshRenderer _readoutRenderer;
-        private Material _readoutMaterial;
-        private bool _readoutComposed;
-        private bool _localizationMissing;
 
         /// <summary>True between an apply and the next release (for tests and tooling).</summary>
         public bool IsApplied => _applied;
@@ -77,10 +50,9 @@ namespace MoonProject.World
 
         public void Initialize(GameContext context)
         {
-            if (_settings == null || _shader == null || _readoutFont == null)
+            if (_settings == null || _shader == null)
             {
-                Debug.LogError($"{nameof(LensView)}: the world settings, the LofiLensView shader or the readout font " +
-                    "is not assigned.",
+                Debug.LogError($"{nameof(LensView)}: the world settings or the LofiLensView shader is not assigned.",
                     this);
                 enabled = false;
                 return;
@@ -100,25 +72,14 @@ namespace MoonProject.World
                 return;
             }
 
-            _model.Step(state, Time.deltaTime);
+            _model.Step(state);
             LensViewSettings look = _settings.LensView;
             _block.SetFloat(LidEdgeId, _model.LidEdge);
             _block.SetFloat(LidSoftnessId, look.LidSoftness);
             _block.SetFloat(LidCurveId, look.LidCurve);
-            _block.SetFloat(DipId, _model.Dip);
-            _block.SetFloat(RollBandId, _model.RollBand);
-            _block.SetFloat(RollHeightId, look.RollBandHeight);
-            _block.SetFloat(RollDarknessId, look.RollBandDarkness);
-            Color warm = look.WarmTint * (look.WarmLift * _model.Warmth);
-            _block.SetVector(WarmId, new Vector4(warm.r, warm.g, warm.b, 0f));
-            Vector2 speck = state.SpeckOffset;
-            _block.SetVector(SpeckId, new Vector4(speck.x, speck.y, look.SpeckRadius, _model.SpeckSharpness));
-            _block.SetVector(SpeckLookId, new Vector4(look.SpeckDarkness, look.SpeckRim, look.SpeckBlurGrowth, 0f));
-            _block.SetColor(SpeckRimColorId, look.SpeckRimColor);
             _overlay.SetPropertyBlock(_block);
             _overlay.enabled = true;
 
-            ShowReadout(state.Readout01, look);
             _focus.focusDistance.Override(_model.FocusDistance);
             _exposure.postExposure.Override(_settings.PostProcessing.PostExposure + _model.Gain);
             _volume.weight = 1f;
@@ -128,9 +89,9 @@ namespace MoonProject.World
 
         public void Warm()
         {
-            if (_model != null && EnsureOverlay() && !_readoutComposed)
+            if (_model != null)
             {
-                ComposeReadout();
+                EnsureOverlay();
             }
         }
 
@@ -141,12 +102,6 @@ namespace MoonProject.World
             if (_overlay != null)
             {
                 _overlay.enabled = false;
-            }
-
-            if (_readoutRenderer != null)
-            {
-                _readoutRenderer.enabled = false;
-                _readoutComposed = false;
             }
 
             if (_volume != null)
@@ -219,88 +174,8 @@ namespace MoonProject.World
             return true;
         }
 
-        /// <summary>
-        /// 07's boot readout: held in the lid's dark corner at a fixed size on screen, faint, fading with the readout's
-        /// share and dipping with the flicker. The lines are read from the tables once each time it appears.
-        /// </summary>
-        private void ShowReadout(float readout01, LensViewSettings look)
-        {
-            float share = Mathf.Clamp01(readout01);
-            if (share <= 0f)
-            {
-                if (_readoutRenderer != null)
-                {
-                    _readoutRenderer.enabled = false;
-                }
-
-                return;
-            }
-
-            if (!_readoutComposed && !ComposeReadout())
-            {
-                return;
-            }
-
-            float height = 2f * look.ReadoutDistance * Mathf.Tan(0.5f * _camera.fieldOfView * Mathf.Deg2Rad);
-            float width = height * _camera.aspect;
-            Vector2 corner = look.ReadoutCorner;
-            Transform node = _readout.transform;
-            node.localPosition = new Vector3((corner.x - 0.5f) * width, (corner.y - 0.5f) * height,
-                look.ReadoutDistance);
-            float scale = look.ReadoutLineHeight * height / (ReadoutFontSize * LineUnitsPerFontSize);
-            node.localScale = new Vector3(scale, scale, scale);
-            Color colour = look.ReadoutColor;
-            colour.a = look.ReadoutOpacity * share * (1f - _model.Dip);
-            _readout.color = colour;
-            _readoutRenderer.enabled = true;
-        }
-
-        private bool ComposeReadout()
-        {
-            if (!_context.TryGet(out ILocalization localization))
-            {
-                if (!_localizationMissing)
-                {
-                    _localizationMissing = true;
-                    Debug.LogError($"{nameof(LensView)}: no ILocalization is registered, so 07's boot readout is " +
-                        "not shown.", this);
-                }
-
-                return false;
-            }
-
-            if (_readout == null)
-            {
-                var host = new GameObject("LensView Readout");
-                host.transform.SetParent(_camera.transform, false);
-                _readout = host.AddComponent<TextMesh>();
-                _readout.font = _readoutFont;
-                _readout.fontSize = ReadoutFontSize;
-                _readout.characterSize = 1f;
-                _readout.anchor = TextAnchor.UpperLeft;
-                _readout.alignment = TextAlignment.Left;
-                _readoutRenderer = host.GetComponent<MeshRenderer>();
-                _readoutMaterial = new Material(_readoutFont.material) { name = "LensViewReadout" };
-                _readoutMaterial.renderQueue = ReadoutQueue;
-                _readoutRenderer.sharedMaterial = _readoutMaterial;
-                _readoutRenderer.shadowCastingMode = ShadowCastingMode.Off;
-                _readoutRenderer.receiveShadows = false;
-            }
-
-            _readout.text = string.Join("\n", localization.Get(ReadoutKeys[0]), localization.Get(ReadoutKeys[1]),
-                localization.Get(ReadoutKeys[2]));
-            _readoutComposed = true;
-            return true;
-        }
-
         private void OnDestroy()
         {
-            if (_readout != null)
-            {
-                Destroy(_readout.gameObject);
-            }
-
-            DestroyOwned(_readoutMaterial);
             if (_overlay != null)
             {
                 Destroy(_overlay.gameObject);

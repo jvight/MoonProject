@@ -418,8 +418,9 @@ namespace MoonProject.Gameplay
         /// - Releasing <c>E</c> after welding has progressed (<c>BuildProgress01 &gt; 0</c>) pauses welding on the
         ///   partially welded structure and returns build mode to <see cref="BuildModeState.Closed"/>
         ///   (<paramref name="cancelledNow"/> = true).
-        /// - Leaving <see cref="BuildingTuning.WeldRange"/> cancels welding and closes build mode (removing and refunding
-        ///   any 0% structure).
+        /// - Leaving <see cref="BuildingTuning.WeldRange"/> (or placing a frame beyond it) closes build mode but leaves
+        ///   the frame standing, unwelded or partly welded, so pressing E to place never silently does nothing; holding
+        ///   <c>E</c> within range resumes it.
         /// - When progress reaches 100%, <paramref name="completedNow"/> is true and build mode closes cleanly.
         /// </summary>
         public bool StepWelding(
@@ -450,6 +451,7 @@ namespace MoonProject.Gameplay
             {
                 _placedBase.StepWeld(ActiveWeldInstanceId, 0f, roverPosition, false);
                 cancelledNow = true;
+                ActiveWeldInstanceId = 0;
                 Close();
                 return false;
             }

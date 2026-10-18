@@ -47,13 +47,13 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void Begin_AnnouncesTheFirstCheck_AtOnce()
+        public void Begin_AnnouncesTheFirstLine_AtOnce()
         {
             _post.Begin();
             Drain();
             Assert.AreEqual(1, _events.Count);
             Assert.AreEqual(PostEventKind.Started, _events[0].Kind);
-            Assert.AreEqual(BootCheckStep.Lens, _events[0].Step);
+            Assert.AreEqual(BootCheckStep.Carrier, _events[0].Step, "why 07 woke comes first");
         }
 
         [Test]
@@ -63,7 +63,7 @@ namespace MoonProject.Rover.Tests
             Drain();
             RunToEnd();
             Assert.AreEqual(PostSequencer.StepCount * 2 + 1, _events.Count);
-            BootCheckStep expected = BootCheckStep.Lens;
+            BootCheckStep expected = BootCheckStep.Carrier;
             for (int i = 0; i < PostSequencer.StepCount; i++)
             {
                 PostEvent started = _events[2 * i];
@@ -141,7 +141,7 @@ namespace MoonProject.Rover.Tests
             _post.Begin();
             Drain();
             RunToEnd();
-            BootCheckStep current = BootCheckStep.Lens;
+            BootCheckStep current = BootCheckStep.Carrier;
             bool inside = false;
             var pulses = new Dictionary<BootCheckStep, List<int>>();
             foreach (PostEvent postEvent in _all)
@@ -173,7 +173,7 @@ namespace MoonProject.Rover.Tests
             CollectionAssert.AreEqual(new[] { 0, 3, 1, 4, 2, 5 }, pulses[BootCheckStep.Cutter], "three sparks, each with the beacon's blink");
             CollectionAssert.AreEqual(new[] { 0, 1, 2 }, pulses[BootCheckStep.SolarWing], "jerk, stall, fold");
             CollectionAssert.AreEqual(new[] { 0, 1 }, pulses[BootCheckStep.Head], "sweep, nod");
-            CollectionAssert.AreEqual(new[] { 0, 1, 2 }, pulses[BootCheckStep.Begin], "turn, shiver, headlamps");
+            Assert.IsFalse(pulses.ContainsKey(BootCheckStep.Begin), "the start's motions are the ready performance");
             Assert.IsFalse(pulses.ContainsKey(BootCheckStep.Assembly), "the assembly line has nothing to tick");
         }
 
@@ -258,9 +258,9 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void TheChecks_FitTheBriefAfterTheLensStages()
+        public void TheLines_FitTheBriefOnceTheEyesAreAwake()
         {
-            Assert.That(_post.TotalSeconds, Is.InRange(14f, 24f), "The checks themselves, after the lens stages.");
+            Assert.That(_post.TotalSeconds, Is.InRange(20f, 28f), "The lines on the face, after the eyes wake.");
         }
 
         [Test]

@@ -106,6 +106,20 @@ namespace MoonProject.World.PlayModeTests
         private const float BlastSearchSeconds = 7200f;
         private const float BlastSearchStep = 20f;
         private const float BlastSettleSeconds = 2f;
+        // The basin's story props (basin dressing Â§2, Â§5): the Scout from the lane in the eclipse, from the apron at
+        // last light (07's chase behind it, a wide eye above the apron), close up, and its shadow from above; the
+        // ruins' front door from the trail's start at golden hour.
+        private const float ScoutApronEyeHeight = 3.2f;
+        private const float ScoutLookHeight = 1.5f;
+        private const float ScoutCloseDistance = 9f;
+        private const float ScoutCloseEyeHeight = 2.2f;
+        private const float ScoutCloseBearingOffset = 60f;
+        private const float ScoutCloseFov = 45f;
+        private const float ScoutApronFov = 40f;
+        private const float ScoutOverheadHeight = 70f;
+        private const float ScoutShadowMid = 30f;
+        private static readonly Vector2 FrontDoorTrailStart = new Vector2(27f, 147f);
+        private static readonly Vector2 FrontDoorTrailEnd = new Vector2(80f, 182f);
 
         private static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "world-captures"));
@@ -520,6 +534,137 @@ namespace MoonProject.World.PlayModeTests
             }
 
             Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        /// <summary>
+        /// The basin's story props against the real sky (basin dressing Â§2, Â§5): in the eclipse, the Scout from the
+        /// first drive's lane (nothing new may show); at golden hour, the ruins' front door from the trail's start; at
+        /// last light, the Scout's shadow from the apron (07's chase view and a wide eye), the Scout close up and its
+        /// shadow from above. The Sun stands where the opening's milestones leave it. Logs/world-captures/basin-*.png.
+        /// </summary>
+        [UnityTest]
+        [Timeout(600000)]
+        [PrebuildSetup(typeof(CanyonSessionScene))]
+        [PostBuildCleanup(typeof(CanyonSessionScene))]
+        public IEnumerator BasinProps_AreCapturedInTheirLight()
+        {
+            BootstrapHarness.DeleteSaveFiles(CanyonSessionScene.SaveSlot);
+#if UNITY_EDITOR
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(CanyonSessionScene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            while (!loading.isDone)
+            {
+                yield return null;
+            }
+
+            GroundShaping shaping =
+                AssetDatabase.LoadAssetAtPath<WorldSettings>(OpeningSettingsPath).CreateSurface().Shaping;
+#else
+            throw new NotSupportedException("The atmosphere session loads the scene through the editor.");
+#endif
+            GameBootstrap bootstrap = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
+            {
+                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
+            }
+
+            Assert.IsNotNull(bootstrap, "the scene has its bootstrap");
+            GameContext context = bootstrap.Context;
+            _awoke = context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
+            float started = Time.time;
+            while (!_awake)
+            {
+                Assert.Less(Time.time - started, WakeTimeout, "07 wakes up");
+                yield return null;
+            }
+
+            yield return new WaitForSeconds(SettleSeconds);
+            var terrain = context.Get<ITerrainQuery>();
+            IWorldAnchors anchors = context.Get<IWorldAnchors>();
+            Vector3 wake = Anchor(anchors, WorldAnchorIds.PlaceWake).Position;
+            Vector3 lander = Anchor(anchors, WorldAnchorIds.PlaceLander).Position;
+            Vector3 apron = Anchor(anchors, WorldAnchorIds.PlaceApron).Position;
+            Vector3 scout = OnGround(terrain, shaping.ScoutSpot);
+            Vector3 scoutLook = scout + Vector3.up * ScoutLookHeight;
+            Vector3 toScout = Vector3.ProjectOnPlane(scout - apron, Vector3.up).normalized;
+
+            Vector3 lane = Vector3.ProjectOnPlane(lander - wake, Vector3.up);
+            float along = Mathf.Clamp01(Vector3.Dot(Vector3.ProjectOnPlane(scout - wake, Vector3.up), lane)
+                                        / lane.sqrMagnitude);
+            Vector3 onLane = OnGround(terrain, new Vector2(wake.x + lane.x * along, wake.z + lane.z * along));
+            Vector3 closeEye = scout
+                               + Quaternion.Euler(0f, ScoutCloseBearingOffset, 0f) * -toScout * ScoutCloseDistance;
+            closeEye.y = terrain.SampleHeight(closeEye.x, closeEye.z) + ScoutCloseEyeHeight;
+            Vector3 shadowMid = scout - toScout * ScoutShadowMid;
+            Vector3 doorEye = OnGround(terrain, FrontDoorTrailStart) + Vector3.up * ScoutApronEyeHeight;
+            Vector3 doorLook = OnGround(terrain, FrontDoorTrailEnd) + Vector3.up * ScoutLookHeight;
+
+            var rover = context.Get<IRoverPlacement>();
+            Camera view = context.Get<IViewCamera>().Camera;
+            var host = new GameObject("BasinReviewCamera");
+            try
+            {
+                var camera = host.AddComponent<Camera>();
+                camera.CopyFrom(view);
+                camera.enabled = false;
+                CopyPipelineSettings(view, camera);
+
+                rover.PlaceAt(onLane, Quaternion.LookRotation(Vector3.ProjectOnPlane(scout - onLane, Vector3.up)));
+                yield return new WaitForSeconds(BlastSettleSeconds);
+                Shoot(view, "basin-eclipse-lane-chase");
+                Shoot(camera, LookPose("eclipse-lane", onLane + Vector3.up * OpeningEyeHeight, scoutLook, OpeningFov));
+
+                context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.FirstCharge, true));
+                yield return new WaitForSeconds(BlastSettleSeconds);
+                Debug.Log($"[basin] golden hour: sun at {SunReport(context)}");
+                Shoot(camera, LookPose("golden-front-door", doorEye, doorLook, ScoutApronFov));
+
+                context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.PowerOn, true));
+                rover.PlaceAt(apron, Quaternion.LookRotation(toScout, Vector3.up));
+                yield return new WaitForSeconds(BlastSettleSeconds);
+                Debug.Log($"[basin] last light: sun at {SunReport(context)}; the Scout at {scout}");
+                Shoot(view, "basin-lastlight-apron-chase");
+                foreach (Pose pose in new[]
+                         {
+                             LookPose("lastlight-apron", apron + Vector3.up * ScoutApronEyeHeight, scoutLook,
+                                 ScoutApronFov),
+                             LookPose("lastlight-close", closeEye, scoutLook, ScoutCloseFov),
+                             LookPose("lastlight-overhead", shadowMid + Vector3.up * ScoutOverheadHeight,
+                                 shadowMid + toScout * LandingOverheadTilt, LandingOverheadFov),
+                         })
+                {
+                    Shoot(camera, pose);
+                }
+            }
+            finally
+            {
+                Object.Destroy(host);
+            }
+
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        private static void Shoot(Camera camera, Pose pose)
+        {
+            Place(camera, pose);
+            Shoot(camera, "basin-" + pose.name);
+        }
+
+        private static void Shoot(Camera camera, string name)
+        {
+            FrameCapture.SavePng(camera, CaptureWidth, CaptureHeight, Path.Combine(CaptureFolder, name + ".png"));
+        }
+
+        private static string SunReport(GameContext context)
+        {
+            Vector3 toSun = context.Get<ISunlight>().SunDirection;
+            float bearing = Mathf.Repeat(Mathf.Atan2(toSun.x, toSun.z) * Mathf.Rad2Deg, 360f);
+            return $"{bearing:F1} deg, {Mathf.Asin(toSun.y) * Mathf.Rad2Deg:F2} deg up";
+        }
+
+        private static Vector3 OnGround(ITerrainQuery terrain, Vector2 spot)
+        {
+            return new Vector3(spot.x, terrain.SampleHeight(spot.x, spot.y), spot.y);
         }
 
         /// <summary>

@@ -135,3 +135,16 @@ class ProcessTreeGuard:
         if self._job is not None:
             _kernel32.CloseHandle(self._job)
             self._job = None
+
+
+def run_guarded(cmd, **popen_kwargs):
+    """Runs <cmd> to completion under a job object: the whole tree dies with this process and after the run, so a
+    killed build_player or box_check never leaves unity_batch or its Unity editor running. Returns the exit code."""
+    guard = ProcessTreeGuard()
+    proc = subprocess.Popen(cmd, **popen_kwargs)
+    guard.attach(proc)
+    try:
+        return proc.wait()
+    finally:
+        guard.kill()
+        guard.close()

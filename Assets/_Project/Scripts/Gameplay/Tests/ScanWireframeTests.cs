@@ -23,6 +23,9 @@ namespace MoonProject.Gameplay.Tests
         /// <summary>Where Art's R1 ruin pieces are built.</summary>
         private const string RuinsFolder = "Assets/_Project/Generated/Art/R1/Models/Ruins";
 
+        /// <summary>Where Art's R1 story props are built (the basin's story scans lie on them).</summary>
+        private const string PropsFolder = "Assets/_Project/Generated/Art/R1/Models/Props";
+
         private static readonly int ProgressId = Shader.PropertyToID("_ScanProgress");
         private static readonly int DissolveId = Shader.PropertyToID("_Dissolve");
 
@@ -102,12 +105,14 @@ namespace MoonProject.Gameplay.Tests
 
             foreach (StoryScan story in scans.Stories)
             {
-                GameObject ruin = Instance(RuinsFolder + "/" + story.RuinId + ".prefab");
+                string ruinPath = RuinsFolder + "/" + story.HostId + ".prefab";
+                GameObject ruin = Instance(AssetDatabase.LoadAssetAtPath<GameObject>(ruinPath) != null ? ruinPath
+                    : PropsFolder + "/" + story.HostId + ".prefab");
                 Transform node = Descendant(ruin.transform, story.Node);
-                Assert.IsNotNull(node, $"{story.RuinId} has {story.Node}");
+                Assert.IsNotNull(node, $"{story.HostId} has {story.Node}");
                 var target = new GameObject(story.FragmentId).transform;
                 target.SetParent(node, false);
-                AssertShowsTheScan(ScanFragment.ForStoryTarget(story, story.RuinId, target, ruin.transform),
+                AssertShowsTheScan(ScanFragment.ForStoryTarget(story, story.HostId, target, ruin.transform),
                     story.FragmentId);
                 targets++;
             }

@@ -59,6 +59,7 @@ namespace MoonProject.World
                 if (Hashing.ToUnit(Hashing.Hash(qx, qz, seed ^ KeepSalt)) >= settings.Chance
                     || site.magnitude < settings.PadClearance || NearAnchor(site, anchors, settings.AnchorClearance)
                     || NearRoute(site, routes, settings.RouteClearance)
+                    || InScoutCrater(site, surface.Shaping, settings.AnchorClearance)
                     || surface.SampleNormal(site.x, site.y).y < maxSlopeCos)
                 {
                     continue;
@@ -86,6 +87,13 @@ namespace MoonProject.World
             }
 
             return false;
+        }
+
+        /// <summary>The Scout's crater (basin dressing Â§2) stays its own: no flat anchor, so checked apart.</summary>
+        private static bool InScoutCrater(Vector2 site, GroundShaping shaping, float clearance)
+        {
+            float reach = shaping.ScoutCraterRadius + clearance;
+            return (site - shaping.ScoutCraterCenter).sqrMagnitude < reach * reach;
         }
 
         private static bool NearRoute(Vector2 site, IReadOnlyList<Vector2> routes, float clearance)

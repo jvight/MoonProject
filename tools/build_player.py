@@ -86,15 +86,17 @@ def mb(size):
     return f"{size / (1024 * 1024):.1f} MB"
 
 
-def build(root, out_dir, skip_builders, timeout, showcase=False, autoplay=False):
+def build(root, out_dir, skip_builders, timeout, showcase=False, autoplay=False, backend="mono"):
     method = SHOWCASE_BUILD_METHOD if showcase else BUILD_METHOD
     cmd = [sys.executable, str(Path(__file__).resolve().parent / "unity_batch.py"), "exec", "--method", method,
            "--project", str(root), "--timeout", str(timeout), "--arg", f"out={out_dir}",
            "--arg", f"builders={'false' if skip_builders else 'true'}"]
     if autoplay:
         cmd += ["--arg", "autoplay=true"]
+    if backend != "mono":
+        cmd += ["--arg", f"backend={backend}"]
     say("building the player through unity_batch (first builds compile player shaders and take several minutes)")
-    return subprocess.run(cmd).returncode == 0
+    return procutil.run_guarded(cmd) == 0
 
 
 def copy_licenses(root, out_dir):
@@ -220,6 +222,9 @@ def main():
     ap.add_argument("--skip-builders", action="store_true", help="build the player without re-running builders")
     ap.add_argument("--autoplay", action="store_true",
                     help="build the development variant with the Autoplay bot into Builds/Lunarion-Autoplay (no zip)")
+    ap.add_argument("--backend", choices=("mono", "il2cpp"), default="mono",
+                    help="scripting backend of the player (il2cpp needs Unity's Windows IL2CPP build support; into "
+                         "Builds/Lunarion-Windows-il2cpp, not zipped)")
     ap.add_argument("--no-build", action="store_true", help="reuse the existing build folder (zip + smoke only)")
     ap.add_argument("--no-smoke", action="store_true", help="skip launching the built player")
     ap.add_argument("--smoke-seconds", type=int, default=20)
@@ -230,11 +235,12 @@ def main():
         sys.exit("[build_player] ERROR: --autoplay plays the Main scene; it cannot be combined with --showcase")
     root = git_toplevel()
     default_out = ("Builds/Lunarion-Autoplay" if args.autoplay else
-                   "Builds/Lunarion-Showcase" if args.showcase else "Builds/Lunarion-Windows")
+                   "Builds/Lunarion-Showcase" if args.showcase else
+                   "Builds/Lunarion-Windows-il2cpp" if args.backend == "il2cpp" else "Builds/Lunarion-Windows")
     out_dir = (Path(args.out) if args.out and Path(args.out).is_absolute() else root / (args.out or
                default_out)).resolve()
     if not args.no_build and not build(root, out_dir, args.skip_builders, args.timeout, showcase=args.showcase,
-                                       autoplay=args.autoplay):
+                                       autoplay=args.autoplay, backend=args.backend):
         say("RESULT: FAIL (player build failed; see the unity_batch output above)")
         sys.exit(1)
     if not (out_dir / INFO_FILE).exists():
@@ -249,6 +255,8 @@ def main():
     say(f"version {info['version']}  exe {mb(exe.stat().st_size)}  build folder {mb(folder_size(out_dir))}")
     if args.autoplay:
         say("development variant (Autoplay bot): not zipped")
+    elif args.backend != "mono":
+        say(f"{args.backend} variant: not zipped")
     else:
         archive = make_zip(root, out_dir, info["version"], showcase=args.showcase)
         say(f"zip {mb(archive.stat().st_size)}: {archive}")

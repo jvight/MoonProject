@@ -15,13 +15,14 @@ namespace MoonProject.Editor.Build
 {
     /// <summary>
     /// Windows playtest build of <c>Assets/_Project/Scenes/Main.unity</c> or
-    /// <c>Assets/_Project/Scenes/Showcase.unity</c>: StandaloneWindows64, Mono, release (no development build, no test
+    /// <c>Assets/_Project/Scenes/Showcase.unity</c>: StandaloneWindows64, Mono (IL2CPP with backend=il2cpp), release (no development build, no test
     /// assemblies), product/company from ProjectSettings. Every builder runs first so the build always reflects source.
     /// Writes <c>build_info.txt</c> next to the exe. Normally run through <c>python tools/build_player.py</c>;
     /// directly:
     /// <code>python tools/unity_batch.py exec --method MoonProject.Editor.Build.PlayerBuild.BuildWindows
     ///     [--arg out=Builds/Lunarion-Windows] [--arg builders=false] [--arg autoplay=true]</code>
-    /// With <c>autoplay=true</c> the player is the development variant that carries the Autoplay bot.
+    /// With <c>autoplay=true</c> the player is the development variant that carries the Autoplay bot; with
+    /// <c>development=true</c> it is a Unity development player, so the profiler can record it.
     /// <code>python tools/unity_batch.py exec --method MoonProject.Editor.Build.PlayerBuild.BuildShowcase
     ///     [--arg out=Builds/Lunarion-Showcase] [--arg builders=false]</code>
     /// </summary>
@@ -47,7 +48,7 @@ namespace MoonProject.Editor.Build
         {
             BatchRunner.Run(nameof(BuildWindows), args => Build(
                 BatchArgs.ProjectPath(args.GetString("out", DefaultOutput)), args.GetBool("builders", true),
-                args.GetBool("autoplay", false)));
+                args.GetBool("autoplay", false), args.GetBool("development", false), args.GetString("backend", "mono")));
         }
 
         public static void BuildShowcase()
@@ -57,20 +58,36 @@ namespace MoonProject.Editor.Build
         }
 
         /// <summary>Builds Main.unity into <paramref name="outputDirectory"/> (emptied first). Returns true on success.</summary>
-        public static bool Build(string outputDirectory, bool runBuilders, bool autoplay = false)
+        public static bool Build(string outputDirectory, bool runBuilders, bool autoplay = false,
+            bool development = false, string backend = "mono")
         {
-            return BuildScene(MainSceneBuilder.ScenePath, MainBuildersPattern, outputDirectory, runBuilders, autoplay);
+            return BuildScene(MainSceneBuilder.ScenePath, MainBuildersPattern, outputDirectory, runBuilders, autoplay,
+                development, backend);
         }
 
         /// <summary>Builds Showcase.unity into <paramref name="outputDirectory"/> (emptied first). Returns true on success.</summary>
         public static bool BuildShowcasePlayer(string outputDirectory, bool runBuilders)
         {
-            return BuildScene(ShowcaseScenePath, ShowcaseBuildersPattern, outputDirectory, runBuilders, false);
+            return BuildScene(ShowcaseScenePath, ShowcaseBuildersPattern, outputDirectory, runBuilders, false, false, "mono");
         }
 
         private static bool BuildScene(string scenePath, string builderPattern, string outputDirectory, bool runBuilders,
-            bool autoplay)
+            bool autoplay, bool development, string backendName)
         {
+            ScriptingImplementation wanted;
+            switch (backendName)
+            {
+                case "mono":
+                    wanted = ScriptingImplementation.Mono2x;
+                    break;
+                case "il2cpp":
+                    wanted = ScriptingImplementation.IL2CPP;
+                    break;
+                default:
+                    Debug.LogError($"Unknown scripting backend '{backendName}'; use mono or il2cpp.");
+                    return false;
+            }
+
             if (!BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.Standalone, BuildTarget.StandaloneWindows64))
             {
                 Debug.LogError("Windows build support is not installed for this Unity editor.");
@@ -113,18 +130,29 @@ namespace MoonProject.Editor.Build
                 locationPathName = exePath,
                 target = BuildTarget.StandaloneWindows64,
                 targetGroup = BuildTargetGroup.Standalone,
-                options = BuildOptions.None,
+                options = development ? BuildOptions.Development : BuildOptions.None,
                 extraScriptingDefines = autoplay ? new[] { AutoplayDefine } : Array.Empty<string>(),
             };
 
             var topLevelAssets = new HashSet<string>(AssetDatabase.GetSubFolders("Assets"), StringComparer.Ordinal);
             BuildReport report;
+            bool switchBackend = wanted != backend;
+            if (switchBackend)
+            {
+                PlayerSettings.SetScriptingBackend(NamedBuildTarget.Standalone, wanted);
+            }
+
             try
             {
                 report = BuildPipeline.BuildPlayer(options);
             }
             finally
             {
+                if (switchBackend)
+                {
+                    PlayerSettings.SetScriptingBackend(NamedBuildTarget.Standalone, backend);
+                }
+
                 RemoveBuildLeftovers(topLevelAssets);
             }
 
@@ -140,7 +168,7 @@ namespace MoonProject.Editor.Build
 
             RemoveDoNotShipFolders(outputDirectory);
             string infoPath = Path.Combine(outputDirectory, InfoFileName);
-            File.WriteAllText(infoPath, Info(version, summary), new UTF8Encoding(false));
+            File.WriteAllText(infoPath, Info(version, summary, wanted), new UTF8Encoding(false));
             BatchRunner.Log($"player build: {exePath}");
             return true;
         }
@@ -189,7 +217,7 @@ namespace MoonProject.Editor.Build
             }
         }
 
-        private static string Info(BuildVersion version, BuildSummary summary)
+        private static string Info(BuildVersion version, BuildSummary summary, ScriptingImplementation backend)
         {
             var info = new StringBuilder();
             info.Append("product=").AppendLine(PlayerSettings.productName);
@@ -202,7 +230,7 @@ namespace MoonProject.Editor.Build
                 .AppendLine(DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture));
             info.Append("unity=").AppendLine(Application.unityVersion);
             info.AppendLine("target=StandaloneWindows64");
-            info.AppendLine("scriptingBackend=Mono");
+            info.Append("scriptingBackend=").AppendLine(backend == ScriptingImplementation.IL2CPP ? "IL2CPP" : "Mono");
             info.AppendLine("development=false");
             info.Append("exe=").AppendLine(ExeName() + ".exe");
             info.Append("buildSeconds=")

@@ -29,6 +29,8 @@ namespace MoonProject.Art.Editor
         public const string IceCoreLabelMaterialName = "R1_IceCoreLabel";
         public const string IceCoreFrostMaterialName = "R1_IceCoreFrost";
         public const string IceCoreWindowMaterialName = "R1_IceCoreWindow";
+        public const string OldLanderTanEnamelMaterialName = "R1_OldLanderTanEnamel";
+        public const string OldLanderBlastDecalMaterialName = "R1_OldLanderBlastDecal";
         public const string MissionFlagStripeMaterialName = "R1_MissionFlagStripe";
         public const string BootprintTrailMaterialName = "R1_BootprintTrail";
 
@@ -43,6 +45,8 @@ namespace MoonProject.Art.Editor
         public const string IceCoreLabelMaterialPath = ArtPaths.R1MaterialsFolder + "/" + IceCoreLabelMaterialName + ".mat";
         public const string IceCoreFrostMaterialPath = ArtPaths.R1MaterialsFolder + "/" + IceCoreFrostMaterialName + ".mat";
         public const string IceCoreWindowMaterialPath = ArtPaths.R1MaterialsFolder + "/" + IceCoreWindowMaterialName + ".mat";
+        public const string OldLanderTanEnamelMaterialPath = ArtPaths.R1MaterialsFolder + "/" + OldLanderTanEnamelMaterialName + ".mat";
+        public const string OldLanderBlastDecalMaterialPath = ArtPaths.R1MaterialsFolder + "/" + OldLanderBlastDecalMaterialName + ".mat";
         public const string MissionFlagStripeMaterialPath = ArtPaths.R1MaterialsFolder + "/" + MissionFlagStripeMaterialName + ".mat";
         public const string BootprintTrailMaterialPath = ArtPaths.R1MaterialsFolder + "/" + BootprintTrailMaterialName + ".mat";
 
@@ -78,6 +82,8 @@ namespace MoonProject.Art.Editor
         public const string CablePlugPrefabPath = PropsModelsFolder + "/Cable_Plug.prefab";
         public const string CableSpliceBoxPrefabPath = PropsModelsFolder + "/Cable_Splice_Box.prefab";
         public const string HabitatModulesPrefabPath = ArtPaths.R1ModelsFolder + "/Ruins/HabitatModules.prefab";
+        public const string PropOldLanderPrefabPath = PropsModelsFolder + "/Prop_OldLander.prefab";
+        public const string DecalOldLanderBlastPrefabPath = PropsModelsFolder + "/Decal_OldLanderBlast.prefab";
         public const string PropMissionFlagPrefabPath = PropsModelsFolder + "/Prop_MissionFlag.prefab";
         public const string PropSeismicStationPrefabPath = PropsModelsFolder + "/Prop_SeismicStation.prefab";
         public const string PropRetroreflectorPrefabPath = PropsModelsFolder + "/Prop_Retroreflector.prefab";
@@ -277,7 +283,43 @@ namespace MoonProject.Art.Editor
             iceCoreWindowMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
             GeneratedAssets.CreateOrReplace(iceCoreWindowMat, IceCoreWindowMaterialPath);
 
-            // 12. R1_MissionFlagStripe: sun-bleached faint stripe & canton trim (almost white warm grey-cream, zero emission)
+            // 12. R1_OldLanderTanEnamel: sun-faded white thermal paint turned warm tan/brown from decades of lunar UV (no emission)
+            Material oldLanderTanMat = R1MaterialLibrary.CreateMaterial(r1Lit, creamSpec);
+            oldLanderTanMat.name = OldLanderTanEnamelMaterialName;
+            oldLanderTanMat.SetColor("_BaseColor", new Color(0.74f, 0.58f, 0.40f, 1f));
+            oldLanderTanMat.SetFloat("_MetallicScale", 0.06f);
+            oldLanderTanMat.SetFloat("_SmoothnessMin", 0.12f);
+            oldLanderTanMat.SetFloat("_SmoothnessMax", 0.28f);
+            oldLanderTanMat.SetColor("_EdgeWearColor", new Color(0.46f, 0.35f, 0.24f, 1f));
+            oldLanderTanMat.SetFloat("_EdgeWearAmount", 0.56f);
+            oldLanderTanMat.SetFloat("_EdgeWearSmoothness", 0.22f);
+            oldLanderTanMat.SetColor("_DustColor", new Color(0.58f, 0.54f, 0.48f, 1f));
+            oldLanderTanMat.SetFloat("_DustAmount", 0.38f);
+            oldLanderTanMat.SetTexture("_EmissionMap", null);
+            oldLanderTanMat.SetColor("_EmissionColor", Color.black);
+            oldLanderTanMat.SetFloat("_EmissionStrength", 0.0f);
+            oldLanderTanMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+            GeneratedAssets.CreateOrReplace(oldLanderTanMat, OldLanderTanEnamelMaterialPath);
+
+            // 13. R1_OldLanderBlastDecal: soft, slightly brighter disturbed-regolith patch under Prop_OldLander (no emission)
+            R1MaterialSpec basaltSpec = R1MaterialRecipes.Get(R1MaterialSlot.Basalt);
+            Material oldLanderBlastMat = R1MaterialLibrary.CreateMaterial(r1Lit, basaltSpec);
+            oldLanderBlastMat.name = OldLanderBlastDecalMaterialName;
+            oldLanderBlastMat.SetColor("_BaseColor", new Color(1.22f, 1.20f, 1.16f, 1f));
+            oldLanderBlastMat.SetFloat("_MetallicScale", 0.02f);
+            oldLanderBlastMat.SetFloat("_SmoothnessMin", 0.04f);
+            oldLanderBlastMat.SetFloat("_SmoothnessMax", 0.12f);
+            oldLanderBlastMat.SetColor("_EdgeWearColor", new Color(0.72f, 0.71f, 0.68f, 1f));
+            oldLanderBlastMat.SetFloat("_EdgeWearAmount", 0.35f);
+            oldLanderBlastMat.SetColor("_DustColor", new Color(0.68f, 0.67f, 0.64f, 1f));
+            oldLanderBlastMat.SetFloat("_DustAmount", 0.62f);
+            oldLanderBlastMat.SetTexture("_EmissionMap", null);
+            oldLanderBlastMat.SetColor("_EmissionColor", Color.black);
+            oldLanderBlastMat.SetFloat("_EmissionStrength", 0.0f);
+            oldLanderBlastMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+            GeneratedAssets.CreateOrReplace(oldLanderBlastMat, OldLanderBlastDecalMaterialPath);
+
+            // 14. R1_MissionFlagStripe: sun-bleached faint stripe & canton trim (almost white warm grey-cream, zero emission)
             Material flagStripeMat = R1MaterialLibrary.CreateMaterial(r1Lit, creamSpec);
             flagStripeMat.name = MissionFlagStripeMaterialName;
             flagStripeMat.SetColor("_BaseColor", new Color(0.84f, 0.80f, 0.74f, 1f));
@@ -292,8 +334,7 @@ namespace MoonProject.Art.Editor
             flagStripeMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
             GeneratedAssets.CreateOrReplace(flagStripeMat, MissionFlagStripeMaterialPath);
 
-            // 13. R1_BootprintTrail: tileable lunar regolith ground decal of two crossing EVA bootprint trails softened by time
-            R1MaterialSpec basaltSpec = R1MaterialRecipes.Get(R1MaterialSlot.Basalt);
+            // 15. R1_BootprintTrail: tileable lunar regolith ground decal of two crossing EVA bootprint trails softened by time
             Material bootprintMat = R1MaterialLibrary.CreateMaterial(r1Lit, basaltSpec);
             bootprintMat.name = BootprintTrailMaterialName;
             bootprintMat.SetTexture("_BaseMap", LoadRequiredTexture(BootprintTrailAlbedoPath));
@@ -415,6 +456,46 @@ namespace MoonProject.Art.Editor
 
                 EnsureSimpleBoxCollider(root);
             }
+            else if (modelPath.EndsWith("/Prop_OldLander.fbx", StringComparison.Ordinal))
+            {
+                Material tanMat = LoadOrBuildMaterial(OldLanderTanEnamelMaterialPath);
+                ReplaceRendererSlotMaterial(root, "ThermalBoxes", R1MaterialRecipes.CreamEnamelSlot, tanMat);
+                ReplaceRendererSlotMaterial(root, "TvCamera", R1MaterialRecipes.CreamEnamelSlot, tanMat);
+                AddOldLanderBoxColliders(root);
+            }
+            else if (modelPath.EndsWith("/Decal_OldLanderBlast.fbx", StringComparison.Ordinal))
+            {
+                Material blastMat = LoadOrBuildMaterial(OldLanderBlastDecalMaterialPath);
+                ReplaceRendererSlotMaterial(root, "BlastPatch", R1MaterialRecipes.CreamEnamelSlot, blastMat);
+                ReplaceRendererSlotMaterial(root, "FootpadScuffs", R1MaterialRecipes.CreamEnamelSlot, blastMat);
+                DisableShadowCastingOnHierarchy(root);
+            }
+        }
+
+        private static void AddOldLanderBoxColliders(GameObject root)
+        {
+            // Central triangular spaceframe & thermal compartments box collider
+            var bodyCol = root.AddComponent<BoxCollider>();
+            bodyCol.center = new Vector3(0.0f, 0.86f, -0.02f);
+            bodyCol.size = new Vector3(1.36f, 0.96f, 1.24f);
+
+            // Tall central mast, flat solar panel & planar antenna box collider
+            var mastCol = root.AddComponent<BoxCollider>();
+            mastCol.center = new Vector3(0.02f, 2.16f, -0.18f);
+            mastCol.size = new Vector3(1.12f, 1.48f, 0.78f);
+
+            // Three extended landing leg & footpad box colliders
+            var leg1Col = root.AddComponent<BoxCollider>();
+            leg1Col.center = new Vector3(0.76f, 0.32f, 0.44f);
+            leg1Col.size = new Vector3(0.92f, 0.64f, 0.72f);
+
+            var leg2Col = root.AddComponent<BoxCollider>();
+            leg2Col.center = new Vector3(-0.76f, 0.32f, 0.44f);
+            leg2Col.size = new Vector3(0.92f, 0.64f, 0.72f);
+
+            var leg3Col = root.AddComponent<BoxCollider>();
+            leg3Col.center = new Vector3(0.0f, 0.24f, -0.86f);
+            leg3Col.size = new Vector3(0.66f, 0.66f, 0.96f);
         }
 
         /// <summary>

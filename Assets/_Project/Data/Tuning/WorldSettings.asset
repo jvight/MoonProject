@@ -195,6 +195,13 @@ MonoBehaviour:
         _levelGround: 0.95
         _edgePebbles: 0.55
         _edgePileWidth: 8
+      _scoutBearing: 137.7
+      _scoutDistance: 80
+      _scoutCraterBearing: 317.7
+      _scoutCraterOffset: 7
+      _scoutCraterRadius: 10
+      _scoutCraterDepth: 1.1
+      _scoutCraterRim: 0.3
     _craterField:
       _cellSize: 18
       _density: 0.7
@@ -569,6 +576,9 @@ MonoBehaviour:
       _offset: {x: 10, y: 30}
       _yaw: 75
       _sink: 0.8
+    _scoutYaw: 137.7
+    _scoutSink: 0.08
+    _scoutBlastSink: 0.03
     _signalPillarSetback: 18
     _signalPillarGlow: 3.5
     _signalPillarWidth: 3
@@ -576,30 +586,12 @@ MonoBehaviour:
     _lidSoftness: 0.14
     _lidCurve: 0.12
     _lidOpenGamma: 0.75
-    _maxDip: 0.3
-    _rollBandHeight: 0.1
-    _rollBandDarkness: 0.6
-    _rollBandSpeed: 1.1
-    _warmTint: {r: 1, g: 0.62, b: 0.32, a: 1}
-    _warmLift: 0.1
-    _speckRadius: 0.028
-    _speckDarkness: 0.45
-    _speckRim: 0.12
-    _speckRimColor: {r: 0.93, g: 0.9, b: 1, a: 1}
-    _speckSharpDistance: 0.25
-    _speckBlurDistance: 3
-    _speckBlurGrowth: 3.5
     _focalLength: 60
     _aperture: 1.6
     _nearestFocus: 0.1
     _wakeGain: 1.5
     _gainHoldLid: 0.2
     _gainGoneLid: 0.65
-    _readoutColor: {r: 1, g: 0.86, b: 0.62, a: 1}
-    _readoutOpacity: 0.55
-    _readoutLineHeight: 0.026
-    _readoutCorner: {x: 0.07, y: 0.9}
-    _readoutDistance: 0.5
     _volumePriority: 90
   _skyCycle:
     _dayLengthSeconds: 7200

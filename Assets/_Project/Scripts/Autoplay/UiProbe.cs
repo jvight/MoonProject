@@ -11,6 +11,7 @@ namespace MoonProject.Autoplay
         private const float VisibleOpacity = 0.05f;
 
         public const string ObjectiveLineName = "next-line-text";
+        private const string LookHintName = "look-hint";
         public const string FaceDevicePrefix = "seven-device-";
 
         private readonly VisualElement _root;
@@ -59,20 +60,22 @@ namespace MoonProject.Autoplay
         /// <summary>The key cap on the prompt chip when it is showing, else empty.</summary>
         public string ChipGlyph()
         {
-            return TextOf("prompt", "prompt-glyph-label");
+            string glyph = TextOf("prompt", "prompt-glyph-label");
+            return glyph.Length > 0 ? glyph : TextOf(LookHintName, "look-hint-glyph-label");
         }
 
         /// <summary>The key cap text the chip carries whether or not it is showing.</summary>
         public string RawChipGlyph()
         {
-            Label glyph = _root.Q<Label>("prompt-glyph-label");
-            return glyph != null && glyph.text != null ? glyph.text : string.Empty;
+            string raw = RawTextOf("prompt-glyph-label");
+            return raw.Length > 0 ? raw : RawTextOf("look-hint-glyph-label");
         }
 
         /// <summary>The word on the prompt chip when it is showing, else empty.</summary>
         public string ChipWord()
         {
-            return TextOf("prompt", "prompt-word");
+            string word = TextOf("prompt", "prompt-word");
+            return word.Length > 0 ? word : TextOf(LookHintName, "look-hint-word");
         }
 
         /// <summary>"E Scan" for a chip showing the key cap E and the word Scan; empty when no chip shows.</summary>
@@ -83,20 +86,32 @@ namespace MoonProject.Autoplay
             return string.IsNullOrEmpty(glyph) && string.IsNullOrEmpty(word) ? string.Empty : (glyph + " " + word).Trim();
         }
 
-        /// <summary>What the chip's elements say whether or not they show, for a failure message.</summary>
+        /// <summary>What the prompt chip and the look-hint chip (where a learned verb's chip renders) say, shown or not.</summary>
         public string DescribeChip()
         {
-            VisualElement chip = _root.Q<VisualElement>("prompt");
-            Label glyph = _root.Q<Label>("prompt-glyph-label");
-            Label word = _root.Q<Label>("prompt-word");
+            return DescribeOne("prompt", "prompt-glyph-label", "prompt-word") + "; " +
+                   DescribeOne(LookHintName, "look-hint-glyph-label", "look-hint-word");
+        }
+
+        private string DescribeOne(string container, string glyphName, string wordName)
+        {
+            VisualElement chip = _root.Q<VisualElement>(container);
+            Label glyph = _root.Q<Label>(glyphName);
+            Label word = _root.Q<Label>(wordName);
             if (chip == null)
             {
-                return "the HUD has no element named 'prompt'";
+                return "the HUD has no element named '" + container + "'";
             }
 
-            return "prompt display=" + chip.resolvedStyle.display + " opacity=" + chip.resolvedStyle.opacity +
+            return container + " display=" + chip.resolvedStyle.display + " opacity=" + chip.resolvedStyle.opacity +
                    " shown=" + IsShown(chip) + " glyph='" + (glyph != null ? glyph.text : "?") + "' word='" +
                    (word != null ? word.text : "?") + "'";
+        }
+
+        private string RawTextOf(string label)
+        {
+            Label text = _root.Q<Label>(label);
+            return text != null && text.text != null ? text.text : string.Empty;
         }
 
         public bool TitleShown()

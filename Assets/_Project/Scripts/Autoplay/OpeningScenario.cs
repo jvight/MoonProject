@@ -12,7 +12,7 @@ namespace MoonProject.Autoplay
 {
     /// <summary>
     /// The opening (docs/design/opening-v2.md, beats B0..B3 so far) played the way a player plays it: New Game on the
-    /// title, 07 wakes in the eclipse, drive to the lander along the cable, scan the two fragments in its cargo bay by
+    /// title, 07 wakes in the eclipse, drive to the lander along the cable, scan the two parts in the open crate by
     /// holding the key its prompt chip shows. Each beat is checked against what the game's own objective line says.
     /// </summary>
     public sealed class OpeningScenario
@@ -137,7 +137,7 @@ namespace MoonProject.Autoplay
 
         private IEnumerator Scan()
         {
-            Begin("B3", "Scan the lander's cargo");
+            Begin("B3", "Scan the two parts in the open crate by the lander");
             yield return _bot.Until(() => _bot.World.Gameplay.Opening.Flow.Current == OpeningKeys.ScanLander,
                 FollowSeconds, "the objective line to say '" + OpeningKeys.ScanLander + "'");
             var chips = new List<string>();
@@ -165,6 +165,14 @@ namespace MoonProject.Autoplay
             _bot.EndBeat("both fragments scanned (chips seen: " + string.Join("; ", chips) + ")");
         }
 
+        /// <summary>The part the brackets are on: a player scans whichever cargo part is the candidate, in any order.</summary>
+        private bool OnCargoCandidate(ScanField scans, ScanFragment fragment)
+        {
+            ScanFragment candidate = scans.Candidate;
+            return candidate != null && (candidate == fragment || (!candidate.Scanned &&
+                   DriveSteering.FlatDistance(candidate.Point, Lander().Position) <= LanderCargoRadius));
+        }
+
         private IEnumerator ScanOne(ScanField scans, ScanFragment fragment, List<string> chips)
         {
             Vector3 point = fragment.Point;
@@ -178,12 +186,12 @@ namespace MoonProject.Autoplay
             float nudgeAt = Time.unscaledTime + NudgeSeconds;
             float traceAt = 0f;
             int nudges = 0;
-            while (!_bot.Failed && !(_bot.KeepLookingAt(point) && scans.Candidate == fragment &&
+            while (!_bot.Failed && !(_bot.KeepLookingAt(point) && OnCargoCandidate(scans, fragment) &&
                                      ui.ChipGlyph().Length > 0))
             {
                 if (Time.unscaledTime > deadline)
                 {
-                    if (scans.Candidate != fragment || ui.RawChipGlyph().Length == 0)
+                    if (!OnCargoCandidate(scans, fragment) || ui.RawChipGlyph().Length == 0)
                     {
                         _bot.Fail("timed out after " + ScanLookTimeoutSeconds.ToString("0", CultureInfo.InvariantCulture) +
                                   " s waiting for the brackets on " + fragment.FragmentId + " (candidate " +
@@ -222,6 +230,13 @@ namespace MoonProject.Autoplay
                 yield break;
             }
 
+            if (scans.Candidate != fragment)
+            {
+                fragment = scans.Candidate;
+                point = fragment.Point;
+            }
+
+            _base.NoteUsed(OpeningBase.ScanVerb);
             string glyph = ui.RawChipGlyph();
             chips.Add(ui.Chip().Length > 0 ? ui.Chip() : "(hidden) " + glyph);
             if (!GlyphKeys.TryResolve(glyph, out Key key))
@@ -293,7 +308,7 @@ namespace MoonProject.Autoplay
             yield return _base.ScanTheSet("ruin.HabitatModules");
             yield return _base.CutTheCrates("HabitatModules");
             yield return _base.DriveToTheRuinsGate("out of the Lumen ruins");
-            yield return _base.Build(StructureIds.BatteryBank, _base.Pad() + Vector3.left * OpeningBase.Spacing);
+            yield return _base.Build(StructureIds.BatteryBank, _base.Pad() + Vector3.left * OpeningBase.BankSpacing);
             yield return _base.UntilReached(OpeningMilestone.NightReady, "the NightReady milestone",
                 NightReadySeconds);
             if (!_bot.Failed && _bot.World.Context.Get<ISunlight>().Phase != SkyPhase.Sunlit)

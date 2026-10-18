@@ -101,17 +101,50 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void TheAntennaRises_TheCellsFillToHalf_TheHeadTurnsThenTheDustShivers()
+        public void TheAntennaRises_TheCellsFillToHalf()
         {
             Assert.AreEqual(0f, _motions.Antenna(0f), 1e-5f);
             Assert.AreEqual(_settings.AntennaRiseMetres, _motions.Antenna(1f), 1e-4f);
             Assert.AreEqual(0f, _motions.Battery(0f), 1e-5f);
             Assert.AreEqual(0.5f, _motions.Battery(1f), 1e-4f, "the battery reads 50%");
-            Assert.AreEqual(0f, PostMotions.BeaconTurn(0f), 1e-5f);
-            Assert.AreEqual(1f, PostMotions.BeaconTurn(0.6f), 1e-4f, "the head has turned to the beacon");
-            Assert.AreEqual(0f, PostMotions.Shiver(0.3f), 1e-5f, "no shiver while it turns");
-            Assert.Greater(PostMotions.Shiver(0.6f) + PostMotions.Shiver(0.65f) + PostMotions.Shiver(0.7f), 0.1f);
-            Assert.AreEqual(0f, PostMotions.Shiver(0.9f), 1e-5f, "the shiver is over");
+        }
+
+        [Test]
+        public void TheReadyPerformance_BlinksTwice_ClicksTheLampsOffAndOn_ShiversThenGlances()
+        {
+            Assert.AreEqual(2, PostMotions.BlinkCount);
+            Assert.AreEqual(0f, PostMotions.BlinkAt(0), 1e-5f, "the double blink opens the performance");
+            Assert.That(PostMotions.BlinkAt(1), Is.InRange(0.05f, 0.25f), "and its second blink follows close");
+
+            Assert.AreEqual(1f, PostMotions.Lamps(0f));
+            Assert.AreEqual(0f, PostMotions.Lamps(0.3f), "the headlamps click off");
+            Assert.AreEqual(1f, PostMotions.Lamps(0.5f), "and on again");
+            Assert.AreEqual(1f, PostMotions.Lamps(1f));
+
+            Assert.AreEqual(0f, PostMotions.Shiver(0.3f), 1e-5f, "no shiver while the lamps click");
+            Assert.Greater(PostMotions.Shiver(0.5f) + PostMotions.Shiver(0.55f) + PostMotions.Shiver(0.6f), 0.1f);
+            Assert.AreEqual(1f, PostMotions.ShiverProgress(0.75f), 1e-4f, "the last dust is off");
+
+            Assert.AreEqual(0f, PostMotions.BeaconTurn(0.6f), 1e-5f, "the glance comes last");
+            Assert.AreEqual(1f, PostMotions.BeaconTurn(1f), 1e-4f, "the head has turned to the beacon");
+        }
+
+        [Test]
+        public void TheReadyPerformance_SoundsAreSorted_AndUseTheStartChecksFourPulses()
+        {
+            float last = -1f;
+            var seen = new System.Collections.Generic.HashSet<int>();
+            for (int n = 0; n < PostMotions.PerformPulseCount; n++)
+            {
+                PostMotions.PulseMark mark = PostMotions.PerformPulse(n);
+                Assert.GreaterOrEqual(mark.Share, last, "sounds fire in order");
+                Assert.IsTrue(seen.Add(mark.Index), $"pulse index {mark.Index} is used once");
+                last = mark.Share;
+            }
+
+            CollectionAssert.AreEquivalent(new[] { 0, 1, 2, 3 }, seen);
+            Assert.AreEqual(0f, PostMotions.Lamps(PostMotions.PerformPulse(0).Share), "the first click turns them off");
+            Assert.AreEqual(1f, PostMotions.Lamps(PostMotions.PerformPulse(1).Share), "the second turns them on");
         }
 
         [Test]
@@ -120,7 +153,7 @@ namespace MoonProject.Rover.Tests
             foreach (BootCheckStep step in new[]
             {
                 BootCheckStep.Head, BootCheckStep.Wheels, BootCheckStep.Motor, BootCheckStep.Cutter,
-                BootCheckStep.SolarWing, BootCheckStep.Antenna, BootCheckStep.Begin,
+                BootCheckStep.SolarWing, BootCheckStep.Antenna,
             })
             {
                 float last = -1f;

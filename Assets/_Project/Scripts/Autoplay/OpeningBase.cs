@@ -24,8 +24,10 @@ namespace MoonProject.Autoplay
         private const float MilestoneSeconds = 120f;
         private const float LineSeconds = 15f;
         private const float DriveSeconds = 150f;
-        private const float StandOff = 4f;
         private const float BaseSpacing = 7f;
+
+        /// <summary>The bank stands close to the pad, well inside the cable reach, as a sensible player places it.</summary>
+        private const float BankPadSpacing = 4.5f;
         private const float RuinsGateOffset = 10f;
         private const float ScanStandOff = 3.5f;
         private const float PanelStandOff = 2.5f;
@@ -47,11 +49,13 @@ namespace MoonProject.Autoplay
         private const float ClearRadius = 1.1f;
         private const int ApproachSides = 8;
         private const int MaxMenuSteps = 12;
-        private const float PlaceDriftMetres = 4f;
-        private const int PlaceRings = 4;
-        private const int PlaceRingSpots = 8;
-        private const float PlaceRingStep = 1.5f;
-        private const float PlaceSettleSeconds = 3f;
+        private const float PlaceDriftMetres = 2f;
+        private const int PlaceBearings = 6;
+        private const float PlaceBearingStepDegrees = 60f;
+        private const float PlaceStandArrive = 0.5f;
+
+        /// <summary>The weld cancels the frame the structure stands beyond the weld range, so the bot keeps this inside it.</summary>
+        private const float PlaceWeldMargin = 1f;
         private const int SettledFrames = 8;
         private const int CutterDevice = 1;
 
@@ -118,7 +122,10 @@ namespace MoonProject.Autoplay
             StructureDefinition definition = build.Catalog.Find(structureId);
             yield return _bot.Until(() => G.KnownStructures.IsKnown(structureId), FollowSeconds,
                 structureId + "'s blueprint to be learned");
-            yield return _bot.DriveTo(Flat(at) + Vector3.back * StandOff, 1f, "beside the build spot", DriveSeconds);
+            float ahead = build.Tuning.GhostAheadMetres;
+            yield return _bot.DriveTo(Flat(at) + Vector3.back * ahead, PlaceStandArrive, "the build spot's stand",
+                DriveSeconds);
+            yield return _bot.TurnToward(at, "the build spot");
             if (_bot.Failed)
             {
                 yield break;
@@ -143,23 +150,29 @@ namespace MoonProject.Autoplay
             yield return _bot.Tap(Key.E);
             yield return _bot.Until(() => build.State == BuildModeState.Placing, FollowSeconds,
                 "E to take " + structureId + " up to place");
-            yield return LookForASpot(build, at, structureId);
+            yield return PutTheGhostOn(build, at, structureId);
             if (_bot.Failed)
             {
                 yield break;
             }
 
-            yield return _bot.Tap(Key.E);
+            string aimed = "candidate " + build.Controller.CandidatePose.Position + " is " +
+                           DriveSteering.FlatDistance(build.Controller.CandidatePose.Position, _bot.World.Rover.Position)
+                               .ToString("0.0", CultureInfo.InvariantCulture) + " m from 07 (weld range " +
+                           G.Building.Tuning.WeldRange.ToString("0.0", CultureInfo.InvariantCulture) + " m)";
             int before = G.PlacedBase.Count;
-            yield return _bot.Until(() => build.State == BuildModeState.Welding || G.PlacedBase.Count > before,
-                FollowSeconds, "E to place " + structureId, () => "State " + build.State + ", reason " +
-                                                                  build.Controller.CandidateReason + ".");
-            if (build.State == BuildModeState.Welding)
+            yield return _bot.Tap(Key.E);
+            yield return _bot.Until(() => G.PlacedBase.Count > before, FollowSeconds, "E to place " + structureId,
+                () => "State " + build.State + ", reason " + build.Controller.CandidateReason + "; " + aimed + ".");
+            if (!_bot.Failed)
             {
-                int instance = build.Controller.ActiveWeldInstanceId;
+                // The tap may already have welded a little and closed build mode; holding E at the frame welds on either way.
+                PlacedStructure frame = LastPlaced();
+                Vector3 weldPoint = frame.Pose.Position;
                 yield return _bot.Hold(Key.E, () =>
                     {
-                        return G.PlacedBase.TryGetStructure(instance, out PlacedStructure built) && built.IsBuilt;
+                        _bot.KeepLookingAt(weldPoint);
+                        return G.PlacedBase.TryGetStructure(frame.InstanceId, out PlacedStructure built) && built.IsBuilt;
                     }, definition.BuildSeconds + FollowSeconds, "a held E to weld " + structureId);
             }
 
@@ -198,16 +211,31 @@ namespace MoonProject.Autoplay
         public IEnumerator ScanTheSet(string setId)
         {
             ScanField scans = G.Scans;
-            for (int i = 0; !_bot.Failed && scans.Find(ScanField.FragmentId(setId, i)) != null; i++)
+            while (!_bot.Failed)
+            {
+                ScanFragment fragment = FirstUnscanned(scans, setId);
+                if (fragment == null)
+                {
+                    yield break;
+                }
+
+                Vector3 away = Flat(_bot.World.Rover.Position - fragment.Point);
+                yield return Scan(fragment, away.sqrMagnitude > 1e-4f ? away.normalized : Vector3.back, ScanStandOff);
+            }
+        }
+
+        private static ScanFragment FirstUnscanned(ScanField scans, string setId)
+        {
+            for (int i = 0; scans.Find(ScanField.FragmentId(setId, i)) != null; i++)
             {
                 ScanFragment fragment = scans.Find(ScanField.FragmentId(setId, i));
                 if (!fragment.Scanned)
                 {
-                    Vector3 away = Flat(_bot.World.Rover.Position - fragment.Point);
-                    yield return Scan(fragment, away.sqrMagnitude > 1e-4f ? away.normalized : Vector3.back,
-                        ScanStandOff);
+                    return fragment;
                 }
             }
+
+            return null;
         }
 
         /// <summary>B7: the habitat's airlock panel, read from square on.</summary>
@@ -250,7 +278,7 @@ namespace MoonProject.Autoplay
                 yield return _bot.DriveTo(Flat(crate.CutPoint.position), SealNose, "nose to the seal of " + cache.Id,
                     DriveSeconds);
                 yield return _bot.TurnToward(crate.CutPoint.position, "the seal of " + cache.Id);
-                yield return FirstUse("cut: hold E");
+                yield return FirstUse("cut: hold E", crate.CutPoint.position);
                 yield return _bot.Hold(Key.E, () =>
                     {
                         _bot.KeepLookingAt(crate.CutPoint.position);
@@ -266,7 +294,7 @@ namespace MoonProject.Autoplay
         public IEnumerator UntilReached(OpeningMilestone milestone, string what, float seconds = MilestoneSeconds)
         {
             yield return _bot.Until(() => _milestones.Exists(reached => reached.Milestone == milestone),
-                seconds, what, () => "The objective line is '" + G.Opening.Flow.Current + "'. " + BaseState());
+                seconds, what, () => "The objective line is '" + G.Opening.Flow.Current + "'." + UnlinkedReason() + " " + BaseState());
         }
 
         /// <summary>B10: the night-ready base lets the first sunset run.</summary>
@@ -289,11 +317,51 @@ namespace MoonProject.Autoplay
             {
                 text.Append(' ').Append(structure.Definition.Id).Append(" built=").Append(structure.IsBuilt)
                     .Append(" stored=").Append(structure.StoredWattHours.ToString("0.0", CultureInfo.InvariantCulture))
+                    .Append(" linked=").Append(IsLinkedToPad(structure))
                     .Append(" supply=").Append(structure.SupplyRatio.ToString("0.00", CultureInfo.InvariantCulture))
                     .Append(" at ").Append(structure.Pose.Position).Append(';');
             }
 
             return text.ToString();
+        }
+
+        private bool IsLinkedToPad(PlacedStructure structure)
+        {
+            foreach (PlacedStructure other in G.PlacedBase.Structures)
+            {
+                if (other.Definition.Id == StructureIds.ChargingPad)
+                {
+                    return other.InstanceId == structure.InstanceId ||
+                           G.PlacedBase.PowerGrid.AreConnected(structure.InstanceId, other.InstanceId);
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>Why a built structure may not work: standing but outside the pad's cable reach.</summary>
+        private string UnlinkedReason()
+        {
+            foreach (PlacedStructure structure in G.PlacedBase.Structures)
+            {
+                if (structure.IsBuilt && !IsLinkedToPad(structure))
+                {
+                    return " " + structure.Definition.Id + " is built but not linked to the pad (out of cable reach).";
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private PlacedStructure LastPlaced()
+        {
+            PlacedStructure last = default;
+            foreach (PlacedStructure structure in G.PlacedBase.Structures)
+            {
+                last = structure;
+            }
+
+            return last;
         }
 
         /// <summary>Where the built structure <paramref name="structureId"/> stands (the build spot is only where 07 aimed).</summary>
@@ -318,8 +386,19 @@ namespace MoonProject.Autoplay
 
         public static float Spacing => BaseSpacing;
 
-        /// <summary>Notes a verb's chip on its first use; a missing chip is a guidance gap, not a stop.</summary>
-        private IEnumerator FirstUse(string verb)
+        public static float BankSpacing => BankPadSpacing;
+
+        /// <summary>The scan verb's first-use key, shared with B3's own scan loop.</summary>
+        public const string ScanVerb = "scan: hold E";
+
+        /// <summary>Records that a verb has been used, so its chip is not expected as a first-use hint again.</summary>
+        public void NoteUsed(string verb)
+        {
+            _verbsUsed.Add(verb);
+        }
+
+        /// <summary>Notes a verb's chip on its first use (the chip waits for 07's gaze on the target); a missing chip is a guidance gap, not a stop.</summary>
+        private IEnumerator FirstUse(string verb, Vector3? gaze = null)
         {
             if (!_verbsUsed.Add(verb))
             {
@@ -329,13 +408,18 @@ namespace MoonProject.Autoplay
             float deadline = Time.unscaledTime + ChipSeconds;
             while (_bot.World.Ui.Chip().Length == 0 && Time.unscaledTime < deadline)
             {
+                if (gaze.HasValue)
+                {
+                    _bot.KeepLookingAt(gaze.Value);
+                }
+
                 yield return null;
             }
 
             if (_bot.World.Ui.Chip().Length == 0)
             {
                 _bot.Warn("guidance gap: " + verb + " showed no prompt chip on its first use (line on screen: '" +
-                          _bot.World.Ui.ObjectiveLine() + "').");
+                          _bot.World.Ui.ObjectiveLine() + "'; " + _bot.World.Ui.DescribeChip() + ").");
             }
         }
 
@@ -354,7 +438,7 @@ namespace MoonProject.Autoplay
             yield return _bot.TurnToward(fragment.Point, fragment.FragmentId);
             UiProbe ui = _bot.World.Ui;
             float deadline = Time.unscaledTime + ScanLookSeconds;
-            while (!_bot.Failed && !(_bot.KeepLookingAt(fragment.Point) && scans.Candidate == fragment))
+            while (!_bot.Failed && !(_bot.KeepLookingAt(fragment.Point) && OnSetCandidate(scans, fragment)))
             {
                 if (Time.unscaledTime > deadline)
                 {
@@ -366,7 +450,8 @@ namespace MoonProject.Autoplay
                 yield return null;
             }
 
-            yield return FirstUse("scan: hold E");
+            fragment = scans.Candidate;
+            yield return FirstUse(ScanVerb);
             yield return _bot.Hold(Key.E, () =>
                 {
                     _bot.KeepLookingAt(fragment.Point);
@@ -375,39 +460,58 @@ namespace MoonProject.Autoplay
                 () => "Chip '" + ui.Chip() + "'.");
         }
 
-        /// <summary>07's look rests on a spot near <paramref name="at"/> the placement rules accept, in rings round it.</summary>
-        private IEnumerator LookForASpot(BuildField build, Vector3 at, string structureId)
+        /// <summary>The brackets are on this part or another unscanned part of its set: a player scans what they frame.</summary>
+        private static bool OnSetCandidate(ScanField scans, ScanFragment fragment)
         {
-            var terrain = _bot.World.Context.Get<ITerrainQuery>();
-            for (int ring = 0; ring < PlaceRings; ring++)
+            ScanFragment candidate = scans.Candidate;
+            if (candidate == null)
             {
-                for (int step = 0; step < PlaceRingSpots; step++)
-                {
-                    Vector3 spot = at + Quaternion.Euler(0f, step * 360f / PlaceRingSpots, 0f) * Vector3.forward *
-                        (ring * PlaceRingStep);
-                    Vector3 ground = SurfaceRules.OnSurface(terrain, spot.x, spot.z);
-                    float until = Time.unscaledTime + PlaceSettleSeconds;
-                    int settled = 0;
-                    while (Time.unscaledTime < until && settled < SettledFrames)
-                    {
-                        settled = _bot.KeepLookingAt(ground) ? settled + 1 : 0;
-                        yield return null;
-                    }
+                return false;
+            }
 
-                    if (build.Controller.CanPlaceNow)
+            int split = fragment.FragmentId.LastIndexOf('.');
+            return candidate == fragment || (!candidate.Scanned && split > 0 &&
+                   candidate.FragmentId.StartsWith(fragment.FragmentId.Substring(0, split + 1),
+                       System.StringComparison.Ordinal));
+        }
+
+        /// <summary>
+        /// The placing ghost rides the tuned distance ahead of 07, so 07 stands that far from the spot on one side and
+        /// faces it; when the rules refuse the spot or the frame would stand out of weld range, 07 stands again, then tries the other sides.
+        /// </summary>
+        private IEnumerator PutTheGhostOn(BuildField build, Vector3 at, string structureId)
+        {
+            float ahead = build.Tuning.GhostAheadMetres;
+            float reach = build.Tuning.WeldRange - PlaceWeldMargin;
+            for (int attempt = 0; attempt < PlaceBearings * 2; attempt++)
+            {
+                if (attempt > 0)
+                {
+                    Vector3 side = Quaternion.Euler(0f, attempt / 2 * PlaceBearingStepDegrees, 0f) * Vector3.back;
+                    yield return _bot.DriveTo(Flat(at) + side * ahead, PlaceStandArrive, "another side of the build spot",
+                        DriveSeconds);
+                    yield return _bot.TurnToward(at, "the build spot");
+                    if (_bot.Failed)
                     {
                         yield break;
                     }
+                }
 
-                    if (ring == 0)
-                    {
-                        break;
-                    }
+                for (int frame = 0; frame < SettledFrames; frame++)
+                {
+                    yield return null;
+                }
+
+                if (build.Controller.CanPlaceNow &&
+                    DriveSteering.FlatDistance(build.Controller.CandidatePose.Position, at) <= PlaceDriftMetres &&
+                    DriveSteering.FlatDistance(build.Controller.CandidatePose.Position, _bot.World.Rover.Position) <= reach)
+                {
+                    yield break;
                 }
             }
 
-            _bot.Fail(structureId + " found no spot near " + at + " the placement rules accept (last reason " +
-                      build.Controller.CandidateReason + ").");
+            _bot.Fail(structureId + " found no way to put the ghost on " + at + " (candidate " +
+                      build.Controller.CandidatePose.Position + ", last reason " + build.Controller.CandidateReason + ").");
         }
 
         /// <summary>Tab opens 07's face screen, the arrows walk the focus to the cutter's socket, Enter fits, Tab closes.</summary>

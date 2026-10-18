@@ -48,16 +48,11 @@ MonoBehaviour:
     _swellSeconds: 1.2
     _handOverSeconds: 2
     _insideCutoff: 1100
-    _besideCutoff: 5000
-    _besidePan: 0.3
-    _narrowSeconds: 4
     _crackleGhostDelay: 0.9
     _ghostFaint: 0.4
     _thump: 0.8
     _tick: 0.8
-    _whine: 0.7
     _stir: 0.5
-    _hurried: 0.7
     _check: 0.8
     _fault: 0.8
   _loopSpatialBlend: 0.75

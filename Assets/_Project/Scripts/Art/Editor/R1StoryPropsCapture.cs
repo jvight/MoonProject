@@ -69,8 +69,10 @@ namespace MoonProject.Art.Editor
                     CaptureDeliverable8_CableKit(capturesDir, false);
                     CaptureDeliverable8_CableKit(capturesDir, true);
 
-                    CaptureDeliverable9_BasinLifeLineup(capturesDir, false);
-                    CaptureDeliverable9_BasinLifeLineup(capturesDir, true);
+                    CaptureDeliverable9_OldLander(capturesDir, false);
+                    CaptureDeliverable9_OldLander(capturesDir, true);
+                    CaptureDeliverable10_BasinLifeLineup(capturesDir, false);
+                    CaptureDeliverable10_BasinLifeLineup(capturesDir, true);
                 }
                 finally
                 {
@@ -82,6 +84,38 @@ namespace MoonProject.Art.Editor
                 foreach (string png in Directory.GetFiles(capturesDir, "r1props_*.png"))
                 {
                     File.Copy(png, Path.Combine(batchOutDir, Path.GetFileName(png)), true);
+                }
+
+                return true;
+            });
+        }
+
+        /// <summary>
+        /// Dedicated fast batch entry point for capturing <c>Prop_OldLander</c> and <c>Decal_OldLanderBlast</c>
+        /// next to Rover 07 in Day C and Eclipse light, plus the 60 m silhouette shot:
+        /// <c>python tools/unity_batch.py exec --project . --method MoonProject.Art.Editor.R1StoryPropsCapture.CaptureOldLander</c>
+        /// </summary>
+        public static void CaptureOldLander()
+        {
+            BatchRunner.Run(nameof(CaptureOldLander), args =>
+            {
+                AssetDatabase.Refresh();
+                R1MaterialLibrary.BuildMaterials();
+                R1ModelBuilder.Build();
+
+                string capturesDir = Path.GetFullPath("Logs/captures");
+                Directory.CreateDirectory(capturesDir);
+
+                bool prevAsync = ShaderUtil.allowAsyncCompilation;
+                ShaderUtil.allowAsyncCompilation = false;
+                try
+                {
+                    CaptureDeliverable9_OldLander(capturesDir, false);
+                    CaptureDeliverable9_OldLander(capturesDir, true);
+                }
+                finally
+                {
+                    ShaderUtil.allowAsyncCompilation = prevAsync;
                 }
 
                 return true;
@@ -110,8 +144,8 @@ namespace MoonProject.Art.Editor
                 ShaderUtil.allowAsyncCompilation = false;
                 try
                 {
-                    CaptureDeliverable9_BasinLifeLineup(capturesDir, false);
-                    CaptureDeliverable9_BasinLifeLineup(capturesDir, true);
+                    CaptureDeliverable10_BasinLifeLineup(capturesDir, false);
+                    CaptureDeliverable10_BasinLifeLineup(capturesDir, true);
                 }
                 finally
                 {
@@ -533,7 +567,71 @@ namespace MoonProject.Art.Editor
             }
         }
 
-        private static void CaptureDeliverable9_BasinLifeLineup(string outDir, bool nightEclipse)
+        private static void CaptureDeliverable9_OldLander(string outDir, bool nightEclipse)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(temp, nightEclipse);
+                if (!nightEclipse && RenderSettings.sun != null)
+                {
+                    RenderSettings.sun.intensity = 1.65f;
+                    RenderSettings.sun.transform.rotation = Quaternion.Euler(22f, -38f, 0f);
+                }
+
+                // Rover 07 parked next to Prop_OldLander in 3/4 view
+                GameObject rover = SpawnRover07(temp, new Vector3(-2.15f, 0f, -0.35f), 132f, nightEclipse);
+
+                // Decal_OldLanderBlast directly under Prop_OldLander at (0.65, 0, 0.15)
+                Vector3 landerPos = new Vector3(0.65f, 0f, 0.15f);
+                float landerYaw = 168f;
+                SpawnProp(R1StoryPropsBuilder.DecalOldLanderBlastPrefabPath, landerPos, landerYaw, temp);
+                SpawnProp(R1StoryPropsBuilder.PropOldLanderPrefabPath, landerPos, landerYaw, temp);
+
+                if (nightEclipse)
+                {
+                    AddRoverHeadlamps(rover.transform, new Vector3(0.55f, 0.95f, 0.10f), temp);
+                }
+
+                string suffix = nightEclipse ? "eclipse" : "dayC";
+
+                // 1. Overview next to Rover 07 showing ~3 m height, ~8 deg tilt, half-buried footpad, blast decal, and mast/solar/antenna
+                RenderShot(
+                    new Vector3(-0.35f, 1.68f, -4.45f),
+                    new Vector3(-0.20f, 1.18f, 0.05f),
+                    44f,
+                    bg,
+                    Path.Combine(outDir, $"r1props_old_lander_{suffix}.png"));
+
+                // 2. Detail close-up showing sun-faded tan thermal boxes with S-3 stencil, TV camera mirror hood, folded scoop arm, and removed-part spots
+                RenderShot(
+                    new Vector3(0.55f, 1.25f, -2.05f),
+                    new Vector3(0.62f, 0.95f, 0.10f),
+                    38f,
+                    bg,
+                    Path.Combine(outDir, $"r1props_old_lander_detail_{suffix}.png"));
+
+                // 3. 60 m silhouette shot (rendered in Day C lighting with telephoto framing so the 3-legged Surveyor silhouette reads clearly at 60 m)
+                if (!nightEclipse)
+                {
+                    Vector3 target60 = new Vector3(0.0f, 1.35f, 0.15f);
+                    Vector3 cam60 = target60 + new Vector3(0.0f, 0.45f, -60.0f);
+                    RenderShot(
+                        cam60,
+                        target60,
+                        12f,
+                        bg,
+                        Path.Combine(outDir, "r1props_old_lander_60m_silhouette.png"));
+                }
+            }
+            finally
+            {
+                temp.Dispose();
+            }
+        }
+
+        private static void CaptureDeliverable10_BasinLifeLineup(string outDir, bool nightEclipse)
         {
             EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var temp = new ArtLightingPreview.TemporaryObjects();
@@ -690,7 +788,7 @@ namespace MoonProject.Art.Editor
             floor.name = "R1RegolithFloor";
             UnityEngine.Object.DestroyImmediate(floor.GetComponent<Collider>());
             floor.transform.position = Vector3.zero;
-            floor.transform.localScale = new Vector3(12f, 1f, 12f);
+            floor.transform.localScale = new Vector3(18f, 1f, 18f);
             floor.GetComponent<MeshRenderer>().sharedMaterial = R1MaterialLibrary.LoadMaterial(R1MaterialSlot.Basalt);
             temp.Add(floor);
 

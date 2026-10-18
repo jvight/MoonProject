@@ -42,6 +42,11 @@ namespace MoonProject.Gameplay
                  "apron's marked bay.")]
         [Range(0.5f, 8f)] [SerializeField] private float _apronSnapRadius = 3f;
 
+        [Tooltip("Metres kept inside the weld range when the riding ghost settles onto the apron: the bay only " +
+                 "catches the ghost while 07 stands this much closer than the weld range, so a placed frame can " +
+                 "always be welded where 07 stands.")]
+        [Range(0f, 2f)] [SerializeField] private float _apronSnapReachMargin = 0.5f;
+
         [Tooltip("Downward physical settle thump (m) when a structure finishes welding and locks into the regolith.")]
         [Range(0.01f, 0.15f)] [SerializeField] private float _settleThumpMeters = 0.042f;
 
@@ -187,6 +192,8 @@ namespace MoonProject.Gameplay
         public float GhostAheadMetres => Mathf.Clamp(_ghostAheadMetres, _minPlacementDistance, _maxPlacementDistance);
 
         public float ApronSnapRadius => _apronSnapRadius;
+
+        public float ApronSnapReachMargin => _apronSnapReachMargin;
 
         public float SettleThumpMeters => _settleThumpMeters;
 

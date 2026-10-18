@@ -67,6 +67,10 @@ namespace MoonProject.World.Editor
         public const string DeadAntennaMastPrefab = R1PropsFolder + "DeadAntennaMast.prefab";
         public const string SignalPillarPrefab = R1PropsFolder + "SignalPillar.prefab";
 
+        /// <summary>Art's R1 Scout, the 1967 soft lander, and its old blast patch (basin dressing Â§4).</summary>
+        public const string OldLanderPrefab = R1PropsFolder + "Prop_OldLander.prefab";
+        public const string OldLanderBlastPrefab = R1PropsFolder + "Decal_OldLanderBlast.prefab";
+
         /// <summary>Art's R1 Kestrel-3 debris kit (Generated/Art/R1/Models/Wreck).</summary>
         public static string KestrelDebrisPrefab(string id) => "Assets/_Project/Generated/Art/R1/Models/Wreck/" + id + ".prefab";
 
