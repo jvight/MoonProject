@@ -472,6 +472,7 @@ namespace MoonProject.Art.Tests
                 "Spaceframe",
                 "LandingLegs",
                 "MastAndSolar",
+                "Array_Hinge",
                 "TvCamera",
                 "ScoopArm",
                 "ThermalBoxes",
@@ -489,6 +490,11 @@ namespace MoonProject.Art.Tests
                 Assert.IsNotNull(landerPrefab.transform.Find(expectedChildren[i]),
                     $"Prop_OldLander missing expected child '{expectedChildren[i]}'.");
             }
+
+            // Planar array exposed on its own hinge node (Array_Hinge) tilting about the mast arm axis
+            Transform arrayHinge = landerPrefab.transform.Find("Array_Hinge");
+            Assert.IsNotNull(arrayHinge.GetComponent<Renderer>(), "Prop_OldLander Array_Hinge must have a MeshRenderer.");
+            Assert.AreEqual(2.46f, arrayHinge.localPosition.y, 0.05f, "Prop_OldLander Array_Hinge pivot must sit on the mast arm axis.");
 
             // About 3 m tall, with one footpad half-buried below Y = 0
             Bounds landerBounds = MeshChecks.PrefabBounds(landerPrefab, landerPrefab.transform.localToWorldMatrix);
@@ -511,6 +517,21 @@ namespace MoonProject.Art.Tests
                 }
             }
             Assert.IsTrue(hasTanEnamel, "Prop_OldLander ThermalBoxes must use R1_OldLanderTanEnamel (sun-faded white turned tan/brown).");
+
+            // Struts use low-smoothness R1_OldLanderStrut so thin struts do not sparkle 1-2 px at 30-80 m
+            Renderer spaceframeRenderer = landerPrefab.transform.Find("Spaceframe").GetComponent<Renderer>();
+            Assert.IsNotNull(spaceframeRenderer);
+            bool hasStrutMaterial = false;
+            foreach (Material m in spaceframeRenderer.sharedMaterials)
+            {
+                if (m != null && m.name == R1StoryPropsBuilder.OldLanderStrutMaterialName)
+                {
+                    hasStrutMaterial = true;
+                    Assert.LessOrEqual(m.GetFloat("_SmoothnessMax"), 0.25f, "R1_OldLanderStrut _SmoothnessMax must be lowered.");
+                    Assert.LessOrEqual(m.GetFloat("_EdgeWearSmoothness"), 0.25f, "R1_OldLanderStrut _EdgeWearSmoothness must be lowered.");
+                }
+            }
+            Assert.IsTrue(hasStrutMaterial, "Prop_OldLander Spaceframe must use R1_OldLanderStrut.");
 
             // Long-dead lander: no lit R1_LampAmber or active emission
             Renderer[] landerRenderers = landerPrefab.GetComponentsInChildren<Renderer>(true);

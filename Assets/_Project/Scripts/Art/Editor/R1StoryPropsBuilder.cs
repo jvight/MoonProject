@@ -32,6 +32,7 @@ namespace MoonProject.Art.Editor
         public const string IceCoreFrostMaterialName = "R1_IceCoreFrost";
         public const string IceCoreWindowMaterialName = "R1_IceCoreWindow";
         public const string OldLanderTanEnamelMaterialName = "R1_OldLanderTanEnamel";
+        public const string OldLanderStrutMaterialName = "R1_OldLanderStrut";
         public const string OldLanderBlastDecalMaterialName = "R1_OldLanderBlastDecal";
         public const string CargoCrateLabelMaterialName = "R1_CargoCrateLabel";
         public const string MissionFlagStripeMaterialName = "R1_MissionFlagStripe";
@@ -49,6 +50,7 @@ namespace MoonProject.Art.Editor
         public const string IceCoreFrostMaterialPath = ArtPaths.R1MaterialsFolder + "/" + IceCoreFrostMaterialName + ".mat";
         public const string IceCoreWindowMaterialPath = ArtPaths.R1MaterialsFolder + "/" + IceCoreWindowMaterialName + ".mat";
         public const string OldLanderTanEnamelMaterialPath = ArtPaths.R1MaterialsFolder + "/" + OldLanderTanEnamelMaterialName + ".mat";
+        public const string OldLanderStrutMaterialPath = ArtPaths.R1MaterialsFolder + "/" + OldLanderStrutMaterialName + ".mat";
         public const string OldLanderBlastDecalMaterialPath = ArtPaths.R1MaterialsFolder + "/" + OldLanderBlastDecalMaterialName + ".mat";
         public const string CargoCrateLabelMaterialPath = ArtPaths.R1MaterialsFolder + "/" + CargoCrateLabelMaterialName + ".mat";
         public const string MissionFlagStripeMaterialPath = ArtPaths.R1MaterialsFolder + "/" + MissionFlagStripeMaterialName + ".mat";
@@ -321,6 +323,29 @@ namespace MoonProject.Art.Editor
             oldLanderTanMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
             GeneratedAssets.CreateOrReplace(oldLanderTanMat, OldLanderTanEnamelMaterialPath);
 
+            // 12b. R1_OldLanderStrut: weathered matte aluminium/painted strut material with lowered smoothness
+            //      so thin spaceframe/leg/mast struts do not sparkle 1-2 px at 30-80 m in grazing sun or earthshine
+            Material oldLanderStrutMat = R1MaterialLibrary.CreateMaterial(r1Lit, bareSteelSpec);
+            oldLanderStrutMat.name = OldLanderStrutMaterialName;
+            oldLanderStrutMat.SetColor("_BaseColor", new Color(0.66f, 0.67f, 0.68f, 1f));
+            oldLanderStrutMat.SetFloat("_MetallicScale", 0.16f);
+            oldLanderStrutMat.SetFloat("_SmoothnessScale", 0.22f);
+            oldLanderStrutMat.SetFloat("_SmoothnessMin", 0.06f);
+            oldLanderStrutMat.SetFloat("_SmoothnessMax", 0.18f);
+            oldLanderStrutMat.SetFloat("_BumpScale", 0.14f);
+            oldLanderStrutMat.SetColor("_EdgeWearColor", new Color(0.72f, 0.73f, 0.74f, 1f));
+            oldLanderStrutMat.SetFloat("_EdgeWearAmount", 0.24f);
+            oldLanderStrutMat.SetFloat("_EdgeWearMetallic", 0.18f);
+            oldLanderStrutMat.SetFloat("_EdgeWearSmoothness", 0.16f);
+            oldLanderStrutMat.SetColor("_DustColor", new Color(0.56f, 0.55f, 0.52f, 1f));
+            oldLanderStrutMat.SetFloat("_DustAmount", 0.40f);
+            oldLanderStrutMat.SetFloat("_DustSmoothness", 0.08f);
+            oldLanderStrutMat.SetTexture("_EmissionMap", null);
+            oldLanderStrutMat.SetColor("_EmissionColor", Color.black);
+            oldLanderStrutMat.SetFloat("_EmissionStrength", 0.0f);
+            oldLanderStrutMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+            GeneratedAssets.CreateOrReplace(oldLanderStrutMat, OldLanderStrutMaterialPath);
+
             // 13. R1_OldLanderBlastDecal: soft, slightly brighter disturbed-regolith patch under Prop_OldLander (no emission)
             R1MaterialSpec basaltSpec = R1MaterialRecipes.Get(R1MaterialSlot.Basalt);
             Material oldLanderBlastMat = R1MaterialLibrary.CreateMaterial(r1Lit, basaltSpec);
@@ -494,8 +519,26 @@ namespace MoonProject.Art.Editor
             else if (modelPath.EndsWith("/Prop_OldLander.fbx", StringComparison.Ordinal))
             {
                 Material tanMat = LoadOrBuildMaterial(OldLanderTanEnamelMaterialPath);
+                Material strutMat = LoadOrBuildMaterial(OldLanderStrutMaterialPath);
                 ReplaceRendererSlotMaterial(root, "ThermalBoxes", R1MaterialRecipes.CreamEnamelSlot, tanMat);
                 ReplaceRendererSlotMaterial(root, "TvCamera", R1MaterialRecipes.CreamEnamelSlot, tanMat);
+                ReplaceRendererSlotMaterial(root, "LandingLegs", R1MaterialRecipes.CreamEnamelSlot, tanMat);
+
+                string[] strutChildren =
+                {
+                    "Spaceframe",
+                    "LandingLegs",
+                    "MastAndSolar",
+                    "Array_Hinge",
+                    "ScoopArm",
+                    "RemovedPartSpots",
+                };
+                for (int i = 0; i < strutChildren.Length; i++)
+                {
+                    ReplaceRendererSlotMaterial(root, strutChildren[i], R1MaterialRecipes.BareSteelSlot, strutMat);
+                    ReplaceRendererSlotMaterial(root, strutChildren[i], R1MaterialRecipes.GreyMetalSlot, strutMat);
+                }
+
                 AddOldLanderBoxColliders(root);
             }
             else if (modelPath.EndsWith("/Decal_OldLanderBlast.fbx", StringComparison.Ordinal))

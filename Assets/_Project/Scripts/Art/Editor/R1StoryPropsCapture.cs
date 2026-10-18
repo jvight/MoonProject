@@ -646,11 +646,18 @@ namespace MoonProject.Art.Editor
                     bg,
                     Path.Combine(outDir, $"r1props_old_lander_detail_{suffix}.png"));
 
-                // 3. 60 m silhouette shot (rendered in Day C lighting with telephoto framing so the 3-legged Surveyor silhouette reads clearly at 60 m)
+                // 3. 60 m shot in both golden light (dayC) and eclipse so the Scout's struts and silhouette can be inspected at 60 m
+                Vector3 target60 = new Vector3(0.0f, 1.35f, 0.15f);
+                Vector3 cam60 = target60 + new Vector3(0.0f, 0.45f, -60.0f);
+                RenderShot(
+                    cam60,
+                    target60,
+                    12f,
+                    bg,
+                    Path.Combine(outDir, $"r1props_old_lander_60m_{suffix}.png"));
+
                 if (!nightEclipse)
                 {
-                    Vector3 target60 = new Vector3(0.0f, 1.35f, 0.15f);
-                    Vector3 cam60 = target60 + new Vector3(0.0f, 0.45f, -60.0f);
                     RenderShot(
                         cam60,
                         target60,
