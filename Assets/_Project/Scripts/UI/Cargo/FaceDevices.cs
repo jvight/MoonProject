@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UIElements;
 using MoonProject.Core;
 
 namespace MoonProject.UI
@@ -27,14 +28,6 @@ namespace MoonProject.UI
             RoverSocket.Tether, RoverSocket.Cutter, RoverSocket.Flanks, RoverSocket.Belly,
         };
 
-        private static readonly Vector2[] Centers =
-        {
-            new Vector2(948f, 130f),
-            new Vector2(1012f, 214f),
-            new Vector2(1064f, 504f),
-            new Vector2(908f, 560f),
-        };
-
         private static readonly string[] NameKeys =
         {
             "ui.device.scan.name", "ui.device.cutter.name", "ui.device.socket1.name", "ui.device.socket2.name",
@@ -52,10 +45,10 @@ namespace MoonProject.UI
             return Mounts[device];
         }
 
-        /// <summary>Centre of the device's bubble in the 1152x768 reference frame.</summary>
+        /// <summary>Centre of the device's frame in the 1152x768 reference frame.</summary>
         public static Vector2 CenterOf(int device)
         {
-            return Centers[device];
+            return FaceLayout.DeviceFrame(device).center;
         }
 
         public static string NameKey(int device)
@@ -84,22 +77,26 @@ namespace MoonProject.UI
             }
         }
 
-        /// <summary>The device whose bubble centre is nearest to <paramref name="y"/> in the reference frame.</summary>
-        public static int NearestTo(float y)
+        /// <summary>
+        /// The device the selection moves to from <paramref name="device"/> in <paramref name="direction"/>, or -1
+        /// when that edge leads to the hold (down from the lower frames) or nowhere. The frames sit at the four
+        /// corners, so the keys follow the screen: across to the frame beside, down or up to the one below or above.
+        /// </summary>
+        public static int Step(int device, NavigationMoveEvent.Direction direction)
         {
-            int best = 0;
-            float bestDistance = float.MaxValue;
-            for (int i = 0; i < Count; i++)
+            switch (direction)
             {
-                float distance = Mathf.Abs(Centers[i].y - y);
-                if (distance < bestDistance)
-                {
-                    bestDistance = distance;
-                    best = i;
-                }
+                case NavigationMoveEvent.Direction.Right:
+                    return device == Scan ? Cutter : device == SocketOne ? SocketTwo : -1;
+                case NavigationMoveEvent.Direction.Left:
+                    return device == Cutter ? Scan : device == SocketTwo ? SocketOne : -1;
+                case NavigationMoveEvent.Direction.Down:
+                    return device == Scan ? SocketOne : device == Cutter ? SocketTwo : -1;
+                case NavigationMoveEvent.Direction.Up:
+                    return device == SocketOne ? Scan : device == SocketTwo ? Cutter : -1;
+                default:
+                    return -1;
             }
-
-            return best;
         }
     }
 }

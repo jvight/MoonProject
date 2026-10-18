@@ -703,8 +703,8 @@
             "text": "Blueprint not yet found"
         },
         {
-            "key": "ui.cargo.tab_seven",
-            "text": "EQUIPPED"
+            "key": "ui.face.title",
+            "text": "EQUIPMENT DIAGNOSTIC · UNIT 07 · SSR-5"
         },
         {
             "key": "ui.title.continue_note",

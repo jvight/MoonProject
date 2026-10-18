@@ -1619,8 +1619,8 @@ Label {
 }
 
 /*
- * The cargo screen (Tab / View): FaceInventoryView (1152x768, 1.5:1) — 07's 4x6 hold grid on the left, 07's 2D
- * line-art and its four device bubbles (scan lens, cutter, two sockets) on the right.
+ * The cargo screen (Tab / View): FaceInventoryView (1152x768, 1.5:1) — 07's 2D line-art in the middle with its four
+ * devices (scan lens, cutter, two sockets) in labelled frames at the corners, the hold as a strip of slots at the foot.
  */
 
 .cargo {
@@ -1658,6 +1658,15 @@ Label {
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
+.cargo__heading--title {
+    -unity-text-align: upper-center;
+}
+
+.cargo__heading--strip {
+    font-size: 22px;
+    letter-spacing: 2px;
+}
+
 .cargo__boot {
     display: none;
     position: absolute;
@@ -1674,10 +1683,21 @@ Label {
 .cargo__badge {
     display: none;
     position: absolute;
-    right: 6px;
-    bottom: 3px;
-    font-size: 24px;
+    right: 4px;
+    bottom: 2px;
+    font-size: 20px;
     color: rgb(255, 224, 152);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
+}
+
+.cargo__cell-name {
+    display: none;
+    position: absolute;
+    overflow: hidden;
+    white-space: normal;
+    font-size: 18px;
+    -unity-text-align: upper-center;
+    color: rgb(242, 192, 104);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
@@ -1685,23 +1705,37 @@ Label {
     position: absolute;
 }
 
+.cargo__device-name {
+    position: absolute;
+    padding-left: 12px;
+    font-size: 22px;
+    letter-spacing: 1px;
+    -unity-text-align: middle-left;
+    color: rgb(255, 224, 152);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
+}
+
 .cargo__device-state {
     position: absolute;
-    left: -40px;
-    right: -40px;
-    top: 100%;
-    margin-top: 4px;
     font-size: 22px;
     white-space: normal;
-    -unity-text-align: upper-center;
-    color: rgb(242, 192, 104);
+    -unity-text-align: middle-left;
+    color: rgb(190, 150, 90);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
+}
+
+.cargo__socket--fitted .cargo__device-state {
+    color: rgb(146, 240, 252);
+}
+
+.cargo__socket--fault .cargo__device-state {
+    color: rgb(255, 214, 128);
 }
 
 .cargo__tooltip {
     display: none;
     position: absolute;
-    padding: 4px 18px;
+    padding: 6px 18px;
     justify-content: center;
     background-color: rgb(19, 18, 16);
     border-width: 3px;
@@ -1717,7 +1751,7 @@ Label {
 .cargo__tooltip-desc {
     margin-top: 2px;
     font-size: 22px;
-    white-space: nowrap;
+    white-space: normal;
     color: rgb(242, 192, 104);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
@@ -1740,8 +1774,9 @@ Label {
 
 .cargo__more {
     position: absolute;
+    padding-left: 30px;
     font-size: 22px;
-    -unity-text-align: middle-center;
+    -unity-text-align: middle-left;
     color: rgb(224, 176, 94);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }

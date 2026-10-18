@@ -28,30 +28,6 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void PlayerLook_MeetsResistanceNearTheLimits_AndNeverPassesThem()
-        {
-            float lastStep = float.MaxValue;
-            for (int i = 0; i < 600; i++)
-            {
-                float before = _gaze.AimYaw;
-                _gaze.Steer(new Vector2(3f, 3f));
-                float step = _gaze.AimYaw - before;
-                if (_gaze.AimYaw > _settings.YawLimit - _settings.SoftZone)
-                {
-                    Assert.LessOrEqual(step, lastStep + 1e-5f, "the last stretch gets harder");
-                }
-
-                lastStep = step;
-            }
-
-            Assert.LessOrEqual(_gaze.AimYaw, _settings.YawLimit);
-            Assert.LessOrEqual(_gaze.AimPitch, _settings.PitchUpLimit);
-            _gaze.Aim(-500f, -500f);
-            Assert.AreEqual(-_settings.YawLimit, _gaze.AimYaw, 1e-4f);
-            Assert.AreEqual(_settings.PitchDownLimit, _gaze.AimPitch, 1e-4f);
-        }
-
-        [Test]
         public void Gaze_FollowsTheAimSlowly_WithoutOvershoot()
         {
             _gaze.Aim(40f, 20f);

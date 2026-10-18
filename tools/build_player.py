@@ -3,6 +3,7 @@
 Windows playtest build of YOUR worktree (git toplevel of the current directory; never the main project).
 
   python tools/build_player.py [--out Builds/Lunarion-Windows] [--skip-builders] [--no-smoke] [--no-build]
+                               [--autoplay]
 
 Steps:
   1. tools/unity_batch.py exec MoonProject.Editor.Build.PlayerBuild.BuildWindows: runs every builder (Main Scene
@@ -15,6 +16,9 @@ Steps:
      requires the bootstrap to confirm the smoke slot and the WorldSystem boot line, and no exceptions/errors in the
      player log, then closes it and reports boot time and sizes. The smoke slot's files are deleted before and
      after the run, so a smoke run never reads or writes the player's progress.
+
+--autoplay builds the development variant that carries the Autoplay bot (tools/autoplay.py drives it): into
+Builds/Lunarion-Autoplay, never zipped, so it cannot be mistaken for the release build.
 
 Exit code 0 = build, zip and smoke check all passed.
 """
@@ -82,11 +86,13 @@ def mb(size):
     return f"{size / (1024 * 1024):.1f} MB"
 
 
-def build(root, out_dir, skip_builders, timeout, showcase=False):
+def build(root, out_dir, skip_builders, timeout, showcase=False, autoplay=False):
     method = SHOWCASE_BUILD_METHOD if showcase else BUILD_METHOD
     cmd = [sys.executable, str(Path(__file__).resolve().parent / "unity_batch.py"), "exec", "--method", method,
            "--project", str(root), "--timeout", str(timeout), "--arg", f"out={out_dir}",
            "--arg", f"builders={'false' if skip_builders else 'true'}"]
+    if autoplay:
+        cmd += ["--arg", "autoplay=true"]
     say("building the player through unity_batch (first builds compile player shaders and take several minutes)")
     return subprocess.run(cmd).returncode == 0
 
@@ -212,17 +218,23 @@ def main():
     ap.add_argument("--showcase", action="store_true", help="build Showcase.unity into Builds/Lunarion-Showcase-<ver>.zip")
     ap.add_argument("--out", help="build folder (default Builds/Lunarion-Windows or Builds/Lunarion-Showcase)")
     ap.add_argument("--skip-builders", action="store_true", help="build the player without re-running builders")
+    ap.add_argument("--autoplay", action="store_true",
+                    help="build the development variant with the Autoplay bot into Builds/Lunarion-Autoplay (no zip)")
     ap.add_argument("--no-build", action="store_true", help="reuse the existing build folder (zip + smoke only)")
     ap.add_argument("--no-smoke", action="store_true", help="skip launching the built player")
     ap.add_argument("--smoke-seconds", type=int, default=20)
     ap.add_argument("--timeout", type=int, default=BUILD_TIMEOUT, help="seconds before the Unity build is killed")
     args = ap.parse_args()
 
+    if args.autoplay and args.showcase:
+        sys.exit("[build_player] ERROR: --autoplay plays the Main scene; it cannot be combined with --showcase")
     root = git_toplevel()
-    default_out = "Builds/Lunarion-Showcase" if args.showcase else "Builds/Lunarion-Windows"
+    default_out = ("Builds/Lunarion-Autoplay" if args.autoplay else
+                   "Builds/Lunarion-Showcase" if args.showcase else "Builds/Lunarion-Windows")
     out_dir = (Path(args.out) if args.out and Path(args.out).is_absolute() else root / (args.out or
                default_out)).resolve()
-    if not args.no_build and not build(root, out_dir, args.skip_builders, args.timeout, showcase=args.showcase):
+    if not args.no_build and not build(root, out_dir, args.skip_builders, args.timeout, showcase=args.showcase,
+                                       autoplay=args.autoplay):
         say("RESULT: FAIL (player build failed; see the unity_batch output above)")
         sys.exit(1)
     if not (out_dir / INFO_FILE).exists():
@@ -234,9 +246,12 @@ def main():
     if not copy_licenses(root, out_dir):
         say("RESULT: FAIL")
         sys.exit(1)
-    archive = make_zip(root, out_dir, info["version"], showcase=args.showcase)
     say(f"version {info['version']}  exe {mb(exe.stat().st_size)}  build folder {mb(folder_size(out_dir))}")
-    say(f"zip {mb(archive.stat().st_size)}: {archive}")
+    if args.autoplay:
+        say("development variant (Autoplay bot): not zipped")
+    else:
+        archive = make_zip(root, out_dir, info["version"], showcase=args.showcase)
+        say(f"zip {mb(archive.stat().st_size)}: {archive}")
 
     ok = True
     if not args.no_smoke:

@@ -976,6 +976,21 @@ namespace MoonProject.UI
             FillCircle(painter, new Vector2(center.x, center.y + 3.2f), 1.2f, color);
         }
 
+        /// <summary>Draws a warning mark: a triangle with an exclamation point, centred at <paramref name="center"/>.</summary>
+        public static void DrawWarningGlyph(Painter2D painter, Vector2 center, float size, Color32 color, float width)
+        {
+            float half = size * 0.5f;
+            var top = new Vector2(center.x, center.y - half);
+            var left = new Vector2(center.x - half, center.y + half * 0.8f);
+            var right = new Vector2(center.x + half, center.y + half * 0.8f);
+            DrawLine(painter, top, left, color, width);
+            DrawLine(painter, left, right, color, width);
+            DrawLine(painter, right, top, color, width);
+            DrawLine(painter, new Vector2(center.x, center.y - half * 0.35f), new Vector2(center.x, center.y + half * 0.2f),
+                color, width);
+            FillCircle(painter, new Vector2(center.x, center.y + half * 0.5f), width * 0.7f, color);
+        }
+
         /// <summary>Draws L-shaped corner bracket ticks inside rectangle <c>(x, y, w, h)</c>.</summary>
         public static void DrawCornerTicks(Painter2D painter, float x, float y, float w, float h, float length,
             Color32 color, float width)

@@ -35,7 +35,7 @@ namespace MoonProject.UI
         public const string ScanKnown = "scan.known";
         public const string RecipeRow = "ui.recipe.row";
         public const string CargoHold = "ui.cargo.hold";
-        public const string CargoTabSeven = "ui.cargo.tab_seven";
+        public const string FaceTitle = "ui.face.title";
         public const string CargoMoreSlots = "ui.cargo.more_slots";
         public const string CargoEmptyName = "ui.cargo.empty_name";
         public const string CargoEmptyDesc = "ui.cargo.empty_desc";
