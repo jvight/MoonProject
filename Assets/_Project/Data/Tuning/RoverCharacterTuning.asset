@@ -121,6 +121,10 @@ MonoBehaviour:
     _halfLife: 0.12
     _gazePriority: 7
     _followSeconds: 1.5
+    _refusalSeconds: 0.55
+    _refusalYawDegrees: 14
+    _refusalShakes: 2
+    _refusalDipDegrees: 6
     _nod:
       _distance: 0
       _angle: 2

@@ -107,6 +107,7 @@ namespace MoonProject.Rover
         private bool _cutting;
         private bool _isCutTool;
         private Vector3 _cutTarget;
+        private CutterRefusal _cutterRefusal;
         private float _cutterYaw;
         private float _cutterPitch;
         private bool _digging;
@@ -415,6 +416,7 @@ namespace MoonProject.Rover
 
             EventBus events = context.Events;
             _chirpPose = new ChirpPose(_tuning.Chirp);
+            _cutterRefusal = new CutterRefusal(_tuning.CutFocus);
             _voice = new RoverVoice(events, _tuning.Chirp, () => Time.time);
             _events = events;
             _subscriptions = new[]
@@ -434,6 +436,7 @@ namespace MoonProject.Rover
                 events.Subscribe<ChargingChanged>(OnChargingChanged),
                 events.Subscribe<BatteryWarned>(OnBatteryWarned),
                 events.Subscribe<FeelBeat>(OnFeelBeat),
+                events.Subscribe<CutterRefused>(OnCutterRefused),
                 events.Subscribe<RoverChirpSyllable>(OnChirpSyllable),
                 events.Subscribe<BasePowerChanged>(OnBasePowerChanged),
                 events.Subscribe<FriendSpotted>(spotted => Glance(spotted.Position)),
@@ -814,8 +817,9 @@ namespace MoonProject.Rover
 
         private void StepTools(float halfLife, float deltaTime)
         {
-            _cutterYaw = Smoothing.Damp(_cutterYaw, 0f, halfLife, deltaTime);
-            _cutterPitch = Smoothing.Damp(_cutterPitch, 0f, halfLife, deltaTime);
+            _cutterRefusal.Step(deltaTime);
+            _cutterYaw = _cutterRefusal.Yaw;
+            _cutterPitch = _cutterRefusal.Pitch;
             _digFocus = Smoothing.Damp(_digFocus, _digging ? 1f : 0f, halfLife, deltaTime);
             _scoopKick = Smoothing.Damp(_scoopKick, 0f, halfLife, deltaTime);
             _winchReel = Smoothing.Damp(_winchReel, _tetherActive ? 1f : 0f, 0.15f, deltaTime);
@@ -1069,6 +1073,12 @@ namespace MoonProject.Rover
         /// brighter lens, nods at ignition, follows the piece as it tumbles, and lets go once the bundle or part is
         /// received, the follow window expires, or the player releases. The dig is answered the same way.
         /// </summary>
+        /// <summary>A press the offline cutter refused: its turret shakes, then stays parked.</summary>
+        private void OnCutterRefused(CutterRefused refused)
+        {
+            _cutterRefusal.Trigger();
+        }
+
         private void OnFeelBeat(FeelBeat beat)
         {
             CutFocusSettings focus = _tuning.CutFocus;

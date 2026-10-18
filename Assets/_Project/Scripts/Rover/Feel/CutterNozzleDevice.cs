@@ -45,6 +45,7 @@ namespace MoonProject.Rover
         private MaterialPropertyBlock _block;
         private IDisposable[] _subscriptions;
 
+        private bool _online;
         private bool _charging;
         private bool _firing;
         private float _chargeElapsed;
@@ -73,7 +74,14 @@ namespace MoonProject.Rover
 
         public bool Initialize(GameContext context)
         {
-            return Initialize(context != null ? context.Events : null);
+            bool ready = Initialize(context != null ? context.Events : null);
+            if (ready && context.TryGet(out IRoverSystems systems))
+            {
+                _online = systems.StateOf(RoverSystem.Cutter) == RoverSystemState.Ok;
+                ApplyVisuals();
+            }
+
+            return ready;
         }
 
         public bool Initialize(EventBus events)
@@ -90,6 +98,7 @@ namespace MoonProject.Rover
             {
                 events.Subscribe<CutChargeStaged>(OnChargeStarted),
                 events.Subscribe<FeelBeat>(OnFeelBeat),
+                events.Subscribe<RoverSystemChanged>(OnSystemChanged),
             };
             _charging = false;
             _firing = false;
@@ -158,7 +167,7 @@ namespace MoonProject.Rover
             else
             {
                 _irisOpen01 = Smoothing.Damp(_irisOpen01, 0f, settings.ReleaseHalfLife, deltaTime);
-                _coreGlow01 = Smoothing.Damp(_coreGlow01, 0f, settings.ReleaseHalfLife, deltaTime);
+                _coreGlow01 = Smoothing.Damp(_coreGlow01, RestGlow(settings), settings.ReleaseHalfLife, deltaTime);
             }
 
             ApplyVisuals();
@@ -186,6 +195,20 @@ namespace MoonProject.Rover
                 _coreGlow01 = Mathf.Max(_coreGlow01, settings.ChargeFullCoreGlow);
                 ApplyVisuals();
             }
+        }
+
+        private void OnSystemChanged(RoverSystemChanged changed)
+        {
+            if (changed.System == RoverSystem.Cutter)
+            {
+                _online = changed.State == RoverSystemState.Ok;
+            }
+        }
+
+        /// <summary>The idle glow: dark while the cutter is offline, a small steady pilot light once it works.</summary>
+        private float RestGlow(CutterNozzleSettings settings)
+        {
+            return _online ? settings.PilotCoreGlow : 0f;
         }
 
         private void OnFeelBeat(FeelBeat beat)
@@ -219,7 +242,7 @@ namespace MoonProject.Rover
             _firing = false;
             _chargeElapsed = 0f;
             _irisOpen01 = 0f;
-            _coreGlow01 = 0f;
+            _coreGlow01 = RestGlow(_tuning.CutterNozzle);
             if (_block != null)
             {
                 ApplyVisuals();
@@ -265,7 +288,9 @@ namespace MoonProject.Rover
             }
             else
             {
-                targetSpill = _coreGlow01 * settings.ReleaseSpillIntensity;
+                targetSpill = _online
+                    ? Mathf.Max(settings.PilotSpillIntensity, _coreGlow01 * settings.ReleaseSpillIntensity)
+                    : _coreGlow01 * settings.ReleaseSpillIntensity;
             }
 
             _spillLight.range = settings.SpillRange;
