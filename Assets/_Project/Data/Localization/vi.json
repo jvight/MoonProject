@@ -736,7 +736,7 @@
         },
         {
             "key": "next.v2.collect_parts",
-            "text": "Lấy phụ tùng trong thùng hàng mở của tàu đổ bộ."
+            "text": "Lấy phụ tùng trong thùng hàng mở cạnh cổng dịch vụ của tàu đổ bộ."
         },
         {
             "key": "next.v2.build_pad",
