@@ -98,7 +98,10 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>07 stops this far (m) from a fragment, facing it, to scan it.</summary>
         private const float ScanStandOff = 3.5f;
 
-        /// <summary>Metres from a line-up spot that count as there: it only turns 07 roughly toward its target.</summary>
+        /// <summary>Metres from a panel on a wall 07 scans it from, square to it: the panel fills the view.</summary>
+        private const float PanelStandOff = 2.5f;
+
+        /// <summary>Metres from a line-up spot that count as there: it only turns 07 roughly to its target.</summary>
         private const float LineUpArrive = 3f;
 
         /// <summary>Metres beyond a scan's stand-off 07 lines up first, where that ground is clear.</summary>
@@ -185,7 +188,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return ExpectLine(OpeningKeys.ScanLander, "B3: at the lander");
             yield return ScanTheSet("ruin." + ScanTuning.LanderCargoId, "the lander's cargo bay");
             Assert.IsTrue(Known(StructureIds.ChargingPad), "the cargo bay's two fragments teach the pad");
-            yield return ExpectLine(OpeningKeys.CollectParts, "B4: the cutter is FAULT, the open crate holds parts");
             yield return CollectTheOpenCrate();
             yield return ExpectLine(OpeningKeys.BuildPad, "B5: the hold covers the pad");
             Vector3 pad = Anchor("place.apron").Position;
@@ -326,7 +328,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 ScanFragment panel = _gameplay.Scans.Find(StoryScan.IdPrefix + "airlock");
                 Assert.IsNotNull(panel, "the habitat has its airlock panel to read");
-                yield return Scan(panel, "the airlock panel");
+                Vector3 outward = Flat(panel.Point - Ruin("HabitatModules").position).normalized;
+                yield return Scan(panel, "the airlock panel", outward, PanelStandOff);
                 Assert.AreEqual(1, read.Count, "the panel's readout shows once");
             }
 
@@ -340,17 +343,26 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// </summary>
         private IEnumerator Scan(ScanFragment fragment, string what)
         {
-            ScanField scans = _gameplay.Scans;
             Vector3 away = Flat(_rover.Position - fragment.Point);
-            away = ClearSide(fragment.Point, away.sqrMagnitude > 1e-4f ? away.normalized : Vector3.back, ScanStandOff,
-                fragment.FragmentId);
-            if (Clear(fragment.Point + away * (ScanStandOff + ScanLineUp)))
+            yield return Scan(fragment, what, away.sqrMagnitude > 1e-4f ? away.normalized : Vector3.back,
+                ScanStandOff);
+        }
+
+        /// <summary>
+        /// As the plain scan, coming in along <paramref name="preferred"/> (where the ground is clear) to
+        /// <paramref name="standOff"/> metres: square to a panel on a wall, close enough that it fills the view.
+        /// </summary>
+        private IEnumerator Scan(ScanFragment fragment, string what, Vector3 preferred, float standOff)
+        {
+            ScanField scans = _gameplay.Scans;
+            Vector3 away = ClearSide(fragment.Point, preferred, standOff, fragment.FragmentId);
+            if (Clear(fragment.Point + away * (standOff + ScanLineUp)))
             {
-                yield return DriveTo(Flat(fragment.Point + away * (ScanStandOff + ScanLineUp)), LineUpArrive,
+                yield return DriveTo(Flat(fragment.Point + away * (standOff + ScanLineUp)), LineUpArrive,
                     "a line-up for a scan");
             }
 
-            yield return DriveTo(Flat(fragment.Point), ScanStandOff, $"the spot facing {what}", ApproachThrottle);
+            yield return DriveTo(Flat(fragment.Point), standOff, $"the spot facing {what}", ApproachThrottle);
             Look(fragment.Point);
             yield return Until(() => scans.Candidate == fragment, ScanLookTimeout,
                 $"07's view rests on {fragment.FragmentId}: its brackets and the Scan chip show",
@@ -374,9 +386,20 @@ namespace MoonProject.Gameplay.PlayModeTests
             Begin();
             SealedContainer crate = _gameplay.Containers.Find("supply.lander.open");
             Assert.IsTrue(crate.StandsOpen, "the lander's crate stands open from the start: no cutting before B6");
-            Vector3 front = Flat(crate.CutPoint.position + crate.Root.forward * SealStandOff);
-            yield return DriveTo(front + Flat(crate.Root.forward) * 3f, 2f, "a line-up for the open crate");
-            yield return DriveTo(front, 1f, "the open crate");
+            if (_gameplay.StartKit.CarriesIgniter)
+            {
+                // 07 scanned the cargo standing in the crate's reach: it gave its parts the moment the scan ended.
+                Assert.AreEqual(OpeningKeys.BuildPad, _gameplay.Opening.Flow.Current, "B4 is done with the scan");
+            }
+            else
+            {
+                yield return ExpectLine(OpeningKeys.CollectParts, "B4: the cutter is FAULT, the crate holds parts");
+                Vector3 front = Flat(crate.CutPoint.position + crate.Root.forward * SealStandOff);
+                yield return DriveTo(front + Flat(crate.Root.forward) * 3f, LineUpArrive,
+                    "a line-up for the open crate");
+                yield return DriveTo(front, 1f, "the open crate");
+            }
+
             yield return Until(() => _gameplay.StartKit.CarriesIgniter, FollowTimeout, "07 takes the spare igniter");
             Capture("04-the-open-crate");
             End("B4: collect the lander's open crate", $"the igniter; hold {Hold()}");
