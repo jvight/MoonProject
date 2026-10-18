@@ -168,10 +168,16 @@ namespace MoonProject.Gameplay
 
         /// <summary>
         /// The beam's far end this frame: where it meets its target's real surface (set before
-        /// <see cref="Step"/>).
+        /// <see cref="Step"/>). Ignored once the scan ends, completes or is let go: the fading beam stays where it last
+        /// met its target, which may be dissolving, collected or gone.
         /// </summary>
         public void Meet(Vector3 contact)
         {
+            if (!_active)
+            {
+                return;
+            }
+
             _contact = contact;
             _hasContact = true;
         }
