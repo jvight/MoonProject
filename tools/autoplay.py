@@ -9,13 +9,14 @@ The bot lives in the development build (python tools/build_player.py --autoplay,
 your worktree; --build makes it first). It feeds the Input System from inside the process (a virtual keyboard and
 mouse; the real devices are disabled for the run), so the OS never sees an input. The window opens windowed,
 unfocused, behind the other windows in the bottom-right corner of the screen, and plays the scenario on its own
-save slot ('autoplay', cleared before and after the run).
+save slot ('autoplay-<hash of the worktree>', cleared before and after the run).
 
 Outputs in --out (default Logs/autoplay/<timestamp>): report.md, screenshots/*.png (one per beat and every
 --shot-seconds), autoplay.log (the Unity log), player.log (the engine log). Exit code 0 = every beat passed.
 """
 import argparse
 import ctypes
+import hashlib
 import os
 import subprocess
 import sys
@@ -28,7 +29,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import build_player  # noqa: E402
 from moonbatch import procutil  # noqa: E402
 
-SLOT = "autoplay"
+SLOT_PREFIX = "autoplay"
 DEFAULT_OUT = "Logs/autoplay"
 BUILD_DIR = "Builds/Lunarion-Autoplay"
 WINDOW_WIDTH = 960
@@ -39,6 +40,8 @@ GRACE_SECONDS = 90
 HWND_BOTTOM = 1
 SWP_NOSIZE = 0x0001
 SWP_NOACTIVATE = 0x0010
+STARTF_USESHOWWINDOW = 0x0001
+SW_SHOWNOACTIVATE = 4
 SM_CXSCREEN = 0
 SM_CYSCREEN = 1
 
@@ -47,10 +50,15 @@ def say(message):
     print(f"[autoplay] {message}", flush=True)
 
 
-def launch_arguments(out_dir, log_path, scenario, until, timeout, shot_seconds):
+def slot_for(root):
+    """The save slot of this worktree: runs in two worktrees at once must not read or clear each other's save."""
+    return f"{SLOT_PREFIX}-{hashlib.sha1(str(root).lower().encode()).hexdigest()[:8]}"
+
+
+def launch_arguments(slot, out_dir, log_path, scenario, until, timeout, shot_seconds):
     """The player's command line: window size, own save slot, own log, and the bot's flags."""
     args = ["-screen-width", str(WINDOW_WIDTH), "-screen-height", str(WINDOW_HEIGHT), "-screen-fullscreen", "0",
-            "-saveSlot", SLOT, "-logFile", str(log_path), "-autoplay", scenario, "-autoplay-out", str(out_dir),
+            "-saveSlot", slot, "-logFile", str(log_path), "-autoplay", scenario, "-autoplay-out", str(out_dir),
             "-autoplay-timeout", str(timeout), "-autoplay-shot-seconds", str(shot_seconds)]
     if until:
         args += ["-autoplay-until", until]
@@ -131,12 +139,17 @@ def main():
 
     company, product = build_player.player_identity(root)
     saves_dir = Path(os.environ["USERPROFILE"]) / "AppData" / "LocalLow" / company / product / "Saves"
-    build_player.delete_slot_files(saves_dir, SLOT)
-    command = [str(exe)] + launch_arguments(out_dir, out_dir / "player.log", args.scenario, args.until, args.timeout,
+    slot = slot_for(root)
+    build_player.delete_slot_files(saves_dir, slot)
+    command = [str(exe)] + launch_arguments(slot, out_dir, out_dir / "player.log", args.scenario, args.until, args.timeout,
                                             args.shot_seconds)
-    say(f"launching {exe.name} on save slot '{SLOT}', output {out_dir}")
+    say(f"launching {exe.name} on save slot '{slot}', output {out_dir}")
     guard = procutil.ProcessTreeGuard()
-    proc = subprocess.Popen(command, cwd=str(exe.parent))
+    # The window shows without taking focus, so a run never jumps in front of what the owner is doing.
+    startup = subprocess.STARTUPINFO()
+    startup.dwFlags |= STARTF_USESHOWWINDOW
+    startup.wShowWindow = SW_SHOWNOACTIVATE
+    proc = subprocess.Popen(command, cwd=str(exe.parent), startupinfo=startup)
     guard.attach(proc)
     try:
         if not args.visible:
@@ -149,7 +162,7 @@ def main():
         guard.kill()
         proc.wait()
         guard.close()
-        build_player.delete_slot_files(saves_dir, SLOT)
+        build_player.delete_slot_files(saves_dir, slot)
 
     result, report = verdict(out_dir)
     if result is None:

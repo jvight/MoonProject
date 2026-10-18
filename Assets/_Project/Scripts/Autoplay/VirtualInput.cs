@@ -20,13 +20,10 @@ namespace MoonProject.Autoplay
         private readonly List<InputDevice> _disabled = new List<InputDevice>();
         private readonly Key[] _keyBuffer = new Key[16];
         private readonly InputSettings.BackgroundBehavior _backgroundBehavior;
-        private readonly bool _runInBackground;
         private bool _leftHeld;
 
         public VirtualInput()
         {
-            _runInBackground = Application.runInBackground;
-            Application.runInBackground = true;
             _backgroundBehavior = InputSystem.settings.backgroundBehavior;
             InputSystem.settings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
             foreach (InputDevice device in InputSystem.devices)
@@ -108,7 +105,6 @@ namespace MoonProject.Autoplay
             }
 
             InputSystem.settings.backgroundBehavior = _backgroundBehavior;
-            Application.runInBackground = _runInBackground;
         }
 
         private void Send()
