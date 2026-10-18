@@ -51,7 +51,7 @@ MonoBehaviour:
   - _id: supply.midway
     _anchorId: place.midway
     _offset: {x: 1.5, y: 0, z: 0}
-    _yaw: -20
+    _yaw: 67
     _container: Crate_S
     _yield:
       _metal: 2
@@ -76,7 +76,7 @@ MonoBehaviour:
     _prop: {fileID: 703351103347903336, guid: 3a2ed291bf34a90459e85da9d8125b67, type: 3}
   - _id: supply.habitat.reel
     _anchorId: HabitatModules
-    _offset: {x: -3, y: 0, z: -6}
+    _offset: {x: -3.3, y: 0, z: -6.5}
     _yaw: 207
     _container: Crate_M
     _yield:
@@ -88,8 +88,8 @@ MonoBehaviour:
     _prop: {fileID: 0}
   - _id: supply.workshop.a
     _anchorId: KenjiWorkshop
-    _offset: {x: 5.5, y: 0, z: 0}
-    _yaw: 100
+    _offset: {x: 3.9, y: 0, z: -11.6}
+    _yaw: -151
     _container: Crate_S
     _yield:
       _metal: 3
