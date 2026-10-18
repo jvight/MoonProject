@@ -1000,11 +1000,11 @@
         },
         {
             "key": "post.resume",
-            "text": "ĐƠN VỊ 07 · SSR-5 · TIẾP TỤC · {0} NGÀY"
+            "text": "TIẾP TỤC · {0} NGÀY · KHÔI PHỤC HÀNG VIỆC"
         },
         {
             "key": "post.agenda",
-            "text": "HÀNG VIỆC 1 · KHÔI PHỤC"
+            "text": "HÀNG VIỆC · 3 MỤC\n1. CĂN CHẢO ĂNG-TEN\n2. GỬI DỮ LIỆU KHẢO SÁT\n3. —\nVIỆC 1 · CẦN ĐIỆN"
         },
         {
             "key": "post.lens",
@@ -1016,7 +1016,7 @@
         },
         {
             "key": "post.head",
-            "text": "ĐẦU"
+            "text": "CỔ · ĐẦU"
         },
         {
             "key": "post.wheels",
@@ -1024,7 +1024,7 @@
         },
         {
             "key": "post.wheels.ok",
-            "text": "OK (1 LỆCH BỘ)"
+            "text": "OK (1 BÁNH KHÁC BỘ)"
         },
         {
             "key": "post.motor",
@@ -1056,7 +1056,7 @@
         },
         {
             "key": "post.assembly",
-            "text": "LẮP RÁP · 0 BẢN VẼ"
+            "text": "LẮP DỰNG · 0 BẢN VẼ"
         },
         {
             "key": "post.begin",
@@ -1077,6 +1077,10 @@
         {
             "key": "post.result.receive_only",
             "text": "CHỈ NHẬN"
+        },
+        {
+            "key": "post.antenna.receive_only",
+            "text": "CHỈ NHẬN · TÍN HIỆU QUỸ ĐẠO"
         }
     ]
 }

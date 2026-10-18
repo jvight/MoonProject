@@ -49,6 +49,13 @@ namespace MoonProject.UI
             return IsInformation(step) ? text : text + Separator;
         }
 
+        /// <summary>The cells' line while they fill: "name · N%" for <paramref name="charge01"/> of a full battery.</summary>
+        public static string Filling(ILocalization localization, float charge01)
+        {
+            return localization.Get(KeyOf(BootCheckStep.Battery)) + Separator +
+                   string.Format(localization.Get("post.battery.ok"), Mathf.RoundToInt(Mathf.Clamp01(charge01) * 100f));
+        }
+
         /// <summary>What the line settles to when the step completes; <paramref name="charge01"/> fills the cells' line.</summary>
         public static string Settled(BootCheckStep step, BootCheckResult result, ILocalization localization,
             int resumeDays, float charge01)

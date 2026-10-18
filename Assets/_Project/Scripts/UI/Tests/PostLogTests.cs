@@ -118,11 +118,36 @@ namespace MoonProject.UI.Tests
                         }
                     }
 
-                    float seconds = longest / _settings.CharsPerSecond;
+                    float seconds = longest / Mathf.Max(_settings.CharsPerSecond, longest / _settings.MaxLineSeconds);
                     Assert.Less(seconds, StepSeconds[step] * 0.8f,
                         $"{table.Language} {s}: {longest} characters must type well inside its {StepSeconds[step]} s");
                 }
             }
+        }
+
+        [Test]
+        public void TheCellsLine_ReadsItsFillLive_ThenSettles()
+        {
+            _log.Started(BootCheckStep.Battery, PostText.Started(BootCheckStep.Battery, _text, 0), false);
+            _log.Live(BootCheckStep.Battery, PostText.Filling(_text, 0.2f));
+            Assert.AreEqual(0, _log.Visible(0), "no reading before the name has typed");
+            Run(0.5f);
+            _log.Live(BootCheckStep.Battery, PostText.Filling(_text, 0.2f));
+            Assert.AreEqual("CELLS · 20%", Shown(0), "the fill shows at once");
+            Assert.AreEqual(0, _log.DotsOf(0));
+            _log.Completed(BootCheckStep.Battery, BootCheckResult.Ok,
+                PostText.Settled(BootCheckStep.Battery, BootCheckResult.Ok, _text, 0, 0.5f));
+            Run(0.5f);
+            Assert.AreEqual("CELLS · 50%", Shown(0));
+        }
+
+        [Test]
+        public void ALongBlock_TypesFaster_SoItStillFitsItsStep()
+        {
+            string block = new string('x', 120);
+            _log.Started(BootCheckStep.Agenda, block, true);
+            Run(_settings.MaxLineSeconds + 0.05f);
+            Assert.AreEqual(block.Length, _log.Visible(0));
         }
 
         private void Run(float seconds)

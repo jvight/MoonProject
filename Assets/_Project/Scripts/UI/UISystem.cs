@@ -85,6 +85,7 @@ namespace MoonProject.UI
         private UnlockCard _unlockCard;
         private PostLog _postLog;
         private PostView _postView;
+        private bool _postOnCrt;
         private EventBus _events;
         private BuildStripView _buildStrip;
         private PauseMenu _pause;
@@ -275,6 +276,7 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<BootCheckStarted>(OnBootCheckStarted));
             _tokens.Add(events.Subscribe<BootCheckCompleted>(OnBootCheckCompleted));
             _tokens.Add(events.Subscribe<BootCheckFinished>(_ => _postLog.Finish()));
+            _tokens.Add(events.Subscribe<BootCheckPulse>(OnBootCheckPulse));
             _tokens.Add(events.Subscribe<LanguageChanged>(OnLanguageChanged));
             _tokens.Add(events.Subscribe<TickerLine>(OnTickerLine));
             _tokens.Add(events.Subscribe<RoverSystemChanged>(OnSystemChanged));
@@ -620,6 +622,19 @@ namespace MoonProject.UI
 
             _postLog.Started(started.Step, PostText.Started(started.Step, _localization, _tuning.Post.ResumeDays),
                 PostText.IsInformation(started.Step));
+            if (!_postOnCrt)
+            {
+                _postOnCrt = true;
+                _services.FaceScreen?.SetReadout(FaceTargetTexture());
+            }
+        }
+
+        private void OnBootCheckPulse(BootCheckPulse pulse)
+        {
+            if (pulse.Step == BootCheckStep.Battery && _services.Battery != null)
+            {
+                _postLog.Live(pulse.Step, PostText.Filling(_localization, pulse.Progress01 * _services.Battery.Charge01));
+            }
         }
 
         private void OnBootCheckCompleted(BootCheckCompleted completed)
@@ -637,6 +652,12 @@ namespace MoonProject.UI
             }
 
             bool changed = _postLog.Tick(deltaTime);
+            if (_postOnCrt && !PostShown)
+            {
+                _postOnCrt = false;
+                _services.FaceScreen?.SetReadout(null);
+            }
+
             _postView.SetShown(PostShown && !_cargo.IsOpen);
             if (changed)
             {

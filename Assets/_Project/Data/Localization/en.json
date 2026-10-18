@@ -1000,11 +1000,11 @@
         },
         {
             "key": "post.resume",
-            "text": "UNIT 07 · SSR-5 · CONTINUE · {0} DAYS"
+            "text": "CONTINUE · {0} DAYS · RESTORING TASK QUEUE"
         },
         {
             "key": "post.agenda",
-            "text": "QUEUE 1 · RECOVERY"
+            "text": "TASK QUEUE · 3 ITEMS\n1. ALIGN THE DISH\n2. SEND THE SURVEY DATA\n3. —\nTASK 1 · NEEDS POWER"
         },
         {
             "key": "post.lens",
@@ -1016,7 +1016,7 @@
         },
         {
             "key": "post.head",
-            "text": "HEAD"
+            "text": "NECK · HEAD"
         },
         {
             "key": "post.wheels",
@@ -1036,7 +1036,7 @@
         },
         {
             "key": "post.cutter.fault",
-            "text": "FAULT · NO IGNITER · PARTS: LANDER"
+            "text": "FAULT · NO IGNITER · SPARE: LANDER"
         },
         {
             "key": "post.solar_wing",
@@ -1048,7 +1048,7 @@
         },
         {
             "key": "post.battery",
-            "text": "CELLS"
+            "text": "BATTERY"
         },
         {
             "key": "post.battery.ok",
@@ -1077,6 +1077,10 @@
         {
             "key": "post.result.receive_only",
             "text": "RECEIVE ONLY"
+        },
+        {
+            "key": "post.antenna.receive_only",
+            "text": "RECEIVE ONLY · ORBITAL SIGNAL"
         }
     ]
 }

@@ -102,6 +102,23 @@ namespace MoonProject.UI
             _alert[line] = IsAlert(result);
         }
 
+        /// <summary>
+        /// A live reading inside a running check (the cells filling): the line shows <paramref name="text"/> at once
+        /// where it matches what is typed, without dots, and stays open for <see cref="Completed"/>.
+        /// </summary>
+        public void Live(BootCheckStep step, string text)
+        {
+            int line = IndexOf(step);
+            if (line < 0 || (int)_typed[line] < _targets[line].Length)
+            {
+                return;
+            }
+
+            _targets[line] = text ?? string.Empty;
+            _typed[line] = _targets[line].Length;
+            _checking[line] = false;
+        }
+
         /// <summary>The self-test is over: control is the player's.</summary>
         public void Finish()
         {
@@ -113,11 +130,11 @@ namespace MoonProject.UI
         public bool Tick(float deltaTime)
         {
             bool changed = false;
-            float step = _settings.CharsPerSecond * deltaTime;
             for (int i = 0; i < Count; i++)
             {
                 int before = (int)_typed[i];
-                _typed[i] = Math.Min(_targets[i].Length, _typed[i] + step);
+                float speed = Math.Max(_settings.CharsPerSecond, _targets[i].Length / _settings.MaxLineSeconds);
+                _typed[i] = Math.Min(_targets[i].Length, _typed[i] + speed * deltaTime);
                 changed |= (int)_typed[i] != before;
             }
 
