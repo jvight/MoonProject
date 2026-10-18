@@ -96,8 +96,8 @@ MonoBehaviour:
     _part: 
   - _id: supply.habitat.reel
     _anchorId: HabitatModules
-    _offset: {x: 3, y: 0, z: -3}
-    _yaw: 0
+    _offset: {x: 3, y: 0, z: -6}
+    _yaw: 153
     _container: Crate_M
     _yield:
       _metal: 0
@@ -108,7 +108,7 @@ MonoBehaviour:
   - _id: supply.workshop.a
     _anchorId: KenjiWorkshop
     _offset: {x: -2.5, y: 0, z: -3}
-    _yaw: 0
+    _yaw: -140
     _container: Crate_S
     _yield:
       _metal: 0
@@ -119,7 +119,7 @@ MonoBehaviour:
   - _id: supply.workshop.b
     _anchorId: KenjiWorkshop
     _offset: {x: 2.5, y: 0, z: -3}
-    _yaw: 0
+    _yaw: 140
     _container: Crate_S
     _yield:
       _metal: 0
@@ -130,7 +130,7 @@ MonoBehaviour:
   - _id: supply.tower.a
     _anchorId: RadioTower
     _offset: {x: -3, y: 0, z: -2.5}
-    _yaw: 0
+    _yaw: -130
     _container: Crate_S
     _yield:
       _metal: 2
@@ -141,7 +141,7 @@ MonoBehaviour:
   - _id: supply.tower.b
     _anchorId: RadioTower
     _offset: {x: 3, y: 0, z: -2.5}
-    _yaw: 0
+    _yaw: 130
     _container: Crate_S
     _yield:
       _metal: 2
@@ -152,7 +152,7 @@ MonoBehaviour:
   - _id: supply.scatter
     _anchorId: ScatterSet
     _offset: {x: 0, y: 0, z: -3}
-    _yaw: 0
+    _yaw: 180
     _container: Crate_M
     _yield:
       _metal: 6
