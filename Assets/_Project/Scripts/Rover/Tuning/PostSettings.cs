@@ -14,7 +14,7 @@ namespace MoonProject.Rover
         [Header("The checks (s each)")]
         [Tooltip("The iris focuses.")]
         [Range(0.5f, 4f)]
-        [SerializeField] private float _lensSeconds = 1.2f;
+        [SerializeField] private float _lensSeconds = 1f;
 
         [Tooltip("The lamps flicker unevenly, fall dark, then ramp up: at least the lamp power-up's own length.")]
         [Range(1f, 5f)]
@@ -22,39 +22,39 @@ namespace MoonProject.Rover
 
         [Tooltip("The neck and head sweep and nod.")]
         [Range(0.5f, 4f)]
-        [SerializeField] private float _headSeconds = 2f;
+        [SerializeField] private float _headSeconds = 1.8f;
 
         [Tooltip("The four wheels twitch in turn.")]
         [Range(0.5f, 4f)]
-        [SerializeField] private float _wheelsSeconds = 2f;
+        [SerializeField] private float _wheelsSeconds = 1.8f;
 
         [Tooltip("The motor shudders and 07 creeps forward a little.")]
         [Range(0.5f, 4f)]
-        [SerializeField] private float _motorSeconds = 1.8f;
+        [SerializeField] private float _motorSeconds = 1.6f;
 
         [Tooltip("The cutter's turret tries to ignite two or three times and dies.")]
         [Range(1f, 5f)]
-        [SerializeField] private float _cutterSeconds = 2.6f;
+        [SerializeField] private float _cutterSeconds = 2.4f;
 
         [Tooltip("The solar wing jerks half open, stalls and folds back.")]
         [Range(1f, 5f)]
-        [SerializeField] private float _solarWingSeconds = 2.2f;
+        [SerializeField] private float _solarWingSeconds = 2f;
 
         [Tooltip("The antenna rises and the orbit's signal hisses.")]
         [Range(0.5f, 4f)]
-        [SerializeField] private float _antennaSeconds = 2f;
+        [SerializeField] private float _antennaSeconds = 1.8f;
 
         [Tooltip("The cell lamps fill to half.")]
         [Range(0.5f, 4f)]
-        [SerializeField] private float _batterySeconds = 1.4f;
+        [SerializeField] private float _batterySeconds = 1.2f;
 
         [Tooltip("The assembly line: no blueprints.")]
         [Range(0.3f, 3f)]
-        [SerializeField] private float _assemblySeconds = 0.8f;
+        [SerializeField] private float _assemblySeconds = 0.7f;
 
         [Tooltip("07 turns its head to the lander's beacon, shivers its dust off and the recovery begins.")]
         [Range(2f, 8f)]
-        [SerializeField] private float _beginSeconds = 4.5f;
+        [SerializeField] private float _beginSeconds = 4f;
 
         /// <summary>Seconds <paramref name="step"/> takes; the lens stages' steps (carrier, resume, agenda) have none here.</summary>
         public float SecondsOf(BootCheckStep step)

@@ -35,7 +35,7 @@ namespace MoonProject.Rover
 
         [Tooltip("O12: the ease round over 07's shoulder toward Earth, before the chase frame takes over.")]
         [Range(1f, 6f)]
-        [SerializeField] private float _overShoulderSeconds = 1.4f;
+        [SerializeField] private float _overShoulderSeconds = 1.2f;
 
         [Header("Lid (0 shut, 0.7 rest, 1 fully open)")]
         [Tooltip("Openness of the lid's first stage (O2).")]
