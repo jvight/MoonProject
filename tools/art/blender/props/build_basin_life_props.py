@@ -561,8 +561,426 @@ def build_mission_flag() -> bpy.types.Object:
     return root
 
 
+def _add_crinkled_foil_shroud(
+    mb: r1kit.MeshBuilder,
+    center_xz: Tuple[float, float],
+    mat: str = "R1_GoldFoil",
+) -> None:
+    """Build a closed manifold crinkled Apollo-ALSEP circular thermal shroud in R1_GoldFoil."""
+    bm = mb.bm
+    mat_idx = mb._mat_index(mat)
+    cx, cz = center_xz
+    n_seg = 24
+
+    # Profile from bottom center -> outer skirt -> stepped mid-skirt -> turret wall -> top inner rim -> top center
+    # (radius, y_u, crinkle_r_amp, crinkle_y_amp)
+    profile = [
+        (0.0, -0.004, 0.0, 0.0),
+        (0.285, 0.003, 0.014, 0.005),
+        (0.288, 0.022, 0.016, 0.009),
+        (0.225, 0.048, 0.015, 0.011),
+        (0.162, 0.068, 0.012, 0.008),
+        (0.150, 0.155, 0.010, 0.007),
+        (0.142, 0.235, 0.008, 0.005),
+        (0.0, 0.235, 0.0, 0.0),
+    ]
+
+    rings: List[List[bmesh.types.BMVert]] = []
+    for r_idx, (rad, y_u, amp_r, amp_y) in enumerate(profile):
+        if rad <= 1e-5:
+            rings.append([bm.verts.new(mb._to_local_b((cx, y_u, cz)))])
+        else:
+            ring_verts: List[bmesh.types.BMVert] = []
+            for s in range(n_seg):
+                th = (2.0 * math.pi * s) / n_seg
+                # Multi-harmonic deterministic Kapton crinkle facets
+                cr_r = amp_r * (
+                    0.55 * math.sin(7.0 * th + 1.3 * r_idx)
+                    + 0.45 * math.cos(11.0 * th - 2.1 * r_idx)
+                )
+                cr_y = amp_y * (
+                    0.60 * math.cos(9.0 * th + 0.9 * r_idx)
+                    + 0.40 * math.sin(5.0 * th - 1.7 * r_idx)
+                )
+                r_eff = max(0.02, rad + cr_r)
+                y_eff = y_u + cr_y
+                px = cx + r_eff * math.cos(th)
+                pz = cz + r_eff * math.sin(th)
+                ring_verts.append(bm.verts.new(mb._to_local_b((px, y_eff, pz))))
+            rings.append(ring_verts)
+
+    faces: List[bmesh.types.BMFace] = []
+    for k in range(len(rings) - 1):
+        r0 = rings[k]
+        r1 = rings[k + 1]
+        if len(r0) == 1:
+            pole = r0[0]
+            for s in range(n_seg):
+                sn = (s + 1) % n_seg
+                faces.append(bm.faces.new([pole, r1[sn], r1[s]]))
+        elif len(r1) == 1:
+            pole = r1[0]
+            for s in range(n_seg):
+                sn = (s + 1) % n_seg
+                faces.append(bm.faces.new([r0[s], r0[sn], pole]))
+        else:
+            for s in range(n_seg):
+                sn = (s + 1) % n_seg
+                faces.append(bm.faces.new([r0[s], r0[sn], r1[sn], r1[s]]))
+
+    r1kit.ensure_outward_normals(bm, per_shell=True)
+    for f in faces:
+        if f.is_valid:
+            f.material_index = mat_idx
+            # Keep crinkled Kapton foil flat-faceted so it catches sharp specular glints in grazing light
+            f.smooth = False
+
+
+def build_seismic_station() -> bpy.types.Object:
+    """Build Deliverable 2: Prop_SeismicStation (~1.22 W x 0.60 D x 0.44 H m).
+
+    Small Apollo-ALSEP-style seismometer under a crinkled foil shroud (R1_GoldFoil),
+    a cable to a squat central box with a dead status lamp.
+    """
+    r1kit.reset_scene()
+    ensure_extended_r1_materials()
+    r1kit.ensure_materials()
+
+    root = r1kit.create_empty("Prop_SeismicStation", pivot_u=(0.0, 0.0, 0.0))
+
+    sx_center = -0.34
+    sz_center = 0.0
+    bx_center = 0.36
+    bz_center = 0.0
+
+    # 1. FoilShroud: crinkled R1_GoldFoil thermal blanket skirt & turret + ballast hold-down tabs
+    shroud_mb = r1kit.MeshBuilder("FoilShroud", pivot_u=(sx_center, 0.0, sz_center))
+    _add_crinkled_foil_shroud(shroud_mb, (sx_center, sz_center), mat="R1_GoldFoil")
+
+    # 4 radial hold-down tape tabs + regolith dust clumps around the skirt perimeter
+    for i in range(4):
+        ang = math.radians(45.0 + 90.0 * i)
+        tx = sx_center + 0.255 * math.cos(ang)
+        tz = sz_center + 0.255 * math.sin(ang)
+        shroud_mb.add_bevel_box(
+            center_u=(tx, 0.024, tz),
+            size_u=(0.065, 0.018, 0.036),
+            mat="R1_OrangeStripe" if (i % 2 == 0) else "R1_GreyMetal",
+            bevel=0.002,
+            segments=1,
+            rot_deg_u=(0.0, -math.degrees(ang), 0.0),
+        )
+        rx = sx_center + 0.295 * math.cos(ang + 0.35)
+        rz = sz_center + 0.295 * math.sin(ang + 0.35)
+        shroud_mb.add_cylinder(
+            center_u=(rx, 0.008, rz),
+            radius=0.038,
+            radius_top=0.022,
+            length=0.024,
+            mat="R1_Basalt",
+            axis_u="Y",
+            segments=8,
+            bevel=0.003,
+        )
+    shroud_mb.build_object(parent=root)
+
+    # 2. SeismometerUnit: upper cylindrical sensor head peeking out of the gold-foil shroud
+    seis_mb = r1kit.MeshBuilder("SeismometerUnit", pivot_u=(sx_center, 0.24, sz_center))
+    # Main machined sensor cylinder (y = 0.22..0.325 m)
+    seis_mb.add_cylinder(
+        center_u=(sx_center, 0.272, sz_center),
+        radius=0.118,
+        length=0.105,
+        mat="R1_CreamEnamel",
+        axis_u="Y",
+        segments=16,
+        bevel=0.005,
+    )
+    # Upper radiator bezel ring
+    seis_mb.add_cylinder(
+        center_u=(sx_center, 0.328, sz_center),
+        radius=0.124,
+        length=0.022,
+        mat="R1_GreyMetal",
+        axis_u="Y",
+        segments=16,
+        bevel=0.003,
+    )
+    # Bullseye spirit-level bezel (R1_Brass) + bubble sight glass (R1_DarkGlass)
+    seis_mb.add_cylinder(
+        center_u=(sx_center - 0.032, 0.342, sz_center + 0.028),
+        radius=0.028,
+        length=0.016,
+        mat="R1_Brass",
+        axis_u="Y",
+        segments=12,
+        bevel=0.002,
+    )
+    seis_mb.add_cylinder(
+        center_u=(sx_center - 0.032, 0.346, sz_center + 0.028),
+        radius=0.020,
+        length=0.012,
+        mat="R1_DarkGlass",
+        axis_u="Y",
+        segments=12,
+        bevel=0.002,
+    )
+    # Solar alignment shadow gnomon pin + calibration scale plate on top
+    seis_mb.add_cylinder(
+        center_u=(sx_center + 0.035, 0.365, sz_center - 0.020),
+        radius=0.006,
+        length=0.062,
+        mat="R1_BareSteel",
+        axis_u="Y",
+        segments=8,
+        bevel=0.001,
+    )
+    seis_mb.add_bevel_box(
+        center_u=(sx_center + 0.035, 0.341, sz_center - 0.020),
+        size_u=(0.064, 0.010, 0.048),
+        mat="R1_OrangeStripe",
+        bevel=0.002,
+        segments=1,
+    )
+    # Folded EVA deployment handle hoop
+    seis_mb.add_tube_path(
+        points_u=[
+            (sx_center - 0.11, 0.315, sz_center),
+            (sx_center - 0.13, 0.375, sz_center),
+            (sx_center, 0.392, sz_center),
+            (sx_center + 0.13, 0.375, sz_center),
+            (sx_center + 0.11, 0.315, sz_center),
+        ],
+        radius=0.007,
+        mat="R1_BareSteel",
+        segments=8,
+        cap_ends=True,
+    )
+    seis_mb.build_object(parent=root)
+
+    # 3. UmbilicalCable: S-curve cable from seismometer shroud (-0.16, 0.025, 0.0) to central box (+0.16, 0.055, 0.0)
+    cable_mb = r1kit.MeshBuilder("UmbilicalCable", pivot_u=(0.0, 0.02, 0.0))
+    cable_pts = [
+        (-0.20, 0.042, 0.01),
+        (-0.14, 0.020, 0.035),
+        (-0.06, 0.016, 0.065),
+        (0.02, 0.016, 0.015),
+        (0.09, 0.018, -0.045),
+        (0.15, 0.036, -0.020),
+        (0.19, 0.068, 0.00),
+    ]
+    cable_mb.add_tube_path(
+        points_u=cable_pts,
+        radius=0.016,
+        mat="R1_Rubber",
+        segments=10,
+        cap_ends=True,
+    )
+    # Strain-relief gland at seismometer exit & central box entry
+    cable_mb.add_cylinder(
+        center_u=(-0.185, 0.036, 0.018),
+        radius=0.022,
+        length=0.048,
+        mat="R1_GreyMetal",
+        axis_u="X",
+        segments=10,
+        bevel=0.002,
+        rot_deg_u=(0.0, -18.0, -15.0),
+    )
+    cable_mb.add_cylinder(
+        center_u=(0.175, 0.058, -0.006),
+        radius=0.024,
+        length=0.048,
+        mat="R1_Brass",
+        axis_u="X",
+        segments=10,
+        bevel=0.002,
+        rot_deg_u=(0.0, -12.0, 24.0),
+    )
+    # Orange cable identification band & regolith dust mound over the middle of the cable
+    cable_mb.add_cylinder(
+        center_u=(-0.06, 0.017, 0.065),
+        radius=0.019,
+        length=0.028,
+        mat="R1_OrangeStripe",
+        axis_u="X",
+        segments=10,
+        bevel=0.002,
+    )
+    cable_mb.add_bevel_box(
+        center_u=(0.02, 0.008, 0.015),
+        size_u=(0.11, 0.022, 0.085),
+        mat="R1_Basalt",
+        bevel=0.005,
+        segments=1,
+        top_scale_xz=(0.68, 0.68),
+    )
+    cable_mb.build_object(parent=root)
+
+    # 4. CentralBox: squat central electronics & telemetry box
+    box_mb = r1kit.MeshBuilder("CentralBox", pivot_u=(bx_center, 0.0, bz_center))
+    # Lower dark grey skid base frame + 4 footpads sunk slightly in regolith (y = -0.012..0.045 m)
+    box_mb.add_bevel_box(
+        center_u=(bx_center, 0.022, bz_center),
+        size_u=(0.44, 0.048, 0.36),
+        mat="R1_GreyMetal",
+        bevel=0.005,
+        segments=1,
+    )
+    for fx in (-0.19, 0.19):
+        for fz in (-0.15, 0.15):
+            box_mb.add_cylinder(
+                center_u=(bx_center + fx, -0.002, bz_center + fz),
+                radius=0.036,
+                length=0.018,
+                mat="R1_BareSteel",
+                axis_u="Y",
+                segments=10,
+                bevel=0.002,
+            )
+
+    # Squat chamfered CreamEnamel electronics housing (y = 0.045..0.285 m)
+    box_mb.add_bevel_box(
+        center_u=(bx_center, 0.165, bz_center),
+        size_u=(0.40, 0.24, 0.32),
+        mat="R1_CreamEnamel",
+        bevel=0.012,
+        segments=2,
+        top_scale_xz=(0.92, 0.90),
+    )
+    # Warm-orange identification stripe band around upper perimeter
+    box_mb.add_bevel_box(
+        center_u=(bx_center, 0.225, bz_center),
+        size_u=(0.392, 0.038, 0.312),
+        mat="R1_OrangeStripe",
+        bevel=0.004,
+        segments=1,
+    )
+    # Gold-foil thermal blanket patch on rear/top half of central box + radiator louver deck
+    box_mb.add_bevel_box(
+        center_u=(bx_center + 0.04, 0.286, bz_center + 0.04),
+        size_u=(0.24, 0.018, 0.16),
+        mat="R1_GoldFoil",
+        bevel=0.003,
+        segments=1,
+    )
+    for lx in (-0.06, 0.0, 0.06, 0.12):
+        box_mb.add_bevel_box(
+            center_u=(bx_center + lx, 0.296, bz_center + 0.04),
+            size_u=(0.024, 0.008, 0.13),
+            mat="R1_GreyMetal",
+            bevel=0.0015,
+            segments=1,
+        )
+    # Front instrument bezel & toggle switch guard
+    box_mb.add_bevel_box(
+        center_u=(bx_center - 0.05, 0.145, bz_center - 0.158),
+        size_u=(0.20, 0.11, 0.022),
+        mat="R1_GreyMetal",
+        bevel=0.003,
+        segments=1,
+    )
+    box_mb.add_cylinder(
+        center_u=(bx_center - 0.09, 0.145, bz_center - 0.172),
+        radius=0.014,
+        length=0.018,
+        mat="R1_Brass",
+        axis_u="Z",
+        segments=10,
+        bevel=0.002,
+    )
+    box_mb.add_cylinder(
+        center_u=(bx_center - 0.01, 0.145, bz_center - 0.172),
+        radius=0.018,
+        length=0.014,
+        mat="R1_DarkGlass",
+        axis_u="Z",
+        segments=10,
+        bevel=0.002,
+    )
+    # Short telemetry whip stub on rear-right corner (y = 0.28..0.43 m)
+    box_mb.add_cylinder(
+        center_u=(bx_center + 0.13, 0.305, bz_center + 0.09),
+        radius=0.022,
+        length=0.042,
+        mat="R1_GreyMetal",
+        axis_u="Y",
+        segments=10,
+        bevel=0.002,
+    )
+    box_mb.add_cylinder(
+        center_u=(bx_center + 0.13, 0.375, bz_center + 0.09),
+        radius=0.007,
+        length=0.11,
+        mat="R1_BareSteel",
+        axis_u="Y",
+        segments=8,
+        bevel=0.0015,
+    )
+    # Copper grounding strap on +X side
+    box_mb.add_strut(
+        p0_u=(bx_center + 0.20, 0.065, bz_center),
+        p1_u=(bx_center + 0.245, 0.002, bz_center),
+        width=0.024,
+        thickness=0.008,
+        mat="R1_Copper",
+        bevel=0.0015,
+    )
+    box_mb.build_object(parent=root)
+
+    # 5. DeadStatusLamp: prominent dead status lamp turret on front-left top deck of CentralBox (R1_DarkGlass, no R1_LampAmber)
+    lamp_pos = (bx_center - 0.10, 0.295, bz_center - 0.08)
+    lamp_mb = r1kit.MeshBuilder("DeadStatusLamp", pivot_u=lamp_pos)
+    # Armored cage base & brass ring
+    lamp_mb.add_cylinder(
+        center_u=(lamp_pos[0], lamp_pos[1], lamp_pos[2]),
+        radius=0.034,
+        length=0.024,
+        mat="R1_GreyMetal",
+        axis_u="Y",
+        segments=12,
+        bevel=0.003,
+    )
+    lamp_mb.add_cylinder(
+        center_u=(lamp_pos[0], lamp_pos[1] + 0.015, lamp_pos[2]),
+        radius=0.029,
+        length=0.012,
+        mat="R1_Brass",
+        axis_u="Y",
+        segments=12,
+        bevel=0.002,
+    )
+    # Unlit dark glass dome lens
+    lamp_mb.add_cylinder(
+        center_u=(lamp_pos[0], lamp_pos[1] + 0.032, lamp_pos[2]),
+        radius=0.024,
+        radius_top=0.015,
+        length=0.028,
+        mat="R1_DarkGlass",
+        axis_u="Y",
+        segments=12,
+        bevel=0.004,
+    )
+    lamp_mb.build_object(parent=root)
+
+    # Anchors
+    r1kit.create_empty("Seismometer_Anchor", parent=root, pivot_u=(sx_center, 0.0, sz_center))
+    r1kit.create_empty("CentralBox_Anchor", parent=root, pivot_u=(bx_center, 0.0, bz_center))
+    r1kit.create_empty("StatusLamp_Dead", parent=root, pivot_u=(lamp_pos[0], lamp_pos[1] + 0.032, lamp_pos[2]))
+
+    r1kit.apply_triplanar_uvs(root)
+    r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))
+    r1kit.bake_vertex_colors(root, footprint_radius=0.65)
+
+    fbx_path = PROPS_DIR / "Prop_SeismicStation.fbx"
+    r1kit.export_fbx(root, fbx_path, bake_space_transform=False)
+    print(f"Exported {fbx_path}")
+    return root
+
+
 BUILDERS: Dict[str, Callable[[], bpy.types.Object]] = {
     "mission_flag": build_mission_flag,
+    "seismic_station": build_seismic_station,
 }
 
 
@@ -590,3 +1008,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

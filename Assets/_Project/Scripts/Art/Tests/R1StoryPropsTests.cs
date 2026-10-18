@@ -40,6 +40,7 @@ namespace MoonProject.Art.Tests
             ("cable_plug.json", "Props/Cable_Plug.fbx"),
             ("cable_splice_box.json", "Props/Cable_Splice_Box.fbx"),
             ("prop_mission_flag.json", "Props/Prop_MissionFlag.fbx"),
+            ("prop_seismic_station.json", "Props/Prop_SeismicStation.fbx"),
         };
 
         [Serializable]
@@ -484,6 +485,38 @@ namespace MoonProject.Art.Tests
 
             Assert.IsTrue(foundStripeMat, "Prop_MissionFlag FlagSheet must use R1_MissionFlagStripe for faint sun-bleached stripes.");
             AssertNoEmissiveMaterials(flagPrefab);
+        }
+
+        [Test]
+        public void PropSeismicStation_HasGoldFoilShroud_Cable_SquatCentralBox_DeadStatusLamp_AndBoxCollider()
+        {
+            GameObject seisPrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.PropSeismicStationPrefabPath);
+            Transform shroud = seisPrefab.transform.Find("FoilShroud");
+            Assert.IsNotNull(shroud, "Prop_SeismicStation missing FoilShroud.");
+            Assert.IsNotNull(seisPrefab.transform.Find("SeismometerUnit"), "Prop_SeismicStation missing SeismometerUnit.");
+            Assert.IsNotNull(seisPrefab.transform.Find("UmbilicalCable"), "Prop_SeismicStation missing UmbilicalCable.");
+            Assert.IsNotNull(seisPrefab.transform.Find("CentralBox"), "Prop_SeismicStation missing CentralBox.");
+            Transform deadLamp = seisPrefab.transform.Find("DeadStatusLamp");
+            Assert.IsNotNull(deadLamp, "Prop_SeismicStation missing DeadStatusLamp.");
+            Assert.IsNotNull(seisPrefab.transform.Find("Seismometer_Anchor"), "Prop_SeismicStation missing Seismometer_Anchor.");
+            Assert.IsNotNull(seisPrefab.transform.Find("CentralBox_Anchor"), "Prop_SeismicStation missing CentralBox_Anchor.");
+            Assert.IsNotNull(seisPrefab.transform.Find("StatusLamp_Dead"), "Prop_SeismicStation missing StatusLamp_Dead.");
+
+            BoxCollider box = seisPrefab.GetComponent<BoxCollider>();
+            Assert.IsNotNull(box, "Prop_SeismicStation must have a simple BoxCollider on root.");
+            Assert.Greater(box.size.x, 1.0f);
+
+            bool hasGoldFoil = false;
+            foreach (Material m in shroud.GetComponent<Renderer>().sharedMaterials)
+            {
+                if (m != null && m.name == R1MaterialRecipes.GoldFoilSlot)
+                {
+                    hasGoldFoil = true;
+                }
+            }
+
+            Assert.IsTrue(hasGoldFoil, "Prop_SeismicStation FoilShroud must use R1_GoldFoil.");
+            AssertNoEmissiveMaterials(seisPrefab);
         }
 
         private static void AssertNoEmissiveMaterials(GameObject prefab)
