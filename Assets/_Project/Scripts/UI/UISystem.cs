@@ -1059,14 +1059,10 @@ namespace MoonProject.UI
                 _firstPrompt.OpeningBegan();
                 _readout.OpeningBegan();
             }
-            else if (reached.Beat == WakeBeat.GazeEarth)
-            {
-                _readout.LensOpened();
-            }
             else if (reached.Beat == WakeBeat.ChaseFrame)
             {
                 _inOpening = false;
-                _readout.LensOpened();
+                _readout.WakeFinished();
                 _firstPrompt.ChaseFrameReached();
             }
         }

@@ -71,8 +71,8 @@ namespace MoonProject.Rover.Tests
             float midBoot = director.State.BootProgress;
             Assert.That(midBoot, Is.GreaterThan(0.1f).And.LessThan(1.0f));
 
-            director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.LidHalf, false));
-            director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.GazeHome, false));
+            director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.EyesOpen, false));
+            director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.ChecksBegin, false));
             Assert.AreEqual(1, director.BootCount, "Later wake beats in the same wake sequence must not restart Boot().");
             Assert.AreEqual(midBoot, director.State.BootProgress, 1e-5f);
 
@@ -499,7 +499,7 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void OpeningDarkHold_KeepsScreenDarkUntilTheChecksAreDone_ThenBootsAndSlowBlinksWithCuriousGlance()
+        public void OpeningDarkHold_KeepsScreenDarkUntilTheEyesOpen_ThenBootsAndSlowBlinksWithCuriousGlance()
         {
             var events = new EventBus();
             var cues = new System.Collections.Generic.List<RoverFaceCueKind>();
@@ -515,26 +515,18 @@ namespace MoonProject.Rover.Tests
 
                 director.OnSceneStart(isNewGame: true);
                 director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.Crackle, false));
-                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.LidCracked, false));
-                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.LidHalf, false));
-                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.FocusHunting, false));
-                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.Flicker, false));
-                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.GazeHome, false));
-                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.GazePilot, false));
-                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.GazePeak, false));
-                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.GazeEarth, false));
-                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.PullingOut, false));
+                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.PictureOpens, false));
                 director.Step(1.0f);
 
-                Assert.IsTrue(director.IsHoldingDarkForOpening, "CRT stays dark through the lens POV and pull-out.");
+                Assert.IsTrue(director.IsHoldingDarkForOpening, "CRT stays dark through the black and the picture opening.");
                 Assert.IsTrue(director.State.IsDarkHold);
-                Assert.AreEqual(0, director.BootCount, "Face must not boot before the checks are done.");
+                Assert.AreEqual(0, director.BootCount, "Face must not boot before the eyes open.");
                 Assert.AreEqual(0f, director.State.Brightness, 1e-5f);
                 Assert.AreEqual(0f, director.RearVentEmissionStrength, 1e-5f);
                 Assert.IsEmpty(cues);
 
-                // Reveal once the checks are done (OverShoulder): single phosphor line flickers on and opens into two eyes
-                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.OverShoulder, false));
+                // The eyes open (EyesOpen): a single phosphor line flickers on and opens into two eyes
+                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.EyesOpen, false));
                 Assert.IsFalse(director.IsHoldingDarkForOpening);
                 Assert.IsFalse(director.State.IsDarkHold);
                 Assert.AreEqual(1, director.BootCount);

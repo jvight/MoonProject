@@ -36,9 +36,6 @@ namespace MoonProject.Rover
         /// <summary>Drive input below this (stick magnitude) is drift, not the player driving.</summary>
         private const float DriveEpsilon = 0.05f;
 
-        /// <summary>Furthest the composer may put 07 from the frame's centre (viewport, either way).</summary>
-        private const float MaxScreenOffset = 0.45f;
-
         /// <summary>Subjects nearer than this (m, ground plane) have no meaningful direction to turn to.</summary>
         private const float MinSubjectDistance = 0.5f;
 
@@ -50,9 +47,6 @@ namespace MoonProject.Rover
 
         /// <summary>Blend weight below this is settled enough to treat a framed shot or face-inspect mode as inactive.</summary>
         private const float ShotWeightEpsilon = 0.01f;
-
-        /// <summary>Blend margin inside (0, 1) where the wake face turn actively probes for terrain clearance.</summary>
-        private const float WakeProbeWeightEpsilon = 0.001f;
 
         /// <summary>Yaw difference (deg) close enough to 180 deg to pick a deterministic turn side.</summary>
         private const float OppositeYawThreshold = 179.9f;
@@ -139,9 +133,6 @@ namespace MoonProject.Rover
         private Stargaze _stargaze;
         private WakeOpening _opening;
         private float _wakeYaw;
-        private float _wakeEarthYaw;
-        private float _wakeEarthScreenY;
-        private float _wakeLift;
         private LookSettings _look;
         private DampedSpring _bumpSpring;
         private IDisposable[] _subscriptions;
@@ -161,9 +152,7 @@ namespace MoonProject.Rover
         /// <summary>The camera's move to show what 07 scans (for tests and tooling).</summary>
         public TargetFraming Framing => _framing;
 
-        public float SkyLift => _stargaze != null ? Mathf.Max(_stargaze.Lift, _wakeLift) : 0f;
-
-        public float EarthTurn => _opening != null ? _opening.Turn * _wakeLift : 0f;
+        public float SkyLift => _stargaze != null ? _stargaze.Lift : 0f;
 
         /// <summary>The lonely wide shot's state (quiet time, weight, frame), for tests and tooling.</summary>
         public WideShot WideShot => _wide;
@@ -176,9 +165,6 @@ namespace MoonProject.Rover
 
         /// <summary>True while the CRT face-inspect camera mode is open.</summary>
         public bool IsFaceInspectOpen => _faceInspectOpen;
-
-        /// <summary>Neck yaw offset (deg) solved for the opening's front CRT reveal shot.</summary>
-        public float WakeFaceNeckYaw => _hasWakeFaceShot ? _wakeFaceShot.NeckYawOffset : 0f;
 
         /// <summary>The close shot composed for 07's CRT face screen, if any (for tests and tooling).</summary>
         public bool TryGetFaceInspectShot(out FaceInspectShot shot)
@@ -386,15 +372,6 @@ namespace MoonProject.Rover
             _camera.PreviousStateIsValid = false;
         }
 
-        /// <summary>Updates the chase camera pose immediately after refreshing the wake face shot.</summary>
-        public void SyncWakeFacePose()
-        {
-            PlaceTarget();
-            StepFreeLookDamping(0f);
-            ApplyOrbit();
-            _camera.PreviousStateIsValid = false;
-        }
-
         private void CacheHeadRenderers()
         {
             if (_headRenderers != null || _faceInspectBody == null || _faceInspectBody.NeckTransform == null)
@@ -507,7 +484,7 @@ namespace MoonProject.Rover
                 HandBackWideShot();
             }
 
-            StepWakeOpening(viewInput, deltaTime);
+            _opening.Step(deltaTime);
             ApplyCameraRadius(_tuning.CameraRadius);
             StepFaceInspect(deltaTime);
             _moment.Step(deltaTime);
@@ -941,58 +918,28 @@ namespace MoonProject.Rover
             float wakeFaceWeight = 0f;
             if (wake > 0f)
             {
-                float turn = _opening.Turn;
                 if (_hasWakeFaceShot)
                 {
-                    wakeFaceWeight = wake * (1f - turn);
+                    wakeFaceWeight = wake;
                     Vector3 shotLine = _wakeFaceShot.Focus - _wakeFaceShot.Eye;
                     float faceRadius = Mathf.Max(_tuning.FaceInspectMinRadius, shotLine.magnitude);
                     float faceElevation = Mathf.Asin(Mathf.Clamp(-shotLine.y / faceRadius, -1f, 1f)) * Mathf.Rad2Deg;
                     float faceWorldYaw = Mathf.Atan2(shotLine.x, shotLine.z) * Mathf.Rad2Deg;
-                    float earthYaw = yaw + Mathf.DeltaAngle(yaw, _wakeEarthYaw);
-                    float deltaEarthToFace = Mathf.DeltaAngle(_wakeEarthYaw, faceWorldYaw - _targetYaw);
-                    if (Mathf.Abs(deltaEarthToFace) > OppositeYawThreshold)
-                    {
-                        deltaEarthToFace = _wakeYaw < 0f ? -180f : 180f;
-                    }
+                    float faceYaw = yaw + Mathf.DeltaAngle(yaw, faceWorldYaw - _targetYaw) + _opening.DriftYaw;
 
-                    float faceYaw = earthYaw + deltaEarthToFace;
-                    float wakeShotYaw = Mathf.Lerp(faceYaw, earthYaw, turn) + _opening.DriftYaw;
-                    float wakeShotElevation = Mathf.Lerp(faceElevation, _tuning.WakeEarthElevation, turn);
-                    float wakeShotRadius = Mathf.Lerp(faceRadius, _tuning.WakeEarthDistance, turn);
-                    float wakeShotFov = Mathf.Lerp(_wakeFaceShot.VerticalFov, fov, turn);
-                    Vector2 wakeShotScreen = Vector2.Lerp(Vector2.zero, new Vector2(screen.x, _wakeEarthScreenY), turn);
-                    Vector3 wakeTargetPos = Vector3.Lerp(_wakeFaceShot.Focus, _target.position, turn);
-
-                    Vector3 focus = Vector3.Lerp(_target.position, wakeTargetPos, wake);
-                    yaw = Mathf.Lerp(yaw, wakeShotYaw, wake);
-                    elevation = Mathf.Lerp(elevation, wakeShotElevation, wake);
-                    radius = Mathf.Lerp(radius, wakeShotRadius, wake);
-                    fov = Mathf.Lerp(fov, wakeShotFov, wake);
-                    screen = Vector2.Lerp(screen, wakeShotScreen, wake);
-
-                    if (wakeFaceWeight > WakeProbeWeightEpsilon && wakeFaceWeight < 1f - WakeProbeWeightEpsilon)
-                    {
-                        float pitchRad = Mathf.Clamp(elevation, _tuning.MinPitch, _tuning.MaxPitch) * Mathf.Deg2Rad;
-                        Vector3 back = Quaternion.Euler(0f, _targetYaw + yaw, 0f) * Vector3.back;
-                        Vector3 candidateEye = focus + (back * Mathf.Cos(pitchRad) + Vector3.up * Mathf.Sin(pitchRad)) * radius;
-                        float clear = _faceSight.Clear(focus, candidateEye, _tuning.FaceInspectProbeRadius);
-                        if (clear < radius)
-                        {
-                            radius = Mathf.Max(_tuning.FaceInspectMinDistance, clear);
-                        }
-                    }
-
-                    _target.position = focus;
+                    yaw = Mathf.Lerp(yaw, faceYaw, wake);
+                    elevation = Mathf.Lerp(elevation, faceElevation, wake);
+                    radius = Mathf.Lerp(radius, faceRadius, wake);
+                    fov = Mathf.Lerp(fov, _wakeFaceShot.VerticalFov, wake);
+                    screen = Vector2.Lerp(screen, Vector2.zero, wake);
+                    _target.position = Vector3.Lerp(_target.position, _wakeFaceShot.Focus, wake);
                 }
                 else
                 {
-                    float shotYaw = _wakeYaw + Mathf.DeltaAngle(_wakeYaw, _wakeEarthYaw) * turn + _opening.DriftYaw;
-                    yaw += Mathf.DeltaAngle(yaw, shotYaw) * wake;
-                    elevation = Mathf.Lerp(elevation,
-                        Mathf.Lerp(_tuning.WakeElevation, _tuning.WakeEarthElevation, turn), wake);
-                    radius = Mathf.Lerp(radius, Mathf.Lerp(_tuning.WakeDistance, _tuning.WakeEarthDistance, turn), wake);
-                    screen.y = Mathf.Lerp(screen.y, Mathf.Lerp(_tuning.WakeScreenY, _wakeEarthScreenY, turn), wake);
+                    yaw += Mathf.DeltaAngle(yaw, _wakeYaw + _opening.DriftYaw) * wake;
+                    elevation = Mathf.Lerp(elevation, _tuning.WakeElevation, wake);
+                    radius = Mathf.Lerp(radius, _tuning.WakeDistance, wake);
+                    screen.y = Mathf.Lerp(screen.y, _tuning.WakeScreenY, wake);
                 }
             }
 
@@ -1046,11 +993,11 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// The lens shot on 07's eye (M3-16 P5, cutscenes §1): the fresh title holds it on the closed lens and the
-        /// opening's pull-out lands on it (<paramref name="held"/>); then it turns round over 07's shoulder to Earth
-        /// and eases into the chase frame. Started by the opening only, so a loaded save never replays it.
+        /// The held frame on 07's closed face (M3-09): the fresh title holds it, and New Game fades to black on it
+        /// until the opening's handover ends it (<see cref="EndWakeOpening"/>). Started by the opening only, so a
+        /// loaded save never replays it.
         /// </summary>
-        public void BeginWakeOpening(bool held)
+        public void BeginWakeOpening()
         {
             SetHeadHidden(false);
             if (_opening.IsActive)
@@ -1063,8 +1010,7 @@ namespace MoonProject.Rover
                 return;
             }
 
-            _opening.Begin(held);
-            _wakeLift = 0f;
+            _opening.Begin();
             PlaceTarget();
             FrameWakeShots();
             StepFreeLookDamping(0f);
@@ -1073,10 +1019,20 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
+        /// Ends the wake shot at once and puts the camera straight behind 07: the opening's handover does this in the
+        /// dark middle of its dip, so the picture opens on the chase frame with no camera move in view.
+        /// </summary>
+        public void EndWakeOpening()
+        {
+            _opening.End();
+            Snap();
+        }
+
+        /// <summary>
         /// Re-solves the front CRT reveal shot using <see cref="FaceInspectComposer.Solve"/> and its sphere-cast
         /// occlusion fallback (<see cref="FaceInspectSightLine"/>) at 07's current dock position and rotation.
         /// </summary>
-        public void RefreshWakeFaceShot()
+        private void RefreshWakeFaceShot()
         {
             if (_faceInspectBody == null || _rover == null)
             {
@@ -1106,9 +1062,8 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// The two beats' framing, fixed once 07 rests on its dock. Beat 1 frames 07's front CRT face using the
-        /// face-inspect composer; beat 2 looks along Earth's bearing from behind 07 (the orbit looks along the target's
-        /// yaw plus its axis value), raised so Earth sits at the tuned height in the frame.
+        /// The held wake frame, fixed once 07 rests: 07's front CRT face from the face-inspect composer, or, without
+        /// it, the tuned low shot on the side of 07 that faces Earth.
         /// </summary>
         private void FrameWakeShots()
         {
@@ -1118,12 +1073,6 @@ namespace MoonProject.Rover
             float positive = Mathf.Abs(Mathf.DeltaAngle(heading - _tuning.WakeYaw, bearing));
             float negative = Mathf.Abs(Mathf.DeltaAngle(heading + _tuning.WakeYaw, bearing));
             _wakeYaw = positive <= negative ? _tuning.WakeYaw : -_tuning.WakeYaw;
-            _wakeEarthYaw = Mathf.DeltaAngle(_targetYaw, bearing);
-            float floor = LowOrbit.Floor(_tuning.WakeEarthDistance, _tuning.TargetHeight, _tuning.LowestCameraHeight);
-            float elevation = Mathf.Max(_tuning.WakeEarthElevation, floor);
-            float earthElevation = Mathf.Asin(Mathf.Clamp(earth.y, -1f, 1f)) * Mathf.Rad2Deg;
-            _wakeEarthScreenY = Mathf.Clamp(WakeOpening.EarthScreenY(earthElevation, elevation,
-                _tuning.WakeEarthHeight, _orbitState.FieldOfView), -MaxScreenOffset, MaxScreenOffset);
             RefreshWakeFaceShot();
         }
 
@@ -1150,20 +1099,6 @@ namespace MoonProject.Rover
             {
                 CloseHeldShot();
             }
-        }
-
-        /// <summary>
-        /// Holds the first shot until any input or the hold runs out; 07 lifts its gaze with it once the shot is no
-        /// longer held (asleep on the title and inside the lens, its head stays its own).
-        /// </summary>
-        /// <param name="viewInput">The player looked round or pressed the recenter button this frame.</param>
-        private void StepWakeOpening(bool viewInput, float deltaTime)
-        {
-            bool input = viewInput || _rover.DriveInput.sqrMagnitude > DriveEpsilon * DriveEpsilon;
-            _opening.Step(input, deltaTime);
-            float target = _opening.IsHeld ? 0f : _opening.Weight;
-            float halfLife = target > _wakeLift ? _tuning.StargazeRiseHalfLife : _tuning.StargazeFallHalfLife;
-            _wakeLift = Smoothing.Damp(_wakeLift, target, halfLife, deltaTime);
         }
 
         /// <summary>

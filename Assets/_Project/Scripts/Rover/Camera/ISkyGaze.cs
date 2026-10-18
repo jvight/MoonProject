@@ -7,8 +7,5 @@ namespace MoonProject.Rover
     public interface ISkyGaze
     {
         float SkyLift { get; }
-
-        /// <summary>How far 07 turns its head toward Earth (0..1, eased): the wake opening's second beat.</summary>
-        float EarthTurn { get; }
     }
 }

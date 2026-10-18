@@ -689,13 +689,13 @@ def wake_power_thump(_variant, gen):
     return filters.lowpass(0.5 * thump + 0.05 * felt + 0.12 * hum, 1400.0)
 
 
-LID_TICK_NOTES = ("A2", "D3", "A4", "D5")
-LID_TICK_LABELS = ("a2", "d3", "a4", "d5")
+LID_TICK_NOTES = ("A2", "D3", "D5")
+LID_TICK_LABELS = ("a2", "d3", "d5")
 
 
 def lid_tick(variant, gen):
-    """One felted servo tick of 07's lid or lens: a soft click with a short ring on its note (A2 and D3 for the lid
-    stages, A4 as the focus lands, D5 for the blink's lid click)."""
+    """One felted servo tick of 07's lid: a soft click with a short ring on its note (A2 as the picture opens, D3 as
+    the eyes open, D5 for the short wake's lid click)."""
     freq = note_freq(LID_TICK_NOTES[variant])
     n = samples(0.5)
     ring = osc.additive(n, freq, [(1, 1.0), (2, 0.4), (3, 0.12)])
@@ -705,18 +705,6 @@ def lid_tick(variant, gen):
     out = 0.35 * filters.lowpass(ring, 2600.0)
     out[:click_n] += 0.08 * click
     return out
-
-
-def lens_whine(_variant, gen):
-    """07's lens motor hunting for focus (O4): a small thin whine gliding E4 up to F#4 with a faint gear flutter."""
-    n = samples(2.4)
-    glide = osc.glide(n, note_freq("E4"), note_freq("F#4"), time_constant=0.9)
-    whine = osc.additive(n, glide, [(1, 1.0), (2, 0.25), (3, 0.08)])
-    whine *= 0.85 + 0.15 * np.sin(2.0 * np.pi * 34.0 * np.arange(n) / SAMPLE_RATE)
-    gears = filters.bandpass(noise.pink(n, gen), 900.0, 2.5)
-    gears = gears / max(float(np.std(gears)), 1e-9)
-    shape = envelope.segments(n, [(0.0, 0.0), (0.25, 1.0), (1.9, 0.8), (2.4, 0.0)], shape="smooth")
-    return filters.lowpass(0.12 * whine + 0.02 * gears, 3000.0) * shape
 
 
 def neck_servo(_variant, gen):
@@ -913,9 +901,7 @@ CUES = (
         notes="O1: 07's systems thump on inside the black, a soft D2 hum easing up under it."),
     Cue("lid_tick", "tick_2d", lid_tick, variants=len(LID_TICK_NOTES), variant_labels=LID_TICK_LABELS,
         volume=(0.6, 0.6), fade_out=0.05, milestone="M3", tonal=True,
-        notes="Felted servo tick of 07's lid or lens: A2, D3 (lid stages), A4 (focus lands), D5 (the blink)."),
-    Cue("lens_whine", "tick_2d", lens_whine, volume=(0.5, 0.5), fade_out=0.2, milestone="M3",
-        notes="O4: 07's lens motor hunting, a thin whine gliding E4 to F#4 over a faint gear flutter."),
+        notes="Felted servo tick of 07's lid: A2 (picture opens), D3 (eyes open), D5 (the short wake)."),
     Cue("neck_servo", "tick_2d", neck_servo, volume=(0.5, 0.5), fade_out=0.2, milestone="M3",
         notes="O6-O9: 07's old neck turning, a soft whirr with a faint whine lifting D5 to E5."),
     Cue("rover_hum", "loop_3d", rover_hum, loop=True, file_stem="rover_hum_loop", volume=(0.55, 0.55),

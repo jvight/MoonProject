@@ -18,10 +18,8 @@ namespace MoonProject.Audio.Tests
         }
 
         [TestCase(WakeBeat.Crackle, WakeCueKind.Thump)]
-        [TestCase(WakeBeat.LidCracked, WakeCueKind.Tick)]
-        [TestCase(WakeBeat.LidHalf, WakeCueKind.Tick)]
-        [TestCase(WakeBeat.FocusHunting, WakeCueKind.Whine)]
-        [TestCase(WakeBeat.FocusSettled, WakeCueKind.Tick)]
+        [TestCase(WakeBeat.PictureOpens, WakeCueKind.Tick)]
+        [TestCase(WakeBeat.EyesOpen, WakeCueKind.Tick)]
         [TestCase(WakeBeat.Stirred, WakeCueKind.Tick)]
         public void EveryVoicedBeat_PlaysItsCueAtOnce(WakeBeat beat, WakeCueKind first)
         {
@@ -33,14 +31,12 @@ namespace MoonProject.Audio.Tests
         }
 
         [Test]
-        public void TheLidStagesTickLowThenHigher_TheFocusLandsHigher_TheShortWakeHighest()
+        public void ThePictureTicksLow_TheEyesHigher_TheShortWakeHighest()
         {
-            _sheet.CuesFor(WakeBeat.LidCracked, false, _calls);
+            _sheet.CuesFor(WakeBeat.PictureOpens, false, _calls);
             Assert.AreEqual(WakeCueSheet.TickA2, _calls[0].Variant);
-            _sheet.CuesFor(WakeBeat.LidHalf, false, _calls);
+            _sheet.CuesFor(WakeBeat.EyesOpen, false, _calls);
             Assert.AreEqual(WakeCueSheet.TickD3, _calls[0].Variant);
-            _sheet.CuesFor(WakeBeat.FocusSettled, false, _calls);
-            Assert.AreEqual(WakeCueSheet.TickA4, _calls[0].Variant);
             _sheet.CuesFor(WakeBeat.Stirred, false, _calls);
             Assert.AreEqual(WakeCueSheet.TickD5, _calls[0].Variant);
         }
@@ -66,9 +62,8 @@ namespace MoonProject.Audio.Tests
         }
 
         [TestCase(WakeBeat.FadedOut)]
-        [TestCase(WakeBeat.PullingOut)]
-        [TestCase(WakeBeat.PulledOut)]
-        [TestCase(WakeBeat.OverShoulder)]
+        [TestCase(WakeBeat.ChecksBegin)]
+        [TestCase(WakeBeat.Blinked)]
         [TestCase(WakeBeat.ChaseFrame)]
         public void CameraBeats_PlayNoCueOfTheirOwn(WakeBeat beat)
         {

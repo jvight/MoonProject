@@ -112,7 +112,7 @@ namespace MoonProject.Rover
         /// <summary>True when 07 has been stationary at night past <see cref="FaceDirectorTuning.NightIdleDelaySeconds"/>.</summary>
         public bool IsNightIdleSlowLookActive => _isNightIdleSlowLookActive;
 
-        /// <summary>True while the CRT is held completely dark until the self-test's end (<see cref="WakeBeat.OverShoulder"/>).</summary>
+        /// <summary>True while the CRT is held completely dark until 07's eyes open (<see cref="WakeBeat.EyesOpen"/>).</summary>
         public bool IsHoldingDarkForOpening => _holdingDarkForOpening;
 
         /// <summary>True once a wake event or fresh-game start has triggered the CRT boot sequence.</summary>
@@ -144,8 +144,8 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// Holds the CRT screen completely dark while 07 is asleep on the title or while the camera is inside the scan lens,
-        /// until the end of the self-test's checks (<see cref="WakeBeat.OverShoulder"/>) starts the CRT boot sequence.
+        /// Holds the CRT screen completely dark while 07 is asleep on the title and in the opening's black, until its eyes
+        /// open (<see cref="WakeBeat.EyesOpen"/>) and start the CRT boot sequence.
         /// </summary>
         public void SetOpeningDarkHold(bool hold)
         {
@@ -193,8 +193,8 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// Handles a <see cref="WakeBeat"/> from the opening sequence. When the opening holds the CRT dark inside the
-        /// scan lens, the boot sequence starts once the self-test's checks are done (<see cref="WakeBeat.OverShoulder"/>); standalone wake
+        /// Handles a <see cref="WakeBeat"/> from the opening sequence. When the opening holds the CRT dark, the boot
+        /// sequence starts as 07's eyes open (<see cref="WakeBeat.EyesOpen"/>), before the self-test prints; standalone wake
         /// sequences start at <see cref="WakeBeat.Crackle"/> / <see cref="WakeBeat.Stirred"/>. <see cref="WakeBeat.Blinked"/>
         /// triggers a slow wake blink and a curious glance at Earth.
         /// </summary>
@@ -208,7 +208,7 @@ namespace MoonProject.Rover
 
             if (_holdingDarkForOpening)
             {
-                if (beat == WakeBeat.OverShoulder || beat == WakeBeat.ChaseFrame || beat == WakeBeat.Stirred)
+                if (beat == WakeBeat.EyesOpen || beat == WakeBeat.ChaseFrame || beat == WakeBeat.Stirred)
                 {
                     _pendingFreshSessionBoot = false;
                     SetOpeningDarkHold(false);

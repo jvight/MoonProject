@@ -534,7 +534,7 @@ namespace MoonProject.UI.PlayModeTests
             Events.Publish(new RoverAwoke(Vector3.zero, false));
             Events.Publish(new NextStepChanged("next.v2.drive_lander"));
             Events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle, false));
-            Events.Publish(new RoverWakeBeatReached(WakeBeat.GazeEarth, false));
+            Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame, false));
             yield return Seconds(_rig.Tuning.Guidance.Readout.FadeIn + 0.4f);
             ReadoutView readout = _rig.Ui.Readout;
             Assert.IsTrue(readout.IsVisible);
@@ -620,7 +620,6 @@ namespace MoonProject.UI.PlayModeTests
             Events.Publish(new RoverAwoke(Vector3.zero, false));
             Events.Publish(new NextStepChanged("next.v2.drive_lander"));
             Events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle, false));
-            Events.Publish(new RoverWakeBeatReached(WakeBeat.GazeEarth, false));
             Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame, false));
             Events.Publish(new TickerLine("battery.low.lander"));
             _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Build, new Vector3(0f, 0f, 10f), true);

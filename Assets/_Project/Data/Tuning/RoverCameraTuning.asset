@@ -30,13 +30,6 @@ MonoBehaviour:
   _wakeElevation: -15
   _wakeDistance: 3.2
   _wakeScreenY: 0.22
-  _wakeLensSeconds: 2.2
-  _wakeTurnSeconds: 1.4
-  _wakeEarthElevation: 15
-  _wakeEarthDistance: 2.4
-  _wakeEarthHeight: 0.75
-  _wakeHoldSeconds: 6
-  _wakeEaseSeconds: 2
   _stargazeStartElevation: 0
   _stargazeFullElevation: -20
   _stargazeRiseHalfLife: 1.2
@@ -178,41 +171,14 @@ MonoBehaviour:
   _gentleBreathRate: 0.5
   _gentleMinSensitivity: 0.15
   _opening:
-    _crackleSeconds: 0.8
-    _lidCrackSeconds: 0.9
-    _lidHalfSeconds: 0.9
-    _huntSeconds: 1.4
-    _pullOutSeconds: 1.8
-    _overShoulderSeconds: 1.4
-    _lidCrack: 0.2
-    _lidHalf: 0.5
     _lidRest: 0.7
-    _lidRiseSeconds: 0.65
-    _lidSettleSeconds: 0.9
-    _shudderAmount: 0.02
-    _shudderWobbles: 3
     _blinkSeconds: 0.55
     _blinkLow: 0.25
-    _focusBlur: 2.5
-    _focusNear: 0.1
-    _focusOvershoot: 400
-    _focusSettle: 80
-    _speckStart: {x: -0.2, y: 0}
-    _speckEnd: {x: -0.34, y: -0.7}
     _bowedPitch: -2
     _yawLimit: 70
     _pitchDownLimit: -15
     _pitchUpLimit: 50
     _neckFrequency: 0.6
-    _earthBelow: 4
-    _lensForward: 0.44
-    _lensNearClip: 0.22
-    _lensFov: 58
-    _pullOutReach: 0.7
-    _pullOutReachAnchor: 0.5
-    _pullOutOntoEarth: 0.15
-    _pullOutTurnStartShare: 0.5
-    _lensReleaseAt: 0.2
     _blinkSigh: 0.5
     _post:
       _lensSeconds: 1

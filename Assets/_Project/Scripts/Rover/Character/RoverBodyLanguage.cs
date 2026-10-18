@@ -570,8 +570,8 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// Poses 07's neck and head directly for the opening sequence (aligning <c>ScanOrigin</c> with the lens gaze
-        /// while inside the lens, and lifting the head to face the front reveal camera during the pull-out and CRT boot).
+        /// Poses 07's neck and head directly for the opening sequence: bowed while it sleeps, then lifted into the
+        /// opening's one shot of its face, with each check's head motion on top.
         /// </summary>
         public void PoseOpeningHead(float yawDeg, float pitchDeg, float rollDeg, float blend)
         {
@@ -1004,13 +1004,6 @@ namespace MoonProject.Rover
             bool precisionAim = scanGaze || cutterGaze;
             _scanAimBlend = Smoothing.Damp(_scanAimBlend, precisionAim ? 1f : 0f, _tuning.ScanLook.OpenHalfLife, deltaTime);
             aim.y = Mathf.Lerp(aim.y, _tuning.StargazeHeadPitch, sky * (1f - _scanAimBlend));
-            float earthTurn = _sky != null ? _sky.EarthTurn * (1f - _scanAimBlend) : 0f;
-            if (earthTurn > 0f)
-            {
-                aim.x = Mathf.Lerp(aim.x, Aim(frame.InverseTransformDirection(_world.EarthDirection)).x, earthTurn);
-                hasExplicitGaze = true;
-            }
-
             float inspect = ScreenInspectBlend;
             if (inspect > 0f)
             {

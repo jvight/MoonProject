@@ -72,7 +72,6 @@ namespace MoonProject.Audio
         public const string GhostChord = "ghost_chord";
         public const string WakePowerThump = "wake_power_thump";
         public const string LidTick = "lid_tick";
-        public const string LensWhine = "lens_whine";
         public const string NeckServo = "neck_servo";
         public const string DockChargeHum = "dock_charge_hum";
         public const string DockFull = "dock_full";

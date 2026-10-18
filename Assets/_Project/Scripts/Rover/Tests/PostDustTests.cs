@@ -17,9 +17,9 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void TheCoat_IsFullFromTheBlackThroughThePullOut_AndOffInTheShortWake()
+        public void TheCoat_IsFullFromTheBlackUntilTheChecks_AndOffInTheShortWake()
         {
-            foreach (OpeningPhase phase in new[] { OpeningPhase.FadeOut, OpeningPhase.LidCrack, OpeningPhase.PullOut })
+            foreach (OpeningPhase phase in new[] { OpeningPhase.FadeOut, OpeningPhase.Dark, OpeningPhase.FadeIn, OpeningPhase.EyesOpen })
             {
                 _dust.Update(phase, BootCheckStep.Lens, 0f);
                 for (int i = 0; i < PostDust.ZoneCount; i++)
@@ -52,7 +52,7 @@ namespace MoonProject.Rover.Tests
             Assert.Greater(_dust.Level(DustZone.Body), 0f, "before the shiver the rest is on");
             _dust.Update(OpeningPhase.Post, BootCheckStep.Begin, 0.9f);
             Assert.AreEqual(0f, _dust.Level(DustZone.Body), 1e-5f);
-            _dust.Update(OpeningPhase.ChaseEase, BootCheckStep.Begin, 1f);
+            _dust.Update(OpeningPhase.Handover, BootCheckStep.Begin, 1f);
             for (int i = 0; i < PostDust.ZoneCount; i++)
             {
                 Assert.AreEqual(0f, _dust.Level((DustZone)i), 1e-5f);
@@ -62,7 +62,7 @@ namespace MoonProject.Rover.Tests
         [Test]
         public void ThePuffs_CountWhatFell_ANewCoatOnlyLaysDown()
         {
-            _dust.Update(OpeningPhase.PullOut, BootCheckStep.Lens, 0f);
+            _dust.Update(OpeningPhase.EyesOpen, BootCheckStep.Lens, 0f);
             Assert.IsFalse(_dust.TryTakePuff(out _), "laying the coat down drops nothing");
             int puffs = 0;
             for (float p = 0f; p <= 1f; p += 0.01f)

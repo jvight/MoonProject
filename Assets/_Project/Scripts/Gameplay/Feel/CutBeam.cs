@@ -7,7 +7,8 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// 07's cutting and welding beam (docs/design/feel-pass.md §3.1): a hot white core inside a cyan sheath and outer
     /// halo that shimmer. At ignition it reaches the target point on a fast ease-out (never instantly); on release it
-    /// retracts into the emitter. Three line renderers, built once.
+    /// thins out where it last met its target, its end held there (the owner saw a finished weld's beam shoot off
+    /// into the distance while its target point went away). Three line renderers, built once.
     /// </summary>
     public sealed class CutBeam
     {
@@ -20,6 +21,7 @@ namespace MoonProject.Gameplay
         private readonly LineRenderer _halo;
         private float _reach;
         private bool _out;
+        private Vector3 _held;
         private float _clock;
 
         public CutBeam(Transform parent, FeelVfxTuning tuning, Material core, Material sheath)
@@ -48,12 +50,16 @@ namespace MoonProject.Gameplay
             _out = true;
         }
 
-        /// <summary>The beam lets go: it retracts into the emitter.</summary>
+        /// <summary>The beam lets go: it thins out with its end held where it last met its target.</summary>
         public void Retract()
         {
             _out = false;
         }
 
+        /// <summary>
+        /// Advances the beam from <paramref name="emitter"/>: while it fires its end follows <paramref name="target"/>;
+        /// once it lets go the target is ignored, its end staying where it last was.
+        /// </summary>
         public void Step(float deltaTime, Vector3 emitter, Vector3 target)
         {
             _clock += deltaTime;
@@ -70,8 +76,14 @@ namespace MoonProject.Gameplay
                 return;
             }
 
-            float eased = _out ? FeelCurves.Extend(_reach) : _reach * _reach;
-            Vector3 tip = Vector3.Lerp(emitter, target, eased);
+            if (_out)
+            {
+                _held = target;
+            }
+
+            float eased = _out ? FeelCurves.Extend(_reach) : 1f;
+            float thickness = _out ? 1f : _reach * _reach;
+            Vector3 tip = Vector3.Lerp(emitter, _held, eased);
             Start = emitter;
             End = tip;
             _core.SetPosition(0, emitter);
@@ -81,8 +93,10 @@ namespace MoonProject.Gameplay
             _halo.SetPosition(0, emitter);
             _halo.SetPosition(1, tip);
             float wobble = Mathf.Sin(TwoPi * _tuning.ShimmerRate * _clock);
-            _sheath.widthMultiplier = _tuning.SheathWidth * (1f + _tuning.Shimmer * wobble);
-            _halo.widthMultiplier = _tuning.SheathWidth * HaloWidthFactor * (1f + _tuning.Shimmer * 0.5f * wobble);
+            _core.widthMultiplier = _tuning.CoreWidth * thickness;
+            _sheath.widthMultiplier = _tuning.SheathWidth * thickness * (1f + _tuning.Shimmer * wobble);
+            _halo.widthMultiplier = _tuning.SheathWidth * HaloWidthFactor * thickness *
+                                    (1f + _tuning.Shimmer * 0.5f * wobble);
         }
 
         private static LineRenderer Line(string name, Transform parent, Material material, float width)
