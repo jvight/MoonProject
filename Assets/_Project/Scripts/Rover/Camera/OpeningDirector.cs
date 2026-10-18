@@ -61,6 +61,7 @@ namespace MoonProject.Rover
         private readonly FaceInspectSightLine _sight = new FaceInspectSightLine();
         private Vector3 _wakePost;
         private OpeningScript _script;
+        private LampPowerUp _lamps;
         private LookSettings _look;
         private GameContext _context;
         private EventBus _events;
@@ -129,6 +130,7 @@ namespace MoonProject.Rover
             _look = new LookSettings(_tuning);
             _rig.SetWakeBody(_body);
             OpeningSettings settings = _tuning.Opening;
+            _lamps = new LampPowerUp(settings);
             CinemachineCamera chase = _rig.ChaseCamera;
             chase.StandbyUpdate = CinemachineVirtualCameraBase.StandbyUpdateMode.Always;
             _lensCamera.Priority = chase.Priority.Value + 1;
@@ -171,6 +173,7 @@ namespace MoonProject.Rover
             _inTitle = true;
             _titleHasSave = shown.HasSave;
             _body.HoldAsleep();
+            _lamps.HoldDark();
             if (shown.HasSave)
             {
                 _rig.HoldTitleFrame();
@@ -188,8 +191,11 @@ namespace MoonProject.Rover
             if (_flow == null || !_flow.ShowsTitle)
             {
                 _body.WakeOnItsOwn();
+                _lamps.Release();
                 return;
             }
+
+            _lamps.HoldDark();
 
             if (started.FreshGame)
             {
@@ -281,6 +287,9 @@ namespace MoonProject.Rover
                 _body.HoldAsleep();
             }
 
+            _lamps.Step(deltaTime);
+            _body.SetLampPower(_lamps.Level);
+
             bool drive = _controller.RequestedDrive.sqrMagnitude > DriveEpsilon * DriveEpsilon;
             _script.Step(deltaTime, ReadLook(deltaTime), drive);
             TakeBeats();
@@ -333,6 +342,7 @@ namespace MoonProject.Rover
                     case WakeBeat.Blinked:
                         _blinkedInWake = true;
                         _body.GreetWithBlink(_tuning.Opening.BlinkSigh);
+                        _lamps.Start();
                         break;
                     case WakeBeat.OverShoulder:
                         _rig.Opening.StartTurn();

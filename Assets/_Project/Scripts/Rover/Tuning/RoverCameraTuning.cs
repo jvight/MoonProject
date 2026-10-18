@@ -553,6 +553,11 @@ namespace MoonProject.Rover
         [SerializeField] private float _headFadeHysteresis = 0.15f;
 
         [Header("Face inspect (FACE-INV)")]
+        [Tooltip("Opening the face view while 07 still moves waits until its speed (m/s) is below this: 07 brakes " +
+                 "smoothly under the hold first, then the camera eases in on a head that no longer sways.")]
+        [Range(0.01f, 0.5f)]
+        [SerializeField] private float _faceInspectSettleSpeed = 0.05f;
+
         [Tooltip("Seconds the camera takes to ease into the face-inspect shot when opening the screen UI.")]
         [Range(0.15f, 2f)]
         [SerializeField] private float _faceInspectOpenSeconds = 0.55f;
@@ -854,6 +859,8 @@ namespace MoonProject.Rover
         public OpeningSettings Opening => _opening;
 
         public float FaceInspectOpenSeconds => _faceInspectOpenSeconds;
+
+        public float FaceInspectSettleSpeed => _faceInspectSettleSpeed;
 
         public float FaceInspectCloseSeconds => _faceInspectCloseSeconds;
 

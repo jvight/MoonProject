@@ -116,6 +116,7 @@ namespace MoonProject.Rover
         private bool _faceInspectOpen;
         private bool _faceInspectHasShot;
         private float _faceInspectEase;
+        private bool _faceInspectSettled;
         private float _faceInspectWeight;
         private float _openingDampingFade = 1f;
         private float _wallCompressionTarget;
@@ -732,9 +733,18 @@ namespace MoonProject.Rover
 
         private void StepFaceInspect(float deltaTime)
         {
+            if (!_faceInspectOpen)
+            {
+                _faceInspectSettled = false;
+            }
+            else if (_rover != null && _rover.Speed <= _tuning.FaceInspectSettleSpeed)
+            {
+                _faceInspectSettled = true;
+            }
+
             if (_faceInspectOpen && _faceInspectBody != null && _rover != null)
             {
-                if (_rover.Speed > 0.05f || !_faceInspectHasShot)
+                if (_rover.Speed > _tuning.FaceInspectSettleSpeed || !_faceInspectHasShot)
                 {
                     SolveFaceInspectShot();
                     _faceInspectBody.SetScreenInspect(
@@ -760,7 +770,8 @@ namespace MoonProject.Rover
             float seconds = _look != null && _look.GentleCamera
                 ? Mathf.Max(duration * 1.35f, 0.75f)
                 : Mathf.Max(0.05f, duration);
-            _faceInspectEase = Mathf.MoveTowards(_faceInspectEase, _faceInspectOpen ? 1f : 0f, deltaTime / seconds);
+            bool easeIn = _faceInspectOpen && _faceInspectSettled;
+            _faceInspectEase = Mathf.MoveTowards(_faceInspectEase, easeIn ? 1f : 0f, deltaTime / seconds);
             _faceInspectWeight = Smoothing.SmoothStep(0f, 1f, _faceInspectEase);
 
             bool cineAvoidance = !_faceInspectOpen && _faceInspectWeight < ShotWeightEpsilon && !_opening.IsActive;

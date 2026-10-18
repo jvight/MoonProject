@@ -40,6 +40,9 @@ namespace MoonProject.Rover.PlayModeTests
         private const int CaptureHeight = 900;
         private const int KeyFrameWidth = 1920;
         private const int KeyFrameHeight = 1080;
+        private const float LanguageSettleSeconds = 1.5f;
+        private const int TransitionWidth = 640;
+        private const int TransitionHeight = 360;
         private const float BootTimeout = 30f;
         private const float GazeTolerance = 6f;
         private const float TitleQuietSeconds = 4f;
@@ -717,6 +720,147 @@ namespace MoonProject.Rover.PlayModeTests
         private static bool IsShown(VisualElement element)
         {
             return element.resolvedStyle.display != DisplayStyle.None && element.resolvedStyle.opacity > 0.05f;
+        }
+
+        [UnityTest]
+        [Explicit("Frame-by-frame capture of the title-to-play transition; run with --category OpeningTransition.")]
+        [Category("OpeningTransition")]
+        [Timeout(600000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator TransitionFrames_NewGameFromAFreshTitle()
+        {
+            yield return Boot(true);
+            yield return Wait(TitleQuietSeconds);
+            yield return RecordTransition("new_game", "button-new-game");
+        }
+
+        [UnityTest]
+        [Explicit("Frame-by-frame capture of the title-to-play transition; run with --category OpeningTransition.")]
+        [Category("OpeningTransition")]
+        [Timeout(600000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator TransitionFrames_ContinueOverASave()
+        {
+            yield return Boot(false);
+            Assert.IsTrue(_context.Get<ISaveService>().SaveNow(), "a save is on disk");
+            Dispose();
+            yield return Boot(true);
+            yield return Wait(TitleQuietSeconds);
+            yield return RecordTransition("continue", "button-resume");
+        }
+
+        /// <summary>
+        /// Clicks <paramref name="buttonName"/> on the title and records every frame the player would see (the whole
+        /// screen, UI included, at a quarter size) until the chase frame plus a second: a PNG every other frame and a
+        /// CSV of each frame's brightness, phase and camera jump, at the game's own frame time.
+        /// </summary>
+        private IEnumerator RecordTransition(string tag, string buttonName)
+        {
+            string folder = Path.Combine(CaptureFolder, "transition_" + tag);
+            if (Directory.Exists(folder))
+            {
+                Directory.Delete(folder, true);
+            }
+
+            Directory.CreateDirectory(folder);
+            UIDocument document = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(RoverSessionScene.ScenePath).GetRootGameObjects())
+            {
+                document = document != null ? document : root.GetComponentInChildren<UIDocument>(true);
+            }
+
+            Assert.IsNotNull(document, "the scene has its UIDocument");
+            VisualElement languagePage = document.rootVisualElement.Q<VisualElement>("page-language");
+            if (languagePage != null && IsShown(languagePage))
+            {
+                Button language = languagePage.Q<Button>();
+                Assert.IsNotNull(language, "the first boot offers its languages");
+                using (NavigationSubmitEvent choose = NavigationSubmitEvent.GetPooled())
+                {
+                    choose.target = language;
+                    language.SendEvent(choose);
+                }
+
+                yield return Wait(LanguageSettleSeconds);
+            }
+
+            Button button = document.rootVisualElement.Q<Button>(buttonName);
+            Assert.IsNotNull(button, buttonName);
+            var csv = new StringBuilder();
+            csv.AppendLine("frame,time,phase,luma,camDistance,camTurnDeg,titleShown,uiScaleX,uiScaleY,curtain,beat");
+            using (NavigationSubmitEvent submit = NavigationSubmitEvent.GetPooled())
+            {
+                submit.target = button;
+                button.SendEvent(submit);
+            }
+
+            Time.captureDeltaTime = 1f / 60f;
+            VisualElement titleCrt = document.rootVisualElement.Q<VisualElement>("title-crt");
+            VisualElement pause = document.rootVisualElement.Q<VisualElement>("pause");
+            VisualElement curtain = document.rootVisualElement.Q<VisualElement>("curtain");
+            Vector3 previousPosition = _view.transform.position;
+            Quaternion previousRotation = _view.transform.rotation;
+            int beatsSeen = 0;
+            float started = Time.time;
+            float chaseAt = -1f;
+            {
+                for (int frame = 0; Time.time - started < RunTimeout; frame++)
+                {
+                    yield return null;
+                    Texture2D shot = FrameCapture.Render(_view, TransitionWidth, TransitionHeight);
+                    Color32[] pixels = shot.GetPixels32();
+                    float luma = 0f;
+                    for (int i = 0; i < pixels.Length; i++)
+                    {
+                        luma += (0.2126f * pixels[i].r + 0.7152f * pixels[i].g + 0.0722f * pixels[i].b) / 255f;
+                    }
+
+                    luma /= pixels.Length;
+                    Transform camera = _view.transform;
+                    float distance = Vector3.Distance(camera.position, previousPosition);
+                    float turn = Quaternion.Angle(camera.rotation, previousRotation);
+                    previousPosition = camera.position;
+                    previousRotation = camera.rotation;
+                    string beat = string.Empty;
+                    while (beatsSeen < _beats.Count)
+                    {
+                        beat += _beats[beatsSeen++] + " ";
+                    }
+
+                    OpeningPhase phase = _director != null ? _director.Script.Phase : OpeningPhase.Idle;
+                    csv.AppendLine(string.Format(CultureInfo.InvariantCulture, "{0},{1:0.000},{2},{3:0.0000},{4:0.0000},{5:0.00},{6},{7:0.000},{8:0.000},{9:0.000},{10}",
+                        frame, Time.time - started, phase, luma, distance, turn, titleCrt != null && IsShown(titleCrt) ? 1 : 0,
+                        pause.resolvedStyle.scale.value.x, pause.resolvedStyle.scale.value.y,
+                        curtain.resolvedStyle.display == DisplayStyle.None ? 0f : curtain.resolvedStyle.opacity, beat.Trim()));
+                    if (frame % 2 == 0)
+                    {
+                        File.WriteAllBytes(Path.Combine(folder, string.Format(CultureInfo.InvariantCulture, "f{0:0000}.png", frame)),
+                            shot.EncodeToPNG());
+                    }
+
+                    Object.DestroyImmediate(shot);
+
+                    if (frame == 30)
+                    {
+                        Assert.AreNotEqual(OpeningPhase.Idle, phase, buttonName + " began the wake");
+                    }
+
+                    if (chaseAt < 0f && _beats.Contains(WakeBeat.ChaseFrame))
+                    {
+                        chaseAt = Time.time;
+                    }
+
+                    if (chaseAt >= 0f && Time.time - chaseAt > 1f)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            File.WriteAllText(Path.Combine(folder, "frames.csv"), csv.ToString());
+            Assert.GreaterOrEqual(chaseAt, 0f, "the transition reaches the chase frame");
         }
 
         private IEnumerator Boot(bool title)

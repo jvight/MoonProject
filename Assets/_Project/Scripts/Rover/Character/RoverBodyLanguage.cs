@@ -108,6 +108,7 @@ namespace MoonProject.Rover
         private bool _isCutTool;
         private Vector3 _cutTarget;
         private CutterRefusal _cutterRefusal;
+        private float _lampPower = 1f;
         private float _cutterYaw;
         private float _cutterPitch;
         private bool _digging;
@@ -452,6 +453,18 @@ namespace MoonProject.Rover
         /// The title is up (docs/features/M3-09): 07 stays asleep, neither the settle delay nor the player's input
         /// wakes it, until the opening or the short wake begins.
         /// </summary>
+        /// <summary>
+        /// How much of its lamp power 07 has (the wake's flicker and ramp, 1 normally): scales the eye lamp, and the
+        /// road light through <see cref="LampPower01"/>.
+        /// </summary>
+        public void SetLampPower(float power)
+        {
+            _lampPower = Mathf.Clamp01(power);
+        }
+
+        /// <summary>The lamp power the wake allows now, 0..1.</summary>
+        public float LampPower01 => _lampPower;
+
         public void HoldAsleep()
         {
             _mood.Wake.Hold();
@@ -1057,7 +1070,7 @@ namespace MoonProject.Rover
 
             _eyeLight.color = _eyeLightRestColor;
             _eyeLight.range = _tuning.EyeLightRange;
-            _eyeLight.intensity = _tuning.EyeLightIntensity * baseEyeGlow * inspectLightDim;
+            _eyeLight.intensity = _tuning.EyeLightIntensity * baseEyeGlow * inspectLightDim * _lampPower;
             _eyeLight.transform.localPosition = _eyeLightRestLocalPos;
 
             _scanFan.transform.localRotation = _scanFanRest * Quaternion.AngleAxis(_scanLook.Sweep, Vector3.up);
