@@ -63,6 +63,7 @@ namespace MoonProject.Rover
         private readonly object _owner = new object();
         private readonly FaceInspectSightLine _sight = new FaceInspectSightLine();
         private Vector3 _wakePost;
+        private bool _wakeWaitsForBlack;
         private CinemachineBrain _brain;
         private CinemachineBlendDefinition _savedBlend;
         private int _cutFrames;
@@ -232,7 +233,6 @@ namespace MoonProject.Rover
             }
 
             _script.Stop();
-            _rig.ReleaseTitleFrame();
             BeginFull(true);
         }
 
@@ -251,6 +251,24 @@ namespace MoonProject.Rover
             _body.HoldOpeningScreenDark(true);
             SetTargets();
             _script.BeginFull(fromTitle);
+            _wakeWaitsForBlack = fromTitle;
+            if (fromTitle)
+            {
+                _rig.Opening.FreezeDrift();
+            }
+
+            if (!fromTitle)
+            {
+                StartWakeShot();
+            }
+        }
+
+        /// <summary>
+        /// Puts 07's head and the rig's wake shot where O1 needs them. From the title this waits until the picture has
+        /// faded to black, so nothing moves in view while the title goes.
+        /// </summary>
+        private void StartWakeShot()
+        {
             _body.PoseOpeningHead(_script.Gaze.Yaw, _script.Gaze.Pitch, 0f, 1f);
             _rig.BeginWakeOpening(true);
         }
@@ -334,6 +352,12 @@ namespace MoonProject.Rover
                         _blinkedInWake = false;
                         _hasPullOutFrom = false;
                         _body.BeginWake();
+                        if (_wakeWaitsForBlack)
+                        {
+                            _wakeWaitsForBlack = false;
+                            StartWakeShot();
+                        }
+
                         break;
                     case WakeBeat.PullingOut:
                         CapturePullOutStart();
@@ -390,7 +414,7 @@ namespace MoonProject.Rover
             {
                 _body.PoseWake(_script.Sleep, _script.BodyLid, _script.BodyLidWeight, _script.HeadTilt);
                 OpeningPhase phase = _script.Phase;
-                if (phase == OpeningPhase.FadeOut || _script.InLens)
+                if (_script.InLens)
                 {
                     _body.PoseOpeningHead(_script.Gaze.Yaw, _script.Gaze.Pitch, 0f, 1f);
                 }

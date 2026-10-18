@@ -433,7 +433,7 @@ MonoBehaviour:
   - {fileID: 504541102478185918}
   _saveSlot: main
   _showTitle: 1
-  _pushedInTimeout: 6
+  _fadedOutTimeout: 6
 --- !u!1 &211589051917798579 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6439807251700604923, guid: 5becb68ea09245445bfbf9ccd3c1929d, type: 3}
