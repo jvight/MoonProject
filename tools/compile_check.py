@@ -6,10 +6,12 @@ Compiles every MoonProject.* .asmdef under Assets/_Project with Unity's own Rosl
 compiler against the Unity engine/editor DLLs and the package assemblies that the
 main Unity project has already built into Library/ScriptAssemblies.
 
-Two configurations are compiled:
+Four configurations are compiled:
   editor  - UNITY_EDITOR defined, every assembly (runtime + editor + tests)
   player  - UNITY_EDITOR undefined, runtime assemblies only, NO UnityEditor refs
             (catches editor API leaking into code that ships in a build)
+  autoplay-editor / autoplay-player - the same two with LUNARION_AUTOPLAY defined, which switches the development-only
+            Autoplay module on; the plain editor and player configurations are the release proof that it is not there
 
 Warnings are errors: the project keeps a zero-warning policy.
 
@@ -45,8 +47,20 @@ BASE_DEFINES = [
     "NETSTANDARD", "NETSTANDARD2_1", "CSHARP_7_3_OR_NEWER", "TRACE",
 ]
 EDITOR_DEFINES = ["UNITY_EDITOR", "UNITY_EDITOR_WIN", "UNITY_EDITOR_64", "UNITY_INCLUDE_TESTS"]
+AUTOPLAY_DEFINE = "LUNARION_AUTOPLAY"
+AUTOPLAY_PREFIX = "autoplay-"
 # CS0649: [SerializeField] private fields are assigned by Unity serialization (Unity suppresses it too).
 NO_WARN = ["0649"]
+
+
+def constraint_met(constraint, defines):
+    """A define constraint as Unity reads it: terms joined by '||', each optionally negated with '!'."""
+    for term in constraint.split("||"):
+        term = term.strip()
+        negated = term.startswith("!")
+        if (term.lstrip("!").strip() in defines) != negated:
+            return True
+    return False
 
 
 def run(cmd, cwd=None):
@@ -158,12 +172,13 @@ def find_precompiled(main: Path, filename: str):
 
 
 def compile_config(config, root, main, editor, asmdefs, out_dir):
-    player = config == "player"
+    autoplay = config.startswith(AUTOPLAY_PREFIX)
+    player = config.endswith("player")
     script_asm = main / "Library" / "ScriptAssemblies"
     pkg_dlls = {p.stem: p for p in script_asm.glob("*.dll")
                 if not p.stem.startswith(ASM_PREFIX) and not p.stem.startswith("Assembly-CSharp")}
     base = engine_refs(editor, player)
-    defines = BASE_DEFINES + ([] if player else EDITOR_DEFINES)
+    defines = BASE_DEFINES + ([] if player else EDITOR_DEFINES) + ([AUTOPLAY_DEFINE] if autoplay else [])
     built = {}
     problems = 0
     csc = [str(editor / "Data" / "NetCoreRuntime" / "dotnet.exe"), str(editor / "Data" / "DotNetSdkRoslyn" / "csc.dll")]
@@ -172,7 +187,7 @@ def compile_config(config, root, main, editor, asmdefs, out_dir):
         a = asmdefs[name]
         if player and a.editor_only:
             continue
-        if any(c not in defines for c in a.define_constraints):
+        if not all(constraint_met(c, defines) for c in a.define_constraints):
             continue
         if not a.sources:
             continue
@@ -234,7 +249,8 @@ def main():
     ap.add_argument("--root", help="checkout to compile (default: current git worktree)")
     ap.add_argument("--unity-project", help="main Unity project with a built Library (default: git common dir parent)")
     ap.add_argument("--unity-editor", help="path to the Unity 'Editor' folder")
-    ap.add_argument("--config", choices=["editor", "player", "both"], default="both")
+    ap.add_argument("--config", choices=["editor", "player", "autoplay-editor", "autoplay-player", "both"],
+                    default="both")
     args = ap.parse_args()
 
     root, main_proj, editor = resolve_paths(args)
@@ -243,7 +259,8 @@ def main():
         sys.exit(f"no {ASM_PREFIX}.* asmdefs under {root / SOURCE_ROOT}")
     out_dir = Path(tempfile.gettempdir()) / "moon_compile_check" / hashlib.sha1(str(root).encode()).hexdigest()[:10]
     print(f"compile_check: {root}  (Unity {editor.parent.name}, refs from {main_proj})")
-    configs = ["editor", "player"] if args.config == "both" else [args.config]
+    configs = (["editor", "player", "autoplay-editor", "autoplay-player"] if args.config == "both"
+               else [args.config])
     problems = run_lint(root)
     problems += sum(compile_config(c, root, main_proj, editor, asmdefs, out_dir) for c in configs)
     print("RESULT: " + ("PASS" if problems == 0 else f"FAIL ({problems} problem(s))"))
