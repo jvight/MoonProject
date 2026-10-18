@@ -178,10 +178,21 @@ MonoBehaviour:
       _blastZone:
         _radius: 34
         _edgeBand: 9
-        _albedoLift: 0.45
-        _rayLift: 0.22
-        _rayCount: 56
-        _rayLength: 14
+        _haloLift: 0.38
+        _haloFalloff: 1.1
+        _edgeWander: 7
+        _blotchSize: 9
+        _blotchContrast: 0.4
+        _rayLift: 0.08
+        _raySectors: 64
+        _rayChance: 0.4
+        _rayLengthMin: 3
+        _rayLengthMax: 8
+        _longRayChance: 0.12
+        _longRayLength: 14
+        _rayWidthMin: 0.4
+        _rayWidthMax: 1.4
+        _levelGround: 0.95
         _edgePebbles: 0.55
         _edgePileWidth: 8
     _craterField:

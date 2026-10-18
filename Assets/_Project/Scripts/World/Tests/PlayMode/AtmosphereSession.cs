@@ -95,6 +95,17 @@ namespace MoonProject.World.PlayModeTests
         private const float LandingOverheadHeight = 110f;
         private const float LandingOverheadTilt = 0.01f;
         private const float LandingOverheadFov = 50f;
+        // The blast zone: 07 stops this far short of the lander for its chase view; golden hour is the lowest sun (at
+        // least this many degrees up) with no terrain between it and a point in the zone, searched for in steps
+        // through a day from a sunlit clock time; each light settles this long before it is shot.
+        private const float BlastChaseBack = 20f;
+        private const float BlastSunlitSeconds = 210f;
+        private const float BlastGoldenMinElevation = 4f;
+        private const float BlastShadowProbeHeight = 3f;
+        private const float BlastShadowProbeReach = 2000f;
+        private const float BlastSearchSeconds = 7200f;
+        private const float BlastSearchStep = 20f;
+        private const float BlastSettleSeconds = 2f;
 
         private static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "world-captures"));
@@ -386,6 +397,121 @@ namespace MoonProject.World.PlayModeTests
                     Place(camera, pose);
                     FrameCapture.SavePng(camera, CaptureWidth, CaptureHeight,
                         Path.Combine(CaptureFolder, "landing-" + pose.name + ".png"));
+                }
+            }
+            finally
+            {
+                Object.Destroy(host);
+            }
+
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        /// <summary>
+        /// The lander's blast-swept zone (opening v2 §4) in the eclipse and at golden hour: from 07's chase camera
+        /// stopped 20 m short of the lander, from the zone's edge and from straight above.
+        /// Logs/world-captures/blast-*.png.
+        /// </summary>
+        [UnityTest]
+        [Timeout(600000)]
+        [PrebuildSetup(typeof(CanyonSessionScene))]
+        [PostBuildCleanup(typeof(CanyonSessionScene))]
+        public IEnumerator BlastZone_IsCapturedInTheEclipseAndAtGoldenHour()
+        {
+            BootstrapHarness.DeleteSaveFiles(CanyonSessionScene.SaveSlot);
+#if UNITY_EDITOR
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(CanyonSessionScene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            while (!loading.isDone)
+            {
+                yield return null;
+            }
+#else
+            throw new NotSupportedException("The atmosphere session loads the scene through the editor.");
+#endif
+            GameBootstrap bootstrap = null;
+            SkyCycleSystem sky = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
+            {
+                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
+                sky = sky != null ? sky : root.GetComponentInChildren<SkyCycleSystem>(true);
+            }
+
+            Assert.IsNotNull(bootstrap, "the scene has its bootstrap");
+            Assert.IsNotNull(sky, "the scene has its sky cycle");
+            GameContext context = bootstrap.Context;
+            _awoke = context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
+            float started = Time.time;
+            while (!_awake)
+            {
+                Assert.Less(Time.time - started, WakeTimeout, "07 wakes up");
+                yield return null;
+            }
+
+            yield return new WaitForSeconds(SettleSeconds);
+            IWorldAnchors anchors = context.Get<IWorldAnchors>();
+            Vector3 wake = Anchor(anchors, WorldAnchorIds.PlaceWake).Position;
+            Vector3 lander = Anchor(anchors, WorldAnchorIds.PlaceLander).Position;
+            Vector3 toLander = Vector3.ProjectOnPlane(lander - wake, Vector3.up).normalized;
+            Vector3 edge = lander - toLander * LandingEdgeBack + Vector3.up * LandingEdgeHeight;
+            Vector3 chase = lander - toLander * BlastChaseBack;
+            chase.y = context.Get<ITerrainQuery>().SampleHeight(chase.x, chase.z);
+            context.Get<IRoverPlacement>().PlaceAt(chase, Quaternion.LookRotation(toLander, Vector3.up));
+            Camera view = context.Get<IViewCamera>().Camera;
+            var host = new GameObject("BlastReviewCamera");
+            try
+            {
+                var camera = host.AddComponent<Camera>();
+                camera.CopyFrom(view);
+                camera.enabled = false;
+                CopyPipelineSettings(view, camera);
+                foreach (string light in new[] { "eclipse", "golden" })
+                {
+                    if (light == "golden")
+                    {
+                        // The first charge lets the eclipse end; golden hour is the sun low over the rim after
+                        // it has stood higher.
+                        context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.FirstCharge, true));
+                        yield return null;
+                        float clock = -1f;
+                        float lowest = float.MaxValue;
+                        Vector3 above = lander - toLander * BlastChaseBack * 0.5f + Vector3.up * BlastShadowProbeHeight;
+                        for (float t = BlastSunlitSeconds; t < BlastSunlitSeconds + BlastSearchSeconds;
+                             t += BlastSearchStep)
+                        {
+                            sky.SetClockTime(t);
+                            Vector3 toSun = sky.SunDirection;
+                            float elevation = Mathf.Asin(toSun.y) * Mathf.Rad2Deg;
+                            if (elevation >= BlastGoldenMinElevation && elevation < lowest
+                                && !Physics.Raycast(above, toSun, BlastShadowProbeReach, Layers.GroundMask,
+                                    QueryTriggerInteraction.Ignore))
+                            {
+                                lowest = elevation;
+                                clock = t;
+                            }
+                        }
+
+                        Assert.GreaterOrEqual(clock, 0f, "a low sun lights the lander some time in the day");
+                        sky.SetClockTime(clock);
+                        Assert.IsFalse(sky.IsHoldingEclipse, "the eclipse has ended");
+                        Debug.Log($"[blast] golden hour: sun {lowest:F1} deg up");
+                        Debug.Log($"[blast] golden hour at clock {clock} s");
+                    }
+
+                    yield return new WaitForSeconds(BlastSettleSeconds);
+                    FrameCapture.SavePng(view, CaptureWidth, CaptureHeight,
+                        Path.Combine(CaptureFolder, "blast-" + light + "-chase.png"));
+                    foreach (Pose pose in new[]
+                             {
+                                 LookPose("edge", edge, lander, OpeningFov),
+                                 LookPose("overhead", lander + Vector3.up * LandingOverheadHeight,
+                                     lander + toLander * LandingOverheadTilt, LandingOverheadFov),
+                             })
+                    {
+                        Place(camera, pose);
+                        FrameCapture.SavePng(camera, CaptureWidth, CaptureHeight,
+                            Path.Combine(CaptureFolder, "blast-" + light + "-" + pose.name + ".png"));
+                    }
                 }
             }
             finally
