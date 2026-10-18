@@ -101,6 +101,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Metres out from a seal's stand-off 07 lines up first, so it reaches the seal facing it.</summary>
         private const float SealLineUp = 3f;
 
+        // The open ground 07 comes in from, this far beyond a seal's line-up (CrateApproachSessions keeps it clear).
+        private const float SealOpenGround = 5f;
+
         /// <summary>Metres back from a build spot 07 parks, facing it: inside the weld's 6 m reach.</summary>
         private const float BuildStandOff = 4f;
         private const float SealCutTimeout = 25f;
@@ -536,6 +539,10 @@ namespace MoonProject.Gameplay.PlayModeTests
                 Vector3 front = Flat(crate.CutPoint.position) + side * SealStandOff;
                 if (Clear(crate.CutPoint.position + side * (SealStandOff + SealLineUp), crate.Root))
                 {
+                    // Out to the open ground before the seal first (CrateApproachSessions keeps it clear): a
+                    // straight run between crates may cross a ruin.
+                    yield return DriveTo(front + side * (SealLineUp + SealOpenGround), LineUpArrive,
+                        "the open ground before " + cache.Id);
                     yield return DriveTo(front + side * SealLineUp, LineUpArrive, "a line-up for " + cache.Id);
                 }
 
