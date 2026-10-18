@@ -12,6 +12,9 @@ namespace MoonProject.Rover
         /// <summary>Share of the push (0..1) after which the camera closes in from the clear radius to the lens.</summary>
         private const float CloseInFrom = 0.7f;
 
+        /// <summary>Share of the push by which the camera has lifted out to the clear radius (it may start nearer).</summary>
+        private const float LiftBy = 0.3f;
+
         /// <summary>The camera's position at eased progress <paramref name="t"/> (0 at <paramref name="from"/>, 1 at <paramref name="to"/>).</summary>
         /// <param name="center">07's position: the push sweeps round it.</param>
         /// <param name="clearRadius">The ground radius (m) the camera keeps from 07 until it closes in on the lens.</param>
@@ -26,7 +29,8 @@ namespace MoonProject.Rover
             float angleB = Mathf.Atan2(b.x, b.z) * Mathf.Rad2Deg;
             float angle = angleA + Mathf.DeltaAngle(angleA, angleB) * t;
             float closeIn = Smoothing.SmoothStep(CloseInFrom, 1f, t);
-            float swept = Mathf.Max(Mathf.Lerp(radiusA, radiusB, t), Mathf.Lerp(clearRadius, radiusB, closeIn));
+            float floorRadius = Mathf.Lerp(Mathf.Min(radiusA, clearRadius), clearRadius, Smoothing.SmoothStep(0f, LiftBy, t));
+            float swept = Mathf.Max(Mathf.Lerp(radiusA, radiusB, t), floorRadius);
             float radius = Mathf.Lerp(swept, radiusB, closeIn * closeIn);
             float height = Mathf.Lerp(a.y, b.y, t);
             Vector3 horizontal = WideShotComposer.Direction(angle) * radius;

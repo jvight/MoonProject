@@ -35,6 +35,14 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
+        public void StartingNearerThanTheClearRadius_IsContinuousAtTheStart()
+        {
+            Vector3 from = Center + new Vector3(0f, 1.2f, 1.4f);
+            Vector3 first = PushInPath.Position(Center, from, FaceEye, 0.01f, Clear);
+            Assert.Less(Vector3.Distance(first, from), 0.1f, "No jump out to the clear radius at the first frame.");
+        }
+
+        [Test]
         public void TheCameraTurnsTheShortWayRound()
         {
             Vector3 from = Center + new Vector3(7f, 3f, -1f);
