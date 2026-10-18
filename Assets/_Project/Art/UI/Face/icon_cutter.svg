@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <path d="M 32.00 64.00 L 44.00 64.00 L 48.00 68.00 L 48.00 188.00 L 44.00 192.00 L 32.00 192.00 L 28.00 188.00 L 28.00 68.00 Z" stroke="#FFE29E" stroke-width="5.20" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <circle cx="38.00" cy="82.00" r="3.50" stroke="#FFE29E" stroke-width="3.80" fill="none" />
+  <circle cx="38.00" cy="174.00" r="3.50" stroke="#FFE29E" stroke-width="3.80" fill="none" />
+  <path d="M 54.00 76.00 L 106.00 76.00 L 112.00 82.00 L 112.00 174.00 L 106.00 180.00 L 54.00 180.00 L 48.00 174.00 L 48.00 82.00 Z" stroke="#FFE29E" stroke-width="5.20" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <path d="M 62.00 98.00 L 98.00 98.00" stroke="#FFE29E" stroke-width="3.80" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <path d="M 62.00 128.00 L 98.00 128.00" stroke="#FFE29E" stroke-width="3.80" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <path d="M 62.00 158.00 L 98.00 158.00" stroke="#FFE29E" stroke-width="3.80" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <path d="M 116.00 84.00 L 126.00 84.00 L 130.00 88.00 L 130.00 168.00 L 126.00 172.00 L 116.00 172.00 L 112.00 168.00 L 112.00 88.00 Z" stroke="#FFE29E" stroke-width="5.20" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <path d="M 130.00 92.00 L 174.00 110.00 L 174.00 146.00 L 130.00 164.00 Z" stroke="#FFE29E" stroke-width="5.20" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <path d="M 130.00 114.00 L 174.00 122.00" stroke="#FFE29E" stroke-width="3.80" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <path d="M 130.00 142.00 L 174.00 134.00" stroke="#FFE29E" stroke-width="3.80" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <path d="M 176.00 116.00 L 182.00 116.00 L 184.00 118.00 L 184.00 138.00 L 182.00 140.00 L 176.00 140.00 L 174.00 138.00 L 174.00 118.00 Z" stroke="#FFE29E" stroke-width="5.20" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <path d="M 188.00 128.00 L 226.00 128.00" stroke="#FFE29E" stroke-width="5.20" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <path d="M 192.00 114.00 L 220.00 92.00" stroke="#FFE29E" stroke-width="3.80" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <path d="M 192.00 142.00 L 220.00 164.00" stroke="#FFE29E" stroke-width="3.80" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <path d="M 196.00 102.00 L 208.00 76.00" stroke="#FFE29E" stroke-width="3.80" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <path d="M 196.00 154.00 L 208.00 180.00" stroke="#FFE29E" stroke-width="3.80" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <path d="M 224.03 100.15 L 224.48 100.95 L 224.92 101.80 L 225.35 102.68 L 225.75 103.61 L 226.15 104.58 L 226.53 105.58 L 226.89 106.62 L 227.23 107.70 L 227.56 108.80 L 227.86 109.94 L 228.15 111.11 L 228.42 112.30 L 228.67 113.52 L 228.90 114.76 L 229.10 116.02 L 229.29 117.31 L 229.45 118.60 L 229.60 119.92 L 229.72 121.25 L 229.82 122.58 L 229.90 123.93 L 229.96 125.28 L 229.99 126.64 L 230.00 128.00 L 229.99 129.36 L 229.96 130.72 L 229.90 132.07 L 229.82 133.42 L 229.72 134.75 L 229.60 136.08 L 229.45 137.40 L 229.29 138.69 L 229.10 139.98 L 228.90 141.24 L 228.67 142.48 L 228.42 143.70 L 228.15 144.89 L 227.86 146.06 L 227.56 147.20 L 227.23 148.30 L 226.89 149.38 L 226.53 150.42 L 226.15 151.42 L 225.75 152.39 L 225.35 153.32 L 224.92 154.20 L 224.48 155.05 L 224.03 155.85" stroke="#FFE29E" stroke-width="3.80" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+</svg>

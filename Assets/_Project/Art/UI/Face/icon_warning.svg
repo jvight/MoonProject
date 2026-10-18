@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <path d="M 120.00 34.00 L 136.00 34.00 L 228.00 196.00 L 218.00 212.00 L 38.00 212.00 L 28.00 196.00 Z" stroke="#FFE29E" stroke-width="5.20" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <path d="M 123.00 56.00 L 133.00 56.00 L 206.00 186.00 L 200.00 196.00 L 56.00 196.00 L 50.00 186.00 Z" stroke="#FFE29E" stroke-width="3.80" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <path d="M 121.00 90.00 L 135.00 90.00 L 132.00 150.00 L 124.00 150.00 Z" stroke="#FFE29E" stroke-width="5.20" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <circle cx="128.00" cy="174.00" r="7.00" stroke="#FFE29E" stroke-width="5.20" fill="none" />
+</svg>
