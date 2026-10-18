@@ -28,7 +28,7 @@ namespace MoonProject.Rover
     public sealed class PostShot
     {
         /// <summary>Share of a check over which the focus eases from the previous check's part to its own.</summary>
-        private const float EaseShare = 0.35f;
+        private const float EaseShare = 0.5f;
 
         private readonly PostSettings _settings;
 
@@ -49,7 +49,7 @@ namespace MoonProject.Rover
         {
             PostFocus from = step == BootCheckStep.Lens ? _settings.BaseFocus : _settings.FocusOf(step - 1);
             PostFocus to = _settings.FocusOf(step);
-            float ease = Smoothing.SmoothStep(0f, EaseShare, p);
+            float ease = WakeOpening.SmoothStepC2(0f, EaseShare, p);
             Vector3 local = Vector3.Lerp(from.Local, to.Local, ease);
             float distance = Mathf.Lerp(from.Distance, to.Distance, ease);
             float height = Mathf.Lerp(from.Height, to.Height, ease);
