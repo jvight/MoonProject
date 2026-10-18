@@ -7,6 +7,7 @@ using System.Text;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using MoonProject.App;
@@ -24,11 +25,14 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// <summary>
     /// The opening v2 through the real game (docs/design/opening-v2.md §2, B0–B11), as a regression and a pacing
     /// measurement: the built Main scene (on its own save slot) boots, 07 wakes at half charge, and a calm autopilot
-    /// holds the wheel while the real input actions scan and cut. 07 drives to the landed lander, scans its cargo bay's
-    /// two fragments (the charging pad), collects the lander's open crate (the cutter is FAULT: no igniter), builds the
-    /// pad on the apron (placed through the base's placement rules and paid from the hold: the build menu is UI's and
-    /// not what this run measures), charges on it from the lander's reserve until the reserve gives out and fits the
-    /// spare igniter while docked, cuts the lander's sealed crates, drives to the Lumen ruins and scans the fallen
+    /// holds the wheel while every verb goes through the keys a player presses: held E scans and cuts; B opens the
+    /// build menu, the arrows pick, E takes the structure up, E places it where 07 looks and a held E welds it; Tab
+    /// opens 07's face screen, the arrows reach the cutter's socket and Enter fits the igniter. Before each beat 07
+    /// stands still until the objective line reads on screen, and on each verb's first use its prompt chip must show
+    /// (a missing one is a guidance gap, listed at the end). 07 drives to the landed lander, scans its cargo bay's two
+    /// fragments (the charging pad), collects the lander's open crate (the cutter is FAULT: no igniter), builds the pad
+    /// on the apron, charges on it from the lander's reserve until the reserve gives out and fits the spare igniter
+    /// while docked, drives to the Lumen ruins and scans the fallen
     /// array (solar), reads the habitat's airlock panel, cuts the workshop's lockers, builds the array (Power on),
     /// scans the habitat (battery bank) and builds it (night-ready), waits out the first sunset, scans the radio tower
     /// (antenna) and cuts its panels, and builds the mast: the west signal ends the opening. Every objective line is
@@ -43,9 +47,11 @@ namespace MoonProject.Gameplay.PlayModeTests
     {
         private const int TestTimeoutMs = 900000;
 
-        /// <summary>Seconds the opening may take end to end (opening-v2 §6: the Playthrough runs in ≤ 10
-        /// min).</summary>
-        private const float TotalBudget = 600f;
+        /// <summary>
+        /// Seconds the opening may take end to end through the real keys, standing still for each line (the Director's
+        /// 12 min, up from opening-v2 §6's 10 for the scripted run).
+        /// </summary>
+        private const float TotalBudget = 720f;
 
         private const float StopSpeed = 0.3f;
         private const float SealStandOff = 1.6f;
@@ -141,6 +147,37 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// frame).</summary>
         private const float FollowTimeout = 3f;
 
+        /// <summary>
+        /// Seconds the objective line may take to read on screen once 07 stands still: UI's 1.5 s after the step and
+        /// 1 s still, its fade in, and a new blueprint's unlock card before it (the guidance slot holds one at a time).
+        /// </summary>
+        private const float LineTimeout = 15f;
+
+        /// <summary>Seconds a verb's prompt chip may take to show once 07 is in place for it.</summary>
+        private const float ChipTimeout = 3f;
+
+        /// <summary>Taps of an arrow a menu or the face screen may take to reach what is wanted.</summary>
+        private const int MaxMenuSteps = 12;
+
+        /// <summary>Seconds after a tap before the next, so each reads as its own press.</summary>
+        private const float TapSeconds = 0.15f;
+
+        /// <summary>Metres apart the rings of spots a structure is tried at round its build spot.</summary>
+        private const float PlaceRingStep = 1.5f;
+
+        private const int PlaceRings = 4;
+        private const int PlaceRingSpots = 8;
+
+        /// <summary>UI's localization keys of the verb words its chips show (UiKeys.Verb*).</summary>
+        private const string VerbScanKey = "ui.verb.scan";
+
+        private const string VerbCutKey = "ui.verb.cut";
+        private const string VerbBuildKey = "ui.verb.build";
+        private const string VerbFitKey = "ui.verb.fit";
+
+        /// <summary>The face screen's device bubble of 07's cutter, where the spare igniter fits.</summary>
+        private const int CutterDevice = 1;
+
         private static readonly string ReportPath = Path.Combine(GameplayFixture.CaptureFolder, "playthrough.md");
 
         private readonly List<(string Step, float Seconds, string Notes, float Charge)> _steps =
@@ -148,6 +185,13 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         private readonly List<string> _problems = new List<string>();
         private readonly List<OpeningMilestoneReached> _milestones = new List<OpeningMilestoneReached>();
+        private readonly HashSet<string> _verbsUsed = new HashSet<string>();
+        private readonly List<string> _chips = new List<string>();
+        private readonly List<string> _lineWaits = new List<string>();
+        private readonly List<string> _guidanceGaps = new List<string>();
+        private HudReader _hud;
+        private string _stepChip = string.Empty;
+        private ILocalization _localization;
         private int _warnings;
         private int _crawls;
         private Keyboard _keyboard;
@@ -212,6 +256,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return DriveTo(RuinsGate(), 3f, "the Lumen ruins");
             yield return ScanTheSet("ruin.FallenSolarArray", "the fallen solar array");
             yield return ReadTheAirlockPanel();
+            yield return ExpectLine(OpeningKeys.CutOptics, "B7: the array needs optics, the workshop's lockers hold some");
             yield return CutTheCrates("KenjiWorkshop", "Kenji's workshop lockers");
             yield return ExpectLine(OpeningKeys.BuildSolar, "B8: the array's cost is covered");
             yield return DriveTo(RuinsGate(), 3f, "out of the Lumen ruins");
@@ -222,7 +267,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return CutTheCrates("HabitatModules", "the habitat's cable reel");
             yield return DriveTo(RuinsGate(), 3f, "out of the Lumen ruins");
             yield return Build(StructureIds.BatteryBank, pad + Vector3.left * BaseSpacing, "B9: the battery bank");
-            yield return UntilReached(OpeningMilestone.NightReady, "night-ready: the bank holds charge");
+            yield return UntilReached(OpeningMilestone.NightReady, "night-ready: the bank is built and wired to the pad");
             yield return TheFirstNightfall();
             yield return ExpectLine(OpeningKeys.ScanTower, "B11: after nightfall");
             yield return CutTheCrates("RadioTower", "the tower's dish-frame panels");
@@ -240,6 +285,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(0, _crawls, "the opening never runs the battery down to a crawl");
             Assert.Less(total, TotalBudget, "the opening fits its budget");
             Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+            Assert.IsEmpty(_guidanceGaps, "guidance gaps:\n" + string.Join("\n", _guidanceGaps));
         }
 
         private void OnLog(string message, string stackTrace, LogType type)
@@ -279,6 +325,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsNotNull(_gameplay, "the scene has the gameplay system");
             Assert.IsNotNull(_gameplay.Opening, "the opening is wired");
             _context = bootstrap.Context;
+            _hud = new HudReader(scene);
+            _localization = _context.Get<ILocalization>();
             _rover = (RoverController)_context.Get<IRoverRig>();
             _awoke = _context.Events.Subscribe<RoverAwoke>(_ => _awokeAt = Time.time);
             _crawled = _context.Events.Subscribe<LowPowerChanged>(low => _crawls += low.LowPower ? 1 : 0);
@@ -387,6 +435,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                       $"{ViewOff(fragment.Point):F0} deg off it ({View(fragment.Point)}), " +
                       $"{Vector3.Distance(Flat(fragment.Point), Flat(_rover.Position)):F2} m flat, " +
                       $"{HeadingOff(fragment.Point):F0} deg off");
+            yield return FirstUse("scan: hold E", VerbScanKey);
             Press(_keyboard.eKey);
             yield return Until(() => fragment.Scanned, scans.Tuning.Seconds(fragment.Size) + ScanAllowance,
                 $"held E scans {fragment.FragmentId}");
@@ -457,6 +506,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                     yield return NoseIn(crate);
                 }
 
+                yield return FirstUse("cut: hold E", VerbCutKey);
                 Press(_keyboard.eKey);
                 yield return Until(() => crate.Opened, SealCutTimeout, $"held E cuts the seal of {cache.Id}",
                     () => $"crate candidate {_gameplay.Containers.Candidate?.Id ?? "none"}, cutter ready " +
@@ -496,40 +546,50 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// Builds <paramref name="structureId"/> near <paramref name="at"/> through the base's placement rules, pays it
-        /// from the hold and welds it with a held E, as a player resumes a weld (the build menu is UI's and the feel
-        /// captures', not this run's), so the weld's battery cost is in the run.
+        /// Builds <paramref name="structureId"/> near <paramref name="at"/> as a player does: B opens the build menu,
+        /// the arrows pick it, E takes it up, 07's look rests on a spot the placement rules accept (the aim is the
+        /// run's, like the wheel), E places and pays it from the hold, and a held E welds it, so the weld's battery
+        /// cost is in the run.
         /// </summary>
         private IEnumerator Build(string structureId, Vector3 at, string what)
         {
             Begin();
-            StructureDefinition definition = _gameplay.Building.Catalog.Find(structureId);
+            BuildField build = _gameplay.Building;
+            StructureDefinition definition = build.Catalog.Find(structureId);
             Assert.IsTrue(Known(structureId), $"{structureId}'s blueprint is learned");
-            Assert.IsTrue(_gameplay.Materials.TrySpend(definition.BuildCost), $"the hold covers {structureId}");
             yield return DriveTo(Flat(at) + Vector3.back * BuildStandOff, 1f, "beside the build spot");
-            var terrain = _context.Get<ITerrainQuery>();
-            bool placed = false;
-            int instance = 0;
-            for (int ring = 0; ring < 4 && !placed; ring++)
+            yield return FirstUse("build: B", VerbBuildKey);
+            yield return Tap(_keyboard.bKey);
+            yield return Until(() => build.State == BuildModeState.Menu, FollowTimeout, "B opens the build menu");
+            yield return Until(() => _hud.BuildStripShown, FollowTimeout, "the build strip shows the menu");
+            for (int step = 0; step < MaxMenuSteps && build.Controller.SelectedStructure?.Id != structureId; step++)
             {
-                for (int step = 0; step < 8 && !placed; step++)
-                {
-                    Vector3 spot = at + Quaternion.Euler(0f, step * 45f, 0f) * Vector3.forward * (ring * 1.5f);
-                    spot = SurfaceRules.OnSurface(terrain, spot.x, spot.z);
-                    placed = _gameplay.PlacedBase.TryPlace(definition, new StructurePose(spot, 0f), terrain,
-                        _rover.Position, out instance, out _);
-                }
+                yield return Tap(_keyboard.rightArrowKey);
             }
 
-            Assert.IsTrue(placed, $"{structureId} finds a spot near {at} the placement rules accept");
-            yield return null;
+            Assert.AreEqual(structureId, build.Controller.SelectedStructure?.Id, $"the arrows pick {structureId}");
+            yield return Tap(_keyboard.eKey);
+            yield return Until(() => build.State == BuildModeState.Placing, FollowTimeout,
+                $"E takes {structureId} up to place");
+            yield return LookForASpot(build, at, structureId);
+            Recipe before = new Recipe(_gameplay.Materials.Metal, _gameplay.Materials.Wiring,
+                _gameplay.Materials.Optics);
+            yield return Tap(_keyboard.eKey);
+            yield return Until(() => build.State == BuildModeState.Welding, FollowTimeout,
+                $"E places {structureId}", () => $"state {build.State}, reason {build.Controller.CandidateReason}");
+            Assert.AreEqual(before.Metal - definition.BuildCost.Metal, _gameplay.Materials.Metal,
+                $"placing {structureId} pays its metal from the hold");
+            int instance = build.Controller.ActiveWeldInstanceId;
             Press(_keyboard.eKey);
             yield return Until(() => _gameplay.PlacedBase.TryGetStructure(instance, out PlacedStructure built) &&
                                      built.IsBuilt, definition.BuildSeconds + FollowTimeout,
                 $"a held E welds {structureId}",
-                () => $"weld hint {_gameplay.Building.TryGetWeldCandidate(out _)}, hovered " +
-                      $"{_gameplay.Building.HoveredInstanceId} (placed {instance}), state {_gameplay.Building.State}");
+                () => $"state {build.State}, welding {build.IsWelding}, active " +
+                      $"{build.Controller.ActiveWeldInstanceId} (placed {instance})");
             Release(_keyboard.eKey);
+            build.SetAimPointOverride(null);
+            yield return Until(() => build.State == BuildModeState.Closed, FollowTimeout,
+                "a finished weld closes build mode");
             Capture("build-" + structureId);
             End(what, "placed, paid and welded");
         }
@@ -552,7 +612,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return ExpectLine(OpeningKeys.FitIgniter, "B6: charging, the igniter in the hold");
             RoverStartKit kit = _gameplay.StartKit;
             Assert.IsTrue(kit.CanFitIgniter, "docked on its pad, the cutter socket takes the igniter");
-            Assert.IsTrue(kit.TryFitIgniter(), "the socket screen fits it (UI's; this run fits it directly)");
+            yield return FitTheIgniter();
             Assert.AreEqual(RoverSystemState.Ok, kit.StateOf(RoverSystem.Cutter), "the cutter's pilot light is on");
             yield return Until(() => !battery.IsCharging, battery.Cells * 6f, "07 charges full");
             Assert.IsTrue(_gameplay.Opening.Port.Spent, "the lander's old cells gave out after one charge");
@@ -569,10 +629,134 @@ namespace MoonProject.Gameplay.PlayModeTests
             End("B10: the first nightfall", "the base's lights over a dark basin");
         }
 
+        /// <summary>
+        /// The step is <paramref name="key"/>, and 07, standing still like a player wondering what next, reads its line
+        /// on screen.
+        /// </summary>
         private IEnumerator ExpectLine(string key, string why)
         {
             yield return Until(() => _gameplay.Opening.Flow.Current == key, FollowTimeout,
                 $"the objective line is '{key}' ({why}), not '{_gameplay.Opening.Flow.Current}'");
+            if (key.Length == 0)
+            {
+                yield break;
+            }
+
+            _pilot.Target = null;
+            yield return Until(() => _rover.Speed < StopSpeed, 6f, "07 stands still to read the line");
+            string expected = _localization.Get(key);
+            float still = Time.time;
+            yield return Until(() => _hud.Line == expected, LineTimeout,
+                $"the objective line reads '{expected}' on screen ({why})",
+                () => $"on screen: line '{_hud.Line}', chip '{_hud.Chip}'");
+            _lineWaits.Add(string.Format(CultureInfo.InvariantCulture, "{0}: {1:F1} s", expected, Time.time - still));
+            float chipBy = Time.time + ChipTimeout;
+            while (_hud.KeyChip.Length == 0 && Time.time < chipBy)
+            {
+                yield return null;
+            }
+
+            _stepChip = _hud.KeyChip;
+        }
+
+        /// <summary>
+        /// On <paramref name="verb"/>'s first use a chip named it: the key chip shown with the step's line (its word,
+        /// <paramref name="wordKey"/>, UI's), or a prompt chip once 07 is in place for it. A missing chip is a guidance
+        /// gap the run lists at the end rather than stopping on.
+        /// </summary>
+        private IEnumerator FirstUse(string verb, string wordKey)
+        {
+            if (!_verbsUsed.Add(verb))
+            {
+                yield break;
+            }
+
+            string word = _localization.Get(wordKey);
+            string chip = _stepChip.EndsWith(" " + word, StringComparison.Ordinal) ? _stepChip + " (with the line)"
+                : string.Empty;
+            float deadline = Time.time + ChipTimeout;
+            while (chip.Length == 0 && Time.time < deadline)
+            {
+                chip = _hud.Chip;
+                yield return null;
+            }
+
+            if (chip.Length == 0)
+            {
+                InteractionHint primary = _gameplay.Hints.Primary;
+                _guidanceGaps.Add($"{verb}: no chip on its first use (with the line: '{_stepChip}'; line on " +
+                                  $"screen: '{_hud.Line}', key chip '{_hud.KeyChip}'; primary hint {primary.Kind}, " +
+                                  $"ready {primary.Ready}; step {_gameplay.Opening.Flow.Current})");
+                Capture("gap-" + _verbsUsed.Count.ToString(CultureInfo.InvariantCulture));
+            }
+
+            _chips.Add($"{verb}: {(chip.Length > 0 ? chip : "none")}");
+        }
+
+        private IEnumerator Tap(ButtonControl key)
+        {
+            Press(key);
+            yield return null;
+            Release(key);
+            yield return new WaitForSeconds(TapSeconds);
+        }
+
+        /// <summary>
+        /// 07's look rests on a spot near <paramref name="at"/> the placement rules accept, in rings round it.
+        /// </summary>
+        private IEnumerator LookForASpot(BuildField build, Vector3 at, string structureId)
+        {
+            var terrain = _context.Get<ITerrainQuery>();
+            for (int ring = 0; ring < PlaceRings; ring++)
+            {
+                for (int step = 0; step < PlaceRingSpots; step++)
+                {
+                    Vector3 spot = at + Quaternion.Euler(0f, step * 360f / PlaceRingSpots, 0f) * Vector3.forward *
+                        (ring * PlaceRingStep);
+                    build.SetAimPointOverride(SurfaceRules.OnSurface(terrain, spot.x, spot.z));
+                    yield return null;
+                    yield return null;
+                    if (build.Controller.CanPlaceNow)
+                    {
+                        yield break;
+                    }
+
+                    if (ring == 0)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            Assert.Fail($"{structureId} finds a spot near {at} the placement rules accept " +
+                        $"(last reason {build.Controller.CandidateReason})");
+        }
+
+        /// <summary>
+        /// B6's fit, as a player does it: Tab opens 07's face screen, the arrows walk the focus to the cutter's socket,
+        /// Enter fits the spare igniter there, Tab closes the screen.
+        /// </summary>
+        private IEnumerator FitTheIgniter()
+        {
+            RoverStartKit kit = _gameplay.StartKit;
+            yield return FirstUse("fit the igniter: Tab", VerbFitKey);
+            yield return Tap(_keyboard.tabKey);
+            yield return Until(() => _hud.FaceFocus.Length > 0, FollowTimeout, "the face screen opens with a focus");
+            for (int step = 0; step < MaxMenuSteps && _hud.FaceFocusedDevice != CutterDevice; step++)
+            {
+                int device = _hud.FaceFocusedDevice;
+                yield return Tap(device < 0 ? _keyboard.rightArrowKey
+                    : device < CutterDevice ? _keyboard.downArrowKey : _keyboard.upArrowKey);
+            }
+
+            Assert.AreEqual(CutterDevice, _hud.FaceFocusedDevice,
+                $"the arrows reach the cutter's socket on the face screen (focus '{_hud.FaceFocus}')");
+            yield return Tap(_keyboard.enterKey);
+            yield return Until(() => !kit.CarriesIgniter, FollowTimeout, "Enter fits the spare igniter",
+                () => $"focus '{_hud.FaceFocus}', can fit {kit.CanFitIgniter}");
+            yield return Tap(_keyboard.tabKey);
+            var face = _context.Get<IRoverFaceScreen>();
+            yield return Until(() => !face.IsOpen, FollowTimeout, "Tab closes the face screen");
         }
 
         private IEnumerator UntilReached(OpeningMilestone milestone, string what)
@@ -867,6 +1051,20 @@ namespace MoonProject.Gameplay.PlayModeTests
             report.AppendLine(string.Format(CultureInfo.InvariantCulture,
                 "| **Total** | **{0:F1}** | budget {1:F0} s; {2} error(s), {3} warning(s); {4} crawl(s) | |", total,
                 TotalBudget, _problems.Count, _warnings, _crawls));
+            report.AppendLine();
+            report.AppendLine("Objective lines, and how long 07 stood still before each read on screen:");
+            foreach (string line in _lineWaits)
+            {
+                report.AppendLine("- " + line);
+            }
+
+            report.AppendLine();
+            report.AppendLine("Prompt chips on each verb's first use:");
+            foreach (string chip in _chips)
+            {
+                report.AppendLine("- " + chip);
+            }
+
             Directory.CreateDirectory(GameplayFixture.CaptureFolder);
             File.WriteAllText(ReportPath, report.ToString());
             Debug.Log("[playthrough] report: " + ReportPath + "\n" + report);

@@ -88,6 +88,55 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
+        public void AnIgnoredPrompt_RestsAtItsSpot_ButANewTargetTeachesAtOnce()
+        {
+            Run(1f, Ready(InteractionKind.Salvage));
+            Run(_settings.MaxShowSeconds + 1f, Ready(InteractionKind.Salvage));
+            Assert.IsFalse(_director.WantsShown, "ignored at this crate: it rests");
+            Run(2f, Ready(InteractionKind.Salvage));
+            Assert.IsFalse(_director.WantsShown, "and does not nag at the same spot");
+
+            var fresh = new InteractionHint(InteractionKind.Salvage,
+                Site + Vector3.forward * (_settings.RepeatRadius + 2f), true);
+            Assert.IsTrue(_director.Wants(fresh), "a fresh crate is worth teaching");
+            Run(1f, fresh);
+            Assert.IsTrue(_director.WantsShown, "the player who drives straight to it sees the key");
+        }
+
+        [Test]
+        public void ATargetThatWavers_KeepsItsDwell_AndKeepsTheSlot()
+        {
+            InteractionHint cut = Ready(InteractionKind.Salvage);
+            for (int i = 0; i < 12 && !_director.WantsShown; i++)
+            {
+                Run(0.15f, cut);
+                Assert.IsTrue(_director.Wants(InteractionHint.None), "a wavering aim still holds the slot");
+                Run(0.1f, InteractionHint.None);
+            }
+
+            Assert.IsTrue(_director.WantsShown, "nosing in does not restart the dwell for ever");
+            Run(_settings.DwellGraceSeconds + 0.2f, InteractionHint.None);
+            Assert.IsFalse(_director.Wants(InteractionHint.None) && !_director.WantsShown);
+        }
+
+        [Test]
+        public void ThePrompt_DwellsWithoutTheSlot_ClaimsItOnlyWhenReady_AndStartsTheMomentItIsGranted()
+        {
+            InteractionHint cut = Ready(InteractionKind.Salvage);
+            Run(Frame, cut, slotGranted: false);
+            Assert.IsFalse(_director.ReadyToShow, "mid-dwell the prompt does not claim the slot: the line stays");
+
+            Run(_settings.Find(InteractionKind.Salvage).DwellSeconds + 0.1f, cut, slotGranted: false);
+            Assert.AreEqual(InteractionKind.None, _director.Displayed, "no start without the slot");
+            Assert.IsTrue(_director.ReadyToShow, "the dwell is done: it claims the slot");
+            Assert.AreEqual(0, _ledger.Shown(InteractionKind.Salvage));
+
+            _director.Step(Frame, true, cut, _chip.IsHidden, true);
+            Assert.IsTrue(_director.Started, "granted, it starts on that very step");
+            Assert.AreEqual(InteractionKind.Salvage, _director.Displayed);
+        }
+
+        [Test]
         public void APrompt_IsRetired_OnceTheActionIsLearned()
         {
             for (int i = 0; i < _settings.Find(InteractionKind.Salvage).UsesToRetire; i++)
@@ -138,7 +187,7 @@ namespace MoonProject.UI.Tests
             Assert.IsFalse(restoredDirector.Wants(hint));
             for (float t = 0f; t < 60f; t += Frame)
             {
-                restoredDirector.Step(Frame, true, hint, restoredChip.IsHidden);
+                restoredDirector.Step(Frame, true, hint, restoredChip.IsHidden, true);
                 restoredChip.Set(restoredDirector.WantsShown);
                 restoredChip.Step(Frame);
             }
@@ -175,7 +224,7 @@ namespace MoonProject.UI.Tests
             Assert.AreEqual(InteractionKind.Salvage, _director.Displayed);
 
             InteractionHint build = Ready(InteractionKind.Build);
-            _director.Step(Frame, true, build, _chip.IsHidden);
+            _director.Step(Frame, true, build, _chip.IsHidden, true);
             _chip.Set(_director.WantsShown);
             _chip.Step(Frame);
             Assert.AreEqual(InteractionKind.Salvage, _director.Displayed, "the old prompt fades before the new one");
@@ -265,11 +314,11 @@ namespace MoonProject.UI.Tests
             return new InteractionHint(kind, Site, true);
         }
 
-        private void Run(float seconds, InteractionHint hint, bool gateOpen = true)
+        private void Run(float seconds, InteractionHint hint, bool gateOpen = true, bool slotGranted = true)
         {
             for (float t = 0f; t < seconds; t += Frame)
             {
-                _director.Step(Frame, gateOpen, hint, _chip.IsHidden);
+                _director.Step(Frame, gateOpen, hint, _chip.IsHidden, slotGranted);
                 _chip.Set(_director.WantsShown);
                 _chip.Step(Frame);
             }

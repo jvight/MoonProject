@@ -264,6 +264,19 @@ namespace MoonProject.UI.Tests
             Assert.AreEqual(20f, SunArc.ElevationDegrees(Direction(20f)), 1e-3f);
         }
 
+        [Test]
+        public void TheSunsTime_ShowsOnlyWhileItIsReallyGoingDown()
+        {
+            Assert.IsFalse(SunArc.CountsDown(float.PositiveInfinity), "the opening holds the Sun: no countdown");
+            Assert.IsFalse(SunArc.HasSet(float.PositiveInfinity));
+            Assert.IsFalse(SunArc.CountsDown(0f), "set");
+            Assert.IsTrue(SunArc.HasSet(0f));
+            Assert.IsTrue(SunArc.CountsDown(90f));
+            Assert.AreEqual(2, SunArc.MinutesLeft(61f), "rounded up");
+            Assert.AreEqual(1, SunArc.MinutesLeft(5f), "never 0 while it is still up");
+            Assert.AreEqual(12, SunArc.MinutesLeft(720f));
+        }
+
         private void AssertBoot(string[] expected)
         {
             var content = new ReadoutContent();

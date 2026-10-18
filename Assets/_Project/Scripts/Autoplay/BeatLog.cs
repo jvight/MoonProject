@@ -8,8 +8,9 @@ namespace MoonProject.Autoplay
     public sealed class BeatResult
     {
         public BeatResult(string id, string title, bool passed, string reason, float seconds, string objective,
-            string chip)
+            string chip, string sky)
         {
+            Sky = sky;
             Id = id;
             Title = title;
             Passed = passed;
@@ -20,6 +21,9 @@ namespace MoonProject.Autoplay
         }
 
         public string Id { get; }
+
+        /// <summary>The sky's phase when the beat ended (the day is the opening's clock: the base must be night-ready by sunset).</summary>
+        public string Sky { get; }
 
         public string Title { get; }
 
@@ -83,13 +87,13 @@ namespace MoonProject.Autoplay
 
             text.Append("- Build: ").Append(buildInfo).Append('\n');
             text.Append("- Run time: ").Append(Number(runSeconds, "0.0")).Append(" s\n\n");
-            text.Append("## Beats\n\n| Beat | Result | Seconds | Reason | Objective line | Prompt chip |\n");
-            text.Append("|---|---|---|---|---|---|\n");
+            text.Append("## Beats\n\n| Beat | Result | Seconds | Sky | Reason | Objective line | Prompt chip |\n");
+            text.Append("|---|---|---|---|---|---|---|\n");
             foreach (BeatResult beat in _beats)
             {
                 text.Append("| ").Append(beat.Id).Append(' ').Append(Cell(beat.Title)).Append(" | ")
                     .Append(beat.Passed ? "pass" : "FAIL").Append(" | ").Append(Number(beat.Seconds, "0.0"))
-                    .Append(" | ").Append(Cell(beat.Reason)).Append(" | ").Append(Cell(beat.Objective))
+                    .Append(" | ").Append(Cell(beat.Sky)).Append(" | ").Append(Cell(beat.Reason)).Append(" | ").Append(Cell(beat.Objective))
                     .Append(" | ").Append(Cell(beat.Chip)).Append(" |\n");
             }
 

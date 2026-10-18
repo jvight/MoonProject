@@ -22,7 +22,7 @@ MonoBehaviour:
   _produceWatts: 0
   _consumeWatts: 0
   _storeWattHours: 360
-  _connectionRadius: 0
+  _connectionRadius: 10
   _buildCost:
     _metal: 3
     _wiring: 3

@@ -93,5 +93,15 @@ namespace MoonProject.UI.Tests
             _chip.Used(ObjectiveVerb.Fit);
             Assert.AreEqual(HintWord.None, _chip.Word(true, true, false, InteractionKind.None));
         }
+
+        [TestCase(OpeningKeys.BuildPad, "Build")]
+        [TestCase(OpeningKeys.FindSolar, "Scan")]
+        [TestCase(OpeningKeys.CutOptics, "Cut")]
+        public void AnUnlearnedVerb_ShowsItsChipWithTheLine_BeforeAnythingIsInReach(string key, string expected)
+        {
+            _chip.SetKey(key);
+            Assert.AreEqual(expected, _chip.Word(true, false, false, InteractionKind.None).ToString(),
+                "the step's verb shows from the moment its line is up, until its first use");
+        }
     }
 }

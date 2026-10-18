@@ -110,7 +110,7 @@ def main():
     ap.add_argument("--build", action="store_true", help="build the autoplay variant first (python tools/build_player.py --autoplay)")
     ap.add_argument("--exe", help="the autoplay exe (default: Builds/Lunarion-Autoplay of this worktree)")
     ap.add_argument("--out", help="output folder (default Logs/autoplay/<timestamp>)")
-    ap.add_argument("--timeout", type=int, default=600, help="seconds the bot may play before it fails the run")
+    ap.add_argument("--timeout", type=int, default=1500, help="seconds the bot may play before it fails the run")
     ap.add_argument("--shot-seconds", type=int, default=20)
     ap.add_argument("--visible", action="store_true", help="leave the window where the system puts it")
     args = ap.parse_args()

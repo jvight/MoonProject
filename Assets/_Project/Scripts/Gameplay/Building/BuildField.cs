@@ -61,6 +61,7 @@ namespace MoonProject.Gameplay
         private LightPulse _weldLight;
         private VacuumDebris _weldDebris;
         private readonly HeatSeam[] _weldSeams = new HeatSeam[SeamSlotCount];
+        private GridLinkLine _gridLink;
         private readonly Vector3[] _seamLine = new Vector3[3];
         private int _seamInstanceId;
         private int _seamStageIndex = -1;
@@ -214,6 +215,8 @@ namespace MoonProject.Gameplay
             {
                 _weldSeams[i] = new HeatSeam(vfxRoot, feelTuning, _visuals.HeatSeam);
             }
+
+            _gridLink = new GridLinkLine(vfxRoot, _visuals.BeamCore, _tuning);
 
             PrewarmGhosts();
 
@@ -1030,10 +1033,34 @@ namespace MoonProject.Gameplay
             _activeGhost.transform.SetPositionAndRotation(_ghostPosition, Quaternion.Euler(0f, _ghostYaw, 0f));
             bool valid = _controller.CandidateReason == PlacementReason.Valid && _controller.CanAffordSelected;
             _activeGhost.SetGhostMode(valid);
+            StepGridLink(selected, targetPose.Position);
+        }
+
+        /// <summary>
+        /// The ghost's cable preview: to the grid hub the structure would join where it would stand, or a loose cable
+        /// end when it would stand off the grid.
+        /// </summary>
+        private void StepGridLink(StructureDefinition selected, Vector3 standsAt)
+        {
+            if (!GridLinkPreview.JoinsGrid(selected))
+            {
+                _gridLink.Hide();
+                return;
+            }
+
+            if (GridLinkPreview.TryFindLink(_placedBase, selected, standsAt, out Vector3 hub))
+            {
+                _gridLink.ShowLink(_ghostPosition, hub);
+            }
+            else
+            {
+                _gridLink.ShowLoose(_ghostPosition, _ghostYaw);
+            }
         }
 
         private void HideAllGhosts()
         {
+            _gridLink.Hide();
             if (_activeGhost != null)
             {
                 _activeGhost.gameObject.SetActive(false);

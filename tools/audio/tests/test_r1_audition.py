@@ -46,7 +46,6 @@ EXPECTED_CUES_BY_GROUP: dict[str, tuple[str, ...]] = {
         "face_proud",
     ),
     "sky": (
-        "sky_diamond_ring",
         "sky_dawn_sweep",
         "sky_nightfall_settle",
     ),
@@ -147,7 +146,7 @@ class R1AuditionTests(unittest.TestCase):
     def test_seeded_determinism_and_variant_distinctness(self) -> None:
         sample_ids = (
             "face_boot",
-            "sky_diamond_ring",
+            "sky_dawn_sweep",
             "build_ghost",
             "build_stage_complete",
             "machine_transformer_loop",

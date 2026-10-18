@@ -21,6 +21,11 @@ namespace MoonProject.UI
         [Range(0.05f, 2f)]
         [SerializeField] private float _stillSpeed = 0.4f;
 
+        [Tooltip("Seconds the objective line keeps its place while a prompt that takes over from it fades in: the two " +
+                 "cross-fade, so the screen is never blank in the hand-over.")]
+        [Range(0f, 1.5f)]
+        [SerializeField] private float _handOverSeconds = 0.3f;
+
         [Tooltip("Seconds after a step begins before its objective line may show (docs/design/opening-v2.md §3).")]
         [Range(0f, 10f)]
         [SerializeField] private float _objectiveDelaySeconds = 1.5f;
@@ -74,6 +79,8 @@ namespace MoonProject.UI
         public float LowBatteryHoldSeconds => _lowBatteryHoldSeconds;
 
         public float StillSpeed => _stillSpeed;
+
+        public float HandOverSeconds => _handOverSeconds;
 
         public float ObjectiveDelaySeconds => _objectiveDelaySeconds;
 

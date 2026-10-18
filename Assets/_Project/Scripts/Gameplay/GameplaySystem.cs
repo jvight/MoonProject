@@ -433,7 +433,7 @@ namespace MoonProject.Gameplay
             Bundles.Step(now);
             Containers.Step(now, deltaTime);
             Scans.Step(now, deltaTime);
-            Opening.Step();
+            Opening.Step(deltaTime);
             PadLock.Step(deltaTime);
             ApronGlow.Step(_building.State != BuildModeState.Closed, deltaTime);
             Recovery.Refresh();

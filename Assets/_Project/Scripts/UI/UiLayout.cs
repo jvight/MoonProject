@@ -28,6 +28,7 @@ namespace MoonProject.UI
             SunArc = Require<VisualElement>("sun-arc");
             SunArcFace = Require<VisualElement>("sun-arc-face");
             SunArcLabel = Require<Label>("sun-arc-label");
+            SunArcTime = Require<Label>("sun-arc-time");
             Cargo = Require<VisualElement>("cargo");
             UnlockCard = Require<VisualElement>("unlock-card");
 
@@ -176,6 +177,8 @@ namespace MoonProject.UI
         public VisualElement SunArcFace { get; }
 
         public Label SunArcLabel { get; }
+
+        public Label SunArcTime { get; }
 
         /// <summary>The cargo screen's root (Tab / View): its parts are found beneath it by name.</summary>
         public VisualElement Cargo { get; }
