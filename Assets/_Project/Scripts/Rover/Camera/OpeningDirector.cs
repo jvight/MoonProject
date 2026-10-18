@@ -45,9 +45,6 @@ namespace MoonProject.Rover
         /// <summary>Phase length or probe distance below this is treated as zero.</summary>
         private const float LengthEpsilon = 1e-4f;
 
-        /// <summary>A speck beyond the glass's edges: the dimmed picture shows none.</summary>
-        private static readonly Vector2 SpeckOffGlass = new Vector2(1f, 1f);
-
         [Tooltip("Camera tuning (Assets/_Project/Data/Tuning/RoverCameraTuning.asset); the opening is its Opening block.")]
         [SerializeField] private RoverCameraTuning _tuning;
 
@@ -337,7 +334,7 @@ namespace MoonProject.Rover
                         break;
                 }
 
-                _events.Publish(new RoverWakeBeatReached(beat, false));
+                _events.Publish(new RoverWakeBeatReached(beat));
             }
         }
 
@@ -672,7 +669,7 @@ namespace MoonProject.Rover
             }
 
             float toLens = Vector3.Distance(_rig.Camera.transform.position, ScanLensOrigin.position);
-            _lens.Apply(new LensViewState(_script.Picture01, toLens, 0f, 0f, SpeckOffGlass));
+            _lens.Apply(new LensViewState(_script.Picture01, toLens));
             _lensApplied = true;
         }
 

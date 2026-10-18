@@ -144,7 +144,7 @@ namespace MoonProject.Rover.PlayModeTests
             yield return WaitSeconds(1.0f);
 
             // 1. Wake boot sequence -> Calm
-            _context.Events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle, false));
+            _context.Events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle));
             Assert.IsTrue(state.IsBooting, $"{prefix}: WakeBeat.Crackle must start Boot().");
             Assert.AreEqual(FaceFeeling.Calm, director.CurrentFeeling);
             director.State.SetBootProgress(0.32f);

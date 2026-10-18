@@ -320,7 +320,7 @@ namespace MoonProject.Audio
                     if (_openingHoldsRadio)
                     {
                         _openingHoldsRadio = false;
-                        WakeUp(reached.Hurried);
+                        WakeUp(false);
                     }
 
                     break;
