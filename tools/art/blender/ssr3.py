@@ -1297,6 +1297,855 @@ def _build_topper_06_cable_reel(root: bpy.types.Object) -> bpy.types.Object:
     return mb.build_object(parent=root)
 
 
+# ---------------------------------------------------------------------------
+# Deliverable 1a: SSR3_Tracks (Direction B Low-Crawler Track Replacement for Wheels)
+# ---------------------------------------------------------------------------
+TRACK_SIDE_X: float = 0.38
+TRACK_AXLE_Y: float = 0.215
+TRACK_WHEELBASE_Z: float = 0.44
+
+
+def _build_ssr3_single_track(
+    root: bpy.types.Object,
+    name: str,
+    side_x: float,
+    rear_idler_mat: str = "R1_CreamEnamel",
+) -> bpy.types.Object:
+    """Build one complete left or right crawler track unit (`Track_L` or `Track_R`)."""
+    import bmesh
+
+    sx = 1.0 if side_x >= 0.0 else -1.0
+    pivot_u = (side_x, TRACK_AXLE_Y, 0.0)
+    mb = r1kit.MeshBuilder(name, pivot_u=pivot_u)
+
+    z_front = TRACK_WHEELBASE_Z   # +0.44 m
+    z_rear = -TRACK_WHEELBASE_Z   # -0.44 m
+    y_axle = TRACK_AXLE_Y         # 0.215 m
+
+    # Track belt X span: inner edge at |x|=0.325 m, outer edge at |x|=0.485 m (center |x|=0.405 m, width 0.160 m)
+    belt_cx = sx * 0.405
+    belt_w = 0.160
+    x_min = belt_cx - belt_w * 0.5
+    x_max = belt_cx + belt_w * 0.5
+
+    # 1. Continuous closed all-quad R1_Rubber stadium track carcass (r_in = 0.174 m, r_out = 0.200 m)
+    r_in = 0.174
+    r_out = 0.200
+    arc_segs = 14
+    straight_segs = 6
+
+    # Build ordered (y, z, alpha_rad) stations around the stadium perimeter:
+    # alpha_rad is the outward normal angle in (Y, Z) where 0 = +Y (up), +pi/2 = +Z (front), pi = -Y (down), -pi/2 = -Z (rear)
+    stations: list[tuple[float, float, float]] = []
+    # Front semicircle: alpha from 0 (top) to pi (bottom) around (y_axle, z_front)
+    for i in range(arc_segs):
+        alpha = math.pi * (i / arc_segs)
+        stations.append((y_axle, z_front, alpha))
+    # Bottom straight run: from z_front to z_rear at alpha = pi (downward normal)
+    for i in range(straight_segs):
+        t = i / straight_segs
+        sz_cur = z_front * (1.0 - t) + z_rear * t
+        stations.append((y_axle, sz_cur, math.pi))
+    # Rear semicircle: alpha from pi (bottom) to 2*pi (top) around (y_axle, z_rear)
+    for i in range(arc_segs):
+        alpha = math.pi + math.pi * (i / arc_segs)
+        stations.append((y_axle, z_rear, alpha))
+    # Top straight run: from z_rear to z_front at alpha = 0 (upward normal)
+    for i in range(straight_segs):
+        t = i / straight_segs
+        sz_cur = z_rear * (1.0 - t) + z_front * t
+        stations.append((y_axle, sz_cur, 0.0))
+
+    n_stat = len(stations)
+    rings_verts: list[tuple[bmesh.types.BMVert, bmesh.types.BMVert, bmesh.types.BMVert, bmesh.types.BMVert]] = []
+    for yc, zc, alpha in stations:
+        ny = math.cos(alpha)
+        nz = math.sin(alpha)
+        y_i = yc + r_in * ny
+        z_i = zc + r_in * nz
+        y_o = yc + r_out * ny
+        z_o = zc + r_out * nz
+        v0 = mb.bm.verts.new(mb._to_local_b((x_min, y_i, z_i)))
+        v1 = mb.bm.verts.new(mb._to_local_b((x_max, y_i, z_i)))
+        v2 = mb.bm.verts.new(mb._to_local_b((x_max, y_o, z_o)))
+        v3 = mb.bm.verts.new(mb._to_local_b((x_min, y_o, z_o)))
+        rings_verts.append((v0, v1, v2, v3))
+
+    belt_faces: list[bmesh.types.BMFace] = []
+    for idx in range(n_stat):
+        r0 = rings_verts[idx]
+        r1 = rings_verts[(idx + 1) % n_stat]
+        for k in range(4):
+            kn = (k + 1) % 4
+            belt_faces.append(mb.bm.faces.new((r0[k], r0[kn], r1[kn], r1[k])))
+
+    bmesh.ops.recalc_face_normals(mb.bm, faces=belt_faces)
+    mb._assign_faces(belt_faces, "R1_Rubber")
+
+    # 2. 40 Sculpted 3D Transverse Grouser Treads around the stadium perimeter (reaching exact R = 0.215 m -> y = 0.000 m)
+    grouser_r_mid = 0.206
+    grouser_h = 0.018  # Radial height: 0.206 + 0.009 = 0.215 m outer contact
+    grouser_len = 0.044
+    for idx, (yc, zc, alpha) in enumerate(stations):
+        ny = math.cos(alpha)
+        nz = math.sin(alpha)
+        gy = yc + grouser_r_mid * ny
+        gz = zc + grouser_r_mid * nz
+        pitch_deg = -math.degrees(alpha)
+        mb.add_bevel_box(
+            center_u=(belt_cx, gy, gz),
+            size_u=(belt_w + 0.010, grouser_h, grouser_len),
+            mat="R1_Rubber",
+            bevel=0.004,
+            segments=1,
+            rot_deg_u=(pitch_deg, 0.0, 0.0),
+        )
+        # Inner steel center guide tooth on every second grouser pad
+        if idx % 2 == 0:
+            ty = yc + (r_in - 0.010) * ny
+            tz = zc + (r_in - 0.010) * nz
+            mb.add_bevel_box(
+                center_u=(belt_cx, ty, tz),
+                size_u=(0.024, 0.022, 0.032),
+                mat="R1_BareSteel",
+                bevel=0.003,
+                segments=1,
+                rot_deg_u=(pitch_deg, 0.0, 0.0),
+            )
+
+    # 3. Front Drive Sprocket (z = +0.44) & Rear Idler Wheel (z = -0.44) inside the track loop
+    r_main_wheel = 0.172
+    r_main_rim = 0.132
+    for end_idx, wz in enumerate((z_front, z_rear)):
+        dish_mat = "R1_CreamEnamel" if end_idx == 0 else rear_idler_mat
+        # Main wheel drum inside belt
+        mb.add_cylinder(
+            center_u=(belt_cx, y_axle, wz),
+            radius=r_main_wheel,
+            length=0.132,
+            mat="R1_GreyMetal",
+            axis_u="X",
+            segments=20,
+            bevel=0.008,
+            bevel_segments=1,
+        )
+        # Outer recessed deep-dish wheel plate (`R1_CreamEnamel` / `R1_SagePatch`)
+        mb.add_cylinder(
+            center_u=(belt_cx + sx * 0.056, y_axle, wz),
+            radius=r_main_rim * 0.94,
+            length=0.024,
+            mat=dish_mat,
+            axis_u="X",
+            segments=20,
+            bevel=0.004,
+            bevel_segments=1,
+        )
+        # Outer rolled steel rim flange torus & inner dish ring torus
+        mb.add_torus(
+            center_u=(belt_cx + sx * 0.068, y_axle, wz),
+            major_radius=r_main_rim,
+            minor_radius=0.015,
+            mat="R1_GreyMetal",
+            axis_u="X",
+            major_segments=20,
+            minor_segments=6,
+        )
+        mb.add_torus(
+            center_u=(belt_cx + sx * 0.064, y_axle, wz),
+            major_radius=r_main_rim * 0.68,
+            minor_radius=0.014,
+            mat=dish_mat,
+            axis_u="X",
+            major_segments=18,
+            minor_segments=6,
+        )
+        # Central machined axle boss & bare-steel cap
+        mb.add_cylinder(
+            center_u=(belt_cx + sx * 0.064, y_axle, wz),
+            radius=r_main_rim * 0.36,
+            length=0.026,
+            mat="R1_GreyMetal",
+            axis_u="X",
+            segments=14,
+            bevel=0.003,
+            bevel_segments=1,
+        )
+        mb.add_cylinder(
+            center_u=(belt_cx + sx * 0.072, y_axle, wz),
+            radius=r_main_rim * 0.22,
+            length=0.028,
+            mat="R1_BareSteel",
+            axis_u="X",
+            segments=12,
+            bevel=0.004,
+            bevel_segments=1,
+        )
+        # 8 hex lug bolts around the main wheel hub dish
+        bolt_x = belt_cx + sx * 0.069
+        bolt_pts = [
+            (
+                bolt_x,
+                y_axle + r_main_rim * 0.48 * math.sin(2.0 * math.pi * b_i / 8),
+                wz + r_main_rim * 0.48 * math.cos(2.0 * math.pi * b_i / 8),
+            )
+            for b_i in range(8)
+        ]
+        mb.add_bolts(
+            bolt_pts,
+            radius=0.0075,
+            height=0.012,
+            axis_u="X",
+            mat="R1_BareSteel",
+            bevel_segments=0,
+        )
+
+    # 4. Twin Central Lower Bogie Road Wheels (z = +0.145 m and z = -0.145 m, y = 0.128 m, R = 0.104 m)
+    r_bogie = 0.104
+    r_bogie_rim = 0.076
+    y_bogie = 0.128
+    for bz in (0.145, -0.145):
+        # Solid rubber cushion tyre ring resting on inner bottom track run
+        mb.add_cylinder(
+            center_u=(belt_cx, y_bogie, bz),
+            radius=r_bogie,
+            length=0.130,
+            mat="R1_Rubber",
+            axis_u="X",
+            segments=18,
+            bevel=0.007,
+            bevel_segments=1,
+        )
+        # Cream enamel bogie dish
+        mb.add_cylinder(
+            center_u=(belt_cx + sx * 0.056, y_bogie, bz),
+            radius=r_bogie_rim * 0.94,
+            length=0.022,
+            mat="R1_CreamEnamel",
+            axis_u="X",
+            segments=16,
+            bevel=0.003,
+            bevel_segments=1,
+        )
+        # Outer grey metal rim ring torus
+        mb.add_torus(
+            center_u=(belt_cx + sx * 0.066, y_bogie, bz),
+            major_radius=r_bogie_rim,
+            minor_radius=0.012,
+            mat="R1_GreyMetal",
+            axis_u="X",
+            major_segments=16,
+            minor_segments=6,
+        )
+        # Central bare-steel bogie axle cap + 6 hex bolts
+        mb.add_cylinder(
+            center_u=(belt_cx + sx * 0.070, y_bogie, bz),
+            radius=r_bogie_rim * 0.30,
+            length=0.026,
+            mat="R1_BareSteel",
+            axis_u="X",
+            segments=12,
+            bevel=0.003,
+            bevel_segments=1,
+        )
+        b_pts = [
+            (
+                belt_cx + sx * 0.067,
+                y_bogie + r_bogie_rim * 0.54 * math.sin(2.0 * math.pi * b_i / 6),
+                bz + r_bogie_rim * 0.54 * math.cos(2.0 * math.pi * b_i / 6),
+            )
+            for b_i in range(6)
+        ]
+        mb.add_bolts(
+            b_pts,
+            radius=0.006,
+            height=0.010,
+            axis_u="X",
+            mat="R1_BareSteel",
+            bevel_segments=0,
+        )
+
+    # 5. Bogie Suspension Frame, Track Tensioner, Return Rollers & Continuous Upper Fender Shroud
+    # Recessed dark inner suspension housing that cleanly covers the wheeled chassis's central rocker skirt
+    mb.add_bevel_box(
+        center_u=(sx * 0.382, 0.285, 0.0),
+        size_u=(0.122, 0.185, 0.66),
+        mat="R1_GreyMetal",
+        bevel=0.008,
+        segments=1,
+    )
+    # Longitudinal bogie side-frame beam linking front drive axle, road wheel bogies, and rear idler
+    mb.add_bevel_box(
+        center_u=(belt_cx + sx * 0.032, 0.215, 0.0),
+        size_u=(0.034, 0.056, 0.88),
+        mat="R1_GreyMetal",
+        bevel=0.006,
+        segments=1,
+    )
+    # Angled bogie swing-arms down to the twin road wheels
+    for bz in (0.145, -0.145):
+        mb.add_strut(
+            p0_u=(belt_cx + sx * 0.036, 0.215, bz * 0.45),
+            p1_u=(belt_cx + sx * 0.042, y_bogie, bz),
+            width=0.028,
+            thickness=0.038,
+            mat="R1_BareSteel",
+            bevel=0.004,
+        )
+    # Horizontal recoil track-tensioner cylinder (R1_Copper sleeve + R1_BareSteel rod + R1_Brass gland)
+    mb.add_cylinder(
+        center_u=(belt_cx + sx * 0.038, 0.288, 0.06),
+        radius=0.028,
+        length=0.22,
+        mat="R1_Copper",
+        axis_u="Z",
+        segments=12,
+        bevel=0.004,
+        bevel_segments=1,
+    )
+    mb.add_cylinder(
+        center_u=(belt_cx + sx * 0.038, 0.288, -0.08),
+        radius=0.016,
+        length=0.24,
+        mat="R1_BareSteel",
+        axis_u="Z",
+        segments=10,
+        bevel=0.003,
+        bevel_segments=1,
+    )
+    mb.add_cylinder(
+        center_u=(belt_cx + sx * 0.038, 0.288, 0.175),
+        radius=0.032,
+        length=0.028,
+        mat="R1_Brass",
+        axis_u="Z",
+        segments=12,
+        bevel=0.003,
+        bevel_segments=1,
+    )
+    # Twin upper track return rollers
+    for rz in (-0.22, 0.22):
+        mb.add_cylinder(
+            center_u=(belt_cx, 0.342, rz),
+            radius=0.034,
+            length=0.125,
+            mat="R1_BareSteel",
+            axis_u="X",
+            segments=12,
+            bevel=0.004,
+            bevel_segments=1,
+        )
+    # Continuous full-length upper track fender shroud bridging front & rear arches
+    mb.add_bevel_box(
+        center_u=(sx * 0.422, 0.436, 0.0),
+        size_u=(0.088, 0.028, 1.18),
+        mat="R1_GreyMetal",
+        bevel=0.006,
+        segments=1,
+    )
+    mb.add_bolt_row(
+        start_u=(sx * 0.464, 0.436, -0.50),
+        end_u=(sx * 0.464, 0.436, 0.50),
+        count=6,
+        radius=0.0065,
+        height=0.008,
+        axis_u="X",
+        mat="R1_BareSteel",
+        bevel_segments=0,
+    )
+
+    return mb.build_object(parent=root)
+
+
+def build_ssr3_tracks() -> bpy.types.Object:
+    """Build the `SSR3_Tracks` crawler track-unit replacement (`Track_L` + `Track_R`) in the active Blender scene."""
+    root = r1kit.create_empty("SSR3_Tracks", pivot_u=(0.0, 0.0, 0.0))
+
+    _build_ssr3_single_track(root, "Track_L", -TRACK_SIDE_X, rear_idler_mat="R1_SagePatch")
+    _build_ssr3_single_track(root, "Track_R", TRACK_SIDE_X, rear_idler_mat="R1_CreamEnamel")
+
+    bpy.context.view_layer.update()
+    _apply_ssr3_decades_at_rest_weathering(root, footprint_radius=0.88)
+    return root
+
+
+# ---------------------------------------------------------------------------
+# Deliverable 1b: SSR3_Topper_03 ("Cryo Ice Cart" — Gold-Foil Cryo Box + Copper Coils + Condenser + Frost Block)
+# ---------------------------------------------------------------------------
+def _build_topper_03_cryo_box(root: bpy.types.Object) -> bpy.types.Object:
+    """Build the insulated `R1_GoldFoil` cryo ice box and finned side condenser stack (`CryoBox`)."""
+    mb = r1kit.MeshBuilder("CryoBox", pivot_u=(0.0, 0.16, -0.08))
+
+    # 1. Base structural mounting tray sitting in the dorsal deck well
+    mb.add_bevel_box(
+        center_u=(0.0, 0.016, -0.02),
+        size_u=(0.64, 0.032, 0.98),
+        mat="R1_GreyMetal",
+        bevel=0.005,
+        segments=1,
+    )
+    mb.add_bolts(
+        [
+            (sx * 0.295, 0.032, bz)
+            for sx in (-1.0, 1.0)
+            for bz in (-0.44, -0.02, 0.40)
+        ],
+        radius=0.008,
+        height=0.010,
+        axis_u="Y",
+        mat="R1_BareSteel",
+        bevel_segments=0,
+    )
+
+    # 2. Main Insulated Gold-Foil Cryo Ice Chest (`R1_GoldFoil` with faceted quilted blanket panels)
+    box_cx = 0.065
+    box_cy = 0.175
+    box_cz = -0.075
+    box_w = 0.44
+    box_h = 0.285
+    box_l = 0.56
+    mb.add_bevel_box(
+        center_u=(box_cx, box_cy, box_cz),
+        size_u=(box_w, box_h, box_l),
+        mat="R1_GoldFoil",
+        bevel=0.014,
+        segments=2,
+    )
+    # Quilted multi-angle Kapton thermal blanket lobes on the walls so low-angle crater-rim light catches glints
+    for row_y in (0.115, 0.225):
+        for col_z in (-0.24, -0.075, 0.09):
+            mb.add_bevel_box(
+                center_u=(box_cx + box_w * 0.502, row_y, col_z),
+                size_u=(0.014, 0.092, 0.145),
+                mat="R1_GoldFoil",
+                bevel=0.006,
+                segments=1,
+                rot_deg_u=(2.5 if col_z > 0 else -2.5, 0.0, 3.0 if row_y > 0.17 else -3.0),
+            )
+        for col_x in (-0.05, 0.18):
+            for end_s in (-1.0, 1.0):
+                mb.add_bevel_box(
+                    center_u=(col_x, row_y, box_cz + end_s * (box_l * 0.502)),
+                    size_u=(0.18, 0.092, 0.014),
+                    mat="R1_GoldFoil",
+                    bevel=0.006,
+                    segments=1,
+                    rot_deg_u=(end_s * 3.0, 0.0, 2.0 if col_x > 0 else -2.0),
+                )
+
+    # Structural bare-steel corner vertical angles & mid-height hold-down strap around the gold-foil cryo chest
+    for sx in (-1.0, 1.0):
+        for sz in (-1.0, 1.0):
+            mb.add_bevel_box(
+                center_u=(box_cx + sx * (box_w * 0.50), box_cy, box_cz + sz * (box_l * 0.50)),
+                size_u=(0.026, box_h + 0.008, 0.026),
+                mat="R1_BareSteel",
+                bevel=0.004,
+                segments=1,
+            )
+    mb.add_bevel_box(
+        center_u=(box_cx, 0.170, box_cz),
+        size_u=(box_w + 0.018, 0.022, box_l + 0.018),
+        mat="R1_Copper",
+        bevel=0.004,
+        segments=1,
+    )
+    # 2 Heavy industrial toggle latches & a dark cryo sight-glass porthole on the right (+X) and front (+Z) walls
+    for lz in (-0.20, 0.05):
+        mb.add_bevel_box(
+            center_u=(box_cx + box_w * 0.512, 0.245, lz),
+            size_u=(0.018, 0.058, 0.032),
+            mat="R1_BareSteel",
+            bevel=0.003,
+            segments=1,
+        )
+        mb.add_cylinder(
+            center_u=(box_cx + box_w * 0.520, 0.228, lz),
+            radius=0.010,
+            length=0.038,
+            mat="R1_Brass",
+            axis_u="Z",
+            segments=10,
+            bevel=0.002,
+            bevel_segments=1,
+        )
+    # Cryo sight glass & brass pressure bezel on the front-right upper wall
+    mb.add_cylinder(
+        center_u=(0.18, 0.235, box_cz + box_l * 0.508),
+        radius=0.042,
+        length=0.018,
+        mat="R1_Brass",
+        axis_u="Z",
+        segments=16,
+        bevel=0.003,
+        bevel_segments=1,
+    )
+    mb.add_cylinder(
+        center_u=(0.18, 0.235, box_cz + box_l * 0.514),
+        radius=0.030,
+        length=0.012,
+        mat="R1_DarkGlass",
+        axis_u="Z",
+        segments=16,
+        bevel=0.002,
+        bevel_segments=1,
+    )
+
+    # 3. Left-Flank (-X) Multi-Fin Cryo Condenser / Radiator Stack (matching concept's horizontal finned block)
+    cond_cx = -0.235
+    cond_cy = 0.172
+    cond_cz = -0.145
+    cond_w = 0.145
+    cond_h = 0.255
+    cond_l = 0.44
+    # Recessed dark slotted core
+    mb.add_bevel_box(
+        center_u=(cond_cx, cond_cy, cond_cz),
+        size_u=(cond_w - 0.018, cond_h - 0.024, cond_l - 0.028),
+        mat="R1_DarkGlass",
+        bevel=0.004,
+        segments=1,
+    )
+    # End header blocks & top/bottom structural plates (`R1_GreyMetal` / `R1_BareSteel`)
+    for end_s in (-1.0, 1.0):
+        mb.add_bevel_box(
+            center_u=(cond_cx, cond_cy, cond_cz + end_s * (cond_l * 0.46)),
+            size_u=(cond_w, cond_h, 0.038),
+            mat="R1_GreyMetal",
+            bevel=0.005,
+            segments=1,
+        )
+    for tb_s in (-1.0, 1.0):
+        mb.add_bevel_box(
+            center_u=(cond_cx, cond_cy + tb_s * (cond_h * 0.47), cond_cz),
+            size_u=(cond_w + 0.006, 0.022, cond_l + 0.006),
+            mat="R1_BareSteel",
+            bevel=0.004,
+            segments=1,
+        )
+    # 11 Horizontal brass/steel radiator fins stacked vertically
+    num_fins = 11
+    for f_i in range(num_fins):
+        fy = (cond_cy - cond_h * 0.40) + (cond_h * 0.80) * (f_i / (num_fins - 1))
+        fin_mat = "R1_Brass" if f_i % 2 == 0 else "R1_BareSteel"
+        mb.add_bevel_box(
+            center_u=(cond_cx - 0.004, fy, cond_cz),
+            size_u=(cond_w + 0.008, 0.009, cond_l - 0.042),
+            mat=fin_mat,
+            bevel=0.002,
+            segments=1,
+        )
+    # 2 Vertical fin tie-rod straps on the outer (-X) face of the condenser
+    for tz in (cond_cz - 0.11, cond_cz + 0.11):
+        mb.add_bevel_box(
+            center_u=(cond_cx - cond_w * 0.52, cond_cy, tz),
+            size_u=(0.010, cond_h - 0.010, 0.014),
+            mat="R1_GreyMetal",
+            bevel=0.002,
+            segments=1,
+        )
+
+    return mb.build_object(parent=root)
+
+
+def _build_topper_03_cooling_coils(root: bpy.types.Object) -> bpy.types.Object:
+    """Build the front 7-turn helical `R1_Copper` cooling coil bank and refrigerant manifolds (`CoolingCoils`)."""
+    mb = r1kit.MeshBuilder("CoolingCoils", pivot_u=(0.08, 0.14, 0.34))
+
+    coil_cy = 0.150
+    coil_cz = 0.335
+    coil_r = 0.086
+    tube_r = 0.0145
+    num_turns = 7
+    x_start = -0.175
+    x_end = 0.245
+
+    # 1. Base steel cradle & notched coil support rails on the front deck
+    mb.add_bevel_box(
+        center_u=(0.035, 0.042, coil_cz),
+        size_u=(0.48, 0.032, 0.21),
+        mat="R1_GreyMetal",
+        bevel=0.005,
+        segments=1,
+    )
+    for sz in (-0.068, 0.068):
+        mb.add_bevel_box(
+            center_u=(0.035, 0.066, coil_cz + sz),
+            size_u=(0.46, 0.026, 0.024),
+            mat="R1_BareSteel",
+            bevel=0.004,
+            segments=1,
+        )
+
+    # 2. Continuous 7-turn helical R1_Copper cooling coil + torus reinforcement rings for ultra-crisp silhouette
+    helix_pts: list[tuple[float, float, float]] = []
+    pts_per_turn = 20
+    total_steps = num_turns * pts_per_turn
+    for step in range(total_steps + 1):
+        u = step / total_steps
+        ang = 2.0 * math.pi * num_turns * u
+        hx = x_start + (x_end - x_start) * u
+        hy = coil_cy + coil_r * math.cos(ang)
+        hz = coil_cz + coil_r * math.sin(ang)
+        helix_pts.append((hx, hy, hz))
+    mb.add_tube_path(helix_pts, radius=tube_r, mat="R1_Copper", segments=12, cap_ends=True)
+
+    # Brass end manifold blocks & axial copper tie-core rod through the coil bank
+    mb.add_cylinder(
+        center_u=(0.035, coil_cy, coil_cz),
+        radius=0.022,
+        length=0.47,
+        mat="R1_Brass",
+        axis_u="X",
+        segments=12,
+        bevel=0.003,
+        bevel_segments=1,
+    )
+    for end_x in (x_start - 0.018, x_end + 0.018):
+        mb.add_cylinder(
+            center_u=(end_x, coil_cy, coil_cz),
+            radius=0.036,
+            length=0.028,
+            mat="R1_Brass",
+            axis_u="X",
+            segments=14,
+            bevel=0.004,
+            bevel_segments=1,
+        )
+
+    # 3. Curved R1_Copper refrigerant feed pipes connecting front coils, gold-foil CryoBox, and side Condenser
+    # Upper & lower S-bend copper pipes from front of side condenser into the gold-foil cryo box & coil bank
+    pipe_upper = [
+        (-0.235, 0.235, 0.075),
+        (-0.235, 0.235, 0.145),
+        (-0.145, 0.220, 0.185),
+        (-0.045, 0.220, 0.185),
+    ]
+    pipe_lower = [
+        (-0.235, 0.115, 0.075),
+        (-0.235, 0.115, 0.165),
+        (-0.185, 0.145, 0.255),
+        (-0.175, coil_cy, coil_cz),
+    ]
+    pipe_right = [
+        (0.245, coil_cy, coil_cz),
+        (0.275, coil_cy, 0.265),
+        (0.225, 0.185, 0.195),
+    ]
+    for path in (pipe_upper, pipe_lower, pipe_right):
+        mb.add_tube_path(path, radius=0.0135, mat="R1_Copper", segments=10, cap_ends=True)
+        # Brass flare union nut at each pipe entry
+        p_start = path[0]
+        mb.add_cylinder(
+            center_u=p_start,
+            radius=0.021,
+            length=0.022,
+            mat="R1_Brass",
+            axis_u="Z",
+            segments=8,
+            bevel=0.002,
+            bevel_segments=1,
+        )
+
+    return mb.build_object(parent=root)
+
+
+def _build_topper_03_frost_block(root: bpy.types.Object) -> bpy.types.Object:
+    """Build the frosted lunar ice block & rime-frost overhangs (`FrostBlock`, `R1_CreamEnamel` -> `R1_IceCoreFrost`)."""
+    mb = r1kit.MeshBuilder("FrostBlock", pivot_u=(0.0, 0.31, -0.08))
+
+    box_cx = 0.065
+    box_cz = -0.075
+
+    # 1. Main Thick Frosted Ice Block Slab crowning the top of the gold-foil cryo chest
+    mb.add_bevel_box(
+        center_u=(box_cx, 0.326, box_cz),
+        size_u=(0.456, 0.048, 0.576),
+        mat="R1_CreamEnamel",
+        bevel=0.014,
+        segments=2,
+    )
+    # Upper stepped crystalline ice core block rising out of the cryo chest (y up to 0.382 m -> ~1.07 m world Y)
+    mb.add_bevel_box(
+        center_u=(box_cx + 0.01, 0.356, box_cz - 0.01),
+        size_u=(0.36, 0.046, 0.44),
+        mat="R1_CreamEnamel",
+        bevel=0.012,
+        segments=2,
+        top_scale_xz=(0.92, 0.94),
+    )
+    mb.add_bevel_box(
+        center_u=(box_cx - 0.02, 0.374, box_cz + 0.02),
+        size_u=(0.24, 0.026, 0.30),
+        mat="R1_CreamEnamel",
+        bevel=0.008,
+        segments=1,
+    )
+
+    # 2. Sculpted Rime-Frost Cornices & Overhang Drips draping over the top edges/corners of the Gold-Foil box
+    # (Matches the thick white rime overhang in ssr3_direction_b_low_crawler.png)
+    overhang_lobe_specs = (
+        # Front edge (+Z) frost overhang lobes
+        (box_cx - 0.13, 0.308, box_cz + 0.282, 0.17, 0.062, 0.044),
+        (box_cx + 0.05, 0.300, box_cz + 0.284, 0.16, 0.078, 0.046),
+        (box_cx + 0.17, 0.312, box_cz + 0.280, 0.12, 0.054, 0.042),
+        # Left edge (-X, above condenser junction) frost overhang lobes
+        (box_cx - 0.222, 0.304, box_cz + 0.16, 0.046, 0.072, 0.18),
+        (box_cx - 0.224, 0.296, box_cz - 0.02, 0.048, 0.088, 0.16),
+        (box_cx - 0.220, 0.310, box_cz - 0.18, 0.044, 0.060, 0.17),
+        # Right edge (+X) frost overhang lobes
+        (box_cx + 0.222, 0.305, box_cz + 0.14, 0.046, 0.070, 0.20),
+        (box_cx + 0.224, 0.298, box_cz - 0.12, 0.048, 0.082, 0.22),
+        # Rear edge (-Z) frost overhang lobes
+        (box_cx - 0.08, 0.304, box_cz - 0.282, 0.20, 0.068, 0.046),
+        (box_cx + 0.12, 0.308, box_cz - 0.280, 0.18, 0.060, 0.044),
+    )
+    for lx, ly, lz, lw, lh, ll in overhang_lobe_specs:
+        mb.add_bevel_box(
+            center_u=(lx, ly, lz),
+            size_u=(lw, lh, ll),
+            mat="R1_CreamEnamel",
+            bevel=0.012,
+            segments=2,
+        )
+
+    # 3. Rime-Frost Header Caps & Return-Bend Crusts on the rear (-Z) and top of the side Condenser Stack
+    mb.add_bevel_box(
+        center_u=(-0.235, 0.308, -0.145),
+        size_u=(0.158, 0.036, 0.452),
+        mat="R1_CreamEnamel",
+        bevel=0.010,
+        segments=2,
+    )
+    for r_y in (0.105, 0.172, 0.240):
+        mb.add_cylinder(
+            center_u=(-0.235, r_y, -0.375),
+            radius=0.034,
+            length=0.056,
+            mat="R1_CreamEnamel",
+            axis_u="Z",
+            segments=12,
+            bevel=0.010,
+            bevel_segments=2,
+        )
+
+    return mb.build_object(parent=root)
+
+
+def _apply_ssr3_cryo_lowlight_weathering(root: bpy.types.Object, footprint_radius: float = 0.65) -> None:
+    """Bake vertex colours for `SSR3_Topper_03` tuned so gold foil, copper coils, and frost read in very low light."""
+    r1kit.bake_vertex_colors(root, footprint_radius=footprint_radius, bevel_wear_width=0.024)
+
+    mesh_objs = [o for o in r1kit.collect_hierarchy(root) if o.type == "MESH" and len(o.data.polygons) > 0]
+    for obj in mesh_objs:
+        me = obj.data
+        ca = me.color_attributes.get(r1kit.VCOL_ATTRIBUTE_NAME)
+        if ca is None:
+            continue
+
+        num_loops = len(me.loops)
+        rgba = np.ones(num_loops * 4, dtype=np.float32)
+        ca.data.foreach_get("color", rgba)
+        rgba = rgba.reshape(-1, 4)
+
+        is_frost = obj.name.startswith("FrostBlock")
+        world_mat = obj.matrix_world
+        rot_mat = world_mat.to_3x3()
+
+        loop_idx = 0
+        for poly in me.polygons:
+            wn = (rot_mat @ poly.normal).normalized()
+            up_dot = float(wn.z)
+            for _ in poly.loop_indices:
+                r_ao = float(rgba[loop_idx, 0])
+                g_wear = float(rgba[loop_idx, 1])
+                b_dust = float(rgba[loop_idx, 2])
+
+                if is_frost:
+                    # Keep frost bright and crystalline in shadowed crater low light: high AO, strong icy edge glint
+                    r_out = float(np.clip(0.84 + r_ao * 0.16, 0.0, 1.0))
+                    g_out = float(np.clip(max(g_wear * 1.35, 0.42 + 0.38 * max(0.0, up_dot)), 0.0, 1.0))
+                    b_out = float(np.clip(b_dust * 0.35 + max(0.0, up_dot) * 0.22, 0.0, 1.0))
+                else:
+                    # Boost specular edge catch (G) on copper coils and gold foil while keeping crevices crisp
+                    r_out = float(np.clip(0.20 + r_ao * 0.80, 0.0, 1.0))
+                    g_out = float(np.clip(max(g_wear * 1.28, 0.24 * max(0.0, up_dot + 0.35) * r_ao), 0.0, 1.0))
+                    b_out = float(np.clip(max(b_dust * 0.85, max(0.0, (up_dot - 0.45) / 0.55) * 0.38), 0.0, 1.0))
+
+                rgba[loop_idx, 0] = r_out
+                rgba[loop_idx, 1] = g_out
+                rgba[loop_idx, 2] = b_out
+                rgba[loop_idx, 3] = 1.0
+                loop_idx += 1
+
+        ca.data.foreach_set("color", rgba.reshape(-1))
+        me.update()
+
+
+def build_ssr3_topper_03() -> bpy.types.Object:
+    """Build the complete `SSR3_Topper_03` ("Cryo Ice Cart") hierarchy in the active Blender scene."""
+    root = r1kit.create_empty("SSR3_Topper_03", pivot_u=(0.0, 0.0, 0.0))
+
+    _build_topper_03_cryo_box(root)
+    _build_topper_03_cooling_coils(root)
+    _build_topper_03_frost_block(root)
+
+    bpy.context.view_layer.update()
+    _apply_ssr3_cryo_lowlight_weathering(root, footprint_radius=0.65)
+    return root
+
+
+def _build_unit_number_stencil(parent: bpy.types.Object, node_name: str, text: str) -> bpy.types.Object:
+    """Build a 2-digit relief stencil (`Unit_Number_06`, `Unit_Number_03`, `Unit_Number_02`) on both flanks."""
+    mb = r1kit.MeshBuilder(node_name, pivot_u=UNIT_NUMBER_PIVOT_U)
+    for sx in (-1.0, 1.0):
+        _add_stencil_text_flank(
+            mb,
+            text=text,
+            side_x=sx * 0.442,
+            center_y=UNIT_NUMBER_PIVOT_U[1],
+            center_z=UNIT_NUMBER_PIVOT_U[2],
+            char_w=0.042,
+            char_h=0.068,
+            relief_x=0.005,
+            mat="R1_GreyMetal",
+        )
+    return mb.build_object(parent=parent)
+
+
+def _replace_chassis_wheels_with_tracks(chassis_root: bpy.types.Object) -> bpy.types.Object:
+    """Remove the 4 wheeled nodes from `chassis_root` and parent `SSR3_Tracks` under `chassis_root`."""
+    for child in list(chassis_root.children):
+        if child.name.startswith("Wheel_"):
+            me = child.data if child.type == "MESH" else None
+            bpy.data.objects.remove(child, do_unlink=True)
+            if me is not None and me.users == 0:
+                bpy.data.meshes.remove(me)
+
+    tracks_root = build_ssr3_tracks()
+    tracks_root.parent = chassis_root
+    tracks_root.location = (0.0, 0.0, 0.0)
+    return tracks_root
+
+
+def build_elder03_combined() -> bpy.types.Object:
+    """Build the combined Elder 03 assembly (`SSR3_Chassis` + `SSR3_Tracks` + `SSR3_Topper_03` + `03` stencil)."""
+    chassis_root = build_ssr3_chassis()
+    _replace_chassis_wheels_with_tracks(chassis_root)
+
+    topper_socket = next((o for o in chassis_root.children if o.name == "Topper_Socket"), chassis_root)
+    unit_num_socket = next((o for o in chassis_root.children if o.name == "Unit_Number"), chassis_root)
+
+    topper_root = build_ssr3_topper_03()
+    topper_root.parent = topper_socket
+    topper_root.location = (0.0, 0.0, 0.0)
+
+    _build_unit_number_stencil(unit_num_socket, "Unit_Number_03", "03")
+    bpy.context.view_layer.update()
+    _apply_ssr3_decades_at_rest_weathering(chassis_root, footprint_radius=0.88)
+    _apply_ssr3_cryo_lowlight_weathering(topper_root, footprint_radius=0.65)
+    return chassis_root
+
+
 def build_ssr3_topper_06() -> bpy.types.Object:
     """Build the complete `SSR3_Topper_06` ("Relay Keeper") hierarchy in the active Blender scene."""
     root = r1kit.create_empty("SSR3_Topper_06", pivot_u=(0.0, 0.0, 0.0))
@@ -1312,20 +2161,7 @@ def build_ssr3_topper_06() -> bpy.types.Object:
 
 def _build_unit_06_stencil(parent: bpy.types.Object) -> bpy.types.Object:
     """Build the `Unit_Number_06` relief stencil (`06`) on both flanks at `UNIT_NUMBER_PIVOT_U`."""
-    mb = r1kit.MeshBuilder("Unit_Number_06", pivot_u=UNIT_NUMBER_PIVOT_U)
-    for sx in (-1.0, 1.0):
-        _add_stencil_text_flank(
-            mb,
-            text="06",
-            side_x=sx * 0.442,
-            center_y=UNIT_NUMBER_PIVOT_U[1],
-            center_z=UNIT_NUMBER_PIVOT_U[2],
-            char_w=0.042,
-            char_h=0.068,
-            relief_x=0.005,
-            mat="R1_GreyMetal",
-        )
-    return mb.build_object(parent=parent)
+    return _build_unit_number_stencil(parent, "Unit_Number_06", "06")
 
 
 def build_elder06_combined() -> bpy.types.Object:
@@ -1345,7 +2181,7 @@ def build_elder06_combined() -> bpy.types.Object:
 
 
 def main(argv: list[str] | None = None) -> None:
-    parser = argparse.ArgumentParser(description="Build SSR3_Chassis and SSR3_Topper_06 FBXs and preview renders.")
+    parser = argparse.ArgumentParser(description="Build SSR3 family FBXs and preview renders.")
     parser.add_argument(
         "--chassis-fbx-out",
         type=Path,
@@ -1357,56 +2193,69 @@ def main(argv: list[str] | None = None) -> None:
         default=Path("Assets/_Project/Art/R1/Models/Rover/SSR3_Topper_06.fbx"),
     )
     parser.add_argument(
+        "--tracks-fbx-out",
+        type=Path,
+        default=Path("Assets/_Project/Art/R1/Models/Rover/SSR3_Tracks.fbx"),
+    )
+    parser.add_argument(
+        "--topper03-fbx-out",
+        type=Path,
+        default=Path("Assets/_Project/Art/R1/Models/Rover/SSR3_Topper_03.fbx"),
+    )
+    parser.add_argument(
         "--renders-dir",
         type=Path,
         default=Path("Logs/renders"),
     )
     parser.add_argument("--skip-renders", action="store_true")
+    parser.add_argument("--only-ssr3c", action="store_true")
     args = parser.parse_args(argv)
 
-    concept_img = Path("D:/Project/MoonProject-wt/agy-elders/Logs/concepts/ssr3_direction_a_boxy_cart.png")
+    concept_img_a = Path("D:/Project/MoonProject-wt/agy-elders/Logs/concepts/ssr3_direction_a_boxy_cart.png")
+    concept_img_b = Path("D:/Project/MoonProject-wt/agy-elders/Logs/concepts/ssr3_direction_b_low_crawler.png")
 
-    # 1. Build & export SSR3_Chassis.fbx
-    r1kit.reset_scene()
-    chassis_root = build_ssr3_chassis()
-    chassis_tris = r1kit.count_triangles(chassis_root)
-    print(f"[SSR3_Chassis] Triangles: {chassis_tris}")
-    r1kit.export_fbx(chassis_root, args.chassis_fbx_out)
+    if not args.only_ssr3c:
+        # 1. Build & export SSR3_Chassis.fbx
+        r1kit.reset_scene()
+        chassis_root = build_ssr3_chassis()
+        chassis_tris = r1kit.count_triangles(chassis_root)
+        print(f"[SSR3_Chassis] Triangles: {chassis_tris}")
+        r1kit.export_fbx(chassis_root, args.chassis_fbx_out)
 
-    # 2. Build & export SSR3_Topper_06.fbx
+        # 2. Build & export SSR3_Topper_06.fbx
+        r1kit.reset_scene()
+        topper06_root = build_ssr3_topper_06()
+        topper06_tris = r1kit.count_triangles(topper06_root)
+        print(f"[SSR3_Topper_06] Triangles: {topper06_tris}")
+        r1kit.export_fbx(topper06_root, args.topper06_fbx_out)
+
+    # 3. Build & export SSR3_Tracks.fbx
     r1kit.reset_scene()
-    topper_root = build_ssr3_topper_06()
-    topper_tris = r1kit.count_triangles(topper_root)
-    print(f"[SSR3_Topper_06] Triangles: {topper_tris}")
-    r1kit.export_fbx(topper_root, args.topper06_fbx_out)
+    tracks_root = build_ssr3_tracks()
+    tracks_tris = r1kit.count_triangles(tracks_root)
+    print(f"[SSR3_Tracks] Triangles: {tracks_tris}")
+    r1kit.export_fbx(tracks_root, args.tracks_fbx_out)
+
+    # 4. Build & export SSR3_Topper_03.fbx
+    r1kit.reset_scene()
+    topper03_root = build_ssr3_topper_03()
+    topper03_tris = r1kit.count_triangles(topper03_root)
+    print(f"[SSR3_Topper_03] Triangles: {topper03_tris}")
+    r1kit.export_fbx(topper03_root, args.topper03_fbx_out)
 
     if not args.skip_renders:
-        r1kit.render_structure_suite(
-            root=topper_root,
-            slug="ssr3_topper_06",
-            out_dir=args.renders_dir,
-            target_height=0.39,
-            footprint_radius=0.62,
-            pose_rest_fn=lambda _r: None,
-            pose_active_fn=lambda _r: None,
-            cam_side_x=-1.0,
-            concept_path=concept_img if concept_img.exists() else None,
-            use_active_for_compare=False,
-        )
-
-        # 3. Render combined Elder06 preview (chassis + topper + 06 stencil)
         r1kit.reset_scene()
-        elder06_root = build_elder06_combined()
+        elder03_root = build_elder03_combined()
         r1kit.render_structure_suite(
-            root=elder06_root,
-            slug="elder06",
+            root=elder03_root,
+            slug="elder03",
             out_dir=args.renders_dir,
             target_height=1.08,
             footprint_radius=0.88,
             pose_rest_fn=lambda _r: None,
             pose_active_fn=lambda _r: None,
             cam_side_x=-1.0,
-            concept_path=concept_img if concept_img.exists() else None,
+            concept_path=concept_img_b if concept_img_b.exists() else None,
             use_active_for_compare=False,
         )
 
@@ -1414,4 +2263,5 @@ def main(argv: list[str] | None = None) -> None:
 if __name__ == "__main__":
     cli_args = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
     main(cli_args)
+
 

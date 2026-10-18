@@ -27,13 +27,21 @@ namespace MoonProject.Art.Editor
 
         public const string Ssr3ChassisFbxPath = RoverSourceFolder + "/SSR3_Chassis.fbx";
         public const string Ssr3Topper06FbxPath = RoverSourceFolder + "/SSR3_Topper_06.fbx";
+        public const string Ssr3TracksFbxPath = RoverSourceFolder + "/SSR3_Tracks.fbx";
+        public const string Ssr3Topper03FbxPath = RoverSourceFolder + "/SSR3_Topper_03.fbx";
 
         public const string Ssr3ChassisPrefabPath = RoverGeneratedFolder + "/SSR3_Chassis.prefab";
         public const string Ssr3Topper06PrefabPath = RoverGeneratedFolder + "/SSR3_Topper_06.prefab";
+        public const string Ssr3TracksPrefabPath = RoverGeneratedFolder + "/SSR3_Tracks.prefab";
+        public const string Ssr3Topper03PrefabPath = RoverGeneratedFolder + "/SSR3_Topper_03.prefab";
+
         public const string Elder06PrefabPath = RoverGeneratedFolder + "/Elder06.prefab";
         public const string Elder06UnitNumberMeshPath = RoverGeneratedFolder + "/Elder06_UnitNumber06.asset";
 
-        /// <summary>Vertical settle depth (~4 cm into lunar dust) applied to <c>Elder06.prefab</c>.</summary>
+        public const string Elder03PrefabPath = RoverGeneratedFolder + "/Elder03.prefab";
+        public const string Elder03UnitNumberMeshPath = RoverGeneratedFolder + "/Elder03_UnitNumber03.asset";
+
+        /// <summary>Vertical settle depth (~4 cm into lunar dust) applied to <c>Elder06.prefab</c> and <c>Elder03.prefab</c>.</summary>
         public const float Elder06DustSettleMeters = 0.04f;
 
         private const int CaptureWidth = 1440;
@@ -43,13 +51,29 @@ namespace MoonProject.Art.Editor
         private static readonly int MoonHazeId = Shader.PropertyToID("_MoonHaze");
         private static readonly int MoonDesaturateId = Shader.PropertyToID("_MoonDesaturate");
 
-        // Normalized (rx, ry, rw, rh) glyph bars in [0..1] x [0..1] for '0' and '6'
+        private static readonly string[] ChassisWheelNodeNames =
+        {
+            "Wheel_FL",
+            "Wheel_FR",
+            "Wheel_RL",
+            "Wheel_RR",
+        };
+
+        // Normalized (rx, ry, rw, rh) glyph bars in [0..1] x [0..1] for '0', '3', and '6'
         private static readonly Vector4[] Glyph0Rects =
         {
             new Vector4(0.18f, 0.50f, 0.22f, 0.88f),
             new Vector4(0.82f, 0.50f, 0.22f, 0.88f),
             new Vector4(0.50f, 0.90f, 0.76f, 0.20f),
             new Vector4(0.50f, 0.10f, 0.76f, 0.20f),
+        };
+
+        private static readonly Vector4[] Glyph3Rects =
+        {
+            new Vector4(0.50f, 0.90f, 0.82f, 0.20f),
+            new Vector4(0.82f, 0.50f, 0.22f, 0.88f),
+            new Vector4(0.54f, 0.50f, 0.68f, 0.18f),
+            new Vector4(0.50f, 0.10f, 0.82f, 0.20f),
         };
 
         private static readonly Vector4[] Glyph6Rects =
@@ -65,13 +89,17 @@ namespace MoonProject.Art.Editor
         public static void Build()
         {
             GameObject chassisPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3ChassisPrefabPath);
-            GameObject topperPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3Topper06PrefabPath);
-            if (chassisPrefab == null || topperPrefab == null)
+            GameObject topper06Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3Topper06PrefabPath);
+            GameObject tracksPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3TracksPrefabPath);
+            GameObject topper03Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3Topper03PrefabPath);
+            if (chassisPrefab == null || topper06Prefab == null || tracksPrefab == null || topper03Prefab == null)
             {
                 R1MaterialLibrary.BuildMaterials();
                 R1ModelBuilder.Build();
                 chassisPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3ChassisPrefabPath);
-                topperPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3Topper06PrefabPath);
+                topper06Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3Topper06PrefabPath);
+                tracksPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3TracksPrefabPath);
+                topper03Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3Topper03PrefabPath);
             }
 
             if (chassisPrefab == null)
@@ -80,69 +108,138 @@ namespace MoonProject.Art.Editor
                     $"R1Ssr3Builder: Missing '{Ssr3ChassisPrefabPath}'. Ensure '{Ssr3ChassisFbxPath}' is imported.");
             }
 
-            if (topperPrefab == null)
+            if (topper06Prefab == null)
             {
                 throw new InvalidOperationException(
                     $"R1Ssr3Builder: Missing '{Ssr3Topper06PrefabPath}'. Ensure '{Ssr3Topper06FbxPath}' is imported.");
             }
 
-            GameObject elder06Root = UnityEngine.Object.Instantiate(chassisPrefab);
-            elder06Root.name = "Elder06";
+            if (tracksPrefab == null)
+            {
+                throw new InvalidOperationException(
+                    $"R1Ssr3Builder: Missing '{Ssr3TracksPrefabPath}'. Ensure '{Ssr3TracksFbxPath}' is imported.");
+            }
+
+            if (topper03Prefab == null)
+            {
+                throw new InvalidOperationException(
+                    $"R1Ssr3Builder: Missing '{Ssr3Topper03PrefabPath}'. Ensure '{Ssr3Topper03FbxPath}' is imported.");
+            }
+
+            BuildElderPrefab(
+                chassisPrefab,
+                tracksPrefab: null,
+                topperPrefab: topper06Prefab,
+                topperNodeName: "SSR3_Topper_06",
+                unitNumberNodeName: "Unit_Number_06",
+                unitNumberMeshName: "Elder06_UnitNumber06",
+                unitNumberMeshPath: Elder06UnitNumberMeshPath,
+                secondDigitRects: Glyph6Rects,
+                elderName: "Elder06",
+                elderPrefabPath: Elder06PrefabPath);
+
+            BuildElderPrefab(
+                chassisPrefab,
+                tracksPrefab: tracksPrefab,
+                topperPrefab: topper03Prefab,
+                topperNodeName: "SSR3_Topper_03",
+                unitNumberNodeName: "Unit_Number_03",
+                unitNumberMeshName: "Elder03_UnitNumber03",
+                unitNumberMeshPath: Elder03UnitNumberMeshPath,
+                secondDigitRects: Glyph3Rects,
+                elderName: "Elder03",
+                elderPrefabPath: Elder03PrefabPath);
+        }
+
+        private static void BuildElderPrefab(
+            GameObject chassisPrefab,
+            GameObject tracksPrefab,
+            GameObject topperPrefab,
+            string topperNodeName,
+            string unitNumberNodeName,
+            string unitNumberMeshName,
+            string unitNumberMeshPath,
+            Vector4[] secondDigitRects,
+            string elderName,
+            string elderPrefabPath)
+        {
+            GameObject elderRoot = UnityEngine.Object.Instantiate(chassisPrefab);
+            elderRoot.name = elderName;
             try
             {
-                Transform topperSocket = elder06Root.transform.Find("Topper_Socket");
+                Transform topperSocket = elderRoot.transform.Find("Topper_Socket");
                 if (topperSocket == null)
                 {
                     throw new InvalidOperationException("R1Ssr3Builder: SSR3_Chassis is missing 'Topper_Socket'.");
                 }
 
-                Transform unitNumberSocket = elder06Root.transform.Find("Unit_Number");
+                Transform unitNumberSocket = elderRoot.transform.Find("Unit_Number");
                 if (unitNumberSocket == null)
                 {
                     throw new InvalidOperationException("R1Ssr3Builder: SSR3_Chassis is missing 'Unit_Number'.");
                 }
 
-                // 1. Mount SSR3_Topper_06 inside Topper_Socket
+                // Optional crawler tracks replacement (Direction B)
+                if (tracksPrefab != null)
+                {
+                    for (int i = 0; i < ChassisWheelNodeNames.Length; i++)
+                    {
+                        Transform wheelNode = elderRoot.transform.Find(ChassisWheelNodeNames[i]);
+                        if (wheelNode != null)
+                        {
+                            UnityEngine.Object.DestroyImmediate(wheelNode.gameObject);
+                        }
+                    }
+
+                    GameObject tracksInstance = UnityEngine.Object.Instantiate(tracksPrefab);
+                    tracksInstance.name = "SSR3_Tracks";
+                    tracksInstance.transform.SetParent(elderRoot.transform, worldPositionStays: false);
+                    tracksInstance.transform.localPosition = Vector3.zero;
+                    tracksInstance.transform.localRotation = Quaternion.identity;
+                    tracksInstance.transform.localScale = Vector3.one;
+                }
+
+                // 1. Mount topper inside Topper_Socket
                 GameObject topperInstance = UnityEngine.Object.Instantiate(topperPrefab);
-                topperInstance.name = "SSR3_Topper_06";
+                topperInstance.name = topperNodeName;
                 topperInstance.transform.SetParent(topperSocket, worldPositionStays: false);
                 topperInstance.transform.localPosition = Vector3.zero;
                 topperInstance.transform.localRotation = Quaternion.identity;
                 topperInstance.transform.localScale = Vector3.one;
 
-                // 2. Build and mount the "06" relief stencil mesh under Unit_Number
-                var unit06Go = new GameObject("Unit_Number_06");
-                unit06Go.transform.SetParent(unitNumberSocket, worldPositionStays: false);
-                unit06Go.transform.localPosition = Vector3.zero;
-                unit06Go.transform.localRotation = Quaternion.identity;
-                unit06Go.transform.localScale = Vector3.one;
+                // 2. Build and mount the 2-digit relief stencil mesh under Unit_Number
+                var unitGo = new GameObject(unitNumberNodeName);
+                unitGo.transform.SetParent(unitNumberSocket, worldPositionStays: false);
+                unitGo.transform.localPosition = Vector3.zero;
+                unitGo.transform.localRotation = Quaternion.identity;
+                unitGo.transform.localScale = Vector3.one;
 
-                Mesh unit06Mesh = BuildUnitNumber06Mesh(unit06Go.transform);
-                Mesh savedMesh = GeneratedAssets.CreateOrReplace(unit06Mesh, Elder06UnitNumberMeshPath);
+                Mesh unitMesh = BuildUnitNumberMesh(unitGo.transform, unitNumberMeshName, secondDigitRects);
+                Mesh savedMesh = GeneratedAssets.CreateOrReplace(unitMesh, unitNumberMeshPath);
 
-                MeshFilter mf = unit06Go.AddComponent<MeshFilter>();
+                MeshFilter mf = unitGo.AddComponent<MeshFilter>();
                 mf.sharedMesh = savedMesh;
 
-                MeshRenderer mr = unit06Go.AddComponent<MeshRenderer>();
+                MeshRenderer mr = unitGo.AddComponent<MeshRenderer>();
                 mr.sharedMaterial = R1MaterialLibrary.LoadMaterial(R1MaterialSlot.GreyMetal);
 
-                // 3. Settle the combined Elder06 rover ~4 cm (-0.04 m Y) into the lunar dust
-                Vector3 localDustShift = elder06Root.transform.InverseTransformVector(
+                // 3. Settle the combined Elder rover ~4 cm (-0.04 m Y) into the lunar dust
+                Vector3 localDustShift = elderRoot.transform.InverseTransformVector(
                     new Vector3(0f, -Elder06DustSettleMeters, 0f));
-                int childCount = elder06Root.transform.childCount;
+                int childCount = elderRoot.transform.childCount;
                 for (int i = 0; i < childCount; i++)
                 {
-                    Transform child = elder06Root.transform.GetChild(i);
+                    Transform child = elderRoot.transform.GetChild(i);
                     child.localPosition += localDustShift;
                 }
 
-                GeneratedAssets.SavePrefab(elder06Root, Elder06PrefabPath);
+                GeneratedAssets.SavePrefab(elderRoot, elderPrefabPath);
             }
             catch
             {
-                if (elder06Root != null)
+                if (elderRoot != null)
                 {
-                    UnityEngine.Object.DestroyImmediate(elder06Root);
+                    UnityEngine.Object.DestroyImmediate(elderRoot);
                 }
 
                 throw;
@@ -152,7 +249,7 @@ namespace MoonProject.Art.Editor
         /// <summary>
         /// Batch capture entry point invoked via:
         /// <c>python tools/unity_batch.py -- -executeMethod MoonProject.Art.Editor.R1Ssr3Builder.Capture</c>
-        /// Captures <c>Elder06.prefab</c> next to <c>07</c> (<c>RoverModel.prefab</c>) in Day C and Eclipse light.
+        /// Captures each SSR-3 elder prefab next to <c>07</c> (<c>RoverModel.prefab</c>) in Day C and Eclipse light.
         /// </summary>
         public static void Capture()
         {
@@ -170,8 +267,10 @@ namespace MoonProject.Art.Editor
                 ShaderUtil.allowAsyncCompilation = false;
                 try
                 {
-                    CaptureElder06NextTo07(capturesDir, nightEclipse: false);
-                    CaptureElder06NextTo07(capturesDir, nightEclipse: true);
+                    CaptureElderNextTo07(Elder06PrefabPath, "elder06", capturesDir, nightEclipse: false);
+                    CaptureElderNextTo07(Elder06PrefabPath, "elder06", capturesDir, nightEclipse: true);
+                    CaptureElderNextTo07(Elder03PrefabPath, "elder03", capturesDir, nightEclipse: false);
+                    CaptureElderNextTo07(Elder03PrefabPath, "elder03", capturesDir, nightEclipse: true);
                 }
                 finally
                 {
@@ -180,7 +279,7 @@ namespace MoonProject.Art.Editor
 
                 string batchOutDir = Path.Combine(args.OutputDirectory, "r1_ssr3");
                 Directory.CreateDirectory(batchOutDir);
-                foreach (string png in Directory.GetFiles(capturesDir, "elder06_*.png"))
+                foreach (string png in Directory.GetFiles(capturesDir, "elder0*_*.png"))
                 {
                     File.Copy(png, Path.Combine(batchOutDir, Path.GetFileName(png)), true);
                 }
@@ -189,7 +288,7 @@ namespace MoonProject.Art.Editor
             });
         }
 
-        private static void CaptureElder06NextTo07(string outDir, bool nightEclipse)
+        private static void CaptureElderNextTo07(string elderPrefabPath, string slug, string outDir, bool nightEclipse)
         {
             EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var temp = new ArtLightingPreview.TemporaryObjects();
@@ -197,9 +296,9 @@ namespace MoonProject.Art.Editor
             {
                 Color bg = SetupCaptureEnvironment(temp, nightEclipse);
 
-                // Spawn Rover 07 on the left and Elder 06 ("Relay Keeper", settled -0.04m in dust) on the right
+                // Spawn Rover 07 on the left and the SSR-3 elder (settled -0.04m in dust) on the right
                 SpawnRover07(temp, new Vector3(-0.92f, 0f, 0.05f), 156f, nightEclipse);
-                SpawnPrefabWithPrefabRotation(Elder06PrefabPath, new Vector3(0.78f, 0f, 0.08f), 148f, temp);
+                SpawnPrefabWithPrefabRotation(elderPrefabPath, new Vector3(0.78f, 0f, 0.08f), 148f, temp);
 
                 string suffix = nightEclipse ? "eclipse" : "dayC";
                 RenderShot(
@@ -207,7 +306,7 @@ namespace MoonProject.Art.Editor
                     new Vector3(-0.02f, 0.66f, 0.05f),
                     40f,
                     bg,
-                    Path.Combine(outDir, $"elder06_next_to_07_{suffix}.png"));
+                    Path.Combine(outDir, $"{slug}_next_to_07_{suffix}.png"));
             }
             finally
             {
@@ -472,7 +571,10 @@ namespace MoonProject.Art.Editor
             return null;
         }
 
-        private static Mesh BuildUnitNumber06Mesh(Transform targetTransform)
+        private static Mesh BuildUnitNumberMesh(
+            Transform targetTransform,
+            string meshName,
+            Vector4[] secondDigitRects)
         {
             var vertices = new List<Vector3>();
             var normals = new List<Vector3>();
@@ -487,7 +589,7 @@ namespace MoonProject.Art.Editor
             const float reliefX = 0.005f;
             const float stepZ = charW * 1.30f;
 
-            Vector4[][] glyphs = { Glyph0Rects, Glyph6Rects };
+            Vector4[][] glyphs = { Glyph0Rects, secondDigitRects };
 
             for (int side = 0; side < 2; side++)
             {
@@ -528,7 +630,7 @@ namespace MoonProject.Art.Editor
 
             var mesh = new Mesh
             {
-                name = "Elder06_UnitNumber06",
+                name = meshName,
             };
             mesh.SetVertices(vertices);
             mesh.SetNormals(normals);

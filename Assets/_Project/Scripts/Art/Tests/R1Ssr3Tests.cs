@@ -27,6 +27,8 @@ namespace MoonProject.Art.Tests
         {
             ("ssr3_chassis.json", "Rover/SSR3_Chassis.fbx"),
             ("ssr3_topper_06.json", "Rover/SSR3_Topper_06.fbx"),
+            ("ssr3_tracks.json", "Rover/SSR3_Tracks.fbx"),
+            ("ssr3_topper_03.json", "Rover/SSR3_Topper_03.fbx"),
         };
 
         [Serializable]
@@ -172,6 +174,92 @@ namespace MoonProject.Art.Tests
                 "Elder06 must be settled ~4 cm (-0.04 m Y) into the lunar dust.");
             Assert.AreEqual(1.036f, elderBounds.max.y, 0.06f,
                 "Elder06 top of cable reel / glass tubes should sit at ~1.04 m above ground.");
+        }
+
+        [Test]
+        public void Ssr3Tracks_HasLeftAndRightTrackUnits_NoLampAmber_AndBakedWeathering()
+        {
+            GameObject tracksPrefab = MeshChecks.LoadGeneratedPrefab(R1Ssr3Builder.Ssr3TracksPrefabPath);
+            Assert.IsNotNull(tracksPrefab.transform.Find("Track_L"), "SSR3_Tracks missing Track_L.");
+            Assert.IsNotNull(tracksPrefab.transform.Find("Track_R"), "SSR3_Tracks missing Track_R.");
+
+            AssertNoLampAmberAndValidVertexColors(tracksPrefab, minRenderers: 2);
+        }
+
+        [Test]
+        public void Ssr3Topper03_HasCryoBox_CopperCoolingCoils_AndFrostedIceBlockWithFrostMaterial()
+        {
+            GameObject topper03Prefab = MeshChecks.LoadGeneratedPrefab(R1Ssr3Builder.Ssr3Topper03PrefabPath);
+            Transform cryoBox = topper03Prefab.transform.Find("CryoBox");
+            Transform coolingCoils = topper03Prefab.transform.Find("CoolingCoils");
+            Transform frostBlock = topper03Prefab.transform.Find("FrostBlock");
+
+            Assert.IsNotNull(cryoBox, "SSR3_Topper_03 missing CryoBox.");
+            Assert.IsNotNull(coolingCoils, "SSR3_Topper_03 missing CoolingCoils.");
+            Assert.IsNotNull(frostBlock, "SSR3_Topper_03 missing FrostBlock.");
+
+            Renderer frostRenderer = frostBlock.GetComponent<Renderer>();
+            Assert.IsNotNull(frostRenderer, "FrostBlock must have a Renderer.");
+            Assert.AreEqual(R1StoryPropsBuilder.IceCoreFrostMaterialName, frostRenderer.sharedMaterial.name,
+                "SSR3_Topper_03 FrostBlock must use R1_IceCoreFrost material (frost as material, no particles).");
+            Assert.IsEmpty(topper03Prefab.GetComponentsInChildren<ParticleSystem>(true),
+                "SSR3_Topper_03 must not use any ParticleSystem.");
+
+            AssertNoLampAmberAndValidVertexColors(topper03Prefab, minRenderers: 3);
+
+            var usedSlots = new HashSet<string>(StringComparer.Ordinal);
+            foreach (Renderer r in topper03Prefab.GetComponentsInChildren<Renderer>(true))
+            {
+                foreach (Material m in r.sharedMaterials)
+                {
+                    usedSlots.Add(m.name);
+                }
+            }
+
+            Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.GoldFoilSlot), "SSR3_Topper_03 must use R1_GoldFoil on CryoBox.");
+            Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.CopperSlot), "SSR3_Topper_03 must use R1_Copper cooling coils.");
+            Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.BrassSlot), "SSR3_Topper_03 must use R1_Brass fittings/fins.");
+        }
+
+        [Test]
+        public void Elder03Prefab_ReplacesWheelsWithTracks_MountsTopper03AndUnit03Stencil_Settled4CmIntoDust()
+        {
+            GameObject elder03Prefab = MeshChecks.LoadGeneratedPrefab(R1Ssr3Builder.Elder03PrefabPath);
+            Assert.IsNotNull(elder03Prefab.transform.Find("Body"), "Elder03 missing Body.");
+            Assert.IsNotNull(elder03Prefab.transform.Find("Headlamp/HeadlampGlass"), "Elder03 missing Headlamp/HeadlampGlass.");
+            Assert.IsNull(elder03Prefab.transform.Find("Wheel_FL"), "Elder03 must replace Wheel_FL with SSR3_Tracks.");
+            Assert.IsNull(elder03Prefab.transform.Find("Wheel_FR"), "Elder03 must replace Wheel_FR with SSR3_Tracks.");
+            Assert.IsNull(elder03Prefab.transform.Find("Wheel_RL"), "Elder03 must replace Wheel_RL with SSR3_Tracks.");
+            Assert.IsNull(elder03Prefab.transform.Find("Wheel_RR"), "Elder03 must replace Wheel_RR with SSR3_Tracks.");
+
+            Transform mountedTracks = elder03Prefab.transform.Find("SSR3_Tracks");
+            Assert.IsNotNull(mountedTracks, "Elder03 missing SSR3_Tracks.");
+            Assert.IsNotNull(mountedTracks.Find("Track_L"), "Elder03 SSR3_Tracks missing Track_L.");
+            Assert.IsNotNull(mountedTracks.Find("Track_R"), "Elder03 SSR3_Tracks missing Track_R.");
+
+            Transform mountedTopper = elder03Prefab.transform.Find("Topper_Socket/SSR3_Topper_03");
+            Assert.IsNotNull(mountedTopper, "Elder03 missing Topper_Socket/SSR3_Topper_03.");
+            Assert.IsNotNull(mountedTopper.Find("CryoBox"), "Elder03 topper missing CryoBox.");
+            Assert.IsNotNull(mountedTopper.Find("CoolingCoils"), "Elder03 topper missing CoolingCoils.");
+            Transform frostBlock = mountedTopper.Find("FrostBlock");
+            Assert.IsNotNull(frostBlock, "Elder03 topper missing FrostBlock.");
+            Assert.AreEqual(R1StoryPropsBuilder.IceCoreFrostMaterialName, frostBlock.GetComponent<Renderer>().sharedMaterial.name,
+                "Elder03 FrostBlock must use R1_IceCoreFrost.");
+
+            Transform unit03Node = elder03Prefab.transform.Find("Unit_Number/Unit_Number_03");
+            Assert.IsNotNull(unit03Node, "Elder03 missing Unit_Number/Unit_Number_03.");
+            MeshFilter unit03Mf = unit03Node.GetComponent<MeshFilter>();
+            Assert.IsNotNull(unit03Mf, "Unit_Number_03 must have a MeshFilter.");
+            Assert.IsNotNull(unit03Mf.sharedMesh, "Unit_Number_03 must have a sharedMesh.");
+            Assert.Greater(unit03Mf.sharedMesh.vertexCount, 24, "Unit_Number_03 mesh must contain the '03' stencil geometry.");
+
+            AssertNoLampAmberAndValidVertexColors(elder03Prefab, minRenderers: 9);
+
+            Bounds elderBounds = MeasureInstantiatedRendererBounds(elder03Prefab);
+            Assert.AreEqual(-R1Ssr3Builder.Elder06DustSettleMeters, elderBounds.min.y, 0.01f,
+                "Elder03 must be settled ~4 cm (-0.04 m Y) into the lunar dust.");
+            Assert.AreEqual(1.037f, elderBounds.max.y, 0.06f,
+                "Elder03 top of FrostBlock should sit at ~1.04 m above ground.");
         }
 
         private static void AssertNoLampAmberAndValidVertexColors(GameObject prefab, int minRenderers)
