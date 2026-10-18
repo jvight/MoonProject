@@ -39,6 +39,9 @@ namespace MoonProject.Autoplay
         private const float SealArrive = 1.5f;
         private const float SealNose = 1.2f;
         private const float SealCutSeconds = 30f;
+        private const float CutChipSeconds = 3f;
+        private const int CutChipAttempts = 3;
+        private const float CutChipNudgeMetres = 1f;
         private const float ScanLookSeconds = 12f;
         private const float ScanAllowanceSeconds = 8f;
         private const float ChipSeconds = 3f;
@@ -279,6 +282,7 @@ namespace MoonProject.Autoplay
                     DriveSeconds);
                 yield return _bot.TurnToward(crate.CutPoint.position, "the seal of " + cache.Id);
                 yield return FirstUse("cut: hold E", crate.CutPoint.position);
+                yield return WaitForTheCutChip(crate.CutPoint.position, cache.Id);
                 yield return _bot.Hold(Key.E, () =>
                     {
                         _bot.KeepLookingAt(crate.CutPoint.position);
@@ -289,6 +293,37 @@ namespace MoonProject.Autoplay
                 yield return _bot.Until(() => crate.StandsOpen, G.Cargo.ContainerLidSeconds + FollowSeconds,
                     cache.Id + " to stand open");
             }
+        }
+
+        /// <summary>
+        /// Holding E only cuts while the brackets are on the seal (a scan target in range can win them), so the bot
+        /// waits for the Cut chip with its gaze on the seal and nudges 07 to another stand if it does not show.
+        /// </summary>
+        private IEnumerator WaitForTheCutChip(Vector3 seal, string what)
+        {
+            for (int attempt = 0; attempt < CutChipAttempts; attempt++)
+            {
+                float deadline = Time.unscaledTime + CutChipSeconds;
+                while (Time.unscaledTime < deadline && !_bot.World.Ui.Chip().Contains("Cut"))
+                {
+                    _bot.KeepLookingAt(seal);
+                    yield return null;
+                }
+
+                if (_bot.World.Ui.Chip().Contains("Cut"))
+                {
+                    yield break;
+                }
+
+                Vector3 away = Flat(_bot.World.Rover.Position - seal);
+                away = away.sqrMagnitude > 1e-4f ? away.normalized : Vector3.back;
+                yield return _bot.DriveTo(Flat(seal) + away * CutChipNudgeMetres, SealArrive, "a nudge off the seal of " + what,
+                    DriveSeconds);
+                yield return _bot.DriveTo(Flat(seal), SealNose, "nose to the seal of " + what, DriveSeconds);
+                yield return _bot.TurnToward(seal, "the seal of " + what);
+            }
+
+            _bot.Warn("the Cut chip never showed on " + what + " (chip '" + _bot.World.Ui.Chip() + "'); the bot held E anyway.");
         }
 
         public IEnumerator UntilReached(OpeningMilestone milestone, string what, float seconds = MilestoneSeconds)
