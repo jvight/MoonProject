@@ -12,7 +12,7 @@ namespace MoonProject.Autoplay
 {
     /// <summary>
     /// The opening (docs/design/opening-v2.md, beats B0..B3 so far) played the way a player plays it: New Game on the
-    /// title, 07 wakes in the eclipse, drive to the lander along the cable, scan the two fragments in its cargo bay by
+    /// title, 07 wakes in the eclipse, drive to the lander along the cable, scan the two parts in the open crate by
     /// holding the key its prompt chip shows. Each beat is checked against what the game's own objective line says.
     /// </summary>
     public sealed class OpeningScenario
@@ -137,7 +137,7 @@ namespace MoonProject.Autoplay
 
         private IEnumerator Scan()
         {
-            Begin("B3", "Scan the lander's cargo");
+            Begin("B3", "Scan the two parts in the open crate by the lander");
             yield return _bot.Until(() => _bot.World.Gameplay.Opening.Flow.Current == OpeningKeys.ScanLander,
                 FollowSeconds, "the objective line to say '" + OpeningKeys.ScanLander + "'");
             var chips = new List<string>();
@@ -293,7 +293,7 @@ namespace MoonProject.Autoplay
             yield return _base.ScanTheSet("ruin.HabitatModules");
             yield return _base.CutTheCrates("HabitatModules");
             yield return _base.DriveToTheRuinsGate("out of the Lumen ruins");
-            yield return _base.Build(StructureIds.BatteryBank, _base.Pad() + Vector3.left * OpeningBase.Spacing);
+            yield return _base.Build(StructureIds.BatteryBank, _base.Pad() + Vector3.left * OpeningBase.BankSpacing);
             yield return _base.UntilReached(OpeningMilestone.NightReady, "the NightReady milestone",
                 NightReadySeconds);
             if (!_bot.Failed && _bot.World.Context.Get<ISunlight>().Phase != SkyPhase.Sunlit)
