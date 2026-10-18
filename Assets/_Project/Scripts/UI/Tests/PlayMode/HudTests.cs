@@ -609,7 +609,7 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator NoFrame_ShowsTwoGuidanceElements()
+        public IEnumerator NoFrame_ShowsTwoGuidanceElements_SaveTheBriefCrossFadeFromTheLineToAPrompt()
         {
             Boot();
             _rig.Tune("_guidance._bootHoldSeconds", 2f);
@@ -626,17 +626,26 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Build, new Vector3(0f, 0f, 10f), true);
             int shownFrames = 0;
             bool readoutSeen = false;
+            float crossFade = 0f;
+            float crossFadeLimit = _rig.Tuning.Guidance.HandOverSeconds + _rig.Tuning.Guidance.Line.FadeOut + 0.2f;
             float until = Time.realtimeSinceStartup + 12f;
+            float last = Time.realtimeSinceStartup;
             while (Time.realtimeSinceStartup < until)
             {
+                float now = Time.realtimeSinceStartup;
                 readoutSeen |= _rig.Ui.Readout.IsVisible;
                 int up = (_rig.Ui.Prompt.IsVisible ? 1 : 0) + (_rig.Ui.LookUp.ShowsPrompt ? 1 : 0) +
                          (_rig.Ui.Readout.IsVisible ? 1 : 0) + (_rig.Ui.UnlockCard.IsVisible ? 1 : 0) +
                          (_rig.Ui.Objective.IsVisible ? 1 : 0);
                 shownFrames += up > 0 ? 1 : 0;
-                Assert.LessOrEqual(up, 1, "one guidance element at a time: prompt " + _rig.Ui.Prompt.IsVisible + ", look-up " +
-                    _rig.Ui.LookUp.ShowsPrompt + ", readout " + _rig.Ui.Readout.IsVisible + ", unlock " +
-                    _rig.Ui.UnlockCard.IsVisible + ", objective " + _rig.Ui.Objective.IsVisible);
+                bool lineToPrompt = up == 2 && _rig.Ui.Prompt.IsVisible && _rig.Ui.Objective.ShowsObjective;
+                crossFade = lineToPrompt ? crossFade + (now - last) : 0f;
+                last = now;
+                Assert.LessOrEqual(crossFade, crossFadeLimit, "the line and the prompt cross-fade only briefly");
+                Assert.LessOrEqual(lineToPrompt ? 1 : up, 1, "one guidance element at a time: prompt " +
+                    _rig.Ui.Prompt.IsVisible + ", look-up " + _rig.Ui.LookUp.ShowsPrompt + ", readout " +
+                    _rig.Ui.Readout.IsVisible + ", unlock " + _rig.Ui.UnlockCard.IsVisible + ", objective " +
+                    _rig.Ui.Objective.IsVisible);
                 yield return null;
             }
 
@@ -742,6 +751,49 @@ namespace MoonProject.UI.PlayModeTests
 
             Assert.IsTrue(_rig.Ui.Prompt.IsVisible, "nosed in at the seal, the cut is taught within 3 s");
             Assert.AreEqual(Text(UiKeys.Hint(InteractionKind.Salvage)), _rig.Ui.Layout.PromptWord.text);
+        }
+
+        [UnityTest]
+        public IEnumerator TheHandOverFromTheLineToAnUnlearnedVerb_IsNeverBlank_TheLineGoesOnlyOnceThePromptIsComing()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            _rig.Ui.Ledger.RecordLookTaught();
+            _rig.Ui.Ledger.RecordDriveTaught();
+            _rig.Ui.Ledger.RecordHoldChipShown();
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            Events.Publish(new NextStepChanged("next.v2.cut_optics"));
+            float limit = Time.realtimeSinceStartup + 12f;
+            while (!_rig.Ui.Objective.ShowsObjective && Time.realtimeSinceStartup < limit)
+            {
+                yield return null;
+            }
+
+            yield return Seconds(1.5f);
+            Assert.IsTrue(_rig.Ui.Objective.ShowsObjective, "the step's line is up");
+            var seal = new Vector3(0.4f, 0.5f, 5f);
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Salvage, seal, true);
+            _rig.Fakes.HasTarget = true;
+            _rig.Fakes.CutPoint = seal;
+            _rig.Fakes.Material = SalvageMaterial.Optics;
+            float lineAtPrompt = -1f;
+            limit = Time.realtimeSinceStartup + 4f;
+            while (Time.realtimeSinceStartup < limit && !(lineAtPrompt >= 0f && !_rig.Ui.Objective.ShowsObjective))
+            {
+                yield return null;
+                Assert.IsTrue(_rig.Ui.Objective.ShowsObjective || _rig.Ui.Prompt.IsVisible,
+                    "one of the two is always on screen through the hand-over");
+                if (lineAtPrompt < 0f && _rig.Ui.Prompt.IsVisible)
+                {
+                    lineAtPrompt = _rig.Ui.Layout.NextLine.resolvedStyle.opacity;
+                }
+            }
+
+            Assert.GreaterOrEqual(lineAtPrompt, 0f, "the cut prompt came, or the test proves nothing");
+            Assert.Greater(lineAtPrompt, 0.9f, "the line had not begun to fade when the prompt began to fade in");
+            Assert.IsFalse(_rig.Ui.Objective.ShowsObjective, "then the line gave the screen to the prompt");
+            Assert.IsTrue(_rig.Ui.Prompt.IsVisible);
         }
 
         private void Boot()
