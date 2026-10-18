@@ -179,14 +179,28 @@ namespace MoonProject.Art.Editor
             peakBeaconRedMat.SetFloat("_HotCorePeak", 1.48f);
             GeneratedAssets.CreateOrReplace(peakBeaconRedMat, PeakBeaconRedMaterialPath);
 
-            // 8. R1_CrateRimGlowAmber: faint warm inner glow strip on open crate rim (emission well below bloom threshold)
+            // 8. R1_CrateRimGlowAmber: soft, even, matte warm line on open crate rim (no speckles, well below bloom threshold)
             Material crateRimGlowMat = R1MaterialLibrary.CreateMaterial(r1Lit, lampSpec);
             crateRimGlowMat.name = CrateRimGlowAmberMaterialName;
+            crateRimGlowMat.SetTexture("_BaseMap", Texture2D.whiteTexture);
+            crateRimGlowMat.SetColor("_BaseColor", new Color(0.82f, 0.52f, 0.22f, 1f));
+            crateRimGlowMat.SetTexture("_EmissionMap", Texture2D.whiteTexture);
             crateRimGlowMat.SetColor("_EmissionColor", new Color(0.98f, 0.64f, 0.24f, 1f));
             crateRimGlowMat.SetFloat("_EmissionStrength", 0.34f);
-            crateRimGlowMat.SetFloat("_BloomSafeMax", 0.44f);
-            crateRimGlowMat.SetFloat("_HotCoreThreshold", 0.98f);
-            crateRimGlowMat.SetFloat("_HotCorePeak", 0.48f);
+            crateRimGlowMat.SetFloat("_BloomSafeMax", 0.42f);
+            crateRimGlowMat.SetFloat("_HotCoreThreshold", 0.99f);
+            crateRimGlowMat.SetFloat("_HotCorePeak", 0.42f);
+            crateRimGlowMat.SetFloat("_BumpScale", 0.0f);
+            crateRimGlowMat.SetFloat("_MetallicScale", 0.0f);
+            crateRimGlowMat.SetFloat("_SmoothnessScale", 0.20f);
+            crateRimGlowMat.SetFloat("_SmoothnessMin", 0.08f);
+            crateRimGlowMat.SetFloat("_SmoothnessMax", 0.16f);
+            crateRimGlowMat.SetFloat("_ColorVarAmount", 0.0f);
+            crateRimGlowMat.SetFloat("_EdgeWearAmount", 0.0f);
+            crateRimGlowMat.SetFloat("_EdgeWearMetallic", 0.0f);
+            crateRimGlowMat.SetFloat("_EdgeWearSmoothness", 0.14f);
+            crateRimGlowMat.SetFloat("_DustAmount", 0.06f);
+            crateRimGlowMat.SetFloat("_DustSmoothness", 0.10f);
             GeneratedAssets.CreateOrReplace(crateRimGlowMat, CrateRimGlowAmberMaterialPath);
 
             // 9. R1_IceCoreLabel: stencilled cryo plaque (CORE 41 · H2O · I.V. 10/88) with zero emission
