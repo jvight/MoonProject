@@ -53,6 +53,9 @@ namespace MoonProject.Autoplay
         private const int PlaceBearings = 6;
         private const float PlaceBearingStepDegrees = 60f;
         private const float PlaceStandArrive = 0.5f;
+
+        /// <summary>The weld cancels the frame the structure stands beyond the weld range, so the bot keeps this inside it.</summary>
+        private const float PlaceWeldMargin = 1f;
         private const int SettledFrames = 8;
         private const int CutterDevice = 1;
 
@@ -459,16 +462,17 @@ namespace MoonProject.Autoplay
 
         /// <summary>
         /// The placing ghost rides the tuned distance ahead of 07, so 07 stands that far from the spot on one side and
-        /// faces it; when the rules refuse the spot from there, 07 tries the other sides in turn.
+        /// faces it; when the rules refuse the spot or the frame would stand out of weld range, 07 stands again, then tries the other sides.
         /// </summary>
         private IEnumerator PutTheGhostOn(BuildField build, Vector3 at, string structureId)
         {
             float ahead = build.Tuning.GhostAheadMetres;
-            for (int attempt = 0; attempt < PlaceBearings; attempt++)
+            float reach = build.Tuning.WeldRange - PlaceWeldMargin;
+            for (int attempt = 0; attempt < PlaceBearings * 2; attempt++)
             {
                 if (attempt > 0)
                 {
-                    Vector3 side = Quaternion.Euler(0f, attempt * PlaceBearingStepDegrees, 0f) * Vector3.back;
+                    Vector3 side = Quaternion.Euler(0f, attempt / 2 * PlaceBearingStepDegrees, 0f) * Vector3.back;
                     yield return _bot.DriveTo(Flat(at) + side * ahead, PlaceStandArrive, "another side of the build spot",
                         DriveSeconds);
                     yield return _bot.TurnToward(at, "the build spot");
@@ -484,7 +488,8 @@ namespace MoonProject.Autoplay
                 }
 
                 if (build.Controller.CanPlaceNow &&
-                    DriveSteering.FlatDistance(build.Controller.CandidatePose.Position, at) <= PlaceDriftMetres)
+                    DriveSteering.FlatDistance(build.Controller.CandidatePose.Position, at) <= PlaceDriftMetres &&
+                    DriveSteering.FlatDistance(build.Controller.CandidatePose.Position, _bot.World.Rover.Position) <= reach)
                 {
                     yield break;
                 }
