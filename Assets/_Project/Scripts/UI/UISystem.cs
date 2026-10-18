@@ -285,7 +285,7 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<CutterRefused>(_ => _readout?.CutterRefused()));
             _tokens.Add(events.Subscribe<OpeningMilestoneReached>(OnMilestoneReached));
             _tokens.Add(events.Subscribe<LanderReserveChanged>(OnLanderReserveChanged));
-            _tokens.Add(events.Subscribe<StoryScanned>(scanned => _readout?.StoryScanned(scanned.TextKey)));
+            _tokens.Add(events.Subscribe<StoryScanned>(OnStoryScanned));
             _tokens.Add(events.Subscribe<StructureLearned>(OnStructureLearned));
             _tokens.Add(events.Subscribe<BatteryArcRevealed>(OnBatteryArcRevealed));
             _tokens.Add(events.Subscribe<StructurePlaced>(_ => _director.NotifyUsed(InteractionKind.Build)));
@@ -510,12 +510,15 @@ namespace MoonProject.UI
             return primary.Ready ? primary.Kind : InteractionKind.None;
         }
 
-        /// <summary>What a held E is doing now (the cut's charge-up counts), or None.</summary>
+        /// <summary>
+        /// What a held E is doing now (the cut's charge-up counts), or None. A scan counts only while E is down, so a
+        /// scan whose end the UI missed can never outrank the target in reach.
+        /// </summary>
         private InteractionKind HeldNow()
         {
             ISalvageStatus salvage = _services.Salvage;
             return salvage.IsCutting || salvage.IsBeamCharging ? InteractionKind.Salvage
-                : _scanning ? InteractionKind.Scan
+                : _scanning && _services.Input.ExcavateHeld ? InteractionKind.Scan
                 : InteractionKind.None;
         }
 
@@ -1043,6 +1046,13 @@ namespace MoonProject.UI
         }
 
         /// <summary>The scan beam started: the scan prompt yields to the beam, and the objective's Scan chip retires.</summary>
+        /// <summary>A story target's scan ends here, not with <see cref="FragmentScanned"/>.</summary>
+        private void OnStoryScanned(StoryScanned scanned)
+        {
+            _scanning = false;
+            _readout?.StoryScanned(scanned.TextKey);
+        }
+
         private void OnFragmentScanned(FragmentScanned scanned)
         {
             _scanning = false;
