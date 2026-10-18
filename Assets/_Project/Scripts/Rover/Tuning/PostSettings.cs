@@ -142,14 +142,14 @@ namespace MoonProject.Rover
                  "close (a share of the shot distance) and how high (m).")]
         [SerializeField] private PostFocus[] _focus =
         {
-            new PostFocus(BootCheckStep.Lens, new Vector3(0f, 1.15f, 0.4f), 0.7f, 1.3f),
+            new PostFocus(BootCheckStep.Lens, new Vector3(0f, 0.8f, 0.3f), 1f, 1.35f),
             new PostFocus(BootCheckStep.Lamps, new Vector3(0f, 0.95f, 0.55f), 0.75f, 1.2f),
             new PostFocus(BootCheckStep.Head, new Vector3(0f, 1.15f, 0.25f), 0.8f, 1.35f),
-            new PostFocus(BootCheckStep.Wheels, new Vector3(0f, 0.35f, 0.1f), 0.95f, 0.7f),
-            new PostFocus(BootCheckStep.Motor, new Vector3(0f, 0.6f, -0.35f), 0.95f, 1f),
+            new PostFocus(BootCheckStep.Wheels, new Vector3(0f, 0.5f, 0.15f), 1.05f, 0.9f),
+            new PostFocus(BootCheckStep.Motor, new Vector3(0f, 0.7f, -0.2f), 1.05f, 1f, -25f),
             new PostFocus(BootCheckStep.Cutter, new Vector3(0f, 0.85f, 0.5f), 0.75f, 1.1f),
-            new PostFocus(BootCheckStep.SolarWing, new Vector3(0f, 1f, -0.2f), 0.9f, 1.5f),
-            new PostFocus(BootCheckStep.Antenna, new Vector3(0f, 1.4f, -0.3f), 0.9f, 1.5f),
+            new PostFocus(BootCheckStep.SolarWing, new Vector3(0f, 0.9f, -0.2f), 1.1f, 1.4f, 70f),
+            new PostFocus(BootCheckStep.Antenna, new Vector3(0f, 1.2f, -0.25f), 1.05f, 1.4f, 45f),
             new PostFocus(BootCheckStep.Battery, new Vector3(0.55f, 1.05f, 0f), 0.8f, 1.1f),
             new PostFocus(BootCheckStep.Assembly, new Vector3(0f, 0.8f, 0.3f), 1f, 1.35f),
             new PostFocus(BootCheckStep.Begin, new Vector3(0f, 1f, 0.3f), 0.9f, 1.35f),
@@ -214,9 +214,11 @@ namespace MoonProject.Rover
         [SerializeField] private Vector3 _local;
         [SerializeField] private float _distance = 1f;
         [SerializeField] private float _height = 1.35f;
+        [SerializeField] private float _sideYaw;
 
-        public PostFocus(BootCheckStep step, Vector3 local, float distance, float height)
+        public PostFocus(BootCheckStep step, Vector3 local, float distance, float height, float sideYaw = 0f)
         {
+            _sideYaw = sideYaw;
             _step = step;
             _local = local;
             _distance = distance;
@@ -233,5 +235,8 @@ namespace MoonProject.Rover
 
         /// <summary>How high above 07's ground point (m).</summary>
         public float Height => _height;
+
+        /// <summary>Degrees the camera swings round 07 from the three-quarter front, to see a part on its side or back.</summary>
+        public float SideYaw => _sideYaw;
     }
 }
