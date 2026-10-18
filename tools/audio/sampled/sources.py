@@ -36,6 +36,8 @@ SOURCES = {
     "fridge_buzz": Source(_FRIDGE_BUZZ, 1.5, 8.0),
     "bowed_metal": Source(_METAL + "DSGNTonl_Designed Metal Bowed Screech Tonal Reverb 7_The Noisery_Moaning Metal.wav",
                           0.6, 8.0, 113.6),
+    "metal_drone_low": Source(_METAL + "DSGNTonl_Metal Scrape Low Tonal LFE 4_The Noisery_Moaning Metal.wav", 0.4, 6.0,
+                              66.0),
     # Clicks, relays and latches.
     "relay_click": Source("InMotionAudio - USA Hotel/MECHClik_USALightSwitch_On05_InMotionAudio_USAHotel.wav", 0.0, 0.2),
     "latch_thunk": Source(_LOCK + "MECHLtch_Click Deep Mechanism Latch Button Nearfield Thunk 02_ESM_HDLM.wav", 0.0,

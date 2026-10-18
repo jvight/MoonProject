@@ -817,6 +817,9 @@ CUES = (
         notes="07 lifting a part (Collect Act): a soft servo whirr rising A2 -> D3."),
     Cue("pickup_clunk", "tick_3d", feel.pickup_clunk, volume=(0.8, 0.8), milestone="M3",
         notes="The part seating on 07's back (Collect Impact): a solid little clunk on D."),
+    Cue("sky_diamond_ring", "stinger_2d", picks.renderer("sky_diamond_ring"), volume=(0.74, 0.74), milestone="M3",
+        sampled=True, notes="Opening v2 B6: the Sun breaking out behind Earth on the first charge: bowed metal "
+                            "rising onto D, its octave opening like light, a breath of creak."),
     Cue("build_place", "oneshot_3d", picks.renderer("build_place"), volume=(0.68, 0.68), milestone="M3", sampled=True,
         notes="A frame set down on regolith: an instrument case dropped, a steel ring tuned to D2, the feet latching."),
     Cue("build_snap", "tick_3d", picks.renderer("build_snap"), volume=(0.9, 0.9), milestone="M3", sampled=True,

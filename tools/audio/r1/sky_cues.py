@@ -1,6 +1,5 @@
 """The sky cues (Group 2).
 
-- sky_diamond_ring: the eclipse-release 'diamond ring' bead (a delicate shimmer)
 - sky_dawn_sweep: the dawn sweep (a slow warm swell, ~6 s)
 - sky_nightfall_settle: the nightfall settle
 
@@ -9,46 +8,10 @@ All tonal material is in D major pentatonic (D E F# A B).
 """
 import numpy as np
 
-from synth import effects, envelope, filters, instruments, noise, osc
-from synth.core import SAMPLE_RATE, note_freq, pan, place, samples
+from synth import envelope, filters, instruments, noise
+from synth.core import note_freq, place, samples
 
 from . import bench
-
-
-def sky_diamond_ring(variant: int, gen: np.random.Generator) -> np.ndarray:
-    """Eclipse-release 'diamond ring' bead: a delicate D-pentatonic shimmer as the first ray of sun breaks."""
-    if variant == 0:
-        # Variant A (C2 Radio bench): faint telemetry relay tick + plucked bronze-wire & soft-bell harmonic shimmer
-        # (A4, D5, F#5, A5) through a warm tube-radio passband with slow tape wow.
-        n = samples(2.85)
-        mix = np.zeros(n)
-        place(mix, 0.28 * bench.relay_armature(note_freq("A4"), 0.14, gen, decay_s=0.08, muted=True), 0)
-
-        notes = ((0.03, "A4", 0.65, 1.4), (0.14, "D5", 0.92, 1.8), (0.27, "F#5", 0.58, 1.5), (0.42, "A5", 0.45, 1.3))
-        for onset, note, gain, dec in notes:
-            voice = bench.warm_chime_voice(note_freq(note), 2.2, gen, decay_s=dec, attack_s=0.012)
-            place(mix, gain * voice, samples(onset))
-
-        shimmer = effects.tremolo(mix, rate=5.2, depth=0.18)
-        return bench.radio_bench_chain(shimmer, gen, hiss_level=0.005, drive_db=2.2, lp_hz=3100.0, room=0.58, wet=0.24)
-
-    # Variant B (Bolder idea): electrostatic dust-whisper transient blooming into a warm bowed-glass & reed-organ
-    # halo on D4 + A4 + D5 + F#5 with gentle stereo-summed chorus shimmer.
-    n = samples(3.0)
-    mix = np.zeros(n)
-    whisper_n = samples(1.2)
-    whisper = filters.swept(noise.pink(whisper_n, gen), "bandpass", osc.glide(whisper_n, 900.0, 2200.0), q=2.8)
-    whisper /= max(float(np.std(whisper)), 1e-9)
-    whisper *= envelope.segments(whisper_n, [(0.0, 0.0), (0.25, 0.12), (1.2, 0.0)], shape="smooth")
-    place(mix, whisper, 0)
-
-    for onset, note, gain in ((0.02, "D4", 0.52), (0.08, "A4", 0.68), (0.16, "D5", 0.95), (0.28, "F#5", 0.54)):
-        bell = instruments.soft_bell(note_freq(note), 2.5, decay=1.8, attack=0.035, detune_cents=3.5)
-        place(mix, gain * bell, samples(onset))
-
-    pad = instruments.soft_pad(note_freq("D4"), 2.6, attack=0.35, release_t60=1.6, hold=0.3, detune_cents=3.0)
-    place(mix, 0.35 * pad, samples(0.05))
-    return bench.radio_bench_chain(mix, gen, hiss_level=0.004, drive_db=1.9, lp_hz=3200.0, room=0.65, wet=0.28)
 
 
 def sky_dawn_sweep(variant: int, gen: np.random.Generator) -> np.ndarray:

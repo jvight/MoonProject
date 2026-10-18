@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Deterministically render the picked variant of every R1 cue into the game's audio folders
-and register all 33 cues in ``tools/audio/sfx_manifest.json``.
+and register all 32 cues in ``tools/audio/sfx_manifest.json``.
 
 Outputs:
-  - 30 SFX cues     -> ``Assets/_Project/Audio/SFX/R1/<cue_id>.wav``
+  - 29 SFX cues     -> ``Assets/_Project/Audio/SFX/R1/<cue_id>.wav``
   - 3 ambience beds -> ``Assets/_Project/Audio/Ambience/R1/<cue_id>.wav``
   - Manifest update -> ``tools/audio/sfx_manifest.json``
 
 Usage:
-  python tools/audio/r1/export_game.py           # render all 33 picked R1 WAVs and update sfx_manifest.json
+  python tools/audio/r1/export_game.py           # render all 32 picked R1 WAVs and update sfx_manifest.json
   python tools/audio/r1/export_game.py --check   # verify exported WAVs and sfx_manifest.json match without writing
 """
 import argparse
@@ -221,7 +221,7 @@ def _build_audio_library_yaml(all_cues: list[dict]) -> str:
 
 
 def export_r1(check_only: bool = False) -> tuple[list[dict], list[dict], list[str]]:
-    """Render (or check) all 33 picked R1 cues and update (or check) ``sfx_manifest.json`` and ``AudioLibrary.asset``.
+    """Render (or check) all 32 picked R1 cues and update (or check) ``sfx_manifest.json`` and ``AudioLibrary.asset``.
 
     Returns ``(r1_entries, metrics_rows, errors)``.
     """
