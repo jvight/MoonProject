@@ -1778,11 +1778,473 @@ def build_survey_tripod() -> bpy.types.Object:
     return root
 
 
+def _add_sample_core_tube(
+    mb: r1kit.MeshBuilder,
+    center_u: Tuple[float, float, float],
+    axis_u: str = "Y",
+    rot_deg_u: Tuple[float, float, float] = (0.0, 0.0, 0.0),
+) -> None:
+    """Add a 0.36 m lunar geology core sample tube (CreamEnamel sleeve, OrangeStripe band, Brass cap, DarkGlass sight)."""
+    cx, cy, cz = center_u
+
+    def tp(dx: float, dy: float, dz: float) -> Tuple[float, float, float]:
+        return _rotate_u((cx + dx, cy + dy, cz + dz), rot_deg_u, center_u)
+
+    if axis_u == "Y":
+        # Main vertical core tube body (length 0.32 m, radius 0.025 m)
+        mb.add_cylinder(
+            center_u=center_u,
+            radius=0.025,
+            length=0.31,
+            mat="R1_CreamEnamel",
+            axis_u="Y",
+            segments=12,
+            bevel=0.003,
+            rot_deg_u=rot_deg_u,
+        )
+        # Upper orange identification collar
+        mb.add_cylinder(
+            center_u=tp(0.0, 0.095, 0.0),
+            radius=0.0265,
+            length=0.036,
+            mat="R1_OrangeStripe",
+            axis_u="Y",
+            segments=12,
+            bevel=0.002,
+            rot_deg_u=rot_deg_u,
+        )
+        # Top Brass twist-lock cap & bottom BareSteel cutting shoe
+        mb.add_cylinder(
+            center_u=tp(0.0, 0.165, 0.0),
+            radius=0.0275,
+            length=0.028,
+            mat="R1_Brass",
+            axis_u="Y",
+            segments=12,
+            bevel=0.003,
+            rot_deg_u=rot_deg_u,
+        )
+        mb.add_cylinder(
+            center_u=tp(0.0, -0.165, 0.0),
+            radius=0.0265,
+            length=0.028,
+            mat="R1_BareSteel",
+            axis_u="Y",
+            segments=12,
+            bevel=0.003,
+            rot_deg_u=rot_deg_u,
+        )
+        # Narrow DarkGlass sight window strip on -Z face
+        mb.add_bevel_box(
+            center_u=tp(0.0, -0.02, -0.024),
+            size_u=(0.014, 0.12, 0.006),
+            mat="R1_DarkGlass",
+            bevel=0.001,
+            segments=1,
+            rot_deg_u=rot_deg_u,
+        )
+    else:
+        # Horizontal core tube along X (fallen in dust)
+        mb.add_cylinder(
+            center_u=center_u,
+            radius=0.025,
+            length=0.31,
+            mat="R1_CreamEnamel",
+            axis_u="X",
+            segments=12,
+            bevel=0.003,
+            rot_deg_u=rot_deg_u,
+        )
+        mb.add_cylinder(
+            center_u=tp(0.095, 0.0, 0.0),
+            radius=0.0265,
+            length=0.036,
+            mat="R1_OrangeStripe",
+            axis_u="X",
+            segments=12,
+            bevel=0.002,
+            rot_deg_u=rot_deg_u,
+        )
+        mb.add_cylinder(
+            center_u=tp(0.165, 0.0, 0.0),
+            radius=0.0275,
+            length=0.028,
+            mat="R1_Brass",
+            axis_u="X",
+            segments=12,
+            bevel=0.003,
+            rot_deg_u=rot_deg_u,
+        )
+        mb.add_cylinder(
+            center_u=tp(-0.165, 0.0, 0.0),
+            radius=0.0265,
+            length=0.028,
+            mat="R1_BareSteel",
+            axis_u="X",
+            segments=12,
+            bevel=0.003,
+            rot_deg_u=rot_deg_u,
+        )
+        mb.add_bevel_box(
+            center_u=tp(-0.02, 0.024, 0.0),
+            size_u=(0.12, 0.006, 0.014),
+            mat="R1_DarkGlass",
+            bevel=0.001,
+            segments=1,
+            rot_deg_u=rot_deg_u,
+        )
+
+
+def build_sample_rack() -> bpy.types.Object:
+    """Build Deliverable 5: Prop_SampleRack (~0.96 W x 0.72 D x 0.94 H m).
+
+    Hand-tool rack with a rake, tongs, scoop, and 3 core tubes, one tube fallen in the dust.
+    """
+    r1kit.reset_scene()
+    ensure_extended_r1_materials()
+    r1kit.ensure_materials()
+
+    root = r1kit.create_empty("Prop_SampleRack", pivot_u=(0.0, 0.0, 0.0))
+
+    # 1. RackFrame: portable tubular A-frame geology carrier with tool bar & 3-slot core tube holster
+    rack_mb = r1kit.MeshBuilder("RackFrame", pivot_u=(0.0, 0.0, 0.0))
+
+    # 4 splayed tubular A-frame legs from top bar (x = +/-0.42, y = 0.78, z = 0.02) to footpads (z = -0.22 / +0.26)
+    for sx in (-1.0, 1.0):
+        x_leg = sx * 0.42
+        for fz, tz in ((-0.21, 0.0), (0.25, 0.04)):
+            # Circular footpad + regolith dust collar
+            rack_mb.add_cylinder(
+                center_u=(x_leg, 0.008, fz),
+                radius=0.038,
+                radius_top=0.030,
+                length=0.016,
+                mat="R1_GreyMetal",
+                axis_u="Y",
+                segments=10,
+                bevel=0.002,
+            )
+            rack_mb.add_cylinder(
+                center_u=(x_leg, 0.003, fz),
+                radius=0.048,
+                radius_top=0.034,
+                length=0.012,
+                mat="R1_Basalt",
+                axis_u="Y",
+                segments=10,
+                bevel=0.002,
+            )
+            rack_mb.add_pipe(
+                p0_u=(x_leg, 0.016, fz),
+                p1_u=(x_leg, 0.78, tz),
+                radius=0.012,
+                mat="R1_BareSteel",
+                segments=10,
+            )
+        # Side A-frame horizontal spreader bar at y = 0.24 m
+        rack_mb.add_pipe(
+            p0_u=(x_leg, 0.24, -0.15),
+            p1_u=(x_leg, 0.24, 0.19),
+            radius=0.010,
+            mat="R1_GreyMetal",
+            segments=8,
+        )
+
+    # Lower horizontal crossbars at y = 0.24 m
+    rack_mb.add_pipe((-0.42, 0.24, -0.14), (0.42, 0.24, -0.14), radius=0.011, mat="R1_GreyMetal", segments=8)
+    rack_mb.add_pipe((-0.42, 0.24, 0.18), (0.42, 0.24, 0.18), radius=0.011, mat="R1_GreyMetal", segments=8)
+
+    # Upper horizontal tool-carrier header bar at y = 0.78 m (CreamEnamel with OrangeStripe ID band & Brass tool clips)
+    rack_mb.add_bevel_box(
+        center_u=(0.0, 0.78, 0.02),
+        size_u=(0.88, 0.056, 0.064),
+        mat="R1_CreamEnamel",
+        bevel=0.006,
+        segments=1,
+    )
+    rack_mb.add_bevel_box(
+        center_u=(0.0, 0.78, -0.012),
+        size_u=(0.84, 0.022, 0.012),
+        mat="R1_OrangeStripe",
+        bevel=0.002,
+        segments=1,
+    )
+    # 3 spring-loaded Brass tool-latch jaws on front (-Z) of header bar for Rake (-0.28), Tongs (-0.06), Scoop (+0.14)
+    for tx in (-0.28, -0.06, 0.14):
+        rack_mb.add_bevel_box(
+            center_u=(tx, 0.78, -0.036),
+            size_u=(0.046, 0.036, 0.044),
+            mat="R1_Brass",
+            bevel=0.003,
+            segments=1,
+        )
+
+    # Top central EVA gloved-hand transport hoop (y = 0.80..0.91 m)
+    rack_mb.add_tube_path(
+        points_u=[
+            (-0.14, 0.80, 0.02),
+            (-0.12, 0.90, 0.02),
+            (0.12, 0.90, 0.02),
+            (0.14, 0.80, 0.02),
+        ],
+        radius=0.010,
+        mat="R1_BareSteel",
+        segments=8,
+        cap_ends=True,
+    )
+
+    # Right-side 3-slot Core Tube Holster Tray (x = 0.18..0.40, y = 0.22..0.46, z = 0.08)
+    # Slots at x = 0.22 (occupied), x = 0.30 (occupied), x = 0.37 (empty — 3rd tube fell out in front!)
+    rack_mb.add_bevel_box(
+        center_u=(0.295, 0.235, 0.08),
+        size_u=(0.24, 0.032, 0.11),
+        mat="R1_GreyMetal",
+        bevel=0.004,
+        segments=1,
+    )
+    rack_mb.add_bevel_box(
+        center_u=(0.295, 0.45, 0.08),
+        size_u=(0.24, 0.028, 0.11),
+        mat="R1_CreamEnamel",
+        bevel=0.004,
+        segments=1,
+    )
+    for slot_x in (0.22, 0.30, 0.37):
+        rack_mb.add_cylinder(
+            center_u=(slot_x, 0.466, 0.08),
+            radius=0.031,
+            length=0.016,
+            mat="R1_Brass" if slot_x > 0.34 else "R1_GreyMetal",
+            axis_u="Y",
+            segments=12,
+            bevel=0.002,
+        )
+    rack_mb.build_object(parent=root)
+
+    # 2. ToolRake: Apollo lunar sampling rake hanging in left clip (x = -0.28, z = -0.055)
+    rake_piv = (-0.28, 0.48, -0.055)
+    rake_mb = r1kit.MeshBuilder("ToolRake", pivot_u=rake_piv)
+    # Long vertical shaft (y = 0.16..0.89 m) + top T-handle + orange grip sleeve
+    rake_mb.add_cylinder(
+        center_u=(-0.28, 0.525, -0.055),
+        radius=0.009,
+        length=0.73,
+        mat="R1_BareSteel",
+        axis_u="Y",
+        segments=10,
+        bevel=0.0015,
+    )
+    rake_mb.add_cylinder(
+        center_u=(-0.28, 0.68, -0.055),
+        radius=0.012,
+        length=0.11,
+        mat="R1_OrangeStripe",
+        axis_u="Y",
+        segments=10,
+        bevel=0.002,
+    )
+    rake_mb.add_cylinder(
+        center_u=(-0.28, 0.895, -0.055),
+        radius=0.011,
+        length=0.11,
+        mat="R1_GreyMetal",
+        axis_u="X",
+        segments=10,
+        bevel=0.002,
+    )
+    # Rake head yoke & 7 curved sampling comb tines at bottom (y = 0.08..0.18 m)
+    rake_mb.add_bevel_box(
+        center_u=(-0.28, 0.165, -0.055),
+        size_u=(0.17, 0.024, 0.028),
+        mat="R1_GreyMetal",
+        bevel=0.003,
+        segments=1,
+    )
+    rake_mb.add_cylinder(
+        center_u=(-0.28, 0.185, -0.055),
+        radius=0.014,
+        length=0.022,
+        mat="R1_Brass",
+        axis_u="Z",
+        segments=10,
+        bevel=0.002,
+    )
+    for t_i in range(7):
+        tx = -0.28 + (t_i - 3) * 0.024
+        rake_mb.add_strut(
+            p0_u=(tx, 0.158, -0.055),
+            p1_u=(tx, 0.082, -0.095),
+            width=0.006,
+            thickness=0.008,
+            mat="R1_BareSteel",
+            bevel=0.001,
+        )
+    rake_mb.build_object(parent=root)
+
+    # 3. ToolTongs: long-handled rock-sampling tongs hanging in center-left clip (x = -0.06, z = -0.055)
+    tongs_piv = (-0.06, 0.48, -0.055)
+    tongs_mb = r1kit.MeshBuilder("ToolTongs", pivot_u=tongs_piv)
+    tongs_mb.add_cylinder(
+        center_u=(-0.06, 0.53, -0.055),
+        radius=0.0085,
+        length=0.68,
+        mat="R1_BareSteel",
+        axis_u="Y",
+        segments=10,
+        bevel=0.0015,
+    )
+    # Upper squeeze-trigger grip assembly (y = 0.72..0.88 m)
+    tongs_mb.add_bevel_box(
+        center_u=(-0.06, 0.875, -0.055),
+        size_u=(0.095, 0.024, 0.026),
+        mat="R1_OrangeStripe",
+        bevel=0.003,
+        segments=1,
+    )
+    tongs_mb.add_bevel_box(
+        center_u=(-0.06, 0.815, -0.055),
+        size_u=(0.078, 0.018, 0.022),
+        mat="R1_GreyMetal",
+        bevel=0.002,
+        segments=1,
+    )
+    # Bottom Brass jaw linkage hub & 4 splayed rock-grasping claw fingers (y = 0.09..0.20 m)
+    tongs_mb.add_cylinder(
+        center_u=(-0.06, 0.19, -0.055),
+        radius=0.016,
+        length=0.032,
+        mat="R1_Brass",
+        axis_u="Y",
+        segments=10,
+        bevel=0.002,
+    )
+    for ang_deg in (0.0, 90.0, 180.0, 270.0):
+        ar = math.radians(ang_deg + 45.0)
+        cx_jaw = -0.06 + 0.036 * math.cos(ar)
+        cz_jaw = -0.055 + 0.036 * math.sin(ar)
+        tx_jaw = -0.06 + 0.018 * math.cos(ar)
+        tz_jaw = -0.055 + 0.018 * math.sin(ar)
+        tongs_mb.add_tube_path(
+            points_u=[
+                (-0.06, 0.185, -0.055),
+                (cx_jaw, 0.135, cz_jaw),
+                (tx_jaw, 0.092, tz_jaw),
+            ],
+            radius=0.0045,
+            mat="R1_BareSteel",
+            segments=6,
+            cap_ends=True,
+        )
+    tongs_mb.build_object(parent=root)
+
+    # 4. ToolScoop: adjustable lunar trenching scoop hanging in center-right clip (x = +0.14, z = -0.055)
+    scoop_piv = (0.14, 0.48, -0.055)
+    scoop_mb = r1kit.MeshBuilder("ToolScoop", pivot_u=scoop_piv)
+    scoop_mb.add_cylinder(
+        center_u=(0.14, 0.535, -0.055),
+        radius=0.0095,
+        length=0.67,
+        mat="R1_BareSteel",
+        axis_u="Y",
+        segments=10,
+        bevel=0.0015,
+    )
+    scoop_mb.add_cylinder(
+        center_u=(0.14, 0.69, -0.055),
+        radius=0.013,
+        length=0.12,
+        mat="R1_CreamEnamel",
+        axis_u="Y",
+        segments=10,
+        bevel=0.002,
+    )
+    scoop_mb.add_cylinder(
+        center_u=(0.14, 0.875, -0.055),
+        radius=0.014,
+        length=0.042,
+        mat="R1_OrangeStripe",
+        axis_u="Y",
+        segments=10,
+        bevel=0.002,
+    )
+    # Adjustable Brass angle-indexing swivel at y = 0.20 m + flared box-pan scoop head (y = 0.08..0.19 m)
+    scoop_mb.add_cylinder(
+        center_u=(0.14, 0.195, -0.055),
+        radius=0.018,
+        length=0.028,
+        mat="R1_Brass",
+        axis_u="X",
+        segments=10,
+        bevel=0.002,
+    )
+    scoop_mb.add_bevel_box(
+        center_u=(0.14, 0.135, -0.075),
+        size_u=(0.092, 0.105, 0.064),
+        mat="R1_GreyMetal",
+        bevel=0.004,
+        segments=1,
+        rot_deg_u=(22.0, 0.0, 0.0),
+        top_scale_xz=(0.82, 0.75),
+    )
+    scoop_mb.add_bevel_box(
+        center_u=(0.14, 0.086, -0.095),
+        size_u=(0.094, 0.018, 0.052),
+        mat="R1_BareSteel",
+        bevel=0.002,
+        segments=1,
+        rot_deg_u=(22.0, 0.0, 0.0),
+    )
+    scoop_mb.build_object(parent=root)
+
+    # 5. CoreTubesRacked: 2 upright core sample tubes seated in the holster tray (x = 0.22 and x = 0.30, z = 0.08)
+    racked_piv = (0.26, 0.38, 0.08)
+    racked_mb = r1kit.MeshBuilder("CoreTubesRacked", pivot_u=racked_piv)
+    _add_sample_core_tube(racked_mb, center_u=(0.22, 0.38, 0.08), axis_u="Y", rot_deg_u=(0.0, 0.0, 0.0))
+    _add_sample_core_tube(racked_mb, center_u=(0.30, 0.38, 0.08), axis_u="Y", rot_deg_u=(2.0, 15.0, -1.5))
+    racked_mb.build_object(parent=root)
+
+    # 6. CoreTubeFallen: 3rd core sample tube fallen in the dust in front of the empty 3rd holster slot
+    fallen_piv = (0.24, 0.028, -0.24)
+    fallen_mb = r1kit.MeshBuilder("CoreTubeFallen", pivot_u=fallen_piv)
+    _add_sample_core_tube(
+        fallen_mb,
+        center_u=fallen_piv,
+        axis_u="X",
+        rot_deg_u=(0.0, 28.0, -2.5),
+    )
+    # Regolith dust bed partially burying the fallen core tube
+    fallen_mb.add_bevel_box(
+        center_u=(fallen_piv[0], 0.007, fallen_piv[2]),
+        size_u=(0.30, 0.018, 0.075),
+        mat="R1_Basalt",
+        bevel=0.005,
+        segments=1,
+        rot_deg_u=(0.0, 28.0, 0.0),
+        top_scale_xz=(0.82, 0.68),
+    )
+    fallen_mb.build_object(parent=root)
+
+    # Anchors
+    r1kit.create_empty("Base_Anchor", parent=root, pivot_u=(0.0, 0.0, 0.0))
+    r1kit.create_empty("Tools_Anchor", parent=root, pivot_u=(-0.06, 0.78, -0.035))
+    r1kit.create_empty("FallenTube_Anchor", parent=root, pivot_u=fallen_piv)
+
+    r1kit.apply_triplanar_uvs(root)
+    r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))
+    r1kit.bake_vertex_colors(root, footprint_radius=0.55)
+
+    fbx_path = PROPS_DIR / "Prop_SampleRack.fbx"
+    r1kit.export_fbx(root, fbx_path, bake_space_transform=False)
+    print(f"Exported {fbx_path}")
+    return root
+
+
 BUILDERS: Dict[str, Callable[[], bpy.types.Object]] = {
     "mission_flag": build_mission_flag,
     "seismic_station": build_seismic_station,
     "retroreflector": build_retroreflector,
     "survey_tripod": build_survey_tripod,
+    "sample_rack": build_sample_rack,
 }
 
 
@@ -1796,6 +2258,7 @@ def _parse_args() -> argparse.Namespace:
         help="Which Basin Life prop to build (default: all)",
     )
     return ap.parse_args(argv)
+
 
 
 

@@ -43,6 +43,7 @@ namespace MoonProject.Art.Tests
             ("prop_seismic_station.json", "Props/Prop_SeismicStation.fbx"),
             ("prop_retroreflector.json", "Props/Prop_Retroreflector.fbx"),
             ("prop_survey_tripod.json", "Props/Prop_SurveyTripod.fbx"),
+            ("prop_sample_rack.json", "Props/Prop_SampleRack.fbx"),
         };
 
         [Serializable]
@@ -571,6 +572,28 @@ namespace MoonProject.Art.Tests
                 "Prop_SurveyTripod must be fallen horizontally on the ground (width much greater than height).");
 
             AssertNoEmissiveMaterials(tripodPrefab);
+        }
+
+        [Test]
+        public void PropSampleRack_HasRack_Rake_Tongs_Scoop_TwoRackedTubes_OneFallenTube_AndBoxCollider()
+        {
+            GameObject rackPrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.PropSampleRackPrefabPath);
+            Assert.IsNotNull(rackPrefab.transform.Find("RackFrame"), "Prop_SampleRack missing RackFrame.");
+            Assert.IsNotNull(rackPrefab.transform.Find("ToolRake"), "Prop_SampleRack missing ToolRake.");
+            Assert.IsNotNull(rackPrefab.transform.Find("ToolTongs"), "Prop_SampleRack missing ToolTongs.");
+            Assert.IsNotNull(rackPrefab.transform.Find("ToolScoop"), "Prop_SampleRack missing ToolScoop.");
+            Assert.IsNotNull(rackPrefab.transform.Find("CoreTubesRacked"), "Prop_SampleRack missing CoreTubesRacked.");
+            Assert.IsNotNull(rackPrefab.transform.Find("CoreTubeFallen"), "Prop_SampleRack missing CoreTubeFallen.");
+            Assert.IsNotNull(rackPrefab.transform.Find("Base_Anchor"), "Prop_SampleRack missing Base_Anchor.");
+            Assert.IsNotNull(rackPrefab.transform.Find("Tools_Anchor"), "Prop_SampleRack missing Tools_Anchor.");
+            Assert.IsNotNull(rackPrefab.transform.Find("FallenTube_Anchor"), "Prop_SampleRack missing FallenTube_Anchor.");
+
+            BoxCollider box = rackPrefab.GetComponent<BoxCollider>();
+            Assert.IsNotNull(box, "Prop_SampleRack must have a simple BoxCollider on root.");
+            Assert.Greater(box.size.x, 0.70f);
+            Assert.Greater(box.size.y, 0.75f);
+
+            AssertNoEmissiveMaterials(rackPrefab);
         }
 
         private static void AssertNoEmissiveMaterials(GameObject prefab)
