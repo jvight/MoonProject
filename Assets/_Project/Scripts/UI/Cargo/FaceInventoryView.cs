@@ -34,7 +34,7 @@ namespace MoonProject.UI
         public const int MaxHoldCells = GridColumns * GridRows;
 
         public const float HoldGridX = 52f;
-        public const float HoldGridY = 74f;
+        public const float HoldGridY = 84f;
         public const float RightPaneX = 512f;
         public const float CellSize = 86f;
         public const float CellGapX = 12f;
@@ -350,9 +350,9 @@ namespace MoonProject.UI
             float s = Mathf.Max(0.25f, Mathf.Min(panelWidth / ReferenceWidth, panelHeight / ReferenceHeight));
             _scale = s;
 
-            PositionElement(_holdTitle, 72f * s, 40f * s);
-            PositionElement(_rightTitle, RightPaneX * s, 40f * s);
-            PositionElement(_bootLabel, 72f * s, 40f * s);
+            PositionElement(_holdTitle, 72f * s, FaceLayout.HeadingY * s);
+            PositionElement(_rightTitle, RightPaneX * s, FaceLayout.HeadingY * s);
+            PositionElement(_bootLabel, 72f * s, FaceLayout.HeadingY * s);
 
             for (int i = 0; i < MaxHoldCells; i++)
             {
@@ -370,7 +370,8 @@ namespace MoonProject.UI
 
             PositionBox(_tooltip, FaceLayout.InfoX * s, FaceLayout.InfoY * s, FaceLayout.InfoWidth * s,
                 FaceLayout.InfoHeight * s);
-            PositionBox(_toast, FaceLayout.InfoX * s, 580f * s, 376f * s, 40f * s);
+            PositionBox(_toast, FaceLayout.InfoX * s, FaceLayout.ToastY * s, FaceLayout.ToastWidth * s,
+                FaceLayout.ToastHeight * s);
             PositionBox(_footerRoot, FaceLayout.InfoX * s, FaceLayout.FooterY * s, FaceLayout.InfoWidth * s,
                 FaceLayout.FooterHeight * s);
             for (int i = 0; i < FaceDevices.Count; i++)
@@ -484,8 +485,18 @@ namespace MoonProject.UI
             _more.text = string.Format(_localization.Get(UiKeys.CargoMoreSlots), _numbers.Get(LockedCellCount));
         }
 
+        /// <summary>
+        /// Selects where the screen opens: the cutter while it offers the spare igniter (one confirm fits it), else the
+        /// first thing in the hold, else the first slot.
+        /// </summary>
         public void FocusFirst()
         {
+            if (_systems.CanFitIgniter)
+            {
+                FocusDevice(FaceDevices.Cutter);
+                return;
+            }
+
             for (int i = 0; i < _unlockedHoldCount; i++)
             {
                 if (_holdStates[i].Kind != HoldCellKind.Empty)
@@ -1106,10 +1117,11 @@ namespace MoonProject.UI
                 float rule = _settings.CellStrokeWidth * s;
                 RoverLineArtPainter.DrawLine(painter, new Vector2(DividerX * s, 42f * s),
                     new Vector2(DividerX * s, FaceLayout.DividerBottom * s), AmberMuted, rule);
-                RoverLineArtPainter.DrawLine(painter, new Vector2(72f * s, 70f * s),
-                    new Vector2(448f * s, 70f * s), AmberMuted, rule);
-                RoverLineArtPainter.DrawLine(painter, new Vector2(RightPaneX * s, 70f * s),
-                    new Vector2(1080f * s, 70f * s), AmberMuted, rule);
+                float headingRule = FaceLayout.HeadingRuleY * s;
+                RoverLineArtPainter.DrawLine(painter, new Vector2(72f * s, headingRule),
+                    new Vector2(448f * s, headingRule), AmberMuted, rule);
+                RoverLineArtPainter.DrawLine(painter, new Vector2(RightPaneX * s, headingRule),
+                    new Vector2(1080f * s, headingRule), AmberMuted, rule);
             }
 
             DrawHoldGrid(painter, s);
@@ -1340,7 +1352,7 @@ namespace MoonProject.UI
                 return;
             }
 
-            RoverLineArtPainter.FillCircle(painter, new Vector2(60f * s, 600f * s), 4f * s, AmberBright);
+            RoverLineArtPainter.FillCircle(painter, new Vector2(60f * s, (FaceLayout.ToastY + 14f) * s), 4f * s, AmberBright);
         }
 
         private Vector2 EventToReference(IPointerEvent evt)

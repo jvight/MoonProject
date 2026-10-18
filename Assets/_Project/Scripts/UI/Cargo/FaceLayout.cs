@@ -14,12 +14,17 @@ namespace MoonProject.UI
         public const float InfoY = 632f;
         public const float InfoWidth = 1008f;
         public const float InfoHeight = 66f;
-        public const float FooterY = 704f;
+        public const float FooterY = 708f;
         public const float FooterHeight = 28f;
         public const float MoreRowHeight = 44f;
         public const float MoreRowGap = 8f;
         public const float DividerBottom = 622f;
-        public const float DeviceStateMaxHalfWidth = 140f;
+        public const float HeadingY = 32f;
+        public const float HeadingRuleY = 72f;
+        public const float ToastY = 566f;
+        public const float ToastHeight = 60f;
+        public const float ToastWidth = 376f;
+        public const float DeviceStateMaxHalfWidth = 100f;
         public const float DeviceStateEdgeMargin = 24f;
         public const float DeviceHitScale = 1.8f;
 

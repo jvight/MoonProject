@@ -1659,7 +1659,7 @@ Label {
     top: 100%;
     margin-top: 4px;
     font-size: 22px;
-    white-space: nowrap;
+    white-space: normal;
     -unity-text-align: upper-center;
     color: rgb(242, 192, 104);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
@@ -1697,6 +1697,7 @@ Label {
 }
 
 .cargo__toast-text {
+    white-space: normal;
     font-size: 22px;
     color: rgb(242, 192, 104);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");

@@ -96,8 +96,8 @@ namespace MoonProject.UI.Tests
             for (int device = 0; device < FaceDevices.Count; device++)
             {
                 Vector2 centre = FaceDevices.CenterOf(device);
-                float stateBottom = centre.y + FaceInventoryView.BubbleRadius + 4f + SmallestText * 1.3f;
-                Assert.Less(stateBottom, FaceLayout.InfoY, $"device {device}: its words clear the info box");
+                float stateBottom = centre.y + FaceInventoryView.BubbleRadius + 4f + 2f * SmallestText * 1.3f;
+                Assert.Less(stateBottom, FaceLayout.InfoY, $"device {device}: two lines of words clear the info box");
             }
         }
 
@@ -116,14 +116,14 @@ namespace MoonProject.UI.Tests
                     RoverSystem system = FaceDevices.SystemOf(device);
                     if (system == RoverSystem.Sockets)
                     {
-                        AssertFits(table, SystemText.StateKey(system, RoverSystemState.Empty), left + right,
-                            SmallestText, $"device {device}");
+                        AssertWrapsIn(table, SystemText.StateKey(system, RoverSystemState.Empty), left + right, 2,
+                            $"device {device}");
                         continue;
                     }
 
                     foreach (RoverSystemState state in new[] { RoverSystemState.Ok, RoverSystemState.Fault })
                     {
-                        AssertFits(table, SystemText.StateKey(system, state), left + right, SmallestText,
+                        AssertWrapsIn(table, SystemText.StateKey(system, state), left + right, 2,
                             $"device {device}");
                     }
                 }
@@ -183,6 +183,31 @@ namespace MoonProject.UI.Tests
                         FaceKeyHints.CapKey((FaceHint)b, InputDeviceKind.Gamepad));
                 }
             }
+        }
+
+        private static void AssertWrapsIn(StringTable table, string key, float room, int lines, string what)
+        {
+            Assert.IsTrue(table.TryGet(key, out string text), $"{table.Language}: {key}");
+            string[] words = text.Split(' ');
+            int used = 1;
+            float width = 0f;
+            float space = SmallestText * MonoAdvance;
+            foreach (string word in words)
+            {
+                float wordWidth = word.Length * SmallestText * MonoAdvance;
+                Assert.LessOrEqual(wordWidth, room, $"{table.Language} {what}: {word} is wider than {room}");
+                if (width > 0f && width + space + wordWidth > room)
+                {
+                    used++;
+                    width = wordWidth;
+                }
+                else
+                {
+                    width += (width > 0f ? space : 0f) + wordWidth;
+                }
+            }
+
+            Assert.LessOrEqual(used, lines, $"{table.Language} {what}: {text} needs {used} lines in {room}");
         }
 
         private static void AssertFits(StringTable table, string key, float room, float size, string what)
