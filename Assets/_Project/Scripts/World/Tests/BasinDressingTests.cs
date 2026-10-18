@@ -17,6 +17,11 @@ namespace MoonProject.World.Tests
         // The plan's rule: nothing new within 45 m of the wake-to-lander lane in the eclipse (§1 rule 2).
         private const float LaneKeepOut = 45f;
 
+        // Bootprint trail A starts on the apron's edge (within this many metres of its radius) and ends within this
+        // many metres of the front door between the flag and the retroreflector.
+        private const float ApronEdge = 2f;
+        private const float FrontDoorReach = 6f;
+
         // On the first night Earth must clear the rim over the Scout and light the side the base sees (within this
         // many degrees of the line of sight), so its pale shape reads from the apron (§2, the night lure).
         private const float FrontLit = 45f;
@@ -104,6 +109,45 @@ namespace MoonProject.World.Tests
                                   "line to the apron");
             Assert.Greater(sky.EarthElevation, horizon, "Earth stands clear of the rim over the Scout");
             Assert.Less(offSight, FrontLit, "Earth lights the side of the Scout the base sees");
+        }
+
+        [Test]
+        public void TheBootprintTrail_SkirtsTheLander_FromTheApronToTheFrontDoor()
+        {
+            var landmarks = new LandmarkSettings();
+            GroundShaping shaping = _surface.Shaping;
+            Vector2[] trail = landmarks.BootprintTrail;
+            float fromApron = Vector2.Distance(trail[0], shaping.Apron.Center);
+            Assert.AreEqual(shaping.Apron.Radius, fromApron, ApronEdge, "the trail starts at the apron's edge");
+
+            for (int i = 1; i < trail.Length; i++)
+            {
+                Vector2 leg = trail[i] - trail[i - 1];
+                float along = Mathf.Clamp01(Vector2.Dot(shaping.Lander.Center - trail[i - 1], leg) / leg.sqrMagnitude);
+                float off = Vector2.Distance(shaping.Lander.Center, trail[i - 1] + leg * along);
+                Assert.Greater(off, shaping.Lander.Radius, $"leg {i} keeps off the lander's footprint");
+            }
+
+            Vector2 ruins = shaping.Ruins.Center;
+            Vector2 flag = ruins + Trace(landmarks, "Prop_MissionFlag");
+            Vector2 reflector = ruins + Trace(landmarks, "Prop_Retroreflector");
+            Vector2 door = (flag + reflector) * 0.5f;
+            Assert.Less(Vector2.Distance(trail[trail.Length - 1], door), FrontDoorReach,
+                "the trail ends between the flag and the retroreflector");
+        }
+
+        private static Vector2 Trace(LandmarkSettings landmarks, string id)
+        {
+            foreach (PropPlacement placement in landmarks.CrewTraces)
+            {
+                if (placement.Id == id)
+                {
+                    return placement.Offset;
+                }
+            }
+
+            Assert.Fail($"no crew trace {id}");
+            return Vector2.zero;
         }
 
         [Test]

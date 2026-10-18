@@ -72,6 +72,11 @@ namespace MoonProject.World.Editor
         public const string OldLanderPrefab = R1PropsFolder + "Prop_OldLander.prefab";
         public const string OldLanderBlastPrefab = R1PropsFolder + "Decal_OldLanderBlast.prefab";
 
+        /// <summary>Art's R1 crew-trace props and bootprint imprint tile (basin dressing §2).</summary>
+        public static string R1PropPrefab(string id) => R1PropsFolder + id + ".prefab";
+        public const string SampleRackPrefab = R1PropsFolder + "Prop_SampleRack.prefab";
+        public const string BootprintTrailPrefab = R1PropsFolder + "Decal_BootprintTrail.prefab";
+
         /// <summary>Art's R1 Kestrel-3 debris kit (Generated/Art/R1/Models/Wreck).</summary>
         public static string KestrelDebrisPrefab(string id) => "Assets/_Project/Generated/Art/R1/Models/Wreck/" + id + ".prefab";
 

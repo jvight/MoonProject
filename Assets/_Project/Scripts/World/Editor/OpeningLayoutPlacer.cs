@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -15,7 +16,9 @@ namespace MoonProject.World.Editor
     /// the port and the port's cable to the build apron (<see cref="GroundCableLayer"/>), the apron's markings, the
     /// dead west relay mast with its (hidden) signal pillar, Kestrel-3's debris, the big boulders near the routes and the rare big boulders on the floor
     /// (<see cref="BigBoulderPlanner"/>); and the basin's story props (docs/design/basin-dressing.md §2): the Scout
-    /// on its crater's wall. Everything solid is fitted with colliders on <see cref="Layers.Prop"/>.
+    /// on its crater's wall, the crew's traces (flag, retroreflector, seismic station, fallen tripod, sample rack) and
+    /// bootprint trail A. Everything solid is fitted with colliders on <see cref="Layers.Prop"/>; the bootprints are
+    /// pressed into the dust and never collide.
     /// </summary>
     public static class OpeningLayoutPlacer
     {
@@ -41,6 +44,7 @@ namespace MoonProject.World.Editor
         public const string BasinPropsRootName = "BasinProps";
         public const string ScoutName = "Prop_OldLander";
         public const string ScoutBlastName = "Decal_OldLanderBlast";
+        public const string BootprintTrailName = "BootprintTrail";
 
         // Art's R1 prop nodes this layout joins (tools/art/qa/contracts).
         private const string PostCableOrigin = "CableOrigin_Anchor";
@@ -53,6 +57,18 @@ namespace MoonProject.World.Editor
 
         // The Scout's parts the 1971 crew took home (basin dressing §4); its bare brackets stay.
         private static readonly string[] ScoutRemovedParts = { "TvCamera", "ScoopArm" };
+
+        // Art's retroreflector: the panel (housing and prism array) turns on its hinge on the stand.
+        private const string ReflectorName = "Prop_Retroreflector";
+        private const string ReflectorHousing = "PanelHousing";
+        private static readonly string[] ReflectorPanel = { "PanelHousing", "PrismArray" };
+
+        // Art's bootprint tile: its trail runs from Start_Anchor to End_Anchor.
+        private const string TileStart = "Start_Anchor";
+        private const string TileEnd = "End_Anchor";
+
+        // A walked path's sway: the tiles wander off the line on this phase step, so no two neighbours match.
+        private const float WanderPhase = 1.7f;
 
         private const string WestMastAnchor = WorldAnchorIds.RelayPrefix + "1";
 
@@ -109,7 +125,147 @@ namespace MoonProject.World.Editor
             }
 
             StandBigBoulders(context, settings, surface, anchors, boulders);
-            StandScout(context, landmarks, surface, context.CreateChild(BasinPropsRootName, root).transform);
+            Transform basin = context.CreateChild(BasinPropsRootName, root).transform;
+            StandScout(context, landmarks, surface, basin);
+            StandCrewTraces(context, settings, surface, anchors, basin);
+            PressBootprints(context, landmarks, surface, context.CreateChild(BootprintTrailName, props).transform);
+        }
+
+        /// <summary>
+        /// The crew's traces (basin dressing §2), each named after its prefab: the flag, the retroreflector (its panel
+        /// aimed so the golden-hour Sun glints into the apron), the seismic station, the fallen tripod, and the sample
+        /// rack on the Scout crater's north rim.
+        /// </summary>
+        private static void StandCrewTraces(SceneBuildContext context, WorldSettings settings, MoonSurface surface,
+            WorldAnchors anchors, Transform parent)
+        {
+            LandmarkSettings landmarks = settings.Landmarks;
+            foreach (PropPlacement placement in landmarks.CrewTraces)
+            {
+                Vector3 near = Require(anchors, placement.Anchor).Position;
+                var at = new Vector3(near.x + placement.Offset.x, 0f, near.z + placement.Offset.y);
+                GameObject prop = StandTrace(context, parent, placement.Id, WorldPaths.R1PropPrefab(placement.Id),
+                    Ground(surface, at) - Vector3.up * placement.Sink, placement.Yaw);
+                if (placement.Id == ReflectorName)
+                {
+                    Vector3 eye = Require(anchors, WorldAnchorIds.PlaceApron).Position
+                                  + Vector3.up * landmarks.ReflectorEyeHeight;
+                    AimReflector(prop, GoldenHourSun(settings), eye);
+                }
+            }
+
+            Vector2 rack = surface.Shaping.ScoutCraterCenter + landmarks.SampleRackOffset;
+            StandTrace(context, parent, "Prop_SampleRack", WorldPaths.SampleRackPrefab,
+                Ground(surface, new Vector3(rack.x, 0f, rack.y)), landmarks.SampleRackYaw);
+        }
+
+        /// <summary>
+        /// A crew trace upright on the ground at <paramref name="yaw"/>: Art's own colliders where it has them (on
+        /// <see cref="Layers.Prop"/>), else a convex collider on each mesh.
+        /// </summary>
+        private static GameObject StandTrace(SceneBuildContext context, Transform parent, string name,
+            string prefabPath, Vector3 position, float yaw)
+        {
+            var prefab = context.LoadAsset<GameObject>(prefabPath);
+            GameObject prop = context.InstantiatePrefab(prefab, parent, position,
+                Quaternion.Euler(0f, yaw, 0f) * prefab.transform.localRotation);
+            prop.name = name;
+            Collider[] own = prop.GetComponentsInChildren<Collider>();
+            if (own.Length == 0)
+            {
+                Solidify(prop);
+                return prop;
+            }
+
+            prop.layer = Layers.Prop;
+            foreach (Collider collider in own)
+            {
+                collider.gameObject.layer = Layers.Prop;
+            }
+
+            return prop;
+        }
+
+        /// <summary>
+        /// Turns the retroreflector's panel on its hinge so its face lies halfway between <paramref name="toSun"/> and
+        /// the way to <paramref name="eye"/>: the Sun's mirror lands on the eye.
+        /// </summary>
+        private static void AimReflector(GameObject reflector, Vector3 toSun, Vector3 eye)
+        {
+            Transform hinge = Node(reflector, ReflectorHousing);
+            Vector3 face = UpwardFace(hinge.GetComponent<MeshFilter>());
+            Vector3 aim = (toSun.normalized + (eye - hinge.position).normalized).normalized;
+            Quaternion.FromToRotation(face, aim).ToAngleAxis(out float angle, out Vector3 axis);
+            foreach (string part in ReflectorPanel)
+            {
+                Node(reflector, part).RotateAround(hinge.position, axis, angle);
+            }
+        }
+
+        /// <summary>The way a mesh's upward faces look, area-weighted (world space): a panel's face.</summary>
+        private static Vector3 UpwardFace(MeshFilter filter)
+        {
+            Mesh mesh = filter != null ? filter.sharedMesh : null;
+            if (mesh == null)
+            {
+                throw new InvalidOperationException("The retroreflector's panel has no mesh (Art's R1 contract).");
+            }
+
+            Vector3[] vertices = mesh.vertices;
+            int[] triangles = mesh.triangles;
+            Transform node = filter.transform;
+            Vector3 sum = Vector3.zero;
+            for (int i = 0; i < triangles.Length; i += 3)
+            {
+                Vector3 a = node.TransformPoint(vertices[triangles[i]]);
+                Vector3 normal = Vector3.Cross(node.TransformPoint(vertices[triangles[i + 1]]) - a,
+                    node.TransformPoint(vertices[triangles[i + 2]]) - a);
+                sum += normal.y > 0f ? normal : Vector3.zero;
+            }
+
+            return sum.normalized;
+        }
+
+        /// <summary>Where the Sun stands as the opening holds at golden hour (B6-B8), toward it.</summary>
+        private static Vector3 GoldenHourSun(WorldSettings settings)
+        {
+            var clock = new SunClock(settings.SkyCycle, settings.Sky);
+            clock.SetTime(new OpeningSkyPacing(settings.SkyCycle, clock).GoldenHourTime);
+            return clock.SunDirection;
+        }
+
+        /// <summary>
+        /// Bootprint trail A (basin dressing §2): Art's imprint tiles end to end along the trail's waypoints, each
+        /// laid on the ground's slope and wandering a little off the line. They are pressed into the dust: no
+        /// colliders.
+        /// </summary>
+        private static void PressBootprints(SceneBuildContext context, LandmarkSettings landmarks, MoonSurface surface,
+            Transform parent)
+        {
+            Vector2[] trail = landmarks.BootprintTrail;
+            var prefab = context.LoadAsset<GameObject>(WorldPaths.BootprintTrailPrefab);
+            float tile = Vector3.Distance(Node(prefab, TileStart).position, Node(prefab, TileEnd).position);
+            int count = 0;
+            for (int leg = 1; leg < trail.Length; leg++)
+            {
+                Vector2 from = trail[leg - 1];
+                Vector2 along = trail[leg] - from;
+                int tiles = Mathf.Max(1, Mathf.RoundToInt(along.magnitude / tile));
+                Vector2 step = along / tiles;
+                var forward = new Vector3(step.x, 0f, step.y);
+                var across = new Vector2(-step.y, step.x).normalized;
+                for (int i = 0; i < tiles; i++, count++)
+                {
+                    Vector2 spot = from + step * (i + 0.5f) + across * (landmarks.BootprintWander *
+                                                                         Mathf.Sin(count * WanderPhase));
+                    Vector3 slope = surface.SampleNormal(spot.x, spot.y);
+                    GameObject print = context.InstantiatePrefab(prefab, parent,
+                        Ground(surface, new Vector3(spot.x, 0f, spot.y)),
+                        Quaternion.FromToRotation(Vector3.up, slope) * Quaternion.LookRotation(forward, Vector3.up)
+                        * prefab.transform.localRotation);
+                    print.name = BootprintTrailName + "_" + count.ToString(CultureInfo.InvariantCulture);
+                }
+            }
         }
 
         /// <summary>
