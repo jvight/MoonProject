@@ -28,10 +28,12 @@ namespace MoonProject.Art.Editor
         public const string Ssr3ChassisFbxPath = RoverSourceFolder + "/SSR3_Chassis.fbx";
         public const string Ssr3Topper06FbxPath = RoverSourceFolder + "/SSR3_Topper_06.fbx";
         public const string Ssr3Topper05FbxPath = RoverSourceFolder + "/SSR3_Topper_05.fbx";
+        public const string Ssr3Topper04FbxPath = RoverSourceFolder + "/SSR3_Topper_04.fbx";
 
         public const string Ssr3ChassisPrefabPath = RoverGeneratedFolder + "/SSR3_Chassis.prefab";
         public const string Ssr3Topper06PrefabPath = RoverGeneratedFolder + "/SSR3_Topper_06.prefab";
         public const string Ssr3Topper05PrefabPath = RoverGeneratedFolder + "/SSR3_Topper_05.prefab";
+        public const string Ssr3Topper04PrefabPath = RoverGeneratedFolder + "/SSR3_Topper_04.prefab";
 
         public const string Elder06PrefabPath = RoverGeneratedFolder + "/Elder06.prefab";
         public const string Elder06UnitNumberMeshPath = RoverGeneratedFolder + "/Elder06_UnitNumber06.asset";
@@ -39,9 +41,16 @@ namespace MoonProject.Art.Editor
         public const string Elder05PrefabPath = RoverGeneratedFolder + "/Elder05.prefab";
         public const string Elder05UnitNumberMeshPath = RoverGeneratedFolder + "/Elder05_UnitNumber05.asset";
 
-        /// <summary>Vertical settle depth (~4 cm into lunar dust) applied to <c>Elder06.prefab</c> and <c>Elder05.prefab</c>.</summary>
+        public const string Elder04PrefabPath = RoverGeneratedFolder + "/Elder04.prefab";
+        public const string Elder04UnitNumberMeshPath = RoverGeneratedFolder + "/Elder04_UnitNumber04.asset";
+
+        /// <summary>Vertical settle depth (~4 cm into lunar dust) applied to <c>Elder06</c>, <c>Elder05</c>, and <c>Elder04</c>.</summary>
         public const float Elder06DustSettleMeters = 0.04f;
         public const float Elder05DustSettleMeters = 0.04f;
+        public const float Elder04DustSettleMeters = 0.04f;
+
+        /// <summary>Long-travel suspension hull lift (+0.14 m Y) applied to <c>Elder04.prefab</c> above its wheels.</summary>
+        public const float Elder04SuspensionLiftMeters = 0.14f;
 
         private const int CaptureWidth = 1440;
         private const int CaptureHeight = 810;
@@ -50,13 +59,20 @@ namespace MoonProject.Art.Editor
         private static readonly int MoonHazeId = Shader.PropertyToID("_MoonHaze");
         private static readonly int MoonDesaturateId = Shader.PropertyToID("_MoonDesaturate");
 
-        // Normalized (rx, ry, rw, rh) glyph bars in [0..1] x [0..1] for '0', '5', and '6'
+        // Normalized (rx, ry, rw, rh) glyph bars in [0..1] x [0..1] for '0', '4', '5', and '6'
         private static readonly Vector4[] Glyph0Rects =
         {
             new Vector4(0.18f, 0.50f, 0.22f, 0.88f),
             new Vector4(0.82f, 0.50f, 0.22f, 0.88f),
             new Vector4(0.50f, 0.90f, 0.76f, 0.20f),
             new Vector4(0.50f, 0.10f, 0.76f, 0.20f),
+        };
+
+        private static readonly Vector4[] Glyph4Rects =
+        {
+            new Vector4(0.18f, 0.68f, 0.22f, 0.52f),
+            new Vector4(0.50f, 0.44f, 0.82f, 0.18f),
+            new Vector4(0.74f, 0.50f, 0.22f, 0.88f),
         };
 
         private static readonly Vector4[] Glyph5Rects =
@@ -83,13 +99,15 @@ namespace MoonProject.Art.Editor
             GameObject chassisPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3ChassisPrefabPath);
             GameObject topper06Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3Topper06PrefabPath);
             GameObject topper05Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3Topper05PrefabPath);
-            if (chassisPrefab == null || topper06Prefab == null || topper05Prefab == null)
+            GameObject topper04Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3Topper04PrefabPath);
+            if (chassisPrefab == null || topper06Prefab == null || topper05Prefab == null || topper04Prefab == null)
             {
                 R1MaterialLibrary.BuildMaterials();
                 R1ModelBuilder.Build();
                 chassisPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3ChassisPrefabPath);
                 topper06Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3Topper06PrefabPath);
                 topper05Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3Topper05PrefabPath);
+                topper04Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Ssr3Topper04PrefabPath);
             }
 
             if (chassisPrefab == null)
@@ -108,6 +126,12 @@ namespace MoonProject.Art.Editor
             {
                 throw new InvalidOperationException(
                     $"R1Ssr3Builder: Missing '{Ssr3Topper05PrefabPath}'. Ensure '{Ssr3Topper05FbxPath}' is imported.");
+            }
+
+            if (topper04Prefab == null)
+            {
+                throw new InvalidOperationException(
+                    $"R1Ssr3Builder: Missing '{Ssr3Topper04PrefabPath}'. Ensure '{Ssr3Topper04FbxPath}' is imported.");
             }
 
             BuildElderPrefab(
@@ -135,6 +159,19 @@ namespace MoonProject.Art.Editor
                 Elder05PrefabPath,
                 Elder05DustSettleMeters,
                 hullLiftMeters: 0f);
+
+            BuildElderPrefab(
+                chassisPrefab,
+                topper04Prefab,
+                "SSR3_Topper_04",
+                "Elder04",
+                "Unit_Number_04",
+                "Elder04_UnitNumber04",
+                new[] { Glyph0Rects, Glyph4Rects },
+                Elder04UnitNumberMeshPath,
+                Elder04PrefabPath,
+                Elder04DustSettleMeters,
+                hullLiftMeters: Elder04SuspensionLiftMeters);
         }
 
         private static void BuildElderPrefab(
@@ -242,6 +279,8 @@ namespace MoonProject.Art.Editor
                     CaptureElderNextTo07(Elder06PrefabPath, "elder06", capturesDir, nightEclipse: true);
                     CaptureElderNextTo07(Elder05PrefabPath, "elder05", capturesDir, nightEclipse: false);
                     CaptureElderNextTo07(Elder05PrefabPath, "elder05", capturesDir, nightEclipse: true);
+                    CaptureElderNextTo07(Elder04PrefabPath, "elder04", capturesDir, nightEclipse: false);
+                    CaptureElderNextTo07(Elder04PrefabPath, "elder04", capturesDir, nightEclipse: true);
                 }
                 finally
                 {

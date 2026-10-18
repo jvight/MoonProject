@@ -2096,6 +2096,560 @@ def build_elder05_combined() -> bpy.types.Object:
     return chassis_root
 
 
+# ---------------------------------------------------------------------------
+# Deliverable 2 (agy-ssr3b): SSR3_Topper_04 ("Terrace Lift & Jumper" —
+# Pressurized Gas Bottles with Copper Lines, 4 De Laval Cold-Gas Thrusters,
+# and a Raised Long-Travel Suspension Kit)
+# ---------------------------------------------------------------------------
+TOPPER_04_SUSPENSION_LIFT_Y: float = 0.14  # Hull lift above standard wheel stance (0.14 m)
+
+
+def _add_pressurized_gas_bottle(
+    mb: r1kit.MeshBuilder,
+    center_u: tuple[float, float, float],
+    radius: float,
+    body_len: float,
+    dome_len: float,
+    mat: str = "R1_Brass",
+    strap_mat: str = "R1_GreyMetal",
+    strap_z_offsets: Sequence[float] = (-0.18, 0.18),
+) -> None:
+    """Append a horizontal Z-aligned cylindrical gas bottle with rounded dome ends and steel clamp bands."""
+    cx, cy, cz = center_u
+    mb.add_cylinder(
+        center_u=(cx, cy, cz),
+        radius=radius,
+        length=body_len,
+        mat=mat,
+        axis_u="Z",
+        segments=24,
+        bevel=min(radius * 0.34, 0.038),
+        bevel_segments=2,
+    )
+    for sz in (-1.0, 1.0):
+        dome_cz = cz + sz * (body_len * 0.5 + dome_len * 0.32)
+        r_bot = radius * 0.76 if sz > 0.0 else radius * 0.36
+        r_top = radius * 0.36 if sz > 0.0 else radius * 0.76
+        mb.add_cylinder(
+            center_u=(cx, cy, dome_cz),
+            radius=r_bot,
+            radius_top=r_top,
+            length=dome_len,
+            mat=mat,
+            axis_u="Z",
+            segments=20,
+            bevel=dome_len * 0.28,
+            bevel_segments=2,
+        )
+        # End neck boss (`R1_BareSteel`)
+        neck_cz = cz + sz * (body_len * 0.5 + dome_len * 0.85)
+        mb.add_cylinder(
+            center_u=(cx, cy, neck_cz),
+            radius=radius * 0.24,
+            length=0.026,
+            mat="R1_BareSteel",
+            axis_u="Z",
+            segments=12,
+            bevel=0.003,
+            bevel_segments=1,
+        )
+
+    for z_off in strap_z_offsets:
+        mb.add_cylinder(
+            center_u=(cx, cy, cz + z_off),
+            radius=radius + 0.006,
+            length=0.030,
+            mat=strap_mat,
+            axis_u="Z",
+            segments=24,
+            bevel=0.003,
+            bevel_segments=1,
+        )
+
+
+def _build_topper_04_gas_bottles(root: bpy.types.Object) -> bpy.types.Object:
+    """Build the twin dorsal O2 gas bottles + twin side outrigger accumulator tanks (`GasBottles`)."""
+    mb = r1kit.MeshBuilder("GasBottles", pivot_u=(0.0, 0.15, 0.0))
+
+    # 1. Dorsal steel tank cradle frame in the payload well
+    mb.add_bevel_box(
+        center_u=(0.0, 0.016, 0.0),
+        size_u=(0.62, 0.032, 0.92),
+        mat="R1_GreyMetal",
+        bevel=0.005,
+        segments=1,
+    )
+    for sz_cradle in (-0.24, 0.24):
+        mb.add_bevel_box(
+            center_u=(0.0, 0.056, sz_cradle),
+            size_u=(0.58, 0.054, 0.048),
+            mat="R1_BareSteel",
+            bevel=0.005,
+            segments=1,
+        )
+    # Central dorsal R1_SagePatch pressure regulator & service manifold housing
+    mb.add_bevel_box(
+        center_u=(0.0, 0.075, 0.0),
+        size_u=(0.12, 0.085, 0.42),
+        mat="R1_SagePatch",
+        bevel=0.006,
+        segments=1,
+    )
+    mb.add_bevel_box(
+        center_u=(0.0, 0.122, 0.0),
+        size_u=(0.095, 0.016, 0.16),
+        mat="R1_DarkGlass",
+        bevel=0.003,
+        segments=1,
+    )
+
+    # 2. Twin large dorsal brushed-brass O2 tanks (`R1_Brass`, x = +/- 0.165 m, y = 0.168 m)
+    for sx in (-1.0, 1.0):
+        _add_pressurized_gas_bottle(
+            mb,
+            center_u=(sx * 0.165, 0.168, 0.0),
+            radius=0.114,
+            body_len=0.72,
+            dome_len=0.068,
+            mat="R1_Brass",
+            strap_mat="R1_GreyMetal",
+            strap_z_offsets=(-0.24, 0.24),
+        )
+        # Saddle clamp bolts on the outer edges of the dorsal tank bands
+        mb.add_bolts(
+            [
+                (sx * 0.285, 0.115, -0.24),
+                (sx * 0.285, 0.115, 0.24),
+            ],
+            radius=0.008,
+            height=0.012,
+            axis_u="X",
+            mat="R1_BareSteel",
+            bevel_segments=0,
+        )
+
+    # 3. Twin side outrigger accumulator bottles (`R1_Brass`, x = +/- 0.448 m, y = 0.025 m)
+    for sx in (-1.0, 1.0):
+        # Outrigger steel saddle beams cantilevering over the dorsal coaming rim
+        for sz_beam in (-0.20, 0.20):
+            mb.add_bevel_box(
+                center_u=(sx * 0.355, 0.068, sz_beam),
+                size_u=(0.19, 0.032, 0.044),
+                mat="R1_GreyMetal",
+                bevel=0.004,
+                segments=1,
+            )
+            mb.add_bevel_box(
+                center_u=(sx * 0.435, 0.035, sz_beam),
+                size_u=(0.048, 0.068, 0.044),
+                mat="R1_GreyMetal",
+                bevel=0.004,
+                segments=1,
+            )
+        _add_pressurized_gas_bottle(
+            mb,
+            center_u=(sx * 0.452, 0.028, 0.0),
+            radius=0.076,
+            body_len=0.52,
+            dome_len=0.052,
+            mat="R1_Brass",
+            strap_mat="R1_GreyMetal",
+            strap_z_offsets=(-0.20, 0.20),
+        )
+        mb.add_bolts(
+            [
+                (sx * 0.532, 0.028, -0.20),
+                (sx * 0.532, 0.028, 0.20),
+            ],
+            radius=0.007,
+            height=0.010,
+            axis_u="X",
+            mat="R1_BareSteel",
+            bevel_segments=0,
+        )
+
+    return mb.build_object(parent=root)
+
+
+def _build_topper_04_copper_lines(root: bpy.types.Object) -> bpy.types.Object:
+    """Build the high-pressure `R1_Copper` gas manifold lines and brass union valves (`CopperLines`)."""
+    mb = r1kit.MeshBuilder("CopperLines", pivot_u=(0.0, 0.12, 0.0))
+
+    # Front and rear cross-manifold header blocks (`R1_Copper` + `R1_Brass`)
+    for sz in (-1.0, 1.0):
+        hz = sz * 0.435
+        mb.add_bevel_box(
+            center_u=(0.0, 0.058, hz),
+            size_u=(0.38, 0.036, 0.042),
+            mat="R1_Copper",
+            bevel=0.005,
+            segments=1,
+        )
+        for sx in (-1.0, 1.0):
+            # Valve block on each dorsal bottle dome
+            mb.add_cylinder(
+                center_u=(sx * 0.165, 0.168, sz * 0.425),
+                radius=0.024,
+                length=0.032,
+                mat="R1_Brass",
+                axis_u="Z",
+                segments=12,
+                bevel=0.003,
+                bevel_segments=1,
+            )
+            # High-pressure arched copper pipe from dorsal bottle dome down to front/rear deck header
+            mb.add_tube_path(
+                points_u=[
+                    (sx * 0.165, 0.168, sz * 0.432),
+                    (sx * 0.215, 0.155, sz * 0.485),
+                    (sx * 0.225, 0.088, sz * 0.475),
+                    (sx * 0.165, 0.062, sz * 0.435),
+                ],
+                radius=0.014,
+                mat="R1_Copper",
+                segments=10,
+                cap_ends=True,
+            )
+            # Copper feed loop from dorsal bottle out over the coaming into the side accumulator bottle dome
+            mb.add_tube_path(
+                points_u=[
+                    (sx * 0.165, 0.168, sz * 0.430),
+                    (sx * 0.295, 0.162, sz * 0.410),
+                    (sx * 0.415, 0.105, sz * 0.365),
+                    (sx * 0.452, 0.028, sz * 0.305),
+                ],
+                radius=0.013,
+                mat="R1_Copper",
+                segments=10,
+                cap_ends=True,
+            )
+            # Outer side manifold pipe running along the side accumulator bottle and feeding the De Laval thrusters
+            mb.add_tube_path(
+                points_u=[
+                    (sx * 0.452, 0.028, sz * 0.305),
+                    (sx * 0.505, -0.025, sz * 0.335),
+                    (sx * 0.485, -0.068, sz * 0.240),
+                    (sx * 0.458, -0.072, sz * 0.225),
+                ],
+                radius=0.012,
+                mat="R1_Copper",
+                segments=10,
+                cap_ends=True,
+            )
+
+    # Longitudinal side copper balance rail along each outrigger bottle
+    for sx in (-1.0, 1.0):
+        mb.add_tube_path(
+            points_u=[
+                (sx * 0.518, -0.022, -0.28),
+                (sx * 0.525, -0.022, 0.0),
+                (sx * 0.518, -0.022, 0.28),
+            ],
+            radius=0.011,
+            mat="R1_Copper",
+            segments=10,
+            cap_ends=True,
+        )
+
+    return mb.build_object(parent=root)
+
+
+def _build_topper_04_jump_thrusters(root: bpy.types.Object) -> bpy.types.Object:
+    """Build the 4 canted conical brass De Laval Cold-Gas Jump Thruster nozzles (`JumpThrusters`)."""
+    mb = r1kit.MeshBuilder("JumpThrusters", pivot_u=(0.0, -0.14, 0.0))
+
+    for sx in (-1.0, 1.0):
+        for sz in (-1.0, 1.0):
+            tx = sx * 0.456
+            tz = sz * 0.225
+            cant_deg = 8.0 * sx
+
+            # 1. Upper solenoid thruster valve & mounting bracket under the side accumulator bottle
+            mb.add_bevel_box(
+                center_u=(tx - sx * 0.018, -0.052, tz),
+                size_u=(0.068, 0.044, 0.068),
+                mat="R1_GreyMetal",
+                bevel=0.005,
+                segments=1,
+            )
+            mb.add_cylinder(
+                center_u=(tx, -0.082, tz),
+                radius=0.038,
+                length=0.034,
+                mat="R1_BareSteel",
+                axis_u="Y",
+                segments=16,
+                bevel=0.004,
+                bevel_segments=1,
+                rot_deg_u=(0.0, 0.0, cant_deg),
+            )
+
+            # 2. Canted conical R1_Brass De Laval thruster bell (radius_top=0.030 throat -> radius=0.072 exit mouth)
+            bell_x = tx + sx * 0.010
+            bell_y = -0.155
+            mb.add_cylinder(
+                center_u=(bell_x, bell_y, tz),
+                radius=0.072,
+                radius_top=0.030,
+                length=0.135,
+                mat="R1_Brass",
+                axis_u="Y",
+                segments=20,
+                bevel=0.004,
+                bevel_segments=1,
+                rot_deg_u=(0.0, 0.0, cant_deg),
+            )
+            # Mid-bell stiffening band & bottom exit lip torus
+            mb.add_torus(
+                center_u=(bell_x + sx * 0.004, bell_y - 0.020, tz),
+                major_radius=0.056,
+                minor_radius=0.006,
+                mat="R1_Brass",
+                axis_u="Y",
+                major_segments=20,
+                minor_segments=6,
+                rot_deg_u=(0.0, 0.0, cant_deg),
+            )
+            mb.add_torus(
+                center_u=(bell_x + sx * 0.009, bell_y - 0.064, tz),
+                major_radius=0.070,
+                minor_radius=0.007,
+                mat="R1_Brass",
+                axis_u="Y",
+                major_segments=20,
+                minor_segments=6,
+                rot_deg_u=(0.0, 0.0, cant_deg),
+            )
+            # Dark interior nozzle throat shadow plug (`R1_DarkGlass`) at bottom of bell
+            mb.add_cylinder(
+                center_u=(bell_x + sx * 0.008, bell_y - 0.062, tz),
+                radius=0.058,
+                length=0.012,
+                mat="R1_DarkGlass",
+                axis_u="Y",
+                segments=18,
+                bevel=0.002,
+                bevel_segments=1,
+                rot_deg_u=(0.0, 0.0, cant_deg),
+            )
+
+    return mb.build_object(parent=root)
+
+
+def _build_topper_04_suspension_kit(root: bpy.types.Object) -> bpy.types.Object:
+    """Build the raised long-travel coil-spring suspension kit & drop-belly cradle (`SuspensionKit`)."""
+    mb = r1kit.MeshBuilder("SuspensionKit", pivot_u=(0.0, -0.48, 0.0))
+
+    # In Elder04, the hull (and Topper_Socket) is lifted by TOPPER_04_SUSPENSION_LIFT_Y (+0.14 m),
+    # so the 4 wheel axle centers sit at y_local = (WHEEL_RADIUS - (0.69 + 0.14)) = -0.615 m.
+    axle_y = WHEEL_RADIUS - (TOPPER_SOCKET_PIVOT_U[1] + TOPPER_04_SUSPENSION_LIFT_Y)  # -0.615 m
+
+    # 1. Tapered central drop-belly undercarriage cradle (matching Elder 04 in ssr3_direction_a_boxy_cart.png)
+    mb.add_bevel_box(
+        center_u=(0.0, -0.465, 0.0),
+        size_u=(0.48, 0.155, 1.08),
+        mat="R1_CreamEnamel",
+        bevel=0.012,
+        segments=1,
+        top_scale_xz=(1.12, 1.08),
+    )
+    mb.add_bevel_box(
+        center_u=(0.0, -0.542, 0.0),
+        size_u=(0.46, 0.028, 1.02),
+        mat="R1_GreyMetal",
+        bevel=0.005,
+        segments=1,
+    )
+    # Front and rear angled belly skid glacis plates with center vertical seam & corner bolts
+    for sz in (-1.0, 1.0):
+        mb.add_bevel_box(
+            center_u=(0.0, -0.465, sz * 0.535),
+            size_u=(0.44, 0.145, 0.042),
+            mat="R1_CreamEnamel",
+            bevel=0.006,
+            segments=1,
+            rot_deg_u=(-sz * 18.0, 0.0, 0.0),
+        )
+        mb.add_bevel_box(
+            center_u=(0.0, -0.465, sz * 0.556),
+            size_u=(0.012, 0.135, 0.012),
+            mat="R1_GreyMetal",
+            bevel=0.002,
+            segments=1,
+            rot_deg_u=(-sz * 18.0, 0.0, 0.0),
+        )
+        mb.add_bolts(
+            [
+                (sx * 0.18, -0.42, sz * 0.552)
+                for sx in (-1.0, 1.0)
+            ]
+            + [
+                (sx * 0.18, -0.51, sz * 0.535)
+                for sx in (-1.0, 1.0)
+            ],
+            radius=0.007,
+            height=0.008,
+            axis_u="Z",
+            mat="R1_BareSteel",
+            bevel_segments=0,
+        )
+
+    # 2. 4 Long-Travel Coil-Over Shock Struts + Diagonal Wishbone Control Arms at FL, FR, RL, RR
+    for sx in (-1.0, 1.0):
+        for sz in (-1.0, 1.0):
+            wz = sz * WHEEL_BASE_Z
+            top_mount_u = (sx * 0.285, -0.345, wz)
+            knuckle_u = (sx * 0.335, axle_y + 0.012, wz)
+            mid_shock_u = (
+                0.5 * (top_mount_u[0] + knuckle_u[0]),
+                0.5 * (top_mount_u[1] + knuckle_u[1]),
+                wz,
+            )
+            shock_cant_deg = 11.0 * sx
+
+            # Upper spring-tower shroud enclosing the chassis upper strut root
+            mb.add_bevel_box(
+                center_u=(sx * 0.305, -0.335, wz),
+                size_u=(0.095, 0.095, 0.14),
+                mat="R1_GreyMetal",
+                bevel=0.006,
+                segments=1,
+            )
+            # Central telescoping steel damper shaft connecting upper tower to lower wheel knuckle
+            mb.add_strut(
+                p0_u=top_mount_u,
+                p1_u=knuckle_u,
+                width=0.032,
+                thickness=0.032,
+                mat="R1_BareSteel",
+                bevel=0.004,
+            )
+            # Upper & lower R1_Brass coil-spring perch collars
+            for perch_t in (0.14, 0.86):
+                py_p = top_mount_u[1] * (1.0 - perch_t) + knuckle_u[1] * perch_t
+                px_p = top_mount_u[0] * (1.0 - perch_t) + knuckle_u[0] * perch_t
+                mb.add_cylinder(
+                    center_u=(px_p, py_p, wz),
+                    radius=0.044,
+                    length=0.020,
+                    mat="R1_Brass",
+                    axis_u="Y",
+                    segments=16,
+                    bevel=0.003,
+                    bevel_segments=1,
+                    rot_deg_u=(0.0, 0.0, shock_cant_deg),
+                )
+            # Long-travel 7.5-turn exposed helical coil spring (`R1_GreyMetal`)
+            _add_helical_coil_u(
+                mb,
+                center_u=mid_shock_u,
+                coil_radius=0.038,
+                wire_radius=0.0085,
+                length=0.205,
+                turns=7.5,
+                axis_u="Y",
+                mat="R1_GreyMetal",
+                segs_per_turn=14,
+                wire_segs=7,
+                rot_deg_u=(0.0, 0.0, shock_cant_deg),
+            )
+
+            # Twin diagonal lower A-arm wishbone struts from the drop-belly cradle to the wheel hub knuckle
+            for arm_dz in (-0.065, 0.065):
+                mb.add_strut(
+                    p0_u=(sx * 0.205, -0.505, wz + arm_dz),
+                    p1_u=(sx * 0.335, axle_y, wz + arm_dz * 0.25),
+                    width=0.034,
+                    thickness=0.028,
+                    mat="R1_GreyMetal",
+                    bevel=0.004,
+                )
+            # Upper radius link arm stabilizing the lifted knuckle
+            mb.add_strut(
+                p0_u=(sx * 0.225, -0.415, wz - sz * 0.08),
+                p1_u=(sx * 0.330, axle_y + 0.045, wz),
+                width=0.028,
+                thickness=0.024,
+                mat="R1_BareSteel",
+                bevel=0.003,
+            )
+
+            # Heavy forged lower wheel-hub carrier knuckle at the lifted axle position
+            mb.add_bevel_box(
+                center_u=(sx * 0.340, axle_y + 0.008, wz),
+                size_u=(0.062, 0.076, 0.084),
+                mat="R1_GreyMetal",
+                bevel=0.005,
+                segments=1,
+            )
+            mb.add_cylinder(
+                center_u=(sx * 0.355, axle_y, wz),
+                radius=0.034,
+                length=0.052,
+                mat="R1_BareSteel",
+                axis_u="X",
+                segments=14,
+                bevel=0.004,
+                bevel_segments=1,
+            )
+
+    return mb.build_object(parent=root)
+
+
+def build_ssr3_topper_04() -> bpy.types.Object:
+    """Build the complete `SSR3_Topper_04` ("Terrace Lift & Jumper") hierarchy in the active Blender scene."""
+    root = r1kit.create_empty("SSR3_Topper_04", pivot_u=(0.0, 0.0, 0.0))
+
+    _build_topper_04_gas_bottles(root)
+    _build_topper_04_copper_lines(root)
+    _build_topper_04_jump_thrusters(root)
+    _build_topper_04_suspension_kit(root)
+
+    bpy.context.view_layer.update()
+    _apply_ssr3_decades_at_rest_weathering(root, footprint_radius=0.68)
+    return root
+
+
+def _build_unit_04_stencil(parent: bpy.types.Object) -> bpy.types.Object:
+    """Build the `Unit_Number_04` relief stencil (`04`) on both flanks at `UNIT_NUMBER_PIVOT_U`."""
+    mb = r1kit.MeshBuilder("Unit_Number_04", pivot_u=UNIT_NUMBER_PIVOT_U)
+    for sx in (-1.0, 1.0):
+        _add_stencil_text_flank(
+            mb,
+            text="04",
+            side_x=sx * 0.442,
+            center_y=UNIT_NUMBER_PIVOT_U[1],
+            center_z=UNIT_NUMBER_PIVOT_U[2],
+            char_w=0.042,
+            char_h=0.068,
+            relief_x=0.005,
+            mat="R1_GreyMetal",
+        )
+    return mb.build_object(parent=parent)
+
+
+def build_elder04_combined() -> bpy.types.Object:
+    """Build the combined Elder 04 assembly (`SSR3_Chassis` + `SSR3_Topper_04` + `04` stencil + lifted hull)."""
+    chassis_root = build_ssr3_chassis()
+    topper_socket = next((o for o in chassis_root.children if o.name == "Topper_Socket"), chassis_root)
+    unit_num_socket = next((o for o in chassis_root.children if o.name == "Unit_Number"), chassis_root)
+
+    topper_root = build_ssr3_topper_04()
+    topper_root.parent = topper_socket
+    topper_root.location = (0.0, 0.0, 0.0)
+
+    _build_unit_04_stencil(unit_num_socket)
+
+    # Apply the long-travel suspension lift (+0.14 m Z in Blender space) to the hull while keeping wheels on ground
+    for child in chassis_root.children:
+        if not child.name.startswith("Wheel_"):
+            child.location.z += TOPPER_04_SUSPENSION_LIFT_Y
+
+    bpy.context.view_layer.update()
+    _apply_ssr3_decades_at_rest_weathering(chassis_root, footprint_radius=0.88)
+    return chassis_root
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Build SSR3_Chassis and SSR3_Topper_06/05/04 FBXs and preview renders.")
     parser.add_argument(
@@ -2114,13 +2668,18 @@ def main(argv: list[str] | None = None) -> None:
         default=Path("Assets/_Project/Art/R1/Models/Rover/SSR3_Topper_05.fbx"),
     )
     parser.add_argument(
+        "--topper04-fbx-out",
+        type=Path,
+        default=Path("Assets/_Project/Art/R1/Models/Rover/SSR3_Topper_04.fbx"),
+    )
+    parser.add_argument(
         "--renders-dir",
         type=Path,
         default=Path("Logs/renders"),
     )
     parser.add_argument(
         "--only",
-        choices=("all", "05", "06"),
+        choices=("all", "04", "05", "06"),
         default="all",
     )
     parser.add_argument("--skip-renders", action="store_true")
@@ -2210,9 +2769,47 @@ def main(argv: list[str] | None = None) -> None:
                 use_active_for_compare=False,
             )
 
+    if args.only in ("all", "04"):
+        # 4. Build & export SSR3_Topper_04.fbx ("Terrace Lift & Jumper")
+        r1kit.reset_scene()
+        topper04_root = build_ssr3_topper_04()
+        topper04_tris = r1kit.count_triangles(topper04_root)
+        print(f"[SSR3_Topper_04] Triangles: {topper04_tris}")
+        r1kit.export_fbx(topper04_root, args.topper04_fbx_out)
+
+        if not args.skip_renders:
+            r1kit.render_structure_suite(
+                root=topper04_root,
+                slug="ssr3_topper_04",
+                out_dir=args.renders_dir,
+                target_height=0.92,
+                footprint_radius=0.72,
+                pose_rest_fn=lambda _r: None,
+                pose_active_fn=lambda _r: None,
+                cam_side_x=-1.0,
+                concept_path=concept_a_img if concept_a_img.exists() else None,
+                use_active_for_compare=False,
+            )
+
+            r1kit.reset_scene()
+            elder04_root = build_elder04_combined()
+            r1kit.render_structure_suite(
+                root=elder04_root,
+                slug="elder04",
+                out_dir=args.renders_dir,
+                target_height=1.12,
+                footprint_radius=0.92,
+                pose_rest_fn=lambda _r: None,
+                pose_active_fn=lambda _r: None,
+                cam_side_x=-1.0,
+                concept_path=concept_a_img if concept_a_img.exists() else None,
+                use_active_for_compare=False,
+            )
+
 
 if __name__ == "__main__":
     cli_args = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
     main(cli_args)
+
 
 
