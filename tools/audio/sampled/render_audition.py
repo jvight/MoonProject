@@ -27,15 +27,12 @@ VOICE_LUFS = -22.0
 BOOT_LUFS = -22.0
 DUST_LUFS = -28.0
 
-# The current synthesized cue each new sound replaces, where one exists (path under Assets/_Project/Audio/SFX).
+# The synthesized cue a sampled sound would replace, where one is still in the game (path under
+# Assets/_Project/Audio/SFX). The voice and the build set already ship sampled (sampled/picks.py).
 CURRENT = {
-    "voice_ack": "chirp_affirm_01.wav", "voice_query": "chirp_curious_01.wav", "voice_done": "chirp_proud_01.wav",
-    "voice_fault": "chirp_worried_01.wav", "voice_working": "chirp_tired_01.wav",
     "boot_carrier": "2D/radio_carrier_loop.wav", "boot_crt": "2D/wake_power_thump.wav",
     "boot_lens": "2D/lens_whine.wav", "boot_lamps": "lamp_tick.wav", "boot_head": "2D/neck_servo.wav",
     "boot_cutter_fault": "cut_ignite_tier_tier0.wav", "boot_battery": "battery_cell_D5.wav",
-    "build_place": "R1/build_place.wav", "build_snap": "R1/build_snap.wav", "build_weld_loop": "R1/build_weld_loop.wav",
-    "build_structure_complete": "R1/build_structure_complete.wav", "structure_power_on": "structure_power_on.wav",
 }
 
 TARGETS = {
@@ -46,8 +43,9 @@ TARGETS = {
 
 def _entries():
     """(cue, group, description, render(lib, gen, variant), variants, target LUFS, loop)."""
-    for cue, fn in voice.GESTURES.items():
-        yield cue, "voice", (fn.__doc__ or "").strip(), fn, 3, VOICE_LUFS, False
+    for cue, variants in voice.GESTURES.items():
+        yield (cue, "voice", " / ".join(g.description for g in variants),
+               (lambda lib, gen, v, name=cue: voice.render(lib, gen, name, v)), len(variants), VOICE_LUFS, False)
     for cue, fn in boot.STEPS.items():
         yield cue, "boot", (fn.__doc__ or "").strip(), (lambda lib, gen, v, f=fn: f(lib, gen)), 1, BOOT_LUFS, False
     yield ("boot_dust_slide", "boot", (boot.dust_slide.__doc__ or "").strip(), boot.dust_slide, 3, DUST_LUFS, False)

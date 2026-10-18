@@ -97,7 +97,7 @@ namespace MoonProject.Audio
         public const string SkyDawnSweep = "sky_dawn_sweep";
         public const string SkyNightfallSettle = "sky_nightfall_settle";
 
-        // R1 Group 3: Building
+        // Building: ghost, invalid, stage complete and deconstruct are R1; place, snap, weld and complete are sampled
         public const string BuildGhost = "build_ghost";
         public const string BuildSnap = "build_snap";
         public const string BuildInvalid = "build_invalid";

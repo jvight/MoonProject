@@ -11,6 +11,11 @@ Usage:
   python tools/audio/build_sfx.py                 # render everything, write the manifest, print the analysis
   python tools/audio/build_sfx.py --only ui_click # render a subset (other manifest entries are kept)
   python tools/audio/build_sfx.py --check         # re-render into a temp dir: byte-identical + quality gates
+  python tools/audio/build_sfx.py --library <dir> # also (re)render the sampled cues (sampled/picks.py)
+
+Sampled cues are made from an external sound library (docs/audio/sampled-sources.md): given its folder
+(--library or MOONPROJECT_SOUND_LIBRARY) they are rendered like any cue; without it they are not re-rendered, and
+their committed files are checked against the manifest's hashes and picks instead (the output says so).
 """
 import argparse
 import hashlib
@@ -35,6 +40,7 @@ from synth.effects import soft_limit  # noqa: E402
 from synth.envelope import fade_in, fade_out  # noqa: E402
 from synth.filters import dc_block  # noqa: E402
 from synth.io import write_wav  # noqa: E402
+from sampled import picks  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[2]
 AUDIO_ROOT_ASSET = "Assets/_Project/Audio"
@@ -117,6 +123,7 @@ def manifest_entry(cue, file_results) -> dict:
         "hfMaxDb": cue.hf_max_db,
         "tonal": cue.tonal,
         "notes": cue.notes,
+        **({"source": "sampled", "pick": picks.label(cue.id)} if cue.sampled else {}),
     }
 
 
@@ -155,19 +162,49 @@ def quality_report(cue_ids, results, out_root: Path, jobs: int) -> int:
     return failed
 
 
+def verify_sampled(cue, previous: dict, audio_root: Path) -> int:
+    """Without the library: the committed files of a sampled cue must match its manifest entry and current pick."""
+    entry = previous.get(cue.id)
+    if entry is None:
+        print(f"sampled: '{cue.id}' was never rendered; it needs the sound library (--library)")
+        return 1
+    problems = 0
+    if entry.get("pick") != picks.label(cue.id):
+        print(f"sampled: '{cue.id}' is picked as {picks.label(cue.id)} but rendered as {entry.get('pick')}: "
+              "re-render it with --library")
+        problems += 1
+    for rel, digest in zip(entry["files"], entry["sha256"]):
+        path = REPO / rel
+        if not path.exists() or hashlib.sha256(path.read_bytes()).hexdigest() != digest:
+            print(f"sampled: {rel} is missing or differs from the manifest")
+            problems += 1
+    return problems
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--check", action="store_true", help="re-render to a temp dir and verify; write nothing")
     ap.add_argument("--only", nargs="+", metavar="CUE_ID", help="render only these cues")
     ap.add_argument("--jobs", type=int, default=min(8, os.cpu_count() or 1))
     ap.add_argument("--keep", action="store_true", help="--check: keep the temp render folder")
+    ap.add_argument("--library", help="the sound library folder for the sampled cues (else "
+                                      f"{picks.LIBRARY_ENV})")
     args = ap.parse_args()
+    if args.library:
+        os.environ[picks.LIBRARY_ENV] = args.library
+    library = picks.library_folder()
+    has_library = bool(library) and Path(library).is_dir()
 
     unknown = [c for c in (args.only or []) if c not in _CUES_BY_ID]
     if unknown:
         print(f"unknown cue id(s): {', '.join(unknown)}")
         return 2
     cue_ids = args.only or [c.id for c in CUES]
+    skipped = [] if has_library else [c for c in cue_ids if _CUES_BY_ID[c].sampled]
+    cue_ids = [c for c in cue_ids if c not in skipped]
+    if skipped:
+        print(f"sampled: no sound library ({library or picks.LIBRARY_ENV + ' not set'}), so {len(skipped)} sampled "
+              "cue(s) are not re-rendered; their committed files are checked against the manifest instead")
     audio_root = REPO / AUDIO_ROOT_ASSET
     out_root = Path(tempfile.mkdtemp(prefix="lunar_sfx_check_")) if args.check else audio_root
 
@@ -187,6 +224,8 @@ def main() -> int:
     previous = {}
     if MANIFEST.exists():
         previous = {c["id"]: c for c in json.loads(MANIFEST.read_text(encoding="utf-8"))["cues"]}
+    for cid in skipped:
+        problems += verify_sampled(_CUES_BY_ID[cid], previous, audio_root)
     entries = []
     for cue in CUES:
         if cue.id in results:

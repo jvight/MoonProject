@@ -130,7 +130,7 @@ def cutter_fault(lib, gen) -> np.ndarray:
                   at + 0.3, 0.32 * strength)
         fizz = parts.clip(lib, "crackle", 5000.0, 800.0)[:samples(0.25)]
         dsp.place(out, fizz * dsp.shape(len(fizz), [(0.0, 1.0), (0.25, 0.0)]), at + 0.45, 0.15 * strength)
-    dsp.place(out, voice.fault(lib, gen, 1), 1.9, 0.7)
+    dsp.place(out, voice.render(lib, gen, "voice_fault", 1), 1.9, 0.7)
     return out
 
 
@@ -191,7 +191,7 @@ def assembly(lib, gen) -> np.ndarray:
     n = samples(LENGTHS["boot_assembly"])
     out = np.zeros(n)
     dsp.place(out, parts.clip(lib, "case_latch", 3500.0), 0.0, 0.6)
-    dsp.place(out, voice.acknowledge(lib, gen, 0), 0.25, 0.8)
+    dsp.place(out, voice.render(lib, gen, "voice_ack", 0), 0.25, 0.8)
     return out
 
 

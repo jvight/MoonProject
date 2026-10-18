@@ -60,7 +60,7 @@ def structure_complete(lib, gen, variant: int) -> np.ndarray:
     out = np.zeros(n)
     dsp.place(out, parts.clip(lib, "case_latch", 3500.0), 0.0, 0.6)
     dsp.place(out, parts.clip(lib, "relay_click", 4500.0, 300.0), 0.12, 0.4)
-    dsp.place(out, voice.done(lib, gen, variant), 0.2, 0.85)
+    dsp.place(out, voice.render(lib, gen, "voice_done", variant), 0.2, 0.85)
     return out
 
 
