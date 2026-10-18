@@ -447,6 +447,9 @@ namespace MoonProject.UI.PlayModeTests
 
             Assert.IsTrue(_ui.Objective.ShowsBuildStep, "the weld line shows");
             Assert.AreEqual(BuildStep.Weld, _ui.Objective.ShownStep);
+            Assert.Greater(_ui.Layout.NextLineProgressFill.resolvedStyle.width, 0f, "its bar fills with the weld");
+            Assert.Greater(_ui.Layout.NextLineProgress.resolvedStyle.width,
+                _ui.Layout.NextLineProgressFill.resolvedStyle.width, "part-way along its track");
             yield return CaptureComposite(viewCamera, "build-step-c-weld");
             Release(_keyboard.eKey);
             yield return null;

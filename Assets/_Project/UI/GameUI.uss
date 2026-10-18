@@ -757,6 +757,7 @@ Label {
 
 /* The weld's bar under the build step's line: a calm cyan fill on an amber track */
 .next-line__progress {
+    align-self: stretch;
     height: 6px;
     margin-top: 8px;
     border-radius: 3px;
