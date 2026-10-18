@@ -77,6 +77,7 @@ namespace MoonProject.Art.Editor
         public const string PropMissionFlagPrefabPath = PropsModelsFolder + "/Prop_MissionFlag.prefab";
         public const string PropSeismicStationPrefabPath = PropsModelsFolder + "/Prop_SeismicStation.prefab";
         public const string PropRetroreflectorPrefabPath = PropsModelsFolder + "/Prop_Retroreflector.prefab";
+        public const string PropSurveyTripodPrefabPath = PropsModelsFolder + "/Prop_SurveyTripod.prefab";
 
         /// <summary>Loads the <c>MoonProject/R1/SignalPillar</c> shader asset.</summary>
         public static Shader LoadSignalPillarShader()
@@ -361,6 +362,10 @@ namespace MoonProject.Art.Editor
             else if (modelPath.EndsWith("/Prop_Retroreflector.fbx", StringComparison.Ordinal))
             {
                 ReplaceRendererSlotMaterial(root, "PrismArray", R1MaterialRecipes.DarkGlassSlot, LoadOrBuildMaterial(IceCoreWindowMaterialPath));
+                EnsureSimpleBoxCollider(root);
+            }
+            else if (modelPath.EndsWith("/Prop_SurveyTripod.fbx", StringComparison.Ordinal))
+            {
                 EnsureSimpleBoxCollider(root);
             }
         }

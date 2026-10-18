@@ -1374,10 +1374,415 @@ def build_retroreflector() -> bpy.types.Object:
     return root
 
 
+def _add_intact_survey_leg(
+    mb: r1kit.MeshBuilder,
+    p_hub: Tuple[float, float, float],
+    p_mid: Tuple[float, float, float],
+    p_foot: Tuple[float, float, float],
+    side_vec: Tuple[float, float, float],
+) -> None:
+    """Add a dual-rail telescoping survey tripod leg from p_hub through p_mid to p_foot."""
+    sx, sy, sz = side_vec
+    # Dual upper wooden/enamel survey leg rails (p_hub -> p_mid)
+    for sign in (-1.0, 1.0):
+        p0 = (p_hub[0] + sign * sx, p_hub[1] + sign * sy, p_hub[2] + sign * sz)
+        p1 = (p_mid[0] + sign * sx * 0.85, p_mid[1] + sign * sy * 0.85, p_mid[2] + sign * sz * 0.85)
+        mb.add_strut(p0, p1, width=0.022, thickness=0.018, mat="R1_CreamEnamel", bevel=0.002)
+
+    # Orange safety marking band near upper third of leg
+    p_band0 = (
+        p_hub[0] * 0.65 + p_mid[0] * 0.35,
+        p_hub[1] * 0.65 + p_mid[1] * 0.35,
+        p_hub[2] * 0.65 + p_mid[2] * 0.35,
+    )
+    p_band1 = (
+        p_hub[0] * 0.48 + p_mid[0] * 0.52,
+        p_hub[1] * 0.48 + p_mid[1] * 0.52,
+        p_hub[2] * 0.48 + p_mid[2] * 0.52,
+    )
+    mb.add_strut(p_band0, p_band1, width=0.056, thickness=0.024, mat="R1_OrangeStripe", bevel=0.002)
+
+    # Mid-span telescoping clamp collar (R1_GreyMetal + R1_Brass cam lever)
+    p_clamp_a = (
+        p_mid[0] * 0.92 + p_hub[0] * 0.08,
+        p_mid[1] * 0.92 + p_hub[1] * 0.08,
+        p_mid[2] * 0.92 + p_hub[2] * 0.08,
+    )
+    p_clamp_b = (
+        p_mid[0] * 0.92 + p_foot[0] * 0.08,
+        p_mid[1] * 0.92 + p_foot[1] * 0.08,
+        p_mid[2] * 0.92 + p_foot[2] * 0.08,
+    )
+    mb.add_strut(p_clamp_a, p_clamp_b, width=0.058, thickness=0.028, mat="R1_GreyMetal", bevel=0.003)
+    mb.add_cylinder(
+        center_u=(p_mid[0], p_mid[1] + 0.016, p_mid[2]),
+        radius=0.015,
+        length=0.020,
+        mat="R1_Brass",
+        axis_u="Y",
+        segments=10,
+        bevel=0.002,
+    )
+
+    # Lower telescoping tubular extension (p_mid -> p_foot)
+    mb.add_pipe(p_mid, p_foot, radius=0.013, mat="R1_BareSteel", segments=10)
+
+    # Pointed steel foot shoe & stepping spur at p_foot
+    p_tip = (
+        p_foot[0] + (p_foot[0] - p_mid[0]) * 0.14,
+        max(0.006, p_foot[1] - 0.004),
+        p_foot[2] + (p_foot[2] - p_mid[2]) * 0.14,
+    )
+    mb.add_strut(p_foot, p_tip, width=0.028, thickness=0.022, mat="R1_GreyMetal", bevel=0.002)
+
+
+def build_survey_tripod() -> bpy.types.Object:
+    """Build Deliverable 4: Prop_SurveyTripod (~1.32 W x 0.68 D x 0.38 H m).
+
+    Fallen survey tripod with a theodolite head, one leg buckled.
+    """
+    r1kit.reset_scene()
+    ensure_extended_r1_materials()
+    r1kit.ensure_materials()
+
+    root = r1kit.create_empty("Prop_SurveyTripod", pivot_u=(0.0, 0.0, 0.0))
+
+    hub_pos = (-0.32, 0.155, 0.02)
+    head_piv = (-0.47, 0.165, 0.02)
+    knee_piv = (0.12, 0.235, -0.17)
+
+    # 1. TripodFrame: tribrach crown hub + 2 intact splayed telescoping legs + regolith dust mounds
+    frame_mb = r1kit.MeshBuilder("TripodFrame", pivot_u=(0.0, 0.0, 0.0))
+
+    # Fallen tripod crown plate & hinge ears at hub_pos (pitched ~78 deg onto its side toward -X)
+    crown_rot = (8.0, 0.0, 76.0)
+    frame_mb.add_cylinder(
+        center_u=hub_pos,
+        radius=0.088,
+        length=0.036,
+        mat="R1_GreyMetal",
+        axis_u="Y",
+        segments=14,
+        bevel=0.004,
+        rot_deg_u=crown_rot,
+    )
+    frame_mb.add_cylinder(
+        center_u=(-0.355, 0.160, 0.02),
+        radius=0.072,
+        length=0.028,
+        mat="R1_Brass",
+        axis_u="Y",
+        segments=14,
+        bevel=0.003,
+        rot_deg_u=crown_rot,
+    )
+
+    # Intact Leg 1 (rear-bottom leg resting directly along the regolith, z > 0)
+    _add_intact_survey_leg(
+        frame_mb,
+        p_hub=(-0.29, 0.125, 0.075),
+        p_mid=(0.16, 0.052, 0.195),
+        p_foot=(0.58, 0.018, 0.275),
+        side_vec=(0.0, 0.016, 0.012),
+    )
+    # Regolith dust mound partially burying Leg 1's foot and mid-joint
+    frame_mb.add_cylinder(
+        center_u=(0.59, 0.006, 0.275),
+        radius=0.068,
+        radius_top=0.042,
+        length=0.022,
+        mat="R1_Basalt",
+        axis_u="Y",
+        segments=10,
+        bevel=0.004,
+    )
+
+    # Intact Leg 2 (lower-center leg touching the dust, z ~ 0.02)
+    _add_intact_survey_leg(
+        frame_mb,
+        p_hub=(-0.29, 0.095, -0.005),
+        p_mid=(0.15, 0.036, 0.010),
+        p_foot=(0.61, 0.016, 0.025),
+        side_vec=(0.0, 0.0, 0.018),
+    )
+    frame_mb.add_cylinder(
+        center_u=(0.62, 0.005, 0.025),
+        radius=0.062,
+        radius_top=0.038,
+        length=0.020,
+        mat="R1_Basalt",
+        axis_u="Y",
+        segments=10,
+        bevel=0.004,
+    )
+
+    # Folding spreader bar linking the 2 intact legs near hub
+    frame_mb.add_pipe(
+        p0_u=(-0.04, 0.082, 0.14),
+        p1_u=(-0.04, 0.062, 0.005),
+        radius=0.008,
+        mat="R1_BareSteel",
+        segments=8,
+    )
+    frame_mb.build_object(parent=root)
+
+    # 2. BuckledLeg: third survey leg visibly buckled upward/forward at a sharp dogleg knee (knee_piv)
+    buckled_mb = r1kit.MeshBuilder("BuckledLeg", pivot_u=knee_piv)
+    p_bhub = (-0.29, 0.195, -0.040)
+    p_bknee = knee_piv
+    p_bfoot = (0.49, 0.020, -0.255)
+
+    # Upper segment (p_bhub -> p_bknee): dual rails splayed/twisted open at the buckled knee
+    buckled_mb.add_strut(
+        (p_bhub[0], p_bhub[1] + 0.015, p_bhub[2] - 0.010),
+        (p_bknee[0] - 0.015, p_bknee[1] + 0.018, p_bknee[2] - 0.012),
+        width=0.022,
+        thickness=0.018,
+        mat="R1_CreamEnamel",
+        bevel=0.002,
+    )
+    buckled_mb.add_strut(
+        (p_bhub[0], p_bhub[1] - 0.015, p_bhub[2] + 0.010),
+        (p_bknee[0] - 0.010, p_bknee[1] - 0.014, p_bknee[2] + 0.016),
+        width=0.022,
+        thickness=0.018,
+        mat="R1_CreamEnamel",
+        bevel=0.002,
+    )
+    # Orange stripe band on upper buckled leg
+    buckled_mb.add_strut(
+        (-0.14, 0.210, -0.088),
+        (-0.04, 0.222, -0.120),
+        width=0.054,
+        thickness=0.024,
+        mat="R1_OrangeStripe",
+        bevel=0.002,
+    )
+
+    # Torn/popped telescoping clamp housing at the buckled knee joint + bent BareSteel inner tube
+    buckled_mb.add_bevel_box(
+        center_u=p_bknee,
+        size_u=(0.068, 0.046, 0.044),
+        mat="R1_GreyMetal",
+        bevel=0.004,
+        segments=1,
+        rot_deg_u=(18.0, -22.0, -14.0),
+    )
+    buckled_mb.add_cylinder(
+        center_u=(p_bknee[0] + 0.012, p_bknee[1] + 0.026, p_bknee[2] - 0.008),
+        radius=0.016,
+        length=0.024,
+        mat="R1_Brass",
+        axis_u="Y",
+        segments=10,
+        bevel=0.002,
+        rot_deg_u=(25.0, -15.0, -32.0),
+    )
+    # Kinked bare-steel inner telescoping rod bending sharply down from knee_piv to p_bfoot
+    buckled_mb.add_tube_path(
+        points_u=[
+            (p_bknee[0] - 0.02, p_bknee[1] + 0.004, p_bknee[2]),
+            (p_bknee[0] + 0.035, p_bknee[1] - 0.012, p_bknee[2] - 0.018),
+            (0.28, 0.135, -0.215),
+            p_bfoot,
+        ],
+        radius=0.0135,
+        mat="R1_BareSteel",
+        segments=10,
+        cap_ends=True,
+    )
+    # Snapped spreader strut stub hanging from the buckled knee
+    buckled_mb.add_pipe(
+        p0_u=(p_bknee[0] - 0.03, p_bknee[1] - 0.015, p_bknee[2] + 0.01),
+        p1_u=(0.04, 0.115, -0.085),
+        radius=0.0075,
+        mat="R1_BareSteel",
+        segments=8,
+    )
+    # Pointed foot shoe at p_bfoot + regolith impact clod
+    buckled_mb.add_bevel_box(
+        center_u=(p_bfoot[0] + 0.022, p_bfoot[1], p_bfoot[2] - 0.010),
+        size_u=(0.052, 0.026, 0.030),
+        mat="R1_GreyMetal",
+        bevel=0.003,
+        segments=1,
+        rot_deg_u=(0.0, 18.0, -28.0),
+    )
+    buckled_mb.add_cylinder(
+        center_u=(p_bfoot[0] + 0.018, 0.006, p_bfoot[2] - 0.008),
+        radius=0.054,
+        radius_top=0.035,
+        length=0.018,
+        mat="R1_Basalt",
+        axis_u="Y",
+        segments=10,
+        bevel=0.003,
+    )
+    buckled_mb.build_object(parent=root)
+
+    # 3. TheodoliteHead: fallen optical survey theodolite head attached to the tribrach at head_piv
+    head_mb = r1kit.MeshBuilder("TheodoliteHead", pivot_u=head_piv)
+    head_rot = (12.0, -10.0, 74.0)
+
+    def hp(x: float, y: float, z: float) -> Tuple[float, float, float]:
+        return _rotate_u((head_piv[0] + x, head_piv[1] + y, head_piv[2] + z), head_rot, head_piv)
+
+    # Tribrach stage & 3 brass leveling thumbscrews
+    head_mb.add_cylinder(
+        center_u=hp(0.0, -0.075, 0.0),
+        radius=0.070,
+        length=0.032,
+        mat="R1_GreyMetal",
+        axis_u="Y",
+        segments=14,
+        bevel=0.003,
+        rot_deg_u=head_rot,
+    )
+    for ang_deg in (0.0, 120.0, 240.0):
+        ar = math.radians(ang_deg)
+        head_mb.add_cylinder(
+            center_u=hp(0.058 * math.cos(ar), -0.095, 0.058 * math.sin(ar)),
+            radius=0.014,
+            length=0.028,
+            mat="R1_Brass",
+            axis_u="Y",
+            segments=10,
+            bevel=0.002,
+            rot_deg_u=head_rot,
+        )
+
+    # Azimuth vernier scale drum & U-shaped alidade standards (R1_CreamEnamel + R1_OrangeStripe)
+    head_mb.add_cylinder(
+        center_u=hp(0.0, -0.042, 0.0),
+        radius=0.064,
+        length=0.034,
+        mat="R1_CreamEnamel",
+        axis_u="Y",
+        segments=14,
+        bevel=0.004,
+        rot_deg_u=head_rot,
+    )
+    # Left & Right alidade uprights supporting the telescope trunnion axis
+    for sz in (-0.054, 0.054):
+        head_mb.add_bevel_box(
+            center_u=hp(0.0, 0.025, sz),
+            size_u=(0.068, 0.125, 0.028),
+            mat="R1_CreamEnamel",
+            bevel=0.004,
+            segments=1,
+            rot_deg_u=head_rot,
+        )
+    # Elevation vernier circle drum on +Z upright & GoldFoil thermal cap on top bridge
+    head_mb.add_cylinder(
+        center_u=hp(0.0, 0.045, 0.074),
+        radius=0.044,
+        length=0.018,
+        mat="R1_Brass",
+        axis_u="Z",
+        segments=14,
+        bevel=0.002,
+        rot_deg_u=head_rot,
+    )
+    head_mb.add_bevel_box(
+        center_u=hp(0.0, 0.092, 0.0),
+        size_u=(0.054, 0.020, 0.135),
+        mat="R1_OrangeStripe",
+        bevel=0.003,
+        segments=1,
+        rot_deg_u=head_rot,
+    )
+    head_mb.add_bevel_box(
+        center_u=hp(0.0, 0.106, 0.0),
+        size_u=(0.044, 0.012, 0.095),
+        mat="R1_GoldFoil",
+        bevel=0.002,
+        segments=1,
+        rot_deg_u=head_rot,
+    )
+
+    # Optical telescope barrel (tilted inside the yoke) + Brass objective ring + DarkGlass lens
+    head_mb.add_cylinder(
+        center_u=hp(0.0, 0.045, 0.0),
+        radius=0.032,
+        length=0.165,
+        mat="R1_GreyMetal",
+        axis_u="X",
+        segments=14,
+        bevel=0.003,
+        rot_deg_u=head_rot,
+    )
+    head_mb.add_cylinder(
+        center_u=hp(-0.088, 0.045, 0.0),
+        radius=0.036,
+        length=0.022,
+        mat="R1_Brass",
+        axis_u="X",
+        segments=14,
+        bevel=0.002,
+        rot_deg_u=head_rot,
+    )
+    head_mb.add_cylinder(
+        center_u=hp(-0.096, 0.045, 0.0),
+        radius=0.028,
+        length=0.012,
+        mat="R1_DarkGlass",
+        axis_u="X",
+        segments=14,
+        bevel=0.002,
+        rot_deg_u=head_rot,
+    )
+    # Eyepiece micrometer barrel at +X end of telescope
+    head_mb.add_cylinder(
+        center_u=hp(0.092, 0.045, 0.0),
+        radius=0.020,
+        length=0.028,
+        mat="R1_BareSteel",
+        axis_u="X",
+        segments=12,
+        bevel=0.002,
+        rot_deg_u=head_rot,
+    )
+    head_mb.add_cylinder(
+        center_u=hp(0.104, 0.045, 0.0),
+        radius=0.014,
+        length=0.010,
+        mat="R1_DarkGlass",
+        axis_u="X",
+        segments=10,
+        bevel=0.0015,
+        rot_deg_u=head_rot,
+    )
+    # Regolith dust cushion beneath the fallen theodolite head
+    head_mb.add_bevel_box(
+        center_u=(-0.50, 0.012, 0.02),
+        size_u=(0.18, 0.028, 0.16),
+        mat="R1_Basalt",
+        bevel=0.006,
+        segments=1,
+        top_scale_xz=(0.72, 0.72),
+    )
+    head_mb.build_object(parent=root)
+
+    # Anchors
+    r1kit.create_empty("Base_Anchor", parent=root, pivot_u=(0.0, 0.0, 0.0))
+    r1kit.create_empty("Head_Anchor", parent=root, pivot_u=head_piv)
+    r1kit.create_empty("BuckledKnee_Anchor", parent=root, pivot_u=knee_piv)
+
+    r1kit.apply_triplanar_uvs(root)
+    r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))
+    r1kit.bake_vertex_colors(root, footprint_radius=0.68)
+
+    fbx_path = PROPS_DIR / "Prop_SurveyTripod.fbx"
+    r1kit.export_fbx(root, fbx_path, bake_space_transform=False)
+    print(f"Exported {fbx_path}")
+    return root
+
+
 BUILDERS: Dict[str, Callable[[], bpy.types.Object]] = {
     "mission_flag": build_mission_flag,
     "seismic_station": build_seismic_station,
     "retroreflector": build_retroreflector,
+    "survey_tripod": build_survey_tripod,
 }
 
 
@@ -1391,6 +1796,7 @@ def _parse_args() -> argparse.Namespace:
         help="Which Basin Life prop to build (default: all)",
     )
     return ap.parse_args(argv)
+
 
 
 def main() -> None:

@@ -42,6 +42,7 @@ namespace MoonProject.Art.Tests
             ("prop_mission_flag.json", "Props/Prop_MissionFlag.fbx"),
             ("prop_seismic_station.json", "Props/Prop_SeismicStation.fbx"),
             ("prop_retroreflector.json", "Props/Prop_Retroreflector.fbx"),
+            ("prop_survey_tripod.json", "Props/Prop_SurveyTripod.fbx"),
         };
 
         [Serializable]
@@ -551,6 +552,25 @@ namespace MoonProject.Art.Tests
 
             Assert.IsTrue(hasWindowGlint, "Prop_Retroreflector PrismArray must use high-glint optical window material.");
             AssertNoEmissiveMaterials(retroPrefab);
+        }
+
+        [Test]
+        public void PropSurveyTripod_IsFallenWithTheodoliteHead_BuckledLeg_AndBoxCollider()
+        {
+            GameObject tripodPrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.PropSurveyTripodPrefabPath);
+            Assert.IsNotNull(tripodPrefab.transform.Find("TripodFrame"), "Prop_SurveyTripod missing TripodFrame.");
+            Assert.IsNotNull(tripodPrefab.transform.Find("BuckledLeg"), "Prop_SurveyTripod missing BuckledLeg.");
+            Assert.IsNotNull(tripodPrefab.transform.Find("TheodoliteHead"), "Prop_SurveyTripod missing TheodoliteHead.");
+            Assert.IsNotNull(tripodPrefab.transform.Find("Base_Anchor"), "Prop_SurveyTripod missing Base_Anchor.");
+            Assert.IsNotNull(tripodPrefab.transform.Find("Head_Anchor"), "Prop_SurveyTripod missing Head_Anchor.");
+            Assert.IsNotNull(tripodPrefab.transform.Find("BuckledKnee_Anchor"), "Prop_SurveyTripod missing BuckledKnee_Anchor.");
+
+            BoxCollider box = tripodPrefab.GetComponent<BoxCollider>();
+            Assert.IsNotNull(box, "Prop_SurveyTripod must have a simple BoxCollider on root.");
+            Assert.Greater(box.size.x, box.size.y * 2.5f,
+                "Prop_SurveyTripod must be fallen horizontally on the ground (width much greater than height).");
+
+            AssertNoEmissiveMaterials(tripodPrefab);
         }
 
         private static void AssertNoEmissiveMaterials(GameObject prefab)
