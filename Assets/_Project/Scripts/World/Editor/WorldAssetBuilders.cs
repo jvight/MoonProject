@@ -68,37 +68,15 @@ namespace MoonProject.World.Editor
             Texture2D basaltAlbedo = LoadTexture(WorldPaths.BasaltAlbedoTexture);
             Texture2D basaltNormal = LoadTexture(WorldPaths.BasaltNormalTexture);
             Texture2D basaltMask = LoadTexture(WorldPaths.BasaltMaskTexture);
-            GeneratedAssets.CreateOrReplace(
-                CreateGroundMaterial(groundShader, regolithAlbedo, regolithNormal, regolithMask, basaltAlbedo, basaltNormal, basaltMask, -1f),
-                WorldPaths.GroundMaterial);
-            GeneratedAssets.CreateOrReplace(
-                CreateGroundMaterial(groundShader, regolithAlbedo, regolithNormal, regolithMask, basaltAlbedo, basaltNormal, basaltMask, 0f),
-                WorldPaths.GroundMaterialA);
-            GeneratedAssets.CreateOrReplace(
-                CreateGroundMaterial(groundShader, regolithAlbedo, regolithNormal, regolithMask, basaltAlbedo, basaltNormal, basaltMask, 1f),
-                WorldPaths.GroundMaterialB);
-            AssetDatabase.SaveAssets();
-        }
-
-        private static Material CreateGroundMaterial(
-            Shader shader,
-            Texture2D regolithAlbedo,
-            Texture2D regolithNormal,
-            Texture2D regolithMask,
-            Texture2D basaltAlbedo,
-            Texture2D basaltNormal,
-            Texture2D basaltMask,
-            float variant)
-        {
-            var material = new Material(shader);
+            var material = new Material(groundShader);
             material.SetTexture("_BaseMap", regolithAlbedo);
             material.SetTexture("_BumpMap", regolithNormal);
             material.SetTexture("_MaskMap", regolithMask);
             material.SetTexture("_RockMap", basaltAlbedo);
             material.SetTexture("_RockBumpMap", basaltNormal);
             material.SetTexture("_RockMaskMap", basaltMask);
-            material.SetFloat("_TerrainVariant", variant);
-            return material;
+            GeneratedAssets.CreateOrReplace(material, WorldPaths.GroundMaterial);
+            AssetDatabase.SaveAssets();
         }
 
         /// <summary>The marks pressed into the dust (M3-18 V4): the rover's track shader with World's tint and fade.</summary>
@@ -118,20 +96,10 @@ namespace MoonProject.World.Editor
         public static void BuildSkyMaterials()
         {
             GeneratedAssets.CreateOrReplace(new Material(LoadShader(WorldPaths.SkyShader)), WorldPaths.SkyMaterial);
-            Shader earthShader = LoadShader(WorldPaths.EarthShader);
-            Texture2D earthAlbedo = LoadEarthTexture(WorldPaths.EarthAlbedoTexture);
-            GeneratedAssets.CreateOrReplace(CreateEarthMaterial(earthShader, earthAlbedo, -1f), WorldPaths.EarthMaterial);
-            GeneratedAssets.CreateOrReplace(CreateEarthMaterial(earthShader, earthAlbedo, 0f), WorldPaths.EarthMaterialA);
-            GeneratedAssets.CreateOrReplace(CreateEarthMaterial(earthShader, earthAlbedo, 1f), WorldPaths.EarthMaterialA2);
+            var earthMaterial = new Material(LoadShader(WorldPaths.EarthShader));
+            earthMaterial.SetTexture("_EarthAlbedoMap", LoadTexture(WorldPaths.EarthAlbedoTexture));
+            GeneratedAssets.CreateOrReplace(earthMaterial, WorldPaths.EarthMaterial);
             AssetDatabase.SaveAssets();
-        }
-
-        private static Material CreateEarthMaterial(Shader shader, Texture2D albedo, float variant)
-        {
-            var material = new Material(shader);
-            material.SetTexture("_EarthAlbedoMap", albedo);
-            material.SetFloat("_EarthVariant", variant);
-            return material;
         }
 
         /// <summary>
@@ -314,55 +282,6 @@ namespace MoonProject.World.Editor
             }
 
             return shader;
-        }
-
-        private static Texture2D LoadEarthTexture(string path)
-        {
-            if (AssetDatabase.LoadAssetAtPath<Texture2D>(path) == null)
-            {
-                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
-            }
-
-            if (AssetImporter.GetAtPath(path) is TextureImporter importer)
-            {
-                bool dirty = false;
-                if (importer.wrapModeU != TextureWrapMode.Repeat)
-                {
-                    importer.wrapModeU = TextureWrapMode.Repeat;
-                    dirty = true;
-                }
-
-                if (importer.wrapModeV != TextureWrapMode.Clamp)
-                {
-                    importer.wrapModeV = TextureWrapMode.Clamp;
-                    dirty = true;
-                }
-
-                if (!importer.sRGBTexture)
-                {
-                    importer.sRGBTexture = true;
-                    dirty = true;
-                }
-
-                if (importer.alphaIsTransparency)
-                {
-                    importer.alphaIsTransparency = false;
-                    dirty = true;
-                }
-
-                if (importer.textureCompression != TextureImporterCompression.Uncompressed)
-                {
-                    importer.textureCompression = TextureImporterCompression.Uncompressed;
-                    dirty = true;
-                }
-
-                if (dirty)
-                {
-                    importer.SaveAndReimport();
-                }
-            }
-
-            return LoadTexture(path);
         }
 
         private static Texture2D LoadTexture(string path)

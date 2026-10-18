@@ -184,10 +184,6 @@ namespace MoonProject.World
         [Range(0.01f, 0.3f)]
         [SerializeField] private float _crestBlend = 0.05f;
 
-        [Header("R1 Look Variant")]
-        [Tooltip("Terrain look variant: HighlandRealism (A, cool neutral grey lunar regolith with 500m+ detail normal and slope craters) or Stylized (B, crisper geological bands and painterly ridges).")]
-        [SerializeField] private TerrainLookVariant _terrainVariant = TerrainLookVariant.HighlandRealism;
-
         public float RockSlope => _rockSlope;
         public float RimRockSlope => _rimRockSlope;
         public float RimZoneStart => _rimZoneStart;
@@ -227,21 +223,5 @@ namespace MoonProject.World
         public float RimFaceShade => _rimFaceShade;
         public float CrestZone => _crestZone;
         public float CrestBlend => _crestBlend;
-        public TerrainLookVariant TerrainVariant => _terrainVariant;
-
-        /// <summary>Switches the active R1 terrain look variant and updates the global shader property immediately.</summary>
-        public void SetTerrainVariant(TerrainLookVariant variant)
-        {
-            _terrainVariant = variant;
-            Shader.SetGlobalFloat("_MoonTerrainVariant", (float)variant);
-        }
-    }
-
-    /// <summary>Switchable R1 terrain shader look variants (Current = legacy pre-pass, A = Highland realism, B = Stronger stylization).</summary>
-    public enum TerrainLookVariant
-    {
-        Current = -1,
-        HighlandRealism = 0,
-        Stylized = 1,
     }
 }

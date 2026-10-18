@@ -3,14 +3,6 @@ using UnityEngine;
 
 namespace MoonProject.World
 {
-    /// <summary>Switchable look variants for Earth (R1 moonlook pass: Current = legacy pre-pass, BlueMarble = Earth A, Stylized = Earth A2).</summary>
-    public enum EarthLookVariant
-    {
-        Current = -1,
-        BlueMarble = 0,
-        Stylized = 1
-    }
-
     /// <summary>
     /// The night sky: gradient, stars, milky way, shooting stars and Earth. Pushed to the sky and Earth shaders as
     /// global properties by <see cref="SkyShaderGlobals"/>; IWorldLayout.EarthDirection comes from here too.
@@ -110,9 +102,6 @@ namespace MoonProject.World
         [SerializeField] private float _milkyWayIntensity = 0.8f;
 
         [Header("Earth")]
-        [Tooltip("Switchable look variant for Earth: BlueMarble (Earth A) or Stylized painterly (Earth A2).")]
-        [SerializeField] private EarthLookVariant _earthVariant = EarthLookVariant.BlueMarble;
-
         [Tooltip("Bearing of Earth from the base, degrees clockwise from +Z. The rover starts facing +Z.")]
         [Range(0f, 360f)]
         [SerializeField] private float _earthBearing = 338f;
@@ -230,15 +219,6 @@ namespace MoonProject.World
         public Color MilkyWayColor => _milkyWayColor;
         public float MilkyWayWidth => _milkyWayWidth;
         public float MilkyWayIntensity => _milkyWayIntensity;
-        public EarthLookVariant EarthVariant => _earthVariant;
-
-        /// <summary>Switches the active Earth look variant and updates the global shader property immediately.</summary>
-        public void SetEarthVariant(EarthLookVariant variant)
-        {
-            _earthVariant = variant;
-            Shader.SetGlobalFloat("_MoonEarthVariant", (float)variant);
-        }
-
         public float EarthBearing => _earthBearing;
         public float EarthElevation => _earthElevation;
         public float EarthDiameter => _earthDiameter;
