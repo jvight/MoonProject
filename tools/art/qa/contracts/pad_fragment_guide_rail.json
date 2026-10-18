@@ -1,0 +1,54 @@
+{
+  "model": "pad_fragment_guide_rail",
+  "pivot_tolerance": 0.01,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_BareSteel",
+    "R1_Brass",
+    "R1_CreamEnamel",
+    "R1_GreyMetal",
+    "R1_OrangeStripe",
+    "R1_Rubber",
+    "R1_Signage"
+  ],
+  "max_triangles": 4200,
+  "max_meshes": 2,
+  "max_draw_calls": 10,
+  "allow_rotation": [],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "PadFragment_GuideRail": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Scan_1": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.09
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      0.28,
+      0.9,
+      0.18
+    ],
+    "tolerance": 0.02,
+    "min_size": [
+      0.26,
+      0.88,
+      0.16
+    ],
+    "max_size": [
+      0.3,
+      0.92,
+      0.2
+    ]
+  }
+}
