@@ -89,7 +89,7 @@ Shader "MoonProject/Art/LofiScanLines"
                 half centerProfile = smoothstep(0.35h, 0.85h, saturate(dot(normalize(input.normalWS), viewDirWS)));
                 half4 pingParams = (half4)MoonScanGetPingParams();
                 half3 pingColor = MoonScanGetPingColor();
-                half3 emission = pingColor * (pingEnv * centerProfile * pingParams.w * 0.65h);
+                half3 emission = pingColor * (pingEnv * centerProfile * pingParams.y * 0.65h);
                 return half4(MixFogColor(emission, half3(0.0h, 0.0h, 0.0h), input.fogFactor), 1.0h);
             }
             ENDHLSL
