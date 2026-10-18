@@ -65,10 +65,11 @@ namespace MoonProject.World
         };
 
         [Header("The Scout, the 1967 soft lander (basin dressing §2, §4)")]
-        [Tooltip("Yaw of the Scout, degrees clockwise from +Z: it stands square on its crater's wall, and the yaw " +
-            "turns Art's half-buried footpad down the slope, so it leans about 12 degrees off level in all.")]
+        [Tooltip("Yaw of the Scout, degrees clockwise from +Z: it stands square on its crater's wall, its planar " +
+            "array turned to 327.6 degrees, halfway between Earth and the apron, as near a mirror for the earthshine " +
+            "as Art's fixed array tilt allows.")]
         [Range(0f, 360f)]
-        [SerializeField] private float _scoutYaw = 137.7f;
+        [SerializeField] private float _scoutYaw = 337.6f;
 
         [Tooltip("How deep the Scout's footpads sit in the dust, metres: fifty years of settling.")]
         [Range(0f, 0.4f)]

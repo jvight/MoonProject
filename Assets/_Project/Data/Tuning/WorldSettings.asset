@@ -576,7 +576,7 @@ MonoBehaviour:
       _offset: {x: 10, y: 30}
       _yaw: 75
       _sink: 0.8
-    _scoutYaw: 137.7
+    _scoutYaw: 337.6
     _scoutSink: 0.08
     _scoutBlastSink: 0.03
     _signalPillarSetback: 18
