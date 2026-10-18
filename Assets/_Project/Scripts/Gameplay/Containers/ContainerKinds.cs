@@ -13,9 +13,11 @@ namespace MoonProject.Gameplay
         public const string CrateM = "Crate_M";
         public const string CrateL = "Crate_L";
 
-        /// <summary>The open crate with its contents in view (the lander's, B4): Igniter, MetalBundle, WiringSpool and
-        /// its RimGlow.</summary>
-        public const string CrateMOpen = "Crate_M_Open";
+        /// <summary>
+        /// The lander's big open cargo crate (B3, B4), at true size: the charging pad's two fragments rest on its
+        /// PartSocket_0/1 above the rim, the ice-core tube on its ItemSocket, and its RimGlow warms as 07 comes near.
+        /// </summary>
+        public const string CrateCargoOpen = "Crate_Cargo_Open";
 
         /// <summary>
         /// The kind of Art's crate prefab <paramref name="prefab"/>; an unknown name is a wiring bug.
@@ -27,7 +29,7 @@ namespace MoonProject.Gameplay
                 case CrateS:
                 case CrateM:
                 case CrateL:
-                case CrateMOpen:
+                case CrateCargoOpen:
                     return ContainerKind.Crate;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(prefab), prefab, "Not one of Art's crates.");

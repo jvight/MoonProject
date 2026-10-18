@@ -22,6 +22,9 @@ namespace MoonProject.Gameplay
         private const string CargoTargetPrefix = "Scan_";
         private const string CargoFragmentPrefix = "CargoFragment_";
 
+        // Art's empty sockets on Crate_Cargo_Open where the pad fragments rest, above the rim: PartSocket_0, _1.
+        private const string CargoSocketPrefix = "PartSocket_";
+
         private readonly OpeningTuning _tuning;
         private readonly IRoverState _rover;
         private readonly ISunlight _sunlight;
@@ -226,28 +229,21 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// Art's pad fragments lying in the cargo crate, at the scan points in its <paramref name="level"/> frame; each
-        /// fragment's own Scan_1 node becomes the set's Scan_1..N in order.
+        /// Art's pad fragments lying in the cargo crate, each on Art's PartSocket_N in order, level in the crate's
+        /// <paramref name="level"/> frame; each fragment's own Scan_1 node becomes the set's Scan_1..N in order.
         /// </summary>
         private Transform CargoBay(Transform crate, Quaternion level)
         {
             IReadOnlyList<GameObject> fragments = _tuning.CargoFragments;
-            if (fragments.Count != _tuning.CargoScanPoints.Count)
-            {
-                throw new InvalidOperationException($"OpeningTuning has {fragments.Count} cargo fragments for " +
-                                                    $"{_tuning.CargoScanPoints.Count} cargo scan points.");
-            }
-
-            // Art's fragments keep their own size however big the crate stands (OpeningTuning's crate scale).
-            Vector3 crateScale = crate.lossyScale;
-            var ownSize = new Vector3(1f / crateScale.x, 1f / crateScale.y, 1f / crateScale.z);
-            for (int i = 0; i < _tuning.CargoScanPoints.Count; i++)
+            for (int i = 0; i < fragments.Count; i++)
             {
                 string number = (i + 1).ToString(CultureInfo.InvariantCulture);
+                Transform socket = FindNode(crate, CargoSocketPrefix + i.ToString(CultureInfo.InvariantCulture))
+                                   ?? throw new InvalidOperationException($"The cargo crate '{crate.name}' has no " +
+                                       $"{CargoSocketPrefix}{i} for pad fragment {i + 1} (Art's Crate_Cargo_Open).");
                 Transform rest = new GameObject(CargoFragmentPrefix + number).transform;
                 rest.SetParent(crate, false);
-                rest.localScale = ownSize;
-                rest.SetPositionAndRotation(crate.position + level * _tuning.CargoScanPoints[i], level);
+                rest.SetPositionAndRotation(socket.position, level);
                 GameObject fragment = fragments[i] != null ? fragments[i] : throw new InvalidOperationException(
                     $"OpeningTuning's cargo fragment {i + 1} is not assigned.");
                 Transform piece = UnityEngine.Object.Instantiate(fragment, rest, false).transform;

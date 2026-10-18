@@ -36,17 +36,9 @@ namespace MoonProject.Gameplay
         [Tooltip("The open crate whose cargo 07 scans for the pad's blueprint (B3) and then collects (B4).")]
         [SerializeField] private string _cargoCrate = "supply.lander.open";
 
-        [Tooltip("Where the charging pad's fragments lie in the cargo crate's frame (x right, y up, z its front), " +
-                 "in metres from its foot whatever its scale: Scan_1..N in order, each on its fragment, so the scan " +
-                 "draws on a real mesh. They rest on top of the crate's packed contents, showing above its rim.")]
-        [SerializeField] private Vector3[] _cargoScanPoints =
-        {
-            new Vector3(-0.27f, 0.58f, 0f),
-            new Vector3(0.28f, 0.58f, 0f),
-        };
-
-        [Tooltip("Art's pad fragments lying in the cargo crate, one per scan point in order (PadFragment_CoilPlate, " +
-                 "PadFragment_GuideRail).")]
+        [Tooltip("Art's pad fragments lying in the cargo crate, one per PartSocket_N in order (PadFragment_CoilPlate " +
+                 "on PartSocket_0, PadFragment_GuideRail on PartSocket_1): Scan_1..N, each on its fragment, so the " +
+                 "scan draws on a real mesh above the crate's rim.")]
         [SerializeField] private GameObject[] _cargoFragments = Array.Empty<GameObject>();
 
         [Header("The start kit (§10)")]
@@ -98,8 +90,8 @@ namespace MoonProject.Gameplay
                 new Recipe(3, 1, 0)),
             new SupplyCache("supply.midway", "place.midway", new Vector3(1.5f, 0f, 0f), -20f, "Crate_S",
                 new Recipe(2, 1, 0)),
-            new SupplyCache("supply.lander.open", OpeningField.LanderPortFrame, new Vector3(4.2f, 0f, -1.4f), -135f,
-                ContainerKinds.CrateMOpen, new Recipe(2, 1, 0), true, new[] { "part.igniter", "part.icecore" }, 2f),
+            new SupplyCache("supply.lander.open", OpeningField.LanderPortFrame, new Vector3(4.2f, 0f, -1.4f), 45f,
+                ContainerKinds.CrateCargoOpen, new Recipe(2, 1, 0), true, new[] { "part.igniter", "part.icecore" }),
             new SupplyCache("supply.habitat.reel", "HabitatModules", new Vector3(-3f, 0f, -6f), 207f, "Crate_M",
                 new Recipe(6, 4, 0)),
             new SupplyCache("supply.workshop.a", "KenjiWorkshop", new Vector3(-2.5f, 0f, -5f), -140f, "Crate_S",
@@ -127,7 +119,6 @@ namespace MoonProject.Gameplay
         public float PortCableReach => _portCableReach;
         public float PadChargeRadius => _padChargeRadius;
         public string CargoCrate => _cargoCrate;
-        public IReadOnlyList<Vector3> CargoScanPoints => _cargoScanPoints;
         public IReadOnlyList<GameObject> CargoFragments => _cargoFragments ?? Array.Empty<GameObject>();
         public IReadOnlyList<SupplyCache> Caches => _caches;
         public string IgniterPart => _igniterPart;

@@ -4,7 +4,7 @@ using UnityEngine;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The soft warm rim glow of an open crate (Art's RimGlow on Crate_M_Open): it warms as 07 comes within reach while
+    /// The soft warm rim glow of an open crate (Art's RimGlow on Crate_Cargo_Open): it warms as 07 comes within reach while
     /// the crate still holds something, brighter the nearer 07 is over the outer band, and cools off once it is
     /// emptied or 07 drives away, easing both ways. Writes only <c>_EmissionStrength</c> and <c>_BloomSafeMax</c>
     /// into the renderers' property blocks (Art's values read from their material, times the tuning's strength) and

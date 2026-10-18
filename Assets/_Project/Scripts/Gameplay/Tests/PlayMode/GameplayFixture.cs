@@ -174,7 +174,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             visuals.PopulateContainers(new[]
             {
                 CrateTemplate(ContainerKinds.CrateS, 0.6f), CrateTemplate(ContainerKinds.CrateM, 0.9f),
-                CrateTemplate(ContainerKinds.CrateL, 1.2f), CrateTemplate(ContainerKinds.CrateMOpen, 0.9f),
+                CrateTemplate(ContainerKinds.CrateL, 1.2f), CargoCrateTemplate(),
             });
             OpeningTuning.PopulateCargoFragments(new[]
             {
@@ -412,6 +412,24 @@ namespace MoonProject.Gameplay.PlayModeTests
             var socket = new GameObject(SealedContainer.ItemSocketPath);
             socket.transform.SetParent(container.transform, false);
             socket.transform.localPosition = new Vector3(0f, width * 0.28f, 0f);
+            return container;
+        }
+
+        /// <summary>
+        /// A stand-in for Art's Crate_Cargo_Open at its true size: a shell lower than its two part sockets, which the
+        /// pad fragments rest on above the rim.
+        /// </summary>
+        private GameObject CargoCrateTemplate()
+        {
+            // Art's contract (tools/art/qa/contracts/crate_cargo_open.json): 2.29 x 0.70 x 1.35 m, the shell kept
+            // below the sockets at 0.55 m.
+            GameObject container = Template(ContainerKinds.CrateCargoOpen, new Vector3(2.29f, 1.06f, 1.35f));
+            Transform lid = Node(SealedContainer.LidPath, container.transform, new Vector3(0f, 0.7f, -0.67f));
+            Node(SealedContainer.CutPointName, lid, new Vector3(0f, 0f, 1.35f));
+            Named(Block(lid, new Vector3(0f, 0f, 1.35f), new Vector3(2f, 0.04f, 0.04f)), SealedContainer.SealName);
+            Node(SealedContainer.ItemSocketPath, container.transform, new Vector3(0f, 0.48f, 0f));
+            Node("PartSocket_0", container.transform, new Vector3(-0.32f, 0.55f, 0f));
+            Node("PartSocket_1", container.transform, new Vector3(0.34f, 0.55f, 0f));
             return container;
         }
 
