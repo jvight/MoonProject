@@ -211,16 +211,31 @@ namespace MoonProject.Autoplay
         public IEnumerator ScanTheSet(string setId)
         {
             ScanField scans = G.Scans;
-            for (int i = 0; !_bot.Failed && scans.Find(ScanField.FragmentId(setId, i)) != null; i++)
+            while (!_bot.Failed)
+            {
+                ScanFragment fragment = FirstUnscanned(scans, setId);
+                if (fragment == null)
+                {
+                    yield break;
+                }
+
+                Vector3 away = Flat(_bot.World.Rover.Position - fragment.Point);
+                yield return Scan(fragment, away.sqrMagnitude > 1e-4f ? away.normalized : Vector3.back, ScanStandOff);
+            }
+        }
+
+        private static ScanFragment FirstUnscanned(ScanField scans, string setId)
+        {
+            for (int i = 0; scans.Find(ScanField.FragmentId(setId, i)) != null; i++)
             {
                 ScanFragment fragment = scans.Find(ScanField.FragmentId(setId, i));
                 if (!fragment.Scanned)
                 {
-                    Vector3 away = Flat(_bot.World.Rover.Position - fragment.Point);
-                    yield return Scan(fragment, away.sqrMagnitude > 1e-4f ? away.normalized : Vector3.back,
-                        ScanStandOff);
+                    return fragment;
                 }
             }
+
+            return null;
         }
 
         /// <summary>B7: the habitat's airlock panel, read from square on.</summary>
@@ -404,7 +419,7 @@ namespace MoonProject.Autoplay
             if (_bot.World.Ui.Chip().Length == 0)
             {
                 _bot.Warn("guidance gap: " + verb + " showed no prompt chip on its first use (line on screen: '" +
-                          _bot.World.Ui.ObjectiveLine() + "').");
+                          _bot.World.Ui.ObjectiveLine() + "'; " + _bot.World.Ui.DescribeChip() + ").");
             }
         }
 
