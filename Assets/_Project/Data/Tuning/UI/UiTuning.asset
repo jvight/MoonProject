@@ -596,7 +596,8 @@ MonoBehaviour:
       _scaleFrom: 0.96
       _springFrequency: 1
       _springDamping: 0.7
-    _holdSeconds: 4
+    _holdSeconds: 3
+    _minReadSeconds: 1.5
   _crateNote:
     _reveal:
       _fadeIn: 0.9

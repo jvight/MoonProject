@@ -67,9 +67,19 @@ namespace MoonProject.UI
             }
         }
 
+        /// <summary>
+        /// True once a card shown for <paramref name="shownSeconds"/> should leave: after its rest, or sooner when
+        /// the player has moved on (<paramref name="movedOn"/>) and the card has had its short read.
+        /// </summary>
+        public static bool Ends(float shownSeconds, bool movedOn, UnlockCardSettings settings)
+        {
+            return shownSeconds >= settings.HoldSeconds || (movedOn && shownSeconds >= settings.MinReadSeconds);
+        }
+
         /// <param name="deltaTime">Unscaled seconds; 0 while paused.</param>
         /// <param name="open">False while another block holds the screen.</param>
-        public void Tick(float deltaTime, bool open)
+        /// <param name="movedOn">True while 07 drives or build mode is open: the card makes way early.</param>
+        public void Tick(float deltaTime, bool open, bool movedOn)
         {
             if (!_showing && !_leaving && open && _waiting.Count > 0)
             {
@@ -83,7 +93,7 @@ namespace MoonProject.UI
             if (_showing)
             {
                 _timer += deltaTime;
-                if (_timer >= _settings.HoldSeconds)
+                if (Ends(_timer, movedOn, _settings))
                 {
                     _showing = false;
                     _leaving = true;
