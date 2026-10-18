@@ -83,6 +83,7 @@ namespace MoonProject.Rover
         private LampPowerUp _lamps;
         private PostShot _shot;
         private PostLights _lights;
+        private PostDust _dust;
         private GameContext _context;
         private EventBus _events;
         private IRoverState _rover;
@@ -137,6 +138,7 @@ namespace MoonProject.Rover
             _lamps = _script.Lamps;
             _shot = new PostShot(settings.Post);
             _lights = new PostLights(transform, settings.Post);
+            _dust = new PostDust(settings.Post);
             _brain = _rig.Camera != null ? _rig.Camera.GetComponent<CinemachineBrain>() : null;
             CinemachineCamera chase = _rig.ChaseCamera;
             chase.StandbyUpdate = CinemachineVirtualCameraBase.StandbyUpdateMode.Always;
@@ -324,6 +326,7 @@ namespace MoonProject.Rover
             PlaceLensCamera();
             ApplyLens();
             ApplyPostLights();
+            ApplyPostDust();
         }
 
         private void TakeBeats()
@@ -706,6 +709,18 @@ namespace MoonProject.Rover
             CameraState chase = _rig.ChaseCamera.State;
             var chasePose = new ShotPose(chase.GetFinalPosition(), chase.GetFinalOrientation(), chase.Lens.FieldOfView);
             return PostShot.Blend(over, chasePose, t);
+        }
+
+        private void ApplyPostDust()
+        {
+            PostSettings post = _tuning.Opening.Post;
+            _dust.Update(_script.Phase, _script.PostStep, _script.PostProgress01);
+            _body.SetPostDust(_dust, post.DustCoatAmount);
+            while (_dust.TryTakePuff(out DustZone zone))
+            {
+                Vector3 anchor = _body.DustAnchor(zone);
+                _controller.DustPuff(new Vector3(anchor.x, _rover.Position.y, anchor.z), post.DustPuffGrains);
+            }
         }
 
         private void ApplyPostLights()

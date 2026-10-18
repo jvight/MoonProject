@@ -67,6 +67,8 @@ namespace MoonProject.Rover
         private MaterialPropertyBlock _dustBlock;
         private float _dustLevel;
         private float _appliedDustAmount = -1f;
+        private float _postDustLevel;
+        private float _postDustHeavy;
 
         public Vector3 RootPosition => transform.position;
 
@@ -74,6 +76,23 @@ namespace MoonProject.Rover
 
         /// <summary>Normalized lower-body regolith dust accumulation [0..1] from driving; brushes off while docked.</summary>
         public float DustLevel => _dustLevel;
+
+        /// <summary>The running gear's renderers that carry the driving dust (the long-sleep coat leaves them to the rig).</summary>
+        public IReadOnlyList<Renderer> LowerBodyRenderers => _lowerBodyRenderers;
+
+        /// <summary>The antenna's node.</summary>
+        public Transform Antenna => _antenna;
+
+        /// <summary>
+        /// The long-sleep coat on the running gear (<paramref name="level"/> 0..1), laid over the driving dust: at 0
+        /// only the driving dust shows, at 1 the amount is <paramref name="heavyAmount"/>.
+        /// </summary>
+        public void SetPostDust(float level, float heavyAmount)
+        {
+            _postDustLevel = level;
+            _postDustHeavy = heavyAmount;
+            ApplyLowerBodyDust();
+        }
 
         /// <summary>Current <c>_DustAmount</c> applied to 07's lower-body renderers (wheels, arms, shock struts).</summary>
         public float AppliedDustAmount => _appliedDustAmount >= 0f ? _appliedDustAmount : (_tuning != null ? _tuning.DustMinAmount : 0f);
@@ -357,7 +376,8 @@ namespace MoonProject.Rover
                 return;
             }
 
-            float targetAmount = Mathf.Lerp(_tuning.DustMinAmount, _tuning.DustMaxAmount, _dustLevel);
+            float driving = Mathf.Lerp(_tuning.DustMinAmount, _tuning.DustMaxAmount, _dustLevel);
+            float targetAmount = Mathf.Lerp(driving, Mathf.Max(driving, _postDustHeavy), _postDustLevel);
             if (Mathf.Abs(targetAmount - _appliedDustAmount) <= 1e-4f)
             {
                 return;

@@ -111,6 +111,30 @@ namespace MoonProject.Rover
 
         public float BatteryFill => _batteryFill;
 
+        [Header("The long-sleep dust")]
+        [Tooltip("The lunar-dust amount of a part under the full coat (the material's own amount is the clean state).")]
+        [Range(0.3f, 4f)]
+        [SerializeField] private float _dustCoatAmount = 4f;
+
+        [Tooltip("How much coat (0..1 of a part) has to fall before a puff of dust drops off it.")]
+        [Range(0.05f, 0.5f)]
+        [SerializeField] private float _dustPuffStep = 0.15f;
+
+        [Tooltip("Grains in each puff that drops where coat falls off a part.")]
+        [Range(1, 30)]
+        [SerializeField] private int _dustPuffGrains = 6;
+
+        [Tooltip("When each part sheds its coat: during which check, over which share of it, and how much is left after.")]
+        [SerializeField] private PostDustSegment[] _dustSegments =
+        {
+            new PostDustSegment(DustZone.Head, BootCheckStep.Head, 0f, 0.8f, 0.4f),
+            new PostDustSegment(DustZone.Wheels, BootCheckStep.Wheels, 0.05f, 0.95f, 0.35f),
+            new PostDustSegment(DustZone.Body, BootCheckStep.Motor, 0.2f, 0.9f, 0.5f),
+            new PostDustSegment(DustZone.Turret, BootCheckStep.Cutter, 0.1f, 0.9f, 0.3f),
+            new PostDustSegment(DustZone.Wing, BootCheckStep.SolarWing, 0.1f, 0.9f, 0.2f),
+            new PostDustSegment(DustZone.Antenna, BootCheckStep.Antenna, 0f, 0.7f, 0.3f),
+        };
+
         [Header("The light")]
         [Tooltip("The cool earthshine-like rim that lets the body read in the eclipse.")]
         [SerializeField] private Color _rimColor = new Color(0.55f, 0.68f, 1f);
@@ -196,6 +220,26 @@ namespace MoonProject.Rover
         public float ShotDistance => _shotDistance;
 
         public float ShotSideYaw => _shotSideYaw;
+
+        public float DustCoatAmount => _dustCoatAmount;
+
+        public float DustPuffStep => _dustPuffStep;
+
+        public int DustPuffGrains => _dustPuffGrains;
+
+        /// <summary>When <paramref name="zone"/> sheds its coat.</summary>
+        public PostDustSegment DustSegmentOf(DustZone zone)
+        {
+            for (int i = 0; i < _dustSegments.Length; i++)
+            {
+                if (_dustSegments[i].Zone == zone)
+                {
+                    return _dustSegments[i];
+                }
+            }
+
+            throw new InvalidOperationException($"PostSettings has no dust segment for {zone}.");
+        }
 
         public Color RimColor => _rimColor;
 
@@ -298,5 +342,39 @@ namespace MoonProject.Rover
 
         /// <summary>Degrees the camera swings round 07 from the three-quarter front, to see a part on its side or back.</summary>
         public float SideYaw => _sideYaw;
+    }
+
+    /// <summary>When one part of 07 sheds its long-sleep dust.</summary>
+    [Serializable]
+    public sealed class PostDustSegment
+    {
+        [SerializeField] private DustZone _zone;
+        [SerializeField] private BootCheckStep _step;
+        [Range(0f, 1f)]
+        [SerializeField] private float _start;
+        [Range(0f, 1f)]
+        [SerializeField] private float _end = 0.9f;
+        [Tooltip("Share of the coat left on the part after its check; the start's shiver takes the rest.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _rest = 0.3f;
+
+        public PostDustSegment(DustZone zone, BootCheckStep step, float start, float end, float rest)
+        {
+            _zone = zone;
+            _step = step;
+            _start = start;
+            _end = end;
+            _rest = rest;
+        }
+
+        public DustZone Zone => _zone;
+
+        public BootCheckStep Step => _step;
+
+        public float Start => _start;
+
+        public float End => _end;
+
+        public float Rest => _rest;
     }
 }

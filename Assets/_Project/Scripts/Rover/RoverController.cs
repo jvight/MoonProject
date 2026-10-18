@@ -319,6 +319,12 @@ namespace MoonProject.Rover
             _bodyLanguage.FaceDirector.SetReadout(contentTexture);
         }
 
+        /// <summary>Drops a puff of dust at <paramref name="position"/> on the ground, as when it falls off 07.</summary>
+        public void DustPuff(Vector3 position, int count)
+        {
+            _wheelFx.Puff(position, GroundNormal, count);
+        }
+
         public bool TryRaycastScreenUv(Ray ray, out Vector2 meshUv)
         {
             if (_facePickingEnabled && _screenCollider != null

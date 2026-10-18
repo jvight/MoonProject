@@ -270,6 +270,12 @@ namespace MoonProject.Rover
             return Smoothing.SmoothStep(0f, TurnEnd, p);
         }
 
+        /// <summary>How far (0..1) the shiver has shaken the dust off by progress <paramref name="p"/> of the start.</summary>
+        public static float ShiverProgress(float p)
+        {
+            return Smoothing.SmoothStep(TurnEnd, ShiverEnd, p);
+        }
+
         /// <summary>The dust shiver's strength (0..1) at progress <paramref name="p"/> of the start.</summary>
         public static float Shiver(float p)
         {
