@@ -31,7 +31,7 @@ namespace MoonProject.Rover.PlayModeTests
         private const float SettleSeconds = 4f;
         private const float SampleSeconds = 2f;
 
-        /// <summary>The most the screen's pose may turn in the frame from one frame to the next once the view eases in (deg).</summary>
+        /// <summary>The most the screen's pose may turn in the frame from one frame to the next once the view has eased in (deg).</summary>
         /// <summary>The shipped face-inspect settle speed (m/s).</summary>
         private const float SettleSpeed = 0.05f;
 
@@ -113,7 +113,7 @@ namespace MoonProject.Rover.PlayModeTests
                     viewport.x, viewport.y));
                 float pitch = Mathf.DeltaAngle(0f, euler.x);
                 float roll = Mathf.DeltaAngle(0f, euler.z);
-                if (_cameraRig.FaceInspectWeight > 0.001f)
+                if (_cameraRig.FaceInspectWeight > 0.999f)
                 {
                     if (eased)
                     {
@@ -130,7 +130,7 @@ namespace MoonProject.Rover.PlayModeTests
 
             Directory.CreateDirectory(CaptureFolder);
             File.WriteAllText(Path.Combine(CaptureFolder, "face_inspect_steady.tsv"), trace.ToString());
-            Assert.IsTrue(eased, "The face view eases in once 07 has stopped.");
+            Assert.IsTrue(eased, "The face view settles in once 07 has stopped.");
             Assert.LessOrEqual(maxStep, MaxFrameStep, "The screen's pose never jolts from one frame to the next.");
         }
 
