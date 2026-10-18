@@ -490,7 +490,6 @@ def build_open_crate() -> bpy.types.Object:
     lid_mat = spec["lid_mat"]
     side_accent_mat = spec["side_accent_mat"]
     bumper_mat = spec["bumper_mat"]
-    liner_mat = spec["liner_mat"]
 
     mb_body = r1kit.MeshBuilder("Crate_M_Open", pivot_u=(0.0, 0.0, 0.0))
 
@@ -530,13 +529,13 @@ def build_open_crate() -> bpy.types.Object:
         bevel=bev,
         segments=2,
     )
-    # Raised gold-foil insulated cargo deck (`y = 0.082 .. 0.162`) with equipment partition ribs
+    # Raised matte painted-metal cargo deck (`y = 0.082 .. 0.162`) with equipment partition ribs
     cradle_top = 0.162
     cradle_h = cradle_top - (tub_bot + floor_h - 0.002)
     mb_body.add_bevel_box(
         center_u=(0.0, cradle_top - cradle_h * 0.5, 0.0),
         size_u=(shell_w - wall_t * 1.8, cradle_h, shell_d - wall_t * 1.8),
-        mat=liner_mat,
+        mat=bumper_mat,
         bevel=0.004,
         segments=1,
     )
@@ -558,22 +557,42 @@ def build_open_crate() -> bpy.types.Object:
         segments=1,
     )
 
-    # Front (+Z) and Rear (-Z) tub walls
+    # Front (+Z) and Rear (-Z) exterior tub walls (R1_CreamEnamel) + interior matte grey liner (R1_GreyMetal)
+    wall_outer_t = wall_t * 0.56
+    wall_inner_t = wall_t * 0.48
+    liner_bot = cradle_top - 0.004
+    liner_top = tub_top - 0.002
+    liner_h = liner_top - liner_bot
+    liner_cy = 0.5 * (liner_bot + liner_top)
     for sz in (-1.0, 1.0):
         mb_body.add_bevel_box(
-            center_u=(0.0, tub_cy, sz * (shell_d * 0.5 - wall_t * 0.5)),
-            size_u=(shell_w, tub_h, wall_t),
+            center_u=(0.0, tub_cy, sz * (shell_d * 0.5 - wall_outer_t * 0.5)),
+            size_u=(shell_w, tub_h, wall_outer_t),
             mat=body_mat,
             bevel=bev * 0.85,
             segments=1,
         )
-    # Left (-X) and Right (+X) tub walls
+        mb_body.add_bevel_box(
+            center_u=(0.0, liner_cy, sz * (shell_d * 0.5 - wall_t + wall_inner_t * 0.5)),
+            size_u=(shell_w - wall_t * 1.2, liner_h, wall_inner_t),
+            mat=bumper_mat,
+            bevel=0.004,
+            segments=1,
+        )
+    # Left (-X) and Right (+X) exterior tub walls (R1_SagePatch) + interior matte grey liner (R1_GreyMetal)
     for sx in (-1.0, 1.0):
         mb_body.add_bevel_box(
-            center_u=(sx * (shell_w * 0.5 - wall_t * 0.5), tub_cy, 0.0),
-            size_u=(wall_t, tub_h, shell_d - wall_t * 1.6),
+            center_u=(sx * (shell_w * 0.5 - wall_outer_t * 0.5), tub_cy, 0.0),
+            size_u=(wall_outer_t, tub_h, shell_d - wall_t * 1.6),
             mat=side_accent_mat,
             bevel=bev * 0.85,
+            segments=1,
+        )
+        mb_body.add_bevel_box(
+            center_u=(sx * (shell_w * 0.5 - wall_t + wall_inner_t * 0.5), liner_cy, 0.0),
+            size_u=(wall_inner_t, liner_h, shell_d - wall_t * 1.9),
+            mat=bumper_mat,
+            bevel=0.004,
             segments=1,
         )
 
@@ -647,19 +666,19 @@ def build_open_crate() -> bpy.types.Object:
         mb_body.add_bevel_box(
             center_u=(sx * (shell_w * 0.5 + handle_out * 0.5), tub_top - 0.028, 0.0),
             size_u=(handle_out, 0.026, handle_d),
-            mat="R1_BareSteel",
-            bevel=0.003,
+            mat=bumper_mat,
+            bevel=0.0035,
             segments=1,
         )
         mb_body.add_bevel_box(
             center_u=(sx * (shell_w * 0.5 + handle_out * 0.72), tub_top - 0.028, 0.0),
             size_u=(handle_out * 0.55, 0.018, handle_d * 0.62),
             mat="R1_Rubber",
-            bevel=0.002,
+            bevel=0.0025,
             segments=1,
         )
 
-    # 7. Front signage plate
+    # 7. Front signage plate (non-emissive SEC-04 stencil cell)
     sig_w, sig_h = spec["signage_size"]
     sig_z = shell_d * 0.5 + 0.004
     ruins_common.add_signage_plate(
@@ -667,7 +686,7 @@ def build_open_crate() -> bpy.types.Object:
         center_u=(0.0, band_y, sig_z),
         width=sig_w,
         height=sig_h,
-        cell_name=spec["signage_cell"],
+        cell_name="SEC04_HABITAT",
         rot_deg_u=(0.0, 0.0, 0.0),
         thickness=0.008,
         frame_mat=bumper_mat,
@@ -685,17 +704,17 @@ def build_open_crate() -> bpy.types.Object:
             mat=bumper_mat,
             axis_u="X",
             segments=8,
-            bevel=0.002,
+            bevel=0.0025,
             bevel_segments=1,
         )
         mb_body.add_cylinder(
             center_u=(hx_off, hinge_y, -hinge_z),
             radius=knuckle_r * 0.55,
             length=knuckle_len * 1.18,
-            mat="R1_BareSteel",
+            mat=bumper_mat,
             axis_u="X",
             segments=6,
-            bevel=0.001,
+            bevel=0.002,
             bevel_segments=1,
         )
 
@@ -703,8 +722,8 @@ def build_open_crate() -> bpy.types.Object:
         mb_body.add_bevel_box(
             center_u=(lx, hinge_y - 0.022, shell_d * 0.5 + rib_t * 0.5),
             size_u=(0.036, 0.028, rib_t),
-            mat="R1_BareSteel",
-            bevel=0.002,
+            mat=bumper_mat,
+            bevel=0.003,
             segments=1,
         )
 
@@ -712,27 +731,29 @@ def build_open_crate() -> bpy.types.Object:
 
     # =========================================================================
     # Child `RimGlow`: faint warm inner glow strip along the upper crate rim
+    # Centered cleanly on the flat top of the tub walls without bevel overlap
     # =========================================================================
     rim_pivot_u = (0.0, tub_top - 0.004, 0.0)
     mb_rim = r1kit.MeshBuilder("RimGlow", pivot_u=rim_pivot_u)
-    inner_half_x = shell_w * 0.5 - wall_t * 0.92
-    inner_half_z = shell_d * 0.5 - wall_t * 0.92
+    wall_mid_x = shell_w * 0.5 - wall_t * 0.5
+    wall_mid_z = shell_d * 0.5 - wall_t * 0.5
     strip_t = 0.010
-    strip_h = 0.010
+    strip_h = 0.006
+    rim_cy = tub_top + 0.002
     for sz in (-1.0, 1.0):
         mb_rim.add_bevel_box(
-            center_u=(0.0, tub_top - 0.004, sz * inner_half_z),
-            size_u=(inner_half_x * 2.0, strip_h, strip_t),
+            center_u=(0.0, rim_cy, sz * wall_mid_z),
+            size_u=(wall_mid_x * 2.0 + strip_t, strip_h, strip_t),
             mat="R1_LampAmber",
-            bevel=0.002,
+            bevel=0.0015,
             segments=1,
         )
     for sx in (-1.0, 1.0):
         mb_rim.add_bevel_box(
-            center_u=(sx * inner_half_x, tub_top - 0.004, 0.0),
-            size_u=(strip_t, strip_h, inner_half_z * 2.0 - strip_t * 1.6),
+            center_u=(sx * wall_mid_x, rim_cy, 0.0),
+            size_u=(strip_t, strip_h, wall_mid_z * 2.0 - strip_t - 0.001),
             mat="R1_LampAmber",
-            bevel=0.002,
+            bevel=0.0015,
             segments=1,
         )
     ruins_common.to_ruin_object(mb_rim, "RimGlow", parent=root_obj, origin_u=rim_pivot_u)
@@ -749,12 +770,21 @@ def build_open_crate() -> bpy.types.Object:
     lid_shell_h = lid_shell_top - lid_bot
     lid_shell_cy = 0.5 * (lid_bot + lid_shell_top)
 
+    # Main bevelled lid shell in dark matte R1_GreyMetal so the open lid underside & border are calm charcoal grey
     mb_lid.add_bevel_box(
         center_u=(0.0, lid_shell_cy, 0.0),
         size_u=(wx - inset * 1.2, lid_shell_h, dz - inset * 1.2),
-        mat=lid_mat,
+        mat=bumper_mat,
         bevel=bev,
         segments=2,
+    )
+    # Exterior top lid plate (R1_CreamEnamel) between the corner bumpers on the back of the lid (zero coplanar faces)
+    mb_lid.add_bevel_box(
+        center_u=(0.0, lid_shell_top - 0.008, 0.0),
+        size_u=(wx - cw * 2.05, 0.020, dz - cw * 2.05),
+        mat=lid_mat,
+        bevel=0.004,
+        segments=1,
     )
     for sx in (-1.0, 1.0):
         for sz in (-1.0, 1.0):
@@ -783,19 +813,19 @@ def build_open_crate() -> bpy.types.Object:
             bevel=0.003,
             segments=1,
         )
-    # Underside lid inner pressure-pad liner + diagnostic foil panel (prominently visible when open!)
+    # Underside lid inner pressure-pad frame + dark R1_GreyMetal baffle plate (stepped proud, zero coplanar faces)
     mb_lid.add_bevel_box(
-        center_u=(0.0, lid_bot + 0.006, 0.0),
-        size_u=(shell_w - wall_t * 1.9, 0.012, shell_d - wall_t * 1.9),
+        center_u=(0.0, lid_bot + 0.002, 0.0),
+        size_u=(shell_w - wall_t * 1.9, 0.010, shell_d - wall_t * 1.9),
         mat=bumper_mat,
-        bevel=0.002,
+        bevel=0.003,
         segments=1,
     )
     mb_lid.add_bevel_box(
-        center_u=(0.0, lid_bot + 0.002, 0.0),
-        size_u=(shell_w - wall_t * 2.5, 0.006, shell_d - wall_t * 2.5),
-        mat=liner_mat,
-        bevel=0.002,
+        center_u=(0.0, lid_bot - 0.002, 0.0),
+        size_u=(shell_w - wall_t * 2.5, 0.008, shell_d - wall_t * 2.5),
+        mat=bumper_mat,
+        bevel=0.0025,
         segments=1,
     )
     latch_z = shell_d * 0.5 + rib_t * 0.55
@@ -803,14 +833,14 @@ def build_open_crate() -> bpy.types.Object:
         mb_lid.add_bevel_box(
             center_u=(lx, hinge_y + 0.004, latch_z),
             size_u=(0.042, 0.056, rib_t * 1.1),
-            mat="R1_BareSteel",
+            mat=bumper_mat,
             bevel=0.003,
             segments=1,
         )
         mb_lid.add_bevel_box(
             center_u=(lx, hinge_y - 0.012, latch_z + 0.003),
             size_u=(0.028, 0.022, 0.008),
-            mat="R1_Brass",
+            mat=bumper_mat,
             bevel=0.002,
             segments=1,
         )
@@ -821,33 +851,27 @@ def build_open_crate() -> bpy.types.Object:
     lid_obj = ruins_common.to_ruin_object(mb_lid, "Lid", parent=root_obj, origin_u=lid_pivot_u)
 
     # =========================================================================
-    # Child `Lid/Seal` (rotated open 110 deg with the lid)
+    # Child `Lid/Seal` (rotated open 110 deg with the lid, clean non-overlapping gasket loop)
     # =========================================================================
     mb_seal = r1kit.MeshBuilder("Seal", pivot_u=lid_pivot_u)
-    seal_h = 0.010
+    seal_h = 0.006
+    seal_cy = lid_bot - 0.002
     for sz in (-1.0, 1.0):
         mb_seal.add_bevel_box(
-            center_u=(0.0, hinge_y, sz * (shell_d * 0.5 - 0.002)),
-            size_u=(wx - cw * 1.6, seal_h, 0.012),
+            center_u=(0.0, seal_cy, sz * wall_mid_z),
+            size_u=(wall_mid_x * 2.0 + strip_t, seal_h, strip_t),
             mat="R1_LampAmber",
-            bevel=0.002,
+            bevel=0.0015,
             segments=1,
         )
     for sx in (-1.0, 1.0):
         mb_seal.add_bevel_box(
-            center_u=(sx * (shell_w * 0.5 - 0.002), hinge_y, 0.0),
-            size_u=(0.012, seal_h, dz - cw * 1.6),
+            center_u=(sx * wall_mid_x, seal_cy, 0.0),
+            size_u=(strip_t, seal_h, wall_mid_z * 2.0 - strip_t - 0.001),
             mat="R1_LampAmber",
-            bevel=0.002,
+            bevel=0.0015,
             segments=1,
         )
-    mb_seal.add_bevel_box(
-        center_u=(0.0, hinge_y, hinge_z),
-        size_u=(min(0.11, wx * 0.26), 0.018, 0.016),
-        mat="R1_LampAmber",
-        bevel=0.003,
-        segments=1,
-    )
     bmesh.ops.rotate(mb_seal.bm, verts=list(mb_seal.bm.verts), cent=(0.0, 0.0, 0.0), matrix=open_rot)
     ruins_common.to_ruin_object(mb_seal, "Seal", parent=lid_obj, origin_u=lid_pivot_u)
 
