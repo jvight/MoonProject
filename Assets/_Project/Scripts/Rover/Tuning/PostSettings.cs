@@ -5,12 +5,47 @@ using MoonProject.Core;
 namespace MoonProject.Rover
 {
     /// <summary>
-    /// How long each check of 07's power-on self-test takes (seconds): the motion on 07 for that line. The whole test
-    /// from the pull-out to the release is meant to land at 25-30 s with the lens stages before it.
+    /// 07's power-on self-test, seen in one calm shot of its face: how long the black, the picture's fade-in, the face's
+    /// waking and each line take (seconds), the motions on 07 for each check, the long-sleep dust, the light, the one
+    /// camera pose and the soft dip that hands over to the chase frame. The whole wake is meant to land at 30-35 s.
     /// </summary>
     [Serializable]
     public sealed class PostSettings
     {
+        [Header("The wake on the face (s)")]
+        [Tooltip("Black while 07's systems thump on, before the picture opens.")]
+        [Range(0.3f, 3f)]
+        [SerializeField] private float _darkSeconds = 1f;
+
+        [Tooltip("The picture opens from black on 07, still asleep with its face dark.")]
+        [Range(0.5f, 4f)]
+        [SerializeField] private float _fadeInSeconds = 1.6f;
+
+        [Tooltip("From the face screen flickering on to the eyes' first blink: the CRT boots and the eyes open.")]
+        [Range(0.5f, 4f)]
+        [SerializeField] private float _eyesBootSeconds = 1.6f;
+
+        [Tooltip("From the eyes' blink to the first line on the face.")]
+        [Range(0.2f, 3f)]
+        [SerializeField] private float _eyesHoldSeconds = 1f;
+
+        [Tooltip("The soft dip to black that hands over to the chase frame: the frame changes at its darkest middle.")]
+        [Range(0.2f, 1.2f)]
+        [SerializeField] private float _handoverSeconds = 0.4f;
+
+        [Header("The lines of information (s each)")]
+        [Tooltip("Why 07 woke: the orbital signal.")]
+        [Range(0.5f, 4f)]
+        [SerializeField] private float _carrierSeconds = 1.4f;
+
+        [Tooltip("07 resumes where it stopped, so many days later.")]
+        [Range(0.5f, 4f)]
+        [SerializeField] private float _resumeSeconds = 1.4f;
+
+        [Tooltip("The restored agenda: what 07 has to do.")]
+        [Range(0.5f, 4f)]
+        [SerializeField] private float _agendaSeconds = 1.6f;
+
         [Header("The checks (s each)")]
         [Tooltip("The iris focuses.")]
         [Range(0.5f, 4f)]
@@ -52,7 +87,7 @@ namespace MoonProject.Rover
         [Range(0.3f, 3f)]
         [SerializeField] private float _assemblySeconds = 0.7f;
 
-        [Tooltip("07 turns its head to the lander's beacon, shivers its dust off and the recovery begins.")]
+        [Tooltip("07 glances at the lander's beacon, shivers its dust off and the recovery begins.")]
         [Range(2f, 8f)]
         [SerializeField] private float _beginSeconds = 4f;
 
@@ -110,6 +145,16 @@ namespace MoonProject.Rover
         public float AntennaRiseMetres => _antennaRiseMetres;
 
         public float BatteryFill => _batteryFill;
+
+        public float DarkSeconds => _darkSeconds;
+
+        public float FadeInSeconds => _fadeInSeconds;
+
+        public float EyesBootSeconds => _eyesBootSeconds;
+
+        public float EyesHoldSeconds => _eyesHoldSeconds;
+
+        public float HandoverSeconds => _handoverSeconds;
 
         [Header("The long-sleep dust")]
         [Tooltip("The lunar-dust amount of a part under the full coat (the material's own amount is the clean state).")]
@@ -173,49 +218,43 @@ namespace MoonProject.Rover
         [Range(0f, 1.5f)]
         [SerializeField] private float _fillOffset = 0.5f;
 
-        [Tooltip("Seconds after the checks start over which the fill grows in.")]
+        [Tooltip("Seconds after the face screen flickers on over which the fill grows in.")]
         [Range(0.1f, 6f)]
         [SerializeField] private float _fillRampSeconds = 2.5f;
 
-        [Header("The camera")]
-        [Tooltip("How far (m) the three-quarter front shot sits from the point it looks at.")]
-        [Range(1f, 6f)]
-        [SerializeField] private float _shotDistance = 2.6f;
+        [Header("The camera: one shot for the whole wake")]
+        [Tooltip("How far (m) the camera stands from the point it looks at, before its push-in.")]
+        [Range(2f, 9f)]
+        [SerializeField] private float _shotDistance = 5f;
 
         [Tooltip("How far (deg) round from 07's front the camera stands: 35 is a three-quarter view.")]
-        [Range(0f, 90f)]
+        [Range(0f, 60f)]
         [SerializeField] private float _shotSideYaw = 35f;
 
+        [Tooltip("The camera's height (m) above 07's ground point: a little below the face, so the shot looks up softly.")]
+        [Range(0.3f, 2f)]
+        [SerializeField] private float _shotHeight = 0.8f;
+
+        [Tooltip("The point the shot looks at, in 07's frame (x right, y up, z forward): between the face and the body, " +
+                 "so 07 sits in the middle of the frame.")]
+        [SerializeField] private Vector3 _shotLook = new Vector3(0f, 0.95f, 0.2f);
+
         [Tooltip("The shot's field of view (deg).")]
-        [Range(20f, 70f)]
-        [SerializeField] private float _shotFov = 42f;
+        [Range(20f, 60f)]
+        [SerializeField] private float _shotFov = 32f;
 
-        [Tooltip("After the checks the camera settles this far (m) to 07's right, high and behind it.")]
-        [SerializeField] private float _overShoulderSide = 0.9f;
+        [Tooltip("Share of the shot distance the camera creeps in over the whole wake, eased: a few percent at most.")]
+        [Range(0f, 0.1f)]
+        [SerializeField] private float _pushIn = 0.04f;
 
-        [SerializeField] private float _overShoulderHeight = 1.6f;
+        [Header("The start's glance")]
+        [Tooltip("How far (deg) at most the head turns from the camera toward the lander's beacon at the start.")]
+        [Range(5f, 45f)]
+        [SerializeField] private float _beaconGlanceYaw = 30f;
 
-        [SerializeField] private float _overShoulderBack = 2.6f;
-
-        [Tooltip("The whole-body focus the pull-out arrives at and the lens check starts from.")]
-        [SerializeField] private PostFocus _baseFocus = new PostFocus(BootCheckStep.Lens, new Vector3(0f, 0.8f, 0.3f), 1f, 1.35f);
-
-        [Tooltip("What the camera eases toward for each check: a point in 07's frame (x right, y up, z forward), how " +
-                 "close (a share of the shot distance) and how high (m).")]
-        [SerializeField] private PostFocus[] _focus =
-        {
-            new PostFocus(BootCheckStep.Lens, new Vector3(0f, 0.8f, 0.3f), 1f, 1.35f),
-            new PostFocus(BootCheckStep.Lamps, new Vector3(0f, 0.95f, 0.55f), 0.75f, 1.2f),
-            new PostFocus(BootCheckStep.Head, new Vector3(0f, 1.15f, 0.25f), 0.8f, 1.35f),
-            new PostFocus(BootCheckStep.Wheels, new Vector3(0f, 0.35f, 0.1f), 1.1f, 0.55f, 55f),
-            new PostFocus(BootCheckStep.Motor, new Vector3(0.2f, 0.75f, 0f), 1.3f, 0.9f, -50f),
-            new PostFocus(BootCheckStep.Cutter, new Vector3(0f, 0.8f, 0.6f), 0.62f, 0.65f, -15f),
-            new PostFocus(BootCheckStep.SolarWing, new Vector3(0f, 0.9f, -0.3f), 1.2f, 1.9f, 145f),
-            new PostFocus(BootCheckStep.Antenna, new Vector3(0f, 1.2f, -0.25f), 1.05f, 1.5f, 110f),
-            new PostFocus(BootCheckStep.Battery, new Vector3(0.55f, 1.05f, 0f), 0.8f, 1.1f),
-            new PostFocus(BootCheckStep.Assembly, new Vector3(0f, 0.8f, 0.3f), 1f, 1.35f),
-            new PostFocus(BootCheckStep.Begin, new Vector3(0f, 1f, 0.3f), 0.9f, 1.35f),
-        };
+        [Tooltip("How far (deg) at most the head lifts or lowers toward the beacon.")]
+        [Range(0f, 15f)]
+        [SerializeField] private float _beaconGlancePitch = 8f;
 
         public float ShotDistance => _shotDistance;
 
@@ -267,33 +306,24 @@ namespace MoonProject.Rover
 
         public float ShotFov => _shotFov;
 
-        public float OverShoulderSide => _overShoulderSide;
+        public float ShotHeight => _shotHeight;
 
-        public float OverShoulderHeight => _overShoulderHeight;
+        public Vector3 ShotLook => _shotLook;
 
-        public float OverShoulderBack => _overShoulderBack;
+        public float PushIn => _pushIn;
 
-        public PostFocus BaseFocus => _baseFocus;
+        public float BeaconGlanceYaw => _beaconGlanceYaw;
 
-        /// <summary>What the camera frames for <paramref name="step"/> (the base focus for a step with none).</summary>
-        public PostFocus FocusOf(BootCheckStep step)
-        {
-            for (int i = 0; i < _focus.Length; i++)
-            {
-                if (_focus[i].Step == step)
-                {
-                    return _focus[i];
-                }
-            }
+        public float BeaconGlancePitch => _beaconGlancePitch;
 
-            return _baseFocus;
-        }
-
-        /// <summary>Seconds <paramref name="step"/> takes; the lens stages' steps (carrier, resume, agenda) have none here.</summary>
+        /// <summary>Seconds the line <paramref name="step"/> takes on the face.</summary>
         public float SecondsOf(BootCheckStep step)
         {
             switch (step)
             {
+                case BootCheckStep.Carrier: return _carrierSeconds;
+                case BootCheckStep.Resume: return _resumeSeconds;
+                case BootCheckStep.Agenda: return _agendaSeconds;
                 case BootCheckStep.Lens: return _lensSeconds;
                 case BootCheckStep.Lamps: return _lampsSeconds;
                 case BootCheckStep.Head: return _headSeconds;
@@ -308,40 +338,6 @@ namespace MoonProject.Rover
                 default: return 0f;
             }
         }
-    }
-
-    /// <summary>Where the self-test's camera looks during one check, and how near and high it stands.</summary>
-    [Serializable]
-    public sealed class PostFocus
-    {
-        [SerializeField] private BootCheckStep _step;
-        [SerializeField] private Vector3 _local;
-        [SerializeField] private float _distance = 1f;
-        [SerializeField] private float _height = 1.35f;
-        [SerializeField] private float _sideYaw;
-
-        public PostFocus(BootCheckStep step, Vector3 local, float distance, float height, float sideYaw = 0f)
-        {
-            _sideYaw = sideYaw;
-            _step = step;
-            _local = local;
-            _distance = distance;
-            _height = height;
-        }
-
-        public BootCheckStep Step => _step;
-
-        /// <summary>The point looked at, in 07's frame (x right, y up, z forward).</summary>
-        public Vector3 Local => _local;
-
-        /// <summary>How near the camera stands, as a share of the shot distance.</summary>
-        public float Distance => _distance;
-
-        /// <summary>How high above 07's ground point (m).</summary>
-        public float Height => _height;
-
-        /// <summary>Degrees the camera swings round 07 from the three-quarter front, to see a part on its side or back.</summary>
-        public float SideYaw => _sideYaw;
     }
 
     /// <summary>When one part of 07 sheds its long-sleep dust.</summary>

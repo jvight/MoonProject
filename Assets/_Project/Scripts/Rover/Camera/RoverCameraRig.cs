@@ -169,9 +169,6 @@ namespace MoonProject.Rover
         /// <summary>True while the CRT face-inspect camera mode is open.</summary>
         public bool IsFaceInspectOpen => _faceInspectOpen;
 
-        /// <summary>Neck yaw offset (deg) solved for the opening's front CRT reveal shot.</summary>
-        public float WakeFaceNeckYaw => _hasWakeFaceShot ? _wakeFaceShot.NeckYawOffset : 0f;
-
         /// <summary>The close shot composed for 07's CRT face screen, if any (for tests and tooling).</summary>
         public bool TryGetFaceInspectShot(out FaceInspectShot shot)
         {
@@ -373,15 +370,6 @@ namespace MoonProject.Rover
 
             _bumpSpring.Reset(0f);
             StepWallCompression(0f, true);
-            PlaceTarget();
-            StepFreeLookDamping(0f);
-            ApplyOrbit();
-            _camera.PreviousStateIsValid = false;
-        }
-
-        /// <summary>Updates the chase camera pose immediately after refreshing the wake face shot.</summary>
-        public void SyncWakeFacePose()
-        {
             PlaceTarget();
             StepFreeLookDamping(0f);
             ApplyOrbit();
@@ -1045,6 +1033,17 @@ namespace MoonProject.Rover
             StepFreeLookDamping(0f);
             ApplyOrbit();
             _camera.PreviousStateIsValid = false;
+        }
+
+        /// <summary>
+        /// Ends the wake shot at once and puts the camera straight behind 07: the opening's handover does this in the
+        /// dark middle of its dip, so the picture opens on the chase frame with no camera move in view.
+        /// </summary>
+        public void EndWakeOpening()
+        {
+            _opening.End();
+            _wakeLift = 0f;
+            Snap();
         }
 
         /// <summary>

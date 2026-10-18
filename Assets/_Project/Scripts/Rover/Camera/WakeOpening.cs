@@ -140,6 +140,17 @@ namespace MoonProject.Rover
             IsEasing = true;
         }
 
+        /// <summary>Ends the opening at once, with no ease (the handover's cut in the black).</summary>
+        public void End()
+        {
+            IsActive = false;
+            IsEasing = false;
+            _hold = false;
+            Weight = 0f;
+            Turn = 0f;
+            DriftYaw = 0f;
+        }
+
         /// <param name="playerInput">The player gave look or drive input this frame.</param>
         public void Step(bool playerInput, float deltaTime)
         {
