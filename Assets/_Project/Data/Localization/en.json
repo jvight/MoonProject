@@ -1081,6 +1081,14 @@
         {
             "key": "post.antenna.receive_only",
             "text": "RECEIVE ONLY · ORBITAL SIGNAL"
+        },
+        {
+            "key": "ui.readout.sunset_in",
+            "text": "SETS IN {0} MIN"
+        },
+        {
+            "key": "ui.readout.sunset_soon",
+            "text": "SETTING"
         }
     ]
 }

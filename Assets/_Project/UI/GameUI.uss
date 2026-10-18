@@ -1361,7 +1361,7 @@ Label {
     right: 100px;
     top: 69px;
     width: 96px;
-    align-items: flex-start;
+    align-items: flex-end;
 }
 
 .sun-arc__face {
@@ -1370,6 +1370,18 @@ Label {
     --track-color: var(--moon-track);
     --fill-color: var(--moon-warm-lamp);
     --ring-width: 6;
+}
+
+/* How long the Sun has left, under its arc: shown only while it is really going down. */
+.sun-arc__time {
+    display: none;
+    margin-top: 2px;
+    font-size: 18px;
+    white-space: nowrap;
+    -unity-text-align: upper-right;
+    color: var(--moon-text);
+    text-shadow: 0 2px 12px var(--moon-shadow);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
 .sun-arc__label {

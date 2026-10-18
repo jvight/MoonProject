@@ -1081,6 +1081,14 @@
         {
             "key": "post.antenna.receive_only",
             "text": "CHỈ NHẬN · TÍN HIỆU QUỸ ĐẠO"
+        },
+        {
+            "key": "ui.readout.sunset_in",
+            "text": "LẶN SAU {0} PHÚT"
+        },
+        {
+            "key": "ui.readout.sunset_soon",
+            "text": "SẮP LẶN"
         }
     ]
 }
