@@ -20,10 +20,10 @@ namespace MoonProject.Rover
     }
 
     /// <summary>
-    /// The camera of 07's wake after the self-test, as pure functions: the wide front three-quarter for the ready
-    /// performance (<see cref="Wide"/>), the one eased move back and out to it from the face close-up
-    /// (<see cref="PullBack"/>), and the one eased move round 07 to the chase frame (<see cref="Round"/>), never past
-    /// it. The close-up itself is the inventory's (<see cref="RoverCameraRig.TryComposeFaceShot"/>). 07's position and
+    /// The camera of 07's wake, as pure functions: the wide front three-quarter for the ready performance
+    /// (<see cref="Wide"/>), the eased straight moves (<see cref="Glide"/>: the push-in from the title onto the face
+    /// close-up, and back and out from it to the wide shot), and the one eased move round 07 to the chase frame
+    /// (<see cref="Round"/>), never past it. The close-up itself is the inventory's (<see cref="RoverCameraRig.TryComposeFaceShot"/>). 07's position and
     /// heading are inputs, so every pose is testable.
     /// </summary>
     public sealed class PostShot
@@ -45,12 +45,12 @@ namespace MoonProject.Rover
                 _settings.WideFov);
         }
 
-        /// <summary>The first move, at <paramref name="t"/> (0..1): eased in a straight line from the close-up to the wide shot.</summary>
-        public static ShotPose PullBack(in ShotPose close, in ShotPose wide, float t)
+        /// <summary>A move at <paramref name="t"/> (0..1): eased in a straight line from one pose to the other.</summary>
+        public static ShotPose Glide(in ShotPose from, in ShotPose to, float t)
         {
             float ease = WakeOpening.SmoothStepC2(0f, 1f, Mathf.Clamp01(t));
-            return new ShotPose(Vector3.Lerp(close.Position, wide.Position, ease),
-                Quaternion.Slerp(close.Rotation, wide.Rotation, ease), Mathf.Lerp(close.Fov, wide.Fov, ease));
+            return new ShotPose(Vector3.Lerp(from.Position, to.Position, ease),
+                Quaternion.Slerp(from.Rotation, to.Rotation, ease), Mathf.Lerp(from.Fov, to.Fov, ease));
         }
 
         /// <summary>

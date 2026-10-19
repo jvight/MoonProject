@@ -166,14 +166,36 @@ namespace MoonProject.Gameplay.PlayModeTests
             _gameplay.StartKit.Restore(new StartKitSaveData { igniterFitted = true });
             _goldenSeconds = GoldenHour(_context.Get<IWorldLayout>().BasePosition);
 
-            yield return ScanWhole("ruin." + ScanTuning.LanderCargoId, 0, 0f, "pad-fragment");
-            yield return ScanWhole("ruin.FallenSolarArray", 1, 50f, "array-at-an-angle");
-            yield return ScanWhole("ruin.HabitatModules", 0, -30f, "habitat");
+            yield return ScanWhole(ScanField.FragmentId("ruin." + ScanTuning.LanderCargoId, 0), 0f, "pad-fragment");
+            yield return ScanWhole(ScanField.FragmentId("ruin.FallenSolarArray", 1), 50f, "array-at-an-angle");
+            yield return ScanWhole(ScanField.FragmentId("ruin.HabitatModules", 0), -30f, "habitat");
             Vector3 pad = _context.Get<IWorldLayout>().BasePosition + Vector3.forward * (PlaceAhead + 2f);
             yield return WeldWhole(StructureIds.ChargingPad, pad, "pad", true);
             yield return WeldWhole(StructureIds.SolarArray, pad + Vector3.right * BuildSpacing, "solar-array", false);
             yield return WeldWhole(StructureIds.BatteryBank, pad + Vector3.left * BuildSpacing, "battery-bank", false);
             yield return WeldWhole(StructureIds.AntennaMast, pad + Vector3.forward * BuildSpacing, "mast", false);
+        }
+
+        /// <summary>
+        /// The story scans (the retroreflector, the seismic station, the mission flag, the old scout lander) are
+        /// scanned as the player scans them: 07 faces one, holds E on the target its view chose, and the beam ends on
+        /// that target's surface every frame (owner build 95b1dd3a: the beam scanned into the air at a retroreflector).
+        /// </summary>
+        [UnityTest]
+        [Timeout(400000)]
+        [PrebuildSetup(typeof(PlaythroughScene))]
+        [PostBuildCleanup(typeof(PlaythroughScene))]
+        public IEnumerator TheStoryScanBeams_EndOnTheirTargetsSurface_EveryFrame()
+        {
+            BootstrapHarness.DeleteSaveFiles(PlaythroughScene.SaveSlot);
+            yield return Boot();
+            _gameplay.StartKit.Restore(new StartKitSaveData { igniterFitted = true });
+            _goldenSeconds = GoldenHour(_context.Get<IWorldLayout>().BasePosition);
+            string[] stories = { "retroreflector", "seismic", "flag", "scout3" };
+            for (int i = 0; i < stories.Length; i++)
+            {
+                yield return ScanWhole(StoryScan.IdPrefix + stories[i], 0f, "story-" + stories[i]);
+            }
         }
 
         [UnityTest]
@@ -200,10 +222,10 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <paramref name="angle"/> degrees round from square, looks at it and holds E until the scan target on the
         /// same host its view rests on is scanned.
         /// </summary>
-        private IEnumerator ScanWhole(string setId, int index, float angle, string capture)
+        private IEnumerator ScanWhole(string fragmentId, float angle, string capture)
         {
-            ScanFragment fragment = _gameplay.Scans.Find(ScanField.FragmentId(setId, index));
-            Assert.IsNotNull(fragment, $"{setId}.{index} is in the world");
+            ScanFragment fragment = _gameplay.Scans.Find(fragmentId);
+            Assert.IsNotNull(fragment, $"{fragmentId} is in the world");
             Renderer solid = fragment.Solid;
             Assert.IsNotNull(solid, $"{fragment.FragmentId} shows on a renderer");
             Vector3 outward = Flat(fragment.Point - solid.bounds.center);

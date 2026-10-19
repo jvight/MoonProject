@@ -12,7 +12,7 @@ import numpy as np
 
 from synth.core import note_freq
 
-from . import base, boot, build, dsp, rover, sky, ui, voice
+from . import base, boot, build, dsp, face, rover, sky, ui, voice
 
 LIBRARY_ENV = "MOONPROJECT_SOUND_LIBRARY"
 
@@ -38,9 +38,10 @@ BUILD = {
 }
 
 # Cues whose every variant ships: the New Game self-test's motions (sampled/boot.py: the wheels, the sparks and the
-# flickers each have their own), the base's lamps at dusk (sampled/base.py: one per lamp in the lighting order) and
-# 07's lamp switch (sampled/rover.py: on and off).
-_EVERY_VARIANT = {**boot.SOUNDS, **base.SOUNDS, **rover.SOUNDS}
+# flickers each have their own), the base's lamps at dusk (sampled/base.py: one per lamp in the lighting order),
+# 07's lamp switch (sampled/rover.py: on and off) and 07's face booting (sampled/face.py: the owner's picks, with every
+# stroke, text tick and load step).
+_EVERY_VARIANT = {**boot.SOUNDS, **base.SOUNDS, **rover.SOUNDS, **face.SOUNDS}
 
 # The self-test cutter's fault on its result: the short strain-and-choke, so it is 07's fault voice but quicker than
 # worried's.

@@ -1945,6 +1945,216 @@
       "pick": "boot_begin_lamps"
     },
     {
+      "id": "face_power_on",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/face_power_on.wav"
+      ],
+      "variantLabels": [
+        "face_power_on"
+      ],
+      "sha256": [
+        "96254351aae8e516ab78404667cccefbacf2eb9c19b181fd4d562b3a87b5d6cf"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "07's face booting (CrtPowerOn): the degauss thunk with a steel ring on D2, the high-voltage whine rising onto D6 and settling.",
+      "source": "sampled",
+      "pick": "face_power_on"
+    },
+    {
+      "id": "face_logo_stroke",
+      "category": "tick_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/face_logo_stroke_01.wav",
+        "Assets/_Project/Audio/SFX/face_logo_stroke_02.wav",
+        "Assets/_Project/Audio/SFX/face_logo_stroke_03.wav",
+        "Assets/_Project/Audio/SFX/face_logo_stroke_04.wav",
+        "Assets/_Project/Audio/SFX/face_logo_stroke_05.wav",
+        "Assets/_Project/Audio/SFX/face_logo_stroke_06.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05",
+        "06"
+      ],
+      "sha256": [
+        "ae013470048ae4fa9eac33cc58eb08d048e44bc7f4adb7fed68ba1421971cfcb",
+        "76db8f4a0607cb4024f0efc1be4d456da7bb5f295ded832254fde3d91f063846",
+        "4afc53fd3e1aecc072701a9150072452996d78f4335d6533172cb1758473e5e2",
+        "39f129d3ccbe9b8a39e7a3314412110315dbcf28275e7e3db95a80d3376ba08c",
+        "86fad35e6a695de1a5203caf3a7b7ff3f4084acffdd9384a0c05088517582bec",
+        "46289fe43717752932f8cbd8f9a9d0e7f496efb0d80933626b85dafe69e38848"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -26.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The maker's mark, one stroke (LogoStrokeDrawn): a faint beam hum climbing D4 E4 F#4 A4 B4 D5.",
+      "source": "sampled",
+      "pick": "face_logo_stroke"
+    },
+    {
+      "id": "face_logo_resolve",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/face_logo_resolve.wav"
+      ],
+      "variantLabels": [
+        "face_logo_resolve"
+      ],
+      "sha256": [
+        "e37d8d6899fac863a857b1530fe92985a70214b8c4d4ef57a6f7e8d1e116afdb"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The maker's mark whole: a gentle swell on D and its fifth in bowed metal.",
+      "source": "sampled",
+      "pick": "face_logo_resolve"
+    },
+    {
+      "id": "face_text_tick",
+      "category": "tick_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/face_text_tick_01.wav",
+        "Assets/_Project/Audio/SFX/face_text_tick_02.wav",
+        "Assets/_Project/Audio/SFX/face_text_tick_03.wav",
+        "Assets/_Project/Audio/SFX/face_text_tick_04.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03",
+        "04"
+      ],
+      "sha256": [
+        "f5d4a4f4ab44f208f21401264fd6c78a43747df39854b2154157ee12c2813897",
+        "1db7322e4f0ce6aa1d2945649e12bc27ffa4b235c5d1206e95462fa0ec8bf416",
+        "c9b2e9bdd24e0edd02e9a6b101062e0bf41dd480ddb1bd75a6f591ba85c6de68",
+        "a4bc855557c9c905e4c1277e9ac7d2e57d39b4dde0aed167b2d688fae4641e1c"
+      ],
+      "volumeMin": 0.3,
+      "volumeMax": 0.3,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -26.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The readout typing (BootTextTyped): a counting machine's soft dry tick, 4 variants at random.",
+      "source": "sampled",
+      "pick": "face_text_tick"
+    },
+    {
+      "id": "face_line_done",
+      "category": "tick_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/face_line_done.wav"
+      ],
+      "variantLabels": [
+        "face_line_done"
+      ],
+      "sha256": [
+        "2ac5daed68deb9fb885ace6e4ec549280ceef7ef616c22015198a14e95e5d4c8"
+      ],
+      "volumeMin": 0.42,
+      "volumeMax": 0.42,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -26.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "A readout line complete (BootLineCompleted): a heavier counter tick and a relay contact.",
+      "source": "sampled",
+      "pick": "face_line_done"
+    },
+    {
+      "id": "face_load_step",
+      "category": "tick_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/face_load_step_01.wav",
+        "Assets/_Project/Audio/SFX/face_load_step_02.wav",
+        "Assets/_Project/Audio/SFX/face_load_step_03.wav",
+        "Assets/_Project/Audio/SFX/face_load_step_04.wav",
+        "Assets/_Project/Audio/SFX/face_load_step_05.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05"
+      ],
+      "sha256": [
+        "d089da1c4b18ab2f8cc191f3fb2908104d05eb804dfb24cd4bcc6d941ec20ef8",
+        "67883cc65f39f76f672a9ba9ee029cc614355229cc66c7ffda3a67efb2abc3c8",
+        "0276529d6f6da075e5917ca3edd3741c78b8fb016d1c1deb47c5a0c3459efb0d",
+        "309ad26e01ef33c9ebc9ac009ab009dd9562e1bdee9fbaec3e1ecff56012d465",
+        "c38eb55c35d8922f38cd0dfd8cdaba8ec8af9be300102b889866eeabec86c50a"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -26.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "A load step (LoadStep 0..4): small ratchet steps rising, the fifth resolving on a latch and D.",
+      "source": "sampled",
+      "pick": "face_load_step"
+    },
+    {
       "id": "boot_rush",
       "category": "oneshot_3d",
       "milestone": "M3",
