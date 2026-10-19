@@ -233,6 +233,8 @@ namespace MoonProject.UI.PlayModeTests
 
         public float SecondsToSunset { get; set; } = float.PositiveInfinity;
 
+        public float LastLightElevationDegrees => 3f;
+
         public float SunlightAt(Vector3 position)
         {
             return 1f;
