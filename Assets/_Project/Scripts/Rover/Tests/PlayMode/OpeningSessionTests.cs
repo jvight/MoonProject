@@ -213,7 +213,7 @@ namespace MoonProject.Rover.PlayModeTests
                 (OpeningPhase.PullBack, 0.5f, "end_3_pull_back"),
                 (OpeningPhase.Perform, 0.05f, "end_4_double_blink"),
                 (OpeningPhase.Perform, 0.32f, "end_5_lamps_off"),
-                (OpeningPhase.Perform, 0.58f, "end_6_shiver"),
+                (OpeningPhase.Perform, 0.58f, "end_6_dust_settles"),
                 (OpeningPhase.Perform, 0.95f, "end_7_glance"),
                 (OpeningPhase.MoveBehind, 0.5f, "end_8_move_behind"),
                 (OpeningPhase.MoveBehind, 0.98f, "end_9_chase_frame"),

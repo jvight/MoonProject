@@ -35,8 +35,8 @@ namespace MoonProject.Rover
         [Range(1f, 4f)]
         [SerializeField] private float _pullBackSeconds = 1.2f;
 
-        [Tooltip("The ready performance seen wide: a double blink, the headlamps clicked off and on, the last dust " +
-                 "shivered off and a glance at the lander's beacon.")]
+        [Tooltip("The ready performance seen wide: a double blink, the headlamps clicked off and on (the last dust " +
+                 "settles off as they come back) and a glance at the lander's beacon.")]
         [Range(1.5f, 5f)]
         [SerializeField] private float _performSeconds = 1.6f;
 
@@ -47,7 +47,7 @@ namespace MoonProject.Rover
         [Header("The lines")]
         [Tooltip("The lines 07's self-test prints on its face, in step order, Carrier first and the Lamps check " +
                  "included (07's lamps come on in it), each with its seconds. A check left out does not run: its " +
-                 "motion and sounds do not play and its part sheds all its dust in the ready shiver.")]
+                 "motion and sounds do not play and its part sheds all its dust in the ready performance.")]
         [SerializeField] private PostLine[] _lines = DefaultLines();
 
         [Header("Fast-forward")]
@@ -394,7 +394,7 @@ namespace MoonProject.Rover
         [SerializeField] private float _start;
         [Range(0f, 1f)]
         [SerializeField] private float _end = 0.9f;
-        [Tooltip("Share of the coat left on the part after its check; the start's shiver takes the rest.")]
+        [Tooltip("Share of the coat left on the part after its check; the rest settles off in the ready performance.")]
         [Range(0f, 1f)]
         [SerializeField] private float _rest = 0.3f;
 

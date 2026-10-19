@@ -20,8 +20,8 @@ namespace MoonProject.Rover
     /// each part does its check; any key after its first moments fast-forwards the remaining lines
     /// (<see cref="OpeningScript.FastForward"/>). The readout holds and 07's eyes come back to the face, the camera
     /// eases back and out on a diagonal to a wide shot, 07 shows it is ready (a double blink, the headlamps clicked
-    /// off and on, a dust shiver, a glance at the lander's beacon) and the camera eases round to the chase frame
-    /// behind it, where control is the player's.</item>
+    /// off and on as the last dust settles off, a glance at the lander's beacon) and the camera eases round to the
+    /// chase frame behind it, where control is the player's.</item>
     /// <item>A loaded game plays the short wake: the title's frame eases back to the chase frame while 07's lid opens
     /// with one blink and it glances at Earth.</item>
     /// <item>In a game without a title (<see cref="IGameFlow.ShowsTitle"/> off: dev fixtures and test runs that drive
@@ -39,9 +39,6 @@ namespace MoonProject.Rover
 
         /// <summary>Frames the brain keeps its cut blend after the shot camera goes live or lets go.</summary>
         private const int CutFrameCount = 2;
-
-        /// <summary>The start's dust shiver shakes the chassis this many times the motor's shudder.</summary>
-        private const float ShiverScale = 1.5f;
 
         /// <summary>Half-life (s) of the antenna's rise and fall.</summary>
         private const float AntennaHalfLife = 0.15f;
@@ -503,8 +500,7 @@ namespace MoonProject.Rover
         /// <summary>
         /// What each check does on 07 beyond its head: the wheels' twitches, the motor's shudder and lurch, the
         /// cutter's flashes and turret kicks, the wing's jerk, the antenna's rise when its check runs (held through the
-        /// later checks and the ready performance, then lowered as the camera moves behind) and the performance's dust
-        /// shiver.
+        /// later checks and the ready performance, then lowered as the camera moves behind).
         /// </summary>
         private void ApplyPostMotion(float deltaTime)
         {
@@ -555,7 +551,6 @@ namespace MoonProject.Rover
             else if (_script.Phase >= OpeningPhase.Ready && _script.Phase <= OpeningPhase.Perform)
             {
                 antennaTarget = antennaChecked ? _script.Motions.Antenna(1f) : 0f;
-                motion.Shudder = PostMotions.Shiver(_script.Perform01) * _tuning.Opening.Post.ShudderMetres * ShiverScale;
             }
 
             _antennaLift = Smoothing.Damp(_antennaLift, antennaTarget, AntennaHalfLife, deltaTime);

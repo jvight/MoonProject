@@ -398,7 +398,7 @@ namespace MoonProject.Rover.Tests
             }
 
             CollectionAssert.AreEqual(new[] { 0, 1 }, blinks, "a double blink");
-            CollectionAssert.AreEqual(new[] { 3, 2, 1, 0 }, sounds, "lamps off, lamps on, shiver, glance");
+            CollectionAssert.AreEqual(new[] { 3, 2, 0 }, sounds, "lamps off, lamps on, glance");
         }
 
         [Test]

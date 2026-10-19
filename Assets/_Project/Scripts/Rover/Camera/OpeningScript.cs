@@ -9,7 +9,7 @@ namespace MoonProject.Rover
     /// moment of black the picture opens straight on the close-up of 07's face (the inventory's framing) and the lines
     /// of <see cref="PostSequencer"/> print there while each part does its check. Then the readout holds its success
     /// and 07's eyes come back to the face, the camera eases back and out to a wide shot, 07 performs that it is ready
-    /// (a double blink, the headlamps clicked off and on, a dust shiver, a glance at the beacon), and the camera eases
+    /// (a double blink, the headlamps clicked off and on, a glance at the beacon), and the camera eases
     /// round to the chase frame. It works out each frame how clear the picture is, how open 07's lid is and how asleep
     /// its body still is. The beats it reaches queue up for <see cref="TryTakeBeat"/>; the self-test's lines and the
     /// performance's sounds and blinks queue up for <see cref="TryTakePostEvent"/>.

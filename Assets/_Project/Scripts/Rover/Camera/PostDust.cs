@@ -17,9 +17,9 @@ namespace MoonProject.Rover
     /// <summary>
     /// How much of the long-sleep regolith coat is still on each part of 07 during its wake, as a pure model
     /// (EditMode-tested): the whole coat is on from the black until the checks; each part sheds most of it while its
-    /// own check moves it (a part whose check is not run keeps it all); the ready performance's shiver shakes off the
-    /// rest. It also counts what has fallen, so the opening can drop a puff of dust at the part each time enough has
-    /// gone.
+    /// own check moves it (a part whose check is not run keeps it all); the rest settles off in the ready performance
+    /// as the headlamps come back on. It also counts what has fallen, so the opening can drop a puff of dust at the
+    /// part each time enough has gone.
     /// </summary>
     public sealed class PostDust
     {
@@ -89,7 +89,7 @@ namespace MoonProject.Rover
                 case OpeningPhase.PullBack:
                     return RestOf(zone);
                 case OpeningPhase.Perform:
-                    return RestOf(zone) * (1f - PostMotions.ShiverProgress(p));
+                    return RestOf(zone) * (1f - PostMotions.DustOffProgress(p));
                 default:
                     return 0f;
             }
