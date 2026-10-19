@@ -24,6 +24,9 @@ namespace MoonProject.Gameplay
         /// <summary>Squared metres within which an aim point counts as the apron bay's centre.</summary>
         private const float ApronBayEpsilonSq = 0.01f;
         private const float WinchRepeatCooldown = 0.14f;
+
+        /// <summary>Metres thick the slice at the dissolving edge is taken to be when the beam is clipped to it.</summary>
+        private const float TakeDownSliceHeight = 0.2f;
         private const float HoverConeDegrees = 55f;
         private const float HoverDistanceWeight = 0.25f;
         private const int OverlapBufferSize = 24;
@@ -473,8 +476,24 @@ namespace MoonProject.Gameplay
                 _takeDownBeam.Retract();
             }
 
-            _takeDownBeam.Step(deltaTime, emitter, _takeDownEdge);
-            _takeDownMotes.Step(deltaTime, _takeDownEdge, emitter, _takeDownLevel);
+            Vector3 meet = TakeDownBeamEnd(emitter);
+            _takeDownBeam.Step(deltaTime, emitter, meet);
+            _takeDownMotes.Step(deltaTime, meet, emitter, _takeDownLevel);
+        }
+
+        /// <summary>
+        /// Where the take-down beam stops: on the near face of what is left of the piece at the dissolving edge, not on
+        /// its far side, so the beam never runs through and beyond it.
+        /// </summary>
+        private Vector3 TakeDownBeamEnd(Vector3 emitter)
+        {
+            Vector3 toward = _takeDownEdge - emitter;
+            var slice = new Bounds(_takeDownEdge, new Vector3(_takeDownBounds.size.x, TakeDownSliceHeight,
+                _takeDownBounds.size.z));
+            var ray = new Ray(emitter, toward);
+            return slice.IntersectRay(ray, out float distance) && distance < toward.magnitude
+                ? ray.GetPoint(distance)
+                : _takeDownEdge;
         }
 
         /// <summary>Where the dissolving edge of the piece being taken down is: the print plane, sinking as the hold fills.</summary>
