@@ -170,8 +170,8 @@ namespace MoonProject.World
             float rimLift = SmoothMath.Smootherstep(0f, 1f, region.CraterRim) * _settings.CraterRimLight;
             if (rimLift > 0f)
             {
-                float ejectaRay = Mathf.Clamp01(0.75f + 0.38f * detail + 0.25f * Patch(position));
-                dust = Color.Lerp(dust, _lightDust, Mathf.Clamp01(rimLift * ejectaRay));
+                float brokenRim = SmoothMath.Smootherstep(0.05f, 0.55f, detail * 0.65f + Patch(position) * 0.35f);
+                dust = Color.Lerp(dust, _lightDust, Mathf.Clamp01(rimLift * brokenRim));
             }
             float highland = SmoothMath.Smootherstep(_settings.HighlandZone - HighlandBand,
                 _settings.HighlandZone + HighlandBand, region.RimZone);

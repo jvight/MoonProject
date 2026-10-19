@@ -212,7 +212,7 @@ MonoBehaviour:
       _depth: 0.058
       _rimHeight: 0.026
       _rimWidth: 0.55
-      _bowlShade: 0.72
+      _bowlShade: 0.22
       _clearance: 6
     _farRangeStart: 950
     _farRangeFull: 1700
@@ -257,8 +257,8 @@ MonoBehaviour:
     _chasmDark: 0.5
     _craterShadow: 0.15
     _craterFloor: 0.8
-    _craterWallShade: 0.7
-    _craterRimLight: 0.78
+    _craterWallShade: 0.18
+    _craterRimLight: 0.1
     _highlandZone: 0.65
     _highlandShade: 0.8
     _scorchShade: 0.85

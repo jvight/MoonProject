@@ -101,19 +101,19 @@ namespace MoonProject.World
         [Header("Craters and highlands")]
         [Tooltip("Crater bowl weight (0 = edge, 1 = centre) where the shaded crater wall starts.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _craterShadow = 0.12f;
+        [SerializeField] private float _craterShadow = 0.15f;
 
         [Tooltip("Crater bowl weight where the wall ends and the crater floor (toned like the open floor) begins.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _craterFloor = 0.7f;
+        [SerializeField] private float _craterFloor = 0.8f;
 
         [Tooltip("How far crater walls turn toward the shadow dust (0..1).")]
         [Range(0f, 1f)]
-        [SerializeField] private float _craterWallShade = 0.68f;
+        [SerializeField] private float _craterWallShade = 0.18f;
 
         [Tooltip("How far the crest of a crater rim turns toward the light dust (0..1); it fades out down the rim.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _craterRimLight = 0.76f;
+        [SerializeField] private float _craterRimLight = 0.10f;
 
         [Tooltip("Rim zone around which gentle faces turn toward the shadow dust (dust settled between the rocks).")]
         [Range(0f, 1f)]

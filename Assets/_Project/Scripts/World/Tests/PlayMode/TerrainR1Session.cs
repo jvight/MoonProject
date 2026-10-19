@@ -18,6 +18,7 @@ using MoonProject.Testing;
 using Debug = UnityEngine.Debug;
 using Object = UnityEngine.Object;
 #if UNITY_EDITOR
+using UnityEditor;
 using UnityEditor.SceneManagement;
 #endif
 
@@ -210,6 +211,133 @@ namespace MoonProject.World.PlayModeTests
             }
 
             WriteMetricsJson(Path.Combine(CaptureFolder, $"{prefix}_metrics.json"), prefix, counts, frameTimes);
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(CanyonSessionScene))]
+        [PostBuildCleanup(typeof(CanyonSessionScene))]
+        public IEnumerator Craters_CapturesOwnerAndChaseViews()
+        {
+            BootstrapHarness.DeleteSaveFiles(CanyonSessionScene.SaveSlot);
+#if UNITY_EDITOR
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(CanyonSessionScene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            while (!loading.isDone)
+            {
+                yield return null;
+            }
+#else
+            throw new NotSupportedException("TerrainR1Session loads the scene through the editor.");
+#endif
+            Scene loadedScene = SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath);
+            GameBootstrap bootstrap = null;
+            SkyCycleSystem skyCycle = null;
+            WorldSystem worldSystem = null;
+            foreach (GameObject root in loadedScene.GetRootGameObjects())
+            {
+                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
+                if (skyCycle == null)
+                {
+                    skyCycle = root.GetComponentInChildren<SkyCycleSystem>(true);
+                }
+
+                if (worldSystem == null)
+                {
+                    worldSystem = root.GetComponentInChildren<WorldSystem>(true);
+                }
+            }
+
+            Assert.IsNotNull(bootstrap, "Main scene must have GameBootstrap.");
+            Assert.IsNotNull(skyCycle, "Main scene must have SkyCycleSystem.");
+            Assert.IsNotNull(worldSystem, "Main scene must have WorldSystem.");
+
+            GameContext context = bootstrap.Context;
+            _awoke = context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
+            float started = Time.time;
+            while (!_awake)
+            {
+                Assert.Less(Time.time - started, WakeTimeout, "07 wakes up");
+                yield return null;
+            }
+
+            yield return new WaitForSeconds(SettleSeconds);
+
+#if UNITY_EDITOR
+            var earthTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/_Project/Art/World/Planet/T_R1_Earth_Albedo.png");
+            if (earthTex != null)
+            {
+                foreach (GameObject root in loadedScene.GetRootGameObjects())
+                {
+                    foreach (Transform t in root.GetComponentsInChildren<Transform>(true))
+                    {
+                        if (t.name == "Earth")
+                        {
+                            var rend = t.GetComponent<Renderer>();
+                            if (rend != null)
+                            {
+                                var mpb = new MaterialPropertyBlock();
+                                rend.GetPropertyBlock(mpb);
+                                mpb.SetTexture("_BaseMap", earthTex);
+                                rend.SetPropertyBlock(mpb);
+                            }
+                        }
+                    }
+                }
+            }
+#endif
+
+            string cratersFolder = Path.Combine(CaptureFolder, "craters");
+            Directory.CreateDirectory(cratersFolder);
+
+            Camera view = context.Get<IViewCamera>().Camera;
+            var host = new GameObject("CratersOwnerReviewCamera");
+            try
+            {
+                var ownerCam = host.AddComponent<Camera>();
+                ownerCam.CopyFrom(view);
+                ownerCam.enabled = false;
+                CopyPipelineSettings(view, ownerCam);
+
+                // 1. Same owner view as before (Logs/captures/moonlook/owner-final.png).
+                skyCycle.SetClockTime(EarthlitTimeSeconds, false);
+                ownerCam.transform.SetPositionAndRotation(
+                    new Vector3(-7.58f, 3.07f, -9.97f),
+                    Quaternion.Euler(7.52f, 20.69f, 0f));
+                ownerCam.fieldOfView = 50.2f;
+                yield return null;
+                yield return null;
+                FrameCapture.SavePng(ownerCam, CaptureWidth, CaptureHeight, Path.Combine(cratersFolder, "owner.png"));
+            }
+            finally
+            {
+                Object.Destroy(host);
+            }
+
+            // 2. 07's chase camera on the plain near the apron in eclipse.
+            IWorldAnchors anchors = context.Get<IWorldAnchors>();
+            Assert.IsTrue(anchors.TryGet(WorldAnchorIds.PlaceApron, out WorldAnchor apronAnchor), "PlaceApron exists");
+            Assert.IsTrue(anchors.TryGet(WorldAnchorIds.PlaceLander, out WorldAnchor landerAnchor), "PlaceLander exists");
+            ITerrainQuery terrain = context.Get<ITerrainQuery>();
+            IRoverPlacement rover = context.Get<IRoverPlacement>();
+
+            Vector3 apron = apronAnchor.Position;
+            Vector3 plainNearApron = new Vector3(apron.x - 10.5f, 0f, apron.z - 6.5f);
+            plainNearApron.y = terrain.SampleHeight(plainNearApron.x, plainNearApron.z);
+            Quaternion roverRot = Quaternion.Euler(0f, 10f, 0f);
+
+            skyCycle.SetClockTime(0f, true);
+            rover.PlaceAt(plainNearApron, roverRot);
+            yield return new WaitForSeconds(2.0f);
+            FrameCapture.SavePng(view, CaptureWidth, CaptureHeight, Path.Combine(cratersFolder, "eclipse.png"));
+
+            // 3. 07's chase camera on the plain near the apron in golden hour (OpeningMilestone.FirstCharge).
+            context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.FirstCharge, true));
+            rover.PlaceAt(plainNearApron, roverRot);
+            yield return new WaitForSeconds(2.0f);
+            FrameCapture.SavePng(view, CaptureWidth, CaptureHeight, Path.Combine(cratersFolder, "golden-hour.png"));
+
             Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
         }
 
