@@ -220,7 +220,10 @@ namespace MoonProject.Autoplay
             Vector3 pad = PlacedPosition(structureId);
             yield return _bot.DriveTo(Flat(pad) + Vector3.back * 6f, 2f, "a line-up for the pad", DriveSeconds);
             yield return _bot.DriveTo(Flat(pad), ApproachThrottleRadius, "the pad", DriveSeconds);
-            yield return _bot.Until(() => battery.IsCharging && battery.Charger == ChargerKind.Pad, FollowSeconds,
+            // After sunrise the Sun can be the charger that is reported while 07 sits on the pad, and FirstCharge
+            // has already fired, so the milestone counts as much as the pad's own charge.
+            yield return _bot.Until(() => battery.IsCharging && battery.Charger == ChargerKind.Pad ||
+                _milestones.Exists(reached => reached.Milestone == OpeningMilestone.FirstCharge), FollowSeconds,
                 "the built pad to charge 07");
             yield return UntilReached(OpeningMilestone.FirstCharge, "the FirstCharge milestone");
             yield return _bot.Until(() => G.PadLock.Raised, FollowSeconds, "the pad's dock lock to rise round 07");
