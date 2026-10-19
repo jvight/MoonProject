@@ -65,6 +65,33 @@ def ensure_extended_r1_materials() -> None:
             "emission": (0.0, 0.0, 0.0, 1.0),
             "emission_strength": 0.0,
         },
+        "R1_WhitePaint": {
+            "base_color": r1kit._srgb_to_linear("#E8EAE6"),
+            "wear_color": r1kit._srgb_to_linear("#C2C7CC"),
+            "dust_color": r1kit._srgb_to_linear("#8D8B86"),
+            "metallic": 0.02,
+            "roughness": 0.82,
+            "emission": (0.0, 0.0, 0.0, 1.0),
+            "emission_strength": 0.0,
+        },
+        "R1_TealMark": {
+            "base_color": r1kit._srgb_to_linear("#2F6E73"),
+            "wear_color": r1kit._srgb_to_linear("#A8BDC2"),
+            "dust_color": r1kit._srgb_to_linear("#788086"),
+            "metallic": 0.04,
+            "roughness": 0.65,
+            "emission": (0.0, 0.0, 0.0, 1.0),
+            "emission_strength": 0.0,
+        },
+        "R1_SilverFoil": {
+            "base_color": r1kit._srgb_to_linear("#C9CED2"),
+            "wear_color": r1kit._srgb_to_linear("#EBF0F5"),
+            "dust_color": r1kit._srgb_to_linear("#8A8E94"),
+            "metallic": 0.85,
+            "roughness": 0.45,
+            "emission": (0.0, 0.0, 0.0, 1.0),
+            "emission_strength": 0.0,
+        },
     }
     allowed = list(r1kit.ALLOWED_MATERIALS)
     for name, spec in extra_specs.items():
@@ -657,7 +684,7 @@ def build_seismic_station() -> bpy.types.Object:
     shroud_mb = r1kit.MeshBuilder("FoilShroud", pivot_u=(sx_center, 0.0, sz_center))
     _add_crinkled_foil_shroud(shroud_mb, (sx_center, sz_center), mat="R1_GoldFoil")
 
-    # 4 radial hold-down tape tabs + regolith dust clumps around the skirt perimeter
+    # 4 radial hold-down tabs (BareSteel) + regolith dust clumps around the skirt perimeter
     for i in range(4):
         ang = math.radians(45.0 + 90.0 * i)
         tx = sx_center + 0.255 * math.cos(ang)
@@ -665,7 +692,7 @@ def build_seismic_station() -> bpy.types.Object:
         shroud_mb.add_bevel_box(
             center_u=(tx, 0.024, tz),
             size_u=(0.065, 0.018, 0.036),
-            mat="R1_OrangeStripe" if (i % 2 == 0) else "R1_GreyMetal",
+            mat="R1_BareSteel",
             bevel=0.002,
             segments=1,
             rot_deg_u=(0.0, -math.degrees(ang), 0.0),
@@ -684,24 +711,24 @@ def build_seismic_station() -> bpy.types.Object:
         )
     shroud_mb.build_object(parent=root)
 
-    # 2. SeismometerUnit: upper cylindrical sensor head peeking out of the gold-foil shroud
+    # 2. SeismometerUnit: upper cylindrical sensor head peeking out of the gold-foil shroud (SilverFoil + BareSteel, no cream/orange)
     seis_mb = r1kit.MeshBuilder("SeismometerUnit", pivot_u=(sx_center, 0.24, sz_center))
-    # Main machined sensor cylinder (y = 0.22..0.325 m)
+    # Main aluminised-film wrapped sensor cylinder (y = 0.22..0.325 m)
     seis_mb.add_cylinder(
         center_u=(sx_center, 0.272, sz_center),
         radius=0.118,
         length=0.105,
-        mat="R1_CreamEnamel",
+        mat="R1_SilverFoil",
         axis_u="Y",
         segments=16,
         bevel=0.005,
     )
-    # Upper radiator bezel ring
+    # Upper machined bare-aluminium radiator bezel ring
     seis_mb.add_cylinder(
         center_u=(sx_center, 0.328, sz_center),
         radius=0.124,
         length=0.022,
-        mat="R1_GreyMetal",
+        mat="R1_BareSteel",
         axis_u="Y",
         segments=16,
         bevel=0.003,
@@ -725,7 +752,7 @@ def build_seismic_station() -> bpy.types.Object:
         segments=12,
         bevel=0.002,
     )
-    # Solar alignment shadow gnomon pin + calibration scale plate on top
+    # Solar alignment shadow gnomon pin + bare-aluminium calibration scale plate on top
     seis_mb.add_cylinder(
         center_u=(sx_center + 0.035, 0.365, sz_center - 0.020),
         radius=0.006,
@@ -738,7 +765,7 @@ def build_seismic_station() -> bpy.types.Object:
     seis_mb.add_bevel_box(
         center_u=(sx_center + 0.035, 0.341, sz_center - 0.020),
         size_u=(0.064, 0.010, 0.048),
-        mat="R1_OrangeStripe",
+        mat="R1_BareSteel",
         bevel=0.002,
         segments=1,
     )
@@ -781,7 +808,7 @@ def build_seismic_station() -> bpy.types.Object:
         center_u=(-0.185, 0.036, 0.018),
         radius=0.022,
         length=0.048,
-        mat="R1_GreyMetal",
+        mat="R1_BareSteel",
         axis_u="X",
         segments=10,
         bevel=0.002,
@@ -797,12 +824,12 @@ def build_seismic_station() -> bpy.types.Object:
         bevel=0.002,
         rot_deg_u=(0.0, -12.0, 24.0),
     )
-    # Orange cable identification band & regolith dust mound over the middle of the cable
+    # Bare-metal cable crimp ferrule & regolith dust mound over the middle of the cable
     cable_mb.add_cylinder(
         center_u=(-0.06, 0.017, 0.065),
         radius=0.019,
         length=0.028,
-        mat="R1_OrangeStripe",
+        mat="R1_BareSteel",
         axis_u="X",
         segments=10,
         bevel=0.002,
@@ -817,13 +844,14 @@ def build_seismic_station() -> bpy.types.Object:
     )
     cable_mb.build_object(parent=root)
 
-    # 4. CentralBox: squat central electronics & telemetry box
+    # 4. CentralBox: 1971 Era-S electronics box (WhitePaint top, SilverFoil reflector skirt, BareSteel legs & handles, no orange)
+    #    plus a small 1980s Lumen junction box (CreamEnamel + one OrangeStripe band) bolted to its -Z side.
     box_mb = r1kit.MeshBuilder("CentralBox", pivot_u=(bx_center, 0.0, bz_center))
-    # Lower dark grey skid base frame + 4 footpads sunk slightly in regolith (y = -0.012..0.045 m)
+    # Lower bare-aluminium skid frame + 4 short leg struts + 4 footpads sunk slightly in regolith
     box_mb.add_bevel_box(
         center_u=(bx_center, 0.022, bz_center),
         size_u=(0.44, 0.048, 0.36),
-        mat="R1_GreyMetal",
+        mat="R1_BareSteel",
         bevel=0.005,
         segments=1,
     )
@@ -838,25 +866,51 @@ def build_seismic_station() -> bpy.types.Object:
                 segments=10,
                 bevel=0.002,
             )
+            box_mb.add_cylinder(
+                center_u=(bx_center + fx * 0.92, 0.032, bz_center + fz * 0.90),
+                radius=0.014,
+                length=0.048,
+                mat="R1_BareSteel",
+                axis_u="Y",
+                segments=8,
+                bevel=0.002,
+            )
 
-    # Squat chamfered CreamEnamel electronics housing (y = 0.045..0.285 m)
+    # Crinkled SilverFoil reflector skirt around the lower/mid body of the 1971 box (y = 0.045..0.205 m)
     box_mb.add_bevel_box(
-        center_u=(bx_center, 0.165, bz_center),
-        size_u=(0.40, 0.24, 0.32),
-        mat="R1_CreamEnamel",
-        bevel=0.012,
+        center_u=(bx_center, 0.125, bz_center),
+        size_u=(0.40, 0.16, 0.32),
+        mat="R1_SilverFoil",
+        bevel=0.010,
         segments=2,
-        top_scale_xz=(0.92, 0.90),
+        top_scale_xz=(0.95, 0.94),
     )
-    # Warm-orange identification stripe band around upper perimeter
+    # Chalky cool-white (R1_WhitePaint) upper thermal-control deck of the 1971 box (y = 0.200..0.285 m)
     box_mb.add_bevel_box(
-        center_u=(bx_center, 0.225, bz_center),
-        size_u=(0.392, 0.038, 0.312),
-        mat="R1_OrangeStripe",
-        bevel=0.004,
-        segments=1,
+        center_u=(bx_center, 0.242, bz_center),
+        size_u=(0.384, 0.086, 0.304),
+        mat="R1_WhitePaint",
+        bevel=0.008,
+        segments=2,
+        top_scale_xz=(0.96, 0.95),
     )
-    # Gold-foil thermal blanket patch on rear/top half of central box + radiator louver deck
+    # Bare-aluminium EVA carry handles on the -X and +X upper sides of the 1971 box
+    for sx in (-1.0, 1.0):
+        hx = bx_center + sx * 0.195
+        box_mb.add_tube_path(
+            points_u=[
+                (hx, 0.225, bz_center - 0.07),
+                (hx + sx * 0.025, 0.245, bz_center - 0.06),
+                (hx + sx * 0.025, 0.245, bz_center + 0.06),
+                (hx, 0.225, bz_center + 0.07),
+            ],
+            radius=0.0065,
+            mat="R1_BareSteel",
+            segments=8,
+            cap_ends=True,
+        )
+
+    # Gold-foil thermal blanket patch on rear/top half of central box + bare-metal radiator louver deck
     box_mb.add_bevel_box(
         center_u=(bx_center + 0.04, 0.286, bz_center + 0.04),
         size_u=(0.24, 0.018, 0.16),
@@ -868,20 +922,20 @@ def build_seismic_station() -> bpy.types.Object:
         box_mb.add_bevel_box(
             center_u=(bx_center + lx, 0.296, bz_center + 0.04),
             size_u=(0.024, 0.008, 0.13),
-            mat="R1_GreyMetal",
+            mat="R1_BareSteel",
             bevel=0.0015,
             segments=1,
         )
-    # Front instrument bezel & toggle switch guard
+    # Front-right 1971 instrument bezel & toggle switch guard (shifted +X so front-left holds the Lumen junction box)
     box_mb.add_bevel_box(
-        center_u=(bx_center - 0.05, 0.145, bz_center - 0.158),
-        size_u=(0.20, 0.11, 0.022),
-        mat="R1_GreyMetal",
+        center_u=(bx_center + 0.06, 0.145, bz_center - 0.158),
+        size_u=(0.16, 0.10, 0.022),
+        mat="R1_BareSteel",
         bevel=0.003,
         segments=1,
     )
     box_mb.add_cylinder(
-        center_u=(bx_center - 0.09, 0.145, bz_center - 0.172),
+        center_u=(bx_center + 0.02, 0.145, bz_center - 0.172),
         radius=0.014,
         length=0.018,
         mat="R1_Brass",
@@ -890,7 +944,7 @@ def build_seismic_station() -> bpy.types.Object:
         bevel=0.002,
     )
     box_mb.add_cylinder(
-        center_u=(bx_center - 0.01, 0.145, bz_center - 0.172),
+        center_u=(bx_center + 0.09, 0.145, bz_center - 0.172),
         radius=0.018,
         length=0.014,
         mat="R1_DarkGlass",
@@ -898,12 +952,53 @@ def build_seismic_station() -> bpy.types.Object:
         segments=10,
         bevel=0.002,
     )
+
+    # Small 1980s Lumen junction box (CreamEnamel with one coral OrangeStripe band) bolted to CentralBox's front-left (-Z) side
+    jbox_x = bx_center - 0.10
+    jbox_y = 0.170
+    jbox_z = bz_center - 0.192
+    # BareSteel mounting flange plate bolted to CentralBox's side wall
+    box_mb.add_bevel_box(
+        center_u=(jbox_x, jbox_y, bz_center - 0.160),
+        size_u=(0.135, 0.125, 0.016),
+        mat="R1_BareSteel",
+        bevel=0.002,
+        segments=1,
+    )
+    for b_dx in (-0.055, 0.055):
+        for b_dy in (-0.048, 0.048):
+            box_mb.add_cylinder(
+                center_u=(jbox_x + b_dx, jbox_y + b_dy, bz_center - 0.170),
+                radius=0.005,
+                length=0.010,
+                mat="R1_BareSteel",
+                axis_u="Z",
+                segments=6,
+                bevel=0.001,
+            )
+    # Warm-cream enameled Lumen retrofit junction box body (y = 0.115..0.225 m)
+    box_mb.add_bevel_box(
+        center_u=(jbox_x, jbox_y, jbox_z),
+        size_u=(0.115, 0.110, 0.068),
+        mat="R1_CreamEnamel",
+        bevel=0.006,
+        segments=1,
+    )
+    # Single coral-orange (R1_OrangeStripe) identification band around the Lumen junction box
+    box_mb.add_bevel_box(
+        center_u=(jbox_x, jbox_y + 0.018, jbox_z),
+        size_u=(0.119, 0.022, 0.072),
+        mat="R1_OrangeStripe",
+        bevel=0.002,
+        segments=1,
+    )
+
     # Short telemetry whip stub on rear-right corner (y = 0.28..0.43 m)
     box_mb.add_cylinder(
         center_u=(bx_center + 0.13, 0.305, bz_center + 0.09),
         radius=0.022,
         length=0.042,
-        mat="R1_GreyMetal",
+        mat="R1_BareSteel",
         axis_u="Y",
         segments=10,
         bevel=0.002,
@@ -928,14 +1023,14 @@ def build_seismic_station() -> bpy.types.Object:
     )
     box_mb.build_object(parent=root)
 
-    # 5. DeadStatusLamp: prominent dead status lamp turret on front-left top deck of CentralBox (R1_DarkGlass, no R1_LampAmber)
-    lamp_pos = (bx_center - 0.10, 0.295, bz_center - 0.08)
+    # 5. DeadStatusLamp: dead status lamp mounted on top of the side-bolted Lumen junction box (R1_DarkGlass, no R1_LampAmber)
+    lamp_pos = (jbox_x, 0.232, jbox_z)
     lamp_mb = r1kit.MeshBuilder("DeadStatusLamp", pivot_u=lamp_pos)
     # Armored cage base & brass ring
     lamp_mb.add_cylinder(
         center_u=(lamp_pos[0], lamp_pos[1], lamp_pos[2]),
-        radius=0.034,
-        length=0.024,
+        radius=0.032,
+        length=0.022,
         mat="R1_GreyMetal",
         axis_u="Y",
         segments=12,
@@ -943,7 +1038,7 @@ def build_seismic_station() -> bpy.types.Object:
     )
     lamp_mb.add_cylinder(
         center_u=(lamp_pos[0], lamp_pos[1] + 0.015, lamp_pos[2]),
-        radius=0.029,
+        radius=0.027,
         length=0.012,
         mat="R1_Brass",
         axis_u="Y",
@@ -953,8 +1048,8 @@ def build_seismic_station() -> bpy.types.Object:
     # Unlit dark glass dome lens
     lamp_mb.add_cylinder(
         center_u=(lamp_pos[0], lamp_pos[1] + 0.032, lamp_pos[2]),
-        radius=0.024,
-        radius_top=0.015,
+        radius=0.022,
+        radius_top=0.014,
         length=0.028,
         mat="R1_DarkGlass",
         axis_u="Y",
@@ -978,22 +1073,20 @@ def build_seismic_station() -> bpy.types.Object:
     return root
 
 
-def _add_corner_cube_prism_array_10x10(
+def _add_corner_cube_prism_array_3x3(
     mb: r1kit.MeshBuilder,
     panel_origin_u: Tuple[float, float, float],
     panel_rot_u: Tuple[float, float, float],
-    grid_span: float = 0.42,
-    prism_depth: float = 0.018,
-    slab_back_z: float = 0.012,
-    front_z: float = -0.022,
-) -> None:
-    """Build a 100% closed manifold 10x10 corner-cube retroreflector prism array (100 recessed 4-facet prisms)."""
+    grid_span: float = 0.416,
+    slab_back_z: float = 0.010,
+    front_z: float = -0.018,
+) -> List[Tuple[int, int, str]]:
+    """Build a 100% closed manifold 3x3 array of large corner-cube optical prisms with broad glassy facets."""
     bm = mb.bm
     glass_idx = mb._mat_index("R1_DarkGlass")
     steel_idx = mb._mat_index("R1_BareSteel")
-    grey_idx = mb._mat_index("R1_GreyMetal")
 
-    n_cells = 10
+    n_cells = 3
     half = grid_span * 0.5
     step = grid_span / n_cells
 
@@ -1021,8 +1114,26 @@ def _add_corner_cube_prism_array_10x10(
         front_rim.append(f_row)
         back_rim.append(b_row)
 
-    faces: List[bmesh.types.BMFace] = []
-    # 10x10 = 100 recessed corner-cube prism pockets on the front (-Z) face
+    # Per-cell asymmetric optical table offsets (ox, oy) and corner cant heights (dz00, dz10, dz11, dz01)
+    # so the 9 large prisms have varied facet angles and non-repeating light reflections.
+    cell_variations = [
+        # Row 0 (bottom)
+        (-0.004, -0.003, -0.0065, -0.0085, -0.0105, -0.0075, True),
+        (0.003, -0.004, -0.0080, -0.0065, -0.0095, -0.0110, False),
+        (-0.003, 0.004, -0.0095, -0.0115, -0.0075, -0.0065, True),
+        # Row 1 (middle)
+        (0.004, 0.002, -0.0070, -0.0105, -0.0085, -0.0065, False),
+        (-0.002, -0.003, -0.0115, -0.0080, -0.0070, -0.0105, True),
+        (0.003, -0.002, -0.0065, -0.0095, -0.0115, -0.0080, False),
+        # Row 2 (top)
+        (-0.003, 0.003, -0.0090, -0.0070, -0.0105, -0.0080, False),
+        (0.002, 0.004, -0.0075, -0.0110, -0.0090, -0.0065, True),
+        (-0.004, -0.002, -0.0110, -0.0085, -0.0070, -0.0100, False),
+    ]
+
+    poly_meta: List[Tuple[int, int, str]] = []
+    thalf = step * 0.285
+
     for r in range(n_cells):
         for c in range(n_cells):
             v00 = front_rim[r][c]
@@ -1030,67 +1141,82 @@ def _add_corner_cube_prism_array_10x10(
             v11 = front_rim[r + 1][c + 1]
             v01 = front_rim[r + 1][c]
 
-            # Slightly offset corner-cube trihedral apex inside each pocket so grazing light glints across facets
-            ox = 0.0035 * (1.0 if ((r + c) % 2 == 0) else -1.0)
-            oy = 0.0035 * (1.0 if (r % 2 == 0) else -1.0)
+            idx = r * n_cells + c
+            ox, oy, dz00, dz10, dz11, dz01, flip_diag = cell_variations[idx]
             cx_loc = -half + (c + 0.5) * step + ox
             cy_loc = -half + (r + 0.5) * step + oy
-            cz_loc = front_z + prism_depth
-            pc_u = _rotate_u(
-                (panel_origin_u[0] + cx_loc, panel_origin_u[1] + cy_loc, panel_origin_u[2] + cz_loc),
-                panel_rot_u,
-                panel_origin_u,
-            )
-            vc = bm.verts.new(mb._to_local_b(pc_u))
 
-            # 4 recessed prism facets per cell (winding outward toward -Z in panel local space)
-            f_bot = bm.faces.new([v00, vc, v10])
-            f_right = bm.faces.new([v10, vc, v11])
-            f_top = bm.faces.new([v11, vc, v01])
-            f_left = bm.faces.new([v01, vc, v00])
+            table_pts = [
+                (cx_loc - thalf, cy_loc - thalf, front_z + dz00),
+                (cx_loc + thalf, cy_loc - thalf, front_z + dz10),
+                (cx_loc + thalf, cy_loc + thalf, front_z + dz11),
+                (cx_loc - thalf, cy_loc + thalf, front_z + dz01),
+            ]
+            t_verts: List[bmesh.types.BMVert] = []
+            for tx, ty, tz in table_pts:
+                pt_u = _rotate_u(
+                    (panel_origin_u[0] + tx, panel_origin_u[1] + ty, panel_origin_u[2] + tz),
+                    panel_rot_u,
+                    panel_origin_u,
+                )
+                t_verts.append(bm.verts.new(mb._to_local_b(pt_u)))
+            t00, t10, t11, t01 = t_verts
 
-            # Assign high-glint DarkGlass to 3 facets and BareSteel specular glint to 1 facet for retroreflector catch
-            f_bot.material_index = glass_idx
-            f_right.material_index = steel_idx
-            f_top.material_index = glass_idx
-            f_left.material_index = glass_idx
-            for pf in (f_bot, f_right, f_top, f_left):
+            # 4 wide chamfered corner-cube bevel facets + 2 large canted central optical table facets
+            f_bot = bm.faces.new([v00, t00, t10, v10])
+            f_right = bm.faces.new([v10, t10, t11, v11])
+            f_top = bm.faces.new([v11, t11, t01, v01])
+            f_left = bm.faces.new([v01, t01, t00, v00])
+            if flip_diag:
+                f_tab1 = bm.faces.new([t00, t11, t10])
+                f_tab2 = bm.faces.new([t00, t01, t11])
+            else:
+                f_tab1 = bm.faces.new([t00, t01, t10])
+                f_tab2 = bm.faces.new([t10, t01, t11])
+
+            front_facets = [
+                (f_bot, "bot"),
+                (f_right, "right"),
+                (f_top, "top"),
+                (f_left, "left"),
+                (f_tab1, "tab1"),
+                (f_tab2, "tab2"),
+            ]
+            for pf, fkind in front_facets:
+                pf.material_index = glass_idx
                 pf.smooth = False
-                faces.append(pf)
+                poly_meta.append((r, c, fkind))
 
             # Back face quad (+Z)
             fb = bm.faces.new([back_rim[r][c], back_rim[r + 1][c], back_rim[r + 1][c + 1], back_rim[r][c + 1]])
-            fb.material_index = grey_idx
+            fb.material_index = steel_idx
             fb.smooth = False
-            faces.append(fb)
+            poly_meta.append((r, c, "back"))
 
     # Outer perimeter walls closing front_rim to back_rim
     for idx in range(n_cells):
-        # Bottom edge (r=0)
         f1 = bm.faces.new([front_rim[0][idx], front_rim[0][idx + 1], back_rim[0][idx + 1], back_rim[0][idx]])
-        # Top edge (r=n_cells)
         f2 = bm.faces.new(
             [back_rim[n_cells][idx], back_rim[n_cells][idx + 1], front_rim[n_cells][idx + 1], front_rim[n_cells][idx]]
         )
-        # Left edge (c=0)
         f3 = bm.faces.new([back_rim[idx][0], back_rim[idx + 1][0], front_rim[idx + 1][0], front_rim[idx][0]])
-        # Right edge (c=n_cells)
         f4 = bm.faces.new(
             [front_rim[idx][n_cells], front_rim[idx + 1][n_cells], back_rim[idx + 1][n_cells], back_rim[idx][n_cells]]
         )
         for fw in (f1, f2, f3, f4):
-            fw.material_index = grey_idx
+            fw.material_index = steel_idx
             fw.smooth = False
-            faces.append(fw)
+            poly_meta.append((0, 0, "wall"))
 
     r1kit.ensure_outward_normals(bm, per_shell=True)
+    return poly_meta
 
 
 def build_retroreflector() -> bpy.types.Object:
     """Build Deliverable 3: Prop_Retroreflector (~0.66 W x 0.62 D x 0.56 H m).
 
-    Tilted panel of 10x10 corner-cube prisms on legs (real lunar laser ranging);
-    catches light at grazing sun.
+    Tilted panel of 3x3 large corner-cube optical prisms with visible glassy facets and varied wear/dust
+    on a bare-aluminium stand with GoldFoil on the rear face only.
     """
     r1kit.reset_scene()
     ensure_extended_r1_materials()
@@ -1099,13 +1225,13 @@ def build_retroreflector() -> bpy.types.Object:
     root = r1kit.create_empty("Prop_Retroreflector", pivot_u=(0.0, 0.0, 0.0))
 
     panel_piv = (0.0, 0.30, 0.0)
-    # Tilted 38 deg toward -Z / +Y so the 10x10 prism face aims toward Earth & catches low grazing sun
+    # Tilted 38 deg toward -Z / +Y so the 3x3 prism face aims toward Earth & catches low grazing sun
     panel_rot = (-38.0, 0.0, 0.0)
 
     def rp(x: float, y: float, z: float) -> Tuple[float, float, float]:
         return _rotate_u((panel_piv[0] + x, panel_piv[1] + y, panel_piv[2] + z), panel_rot, panel_piv)
 
-    # 1. SupportStand: tubular A-frame legs, circular footpads in regolith, elevation trunnions, spirit level
+    # 1. SupportStand: tubular bare-aluminium A-frame legs, circular footpads in regolith, elevation trunnions, spirit level
     stand_mb = r1kit.MeshBuilder("SupportStand", pivot_u=(0.0, 0.0, 0.0))
 
     # 4 splayed tubular legs from the side trunnions (-0.27 / +0.27, 0.30, 0.0) down to circular footpads
@@ -1122,7 +1248,7 @@ def build_retroreflector() -> bpy.types.Object:
             radius=0.044,
             radius_top=0.036,
             length=0.016,
-            mat="R1_GreyMetal",
+            mat="R1_BareSteel",
             axis_u="Y",
             segments=12,
             bevel=0.002,
@@ -1157,27 +1283,27 @@ def build_retroreflector() -> bpy.types.Object:
             segments=10,
         )
 
-    # Lower horizontal spreader bars (left, right, and rear cross-brace)
+    # Lower horizontal spreader bars (left, right, and rear/front cross-braces — all R1_BareSteel, no cream/orange)
     for sx in (-1.0, 1.0):
         stand_mb.add_pipe(
             p0_u=(sx * 0.28, 0.11, -0.155),
             p1_u=(sx * 0.28, 0.11, 0.155),
             radius=0.010,
-            mat="R1_GreyMetal",
+            mat="R1_BareSteel",
             segments=8,
         )
     stand_mb.add_pipe(
         p0_u=(-0.28, 0.11, 0.145),
         p1_u=(0.28, 0.11, 0.145),
         radius=0.010,
-        mat="R1_CreamEnamel",
+        mat="R1_BareSteel",
         segments=8,
     )
     stand_mb.add_pipe(
         p0_u=(-0.28, 0.11, -0.145),
         p1_u=(0.28, 0.11, -0.145),
         radius=0.010,
-        mat="R1_OrangeStripe",
+        mat="R1_BareSteel",
         segments=8,
     )
 
@@ -1187,7 +1313,7 @@ def build_retroreflector() -> bpy.types.Object:
             center_u=(sx * 0.268, 0.30, 0.0),
             radius=0.036,
             length=0.032,
-            mat="R1_GreyMetal",
+            mat="R1_BareSteel",
             axis_u="X",
             segments=14,
             bevel=0.003,
@@ -1206,7 +1332,7 @@ def build_retroreflector() -> bpy.types.Object:
     stand_mb.add_bevel_box(
         center_u=(0.20, 0.122, -0.145),
         size_u=(0.075, 0.018, 0.056),
-        mat="R1_GreyMetal",
+        mat="R1_BareSteel",
         bevel=0.002,
         segments=1,
     )
@@ -1230,14 +1356,14 @@ def build_retroreflector() -> bpy.types.Object:
     )
     stand_mb.build_object(parent=root)
 
-    # 2. PanelHousing: tilted square optical array frame, sun-shield baffle walls, GoldFoil thermal backing, EVA handle
+    # 2. PanelHousing: machined bare-aluminium (R1_BareSteel) optical array frame, GoldFoil thermal backing on rear face only
     housing_mb = r1kit.MeshBuilder("PanelHousing", pivot_u=panel_piv)
 
-    # Rear aluminum/CreamEnamel backing plate behind the prism array (z_local = +0.010 to +0.038 m)
+    # Rear machined bare-aluminium backing plate behind the prism array (z_local = +0.010 to +0.038 m)
     housing_mb.add_bevel_box(
         center_u=rp(0.0, 0.0, 0.024),
         size_u=(0.49, 0.49, 0.028),
-        mat="R1_CreamEnamel",
+        mat="R1_BareSteel",
         bevel=0.006,
         segments=1,
         rot_deg_u=panel_rot,
@@ -1252,22 +1378,22 @@ def build_retroreflector() -> bpy.types.Object:
         rot_deg_u=panel_rot,
     )
 
-    # 4 perimeter bezel rails & stray-light sunshade hood framing the 0.42x0.42 m 10x10 prism cavity
+    # 4 perimeter bezel rails & stray-light sunshade hood framing the 0.42x0.42 m 3x3 prism cavity
     # Left & Right rails
     for sx in (-1.0, 1.0):
         housing_mb.add_bevel_box(
             center_u=rp(sx * 0.230, 0.0, -0.012),
             size_u=(0.040, 0.50, 0.056),
-            mat="R1_CreamEnamel",
+            mat="R1_BareSteel",
             bevel=0.004,
             segments=1,
             rot_deg_u=panel_rot,
         )
-        # Inner dark anti-glare baffle lip
+        # Inner anti-glare baffle lip
         housing_mb.add_bevel_box(
             center_u=rp(sx * 0.214, 0.0, -0.026),
             size_u=(0.014, 0.43, 0.034),
-            mat="R1_GreyMetal",
+            mat="R1_BareSteel",
             bevel=0.002,
             segments=1,
             rot_deg_u=panel_rot,
@@ -1277,7 +1403,7 @@ def build_retroreflector() -> bpy.types.Object:
         housing_mb.add_bevel_box(
             center_u=rp(0.0, sy * 0.230, -0.012),
             size_u=(0.42, 0.040, 0.056),
-            mat="R1_CreamEnamel",
+            mat="R1_BareSteel",
             bevel=0.004,
             segments=1,
             rot_deg_u=panel_rot,
@@ -1285,26 +1411,77 @@ def build_retroreflector() -> bpy.types.Object:
         housing_mb.add_bevel_box(
             center_u=rp(0.0, sy * 0.214, -0.026),
             size_u=(0.43, 0.014, 0.034),
-            mat="R1_GreyMetal",
+            mat="R1_BareSteel",
             bevel=0.002,
             segments=1,
             rot_deg_u=panel_rot,
         )
 
+    # Machined bare-aluminium 3x3 divider lattice separating the 9 large corner-cube optical prisms
+    div_offset = 0.416 / 6.0  # +/- 0.0693 m
+    for d_coord in (-div_offset, div_offset):
+        housing_mb.add_bevel_box(
+            center_u=rp(d_coord, 0.0, -0.017),
+            size_u=(0.013, 0.414, 0.012),
+            mat="R1_BareSteel",
+            bevel=0.002,
+            segments=1,
+            rot_deg_u=panel_rot,
+        )
+        housing_mb.add_bevel_box(
+            center_u=rp(0.0, d_coord, -0.017),
+            size_u=(0.414, 0.013, 0.012),
+            mat="R1_BareSteel",
+            bevel=0.002,
+            segments=1,
+            rot_deg_u=panel_rot,
+        )
+    # 4 machined retainer clamp bosses at the 3x3 divider intersections
+    for dx in (-div_offset, div_offset):
+        for dy in (-div_offset, div_offset):
+            housing_mb.add_bevel_box(
+                center_u=rp(dx, dy, -0.019),
+                size_u=(0.024, 0.024, 0.014),
+                mat="R1_BareSteel",
+                bevel=0.002,
+                segments=1,
+                rot_deg_u=panel_rot,
+            )
+
+    # Settled regolith dust drifts in the lower-left and lower-center bezel trough for asymmetric Era-S weathering
+    housing_mb.add_bevel_box(
+        center_u=rp(-0.142, -0.188, -0.024),
+        size_u=(0.115, 0.036, 0.014),
+        mat="R1_Basalt",
+        bevel=0.004,
+        segments=1,
+        top_scale_xz=(0.72, 0.65),
+        rot_deg_u=panel_rot,
+    )
+    housing_mb.add_bevel_box(
+        center_u=rp(0.025, -0.194, -0.023),
+        size_u=(0.082, 0.026, 0.012),
+        mat="R1_Basalt",
+        bevel=0.003,
+        segments=1,
+        top_scale_xz=(0.70, 0.65),
+        rot_deg_u=panel_rot,
+    )
+
     # Upper solar-glare sunhood visor along the top (+Y_local) edge
     housing_mb.add_bevel_box(
         center_u=rp(0.0, 0.244, -0.052),
         size_u=(0.49, 0.016, 0.048),
-        mat="R1_GreyMetal",
+        mat="R1_BareSteel",
         bevel=0.002,
         segments=1,
         rot_deg_u=panel_rot,
     )
-    # Warm-orange identification corner tabs & top alignment fiducial stripe
+    # Machined corner brackets & top alignment fiducial bar (all R1_BareSteel, no orange)
     housing_mb.add_bevel_box(
         center_u=rp(0.0, 0.236, -0.041),
         size_u=(0.18, 0.024, 0.012),
-        mat="R1_OrangeStripe",
+        mat="R1_BareSteel",
         bevel=0.002,
         segments=1,
         rot_deg_u=panel_rot,
@@ -1313,7 +1490,7 @@ def build_retroreflector() -> bpy.types.Object:
         housing_mb.add_bevel_box(
             center_u=rp(sx * 0.232, -0.18, -0.038),
             size_u=(0.032, 0.065, 0.012),
-            mat="R1_OrangeStripe",
+            mat="R1_BareSteel",
             bevel=0.002,
             segments=1,
             rot_deg_u=panel_rot,
@@ -1334,16 +1511,15 @@ def build_retroreflector() -> bpy.types.Object:
     )
     housing_mb.build_object(parent=root)
 
-    # 3. PrismArray: 10x10 = 100 corner-cube retroreflector prisms seated inside the tilted panel frame
+    # 3. PrismArray: 3x3 = 9 large corner-cube optical prisms with broad glassy facets seated inside the frame
     prism_mb = r1kit.MeshBuilder("PrismArray", pivot_u=panel_piv)
-    _add_corner_cube_prism_array_10x10(
+    poly_meta = _add_corner_cube_prism_array_3x3(
         prism_mb,
         panel_origin_u=panel_piv,
         panel_rot_u=panel_rot,
         grid_span=0.416,
-        prism_depth=0.018,
         slab_back_z=0.010,
-        front_z=-0.022,
+        front_z=-0.018,
     )
     prism_obj = prism_mb.build_object(parent=root)
 
@@ -1355,18 +1531,45 @@ def build_retroreflector() -> bpy.types.Object:
     r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(root, footprint_radius=0.42)
 
-    # Boost vertex-color G (edge wear / crisp optical facet reflectance) and reduce B (dust) on PrismArray
-    # so the 10x10 corner-cube prisms catch grazing sun and headlamp beams crisply
-    if prism_obj.data is not None and "Col" in prism_obj.data.color_attributes:
-        attr = prism_obj.data.color_attributes["Col"]
-        for loop in prism_obj.data.loops:
-            r, g, b, a = attr.data[loop.index].color
-            attr.data[loop.index].color = (
-                max(0.82, min(1.0, r * 0.95 + 0.12)),
-                max(0.76, min(1.0, g * 0.5 + 0.65)),
-                max(0.0, min(0.14, b * 0.25)),
-                a,
-            )
+    # Assign varied per-cell and per-facet vertex colors (R=AO, G=glassy facet glint/wear, B=settled regolith dust)
+    # across the 3x3 large corner-cube prisms so every prism shows distinct glassy facets and organic wear/dust.
+    cell_weathering = {
+        (0, 0): (0.48, 0.62, 0.94),  # bottom-left: heavy settled regolith dust drift
+        (0, 1): (0.64, 0.74, 0.68),  # bottom-mid: moderate dust & worn lower bevel
+        (0, 2): (0.78, 0.85, 0.42),  # bottom-right: light dust, crisp corner glint
+        (1, 0): (0.68, 0.78, 0.56),  # mid-left: weathered/crazed outer prism
+        (1, 1): (0.94, 0.95, 0.08),  # center: clean high-glint optical prism
+        (1, 2): (0.90, 0.86, 0.12),  # mid-right: deep glassy blue with bright table facet
+        (2, 0): (0.76, 0.88, 0.30),  # top-left: sun-crazed upper corner prism
+        (2, 1): (0.92, 0.80, 0.10),  # top-mid: dark glass with mid-tone bevel catch
+        (2, 2): (0.96, 0.98, 0.04),  # top-right: brightest optical glint under sunhood
+    }
+    facet_offsets = {
+        "tab1": (0.04, 0.14, -0.12),   # bright primary optical table facet
+        "tab2": (-0.02, -0.14, 0.04),  # deeper contrasting optical table facet
+        "bot": (0.02, 0.10, 0.12),     # lower bevel catching low sun + settled dust
+        "left": (0.00, 0.04, 0.05),    # mid-tone left bevel facet
+        "right": (-0.04, -0.22, 0.00), # deep dark-blue right bevel facet
+        "top": (-0.06, -0.26, -0.06),  # shaded upper bevel under sunhood
+    }
+    if prism_obj.data is not None and r1kit.VCOL_ATTRIBUTE_NAME in prism_obj.data.color_attributes:
+        attr = prism_obj.data.color_attributes[r1kit.VCOL_ATTRIBUTE_NAME]
+        for poly_idx, poly in enumerate(prism_obj.data.polygons):
+            if poly_idx >= len(poly_meta):
+                break
+            r_cell, c_cell, fkind = poly_meta[poly_idx]
+            if fkind not in facet_offsets:
+                continue
+            base_r, base_g, base_b = cell_weathering.get((r_cell, c_cell), (0.85, 0.82, 0.15))
+            dr, dg, db = facet_offsets[fkind]
+            # Alternate facet highlight emphasis across cells so adjacent prisms never look identical
+            if (r_cell + c_cell) % 2 == 1 and fkind in ("tab1", "tab2"):
+                dg = -dg * 0.85
+            col_r = max(0.32, min(1.0, base_r + dr))
+            col_g = max(0.38, min(1.0, base_g + dg))
+            col_b = max(0.0, min(1.0, base_b + db))
+            for loop_idx in poly.loop_indices:
+                attr.data[loop_idx].color = (col_r, col_g, col_b, 1.0)
 
     fbx_path = PROPS_DIR / "Prop_Retroreflector.fbx"
     r1kit.export_fbx(root, fbx_path, bake_space_transform=False)
@@ -1784,30 +1987,30 @@ def _add_sample_core_tube(
     axis_u: str = "Y",
     rot_deg_u: Tuple[float, float, float] = (0.0, 0.0, 0.0),
 ) -> None:
-    """Add a 0.36 m lunar geology core sample tube (CreamEnamel sleeve, OrangeStripe band, Brass cap, DarkGlass sight)."""
+    """Add a 0.36 m Era-S lunar geology core sample tube (BareSteel sleeve, Rubber grip collar, Brass cap, DarkGlass sight)."""
     cx, cy, cz = center_u
 
     def tp(dx: float, dy: float, dz: float) -> Tuple[float, float, float]:
         return _rotate_u((cx + dx, cy + dy, cz + dz), rot_deg_u, center_u)
 
     if axis_u == "Y":
-        # Main vertical core tube body (length 0.32 m, radius 0.025 m)
+        # Main vertical bare-aluminium core tube body (length 0.31 m, radius 0.025 m)
         mb.add_cylinder(
             center_u=center_u,
             radius=0.025,
             length=0.31,
-            mat="R1_CreamEnamel",
+            mat="R1_BareSteel",
             axis_u="Y",
             segments=12,
             bevel=0.003,
             rot_deg_u=rot_deg_u,
         )
-        # Upper orange identification collar
+        # Upper black rubber grip collar
         mb.add_cylinder(
             center_u=tp(0.0, 0.095, 0.0),
             radius=0.0265,
             length=0.036,
-            mat="R1_OrangeStripe",
+            mat="R1_Rubber",
             axis_u="Y",
             segments=12,
             bevel=0.002,
@@ -1844,12 +2047,12 @@ def _add_sample_core_tube(
             rot_deg_u=rot_deg_u,
         )
     else:
-        # Horizontal core tube along X (fallen in dust)
+        # Horizontal bare-aluminium core tube along X (fallen in dust)
         mb.add_cylinder(
             center_u=center_u,
             radius=0.025,
             length=0.31,
-            mat="R1_CreamEnamel",
+            mat="R1_BareSteel",
             axis_u="X",
             segments=12,
             bevel=0.003,
@@ -1859,7 +2062,7 @@ def _add_sample_core_tube(
             center_u=tp(0.095, 0.0, 0.0),
             radius=0.0265,
             length=0.036,
-            mat="R1_OrangeStripe",
+            mat="R1_Rubber",
             axis_u="X",
             segments=12,
             bevel=0.002,
@@ -1906,7 +2109,7 @@ def build_sample_rack() -> bpy.types.Object:
 
     root = r1kit.create_empty("Prop_SampleRack", pivot_u=(0.0, 0.0, 0.0))
 
-    # 1. RackFrame: portable tubular A-frame geology carrier with tool bar & 3-slot core tube holster
+    # 1. RackFrame: portable tubular bare-aluminium A-frame geology carrier with tool bar & 3-slot core tube holster
     rack_mb = r1kit.MeshBuilder("RackFrame", pivot_u=(0.0, 0.0, 0.0))
 
     # 4 splayed tubular A-frame legs from top bar (x = +/-0.42, y = 0.78, z = 0.02) to footpads (z = -0.22 / +0.26)
@@ -1919,7 +2122,7 @@ def build_sample_rack() -> bpy.types.Object:
                 radius=0.038,
                 radius_top=0.030,
                 length=0.016,
-                mat="R1_GreyMetal",
+                mat="R1_BareSteel",
                 axis_u="Y",
                 segments=10,
                 bevel=0.002,
@@ -1946,26 +2149,26 @@ def build_sample_rack() -> bpy.types.Object:
             p0_u=(x_leg, 0.24, -0.15),
             p1_u=(x_leg, 0.24, 0.19),
             radius=0.010,
-            mat="R1_GreyMetal",
+            mat="R1_BareSteel",
             segments=8,
         )
 
     # Lower horizontal crossbars at y = 0.24 m
-    rack_mb.add_pipe((-0.42, 0.24, -0.14), (0.42, 0.24, -0.14), radius=0.011, mat="R1_GreyMetal", segments=8)
-    rack_mb.add_pipe((-0.42, 0.24, 0.18), (0.42, 0.24, 0.18), radius=0.011, mat="R1_GreyMetal", segments=8)
+    rack_mb.add_pipe((-0.42, 0.24, -0.14), (0.42, 0.24, -0.14), radius=0.011, mat="R1_BareSteel", segments=8)
+    rack_mb.add_pipe((-0.42, 0.24, 0.18), (0.42, 0.24, 0.18), radius=0.011, mat="R1_BareSteel", segments=8)
 
-    # Upper horizontal tool-carrier header bar at y = 0.78 m (CreamEnamel with OrangeStripe ID band & Brass tool clips)
+    # Upper horizontal tool-carrier header bar at y = 0.78 m (all R1_BareSteel + Brass tool clips, no cream/orange)
     rack_mb.add_bevel_box(
         center_u=(0.0, 0.78, 0.02),
         size_u=(0.88, 0.056, 0.064),
-        mat="R1_CreamEnamel",
+        mat="R1_BareSteel",
         bevel=0.006,
         segments=1,
     )
     rack_mb.add_bevel_box(
         center_u=(0.0, 0.78, -0.012),
         size_u=(0.84, 0.022, 0.012),
-        mat="R1_OrangeStripe",
+        mat="R1_BareSteel",
         bevel=0.002,
         segments=1,
     )
@@ -1993,19 +2196,18 @@ def build_sample_rack() -> bpy.types.Object:
         cap_ends=True,
     )
 
-    # Right-side 3-slot Core Tube Holster Tray (x = 0.18..0.40, y = 0.22..0.46, z = 0.08)
-    # Slots at x = 0.22 (occupied), x = 0.30 (occupied), x = 0.37 (empty — 3rd tube fell out in front!)
+    # Right-side 3-slot Core Tube Holster Tray (x = 0.18..0.40, y = 0.22..0.46, z = 0.08, all R1_BareSteel / Brass)
     rack_mb.add_bevel_box(
         center_u=(0.295, 0.235, 0.08),
         size_u=(0.24, 0.032, 0.11),
-        mat="R1_GreyMetal",
+        mat="R1_BareSteel",
         bevel=0.004,
         segments=1,
     )
     rack_mb.add_bevel_box(
         center_u=(0.295, 0.45, 0.08),
         size_u=(0.24, 0.028, 0.11),
-        mat="R1_CreamEnamel",
+        mat="R1_BareSteel",
         bevel=0.004,
         segments=1,
     )
@@ -2014,17 +2216,17 @@ def build_sample_rack() -> bpy.types.Object:
             center_u=(slot_x, 0.466, 0.08),
             radius=0.031,
             length=0.016,
-            mat="R1_Brass" if slot_x > 0.34 else "R1_GreyMetal",
+            mat="R1_Brass" if slot_x > 0.34 else "R1_BareSteel",
             axis_u="Y",
             segments=12,
             bevel=0.002,
         )
     rack_mb.build_object(parent=root)
 
-    # 2. ToolRake: Apollo lunar sampling rake hanging in left clip (x = -0.28, z = -0.055)
+    # 2. ToolRake: Apollo lunar sampling rake hanging in left clip (BareSteel shaft/head + Rubber black grip)
     rake_piv = (-0.28, 0.48, -0.055)
     rake_mb = r1kit.MeshBuilder("ToolRake", pivot_u=rake_piv)
-    # Long vertical shaft (y = 0.16..0.89 m) + top T-handle + orange grip sleeve
+    # Long vertical shaft (y = 0.16..0.89 m) + top Rubber T-handle + Rubber grip sleeve
     rake_mb.add_cylinder(
         center_u=(-0.28, 0.525, -0.055),
         radius=0.009,
@@ -2038,7 +2240,7 @@ def build_sample_rack() -> bpy.types.Object:
         center_u=(-0.28, 0.68, -0.055),
         radius=0.012,
         length=0.11,
-        mat="R1_OrangeStripe",
+        mat="R1_Rubber",
         axis_u="Y",
         segments=10,
         bevel=0.002,
@@ -2047,7 +2249,7 @@ def build_sample_rack() -> bpy.types.Object:
         center_u=(-0.28, 0.895, -0.055),
         radius=0.011,
         length=0.11,
-        mat="R1_GreyMetal",
+        mat="R1_Rubber",
         axis_u="X",
         segments=10,
         bevel=0.002,
@@ -2056,7 +2258,7 @@ def build_sample_rack() -> bpy.types.Object:
     rake_mb.add_bevel_box(
         center_u=(-0.28, 0.165, -0.055),
         size_u=(0.17, 0.024, 0.028),
-        mat="R1_GreyMetal",
+        mat="R1_BareSteel",
         bevel=0.003,
         segments=1,
     )
@@ -2081,7 +2283,7 @@ def build_sample_rack() -> bpy.types.Object:
         )
     rake_mb.build_object(parent=root)
 
-    # 3. ToolTongs: long-handled rock-sampling tongs hanging in center-left clip (x = -0.06, z = -0.055)
+    # 3. ToolTongs: long-handled rock-sampling tongs hanging in center-left clip (BareSteel shaft/jaws + Rubber black grip)
     tongs_piv = (-0.06, 0.48, -0.055)
     tongs_mb = r1kit.MeshBuilder("ToolTongs", pivot_u=tongs_piv)
     tongs_mb.add_cylinder(
@@ -2093,18 +2295,18 @@ def build_sample_rack() -> bpy.types.Object:
         segments=10,
         bevel=0.0015,
     )
-    # Upper squeeze-trigger grip assembly (y = 0.72..0.88 m)
+    # Upper black rubber squeeze-trigger grip assembly (y = 0.72..0.88 m)
     tongs_mb.add_bevel_box(
         center_u=(-0.06, 0.875, -0.055),
         size_u=(0.095, 0.024, 0.026),
-        mat="R1_OrangeStripe",
+        mat="R1_Rubber",
         bevel=0.003,
         segments=1,
     )
     tongs_mb.add_bevel_box(
         center_u=(-0.06, 0.815, -0.055),
         size_u=(0.078, 0.018, 0.022),
-        mat="R1_GreyMetal",
+        mat="R1_Rubber",
         bevel=0.002,
         segments=1,
     )
@@ -2137,7 +2339,7 @@ def build_sample_rack() -> bpy.types.Object:
         )
     tongs_mb.build_object(parent=root)
 
-    # 4. ToolScoop: adjustable lunar trenching scoop hanging in center-right clip (x = +0.14, z = -0.055)
+    # 4. ToolScoop: adjustable lunar trenching scoop hanging in center-right clip (BareSteel shaft/head + Rubber black grip)
     scoop_piv = (0.14, 0.48, -0.055)
     scoop_mb = r1kit.MeshBuilder("ToolScoop", pivot_u=scoop_piv)
     scoop_mb.add_cylinder(
@@ -2153,7 +2355,7 @@ def build_sample_rack() -> bpy.types.Object:
         center_u=(0.14, 0.69, -0.055),
         radius=0.013,
         length=0.12,
-        mat="R1_CreamEnamel",
+        mat="R1_Rubber",
         axis_u="Y",
         segments=10,
         bevel=0.002,
@@ -2162,7 +2364,7 @@ def build_sample_rack() -> bpy.types.Object:
         center_u=(0.14, 0.875, -0.055),
         radius=0.014,
         length=0.042,
-        mat="R1_OrangeStripe",
+        mat="R1_Rubber",
         axis_u="Y",
         segments=10,
         bevel=0.002,
@@ -2180,7 +2382,7 @@ def build_sample_rack() -> bpy.types.Object:
     scoop_mb.add_bevel_box(
         center_u=(0.14, 0.135, -0.075),
         size_u=(0.092, 0.105, 0.064),
-        mat="R1_GreyMetal",
+        mat="R1_BareSteel",
         bevel=0.004,
         segments=1,
         rot_deg_u=(22.0, 0.0, 0.0),

@@ -381,6 +381,51 @@ def _generate_surface_maps(
         )
         normal_strength = 8.4
 
+    elif style == "whitepaint":
+        # Chalky cool-white low-gloss thermal control paint (smooth multi-scale chalk variation, no pits/dots)
+        chalk_broad = _fbm(res, 4, seed + 17)
+        chalk_med = _tileable_noise(res, 12, seed + 43)
+        height = 0.50 + (chalk_broad - 0.5) * 0.016 + (chalk_med - 0.5) * 0.010
+        albedo *= 0.97 + 0.05 * chalk_broad[..., None] + 0.02 * (chalk_med[..., None] - 0.5)
+        smoothness = np.clip(smoothness_val + (chalk_broad - 0.5) * 0.03, 0.14, 0.22)
+        micro_wear = np.clip(0.5 + (chalk_med - 0.5) * 0.30, 0.0, 1.0)
+        micro_cavity = np.clip(0.5 + (0.5 - chalk_broad) * 0.30, 0.0, 1.0)
+        normal_strength = 2.2
+
+    elif style == "tealmark":
+        # Muted teal painted markings with smooth subtle brush/roller grain (no pits/dots)
+        roll_broad = _fbm(res, 4, seed + 23)
+        roll_med = _tileable_noise(res, 14, seed + 61)
+        height = 0.50 + (roll_broad - 0.5) * 0.018 + (roll_med - 0.5) * 0.012
+        albedo *= 0.96 + 0.07 * roll_broad[..., None] + 0.03 * (roll_med[..., None] - 0.5)
+        smoothness = np.clip(smoothness_val + (roll_broad - 0.5) * 0.05, 0.22, 0.46)
+        micro_wear = np.clip(0.5 + (roll_med - 0.5) * 0.35, 0.0, 1.0)
+        micro_cavity = np.clip(0.5 + (0.5 - roll_broad) * 0.35, 0.0, 1.0)
+        normal_strength = 2.6
+
+    elif style == "silverfoil":
+        # Crinkled aluminised Mylar/Teflon thermal film with diagonal domain-warped crease facets (no loops or dots)
+        w1 = _fbm(res, 4, seed + 13)
+        w2 = _fbm(res, 6, seed + 29)
+        w3 = _fbm(res, 8, seed + 47)
+        p1 = (u * 5.0 + v * 3.0 + (w1 - 0.5) * 1.35) * np.pi * 2.0
+        p2 = (u * 4.0 - v * 6.0 + (w2 - 0.5) * 1.45) * np.pi * 2.0
+        p3 = (u * 7.0 + v * 7.0 + (w3 - 0.5) * 1.25) * np.pi * 2.0
+        f1 = 1.0 - np.abs(np.sin(p1))
+        f2 = 1.0 - np.abs(np.sin(p2))
+        f3 = 1.0 - np.abs(np.cos(p3))
+        crinkle_h = 0.42 * (f1**1.2) + 0.36 * (f2**1.3) + 0.22 * (f3**1.4)
+        height = 0.36 + 0.34 * crinkle_h
+        silver_tint = np.empty_like(albedo)
+        silver_tint[..., 0] = base_rgb[0] * (0.93 + 0.12 * crinkle_h)
+        silver_tint[..., 1] = base_rgb[1] * (0.93 + 0.12 * crinkle_h)
+        silver_tint[..., 2] = base_rgb[2] * (0.94 + 0.12 * crinkle_h)
+        albedo = np.clip(silver_tint, 0.0, 1.0)
+        metallic = np.clip(metallic_val + (crinkle_h - 0.5) * 0.08, 0.80, 0.92)
+        smoothness = np.clip(smoothness_val + (crinkle_h - 0.5) * 0.14, 0.42, 0.68)
+        micro_wear = np.clip(0.5 + (crinkle_h - 0.5) * 0.55, 0.0, 1.0)
+        normal_strength = 8.0
+
     normal_rgb = _height_to_normal(height, normal_strength=normal_strength)
 
     mask_rgba = np.stack(
@@ -957,6 +1002,9 @@ def main() -> None:
         ("SolarCell", (0.20, 0.22, 0.44), 0.08, 0.90, 1111, "solar"),
         ("Brass", (0.86, 0.69, 0.32), 0.92, 0.76, 1212, "brass"),
         ("Basalt", (0.39, 0.40, 0.43), 0.03, 0.22, 1212, "basalt"),
+        ("WhitePaint", (0.91, 0.92, 0.90), 0.02, 0.18, 1313, "whitepaint"),
+        ("TealMark", (0.18, 0.43, 0.45), 0.04, 0.35, 1414, "tealmark"),
+        ("SilverFoil", (0.79, 0.81, 0.82), 0.85, 0.55, 1515, "silverfoil"),
     ]
 
     surfaces: list[dict[str, np.ndarray]] = []

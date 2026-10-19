@@ -26,7 +26,7 @@ SPEC_START = "new R1MaterialSpec("
 ARG_SLOT_NAME, ARG_BASE, ARG_SMOOTH_MIN, ARG_SMOOTH_MAX = 1, 5, 8, 9
 ARG_HAS_EMISSION, ARG_EMISSION, ARG_EMISSION_STRENGTH = 15, 16, 17
 SPEC_ARGS = 18
-METAL_SLOTS = frozenset({"R1_BareSteel", "R1_GoldFoil", "R1_Copper"})
+METAL_SLOTS = frozenset({"R1_BareSteel", "R1_GoldFoil", "R1_Copper", "R1_SilverFoil"})
 GLB_MAGIC, GLB_VERSION, CHUNK_JSON = 0x46546C67, 2, 0x4E4F534A
 
 
