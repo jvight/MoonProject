@@ -25,7 +25,7 @@ namespace MoonProject.UI
 
         [Tooltip("Seconds the finished log stays on the CRT before 07's face takes it back.")]
         [Range(0f, 4f)]
-        [SerializeField] private float _lingerSeconds = 0.8f;
+        [SerializeField] private float _lingerSeconds = 0.5f;
 
         public float CharsPerSecond => _charsPerSecond;
 

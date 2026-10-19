@@ -15,7 +15,7 @@ namespace MoonProject.Rover
         [Header("The wake on the face (s)")]
         [Tooltip("Black while 07's systems thump on, before the picture opens on its face.")]
         [Range(0.3f, 3f)]
-        [SerializeField] private float _darkSeconds = 1f;
+        [SerializeField] private float _darkSeconds = 0.6f;
 
         [Tooltip("The picture opens from black on the close-up of 07's face while the first line prints.")]
         [Range(0.3f, 3f)]
@@ -25,24 +25,24 @@ namespace MoonProject.Rover
         [Tooltip("After the last line: the readout holds its success, then gives way to the eyes. Longer than the " +
                  "readout's own linger on the face (UI), so the eyes are back before the camera moves.")]
         [Range(0.5f, 4f)]
-        [SerializeField] private float _readySeconds = 1.2f;
+        [SerializeField] private float _readySeconds = 0.9f;
 
         [Tooltip("Seconds into the ready hold when 07's eyes come back to its face, after the readout's linger.")]
         [Range(0.2f, 3f)]
-        [SerializeField] private float _readyEyesSeconds = 0.9f;
+        [SerializeField] private float _readyEyesSeconds = 0.6f;
 
         [Tooltip("The one eased move that pulls the camera back and out diagonally to the wide front three-quarter.")]
         [Range(1f, 4f)]
-        [SerializeField] private float _pullBackSeconds = 1.8f;
+        [SerializeField] private float _pullBackSeconds = 1.2f;
 
         [Tooltip("The ready performance seen wide: a double blink, the headlamps clicked off and on, the last dust " +
                  "shivered off and a glance at the lander's beacon.")]
         [Range(1.5f, 5f)]
-        [SerializeField] private float _performSeconds = 2.6f;
+        [SerializeField] private float _performSeconds = 1.6f;
 
         [Tooltip("The one eased move round to the chase frame behind 07, after which control is the player's.")]
         [Range(1f, 4f)]
-        [SerializeField] private float _moveBehindSeconds = 1.8f;
+        [SerializeField] private float _moveBehindSeconds = 1.2f;
 
         [Header("The lines")]
         [Tooltip("The lines 07's self-test prints on its face, in step order, Carrier first and the Lamps check " +

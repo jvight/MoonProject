@@ -16,10 +16,12 @@ namespace MoonProject.Rover
     /// of 07 where it was left (<see cref="TitleFrame"/>).</item>
     /// <item><see cref="SessionStarted"/> with a fresh game plays the full opening once: from the title the picture
     /// fades to black where the camera is (no camera move). In the black the shot camera takes the one fixed shot of
-    /// 07's face (<see cref="PostShot"/>) and holds it: the picture opens, the face screen flickers on, the eyes blink
-    /// awake and the self-test prints on the face while each part does its check; any key after its first moments
-    /// fast-forwards the remaining lines (<see cref="OpeningScript.FastForward"/>). A short dip to black
-    /// (<see cref="ILensView"/> darkens the picture) hands over to the chase frame in the dark.</item>
+    /// 07's face (<see cref="PostShot"/>) and holds it: the picture opens and the self-test prints on the face while
+    /// each part does its check; any key after its first moments fast-forwards the remaining lines
+    /// (<see cref="OpeningScript.FastForward"/>). The readout holds and 07's eyes come back to the face, the camera
+    /// eases back and out on a diagonal to a wide shot, 07 shows it is ready (a double blink, the headlamps clicked
+    /// off and on, a dust shiver, a glance at the lander's beacon) and the camera eases round to the chase frame
+    /// behind it, where control is the player's.</item>
     /// <item>A loaded game plays the short wake: the title's frame eases back to the chase frame while 07's lid opens
     /// with one blink and it glances at Earth.</item>
     /// <item>In a game without a title (<see cref="IGameFlow.ShowsTitle"/> off: dev fixtures and test runs that drive

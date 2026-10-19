@@ -601,7 +601,7 @@ MonoBehaviour:
     _maxLineSeconds: 0.5
     _dotSeconds: 0.12
     _resumeDays: 13148
-    _lingerSeconds: 0.8
+    _lingerSeconds: 0.5
   _salvage:
     _ring:
       _fadeIn: 0.3
