@@ -512,7 +512,7 @@ namespace MoonProject.Art.Editor
             }
             else if (modelPath.EndsWith("/SSR3_Topper_03.fbx", StringComparison.Ordinal))
             {
-                ReplaceRendererSlotMaterial(root, "FrostBlock", R1MaterialRecipes.CreamEnamelSlot, LoadOrBuildMaterial(IceCoreFrostMaterialPath));
+                ReplaceRendererSlotMaterial(root, "FrostBlock", R1MaterialRecipes.WhitePaintSlot, LoadOrBuildMaterial(IceCoreFrostMaterialPath));
             }
             else if (modelPath.EndsWith("/Prop_MissionFlag.fbx", StringComparison.Ordinal))
             {

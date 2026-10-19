@@ -2,9 +2,9 @@
 
 Deliverable 1:
   - `SSR3_Chassis.fbx` (`Assets/_Project/Art/R1/Models/Rover/SSR3_Chassis.fbx`)
-    Shared older 1978 ILC utility cart chassis (~1.40 m L x 0.95 m W x 0.75 m H to deck):
-      * Brake-bent R1_CreamEnamel sheet-metal body with chamfered upper shoulders, panel seams, and rivets
-      * Continuous R1_OrangeStripe beltline with `ILC · SSR-3` flank stencil and `Unit_Number` decal slot
+    Shared older 1978 Kessler–Arai utility cart chassis (~1.40 m L x 0.95 m W x 0.75 m H to deck):
+      * Brake-bent R1_WhitePaint sheet-metal body with chamfered upper shoulders, panel seams, and rivets
+      * Single thin continuous R1_OrangeStripe identification band (<= 2% surface area), `Decal_KA_1`, and `Unit_Number` slot
       * 4 small wheels (`Wheel_FL`, `Wheel_FR`, `Wheel_RL`, `Wheel_RR`) in 07's 8-bolt deep-dish chevron language
       * Single off-center front headlamp (`Headlamp` + `HeadlampGlass` in dark `R1_DarkGlass`) and dark `CELL 0%` strip
       * No CRT face, no cartoon eyes, no hands, no active emissive materials
@@ -29,6 +29,18 @@ if str(THIS_DIR) not in sys.path:
 sys.dont_write_bytecode = True
 
 import r1kit  # noqa: E402
+
+if "R1_WhitePaint" not in r1kit.ALLOWED_MATERIALS:
+    r1kit.ALLOWED_MATERIALS = (*r1kit.ALLOWED_MATERIALS, "R1_WhitePaint")
+    r1kit.MATERIAL_SPECS["R1_WhitePaint"] = {
+        "base_color": r1kit._srgb_to_linear("#ECE8DF"),
+        "wear_color": r1kit._srgb_to_linear("#9C9E9E"),
+        "dust_color": r1kit._srgb_to_linear("#8D8B86"),
+        "metallic": 0.0,
+        "roughness": 0.68,
+        "emission": (0.0, 0.0, 0.0, 1.0),
+        "emission_strength": 0.0,
+    }
 
 # ---------------------------------------------------------------------------
 # SSR-3 Chassis Envelope & Rig Constants (Unity coordinates: +X right, +Y up, +Z forward)
@@ -225,7 +237,7 @@ def _build_ssr3_wheel(
     root: bpy.types.Object,
     name: str,
     pivot_u: tuple[float, float, float],
-    dish_mat: str = "R1_CreamEnamel",
+    dish_mat: str = "R1_WhitePaint",
 ) -> bpy.types.Object:
     """Build a small SSR-3 off-road wheel (R = 0.215 m) with recessed cream/sage 8-bolt hub dish."""
     import bmesh
@@ -480,7 +492,7 @@ def _build_ssr3_body(root: bpy.types.Object) -> bpy.types.Object:
     mb.add_bevel_box(
         center_u=(0.0, 0.305, 0.0),
         size_u=(0.86, 0.13, 0.28),
-        mat="R1_CreamEnamel",
+        mat="R1_WhitePaint",
         bevel=0.012,
         segments=1,
     )
@@ -514,12 +526,12 @@ def _build_ssr3_body(root: bpy.types.Object) -> bpy.types.Object:
             minor_segments=6,
         )
 
-    # 2. Main brake-bent sheet-metal hull tub (`R1_CreamEnamel`)
+    # 2. Main brake-bent sheet-metal hull tub (`R1_WhitePaint`)
     # Lower-mid hull above wheel arches (y = 0.38 .. 0.61 m)
     mb.add_bevel_box(
         center_u=(0.0, 0.495, 0.0),
         size_u=(0.87, 0.23, 1.33),
-        mat="R1_CreamEnamel",
+        mat="R1_WhitePaint",
         bevel=0.018,
         segments=2,
     )
@@ -527,7 +539,7 @@ def _build_ssr3_body(root: bpy.types.Object) -> bpy.types.Object:
     mb.add_bevel_box(
         center_u=(0.0, 0.658, 0.0),
         size_u=(0.87, 0.135, 1.33),
-        mat="R1_CreamEnamel",
+        mat="R1_WhitePaint",
         bevel=0.016,
         segments=2,
         top_scale_xz=(0.91, 0.93),
@@ -537,7 +549,7 @@ def _build_ssr3_body(root: bpy.types.Object) -> bpy.types.Object:
         mb.add_bevel_box(
             center_u=(0.0, 0.355, sz * 0.595),
             size_u=(0.84, 0.095, 0.14),
-            mat="R1_CreamEnamel",
+            mat="R1_WhitePaint",
             bevel=0.012,
             segments=1,
             rot_deg_u=(sz * 22.0, 0.0, 0.0),
@@ -550,7 +562,7 @@ def _build_ssr3_body(root: bpy.types.Object) -> bpy.types.Object:
         mb.add_bevel_box(
             center_u=(sx * 0.375, coam_y, 0.0),
             size_u=(0.048, coam_h, 1.22),
-            mat="R1_CreamEnamel",
+            mat="R1_WhitePaint",
             bevel=0.008,
             segments=1,
         )
@@ -565,7 +577,7 @@ def _build_ssr3_body(root: bpy.types.Object) -> bpy.types.Object:
         mb.add_bevel_box(
             center_u=(0.0, coam_y, sz * 0.585),
             size_u=(0.798, coam_h, 0.050),
-            mat="R1_CreamEnamel",
+            mat="R1_WhitePaint",
             bevel=0.008,
             segments=1,
         )
@@ -623,38 +635,30 @@ def _build_ssr3_body(root: bpy.types.Object) -> bpy.types.Object:
                 segments=1,
             )
 
-    # 4. Continuous warm coral-orange belt stripe (`R1_OrangeStripe`) wrapping front, flanks, and rear
-    stripe_y = 0.505
-    stripe_h = 0.112
+    # 4. Single thin faded orange identification band (`R1_OrangeStripe`, <= 2% surface area) wrapping front, flanks, and rear
+    stripe_y = 0.582
+    stripe_h = 0.012
     for sx in (-1.0, 1.0):
         mb.add_bevel_box(
-            center_u=(sx * 0.436, stripe_y, 0.0),
-            size_u=(0.012, stripe_h, 1.336),
+            center_u=(sx * 0.4345, stripe_y, 0.0),
+            size_u=(0.005, stripe_h, 1.332),
             mat="R1_OrangeStripe",
-            bevel=0.004,
+            bevel=0.001,
             segments=1,
         )
-        for dy in (-stripe_h * 0.52, stripe_h * 0.52):
-            mb.add_bevel_box(
-                center_u=(sx * 0.435, stripe_y + dy, 0.0),
-                size_u=(0.009, 0.008, 1.334),
-                mat="R1_GreyMetal",
-                bevel=0.002,
-                segments=1,
-            )
     for sz in (-1.0, 1.0):
         mb.add_bevel_box(
-            center_u=(0.0, stripe_y, sz * 0.666),
-            size_u=(0.876, stripe_h, 0.012),
+            center_u=(0.0, stripe_y, sz * 0.6645),
+            size_u=(0.872, stripe_h, 0.005),
             mat="R1_OrangeStripe",
-            bevel=0.004,
+            bevel=0.001,
             segments=1,
         )
 
-    # 5. Recessed front `CELL 0%` status strip beside the headlamp on the front orange band (dark, unlit)
+    # 5. Recessed front `CELL 0%` status strip beside the headlamp on the front hull panel (dark, unlit)
     status_x = -0.075
     status_y = 0.505
-    status_z = 0.672
+    status_z = 0.666
     mb.add_bevel_box(
         center_u=(status_x, status_y, status_z),
         size_u=(0.36, 0.076, 0.018),
@@ -681,26 +685,12 @@ def _build_ssr3_body(root: bpy.types.Object) -> bpy.types.Object:
         mat="R1_Copper",
     )
 
-    # 6. Flank `ILC · SSR-3` stencil lettering on the rear half of the orange beltline
+    # 6. Brake-bent vertical panel seam channels, corner bolts/rivets, and right-flank R1_SagePatch repair plate
     for sx in (-1.0, 1.0):
-        _add_stencil_text_flank(
-            mb,
-            text="ILC · SSR-3",
-            side_x=sx * 0.442,
-            center_y=stripe_y,
-            center_z=-0.20,
-            char_w=0.036,
-            char_h=0.052,
-            relief_x=0.004,
-            mat="R1_GreyMetal",
-        )
-
-    # 7. Brake-bent vertical panel seam channels, corner bolts/rivets, and right-flank R1_SagePatch repair plate
-    for sx in (-1.0, 1.0):
-        for seam_z in (-0.48, 0.04, 0.48):
+        for seam_z in (-0.48, 0.12, 0.48):
             mb.add_bevel_box(
-                center_u=(sx * 0.434, 0.56, seam_z),
-                size_u=(0.008, 0.30, 0.009),
+                center_u=(sx * 0.434, 0.485, seam_z),
+                size_u=(0.008, 0.17, 0.009),
                 mat="R1_GreyMetal",
                 bevel=0.002,
                 segments=1,
@@ -879,6 +869,8 @@ def _apply_ssr3_decades_at_rest_weathering(root: bpy.types.Object, footprint_rad
 
     mesh_objs = [o for o in r1kit.collect_hierarchy(root) if o.type == "MESH" and len(o.data.polygons) > 0]
     for obj in mesh_objs:
+        if obj.name.startswith("Decal_"):
+            continue
         me = obj.data
         ca = me.color_attributes.get(r1kit.VCOL_ATTRIBUTE_NAME)
         if ca is None:
@@ -937,11 +929,25 @@ def build_ssr3_chassis() -> bpy.types.Object:
     _build_ssr3_body(root)
     _build_ssr3_headlamp(root)
 
-    # 4 small wheels in 07's wheel/hub language (cream enamel deep-dish hubs with 8 lug bolts)
-    _build_ssr3_wheel(root, "Wheel_FL", (-WHEEL_TRACK_X, WHEEL_RADIUS, WHEEL_BASE_Z), dish_mat="R1_CreamEnamel")
-    _build_ssr3_wheel(root, "Wheel_FR", (WHEEL_TRACK_X, WHEEL_RADIUS, WHEEL_BASE_Z), dish_mat="R1_CreamEnamel")
+    # 4 small wheels in 07's wheel/hub language (aged white paint deep-dish hubs with 8 lug bolts)
+    _build_ssr3_wheel(root, "Wheel_FL", (-WHEEL_TRACK_X, WHEEL_RADIUS, WHEEL_BASE_Z), dish_mat="R1_WhitePaint")
+    _build_ssr3_wheel(root, "Wheel_FR", (WHEEL_TRACK_X, WHEEL_RADIUS, WHEEL_BASE_Z), dish_mat="R1_WhitePaint")
     _build_ssr3_wheel(root, "Wheel_RL", (-WHEEL_TRACK_X, WHEEL_RADIUS, -WHEEL_BASE_Z), dish_mat="R1_SagePatch")
-    _build_ssr3_wheel(root, "Wheel_RR", (WHEEL_TRACK_X, WHEEL_RADIUS, -WHEEL_BASE_Z), dish_mat="R1_CreamEnamel")
+    _build_ssr3_wheel(root, "Wheel_RR", (WHEEL_TRACK_X, WHEEL_RADIUS, -WHEEL_BASE_Z), dish_mat="R1_WhitePaint")
+
+    # Small worn Kessler–Arai maker decal (~0.25 m) on the flat left chassis side panel
+    r1kit.add_maker_decal_node(
+        parent=root,
+        name="Decal_KA_1",
+        cell_key="KESSLER_ARAI",
+        center_u=(-0.435, 0.485, -0.07),
+        normal_u=(-1.0, 0.0, 0.0),
+        up_u=(0.0, 1.0, 0.0),
+        width=0.25,
+        height=0.175,
+        u_crop=(0.04, 0.96),
+        v_crop=(0.15, 0.85),
+    )
 
     # Required sockets / slots on the chassis
     r1kit.create_empty("Topper_Socket", parent=root, pivot_u=TOPPER_SOCKET_PIVOT_U)
@@ -1333,7 +1339,7 @@ def _build_ssr3_single_track(
     root: bpy.types.Object,
     name: str,
     side_x: float,
-    rear_idler_mat: str = "R1_CreamEnamel",
+    rear_idler_mat: str = "R1_WhitePaint",
 ) -> bpy.types.Object:
     """Build one complete left or right crawler track unit (`Track_L` or `Track_R`)."""
     import bmesh
@@ -1441,7 +1447,7 @@ def _build_ssr3_single_track(
     r_main_wheel = 0.172
     r_main_rim = 0.132
     for end_idx, wz in enumerate((z_front, z_rear)):
-        dish_mat = "R1_CreamEnamel" if end_idx == 0 else rear_idler_mat
+        dish_mat = "R1_WhitePaint" if end_idx == 0 else rear_idler_mat
         # Main wheel drum inside belt
         mb.add_cylinder(
             center_u=(belt_cx, y_axle, wz),
@@ -1453,7 +1459,7 @@ def _build_ssr3_single_track(
             bevel=0.008,
             bevel_segments=1,
         )
-        # Outer recessed deep-dish wheel plate (`R1_CreamEnamel` / `R1_SagePatch`)
+        # Outer recessed deep-dish wheel plate (`R1_WhitePaint` / `R1_SagePatch`)
         mb.add_cylinder(
             center_u=(belt_cx + sx * 0.056, y_axle, wz),
             radius=r_main_rim * 0.94,
@@ -1539,12 +1545,12 @@ def _build_ssr3_single_track(
             bevel=0.007,
             bevel_segments=1,
         )
-        # Cream enamel bogie dish
+        # White painted bogie dish
         mb.add_cylinder(
             center_u=(belt_cx + sx * 0.056, y_bogie, bz),
             radius=r_bogie_rim * 0.94,
             length=0.022,
-            mat="R1_CreamEnamel",
+            mat="R1_WhitePaint",
             axis_u="X",
             segments=16,
             bevel=0.003,
@@ -1685,7 +1691,7 @@ def build_ssr3_tracks() -> bpy.types.Object:
     root = r1kit.create_empty("SSR3_Tracks", pivot_u=(0.0, 0.0, 0.0))
 
     _build_ssr3_single_track(root, "Track_L", -TRACK_SIDE_X, rear_idler_mat="R1_SagePatch")
-    _build_ssr3_single_track(root, "Track_R", TRACK_SIDE_X, rear_idler_mat="R1_CreamEnamel")
+    _build_ssr3_single_track(root, "Track_R", TRACK_SIDE_X, rear_idler_mat="R1_WhitePaint")
 
     bpy.context.view_layer.update()
     _apply_ssr3_decades_at_rest_weathering(root, footprint_radius=0.88)
@@ -1974,7 +1980,7 @@ def _build_topper_03_cooling_coils(root: bpy.types.Object) -> bpy.types.Object:
 
 
 def _build_topper_03_frost_block(root: bpy.types.Object) -> bpy.types.Object:
-    """Build the frosted lunar ice block & rime-frost overhangs (`FrostBlock`, `R1_CreamEnamel` -> `R1_IceCoreFrost`)."""
+    """Build the frosted lunar ice block & rime-frost overhangs (`FrostBlock`, `R1_WhitePaint` -> `R1_IceCoreFrost`)."""
     mb = r1kit.MeshBuilder("FrostBlock", pivot_u=(0.0, 0.31, -0.08))
 
     box_cx = 0.065
@@ -1984,7 +1990,7 @@ def _build_topper_03_frost_block(root: bpy.types.Object) -> bpy.types.Object:
     mb.add_bevel_box(
         center_u=(box_cx, 0.326, box_cz),
         size_u=(0.456, 0.048, 0.576),
-        mat="R1_CreamEnamel",
+        mat="R1_WhitePaint",
         bevel=0.014,
         segments=2,
     )
@@ -1992,7 +1998,7 @@ def _build_topper_03_frost_block(root: bpy.types.Object) -> bpy.types.Object:
     mb.add_bevel_box(
         center_u=(box_cx + 0.01, 0.356, box_cz - 0.01),
         size_u=(0.36, 0.046, 0.44),
-        mat="R1_CreamEnamel",
+        mat="R1_WhitePaint",
         bevel=0.012,
         segments=2,
         top_scale_xz=(0.92, 0.94),
@@ -2000,7 +2006,7 @@ def _build_topper_03_frost_block(root: bpy.types.Object) -> bpy.types.Object:
     mb.add_bevel_box(
         center_u=(box_cx - 0.02, 0.374, box_cz + 0.02),
         size_u=(0.24, 0.026, 0.30),
-        mat="R1_CreamEnamel",
+        mat="R1_WhitePaint",
         bevel=0.008,
         segments=1,
     )
@@ -2027,7 +2033,7 @@ def _build_topper_03_frost_block(root: bpy.types.Object) -> bpy.types.Object:
         mb.add_bevel_box(
             center_u=(lx, ly, lz),
             size_u=(lw, lh, ll),
-            mat="R1_CreamEnamel",
+            mat="R1_WhitePaint",
             bevel=0.012,
             segments=2,
         )
@@ -2036,7 +2042,7 @@ def _build_topper_03_frost_block(root: bpy.types.Object) -> bpy.types.Object:
     mb.add_bevel_box(
         center_u=(-0.235, 0.308, -0.145),
         size_u=(0.158, 0.036, 0.452),
-        mat="R1_CreamEnamel",
+        mat="R1_WhitePaint",
         bevel=0.010,
         segments=2,
     )
@@ -2045,7 +2051,7 @@ def _build_topper_03_frost_block(root: bpy.types.Object) -> bpy.types.Object:
             center_u=(-0.235, r_y, -0.375),
             radius=0.034,
             length=0.056,
-            mat="R1_CreamEnamel",
+            mat="R1_WhitePaint",
             axis_u="Z",
             segments=12,
             bevel=0.010,
@@ -2125,7 +2131,7 @@ def _build_unit_number_stencil(parent: bpy.types.Object, node_name: str, text: s
         _add_stencil_text_flank(
             mb,
             text=text,
-            side_x=sx * 0.442,
+            side_x=sx * 0.4355,
             center_y=UNIT_NUMBER_PIVOT_U[1],
             center_z=UNIT_NUMBER_PIVOT_U[2],
             char_w=0.042,
@@ -2715,12 +2721,12 @@ def _build_topper_05_turntable(root: bpy.types.Object) -> bpy.types.Object:
             rot_deg_u=(0.0, ang_deg, 0.0),
         )
 
-    # 3. Rotating upper turntable platter (`R1_CreamEnamel` with 8 perimeter bolts)
+    # 3. Rotating upper turntable platter (`R1_WhitePaint` with 8 perimeter bolts)
     mb.add_cylinder(
         center_u=(0.0, 0.092, hz),
         radius=0.195,
         length=0.036,
-        mat="R1_CreamEnamel",
+        mat="R1_WhitePaint",
         axis_u="Y",
         segments=24,
         bevel=0.006,
@@ -2836,14 +2842,14 @@ def _build_topper_05_rf_cabinet(root: bpy.types.Object) -> bpy.types.Object:
     mb.add_bevel_box(
         center_u=(0.0, 0.088, cab_z),
         size_u=(0.52, 0.122, 0.28),
-        mat="R1_CreamEnamel",
+        mat="R1_WhitePaint",
         bevel=0.010,
         segments=2,
     )
     mb.add_bevel_box(
         center_u=(0.0, 0.085, cab_z),
         size_u=(0.526, 0.034, 0.286),
-        mat="R1_OrangeStripe",
+        mat="R1_GreyMetal",
         bevel=0.003,
         segments=1,
     )
@@ -2859,7 +2865,7 @@ def _build_topper_05_rf_cabinet(root: bpy.types.Object) -> bpy.types.Object:
     mb.add_bevel_box(
         center_u=(0.0, 0.220, cab_z),
         size_u=(0.48, 0.118, 0.25),
-        mat="R1_CreamEnamel",
+        mat="R1_WhitePaint",
         bevel=0.010,
         segments=2,
     )
@@ -3306,7 +3312,7 @@ def _build_unit_05_stencil(parent: bpy.types.Object) -> bpy.types.Object:
         _add_stencil_text_flank(
             mb,
             text="05",
-            side_x=sx * 0.442,
+            side_x=sx * 0.4355,
             center_y=UNIT_NUMBER_PIVOT_U[1],
             center_z=UNIT_NUMBER_PIVOT_U[2],
             char_w=0.042,
@@ -3685,7 +3691,7 @@ def _build_topper_04_suspension_kit(root: bpy.types.Object) -> bpy.types.Object:
     mb.add_bevel_box(
         center_u=(0.0, -0.465, 0.0),
         size_u=(0.48, 0.155, 1.08),
-        mat="R1_CreamEnamel",
+        mat="R1_WhitePaint",
         bevel=0.012,
         segments=1,
         top_scale_xz=(1.12, 1.08),
@@ -3702,7 +3708,7 @@ def _build_topper_04_suspension_kit(root: bpy.types.Object) -> bpy.types.Object:
         mb.add_bevel_box(
             center_u=(0.0, -0.465, sz * 0.535),
             size_u=(0.44, 0.145, 0.042),
-            mat="R1_CreamEnamel",
+            mat="R1_WhitePaint",
             bevel=0.006,
             segments=1,
             rot_deg_u=(-sz * 18.0, 0.0, 0.0),
@@ -3854,7 +3860,7 @@ def _build_unit_04_stencil(parent: bpy.types.Object) -> bpy.types.Object:
         _add_stencil_text_flank(
             mb,
             text="04",
-            side_x=sx * 0.442,
+            side_x=sx * 0.4355,
             center_y=UNIT_NUMBER_PIVOT_U[1],
             center_z=UNIT_NUMBER_PIVOT_U[2],
             char_w=0.042,
@@ -3928,14 +3934,14 @@ def _build_topper_01_lattice_mast(root: bpy.types.Object) -> bpy.types.Object:
     mb.add_bevel_box(
         center_u=(0.0, 0.115, cab_z),
         size_u=(0.50, 0.17, 0.22),
-        mat="R1_CreamEnamel",
+        mat="R1_WhitePaint",
         bevel=0.010,
         segments=2,
     )
     mb.add_bevel_box(
         center_u=(0.0, 0.115, cab_z),
         size_u=(0.506, 0.036, 0.226),
-        mat="R1_OrangeStripe",
+        mat="R1_GreyMetal",
         bevel=0.003,
         segments=1,
     )
@@ -4224,7 +4230,7 @@ def _build_topper_01_alt_az_yoke(root: bpy.types.Object) -> bpy.types.Object:
         center_u=(0.0, 1.680, tz),
         radius=0.096,
         length=0.026,
-        mat="R1_CreamEnamel",
+        mat="R1_WhitePaint",
         axis_u="Y",
         segments=20,
         bevel=0.004,
@@ -4364,12 +4370,12 @@ def _build_topper_01_telescope_tube(root: bpy.types.Object) -> bpy.types.Object:
             minor_segments=6,
         )
 
-    # 2. Rear Star-Tracker Vidicon / Sensor Breech Housing (z = tz - 0.31 .. tz - 0.06) in R1_CreamEnamel + R1_OrangeStripe
+    # 2. Rear Star-Tracker Vidicon / Sensor Breech Housing (z = tz - 0.31 .. tz - 0.06) in R1_WhitePaint + R1_GreyMetal
     mb.add_cylinder(
         center_u=(tx, ty, tz - 0.165),
         radius=0.078,
         length=0.19,
-        mat="R1_CreamEnamel",
+        mat="R1_WhitePaint",
         axis_u="Z",
         segments=24,
         bevel=0.006,
@@ -4379,7 +4385,7 @@ def _build_topper_01_telescope_tube(root: bpy.types.Object) -> bpy.types.Object:
         center_u=(tx, ty, tz - 0.145),
         radius=0.080,
         length=0.044,
-        mat="R1_OrangeStripe",
+        mat="R1_GreyMetal",
         axis_u="Z",
         segments=24,
         bevel=0.003,
@@ -4580,17 +4586,17 @@ def _build_topper_01_calibration_plate(root: bpy.types.Object) -> bpy.types.Obje
     mb.add_bevel_box(
         center_u=(0.0, py, pz),
         size_u=(0.28, 0.20, 0.022),
-        mat="R1_CreamEnamel",
+        mat="R1_WhitePaint",
         bevel=0.006,
         segments=1,
         rot_deg_u=(plate_tilt, 0.0, 0.0),
     )
-    # Orange calibration border band on top & bottom edges of the target plate
+    # Brass calibration border band on top & bottom edges of the target plate
     for dy_off, dz_off in ((0.082, 0.040), (-0.082, -0.048)):
         mb.add_bevel_box(
             center_u=(0.0, py + dy_off, pz + dz_off),
             size_u=(0.26, 0.022, 0.016),
-            mat="R1_OrangeStripe",
+            mat="R1_Brass",
             bevel=0.003,
             segments=1,
             rot_deg_u=(plate_tilt, 0.0, 0.0),
