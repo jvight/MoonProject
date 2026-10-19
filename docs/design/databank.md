@@ -13,8 +13,9 @@
   they just touched.
 - **Pull:** every card stops where the crew's records stop, in October 1988, so the gaps ask the questions. Why do
   the eclipse's city lights read **0**? Who are Tycho? Why does a 1967 lander sit in a crater the crew walked past?
-- **Hold:** the collection grows by category, and **the era strip** fills: 5 marks, P S B L N, lit as eras are found.
-  History becomes something the player owns.
+- **Hold:** the collection grows by category, each category counting up as it fills. On every card **the era strip**
+  (5 marks, P S B L N) lights that entry's era alone, so the player reads where in the timeline each find sits.
+  History becomes something the player owns. (Director ruling 2026-10-19: one lit era per entry, not a collection fill.)
 - **Finish:** the cards build the case the transmission makes. The last Archive card arrives with the answer from
   Ark IV, as a print.
 - **Feeling:** *quiet archaeology*, company in absence. It comes from the slow turntable, the amber lines, the
@@ -83,7 +84,7 @@ Each category shows **found count only** (no totals, no percentages), plus a sma
     grain and a slight skew.
   - **Right, below:** the field row `MAKER · VIS   YEAR · 1967   ERA · PROBES`, then the readout line, then the
     history card and its signature.
-  - **Bottom:** the era strip (5 small marks).
+  - **Bottom:** the era strip (5 small marks; only the shown entry's era is lit).
 - **F (Y on a gamepad): full colour.** The model renders with its real materials, and a print in its true colours.
   - The logic: 07's tube is a **colour shadow-mask CRT run in amber** for low power and visor-readable contrast. That
     is plausible for 1983, and it squares the owner's pick with v4's amber look.
