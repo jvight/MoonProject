@@ -503,16 +503,16 @@ Shader "MoonProject/World/R1Terrain"
                     BlastNoise(sp * 0.018 + float2(3.1, 9.7)) - 0.5,
                     BlastNoise(sp * 0.018 + float2(14.3, 2.9)) - 0.5);
 
-                // Strong spatial clustering with long empty stretches: over 65% of the plain has zero craters
+                // Strong spatial clustering with long empty stretches: most of the plain has zero craters
                 float clusterA = BlastNoise(sp * 0.012 + float2(11.3, 24.1));
                 float clusterB = BlastNoise(sp * 0.0055 + float2(33.4, 8.7));
                 float clusterField = clusterA * 0.58 + clusterB * 0.42;
-                float patchMask = smoothstep(0.55, 0.80, clusterField);
+                float patchMask = smoothstep(0.46, 0.74, clusterField);
 
                 // Keep the home pad, apron, and lander blast core clear of procedural depressions
-                float padClear = smoothstep(14.0, 28.0, length(wp3.xz));
+                float padClear = smoothstep(14.0, 26.0, length(wp3.xz));
                 float landerClear = _MoonBlastZone.z > 0.001
-                    ? smoothstep(_MoonBlastZone.z * 0.55, _MoonBlastZone.z * 1.15, length(wp3.xz - _MoonBlastZone.xy))
+                    ? smoothstep(_MoonBlastZone.z * 0.45, _MoonBlastZone.z * 0.95, length(wp3.xz - _MoonBlastZone.xy))
                     : 1.0;
                 float openGate = patchMask * padClear * landerClear;
                 if (openGate <= 0.001)
@@ -521,14 +521,14 @@ Shader "MoonProject/World/R1Terrain"
                 }
 
                 // Soft, low-contrast shading on the flat plain; slightly firmer on distant mountain slopes
-                half strengthScale = lerp(0.11h, 0.24h, slopeFactor) * rangeFade;
+                half strengthScale = lerp(0.24h, 0.34h, slopeFactor) * rangeFade;
 
                 half2 normDelta = half2(0.0h, 0.0h);
                 half aoMod = 1.0h;
 
                 // Layer 1 (Medium-to-Large Weathered Craters): ~26 m cells, radius ~2.0–7.5 m (diameter ~4–15 m), steep power-law (2.8)
                 float2 spRotA = float2(sp.x * 0.7986 - sp.y * 0.6018, sp.x * 0.6018 + sp.y * 0.7986);
-                float occMed = 0.34 * openGate;
+                float occMed = 0.38 * openGate;
                 AccumulateWeatheredCrater2x2(
                     spRotA * 0.038 + warpLarge * 0.25 + float2(15.7, 29.3),
                     sp,
@@ -539,7 +539,7 @@ Shader "MoonProject/World/R1Terrain"
 
                 // Layer 2 (Large Ancient Basins): ~58 m cells, radius ~5.2–16.8 m (diameter ~10–33 m), steep power-law (2.6)
                 float2 spRotB = float2(sp.x * 0.5878 + sp.y * 0.8090, -sp.x * 0.8090 + sp.y * 0.5878);
-                float occLarge = 0.28 * smoothstep(0.48, 0.76, clusterB) * padClear * landerClear;
+                float occLarge = 0.32 * smoothstep(0.42, 0.72, clusterB) * padClear * landerClear;
                 if (occLarge > 0.005)
                 {
                     AccumulateWeatheredCrater2x2(
