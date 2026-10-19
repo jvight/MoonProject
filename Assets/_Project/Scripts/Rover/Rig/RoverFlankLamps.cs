@@ -89,10 +89,11 @@ namespace MoonProject.Rover
             FlankLampSettings settings = _tuning.FlankLamps;
             float time = Time.time;
             StepWake(settings, time);
+            float dim = battery.OnOpeningReserve ? settings.OpeningReserveGlow : 1f;
             for (int i = 0; i < _shownCells; i++)
             {
                 float target = i < _wakeLit
-                    ? FlankLampStrip.Level(settings, i, battery.Charge, battery.IsLowPower, time)
+                    ? FlankLampStrip.Level(settings, i, battery.Charge, battery.IsLowPower, time) * dim
                     : 0f;
                 _levels[i] = Smoothing.Damp(_levels[i], target, settings.HalfLife, deltaTime);
                 Apply(i, _levels[i]);
