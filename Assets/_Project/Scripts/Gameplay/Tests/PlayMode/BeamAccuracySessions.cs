@@ -41,6 +41,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Metres a beam's end may lie off its target's surface.</summary>
         private const float OnSurface = 0.03f;
 
+        // The scan beam leaves 07's cheek lens outward: past this first stretch at the lens it never crosses 07's body.
+        private const float LensClearance = 0.05f;
+
         /// <summary>A scan beam this far up (0..1) counts as fully out: its end is where it meets the target.</summary>
         private const float FullBeam = 0.99f;
 
@@ -261,6 +264,11 @@ namespace MoonProject.Gameplay.PlayModeTests
                 Assert.LessOrEqual(off, OnSurface,
                     $"frame {frame} ({fragment.Progress:P0}): the scan beam ends {off * 100f:F1} cm off " +
                     $"{fragment.FragmentId} at {end} ({fragment.Surface.Count} collider(s))");
+                Vector3 lens = _gameplay.Salvage.ScanEmitter;
+                Vector3 along = (end - lens).normalized;
+                Assert.IsFalse(Physics.Linecast(lens + along * LensClearance, end, out RaycastHit through,
+                        Layers.RoverMask, QueryTriggerInteraction.Ignore),
+                    $"frame {frame}: the scan beam to {fragment.FragmentId} passes through 07 at {through.point}");
                 if (!captured && fragment.Progress >= 0.5f)
                 {
                     captured = true;
