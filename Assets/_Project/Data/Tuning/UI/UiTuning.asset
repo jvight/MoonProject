@@ -570,7 +570,7 @@ MonoBehaviour:
     _resumeDays: 13148
     _lingerSeconds: 0.3
   _bootFace:
-    _linework: {fileID: 0}
+    _linework: {fileID: 11400000, guid: e0ed04034e1b4a345ae2b7dbafcd0750, type: 2}
     _lineShare: 0.3
     _openShare: 0.35
     _bloomPeak: 0.3
@@ -674,6 +674,7 @@ MonoBehaviour:
     _saturation: -30
     _faceBlurStartMetres: 1.35
     _faceBlurEndMetres: 6.5
+    _faceGrain: 0
     _faceSaturation: 0
   _saveTick:
     _reveal:
