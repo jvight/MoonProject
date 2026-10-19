@@ -251,6 +251,8 @@ namespace MoonProject.Rover.PlayModeTests
             Transform tip = Shape(PrimitiveType.Sphere, antenna, new Vector3(0f, 0.9f, 0f), Vector3.one * 0.06f,
                 material);
             tip.name = RoverModelNodes.AntennaTip;
+            Transform antennaSegment = Node(RoverModelNodes.AntennaSegment2, antenna, new Vector3(0f, 0.5f, 0f));
+            Transform igniter = Node(RoverModelNodes.CutterIgniter, cutterTurret, new Vector3(0f, 0.04f, 0.02f));
             Transform lampSocket = Node(RoverModelNodes.HeadlampSocket, model, new Vector3(0f, 0.55f, 1f));
             Transform cargo = Node(RoverModelNodes.CargoSocket, model, new Vector3(0f, 1.05f, -0.4f));
             Transform dustLeft = Node(RoverModelNodes.DustSocketLeft, model, new Vector3(-HalfTrack, 0f, -AxleSpacing));
@@ -274,6 +276,9 @@ namespace MoonProject.Rover.PlayModeTests
             }
 
             var flank = visual.gameObject.AddComponent<RoverFlankLamps>();
+            var growth = visual.gameObject.AddComponent<RoverGrowth>();
+            Assign(growth, ("_tuning", rigTuning), ("_antennaSegment", antennaSegment), ("_igniter", igniter),
+                ("_turret", cutterTurret));
             var roadLight = visual.gameObject.AddComponent<RoverHeadlamp>();
             var moteSystem = Particles("LampMotes", headlamp.transform, material);
             var lampMotes = moteSystem.gameObject.AddComponent<RoverLampMotes>();
@@ -331,7 +336,7 @@ namespace MoonProject.Rover.PlayModeTests
             AssignArray(flank, "_glasses", flankGlasses);
             Assign(controller, ("_tuning", tuning), ("_body", rigidbody), ("_sphere", collider), ("_visualRig", rig),
                 ("_wheelFx", fx), ("_lampMotes", lampMotes), ("_headlamp", roadLight),
-                ("_flankLamps", flank), ("_nozzleDevice", nozzleDevice),
+                ("_flankLamps", flank), ("_growth", growth), ("_nozzleDevice", nozzleDevice),
                 ("_tetherOrigin", eyeOrigin), ("_cutterOrigin", cutterOrigin), ("_scanOrigin", eyeOrigin),
                 ("_winchOrigin", winchOrigin), ("_scoopOrigin", scoopOrigin), ("_cargoSocket", cargo));
             Transform hatch = Node(RoverModelNodes.CargoHatch, model, new Vector3(0f, HatchY, HatchZ));
