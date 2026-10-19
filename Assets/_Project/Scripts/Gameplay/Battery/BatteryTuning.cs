@@ -82,6 +82,15 @@ namespace MoonProject.Gameplay
         [Tooltip("Cells of charge that end the crawl, so it never flickers on and off at empty.")]
         [Range(0.05f, 1f)] [SerializeField] private float _exitMargin = 0.25f;
 
+        [Header("The opening reserve (opening v3, R2)")]
+        [Tooltip("Share of 07's top speed while the opening runs on the reserve, until the first charge. It caps top " +
+                 "speed only: acceleration and turning are untouched, so 07 still feels quick off the line.")]
+        [Range(0.3f, 1f)] [SerializeField] private float _openingReserveCap = 0.7f;
+
+        [Tooltip("Cells of charge the opening never lets 07 fall below until the call is answered, so 07 cannot die " +
+                 "in the opening. 0 turns the floor off.")]
+        [Range(0f, 1f)] [SerializeField] private float _openingChargeFloor = 0.5f;
+
         [Header("Solar trickle (07's solar wing, jammed through the opening)")]
         [Tooltip("Seconds of standing still that trickle one cell back in.")]
         [Range(30f, 600f)] [SerializeField] private float _trickleSecondsPerCell = 180f;
@@ -157,6 +166,8 @@ namespace MoonProject.Gameplay
         public float DrumRollSpeed => _drumRollSpeed;
         public float DrumRollRefill => _drumRollRefill;
         public float CrawlCap => _crawlCap;
+        public float OpeningReserveCap => _openingReserveCap;
+        public float OpeningChargeFloor => _openingChargeFloor;
         public float CapEase => _capEase;
         public float ExitMargin => _exitMargin;
         public float TrickleSecondsPerCell => _trickleSecondsPerCell;

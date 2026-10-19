@@ -110,6 +110,9 @@ namespace MoonProject.Gameplay
                     return _game.NightReady;
                 case OpeningMilestone.SignalWest:
                     return _game.Built(StructureIds.AntennaMast);
+                case OpeningMilestone.CallAnswered:
+                    // The answer (R8) is not in the game yet: nothing holds it until that slice lands.
+                    return false;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(milestone), milestone, "Not an opening milestone.");
             }

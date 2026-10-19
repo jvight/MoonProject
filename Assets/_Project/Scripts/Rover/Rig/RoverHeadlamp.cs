@@ -101,7 +101,8 @@ namespace MoonProject.Rover
         public void Tick(float deltaTime, float power)
         {
             DockSettings dock = _rover.Tuning.Dock;
-            float target = _docked ? dock.LampDim : _battery.IsLowPower ? _tuning.FlankLamps.CrawlHeadlamp : 1f;
+            float target = _docked ? dock.LampDim : _battery.IsLowPower ? _tuning.FlankLamps.CrawlHeadlamp
+                : _battery.OnOpeningReserve ? _tuning.FlankLamps.OpeningReserveHeadlamp : 1f;
             _level = Smoothing.Damp(_level, target, dock.LampHalfLife, deltaTime);
             _switch = Mathf.MoveTowards(_switch, LightsOn ? 1f : 0f, deltaTime / _tuning.LampSwitchSeconds);
             ApplyLevel(power);
