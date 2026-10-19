@@ -46,7 +46,7 @@ namespace MoonProject.World.Editor
         public const string ScoutBlastName = "Decal_OldLanderBlast";
         public const string BootprintTrailName = "BootprintTrail";
 
-        /// <summary>Kestrel-3's story scan host in [World]/BasinProps; Art's hull panel under it is the scan node.</summary>
+        /// <summary>Kestrel-3's story scan host in [World]/BasinProps; Art's hull panel under it is the node.</summary>
         public const string KestrelPanelHostName = "Kestrel3_HullPanel";
 
         // Art's R1 prop nodes this layout joins (tools/art/qa/contracts).
@@ -170,9 +170,10 @@ namespace MoonProject.World.Editor
         }
 
         /// <summary>
-        /// The databank's story scan hosts in [World]/BasinProps, solid on <see cref="Layers.Prop"/>: Kestrel-3's hull
-        /// panel at the impact crater (its own host, the panel its scan node), 06 at micro.06, and 01 at the foot of
-        /// the Peak road with the rockfall that stopped it (with the boulders).
+        /// The databank's story scan hosts in [World]/BasinProps, each solid with one box on
+        /// <see cref="Layers.Prop"/>: Kestrel-3's hull panel at the impact crater (its own host, the panel its scan
+        /// node), 06 at micro.06, and 01 at the foot of the Peak road with the rockfall that stopped it (with the
+        /// boulders).
         /// </summary>
         private static void StandStoryHosts(SceneBuildContext context, LandmarkSettings landmarks, MoonSurface surface,
             WorldAnchors anchors, Transform parent, Transform boulders)
@@ -180,26 +181,41 @@ namespace MoonProject.World.Editor
             PropPlacement panel = landmarks.KestrelPanel;
             Transform host = context.CreateChild(KestrelPanelHostName, parent).transform;
             host.position = Ground(surface, Near(anchors, panel));
-            Stand(context, host, panel.Id, WorldPaths.KestrelDebrisPrefab(panel.Id),
-                host.position - Vector3.up * panel.Sink, Quaternion.Euler(0f, panel.Yaw, 0f) * Vector3.forward, true);
+            BlockOut(Stand(context, host, panel.Id, WorldPaths.KestrelDebrisPrefab(panel.Id),
+                host.position - Vector3.up * panel.Sink, Quaternion.Euler(0f, panel.Yaw, 0f) * Vector3.forward, false));
             PropPlacement keeper = landmarks.Elder06;
             Vector3 rest = Ground(surface, Near(anchors, keeper)) - Vector3.up * keeper.Sink;
             Vector3 towardMast = Flat(Require(anchors, WorldAnchorIds.CanyonMouth).Position - rest);
             GameObject six = Stand(context, parent, keeper.Id, WorldPaths.ElderPrefab(keeper.Id), rest,
-                Quaternion.Euler(0f, keeper.Yaw, 0f) * towardMast, true);
+                Quaternion.Euler(0f, keeper.Yaw, 0f) * towardMast, false);
+            BlockOut(six);
             six.transform.rotation = Quaternion.AngleAxis(-landmarks.Elder06Slump, six.transform.forward)
                                      * six.transform.rotation;
 
             PropPlacement surveyor = landmarks.Elder01;
-            Stand(context, parent, surveyor.Id, WorldPaths.ElderPrefab(surveyor.Id),
+            BlockOut(Stand(context, parent, surveyor.Id, WorldPaths.ElderPrefab(surveyor.Id),
                 Ground(surface, Near(anchors, surveyor)) - Vector3.up * surveyor.Sink,
-                Quaternion.Euler(0f, surveyor.Yaw, 0f) * Vector3.forward, true);
+                Quaternion.Euler(0f, surveyor.Yaw, 0f) * Vector3.forward, false));
 
             foreach (PropPlacement rock in landmarks.Rockfall)
             {
                 StandRock(context, boulders, rock.Id, Ground(surface, Near(anchors, rock)) - Vector3.up * rock.Sink,
                     rock.Yaw);
             }
+        }
+
+        /// <summary>
+        /// One box round all of <paramref name="prop"/>'s meshes, on <see cref="Layers.Prop"/>: it blocks 07 like the
+        /// prop itself. A story host's meshes (the elders' wheels) are too fine for convex colliders, which Unity cuts
+        /// down to a partial hull with a warning at load.
+        /// </summary>
+        private static void BlockOut(GameObject prop)
+        {
+            Bounds bounds = LocalBounds(prop.transform.localToWorldMatrix, prop);
+            prop.layer = Layers.Prop;
+            var box = prop.AddComponent<BoxCollider>();
+            box.center = bounds.center;
+            box.size = bounds.size;
         }
 
         /// <summary>Where <paramref name="placement"/> stands: its offset from its anchor, on the XZ plane.</summary>
