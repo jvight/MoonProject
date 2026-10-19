@@ -49,3 +49,12 @@
 - `docs/design/databank.md` is written, with its entries in `text/databank-entries.md` (18 entries, en and vi).
   - The cards are Lumen's crew-written catalogue, which ends in 1988; anything newer shows `NO LUMEN RECORD`.
   - ui-fit implements it next.
+
+## Maker understanding (box/cl-maker-understanding)
+- `docs/design/maker-understanding.md`: each scanned databank entry gives +1 to its maker. Small thresholds unlock
+  adapted blueprints: the donor part keeps its era and livery, joined by 07's weld beads and a `07` tag.
+- Families: Kessler–Arai, 07 itself (fastest); VIS, base structures; ILC, instruments; Tycho, automation (slowest).
+- Points derive from the databank, so there is no new save state.
+- Open questions:
+  - the survey flock's maker (living-moon says Lumen, v4 says Tycho);
+  - the game-design session should fold the re-sourcing into `craft-catalogue.md`.
