@@ -32,6 +32,7 @@ Material:
     - _BloomSafeMax: 1.06
     - _ContentGlowIntensity: 0.2
     - _ContentGlowMip: 1.25
+    - _ContentMinStrokeLuma: 0
     - _ContentScanlineAtten: 0.6
     - _GlowRadius: 0.028
     - _HotCorePeak: 1.65
