@@ -27,6 +27,8 @@ static const float2 CONTENT_FALLBACK_TEXEL_SIZE = float2(1.0 / 1152.0, 1.0 / 768
 static const float CONTENT_TENT_RADIUS_SCALE = 18.0;
 static const half CONTENT_SHOULDER_ATTEN = 0.72h;
 static const half CONTENT_DIRECT_GAIN = 1.12h;
+// Content luminance below which a pixel is a dark fill (shown as the tube's black), and above which it is lit.
+static const half2 CONTENT_FILL_LUMA = half2(0.012h, 0.040h);
 static const half3 CONTENT_BG_LINEAR = half3(0.0178h, 0.0170h, 0.0026h);
 static const half3 CONTENT_EDGE_LINEAR = half3(0.0162h, 0.0155h, 0.0024h);
 static const half3 CONTENT_VIGNETTE_FLOOR = half3(0.0023h, 0.0027h, 0.0040h);
@@ -444,7 +446,12 @@ half4 CrtFacePassFragment(Varyings input) : SV_Target
         float inDeflectedBounds = step(0.0, deflectedUv.x) * step(deflectedUv.x, 1.0)
             * step(0.0, deflectedUv.y) * step(deflectedUv.y, 1.0) * deflectionBandMask;
         float2 contentUv = saturate(deflectedUv);
-        half4 contentSample = SAMPLE_TEXTURE2D_LOD(_ContentTex, sampler_ContentTex, contentUv, 0.0) * (half)inDeflectedBounds;
+        // Read the UI with its own screen-space footprint, so the texture's mips and anisotropy filter it the way the
+        // screen needs at any resolution (no aliasing when the face covers fewer pixels than the texture holds).
+        float2 contentDx = ddx(deflectedUv);
+        float2 contentDy = ddy(deflectedUv);
+        half4 contentSample = SAMPLE_TEXTURE2D_GRAD(_ContentTex, sampler_ContentTex, contentUv, contentDx, contentDy)
+            * (half)inDeflectedBounds;
 
         // The halation was tuned against the 1152 x 768 layout. The content texture may be sharper than that (the UI
         // renders it at twice the layout so text and line art stay crisp on a big screen), so the halo keeps its
@@ -469,22 +476,20 @@ half4 CrtFacePassFragment(Varyings input) : SV_Target
         half3 phosphorHalation = (tightGlow * _PhosphorColor.rgb)
             * (_ContentGlowIntensity * glowGate * shoulderWeight * glowMask);
 
-        // Separate background pixels from stroke/text pixels so background stays a uniform near-neutral warm black
-        // while strokes and text receive full crisp contrast (>= 7:1 everywhere).
-        half strokeGate = smoothstep(0.014h, 0.045h, contentLum);
+        // The UI is premultiplied over a clear texture: lay it over the tube's dark by its own coverage, so its
+        // anti-aliased edges, thin strokes and authored colours come through as drawn (no stroke boost, no gold tint),
+        // lifted only a touch for the phosphor's emission.
         float contentRimVig = smoothstep(0.003, -0.016, bezelSdf);
         float2 vigD = abs(cc) * float2(0.57, 0.675);
         half vigFactor = (half)pow(saturate(1.0 - dot(vigD, vigD)), 2.5);
         half3 contentBgCenter = max(CONTENT_BG_LINEAR - CONTENT_VIGNETTE_FLOOR * (1.0h - vigFactor), 0.0h) / max(vigFactor, 0.58h);
         half3 contentBgEdge = max(CONTENT_EDGE_LINEAR - CONTENT_VIGNETTE_FLOOR * (1.0h - vigFactor), 0.0h) / max(vigFactor, 0.58h);
         half3 contentBg = lerp(contentBgEdge, contentBgCenter, (half)contentRimVig);
-        half3 warmGoldLift = half3(1.00h, 0.86h, 0.60h) * contentLum;
-        half3 baseStroke = lerp(contentSample.rgb, max(contentSample.rgb, warmGoldLift), 0.42h);
-        half strokeRec709 = max(dot(baseStroke, half3(0.2126h, 0.7152h, 0.0722h)), (half)1e-4);
-        half targetRec709 = lerp(0.84h, 0.96h, saturate((contentLum - 0.02h) / 0.85h));
-        half lumGain = max(CONTENT_DIRECT_GAIN, targetRec709 / strokeRec709);
-        half3 strokeRgb = baseStroke * lumGain;
-        half3 contentBody = lerp(contentBg, strokeRgb, strokeGate) + phosphorHalation * (half)contentRimVig;
+        half coverage = saturate(contentSample.a);
+        half3 composite = contentBg * (1.0h - coverage) + contentSample.rgb * CONTENT_DIRECT_GAIN;
+        // A dark panel fill is the tube's own black, not a coloured plate: only luminous content shows its colour.
+        half lit = smoothstep(CONTENT_FILL_LUMA.x, CONTENT_FILL_LUMA.y, contentLum);
+        half3 contentBody = lerp(contentBg, composite, lit) + phosphorHalation * (half)contentRimVig;
         half contentSafeMax = min(_BloomSafeMax, 1.02h);
         half contentBodyMax = max(contentBody.r, max(contentBody.g, contentBody.b));
         if (contentBodyMax > contentSafeMax)
