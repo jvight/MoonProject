@@ -38,7 +38,7 @@ RIBBON_CENTER_Y = 0.005
 
 
 def ensure_extended_r1_materials() -> None:
-    """Register R1_Brass into r1kit at runtime (using only non-emissive R1 family materials)."""
+    """Register R1_Brass, R1_WhitePaint, R1_TealMark, and R1_SilverFoil into r1kit at runtime."""
     extra_specs = {
         "R1_Brass": {
             "base_color": r1kit._srgb_to_linear("#DBB052"),
@@ -46,6 +46,33 @@ def ensure_extended_r1_materials() -> None:
             "dust_color": r1kit._srgb_to_linear("#8A8270"),
             "metallic": 0.92,
             "roughness": 0.24,
+            "emission": (0.0, 0.0, 0.0, 1.0),
+            "emission_strength": 0.0,
+        },
+        "R1_WhitePaint": {
+            "base_color": r1kit._srgb_to_linear("#E8EAE6"),
+            "wear_color": r1kit._srgb_to_linear("#C2C7CC"),
+            "dust_color": r1kit._srgb_to_linear("#8D8B86"),
+            "metallic": 0.02,
+            "roughness": 0.82,
+            "emission": (0.0, 0.0, 0.0, 1.0),
+            "emission_strength": 0.0,
+        },
+        "R1_TealMark": {
+            "base_color": r1kit._srgb_to_linear("#2F6E73"),
+            "wear_color": r1kit._srgb_to_linear("#A8BDC2"),
+            "dust_color": r1kit._srgb_to_linear("#788086"),
+            "metallic": 0.04,
+            "roughness": 0.65,
+            "emission": (0.0, 0.0, 0.0, 1.0),
+            "emission_strength": 0.0,
+        },
+        "R1_SilverFoil": {
+            "base_color": r1kit._srgb_to_linear("#C9CED2"),
+            "wear_color": r1kit._srgb_to_linear("#EBF0F5"),
+            "dust_color": r1kit._srgb_to_linear("#8A8E94"),
+            "metallic": 0.85,
+            "roughness": 0.45,
             "emission": (0.0, 0.0, 0.0, 1.0),
             "emission_strength": 0.0,
         },
@@ -142,15 +169,15 @@ def _add_flat_ribbon_with_conductors(
     width: float = RIBBON_WIDTH,
     thickness: float = RIBBON_THICKNESS,
 ) -> None:
-    """Build a multi-conductor flat seismic ribbon cable with raised Kapton/orange center tracer & outer conductor ribs."""
-    # Main dark elastomer flat ribbon base
-    _add_flat_ribbon_strip(mb, points_u, width=width, thickness=thickness, mat="R1_Rubber")
+    """Build a flat white Kapton seismic ribbon cable (R1_WhitePaint, no orange or gold)."""
+    # Main flat white Kapton ribbon base
+    _add_flat_ribbon_strip(mb, points_u, width=width, thickness=thickness, mat="R1_WhitePaint")
 
-    # Center Kapton/GoldFoil insulated signal conductor rib raised 1.2 mm above top of ribbon
+    # Center white-insulated signal conductor rib raised 1.2 mm above top of ribbon
     center_pts = [(x, y + thickness * 0.35, z) for (x, y, z) in points_u]
-    _add_flat_ribbon_strip(mb, center_pts, width=width * 0.24, thickness=thickness * 0.55, mat="R1_GoldFoil")
+    _add_flat_ribbon_strip(mb, center_pts, width=width * 0.24, thickness=thickness * 0.55, mat="R1_WhitePaint")
 
-    # Left and right outer conductor ribs in GreyMetal
+    # Left and right outer conductor ribs in WhitePaint
     n_pts = len(points_u)
     for side in (-1.0, 1.0):
         side_offset = side * (width * 0.31)
@@ -168,7 +195,7 @@ def _add_flat_ribbon_with_conductors(
             hlen = math.hypot(dx, dz)
             rx, rz = (dz / hlen, -dx / hlen) if hlen > 1e-6 else (1.0, 0.0)
             side_pts.append((px + side_offset * rx, py + thickness * 0.28, pz + side_offset * rz))
-        _add_flat_ribbon_strip(mb, side_pts, width=width * 0.14, thickness=thickness * 0.48, mat="R1_GreyMetal")
+        _add_flat_ribbon_strip(mb, side_pts, width=width * 0.14, thickness=thickness * 0.48, mat="R1_WhitePaint")
 
 
 def _add_ribbon_end_ferrule(
@@ -176,28 +203,28 @@ def _add_ribbon_end_ferrule(
     center_u: Tuple[float, float, float],
     yaw_deg: float = 0.0,
 ) -> None:
-    """Add a low-profile flat ribbon crimp ferrule & brass pin block at a segment endpoint."""
+    """Add a low-profile bare-metal flat ribbon crimp ferrule & black rubber strain collar at a segment endpoint."""
     cx, cy, cz = center_u
     rot = (0.0, yaw_deg, 0.0)
-    # Flat grey-metal crimp shell
+    # Flat bare-aluminium crimp shell
     mb.add_bevel_box(
         (cx, cy + 0.001, cz),
         (0.060, 0.012, 0.044),
-        mat="R1_GreyMetal",
+        mat="R1_BareSteel",
         bevel=0.002,
         segments=1,
         rot_deg_u=rot,
     )
-    # Faded orange index stripe across top of ferrule
+    # Black elastomer strain-relief band across top of ferrule
     mb.add_bevel_box(
         (cx, cy + 0.006, cz),
         (0.056, 0.005, 0.016),
-        mat="R1_OrangeStripe",
+        mat="R1_Rubber",
         bevel=0.001,
         segments=1,
         rot_deg_u=rot,
     )
-    # Brass alignment rivets on left and right ears
+    # Bare-metal alignment rivets on left and right ears
     rad = math.radians(yaw_deg)
     rx, rz = math.cos(rad), -math.sin(rad)
     for side in (-1.0, 1.0):
@@ -205,7 +232,7 @@ def _add_ribbon_end_ferrule(
             (cx + side * 0.022 * rx, cy + 0.006, cz + side * 0.022 * rz),
             radius=0.0035,
             length=0.006,
-            mat="R1_Brass",
+            mat="R1_BareSteel",
             axis_u="Y",
             segments=8,
             bevel=0.0008,
@@ -217,27 +244,27 @@ def _add_ribbon_hold_down_clip(
     center_u: Tuple[float, float, float],
     yaw_deg: float = 0.0,
 ) -> None:
-    """Add a low-profile regolith staple clip and settled dust clod holding down the flat ribbon cable."""
+    """Add a low-profile bare-metal regolith staple clip and settled dust clod holding down the flat ribbon cable."""
     cx, _, cz = center_u
     rot = (0.0, yaw_deg, 0.0)
     rad = math.radians(yaw_deg)
     rx, rz = math.cos(rad), -math.sin(rad)
 
-    # Low-profile stamped grey-metal bridge strap over the 5.2 cm ribbon
+    # Low-profile stamped bare-aluminium bridge strap over the 5.2 cm ribbon
     mb.add_bevel_box(
         (cx, 0.008, cz),
         (0.088, 0.012, 0.042),
-        mat="R1_GreyMetal",
+        mat="R1_BareSteel",
         bevel=0.0025,
         segments=1,
         rot_deg_u=rot,
         top_scale_xz=(0.88, 0.90),
     )
-    # Faded orange identification marker tab on top of clip
+    # Bare-metal crimp rib on top of clip (no orange)
     mb.add_bevel_box(
         (cx, 0.015, cz),
         (0.048, 0.005, 0.024),
-        mat="R1_OrangeStripe",
+        mat="R1_BareSteel",
         bevel=0.0015,
         segments=1,
         rot_deg_u=rot,
@@ -273,27 +300,27 @@ def _add_stencil_number_mesh(
     number: int,
     center_u: Tuple[float, float, float],
 ) -> None:
-    """Build a crisp 1980s stencilled number plate (1, 2, or 3) in R1_CreamEnamel + dark R1_GreyMetal strokes."""
+    """Build a 1971 Era-S stencilled number plate (1, 2, or 3) in R1_WhitePaint + dark R1_GreyMetal strokes on R1_BareSteel."""
     cx, cy, cz = center_u
 
-    # Chamfered dark grey-metal backing frame sitting on the faded orange cap
+    # Chamfered bare-aluminium backing frame sitting on the sensor cap
     mb.add_bevel_box(
         (cx, cy, cz),
         (0.021, 0.005, 0.026),
-        mat="R1_GreyMetal",
+        mat="R1_BareSteel",
         bevel=0.001,
         segments=1,
     )
-    # Cream-enamel stencil background face
+    # Chalky white-paint stencil background patch
     mb.add_bevel_box(
         (cx, cy + 0.0018, cz),
         (0.018, 0.004, 0.023),
-        mat="R1_CreamEnamel",
+        mat="R1_WhitePaint",
         bevel=0.0008,
         segments=1,
     )
 
-    # Raised dark stencil numeral strokes on top of the cream plaque (y_top ~ cy + 0.0055)
+    # Raised dark stencil numeral strokes on top of the white-paint plaque (y_top ~ cy + 0.0055)
     sy = cy + 0.0038
     sh = 0.0032
     sw = 0.0030
@@ -327,7 +354,7 @@ def _populate_sensor_housing_and_cap(
     cap_mb: r1kit.MeshBuilder,
     center_xz: Tuple[float, float] = (0.0, 0.0),
 ) -> None:
-    """Populate a geophone sensor's squat cylinder body, 3 short ground spikes, and faded orange cap (~0.12 m tall)."""
+    """Populate a geophone sensor's squat bare-aluminium cylinder body, 3 short ground spikes, and bare-aluminium cap (~0.12 m tall)."""
     cx, cz = center_xz
 
     # 1. Three short tapered BareSteel ground spikes (120 deg apart at 30, 150, 270 deg)
@@ -342,7 +369,7 @@ def _populate_sensor_housing_and_cap(
         housing_mb.add_bevel_box(
             (lx, 0.022, lz),
             (0.026, 0.018, 0.022),
-            mat="R1_GreyMetal",
+            mat="R1_BareSteel",
             bevel=0.002,
             segments=1,
             rot_deg_u=(0.0, -ang_deg, 0.0),
@@ -382,33 +409,33 @@ def _populate_sensor_housing_and_cap(
             bevel=0.0015,
         )
 
-    # 2. Lower machined GreyMetal base cup (y = 0.012 .. 0.028 m, radius = 0.056 m)
+    # 2. Lower machined BareSteel base cup (y = 0.012 .. 0.028 m, radius = 0.056 m)
     housing_mb.add_cylinder(
         (cx, 0.020, cz),
         radius=0.056,
         length=0.016,
-        mat="R1_GreyMetal",
+        mat="R1_BareSteel",
         axis_u="Y",
         segments=16,
         bevel=0.0025,
     )
 
-    # 3. Squat cylindrical CreamEnamel seismic sensor canister (y = 0.026 .. 0.076 m, radius = 0.052 m)
+    # 3. Squat cylindrical BareSteel seismic sensor canister (y = 0.026 .. 0.076 m, radius = 0.052 m — no cream/orange)
     housing_mb.add_cylinder(
         (cx, 0.051, cz),
         radius=0.052,
         length=0.050,
-        mat="R1_CreamEnamel",
+        mat="R1_BareSteel",
         axis_u="Y",
         segments=16,
         bevel=0.0035,
     )
-    # Recessed mid-body GreyMetal clamping band + Copper grounding lug
+    # Recessed mid-body BareSteel clamping band + Copper grounding lug
     housing_mb.add_cylinder(
         (cx, 0.050, cz),
         radius=0.054,
         length=0.010,
-        mat="R1_GreyMetal",
+        mat="R1_BareSteel",
         axis_u="Y",
         segments=16,
         bevel=0.0015,
@@ -437,7 +464,7 @@ def _populate_sensor_housing_and_cap(
         housing_mb.add_bevel_box(
             (cx, 0.012, cz + sz * 0.062),
             (0.058, 0.016, 0.028),
-            mat="R1_GreyMetal",
+            mat="R1_BareSteel",
             bevel=0.002,
             segments=1,
         )
@@ -445,30 +472,29 @@ def _populate_sensor_housing_and_cap(
             (cx, 0.021, cz + sz * 0.062),
             radius=0.006,
             length=0.006,
-            mat="R1_Brass",
+            mat="R1_BareSteel",
             axis_u="Y",
             segments=8,
             bevel=0.001,
         )
 
-    # 5. Faded orange cap (`OrangeCap` mesh node, y = 0.074 .. 0.105 m):
-    #    Squat chamfered R1_OrangeStripe cap dome + Brass bubble-level bezel + BareSteel top calibration stud
+    # 5. Machined bare-aluminium top cap (`OrangeCap` mesh node name preserved for World compatibility, y = 0.074 .. 0.105 m):
     cap_mb.add_cylinder(
         (cx, 0.085, cz),
         radius=0.055,
         radius_top=0.048,
         length=0.022,
-        mat="R1_OrangeStripe",
+        mat="R1_BareSteel",
         axis_u="Y",
         segments=16,
         bevel=0.004,
     )
-    # Brass spirit-level bezel ring on rear-top of cap (z = +0.020 m)
+    # Spirit-level bezel ring on rear-top of cap (z = +0.020 m)
     cap_mb.add_cylinder(
         (cx, 0.098, cz + 0.020),
         radius=0.014,
         length=0.006,
-        mat="R1_Brass",
+        mat="R1_BareSteel",
         axis_u="Y",
         segments=12,
         bevel=0.001,
@@ -507,7 +533,7 @@ def apply_geophone_uvs_and_colors(
     root: bpy.types.Object,
     footprint_radius: float = 0.35,
 ) -> None:
-    """Project UVs and bake vertex colors (R=AO, G=Wear, B=Dust) with sun-faded orange cap and dusty ribbon crown."""
+    """Project UVs and bake vertex colors (R=AO, G=Wear, B=Dust) with dusty white Kapton ribbon crown."""
     r1kit.apply_triplanar_uvs(root, texel_scale=0.85)
     r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(root, footprint_radius=footprint_radius)
@@ -527,7 +553,7 @@ def apply_geophone_uvs_and_colors(
                 if poly.material_index < len(mesh.materials) and mesh.materials[poly.material_index]
                 else ""
             )
-            is_orange = mat_name == "R1_OrangeStripe"
+            is_white = mat_name == "R1_WhitePaint"
             is_rubber = mat_name == "R1_Rubber"
 
             for li in poly.loop_indices:
@@ -537,13 +563,12 @@ def apply_geophone_uvs_and_colors(
                 sunk_factor = max(0.0, min(1.0, (0.012 - v_w.z) / 0.022))
                 top_factor = max(0.0, min(1.0, (n_w.z - 0.15) / 0.75))
 
-                if is_orange:
-                    # Sun-faded orange cap: elevated G (wear -> pale bleached cream-orange) + moderate B (lunar dust)
-                    r_new = max(0.82, min(1.0, r * 0.96))
-                    g_new = max(0.58, min(0.92, g * 0.65 + 0.52))
-                    b_new = max(0.24, min(0.62, b * 0.60 + 0.26 * top_factor))
+                if is_white:
+                    # Flat white Kapton ribbon & stencil patches: chalky surface + regolith dust along edges
+                    r_new = max(0.32, min(1.0, r * (0.94 - 0.18 * sunk_factor)))
+                    g_new = max(0.28, min(0.85, g * 0.75 + 0.25))
+                    b_new = max(0.18, min(0.68, b + 0.28 * max(top_factor, 0.85 * sunk_factor)))
                 elif is_rubber:
-                    # Flat ribbon cable lying in regolith: dusty top crown
                     r_new = max(0.20, min(1.0, r * (0.90 - 0.25 * sunk_factor)))
                     g_new = max(0.0, min(0.18, g * (1.0 - 0.70 * top_factor)))
                     b_new = max(0.32, min(1.0, b + 0.42 * max(top_factor, 0.85 * sunk_factor)))
@@ -661,21 +686,21 @@ def _populate_geophone_plug(
     lead_mb.add_bevel_box(
         (0.0, 0.012, z_offset - 0.14),
         (0.116, 0.024, 0.088),
-        mat="R1_GreyMetal",
+        mat="R1_BareSteel",
         bevel=0.003,
         segments=1,
     )
     lead_mb.add_bevel_box(
         (0.0, 0.026, z_offset - 0.14),
         (0.082, 0.010, 0.068),
-        mat="R1_CreamEnamel",
+        mat="R1_Rubber",
         bevel=0.002,
         segments=1,
     )
     lead_mb.add_bevel_box(
         (0.0, 0.015, z_offset - 0.14),
         (0.120, 0.010, 0.028),
-        mat="R1_OrangeStripe",
+        mat="R1_BareSteel",
         bevel=0.0015,
         segments=1,
     )
@@ -710,26 +735,26 @@ def _populate_geophone_plug(
         bevel=0.003,
         segments=1,
     )
-    # Main machined GreyMetal rectangular connector body (z = +0.135 .. +0.215 m)
+    # Main machined BareSteel rectangular connector body (z = +0.135 .. +0.215 m)
     plug_mb.add_bevel_box(
         (0.0, py, z_offset + 0.175),
         (0.096, 0.044, 0.080),
-        mat="R1_GreyMetal",
+        mat="R1_BareSteel",
         bevel=0.004,
         segments=2,
     )
-    # CreamEnamel top cover plate & faded OrangeStripe collar band
+    # Black Rubber shell cover plate & collar band
     plug_mb.add_bevel_box(
         (0.0, py + 0.022, z_offset + 0.175),
         (0.082, 0.008, 0.066),
-        mat="R1_CreamEnamel",
+        mat="R1_Rubber",
         bevel=0.002,
         segments=1,
     )
     plug_mb.add_bevel_box(
         (0.0, py, z_offset + 0.152),
         (0.100, 0.046, 0.020),
-        mat="R1_OrangeStripe",
+        mat="R1_Rubber",
         bevel=0.002,
         segments=1,
     )
@@ -747,7 +772,7 @@ def _populate_geophone_plug(
     plug_mb.add_bevel_box(
         (0.0, py + 0.040, z_offset + 0.165),
         (0.062, 0.009, 0.022),
-        mat="R1_OrangeStripe",
+        mat="R1_Rubber",
         bevel=0.002,
         segments=1,
     )

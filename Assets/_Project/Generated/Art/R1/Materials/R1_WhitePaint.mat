@@ -1,0 +1,80 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: R1_WhitePaint
+  m_Shader: {fileID: 4800000, guid: 299163e709bb15d4989f6dd70ac04ab5, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 1
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 2800000, guid: c0096e7825699ba40a9464cd926ed435, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BumpMap:
+        m_Texture: {fileID: 2800000, guid: 7331f68e33f9bdf428bb28530fd3574d, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MaskMap:
+        m_Texture: {fileID: 2800000, guid: 17b9e67df2ed49f4a8e907aa2dac41a8, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _BloomSafeMax: 1.06
+    - _BuildModeGlow: 0
+    - _BuildPrint: 0
+    - _BuildRevealProgress: 1
+    - _BuildStageHeat: 0
+    - _BumpScale: 0.65
+    - _ColorVarAmount: 0.025
+    - _ColorVarScale: 1.8
+    - _Dissolve: 0
+    - _DustAmount: 0.24
+    - _DustOcclusionWeight: 0.42
+    - _DustSharpness: 2
+    - _DustSmoothness: 0.12
+    - _DustUpThreshold: 0.12
+    - _EdgeWearAmount: 0.58
+    - _EdgeWearMetallic: 0.55
+    - _EdgeWearSharpness: 4
+    - _EdgeWearSmoothness: 0.34
+    - _EdgeWearThreshold: 0.52
+    - _EmissionStrength: 0
+    - _HotCorePeak: 1.65
+    - _HotCoreThreshold: 0.85
+    - _MetallicScale: 1
+    - _OcclusionStrength: 1
+    - _ScanProgress: 0
+    - _SmoothnessMax: 0.22
+    - _SmoothnessMin: 0.15
+    - _SmoothnessScale: 1
+    m_Colors:
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _BuildBoundsY: {r: 0, g: 2, b: 0, a: 0}
+    - _BuildSeamPointWS: {r: 0, g: 0, b: 0, a: 0.6}
+    - _DustColor: {r: 0.46, g: 0.48, b: 0.54, a: 1}
+    - _EdgeWearColor: {r: 0.76, g: 0.78, b: 0.8, a: 1}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

@@ -7,12 +7,10 @@
     "R1_Basalt",
     "R1_Brass",
     "R1_Copper",
-    "R1_CreamEnamel",
     "R1_DarkGlass",
-    "R1_GoldFoil",
     "R1_GreyMetal",
-    "R1_OrangeStripe",
-    "R1_Rubber"
+    "R1_Rubber",
+    "R1_WhitePaint"
   ],
   "max_triangles": 13500,
   "max_meshes": 5,

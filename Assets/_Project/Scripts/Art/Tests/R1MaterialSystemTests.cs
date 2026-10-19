@@ -140,7 +140,12 @@ namespace MoonProject.Art.Tests
         public void MaterialLibrary_AllTwelveMaterialsExist_AndHaveTexturesAssigned()
         {
             IReadOnlyList<R1MaterialSpec> specs = R1MaterialRecipes.All;
-            Assert.AreEqual(15, specs.Count, "R1MaterialRecipes must define all 15 fixed Blender material slots.");
+            Assert.AreEqual(18, specs.Count, "R1MaterialRecipes must define all 18 fixed Blender material slots.");
+
+            if (AssetDatabase.LoadAssetAtPath<Material>(R1MaterialRecipes.GetMaterialPath(specs[specs.Count - 1])) == null)
+            {
+                R1MaterialLibrary.BuildMaterials();
+            }
 
             for (int i = 0; i < specs.Count; i++)
             {

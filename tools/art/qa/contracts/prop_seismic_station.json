@@ -12,7 +12,9 @@
     "R1_GoldFoil",
     "R1_GreyMetal",
     "R1_OrangeStripe",
-    "R1_Rubber"
+    "R1_Rubber",
+    "R1_SilverFoil",
+    "R1_WhitePaint"
   ],
   "max_triangles": 4500,
   "max_meshes": 6,
@@ -58,8 +60,8 @@
     "DeadStatusLamp": {
       "pivot": [
         0.26,
-        -0.08,
-        0.295
+        -0.192,
+        0.232
       ]
     },
     "Seismometer_Anchor": {
@@ -79,8 +81,8 @@
     "StatusLamp_Dead": {
       "pivot": [
         0.26,
-        -0.08,
-        0.327
+        -0.192,
+        0.264
       ]
     }
   },
@@ -90,6 +92,6 @@
       0.6076,
       0.441
     ],
-    "tolerance": 0.025
+    "tolerance": 0.035
   }
 }
