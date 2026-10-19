@@ -189,4 +189,18 @@ namespace MoonProject.Core.Events
 
         public int Slot { get; }
     }
+
+    /// <summary>
+    /// 07's face screen is on (or flipping to) <see cref="Page"/>: the camera's face shot eases to that page's distance
+    /// (docs/design/databank.md §4; the databank sits closer so the tube nearly fills the frame).
+    /// </summary>
+    public readonly struct FacePageChanged
+    {
+        public FacePageChanged(FacePage page)
+        {
+            Page = page;
+        }
+
+        public FacePage Page { get; }
+    }
 }

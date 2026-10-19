@@ -117,6 +117,10 @@ namespace MoonProject.Rover
         private bool _faceInspectOpen;
         private bool _faceInspectHasShot;
         private float _faceInspectEase;
+        private float _pageShareFrom = 1f;
+        private float _pageShareTo = 1f;
+        private float _pageEase = 1f;
+        private float _pageShare = 1f;
         private bool _faceInspectSettled;
         private float _faceInspectWeight;
         private float _openingDampingFade = 1f;
@@ -264,6 +268,7 @@ namespace MoonProject.Rover
                 context.Events.Subscribe<RoverPlaced>(OnPlaced),
                 context.Events.Subscribe<LowPowerChanged>(OnLowPowerChanged),
                 context.Events.Subscribe<ChargingChanged>(OnChargingChanged),
+                context.Events.Subscribe<FacePageChanged>(OnFacePageChanged),
             };
             context.Register<IViewCamera>(this);
             context.Register<ILookSettings>(this);
@@ -738,8 +743,18 @@ namespace MoonProject.Rover
             return true;
         }
 
+        /// <summary>The face screen flipped pages: the shot eases to that page's distance.</summary>
+        private void OnFacePageChanged(FacePageChanged changed)
+        {
+            _pageShareFrom = _pageShare;
+            _pageShareTo = changed.Page == FacePage.Databank ? _tuning.FaceInspectDatabankShare : 1f;
+            _pageEase = 0f;
+        }
+
         private void StepFaceInspect(float deltaTime)
         {
+            _pageEase = Mathf.MoveTowards(_pageEase, 1f, deltaTime / _tuning.FacePageEaseSeconds);
+            _pageShare = Mathf.Lerp(_pageShareFrom, _pageShareTo, Smoothing.SmoothStep(0f, 1f, _pageEase));
             if (!_faceInspectOpen)
             {
                 _faceInspectSettled = false;
@@ -809,9 +824,15 @@ namespace MoonProject.Rover
 
             _targetYaw = currentYaw + deltaYaw * _faceInspectWeight;
             orbitYaw = 0f;
+            // The databank page sits closer: the camera moves in, or under gentle camera the lens crops instead.
+            bool crop = _look != null && _look.GentleCamera;
+            float shotFov = crop
+                ? 2f * Mathf.Atan(Mathf.Tan(_faceInspectShot.VerticalFov * 0.5f * Mathf.Deg2Rad) * _pageShare) *
+                  Mathf.Rad2Deg
+                : _faceInspectShot.VerticalFov;
             elevation = Mathf.Lerp(elevation, shotElevation, _faceInspectWeight);
-            radius = Mathf.Lerp(radius, shotRadius, _faceInspectWeight);
-            fov = Mathf.Lerp(fov, _faceInspectShot.VerticalFov, _faceInspectWeight);
+            radius = Mathf.Lerp(radius, crop ? shotRadius : shotRadius * _pageShare, _faceInspectWeight);
+            fov = Mathf.Lerp(fov, shotFov, _faceInspectWeight);
             screen = Vector2.Lerp(screen, Vector2.zero, _faceInspectWeight);
             _target.SetPositionAndRotation(focus, Quaternion.Euler(0f, _targetYaw, 0f));
         }
@@ -983,7 +1004,12 @@ namespace MoonProject.Rover
             _composer.Composition = composition;
             _bump.Offset = Vector3.up * (_bumpSpring.Value * orbitShare);
             _bump.FaceInspectWeight = _faceInspectHasShot ? _faceInspectWeight : 0f;
-            _bump.FaceInspectEye = _faceInspectShot.Eye;
+            // The databank page sits closer: the eye moves toward the screen along the shot's line (or, under gentle
+            // camera, stays and the lens crops).
+            bool crop = _look != null && _look.GentleCamera;
+            _bump.FaceInspectEye = crop
+                ? _faceInspectShot.Eye
+                : _faceInspectShot.Focus + (_faceInspectShot.Eye - _faceInspectShot.Focus) * _pageShare;
             _bump.FaceInspectRotation = _faceInspectShot.Rotation;
             _bump.FaceInspectUp = _faceInspectShot.ScreenUp;
         }
