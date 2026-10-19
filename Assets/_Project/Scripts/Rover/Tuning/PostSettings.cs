@@ -48,7 +48,7 @@ namespace MoonProject.Rover
 
         [Tooltip("The one eased move that pulls the camera back and out diagonally to the wide front three-quarter.")]
         [Range(1f, 4f)]
-        [SerializeField] private float _pullBackSeconds = 1.2f;
+        [SerializeField] private float _pullBackSeconds = 2f;
 
         [Tooltip("The ready performance seen wide: a double blink, the headlamps clicked off and on (the last dust " +
                  "settles off as they come back) and a glance at the lander's beacon.")]
@@ -57,7 +57,7 @@ namespace MoonProject.Rover
 
         [Tooltip("The one eased move round to the chase frame behind 07, after which control is the player's.")]
         [Range(1f, 4f)]
-        [SerializeField] private float _moveBehindSeconds = 1.6f;
+        [SerializeField] private float _moveBehindSeconds = 2.4f;
 
         [Header("The lines")]
         [Tooltip("The lines 07's self-test prints on its face, in step order, Carrier first and the Lamps check " +

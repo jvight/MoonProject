@@ -439,6 +439,7 @@ namespace MoonProject.Rover
             _isScanning = true;
             _scanProgress = Mathf.Max(_scanProgress, 0.08f);
             _scanHoldTimer = Mathf.Max(_scanHoldTimer, _tuning.ScanMinHoldSeconds);
+            _state.SetReadout(false);
             EvaluateImmediate();
         }
 

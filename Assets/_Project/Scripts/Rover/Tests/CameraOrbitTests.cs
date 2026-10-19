@@ -115,10 +115,10 @@ namespace MoonProject.Rover.Tests
             Assert.AreEqual(1f, _tuning.RecenterDriveSeconds);
             Assert.AreEqual(25f, _tuning.RecenterDeadzone);
             Assert.AreEqual(2f, _tuning.RecenterRampTime);
-            Assert.AreEqual(30f, _tuning.RecenterMaxRate);
+            Assert.AreEqual(20f, _tuning.RecenterMaxRate);
             Assert.AreEqual(20f, _tuning.RecenterEaseAngle);
-            Assert.AreEqual(10f, _tuning.RecenterPitchRate);
-            Assert.AreEqual(0.8f, _tuning.RecenterButtonSeconds);
+            Assert.AreEqual(7f, _tuning.RecenterPitchRate);
+            Assert.AreEqual(1.4f, _tuning.RecenterButtonSeconds);
             Assert.AreEqual(45f, _tuning.FollowMaxRate);
             Assert.AreEqual(3f, _tuning.SpeedFovBoost);
             Assert.LessOrEqual(_tuning.MaxBumpKick, 0.6f);
@@ -305,7 +305,7 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void Recenter_FromATunedFrontLimit_TakesAboutFiveSeconds()
+        public void Recenter_FromATunedFrontLimit_TakesAboutEightSeconds()
         {
             LimitTheFrontTo(135f);
             DriveForward(Cruise);
@@ -315,7 +315,7 @@ namespace MoonProject.Rover.Tests
             Run(_tuning.RecenterDelay - 0.5f, Vector2.zero);
             Run(5f, Vector2.zero);
             Assert.Greater(Mathf.Abs(_orbit.YawOffset), 5f, "Still on its way after 5 s.");
-            Run(3f, Vector2.zero);
+            Run(5f, Vector2.zero);
             Assert.AreEqual(0f, _orbit.YawOffset, 0.05f);
         }
 
