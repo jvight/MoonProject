@@ -879,19 +879,11 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 2970519f6fa27144c9abf4ed0099b8d1, type: 3}
     - {fileID: 8300000, guid: 4ee630d321f39ed41b5a90cb713035b9, type: 3}
     - {fileID: 8300000, guid: 2467175a1b3f9ef48bf5ed61ceaedaa1, type: 3}
-    - {fileID: 8300000, guid: 35e18eb12eb95244aab320446bcd2e56, type: 3}
-    - {fileID: 8300000, guid: 5b8f60a959621314fa2e194832e504e0, type: 3}
-    - {fileID: 8300000, guid: 675cdf5e315af7449ae1147b1390d232, type: 3}
-    - {fileID: 8300000, guid: 11681ae98cf18c045b2f446219ea0aef, type: 3}
     _variantLabels:
     - 01
     - 02
     - 03
     - 04
-    - 05
-    - 06
-    - 07
-    - 08
     _bus: 2
     _spatial: 1
     _loop: 0
