@@ -309,7 +309,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(armsOpenAt >= 0f && chocksDownAt >= 0f, "a full battery opens the lock");
             Assert.LessOrEqual(armsOpenAt, chocksDownAt, "the arms open first, the chocks last");
             Assert.AreEqual(1, _opened.Count, "the lock opens once");
-            Assert.IsFalse(_rover.IsDocked && _gameplay.PadLock.Raised, "and 07 is free");
+            yield return new WaitForSeconds(SettleSeconds);
+            Assert.IsFalse(_rover.IsDocked, "and 07 is free once the lock has let go");
         }
 
         [UnityTest]
@@ -340,6 +341,55 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.Less(ArmAngle(0), 1f, "the arms are open");
             Assert.Less(ChockAngle(0), 1f, "and the chocks are down: an early drive-off loses nothing");
             _pilot.Reverse = 0f;
+        }
+
+        [UnityTest]
+        [Timeout(200000)]
+        [PrebuildSetup(typeof(PlaythroughScene))]
+        [PostBuildCleanup(typeof(PlaythroughScene))]
+        public IEnumerator ArrivingFull_ThePadStillTakes07In_PlaysTheFullBeat_AndLetsGoOnce()
+        {
+            yield return Stage(0f);
+            FindLockParts();
+            BatteryModel battery = _gameplay.Battery.Model;
+            battery.Restore(new BatterySaveData { cells = battery.Cells, charge = battery.Cells });
+            float closedAt = -1f;
+            float fullAt = -1f;
+            float openedAt = -1f;
+            using (_context.Events.Subscribe<PadLockClosed>(_ => closedAt = closedAt < 0f ? Time.time : closedAt))
+            using (_context.Events.Subscribe<PadLockOpened>(_ => openedAt = openedAt < 0f ? Time.time : openedAt))
+            using (_context.Events.Subscribe<FeelBeat>(beat =>
+            {
+                if (beat.Kind == FeelKind.Dock && beat.Phase == FeelPhase.Reward && fullAt < 0f)
+                {
+                    fullAt = Time.time;
+                }
+            }))
+            {
+                // Set down on the plate with no drive to spend a cell: 07 comes to rest full.
+                _context.Get<IRoverPlacement>().PlaceAt(_centre,
+                    Quaternion.LookRotation(_dockHeading, Vector3.up));
+                float until = Time.time + DriveTimeout;
+                while (Time.time < until && openedAt < 0f)
+                {
+                    yield return null;
+                }
+
+                Assert.GreaterOrEqual(closedAt, 0f, "a full 07 resting on the pad is locked in");
+                Assert.GreaterOrEqual(fullAt, 0f, $"the full beat plays (closed {closedAt:F2}, opened {openedAt:F2}, " +
+                                                  $"charge {battery.Charge:F3}/{battery.Cells}, full {battery.CellsFull}, " +
+                                                  $"charging {battery.IsCharging})");
+                Assert.GreaterOrEqual(openedAt, 0f, "and the lock lets go");
+                Assert.Less(closedAt, fullAt, "the lock closes before the full beat");
+                Assert.Less(fullAt, openedAt, "and opens after it");
+                Assert.IsTrue(_gameplay.Opening.FirstCharge, "the old cells gave out: the first charge happened");
+                yield return new WaitForSeconds(EarlyOpenSeconds);
+                Assert.IsFalse(_rover.IsDocked, "07 is free once the lock has let go");
+                Assert.AreEqual(1, _closed.Count, "the lock closed once");
+                Assert.AreEqual(1, _opened.Count, "and opened once");
+                yield return new WaitForSeconds(SteerWatchSeconds);
+                Assert.AreEqual(1, _closed.Count, "07 resting there, full, is not locked in again");
+            }
         }
 
         [UnityTest]

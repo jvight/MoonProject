@@ -37,6 +37,8 @@ namespace MoonProject.Gameplay
         /// <summary>The middle segment of a wall's band, which lights first.</summary>
         public const int CentreSegment = SegmentsPerWall / 2;
 
+        private const float FullEpsilon = 1e-3f;
+
         private enum Stage
         {
             Open,
@@ -87,6 +89,9 @@ namespace MoonProject.Gameplay
         /// <summary>True while 07 is held between the risen walls, charging.</summary>
         public bool Locked => _stage == Stage.Locked;
 
+        /// <summary>The full sweep is running: 07 is still held while the strips turn to gold.</summary>
+        public bool Sweeping => _stage == Stage.Releasing && Sweep < 1f;
+
         /// <summary>How far the strips have swept from the charging tint to the full one, 0..1.</summary>
         public float Sweep { get; private set; }
 
@@ -121,7 +126,7 @@ namespace MoonProject.Gameplay
         public void Step(bool onPad, bool docked, float charge, int cells, Vector3 dock, float deltaTime)
         {
             _time += deltaTime;
-            bool full = charge >= cells;
+            bool full = IsFull(charge, cells);
             if (!onPad)
             {
                 _bootRest = false;
@@ -158,8 +163,10 @@ namespace MoonProject.Gameplay
 
         private void OnDocked(float charge, int cells, bool full, Vector3 dock)
         {
-            if (full)
+            if (full && _bootRest)
             {
+                // Woke on a full pad: nothing to lock for, nothing to show.
+                _bootRest = false;
                 return;
             }
 
@@ -227,7 +234,7 @@ namespace MoonProject.Gameplay
             SetAll(_heights, 1f);
             Enter(Stage.Locked);
             Publish(FeelPhase.Impact, dock, 1f - _arrival);
-            StepLocked(charge, cells, charge >= cells, dock);
+            StepLocked(charge, cells, IsFull(charge, cells), dock);
         }
 
         private void StepLocked(float charge, int cells, bool full, Vector3 dock)
@@ -240,7 +247,7 @@ namespace MoonProject.Gameplay
             }
 
             FillStrips(_litCells, cells);
-            if (!full)
+            if (!full || _time < _tuning.LockDwellSeconds)
             {
                 return;
             }
@@ -290,6 +297,12 @@ namespace MoonProject.Gameplay
             {
                 _strips[wall] = Mathf.Clamp01((lit - wall * perWall) / perWall);
             }
+        }
+
+        /// <summary>Every cell is charged, within the rounding of a charge that filled cell by cell.</summary>
+        private static bool IsFull(float charge, int cells)
+        {
+            return charge >= cells - FullEpsilon;
         }
 
         private void Enter(Stage stage)

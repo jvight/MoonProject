@@ -61,6 +61,16 @@ namespace MoonProject.Gameplay
                  "to drive off. Steering alone and a light touch let nothing go, and nothing does while 07 settles.")]
         [Range(0.1f, 0.9f)] [SerializeField] private float _dockDriveOff = 0.4f;
 
+        [Tooltip("Seconds the lock holds 07 at least before it lets go at full: a pad that takes 07 in already full still " +
+                 "closes its arms (the thunk) and plays its full beat before it opens.")]
+        [Range(0.2f, 3f)] [SerializeField] private float _lockDwellSeconds = 0.8f;
+
+        [Tooltip("Speed (m/s) at or under which 07 counts as resting on the pad: a full battery is then taken in too.")]
+        [Range(0.05f, 1f)] [SerializeField] private float _dockRestSpeed = 0.3f;
+
+        [Tooltip("Seconds 07 must rest on the plate before a pad takes it in with a battery already full.")]
+        [Range(0.1f, 2f)] [SerializeField] private float _dockRestSeconds = 0.5f;
+
         [Tooltip("Degrees 07's heading on a charging pad lies from the pad's forward axis: 180 noses 07 in toward the " +
                  "pad's cooling tower at its rear, so the tower never stands between the chase camera and 07.")]
         [Range(-180f, 180f)] [SerializeField] private float _dockHeadingOffset = 180f;
@@ -157,6 +167,9 @@ namespace MoonProject.Gameplay
         public float LampFlickerHertz => _lampFlickerHertz;
         public float LampFlickerSeconds => Mathf.Min(_lampFlickerSeconds, _lampRiseSeconds);
         public System.Collections.Generic.IReadOnlyList<string> LampOrder => _lampOrder;
+        public float LockDwellSeconds => _lockDwellSeconds;
+        public float DockRestSpeed => _dockRestSpeed;
+        public float DockRestSeconds => _dockRestSeconds;
         public float DockHeadingOffset => _dockHeadingOffset;
         public float DockSettledMetres => _dockSettledMetres;
         public float DockSettledDegrees => _dockSettledDegrees;

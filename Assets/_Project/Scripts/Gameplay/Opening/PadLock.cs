@@ -26,6 +26,9 @@ namespace MoonProject.Gameplay
 
         private const int ClampArmCount = 2;
 
+        /// <summary>Frames 07 has been settled on the pad before a lock that has not started counts as done.</summary>
+        private const int FullCycleGrace = 3;
+
         private static readonly string[] ClampArmNames = { "ClampArm_L", "ClampArm_R" };
 
         /// <summary>The chocks hinge about the pad's X axis; the front pair up one way, the rear pair the other.
@@ -56,6 +59,9 @@ namespace MoonProject.Gameplay
         private readonly Quaternion[] _armRest = new Quaternion[ClampArmCount];
         private bool _hasLockParts;
         private bool _woke;
+        private bool _fullDone;
+        private float _restTime;
+        private int _settledFrames;
         private float _arms01;
         private bool _armsClosed;
         private int _pad = -1;
@@ -114,11 +120,34 @@ namespace MoonProject.Gameplay
                 return;
             }
 
+            if (!OnPad)
+            {
+                _fullDone = false;
+            }
+
             bool charging = _battery.IsCharging && _battery.Charger == ChargerKind.Pad && pad == _pad;
+            // A battery already full when 07 rests on the pad is taken in all the same: the lock closes, the full beat
+            // plays and the lock lets go. While a lock cycle runs to its end, the pad also holds 07 once it is full.
+            _restTime = OnPad && _rover.Speed <= _tuning.DockRestSpeed ? _restTime + deltaTime : 0f;
+            bool full = _battery.CellsFull && pad == _pad && !_fullDone &&
+                        (_restTime >= _tuning.DockRestSeconds || _lock.Raised || _docked);
+            bool hold = charging || full;
             bool driveOff = _settled && Mathf.Abs(_rover.DriveInput.y) > _tuning.DockDriveOff;
-            StepDock(charging && !driveOff, pose);
-            _lock.Step(pad == _pad, charging && !driveOff && (_settled || _lock.Raised), _battery.Charge,
+            if (driveOff && _battery.CellsFull)
+            {
+                // 07 pushed off a full pad: it is not taken in again until it has left the plate.
+                _fullDone = true;
+            }
+
+            StepDock(hold && !driveOff, pose);
+            _lock.Step(pad == _pad, hold && !driveOff && (_settled || _lock.Raised), _battery.Charge,
                 _battery.Cells, centre, deltaTime);
+            _settledFrames = _docked && _settled ? _settledFrames + 1 : 0;
+            if (_battery.CellsFull && !charging && _settledFrames > FullCycleGrace && !_lock.Raised)
+            {
+                // The lock has run its cycle (or had nothing to lock): the pad lets 07 go.
+                _fullDone = true;
+            }
             Color tint = Color.Lerp(_tuning.StripCharging, _tuning.StripFull, _lock.Sweep);
             for (int i = 0; i < DockLock.Walls; i++)
             {
@@ -145,7 +174,7 @@ namespace MoonProject.Gameplay
                 return;
             }
 
-            bool wantClosed = _lock.Locked;
+            bool wantClosed = _lock.Locked || _lock.Sweeping;
             if (_lock.Silent && wantClosed)
             {
                 _arms01 = 1f;

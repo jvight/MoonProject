@@ -119,6 +119,9 @@ namespace MoonProject.Gameplay.Tests
         {
             DockLock dock = Locked(3f, 4);
             dock.Step(true, true, 4f, 4, Vector3.zero, Frame);
+            Assert.AreNotEqual(FeelPhase.Reward, _beats[_beats.Count - 1].Phase,
+                "a lock that has only just closed holds 07 a moment before the full beat");
+            Run(dock, true, 4f, 4, _tuning.LockDwellSeconds);
             Assert.AreEqual(FeelPhase.Reward, _beats[_beats.Count - 1].Phase);
             Run(dock, true, 4f, 4, _tuning.FullSweepSeconds);
             Assert.AreEqual(1f, dock.Sweep, 1e-4f, "cyan to warm gold");
