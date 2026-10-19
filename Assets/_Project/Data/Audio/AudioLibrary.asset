@@ -1397,6 +1397,20 @@ MonoBehaviour:
     _volumeMax: 0.5
     _pitchMin: 1
     _pitchMax: 1
+  - _id: rover_lights_switch
+    _clips:
+    - {fileID: 8300000, guid: c4b26c35308a74e49b03e19cab6714a5, type: 3}
+    - {fileID: 8300000, guid: 996307c8e74aa32438064fa10e35b318, type: 3}
+    _variantLabels:
+    - on
+    - off
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
   - _id: lamp_tick
     _clips:
     - {fileID: 8300000, guid: a015c003f6f6ef2488542b8264185fc6, type: 3}
