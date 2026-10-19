@@ -22044,6 +22044,7 @@ MonoBehaviour:
   _materialCatalog: {fileID: 11400000, guid: 463bed6d94f945b46bd98bd773a491c1, type: 2}
   _cargo: {fileID: 11400000, guid: de35fd932df151943936801c10100f59, type: 2}
   _cutterTuning: {fileID: 11400000, guid: f6afbe3ccb78e1745921d4125fc1a80b, type: 2}
+  _databankCatalogue: {fileID: 11400000, guid: 9dcd23cb5f40136429cfddc6f38a7acf, type: 2}
   _scanTuning: {fileID: 11400000, guid: 1f03747e56920a0468c2ac7e4a10e950, type: 2}
   _baseTuning: {fileID: 11400000, guid: e9f13f3291e86804498283ade8856668, type: 2}
   _openingTuning: {fileID: 11400000, guid: 4d3f666c6aa38f5438e6cd42d21bd950, type: 2}
