@@ -21,6 +21,10 @@ namespace MoonProject.World
         private const uint TrailSalt = 0x4F1B9D27u;
         private const uint AcceptSalt = 0xB0E5A9F1u;
         private const uint ShapeSalt = 0x7DFC2C4Du;
+        private const uint FieldSalt = 0x1B873593u;
+
+        // The boulder field mask eases in over this much of the field noise's range around its threshold.
+        private const float FieldEdge = 0.12f;
 
         // Hash inputs quantise site positions to centimetres: stable per site, independent of sampling order.
         private const float HashQuantum = 100f;
@@ -30,6 +34,8 @@ namespace MoonProject.World
         private readonly uint _seed;
         private readonly GradientNoise _clusterNoise;
         private readonly GradientNoise _trailNoise;
+        private readonly GradientNoise _fieldNoise;
+        private readonly float _fieldThreshold;
         private readonly Vector2[] _laneEnds;
 
         // Spaces kept clear of rocks, the anchors' and the Scout's crater (no flat anchor): x, z of the centre and its
@@ -75,6 +81,10 @@ namespace MoonProject.World
             _seed = (uint)surface.Seed;
             _clusterNoise = new GradientNoise(Hashing.Mix(_seed ^ ClusterSalt));
             _trailNoise = new GradientNoise(Hashing.Mix(_seed ^ TrailSalt));
+            _fieldNoise = new GradientNoise(Hashing.Mix(_seed ^ FieldSalt));
+
+            // Fractal noise sits near 0 with a spread of about +-0.5: a threshold this far up leaves the coverage asked.
+            _fieldThreshold = 0.5f - settings.BoulderFieldCoverage;
             _pebbleMaxSlopeCos = Mathf.Cos(settings.PebbleMaxSlope * Mathf.Deg2Rad);
             _boulderMaxSlopeCos = Mathf.Cos(settings.BoulderMaxSlope * Mathf.Deg2Rad);
 
@@ -176,11 +186,15 @@ namespace MoonProject.World
             float cluster = Cluster(x, z);
             float trail = BoulderTrail(x, z, sample);
 
-            // Sparse on open ground (only inside tight cluster peaks); dense on crater rims, boulder trails, and talus pockets
-            float openSparse = _settings.BoulderDensity * SmoothMath.Smootherstep(0.83f, 0.96f, cluster);
-            float rimCluster = _settings.CraterRimBoulders * sample.CraterRim
+            // Boulders gather in a few broad fields and leave long empty stretches of plain between them (owner,
+            // 2026-10-19); inside a field they stay sparse on open ground (tight cluster peaks only) and dense on crater
+            // rims and boulder trails. The talus at the rim's foot is its own apron.
+            float field = BoulderField(x, z);
+            float openSparse = _settings.BoulderDensity * _settings.BoulderFieldDensity * field
+                * SmoothMath.Smootherstep(0.83f, 0.96f, cluster);
+            float rimCluster = _settings.CraterRimBoulders * sample.CraterRim * field
                 * SmoothMath.Smootherstep(0.46f, 0.78f, cluster);
-            float trailCluster = 0.52f * trail * SmoothMath.Smootherstep(0.42f, 0.76f, cluster);
+            float trailCluster = 0.52f * trail * field * SmoothMath.Smootherstep(0.42f, 0.76f, cluster);
             float talusCluster = _settings.TalusBoulders * talus * SmoothMath.Smootherstep(0.62f, 0.88f, cluster);
 
             float chance = openSparse + rimCluster + trailCluster + talusCluster;
@@ -324,6 +338,14 @@ namespace MoonProject.World
                     scaleAspect,
                     burialDepth));
             }
+        }
+
+        /// <summary>How deep inside a boulder field (x, z) lies: 0 on the bare plain between, 1 within.</summary>
+        private float BoulderField(float x, float z)
+        {
+            float wavelength = _settings.BoulderFieldWavelength;
+            float noise = _fieldNoise.Fractal(x / wavelength, z / wavelength, 2, 2f, 0.5f);
+            return SmoothMath.Smootherstep(_fieldThreshold - FieldEdge, _fieldThreshold + FieldEdge, noise);
         }
 
         private float Cluster(float x, float z)

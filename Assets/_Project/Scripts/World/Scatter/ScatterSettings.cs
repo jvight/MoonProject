@@ -95,6 +95,19 @@ namespace MoonProject.World
         [Range(0f, 1f)]
         [SerializeField] private float _boulderDensity = 0.025f;
 
+        [Tooltip("Size of the boulder fields and the long empty stretches between them, metres: boulders gather in a " +
+            "few places and leave open plain elsewhere.")]
+        [Range(80f, 800f)]
+        [SerializeField] private float _boulderFieldWavelength = 320f;
+
+        [Tooltip("Share of the plain the boulder fields cover (0..1): the rest is left bare of boulders.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _boulderFieldCoverage = 0.35f;
+
+        [Tooltip("How much denser boulders lie inside a field than the open floor's base chance (times).")]
+        [Range(1f, 10f)]
+        [SerializeField] private float _boulderFieldDensity = 3f;
+
         [Tooltip("Extra boulder chance on raised crater rims (ejecta).")]
         [Range(0f, 1f)]
         [SerializeField] private float _craterRimBoulders = 0.82f;
@@ -144,6 +157,9 @@ namespace MoonProject.World
         public float BoulderSpacing => _boulderSpacing;
         public Vector2 BoulderSize => _boulderSize;
         public float BoulderDensity => _boulderDensity;
+        public float BoulderFieldWavelength => _boulderFieldWavelength;
+        public float BoulderFieldCoverage => _boulderFieldCoverage;
+        public float BoulderFieldDensity => _boulderFieldDensity;
         public float CraterRimBoulders => _craterRimBoulders;
         public float TalusBoulders => _talusBoulders;
         public float TalusOffset => _talusOffset;
