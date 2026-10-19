@@ -3503,6 +3503,35 @@
       "pick": "cutter_sputter"
     },
     {
+      "id": "cutter_refuse",
+      "category": "tick_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/cutter_refuse.wav"
+      ],
+      "variantLabels": [
+        "cutter_refuse"
+      ],
+      "sha256": [
+        "62b17e31dccfa4c689af1848f0c2c9e15b0c7462bba9376aa2e18b55e4b76e4d"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -26.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "A cut the cutter refused (CutterRefused): a soft, low fault tick, the turret's latch thudding shut with a breath of dry buzz. Skipped in a CutterSputtered frame.",
+      "source": "sampled",
+      "pick": "cutter_refuse"
+    },
+    {
       "id": "lamp_tick",
       "category": "tick_3d",
       "milestone": "M3",

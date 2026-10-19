@@ -3,7 +3,8 @@
 hum on D3 as the lamps ease up. Off: a softer, lower tick and nothing after. Close and quiet; no tone of its own.
 
 The cutter's sputter (CutterSputtered, the first cut tried without an igniter): a spark gap that will not catch, two
-dry clicks of the contact and a short fizzle dying away. Dry and physical, no tone."""
+dry clicks of the contact and a short fizzle dying away. Dry and physical, no tone. Every other refused cut
+(CutterRefused): a soft, low fault tick, the turret's latch held shut with a breath of dry buzz."""
 import numpy as np
 
 from synth import filters
@@ -51,8 +52,22 @@ def cutter_sputter(lib, gen, _variant: int) -> np.ndarray:
     return out
 
 
-# Cue id -> (recipe, variants). Every variant ships: on and off, and the one sputter.
+def cutter_refuse(lib, gen, _variant: int) -> np.ndarray:
+    """A cut the cutter refused: a soft, low fault tick, the turret's latch thudding shut slowed and muffled, with a
+    breath of dry contactor buzz under it."""
+    n = samples(0.35)
+    out = np.zeros(n)
+    dsp.place(out, parts.clip(lib, "latch_thunk", 1100.0, 60.0, 0.7), 0.0, 0.6)
+    buzz_n = samples(0.12)
+    buzz = dsp.varispeed(lib("arc_buzz"), 0.5, buzz_n, float(gen.uniform(0.0, 4.0)))
+    buzz = dsp.peak_normalize(filters.butter(filters.highpass(buzz, 150.0), "lowpass", 900.0, order=2))
+    dsp.place(out, buzz * dsp.shape(buzz_n, [(0.0, 0.0), (0.01, 1.0), (0.12, 0.0)]), 0.01, 0.2)
+    return out
+
+
+# Cue id -> (recipe, variants). Every variant ships: on and off, the one sputter and the refusal tick.
 SOUNDS = {
     "rover_lights_switch": (lights_switch, len(LABELS)),
     "cutter_sputter": (cutter_sputter, 1),
+    "cutter_refuse": (cutter_refuse, 1),
 }
