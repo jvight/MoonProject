@@ -4,8 +4,8 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// The dock lock on a charging pad 07 built (docs/design/feel-pass.md §7.1, opening-v2 §5): how its walls rise,
-    /// clamp and lower, and how its strips fill with 07's cells. Created by the Gameplay/Tuning builder; runtime code
-    /// only reads it.
+    /// clamp and lower, and how its strips fill with 07's cells; and how the base's lamps come on at dusk and go off
+    /// at dawn. Created by the Gameplay/Tuning builder; runtime code only reads it.
     /// </summary>
     public sealed class BaseTuning : ScriptableObject
     {
@@ -65,6 +65,46 @@ namespace MoonProject.Gameplay
                  "pad's cooling tower at its rear, so the tower never stands between the chase camera and 07.")]
         [Range(-180f, 180f)] [SerializeField] private float _dockHeadingOffset = 180f;
 
+        [Header("Base lamps")]
+        [Tooltip("Degrees above last light the Sun may stand and the base's lamps still begin to come on: dusk falls " +
+                 "over the base before the Sun sets.")]
+        [Range(0f, 20f)] [SerializeField] private float _lampDuskAboveLastLightDegrees = 4f;
+
+        [Tooltip("Degrees above the lamps' dusk elevation the Sun must climb before they go off again, so a Sun " +
+                 "hovering at the threshold does not flicker the lamps.")]
+        [Range(0.2f, 10f)] [SerializeField] private float _lampDawnMarginDegrees = 1.5f;
+
+        [Tooltip("Seconds between one lamp starting to come on and the next, in the base's order.")]
+        [Range(0f, 5f)] [SerializeField] private float _lampStaggerSeconds = 0.9f;
+
+        [Tooltip("Seconds a lamp takes to ease up to full, like an old lamp warming.")]
+        [Range(0.2f, 5f)] [SerializeField] private float _lampRiseSeconds = 1.5f;
+
+        [Tooltip("Seconds the lamps take to ease off at dawn.")]
+        [Range(0.2f, 8f)] [SerializeField] private float _lampFallSeconds = 2.5f;
+
+        [Tooltip("How deep (0..1 of the lamp's glow) the warm flicker as a lamp catches dips it.")]
+        [Range(0f, 1f)] [SerializeField] private float _lampFlickerDepth = 0.4f;
+
+        [Tooltip("Flickers a second while a lamp catches.")]
+        [Range(1f, 20f)] [SerializeField] private float _lampFlickerHertz = 6f;
+
+        [Tooltip("Seconds from the start of a lamp's rise that the flicker lasts, dying away (within the rise).")]
+        [Range(0.1f, 2f)] [SerializeField] private float _lampFlickerSeconds = 0.7f;
+
+        [Tooltip("Structure ids in the order the lamps come on at dusk; any other structure lights after them.")]
+        [SerializeField] private string[] _lampOrder =
+            { "charging_pad", "solar_array", "battery_bank", "antenna_mast" };
+
+        public float LampDuskAboveLastLightDegrees => _lampDuskAboveLastLightDegrees;
+        public float LampDawnMarginDegrees => _lampDawnMarginDegrees;
+        public float LampStaggerSeconds => _lampStaggerSeconds;
+        public float LampRiseSeconds => _lampRiseSeconds;
+        public float LampFallSeconds => _lampFallSeconds;
+        public float LampFlickerDepth => _lampFlickerDepth;
+        public float LampFlickerHertz => _lampFlickerHertz;
+        public float LampFlickerSeconds => Mathf.Min(_lampFlickerSeconds, _lampRiseSeconds);
+        public System.Collections.Generic.IReadOnlyList<string> LampOrder => _lampOrder;
         public float DockHeadingOffset => _dockHeadingOffset;
         public float DockSettledMetres => _dockSettledMetres;
         public float DockSettledDegrees => _dockSettledDegrees;

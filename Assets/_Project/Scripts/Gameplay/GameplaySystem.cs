@@ -121,6 +121,9 @@ namespace MoonProject.Gameplay
         /// <summary>The dock lock on the built pad 07 charges on (opening-v2 §5).</summary>
         public PadLock PadLock { get; private set; }
 
+        /// <summary>The base's lamps, which follow the Sun (null while the opening could not be built).</summary>
+        public BaseLamps BaseLamps { get; private set; }
+
         public SalvageField Salvage => _salvage;
 
         /// <summary>07's battery: drains, chargers, the crawl and the warnings (docs/features/M3-20).</summary>
@@ -320,6 +323,7 @@ namespace MoonProject.Gameplay
                 _battery.ConnectPads(opening);
                 PadLock = new PadLock(context.Events, _baseTuning, _building, _battery.Model, services.Rover,
                     _openingTuning.PadChargeRadius);
+                BaseLamps = new BaseLamps(context.Events, _baseTuning, _building, sunlight);
                 return opening;
             }
             catch (InvalidOperationException exception)
@@ -487,6 +491,7 @@ namespace MoonProject.Gameplay
             Scans.Step(now, deltaTime);
             Opening.Step(deltaTime);
             PadLock.Step(deltaTime);
+            BaseLamps.Step(deltaTime);
             ApronGlow.Step(_building.State != BuildModeState.Closed, deltaTime);
             Recovery.Refresh();
         }
@@ -551,6 +556,7 @@ namespace MoonProject.Gameplay
                 token.Dispose();
             }
 
+            BaseLamps?.Dispose();
             _saveTokens.Clear();
             foreach (IDisposable token in _flowTokens)
             {
