@@ -23,6 +23,8 @@ namespace MoonProject.Autoplay
         /// <summary>Seconds a milestone may take after its build: the bank, for one, has to charge first.</summary>
         private const float MilestoneSeconds = 120f;
         private const float LineSeconds = 15f;
+        private const string LowBatteryLanderKey = "battery.low.lander";
+        private const string LowBatteryPadKey = "battery.low.pad";
 
         /// <summary>Seconds a world cue may take to be lit and on screen.</summary>
         private const float CueSeconds = 20f;
@@ -118,14 +120,16 @@ namespace MoonProject.Autoplay
         /// <summary>
         /// The opening must stand at step <paramref name="index"/> (<see cref="OpeningSteps"/>), read from the flow's
         /// own position, not from any text. While the lines are expected, the step's line (<paramref name="key"/>) must
-        /// also be the one the game is on and read on screen, as <see cref="ExpectLine"/> checks.
+        /// also be the one the game is on and, with <paramref name="onScreen"/>, read on screen, as
+        /// <see cref="ExpectLine"/> checks (the opening beats before the lander never waited on the screen).
         /// </summary>
-        public IEnumerator ExpectStep(int index, string key, string why, float seconds = FollowSeconds)
+        public IEnumerator ExpectStep(int index, string key, string why, float seconds = FollowSeconds,
+            bool onScreen = true)
         {
             yield return _bot.Until(() => G.Opening.Flow.CurrentIndex == index, seconds,
                 "the opening to stand at step " + index + " (" + why + ")",
                 () => "It stands at step " + G.Opening.Flow.CurrentIndex + ".");
-            if (!_bot.Failed && LinesExpected && key.Length > 0)
+            if (!_bot.Failed && LinesExpected && onScreen && key.Length > 0)
             {
                 yield return ExpectLine(key, why);
             }
@@ -156,8 +160,17 @@ namespace MoonProject.Autoplay
                 yield break;
             }
 
-            string expected = _bot.World.Context.Get<ILocalization>().Get(key);
-            yield return _bot.Until(() => _bot.World.Ui.ObjectiveLine() == expected, LineSeconds,
+            ILocalization words = _bot.World.Context.Get<ILocalization>();
+            string expected = words.Get(key);
+            string lowLander = words.Get(LowBatteryLanderKey);
+            string lowPad = words.Get(LowBatteryPadKey);
+
+            // The low-battery hint takes the objective line's own slot for a while, by the slot's priority.
+            yield return _bot.Until(() =>
+                {
+                    string line = _bot.World.Ui.ObjectiveLine();
+                    return line == expected || line == lowLander || line == lowPad;
+                }, LineSeconds,
                 "the objective line to read '" + expected + "' on screen (" + why + ")",
                 () => "On screen: line '" + _bot.World.Ui.ObjectiveLine() + "', chip '" + _bot.World.Ui.Chip() + "'.");
         }
@@ -664,8 +677,13 @@ namespace MoonProject.Autoplay
                     }
                 }
 
+                // The ghost follows the camera's aim: a player looks at the ground where the structure should stand.
+                var terrain = _bot.World.Context.Get<ITerrainQuery>();
+                Vector3 ground = new Vector3(at.x, terrain.SampleHeight(at.x, at.z), at.z);
+                yield return _bot.LookAt(ground, "the build spot on the ground");
                 for (int frame = 0; frame < SettledFrames; frame++)
                 {
+                    _bot.KeepLookingAt(ground);
                     yield return null;
                 }
 

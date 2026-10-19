@@ -43,6 +43,9 @@ namespace MoonProject.Autoplay
         /// <summary>Degrees under last light that still count as last light (the Sun settles onto it).</summary>
         private const float LastLightToleranceDegrees = 0.5f;
 
+        /// <summary>The lander cargo set's fragment ids start with this; a story scan standing nearby is not part of it.</summary>
+        private static readonly string CargoPrefix = "ruin." + ScanTuning.LanderCargoId + ".";
+
         private readonly AutoplayBot _bot;
         private readonly string _untilBeat;
         private bool _awoke;
@@ -128,7 +131,8 @@ namespace MoonProject.Autoplay
         {
             Begin("B2", "Drive to the lander");
             yield return _bot.Until(() => _bot.World.Refresh(), LineTimeoutSeconds, "the game to be up");
-            yield return _base.ExpectStep(OpeningSteps.DriveToLander, OpeningKeys.DriveToLander, "B2", LineTimeoutSeconds);
+            yield return _base.ExpectStep(OpeningSteps.DriveToLander, OpeningKeys.DriveToLander, "B2", LineTimeoutSeconds,
+                onScreen: false);
             if (!_bot.Failed)
             {
                 WorldAnchor lander = Lander();
@@ -144,7 +148,7 @@ namespace MoonProject.Autoplay
         private IEnumerator Scan()
         {
             Begin("B3", "Scan the two parts in the open crate by the lander");
-            yield return _base.ExpectStep(OpeningSteps.ScanLander, OpeningKeys.ScanLander, "B3");
+            yield return _base.ExpectStep(OpeningSteps.ScanLander, OpeningKeys.ScanLander, "B3", onScreen: false);
             var chips = new List<string>();
             ScanField scans = _bot.World.Gameplay.Scans;
             ScanFragment next;
@@ -362,7 +366,8 @@ namespace MoonProject.Autoplay
             ScanFragment best = null;
             foreach (ScanFragment fragment in scans.Fragments)
             {
-                if (!fragment.Scanned && DriveSteering.FlatDistance(fragment.Point, lander) <= LanderCargoRadius &&
+                if (!fragment.Scanned && fragment.FragmentId.StartsWith(CargoPrefix, StringComparison.Ordinal) &&
+                    DriveSteering.FlatDistance(fragment.Point, lander) <= LanderCargoRadius &&
                     (best == null || fragment.Index < best.Index))
                 {
                     best = fragment;

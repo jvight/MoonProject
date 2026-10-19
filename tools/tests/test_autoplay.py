@@ -33,6 +33,14 @@ class LaunchArgumentTests(unittest.TestCase):
         pairs = dict(zip(hidden[::2], hidden[1::2]))
         self.assertEqual(pairs["-autoplay-lines"], "0")
 
+    def test_strict_guidance_is_sent_only_when_asked_for(self):
+        plain = autoplay.launch_arguments("autoplay-slot", Path("out"), Path("out/player.log"), "opening", "", 600, 20)
+        self.assertNotIn("-autoplay-strict-guidance", plain)
+        strict = autoplay.launch_arguments("autoplay-slot", Path("out"), Path("out/player.log"), "opening", "", 600, 20,
+                                           strict_guidance=True)
+        pairs = dict(zip(strict[::2], strict[1::2]))
+        self.assertEqual(pairs["-autoplay-strict-guidance"], "1")
+
 
 class VerdictTests(unittest.TestCase):
     def setUp(self):

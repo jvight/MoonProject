@@ -5,7 +5,7 @@ namespace MoonProject.Autoplay
 {
     /// <summary>
     /// What the command line asks of the bot: <c>-autoplay opening -autoplay-out &lt;dir&gt;</c>, with optional
-    /// <c>-autoplay-shot-seconds</c>, <c>-autoplay-timeout</c> and <c>-autoplay-until</c> (the last beat to play) and <c>-autoplay-lines 0</c> (the game shows no objective line
+    /// <c>-autoplay-shot-seconds</c>, <c>-autoplay-timeout</c> and <c>-autoplay-until</c> (the last beat to play) and <c>-autoplay-strict-guidance 1</c> (two guidance elements together fail the run) and <c>-autoplay-lines 0</c> (the game shows no objective line
     /// unless a stall reminder fired, which fails the run).
     /// </summary>
     public sealed class AutoplayOptions
@@ -16,12 +16,13 @@ namespace MoonProject.Autoplay
         public const string TimeoutFlag = "-autoplay-timeout";
         public const string UntilFlag = "-autoplay-until";
         public const string LinesFlag = "-autoplay-lines";
+        public const string StrictGuidanceFlag = "-autoplay-strict-guidance";
 
         public const float DefaultShotSeconds = 20f;
         public const float DefaultTimeoutSeconds = 900f;
 
         private AutoplayOptions(string scenario, string outDirectory, float shotSeconds, float timeoutSeconds,
-            string untilBeat, bool linesExpected)
+            string untilBeat, bool linesExpected, bool strictGuidance)
         {
             Scenario = scenario;
             OutDirectory = outDirectory;
@@ -29,6 +30,7 @@ namespace MoonProject.Autoplay
             TimeoutSeconds = timeoutSeconds;
             UntilBeat = untilBeat;
             LinesExpected = linesExpected;
+            StrictGuidance = strictGuidance;
         }
 
         /// <summary>The scenario to play; today only "opening".</summary>
@@ -44,6 +46,12 @@ namespace MoonProject.Autoplay
 
         /// <summary>Id of the last beat to play ("B3"), or empty to play the scenario to its end.</summary>
         public string UntilBeat { get; }
+
+        /// <summary>
+        /// Two guidance elements on screen together fail the run. Off, the run only warns (the opening shows an
+        /// objective line, a floating chip and a bottom chip together until slice 1.5 removes the lines).
+        /// </summary>
+        public bool StrictGuidance { get; }
 
         /// <summary>The objective lines are part of the opening: the bot checks them on screen. Off, any line is a fallback.</summary>
         public bool LinesExpected { get; }
@@ -82,7 +90,7 @@ namespace MoonProject.Autoplay
             }
 
             options = new AutoplayOptions(scenario, outDirectory, shotSeconds, timeout,
-                Value(args, UntilFlag) ?? string.Empty, Value(args, LinesFlag) != "0");
+                Value(args, UntilFlag) ?? string.Empty, Value(args, LinesFlag) != "0", Value(args, StrictGuidanceFlag) == "1");
             return true;
         }
 

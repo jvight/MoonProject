@@ -64,13 +64,17 @@ namespace MoonProject.Autoplay.Tests
             var line = new VisualElement { name = "next-line" };
             line.Add(new Label("Build a charging pad beside the lander.") { name = "next-line-text" });
             var chip = new VisualElement { name = "prompt" };
+            chip.Add(new Label("E") { name = "prompt-glyph-label" });
+            chip.Add(new Label("Scan") { name = "prompt-word" });
             root.Add(line);
             root.Add(chip);
             var probe = new UiProbe(root, null);
             var shown = new List<string>();
 
             probe.GuidanceShown(shown);
-            Assert.AreEqual(new[] { "next-line", "prompt" }, shown.ToArray(), "a seeded frame with two elements");
+            Assert.AreEqual(2, shown.Count, "a seeded frame with two elements");
+            StringAssert.Contains("Build a charging pad", shown[0]);
+            StringAssert.Contains("E Scan", shown[1]);
 
             var counter = new GuidanceCounter(0.5f);
             for (int i = 0; i < 10; i++)
@@ -83,7 +87,24 @@ namespace MoonProject.Autoplay.Tests
 
             root.Remove(chip);
             probe.GuidanceShown(shown);
-            Assert.AreEqual(new[] { "next-line" }, shown.ToArray(), "with one element the frame is clean");
+            Assert.AreEqual(1, shown.Count, "with one element the frame is clean");
+        }
+
+        [Test]
+        public void ThePromptAndLookHintShells_AreOneChipToThePlayer()
+        {
+            var root = new VisualElement();
+            var prompt = new VisualElement { name = "prompt" };
+            prompt.Add(new Label("E") { name = "prompt-glyph-label" });
+            prompt.Add(new Label("Scan") { name = "prompt-word" });
+            var hint = new VisualElement { name = "look-hint" };
+            hint.Add(new Label("E") { name = "look-hint-glyph-label" });
+            hint.Add(new Label("Scan") { name = "look-hint-word" });
+            root.Add(prompt);
+            root.Add(hint);
+            var shown = new List<string>();
+            new UiProbe(root, null).GuidanceShown(shown);
+            Assert.AreEqual(1, shown.Count);
         }
 
         [Test]
@@ -126,6 +147,10 @@ namespace MoonProject.Autoplay.Tests
             AutoplayOptions.TryParse(new[] { "-autoplay", "opening", "-autoplay-out", "o", AutoplayOptions.LinesFlag, "0" },
                 out AutoplayOptions off, out _);
             Assert.IsFalse(off.LinesExpected);
+            Assert.IsFalse(on.StrictGuidance, "two elements only warn until the lines go");
+            AutoplayOptions.TryParse(new[] { "-autoplay", "opening", "-autoplay-out", "o",
+                AutoplayOptions.StrictGuidanceFlag, "1" }, out AutoplayOptions strict, out _);
+            Assert.IsTrue(strict.StrictGuidance);
         }
     }
 }

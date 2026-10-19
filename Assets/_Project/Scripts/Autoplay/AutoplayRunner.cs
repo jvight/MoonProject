@@ -27,6 +27,7 @@ namespace MoonProject.Autoplay
         private readonly BeatLog _beats = new BeatLog();
         private readonly GuidanceCounter _guidance = new GuidanceCounter(GuidanceGraceSeconds);
         private readonly List<string> _guidanceShown = new List<string>();
+        private bool _guidanceReported;
         private readonly FrameTimeLog _frames = new FrameTimeLog();
         private readonly List<string> _screenshots = new List<string>();
         private readonly List<string> _errors = new List<string>();
@@ -108,9 +109,17 @@ namespace MoonProject.Autoplay
 
             _world.Ui.GuidanceShown(_guidanceShown);
             _guidance.Step(Time.unscaledDeltaTime, _guidanceShown);
-            if (_guidance.Failed)
+            if (_guidance.Failed && !_guidanceReported)
             {
-                _bot.Fail(_guidance.Message + " " + _bot.Where());
+                _guidanceReported = true;
+                if (_options.StrictGuidance)
+                {
+                    _bot.Fail(_guidance.Message + " " + _bot.Where());
+                }
+                else
+                {
+                    _bot.Warn("guidance: " + _guidance.Message + " " + _bot.Where());
+                }
             }
             else if (!_options.LinesExpected && _world.Ui.ObjectiveLine().Length > 0)
             {

@@ -14,7 +14,10 @@ namespace MoonProject.Autoplay
         /// <summary>An element this opaque counts as on screen for the one-guidance-element rule (not a fade's tail).</summary>
         private const float GuidanceOpacity = 0.5f;
 
-        /// <summary>The guidance elements: the objective line, the chips, the call display and the controls card.</summary>
+        /// <summary>
+        /// The guidance elements: the objective line, the chips (the prompt and the look-hint shell are one chip to the
+        /// player), the unlock card, the call display and the controls card.
+        /// </summary>
         private static readonly string[] GuidanceNames =
         {
             "next-line", "prompt", "look-hint", "controls-card", "unlock-card", "call-display",
@@ -82,12 +85,39 @@ namespace MoonProject.Autoplay
                     continue;
                 }
 
-                if (GuidanceNames[i] == "next-line" && ObjectiveLine().Length == 0)
+                string words = WordsOf(GuidanceNames[i]);
+                if (words == null)
                 {
-                    continue;
+                    into.Add(GuidanceNames[i]);
                 }
+                else if (words.Length > 0)
+                {
+                    // The two chip shells share one anchor and carry the same words: one chip to the player.
+                    bool secondChip = GuidanceNames[i] == "look-hint" && into.Exists(name => name.StartsWith("prompt"));
+                    if (!secondChip)
+                    {
+                        into.Add(GuidanceNames[i] + " '" + words + "'");
+                    }
+                }
+            }
+        }
 
-                into.Add(GuidanceNames[i]);
+        /// <summary>
+        /// What an element says (its words), empty when it says nothing, null for an element judged by its look alone.
+        /// A line or chip with no words is not on screen however opaque its shell.
+        /// </summary>
+        private string WordsOf(string element)
+        {
+            switch (element)
+            {
+                case "next-line":
+                    return RawTextOf("next-line-text");
+                case "prompt":
+                    return (RawTextOf("prompt-glyph-label") + " " + RawTextOf("prompt-word")).Trim();
+                case "look-hint":
+                    return (RawTextOf("look-hint-glyph-label") + " " + RawTextOf("look-hint-word")).Trim();
+                default:
+                    return null;
             }
         }
 
