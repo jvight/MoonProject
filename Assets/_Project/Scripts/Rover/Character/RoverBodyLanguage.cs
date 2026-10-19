@@ -455,6 +455,7 @@ namespace MoonProject.Rover
                 events.Subscribe<FriendSpotted>(spotted => Glance(spotted.Position)),
                 events.Subscribe<CargoChanged>(OnCargoChanged),
                 events.Subscribe<SonarPinged>(OnListened),
+                events.Subscribe<CallReplyFailed>(_ => _call.ReplyFailed()),
             };
             _initialized = true;
             _faceDirector.Initialize(context);
@@ -1083,7 +1084,7 @@ namespace MoonProject.Rover
             float bow = _tired * battery.LowHeadBow + _crawl * battery.CrawlHeadBow;
             CallListenSettings call = _tuning.CallListen;
             float rawPitch = _pitch.Value + (_mood.HeadPitchOffset + breathing - bow - _headNudge.Pitch
-                - _chirpPose.HeadDip + _call.Reach * call.ReachHeadPitch) * idleScale;
+                - _chirpPose.HeadDip + _call.Reach * call.ReachHeadPitch - _call.Dejection * call.DejectedHeadPitch) * idleScale;
             float targetPitch = opening >= inspect ? _openingPitchDeg : _screenInspectPitchDeg;
             float targetYaw = opening >= inspect ? _openingYawDeg : _screenInspectYawDeg;
             float scanSweepWeight = (1f - steady) * _scanAimBlend;
@@ -1095,7 +1096,7 @@ namespace MoonProject.Rover
             {
                 float neckDroop = (_tuning.NeckSleepDroop * _mood.Wake.Sleep + _tuning.NeckTiredDroop * _tired
                     + _tuning.NeckCrawlExtend * _crawl + _tuning.NeckCargoExtend * _cargoSag
-                    - _tuning.NeckAlertLift * Mathf.Clamp01(_mood.Perk) - _call.Reach * call.ReachNeckLift) * idleScale;
+                    - _tuning.NeckAlertLift * Mathf.Clamp01(_mood.Perk) - _call.Reach * call.ReachNeckLift + _call.Dejection * call.DejectedNeckDroop) * idleScale;
                 _neckLift.localRotation = _neckLiftRest * Quaternion.AngleAxis(neckDroop, Vector3.right);
             }
 

@@ -136,6 +136,9 @@ namespace MoonProject.Gameplay
 
         public MastRaise MastRaise { get; private set; }
 
+        /// <summary>How the mast raises and the reply times (tests).</summary>
+        public CallReplySettings MastRaiseSettings => _openingTuning.Reply;
+
         /// <summary>The dock lock on the built pad 07 charges on (opening-v2 §5).</summary>
         public PadLock PadLock { get; private set; }
 

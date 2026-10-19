@@ -23,6 +23,8 @@ namespace MoonProject.Rover
         private float _patternAt = float.PositiveInfinity;
         private float _idleSeconds;
         private float _reachAt = float.PositiveInfinity;
+        private float _dejectedFor = float.PositiveInfinity;
+        private float _darkFor = float.PositiveInfinity;
         private int _slot = -1;
         private float _slotLeft;
         private bool _slotLit;
@@ -40,6 +42,17 @@ namespace MoonProject.Rover
 
         /// <summary>The reach toward the call now, 0 (none) to 1 (the top of a reach).</summary>
         public float Reach { get; private set; }
+
+        /// <summary>How far 07 hangs its head after its reply failed, 0 (not at all) to 1 (fully).</summary>
+        public float Dejection { get; private set; }
+
+        /// <summary>07 tried to answer the call and could not: its head lowers and the lamp goes dark for a while.</summary>
+        public void ReplyFailed()
+        {
+            _dejectedFor = 0f;
+            _darkFor = 0f;
+            _reachAt = float.PositiveInfinity;
+        }
 
         /// <summary>The pattern is being keyed (a key is down or the pattern is between keys).</summary>
         public bool KeyingPattern => _patternAt >= 0f && _patternAt < PatternSeconds && _state == CallState.Locked;
@@ -70,6 +83,10 @@ namespace MoonProject.Rover
 
             HeadWeight = Smoothing.Damp(HeadWeight, listening ? 1f : 0f, _settings.HeadHalfLife, deltaTime);
             _idleSeconds = listening ? _idleSeconds + deltaTime : 0f;
+            _dejectedFor += deltaTime;
+            _darkFor += deltaTime;
+            Dejection = Smoothing.Damp(Dejection, _dejectedFor < _settings.DejectedHoldSeconds ? 1f : 0f,
+                _settings.DejectedHalfLife, deltaTime);
             StepReach(deltaTime, listening);
             StepLamp(deltaTime, listening);
         }
@@ -146,6 +163,15 @@ namespace MoonProject.Rover
             else if (_state == CallState.Locked)
             {
                 glow = StepPattern(deltaTime) && listening ? _settings.KeyGlow : 0f;
+            }
+            else if (_state == CallState.Clear)
+            {
+                glow = _settings.ClearGlow;
+            }
+
+            if (_darkFor < _settings.LampDarkSeconds)
+            {
+                glow = 0f;
             }
 
             LampGlow = Smoothing.Damp(LampGlow, glow, _settings.LampHalfLife, deltaTime);

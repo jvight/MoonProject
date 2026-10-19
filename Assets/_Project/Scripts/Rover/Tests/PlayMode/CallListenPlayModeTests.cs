@@ -116,6 +116,29 @@ namespace MoonProject.Rover.PlayModeTests
             _scene.Context.Get<IRoverRig>().SetHoldStill(_holdOwner, false);
         }
 
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator AFailedReply_LowersTheHead_AndDropsTheLamp()
+        {
+            yield return _scene.Boot();
+            RoverBodyLanguage body = _scene.Body;
+            _scene.Context.Get<IRoverRig>().SetHoldStill(_holdOwner, true);
+            _scene.Context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.FirstCharge, false));
+            _scene.Context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.NightReady, false));
+            yield return RealRoverScene.WaitSeconds(IdleSettleSeconds);
+            Assert.AreEqual(CallState.Clear, _scene.Context.Get<ICallSource>().State);
+            Assert.Greater(body.CallLampGlow, 0.3f, "a clear call glows steadily at the antenna");
+            float headUp = body.ScreenTransform.forward.y;
+
+            _scene.Context.Events.Publish(new CallReplyFailed());
+            yield return RealRoverScene.WaitSeconds(2f);
+            Assert.Less(body.ScreenTransform.forward.y, headUp - 0.1f, "the head hangs lower");
+            Assert.Less(body.CallLampGlow, 0.05f, "and the antenna lamp has dropped");
+            _scene.Context.Get<IRoverRig>().SetHoldStill(_holdOwner, false);
+        }
+
         private static Vector3 Flat(Vector3 direction)
         {
             direction.y = 0f;
