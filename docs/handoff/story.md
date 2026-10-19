@@ -31,3 +31,12 @@
   "built 1984, crewed from 1985").
 - Put the new scan line into `basin-dressing.md` §4.
 - Brief the 0.6 descent-stage prop (era S at Kenji's workshop).
+
+## Makers & agencies (tech-eras §6, a87084df)
+- Three marks:
+  - ILC, the programme: a round seal; the crescent stays Lumen's station patch;
+  - Kessler–Arai, the SSR rovers: a vector mark on 07's CRT at boot;
+  - Tycho, Meridian: a teal hexagon.
+- Halvard Orbital Works `[PROPOSAL]`: ILC's structures contractor (lander, habitat, arrays, flat-packs, Atlas). It
+  also built the 1967 Scout, so the Scout needs no fourth logo.
+- Next: maker databank pages and maker lines on scan pages, once Argon's logos land.
