@@ -865,7 +865,8 @@ namespace MoonProject.UI
             }
 
             _lastFaceMouseScreenPos = rawMouse;
-            Vector2 panelPos = onFace ? FacePanelPoint(rawMouse) : MainPanelPoint(rawMouse) - _cargo.PanelRect.position;
+            // The view's own pointer feed: the only one, on either host, so the dragged part sits where the mouse is.
+            Vector2 panelPos = (onFace ? FacePanelPoint(rawMouse) : MainPanelPoint(rawMouse)) - _cargo.PanelRect.position;
             if (!float.IsNaN(panelPos.x) && !float.IsNaN(panelPos.y))
             {
                 if (down)
@@ -1107,6 +1108,12 @@ namespace MoonProject.UI
         private void OnFragmentScanned(FragmentScanned scanned)
         {
             _scanning = false;
+            string nameKey = StructureIds.NameKey(scanned.BlueprintId);
+            if (!scanned.Known && scanned.Count > 1 && _localization.TryGet(nameKey, out _))
+            {
+                _readout.ScanSetProgress(nameKey, scanned.Index + 1, scanned.Count);
+            }
+
             _director.NotifyUsed(InteractionKind.Scan);
         }
 

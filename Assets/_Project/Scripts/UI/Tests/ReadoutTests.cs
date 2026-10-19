@@ -135,6 +135,21 @@ namespace MoonProject.UI.Tests
             }
         }
 
+        [TestCase("en", 1, "Solar Array · blueprint 1/3")]
+        [TestCase("en", 3, "Solar Array · blueprint 3/3 · learned")]
+        [TestCase("vi", 1, "Giàn pin mặt trời · bản vẽ 1/3")]
+        [TestCase("vi", 3, "Giàn pin mặt trời · bản vẽ 3/3 · đã học")]
+        public void AScanSetsProgress_ReadsPlainly_AndFitsThePlate(string language, int step, string expected)
+        {
+            const int plateCharacters = 52;
+            _localization.SetLanguage(language);
+            var content = new ReadoutContent();
+            _text.ScanSet(content, "structure.solar_array.name", step, 3);
+            Assert.AreEqual(1, content.Count, "one short line");
+            Assert.AreEqual(expected, content.TextAt(0));
+            Assert.LessOrEqual(content.TextAt(0).Length, plateCharacters);
+        }
+
         [Test]
         public void AFlippedLine_ReadsOk_AndTheBlueprintsCountIsInTheAssemblyLine()
         {

@@ -13,6 +13,8 @@ namespace MoonProject.UI
     {
         public const string ColumnKey = "ui.system.column";
         public const string ReserveKey = "ui.readout.reserve";
+        public const string ScanSetKey = "ui.readout.scan_set";
+        public const string ScanSetLearnedKey = "ui.readout.scan_set_learned";
         public const string WheelsNoteKey = "ui.system.note.wheels";
         public const string BlueprintsNoteKey = "ui.system.note.blueprints";
         public const string BlueprintOneNoteKey = "ui.system.note.blueprint_one";
@@ -76,6 +78,17 @@ namespace MoonProject.UI
         {
             into.Clear();
             into.Add(string.Format(_localization.Get(ReserveKey), percent), ReadoutLineStyle.Plain);
+        }
+
+        /// <summary>
+        /// The blueprint progress of <paramref name="nameKey"/>'s scan set: <paramref name="step"/> of
+        /// <paramref name="of"/>, and learned on the last piece.
+        /// </summary>
+        public void ScanSet(ReadoutContent into, string nameKey, int step, int of)
+        {
+            into.Clear();
+            string format = _localization.Get(step >= of ? ScanSetLearnedKey : ScanSetKey);
+            into.Add(string.Format(format, _localization.Get(nameKey), step, of), ReadoutLineStyle.Plain);
         }
 
         /// <summary>The story text <paramref name="textKey"/>, one line per line break.</summary>

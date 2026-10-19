@@ -99,6 +99,15 @@ namespace MoonProject.UI
             _queue.Offer(new ReadoutRequest(ReadoutKind.Story, textKey: textKey));
         }
 
+        /// <summary>
+        /// Piece <paramref name="step"/> of the <paramref name="of"/> in <paramref name="nameKey"/>'s scan set is done:
+        /// a short card says how far its blueprint has come (and learned, on the last).
+        /// </summary>
+        public void ScanSetProgress(string nameKey, int step, int of)
+        {
+            _queue.Offer(new ReadoutRequest(ReadoutKind.ScanSet, textKey: nameKey, step: step, of: of));
+        }
+
         /// <summary>A system changed now: its line shows on a card of its own.</summary>
         public void SystemChanged(RoverSystem system)
         {
@@ -175,6 +184,9 @@ namespace MoonProject.UI
                     break;
                 case ReadoutKind.Story:
                     _text.Story(_content, request.TextKey);
+                    break;
+                case ReadoutKind.ScanSet:
+                    _text.ScanSet(_content, request.TextKey, request.Step, request.Of);
                     break;
             }
 
