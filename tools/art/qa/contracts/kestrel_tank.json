@@ -11,13 +11,12 @@
     "R1_GreyMetal",
     "R1_TealMark",
     "R1_Brass",
-    "R1_Copper",
-    "R1_Signage"
+    "R1_Copper"
   ],
   "require_vertex_colors": true,
   "max_triangles": 1600,
   "max_meshes": 1,
-  "max_draw_calls": 8,
+  "max_draw_calls": 7,
   "allow_boundary_edges": false,
   "bounds": {
     "size": [1.95, 1.35, 1.15],

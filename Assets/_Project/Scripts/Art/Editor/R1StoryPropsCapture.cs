@@ -336,8 +336,8 @@ namespace MoonProject.Art.Editor
             {
                 Color bg = SetupEnvironment(temp, false);
                 GameObject elder01 = SpawnProp(R1Ssr3Builder.Elder01PrefabPath, Vector3.zero, 162f, temp);
-                SpawnProp(R1Ssr3Builder.Elder06PrefabPath, new Vector3(1.55f, 0f, 0.25f), 148f, temp);
-                SpawnRover07(temp, new Vector3(-1.65f, 0f, 0.20f), 152f, false);
+                SpawnProp(R1Ssr3Builder.Elder06PrefabPath, new Vector3(-0.48f, 0f, 1.50f), 148f, temp);
+                SpawnRover07(temp, new Vector3(0.48f, 0f, -1.55f), 152f, false);
 
                 GetDecalWorldPose(elder01, "Decal_KA_1", out Vector3 decalPos, out Vector3 decalNormal, out Vector3 decalUp);
                 Vector3 decalRight = Vector3.Cross(decalUp, decalNormal).normalized;
@@ -354,7 +354,7 @@ namespace MoonProject.Art.Editor
                     Path.Combine(outDir, "era2_elder_closeup_dayC.png"));
 
                 // 2. 7 m Day C gameplay distance showing Elder01 flanked by Rover 07 and Elder06
-                Vector3 look7m = new Vector3(0.0f, 0.82f, 0.10f);
+                Vector3 look7m = new Vector3(0.0f, 0.72f, 0.0f);
                 Vector3 cam7m = look7m + (decalNormal * 0.90f + Vector3.up * 0.34f - decalRight * 0.08f).normalized * 7.0f;
                 RenderShot(
                     cam7m,
@@ -390,8 +390,8 @@ namespace MoonProject.Art.Editor
                 AimDayCSunAtSurface(decalNormal);
 
                 // 1. Close-up of the ~0.40 m Tycho Consortium hex mark on the white strake meeting the scorched cut-seam collar & teal stripe
-                Vector3 closeLook = decalPos - decalRight * 0.04f;
-                Vector3 closeCam = closeLook + (decalNormal * 0.88f + Vector3.up * 0.28f - decalRight * 0.18f).normalized * 1.05f;
+                Vector3 closeLook = decalPos + decalUp * 0.02f;
+                Vector3 closeCam = closeLook + (decalNormal * 0.90f + Vector3.up * 0.24f - decalRight * 0.14f).normalized * 0.98f;
                 RenderShot(
                     closeCam,
                     closeLook,
@@ -429,11 +429,11 @@ namespace MoonProject.Art.Editor
                 SpawnProp(strutPath, new Vector3(1.95f, 0f, 0.65f), 28f, temp);
                 SpawnRover07(temp, new Vector3(-1.75f, 0f, 0.35f), 148f, false);
 
-                AimDayCSunAtSurface(new Vector3(0.35f, 0.25f, -0.90f).normalized);
+                AimDayCSunAtSurface(new Vector3(0.25f, 0.30f, -0.92f).normalized);
 
-                // 1. Close-up of Kestrel_AntennaBoom showing the snapped lattice truss, white dish with teal rim & gold feed horn, and 4-panel solar wing
-                Vector3 closeLook = new Vector3(0.05f, 0.42f, 0.02f);
-                Vector3 closeCam = new Vector3(0.72f, 1.08f, -1.62f);
+                // 1. Close-up of Kestrel_AntennaBoom showing the snapped lattice truss, white dish with teal rim & gold feed horn, and solar wing
+                Vector3 closeLook = new Vector3(0.02f, 0.44f, -0.04f);
+                Vector3 closeCam = new Vector3(0.45f, 1.16f, -1.56f);
                 RenderShot(
                     closeCam,
                     closeLook,

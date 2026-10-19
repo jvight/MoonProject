@@ -204,10 +204,12 @@ def _add_bolted_cut_seam_band(
         bevel=0.005,
     )
     # Irregular outer soot/scorch blotches along the cut line
-    for side_y in (-band_depth * 0.95, band_depth * 0.95):
+    for side_y in (-band_depth * 0.90, band_depth * 0.90):
         for frac in (-0.34, 0.0, 0.34):
+            if side_y < 0.0 and abs(frac) < 0.05:
+                continue
             place_local_box(
-                (span_w * 0.22, band_depth * 0.65, band_thick * 0.92),
+                (span_w * 0.20, band_depth * 0.55, band_thick * 0.54),
                 (span_w * frac, side_y, 0.0),
                 m_rubber,
                 bevel=0.004,
@@ -424,10 +426,10 @@ def build_kestrel_hull_panel() -> bpy.types.Object:
         )
 
     # Transverse bulkhead frame arcs at front and rear edges
-    for y_off in (-0.68, 0.58):
+    for y_off in (-0.74, 0.62):
         _add_oriented_box(
             bm,
-            (2.42, 0.12, 0.18),
+            (2.42, 0.11, 0.17),
             (0.0, y_off, 0.48),
             (16.0, 0.0, 3.0),
             m["R1_GreyMetal"],
@@ -438,7 +440,7 @@ def build_kestrel_hull_panel() -> bpy.types.Object:
     _add_oriented_box(
         bm,
         (2.15, 0.22, 0.095),
-        (0.0, 0.36, 0.76),
+        (0.0, 0.42, 0.78),
         (16.0, 0.0, 3.0),
         m["R1_TealMark"],
         bevel=0.004,
@@ -447,11 +449,11 @@ def build_kestrel_hull_panel() -> bpy.types.Object:
     # Prominent bolted cut seam band + scorch marks wrapping proud over the hull panel crest!
     _add_bolted_cut_seam_band(
         bm,
-        center=(0.0, -0.04, 0.72),
+        center=(0.0, 0.04, 0.73),
         rot_deg=(16.0, 0.0, 3.0),
         span_w=2.34,
-        band_thick=0.18,
-        band_depth=0.30,
+        band_thick=0.16,
+        band_depth=0.22,
         mat_map=m,
         bolt_count=7,
     )
@@ -466,7 +468,7 @@ def build_kestrel_hull_panel() -> bpy.types.Object:
     )
 
     # Attach ~0.4 m Tycho Heavy Industries maker decal (Decal_Tycho_1) on the central white hull strake,
-    # positioned so its plasma-cut / scorched upper-right corner meets the scorched cut-seam collar.
+    # positioned in the open bay so its plasma-cut / scorched upper-right corner kisses the cut-seam collar.
     white_idx = m["R1_WhitePaint"]
     central_polys = [
         p
@@ -476,8 +478,8 @@ def build_kestrel_hull_panel() -> bpy.types.Object:
     top_poly = max(central_polys, key=lambda p: p.area)
     n_bl = Vector(top_poly.normal).normalized()
     p0_bl = Vector(top_poly.center)
-    decal_x_bl = -0.03
-    decal_y_bl = -0.52
+    decal_x_bl = -0.02
+    decal_y_bl = -0.44
     decal_z_bl = p0_bl.z - (n_bl.x * (decal_x_bl - p0_bl.x) + n_bl.y * (decal_y_bl - p0_bl.y)) / n_bl.z
     p_bl = Vector((decal_x_bl, decal_y_bl, decal_z_bl))
     up_bl = (Vector((0.0, 1.0, 0.0)) - n_bl * n_bl.y).normalized()
@@ -612,7 +614,6 @@ def build_kestrel_tank() -> bpy.types.Object:
         "R1_TealMark",
         "R1_Brass",
         "R1_Copper",
-        "R1_Signage",
     ]
     m = {name: i for i, name in enumerate(slot_names)}
     bm = bmesh.new()
@@ -665,13 +666,13 @@ def build_kestrel_tank() -> bpy.types.Object:
         bm, 0.04, 0.04, 0.54, 10, (-0.12, 0.24, 0.82), (14.0, 76.0, 0.0), m["R1_Copper"]
     )
 
-    # Signage stencil plate on upper flank
+    # Tycho identification badge plate on upper flank
     _add_oriented_box(
         bm,
         (0.38, 0.18, 0.03),
         (-0.22, -0.38, 0.72),
         (38.0, -8.0, 4.0),
-        m["R1_Signage"],
+        m["R1_TealMark"],
         bevel=0.003,
     )
 
@@ -682,7 +683,6 @@ def build_kestrel_tank() -> bpy.types.Object:
         target_size=(1.95, 1.35, 1.15),
         target_min_z=-0.20,
         cut_pivot=(0.18, 0.0, 0.88),
-        signage_cell="CAUTION_RAD",
     )
 
 
@@ -1018,65 +1018,70 @@ def build_kestrel_antenna_boom() -> bpy.types.Object:
     )
 
     # Broken solar-wing paddle cantilevered off the -Y flank of the boom (tilted into the regolith)
-    wing_rot = (28.0, -16.0, 8.0)
+    wing_rot = (26.0, -14.0, 8.0)
+    wing_rot_mat = Euler(
+        (math.radians(wing_rot[0]), math.radians(wing_rot[1]), math.radians(wing_rot[2])),
+        "XYZ",
+    ).to_matrix()
+    wing_ctr = Vector((-0.14, -0.34, 0.34))
+
+    def place_wing_box(
+        lsize: tuple[float, float, float],
+        lpos: tuple[float, float, float],
+        m_idx: int,
+        bevel: float = 0.004,
+    ) -> None:
+        wpos = wing_ctr + (wing_rot_mat @ Vector(lpos))
+        _add_oriented_box(bm, lsize, (wpos.x, wpos.y, wpos.z), wing_rot, m_idx, bevel=bevel)
+
     # Aluminum honeycomb backing plate & white perimeter frame
-    _add_oriented_box(
-        bm,
-        (0.96, 0.56, 0.048),
-        (-0.14, -0.34, 0.34),
-        wing_rot,
-        m["R1_WhitePaint"],
-        bevel=0.005,
-    )
-    _add_oriented_box(
-        bm,
-        (0.88, 0.48, 0.054),
-        (-0.14, -0.34, 0.345),
-        wing_rot,
-        m["R1_GreyMetal"],
-        bevel=0.004,
-    )
+    place_wing_box((0.96, 0.56, 0.046), (0.0, 0.0, 0.0), m["R1_WhitePaint"], bevel=0.005)
+    place_wing_box((0.88, 0.48, 0.048), (0.0, 0.0, 0.006), m["R1_GreyMetal"], bevel=0.004)
+    # Teal Tycho trim strip along the upper edge of the solar wing frame
+    place_wing_box((0.88, 0.048, 0.052), (0.0, 0.22, 0.010), m["R1_TealMark"], bevel=0.003)
     # Two deep-violet photovoltaic cell bays separated by a bare-steel busbar rib
     for sx_cell in (-0.22, 0.22):
-        _add_oriented_box(
-            bm,
-            (0.38, 0.42, 0.036),
-            (-0.14 + sx_cell, -0.33, 0.37),
-            wing_rot,
-            m["R1_SolarCell"],
-            bevel=0.003,
-        )
-    _add_oriented_box(
-        bm,
-        (0.05, 0.46, 0.042),
-        (-0.14, -0.33, 0.372),
-        wing_rot,
-        m["R1_BareSteel"],
-        bevel=0.003,
-    )
+        place_wing_box((0.38, 0.40, 0.040), (sx_cell, -0.01, 0.022), m["R1_SolarCell"], bevel=0.003)
+    place_wing_box((0.048, 0.42, 0.044), (0.0, -0.01, 0.024), m["R1_BareSteel"], bevel=0.003)
+
     # Fractured outer solar-wing corner bent at a sharp angle with charred edge
-    bent_wing_rot = (-18.0, 26.0, -14.0)
+    bent_wing_rot = (18.0, 22.0, -14.0)
     _add_oriented_box(
         bm,
         (0.36, 0.44, 0.045),
-        (-0.62, -0.38, 0.22),
+        (-0.62, -0.38, 0.24),
         bent_wing_rot,
         m["R1_SolarCell"],
         bevel=0.004,
     )
 
-    # Cantilevered high-gain dish & brass feed horn at the upper +X end of the boom
-    dish_rot = (-22.0, 34.0, -12.0)
-    _add_oriented_frustum(
-        bm, 0.24, 0.44, 0.14, 16, (0.56, 0.18, 0.56), dish_rot, m["R1_WhitePaint"], cap_mat_idx=m["R1_GreyMetal"]
-    )
-    _add_oriented_frustum(
-        bm, 0.44, 0.46, 0.05, 16, (0.60, 0.20, 0.62), dish_rot, m["R1_TealMark"], cap_mat_idx=m["R1_GreyMetal"]
-    )
-    # Central brass waveguide feed horn + copper sub-reflector cap
-    _add_oriented_frustum(
-        bm, 0.065, 0.042, 0.28, 12, (0.64, 0.23, 0.70), dish_rot, m["R1_Brass"], cap_mat_idx=m["R1_Copper"]
-    )
+    # Cantilevered high-gain dish & brass feed horn at the upper +X end of the boom,
+    # angled so its white dish reflector face, teal rim collar, and brass/copper feed horn are visible
+    dish_rot = (28.0, 22.0, -10.0)
+    dish_rot_mat = Euler(
+        (math.radians(dish_rot[0]), math.radians(dish_rot[1]), math.radians(dish_rot[2])),
+        "XYZ",
+    ).to_matrix()
+    dish_ctr = Vector((0.56, 0.14, 0.56))
+
+    def place_dish_frustum(
+        r_b: float,
+        r_t: float,
+        length: float,
+        segs: int,
+        lpos: tuple[float, float, float],
+        m_idx: int,
+        cap_m_idx: int,
+    ) -> None:
+        wpos = dish_ctr + (dish_rot_mat @ Vector(lpos))
+        _add_oriented_frustum(
+            bm, r_b, r_t, length, segs, (wpos.x, wpos.y, wpos.z), dish_rot, m_idx, cap_mat_idx=cap_m_idx
+        )
+
+    place_dish_frustum(0.22, 0.43, 0.12, 16, (0.0, 0.0, 0.0), m["R1_WhitePaint"], m["R1_WhitePaint"])
+    place_dish_frustum(0.43, 0.46, 0.048, 16, (0.0, 0.0, 0.068), m["R1_TealMark"], m["R1_WhitePaint"])
+    place_dish_frustum(0.095, 0.080, 0.040, 12, (0.0, 0.0, 0.100), m["R1_GreyMetal"], m["R1_GreyMetal"])
+    place_dish_frustum(0.062, 0.042, 0.26, 12, (0.0, 0.0, 0.220), m["R1_Brass"], m["R1_Copper"])
 
     return _finalize_debris_object(
         name="Kestrel_AntennaBoom",
