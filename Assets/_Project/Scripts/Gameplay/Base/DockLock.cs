@@ -71,6 +71,19 @@ namespace MoonProject.Gameplay
         /// <summary>True from the walls starting to rise until they are down again.</summary>
         public bool Raised => _stage != Stage.Open;
 
+        /// <summary>The lock stands as 07 woke into it (a loaded game): shown at once, with no beats and no motion.
+        /// </summary>
+        public bool Silent { get; private set; }
+
+        /// <summary>
+        /// The session starts: 07 wakes on the dock's pad (a loaded game: the lock then shows at once, silently) or
+        /// off it (the first roll-on then locks with its beats).
+        /// </summary>
+        public void Wake(bool onPad)
+        {
+            _bootRest = onPad;
+        }
+
         /// <summary>True while 07 is held between the risen walls, charging.</summary>
         public bool Locked => _stage == Stage.Locked;
 
@@ -160,6 +173,7 @@ namespace MoonProject.Gameplay
                 _bootRest = false;
                 SetAll(_heights, 1f);
                 Enter(Stage.Locked);
+                Silent = true;
                 return;
             }
 
@@ -282,6 +296,7 @@ namespace MoonProject.Gameplay
         {
             _stage = stage;
             _time = 0f;
+            Silent = false;
         }
 
         private void Publish(FeelPhase phase, Vector3 dock, float strength)

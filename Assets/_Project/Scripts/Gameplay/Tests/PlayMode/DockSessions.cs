@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using NUnit.Framework;
 using UnityEngine;
@@ -48,6 +49,19 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         private const float OutsideMargin = 0.45f;
 
+        private const float CloseShotSide = 2.6f;
+        private const float CloseShotRise = 1.7f;
+        private const float CloseShotBack = -3.4f;
+        private const float CloseShotLookHeight = 0.6f;
+        private const float PartRise = 0.12f;
+        private const float ChockLockDegrees = 65f;
+        private const float ArmLockDegrees = 80f;
+        private const float AngleSlack = 2f;
+        private const float NearlyFullCells = 1.2f;
+        private const float HalfCharge = 0.5f;
+        private const float SteerWatchSeconds = 2.5f;
+        private const float ReleaseWithin = 0.6f;
+        private const float EarlyOpenSeconds = 1.5f;
         private const float LightThrottle = 0.15f;
         private const float HeldSteer = 0.8f;
         private const float PoseDegrees = 2f;
@@ -78,6 +92,13 @@ namespace MoonProject.Gameplay.PlayModeTests
         private ITerrainQuery _terrain;
         private Autopilot _pilot;
         private StructurePose _pose;
+        private int _padId;
+        private readonly List<PadLockClosed> _closed = new List<PadLockClosed>();
+        private readonly List<PadLockOpened> _opened = new List<PadLockOpened>();
+        private Transform[] _chocks;
+        private Transform[] _arms;
+        private Quaternion[] _chockRest;
+        private Quaternion[] _armRest;
         private Vector3 _centre;
         private Vector3 _dockHeading;
 
@@ -204,6 +225,247 @@ namespace MoonProject.Gameplay.PlayModeTests
         [Timeout(200000)]
         [PrebuildSetup(typeof(PlaythroughScene))]
         [PostBuildCleanup(typeof(PlaythroughScene))]
+        public IEnumerator OnThePlate_TheChocksStandStaggered_ThenTheArmsClose_AndTheLockClosesOnce()
+        {
+            yield return Stage(0f);
+            FindLockParts();
+            CaptureClose("pad-lock-open-close");
+            Bounds[] chocksOpen = PartBounds(_chocks);
+            Bounds[] armsOpen = PartBounds(_arms);
+            _pilot.Target = _centre;
+            var seen = new List<float>();
+            float until = Time.time + DriveTimeout;
+            while (Time.time < until && _closed.Count == 0)
+            {
+                yield return null;
+                seen.Add(ChockAngle(0));
+            }
+
+            Assert.AreEqual(1, _closed.Count, "the lock closes once 07 is held");
+            for (int i = 0; i < _chocks.Length; i++)
+            {
+                Assert.AreEqual(ChockLockDegrees, ChockAngle(i), AngleSlack, $"chock {i} stands, hinged up to cradle the wheel");
+            }
+
+            for (int i = 0; i < _arms.Length; i++)
+            {
+                Assert.AreEqual(ArmLockDegrees, ArmAngle(i), AngleSlack, $"clamp arm {i} has swung in against the flank");
+            }
+
+            Bounds[] chocksShut = PartBounds(_chocks);
+            Bounds[] armsShut = PartBounds(_arms);
+            for (int i = 0; i < _chocks.Length; i++)
+            {
+                Debug.Log($"[padlock] chock {i}: top {chocksOpen[i].max.y:F2} -> {chocksShut[i].max.y:F2}, centre " +
+                          $"{chocksOpen[i].center} -> {chocksShut[i].center}");
+                Assert.Greater(chocksShut[i].max.y - chocksOpen[i].max.y, PartRise, $"chock {i} stands up from its slot");
+            }
+
+            for (int i = 0; i < _arms.Length; i++)
+            {
+                Debug.Log($"[padlock] arm {i}: top {armsOpen[i].max.y:F2} -> {armsShut[i].max.y:F2}, centre " +
+                          $"{armsOpen[i].center} -> {armsShut[i].center}");
+                Assert.Greater(armsShut[i].max.y - armsOpen[i].max.y, PartRise, $"clamp arm {i} swings up");
+                Assert.Less(Mathf.Abs(armsShut[i].center.x - _centre.x), Mathf.Abs(armsOpen[i].center.x - _centre.x),
+                    $"clamp arm {i} swings in toward 07");
+            }
+
+            Assert.IsTrue(seen.Exists(angle => angle > 5f && angle < ChockLockDegrees - 5f), "the chocks rise: they were seen part way up");
+            yield return new WaitForSeconds(ShotSeconds);
+            FrameCapture.SavePng(_context.Get<IViewCamera>().Camera, 1600, 900,
+                Path.Combine(GameplayFixture.CaptureFolder, "pad-lock-locked.png"));
+            CaptureClose("pad-lock-locked-close");
+        }
+
+        [UnityTest]
+        [Timeout(200000)]
+        [PrebuildSetup(typeof(PlaythroughScene))]
+        [PostBuildCleanup(typeof(PlaythroughScene))]
+        public IEnumerator WhenTheBatteryIsFull_TheArmsOpenFirst_AndTheChocksLowerLast()
+        {
+            yield return Stage(0f);
+            FindLockParts();
+            BatteryModel battery = _gameplay.Battery.Model;
+            battery.Restore(new BatterySaveData { cells = battery.Cells, charge = battery.Cells - NearlyFullCells });
+            _pilot.Target = _centre;
+            yield return Until(() => _closed.Count == 1, DriveTimeout, "the lock closes");
+            float armsOpenAt = -1f;
+            float chocksDownAt = -1f;
+            float deadline = Time.time + DriveTimeout;
+            while (Time.time < deadline && chocksDownAt < 0f)
+            {
+                yield return null;
+                if (armsOpenAt < 0f && ArmAngle(0) < ArmLockDegrees * 0.5f)
+                {
+                    armsOpenAt = Time.time;
+                }
+
+                if (chocksDownAt < 0f && ChockAngle(0) < ChockLockDegrees * 0.5f && ChockAngle(3) < ChockLockDegrees * 0.5f)
+                {
+                    chocksDownAt = Time.time;
+                }
+            }
+
+            Assert.IsTrue(armsOpenAt >= 0f && chocksDownAt >= 0f, "a full battery opens the lock");
+            Assert.LessOrEqual(armsOpenAt, chocksDownAt, "the arms open first, the chocks last");
+            Assert.AreEqual(1, _opened.Count, "the lock opens once");
+            Assert.IsFalse(_rover.IsDocked && _gameplay.PadLock.Raised, "and 07 is free");
+        }
+
+        [UnityTest]
+        [Timeout(200000)]
+        [PrebuildSetup(typeof(PlaythroughScene))]
+        [PostBuildCleanup(typeof(PlaythroughScene))]
+        public IEnumerator ThrottleOpensTheLockAtOnce_ButSteeringAloneNeverDoes()
+        {
+            yield return Stage(0f);
+            FindLockParts();
+            BatteryModel battery = _gameplay.Battery.Model;
+            battery.Restore(new BatterySaveData { cells = battery.Cells, charge = battery.Cells * HalfCharge });
+            _pilot.Target = _centre;
+            yield return Until(() => _closed.Count == 1, DriveTimeout, "the lock closes");
+
+            _rover.SetDriveSource(new SteerOnly());
+            yield return new WaitForSeconds(SteerWatchSeconds);
+            Assert.AreEqual(0, _opened.Count, "steering alone never lets 07 go");
+            Assert.AreEqual(ArmLockDegrees, ArmAngle(0), AngleSlack, "the arms stay closed");
+
+            _pilot.Target = null;
+            _pilot.Reverse = TouchThrottle;
+            _rover.SetDriveSource(_pilot);
+            float pushed = Time.time;
+            yield return Until(() => _opened.Count == 1, ReleaseWithin, "a push on the throttle opens the lock");
+            Assert.LessOrEqual(Time.time - pushed, ReleaseWithin, "and at once");
+            yield return new WaitForSeconds(EarlyOpenSeconds);
+            Assert.Less(ArmAngle(0), 1f, "the arms are open");
+            Assert.Less(ChockAngle(0), 1f, "and the chocks are down: an early drive-off loses nothing");
+            _pilot.Reverse = 0f;
+        }
+
+        [UnityTest]
+        [Timeout(200000)]
+        [PrebuildSetup(typeof(PlaythroughScene))]
+        [PostBuildCleanup(typeof(PlaythroughScene))]
+        public IEnumerator OffThePlate_NothingLocks()
+        {
+            yield return Stage(0f);
+            FindLockParts();
+            StructureDefinition definition = _gameplay.Building.Catalog.Find(StructureIds.ChargingPad);
+            Vector3 at = SurfaceRules.OnSurface(_terrain, _centre.x + definition.Width * 0.5f + OutsideMargin + 0.5f,
+                _centre.z);
+            _context.Get<IRoverPlacement>().PlaceAt(at, Quaternion.LookRotation(Vector3.forward, Vector3.up));
+            yield return new WaitForSeconds(DockTimeout);
+            Assert.IsFalse(_gameplay.PadLock.OnPad, "07 is off the plate");
+            Assert.AreEqual(0, _closed.Count, "no lock closes");
+            for (int i = 0; i < _chocks.Length; i++)
+            {
+                Assert.Less(ChockAngle(i), 0.5f, $"chock {i} lies flush");
+            }
+
+            Assert.Less(ArmAngle(0), 0.5f, "the arms lie flat");
+        }
+
+        private sealed class SteerOnly : IRoverDriveSource
+        {
+            public Vector2 Drive => new Vector2(1f, 0f);
+        }
+
+        private void FindLockParts()
+        {
+            Assert.IsTrue(_gameplay.Building.TryGetView(_padId, out StructureView view), "the pad has its view");
+            string[] chockNames = { "Chock_FL", "Chock_FR", "Chock_RL", "Chock_RR" };
+            string[] armNames = { "ClampArm_L", "ClampArm_R" };
+            _chocks = new Transform[chockNames.Length];
+            _chockRest = new Quaternion[chockNames.Length];
+            _arms = new Transform[armNames.Length];
+            _armRest = new Quaternion[armNames.Length];
+            for (int i = 0; i < chockNames.Length; i++)
+            {
+                _chocks[i] = FindIn(view.transform, chockNames[i]);
+                if (_chocks[i] == null)
+                {
+                    Assert.Ignore("the pad model has no wheel chocks and clamp arms yet (Argon's box/agy-pad-lock)");
+                }
+
+                _chockRest[i] = _chocks[i].localRotation;
+            }
+
+            for (int i = 0; i < armNames.Length; i++)
+            {
+                _arms[i] = FindIn(view.transform, armNames[i]);
+                Assert.IsNotNull(_arms[i], armNames[i] + " is on the pad");
+                _armRest[i] = _arms[i].localRotation;
+            }
+
+            _closed.Clear();
+            _opened.Clear();
+            _context.Events.Subscribe<PadLockClosed>(_closed.Add);
+            _context.Events.Subscribe<PadLockOpened>(_opened.Add);
+        }
+
+        /// <summary>The game's camera, for one frame, close by the pad from its front corner, so the lock shows.</summary>
+        private void CaptureClose(string name)
+        {
+            Transform lens = _context.Get<IViewCamera>().Camera.transform;
+            Vector3 position = lens.position;
+            Quaternion rotation = lens.rotation;
+            Vector3 target = _centre + Vector3.up * CloseShotLookHeight;
+            Vector3 eye = _centre + new Vector3(CloseShotSide, CloseShotRise, CloseShotBack);
+            lens.SetPositionAndRotation(eye, Quaternion.LookRotation(target - eye, Vector3.up));
+            FrameCapture.SavePng(lens.GetComponent<Camera>(), 1600, 900,
+                Path.Combine(GameplayFixture.CaptureFolder, name + ".png"));
+            lens.SetPositionAndRotation(position, rotation);
+        }
+
+        private static Transform FindIn(Transform root, string name)
+        {
+            if (root.name == name)
+            {
+                return root;
+            }
+
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform found = FindIn(root.GetChild(i), name);
+                if (found != null)
+                {
+                    return found;
+                }
+            }
+
+            return null;
+        }
+
+        private static Bounds[] PartBounds(Transform[] parts)
+        {
+            var bounds = new Bounds[parts.Length];
+            for (int i = 0; i < parts.Length; i++)
+            {
+                Renderer[] renderers = parts[i].GetComponentsInChildren<Renderer>();
+                bounds[i] = renderers[0].bounds;
+                for (int r = 1; r < renderers.Length; r++)
+                {
+                    bounds[i].Encapsulate(renderers[r].bounds);
+                }
+            }
+
+            return bounds;
+        }
+
+        private float ChockAngle(int index)
+        {
+            return Quaternion.Angle(_chockRest[index], _chocks[index].localRotation);
+        }
+
+        private float ArmAngle(int index)
+        {
+            return Quaternion.Angle(_armRest[index], _arms[index].localRotation);
+        }
+
+        [UnityTest]
+        [Timeout(200000)]
+        [PrebuildSetup(typeof(PlaythroughScene))]
+        [PostBuildCleanup(typeof(PlaythroughScene))]
         public IEnumerator OnThePadMeansOnItsPlate_EdgeIncluded_NotAMetreAndAHalfFromItsCentre()
         {
             yield return Stage(0f);
@@ -249,7 +511,8 @@ namespace MoonProject.Gameplay.PlayModeTests
                 "the World has the apron, where the lander's cable ends");
             _centre = SurfaceRules.OnSurface(_terrain, apron.Position.x, apron.Position.z);
             _pose = new StructurePose(_centre, PadYaw);
-            _gameplay.PlacedBase.PlaceUnchecked(_gameplay.Building.Catalog.Find(StructureIds.ChargingPad), _pose, 1f);
+            _padId = _gameplay.PlacedBase.PlaceUnchecked(_gameplay.Building.Catalog.Find(StructureIds.ChargingPad), _pose,
+                1f);
             yield return new WaitForSeconds(SettleSeconds);
 
             _dockHeading = Quaternion.Euler(0f, NoseInDegrees, 0f) * _pose.Forward;

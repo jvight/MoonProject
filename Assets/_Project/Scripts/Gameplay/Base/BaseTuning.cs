@@ -65,6 +65,19 @@ namespace MoonProject.Gameplay
                  "pad's cooling tower at its rear, so the tower never stands between the chase camera and 07.")]
         [Range(-180f, 180f)] [SerializeField] private float _dockHeadingOffset = 180f;
 
+        [Header("Pad lock: chocks and clamp arms")]
+        [Tooltip("Degrees the four wheel chocks hinge up from lying flush in the plate to cradle 07's wheels.")]
+        [Range(10f, 90f)] [SerializeField] private float _chockLockDegrees = 65f;
+
+        [Tooltip("Degrees the two side clamp arms swing up and in from lying flat to rest against 07's flanks.")]
+        [Range(10f, 90f)] [SerializeField] private float _clampArmLockDegrees = 80f;
+
+        [Tooltip("Seconds the clamp arms take to close once the chocks stand (the soft thunk is where they meet 07).")]
+        [Range(0.1f, 1.5f)] [SerializeField] private float _clampArmCloseSeconds = 0.45f;
+
+        [Tooltip("Seconds the clamp arms take to open when the lock lets 07 go (they open before the chocks lower).")]
+        [Range(0.1f, 1.5f)] [SerializeField] private float _clampArmOpenSeconds = 0.35f;
+
         [Header("Base lamps")]
         [Tooltip("Degrees above last light the Sun may stand and the base's lamps still begin to come on: dusk falls " +
                  "over the base before the Sun sets.")]
@@ -123,6 +136,10 @@ namespace MoonProject.Gameplay
                  "order get them, the rest only glow.")]
         [Range(0, 8)] [SerializeField] private int _lampLightBudget = 4;
 
+        public float ChockLockDegrees => _chockLockDegrees;
+        public float ClampArmLockDegrees => _clampArmLockDegrees;
+        public float ClampArmCloseSeconds => _clampArmCloseSeconds;
+        public float ClampArmOpenSeconds => _clampArmOpenSeconds;
         public float LampEmissionGain => _lampEmissionGain;
         public Color LampLightColor => _lampLightColor;
         public float LampLightRange => _lampLightRange;

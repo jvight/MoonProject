@@ -20,6 +20,21 @@ namespace MoonProject.Gameplay
         private const string BarPrefix = "TotemBar_";
         private const string StagePrefix = "Stage_";
 
+        /// <summary>The four wheel chocks, in the order of the dock walls: front left and right, rear left and right.
+        /// </summary>
+        private static readonly string[] ChockNames = { "Chock_FL", "Chock_FR", "Chock_RL", "Chock_RR" };
+
+        private const int ClampArmCount = 2;
+
+        private static readonly string[] ClampArmNames = { "ClampArm_L", "ClampArm_R" };
+
+        /// <summary>The chocks hinge about the pad's X axis; the front pair up one way, the rear pair the other.
+        /// </summary>
+        private static readonly float[] ChockSigns = { -1f, -1f, 1f, 1f };
+
+        /// <summary>The clamp arms hinge about the pad's Z axis; the left arm one way, the right the other.</summary>
+        private static readonly float[] ClampArmSigns = { -1f, 1f };
+
         /// <summary>Metres above the pad's centre a cast down for its deck starts.</summary>
         private const float DockProbeHeight = 3f;
 
@@ -35,6 +50,14 @@ namespace MoonProject.Gameplay
         private readonly Vector3[] _barRest = new Vector3[DockLock.Walls];
         private readonly EmissionGlow[] _stages = new EmissionGlow[DockLock.Walls];
         private readonly float[] _stageLevels = new float[DockLock.Walls];
+        private readonly Transform[] _chocks = new Transform[DockLock.Walls];
+        private readonly Quaternion[] _chockRest = new Quaternion[DockLock.Walls];
+        private readonly Transform[] _arms = new Transform[ClampArmCount];
+        private readonly Quaternion[] _armRest = new Quaternion[ClampArmCount];
+        private bool _hasLockParts;
+        private bool _woke;
+        private float _arms01;
+        private bool _armsClosed;
         private int _pad = -1;
         private bool _docked;
         private bool _settled;
@@ -73,6 +96,12 @@ namespace MoonProject.Gameplay
             int pad = PadUnder(out StructurePose pose);
             Vector3 centre = pose.Position;
             OnPad = OnPlate();
+            if (!_woke)
+            {
+                _woke = true;
+                _lock.Wake(pad >= 0);
+            }
+
             if (pad != _pad && !_lock.Raised)
             {
                 Release();
@@ -99,6 +128,62 @@ namespace MoonProject.Gameplay
                 float target = height <= 0f ? 0f : Mathf.Lerp(_tuning.StripUnlit, _tuning.StripLit, lit);
                 _stageLevels[i] = Damp.Toward(_stageLevels[i], target, _tuning.StripEase, deltaTime);
                 _stages[i].Apply(tint, _stageLevels[i]);
+            }
+
+            StepLockParts(deltaTime, centre);
+        }
+
+        /// <summary>
+        /// The chocks stand with the dock's walls (staggered, with the overshoot); once 07 is locked the clamp arms swing
+        /// in (the thunk); when the lock lets go the arms open first and the chocks lower last, or at once for an early
+        /// drive-off. A lock loaded already closed shows at once, silently.
+        /// </summary>
+        private void StepLockParts(float deltaTime, Vector3 centre)
+        {
+            if (!_hasLockParts)
+            {
+                return;
+            }
+
+            bool wantClosed = _lock.Locked;
+            if (_lock.Silent && wantClosed)
+            {
+                _arms01 = 1f;
+                _armsClosed = true;
+            }
+            else if (wantClosed)
+            {
+                _arms01 = Mathf.MoveTowards(_arms01, 1f, deltaTime / _tuning.ClampArmCloseSeconds);
+                if (_arms01 >= 1f && !_armsClosed)
+                {
+                    _armsClosed = true;
+                    _events.Publish(new PadLockClosed(centre));
+                }
+            }
+            else
+            {
+                if (_armsClosed)
+                {
+                    _armsClosed = false;
+                    _events.Publish(new PadLockOpened(centre));
+                }
+
+                _arms01 = Mathf.MoveTowards(_arms01, 0f, deltaTime / _tuning.ClampArmOpenSeconds);
+            }
+
+            float chockDegrees = _tuning.ChockLockDegrees;
+            for (int i = 0; i < DockLock.Walls; i++)
+            {
+                // Held up while the arms are still closed: the chocks lower last.
+                float level = _arms01 > 0f ? Mathf.Max(_lock.WallHeight(i), 1f) : _lock.WallHeight(i);
+                _chocks[i].localRotation = _chockRest[i] *
+                                           Quaternion.AngleAxis(ChockSigns[i] * chockDegrees * level, Vector3.right);
+            }
+
+            float arm = _arms01 * _arms01 * (3f - 2f * _arms01) * _tuning.ClampArmLockDegrees;
+            for (int i = 0; i < ClampArmCount; i++)
+            {
+                _arms[i].localRotation = _armRest[i] * Quaternion.AngleAxis(ClampArmSigns[i] * arm, Vector3.up);
             }
         }
 
@@ -231,6 +316,48 @@ namespace MoonProject.Gameplay
                 _stageLevels[i] = 0f;
             }
 
+            return ReadLockParts(view);
+        }
+
+        /// <summary>
+        /// The pad's wheel chocks and clamp arms. A pad model without any of them has no lock parts to move; one with
+        /// only some is a broken model (logged).
+        /// </summary>
+        private bool ReadLockParts(StructureView view)
+        {
+            int found = 0;
+            for (int i = 0; i < DockLock.Walls; i++)
+            {
+                _chocks[i] = Find(view.transform, ChockNames[i]);
+                found += _chocks[i] != null ? 1 : 0;
+            }
+
+            for (int i = 0; i < ClampArmCount; i++)
+            {
+                _arms[i] = Find(view.transform, ClampArmNames[i]);
+                found += _arms[i] != null ? 1 : 0;
+            }
+
+            _hasLockParts = found == DockLock.Walls + ClampArmCount;
+            _arms01 = 0f;
+            _armsClosed = false;
+            if (found != 0 && !_hasLockParts)
+            {
+                Debug.LogError($"{nameof(PadLock)}: Art's charging pad has only some of its wheel chocks and clamp arms " +
+                               $"({found} of {DockLock.Walls + ClampArmCount}).", view);
+                return false;
+            }
+
+            for (int i = 0; _hasLockParts && i < DockLock.Walls; i++)
+            {
+                _chockRest[i] = _chocks[i].localRotation;
+            }
+
+            for (int i = 0; _hasLockParts && i < ClampArmCount; i++)
+            {
+                _armRest[i] = _arms[i].localRotation;
+            }
+
             return true;
         }
 
@@ -247,6 +374,19 @@ namespace MoonProject.Gameplay
                 _bars[i].localPosition = _barRest[i];
                 _stages[i].Apply(0f);
             }
+
+            for (int i = 0; _hasLockParts && i < DockLock.Walls; i++)
+            {
+                _chocks[i].localRotation = _chockRest[i];
+            }
+
+            for (int i = 0; _hasLockParts && i < ClampArmCount; i++)
+            {
+                _arms[i].localRotation = _armRest[i];
+            }
+
+            _arms01 = 0f;
+            _armsClosed = false;
         }
 
         private static Transform Find(Transform root, string name)
