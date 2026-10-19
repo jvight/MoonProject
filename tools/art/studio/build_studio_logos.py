@@ -736,8 +736,296 @@ def draw_mark_b(
     draw.polygon(beam_pts, fill=accent)
 
 
+# ==============================================================================
+# DIRECTION C — "THE LEAVING LINE" (A Single Line Leaving a Circle)
+# ==============================================================================
+
+def draw_mark_c(
+    draw: ImageDraw.ImageDraw,
+    cx: float,
+    cy: float,
+    scale: float,
+    ink: tuple,
+    accent: tuple,
+    bg_cut: tuple | None = None,
+    line_progress: float = 1.0,
+    circle_alpha: float = 1.0,
+    ss: int = SS,
+):
+    """
+    Draws Direction C ('The Leaving Line'):
+      - An iconic circular ring ('O', radius 170 px) with a clean opening on its upper-right rim (-36 deg).
+      - From the upper-right lip of the opening, the ribbon sweeps counter-clockwise around the top and left,
+        then smoothly peels inward with exact C^1 tangent continuity onto the center axis and shoots straight
+        outward at -36 deg through the opening into the unexplored space beyond the circle.
+      - The lower-right arc completes the circle silhouette, separated from the peeling inner trajectory by a
+        crisp negative-space notch. The outward tip of the departing line carries a warm ochre-amber segment.
+    """
+    exit_deg = -36.0
+    exit_rad = math.radians(exit_deg)
+    ux, uy = math.cos(exit_rad), math.sin(exit_rad)
+    vx, vy = -uy, ux  # +90 deg clockwise from exit vector (lower-right)
+
+    # Shift circle center slightly lower-left along -u so the outward line tip balances optically
+    ccx = cx - 18.0 * scale * ux
+    ccy = cy - 18.0 * scale * uy
+
+    R1 = 172.0 * scale
+    thick = 26.0 * scale
+    half_t = thick / 2.0
+
+    def to_screen(u_val: float, v_val: float) -> tuple[float, float]:
+        return ((ccx + u_val * ux + v_val * vx) * ss, (ccy + u_val * uy + v_val * vy) * ss)
+
+    # 1. Lower-right cradle arc: from phi = +26 deg (bottom lip of upper-right opening) clockwise to phi = 190 deg,
+    # leaving a crisp, intentional negative-space breathing channel before the upper ribbon peels inward.
+    if circle_alpha > 0.01:
+        c_ink = (ink[0], ink[1], ink[2], int(round(ink[3] * circle_alpha)))
+        draw_thick_arc_poly(
+            draw,
+            ccx,
+            ccy,
+            R1,
+            deg_start=exit_deg + 26.0,
+            deg_end=exit_deg + 190.0,
+            thickness=thick,
+            fill=c_ink,
+            round_caps=False,
+            chamfer_deg=3.0,
+            ss=ss,
+        )
+
+    # 2. ONE Continuous Unbroken Ribbon: starts at phi = 334 deg (top lip of opening), sweeps counter-clockwise
+    # around the top-left (334 -> 222 deg), peels smoothly inward with exact C^1 tangent continuity (222 -> 90 deg),
+    # and shoots straight outward along +u through the opening at phi = 0!
+    if line_progress > 0.01:
+        phi_start_outer = math.radians(334.0)
+        phi_star = math.radians(222.0)
+        sin_ps = math.sin(phi_star)
+        cos_ps = math.cos(phi_star)
+        r_turn = (-R1 * sin_ps) / (1.0 - sin_ps)
+        uc = (R1 - r_turn) * cos_ps
+        vc = (R1 - r_turn) * sin_ps
+
+        spine_uv = []
+        # Segment A: Outer circle arc from 334 deg down to 222 deg
+        outer_steps = 72
+        for i in range(outer_steps):
+            t = i / outer_steps
+            phi = phi_start_outer + (phi_star - phi_start_outer) * t
+            spine_uv.append((R1 * math.cos(phi), R1 * math.sin(phi)))
+
+        # Segment B: C^1 inner tangent turn from 222 deg down to 90 deg (landing on v = 0)
+        turn_steps = 64
+        for i in range(turn_steps + 1):
+            t = i / turn_steps
+            phi = phi_star + (math.radians(90.0) - phi_star) * t
+            u_pt = uc + r_turn * math.cos(phi)
+            v_pt = vc + r_turn * math.sin(phi)
+            spine_uv.append((u_pt, v_pt))
+
+        # Segment C: Straight departing line from u_exit = uc (at v = 0) out to u_main_end (just outside the ring)
+        u_exit = uc
+        u_main_end = 184.0 * scale
+        u_tip_full = 248.0 * scale
+        straight_steps = 72
+        for i in range(1, straight_steps + 1):
+            t = i / straight_steps
+            u_pt = u_exit + (u_main_end - u_exit) * t
+            spine_uv.append((u_pt, 0.0))
+
+        # Truncate spine by line_progress (0..1) for smooth storyboard animation
+        total_pts = len(spine_uv)
+        n_draw = max(2, int(round(total_pts * min(1.0, line_progress / 0.82))))
+        active_spine = spine_uv[:n_draw]
+
+        left_edge = []
+        right_edge = []
+        for idx, (u_p, v_p) in enumerate(active_spine):
+            if idx == 0:
+                du = active_spine[1][0] - u_p
+                dv = active_spine[1][1] - v_p
+            elif idx == len(active_spine) - 1:
+                du = u_p - active_spine[idx - 1][0]
+                dv = v_p - active_spine[idx - 1][1]
+            else:
+                du = active_spine[idx + 1][0] - active_spine[idx - 1][0]
+                dv = active_spine[idx + 1][1] - active_spine[idx - 1][1]
+            dlen = max(1e-6, math.hypot(du, dv))
+            nu, nv = -dv / dlen, du / dlen
+            left_edge.append(to_screen(u_p + nu * half_t, v_p + nv * half_t))
+            right_edge.append(to_screen(u_p - nu * half_t, v_p - nv * half_t))
+
+        draw.polygon(left_edge + list(reversed(right_edge)), fill=ink)
+
+        # Segment D: Warm ochre-amber outward beacon segment separated by a crisp 8 px architectural gap
+        if line_progress > 0.84:
+            tip_t = min(1.0, (line_progress - 0.84) / 0.16)
+            u_acc_start = (184.0 + 8.0) * scale
+            u_acc_end = u_acc_start + (u_tip_full - u_acc_start) * tip_t
+            if u_acc_end > u_acc_start + 2.0 * scale:
+                acc_poly = [
+                    to_screen(u_acc_start, -half_t),
+                    to_screen(u_acc_end, -half_t),
+                    to_screen(u_acc_end, +half_t),
+                    to_screen(u_acc_start, +half_t),
+                ]
+                draw.polygon(acc_poly, fill=accent)
+
+
+def render_storyboard_c():
+    """
+    Renders the 4-frame 5-second boot 'splash' storyboard for Direction C ('The Leaving Line')
+    on the calm navy (#0B0E2A) boot screen before the game's title.
+    """
+    out_dir = OUT_ROOT / "c"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    frames_spec = [
+        {
+            "idx": 1,
+            "time": "0.0 s – 1.2 s",
+            "title": "1 · THE KNOWN CIRCLE",
+            "desc": "Calm navy (#0B0E2A) holds briefly; the circular arc begins tracing softly at 42% opacity.",
+            "mark_alpha": 0.42,
+            "circle_alpha": 1.0,
+            "line_progress": 0.42,
+            "tip_override_alpha": 0.0,
+            "word_alpha": 0.0,
+            "word_dy": 10.0,
+        },
+        {
+            "idx": 2,
+            "time": "1.2 s – 2.5 s",
+            "title": "2 · TANGENTIAL INFLECTION",
+            "desc": "Rather than closing the loop, the ribbon peels smoothly inward toward the upper-right opening.",
+            "mark_alpha": 0.84,
+            "circle_alpha": 1.0,
+            "line_progress": 0.80,
+            "tip_override_alpha": 0.0,
+            "word_alpha": 0.22,
+            "word_dy": 6.0,
+        },
+        {
+            "idx": 3,
+            "time": "2.5 s – 4.0 s",
+            "title": "3 · DEPARTURE BEYOND THE RING",
+            "desc": "The single line exits the open rim into uncharted space with a warm ochre tip; wordmark locks in.",
+            "mark_alpha": 1.0,
+            "circle_alpha": 1.0,
+            "line_progress": 1.0,
+            "tip_override_alpha": 0.0,
+            "word_alpha": 1.0,
+            "word_dy": 0.0,
+        },
+        {
+            "idx": 4,
+            "time": "4.0 s – 5.0 s",
+            "title": "4 · STILL HOLD & DISSOLVE",
+            "desc": "Circle and wordmark dissolve into the calm navy dark; the warm departing tip lingers last.",
+            "mark_alpha": 0.22,
+            "circle_alpha": 1.0,
+            "line_progress": 0.82,
+            "tip_override_alpha": 0.82,
+            "word_alpha": 0.22,
+            "word_dy": 0.0,
+        },
+    ]
+
+    rendered_frames = []
+    ss_boot = 3
+    wb, hb = OUT_SIZE * ss_boot, OUT_SIZE * ss_boot
+
+    for f in frames_spec:
+        canvas = make_calm_navy_boot_canvas(wb, hb)
+        cx, cy_mark, y_word = 512.0, 410.0, 742.0
+
+        l_mark = Image.new("RGBA", (wb, hb), (0, 0, 0, 0))
+        draw_mark_c(
+            ImageDraw.Draw(l_mark),
+            cx,
+            cy_mark,
+            scale=0.88,
+            ink=INK_ON_BLACK,
+            accent=ACCENT_ON_BLACK,
+            line_progress=f["line_progress"],
+            circle_alpha=f["circle_alpha"],
+            ss=ss_boot,
+        )
+        canvas = Image.alpha_composite(canvas, apply_layer_opacity(l_mark, f["mark_alpha"]))
+
+        if f["tip_override_alpha"] > 0.01:
+            l_tip = Image.new("RGBA", (wb, hb), (0, 0, 0, 0))
+            exit_rad = math.radians(-36.0)
+            ux, uy = math.cos(exit_rad), math.sin(exit_rad)
+            vx, vy = -uy, ux
+            scale = 0.88
+            ccx = cx - 18.0 * scale * ux
+            ccy = cy_mark - 18.0 * scale * uy
+            half_t = 13.0 * scale
+
+            def to_scr(u_val: float, v_val: float) -> tuple[float, float]:
+                return ((ccx + u_val * ux + v_val * vx) * ss_boot, (ccy + u_val * uy + v_val * vy) * ss_boot)
+
+            u_acc_start = 192.0 * scale
+            u_acc_end = 248.0 * scale
+            ImageDraw.Draw(l_tip).polygon(
+                [
+                    to_scr(u_acc_start, -half_t),
+                    to_scr(u_acc_end, -half_t),
+                    to_scr(u_acc_end, +half_t),
+                    to_scr(u_acc_start, +half_t),
+                ],
+                fill=ACCENT_ON_BLACK,
+            )
+            canvas = Image.alpha_composite(canvas, apply_layer_opacity(l_tip, f["tip_override_alpha"]))
+
+        layer_ui = Image.new("RGBA", (wb, hb), (0, 0, 0, 0))
+        d = ImageDraw.Draw(layer_ui)
+        if f["word_alpha"] > 0.01:
+            wa = f["word_alpha"]
+            w_ink = (INK_ON_BLACK[0], INK_ON_BLACK[1], INK_ON_BLACK[2], int(round(255 * wa)))
+            w_sub = (SUB_ON_BLACK[0], SUB_ON_BLACK[1], SUB_ON_BLACK[2], int(round(220 * wa)))
+            draw_wordmark_outsight(
+                d, cx, y_word + f["word_dy"], w_ink, w_sub, show_games=True, ss=ss_boot
+            )
+
+        font_cap = load_font("IBMPlexMono-Medium.ttf", 18, ss=ss_boot)
+        font_sub = load_font("BeVietnamPro-Regular.ttf", 17, ss=ss_boot)
+        d.line(
+            [(48 * ss_boot, 912 * ss_boot), ((1024 - 48) * ss_boot, 912 * ss_boot)],
+            fill=(244, 239, 230, 38),
+            width=max(1, ss_boot),
+        )
+        draw_tracked_text(
+            d, 512.0, 942.0, f"{f['title']}   ·   {f['time']}", font_cap, (226, 168, 86, 220), tracking=2.0, ss=ss_boot
+        )
+        draw_tracked_text(
+            d, 512.0, 976.0, f["desc"], font_sub, (244, 239, 230, 175), tracking=0.3, ss=ss_boot
+        )
+
+        comp = Image.alpha_composite(canvas, layer_ui).resize((OUT_SIZE, OUT_SIZE), Image.Resampling.LANCZOS)
+        comp.save(out_dir / f"splash_{f['idx']}.png")
+        rendered_frames.append(comp)
+
+    sheet = Image.new("RGBA", (OUT_SIZE, OUT_SIZE), BG_BOOT_NAVY)
+    half = OUT_SIZE // 2
+    positions = [(0, 0), (half, 0), (0, half), (half, half)]
+    for img_f, (px, py) in zip(rendered_frames, positions):
+        thumb = img_f.resize((half, half), Image.Resampling.LANCZOS)
+        sheet.paste(thumb, (px, py))
+    d_s = ImageDraw.Draw(sheet)
+    d_s.line([(half, 0), (half, OUT_SIZE)], fill=(244, 239, 230, 45), width=2)
+    d_s.line([(0, half), (OUT_SIZE, half)], fill=(244, 239, 230, 45), width=2)
+    sheet.save(out_dir / "splash_storyboard.png")
+    print("[build_studio_logos] Rendered Direction C 4-frame boot splash storyboard")
+
+
 if __name__ == "__main__":
     render_direction_lockups("a", draw_mark_a, wordmark_style="geometric", show_games=True)
     render_storyboard_a()
     render_direction_lockups("b", draw_mark_b, wordmark_style="geometric", show_games=True)
+    render_direction_lockups("c", draw_mark_c, wordmark_style="geometric", show_games=True)
+    render_storyboard_c()
+
 
