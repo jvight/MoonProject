@@ -22,7 +22,6 @@ MonoBehaviour:
   _heatSeam: {fileID: 2100000, guid: 3663c4749be107848bfb7c3ebc2cc9e7, type: 2}
   _feelTuning: {fileID: 11400000, guid: e8e2f64fb25385c4f826b1e01fcee110, type: 2}
   _containers:
-  - {fileID: 8913901452062825307, guid: f825c6036b6f2d24d8f9e60c1ea9737a, type: 3}
   - {fileID: 5871157106361356003, guid: 148105d6a357cda4bb6500a41a06789b, type: 3}
   - {fileID: 1333976485439428776, guid: 664c9cbe130a4444b826058ca5cf03f4, type: 3}
   - {fileID: 817974754102879277, guid: a1dd51ed5b65aaa408dab15143ca2162, type: 3}
