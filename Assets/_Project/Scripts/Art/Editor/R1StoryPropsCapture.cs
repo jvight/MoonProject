@@ -77,6 +77,7 @@ namespace MoonProject.Art.Editor
                     CaptureDeliverable11_BasinLifeLineup(capturesDir, true);
                     CaptureDeliverable12_GeophoneLine(capturesDir, false);
                     CaptureDeliverable12_GeophoneLine(capturesDir, true);
+                    CaptureDeliverable13_EraSortiesLineup(capturesDir, false);
                 }
                 finally
                 {
@@ -899,6 +900,114 @@ namespace MoonProject.Art.Editor
                     38f,
                     bg,
                     Path.Combine(outDir, $"r1props_geophone_line_detail_{suffix}.png"));
+            }
+            finally
+            {
+                temp.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Dedicated fast batch entry point for capturing the reworked 1967 Era-P (<c>Prop_OldLander</c>) and 1971 Era-S
+        /// (<c>Prop_SeismicStation</c>, <c>Prop_GeophoneLine</c>, <c>Geophone_Sensor</c>, <c>Geophone_Ribbon_10m</c>,
+        /// <c>Geophone_Plug</c>, <c>Prop_Retroreflector</c>, <c>Prop_SampleRack</c>) sortie props next to Rover 07 and
+        /// a Lumen-era crate in Day C light so the era contrast (P/S foil, bare metal, and white paint vs. L cream and coral)
+        /// reads clearly:
+        /// <c>python tools/unity_batch.py exec --project . --method MoonProject.Art.Editor.R1StoryPropsCapture.CaptureEraSortiesLineup</c>
+        /// </summary>
+        public static void CaptureEraSortiesLineup()
+        {
+            BatchRunner.Run(nameof(CaptureEraSortiesLineup), args =>
+            {
+                AssetDatabase.Refresh();
+                R1MaterialLibrary.BuildMaterials();
+                R1ModelBuilder.Build();
+
+                string capturesDir = Path.GetFullPath("Logs/captures");
+                Directory.CreateDirectory(capturesDir);
+
+                bool prevAsync = ShaderUtil.allowAsyncCompilation;
+                ShaderUtil.allowAsyncCompilation = false;
+                try
+                {
+                    CaptureDeliverable13_EraSortiesLineup(capturesDir, false);
+                    CaptureDeliverable9_OldLander(capturesDir, false);
+                    CaptureDeliverable11_BasinLifeLineup(capturesDir, false);
+                    CaptureDeliverable12_GeophoneLine(capturesDir, false);
+                }
+                finally
+                {
+                    ShaderUtil.allowAsyncCompilation = prevAsync;
+                }
+
+                return true;
+            });
+        }
+
+        private static void CaptureDeliverable13_EraSortiesLineup(string outDir, bool nightEclipse)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(temp, nightEclipse);
+                if (!nightEclipse && RenderSettings.sun != null)
+                {
+                    RenderSettings.sun.intensity = 2.0f;
+                    RenderSettings.sun.transform.rotation = Quaternion.Euler(24f, -34f, 0f);
+                }
+
+                // Era L (2050s/2058) reference hardware on the right (+X):
+                // Rover 07 (warm cream & coral-orange) and a Lumen-era crate (Crate_M_Open, warm cream & coral-orange)
+                SpawnRover07(temp, new Vector3(1.85f, 0f, 0.55f), -142f, nightEclipse);
+                SpawnProp(R1StoryPropsBuilder.CrateMOpenPrefabPath, new Vector3(1.05f, 0f, -0.35f), 165f, temp);
+
+                // Era P (1967) Scout 3 lander on the back-left (-X):
+                // Bare aluminium spaceframe & legs, chalked R1_WhitePaint thermal boxes & planar array, R1_SilverFoil mirror patches
+                Vector3 landerPos = new Vector3(-1.65f, 0f, 0.85f);
+                SpawnProp(R1StoryPropsBuilder.DecalOldLanderBlastPrefabPath, landerPos, 156f, temp);
+                SpawnProp(R1StoryPropsBuilder.PropOldLanderPrefabPath, landerPos, 156f, temp);
+
+                // Era S (1971) crewed sortie scientific hardware across the center and foreground:
+                // 1. Prop_SeismicStation: R1_WhitePaint top, R1_SilverFoil skirt, R1_BareSteel legs, GoldFoil shroud,
+                //    and bolted cream/coral Lumen junction box on its -Z face holding DeadStatusLamp
+                SpawnProp(R1StoryPropsBuilder.PropSeismicStationPrefabPath, new Vector3(-0.75f, 0f, -0.32f), 8f, temp);
+
+                // 2. Prop_SampleRack: bare aluminium rack, tools, and core tubes with black rubber grips
+                SpawnProp(R1StoryPropsBuilder.PropSampleRackPrefabPath, new Vector3(-0.35f, 0f, 0.35f), 10f, temp);
+
+                // 3. Prop_Retroreflector: bare aluminium stand & housing, GoldFoil rear face, 10x10 corner-cube array
+                SpawnProp(R1StoryPropsBuilder.PropRetroreflectorPrefabPath, new Vector3(0.45f, 0f, 0.25f), -12f, temp);
+
+                // 4. Geophone kit (Prop_GeophoneLine, Geophone_Ribbon_10m, Geophone_Plug, and 3 bare-metal Geophone_Sensor units)
+                SpawnProp(R1StoryPropsBuilder.PropGeophoneLinePrefabPath, new Vector3(0.25f, 0f, -0.82f), -90f, temp);
+                SpawnProp(R1StoryPropsBuilder.GeophonePlugPrefabPath, new Vector3(-0.32f, 0f, -0.62f), -70f, temp);
+                GameObject s1 = SpawnProp(R1StoryPropsBuilder.GeophoneSensorPrefabPath, new Vector3(0.02f, 0f, -0.62f), 12f, temp);
+                SetOnlySensorStencilActive(s1, 1);
+                GameObject s2 = SpawnProp(R1StoryPropsBuilder.GeophoneSensorPrefabPath, new Vector3(0.28f, 0f, -0.62f), 0f, temp);
+                SetOnlySensorStencilActive(s2, 2);
+                GameObject s3 = SpawnProp(R1StoryPropsBuilder.GeophoneSensorPrefabPath, new Vector3(0.54f, 0f, -0.62f), -12f, temp);
+                SetOnlySensorStencilActive(s3, 3);
+
+                string suffix = nightEclipse ? "eclipse" : "dayC";
+
+                // 1. Full lineup overview in Day C light showing Era P (Scout 3), Era S (Seismic Station, Sample Rack,
+                //    Retroreflector, Geophone Line), and Era L (Rover 07 + Lumen Crate) side-by-side
+                RenderShot(
+                    new Vector3(0.05f, 1.65f, -3.65f),
+                    new Vector3(0.0f, 0.68f, 0.15f),
+                    48f,
+                    bg,
+                    Path.Combine(outDir, $"r1props_era_sorties_lineup_{suffix}.png"));
+
+                // 2. Close-up detail shot comparing the 1971 Era-S instruments (including the Lumen junction box bolted
+                //    to Prop_SeismicStation's side) directly against the warm cream & coral Lumen crate
+                RenderShot(
+                    new Vector3(0.10f, 0.92f, -2.05f),
+                    new Vector3(0.08f, 0.25f, -0.22f),
+                    42f,
+                    bg,
+                    Path.Combine(outDir, $"r1props_era_sorties_detail_{suffix}.png"));
             }
             finally
             {
