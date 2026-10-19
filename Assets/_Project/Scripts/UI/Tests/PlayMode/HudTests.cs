@@ -931,6 +931,39 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator AimingAtAnUnlearnedSetPiece_TheChipReadsEScanWithItsPlaceInTheSet()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            _rig.Ui.Ledger.RecordLookTaught();
+            _rig.Ui.Ledger.RecordDriveTaught();
+            _rig.Ui.Ledger.RecordHoldChipShown();
+            _rig.Ui.Ledger.RecordUsed(InteractionKind.Scan);
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            var piece = new Vector3(-1f, 0.3f, 4f);
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Scan, piece, true, null, 1, 3);
+            Events.Publish(new NextStepChanged("next.v2.scan_lander"));
+            float limit = Time.realtimeSinceStartup + 12f;
+            while (!_rig.Ui.LookUp.IsVisible && Time.realtimeSinceStartup < limit)
+            {
+                yield return null;
+            }
+
+            Assert.AreEqual(Text(UiKeys.VerbScan) + " 1/3", _rig.Ui.Layout.LookHintWord.text,
+                "the first piece of three");
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Scan, piece, true, null, 2, 3);
+            yield return null;
+            yield return null;
+            Assert.AreEqual(Text(UiKeys.VerbScan) + " 2/3", _rig.Ui.Layout.LookHintWord.text, "the next piece");
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Scan, piece, true);
+            yield return null;
+            yield return null;
+            Assert.AreEqual(Text(UiKeys.VerbScan), _rig.Ui.Layout.LookHintWord.text,
+                "a known set or a lone target: no count");
+        }
+
+        [UnityTest]
         public IEnumerator AnUnlearnedReadyVerb_TakesTheSlotFromTheObjectiveLine_WhenSevenNosesIntoACrate()
         {
             InputSystem.AddDevice<Keyboard>();

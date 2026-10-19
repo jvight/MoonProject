@@ -1040,6 +1040,9 @@ namespace MoonProject.Gameplay.Tests
                 {
                     ScanFragment part = scans.Find(ScanField.FragmentId("ruin.FallenSolarArray", i));
                     Assert.IsNotNull(part);
+                    Assert.IsTrue(scans.TryGetSetStep(part, out int step, out int of), "an unlearned set piece counts");
+                    Assert.AreEqual(i + 1, step, "the scan would make it this piece of the set");
+                    Assert.AreEqual(3, of);
                     scans.CompleteTarget(part, 1f + i);
                     Assert.AreEqual(0, part.Owed, "new knowledge pays no Metal");
                 }
@@ -1048,6 +1051,8 @@ namespace MoonProject.Gameplay.Tests
                 Assert.AreEqual(0, learnedEvents.Count);
                 scans.CompleteTarget(scans.Find(ScanField.FragmentId("ruin.FallenSolarArray", 2)), 3f);
                 Assert.IsTrue(known.IsKnown(StructureIds.SolarArray));
+                Assert.IsFalse(scans.TryGetSetStep(scans.Find(ScanField.FragmentId("ruin.FallenSolarArray", 2)),
+                    out _, out _), "a learned set counts no more");
                 Assert.AreEqual(1, learnedEvents.Count);
                 Assert.AreEqual(StructureIds.SolarArray, learnedEvents[0].StructureId);
                 Assert.AreEqual(1, toasts.Count);
