@@ -20,6 +20,9 @@ namespace MoonProject.Art.Editor
         Screen = 11,
         Brass = 12,
         Basalt = 13,
-        Signage = 14
+        Signage = 14,
+        WhitePaint = 15,
+        TealMark = 16,
+        SilverFoil = 17
     }
 }
