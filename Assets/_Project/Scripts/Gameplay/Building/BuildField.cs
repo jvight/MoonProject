@@ -57,6 +57,7 @@ namespace MoonProject.Gameplay
         private BuildModeController _controller;
 
         private const string TintProperty = "_Color";
+        private const string IntensityProperty = "_Intensity";
 
         /// <summary>Metres above 07's origin the taken-apart pieces float to: about its body.</summary>
         private const float TakeApartBodyHeight = 0.8f;
@@ -226,9 +227,10 @@ namespace MoonProject.Gameplay
             _weldLight = new LightPulse("BuildWeldLight", vfxRoot, feelTuning.CutLightColor, feelTuning.CutRange);
             _weldDebris = new VacuumDebris(vfxRoot, feelTuning, _visuals.FeelSprite);
             _dustPuff = _weldDebris.Ring;
-            _takeApartCore = Tinted(_visuals.BeamCore, _tuning.TakeApartBeamColor);
-            _takeApartSheath = Tinted(_visuals.BeamSheath, _tuning.TakeApartBeamColor);
-            _takeApartBeam = new CutBeam(vfxRoot, feelTuning, _takeApartCore, _takeApartSheath);
+            _takeApartCore = Tinted(_visuals.BeamCore, _tuning.TakeApartBeamColor, _tuning.TakeApartBeamIntensity);
+            _takeApartSheath = Tinted(_visuals.BeamSheath, _tuning.TakeApartBeamColor, _tuning.TakeApartBeamIntensity);
+            _takeApartBeam = new CutBeam(vfxRoot, feelTuning, _takeApartCore, _takeApartSheath,
+                _tuning.TakeApartBeamWidthShare);
             for (int i = 0; i < SeamSlotCount; i++)
             {
                 _weldSeams[i] = new HeatSeam(vfxRoot, feelTuning, _visuals.HeatSeam);
@@ -444,10 +446,11 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>A copy of a beam material in the take-apart's cool, desaturated colour.</summary>
-        private static Material Tinted(Material source, Color color)
+        private static Material Tinted(Material source, Color color, float intensity)
         {
             var copy = new Material(source) { name = source.name + "_TakeApart" };
             copy.SetColor(TintProperty, color);
+            copy.SetFloat(IntensityProperty, intensity);
             return copy;
         }
 

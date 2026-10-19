@@ -31,6 +31,33 @@ namespace MoonProject.Gameplay
                  "misplaced piece never costs the player progress.")]
         [Range(0f, 1f)] [SerializeField] private float _deconstructRefundShare = 1f;
 
+        [Header("The first pad's home (the apron guide)")]
+        [Tooltip("Colour of the guide laid round the marked apron while the first pad is placed: a calm cool white, " +
+                 "never the scan's cyan.")]
+        [SerializeField] private Color _apronGuideColor = new Color(0.82f, 0.9f, 1f, 1f);
+
+        [Tooltip("Brightness (glow intensity) of the apron guide at the top of its breath: bright enough to read from " +
+                 "the chase camera 8-10 m back, never clipping to white.")]
+        [Range(0.05f, 2f)] [SerializeField] private float _apronGuideIntensity = 0.55f;
+
+        [Tooltip("Metres wide the guide's lines are (Art's worn outline is a hairline).")]
+        [Range(0.05f, 0.5f)] [SerializeField] private float _apronGuideWidth = 0.18f;
+
+        [Tooltip("Seconds of one slow breath of the guide.")]
+        [Range(0.6f, 4f)] [SerializeField] private float _apronGuidePeriodSeconds = 1.5f;
+
+        [Tooltip("Share (0..1) of the guide's brightness it keeps at the bottom of its breath.")]
+        [Range(0f, 0.9f)] [SerializeField] private float _apronGuideFloorShare = 0.35f;
+
+        [Tooltip("Seconds the guide takes to fade in when build mode opens and out once the first pad is placed.")]
+        [Range(0.2f, 3f)] [SerializeField] private float _apronGuideFadeSeconds = 0.8f;
+
+        [Tooltip("Radius, metres, of the soft ring segment laid at the bay's centre.")]
+        [Range(0.3f, 2.5f)] [SerializeField] private float _apronGuideMarkerRadius = 0.9f;
+
+        [Tooltip("Degrees of the ring the centre marker covers (a segment, never a full ring).")]
+        [Range(60f, 300f)] [SerializeField] private float _apronGuideMarkerArcDegrees = 200f;
+
         [Header("Taking a piece apart")]
         [Tooltip("Seconds the take-apart runs once the hold completes: the piece eases down, comes apart and its " +
                  "pieces fly to 07 (the reverse of the print).")]
@@ -50,6 +77,13 @@ namespace MoonProject.Gameplay
 
         [Tooltip("The take-apart beam's colour: a soft, desaturated cool tone, not the build's amber-cyan.")]
         [SerializeField] private Color _takeApartBeamColor = new Color(0.58f, 0.68f, 0.76f, 0.7f);
+
+        [Tooltip("Brightness (the glow material's intensity) of the take-apart beam: low, so nothing near the piece " +
+                 "clips to white (the build beam's own intensity is far higher).")]
+        [Range(0.02f, 1f)] [SerializeField] private float _takeApartBeamIntensity = 0.18f;
+
+        [Tooltip("Width of the take-apart beam as a share of the build beam's: a thin, quiet line.")]
+        [Range(0.1f, 1f)] [SerializeField] private float _takeApartBeamWidthShare = 0.5f;
 
         [Tooltip("Dust grains in the small puff where the piece stood once it is gone.")]
         [Range(4, 24)] [SerializeField] private int _takeApartDustCount = 10;
@@ -219,6 +253,22 @@ namespace MoonProject.Gameplay
 
         public float DeconstructRefundShare => _deconstructRefundShare;
 
+        public Color ApronGuideColor => _apronGuideColor;
+
+        public float ApronGuideIntensity => _apronGuideIntensity;
+
+        public float ApronGuideWidth => _apronGuideWidth;
+
+        public float ApronGuidePeriodSeconds => _apronGuidePeriodSeconds;
+
+        public float ApronGuideFloorShare => _apronGuideFloorShare;
+
+        public float ApronGuideFadeSeconds => _apronGuideFadeSeconds;
+
+        public float ApronGuideMarkerRadius => _apronGuideMarkerRadius;
+
+        public float ApronGuideMarkerArcDegrees => _apronGuideMarkerArcDegrees;
+
         public float TakeApartSeconds => _takeApartSeconds;
 
         public int TakeApartPieces => _takeApartPieces;
@@ -230,6 +280,10 @@ namespace MoonProject.Gameplay
         public float TakeApartArcMetres => _takeApartArcMetres;
 
         public Color TakeApartBeamColor => _takeApartBeamColor;
+
+        public float TakeApartBeamIntensity => _takeApartBeamIntensity;
+
+        public float TakeApartBeamWidthShare => _takeApartBeamWidthShare;
 
         public int TakeApartDustCount => _takeApartDustCount;
 

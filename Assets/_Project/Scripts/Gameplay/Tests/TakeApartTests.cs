@@ -192,5 +192,52 @@ namespace MoonProject.Gameplay.Tests
                 }
             }
         }
+
+        [Test]
+        public void TheApronGuide_BreathesSlowlyAndEased_FadesInWhileWanted_AndOutForGood()
+        {
+            var bayHost = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            bayHost.transform.localScale = new Vector3(6f, 0.05f, 9f);
+            var host = new GameObject("GuideHost");
+            var glow = new Material(Shader.Find("Sprites/Default"));
+            try
+            {
+                var guide = new ApronGuide(host.transform, bayHost.GetComponent<Renderer>(), glow, _tuning);
+                Assert.AreEqual(1.5f, _tuning.ApronGuidePeriodSeconds, 1e-4f, "about a 1.5 s breath");
+                float floor = _tuning.ApronGuideFloorShare;
+                Assert.AreEqual(floor, guide.Breath(0f), 1e-4f);
+                Assert.AreEqual(1f, guide.Breath(0.75f), 1e-4f);
+                Assert.AreEqual(floor, guide.Breath(1.5f), 1e-4f);
+                Assert.Greater(guide.Breath(0.1f), floor);
+                Assert.Less(guide.Breath(0.1f) - floor, 0.1f, "eased: it leaves its floor slowly");
+
+                Assert.IsFalse(guide.IsShown);
+                for (float t = 0f; t < _tuning.ApronGuideFadeSeconds + 0.1f; t += 0.05f)
+                {
+                    guide.Step(true, 0.05f);
+                }
+
+                Assert.AreEqual(1f, guide.Visible, 1e-4f, "it fades in while the first pad is wanted");
+                Assert.AreEqual(2, host.GetComponentsInChildren<LineRenderer>().Length, "a frame and one centre marker");
+                foreach (LineRenderer line in host.GetComponentsInChildren<LineRenderer>())
+                {
+                    Assert.AreEqual(_tuning.ApronGuideWidth, line.widthMultiplier, 1e-4f);
+                }
+
+                for (float t = 0f; t < _tuning.ApronGuideFadeSeconds + 0.1f; t += 0.05f)
+                {
+                    guide.Step(false, 0.05f);
+                }
+
+                Assert.IsFalse(guide.IsShown, "and out once the pad is placed");
+                guide.Dispose();
+            }
+            finally
+            {
+                Object.DestroyImmediate(bayHost);
+                Object.DestroyImmediate(host);
+                Object.DestroyImmediate(glow);
+            }
+        }
     }
 }

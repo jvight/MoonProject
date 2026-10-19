@@ -19,17 +19,20 @@ namespace MoonProject.Gameplay
         private readonly LineRenderer _core;
         private readonly LineRenderer _sheath;
         private readonly LineRenderer _halo;
+        private readonly float _widthScale;
         private float _reach;
         private bool _out;
         private Vector3 _held;
         private float _clock;
 
-        public CutBeam(Transform parent, FeelVfxTuning tuning, Material core, Material sheath)
+        /// <param name="widthScale">Scales the beam's line widths (a quieter beam is a thinner one).</param>
+        public CutBeam(Transform parent, FeelVfxTuning tuning, Material core, Material sheath, float widthScale = 1f)
         {
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
-            _halo = Line("BeamHalo", parent, sheath, tuning.SheathWidth * HaloWidthFactor);
-            _sheath = Line("BeamSheath", parent, sheath, tuning.SheathWidth);
-            _core = Line("BeamCore", parent, core, tuning.CoreWidth);
+            _widthScale = Mathf.Max(0.05f, widthScale);
+            _halo = Line("BeamHalo", parent, sheath, tuning.SheathWidth * HaloWidthFactor * _widthScale);
+            _sheath = Line("BeamSheath", parent, sheath, tuning.SheathWidth * _widthScale);
+            _core = Line("BeamCore", parent, core, tuning.CoreWidth * _widthScale);
         }
 
         /// <summary>How far the beam reaches from the emitter to the target point (0..1).</summary>
@@ -93,9 +96,9 @@ namespace MoonProject.Gameplay
             _halo.SetPosition(0, emitter);
             _halo.SetPosition(1, tip);
             float wobble = Mathf.Sin(TwoPi * _tuning.ShimmerRate * _clock);
-            _core.widthMultiplier = _tuning.CoreWidth * thickness;
-            _sheath.widthMultiplier = _tuning.SheathWidth * thickness * (1f + _tuning.Shimmer * wobble);
-            _halo.widthMultiplier = _tuning.SheathWidth * HaloWidthFactor * thickness *
+            _core.widthMultiplier = _tuning.CoreWidth * _widthScale * thickness;
+            _sheath.widthMultiplier = _tuning.SheathWidth * _widthScale * thickness * (1f + _tuning.Shimmer * wobble);
+            _halo.widthMultiplier = _tuning.SheathWidth * HaloWidthFactor * _widthScale * thickness *
                                     (1f + _tuning.Shimmer * 0.5f * wobble);
         }
 

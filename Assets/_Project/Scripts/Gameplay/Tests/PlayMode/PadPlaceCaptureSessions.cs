@@ -26,6 +26,9 @@ namespace MoonProject.Gameplay.PlayModeTests
     public sealed class PadPlaceCaptureSessions : InputTestFixture
     {
         private const float StandBack = 5f;
+
+        /// <summary>Where 07 approaches the apron from: the chase camera's normal distance.</summary>
+        private const float ApproachBack = 9f;
         private const float SettleSeconds = 1f;
         private const float WakeTimeout = 120f;
         private static readonly float[] TakeApartMarks = { 0.15f, 0.55f, 0.95f };
@@ -70,6 +73,16 @@ namespace MoonProject.Gameplay.PlayModeTests
             StructureDefinition pad = building.Catalog.Find(StructureIds.ChargingPad);
             _gameplay.Materials.Stow(pad.BuildCost);
 
+            // The approach: 9 m back with the build menu open, the guide frames the bay and marks its centre.
+            yield return StandFacing(Flat(apron) + Vector3.back * ApproachBack, apron);
+            Assert.IsTrue(building.Controller.TryOpenMenu());
+            yield return new WaitForSeconds(_gameplay.Building.Tuning.ApronGuideFadeSeconds + 0.5f);
+            Assert.IsTrue(_gameplay.ApronGuide.IsShown, "the guide shows while the first pad is placed");
+            Capture("apron-guide-9m-a");
+            yield return new WaitForSeconds(_gameplay.Building.Tuning.ApronGuidePeriodSeconds * 0.5f);
+            Capture("apron-guide-9m-b");
+            building.Controller.Close();
+
             // Placing: 07 stands south of the apron facing it; the ghost rides onto the bay and is good there.
             Vector3 stand = Flat(apron) + Vector3.back * StandBack;
             yield return StandFacing(stand, apron);
@@ -82,6 +95,14 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(PlacementReason.Valid, building.Controller.CandidateReason, "and is good there");
             Capture("pad-ghost-on-the-apron");
             building.Controller.Close();
+            yield return new WaitForSeconds(_gameplay.Building.Tuning.ApronGuideFadeSeconds + 0.3f);
+            _gameplay.PlacedBase.PlaceUnchecked(pad, new StructurePose(apron, 0f), 0.5f);
+            Assert.IsTrue(building.Controller.TryOpenMenu());
+            yield return new WaitForSeconds(_gameplay.Building.Tuning.ApronGuideFadeSeconds + 0.3f);
+            Assert.IsFalse(_gameplay.ApronGuide.IsShown, "once a pad is placed the guide is gone");
+            building.Controller.Close();
+            Assert.IsTrue(_gameplay.PlacedBase.TryDeconstruct(_gameplay.PlacedBase.StructureAt(0).InstanceId, out _));
+            _gameplay.Materials.Stow(pad.BuildCost);
 
             // Taking down: a finished pad on the apron, the menu open, X held until it comes apart.
             var removed = new System.Collections.Generic.List<StructureRemoved>();
