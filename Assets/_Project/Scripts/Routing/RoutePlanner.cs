@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace MoonProject.Autoplay
+namespace MoonProject.Routing
 {
     /// <summary>
     /// A coarse path round obstacles on the ground plane, for a bot that cannot see a lander in the way: a grid over

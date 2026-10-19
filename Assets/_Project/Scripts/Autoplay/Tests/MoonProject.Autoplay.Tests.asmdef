@@ -3,6 +3,7 @@
     "rootNamespace": "MoonProject.Autoplay.Tests",
     "references": [
         "MoonProject.Autoplay",
+        "MoonProject.Routing",
         "Unity.InputSystem",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
