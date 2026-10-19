@@ -186,14 +186,14 @@ namespace MoonProject.Rover
         [Range(0f, 30f)]
         [SerializeField] private float _headlampDownTilt = 7.5f;
 
-        [Tooltip("Headlamp intensity (warm spot light at HeadlampSocket). Pitched down onto the dust 4-7 m ahead so "
-            + "the warm pool reads clearly from the chase camera without blowing out near the wheels.")]
+        [Tooltip("Headlamp intensity (warm spot light at HeadlampSocket): a soft key in the eclipse-dark opening, " +
+            "pitched onto the dust 4-7 m ahead so the near ground reads from the chase camera and nothing blooms.")]
         [Range(0f, 200f)]
-        [SerializeField] private float _headlampIntensity = 165f;
+        [SerializeField] private float _headlampIntensity = 55f;
 
-        [Tooltip("Headlamp range (m); feathers the outer edge out to ~12-15 m ahead on flat ground.")]
+        [Tooltip("Headlamp range (m); feathers the outer edge out to ~10-12 m ahead on flat ground.")]
         [Range(1f, 60f)]
-        [SerializeField] private float _headlampRange = 18f;
+        [SerializeField] private float _headlampRange = 13f;
 
         [Tooltip("Headlamp outer cone angle (deg).")]
         [Range(10f, 150f)]
@@ -202,6 +202,10 @@ namespace MoonProject.Rover
         [Tooltip("Headlamp inner (full brightness) cone angle (deg); a wide soft edge reads as cosy.")]
         [Range(1f, 150f)]
         [SerializeField] private float _headlampInnerSpotAngle = 20f;
+
+        [Tooltip("Seconds 07's lamps ease on or off when the player switches them (the lights key).")]
+        [Range(0.05f, 1f)]
+        [SerializeField] private float _lampSwitchSeconds = 0.25f;
 
         public float AlignFrequency => _alignFrequency;
 
@@ -296,5 +300,7 @@ namespace MoonProject.Rover
         public float HeadlampSpotAngle => _headlampSpotAngle;
 
         public float HeadlampInnerSpotAngle => Mathf.Min(_headlampInnerSpotAngle, _headlampSpotAngle);
+
+        public float LampSwitchSeconds => _lampSwitchSeconds;
     }
 }

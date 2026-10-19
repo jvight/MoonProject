@@ -167,6 +167,18 @@ Label {
     -unity-text-align: middle-center;
 }
 
+/* A hold verb's keycap ring: faint at rest, so the key reads as one you hold; it fills while the hold runs. */
+.glyph__hold-ring {
+    position: absolute;
+    left: -6px;
+    top: -6px;
+    right: -6px;
+    bottom: -6px;
+    --track-color: var(--moon-amber-soft);
+    --fill-color: var(--glass-hi);
+    --ring-width: 2.5;
+}
+
 .glyph--small {
     min-width: 30px;
     height: 30px;

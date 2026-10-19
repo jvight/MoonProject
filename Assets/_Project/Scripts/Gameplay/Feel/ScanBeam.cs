@@ -29,8 +29,8 @@ namespace MoonProject.Gameplay
         private const int DataTickCount = 12;
         private const int DataTickLanes = 3;
 
-        /// <summary>Share of CRT amber in the beam's cyan while it sweeps (the wireframe it reveals is amber).</summary>
-        private const float BeamAmberShare = 0.35f;
+        /// <summary>Share of the teal ping colour in the lens's cyan while it sweeps (the wireframe it reveals is teal).</summary>
+        private const float BeamPingShare = 0.35f;
         private const int StreakSlots = LensStreakCount + DataTickCount;
 
         private const int WedgeRings = 16;
@@ -268,7 +268,7 @@ namespace MoonProject.Gameplay
         {
             ScanBeamLook look = _look;
             Color cyanColor = _scanTuning.ScanLineColor;
-            Color amberColor = _scanTuning.CompletionPingColor;
+            Color pingColor = _scanTuning.CompletionPingColor;
             float coreSize = _scanTuning.LensGlowSize;
             float coreAlpha = Mathf.Min(_scanTuning.LensGlowAlpha, MaxBloomSafeCoreAlpha);
             float haloSize = _scanTuning.LensHaloSize;
@@ -311,10 +311,10 @@ namespace MoonProject.Gameplay
             _lastContactCenter = contactCenter;
 
             // 1. Stylised narrow scan beam wedge from 07's cheek lens to the current surface scan line on the target
-            StepWedgeMesh(wedgeOrigin, contactCenter, right, orthoUp, spanHeight, cyanColor, amberColor, sweepLevel, widthScale);
+            StepWedgeMesh(wedgeOrigin, contactCenter, right, orthoUp, spanHeight, cyanColor, pingColor, sweepLevel, widthScale);
 
             // 2. No point light: a light at the lens would tint 07's cream body and head cyan during a scan
-            Color activeTint = _pingRemaining > 0f ? amberColor : Color.Lerp(cyanColor, amberColor, BeamAmberShare);
+            Color activeTint = _pingRemaining > 0f ? pingColor : Color.Lerp(cyanColor, pingColor, BeamPingShare);
 
             // 3. 07's cheek lens emitter core, calm outer halo, opening iris ring, and short bezel-clamped flare needles
             Color halo = activeTint;
@@ -393,7 +393,7 @@ namespace MoonProject.Gameplay
             }
 
             // 4. Small data ticks streaming along the beam from the target to the lens
-            StepStreamingDataTicks(wedgeOrigin, contactCenter, right, orthoUp, cyanColor, amberColor, sweepLevel, widthScale);
+            StepStreamingDataTicks(wedgeOrigin, contactCenter, right, orthoUp, cyanColor, pingColor, sweepLevel, widthScale);
 
             // 5. Sparse, brief tiny dust sparkles strictly within a thin band of the beam wedge, capped well below
             //    the bloom threshold
@@ -407,7 +407,7 @@ namespace MoonProject.Gameplay
             Vector3 orthoUp,
             float spanHeight,
             Color cyanColor,
-            Color amberColor,
+            Color pingColor,
             float sweepLevel,
             float widthScale)
         {
@@ -465,8 +465,8 @@ namespace MoonProject.Gameplay
                 float alongAlpha = EvaluateWedgeLongitudinalAlpha(d, beamLen) * screenClearance;
                 float lensHotMix = Mathf.Exp(-d / LensCoreDecayMeters) * look.LensWhite;
                 float contactHotMix = Mathf.Exp(-Mathf.Max(0f, beamLen - d) / ContactLipDecayMeters) * look.ContactWhite;
-                float amber = Mathf.SmoothStep(look.AmberRamp.x, look.AmberRamp.y, u) * look.AmberShare;
-                Color ringColor = Color.Lerp(cyanColor, amberColor, amber);
+                float ping = Mathf.SmoothStep(look.PingRamp.x, look.PingRamp.y, u) * look.PingShare;
+                Color ringColor = Color.Lerp(cyanColor, pingColor, ping);
                 Color baseTint = Color.Lerp(ringColor, Color.white, Mathf.Clamp01(lensHotMix + contactHotMix));
 
                 // Crossed fan sheets tilted in (right, orthoUp) so the wedge fans out visibly from low
@@ -535,7 +535,7 @@ namespace MoonProject.Gameplay
             Vector3 right,
             Vector3 orthoUp,
             Color cyanColor,
-            Color amberColor,
+            Color pingColor,
             float sweepLevel,
             float widthScale)
         {
@@ -570,7 +570,7 @@ namespace MoonProject.Gameplay
                     + orthoUp * (Mathf.Sin(u * Mathf.PI) * look.TickBow * laneSign);
 
                 float tickLen = Mathf.Lerp(look.TickLength.x, look.TickLength.y, env) * widthScale;
-                Color tickColor = Color.Lerp(amberColor, coolColor, (1f - u) * look.TickCyanShare);
+                Color tickColor = Color.Lerp(pingColor, coolColor, (1f - u) * look.TickCyanShare);
                 tickColor.a = Mathf.Min(look.TickAlphaCap, look.TickAlpha * env * sweepLevel);
                 _streaks.Add(pos, tickWidth, tickColor, -beamDir * tickLen);
             }

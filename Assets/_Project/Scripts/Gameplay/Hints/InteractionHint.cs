@@ -7,8 +7,9 @@ namespace MoonProject.Gameplay
     public readonly struct InteractionHint
     {
         public InteractionHint(InteractionKind kind, Vector3 position, bool ready, string nounKey = null,
-            int setStep = 0, int setCount = 0)
+            int setStep = 0, int setCount = 0, float holdProgress = 0f)
         {
+            HoldProgress = Mathf.Clamp01(holdProgress);
             Kind = kind;
             Position = position;
             Ready = ready;
@@ -37,6 +38,15 @@ namespace MoonProject.Gameplay
 
         /// <summary>The pieces in that set (0 when the hint is not a set piece's scan).</summary>
         public int SetCount { get; }
+
+        /// <summary>
+        /// The verb is a hold (scan, cut, weld, fold down), not a press (pick up): its prompt's keycap carries a ring
+        /// that fills with <see cref="HoldProgress"/>.
+        /// </summary>
+        public bool IsHold => Kind != InteractionKind.None && Kind != InteractionKind.PickUp;
+
+        /// <summary>How far the hold has come while the key is down (0..1); 0 at rest.</summary>
+        public float HoldProgress { get; }
 
         public static InteractionHint None => new InteractionHint(InteractionKind.None, Vector3.zero, false);
     }

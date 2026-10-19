@@ -23,12 +23,15 @@ namespace MoonProject.Gameplay
         private readonly CargoHold _hold;
         private readonly Func<bool> _docked;
         private readonly string _igniter;
+        private readonly bool _fieldFit;
         private bool _carriedOnLoad;
 
         /// <param name="docked">07 stands on a pad it built (the cutter socket is reached there, B6).</param>
         /// <param name="igniter">The spare igniter's story-part id in 07's hold.</param>
-        public RoverStartKit(EventBus events, CargoHold hold, Func<bool> docked, string igniter)
+        /// <param name="fieldFit">The igniter is a small field swap: it fits anywhere once it is in the hold.</param>
+        public RoverStartKit(EventBus events, CargoHold hold, Func<bool> docked, string igniter, bool fieldFit)
         {
+            _fieldFit = fieldFit;
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _hold = hold ?? throw new ArgumentNullException(nameof(hold));
             _docked = docked ?? throw new ArgumentNullException(nameof(docked));
@@ -48,7 +51,7 @@ namespace MoonProject.Gameplay
         /// <summary>07 stands on a pad it built.</summary>
         public bool OnPad => _docked();
 
-        public bool CanFitIgniter => !IgniterFitted && CarriesIgniter && _docked();
+        public bool CanFitIgniter => !IgniterFitted && CarriesIgniter && (_fieldFit || _docked());
 
         public RoverSystemState StateOf(RoverSystem system)
         {

@@ -3102,6 +3102,38 @@
       "notes": "The battery empties: a soft power-down sigh, D4 gliding to A2 under a breath of air."
     },
     {
+      "id": "rover_lights_switch",
+      "category": "tick_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/rover_lights_switch_on.wav",
+        "Assets/_Project/Audio/SFX/rover_lights_switch_off.wav"
+      ],
+      "variantLabels": [
+        "on",
+        "off"
+      ],
+      "sha256": [
+        "1f4bd09649cff908227f9da7faea82a96b0dfa933094a43e08409d5e17642150",
+        "778dd94a01b14cc9f4e3103c76ee058d12efca04f96b1e3df87bcbb51362309e"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -26.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "07's lamps switched by the player (RoverLightsSwitched), at the headlamp: on = a relay tick, its contact and a faint filament breath on D3; off = a softer, darker tick.",
+      "source": "sampled",
+      "pick": "rover_lights_switch"
+    },
+    {
       "id": "lamp_tick",
       "category": "tick_3d",
       "milestone": "M3",

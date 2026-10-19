@@ -241,7 +241,7 @@ namespace MoonProject.Gameplay
             _salvage.ConnectHeld(Bundles);
             _salvage.Connect(Containers);
             StartKit = new RoverStartKit(context.Events, Materials.Hold, () => PadLock != null && PadLock.OnPad,
-                _openingTuning.IgniterPart);
+                _openingTuning.IgniterPart, _openingTuning.IsFieldFit(_openingTuning.IgniterPart));
             Cutter.ConnectSystems(StartKit);
             _battery.ConnectSystems(StartKit);
             _battery.ConnectStructures(_building.Catalog);

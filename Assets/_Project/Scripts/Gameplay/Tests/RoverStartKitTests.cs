@@ -33,7 +33,7 @@ namespace MoonProject.Gameplay.Tests
             _catalog = CargoFixtures.Catalog();
             _hold = CargoFixtures.Stock(_events, _catalog).Hold;
             _docked = false;
-            _kit = new RoverStartKit(_events, _hold, () => _docked, Igniter);
+            _kit = new RoverStartKit(_events, _hold, () => _docked, Igniter, false);
         }
 
         [TearDown]
@@ -57,6 +57,18 @@ namespace MoonProject.Gameplay.Tests
             _kit.Announce();
             Assert.AreEqual(8, _changes.Count, "the readout states every line once");
             Assert.IsTrue(_changes.TrueForAll(changed => changed.Restored));
+        }
+
+        [Test]
+        public void AFieldSwapIgniter_FitsAnywhereOnceItIsInTheHold()
+        {
+            var field = new RoverStartKit(_events, _hold, () => _docked, Igniter, true);
+            Assert.IsFalse(field.CanFitIgniter, "not in the hold yet");
+            Assert.IsTrue(_hold.TryAddPart(Igniter));
+            _docked = false;
+            Assert.IsTrue(field.CanFitIgniter, "off the pad, a small field swap still fits");
+            Assert.IsTrue(field.TryFitIgniter());
+            Assert.AreEqual(RoverSystemState.Ok, field.StateOf(RoverSystem.Cutter));
         }
 
         [Test]
@@ -117,14 +129,14 @@ namespace MoonProject.Gameplay.Tests
             Assert.IsFalse(carried.igniterFitted);
 
             _hold.RemovePart(Igniter);
-            var loaded = new RoverStartKit(_events, _hold, () => _docked, Igniter);
+            var loaded = new RoverStartKit(_events, _hold, () => _docked, Igniter, false);
             loaded.Restore(carried);
             loaded.Announce();
             Assert.IsTrue(_hold.HasPart(Igniter), "the carried igniter is back in the hold as the session starts");
 
             _docked = true;
             loaded.TryFitIgniter();
-            var reloaded = new RoverStartKit(_events, _hold, () => _docked, Igniter);
+            var reloaded = new RoverStartKit(_events, _hold, () => _docked, Igniter, false);
             reloaded.Restore(loaded.Capture());
             Assert.IsTrue(reloaded.IgniterFitted);
             Assert.AreEqual(RoverSystemState.Ok, reloaded.StateOf(RoverSystem.Cutter));

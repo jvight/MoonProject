@@ -111,6 +111,14 @@ namespace MoonProject.Audio
         [Tooltip("Volume scale of the settle when the lift sets 07 down.")]
         [Range(0f, 1f)] [SerializeField] private float _settleVolume = 1f;
 
+        [Header("Lamp switch (RoverLightsSwitched)")]
+        [Tooltip("Volume scale of the switch as the player turns 07's lamps on: the relay tick and the filament's " +
+                 "breath.")]
+        [Range(0f, 1f)] [SerializeField] private float _lightsOnVolume = 0.9f;
+
+        [Tooltip("Volume scale of the switch as the lamps go off: kept softer than on.")]
+        [Range(0f, 1f)] [SerializeField] private float _lightsOffVolume = 0.55f;
+
         [Header("07's wake")]
         [Tooltip("The Asleep radio and 07's small cues as it wakes through its own eye (cutscenes §1).")]
         [SerializeField] private WakeAudioSettings _wake = new WakeAudioSettings();
@@ -151,6 +159,8 @@ namespace MoonProject.Audio
         public float LiftFadeOut => _liftFadeOut;
         public float LiftVolume => _liftVolume;
         public float SettleVolume => _settleVolume;
+        public float LightsOnVolume => _lightsOnVolume;
+        public float LightsOffVolume => _lightsOffVolume;
 
         public WakeAudioSettings Wake => _wake;
     }
