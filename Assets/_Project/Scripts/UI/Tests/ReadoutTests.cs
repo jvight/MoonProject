@@ -34,7 +34,7 @@ namespace MoonProject.UI.Tests
             "BÁNH XE ········ OK (1 BÁNH KHÁC BỘ)",
             "ĐÈN ············ OK",
             "ỐNG KÍNH · QUÉT  OK",
-            "LẮP DỰNG ······· OK · 0 BẢN VẼ",
+            "LẮP RÁP ········ OK · 0 BẢN VẼ",
             "MỎ CẮT ········· LỖI · MẤT BỘ ĐÁNH LỬA",
             "CÁNH PIN ······· KẸT",
             "ĂNG-TEN ········ CHỈ NHẬN",
