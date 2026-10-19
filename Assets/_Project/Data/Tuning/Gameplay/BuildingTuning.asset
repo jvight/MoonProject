@@ -20,6 +20,7 @@ MonoBehaviour:
   _deconstructRefundShare: 0.75
   _apronGlowFadeSeconds: 0.8
   _ghostAheadMetres: 4.5
+  _apronPadYaw: 180
   _apronSnapRadius: 3
   _settleThumpMeters: 0.042
   _settleDustRingCount: 18
