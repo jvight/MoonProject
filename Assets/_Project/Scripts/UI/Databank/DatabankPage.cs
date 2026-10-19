@@ -91,7 +91,6 @@ namespace MoonProject.UI
                 return;
             }
 
-            _view.WriteStrip(_index);
             ShowFocused();
         }
 

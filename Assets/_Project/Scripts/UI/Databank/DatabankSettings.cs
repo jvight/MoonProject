@@ -52,9 +52,9 @@ namespace MoonProject.UI
         [Range(10f, 60f)]
         [SerializeField] private float _stageFieldOfView = 26f;
 
-        [Tooltip("How much room the framing leaves around the model (1 = its bounds touch the frame).")]
-        [Range(1f, 2f)]
-        [SerializeField] private float _stageFrameMargin = 1.25f;
+        [Tooltip("Share of the stage rect the model's bounds fill (its height, or the width it sweeps as it turns).")]
+        [Range(0.4f, 1f)]
+        [SerializeField] private float _stageFill = 0.8f;
 
         [Tooltip("Pixels of the stage's render texture (twice the 860 x 420 panel rect, like the face texture).")]
         [SerializeField] private Vector2Int _stageResolution = new Vector2Int(1720, 840);
@@ -68,7 +68,11 @@ namespace MoonProject.UI
 
         [Tooltip("Stage fade of the wireframe at the first piece of a set: faint, brightening to full as pieces come.")]
         [Range(0.05f, 1f)]
-        [SerializeField] private float _wireFirstPieceFade = 0.35f;
+        [SerializeField] private float _wireFirstPieceFade = 0.2f;
+
+        [Tooltip("Fresnel power of the wireframe's rim: higher keeps flat faces dark, so the model reads as its edges.")]
+        [Range(0.5f, 6f)]
+        [SerializeField] private float _wireRimPower = 4.5f;
 
         [Tooltip("Warm key light colour on the model in full colour.")]
         [SerializeField] private Color _keyColour = new Color(1f, 0.93f, 0.82f);
@@ -121,7 +125,7 @@ namespace MoonProject.UI
 
         public float StageFieldOfView => _stageFieldOfView;
 
-        public float StageFrameMargin => _stageFrameMargin;
+        public float StageFill => _stageFill;
 
         public Vector2Int StageResolution => _stageResolution;
 
@@ -130,6 +134,8 @@ namespace MoonProject.UI
         public Material WireMaterial => _wireMaterial;
 
         public float WireFirstPieceFade => _wireFirstPieceFade;
+
+        public float WireRimPower => _wireRimPower;
 
         public Color KeyColour => _keyColour;
 

@@ -31,7 +31,7 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
-        public void TheIndex_SortsEntriesIntoTheirCategories_NewestFirst_AndLightsTheErasFound()
+        public void TheIndex_SortsEntriesIntoTheirCategories_NewestFirst_AndKnowsWhereACardIsUnread()
         {
             _databank.Unlock(Entry("db.unit07", DatabankCategory.Machines, DatabankEra.Lumen));
             _databank.Unlock(Entry("db.earth_eclipse", DatabankCategory.Phenomena, DatabankEra.None));
@@ -42,9 +42,6 @@ namespace MoonProject.UI.Tests
             CollectionAssert.AreEqual(new[] { "db.scout3", "db.unit07" }, index.EntriesOf(0), "newest first");
             CollectionAssert.AreEqual(new[] { "db.earth_eclipse" }, index.EntriesOf(3));
             Assert.AreEqual(0, index.EntriesOf(4).Count);
-            Assert.IsTrue(index.EraFound(DatabankEra.Probes));
-            Assert.IsTrue(index.EraFound(DatabankEra.Lumen));
-            Assert.IsFalse(index.EraFound(DatabankEra.Sorties));
             Assert.IsTrue(index.HasUnread(0, _databank));
             _databank.MarkRead("db.scout3");
             _databank.MarkRead("db.unit07");

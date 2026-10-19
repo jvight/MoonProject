@@ -24,7 +24,7 @@ MonoBehaviour:
     _view: 0
     _model: {fileID: 9151376675619698006, guid: 75ace44f4d9851344a3451fee0c31efe, type: 3}
     _hiddenNodes: []
-    _framingYaw: 0
+    _framingYaw: 145
     _print: {fileID: 0}
     _unlock:
       _kind: 0
@@ -41,7 +41,7 @@ MonoBehaviour:
     _view: 0
     _model: {fileID: 9015765694771908943, guid: 8d42257fd88d2eb4ea09b9c56b398515, type: 3}
     _hiddenNodes: []
-    _framingYaw: 0
+    _framingYaw: 145
     _print: {fileID: 0}
     _unlock:
       _kind: 1
@@ -58,7 +58,7 @@ MonoBehaviour:
     _view: 0
     _model: {fileID: 4928122742167231833, guid: 2412cbd3726d8e24e893a5ef43d4f2a8, type: 3}
     _hiddenNodes: []
-    _framingYaw: 0
+    _framingYaw: 145
     _print: {fileID: 0}
     _unlock:
       _kind: 1

@@ -113,6 +113,12 @@ namespace MoonProject.Rover.PlayModeTests
             StringAssert.Contains("VIS", page.View.Fields);
             StringAssert.Contains("1967", page.View.Fields);
             Assert.IsFalse(archive.IsUnread(ScoutId), "the page read the Scout's card");
+            for (int i = 0; i < DatabankIndex.StripEras.Length; i++)
+            {
+                Assert.AreEqual(DatabankIndex.StripEras[i] == DatabankEra.Probes, page.View.IsMarkLit(i),
+                    $"the era strip lights only the Scout's era (mark {i})");
+            }
+
             Capture("databank_scout_wire");
 
             yield return Tap(_keyboard.fKey);
@@ -120,6 +126,11 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.IsTrue(page.IsColour, "F shows its true colours");
             Capture("databank_scout_colour");
             yield return Tap(_keyboard.fKey);
+
+            yield return StepTo(page, "db.unit07");
+            yield return RealRoverScene.WaitSeconds(0.8f);
+            Assert.IsTrue(page.StageHasModel, "07's own wireframe turns on the tube");
+            Capture("databank_unit07_wire");
 
             yield return StepTo(page, "db.card_kessler_arai");
             yield return RealRoverScene.WaitSeconds(0.6f);

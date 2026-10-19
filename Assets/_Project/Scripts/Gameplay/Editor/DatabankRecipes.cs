@@ -18,6 +18,12 @@ namespace MoonProject.Gameplay.Editor
         private const string LanderCargo = ScanTuning.LanderCargoId;
         private const string LumenSets = "FallenSolarArray,HabitatModules,RadioTower";
 
+        /// <summary>
+        /// Degrees an SSR rover turns on the page so its CRT face looks out over its front-left shoulder (its art faces
+        /// away from the stage camera at 0).
+        /// </summary>
+        private const float RoverFramingYaw = 145f;
+
         /// <summary>Art's prefab for the Scout, whose camera and scoop the 1971 crew took home.</summary>
         private static readonly string[] ScoutRemovedParts = { "TvCamera", "ScoopArm" };
 
@@ -26,11 +32,13 @@ namespace MoonProject.Gameplay.Editor
             return new[]
             {
                 Machine("unit07", DatabankMaker.KesslerArai, "1983", DatabankEra.Lumen, "db.unit07.readout",
-                    "notes.unit07", Models + "/Rover/RoverModel.prefab", DatabankUnlock.Seeded),
+                    "notes.unit07", Models + "/Rover/RoverModel.prefab", DatabankUnlock.Seeded, RoverFramingYaw),
                 Machine("elder06", DatabankMaker.KesslerArai, "1978", DatabankEra.BuildOut, "elder.06.manifest",
-                    "db.elder06.history", Models + "/Rover/Elder06.prefab", DatabankUnlock.StoryScan("elder06")),
+                    "db.elder06.history", Models + "/Rover/Elder06.prefab", DatabankUnlock.StoryScan("elder06"),
+                    RoverFramingYaw),
                 Machine("elder01", DatabankMaker.KesslerArai, "1978", DatabankEra.BuildOut, "db.elder01.readout",
-                    "db.elder01.history", Models + "/Rover/Elder01.prefab", DatabankUnlock.StoryScan("elder01")),
+                    "db.elder01.history", Models + "/Rover/Elder01.prefab", DatabankUnlock.StoryScan("elder01"),
+                    RoverFramingYaw),
                 new DatabankEntry("db.scout3", DatabankCategory.Machines, "scan.scout3.name", DatabankMaker.VIS, "1967",
                     DatabankEra.Probes, "scan.scout3.manifest", "scan.scout3.note", DatabankViewKind.Model,
                     LoadModel(Models + "/Props/Prop_OldLander.prefab"), ScoutRemovedParts, 0f, null,
@@ -70,10 +78,10 @@ namespace MoonProject.Gameplay.Editor
         }
 
         private static DatabankEntry Machine(string name, DatabankMaker maker, string year, DatabankEra era,
-            string readoutKey, string historyKey, string modelPath, DatabankUnlock unlock)
+            string readoutKey, string historyKey, string modelPath, DatabankUnlock unlock, float framingYaw = 0f)
         {
             return new DatabankEntry("db." + name, DatabankCategory.Machines, "db." + name + ".name", maker, year, era,
-                readoutKey, historyKey, DatabankViewKind.Model, LoadModel(modelPath), null, 0f, null, unlock);
+                readoutKey, historyKey, DatabankViewKind.Model, LoadModel(modelPath), null, framingYaw, null, unlock);
         }
 
         private static DatabankEntry Structure(string name, DatabankMaker maker, string year, DatabankEra era,
