@@ -341,6 +341,136 @@ namespace MoonProject.World.PlayModeTests
             Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
         }
 
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(CanyonSessionScene))]
+        [PostBuildCleanup(typeof(CanyonSessionScene))]
+        public IEnumerator Albedo_CapturesOwnerApronAndOverheadViews()
+        {
+            BootstrapHarness.DeleteSaveFiles(CanyonSessionScene.SaveSlot);
+#if UNITY_EDITOR
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(CanyonSessionScene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            while (!loading.isDone)
+            {
+                yield return null;
+            }
+#else
+            throw new NotSupportedException("TerrainR1Session loads the scene through the editor.");
+#endif
+            Scene loadedScene = SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath);
+            GameBootstrap bootstrap = null;
+            SkyCycleSystem skyCycle = null;
+            WorldSystem worldSystem = null;
+            foreach (GameObject root in loadedScene.GetRootGameObjects())
+            {
+                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
+                if (skyCycle == null)
+                {
+                    skyCycle = root.GetComponentInChildren<SkyCycleSystem>(true);
+                }
+
+                if (worldSystem == null)
+                {
+                    worldSystem = root.GetComponentInChildren<WorldSystem>(true);
+                }
+            }
+
+            Assert.IsNotNull(bootstrap, "Main scene must have GameBootstrap.");
+            Assert.IsNotNull(skyCycle, "Main scene must have SkyCycleSystem.");
+            Assert.IsNotNull(worldSystem, "Main scene must have WorldSystem.");
+
+            GameContext context = bootstrap.Context;
+            _awoke = context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
+            float started = Time.time;
+            while (!_awake)
+            {
+                Assert.Less(Time.time - started, WakeTimeout, "07 wakes up");
+                yield return null;
+            }
+
+            yield return new WaitForSeconds(SettleSeconds);
+
+#if UNITY_EDITOR
+            var earthTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/_Project/Art/World/Planet/T_R1_Earth_Albedo.png");
+            if (earthTex != null)
+            {
+                foreach (GameObject root in loadedScene.GetRootGameObjects())
+                {
+                    foreach (Transform t in root.GetComponentsInChildren<Transform>(true))
+                    {
+                        if (t.name == "Earth")
+                        {
+                            var rend = t.GetComponent<Renderer>();
+                            if (rend != null)
+                            {
+                                var mpb = new MaterialPropertyBlock();
+                                rend.GetPropertyBlock(mpb);
+                                mpb.SetTexture("_BaseMap", earthTex);
+                                rend.SetPropertyBlock(mpb);
+                            }
+                        }
+                    }
+                }
+            }
+#endif
+
+            string albedoFolder = Path.Combine(CaptureFolder, "albedo");
+            Directory.CreateDirectory(albedoFolder);
+
+            Camera view = context.Get<IViewCamera>().Camera;
+            var host = new GameObject("AlbedoReviewCamera");
+            try
+            {
+                var reviewCam = host.AddComponent<Camera>();
+                reviewCam.CopyFrom(view);
+                reviewCam.enabled = false;
+                CopyPipelineSettings(view, reviewCam);
+
+                // 1. Owner view: chase cam near the B2 cable looking at The Peak.
+                skyCycle.SetClockTime(EarthlitTimeSeconds, false);
+                reviewCam.transform.SetPositionAndRotation(
+                    new Vector3(-7.58f, 3.07f, -9.97f),
+                    Quaternion.Euler(7.52f, 20.69f, 0f));
+                reviewCam.fieldOfView = 50.2f;
+                yield return null;
+                yield return null;
+                FrameCapture.SavePng(reviewCam, CaptureWidth, CaptureHeight, Path.Combine(albedoFolder, "owner.png"));
+
+                // 2. Overhead view of the basin plain showing the 50-300 m patches and 4 faint broken rays.
+                reviewCam.farClipPlane = Mathf.Max(reviewCam.farClipPlane, 1500f);
+                reviewCam.transform.SetPositionAndRotation(
+                    new Vector3(0f, 520f, 35f),
+                    Quaternion.Euler(90f, 0f, 0f));
+                reviewCam.fieldOfView = 56f;
+                yield return null;
+                yield return null;
+                FrameCapture.SavePng(reviewCam, CaptureWidth, CaptureHeight, Path.Combine(albedoFolder, "overhead.png"));
+            }
+            finally
+            {
+                Object.Destroy(host);
+            }
+
+            // 3. Golden hour from the apron (OpeningMilestone.FirstCharge).
+            IWorldAnchors anchors = context.Get<IWorldAnchors>();
+            Assert.IsTrue(anchors.TryGet(WorldAnchorIds.PlaceApron, out WorldAnchor apronAnchor), "PlaceApron exists");
+            ITerrainQuery terrain = context.Get<ITerrainQuery>();
+            IRoverPlacement rover = context.Get<IRoverPlacement>();
+
+            Vector3 apron = apronAnchor.Position;
+            Vector3 plainNearApron = new Vector3(apron.x - 10.5f, 0f, apron.z - 6.5f);
+            plainNearApron.y = terrain.SampleHeight(plainNearApron.x, plainNearApron.z);
+            Quaternion roverRot = Quaternion.Euler(0f, 10f, 0f);
+
+            context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.FirstCharge, true));
+            rover.PlaceAt(plainNearApron, roverRot);
+            yield return new WaitForSeconds(2.0f);
+            FrameCapture.SavePng(view, CaptureWidth, CaptureHeight, Path.Combine(albedoFolder, "golden-hour.png"));
+
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
         private static (double Median, double P90) CaptureAndMeasure(Camera camera, string baseName)
         {
             string fullPath = Path.Combine(CaptureFolder, baseName + ".png");
