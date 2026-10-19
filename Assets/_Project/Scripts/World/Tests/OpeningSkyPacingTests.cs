@@ -6,7 +6,8 @@ namespace MoonProject.World.Tests
     /// <summary>
     /// The first day follows the opening (opening v2 §9.2): the eclipse holds until the first charge and ends within 2 s
     /// of it; the Sun never sets before the night is ready; it holds at golden hour until power-on and at last light
-    /// until the night is ready; the first sunset runs in its tuned length; a restored milestone snaps the clock.
+    /// until the night is ready; the first sunset starts the moment the night is ready, wherever the sink has brought
+    /// the Sun, and reaches nightfall in its tuned length; a restored milestone snaps the clock.
     /// </summary>
     public sealed class OpeningSkyPacingTests
     {
@@ -81,6 +82,31 @@ namespace MoonProject.World.Tests
             Run(10f);
             Assert.AreEqual(before + 10f, _clock.TimeSeconds, 2f * Frame,
                 "after nightfall the day runs at its normal pace");
+        }
+
+        [TestCase(0f)]
+        [TestCase(0.1f)]
+        [TestCase(0.5f)]
+        [TestCase(0.9f)]
+        [TestCase(1f)]
+        public void FirstSunset_StartsWhenTheNightIsReady_AndEndsInItsTunedLength(float sinkProgress)
+        {
+            _pacing.Reach(OpeningMilestone.FirstCharge, true, _clock);
+            _pacing.Reach(OpeningMilestone.PowerOn, false, _clock);
+            Run(_cycle.LastLightSinkSeconds * sinkProgress + (sinkProgress >= 1f ? 1f : 0f));
+            float readyAt = _clock.TimeSeconds;
+
+            _pacing.Reach(OpeningMilestone.NightReady, false, _clock);
+            float seconds = 0f;
+            while (_clock.TimeSeconds < _pacing.NightfallTime)
+            {
+                _clock.Tick(_pacing.ClockDelta(_clock.TimeSeconds, Frame), out _);
+                seconds += Frame;
+                Assert.Less(seconds, _cycle.FirstSunsetSeconds + 1f, "the first sunset never drags on");
+            }
+
+            Assert.AreEqual(_cycle.FirstSunsetSeconds, seconds, Frame,
+                $"night ready at clock {readyAt:F0} s ({sinkProgress:P0} of the sink): nightfall in its tuned length");
         }
 
         [Test]

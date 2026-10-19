@@ -34,7 +34,8 @@ namespace MoonProject.World
         [Range(0.5f, 10f)]
         [SerializeField] private float _lastLightElevation = 3f;
 
-        [Tooltip("Real seconds the Sun takes to sink from golden hour to last light after power-on.")]
+        [Tooltip("Real seconds the Sun takes to sink from golden hour to last light after power-on, while the night " +
+            "is not yet ready (the first sunset takes over the moment it is).")]
         [Range(10f, 600f)]
         [SerializeField] private float _lastLightSinkSeconds = 200f;
 
@@ -42,9 +43,10 @@ namespace MoonProject.World
         [Range(-4f, -0.1f)]
         [SerializeField] private float _nightfallElevation = -1.5f;
 
-        [Tooltip("Real seconds the first sunset takes, from last light to nightfall, once the night is ready.")]
+        [Tooltip("Real seconds the first sunset takes once the night is ready: from wherever the Sun stands then (on " +
+            "its sink, or held at last light) to nightfall, a watched beat rather than a wait.")]
         [Range(30f, 600f)]
-        [SerializeField] private float _firstSunsetSeconds = 150f;
+        [SerializeField] private float _firstSunsetSeconds = 75f;
 
         [Tooltip("Clock time (seconds into Day 1) used when loading an older save that has no world.sky section: " +
             "starts after the opening eclipse in full low sunlight.")]
