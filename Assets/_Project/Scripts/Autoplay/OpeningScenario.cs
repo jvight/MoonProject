@@ -40,9 +40,6 @@ namespace MoonProject.Autoplay
         /// <summary>Seconds the base may take to become night-ready: a sunset that comes first leaves the array idle, so the bank never charges.</summary>
         private const float NightReadySeconds = 150f;
 
-        /// <summary>Where the first day's Sun holds at last light (SkyCycleSettings.LastLightElevation), degrees.</summary>
-        private const float LastLightElevationDegrees = 3f;
-
         /// <summary>Degrees under last light that still count as last light (the Sun settles onto it).</summary>
         private const float LastLightToleranceDegrees = 0.5f;
 
@@ -319,13 +316,14 @@ namespace MoonProject.Autoplay
                 NightReadySeconds);
             if (!_bot.Failed)
             {
-                float elevation = SunElevationDegrees(_bot.World.Context.Get<ISunlight>().SunDirection);
-                if (elevation < LastLightElevationDegrees - LastLightToleranceDegrees)
+                var sunlight = _bot.World.Context.Get<ISunlight>();
+                float elevation = SunElevationDegrees(sunlight.SunDirection);
+                float lastLight = sunlight.LastLightElevationDegrees;
+                if (elevation < lastLight - LastLightToleranceDegrees)
                 {
                     _bot.Warn("the base became night-ready with the sun at " +
                               elevation.ToString("0.0", CultureInfo.InvariantCulture) +
-                              " degrees, past last light (" +
-                              LastLightElevationDegrees.ToString("0", CultureInfo.InvariantCulture) +
+                              " degrees, past last light (" + lastLight.ToString("0", CultureInfo.InvariantCulture) +
                               "): the array stood idle through the dusk.");
                 }
             }

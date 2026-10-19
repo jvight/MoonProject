@@ -100,6 +100,8 @@ namespace MoonProject.World
             }
         }
 
+        public float LastLightElevationDegrees => _settings.SkyCycle.LastLightElevation;
+
         public float SecondsToSunset
         {
             get

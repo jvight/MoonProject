@@ -37,6 +37,9 @@ namespace MoonProject.Core
         /// </summary>
         float SecondsToSunset { get; }
 
+        /// <summary>Elevation, degrees above the horizon, where the first day's Sun holds at last light until the night is ready.</summary>
+        float LastLightElevationDegrees { get; }
+
         /// <summary>
         /// Direct sunlight reaching <paramref name="position"/> right now, 0..1: 0 when the Sun is eclipsed or hidden
         /// behind the local terrain horizon along the Sun's bearing, with a soft ramp across the horizon edge.
