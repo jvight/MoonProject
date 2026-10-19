@@ -44,6 +44,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float BotLineUpMetres = -6f;
 
         private const float LightThrottle = 0.15f;
+        private const float HeldSteer = 0.8f;
         private const float PoseDegrees = 2f;
         private const float PoseMetres = 0.05f;
 
@@ -169,10 +170,10 @@ namespace MoonProject.Gameplay.PlayModeTests
         [Timeout(200000)]
         [PrebuildSetup(typeof(PlaythroughScene))]
         [PostBuildCleanup(typeof(PlaythroughScene))]
-        public IEnumerator ArrivingWithAFingerOnTheThrottle_ChargingStartsAndTheDockHolds()
+        public IEnumerator ArrivingWithAFingerOnTheThrottleAndTheWheelHeld_ChargingStartsAndTheDockHolds()
         {
             yield return Stage(ArrivalDegrees);
-            _rover.SetDriveSource(new LightHold(_pilot, LightThrottle));
+            _rover.SetDriveSource(new LightHold(_pilot, LightThrottle, HeldSteer));
             _pilot.Target = _centre;
             yield return Until(() => _gameplay.Battery.Model.IsCharging, DriveTimeout,
                 () => $"07 charges on the pad with a light throttle held (07 at {_rover.Position}, the pad at " +
@@ -235,16 +236,20 @@ namespace MoonProject.Gameplay.PlayModeTests
                       $"{_gameplay.PadLock.OnPad}, charging {_gameplay.Battery.Model.IsCharging})");
         }
 
-        /// <summary>A finger kept lightly on the throttle on top of whatever the pilot does.</summary>
+        /// <summary>
+        /// A finger kept lightly on the throttle and the wheel held over, on top of whatever the pilot does.
+        /// </summary>
         private sealed class LightHold : IRoverDriveSource
         {
             private readonly Autopilot _pilot;
             private readonly float _throttle;
+            private readonly float _steer;
 
-            public LightHold(Autopilot pilot, float throttle)
+            public LightHold(Autopilot pilot, float throttle, float steer)
             {
                 _pilot = pilot;
                 _throttle = throttle;
+                _steer = steer;
             }
 
             public Vector2 Drive
@@ -252,7 +257,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 get
                 {
                     Vector2 drive = _pilot.Drive;
-                    return new Vector2(drive.x, Mathf.Max(drive.y, _throttle));
+                    return new Vector2(Mathf.Abs(drive.x) > _steer ? drive.x : _steer, Mathf.Max(drive.y, _throttle));
                 }
             }
         }
