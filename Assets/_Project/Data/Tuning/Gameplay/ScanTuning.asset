@@ -131,3 +131,21 @@ MonoBehaviour:
     _textKey: db.card_ilc.readout
     _size: 0
     _offset: {x: 0, y: 0, z: 0}
+  - _storyId: kestrel3
+    _ruinId: Kestrel3_HullPanel
+    _node: Kestrel_HullPanel
+    _textKey: db.kestrel3.readout
+    _size: 1
+    _offset: {x: 0, y: 0, z: 0}
+  - _storyId: elder06
+    _ruinId: Elder06
+    _node: Body
+    _textKey: elder.06.manifest
+    _size: 1
+    _offset: {x: 0, y: 0, z: 0}
+  - _storyId: elder01
+    _ruinId: Elder01
+    _node: Body
+    _textKey: db.elder01.readout
+    _size: 1
+    _offset: {x: 0, y: 0, z: 0}
