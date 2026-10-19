@@ -65,6 +65,51 @@ namespace MoonProject.Audio
         [Range(0f, 1f)]
         [SerializeField] private float _rush = 0.7f;
 
+        [Header("07's face booting")]
+        [Tooltip("The tube powering on: the degauss thunk and the high-voltage whine.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _facePowerOn = 0.8f;
+
+        [Tooltip("Each stroke of the maker's mark: the beam's faint hum on its note.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _faceStroke = 0.7f;
+
+        [Tooltip("How many strokes share one note as the mark climbs the pentatonic (11 strokes over 6 notes).")]
+        [Range(1, 4)]
+        [SerializeField] private int _strokesPerNote = 2;
+
+        [Tooltip("The mark whole (its wordmark typed out): the resolve on D.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _faceResolve = 0.7f;
+
+        [Tooltip("Each typed character pair's counter tick.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _faceText = 0.6f;
+
+        [Tooltip("A typed line settling: the heavier tick.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _faceLine = 0.7f;
+
+        [Tooltip("Each step of the load bar; the fifth resolves.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _faceLoad = 0.75f;
+
+        [Tooltip("Text ticks closer together than this (seconds) are skipped.")]
+        [Range(0f, 0.2f)]
+        [SerializeField] private float _textMinInterval = 0.045f;
+
+        [Tooltip("Text ticks within this many seconds of the last count as a run and soften.")]
+        [Range(0.05f, 1f)]
+        [SerializeField] private float _textStreakWindow = 0.2f;
+
+        [Tooltip("Volume multiplier per text tick within a run.")]
+        [Range(0.5f, 1f)]
+        [SerializeField] private float _textStreakDecay = 0.95f;
+
+        [Tooltip("Softest a run of text ticks gets (volume scale), so a 7 s readout stays quiet but present.")]
+        [Range(0.1f, 1f)]
+        [SerializeField] private float _textStreakFloor = 0.7f;
+
         public float OpeningStatic => _openingStatic;
         public float SwellSeconds => _swellSeconds;
         public float HandOverSeconds => _handOverSeconds;
@@ -77,5 +122,16 @@ namespace MoonProject.Audio
         public float Check => _check;
         public float Fault => _fault;
         public float Rush => _rush;
+        public float FacePowerOn => _facePowerOn;
+        public float FaceStroke => _faceStroke;
+        public int StrokesPerNote => _strokesPerNote;
+        public float FaceResolve => _faceResolve;
+        public float FaceText => _faceText;
+        public float FaceLine => _faceLine;
+        public float FaceLoad => _faceLoad;
+        public float TextMinInterval => _textMinInterval;
+        public float TextStreakWindow => _textStreakWindow;
+        public float TextStreakDecay => _textStreakDecay;
+        public float TextStreakFloor => _textStreakFloor;
     }
 }
