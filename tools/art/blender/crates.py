@@ -51,6 +51,8 @@ CRATE_SPECS: dict[str, dict[str, Any]] = {
         "strap_offsets_x": (0.0,),
         "signage_cell": "LUMEN",
         "signage_size": (0.14, 0.056),
+        "decal_center_xy": (-0.100, 0.135),
+        "decal_size": 0.042,
         "corner_w": 0.036,
         "skid_h": 0.022,
         "wall_inset": 0.012,
@@ -73,6 +75,8 @@ CRATE_SPECS: dict[str, dict[str, Any]] = {
         "strap_offsets_x": (-0.17, 0.17),
         "signage_cell": "SEC_04",
         "signage_size": (0.18, 0.076),
+        "decal_center_xy": (-0.195, 0.214),
+        "decal_size": 0.060,
         "corner_w": 0.048,
         "skid_h": 0.030,
         "wall_inset": 0.016,
@@ -95,6 +99,8 @@ CRATE_SPECS: dict[str, dict[str, Any]] = {
         "strap_offsets_x": (-0.24, 0.24),
         "signage_cell": "SEC04_HABITAT",
         "signage_size": (0.24, 0.096),
+        "decal_center_xy": (-0.284, 0.286),
+        "decal_size": 0.076,
         "corner_w": 0.058,
         "skid_h": 0.038,
         "wall_inset": 0.020,
@@ -448,6 +454,22 @@ def build_crate(name: str) -> bpy.types.Object:
     # =========================================================================
     r1kit.create_empty("CutPoint", parent=lid_obj, pivot_u=(0.0, hinge_y, hinge_z))
     r1kit.create_empty("ItemSocket", parent=root_obj, pivot_u=(0.0, item_y, 0.0))
+
+    # =========================================================================
+    # Child `Decal_VIS_1` (VIS 1985 mark on the flat front panel corner)
+    # =========================================================================
+    dx, dy = spec["decal_center_xy"]
+    d_size = float(spec["decal_size"])
+    r1kit.add_maker_decal_node(
+        parent=root_obj,
+        name="Decal_VIS_1",
+        cell_key="VIS_1985",
+        center_u=(dx, dy, shell_d * 0.5),
+        normal_u=(0.0, 0.0, 1.0),
+        up_u=(0.0, 1.0, 0.0),
+        width=d_size,
+        height=d_size,
+    )
 
     return root_obj
 

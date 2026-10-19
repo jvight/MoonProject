@@ -907,6 +907,18 @@ def build_cargo_crate_open() -> bpy.types.Object:
     r1kit.create_empty("PartSocket_1", parent=root_obj, pivot_u=(0.34, 0.55, 0.0))
     r1kit.create_empty("ItemSocket", parent=root_obj, pivot_u=(0.0, 0.48, 0.0))
 
+    # 5b. `Decal_VIS_1` (VIS 1985 mark on the flat corner panel of Wall_Back)
+    r1kit.add_maker_decal_node(
+        parent=root_obj,
+        name="Decal_VIS_1",
+        cell_key="VIS_1985",
+        center_u=(-0.538, 0.255, 0.450),
+        normal_u=(0.0, 0.0, 1.0),
+        up_u=(0.0, 1.0, 0.0),
+        width=0.095,
+        height=0.095,
+    )
+
     # 6. Apply triplanar UVs first, then exact [0, 1] planar UVs on the three LabelPlate plaques
     r1kit.apply_triplanar_uvs(root_obj, texel_scale=0.85)
     _project_label_plate_uvs(plates)

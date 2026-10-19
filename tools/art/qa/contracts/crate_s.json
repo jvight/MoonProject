@@ -14,7 +14,7 @@
     "R1_Signage"
   ],
   "max_triangles": 2600,
-  "max_meshes": 3,
+  "max_meshes": 4,
   "max_draw_calls": 14,
   "allow_rotation": [],
   "scale_tolerance": 0.001,
@@ -53,6 +53,13 @@
         0.0,
         0.0,
         0.06
+      ]
+    },
+    "Decal_VIS_1": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
       ]
     }
   },
