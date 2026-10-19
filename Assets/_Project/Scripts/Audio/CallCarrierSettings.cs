@@ -31,6 +31,19 @@ namespace MoonProject.Audio
         [Range(0.01f, 2f)]
         [SerializeField] private float _facingSmoothing = 0.25f;
 
+        [Tooltip("Metres from 07 toward the light where the call is placed: inside the mix's near distance, so it pans " +
+                 "from the sky point at full level.")]
+        [Range(0.5f, 6f)]
+        [SerializeField] private float _placementDistance = 5f;
+
+        [Tooltip("3D amount of the call (1 = fully from the sky point, lower keeps it closer to centre).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _spatialBlend = 0.8f;
+
+        [Tooltip("Each decoded character's note (share of the cue volume): very quiet.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _decodedVolume = 0.6f;
+
         [Header("Broken (on reserve)")]
         [Tooltip("Shortest dropout, seconds.")]
         [Range(0.02f, 1f)]
@@ -81,6 +94,9 @@ namespace MoonProject.Audio
         public float AwayFloor => _awayFloor;
         public float FacingSharpness => _facingSharpness;
         public float FacingSmoothing => _facingSmoothing;
+        public float PlacementDistance => _placementDistance;
+        public float SpatialBlend => _spatialBlend;
+        public float DecodedVolume => _decodedVolume;
         public float DropoutMin => _dropoutMin;
         public float DropoutMax => Mathf.Max(_dropoutMax, _dropoutMin + MinSpan);
         public float HoldMin => _holdMin;

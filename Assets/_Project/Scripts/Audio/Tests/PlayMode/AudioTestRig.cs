@@ -70,6 +70,8 @@ namespace MoonProject.Audio.PlayModeTests
             Salvage = Child(audioRoot, "SalvageAudio").AddComponent<SalvageAudio>();
             Salvage.Wire(Load<SalvageAudioTuning>("SalvageAudioTuning.asset"));
             Battery = Child(audioRoot, "BatteryAudio").AddComponent<BatteryAudio>();
+            Call = Child(audioRoot, "CallCarrier").AddComponent<CallCarrier>();
+            Call.Wire(soundscapeTuning);
             RoverAudio.Wire(Load<RoverAudioTuning>("RoverAudioTuning.asset"));
             Gameplay.Wire(Load<GameplayAudioTuning>("GameplayAudioTuning.asset"));
             Ui.Wire(Load<UiAudioTuning>("UiAudioTuning.asset"));
@@ -78,6 +80,7 @@ namespace MoonProject.Audio.PlayModeTests
                 RoverAudio, Gameplay, Ui, Radio, Ambience, Soundscape, SmallSounds, Salvage);
             Director.WireTitleMusic(TitleMusic);
             Director.WireBattery(Battery);
+            Director.WireCall(Call);
             Director.WireFeel(Feel, Chirps);
             audioRoot.SetActive(true);
 
@@ -96,6 +99,8 @@ namespace MoonProject.Audio.PlayModeTests
 
 
         public BatteryAudio Battery { get; }
+
+        public CallCarrier Call { get; }
 
         public RadioStation Radio { get; }
 

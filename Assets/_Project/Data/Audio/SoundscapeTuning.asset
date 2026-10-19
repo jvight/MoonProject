@@ -59,6 +59,9 @@ MonoBehaviour:
     _awayFloor: 0.15
     _facingSharpness: 2.5
     _facingSmoothing: 0.25
+    _placementDistance: 5
+    _spatialBlend: 0.8
+    _decodedVolume: 0.6
     _dropoutMin: 0.08
     _dropoutMax: 0.45
     _holdMin: 0.3
