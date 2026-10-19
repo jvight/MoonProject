@@ -37,6 +37,7 @@ namespace MoonProject.Art.Editor
         public const string CargoCrateLabelMaterialName = "R1_CargoCrateLabel";
         public const string MissionFlagStripeMaterialName = "R1_MissionFlagStripe";
         public const string BootprintTrailMaterialName = "R1_BootprintTrail";
+        public const string MakerDecalMaterialName = "M_R1_MakerDecal";
 
         public const string CableMarkerAmberMaterialPath = ArtPaths.R1MaterialsFolder + "/" + CableMarkerAmberMaterialName + ".mat";
         public const string CrateRimGlowAmberMaterialPath = ArtPaths.R1MaterialsFolder + "/" + CrateRimGlowAmberMaterialName + ".mat";
@@ -55,6 +56,7 @@ namespace MoonProject.Art.Editor
         public const string CargoCrateLabelMaterialPath = ArtPaths.R1MaterialsFolder + "/" + CargoCrateLabelMaterialName + ".mat";
         public const string MissionFlagStripeMaterialPath = ArtPaths.R1MaterialsFolder + "/" + MissionFlagStripeMaterialName + ".mat";
         public const string BootprintTrailMaterialPath = ArtPaths.R1MaterialsFolder + "/" + BootprintTrailMaterialName + ".mat";
+        public const string MakerDecalMaterialPath = ArtPaths.R1MaterialsFolder + "/" + MakerDecalMaterialName + ".mat";
 
         public const string LanderReserveAlbedoPath = R1MaterialRecipes.TexturesFolder + "/T_R1_LanderReserve_Albedo.png";
         public const string LanderReserveEmissionPath = R1MaterialRecipes.TexturesFolder + "/T_R1_LanderReserve_Emission.png";
@@ -67,6 +69,7 @@ namespace MoonProject.Art.Editor
         public const string CargoCrateLabelAlbedoPath = R1MaterialRecipes.TexturesFolder + "/T_R1_CargoCrateLabel_Albedo.png";
         public const string BootprintTrailAlbedoPath = R1MaterialRecipes.TexturesFolder + "/T_R1_BootprintTrail_Albedo.png";
         public const string BootprintTrailNormalPath = R1MaterialRecipes.TexturesFolder + "/T_R1_BootprintTrail_Normal.png";
+        public const string MakerDecalsAlbedoPath = R1ModelPostprocessor.MakerDecalsTexturePath;
 
         public const string DeadChargingPostPrefabPath = PropsModelsFolder + "/DeadChargingPost.prefab";
         public const string GroundCableSegmentPrefabPath = PropsModelsFolder + "/GroundCableSegment.prefab";
@@ -410,6 +413,25 @@ namespace MoonProject.Art.Editor
             bootprintMat.SetFloat("_GrazeEnd", 0.75f);
             bootprintMat.SetFloat("_HighSunRelief", 0.15f);
             GeneratedAssets.CreateOrReplace(bootprintMat, BootprintTrailMaterialPath);
+
+            // 17. M_R1_MakerDecal: URP Lit with alpha clip (_AlphaClip = 1, _Cutoff = 0.35), no shadow casting,
+            //     slight smoothness (0.22) so painted maker stencils catch low-angle sun like real vehicle paint.
+            Shader urpLit = R1MaterialLibrary.LoadUrpLitShader();
+            var makerDecalMat = new Material(urpLit) { name = MakerDecalMaterialName };
+            makerDecalMat.SetTexture("_BaseMap", LoadRequiredTexture(MakerDecalsAlbedoPath));
+            makerDecalMat.SetColor("_BaseColor", Color.white);
+            makerDecalMat.SetFloat("_AlphaClip", 1.0f);
+            makerDecalMat.SetFloat("_Cutoff", 0.35f);
+            makerDecalMat.SetFloat("_Surface", 0.0f);
+            makerDecalMat.SetFloat("_Metallic", 0.0f);
+            makerDecalMat.SetFloat("_Smoothness", 0.22f);
+            makerDecalMat.SetFloat("_SpecularHighlights", 1.0f);
+            makerDecalMat.SetFloat("_EnvironmentReflections", 1.0f);
+            makerDecalMat.EnableKeyword("_ALPHATEST_ON");
+            makerDecalMat.renderQueue = (int)RenderQueue.AlphaTest;
+            makerDecalMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+            makerDecalMat.enableInstancing = true;
+            GeneratedAssets.CreateOrReplace(makerDecalMat, MakerDecalMaterialPath);
         }
 
         /// <summary>
@@ -549,6 +571,51 @@ namespace MoonProject.Art.Editor
                 ReplaceRendererSlotMaterial(root, "BlastPatch", R1MaterialRecipes.CreamEnamelSlot, blastMat);
                 ReplaceRendererSlotMaterial(root, "FootpadScuffs", R1MaterialRecipes.CreamEnamelSlot, blastMat);
                 DisableShadowCastingOnHierarchy(root);
+            }
+
+            ApplyMakerDecalOverrides(root);
+        }
+
+        /// <summary>Returns true when <paramref name="nodeName"/> is a maker decal child node (<c>Decal_&lt;Maker&gt;_&lt;n&gt;</c>).</summary>
+        public static bool IsMakerDecalNodeName(string nodeName)
+        {
+            if (string.IsNullOrEmpty(nodeName))
+            {
+                return false;
+            }
+
+            return nodeName.StartsWith("Decal_VIS_", StringComparison.Ordinal)
+                || nodeName.StartsWith("Decal_ILC_", StringComparison.Ordinal)
+                || nodeName.StartsWith("Decal_Tycho_", StringComparison.Ordinal)
+                || nodeName.StartsWith("Decal_KA_", StringComparison.Ordinal);
+        }
+
+        private static void ApplyMakerDecalOverrides(GameObject root)
+        {
+            Renderer[] renderers = root.GetComponentsInChildren<Renderer>(true);
+            Material decalMat = null;
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                Renderer r = renderers[i];
+                if (r == null || !IsMakerDecalNodeName(r.gameObject.name))
+                {
+                    continue;
+                }
+
+                if (decalMat == null)
+                {
+                    decalMat = LoadOrBuildMaterial(MakerDecalMaterialPath);
+                }
+
+                Material[] mats = r.sharedMaterials;
+                for (int m = 0; m < mats.Length; m++)
+                {
+                    mats[m] = decalMat;
+                }
+
+                r.sharedMaterials = mats;
+                r.shadowCastingMode = ShadowCastingMode.Off;
+                r.receiveShadows = true;
             }
         }
 

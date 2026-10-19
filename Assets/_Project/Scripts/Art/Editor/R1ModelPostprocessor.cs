@@ -19,6 +19,7 @@ namespace MoonProject.Art.Editor
         public const string ModelsPrefix = "Assets/_Project/Art/R1/Models/";
         public const string RocksPrefix = "Assets/_Project/Art/R1/Models/Rocks/";
         public const string TexturesPrefix = "Assets/_Project/Art/R1/Textures/";
+        public const string MakerDecalsTexturePath = "Assets/_Project/Art/R1/Brands/T_R1_MakerDecals_Albedo.png";
 
         public override uint GetVersion()
         {
@@ -33,10 +34,15 @@ namespace MoonProject.Art.Editor
                 && normalized.EndsWith(".fbx", StringComparison.OrdinalIgnoreCase);
         }
 
-        /// <summary>Returns true when <paramref name="assetPath"/> is a PNG texture inside the R1 textures folder.</summary>
+        /// <summary>Returns true when <paramref name="assetPath"/> is a PNG texture inside the R1 textures folder or the maker decal atlas.</summary>
         public static bool IsR1TexturePath(string assetPath)
         {
             string normalized = NormalizePath(assetPath);
+            if (normalized.Equals(MakerDecalsTexturePath, StringComparison.Ordinal))
+            {
+                return true;
+            }
+
             return normalized.StartsWith(TexturesPrefix, StringComparison.Ordinal)
                 && normalized.EndsWith(".png", StringComparison.OrdinalIgnoreCase);
         }
@@ -122,6 +128,8 @@ namespace MoonProject.Art.Editor
             }
 
             var importer = (TextureImporter)assetImporter;
+            string normalized = NormalizePath(assetPath);
+            bool isMakerDecal = normalized.Equals(MakerDecalsTexturePath, StringComparison.Ordinal);
             string name = Path.GetFileNameWithoutExtension(assetPath);
             bool isNormal = name.EndsWith("_Normal", StringComparison.OrdinalIgnoreCase);
             bool isMask = name.EndsWith("_Mask", StringComparison.OrdinalIgnoreCase);
@@ -131,7 +139,17 @@ namespace MoonProject.Art.Editor
             importer.mipmapEnabled = true;
             importer.filterMode = FilterMode.Trilinear;
             importer.anisoLevel = 4;
-            importer.wrapMode = TextureWrapMode.Repeat;
+            if (isMakerDecal)
+            {
+                importer.alphaSource = TextureImporterAlphaSource.FromInput;
+                importer.alphaIsTransparency = true;
+                importer.wrapMode = TextureWrapMode.Clamp;
+            }
+            else
+            {
+                importer.wrapMode = TextureWrapMode.Repeat;
+            }
+
             importer.textureCompression = TextureImporterCompression.Uncompressed;
             importer.isReadable = false;
         }
