@@ -3033,8 +3033,9 @@ def add_maker_decal_node(
     mat_name: str = "R1_Signage",
     material_override: bpy.types.Material | None = None,
     local_space: bool = False,
+    cyl_patch: tuple[float, float, float, int] | None = None,
 ) -> bpy.types.Object:
-    """Create a closed manifold wafer decal node (`Decal_<Maker>_<n>`) 1-2 mm off a flat panel mapped to MAKER_DECAL_CELLS."""
+    """Create a closed manifold wafer decal node (`Decal_<Maker>_<n>`) 1-2 mm off a flat or faceted-cylindrical panel mapped to MAKER_DECAL_CELLS."""
     if not name.startswith("Decal_"):
         raise ValueError(f"Decal node name '{name}' must start with 'Decal_'")
     if cell_key not in MAKER_DECAL_CELLS:
@@ -3064,40 +3065,99 @@ def add_maker_decal_node(
     right_b = up_b.cross(n_b).normalized()
 
     piv_b = u_pos(*pivot_u)
-    front_center_b = u_pos(*center_u) + n_b * float(offset)
-    back_center_b = front_center_b - n_b * float(thickness)
-    fc_local = front_center_b - piv_b
-    bc_local = back_center_b - piv_b
-
     hw = 0.5 * float(width)
     hh = 0.5 * float(height)
 
     bm = bmesh.new()
-    vf0 = bm.verts.new(fc_local - hw * right_b - hh * up_b)
-    vf1 = bm.verts.new(fc_local + hw * right_b - hh * up_b)
-    vf2 = bm.verts.new(fc_local + hw * right_b + hh * up_b)
-    vf3 = bm.verts.new(fc_local - hw * right_b + hh * up_b)
-    vb0 = bm.verts.new(bc_local - hw * right_b - hh * up_b)
-    vb1 = bm.verts.new(bc_local + hw * right_b - hh * up_b)
-    vb2 = bm.verts.new(bc_local + hw * right_b + hh * up_b)
-    vb3 = bm.verts.new(bc_local - hw * right_b + hh * up_b)
-
-    f_front = bm.faces.new((vf0, vf1, vf2, vf3))
-    f_back = bm.faces.new((vb0, vb3, vb2, vb1))
-    f_bot = bm.faces.new((vb0, vb1, vf1, vf0))
-    f_right = bm.faces.new((vb1, vb2, vf2, vf1))
-    f_top = bm.faces.new((vb2, vb3, vf3, vf2))
-    f_left = bm.faces.new((vb3, vb0, vf0, vf3))
-
     uv_layer = bm.loops.layers.uv.verify()
-    front_uvs = ((u0, v0), (u1, v0), (u1, v1), (u0, v1))
-    for loop, uv in zip(f_front.loops, front_uvs):
-        loop[uv_layer].uv = uv
-
     trim_uvs = ((ut0, vt0), (ut1, vt0), (ut1, vt1), (ut0, vt1))
-    for side_f in (f_back, f_bot, f_right, f_top, f_left):
-        for loop, uv in zip(side_f.loops, trim_uvs):
+
+    if cyl_patch is not None:
+        r_out, patch_ang_center_deg, patch_ang_span_deg, patch_arc_segments = cyl_patch
+        step_deg = float(patch_ang_span_deg) / float(patch_arc_segments)
+        a0_deg = float(patch_ang_center_deg) - 0.5 * float(patch_ang_span_deg)
+        cos_half = math.cos(math.radians(0.5 * step_deg))
+        r_front = float(r_out) + float(offset) / cos_half
+        r_back = float(r_out) + (float(offset) - float(thickness)) / cos_half
+
+        center_ang_deg = math.degrees(math.atan2(float(normal_u[0]), float(normal_u[2])))
+        half_span_deg = math.degrees(hw / float(r_out))
+        theta_left = center_ang_deg + half_span_deg
+        theta_right = center_ang_deg - half_span_deg
+
+        sample_angles = [theta_left]
+        for k in range(patch_arc_segments - 1, 0, -1):
+            j_deg = a0_deg + k * step_deg
+            if theta_right + 1e-4 < j_deg < theta_left - 1e-4:
+                sample_angles.append(j_deg)
+        sample_angles.append(theta_right)
+
+        def _facet_pt_local(theta_deg: float, r_poly: float, y_val: float) -> Vector:
+            f_pos = (theta_deg - a0_deg) / step_deg
+            k_idx = max(0, min(int(patch_arc_segments) - 1, int(math.floor(f_pos + 1e-7))))
+            t_val = max(0.0, min(1.0, f_pos - k_idx))
+            ak0 = math.radians(a0_deg + k_idx * step_deg)
+            ak1 = math.radians(a0_deg + (k_idx + 1) * step_deg)
+            xu = r_poly * ((1.0 - t_val) * math.sin(ak0) + t_val * math.sin(ak1))
+            zu = r_poly * ((1.0 - t_val) * math.cos(ak0) + t_val * math.cos(ak1))
+            return u_pos(xu, y_val, zu) - piv_b
+
+        cy_u = float(center_u[1])
+        vf_bot = [bm.verts.new(_facet_pt_local(th, r_front, cy_u - hh)) for th in sample_angles]
+        vf_top = [bm.verts.new(_facet_pt_local(th, r_front, cy_u + hh)) for th in sample_angles]
+        vb_bot = [bm.verts.new(_facet_pt_local(th, r_back, cy_u - hh)) for th in sample_angles]
+        vb_top = [bm.verts.new(_facet_pt_local(th, r_back, cy_u + hh)) for th in sample_angles]
+
+        side_faces: list[bmesh.types.BMFace] = []
+        n_strips = len(sample_angles) - 1
+        for i in range(n_strips):
+            s0 = (theta_left - sample_angles[i]) / max(1e-6, theta_left - theta_right)
+            s1 = (theta_left - sample_angles[i + 1]) / max(1e-6, theta_left - theta_right)
+            ui0 = round(u0 + s0 * (u1 - u0), 5)
+            ui1 = round(u0 + s1 * (u1 - u0), 5)
+
+            f_fr = bm.faces.new((vf_bot[i], vf_bot[i + 1], vf_top[i + 1], vf_top[i]))
+            for loop, uv in zip(f_fr.loops, ((ui0, v0), (ui1, v0), (ui1, v1), (ui0, v1))):
+                loop[uv_layer].uv = uv
+
+            side_faces.append(bm.faces.new((vb_bot[i], vb_top[i], vb_top[i + 1], vb_bot[i + 1])))
+            side_faces.append(bm.faces.new((vb_bot[i], vb_bot[i + 1], vf_bot[i + 1], vf_bot[i])))
+            side_faces.append(bm.faces.new((vb_top[i + 1], vb_top[i], vf_top[i], vf_top[i + 1])))
+
+        side_faces.append(bm.faces.new((vb_top[0], vb_bot[0], vf_bot[0], vf_top[0])))
+        side_faces.append(bm.faces.new((vb_bot[-1], vb_top[-1], vf_top[-1], vf_bot[-1])))
+        for side_f in side_faces:
+            for loop, uv in zip(side_f.loops, trim_uvs):
+                loop[uv_layer].uv = uv
+    else:
+        front_center_b = u_pos(*center_u) + n_b * float(offset)
+        back_center_b = front_center_b - n_b * float(thickness)
+        fc_local = front_center_b - piv_b
+        bc_local = back_center_b - piv_b
+
+        vf0 = bm.verts.new(fc_local - hw * right_b - hh * up_b)
+        vf1 = bm.verts.new(fc_local + hw * right_b - hh * up_b)
+        vf2 = bm.verts.new(fc_local + hw * right_b + hh * up_b)
+        vf3 = bm.verts.new(fc_local - hw * right_b + hh * up_b)
+        vb0 = bm.verts.new(bc_local - hw * right_b - hh * up_b)
+        vb1 = bm.verts.new(bc_local + hw * right_b - hh * up_b)
+        vb2 = bm.verts.new(bc_local + hw * right_b + hh * up_b)
+        vb3 = bm.verts.new(bc_local - hw * right_b + hh * up_b)
+
+        f_front = bm.faces.new((vf0, vf1, vf2, vf3))
+        f_back = bm.faces.new((vb0, vb3, vb2, vb1))
+        f_bot = bm.faces.new((vb0, vb1, vf1, vf0))
+        f_right = bm.faces.new((vb1, vb2, vf2, vf1))
+        f_top = bm.faces.new((vb2, vb3, vf3, vf2))
+        f_left = bm.faces.new((vb3, vb0, vf0, vf3))
+
+        front_uvs = ((u0, v0), (u1, v0), (u1, v1), (u0, v1))
+        for loop, uv in zip(f_front.loops, front_uvs):
             loop[uv_layer].uv = uv
+
+        for side_f in (f_back, f_bot, f_right, f_top, f_left):
+            for loop, uv in zip(side_f.loops, trim_uvs):
+                loop[uv_layer].uv = uv
 
     for f in bm.faces:
         f.material_index = 0

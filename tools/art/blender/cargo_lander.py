@@ -2002,31 +2002,24 @@ def _prepare_ao_bake_pose(root: bpy.types.Object) -> None:
 
 
 def _build_maker_decals(root: bpy.types.Object, d: dict[str, Any]) -> list[bpy.types.Object]:
-    """Add flat maker decal child nodes (`Decal_VIS_1`, `Decal_VIS_2`, `Decal_ILC_1`) 1.6 mm off flat lander panels."""
-    low_ang_rad = math.radians(-58.6)
+    """Add maker decal child nodes (`Decal_VIS_1` ~0.7 m wide on descent stage, `Decal_ILC_1` near hatch) 1.6 mm off lander panels."""
+    low_ang_rad = math.radians(-59.0)
     low_nx = math.sin(low_ang_rad)
     low_nz = math.cos(low_ang_rad)
-    low_r_plane = (d["low_panel_radius"] + d["low_panel_thick"]) * math.cos(math.radians(38.0 / 10.0))
+    low_r_out = d["low_panel_radius"] + d["low_panel_thick"]
 
     vis1 = r1kit.add_maker_decal_node(
         parent=root,
         name="Decal_VIS_1",
         cell_key="VIS_1985",
-        center_u=(low_nx * low_r_plane, 2.05, low_nz * low_r_plane),
+        center_u=(low_nx * low_r_out, 1.90, low_nz * low_r_out),
         normal_u=(low_nx, 0.0, low_nz),
         up_u=(0.0, 1.0, 0.0),
-        width=0.21,
-        height=0.21,
-    )
-    vis2 = r1kit.add_maker_decal_node(
-        parent=root,
-        name="Decal_VIS_2",
-        cell_key="VIS_STENCIL",
-        center_u=(low_nx * low_r_plane, 1.74, low_nz * low_r_plane),
-        normal_u=(low_nx, 0.0, low_nz),
-        up_u=(0.0, 1.0, 0.0),
-        width=0.21,
-        height=0.13,
+        width=0.70,
+        height=0.64,
+        u_crop=(0.06, 0.94),
+        v_crop=(0.12, 0.92),
+        cyl_patch=(low_r_out, -51.0, 38.0, 5),
     )
 
     ilc_ang_rad = math.radians(-19.425)
@@ -2043,7 +2036,7 @@ def _build_maker_decals(root: bpy.types.Object, d: dict[str, Any]) -> list[bpy.t
         width=0.115,
         height=0.115,
     )
-    return [vis1, vis2, ilc1]
+    return [vis1, ilc1]
 
 
 def build_asset() -> bpy.types.Object:
