@@ -48,7 +48,7 @@ MonoBehaviour:
     _peakRidgeCount: 7
     _hillHeight: 5.5
     _hillWavelength: 200
-    _duneHeight: 1.4
+    _duneHeight: 0.9
     _duneWavelength: 46
     _duneWindBearing: 65
     _duneSkew: 0.35
@@ -88,10 +88,10 @@ MonoBehaviour:
       _depth: 3.6
       _lipHeight: 0.6
     - _bearing: 140
-      _distance: 215
-      _radius: 40
-      _depth: 4.4
-      _lipHeight: 0.7
+      _distance: 190
+      _radius: 65
+      _depth: 4.5
+      _lipHeight: 1
     _canyon:
       _bearing: 72
       _mouthDistance: 280

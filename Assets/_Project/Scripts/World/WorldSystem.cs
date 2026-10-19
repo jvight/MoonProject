@@ -290,7 +290,7 @@ namespace MoonProject.World
         {
             SurfaceSettings ground = _settings.Surface;
             return new CraterField(ground.CraterField, _settings.Seed, ground.FloorRadius - ground.RimWarpAmplitude,
-                ground.PadRadius + ground.PadBlend, Anchors, surface.Canyon.Bounds);
+                ground.PadRadius + ground.PadBlend, Anchors, surface.Canyon.Bounds, surface.SampleNormal);
         }
 
         private void BuildEarth(HideFlags hideFlags)
