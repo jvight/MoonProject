@@ -568,7 +568,25 @@ MonoBehaviour:
     _maxLineSeconds: 0.5
     _dotSeconds: 0.12
     _resumeDays: 13148
-    _lingerSeconds: 0.5
+    _lingerSeconds: 0.3
+  _bootFace:
+    _linework: {fileID: 11400000, guid: e0ed04034e1b4a345ae2b7dbafcd0750, type: 2}
+    _lineShare: 0.3
+    _openShare: 0.35
+    _bloomPeak: 0.3
+    _strokesShare: 0.55
+    _wordmarkShare: 0.15
+    _holdShare: 0.22
+    _afterglowSeconds: 0.35
+    _afterglowBoost: 0.6
+    _loadTextShare: 0.25
+    _loadSteps: 5
+    _loadPauseStep: 3
+    _loadPauseWeight: 2
+    _typeCueEvery: 2
+    _coverCloseSeconds: 0.5
+    _coverOpenSeconds: 0.5
+    _coverSoftness: 0.35
   _salvage:
     _ring:
       _fadeIn: 0.3
@@ -656,6 +674,7 @@ MonoBehaviour:
     _saturation: -30
     _faceBlurStartMetres: 1.35
     _faceBlurEndMetres: 6.5
+    _faceGrain: 0
     _faceSaturation: 0
   _saveTick:
     _reveal:

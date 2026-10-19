@@ -8,13 +8,14 @@ namespace MoonProject.Rover
     public readonly struct PostEvent
     {
         public PostEvent(PostEventKind kind, BootCheckStep step, BootCheckResult result, int index = 0,
-            float progress01 = 0f)
+            float progress01 = 0f, float seconds = 0f)
         {
             Kind = kind;
             Step = step;
             Result = result;
             Index = index;
             Progress01 = progress01;
+            Seconds = seconds;
         }
 
         /// <summary>For <see cref="PostEventKind.Pulse"/>: which tick of the check.</summary>
@@ -22,6 +23,9 @@ namespace MoonProject.Rover
 
         /// <summary>For <see cref="PostEventKind.Pulse"/>: progress through a continuous tick, else 0.</summary>
         public float Progress01 { get; }
+
+        /// <summary>For <see cref="PostEventKind.FaceBegan"/>: the seconds that part of the face takes.</summary>
+        public float Seconds { get; }
 
         public PostEventKind Kind { get; }
 
@@ -39,6 +43,12 @@ namespace MoonProject.Rover
 
         /// <summary>07's face blinks (the ready performance's double blink; <see cref="PostEvent.Index"/> counts them).</summary>
         Blink = 4,
+
+        /// <summary>
+        /// A part of the face's boot begins (<see cref="PostEvent.Index"/> is the <see cref="BootFacePart"/>) and lasts
+        /// <see cref="PostEvent.Seconds"/>.
+        /// </summary>
+        FaceBegan = 5,
     }
 
     /// <summary>

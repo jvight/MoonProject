@@ -20,6 +20,7 @@ namespace MoonProject.UI
         [SerializeField] private CargoScreenSettings _cargo = new CargoScreenSettings();
         [SerializeField] private UnlockCardSettings _unlockCard = new UnlockCardSettings();
         [SerializeField] private PostLineSettings _post = new PostLineSettings();
+        [SerializeField] private BootFaceSettings _bootFace = new BootFaceSettings();
         [SerializeField] private SalvageSettings _salvage = new SalvageSettings();
         [SerializeField] private StargazeSettings _stargaze = new StargazeSettings();
         [SerializeField] private GuidanceSettings _guidance = new GuidanceSettings();
@@ -47,6 +48,8 @@ namespace MoonProject.UI
 
         public PostLineSettings Post => _post;
 
+        public BootFaceSettings BootFace => _bootFace;
+
         public SalvageSettings Salvage => _salvage;
 
         public StargazeSettings Stargaze => _stargaze;
@@ -73,13 +76,13 @@ namespace MoonProject.UI
             if (_pause == null || _title == null || _prompts == null || _pickupFeed == null || _salvage == null ||
                 _stargaze == null || _guidance == null || _backdrop == null || _battery == null || _safe == null ||
                 _saveTick == null || _credits == null || _cargo == null || _unlockCard == null || _post == null ||
-                _databank == null || _controlsCard == null)
+                _databank == null || _controlsCard == null || _bootFace == null)
             {
                 return "a settings section is missing";
             }
 
             return _title.Validate() ?? _prompts.Validate() ?? _safe.Validate() ?? _pause.Validate() ??
-                _cargo.Validate() ?? _databank.Validate();
+                _cargo.Validate() ?? _databank.Validate() ?? _bootFace.Validate();
         }
     }
 }
