@@ -28,6 +28,8 @@ namespace MoonProject.UI
         private readonly Reveal _reveal;
         private readonly GlyphView _glyph;
         private HintWord _word = HintWord.LookUp;
+        private int _setStep;
+        private int _setCount;
         private float _nudgeOffset;
         private float _nudgeOpacity = 1f;
 
@@ -77,7 +79,26 @@ namespace MoonProject.UI
 
         public void Relocalize()
         {
-            _layout.LookHintWord.text = _localization.Get(WordKey());
+            string word = _localization.Get(WordKey());
+            _layout.LookHintWord.text = _word == HintWord.Scan && _setCount > 1
+                ? $"{word} {_setStep}/{_setCount}"
+                : word;
+        }
+
+        /// <summary>
+        /// The aimed piece's place in its scan set (<c>E Scan 1/3</c>), shown on the Scan word; 0 and 0 show none.
+        /// The words are written only when the numbers change.
+        /// </summary>
+        public void SetCount(int step, int count)
+        {
+            if (step == _setStep && count == _setCount)
+            {
+                return;
+            }
+
+            _setStep = step;
+            _setCount = count;
+            Relocalize();
         }
 
         /// <summary>The blocked cue's dim and shake on the chip (0 and 1 leave it as it is).</summary>

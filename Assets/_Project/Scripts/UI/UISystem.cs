@@ -498,6 +498,9 @@ namespace MoonProject.UI
             hint = hint != HintWord.None ? hint
                 : _objectiveChip.Word(_objectiveView.ShowsObjective && _objective.WantsShown,
                     _services.Systems.CanFitIgniter, cargoOpen, OfferedNow(), HeldNow());
+            InteractionHint aimed = _services.Hints.Primary;
+            bool counting = hint == HintWord.Scan && aimed.Kind == InteractionKind.Scan;
+            _lookUpChip.SetCount(counting ? aimed.SetStep : 0, counting ? aimed.SetCount : 0);
             _lookUpChip.Tick(deltaTime, paused ? HintWord.None : hint, device);
             _blockedCue.Tick(paused ? 0f : deltaTime);
             _lookUpChip.Nudge(_blockedCue.ChipOffset, _blockedCue.ChipOpacity);
