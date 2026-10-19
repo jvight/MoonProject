@@ -569,6 +569,175 @@ def render_storyboard_a():
     print("[build_studio_logos] Rendered Direction A 4-frame boot splash storyboard")
 
 
+# ==============================================================================
+# DIRECTION B — "THE OPEN HORIZON" (A Horizon Line with an Opening)
+# ==============================================================================
+
+def draw_mark_b(
+    draw: ImageDraw.ImageDraw,
+    cx: float,
+    cy: float,
+    scale: float,
+    ink: tuple,
+    accent: tuple,
+    bg_cut: tuple | None = None,
+    ss: int = SS,
+):
+    """
+    Draws Direction B ('The Open Horizon'):
+      - A wide, calm horizontal datum line (the horizon) that parts cleanly at the center.
+      - Above the horizon rises a poised semicircular vault arch framing an unseen sky.
+      - Through the central opening in the horizon, a warm ochre perspective wedge passes forward and downward
+        from a vertical threshold portal, while a quiet lower counter-arc completes the 'O' silhouette.
+      - Simple, architectural, zero dot/hole clusters, reads effortlessly at 16 px and 1024 px.
+    """
+    y_horiz = cy + 18.0 * scale
+    r_arch = 166.0 * scale
+    t_stroke = 25.0 * scale
+
+    # 1. Upper Sky Vault Arch (from 190 deg to 350 deg — a calm 160-deg dome hovering above the horizon)
+    draw_thick_arc_poly(
+        draw,
+        cx,
+        y_horiz - 12.0 * scale,
+        r_arch,
+        deg_start=192.0,
+        deg_end=348.0,
+        thickness=t_stroke,
+        fill=ink,
+        round_caps=False,
+        chamfer_deg=3.0,
+        ss=ss,
+    )
+
+    # 2. Lower Counter-Arc (completing the implied 'O' below the parted horizon, broken at center for the path)
+    draw_thick_arc_poly(
+        draw,
+        cx,
+        y_horiz - 12.0 * scale,
+        r_arch,
+        deg_start=16.0,
+        deg_end=64.0,
+        thickness=t_stroke,
+        fill=ink,
+        round_caps=False,
+        ss=ss,
+    )
+    draw_thick_arc_poly(
+        draw,
+        cx,
+        y_horiz - 12.0 * scale,
+        r_arch,
+        deg_start=116.0,
+        deg_end=164.0,
+        thickness=t_stroke,
+        fill=ink,
+        round_caps=False,
+        ss=ss,
+    )
+
+    # 4. The Threshold Opening & Outward Perspective Wedge passing through the horizon gap
+    # The warm ochre-amber perspective beam starts with a semicircular crown inside the upper dome
+    # and widens smoothly downward through the parted horizon, terminating along the outer circle arc.
+    c_arch_y = y_horiz - 12.0 * scale
+    r_outer_circle = r_arch + t_stroke / 2.0
+    crown_y = c_arch_y - 72.0 * scale
+    r_crown = 21.0 * scale
+    bot_half_w = 48.0 * scale
+    bot_y_edge = c_arch_y + math.sqrt(max(0.0, r_outer_circle**2 - bot_half_w**2))
+
+    # Slope of the perspective beam edge from (r_crown, crown_y) to (bot_half_w, bot_y_edge)
+    dx_beam = bot_half_w - r_crown
+    dy_beam = bot_y_edge - crown_y
+    beam_len = math.hypot(dx_beam, dy_beam)
+    # Outward unit normal to the right beam edge
+    nx, ny = dy_beam / beam_len, -dx_beam / beam_len
+
+    # Re-draw the parted horizon wings so their inner bevels are 100% parallel to the beam (14 px gap)
+    gap_channel = 14.0 * scale
+    wing_outer = 218.0 * scale
+    h_bar = 25.0 * scale
+    y_top_bar = y_horiz - h_bar / 2.0
+    y_bot_bar = y_horiz + h_bar / 2.0
+
+    def beam_half_w_at(y_val: float) -> float:
+        return r_crown + (y_val - crown_y) * (dx_beam / dy_beam)
+
+    # Clear previous horizon wing area by drawing horizon wings after computing exact parallel bevels
+    w_top_inner = beam_half_w_at(y_top_bar) + gap_channel / nx
+    w_bot_inner = beam_half_w_at(y_bot_bar) + gap_channel / nx
+
+    left_wing = [
+        ((cx - wing_outer) * ss, y_top_bar * ss),
+        ((cx - w_top_inner) * ss, y_top_bar * ss),
+        ((cx - w_bot_inner) * ss, y_bot_bar * ss),
+        ((cx - wing_outer) * ss, y_bot_bar * ss),
+    ]
+    right_wing = [
+        ((cx + w_top_inner) * ss, y_top_bar * ss),
+        ((cx + wing_outer) * ss, y_top_bar * ss),
+        ((cx + wing_outer) * ss, y_bot_bar * ss),
+        ((cx + w_bot_inner) * ss, y_bot_bar * ss),
+    ]
+    draw.polygon(left_wing, fill=ink)
+    draw.polygon(right_wing, fill=ink)
+
+    # Upper portal arch hood framing the crown of the light beam with a uniform 13 px negative-space channel
+    hood_gap = 13.0 * scale
+    hood_thick = 20.0 * scale
+    r_hood_in = r_crown + hood_gap
+    r_hood_out = r_hood_in + hood_thick
+    jamb_bot_y = y_top_bar - 13.0 * scale
+
+    # Semicircular upper arch of the portal hood
+    draw_thick_arc_poly(
+        draw,
+        cx,
+        crown_y,
+        (r_hood_in + r_hood_out) / 2.0,
+        deg_start=180.0,
+        deg_end=360.0,
+        thickness=hood_thick,
+        fill=ink,
+        ss=ss,
+    )
+    # Tapered left & right jambs running parallel to the light beam down to just above the horizon bar
+    dy_jamb = jamb_bot_y - crown_y
+    jx_shift = dy_jamb * (dx_beam / dy_beam)
+    left_jamb = [
+        ((cx - r_hood_out) * ss, crown_y * ss),
+        ((cx - r_hood_in) * ss, crown_y * ss),
+        ((cx - r_hood_in - jx_shift) * ss, jamb_bot_y * ss),
+        ((cx - r_hood_out - jx_shift) * ss, jamb_bot_y * ss),
+    ]
+    right_jamb = [
+        ((cx + r_hood_in) * ss, crown_y * ss),
+        ((cx + r_hood_out) * ss, crown_y * ss),
+        ((cx + r_hood_out + jx_shift) * ss, jamb_bot_y * ss),
+        ((cx + r_hood_in + jx_shift) * ss, jamb_bot_y * ss),
+    ]
+    draw.polygon(left_jamb, fill=ink)
+    draw.polygon(right_jamb, fill=ink)
+
+    # Build the golden perspective light beam polygon (semicircular top crown + curved bottom arc)
+    beam_pts = []
+    # Top semicircular crown (from 180 deg to 360 deg)
+    for i in range(49):
+        ang = math.radians(180.0 + 180.0 * (i / 48.0))
+        beam_pts.append(((cx + r_crown * math.cos(ang)) * ss, (crown_y + r_crown * math.sin(ang)) * ss))
+    # Bottom arc along the outer circle radius (from right corner to left corner around 90 deg)
+    ang_right = math.degrees(math.atan2(bot_y_edge - c_arch_y, bot_half_w))
+    ang_left = math.degrees(math.atan2(bot_y_edge - c_arch_y, -bot_half_w))
+    for i in range(33):
+        ang = math.radians(ang_right + (ang_left - ang_right) * (i / 32.0))
+        beam_pts.append(
+            ((cx + r_outer_circle * math.cos(ang)) * ss, (c_arch_y + r_outer_circle * math.sin(ang)) * ss)
+        )
+    draw.polygon(beam_pts, fill=accent)
+
+
 if __name__ == "__main__":
     render_direction_lockups("a", draw_mark_a, wordmark_style="geometric", show_games=True)
     render_storyboard_a()
+    render_direction_lockups("b", draw_mark_b, wordmark_style="geometric", show_games=True)
+
