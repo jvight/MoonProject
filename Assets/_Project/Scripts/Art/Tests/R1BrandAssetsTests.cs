@@ -20,8 +20,6 @@ namespace MoonProject.Art.Tests
             "ilc_mark_mono.png",
             "kessler_arai_mark.png",
             "kessler_arai_mark_mono.png",
-            "ka_mark.png",
-            "ka_mark_mono.png",
             "tycho_mark.png",
             "tycho_mark_mono.png",
             "vis_mark.png",
@@ -34,9 +32,17 @@ namespace MoonProject.Art.Tests
         {
             "print_ilc.png",
             "print_kessler_arai.png",
-            "print_ka.png",
             "print_tycho.png",
             "print_vis.png"
+        };
+
+        private static readonly string[] ForbiddenDuplicates =
+        {
+            "ka_mark.png",
+            "ka_mark_mono.png",
+            "ka_crt_linework.json",
+            "ka_crt_linework_preview.png",
+            "print_ka.png"
         };
 
         [Test]
@@ -63,6 +69,12 @@ namespace MoonProject.Art.Tests
                 {
                     Object.DestroyImmediate(tex);
                 }
+            }
+
+            foreach (string dup in ForbiddenDuplicates)
+            {
+                string fullPath = Path.Combine(BrandsDir, dup);
+                Assert.IsFalse(File.Exists(fullPath), $"Duplicate brand file must not exist: {fullPath}");
             }
         }
 
@@ -119,7 +131,7 @@ namespace MoonProject.Art.Tests
                 }
             }
 
-            string previewPath = Path.Combine(BrandsDir, "ka_crt_linework_preview.png");
+            string previewPath = Path.Combine(BrandsDir, "kessler_arai_crt_linework_preview.png");
             Assert.IsTrue(File.Exists(previewPath), $"Missing CRT linework preview PNG at {previewPath}");
         }
     }

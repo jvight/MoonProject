@@ -6,13 +6,13 @@ namespace MoonProject.Art
 {
     /// <summary>
     /// Serializable representation of the Kessler-Arai B mark monoline CRT boot linework
-    /// (Assets/_Project/Art/R1/Brands/ka_crt_linework.json), stored as ordered polylines in
+    /// (Assets/_Project/Art/R1/Brands/kessler_arai_crt_linework.json), stored as ordered polylines in
     /// normalized 0..1 screen space so 07's CRT face can draw it stroke by stroke at boot.
     /// </summary>
     [Serializable]
     public sealed class KesslerAraiCrtLinework
     {
-        public const string DefaultAssetPath = "Assets/_Project/Art/R1/Brands/ka_crt_linework.json";
+        public const string DefaultAssetPath = "Assets/_Project/Art/R1/Brands/kessler_arai_crt_linework.json";
         public const int MaxStrokeBudget = 12;
 
         public string brand = "kessler_arai";
@@ -33,7 +33,7 @@ namespace MoonProject.Art
         }
 
         /// <summary>
-        /// Parses the JSON text of ka_crt_linework.json into a <see cref="KesslerAraiCrtLinework"/> instance.
+        /// Parses the JSON text of kessler_arai_crt_linework.json into a <see cref="KesslerAraiCrtLinework"/> instance.
         /// Supports both <c>[[x, y], ...]</c> coordinate arrays and <c>[{"x": x, "y": y}]</c> objects.
         /// </summary>
         public static KesslerAraiCrtLinework FromJson(string json)

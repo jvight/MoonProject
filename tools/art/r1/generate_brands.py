@@ -4,20 +4,19 @@ Deterministic generator for Lunarion R1 Maker Brands (Deliverables 1, 2, 4 of TA
   1. Clean production marks (2048x2048 RGBA transparent PNGs + 1-colour white mono versions):
      - Assets/_Project/Art/R1/Brands/ilc_mark.png, ilc_mark_mono.png
      - Assets/_Project/Art/R1/Brands/kessler_arai_mark.png, kessler_arai_mark_mono.png
-       (plus aliases ka_mark.png, ka_mark_mono.png)
      - Assets/_Project/Art/R1/Brands/tycho_mark.png, tycho_mark_mono.png
      - Assets/_Project/Art/R1/Brands/vis_mark.png, vis_mark_mono.png
      - Assets/_Project/Art/R1/Brands/vis_1967_mark.png, vis_1967_mark_mono.png
      Removes long descriptive sub-lines from concept sheets: mark + short wordmark only.
 
   2. Kessler-Arai CRT boot monoline linework (<= 12 single-width strokes in 0..1 space):
-     - Assets/_Project/Art/R1/Brands/ka_crt_linework.json (plus kessler_arai_crt_linework.json)
-     - Assets/_Project/Art/R1/Brands/ka_crt_linework_preview.png (1024x1024)
-     - Logs/captures/ka_crt_linework_preview.png (1024x1024)
+     - Assets/_Project/Art/R1/Brands/kessler_arai_crt_linework.json
+     - Assets/_Project/Art/R1/Brands/kessler_arai_crt_linework_preview.png (1024x1024)
+     - Logs/captures/kessler_arai_crt_linework_preview.png (1024x1024)
 
   4. Databank archive prints (1024x1024 off-white catalogue card with mark + one line of text):
      - Assets/_Project/Art/R1/Brands/print_ilc.png
-     - Assets/_Project/Art/R1/Brands/print_kessler_arai.png (plus print_ka.png)
+     - Assets/_Project/Art/R1/Brands/print_kessler_arai.png
      - Assets/_Project/Art/R1/Brands/print_tycho.png
      - Assets/_Project/Art/R1/Brands/print_vis.png
 
@@ -26,7 +25,6 @@ Owner rule strictly enforced: ZERO clusters of identical dots/holes (trypophobia
 
 import json
 import math
-import shutil
 from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
@@ -1131,8 +1129,6 @@ def main():
     ka_mono = build_kessler_mark(mono=True)
     ka_col.save(BRANDS_DIR / "kessler_arai_mark.png")
     ka_mono.save(BRANDS_DIR / "kessler_arai_mark_mono.png")
-    shutil.copyfile(BRANDS_DIR / "kessler_arai_mark.png", BRANDS_DIR / "ka_mark.png")
-    shutil.copyfile(BRANDS_DIR / "kessler_arai_mark_mono.png", BRANDS_DIR / "ka_mark_mono.png")
 
     tycho_col = build_tycho_mark(mono=False)
     tycho_mono = build_tycho_mark(mono=True)
@@ -1153,12 +1149,11 @@ def main():
     print("[generate_brands] Building Kessler-Arai CRT boot monoline polyline asset & preview...")
     linework_data = build_ka_crt_linework_data()
     json_str = json.dumps(linework_data, indent=2) + "\n"
-    (BRANDS_DIR / "ka_crt_linework.json").write_text(json_str, encoding="utf-8")
     (BRANDS_DIR / "kessler_arai_crt_linework.json").write_text(json_str, encoding="utf-8")
 
     crt_preview = render_ka_crt_linework_preview(linework_data)
-    crt_preview.save(BRANDS_DIR / "ka_crt_linework_preview.png")
-    crt_preview.save(CAPTURES_DIR / "ka_crt_linework_preview.png")
+    crt_preview.save(BRANDS_DIR / "kessler_arai_crt_linework_preview.png")
+    crt_preview.save(CAPTURES_DIR / "kessler_arai_crt_linework_preview.png")
 
     # 4. Databank archive prints (1024x1024 off-white catalogue cards with one line of text)
     print("[generate_brands] Building 1024x1024 databank archive prints...")
@@ -1183,7 +1178,6 @@ def main():
         CORAL,
     )
     print_ka.save(BRANDS_DIR / "print_kessler_arai.png")
-    shutil.copyfile(BRANDS_DIR / "print_kessler_arai.png", BRANDS_DIR / "print_ka.png")
 
     print_tycho = build_archive_print(
         tycho_card_mark,
