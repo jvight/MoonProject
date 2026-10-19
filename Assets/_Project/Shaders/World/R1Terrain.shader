@@ -1019,8 +1019,8 @@ Shader "MoonProject/World/R1Terrain"
 
                         // Lower near-field normal scale so the ground is rounded and lumpy, never crinkly or scaly
                         half nearPlainBoost = lerp(1.0h, 0.55h, slopeFactor);
-                        half medBumpScale = (0.50h * regolithFade120 + 0.28h * regolithNear40) * nearPlainBoost;
-                        half fineBumpScale = (0.34h * regolithFade120 + 0.28h * regolithNear40) * nearPlainBoost;
+                        half medBumpScale = (0.48h * regolithFade120 + 0.28h * regolithNear40) * nearPlainBoost;
+                        half fineBumpScale = (0.36h * regolithFade120 + 0.30h * regolithNear40) * nearPlainBoost;
 
                         half3 nMedARaw = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, uvMedA), medBumpScale);
                         half3 nMedBRaw = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, uvMedB), medBumpScale);
@@ -1034,55 +1034,51 @@ Shader "MoonProject/World/R1Terrain"
                         half2 nFineB = half2(nFineBRaw.x * 0.6704h + nFineBRaw.y * 0.7420h, -nFineARaw.x * 0.7420h + nFineBRaw.y * 0.6704h);
                         half2 tsFineXY = lerp(nFineA, nFineB, fineBlend);
 
-                        // Scale 3: Fine isotropic grain layer (sand/powder) at a smaller scale (~0.68 m and ~0.36 m tiles + isotropic sand micro-grain)
+                        // Scale 3: Smaller soft rounded clods (~1.02 m tile) + fine isotropic sand/powder grain (~0.45 m tile)
+                        // Hardware mipmapping + grazing view damping keep the powder grain isotropic with zero horizontal ripple streaks.
                         half2 tsGrainXY = half2(0.0h, 0.0h);
                         half grainAlbedoMod = 1.0h;
-                        half grainWeight = saturate(regolithNear40 * 0.70h + regolithClose20 * 0.30h) * nearPlainBoost;
+                        half grainHeightDelta = 0.0h;
+                        half grainAo = 1.0h;
+                        half grazingViewDamp = saturate(dot(geomNormalWS, viewDirWS) * 3.0h);
+                        half grainWeight = saturate(regolithNear40 * 0.68h + regolithClose20 * 0.32h) * nearPlainBoost;
                         if (grainWeight > 0.005h)
                         {
-                            float2 wpGrainA = float2(wp.x * 0.3907 + wp.y * 0.9205, -wp.x * 0.9205 + wp.y * 0.3907) + fineWarp * 0.18;
+                            float2 wpGrainA = float2(wp.x * 0.3907 + wp.y * 0.9205, -wp.x * 0.9205 + wp.y * 0.3907) + fineWarp * 0.22;
                             float2 wpGrainB = float2(wp.x * 0.7660 - wp.y * 0.6428, wp.x * 0.6428 + wp.y * 0.7660) - fineWarp.yx * 0.14;
-                            float2 uvGrainA = wpGrainA * 1.48 + float2(0.73, 0.19);
-                            float2 uvGrainB = wpGrainB * 2.75 + float2(0.29, 0.63);
+                            float2 uvGrainA = wpGrainA * 0.98 + float2(0.73, 0.19);
+                            float2 uvGrainB = wpGrainB * 2.22 + float2(0.29, 0.63);
 
-                            half grainScaleA = (0.18h * regolithNear40 + 0.12h * regolithClose20) * nearPlainBoost;
-                            half grainScaleB = (0.12h * regolithNear40 + 0.18h * regolithClose20) * nearPlainBoost;
+                            half grainScaleA = (0.22h * regolithNear40 + 0.16h * regolithClose20) * nearPlainBoost * lerp(0.55h, 1.0h, grazingViewDamp);
+                            half grainScaleB = (0.14h * regolithNear40 + 0.22h * regolithClose20) * nearPlainBoost * lerp(0.35h, 1.0h, grazingViewDamp);
 
                             half3 nGrainARaw = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, uvGrainA), grainScaleA);
                             half3 nGrainBRaw = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, uvGrainB), grainScaleB);
                             half2 nGrainA = half2(nGrainARaw.x * 0.3907h - nGrainARaw.y * 0.9205h, nGrainARaw.x * 0.9205h + nGrainARaw.y * 0.3907h);
                             half2 nGrainB = half2(nGrainBRaw.x * 0.7660h + nGrainBRaw.y * 0.6428h, -nGrainBRaw.x * 0.6428h + nGrainBRaw.y * 0.7660h);
 
-                            // High-frequency isotropic sand/powder micro-granularity (equal X/Z frequencies in two rotated frames -> zero streaks)
-                            float sEps = 0.022;
-                            float2 pSandA = wpGrainA * 18.5;
-                            float2 pSandB = wpGrainB * 31.0 + float2(17.3, 9.1);
-                            float s0 = (BlastNoise(pSandA) - 0.5) * 0.55 + (BlastNoise(pSandB) - 0.5) * 0.45;
-                            float sx = (BlastNoise(pSandA + float2(sEps * 18.5, 0.0)) - 0.5) * 0.55
-                                     + (BlastNoise(pSandB + float2(sEps * 31.0, 0.0)) - 0.5) * 0.45;
-                            float sz = (BlastNoise(pSandA + float2(0.0, sEps * 18.5)) - 0.5) * 0.55
-                                     + (BlastNoise(pSandB + float2(0.0, sEps * 31.0)) - 0.5) * 0.45;
-                            half sandMicroScale = (0.14h * regolithNear40 + 0.22h * regolithClose20) * nearPlainBoost;
-                            half2 sandMicroXY = half2(sx - s0, sz - s0) * sandMicroScale;
+                            tsGrainXY = nGrainA * 0.65h + nGrainB * 0.55h;
 
-                            tsGrainXY = (nGrainA + nGrainB) * 0.55h + sandMicroXY;
+                            half4 maskGrainA = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, uvGrainA);
+                            half4 maskGrainB = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, uvGrainB);
+                            grainHeightDelta = ((maskGrainA.r - 0.50h) * 0.65h + (maskGrainB.r - 0.50h) * 0.35h) * grainWeight * 0.45h;
+                            grainAo = lerp(1.0h, saturate(lerp(maskGrainA.g, maskGrainB.g, 0.40h) / 0.865h), grainWeight * 0.42h);
 
                             half3 albGrainA = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uvGrainA).rgb;
                             half3 albGrainB = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uvGrainB).rgb;
-                            half grainLuma = dot(lerp(albGrainA, albGrainB, 0.50h), half3(0.2126h, 0.7152h, 0.0722h));
-                            half sandMottle = (half)(s0 * 0.035) + (grainLuma - 0.525h) * 0.22h;
-                            grainAlbedoMod = 1.0h + clamp(sandMottle, -0.032h, 0.032h) * grainWeight;
+                            half grainLuma = dot(lerp(albGrainA, albGrainB, 0.48h), half3(0.2126h, 0.7152h, 0.0722h));
+                            grainAlbedoMod = 1.0h + clamp((grainLuma - 0.525h) * 0.32h, -0.036h, 0.036h) * grainWeight;
                         }
 
                         half2 combinedTsXY = tsMedXY + tsFineXY + tsGrainXY + distNormalXY;
                         half3 tsNormal = normalize(half3(combinedTsXY, 1.0h));
 
                         // Soft mottled albedo: slightly lighter on rounded lump tops, darker in the hollows (AO), no hard-edged speckles
-                        half3 albedoNear = lerp(albedoMed, albedoFine, 0.48h) * grainAlbedoMod;
-                        half lumpHeightAvg = lerp(maskMed.r, maskFine.r, 0.48h);
-                        half hollowAoAvg = lerp(maskMed.g, maskFine.g, 0.50h);
-                        half lumpTopLift = saturate(lumpHeightAvg - 0.50h) * 0.14h - saturate(0.84h - hollowAoAvg) * 0.12h;
-                        albedoNear *= 1.0h + lumpTopLift * (0.55h + 0.45h * regolithNear40);
+                        half3 albedoNear = lerp(albedoMed, albedoFine, 0.50h) * grainAlbedoMod;
+                        half lumpHeightAvg = saturate(lerp(maskMed.r, maskFine.r, 0.50h) + grainHeightDelta);
+                        half hollowAoAvg = lerp(maskMed.g, maskFine.g, 0.50h) * grainAo;
+                        half lumpTopLift = saturate(lumpHeightAvg - 0.50h) * 0.16h - saturate(0.84h - hollowAoAvg) * 0.14h;
+                        albedoNear *= 1.0h + lumpTopLift * (0.58h + 0.42h * regolithNear40);
 
                         regolithTex = lerp(regolithTex, albedoNear, saturate(regolithFade120 * 0.85h + regolithNear40 * 0.15h));
 
@@ -1093,8 +1089,8 @@ Shader "MoonProject/World/R1Terrain"
 
                         // Soft hollow & cavity AO (mask.g = baked soft horizon/hollow AO around rounded clods and inside dust-filled dimples)
                         half combinedMaskG = lerp(maskMed.g, maskFine.g, 0.50h);
-                        half texAo = saturate(combinedMaskG / 0.865h);
-                        half aoWeight = saturate(regolithFade120 * 0.58h + regolithNear40 * 0.34h) * max(_OcclusionStrength, 0.65h);
+                        half texAo = saturate(combinedMaskG / 0.865h) * grainAo;
+                        half aoWeight = saturate(regolithFade120 * 0.58h + regolithNear40 * 0.36h) * max(_OcclusionStrength, 0.65h);
                         microAo = min(microAo, saturate(lerp(1.0h, texAo, aoWeight)));
 
                         half maskSmooth = lerp(maskMed.a, maskFine.a, 0.55h);

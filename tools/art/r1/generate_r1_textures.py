@@ -600,46 +600,46 @@ def _generate_regolith_maps(res: int = 1024, seed: int = 2026) -> dict[str, np.n
         bowl = (dust_filled_bowl * depth).astype(np.float32)
 
         sub = irregular_dimples[np.ix_(iy, ix)]
-        irregular_dimples[np.ix_(iy, ix)] = sub + bowl * np.exp(-sub * 5.5)
+        irregular_dimples[np.ix_(iy, ix)] = sub + bowl * np.exp(-sub * 5.0)
 
-    irregular_dimples = _gaussian_blur_tileable(irregular_dimples, sigma_px=5.5)
+    irregular_dimples = _gaussian_blur_tileable(irregular_dimples, sigma_px=3.4)
 
-    # 4. Soft rounded clods at varied sizes (organic warped domes, blurred into pillowy soft bumps)
+    # 4. Soft rounded clods at varied sizes (organic warped domes, blurred into pillowy soft bumps across 3 size tiers)
     clod_height_large = np.zeros((res, res), dtype=np.float32)
     clod_height_med = np.zeros((res, res), dtype=np.float32)
     clod_height_small = np.zeros((res, res), dtype=np.float32)
     cluster_field = _tileable_aniso_noise(res, 5, 5, seed + 601)
 
-    for i in range(340):
+    for i in range(520):
         cx = float(rng.random())
         cy = float(rng.random())
         c_val = float(cluster_field[int(cy * res) % res, int(cx * res) % res])
-        if i >= 60 and rng.random() > (0.32 + 0.68 * c_val):
+        if i >= 70 and rng.random() > (0.28 + 0.72 * c_val):
             continue
 
-        if i < 38:
-            pr = float(rng.uniform(0.025, 0.048))
+        if i < 42:
+            pr = float(rng.uniform(0.022, 0.042))
             tier = 0
-        elif i < 145:
-            pr = float(rng.uniform(0.012, 0.025))
+        elif i < 210:
+            pr = float(rng.uniform(0.010, 0.022))
             tier = 1
         else:
-            size_u = float(rng.random()) ** 1.50
-            pr = 0.0055 + 0.0075 * size_u
+            size_u = float(rng.random()) ** 1.45
+            pr = 0.0045 + 0.0060 * size_u
             tier = 2
 
-        ph = float(rng.uniform(0.042, 0.092)) * ((pr / 0.018) ** 0.45)
-        # Keep aspect close to 1 (1.0..1.32) so clods are rounded soft lumps, never elongated pills/flakes
-        aspect = float(rng.uniform(1.02, 1.32))
+        ph = float(rng.uniform(0.055, 0.115)) * ((pr / 0.016) ** 0.38)
+        # Keep aspect close to 1 (1.0..1.28) so clods are rounded soft lumps, never elongated pills/flakes
+        aspect = float(rng.uniform(1.02, 1.28))
         ang = float(rng.uniform(0.0, np.pi))
         ca = float(np.cos(ang))
         sa = float(np.sin(ang))
 
-        lobe_x = float(rng.uniform(0.24, 0.52)) * pr * (1.0 if rng.random() < 0.5 else -1.0)
-        lobe_y = float(rng.uniform(-0.28, 0.28)) * pr
+        lobe_x = float(rng.uniform(0.22, 0.48)) * pr * (1.0 if rng.random() < 0.5 else -1.0)
+        lobe_y = float(rng.uniform(-0.26, 0.26)) * pr
         lobe_s = float(rng.uniform(0.68, 0.92))
 
-        rmax = pr * 2.25
+        rmax = pr * 2.15
         half_px = int(np.ceil(rmax * res)) + 2
         ix_c = int(round(cx * res))
         iy_c = int(round(cy * res))
@@ -656,48 +656,48 @@ def _generate_regolith_maps(res: int = 1024, seed: int = 2026) -> dict[str, np.n
         w_a = n_warp_local[np.ix_(iy, ix)] - 0.5
         w_b = n_warp_fine[np.ix_(iy, ix)] - 0.5
 
-        rx = (dx * ca + dy * sa) + (w_a * 0.30 + w_b * 0.16) * pr
-        ry = (-dx * sa + dy * ca) * aspect + (w_b * 0.24 - w_a * 0.20) * pr
+        rx = (dx * ca + dy * sa) + (w_a * 0.26 + w_b * 0.14) * pr
+        ry = (-dx * sa + dy * ca) * aspect + (w_b * 0.22 - w_a * 0.18) * pr
 
         d1 = np.sqrt(rx * rx + ry * ry) / pr
         rx2 = rx - lobe_x
         ry2 = ry - lobe_y
         d2 = np.sqrt(rx2 * rx2 + ry2 * ry2) / (pr * lobe_s)
-        k_c = 0.45
+        k_c = 0.42
         hb = np.clip(0.5 + 0.5 * (d2 - d1) / k_c, 0.0, 1.0)
         d_clod = d2 * (1.0 - hb) + d1 * hb - k_c * hb * (1.0 - hb)
 
-        # Soft C3 bell dome that feathers smoothly into the surrounding powder bed
-        falloff = np.clip(1.0 - d_clod * d_clod, 0.0, 1.0) ** 2.85
-        clod = (falloff * ph * (0.90 + 0.20 * (w_b + 0.5))).astype(np.float32)
+        # Soft C2 bell dome that feathers smoothly into the surrounding powder bed
+        falloff = np.clip(1.0 - d_clod * d_clod, 0.0, 1.0) ** 2.25
+        clod = (falloff * ph * (0.92 + 0.16 * (w_b + 0.5))).astype(np.float32)
 
         target_buf = clod_height_large if tier == 0 else (clod_height_med if tier == 1 else clod_height_small)
         cur_h = target_buf[np.ix_(iy, ix)]
-        target_buf[np.ix_(iy, ix)] = cur_h + clod * np.exp(-cur_h * 4.5)
+        target_buf[np.ix_(iy, ix)] = cur_h + clod * np.exp(-cur_h * 3.4)
 
-    # Blur each clod size tier proportionally to its scale so every bump is soft and rounded
+    # Blur each clod size tier proportionally to its scale so every bump is soft and rounded yet distinct
     clod_height = (
-        _gaussian_blur_tileable(clod_height_large, sigma_px=6.5)
-        + _gaussian_blur_tileable(clod_height_med, sigma_px=4.0)
-        + _gaussian_blur_tileable(clod_height_small, sigma_px=2.4)
-        + continuous_clods
+        _gaussian_blur_tileable(clod_height_large, sigma_px=3.2) * 1.10
+        + _gaussian_blur_tileable(clod_height_med, sigma_px=2.0) * 1.15
+        + _gaussian_blur_tileable(clod_height_small, sigma_px=1.25) * 1.15
+        + continuous_clods * 0.85
     ).astype(np.float32)
 
     # 5. Dust filling the low spots + Gaussian rounding of the composite lump heightfield BEFORE deriving normals
-    raw_lumps = 0.50 + lumpy_bed - dimple_troughs - irregular_dimples + clod_height
+    raw_lumps = 0.50 + lumpy_bed * 0.85 - dimple_troughs - irregular_dimples + clod_height
     lump_mean = float(np.mean(raw_lumps))
     centered_lumps = raw_lumps - lump_mean
     # Dust settles in hollows: softly compress negative excursions so low spots have powdery dust-filled bottoms
     dust_filled_lumps = np.where(
         centered_lumps < 0.0,
-        centered_lumps / (1.0 - 2.6 * centered_lumps),
+        centered_lumps / (1.0 - 2.2 * centered_lumps),
         centered_lumps,
     ).astype(np.float32)
 
-    # Round/blur the composite heightfield so there are zero sharp ridge lines or flake edges
-    lumps_blur_fine = _gaussian_blur_tileable(dust_filled_lumps, sigma_px=2.8)
-    lumps_blur_broad = _gaussian_blur_tileable(dust_filled_lumps, sigma_px=6.5)
-    rounded_lump_height = (0.54 * lumps_blur_fine + 0.46 * lumps_blur_broad).astype(np.float32)
+    # Round/blur the composite heightfield so lumps and clods are pillowy and rounded with zero sharp ridge lines
+    lumps_blur_fine = _gaussian_blur_tileable(dust_filled_lumps, sigma_px=1.45)
+    lumps_blur_broad = _gaussian_blur_tileable(dust_filled_lumps, sigma_px=3.40)
+    rounded_lump_height = (0.66 * lumps_blur_fine + 0.34 * lumps_blur_broad).astype(np.float32)
 
     # 6. Fine isotropic grain layer (sand/powder) at a smaller scale
     grain_64 = _tileable_aniso_noise(res, 64, 64, seed + 401) - 0.5
@@ -707,41 +707,41 @@ def _generate_regolith_maps(res: int = 1024, seed: int = 2026) -> dict[str, np.n
 
     rng_grain = np.random.default_rng(seed + 811)
     micro_sand_raw = rng_grain.normal(0.0, 1.0, (res, res)).astype(np.float32)
-    micro_sand_iso = _gaussian_blur_tileable(micro_sand_raw, sigma_px=1.25)
+    micro_sand_iso = _gaussian_blur_tileable(micro_sand_raw, sigma_px=1.05)
     micro_sand_iso /= max(float(np.std(micro_sand_iso)), 1e-4)
 
     powder_grain = (
-        0.24 * grain_64
-        + 0.28 * grain_112
-        + 0.24 * grain_192
-        + 0.16 * grain_288
-        + 0.10 * micro_sand_iso
+        0.20 * grain_64
+        + 0.26 * grain_112
+        + 0.26 * grain_192
+        + 0.18 * grain_288
+        + 0.14 * micro_sand_iso
     ).astype(np.float32)
-    powder_grain = _gaussian_blur_tileable(powder_grain, sigma_px=0.90)
+    powder_grain = _gaussian_blur_tileable(powder_grain, sigma_px=0.72)
 
-    # Normalize rounded height into [0.06, 0.94] centered at 0.50
+    # Normalize rounded height into [0.05, 0.95] centered at 0.50
     h_std = max(float(np.std(rounded_lump_height)), 1e-4)
-    lump_norm = (rounded_lump_height - float(np.mean(rounded_lump_height))) / (h_std * 3.05)
-    height_01 = np.clip(0.50 + lump_norm + powder_grain * 0.055, 0.06, 0.94).astype(np.float32)
+    lump_norm = (rounded_lump_height - float(np.mean(rounded_lump_height))) / (h_std * 2.90)
+    height_01 = np.clip(0.50 + lump_norm + powder_grain * 0.065, 0.05, 0.95).astype(np.float32)
 
     # 7. Derive tangent-space normal map from the blurred/rounded lump height + fine isotropic powder grain
     dh_lump_x = (
-        0.40 * (np.roll(lump_norm, -3, axis=1) - np.roll(lump_norm, 3, axis=1)) / 6.0
-        + 0.38 * (np.roll(lump_norm, -7, axis=1) - np.roll(lump_norm, 7, axis=1)) / 14.0
-        + 0.22 * (np.roll(lump_norm, -13, axis=1) - np.roll(lump_norm, 13, axis=1)) / 26.0
+        0.52 * (np.roll(lump_norm, -1, axis=1) - np.roll(lump_norm, 1, axis=1)) * 0.5
+        + 0.33 * (np.roll(lump_norm, -3, axis=1) - np.roll(lump_norm, 3, axis=1)) / 6.0
+        + 0.15 * (np.roll(lump_norm, -6, axis=1) - np.roll(lump_norm, 6, axis=1)) / 12.0
     )
     dh_lump_y = (
-        0.40 * (np.roll(lump_norm, -3, axis=0) - np.roll(lump_norm, 3, axis=0)) / 6.0
-        + 0.38 * (np.roll(lump_norm, -7, axis=0) - np.roll(lump_norm, 7, axis=0)) / 14.0
-        + 0.22 * (np.roll(lump_norm, -13, axis=0) - np.roll(lump_norm, 13, axis=0)) / 26.0
+        0.52 * (np.roll(lump_norm, -1, axis=0) - np.roll(lump_norm, 1, axis=0)) * 0.5
+        + 0.33 * (np.roll(lump_norm, -3, axis=0) - np.roll(lump_norm, 3, axis=0)) / 6.0
+        + 0.15 * (np.roll(lump_norm, -6, axis=0) - np.roll(lump_norm, 6, axis=0)) / 12.0
     )
 
     dh_grain_x = (np.roll(powder_grain, -1, axis=1) - np.roll(powder_grain, 1, axis=1)) * 0.5
     dh_grain_y = (np.roll(powder_grain, -1, axis=0) - np.roll(powder_grain, 1, axis=0)) * 0.5
 
-    # Soft rounded lump normal (8.2) + fine isotropic sand/powder grain normal (2.2)
-    nx = -(dh_lump_x * 8.2 + dh_grain_x * 2.2)
-    ny = -(dh_lump_y * 8.2 + dh_grain_y * 2.2)
+    # Soft rounded lump normal (10.2) + fine isotropic sand/powder grain normal (2.6)
+    nx = -(dh_lump_x * 10.2 + dh_grain_x * 2.6)
+    ny = -(dh_lump_y * 10.2 + dh_grain_y * 2.6)
     nz = np.ones_like(height_01, dtype=np.float32)
     inv_len = 1.0 / np.sqrt(nx * nx + ny * ny + nz * nz)
     normal_rgb = np.stack(
@@ -756,7 +756,7 @@ def _generate_regolith_maps(res: int = 1024, seed: int = 2026) -> dict[str, np.n
     # 8. Soft multi-directional horizon & cavity ambient occlusion from the rounded heightfield
     horizon_occ = np.zeros((res, res), dtype=np.float32)
     directions = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, 1), (1, -1), (-1, -1)]
-    for step_px, weight in ((6, 0.26), (13, 0.34), (24, 0.24), (42, 0.16)):
+    for step_px, weight in ((4, 0.28), (9, 0.34), (18, 0.24), (32, 0.14)):
         step_occ = np.zeros((res, res), dtype=np.float32)
         inv_dist = 1.0 / float(step_px)
         for dx_i, dy_i in directions:
@@ -766,36 +766,36 @@ def _generate_regolith_maps(res: int = 1024, seed: int = 2026) -> dict[str, np.n
             step_occ += elev_diff
         horizon_occ += (step_occ / float(len(directions))) * weight
 
-    hollow_soft = _gaussian_blur_tileable(dimple_troughs + irregular_dimples, sigma_px=10.0)
-    clod_soft = _gaussian_blur_tileable(clod_height, sigma_px=9.0)
+    hollow_soft = _gaussian_blur_tileable(dimple_troughs + irregular_dimples, sigma_px=5.5)
+    clod_soft = _gaussian_blur_tileable(clod_height, sigma_px=4.2)
     raw_ao = (
         0.90
-        - horizon_occ * 7.8
-        - hollow_soft * 0.75
-        + np.clip(clod_soft * 0.85, 0.0, 0.045)
+        - horizon_occ * 8.4
+        - hollow_soft * 0.85
+        + np.clip(clod_soft * 0.90, 0.0, 0.05)
     ).astype(np.float32)
-    micro_ao = np.clip(_gaussian_blur_tileable(raw_ao, sigma_px=5.5), 0.36, 0.97).astype(np.float32)
+    micro_ao = np.clip(_gaussian_blur_tileable(raw_ao, sigma_px=3.2), 0.32, 0.97).astype(np.float32)
 
     # 9. Albedo: soft mottling, slightly lighter on lump tops, darker in the hollows (AO), no hard-edged speckles
     mottle_broad = _tileable_aniso_noise(res, 3, 3, seed + 641) - 0.5
     mottle_med = _tileable_aniso_noise(res, 7, 7, seed + 673) - 0.5
     mottle_fine = _tileable_aniso_noise(res, 15, 15, seed + 691) - 0.5
     mottle_soft = _gaussian_blur_tileable(
-        0.50 * mottle_broad + 0.32 * mottle_med + 0.18 * mottle_fine, sigma_px=8.0
+        0.50 * mottle_broad + 0.32 * mottle_med + 0.18 * mottle_fine, sigma_px=6.5
     )
 
-    # Use broadly rounded height and soft AO for albedo so there are zero discrete oval spots or hard-edged speckles
-    lump_top_soft = _gaussian_blur_tileable(lump_norm, sigma_px=9.5)
-    ao_hollow_soft = _gaussian_blur_tileable(np.clip(0.86 - micro_ao, 0.0, 0.55), sigma_px=7.0)
+    # Softly blurred lump height and hollow AO for albedo so clod tops are gently lighter and hollows darker with zero sharp speckles
+    lump_top_soft = _gaussian_blur_tileable(lump_norm, sigma_px=4.8)
+    ao_hollow_soft = _gaussian_blur_tileable(np.clip(0.86 - micro_ao, 0.0, 0.55), sigma_px=4.5)
 
     lum = (
         0.525
-        + mottle_soft * 0.068
-        + lump_top_soft * 0.095
-        - ao_hollow_soft * 0.135
-        + powder_grain * 0.024
+        + mottle_soft * 0.065
+        + lump_top_soft * 0.115
+        - ao_hollow_soft * 0.150
+        + powder_grain * 0.026
     )
-    lum = np.clip(lum, 0.43, 0.62).astype(np.float32)
+    lum = np.clip(lum, 0.41, 0.63).astype(np.float32)
     albedo_rgb = np.stack([lum * 0.995, lum * 1.000, lum * 1.005], axis=-1)
     albedo_rgba = np.concatenate(
         [np.clip(albedo_rgb, 0.0, 1.0), np.ones((res, res, 1), dtype=np.float32)], axis=-1
