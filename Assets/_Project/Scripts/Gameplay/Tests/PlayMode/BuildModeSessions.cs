@@ -44,6 +44,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>Metres the riding ghost may stand off the spot ahead of 07 (07 eases to a stop).</summary>
         private const float RideTolerance = 0.8f;
+        private const float TurnViewDegrees = 60f;
 
         /// <summary>Metres short of the apron's centre 07's ghost rides when it is set down facing the apron.</summary>
         private const float ApronShortfall = 1f;
@@ -166,10 +167,22 @@ namespace MoonProject.Gameplay.PlayModeTests
             Release(_keyboard.wKey);
             yield return new WaitForSeconds(RideSeconds);
             Assert.Greater(Vector3.Distance(rover.Position, beforeRide), 0.1f, "07 drives while placing.");
-            Vector3 heading = Flat(rover.Rotation * Vector3.forward).normalized;
-            Vector3 ahead = rover.Position + heading * build.Tuning.GhostAheadMetres;
-            Assert.Less(Vector3.Distance(Flat(build.Controller.CandidatePose.Position), Flat(ahead)), RideTolerance,
-                "The placing ghost rides in front of 07.");
+            Vector3 toGhost = Flat(build.Controller.CandidatePose.Position - rover.Position);
+            Assert.GreaterOrEqual(toGhost.magnitude, build.Tuning.MinPlacementDistance - 0.05f,
+                "The placing ghost stands at least the nearest placement distance from 07.");
+            Assert.LessOrEqual(toGhost.magnitude, build.Tuning.MaxPlacementDistance + 0.05f,
+                "and no farther than the farthest.");
+
+            // The ghost follows the camera's aim: turning the view round 07 carries it round with it.
+            var cameraRig = (MoonProject.Rover.RoverCameraRig)_context.Get<IViewCamera>();
+            float bearing = Quaternion.LookRotation(Flat(_context.Get<IViewCamera>().Camera.transform.forward)).eulerAngles.y;
+            cameraRig.Orbit.AdoptBearing(bearing + TurnViewDegrees);
+            yield return new WaitForSeconds(StepWaitSeconds);
+            Vector3 turned = Flat(build.Controller.CandidatePose.Position - rover.Position);
+            Assert.Greater(Vector3.Angle(toGhost, turned), TurnViewDegrees * 0.5f,
+                "Turning the view carries the placing ghost round 07 with it.");
+            cameraRig.Orbit.AdoptBearing(bearing);
+            yield return new WaitForSeconds(StepWaitSeconds);
 
             Assert.IsTrue(build.ApronCentre.HasValue, "The apron's bay is marked for the pad's ghost.");
             Vector3 apron = build.ApronCentre.Value;
@@ -177,6 +190,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Vector3 shortOf = apron - approach * (build.Tuning.GhostAheadMetres + ApronShortfall);
             shortOf.y = terrain.SampleHeight(shortOf.x, shortOf.z);
             placement.PlaceAt(shortOf, Quaternion.LookRotation(approach, Vector3.up));
+            cameraRig.Orbit.AdoptBearing(Quaternion.LookRotation(approach, Vector3.up).eulerAngles.y);
             yield return new WaitForSeconds(StepWaitSeconds);
             Assert.Less(Vector3.Distance(Flat(build.Controller.CandidatePose.Position), Flat(apron)), 0.05f,
                 "Riding within reach of the apron, the pad's ghost settles on its bay.");

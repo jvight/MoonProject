@@ -36,6 +36,10 @@ namespace MoonProject.Rover.PlayModeTests
 
         private static readonly int EmissionStrengthId = Shader.PropertyToID("_EmissionStrength");
 
+        private const float ScanFaceSettleSeconds = 6f;
+        private const float ScanFaceWatchSeconds = 2f;
+        private const float ScanEyesOpenAtLeast = 0.5f;
+
         private static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "captures"));
 
@@ -221,6 +225,44 @@ namespace MoonProject.Rover.PlayModeTests
             // Wait for the short Happy beat to finish and verify it returns to Calm
             yield return WaitSeconds(_faceDirector.Tuning.FragmentHappyHoldSeconds + 0.25f);
             Assert.AreEqual(FaceFeeling.Calm, director.CurrentFeeling, $"{prefix}: Happy beat must return to Calm after its hold.");
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator ASheetOfWordsOnTheFace_NeverBlanksItWhileAScanRuns()
+        {
+            Directory.CreateDirectory(CaptureFolder);
+            yield return BootRealScene();
+            _context.Get<IRoverRig>().SetHoldStill(_holdOwner, true);
+            yield return WaitSeconds(ScanFaceSettleSeconds);
+            FaceState face = _faceDisplay.State;
+            Vector3 scanPoint = _rover.Position + _rover.Rotation * Vector3.forward * 6f + Vector3.up * 0.9f;
+            _context.Events.Publish(new ScanStarted("fragment.cradle.1", scanPoint));
+            IRoverFaceScreen screen = _context.Get<IRoverFaceScreen>();
+            screen.SetReadout(Texture2D.blackTexture);
+
+            float until = Time.time + ScanFaceWatchSeconds;
+            float mostOpen = 0f;
+            while (Time.time < until)
+            {
+                Assert.IsFalse(face.IsReadout, "a line of words never takes the face over while 07 scans");
+                Assert.Greater(face.Brightness, 0.2f, "the screen stays lit while 07 scans");
+                mostOpen = Mathf.Max(mostOpen, face.LeftEye.Open, face.RightEye.Open);
+                Assert.AreEqual(FaceFeeling.Curious, _faceDirector.Director.CurrentFeeling, "the scanning look");
+                yield return null;
+                screen.SetReadout(Texture2D.blackTexture);
+            }
+
+            Assert.Greater(mostOpen, ScanEyesOpenAtLeast, "07's eyes are open on the face while it scans (a blink aside)");
+            _context.Events.Publish(new ScanStopped("fragment.cradle.1", 0.5f));
+            yield return WaitSeconds(ScanFaceSettleSeconds);
+            screen.SetReadout(Texture2D.blackTexture);
+            yield return null;
+            Assert.IsTrue(face.IsReadout, "once the scan is over a line of words may show again");
+            screen.SetReadout(null);
+            _context.Get<IRoverRig>().SetHoldStill(_holdOwner, false);
         }
 
         private IEnumerator BootRealScene()

@@ -79,7 +79,8 @@ namespace MoonProject.Core.Events
 
         /// <summary>
         /// 07 transmitted from the mast and relay.1 blinked the call back (beat R8,
-        /// docs/design/opening-v3-purpose.md): the release begins.
+        /// docs/design/opening-v3-purpose.md): the release begins. Published by the answer itself (opening v3 slice
+        /// 4.1); the opening's objective flow does not derive it.
         /// </summary>
         CallAnswered = 4,
     }

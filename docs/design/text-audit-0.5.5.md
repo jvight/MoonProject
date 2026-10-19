@@ -247,4 +247,5 @@ Container names show only on the prompt chip's noun ("Cut · Coil crate"), never
   one gives `scan.known` (+3 Metal).
 - D6: relics stay buried under their own site's wreck debris, so they need no container names; their prompt stays
   `hint.excavate` (Dig).
-- D4: the starter items show in the first Tab boot (`ui.hold.boot`); no extra line.
+- D4: the starter items show in the first Tab boot (`ui.hold.boot`); no extra line. *(Superseded 2026-10-19: opening
+  v3 starts the hold empty.)*

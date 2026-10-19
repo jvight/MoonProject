@@ -17,6 +17,7 @@ namespace MoonProject.Gameplay.Editor
         /// <summary>World's service port under [World] (World's opening layout contract).</summary>
         private const string LanderPortPath = "Lander/ServicePort";
         private const string ApronOutlinePath = "OpeningProps/ApronMarkings/BayGlowOutline";
+        private const string ApronCableChannelPath = "OpeningProps/ApronMarkings/CableChannel_Anchor";
 
         public int Order => 500;
 
@@ -61,6 +62,7 @@ namespace MoonProject.Gameplay.Editor
             gameplay.WireStoryProps(StoryProps(context.WorldRoot.transform));
             gameplay.WireLanderPort(LanderPort(context.WorldRoot.transform));
             gameplay.WireApronOutline(ApronOutline(context.WorldRoot.transform));
+            gameplay.WireApronCableChannel(ApronCableChannel(context.WorldRoot.transform));
             gameplay.WireOpening(openingTuning, baseTuning);
             context.AddSystem(gameplay);
         }
@@ -116,6 +118,19 @@ namespace MoonProject.Gameplay.Editor
             }
 
             return port;
+        }
+
+        /// <summary>World's apron cable channel: a pad on the apron cables to it, into the lander's cable.</summary>
+        private static Transform ApronCableChannel(Transform worldRoot)
+        {
+            Transform channel = worldRoot.Find(ApronCableChannelPath);
+            if (channel == null)
+            {
+                throw new InvalidOperationException($"Gameplay scene build: [World] has no '{ApronCableChannelPath}' " +
+                                                    "(the lander's cable across the apron).");
+            }
+
+            return channel;
         }
 
         /// <summary>The bay outline on World's apron markings: it glows while build mode is open.</summary>

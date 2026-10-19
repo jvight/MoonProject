@@ -96,7 +96,7 @@ Each lives on a surface the player scans or a readout that already exists, so it
 | Where | What it says | Beat |
 |---|---|---|
 | **The chassis plate** (rear flank stencil) | "ILC · SSR-5 STATION SERVICE ROVER · S/N 3-0417 · KESSLER–ARAI 1983", and Kenji's hand-painted "07" above it | seen in the chase frame from B1; readable on the first close look |
-| **The CRT face boot** (B1, part of the existing hold boot readout) | "UNIT 07 · SSR-5 · CONTINUE · 13 148 DAYS" | the first look at the hold |
+| **The CRT face boot** (New Game's boot face POST, `cutscenes.md` §1.8) | "UNIT 07 · CARRIER DETECTED", then "CONTINUE · 13 148 DAYS · RESTORING TASK QUEUE" (`post.carrier`, `post.resume`) | the wake, before control |
 | **The dead trickle post** (B2, scan) | "SSR-5 TRICKLE POST · WAKE ON CARRIER · LINE FAULT" | the wake point, before the first drive |
 | **The airlock panel** (B7, beneath the existing lines) | "ROVERS · CONTINUE · SET 28 OCT 1988 · K. MORROW" | the Lumen ruins |
 | **Kenji's job board** (the workshop ruin, scan) | "JOB 7 · SPARE SURVEY CHASSIS → SSR-5 REBUILD · DONE · K.M." | B7, optional |
@@ -107,7 +107,7 @@ Each lives on a surface the player scans or a readout that already exists, so it
 | Key | en | vi |
 |---|---|---|
 | `rover.plate` | ILC · SSR-5 STATION SERVICE ROVER · S/N 3-0417 · KESSLER–ARAI 1983 | ILC · XE DỊCH VỤ TRẠM SSR-5 · S/N 3-0417 · KESSLER–ARAI 1983 |
-| `ui.hold.unit` | UNIT 07 · SSR-5 · CONTINUE · {0} DAYS | ĐƠN VỊ 07 · SSR-5 · TIẾP TỤC · {0} NGÀY |
+| `ui.hold.unit` (not built: the boot face's `post.carrier` and `post.resume` carry it) | UNIT 07 · SSR-5 · CONTINUE · {0} DAYS | ĐƠN VỊ 07 · SSR-5 · TIẾP TỤC · {0} NGÀY |
 | `post.trickle.readout` | SSR-5 TRICKLE POST · WAKE ON CARRIER · LINE FAULT | TRỤ SẠC NHỎ GIỌT SSR-5 · THỨC KHI CÓ SÓNG MANG · HỎNG ĐƯỜNG DÂY |
 | `airlock.rovers` | ROVERS · CONTINUE · SET 28 OCT 1988 · K. MORROW | XE TỰ HÀNH · TIẾP TỤC · ĐẶT 28/10/1988 · K. MORROW |
 | `board.job_7` | JOB 7 · SPARE SURVEY CHASSIS → SSR-5 REBUILD · DONE · K.M. | VIỆC 7 · KHUNG XE KHẢO SÁT DỰ PHÒNG → LẮP LẠI SSR-5 · XONG · K.M. |

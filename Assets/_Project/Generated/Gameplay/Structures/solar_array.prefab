@@ -43,7 +43,7 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.74, b: 0.36, a: 1}
-  m_Intensity: 1.6
+  m_Intensity: 0.8
   m_Range: 5
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -178,7 +178,7 @@ MonoBehaviour:
   - {fileID: 4539653912045359387}
   - {fileID: 6086149159082564196}
   _statusLight: {fileID: 8491533203001044899}
-  _statusLightIntensity: 1.6
+  _statusLightIntensity: 0.8
 --- !u!1001 &3542866547622509466
 PrefabInstance:
   m_ObjectHideFlags: 0
