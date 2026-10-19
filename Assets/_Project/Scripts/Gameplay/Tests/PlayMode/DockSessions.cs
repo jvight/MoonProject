@@ -111,6 +111,9 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             yield return new WaitForSeconds(ShotSeconds);
             Capture("dock-docked");
+            Assert.Greater(_gameplay.Building.HoveredInstanceId, 0, "07 looks at the pad it rests on");
+            Assert.IsFalse(_gameplay.Hints.TryGet(InteractionKind.Deconstruct, out _),
+                "no Deconstruct prompt while 07 rests docked on its pad outside build mode");
             Renderer[] head = HeadRenderers();
             float until = Time.time + WatchSeconds;
             float closest = float.MaxValue;

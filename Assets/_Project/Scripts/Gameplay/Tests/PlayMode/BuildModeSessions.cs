@@ -286,13 +286,21 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             yield return null;
+            Assert.IsFalse(
+                _gameplay.Hints.TryGet(InteractionKind.Deconstruct, out _),
+                "No Deconstruct prompt while 07 merely stands by a built piece outside build mode.");
+            Press(_keyboard.bKey);
+            yield return null;
+            Release(_keyboard.bKey);
+            yield return null;
+            Assert.AreEqual(BuildModeState.Menu, restoredBuild.State, "B opens the build menu: the builder is out.");
             Assert.AreEqual(
                 restoredPad.InstanceId,
                 restoredBuild.HoveredInstanceId,
                 "07 hovers the restored charging pad within weld range.");
             Assert.IsTrue(
                 _gameplay.Hints.TryGet(InteractionKind.Deconstruct, out _),
-                "InteractionHints offers the Deconstruct prompt while looking at the placed structure.");
+                "InteractionHints offers the Deconstruct prompt in build mode while looking at the placed structure.");
 
             int metalBeforeDeconstruct = _gameplay.Materials.Metal;
             int wiringBeforeDeconstruct = _gameplay.Materials.Wiring;
