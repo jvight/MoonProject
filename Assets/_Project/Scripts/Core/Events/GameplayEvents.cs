@@ -172,11 +172,10 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
-    /// 07 came to rest on the charging dock at home (<see cref="Docked"/> true), or left it (false): docked once it
-    /// has stood still on the dock's pad for a moment with no drive input; any drive input undocks it at once
-    /// (docs/features/M3-14). The rover settles 07 gently onto <see cref="Position"/> and <see cref="Rotation"/> (the
-    /// lander's DockAnchor: 07's pivot, facing the lander), dims its lamp and lets go when undocked; the dock's glow
-    /// warms meanwhile.
+    /// 07 is held on a charging pad (<see cref="Docked"/> true), or let go of it (false): docked while it charges on a
+    /// pad and the wheel is untouched; any touch of the wheel undocks it at once. The rover eases 07 gently onto
+    /// <see cref="Position"/> (07's pivot on the pad's deck) and <see cref="Rotation"/> (the pad's heading), dims its
+    /// lamp and lets go when undocked.
     /// </summary>
     public readonly struct RoverDockChanged
     {

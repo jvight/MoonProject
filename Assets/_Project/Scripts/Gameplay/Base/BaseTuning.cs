@@ -51,6 +51,23 @@ namespace MoonProject.Gameplay
         [Tooltip("Seconds for the rim lamps' chase to run from the outer ring to the inner one as 07 rolls on.")]
         [Range(0.2f, 2f)] [SerializeField] private float _rimChaseSeconds = 0.6f;
 
+        [Tooltip("Metres from the pad's centre line 07 may rest off and still count as settled onto the dock.")]
+        [Range(0.005f, 0.2f)] [SerializeField] private float _dockSettledMetres = 0.03f;
+
+        [Tooltip("Degrees off the pad's heading 07 may rest at and still count as settled onto the dock.")]
+        [Range(0.2f, 10f)] [SerializeField] private float _dockSettledDegrees = 1f;
+
+        [Tooltip("Drive input (0..1) beyond which a touch of the wheel lets 07 go from the dock at once.")]
+        [Range(0.02f, 0.5f)] [SerializeField] private float _dockTouch = 0.08f;
+
+        [Tooltip("Degrees 07's heading on a charging pad lies from the pad's forward axis: 180 noses 07 in toward the " +
+                 "pad's cooling tower at its rear, so the tower never stands between the chase camera and 07.")]
+        [Range(-180f, 180f)] [SerializeField] private float _dockHeadingOffset = 180f;
+
+        public float DockHeadingOffset => _dockHeadingOffset;
+        public float DockSettledMetres => _dockSettledMetres;
+        public float DockSettledDegrees => _dockSettledDegrees;
+        public float DockTouch => _dockTouch;
         public float WallStagger => _wallStagger;
         public float WallRiseSeconds => _wallRiseSeconds;
         public float WallOvershoot => _wallOvershoot;
