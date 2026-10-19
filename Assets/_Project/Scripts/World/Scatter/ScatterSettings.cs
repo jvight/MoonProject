@@ -111,7 +111,7 @@ namespace MoonProject.World
 
         [Tooltip("Share of rubble cells that hold a stone inside a rubble patch (0..1).")]
         [Range(0f, 1f)]
-        [SerializeField] private float _rubbleDense = 0.5f;
+        [SerializeField] private float _rubbleDense = 0.65f;
 
         [Tooltip("Size of the rubble patches and the emptier stretches between them, metres.")]
         [Range(5f, 200f)]
