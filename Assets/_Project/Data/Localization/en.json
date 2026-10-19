@@ -607,14 +607,6 @@
             "text": "Clear the ground first"
         },
         {
-            "key": "build.hint.weld",
-            "text": "Hold to assemble"
-        },
-        {
-            "key": "build.hint.deconstruct",
-            "text": "Hold to dismantle"
-        },
-        {
             "key": "structure.charging_pad.name",
             "text": "Charging Pad"
         },

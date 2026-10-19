@@ -79,8 +79,6 @@ namespace MoonProject.UI
         public const string BuildHintLeave = "build.hint.leave";
         public const string BuildStepPlace = "build.step.place";
         public const string BuildStepWeld = "build.step.weld";
-        public const string BuildHintWeld = "build.hint.weld";
-        public const string BuildHintDeconstruct = "build.hint.deconstruct";
         public const string BuildLocked = "build.locked";
         public const string BuildEnergyCard = "build.energy.card";
 

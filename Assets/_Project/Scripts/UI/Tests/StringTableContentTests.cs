@@ -110,7 +110,7 @@ namespace MoonProject.UI.Tests
                           UiKeys.KeyBOrEscape, UiKeys.KeyPadYOrB, UiKeys.KeyB,
                           UiKeys.BuildStripTitle, UiKeys.BuildCostAffordable, UiKeys.BuildCostShort,
                           UiKeys.BuildHintPick, UiKeys.BuildHintLeave, UiKeys.BuildStepPlace, UiKeys.BuildStepWeld,
-                          UiKeys.BuildHintWeld, UiKeys.BuildHintDeconstruct, UiKeys.BuildLocked, UiKeys.BuildEnergyCard,
+                          UiKeys.BuildLocked, UiKeys.BuildEnergyCard,
                       })
             {
                 Assert.IsTrue(_english.TryGet(key, out _), key);
