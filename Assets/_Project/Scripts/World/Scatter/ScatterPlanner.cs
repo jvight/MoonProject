@@ -516,9 +516,10 @@ namespace MoonProject.World
         private bool NearRuins(Vector2 point)
         {
             GroundShape ruins = _surface.Shaping.Ruins;
-            GroundShape array = _surface.Shaping.FallenArray;
+            Vector2 array = _surface.Shaping.FallenArray.Center;
+            float arrayClearance = _surface.Shaping.FallenArrayClearance;
             return Vector2.Distance(point, ruins.Center) < ruins.Radius + _settings.PadClearance
-                || Vector2.Distance(point, array.Center) < array.Radius + _settings.PadClearance;
+                || Vector2.Distance(point, array) < arrayClearance + _settings.PadClearance;
         }
     }
 }

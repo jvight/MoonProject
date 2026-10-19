@@ -38,6 +38,7 @@ namespace MoonProject.World
             float arrayGround = Mathf.Lerp(arrayNatural, Ruins.Plateau,
                 Ruins.Weight(Vector2.Distance(array, Ruins.Center)));
             FallenArray = new GroundShape(array, settings.FallenArrayRadius, blend, arrayGround);
+            FallenArrayClearance = settings.FallenArrayClearance;
             MidwayCenter = settings.MidwayCenter;
             MidwayRadius = settings.MidwayRadius;
             WakePost = settings.WakePost;
@@ -60,6 +61,9 @@ namespace MoonProject.World
 
         /// <summary>Opening v3 R4: the fallen solar array's own flat footprint, sunlit at the golden-hour hold.</summary>
         public GroundShape FallenArray { get; }
+
+        /// <summary>Opening v3 R4: radius round the fallen array kept clear of rocks (it and its sources), metres.</summary>
+        public float FallenArrayClearance { get; }
 
         /// <summary>Opening v2: the flat footprint the landed cargo lander stands on.</summary>
         public GroundShape Lander { get; }

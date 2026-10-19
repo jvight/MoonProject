@@ -45,9 +45,14 @@ namespace MoonProject.World
             "new Sun (opening v3 R4). Its ruin placement must stand inside this footprint.")]
         [SerializeField] private Vector2 _fallenArrayOffset = new Vector2(-22f, -24f);
 
-        [Tooltip("Radius of the fallen array's own flat footprint, metres: its wings, kept clear of rocks and craters.")]
+        [Tooltip("Radius of the fallen array's own flat footing, metres: its wings and its panels' crate beside them.")]
         [Range(2f, 10f)]
-        [SerializeField] private float _fallenArrayRadius = 5f;
+        [SerializeField] private float _fallenArrayRadius = 6f;
+
+        [Tooltip("Radius round the fallen array kept clear of rocks, metres: its wings and the sources that stand " +
+            "beside it (its junction box stands about 10 m out, on the footing's gentle blend).")]
+        [Range(2f, 20f)]
+        [SerializeField] private float _fallenArrayClearance = 11f;
 
         [Header("Opening v2 layout (docs/design/opening-v2.md §4)")]
         [Tooltip("Where 07's dead charging post stands on the old pad (world XZ, metres): beside 07's wake spot.")]
@@ -142,6 +147,7 @@ namespace MoonProject.World
         public float RuinsBlend => _ruinsBlend;
         public Vector2 FallenArrayCenter => RuinsCenter + _fallenArrayOffset;
         public float FallenArrayRadius => _fallenArrayRadius;
+        public float FallenArrayClearance => _fallenArrayClearance;
         public KestrelSettings Kestrel => _kestrel;
         public BlastZoneSettings BlastZone => _blastZone;
         public Vector2 ScoutSpot => ApronCenter + MoonSurface.BearingToDirection(_scoutBearing) * _scoutDistance;
@@ -157,6 +163,11 @@ namespace MoonProject.World
             if (_ruinsRadius + _footprintBlend > _ruinsDistance)
             {
                 return "Sites: the ruins cluster reaches back to the base.";
+            }
+
+            if (_ruinsRadius + _fallenArrayRadius + _footprintBlend > _fallenArrayOffset.magnitude)
+            {
+                return "Sites: the fallen array's footprint reaches into the ruins' flat ground.";
             }
 
             if (_scoutCraterOffset >= _scoutCraterRadius)

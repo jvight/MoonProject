@@ -167,7 +167,8 @@ MonoBehaviour:
       _ruinsRadius: 14
       _ruinsBlend: 24
       _fallenArrayOffset: {x: -22, y: -24}
-      _fallenArrayRadius: 5
+      _fallenArrayRadius: 6
+      _fallenArrayClearance: 11
       _wakePost: {x: -2.4, y: -4}
       _landerBearing: 12.3
       _landerDistance: 164

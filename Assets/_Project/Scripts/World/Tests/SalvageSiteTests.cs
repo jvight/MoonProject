@@ -312,8 +312,8 @@ namespace MoonProject.World.Tests
                     $"{rock.Kind} at {at} lies on the lander's footprint");
                 Assert.GreaterOrEqual(Vector2.Distance(at, apron.Center), apron.Radius,
                     $"{rock.Kind} at {at} lies on the build apron");
-                Assert.GreaterOrEqual(Vector2.Distance(at, array.Center), array.Radius,
-                    $"{rock.Kind} at {at} lies on the fallen array's footprint");
+                Assert.GreaterOrEqual(Vector2.Distance(at, array.Center), _surface.Shaping.FallenArrayClearance,
+                    $"{rock.Kind} at {at} lies by the fallen array or its sources");
             }
         }
 
