@@ -39,113 +39,109 @@ MonoBehaviour:
     _dish: 4
     _answer: 1
   _caches:
-  - _id: supply.wake
-    _anchorId: place.wake
-    _offset: {x: 2.5, y: 0, z: -1.5}
-    _yaw: 30
-    _container: Crate_S
-    _yield:
-      _metal: 3
-      _wiring: 1
-      _optics: 0
-    _startsOpen: 0
-    _parts: []
-    _prop: {fileID: 0}
-  - _id: supply.midway
-    _anchorId: place.midway
-    _offset: {x: 1.5, y: 0, z: 0}
-    _yaw: 67
-    _container: Crate_S
-    _yield:
-      _metal: 2
-      _wiring: 1
-      _optics: 0
-    _startsOpen: 0
-    _parts: []
-    _prop: {fileID: 0}
   - _id: supply.lander.open
     _anchorId: lander.port
     _offset: {x: 4.2, y: 0, z: -1.4}
     _yaw: 45
     _container: Crate_Cargo_Open
     _yield:
-      _metal: 2
-      _wiring: 1
+      _metal: 4
+      _wiring: 2
       _optics: 0
+    _forStructure: charging_pad
     _startsOpen: 1
     _parts:
     - part.igniter
     - part.icecore
     _prop: {fileID: 703351103347903336, guid: 3a2ed291bf34a90459e85da9d8125b67, type: 3}
+  - _id: supply.array.panels
+    _anchorId: FallenSolarArray
+    _offset: {x: 5, y: 0, z: 0}
+    _yaw: 90
+    _container: Crate_L
+    _yield:
+      _metal: 3
+      _wiring: 0
+      _optics: 1
+    _forStructure: solar_array
+    _startsOpen: 0
+    _parts: []
+    _prop: {fileID: 0}
+  - _id: supply.array.junction
+    _anchorId: FallenSolarArray
+    _offset: {x: -7, y: 0, z: 0}
+    _yaw: -90
+    _container: Crate_M
+    _yield:
+      _metal: 0
+      _wiring: 2
+      _optics: 0
+    _forStructure: solar_array
+    _startsOpen: 0
+    _parts: []
+    _prop: {fileID: 0}
   - _id: supply.habitat.reel
     _anchorId: HabitatModules
     _offset: {x: -3.3, y: 0, z: -6.5}
     _yaw: 207
     _container: Crate_M
     _yield:
-      _metal: 6
-      _wiring: 4
+      _metal: 0
+      _wiring: 3
       _optics: 0
+    _forStructure: battery_bank
     _startsOpen: 0
     _parts: []
     _prop: {fileID: 0}
-  - _id: supply.workshop.a
-    _anchorId: KenjiWorkshop
-    _offset: {x: 3.9, y: 0, z: -11.6}
-    _yaw: -151
-    _container: Crate_S
+  - _id: supply.habitat.module
+    _anchorId: HabitatModules
+    _offset: {x: -13.5, y: 0, z: -3.6}
+    _yaw: -90
+    _container: Crate_L
     _yield:
       _metal: 3
-      _wiring: 4
-      _optics: 2
+      _wiring: 0
+      _optics: 0
+    _forStructure: battery_bank
     _startsOpen: 0
     _parts: []
     _prop: {fileID: 0}
-  - _id: supply.workshop.b
-    _anchorId: KenjiWorkshop
-    _offset: {x: 9, y: 0, z: -9.1}
-    _yaw: -151
-    _container: Crate_S
-    _yield:
-      _metal: 3
-      _wiring: 4
-      _optics: 2
-    _startsOpen: 0
-    _parts: []
-    _prop: {fileID: 0}
-  - _id: supply.tower.a
+  - _id: supply.tower.mast
     _anchorId: RadioTower
     _offset: {x: -6.5, y: 0, z: 0}
     _yaw: -100
-    _container: Crate_S
+    _container: Crate_L
     _yield:
-      _metal: 2
+      _metal: 4
       _wiring: 0
-      _optics: 1
+      _optics: 0
+    _forStructure: antenna_mast
     _startsOpen: 0
     _parts: []
     _prop: {fileID: 0}
-  - _id: supply.tower.b
+  - _id: supply.tower.feed
     _anchorId: RadioTower
     _offset: {x: -5.4, y: 0, z: 5.6}
     _yaw: -143
-    _container: Crate_S
+    _container: Crate_M
     _yield:
-      _metal: 2
-      _wiring: 0
-      _optics: 1
+      _metal: 0
+      _wiring: 3
+      _optics: 0
+    _forStructure: antenna_mast
     _startsOpen: 0
     _parts: []
     _prop: {fileID: 0}
-  - _id: supply.scatter
-    _anchorId: ScatterSet
-    _offset: {x: 0, y: 0, z: -3}
-    _yaw: 180
+  - _id: supply.tower.dish
+    _anchorId: RadioTower
+    _offset: {x: 6.8, y: 0, z: 1.8}
+    _yaw: 90
     _container: Crate_M
     _yield:
-      _metal: 6
+      _metal: 0
       _wiring: 0
-      _optics: 0
+      _optics: 2
+    _forStructure: antenna_mast
     _startsOpen: 0
     _parts: []
     _prop: {fileID: 0}
