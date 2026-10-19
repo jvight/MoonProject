@@ -57,4 +57,5 @@ MonoBehaviour:
     _stir: 0.5
     _check: 0.8
     _fault: 0.8
+    _rush: 0.7
   _loopSpatialBlend: 0.75

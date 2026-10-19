@@ -18,6 +18,8 @@ WHEEL_NOTES = ("D6", "B5", "E6", "A5")
 WHEEL_RATES = (1.0, 0.9, 1.08, 0.84)
 SPARK_STRENGTHS = (1.0, 0.8, 0.55)
 FLICKER_RATES = (1.0, 1.06, 0.94)
+RUSH_S = 1.1
+RUSH_CHATTER_S = 0.78
 
 
 def lens(lib, gen, _variant: int) -> np.ndarray:
@@ -207,16 +209,6 @@ def begin_turn(lib, gen, _variant: int) -> np.ndarray:
     return turn * dsp.shape(n, [(0.0, 0.0), (0.15, 1.0), (1.7, 0.8), (2.0, 0.0)])
 
 
-def begin_shiver(lib, gen, _variant: int) -> np.ndarray:
-    """07 shivering off 36 years of dust: a rattle of panels and springs, grit pouring off the metal."""
-    n = samples(1.2)
-    shiver = (0.6 * dsp.fit(parts.clip(lib, "metal_rattle", 6000.0, 300.0), n)
-              + 0.5 * dsp.fit(parts.clip(lib, "spring_clatter", 5000.0, 400.0), n)
-              + 0.6 * dsp.fit(parts.clip(lib, "grit_roll", 4000.0, 200.0), n)
-              + 0.4 * dsp.fit(parts.clip(lib, "dust_wipe", 4000.0, 300.0), n))
-    return effects.tremolo(shiver, 13.0, 0.5) * dsp.shape(n, [(0.0, 0.0), (0.1, 1.0), (0.8, 0.6), (1.2, 0.0)])
-
-
 def begin_lamps(lib, gen, _variant: int) -> np.ndarray:
     """The headlamps on, and a mechanical ready chord (D, F#, A) settles: the recovery begins."""
     n = samples(1.4)
@@ -230,6 +222,30 @@ def begin_lamps(lib, gen, _variant: int) -> np.ndarray:
         voice.Syllable(0.14, 0.86, "A5", ((0.0, -1.0), (0.1, 0.0), (0.86, -0.2)), 0.6, attack=0.03, release=0.35),
     ], 1.05, click="relay_click")
     dsp.place(out, chord, 0.3, 0.9)
+    return out
+
+
+def rush(lib, gen, _variant: int) -> np.ndarray:
+    """The player hurrying the self-test (BootCheckFastForwarded): one soft rush in place of the remaining motions,
+    a tape head fast-winding through them under a relay's chatter, quickening, then slowing and settling on a latch."""
+    n = samples(RUSH_S)
+    out = np.zeros(n)
+    whirr_n = samples(RUSH_CHATTER_S + 0.1)
+    rise = dsp.contour(whirr_n, [(0.0, 0.0), (0.4, 5.0), (RUSH_CHATTER_S + 0.1, 2.0)])
+    whirr = dsp.varispeed(lib("tape_spring"), 0.9 * 2.0 ** (rise / 12.0), whirr_n, 0.1)
+    whirr = dsp.peak_normalize(filters.butter(filters.highpass(whirr, 200.0), "lowpass", 1800.0, order=2))
+    dsp.place(out, whirr * dsp.shape(whirr_n, [(0.0, 0.0), (0.12, 1.0), (0.6, 0.8), (RUSH_CHATTER_S + 0.1, 0.0)]),
+              0.0, 0.6)
+    t = 0.0
+    gap = 0.075
+    k = 0
+    while t < RUSH_CHATTER_S:
+        rate = float(gen.uniform(0.85, 1.05))
+        dsp.place(out, parts.clip(lib, "relay_click", 2400.0, 200.0, rate), t, 0.1 + 0.03 * (k % 2))
+        gap = gap * 0.82 if t < 0.4 else gap * 1.35
+        t += max(gap, 0.035)
+        k += 1
+    dsp.place(out, parts.clip(lib, "latch_thunk", 2000.0, 80.0, 0.95), RUSH_CHATTER_S + 0.08, 0.3)
     return out
 
 
@@ -252,6 +268,6 @@ SOUNDS = {
     "boot_battery": (battery, 1),
     "boot_assembly": (assembly, 1),
     "boot_begin_turn": (begin_turn, 1),
-    "boot_begin_shiver": (begin_shiver, 1),
     "boot_begin_lamps": (begin_lamps, 1),
+    "boot_rush": (rush, 1),
 }
