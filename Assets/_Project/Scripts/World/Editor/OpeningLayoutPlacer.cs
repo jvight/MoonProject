@@ -46,6 +46,9 @@ namespace MoonProject.World.Editor
         public const string ScoutBlastName = "Decal_OldLanderBlast";
         public const string BootprintTrailName = "BootprintTrail";
 
+        /// <summary>Kestrel-3's story scan host in [World]/BasinProps; Art's hull panel under it is the scan node.</summary>
+        public const string KestrelPanelHostName = "Kestrel3_HullPanel";
+
         // Art's R1 prop nodes this layout joins (tools/art/qa/contracts).
         private const string PostCableOrigin = "CableOrigin_Anchor";
         private const string PortWakeSocket = "CableSocket";
@@ -130,9 +133,11 @@ namespace MoonProject.World.Editor
             }
 
             StandBigBoulders(context, settings, surface, anchors, boulders);
+            StandTrackBoulders(context, settings.Surface.Relief, surface, boulders);
             Transform basin = context.CreateChild(BasinPropsRootName, root).transform;
             StandScout(context, landmarks, surface, basin);
             StandCrewTraces(context, settings, surface, anchors, basin);
+            StandStoryHosts(context, landmarks, surface, anchors, basin, boulders);
             PressBootprints(context, landmarks, surface, context.CreateChild(BootprintTrailName, props).transform);
         }
 
@@ -162,6 +167,46 @@ namespace MoonProject.World.Editor
             Vector2 rack = surface.Shaping.ScoutCraterCenter + landmarks.SampleRackOffset;
             StandTrace(context, parent, "Prop_SampleRack", WorldPaths.SampleRackPrefab,
                 Ground(surface, new Vector3(rack.x, 0f, rack.y)), landmarks.SampleRackYaw);
+        }
+
+        /// <summary>
+        /// The databank's story scan hosts in [World]/BasinProps, solid on <see cref="Layers.Prop"/>: Kestrel-3's hull
+        /// panel at the impact crater (its own host, the panel its scan node), 06 at micro.06, and 01 at the foot of
+        /// the Peak road with the rockfall that stopped it (with the boulders).
+        /// </summary>
+        private static void StandStoryHosts(SceneBuildContext context, LandmarkSettings landmarks, MoonSurface surface,
+            WorldAnchors anchors, Transform parent, Transform boulders)
+        {
+            PropPlacement panel = landmarks.KestrelPanel;
+            Transform host = context.CreateChild(KestrelPanelHostName, parent).transform;
+            host.position = Ground(surface, Near(anchors, panel));
+            Stand(context, host, panel.Id, WorldPaths.KestrelDebrisPrefab(panel.Id),
+                host.position - Vector3.up * panel.Sink, Quaternion.Euler(0f, panel.Yaw, 0f) * Vector3.forward, true);
+            PropPlacement keeper = landmarks.Elder06;
+            Vector3 rest = Ground(surface, Near(anchors, keeper)) - Vector3.up * keeper.Sink;
+            Vector3 towardMast = Flat(Require(anchors, WorldAnchorIds.CanyonMouth).Position - rest);
+            GameObject six = Stand(context, parent, keeper.Id, WorldPaths.ElderPrefab(keeper.Id), rest,
+                Quaternion.Euler(0f, keeper.Yaw, 0f) * towardMast, true);
+            six.transform.rotation = Quaternion.AngleAxis(-landmarks.Elder06Slump, six.transform.forward)
+                                     * six.transform.rotation;
+
+            PropPlacement surveyor = landmarks.Elder01;
+            Stand(context, parent, surveyor.Id, WorldPaths.ElderPrefab(surveyor.Id),
+                Ground(surface, Near(anchors, surveyor)) - Vector3.up * surveyor.Sink,
+                Quaternion.Euler(0f, surveyor.Yaw, 0f) * Vector3.forward, true);
+
+            foreach (PropPlacement rock in landmarks.Rockfall)
+            {
+                StandRock(context, boulders, rock.Id, Ground(surface, Near(anchors, rock)) - Vector3.up * rock.Sink,
+                    rock.Yaw);
+            }
+        }
+
+        /// <summary>Where <paramref name="placement"/> stands: its offset from its anchor, on the XZ plane.</summary>
+        private static Vector3 Near(WorldAnchors anchors, PropPlacement placement)
+        {
+            Vector3 near = Require(anchors, placement.Anchor).Position;
+            return new Vector3(near.x + placement.Offset.x, 0f, near.z + placement.Offset.y);
         }
 
         /// <summary>
@@ -385,6 +430,24 @@ namespace MoonProject.World.Editor
                 float height = context.LoadAsset<GameObject>(WorldPaths.R1RockPrefab(rock))
                     .GetComponentInChildren<Renderer>().bounds.size.y;
                 StandRock(context, parent, rock, site.Position - Vector3.up * height * tuning.Sink, site.Yaw);
+            }
+        }
+
+        /// <summary>
+        /// The boulders at the foot of their furrows down the big old crater's wall (<see cref="ReliefSettings.Tracks"/>),
+        /// half-buried where they came to rest, turned along the way they rolled.
+        /// </summary>
+        private static void StandTrackBoulders(SceneBuildContext context, ReliefSettings relief, MoonSurface surface,
+            Transform parent)
+        {
+            foreach (BoulderTrack track in relief.Tracks)
+            {
+                float height = context.LoadAsset<GameObject>(WorldPaths.R1RockPrefab(track.Rock))
+                    .GetComponentInChildren<Renderer>().bounds.size.y;
+                Vector2 rolled = track.End - track.Start;
+                float yaw = Mathf.Atan2(rolled.x, rolled.y) * Mathf.Rad2Deg;
+                Vector3 rest = Ground(surface, new Vector3(track.End.x, 0f, track.End.y));
+                StandRock(context, parent, track.Rock, rest - Vector3.up * height * relief.TrackBoulderSink, yaw);
             }
         }
 

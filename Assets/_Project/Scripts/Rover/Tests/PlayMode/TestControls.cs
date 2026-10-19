@@ -27,6 +27,9 @@ namespace MoonProject.Rover.PlayModeTests
             menu.AddAction("Pause", InputActionType.Button, "<Gamepad>/start");
             menu.AddAction("Click", InputActionType.Button, "<Mouse>/leftButton");
             menu.AddAction("Cargo", InputActionType.Button, "<Gamepad>/select");
+            menu.AddAction("PageToggle", InputActionType.Button, "<Gamepad>/leftShoulder");
+            menu.AddAction("Colour", InputActionType.Button, "<Gamepad>/buttonNorth");
+            menu.AddAction("Turn", InputActionType.Value, "<Gamepad>/rightStick", expectedControlLayout: "Vector2");
             return asset;
         }
     }

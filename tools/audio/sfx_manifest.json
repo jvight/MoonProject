@@ -507,6 +507,93 @@
       "notes": "0.5.5: a drop refused: two soft muted ticks falling B4 -> F#4."
     },
     {
+      "id": "ui_relay_click",
+      "category": "tick_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/ui_relay_click.wav"
+      ],
+      "variantLabels": [
+        "ui_relay_click"
+      ],
+      "sha256": [
+        "fb415600d220e2f4fcef2424df61084197d65a7cc4e5cca603277aa13e816944"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -28.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The databank's page starting to flip: a small relay pulling in, its contact settling.",
+      "source": "sampled",
+      "pick": "ui_relay_click v1"
+    },
+    {
+      "id": "ui_tube_thunk",
+      "category": "tick_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/ui_tube_thunk.wav"
+      ],
+      "variantLabels": [
+        "ui_tube_thunk"
+      ],
+      "sha256": [
+        "5508055fdfe7ccae352811c2d31d4c75f81d9105edc498dbd0cebf4bd2c05e92"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -28.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The databank's picture tube settling on a channel: a soft latch thunk, the steel's ring on D2 and a breath of the tube's hum on D3.",
+      "source": "sampled",
+      "pick": "ui_tube_thunk v1"
+    },
+    {
+      "id": "ui_tape_tick",
+      "category": "tick_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/ui_tape_tick.wav"
+      ],
+      "variantLabels": [
+        "ui_tape_tick"
+      ],
+      "sha256": [
+        "a003c4d77bf6694b089e7d3e75567ab5e2392d325ec16d2286679a75c8eaf4b2"
+      ],
+      "volumeMin": 0.4,
+      "volumeMax": 0.4,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -28.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The databank's list cursor moving one line: a typewriter carriage's single ratchet notch, like a tape head stepping.",
+      "source": "sampled",
+      "pick": "ui_tape_tick v2"
+    },
+    {
       "id": "sheet_complete",
       "category": "stinger_2d",
       "milestone": "M3",
@@ -2183,7 +2270,7 @@
       "sha256": [
         "e2699bd5c176b41aa2a2e661321f11bc8eb2b5efe579617a498179936d4d3010",
         "58bed0c9eb8b3f90f69f1bb3547f5c409d09fbcef53ee887dedfc40af44efc27",
-        "51d32df454ddb3dd2b01f7e4d54a032525c93eac3f8422918f353afbd46a0dd9"
+        "c90666758fec612d069be735c620eed0743f5e51b0af26a360f14ed1cdab0829"
       ],
       "volumeMin": 0.6,
       "volumeMax": 0.6,

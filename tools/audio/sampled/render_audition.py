@@ -18,11 +18,12 @@ sys.path.insert(0, str(AUDIO_TOOLS))
 from synth import io  # noqa: E402
 from synth.core import rng  # noqa: E402
 
-from sampled import boot, build, dsp, sky, voice  # noqa: E402
+from sampled import boot, build, dsp, sky, ui, voice  # noqa: E402
 
 VOICE_LUFS = -22.0
 BOOT_LUFS = -22.0
 SKY_LUFS = -20.0
+UI_LUFS = -28.0
 TARGETS = {
     "build_place": -19.0, "build_snap": -21.5, "build_weld_loop": -21.5, "build_structure_complete": -18.5,
     "structure_power_on": -22.0,
@@ -38,6 +39,8 @@ def _entries():
         yield cue, "boot", (fn.__doc__ or "").strip(), fn, count, BOOT_LUFS, False
     for cue, (fn, count) in sky.SOUNDS.items():
         yield cue, "sky", (fn.__doc__ or "").strip(), fn, count, SKY_LUFS, False
+    for cue, (fn, count) in ui.SOUNDS.items():
+        yield cue, "ui", (fn.__doc__ or "").strip(), fn, count, UI_LUFS, False
     for cue, (fn, count) in build.SOUNDS.items():
         yield cue, "build", (fn.__doc__ or "").strip(), fn, count, TARGETS[cue], cue == "build_weld_loop"
 

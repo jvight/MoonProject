@@ -52,6 +52,9 @@ namespace MoonProject.UI
         public const string KeyBOrEscape = "glyph.combo.b_esc";
         public const string KeyPadYOrB = "glyph.combo.pad_y_b";
         public const string KeyB = "glyph.keyboard.b";
+        public const string KeyQ = "glyph.keyboard.q";
+        public const string KeyF = "glyph.keyboard.f";
+        public const string KeyShoulders = "glyph.gamepad.shoulders";
         public const string CargoWaiting = "ui.cargo.waiting";
         public const string CargoSummary = "ui.cargo.summary";
         public const string BuildStripTitle = "build.strip.title";

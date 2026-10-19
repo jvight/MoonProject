@@ -1831,6 +1831,141 @@ Label {
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
+/* 07's databank page on its CRT (DatabankView): categories left, the turning model or a print right, the crew's card
+   under it, the era strip and the key row along the bottom. Amber on the tube's dark, like the hold page. */
+
+.databank {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.page-tab {
+    position: absolute;
+    font-size: 20px;
+    letter-spacing: 2px;
+    -unity-text-align: middle-center;
+    color: rgb(214, 170, 96);
+    border-bottom-width: 2px;
+    border-color: rgb(44, 36, 24);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
+}
+
+.page-tab--active {
+    color: rgb(255, 224, 152);
+    border-color: rgb(255, 224, 152);
+}
+
+.databank__row {
+    position: absolute;
+    padding: 0 8px;
+    font-size: 22px;
+    letter-spacing: 2px;
+    -unity-text-align: middle-left;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: rgb(242, 192, 104);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
+}
+
+.databank__row--entry {
+    font-size: 19px;
+    letter-spacing: 0;
+    color: rgb(214, 170, 96);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
+}
+
+.databank__row--focus {
+    color: rgb(19, 18, 16);
+    background-color: rgb(255, 224, 152);
+}
+
+.databank__dot {
+    position: absolute;
+    background-color: rgb(95, 243, 255);
+}
+
+.databank__model {
+    position: absolute;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.databank__print {
+    position: absolute;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.databank__grain {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
+.databank__empty {
+    position: absolute;
+    font-size: 22px;
+    -unity-text-align: middle-center;
+    color: rgb(214, 170, 96);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
+}
+
+.databank__fields {
+    position: absolute;
+    font-size: 20px;
+    letter-spacing: 2px;
+    white-space: nowrap;
+    color: rgb(255, 224, 152);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
+}
+
+.databank__readout {
+    position: absolute;
+    font-size: 19px;
+    white-space: normal;
+    color: rgb(242, 192, 104);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
+}
+
+.databank__set {
+    position: absolute;
+    font-size: 19px;
+    letter-spacing: 2px;
+    color: rgb(95, 243, 255);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
+}
+
+.databank__history-box {
+    position: absolute;
+    padding: 8px 14px;
+    border-left-width: 3px;
+    border-color: rgb(242, 192, 104);
+}
+
+.databank__history {
+    font-size: 20px;
+    white-space: normal;
+    color: rgb(255, 224, 152);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
+}
+
+.databank__mark {
+    position: absolute;
+    font-size: 19px;
+    -unity-text-align: middle-center;
+    color: rgb(44, 36, 24);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
+}
+
+.databank__mark--lit {
+    color: rgb(255, 224, 152);
+}
+
 /* 07's power-on self-test on its CRT (PostView): a terminal column of typed lines; a part that fails reads amber. */
 
 .post {

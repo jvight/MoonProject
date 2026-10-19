@@ -53,6 +53,11 @@ namespace MoonProject.World
         [Range(0f, 40f)]
         [SerializeField] private float _clearance = 6f;
 
+        [Tooltip("No small crater on ground already steeper than this, degrees: its wall on a hillside would pass the " +
+            "drive limit.")]
+        [Range(0f, 20f)]
+        [SerializeField] private float _maxGroundSlope = 12f;
+
         public float CellSize => _cellSize;
         public float Density => _density;
         public float FieldWavelength => _fieldWavelength;
@@ -64,6 +69,7 @@ namespace MoonProject.World
         public float RimWidth => _rimWidth;
         public float BowlShade => _bowlShade;
         public float Clearance => _clearance;
+        public float MaxGroundSlope => _maxGroundSlope;
 
         /// <summary>Null when the settings are usable, otherwise what is wrong.</summary>
         public string Validate()

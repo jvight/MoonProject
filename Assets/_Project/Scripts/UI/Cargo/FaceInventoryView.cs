@@ -412,7 +412,7 @@ namespace MoonProject.UI
             _scale = s;
 
             PositionBox(_title, FaceLayout.Margin * s, FaceLayout.TitleY * s,
-                (FaceLayout.RightEdge - FaceLayout.Margin) * s, FaceLayout.TitleHeight * s);
+                (DatabankLayout.TabsX - DatabankLayout.TabGap - FaceLayout.Margin) * s, FaceLayout.TitleHeight * s);
             PositionElement(_bootLabel, FaceLayout.Margin * s, FaceLayout.TitleY * s);
             PositionRect(_art, FaceLayout.ArtImageRect(_diagram.FaceArtContent), s);
             PositionRect(_holdTitle, FaceLayout.HeadingRect, s);

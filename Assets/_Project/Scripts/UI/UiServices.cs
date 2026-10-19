@@ -13,12 +13,15 @@ namespace MoonProject.UI
     /// </summary>
     internal sealed class UiServices
     {
+        private readonly GameContext _context;
+        private IDatabank _databank;
+
         public UiServices(EventBus events, InputReader input, IViewCamera view, IRoverState rover, IAudioSettings audio,
             ILookSettings look, IFeelSettings feel, ISaveService save, IMaterialStock materials,
             IInteractionHints hints, ISalvageStatus salvage, IGameFlow flow, ISettingsFile settings,
             IRoverBattery battery, IBeamStatus beam, ICargoHold hold, IMaterialCatalog catalog,
             IRoverSystems systems, IRoverFaceScreen faceScreen = null, BuildField buildField = null,
-            ISunlight sun = null, IWeldEnergy weldEnergy = null)
+            ISunlight sun = null, IWeldEnergy weldEnergy = null, IDatabank databank = null, GameContext context = null)
         {
             Events = events ?? throw new ArgumentNullException(nameof(events));
             Input = input ?? throw new ArgumentNullException(nameof(input));
@@ -42,6 +45,8 @@ namespace MoonProject.UI
             BuildField = buildField;
             Sun = sun;
             WeldEnergy = weldEnergy;
+            _databank = databank;
+            _context = context;
         }
 
         public EventBus Events { get; }
@@ -98,6 +103,21 @@ namespace MoonProject.UI
         public IWeldEnergy WeldEnergy { get; }
 
         /// <summary>
+        /// 07's scan archive: the one handed in, else the GameContext's, looked up when the databank page first opens
+        /// (Gameplay registers it; false while nothing has).
+        /// </summary>
+        public bool TryGetDatabank(out IDatabank databank)
+        {
+            if (_databank == null && _context != null)
+            {
+                _context.TryGet(out _databank);
+            }
+
+            databank = _databank;
+            return databank != null;
+        }
+
+        /// <summary>
         /// Resolves every service; a missing one throws (a system is missing from the bootstrap order).
         /// </summary>
         public static UiServices From(GameContext context)
@@ -118,7 +138,7 @@ namespace MoonProject.UI
                 context.Get<IMaterialStock>(), context.Get<IInteractionHints>(), context.Get<ISalvageStatus>(),
                 context.Get<IGameFlow>(), context.Get<ISettingsFile>(), context.Get<IRoverBattery>(),
                 context.Get<IBeamStatus>(), context.Get<ICargoHold>(), context.Get<IMaterialCatalog>(),
-                context.Get<IRoverSystems>(), faceScreen, buildField, sun, weldEnergy);
+                context.Get<IRoverSystems>(), faceScreen, buildField, sun, weldEnergy, context: context);
         }
     }
 }

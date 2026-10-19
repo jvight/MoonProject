@@ -763,6 +763,14 @@ CUES = (
         notes="0.5.5: a part dropped on a valid socket: a seated tick on D5 over a felt thud."),
     Cue("part_refuse", "tick_2d", feel.part_refuse, volume=(0.4, 0.4), milestone="M3",
         notes="0.5.5: a drop refused: two soft muted ticks falling B4 -> F#4."),
+    Cue("ui_relay_click", "tick_2d", picks.renderer("ui_relay_click"), volume=(0.45, 0.45), milestone="M3",
+        sampled=True, notes="The databank's page starting to flip: a small relay pulling in, its contact settling."),
+    Cue("ui_tube_thunk", "tick_2d", picks.renderer("ui_tube_thunk"), volume=(0.45, 0.45), milestone="M3",
+        sampled=True, notes="The databank's picture tube settling on a channel: a soft latch thunk, the steel's ring "
+                            "on D2 and a breath of the tube's hum on D3."),
+    Cue("ui_tape_tick", "tick_2d", picks.renderer("ui_tape_tick"), volume=(0.4, 0.4), milestone="M3",
+        sampled=True, notes="The databank's list cursor moving one line: a typewriter carriage's single ratchet "
+                            "notch, like a tape head stepping."),
     Cue("sheet_complete", "stinger_2d", feel.sheet_complete, volume=(0.45, 0.45), milestone="M3", tonal=True,
         notes="0.5.5 D: a blueprint's sheet complete: a soft rising D major arpeggio on felt piano."),
     Cue("scan_sweep", "loop_3d", feel.scan_sweep, loop=True, file_stem="scan_sweep_loop", volume=(0.5, 0.5),

@@ -76,6 +76,15 @@ namespace MoonProject.Core.Events
 
         /// <summary>A part was dropped where it does not fit: a quiet refusal.</summary>
         PartRefuse = 13,
+
+        /// <summary>A databank page started to flip on 07's face: Audio plays a small relay click.</summary>
+        DatabankPageFlip = 14,
+
+        /// <summary>The databank's picture settled on its new page (the CRT channel settling): a soft tube thunk.</summary>
+        DatabankChannelSettle = 15,
+
+        /// <summary>The databank's list cursor moved one line: a tape-head tick (rate-limited like focus steps).</summary>
+        DatabankListStep = 16,
     }
 
     /// <summary>
@@ -188,5 +197,19 @@ namespace MoonProject.Core.Events
         }
 
         public int Slot { get; }
+    }
+
+    /// <summary>
+    /// 07's face screen is on (or flipping to) <see cref="Page"/>: the camera's face shot eases to that page's distance
+    /// (docs/design/databank.md §4; the databank sits closer so the tube nearly fills the frame).
+    /// </summary>
+    public readonly struct FacePageChanged
+    {
+        public FacePageChanged(FacePage page)
+        {
+            Page = page;
+        }
+
+        public FacePage Page { get; }
     }
 }

@@ -46,9 +46,10 @@ MonoBehaviour:
     _peakSharpness: 2.4
     _peakCragHeight: 20
     _peakRidgeCount: 7
+    _peakRoadInset: 12
     _hillHeight: 5.5
     _hillWavelength: 200
-    _duneHeight: 1.4
+    _duneHeight: 0.9
     _duneWavelength: 46
     _duneWindBearing: 65
     _duneSkew: 0.35
@@ -88,10 +89,10 @@ MonoBehaviour:
       _depth: 3.6
       _lipHeight: 0.6
     - _bearing: 140
-      _distance: 215
-      _radius: 40
-      _depth: 4.4
-      _lipHeight: 0.7
+      _distance: 190
+      _radius: 65
+      _depth: 4.5
+      _lipHeight: 1
     _canyon:
       _bearing: 72
       _mouthDistance: 280
@@ -545,11 +546,6 @@ MonoBehaviour:
       _offset: {x: 0.6, y: -4.2}
       _yaw: 80
       _sink: 0.2
-    - _anchor: site.kestrel
-      _id: Kestrel_HullPanel
-      _offset: {x: -2.2, y: -1.4}
-      _yaw: 160
-      _sink: 0.3
     _boulders:
     - _anchor: place.midway
       _id: Rock_12
@@ -611,6 +607,41 @@ MonoBehaviour:
     _signalPillarSetback: 18
     _signalPillarGlow: 3.5
     _signalPillarWidth: 3
+    _kestrelPanel:
+      _anchor: site.kestrel
+      _id: Kestrel_HullPanel
+      _offset: {x: -2.2, y: -1.4}
+      _yaw: 160
+      _sink: 0.3
+    _elder06:
+      _anchor: micro.06
+      _id: Elder06
+      _offset: {x: 0, y: 0}
+      _yaw: 0
+      _sink: 0.08
+    _elder06Slump: 7
+    _elder01:
+      _anchor: site.peakroad
+      _id: Elder01
+      _offset: {x: 0, y: 0}
+      _yaw: 30
+      _sink: 0
+    _rockfall:
+    - _anchor: site.peakroad
+      _id: Rock_09
+      _offset: {x: 0.4, y: 6.6}
+      _yaw: 70
+      _sink: 0.5
+    - _anchor: site.peakroad
+      _id: Rock_08
+      _offset: {x: 3.7, y: 4.8}
+      _yaw: 205
+      _sink: 0.4
+    - _anchor: site.peakroad
+      _id: Rock_08
+      _offset: {x: -2, y: 9.1}
+      _yaw: 320
+      _sink: 0.45
   _lensView:
     _lidSoftness: 0.14
     _lidCurve: 0.12

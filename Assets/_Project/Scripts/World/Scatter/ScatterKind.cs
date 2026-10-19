@@ -8,5 +8,10 @@ namespace MoonProject.World
 
         /// <summary>Big rock with a convex collider on Layers.Prop.</summary>
         Boulder = 1,
+
+        /// <summary>
+        /// A small clod or stone of the near-field rubble: no collider, seen only close to the camera.
+        /// </summary>
+        Rubble = 2,
     }
 }

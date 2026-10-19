@@ -6,18 +6,11 @@ using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
-using MoonProject.App;
 using MoonProject.Core;
-using MoonProject.Core.Events;
-using MoonProject.Core.Save;
 using MoonProject.Testing;
 using MoonProject.UI;
 using Object = UnityEngine.Object;
-#if UNITY_EDITOR
-using UnityEditor.SceneManagement;
-#endif
 
 namespace MoonProject.Rover.PlayModeTests
 {
@@ -29,8 +22,6 @@ namespace MoonProject.Rover.PlayModeTests
     public sealed class RoverFaceDragPlayModeTests : InputTestFixture
     {
         private const float FrameTime = 1f / 60f;
-        private const float WakeTimeout = 20f;
-        private const float PowerOnTimeout = 60f;
         private const float OpenTimeout = 8f;
         private const float BootSettleSeconds = 4f;
         private const float RoundTripPixels = 1.5f;
@@ -46,30 +37,21 @@ namespace MoonProject.Rover.PlayModeTests
         private static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "captures", "inv_drag"));
 
-        private GameContext _context;
-        private RoverController _rover;
-        private RoverCameraRig _cameraRig;
-        private RoverBodyLanguage _body;
-        private UISystem _uiSystem;
+        private readonly RealRoverScene _scene = new RealRoverScene();
         private Camera _view;
         private Keyboard _keyboard;
         private Mouse _mouse;
         private RenderTexture _target;
-        private IDisposable _awokeSub;
-        private bool _awake;
 
         public override void Setup()
         {
             base.Setup();
             Time.captureDeltaTime = FrameTime;
-            _awake = false;
         }
 
         public override void TearDown()
         {
             Time.captureDeltaTime = 0f;
-            _awokeSub?.Dispose();
-            _awokeSub = null;
             if (_view != null)
             {
                 _view.targetTexture = null;
@@ -82,16 +64,7 @@ namespace MoonProject.Rover.PlayModeTests
                 _target = null;
             }
 
-            Scene scene = SceneManager.GetSceneByPath(RoverSessionScene.ScenePath);
-            if (scene.IsValid() && scene.isLoaded)
-            {
-                foreach (GameObject root in scene.GetRootGameObjects())
-                {
-                    Object.DestroyImmediate(root);
-                }
-            }
-
-            BootstrapHarness.DeleteSaveFiles(RoverSessionScene.SaveSlot);
+            _scene.Unload();
             base.TearDown();
         }
 
@@ -104,25 +77,26 @@ namespace MoonProject.Rover.PlayModeTests
             Directory.CreateDirectory(CaptureFolder);
             _keyboard = InputSystem.AddDevice<Keyboard>();
             _mouse = InputSystem.AddDevice<Mouse>();
-            yield return BootRealScene();
-            ICargoHold hold = _context.Get<ICargoHold>();
+            yield return _scene.Boot();
+            _view = _scene.View;
+            ICargoHold hold = _scene.Context.Get<ICargoHold>();
             MethodInfo add = hold.GetType().GetMethod("Add", BindingFlags.Instance | BindingFlags.Public);
             Assert.IsNotNull(add, "the hold takes material");
             add.Invoke(hold, new object[] { SalvageMaterial.Metal, 5 });
-            FaceInventoryView view = _uiSystem.Cargo.View;
-            IRoverFaceScreen face = _context.Get<IRoverFaceScreen>();
+            FaceInventoryView view = _scene.Ui.Cargo.View;
+            IRoverFaceScreen face = _scene.Context.Get<IRoverFaceScreen>();
 
             Press(_keyboard.tabKey);
             yield return null;
             Release(_keyboard.tabKey);
             float deadline = Time.time + OpenTimeout;
-            while (!face.IsOpen || _cameraRig.FaceInspectWeight < 0.99f)
+            while (!face.IsOpen || _scene.CameraRig.FaceInspectWeight < 0.99f)
             {
                 Assert.Less(Time.time, deadline, "Tab opens the inventory on 07's face");
                 yield return null;
             }
 
-            yield return WaitSeconds(BootSettleSeconds);
+            yield return RealRoverScene.WaitSeconds(BootSettleSeconds);
             var failures = new List<string>();
             foreach (Vector2Int shape in Shapes)
             {
@@ -145,7 +119,7 @@ namespace MoonProject.Rover.PlayModeTests
 
             _target = new RenderTexture(shape.x, shape.y, 24);
             _view.targetTexture = _target;
-            yield return WaitSeconds(0.3f);
+            yield return RealRoverScene.WaitSeconds(0.3f);
         }
 
         /// <summary>Points across the glass (inside the rounded safe area) map back onto themselves.</summary>
@@ -204,7 +178,7 @@ namespace MoonProject.Rover.PlayModeTests
                 yield return null;
             }
 
-            yield return WaitSeconds(0.4f);
+            yield return RealRoverScene.WaitSeconds(0.4f);
             if (view.DragPhase != HoldDragPhase.Dragging)
             {
                 failures.Add($"{shape}: the press on cell 0 did not become a drag ({view.DragPhase})");
@@ -267,60 +241,6 @@ namespace MoonProject.Rover.PlayModeTests
             if (x >= 0 && y >= 0 && x < image.width && y < image.height)
             {
                 image.SetPixel(x, y, Color.magenta);
-            }
-        }
-
-        private IEnumerator BootRealScene()
-        {
-            Directory.CreateDirectory(SaveService.DefaultDirectory);
-#if UNITY_EDITOR
-            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(
-                RoverSessionScene.ScenePath,
-                new LoadSceneParameters(LoadSceneMode.Single));
-            while (!loading.isDone)
-            {
-                yield return null;
-            }
-#else
-            throw new NotSupportedException("RoverFaceDragPlayModeTests loads the scene through the editor.");
-#endif
-            GameBootstrap bootstrap = null;
-            Scene scene = SceneManager.GetSceneByPath(RoverSessionScene.ScenePath);
-            foreach (GameObject root in scene.GetRootGameObjects())
-            {
-                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
-                _rover = _rover != null ? _rover : root.GetComponentInChildren<RoverController>(true);
-                _cameraRig = _cameraRig != null ? _cameraRig : root.GetComponentInChildren<RoverCameraRig>(true);
-                _body = _body != null ? _body : root.GetComponentInChildren<RoverBodyLanguage>(true);
-                _uiSystem = _uiSystem != null ? _uiSystem : root.GetComponentInChildren<UISystem>(true);
-            }
-
-            Assert.IsNotNull(bootstrap, "Main scene must contain GameBootstrap.");
-            Assert.IsNotNull(_uiSystem, "Main scene must contain UISystem.");
-            _context = bootstrap.Context;
-            _view = _context.Get<IViewCamera>().Camera;
-            _awokeSub = _context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
-            float start = Time.time;
-            while (!_awake || _body.Mood.Wake.Sleep > 0.05f)
-            {
-                Assert.Less(Time.time - start, WakeTimeout, "07 must finish waking in the real scene.");
-                yield return null;
-            }
-
-            float released = Time.time;
-            while (_rover.IsHeldStill)
-            {
-                Assert.Less(Time.time - released, PowerOnTimeout, "07 must be handed to the player after its self-test.");
-                yield return null;
-            }
-        }
-
-        private static IEnumerator WaitSeconds(float seconds)
-        {
-            float until = Time.time + seconds;
-            while (Time.time < until)
-            {
-                yield return null;
             }
         }
     }
