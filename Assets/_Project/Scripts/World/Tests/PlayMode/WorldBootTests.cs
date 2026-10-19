@@ -16,7 +16,9 @@ namespace MoonProject.World.PlayModeTests
     /// <summary>
     /// Boots <see cref="WorldSystem"/> through its only play-mode path (<see cref="IGameSystem.Initialize"/>) and
     /// checks the services it registers, that the baked chunk colliders match the analytic surface, and the boot
-    /// budget (minimum across <see cref="BootRuns"/> boots to filter out machine load while catching regressions).
+    /// budget: the CPU time the editor process spends in Initialize (all its threads), the least across
+    /// <see cref="BootRuns"/> boots. CPU time is the work itself, so it holds steady while other batch editors load the
+    /// machine, where wall time swings two- and threefold; wall time is logged beside it.
     /// </summary>
     public sealed class WorldBootTests
     {
@@ -32,7 +34,9 @@ namespace MoonProject.World.PlayModeTests
         private static readonly string[] BoulderRocks = { "Rock_05", "Rock_06", "Rock_07", "Rock_08", "Rock_09" };
 
         private const int BootRuns = 3;
-        private const double BootBudgetMs = 1500.0;
+        // The boot's work in CPU milliseconds across all threads (16 cores, 2026-10-19: about 6.6 s with the
+        // near-field rubble, 4.0 s without it, steady within 6 % under three other batch editors).
+        private const double BootCpuBudgetMs = 8000.0;
         private const float ColliderTolerance = 0.25f;
         private const float ScatterProbeRadius = 1000f;
 
@@ -85,7 +89,10 @@ namespace MoonProject.World.PlayModeTests
 
             _input = new InputReader(Load<InputActionAsset>(ControlsPath));
             var runsMs = new double[BootRuns];
+            var cpuMs = new double[BootRuns];
             double minMs = double.MaxValue;
+            double minCpuMs = double.MaxValue;
+            Process self = Process.GetCurrentProcess();
             TerrainBuildReport bestBuild = default;
             ScatterBuildReport bestScatter = default;
 
@@ -109,9 +116,14 @@ namespace MoonProject.World.PlayModeTests
                 }
 
                 var context = new GameContext(new EventBus(), _input);
+                self.Refresh();
+                System.TimeSpan cpuBefore = self.TotalProcessorTime;
                 var watch = Stopwatch.StartNew();
                 world.Initialize(context);
                 watch.Stop();
+                self.Refresh();
+                cpuMs[run] = (self.TotalProcessorTime - cpuBefore).TotalMilliseconds;
+                minCpuMs = System.Math.Min(minCpuMs, cpuMs[run]);
                 double elapsedMs = watch.Elapsed.TotalMilliseconds;
                 runsMs[run] = elapsedMs;
                 if (elapsedMs < minMs)
@@ -125,13 +137,14 @@ namespace MoonProject.World.PlayModeTests
                 AssertBootedWorld(world, settings, context);
             }
 
-            string runsLine = $"[moon] world boot runs: {runsMs[0]:0} / {runsMs[1]:0} / {runsMs[2]:0} ms, min {minMs:0}";
+            string runsLine = $"[moon] world boot runs: {runsMs[0]:0} / {runsMs[1]:0} / {runsMs[2]:0} ms, min {minMs:0}; " +
+                              $"cpu {cpuMs[0]:0} / {cpuMs[1]:0} / {cpuMs[2]:0} ms, min {minCpuMs:0}";
             string summary = $"Initialize {minMs:0} ms; terrain {bestBuild}; scatter {bestScatter}";
             TestContext.WriteLine(runsLine);
             TestContext.WriteLine("World boot: " + summary);
             UnityEngine.Debug.Log(runsLine);
             UnityEngine.Debug.Log("[moon] world boot: " + summary);
-            Assert.Less(minMs, BootBudgetMs, "world boot exceeds its budget");
+            Assert.Less(minCpuMs, BootCpuBudgetMs, "world boot's CPU work exceeds its budget");
 #else
             Assert.Ignore("Needs editor asset access to wire the WorldSystem.");
             yield break;
