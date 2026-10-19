@@ -30,6 +30,13 @@
         1.57
       ]
     },
+    "Antenna_Segment2": {
+      "pivot": [
+        0.36,
+        -0.46,
+        1.19
+      ]
+    },
     "Arm_FL": {
       "pivot": [
         -0.42,
@@ -294,6 +301,13 @@
         0.0,
         0.55,
         0.72
+      ]
+    },
+    "Cutter_Igniter": {
+      "pivot": [
+        0.092,
+        0.772,
+        0.744
       ]
     },
     "Decal07Fresh": {
@@ -895,7 +909,7 @@
   "require_vertex_colors": true,
   "max_triangles": 80000,
   "max_meshes": 65,
-  "max_draw_calls": 132,
+  "max_draw_calls": 138,
   "allow_rotation": [
     "ScoopCyl_*",
     "Shock_*"

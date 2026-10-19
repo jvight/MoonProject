@@ -318,6 +318,7 @@ namespace MoonProject.Art.Editor
                     CaptureEra2_KestrelHullPanel(capturesDir);
                     CaptureEra2_KestrelAntennaBoom(capturesDir);
                     CaptureEra2_Rover07Flank(capturesDir);
+                    CaptureKaSizeMatch7m(capturesDir);
                 }
                 finally
                 {
@@ -326,6 +327,223 @@ namespace MoonProject.Art.Editor
 
                 return true;
             });
+        }
+
+        /// <summary>
+        /// Dedicated fast batch entry point for capturing 07's growth parts in Day C:
+        /// antenna retracted vs extended (<c>Antenna_Segment2</c> translated +0.35 m along local up in capture only)
+        /// and cutter turret with vs without <c>Cutter_Igniter</c>:
+        /// <c>python tools/unity_batch.py exec --project . --method MoonProject.Art.Editor.R1StoryPropsCapture.CaptureRoverGrowthParts</c>
+        /// </summary>
+        public static void CaptureRoverGrowthParts()
+        {
+            BatchRunner.Run(nameof(CaptureRoverGrowthParts), args =>
+            {
+                AssetDatabase.Refresh();
+                R1MaterialLibrary.BuildMaterials();
+                R1ModelBuilder.Build();
+
+                string capturesDir = Path.GetFullPath("Logs/captures");
+                Directory.CreateDirectory(capturesDir);
+
+                bool prevAsync = ShaderUtil.allowAsyncCompilation;
+                ShaderUtil.allowAsyncCompilation = false;
+                try
+                {
+                    CaptureGrowth_AntennaRetractedVsExtended(capturesDir);
+                    CaptureGrowth_CutterIgniterWithVsWithout(capturesDir);
+                }
+                finally
+                {
+                    ShaderUtil.allowAsyncCompilation = prevAsync;
+                }
+
+                return true;
+            });
+        }
+
+        private static void CaptureGrowth_AntennaRetractedVsExtended(string outDir)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(temp, false);
+                GameObject rover = SpawnRover07(temp, Vector3.zero, 0f, false);
+                Transform ant = FindChildRecursive(rover.transform, "Antenna");
+                Transform seg2 = FindChildRecursive(rover.transform, "Antenna_Segment2");
+                if (ant == null || seg2 == null)
+                {
+                    throw new InvalidOperationException("R1StoryPropsCapture: RoverModel is missing Antenna or Antenna_Segment2.");
+                }
+
+                AimDayCSunAtSurface(new Vector3(0.55f, 0.20f, -0.81f).normalized);
+
+                Vector3 baseLocalPos = seg2.localPosition;
+                Vector3 antBaseWorld = ant.position;
+                Vector3 closeLook = antBaseWorld + new Vector3(-0.04f, 0.68f, 0.02f);
+                Vector3 closeCam = closeLook + new Vector3(0.78f, 0.08f, -0.95f);
+
+                // 1. Retracted rest pose (Antenna_Segment2 hidden inside Antenna tube)
+                seg2.localPosition = baseLocalPos;
+                RenderShot(
+                    closeCam,
+                    closeLook,
+                    40f,
+                    bg,
+                    Path.Combine(outDir, "rover07_antenna_retracted_dayC.png"));
+
+                // 2. Extended pose (+0.35 m along local up axis, pose in capture only)
+                seg2.localPosition = baseLocalPos + Vector3.up * 0.35f;
+                RenderShot(
+                    closeCam,
+                    closeLook,
+                    40f,
+                    bg,
+                    Path.Combine(outDir, "rover07_antenna_extended_dayC.png"));
+                seg2.localPosition = baseLocalPos;
+            }
+            finally
+            {
+                temp.Dispose();
+            }
+
+            // 3. Side-by-side Day C comparison (left: retracted rest pose, right: extended +0.35 m)
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var tempPair = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(tempPair, false);
+                GameObject roverRetracted = SpawnRover07(tempPair, new Vector3(-0.85f, 0f, 0f), 145f, false);
+                GameObject roverExtended = SpawnRover07(tempPair, new Vector3(0.85f, 0f, 0f), 145f, false);
+                Transform seg2Ext = FindChildRecursive(roverExtended.transform, "Antenna_Segment2");
+                if (seg2Ext != null)
+                {
+                    seg2Ext.localPosition += Vector3.up * 0.35f;
+                }
+
+                AimDayCSunAtSurface(Vector3.back);
+                Vector3 pairLook = new Vector3(0.0f, 1.32f, 0.15f);
+                Vector3 pairCam = pairLook + new Vector3(0.0f, 0.16f, -2.55f);
+                RenderShot(
+                    pairCam,
+                    pairLook,
+                    38f,
+                    bg,
+                    Path.Combine(outDir, "rover07_antenna_retracted_vs_extended_dayC.png"));
+            }
+            finally
+            {
+                tempPair.Dispose();
+            }
+        }
+
+        private static void CaptureGrowth_CutterIgniterWithVsWithout(string outDir)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(temp, false);
+                GameObject rover = SpawnRover07(temp, Vector3.zero, 0f, false);
+                Transform turret = FindChildRecursive(rover.transform, "CutterTurret");
+                Transform igniter = FindChildRecursive(rover.transform, "Cutter_Igniter");
+                if (turret == null || igniter == null)
+                {
+                    throw new InvalidOperationException("R1StoryPropsCapture: RoverModel is missing CutterTurret or Cutter_Igniter.");
+                }
+
+                AimDayCSunAtSurface(new Vector3(0.32f, 0.18f, 0.93f).normalized);
+
+                Vector3 ignWorld = igniter.position;
+                Vector3 closeLook = ignWorld + new Vector3(-0.045f, -0.025f, 0.015f);
+                Vector3 closeCam = closeLook + new Vector3(0.18f, 0.06f, 0.44f);
+
+                // 1. With igniter present in its socket (rest pose)
+                igniter.gameObject.SetActive(true);
+                RenderShot(
+                    closeCam,
+                    closeLook,
+                    34f,
+                    bg,
+                    Path.Combine(outDir, "rover07_cutter_with_igniter_dayC.png"));
+
+                // 2. Without igniter (hidden in capture only, exposing the dark empty socket recess)
+                igniter.gameObject.SetActive(false);
+                RenderShot(
+                    closeCam,
+                    closeLook,
+                    34f,
+                    bg,
+                    Path.Combine(outDir, "rover07_cutter_without_igniter_dayC.png"));
+                igniter.gameObject.SetActive(true);
+            }
+            finally
+            {
+                temp.Dispose();
+            }
+
+            // 3. Side-by-side Day C comparison (left in frame: with igniter fitted, right in frame: without igniter showing dark socket recess)
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var tempPair = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(tempPair, false);
+                GameObject roverWith = SpawnRover07(tempPair, new Vector3(0.72f, 0f, 0f), 16f, false);
+                GameObject roverWithout = SpawnRover07(tempPair, new Vector3(-0.72f, 0f, 0f), 16f, false);
+                Transform ignWithout = FindChildRecursive(roverWithout.transform, "Cutter_Igniter");
+                if (ignWithout != null)
+                {
+                    ignWithout.gameObject.SetActive(false);
+                }
+
+                AimDayCSunAtSurface(new Vector3(0.24f, 0.16f, 0.96f).normalized);
+                Vector3 pairLook = new Vector3(0.06f, 0.72f, 0.72f);
+                Vector3 pairCam = pairLook + new Vector3(0.12f, 0.10f, 1.80f);
+                RenderShot(
+                    pairCam,
+                    pairLook,
+                    36f,
+                    bg,
+                    Path.Combine(outDir, "rover07_cutter_igniter_with_vs_without_dayC.png"));
+            }
+            finally
+            {
+                tempPair.Dispose();
+            }
+        }
+
+        private static void CaptureKaSizeMatch7m(string outDir)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(temp, false);
+
+                // Place 07 (left, yaw = +90 deg so right flank Decal_KA_R faces -Z) and SSR-3 Elder01
+                // (right, yaw = -90 deg so left flank Decal_KA_1 faces -Z) side by side in pure side view at 7 m
+                GameObject rover07 = SpawnRover07(temp, new Vector3(-1.05f, 0f, 0f), 90f, false);
+                GameObject elder01 = SpawnProp(R1Ssr3Builder.Elder01PrefabPath, new Vector3(1.05f, 0f, 0f), -90f, temp);
+
+                GetDecalWorldPose(rover07, "Decal_KA_R", out Vector3 ka07Pos, out Vector3 ka07Normal, out _);
+                GetDecalWorldPose(elder01, "Decal_KA_1", out Vector3 kaElderPos, out Vector3 kaElderNormal, out _);
+
+                AimDayCSunAtSurface(ka07Normal);
+
+                Vector3 look7m = new Vector3(0.0f, 0.68f, 0.5f * (ka07Pos.z + kaElderPos.z));
+                Vector3 cam7m = look7m + (Vector3.back * 0.985f + Vector3.up * 0.17f).normalized * 7.0f;
+                RenderShot(
+                    cam7m,
+                    look7m,
+                    30f,
+                    bg,
+                    Path.Combine(outDir, "ka_size_match_7m_dayC.png"));
+            }
+            finally
+            {
+                temp.Dispose();
+            }
         }
 
         private static void CaptureEra2_Elder(string outDir)
@@ -476,12 +694,12 @@ namespace MoonProject.Art.Editor
                 Vector3 kaRRight = Vector3.Cross(kaRUp, kaRNormal).normalized;
                 AimDayCSunAtSurface(kaRNormal);
 
-                Vector3 closeLookR = kaRPos - kaRUp * 0.03f + kaRRight * 0.02f;
-                Vector3 closeCamR = closeLookR + kaRNormal * 0.46f + kaRUp * 0.03f - kaRRight * 0.04f;
+                Vector3 closeLookR = kaRPos - kaRUp * 0.035f - kaRRight * 0.04f;
+                Vector3 closeCamR = closeLookR + kaRNormal * 0.64f + kaRUp * 0.02f - kaRRight * 0.02f;
                 RenderShot(
                     closeCamR,
                     closeLookR,
-                    36f,
+                    38f,
                     bg,
                     Path.Combine(outDir, "era2_rover07_flank_closeup_dayC.png"));
 
@@ -490,12 +708,12 @@ namespace MoonProject.Art.Editor
                 Vector3 kaLRight = Vector3.Cross(kaLUp, kaLNormal).normalized;
                 AimDayCSunAtSurface(kaLNormal);
 
-                Vector3 closeLookL = kaLPos - kaLUp * 0.03f - kaLRight * 0.02f;
-                Vector3 closeCamL = closeLookL + kaLNormal * 0.46f + kaLUp * 0.03f + kaLRight * 0.04f;
+                Vector3 closeLookL = kaLPos - kaLUp * 0.035f + kaLRight * 0.04f;
+                Vector3 closeCamL = closeLookL + kaLNormal * 0.64f + kaLUp * 0.02f + kaLRight * 0.02f;
                 RenderShot(
                     closeCamL,
                     closeLookL,
-                    36f,
+                    38f,
                     bg,
                     Path.Combine(outDir, "era2_rover07_flank_left_closeup_dayC.png"));
 
