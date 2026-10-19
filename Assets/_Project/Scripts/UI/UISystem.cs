@@ -93,6 +93,8 @@ namespace MoonProject.UI
         private PageFlip _pages;
         private PageTabs _tabs;
         private VisualElement[] _pageRoots;
+        private VisualElement[] _pageChrome;
+        private PageShutter _shutter;
         private DatabankPage _databank;
         private DatabankText _databankText;
         private float _databankLaidOutAt = -1f;
@@ -388,7 +390,13 @@ namespace MoonProject.UI
             _pages = new PageFlip(_tuning.Databank);
             _tabs = new PageTabs(_cargo.Panel, _localization);
             _tabs.SetShown(_faceDocument != null);
-            _pageRoots = new VisualElement[] { _tabs.Tab(0), _tabs.Tab(1), null };
+            _shutter = new PageShutter(_cargo.Panel, _tuning.Databank);
+            _pageChrome = new[] { _tabs.Tab(0), _tabs.Tab(1), _tabs.Underline, _shutter.Edge, _shutter.Body };
+            _pageRoots = new VisualElement[]
+            {
+                _tabs.Tab(0), _tabs.Tab(1), _tabs.Underline, _shutter.Edge, _shutter.Body, null,
+            };
+            ShowChange();
             _databankText = new DatabankText(_localization);
             _unlockCard = new UnlockCard(_layout, _tuning.UnlockCard, _localization);
             _pause = new PauseMenu(_layout, _tuning.Pause, _tuning.Title, _player, _localization, services.Input,
@@ -1051,7 +1059,7 @@ namespace MoonProject.UI
             if (_pages.Target != FacePage.Hold || _pages.IsFlipping)
             {
                 _pages.Snap(FacePage.Hold);
-                _cargo.SetPageScale(1f);
+                ShowChange();
                 ShowPage(_services.Input.ActiveDevice);
                 _events.Publish(new FacePageChanged(FacePage.Hold));
             }
@@ -1166,8 +1174,8 @@ namespace MoonProject.UI
         }
 
         /// <summary>
-        /// Q / E flip 07's face between its pages with the CRT channel flip; the page on the tube changes at the flip's
-        /// thinnest moment, and the camera's face shot follows the page.
+        /// Q flips 07's face between its pages as the CRT redraws: the old page fades down, the page changes, the new
+        /// one draws in from the top while the tab underline glides across; the camera's face shot follows the page.
         /// </summary>
         private void StepPages(MenuInput menu, float deltaTime, InputDeviceKind device)
         {
@@ -1177,11 +1185,16 @@ namespace MoonProject.UI
             }
 
             _pages.Tick(deltaTime);
-            _tabs.Light(_pages.Target);
-            _cargo.SetPageScale(_pages.ScaleY);
             if (_pages.Switched)
             {
                 ShowPage(device);
+                _shutter.BringToFront();
+                _tabs.BringToFront();
+            }
+
+            if (_pages.IsFlipping || _pages.Settled)
+            {
+                ShowChange();
             }
 
             if (_pages.Settled)
@@ -1193,8 +1206,18 @@ namespace MoonProject.UI
             {
                 _databankLaidOutAt = _cargo.PanelScale;
                 _tabs.Layout(_cargo.PanelScale);
+                _shutter.Layout(_cargo.PanelScale);
                 _databank?.Layout(_cargo.PanelScale);
             }
+        }
+
+        /// <summary>The page change as it stands: the lit tab, the underline, the old page's fade, the new one's draw.</summary>
+        private void ShowChange()
+        {
+            _tabs.Light(_pages.Page);
+            _tabs.Glide(_pages.TabPosition);
+            _cargo.SetPageAlpha(_pages.ContentAlpha, _pageChrome);
+            _shutter.Draw(_pages.Drawn);
         }
 
         /// <summary>Flips to the face's other page (Q, LB / RB, or a click on its tab), on 07's face only.</summary>

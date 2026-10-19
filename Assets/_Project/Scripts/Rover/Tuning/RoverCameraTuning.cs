@@ -647,9 +647,10 @@ namespace MoonProject.Rover
         [Range(0.5f, 1f)]
         [SerializeField] private float _faceInspectDatabankShare = 0.833f;
 
-        [Tooltip("Seconds the face shot eases between the pages' distances (smooth step).")]
+        [Tooltip("Seconds the face shot eases between the pages' distances (smooth step); it ends with the page change " +
+                 "(DatabankSettings: fade plus draw), so the shot is still when the new page has settled.")]
         [Range(0.05f, 1.5f)]
-        [SerializeField] private float _facePageEaseSeconds = 0.35f;
+        [SerializeField] private float _facePageEaseSeconds = 0.32f;
 
         [Tooltip("Closest pulled-in camera distance (m) allowed when rocks or terrain occlude the default and side views.")]
         [Range(0.25f, 1.00f)]
