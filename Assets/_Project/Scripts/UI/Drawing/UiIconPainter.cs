@@ -48,6 +48,12 @@ namespace MoonProject.UI
             Vector2 origin = new Vector2(center.x - size * 0.5f, center.y - size * 0.5f);
             Color32 detailStroke = new Color32(tint.r, tint.g, tint.b, (byte)Mathf.RoundToInt(tint.a * 0.92f));
 
+            UiIconTone[] tones = icon.Tones;
+            for (int i = 0; i < tones.Length; i++)
+            {
+                tones[i].Path.FillEvenOdd(painter, origin, scale, ToneColor(tint, tones[i].Opacity));
+            }
+
             if (!icon.Fill.IsEmpty)
             {
                 icon.Fill.Draw(painter, origin, scale, detailStroke, IconInteriorFill);
@@ -62,6 +68,12 @@ namespace MoonProject.UI
             {
                 icon.Detail.Draw(painter, origin, scale, detailStroke, default);
             }
+        }
+
+        /// <summary><paramref name="tint"/> at <paramref name="opacity"/> of its alpha: one tone of a two-tone icon.</summary>
+        public static Color32 ToneColor(Color32 tint, float opacity)
+        {
+            return new Color32(tint.r, tint.g, tint.b, (byte)Mathf.RoundToInt(tint.a * Mathf.Clamp01(opacity)));
         }
     }
 }
