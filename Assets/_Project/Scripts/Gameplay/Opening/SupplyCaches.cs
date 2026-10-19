@@ -37,7 +37,6 @@ namespace MoonProject.Gameplay
         private readonly Recipe[] _left;
         private readonly Func<bool>[] _heldBack;
         private readonly bool[] _partLeft;
-        private readonly GameObject[] _props;
         private readonly List<Quaternion> _levels = new List<Quaternion>();
         private readonly EventBus _events;
         private readonly MaterialStock _stock;
@@ -97,7 +96,6 @@ namespace MoonProject.Gameplay
             }
 
             _left = new Recipe[_caches.Count];
-            _props = new GameObject[_caches.Count];
             _rims = new CrateRimGlow[_caches.Count];
             _heldBack = new Func<bool>[_caches.Count];
             _partLeft = new bool[_caches.Count];
@@ -110,16 +108,9 @@ namespace MoonProject.Gameplay
                     _partLeft[i] = _caches[i].Parts.Count > 0;
                 }
 
-                if (_caches[i].Prop != null)
-                {
-                    _props[i] = Object.Instantiate(_caches[i].Prop, _containers[i].ItemSocket, false);
-                    _props[i].transform.rotation = _levels[i] * _caches[i].Prop.transform.localRotation;
-                }
-
                 Transform root = _containers[i].Root;
                 GameObject rim = Child(root, RimGlowName);
                 _rims[i] = rim != null ? new CrateRimGlow(rim, RimLight(rim, root, tuning), tuning) : null;
-                ShowContents(i);
             }
 
             _opened = _events.Subscribe<ContainerOpened>(OnOpened);
@@ -280,11 +271,6 @@ namespace MoonProject.Gameplay
                 }
             }
 
-            for (int i = 0; i < _caches.Count; i++)
-            {
-                ShowContents(i);
-            }
-
             string[] ids = data.leftIds ?? Array.Empty<string>();
             Recipe[] left = data.left ?? Array.Empty<Recipe>();
             for (int i = 0; i < ids.Length && i < left.Length; i++)
@@ -351,8 +337,6 @@ namespace MoonProject.Gameplay
             {
                 GiveParts(index, at);
             }
-
-            ShowContents(index);
         }
 
         /// <summary>
@@ -384,20 +368,6 @@ namespace MoonProject.Gameplay
 
             _events.Publish(new FeelBeat(FeelKind.Collect, FeelPhase.Reward, at, Vector3.up, 1f, 0f));
             _partLeft[index] = false;
-        }
-
-        /// <summary>What crate <paramref name="index"/> still holds stays in view; what 07 took is gone.</summary>
-        private void ShowContents(int index)
-        {
-            Show(_props[index], _partLeft[index]);
-        }
-
-        private static void Show(GameObject shown, bool visible)
-        {
-            if (shown != null && shown.activeSelf != visible)
-            {
-                shown.SetActive(visible);
-            }
         }
 
         /// <summary>
