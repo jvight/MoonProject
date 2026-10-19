@@ -30,6 +30,8 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Where 07 approaches the apron from: the chase camera's normal distance.</summary>
         private const float ApproachBack = 9f;
         private const float SettleSeconds = 1f;
+        private const float SideViewDegrees = 55f;
+        private const float SparksClearSeconds = 12f;
         private const float WakeTimeout = 120f;
         private static readonly float[] TakeDownMarks = { 0.33f, 0.66f, 0.97f };
 
@@ -74,7 +76,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _gameplay.Materials.Stow(pad.BuildCost);
 
             // The approach: 9 m back with the build menu open, the guide frames the bay and marks its centre.
-            yield return StandFacing(Flat(apron) + Vector3.back * ApproachBack, apron);
+            yield return StandFacing(Flat(apron) + Vector3.back * ApproachBack, apron, SideViewDegrees);
             Assert.IsTrue(building.Controller.TryOpenMenu());
             yield return new WaitForSeconds(_gameplay.Building.Tuning.ApronGuideFadeSeconds + 0.5f);
             Assert.IsTrue(_gameplay.ApronGuide.IsShown, "the guide shows while the first pad is placed");
@@ -111,9 +113,11 @@ namespace MoonProject.Gameplay.PlayModeTests
                 int id = _gameplay.PlacedBase.PlaceUnchecked(pad, new StructurePose(apron, 0f), 1f);
                 int metalBefore = _gameplay.Materials.Metal;
                 int wiringBefore = _gameplay.Materials.Wiring;
-                yield return StandFacing(stand, apron);
+                yield return StandFacing(stand, apron, SideViewDegrees);
                 Assert.IsTrue(building.Controller.TryOpenMenu());
                 yield return Until(() => building.HoveredInstanceId == id, 5f, "the pad is in view to take down");
+                yield return Until(() => building.SparkCount == 0, SparksClearSeconds,
+                    "the sparks of the pad's own completion have gone before it is taken down");
                 Capture("pad-take-down-000");
                 Press(_keyboard.xKey);
                 foreach (float mark in TakeDownMarks)
@@ -138,12 +142,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
         }
 
-        private IEnumerator StandFacing(Vector3 spot, Vector3 target)
+        private IEnumerator StandFacing(Vector3 spot, Vector3 target, float cameraDegreesOff = 0f)
         {
             Vector3 facing = Flat(target - spot).normalized;
             _context.Get<IRoverPlacement>().PlaceAt(spot, Quaternion.LookRotation(facing, Vector3.up));
             var rig = (RoverCameraRig)_context.Get<IViewCamera>();
-            rig.Orbit.AdoptBearing(Quaternion.LookRotation(facing, Vector3.up).eulerAngles.y);
+            rig.Orbit.AdoptBearing(Quaternion.LookRotation(facing, Vector3.up).eulerAngles.y + cameraDegreesOff);
             yield return new WaitForSeconds(SettleSeconds);
         }
 
