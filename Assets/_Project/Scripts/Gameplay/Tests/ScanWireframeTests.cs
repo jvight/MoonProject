@@ -142,7 +142,9 @@ namespace MoonProject.Gameplay.Tests
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
             Assert.IsNotNull(prefab, path);
-            return Made(Object.Instantiate(prefab));
+            GameObject instance = Made(Object.Instantiate(prefab));
+            instance.name = prefab.name;
+            return instance;
         }
 
         /// <summary>
