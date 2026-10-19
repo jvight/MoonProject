@@ -559,6 +559,50 @@ MonoBehaviour:
     _volumeMax: 0.8
     _pitchMin: 1
     _pitchMax: 1
+  - _id: call_carrier
+    _clips:
+    - {fileID: 8300000, guid: 57ac8affc1308cd4c9f7e3c0cc3ad923, type: 3}
+    _variantLabels:
+    - call_carrier
+    _bus: 2
+    _spatial: 1
+    _loop: 1
+    _volumeMin: 0.35
+    _volumeMax: 0.35
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: call_answered
+    _clips:
+    - {fileID: 8300000, guid: a9cce2ead0fb9e94991b0e3e73ff8dc5, type: 3}
+    _variantLabels:
+    - call_answered
+    _bus: 2
+    _spatial: 1
+    _loop: 1
+    _volumeMin: 0.35
+    _volumeMax: 0.35
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: call_decoded
+    _clips:
+    - {fileID: 8300000, guid: 388ae61b9c96acc46bbd8521ff8bf0db, type: 3}
+    - {fileID: 8300000, guid: 34bd5a9e788d97f4daaaee59a2f8c6b2, type: 3}
+    - {fileID: 8300000, guid: 45663c5e73a41474d8fa668689abf4b8, type: 3}
+    - {fileID: 8300000, guid: b5fcb5608386f01419756262fd24f755, type: 3}
+    - {fileID: 8300000, guid: 161d69d489e3f0f46b3109855cb6df57, type: 3}
+    _variantLabels:
+    - 01
+    - 02
+    - 03
+    - 04
+    - 05
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.35
+    _volumeMax: 0.35
+    _pitchMin: 1
+    _pitchMax: 1
   - _id: sky_diamond_ring
     _clips:
     - {fileID: 8300000, guid: f38e74750cc8b6447923429b7d82276b, type: 3}
