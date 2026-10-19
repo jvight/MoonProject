@@ -2204,12 +2204,109 @@ def build_front_tools_and_lamps(rover_root, body_obj, cfg, mats):
         mat_idx=0,
         ring_mat_indices=[0, 0, 0, 0, 1, 1],
     )
+
+    # Igniter socket housing + dark empty socket recess on upper-right shoulder of CutterTurret
+    ign_piv = cfg["piv_cutter_igniter_local"]
+    append_beveled_box(
+        bm_ct,
+        size_xyz=(0.046, 0.042, 0.038),
+        center_xyz=(ign_piv[0] - 0.010, ign_piv[1] - 0.008, ign_piv[2] - 0.018),
+        bevel_width=0.005,
+        bevel_segments=2,
+        mat_idx=1,
+    )
+    for by_off in (-0.016, 0.014):
+        append_hex_bolt(
+            bm_ct,
+            radius=0.005,
+            height=0.008,
+            axis="X",
+            center_xyz=(ign_piv[0] + 0.014, ign_piv[1] + by_off, ign_piv[2] - 0.016),
+            mat_idx=2,
+        )
+    ign_socket_profile = [
+        (0.0, -0.024),
+        (0.025, -0.024),
+        (0.025, 0.002),
+        (0.027, 0.004),
+        (0.027, 0.010),
+        (0.021, 0.010),
+        (0.0175, 0.006),
+        (0.0175, -0.018),
+        (0.0, -0.018),
+    ]
+    append_lathe_profile(
+        bm_ct,
+        ign_socket_profile,
+        axis="Z",
+        center_xyz=ign_piv,
+        segments=24,
+        mat_idx=1,
+        ring_mat_indices=[1, 1, 0, 0, 0, 2, 3, 3],
+        auto_chamfer=False,
+    )
     ct_obj = create_mesh_node(
         "CutterTurret",
         bm_ct,
         cfg["piv_cutter_turret"],
         parent=rover_root,
-        mat_list=[mats["R1_Brass"], mats["R1_GreyMetal"], mats["R1_BareSteel"]],
+        mat_list=[mats["R1_Brass"], mats["R1_GreyMetal"], mats["R1_BareSteel"], mats["R1_Rubber"]],
+        cfg=cfg,
+    )
+
+    # Cutter_Igniter: spark-plug-like ceramic white + brass igniter cartridge seated in the CutterTurret socket
+    bm_ign = bmesh.new()
+    ign_profile = [
+        (0.0, -0.015),
+        (0.0168, -0.015),
+        (0.0168, 0.010),
+        (0.0195, 0.010),
+        (0.0195, 0.025),
+        (0.0145, 0.026),
+        (0.0190, 0.029),
+        (0.0190, 0.035),
+        (0.0140, 0.038),
+        (0.0190, 0.041),
+        (0.0190, 0.047),
+        (0.0140, 0.050),
+        (0.0185, 0.053),
+        (0.0185, 0.059),
+        (0.0135, 0.063),
+        (0.0115, 0.064),
+        (0.0115, 0.072),
+        (0.0072, 0.073),
+        (0.0072, 0.080),
+        (0.0050, 0.082),
+        (0.0, 0.082),
+    ]
+    append_lathe_profile(
+        bm_ign,
+        ign_profile,
+        axis="Z",
+        center_xyz=(0.0, 0.0, 0.0),
+        segments=24,
+        mat_idx=0,
+        ring_mat_indices=[1] * 5 + [0] * 9 + [1] * 6,
+        auto_chamfer=False,
+    )
+    append_cylinder(
+        bm_ign,
+        radius1=0.0235,
+        radius2=0.0235,
+        length=0.012,
+        axis="Z",
+        center_xyz=(0.0, 0.0, 0.016),
+        segments=6,
+        bevel_width=0.002,
+        bevel_segments=1,
+        mat_idx=1,
+    )
+    create_mesh_node(
+        "Cutter_Igniter",
+        bm_ign,
+        ign_piv,
+        parent=ct_obj,
+        mat_list=[mats["R1_WhitePaint"], mats["R1_Brass"]],
         cfg=cfg,
     )
 
@@ -3063,8 +3160,8 @@ def build_rear_and_shoulder_nodes(rover_root, body_obj, cfg, mats):
     )
     append_cylinder(
         bm_ant,
-        radius1=0.012,
-        radius2=0.009,
+        radius1=0.0125,
+        radius2=0.0105,
         length=0.64,
         axis="Y",
         center_xyz=(0.0, 0.35, 0.0),
@@ -3080,6 +3177,76 @@ def build_rear_and_shoulder_nodes(rover_root, body_obj, cfg, mats):
         cfg=cfg,
     )
     create_empty("AntennaSocket", parent=ant_obj, pivot_u=(0.0, 0.0, 0.0), local_space=True, empty_size=0.04)
+
+    # Antenna_Segment2: telescoping second mast segment retracted inside Antenna mast in rest pose
+    # (pivot at its base, local +Y up axis = extension axis; extends +0.35 m straight up when raised)
+    bm_seg2 = bmesh.new()
+    append_cylinder(
+        bm_seg2,
+        radius1=0.0078,
+        radius2=0.0068,
+        length=0.358,
+        axis="Y",
+        center_xyz=(0.0, 0.179, 0.0),
+        segments=12,
+        mat_idx=0,
+    )
+    append_cylinder(
+        bm_seg2,
+        radius1=0.0086,
+        radius2=0.0086,
+        length=0.024,
+        axis="Y",
+        center_xyz=(0.0, 0.180, 0.0),
+        segments=12,
+        bevel_width=0.002,
+        bevel_segments=1,
+        mat_idx=0,
+    )
+    append_cylinder(
+        bm_seg2,
+        radius1=0.0092,
+        radius2=0.0092,
+        length=0.016,
+        axis="Y",
+        center_xyz=(0.0, 0.350, 0.0),
+        segments=12,
+        bevel_width=0.002,
+        bevel_segments=1,
+        mat_idx=0,
+    )
+    append_cylinder(
+        bm_seg2,
+        radius1=0.0135,
+        radius2=0.0130,
+        length=0.032,
+        axis="Y",
+        center_xyz=(0.0, 0.374, 0.0),
+        segments=16,
+        bevel_width=0.003,
+        bevel_segments=2,
+        mat_idx=1,
+    )
+    append_cylinder(
+        bm_seg2,
+        radius1=0.0095,
+        radius2=0.0075,
+        length=0.008,
+        axis="Y",
+        center_xyz=(0.0, 0.393, 0.0),
+        segments=12,
+        bevel_width=0.002,
+        bevel_segments=1,
+        mat_idx=0,
+    )
+    create_mesh_node(
+        "Antenna_Segment2",
+        bm_seg2,
+        cfg["piv_antenna_segment2_local"],
+        parent=ant_obj,
+        mat_list=[mats["R1_BareSteel"], mats["R1_LampAmber"]],
+        cfg=cfg,
+    )
 
     bm_loop = bmesh.new()
     append_torus(
