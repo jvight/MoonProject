@@ -127,6 +127,9 @@ namespace MoonProject.World.PlayModeTests
         private const float ReliefLowEyeHeight = 2f;
         private const float ReliefCraterStandOff = 20f;
         private const float ReliefCraterEyeHeight = 12f;
+
+        // The near-field rubble from 07's chase camera: 07 parked this far to either side of the cable's lane.
+        private const float ReliefRubbleStandOff = 35f;
         private const float ReliefOverviewBack = 2.2f;
         private const float ReliefOverviewHeight = 30f;
         private const int ScoutPeakWindow = 40;
@@ -557,7 +560,8 @@ namespace MoonProject.World.PlayModeTests
         /// The basin floor's gentle relief at golden hour (owner, 2026-10-19), to check by eye for any dotted or holey
         /// pattern: the owner's view (07's chase camera on the plain by the first drive's cable, The Peak ahead), the
         /// plain from the apron looking south and west, the south wrinkle ridge in raking light from its lee flank, and
-        /// the big old crater from above its north rim and down its boulder tracks. Logs/world-captures/relief-*.png.
+        /// the big old crater from above its north rim and down its boulder tracks, and the near-field rubble from
+        /// 07's chase camera parked off the cable's lane to either side. Logs/world-captures/relief-*.png.
         /// </summary>
         [UnityTest]
         [Timeout(600000)]
@@ -658,6 +662,15 @@ namespace MoonProject.World.PlayModeTests
                 {
                     Place(camera, pose);
                     Shoot(camera, "relief-" + pose.name);
+                }
+
+                var offLane = new Vector3(toPeak.z, 0f, -toPeak.x) * ReliefRubbleStandOff;
+                foreach ((string side, Vector3 shift) in new[] { ("east", offLane), ("west", -offLane) })
+                {
+                    Vector3 spot = OnGround(terrain, new Vector2(onCable.x + shift.x, onCable.z + shift.z));
+                    rover.PlaceAt(spot, Quaternion.LookRotation(toPeak, Vector3.up));
+                    yield return new WaitForSeconds(BlastSettleSeconds);
+                    Shoot(view, "relief-rubble-chase-" + side);
                 }
             }
             finally
