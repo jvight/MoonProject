@@ -79,6 +79,25 @@ namespace MoonProject.Audio.Tests
             Assert.LessOrEqual(pitchSpread, settings.WowDepth + 1e-4f);
         }
 
+        [TestCase(5)]
+        [TestCase(6)]
+        [TestCase(3)]
+        public void TheDecodedName_ClimbsAndLandsOnD(int total)
+        {
+            const int steps = 5;
+            int previous = -1;
+            for (int decoded = 1; decoded <= total; decoded++)
+            {
+                int step = CallCarrierModel.DecodeStep(decoded, total, steps);
+                Assert.GreaterOrEqual(step, previous, "the notes climb as the name completes");
+                Assert.That(step, Is.InRange(0, steps - 1));
+                previous = step;
+            }
+
+            Assert.AreEqual(0, CallCarrierModel.DecodeStep(1, total, steps), "the first character starts low");
+            Assert.AreEqual(steps - 1, CallCarrierModel.DecodeStep(total, total, steps), "the whole name lands on D");
+        }
+
         [TestCase(CallState.Locked)]
         [TestCase(CallState.Clear)]
         [TestCase(CallState.Answered)]

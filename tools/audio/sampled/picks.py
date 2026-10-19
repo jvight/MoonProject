@@ -39,20 +39,13 @@ BUILD = {
 
 # Cues whose every variant ships: the New Game self-test's motions (sampled/boot.py: the wheels, the sparks and the
 # flickers each have their own), the base's lamps at dusk (sampled/base.py: one per lamp in the lighting order),
-# 07's lamp switch (sampled/rover.py: on and off) and 07's face booting (sampled/face.py: the owner's picks, with every
-# stroke, text tick and load step).
-_EVERY_VARIANT = {**boot.SOUNDS, **base.SOUNDS, **rover.SOUNDS, **face.SOUNDS}
+# 07's lamp switch (sampled/rover.py: on and off), 07's face booting (sampled/face.py: the owner's picks, with every
+# stroke, text tick and load step) and the call (sampled/call.py: its two loops and each note of the name's climb).
+_EVERY_VARIANT = {**boot.SOUNDS, **base.SOUNDS, **rover.SOUNDS, **face.SOUNDS, **call.SOUNDS}
 
 # The self-test cutter's fault on its result: the short strain-and-choke, so it is 07's fault voice but quicker than
 # worried's.
 BOOT_FAULT = ("voice_fault", 1)
-
-# The call (sampled/call.py) -> the tone colour's variant: bowed metal (0) or the motor through a narrow speaker
-# (1), the owner's A/B.
-CALL = {
-    "call_carrier": 0,
-    "call_answered": 0,
-}
 
 # The sky's moments -> variant of its recipe in sky.SOUNDS.
 SKY = {
@@ -101,8 +94,6 @@ def label(cue_id: str) -> str:
         return f"{cue_id} v{SKY[cue_id] + 1}"
     if cue_id in UI:
         return f"{cue_id} v{UI[cue_id] + 1}"
-    if cue_id in CALL:
-        return f"{cue_id} v{CALL[cue_id] + 1}"
     return f"{cue_id} v{BUILD[cue_id] + 1}"
 
 
@@ -138,9 +129,6 @@ def renderer(cue_id: str):
     elif cue_id in UI:
         fn, _ = ui.SOUNDS[cue_id]
         pick = UI[cue_id]
-    elif cue_id in CALL:
-        fn, _ = call.SOUNDS[cue_id]
-        pick = CALL[cue_id]
     else:
         fn, _ = build.SOUNDS[cue_id]
         pick = BUILD[cue_id]

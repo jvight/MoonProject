@@ -1254,7 +1254,7 @@
       "tonal": false,
       "notes": "Opening v3 2.1, the call: Lumen's sign (three short, one long) on A5 from the Ark IV sweep beside Earth, faint and far. 4 s seamless; the game breaks it up on reserve and swells it with 07's facing.",
       "source": "sampled",
-      "pick": "call_carrier v1"
+      "pick": "call_carrier"
     },
     {
       "id": "call_answered",
@@ -1283,7 +1283,48 @@
       "tonal": false,
       "notes": "The call answered: the sign on A5, then relay.1 keying it back on E5, softer. 6 s seamless.",
       "source": "sampled",
-      "pick": "call_answered v1"
+      "pick": "call_answered"
+    },
+    {
+      "id": "call_decoded",
+      "category": "tick_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/call_decoded_01.wav",
+        "Assets/_Project/Audio/SFX/call_decoded_02.wav",
+        "Assets/_Project/Audio/SFX/call_decoded_03.wav",
+        "Assets/_Project/Audio/SFX/call_decoded_04.wav",
+        "Assets/_Project/Audio/SFX/call_decoded_05.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05"
+      ],
+      "sha256": [
+        "a5a4f145688598866561c1556c41412cb55414cc95ff84b196683e36f2c54505",
+        "d919cbaad75de6ab708f9f81d095eeee67aa92aff0c65149e059efc8bdecf694",
+        "6b1fce39408eae96068bffab75c24ca632dda99397cf3781880b487d742467e9",
+        "5b9f97277f56b809c2897727dc9b7171a7d7f63d10164690049969cc57762c3f",
+        "4c44fdfa8b828b1da39808743834e57365dd0259b5c7e6da153819541ec44bf1"
+      ],
+      "volumeMin": 0.35,
+      "volumeMax": 0.35,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -26.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "A character of the sender's name decoded (CallDecoded): one soft bowed-metal note climbing E4 F#4 A4 B4, landing on D5 when ARK IV is whole.",
+      "source": "sampled",
+      "pick": "call_decoded"
     },
     {
       "id": "sky_diamond_ring",

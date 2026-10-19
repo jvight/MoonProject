@@ -49,7 +49,7 @@ def _entries():
     for cue, (fn, count) in rover.SOUNDS.items():
         yield cue, "rover", (fn.__doc__ or "").strip(), fn, count, ROVER_LUFS, False
     for cue, (fn, count) in call.SOUNDS.items():
-        yield cue, "call", (fn.__doc__ or "").strip(), fn, count, CALL_LUFS, True
+        yield cue, "call", (fn.__doc__ or "").strip(), fn, count, CALL_LUFS, cue != "call_decoded"
     for cue, (fn, count) in face.SOUNDS.items():
         yield cue, "face", (fn.__doc__ or "").strip(), fn, count, FACE_LUFS.get(cue, FACE_DEFAULT_LUFS), False
     for cue, (fn, count) in ui.SOUNDS.items():

@@ -76,6 +76,22 @@ namespace MoonProject.Audio
             }
         }
 
+        /// <summary>
+        /// The note step for the <paramref name="decoded"/>-th character of <paramref name="total"/> (from 1): the climb
+        /// is spread over <paramref name="steps"/> notes so it rises as the name completes and the last character
+        /// always lands on the top step (D).
+        /// </summary>
+        public static int DecodeStep(int decoded, int total, int steps)
+        {
+            if (steps <= 1 || total <= 1)
+            {
+                return Mathf.Max(0, steps - 1);
+            }
+
+            float share = Mathf.Clamp01((decoded - 1f) / (total - 1f));
+            return Mathf.RoundToInt(share * (steps - 1));
+        }
+
         /// <summary>The call changed state (or was restored): the carrier eases into its new mode.</summary>
         public void SetState(CallState state)
         {
