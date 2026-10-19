@@ -48,6 +48,14 @@ MonoBehaviour:
   _dockSettledMetres: 0.03
   _dockSettledDegrees: 1
   _dockDriveOff: 0.4
+  _lampEmissionGain: 3.5
+  _lampLightColor: {r: 1, g: 0.62, b: 0.28, a: 1}
+  _lampLightRange: 4.5
+  _lampLightIntensity: 8
+  _lampLightHeightShare: 0.85
+  _padSpotAngleDegrees: 120
+  _padSpotHeightMetres: 2.4
+  _lampLightBudget: 4
   _lampDuskAboveLastLightDegrees: 4
   _lampDawnMarginDegrees: 1.5
   _lampStaggerSeconds: 0.9
