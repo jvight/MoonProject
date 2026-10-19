@@ -610,11 +610,16 @@ namespace MoonProject.UI.PlayModeTests
                 completed, "each line done once, in order");
         }
 
+        /// <summary>Share (%) of the rig's HUD height left below the log's column, so it is about a face tall.</summary>
+        private const float FaceFreeShare = 45f;
+
         [UnityTest]
         public IEnumerator TheSelfTestLog_ScrollsUpOnceItFillsTheFace_KeepingTheNewestLineInView()
         {
             Boot();
             yield return null;
+            // The rig has no face panel, so the log sits on the tall HUD: a face-sized column makes it fill as on 07.
+            _rig.Ui.PostView.Root.style.bottom = Length.Percent(FaceFreeShare);
             Events.Publish(new RoverAwoke(Vector3.zero, false));
             for (int i = 0; i <= (int)BootCheckStep.Begin; i++)
             {
