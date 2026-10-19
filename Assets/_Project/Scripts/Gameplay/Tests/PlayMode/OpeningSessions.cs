@@ -16,13 +16,16 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// The opening v2 on the real gameplay components behind the fake rover (docs/design/opening-v2.md §2–§4): a new
     /// game at half charge, every objective line in order as the world moves on, the lander cargo bay's two scans
     /// teaching the pad (and a ruin's set teaching only when whole), the first charge on a built pad drawing the
-    /// lander's reserve until it gives out, the milestones FirstCharge, PowerOn, NightReady and SignalWest, the supply
-    /// crates' yields, and a load that shows its step at once and replays its milestones as Restored.
+    /// lander's reserve until it gives out, the faulted cutter sputtering at the fallen array and the spare igniter
+    /// taken from the rack beside it and fitted where 07 stands, the milestones FirstCharge, PowerOn, NightReady and
+    /// SignalWest, the supply crates' yields, and a load that shows its step at once and replays its milestones as
+    /// Restored.
     /// </summary>
     public sealed class OpeningSessions : InputTestFixture
     {
         private const float PressTimeout = 1f;
         private const float Park = 4f;
+        private const float SealStandOff = 1.6f;
 
         private readonly List<OpeningMilestoneReached> _milestones = new List<OpeningMilestoneReached>();
         private readonly List<LanderReserveChanged> _reserve = new List<LanderReserveChanged>();
@@ -78,16 +81,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             RoverStartKit kit = _fixture.Gameplay.StartKit;
             Assert.AreEqual(RoverSystemState.Fault, kit.StateOf(RoverSystem.Cutter), "no igniter: the cutter is FAULT");
             yield return PlaceAt(_fixture.Gameplay.Containers.Find("supply.lander.open").CutPoint.position);
-            Assert.IsFalse(kit.CarriesIgniter, "in reach, the open crate only offers its parts");
-            Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.PickUp, out _), "the open crate offers Pick up");
-            Press(_keyboard.eKey);
-            yield return null;
-            yield return null;
-            Release(_keyboard.eKey);
-            yield return null;
-            Assert.IsTrue(kit.CarriesIgniter, "B4: a held E takes the spare igniter from the lander's open crate");
-            Assert.AreEqual(2, _parts.Count, "with a pickup note each: the igniter and Ines's ice core");
             CargoHold hold = _fixture.Gameplay.Materials.Hold;
+            Assert.AreEqual(0, hold.Units(SalvageMaterial.Metal), "in reach, the open crate only offers its parts");
+            Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.PickUp, out _),
+                "the open crate offers Pick up");
+            yield return TapE();
+            Assert.IsFalse(kit.CarriesIgniter, "B4: the charger kit holds no igniter (it waits by the fallen array)");
             Assert.AreEqual(4, hold.Units(SalvageMaterial.Metal), "the charger kit's Metal 4, into an empty hold");
             Assert.AreEqual(2, hold.Units(SalvageMaterial.Wiring), "and its Wiring 2: the pad's whole cost");
             Assert.AreEqual(OpeningKeys.BuildPad, opening.Flow.Current);
@@ -106,14 +105,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return null;
             Assert.IsTrue(Reached(OpeningMilestone.FirstCharge), "B6: the eclipse may end");
             Assert.IsFalse(opening.Port.Spent, "the reserve is being drawn");
-            Assert.AreEqual(OpeningKeys.FitIgniter, opening.Flow.Current, "charging, the igniter in the hold");
-            Assert.IsTrue(kit.CanFitIgniter, "docked on its pad, the cutter socket takes the igniter");
-            Assert.IsTrue(kit.TryFitIgniter());
-            Assert.AreEqual(RoverSystemState.Ok, kit.StateOf(RoverSystem.Cutter), "the cutter works");
-            Assert.IsFalse(kit.CarriesIgniter, "the igniter left the hold for the cutter");
-            Assert.IsTrue(_systems.Exists(changed => changed.System == RoverSystem.Cutter &&
-                                                     changed.State == RoverSystemState.Ok && !changed.Restored),
-                "the pilot light and the done tone");
+            Assert.AreEqual(string.Empty, opening.Flow.Current, "charging: the lander's 0% speaks next");
             yield return Waits.Until(() => !battery.IsCharging, 60f);
             Assert.AreEqual(1f, battery.Charge01, 0.01f,
                 $"full (reserve {opening.Port.ReserveCells:F2}, cells {battery.Cells}, " +
@@ -126,6 +118,27 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return ScanSet("ruin.FallenSolarArray", 3);
             Assert.IsTrue(known.IsKnown(StructureIds.SolarArray));
             Assert.AreEqual(OpeningKeys.CutOptics, opening.Flow.Current, "the array needs an optic");
+
+            yield return FaceTheSeal(_fixture.Gameplay.Containers.Find("supply.array.junction"));
+            yield return TapE();
+            Assert.AreEqual(RoverSystemState.Fault, kit.StateOf(RoverSystem.Cutter), "no igniter: the cut is refused");
+            Assert.IsTrue(kit.Sputtered, "B7: the first cut attempt sputters (CUTTER · NO IGNITER)");
+            Assert.AreEqual(OpeningKeys.TakeIgniter, opening.Flow.Current, "stalled: the line points at the rack");
+            yield return PlaceAt(_fixture.Gameplay.Containers.Find("supply.array.spares").CutPoint.position);
+            Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.PickUp, out _),
+                "the open rack offers Pick up");
+            yield return TapE();
+            Assert.IsTrue(kit.CarriesIgniter, "a held E takes the spare igniter from the rack");
+            Assert.IsTrue(_parts.Exists(part => part.PartId == kit.IgniterPartId), "with its pickup note");
+            Assert.AreEqual(OpeningKeys.FitIgniter, opening.Flow.Current, "a field swap: fitted where 07 stands");
+            Assert.IsTrue(kit.TryFitIgniter());
+            Assert.AreEqual(RoverSystemState.Ok, kit.StateOf(RoverSystem.Cutter), "the cutter works");
+            Assert.IsFalse(kit.CarriesIgniter, "the igniter left the hold for the cutter");
+            Assert.IsTrue(_systems.Exists(changed => changed.System == RoverSystem.Cutter &&
+                                                     changed.State == RoverSystemState.Ok && !changed.Restored),
+                "the pilot light and the done tone");
+            yield return null;
+            Assert.AreEqual(OpeningKeys.CutOptics, opening.Flow.Current, "now the cutter cuts");
             Collect(0, 0, 1);
             yield return null;
             Assert.AreEqual(OpeningKeys.BuildSolar, opening.Flow.Current);
@@ -202,7 +215,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             SupplyCaches caches = _fixture.Gameplay.Opening.Caches;
-            Assert.AreEqual(8, caches.Count, "the opening's fixed sources (opening-v3 §4: no small crates)");
+            Assert.AreEqual(9, caches.Count, "the opening's fixed sources and the spares rack (opening-v3 §4)");
             SealedContainer crate = _fixture.Gameplay.Containers.Find("supply.array.junction");
             Assert.IsNotNull(crate, "the fallen array's junction box is a sealed container the cutter opens");
             _fixture.Gameplay.Containers.StandOpen("supply.array.junction");
@@ -219,12 +232,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Boot(null);
             yield return null;
             SealedContainer crate = _fixture.Gameplay.Containers.Find("supply.array.junction");
-            Vector3 front = crate.CutPoint.position + crate.Root.forward * 1.6f;
-            float facing = Quaternion.LookRotation(-crate.Root.forward).eulerAngles.y;
-            _fixture.Rover.Place(new Vector3(front.x, 0f, front.z), facing);
-            yield return null;
-            yield return null;
-            Assert.AreEqual(crate, _fixture.Gameplay.Containers.Candidate, "07 faces the junction box's seal");
+            yield return FaceTheSeal(crate);
             for (int press = 0; press < 2; press++)
             {
                 Press(_keyboard.eKey);
@@ -293,6 +301,27 @@ namespace MoonProject.Gameplay.PlayModeTests
         {
             PlacedBase placed = _fixture.Gameplay.PlacedBase;
             placed.PlaceUnchecked(_fixture.Gameplay.Building.Catalog.Find(structureId), new StructurePose(at, 0f), 1f);
+        }
+
+        /// <summary>07 stands before <paramref name="crate"/>'s seal, facing it, the crate its cut candidate.</summary>
+        private IEnumerator FaceTheSeal(SealedContainer crate)
+        {
+            Vector3 front = crate.CutPoint.position + crate.Root.forward * SealStandOff;
+            float facing = Quaternion.LookRotation(-crate.Root.forward).eulerAngles.y;
+            _fixture.Rover.Place(new Vector3(front.x, 0f, front.z), facing);
+            yield return null;
+            yield return null;
+            Assert.AreEqual(crate, _fixture.Gameplay.Containers.Candidate, $"07 faces the seal of {crate.Id}");
+        }
+
+        /// <summary>A short press of E: an open crate gives what it holds, a seal is tried once.</summary>
+        private IEnumerator TapE()
+        {
+            Press(_keyboard.eKey);
+            yield return null;
+            yield return null;
+            Release(_keyboard.eKey);
+            yield return null;
         }
 
         private IEnumerator PlaceAt(Vector3 at)

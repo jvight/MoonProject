@@ -695,6 +695,10 @@
             "text": "Lắp bộ đánh lửa vào mỏ cắt."
         },
         {
+            "key": "next.v2.take_igniter",
+            "text": "Lấy bộ đánh lửa dự phòng ở giá cạnh dàn pin."
+        },
+        {
             "key": "next.v2.find_solar",
             "text": "Tìm bản vẽ pin mặt trời trong tàn tích Lumen."
         },
