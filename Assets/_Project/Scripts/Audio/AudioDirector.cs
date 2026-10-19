@@ -34,6 +34,9 @@ namespace MoonProject.Audio
 
         [SerializeField] private BatteryAudio _battery;
 
+        [Tooltip("The call from the light beside Earth (opening v3).")]
+        [SerializeField] private CallCarrier _call;
+
 
         [Tooltip("UI touches (menus, focus, sliders, cards, prompts, hold-to-buy).")]
         [SerializeField] private UiAudio _ui;
@@ -182,6 +185,7 @@ namespace MoonProject.Audio
             _smallSounds.Initialize(context, this, _soundscape);
             _salvage.Initialize(context, this);
             _battery.Initialize(context, this);
+            _call.Initialize(context, this);
         }
 
         /// <summary>Resolves a cue id once (call at initialisation); logs and returns an invalid handle if
@@ -288,6 +292,11 @@ namespace MoonProject.Audio
         }
 
         /// <summary>07's battery sounds (docs/features/M3-20).</summary>
+        internal void WireCall(CallCarrier call)
+        {
+            _call = call;
+        }
+
         internal void WireBattery(BatteryAudio battery)
         {
             _battery = battery;
@@ -435,6 +444,7 @@ namespace MoonProject.Audio
             ok &= Require(_smallSounds, nameof(_smallSounds));
             ok &= Require(_salvage, nameof(_salvage));
             ok &= Require(_battery, nameof(_battery));
+            ok &= Require(_call, nameof(_call));
             if (_library != null)
             {
                 string problem = _library.FindProblem();

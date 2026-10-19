@@ -54,3 +54,22 @@ MonoBehaviour:
   _tickGapJitter: 0.5
   _tickMinHeat: 0.08
   _tickVolume: 0.6
+  _call:
+    _level: 0.6
+    _awayFloor: 0.15
+    _facingSharpness: 2.5
+    _facingSmoothing: 0.25
+    _placementDistance: 5
+    _spatialBlend: 0.8
+    _decodedVolume: 0.6
+    _dropoutMin: 0.08
+    _dropoutMax: 0.45
+    _holdMin: 0.3
+    _holdMax: 1.6
+    _dropoutGain: 0.08
+    _dropoutEase: 0.04
+    _wowDepth: 0.012
+    _wowRate: 0.4
+    _brokenStatic: 0.35
+    _lockedStatic: 0.15
+    _stateFade: 1.2
