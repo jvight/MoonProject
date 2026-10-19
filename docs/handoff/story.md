@@ -40,3 +40,12 @@
 - Halvard Orbital Works `[PROPOSAL]`: ILC's structures contractor (lander, habitat, arrays, flat-packs, Atlas). It
   also built the 1967 Scout, so the Scout needs no fourth logo.
 - Next: maker databank pages and maker lines on scan pages, once Argon's logos land.
+
+## Rulings applied (e64547b3) and the databank
+- The text docs now match the Director's rulings: Kestrel-3 is Meridian's relay satellite; Lumen is built in 1984
+  and crewed from 1985; the cargo lander landed in the 1987 drop with its sister, the Canyon Supply Lander, and 07
+  unloaded its last cargo in October 1988; the seismic scan line carries both eras.
+- The 1971 descent stage is approved for the 0.6 roadmap. The Director adds it to `docs/ROADMAP.md`.
+- `docs/design/databank.md` is written, with its entries in `text/databank-entries.md` (18 entries, en and vi).
+  - The cards are Lumen's crew-written catalogue, which ends in 1988; anything newer shows `NO LUMEN RECORD`.
+  - ui-fit implements it next.
