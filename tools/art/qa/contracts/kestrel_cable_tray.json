@@ -11,7 +11,7 @@
     "R1_Rubber",
     "R1_Copper",
     "R1_Brass",
-    "R1_OrangeStripe"
+    "R1_TealMark"
   ],
   "require_vertex_colors": true,
   "max_triangles": 1800,

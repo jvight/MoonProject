@@ -327,6 +327,13 @@ MATERIALS = {
         "emission_color": (0.95, 0.62, 0.18),
         "emission_strength": 1.35,
     },
+    "R1_Signage": {
+        "base_color": (0.86, 0.62, 0.24),
+        "metallic": 0.05,
+        "roughness": 0.42,
+        "emission_color": (0.0, 0.0, 0.0),
+        "emission_strength": 0.0,
+    },
 }
 
 
@@ -366,7 +373,8 @@ def main(argv=None):
     rover_root = build_rover_model_hierarchy(DIMENSIONS, mats_rv)
     rv_objs = list(bpy.data.objects)
     rv_meshes = [o for o in rv_objs if o.type == "MESH"]
-    bake_vertex_colors(rv_meshes, rover_cfg=DIMENSIONS, include_ground_occluder=True)
+    rv_bake_meshes = [o for o in rv_meshes if not o.name.startswith("Decal_KA_")]
+    bake_vertex_colors(rv_bake_meshes, rover_cfg=DIMENSIONS, include_ground_occluder=True)
     export_fbx(rv_objs, fbx_out_dir / "RoverModel.fbx", bake_space_transform=True)
     rv_stats = count_model_stats(rv_objs)
 

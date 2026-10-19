@@ -894,7 +894,7 @@ namespace MoonProject.Art.Editor
             for (int side = 0; side < 2; side++)
             {
                 float sx = side == 0 ? -1f : 1f;
-                float sideX = sx * 0.442f;
+                float sideX = sx * 0.4355f;
                 float dirZ = sx > 0f ? 1f : -1f;
                 float startZ = centerZ - 0.5f * stepZ * dirZ;
 
