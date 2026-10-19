@@ -193,19 +193,33 @@ MonoBehaviour:
       _moveBehindSeconds: 1.6
       _lines:
       - _step: 0
-        _seconds: 0.6
+        _seconds: 0.7
       - _step: 1
-        _seconds: 0.8
+        _seconds: 0.7
       - _step: 2
-        _seconds: 1.4
+        _seconds: 1
+      - _step: 3
+        _seconds: 0.4
       - _step: 4
         _seconds: 1.2
-      - _step: 8
-        _seconds: 1.4
-      - _step: 11
-        _seconds: 0.9
-      - _step: 13
+      - _step: 5
         _seconds: 0.5
+      - _step: 6
+        _seconds: 0.6
+      - _step: 7
+        _seconds: 0.5
+      - _step: 8
+        _seconds: 1.2
+      - _step: 9
+        _seconds: 0.6
+      - _step: 10
+        _seconds: 0.6
+      - _step: 11
+        _seconds: 0.6
+      - _step: 12
+        _seconds: 0.4
+      - _step: 13
+        _seconds: 0.4
       _fastForwardAfterSeconds: 0.6
       _fastForwardScale: 6
       _headSweepDegrees: 10

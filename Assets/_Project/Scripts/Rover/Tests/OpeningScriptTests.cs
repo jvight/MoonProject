@@ -111,13 +111,13 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void NewGameOnAFreshTitle_HandsControlOverWithinSixteenSeconds()
+        public void NewGameOnAFreshTitle_HandsControlOverWithinTwentySeconds()
         {
             _script.BeginFull(OpeningStart.PushIn);
             TakeAll();
             float seconds = RunToChase(60f);
-            Assert.LessOrEqual(seconds, 16f + Frame, "New Game click to control, untouched");
-            Assert.Greater(seconds, 12f, "not rushed");
+            Assert.LessOrEqual(seconds, 20f + Frame, "New Game click to control, untouched");
+            Assert.Greater(seconds, 15f, "not rushed");
         }
 
         [Test]

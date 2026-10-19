@@ -386,21 +386,28 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// The opening's lines: who 07 is and why it woke, how long it slept, its agenda, the lamps coming on, the
-        /// cutter's missing igniter, the battery and the start. The other checks are left out for pace; they can be
-        /// put back here.
+        /// The opening's lines, every check: who 07 is and why it woke, how long it slept, its agenda, then each part
+        /// checked in a fast, dense run (the lamps long enough to come on, the cutter's missing igniter a beat
+        /// longer), the battery, the assembly and the start.
         /// </summary>
         private static PostLine[] DefaultLines()
         {
             return new[]
             {
-                new PostLine(BootCheckStep.Carrier, 0.6f),
-                new PostLine(BootCheckStep.Resume, 0.8f),
-                new PostLine(BootCheckStep.Agenda, 1.4f),
+                new PostLine(BootCheckStep.Carrier, 0.7f),
+                new PostLine(BootCheckStep.Resume, 0.7f),
+                new PostLine(BootCheckStep.Agenda, 1f),
+                new PostLine(BootCheckStep.Lens, 0.4f),
                 new PostLine(BootCheckStep.Lamps, 1.2f),
-                new PostLine(BootCheckStep.Cutter, 1.4f),
-                new PostLine(BootCheckStep.Battery, 0.9f),
-                new PostLine(BootCheckStep.Begin, 0.5f),
+                new PostLine(BootCheckStep.Head, 0.5f),
+                new PostLine(BootCheckStep.Wheels, 0.6f),
+                new PostLine(BootCheckStep.Motor, 0.5f),
+                new PostLine(BootCheckStep.Cutter, 1.2f),
+                new PostLine(BootCheckStep.SolarWing, 0.6f),
+                new PostLine(BootCheckStep.Antenna, 0.6f),
+                new PostLine(BootCheckStep.Battery, 0.6f),
+                new PostLine(BootCheckStep.Assembly, 0.4f),
+                new PostLine(BootCheckStep.Begin, 0.4f),
             };
         }
     }

@@ -57,14 +57,16 @@ namespace MoonProject.Rover.PlayModeTests
         private const float TextCheckEvery = 0.5f;
         private const float TitleQuietSeconds = 4f;
         private const float MaxUntouched = 45f;
-        private const float MinSelfTest = 14f;
-        private const float MaxSelfTest = 16.2f;
+        private const float MinSelfTest = 16f;
+        private const float MaxSelfTest = 20f;
 
-        /// <summary>The opening's lines, as the shipped tuning prints them (the other checks are left out for pace).</summary>
+        /// <summary>The opening's lines, as the shipped tuning prints them: every check.</summary>
         private static readonly BootCheckStep[] OpeningLines =
         {
-            BootCheckStep.Carrier, BootCheckStep.Resume, BootCheckStep.Agenda, BootCheckStep.Lamps,
-            BootCheckStep.Cutter, BootCheckStep.Battery, BootCheckStep.Begin,
+            BootCheckStep.Carrier, BootCheckStep.Resume, BootCheckStep.Agenda, BootCheckStep.Lens,
+            BootCheckStep.Lamps, BootCheckStep.Head, BootCheckStep.Wheels, BootCheckStep.Motor,
+            BootCheckStep.Cutter, BootCheckStep.SolarWing, BootCheckStep.Antenna, BootCheckStep.Battery,
+            BootCheckStep.Assembly, BootCheckStep.Begin,
         };
 
         /// <summary>The shot may turn this little (deg) and stray this little (m) off its push-in line.</summary>
@@ -228,6 +230,7 @@ namespace MoonProject.Rover.PlayModeTests
                 (OpeningPhase.Load, 0.6f, "key_04_loading"),
                 (OpeningPhase.Post, 0.05f, "key_05_first_line"),
                 (OpeningPhase.Post, 0.5f, "key_06_lines_on_face"),
+                (OpeningPhase.Post, 0.97f, "key_06b_log_scrolled"),
                 (OpeningPhase.Perform, 0.58f, "key_07_ready_performance"),
                 (OpeningPhase.MoveBehind, 0.98f, "key_08_chase_frame"),
             };
@@ -346,11 +349,13 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreEqual(0, Count(WakeBeat.FadedOut), "a fresh title pushes in: no cover, no black");
             Assert.AreEqual(1, _awoke, "RoverAwoke goes with the crackle, once");
             Assert.AreEqual(1, _body.FaceDirector.Director.BootCount, "the CRT face boots once, as the eyes come back");
-            Assert.That(chase - crackle, Is.InRange(MinSelfTest, MaxSelfTest), "New Game to control in at most about 16 s");
+            Assert.That(chase - crackle, Is.InRange(MinSelfTest, MaxSelfTest), "New Game to control in at most about 20 s");
             CollectionAssert.AreEqual(OpeningLines, _checksStartedList, "the lines print in the story's order");
             Assert.AreEqual(OpeningLines.Length, _checksCompleted.Count, "every line is completed");
             Assert.AreEqual(1, _checksFinished, "and the test finishes once");
             Assert.AreEqual(BootCheckResult.Fault, _checksCompleted[BootCheckStep.Cutter], "the missing igniter");
+            Assert.AreEqual(BootCheckResult.Jammed, _checksCompleted[BootCheckStep.SolarWing]);
+            Assert.AreEqual(BootCheckResult.ReceiveOnly, _checksCompleted[BootCheckStep.Antenna]);
             for (int i = 0; i < shots.Length; i++)
             {
                 Assert.IsTrue(taken[i], $"{shots[i].Name} was captured");
