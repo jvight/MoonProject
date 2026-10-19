@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine.UIElements;
 
 namespace MoonProject.Autoplay
@@ -9,6 +10,18 @@ namespace MoonProject.Autoplay
     public sealed class UiProbe
     {
         private const float VisibleOpacity = 0.05f;
+
+        /// <summary>An element this opaque counts as on screen for the one-guidance-element rule (not a fade's tail).</summary>
+        private const float GuidanceOpacity = 0.5f;
+
+        /// <summary>
+        /// The guidance elements: the objective line, the chips (the prompt and the look-hint shell are one chip to the
+        /// player), the unlock card, the call display and the controls card.
+        /// </summary>
+        private static readonly string[] GuidanceNames =
+        {
+            "next-line", "prompt", "look-hint", "controls-card", "unlock-card", "call-display",
+        };
 
         public const string ObjectiveLineName = "next-line-text";
         private const string LookHintName = "look-hint";
@@ -55,6 +68,57 @@ namespace MoonProject.Autoplay
         public string ObjectiveLine()
         {
             return TextOf("next-line", "next-line-text");
+        }
+
+        /// <summary>
+        /// Fills <paramref name="into"/> with the names of the guidance elements on screen now (an objective line only
+        /// while it has words); elements the HUD does not have yet are not on screen.
+        /// </summary>
+        public void GuidanceShown(List<string> into)
+        {
+            into.Clear();
+            for (int i = 0; i < GuidanceNames.Length; i++)
+            {
+                VisualElement element = _root.Q<VisualElement>(GuidanceNames[i]);
+                if (element == null || !IsShown(element, GuidanceOpacity))
+                {
+                    continue;
+                }
+
+                string words = WordsOf(GuidanceNames[i]);
+                if (words == null)
+                {
+                    into.Add(GuidanceNames[i]);
+                }
+                else if (words.Length > 0)
+                {
+                    // The two chip shells share one anchor and carry the same words: one chip to the player.
+                    bool secondChip = GuidanceNames[i] == "look-hint" && into.Exists(name => name.StartsWith("prompt"));
+                    if (!secondChip)
+                    {
+                        into.Add(GuidanceNames[i] + " '" + words + "'");
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// What an element says (its words), empty when it says nothing, null for an element judged by its look alone.
+        /// A line or chip with no words is not on screen however opaque its shell.
+        /// </summary>
+        private string WordsOf(string element)
+        {
+            switch (element)
+            {
+                case "next-line":
+                    return RawTextOf("next-line-text");
+                case "prompt":
+                    return (RawTextOf("prompt-glyph-label") + " " + RawTextOf("prompt-word")).Trim();
+                case "look-hint":
+                    return (RawTextOf("look-hint-glyph-label") + " " + RawTextOf("look-hint-word")).Trim();
+                default:
+                    return null;
+            }
         }
 
         /// <summary>The key cap on the prompt chip when it is showing, else empty.</summary>
@@ -128,9 +192,14 @@ namespace MoonProject.Autoplay
 
         private static bool IsShown(VisualElement element)
         {
+            return IsShown(element, VisibleOpacity);
+        }
+
+        private static bool IsShown(VisualElement element, float minOpacity)
+        {
             for (VisualElement e = element; e != null; e = e.parent)
             {
-                if (e.resolvedStyle.display == DisplayStyle.None || e.resolvedStyle.opacity < VisibleOpacity
+                if (e.resolvedStyle.display == DisplayStyle.None || e.resolvedStyle.opacity < minOpacity
                     || e.resolvedStyle.visibility == Visibility.Hidden)
                 {
                     return false;

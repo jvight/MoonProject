@@ -11,9 +11,9 @@ import autoplay
 
 class LaunchArgumentTests(unittest.TestCase):
     def test_the_command_line_names_slot_log_and_the_bots_flags(self):
-        args = autoplay.launch_arguments(Path("out"), Path("out/player.log"), "opening", "B3", 600, 20)
+        args = autoplay.launch_arguments("autoplay-slot", Path("out"), Path("out/player.log"), "opening", "B3", 600, 20)
         pairs = dict(zip(args[::2], args[1::2]))
-        self.assertEqual(pairs["-saveSlot"], autoplay.SLOT)
+        self.assertEqual(pairs["-saveSlot"], "autoplay-slot")
         self.assertEqual(pairs["-autoplay"], "opening")
         self.assertEqual(pairs["-autoplay-out"], str(Path("out")))
         self.assertEqual(pairs["-autoplay-until"], "B3")
@@ -22,8 +22,24 @@ class LaunchArgumentTests(unittest.TestCase):
         self.assertEqual(pairs["-screen-fullscreen"], "0")
 
     def test_without_a_last_beat_the_scenario_plays_to_its_end(self):
-        args = autoplay.launch_arguments(Path("out"), Path("out/player.log"), "opening", "", 600, 20)
+        args = autoplay.launch_arguments("autoplay-slot", Path("out"), Path("out/player.log"), "opening", "", 600, 20)
         self.assertNotIn("-autoplay-until", args)
+
+    def test_the_lines_flag_is_sent_only_when_the_opening_shows_no_objective_lines(self):
+        shown = autoplay.launch_arguments("autoplay-slot", Path("out"), Path("out/player.log"), "opening", "", 600, 20)
+        self.assertNotIn("-autoplay-lines", shown)
+        hidden = autoplay.launch_arguments("autoplay-slot", Path("out"), Path("out/player.log"), "opening", "", 600, 20,
+                                           lines=False)
+        pairs = dict(zip(hidden[::2], hidden[1::2]))
+        self.assertEqual(pairs["-autoplay-lines"], "0")
+
+    def test_strict_guidance_is_sent_only_when_asked_for(self):
+        plain = autoplay.launch_arguments("autoplay-slot", Path("out"), Path("out/player.log"), "opening", "", 600, 20)
+        self.assertNotIn("-autoplay-strict-guidance", plain)
+        strict = autoplay.launch_arguments("autoplay-slot", Path("out"), Path("out/player.log"), "opening", "", 600, 20,
+                                           strict_guidance=True)
+        pairs = dict(zip(strict[::2], strict[1::2]))
+        self.assertEqual(pairs["-autoplay-strict-guidance"], "1")
 
 
 class VerdictTests(unittest.TestCase):
