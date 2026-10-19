@@ -606,6 +606,7 @@ namespace MoonProject.Gameplay
 
             _flowTokens.Clear();
             Databank?.Dispose();
+            StartKit?.Dispose();
             Bundles?.Dispose();
             Opening?.Dispose();
             _meshes?.Dispose();
