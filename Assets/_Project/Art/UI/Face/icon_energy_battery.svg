@@ -1,13 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
-  <path d="M 76.00 36.00 L 100.00 36.00 L 104.00 40.00 L 104.00 58.00 L 100.00 62.00 L 76.00 62.00 L 72.00 58.00 L 72.00 40.00 Z" stroke="#FFE29E" stroke-width="5.20" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-  <path d="M 156.00 36.00 L 180.00 36.00 L 184.00 40.00 L 184.00 58.00 L 180.00 62.00 L 156.00 62.00 L 152.00 58.00 L 152.00 40.00 Z" stroke="#FFE29E" stroke-width="5.20" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-  <path d="M 60.00 62.00 L 196.00 62.00 L 210.00 76.00 L 210.00 204.00 L 196.00 218.00 L 60.00 218.00 L 46.00 204.00 L 46.00 76.00 Z" stroke="#FFE29E" stroke-width="5.20" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-  <path d="M 46.00 86.00 L 210.00 86.00" stroke="#FFE29E" stroke-width="5.20" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-  <path d="M 46.00 112.00 L 58.00 112.00" stroke="#FFE29E" stroke-width="3.80" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-  <path d="M 198.00 112.00 L 210.00 112.00" stroke="#FFE29E" stroke-width="3.80" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-  <path d="M 46.00 148.00 L 58.00 148.00" stroke="#FFE29E" stroke-width="3.80" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-  <path d="M 198.00 148.00 L 210.00 148.00" stroke="#FFE29E" stroke-width="3.80" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-  <path d="M 46.00 184.00 L 58.00 184.00" stroke="#FFE29E" stroke-width="3.80" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-  <path d="M 198.00 184.00 L 210.00 184.00" stroke="#FFE29E" stroke-width="3.80" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-  <path d="M 138.00 98.00 L 98.00 152.00 L 128.00 152.00 L 116.00 200.00 L 160.00 142.00 L 130.00 142.00 Z" stroke="#FFE29E" stroke-width="5.20" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <g fill="#FFFFFF" fill-opacity="0.45" fill-rule="evenodd">
+    <path d="M 60.08 218.45 L 195.85 218.45 L 183.51 236.97 L 72.42 236.97 Z" stroke="none" stroke-width="4.00" />
+  </g>
+  <g fill="#FFFFFF" fill-rule="evenodd">
+    <path d="M 84.77 20.97 L 171.17 20.97 L 179.40 29.19 L 179.40 53.88 L 195.85 53.88 L 216.42 74.45 L 216.42 197.88 L 195.85 218.45 L 60.08 218.45 L 39.51 197.88 L 39.51 74.45 L 60.08 53.88 L 76.54 53.88 L 76.54 29.19 Z M 142.37 74.45 L 86.82 146.45 L 123.85 146.45 L 111.51 204.05 L 169.11 132.05 L 132.08 132.05 Z" stroke="none" stroke-width="11.50" />
+  </g>
 </svg>
