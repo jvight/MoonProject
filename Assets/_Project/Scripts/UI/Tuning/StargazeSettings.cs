@@ -19,7 +19,7 @@ namespace MoonProject.UI
 
         [Tooltip("Seconds the Tab chip stays at most; opening the hold sends it sooner.")]
         [Range(1f, 20f)]
-        [SerializeField] private float _hintHoldSeconds = 6f;
+        [SerializeField] private float _hintHoldSeconds = 4f;
 
         [Tooltip("Seconds 07 rests in the opening's chase frame (no look or drive input) before its first prompt, " +
             "\"Look up\" or \"Drive\", fades in (cutscenes O14: +3 s still).")]

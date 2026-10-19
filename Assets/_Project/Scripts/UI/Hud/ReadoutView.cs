@@ -105,7 +105,10 @@ namespace MoonProject.UI
         /// </summary>
         public void ScanSetProgress(string nameKey, int step, int of)
         {
-            _queue.Offer(new ReadoutRequest(ReadoutKind.ScanSet, textKey: nameKey, step: step, of: of));
+            if (_queue.Offer(new ReadoutRequest(ReadoutKind.ScanSet, textKey: nameKey, step: step, of: of)))
+            {
+                Write(_queue.Current);
+            }
         }
 
         /// <summary>A system changed now: its line shows on a card of its own.</summary>
