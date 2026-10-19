@@ -17,6 +17,7 @@ from synth.loop import periodic
 
 from sampled import base as sampled_base
 from sampled import boot as sampled_boot
+from sampled import rover as sampled_rover
 from sampled import picks
 import feel_cues as feel
 
@@ -980,6 +981,11 @@ CUES = (
         notes="The Low warning (30%): one soft falling two-note A4 -> F#4, round bells, never an alarm."),
     Cue("battery_sigh", "oneshot_3d", battery_sigh, volume=(0.5, 0.5), fade_out=0.25, milestone="M3",
         notes="The battery empties: a soft power-down sigh, D4 gliding to A2 under a breath of air."),
+    Cue("rover_lights_switch", "tick_3d", picks.renderer("rover_lights_switch"),
+        variants=sampled_rover.SOUNDS["rover_lights_switch"][1], variant_labels=sampled_rover.LABELS,
+        volume=(0.5, 0.5), milestone="M3", sampled=True,
+        notes="07's lamps switched by the player (RoverLightsSwitched), at the headlamp: on = a relay tick, its "
+              "contact and a faint filament breath on D3; off = a softer, darker tick."),
     Cue("lamp_tick", "tick_3d", lamp_tick, volume=(0.45, 0.45), fade_out=0.03, milestone="M3",
         notes="A flank lamp lighting as 07 wakes: a tiny relay tick with a breath of filament on D6."),
 )
