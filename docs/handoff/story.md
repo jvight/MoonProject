@@ -49,3 +49,24 @@
 - `docs/design/databank.md` is written, with its entries in `text/databank-entries.md` (18 entries, en and vi).
   - The cards are Lumen's crew-written catalogue, which ends in 1988; anything newer shows `NO LUMEN RECORD`.
   - ui-fit implements it next.
+
+## Maker understanding (box/cl-maker-understanding)
+- `docs/design/maker-understanding.md`: each scanned databank entry gives +1 to its maker. Small thresholds unlock
+  adapted blueprints: the donor part keeps its era and livery, joined by 07's weld beads and a `07` tag.
+- Families: Kessler–Arai, 07 itself (fastest); VIS, base structures; ILC, instruments; Tycho, automation (slowest).
+- Points derive from the databank, so there is no new save state.
+- Open questions:
+  - the survey flock's maker (living-moon says Lumen, v4 says Tycho);
+  - the game-design session should fold the re-sourcing into `craft-catalogue.md`.
+- **Ruled and folded** (box/cl-catalogue-fold, stacked on 5855d572):
+  - the survey flock is Meridian's hex flock (0.6-living-moon is fixed; it charges by induction on any lit ring);
+  - `craft-catalogue.md` and `blueprint-fit.md` now carry the 10 adapted blueprints and the 5 re-sourced ones. The
+    catalogue counts 39 structures, 26 device tiers, 11 machines: 88 things to make.
+
+## Where this box stands (2026-10-19, end of session)
+- Done: tech-eras (eras, audit, makers), the text rulings, the databank and its 18 entries, VIS, maker
+  understanding, the catalogue fold.
+- Next:
+  - after Argon's logos, the maker databank pages;
+  - port `text/databank-entries.md` and the `und.*` and `adapted.*` keys into `en.json` / `vi.json` once UI asks;
+  - the 0.6 databank entries for the mare, with each machine's maker.
