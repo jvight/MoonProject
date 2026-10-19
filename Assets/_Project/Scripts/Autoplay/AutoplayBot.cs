@@ -24,7 +24,7 @@ namespace MoonProject.Autoplay
         private const float LookAroundSweepPixels = 6f;
         private const float RouteCellMetres = 2f;
         private const float RouteMarginMetres = 40f;
-        private const float RouteClearance = 1.4f;
+        private const float RouteClearance = 1.0f;
         private const float RouteRelaxMetres = 4f;
         private const float RouteArriveRadius = 2.5f;
 
@@ -194,6 +194,11 @@ namespace MoonProject.Autoplay
             foreach (Vector2 point in _points)
             {
                 _route.Add(new Vector3(point.x, target.y, point.y));
+            }
+
+            if (_route.Count > 1)
+            {
+                Debug.Log($"Autoplay: {Activity}: {_route.Count} waypoints round the props from {position} to {target}.");
             }
         }
 
