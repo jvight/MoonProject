@@ -19,6 +19,7 @@ CBUFFER_START(UnityPerMaterial)
     half _ContentGlowIntensity;
     half _ContentGlowMip;
     half _ContentScanlineAtten;
+    half _ContentMinStrokeLuma;
 
     float4 _EyeLeftRect;
     float4 _EyeLeftShape;

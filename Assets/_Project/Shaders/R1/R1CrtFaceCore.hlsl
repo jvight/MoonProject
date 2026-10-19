@@ -29,8 +29,6 @@ static const half CONTENT_SHOULDER_ATTEN = 0.72h;
 static const half CONTENT_DIRECT_GAIN = 1.12h;
 // Content luminance below which a pixel is a dark fill (shown as the tube's black), and above which it is lit.
 static const half2 CONTENT_FILL_LUMA = half2(0.012h, 0.040h);
-// Least luminance a lit stroke shows at, so dim authored colours still read at >= 7:1 on the tube's black.
-static const half CONTENT_MIN_STROKE_LUMA = 0.66h;
 static const half3 CONTENT_BG_LINEAR = half3(0.0178h, 0.0170h, 0.0026h);
 static const half3 CONTENT_EDGE_LINEAR = half3(0.0162h, 0.0155h, 0.0024h);
 static const half3 CONTENT_VIGNETTE_FLOOR = half3(0.0023h, 0.0027h, 0.0040h);
@@ -488,18 +486,18 @@ half4 CrtFacePassFragment(Varyings input) : SV_Target
         half3 contentBgEdge = max(CONTENT_EDGE_LINEAR - CONTENT_VIGNETTE_FLOOR * (1.0h - vigFactor), 0.0h) / max(vigFactor, 0.58h);
         half3 contentBg = lerp(contentBgEdge, contentBgCenter, (half)contentRimVig);
         half coverage = saturate(contentSample.a);
-        // A stroke's own colour (un-premultiplied) keeps its hue but never falls below the tube's readable floor
-        // (>= 7:1 on the black); edges keep their partial coverage, so anti-aliasing stays as drawn.
+        // A stroke's own colour (un-premultiplied) keeps its hue but never falls below the look's floor
+        // (_ContentMinStrokeLuma; 0 when the palette carries its own contrast); edges keep their partial coverage.
         half3 strokeColour = contentSample.rgb / max(coverage, (half)1e-3) * CONTENT_DIRECT_GAIN;
         half strokeLuma = max(dot(strokeColour, half3(0.2126h, 0.7152h, 0.0722h)), (half)1e-4);
-        strokeColour *= max(1.0h, CONTENT_MIN_STROKE_LUMA / strokeLuma);
+        strokeColour *= max(1.0h, _ContentMinStrokeLuma / strokeLuma);
         // A saturated colour (coral, green) runs out of headroom before it reaches the floor: keep its hue at full
         // strength and lighten it toward white only as far as the floor needs.
         half strokePeak = max(strokeColour.r, max(strokeColour.g, strokeColour.b));
         strokeColour /= max(strokePeak, 1.0h);
         half cappedLuma = dot(strokeColour, half3(0.2126h, 0.7152h, 0.0722h));
         strokeColour = lerp(strokeColour, (half3)1.0h,
-            saturate((CONTENT_MIN_STROKE_LUMA - cappedLuma) / max(1.0h - cappedLuma, (half)1e-3)));
+            saturate((_ContentMinStrokeLuma - cappedLuma) / max(1.0h - cappedLuma, (half)1e-3)));
         // Scaled down, a one-texel line spreads to part coverage: a soft curve (half reads as seven eighths) keeps
         // thin strokes solid while their edges stay graded.
         half uncovered = 1.0h - coverage;
