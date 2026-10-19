@@ -74,6 +74,30 @@
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
+                <ui:VisualElement name="controls-card" class="controls-card" picking-mode="Ignore">
+                    <ui:VisualElement name="controls-card-shadow" class="soft-shadow soft-shadow--chip" />
+                    <ui:VisualElement class="chip controls-card__chip" picking-mode="Ignore">
+                        <ui:VisualElement name="controls-drive-glyph" class="glyph glyph--small" picking-mode="Ignore">
+                            <ui:Label name="controls-drive-glyph-label" class="glyph__label" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                        <ui:Label name="controls-drive-word" class="chip__word controls-card__word" picking-mode="Ignore" />
+                        <ui:VisualElement class="controls-card__dot" picking-mode="Ignore" />
+                        <ui:VisualElement name="controls-look-glyph" class="glyph glyph--small" picking-mode="Ignore">
+                            <ui:Label name="controls-look-glyph-label" class="glyph__label" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                        <ui:Label name="controls-look-word" class="chip__word controls-card__word" picking-mode="Ignore" />
+                        <ui:VisualElement class="controls-card__dot" picking-mode="Ignore" />
+                        <ui:VisualElement name="controls-face-glyph" class="glyph glyph--small" picking-mode="Ignore">
+                            <ui:Label name="controls-face-glyph-label" class="glyph__label" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                        <ui:Label name="controls-face-word" class="chip__word controls-card__word" picking-mode="Ignore" />
+                        <ui:VisualElement class="controls-card__dot" picking-mode="Ignore" />
+                        <ui:VisualElement name="controls-lights-glyph" class="glyph glyph--small" picking-mode="Ignore">
+                            <ui:Label name="controls-lights-glyph-label" class="glyph__label" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                        <ui:Label name="controls-lights-word" class="chip__word controls-card__word" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
                 <ui:VisualElement name="build-strip" class="build-strip" picking-mode="Ignore">
                     <ui:VisualElement name="build-strip-shadow" class="soft-shadow soft-shadow--panel" />
                     <ui:VisualElement name="build-strip-body" class="panel build-strip__body" picking-mode="Ignore">

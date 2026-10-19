@@ -180,7 +180,7 @@ namespace MoonProject.UI
             _words[0].text = _localization.Get(DatabankText.HoldPageKey);
             _keys[1].text = _localization.Get(pad ? "glyph.gamepad.buttonnorth" : UiKeys.KeyF);
             _words[1].text = _localization.Get(DatabankText.ColourKey);
-            _keys[2].text = _localization.Get(pad ? "glyph.gamepad.select" : "glyph.keyboard.tab");
+            _keys[2].text = _localization.Get(pad ? UiKeys.PadView : UiKeys.KeyTab);
             _words[2].text = _localization.Get(UiKeys.FaceClose);
         }
 

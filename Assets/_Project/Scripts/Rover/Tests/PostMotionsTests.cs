@@ -110,7 +110,7 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void TheReadyPerformance_BlinksTwice_ClicksTheLampsOffAndOn_ShiversThenGlances()
+        public void TheReadyPerformance_BlinksTwice_ClicksTheLampsOffAndOn_ThenGlances_WithoutAShake()
         {
             Assert.AreEqual(2, PostMotions.BlinkCount);
             Assert.AreEqual(0f, PostMotions.BlinkAt(0), 1e-5f, "the double blink opens the performance");
@@ -121,16 +121,15 @@ namespace MoonProject.Rover.Tests
             Assert.AreEqual(1f, PostMotions.Lamps(0.5f), "and on again");
             Assert.AreEqual(1f, PostMotions.Lamps(1f));
 
-            Assert.AreEqual(0f, PostMotions.Shiver(0.3f), 1e-5f, "no shiver while the lamps click");
-            Assert.Greater(PostMotions.Shiver(0.5f) + PostMotions.Shiver(0.55f) + PostMotions.Shiver(0.6f), 0.1f);
-            Assert.AreEqual(1f, PostMotions.ShiverProgress(0.75f), 1e-4f, "the last dust is off");
+            Assert.AreEqual(0f, PostMotions.DustOffProgress(0.3f), 1e-5f, "the dust waits for the lamps to come back");
+            Assert.AreEqual(1f, PostMotions.DustOffProgress(0.75f), 1e-4f, "the last dust is off");
 
             Assert.AreEqual(0f, PostMotions.BeaconTurn(0.6f), 1e-5f, "the glance comes last");
             Assert.AreEqual(1f, PostMotions.BeaconTurn(1f), 1e-4f, "the head has turned to the beacon");
         }
 
         [Test]
-        public void TheReadyPerformance_SoundsAreSorted_AndUseTheStartChecksFourPulses()
+        public void TheReadyPerformance_SoundsAreSorted_AndUseTheStartChecksPulses()
         {
             float last = -1f;
             var seen = new System.Collections.Generic.HashSet<int>();
@@ -142,7 +141,7 @@ namespace MoonProject.Rover.Tests
                 last = mark.Share;
             }
 
-            CollectionAssert.AreEquivalent(new[] { 0, 1, 2, 3 }, seen);
+            CollectionAssert.AreEquivalent(new[] { 0, 2, 3 }, seen, "glance, lamps on, lamps off: no shiver");
             Assert.AreEqual(0f, PostMotions.Lamps(PostMotions.PerformPulse(0).Share), "the first click turns them off");
             Assert.AreEqual(1f, PostMotions.Lamps(PostMotions.PerformPulse(1).Share), "the second turns them on");
         }

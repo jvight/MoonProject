@@ -564,11 +564,11 @@ MonoBehaviour:
     _holdSeconds: 3
     _minReadSeconds: 1.5
   _post:
-    _charsPerSecond: 48
-    _maxLineSeconds: 0.9
-    _dotSeconds: 0.22
+    _charsPerSecond: 90
+    _maxLineSeconds: 0.5
+    _dotSeconds: 0.12
     _resumeDays: 13148
-    _lingerSeconds: 1.2
+    _lingerSeconds: 0.5
   _salvage:
     _ring:
       _fadeIn: 0.3
@@ -638,6 +638,17 @@ MonoBehaviour:
       _springFrequency: 1
       _springDamping: 0.8
     _sunArcFullElevation: 17.3
+  _controlsCard:
+    _reveal:
+      _fadeIn: 0.8
+      _fadeOut: 1.2
+      _slide: 8
+      _scaleFrom: 0.96
+      _springFrequency: 1.4
+      _springDamping: 0.6
+    _driveMetres: 4
+    _lookSeconds: 0.6
+    _maxSeconds: 20
   _backdrop:
     _blurStartMetres: 0
     _blurEndMetres: 4

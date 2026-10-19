@@ -334,6 +334,20 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
+    /// A key fast-forwarded the self-test: its remaining lines now run <see cref="Scale"/> times faster (each still
+    /// started and completed in order), so the face's log types them that much faster too.
+    /// </summary>
+    public readonly struct BootCheckFastForwarded
+    {
+        public BootCheckFastForwarded(float scale)
+        {
+            Scale = scale;
+        }
+
+        public float Scale { get; }
+    }
+
+    /// <summary>
     /// One audible or visible tick inside a self-test check: a wheel's twitch (Wheels 0..3), a lamp flicker (Lamps 0..2,
     /// then the ramp as index 3), a spark (Cutter 0..2) with the beacon blinking in sync (Cutter 3..5), the head's sweep
     /// and nod (Head 0, 1), the motor's shudder and creep (Motor 0, 1), the wing's jerk, stall and fold (SolarWing 0..2),

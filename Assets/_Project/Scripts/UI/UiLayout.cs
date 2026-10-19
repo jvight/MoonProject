@@ -51,6 +51,20 @@ namespace MoonProject.UI
             LookHintGlyph = Require<VisualElement>("look-hint-glyph");
             LookHintGlyphLabel = Require<Label>("look-hint-glyph-label");
             LookHintWord = Require<Label>("look-hint-word");
+            ControlsCard = Require<VisualElement>("controls-card");
+            ControlsCardShadow = Require<VisualElement>("controls-card-shadow");
+            ControlsDriveGlyph = Require<VisualElement>("controls-drive-glyph");
+            ControlsDriveGlyphLabel = Require<Label>("controls-drive-glyph-label");
+            ControlsDriveWord = Require<Label>("controls-drive-word");
+            ControlsLookGlyph = Require<VisualElement>("controls-look-glyph");
+            ControlsLookGlyphLabel = Require<Label>("controls-look-glyph-label");
+            ControlsLookWord = Require<Label>("controls-look-word");
+            ControlsFaceGlyph = Require<VisualElement>("controls-face-glyph");
+            ControlsFaceGlyphLabel = Require<Label>("controls-face-glyph-label");
+            ControlsFaceWord = Require<Label>("controls-face-word");
+            ControlsLightsGlyph = Require<VisualElement>("controls-lights-glyph");
+            ControlsLightsGlyphLabel = Require<Label>("controls-lights-glyph-label");
+            ControlsLightsWord = Require<Label>("controls-lights-word");
 
             Pause = Require<VisualElement>("pause");
             PauseVeil = Require<VisualElement>("pause-veil");
@@ -218,6 +232,35 @@ namespace MoonProject.UI
         public Label LookHintGlyphLabel { get; }
 
         public Label LookHintWord { get; }
+
+        /// <summary>The first controls card at the bottom left (<see cref="ControlsCardView"/>).</summary>
+        public VisualElement ControlsCard { get; }
+
+        public VisualElement ControlsCardShadow { get; }
+
+        public VisualElement ControlsDriveGlyph { get; }
+
+        public Label ControlsDriveGlyphLabel { get; }
+
+        public Label ControlsDriveWord { get; }
+
+        public VisualElement ControlsLookGlyph { get; }
+
+        public Label ControlsLookGlyphLabel { get; }
+
+        public Label ControlsLookWord { get; }
+
+        public VisualElement ControlsFaceGlyph { get; }
+
+        public Label ControlsFaceGlyphLabel { get; }
+
+        public Label ControlsFaceWord { get; }
+
+        public VisualElement ControlsLightsGlyph { get; }
+
+        public Label ControlsLightsGlyphLabel { get; }
+
+        public Label ControlsLightsWord { get; }
 
         public VisualElement Pause { get; }
 

@@ -51,6 +51,18 @@
             "text": "Lái xe"
         },
         {
+            "key": "ui.controls.look",
+            "text": "Nhìn quanh"
+        },
+        {
+            "key": "ui.controls.face",
+            "text": "07"
+        },
+        {
+            "key": "ui.controls.lights",
+            "text": "Đèn"
+        },
+        {
             "key": "glyph.keyboard.wasd",
             "text": "WASD"
         },
@@ -603,14 +615,6 @@
             "text": "Cần dọn chỗ trước"
         },
         {
-            "key": "build.hint.weld",
-            "text": "Giữ để lắp ráp"
-        },
-        {
-            "key": "build.hint.deconstruct",
-            "text": "Giữ để tháo dỡ"
-        },
-        {
             "key": "structure.charging_pad.name",
             "text": "Bệ sạc"
         },
@@ -1036,7 +1040,7 @@
         },
         {
             "key": "post.carrier",
-            "text": "SÓNG MANG · PHÁT HIỆN"
+            "text": "ĐƠN VỊ 07 · BẮT ĐƯỢC SÓNG MANG"
         },
         {
             "key": "post.resume",

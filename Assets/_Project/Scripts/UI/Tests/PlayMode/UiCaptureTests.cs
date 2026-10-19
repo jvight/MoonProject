@@ -594,7 +594,6 @@ namespace MoonProject.UI.PlayModeTests
             Directory.CreateDirectory(folder);
             context.Events.Publish(new RoverAwoke(Vector3.zero, false));
             context.Events.Publish(new NextStepChanged("next.v2.drive_lander"));
-            context.Events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle));
             context.Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame));
             yield return new WaitForSecondsRealtime(_tuning.Guidance.Line.FadeIn +
                                                     _tuning.Guidance.ObjectiveDelaySeconds + 2.5f);
@@ -774,8 +773,45 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         /// <summary>
-        /// 07's power-on self-test typed from a replayed Rover event stream, in Vietnamese and English: the checks with
-        /// their dots, the alerts in amber, no guidance until it finishes. Rerun with --filter CapturePost.
+        /// The first controls card as the full opening hands 07 over, at 1920x1080 in English and Vietnamese: the only
+        /// guidance on screen, the objective line waiting for it. Rerun with --filter CaptureControlsCard.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator CaptureControlsCard_AtTheHandOver_IsTheOnlyGuidance()
+        {
+#if UNITY_EDITOR
+            yield return LoadMain();
+            GameContext context = FindBootstrap().Context;
+            Camera camera = context.Get<IViewCamera>().Camera;
+            UISystem ui = BuildUi(context, out _, out _);
+            Reframe(1920, 1080);
+            yield return null;
+            string folder = Path.GetFullPath(OutputFolder);
+            Directory.CreateDirectory(folder);
+            context.Events.Publish(new RoverAwoke(Vector3.zero, false));
+            context.Events.Publish(new NextStepChanged("next.v2.drive_lander"));
+            context.Events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle));
+            context.Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame));
+            foreach (string language in new[] { "en", "vi" })
+            {
+                ui.Localization.SetLanguage(language);
+                yield return new WaitForSecondsRealtime(_tuning.ControlsCard.Reveal.FadeIn +
+                                                        _tuning.Guidance.ObjectiveDelaySeconds + 1f);
+                Assert.IsTrue(ui.ControlsCardView.IsVisible, "the card holds the hand-over");
+                Assert.IsFalse(ui.Objective.IsVisible, "alone: the objective line waits for it");
+                Assert.IsFalse(ui.LookUp.IsVisible, "and no chip beside it");
+                yield return Capture(camera, folder, "48_controls_card_" + language);
+            }
+#else
+            Assert.Ignore("Captures need the editor.");
+            yield break;
+#endif
+        }
+
+        /// <summary>
+        /// 07's power-on self-test typed from a replayed Rover event stream (the opening's lines), in Vietnamese and
+        /// English: the checks with their dots, the alert in amber, no guidance until it finishes. Rerun with
+        /// --filter CapturePost.
         /// </summary>
         [UnityTest]
         public IEnumerator CapturePost_TypesEachCheck_AlertsInAmber_AndHoldsGuidanceUntilItEnds()
@@ -810,7 +846,8 @@ namespace MoonProject.UI.PlayModeTests
 
                 yield return new WaitForSecondsRealtime(0.6f);
                 Assert.IsTrue(ui.PostView.Line(PostStream.Length - 1).text.Length > 0, "the last line has typed");
-                Assert.IsTrue(ui.PostView.Line(8).ClassListContains(PostView.AlertClass), "the cutter's fault is amber");
+                Assert.IsTrue(ui.PostView.Line(CutterLine).ClassListContains(PostView.AlertClass),
+                    "the cutter's fault is amber");
                 yield return Capture(camera, folder, "post_done_" + language);
                 context.Events.Publish(new BootCheckFinished());
                 yield return null;
@@ -825,19 +862,18 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         private const float PostStepSeconds = 0.9f;
+        private const int CutterLine = 4;
 
         private static readonly BootCheckStep[] PostStream =
         {
-            BootCheckStep.Carrier, BootCheckStep.Resume, BootCheckStep.Agenda, BootCheckStep.Lens, BootCheckStep.Lamps,
-            BootCheckStep.Head, BootCheckStep.Wheels, BootCheckStep.Motor, BootCheckStep.Cutter, BootCheckStep.SolarWing,
-            BootCheckStep.Antenna, BootCheckStep.Battery, BootCheckStep.Assembly, BootCheckStep.Begin,
+            BootCheckStep.Carrier, BootCheckStep.Resume, BootCheckStep.Agenda, BootCheckStep.Lamps,
+            BootCheckStep.Cutter, BootCheckStep.Battery, BootCheckStep.Begin,
         };
 
         private static readonly BootCheckResult[] PostResults =
         {
-            BootCheckResult.Info, BootCheckResult.Info, BootCheckResult.Info, BootCheckResult.Ok, BootCheckResult.Ok,
-            BootCheckResult.Ok, BootCheckResult.Ok, BootCheckResult.Ok, BootCheckResult.Fault, BootCheckResult.Jammed,
-            BootCheckResult.ReceiveOnly, BootCheckResult.Ok, BootCheckResult.Info, BootCheckResult.Info,
+            BootCheckResult.Info, BootCheckResult.Info, BootCheckResult.Info, BootCheckResult.Ok,
+            BootCheckResult.Fault, BootCheckResult.Ok, BootCheckResult.Info,
         };
 
         private IEnumerator Capture(Camera camera, string folder, string name)

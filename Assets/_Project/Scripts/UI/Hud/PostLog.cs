@@ -21,6 +21,7 @@ namespace MoonProject.UI
         private readonly bool[] _alert = new bool[Capacity];
         private readonly BootCheckStep[] _steps = new BootCheckStep[Capacity];
         private float _dotClock;
+        private float _rush = 1f;
 
         public PostLog(PostLineSettings settings)
         {
@@ -47,6 +48,16 @@ namespace MoonProject.UI
             IsFinished = false;
             SinceFinished = 0f;
             _dotClock = 0f;
+            _rush = 1f;
+        }
+
+        /// <summary>
+        /// The self-test was fast-forwarded: its lines type and its dots run <paramref name="scale"/> times faster
+        /// until the next <see cref="Reset"/>, as Rover now runs them; the linger after the end keeps its pace.
+        /// </summary>
+        public void Rush(float scale)
+        {
+            _rush = Math.Max(1f, scale);
         }
 
         /// <summary>
@@ -130,16 +141,17 @@ namespace MoonProject.UI
         public bool Tick(float deltaTime)
         {
             bool changed = false;
+            float typing = deltaTime * _rush;
             for (int i = 0; i < Count; i++)
             {
                 int before = (int)_typed[i];
                 float speed = Math.Max(_settings.CharsPerSecond, _targets[i].Length / _settings.MaxLineSeconds);
-                _typed[i] = Math.Min(_targets[i].Length, _typed[i] + speed * deltaTime);
+                _typed[i] = Math.Min(_targets[i].Length, _typed[i] + speed * typing);
                 changed |= (int)_typed[i] != before;
             }
 
             int dotsBefore = DotPhase;
-            _dotClock += deltaTime;
+            _dotClock += typing;
             changed |= DotPhase != dotsBefore && AnyChecking();
             if (IsFinished)
             {

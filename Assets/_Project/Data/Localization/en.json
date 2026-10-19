@@ -51,6 +51,18 @@
             "text": "Drive"
         },
         {
+            "key": "ui.controls.look",
+            "text": "Look"
+        },
+        {
+            "key": "ui.controls.face",
+            "text": "07"
+        },
+        {
+            "key": "ui.controls.lights",
+            "text": "Lights"
+        },
+        {
             "key": "glyph.keyboard.wasd",
             "text": "WASD"
         },
@@ -548,7 +560,7 @@
         },
         {
             "key": "hint.hold",
-            "text": "Hold"
+            "text": "Inventory"
         },
         {
             "key": "ui.hold.boot",
@@ -601,14 +613,6 @@
         {
             "key": "build.reason.blocked",
             "text": "Clear the ground first"
-        },
-        {
-            "key": "build.hint.weld",
-            "text": "Hold to assemble"
-        },
-        {
-            "key": "build.hint.deconstruct",
-            "text": "Hold to dismantle"
         },
         {
             "key": "structure.charging_pad.name",
@@ -1036,7 +1040,7 @@
         },
         {
             "key": "post.carrier",
-            "text": "CARRIER · DETECTED"
+            "text": "UNIT 07 · CARRIER DETECTED"
         },
         {
             "key": "post.resume",

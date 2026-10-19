@@ -10,10 +10,11 @@ namespace MoonProject.UI.Tests
     {
         private const float Frame = 1f / 60f;
 
-        // Rover's step durations (box/cl-rover-reload 3b26ca6c, PostSettings), in BootCheckStep order.
+        // Rover's line seconds (PostSettings' opening lines), in BootCheckStep order; the checks the opening leaves
+        // out for pace keep the seconds they had, so they still fit if they are put back.
         private static readonly float[] StepSeconds =
         {
-            0.8f, 1.8f, 1.4f, 1.0f, 2.4f, 1.8f, 1.8f, 1.6f, 2.4f, 2.0f, 1.8f, 1.2f, 0.7f, 4.0f,
+            0.7f, 0.8f, 1.4f, 1.0f, 1.2f, 1.8f, 1.8f, 1.6f, 1.4f, 2.0f, 1.8f, 0.9f, 0.7f, 0.6f,
         };
 
         private PostLineSettings _settings;
@@ -148,6 +149,23 @@ namespace MoonProject.UI.Tests
             _log.Started(BootCheckStep.Agenda, block, true);
             Run(_settings.MaxLineSeconds + 0.05f);
             Assert.AreEqual(block.Length, _log.Visible(0));
+        }
+
+        [Test]
+        public void AFastForward_TypesTheLinesThatMuchFaster_UntilTheNextWake()
+        {
+            const float Scale = 4f;
+            const string Line = "CONTINUE · 13 148 DAYS · RESTORING TASK QUEUE";
+            float seconds = Line.Length / Mathf.Max(_settings.CharsPerSecond, Line.Length / _settings.MaxLineSeconds);
+            _log.Started(BootCheckStep.Resume, Line, true);
+            _log.Rush(Scale);
+            Run(seconds / Scale + 2f * Frame);
+            Assert.AreEqual(Line, Shown(0), "the line types four times faster");
+
+            _log.Reset();
+            _log.Started(BootCheckStep.Resume, Line, true);
+            Run(seconds / Scale + 2f * Frame);
+            Assert.AreNotEqual(Line, Shown(0), "a new wake types at its own pace");
         }
 
         private void Run(float seconds)

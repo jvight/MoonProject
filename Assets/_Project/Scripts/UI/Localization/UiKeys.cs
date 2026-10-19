@@ -58,6 +58,15 @@ namespace MoonProject.UI
         public const string KeyQ = "glyph.keyboard.q";
         public const string KeyF = "glyph.keyboard.f";
         public const string KeyShoulders = "glyph.gamepad.shoulders";
+        public const string KeyDrive = "glyph.keyboard.wasd";
+        public const string PadDrive = "glyph.gamepad.leftstick";
+        public const string MouseLook = "glyph.mouse.move";
+        public const string PadLook = "glyph.gamepad.rightstick";
+        public const string KeyTab = "glyph.keyboard.tab";
+        public const string PadView = "glyph.gamepad.select";
+        public const string ControlsLook = "ui.controls.look";
+        public const string ControlsFace = "ui.controls.face";
+        public const string ControlsLights = "ui.controls.lights";
         public const string CargoWaiting = "ui.cargo.waiting";
         public const string CargoSummary = "ui.cargo.summary";
         public const string BuildStripTitle = "build.strip.title";
@@ -73,8 +82,6 @@ namespace MoonProject.UI
         public const string BuildHintLeave = "build.hint.leave";
         public const string BuildStepPlace = "build.step.place";
         public const string BuildStepWeld = "build.step.weld";
-        public const string BuildHintWeld = "build.hint.weld";
-        public const string BuildHintDeconstruct = "build.hint.deconstruct";
         public const string BuildLocked = "build.locked";
         public const string BuildEnergyCard = "build.energy.card";
 

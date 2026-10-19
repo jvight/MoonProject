@@ -25,7 +25,7 @@ namespace MoonProject.Rover
         /// <summary>The first move: the camera eases back and out diagonally to the wide front three-quarter.</summary>
         PullBack = 5,
 
-        /// <summary>07's ready performance, seen wide: a double blink, lamps off and on, a dust shiver, a glance.</summary>
+        /// <summary>07's ready performance, seen wide: a double blink, lamps off and on, a glance.</summary>
         Perform = 6,
 
         /// <summary>The second move: the camera eases round to the chase frame behind 07.</summary>

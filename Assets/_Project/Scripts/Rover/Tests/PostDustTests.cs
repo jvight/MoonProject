@@ -12,8 +12,22 @@ namespace MoonProject.Rover.Tests
         [SetUp]
         public void SetUp()
         {
-            _settings = new PostSettings();
+            _settings = PostSequencerTests.Full();
             _dust = new PostDust(_settings);
+        }
+
+        [Test]
+        public void APartWhoseCheckIsLeftOut_KeepsItsCoatUntilThePerformance_ThenIsClean()
+        {
+            var opening = new PostSettings();
+            Assert.IsFalse(opening.Runs(BootCheckStep.Wheels));
+            var dust = new PostDust(opening);
+            dust.Update(OpeningPhase.Post, BootCheckStep.Cutter, 0.5f);
+            Assert.AreEqual(1f, dust.Level(DustZone.Wheels), 1e-5f, "a later check does not strip it");
+            dust.Update(OpeningPhase.PullBack, BootCheckStep.Begin, 1f);
+            Assert.AreEqual(1f, dust.Level(DustZone.Wheels), 1e-5f, "still on as the camera pulls back");
+            dust.Update(OpeningPhase.Perform, BootCheckStep.Begin, 0.8f);
+            Assert.AreEqual(0f, dust.Level(DustZone.Wheels), 1e-5f, "it settles off as the lamps come back, seen wide");
         }
 
         [Test]
@@ -46,7 +60,7 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void TheReadyShiver_ShakesOffTheRest_AndTheChaseFrameIsClean()
+        public void TheReadyPerformance_SettlesOffTheRest_AndTheChaseFrameIsClean()
         {
             float rest = _settings.DustSegmentOf(DustZone.Body).Rest;
             _dust.Update(OpeningPhase.Post, BootCheckStep.Begin, 0.9f);
@@ -54,9 +68,9 @@ namespace MoonProject.Rover.Tests
             _dust.Update(OpeningPhase.PullBack, BootCheckStep.Begin, 1f);
             Assert.AreEqual(rest, _dust.Level(DustZone.Body), 1e-5f, "still on as the camera pulls back");
             _dust.Update(OpeningPhase.Perform, BootCheckStep.Begin, 0.3f);
-            Assert.AreEqual(rest, _dust.Level(DustZone.Body), 1e-5f, "before the shiver the rest is on");
+            Assert.AreEqual(rest, _dust.Level(DustZone.Body), 1e-5f, "before the lamps come back the rest is on");
             _dust.Update(OpeningPhase.Perform, BootCheckStep.Begin, 0.8f);
-            Assert.AreEqual(0f, _dust.Level(DustZone.Body), 1e-5f, "the shiver, seen wide, shakes it off");
+            Assert.AreEqual(0f, _dust.Level(DustZone.Body), 1e-5f, "it settles off, seen wide");
             _dust.Update(OpeningPhase.MoveBehind, BootCheckStep.Begin, 1f);
             for (int i = 0; i < PostDust.ZoneCount; i++)
             {

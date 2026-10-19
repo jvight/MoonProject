@@ -8,9 +8,9 @@ namespace MoonProject.Rover
     /// What 07 does in each check of its power-on self-test, as pure functions of the check's progress (0..1) so each
     /// motion's shape is testable: the head's sweep and nod, each wheel's twitch, the motor's shudder and lurch, the
     /// cutter's failed ignitions with the turret's kicks, the wing's jerk-stall-fold, the antenna's rise, the cells'
-    /// fill, and the ready performance after the checks (a double blink, the headlamps clicked off and on, the dust
-    /// shiver, the glance at the beacon). The same tables say when each <c>BootCheckPulse</c> fires, so the sounds and
-    /// the motion cannot drift apart.
+    /// fill, and the ready performance after the checks (a double blink, the headlamps clicked off and on, the last
+    /// dust settling off, the glance at the beacon). The same tables say when each <c>BootCheckPulse</c> fires, so the
+    /// sounds and the motion cannot drift apart.
     /// </summary>
     public sealed class PostMotions
     {
@@ -56,22 +56,20 @@ namespace MoonProject.Rover
         // Antenna: rises in the first part, then holds.
         private const float AntennaRiseShare = 0.6f;
 
-        // The ready performance after the checks, seen wide: a double blink, the headlamps clicked off and on, the
-        // last dust shivered off, then a glance at the beacon.
+        // The ready performance after the checks, seen wide: a double blink, the headlamps clicked off and on (the
+        // last dust settles off as they come back), then a glance at the beacon. No shake: at its tuned length a
+        // shiver reads as a jitter.
         private const float SecondBlinkAt = 0.14f;
         private const float LampsOffAt = 0.24f;
         private const float LampsOnAt = 0.4f;
-        private const float ShiverStart = 0.44f;
-        private const float ShiverEnd = 0.72f;
+        private const float DustOffEnd = 0.72f;
         private const float GlanceStart = 0.7f;
-        private const float ShiverWobbles = 7f;
 
-        /// <summary>The performance's sounds as the start check's pulses (Audio voices them): glance, shiver, lamps on, lamps off.</summary>
+        /// <summary>The performance's sounds as the start check's pulses (Audio voices them): glance, lamps on, lamps off.</summary>
         private const int GlancePulse = 0;
-        private const int ShiverPulse = 1;
         private const int LampsOnPulse = 2;
         private const int LampsOffPulse = 3;
-        private const int PerformPulses = 4;
+        private const int PerformPulses = 3;
 
         private static readonly float[] AttemptStarts = { 0.1f, 0.4f, 0.7f };
         private static readonly float[] AttemptPeaks = { 1f, 0.8f, 0.55f };
@@ -283,7 +281,6 @@ namespace MoonProject.Rover
             {
                 case 0: return new PulseMark(LampsOffAt, LampsOffPulse);
                 case 1: return new PulseMark(LampsOnAt, LampsOnPulse);
-                case 2: return new PulseMark(ShiverStart, ShiverPulse);
                 default: return new PulseMark(GlanceStart, GlancePulse);
             }
         }
@@ -309,22 +306,10 @@ namespace MoonProject.Rover
             return Smoothing.SmoothStep(GlanceStart, 1f, p);
         }
 
-        /// <summary>How far (0..1) the shiver has shaken the dust off by progress <paramref name="p"/> of the performance.</summary>
-        public static float ShiverProgress(float p)
+        /// <summary>How far (0..1) the last dust has settled off by progress <paramref name="p"/> of the performance.</summary>
+        public static float DustOffProgress(float p)
         {
-            return Smoothing.SmoothStep(ShiverStart, ShiverEnd, p);
-        }
-
-        /// <summary>The dust shiver's strength (0..1) at progress <paramref name="p"/> of the performance.</summary>
-        public static float Shiver(float p)
-        {
-            if (p <= ShiverStart || p >= ShiverEnd)
-            {
-                return 0f;
-            }
-
-            float u = (p - ShiverStart) / (ShiverEnd - ShiverStart);
-            return Mathf.Sin(Mathf.PI * u) * Mathf.Abs(Mathf.Sin(2f * Mathf.PI * ShiverWobbles * u));
+            return Smoothing.SmoothStep(LampsOnAt, DustOffEnd, p);
         }
     }
 }

@@ -95,10 +95,13 @@ namespace MoonProject.Rover.Tests
             Assert.IsFalse(_lamps.IsControlling);
             Assert.AreEqual(1f, _lamps.Level, "Full power at the end.");
 
+            // Unevenness is a share of the flicker span, so it holds however short the lamps' line is tuned.
             bool uneven = false;
-            for (int i = 2; i < peakTimes.Count; i++)
+            float firstGap = _lamps.FlickerCenter(1) - _lamps.FlickerCenter(0);
+            for (int i = 2; i < _lamps.FlickerCount; i++)
             {
-                uneven |= Mathf.Abs((peakTimes[i] - peakTimes[i - 1]) - (peakTimes[1] - peakTimes[0])) > 0.02f;
+                float gap = _lamps.FlickerCenter(i) - _lamps.FlickerCenter(i - 1);
+                uneven |= Mathf.Abs(gap - firstGap) > 0.02f * _settings.LampFlickerSeconds;
             }
 
             Assert.IsTrue(uneven, "The flickers are spaced unevenly.");

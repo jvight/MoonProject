@@ -39,15 +39,15 @@ namespace MoonProject.Rover
 
         [Tooltip("Seconds all the flickers take together.")]
         [Range(0.3f, 3f)]
-        [SerializeField] private float _lampFlickerSeconds = 0.9f;
+        [SerializeField] private float _lampFlickerSeconds = 0.55f;
 
         [Tooltip("Seconds of dark between the last flicker and the ramp.")]
         [Range(0f, 1.5f)]
-        [SerializeField] private float _lampDarkGapSeconds = 0.35f;
+        [SerializeField] private float _lampDarkGapSeconds = 0.15f;
 
         [Tooltip("Seconds the lamps take to ramp smoothly to full.")]
         [Range(0.2f, 4f)]
-        [SerializeField] private float _lampRampSeconds = 1.1f;
+        [SerializeField] private float _lampRampSeconds = 0.45f;
 
         [Header("Title and the fade to black")]
         [Tooltip("Seconds New Game takes to fade the title's picture to black before the wake begins; it runs with " +
