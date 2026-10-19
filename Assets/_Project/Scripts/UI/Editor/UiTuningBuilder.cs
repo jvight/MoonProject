@@ -7,8 +7,8 @@ namespace MoonProject.UI.Editor
     /// <summary>
     /// Creates the UI tuning assets with their code defaults when they do not exist yet. An existing UI tuning asset
     /// keeps every hand-tuned value; it only gains the default prompt entry of an interaction kind added since it was
-    /// created (new settings sections arrive with their code defaults on their own), and the databank's wireframe
-    /// material, a generated asset no code default can name.
+    /// created (new settings sections arrive with their code defaults on their own), and the generated assets no code
+    /// default can name: the databank's wireframe material and the maker's mark the face traces as it boots.
     /// </summary>
     internal static class UiTuningBuilder
     {
@@ -22,7 +22,8 @@ namespace MoonProject.UI.Editor
             if (existing != null)
             {
                 int added = existing.Prompts.AddMissingDefaults();
-                bool wired = AssignWireMaterial(existing) | AssignSplashLayers(existing);
+                bool wired = AssignWireMaterial(existing) | AssignSplashLayers(existing) |
+                             AssignMakerLinework(existing);
                 if (added > 0 || wired)
                 {
                     EditorUtility.SetDirty(existing);
@@ -36,6 +37,7 @@ namespace MoonProject.UI.Editor
             var created = ScriptableObject.CreateInstance<UiTuning>();
             AssignWireMaterial(created);
             AssignSplashLayers(created);
+            AssignMakerLinework(created);
             GeneratedAssets.CreateOrReplace(created, UiAssetPaths.Tuning);
             Debug.Log($"{BuilderPath}: created {UiAssetPaths.Tuning} with default values");
         }
@@ -64,6 +66,28 @@ namespace MoonProject.UI.Editor
 
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return changed;
+        }
+
+        /// <summary>Points the boot face at the maker's mark; true when it changed.</summary>
+        private static bool AssignMakerLinework(UiTuning tuning)
+        {
+            var linework = AssetDatabase.LoadAssetAtPath<MakerLinework>(UiAssetPaths.MakerLinework);
+            if (linework == null)
+            {
+                throw new System.InvalidOperationException(
+                    $"{BuilderPath}: the maker's mark is missing at {UiAssetPaths.MakerLinework} (UI/MakerLinework).");
+            }
+
+            var serialized = new SerializedObject(tuning);
+            SerializedProperty property = serialized.FindProperty("_bootFace._linework");
+            if (property.objectReferenceValue == linework)
+            {
+                return false;
+            }
+
+            property.objectReferenceValue = linework;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            return true;
         }
 
         /// <summary>Points the databank at the wireframe material; true when it changed.</summary>

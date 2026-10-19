@@ -861,6 +861,102 @@ MonoBehaviour:
     _volumeMax: 0.6
     _pitchMin: 1
     _pitchMax: 1
+  - _id: face_power_on
+    _clips:
+    - {fileID: 8300000, guid: a7d83e657dcc94a4bb16d95c1bcf6a63, type: 3}
+    _variantLabels:
+    - face_power_on
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.55
+    _volumeMax: 0.55
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: face_logo_stroke
+    _clips:
+    - {fileID: 8300000, guid: b15a6984233bd9445a729661f0019de4, type: 3}
+    - {fileID: 8300000, guid: 348474ae928d4024ba3fe8e5a7c01e54, type: 3}
+    - {fileID: 8300000, guid: e665bccf0bf593b4d957ab7d65c5178e, type: 3}
+    - {fileID: 8300000, guid: bbd2400a98a378946bcaa8b8fb292b78, type: 3}
+    - {fileID: 8300000, guid: 22ca2a100d1109f4cb86ca67cc590686, type: 3}
+    - {fileID: 8300000, guid: 54198013e23607b4da01bf4b0284ed15, type: 3}
+    _variantLabels:
+    - 01
+    - 02
+    - 03
+    - 04
+    - 05
+    - 06
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: face_logo_resolve
+    _clips:
+    - {fileID: 8300000, guid: 95f934b9a038ccc4d9fa9198434e5fbf, type: 3}
+    _variantLabels:
+    - face_logo_resolve
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: face_text_tick
+    _clips:
+    - {fileID: 8300000, guid: cfad9e1e9ed643440b506e5c4bc689c0, type: 3}
+    - {fileID: 8300000, guid: 5fdb1465fa2419f4285dd1179578e02b, type: 3}
+    - {fileID: 8300000, guid: de6a8310a6ea064459010673fa0cfab5, type: 3}
+    - {fileID: 8300000, guid: f5d5da3b075095441ad1f9e07a8e5578, type: 3}
+    _variantLabels:
+    - 01
+    - 02
+    - 03
+    - 04
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.3
+    _volumeMax: 0.3
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: face_line_done
+    _clips:
+    - {fileID: 8300000, guid: b8beb9df66772d44eb7fefb35aa294fc, type: 3}
+    _variantLabels:
+    - face_line_done
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.42
+    _volumeMax: 0.42
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: face_load_step
+    _clips:
+    - {fileID: 8300000, guid: 46df0f945683cb8479d3fa7ce9517d52, type: 3}
+    - {fileID: 8300000, guid: 8043c93840ab14b43937b0bafcbf57f9, type: 3}
+    - {fileID: 8300000, guid: 7b6752c243098bd44b144147bb75e1f4, type: 3}
+    - {fileID: 8300000, guid: 30d6942265bb9e44e9bf2e32595ee23d, type: 3}
+    - {fileID: 8300000, guid: bb59271dedd781945a814ef9c90dcae8, type: 3}
+    _variantLabels:
+    - 01
+    - 02
+    - 03
+    - 04
+    - 05
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
   - _id: boot_rush
     _clips:
     - {fileID: 8300000, guid: 833fe880f1dca00409ad8babcd24e42a, type: 3}

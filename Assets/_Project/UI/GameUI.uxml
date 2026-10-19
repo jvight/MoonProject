@@ -21,6 +21,7 @@
                     <ui:VisualElement name="salvage-ring" class="salvage-ring" picking-mode="Ignore" />
                 </ui:VisualElement>
             </ui:VisualElement>
+            <ui:VisualElement name="build-reticle" class="build-reticle" picking-mode="Ignore" />
             <ui:VisualElement name="build-reason-anchor" class="world-anchor" picking-mode="Ignore">
                 <ui:VisualElement name="build-reason-center" class="world-anchor__center" picking-mode="Ignore">
                     <ui:VisualElement name="build-reason" class="build-reason" picking-mode="Ignore">

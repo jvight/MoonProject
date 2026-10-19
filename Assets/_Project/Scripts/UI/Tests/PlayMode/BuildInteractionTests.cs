@@ -70,6 +70,7 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(StructureIds.BatteryBank, build.Controller.SelectedStructure.Id);
             Assert.AreEqual(CursorMode.Drive, ui.Cursor.Mode, "placing aims with the camera: the cursor is captured");
             Assert.AreEqual(BuildStep.Place, ui.BuildStrip.Step);
+            Assert.IsTrue(ui.BuildStrip.IsReticleVisible, "the centre ring shows where the ghost follows the aim");
             Assert.IsFalse(ui.BuildStrip.IsVisible, "the cards leave for placing");
             Assert.IsTrue(ui.Objective.ShowsBuildStep, "the one placing line takes the guidance slot");
             StringAssert.Contains("E", ui.Layout.NextLineText.text, "it names the real place key");
@@ -79,6 +80,40 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(BuildModeState.Closed, build.State, "Esc leaves build mode");
             Assert.IsFalse(ui.Pause.IsOpen, "and does not also pause the game");
             Assert.AreEqual(CursorMode.Drive, ui.Cursor.Mode);
+        }
+
+        [UnityTest]
+        [Timeout(180000)]
+        [PrebuildSetup(typeof(BuildModeCaptureTests.BuildCaptureScene))]
+        [PostBuildCleanup(typeof(BuildModeCaptureTests.BuildCaptureScene))]
+        public IEnumerator Tab_InBuildMode_LeavesItCleanlyAndOpens07sScreen_OneContextAtATime()
+        {
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            _scene = new BuildScene();
+            yield return _scene.Boot();
+            _scene.Unlock(new[] { StructureIds.ChargingPad }, 16, 8, 8);
+            UISystem ui = _scene.Ui;
+            BuildField build = _scene.Build;
+
+            yield return Tap(keyboard.bKey);
+            yield return Seconds(Settle);
+            Assert.AreEqual(BuildModeState.Menu, build.State);
+            Assert.IsTrue(build.Controller.PickStructure(StructureIds.ChargingPad));
+            yield return Seconds(Settle);
+            Assert.AreEqual(BuildModeState.Placing, build.State, "a structure is picked and its ghost shows");
+
+            yield return Tap(keyboard.tabKey);
+            yield return Seconds(Settle);
+            Assert.AreEqual(BuildModeState.Closed, build.State, "Tab leaves build mode");
+            Assert.IsTrue(ui.Cargo.IsOpen, "and opens 07's screen");
+            Assert.IsNull(build.GhostView, "the ghost is cancelled");
+            Assert.IsFalse(ui.BuildStrip.IsReticleVisible, "and the centre ring goes with it");
+            Assert.IsFalse(ui.Pause.IsOpen);
+
+            yield return Tap(keyboard.tabKey);
+            yield return Seconds(Settle);
+            Assert.IsFalse(ui.Cargo.IsOpen, "Tab again closes the screen");
+            Assert.AreEqual(BuildModeState.Closed, build.State, "and build mode stays closed");
         }
 
         /// <summary>Card <paramref name="index"/>'s centre in Input System screen pixels (bottom-left origin).</summary>

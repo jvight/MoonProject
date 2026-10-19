@@ -57,14 +57,14 @@ namespace MoonProject.Rover.Tests
         {
             ShotPose close = Close();
             ShotPose wide = _shot.Wide(Body, Heading);
-            Assert.AreEqual(0f, Vector3.Distance(PostShot.PullBack(close, wide, 0f).Position, close.Position), 1e-4f);
-            Assert.AreEqual(0f, Vector3.Distance(PostShot.PullBack(close, wide, 1f).Position, wide.Position), 1e-4f);
-            Assert.AreEqual(0f, Quaternion.Angle(PostShot.PullBack(close, wide, 1f).Rotation, wide.Rotation), 1e-3f);
+            Assert.AreEqual(0f, Vector3.Distance(PostShot.Glide(close, wide, 0f).Position, close.Position), 1e-4f);
+            Assert.AreEqual(0f, Vector3.Distance(PostShot.Glide(close, wide, 1f).Position, wide.Position), 1e-4f);
+            Assert.AreEqual(0f, Quaternion.Angle(PostShot.Glide(close, wide, 1f).Rotation, wide.Rotation), 1e-3f);
             float last = float.MaxValue;
             Vector3 line = (wide.Position - close.Position).normalized;
             for (float t = 0f; t <= 1f; t += 0.02f)
             {
-                ShotPose pose = PostShot.PullBack(close, wide, t);
+                ShotPose pose = PostShot.Glide(close, wide, t);
                 float left = Vector3.Distance(pose.Position, wide.Position);
                 Assert.LessOrEqual(left, last + 1e-5f, "it never backs up");
                 Vector3 off = pose.Position - close.Position;
@@ -79,7 +79,7 @@ namespace MoonProject.Rover.Tests
             ShotPose close = Close();
             ShotPose wide = _shot.Wide(Body, Heading);
             float Step(float a, float b) =>
-                Vector3.Distance(PostShot.PullBack(close, wide, a).Position, PostShot.PullBack(close, wide, b).Position);
+                Vector3.Distance(PostShot.Glide(close, wide, a).Position, PostShot.Glide(close, wide, b).Position);
             Assert.Less(Step(0f, 0.05f), Step(0.475f, 0.525f) * 0.2f, "it starts from rest");
             Assert.Less(Step(0.95f, 1f), Step(0.475f, 0.525f) * 0.2f, "and settles to rest");
         }
