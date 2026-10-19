@@ -573,7 +573,7 @@ MonoBehaviour:
     _linework: {fileID: 0}
     _lineShare: 0.3
     _openShare: 0.35
-    _bloomPeak: 0.55
+    _bloomPeak: 0.3
     _strokesShare: 0.55
     _wordmarkShare: 0.15
     _holdShare: 0.22

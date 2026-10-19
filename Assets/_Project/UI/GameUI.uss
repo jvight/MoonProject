@@ -2123,9 +2123,6 @@ Label {
 
 .boot-face__raster {
     position: absolute;
-    left: 50%;
-    top: 50%;
-    translate: -50% -50%;
     min-width: 6px;
     min-height: 4px;
     border-radius: 2px;
@@ -2148,8 +2145,9 @@ Label {
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
+/* The mark fills only the middle of its square: the wordmark sits just under the drawn lines */
 .boot-face__wordmark {
-    margin-top: 18px;
+    margin-top: -72px;
 }
 
 .boot-face__load {

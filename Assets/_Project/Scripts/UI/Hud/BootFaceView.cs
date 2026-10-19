@@ -108,8 +108,11 @@ namespace MoonProject.UI
             switch (stage)
             {
                 case BootFaceStage.PowerOn:
+                    // Centred on the tube: a dot, then a line across, then the raster opening from it.
                     _raster.style.width = Length.Percent(_face.RasterWidth * Percent);
                     _raster.style.height = Length.Percent(_face.RasterHeight * Percent);
+                    _raster.style.left = Length.Percent((1f - _face.RasterWidth) * Percent * 0.5f);
+                    _raster.style.top = Length.Percent((1f - _face.RasterHeight) * Percent * 0.5f);
                     _raster.style.opacity = _face.RasterGlow;
                     break;
                 case BootFaceStage.Logo:

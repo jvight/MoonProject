@@ -806,12 +806,9 @@ namespace MoonProject.UI
 
         private void StepPost(float deltaTime)
         {
-            if (_bootFace.IsShowing)
-            {
-                _bootFace.Tick(deltaTime);
-                DrainBootCues();
-                _bootFaceView.Refresh();
-            }
+            _bootFace.Tick(deltaTime);
+            DrainBootCues();
+            _bootFaceView.Refresh();
 
             bool changed = _postLog.Count > 0 && _postLog.Tick(deltaTime);
             CueTyping();

@@ -24,7 +24,7 @@ namespace MoonProject.UI
 
         [Tooltip("How bright the raster blooms at its peak (0..1 of the phosphor colour).")]
         [Range(0.1f, 1f)]
-        [SerializeField] private float _bloomPeak = 0.55f;
+        [SerializeField] private float _bloomPeak = 0.3f;
 
         [Header("Maker's mark (shares of its seconds)")]
         [Tooltip("The beam tracing the strokes, one after another, each the same time.")]
