@@ -228,7 +228,9 @@ namespace MoonProject.Rover
 
             while (Phase != OpeningPhase.Idle && Phase != OpeningPhase.Post && _phaseTime >= _phaseLength)
             {
+                float leftover = (_phaseTime - _phaseLength) / PostTimeScale;
                 Advance();
+                CarryInto(leftover);
             }
 
             Evaluate();
@@ -375,7 +377,29 @@ namespace MoonProject.Rover
             DrainPost();
             if (_post.IsFinished)
             {
+                float leftover = Math.Max(0f, _phaseTime - _phaseLength) / PostTimeScale;
                 Enter(OpeningPhase.Ready);
+                CarryInto(leftover);
+            }
+        }
+
+        /// <summary>
+        /// Starts the phase just entered <paramref name="seconds"/> (unscaled) in: what the frame had left after the
+        /// last phase ended. Dropping it would add up to a frame at every change, so a slow frame rate would stretch
+        /// the wake past its tuned length.
+        /// </summary>
+        private void CarryInto(float seconds)
+        {
+            if (Phase == OpeningPhase.Idle || seconds <= 0f)
+            {
+                return;
+            }
+
+            float delta = seconds * PostTimeScale;
+            _phaseTime += delta;
+            if (Phase == OpeningPhase.Post)
+            {
+                StepPost(delta);
             }
         }
 

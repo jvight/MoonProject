@@ -121,6 +121,31 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
+        public void ASlowFrameRate_DoesNotStretchTheWake()
+        {
+            const float SlowFrame = 0.1f;
+            PostSettings post = _tuning.Opening.Post;
+            float tuned = post.PushInSeconds + post.PowerOnSeconds + post.LogoSeconds + post.LoadSeconds +
+                          post.ReadySeconds + post.PullBackSeconds + post.PerformSeconds + post.MoveBehindSeconds;
+            for (int i = 0; i < post.LineCount; i++)
+            {
+                tuned += post.LineSeconds(i);
+            }
+
+            _script.BeginFull(OpeningStart.PushIn);
+            TakeAll();
+            float seconds = 0f;
+            while (!_beats.Contains(WakeBeat.ChaseFrame) && seconds < 60f)
+            {
+                _script.Step(SlowFrame);
+                TakeAll();
+                seconds += SlowFrame;
+            }
+
+            Assert.AreEqual(tuned, seconds, SlowFrame + 1e-3f, "each phase carries the frame's leftover into the next");
+        }
+
+        [Test]
         public void TheWake_RunsItsBeats_InOrder()
         {
             _script.BeginFull(OpeningStart.Settle);
