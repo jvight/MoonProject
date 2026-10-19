@@ -22,8 +22,11 @@ namespace MoonProject.Gameplay
         /// <summary>The spare igniter is in 07's hold (B4, from the lander's open crate).</summary>
         bool CarriesIgniter { get; }
 
-        /// <summary>07 stands on a built charging pad's plate (the cutter socket is reached there, B6).</summary>
-        bool OnPad { get; }
+        /// <summary>
+        /// The cutter takes the spare igniter now: it is in the hold and 07 may fit it where it stands (a field swap
+        /// fits anywhere; a part that needs the pad, only on its plate).
+        /// </summary>
+        bool CanFitIgniter { get; }
 
         /// <summary>The spare igniter is fitted to 07's cutter (B6): the cutter works.</summary>
         bool IgniterFitted { get; }

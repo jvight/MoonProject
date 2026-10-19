@@ -36,9 +36,9 @@ namespace MoonProject.Gameplay
                       (_game.CarriesIgniter || _game.IgniterFitted));
             _steps.Add(OpeningKeys.BuildPad, () => _game.Built(StructureIds.ChargingPad));
             _steps.Add(OpeningKeys.Charge, () => _game.FirstCharge);
-            // The line says what the screen will accept: the cutter takes the igniter only on the pad's plate.
+            // The line says what the screen will accept: a field swap fits where 07 stands, a pad part on the plate.
             _steps.Add(() => !_game.CarriesIgniter ? string.Empty
-                    : _game.OnPad ? OpeningKeys.FitIgniter : OpeningKeys.ParkOnPad,
+                    : _game.CanFitIgniter ? OpeningKeys.FitIgniter : OpeningKeys.ParkOnPad,
                 () => _game.IgniterFitted);
             _steps.Add(() => _game.ReserveSpent ? OpeningKeys.FindSolar : string.Empty,
                 () => _game.Knows(StructureIds.SolarArray));

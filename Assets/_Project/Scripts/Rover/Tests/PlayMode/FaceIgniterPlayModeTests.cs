@@ -4,6 +4,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.TestTools;
+using UnityEngine.UIElements;
 using MoonProject.Core;
 using MoonProject.Gameplay;
 using MoonProject.Testing;
@@ -156,8 +157,86 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.IsTrue(_face.IsIgniterOffered, "the cutter offers it");
         }
 
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator TheIgniterIsAFieldSwap_ItFitsWithNoPadAnywhere()
+        {
+            yield return OpenWithTheIgniter(Shapes[0], BootSettleSeconds, pad: false);
+            Assert.IsFalse(_gameplay.PadLock.OnPad, "07 stands nowhere near a pad");
+            Assert.AreEqual(_igniterCell, _face.FocusedHoldCell, "the screen opens with the igniter selected");
+            yield return Drag(Center(HoldCell()), Center(FaceLayout.DeviceHitRect(FaceDevices.Cutter)));
+            yield return AssertFitted("with no pad at all the igniter fits");
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator TheCutterSocket_IsFullyOnScreen_AndClearOfTheHudsText_At16x9()
+        {
+            yield return OpenWithTheIgniter(Shapes[0]);
+            foreach (Vector2Int shape in Shapes)
+            {
+                _view.targetTexture = null;
+                _target.Release();
+                Object.DestroyImmediate(_target);
+                _target = new RenderTexture(shape.x, shape.y, 24);
+                _view.targetTexture = _target;
+                yield return RealRoverScene.WaitSeconds(0.3f);
+
+                Rect frame = FaceLayout.DeviceHitRect(FaceDevices.Cutter);
+                Vector2[] corners =
+                {
+                    new Vector2(frame.xMin, frame.yMin), new Vector2(frame.xMax, frame.yMin),
+                    new Vector2(frame.xMin, frame.yMax), new Vector2(frame.xMax, frame.yMax),
+                };
+                float minX = float.MaxValue, minY = float.MaxValue, maxX = float.MinValue, maxY = float.MinValue;
+                foreach (Vector2 corner in corners)
+                {
+                    Assert.IsTrue(ToScreen(corner, out Vector2 screen), $"{shape}: the cutter's corner {corner} is on the glass");
+                    Assert.That(screen.x, Is.InRange(0f, shape.x), $"{shape}: the cutter is within the screen's width");
+                    Assert.That(screen.y, Is.InRange(0f, shape.y), $"{shape}: the cutter is within the screen's height");
+                    minX = Mathf.Min(minX, screen.x);
+                    maxX = Mathf.Max(maxX, screen.x);
+                    minY = Mathf.Min(minY, screen.y);
+                    maxY = Mathf.Max(maxY, screen.y);
+                }
+
+                // The HUD's text, as shares of its panel, against the cutter's, as shares of the frame (screen
+                // pixels have a bottom-left origin; a panel's top-left).
+                var cutter = new Rect(minX / shape.x, 1f - maxY / shape.y, (maxX - minX) / shape.x,
+                    (maxY - minY) / shape.y);
+                foreach (UIDocument document in Object.FindObjectsByType<UIDocument>(FindObjectsSortMode.None))
+                {
+                    if (document.panelSettings == null || document.panelSettings.targetTexture != null ||
+                        document.rootVisualElement == null || document.rootVisualElement.panel == null)
+                    {
+                        continue;
+                    }
+
+                    Rect panel = document.rootVisualElement.worldBound;
+                    foreach (Label label in document.rootVisualElement.Query<Label>().ToList())
+                    {
+                        if (string.IsNullOrEmpty(label.text) || label.resolvedStyle.display == DisplayStyle.None ||
+                            label.resolvedStyle.opacity < 0.05f || !label.visible || label.worldBound.width <= 1f)
+                        {
+                            continue;
+                        }
+
+                        Rect share = new Rect(label.worldBound.x / panel.width, label.worldBound.y / panel.height,
+                            label.worldBound.width / panel.width, label.worldBound.height / panel.height);
+                        Assert.IsFalse(share.Overlaps(cutter),
+                            $"{shape}: the HUD text '{label.text}' ({share}) lies over the cutter socket ({cutter})");
+                    }
+                }
+            }
+        }
+
         /// <summary>The scene booted, the pad built, 07 parked on it with the igniter in the hold, the face open.</summary>
-        private IEnumerator OpenWithTheIgniter(Vector2Int shape, float settleSeconds = BootSettleSeconds)
+        private IEnumerator OpenWithTheIgniter(Vector2Int shape, float settleSeconds = BootSettleSeconds,
+            bool pad = true)
         {
             _keyboard = InputSystem.AddDevice<Keyboard>();
             _mouse = InputSystem.AddDevice<Mouse>();
@@ -172,13 +251,19 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.IsTrue(_scene.Context.Get<IWorldAnchors>().TryGet("place.apron", out MoonProject.Core.WorldAnchor apron),
                 "the World has the apron");
             Vector3 centre = SurfaceRules.OnSurface(terrain, apron.Position.x, apron.Position.z);
-            _gameplay.PlacedBase.PlaceUnchecked(_gameplay.Building.Catalog.Find(StructureIds.ChargingPad),
-                new StructurePose(centre, PadYaw), 1f);
             Assert.IsTrue(_gameplay.Materials.Hold.TryAddPart(_gameplay.StartKit.IgniterPartId),
                 "the igniter goes into the hold");
-            _scene.Context.Get<IRoverPlacement>().PlaceAt(centre, Quaternion.LookRotation(Vector3.forward, Vector3.up));
-            yield return RealRoverScene.WaitSeconds(DockSeconds);
-            Assert.IsTrue(_gameplay.StartKit.CanFitIgniter, "07 stands on its pad with the igniter in the hold");
+            if (pad)
+            {
+                _gameplay.PlacedBase.PlaceUnchecked(_gameplay.Building.Catalog.Find(StructureIds.ChargingPad),
+                    new StructurePose(centre, PadYaw), 1f);
+                _scene.Context.Get<IRoverPlacement>().PlaceAt(centre,
+                    Quaternion.LookRotation(Vector3.forward, Vector3.up));
+                yield return RealRoverScene.WaitSeconds(DockSeconds);
+                Assert.IsTrue(_gameplay.PadLock.OnPad, "07 stands on its pad");
+            }
+
+            Assert.IsTrue(_gameplay.StartKit.CanFitIgniter, "the igniter in the hold can be fitted");
 
             Press(_keyboard.tabKey);
             yield return null;

@@ -46,6 +46,10 @@ namespace MoonProject.Gameplay
         [SerializeField] private GameObject[] _cargoFragments = Array.Empty<GameObject>();
 
         [Header("The start kit (§10)")]
+        [Tooltip("Story parts that fit anywhere the moment they are in 07's hold (a small field swap, like the spare " +
+                 "igniter into the cutter): no pad and no dock needed. Any other part needs the service bay.")]
+        [SerializeField] private string[] _fieldFitParts = { "part.igniter" };
+
         [Tooltip("The spare igniter's story-part id in 07's hold: the lander's open crate holds it, the cutter " +
                  "takes it at B6.")]
         [SerializeField] private string _igniterPart = "part.igniter";
@@ -127,6 +131,20 @@ namespace MoonProject.Gameplay
         public IReadOnlyList<GameObject> CargoFragments => _cargoFragments ?? Array.Empty<GameObject>();
         public IReadOnlyList<SupplyCache> Caches => _caches;
         public string IgniterPart => _igniterPart;
+
+        /// <summary>The part fits anywhere as soon as it is in the hold (no pad, no dock).</summary>
+        public bool IsFieldFit(string partId)
+        {
+            for (int i = 0; i < _fieldFitParts.Length; i++)
+            {
+                if (string.Equals(_fieldFitParts[i], partId, System.StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
         public float CollectReach => _collectReach;
         public float CrateRimReach => _crateRimReach;
 
