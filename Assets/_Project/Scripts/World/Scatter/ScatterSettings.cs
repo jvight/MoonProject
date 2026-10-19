@@ -135,15 +135,36 @@ namespace MoonProject.World
         [Range(2f, 20f)]
         [SerializeField] private float _rubbleLaneHalfWidth = 6f;
 
-        [Tooltip("Rubble shows only within about this distance of the camera, metres: it reads from the chase " +
-            "camera, and stays cheap.")]
-        [Range(10f, 120f)]
-        [SerializeField] private float _rubbleCullDistance = 40f;
+        [Tooltip("Rubble thins away by dither between x and y metres from the camera and is gone past y: it reads " +
+            "from the chase camera, and its far edge never pops.")]
+        [SerializeField] private Vector2 _rubbleFadeRange = new Vector2(32f, 40f);
 
-        [Tooltip("Rubble is meshed in chunks this wide, metres: small, so the distance cull follows the camera " +
-            "closely.")]
-        [Range(4f, 64f)]
-        [SerializeField] private float _rubbleChunkSize = 32f;
+        [Tooltip("Rubble is planned and meshed in square chunks this wide, metres, streamed in round the camera.")]
+        [Range(4f, 32f)]
+        [SerializeField] private float _rubbleChunkSize = 10f;
+
+        [Tooltip("Rubble is streamed in within this distance of the camera, metres: well past where it fades, so a " +
+            "chunk is ready long before it shows.")]
+        [Range(20f, 160f)]
+        [SerializeField] private float _rubbleStreamRadius = 60f;
+
+        [Tooltip("A streamed chunk is put away only this much farther out than the stream radius, metres, so driving " +
+            "back and forth at the edge never rebuilds it.")]
+        [Range(0f, 40f)]
+        [SerializeField] private float _rubbleStreamHysteresis = 8f;
+
+        [Tooltip("Rubble grid cells (and apron stones) the stream may plan in one frame: its per-frame budget, a fixed " +
+            "amount of work however loaded the machine is.")]
+        [Range(50, 5000)]
+        [SerializeField] private int _rubbleCellsPerFrame = 200;
+
+        [Tooltip("Most stones one rubble chunk holds; its mesh buffers are sized for this once.")]
+        [Range(50, 4000)]
+        [SerializeField] private int _rubbleChunkCapacity = 600;
+
+        [Tooltip("The fastest 07 can drive (boost included), metres a second: the stream must keep ahead of it.")]
+        [Range(1f, 40f)]
+        [SerializeField] private float _rubbleStreamDesignSpeed = 12f;
 
         [Tooltip("Size of the boulder fields and the long empty stretches between them, metres: boulders gather in a " +
             "few places and leave open plain elsewhere.")]
@@ -216,8 +237,13 @@ namespace MoonProject.World
         public float RubbleApronCount => _rubbleApronCount;
         public float RubbleApronReach => _rubbleApronReach;
         public float RubbleLaneHalfWidth => _rubbleLaneHalfWidth;
-        public float RubbleCullDistance => _rubbleCullDistance;
+        public Vector2 RubbleFadeRange => _rubbleFadeRange;
         public float RubbleChunkSize => _rubbleChunkSize;
+        public float RubbleStreamRadius => _rubbleStreamRadius;
+        public float RubbleStreamHysteresis => _rubbleStreamHysteresis;
+        public int RubbleCellsPerFrame => _rubbleCellsPerFrame;
+        public int RubbleChunkCapacity => _rubbleChunkCapacity;
+        public float RubbleStreamDesignSpeed => _rubbleStreamDesignSpeed;
         public float BoulderFieldWavelength => _boulderFieldWavelength;
         public float BoulderFieldCoverage => _boulderFieldCoverage;
         public float BoulderFieldDensity => _boulderFieldDensity;

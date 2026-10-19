@@ -20,6 +20,11 @@ namespace MoonProject.World
         // Shapes of the rubble's clods: enough that no two neighbours read as one stamp.
         private const int RubbleVariants = 6;
 
+        // R1Lit's distance fade: the rubble's material turns it on, and the view camera is where it measures from.
+        private static readonly int DistanceFadeId = Shader.PropertyToID("_DistanceFade");
+        private static readonly int DistanceFadeRangeId = Shader.PropertyToID("_DistanceFadeRange");
+        private static readonly int DistanceFadeOriginId = Shader.PropertyToID("_MoonDistanceFadeOrigin");
+
         private const string GeneratedRootName = "Generated";
 
         [Tooltip("World tuning (Assets/_Project/Data/Tuning/WorldSettings.asset).")]
@@ -64,6 +69,9 @@ namespace MoonProject.World
         private GameObject _generatedRoot;
         private Mesh _earthMesh;
         private Mesh[] _rubbleRocks = System.Array.Empty<Mesh>();
+        private Material _rubbleMaterial;
+        private RubbleStream _rubble;
+        private GameContext _context;
         private Mesh _tracksMesh;
 
         public MoonSurface Surface { get; private set; }
@@ -78,6 +86,9 @@ namespace MoonProject.World
 
         public ScatterBuildReport LastScatter { get; private set; }
 
+        /// <summary>The near-field rubble streamed in round the view camera (play mode only; null before then).</summary>
+        public RubbleStream Rubble => _rubble;
+
         /// <summary>True while generated world objects exist (play mode or the edit-mode preview).</summary>
         public bool HasGeneratedWorld => _generatedRoot != null;
 
@@ -89,6 +100,7 @@ namespace MoonProject.World
                 return;
             }
 
+            _context = context;
             Generate(HideFlags.None);
             context.Register<ITerrainQuery>(Surface);
             context.Register<IWorldLayout>(Layout);
@@ -120,6 +132,19 @@ namespace MoonProject.World
             DestroyGenerated();
         }
 
+        /// <summary>The rubble streams in round the view camera, and fades out with distance from it.</summary>
+        private void Update()
+        {
+            if (_rubble == null || _context == null || !_context.TryGet(out IViewCamera view) || view.Camera == null)
+            {
+                return;
+            }
+
+            Vector3 eye = view.Camera.transform.position;
+            Shader.SetGlobalVector(DistanceFadeOriginId, eye);
+            _rubble.Tick(eye);
+        }
+
         private void Generate(HideFlags hideFlags)
         {
             DestroyGenerated();
@@ -131,8 +156,8 @@ namespace MoonProject.World
 
             // Scatter planning only reads the analytic surface: it runs on a worker while the terrain is meshed.
             ScatterSettings scatterSettings = _settings.Scatter;
-            Task<List<ScatterInstance>> scatterPlan =
-                Task.Run(() => new ScatterPlanner(surface, scatterSettings, Anchors).Plan());
+            var planner = new ScatterPlanner(surface, scatterSettings, Anchors);
+            Task<List<ScatterInstance>> scatterPlan = Task.Run(planner.Plan);
             WorldAtmosphere.Apply(_settings.Atmosphere, _settings.Sky, _earthlight, _fillLight);
             SkyShaderGlobals.Apply(_settings.Sky);
             BlastZoneShaderGlobals.Apply(surface.Shaping.Blast);
@@ -144,11 +169,16 @@ namespace MoonProject.World
                 toLight, _groundMaterial, hideFlags);
             _gateBuilder.Build(_generatedRoot.transform, surface.Canyon.Slabs, _paletteMaterial, hideFlags);
             List<ScatterInstance> scatterInstances = scatterPlan.GetAwaiter().GetResult();
+            var aprons = new List<RubbleApron>();
+            planner.CollectRubbleAprons(scatterInstances, aprons);
             AddHomeApronStones(scatterInstances, surface);
-            _rubbleRocks = CreateRubbleRocks(hideFlags);
             LastScatter = _scatterBuilder.Build(_generatedRoot.transform, scatterInstances,
-                scatterSettings, _settings.Mesh.ChunkSize, _pebbleRocks, _boulderRocks, _rubbleRocks, _paletteMaterial,
-                hideFlags);
+                scatterSettings, _settings.Mesh.ChunkSize, _pebbleRocks, _boulderRocks, _paletteMaterial, hideFlags);
+            if (Application.isPlaying)
+            {
+                StartRubble(planner, aprons, surface, hideFlags);
+            }
+
             BuildEarth(hideFlags);
             BuildWornTracks(hideFlags);
             _peakBeacon.transform.position = Layout.PeakPosition;
@@ -360,6 +390,24 @@ namespace MoonProject.World
             return false;
         }
 
+        /// <summary>
+        /// The near-field rubble: its clods, its material (the palette's, with R1Lit's distance fade on, so the
+        /// rubble thins away at the fade range) and the stream that plans it in round the view camera.
+        /// </summary>
+        private void StartRubble(ScatterPlanner planner, List<RubbleApron> aprons, MoonSurface surface,
+            HideFlags hideFlags)
+        {
+            ScatterSettings scatter = _settings.Scatter;
+            _rubbleRocks = CreateRubbleRocks(hideFlags);
+            _rubbleMaterial = new Material(_paletteMaterial) { name = "Rubble (distance fade)", hideFlags = hideFlags };
+            _rubbleMaterial.SetFloat(DistanceFadeId, 1f);
+            _rubbleMaterial.SetVector(DistanceFadeRangeId, scatter.RubbleFadeRange);
+            var root = new GameObject("Rubble") { hideFlags = hideFlags };
+            root.transform.SetParent(_generatedRoot.transform, false);
+            _rubble = new RubbleStream(planner, aprons, scatter, _rubbleRocks, _rubbleMaterial, surface.DrivableRadius,
+                root.transform, hideFlags);
+        }
+
         /// <summary>The rubble's clods (<see cref="ClodMesh"/>), in the pebbles' own basalt tone.</summary>
         private Mesh[] CreateRubbleRocks(HideFlags hideFlags)
         {
@@ -377,6 +425,14 @@ namespace MoonProject.World
 
         private void DestroyGenerated()
         {
+            _rubble?.Dispose();
+            _rubble = null;
+            if (_rubbleMaterial != null)
+            {
+                Release(_rubbleMaterial);
+                _rubbleMaterial = null;
+            }
+
             if (_generatedRoot != null)
             {
                 Release(_generatedRoot);
