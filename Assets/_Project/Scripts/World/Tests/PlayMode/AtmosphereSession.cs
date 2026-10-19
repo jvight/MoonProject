@@ -70,6 +70,11 @@ namespace MoonProject.World.PlayModeTests
         private const float CueTowerStandOff = 12f;
         private const float CueLowEyeHeight = 1.2f;
         private const float CueTowerLook = 7f;
+        private const string CueLampName = "ModuleLamp";
+        private const string CueLampLens = "PowerModule_StatusLamp";
+        private const float CueLampStandOff = 10f;
+        private const float CueLampPeak = 0.9f;
+        private const float CueLampTimeout = 30f;
 
         // 07's self-test cues on a New Game (opening v2's POST): the beacon's answering flashes seen from the apron's
         // edge and from the wake, the Begin wave seen from just behind 07's post looking down the cable toward the
@@ -371,17 +376,18 @@ namespace MoonProject.World.PlayModeTests
         }
 
         /// <summary>
-        /// The opening v3 world cues at their four fixed points (opening-v3-plan slice 1.2), on a real New Game:
+        /// The opening v3 world cues at their fixed points (opening-v3-plan slice 1.2), on a real New Game:
         /// the lander's amber beacon in 07's first forward view; the lander from the apron, lit, and dark once its
         /// reserve is spent (its beacon, its port's pilot lamp and the glow along its cables die together); the fallen
         /// array glinting in the new sunlight once the eclipse ends; and the radio tower ruin against the stars at
-        /// night. Logs/world-captures/cue-*.png, with the array's glint levels in the log.
+        /// night, with the habitat's power module lamp blinking beside it. Logs/world-captures/cue-*.png, with the
+        /// array's glint levels in the log.
         /// </summary>
         [UnityTest]
         [Timeout(600000)]
         [PrebuildSetup(typeof(CanyonSessionScene))]
         [PostBuildCleanup(typeof(CanyonSessionScene))]
-        public IEnumerator OpeningCues_AreCapturedAtTheirFourFixedPoints()
+        public IEnumerator OpeningCues_AreCapturedAtTheirFixedPoints()
         {
             BootstrapHarness.DeleteSaveFiles(CanyonSessionScene.SaveSlot);
 #if UNITY_EDITOR
@@ -463,6 +469,20 @@ namespace MoonProject.World.PlayModeTests
                 Place(camera, LookPose("cue-4-night-tower", towerEye, tower.position + Vector3.up * CueTowerLook,
                     OpeningFov));
                 Shoot(camera, "cue-4-night-tower");
+
+                var lamp = FindNamed(CueLampName).GetComponent<ModuleStatusLamp>();
+                Transform lens = FindNamed(CueLampLens);
+                Vector3 toLamp = Vector3.ProjectOnPlane(lens.position - apron, Vector3.up).normalized;
+                Vector3 lampEye = lens.position - toLamp * CueLampStandOff + Vector3.up * CueLowEyeHeight;
+                Place(camera, LookPose("cue-5-module-lamp-night", lampEye, lens.position, OpeningFov));
+                started = Time.time;
+                while (lamp.Level < CueLampPeak)
+                {
+                    Assert.Less(Time.time - started, CueLampTimeout, "the module lamp blinks at night");
+                    yield return null;
+                }
+
+                Shoot(camera, "cue-5-module-lamp-night");
             }
             finally
             {
