@@ -89,7 +89,7 @@ Bare aluminium uses `R1_BareSteel`, which reads the same at chase distance.
 Kestrel-3 (6). All are material swaps, plus four geometry changes: the station's Lumen junction box, the optional
 RTG, a Kestrel piece to replace the landing foot, and the Scout's mirror patches.
 
-## 5. Story conflicts with v4 (for the Director)
+## 5. Story conflicts with v4 (ruled by the Director, 2026-10-19: all five as recommended)
 1. **Kestrel-3 has two identities.** Story v4 §2.2 has Meridian's relay *satellite* coming down in October 1988, and
    that fact carries plot: it is why Meridian routes through Lumen's dish. But `text/crew-map.md` and
    `text/crew-logs.md` call it "the 1971 survey probe" (`map.site.kestrel.note`, `crate.kestrel.note`),
@@ -97,8 +97,9 @@ RTG, a Kestrel piece to replace the landing foot, and the Scout's mirror patches
    livery as above. A foreign white-and-teal wreck in the basin also seeds Meridian early.
 2. `crew-map.md` gives "1985–1988 Lumen crew"; v4 says commissioned 1984. These fit as "built 1984, crewed from
    1985". Write it that way in both docs.
-3. `crew-map.md` makes the cargo lander "the 1987 resupply drop", but `07-identity.md` has 07 *unloading* it on
-   28 Oct 1988. Either it landed in October 1988 for the pack-out, or 07 was *loading* it. Pick one.
+3. **Ruled:** the crew's cargo lander landed in the 1987 drop, and 07 unloaded its last cargo in October 1988.
+   The "1987 drop" in `crew-map.md` was the Canyon Supply Lander, the cargo lander's sister, which came down hard in
+   the same drop.
 4. The seismic station's scan line (basin-dressing §4) should carry both eras:
    `SEISMIC STATION · DEPLOYED 1971 · LUMEN BUS 1984 · LAST RECORD 28 OCT 1988 · CELL 0%` `[PROPOSAL]`.
 5. **Gap:** a 1971 crew would leave a descent stage. Lumen cleared it off its landing field. Proposed for 0.6: its

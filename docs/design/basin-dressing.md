@@ -94,8 +94,9 @@ gap, logged below.
 
 Story check: Kenji's voice is a machine note, so it may be warm, but it stays plain. It never mentions or
 addresses 07, and the probe gets no feelings.
-- **Seismic station page** `[PROPOSAL]`: `SEISMIC STATION · LUMEN · LAST RECORD 28 OCT 1988 · CELL 0%`. The storm
-  date fits story v4; this is not a launch, because the crew never left.
+- **Seismic station page** (approved, Director 2026-10-19): `SEISMIC STATION · DEPLOYED 1971 · LUMEN BUS 1984 · LAST
+  RECORD 28 OCT 1988 · CELL 0%`. 1971 hardware that Lumen wired into its bus (`tech-eras.md` §2). The storm date fits
+  story v4; this is not a launch, because the crew never left.
 
 ## 5. For World / Argon, and gaps
 - **World:**

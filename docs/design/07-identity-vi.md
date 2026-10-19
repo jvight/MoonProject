@@ -44,7 +44,7 @@
 
   Người chơi nghe nó qua chính thân xe 07. Đó là mã, không phải lời nói. **Đã áp dụng:** các "cử chỉ giọng máy"
   của 07 trong game mang đúng năm ý nghĩa này.
-- **Ngày bão** (28/10/1988): 07 đang dỡ hàng từ tàu đổ bộ, đỗ trên trụ sạc nhỏ giọt khuất sau thân tàu, nên được che
+- **Ngày bão** (28/10/1988): 07 vừa dỡ chuyến hàng cuối từ tàu đổ bộ (hạ cánh trong đợt thả hàng năm 1987), đang đỗ trên trụ sạc nhỏ giọt khuất sau thân tàu, nên được che
   khỏi bức xạ. Kenji đặt mọi xe tự hành ở chế độ **TIẾP TỤC**, và nối trụ sạc của 07 vào nguồn sạc sâu kèm lệnh **thức
   khi có sóng mang**. Ines xếp việc căn chỉnh chảo ăng-ten và gửi dữ liệu Meridian vào hàng việc khôi phục của 07.
 - **Vì sao sống được 36 năm:** **nó ngủ chờ theo thiết kế.** Chế độ TIẾP TỤC giữ nguyên hàng việc của nó, và việc
