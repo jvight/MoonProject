@@ -110,28 +110,36 @@ namespace MoonProject.Gameplay
                 case InteractionKind.Build:
                     bool weld = _building.TryGetWeldCandidate(out Vector3 weldPoint);
                     hint = weld
-                        ? new InteractionHint(kind, weldPoint, _building.IsWelding || _beam.MayStart)
+                        ? new InteractionHint(kind, weldPoint, _building.IsWelding || _beam.MayStart, null, 0, 0,
+                            _building.IsWelding ? _building.Controller.ActiveWeldProgress01 : 0f)
                         : InteractionHint.None;
                     return weld;
                 case InteractionKind.Deconstruct:
                     bool fold = _building.TryGetDeconstructCandidate(out Vector3 foldPoint);
-                    hint = fold ? new InteractionHint(kind, foldPoint, true) : InteractionHint.None;
+                    hint = fold
+                        ? new InteractionHint(kind, foldPoint, true, null, 0, 0,
+                            _building.Controller.DeconstructProgress01)
+                        : InteractionHint.None;
                     return fold;
                 case InteractionKind.Salvage:
                     SalvagePiece piece = _salvage.Cutting ?? _salvage.Candidate;
                     SealedContainer sealedOne = _containers.Candidate;
                     bool cuts = _cutter.Ready && _beam.MayStart;
+                    float cut = _salvage.IsCutting || _salvage.IsBeamCharging ? _salvage.Progress : 0f;
                     hint = piece != null
-                        ? new InteractionHint(kind, piece.CutPosition, _salvage.Cutting != null || cuts)
+                        ? new InteractionHint(kind, piece.CutPosition, _salvage.Cutting != null || cuts, null, 0, 0,
+                            cut)
                         : sealedOne != null
-                            ? new InteractionHint(kind, sealedOne.CutPoint.position, cuts)
+                            ? new InteractionHint(kind, sealedOne.CutPoint.position, cuts, null, 0, 0, cut)
                             : InteractionHint.None;
                     return piece != null || sealedOne != null;
                 case InteractionKind.Scan:
                     ScanFragment fragment = _scans.Candidate;
                     _scans.TryGetSetStep(fragment, out int step, out int count);
+                    ScanFragment held = _scans.Scanning;
+                    float scanned = held != null && held == fragment ? held.Progress : 0f;
                     hint = fragment != null
-                        ? new InteractionHint(kind, fragment.Point, true, null, step, count)
+                        ? new InteractionHint(kind, fragment.Point, true, null, step, count, scanned)
                         : InteractionHint.None;
                     return fragment != null;
                 default:
