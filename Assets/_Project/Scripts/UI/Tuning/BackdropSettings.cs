@@ -35,6 +35,10 @@ namespace MoonProject.UI
         [Range(1f, 50f)]
         [SerializeField] private float _faceBlurEndMetres = 6.5f;
 
+        [Tooltip("Film grain while 07's face or a menu is up (the world's grain speckles small text on the CRT).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _faceGrain;
+
         [Tooltip("Saturation offset during face inspect (0 keeps 07's amber and cyan phosphors at full colour).")]
         [Range(-100f, 0f)]
         [SerializeField] private float _faceSaturation;
@@ -52,5 +56,7 @@ namespace MoonProject.UI
         public float FaceBlurEndMetres => Mathf.Max(_faceBlurEndMetres, _faceBlurStartMetres + 0.5f);
 
         public float FaceSaturation => _faceSaturation;
+
+        public float FaceGrain => _faceGrain;
     }
 }

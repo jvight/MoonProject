@@ -7,7 +7,8 @@ namespace MoonProject.UI
 {
     /// <summary>
     /// Blurs and slightly greys the live frame behind a menu: a global URP volume of its own, above the world's look,
-    /// whose weight follows the menu's veil so the blur eases in and out with it (M3-18 V11).
+    /// whose weight follows the menu's veil so the blur eases in and out with it (M3-18 V11). It also quiets the
+    /// world's film grain, which would speckle the small text on 07's face.
     /// </summary>
     internal sealed class BackdropBlur : IDisposable
     {
@@ -20,6 +21,7 @@ namespace MoonProject.UI
         private readonly Volume _volume;
         private readonly DepthOfField _blur;
         private readonly ColorAdjustments _colour;
+        private readonly FilmGrain _grain;
 
         public BackdropBlur(Transform parent, BackdropSettings settings)
         {
@@ -40,6 +42,8 @@ namespace MoonProject.UI
             _blur.highQualitySampling.Override(true);
             _colour = _profile.Add<ColorAdjustments>(true);
             _colour.saturation.Override(settings.Saturation);
+            _grain = _profile.Add<FilmGrain>(true);
+            _grain.intensity.Override(settings.FaceGrain);
 
             _host = new GameObject("MenuBackdrop");
             _host.transform.SetParent(parent, false);
