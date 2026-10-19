@@ -115,13 +115,13 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void TheWake_RunsBlackFaceChecksReadyAndBothMoves_InOrder_InAboutTwelveAndAHalfSeconds()
+        public void TheWake_RunsBlackFaceChecksReadyAndBothMoves_InOrder_InAboutFifteenSeconds()
         {
             _script.BeginFull(false);
             TakeAll();
             float seconds = RunToChase(60f);
 
-            Assert.That(seconds, Is.InRange(11f, 14f), "the wake lasts about 12.5 s");
+            Assert.That(seconds, Is.InRange(13f, 16f), "the wake lasts about 14.5 s: its two moves are slow and gradual");
             CollectionAssert.AreEqual(new[]
             {
                 WakeBeat.Crackle, WakeBeat.ChecksBegin, WakeBeat.EyesOpen, WakeBeat.ChaseFrame,
