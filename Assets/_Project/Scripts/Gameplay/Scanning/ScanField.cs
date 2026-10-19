@@ -325,6 +325,32 @@ namespace MoonProject.Gameplay
             return setId + "." + index.ToString(CultureInfo.InvariantCulture);
         }
 
+        /// <summary>True when the story scan <paramref name="storyId"/> (without 'story.') is read.</summary>
+        public bool IsStoryScanned(string storyId)
+        {
+            ScanFragment story = Find(StoryScan.IdPrefix + storyId);
+            return story != null && story.Scanned;
+        }
+
+        /// <summary>How many targets of the ruin or cargo set <paramref name="setId"/> are scanned.</summary>
+        public int ScannedInSet(string setId)
+        {
+            return ScannedOf(RuinScanSet.BlueprintPrefix + setId);
+        }
+
+        /// <summary>How many targets the ruin or cargo set <paramref name="setId"/> has (0 when it is not in the world).</summary>
+        public int SetSize(string setId)
+        {
+            string blueprintId = RuinScanSet.BlueprintPrefix + setId;
+            int size = 0;
+            for (int i = 0; i < _fragments.Count; i++)
+            {
+                size += string.Equals(_fragments[i].BlueprintId, blueprintId, StringComparison.Ordinal) ? 1 : 0;
+            }
+
+            return size;
+        }
+
         /// <summary>How many targets of <paramref name="blueprintId"/>'s set are scanned.</summary>
         /// <summary>
         /// For a piece of an unlearned structure set of two or more: scanning <paramref name="fragment"/> would make it

@@ -23,6 +23,7 @@ namespace MoonProject.Gameplay.Editor
             BuildMaterials();
             BuildSalvage();
             BuildStructures();
+            BuildDatabank();
             AssetDatabase.SaveAssets();
         }
 
@@ -68,6 +69,22 @@ namespace MoonProject.Gameplay.Editor
             GeneratedAssets.CreateOrReplace(catalog, GameplayAssetPaths.StructureCatalog);
             Debug.Log($"{BuilderPath}: wrote {definitions.Length} structure definitions and " +
                       GameplayAssetPaths.StructureCatalog);
+        }
+
+        /// <summary>The databank's 18 entries over Art's models (<see cref="DatabankRecipes"/>).</summary>
+        private static void BuildDatabank()
+        {
+            var catalogue = ScriptableObject.CreateInstance<DatabankCatalogue>();
+            catalogue.Populate(DatabankRecipes.Create());
+            string problem = catalogue.Validate();
+            if (problem != null)
+            {
+                throw new InvalidOperationException($"{BuilderPath}: the databank catalogue is broken: {problem}.");
+            }
+
+            GeneratedAssets.CreateOrReplace(catalogue, GameplayAssetPaths.DatabankCatalogue);
+            Debug.Log($"{BuilderPath}: wrote {catalogue.Count} databank entries to " +
+                      GameplayAssetPaths.DatabankCatalogue);
         }
 
         private static GameObject LoadArt(string path)

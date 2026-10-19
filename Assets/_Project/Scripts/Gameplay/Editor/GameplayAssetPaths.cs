@@ -25,6 +25,7 @@ namespace MoonProject.Gameplay.Editor
         public const string MaterialCatalog = ContentFolder + "/MaterialCatalog.asset";
         public const string StructureFolder = ContentFolder + "/Structures";
         public const string StructureCatalog = ContentFolder + "/StructureCatalog.asset";
+        public const string DatabankCatalogue = ContentFolder + "/DatabankCatalogue.asset";
 
         public const string GeneratedFolder = GeneratedAssets.Root + "/Gameplay";
         public const string MaterialFolder = GeneratedFolder + "/Materials";

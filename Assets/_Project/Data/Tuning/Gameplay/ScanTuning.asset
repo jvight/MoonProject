@@ -113,3 +113,21 @@ MonoBehaviour:
     _textKey: scan.scout3.manifest
     _size: 1
     _offset: {x: 0, y: 0, z: 0}
+  - _storyId: seismic
+    _ruinId: Prop_SeismicStation
+    _node: CentralBox
+    _textKey: db.seismic_station.readout
+    _size: 1
+    _offset: {x: 0, y: 0, z: 0}
+  - _storyId: retroreflector
+    _ruinId: Prop_Retroreflector
+    _node: PanelHousing
+    _textKey: db.retroreflector.readout
+    _size: 1
+    _offset: {x: 0, y: 0, z: 0}
+  - _storyId: flag
+    _ruinId: Prop_MissionFlag
+    _node: FlagSheet
+    _textKey: db.card_ilc.readout
+    _size: 0
+    _offset: {x: 0, y: 0, z: 0}

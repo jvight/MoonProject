@@ -35,10 +35,12 @@ namespace MoonProject.Gameplay.Editor
             var structureCatalog = context.LoadAsset<StructureCatalog>(GameplayAssetPaths.StructureCatalog);
             var materialCatalog = context.LoadAsset<MaterialCatalog>(GameplayAssetPaths.MaterialCatalog);
             var salvageCatalog = context.LoadAsset<SalvageCatalog>(GameplayAssetPaths.SalvageCatalog);
+            var databankCatalogue = context.LoadAsset<DatabankCatalogue>(GameplayAssetPaths.DatabankCatalogue);
             Require(visuals.Validate(), nameof(GameplayVisuals));
             Require(salvageCatalog.Validate(), nameof(SalvageCatalog));
             Require(materialCatalog.Validate(), nameof(MaterialCatalog));
             Require(structureCatalog.Validate(), nameof(StructureCatalog));
+            Require(databankCatalogue.Validate(), nameof(DatabankCatalogue));
 
             GameObject host = context.CreateChild("GameplaySystem", context.GameplayRoot.transform);
             var gameplay = host.AddComponent<GameplaySystem>();
@@ -54,6 +56,7 @@ namespace MoonProject.Gameplay.Editor
             gameplay.WireCargo(materialCatalog, cargoTuning);
             gameplay.WireCutter(cutterTuning);
             gameplay.WireScans(scanTuning);
+            gameplay.WireDatabank(databankCatalogue);
             gameplay.WireRuins(Ruins(context.WorldRoot.transform));
             gameplay.WireStoryProps(StoryProps(context.WorldRoot.transform));
             gameplay.WireLanderPort(LanderPort(context.WorldRoot.transform));
