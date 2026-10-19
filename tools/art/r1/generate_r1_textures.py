@@ -406,140 +406,464 @@ def _generate_surface_maps(
     }
 
 
-def _generate_regolith_maps(res: int = 512, seed: int = 2026) -> dict[str, np.ndarray]:
-    """Generate seamless, tileable lunar regolith detail textures (512x512) for R1Terrain.shader."""
+def _tileable_aniso_noise(res: int, freq_u: int, freq_v: int, seed: int) -> np.ndarray:
+    """Generate smooth tileable 2D value noise in [0, 1] with independent (freq_u, freq_v) periods."""
+    rng = np.random.default_rng(seed)
+    grid = rng.random((freq_v, freq_u), dtype=np.float32)
+
+    cu = np.linspace(0.0, float(freq_u), res, endpoint=False, dtype=np.float32)
+    cv = np.linspace(0.0, float(freq_v), res, endpoint=False, dtype=np.float32)
+    gi_u = np.floor(cu).astype(np.int32)
+    gi_v = np.floor(cv).astype(np.int32)
+    gf_u = cu - gi_u
+    gf_v = cv - gi_v
+    # Quintic C2 interpolation so derivatives (normals) have zero grid-line artifacts
+    uu = gf_u * gf_u * gf_u * (gf_u * (gf_u * 6.0 - 15.0) + 10.0)
+    uv = gf_v * gf_v * gf_v * (gf_v * (gf_v * 6.0 - 15.0) + 10.0)
+
+    u0 = gi_u % freq_u
+    u1 = (gi_u + 1) % freq_u
+    v0 = gi_v % freq_v
+    v1 = (gi_v + 1) % freq_v
+
+    g00 = grid[np.ix_(v0, u0)]
+    g10 = grid[np.ix_(v0, u1)]
+    g01 = grid[np.ix_(v1, u0)]
+    g11 = grid[np.ix_(v1, u1)]
+
+    ux = uu[None, :]
+    uy = uv[:, None]
+    nx0 = g00 * (1.0 - ux) + g10 * ux
+    nx1 = g01 * (1.0 - ux) + g11 * ux
+    return nx0 * (1.0 - uy) + nx1 * uy
+
+
+def _sample_tileable_bilinear(field: np.ndarray, u_coord: np.ndarray, v_coord: np.ndarray) -> np.ndarray:
+    """Sample a tileable (res, res) array at periodic coordinates (u_coord, v_coord) in [0, 1)."""
+    res = field.shape[0]
+    x = (u_coord % 1.0) * float(res)
+    y = (v_coord % 1.0) * float(res)
+    x0 = np.floor(x).astype(np.int32) % res
+    y0 = np.floor(y).astype(np.int32) % res
+    x1 = (x0 + 1) % res
+    y1 = (y0 + 1) % res
+    fx = (x - np.floor(x)).astype(np.float32)
+    fy = (y - np.floor(y)).astype(np.float32)
+    v00 = field[y0, x0]
+    v10 = field[y0, x1]
+    v01 = field[y1, x0]
+    v11 = field[y1, x1]
+    return (v00 * (1.0 - fx) + v10 * fx) * (1.0 - fy) + (v01 * (1.0 - fx) + v11 * fx) * fy
+
+
+def _gaussian_blur_tileable(field: np.ndarray, sigma_px: float) -> np.ndarray:
+    """Apply an exact periodic 2D Gaussian blur in frequency domain on a tileable (H, W) array."""
+    if sigma_px <= 0.05:
+        return field.astype(np.float32)
+    h, w = field.shape[:2]
+    fy = np.fft.fftfreq(h, d=1.0).astype(np.float32)[:, None]
+    fx = np.fft.rfftfreq(w, d=1.0).astype(np.float32)[None, :]
+    gauss_fft = np.exp(-2.0 * (np.pi ** 2) * (sigma_px ** 2) * (fx * fx + fy * fy)).astype(np.float32)
+    spec = np.fft.rfft2(field.astype(np.float32))
+    return np.fft.irfft2(spec * gauss_fft, s=(h, w)).astype(np.float32)
+
+
+def _generate_regolith_maps(res: int = 1024, seed: int = 2026) -> dict[str, np.ndarray]:
+    """Generate seamless, tileable powdery lunar regolith detail textures (1024x1024) for R1Terrain.shader.
+
+    Captures the Apollo 11 close-up powdery & granular surface look:
+    - Rounded, soft lumps and soft rounded clods at varied sizes (height blurred/rounded before deriving normals)
+    - Zero sharp ridge lines, zero flake edges, zero directional streaks
+    - Soft-edged irregular dimples with dust filling the low spots (zero clusters of same-size round holes/dots)
+    - Fine isotropic sand/powder grain layer at a smaller scale
+    - Soft mottled albedo, slightly lighter on lump tops, darker in the hollows (AO), no hard-edged speckles
+    """
     coords = (np.arange(res, dtype=np.float32) + 0.5) / float(res)
     u, v = np.meshgrid(coords, coords)
 
-    broad = _fbm(res, 4, seed)
-    medium = _fbm(res, 12, seed + 17)
-    fine = _tileable_noise(res, 32, seed + 33)
-    ultra_fine = _tileable_noise(res, 64, seed + 71)
-    grain = _tileable_noise(res, 96, seed + 113)
-    micro_grit = _tileable_noise(res, 128, seed + 157)
+    # 1. Multi-scale isotropic periodic domain-warp fields (equal U and V frequencies -> zero directional streaks)
+    wx1 = _tileable_aniso_noise(res, 3, 3, seed + 11) - 0.5
+    wy1 = _tileable_aniso_noise(res, 3, 3, seed + 23) - 0.5
+    wx2 = _tileable_aniso_noise(res, 6, 6, seed + 37) - 0.5
+    wy2 = _tileable_aniso_noise(res, 6, 6, seed + 53) - 0.5
+    wx3 = _tileable_aniso_noise(res, 13, 13, seed + 71) - 0.5
+    wy3 = _tileable_aniso_noise(res, 13, 13, seed + 89) - 0.5
+    wx4 = _tileable_aniso_noise(res, 26, 26, seed + 103) - 0.5
+    wy4 = _tileable_aniso_noise(res, 26, 26, seed + 113) - 0.5
 
-    # Subtle impact/gardening regolith micro-undulation (tileable periodic phase)
-    phase = u * 5.0 * np.pi * 2.0 + v * 2.0 * np.pi * 2.0 + (broad - 0.5) * 2.6
-    ripple = 0.5 + 0.5 * np.sin(phase)
+    uw_broad = u + wx1 * 0.12 + wx2 * 0.055
+    vw_broad = v + wy1 * 0.12 + wy2 * 0.055
+    uw_med = u + wx2 * 0.065 + wx3 * 0.030
+    vw_med = v + wy2 * 0.065 + wy3 * 0.030
+    uw_fine = u + wx3 * 0.032 + wx4 * 0.015
+    vw_fine = v + wy3 * 0.032 + wy4 * 0.015
 
-    crater_bowl = np.zeros((res, res), dtype=np.float32)
-    crater_rim = np.zeros((res, res), dtype=np.float32)
-    crater_ejecta = np.zeros((res, res), dtype=np.float32)
-    pebbles = np.zeros((res, res), dtype=np.float32)
-    pebble_moat = np.zeros((res, res), dtype=np.float32)
-    pebble_tone = np.zeros((res, res), dtype=np.float32)
+    # 2. Gently settled dust bed + continuous rounded clod aggregates + soft dust-filled hollows
+    octave_specs = [
+        (2, 0.085, uw_broad, vw_broad, 12.0, seed + 121),
+        (4, 0.095, uw_broad + 0.37, vw_broad + 0.61, 8.0, seed + 149),
+        (8, 0.115, uw_med, vw_med, 4.8, seed + 179),
+        (14, 0.130, uw_med + 0.19, vw_med + 0.73, 3.2, seed + 211),
+        (24, 0.125, uw_fine, vw_fine, 2.2, seed + 241),
+        (38, 0.105, uw_fine + 0.53, vw_fine + 0.29, 1.5, seed + 277),
+        (60, 0.080, uw_fine + 0.29, vw_fine + 0.83, 1.1, seed + 313),
+    ]
 
-    rng = np.random.default_rng(seed + 500)
-    # 55 subtle, organic micro-pits across [0, 1]^2 (warped by fine noise so they never read as compass circles)
-    for i in range(55):
+    lumpy_bed = np.zeros((res, res), dtype=np.float32)
+    dimple_troughs = np.zeros((res, res), dtype=np.float32)
+    continuous_clods = np.zeros((res, res), dtype=np.float32)
+
+    for freq, weight, u_w, v_w, blur_sig, s_oct in octave_specs:
+        na = _sample_tileable_bilinear(_tileable_aniso_noise(res, freq, freq, s_oct), u_w, v_w)
+        nb = _sample_tileable_bilinear(
+            _tileable_aniso_noise(res, freq, freq, s_oct + 17), v_w + 0.23, u_w + 0.47
+        )
+        nc = _sample_tileable_bilinear(
+            _tileable_aniso_noise(res, freq + 1, freq + 1, s_oct + 31), u_w + 0.71, v_w + 0.13
+        )
+
+        # Smooth isotropic undulating mound field; upward quadratic bias rounds tops and fills low spots with dust
+        centered = 0.5 * (na + nb) - 0.5
+        soft_mound = centered + 0.32 * (centered * centered) - 0.026
+
+        # Soft irregular hollows where warped isotropic fields dip simultaneously (zero rim, soft blurred edges)
+        dip_a = np.clip((0.46 - na) / 0.46, 0.0, 1.0)
+        dip_b = np.clip((0.48 - nb) / 0.48, 0.0, 1.0)
+        soft_hollow = ((dip_a * dip_b) ** 1.85) * (0.70 + 0.50 * nc)
+
+        # Soft rounded clod bumps at this scale where na and nc peak together
+        bump_a = np.clip((na - 0.47) / 0.53, 0.0, 1.0)
+        bump_c = np.clip((nc - 0.43) / 0.57, 0.0, 1.0)
+        clod_oct = ((bump_a * bump_c) ** 1.75) * (0.65 + 0.55 * nb)
+
+        lumpy_bed += _gaussian_blur_tileable(soft_mound, blur_sig * 0.65) * weight
+        dimple_troughs += _gaussian_blur_tileable(soft_hollow, blur_sig * 0.90) * (weight * 0.75)
+        continuous_clods += _gaussian_blur_tileable(clod_oct, blur_sig * 0.55) * (weight * 1.15)
+
+    # 3. Scattered soft-edged irregular hollows of mixed size with dust filling the low spots
+    rng = np.random.default_rng(seed + 700)
+    irregular_dimples = np.zeros((res, res), dtype=np.float32)
+    n_warp_local = _tileable_aniso_noise(res, 18, 18, seed + 563)
+    n_warp_fine = _tileable_aniso_noise(res, 36, 36, seed + 587)
+
+    for i in range(68):
         cx = float(rng.random())
         cy = float(rng.random())
-        radius = float(rng.uniform(0.008, 0.014)) if i < 18 else float(rng.uniform(0.004, 0.009))
-        depth = float(rng.uniform(0.35, 0.72)) * (radius / 0.012) ** 0.35
-        aspect = float(rng.uniform(0.82, 1.22))
+        if i < 12:
+            radius = float(rng.uniform(0.048, 0.085))
+        elif i < 38:
+            radius = float(rng.uniform(0.022, 0.046))
+        else:
+            radius = float(rng.uniform(0.010, 0.022))
+        depth = float(rng.uniform(0.032, 0.068)) * ((radius / 0.030) ** 0.45)
+        # Near-isotropic organic aspect (no rice-grain / pill streaks)
+        aspect = float(rng.uniform(1.02, 1.28))
         ang = float(rng.uniform(0.0, np.pi))
-        dx = (u - cx + 0.5) % 1.0 - 0.5
-        dy = (v - cy + 0.5) % 1.0 - 0.5
-        rx = (dx * np.cos(ang) + dy * np.sin(ang)) * aspect
-        ry = -dx * np.sin(ang) + dy * np.cos(ang)
-        rn = (np.sqrt(rx * rx + ry * ry) + (fine - 0.5) * radius * 0.28) / radius
+        ca = float(np.cos(ang))
+        sa = float(np.sin(ang))
 
-        bowl = (np.clip(1.0 - rn * rn, 0.0, 1.0) ** 1.55) * depth
-        rim = np.exp(-(((rn - 1.03) / 0.22) ** 2)) * depth * 0.58
-        ejecta = np.exp(-(((rn - 1.20) / 0.38) ** 2)) * depth * 0.24
-        crater_bowl = np.maximum(crater_bowl, bowl)
-        crater_rim = np.maximum(crater_rim, rim)
-        crater_ejecta = np.maximum(crater_ejecta, ejecta)
+        lobe_off_x = float(rng.uniform(0.28, 0.55)) * radius * (1.0 if rng.random() < 0.5 else -1.0)
+        lobe_off_y = float(rng.uniform(-0.32, 0.32)) * radius
+        lobe_scale = float(rng.uniform(0.68, 0.92))
 
-    # 620 tiny irregular basalt/breccia clasts and regolith pebbles
-    for _ in range(620):
-        px = float(rng.random())
-        py = float(rng.random())
-        pr = float(rng.uniform(0.0024, 0.0105))
-        ph = float(rng.uniform(0.35, 0.92))
-        tone = float(rng.uniform(-0.95, 0.85))
-        aspect = float(rng.uniform(0.65, 1.48))
+        rmax = radius * 2.35
+        half_px = int(np.ceil(rmax * res)) + 2
+        ix_c = int(round(cx * res))
+        iy_c = int(round(cy * res))
+        ox = np.arange(-half_px, half_px + 1, dtype=np.float32)
+        oy = np.arange(-half_px, half_px + 1, dtype=np.float32)
+        ix = (ix_c + ox.astype(np.int32)) % res
+        iy = (iy_c + oy.astype(np.int32)) % res
+
+        dx_1d = ((ix_c + ox + 0.5) / float(res) - cx + 0.5) % 1.0 - 0.5
+        dy_1d = ((iy_c + oy + 0.5) / float(res) - cy + 0.5) % 1.0 - 0.5
+        dx = dx_1d[None, :]
+        dy = dy_1d[:, None]
+
+        w_loc_a = n_warp_fine[np.ix_(iy, ix)] - 0.5
+        w_loc_b = n_warp_local[np.ix_(iy, ix)] - 0.5
+        rx = (dx * ca + dy * sa) + (w_loc_a * 0.24 + w_loc_b * 0.36) * radius
+        ry = (-dx * sa + dy * ca) * aspect + (w_loc_b * 0.32 - w_loc_a * 0.22) * radius
+
+        d1 = np.sqrt(rx * rx + ry * ry) / radius
+        rx2 = rx - lobe_off_x
+        ry2 = ry - lobe_off_y
+        d2 = np.sqrt(rx2 * rx2 + ry2 * ry2) / (radius * lobe_scale)
+
+        k = 0.48
+        h_blend = np.clip(0.5 + 0.5 * (d2 - d1) / k, 0.0, 1.0)
+        d_merged = d2 * (1.0 - h_blend) + d1 * h_blend - k * h_blend * (1.0 - h_blend)
+
+        # Wide Gaussian-like C2 bell with dust-filled flat floor
+        t_fall = np.clip(1.0 - d_merged * d_merged, 0.0, 1.0)
+        dust_filled_bowl = ((t_fall ** 3.0) / (1.0 + 0.90 * (t_fall ** 3.0))) * 1.85
+        bowl = (dust_filled_bowl * depth).astype(np.float32)
+
+        sub = irregular_dimples[np.ix_(iy, ix)]
+        irregular_dimples[np.ix_(iy, ix)] = sub + bowl * np.exp(-sub * 5.0)
+
+    irregular_dimples = _gaussian_blur_tileable(irregular_dimples, sigma_px=3.6)
+
+    # 4. Soft rounded clods & pebbles across 4 size tiers resting in the settled dust bed
+    clod_height_large = np.zeros((res, res), dtype=np.float32)
+    clod_height_med = np.zeros((res, res), dtype=np.float32)
+    clod_height_small = np.zeros((res, res), dtype=np.float32)
+    clod_height_pebble = np.zeros((res, res), dtype=np.float32)
+    cluster_field = _tileable_aniso_noise(res, 5, 5, seed + 601)
+
+    for i in range(1320):
+        cx = float(rng.random())
+        cy = float(rng.random())
+        c_val = float(cluster_field[int(cy * res) % res, int(cx * res) % res])
+        if 55 <= i < 650 and rng.random() > (0.32 + 0.68 * c_val):
+            continue
+
+        if i < 45:
+            pr = float(rng.uniform(0.020, 0.038))
+            tier = 0
+        elif i < 230:
+            pr = float(rng.uniform(0.010, 0.020))
+            tier = 1
+        elif i < 650:
+            size_u = float(rng.random()) ** 1.35
+            pr = 0.0050 + 0.0055 * size_u
+            tier = 2
+        else:
+            size_u = float(rng.random()) ** 1.25
+            pr = 0.0024 + 0.0028 * size_u
+            tier = 3
+
+        ph = float(rng.uniform(0.065, 0.130)) * ((pr / 0.014) ** 0.34)
+        # Keep aspect close to 1 (1.0..1.22) so clods are rounded soft lumps, never elongated pills/flakes
+        aspect = float(rng.uniform(1.01, 1.22))
         ang = float(rng.uniform(0.0, np.pi))
-        dx = (u - px + 0.5) % 1.0 - 0.5
-        dy = (v - py + 0.5) % 1.0 - 0.5
-        rx = (dx * np.cos(ang) + dy * np.sin(ang)) * aspect
-        ry = -dx * np.sin(ang) + dy * np.cos(ang)
-        rn = (np.sqrt(rx * rx + ry * ry) + (ultra_fine - 0.5) * pr * 0.32) / pr
-        dome = (np.clip(1.0 - rn * rn, 0.0, 1.0) ** 1.20) * ph
-        moat = np.exp(-(((rn - 1.06) / 0.20) ** 2)) * ph * 0.45
-        mask_update = dome > pebbles
-        pebbles = np.where(mask_update, dome, pebbles)
-        pebble_tone = np.where(mask_update, dome * tone, pebble_tone)
-        pebble_moat = np.maximum(pebble_moat, moat)
+        ca = float(np.cos(ang))
+        sa = float(np.sin(ang))
 
-    ridge_grit = (0.5 - np.abs(grain - 0.5)) * 0.6 + (0.5 - np.abs(micro_grit - 0.5)) * 0.4 - 0.25
-    crunchy_grain = 0.45 * (grain - 0.5) + 0.35 * (micro_grit - 0.5) + 0.20 * ridge_grit
+        lobe_x = float(rng.uniform(0.20, 0.44)) * pr * (1.0 if rng.random() < 0.5 else -1.0)
+        lobe_y = float(rng.uniform(-0.24, 0.24)) * pr
+        lobe_s = float(rng.uniform(0.70, 0.92))
 
-    height = (
-        0.50
-        + (broad - 0.5) * 0.036
-        + (medium - 0.5) * 0.032
-        + (ripple - 0.5) * 0.009
-        + (fine - 0.5) * 0.032
-        + (ultra_fine - 0.5) * 0.028
-        + crunchy_grain * 0.034
-        + crater_rim * 0.042
-        - crater_bowl * 0.052
-        + pebbles * 0.072
-        - pebble_moat * 0.018
+        rmax = pr * 2.10
+        half_px = int(np.ceil(rmax * res)) + 2
+        ix_c = int(round(cx * res))
+        iy_c = int(round(cy * res))
+        ox = np.arange(-half_px, half_px + 1, dtype=np.float32)
+        oy = np.arange(-half_px, half_px + 1, dtype=np.float32)
+        ix = (ix_c + ox.astype(np.int32)) % res
+        iy = (iy_c + oy.astype(np.int32)) % res
+
+        dx_1d = ((ix_c + ox + 0.5) / float(res) - cx + 0.5) % 1.0 - 0.5
+        dy_1d = ((iy_c + oy + 0.5) / float(res) - cy + 0.5) % 1.0 - 0.5
+        dx = dx_1d[None, :]
+        dy = dy_1d[:, None]
+
+        w_a = n_warp_local[np.ix_(iy, ix)] - 0.5
+        w_b = n_warp_fine[np.ix_(iy, ix)] - 0.5
+
+        rx = (dx * ca + dy * sa) + (w_a * 0.22 + w_b * 0.14) * pr
+        ry = (-dx * sa + dy * ca) * aspect + (w_b * 0.20 - w_a * 0.16) * pr
+
+        d1 = np.sqrt(rx * rx + ry * ry) / pr
+        rx2 = rx - lobe_x
+        ry2 = ry - lobe_y
+        d2 = np.sqrt(rx2 * rx2 + ry2 * ry2) / (pr * lobe_s)
+        k_c = 0.42
+        hb = np.clip(0.5 + 0.5 * (d2 - d1) / k_c, 0.0, 1.0)
+        d_clod = d2 * (1.0 - hb) + d1 * hb - k_c * hb * (1.0 - hb)
+
+        # Soft C2 bell dome that feathers smoothly into the surrounding powder bed
+        falloff = np.clip(1.0 - d_clod * d_clod, 0.0, 1.0) ** 2.20
+        clod = (falloff * ph * (0.92 + 0.16 * (w_b + 0.5))).astype(np.float32)
+
+        if tier == 0:
+            target_buf = clod_height_large
+        elif tier == 1:
+            target_buf = clod_height_med
+        elif tier == 2:
+            target_buf = clod_height_small
+        else:
+            target_buf = clod_height_pebble
+        cur_h = target_buf[np.ix_(iy, ix)]
+        target_buf[np.ix_(iy, ix)] = cur_h + clod * np.exp(-cur_h * 3.2)
+
+    # Blur each clod size tier proportionally to its scale so every bump is soft and rounded yet distinct
+    clod_height = (
+        _gaussian_blur_tileable(clod_height_large, sigma_px=3.0) * 1.15
+        + _gaussian_blur_tileable(clod_height_med, sigma_px=1.85) * 1.25
+        + _gaussian_blur_tileable(clod_height_small, sigma_px=1.15) * 1.30
+        + _gaussian_blur_tileable(clod_height_pebble, sigma_px=0.80) * 1.25
+        + continuous_clods * 0.90
+    ).astype(np.float32)
+
+    # 5. Dust filling the low spots + Gaussian rounding of the composite lump heightfield BEFORE deriving normals
+    raw_lumps = 0.50 + lumpy_bed * 0.28 - dimple_troughs * 0.55 - irregular_dimples * 0.72 + clod_height * 1.35
+    lump_mean = float(np.mean(raw_lumps))
+    centered_lumps = raw_lumps - lump_mean
+    # Dust settles in hollows: softly compress negative excursions so low spots have powdery dust-filled bottoms
+    dust_filled_lumps = np.where(
+        centered_lumps < 0.0,
+        centered_lumps / (1.0 - 2.6 * centered_lumps),
+        centered_lumps,
+    ).astype(np.float32)
+
+    # Round/blur the composite heightfield so lumps and clods are pillowy and rounded with zero sharp ridge lines
+    lumps_blur_fine = _gaussian_blur_tileable(dust_filled_lumps, sigma_px=1.15)
+    lumps_blur_broad = _gaussian_blur_tileable(dust_filled_lumps, sigma_px=2.65)
+    rounded_lump_height = (0.72 * lumps_blur_fine + 0.28 * lumps_blur_broad).astype(np.float32)
+
+    # 6. Fine rotationally-invariant (isotropic) sand/powder grain layer across multiple micro-scales
+    # Using 2D FFT Gaussian-filtered white noise + high-frequency isotropic octaves guarantees 100% rotational
+    # symmetry (zero directional streaks) and preserves granular sand texture across mip levels 0..3.
+    rng_grain = np.random.default_rng(seed + 811)
+    wn_a = rng_grain.normal(0.0, 1.0, (res, res)).astype(np.float32)
+    wn_b = rng_grain.normal(0.0, 1.0, (res, res)).astype(np.float32)
+    wn_c = rng_grain.normal(0.0, 1.0, (res, res)).astype(np.float32)
+
+    sand_fine = _gaussian_blur_tileable(wn_a, sigma_px=0.88)
+    sand_fine /= max(float(np.std(sand_fine)), 1e-4)
+    sand_med = _gaussian_blur_tileable(wn_b, sigma_px=1.65)
+    sand_med /= max(float(np.std(sand_med)), 1e-4)
+    sand_coarse = _gaussian_blur_tileable(wn_c, sigma_px=2.85)
+    sand_coarse /= max(float(np.std(sand_coarse)), 1e-4)
+
+    # Upward-rounded convex sand/powder granules (positive quadratic bias rounds grain tops and fills micro-pores with dust)
+    sand_granules = (
+        0.42 * (sand_fine + 0.24 * np.clip(sand_fine, -1.5, 2.0) ** 2 - 0.20)
+        + 0.36 * (sand_med + 0.26 * np.clip(sand_med, -1.5, 2.0) ** 2 - 0.22)
+        + 0.22 * (sand_coarse + 0.24 * np.clip(sand_coarse, -1.5, 2.0) ** 2 - 0.20)
+    ).astype(np.float32)
+
+    grain_64 = _tileable_aniso_noise(res, 64, 64, seed + 401) - 0.5
+    grain_128 = _tileable_aniso_noise(res, 128, 128, seed + 443) - 0.5
+    grain_224 = _tileable_aniso_noise(res, 224, 224, seed + 487) - 0.5
+
+    powder_grain = (
+        sand_granules * 0.72
+        + (0.35 * grain_64 + 0.38 * grain_128 + 0.27 * grain_224) * 0.85
+    ).astype(np.float32)
+    powder_grain = _gaussian_blur_tileable(powder_grain, sigma_px=0.68)
+    powder_grain -= float(np.mean(powder_grain))
+    powder_grain /= max(float(np.std(powder_grain)), 1e-4)
+    powder_grain = np.clip(powder_grain * 0.32, -0.95, 1.05).astype(np.float32)
+
+    # Normalize rounded height into [0.05, 0.95] centered at 0.50
+    h_std = max(float(np.std(rounded_lump_height)), 1e-4)
+    lump_norm = (rounded_lump_height - float(np.mean(rounded_lump_height))) / (h_std * 2.85)
+    height_01 = np.clip(0.50 + lump_norm * 0.82 + powder_grain * 0.14, 0.05, 0.95).astype(np.float32)
+
+    # 7. Derive tangent-space normal map from the blurred/rounded clod height + strong isotropic sand/powder grain
+    dh_lump_x = (
+        0.52 * (np.roll(lump_norm, -1, axis=1) - np.roll(lump_norm, 1, axis=1)) * 0.5
+        + 0.33 * (np.roll(lump_norm, -3, axis=1) - np.roll(lump_norm, 3, axis=1)) / 6.0
+        + 0.15 * (np.roll(lump_norm, -6, axis=1) - np.roll(lump_norm, 6, axis=1)) / 12.0
+    )
+    dh_lump_y = (
+        0.52 * (np.roll(lump_norm, -1, axis=0) - np.roll(lump_norm, 1, axis=0)) * 0.5
+        + 0.33 * (np.roll(lump_norm, -3, axis=0) - np.roll(lump_norm, 3, axis=0)) / 6.0
+        + 0.15 * (np.roll(lump_norm, -6, axis=0) - np.roll(lump_norm, 6, axis=0)) / 12.0
     )
 
-    normal_rgb = _height_to_normal(height, normal_strength=9.5)
+    dh_grain_x = (
+        0.65 * (np.roll(powder_grain, -1, axis=1) - np.roll(powder_grain, 1, axis=1)) * 0.5
+        + 0.35 * (np.roll(powder_grain, -2, axis=1) - np.roll(powder_grain, 2, axis=1)) * 0.25
+    )
+    dh_grain_y = (
+        0.65 * (np.roll(powder_grain, -1, axis=0) - np.roll(powder_grain, 1, axis=0)) * 0.5
+        + 0.35 * (np.roll(powder_grain, -2, axis=0) - np.roll(powder_grain, 2, axis=0)) * 0.25
+    )
 
-    # Near-neutral grey regolith albedo; crunchy mineral grit, dark/light clast specks, subtle raised rims (no dark circular stains)
+    # Balanced rounded clod normal (7.8) + crisp isotropic sand/powder grain normal (3.8)
+    nx = -(dh_lump_x * 7.8 + dh_grain_x * 3.8)
+    ny = -(dh_lump_y * 7.8 + dh_grain_y * 3.8)
+    nz = np.ones_like(height_01, dtype=np.float32)
+    inv_len = 1.0 / np.sqrt(nx * nx + ny * ny + nz * nz)
+    normal_rgb = np.stack(
+        [
+            np.clip((nx * inv_len) * 0.5 + 0.5, 0.0, 1.0),
+            np.clip((ny * inv_len) * 0.5 + 0.5, 0.0, 1.0),
+            np.clip((nz * inv_len) * 0.5 + 0.5, 0.0, 1.0),
+        ],
+        axis=-1,
+    )
+
+    # 8. Soft multi-directional horizon & cavity ambient occlusion from the rounded heightfield
+    horizon_occ = np.zeros((res, res), dtype=np.float32)
+    directions = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, 1), (1, -1), (-1, -1)]
+    for step_px, weight in ((3, 0.30), (7, 0.34), (15, 0.22), (28, 0.14)):
+        step_occ = np.zeros((res, res), dtype=np.float32)
+        inv_dist = 1.0 / float(step_px)
+        for dx_i, dy_i in directions:
+            diag = 0.7071 if (dx_i != 0 and dy_i != 0) else 1.0
+            neighbor_h = np.roll(np.roll(height_01, -dy_i * step_px, axis=0), -dx_i * step_px, axis=1)
+            elev_diff = np.maximum(0.0, neighbor_h - height_01) * inv_dist * diag
+            step_occ += elev_diff
+        horizon_occ += (step_occ / float(len(directions))) * weight
+
+    hollow_soft = _gaussian_blur_tileable(dimple_troughs + irregular_dimples, sigma_px=5.0)
+    clod_soft = _gaussian_blur_tileable(clod_height, sigma_px=3.6)
+    raw_ao = (
+        0.90
+        - horizon_occ * 8.2
+        - hollow_soft * 0.78
+        + np.clip(clod_soft * 0.85, 0.0, 0.05)
+    ).astype(np.float32)
+    micro_ao = np.clip(_gaussian_blur_tileable(raw_ao, sigma_px=2.8), 0.34, 0.97).astype(np.float32)
+
+    # 9. Albedo: soft mottling, slightly lighter on lump tops, darker in the hollows (AO), no hard-edged speckles
+    mottle_broad = _tileable_aniso_noise(res, 3, 3, seed + 641) - 0.5
+    mottle_med = _tileable_aniso_noise(res, 7, 7, seed + 673) - 0.5
+    mottle_fine = _tileable_aniso_noise(res, 15, 15, seed + 691) - 0.5
+    mottle_soft = _gaussian_blur_tileable(
+        0.50 * mottle_broad + 0.32 * mottle_med + 0.18 * mottle_fine, sigma_px=6.0
+    )
+
+    # Softly blurred lump height and hollow AO for albedo so clod tops are gently lighter and hollows darker with zero sharp speckles
+    lump_top_soft = _gaussian_blur_tileable(lump_norm, sigma_px=3.8)
+    ao_hollow_soft = _gaussian_blur_tileable(np.clip(0.86 - micro_ao, 0.0, 0.55), sigma_px=4.0)
+    powder_albedo_soft = _gaussian_blur_tileable(powder_grain, sigma_px=1.35)
+
     lum = (
-        0.75
-        + (broad - 0.5) * 0.068
-        + (medium - 0.5) * 0.055
-        + (fine - 0.5) * 0.052
-        + (ultra_fine - 0.5) * 0.038
-        + crunchy_grain * 0.068
-        + crater_rim * 0.034
-        + crater_ejecta * 0.018
-        + pebbles * 0.025
-        + pebble_tone * 0.082
-        - pebble_moat * 0.038
-        - crater_bowl * 0.016
+        0.525
+        + mottle_soft * 0.060
+        + lump_top_soft * 0.120
+        - ao_hollow_soft * 0.145
+        + powder_albedo_soft * 0.038
     )
-    lum = np.clip(lum, 0.54, 0.94)
+    lum = np.clip(lum, 0.41, 0.63).astype(np.float32)
     albedo_rgb = np.stack([lum * 0.995, lum * 1.000, lum * 1.005], axis=-1)
     albedo_rgba = np.concatenate(
         [np.clip(albedo_rgb, 0.0, 1.0), np.ones((res, res, 1), dtype=np.float32)], axis=-1
     )
 
-    # Mask channels for R1Terrain (matching R1 standard R=Metallic, G=AO, B=Detail, A=Smoothness):
-    metallic = np.zeros((res, res), dtype=np.float32)
-    micro_ao = np.clip(
-        0.89
-        - crater_bowl * 0.16
-        - pebble_moat * 0.28
-        - np.clip(0.5 - medium, 0.0, 0.5) * 0.16
-        - np.clip(-crunchy_grain, 0.0, 0.5) * 0.22,
-        0.48,
-        1.0,
-    )
-    clast_detail = np.clip(
-        0.50 + pebbles * 0.38 + crater_rim * 0.20 - crater_bowl * 0.14 + crunchy_grain * 0.34,
+    # 10. Mask channels:
+    # R = Rounded Lump + Powder Height [0..1]
+    # G = Soft Horizon & Hollow AO [0..1]
+    # B = Soft Rounded Clod / Lump Top Prominence [0..1]
+    # A = Matte Powdery Micro-Smoothness [0..1]
+    clod_crust_detail = np.clip(
+        0.48
+        + lump_top_soft * 0.52
+        + powder_grain * 0.14
+        - hollow_soft * 0.85,
         0.0,
         1.0,
-    )
+    ).astype(np.float32)
     smoothness = np.clip(
-        0.08 + pebbles * 0.11 + crunchy_grain * 0.05 - crater_bowl * 0.02,
-        0.03,
-        0.22,
-    )
+        0.040
+        + np.clip(lump_top_soft * 0.02, -0.01, 0.015)
+        + np.clip(powder_grain * 0.03, -0.01, 0.012),
+        0.020,
+        0.070,
+    ).astype(np.float32)
 
-    mask_rgba = np.stack([metallic, micro_ao, clast_detail, smoothness], axis=-1)
+    mask_rgba = np.stack([height_01, micro_ao, clod_crust_detail, smoothness], axis=-1)
     return {
         "albedo": albedo_rgba,
         "normal": normal_rgb,
         "mask": mask_rgba,
     }
+
 
 
 def _generate_trim_sheet(res: int, surfaces: list[dict[str, np.ndarray]]) -> dict[str, np.ndarray]:
@@ -651,7 +975,7 @@ def main() -> None:
     _save_rgba_or_rgb(OUTPUT_DIR / "T_R1_TrimSheet_Mask.png", trim["mask"])
     _save_rgba_or_rgb(OUTPUT_DIR / "T_R1_TrimSheet_Emission.png", trim["emission"])
 
-    regolith = _generate_regolith_maps(512, 2026)
+    regolith = _generate_regolith_maps(1024, 2026)
     _save_rgba_or_rgb(OUTPUT_DIR / "T_R1_Regolith_Albedo.png", regolith["albedo"])
     _save_rgba_or_rgb(OUTPUT_DIR / "T_R1_Regolith_Normal.png", regolith["normal"])
     _save_rgba_or_rgb(OUTPUT_DIR / "T_R1_Regolith_Mask.png", regolith["mask"])

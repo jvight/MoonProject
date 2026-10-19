@@ -471,6 +471,133 @@ namespace MoonProject.World.PlayModeTests
             Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
         }
 
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(CanyonSessionScene))]
+        [PostBuildCleanup(typeof(CanyonSessionScene))]
+        public IEnumerator Regolith_CapturesChaseAndCloseViews()
+        {
+            BootstrapHarness.DeleteSaveFiles(CanyonSessionScene.SaveSlot);
+#if UNITY_EDITOR
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(CanyonSessionScene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            while (!loading.isDone)
+            {
+                yield return null;
+            }
+#else
+            throw new NotSupportedException("TerrainR1Session loads the scene through the editor.");
+#endif
+            Scene loadedScene = SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath);
+            GameBootstrap bootstrap = null;
+            SkyCycleSystem skyCycle = null;
+            WorldSystem worldSystem = null;
+            foreach (GameObject root in loadedScene.GetRootGameObjects())
+            {
+                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
+                if (skyCycle == null)
+                {
+                    skyCycle = root.GetComponentInChildren<SkyCycleSystem>(true);
+                }
+
+                if (worldSystem == null)
+                {
+                    worldSystem = root.GetComponentInChildren<WorldSystem>(true);
+                }
+            }
+
+            Assert.IsNotNull(bootstrap, "Main scene must have GameBootstrap.");
+            Assert.IsNotNull(skyCycle, "Main scene must have SkyCycleSystem.");
+            Assert.IsNotNull(worldSystem, "Main scene must have WorldSystem.");
+
+            GameContext context = bootstrap.Context;
+            _awoke = context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
+            float started = Time.time;
+            while (!_awake)
+            {
+                Assert.Less(Time.time - started, WakeTimeout, "07 wakes up");
+                yield return null;
+            }
+
+            yield return new WaitForSeconds(SettleSeconds);
+
+#if UNITY_EDITOR
+            var earthTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/_Project/Art/World/Planet/T_R1_Earth_Albedo.png");
+            if (earthTex != null)
+            {
+                foreach (GameObject root in loadedScene.GetRootGameObjects())
+                {
+                    foreach (Transform t in root.GetComponentsInChildren<Transform>(true))
+                    {
+                        if (t.name == "Earth")
+                        {
+                            var rend = t.GetComponent<Renderer>();
+                            if (rend != null)
+                            {
+                                var mpb = new MaterialPropertyBlock();
+                                rend.GetPropertyBlock(mpb);
+                                mpb.SetTexture("_BaseMap", earthTex);
+                                rend.SetPropertyBlock(mpb);
+                            }
+                        }
+                    }
+                }
+            }
+#endif
+
+            string regolithFolder = Path.Combine(CaptureFolder, "regolith");
+            Directory.CreateDirectory(regolithFolder);
+
+            Camera view = context.Get<IViewCamera>().Camera;
+            IWorldAnchors anchors = context.Get<IWorldAnchors>();
+            Assert.IsTrue(anchors.TryGet(WorldAnchorIds.PlaceApron, out WorldAnchor apronAnchor), "PlaceApron exists");
+            ITerrainQuery terrain = context.Get<ITerrainQuery>();
+            IRoverPlacement rover = context.Get<IRoverPlacement>();
+
+            Vector3 apron = apronAnchor.Position;
+            Vector3 plainNearCable = new Vector3(apron.x - 10.5f, 0f, apron.z - 6.5f);
+            plainNearCable.y = terrain.SampleHeight(plainNearCable.x, plainNearCable.z);
+            Quaternion roverRot = Quaternion.Euler(0f, 10f, 0f);
+
+            // 1. Chase camera on the plain near the cable in eclipse with 07's lamps on the ground.
+            skyCycle.SetClockTime(0f, true);
+            rover.PlaceAt(plainNearCable, roverRot);
+            yield return new WaitForSeconds(2.0f);
+            FrameCapture.SavePng(view, CaptureWidth, CaptureHeight, Path.Combine(regolithFolder, "eclipse.png"));
+
+            // 2. Chase camera on the plain near the cable at golden hour (OpeningMilestone.FirstCharge).
+            context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.FirstCharge, true));
+            rover.PlaceAt(plainNearCable, roverRot);
+            yield return new WaitForSeconds(2.0f);
+            FrameCapture.SavePng(view, CaptureWidth, CaptureHeight, Path.Combine(regolithFolder, "golden-hour.png"));
+
+            // 3. Low close view (1.5 m up) next to 07 at golden hour.
+            var host = new GameObject("RegolithCloseReviewCamera");
+            try
+            {
+                var closeCam = host.AddComponent<Camera>();
+                closeCam.CopyFrom(view);
+                closeCam.enabled = false;
+                CopyPipelineSettings(view, closeCam);
+
+                Vector3 closePos = plainNearCable + new Vector3(1.15f, 0f, -3.55f);
+                closePos.y = terrain.SampleHeight(closePos.x, closePos.z) + 1.5f;
+                closeCam.transform.SetPositionAndRotation(
+                    closePos,
+                    Quaternion.Euler(14.0f, 16.0f, 0f));
+                closeCam.fieldOfView = 44f;
+                yield return null;
+                yield return null;
+                FrameCapture.SavePng(closeCam, CaptureWidth, CaptureHeight, Path.Combine(regolithFolder, "close-1.5m.png"));
+            }
+            finally
+            {
+                Object.Destroy(host);
+            }
+
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
         private static (double Median, double P90) CaptureAndMeasure(Camera camera, string baseName)
         {
             string fullPath = Path.Combine(CaptureFolder, baseName + ".png");
