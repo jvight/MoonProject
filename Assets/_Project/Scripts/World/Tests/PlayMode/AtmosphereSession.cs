@@ -117,6 +117,18 @@ namespace MoonProject.World.PlayModeTests
         private const float ScoutCloseBearingOffset = 60f;
         private const float ScoutCloseFov = 45f;
         private const float ScoutApronFov = 40f;
+        // The relief's review: 07 a third of the way up the first drive's cable, the apron's eye looking far out over
+        // the plain, a low eye on the south ridge's flank, and a high eye behind the first boulder track's top.
+        private const float ReliefCableShare = 0.35f;
+        private const float ReliefFar = 150f;
+        private const float ReliefFarDrop = 6f;
+        private const float ReliefRidgeStandOff = 45f;
+        private const float ReliefRidgeLookAhead = 20f;
+        private const float ReliefLowEyeHeight = 2f;
+        private const float ReliefCraterStandOff = 20f;
+        private const float ReliefCraterEyeHeight = 12f;
+        private const float ReliefOverviewBack = 2.2f;
+        private const float ReliefOverviewHeight = 30f;
         private const int ScoutPeakWindow = 40;
         private const float PeakChange = 0.01f;
         private const float FirstNightSeconds = 300f;
@@ -531,6 +543,121 @@ namespace MoonProject.World.PlayModeTests
                         FrameCapture.SavePng(camera, CaptureWidth, CaptureHeight,
                             Path.Combine(CaptureFolder, "blast-" + light + "-" + pose.name + ".png"));
                     }
+                }
+            }
+            finally
+            {
+                Object.Destroy(host);
+            }
+
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        /// <summary>
+        /// The basin floor's gentle relief at golden hour (owner, 2026-10-19), to check by eye for any dotted or holey
+        /// pattern: the owner's view (07's chase camera on the plain by the first drive's cable, The Peak ahead), the
+        /// plain from the apron looking south and west, the south wrinkle ridge in raking light from its lee flank, and
+        /// the big old crater from above its north rim and down its boulder tracks. Logs/world-captures/relief-*.png.
+        /// </summary>
+        [UnityTest]
+        [Timeout(600000)]
+        [PrebuildSetup(typeof(CanyonSessionScene))]
+        [PostBuildCleanup(typeof(CanyonSessionScene))]
+        public IEnumerator Relief_IsCapturedInRakingLight()
+        {
+            BootstrapHarness.DeleteSaveFiles(CanyonSessionScene.SaveSlot);
+#if UNITY_EDITOR
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(CanyonSessionScene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            while (!loading.isDone)
+            {
+                yield return null;
+            }
+
+            SurfaceSettings ground = AssetDatabase.LoadAssetAtPath<WorldSettings>(OpeningSettingsPath).Surface;
+#else
+            throw new NotSupportedException("The atmosphere session loads the scene through the editor.");
+#endif
+            GameBootstrap bootstrap = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
+            {
+                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
+            }
+
+            Assert.IsNotNull(bootstrap, "the scene has its bootstrap");
+            GameContext context = bootstrap.Context;
+            _awoke = context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
+            float started = Time.time;
+            while (!_awake)
+            {
+                Assert.Less(Time.time - started, WakeTimeout, "07 wakes up");
+                yield return null;
+            }
+
+            yield return new WaitForSeconds(SettleSeconds);
+            var terrain = context.Get<ITerrainQuery>();
+            IWorldAnchors anchors = context.Get<IWorldAnchors>();
+            Vector3 wake = Anchor(anchors, WorldAnchorIds.PlaceWake).Position;
+            Vector3 lander = Anchor(anchors, WorldAnchorIds.PlaceLander).Position;
+            Vector3 apron = Anchor(anchors, WorldAnchorIds.PlaceApron).Position;
+            Vector3 peak = context.Get<IWorldLayout>().PeakPosition;
+            Vector3 onCable = OnGround(terrain, Vector2.Lerp(new Vector2(wake.x, wake.z),
+                new Vector2(lander.x, lander.z), ReliefCableShare));
+            Vector3 apronEye = apron + Vector3.up * ScoutApronEyeHeight;
+
+            WrinkleRidge ridge = ground.Relief.Ridges[0];
+            Vector2 along = MoonSurface.BearingToDirection(ridge.Bearing);
+            Vector2 middle = ridge.Start + along * (ridge.Length * 0.5f);
+            // From the lee side, looking back at the steep face the golden-hour Sun only grazes.
+            Vector2 left = new Vector2(-along.y, along.x);
+            Vector2 flank = middle + (ridge.SteepToLeft ? left : -left) * ReliefRidgeStandOff;
+            Vector3 ridgeEye = OnGround(terrain, flank) + Vector3.up * ReliefLowEyeHeight;
+            Vector3 ridgeLook = OnGround(terrain, middle + along * ReliefRidgeLookAhead);
+
+            BoulderTrack track = ground.Relief.Tracks[0];
+            Vector2 down = (track.End - track.Start).normalized;
+            Vector3 craterEye = OnGround(terrain, track.Start - down * ReliefCraterStandOff)
+                                + Vector3.up * ReliefCraterEyeHeight;
+            Vector3 craterLook = OnGround(terrain, track.End);
+            Crater big = default;
+            foreach (Crater crater in AssetDatabase.LoadAssetAtPath<WorldSettings>(OpeningSettingsPath).CreateSurface()
+                         .Craters)
+            {
+                big = crater.Radius > big.Radius ? crater : big;
+            }
+
+            Vector3 bigCentre = OnGround(terrain, big.Center);
+            Vector3 overviewEye = OnGround(terrain, big.Center + Vector2.up * (big.Radius * ReliefOverviewBack))
+                                  + Vector3.up * ReliefOverviewHeight;
+
+            context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.FirstCharge, true));
+            var rover = context.Get<IRoverPlacement>();
+            Vector3 toPeak = Vector3.ProjectOnPlane(peak - onCable, Vector3.up).normalized;
+            rover.PlaceAt(onCable, Quaternion.LookRotation(toPeak, Vector3.up));
+            Camera view = context.Get<IViewCamera>().Camera;
+            var host = new GameObject("ReliefReviewCamera");
+            try
+            {
+                var camera = host.AddComponent<Camera>();
+                camera.CopyFrom(view);
+                camera.enabled = false;
+                CopyPipelineSettings(view, camera);
+                yield return new WaitForSeconds(BlastSettleSeconds);
+                Debug.Log($"[relief] golden hour: sun at {SunReport(context)}");
+                Shoot(view, "relief-owner-view");
+                foreach (Pose pose in new[]
+                         {
+                             LookPose("apron-south", apronEye, apronEye + Vector3.back * ReliefFar
+                                 + Vector3.down * ReliefFarDrop, OpeningFov),
+                             LookPose("apron-west", apronEye, apronEye + Vector3.left * ReliefFar
+                                 + Vector3.down * ReliefFarDrop, OpeningFov),
+                             LookPose("ridge-raking", ridgeEye, ridgeLook, OpeningFov),
+                             LookPose("crater-tracks", craterEye, craterLook, OpeningFov),
+                             LookPose("crater-overview", overviewEye, bigCentre, OpeningFov),
+                         })
+                {
+                    Place(camera, pose);
+                    Shoot(camera, "relief-" + pose.name);
                 }
             }
             finally
