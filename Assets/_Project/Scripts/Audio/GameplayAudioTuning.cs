@@ -3,7 +3,7 @@ using UnityEngine;
 namespace MoonProject.Audio
 {
     /// <summary>
-    /// How the base sounds: the weld loop's fades, the power-on swell and the first nightfall's light sequence.
+    /// How the base sounds: the weld loop's fades, the power-on swell and the lamps warming on at dusk.
     /// Created by the Audio/Tuning builder; runtime code only reads it.
     /// </summary>
     public sealed class GameplayAudioTuning : ScriptableObject
@@ -27,23 +27,16 @@ namespace MoonProject.Audio
                  "speaks for them.")]
         [Range(0f, 5f)] [SerializeField] private float _powerOnMinInterval = 1.2f;
 
-        [Header("The first nightfall (opening v2 B10)")]
-        [Tooltip("Seconds after the Sun sets before the first base lamp clicks on (the night settles first).")]
-        [Range(0f, 10f)] [SerializeField] private float _nightLampDelay = 2.5f;
-
-        [Tooltip("Seconds between one base lamp and the next, nearest to the base first.")]
-        [Range(0.1f, 3f)] [SerializeField] private float _nightLampInterval = 0.7f;
-
-        [Tooltip("Volume scale of each lamp's click and filament bloom (soft: the night is the moment).")]
-        [Range(0f, 1f)] [SerializeField] private float _nightLampVolume = 0.75f;
+        [Header("Base lamps at dusk (BaseLampLit)")]
+        [Tooltip("Volume scale of each lamp's relay, filament tick and hum as it warms on (soft: the dusk is the " +
+                 "moment).")]
+        [Range(0f, 1f)] [SerializeField] private float _baseLampVolume = 0.75f;
 
         public float WeldFadeIn => _weldFadeIn;
         public float WeldFadeOut => _weldFadeOut;
         public float PowerOnVolume => _powerOnVolume;
         public float PowerOnBuildGrace => _powerOnBuildGrace;
         public float PowerOnMinInterval => _powerOnMinInterval;
-        public float NightLampDelay => _nightLampDelay;
-        public float NightLampInterval => _nightLampInterval;
-        public float NightLampVolume => _nightLampVolume;
+        public float BaseLampVolume => _baseLampVolume;
     }
 }

@@ -1982,31 +1982,19 @@
         "Assets/_Project/Audio/SFX/base_lamp_on_01.wav",
         "Assets/_Project/Audio/SFX/base_lamp_on_02.wav",
         "Assets/_Project/Audio/SFX/base_lamp_on_03.wav",
-        "Assets/_Project/Audio/SFX/base_lamp_on_04.wav",
-        "Assets/_Project/Audio/SFX/base_lamp_on_05.wav",
-        "Assets/_Project/Audio/SFX/base_lamp_on_06.wav",
-        "Assets/_Project/Audio/SFX/base_lamp_on_07.wav",
-        "Assets/_Project/Audio/SFX/base_lamp_on_08.wav"
+        "Assets/_Project/Audio/SFX/base_lamp_on_04.wav"
       ],
       "variantLabels": [
         "01",
         "02",
         "03",
-        "04",
-        "05",
-        "06",
-        "07",
-        "08"
+        "04"
       ],
       "sha256": [
-        "eba13349a61fb897ab5b631ca0e0170eb7d77c0e85e2efc1e9397c626f3c6322",
-        "08efafddee1ff0300a71ec7de15d9668ed537be958797fe56bbac9cb36c217ff",
-        "e65e8ed57d00405d1b2667b33a61086096a6a05f42938888073207826a1d1f00",
-        "a47a47ead2c0d11d5422fce1f8575a66e59ec17fbcb893814c8768a620dfa32b",
-        "3355c7811ea7454e85a23fe248bfc6f0162400f9758fb689e25e49c25e652131",
-        "dad59917b57195785448f70d998fb73fdcd612bd1525d15aa98780010d950732",
-        "44eb43fb3a57484fa26bd58e6e35e15511304ecd3dcd6dc36df0b8c83cc2be23",
-        "b9b003eacdf8a2abc7332fe059c64b590fcf94e284d56d9316b370faa2826ad6"
+        "b589959a9392d7f61bfe03a78ad87867c1aa0408d4a9f7bf42213f7a40e0520f",
+        "b9ae5c4b40819d76fb732c598b4d513b726ea48e3c93c0d3d292a103c4008627",
+        "1172d99eeead0976bf62b1e48cd3cd29895b6b1cdc91c973ea86578eea31031e",
+        "52c492222a5c1262976a75ff4d901549673472ff4e6ac3839282e7a5390e8e60"
       ],
       "volumeMin": 0.5,
       "volumeMax": 0.5,
@@ -2016,8 +2004,10 @@
       "loudnessMode": "momentary",
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
-      "tonal": true,
-      "notes": "Opening v2 B10: a base lamp coming on at nightfall: a muted filament switch and a warm glow on its step (D4 .. F#5)."
+      "tonal": false,
+      "notes": "A base lamp warming on at dusk (BaseLampLit): a relay's warm clunk, the filament's soft tick and the lamp's hum easing in on its step, D3 E3 F#3 A3 in the lighting order.",
+      "source": "sampled",
+      "pick": "base_lamp_on"
     },
     {
       "id": "boost_whine",

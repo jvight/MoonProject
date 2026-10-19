@@ -11,10 +11,9 @@ namespace MoonProject.Audio
     /// loop (following the beam), stage and structure complete and deconstruct (<see cref="BuildCue"/> and the
     /// structure events); a structure taking power (<see cref="StructurePowerChanged"/> from unpowered to powered,
     /// not on a restore, not just after its own build, one swell for several at once): a relay thunk and a
-    /// transformer swell rising onto its lamp; and the
-    /// first nightfall's light sequence (<see cref="SkyPhaseChanged"/> Sunset to Earthlit): every built structure's
-    /// lamp clicking on one by one, nearest to the base first, climbing the pentatonic ladder
-    /// (<see cref="NightLightsSequence"/>). Initialised by <see cref="AudioDirector"/>.
+    /// transformer swell rising onto its lamp; and each base lamp warming on at dusk (<see cref="BaseLampLit"/>, one
+    /// sound per lamp as its light starts easing up, at that structure, a step higher along the lighting order).
+    /// Initialised by <see cref="AudioDirector"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class GameplayAudio : MonoBehaviour
@@ -27,11 +26,10 @@ namespace MoonProject.Audio
 
         private readonly IDisposable[] _subscriptions = new IDisposable[SubscriptionCount];
         private readonly LoopFader _weldFader = new LoopFader();
-        private readonly NightLightsSequence _nightLights = new NightLightsSequence();
+        private readonly Dictionary<int, Vector3> _builtPositions = new Dictionary<int, Vector3>(InitialStructureCapacity);
         private readonly Dictionary<int, bool> _powered = new Dictionary<int, bool>(InitialStructureCapacity);
         private readonly Dictionary<int, float> _builtAt = new Dictionary<int, float>(InitialStructureCapacity);
         private AudioDirector _director;
-        private IWorldLayout _layout;
         private CueHandle _buildGhost;
         private CueHandle _buildSnap;
         private CueHandle _buildInvalid;
@@ -44,17 +42,10 @@ namespace MoonProject.Audio
         private AudioSource _weldLoop;
         private float _weldLoopCueVolume;
         private int _lampNotes;
-        private SkyPhase _phase;
         private float _lastPowerOn = float.NegativeInfinity;
 
         /// <summary>True while the build weld loop can be heard (including its fade-out).</summary>
         public bool BuildWeldAudible => _weldFader.IsAudible;
-
-        /// <summary>True while the nightfall's lamps are still clicking on.</summary>
-        public bool NightLightsRunning => _nightLights.Running;
-
-        /// <summary>How many built structures will light at nightfall.</summary>
-        public int NightLampCount => _nightLights.Count;
 
         internal AudioSource BuildWeldSource => _weldLoop;
 
@@ -91,8 +82,6 @@ namespace MoonProject.Audio
             }
 
             _director = director;
-            _layout = context.Get<IWorldLayout>();
-            _phase = context.TryGet(out ISunlight sunlight) ? sunlight.Phase : SkyPhase.Earthlit;
             _weldLoopCueVolume = director.Library.GetCue(weldLoop).VolumeMax;
             _lampNotes = director.Library.GetCue(_baseLamp).ClipCount;
             _weldLoop = director.CreateLoopSource(transform, "BuildWeldLoop", weldLoop, 1f);
@@ -104,7 +93,7 @@ namespace MoonProject.Audio
             _subscriptions[3] = events.Subscribe<StructurePowerChanged>(OnStructurePowerChanged);
             _subscriptions[4] = events.Subscribe<BuildCue>(OnBuildCue);
             _subscriptions[5] = events.Subscribe<BuildWeldStateChanged>(OnBuildWeldStateChanged);
-            _subscriptions[6] = events.Subscribe<SkyPhaseChanged>(OnSkyPhaseChanged);
+            _subscriptions[6] = events.Subscribe<BaseLampLit>(OnBaseLampLit);
         }
 
         private void Update()
@@ -126,12 +115,6 @@ namespace MoonProject.Audio
             {
                 _weldLoop.Stop();
             }
-
-            if (_nightLights.Step(dt, _tuning.NightLampInterval, out Vector3 lamp, out int order))
-            {
-                _director.PlayVariantAt(_baseLamp, Mathf.Min(order, _lampNotes - 1), lamp,
-                    _tuning.NightLampVolume);
-            }
         }
 
         private void OnStructurePlaced(StructurePlaced placed)
@@ -144,7 +127,7 @@ namespace MoonProject.Audio
 
         private void OnStructureBuilt(StructureBuilt built)
         {
-            _nightLights.Add(built.InstanceId, built.Position);
+            _builtPositions[built.InstanceId] = built.Position;
             _builtAt[built.InstanceId] = built.Restored ? float.NegativeInfinity : Time.time;
             if (!built.Restored)
             {
@@ -156,7 +139,7 @@ namespace MoonProject.Audio
 
         private void OnStructureRemoved(StructureRemoved removed)
         {
-            _nightLights.Remove(removed.InstanceId);
+            _builtPositions.Remove(removed.InstanceId);
             _powered.Remove(removed.InstanceId);
             _builtAt.Remove(removed.InstanceId);
             _director.PlayAt(_buildDeconstruct, removed.Position);
@@ -217,19 +200,18 @@ namespace MoonProject.Audio
             }
         }
 
-        /// <summary>A real sunset into night starts the lamps; a load into night (no Sunset before) does not.</summary>
-        private void OnSkyPhaseChanged(SkyPhaseChanged changed)
+        /// <summary>A lamp starts easing up: its relay, filament and hum, at its structure, on its step.</summary>
+        private void OnBaseLampLit(BaseLampLit lit)
         {
-            SkyPhase previous = _phase;
-            _phase = changed.Phase;
-            if (changed.Phase == SkyPhase.Earthlit && previous == SkyPhase.Sunset)
+            if (!_builtPositions.TryGetValue(lit.InstanceId, out Vector3 position))
             {
-                _nightLights.Begin(_layout.BasePosition, _tuning.NightLampDelay);
+                Debug.LogError($"{nameof(GameplayAudio)}: lamp lit on structure {lit.InstanceId}, which was never " +
+                               $"announced built ({nameof(StructureBuilt)}).", this);
+                return;
             }
-            else if (changed.Phase != SkyPhase.Earthlit)
-            {
-                _nightLights.Stop();
-            }
+
+            _director.PlayVariantAt(_baseLamp, Mathf.Clamp(lit.Index, 0, _lampNotes - 1), position,
+                _tuning.BaseLampVolume);
         }
 
         private void OnDestroy()
