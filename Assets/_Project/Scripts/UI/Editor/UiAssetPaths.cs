@@ -19,6 +19,12 @@ namespace MoonProject.UI.Editor
         public const string TuningFolder = "Assets/_Project/Data/Tuning/UI";
         public const string Tuning = TuningFolder + "/UiTuning.asset";
 
+        /// <summary>The Outsight Worlds splash's layers, by the BootSplashSettings field each fills.</summary>
+        public static readonly string[] SplashLayers = { "ring", "stroke", "glint", "wordmark" };
+
+        /// <summary>"Assets/_Project/UI/Brand/boot_layer_ring.png": one splash layer's texture.</summary>
+        public static string SplashLayer(string layer) => "Assets/_Project/UI/Brand/boot_layer_" + layer + ".png";
+
         /// <summary>The build ghost's material (Art's LofiHologram), drawn as lines on the databank's stage.</summary>
         public const string WireMaterial =
             MoonProject.Editor.Builders.GeneratedAssets.Root + "/Art/Palette/M_Hologram.mat";

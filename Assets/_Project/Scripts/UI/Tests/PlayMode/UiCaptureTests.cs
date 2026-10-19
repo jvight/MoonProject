@@ -179,6 +179,48 @@ namespace MoonProject.UI.PlayModeTests
         /// <c>python tools/unity_batch.py tests --platform playmode --filter CaptureFirstBootTitle</c>.
         /// </summary>
         [UnityTest]
+        public IEnumerator CaptureBootSplash_TheStudioMarkInTheBootDark()
+        {
+#if UNITY_EDITOR
+            float[] times = { 0.4f, 0.9f, 1.4f, 1.8f, 2.6f, 3.5f };
+            yield return LoadMain();
+            GameContext context = FindBootstrap().Context;
+            Camera camera = context.Get<IViewCamera>().Camera;
+            UISystem ui = BuildUi(context, out _, out _);
+            yield return null;
+            string folder = Path.GetFullPath(OutputFolder);
+            Directory.CreateDirectory(folder);
+            ui.Pause.OpenTitle(false, true, afterBoot: true);
+            Assert.IsTrue(ui.Pause.IsSplashPlaying, "a boot opens on the studio splash");
+            var frames = new Texture2D[times.Length];
+            try
+            {
+                for (int i = 0; i < times.Length; i++)
+                {
+                    ui.Pause.SetBootSplashTime(times[i]);
+                    yield return null;
+                    yield return null;
+                    frames[i] = RenderFrame(camera);
+                }
+
+                Texture2D strip = Strip(frames);
+                FrameCapture.WritePng(strip, Path.Combine(folder, "39_boot_splash_strip.png"));
+                Object.DestroyImmediate(strip);
+            }
+            finally
+            {
+                foreach (Texture2D frame in frames)
+                {
+                    Object.DestroyImmediate(frame);
+                }
+            }
+#else
+            Assert.Ignore("Captures need the editor.");
+            yield break;
+#endif
+        }
+
+        [UnityTest]
         public IEnumerator CaptureFirstBootTitle()
         {
 #if UNITY_EDITOR
@@ -801,6 +843,22 @@ namespace MoonProject.UI.PlayModeTests
         private IEnumerator Capture(Camera camera, string folder, string name)
         {
             yield return null;
+            Texture2D frame = RenderFrame(camera);
+            try
+            {
+                string path = Path.Combine(folder, name + ".png");
+                FrameCapture.WritePng(frame, path);
+                Debug.Log($"[ui-capture] {path}");
+            }
+            finally
+            {
+                Object.Destroy(frame);
+            }
+        }
+
+        /// <summary>The world from <paramref name="camera"/> with the UI over it, at the UI target's size.</summary>
+        private Texture2D RenderFrame(Camera camera)
+        {
             int width = _target.width;
             int height = _target.height;
             Texture2D world = FrameCapture.Render(camera, width, height);
@@ -821,15 +879,37 @@ namespace MoonProject.UI.PlayModeTests
 
                 world.SetPixels32(background);
                 world.Apply(false);
-                string path = Path.Combine(folder, name + ".png");
-                FrameCapture.WritePng(world, path);
-                Debug.Log($"[ui-capture] {path}");
+                return world;
             }
             finally
             {
-                Object.Destroy(world);
                 Object.Destroy(ui);
             }
+        }
+
+        /// <summary>
+        /// The frames side by side at a third of their size: a strip to read the motion in one image.
+        /// </summary>
+        private static Texture2D Strip(Texture2D[] frames)
+        {
+            const int Shrink = 3;
+            int width = frames[0].width / Shrink;
+            int height = frames[0].height / Shrink;
+            var strip = new Texture2D(width * frames.Length, height, TextureFormat.RGBA32, false, false);
+            for (int f = 0; f < frames.Length; f++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < width; x++)
+                    {
+                        strip.SetPixel(f * width + x, y,
+                            frames[f].GetPixelBilinear((x + 0.5f) / width, (y + 0.5f) / height));
+                    }
+                }
+            }
+
+            strip.Apply(false);
+            return strip;
         }
 
         /// <summary>UI Toolkit writes premultiplied colour: result = ui + world x (1 - ui alpha).</summary>

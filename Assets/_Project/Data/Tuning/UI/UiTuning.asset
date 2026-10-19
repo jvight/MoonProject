@@ -84,6 +84,37 @@ MonoBehaviour:
     _bootSteadyFrames: 12
     _bootMinSeconds: 0.5
     _bootMaxSeconds: 8
+    _splash:
+      _ring: {fileID: 2800000, guid: 86d69ca1ebf076a4d8dd07ec4bd770e4, type: 3}
+      _stroke: {fileID: 2800000, guid: d30dbe7ba1ef701478409e36d1e5c00e, type: 3}
+      _glint: {fileID: 2800000, guid: 4f01260edf3b5854194eb5e435dc8aaa, type: 3}
+      _wordmark: {fileID: 2800000, guid: 394c441e7e8dcb3429af19af9208e41c, type: 3}
+      _duration: 4
+      _maxStep: 0.05
+      _heightShare: 0.8
+      _ringIn0: 0.1
+      _ringIn1: 0.95
+      _strokeIn0: 0.15
+      _strokeIn1: 0.65
+      _strokeDraw0: 0.2
+      _strokeDraw1: 1.45
+      _strokeSpanPixels: {x: 334, y: 651}
+      _glintIn0: 1.3
+      _glintIn1: 1.72
+      _glintPeak: 1.62
+      _glintSettled: 1.95
+      _glintStartScale: 0.35
+      _glintPeakScale: 1.12
+      _glintEndScale: 0.88
+      _glintCentrePixels: {x: 662, y: 295}
+      _wordIn0: 1.5
+      _wordIn1: 2.2
+      _wordRisePixels: 8
+      _dissolve0: 3.12
+      _dissolve1: 3.84
+      _glintOut0: 3.48
+      _glintOut1: 4
+      _skipFadeSeconds: 0.25
     _backdropWeight: 0.55
     _moonTurnPeriodSeconds: 48
     _morsePeriodSeconds: 4.2
