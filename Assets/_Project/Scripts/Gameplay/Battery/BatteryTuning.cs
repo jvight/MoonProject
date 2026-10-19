@@ -87,7 +87,7 @@ namespace MoonProject.Gameplay
                  "speed only: acceleration and turning are untouched, so 07 still feels quick off the line.")]
         [Range(0.3f, 1f)] [SerializeField] private float _openingReserveCap = 0.7f;
 
-        [Tooltip("Cells of charge the opening never lets 07 fall below until the call is answered, so 07 cannot die " +
+        [Tooltip("Cells of charge the opening never lets 07 fall below until the opening's signal is caught at the mast, so 07 cannot die " +
                  "in the opening. 0 turns the floor off.")]
         [Range(0f, 1f)] [SerializeField] private float _openingChargeFloor = 0.5f;
 

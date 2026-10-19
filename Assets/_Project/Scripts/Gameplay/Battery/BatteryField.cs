@@ -143,14 +143,14 @@ namespace MoonProject.Gameplay
             }
         }
 
-        /// <summary>The first charge lifts the reserve's speed cap; the answered call lifts the charge floor.</summary>
+        /// <summary>The first charge lifts the reserve's speed cap; the mast catching the signal (the opening's last built beat) lifts the charge floor.</summary>
         private void OnMilestone(OpeningMilestoneReached reached)
         {
             if (reached.Milestone == OpeningMilestone.FirstCharge)
             {
                 Model.SetOpeningReserve(false);
             }
-            else if (reached.Milestone == OpeningMilestone.CallAnswered)
+            else if (reached.Milestone == OpeningMilestone.SignalWest)
             {
                 Model.HoldChargeFloor(false);
             }
