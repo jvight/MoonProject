@@ -78,8 +78,7 @@ namespace MoonProject.World.Tests
                 var flat = new Vector2(rock.Position.x, rock.Position.z);
                 Assert.LessOrEqual(flat.magnitude, _settings.ExtentRadius);
                 Assert.AreEqual(_surface.SampleHeight(flat.x, flat.y), rock.Position.y, 1e-4f);
-                Vector2 range = rock.Kind == ScatterKind.Boulder ? _settings.BoulderSize
-                    : rock.Kind == ScatterKind.Rubble ? _settings.RubbleSize : _settings.PebbleSize;
+                Vector2 range = rock.Kind == ScatterKind.Boulder ? _settings.BoulderSize : _settings.PebbleSize;
                 Assert.That(rock.Size, Is.InRange(range.x, range.y));
                 Assert.GreaterOrEqual(rock.Variant, 0);
             }
@@ -227,7 +226,7 @@ namespace MoonProject.World.Tests
                 };
 
                 ScatterBuildReport report = builder.Build(parent.transform, instances, _settings, 64f,
-                    new[] { cubeMesh }, new[] { cubeMesh }, new[] { cubeMesh }, mat, HideFlags.None);
+                    new[] { cubeMesh }, new[] { cubeMesh }, mat, HideFlags.None);
                 Assert.AreEqual(2, report.Pebbles);
                 Assert.AreEqual(1, report.SolidCobbles, "medium cobble >= 0.48 m gets a SphereCollider");
                 Assert.AreEqual(1, report.Boulders);

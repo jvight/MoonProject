@@ -93,16 +93,32 @@ namespace MoonProject.Audio.PlayModeTests
         }
 
         [Test]
-        public void TheDock_RisesClampsSettlesAndDrops()
+        public void TheDock_RisesSettlesAndDrops_AndItsImpactLeavesTheClampToThePadLock()
         {
             Beat(FeelKind.Dock, FeelPhase.Anticipate);
             Assert.AreEqual("dock_walls_rise", LastClip);
+            int plays = _rig.Director.PlayCount;
             Beat(FeelKind.Dock, FeelPhase.Impact);
-            Assert.AreEqual("dock_clamp", LastClip);
+            Assert.AreEqual(plays, _rig.Director.PlayCount, "the clamp sounds when the arms seat (PadLockClosed)");
             Beat(FeelKind.Dock, FeelPhase.Reward);
             Assert.AreEqual("dock_walls_settle", LastClip);
             Beat(FeelKind.Dock, FeelPhase.Cancel);
             Assert.AreEqual("dock_walls_drop", LastClip);
+        }
+
+        [Test]
+        public void ThePadLock_EachCloseAndOpen_PlaysOneCue_AtThePad()
+        {
+            var pad = new Vector3(2f, 0f, 7f);
+            int plays = _rig.Director.PlayCount;
+            _rig.Events.Publish(new PadLockClosed(pad));
+            Assert.AreEqual(plays + 1, _rig.Director.PlayCount);
+            Assert.AreEqual("pad_lock_close", LastClip);
+            Assert.Less(Vector3.Distance(pad, _rig.Director.LastVoice.transform.position), 1e-4f);
+            _rig.Events.Publish(new PadLockOpened(pad));
+            Assert.AreEqual(plays + 2, _rig.Director.PlayCount);
+            Assert.AreEqual("pad_lock_open", LastClip);
+            Assert.Less(Vector3.Distance(pad, _rig.Director.LastVoice.transform.position), 1e-4f);
         }
 
         [Test]

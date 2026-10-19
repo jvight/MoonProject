@@ -18,9 +18,11 @@ namespace MoonProject.Audio
     /// (<see cref="BootCheckStarted"/>: the iris, the cells' charge whine, the assembly's query); a check made of
     /// several plays each on its <see cref="BootCheckPulse"/> (the lamps' flickers and ramp, the head's sweep and nod,
     /// each wheel, the motor's shudder and creep, the cutter's sparks, the wing's jerk, stall and fold, the antenna's
-    /// rise and signal, and the ready performance's glance, shiver and headlamps clicked off and on), once per pulse
+    /// rise and signal, and the ready performance's glance and headlamps clicked off and on), once per pulse
     /// even where Rover repeats one as progress; 07's fault voice when a check comes out
-    /// <see cref="BootCheckResult.Fault"/> (<see cref="BootCheckCompleted"/>). The lines of information (Carrier, Resume, Agenda) have no motion of their
+    /// <see cref="BootCheckResult.Fault"/> (<see cref="BootCheckCompleted"/>). When the player fast-forwards the
+    /// readout (<see cref="BootCheckFastForwarded"/>) one soft rush plays instead of the remaining lines' sounds, which
+    /// would otherwise chatter, and the ready performance after <see cref="BootCheckFinished"/> sounds as usual. The lines of information (Carrier, Resume, Agenda) have no motion of their
     /// own, and the cells' ticks are the battery's (<see cref="BatteryAudio"/>).</item>
     /// </list>
     /// The pause menu ducks all of it with the world (<see cref="AudioDirector.WorldGain"/>), and delayed cues wait.
@@ -69,7 +71,6 @@ namespace MoonProject.Audio
             new PulseSound(BootCheckStep.Antenna, 0, AudioCueIds.BootAntennaRise, 0, 1f),
             new PulseSound(BootCheckStep.Antenna, 1, AudioCueIds.BootAntennaSignal, 0, 1f),
             new PulseSound(BootCheckStep.Begin, 0, AudioCueIds.BootBeginTurn, 0, 1f),
-            new PulseSound(BootCheckStep.Begin, 1, AudioCueIds.BootBeginShiver, 0, 1f),
             new PulseSound(BootCheckStep.Begin, 2, AudioCueIds.BootBeginLamps, 0, 1f),
             new PulseSound(BootCheckStep.Begin, 3, AudioCueIds.BootBeginLamps, 0, 0.6f),
         };
@@ -89,6 +90,7 @@ namespace MoonProject.Audio
         private readonly bool[] _pulseHeard = new bool[MaxPulseIndex];
         private IRoverState _rover;
         private CueHandle _fault;
+        private CueHandle _rush;
         private WakeCueSheet _sheet;
         private WakeAudioSettings _settings;
         private IDisposable[] _subscriptions;
@@ -100,6 +102,7 @@ namespace MoonProject.Audio
         private float _fadeSeconds = 1f;
         private bool _paused;
         private int _pendingCount;
+        private bool _rushed;
 
         /// <summary>The Asleep static's source (for tests and tooling).</summary>
         internal AudioSource StaticSource => _static;
@@ -125,7 +128,8 @@ namespace MoonProject.Audio
             _cues[(int)WakeCueKind.Ghost] = _director.Resolve(AudioCueIds.GhostChord);
             _cues[(int)WakeCueKind.Tick] = _director.Resolve(AudioCueIds.LidTick);
             _fault = _director.Resolve(AudioCueIds.BootFault);
-            bool resolved = asleep.IsValid && _fault.IsValid;
+            _rush = _director.Resolve(AudioCueIds.BootRush);
+            bool resolved = asleep.IsValid && _fault.IsValid && _rush.IsValid;
             foreach (CueHandle cue in _cues)
             {
                 resolved &= cue.IsValid;
@@ -165,6 +169,8 @@ namespace MoonProject.Audio
                 events.Subscribe<BootCheckStarted>(OnCheckStarted),
                 events.Subscribe<BootCheckCompleted>(OnCheckCompleted),
                 events.Subscribe<BootCheckPulse>(OnCheckPulse),
+                events.Subscribe<BootCheckFastForwarded>(OnFastForwarded),
+                events.Subscribe<BootCheckFinished>(OnChecksFinished),
             };
         }
 
@@ -177,7 +183,7 @@ namespace MoonProject.Audio
             }
 
             CueHandle cue = _checks[(int)started.Step];
-            if (cue.IsValid)
+            if (cue.IsValid && !_rushed)
             {
                 _director.PlayAt(cue, _rover.Position, _settings.Check * _director.WorldGain);
             }
@@ -186,7 +192,7 @@ namespace MoonProject.Audio
         /// <summary>One of a check's motions: its sound once, the first time Rover marks that motion.</summary>
         private void OnCheckPulse(BootCheckPulse pulse)
         {
-            if (pulse.Index < 0 || pulse.Index >= _pulseHeard.Length || _pulseHeard[pulse.Index])
+            if (_rushed || pulse.Index < 0 || pulse.Index >= _pulseHeard.Length || _pulseHeard[pulse.Index])
             {
                 return;
             }
@@ -207,15 +213,37 @@ namespace MoonProject.Audio
         /// <summary>A check came out: only a fault speaks (the jam, the receive-only hiss are in the motions).</summary>
         private void OnCheckCompleted(BootCheckCompleted completed)
         {
-            if (completed.Result == BootCheckResult.Fault)
+            if (completed.Result == BootCheckResult.Fault && !_rushed)
             {
                 _director.PlayAt(_fault, _rover.Position, _settings.Fault * _director.WorldGain);
             }
         }
 
+        /// <summary>
+        /// The player hurried the readout: one rush now, and the remaining lines run silent (at their faster pace
+        /// their motions would chatter) until the checks finish.
+        /// </summary>
+        private void OnFastForwarded(BootCheckFastForwarded forwarded)
+        {
+            if (_rushed)
+            {
+                return;
+            }
+
+            _rushed = true;
+            _director.PlayAt(_rush, _rover.Position, _settings.Rush * _director.WorldGain);
+        }
+
+        /// <summary>The readout is done: the ready performance that follows sounds as usual.</summary>
+        private void OnChecksFinished(BootCheckFinished finished)
+        {
+            _rushed = false;
+        }
+
         /// <summary>A loaded game wakes the radio its own way; the Asleep static, if it was up, gives way.</summary>
         private void OnSessionStarted(SessionStarted started)
         {
+            _rushed = false;
             if (!started.FreshGame)
             {
                 FadeStatic(0f, _settings.HandOverSeconds);

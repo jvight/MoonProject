@@ -15,7 +15,8 @@ namespace MoonProject.Audio
         public const string CutCrack = "cut_crack";
         public const string StrapTuk = "strap_tuk";
         public const string DockWallsRise = "dock_walls_rise";
-        public const string DockClamp = "dock_clamp";
+        public const string PadLockClose = "pad_lock_close";
+        public const string PadLockOpen = "pad_lock_open";
         public const string DockWallsSettle = "dock_walls_settle";
         public const string DockWallsDrop = "dock_walls_drop";
         public const string BoostWhine = "boost_whine";
@@ -130,7 +131,7 @@ namespace MoonProject.Audio
         public const string BootBattery = "boot_battery";
         public const string BootAssembly = "boot_assembly";
         public const string BootBeginTurn = "boot_begin_turn";
-        public const string BootBeginShiver = "boot_begin_shiver";
+        public const string BootRush = "boot_rush";
         public const string BootBeginLamps = "boot_begin_lamps";
         public const string BootFault = "boot_fault";
 

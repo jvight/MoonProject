@@ -60,6 +60,11 @@ namespace MoonProject.Audio
         [Range(0f, 1f)]
         [SerializeField] private float _fault = 0.8f;
 
+        [Tooltip("The rush when the player fast-forwards the self-test: one soft tape wind and relay chatter, in place " +
+                 "of the remaining motions.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _rush = 0.7f;
+
         public float OpeningStatic => _openingStatic;
         public float SwellSeconds => _swellSeconds;
         public float HandOverSeconds => _handOverSeconds;
@@ -71,5 +76,6 @@ namespace MoonProject.Audio
         public float Stir => _stir;
         public float Check => _check;
         public float Fault => _fault;
+        public float Rush => _rush;
     }
 }

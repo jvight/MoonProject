@@ -57,6 +57,39 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void ARestWokenInto_StandsLockedAtOnce_Silently()
+        {
+            var dock = new DockLock(_events, _tuning);
+            dock.Step(true, true, 2f, 4, Vector3.zero, Frame);
+            Assert.IsTrue(dock.Locked, "07 woke on its charging pad: the lock stands");
+            Assert.IsTrue(dock.Silent, "shown with no motion and no beat");
+            Assert.AreEqual(1f, dock.WallHeight(0));
+            Assert.IsEmpty(_beats);
+        }
+
+        [Test]
+        public void AFirstRollOn_AfterWakingOffThePad_LocksWithItsBeats()
+        {
+            var dock = new DockLock(_events, _tuning);
+            dock.Wake(false);
+            dock.Step(true, false, 1f, 4, Vector3.zero, Frame);
+            dock.Step(true, true, 1f, 4, Vector3.zero, Frame);
+            Assert.IsTrue(dock.Raised);
+            Assert.IsFalse(dock.Locked, "the walls rise, they do not stand at once");
+            Assert.AreEqual(FeelPhase.Anticipate, _beats[0].Phase);
+        }
+
+        [Test]
+        public void ALockClosedByDocking_IsNotSilent()
+        {
+            DockLock dock = Rolled();
+            dock.Step(true, true, 1f, 4, Vector3.zero, Frame);
+            Run(dock, true, 1f, 4, _tuning.WallRiseSeconds + _tuning.WallStagger * 4f);
+            Assert.IsTrue(dock.Locked);
+            Assert.IsFalse(dock.Silent, "the lock closed with its beats");
+        }
+
+        [Test]
         public void EachCell_LightsOneWall_WithFourCells()
         {
             DockLock dock = Locked(1f, 4);
@@ -86,6 +119,9 @@ namespace MoonProject.Gameplay.Tests
         {
             DockLock dock = Locked(3f, 4);
             dock.Step(true, true, 4f, 4, Vector3.zero, Frame);
+            Assert.AreNotEqual(FeelPhase.Reward, _beats[_beats.Count - 1].Phase,
+                "a lock that has only just closed holds 07 a moment before the full beat");
+            Run(dock, true, 4f, 4, _tuning.LockDwellSeconds);
             Assert.AreEqual(FeelPhase.Reward, _beats[_beats.Count - 1].Phase);
             Run(dock, true, 4f, 4, _tuning.FullSweepSeconds);
             Assert.AreEqual(1f, dock.Sweep, 1e-4f, "cyan to warm gold");

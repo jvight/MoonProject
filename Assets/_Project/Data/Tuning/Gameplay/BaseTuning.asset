@@ -44,10 +44,17 @@ MonoBehaviour:
   _dockBreathPeriod: 3.6
   _dockBreathDepth: 0.3
   _dockGlowEase: 0.8
+  _lockDwellSeconds: 0.8
+  _dockRestSpeed: 0.3
+  _dockRestSeconds: 0.5
   _dockHeadingOffset: 180
   _dockSettledMetres: 0.03
   _dockSettledDegrees: 1
   _dockDriveOff: 0.4
+  _chockLockDegrees: 65
+  _clampArmLockDegrees: 80
+  _clampArmCloseSeconds: 0.45
+  _clampArmOpenSeconds: 0.35
   _lampEmissionGain: 3.5
   _lampLightColor: {r: 1, g: 0.62, b: 0.28, a: 1}
   _lampLightRange: 4.5

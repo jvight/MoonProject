@@ -46,8 +46,6 @@ SOURCES = {
                          0.04, 0.22),
     "tape_spring": Source(_LOCK + "MECHMisc_Tool Tape Measure Pull Retract Spring Slide Spin Long 07_ESM_HDLM.wav", 0.0,
                           3.26),
-    "spring_clatter": Source(_LOCK + "METLTonl_Item Spring Wire Impact Flick Top Clatter Light Tap Roll Handling Short"
-                             " 01_ESM_HDLM.wav", 0.95, 1.7),
     "lamp_switch": Source("344 Audio - Car Foley Vol. 1/VEHInt_LIGHTING CONTROL, RELEASE, HEADLIGHT FLASH_344 Audio_Car"
                           " Foley Vol 1.wav", 0.03, 0.45),
     "fan_dial": Source("344 Audio - Car Foley Vol. 1/VEHInt_CLIMATE CONTROL SYSTEM, FAN SPEED DIAL, FAST_344 Audio_Car"
@@ -80,12 +78,8 @@ SOURCES = {
     "arc_powerup": Source(_ARC + "ELECArc_ArcPowerUpDesign04_InMotionAudio_Arc.wav", 0.0, 7.4),
     "arc_buzz": Source(_ARC + "ELECBuzz_Buzz27_InMotionAudio_Arc.wav", 0.0, 9.8),
     # Grit and dust.
-    "dust_wipe": Source("InMotionAudio - Scratch Card/OBJMisc_ScratchCard_SurfaceWipe_04_InMotionAudio_ScratchCard.wav",
-                        0.3, 0.75),
     "grit_roll": Source("Epic Stock Media - HD Game Materials/WOODFric_Wood Shaker Microphone Head Roll Table Alternate"
                         " Grainy 05_ESM_HDGM.wav", 0.2, 3.9),
-    "metal_rattle": Source("344 Audio - Elemental Palette Designed Vol. 1/METLMisc_Metal, Slow Whoosh, Rattle, Pass By"
-                           " x4 01_344 Audio_Elemental Palette Designed Vol 1.wav", 0.0, 1.21),
     "scrape_grit": Source("InMotionAudio - Sinister Textures 5/GOREMisc_Cladding_Scratch06_InMotionAudio"
                           "_SinisterTextures5.wav", 0.03, 1.5),
     "crackle": Source("InMotionAudio - Velcro/OBJTape_VelcroSqueeze01_InMotionAudio_Velcro.wav", 0.45, 1.5),

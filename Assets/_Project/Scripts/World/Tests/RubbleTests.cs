@@ -28,6 +28,7 @@ namespace MoonProject.World.Tests
         private MoonSurface _surface;
         private ScatterPlanner _planner;
         private List<ScatterInstance> _plan;
+        private List<ScatterInstance> _rubble;
 
         [OneTimeSetUp]
         public void SetUp()
@@ -38,19 +39,44 @@ namespace MoonProject.World.Tests
             var anchors = new WorldAnchors(_surface, _surfaceSettings.Canyon, new RelaySettings());
             _planner = new ScatterPlanner(_surface, _settings, anchors);
             _plan = _planner.Plan();
+            _rubble = PlanField(_planner, _plan, _settings, _surface.DrivableRadius);
+        }
+
+        /// <summary>
+        /// The whole floor's rubble: every grid cell and every boulder's apron, as the stream plans them chunk by chunk
+        /// (each cell's stone and each apron stone belongs to exactly one chunk).
+        /// </summary>
+        public static List<ScatterInstance> PlanField(ScatterPlanner planner, List<ScatterInstance> plan,
+            ScatterSettings settings, float radius)
+        {
+            var stones = new List<ScatterInstance>();
+            int cells = Mathf.CeilToInt(radius / settings.RubbleSpacing);
+            for (int j = -cells; j < cells; j++)
+            {
+                for (int i = -cells; i < cells; i++)
+                {
+                    planner.PlanRubbleCell(i, j, stones);
+                }
+            }
+
+            var aprons = new List<RubbleApron>();
+            planner.CollectRubbleAprons(plan, aprons);
+            var everywhere = new Rect(-2f * radius, -2f * radius, 4f * radius, 4f * radius);
+            foreach (RubbleApron apron in aprons)
+            {
+                planner.PlanRubbleApron(apron, everywhere, stones);
+            }
+
+            return stones;
         }
 
         [Test]
         public void Rubble_KeepsOffTheOpeningsSitesAndLanes()
         {
             int rubble = 0;
-            foreach (ScatterInstance stone in _plan)
+            foreach (ScatterInstance stone in _rubble)
             {
-                if (stone.Kind != ScatterKind.Rubble)
-                {
-                    continue;
-                }
-
+                Assert.AreEqual(ScatterKind.Rubble, stone.Kind);
                 rubble++;
                 var point = new Vector2(stone.Position.x, stone.Position.z);
                 Assert.IsFalse(_surface.Relief.OnOpeningSite(point), $"rubble on an opening site at {point}");
@@ -93,10 +119,10 @@ namespace MoonProject.World.Tests
                 }
             }
 
-            foreach (ScatterInstance stone in _plan)
+            foreach (ScatterInstance stone in _rubble)
             {
                 Vector2Int tile = Tile(stone.Position.x, stone.Position.z);
-                if (stone.Kind == ScatterKind.Rubble && tiles.ContainsKey(tile))
+                if (tiles.ContainsKey(tile))
                 {
                     tiles[tile]++;
                 }
@@ -124,14 +150,15 @@ namespace MoonProject.World.Tests
             int stones = 0;
             var rubble = new List<Vector2>();
             var boulders = new List<ScatterInstance>();
+            foreach (ScatterInstance instance in _rubble)
+            {
+                stones++;
+                rubble.Add(new Vector2(instance.Position.x, instance.Position.z));
+            }
+
             foreach (ScatterInstance instance in _plan)
             {
-                if (instance.Kind == ScatterKind.Rubble)
-                {
-                    stones++;
-                    rubble.Add(new Vector2(instance.Position.x, instance.Position.z));
-                }
-                else if (instance.Kind == ScatterKind.Boulder)
+                if (instance.Kind == ScatterKind.Boulder)
                 {
                     boulders.Add(instance);
                 }

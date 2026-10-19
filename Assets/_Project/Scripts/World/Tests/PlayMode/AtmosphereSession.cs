@@ -135,6 +135,11 @@ namespace MoonProject.World.PlayModeTests
 
         // The near-field rubble from 07's chase camera: 07 parked this far to either side of the cable's lane.
         private const float ReliefRubbleStandOff = 35f;
+
+        // The drive-by: 07 set down this far further on each frame (12 m/s at 60 frames a second), a shot every so many.
+        private const float DriveByStep = 0.2f;
+        private const int DriveByFrames = 300;
+        private const int DriveByShotEvery = 25;
         private const float ReliefOverviewBack = 2.2f;
         private const float ReliefOverviewHeight = 30f;
         private const int ScoutPeakWindow = 40;
@@ -736,6 +741,21 @@ namespace MoonProject.World.PlayModeTests
                     rover.PlaceAt(spot, Quaternion.LookRotation(toPeak, Vector3.up));
                     yield return new WaitForSeconds(BlastSettleSeconds);
                     Shoot(view, "relief-rubble-chase-" + side);
+                }
+
+                // A drive-by at 07's top speed through the west rubble: the stream keeps ahead of the chase camera and
+                // the rubble's far edge thins in by its distance fade, never popping.
+                Vector3 driveFrom = OnGround(terrain, new Vector2(onCable.x - offLane.x, onCable.z - offLane.z));
+                Quaternion heading = Quaternion.LookRotation(toPeak, Vector3.up);
+                for (int frame = 0; frame <= DriveByFrames; frame++)
+                {
+                    Vector3 passing = driveFrom + toPeak * (frame * DriveByStep);
+                    rover.PlaceAt(OnGround(terrain, new Vector2(passing.x, passing.z)), heading);
+                    yield return null;
+                    if (frame % DriveByShotEvery == 0)
+                    {
+                        Shoot(view, $"relief-rubble-drive-{frame / DriveByShotEvery:00}");
+                    }
                 }
             }
             finally

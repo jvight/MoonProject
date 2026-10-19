@@ -113,20 +113,20 @@
       "notes": "The dock's walls rising, staggered: soft ticks D A D A over a short servo push."
     },
     {
-      "id": "dock_clamp",
+      "id": "pad_lock_close",
       "category": "oneshot_3d",
       "milestone": "M3",
       "bus": "Sfx",
       "spatial": true,
       "loop": false,
       "files": [
-        "Assets/_Project/Audio/SFX/dock_clamp.wav"
+        "Assets/_Project/Audio/SFX/pad_lock_close.wav"
       ],
       "variantLabels": [
-        "dock_clamp"
+        "pad_lock_close"
       ],
       "sha256": [
-        "5e27ddadc837cec65bf938fe963b693cf580128b9d8a9c83d5293bd4113c31f7"
+        "88154faee427f586f958ecc2a0503534cb7188b5964df193517b9bbd9d02d793"
       ],
       "volumeMin": 0.65,
       "volumeMax": 0.65,
@@ -137,7 +137,38 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "The clamp closing on 07: a felt clunk and a 100 ms connection crackle."
+      "notes": "The charging pad's clamp arms seating on 07 (PadLockClosed): the rams' gear settling, a padded heavy clunk and the latch.",
+      "source": "sampled",
+      "pick": "pad_lock_close"
+    },
+    {
+      "id": "pad_lock_open",
+      "category": "tick_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/pad_lock_open.wav"
+      ],
+      "variantLabels": [
+        "pad_lock_open"
+      ],
+      "sha256": [
+        "d0e7842c96fe5d1e7ff7148ab6072a4ec5f93cf8be6e5027497a47a856f4d81a"
+      ],
+      "volumeMin": 0.75,
+      "volumeMax": 0.75,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -26.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The charging pad letting 07 go (PadLockOpened): a short release hiss, a lighter clunk.",
+      "source": "sampled",
+      "pick": "pad_lock_open"
     },
     {
       "id": "dock_walls_settle",
@@ -1885,35 +1916,6 @@
       "pick": "boot_begin_turn"
     },
     {
-      "id": "boot_begin_shiver",
-      "category": "oneshot_3d",
-      "milestone": "M3",
-      "bus": "Sfx",
-      "spatial": true,
-      "loop": false,
-      "files": [
-        "Assets/_Project/Audio/SFX/boot_begin_shiver.wav"
-      ],
-      "variantLabels": [
-        "boot_begin_shiver"
-      ],
-      "sha256": [
-        "4bfa880f52d37ac4fa0d1a55c2ac1561cbf826dd8c5a3485853e4f3ac598a3cc"
-      ],
-      "volumeMin": 0.45,
-      "volumeMax": 0.45,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -18.0,
-      "loudnessMode": "momentary",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": false,
-      "notes": "New Game self-test, the dust shiver (Pulse 1).",
-      "source": "sampled",
-      "pick": "boot_begin_shiver"
-    },
-    {
       "id": "boot_begin_lamps",
       "category": "oneshot_3d",
       "milestone": "M3",
@@ -1941,6 +1943,35 @@
       "notes": "New Game self-test, the headlamps and a D F# A ready chord (Pulse 2).",
       "source": "sampled",
       "pick": "boot_begin_lamps"
+    },
+    {
+      "id": "boot_rush",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/boot_rush.wav"
+      ],
+      "variantLabels": [
+        "boot_rush"
+      ],
+      "sha256": [
+        "5e092809f1e6d6f6e6228ee897d3691e016ec1011c1dd54f2876bf5918a12c3e"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "New Game self-test fast-forwarded (BootCheckFastForwarded): a relay chattering through the remaining checks, quickening, slowing, settling on a latch. Replaces their motions.",
+      "source": "sampled",
+      "pick": "boot_rush"
     },
     {
       "id": "boot_fault",

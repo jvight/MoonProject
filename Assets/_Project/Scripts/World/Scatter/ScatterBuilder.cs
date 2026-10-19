@@ -13,8 +13,8 @@ namespace MoonProject.World
     /// (Art/R1/Models/Rocks): every instance copies one indexed source rock, scaled to its size, into one combined
     /// smooth-shaded mesh per terrain chunk and rock class (built in parallel). Pebble chunks are shadowless and
     /// distance-culled by a LODGroup; boulder chunks cast shadows, and every boulder gets a convex MeshCollider on
-    /// <see cref="Layers.Prop"/>. The near-field rubble's clods (<see cref="ClodMesh"/>) are meshed in small chunks of
-    /// their own, culled close to the camera, and never collide.
+    /// <see cref="Layers.Prop"/>. The near-field rubble is not built here: <see cref="RubbleStream"/> streams it in
+    /// round the camera.
     /// </summary>
     public sealed class ScatterBuilder
     {
@@ -44,13 +44,12 @@ namespace MoonProject.World
 
         /// <param name="pebbleRocks">Readable source meshes for pebbles (origin at the ground contact point).</param>
         /// <param name="boulderRocks">Readable source meshes for boulders; also used as their convex colliders.</param>
-        /// <param name="rubbleRocks">Readable source meshes for the rubble's clods.</param>
         public ScatterBuildReport Build(Transform parent, IReadOnlyList<ScatterInstance> instances,
             ScatterSettings settings, float chunkSize, IReadOnlyList<Mesh> pebbleRocks,
-            IReadOnlyList<Mesh> boulderRocks, IReadOnlyList<Mesh> rubbleRocks, Material material, HideFlags hideFlags)
+            IReadOnlyList<Mesh> boulderRocks, Material material, HideFlags hideFlags)
         {
             if (parent == null || instances == null || settings == null || pebbleRocks == null || boulderRocks == null
-                || rubbleRocks == null || material == null)
+                || material == null)
             {
                 throw new ArgumentNullException(nameof(parent), "Scatter build inputs must all be provided.");
             }
@@ -58,9 +57,8 @@ namespace MoonProject.World
             var watch = Stopwatch.StartNew();
             RockShape[] pebbleShapes = ReadShapes(pebbleRocks);
             RockShape[] boulderShapes = ReadShapes(boulderRocks);
-            RockShape[] rubbleShapes = ReadShapes(rubbleRocks);
-            RockShape[][] shapesOf = { pebbleShapes, boulderShapes, rubbleShapes };
-            float[] chunkOf = { chunkSize, chunkSize, settings.RubbleChunkSize };
+            RockShape[][] shapesOf = { pebbleShapes, boulderShapes };
+            float[] chunkOf = { chunkSize, chunkSize };
 
             // Group by (class, chunk) in plan order, so every combined mesh is deterministic.
             var groups = new List<ChunkGroup>();
@@ -100,7 +98,7 @@ namespace MoonProject.World
 
             int triangles = 0;
             float tan = Mathf.Tan(ReferenceFieldOfView * 0.5f * Mathf.Deg2Rad);
-            float[] cullOf = { settings.PebbleCullDistance, 0f, settings.RubbleCullDistance };
+            float[] cullOf = { settings.PebbleCullDistance, 0f };
             for (int g = 0; g < groups.Count; g++)
             {
                 ChunkGroup group = groups[g];
@@ -119,9 +117,8 @@ namespace MoonProject.World
 
             int solidCobbles = AddRockColliders(parent, instances, settings, pebbleShapes, boulderRocks, boulderShapes,
                 hideFlags);
-            return new ScatterBuildReport(counts[(int)ScatterKind.Pebble], counts[(int)ScatterKind.Boulder],
-                counts[(int)ScatterKind.Rubble], triangles, groups.Count, watch.Elapsed.TotalMilliseconds,
-                solidCobbles);
+            return new ScatterBuildReport(counts[(int)ScatterKind.Pebble], counts[(int)ScatterKind.Boulder], triangles,
+                groups.Count, watch.Elapsed.TotalMilliseconds, solidCobbles);
         }
 
         public void DestroyMeshes()
