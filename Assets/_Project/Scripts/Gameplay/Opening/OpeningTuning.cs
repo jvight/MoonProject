@@ -102,7 +102,7 @@ namespace MoonProject.Gameplay
                 new[] { "part.igniter", "part.icecore" }),
             new SupplyCache("supply.array.panels", "FallenSolarArray", new Vector3(5f, 0f, 0f), 90f,
                 ContainerKinds.CrateL, new Recipe(3, 0, 1), StructureIds.SolarArray),
-            new SupplyCache("supply.array.junction", "FallenSolarArray", new Vector3(9.7f, 0f, 2.6f), 90f,
+            new SupplyCache("supply.array.junction", "FallenSolarArray", new Vector3(9.7f, 0f, -2.6f), 90f,
                 ContainerKinds.CrateM, new Recipe(0, 2, 0), StructureIds.SolarArray),
             new SupplyCache("supply.habitat.reel", "HabitatModules", new Vector3(-3.3f, 0f, -6.5f), 207f,
                 ContainerKinds.CrateM, new Recipe(0, 3, 0), StructureIds.BatteryBank),

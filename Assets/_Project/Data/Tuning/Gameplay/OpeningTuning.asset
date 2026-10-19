@@ -69,7 +69,7 @@ MonoBehaviour:
     _prop: {fileID: 0}
   - _id: supply.array.junction
     _anchorId: FallenSolarArray
-    _offset: {x: 9.7, y: 0, z: 2.6}
+    _offset: {x: 9.7, y: 0, z: -2.6}
     _yaw: 90
     _container: Crate_M
     _yield:
