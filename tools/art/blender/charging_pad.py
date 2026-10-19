@@ -509,10 +509,17 @@ def _build_side_clamp_arms(stage_4: bpy.types.Object) -> None:
     d = CHARGING_PAD_DIMS
     hy = d["clamp_hinge_y"]
     hz = d["clamp_hinge_z"]
+    c80 = math.cos(math.radians(d["clamp_arm_lock_deg"]))
+    s80 = math.sin(math.radians(d["clamp_arm_lock_deg"]))
 
     for side, name in ((-1.0, "ClampArm_L"), (1.0, "ClampArm_R")):
         hx = side * d["clamp_hinge_x"]
         mb = r1kit.MeshBuilder(name, pivot_u=(hx, hy, hz))
+
+        def _from_locked(dx_lock: float, dy_lock: float, z_val: float = hz) -> tuple[float, float, float]:
+            dx_open = dx_lock * c80 + dy_lock * s80
+            dy_open = -dx_lock * s80 + dy_lock * c80
+            return (hx + side * dx_open, hy + dy_open, z_val)
 
         # Heavy hinge barrel along the plate-edge pivot line (axis Z in r1kit = Y in Blender)
         mb.add_cylinder(
@@ -526,55 +533,54 @@ def _build_side_clamp_arms(stage_4: bpy.types.Object) -> None:
         )
         # Flat base beam folded along the side of the plate in the open pose (0 deg)
         mb.add_bevel_box(
-            center_u=(hx + side * 0.115, hy + 0.012, hz),
-            size_u=(0.23, 0.034, 0.30),
+            center_u=(hx + side * 0.18, hy + 0.016, hz),
+            size_u=(0.34, 0.032, 0.26),
             mat="R1_BareSteel",
             bevel=0.006,
             segments=1,
         )
-        # Two shallow-angled dogleg claw arms (folded low outward when open; arch up and in at 80 deg when locked)
-        for z_off in (-0.095, 0.095):
-            mb.add_strut(
-                p0_u=(hx + side * 0.18, hy + 0.018, hz + z_off),
-                p1_u=(hx + side * 0.355, hy + 0.235, hz + z_off),
-                width=0.046,
-                thickness=0.044,
-                mat="R1_BareSteel",
-            )
-
-        # Worn amber/orange hazard edge strip along the outer spine of the clamp arm
+        # Worn amber/orange hazard spine plate on the lower arm (faces outward when locked)
         mb.add_bevel_box(
-            center_u=(hx + side * 0.12, hy + 0.026, hz),
-            size_u=(0.14, 0.014, 0.26),
+            center_u=(hx + side * 0.19, hy + 0.006, hz),
+            size_u=(0.28, 0.018, 0.20),
             mat="R1_OrangeStripe",
             bevel=0.004,
             segments=1,
         )
+        # Two caliper jaw struts reaching from the flat arm's outer elbow up/in to the flank bumper when locked
+        for z_off in (-0.088, 0.088):
+            mb.add_strut(
+                p0_u=(hx + side * 0.33, hy + 0.022, hz + z_off),
+                p1_u=_from_locked(-0.195, 0.470, hz + z_off),
+                width=0.044,
+                thickness=0.042,
+                mat="R1_BareSteel",
+            )
+        # Worn amber/orange hazard edge along the upper caliper arch
         mb.add_strut(
-            p0_u=(hx + side * 0.20, hy + 0.012, hz),
-            p1_u=(hx + side * 0.375, hy + 0.225, hz),
-            width=0.18,
-            thickness=0.026,
+            p0_u=(hx + side * 0.34, hy + 0.014, hz),
+            p1_u=_from_locked(-0.185, 0.482, hz),
+            width=0.14,
+            thickness=0.024,
             mat="R1_OrangeStripe",
         )
-
-        # Upper bare-steel jaw backing plate (tilted 10 deg in open pose so at +80 deg locked pose it stands vertical)
+        # Upper bare-steel jaw backing plate (aligned upright against 07's flank at 80 deg locked pose)
         mb.add_bevel_box(
-            center_u=(hx + side * 0.352, hy + 0.245, hz),
-            size_u=(0.095, 0.040, 0.25),
+            center_u=_from_locked(-0.205, 0.470, hz),
+            size_u=(0.042, 0.115, 0.24),
             mat="R1_BareSteel",
             bevel=0.006,
             segments=1,
-            rot_deg_u=(0.0, 0.0, side * 10.0),
+            rot_deg_u=(0.0, 0.0, -side * d["clamp_arm_lock_deg"]),
         )
-        # Chunky black rubber flank bumper block (inner face rests at |X| = 0.484 m against 07's 0.480 m flank)
+        # Chunky black rubber flank bumper block (inner face at |X| = 0.466 m, Y = 0.58..0.68 m against 07's flank)
         mb.add_bevel_box(
-            center_u=(hx + side * 0.338, hy + 0.290, hz),
-            size_u=(0.125, 0.068, 0.23),
+            center_u=_from_locked(-0.250, 0.470, hz),
+            size_u=(0.068, 0.105, 0.22),
             mat="R1_Rubber",
             bevel=0.007,
             segments=1,
-            rot_deg_u=(0.0, 0.0, side * 10.0),
+            rot_deg_u=(0.0, 0.0, -side * d["clamp_arm_lock_deg"]),
         )
 
         mb.build_object(parent=stage_4)
@@ -793,8 +799,12 @@ def build_charging_pad() -> bpy.types.Object:
 
 def render_charging_pad_open_and_locked() -> None:
     """Render Day C (dawn) and Earthlit night captures of ChargingPad: (1) open with no rover, (2) locked with 07."""
+    import shutil
     from mathutils import Euler, Vector
     from ruins import ruins_common as rc
+
+    captures_dir = Path("Logs/captures")
+    captures_dir.mkdir(parents=True, exist_ok=True)
 
     # 1. Pad OPEN (rest pose) with no rover (Day C + Earthlit night, 3/4 chase camera view)
     rc.reset_ruins_scene()
@@ -804,13 +814,15 @@ def render_charging_pad_open_and_locked() -> None:
     pose_charging_pad_rest(pad_open)
     pad_open.parent = open_group
     bpy.context.view_layer.update()
-    rc.render_ruin_day_night(
+    open_dawn, open_night = rc.render_ruin_day_night(
         open_group,
         slug="charging_pad_open",
         cam_angle_deg=142.0,
         cam_elev_deg=24.0,
         res=(1024, 768),
     )
+    shutil.copy2(open_dawn, captures_dir / "padlock_open_day_c.png")
+    shutil.copy2(open_night, captures_dir / "padlock_open_night.png")
 
     # 2. Pad LOCKED (posed in capture only) with Rover 07 at the centre of the pad (Day C + Earthlit night)
     rc.reset_ruins_scene()
@@ -839,13 +851,15 @@ def render_charging_pad_open_and_locked() -> None:
                 o.rotation_euler = Euler((0.0, 0.0, math.radians(180.0)), "XYZ")
 
     bpy.context.view_layer.update()
-    rc.render_ruin_day_night(
+    locked_dawn, locked_night = rc.render_ruin_day_night(
         scene_group,
         slug="charging_pad_locked",
         cam_angle_deg=142.0,
         cam_elev_deg=22.0,
         res=(1024, 768),
     )
+    shutil.copy2(locked_dawn, captures_dir / "padlock_locked_day_c.png")
+    shutil.copy2(locked_night, captures_dir / "padlock_locked_night.png")
 
 
 def render_charging_pad_with_rover() -> None:
