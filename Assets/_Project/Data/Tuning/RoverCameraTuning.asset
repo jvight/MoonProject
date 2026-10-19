@@ -50,10 +50,10 @@ MonoBehaviour:
   _recenterDeadzone: 25
   _recenterRampTime: 2
   _recenterFadeOut: 0.5
-  _recenterMaxRate: 30
+  _recenterMaxRate: 20
   _recenterEaseAngle: 20
-  _recenterPitchRate: 10
-  _recenterButtonSeconds: 0.8
+  _recenterPitchRate: 7
+  _recenterButtonSeconds: 1.4
   _followHalfLife: 0.27
   _followMaxRate: 45
   _framingMaxSpeed: 1
@@ -185,9 +185,9 @@ MonoBehaviour:
       _fadeInSeconds: 1.2
       _readySeconds: 0.9
       _readyEyesSeconds: 0.6
-      _pullBackSeconds: 1.2
+      _pullBackSeconds: 2
       _performSeconds: 1.6
-      _moveBehindSeconds: 1.6
+      _moveBehindSeconds: 2.4
       _lines:
       - _step: 0
         _seconds: 0.7
@@ -380,8 +380,8 @@ MonoBehaviour:
   _headFadeStartDistance: 1.95
   _headFadeHysteresis: 0.15
   _faceInspectSettleSpeed: 0.05
-  _faceInspectOpenSeconds: 0.55
-  _faceInspectCloseSeconds: 0.5
+  _faceInspectOpenSeconds: 1.2
+  _faceInspectCloseSeconds: 1.1
   _faceInspectScreenHeight: 0.3687
   _faceInspectHeightFill: 0.75
   _faceInspectDistance: 0.67
