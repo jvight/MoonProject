@@ -23,10 +23,17 @@ namespace MoonProject.World.Editor
         // The ruin whose fallen wings glint, the material its cells wear, and how far off the cells its glint floats.
         private const string FallenSolarArrayName = "FallenSolarArray";
         private const string SolarCellMaterial = "R1_SolarCell";
+
+        // The ruin whose power module still blinks at dusk, and Art's node for the lamp's lens on it.
+        private const string HabitatModulesName = "HabitatModules";
+        private const string ModuleLampNode = "PowerModule_StatusLamp";
         private const float GlintLift = 0.03f;
 
         /// <summary>[World]/ArrayGlint: the fallen solar array's glints, beside the ruins.</summary>
         public const string ArrayGlintName = "ArrayGlint";
+
+        /// <summary>The [World] child holding the habitat power module lamp's halo and its blink.</summary>
+        public const string ModuleLampName = "ModuleLamp";
 
         public int Order => 200;
 
@@ -107,6 +114,11 @@ namespace MoonProject.World.Editor
                 {
                     StandArrayGlint(context, settings, instance, root);
                 }
+
+                if (piece.Id == HabitatModulesName)
+                {
+                    StandModuleLamp(context, settings, instance, root);
+                }
             }
         }
 
@@ -172,6 +184,52 @@ namespace MoonProject.World.Editor
 
             serialized.ApplyModifiedPropertiesWithoutUndo();
             context.AddSystem(glint);
+        }
+
+        /// <summary>
+        /// The habitat power module's status lamp under [World]/ModuleLamp: Art's lens on the ruin and a small amber
+        /// halo floated out in front of it, kept out of the ruin itself (its renderers are its scan targets'), and the
+        /// <see cref="ModuleStatusLamp"/> that blinks them from dusk.
+        /// </summary>
+        private static void StandModuleLamp(SceneBuildContext context, WorldSettings settings, GameObject habitat,
+            Transform root)
+        {
+            Transform node = habitat.transform.Find(ModuleLampNode);
+            var lens = node != null ? node.GetComponent<MeshRenderer>() : null;
+            Mesh lensMesh = lens != null ? lens.GetComponent<MeshFilter>().sharedMesh : null;
+            if (lensMesh == null)
+            {
+                throw new System.InvalidOperationException($"World scene build: Art's {HabitatModulesName} has no " +
+                    $"{ModuleLampNode} lens to blink.");
+            }
+
+            // The lens bulges out of its bezel: its mesh's middle sits in front of the node's pivot, on the bulkhead.
+            Vector3 facing = node.TransformDirection(lensMesh.bounds.center);
+            if (facing.sqrMagnitude <= 0f)
+            {
+                throw new System.InvalidOperationException($"World scene build: Art's {ModuleLampNode} has its " +
+                    "pivot in its middle, so the way it faces cannot be read.");
+            }
+
+            GameObject holder = context.CreateChild(ModuleLampName, root);
+            GameObject halo = context.CreateChild("Halo", holder.transform);
+            Vector3 lift = facing.normalized * settings.Landmarks.ModuleLamp.HaloLift;
+            halo.transform.SetPositionAndRotation(lens.bounds.center + lift, Quaternion.identity);
+            halo.AddComponent<MeshFilter>().sharedMesh = context.LoadAsset<Mesh>(WorldPaths.BeaconHaloMesh);
+            var haloRenderer = halo.AddComponent<MeshRenderer>();
+            haloRenderer.sharedMaterial = context.LoadAsset<Material>(WorldPaths.ModuleLampHaloMaterial);
+            haloRenderer.shadowCastingMode = ShadowCastingMode.Off;
+            haloRenderer.receiveShadows = false;
+            haloRenderer.lightProbeUsage = LightProbeUsage.Off;
+            haloRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+
+            var lamp = holder.AddComponent<ModuleStatusLamp>();
+            var serialized = new SerializedObject(lamp);
+            serialized.FindProperty("_settings").objectReferenceValue = settings;
+            serialized.FindProperty("_lens").objectReferenceValue = lens;
+            serialized.FindProperty("_halo").objectReferenceValue = haloRenderer;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            context.AddSystem(lamp);
         }
 
         /// <summary>

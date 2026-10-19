@@ -30,6 +30,9 @@ namespace MoonProject.World.Editor
 
         /// <summary>The fallen solar array's sun-white glint halo (LofiBeaconHalo).</summary>
         public const string ArrayGlintMaterial = GeneratedRoot + "/M_ArrayGlint.mat";
+
+        /// <summary>The habitat power module status lamp's amber halo (LofiBeaconHalo).</summary>
+        public const string ModuleLampHaloMaterial = GeneratedRoot + "/M_ModuleLampHalo.mat";
         public const string CableTearSparkMaterial = GeneratedRoot + "/M_CableTearSpark.mat";
         public const string SkyShader = "Assets/_Project/Shaders/World/LofiSky.shader";
         public const string EarthShader = "Assets/_Project/Shaders/World/LofiEarth.shader";

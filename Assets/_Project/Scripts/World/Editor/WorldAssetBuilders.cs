@@ -105,7 +105,7 @@ namespace MoonProject.World.Editor
         /// <summary>
         /// The landed lander's amber emergency beacon (opening v2 §4): a LofiBeaconHalo in its colour, the cable
         /// clips' small halo (its brightness set per clip by the beacon), the tear's cold spark, and the fallen solar
-        /// array's sun-white glint (opening v3 R4).
+        /// array's sun-white glint and the habitat power module lamp's amber halo (opening v3 R4).
         /// </summary>
         [MoonBuilder("World/Lander Beacon", 240)]
         public static void BuildLanderBeacon()
@@ -136,6 +136,13 @@ namespace MoonProject.World.Editor
             arrayGlint.SetFloat("_Radius", glint.Radius);
             arrayGlint.SetFloat("_MinAngleTan", Mathf.Tan(glint.MinAngle * Mathf.Deg2Rad));
             GeneratedAssets.CreateOrReplace(arrayGlint, WorldPaths.ArrayGlintMaterial);
+            ModuleLampSettings moduleLamp = LoadSettings().Landmarks.ModuleLamp;
+            var moduleHalo = new Material(LoadShader(WorldPaths.BeaconHaloShader));
+            moduleHalo.SetColor("_Color", moduleLamp.HaloColor);
+            moduleHalo.SetFloat("_Intensity", 0f);
+            moduleHalo.SetFloat("_Radius", moduleLamp.HaloRadius);
+            moduleHalo.SetFloat("_MinAngleTan", Mathf.Tan(moduleLamp.HaloMinAngle * Mathf.Deg2Rad));
+            GeneratedAssets.CreateOrReplace(moduleHalo, WorldPaths.ModuleLampHaloMaterial);
             AssetDatabase.SaveAssets();
         }
 

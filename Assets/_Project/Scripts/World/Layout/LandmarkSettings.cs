@@ -42,6 +42,9 @@ namespace MoonProject.World
         [Tooltip("The fallen solar array's glint in the new sunlight (opening v3 R4).")]
         [SerializeField] private ArrayGlintSettings _arrayGlint = new ArrayGlintSettings();
 
+        [Tooltip("The habitat's power module status lamp, blinking from dusk (opening v3 R4).")]
+        [SerializeField] private ModuleLampSettings _moduleLamp = new ModuleLampSettings();
+
         [Header("Kestrel-3's debris and the big boulders (opening v2 §4)")]
         [Tooltip("Art's R1 Kestrel-3 debris (Generated/Art/R1/Models/Wreck): a few pieces at the first drive's midway " +
             "point and more round the impact crater, settled in the dust.")]
@@ -173,6 +176,7 @@ namespace MoonProject.World
         public GroundCableSettings WakeCable => _wakeCable;
         public LanderBeaconSettings LanderBeacon => _landerBeacon;
         public ArrayGlintSettings ArrayGlint => _arrayGlint;
+        public ModuleLampSettings ModuleLamp => _moduleLamp;
         public PropPlacement[] Debris => _debris;
         public PropPlacement[] Boulders => _boulders;
         public float ScoutYaw => _scoutYaw;
