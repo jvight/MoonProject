@@ -5,11 +5,11 @@
     "CutPoint": { "pivot": [0.18, 0.0, 0.88], "tolerance": 0.02 }
   },
   "slots": [
-    "R1_CreamEnamel",
+    "R1_WhitePaint",
     "R1_GoldFoil",
     "R1_Basalt",
     "R1_GreyMetal",
-    "R1_OrangeStripe",
+    "R1_TealMark",
     "R1_Brass",
     "R1_Copper",
     "R1_Signage"
