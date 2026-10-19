@@ -128,6 +128,11 @@ namespace MoonProject.World.PlayModeTests
         private const float ReliefCraterStandOff = 20f;
         private const float ReliefCraterEyeHeight = 12f;
 
+        // The story scan hosts from 07's chase camera, this far back toward home on the drive up to each.
+        // 07 stands this far to the side of the line, facing along it, so the host shows ahead beside it.
+        private const float HostApproachDistance = 16f;
+        private const float HostSideStep = 5f;
+
         // The near-field rubble from 07's chase camera: 07 parked this far to either side of the cable's lane.
         private const float ReliefRubbleStandOff = 35f;
         private const float ReliefOverviewBack = 2.2f;
@@ -551,6 +556,66 @@ namespace MoonProject.World.PlayModeTests
             finally
             {
                 Object.Destroy(host);
+            }
+
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        /// <summary>
+        /// The databank's story scan hosts from 07's chase camera on the drive up to each (Kestrel-3's hull panel, 06
+        /// slumped at micro.06, 01 by the Peak road's rockfall), to check by eye that each reads and stands clear:
+        /// Logs/world-captures/hosts-*.png.
+        /// </summary>
+        [UnityTest]
+        [Timeout(600000)]
+        [PrebuildSetup(typeof(CanyonSessionScene))]
+        [PostBuildCleanup(typeof(CanyonSessionScene))]
+        public IEnumerator StoryHosts_AreCapturedFromTheDriveUp()
+        {
+            BootstrapHarness.DeleteSaveFiles(CanyonSessionScene.SaveSlot);
+#if UNITY_EDITOR
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(CanyonSessionScene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            while (!loading.isDone)
+            {
+                yield return null;
+            }
+
+            LandmarkSettings landmarks = AssetDatabase.LoadAssetAtPath<WorldSettings>(OpeningSettingsPath).Landmarks;
+#else
+            throw new NotSupportedException("The atmosphere session loads the scene through the editor.");
+#endif
+            GameBootstrap bootstrap = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
+            {
+                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
+            }
+
+            Assert.IsNotNull(bootstrap, "the scene has its bootstrap");
+            GameContext context = bootstrap.Context;
+            _awoke = context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
+            float started = Time.time;
+            while (!_awake)
+            {
+                Assert.Less(Time.time - started, WakeTimeout, "07 wakes up");
+                yield return null;
+            }
+
+            yield return new WaitForSeconds(SettleSeconds);
+            var terrain = context.Get<ITerrainQuery>();
+            IWorldAnchors anchors = context.Get<IWorldAnchors>();
+            var rover = context.Get<IRoverPlacement>();
+            Camera view = context.Get<IViewCamera>().Camera;
+            context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.FirstCharge, true));
+            foreach (PropPlacement host in new[] { landmarks.KestrelPanel, landmarks.Elder06, landmarks.Elder01 })
+            {
+                Vector3 near = Anchor(anchors, host.Anchor).Position;
+                var spot = new Vector2(near.x + host.Offset.x, near.z + host.Offset.y);
+                Vector2 inward = spot.normalized;
+                Vector2 back = spot - inward * HostApproachDistance + new Vector2(inward.y, -inward.x) * HostSideStep;
+                rover.PlaceAt(OnGround(terrain, back), Quaternion.LookRotation(new Vector3(inward.x, 0f, inward.y)));
+                yield return new WaitForSeconds(BlastSettleSeconds);
+                Shoot(view, "hosts-" + host.Id);
             }
 
             Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));

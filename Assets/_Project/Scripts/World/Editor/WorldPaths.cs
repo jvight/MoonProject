@@ -80,6 +80,9 @@ namespace MoonProject.World.Editor
         /// <summary>Art's R1 Kestrel-3 debris kit (Generated/Art/R1/Models/Wreck).</summary>
         public static string KestrelDebrisPrefab(string id) => "Assets/_Project/Generated/Art/R1/Models/Wreck/" + id + ".prefab";
 
+        /// <summary>Art's R1 SSR-3 elders, the station's earlier units (Generated/Art/R1/Models/Rover).</summary>
+        public static string ElderPrefab(string id) => "Assets/_Project/Generated/Art/R1/Models/Rover/" + id + ".prefab";
+
         /// <summary>Art's R1 rock prefabs (Generated/Art/R1/Models/Rocks), the big boulders among them.</summary>
         public static string R1RockPrefab(string id) => "Assets/_Project/Generated/Art/R1/Models/Rocks/" + id + ".prefab";
 

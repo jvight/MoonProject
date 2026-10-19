@@ -144,6 +144,11 @@ namespace MoonProject.World
         [Range(2f, 16f)]
         [SerializeField] private float _peakRidgeCount = 7f;
 
+        [Tooltip("How far inside the drivable floor's edge the Peak road leaves the basin, on The Peak's bearing, " +
+            "metres: where 01 stopped at the rockfall (databank entry 3).")]
+        [Range(4f, 60f)]
+        [SerializeField] private float _peakRoadInset = 12f;
+
         [Header("Dunes")]
         [Tooltip("Height of the broad rolling hills on the floor.")]
         [Range(0f, 20f)]
@@ -305,6 +310,7 @@ namespace MoonProject.World
         public float PeakSharpness => _peakSharpness;
         public float PeakCragHeight => _peakCragHeight;
         public float PeakRidgeCount => _peakRidgeCount;
+        public float PeakRoadInset => _peakRoadInset;
         public float HillHeight => _hillHeight;
         public float HillWavelength => _hillWavelength;
         public float DuneHeight => _duneHeight;

@@ -239,6 +239,7 @@ namespace MoonProject.World
             float half = DrivableRadius * 0.70710678f;
             PlayableArea = new Rect(-half, -half, half * 2f, half * 2f);
             PeakSummit = new Vector3(_peakX, _peakHeight, _peakZ);
+            PeakRoadFoot = peakDirection * (DrivableRadius - settings.PeakRoadInset);
             SummitRadius = _summitRadius;
             PadRadius = _padRadius;
             FloorRadius = _floorRadius;
@@ -297,6 +298,11 @@ namespace MoonProject.World
 
         /// <summary>Centre of The Peak's flat summit plateau (the global maximum of the surface).</summary>
         public Vector3 PeakSummit { get; }
+
+        /// <summary>
+        /// Where the Peak road leaves the basin floor (x, z): on The Peak's bearing, inside the floor's edge.
+        /// </summary>
+        public Vector2 PeakRoadFoot { get; }
 
         public float SummitRadius { get; }
 

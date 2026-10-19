@@ -44,6 +44,14 @@ namespace MoonProject.World
 
         private const string Kestrel = WorldAnchorIds.SitePrefix + "kestrel";
 
+        // The foot of the Peak road, where 01 stopped at the rockfall, and how much ground round it stays clear.
+        private const float PeakRoadRadius = 7f;
+
+        /// <summary>
+        /// The foot of the Peak road on the basin floor, facing up it toward The Peak (databank entry 3).
+        /// </summary>
+        public const string PeakRoad = WorldAnchorIds.SitePrefix + "peakroad";
+
         private readonly WorldAnchor[] _anchors;
         private readonly Dictionary<string, int> _byId = new Dictionary<string, int>(StringComparer.Ordinal);
 
@@ -105,6 +113,8 @@ namespace MoonProject.World
                 kestrel.TailHalfWidth));
             Vector2 elder = relays.ElderSite;
             anchors.Add(Make(surface, WorldAnchorIds.Micro06, elder, -elder, relays.ElderRadius));
+            Vector2 road = surface.PeakRoadFoot;
+            anchors.Add(Make(surface, PeakRoad, road, road, PeakRoadRadius));
             AddOpening(surface, anchors);
 
             _anchors = anchors.ToArray();
