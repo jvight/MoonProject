@@ -1,133 +1,233 @@
-# Opening v3: purpose (proposal)
+# Opening v3: purpose (proposal, v1)
 
-> Author: the game design session. A proposal for the Director and the owner; no code changes.
+> **Author:** the game design session. A proposal for the Director and the owner; no code changes.
+> - v1 revises draft v0 (94e31db1) against `research/player-guidance.md`.
+> - §9 lists what changed and why.
 >
-> The owner, after playing build 95b1dd3a: "The opening doesn't feel engaging. You arrive, drive over and build a few
-> buildings with no clear purpose or goal. The player just follows text lines without knowing WHY. After building the
-> first buildings you can't interact with anything and don't know what to do next. Is building those 3 the end of
-> 0.6? We also hand out too many items early: little crates you shoot give 2–3 items you don't understand."
+> **The owner, after build 95b1dd3a:** "You arrive, drive over and build a few buildings with no clear purpose or
+> goal… follow text lines without knowing WHY… after building you can't interact with anything and don't know what
+> to do next. Is building those 3 the end of 0.6? … little crates you shoot give 2–3 items you don't understand."
 >
-> Built on: `opening-v2.md` (its §9 rulings and §10 start kit), `07-identity.md`, story v4, `hook-review.md`,
-> `maker-understanding.md` (unlocks held until `SignalWest`), `databank.md`, `blueprint-fit.md`.
+> **Canon used:**
+> - `opening-v2.md` (§9 rulings, §10 kit, layout);
+> - `07-identity.md` (CONTINUE, wake-on-carrier, cells at 50%, the antenna keys the call sign when its receiver
+>   locks);
+> - `story-v4.md` (the Ark IV sweep woke 07; the Great Dish on the Peak sends the survey home; the Arks' light blinks
+>   three short, one long);
+> - `maker-understanding.md` (unlocks are held until `SignalWest`);
+> - `databank.md`;
+> - `tech-eras.md`.
 >
-> Respects: one guidance element, plain text, no floating loot, scan fragments, the base-building pivot, visible
-> progression on 07, the sky follows progress (no clock).
+> **Citations** refer to `research/player-guidance.md`:
+> - **P1–P14:** opening principles (B1);
+> - **H1–H5:** the guidance hierarchy (B2);
+> - **M:** limit → hint → means → change (B3);
+> - **E1–E7:** economy rules (B4);
+> - **HO:** handoff (B5);
+> - **AP:** anti-patterns (B7).
 
-## 0. Why it doesn't work today (the owner is right)
-| What the owner felt | The cause |
-|---|---|
-| "No clear purpose or goal" | The goal (Power → Link → Dish → Answer) is a readout and a word list. Nothing the player can *see or hear* wants something from them. |
-| "Following text lines without knowing WHY" | Each beat's reason lives in its objective line ("Build a charging pad…"). The line says *what*, never *why*, and it is the only voice. |
-| "After the first buildings you can't do anything" | B8–B11 end in a pillar on the horizon. The base has no use after it's built, and every unlock is held until later. |
-| "Too many items you don't understand" | Small crates are cut for mixed stacks. Materials arrive before the player knows what they're for. |
+## 0. Diagnosis (the owner is right)
+Our opening shows four of the research's named anti-patterns (AP):
+- **Task-list guidance:** objective lines carry every reason.
+- **Unmotivated building / tool before need:** pad, solar and mast arrive as a list, before any limit is felt.
+- **Loot spam:** small crates give random stacks.
+- **Dead end after the tutorial:** a pillar on the horizon, then nothing to do.
 
-## 1. Player experience (skill `player-experience`)
-| When | What the player should feel and think |
-|---|---|
-| **The first 60 s** | *"Something is calling, and 07 can hear it but can't answer."* The eclipse wake (it exists). Then 07's CRT shows **a live waveform**: a faint carrier repeating from the west, and one word under it: `ANSWER?` with three dark lamps. The antenna tip flickers each time the carrier arrives. 07 turns its head toward the west. |
-| **At 5 min** | *"I know what I'm doing and why."* The lamps are the goal: **POWER · NIGHT · TRANSMIT**. The first need is concrete: 07's battery reads 22% and falling, and the lander 165 m away has a charger kit. |
-| **What makes them finish** | Each lamp lights *because of something the player built*. The last lamp lights, the player presses one button, and **07 answers**. Then **something answers back**. |
-| **Feeling** | **A small machine trying to answer a call in the dark, and managing it.** Lonely wonder → quiet pride (north-star). |
+Factorio named the same failures in its own tutorial (A7): "gather N because the list says so".
 
-## 2. The one goal: answer the call (my pick, §6)
-**The CALL panel** on 07's CRT:
-- the incoming waveform;
-- three lamps;
-- one word.
-
-It is **the goal itself, shown diegetically**: no task list and no text instructions.
-
-| Lamp | Lights when | Why the world says it needs this (said once, by 07 or the world) |
-|---|---|---|
-| **POWER** | a charger is built **and** a steady source feeds it (pad + solar) | the battery is dying (22%), and the lander's old reserve runs out after one charge (`LANDER RESERVE · 0%` on the CRT) |
-| **NIGHT** | a battery bank holds a night's charge | the Sun lowers after power-on, and the CRT's power line shows the night's need going unmet (`NIGHT · 0 W`) |
-| **TRANSMIT** | an antenna mast stands, powered | the antenna mount reads `RECEIVE ONLY` (the boot readout): 07 can hear but not speak |
-
-**Rules:**
-- **When the panel shows:** on 07's face when 07 is still for 2 s, and for 3 s whenever a lamp changes. It is the
-  one guidance element while it shows; it never shows with a prompt chip.
-- **The objective lines go.** "How" is taught by **prompt chips** the first time only (Scan, Build, Fit…), and by the
-  world (brackets on fragments, a lit apron).
-  - **One fallback:** after 120 s with no progress and 07 still, a single dim line names the *next lamp's* need, e.g.
-    "The lander's cargo had a charger kit."
-- **Why, said once per step,** by 07's own readouts (the battery line, `LANDER RESERVE · 0%`, `NIGHT · 0 W`,
-  `RECEIVE ONLY`) or by the world (the Sun lowering, the waveform). It is never an objective sentence.
-
-## 3. The item economy for the first 30 minutes: "salvage the thing to build the thing"
-**Each material comes from the old version of what you're about to build,** so it never needs explaining:
-- the pad's kit comes from a charger crate;
-- the solar array's cells come from the fallen array;
-- the mast comes from the radio tower ruin.
-
-| Need | Exactly where it comes from | What the player understands |
-|---|---|---|
-| Charging pad (4M 2W) | **one labelled crate** in the lander's open cargo bay: `CHARGER KIT · ILC-R` (Metal 4, Wiring 2 inside, as a flat-pack) plus the pad's 2 scan fragments beside it | "This crate holds a charger" |
-| Igniter (a cutter repair part) | a toolbox in the same bay, labelled `CUTTER SPARES` | "My cutter is broken (boot: `NO IGNITER`); here is the part" |
-| Solar array (3M 2W 1O) | **the fallen solar array** in the ruins: 3 fragments to scan, then cut 2 intact panels free (the first use of the fixed cutter): Optics 1, Metal 3 | "I'm making a solar array from a dead one" |
-| Battery bank (3M 3W) | the habitat's power module: 2 fragments; its cable reel crate (Wiring 3) and its casing (Metal 3) | "Its old batteries teach mine" |
-| Antenna mast (4M 3W 2O) | the radio tower ruin: 3 fragments; its mast sections (Metal 4), its feed cable (Wiring 3), its dish panels (Optics 2) | "I'm rebuilding its antenna for me" |
-
-- **Cut from the opening:** every small sealed crate with mixed stacks, the wake-point crate and the midway debris
-  crate, and every pickup that isn't for the current lamp.
-- **The start hold is empty** (not Metal 2, Wiring 1): nothing arrives before it's needed. This changes the earlier
-  "first open = starter items" ruling: the first Tab open shows 07's faults (`NO IGNITER`, `JAMMED`), not stock.
-  **An owner call.**
-- **Every cut piece shows its yield before cutting** (the brackets read `METAL 3`), so a cut is a choice, not a
-  gamble.
-- **Totals by B11:** 3 materials, 5 named sources, ~10 cuts. The supply is about 1.3× the need (enough slack for a
-  mistake, no clutter).
-
-## 4. After the mast (B11): the payoff, the next goal, things to do
-- **The answer** (the payoff, a held beat, ~15 s):
-  1. All three lamps are lit; the player holds `Transmit`.
-  2. 07's antenna lights, the network pulse runs up the mast, and the waveform on the CRT changes from the faint
-     repeating carrier **to a reply**: `ACK · UNIT 07 · LINK REQUEST · RELAY W-1 OFFLINE`.
-  3. A pillar rises over the west rim at the dead relay mast.
-  4. Operational, not sentimental: an automated station (story v4's Meridian, still running its scheduler) answers a
-     Lumen unit. **The player learns someone else is out there, and it isn't human.**
-- **The next goal (the panel's new line):** **LINK**, with one lamp: `RELAY W-1`. Reach the west relay, repair it and
-  carry the call further. That opens the road to the Long Mare.
-- **Things to do at the base right after** (each gives a visible change on 07, ruling 11):
-  1. **The held unlocks arrive** (maker-understanding §1 rule 6): the first Kessler–Arai understanding lets 07 bolt
-     an elder's old headlamp onto its visor at the pad. A visible upgrade.
-  2. **Free the solar wing** (`JAMMED` on the boot readout): a part from the habitat, fitted at the pad. Now 07 trickles
-     in sunlight.
-  3. **The databank on 07's face** now holds the night's scans (the lander, the ruins, `SUIT 01-04 · OFFLINE`).
-  4. **Lay lamp posts or a cable run** toward the ruins (craft catalogue's expressive builds). Optional.
-- **Is this the end of 0.6? No.**
-  - **The opening is the start of the game** (~45 min). It ends on the reply and the LINK goal.
-  - **0.6's end beat should be:** the relay chain reaches the Long Mare's comms dish, 07 transmits **the first piece
-    of the survey** (Ines's core logger), and the reply comes from the Arks: `ARK IV · LUMEN · RECEIVED 1/6 · KEEP
-    SENDING`. **Proof that the call matters**, and the arc's goal made real.
-
-## 5. Beat table (v3)
-| # | Purpose (the panel or world line) | What changes on screen | Felt reward | Cut or merge |
-|---|---|---|---|---|
-| B0 | — (the eclipse wake) | the lens opens on dark Earth and the Ark point | wonder | keep |
-| B1 | `ANSWER?` + 3 dark lamps; battery 22% | the waveform pulses; 07 turns toward the west | "it wants to answer" | **replaces** the long boot list (it moves to the databank; only the faults show) |
-| B2 | (world) the lander's amber light; the cable | drive 165 m | approach | keep; **cut** the midway crate |
-| B3 | (world) brackets on 2 fragments by the `CHARGER KIT` crate | scan → a line drawing on the CRT: `ILC-R · BUILDABLE` | "scanning teaches me" | keep |
-| B4 | (world) the open crate | collect the kit (Metal 4, Wiring 2) and the igniter | understood items only | **merge** into B3's spot |
-| B5 | battery Low (07's fault tone) | build the pad (the hatch press, the weld) | "I made my charger" | keep |
-| B6 | the POWER lamp half lit; `LANDER RESERVE · 0%` | the dock lock, cells filling; **the eclipse ends** (diamond ring); fit the igniter while charging (a small field part, it fits anywhere) | relief, awe, my cutter works | keep |
-| B7 | POWER needs a steady source | ruins: scan the fallen array, cut its panels; the airlock reads `SUIT 01-04 · OFFLINE` | the first story fact | keep; **cut** the locker and crate loot |
-| B8 | **POWER lamp lit** | build solar; power on; music returns | pride | keep |
-| B9 | `NIGHT · 0 W` as the Sun lowers | scan the habitat power module; build the bank | foresight | keep |
-| B10 | **NIGHT lamp lit** | the first nightfall: your lights come on | awe | keep |
-| B11 | `RECEIVE ONLY` → TRANSMIT | scan the tower ruin; build the mast | — | keep |
-| **B12** | **all lamps lit: Transmit** | **07 answers; the reply; a pillar in the west** | **the payoff** | **new** |
-| **B13** | LINK · RELAY W-1 | held unlocks (the headlamp), the solar wing freed, the databank | growth on 07 | **new** |
-
-## 6. Alternative core hooks (for the pick page)
-| | Hook | Strength | Weakness |
+## 1. Player experience
+| When | What the player feels | How | Principles |
 |---|---|---|---|
-| **A · Answer the call** *(my pick)* | a carrier repeats from the west; 07 can hear but not speak; build power, night storage and a transmitter to answer; something answers back | the goal is felt from the first minute (sound, waveform, head turn); every build serves it; it ends on a reply that opens the next goal; it fits story v4 (the carrier woke 07) | the reply's sender must be set up well (Meridian's automation) to avoid confusion |
-| **B · Survive the first night** | the battery dies against the coming night; build to stay alive | instant, primal urgency | the survival cliché; a calm game turned stressful; after the night there is no "why next"; it fights "the sky follows progress" |
-| **C · Finish K.'s job** | 07's queue shows the task it was doing when Kenji set CONTINUE (`JOB 7 · RESTORE POWER · STEP 1/4`) | very logical, 07's own reason | still a task list, now on the CRT; weak wonder; risks reading as the same "follow lines" |
+| **60 s** | *"Something out there is calling, and I'm too weak to answer."* | 07 wakes in the eclipse. Its lens opens on dark Earth and **one point of light beside it**. A faint carrier ticks **three short, one long**, a soft tone in D pentatonic. 07's antenna lamp tries to key the same pattern and stutters out. 07 tilts its head up. It is dim and slow (§2, link 0). | P1, P2, P10 |
+| **5 min** | *"I need power, and that lander is the only warm light here."* | The lander's amber pilot lamp at 165 m is the one warm light in view. A broken charging pad lies beside it. | P3, P6, H1 |
+| **30 min** | *"Every build made 07 stronger and the call clearer."* | Each limit lifts in a way you can see and hear: speed, light, the call steadying, the lights holding through the night. Then 07 tries to answer, and can't. | P7, P8, M |
+| **Finish** | *"It answered, and now I know where to go."* | The mast transmits; a relay on the rim blinks the pattern back; the Peak's dead dish is the next goal. | P12, HO |
+| **Feeling** | A small machine, weak in the dark, earns its strength and its voice. Lonely wonder → quiet pride. | Dark/weak → dawn/capable → night/heard: the eclipse's three-act shape (research C4). | P1 |
 
-**Pick A.**
-- It answers all four of the owner's points at once: a goal from minute 1; each step's reason shown by the world; a
-  payoff and a next goal; items tied to what they build.
-- It borrows B's felt pressure (22% battery) and C's logic (07's own receive-only antenna) without their weaknesses.
-- **Playtest signal:** within 5 minutes, a new player says "it's trying to answer something", and at B12 they hold
-  Transmit before reading anything.
+## 2. The spine: the call, and a chain of felt limits
+**The far goal is the call.** It is seen from the first minute (the point of light by Earth) and heard (three short,
+one long). It is never written down. This is Journey's mountain or BotW's castle (P2). 07 doesn't know who is calling.
+The player learns it at the game's end, when the Arks' light blinks the same pattern (story v4).
+
+**Lunarion's tie-in.** Three short, one long is **Lumen's own call sign**: 07's antenna keys it when its receiver
+locks (07-identity). The fleet's search sweep is calling Lumen by name.
+
+**No lamps, no list.** Each step is driven by a **felt limit** (M), and progress shows **in the world and in the call
+itself** (P8). The call's state is the only goal display on 07's face (H2):
+1. broken;
+2. steady and locked;
+3. answered.
+
+| Link | 1 · Feel the limit | 2 · See the hint | 3 · Earn the means | 4 · Feel the change | Why now? (the player's words) |
+|---|---|---|---|---|---|
+| **0 · Weak** | `STANDBY · RESERVE`: 07 drives at a soft cap, lamps dim, the receiver duty-cycled so the call breaks up | the lander's amber lamp, the only warm light | drive 165 m | arrival; the broken pad and its crate | "I'm weak, and that light is the only thing out here." |
+| **1 · Power** | still on reserve | a broken 1980s pad by a crate labelled `CHARGER KIT · ILC-R` | scan the pad (2 fragments), open the crate, build the pad | the dock locks and the cells fill. **The eclipse ends** (the diamond ring). Reserve lifts: full speed, bright lamps. The receiver locks, so the call steadies and **07's antenna keys three short, one long back**. | "I'm almost empty, and I just learned to build a charger." |
+| **2 · Steady power** | **the lander's pilot lamp goes out**: its reserve gave one charge, and the pad is dark now | the fallen solar array in the ruins glints in the new sunlight | scan the array (3); the cutter sputters, so fit the igniter from Kenji's `CUTTER SPARES` rack beside it; cut 2 panels free; build solar | `PowerOn`: the pad and base lamps light, the music returns | "My charger died, and that dead array could feed it." |
+| **3 · Night** | in last light (the sky holds there; opening-v2 §9) the array's output falls and **the pad charges slower and slower** | the habitat's old power module, whose status lamp blinks as the charge slows | scan it (2); its labelled cable-reel crate and casing; build the bank | `NightReady`: **the first nightfall, and your lights stay on** | "The sun's going, and my charger is fading with it." |
+| **4 · Voice** | at night, with the call clear, 07 tries to answer: an F# query chirp goes out, the CRT reads `TX · NO RANGE`, the antenna lamp drops, 07's head lowers | the radio tower ruin, a fallen mast with its dish face-down, a "tall thing that listens" | scan it (3); cut sections, feed cable and dish panels; build the mast. No prompt chips now: **the test without hints** (Portal, A4) | **B12: the answer** (§5) | "It's calling, and I can't answer." |
+
+**Notes:**
+- **Link 0 is new.** It is the one new mechanic. `STANDBY · RESERVE` is logical for a machine that survived 36 years
+  in standby by design: it stays in low draw until it docks on a live source. Battery stays at canon 50%. Tuning
+  bounds:
+  - the cap must keep the 165 m drive pleasant (start near 70% top speed; feel gate);
+  - **07 cannot die in the opening.** Reserve has a floor, and wear starts after B13 (calm, B6 Flow).
+  - **Director call.**
+- **Each "why" is said once, by the world:**
+  - the lamp going out;
+  - the charge slowing;
+  - the TX attempt failing.
+
+  These are world states (H1) and 07's own behaviour (H2), never a sentence. This replaces v0's readouts
+  (`LANDER RESERVE · 0%`, `NIGHT · 0 W`).
+
+## 3. Guidance on screen
+- **No objective lines.** Guidance uses the highest level that works (H1 → H4):
+  - the warm light;
+  - the glint;
+  - the blinking module lamp;
+  - prompt chips, **the first time only**, at the object (Scan, Open, Build, Fit, Cut).
+- **One element at a time** (owner rule):
+  - a prompt chip never shows with the call display;
+  - the call display shows only when 07 is still for 2 s, and for 3 s when its state changes.
+- **One fallback (H5 as a reminder only):** after 120 s with no progress and 07 still, one dim line restates the
+  *current limit's hint*, e.g. "The lander's pilot lamp is still lit." It is never repeated.
+- **Playtest metric:** a stall of more than 30 s means the world isn't saying enough (C4).
+
+## 4. Item economy (first 30 min): salvage the thing to build the thing
+- **Four item types in all:** Metal, Wiring, Optics, and the igniter (E2: 3–5).
+- **Every item:**
+  - comes from a source whose look says what's inside (E5);
+  - is named with its purpose at pickup, e.g. `Metal 4 · for the charging pad` (E3);
+  - is spent within the same link (E6).
+- **Costs show on the build ghost**, never in a list (E7).
+
+| Build | Source (fixed contents, E4) | Spent in |
+|---|---|---|
+| Charging pad (4M 2W) | the `CHARGER KIT · ILC-R` crate, a flat-pack (Metal 4, Wiring 2) | link 1 |
+| Igniter | Kenji's `CUTTER SPARES` rack, beside the fallen array: found **at the moment the cutter fails** (P3) | link 2, at once |
+| Solar array (3M 2W 1O) | 2 panels cut from the fallen array (Metal 3, Optics 1); its junction box (Wiring 2) | link 2 |
+| Battery bank (3M 3W) | the habitat power module: its cable-reel crate (Wiring 3), its casing cut free (Metal 3) | link 3 |
+| Antenna mast (4M 3W 2O) | the radio tower ruin: mast sections (Metal 4), feed cable (Wiring 3), dish panels (Optics 2) | link 4 |
+
+- **Cut from the opening:**
+  - every small mixed crate, including the wake crate and the midway crate;
+  - shooting crates for stacks;
+  - every pickup that doesn't serve the current link.
+- **Cutting stays a verb only to free a part the player can already see they need** (C4). Every cut piece shows its
+  yield before cutting.
+- **The start hold is empty** (E1). The first Tab opens on the databank's seeded cards: 07, Kessler–Arai, the eclipse
+  (`databank.md` §3).
+  - This overrides the earlier "first open = starter items" ruling. **Owner call.**
+- **Supply:** about 1.3× the need, so a mistake never strands the player.
+
+## 5. After the mast: the answer, the release, and 0.6
+- **B12 · The answer** (a held beat, ~15 s, P7, P8):
+  1. The player holds Transmit.
+  2. The network pulse runs up the mast and out to the west rim.
+  3. **relay.1's dead lamp lights and blinks three short, one long back.**
+  4. 07's CRT reads: `ACK · RELAY.1 · ROUTE · PEAK DISH · OFFLINE`.
+  5. The pulse glints once on the Peak's dark Great Dish.
+
+  The call is answered by the network: the crew's relays still route it, and the fleet is still out of reach. That
+  protects the ending: only the Great Dish can carry the survey home (story v4).
+- **B13 · The release** (HO):
+  - **Reach (P7):** 07's CRT shows a range ring for the first time. relay.1 is inside it; the Peak is just outside.
+    That gate is visible before its key (P11): more cells, from elder 06's Cell Pack at relay.2.
+  - **View and lures (P12):** from the rise by the mast, the player sees:
+    - relay.1 blinking (**the next goal:** repair it and extend the route);
+    - the Peak's dish (**the long goal**);
+    - Kestrel-3's white-and-teal wreck (**curiosity**: a foreign maker, `NO LUMEN RECORD`).
+  - **Growth on 07 (ruling 11):** the held maker unlocks arrive (`maker-understanding.md` §1). The first is the
+    Kessler–Arai headlamp, fitted at the pad: 07 sees farther at night.
+  - **Something growing at home (P13):** the mast keeps listening while 07 is away. Each time 07 docks, a few more
+    characters of the carrier's ID resolve on the CRT (`A?? IV` → `ARK IV`). It is a reason to come home, and an
+    open question (P10). **Story call.**
+  - **Guidance steps down:** no fallback lines after B13; the world takes over.
+- **Is this the end of 0.6? No.** The opening is the first ~45 minutes. **Proposed 0.6 end beat:**
+  1. The route reaches the Peak.
+  2. 07 wakes the Great Dish. It slews toward Earth and **jams at 14%** (story v4's figure).
+  3. It sends one fragment of the survey. The far carrier **stops sweeping and holds on Lumen** (`CARRIER · LOCKED`).
+     Someone heard, and the game's ending is still ahead: freeing the dish, gathering the survey, the Arks' light.
+  4. The Peak's view opens the next regions.
+  - **Director and story call.**
+
+## 6. Beat table (v3)
+| # | Purpose (why now) | On screen | Felt reward | Cut or merge | Principles |
+|---|---|---|---|---|---|
+| B0 | the call, too weak to answer | POST one shot (canon) → the lens opens on dark Earth and the point of light; the carrier; the antenna's stuttered echo | wonder and a question | **cut** the boot fault list (it moves to the databank) | P1, P2, P10 |
+| B1 | weak; the only warm light | drive 165 m on reserve | arrival | **cut** the midway crate | P3, H1 |
+| B2 | low power; a broken charger | scan 2 pad fragments → `ILC-R · BUILDABLE` drawn on the CRT | "scanning teaches me" | — | P6, P4 |
+| B3 | the charger's parts | open the labelled crate: `Metal 4 · for the charging pad` | understood items | same spot as B2 | E1, E3, E5 |
+| B4 | build what I learned | the pad, ghost costs, unfold and weld | "I made it" | — | E7, P5 |
+| B5 | charge | dock lock; cells fill; diamond ring; reserve lifts; call locks; 07 keys it back | relief, awe, power felt in the hands | `FirstCharge` | P7, M |
+| B6 | the pad died with the lander lamp | scan the fallen array (3); the cutter sputters | a new limit | **cut** the ruins' loose loot | M, P3 |
+| B7 | fix my cutter, free the panels | fit the igniter (spares rack), first cut (yield shown) | "my tool works" | — | P6, E6 |
+| B8 | feed the charger | build solar → `PowerOn`; music | pride | — | P8 |
+| B9 | the charge fades at last light | scan the power module (2); collect, cut; build the bank | foresight | — | M, H1 |
+| B10 | — | first nightfall, the lights stay on; then the failed TX attempt | awe, then a pang | `NightReady` | P8, P3 |
+| B11 | "it's calling and I can't answer" | scan the tower ruin (3); cut; build the mast. **No chips** | mastery | `SignalWest` | P4, A4 |
+| **B12** | answer | Transmit → relay.1 blinks back; `ACK · … PEAK DISH · OFFLINE` | the payoff | **new** | P7, P8 |
+| **B13** | where next | range ring; the three lures; the headlamp; the decode ticker | release | **new** | HO, P11–P13 |
+
+## 7. Checklist (research B6, 20 questions per beat)
+| Beat | Yes · No · n/a | Each "no", condition or n/a, with the reason or fix |
+|---|---|---|
+| B0 | 13 · 2 · 4 (+1 cond) | **No:** it changes nothing on 07 or the base. That is by design: it's the hook, and its job is the question (P10). **Cond.:** "target visible" holds only if the lander's lamp is in the first forward view after the lens opens. World must check this. **n/a:** need-before-tool, and the 3 economy questions. |
+| B1 | 15 · 1 · 4 | **No:** nothing changes on 07 (a travel beat). Watch the reserve cap's feel (§2). **n/a:** need-before-tool, economy. |
+| B2 | 17 · 0 · 3 | **n/a:** economy (fragments aren't items). |
+| B3 | 20 · 0 · 0 | — |
+| B4 | 18 · 0 · 2 | **n/a:** purpose named at pickup, no random loot (nothing is picked up). |
+| B5 | 16 · 0 · 3 (+1 cond) | **Cond.:** "knows what to do in 10 s" needs the fallen array's glint visible from the pad in the new sunlight. World and art must check. **n/a:** economy. |
+| B6 | 17 · 0 · 3 | **n/a:** economy. |
+| B7 | 19 · 1 · 0 | **No:** two ideas (fit, then cut). The fit is a 2-s socket action, and the cut is its payoff. Playtest it; if players stall, split the beat with a pause. |
+| B8 | 18 · 0 · 2 | **n/a:** pickup questions. |
+| B9 | 19 · 0 · 0 (+1 cond) | **Cond.:** "say why" depends on players linking the slowing charge to the blinking module lamp. Playtest signal (§8). |
+| B10 | 16 · 0 · 3 (+1 cond) | **Cond.:** the tower ruin must read at night (a silhouette against the stars, or within the base lights' reach). Art must check. **n/a:** economy. |
+| B11 | 20 · 0 · 0 | Note: no text and no chips; this is the skill test. |
+| B12 | 17 · 0 · 3 | **n/a:** economy. |
+| B13 | 16 · 1 · 3 | **No:** "one new idea" fails, because four things arrive (ring, lures, headlamp, ticker). Stagger them: the ring and the view first; the headlamp at the next dock; the ticker on the first return home. **n/a:** economy. |
+
+## 8. Alternative core hooks (for the owner's pick page)
+| | Hook | For | Against |
+|---|---|---|---|
+| **A · The call** *(pick)* | a sky light calls Lumen's name; 07 grows from weak to heard | a far goal from minute 1 (P2); every build lifts a felt limit (M); ends on an answer with lures (HO); fits canon and bookends the ending (same pattern) | the call is abstract at first: if the sound and the sky point don't read, the hook is lost. Needs the reserve mechanic (new work). B11's link is the weakest *felt* limit, because it's sad rather than blocking. |
+| **B · Survive the first night** | the night is coming, and 07 must store power before it falls | the strongest primal urgency; simplest to read | it fights the sky-follows-progress ruling and the calm (F2); no "why next" after the night; the survival cliché; less wonder |
+| **C · Finish K.'s job** | 07's CONTINUE queue shows the job it was on when Kenji parked it: `RESTORE POWER · STEP 1/4` | 07's own logic, ready-made; easy to build | it is still a task list, now on the CRT (AP: task-list guidance); it explains *what*, not a felt *why*; weak hook at 60 s (P1) |
+
+**Pick A.** It is the only one that gives a far goal, felt needs and an open ending at once. It also borrows B's
+urgency (the weak start) without the timer.
+
+**Playtest signals:**
+- by 5 min, an untold player says "it's trying to answer something";
+- at B9, they head to the module lamp within 30 s;
+- at B12, they hold Transmit without a chip.
+
+## 9. Changes from v0, and the calls needed
+- **Changes, and why:**
+  - **The three-lamp panel is gone.** It was a task list on the CRT (AP; P4). The call's own state and the world carry
+    progress (P8).
+  - **The caller** is now the sky light (canon: the Ark IV sweep), not "a west station". The reply comes from relay.1
+    and points at the Peak. Meridian is out of the opening.
+  - **Battery:** 22% → canon 50%, plus a felt `STANDBY · RESERVE` limit (M, link 0).
+  - **The igniter** moves from the lander crate to the fallen array: need before tool (P3).
+  - **Readouts become world states:** the lamp going out, the slowing charge, the failed TX (H1 over H2).
+  - **Pickups** now name their purpose, and costs move to the ghost (E3, E7).
+  - **B13** now has reach, three lures, a reason to come home, and a stepped-down voice (HO).
+  - **The 0.6 end** is now the Peak dish jamming at 14% and the carrier locking on, so it doesn't pre-empt the ending.
+- **Owner calls:**
+  - the empty start hold;
+  - the hook pick (A / B / C).
+- **Director calls:**
+  - the reserve mechanic and its tuning;
+  - no death until B13;
+  - the 0.6 end beat.
+- **Story calls:**
+  - the point of light and its three-short-one-long from B0;
+  - the decode ticker;
+  - the relay.1 ACK line.
+- **World and art checks:**
+  - the lander's lamp in the first view;
+  - the array's glint visible from the pad;
+  - the tower readable at night;
+  - a rise by the mast for the B13 view.
