@@ -1108,6 +1108,12 @@ namespace MoonProject.UI
         private void OnFragmentScanned(FragmentScanned scanned)
         {
             _scanning = false;
+            string nameKey = StructureIds.NameKey(scanned.BlueprintId);
+            if (!scanned.Known && scanned.Count > 1 && _localization.TryGet(nameKey, out _))
+            {
+                _readout.ScanSetProgress(nameKey, scanned.Index + 1, scanned.Count);
+            }
+
             _director.NotifyUsed(InteractionKind.Scan);
         }
 

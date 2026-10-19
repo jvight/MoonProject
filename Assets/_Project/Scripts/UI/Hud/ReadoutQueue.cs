@@ -20,16 +20,24 @@ namespace MoonProject.UI
 
         /// <summary>The text of a scanned story panel.</summary>
         Story = 5,
+
+        /// <summary>
+        /// A piece of a structure's scan set is done: its blueprint's progress (<c>Solar Array · blueprint 1/3</c>).
+        /// </summary>
+        ScanSet = 6,
     }
 
     /// <summary>One card the readout is asked to show.</summary>
     internal readonly struct ReadoutRequest
     {
-        public ReadoutRequest(ReadoutKind kind, RoverSystem system = RoverSystem.Wheels, string textKey = null)
+        public ReadoutRequest(ReadoutKind kind, RoverSystem system = RoverSystem.Wheels, string textKey = null,
+            int step = 0, int of = 0)
         {
             Kind = kind;
             System = system;
             TextKey = textKey ?? string.Empty;
+            Step = step;
+            Of = of;
         }
 
         public ReadoutKind Kind { get; }
@@ -37,20 +45,30 @@ namespace MoonProject.UI
         /// <summary>The system a <see cref="ReadoutKind.System"/> card tells about.</summary>
         public RoverSystem System { get; }
 
-        /// <summary>The story text of a <see cref="ReadoutKind.Story"/> card.</summary>
+        /// <summary>
+        /// The story text of a <see cref="ReadoutKind.Story"/> card, or the structure a
+        /// <see cref="ReadoutKind.ScanSet"/> card's blueprint teaches.
+        /// </summary>
         public string TextKey { get; }
+
+        /// <summary>The pieces of a <see cref="ReadoutKind.ScanSet"/> scanned so far (1-based).</summary>
+        public int Step { get; }
+
+        /// <summary>The pieces in that set.</summary>
+        public int Of { get; }
 
         public bool Matches(ReadoutRequest other)
         {
             return Kind == other.Kind && System == other.System &&
-                   string.Equals(TextKey, other.TextKey, StringComparison.Ordinal);
+                   string.Equals(TextKey, other.TextKey, StringComparison.Ordinal) &&
+                   Step == other.Step && Of == other.Of;
         }
     }
 
     /// <summary>
     /// The order and timing of the readout's cards (pure, EditMode-tested). One card shows at a time; a card waits for
-    /// the guidance slot, rests for its hold, fades, and then the next one comes. The boot diagnostics go before every
-    /// other card. A card asked for again while it shows keeps the screen for a fresh hold instead of queueing twice.
+    /// the guidance slot, rests for its hold, fades, and then the next one comes, in the order asked. A card asked for
+    /// again while it shows keeps the screen for a fresh hold instead of queueing twice.
     /// </summary>
     internal sealed class ReadoutQueue
     {

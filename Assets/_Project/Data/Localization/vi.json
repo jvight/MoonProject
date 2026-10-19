@@ -847,6 +847,14 @@
             "text": "NGUỒN · NGOẠI TUYẾN"
         },
         {
+            "key": "ui.readout.scan_set",
+            "text": "{0} · bản vẽ {1}/{2}"
+        },
+        {
+            "key": "ui.readout.scan_set_learned",
+            "text": "{0} · bản vẽ {1}/{2} · đã học"
+        },
+        {
             "key": "ui.readout.power_on",
             "text": "NGUỒN · BẬT"
         },

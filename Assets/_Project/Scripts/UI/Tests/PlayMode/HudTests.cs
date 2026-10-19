@@ -897,6 +897,40 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator EachPieceOfAScanSet_ShowsItsBlueprintsProgressBriefly_OverTheLine_LearnedOnTheLast()
+        {
+            Boot();
+            _rig.Tune("_guidance._statusHoldSeconds", 1.5f);
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            Events.Publish(new NextStepChanged("next.v2.drive_lander"));
+            ReadoutView readout = _rig.Ui.Readout;
+            float wait = _rig.Tuning.Guidance.Readout.FadeIn + 0.4f;
+            float gone = _rig.Tuning.Guidance.StatusHoldSeconds + _rig.Tuning.Guidance.Readout.FadeOut + 0.6f;
+
+            Events.Publish(new FragmentScanned("array.1", "solar_array", 0, 3, false, 0));
+            yield return Seconds(wait);
+            Assert.AreEqual(ReadoutKind.ScanSet, readout.Showing, "the first piece says how far the blueprint is");
+            Assert.AreEqual(1, readout.LineCount, "in one short line");
+            Assert.AreEqual(string.Format(Text(ReadoutText.ScanSetKey), Text("structure.solar_array.name"), 1, 3),
+                readout.LineText(0));
+            Assert.IsFalse(_rig.Ui.Objective.IsVisible, "one guidance element: the card stands over the line");
+            yield return Seconds(gone);
+            Assert.IsFalse(readout.IsVisible, "and yields by itself");
+
+            Events.Publish(new FragmentScanned("array.3", "solar_array", 2, 3, false, 0));
+            yield return Seconds(wait);
+            Assert.AreEqual(string.Format(Text(ReadoutText.ScanSetLearnedKey), Text("structure.solar_array.name"), 3, 3),
+                readout.LineText(0), "the last piece: learned");
+            yield return Seconds(gone);
+
+            Events.Publish(new FragmentScanned("array.1", "solar_array", 0, 3, true, 4));
+            Events.Publish(new FragmentScanned("pad.1", "charging_pad", 0, 1, false, 0));
+            yield return Seconds(wait);
+            Assert.IsFalse(readout.IsVisible, "a known blueprint (it pays metal) and a one-piece set need no count");
+        }
+
+        [UnityTest]
         public IEnumerator AnUnlearnedReadyVerb_TakesTheSlotFromTheObjectiveLine_WhenSevenNosesIntoACrate()
         {
             InputSystem.AddDevice<Keyboard>();

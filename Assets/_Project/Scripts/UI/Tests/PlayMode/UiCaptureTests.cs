@@ -575,6 +575,15 @@ namespace MoonProject.UI.PlayModeTests
             yield return new WaitForSecondsRealtime(_tuning.Guidance.Readout.FadeIn + 0.5f);
             Assert.AreEqual(ReadoutKind.Protocol, ui.Readout.Showing);
             yield return Capture(camera, folder, "49c_protocol_power_on");
+
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.StatusHoldSeconds +
+                                                    _tuning.Guidance.Readout.FadeOut + 0.6f);
+            Reframe(3440, 1440);
+            context.Events.Publish(new FragmentScanned("array.1", "solar_array", 0, 3, false, 0));
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.Readout.FadeIn + 0.5f);
+            Assert.AreEqual(ReadoutKind.ScanSet, ui.Readout.Showing, "a set piece's progress card");
+            yield return Capture(camera, folder, "49d_scan_set_1of3_3440x1440");
+            Reframe(Width, Height);
             fakes.Sun.ElevationDegrees = 9f;
             yield return new WaitForSecondsRealtime(_tuning.Guidance.StatusHoldSeconds +
                                                     _tuning.Guidance.Readout.FadeOut + _tuning.Guidance.SunArc.FadeIn);

@@ -847,6 +847,14 @@
             "text": "POWER · OFFLINE"
         },
         {
+            "key": "ui.readout.scan_set",
+            "text": "{0} · blueprint {1}/{2}"
+        },
+        {
+            "key": "ui.readout.scan_set_learned",
+            "text": "{0} · blueprint {1}/{2} · learned"
+        },
+        {
             "key": "ui.readout.power_on",
             "text": "POWER · ON"
         },
