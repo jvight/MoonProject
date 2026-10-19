@@ -521,7 +521,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             int split = fragment.FragmentId.LastIndexOf('.');
-            return candidate == fragment || (!candidate.Scanned && split > 0 &&
+            bool story = fragment.FragmentId.StartsWith(StoryScan.IdPrefix, StringComparison.Ordinal);
+            return candidate == fragment || (!story && !candidate.Scanned && split > 0 &&
                    candidate.FragmentId.StartsWith(fragment.FragmentId.Substring(0, split + 1),
                        StringComparison.Ordinal));
         }
