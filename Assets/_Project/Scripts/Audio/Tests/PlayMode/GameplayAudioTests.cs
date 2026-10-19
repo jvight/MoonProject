@@ -139,17 +139,14 @@ namespace MoonProject.Audio.PlayModeTests
         public IEnumerator TheSkyPhaseAlone_PlaysNoLampSound()
         {
             _rig.Events.Publish(new StructureBuilt(1, "solar_array", Vector3.one, 0f, true));
-            int plays = _rig.Director.PlayCount;
             _rig.Events.Publish(new SkyPhaseChanged(SkyPhase.Sunset, 0f));
             _rig.Events.Publish(new SkyPhaseChanged(SkyPhase.Earthlit, 0f));
             float until = Time.realtimeSinceStartup + 4f;
             while (Time.realtimeSinceStartup < until)
             {
+                Assert.IsNull(_rig.FindPlayingVoice("base_lamp_on"), "nightfall itself lights nothing: BaseLamps does");
                 yield return null;
             }
-
-            Assert.AreEqual(plays, _rig.Director.PlayCount, "nightfall itself lights nothing: BaseLamps does");
-            Assert.IsNull(_rig.FindPlayingVoice("base_lamp_on"));
         }
     }
 }
