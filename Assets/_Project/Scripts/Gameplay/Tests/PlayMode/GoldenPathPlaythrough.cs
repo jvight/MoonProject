@@ -431,6 +431,8 @@ namespace MoonProject.Gameplay.PlayModeTests
                 Vector3 outward = Flat(panel.Point - Ruin("HabitatModules").position).normalized;
                 yield return Scan(panel, "the airlock panel", outward, PanelStandOff);
                 Assert.AreEqual(1, read.Count, "the panel's readout shows once");
+                Assert.AreEqual(panel.FragmentId, read[0].StoryId, "it is the airlock panel that was read");
+                Assert.IsTrue(panel.Scanned, "the airlock panel is scanned");
             }
 
             Capture("07-the-airlock-panel");
@@ -466,7 +468,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Look(fragment.Point);
             yield return Until(() => OnSetCandidate(scans, fragment), ScanLookTimeout,
                 $"07's view rests on {fragment.FragmentId}: its brackets and the Scan chip show",
-                () => $"scan candidate {scans.Candidate?.FragmentId ?? "none"}, primary hint " +
+                () => $"scan candidate {scans.Candidate?.FragmentId ?? "none"} (scanned " +
+                      $"{scans.Candidate?.Scanned}, airlock scanned {scans.Find("story.airlock")?.Scanned}), primary hint " +
                       $"{_gameplay.Hints.Primary.Kind} at {_gameplay.Hints.Primary.Position} (piece " +
                       $"{_gameplay.Salvage.Candidate?.Site.Id}/{_gameplay.Salvage.Candidate?.Number}, crate " +
                       $"{_gameplay.Containers.Candidate?.Id}); the target at {fragment.Point}, the view " +
