@@ -50,6 +50,25 @@ namespace MoonProject.Audio.PlayModeTests
         }
 
         [Test]
+        public void EachLightsSwitch_PlaysOneSwitch_AtTheLamp_OnAndOffDiffer()
+        {
+            const int switches = 5;
+            int plays = _rig.Director.PlayCount;
+            for (int i = 0; i < switches; i++)
+            {
+                bool on = i % 2 == 0;
+                var lamp = new Vector3(i, 0.8f, 2f);
+                _rig.Events.Publish(new RoverLightsSwitched(on, lamp));
+                AudioSource voice = _rig.Director.LastVoice;
+                Assert.AreEqual(on ? "rover_lights_switch_on" : "rover_lights_switch_off", voice.clip.name);
+                Assert.IsTrue(voice.isPlaying);
+                Assert.Less(Vector3.Distance(lamp, voice.transform.position), 1e-4f, "the switch clicks at the lamp");
+            }
+
+            Assert.AreEqual(plays + switches, _rig.Director.PlayCount, "one switch sound per RoverLightsSwitched");
+        }
+
+        [Test]
         public void AudioSettings_AreRegistered_AndDriveTheBuses()
         {
             var settings = _rig.Bootstrap.Context.Get<IAudioSettings>();

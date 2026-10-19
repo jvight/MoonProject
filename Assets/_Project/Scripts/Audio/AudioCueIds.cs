@@ -82,6 +82,7 @@ namespace MoonProject.Audio
         public const string BatteryLow = "battery_low";
         public const string BatterySigh = "battery_sigh";
         public const string LampTick = "lamp_tick";
+        public const string RoverLightsSwitch = "rover_lights_switch";
 
         // R1 Group 1: 07's face
         public const string FaceBoot = "face_boot";

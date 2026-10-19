@@ -43,6 +43,8 @@ MonoBehaviour:
   _liftFadeOut: 0.35
   _liftVolume: 1
   _settleVolume: 1
+  _lightsOnVolume: 0.9
+  _lightsOffVolume: 0.55
   _wake:
     _openingStatic: 0.6
     _swellSeconds: 1.2
