@@ -7,9 +7,9 @@ namespace MoonProject.Rover.Tests
 {
     /// <summary>
     /// 07's wake as its power-on self-test seen on its face: the fade to black, the black, the picture opening straight
-    /// on the face with the first line, every line announced in order and never skipped, the eyes back only after the
-    /// checks, the ready hold, the two camera moves around the ready performance, and the short wake that Continue
-    /// plays instead.
+    /// on the face with the first line, every line announced in order (a key after the first moments fast-forwards
+    /// them, never on their first frame), the eyes back only after the checks, the ready hold, the two camera moves
+    /// around the ready performance, and the short wake that Continue plays instead.
     /// </summary>
     public sealed class OpeningScriptTests
     {
@@ -82,11 +82,11 @@ namespace MoonProject.Rover.Tests
                     continue;
                 }
 
-                sawIndexed |= line.Step == BootCheckStep.Wheels && line.Index == 3;
+                sawIndexed |= line.Step == BootCheckStep.Cutter && line.Index == 5;
                 sawProgress |= line.Step == BootCheckStep.Battery && line.Progress01 > 0.4f;
             }
 
-            Assert.IsTrue(sawIndexed, "the fourth wheel's twitch keeps its index");
+            Assert.IsTrue(sawIndexed, "the third spark's beacon blink keeps its index");
             Assert.IsTrue(sawProgress, "the battery fill keeps its progress");
         }
 
@@ -115,13 +115,13 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void TheWake_RunsBlackFaceChecksReadyAndBothMoves_InOrder_InAboutThirtyTwoSeconds()
+        public void TheWake_RunsBlackFaceChecksReadyAndBothMoves_InOrder_InAboutFifteenSeconds()
         {
             _script.BeginFull(false);
             TakeAll();
             float seconds = RunToChase(60f);
 
-            Assert.That(seconds, Is.InRange(28f, 36f), "the wake lasts about 32 s");
+            Assert.That(seconds, Is.InRange(13f, 18f), "the wake lasts about 15 s");
             CollectionAssert.AreEqual(new[]
             {
                 WakeBeat.Crackle, WakeBeat.ChecksBegin, WakeBeat.EyesOpen, WakeBeat.ChaseFrame,
@@ -166,13 +166,13 @@ namespace MoonProject.Rover.Tests
             TakeAll();
             RunToChase(60f);
 
-            var expected = new[]
+            PostSettings post = _tuning.Opening.Post;
+            var expected = new BootCheckStep[post.LineCount];
+            for (int i = 0; i < expected.Length; i++)
             {
-                BootCheckStep.Carrier, BootCheckStep.Resume, BootCheckStep.Agenda, BootCheckStep.Lens,
-                BootCheckStep.Lamps, BootCheckStep.Head, BootCheckStep.Wheels, BootCheckStep.Motor,
-                BootCheckStep.Cutter, BootCheckStep.SolarWing, BootCheckStep.Antenna, BootCheckStep.Battery,
-                BootCheckStep.Assembly, BootCheckStep.Begin,
-            };
+                expected[i] = post.LineStep(i);
+            }
+
             var started = new List<BootCheckStep>();
             var completed = new List<BootCheckStep>();
             foreach (PostEvent line in _lines)
@@ -194,17 +194,102 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void ControlIsHeld_UntilTheChaseFrame_TheWakeCannotBeSkipped()
+        public void ControlIsHeld_UntilTheChaseFrame_EvenWhenTheLinesAreFastForwarded()
         {
-            _script.BeginFull(false);
-            TakeAll();
-            while (!_beats.Contains(WakeBeat.ChaseFrame) && _script.IsRunning)
+            foreach (bool fastForward in new[] { false, true })
             {
-                Assert.IsTrue(_script.ControlHeld, $"held in {_script.Phase}");
+                _beats.Clear();
+                _script.BeginFull(false);
+                TakeAll();
+                while (!_beats.Contains(WakeBeat.ChaseFrame) && _script.IsRunning)
+                {
+                    Assert.IsTrue(_script.ControlHeld, $"held in {_script.Phase}");
+                    if (fastForward)
+                    {
+                        _script.FastForward();
+                    }
+
+                    StepOnce();
+                }
+
+                Assert.IsFalse(_script.ControlHeld);
+            }
+        }
+
+        [Test]
+        public void AKey_BeforeTheLines_OrOnTheirFirstFrame_OrTooEarly_DoesNotFastForward()
+        {
+            PostSettings post = _tuning.Opening.Post;
+            _script.BeginFull(true);
+            TakeAll();
+            while (_script.Phase != OpeningPhase.Post)
+            {
+                Assert.IsFalse(_script.FastForward(), $"nothing to fast-forward in {_script.Phase}");
                 StepOnce();
             }
 
-            Assert.IsFalse(_script.ControlHeld);
+            Assert.AreEqual(0f, _script.PhaseTime, 1e-6f, "the lines' first frame");
+            Assert.IsFalse(_script.FastForward(), "never on the first frame: the press may be the one that started it");
+            while (_script.PhaseTime + Frame < post.FastForwardAfterSeconds)
+            {
+                StepOnce();
+                Assert.IsFalse(_script.FastForward(), $"too early at {_script.PhaseTime:0.00} s");
+            }
+
+            Assert.AreEqual(1f, _script.PostTimeScale);
+        }
+
+        [Test]
+        public void AKey_AfterTheFirstMoments_RunsTheRemainingLinesFaster_EveryLineStillInOrder()
+        {
+            PostSettings post = _tuning.Opening.Post;
+            _script.BeginFull(false);
+            TakeAll();
+            while (_script.Phase != OpeningPhase.Post || _script.PhaseTime < post.FastForwardAfterSeconds)
+            {
+                StepOnce();
+            }
+
+            float at = _script.PhaseTime;
+            Assert.IsTrue(_script.FastForward());
+            Assert.IsFalse(_script.FastForward(), "once is enough");
+            Assert.AreEqual(post.FastForwardScale, _script.PostTimeScale);
+            float seconds = 0f;
+            while (_script.Phase == OpeningPhase.Post)
+            {
+                StepOnce();
+                seconds += Frame;
+            }
+
+            float total = 0f;
+            for (int i = 0; i < post.LineCount; i++)
+            {
+                total += post.LineSeconds(i);
+            }
+
+            Assert.AreEqual((total - at) / post.FastForwardScale, seconds, 2f * Frame, "the rest runs that much faster");
+            Assert.AreEqual(1f, _script.PostTimeScale, "the ready hold and the moves keep their pace");
+            var started = new List<BootCheckStep>();
+            var completed = new List<BootCheckStep>();
+            foreach (PostEvent line in _lines)
+            {
+                if (line.Kind == PostEventKind.Started)
+                {
+                    started.Add(line.Step);
+                }
+                else if (line.Kind == PostEventKind.Completed)
+                {
+                    completed.Add(line.Step);
+                }
+            }
+
+            Assert.AreEqual(post.LineCount, started.Count, "every line still prints");
+            Assert.AreEqual(post.LineCount, completed.Count);
+            for (int i = 0; i < post.LineCount; i++)
+            {
+                Assert.AreEqual(post.LineStep(i), started[i]);
+                Assert.AreEqual(post.LineStep(i), completed[i]);
+            }
         }
 
         [Test]

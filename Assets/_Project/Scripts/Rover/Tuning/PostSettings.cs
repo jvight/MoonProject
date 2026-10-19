@@ -25,11 +25,11 @@ namespace MoonProject.Rover
         [Tooltip("After the last line: the readout holds its success, then gives way to the eyes. Longer than the " +
                  "readout's own linger on the face (UI), so the eyes are back before the camera moves.")]
         [Range(0.5f, 4f)]
-        [SerializeField] private float _readySeconds = 1.8f;
+        [SerializeField] private float _readySeconds = 1.2f;
 
         [Tooltip("Seconds into the ready hold when 07's eyes come back to its face, after the readout's linger.")]
         [Range(0.2f, 3f)]
-        [SerializeField] private float _readyEyesSeconds = 1.35f;
+        [SerializeField] private float _readyEyesSeconds = 0.9f;
 
         [Tooltip("The one eased move that pulls the camera back and out diagonally to the wide front three-quarter.")]
         [Range(1f, 4f)]
@@ -44,63 +44,21 @@ namespace MoonProject.Rover
         [Range(1f, 4f)]
         [SerializeField] private float _moveBehindSeconds = 1.8f;
 
-        [Header("The lines of information (s each)")]
-        [Tooltip("Why 07 woke: the orbital signal.")]
-        [Range(0.5f, 4f)]
-        [SerializeField] private float _carrierSeconds = 1.4f;
+        [Header("The lines")]
+        [Tooltip("The lines 07's self-test prints on its face, in step order, Carrier first and the Lamps check " +
+                 "included (07's lamps come on in it), each with its seconds. A check left out does not run: its " +
+                 "motion and sounds do not play and its part sheds all its dust in the ready shiver.")]
+        [SerializeField] private PostLine[] _lines = DefaultLines();
 
-        [Tooltip("07 resumes where it stopped, so many days later.")]
-        [Range(0.5f, 4f)]
-        [SerializeField] private float _resumeSeconds = 1.4f;
+        [Header("Fast-forward")]
+        [Tooltip("Seconds into the lines before a key press can fast-forward them, so no press, not even one held " +
+                 "over from New Game, skips the wake on its first frame.")]
+        [Range(0.2f, 3f)]
+        [SerializeField] private float _fastForwardAfterSeconds = 0.6f;
 
-        [Tooltip("The restored agenda: what 07 has to do.")]
-        [Range(0.5f, 4f)]
-        [SerializeField] private float _agendaSeconds = 1.6f;
-
-        [Header("The checks (s each)")]
-        [Tooltip("The iris focuses.")]
-        [Range(0.5f, 4f)]
-        [SerializeField] private float _lensSeconds = 1f;
-
-        [Tooltip("The lamps flicker unevenly, fall dark, then ramp up: at least the lamp power-up's own length.")]
-        [Range(1f, 5f)]
-        [SerializeField] private float _lampsSeconds = 2.4f;
-
-        [Tooltip("The neck and head sweep and nod.")]
-        [Range(0.5f, 4f)]
-        [SerializeField] private float _headSeconds = 1.8f;
-
-        [Tooltip("The four wheels twitch in turn.")]
-        [Range(0.5f, 4f)]
-        [SerializeField] private float _wheelsSeconds = 1.8f;
-
-        [Tooltip("The motor shudders and 07 creeps forward a little.")]
-        [Range(0.5f, 4f)]
-        [SerializeField] private float _motorSeconds = 1.6f;
-
-        [Tooltip("The cutter's turret tries to ignite two or three times and dies.")]
-        [Range(1f, 5f)]
-        [SerializeField] private float _cutterSeconds = 2.4f;
-
-        [Tooltip("The solar wing jerks half open, stalls and folds back.")]
-        [Range(1f, 5f)]
-        [SerializeField] private float _solarWingSeconds = 2f;
-
-        [Tooltip("The antenna rises and the orbit's signal hisses.")]
-        [Range(0.5f, 4f)]
-        [SerializeField] private float _antennaSeconds = 1.8f;
-
-        [Tooltip("The cell lamps fill to half.")]
-        [Range(0.5f, 4f)]
-        [SerializeField] private float _batterySeconds = 1.2f;
-
-        [Tooltip("The assembly line: no blueprints.")]
-        [Range(0.3f, 3f)]
-        [SerializeField] private float _assemblySeconds = 0.7f;
-
-        [Tooltip("The start line: the recovery begins (its motions are the ready performance, seen wide).")]
-        [Range(0.5f, 4f)]
-        [SerializeField] private float _beginSeconds = 1.4f;
+        [Tooltip("How many times faster the remaining lines run once a key fast-forwards them.")]
+        [Range(2f, 12f)]
+        [SerializeField] private float _fastForwardScale = 6f;
 
         [Header("The motions")]
         [Tooltip("How far (deg) the neck sweeps to each side in the head check: small, so the face stays toward the close-up.")]
@@ -138,6 +96,16 @@ namespace MoonProject.Rover
         [Tooltip("The cell lamps fill to this share of full (the battery's 50%).")]
         [Range(0.1f, 1f)]
         [SerializeField] private float _batteryFill = 0.5f;
+
+        public PostSettings()
+        {
+        }
+
+        /// <summary>Settings whose self-test prints <paramref name="lines"/>; every other value is its default.</summary>
+        public PostSettings(PostLine[] lines)
+        {
+            _lines = lines ?? throw new ArgumentNullException(nameof(lines));
+        }
 
         public float HeadSweepDegrees => _headSweepDegrees;
 
@@ -327,27 +295,92 @@ namespace MoonProject.Rover
 
         public float BeaconGlancePitch => _beaconGlancePitch;
 
-        /// <summary>Seconds the line <paramref name="step"/> takes on the face.</summary>
+        /// <summary>The lines 07's self-test prints, in their order.</summary>
+        public int LineCount => _lines.Length;
+
+        public float FastForwardAfterSeconds => _fastForwardAfterSeconds;
+
+        public float FastForwardScale => _fastForwardScale;
+
+        /// <summary>The step line <paramref name="index"/> prints.</summary>
+        public BootCheckStep LineStep(int index)
+        {
+            return _lines[index].Step;
+        }
+
+        /// <summary>Seconds line <paramref name="index"/> takes on the face.</summary>
+        public float LineSeconds(int index)
+        {
+            return _lines[index].Seconds;
+        }
+
+        /// <summary>True when the self-test prints <paramref name="step"/>'s line (and runs its check).</summary>
+        public bool Runs(BootCheckStep step)
+        {
+            return IndexOf(step) >= 0;
+        }
+
+        /// <summary>Seconds the line <paramref name="step"/> takes on the face, 0 when it is not printed.</summary>
         public float SecondsOf(BootCheckStep step)
         {
-            switch (step)
+            int index = IndexOf(step);
+            return index >= 0 ? _lines[index].Seconds : 0f;
+        }
+
+        /// <summary>Null when the lines are usable, else the first problem.</summary>
+        public string Validate()
+        {
+            if (_lines == null || _lines.Length == 0)
             {
-                case BootCheckStep.Carrier: return _carrierSeconds;
-                case BootCheckStep.Resume: return _resumeSeconds;
-                case BootCheckStep.Agenda: return _agendaSeconds;
-                case BootCheckStep.Lens: return _lensSeconds;
-                case BootCheckStep.Lamps: return _lampsSeconds;
-                case BootCheckStep.Head: return _headSeconds;
-                case BootCheckStep.Wheels: return _wheelsSeconds;
-                case BootCheckStep.Motor: return _motorSeconds;
-                case BootCheckStep.Cutter: return _cutterSeconds;
-                case BootCheckStep.SolarWing: return _solarWingSeconds;
-                case BootCheckStep.Antenna: return _antennaSeconds;
-                case BootCheckStep.Battery: return _batterySeconds;
-                case BootCheckStep.Assembly: return _assemblySeconds;
-                case BootCheckStep.Begin: return _beginSeconds;
-                default: return 0f;
+                return "the self-test has no lines";
             }
+
+            if (_lines[0] == null || _lines[0].Step != BootCheckStep.Carrier)
+            {
+                return "the self-test's first line must be the Carrier (it clears the face's log)";
+            }
+
+            for (int i = 1; i < _lines.Length; i++)
+            {
+                if (_lines[i] == null || _lines[i].Step <= _lines[i - 1].Step)
+                {
+                    return $"the self-test's line {i} is missing or out of step order";
+                }
+            }
+
+            return Runs(BootCheckStep.Lamps) ? null : "the self-test needs its Lamps line: 07's lamps come on in it";
+        }
+
+        private int IndexOf(BootCheckStep step)
+        {
+            for (int i = 0; i < _lines.Length; i++)
+            {
+                if (_lines[i].Step == step)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        /// <summary>
+        /// The opening's lines: who 07 is and why it woke, how long it slept, its agenda, the lamps coming on, the
+        /// cutter's missing igniter, the battery and the start. The other checks are left out for pace; they can be
+        /// put back here.
+        /// </summary>
+        private static PostLine[] DefaultLines()
+        {
+            return new[]
+            {
+                new PostLine(BootCheckStep.Carrier, 0.7f),
+                new PostLine(BootCheckStep.Resume, 0.8f),
+                new PostLine(BootCheckStep.Agenda, 1.4f),
+                new PostLine(BootCheckStep.Lamps, 1.2f),
+                new PostLine(BootCheckStep.Cutter, 1.4f),
+                new PostLine(BootCheckStep.Battery, 0.9f),
+                new PostLine(BootCheckStep.Begin, 0.6f),
+            };
         }
     }
 

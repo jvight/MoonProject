@@ -53,12 +53,19 @@ namespace MoonProject.Rover.PlayModeTests
         private const int TransitionWidth = 640;
         private const int TransitionHeight = 360;
         private const float BootTimeout = 30f;
-        private const int BootCheckStepCount = 14;
+        private const int BootCheckStepCount = (int)BootCheckStep.Begin + 1;
         private const float TextCheckEvery = 0.5f;
         private const float TitleQuietSeconds = 4f;
         private const float MaxUntouched = 45f;
-        private const float MinSelfTest = 28f;
-        private const float MaxSelfTest = 36f;
+        private const float MinSelfTest = 13f;
+        private const float MaxSelfTest = 18f;
+
+        /// <summary>The opening's lines, as the shipped tuning prints them (the other checks are left out for pace).</summary>
+        private static readonly BootCheckStep[] OpeningLines =
+        {
+            BootCheckStep.Carrier, BootCheckStep.Resume, BootCheckStep.Agenda, BootCheckStep.Lamps,
+            BootCheckStep.Cutter, BootCheckStep.Battery, BootCheckStep.Begin,
+        };
 
         /// <summary>The shot may turn this little (deg) and stray this little (m) off its push-in line.</summary>
         private const float ShotAngleSlack = 0.05f;
@@ -328,20 +335,11 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreEqual(1, Count(WakeBeat.FadedOut), "New Game faded the picture to black");
             Assert.AreEqual(1, _awoke, "RoverAwoke goes with the crackle, once");
             Assert.AreEqual(1, _body.FaceDirector.Director.BootCount, "the CRT face boots once, as the eyes come back");
-            Assert.That(chase - crackle, Is.InRange(MinSelfTest, MaxSelfTest), "the wake lasts about 32 s");
-            CollectionAssert.AreEqual(new[]
-            {
-                BootCheckStep.Carrier, BootCheckStep.Resume, BootCheckStep.Agenda, BootCheckStep.Lens,
-                BootCheckStep.Lamps, BootCheckStep.Head, BootCheckStep.Wheels, BootCheckStep.Motor,
-                BootCheckStep.Cutter, BootCheckStep.SolarWing, BootCheckStep.Antenna, BootCheckStep.Battery,
-                BootCheckStep.Assembly, BootCheckStep.Begin,
-            }, _checksStartedList, "the lines print in the story's order");
-            Assert.AreEqual(BootCheckStepCount, _checksStartedList.Count, "every line of the self-test is started");
-            Assert.AreEqual(BootCheckStepCount, _checksCompleted.Count, "and completed");
+            Assert.That(chase - crackle, Is.InRange(MinSelfTest, MaxSelfTest), "the wake lasts about 15 s");
+            CollectionAssert.AreEqual(OpeningLines, _checksStartedList, "the lines print in the story's order");
+            Assert.AreEqual(OpeningLines.Length, _checksCompleted.Count, "every line is completed");
             Assert.AreEqual(1, _checksFinished, "and the test finishes once");
-            Assert.AreEqual(BootCheckResult.Fault, _checksCompleted[BootCheckStep.Cutter]);
-            Assert.AreEqual(BootCheckResult.Jammed, _checksCompleted[BootCheckStep.SolarWing]);
-            Assert.AreEqual(BootCheckResult.ReceiveOnly, _checksCompleted[BootCheckStep.Antenna]);
+            Assert.AreEqual(BootCheckResult.Fault, _checksCompleted[BootCheckStep.Cutter], "the missing igniter");
             for (int i = 0; i < shots.Length; i++)
             {
                 Assert.IsTrue(taken[i], $"{shots[i].Name} was captured");

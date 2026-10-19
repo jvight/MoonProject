@@ -12,8 +12,22 @@ namespace MoonProject.Rover.Tests
         [SetUp]
         public void SetUp()
         {
-            _settings = new PostSettings();
+            _settings = PostSequencerTests.Full();
             _dust = new PostDust(_settings);
+        }
+
+        [Test]
+        public void APartWhoseCheckIsLeftOut_KeepsItsCoatUntilTheShiver_ThenIsClean()
+        {
+            var opening = new PostSettings();
+            Assert.IsFalse(opening.Runs(BootCheckStep.Wheels));
+            var dust = new PostDust(opening);
+            dust.Update(OpeningPhase.Post, BootCheckStep.Cutter, 0.5f);
+            Assert.AreEqual(1f, dust.Level(DustZone.Wheels), 1e-5f, "a later check does not strip it");
+            dust.Update(OpeningPhase.PullBack, BootCheckStep.Begin, 1f);
+            Assert.AreEqual(1f, dust.Level(DustZone.Wheels), 1e-5f, "still on as the camera pulls back");
+            dust.Update(OpeningPhase.Perform, BootCheckStep.Begin, 0.8f);
+            Assert.AreEqual(0f, dust.Level(DustZone.Wheels), 1e-5f, "the shiver, seen wide, shakes it all off");
         }
 
         [Test]

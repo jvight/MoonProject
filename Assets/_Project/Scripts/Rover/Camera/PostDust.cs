@@ -17,8 +17,9 @@ namespace MoonProject.Rover
     /// <summary>
     /// How much of the long-sleep regolith coat is still on each part of 07 during its wake, as a pure model
     /// (EditMode-tested): the whole coat is on from the black until the checks; each part sheds most of it while its
-    /// own check moves it; the ready performance's shiver shakes off the rest. It also counts what has fallen, so the opening
-    /// can drop a puff of dust at the part each time enough has gone.
+    /// own check moves it (a part whose check is not run keeps it all); the ready performance's shiver shakes off the
+    /// rest. It also counts what has fallen, so the opening can drop a puff of dust at the part each time enough has
+    /// gone.
     /// </summary>
     public sealed class PostDust
     {
@@ -86,18 +87,25 @@ namespace MoonProject.Rover
                     return DuringChecks(zone, step, p);
                 case OpeningPhase.Ready:
                 case OpeningPhase.PullBack:
-                    return _settings.DustSegmentOf(zone).Rest;
+                    return RestOf(zone);
                 case OpeningPhase.Perform:
-                    return _settings.DustSegmentOf(zone).Rest * (1f - PostMotions.ShiverProgress(p));
+                    return RestOf(zone) * (1f - PostMotions.ShiverProgress(p));
                 default:
                     return 0f;
             }
         }
 
+        /// <summary>Coat left on <paramref name="zone"/> after the checks: all of it when its check does not run.</summary>
+        private float RestOf(DustZone zone)
+        {
+            PostDustSegment segment = _settings.DustSegmentOf(zone);
+            return _settings.Runs(segment.Step) ? segment.Rest : 1f;
+        }
+
         private float DuringChecks(DustZone zone, BootCheckStep step, float p)
         {
             PostDustSegment segment = _settings.DustSegmentOf(zone);
-            if (step < segment.Step)
+            if (!_settings.Runs(segment.Step) || step < segment.Step)
             {
                 return 1f;
             }

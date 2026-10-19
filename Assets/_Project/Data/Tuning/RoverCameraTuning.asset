@@ -181,17 +181,23 @@ MonoBehaviour:
     _blinkLow: 0.25
     _blinkSigh: 0.5
     _post:
-      _lensSeconds: 1
-      _lampsSeconds: 2.4
-      _headSeconds: 1.8
-      _wheelsSeconds: 1.8
-      _motorSeconds: 1.6
-      _cutterSeconds: 2.4
-      _solarWingSeconds: 2
-      _antennaSeconds: 1.8
-      _batterySeconds: 1.2
-      _assemblySeconds: 0.7
-      _beginSeconds: 1.4
+      _lines:
+      - _step: 0
+        _seconds: 0.7
+      - _step: 1
+        _seconds: 0.8
+      - _step: 2
+        _seconds: 1.4
+      - _step: 4
+        _seconds: 1.2
+      - _step: 8
+        _seconds: 1.4
+      - _step: 11
+        _seconds: 0.9
+      - _step: 13
+        _seconds: 0.6
+      _fastForwardAfterSeconds: 0.6
+      _fastForwardScale: 6
       _headSweepDegrees: 10
       _headNodDegrees: 5
       _wheelTwitchDegrees: 14
@@ -248,9 +254,9 @@ MonoBehaviour:
       _fillOffset: 0.5
       _fillRampSeconds: 2.5
     _lampFlickerCount: 3
-    _lampFlickerSeconds: 0.9
-    _lampDarkGapSeconds: 0.35
-    _lampRampSeconds: 1.1
+    _lampFlickerSeconds: 0.55
+    _lampDarkGapSeconds: 0.15
+    _lampRampSeconds: 0.45
     _fadeOutSeconds: 0.6
     _fadeOutFrom: 0.1
     _titleDriftDelay: 20

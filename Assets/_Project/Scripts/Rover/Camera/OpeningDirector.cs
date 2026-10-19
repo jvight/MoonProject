@@ -3,6 +3,7 @@ using UnityEngine;
 using Unity.Cinemachine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
+using MoonProject.Core.Input;
 
 namespace MoonProject.Rover
 {
@@ -16,7 +17,8 @@ namespace MoonProject.Rover
     /// <item><see cref="SessionStarted"/> with a fresh game plays the full opening once: from the title the picture
     /// fades to black where the camera is (no camera move). In the black the shot camera takes the one fixed shot of
     /// 07's face (<see cref="PostShot"/>) and holds it: the picture opens, the face screen flickers on, the eyes blink
-    /// awake and the self-test prints on the face while each part does its check. A short dip to black
+    /// awake and the self-test prints on the face while each part does its check; any key after its first moments
+    /// fast-forwards the remaining lines (<see cref="OpeningScript.FastForward"/>). A short dip to black
     /// (<see cref="ILensView"/> darkens the picture) hands over to the chase frame in the dark.</item>
     /// <item>A loaded game plays the short wake: the title's frame eases back to the chase frame while 07's lid opens
     /// with one blink and it glances at Earth.</item>
@@ -79,6 +81,7 @@ namespace MoonProject.Rover
         private PostDust _dust;
         private GameContext _context;
         private EventBus _events;
+        private InputReader _input;
         private IRoverState _rover;
         private IRoverRig _roverRig;
         private IWorldLayout _world;
@@ -115,8 +118,17 @@ namespace MoonProject.Rover
                 return;
             }
 
+            if (context.Input == null)
+            {
+                Debug.LogError($"{nameof(OpeningDirector)}: the game context has no input; the wake's fast-forward " +
+                    "reads it.", this);
+                enabled = false;
+                return;
+            }
+
             _context = context;
             _events = context.Events;
+            _input = context.Input;
             _rover = context.Get<IRoverState>();
             _roverRig = context.Get<IRoverRig>();
             _world = context.Get<IWorldLayout>();
@@ -160,9 +172,17 @@ namespace MoonProject.Rover
             {
                 Debug.LogError($"{nameof(OpeningDirector)}: tuning, rig, rover, body, shot camera or the lander's " +
                     "beacon is not assigned; rebuild the Main scene.", this);
+                return false;
             }
 
-            return ok;
+            string lines = _tuning.Opening.Post.Validate();
+            if (lines != null)
+            {
+                Debug.LogError($"{nameof(OpeningDirector)}: {lines} ({nameof(RoverCameraTuning)}).", _tuning);
+                return false;
+            }
+
+            return true;
         }
 
         private void OnTitleShown(TitleShown shown)
@@ -317,7 +337,8 @@ namespace MoonProject.Rover
                 _brain.DefaultBlend = _savedBlend;
             }
 
-            _lamps.Step(deltaTime);
+            StepFastForward();
+            _lamps.Step(deltaTime * _script.PostTimeScale);
             _body.SetLampPower(_lamps.Level * PostMotions.Lamps(_script.Phase == OpeningPhase.Perform ? _script.Perform01 : 0f));
 
             _script.Step(deltaTime);
@@ -331,6 +352,20 @@ namespace MoonProject.Rover
             ApplyPicture();
             ApplyPostLights();
             ApplyPostDust();
+        }
+
+        /// <summary>A key pressed while the self-test prints fast-forwards its remaining lines (pause stays pause).</summary>
+        private void StepFastForward()
+        {
+            if (_script.Phase != OpeningPhase.Post || !_input.Menu.AnyPressed || _input.Menu.PausePressed)
+            {
+                return;
+            }
+
+            if (_script.FastForward())
+            {
+                _events.Publish(new BootCheckFastForwarded(_script.PostTimeScale));
+            }
         }
 
         private void TakeBeats()
@@ -465,8 +500,9 @@ namespace MoonProject.Rover
 
         /// <summary>
         /// What each check does on 07 beyond its head: the wheels' twitches, the motor's shudder and lurch, the
-        /// cutter's flashes and turret kicks, the wing's jerk, the antenna's rise (held through the later checks and
-        /// the ready performance, then lowered as the camera moves behind) and the performance's dust shiver.
+        /// cutter's flashes and turret kicks, the wing's jerk, the antenna's rise when its check runs (held through the
+        /// later checks and the ready performance, then lowered as the camera moves behind) and the performance's dust
+        /// shiver.
         /// </summary>
         private void ApplyPostMotion(float deltaTime)
         {
@@ -476,6 +512,7 @@ namespace MoonProject.Rover
             float flash = 0f;
             float antennaTarget = 0f;
             float eyeFocus = 0f;
+            bool antennaChecked = _tuning.Opening.Post.Runs(BootCheckStep.Antenna);
             if (_script.Phase == OpeningPhase.Post)
             {
                 PostMotions motions = _script.Motions;
@@ -508,14 +545,14 @@ namespace MoonProject.Rover
                         break;
                 }
 
-                if (step > BootCheckStep.Antenna)
+                if (step > BootCheckStep.Antenna && antennaChecked)
                 {
                     antennaTarget = motions.Antenna(1f);
                 }
             }
             else if (_script.Phase >= OpeningPhase.Ready && _script.Phase <= OpeningPhase.Perform)
             {
-                antennaTarget = _script.Motions.Antenna(1f);
+                antennaTarget = antennaChecked ? _script.Motions.Antenna(1f) : 0f;
                 motion.Shudder = PostMotions.Shiver(_script.Perform01) * _tuning.Opening.Post.ShudderMetres * ShiverScale;
             }
 

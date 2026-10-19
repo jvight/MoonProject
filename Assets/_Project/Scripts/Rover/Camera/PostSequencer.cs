@@ -42,38 +42,18 @@ namespace MoonProject.Rover
     }
 
     /// <summary>
-    /// The lines of 07's power-on self-test once its eyes are awake, as a pure clock (EditMode-tested): the three lines
-    /// of information (why 07 woke, the day it resumes, its agenda), then each check, every step in its order, for its
-    /// tuned seconds, announced when it starts and when it is done
-    /// with its result, with the check's pulses (each wheel twitch, spark, flicker; the continuous ramps ten times a
-    /// second) in between. The opening publishes the events as Core's <c>BootCheckStarted</c>/<c>Completed</c>/
-    /// <c>Finished</c>, and drives each step's motion from <see cref="Current"/> and <see cref="StepProgress01"/>.
-    /// Not skippable: only time moves it.
+    /// The lines of 07's power-on self-test once its eyes are awake, as a pure clock (EditMode-tested): the tuned
+    /// lines (<see cref="PostSettings.LineStep"/>) in their order, each for its tuned seconds, announced when it starts
+    /// and when it is done with its result, with the check's pulses (each wheel twitch, spark, flicker; the continuous
+    /// ramps ten times a second) in between. The opening publishes the events as Core's <c>BootCheckStarted</c>/
+    /// <c>Completed</c>/<c>Finished</c>, and drives each step's motion from <see cref="Current"/> and
+    /// <see cref="StepProgress01"/>. Only time moves it; the opening fast-forwards it by stepping it faster.
     /// </summary>
     public sealed class PostSequencer
     {
         private const int EventCapacity = 64;
         private const float ContinuousInterval = 0.1f;
         private const int LampRampIndex = 3;
-
-        /// <summary>The lines in order, with what each comes out as (the story, not tuning).</summary>
-        private static readonly (BootCheckStep Step, BootCheckResult Result)[] Checks =
-        {
-            (BootCheckStep.Carrier, BootCheckResult.Info),
-            (BootCheckStep.Resume, BootCheckResult.Info),
-            (BootCheckStep.Agenda, BootCheckResult.Info),
-            (BootCheckStep.Lens, BootCheckResult.Ok),
-            (BootCheckStep.Lamps, BootCheckResult.Ok),
-            (BootCheckStep.Head, BootCheckResult.Ok),
-            (BootCheckStep.Wheels, BootCheckResult.Ok),
-            (BootCheckStep.Motor, BootCheckResult.Ok),
-            (BootCheckStep.Cutter, BootCheckResult.Fault),
-            (BootCheckStep.SolarWing, BootCheckResult.Jammed),
-            (BootCheckStep.Antenna, BootCheckResult.ReceiveOnly),
-            (BootCheckStep.Battery, BootCheckResult.Ok),
-            (BootCheckStep.Assembly, BootCheckResult.Info),
-            (BootCheckStep.Begin, BootCheckResult.Info),
-        };
 
         private readonly PostSettings _settings;
         private readonly LampPowerUp _lamps;
@@ -93,7 +73,7 @@ namespace MoonProject.Rover
         }
 
         /// <summary>The number of lines, the information lines included.</summary>
-        public static int StepCount => Checks.Length;
+        public int StepCount => _settings.LineCount;
 
         /// <summary>True from <see cref="Begin"/> until the last step is done.</summary>
         public bool IsRunning { get; private set; }
@@ -102,7 +82,7 @@ namespace MoonProject.Rover
         public bool IsFinished { get; private set; }
 
         /// <summary>The step under way (meaningful while <see cref="IsRunning"/>).</summary>
-        public BootCheckStep Current => _index >= 0 && _index < Checks.Length ? Checks[_index].Step : BootCheckStep.Carrier;
+        public BootCheckStep Current => _index >= 0 && _index < StepCount ? _settings.LineStep(_index) : BootCheckStep.Carrier;
 
         /// <summary>How far through the current step, 0..1.</summary>
         public float StepProgress01 => _stepLength > 1e-4f ? Mathf.Clamp01(_stepTime / _stepLength) : 1f;
@@ -113,9 +93,9 @@ namespace MoonProject.Rover
             get
             {
                 float total = 0f;
-                for (int i = 0; i < Checks.Length; i++)
+                for (int i = 0; i < StepCount; i++)
                 {
-                    total += _settings.SecondsOf(Checks[i].Step);
+                    total += _settings.LineSeconds(i);
                 }
 
                 return total;
@@ -144,7 +124,8 @@ namespace MoonProject.Rover
             {
                 float carry = _stepTime - _stepLength;
                 EmitPulses(_stepLength);
-                Publish(new PostEvent(PostEventKind.Completed, Checks[_index].Step, Checks[_index].Result));
+                BootCheckStep step = _settings.LineStep(_index);
+                Publish(new PostEvent(PostEventKind.Completed, step, ResultOf(step)));
                 Advance();
                 _stepTime = carry;
             }
@@ -174,7 +155,7 @@ namespace MoonProject.Rover
         {
             _index++;
             _stepTime = 0f;
-            if (_index >= Checks.Length)
+            if (_index >= StepCount)
             {
                 IsRunning = false;
                 IsFinished = true;
@@ -183,16 +164,16 @@ namespace MoonProject.Rover
                 return;
             }
 
-            _stepLength = _settings.SecondsOf(Checks[_index].Step);
+            _stepLength = _settings.LineSeconds(_index);
             _pulsesSent = 0;
             _nextTick = 0f;
-            Publish(new PostEvent(PostEventKind.Started, Checks[_index].Step, BootCheckResult.Info));
+            Publish(new PostEvent(PostEventKind.Started, _settings.LineStep(_index), BootCheckResult.Info));
         }
 
         /// <summary>Publishes the current check's pulses that fall at or before <paramref name="time"/> into the check.</summary>
         private void EmitPulses(float time)
         {
-            BootCheckStep step = Checks[_index].Step;
+            BootCheckStep step = _settings.LineStep(_index);
             if (step == BootCheckStep.Lamps)
             {
                 EmitLampPulses(time);
@@ -244,6 +225,29 @@ namespace MoonProject.Rover
                 float progress = end > start ? Mathf.Clamp01((_nextTick - start) / (end - start)) : 1f;
                 Publish(new PostEvent(PostEventKind.Pulse, step, BootCheckResult.Info, index, progress));
                 _nextTick += ContinuousInterval;
+            }
+        }
+
+        /// <summary>What <paramref name="step"/> comes out as: the story, not tuning.</summary>
+        public static BootCheckResult ResultOf(BootCheckStep step)
+        {
+            switch (step)
+            {
+                case BootCheckStep.Lens:
+                case BootCheckStep.Lamps:
+                case BootCheckStep.Head:
+                case BootCheckStep.Wheels:
+                case BootCheckStep.Motor:
+                case BootCheckStep.Battery:
+                    return BootCheckResult.Ok;
+                case BootCheckStep.Cutter:
+                    return BootCheckResult.Fault;
+                case BootCheckStep.SolarWing:
+                    return BootCheckResult.Jammed;
+                case BootCheckStep.Antenna:
+                    return BootCheckResult.ReceiveOnly;
+                default:
+                    return BootCheckResult.Info;
             }
         }
 

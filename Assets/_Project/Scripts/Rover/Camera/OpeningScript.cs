@@ -14,7 +14,8 @@ namespace MoonProject.Rover
     /// its body still is. The beats it reaches queue up for <see cref="TryTakeBeat"/>; the self-test's lines and the
     /// performance's sounds and blinks queue up for <see cref="TryTakePostEvent"/>.
     /// <list type="bullet">
-    /// <item>Not skippable: only time moves it, and 07 is held (<see cref="ControlHeld"/>) until the chase frame.</item>
+    /// <item>A key can fast-forward the self-test's lines (<see cref="FastForward"/>), never on their first frame;
+    /// nothing else skips, and 07 is held (<see cref="ControlHeld"/>) until the chase frame.</item>
     /// <item>Continue plays the short wake instead: the lid opens in one move with one blink, then a glance at
     /// Earth that never holds control.</item>
     /// </list>
@@ -43,6 +44,7 @@ namespace MoonProject.Rover
         private float _glanceClock;
         private bool _blinked;
         private bool _eyesBack;
+        private bool _fastForward;
         private int _performPulsesSent;
         private int _performBlinksSent;
 
@@ -110,6 +112,9 @@ namespace MoonProject.Rover
         /// <summary>The short wake's glance at Earth is on.</summary>
         public bool GlancingEarth => _glanceClock >= 0f && _glanceClock < _settings.ShortGlanceSeconds;
 
+        /// <summary>How fast the self-test's lines run: the fast-forward's scale once a key sped them up, else 1.</summary>
+        public float PostTimeScale => _fastForward && Phase == OpeningPhase.Post ? _postSettings.FastForwardScale : 1f;
+
         /// <summary>Control is held from the fade to black until the chase frame (and through the short wake).</summary>
         public bool ControlHeld => Phase != OpeningPhase.Idle;
 
@@ -127,6 +132,22 @@ namespace MoonProject.Rover
             Reset();
             Enter(OpeningPhase.ShortWake);
             Evaluate();
+        }
+
+        /// <summary>
+        /// A key asks to fast-forward the remaining lines: granted once, while they print and only after
+        /// <see cref="PostSettings.FastForwardAfterSeconds"/> of them, so no press skips the wake on its first frame.
+        /// The lines then run <see cref="PostSettings.FastForwardScale"/> times faster, each still announced in order.
+        /// </summary>
+        public bool FastForward()
+        {
+            if (Phase != OpeningPhase.Post || _fastForward || _phaseTime < _postSettings.FastForwardAfterSeconds)
+            {
+                return false;
+            }
+
+            _fastForward = true;
+            return true;
         }
 
         /// <summary>Stops everything at once (a scene going away).</summary>
@@ -183,11 +204,12 @@ namespace MoonProject.Rover
             }
 
             Elapsed += deltaTime;
-            _phaseTime += deltaTime;
+            float phaseDelta = deltaTime * PostTimeScale;
+            _phaseTime += phaseDelta;
             StepClocks(deltaTime);
             if (Phase == OpeningPhase.Post)
             {
-                StepPost(deltaTime);
+                StepPost(phaseDelta);
             }
 
             while (Phase != OpeningPhase.Idle && Phase != OpeningPhase.Post && _phaseTime >= _phaseLength)
@@ -212,6 +234,7 @@ namespace MoonProject.Rover
             _glanceClock = -1f;
             _blinked = false;
             _eyesBack = false;
+            _fastForward = false;
             _performPulsesSent = 0;
             _performBlinksSent = 0;
             Picture01 = 1f;

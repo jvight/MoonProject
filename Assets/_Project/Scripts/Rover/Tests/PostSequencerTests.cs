@@ -1,10 +1,15 @@
 using System.Collections.Generic;
 using NUnit.Framework;
+using UnityEditor;
 using MoonProject.Core;
+using MoonProject.Rover.Editor;
 
 namespace MoonProject.Rover.Tests
 {
-    /// <summary>The self-test's clock: every check in order, announced twice, never skipped, ended by Finished.</summary>
+    /// <summary>
+    /// The self-test's clock: every tuned line in order, announced twice, never skipped, ended by Finished. The motion
+    /// tests run every check (<see cref="Full"/>), since the opening's own lines leave some out for pace.
+    /// </summary>
     public sealed class PostSequencerTests
     {
         private const float Frame = 1f / 60f;
@@ -17,7 +22,39 @@ namespace MoonProject.Rover.Tests
         [SetUp]
         public void SetUp()
         {
-            _settings = new PostSettings();
+            Use(Full());
+        }
+
+        /// <summary>Every check of the self-test, at the seconds they had before the opening was cut for pace.</summary>
+        internal static PostSettings Full()
+        {
+            return new PostSettings(new[]
+            {
+                new PostLine(BootCheckStep.Carrier, 1.4f),
+                new PostLine(BootCheckStep.Resume, 1.4f),
+                new PostLine(BootCheckStep.Agenda, 1.6f),
+                new PostLine(BootCheckStep.Lens, 1f),
+                new PostLine(BootCheckStep.Lamps, 2.4f),
+                new PostLine(BootCheckStep.Head, 1.8f),
+                new PostLine(BootCheckStep.Wheels, 1.8f),
+                new PostLine(BootCheckStep.Motor, 1.6f),
+                new PostLine(BootCheckStep.Cutter, 2.4f),
+                new PostLine(BootCheckStep.SolarWing, 2f),
+                new PostLine(BootCheckStep.Antenna, 1.8f),
+                new PostLine(BootCheckStep.Battery, 1.2f),
+                new PostLine(BootCheckStep.Assembly, 0.7f),
+                new PostLine(BootCheckStep.Begin, 1.4f),
+            });
+        }
+
+        private static PostSettings Shipped()
+        {
+            return AssetDatabase.LoadAssetAtPath<RoverCameraTuning>(RoverAssetPaths.CameraTuning).Opening.Post;
+        }
+
+        private void Use(PostSettings settings)
+        {
+            _settings = settings;
             _post = new PostSequencer(_settings, new LampPowerUp(new OpeningSettings()));
             _events.Clear();
             _all.Clear();
@@ -62,9 +99,9 @@ namespace MoonProject.Rover.Tests
             _post.Begin();
             Drain();
             RunToEnd();
-            Assert.AreEqual(PostSequencer.StepCount * 2 + 1, _events.Count);
+            Assert.AreEqual(_post.StepCount * 2 + 1, _events.Count);
             BootCheckStep expected = BootCheckStep.Carrier;
-            for (int i = 0; i < PostSequencer.StepCount; i++)
+            for (int i = 0; i < _post.StepCount; i++)
             {
                 PostEvent started = _events[2 * i];
                 PostEvent completed = _events[2 * i + 1];
@@ -131,7 +168,7 @@ namespace MoonProject.Rover.Tests
             }
 
             Assert.IsTrue(_post.IsFinished);
-            Assert.AreEqual(PostSequencer.StepCount * 2 + 1, _events.Count);
+            Assert.AreEqual(_post.StepCount * 2 + 1, _events.Count);
             Assert.AreEqual(PostEventKind.Finished, _events[_events.Count - 1].Kind);
         }
 
@@ -202,7 +239,8 @@ namespace MoonProject.Rover.Tests
             }
 
             CollectionAssert.AreEqual(new[] { 0, 1, 2 }, flickers);
-            Assert.AreEqual(1.1f * 10f, ramp.Count, 2f, "the ramp is ticked about ten times a second");
+            Assert.AreEqual(new OpeningSettings().LampRampSeconds * 10f, ramp.Count, 2f,
+                "the ramp is ticked about ten times a second");
             Assert.AreEqual(0f, ramp[0], 1e-3f);
             Assert.AreEqual(1f, ramp[ramp.Count - 1], 0.12f, "and ends at full");
             for (int i = 1; i < ramp.Count; i++)
@@ -258,15 +296,77 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void TheLines_FitTheBriefOnceTheEyesAreAwake()
+        public void TheOpeningsLines_TakeAtMostEightSeconds()
         {
-            Assert.That(_post.TotalSeconds, Is.InRange(20f, 28f), "The lines on the face, after the eyes wake.");
+            foreach (PostSettings settings in new[] { new PostSettings(), Shipped() })
+            {
+                Use(settings);
+                Assert.That(_post.TotalSeconds, Is.InRange(6f, 8f), "the lines on the face, after the eyes wake");
+            }
+        }
+
+        [Test]
+        public void TheOpeningsLines_KeepWhoWokeAndTheMissingIgniter_AndRunInTheirOrder()
+        {
+            foreach (PostSettings settings in new[] { new PostSettings(), Shipped() })
+            {
+                Assert.IsNull(settings.Validate());
+                Assert.IsTrue(settings.Runs(BootCheckStep.Carrier), "07's name and why it woke");
+                Assert.IsTrue(settings.Runs(BootCheckStep.Cutter), "the missing igniter the opening asks for");
+                Use(settings);
+                _post.Begin();
+                Drain();
+                RunToEnd();
+                Assert.AreEqual(settings.LineCount * 2 + 1, _events.Count);
+                for (int i = 0; i < settings.LineCount; i++)
+                {
+                    Assert.AreEqual(settings.LineStep(i), _events[2 * i].Step);
+                    Assert.AreEqual(settings.LineStep(i), _events[2 * i + 1].Step);
+                }
+            }
+        }
+
+        [Test]
+        public void ACheckLeftOut_IsNeverAnnounced_NorPulsed()
+        {
+            Use(new PostSettings());
+            Assert.IsFalse(_settings.Runs(BootCheckStep.Wheels));
+            _post.Begin();
+            Drain();
+            RunToEnd();
+            foreach (PostEvent postEvent in _all)
+            {
+                Assert.AreNotEqual(BootCheckStep.Wheels, postEvent.Step);
+            }
+
+            Assert.AreEqual(0f, _settings.SecondsOf(BootCheckStep.Wheels));
+        }
+
+        [Test]
+        public void Lines_WithoutTheCarrierFirst_OutOfOrder_OrWithoutTheLamps_AreRefused()
+        {
+            Assert.IsNotNull(new PostSettings(new PostLine[0]).Validate(), "no lines");
+            Assert.IsNotNull(new PostSettings(new[] { new PostLine(BootCheckStep.Lamps, 1.2f) }).Validate(),
+                "the carrier comes first: it clears the face's log");
+            Assert.IsNotNull(new PostSettings(new[]
+            {
+                new PostLine(BootCheckStep.Carrier, 1f),
+                new PostLine(BootCheckStep.Cutter, 1f),
+                new PostLine(BootCheckStep.Lamps, 1f),
+            }).Validate(), "out of step order");
+            Assert.IsNotNull(new PostSettings(new[]
+            {
+                new PostLine(BootCheckStep.Carrier, 1f),
+                new PostLine(BootCheckStep.Cutter, 1f),
+            }).Validate(), "07's lamps come on in the lamps check");
+            Assert.IsNull(Full().Validate());
         }
 
         [Test]
         public void TheLampsCheck_IsAsLongAsTheLampPowerUp()
         {
             var lamps = new LampPowerUp(new OpeningSettings());
+            Assert.GreaterOrEqual(new PostSettings().SecondsOf(BootCheckStep.Lamps), lamps.TotalSeconds);
             Assert.GreaterOrEqual(_settings.SecondsOf(BootCheckStep.Lamps), lamps.TotalSeconds);
         }
     }
