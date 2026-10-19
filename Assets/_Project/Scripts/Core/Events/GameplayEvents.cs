@@ -785,4 +785,33 @@ namespace MoonProject.Core.Events
 
         public int Index { get; }
     }
+
+    /// <summary>
+    /// The charging pad's lock closed on 07: its wheel chocks stand and its side clamp arms have swung in against its
+    /// flanks (the soft mechanical thunk), at <see cref="Position"/>. Raised once per lock, not for a lock a loaded game
+    /// shows silently.
+    /// </summary>
+    public readonly struct PadLockClosed
+    {
+        public PadLockClosed(Vector3 position)
+        {
+            Position = position;
+        }
+
+        public Vector3 Position { get; }
+    }
+
+    /// <summary>
+    /// The charging pad's lock began to let 07 go (the battery is full, or the player pushed the throttle): the clamp
+    /// arms open first, the chocks last.
+    /// </summary>
+    public readonly struct PadLockOpened
+    {
+        public PadLockOpened(Vector3 position)
+        {
+            Position = position;
+        }
+
+        public Vector3 Position { get; }
+    }
 }
