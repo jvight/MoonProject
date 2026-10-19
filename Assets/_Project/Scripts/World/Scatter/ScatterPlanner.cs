@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 using MoonProject.Core;
 
@@ -29,6 +30,10 @@ namespace MoonProject.World
         private const float RubbleSquatMin = 0.8f;
         private const float RubbleSquatMax = 1.3f;
         private const float RubbleBurial = 0.15f;
+
+        // A rubble stone's ground normal comes from three height samples this far apart, metres: a stone needs only the
+        // ground's lean, and the full five-sample normal would double the plan's cost.
+        private const float RubbleNormalStep = 0.25f;
 
         // A pebble in a lane is held to this share of the cobble cutoff: below it, so it never gets a collider.
         private const float LaneCobbleShare = 0.95f;
@@ -380,8 +385,15 @@ namespace MoonProject.World
             float cell = _settings.RubbleSpacing;
             float radius = _surface.DrivableRadius;
             int cells = Mathf.CeilToInt(radius / cell);
-            for (int j = -cells; j < cells; j++)
+            int planned = instances.Count;
+
+            // Tens of thousands of stones each sample the ground: the grid's rows are planned side by side, each into
+            // its own list, and joined in order, so the plan stays the same from run to run.
+            var rows = new List<ScatterInstance>[2 * cells];
+            Parallel.For(0, rows.Length, row =>
             {
+                int j = row - cells;
+                var stones = new List<ScatterInstance>();
                 for (int i = -cells; i < cells; i++)
                 {
                     float x = (i + Hashing.ToUnit(Hashing.Hash(i, j, 1, seed))) * cell;
@@ -394,13 +406,18 @@ namespace MoonProject.World
                     float chance = Mathf.Lerp(_settings.RubbleSparse, _settings.RubbleDense, RubblePatch(x, z));
                     if (Hashing.ToUnit(Hashing.Hash(i, j, 3, seed)) < chance)
                     {
-                        AddStone(instances, x, z, Hashing.Hash(i, j, 4, seed));
+                        AddStone(stones, x, z, Hashing.Hash(i, j, 4, seed));
                     }
                 }
+
+                rows[row] = stones;
+            });
+            foreach (List<ScatterInstance> stones in rows)
+            {
+                instances.AddRange(stones);
             }
 
-            int boulders = instances.Count;
-            for (int b = 0; b < boulders; b++)
+            for (int b = 0; b < planned; b++)
             {
                 ScatterInstance boulder = instances[b];
                 if (boulder.Kind != ScatterKind.Boulder)
@@ -436,7 +453,9 @@ namespace MoonProject.World
                 return;
             }
 
-            Vector3 normal = _surface.SampleNormal(x, z);
+            float height = _surface.SampleHeight(x, z);
+            var normal = new Vector3(height - _surface.SampleHeight(x + RubbleNormalStep, z), RubbleNormalStep,
+                height - _surface.SampleHeight(x, z + RubbleNormalStep)).normalized;
             if (normal.y < _pebbleMaxSlopeCos)
             {
                 return;
@@ -445,7 +464,7 @@ namespace MoonProject.World
             float yaw = Hashing.ToUnit(Hashing.Mix(shape ^ 0x5bd1e995u)) * 360f;
             float squat = Mathf.Lerp(RubbleSquatMin, RubbleSquatMax, Hashing.ToUnit(Hashing.Mix(shape ^ 0x165667b1u)));
             float burial = size * squat * RubbleBurial * Hashing.ToUnit(Hashing.Mix(shape ^ 0xfd7046c5u));
-            instances.Add(new ScatterInstance(ScatterKind.Rubble, new Vector3(x, _surface.SampleHeight(x, z), z),
+            instances.Add(new ScatterInstance(ScatterKind.Rubble, new Vector3(x, height, z),
                 normal, yaw, size, (int)(shape >> 1), new Vector3(1f, squat, 1f), burial));
         }
 
