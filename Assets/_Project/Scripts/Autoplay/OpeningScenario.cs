@@ -285,13 +285,13 @@ namespace MoonProject.Autoplay
 
         private IEnumerator TheRuins()
         {
-            Begin("B7", "The Lumen ruins: scan the array and the airlock, cut the lockers");
+            Begin("B7", "The Lumen ruins: scan the array and the airlock, cut the array's panels and junction box");
             yield return _base.ExpectLine(OpeningKeys.FindSolar, "B7: the reserve is spent");
             yield return _base.DriveToTheRuinsGate("the Lumen ruins");
             yield return _base.ScanTheSet("ruin.FallenSolarArray");
             yield return _base.ReadTheAirlockPanel();
-            yield return _base.CutTheCrates("KenjiWorkshop");
-            _bot.EndBeat("the fallen array scanned, the airlock panel read, the workshop lockers cut");
+            yield return _base.CutTheCrates("FallenSolarArray");
+            _bot.EndBeat("the fallen array scanned, the airlock panel read, its panels and junction box cut");
         }
 
         private IEnumerator BuildTheArray()
@@ -306,7 +306,7 @@ namespace MoonProject.Autoplay
 
         private IEnumerator TheHabitat()
         {
-            Begin("B9", "The habitat: scan the modules, cut the cable reel, build the battery bank");
+            Begin("B9", "The habitat: scan the modules, cut the cable reel and power module, build the bank");
             yield return _base.ExpectLine(OpeningKeys.BuildBatteryBank, "B9: night is coming");
             yield return _base.ScanTheSet("ruin.HabitatModules");
             yield return _base.CutTheCrates("HabitatModules");

@@ -57,7 +57,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         public IEnumerator TheOpening_FromTheWakeToTheWestSignal_OneLineAtATime_AndALoadKeepsIt()
         {
             string slot = BootstrapHarness.NewTestSlot();
-            Boot(slot, true);
+            Boot(slot);
             yield return null;
             yield return null;
             OpeningField opening = _fixture.Gameplay.Opening;
@@ -88,8 +88,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(kit.CarriesIgniter, "B4: a held E takes the spare igniter from the lander's open crate");
             Assert.AreEqual(2, _parts.Count, "with a pickup note each: the igniter and Ines's ice core");
             CargoHold hold = _fixture.Gameplay.Materials.Hold;
-            Assert.AreEqual(4, hold.Units(SalvageMaterial.Metal), "07's Metal 2 and the crate's 2");
-            Assert.AreEqual(2, hold.Units(SalvageMaterial.Wiring), "07's Wiring 1 and the crate's 1");
+            Assert.AreEqual(4, hold.Units(SalvageMaterial.Metal), "the charger kit's Metal 4, into an empty hold");
+            Assert.AreEqual(2, hold.Units(SalvageMaterial.Wiring), "and its Wiring 2: the pad's whole cost");
             Assert.AreEqual(OpeningKeys.BuildPad, opening.Flow.Current);
 
             Vector3 apron = _fixture.World.Anchor("place.apron").Position;
@@ -202,15 +202,15 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             SupplyCaches caches = _fixture.Gameplay.Opening.Caches;
-            Assert.AreEqual(9, caches.Count, "the opening's crates (opening-v2 §4, §10; none loose by the lander)");
-            SealedContainer crate = _fixture.Gameplay.Containers.Find("supply.wake");
-            Assert.IsNotNull(crate, "the wake crate is a sealed container the cutter opens");
-            _fixture.Gameplay.Containers.StandOpen("supply.wake");
-            _fixture.Bootstrap.Context.Events.Publish(new ContainerOpened("supply.wake", crate.Kind,
+            Assert.AreEqual(8, caches.Count, "the opening's fixed sources (opening-v3 §4: no small crates)");
+            SealedContainer crate = _fixture.Gameplay.Containers.Find("supply.array.junction");
+            Assert.IsNotNull(crate, "the fallen array's junction box is a sealed container the cutter opens");
+            _fixture.Gameplay.Containers.StandOpen("supply.array.junction");
+            _fixture.Bootstrap.Context.Events.Publish(new ContainerOpened("supply.array.junction", crate.Kind,
                 crate.CutPoint.position));
             CargoHold hold = _fixture.Gameplay.Materials.Hold;
-            Assert.AreEqual(3, hold.Units(SalvageMaterial.Metal), "the wake crate's Metal 3");
-            Assert.AreEqual(1, hold.Units(SalvageMaterial.Wiring), "and its Wiring 1");
+            Assert.AreEqual(2, hold.Units(SalvageMaterial.Wiring), "the junction box's Wiring 2");
+            Assert.AreEqual(0, hold.Units(SalvageMaterial.Metal), "and nothing the solar array does not use");
         }
 
         [UnityTest]
@@ -218,13 +218,13 @@ namespace MoonProject.Gameplay.PlayModeTests
         {
             Boot(null);
             yield return null;
-            SealedContainer crate = _fixture.Gameplay.Containers.Find("supply.wake");
+            SealedContainer crate = _fixture.Gameplay.Containers.Find("supply.array.junction");
             Vector3 front = crate.CutPoint.position + crate.Root.forward * 1.6f;
             float facing = Quaternion.LookRotation(-crate.Root.forward).eulerAngles.y;
             _fixture.Rover.Place(new Vector3(front.x, 0f, front.z), facing);
             yield return null;
             yield return null;
-            Assert.AreEqual(crate, _fixture.Gameplay.Containers.Candidate, "07 faces the wake crate's seal");
+            Assert.AreEqual(crate, _fixture.Gameplay.Containers.Candidate, "07 faces the junction box's seal");
             for (int press = 0; press < 2; press++)
             {
                 Press(_keyboard.eKey);
@@ -240,8 +240,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                            hint.Ready, "the cut hint shows as not ready");
         }
 
-        /// <param name="spares">07 wakes with its spares in the hold (Metal 2, Wiring 1: the opening's start).</param>
-        private void Boot(string slot, bool spares = false)
+        private void Boot(string slot)
         {
             _milestoneToken?.Dispose();
             _reserveToken?.Dispose();
@@ -251,7 +250,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _parts.Clear();
             _systems.Clear();
             _refused.Clear();
-            _fixture = GameplayFixture.Boot(_controls, slot, spares: spares, startKit: true);
+            _fixture = GameplayFixture.Boot(_controls, slot, startKit: true);
             EventBus events = _fixture.Bootstrap.Context.Events;
             _milestoneToken = events.Subscribe<OpeningMilestoneReached>(_milestones.Add);
             _reserveToken = events.Subscribe<LanderReserveChanged>(_reserve.Add);
