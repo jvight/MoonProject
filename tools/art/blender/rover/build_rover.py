@@ -147,6 +147,7 @@ DIMENSIONS = {
     "piv_front_intake_roller_local": (0.0, -0.01, 0.012),
     "piv_cutter_turret": (0.0, 0.72, 0.55),
     "piv_cutter_head_local": (0.0, 0.0, 0.05),
+    "piv_cutter_igniter_local": (0.092, 0.024, 0.222),
     "piv_cutter_origin_local": (0.0, 0.01, 0.12),
     "piv_stitch_origin_local": (0.0, -0.04, 0.11),
     "piv_coil_socket_t1_local": (0.0, 0.0, 0.04),
@@ -178,6 +179,7 @@ DIMENSIONS = {
     "piv_antenna": (0.36, 0.91, -0.46),
     "piv_sonar_loop_local": (0.0, 0.14, 0.0),
     "piv_antenna_tip_local": (0.0, 0.66, 0.0),
+    "piv_antenna_segment2_local": (0.0, 0.28, 0.0),
     "piv_arm_x": 0.42,
     "piv_arm_y": 0.46,
     "piv_arm_z": 0.31,
@@ -334,6 +336,13 @@ MATERIALS = {
         "emission_color": (0.0, 0.0, 0.0),
         "emission_strength": 0.0,
     },
+    "R1_WhitePaint": {
+        "base_color": (0.86, 0.85, 0.81),
+        "metallic": 0.04,
+        "roughness": 0.38,
+        "emission_color": (0.0, 0.0, 0.0),
+        "emission_strength": 0.0,
+    },
 }
 
 
@@ -374,7 +383,14 @@ def main(argv=None):
     rv_objs = list(bpy.data.objects)
     rv_meshes = [o for o in rv_objs if o.type == "MESH"]
     rv_bake_meshes = [o for o in rv_meshes if not o.name.startswith("Decal_KA_")]
+    seg2_obj = bpy.data.objects.get("Antenna_Segment2")
+    if seg2_obj is not None:
+        seg2_obj.location.z += 0.35
+        bpy.context.view_layer.update()
     bake_vertex_colors(rv_bake_meshes, rover_cfg=DIMENSIONS, include_ground_occluder=True)
+    if seg2_obj is not None:
+        seg2_obj.location.z -= 0.35
+        bpy.context.view_layer.update()
     export_fbx(rv_objs, fbx_out_dir / "RoverModel.fbx", bake_space_transform=True)
     rv_stats = count_model_stats(rv_objs)
 

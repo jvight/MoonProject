@@ -170,6 +170,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 GlowMaterial(shader, GlowRole.Flash), GlowMaterial(shader, GlowRole.PieceHalo),
                 Asset<FeelVfxTuning>());
             visuals.PopulateHologram(GlowMaterial(shader, GlowRole.PieceHalo), GlowMaterial(shader, GlowRole.Flash));
+            visuals.PopulateCable(GlowMaterial(shader, GlowRole.PieceHalo));
             visuals.PopulateContainers(new[]
             {
                 CrateTemplate(ContainerKinds.CrateM, 0.9f), CrateTemplate(ContainerKinds.CrateL, 1.2f),
@@ -207,6 +208,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Gameplay.WireLanderPort(Node("ServicePort", root.transform, new Vector3(35f, 0f, 157f)));
             Gameplay.WireApronOutline(Node("BayGlowOutline", root.transform, Vector3.zero).gameObject
                 .AddComponent<MeshRenderer>());
+            Gameplay.WireApronCableChannel(Node("CableChannel_Anchor", root.transform, Vector3.zero));
             Gameplay.WireOpening(OpeningTuning, BaseTuning);
             root.SetActive(true);
 

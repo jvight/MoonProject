@@ -17,6 +17,7 @@ from synth.loop import periodic
 
 from sampled import base as sampled_base
 from sampled import boot as sampled_boot
+from sampled import call as sampled_call
 from sampled import face as sampled_face
 from sampled import rover as sampled_rover
 from sampled import picks
@@ -818,6 +819,17 @@ CUES = (
         notes="07 lifting a part (Collect Act): a soft servo whirr rising A2 -> D3."),
     Cue("pickup_clunk", "tick_3d", feel.pickup_clunk, volume=(0.8, 0.8), milestone="M3",
         notes="The part seating on 07's back (Collect Impact): a solid little clunk on D."),
+    Cue("call_carrier", "loop_3d", picks.renderer("call_carrier"), loop=True, file_stem="call_carrier_loop",
+        volume=(0.35, 0.35), milestone="M3", sampled=True,
+        notes="Opening v3 2.1, the call: Lumen's sign (three short, one long) on A5 from the Ark IV sweep beside "
+              "Earth, faint and far. 4 s seamless; the game breaks it up on reserve and swells it with 07's facing."),
+    Cue("call_answered", "loop_3d", picks.renderer("call_answered"), loop=True, file_stem="call_answered_loop",
+        volume=(0.35, 0.35), milestone="M3", sampled=True,
+        notes="The call answered: the sign on A5, then relay.1 keying it back on E5, softer. 6 s seamless."),
+    Cue("call_decoded", "tick_3d", picks.renderer("call_decoded"), variants=sampled_call.SOUNDS["call_decoded"][1],
+        volume=(0.35, 0.35), milestone="M3", sampled=True,
+        notes="A character of the sender's name decoded (CallDecoded): one soft bowed-metal note climbing "
+              "E4 F#4 A4 B4, landing on D5 when ARK IV is whole."),
     Cue("sky_diamond_ring", "stinger_2d", picks.renderer("sky_diamond_ring"), volume=(0.74, 0.74), milestone="M3",
         sampled=True, notes="Opening v2 B6: the Sun breaking out behind Earth on the first charge: bowed metal "
                             "rising onto D, its octave opening like light, a breath of creak."),

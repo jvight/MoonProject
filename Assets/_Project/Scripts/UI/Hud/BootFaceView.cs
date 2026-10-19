@@ -5,7 +5,8 @@ using MoonProject.Core;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// Draws <see cref="BootFace"/> on 07's CRT, in the face panel beside the self-test's column: the waking raster,
+    /// Draws <see cref="BootFace"/> on 07's CRT, in the face panel beside the self-test's column: the waking raster
+    /// (phosphor amber, brighter along its middle, so it opens as a glow rather than a slab),
     /// the maker's mark (<see cref="LogoTracePainter"/>) with its wordmark typing under it, and the load line with its
     /// bar of steps. It writes labels and classes only when what they show changes.
     /// </summary>
@@ -44,6 +45,7 @@ namespace MoonProject.UI
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
             _root = Element("boot-face", RootClass);
             _raster = Element("boot-face-raster", "boot-face__raster");
+            _raster.Add(Element("boot-face-raster-core", "boot-face__raster-core"));
             _logo = Element("boot-face-logo", "boot-face__logo");
             _wordmark = new Label { name = "boot-face-wordmark", pickingMode = PickingMode.Ignore };
             _wordmark.AddToClassList("boot-face__wordmark");

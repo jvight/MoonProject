@@ -11,12 +11,20 @@ namespace MoonProject.Gameplay
     /// world has not set up yet shows no line (B6's igniter line waits for the igniter in the hold; B7's for the spent
     /// lander reserve; B11's for nightfall).
     /// It also publishes <see cref="OpeningMilestoneReached"/> as the opening reaches FirstCharge (B6), PowerOn (B8),
-    /// NightReady (B9) and SignalWest (B11); <see cref="Announce"/> replays the ones a loaded game has reached, with
-    /// Restored = true, before the first <see cref="Tick"/>. Allocation-free per tick.
+    /// NightReady (B9) and SignalWest (B11), the milestones it reads from the game; <see cref="Announce"/> replays the
+    /// ones a loaded game has reached, with Restored = true, before the first <see cref="Tick"/>. CallAnswered (R8) is
+    /// published by the answer itself, not derived here. Allocation-free per tick.
     /// </summary>
     public sealed class OpeningFlow
     {
         private static readonly int MilestoneCount = Enum.GetValues(typeof(OpeningMilestone)).Length;
+
+        /// <summary>The milestones this flow reads from the game, in the order the opening reaches them.</summary>
+        private static readonly OpeningMilestone[] Derived =
+        {
+            OpeningMilestone.FirstCharge, OpeningMilestone.PowerOn, OpeningMilestone.NightReady,
+            OpeningMilestone.SignalWest,
+        };
 
         private readonly EventBus _events;
         private readonly IOpeningProgress _game;
@@ -70,14 +78,7 @@ namespace MoonProject.Gameplay
         public void Announce()
         {
             _announced = true;
-            for (int i = 0; i < MilestoneCount; i++)
-            {
-                if (!_reached[i] && Holds((OpeningMilestone)i))
-                {
-                    _reached[i] = true;
-                    _events.Publish(new OpeningMilestoneReached((OpeningMilestone)i, true));
-                }
-            }
+            Reach(true);
         }
 
         public void Tick()
@@ -88,12 +89,19 @@ namespace MoonProject.Gameplay
             }
 
             _steps.Tick();
-            for (int i = 0; i < MilestoneCount; i++)
+            Reach(false);
+        }
+
+        /// <summary>Publishes each derived milestone the game now holds and the flow has not yet reached.</summary>
+        private void Reach(bool restored)
+        {
+            for (int i = 0; i < Derived.Length; i++)
             {
-                if (!_reached[i] && Holds((OpeningMilestone)i))
+                OpeningMilestone milestone = Derived[i];
+                if (!_reached[(int)milestone] && Holds(milestone))
                 {
-                    _reached[i] = true;
-                    _events.Publish(new OpeningMilestoneReached((OpeningMilestone)i, false));
+                    _reached[(int)milestone] = true;
+                    _events.Publish(new OpeningMilestoneReached(milestone, restored));
                 }
             }
         }
@@ -111,7 +119,8 @@ namespace MoonProject.Gameplay
                 case OpeningMilestone.SignalWest:
                     return _game.Built(StructureIds.AntennaMast);
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(milestone), milestone, "Not an opening milestone.");
+                    throw new ArgumentOutOfRangeException(nameof(milestone), milestone,
+                        "Not a milestone the opening derives.");
             }
         }
     }

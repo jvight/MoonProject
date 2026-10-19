@@ -119,7 +119,7 @@ A, không cần ý "học theo phi hành đoàn".
 
 ## 3. Người chơi biết những điều này thế nào (không thuyết minh, mỗi chỗ một dòng)
 - **Biển số trên thân xe:** "ILC · XE DỊCH VỤ TRẠM SSR-5 · S/N 3-0417 · KESSLER–ARAI 1983", và chữ "07" Kenji sơn tay.
-- **Màn hình khởi động** (lúc mở khoang hàng): "ĐƠN VỊ 07 · SSR-5 · TIẾP TỤC · 13 148 NGÀY".
+- **Màn hình khởi động** (màn hình CRT tự kiểm tra lúc New Game, `cutscenes.md` §1.8): "UNIT 07 · CARRIER DETECTED", rồi "CONTINUE · 13 148 DAYS · RESTORING TASK QUEUE" (`post.carrier`, `post.resume`).
 - **Trụ sạc chết** (quét): "TRỤ SẠC NHỎ GIỌT SSR-5 · THỨC KHI CÓ SÓNG MANG · HỎNG ĐƯỜNG DÂY".
 - **Bảng ở cửa khoang khí** (dưới các dòng có sẵn): "XE TỰ HÀNH · TIẾP TỤC · ĐẶT 28/10/1988 · K. MORROW".
 - **Bảng việc của Kenji** (quét): "VIỆC 7 · KHUNG XE KHẢO SÁT DỰ PHÒNG → LẮP LẠI SSR-5 · XONG · K.M."

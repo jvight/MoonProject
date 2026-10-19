@@ -30,6 +30,12 @@ namespace MoonProject.Core
         float DriveCap01 { get; }
 
         /// <summary>
+        /// True while the opening runs on the reserve (docs/design/opening-v3-purpose.md, R2): top speed is capped
+        /// (<see cref="DriveCap01"/>) and Rover dims the lamps. It lifts at the first charge.
+        /// </summary>
+        bool OnOpeningReserve => false;
+
+        /// <summary>
         /// True when the capacitor drums and the cells can pay for a full leap now. When false the Hover-Jump never
         /// charges, so a leap is never cut short mid-air.
         /// </summary>

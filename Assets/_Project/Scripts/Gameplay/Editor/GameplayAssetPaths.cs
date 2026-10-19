@@ -31,6 +31,9 @@ namespace MoonProject.Gameplay.Editor
         public const string MaterialFolder = GeneratedFolder + "/Materials";
         public const string Visuals = GeneratedFolder + "/GameplayVisuals.asset";
 
+        /// <summary>Art's R1 rubber, the built base's cables.</summary>
+        public const string CableMaterial = "Assets/_Project/Generated/Art/R1/Materials/R1_Rubber.mat";
+
         public const string Shader = "Assets/_Project/Shaders/Gameplay/SoftGlow.shader";
         public const string GlintShader = "Assets/_Project/Shaders/Gameplay/Glint.shader";
         public const string PartGlintMaterial = MaterialFolder + "/M_PartGlint.mat";

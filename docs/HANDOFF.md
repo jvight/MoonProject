@@ -402,7 +402,8 @@ account) can continue without the old conversation.
      object disappears; a known blueprint gives raw metal.
   5. 07's charge-run lamps sit lopsided beside the solar wing; make them symmetric.
   6. Tab must show 07's hold only; home storage separate. The selected tab label is unreadable.
-  7. The opening teaches Tab like Subnautica: a first-open boot moment and starter items.
+  7. The opening teaches Tab like Subnautica: a first-open boot moment and starter items. *(2026-10-19: superseded,
+     opening v3 starts the hold empty.)*
   8. The cut's charge-up is too fast and weightless, its sound doesn't fit, and the lamp row "doesn't look like
      technology". The solar panel sits off to one side; 07 must be symmetric (memory cut-charge-weight).
 - **Dispatched 2026-10-13:**
@@ -731,7 +732,8 @@ account) can continue without the old conversation.
     opening's leftovers (art's lens glass ring reflecting Earth on the pull-out; UI's O14 prompt rule "Look up"/"Drive"
     from `WakeBeat.ChaseFrame`; the save's station playing softly on the title), and a `ReserializeAssets` automation
     entry to write out `RoverCameraTuning`'s OpeningSettings and `WorldSettings.LensView` (new fields only, defaults
-    apply meanwhile).
+    apply meanwhile). *(2026-10-20: the lens view and `WorldSettings.LensView` are gone, ec86da65; the wake is now
+    07's boot face, `cutscenes.md` §1.8.)*
 - **Sessions:** map and opening are closed and idle with large contexts (map 559k); do not wake them, their leftovers
   are in the chips above. Resting with large contexts: gameplay, rover, art, ui, world, tools, game design, story &
   flow. box/rover's 4 commits net to zero (two commits and their reverts); nothing to land.
@@ -763,7 +765,7 @@ account) can continue without the old conversation.
   the exact edits to VISION, DESIGN, M3-16, M3-06, M3-11, cutscenes and ROADMAP.
 - **0.5 scope:** the battery, chargers, the crawl with Tilly's lead, Cell Pack II, the lab (M3-19) and the recovery
   panel. Structures and T2 are not in 0.5.
-- **The opening slice landed** (O1–O14, the lens view, the title camera and push-in, the short wake, the call sign,
+- **The opening slice landed** (O1–O14, the lens view (removed 2026-10-20 in ec86da65; the boot face replaced it), the title camera and push-in, the short wake, the call sign,
   the wake sounds). The opening session is now doing: O10's swing, the owner-approved boot readout in O5, and
   pause ducking.
   - Still to dispatch: art's lens glass ring (it reflects Earth during the pull-out); UI's O14 prompt rule ("Look
@@ -795,7 +797,7 @@ account) can continue without the old conversation.
     - world: the table glow through IHomeLights.
   - The deck-hatch flow was removed; ISightline waits for a lookout.
 - **Tuning not yet written out** (the editor's MCP was down): RoverCameraTuning's OpeningSettings additions and
-  WorldSettings.LensView. They are new fields only, so their defaults apply; re-serialise them when the editor is
+  WorldSettings.LensView (the latter removed 2026-10-20, ec86da65). They are new fields only, so their defaults apply; re-serialise them when the editor is
   reachable.
 - **Cron guard is session-only:** recreate the token and stall guard in a new Director session (see §6 and §8).
 

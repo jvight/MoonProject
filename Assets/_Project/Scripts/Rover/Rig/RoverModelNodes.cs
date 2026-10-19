@@ -52,11 +52,13 @@ namespace MoonProject.Rover
         public const string WingSocket = "WingSocket";
 
         public const string Antenna = "Antenna";
+        public const string AntennaSegment2 = "Antenna_Segment2";
         public const string AntennaTip = "AntennaTip";
         public const string SonarLoop = "SonarLoop";
         public const string AntennaOrigin = "AntennaOrigin";
 
         public const string CutterTurret = "CutterTurret";
+        public const string CutterIgniter = "Cutter_Igniter";
         public const string CutterHead = "CutterHead";
         public const string CutterOrigin = "CutterOrigin";
         public const string StitchOrigin = "StitchOrigin";

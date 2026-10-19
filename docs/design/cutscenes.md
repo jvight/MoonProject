@@ -47,6 +47,10 @@ say what it feels. Its gentle one-lens face never changes, and its rear never re
 
 ## 1. The opening (New Game): 07 wakes, through its own eye
 
+> **Status (2026-10-20): superseded by the boot face.** The first-person lens opening below (§1.1–§1.7) was built and
+> then replaced. The lens view (`ILensView`, World's `LensView`, the `LofiLensView` shader) was removed in ec86da65.
+> What ships is in §1.8. The intent and the call sign setup (§1.5) still hold.
+
 ### 1.1 Intent
 The owner's brief: *the opening in the robot's first-person view: its eyes open slowly, it looks around, it doesn't
 know what happened.* The player **is** 07 for half a minute. They see what 07 sees, in the order it would notice it:
@@ -165,25 +169,35 @@ eye on the title, goes inside it, and comes back out to the same frame with the 
 - **The wordmark:** only on the title (M3-09's new treatment). `TitleCard`'s drifting wordmark over the wake is
   retired: a wordmark over 07's own eye would break the first-person spell.
 
-### 1.8 Build split and contracts
+### 1.8 What ships: the boot face (as built)
+New Game is 07's power-on self-test, seen on its own CRT face (owner: POST one shot). The wake runs about 18–22 s;
+a key fast-forwards the face and the lines, but never their first moments.
+1. **Push-in:** the camera eases from the title onto 07's dark face (the inventory's framing). Over a save, a cover
+   hides the reload, with no black frame.
+2. **CRT power-on:** the tube wakes as a dot, then a line, then a blooming raster.
+3. **The maker's mark:** the Kessler–Arai mark traces itself stroke by stroke, and `KESSLER–ARAI FIELD SYSTEMS`
+   types under it.
+4. **Field profile:** `LOADING FIELD PROFILE` types, and its bar fills step by step.
+5. **POST, 14 lines:** carrier and memory, `CONTINUE · n DAYS`, the task queue, then lens, lamps, neck and head,
+   wheels, motor, cutter (`FAULT · NO IGNITER`), solar wing (`JAMMED`), antenna (`RECEIVE ONLY`), battery,
+   `ASSEMBLY · 0 BLUEPRINTS` and `BEGIN RECOVERY`. Each part moves as it is checked.
+6. **The ready performance:** the readout holds, the camera eases out to a wide shot, and 07 double-blinks, clicks
+   its headlamps off and on, glances at the beacon, and hands over at the chase frame.
+
+Continue plays the short wake instead: the lid opens in one move with one blink, then a glance at Earth.
+
 | Box | Builds |
 |---|---|
-| rover | the POV camera at the lens socket; the gaze, with its attention list (lander, tower pilot, Peak beacon, Earth) and soft limits; the lid stages, the focus and flicker curves driven through `ILensView`; the pull-out path into the existing WakeOpening beat 1; the blink, tilt, wing and antenna call sign; the input rules in §1.3 |
-| world | the lens view: a post pass with a soft curved lid mask, focus distance (URP depth of field), the exposure dips and roll band, the warm tint and the dust speck. Registers `ILensView`. The radio's speaker is not world's. |
-| art | the inner faces of the hood and brow, if the POV camera can see them; the lens glass ring for the pull-out (it reflects Earth; built: `LensGlass`, mounted on the Eye by Rover); the antenna tip lamp as its own renderer |
-| audio | the Asleep radio profile (static with the ghost chord surfacing on cue); the lid ticks, the lens whine, the hum dropout, the neck servo, the "hm?" chirp, all keyed to the wake beats |
-| ui | nothing during the opening; then the first-prompt rule in O14 |
+| rover | `OpeningScript` (plain C#, tested) and `OpeningDirector`: the push-in, the face parts' timing (`BootFacePart`), the POST lines (`PostSequencer`), the checks' part motion, the ready performance, the hold on control until the chase frame |
+| ui | `BootFace` (pure, tested) and its painters: the raster, the mark trace (`LogoTracePainter`), the load bar, the cover (`CoverVignettePainter`); the POST lines on the face |
+| audio | the face's boot sounds: degauss and whine, stroke notes, counter ticks, load steps (cl-boot-face-audio) |
+| world | nothing in the opening |
 | gameplay | the fresh-game flag and "opening seen" in the save |
 
-Proposed Core contracts (the Director lands them first):
-- `SessionStarted(bool freshGame)`: published by Gameplay once a save is applied (fresh or loaded). Rover plays the
-  opening on a fresh game and the short wake otherwise.
-- `WakeBeat` enum (Crackle, LidCracked, LidHalf, FocusSettled, Flicker, GazeHome, GazePilot, GazePeak, GazeEarth,
-  PulledOut, Blinked, ChaseFrame) and `RoverWakeBeatReached(WakeBeat beat, bool hurried)`: published by Rover. Audio
-  voices each beat; UI waits for ChaseFrame. `RoverAwoke` stays as the crackle (O1), as today.
-- `ILensView` (Lid01, FocusDistance, Flicker01, Warmth01, SpeckOffset): registered by World, driven by Rover.
-- The gaze targets: Rover reads the lander, the tower pilot and the Peak beacon from world anchors, and Earth from the
-  sky. Any missing anchor is added to `WorldAnchorIds` by the Director.
+**Core contracts (landed):**
+- `SessionStarted(bool freshGame)`;
+- `WakeBeat` (FadedOut, Crackle, ChecksBegin, EyesOpen, ChaseFrame, Stirred) and `RoverWakeBeatReached`;
+- `BootCheckStep` and `BootCheckResult` (`Core/BootCheck.cs`).
 
 ## 2. The tower wakes: tower levels L1, L2 and L3
 
@@ -361,7 +375,8 @@ bunk windows as separate renderers), audio (the stingers, the radio's clear), ui
 3. M3-16 P5, first bullet, and step 0's warm points: the edits in §1.4.
 4. STORY "The ending": add the call sign's setup (§1.5), the beacon turning amber (F1), and Bell playing Side B up
    the relay chain (F2).
-5. Core: `SessionStarted`, `WakeBeat` and `RoverWakeBeatReached`, `ILensView` (0.5); `BroadcastStarted`,
+5. Core: `SessionStarted`, `WakeBeat` and `RoverWakeBeatReached` (0.5, landed; `ILensView` was removed with the
+   lens view); `BroadcastStarted`,
    `EarthAnswered`, `CreditsFinished` (0.8).
 6. Optional, to keep moments cheap: one Rover event, `CinematicChanged(kind, active)`, so UI fades the HUD and audio
    ducks the radio for every moment without new wiring per moment. Today each moment has its own event (stargazing,

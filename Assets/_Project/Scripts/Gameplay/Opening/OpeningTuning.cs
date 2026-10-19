@@ -87,6 +87,10 @@ namespace MoonProject.Gameplay
         [Tooltip("The rows after Power: their lamps, dark through the opening.")]
         [SerializeField] private RecoveryLamps _recoveryLamps = new RecoveryLamps(4, 4, 1);
 
+        [Header("The call from the sky (opening v3 §2)")]
+        [Tooltip("The sender's identity and its decode, and where its point of light stands beside Earth.")]
+        [SerializeField] private CallSettings _call = new CallSettings();
+
         [Header("Supply (opening-v3 §4: fixed sources, each for one structure)")]
         [Tooltip("Every source of the opening's materials, and nothing else: each stands by the thing it comes from " +
                  "and is for one structure (its link), which it covers on its own with the link's other sources " +
@@ -162,5 +166,7 @@ namespace MoonProject.Gameplay
 
         public float CrateRimLightLift => _crateRimLightLift;
         public RecoveryLamps RecoveryLamps => _recoveryLamps;
+
+        public CallSettings Call => _call;
     }
 }

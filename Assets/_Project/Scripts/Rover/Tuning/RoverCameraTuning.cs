@@ -183,7 +183,7 @@ namespace MoonProject.Rover
 
         [Tooltip("Fastest the view turns (deg/s) while recentering, once fully faded in.")]
         [Range(5f, 120f)]
-        [SerializeField] private float _recenterMaxRate = 30f;
+        [SerializeField] private float _recenterMaxRate = 20f;
 
         [Tooltip("Degrees before straight behind 07 over which recentering eases out to a stop.")]
         [Range(1f, 90f)]
@@ -191,11 +191,11 @@ namespace MoonProject.Rover
 
         [Tooltip("Fastest the elevation returns to its default (deg/s) while recentering.")]
         [Range(1f, 60f)]
-        [SerializeField] private float _recenterPitchRate = 10f;
+        [SerializeField] private float _recenterPitchRate = 7f;
 
         [Tooltip("Seconds the recenter button takes to ease the view behind 07 (eased in and out).")]
         [Range(0.2f, 3f)]
-        [SerializeField] private float _recenterButtonSeconds = 0.8f;
+        [SerializeField] private float _recenterButtonSeconds = 1.4f;
 
         [Tooltip("Half-life (s) of the camera following 07's turns while it sits behind 07 (no free look).")]
         [Range(0f, 3f)]
@@ -624,11 +624,11 @@ namespace MoonProject.Rover
 
         [Tooltip("Seconds the camera takes to ease into the face-inspect shot when opening the screen UI.")]
         [Range(0.15f, 2f)]
-        [SerializeField] private float _faceInspectOpenSeconds = 0.55f;
+        [SerializeField] private float _faceInspectOpenSeconds = 1.2f;
 
         [Tooltip("Seconds the camera takes to ease back to the chase camera when closing the screen UI.")]
         [Range(0.15f, 2f)]
-        [SerializeField] private float _faceInspectCloseSeconds = 0.50f;
+        [SerializeField] private float _faceInspectCloseSeconds = 1.1f;
 
         [Tooltip("World-space height (m) of 07's CRT Screen and inner bezel framed in face-inspect mode.")]
         [Range(0.10f, 0.60f)]
@@ -647,10 +647,10 @@ namespace MoonProject.Rover
         [Range(0.5f, 1f)]
         [SerializeField] private float _faceInspectDatabankShare = 0.833f;
 
-        [Tooltip("Seconds the face shot eases between the pages' distances (smooth step); it ends with the page change " +
-                 "(DatabankSettings: fade plus draw), so the shot is still when the new page has settled.")]
+        [Tooltip("Seconds the face shot eases between the pages' distances (smooth step). Slower than the page's own " +
+                 "flip (DatabankSettings: fade plus draw): the content changes at once, the camera drifts calmly.")]
         [Range(0.05f, 1.5f)]
-        [SerializeField] private float _facePageEaseSeconds = 0.32f;
+        [SerializeField] private float _facePageEaseSeconds = 0.9f;
 
         [Tooltip("Closest pulled-in camera distance (m) allowed when rocks or terrain occlude the default and side views.")]
         [Range(0.25f, 1.00f)]

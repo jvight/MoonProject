@@ -65,6 +65,10 @@ namespace MoonProject.Gameplay
                  "glows while build mode is open.")]
         [SerializeField] private Renderer _apronOutline;
 
+        [Tooltip("World's apron cable channel ([World]/OpeningProps/ApronMarkings/CableChannel_Anchor): where the " +
+                 "lander's cable across the apron takes a pad's own cable.")]
+        [SerializeField] private Transform _apronCableChannel;
+
         /// <summary>The recovery protocol's Power steps: the pad, solar power on, a night-ready base
         /// (opening-v2).</summary>
         private const int PowerSteps = 3;
@@ -123,6 +127,9 @@ namespace MoonProject.Gameplay
         /// <summary>The opening in the world: the lander, the built pads, the supply crates, the objective
         /// flow.</summary>
         public OpeningField Opening { get; private set; }
+
+        /// <summary>The call from the sky (opening v3 §2): its state, its decode and its point of light.</summary>
+        public CallProgress Call { get; private set; }
 
         /// <summary>The dock lock on the built pad 07 charges on (opening-v2 §5).</summary>
         public PadLock PadLock { get; private set; }
@@ -195,6 +202,11 @@ namespace MoonProject.Gameplay
         internal void WireApronOutline(Renderer apronOutline)
         {
             _apronOutline = apronOutline;
+        }
+
+        internal void WireApronCableChannel(Transform channel)
+        {
+            _apronCableChannel = channel;
         }
 
         internal void WireDatabank(DatabankCatalogue catalogue)
@@ -272,6 +284,7 @@ namespace MoonProject.Gameplay
                 services.Pickups);
             Hints = hints;
             Recovery = new RecoveryProgress(context.Events, PowerLamps, PowerSteps, _openingTuning.RecoveryLamps);
+            Call = new CallProgress(context.Events, _openingTuning.Call, services.Layout);
             _flowTokens.Add(context.Events.Subscribe<ChargingChanged>(OnChargingChanged));
             context.Register<IMaterialStock>(Materials);
             context.Register<IMaterialCatalog>(_materialCatalog);
@@ -285,6 +298,7 @@ namespace MoonProject.Gameplay
             context.Register<IBuildEnergy>(_battery);
             context.Register<IBeamStatus>(services.Beam);
             context.Register<IRecoveryProgress>(Recovery);
+            context.Register<ICallSource>(Call);
             context.Register<IDatabank>(Databank);
             context.Register<BuildField>(_building);
             RegisterSaveSections(save);
@@ -308,6 +322,8 @@ namespace MoonProject.Gameplay
                 GameplaySaveKeys.ScansVersion, Scans.Capture, Scans.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<DatabankSaveData>(GameplaySaveKeys.Databank,
                 GameplaySaveKeys.DatabankVersion, Databank.Capture, Databank.Restore)));
+            _saveTokens.Add(save.Register(new SaveSection<CallSaveData>(GameplaySaveKeys.Call,
+                GameplaySaveKeys.CallVersion, Call.Capture, Call.Restore)));
             _saveTokens.Add(_building.RegisterSave(save));
         }
 
@@ -328,6 +344,9 @@ namespace MoonProject.Gameplay
                 var opening = new OpeningField(_openingTuning, services, _building, sunlight, Containers, _ruins,
                     _landerPort, transform, _salvage.Tuning.ReachRadius, StartKit);
                 _battery.ConnectPads(opening);
+                services.Anchors.TryGet(_openingTuning.ApronAnchor, out WorldAnchor apron);
+                _building.SetApronCable(new ApronCable(_apronCableChannel.position, apron.Position,
+                    _openingTuning.PortCableReach));
                 PadLock = new PadLock(context.Events, _baseTuning, _building, _battery.Model, services.Rover,
                     _openingTuning.PadChargeRadius, _openingTuning.PadPlateMargin);
                 BaseLamps = new BaseLamps(context.Events, _baseTuning, _building, sunlight);
@@ -485,6 +504,7 @@ namespace MoonProject.Gameplay
         {
             StartKit.Announce();
             Recovery.Announce();
+            Call.Announce();
             Opening.Announce();
         }
 
@@ -550,11 +570,14 @@ namespace MoonProject.Gameplay
                 : _databankCatalogue == null ? "DatabankCatalogue is not assigned (run Gameplay/Content)."
                 : _baseTuning == null ? "BaseTuning is not assigned."
                 : _openingTuning == null ? "OpeningTuning is not assigned."
+                : _openingTuning.Call.Validate() != null ? "OpeningTuning: " + _openingTuning.Call.Validate() + "."
                 : _salvage == null ? "SalvageField is not assigned."
                 : _battery == null ? "BatteryField is not assigned."
                 : _building == null ? "BuildField is not assigned."
                 : _landerPort == null ? "The lander's service port is not assigned (rebuild the Main scene)."
                 : _apronOutline == null ? "The apron's bay outline is not assigned (rebuild the Main scene)."
+                : _apronCableChannel == null
+                    ? "The apron's cable channel is not assigned (rebuild the Main scene)."
                 : null;
         }
 
@@ -591,6 +614,7 @@ namespace MoonProject.Gameplay
 
             _flowTokens.Clear();
             Databank?.Dispose();
+            Call?.Dispose();
             Bundles?.Dispose();
             Opening?.Dispose();
             _meshes?.Dispose();

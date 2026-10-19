@@ -32,6 +32,7 @@ namespace MoonProject.Gameplay.Editor
             visuals.Populate(Write(shader, GlowRole.Flash), Write(shader, GlowRole.PieceHalo),
                 GeneratedAssets.CreateOrReplace(GlintMaterials.CreatePart(glint), GameplayAssetPaths.PartGlintMaterial));
             visuals.PopulateContainers(CrateModels());
+            visuals.PopulateCable(LoadCable());
             visuals.PopulateHologram(HologramMaterialBuilder.LoadMaterial(false),
                 HologramMaterialBuilder.LoadMaterial(true));
             GeneratedAssets.CreateOrReplace(visuals, GameplayAssetPaths.Visuals);
@@ -54,6 +55,18 @@ namespace MoonProject.Gameplay.Editor
             }
 
             return crates;
+        }
+
+        private static Material LoadCable()
+        {
+            var cable = AssetDatabase.LoadAssetAtPath<Material>(GameplayAssetPaths.CableMaterial);
+            if (cable == null)
+            {
+                throw new InvalidOperationException($"{BuilderPath}: Art's cable rubber {GameplayAssetPaths.CableMaterial} " +
+                    "is missing.");
+            }
+
+            return cable;
         }
 
         private static Shader LoadShader(string path)

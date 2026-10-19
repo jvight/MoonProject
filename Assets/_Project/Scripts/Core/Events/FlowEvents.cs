@@ -76,6 +76,13 @@ namespace MoonProject.Core.Events
         /// rises over the dead relay mast at relay.1, and Link is the next step.
         /// </summary>
         SignalWest = 3,
+
+        /// <summary>
+        /// 07 transmitted from the mast and relay.1 blinked the call back (beat R8,
+        /// docs/design/opening-v3-purpose.md): the release begins. Published by the answer itself (opening v3 slice
+        /// 4.1); the opening's objective flow does not derive it.
+        /// </summary>
+        CallAnswered = 4,
     }
 
     /// <summary>
