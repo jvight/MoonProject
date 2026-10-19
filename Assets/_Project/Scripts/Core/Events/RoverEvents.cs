@@ -348,6 +348,102 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
+    /// 07's tube wakes on its face before the self-test (Rover): a dot, a line, then the full raster with a warm bloom,
+    /// over <see cref="Seconds"/>. UI draws it; Audio voices it.
+    /// </summary>
+    public readonly struct CrtPowerOn
+    {
+        public CrtPowerOn(float seconds)
+        {
+            Seconds = seconds;
+        }
+
+        public float Seconds { get; }
+    }
+
+    /// <summary>
+    /// The maker's mark begins to draw itself on 07's face (Rover): its strokes, its wordmark, a hold and a dim, over
+    /// <see cref="Seconds"/>. UI draws it and reports each stroke (<see cref="LogoStrokeDrawn"/>).
+    /// </summary>
+    public readonly struct BootLogoBegan
+    {
+        public BootLogoBegan(float seconds)
+        {
+            Seconds = seconds;
+        }
+
+        public float Seconds { get; }
+    }
+
+    /// <summary>
+    /// 07 loads its field profile on its face (Rover), over <see cref="Seconds"/>. UI draws it and reports each step
+    /// (<see cref="LoadStep"/>).
+    /// </summary>
+    public readonly struct BootLoadBegan
+    {
+        public BootLoadBegan(float seconds)
+        {
+            Seconds = seconds;
+        }
+
+        public float Seconds { get; }
+    }
+
+    /// <summary>The beam has traced stroke <see cref="Index"/> (from 0) of the maker's mark on 07's face (UI).</summary>
+    public readonly struct LogoStrokeDrawn
+    {
+        public LogoStrokeDrawn(int index)
+        {
+            Index = index;
+        }
+
+        public int Index { get; }
+    }
+
+    /// <summary>
+    /// Text typed on 07's face during the boot (UI), at most once every two characters: <see cref="CharIndex"/> is the
+    /// last character on screen of line <see cref="LineIndex"/>. Lines count in the order they show: 0 the maker's
+    /// wordmark, 1 the load line, then 2 onward the self-test's lines.
+    /// </summary>
+    public readonly struct BootTextTyped
+    {
+        public BootTextTyped(int lineIndex, int charIndex)
+        {
+            LineIndex = lineIndex;
+            CharIndex = charIndex;
+        }
+
+        public int LineIndex { get; }
+
+        public int CharIndex { get; }
+    }
+
+    /// <summary>
+    /// Line <see cref="LineIndex"/> on 07's face (numbered as in <see cref="BootTextTyped"/>) has typed out and settled
+    /// (UI), once per line.
+    /// </summary>
+    public readonly struct BootLineCompleted
+    {
+        public BootLineCompleted(int lineIndex)
+        {
+            LineIndex = lineIndex;
+        }
+
+        public int LineIndex { get; }
+    }
+
+    /// <summary>Step <see cref="Index"/> (from 0) of the field profile's load bar has filled on 07's face (UI).</summary>
+    public readonly struct LoadStep
+    {
+        public LoadStep(int index)
+        {
+            Index = index;
+        }
+
+        public int Index { get; }
+    }
+
+    /// <summary>
     /// One audible or visible tick inside a self-test check: a wheel's twitch (Wheels 0..3), a lamp flicker (Lamps 0..2,
     /// then the ramp as index 3), a spark (Cutter 0..2) with the beacon blinking in sync (Cutter 3..5), the head's sweep
     /// and nod (Head 0, 1), the motor's shudder and creep (Motor 0, 1), the wing's jerk, stall and fold (SolarWing 0..2),

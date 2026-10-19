@@ -47,6 +47,9 @@ namespace MoonProject.UI.Editor
         /// <summary>The wordmark's path commands, parsed from <see cref="WordmarkSource"/> by UI/Wordmark.</summary>
         public const string Wordmark = GeneratedFolder + "/Wordmark.asset";
 
+        /// <summary>The maker's monoline mark 07's face traces as it boots, built by UI/MakerLinework.</summary>
+        public const string MakerLinework = GeneratedFolder + "/MakerLinework.asset";
+
         /// <summary>The 25 production vector icons (item_*.svg and kit_*.svg), parsed by UI/Icons.</summary>
         public const string IconsFolder = SourceFolder + "/Icons";
 

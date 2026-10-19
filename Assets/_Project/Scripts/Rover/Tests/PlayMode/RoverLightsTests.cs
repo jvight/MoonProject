@@ -18,6 +18,9 @@ namespace MoonProject.Rover.PlayModeTests
         // The ease takes the tuned switch time; this much more covers the frame it lands on.
         private const float SwitchSlack = 0.1f;
 
+        /// <summary>Frames the lamps may take after the key to show the first step of their ease off.</summary>
+        private const int EaseStartFrames = 10;
+
         private LunarTestPhysics _physics;
         private TestWorld _world;
         private TestRover _rover;
@@ -56,11 +59,19 @@ namespace MoonProject.Rover.PlayModeTests
             {
                 yield return Toggle();
                 float seconds = _rover.RigTuning.LampSwitchSeconds;
+                // The ease runs in the rig's own update, a frame or so after the key: sample once it has begun.
+                int frames = 0;
+                while (_rover.Headlamp.intensity >= lit && frames < EaseStartFrames)
+                {
+                    yield return null;
+                    frames++;
+                }
+
                 float halfway = _rover.Headlamp.intensity;
                 yield return Wait(seconds + SwitchSlack);
                 Assert.AreEqual(1, switched, "the switch says so once, for its click");
                 Assert.IsFalse(lastOn);
-                Assert.Less(halfway, lit, "the lamps begin to ease off at once");
+                Assert.Less(halfway, lit, $"the lamps begin to ease off within {EaseStartFrames} frames of the key");
                 Assert.Greater(halfway, 0f, "an ease, not a cut");
                 Assert.AreEqual(0f, _rover.Headlamp.intensity, 1e-3f, "and are dark within the switch time");
                 StringAssert.Contains("\"lightsOff\":true", _rover.Save.Capture(LightsSaveKey), "the save keeps it");

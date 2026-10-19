@@ -47,6 +47,18 @@ namespace MoonProject.Rover.Tests
             });
         }
 
+        /// <summary>Every check but the wheels', as tuning may leave one out.</summary>
+        internal static PostSettings WithoutWheels()
+        {
+            return new PostSettings(new[]
+            {
+                new PostLine(BootCheckStep.Carrier, 0.7f),
+                new PostLine(BootCheckStep.Lamps, 1.2f),
+                new PostLine(BootCheckStep.Cutter, 1.2f),
+                new PostLine(BootCheckStep.Begin, 0.4f),
+            });
+        }
+
         private static PostSettings Shipped()
         {
             return AssetDatabase.LoadAssetAtPath<RoverCameraTuning>(RoverAssetPaths.CameraTuning).Opening.Post;
@@ -296,12 +308,13 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void TheOpeningsLines_TakeAtMostEightSeconds()
+        public void TheOpeningsLines_RunEveryCheck_FastAndDense_InUnderTenSeconds()
         {
             foreach (PostSettings settings in new[] { new PostSettings(), Shipped() })
             {
                 Use(settings);
-                Assert.That(_post.TotalSeconds, Is.InRange(6f, 8f), "the lines on the face, after the eyes wake");
+                Assert.AreEqual(Full().LineCount, settings.LineCount, "every check prints its line");
+                Assert.That(_post.TotalSeconds, Is.InRange(8f, 10f), "a dense, fast run of lines");
             }
         }
 
@@ -329,7 +342,7 @@ namespace MoonProject.Rover.Tests
         [Test]
         public void ACheckLeftOut_IsNeverAnnounced_NorPulsed()
         {
-            Use(new PostSettings());
+            Use(WithoutWheels());
             Assert.IsFalse(_settings.Runs(BootCheckStep.Wheels));
             _post.Begin();
             Drain();

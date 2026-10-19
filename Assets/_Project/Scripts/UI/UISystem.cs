@@ -89,10 +89,22 @@ namespace MoonProject.UI
         private PostLog _postLog;
         private PostView _postView;
         private bool _postOnCrt;
+        private BootFace _bootFace;
+        private BootFaceView _bootFaceView;
+        private readonly int[] _typedCued = new int[PostLog.Capacity];
+        private readonly bool[] _lineCued = new bool[PostLog.Capacity];
+        private CoverVignette _cover;
+        private CoverVignettePainter _coverPainter;
+        private float _coverPainted;
+        private bool _titleSeen;
+        private bool _titleUp;
+        private bool _coverSettlePending;
         private BlockedCue _blockedCue;
         private PageFlip _pages;
         private PageTabs _tabs;
         private VisualElement[] _pageRoots;
+        private VisualElement[] _pageChrome;
+        private PageShutter _shutter;
         private DatabankPage _databank;
         private DatabankText _databankText;
         private float _databankLaidOutAt = -1f;
@@ -281,7 +293,8 @@ namespace MoonProject.UI
             _events = events;
             _tokens.Add(events.Subscribe<RoverAwoke>(OnRoverAwoke));
             _tokens.Add(events.Subscribe<TitleShown>(OnTitleShown));
-            _tokens.Add(events.Subscribe<NewGameRequested>(_ => OnTitleDismissed()));
+            _tokens.Add(events.Subscribe<NewGameRequested>(_ => OnNewGameRequested()));
+            _tokens.Add(events.Subscribe<SessionStarted>(OnSessionStarted));
             _tokens.Add(events.Subscribe<ContinueRequested>(_ => OnTitleDismissed()));
             _tokens.Add(events.Subscribe<FeelBeat>(OnFeelBeat));
             _tokens.Add(events.Subscribe<CargoChanged>(OnCargoChanged));
@@ -296,7 +309,10 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<BootCheckStarted>(OnBootCheckStarted));
             _tokens.Add(events.Subscribe<BootCheckCompleted>(OnBootCheckCompleted));
             _tokens.Add(events.Subscribe<BootCheckFinished>(_ => _postLog.Finish()));
-            _tokens.Add(events.Subscribe<BootCheckFastForwarded>(forwarded => _postLog.Rush(forwarded.Scale)));
+            _tokens.Add(events.Subscribe<BootCheckFastForwarded>(OnBootFastForwarded));
+            _tokens.Add(events.Subscribe<CrtPowerOn>(OnCrtPowerOn));
+            _tokens.Add(events.Subscribe<BootLogoBegan>(began => _bootFace?.LogoBegan(began.Seconds)));
+            _tokens.Add(events.Subscribe<BootLoadBegan>(began => _bootFace?.LoadBegan(began.Seconds)));
             _tokens.Add(events.Subscribe<BootCheckPulse>(OnBootCheckPulse));
             _tokens.Add(events.Subscribe<LanguageChanged>(OnLanguageChanged));
             _tokens.Add(events.Subscribe<TickerLine>(OnTickerLine));
@@ -383,12 +399,26 @@ namespace MoonProject.UI
             BindFacePanel(root);
             // The face panel takes the cargo screen when there is one; the log sits beside it either way.
             _postView = new PostView(_layout.Cargo.parent, _postLog);
+            BootFaceSettings boot = _tuning.BootFace;
+            _bootFace = new BootFace(boot, boot.Linework.StrokeCount);
+            _bootFaceView = new BootFaceView(_layout.Cargo.parent, _bootFace, boot.Linework, _localization);
+            var coverElement = new VisualElement { name = "cover-vignette", pickingMode = PickingMode.Ignore };
+            coverElement.AddToClassList("cover-vignette");
+            root.Add(coverElement);
+            _cover = new CoverVignette(boot);
+            _coverPainter = new CoverVignettePainter(coverElement, _cover, boot);
             _faceNotice = new FaceNotice(_layout.Cargo.parent);
             _blockedCue = new BlockedCue(_tuning.Guidance);
             _pages = new PageFlip(_tuning.Databank);
             _tabs = new PageTabs(_cargo.Panel, _localization);
             _tabs.SetShown(_faceDocument != null);
-            _pageRoots = new VisualElement[] { _tabs.Tab(0), _tabs.Tab(1), null };
+            _shutter = new PageShutter(_cargo.Panel, _tuning.Databank);
+            _pageChrome = new[] { _tabs.Tab(0), _tabs.Tab(1), _tabs.Underline, _shutter.Edge, _shutter.Body };
+            _pageRoots = new VisualElement[]
+            {
+                _tabs.Tab(0), _tabs.Tab(1), _tabs.Underline, _shutter.Edge, _shutter.Body, null,
+            };
+            ShowChange();
             _databankText = new DatabankText(_localization);
             _unlockCard = new UnlockCard(_layout, _tuning.UnlockCard, _localization);
             _pause = new PauseMenu(_layout, _tuning.Pause, _tuning.Title, _player, _localization, services.Input,
@@ -398,6 +428,12 @@ namespace MoonProject.UI
             _textScale = new TextScale(_document.panelSettings);
             _backdrop = new BackdropBlur(transform, _tuning.Backdrop);
             _bound = true;
+            if (_coverSettlePending)
+            {
+                _coverSettlePending = false;
+                SettleUnderCover();
+            }
+
             if (_titleWaiting)
             {
                 _titleWaiting = false;
@@ -458,9 +494,10 @@ namespace MoonProject.UI
             }
 
             _pause.Tick(deltaTime);
+            StepCover(deltaTime);
             bool paused = _pause.IsOpen;
             StepPost(deltaTime);
-            SetFacePanelVisible(_cargo.IsOpen || _cargo.Openness > 0f || PostShown);
+            SetFacePanelVisible(_cargo.IsOpen || _cargo.Openness > 0f || FaceReadoutShown);
             _cargo.Tick(deltaTime, CargoScreenSize(), input.ActiveDevice);
             if (_cargo.IsOpen)
             {
@@ -475,7 +512,7 @@ namespace MoonProject.UI
                 }
             }
 
-            SetFacePanelVisible(_cargo.IsOpen || _cargo.Openness > 0f || PostShown);
+            SetFacePanelVisible(_cargo.IsOpen || _cargo.Openness > 0f || FaceReadoutShown);
             bool cargoOpen = _cargo.IsOpen;
             _backdrop.Set(_pause.Openness, _cargo.Openness);
             float hudTime = paused ? 0f : deltaTime;
@@ -684,6 +721,17 @@ namespace MoonProject.UI
         private bool PostShown => _postLog.IsRunning ||
                                   (_postLog.IsFinished && _postLog.SinceFinished < _tuning.Post.LingerSeconds);
 
+        /// <summary>True while 07's CRT shows the self-test: the face's boot, the lines and their linger.</summary>
+        private bool FaceReadoutShown => (_bootFace != null && _bootFace.IsShowing) || PostShown;
+
+        /// <summary>07's face booting before the lines, and its view (tests and captures).</summary>
+        internal BootFace BootFace => _bootFace;
+
+        internal BootFaceView BootFaceView => _bootFaceView;
+
+        /// <summary>The cover over a New Game that reloads (tests and captures).</summary>
+        internal CoverVignette Cover => _cover;
+
         /// <summary>Internal view of the self-test log (tests and captures).</summary>
         internal PostLog Post => _postLog;
 
@@ -703,12 +751,45 @@ namespace MoonProject.UI
         {
             if (started.Step == BootCheckStep.Carrier || _postLog.IsFinished)
             {
-                _postLog.Reset();
-                _postView.Clear();
+                ResetLines();
+                _bootFace?.Clear();
+                DrainBootCues();
             }
 
             _postLog.Started(started.Step, PostText.Started(started.Step, _localization, _tuning.Post.ResumeDays),
                 PostText.IsInformation(started.Step));
+            ShowReadout();
+        }
+
+        /// <summary>07's tube wakes: the face's boot begins on a clean CRT.</summary>
+        private void OnCrtPowerOn(CrtPowerOn powerOn)
+        {
+            if (!_bound)
+            {
+                return;
+            }
+
+            ResetLines();
+            _bootFace.PowerOn(powerOn.Seconds);
+            ShowReadout();
+        }
+
+        private void OnBootFastForwarded(BootCheckFastForwarded forwarded)
+        {
+            _postLog.Rush(forwarded.Scale);
+            _bootFace?.Rush(forwarded.Scale);
+        }
+
+        private void ResetLines()
+        {
+            _postLog.Reset();
+            _postView.Clear();
+            Array.Clear(_typedCued, 0, _typedCued.Length);
+            Array.Clear(_lineCued, 0, _lineCued.Length);
+        }
+
+        private void ShowReadout()
+        {
             if (!_postOnCrt)
             {
                 _postOnCrt = true;
@@ -733,13 +814,13 @@ namespace MoonProject.UI
 
         private void StepPost(float deltaTime)
         {
-            if (_postLog.Count == 0)
-            {
-                return;
-            }
+            _bootFace.Tick(deltaTime);
+            DrainBootCues();
+            _bootFaceView.Refresh();
 
-            bool changed = _postLog.Tick(deltaTime);
-            if (_postOnCrt && !PostShown)
+            bool changed = _postLog.Count > 0 && _postLog.Tick(deltaTime);
+            CueTyping();
+            if (_postOnCrt && !FaceReadoutShown)
             {
                 _postOnCrt = false;
                 _services.FaceScreen?.SetReadout(null);
@@ -750,6 +831,106 @@ namespace MoonProject.UI
             {
                 _postView.Refresh();
             }
+        }
+
+        /// <summary>The face's boot's cues, as Core's events for Audio.</summary>
+        private void DrainBootCues()
+        {
+            while (_bootFace.TryTakeCue(out BootFaceCue cue))
+            {
+                switch (cue.Kind)
+                {
+                    case BootFaceCueKind.StrokeDrawn:
+                        _events.Publish(new LogoStrokeDrawn(cue.A));
+                        break;
+                    case BootFaceCueKind.LoadStep:
+                        _events.Publish(new LoadStep(cue.A));
+                        break;
+                    case BootFaceCueKind.Typed:
+                        _events.Publish(new BootTextTyped(cue.A, cue.B));
+                        break;
+                    default:
+                        _events.Publish(new BootLineCompleted(cue.A));
+                        break;
+                }
+            }
+        }
+
+        /// <summary>The self-test's typing as Core's events: a cue every few characters, and each line once it settles.</summary>
+        private void CueTyping()
+        {
+            int every = _tuning.BootFace.TypeCueEvery;
+            for (int i = 0; i < _postLog.Count; i++)
+            {
+                int visible = _postLog.Visible(i);
+                for (int typed = _typedCued[i] + 1; typed <= visible; typed++)
+                {
+                    if (typed % every == 0)
+                    {
+                        _events.Publish(new BootTextTyped(BootFace.FirstPostLine + i, typed - 1));
+                    }
+                }
+
+                _typedCued[i] = visible;
+                if (!_lineCued[i] && _postLog.IsSettled(i))
+                {
+                    _lineCued[i] = true;
+                    _events.Publish(new BootLineCompleted(BootFace.FirstPostLine + i));
+                }
+            }
+        }
+
+        /// <summary>The cover eases toward closed or open and repaints while it moves.</summary>
+        private void StepCover(float deltaTime)
+        {
+            _cover.Tick(deltaTime);
+            float cover = _cover.Cover01;
+            if (cover != _coverPainted)
+            {
+                _coverPainted = cover;
+                _coverPainter.Refresh();
+            }
+        }
+
+        /// <summary>
+        /// New Game: over a fresh title the camera pushes in and nothing covers it; otherwise App reloads, so the tube's
+        /// dark closes in from the edges before it does.
+        /// </summary>
+        private void OnNewGameRequested()
+        {
+            bool freshTitle = _titleUp && !_titleHasSave;
+            OnTitleDismissed();
+            if (_bound && !freshTitle)
+            {
+                _cover.Close();
+            }
+        }
+
+        /// <summary>
+        /// A fresh game that began without a title in this scene, where a title belongs: the reload of a New Game. It
+        /// begins under the closed cover and opens on 07's dark face.
+        /// </summary>
+        private void OnSessionStarted(SessionStarted started)
+        {
+            if (!started.FreshGame || _titleSeen || !_services.Flow.ShowsTitle)
+            {
+                return;
+            }
+
+            if (_bound)
+            {
+                SettleUnderCover();
+            }
+            else
+            {
+                _coverSettlePending = true;
+            }
+        }
+
+        private void SettleUnderCover()
+        {
+            _cover.SnapClosed();
+            _cover.Open();
         }
 
         private void BindFacePanel(VisualElement root)
@@ -1051,7 +1232,7 @@ namespace MoonProject.UI
             if (_pages.Target != FacePage.Hold || _pages.IsFlipping)
             {
                 _pages.Snap(FacePage.Hold);
-                _cargo.SetPageScale(1f);
+                ShowChange();
                 ShowPage(_services.Input.ActiveDevice);
                 _events.Publish(new FacePageChanged(FacePage.Hold));
             }
@@ -1091,6 +1272,9 @@ namespace MoonProject.UI
         /// </summary>
         private void OnTitleShown(TitleShown shown)
         {
+            _titleSeen = true;
+            _titleUp = true;
+            _titleHasSave = shown.HasSave;
             if (_bound)
             {
                 _pause.OpenTitle(shown.HasSave, !shown.HasSave);
@@ -1098,11 +1282,11 @@ namespace MoonProject.UI
             }
 
             _titleWaiting = true;
-            _titleHasSave = shown.HasSave;
         }
 
         private void OnTitleDismissed()
         {
+            _titleUp = false;
             _titleWaiting = false;
             _pause?.CloseTitleIfOpen();
         }
@@ -1166,8 +1350,8 @@ namespace MoonProject.UI
         }
 
         /// <summary>
-        /// Q / E flip 07's face between its pages with the CRT channel flip; the page on the tube changes at the flip's
-        /// thinnest moment, and the camera's face shot follows the page.
+        /// Q flips 07's face between its pages as the CRT redraws: the old page fades down, the page changes, the new
+        /// one draws in from the top while the tab underline glides across; the camera's face shot follows the page.
         /// </summary>
         private void StepPages(MenuInput menu, float deltaTime, InputDeviceKind device)
         {
@@ -1177,11 +1361,16 @@ namespace MoonProject.UI
             }
 
             _pages.Tick(deltaTime);
-            _tabs.Light(_pages.Target);
-            _cargo.SetPageScale(_pages.ScaleY);
             if (_pages.Switched)
             {
                 ShowPage(device);
+                _shutter.BringToFront();
+                _tabs.BringToFront();
+            }
+
+            if (_pages.IsFlipping || _pages.Settled)
+            {
+                ShowChange();
             }
 
             if (_pages.Settled)
@@ -1193,8 +1382,18 @@ namespace MoonProject.UI
             {
                 _databankLaidOutAt = _cargo.PanelScale;
                 _tabs.Layout(_cargo.PanelScale);
+                _shutter.Layout(_cargo.PanelScale);
                 _databank?.Layout(_cargo.PanelScale);
             }
+        }
+
+        /// <summary>The page change as it stands: the lit tab, the underline, the old page's fade, the new one's draw.</summary>
+        private void ShowChange()
+        {
+            _tabs.Light(_pages.Page);
+            _tabs.Glide(_pages.TabPosition);
+            _cargo.SetPageAlpha(_pages.ContentAlpha, _pageChrome);
+            _shutter.Draw(_pages.Drawn);
         }
 
         /// <summary>Flips to the face's other page (Q, LB / RB, or a click on its tab), on 07's face only.</summary>
@@ -1455,6 +1654,7 @@ namespace MoonProject.UI
             _prompt.Relocalize();
             _lookUpChip.Relocalize();
             _controlsView.Relocalize();
+            _bootFaceView.Relocalize();
             _tabs.Relocalize();
             _lowBattery.Relocalize();
             _objectiveView.Relocalize(_lowBattery);

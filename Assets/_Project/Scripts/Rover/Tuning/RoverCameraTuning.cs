@@ -32,11 +32,11 @@ namespace MoonProject.Rover
         [Range(1f, 10f)]
         [SerializeField] private float _maxSensitivity = 3f;
 
-        [Tooltip("Furthest (deg) the player's look swings the view round from straight behind 07: the player sees 07 "
-            + "from behind or three-quarter, never head on. 07 turning under a held view may leave it further; the "
-            + "recenter brings it back.")]
+        [Tooltip("Furthest (deg) the player's look swings the view round from straight behind 07. 180 is no limit: "
+            + "the view goes all the way round 07, face included. Less keeps it behind or three-quarter; 07 turning "
+            + "under a held view may then leave it further, and the recenter brings it back.")]
         [Range(60f, 180f)]
-        [SerializeField] private float _maxLookYaw = 135f;
+        [SerializeField] private float _maxLookYaw = 180f;
 
         [Tooltip("Degrees before the limit over which the look slows to a stop, so the view settles against it.")]
         [Range(5f, 90f)]
@@ -138,11 +138,11 @@ namespace MoonProject.Rover
         [Header("Following and auto-recenter")]
         [Tooltip("Seconds after the mouse stops before the camera may ease back behind 07.")]
         [Range(0.5f, 20f)]
-        [SerializeField] private float _recenterDelay = 5f;
+        [SerializeField] private float _recenterDelay = 1.5f;
 
         [Tooltip("Seconds after the stick returns to centre before the camera may ease back behind 07.")]
         [Range(0.5f, 20f)]
-        [SerializeField] private float _stickRecenterDelay = 4f;
+        [SerializeField] private float _stickRecenterDelay = 1.5f;
 
         [Tooltip("Recenter only while 07 drives forward faster than this (m/s): parked, crawling or reversing, the "
             + "view stays where the player left it.")]
@@ -647,9 +647,10 @@ namespace MoonProject.Rover
         [Range(0.5f, 1f)]
         [SerializeField] private float _faceInspectDatabankShare = 0.833f;
 
-        [Tooltip("Seconds the face shot eases between the pages' distances (smooth step).")]
+        [Tooltip("Seconds the face shot eases between the pages' distances (smooth step); it ends with the page change " +
+                 "(DatabankSettings: fade plus draw), so the shot is still when the new page has settled.")]
         [Range(0.05f, 1.5f)]
-        [SerializeField] private float _facePageEaseSeconds = 0.35f;
+        [SerializeField] private float _facePageEaseSeconds = 0.32f;
 
         [Tooltip("Closest pulled-in camera distance (m) allowed when rocks or terrain occlude the default and side views.")]
         [Range(0.25f, 1.00f)]

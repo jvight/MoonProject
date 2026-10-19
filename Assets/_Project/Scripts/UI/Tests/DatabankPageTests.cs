@@ -102,40 +102,76 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
-        public void ThePageFlip_CollapsesToTheLine_SwitchesThere_AndOpensAgain()
+        public void ThePageChange_FadesTheOldPageDown_SwitchesInTheDark_DrawsTheNewOneIn_AndSettlesOnce()
         {
             var flip = new PageFlip(_settings);
             Assert.AreEqual(FacePage.Hold, flip.Page);
+            Assert.AreEqual(0f, flip.TabPosition, "the underline rests under HOLD");
             flip.Toggle();
             Assert.AreEqual(FacePage.Databank, flip.Target);
-            bool switched = false;
+            int switched = 0;
             int settled = 0;
-            float thinnest = 1f;
-            for (float t = 0f; t < _settings.FlipCollapseSeconds + _settings.FlipOpenSeconds + 0.1f; t += Step)
+            float elapsed = 0f;
+            float blank = 0f;
+            float longestBlank = 0f;
+            float underline = 0f;
+            while (flip.IsFlipping)
             {
+                Assert.Less(elapsed, 1f, "the change ends");
                 flip.Tick(Step);
-                switched |= flip.Switched;
-                settled += flip.Settled ? 1 : 0;
-                thinnest = Mathf.Min(thinnest, flip.ScaleY);
+                elapsed += Step;
                 if (flip.Switched)
                 {
-                    Assert.AreEqual(_settings.FlipLineShare, flip.ScaleY, 0.05f, "it switches at the line");
+                    switched++;
+                    Assert.AreEqual(0f, flip.Drawn, 0.05f, "the new page starts drawing from the top");
                 }
+
+                if (flip.IsFlipping && !flip.Switched && flip.Page == FacePage.Hold)
+                {
+                    Assert.AreEqual(1f, flip.Drawn, "the old page is never cut, only faded");
+                }
+
+                settled += flip.Settled ? 1 : 0;
+                Assert.GreaterOrEqual(flip.TabPosition, underline - 1e-4f, "the underline glides one way");
+                underline = flip.TabPosition;
+                bool dark = flip.ContentAlpha * flip.Drawn < 0.1f;
+                blank = dark ? blank + Step : 0f;
+                longestBlank = Mathf.Max(longestBlank, blank);
             }
 
-            Assert.IsTrue(switched);
-            Assert.AreEqual(1, settled, "the page settles once, when the line has opened (the tube's thunk)");
+            Assert.AreEqual(1, switched, "the page changes once, in the dark");
+            Assert.AreEqual(1, settled, "and settles exactly once (the tube's thunk)");
+            Assert.LessOrEqual(flip.Duration, 0.35f, "the whole change takes at most 350 ms");
+            Assert.AreEqual(flip.Duration, elapsed, Step * 1.5f);
+            Assert.LessOrEqual(longestBlank, 0.15f, "the tube is never dark for long");
             Assert.AreEqual(FacePage.Databank, flip.Page);
-            Assert.AreEqual(1f, flip.ScaleY);
-            Assert.IsFalse(flip.IsFlipping);
-            Assert.AreEqual(_settings.FlipLineShare, thinnest, 0.05f);
+            Assert.AreEqual(1f, flip.TabPosition, "the underline has arrived under DATABANK");
+            Assert.AreEqual(1f, flip.ContentAlpha);
+            Assert.AreEqual(1f, flip.Drawn);
+        }
+
+        [Test]
+        public void APress_DuringTheChange_NeverFlipsTwice()
+        {
+            var flip = new PageFlip(_settings);
+            flip.Toggle();
+            int switched = 0;
+            int settled = 0;
+            while (flip.IsFlipping)
+            {
+                flip.Toggle();
+                flip.Tick(Step);
+                switched += flip.Switched ? 1 : 0;
+                settled += flip.Settled ? 1 : 0;
+            }
+
+            Assert.AreEqual(1, switched, "a press while the page changes is ignored");
+            Assert.AreEqual(1, settled);
+            Assert.AreEqual(FacePage.Databank, flip.Page, "it lands on the page the first press asked for");
 
             flip.Toggle();
-            flip.Tick(Step);
-            flip.Toggle();
-            Assert.AreEqual(FacePage.Databank, flip.Target, "a second press turns the flip back");
             flip.Snap(FacePage.Hold);
-            Assert.AreEqual(FacePage.Hold, flip.Page);
+            Assert.AreEqual(FacePage.Hold, flip.Page, "closing the face mid-change rests on the hold");
             Assert.IsFalse(flip.IsFlipping);
         }
 

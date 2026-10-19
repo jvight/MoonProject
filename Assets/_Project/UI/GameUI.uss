@@ -1993,8 +1993,13 @@ Label {
 
 .page-tab--active {
     color: rgb(248, 238, 214);
-    border-color: rgb(255, 196, 96);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
+}
+
+/* The one accent underline under the lit tab; it glides to the other tab while the page changes. */
+.page-tab__underline {
+    position: absolute;
+    background-color: rgb(255, 196, 96);
 }
 
 .databank__row {
@@ -2098,6 +2103,11 @@ Label {
     bottom: 0;
     padding: 72px 96px;
     justify-content: flex-start;
+    overflow: hidden;
+}
+
+.post__column {
+    flex-shrink: 0;
 }
 
 .post__line {
@@ -2110,6 +2120,79 @@ Label {
 
 .post__line--alert {
     color: rgb(255, 170, 72);
+}
+
+/* 07's face booting before its self-test: the tube's raster, the maker's mark traced by the beam, the load bar */
+
+.boot-face {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+}
+
+.boot-face__raster {
+    position: absolute;
+    min-width: 6px;
+    min-height: 4px;
+    border-radius: 2px;
+    background-color: rgb(255, 224, 152);
+}
+
+.boot-face__logo {
+    width: 360px;
+    height: 360px;
+    --trace-color: rgb(255, 224, 152);
+    --trace-halo-scale: 4;
+}
+
+.boot-face__wordmark,
+.boot-face__load-text {
+    font-size: 26px;
+    letter-spacing: 2px;
+    white-space: nowrap;
+    color: rgb(255, 224, 152);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
+}
+
+/* The mark fills only the middle of its square: the wordmark sits just under the drawn lines */
+.boot-face__wordmark {
+    margin-top: -72px;
+}
+
+.boot-face__load {
+    flex-direction: row;
+    align-items: center;
+}
+
+.boot-face__load-text {
+    margin-right: 18px;
+}
+
+.boot-face__step {
+    width: 18px;
+    height: 26px;
+    margin-left: 6px;
+    border-width: 2px;
+    border-color: rgb(255, 224, 152);
+}
+
+.boot-face__step--filled {
+    background-color: rgb(255, 224, 152);
+}
+
+/* The cover over a New Game that reloads: 07's own dark tube closing in from the edges */
+
+.cover-vignette {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    --cover-color: rgb(18, 12, 6);
 }
 
 .face-notice {

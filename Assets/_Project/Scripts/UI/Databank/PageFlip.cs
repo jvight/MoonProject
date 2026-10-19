@@ -5,33 +5,36 @@ using MoonProject.Core;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// The CRT channel flip between 07's face pages, HOLD and DATABANK (pure, EditMode-tested): the page collapses to
-    /// the tube's bright line, the other page takes its place at the thinnest moment, and the line opens again
-    /// (docs/design/databank.md §4).
+    /// The page change between 07's face pages, HOLD and DATABANK (pure, EditMode-tested), as a CRT redraws: the old
+    /// page's phosphor fades down to the tube's dark, the page switches, and the new page is drawn in from the top
+    /// behind a soft scan edge. Nothing slides, bounces or flashes; the two pages are never on the tube together; the
+    /// tab underline glides across for the whole change. A press while a change runs is ignored, so it never flips
+    /// twice and settles exactly once (docs/design/databank.md §4).
     /// </summary>
     internal sealed class PageFlip
     {
         private enum Phase
         {
             Idle,
-            Collapsing,
-            Opening,
+            Fading,
+            Drawing,
         }
 
         private readonly DatabankSettings _settings;
         private Phase _phase;
         private float _t;
         private FacePage _target;
+        private float _elapsed;
 
         public PageFlip(DatabankSettings settings)
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         }
 
-        /// <summary>The page on the tube (it changes at the flip's thinnest moment).</summary>
+        /// <summary>The page on the tube (it changes when the old page has faded out).</summary>
         public FacePage Page { get; private set; } = FacePage.Hold;
 
-        /// <summary>The page the tube is on or flipping to.</summary>
+        /// <summary>The page the tube is on or changing to.</summary>
         public FacePage Target => _phase == Phase.Idle ? Page : _target;
 
         public bool IsFlipping => _phase != Phase.Idle;
@@ -39,47 +42,60 @@ namespace MoonProject.UI
         /// <summary>True on the step the page changed.</summary>
         public bool Switched { get; private set; }
 
-        /// <summary>True on the step the line finished opening: the new page has settled on the tube.</summary>
+        /// <summary>True on the step the new page finished drawing in: it has settled on the tube.</summary>
         public bool Settled { get; private set; }
 
-        /// <summary>The page's height as a share of its own (1 at rest, the line share at the thinnest).</summary>
-        public float ScaleY
+        /// <summary>Seconds a whole change takes: the fade down, then the draw in.</summary>
+        public float Duration => _settings.FlipFadeSeconds + _settings.FlipDrawSeconds;
+
+        /// <summary>The page's brightness: it fades down before the switch, and is whole while it draws in.</summary>
+        public float ContentAlpha
         {
             get
             {
-                float line = _settings.FlipLineShare;
-                switch (_phase)
+                if (_phase != Phase.Fading)
                 {
-                    case Phase.Collapsing:
-                        return Mathf.Lerp(1f, line, Mathf.SmoothStep(0f, 1f, _t));
-                    case Phase.Opening:
-                        return Mathf.Lerp(line, 1f, Mathf.SmoothStep(0f, 1f, _t));
-                    default:
-                        return 1f;
+                    return 1f;
                 }
+
+                float ease = 1f - _t;
+                return ease * ease;
             }
         }
 
-        /// <summary>Flips to the other page (a flip already running turns toward it again).</summary>
+        /// <summary>The share of the page drawn from its top (1 at rest and while the old page fades).</summary>
+        public float Drawn
+        {
+            get
+            {
+                if (_phase != Phase.Drawing)
+                {
+                    return 1f;
+                }
+
+                float left = 1f - _t;
+                return 1f - left * left * left;
+            }
+        }
+
+        /// <summary>Where the tab underline stands: 0 under HOLD, 1 under DATABANK, gliding for the whole change.</summary>
+        public float TabPosition => _phase == Phase.Idle
+            ? Position(Page)
+            : Mathf.Lerp(Position(Other(_target)), Position(_target),
+                Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(_elapsed / Duration)));
+
+        /// <summary>Changes to the other page; ignored while a change already runs.</summary>
         public void Toggle()
         {
-            FacePage to = Target == FacePage.Hold ? FacePage.Databank : FacePage.Hold;
-            switch (_phase)
+            if (_phase != Phase.Idle)
             {
-                case Phase.Idle:
-                    _target = to;
-                    _phase = Phase.Collapsing;
-                    _t = 0f;
-                    break;
-                case Phase.Collapsing:
-                    _target = to;
-                    break;
-                default:
-                    _target = to;
-                    _phase = Phase.Collapsing;
-                    _t = 1f - _t;
-                    break;
+                return;
             }
+
+            _target = Other(Page);
+            _phase = Phase.Fading;
+            _t = 0f;
+            _elapsed = 0f;
         }
 
         /// <summary>The face closed: the next open starts on <paramref name="page"/>, at rest.</summary>
@@ -88,6 +104,7 @@ namespace MoonProject.UI
             Page = page;
             _phase = Phase.Idle;
             _t = 0f;
+            _elapsed = 0f;
         }
 
         /// <param name="deltaTime">Unscaled seconds.</param>
@@ -95,30 +112,43 @@ namespace MoonProject.UI
         {
             Switched = false;
             Settled = false;
-            switch (_phase)
+            if (_phase == Phase.Idle)
             {
-                case Phase.Collapsing:
-                    _t += deltaTime / _settings.FlipCollapseSeconds;
-                    if (_t >= 1f)
-                    {
-                        _t = 0f;
-                        Switched = Page != _target;
-                        Page = _target;
-                        _phase = Phase.Opening;
-                    }
-
-                    break;
-                case Phase.Opening:
-                    _t += deltaTime / _settings.FlipOpenSeconds;
-                    if (_t >= 1f)
-                    {
-                        _t = 0f;
-                        _phase = Phase.Idle;
-                        Settled = true;
-                    }
-
-                    break;
+                return;
             }
+
+            _elapsed += deltaTime;
+            if (_phase == Phase.Fading)
+            {
+                _t += deltaTime / _settings.FlipFadeSeconds;
+                if (_t >= 1f)
+                {
+                    _t = 0f;
+                    Page = _target;
+                    Switched = true;
+                    _phase = Phase.Drawing;
+                }
+
+                return;
+            }
+
+            _t += deltaTime / _settings.FlipDrawSeconds;
+            if (_t >= 1f)
+            {
+                _t = 0f;
+                _phase = Phase.Idle;
+                Settled = true;
+            }
+        }
+
+        private static FacePage Other(FacePage page)
+        {
+            return page == FacePage.Hold ? FacePage.Databank : FacePage.Hold;
+        }
+
+        private static float Position(FacePage page)
+        {
+            return page == FacePage.Databank ? 1f : 0f;
         }
     }
 }

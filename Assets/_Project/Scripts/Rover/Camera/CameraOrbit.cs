@@ -9,8 +9,9 @@ namespace MoonProject.Rover
     /// <list type="bullet">
     /// <item>The view's yaw is a world <see cref="Bearing"/>: 07 turning under a view the player chose never turns it.
     /// Look input is smoothed in velocity space (it glides, and never lags behind once the mouse stops).</item>
-    /// <item>The player's look stops short of facing 07 head on (the front limit): it slows over a soft band and
-    /// settles against it. 07 turning under a held view may leave it further out; the recenter brings it back.</item>
+    /// <item>The player's look goes all the way round 07, face included, unless the tuning sets a front limit short
+    /// of 180 degrees: then it slows over a soft band and settles against it. 07 turning under a held view may leave
+    /// it further out; the recenter brings it back.</item>
     /// <item>Sitting behind 07 with no free look since, the camera follows 07's turns, damped and capped, so a pivot
     /// slides into view and never whips round.</item>
     /// <item>Once look input has stopped for its idle delay (shorter on the stick) and 07 has driven forward above
@@ -25,6 +26,10 @@ namespace MoonProject.Rover
     public sealed class CameraOrbit
     {
         private const float InputEpsilon = 1e-6f;
+
+        /// <summary>A front limit this wide (deg) is no limit: the view goes all the way round 07, face included.
+        /// </summary>
+        private const float FullTurnDegrees = 180f;
 
         /// <summary>Throttle below this is drift on the stick, not the player driving.</summary>
         private const float ThrottleEpsilon = 0.05f;
@@ -211,6 +216,11 @@ namespace MoonProject.Rover
             }
 
             float limit = _tuning.MaxLookYaw;
+            if (limit >= FullTurnDegrees)
+            {
+                return 1f;
+            }
+
             return 1f - Smoothing.SmoothStep(limit - _tuning.LookYawSoftBand, limit, Mathf.Abs(offset));
         }
 

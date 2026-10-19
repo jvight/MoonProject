@@ -12,17 +12,17 @@ namespace MoonProject.UI
     {
         private const int MinStagePixels = 64;
 
-        [Tooltip("Seconds the page collapses to the CRT line before the other page opens (the channel flip).")]
-        [Range(0.05f, 0.5f)]
-        [SerializeField] private float _flipCollapseSeconds = 0.16f;
+        [Tooltip("Seconds the old page's phosphor fades down to the tube's dark before the page changes.")]
+        [Range(0.05f, 0.2f)]
+        [SerializeField] private float _flipFadeSeconds = 0.12f;
 
-        [Tooltip("Seconds the line takes to open into the other page.")]
-        [Range(0.05f, 0.6f)]
-        [SerializeField] private float _flipOpenSeconds = 0.22f;
+        [Tooltip("Seconds the new page takes to draw in from the top (with the fade, the whole change stays <= 0.35 s).")]
+        [Range(0.1f, 0.25f)]
+        [SerializeField] private float _flipDrawSeconds = 0.2f;
 
-        [Tooltip("Share of its height the page keeps at the flip's thinnest (the bright line).")]
-        [Range(0.005f, 0.2f)]
-        [SerializeField] private float _flipLineShare = 0.02f;
+        [Tooltip("Height (px at 1152x768) of the soft scan edge the new page draws in behind.")]
+        [Range(4f, 64f)]
+        [SerializeField] private float _flipEdgePixels = 24f;
 
         [Tooltip("Degrees per second the model turns by itself while nobody turns it.")]
         [Range(0f, 30f)]
@@ -105,11 +105,11 @@ namespace MoonProject.UI
         [Range(1f, 8f)]
         [SerializeField] private float _toastSeconds = 3f;
 
-        public float FlipCollapseSeconds => _flipCollapseSeconds;
+        public float FlipFadeSeconds => _flipFadeSeconds;
 
-        public float FlipOpenSeconds => _flipOpenSeconds;
+        public float FlipDrawSeconds => _flipDrawSeconds;
 
-        public float FlipLineShare => _flipLineShare;
+        public float FlipEdgePixels => _flipEdgePixels;
 
         public float IdleTurnDegreesPerSecond => _idleTurnDegreesPerSecond;
 

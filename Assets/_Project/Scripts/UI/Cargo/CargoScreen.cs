@@ -120,10 +120,20 @@ namespace MoonProject.UI
             }
         }
 
-        /// <summary>The channel flip's squash of the whole panel toward the tube's line (1 at rest).</summary>
-        public void SetPageScale(float scaleY)
+        /// <summary>
+        /// The page change's fade: every element of the panel but <paramref name="keep"/> (the tabs and the shutter) at
+        /// <paramref name="alpha"/> (1 at rest).
+        /// </summary>
+        public void SetPageAlpha(float alpha, VisualElement[] keep)
         {
-            _panel.style.scale = new Scale(new Vector3(1f, scaleY, 1f));
+            for (int i = 0; i < _panel.childCount; i++)
+            {
+                VisualElement child = _panel[i];
+                if (Array.IndexOf(keep, child) < 0)
+                {
+                    child.style.opacity = alpha;
+                }
+            }
         }
 
         public void Open()

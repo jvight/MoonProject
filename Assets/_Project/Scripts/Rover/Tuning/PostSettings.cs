@@ -6,30 +6,45 @@ namespace MoonProject.Rover
 {
     /// <summary>
     /// 07's power-on self-test, seen first on the close-up of its face (the inventory's framing) and then wide: how
-    /// long the black, the picture's opening, each line, the ready hold, the two camera moves and the ready performance
-    /// take (seconds), the motions on 07 for each check, the long-sleep dust, the light and the wide shot.
+    /// long the push-in (or the settle after a reload), the tube's power-on, the maker's mark, the load, each line, the
+    /// ready hold, the two camera moves and the ready performance take (seconds), the motions on 07 for each check, the
+    /// long-sleep dust, the light and the wide shot.
     /// </summary>
     [Serializable]
     public sealed class PostSettings
     {
         [Header("The wake on the face (s)")]
-        [Tooltip("Black while 07's systems thump on, before the picture opens on its face.")]
+        [Tooltip("New Game on a fresh title: the one eased move from the title's shot onto 07's dark face while the " +
+                 "title fades and 07 lifts its head.")]
         [Range(0.3f, 3f)]
-        [SerializeField] private float _darkSeconds = 0.6f;
+        [SerializeField] private float _pushInSeconds = 0.6f;
 
-        [Tooltip("The picture opens from black on the close-up of 07's face while the first line prints.")]
+        [Tooltip("After the reload a New Game over a save needs: on 07's dark face while the cover opens (UI's " +
+                 "vignette) and 07 lifts its head.")]
         [Range(0.3f, 3f)]
-        [SerializeField] private float _fadeInSeconds = 1.2f;
+        [SerializeField] private float _darkSeconds = 0.5f;
+
+        [Tooltip("The tube wakes on 07's face: a dot, a line, then the full raster with a warm bloom.")]
+        [Range(0.2f, 2f)]
+        [SerializeField] private float _powerOnSeconds = 0.6f;
+
+        [Tooltip("The maker's mark draws itself stroke by stroke, its wordmark types under it, holds, then dims away.")]
+        [Range(1f, 5f)]
+        [SerializeField] private float _logoSeconds = 1.9f;
+
+        [Tooltip("The machine loads its field profile in five steps.")]
+        [Range(0.3f, 3f)]
+        [SerializeField] private float _loadSeconds = 0.7f;
 
         [Header("The end of the wake (s)")]
         [Tooltip("After the last line: the readout holds its success, then gives way to the eyes. Longer than the " +
                  "readout's own linger on the face (UI), so the eyes are back before the camera moves.")]
         [Range(0.5f, 4f)]
-        [SerializeField] private float _readySeconds = 0.9f;
+        [SerializeField] private float _readySeconds = 0.6f;
 
         [Tooltip("Seconds into the ready hold when 07's eyes come back to its face, after the readout's linger.")]
         [Range(0.2f, 3f)]
-        [SerializeField] private float _readyEyesSeconds = 0.6f;
+        [SerializeField] private float _readyEyesSeconds = 0.4f;
 
         [Tooltip("The one eased move that pulls the camera back and out diagonally to the wide front three-quarter.")]
         [Range(1f, 4f)]
@@ -127,7 +142,13 @@ namespace MoonProject.Rover
 
         public float DarkSeconds => _darkSeconds;
 
-        public float FadeInSeconds => _fadeInSeconds;
+        public float PushInSeconds => _pushInSeconds;
+
+        public float PowerOnSeconds => _powerOnSeconds;
+
+        public float LogoSeconds => _logoSeconds;
+
+        public float LoadSeconds => _loadSeconds;
 
         public float ReadySeconds => _readySeconds;
 
@@ -365,21 +386,28 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// The opening's lines: who 07 is and why it woke, how long it slept, its agenda, the lamps coming on, the
-        /// cutter's missing igniter, the battery and the start. The other checks are left out for pace; they can be
-        /// put back here.
+        /// The opening's lines, every check: who 07 is and why it woke, how long it slept, its agenda, then each part
+        /// checked in a fast, dense run (the lamps long enough to come on, the cutter's missing igniter a beat
+        /// longer), the battery, the assembly and the start.
         /// </summary>
         private static PostLine[] DefaultLines()
         {
             return new[]
             {
                 new PostLine(BootCheckStep.Carrier, 0.7f),
-                new PostLine(BootCheckStep.Resume, 0.8f),
-                new PostLine(BootCheckStep.Agenda, 1.4f),
+                new PostLine(BootCheckStep.Resume, 0.7f),
+                new PostLine(BootCheckStep.Agenda, 1f),
+                new PostLine(BootCheckStep.Lens, 0.4f),
                 new PostLine(BootCheckStep.Lamps, 1.2f),
-                new PostLine(BootCheckStep.Cutter, 1.4f),
-                new PostLine(BootCheckStep.Battery, 0.9f),
-                new PostLine(BootCheckStep.Begin, 0.6f),
+                new PostLine(BootCheckStep.Head, 0.5f),
+                new PostLine(BootCheckStep.Wheels, 0.6f),
+                new PostLine(BootCheckStep.Motor, 0.5f),
+                new PostLine(BootCheckStep.Cutter, 1.2f),
+                new PostLine(BootCheckStep.SolarWing, 0.6f),
+                new PostLine(BootCheckStep.Antenna, 0.6f),
+                new PostLine(BootCheckStep.Battery, 0.6f),
+                new PostLine(BootCheckStep.Assembly, 0.4f),
+                new PostLine(BootCheckStep.Begin, 0.4f),
             };
         }
     }

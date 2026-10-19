@@ -17,7 +17,7 @@ MonoBehaviour:
   _invertY: 0
   _minSensitivity: 0.25
   _maxSensitivity: 3
-  _maxLookYaw: 135
+  _maxLookYaw: 180
   _lookYawSoftBand: 30
   _lookHalfLife: 0.05
   _distance: 7.5
@@ -40,8 +40,8 @@ MonoBehaviour:
   _stargazeBeginShare: 0.6
   _stargazeHoldShare: 0.3
   _stargazeMaxSpeed: 0.3
-  _recenterDelay: 5
-  _stickRecenterDelay: 4
+  _recenterDelay: 1.5
+  _stickRecenterDelay: 1.5
   _recenterMinSpeed: 2
   _recenterFullSpeed: 5
   _recenterSlowDelayScale: 1.6
@@ -181,10 +181,13 @@ MonoBehaviour:
     _blinkLow: 0.25
     _blinkSigh: 0.5
     _post:
-      _darkSeconds: 0.6
-      _fadeInSeconds: 1.2
-      _readySeconds: 0.9
-      _readyEyesSeconds: 0.6
+      _pushInSeconds: 0.6
+      _darkSeconds: 0.5
+      _powerOnSeconds: 0.6
+      _logoSeconds: 1.9
+      _loadSeconds: 0.7
+      _readySeconds: 0.6
+      _readyEyesSeconds: 0.4
       _pullBackSeconds: 1.2
       _performSeconds: 1.6
       _moveBehindSeconds: 1.6
@@ -192,17 +195,31 @@ MonoBehaviour:
       - _step: 0
         _seconds: 0.7
       - _step: 1
-        _seconds: 0.8
+        _seconds: 0.7
       - _step: 2
-        _seconds: 1.4
+        _seconds: 1
+      - _step: 3
+        _seconds: 0.4
       - _step: 4
         _seconds: 1.2
-      - _step: 8
-        _seconds: 1.4
-      - _step: 11
-        _seconds: 0.9
-      - _step: 13
+      - _step: 5
+        _seconds: 0.5
+      - _step: 6
         _seconds: 0.6
+      - _step: 7
+        _seconds: 0.5
+      - _step: 8
+        _seconds: 1.2
+      - _step: 9
+        _seconds: 0.6
+      - _step: 10
+        _seconds: 0.6
+      - _step: 11
+        _seconds: 0.6
+      - _step: 12
+        _seconds: 0.4
+      - _step: 13
+        _seconds: 0.4
       _fastForwardAfterSeconds: 0.6
       _fastForwardScale: 6
       _headSweepDegrees: 10
@@ -265,7 +282,6 @@ MonoBehaviour:
     _lampDarkGapSeconds: 0.15
     _lampRampSeconds: 0.45
     _fadeOutSeconds: 0.6
-    _fadeOutFrom: 0.1
     _titleDriftDelay: 20
     _titleDriftYaw: 8
     _titleDriftPeriod: 48

@@ -170,6 +170,9 @@ namespace MoonProject.UI
         /// <summary>The step of line <paramref name="index"/>.</summary>
         public BootCheckStep StepOf(int index) => _steps[index];
 
+        /// <summary>True once line <paramref name="index"/> has typed out with its check done (no dots left).</summary>
+        public bool IsSettled(int index) => !_checking[index] && (int)_typed[index] >= _targets[index].Length;
+
         /// <summary>True when line <paramref name="index"/> reports a part that does not work.</summary>
         public bool IsAlertLine(int index) => _alert[index];
 
