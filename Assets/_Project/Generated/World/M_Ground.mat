@@ -49,19 +49,19 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _DetailAlbedoStrength: 0.3
-    - _MacroBumpScale: 0.24
-    - _MacroTiling: 0.042
-    - _NearBumpScale: 1.05
-    - _NearFadeEnd: 32
-    - _NearFadeStart: 12
-    - _NearTiling: 0.44
-    - _OcclusionStrength: 0.52
+    - _DetailAlbedoStrength: 0.36
+    - _MacroBumpScale: 0.5
+    - _MacroTiling: 0.16
+    - _NearBumpScale: 0.78
+    - _NearFadeEnd: 120
+    - _NearFadeStart: 38
+    - _NearTiling: 0.56
+    - _OcclusionStrength: 0.68
     - _RockBumpScale: 0.88
     - _RockTiling: 0.12
     - _SlopeBlendRange: 0.1
     - _SlopeThreshold: 0.88
-    - _SmoothnessScale: 0.13
+    - _SmoothnessScale: 0.05
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

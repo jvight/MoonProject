@@ -13,7 +13,8 @@ namespace MoonProject.World
     /// (Art/R1/Models/Rocks): every instance copies one indexed source rock, scaled to its size, into one combined
     /// smooth-shaded mesh per terrain chunk and rock class (built in parallel). Pebble chunks are shadowless and
     /// distance-culled by a LODGroup; boulder chunks cast shadows, and every boulder gets a convex MeshCollider on
-    /// <see cref="Layers.Prop"/>.
+    /// <see cref="Layers.Prop"/>. The near-field rubble's clods (<see cref="ClodMesh"/>) are meshed in small chunks of
+    /// their own, culled close to the camera, and never collide.
     /// </summary>
     public sealed class ScatterBuilder
     {
@@ -43,12 +44,13 @@ namespace MoonProject.World
 
         /// <param name="pebbleRocks">Readable source meshes for pebbles (origin at the ground contact point).</param>
         /// <param name="boulderRocks">Readable source meshes for boulders; also used as their convex colliders.</param>
+        /// <param name="rubbleRocks">Readable source meshes for the rubble's clods.</param>
         public ScatterBuildReport Build(Transform parent, IReadOnlyList<ScatterInstance> instances,
             ScatterSettings settings, float chunkSize, IReadOnlyList<Mesh> pebbleRocks,
-            IReadOnlyList<Mesh> boulderRocks, Material material, HideFlags hideFlags)
+            IReadOnlyList<Mesh> boulderRocks, IReadOnlyList<Mesh> rubbleRocks, Material material, HideFlags hideFlags)
         {
             if (parent == null || instances == null || settings == null || pebbleRocks == null || boulderRocks == null
-                || material == null)
+                || rubbleRocks == null || material == null)
             {
                 throw new ArgumentNullException(nameof(parent), "Scatter build inputs must all be provided.");
             }
@@ -56,39 +58,34 @@ namespace MoonProject.World
             var watch = Stopwatch.StartNew();
             RockShape[] pebbleShapes = ReadShapes(pebbleRocks);
             RockShape[] boulderShapes = ReadShapes(boulderRocks);
+            RockShape[] rubbleShapes = ReadShapes(rubbleRocks);
+            RockShape[][] shapesOf = { pebbleShapes, boulderShapes, rubbleShapes };
+            float[] chunkOf = { chunkSize, chunkSize, settings.RubbleChunkSize };
 
             // Group by (class, chunk) in plan order, so every combined mesh is deterministic.
             var groups = new List<ChunkGroup>();
             var lookup = new Dictionary<Vector3Int, int>();
-            int pebbles = 0;
-            int boulders = 0;
+            var counts = new int[shapesOf.Length];
             for (int i = 0; i < instances.Count; i++)
             {
-                bool boulder = instances[i].Kind == ScatterKind.Boulder;
+                ScatterKind kind = instances[i].Kind;
+                float size = chunkOf[(int)kind];
                 Vector3 position = instances[i].Position;
-                var cell = new Vector2Int(Mathf.FloorToInt(position.x / chunkSize),
-                    Mathf.FloorToInt(position.z / chunkSize));
-                var key = new Vector3Int(cell.x, cell.y, boulder ? 1 : 0);
+                var cell = new Vector2Int(Mathf.FloorToInt(position.x / size), Mathf.FloorToInt(position.z / size));
+                var key = new Vector3Int(cell.x, cell.y, (int)kind);
                 if (!lookup.TryGetValue(key, out int group))
                 {
                     group = groups.Count;
                     lookup.Add(key, group);
-                    groups.Add(new ChunkGroup(cell, boulder));
+                    groups.Add(new ChunkGroup(cell, kind));
                 }
 
-                RockShape[] shapes = boulder ? boulderShapes : pebbleShapes;
+                RockShape[] shapes = shapesOf[(int)kind];
                 RockShape shape = shapes[instances[i].Variant % shapes.Length];
                 groups[group].Members.Add(i);
                 groups[group].VertexCount += shape.Positions.Length;
                 groups[group].IndexCount += shape.Triangles.Length;
-                if (boulder)
-                {
-                    boulders++;
-                }
-                else
-                {
-                    pebbles++;
-                }
+                counts[(int)kind]++;
             }
 
             var vertices = new ScatterVertex[groups.Count][];
@@ -97,31 +94,33 @@ namespace MoonProject.World
             Parallel.For(0, groups.Count, g =>
             {
                 ChunkGroup group = groups[g];
-                vertices[g] = Combine(group, instances, group.Boulders ? boulderShapes : pebbleShapes, chunkSize,
+                vertices[g] = Combine(group, instances, shapesOf[(int)group.Kind], chunkOf[(int)group.Kind],
                     out indices[g], out bounds[g]);
             });
 
             int triangles = 0;
-            float lodSize = PebbleCullScreenHeight * 2f * settings.PebbleCullDistance
-                * Mathf.Tan(ReferenceFieldOfView * 0.5f * Mathf.Deg2Rad);
+            float tan = Mathf.Tan(ReferenceFieldOfView * 0.5f * Mathf.Deg2Rad);
+            float[] cullOf = { settings.PebbleCullDistance, 0f, settings.RubbleCullDistance };
             for (int g = 0; g < groups.Count; g++)
             {
                 ChunkGroup group = groups[g];
-                MeshRenderer chunkRenderer = CreateChunk(parent, group, vertices[g], indices[g], bounds[g], chunkSize,
+                float size = chunkOf[(int)group.Kind];
+                MeshRenderer chunkRenderer = CreateChunk(parent, group, vertices[g], indices[g], bounds[g], size,
                     material, hideFlags);
                 triangles += indices[g].Length / 3;
-                if (!group.Boulders)
+                if (group.Kind != ScatterKind.Boulder)
                 {
                     var lodGroup = chunkRenderer.gameObject.AddComponent<LODGroup>();
-                    lodGroup.localReferencePoint = new Vector3(chunkSize * 0.5f, 0f, chunkSize * 0.5f);
-                    lodGroup.size = lodSize;
+                    lodGroup.localReferencePoint = new Vector3(size * 0.5f, 0f, size * 0.5f);
+                    lodGroup.size = PebbleCullScreenHeight * 2f * cullOf[(int)group.Kind] * tan;
                     lodGroup.SetLODs(new[] { new LOD(PebbleCullScreenHeight, new Renderer[] { chunkRenderer }) });
                 }
             }
 
             int solidCobbles = AddRockColliders(parent, instances, settings, pebbleShapes, boulderRocks, boulderShapes,
                 hideFlags);
-            return new ScatterBuildReport(pebbles, boulders, triangles, groups.Count, watch.Elapsed.TotalMilliseconds,
+            return new ScatterBuildReport(counts[(int)ScatterKind.Pebble], counts[(int)ScatterKind.Boulder],
+                counts[(int)ScatterKind.Rubble], triangles, groups.Count, watch.Elapsed.TotalMilliseconds,
                 solidCobbles);
         }
 
@@ -227,7 +226,7 @@ namespace MoonProject.World
         private MeshRenderer CreateChunk(Transform parent, ChunkGroup group, ScatterVertex[] vertices, int[] indices,
             Bounds bounds, float chunkSize, Material material, HideFlags hideFlags)
         {
-            string name = $"{(group.Boulders ? "Boulders" : "Pebbles")}_{group.Cell.x}_{group.Cell.y}";
+            string name = $"{group.Kind}_{group.Cell.x}_{group.Cell.y}";
             var chunk = new GameObject(name) { hideFlags = hideFlags, layer = Layers.Prop };
             chunk.transform.SetParent(parent, false);
             chunk.transform.localPosition = new Vector3(group.Cell.x, 0f, group.Cell.y) * chunkSize;
@@ -293,7 +292,7 @@ namespace MoonProject.World
                     meshCollider.convex = true;
                     meshCollider.sharedMesh = boulderRocks[variant];
                 }
-                else if (instance.Size >= cobbleCutoff)
+                else if (instance.Kind == ScatterKind.Pebble && instance.Size >= cobbleCutoff)
                 {
                     // A cobble at or above the cutoff reaches 07's wheel hub and belly pan, so it gets a cheap sphere;
                     // smaller pebbles stay non-colliding.
@@ -390,15 +389,15 @@ namespace MoonProject.World
 
         private sealed class ChunkGroup
         {
-            public ChunkGroup(Vector2Int cell, bool boulders)
+            public ChunkGroup(Vector2Int cell, ScatterKind kind)
             {
                 Cell = cell;
-                Boulders = boulders;
+                Kind = kind;
             }
 
             public Vector2Int Cell { get; }
 
-            public bool Boulders { get; }
+            public ScatterKind Kind { get; }
 
             public List<int> Members { get; } = new List<int>();
 

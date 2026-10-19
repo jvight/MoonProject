@@ -130,6 +130,7 @@ namespace MoonProject.World.Editor
             }
 
             StandBigBoulders(context, settings, surface, anchors, boulders);
+            StandTrackBoulders(context, settings.Surface.Relief, surface, boulders);
             Transform basin = context.CreateChild(BasinPropsRootName, root).transform;
             StandScout(context, landmarks, surface, basin);
             StandCrewTraces(context, settings, surface, anchors, basin);
@@ -385,6 +386,24 @@ namespace MoonProject.World.Editor
                 float height = context.LoadAsset<GameObject>(WorldPaths.R1RockPrefab(rock))
                     .GetComponentInChildren<Renderer>().bounds.size.y;
                 StandRock(context, parent, rock, site.Position - Vector3.up * height * tuning.Sink, site.Yaw);
+            }
+        }
+
+        /// <summary>
+        /// The boulders at the foot of their furrows down the big old crater's wall (<see cref="ReliefSettings.Tracks"/>),
+        /// half-buried where they came to rest, turned along the way they rolled.
+        /// </summary>
+        private static void StandTrackBoulders(SceneBuildContext context, ReliefSettings relief, MoonSurface surface,
+            Transform parent)
+        {
+            foreach (BoulderTrack track in relief.Tracks)
+            {
+                float height = context.LoadAsset<GameObject>(WorldPaths.R1RockPrefab(track.Rock))
+                    .GetComponentInChildren<Renderer>().bounds.size.y;
+                Vector2 rolled = track.End - track.Start;
+                float yaw = Mathf.Atan2(rolled.x, rolled.y) * Mathf.Rad2Deg;
+                Vector3 rest = Ground(surface, new Vector3(track.End.x, 0f, track.End.y));
+                StandRock(context, parent, track.Rock, rest - Vector3.up * height * relief.TrackBoulderSink, yaw);
             }
         }
 

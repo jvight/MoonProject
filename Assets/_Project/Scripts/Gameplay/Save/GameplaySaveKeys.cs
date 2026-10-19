@@ -24,5 +24,7 @@ namespace MoonProject.Gameplay
         public const int OpeningVersion = 1;
         public const string StartKit = "gameplay.startkit";
         public const int StartKitVersion = 1;
+        public const string Databank = "gameplay.databank";
+        public const int DatabankVersion = 1;
     }
 }

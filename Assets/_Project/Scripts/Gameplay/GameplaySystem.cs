@@ -36,6 +36,9 @@ namespace MoonProject.Gameplay
         [Tooltip("07's cutter tiers (Assets/_Project/Data/Tuning/Gameplay/CutterTuning.asset).")]
         [SerializeField] private CutterTuning _cutterTuning;
 
+        [Tooltip("07's scan archive: every databank entry (Assets/_Project/Data/Content/DatabankCatalogue.asset).")]
+        [SerializeField] private DatabankCatalogue _databankCatalogue;
+
         [Tooltip("The ruins' structure sets, the story scans and the scan verb (Assets/_Project/Data/Tuning/Gameplay/" +
                  "ScanTuning.asset).")]
         [SerializeField] private ScanTuning _scanTuning;
@@ -101,6 +104,9 @@ namespace MoonProject.Gameplay
 
         /// <summary>The ruins' and the lander's scan targets, scanned to learn structures (0.5.5 §1).</summary>
         public ScanField Scans { get; private set; }
+
+        /// <summary>07's scan archive: what the scans and milestones unlocked (docs/design/databank.md).</summary>
+        public Databank Databank { get; private set; }
 
         /// <summary>The recovery protocol's rows (docs/features/M3-21).</summary>
         public RecoveryProgress Recovery { get; private set; }
@@ -182,6 +188,11 @@ namespace MoonProject.Gameplay
             _apronOutline = apronOutline;
         }
 
+        internal void WireDatabank(DatabankCatalogue catalogue)
+        {
+            _databankCatalogue = catalogue;
+        }
+
         internal void WireCargo(MaterialCatalog catalog, CargoTuning cargo)
         {
             _materialCatalog = catalog;
@@ -242,6 +253,8 @@ namespace MoonProject.Gameplay
                 return;
             }
 
+            Databank = new Databank(_databankCatalogue, context.Events,
+                new WorldDatabankSources(Scans, Opening.Flow.HasReached));
             _salvage.ConnectScans(Scans);
             ApronGlow = new ApronGlow(_apronOutline, _building.Tuning.ApronGlowFadeSeconds);
             _building.MarkApron(_apronOutline.bounds.center);
@@ -262,6 +275,7 @@ namespace MoonProject.Gameplay
             context.Register<IBuildEnergy>(_battery);
             context.Register<IBeamStatus>(services.Beam);
             context.Register<IRecoveryProgress>(Recovery);
+            context.Register<IDatabank>(Databank);
             context.Register<BuildField>(_building);
             RegisterSaveSections(save);
         }
@@ -282,6 +296,8 @@ namespace MoonProject.Gameplay
                 GameplaySaveKeys.StartKitVersion, StartKit.Capture, StartKit.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<ScansSaveData>(GameplaySaveKeys.Scans,
                 GameplaySaveKeys.ScansVersion, Scans.Capture, Scans.Restore)));
+            _saveTokens.Add(save.Register(new SaveSection<DatabankSaveData>(GameplaySaveKeys.Databank,
+                GameplaySaveKeys.DatabankVersion, Databank.Capture, Databank.Restore)));
             _saveTokens.Add(_building.RegisterSave(save));
         }
 
@@ -517,6 +533,7 @@ namespace MoonProject.Gameplay
                 : _cargo == null ? "CargoTuning is not assigned."
                 : _cutterTuning == null ? "CutterTuning is not assigned."
                 : _scanTuning == null ? "ScanTuning is not assigned."
+                : _databankCatalogue == null ? "DatabankCatalogue is not assigned (run Gameplay/Content)."
                 : _baseTuning == null ? "BaseTuning is not assigned."
                 : _openingTuning == null ? "OpeningTuning is not assigned."
                 : _salvage == null ? "SalvageField is not assigned."
@@ -541,6 +558,7 @@ namespace MoonProject.Gameplay
             }
 
             _flowTokens.Clear();
+            Databank?.Dispose();
             Bundles?.Dispose();
             Opening?.Dispose();
             _meshes?.Dispose();

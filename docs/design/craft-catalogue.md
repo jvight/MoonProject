@@ -20,6 +20,10 @@
 > **Cost shorthand:** M Metal · W Wiring · O Optics · Al Alloy · G Glass · Ox Oxygen (blueprint-fit gap: to add) ·
 > C Coolant · Cr Crystal · Ch Circuit Chips · S Superconductor. **⚡** = build energy in cells.
 >
+> **Understanding source** (`maker-understanding.md`, owner-approved pillar 2026-10-19): `KA·n`, `VIS·n`, `ILC·n` or `TY·n`
+> means the item is an **adapted** blueprint, unlocked at level n of that maker's understanding, not by fragments.
+> It looks home-made: the donor part keeps its own era and livery, joined by 07's weld beads and a cut `07` tag.
+>
 > **Phase:** O = the opening (first 45 min) · 0.5 = the rest of the basin · 0.6 = the Long Mare · 0.7 = the Rim
 > Terraces · 0.8 = the Shadowed Crater and lava tube · 1.0 = the Peak.
 
@@ -39,10 +43,10 @@
   light the pulse; solar flowers charge on the route). Breadth comes from regions, not from duplicate lockers.
 
 ## 1. The catalogue
-**Counts by 1.0:** 34 structures · 4 repair targets · 12 kits · 23 device tiers · 9 vehicles and helper machines.
-That is **78 things to make**, plus 4 to restore. Of these, **6 are expressive builds** (★).
+**Counts by 1.0:** 39 structures · 4 repair targets · 12 kits · 26 device tiers · 11 vehicles and helper machines.
+That is **88 things to make**, plus 4 to restore. 10 of them are adapted, from `maker-understanding.md`. Of these, **6 are expressive builds** (★).
 
-### 1.1 Structures (A unless marked) — 32
+### 1.1 Structures (A unless marked) — 37
 | # | Structure | Source (teaches it) | Does for 07 | Visible change | Cost · ⚡ | Phase |
 |---|---|---|---|---|---|---|
 | **Power** | | | | | | |
@@ -55,7 +59,7 @@ That is **78 things to make**, plus 4 to restore. Of these, **6 are expressive b
 | 7 | Louver-comb dust harvester | the mare weather post (invention 10) | harvests charged terminator dust into power | vertical combs glitter at dusk | 2M 2W 1O · 0.4 | 0.6 |
 | **Charging and network** | | | | | | |
 | 8 | Field charge pylon | the mare comms dish site | a charger far from home | a slim post, a 4 m pad, a warm cap lamp | 3M 2W 1O · 0.4 | 0.6 |
-| 9 | Power bridge (C) | Meridian's hex dock + the adapter | lets both families share a charger | a Lumen pad and a hex dock joined by a bridge box | 2Al 2W 1Ch · 0.6 | 0.7 |
+| 9 | Power bridge (C) | **TY·2** (Meridian's hex docks feed it) | lets both families share a charger | a Lumen pad and a hex dock joined by a bridge box | 2Al 2W 1Ch · 0.6 | 0.7 |
 | 10 | Antenna mast | the radio tower ruin | listens; the first Link step | a dish turning on a telescoped mast | 4M 3W 2O · 0.5 | O |
 | 11 | Relay mast | the mare dish (05's task) | carries the Link to the next region | a lit mast; the network pulse runs along it | 4M 3W 2O · 0.5 | 0.6 |
 | 12 | The great dish | the Peak and Meridian's vault | the uplink: the ending | the dish turns to the Arks | 6S 4Al 4Ch · (built in 3 stages) | 1.0 |
@@ -67,7 +71,7 @@ That is **78 things to make**, plus 4 to restore. Of these, **6 are expressive b
 | 17 | ★ **Brick press** | the Lumen depot scraps | compacts scrap and regolith into **interlocking blocks** (07's "cubes") | a press thumping out blocks; a growing stack | 3M 1W · 0.3 | 0.5 |
 | 18 | Ice still | the crater's ice works | ice → Coolant | a frosted tank with a slow drip light | 2Al 2G · 0.5 | 0.8 |
 | **Storage and logistics** | | | | | | |
-| 19 | Storage rack | the depot | home storage (open shelves, M3-25) | crates in material colours; a self-lifting carousel (blueprint-fit fix) | 3M · 0.2 | 0.5 |
+| 19 | Storage rack (crate rack) | **VIS·1** (the depot feeds it) | home storage (open shelves, M3-25) | crates in material colours; a self-lifting carousel (blueprint-fit fix) | 3M · 0.2 | 0.5 |
 | 20 | Pneumatic post | the garage–depot arch (invention 04) | moves stock between structures automatically | sealed brass tubes pulsing with capsules | 2M 1G 1Ox · 0.4 | 0.6 |
 | 21 | ★ **Cable run** | the trencher | power over distance, **laid by driving** with the cable reel kit | a cable on the ground whose beads light with the network pulse: **the player's lines drawn across the moon** | 1W per 20 m · 0.05 | 0.5 |
 | 22 | Rail line and cart dock | the mass driver spine | an automated rail between base and quarry | rails on sleepers, a cart running | 2M per 10 m, dock 3Al 2W · 0.5 | 0.7 |
@@ -82,6 +86,15 @@ That is **78 things to make**, plus 4 to restore. Of these, **6 are expressive b
 | 30 | Vehicle pad | the depot loading bay | docks and charges vehicles and helpers | a bigger pad with a raised hoist (blueprint-fit fix) | 4M 2W 1O · 0.5 | 0.6 |
 | 31 | Sunshade garage | the habitat's regolith berm | shelters 07 from micrometeorite flash nights and the cold at night (less wear; ×1.0 cold drain) | a bermed half-shell of blocks | 8 blocks 2M · 0.3 | 0.6 |
 | 32 | ★ **Paint and stencil booth** | Kenji's workshop sign kit | 07's livery and stencils on its builds (the player's own number and colours on structures) | the base wears the player's marks | 2M 1O · 0.2 | 0.7 |
+
+| **Adapted** (`maker-understanding.md`) | | | | | | |
+| 33 | Module storehouse | **VIS·2** | a sealed store and workshop shell, **no air** (F5 and D hold) | a VIS habitat module cut from the ruins, stood at the base and patched | 4M 2W · 0.6 | 0.6 |
+| 34 | Tall pylon | **VIS·3** | carries the grid 40 m | a lattice pylon with lit insulators | 3M 2W · 0.3 | 0.7 |
+| 35 | Hangar module | **VIS·4** | houses and charges the service crawler | two modules joined by bellows | 6M 3W 1Al · 0.8 | 0.7 |
+| 36 | Reflector beacon | **ILC·1** | a road marker: it glints back in 07's headlamp from far and shows on the chart | a small corner-cube post (a 1971 idea) | 1M 1O · 0.05 | 0.5 |
+| 37 | Survey stakes | **ILC·3** | place two, and the chart inks everything between them | theodolite stakes on tripods | 2M 1O · 0.1 | 0.7 |
+
+Costs and energy for 33–37 are `[PROPOSAL]`, for Gameplay to tune.
 
 **Repair targets** (A, repair only):
 1. old relay masts (0.6);
@@ -100,7 +113,7 @@ That is **78 things to make**, plus 4 to restore. Of these, **6 are expressive b
 | 6 | Scoop | the depot's regolith loader | digs buried things, feeds the brick press with regolith | a widened front scoop | 3M · 0.2 | 0.5 |
 | 7 | Cold-gas thrusters | elder 04's thruster pack (invention 05) | controlled hops and slow descents | nozzles with a brief white plume | 2Al 1Ox · 0.5 | 0.7 |
 | 8 | Drone dock | the survey drone's cradle | launches and recalls the survey drone (vehicle 3) | a small cradle on the back | 2Al 2W 1O · 0.4 | 0.6 |
-| 9 | Seismic bell | the drill rig's seismic line (invention 11) | rings the ground and reveals buried sites | a brass bell on an arm | 2Al 1W 1Ox · 0.4 | 0.6 |
+| 9 | Seismic bell | **ILC·2** (the drill rig's seismic line feeds it) | rings the ground and reveals buried sites | a brass bell on an arm | 2Al 1W 1Ox · 0.4 | 0.6 |
 | 10 | Flare launcher | the crater rim post (invention 02) | fires glass flares to light the dark | a short launcher tube | 2Al 2G 1Ox · 0.5 | 0.8 |
 | 11 | Sounding kit (C) | the Meridian survey flock | maps buried ice in the ground (survey pieces) | a hex-standard probe on an adapter | 2Al 2Ch · 0.5 | 0.7 |
 | 12 | Core drill (C) | Meridian's ice tappers | drills ice and ore | a drill on the nose | 3Al 1Ch 1C · 0.6 | 0.8 |
@@ -114,20 +127,21 @@ That is **78 things to make**, plus 4 to restore. Of these, **6 are expressive b
 | The crater | flare launcher + core drill |
 | A survey day | drone dock + seismic bell |
 
-### 1.3 Device tiers (fixed mounts, upgraded in place) — 22
+### 1.3 Device tiers (fixed mounts, upgraded in place) — 26
 | Mount | Tiers (source · phase) |
 |---|---|
 | Lens (scan) | Focus Lens (Kenji's workshop · 0.5) → Wide Lens (scan range ×2, elder 05 · 0.6) → Survey Lens (shows a site's contents, Meridian · C · 0.7) |
-| Cutter | igniter repair (the lander · O) → Cutter Ribs (a terrace wreck · 0.6) → Thermic Oxy-Lance (Meridian's vault · C · 0.7) |
-| Lamp | Warm Headlamp (Mule · 0.5) → Floodlights (elder 02 · 0.8) |
+| Cutter | igniter repair (the lander · O) → Cutter Ribs (**KA·4** · 0.7) → Thermic Oxy-Lance (Meridian's vault · C · 0.7) |
+| Lamp | Warm Headlamp (Mule · 0.5) → Floodlights (elder 02 · 0.8); plus the SSR-3 headlamp beside the visor, a long, narrow night beam (**KA·1** · 0.5) |
 | Solar wing | unjam (the opening's first upgrade · 0.5) → wing wiper (the sweeper · 0.6) → twin wing (Theo's sled · 0.8) |
 | Battery | Cell Pack II (elder 06 · 0.5) → Cell Pack III (the mare cart · 0.6) → Cell Heater (elder 03 · 0.8) → Power Core (the Peak · 1.0) |
 | Hold | Side bins (a Lumen crate · 0.5) → Cargo pod (the convoy · 0.6) |
-| Wheels | Magnetic Treads (the terrace bot · 0.7) → Efficient Hubs (the rail works · 0.7) → Cryo cleats (elder 03 · 0.8: the ice gate, `ice-and-vehicles.md`) |
+| Wheels | Grip rings (**KA·2** · 0.6) → Magnetic Treads (the terrace bot · 0.7) → Efficient Hubs (the rail works · 0.7) → Cryo cleats (elder 03 · 0.8: the ice gate, `ice-and-vehicles.md`) |
 | Antenna | Transmit module (elder 05 · 0.6) → Star Tracker (elder 01 · 1.0) |
-| Charge port | Hex adapter (Meridian docks · 0.7: the key to standard C) |
+| Charge port | Hex adapter (**TY·1** · 0.7: the key to standard C; scanning Meridian's docks feeds it) |
+| Kit sockets | a third kit socket (**KA·3** · 0.6–0.7; blueprint-fit §3) |
 
-### 1.4 Vehicles and helper machines (A, built or repaired; operational task queues, no companions) — 9
+### 1.4 Vehicles and helper machines (A, built or repaired; operational task queues, no companions) — 11
 | # | Machine | Source | Job | Visible | Phase |
 |---|---|---|---|---|---|
 | 1 | Cargo sled | the depot | towed by the winch; carries a big load | a flat sled on skids | 0.5 |
@@ -139,6 +153,9 @@ That is **78 things to make**, plus 4 to restore. Of these, **6 are expressive b
 | 7 | **Service crawler** (07 drives in and docks) | the mare's far shore | a mobile base: charger, 3 pods, 12 m/s (`ice-and-vehicles.md`) | a tracked platform with a rover bay | 0.7 |
 | 8 | **Rail runner** (07 docks on it) | the mass driver spine | fast travel on the player's rail lines, 20 m/s | a cart carrying 07 along lit rails | 0.7 |
 | 9 | **Ballistic hopper** (07 docks in its cradle) | Lumen lander frame + Meridian guidance (C) | hops ~2 km to pads 07 built; propellant from the crater's ice | a squat cold-gas/rocket frame, no wings | 1.0 |
+
+| 10 | Remote harvester (C) | **TY·3** | works an ore patch and fills a base hopper | a hex-legged harvester walking its patch | 0.7 |
+| 11 | Flock relay drones (C) | **TY·4** | hold the Link between masts | three small drones keeping station | 0.8 |
 
 **Structures added with the vehicles:** a hop pad (3M 2W 1O · 0.3 · 1.0) and a propellant plant (H₂/O₂ from ice, beside the ice still · 1.0).
 
@@ -166,7 +183,8 @@ minutes without a new thing to build or fit.
 | 0.8 Crater and tube | 5:00–6:15 | 9 | 66 | the heliostat, ice still; flare launcher, core drill; Floodlights, Cell Heater, twin wing |
 | 1.0 Peak | 6:15–7:00 | 6 | 72 | the great dish (3 stages), Star Tracker, Power Core, the hauler |
 
-Repair targets (4) come on top. **Rule:** each region adds at least one expressive build and at least one
+Repair targets (4) come on top, and so do the **10 adapted blueprints** (`maker-understanding.md` §2: 2–4 per region, kept
+60 s clear of any fragment blueprint). **Rule:** each region adds at least one expressive build and at least one
 logistics build, so the base grows outward along the player's routes.
 
 ## 4. What makes building feel good *for 07* (no hands)
@@ -188,8 +206,9 @@ logistics build, so the base grows outward along the player's routes.
 ## Tóm tắt (Tiếng Việt)
 - **Ý chính:** 2 ổ kit chỉ giới hạn thứ 07 *mang theo cùng lúc*, không giới hạn thứ 07 *dựng được*. Danh mục 1.0
   rộng, còn chọn bộ kit cho từng chuyến là một lựa chọn thú vị.
-- **Số lượng đến 1.0:** 32 công trình, 4 mục tiêu sửa, 12 kit, 22 cấp thiết bị, 6 xe và máy giúp việc. Tổng cộng
-  **72 thứ để làm**; 6 trong đó là công trình "mang dấu ấn" (★).
+- **Số lượng đến 1.0:** 39 công trình, 4 mục tiêu sửa, 12 kit, 26 cấp thiết bị, 11 xe và máy giúp việc. Tổng cộng
+  **88 thứ để làm**. Trong đó 10 bản vẽ **tự chế** đến từ mức hiểu về từng hãng (`maker-understanding.md`), và 6
+  là công trình "mang dấu ấn" (★).
 - **Mỗi mục đều qua quy tắc blueprint-fit:**
   - chuẩn A, B hoặc C;
   - lắp không cần tay;

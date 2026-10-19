@@ -1,0 +1,107 @@
+using System;
+using UnityEditor;
+using UnityEngine;
+using MoonProject.Art.Editor;
+using MoonProject.Core;
+
+namespace MoonProject.Gameplay.Editor
+{
+    /// <summary>
+    /// The opening basin's 18 databank entries (docs/design/databank.md, docs/design/text/databank-entries.md): ids,
+    /// categories, makers, years, eras, text keys, the Art model each turns on the page, and the rule that unlocks it.
+    /// The content builder writes them into the <see cref="DatabankCatalogue"/>. Print entries leave the sheet empty
+    /// until Art's prints exist.
+    /// </summary>
+    internal static class DatabankRecipes
+    {
+        private const string Models = ArtPaths.R1ModelsFolder;
+        private const string LanderCargo = ScanTuning.LanderCargoId;
+        private const string LumenSets = "FallenSolarArray,HabitatModules,RadioTower";
+
+        /// <summary>Art's prefab for the Scout, whose camera and scoop the 1971 crew took home.</summary>
+        private static readonly string[] ScoutRemovedParts = { "TvCamera", "ScoopArm" };
+
+        public static DatabankEntry[] Create()
+        {
+            return new[]
+            {
+                Machine("unit07", DatabankMaker.KesslerArai, "1983", DatabankEra.Lumen, "db.unit07.readout",
+                    "notes.unit07", Models + "/Rover/RoverModel.prefab", DatabankUnlock.Seeded),
+                Machine("elder06", DatabankMaker.KesslerArai, "1978", DatabankEra.BuildOut, "elder.06.manifest",
+                    "db.elder06.history", Models + "/Rover/Elder06.prefab", DatabankUnlock.StoryScan("elder06")),
+                Machine("elder01", DatabankMaker.KesslerArai, "1978", DatabankEra.BuildOut, "db.elder01.readout",
+                    "db.elder01.history", Models + "/Rover/Elder01.prefab", DatabankUnlock.StoryScan("elder01")),
+                new DatabankEntry("db.scout3", DatabankCategory.Machines, "scan.scout3.name", DatabankMaker.VIS, "1967",
+                    DatabankEra.Probes, "scan.scout3.manifest", "scan.scout3.note", DatabankViewKind.Model,
+                    LoadModel(Models + "/Props/Prop_OldLander.prefab"), ScoutRemovedParts, 0f, null,
+                    DatabankUnlock.StoryScan("scout3")),
+                Machine("cargo_lander", DatabankMaker.VIS, "1987", DatabankEra.Lumen, "db.cargo_lander.readout",
+                    "db.cargo_lander.history", Models + "/Lander/CargoLander.prefab",
+                    DatabankUnlock.FragmentOf(LanderCargo)),
+                Machine("kestrel3", DatabankMaker.Tycho, "1985", DatabankEra.Meridian, "db.kestrel3.readout",
+                    "db.kestrel3.history", ArtPaths.SitesFolder + "/Site_kestrel.prefab",
+                    DatabankUnlock.StoryScan("kestrel3")),
+                Structure("habitat", DatabankMaker.VIS, "1984", DatabankEra.Lumen, Models + "/Ruins/HabitatModules.prefab",
+                    DatabankUnlock.FragmentOf("HabitatModules")),
+                Structure("solar_array", DatabankMaker.VIS, "1984", DatabankEra.Lumen,
+                    Models + "/Ruins/FallenSolarArray.prefab", DatabankUnlock.FragmentOf("FallenSolarArray")),
+                Structure("radio_tower", DatabankMaker.VIS, "1984", DatabankEra.Lumen,
+                    Models + "/Ruins/RadioTower.prefab", DatabankUnlock.FragmentOf("RadioTower")),
+                Structure("seismic_station", DatabankMaker.ILC, "1971 · 1984", DatabankEra.Sorties,
+                    Models + "/Props/Prop_SeismicStation.prefab", DatabankUnlock.StoryScan("seismic")),
+                Structure("retroreflector", DatabankMaker.ILC, "1971 · 1984", DatabankEra.Sorties,
+                    Models + "/Props/Prop_Retroreflector.prefab", DatabankUnlock.StoryScan("retroreflector")),
+                Print("lumen", DatabankCategory.Places, DatabankMaker.None, "1984", DatabankEra.Lumen,
+                    "db.lumen.readout", "db.lumen.history", DatabankUnlock.FragmentOf(LumenSets)),
+                Print("earth_eclipse", DatabankCategory.Phenomena, DatabankMaker.None, string.Empty, DatabankEra.None,
+                    "db.earth_eclipse.readout", "db.earth_eclipse.history", DatabankUnlock.Seeded),
+                Print("crew", DatabankCategory.Archive, DatabankMaker.ILC, "1985", DatabankEra.Lumen,
+                    "story.airlock_panel", "db.crew.history", DatabankUnlock.StoryScan("airlock")),
+                Print("card_kessler_arai", DatabankCategory.Archive, DatabankMaker.KesslerArai, "1983",
+                    DatabankEra.Lumen, "db.card_kessler_arai.readout", "db.card_kessler_arai.history",
+                    DatabankUnlock.Seeded),
+                Print("card_ilc", DatabankCategory.Archive, DatabankMaker.ILC, "1984", DatabankEra.Lumen,
+                    "db.card_ilc.readout", "db.card_ilc.history", DatabankUnlock.StoryScan("flag")),
+                Print("card_tycho", DatabankCategory.Archive, DatabankMaker.Tycho, "1985", DatabankEra.Meridian,
+                    "db.card_tycho.readout", "db.card_tycho.history", DatabankUnlock.StoryScan("kestrel3")),
+                Print("card_vis", DatabankCategory.Archive, DatabankMaker.VIS, "1967", DatabankEra.Probes,
+                    "db.card_vis.readout", "db.card_vis.history", DatabankUnlock.SetComplete(LanderCargo)),
+            };
+        }
+
+        private static DatabankEntry Machine(string name, DatabankMaker maker, string year, DatabankEra era,
+            string readoutKey, string historyKey, string modelPath, DatabankUnlock unlock)
+        {
+            return new DatabankEntry("db." + name, DatabankCategory.Machines, "db." + name + ".name", maker, year, era,
+                readoutKey, historyKey, DatabankViewKind.Model, LoadModel(modelPath), null, 0f, null, unlock);
+        }
+
+        private static DatabankEntry Structure(string name, DatabankMaker maker, string year, DatabankEra era,
+            string modelPath, DatabankUnlock unlock)
+        {
+            return new DatabankEntry("db." + name, DatabankCategory.Structures, "db." + name + ".name", maker, year,
+                era, "db." + name + ".readout", "db." + name + ".history", DatabankViewKind.Model, LoadModel(modelPath),
+                null, 0f, null, unlock);
+        }
+
+        private static DatabankEntry Print(string name, DatabankCategory category, DatabankMaker maker, string year,
+            DatabankEra era, string readoutKey, string historyKey, DatabankUnlock unlock)
+        {
+            return new DatabankEntry("db." + name, category, "db." + name + ".name", maker, year, era, readoutKey,
+                historyKey, DatabankViewKind.Print, null, null, 0f, null, unlock);
+        }
+
+        private static GameObject LoadModel(string path)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (prefab == null)
+            {
+                throw new InvalidOperationException(
+                    $"{GameplayContentBuilder.BuilderPath}: Art prefab {path} is missing (databank entry model). " +
+                    "Run the Art builders.");
+            }
+
+            return prefab;
+        }
+    }
+}

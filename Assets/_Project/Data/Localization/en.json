@@ -1425,6 +1425,314 @@
         {
             "key": "ui.readout.sunset_soon",
             "text": "SETTING"
+        },
+        {
+            "key": "db.title",
+            "text": "DATABANK"
+        },
+        {
+            "key": "db.cat.machines",
+            "text": "MACHINES"
+        },
+        {
+            "key": "db.cat.structures",
+            "text": "STRUCTURES"
+        },
+        {
+            "key": "db.cat.places",
+            "text": "PLACES"
+        },
+        {
+            "key": "db.cat.phenomena",
+            "text": "PHENOMENA"
+        },
+        {
+            "key": "db.cat.archive",
+            "text": "ARCHIVE"
+        },
+        {
+            "key": "db.field.maker",
+            "text": "MAKER"
+        },
+        {
+            "key": "db.field.year",
+            "text": "YEAR"
+        },
+        {
+            "key": "db.field.era",
+            "text": "ERA"
+        },
+        {
+            "key": "db.era.p",
+            "text": "PROBES"
+        },
+        {
+            "key": "db.era.s",
+            "text": "SORTIES"
+        },
+        {
+            "key": "db.era.b",
+            "text": "BUILD-OUT"
+        },
+        {
+            "key": "db.era.l",
+            "text": "LUMEN"
+        },
+        {
+            "key": "db.era.m",
+            "text": "MERIDIAN"
+        },
+        {
+            "key": "db.era.n",
+            "text": "NOW"
+        },
+        {
+            "key": "db.maker.ilc",
+            "text": "ILC"
+        },
+        {
+            "key": "db.maker.kessler_arai",
+            "text": "KESSLER–ARAI"
+        },
+        {
+            "key": "db.maker.vis",
+            "text": "VIS"
+        },
+        {
+            "key": "db.maker.tycho",
+            "text": "TYCHO"
+        },
+        {
+            "key": "db.no_record",
+            "text": "NO LUMEN RECORD"
+        },
+        {
+            "key": "db.scan_progress",
+            "text": "SCAN {0}/{1}"
+        },
+        {
+            "key": "db.blueprint",
+            "text": "BLUEPRINT · {0}"
+        },
+        {
+            "key": "db.toast.added",
+            "text": "Added to databank: {0}"
+        },
+        {
+            "key": "db.colour",
+            "text": "Full colour"
+        },
+        {
+            "key": "db.unit07.name",
+            "text": "07"
+        },
+        {
+            "key": "db.unit07.readout",
+            "text": "SSR-5 · S/N 3-0417 · LUMEN ASSET 07"
+        },
+        {
+            "key": "db.elder06.name",
+            "text": "06"
+        },
+        {
+            "key": "db.elder06.readout",
+            "text": "SSR-3 · UNIT 06 · RELAY KEEPER · TASK: HOLD RELAY.2 LINK · STOPPED: CELL 0%"
+        },
+        {
+            "key": "db.elder06.history",
+            "text": "Our sixth unit, an SSR-3 relay keeper. One job and no sockets: it holds a relay link, nothing else. — K."
+        },
+        {
+            "key": "db.elder01.name",
+            "text": "01"
+        },
+        {
+            "key": "db.elder01.readout",
+            "text": "SSR-3 · UNIT 01 · SURVEY CART · TASK: PEAK ROAD SURVEY · STOPPED: ROCKFALL"
+        },
+        {
+            "key": "db.elder01.history",
+            "text": "Unit 01 came up with the first habitat crates in '84. Six years old even then, and still the steadiest climber we have. — K."
+        },
+        {
+            "key": "db.cargo_lander.name",
+            "text": "The Lander"
+        },
+        {
+            "key": "db.cargo_lander.readout",
+            "text": "CARGO LANDER · VIS CL-4 · LANDED 1987"
+        },
+        {
+            "key": "db.cargo_lander.history",
+            "text": "Came down in the '87 drop. Its sister landed in the canyon, harder. 07 took the last crates off this one in October '88. — K."
+        },
+        {
+            "key": "db.kestrel3.name",
+            "text": "Kestrel-3"
+        },
+        {
+            "key": "db.kestrel3.readout",
+            "text": "KESTREL-3 · RELAY SATELLITE · DOWN OCT 1988"
+        },
+        {
+            "key": "db.kestrel3.history",
+            "text": "Meridian's relay. Lost its attitude and came down in our basin, still pointing at the Arks. Meridian talks through our great dish now. — Ro"
+        },
+        {
+            "key": "db.habitat.name",
+            "text": "Habitat & Lab"
+        },
+        {
+            "key": "db.habitat.readout",
+            "text": "SEC-04 · HABITAT & LAB · SEAL LOCKED · NO POWER"
+        },
+        {
+            "key": "db.habitat.history",
+            "text": "Three VIS modules, put up by the build crew in '84, a year before we moved in: living, lab and stores. — K."
+        },
+        {
+            "key": "db.solar_array.name",
+            "text": "Fallen solar array"
+        },
+        {
+            "key": "db.solar_array.readout",
+            "text": "MAIN SOLAR ARRAY · DOWN · NO OUTPUT"
+        },
+        {
+            "key": "db.solar_array.history",
+            "text": "Lumen's main array. At the pole the Sun never climbs high, so the array turns all day to follow it round the horizon. — K."
+        },
+        {
+            "key": "db.radio_tower.name",
+            "text": "Radio Tower"
+        },
+        {
+            "key": "db.radio_tower.readout",
+            "text": "RADIO TOWER · LINK TO PEAK · OFFLINE"
+        },
+        {
+            "key": "db.radio_tower.history",
+            "text": "Everything we send goes up this first, then on to the great dish on the Peak. On Sundays it carries my show. — Ro"
+        },
+        {
+            "key": "db.seismic_station.name",
+            "text": "Seismic station"
+        },
+        {
+            "key": "db.seismic_station.readout",
+            "text": "SEISMIC STATION · DEPLOYED 1971 · LUMEN BUS 1984 · LAST RECORD 28 OCT 1988 · CELL 0%"
+        },
+        {
+            "key": "db.seismic_station.history",
+            "text": "Left by the '71 crew. It had thirteen years of quiet ground on record, so the ILC put Lumen here. We wired it into the station bus. — Ines"
+        },
+        {
+            "key": "db.retroreflector.name",
+            "text": "Retroreflector"
+        },
+        {
+            "key": "db.retroreflector.readout",
+            "text": "RETROREFLECTOR · 100 PRISMS · PLACED 1971 · RE-AIMED 1984"
+        },
+        {
+            "key": "db.retroreflector.history",
+            "text": "The '71 crew set it up for lasers from Earth. We turned it toward our landing approach, so landers can range on it. — Ines"
+        },
+        {
+            "key": "db.lumen.name",
+            "text": "Lumen ruins"
+        },
+        {
+            "key": "db.lumen.readout",
+            "text": "LUMEN · ILC · SEC-04 · NO POWER"
+        },
+        {
+            "key": "db.lumen.history",
+            "text": "Lumen. Built in '84, and four of us here from '85: Ines, Kenji, Theo and me. Call sign: three short, one long. — Ro"
+        },
+        {
+            "key": "db.earth_eclipse.name",
+            "text": "Earth eclipse"
+        },
+        {
+            "key": "db.earth_eclipse.readout",
+            "text": "EARTH ECLIPSE · NIGHT SIDE · CITY LIGHTS: 0"
+        },
+        {
+            "key": "db.earth_eclipse.history",
+            "text": "When Earth covers the Sun, its whole night side shows, every city lit. Ines counts them. I put a record on. — Ro"
+        },
+        {
+            "key": "db.crew.name",
+            "text": "Lumen crew"
+        },
+        {
+            "key": "db.crew.history",
+            "text": "I. Kalani, lead, geology. K. Morrow, mechanic, systems. T. Lindqvist, botany, galley. R. Amadi, communications."
+        },
+        {
+            "key": "db.card_kessler_arai.name",
+            "text": "KESSLER–ARAI"
+        },
+        {
+            "key": "db.card_kessler_arai.readout",
+            "text": "KESSLER–ARAI FIELD SYSTEMS · FIELD ROBOTICS · SSR SERIES"
+        },
+        {
+            "key": "db.card_kessler_arai.history",
+            "text": "They build rovers that take kit: sockets, not welds. An SSR-3 does one job. An SSR-5 does whatever you bolt on. — K."
+        },
+        {
+            "key": "db.card_ilc.name",
+            "text": "ILC"
+        },
+        {
+            "key": "db.card_ilc.readout",
+            "text": "INTERNATIONAL LUNAR COMMISSION · ILC"
+        },
+        {
+            "key": "db.card_ilc.history",
+            "text": "Set up after the '69 landing to run the Moon for everyone. Now it runs it for the Arks. Our pay slips say ILC. — Ro"
+        },
+        {
+            "key": "db.card_tycho.name",
+            "text": "Tycho Consortium"
+        },
+        {
+            "key": "db.card_tycho.readout",
+            "text": "TYCHO CONSORTIUM · MERIDIAN STATION · UNCREWED"
+        },
+        {
+            "key": "db.card_tycho.history",
+            "text": "Tycho runs Meridian, up on the Rim Terraces. No crew, only machines. Their deep radar is the best on the Moon. — Ines"
+        },
+        {
+            "key": "db.card_vis.name",
+            "text": "VIS"
+        },
+        {
+            "key": "db.card_vis.readout",
+            "text": "VANGUARD INTERPLANETARY STRUCTURES · LANDERS · MODULES"
+        },
+        {
+            "key": "db.card_vis.history",
+            "text": "VIS built our modules, our landers and, back in '67, that Scout in the crater. Twenty years of the same bolts. — K."
+        },
+        {
+            "key": "scan.scout3.name",
+            "text": "Scout 3"
+        },
+        {
+            "key": "scan.scout3.note",
+            "text": "Landed here in 1967, two years before anyone walked on the Moon. A '71 crew took its camera and scoop home to see what the Moon does to metal, and left the rest. It got here before any of us."
+        },
+        {
+            "key": "elder.06.manifest",
+            "text": "SSR-3 · UNIT 06 · RELAY KEEPER · TASK: HOLD RELAY.2 LINK · STOPPED: CELL 0%"
+        },
+        {
+            "key": "notes.unit07",
+            "text": "SSR-5 service rover. Scans parts for the shop, cuts what's broken, builds what's new. Rebuilt this one from a spare chassis. — K."
         }
     ]
 }

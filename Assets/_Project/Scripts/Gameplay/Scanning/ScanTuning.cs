@@ -186,6 +186,12 @@ namespace MoonProject.Gameplay
                 new Vector3(0f, -0.3f, 0f)),
             new StoryScan("scout3", "Prop_OldLander", "Spaceframe", "scan.scout3.manifest", ScanSize.Medium,
                 Vector3.zero),
+            new StoryScan("seismic", "Prop_SeismicStation", "CentralBox", "db.seismic_station.readout",
+                ScanSize.Medium, Vector3.zero),
+            new StoryScan("retroreflector", "Prop_Retroreflector", "PanelHousing", "db.retroreflector.readout",
+                ScanSize.Medium, Vector3.zero),
+            new StoryScan("flag", "Prop_MissionFlag", "FlagSheet", "db.card_ilc.readout", ScanSize.Small,
+                Vector3.zero),
         };
 
         private static readonly int ScanLineColorShaderId = Shader.PropertyToID("_MoonScanLineColor");

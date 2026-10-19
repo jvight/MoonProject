@@ -38,6 +38,11 @@ namespace MoonProject.Gameplay
                  "placement distances).")]
         [Range(2f, 12f)] [SerializeField] private float _ghostAheadMetres = 4.5f;
 
+        [Tooltip("Heading (degrees, 0 faces +Z) the charging pad takes when its ghost settles onto the apron's bay: " +
+                 "its open front toward the south, where 07 rolls in from the lander's cable, the cooling tower " +
+                 "at the back.")]
+        [Range(0f, 360f)] [SerializeField] private float _apronPadYaw = 180f;
+
         [Tooltip("Metres from the apron's centre within which the charging pad's riding ghost settles onto the " +
                  "apron's marked bay.")]
         [Range(0.5f, 8f)] [SerializeField] private float _apronSnapRadius = 3f;
@@ -190,6 +195,8 @@ namespace MoonProject.Gameplay
         public float ApronGlowFadeSeconds => _apronGlowFadeSeconds;
 
         public float GhostAheadMetres => Mathf.Clamp(_ghostAheadMetres, _minPlacementDistance, _maxPlacementDistance);
+
+        public float ApronPadYaw => _apronPadYaw;
 
         public float ApronSnapRadius => _apronSnapRadius;
 

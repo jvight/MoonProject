@@ -155,7 +155,7 @@ namespace MoonProject.World
 
         [Tooltip("Height of the dune waves (crest to mean). Crests give floaty hops at speed.")]
         [Range(0f, 6f)]
-        [SerializeField] private float _duneHeight = 1.4f;
+        [SerializeField] private float _duneHeight = 0.9f;
 
         [Tooltip("Wavelength between dune crests, metres.")]
         [Range(10f, 200f)]
@@ -231,11 +231,12 @@ namespace MoonProject.World
             new RampPlacement(205f, 150f, 25f, 22f, 32f, 22f, 3.4f),
         };
 
-        [Tooltip("Hand-placed shallow bowls to swoop through.")]
+        [Tooltip("Hand-placed shallow bowls to swoop through; the second is the big old degraded crater beyond the " +
+            "Scout, a round valley with soft walls, a landmark far from the opening's lanes.")]
         [SerializeField] private BowlPlacement[] _bowls =
         {
             new BowlPlacement(292f, 125f, 32f, 3.6f, 0.6f),
-            new BowlPlacement(140f, 215f, 40f, 4.4f, 0.7f),
+            new BowlPlacement(140f, 194f, 65f, 4.5f, 1f),
         };
 
         [Header("Whispering Canyon")]
@@ -245,6 +246,11 @@ namespace MoonProject.World
         [Header("Sites")]
         [Tooltip("Ground shaped for the opening's places and Kestrel-3's impact (M3-13).")]
         [SerializeField] private SiteSettings _sites = new SiteSettings();
+
+        [Header("Gentle relief")]
+        [Tooltip("Low swells, long wrinkle ridges and rolled boulders' furrows on the basin floor, level where the " +
+            "opening plays.")]
+        [SerializeField] private ReliefSettings _relief = new ReliefSettings();
 
         [Header("Crater field")]
         [Tooltip("The small craters on the open plains (M3-18 V4), added once the world anchors are known.")]
@@ -324,6 +330,7 @@ namespace MoonProject.World
         public CanyonSettings Canyon => _canyon;
         public SiteSettings Sites => _sites;
         public CraterFieldSettings CraterField => _craterField;
+        public ReliefSettings Relief => _relief;
         public float FarRangeStart => _farRangeStart;
         public float FarRangeFull => _farRangeFull;
         public float FarRangeHeight => _farRangeHeight;
