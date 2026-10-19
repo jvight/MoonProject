@@ -220,10 +220,20 @@ namespace MoonProject.Autoplay
             Vector3 pad = PlacedPosition(structureId);
             yield return _bot.DriveTo(Flat(pad) + Vector3.back * 6f, 2f, "a line-up for the pad", DriveSeconds);
             yield return _bot.DriveTo(Flat(pad), ApproachThrottleRadius, "the pad", DriveSeconds);
-            yield return _bot.Until(() => battery.IsCharging && battery.Charger == ChargerKind.Pad, FollowSeconds,
+            // After sunrise 07 can reach the pad already full, so FirstCharge fires without the pad charging it and
+            // the milestone counts as much as the pad's own charge.
+            yield return _bot.Until(() => battery.IsCharging && battery.Charger == ChargerKind.Pad ||
+                _milestones.Exists(reached => reached.Milestone == OpeningMilestone.FirstCharge), FollowSeconds,
                 "the built pad to charge 07");
+            bool arrivedFull = battery.CellsFull;
             yield return UntilReached(OpeningMilestone.FirstCharge, "the FirstCharge milestone");
-            yield return _bot.Until(() => G.PadLock.Raised, FollowSeconds, "the pad's dock lock to rise round 07");
+            if (!arrivedFull)
+            {
+                // A 07 that reaches the pad with full cells (the Sun topped it up) is not charged, so the dock never
+                // locks it in; the reserve still gives out and the opening goes on.
+                yield return _bot.Until(() => G.PadLock.Raised, FollowSeconds, "the pad's dock lock to rise round 07");
+            }
+
             yield return ExpectLine(OpeningKeys.FitIgniter, "B6: charging, the igniter in the hold");
             if (_bot.Failed)
             {

@@ -15,6 +15,10 @@ import time
 
 from . import procutil
 
+REPLACE_ATTEMPTS = 8
+REPLACE_FIRST_DELAY = 0.01
+REPLACE_MAX_DELAY = 0.25
+
 if sys.platform == "win32":
     import msvcrt
 
@@ -86,7 +90,25 @@ def _write_json(path, data):
     tmp = f"{path}.{os.getpid()}.tmp"
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
-    os.replace(tmp, path)
+    delay = REPLACE_FIRST_DELAY
+    for attempt in range(REPLACE_ATTEMPTS):
+        try:
+            os.replace(tmp, path)
+            return
+        except PermissionError:
+            # Windows refuses the swap while a reader (or a scanner) holds the target open; they let go within ms.
+            if attempt == REPLACE_ATTEMPTS - 1:
+                break
+            time.sleep(delay)
+            delay = min(delay * 2, REPLACE_MAX_DELAY)
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+    finally:
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
 
 
 def _describe(info):
