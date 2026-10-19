@@ -935,6 +935,10 @@
             "text": "NO LINE OF SIGHT"
         },
         {
+            "key": "ui.face.tx_no_range",
+            "text": "TX · NO RANGE"
+        },
+        {
             "key": "ui.verb.cut",
             "text": "Cut"
         },

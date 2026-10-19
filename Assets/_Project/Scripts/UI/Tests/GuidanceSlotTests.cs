@@ -46,6 +46,26 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
+        public void TheFacesStoryLine_TakesTheSlotFromEverything_WhichFadesFirstAndComesBackAfter()
+        {
+            _wants[(int)GuidanceKind.CallLine] = true;
+            _wants[(int)GuidanceKind.Prompt] = true;
+            _wants[(int)GuidanceKind.Objective] = true;
+            _visible[(int)GuidanceKind.Prompt] = true;
+            _slot.Step(_wants, _visible, Frame);
+            Assert.IsNull(_slot.Granted, "nothing shows while the prompt is still fading");
+            _visible[(int)GuidanceKind.Prompt] = false;
+            _slot.Step(_wants, _visible, Frame);
+            Assert.IsTrue(_slot.Allows(GuidanceKind.CallLine), "the line is the one element");
+            Assert.IsFalse(_slot.Allows(GuidanceKind.Prompt));
+            Assert.IsFalse(_slot.Allows(GuidanceKind.Objective));
+
+            _wants[(int)GuidanceKind.CallLine] = false;
+            _slot.Step(_wants, _visible, Frame);
+            Assert.IsTrue(_slot.Allows(GuidanceKind.Prompt), "then the rest come back, one at a time");
+        }
+
+        [Test]
         public void ALowerElementOnScreen_IsFadedOutBeforeTheHigherOneStarts()
         {
             _wants[(int)GuidanceKind.Prompt] = true;
