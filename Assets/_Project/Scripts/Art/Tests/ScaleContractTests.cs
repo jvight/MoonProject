@@ -31,6 +31,7 @@ namespace MoonProject.Art.Tests
             ("habitat_modules.json", "Ruins/HabitatModules.fbx"),
             ("hover_coils.json", "Rover/HoverCoils.fbx"),
             ("kenji_workshop.json", "Ruins/KenjiWorkshop.fbx"),
+            ("kestrel_antenna_boom.json", "Wreck/Kestrel_AntennaBoom.fbx"),
             ("kestrel_cable_tray.json", "Wreck/Kestrel_CableTray.fbx"),
             ("kestrel_engine_bell.json", "Wreck/Kestrel_EngineBell.fbx"),
             ("kestrel_hull_panel.json", "Wreck/Kestrel_HullPanel.fbx"),
@@ -115,6 +116,38 @@ namespace MoonProject.Art.Tests
             Bounds rendererBounds = MeasureInstantiatedRendererBounds(prefab);
             Vector3 actualRendererSize = new Vector3(rendererBounds.size.x, rendererBounds.size.z, rendererBounds.size.y);
             AssertAxisBounds(contractFile, "renderer", actualRendererSize, contract.bounds);
+        }
+
+        [Test]
+        public void KestrelAntennaBoom_HasCutPoint_UsesEraMaterials_AndHasValidVertexColors()
+        {
+            string fbxPath = R1MaterialRecipes.ModelsFolder + "/Wreck/Kestrel_AntennaBoom.fbx";
+            string prefabPath = R1ModelBuilder.GetGeneratedPrefabPath(fbxPath);
+            GameObject prefab = MeshChecks.LoadGeneratedPrefab(prefabPath);
+
+            Transform cutPoint = prefab.transform.Find("CutPoint");
+            Assert.IsNotNull(cutPoint, "Kestrel_AntennaBoom must have a child CutPoint node.");
+
+            var usedSlots = new HashSet<string>(StringComparer.Ordinal);
+            foreach (Renderer r in prefab.GetComponentsInChildren<Renderer>(true))
+            {
+                foreach (Material m in r.sharedMaterials)
+                {
+                    Assert.IsNotNull(m, $"Null material on '{prefab.name}/{r.name}'.");
+                    usedSlots.Add(m.name);
+                }
+            }
+
+            Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.WhitePaintSlot), "Kestrel_AntennaBoom must use R1_WhitePaint.");
+            Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.TealMarkSlot), "Kestrel_AntennaBoom must use R1_TealMark.");
+            Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.SolarCellSlot), "Kestrel_AntennaBoom must use R1_SolarCell.");
+
+            foreach (MeshFilter mf in prefab.GetComponentsInChildren<MeshFilter>(true))
+            {
+                Mesh mesh = mf.sharedMesh;
+                Assert.IsNotNull(mesh, $"Missing sharedMesh on '{prefab.name}/{mf.name}'.");
+                Assert.AreEqual(mesh.vertexCount, mesh.colors.Length, $"Mesh '{mesh.name}' is missing baked vertex colors.");
+            }
         }
 
         private static Bounds MeasureInstantiatedRendererBounds(GameObject prefab)

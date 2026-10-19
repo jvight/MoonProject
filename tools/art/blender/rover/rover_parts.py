@@ -16,6 +16,7 @@ from r1kit import (
     FULL_CIRCLE_RAD,
     HALF_PI_RAD,
     UNIT_EPSILON,
+    add_maker_decal_node,
     append_beveled_box,
     append_cylinder,
     append_dome_rivet,
@@ -3210,6 +3211,30 @@ def build_rear_and_shoulder_nodes(rover_root, body_obj, cfg, mats):
         mat_list=[mats["R1_OrangeStripe"], mats["R1_CreamEnamel"]],
         cfg=cfg,
     )
+
+    # Kessler-Arai maker decals (~0.12 m) on both flank panels above the orange stripe, symmetric on the flat door panel
+    ka_uy = 0.702
+    ka_uz = -0.050
+    ka_flank_x = _hull_flank_x(ka_uy, ka_uz, cfg)
+    for side_label, sx in (("L", -1.0), ("R", 1.0)):
+        ka_center = (round(sx * ka_flank_x, 4), ka_uy, ka_uz)
+        add_maker_decal_node(
+            f"Decal_KA_{side_label}",
+            body_obj,
+            center_u=ka_center,
+            normal_u=(sx, 0.0133, 0.0),
+            width=0.120,
+            height=0.072,
+            cell_key="KESSLER_ARAI",
+            up_u=(0.0, 1.0, 0.0),
+            offset=0.0018,
+            thickness=0.0008,
+            pivot_u=ka_center,
+            u_crop=(0.04, 0.96),
+            v_crop=(0.14, 0.86),
+            material_override=mats["R1_Signage"],
+            local_space=True,
+        )
 
 
 def build_suspension_and_sockets(rover_root, cfg, mats):
