@@ -572,7 +572,8 @@ namespace MoonProject.UI
             }
 
             // The verb chip is the objective's own: it shows only with its line, and a teaching prompt takes the chip.
-            hint = hint != HintWord.None ? hint
+            // One chip at a time: while the world's own chip shows over its target, the bottom slot stays empty.
+            hint = hint != HintWord.None || _prompt.IsVisible ? hint
                 : _objectiveChip.Word(_objectiveView.ShowsObjective && _objective.WantsShown,
                     _services.Systems.CanFitIgniter, cargoOpen, OfferedNow(), HeldNow());
             InteractionHint aimed = _services.Hints.Primary;

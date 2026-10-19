@@ -112,7 +112,7 @@ namespace MoonProject.Autoplay
         /// The objective lines are part of the opening and checked on screen. Off (the lines have become stall
         /// reminders), a line showing at all fails the run, so the bot follows the game's steps and the world's cues.
         /// </summary>
-        public bool LinesExpected { get; set; } = true;
+        public bool LinesExpected { get; set; }
 
         /// <summary>Where the last world cue the bot waited for stood.</summary>
         public Vector3 CuePoint { get; private set; }
