@@ -49,9 +49,6 @@ namespace MoonProject.World
         [Tooltip("Where the crew's remnants from Art's landmark kit stand (M3-18 L2, L4, L7).")]
         [SerializeField] private LandmarkSettings _landmarks = new LandmarkSettings();
 
-        [Tooltip("The picture through 07's own eye in the opening (docs/design/cutscenes.md §1).")]
-        [SerializeField] private LensViewSettings _lensView = new LensViewSettings();
-
         [Tooltip("The low circling Sun, the opening eclipse and the look C sunlit atmosphere (0.5.7 SKY-CYCLE).")]
         [SerializeField] private SkyCycleSettings _skyCycle = new SkyCycleSettings();
 
@@ -78,8 +75,6 @@ namespace MoonProject.World
         public GroundMarkSettings GroundMarks => _groundMarks;
 
         public LandmarkSettings Landmarks => _landmarks;
-
-        public LensViewSettings LensView => _lensView;
 
         public SkyCycleSettings SkyCycle => _skyCycle;
 
