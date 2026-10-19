@@ -16,11 +16,13 @@
     "R1_Screen",
     "R1_SolarCell"
   ],
-  "max_triangles": 5000,
-  "max_meshes": 16,
-  "max_draw_calls": 32,
+  "max_triangles": 7000,
+  "max_meshes": 20,
+  "max_draw_calls": 48,
   "allow_rotation": [
-    "Socket_Power_*"
+    "Socket_Power_*",
+    "Chock_*",
+    "ClampArm_*"
   ],
   "scale_tolerance": 0.001,
   "allow_boundary_edges": false,
@@ -114,6 +116,48 @@
         0.0,
         -1.112,
         1.036
+      ]
+    },
+    "Chock_FL": {
+      "pivot": [
+        -0.61,
+        0.765,
+        0.16
+      ]
+    },
+    "Chock_FR": {
+      "pivot": [
+        0.61,
+        0.765,
+        0.16
+      ]
+    },
+    "Chock_RL": {
+      "pivot": [
+        -0.61,
+        -0.765,
+        0.16
+      ]
+    },
+    "Chock_RR": {
+      "pivot": [
+        0.61,
+        -0.765,
+        0.16
+      ]
+    },
+    "ClampArm_L": {
+      "pivot": [
+        -0.75,
+        0.0,
+        0.16
+      ]
+    },
+    "ClampArm_R": {
+      "pivot": [
+        0.75,
+        0.0,
+        0.16
       ]
     },
     "Socket_Power_1": {
