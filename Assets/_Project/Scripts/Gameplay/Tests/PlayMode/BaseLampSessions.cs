@@ -47,11 +47,18 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         private const float SearchStep = 10f;
         private const float SearchLimit = 3000f;
+        private const float NightSearchLimit = 12000f;
 
         /// <summary>Seconds after the second lamp begins to come on that the dusk frame is captured.</summary>
         private const float ShotAfterSecondLamp = 0.8f;
 
         private const float DuskWatchSeconds = 8f;
+
+        /// <summary>The most lamp lights the base may burn (BaseTuning.LampLightBudget).</summary>
+        private const int MaxLampLights = 4;
+
+        private const float NightShotMetres = 15f;
+        private const float NightShotRise = 2.2f;
         private const float DawnWatchSeconds = 4f;
         private const float WatchStep = 0.1f;
 
@@ -63,6 +70,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private bool _awake;
         private float _daySeconds;
         private float _duskSeconds;
+        private float _nightSeconds;
 
         public override void Setup()
         {
@@ -198,6 +206,72 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsEmpty(_lit, "no base, no lamps at dusk");
         }
 
+        [UnityTest]
+        [Timeout(200000)]
+        [PrebuildSetup(typeof(PlaythroughScene))]
+        [PostBuildCleanup(typeof(PlaythroughScene))]
+        public IEnumerator TheLampsThrowWarmLight_NoMoreThanTheBudget_NeverWithShadows_AndOnlyWhenLit()
+        {
+            yield return Boot();
+            Build();
+            SetSky(_daySeconds);
+            yield return new WaitForSeconds(SettleSeconds);
+            Assert.AreEqual(0, LitLights().Count, "in full sun no lamp throws light");
+
+            SetSky(_nightSeconds);
+            yield return new WaitForSeconds(DuskWatchSeconds);
+            List<Light> lights = LitLights();
+            Assert.AreEqual(Order.Length, lights.Count, "each lamp of the four throws a warm light at night");
+            Assert.LessOrEqual(lights.Count, MaxLampLights, "the base burns no more lights than its budget");
+            foreach (Light light in lights)
+            {
+                Assert.AreEqual(LightShadows.None, light.shadows, "a lamp light casts no shadow");
+                Assert.Greater(light.color.r, light.color.b, "and is a warm amber");
+            }
+
+            Light spot = lights.Find(light => light.type == LightType.Spot);
+            Assert.IsNotNull(spot, "the pad's light is a spot");
+            Assert.AreEqual(1, lights.FindAll(light => light.type == LightType.Spot).Count, "and only the pad's");
+            Assert.Less(spot.transform.forward.y, -0.9f, "pointing straight down at the pad");
+        }
+
+        [UnityTest]
+        [Timeout(200000)]
+        [PrebuildSetup(typeof(PlaythroughScene))]
+        [PostBuildCleanup(typeof(PlaythroughScene))]
+        public IEnumerator ANightFrame_FromAbout15Metres_ShowsTheBaseLit()
+        {
+            yield return Boot();
+            Build();
+            SetSky(_nightSeconds);
+            yield return new WaitForSeconds(DuskWatchSeconds);
+            Camera lens = _context.Get<IViewCamera>().Camera;
+            var terrain = _context.Get<ITerrainQuery>();
+            _context.Get<IWorldAnchors>().TryGet("place.apron", out WorldAnchor apron);
+            Vector3 middle = SurfaceRules.OnSurface(terrain, apron.Position.x, apron.Position.z) + Vector3.up * 1.2f;
+            Vector3 eye = middle + new Vector3(0f, NightShotRise, -NightShotMetres);
+            Vector3 position = lens.transform.position;
+            Quaternion rotation = lens.transform.rotation;
+            lens.transform.SetPositionAndRotation(eye, Quaternion.LookRotation(middle - eye, Vector3.up));
+            FrameCapture.SavePng(lens, 1920, 1080, Path.Combine(GameplayFixture.CaptureFolder, "base-lamps-night-15m.png"));
+            lens.transform.SetPositionAndRotation(position, rotation);
+            Assert.AreEqual(Order.Length, LitLights().Count, "the base is lit in the night frame");
+        }
+
+        private static List<Light> LitLights()
+        {
+            var lit = new List<Light>();
+            foreach (Light light in Object.FindObjectsByType<Light>(FindObjectsSortMode.InstanceID))
+            {
+                if (light.name == "BaseLampLight" && light.enabled && light.intensity > 0.01f)
+                {
+                    lit.Add(light);
+                }
+            }
+
+            return lit;
+        }
+
         private void AssertAllLevels(float expected, string why)
         {
             foreach (PlacedStructure placed in _gameplay.PlacedBase.Structures)
@@ -252,6 +326,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             float last = _sunlight.LastLightElevationDegrees;
             _daySeconds = -1f;
             _duskSeconds = -1f;
+            _nightSeconds = -1f;
             for (float t = 0f; t <= SearchLimit && (_daySeconds < 0f || _duskSeconds < 0f); t += SearchStep)
             {
                 SetSky(t);
@@ -268,6 +343,16 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             Assert.GreaterOrEqual(_daySeconds, 0f, "the first day has a high Sun");
             Assert.Greater(_duskSeconds, _daySeconds, "and a dusk after it");
+            for (float t = _duskSeconds; t <= NightSearchLimit && _nightSeconds <= _duskSeconds; t += SearchStep)
+            {
+                SetSky(t);
+                if (_sunlight.Phase == SkyPhase.Earthlit)
+                {
+                    _nightSeconds = t;
+                }
+            }
+
+            Assert.Greater(_nightSeconds, _duskSeconds, "and a night after the dusk");
         }
 
         private IEnumerator Boot()

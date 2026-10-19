@@ -3805,6 +3805,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4379012858778920083}
     m_Modifications:
+    - target: {fileID: 749031678942749271, guid: 3415f5e67284d3a4fb96fb755dd3303e, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 6117526061173205266, guid: 3415f5e67284d3a4fb96fb755dd3303e, type: 3}
       propertyPath: m_LocalPosition.x
       value: -41.663544
@@ -3860,6 +3864,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6641823712429900846, guid: 3415f5e67284d3a4fb96fb755dd3303e, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2673353077069809800}
+    - targetCorrespondingSourceObject: {fileID: 749031678942749271, guid: 3415f5e67284d3a4fb96fb755dd3303e, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 989754557554633056}
   m_SourcePrefab: {fileID: 100100000, guid: 3415f5e67284d3a4fb96fb755dd3303e, type: 3}
 --- !u!23 &770205129569043581
 MeshRenderer:
@@ -5399,6 +5406,28 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 6562798248470161748, guid: 42ac7bebaea6fad43852d36f1ae67ef1, type: 3}
   m_PrefabInstance: {fileID: 3265614400656909276}
   m_PrefabAsset: {fileID: 0}
+--- !u!64 &989754557554633056
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4363232291011549108}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 4460727156363691726, guid: 88e516977033760419229654dd865167, type: 3}
 --- !u!23 &989835784312971627
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -23349,6 +23378,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 3712320884212565078}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &4363232291011549108 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 749031678942749271, guid: 3415f5e67284d3a4fb96fb755dd3303e, type: 3}
+  m_PrefabInstance: {fileID: 765379117398658310}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &4371751369767411178 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7214276373275970889, guid: 5becb68ea09245445bfbf9ccd3c1929d, type: 3}

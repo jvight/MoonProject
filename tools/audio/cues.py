@@ -15,7 +15,7 @@ from synth.core import SAMPLE_RATE, loop_freq, note_freq, pan, pentatonic, place
 from synth.fm import two_op
 from synth.loop import periodic
 
-import base_cues as base
+from sampled import base as sampled_base
 from sampled import boot as sampled_boot
 from sampled import picks
 import feel_cues as feel
@@ -887,9 +887,10 @@ CUES = (
         notes="New Game self-test, the headlamps and a D F# A ready chord (Pulse 2)."),
     Cue("boot_fault", "oneshot_3d", picks.renderer("boot_fault"), volume=(0.55, 0.55), milestone="M3", sampled=True,
         notes="The self-test's fault result (the cutter): 07's short strain-and-choke on low B."),
-    Cue("base_lamp_on", "oneshot_3d", base.base_lamp_on, variants=len(base.BASE_LAMP_NOTES), volume=(0.5, 0.5),
-        milestone="M3", tonal=True, notes="Opening v2 B10: a base lamp coming on at nightfall: a muted filament "
-                                          "switch and a warm glow on its step (D4 .. F#5)."),
+    Cue("base_lamp_on", "oneshot_3d", picks.renderer("base_lamp_on"), variants=sampled_base.SOUNDS["base_lamp_on"][1],
+        volume=(0.5, 0.5), milestone="M3", sampled=True,
+        notes="A base lamp warming on at dusk (BaseLampLit): a relay's warm clunk, the filament's soft tick and the "
+              "lamp's hum easing in on its step, D3 E3 F#3 A3 in the lighting order."),
     Cue("boost_whine", "loop_3d", feel.boost_whine, loop=True, file_stem="boost_whine_loop", volume=(0.45, 0.45),
         milestone="M3", notes="The capacitor drums boosting: a soft whine on A. 2 s seamless."),
     Cue("boost_release", "tick_3d", feel.boost_release, volume=(0.6, 0.6), milestone="M3",

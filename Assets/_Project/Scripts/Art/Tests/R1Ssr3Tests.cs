@@ -108,6 +108,7 @@ namespace MoonProject.Art.Tests
             Vector3 topperWorldPos = chassisPrefab.transform.TransformPoint(topperSocket.localPosition);
             Assert.AreEqual(0.69f, topperWorldPos.y, 0.02f, "Topper_Socket should sit on the dorsal deck (~0.69 m Y).");
             Assert.IsNotNull(chassisPrefab.transform.Find("Unit_Number"), "SSR3_Chassis missing Unit_Number.");
+            Assert.IsNotNull(chassisPrefab.transform.Find("Decal_KA_1"), "SSR3_Chassis missing Decal_KA_1.");
 
             Renderer glassRenderer = headlampGlass.GetComponent<Renderer>();
             Assert.IsNotNull(glassRenderer, "HeadlampGlass must have a Renderer.");
@@ -364,7 +365,7 @@ namespace MoonProject.Art.Tests
 
             Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.CopperSlot), "SSR3_Topper_05 must use R1_Copper helical coil and coax lines.");
             Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.BrassSlot), "SSR3_Topper_05 must use R1_Brass horn feeds and collars.");
-            Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.CreamEnamelSlot), "SSR3_Topper_05 must use R1_CreamEnamel turntable/cabinet.");
+            Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.WhitePaintSlot), "SSR3_Topper_05 must use R1_WhitePaint turntable/cabinet.");
             Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.DarkGlassSlot), "SSR3_Topper_05 must use R1_DarkGlass waveguide throats.");
         }
 
@@ -501,8 +502,7 @@ namespace MoonProject.Art.Tests
                 }
             }
 
-            Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.CreamEnamelSlot), "SSR3_Topper_01 must use R1_CreamEnamel.");
-            Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.OrangeStripeSlot), "SSR3_Topper_01 must use R1_OrangeStripe.");
+            Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.WhitePaintSlot), "SSR3_Topper_01 must use R1_WhitePaint.");
             Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.BrassSlot), "SSR3_Topper_01 must use R1_Brass on alt-az yoke and collars.");
             Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.CopperSlot), "SSR3_Topper_01 must use R1_Copper cable runs down the mast.");
             Assert.IsTrue(usedSlots.Contains(R1MaterialRecipes.RubberSlot), "SSR3_Topper_01 must use R1_Rubber umbilical cables down the mast.");

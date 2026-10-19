@@ -15,7 +15,7 @@ namespace MoonProject.Art.Tests
 
         private static readonly string[] RequiredMeshPaths =
         {
-            "Body", "Body/Decal07Fresh",
+            "Body", "Body/Decal07Fresh", "Body/Decal_KA_L", "Body/Decal_KA_R",
             "Body/ChargeConduits/ConduitGlow",
             "Body/Stage_1_L/StageGlow_1_L",
             "Body/Stage_1_R/StageGlow_1_R",

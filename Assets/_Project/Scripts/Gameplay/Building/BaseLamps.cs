@@ -11,10 +11,15 @@ namespace MoonProject.Gameplay
     /// above last light, or while the opening eclipse holds) the built pieces' lamps come on one by one in the
     /// base's order, each easing up like an old lamp warming (<see cref="LampEase"/>) and raising
     /// <see cref="BaseLampLit"/>; once the Sun climbs back they ease off together. A piece built at dusk lights at once;
-    /// one restored from a save starts as the sky says. Allocation-free per frame.
+    /// one restored from a save starts as the sky says. The first few lamps in the order also throw a warm light
+    /// (<see cref="BaseTuning.LampLightBudget"/> at most, none with shadows; a spot pointing down for the pad) that
+    /// follows the lamp's glow. Allocation-free per frame.
     /// </summary>
     public sealed class BaseLamps : IDisposable
     {
+        /// <summary>A lamp below this glow throws no light at all.</summary>
+        private const float LightOffLevel = 0.01f;
+
         private readonly BaseTuning _tuning;
         private readonly BuildField _building;
         private readonly ISunlight _sunlight;
@@ -60,6 +65,11 @@ namespace MoonProject.Gameplay
 
         public void Dispose()
         {
+            for (int i = 0; i < _lamps.Count; i++)
+            {
+                _lamps[i].DropLight();
+            }
+
             _builtSubscription.Dispose();
             _removedSubscription.Dispose();
         }
@@ -102,11 +112,68 @@ namespace MoonProject.Gameplay
                     _events.Publish(new BaseLampLit(lamp.InstanceId, i));
                 }
 
-                if (_building.TryGetView(lamp.InstanceId, out StructureView view))
+                bool hasView = _building.TryGetView(lamp.InstanceId, out StructureView view);
+                if (hasView)
                 {
-                    view.DriveLamps(lamp.Ease.Level);
+                    view.DriveLamps(lamp.Ease.Level * _tuning.LampEmissionGain);
+                }
+
+                if (hasView && i < _tuning.LampLightBudget)
+                {
+                    ShineLight(lamp, view);
+                }
+                else
+                {
+                    lamp.DropLight();
                 }
             }
+        }
+
+        /// <summary>The lamp's warm light, made once and then set to the lamp's glow.</summary>
+        private void ShineLight(Lamp lamp, StructureView view)
+        {
+            if (lamp.Light == null)
+            {
+                lamp.Light = MakeLight(lamp, view);
+            }
+
+            float level = lamp.Ease.Level;
+            bool lit = level > LightOffLevel;
+            if (lamp.Light.enabled != lit)
+            {
+                lamp.Light.enabled = lit;
+            }
+
+            if (lit)
+            {
+                lamp.Light.intensity = _tuning.LampLightIntensity * level;
+            }
+        }
+
+        private Light MakeLight(Lamp lamp, StructureView view)
+        {
+            float height = _building.PlacedBase.TryGetStructure(lamp.InstanceId, out PlacedStructure placed)
+                ? placed.Definition.Height
+                : 1f;
+            bool pad = string.Equals(lamp.StructureId, StructureIds.ChargingPad, StringComparison.Ordinal);
+            var host = new GameObject("BaseLampLight");
+            host.transform.SetParent(view.transform, false);
+            host.transform.localPosition = Vector3.up *
+                                           (pad ? _tuning.PadSpotHeightMetres : height * _tuning.LampLightHeightShare);
+            Light light = host.AddComponent<Light>();
+            light.type = pad ? LightType.Spot : LightType.Point;
+            if (pad)
+            {
+                host.transform.rotation = Quaternion.LookRotation(Vector3.down, Vector3.forward);
+                light.spotAngle = _tuning.PadSpotAngleDegrees;
+            }
+
+            light.color = _tuning.LampLightColor;
+            light.range = _tuning.LampLightRange;
+            light.shadows = LightShadows.None;
+            light.intensity = 0f;
+            light.enabled = false;
+            return light;
         }
 
         /// <summary>Dusk with a margin the other way, so a Sun at the threshold does not flicker the lamps.</summary>
@@ -132,7 +199,7 @@ namespace MoonProject.Gameplay
                 }
             }
 
-            var lamp = new Lamp(built.InstanceId, Rank(built.StructureId));
+            var lamp = new Lamp(built.InstanceId, built.StructureId, Rank(built.StructureId));
             if (_started && !built.Restored)
             {
                 lamp.Ease.Snap(false);
@@ -152,6 +219,7 @@ namespace MoonProject.Gameplay
             {
                 if (_lamps[i].InstanceId == removed.InstanceId)
                 {
+                    _lamps[i].DropLight();
                     _lamps.RemoveAt(i);
                     return;
                 }
@@ -180,13 +248,28 @@ namespace MoonProject.Gameplay
 
         private sealed class Lamp
         {
-            public Lamp(int instanceId, int rank)
+            public Lamp(int instanceId, string structureId, int rank)
             {
                 InstanceId = instanceId;
+                StructureId = structureId;
                 Rank = rank;
             }
 
             public int InstanceId { get; }
+
+            public string StructureId { get; }
+
+            public Light Light { get; set; }
+
+            public void DropLight()
+            {
+                if (Light != null)
+                {
+                    UnityEngine.Object.Destroy(Light.gameObject);
+                }
+
+                Light = null;
+            }
 
             public int Rank { get; }
 

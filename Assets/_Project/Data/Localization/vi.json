@@ -312,7 +312,7 @@
         },
         {
             "key": "hint.build",
-            "text": "Hàn"
+            "text": "Lắp ráp"
         },
         {
             "key": "hint.scan",
@@ -560,7 +560,7 @@
         },
         {
             "key": "hint.deconstruct",
-            "text": "Tháo"
+            "text": "Tháo dỡ"
         },
         {
             "key": "build.strip.title",
@@ -600,19 +600,19 @@
         },
         {
             "key": "build.hint.weld",
-            "text": "Giữ để hàn"
+            "text": "Giữ để lắp ráp"
         },
         {
             "key": "build.hint.deconstruct",
-            "text": "Giữ để tháo"
+            "text": "Giữ để tháo dỡ"
         },
         {
             "key": "structure.charging_pad.name",
-            "text": "Đế sạc"
+            "text": "Bệ sạc"
         },
         {
             "key": "structure.charging_pad.desc",
-            "text": "Bệ sạc ấm áp giúp nạp lại pin cho 07 khi có điện."
+            "text": "Bệ đỗ để sạc pin cho 07 khi có điện."
         },
         {
             "key": "structure.solar_array.name",
@@ -676,7 +676,7 @@
         },
         {
             "key": "next.v2.build_pad",
-            "text": "Dựng một bệ sạc cạnh tàu đổ bộ."
+            "text": "Xây một bệ sạc cạnh tàu đổ bộ."
         },
         {
             "key": "next.v2.charge",
@@ -700,15 +700,15 @@
         },
         {
             "key": "next.v2.build_solar",
-            "text": "Dựng một giàn pin mặt trời gần bệ sạc."
+            "text": "Xây một giàn pin mặt trời gần bệ sạc."
         },
         {
             "key": "next.v2.build_battery_bank",
-            "text": "Đêm sắp xuống. Hãy dựng một khối pin dự trữ."
+            "text": "Đêm sắp xuống. Hãy xây một cụm pin tích điện."
         },
         {
             "key": "next.v2.move_battery_bank",
-            "text": "Đặt khối pin gần bệ sạc hơn."
+            "text": "Dời cụm pin tích điện lại gần bệ sạc."
         },
         {
             "key": "next.v2.scan_tower",
@@ -716,11 +716,11 @@
         },
         {
             "key": "next.v2.build_mast",
-            "text": "Dựng một cột ăng-ten."
+            "text": "Xây một cột ăng-ten."
         },
         {
             "key": "battery.low.lander",
-            "text": "Pin yếu. Cổng của tàu đổ bộ sạc được khi đã có bệ."
+            "text": "Pin yếu. Xây bệ sạc cạnh tàu đổ bộ để sạc."
         },
         {
             "key": "battery.low.pad",
@@ -744,7 +744,7 @@
         },
         {
             "key": "ui.system.assembly",
-            "text": "LẮP DỰNG"
+            "text": "LẮP RÁP"
         },
         {
             "key": "ui.system.cutter",
@@ -832,7 +832,7 @@
         },
         {
             "key": "ui.device.socket.empty",
-            "text": "Trống. Bộ phụ kiện sau này lắp ở đây."
+            "text": "Trống. Sau này lắp thêm phụ kiện vào đây."
         },
         {
             "key": "pickup.part.igniter",
@@ -920,7 +920,7 @@
         },
         {
             "key": "ui.verb.build",
-            "text": "Dựng"
+            "text": "Xây dựng"
         },
         {
             "key": "ui.verb.fit",
@@ -952,7 +952,7 @@
         },
         {
             "key": "ui.face.build",
-            "text": "Dựng"
+            "text": "Xây dựng"
         },
         {
             "key": "ui.cargo.drag.not_docked",
@@ -1004,7 +1004,7 @@
         },
         {
             "key": "build.step.weld",
-            "text": "Giữ {0} để hàn"
+            "text": "Giữ {0} để lắp ráp"
         },
         {
             "key": "post.carrier",
@@ -1068,7 +1068,7 @@
         },
         {
             "key": "post.assembly",
-            "text": "LẮP DỰNG · 0 BẢN VẼ"
+            "text": "LẮP RÁP · 0 BẢN VẼ"
         },
         {
             "key": "post.begin",

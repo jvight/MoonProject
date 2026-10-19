@@ -1,5 +1,4 @@
 using NUnit.Framework;
-using UnityEngine;
 
 namespace MoonProject.Audio.Tests
 {
@@ -68,57 +67,6 @@ namespace MoonProject.Audio.Tests
             fader.Step(0.1f, 1f, 1f);
             Assert.Less(fader.Gain, midway);
             Assert.Greater(fader.Gain, 0f);
-        }
-
-        [Test]
-        public void NightLights_LightNearestToTheBaseFirst_OnePerInterval_AfterTheDelay()
-        {
-            var lights = new NightLightsSequence();
-            lights.Add(1, new Vector3(30f, 0f, 0f));
-            lights.Add(2, new Vector3(5f, 0f, 0f));
-            lights.Add(3, new Vector3(0f, 0f, -12f));
-            lights.Begin(Vector3.zero, 2f);
-
-            Assert.IsFalse(lights.Step(1.9f, 0.5f, out _, out _), "the night settles first");
-            Assert.IsTrue(lights.Step(0.2f, 0.5f, out Vector3 first, out int firstOrder));
-            Assert.AreEqual(new Vector3(5f, 0f, 0f), first);
-            Assert.AreEqual(0, firstOrder);
-            Assert.IsFalse(lights.Step(0.4f, 0.5f, out _, out _));
-            Assert.IsTrue(lights.Step(0.1f, 0.5f, out Vector3 second, out int secondOrder));
-            Assert.AreEqual(new Vector3(0f, 0f, -12f), second);
-            Assert.AreEqual(1, secondOrder);
-            Assert.IsTrue(lights.Step(0.5f, 0.5f, out Vector3 third, out _));
-            Assert.AreEqual(new Vector3(30f, 0f, 0f), third);
-            Assert.IsFalse(lights.Running);
-            Assert.IsFalse(lights.Step(5f, 0.5f, out _, out _));
-        }
-
-        [Test]
-        public void NightLights_ARemovedStructureNeverLights_AndAReAddedOneMoves()
-        {
-            var lights = new NightLightsSequence();
-            lights.Add(1, new Vector3(4f, 0f, 0f));
-            lights.Add(2, new Vector3(8f, 0f, 0f));
-            lights.Add(2, new Vector3(2f, 0f, 0f));
-            lights.Remove(1);
-            Assert.AreEqual(1, lights.Count);
-            lights.Begin(Vector3.zero, 0f);
-            Assert.IsTrue(lights.Step(0f, 1f, out Vector3 only, out _));
-            Assert.AreEqual(new Vector3(2f, 0f, 0f), only);
-            Assert.IsFalse(lights.Running);
-        }
-
-        [Test]
-        public void NightLights_ASunriseStopsTheSequence()
-        {
-            var lights = new NightLightsSequence();
-            lights.Add(1, Vector3.one);
-            lights.Add(2, Vector3.one * 2f);
-            lights.Begin(Vector3.zero, 0f);
-            Assert.IsTrue(lights.Step(0f, 1f, out _, out _));
-            lights.Stop();
-            Assert.IsFalse(lights.Running);
-            Assert.IsFalse(lights.Step(2f, 1f, out _, out _));
         }
     }
 }

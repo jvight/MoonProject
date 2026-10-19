@@ -293,6 +293,229 @@ namespace MoonProject.Art.Editor
             });
         }
 
+        /// <summary>
+        /// Dedicated fast batch entry point for Era Rework Part 2 Day C close-up + 7 m captures
+        /// (an elder, Kestrel_HullPanel, Kestrel_AntennaBoom, and 07's flank):
+        /// <c>python tools/unity_batch.py exec --project . --method MoonProject.Art.Editor.R1StoryPropsCapture.CaptureEraReworkPart2</c>
+        /// </summary>
+        public static void CaptureEraReworkPart2()
+        {
+            BatchRunner.Run(nameof(CaptureEraReworkPart2), args =>
+            {
+                AssetDatabase.Refresh();
+                R1MaterialLibrary.BuildMaterials();
+                R1ModelBuilder.Build();
+                R1Ssr3Builder.Build();
+
+                string capturesDir = Path.GetFullPath("Logs/captures");
+                Directory.CreateDirectory(capturesDir);
+
+                bool prevAsync = ShaderUtil.allowAsyncCompilation;
+                ShaderUtil.allowAsyncCompilation = false;
+                try
+                {
+                    CaptureEra2_Elder(capturesDir);
+                    CaptureEra2_KestrelHullPanel(capturesDir);
+                    CaptureEra2_KestrelAntennaBoom(capturesDir);
+                    CaptureEra2_Rover07Flank(capturesDir);
+                }
+                finally
+                {
+                    ShaderUtil.allowAsyncCompilation = prevAsync;
+                }
+
+                return true;
+            });
+        }
+
+        private static void CaptureEra2_Elder(string outDir)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(temp, false);
+                GameObject elder01 = SpawnProp(R1Ssr3Builder.Elder01PrefabPath, Vector3.zero, 162f, temp);
+                SpawnProp(R1Ssr3Builder.Elder06PrefabPath, new Vector3(-0.48f, 0f, 1.50f), 148f, temp);
+                SpawnRover07(temp, new Vector3(0.48f, 0f, -1.55f), 152f, false);
+
+                GetDecalWorldPose(elder01, "Decal_KA_1", out Vector3 decalPos, out Vector3 decalNormal, out Vector3 decalUp);
+                Vector3 decalRight = Vector3.Cross(decalUp, decalNormal).normalized;
+                AimDayCSunAtSurface(decalNormal);
+
+                // 1. Close-up of Elder01 chassis flank showing R1_WhitePaint, thin R1_OrangeStripe beltline, and Decal_KA_1
+                Vector3 closeLook = decalPos + decalUp * 0.02f;
+                Vector3 closeCam = closeLook + decalNormal * 0.62f + decalUp * 0.06f - decalRight * 0.08f;
+                RenderShot(
+                    closeCam,
+                    closeLook,
+                    36f,
+                    bg,
+                    Path.Combine(outDir, "era2_elder_closeup_dayC.png"));
+
+                // 2. 7 m Day C gameplay distance showing Elder01 flanked by Rover 07 and Elder06
+                Vector3 look7m = new Vector3(0.0f, 0.72f, 0.0f);
+                Vector3 cam7m = look7m + (decalNormal * 0.90f + Vector3.up * 0.34f - decalRight * 0.08f).normalized * 7.0f;
+                RenderShot(
+                    cam7m,
+                    look7m,
+                    40f,
+                    bg,
+                    Path.Combine(outDir, "era2_elder_7m_dayC.png"));
+            }
+            finally
+            {
+                temp.Dispose();
+            }
+        }
+
+        private static void CaptureEra2_KestrelHullPanel(string outDir)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(temp, false);
+                const string hullPanelPath = ArtPaths.R1ModelsFolder + "/Wreck/Kestrel_HullPanel.prefab";
+                const string engineBellPath = ArtPaths.R1ModelsFolder + "/Wreck/Kestrel_EngineBell.prefab";
+                const string tankPath = ArtPaths.R1ModelsFolder + "/Wreck/Kestrel_Tank.prefab";
+
+                GameObject panel = SpawnProp(hullPanelPath, Vector3.zero, -18f, temp);
+                SpawnProp(engineBellPath, new Vector3(-2.10f, 0f, 0.65f), 24f, temp);
+                SpawnProp(tankPath, new Vector3(2.05f, 0f, 0.55f), -32f, temp);
+                SpawnRover07(temp, new Vector3(-1.85f, 0f, -1.10f), 38f, false);
+
+                GetDecalWorldPose(panel, "Decal_Tycho_1", out Vector3 decalPos, out Vector3 decalNormal, out Vector3 decalUp);
+                Vector3 decalRight = Vector3.Cross(decalUp, decalNormal).normalized;
+                AimDayCSunAtSurface(decalNormal);
+
+                // 1. Close-up of the ~0.40 m Tycho Consortium hex mark on the white strake meeting the scorched cut-seam collar & teal stripe
+                Vector3 closeLook = decalPos + decalUp * 0.02f;
+                Vector3 closeCam = closeLook + (decalNormal * 0.90f + Vector3.up * 0.24f - decalRight * 0.14f).normalized * 0.98f;
+                RenderShot(
+                    closeCam,
+                    closeLook,
+                    38f,
+                    bg,
+                    Path.Combine(outDir, "era2_kestrel_hull_panel_closeup_dayC.png"));
+
+                // 2. 7 m Day C gameplay distance showing Kestrel_HullPanel in context with Rover 07 and Kestrel debris
+                Vector3 look7m = new Vector3(-0.20f, 0.45f, 0.0f);
+                Vector3 cam7m = look7m + (new Vector3(0.25f, 0.52f, -0.82f)).normalized * 7.0f;
+                RenderShot(
+                    cam7m,
+                    look7m,
+                    40f,
+                    bg,
+                    Path.Combine(outDir, "era2_kestrel_hull_panel_7m_dayC.png"));
+            }
+            finally
+            {
+                temp.Dispose();
+            }
+        }
+
+        private static void CaptureEra2_KestrelAntennaBoom(string outDir)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(temp, false);
+                const string boomPath = ArtPaths.R1ModelsFolder + "/Wreck/Kestrel_AntennaBoom.prefab";
+                const string strutPath = ArtPaths.R1ModelsFolder + "/Wreck/Kestrel_StrutFrame.prefab";
+
+                SpawnProp(boomPath, Vector3.zero, -16f, temp);
+                SpawnProp(strutPath, new Vector3(1.95f, 0f, 0.65f), 28f, temp);
+                SpawnRover07(temp, new Vector3(-1.75f, 0f, 0.35f), 148f, false);
+
+                AimDayCSunAtSurface(new Vector3(0.25f, 0.30f, -0.92f).normalized);
+
+                // 1. Close-up of Kestrel_AntennaBoom showing the snapped lattice truss, white dish with teal rim & gold feed horn, and solar wing
+                Vector3 closeLook = new Vector3(0.02f, 0.44f, -0.04f);
+                Vector3 closeCam = new Vector3(0.45f, 1.16f, -1.56f);
+                RenderShot(
+                    closeCam,
+                    closeLook,
+                    40f,
+                    bg,
+                    Path.Combine(outDir, "era2_kestrel_antenna_boom_closeup_dayC.png"));
+
+                // 2. 7 m Day C gameplay distance showing Kestrel_AntennaBoom beside Rover 07
+                Vector3 look7m = new Vector3(-0.35f, 0.52f, 0.10f);
+                Vector3 cam7m = look7m + (new Vector3(0.28f, 0.44f, -0.85f)).normalized * 7.0f;
+                RenderShot(
+                    cam7m,
+                    look7m,
+                    40f,
+                    bg,
+                    Path.Combine(outDir, "era2_kestrel_antenna_boom_7m_dayC.png"));
+            }
+            finally
+            {
+                temp.Dispose();
+            }
+        }
+
+        private static void CaptureEra2_Rover07Flank(string outDir)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(temp, false);
+                GameObject rover = SpawnRover07(temp, Vector3.zero, 0f, false);
+                Transform decal07 = FindChildRecursive(rover.transform, "Decal07Fresh");
+                if (decal07 != null)
+                {
+                    decal07.gameObject.SetActive(true);
+                }
+
+                // 1. Right flank close-up (Decal_KA_R above the orange beltline & 07 plaque)
+                GetDecalWorldPose(rover, "Decal_KA_R", out Vector3 kaRPos, out Vector3 kaRNormal, out Vector3 kaRUp);
+                Vector3 kaRRight = Vector3.Cross(kaRUp, kaRNormal).normalized;
+                AimDayCSunAtSurface(kaRNormal);
+
+                Vector3 closeLookR = kaRPos - kaRUp * 0.03f + kaRRight * 0.02f;
+                Vector3 closeCamR = closeLookR + kaRNormal * 0.46f + kaRUp * 0.03f - kaRRight * 0.04f;
+                RenderShot(
+                    closeCamR,
+                    closeLookR,
+                    36f,
+                    bg,
+                    Path.Combine(outDir, "era2_rover07_flank_closeup_dayC.png"));
+
+                // 2. Left flank close-up (Decal_KA_L above the orange beltline & SagePatch_RL / 07 plaque)
+                GetDecalWorldPose(rover, "Decal_KA_L", out Vector3 kaLPos, out Vector3 kaLNormal, out Vector3 kaLUp);
+                Vector3 kaLRight = Vector3.Cross(kaLUp, kaLNormal).normalized;
+                AimDayCSunAtSurface(kaLNormal);
+
+                Vector3 closeLookL = kaLPos - kaLUp * 0.03f - kaLRight * 0.02f;
+                Vector3 closeCamL = closeLookL + kaLNormal * 0.46f + kaLUp * 0.03f + kaLRight * 0.04f;
+                RenderShot(
+                    closeCamL,
+                    closeLookL,
+                    36f,
+                    bg,
+                    Path.Combine(outDir, "era2_rover07_flank_left_closeup_dayC.png"));
+
+                // 3. 7 m Day C gameplay distance showing 07's flank in three-quarter profile
+                AimDayCSunAtSurface(kaRNormal);
+                Vector3 look7m = new Vector3(0.0f, 0.72f, 0.05f);
+                Vector3 cam7m = look7m + (kaRNormal * 0.86f + Vector3.up * 0.34f + kaRRight * 0.36f).normalized * 7.0f;
+                RenderShot(
+                    cam7m,
+                    look7m,
+                    38f,
+                    bg,
+                    Path.Combine(outDir, "era2_rover07_flank_7m_dayC.png"));
+            }
+            finally
+            {
+                temp.Dispose();
+            }
+        }
+
         private static void CaptureMakerDecal_CargoLander(string outDir)
         {
             EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
