@@ -305,6 +305,9 @@ namespace MoonProject.Gameplay
         /// <summary>The apron bay's centre the charging pad's ghost settles on, or null before it is marked.</summary>
         public Vector3? ApronCentre => _apronCentre;
 
+        /// <summary>True while a taken-down piece is still coming apart on screen.</summary>
+        public bool TakeApartRunning => _takeApart != null;
+
         /// <summary>
         /// Opens the build menu as the Build key would, for a screen that closes and hands over to build mode (the
         /// face screen's Build); false when build mode is already open or 07 knows no structure it can build yet.
