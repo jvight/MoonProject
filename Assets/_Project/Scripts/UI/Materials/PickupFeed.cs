@@ -14,7 +14,8 @@ namespace MoonProject.UI
     /// (<see cref="MaterialTally"/>), the icon gives a small pulse for each, and the row lingers a few seconds after the
     /// count settles and fades away. More of the same material while its row is up adds to its "+N". A few rows are
     /// shared by every material (<see cref="PickupFeedSettings.MaxRows"/>): a new one takes a free row, or the row that
-    /// has rested longest. The stock is read each frame, so a load is taken as it is, with no row, and moving units
+    /// has rested longest. A material from one of the opening's sources also says what it is for, after its count
+    /// ("Metal +4 · for the charging pad", opening-v3 §4 E3, <see cref="ForStructure"/>). The stock is read each frame, so a load is taken as it is, with no row, and moving units
     /// from the hold to home's shelves (the total does not change) shows nothing. Only the materials the catalog
     /// describes in this version are read. Each unit rolled publishes a
     /// <see cref="StockCountTicked"/>, so Audio can tick and Rover can rumble in step.
@@ -23,6 +24,7 @@ namespace MoonProject.UI
     {
         public const string RowClass = "pickup-row";
         private const float WriteEpsilon = 1e-3f;
+        private const string PurposeSeparator = "· ";
 
         private readonly PickupFeedSettings _settings;
         private readonly EventBus _events;
@@ -35,6 +37,7 @@ namespace MoonProject.UI
         private readonly RoverDiagramData _diagram;
         private readonly PartRows _partLogic;
         private readonly PartRow[] _partRows;
+        private readonly string[] _pendingPurpose = new string[Materials.Count];
         private bool _armed;
 
         public PickupFeed(UiLayout layout, PickupFeedSettings settings, IntText numbers, ILocalization localization,
@@ -157,6 +160,27 @@ namespace MoonProject.UI
             return Showing(material).Name.text;
         }
 
+        /// <summary>The purpose written on <paramref name="material"/>'s row, empty when it shows none (tests).</summary>
+        public string PurposeText(SalvageMaterial material)
+        {
+            Row row = Showing(material);
+            return row != null && row.Purpose.style.display == DisplayStyle.Flex ? row.Purpose.text : string.Empty;
+        }
+
+        /// <summary>
+        /// The <paramref name="material"/> 07 is taking in now is for <paramref name="structureId"/>: its row says so
+        /// (called as a source gives, before the stock shows the gain).
+        /// </summary>
+        public void ForStructure(SalvageMaterial material, string structureId)
+        {
+            _pendingPurpose[(int)material] = structureId;
+            Row row = Showing(material);
+            if (row != null && row.Reveal.Target)
+            {
+                WritePurpose(row);
+            }
+        }
+
         /// <summary>Writes the materials' names again (a new language).</summary>
         public void Relocalize()
         {
@@ -165,6 +189,10 @@ namespace MoonProject.UI
                 if (_rows[i].Active)
                 {
                     _rows[i].Name.text = _localization.Get(_catalog.NameKey(_rows[i].Material));
+                    if (_rows[i].PurposeOf != null)
+                    {
+                        _rows[i].Purpose.text = PurposeWords(_rows[i].PurposeOf);
+                    }
                 }
             }
 
@@ -314,16 +342,20 @@ namespace MoonProject.UI
             gain.AddToClassList(RowClass + "__gain");
             var total = new Label { pickingMode = PickingMode.Ignore };
             total.AddToClassList(RowClass + "__total");
+            var purpose = new Label { pickingMode = PickingMode.Ignore };
+            purpose.AddToClassList(RowClass + "__purpose");
+            purpose.style.display = DisplayStyle.None;
             body.Add(icon);
             body.Add(name);
             body.Add(plus);
             body.Add(gain);
             body.Add(total);
+            body.Add(purpose);
             root.Add(body);
             feed.Add(root);
             var reveal = new Reveal(root, _settings.Reveal);
             reveal.Snap(false);
-            return new Row(reveal, body, icon, painter, name, gain, total);
+            return new Row(reveal, body, icon, painter, name, gain, total, purpose);
         }
 
         private Row Showing(SalvageMaterial material)
@@ -376,7 +408,30 @@ namespace MoonProject.UI
             row.WrittenGain = -1;
             row.Painter.SetMaterial(material);
             row.Name.text = _localization.Get(_catalog.NameKey(material));
+            row.PurposeOf = null;
+            row.Purpose.style.display = DisplayStyle.None;
             return row;
+        }
+
+        /// <summary>The row says what its material is for, when a source just said (the pending purpose).</summary>
+        private void WritePurpose(Row row)
+        {
+            string structureId = _pendingPurpose[(int)row.Material];
+            if (structureId == null)
+            {
+                return;
+            }
+
+            _pendingPurpose[(int)row.Material] = null;
+            row.PurposeOf = structureId;
+            row.Purpose.text = PurposeWords(structureId);
+            row.Purpose.style.display = DisplayStyle.Flex;
+        }
+
+        /// <summary>"· for the charging pad": the purpose after the row's count.</summary>
+        private string PurposeWords(string structureId)
+        {
+            return string.Concat(PurposeSeparator, _localization.Get(UiKeys.PickupPurpose(structureId)));
         }
 
         /// <summary>Opens (or feeds) a row when <paramref name="amount"/> is a gain; a spend closes nothing.</summary>
@@ -391,6 +446,7 @@ namespace MoonProject.UI
                     row.Reveal.Show();
                 }
 
+                WritePurpose(row);
                 row.Linger = 0f;
             }
             else
@@ -526,7 +582,7 @@ namespace MoonProject.UI
         private sealed class Row
         {
             public Row(Reveal reveal, VisualElement body, VisualElement icon, MaterialIconPainter painter, Label name,
-                Label gain, Label total)
+                Label gain, Label total, Label purpose)
             {
                 Reveal = reveal;
                 Body = body;
@@ -535,6 +591,7 @@ namespace MoonProject.UI
                 Name = name;
                 Gain = gain;
                 Total = total;
+                Purpose = purpose;
             }
 
             public Reveal Reveal { get; }
@@ -550,6 +607,12 @@ namespace MoonProject.UI
             public Label Gain { get; }
 
             public Label Total { get; }
+
+            /// <summary>What the material is for ("for the charging pad"), shown when a source said so.</summary>
+            public Label Purpose { get; }
+
+            /// <summary>The structure the row's purpose names, or null while it names none.</summary>
+            public string PurposeOf { get; set; }
 
             /// <summary>True from the claim until the row has faded out.</summary>
             public bool Active { get; set; }

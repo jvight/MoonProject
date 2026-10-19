@@ -700,7 +700,7 @@
         },
         {
             "key": "next.v2.cut_optics",
-            "text": "Cắt các tấm pin và hộp nối dây của dàn pin đổ."
+            "text": "Cắt các tấm pin và hộp nối dây của giàn pin đổ."
         },
         {
             "key": "next.v2.build_solar",
@@ -913,6 +913,22 @@
         {
             "key": "pickup.crate.contents",
             "text": "phụ tùng"
+        },
+        {
+            "key": "pickup.for.charging_pad",
+            "text": "cho bệ sạc"
+        },
+        {
+            "key": "pickup.for.solar_array",
+            "text": "cho giàn pin mặt trời"
+        },
+        {
+            "key": "pickup.for.battery_bank",
+            "text": "cho cụm pin tích điện"
+        },
+        {
+            "key": "pickup.for.antenna_mast",
+            "text": "cho cột ăng-ten"
         },
         {
             "key": "pickup.part.icecore",

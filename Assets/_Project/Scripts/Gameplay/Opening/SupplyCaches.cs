@@ -18,7 +18,7 @@ namespace MoonProject.Gameplay
     /// within the beam's reach. What the hold has no room for stays in the crate and comes out the same way; a story part (the spare igniter) comes out with
     /// <see cref="StoryPartCollected"/>. Allocation-free per frame.
     /// </summary>
-    public sealed class SupplyCaches : IDisposable
+    public sealed class SupplyCaches : IDisposable, ISupplyPurposes
     {
         /// <summary>Name key of an open crate's contents, after the Pick up verb.</summary>
         private const string CrateContentsNoun = "pickup.crate.contents";
@@ -126,6 +126,21 @@ namespace MoonProject.Gameplay
         }
 
         public int Count => _caches.Count;
+
+        public bool TryPurposeOf(string sourceId, out string structureId)
+        {
+            for (int i = 0; i < _caches.Count; i++)
+            {
+                if (string.Equals(_caches[i].Id, sourceId, StringComparison.Ordinal))
+                {
+                    structureId = _caches[i].ForStructure;
+                    return true;
+                }
+            }
+
+            structureId = null;
+            return false;
+        }
 
         public SupplyCache Get(int index)
         {
