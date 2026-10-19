@@ -129,11 +129,85 @@ namespace MoonProject.UI
                 painter.Stroke();
             }
         }
+
+        /// <summary>
+        /// Fills every subpath as one shape with the even-odd rule, so a subpath inside another cuts a hole in it (a
+        /// silhouette's windows and gaps), and strokes nothing.
+        /// </summary>
+        internal void FillEvenOdd(Painter2D painter, Vector2 origin, float scale, Color32 color)
+        {
+            if (IsEmpty || color.a == 0)
+            {
+                return;
+            }
+
+            painter.fillColor = color;
+            painter.BeginPath();
+            int v = 0;
+            for (int i = 0; i < _commands.Length; i++)
+            {
+                switch (_commands[i])
+                {
+                    case WordmarkCommand.MoveTo:
+                        painter.MoveTo(origin + new Vector2(_values[v], _values[v + 1]) * scale);
+                        v += 2;
+                        break;
+                    case WordmarkCommand.LineTo:
+                        painter.LineTo(origin + new Vector2(_values[v], _values[v + 1]) * scale);
+                        v += 2;
+                        break;
+                    case WordmarkCommand.CubicTo:
+                        painter.BezierCurveTo(
+                            origin + new Vector2(_values[v], _values[v + 1]) * scale,
+                            origin + new Vector2(_values[v + 2], _values[v + 3]) * scale,
+                            origin + new Vector2(_values[v + 4], _values[v + 5]) * scale);
+                        v += 6;
+                        break;
+                    case WordmarkCommand.ArcTo:
+                        painter.Arc(
+                            origin + new Vector2(_values[v], _values[v + 1]) * scale,
+                            _values[v + 2] * scale,
+                            Angle.Degrees(_values[v + 3]),
+                            Angle.Degrees(_values[v + 4]),
+                            _values[v + 5] > 0.5f ? ArcDirection.Clockwise : ArcDirection.CounterClockwise);
+                        v += 6;
+                        break;
+                    case WordmarkCommand.Close:
+                        painter.ClosePath();
+                        break;
+                }
+            }
+
+            painter.Fill(FillRule.OddEven);
+        }
     }
 
     /// <summary>
-    /// One 64x64 vector icon parsed from <c>Assets/_Project/UI/Icons/&lt;id&gt;.svg</c>: an optional accent fill path,
-    /// a 2.2px primary stroke path, and an optional 1.5px detail stroke path.
+    /// One filled tone of a two-tone icon: a silhouette filled with the even-odd rule, drawn in the icon's tint at
+    /// <see cref="Opacity"/> (Argon's face icons: the body at 1, its second tone at 0.45).
+    /// </summary>
+    [Serializable]
+    public struct UiIconTone
+    {
+        [SerializeField] private UiIconPath _path;
+        [SerializeField] private float _opacity;
+
+        public UiIconTone(UiIconPath path, float opacity)
+        {
+            _path = path;
+            _opacity = Mathf.Clamp01(opacity);
+        }
+
+        public UiIconPath Path => _path;
+
+        /// <summary>The share of the tint's alpha this tone is drawn at (0..1).</summary>
+        public float Opacity => _opacity;
+    }
+
+    /// <summary>
+    /// One 64x64 vector icon parsed from an SVG: filled tones drawn first (two-tone silhouettes), then an optional
+    /// accent fill path, a primary stroke path and an optional detail stroke path (the line icons). An icon has tones,
+    /// a primary stroke, or both.
     /// </summary>
     [Serializable]
     public struct UiIconShape
@@ -144,13 +218,20 @@ namespace MoonProject.UI
         [SerializeField] private UiIconPath _fill;
         [SerializeField] private UiIconPath _primary;
         [SerializeField] private UiIconPath _detail;
+        [SerializeField] private UiIconTone[] _tones;
 
         public UiIconShape(string id, UiIconPath fill, UiIconPath primary, UiIconPath detail)
+            : this(id, fill, primary, detail, Array.Empty<UiIconTone>())
+        {
+        }
+
+        public UiIconShape(string id, UiIconPath fill, UiIconPath primary, UiIconPath detail, UiIconTone[] tones)
         {
             _id = id ?? throw new ArgumentNullException(nameof(id));
             _fill = fill;
             _primary = primary;
             _detail = detail;
+            _tones = tones ?? throw new ArgumentNullException(nameof(tones));
         }
 
         /// <summary>The canonical icon id (for example <c>item_metal</c> or <c>kit_wing</c>).</summary>
@@ -162,6 +243,9 @@ namespace MoonProject.UI
 
         public UiIconPath Detail => _detail;
 
+        /// <summary>The filled tones, back to front (none for a line icon).</summary>
+        public UiIconTone[] Tones => _tones ?? Array.Empty<UiIconTone>();
+
         public string Validate()
         {
             if (string.IsNullOrEmpty(_id))
@@ -169,9 +253,19 @@ namespace MoonProject.UI
                 return "has an empty id";
             }
 
-            if (_primary.IsEmpty)
+            UiIconTone[] tones = Tones;
+            if (_primary.IsEmpty && tones.Length == 0)
             {
-                return $"icon '{_id}' has no primary stroke path";
+                return $"icon '{_id}' has neither a primary stroke path nor a filled tone";
+            }
+
+            for (int i = 0; i < tones.Length; i++)
+            {
+                string toneProblem = tones[i].Path.IsEmpty ? "is empty" : tones[i].Path.Validate();
+                if (toneProblem != null)
+                {
+                    return $"icon '{_id}' tone {i} {toneProblem}";
+                }
             }
 
             string fillProblem = _fill.Validate();

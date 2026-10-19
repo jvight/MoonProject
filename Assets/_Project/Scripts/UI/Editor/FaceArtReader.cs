@@ -12,7 +12,8 @@ namespace MoonProject.UI.Editor
     /// Reads the face's art from <see cref="UiAssetPaths.FaceArtFolder"/> for <see cref="RoverDiagramBuilder"/>: 07's
     /// three-quarter line drawing and where its lines sit in the image, the leader end point of each device from
     /// <c>rover_07_anchors.json</c>, and the face icons (<see cref="RoverDiagramData.FaceIconIds"/>) parsed from their
-    /// 256-unit SVGs into the 64-unit <see cref="UiIconShape"/> the painter draws. Anything missing or malformed throws.
+    /// 256-unit SVGs into the 64-unit <see cref="UiIconShape"/> the painter draws: line icons as primary and detail
+    /// strokes, two-tone silhouettes as filled tones. Anything missing or malformed throws.
     /// </summary>
     internal static class FaceArtReader
     {
@@ -26,6 +27,9 @@ namespace MoonProject.UI.Editor
         private const byte ContentAlpha = 8;
 
         private const float FullCircle = 360f;
+        private const string None = "none";
+        private const string EvenOdd = "evenodd";
+        private const float Opaque = 1f;
 
         // An arc's values are its centre x, y and radius (lengths, which scale), then two angles and a flag.
         private const int ArcLengthValues = 3;
@@ -142,14 +146,27 @@ namespace MoonProject.UI.Editor
             }
 
             XElement svg = XDocument.Load(path).Root ?? throw new InvalidOperationException($"{path} has no root <svg>.");
+            return ParseIcon(id, svg, path);
+        }
+
+        /// <summary>
+        /// Parses one face icon's SVG (<paramref name="source"/> names it in errors). Stroked paths and circles split
+        /// by weight into the primary and detail strokes; filled ones (even-odd only, any colour: the painter tints)
+        /// gather into one tone per fill-opacity, in the order the tones first appear, which is the order they paint.
+        /// Fill, fill-rule, fill-opacity and stroke-width may sit on the shape or on a group around it.
+        /// </summary>
+        internal static UiIconShape ParseIcon(string id, XElement svg, string source)
+        {
             string viewBox = (string)svg.Attribute("viewBox");
             if (!string.Equals(viewBox, SourceViewBox, StringComparison.Ordinal))
             {
-                throw new InvalidOperationException($"{path} must have viewBox='{SourceViewBox}', found '{viewBox}'.");
+                throw new InvalidOperationException($"{source} must have viewBox='{SourceViewBox}', found '{viewBox}'.");
             }
 
             var primary = new IconLayer();
             var detail = new IconLayer();
+            var tones = new List<IconLayer>();
+            var opacities = new List<float>();
             foreach (XElement element in svg.Descendants())
             {
                 string kind = element.Name.LocalName;
@@ -158,29 +175,97 @@ namespace MoonProject.UI.Editor
                     continue;
                 }
 
-                string fill = (string)element.Attribute("fill") ?? "none";
-                if (!string.Equals(fill, "none", StringComparison.Ordinal))
+                IconLayer layer;
+                if (!string.Equals(Inherited(element, "fill") ?? None, None, StringComparison.Ordinal))
                 {
-                    throw new InvalidOperationException($"{path}: only stroked shapes are drawn, found fill '{fill}'.");
+                    string rule = Inherited(element, "fill-rule");
+                    if (!string.Equals(rule, EvenOdd, StringComparison.Ordinal))
+                    {
+                        throw new InvalidOperationException(
+                            $"{source}: a filled shape must use fill-rule='{EvenOdd}', found '{rule}'.");
+                    }
+
+                    float opacity = InheritedNumber(element, "fill-opacity", Opaque, source);
+                    int tone = opacities.IndexOf(opacity);
+                    if (tone < 0)
+                    {
+                        tone = tones.Count;
+                        tones.Add(new IconLayer());
+                        opacities.Add(opacity);
+                    }
+
+                    layer = tones[tone];
+                }
+                else
+                {
+                    float stroke = InheritedNumber(element, "stroke-width", float.NaN, source);
+                    if (float.IsNaN(stroke))
+                    {
+                        throw new InvalidOperationException($"{source}: a stroked <{kind}> has no 'stroke-width'.");
+                    }
+
+                    layer = stroke >= PrimaryStrokeMin ? primary : detail;
+                    layer.Stroke = stroke;
                 }
 
-                float stroke = Number(element, "stroke-width", path);
-                IconLayer layer = stroke >= PrimaryStrokeMin ? primary : detail;
-                layer.Stroke = stroke;
                 if (kind == "path")
                 {
                     SvgPathParser.Parse((string)element.Attribute("d"), layer.Commands, layer.Values);
                 }
                 else
                 {
-                    AddCircle(layer, Number(element, "cx", path), Number(element, "cy", path),
-                        Number(element, "r", path));
+                    AddCircle(layer, Number(element, "cx", source), Number(element, "cy", source),
+                        Number(element, "r", source));
                 }
             }
 
             float scale = UiIconShape.ViewBoxSize / SourceViewSize;
+            var filled = new UiIconTone[tones.Count];
+            for (int i = 0; i < filled.Length; i++)
+            {
+                filled[i] = new UiIconTone(tones[i].ToPath(scale), opacities[i]);
+            }
+
             var empty = new UiIconPath(Array.Empty<WordmarkCommand>(), Array.Empty<float>(), 0f, false);
-            return new UiIconShape(id, empty, primary.ToPath(scale), detail.ToPath(scale));
+            var icon = new UiIconShape(id, empty, primary.ToPath(scale), detail.ToPath(scale), filled);
+            string problem = icon.Validate();
+            if (problem != null)
+            {
+                throw new InvalidOperationException($"{source}: {problem}.");
+            }
+
+            return icon;
+        }
+
+        /// <summary>The value of <paramref name="attribute"/> on <paramref name="element"/> or its nearest group.</summary>
+        private static string Inherited(XElement element, string attribute)
+        {
+            for (XElement node = element; node != null; node = node.Parent)
+            {
+                string value = (string)node.Attribute(attribute);
+                if (value != null)
+                {
+                    return value;
+                }
+            }
+
+            return null;
+        }
+
+        private static float InheritedNumber(XElement element, string attribute, float fallback, string source)
+        {
+            string text = Inherited(element, attribute);
+            if (text == null)
+            {
+                return fallback;
+            }
+
+            if (!float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out float value))
+            {
+                throw new InvalidOperationException($"{source}: '{attribute}' is not a number: '{text}'.");
+            }
+
+            return value;
         }
 
         private static void AddCircle(IconLayer layer, float cx, float cy, float r)

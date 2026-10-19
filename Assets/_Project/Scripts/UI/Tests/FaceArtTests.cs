@@ -53,13 +53,22 @@ namespace MoonProject.UI.Tests
             foreach (string id in RoverDiagramData.FaceIconIds)
             {
                 UiIconShape icon = diagram.GetIcon(id);
-                Assert.IsFalse(icon.Primary.IsEmpty, $"{id} has its outline");
-                for (int i = 0; i < icon.Primary.Values.Length; i++)
-                {
-                    Assert.LessOrEqual(Mathf.Abs(icon.Primary.Values[i]), 360f, $"{id}: values stay in range");
-                }
-
+                Assert.IsNull(icon.Validate(), $"{id} has an outline or filled tones");
+                AssertInRange(icon.Primary, id);
                 Assert.Less(icon.Primary.StrokeWidth, UiIconShape.ViewBoxSize * 0.05f, $"{id}: strokes scaled to 64");
+                foreach (UiIconTone tone in icon.Tones)
+                {
+                    AssertInRange(tone.Path, id);
+                    Assert.IsTrue(tone.Opacity > 0f && tone.Opacity <= 1f, $"{id}: a tone's opacity is a share");
+                }
+            }
+        }
+
+        private static void AssertInRange(UiIconPath path, string id)
+        {
+            for (int i = 0; i < path.Values.Length; i++)
+            {
+                Assert.LessOrEqual(Mathf.Abs(path.Values[i]), 360f, $"{id}: values stay in range");
             }
         }
     }
