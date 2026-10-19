@@ -555,18 +555,7 @@ namespace MoonProject.Art.Tests
             }
 
             // Long-dead lander: no lit R1_LampAmber or active emission
-            Renderer[] landerRenderers = landerPrefab.GetComponentsInChildren<Renderer>(true);
-            foreach (Renderer r in landerRenderers)
-            {
-                foreach (Material m in r.sharedMaterials)
-                {
-                    Assert.IsNotNull(m);
-                    Assert.AreNotEqual(R1MaterialRecipes.LampAmberSlot, m.name,
-                        "Prop_OldLander is long dead and must have no lit R1_LampAmber material slots.");
-                    Assert.AreEqual(0f, m.GetFloat("_EmissionStrength"), 1e-4f,
-                        $"Prop_OldLander material '{m.name}' must have zero emission.");
-                }
-            }
+            AssertNoEmissiveMaterials(landerPrefab);
 
             // Decal_OldLanderBlast: BlastPatch + FootpadScuffs + Center_Anchor, shadow casting disabled
             GameObject decalPrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.DecalOldLanderBlastPrefabPath);
