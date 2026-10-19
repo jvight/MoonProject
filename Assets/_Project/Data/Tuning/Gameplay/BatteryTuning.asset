@@ -32,6 +32,8 @@ MonoBehaviour:
   _crawlCap: 0.35
   _capEase: 0.5
   _exitMargin: 0.25
+  _openingReserveCap: 0.7
+  _openingChargeFloor: 0.5
   _trickleSecondsPerCell: 180
   _trickleCap: 1
   _trickleStill: 3

@@ -89,6 +89,10 @@ namespace MoonProject.Gameplay
             _save = services.Save;
             _beam = services.Beam;
             Model = new BatteryModel(_tuning, _events);
+            Model.SetOpeningReserve(true);
+            Model.HoldChargeFloor(true);
+            _subscriptions.Add(_events.Subscribe<OpeningMilestoneReached>(OnMilestone));
+            _subscriptions.Add(_events.Subscribe<CallStateChanged>(OnCallState));
             _lastPosition = _rover.Position;
             _subscriptions.Add(_events.Subscribe<RoverJumped>(OnJumped));
             _subscriptions.Add(_events.Subscribe<RoverBoostChanged>(OnBoostChanged));
@@ -137,6 +141,24 @@ namespace MoonProject.Gameplay
             {
                 Model.Announce();
                 _wasLow = Model.IsLowPower;
+            }
+        }
+
+        /// <summary>The first charge lifts the reserve's speed cap.</summary>
+        private void OnMilestone(OpeningMilestoneReached reached)
+        {
+            if (reached.Milestone == OpeningMilestone.FirstCharge)
+            {
+                Model.SetOpeningReserve(false);
+            }
+        }
+
+        /// <summary>The call answered (the release) lifts the charge floor: from here 07 can run flat.</summary>
+        private void OnCallState(CallStateChanged changed)
+        {
+            if (changed.State == CallState.Answered)
+            {
+                Model.HoldChargeFloor(false);
             }
         }
 
