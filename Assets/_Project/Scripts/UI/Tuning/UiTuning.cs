@@ -23,6 +23,7 @@ namespace MoonProject.UI
         [SerializeField] private SalvageSettings _salvage = new SalvageSettings();
         [SerializeField] private StargazeSettings _stargaze = new StargazeSettings();
         [SerializeField] private GuidanceSettings _guidance = new GuidanceSettings();
+        [SerializeField] private ControlsCardSettings _controlsCard = new ControlsCardSettings();
         [SerializeField] private BackdropSettings _backdrop = new BackdropSettings();
         [SerializeField] private SaveTickSettings _saveTick = new SaveTickSettings();
         [SerializeField] private CreditsSettings _credits = new CreditsSettings();
@@ -52,6 +53,8 @@ namespace MoonProject.UI
 
         public GuidanceSettings Guidance => _guidance;
 
+        public ControlsCardSettings ControlsCard => _controlsCard;
+
         public BackdropSettings Backdrop => _backdrop;
 
         public SaveTickSettings SaveTick => _saveTick;
@@ -70,7 +73,7 @@ namespace MoonProject.UI
             if (_pause == null || _title == null || _prompts == null || _pickupFeed == null || _salvage == null ||
                 _stargaze == null || _guidance == null || _backdrop == null || _battery == null || _safe == null ||
                 _saveTick == null || _credits == null || _cargo == null || _unlockCard == null || _post == null ||
-                _databank == null)
+                _databank == null || _controlsCard == null)
             {
                 return "a settings section is missing";
             }

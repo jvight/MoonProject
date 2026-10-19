@@ -524,10 +524,12 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator AfterTheChaseFrame_TheFirstObjectiveLine_IsTheOnlyGuidanceElement()
+        public IEnumerator AfterTheChaseFrame_TheControlsCard_ThenTheFirstObjectiveLine_EachTheOnlyGuidanceElement()
         {
             const float WatchSeconds = 6f;
+            const float CardSeconds = 5f;
             Boot();
+            _rig.Tune("_controlsCard._maxSeconds", CardSeconds);
             _rig.Ui.Ledger.RecordLookTaught();
             _rig.Ui.Ledger.RecordDriveTaught();
             _rig.Ui.Ledger.RecordHoldChipShown();
@@ -536,14 +538,24 @@ namespace MoonProject.UI.PlayModeTests
             Events.Publish(new NextStepChanged("next.v2.drive_lander"));
             Events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle));
             Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame));
-            float limit = Time.realtimeSinceStartup + 12f;
+            yield return Seconds(1f);
+            Assert.IsTrue(_rig.Ui.ControlsCardView.IsVisible, "the controls card comes at the hand-over");
+            float limit = Time.realtimeSinceStartup + CardSeconds + 8f;
             while (!_rig.Ui.Objective.ShowsObjective && Time.realtimeSinceStartup < limit)
             {
                 Assert.IsFalse(_rig.Ui.Readout.IsVisible, "no boot card: the diagnostics were on 07's face");
+                if (_rig.Ui.ControlsCardView.IsVisible)
+                {
+                    Assert.IsFalse(_rig.Ui.Objective.IsVisible, "the objective line waits for the card");
+                    Assert.IsFalse(_rig.Ui.Prompt.IsVisible, "no prompt beside the card");
+                    Assert.IsFalse(_rig.Ui.LookUp.IsVisible, "no chip beside the card");
+                }
+
                 yield return null;
             }
 
-            Assert.IsTrue(_rig.Ui.Objective.ShowsObjective, "the first objective line comes after the wake");
+            Assert.IsTrue(_rig.Ui.Objective.ShowsObjective, "the first objective line comes after the card");
+            Assert.IsFalse(_rig.Ui.ControlsCardView.IsVisible, "the card has gone");
             Assert.AreEqual(Text("next.v2.drive_lander"), _rig.Ui.Layout.NextLineText.text);
             float until = Time.realtimeSinceStartup + WatchSeconds;
             while (Time.realtimeSinceStartup < until)
@@ -552,6 +564,64 @@ namespace MoonProject.UI.PlayModeTests
                 Assert.IsFalse(_rig.Ui.Prompt.IsVisible, "no prompt beside it");
                 Assert.IsFalse(_rig.Ui.LookUp.ShowsPrompt, "no look or drive chip beside it");
                 Assert.IsFalse(_rig.Ui.UnlockCard.IsVisible, "no card beside it");
+                Assert.IsFalse(_rig.Ui.ControlsCardView.IsVisible, "the controls card does not come back");
+                yield return null;
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator TheControlsCard_ShowsOnceAfterTheOpening_GoesOnceThePlayerDroveAndLooked_AndNotOnAReload()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            Mouse mouse = InputSystem.AddDevice<Mouse>();
+            Boot();
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            Events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle));
+            yield return Seconds(1f);
+            Assert.IsFalse(_rig.Ui.ControlsCardView.IsVisible, "not during the wake");
+            Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame));
+            yield return Seconds(1f);
+            Assert.IsTrue(_rig.Ui.ControlsCardView.IsVisible, "at the hand-over");
+            Assert.AreEqual(Text(UiKeys.KeyDrive), _rig.Ui.Layout.ControlsDriveGlyphLabel.text);
+            Assert.AreEqual(Text(UiKeys.Drive), _rig.Ui.Layout.ControlsDriveWord.text);
+            Assert.AreEqual(Text(UiKeys.MouseLook), _rig.Ui.Layout.ControlsLookGlyphLabel.text);
+            Assert.AreEqual(Text(UiKeys.KeyTab), _rig.Ui.Layout.ControlsFaceGlyphLabel.text);
+            Rect card = _rig.Ui.Layout.ControlsCard.worldBound;
+            Rect root = _rig.Ui.Layout.Root.worldBound;
+            Assert.Less(card.center.x, root.center.x, "at the left");
+            Assert.Greater(card.center.y, root.center.y, "at the bottom");
+
+            Gamepad gamepad = InputSystem.AddDevice<Gamepad>();
+            yield return Tap(gamepad.buttonSouth);
+            yield return Seconds(0.1f);
+            Assert.AreEqual(Text(UiKeys.PadDrive), _rig.Ui.Layout.ControlsDriveGlyphLabel.text, "the pad's caps");
+            Assert.AreEqual(Text(UiKeys.PadView), _rig.Ui.Layout.ControlsFaceGlyphLabel.text);
+
+            _rig.Fakes.Speed = 3f;
+            yield return Seconds(1f);
+            Assert.IsTrue(_rig.Ui.ControlsCard.WantsShown, "driving alone leaves the look still to learn");
+            float lookUntil = Time.realtimeSinceStartup + 1.5f;
+            while (Time.realtimeSinceStartup < lookUntil)
+            {
+                Set(mouse.delta, new Vector2(12f, 0f), queueEventOnly: true);
+                yield return null;
+            }
+
+            _rig.Fakes.Speed = 0f;
+            Assert.IsFalse(_rig.Ui.ControlsCard.WantsShown, "driven and looked: its job is done");
+            yield return Seconds(_rig.Tuning.ControlsCard.Reveal.FadeOut + 0.5f);
+            Assert.IsFalse(_rig.Ui.ControlsCardView.IsVisible, "it has faded out");
+
+            _rig.Dispose();
+            Boot();
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame));
+            float until = Time.realtimeSinceStartup + 3f;
+            while (Time.realtimeSinceStartup < until)
+            {
+                Assert.IsFalse(_rig.Ui.ControlsCardView.IsVisible, "a reloaded save plays the short wake: no card");
                 yield return null;
             }
         }
@@ -631,6 +701,7 @@ namespace MoonProject.UI.PlayModeTests
         {
             Boot();
             _rig.Tune("_guidance._statusHoldSeconds", 2f);
+            _rig.Tune("_controlsCard._maxSeconds", 5f);
             _rig.Ui.Ledger.RecordLookTaught();
             _rig.Ui.Ledger.RecordDriveTaught();
             _rig.Ui.Ledger.RecordHoldChipShown();
@@ -646,7 +717,7 @@ namespace MoonProject.UI.PlayModeTests
             bool readoutSeen = false;
             float crossFade = 0f;
             float crossFadeLimit = _rig.Tuning.Guidance.HandOverSeconds + _rig.Tuning.Guidance.Line.FadeOut + 0.2f;
-            float until = Time.realtimeSinceStartup + 12f;
+            float until = Time.realtimeSinceStartup + 18f;
             float last = Time.realtimeSinceStartup;
             while (Time.realtimeSinceStartup < until)
             {
@@ -654,7 +725,7 @@ namespace MoonProject.UI.PlayModeTests
                 readoutSeen |= _rig.Ui.Readout.IsVisible;
                 int up = (_rig.Ui.Prompt.IsVisible ? 1 : 0) + (_rig.Ui.LookUp.ShowsPrompt ? 1 : 0) +
                          (_rig.Ui.Readout.IsVisible ? 1 : 0) + (_rig.Ui.UnlockCard.IsVisible ? 1 : 0) +
-                         (_rig.Ui.Objective.IsVisible ? 1 : 0);
+                         (_rig.Ui.Objective.IsVisible ? 1 : 0) + (_rig.Ui.ControlsCardView.IsVisible ? 1 : 0);
                 shownFrames += up > 0 ? 1 : 0;
                 bool lineToPrompt = up == 2 && _rig.Ui.Prompt.IsVisible && _rig.Ui.Objective.ShowsObjective;
                 crossFade = lineToPrompt ? crossFade + (now - last) : 0f;
@@ -663,7 +734,7 @@ namespace MoonProject.UI.PlayModeTests
                 Assert.LessOrEqual(lineToPrompt ? 1 : up, 1, "one guidance element at a time: prompt " +
                     _rig.Ui.Prompt.IsVisible + ", look-up " + _rig.Ui.LookUp.ShowsPrompt + ", readout " +
                     _rig.Ui.Readout.IsVisible + ", unlock " + _rig.Ui.UnlockCard.IsVisible + ", objective " +
-                    _rig.Ui.Objective.IsVisible);
+                    _rig.Ui.Objective.IsVisible + ", controls " + _rig.Ui.ControlsCardView.IsVisible);
                 yield return null;
             }
 

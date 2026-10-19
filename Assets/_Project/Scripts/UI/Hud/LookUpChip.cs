@@ -15,13 +15,6 @@ namespace MoonProject.UI
     /// </summary>
     internal sealed class LookUpChip
     {
-        private const string PadGlyphKey = "glyph.gamepad.rightstick";
-        private const string MouseGlyphKey = "glyph.mouse.move";
-        private const string DrivePadGlyphKey = "glyph.gamepad.leftstick";
-        private const string DriveKeysGlyphKey = "glyph.keyboard.wasd";
-        private const string HoldPadGlyphKey = "glyph.gamepad.select";
-        private const string HoldKeysGlyphKey = "glyph.keyboard.tab";
-
         private readonly UiLayout _layout;
         private readonly ILocalization _localization;
         private readonly GlyphLabels _labels;
@@ -162,15 +155,15 @@ namespace MoonProject.UI
             bool pad = device == InputDeviceKind.Gamepad;
             if (_word == HintWord.Hold || _word == HintWord.Fit)
             {
-                return pad ? HoldPadGlyphKey : HoldKeysGlyphKey;
+                return pad ? UiKeys.PadView : UiKeys.KeyTab;
             }
 
             if (_word == HintWord.Drive)
             {
-                return pad ? DrivePadGlyphKey : DriveKeysGlyphKey;
+                return pad ? UiKeys.PadDrive : UiKeys.KeyDrive;
             }
 
-            return pad ? PadGlyphKey : MouseGlyphKey;
+            return pad ? UiKeys.PadLook : UiKeys.MouseLook;
         }
     }
 }

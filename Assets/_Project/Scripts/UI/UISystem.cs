@@ -64,6 +64,8 @@ namespace MoonProject.UI
         private HoldHint _holdHint;
         private FirstPrompt _firstPrompt;
         private LookUpChip _lookUpChip;
+        private ControlsCard _controlsCard;
+        private ControlsCardView _controlsView;
         private readonly ObjectiveChip _objectiveChip = new ObjectiveChip();
         private ObjectiveLine _objective;
         private ObjectiveView _objectiveView;
@@ -146,6 +148,11 @@ namespace MoonProject.UI
         internal OpeningProtocol OpeningProtocol => _openingProtocol;
 
         internal LookUpChip LookUp => _lookUpChip;
+
+        /// <summary>The first controls card after the opening, and its view (tests and captures).</summary>
+        internal ControlsCard ControlsCard => _controlsCard;
+
+        internal ControlsCardView ControlsCardView => _controlsView;
 
         internal BackdropBlur Backdrop => _backdrop;
 
@@ -351,6 +358,8 @@ namespace MoonProject.UI
             _holdHint = new HoldHint(_tuning.Stargaze, _ledger);
             _firstPrompt = new FirstPrompt(_tuning.Stargaze, _ledger);
             _lookUpChip = new LookUpChip(_layout, _tuning.Stargaze, _localization, _glyphs);
+            _controlsCard = new ControlsCard(_tuning.ControlsCard);
+            _controlsView = new ControlsCardView(_layout, _tuning.ControlsCard, _localization);
             _objective = new ObjectiveLine(_tuning.Guidance, _ledger);
             _objectiveView = new ObjectiveView(_layout, _tuning.Guidance, _localization);
             _slot = new GuidanceSlot(_tuning.Guidance.HandOverSeconds);
@@ -484,7 +493,13 @@ namespace MoonProject.UI
             _objective.Tick(hudTime, _services.Rover.Speed, _player.Guidance, _objectiveView.ShowsObjective,
                 _objectiveChip.AtHand(_services.Hints.Primary.Kind));
             _lowBattery.Tick(paused ? 0f : deltaTime, _objectiveView.ShowsBattery);
+            float stick = _tuning.Stargaze.FirstPromptStick * _tuning.Stargaze.FirstPromptStick;
+            bool looking = !paused && (input.LookDelta.sqrMagnitude > 0f || input.LookRate.sqrMagnitude > stick);
+            bool cardOpen = ControlsCardOpen(paused, cargoOpen);
+            _controlsCard.Tick(hudTime, cardOpen, _services.Rover.Speed * hudTime, looking, _player.Guidance);
             PromptHolder holder = DecideGuidance(paused, hudTime);
+            _controlsView.Tick(deltaTime, holder == PromptHolder.Controls && _controlsCard.WantsShown && cardOpen,
+                device);
             _unlockCard.Tick(hudTime, !cargoOpen && holder == PromptHolder.Unlock,
                 _services.Rover.Speed >= _tuning.Guidance.StillSpeed || _buildStrip.State != BuildModeState.Closed);
             _pickups.Tick(deltaTime);
@@ -508,8 +523,6 @@ namespace MoonProject.UI
             // The look-up chip is the gentlest of the prompts: a teaching prompt that wants the screen takes it first.
             bool hintOpen = LookHintsOpen() && holder == PromptHolder.Chip &&
                             !_director.Wants(_services.Hints.Primary);
-            float stick = _tuning.Stargaze.FirstPromptStick * _tuning.Stargaze.FirstPromptStick;
-            bool looking = !paused && (input.LookDelta.sqrMagnitude > 0f || input.LookRate.sqrMagnitude > stick);
             _firstPrompt.Tick(hudTime, hintOpen, looking, !paused && input.Drive.sqrMagnitude > stick);
             _holdHint.Tick(hudTime, hintOpen && !cargoOpen && _firstPrompt.Word == HintWord.None, _awake && _carrying);
             HintWord hint = _firstPrompt.Word != HintWord.None ? _firstPrompt.Word
@@ -592,6 +605,12 @@ namespace MoonProject.UI
             return !paused && _awake && !_inOpening && !_cargo.IsOpen;
         }
 
+        /// <summary>The controls card can be seen: the live HUD after the opening, nothing over it.</summary>
+        private bool ControlsCardOpen(bool paused, bool cargoOpen)
+        {
+            return !paused && _awake && !_inOpening && !_stargaze.IsVeiled && !cargoOpen && !BuildMenuOpen();
+        }
+
         private bool LookHintsOpen()
         {
             return !_postLog.IsRunning && !_readout.IsVisible && !BuildMenuOpen();
@@ -611,17 +630,18 @@ namespace MoonProject.UI
         private enum PromptHolder
         {
             None,
+            Controls,
             Unlock,
             Readout,
             Chip,
         }
 
         /// <summary>
-        /// One guidance element at a time (docs/design/opening-v2.md §5): a chip or card (the teaching prompt, the
-        /// look/drive/hold chips, the blueprint card, 07's readout cards), then the low-battery hint, then the
-        /// objective line. Each wants the slot when it could show; the slot goes to the highest and passes on once the
-        /// screen is clear. Inside the prompt kind the one already up keeps the screen, else the blueprint card, the
-        /// readout and the chips take turns in that order.
+        /// One guidance element at a time (docs/design/opening-v2.md §5): a chip or card (the first controls card, the
+        /// teaching prompt, the look/drive/hold chips, the blueprint card, 07's readout cards), then the low-battery
+        /// hint, then the objective line. Each wants the slot when it could show; the slot goes to the highest and
+        /// passes on once the screen is clear. Inside the prompt kind the one already up keeps the screen, else the
+        /// controls card, the blueprint card, the readout and the chips take turns in that order.
         /// </summary>
         private PromptHolder DecideGuidance(bool paused, float deltaTime)
         {
@@ -629,10 +649,13 @@ namespace MoonProject.UI
             bool chipWants = (PromptsOpen(paused) && _director.ReadyToShow) || looks;
             bool unlockWants = !_cargo.IsOpen && _unlockCard.IsWaiting;
             bool readoutWants = ReadoutOpen(paused) && _readout.Wants;
+            bool controlsWants = _controlsCard.WantsShown && ControlsCardOpen(paused, _cargo.IsOpen);
             bool chipUp = _prompt.IsVisible || _lookUpChip.ShowsPrompt;
-            PromptHolder holder = _unlockCard.IsVisible ? PromptHolder.Unlock
+            PromptHolder holder = _controlsView.IsVisible ? PromptHolder.Controls
+                : _unlockCard.IsVisible ? PromptHolder.Unlock
                 : _readout.IsVisible ? PromptHolder.Readout
                 : chipUp ? PromptHolder.Chip
+                : controlsWants ? PromptHolder.Controls
                 : unlockWants ? PromptHolder.Unlock
                 : readoutWants ? PromptHolder.Readout
                 : chipWants ? PromptHolder.Chip : PromptHolder.None;
@@ -641,7 +664,8 @@ namespace MoonProject.UI
             _guidanceWants[(int)GuidanceKind.Battery] = ObjectiveOpen(paused) && _lowBattery.WantsShown;
             _guidanceWants[(int)GuidanceKind.Objective] = ObjectiveOpen(paused) && _objective.WantsShown;
             _guidanceShown[(int)GuidanceKind.BuildStep] = _objectiveView.ShowsBuildStep;
-            _guidanceShown[(int)GuidanceKind.Prompt] = chipUp || _unlockCard.IsVisible || _readout.IsVisible;
+            _guidanceShown[(int)GuidanceKind.Prompt] = chipUp || _unlockCard.IsVisible || _readout.IsVisible ||
+                                                       _controlsView.IsVisible;
             _guidanceShown[(int)GuidanceKind.Battery] = _objectiveView.ShowsBattery;
             _guidanceShown[(int)GuidanceKind.Objective] = _objectiveView.ShowsObjective;
             _slot.Step(_guidanceWants, _guidanceShown, deltaTime);
@@ -1370,11 +1394,13 @@ namespace MoonProject.UI
             {
                 _inOpening = true;
                 _firstPrompt.OpeningBegan();
+                _controlsCard.OpeningBegan();
             }
             else if (reached.Beat == WakeBeat.ChaseFrame)
             {
                 _inOpening = false;
                 _firstPrompt.ChaseFrameReached();
+                _controlsCard.ChaseFrameReached();
             }
         }
 
@@ -1428,6 +1454,7 @@ namespace MoonProject.UI
             _staticText.Apply();
             _prompt.Relocalize();
             _lookUpChip.Relocalize();
+            _controlsView.Relocalize();
             _tabs.Relocalize();
             _lowBattery.Relocalize();
             _objectiveView.Relocalize(_lowBattery);

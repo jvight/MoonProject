@@ -1013,6 +1013,35 @@ Label {
     align-items: center;
 }
 
+/* The first controls card: one small, quiet glass row in the bottom-left corner, below the battery dial */
+
+.controls-card {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+}
+
+.controls-card__chip {
+    padding: 5px 14px 5px 6px;
+}
+
+.controls-card__word {
+    font-size: 19px;
+}
+
+.controls-card__dot {
+    width: 4px;
+    height: 4px;
+    margin: 0 12px;
+    border-radius: 2px;
+    background-color: var(--moon-text-faint);
+}
+
+.controls-card .glyph--small.glyph--pad {
+    width: auto;
+    padding: 0 8px;
+}
+
 /* Pause menu */
 
 .pause__veil {

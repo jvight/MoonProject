@@ -51,6 +51,14 @@
             "text": "Lái xe"
         },
         {
+            "key": "ui.controls.look",
+            "text": "Nhìn quanh"
+        },
+        {
+            "key": "ui.controls.face",
+            "text": "07"
+        },
+        {
             "key": "glyph.keyboard.wasd",
             "text": "WASD"
         },

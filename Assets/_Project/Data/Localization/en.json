@@ -51,6 +51,14 @@
             "text": "Drive"
         },
         {
+            "key": "ui.controls.look",
+            "text": "Look"
+        },
+        {
+            "key": "ui.controls.face",
+            "text": "07"
+        },
+        {
             "key": "glyph.keyboard.wasd",
             "text": "WASD"
         },

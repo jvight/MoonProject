@@ -671,6 +671,17 @@ MonoBehaviour:
       _springFrequency: 1
       _springDamping: 0.8
     _sunArcFullElevation: 17.3
+  _controlsCard:
+    _reveal:
+      _fadeIn: 0.8
+      _fadeOut: 1.2
+      _slide: 8
+      _scaleFrom: 0.96
+      _springFrequency: 1.4
+      _springDamping: 0.6
+    _driveMetres: 4
+    _lookSeconds: 0.6
+    _maxSeconds: 20
   _backdrop:
     _blurStartMetres: 0
     _blurEndMetres: 4

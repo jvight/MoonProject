@@ -34,7 +34,7 @@ namespace MoonProject.UI
                 case FaceHint.Fit:
                     return pad ? "glyph.gamepad.buttonsouth" : UiKeys.KeyDragOrE;
                 case FaceHint.Close:
-                    return pad ? "glyph.gamepad.select" : "glyph.keyboard.tab";
+                    return pad ? UiKeys.PadView : UiKeys.KeyTab;
                 case FaceHint.Build:
                     return pad ? "glyph.gamepad.buttonnorth" : UiKeys.KeyB;
                 default:
