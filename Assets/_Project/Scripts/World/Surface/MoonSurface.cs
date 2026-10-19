@@ -751,7 +751,7 @@ namespace MoonProject.World
 
         /// <summary>
         /// True when a seeded crater would reach into Kestrel-3's impact, the Scout's crater or a flat footprint under
-        /// the opening's places (the ruins, the lander and the build apron).
+        /// the opening's places (the ruins, the fallen array, the lander and the build apron).
         /// </summary>
         private bool OnASite(Crater crater, SiteSettings sites)
         {
@@ -759,6 +759,7 @@ namespace MoonProject.World
             return _kestrel.Overlaps(crater.Center, crater.OuterRadius)
                 || Reaches(crater, sites.ScoutCraterCenter, sites.ScoutCraterRadius)
                 || Reaches(crater, sites.RuinsCenter, sites.RuinsRadius + blend)
+                || Reaches(crater, sites.FallenArrayCenter, sites.FallenArrayRadius + blend)
                 || Reaches(crater, sites.LanderCenter, sites.LanderRadius + blend)
                 || Reaches(crater, sites.ApronCenter, sites.ApronRadius + blend);
         }

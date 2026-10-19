@@ -17,6 +17,7 @@ namespace MoonProject.World.Tests
         private const float MinFootprint = 8f;
         private const float MaxFootprint = 14f;
         private const float MaxDriveSlope = 20f;
+        private const string FallenArrayRuin = "FallenSolarArray";
 
         // A clear way in: no boulder this close to the straight line from the base pad to a floor site.
         private const float ApproachClearance = 3f;
@@ -281,12 +282,14 @@ namespace MoonProject.World.Tests
 
             RuinPlacement[] pieces = new LandmarkSettings().Ruins;
             Assert.AreEqual(5, pieces.Length);
+            GroundShape array = _surface.Shaping.FallenArray;
             for (int i = 0; i < pieces.Length; i++)
             {
                 Vector2 spot = ruins.Center + pieces[i].Offset;
-                Assert.LessOrEqual(pieces[i].Offset.magnitude, ruins.Radius,
-                    $"{pieces[i].Id} sits outside the flattened ruins footprint");
-                Assert.AreEqual(ruins.Plateau, _surface.SampleHeight(spot.x, spot.y), 1e-3f,
+                GroundShape footing = pieces[i].Id == FallenArrayRuin ? array : ruins;
+                Assert.LessOrEqual(Vector2.Distance(spot, footing.Center), footing.Radius,
+                    $"{pieces[i].Id} sits outside its flattened footprint");
+                Assert.AreEqual(footing.Plateau, _surface.SampleHeight(spot.x, spot.y), 1e-3f,
                     $"{pieces[i].Id} footing is not flat");
                 for (int j = i + 1; j < pieces.Length; j++)
                 {
@@ -309,6 +312,8 @@ namespace MoonProject.World.Tests
                     $"{rock.Kind} at {at} lies on the lander's footprint");
                 Assert.GreaterOrEqual(Vector2.Distance(at, apron.Center), apron.Radius,
                     $"{rock.Kind} at {at} lies on the build apron");
+                Assert.GreaterOrEqual(Vector2.Distance(at, array.Center), array.Radius,
+                    $"{rock.Kind} at {at} lies on the fallen array's footprint");
             }
         }
 

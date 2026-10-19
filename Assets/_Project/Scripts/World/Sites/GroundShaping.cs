@@ -30,6 +30,14 @@ namespace MoonProject.World
             Ruins = Flat(naturalHeight, settings.RuinsCenter, settings.RuinsRadius, settings.RuinsBlend);
             Lander = Flat(naturalHeight, settings.LanderCenter, settings.LanderRadius, blend);
             Apron = Flat(naturalHeight, settings.ApronCenter, settings.ApronRadius, blend);
+
+            // The array lies on the ruins' long blend: level it with the ground as the ruins leave it there, and shape
+            // it last so its own flat holds.
+            Vector2 array = settings.FallenArrayCenter;
+            float arrayNatural = naturalHeight(array.x, array.y);
+            float arrayGround = Mathf.Lerp(arrayNatural, Ruins.Plateau,
+                Ruins.Weight(Vector2.Distance(array, Ruins.Center)));
+            FallenArray = new GroundShape(array, settings.FallenArrayRadius, blend, arrayGround);
             MidwayCenter = settings.MidwayCenter;
             MidwayRadius = settings.MidwayRadius;
             WakePost = settings.WakePost;
@@ -38,7 +46,7 @@ namespace MoonProject.World
             ScoutCraterRadius = settings.ScoutCraterRadius;
             Blast = new BlastZone(Lander.Center, settings.BlastZone);
 
-            _shapes = new[] { Ruins, Lander, Apron };
+            _shapes = new[] { Ruins, Lander, Apron, FallenArray };
             _reachSq = new float[_shapes.Length];
             for (int i = 0; i < _shapes.Length; i++)
             {
@@ -49,6 +57,9 @@ namespace MoonProject.World
 
         /// <summary>The flat footprint under the Lumen station ruins cluster.</summary>
         public GroundShape Ruins { get; }
+
+        /// <summary>Opening v3 R4: the fallen solar array's own flat footprint, sunlit at the golden-hour hold.</summary>
+        public GroundShape FallenArray { get; }
 
         /// <summary>Opening v2: the flat footprint the landed cargo lander stands on.</summary>
         public GroundShape Lander { get; }

@@ -13,6 +13,9 @@ namespace MoonProject.World
         /// <summary>Seed of the shipped world; tests pin their expectations to it.</summary>
         public const int DefaultSeed = 1337;
 
+        // The ruin piece that lies off the cluster on its own footprint.
+        private const string FallenArrayRuin = "FallenSolarArray";
+
         [Tooltip("Master seed: craters, noise, jitter and scatter all derive from it. Same seed = same world.")]
         [SerializeField] private int _seed = DefaultSeed;
 
@@ -93,7 +96,25 @@ namespace MoonProject.World
         public string Validate()
         {
             return _surface.Validate() ?? _mesh.Validate() ?? _scatter.Validate()
-                ?? _skyCycle.Validate();
+                ?? _skyCycle.Validate() ?? FallenArrayOnItsSite();
+        }
+
+        // The array's ruin placement and its shaped, cleared footprint are tuned apart: they must agree.
+        private string FallenArrayOnItsSite()
+        {
+            SiteSettings sites = _surface.Sites;
+            RuinPlacement[] ruins = _landmarks.Ruins;
+            for (int i = 0; ruins != null && i < ruins.Length; i++)
+            {
+                Vector2 spot = sites.RuinsCenter + ruins[i].Offset;
+                if (ruins[i].Id == FallenArrayRuin
+                    && Vector2.Distance(spot, sites.FallenArrayCenter) > sites.FallenArrayRadius)
+                {
+                    return "Landmarks: the fallen solar array lies off its own footprint (Sites' fallen array offset).";
+                }
+            }
+
+            return null;
         }
 
         private void OnValidate()

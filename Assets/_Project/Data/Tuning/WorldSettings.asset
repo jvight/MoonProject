@@ -166,6 +166,8 @@ MonoBehaviour:
       _ruinsDistance: 208
       _ruinsRadius: 14
       _ruinsBlend: 24
+      _fallenArrayOffset: {x: -22, y: -24}
+      _fallenArrayRadius: 5
       _wakePost: {x: -2.4, y: -4}
       _landerBearing: 12.3
       _landerDistance: 164
@@ -466,7 +468,7 @@ MonoBehaviour:
       _yaw: 16
       _clearanceRadius: 3.6
     - _id: FallenSolarArray
-      _offset: {x: 2.2, y: -5.8}
+      _offset: {x: -22, y: -24}
       _yaw: 20
       _clearanceRadius: 3.8
     - _id: ScatterSet
@@ -494,6 +496,8 @@ MonoBehaviour:
       _haloMinAngle: 0.7
       _lightIntensity: 2.2
       _lightRange: 16
+      _reserveDarkSeconds: 2.4
+      _pilotLampGlow: 1.4
       _clipHaloRest: 0.22
       _clipHaloPulse: 0.5
       _markerRunSeconds: 4

@@ -4,7 +4,8 @@ using UnityEngine;
 namespace MoonProject.World
 {
     /// <summary>
-    /// Ground shaped for the places content stands on: opening v2's ruins, lander and apron, and Kestrel-3's impact.
+    /// Ground shaped for the places content stands on: opening v2's ruins, the fallen array off them, lander and apron,
+    /// and Kestrel-3's impact.
     /// Each shape blends into the ground around it, so the surface stays smooth. Positions are bearings and distances
     /// from the base.
     /// </summary>
@@ -38,6 +39,15 @@ namespace MoonProject.World
             "the way down must stay drivable.")]
         [Range(4f, 40f)]
         [SerializeField] private float _ruinsBlend = 24f;
+
+        [Tooltip("Where the fallen solar array lies, XZ metres from the ruins cluster's centre: out of The Peak's " +
+            "shadow at the golden-hour hold, at the shadow's edge south-west of the cluster, so its wings catch the " +
+            "new Sun (opening v3 R4). Its ruin placement must stand inside this footprint.")]
+        [SerializeField] private Vector2 _fallenArrayOffset = new Vector2(-22f, -24f);
+
+        [Tooltip("Radius of the fallen array's own flat footprint, metres: its wings, kept clear of rocks and craters.")]
+        [Range(2f, 10f)]
+        [SerializeField] private float _fallenArrayRadius = 5f;
 
         [Header("Opening v2 layout (docs/design/opening-v2.md §4)")]
         [Tooltip("Where 07's dead charging post stands on the old pad (world XZ, metres): beside 07's wake spot.")]
@@ -130,6 +140,8 @@ namespace MoonProject.World
         public Vector2 RuinsCenter => MoonSurface.BearingToDirection(_ruinsBearing) * _ruinsDistance;
         public float RuinsRadius => _ruinsRadius;
         public float RuinsBlend => _ruinsBlend;
+        public Vector2 FallenArrayCenter => RuinsCenter + _fallenArrayOffset;
+        public float FallenArrayRadius => _fallenArrayRadius;
         public KestrelSettings Kestrel => _kestrel;
         public BlastZoneSettings BlastZone => _blastZone;
         public Vector2 ScoutSpot => ApronCenter + MoonSurface.BearingToDirection(_scoutBearing) * _scoutDistance;

@@ -73,7 +73,7 @@ namespace MoonProject.World.Tests
             var spots = new List<Vector2>
             {
                 Vector2.zero, sites.ApronCenter, sites.LanderCenter, sites.RuinsCenter, sites.ScoutSpot,
-                sites.MidwayCenter,
+                sites.MidwayCenter, sites.FallenArrayCenter,
             };
             foreach (ProtectedLane lane in _settings.Relief.ProtectedLanes)
             {
