@@ -570,10 +570,10 @@ def _append_body_cut_panels_and_seams(bm, cfg):
             (0.660, -0.180),
             (0.735, -0.180),
             (0.785, -0.180),
-            (0.835, -0.155),
-            (0.855, -0.075),
-            (0.855, 0.075),
-            (0.835, 0.165),
+            (0.840, -0.155),
+            (0.860, -0.075),
+            (0.860, 0.075),
+            (0.840, 0.165),
             (0.785, 0.200),
             (0.735, 0.200),
             (0.660, 0.200),
@@ -3219,12 +3219,12 @@ def build_rear_and_shoulder_nodes(rover_root, body_obj, cfg, mats):
 
     # Kessler-Arai maker decals matching the SSR-3 chassis decal physical size (width=0.25, height=0.175,
     # u_crop=(0.04, 0.96), v_crop=(0.15, 0.85)) on both flank panels above the orange stripe, symmetric
-    ka_uy = 0.7465
+    ka_uy = 0.7545
     ka_uz = -0.030
     ka_width = 0.25
     ka_height = 0.175
     ka_u_crop = (0.04, 0.96)
-    ka_v_crop = (0.15, 0.85)
+    ka_v_crop = (0.14, 0.84)
     ka_offset = 0.0020
     ka_thickness = 0.0008
     ka_flank_x = _hull_flank_x(ka_uy, ka_uz, cfg)
@@ -3275,7 +3275,7 @@ def _conform_flank_decal_wafer(
 ):
     """
     Conform a flank maker decal wafer to _hull_flank_x(uy, uz, cfg) across the hull's exact
-    vertical contour rings (0.659..0.834 m) and longitudinal barrel curve so the 0.25 m x 0.175 m
+    vertical contour rings (0.667..0.842 m) and longitudinal barrel curve so the 0.25 m x 0.175 m
     decal sits a uniform 2.0 mm proud of the flank panel with zero hull clipping.
     """
     u_center, v_center, u_span, v_span = MAKER_DECAL_CELLS["KESSLER_ARAI"]
@@ -3297,7 +3297,7 @@ def _conform_flank_decal_wafer(
     ka_uz = ka_center[2]
     y_bot = round(ka_uy - 0.5 * height, 4)
     y_top = round(ka_uy + 0.5 * height, 4)
-    y_vals = (y_bot, 0.7350, 0.7900, y_top)
+    y_vals = (y_bot, 0.7350, 0.7900, 0.8350, y_top)
     u_fracs = (0.0, 0.25, 0.50, 0.75, 1.0)
 
     bm = bmesh.new()

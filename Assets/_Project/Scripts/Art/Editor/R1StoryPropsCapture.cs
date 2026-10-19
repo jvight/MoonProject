@@ -318,6 +318,7 @@ namespace MoonProject.Art.Editor
                     CaptureEra2_KestrelHullPanel(capturesDir);
                     CaptureEra2_KestrelAntennaBoom(capturesDir);
                     CaptureEra2_Rover07Flank(capturesDir);
+                    CaptureKaSizeMatch7m(capturesDir);
                 }
                 finally
                 {
@@ -326,6 +327,39 @@ namespace MoonProject.Art.Editor
 
                 return true;
             });
+        }
+
+        private static void CaptureKaSizeMatch7m(string outDir)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(temp, false);
+
+                // Place 07 (left, yaw = +90 deg so right flank Decal_KA_R faces -Z) and SSR-3 Elder01
+                // (right, yaw = -90 deg so left flank Decal_KA_1 faces -Z) side by side in pure side view at 7 m
+                GameObject rover07 = SpawnRover07(temp, new Vector3(-1.05f, 0f, 0f), 90f, false);
+                GameObject elder01 = SpawnProp(R1Ssr3Builder.Elder01PrefabPath, new Vector3(1.05f, 0f, 0f), -90f, temp);
+
+                GetDecalWorldPose(rover07, "Decal_KA_R", out Vector3 ka07Pos, out Vector3 ka07Normal, out _);
+                GetDecalWorldPose(elder01, "Decal_KA_1", out Vector3 kaElderPos, out Vector3 kaElderNormal, out _);
+
+                AimDayCSunAtSurface(ka07Normal);
+
+                Vector3 look7m = new Vector3(0.0f, 0.68f, 0.5f * (ka07Pos.z + kaElderPos.z));
+                Vector3 cam7m = look7m + (Vector3.back * 0.985f + Vector3.up * 0.17f).normalized * 7.0f;
+                RenderShot(
+                    cam7m,
+                    look7m,
+                    30f,
+                    bg,
+                    Path.Combine(outDir, "ka_size_match_7m_dayC.png"));
+            }
+            finally
+            {
+                temp.Dispose();
+            }
         }
 
         private static void CaptureEra2_Elder(string outDir)
@@ -476,12 +510,12 @@ namespace MoonProject.Art.Editor
                 Vector3 kaRRight = Vector3.Cross(kaRUp, kaRNormal).normalized;
                 AimDayCSunAtSurface(kaRNormal);
 
-                Vector3 closeLookR = kaRPos - kaRUp * 0.03f + kaRRight * 0.02f;
-                Vector3 closeCamR = closeLookR + kaRNormal * 0.46f + kaRUp * 0.03f - kaRRight * 0.04f;
+                Vector3 closeLookR = kaRPos - kaRUp * 0.035f - kaRRight * 0.04f;
+                Vector3 closeCamR = closeLookR + kaRNormal * 0.64f + kaRUp * 0.02f - kaRRight * 0.02f;
                 RenderShot(
                     closeCamR,
                     closeLookR,
-                    36f,
+                    38f,
                     bg,
                     Path.Combine(outDir, "era2_rover07_flank_closeup_dayC.png"));
 
@@ -490,12 +524,12 @@ namespace MoonProject.Art.Editor
                 Vector3 kaLRight = Vector3.Cross(kaLUp, kaLNormal).normalized;
                 AimDayCSunAtSurface(kaLNormal);
 
-                Vector3 closeLookL = kaLPos - kaLUp * 0.03f - kaLRight * 0.02f;
-                Vector3 closeCamL = closeLookL + kaLNormal * 0.46f + kaLUp * 0.03f + kaLRight * 0.04f;
+                Vector3 closeLookL = kaLPos - kaLUp * 0.035f + kaLRight * 0.04f;
+                Vector3 closeCamL = closeLookL + kaLNormal * 0.64f + kaLUp * 0.02f + kaLRight * 0.02f;
                 RenderShot(
                     closeCamL,
                     closeLookL,
-                    36f,
+                    38f,
                     bg,
                     Path.Combine(outDir, "era2_rover07_flank_left_closeup_dayC.png"));
 
