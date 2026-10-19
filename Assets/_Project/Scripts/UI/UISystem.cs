@@ -1566,7 +1566,16 @@ namespace MoonProject.UI
                 _readout.ScanSetProgress(nameKey, scanned.Index + 1, scanned.Count);
             }
 
-            _director.NotifyUsed(InteractionKind.Scan);
+            // A set of several fragments is learned with its last one: until then the world's chip shows again on the
+            // next piece (with its place in the set), so no second chip is needed at the bottom of the screen.
+            if (scanned.Count <= 1 || scanned.Index + 1 >= scanned.Count)
+            {
+                _director.NotifyUsed(InteractionKind.Scan);
+            }
+            else
+            {
+                _director.ClearCooldown(InteractionKind.Scan);
+            }
         }
 
         private void OnScanStarted(ScanStarted started)
