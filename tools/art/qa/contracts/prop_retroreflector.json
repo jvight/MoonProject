@@ -9,9 +9,9 @@
     "R1_DarkGlass",
     "R1_GoldFoil"
   ],
-  "max_triangles": 4000,
+  "max_triangles": 3400,
   "max_meshes": 4,
-  "max_draw_calls": 18,
+  "max_draw_calls": 12,
   "scale_tolerance": 0.001,
   "allow_boundary_edges": false,
   "nodes": {

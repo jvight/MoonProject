@@ -764,7 +764,7 @@ namespace MoonProject.Art.Editor
                 // 2. Prop_SampleRack: mid-left (A-frame rack with rake, tongs, scoop, 2 racked core tubes + 1 fallen tube)
                 SpawnProp(R1StoryPropsBuilder.PropSampleRackPrefabPath, new Vector3(-0.55f, 0f, 0.32f), 8f, temp);
 
-                // 3. Prop_Retroreflector: mid-center (tilted 10x10 corner-cube prism array catching grazing light)
+                // 3. Prop_Retroreflector: mid-center (tilted 3x3 corner-cube prism array catching grazing light)
                 SpawnProp(R1StoryPropsBuilder.PropRetroreflectorPrefabPath, new Vector3(0.35f, 0f, 0.25f), -14f, temp);
 
                 // 4. Prop_SeismicStation: front-left (GoldFoil shroud over seismometer + cable to squat central box with dead lamp)
@@ -976,7 +976,7 @@ namespace MoonProject.Art.Editor
                 // 2. Prop_SampleRack: bare aluminium rack, tools, and core tubes with black rubber grips
                 SpawnProp(R1StoryPropsBuilder.PropSampleRackPrefabPath, new Vector3(-0.35f, 0f, 0.35f), 10f, temp);
 
-                // 3. Prop_Retroreflector: bare aluminium stand & housing, GoldFoil rear face, 10x10 corner-cube array
+                // 3. Prop_Retroreflector: bare aluminium stand & housing, GoldFoil rear face, 3x3 corner-cube array
                 SpawnProp(R1StoryPropsBuilder.PropRetroreflectorPrefabPath, new Vector3(0.45f, 0f, 0.25f), -12f, temp);
 
                 // 4. Geophone kit (Prop_GeophoneLine, Geophone_Ribbon_10m, Geophone_Plug, and 3 bare-metal Geophone_Sensor units)

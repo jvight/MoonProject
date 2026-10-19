@@ -290,17 +290,23 @@ namespace MoonProject.Art.Editor
             iceCoreFrostMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
             GeneratedAssets.CreateOrReplace(iceCoreFrostMat, IceCoreFrostMaterialPath);
 
-            // 11. R1_IceCoreWindow: high-glint cryo sight glass that catches 07's headlamps in eclipse dark (no emission)
+            // 11. R1_IceCoreWindow: high-glint optical/cryo glass with visible facet contrast and dust/wear support (no emission)
             Material iceCoreWindowMat = R1MaterialLibrary.CreateMaterial(r1Lit, darkGlassSpec);
             iceCoreWindowMat.name = IceCoreWindowMaterialName;
-            iceCoreWindowMat.SetColor("_BaseColor", new Color(0.75f, 0.88f, 0.98f, 1f));
-            iceCoreWindowMat.SetFloat("_MetallicScale", 0.38f);
-            iceCoreWindowMat.SetFloat("_SmoothnessMin", 0.88f);
-            iceCoreWindowMat.SetFloat("_SmoothnessMax", 0.98f);
-            iceCoreWindowMat.SetColor("_EdgeWearColor", new Color(0.90f, 0.97f, 1.00f, 1f));
-            iceCoreWindowMat.SetFloat("_EdgeWearAmount", 0.62f);
-            iceCoreWindowMat.SetFloat("_EdgeWearSmoothness", 0.98f);
-            iceCoreWindowMat.SetFloat("_DustAmount", 0.03f);
+            iceCoreWindowMat.SetColor("_BaseColor", new Color(1.65f, 1.95f, 2.35f, 1f));
+            iceCoreWindowMat.SetFloat("_MetallicScale", 0.25f);
+            iceCoreWindowMat.SetFloat("_SmoothnessMin", 0.84f);
+            iceCoreWindowMat.SetFloat("_SmoothnessMax", 0.96f);
+            iceCoreWindowMat.SetColor("_EdgeWearColor", new Color(0.58f, 0.72f, 0.88f, 1f));
+            iceCoreWindowMat.SetFloat("_EdgeWearAmount", 0.82f);
+            iceCoreWindowMat.SetFloat("_EdgeWearThreshold", 0.42f);
+            iceCoreWindowMat.SetFloat("_EdgeWearSharpness", 1.20f);
+            iceCoreWindowMat.SetFloat("_EdgeWearMetallic", 0.14f);
+            iceCoreWindowMat.SetFloat("_EdgeWearSmoothness", 0.94f);
+            iceCoreWindowMat.SetColor("_DustColor", new Color(0.58f, 0.56f, 0.52f, 1f));
+            iceCoreWindowMat.SetFloat("_DustAmount", 0.46f);
+            iceCoreWindowMat.SetFloat("_DustOcclusionWeight", 0.80f);
+            iceCoreWindowMat.SetFloat("_DustSharpness", 1.15f);
             iceCoreWindowMat.SetTexture("_EmissionMap", null);
             iceCoreWindowMat.SetColor("_EmissionColor", Color.black);
             iceCoreWindowMat.SetFloat("_EmissionStrength", 0.0f);

@@ -1073,22 +1073,20 @@ def build_seismic_station() -> bpy.types.Object:
     return root
 
 
-def _add_corner_cube_prism_array_10x10(
+def _add_corner_cube_prism_array_3x3(
     mb: r1kit.MeshBuilder,
     panel_origin_u: Tuple[float, float, float],
     panel_rot_u: Tuple[float, float, float],
-    grid_span: float = 0.42,
-    prism_depth: float = 0.018,
-    slab_back_z: float = 0.012,
-    front_z: float = -0.022,
-) -> None:
-    """Build a 100% closed manifold 10x10 corner-cube retroreflector prism array (100 recessed 4-facet prisms)."""
+    grid_span: float = 0.416,
+    slab_back_z: float = 0.010,
+    front_z: float = -0.018,
+) -> List[Tuple[int, int, str]]:
+    """Build a 100% closed manifold 3x3 array of large corner-cube optical prisms with broad glassy facets."""
     bm = mb.bm
     glass_idx = mb._mat_index("R1_DarkGlass")
     steel_idx = mb._mat_index("R1_BareSteel")
-    grey_idx = mb._mat_index("R1_GreyMetal")
 
-    n_cells = 10
+    n_cells = 3
     half = grid_span * 0.5
     step = grid_span / n_cells
 
@@ -1116,8 +1114,26 @@ def _add_corner_cube_prism_array_10x10(
         front_rim.append(f_row)
         back_rim.append(b_row)
 
-    faces: List[bmesh.types.BMFace] = []
-    # 10x10 = 100 recessed corner-cube prism pockets on the front (-Z) face
+    # Per-cell asymmetric optical table offsets (ox, oy) and corner cant heights (dz00, dz10, dz11, dz01)
+    # so the 9 large prisms have varied facet angles and non-repeating light reflections.
+    cell_variations = [
+        # Row 0 (bottom)
+        (-0.004, -0.003, -0.0065, -0.0085, -0.0105, -0.0075, True),
+        (0.003, -0.004, -0.0080, -0.0065, -0.0095, -0.0110, False),
+        (-0.003, 0.004, -0.0095, -0.0115, -0.0075, -0.0065, True),
+        # Row 1 (middle)
+        (0.004, 0.002, -0.0070, -0.0105, -0.0085, -0.0065, False),
+        (-0.002, -0.003, -0.0115, -0.0080, -0.0070, -0.0105, True),
+        (0.003, -0.002, -0.0065, -0.0095, -0.0115, -0.0080, False),
+        # Row 2 (top)
+        (-0.003, 0.003, -0.0090, -0.0070, -0.0105, -0.0080, False),
+        (0.002, 0.004, -0.0075, -0.0110, -0.0090, -0.0065, True),
+        (-0.004, -0.002, -0.0110, -0.0085, -0.0070, -0.0100, False),
+    ]
+
+    poly_meta: List[Tuple[int, int, str]] = []
+    thalf = step * 0.285
+
     for r in range(n_cells):
         for c in range(n_cells):
             v00 = front_rim[r][c]
@@ -1125,67 +1141,82 @@ def _add_corner_cube_prism_array_10x10(
             v11 = front_rim[r + 1][c + 1]
             v01 = front_rim[r + 1][c]
 
-            # Slightly offset corner-cube trihedral apex inside each pocket so grazing light glints across facets
-            ox = 0.0035 * (1.0 if ((r + c) % 2 == 0) else -1.0)
-            oy = 0.0035 * (1.0 if (r % 2 == 0) else -1.0)
+            idx = r * n_cells + c
+            ox, oy, dz00, dz10, dz11, dz01, flip_diag = cell_variations[idx]
             cx_loc = -half + (c + 0.5) * step + ox
             cy_loc = -half + (r + 0.5) * step + oy
-            cz_loc = front_z + prism_depth
-            pc_u = _rotate_u(
-                (panel_origin_u[0] + cx_loc, panel_origin_u[1] + cy_loc, panel_origin_u[2] + cz_loc),
-                panel_rot_u,
-                panel_origin_u,
-            )
-            vc = bm.verts.new(mb._to_local_b(pc_u))
 
-            # 4 recessed prism facets per cell (winding outward toward -Z in panel local space)
-            f_bot = bm.faces.new([v00, vc, v10])
-            f_right = bm.faces.new([v10, vc, v11])
-            f_top = bm.faces.new([v11, vc, v01])
-            f_left = bm.faces.new([v01, vc, v00])
+            table_pts = [
+                (cx_loc - thalf, cy_loc - thalf, front_z + dz00),
+                (cx_loc + thalf, cy_loc - thalf, front_z + dz10),
+                (cx_loc + thalf, cy_loc + thalf, front_z + dz11),
+                (cx_loc - thalf, cy_loc + thalf, front_z + dz01),
+            ]
+            t_verts: List[bmesh.types.BMVert] = []
+            for tx, ty, tz in table_pts:
+                pt_u = _rotate_u(
+                    (panel_origin_u[0] + tx, panel_origin_u[1] + ty, panel_origin_u[2] + tz),
+                    panel_rot_u,
+                    panel_origin_u,
+                )
+                t_verts.append(bm.verts.new(mb._to_local_b(pt_u)))
+            t00, t10, t11, t01 = t_verts
 
-            # Assign high-glint DarkGlass to 3 facets and BareSteel specular glint to 1 facet for retroreflector catch
-            f_bot.material_index = glass_idx
-            f_right.material_index = steel_idx
-            f_top.material_index = glass_idx
-            f_left.material_index = glass_idx
-            for pf in (f_bot, f_right, f_top, f_left):
+            # 4 wide chamfered corner-cube bevel facets + 2 large canted central optical table facets
+            f_bot = bm.faces.new([v00, t00, t10, v10])
+            f_right = bm.faces.new([v10, t10, t11, v11])
+            f_top = bm.faces.new([v11, t11, t01, v01])
+            f_left = bm.faces.new([v01, t01, t00, v00])
+            if flip_diag:
+                f_tab1 = bm.faces.new([t00, t11, t10])
+                f_tab2 = bm.faces.new([t00, t01, t11])
+            else:
+                f_tab1 = bm.faces.new([t00, t01, t10])
+                f_tab2 = bm.faces.new([t10, t01, t11])
+
+            front_facets = [
+                (f_bot, "bot"),
+                (f_right, "right"),
+                (f_top, "top"),
+                (f_left, "left"),
+                (f_tab1, "tab1"),
+                (f_tab2, "tab2"),
+            ]
+            for pf, fkind in front_facets:
+                pf.material_index = glass_idx
                 pf.smooth = False
-                faces.append(pf)
+                poly_meta.append((r, c, fkind))
 
             # Back face quad (+Z)
             fb = bm.faces.new([back_rim[r][c], back_rim[r + 1][c], back_rim[r + 1][c + 1], back_rim[r][c + 1]])
             fb.material_index = steel_idx
             fb.smooth = False
-            faces.append(fb)
+            poly_meta.append((r, c, "back"))
 
     # Outer perimeter walls closing front_rim to back_rim
     for idx in range(n_cells):
-        # Bottom edge (r=0)
         f1 = bm.faces.new([front_rim[0][idx], front_rim[0][idx + 1], back_rim[0][idx + 1], back_rim[0][idx]])
-        # Top edge (r=n_cells)
         f2 = bm.faces.new(
             [back_rim[n_cells][idx], back_rim[n_cells][idx + 1], front_rim[n_cells][idx + 1], front_rim[n_cells][idx]]
         )
-        # Left edge (c=0)
         f3 = bm.faces.new([back_rim[idx][0], back_rim[idx + 1][0], front_rim[idx + 1][0], front_rim[idx][0]])
-        # Right edge (c=n_cells)
         f4 = bm.faces.new(
             [front_rim[idx][n_cells], front_rim[idx + 1][n_cells], back_rim[idx + 1][n_cells], back_rim[idx][n_cells]]
         )
         for fw in (f1, f2, f3, f4):
             fw.material_index = steel_idx
             fw.smooth = False
-            faces.append(fw)
+            poly_meta.append((0, 0, "wall"))
 
     r1kit.ensure_outward_normals(bm, per_shell=True)
+    return poly_meta
 
 
 def build_retroreflector() -> bpy.types.Object:
     """Build Deliverable 3: Prop_Retroreflector (~0.66 W x 0.62 D x 0.56 H m).
 
-    Tilted panel of 10x10 corner-cube prisms on legs (real lunar laser ranging);
-    catches light at grazing sun.
+    Tilted panel of 3x3 large corner-cube optical prisms with visible glassy facets and varied wear/dust
+    on a bare-aluminium stand with GoldFoil on the rear face only.
     """
     r1kit.reset_scene()
     ensure_extended_r1_materials()
@@ -1194,7 +1225,7 @@ def build_retroreflector() -> bpy.types.Object:
     root = r1kit.create_empty("Prop_Retroreflector", pivot_u=(0.0, 0.0, 0.0))
 
     panel_piv = (0.0, 0.30, 0.0)
-    # Tilted 38 deg toward -Z / +Y so the 10x10 prism face aims toward Earth & catches low grazing sun
+    # Tilted 38 deg toward -Z / +Y so the 3x3 prism face aims toward Earth & catches low grazing sun
     panel_rot = (-38.0, 0.0, 0.0)
 
     def rp(x: float, y: float, z: float) -> Tuple[float, float, float]:
@@ -1347,7 +1378,7 @@ def build_retroreflector() -> bpy.types.Object:
         rot_deg_u=panel_rot,
     )
 
-    # 4 perimeter bezel rails & stray-light sunshade hood framing the 0.42x0.42 m 10x10 prism cavity
+    # 4 perimeter bezel rails & stray-light sunshade hood framing the 0.42x0.42 m 3x3 prism cavity
     # Left & Right rails
     for sx in (-1.0, 1.0):
         housing_mb.add_bevel_box(
@@ -1385,6 +1416,57 @@ def build_retroreflector() -> bpy.types.Object:
             segments=1,
             rot_deg_u=panel_rot,
         )
+
+    # Machined bare-aluminium 3x3 divider lattice separating the 9 large corner-cube optical prisms
+    div_offset = 0.416 / 6.0  # +/- 0.0693 m
+    for d_coord in (-div_offset, div_offset):
+        housing_mb.add_bevel_box(
+            center_u=rp(d_coord, 0.0, -0.017),
+            size_u=(0.013, 0.414, 0.012),
+            mat="R1_BareSteel",
+            bevel=0.002,
+            segments=1,
+            rot_deg_u=panel_rot,
+        )
+        housing_mb.add_bevel_box(
+            center_u=rp(0.0, d_coord, -0.017),
+            size_u=(0.414, 0.013, 0.012),
+            mat="R1_BareSteel",
+            bevel=0.002,
+            segments=1,
+            rot_deg_u=panel_rot,
+        )
+    # 4 machined retainer clamp bosses at the 3x3 divider intersections
+    for dx in (-div_offset, div_offset):
+        for dy in (-div_offset, div_offset):
+            housing_mb.add_bevel_box(
+                center_u=rp(dx, dy, -0.019),
+                size_u=(0.024, 0.024, 0.014),
+                mat="R1_BareSteel",
+                bevel=0.002,
+                segments=1,
+                rot_deg_u=panel_rot,
+            )
+
+    # Settled regolith dust drifts in the lower-left and lower-center bezel trough for asymmetric Era-S weathering
+    housing_mb.add_bevel_box(
+        center_u=rp(-0.142, -0.188, -0.024),
+        size_u=(0.115, 0.036, 0.014),
+        mat="R1_Basalt",
+        bevel=0.004,
+        segments=1,
+        top_scale_xz=(0.72, 0.65),
+        rot_deg_u=panel_rot,
+    )
+    housing_mb.add_bevel_box(
+        center_u=rp(0.025, -0.194, -0.023),
+        size_u=(0.082, 0.026, 0.012),
+        mat="R1_Basalt",
+        bevel=0.003,
+        segments=1,
+        top_scale_xz=(0.70, 0.65),
+        rot_deg_u=panel_rot,
+    )
 
     # Upper solar-glare sunhood visor along the top (+Y_local) edge
     housing_mb.add_bevel_box(
@@ -1429,16 +1511,15 @@ def build_retroreflector() -> bpy.types.Object:
     )
     housing_mb.build_object(parent=root)
 
-    # 3. PrismArray: 10x10 = 100 corner-cube retroreflector prisms seated inside the tilted panel frame
+    # 3. PrismArray: 3x3 = 9 large corner-cube optical prisms with broad glassy facets seated inside the frame
     prism_mb = r1kit.MeshBuilder("PrismArray", pivot_u=panel_piv)
-    _add_corner_cube_prism_array_10x10(
+    poly_meta = _add_corner_cube_prism_array_3x3(
         prism_mb,
         panel_origin_u=panel_piv,
         panel_rot_u=panel_rot,
         grid_span=0.416,
-        prism_depth=0.018,
         slab_back_z=0.010,
-        front_z=-0.022,
+        front_z=-0.018,
     )
     prism_obj = prism_mb.build_object(parent=root)
 
@@ -1450,18 +1531,45 @@ def build_retroreflector() -> bpy.types.Object:
     r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(root, footprint_radius=0.42)
 
-    # Boost vertex-color G (edge wear / crisp optical facet reflectance) and reduce B (dust) on PrismArray
-    # so the 10x10 corner-cube prisms catch grazing sun and headlamp beams crisply
-    if prism_obj.data is not None and "Col" in prism_obj.data.color_attributes:
-        attr = prism_obj.data.color_attributes["Col"]
-        for loop in prism_obj.data.loops:
-            r, g, b, a = attr.data[loop.index].color
-            attr.data[loop.index].color = (
-                max(0.82, min(1.0, r * 0.95 + 0.12)),
-                max(0.76, min(1.0, g * 0.5 + 0.65)),
-                max(0.0, min(0.14, b * 0.25)),
-                a,
-            )
+    # Assign varied per-cell and per-facet vertex colors (R=AO, G=glassy facet glint/wear, B=settled regolith dust)
+    # across the 3x3 large corner-cube prisms so every prism shows distinct glassy facets and organic wear/dust.
+    cell_weathering = {
+        (0, 0): (0.48, 0.62, 0.94),  # bottom-left: heavy settled regolith dust drift
+        (0, 1): (0.64, 0.74, 0.68),  # bottom-mid: moderate dust & worn lower bevel
+        (0, 2): (0.78, 0.85, 0.42),  # bottom-right: light dust, crisp corner glint
+        (1, 0): (0.68, 0.78, 0.56),  # mid-left: weathered/crazed outer prism
+        (1, 1): (0.94, 0.95, 0.08),  # center: clean high-glint optical prism
+        (1, 2): (0.90, 0.86, 0.12),  # mid-right: deep glassy blue with bright table facet
+        (2, 0): (0.76, 0.88, 0.30),  # top-left: sun-crazed upper corner prism
+        (2, 1): (0.92, 0.80, 0.10),  # top-mid: dark glass with mid-tone bevel catch
+        (2, 2): (0.96, 0.98, 0.04),  # top-right: brightest optical glint under sunhood
+    }
+    facet_offsets = {
+        "tab1": (0.04, 0.14, -0.12),   # bright primary optical table facet
+        "tab2": (-0.02, -0.14, 0.04),  # deeper contrasting optical table facet
+        "bot": (0.02, 0.10, 0.12),     # lower bevel catching low sun + settled dust
+        "left": (0.00, 0.04, 0.05),    # mid-tone left bevel facet
+        "right": (-0.04, -0.22, 0.00), # deep dark-blue right bevel facet
+        "top": (-0.06, -0.26, -0.06),  # shaded upper bevel under sunhood
+    }
+    if prism_obj.data is not None and r1kit.VCOL_ATTRIBUTE_NAME in prism_obj.data.color_attributes:
+        attr = prism_obj.data.color_attributes[r1kit.VCOL_ATTRIBUTE_NAME]
+        for poly_idx, poly in enumerate(prism_obj.data.polygons):
+            if poly_idx >= len(poly_meta):
+                break
+            r_cell, c_cell, fkind = poly_meta[poly_idx]
+            if fkind not in facet_offsets:
+                continue
+            base_r, base_g, base_b = cell_weathering.get((r_cell, c_cell), (0.85, 0.82, 0.15))
+            dr, dg, db = facet_offsets[fkind]
+            # Alternate facet highlight emphasis across cells so adjacent prisms never look identical
+            if (r_cell + c_cell) % 2 == 1 and fkind in ("tab1", "tab2"):
+                dg = -dg * 0.85
+            col_r = max(0.32, min(1.0, base_r + dr))
+            col_g = max(0.38, min(1.0, base_g + dg))
+            col_b = max(0.0, min(1.0, base_b + db))
+            for loop_idx in poly.loop_indices:
+                attr.data[loop_idx].color = (col_r, col_g, col_b, 1.0)
 
     fbx_path = PROPS_DIR / "Prop_Retroreflector.fbx"
     r1kit.export_fbx(root, fbx_path, bake_space_transform=False)

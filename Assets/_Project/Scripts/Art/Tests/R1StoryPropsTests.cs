@@ -846,8 +846,11 @@ namespace MoonProject.Art.Tests
 
             Mesh prismMesh = prismArray.GetComponent<MeshFilter>().sharedMesh;
             Assert.IsNotNull(prismMesh);
-            Assert.GreaterOrEqual(prismMesh.triangles.Length / 3, 600,
-                "PrismArray must contain sculpted 10x10 corner-cube prism facets.");
+            int prismTriangles = prismMesh.triangles.Length / 3;
+            Assert.GreaterOrEqual(prismTriangles, 90,
+                "PrismArray must contain sculpted 3x3 large corner-cube prism facets.");
+            Assert.LessOrEqual(prismTriangles, 400,
+                "PrismArray must use a few large corner-cube prisms (no dense field of small repeated cells).");
 
             bool hasWindowGlint = false;
             foreach (Material m in prismArray.GetComponent<Renderer>().sharedMaterials)
