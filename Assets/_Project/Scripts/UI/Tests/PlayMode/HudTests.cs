@@ -197,8 +197,8 @@ namespace MoonProject.UI.PlayModeTests
 
             Assert.IsTrue(view.DeviceElement(FaceDevices.Scan).ClassListContains(CargoScreen.FittedClass));
             Assert.IsFalse(view.DeviceElement(FaceDevices.Cutter).ClassListContains(CargoScreen.FittedClass));
-            Assert.AreEqual(Text("ui.system.state.fault_igniter"), view.DeviceStateText(FaceDevices.Cutter));
-            Assert.AreEqual(Text("ui.system.state.empty"), view.DeviceStateText(FaceDevices.SocketOne));
+            Assert.AreEqual(Text("ui.device.state.cutter_needs"), view.DeviceStateText(FaceDevices.Cutter));
+            Assert.AreEqual(Text("ui.device.state.socket_empty"), view.DeviceStateText(FaceDevices.SocketOne));
 
             Submit(view.DeviceElement(FaceDevices.Cutter));
             yield return Seconds(0.2f);
@@ -215,7 +215,7 @@ namespace MoonProject.UI.PlayModeTests
             Submit(view.DeviceElement(FaceDevices.Cutter));
             yield return Seconds(0.3f);
             Assert.AreEqual(1, _rig.Fakes.Systems.Fits, "one confirm fits the igniter");
-            Assert.AreEqual(Text("ui.system.state.ok"), view.DeviceStateText(FaceDevices.Cutter));
+            Assert.AreEqual(Text("ui.device.state.ok"), view.DeviceStateText(FaceDevices.Cutter));
             Assert.IsFalse(view.IsIgniterOffered);
             Assert.IsTrue(cargo.IsOpen, "and the screen stays open");
         }

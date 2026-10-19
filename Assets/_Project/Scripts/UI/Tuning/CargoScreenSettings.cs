@@ -108,130 +108,82 @@ namespace MoonProject.UI
         [Range(400f, 560f)]
         [SerializeField] private float _dividerX = 480f;
 
-        [Tooltip("Radius (px in 1152x768) of the status disc in each device frame.")]
-        [Range(12f, 32f)]
-        [SerializeField] private float _bubbleRadius = 22f;
-
         [Tooltip("Seconds a transient toast message remains visible at the bottom of the panel.")]
         [Range(1f, 8f)]
         [SerializeField] private float _toastDurationSeconds = 3.5f;
 
         [Header("07's line drawing on the face (Art/UI/Face/rover_07_line_3q.png)")]
-        [Tooltip("Tint over the drawing's cream lines; white keeps them as Art drew them.")]
-        [SerializeField] private Color32 _artTint = new Color32(255, 255, 255, 255);
+        [Tooltip("Tint over the drawing's cream lines: a quiet neutral, so the hold and the bays read first.")]
+        [SerializeField] private Color32 _artTint = new Color32(176, 160, 132, 255);
 
-        [Header("Device states: each one its own colour, stroke and mark, so they read apart on the CRT in daylight")]
-        [Tooltip("A working device (OK): its state words, frame and disc.")]
-        [SerializeField] private Color32 _statusOk = new Color32(40, 230, 150, 255);
+        [Header("Look A, quiet amber CRT: one accent over warm neutrals, nothing drawn that carries nothing")]
+        [Tooltip("The hold's item icons and the dragged part.")]
+        [SerializeField] private Color32 _iconColor = new Color32(206, 192, 166, 255);
 
-        [Tooltip("A faulty device (FAULT): its state words, frame, disc and the warning mark beside its name.")]
-        [SerializeField] private Color32 _statusFault = new Color32(255, 96, 32, 255);
+        [Tooltip("Quiet strokes: empty slot outlines, the brackets of a bay at rest and resting leaders.")]
+        [SerializeField] private Color32 _faintColor = new Color32(96, 88, 74, 255);
 
-        [Tooltip("An empty socket (EMPTY): its state words and its broken frame and disc, quieter than the rest.")]
-        [SerializeField] private Color32 _statusEmpty = new Color32(152, 148, 164, 255);
+        [Tooltip("The one accent: the selection, the bays the carried part fits and what can be fitted right now.")]
+        [SerializeField] private Color32 _accentColor = new Color32(255, 184, 72, 255);
 
-        [Tooltip("Length (px at 1152x768) of each dash of an empty socket's frame.")]
-        [Range(4f, 24f)]
-        [SerializeField] private float _emptyDash = 10f;
-
-        [Tooltip("Gap (px at 1152x768) between the dashes of an empty socket's frame.")]
-        [Range(2f, 16f)]
-        [SerializeField] private float _emptyDashGap = 7f;
-
-        [Tooltip("Size (px at 1152x768) of the warning mark beside a faulty device's name.")]
-        [Range(16f, 32f)]
-        [SerializeField] private float _warningIconSize = 26f;
-
-        [Header("Orbital socket leader lines (faint default, slightly brighter installed, cyan only on focus/drag)")]
-        [Tooltip("Faint amber stroke (~27% alpha) for empty socket leader lines so the 10 spokes do not compete with 07.")]
-        [SerializeField] private Color32 _leaderEmptyColor = new Color32(236, 188, 104, 76);
-
-        [Tooltip("Stroke width (px at 1152x768) for empty socket leader lines.")]
-        [Range(0.5f, 3f)]
-        [SerializeField] private float _leaderEmptyWidth = 2f;
-
-        [Tooltip("Mount anchor dot radius (px at 1152x768) on 07 for empty socket leader lines.")]
-        [Range(1f, 5f)]
-        [SerializeField] private float _leaderEmptyDotRadius = 3.5f;
-
-        [Tooltip("Subtle warm amber stroke (~42% alpha) for installed socket leader lines.")]
-        [SerializeField] private Color32 _leaderInstalledColor = new Color32(252, 204, 118, 110);
-
-        [Tooltip("Stroke width (px at 1152x768) for installed socket leader lines.")]
-        [Range(0.5f, 3f)]
-        [SerializeField] private float _leaderInstalledWidth = 2.4f;
-
-        [Tooltip("Mount anchor dot radius (px at 1152x768) on 07 for installed socket leader lines.")]
-        [Range(1f, 5f)]
-        [SerializeField] private float _leaderInstalledDotRadius = 4f;
-
-        [Tooltip("Bright cyan stroke for the single focused, hovered, or active drag-target socket's leader line.")]
-        [SerializeField] private Color32 _leaderFocusColor = new Color32(95, 243, 255, 250);
-
-        [Tooltip("Stroke width (px at 1152x768) for the focused or drag-target socket leader line.")]
-        [Range(1f, 4f)]
-        [SerializeField] private float _leaderFocusWidth = 3.2f;
-
-        [Tooltip("Mount anchor dot radius (px at 1152x768) on 07 for the focused or drag-target socket leader line.")]
-        [Range(1.5f, 6f)]
-        [SerializeField] private float _leaderFocusDotRadius = 5.5f;
-
-        [Header("Legibility on the 2x face texture: heavier strokes, larger icons, a clear selection")]
-        [Tooltip("Stroke width (px at 1152x768) of the outline of an empty hold cell and of the grid rules.")]
-        [Range(1f, 6f)]
-        [SerializeField] private float _cellStrokeWidth = 2.4f;
-
-        [Tooltip("Stroke width (px at 1152x768) of the outline of a hold cell that holds something.")]
-        [Range(1f, 6f)]
-        [SerializeField] private float _itemStrokeWidth = 3.2f;
-
-        [Tooltip("Stroke width (px at 1152x768) of the selection ring and corner ticks on a cell or device bubble.")]
-        [Range(2f, 8f)]
-        [SerializeField] private float _focusStrokeWidth = 5f;
-
-        [Tooltip("Size (px at 1152x768) of the icon in a hold cell.")]
-        [Range(30f, 64f)]
-        [SerializeField] private float _holdIconSize = 58f;
-
-        [Tooltip("Size (px at 1152x768) of the icon in a device frame's status disc.")]
-        [Range(20f, 40f)]
-        [SerializeField] private float _deviceIconSize = 36f;
-
-        [Tooltip("Fill of the selected hold cell or device frame: a dark teal, so the CRT keeps it dim and the icon on " +
-                 "it stays bright (a lighter fill is lifted to the strokes' brightness and washes the icon out).")]
-        [SerializeField] private Color32 _selectionFill = new Color32(6, 34, 38, 255);
-
-        [Tooltip("Fill of a cell or frame for a moment after it is clicked: brighter than the selection, then easing back.")]
-        [SerializeField] private Color32 _pressFill = new Color32(10, 44, 48, 255);
-
-        [Tooltip("Seconds the pressed fill takes to ease back to the selection fill.")]
-        [Range(0.05f, 0.6f)]
-        [SerializeField] private float _pressFlashSeconds = 0.22f;
-
-        [Header("Two-colour CRT palette (amber + cyan, near-neutral warm-black background, >= 7:1 stroke contrast)")]
-        [Tooltip("Near-neutral warm-black CRT fill (HSV sat <= 0.25, val ~0.075) inside an unlocked inventory cell or socket bubble.")]
-        [SerializeField] private Color32 _cellBackground = new Color32(19, 18, 16, 255);
+        [Tooltip("Soft fill of a bay the carried part fits, and of a cell or bay for a moment after a press.")]
+        [SerializeField] private Color32 _accentFill = new Color32(255, 184, 72, 40);
 
         [Tooltip("Opaque near-neutral warm-black CRT backing plate behind count badges, tooltips, and toasts.")]
         [SerializeField] private Color32 _plateBackground = new Color32(19, 18, 16, 255);
 
-        [Tooltip("Brightest amber stroke and badge color for active and installed items.")]
-        [SerializeField] private Color32 _amberBright = new Color32(255, 224, 148, 255);
+        [Tooltip("Stroke width (px at 1152x768) of an empty slot's outline.")]
+        [Range(0.5f, 4f)]
+        [SerializeField] private float _slotStrokeWidth = 1.5f;
 
-        [Tooltip("Warm amber stroke of the hold item icons.")]
-        [SerializeField] private Color32 _amberText = new Color32(255, 206, 116, 255);
+        [Tooltip("Stroke width (px at 1152x768) of the selection outline on a cell or a bay.")]
+        [Range(1f, 6f)]
+        [SerializeField] private float _focusStrokeWidth = 2.5f;
 
-        [Tooltip("Amber stroke for empty cells, empty socket rings, and default leader lines (>= 7:1 contrast).")]
-        [SerializeField] private Color32 _amberFaint = new Color32(232, 182, 98, 240);
+        [Tooltip("Size (px at 1152x768) of the icon in a hold cell; 40 or more so its silhouette reads.")]
+        [Range(40f, 64f)]
+        [SerializeField] private float _holdIconSize = 52f;
 
-        [Tooltip("Amber stroke for ghosted kit silhouettes inside empty sockets and grid rules (>= 7:1 contrast).")]
-        [SerializeField] private Color32 _amberMuted = new Color32(224, 176, 94, 225);
+        [Tooltip("Seconds the press fill takes to ease away after a cell or a bay is pressed.")]
+        [Range(0.05f, 0.6f)]
+        [SerializeField] private float _pressFlashSeconds = 0.22f;
 
-        [Tooltip("Amber stroke for locked hold cell dotted borders and padlocks (>= 7:1 contrast).")]
-        [SerializeField] private Color32 _amberLocked = new Color32(216, 168, 90, 215);
+        [Header("Device bays: where a part from the hold can be dropped")]
+        [Tooltip("Stroke width (px at 1152x768) of the corner brackets of a bay at rest or ready.")]
+        [Range(0.5f, 4f)]
+        [SerializeField] private float _bayStrokeWidth = 1.5f;
 
-        [Tooltip("Bright cyan accent for focused/hovered cells, active drag-target sockets, and their leader lines.")]
-        [SerializeField] private Color32 _cyanAccent = new Color32(95, 243, 255, 255);
+        [Tooltip("Stroke width (px at 1152x768) of the solid outline of a bay the carried part fits.")]
+        [Range(1f, 5f)]
+        [SerializeField] private float _bayLitStrokeWidth = 2f;
+
+        [Tooltip("Stroke width (px at 1152x768) of that outline while the part is over it or the selection is on it.")]
+        [Range(1f, 6f)]
+        [SerializeField] private float _bayHoverStrokeWidth = 3.5f;
+
+        [Tooltip("Seconds of one breath of a lit bay: its outline and fill ease down and back up.")]
+        [Range(0.4f, 3f)]
+        [SerializeField] private float _bayBreathSeconds = 1.2f;
+
+        [Tooltip("How far a lit bay's outline and fill ease down at the bottom of each breath (0: no breath).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _bayBreathDepth = 0.45f;
+
+        [Tooltip("Opacity of a device that takes nothing from the part being dragged.")]
+        [Range(0.1f, 1f)]
+        [SerializeField] private float _bayDimAlpha = 0.4f;
+
+        [Tooltip("Stroke width (px at 1152x768) of a leader from a bay to its part on 07.")]
+        [Range(0.5f, 3f)]
+        [SerializeField] private float _leaderWidth = 1.5f;
+
+        [Tooltip("Stroke width (px at 1152x768) of a lit bay's leader: brighter and a little heavier.")]
+        [Range(1f, 4f)]
+        [SerializeField] private float _leaderLitWidth = 2.5f;
+
+        [Tooltip("Radius (px at 1152x768) of the dot where a leader meets 07's part.")]
+        [Range(1f, 6f)]
+        [SerializeField] private float _leaderDotRadius = 3.5f;
 
         public RevealSettings Reveal => _reveal;
 
@@ -271,73 +223,45 @@ namespace MoonProject.UI
 
         public float DividerX => _dividerX;
 
-        public float BubbleRadius => _bubbleRadius;
-
         public float ToastDurationSeconds => _toastDurationSeconds;
 
         public Color32 ArtTint => _artTint;
 
-        public Color32 StatusOk => _statusOk;
+        public Color32 IconColor => _iconColor;
 
-        public Color32 StatusFault => _statusFault;
+        public Color32 FaintColor => _faintColor;
 
-        public Color32 StatusEmpty => _statusEmpty;
+        public Color32 AccentColor => _accentColor;
 
-        public float EmptyDash => _emptyDash;
-
-        public float EmptyDashGap => _emptyDashGap;
-
-        public float WarningIconSize => _warningIconSize;
-
-        public Color32 LeaderEmptyColor => _leaderEmptyColor;
-
-        public float LeaderEmptyWidth => _leaderEmptyWidth;
-
-        public float LeaderEmptyDotRadius => _leaderEmptyDotRadius;
-
-        public Color32 LeaderInstalledColor => _leaderInstalledColor;
-
-        public float LeaderInstalledWidth => _leaderInstalledWidth;
-
-        public float LeaderInstalledDotRadius => _leaderInstalledDotRadius;
-
-        public Color32 LeaderFocusColor => _leaderFocusColor;
-
-        public float LeaderFocusWidth => _leaderFocusWidth;
-
-        public float LeaderFocusDotRadius => _leaderFocusDotRadius;
-
-        public Color32 CellBackground => _cellBackground;
+        public Color32 AccentFill => _accentFill;
 
         public Color32 PlateBackground => _plateBackground;
 
-        public Color32 AmberBright => _amberBright;
-
-        public Color32 AmberText => _amberText;
-
-        public Color32 AmberFaint => _amberFaint;
-
-        public Color32 AmberMuted => _amberMuted;
-
-        public Color32 AmberLocked => _amberLocked;
-
-        public Color32 CyanAccent => _cyanAccent;
-
-        public float CellStrokeWidth => _cellStrokeWidth;
-
-        public float ItemStrokeWidth => _itemStrokeWidth;
+        public float SlotStrokeWidth => _slotStrokeWidth;
 
         public float FocusStrokeWidth => _focusStrokeWidth;
 
         public float HoldIconSize => _holdIconSize;
 
-        public float DeviceIconSize => _deviceIconSize;
-
-        public Color32 SelectionFill => _selectionFill;
-
-        public Color32 PressFill => _pressFill;
-
         public float PressFlashSeconds => _pressFlashSeconds;
+
+        public float BayStrokeWidth => _bayStrokeWidth;
+
+        public float BayLitStrokeWidth => _bayLitStrokeWidth;
+
+        public float BayHoverStrokeWidth => _bayHoverStrokeWidth;
+
+        public float BayBreathSeconds => _bayBreathSeconds;
+
+        public float BayBreathDepth => _bayBreathDepth;
+
+        public float BayDimAlpha => _bayDimAlpha;
+
+        public float LeaderWidth => _leaderWidth;
+
+        public float LeaderLitWidth => _leaderLitWidth;
+
+        public float LeaderDotRadius => _leaderDotRadius;
 
         public float BootTypeSeconds => _bootTypeSeconds;
 
@@ -358,21 +282,16 @@ namespace MoonProject.UI
                 return "cargo reveal is missing";
             }
 
-            if (_panelWidth <= 0f || _panelHeight <= 0f || _maxCell <= 0f || _bubbleRadius <= 0f)
+            if (_panelWidth <= 0f || _panelHeight <= 0f || _maxCell <= 0f)
             {
-                return "cargo layout or diagram framing is non-positive";
+                return "cargo layout is non-positive";
             }
 
-            if (_emptyDash <= 0f || _emptyDashGap <= 0f || _warningIconSize <= 0f)
+            if (_slotStrokeWidth <= 0f || _focusStrokeWidth <= 0f || _holdIconSize <= 0f || _pressFlashSeconds <= 0f ||
+                _bayStrokeWidth <= 0f || _bayLitStrokeWidth <= 0f || _bayHoverStrokeWidth <= 0f ||
+                _bayBreathSeconds <= 0f || _leaderWidth <= 0f || _leaderLitWidth <= 0f || _leaderDotRadius <= 0f)
             {
-                return "cargo device state marks are non-positive";
-            }
-
-            if (_leaderEmptyWidth <= 0f || _leaderInstalledWidth <= 0f || _leaderFocusWidth <= 0f ||
-                _cellStrokeWidth <= 0f || _itemStrokeWidth <= 0f || _focusStrokeWidth <= 0f ||
-                _holdIconSize <= 0f || _deviceIconSize <= 0f || _pressFlashSeconds <= 0f)
-            {
-                return "cargo leader line, stroke or icon settings are non-positive";
+                return "cargo stroke, icon, bay or leader settings are non-positive";
             }
 
             if (_dragThreshold <= 0f || _dragFollowSeconds < 0f || _dragReturnSeconds <= 0f || _dragFitSeconds <= 0f)

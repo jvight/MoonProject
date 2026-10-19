@@ -42,6 +42,12 @@ namespace MoonProject.Rover.PlayModeTests
         private const float SunriseTimeout = 35f;
         private const float OpenGroundOffset = 12f;
 
+        // Look A's text roles (GameUI.uss): body and title words, icons and the accent are drawn at or above this
+        // brightest-channel level on the face texture; the meta words sit under it.
+        private const float BodyStrokeLevel = 0.76f;
+        private const float BodyContrast = 7f;
+        private const float MetaContrast = 4.5f;
+
         private static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "captures"));
         private static readonly string R2CaptureFolder =
@@ -880,7 +886,7 @@ namespace MoonProject.Rover.PlayModeTests
             var rects = new List<Rect>
             {
                 new Rect(FaceLayout.Margin, FaceLayout.TitleY, FaceLayout.RightEdge - FaceLayout.Margin,
-                    FaceLayout.TitleRuleY - FaceLayout.TitleY),
+                    FaceLayout.TitleHeight),
                 new Rect(FaceLayout.InfoX, FaceLayout.InfoY, FaceLayout.InfoWidth, FaceLayout.InfoHeight),
                 new Rect(FaceLayout.Margin, FaceLayout.FooterY, FaceLayout.RightEdge - FaceLayout.Margin,
                     FaceLayout.FooterHeight),
@@ -938,7 +944,8 @@ namespace MoonProject.Rover.PlayModeTests
                 $"[{lightingTag}] Face-inspect camera must look straight down the glass normal.");
 
             // 2. Automated Comfort Check on the 1920x1080 rendered inventory capture:
-            //    - stroke/text pixels vs local background >= 7:1;
+            //    - body and title strokes (and the accent) vs local background >= 7:1, meta strokes >= 4.5:1 (look A
+            //      keeps its contrast in its palette: the quiet strokes under meta carry no words and are not checked);
             //    - background saturation <= 0.25 (near-neutral warm black, not orange);
             //    - no background hotspot > 1.3x median background luminance inside the safe area.
             const int width = 1920;
@@ -954,6 +961,7 @@ namespace MoonProject.Rover.PlayModeTests
 
                 var bgLuminances = new List<float>(8192);
                 var strokeCheckCoords = new List<Vector2Int>(1024);
+                var strokeIsBody = new List<bool>(1024);
                 float maxBgSat = 0f;
                 float sumBgR = 0f;
                 float sumBgG = 0f;
@@ -1017,6 +1025,8 @@ namespace MoonProject.Rover.PlayModeTests
                             else if (distInside >= minMargin + 6f && IsUiStrokeCore(uiPixels, uiW, uiH, uiX, uiY))
                             {
                                 strokeCheckCoords.Add(new Vector2Int(x, y));
+                                Color core = uiPixels[uiY * uiW + uiX];
+                                strokeIsBody.Add(Mathf.Max(core.r, Mathf.Max(core.g, core.b)) >= BodyStrokeLevel);
                             }
                         }
                     }
@@ -1060,10 +1070,11 @@ namespace MoonProject.Rover.PlayModeTests
                     float fgLum = MaxCaptureLuminanceInWindow(capturePixels, width, height, pt.x, pt.y, 2);
                     float localBgLum = MinCaptureLuminanceInWindow(capturePixels, width, height, pt.x, pt.y, 14, medianBgLum);
                     float contrast = ContrastRatio(fgLum, localBgLum);
+                    float floor = strokeIsBody[i] ? BodyContrast : MetaContrast;
                     Assert.GreaterOrEqual(
                         contrast,
-                        7.0f,
-                        $"[{lightingTag}] Stroke/text pixel at capture ({pt.x},{pt.y}) must have >= 7:1 contrast against local background (got {contrast:F2}:1, fgLum={fgLum:F4}, bgLum={localBgLum:F5}).");
+                        floor,
+                        $"[{lightingTag}] {(strokeIsBody[i] ? "Body" : "Meta")} stroke at capture ({pt.x},{pt.y}) must have >= {floor}:1 contrast against local background (got {contrast:F2}:1, fgLum={fgLum:F4}, bgLum={localBgLum:F5}).");
                 }
             }
             finally

@@ -259,18 +259,17 @@ namespace MoonProject.UI.Tests
                 Rect frame = FaceLayout.DeviceFrame(i);
                 Assert.GreaterOrEqual(frame.xMin, FaceLayout.HoldRight);
                 Assert.LessOrEqual(frame.xMax, FaceLayout.RightEdge);
-                Assert.GreaterOrEqual(frame.yMin, FaceLayout.TitleRuleY);
+                Assert.GreaterOrEqual(frame.yMin, FaceLayout.TitleY + FaceLayout.TitleHeight);
             }
 
             var uiTuning = AssetDatabase.LoadAssetAtPath<UiTuning>(UiAssetPaths.Tuning);
             Assert.IsNotNull(uiTuning);
             Assert.IsNull(uiTuning.Validate());
             CargoScreenSettings cargo = uiTuning.Cargo;
-            Assert.LessOrEqual(cargo.LeaderEmptyColor.a, 78, "Empty socket leader line is faint (~25-30% alpha)");
-            Assert.Greater(cargo.LeaderInstalledColor.a, cargo.LeaderEmptyColor.a,
-                "Installed socket leader is slightly brighter than empty leader");
-            Assert.LessOrEqual(cargo.LeaderInstalledColor.a, 115, "Installed socket leader remains subtle");
-            Assert.GreaterOrEqual(cargo.LeaderFocusColor.a, 220, "Focused/drag-target leader is bright cyan");
+            Assert.Greater(cargo.LeaderLitWidth, cargo.LeaderWidth, "a lit bay's leader is heavier than a resting one");
+            Assert.Less(Luma(cargo.FaintColor), Luma(cargo.IconColor), "resting strokes stay quieter than the icons");
+            Assert.Greater(cargo.AccentColor.r - cargo.AccentColor.b, cargo.IconColor.r - cargo.IconColor.b,
+                "the one accent is the warm, saturated colour on the page");
 
             var enAsset = AssetDatabase.LoadAssetAtPath<TextAsset>(UiAssetPaths.StringTable("en"));
             var viAsset = AssetDatabase.LoadAssetAtPath<TextAsset>(UiAssetPaths.StringTable("vi"));
@@ -278,12 +277,10 @@ namespace MoonProject.UI.Tests
                 new[] { StringTable.Parse(enAsset.text, "en"), StringTable.Parse(viAsset.text, "vi") });
 
             localization.SetLanguage("en");
-            Assert.AreEqual("INVENTORY", localization.Get(UiKeys.CargoHold));
-            Assert.AreEqual("EQUIPMENT DIAGNOSTIC · UNIT 07 · SSR-5", localization.Get(UiKeys.FaceTitle));
+            Assert.AreEqual("HOLD", localization.Get(UiKeys.CargoHold));
 
             localization.SetLanguage("vi");
             Assert.AreEqual("KHOANG HÀNG", localization.Get(UiKeys.CargoHold));
-            Assert.AreEqual("CHẨN ĐOÁN TRANG BỊ · ĐƠN VỊ 07 · SSR-5", localization.Get(UiKeys.FaceTitle));
 
             foreach (string lang in new[] { "en", "vi" })
             {
@@ -319,6 +316,12 @@ namespace MoonProject.UI.Tests
                         FaceInventoryView.MaxTooltipDescriptionChars);
                 }
             }
+        }
+
+        private static float Luma(Color32 color)
+        {
+            Color linear = ((Color)color).linear;
+            return 0.2126f * linear.r + 0.7152f * linear.g + 0.0722f * linear.b;
         }
 
         private static Transform FindNode(Transform[] nodes, string name)

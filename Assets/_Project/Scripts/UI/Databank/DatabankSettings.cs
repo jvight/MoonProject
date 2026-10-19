@@ -56,8 +56,8 @@ namespace MoonProject.UI
         [Range(0.4f, 1f)]
         [SerializeField] private float _stageFill = 0.8f;
 
-        [Tooltip("Pixels of the stage's render texture (twice the 860 x 420 panel rect, like the face texture).")]
-        [SerializeField] private Vector2Int _stageResolution = new Vector2Int(1720, 840);
+        [Tooltip("Pixels of the stage's render texture (twice the 416 x 444 model rect, like the face texture).")]
+        [SerializeField] private Vector2Int _stageResolution = new Vector2Int(832, 888);
 
         [Tooltip("Where the stage stands in the world: far beyond every camera's reach, so its camera sees only the " +
                  "model.")]

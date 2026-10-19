@@ -3,11 +3,13 @@ using UnityEngine;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// Where everything on 07's face screen sits in the 1152x768 reference frame (pure, EditMode-tested). The title row
-    /// and the key hints run the full width. The left half is the hold: a grid of four columns with each item's name
-    /// under its cell, only the unlocked rows shown and one hint row where the next row will grow, paged three rows at
-    /// a time (a full hold of 24 is two pages), then a status line and the info box. The right half is 07's line
-    /// drawing with its four devices in labelled frames, two above it and two below, each with a leader to its part.
+    /// Where everything on 07's face screen sits in the 1152x768 reference frame (pure, EditMode-tested), on one grid
+    /// with no rules or frames that carry nothing. The title row runs the full width (the page tabs at its right), the
+    /// key hints run along the foot. The left half is the hold: a grid of four columns with each item's name under its
+    /// cell, only the unlocked rows shown and one hint row where the next row will grow, paged three rows at a time (a
+    /// full hold of 24 is two pages), the page count right of that row, then a status line and the info box, which says
+    /// what the selection is and where it goes. The right half is 07's line drawing with its four devices as bays, two
+    /// above it and two below, each a drop area big enough to hit with a leader to its part.
     /// </summary>
     internal static class FaceLayout
     {
@@ -15,53 +17,56 @@ namespace MoonProject.UI
         public const float RightEdge = FaceInventoryView.ReferenceWidth - Margin;
         public const float TitleY = 40f;
         public const float TitleHeight = 32f;
-        public const float TitleRuleY = 78f;
 
         public const int Columns = 4;
         public const int RowsPerPage = 3;
         public const int PageSize = Columns * RowsPerPage;
-        public const float ColumnPitch = 128f;
+        public const float ColumnPitch = 120f;
         public const float HoldWidth = Columns * ColumnPitch;
         public const float HoldRight = Margin + HoldWidth;
-        public const float HeadingY = 92f;
-        public const float HeadingHeight = 28f;
-        public const float HeadingRuleY = 126f;
-        public const float PageWidth = 176f;
-        public const float GridTop = 132f;
-        public const float CellSize = 70f;
-        public const float NameGap = 2f;
+        public const float PageWidth = 140f;
+        public const float GridTop = 112f;
+        public const float CellSize = 76f;
+        public const float NameGap = 4f;
         public const float NameHeight = 46f;
-        public const float RowGap = 2f;
+        public const float RowGap = 6f;
         public const float RowPitch = CellSize + NameGap + NameHeight + RowGap;
         public const float HintGap = 4f;
-        public const float HintHeight = 26f;
-        public const float HintPadlockX = 14f;
-        public const float ToastY = 522f;
-        public const float ToastHeight = 28f;
+        public const float HintHeight = 24f;
+        public const float StatusY = GridTop + RowsPerPage * RowPitch - RowGap + HintGap;
+        public const float ToastY = StatusY + HintHeight + HintGap;
+        public const float ToastHeight = 24f;
         public const float InfoX = Margin;
-        public const float InfoY = 556f;
+        public const float InfoY = 566f;
         public const float InfoWidth = HoldWidth;
-        public const float InfoHeight = 132f;
+        public const float InfoHeight = 124f;
+        public const float InfoNameHeight = 36f;
+        public const float InfoDescHeight = 60f;
+        public const float InfoUseHeight = 28f;
         public const float FooterY = 700f;
         public const float FooterHeight = 28f;
 
         public const float DeviceX = 600f;
-        public const float FrameWidth = 234f;
-        public const float FrameHeight = 96f;
+        public const float FrameWidth = 232f;
+        public const float FrameHeight = 104f;
         public const float FrameGap = RightEdge - DeviceX - 2f * FrameWidth;
-        public const float FrameTopY = 92f;
-        public const float FrameBottomY = 592f;
-        public const float FrameNameHeight = 34f;
-        public const float FrameNamePad = 12f;
-        public const float FrameGlyphRoom = 36f;
-        public const float FrameIconX = 32f;
-        public const float FrameTextX = 62f;
-        public const float FrameEdgeInset = 12f;
+        public const float FrameTopY = 104f;
+        public const float FrameBottomY = 588f;
+        public const float FramePadX = 14f;
+        public const float FrameNameY = 12f;
+        public const float FrameNameHeight = 28f;
+        public const float FrameStateY = 44f;
+        public const float FrameStateHeight = 48f;
+        public const float BracketLength = 16f;
         public const float DeviceHitPadding = 8f;
-        public const float ArtY = 204f;
-        public const float ArtHeight = 372f;
-        public const float LeaderKnee = 36f;
+        public const float ArtY = 220f;
+        public const float ArtHeight = 356f;
         public const float LeaderEdgeInset = 24f;
+
+        public const float ReleaseOffsetX = 40f;
+        public const float ReleaseOffsetY = -36f;
+        public const float ReleaseWidth = 200f;
+        public const float ReleaseHeight = 26f;
 
         private static readonly Vector2[] FrameOrigins =
         {
@@ -127,11 +132,8 @@ namespace MoonProject.UI
             return new Rect(Margin + index % Columns * ColumnPitch, cell.y - RowGap * 0.5f, ColumnPitch, RowPitch);
         }
 
-        /// <summary>The heading over the hold, left of the page count.</summary>
-        public static Rect HeadingRect => new Rect(Margin, HeadingY, HoldWidth - PageWidth, HeadingHeight);
-
-        /// <summary>The page count on the heading row, right-aligned over the grid: a click turns the page.</summary>
-        public static Rect PageRect => new Rect(HoldRight - PageWidth, HeadingY, PageWidth, HeadingHeight);
+        /// <summary>The page count on the status row under the grid, right-aligned: a click turns the page.</summary>
+        public static Rect PageRect => new Rect(HoldRight - PageWidth, StatusY, PageWidth, HintHeight);
 
         /// <summary>
         /// The one hint row that stands for every locked slot: on the last page, right under its last row, where the
@@ -140,7 +142,7 @@ namespace MoonProject.UI
         public static Rect HintRect(int unlocked)
         {
             int rows = RowsOnPage(PageCount(unlocked) - 1, unlocked);
-            return new Rect(Margin, GridTop + rows * RowPitch + HintGap, HoldWidth, HintHeight);
+            return new Rect(Margin, GridTop + rows * RowPitch - RowGap + HintGap, HoldWidth - PageWidth, HintHeight);
         }
 
         /// <summary>The labelled frame of device <paramref name="device"/>.</summary>
@@ -154,21 +156,6 @@ namespace MoonProject.UI
         public static bool IsTopFrame(int device)
         {
             return FrameOrigins[device].y < ArtY;
-        }
-
-        /// <summary>Centre of the status disc in device <paramref name="device"/>'s frame.</summary>
-        public static Vector2 DeviceIconCenter(int device)
-        {
-            Rect frame = DeviceFrame(device);
-            return new Vector2(frame.x + FrameIconX, frame.y + FrameNameHeight + (FrameHeight - FrameNameHeight) * 0.5f);
-        }
-
-        /// <summary>Centre of the warning mark on the name row of device <paramref name="device"/>'s frame.</summary>
-        public static Vector2 WarningCenter(int device)
-        {
-            Rect frame = DeviceFrame(device);
-            return new Vector2(frame.xMax - FrameGlyphRoom * 0.5f - FrameEdgeInset * 0.5f,
-                frame.y + FrameNameHeight * 0.5f);
         }
 
         /// <summary>The area that selects a device: its frame and a little around it.</summary>
@@ -207,11 +194,10 @@ namespace MoonProject.UI
             return new Vector2(x, IsTopFrame(device) ? frame.yMax : frame.yMin);
         }
 
-        /// <summary>The bend of the leader: it runs straight out of the frame, then on to the part it names.</summary>
+        /// <summary>The bend of the leader: it runs straight out of the frame to the part's height, then across to it.</summary>
         public static Vector2 LeaderKneeOf(int device, Vector2 target)
         {
-            Vector2 start = LeaderStart(device, target);
-            return new Vector2(start.x, start.y + (IsTopFrame(device) ? LeaderKnee : -LeaderKnee));
+            return new Vector2(LeaderStart(device, target).x, target.y);
         }
     }
 }

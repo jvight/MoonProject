@@ -1664,8 +1664,9 @@ Label {
 }
 
 /*
- * The cargo screen (Tab / View): FaceInventoryView (1152x768, 1.5:1) — the hold grid with the info box under it on the
- * left, 07's line drawing with its four devices (scan lens, cutter, two sockets) in labelled frames on the right.
+ * The cargo screen (Tab / View): FaceInventoryView (1152x768, 1.5:1), look A "quiet amber CRT": warm neutrals and one
+ * amber accent on the tube's dark, three text sizes (title 28, body 22, meta 18) and nothing drawn that carries
+ * nothing. The hold grid and its info box on the left, 07's line drawing with its four device bays on the right.
  */
 
 .cargo {
@@ -1703,34 +1704,26 @@ Label {
 .cargo__heading {
     position: absolute;
     font-size: 28px;
-    letter-spacing: 3px;
-    color: rgb(255, 224, 152);
+    letter-spacing: 1px;
+    -unity-text-align: middle-left;
+    color: rgb(236, 222, 196);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
-}
-
-.cargo__heading--title {
-    -unity-text-align: upper-center;
-}
-
-.cargo__heading--strip {
-    font-size: 22px;
-    letter-spacing: 2px;
 }
 
 .cargo__page {
     position: absolute;
-    font-size: 22px;
+    font-size: 18px;
     -unity-text-align: middle-right;
-    color: rgb(224, 176, 94);
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
+    color: rgb(170, 157, 134);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
 .cargo__boot {
     display: none;
     position: absolute;
-    font-size: 24px;
-    letter-spacing: 2px;
-    color: rgb(252, 210, 132);
+    font-size: 28px;
+    letter-spacing: 1px;
+    color: rgb(236, 222, 196);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
@@ -1742,10 +1735,23 @@ Label {
     display: none;
     position: absolute;
     right: 4px;
-    bottom: 2px;
-    font-size: 20px;
-    color: rgb(255, 224, 152);
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
+    bottom: 0;
+    font-size: 18px;
+    color: rgb(170, 157, 134);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
+}
+
+/* The small accent tag under a part that can be fitted right now: where it goes ("-> Cutter"). */
+.cargo__tag {
+    display: none;
+    position: absolute;
+    left: -18px;
+    right: -18px;
+    bottom: 0;
+    font-size: 18px;
+    -unity-text-align: lower-center;
+    color: rgb(255, 184, 72);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
 .cargo__cell-name {
@@ -1756,8 +1762,13 @@ Label {
     padding: 0;
     font-size: 18px;
     -unity-text-align: upper-center;
-    color: rgb(252, 210, 132);
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
+    color: rgb(170, 157, 134);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
+}
+
+.cargo__cell-name--on {
+    color: rgb(206, 192, 166);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
 .cargo__socket-bubble {
@@ -1766,45 +1777,92 @@ Label {
 
 .cargo__device-name {
     position: absolute;
-    padding-left: 12px;
     font-size: 22px;
-    letter-spacing: 1px;
     -unity-text-align: middle-left;
-    color: rgb(255, 224, 152);
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
+    color: rgb(206, 192, 166);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
-/* The state words take their colour from the device's state (CargoScreenSettings, set by FaceInventoryView). */
 .cargo__device-state {
     position: absolute;
-    font-size: 22px;
+    font-size: 18px;
     white-space: normal;
-    -unity-text-align: middle-left;
+    -unity-text-align: upper-left;
+    color: rgb(170, 157, 134);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
+}
+
+.cargo__device-state--accent {
+    color: rgb(255, 184, 72);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
+}
+
+/* The bays right of 07 set their words against their outer edge, the way the screen's right column reads. */
+.cargo__socket-bubble--right .cargo__device-name {
+    -unity-text-align: middle-right;
+}
+
+.cargo__socket-bubble--right .cargo__device-state {
+    -unity-text-align: upper-right;
+}
+
+/* "Release to fit": one line beside the dragged part while it is over a bay it fits. */
+.cargo__release {
+    display: none;
+    position: absolute;
+    font-size: 18px;
+    -unity-text-align: middle-left;
+    color: rgb(255, 184, 72);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
+}
+
+.cargo__release--quiet {
+    color: rgb(170, 157, 134);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
 .cargo__tooltip {
     display: none;
     position: absolute;
-    padding: 6px 18px;
-    justify-content: center;
-    background-color: rgb(19, 18, 16);
-    border-width: 3px;
-    border-color: rgb(95, 243, 255);
 }
 
 .cargo__tooltip-name {
-    font-size: 26px;
-    color: rgb(255, 224, 152);
+    height: 36px;
+    font-size: 28px;
+    -unity-text-align: middle-left;
+    color: rgb(236, 222, 196);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
 .cargo__tooltip-desc {
-    margin-top: 2px;
+    height: 60px;
     font-size: 22px;
     white-space: normal;
-    color: rgb(252, 210, 132);
+    color: rgb(206, 192, 166);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
+}
+
+.cargo__tooltip-use {
+    flex-direction: row;
+    align-items: center;
+    height: 28px;
+}
+
+.cargo__tooltip-use-label {
+    margin-right: 12px;
+    font-size: 18px;
+    color: rgb(170, 157, 134);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
+}
+
+.cargo__tooltip-use-target {
+    font-size: 22px;
+    color: rgb(206, 192, 166);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
+}
+
+.cargo__tooltip-use-target--accent {
+    color: rgb(255, 184, 72);
 }
 
 .cargo__toast {
@@ -1814,10 +1872,9 @@ Label {
 }
 
 .cargo__toast-text {
-    padding-left: 20px;
     white-space: normal;
-    font-size: 22px;
-    color: rgb(252, 210, 132);
+    font-size: 18px;
+    color: rgb(255, 184, 72);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
@@ -1825,11 +1882,10 @@ Label {
 
 .cargo__more {
     position: absolute;
-    padding-left: 30px;
-    font-size: 22px;
+    font-size: 18px;
     -unity-text-align: middle-left;
-    color: rgb(224, 176, 94);
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
+    color: rgb(170, 157, 134);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
 .cargo__footer {
@@ -1841,31 +1897,31 @@ Label {
 .cargo__hint {
     flex-direction: row;
     align-items: center;
-    margin-right: 48px;
+    margin-right: 40px;
 }
 
 .cargo__key {
-    min-width: 44px;
-    height: 28px;
-    padding: 0 10px;
-    border-width: 2px;
-    border-radius: 6px;
-    border-color: rgb(255, 224, 148);
-    font-size: 22px;
-    color: rgb(255, 224, 148);
+    min-width: 36px;
+    height: 26px;
+    padding: 0 8px;
+    border-width: 1.5px;
+    border-radius: 5px;
+    border-color: rgb(170, 157, 134);
+    font-size: 18px;
+    color: rgb(206, 192, 166);
     -unity-text-align: middle-center;
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
-}
-
-.cargo__key-word {
-    margin-left: 12px;
-    font-size: 22px;
-    color: rgb(252, 210, 132);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
-/* 07's databank page on its CRT (DatabankView): categories left, the turning model or a print right, the crew's card
-   under it, the era strip and the key row along the bottom. Amber on the tube's dark, like the hold page. */
+.cargo__key-word {
+    margin-left: 10px;
+    font-size: 18px;
+    color: rgb(170, 157, 134);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
+}
+
+/* 07's databank page on its CRT (DatabankView), look A like the hold page: categories left, the turning model or a
+   print in the middle, the entry's words beside it (name, what it is, why it matters), the key row along the bottom. */
 
 .databank {
     position: absolute;
@@ -1875,51 +1931,48 @@ Label {
     bottom: 0;
 }
 
+/* The page tabs: quiet words, the open page lit and underlined in the accent. */
 .page-tab {
     position: absolute;
-    font-size: 20px;
-    letter-spacing: 2px;
+    font-size: 18px;
+    letter-spacing: 1px;
     -unity-text-align: middle-center;
-    color: rgb(150, 118, 70);
+    color: rgb(170, 157, 134);
     border-bottom-width: 2px;
-    border-color: rgb(44, 36, 24);
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
+    border-color: rgba(0, 0, 0, 0);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
 .page-tab--active {
-    color: rgb(19, 18, 16);
-    background-color: rgb(255, 224, 152);
-    border-color: rgb(255, 224, 152);
+    color: rgb(236, 222, 196);
+    border-color: rgb(255, 184, 72);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
 .databank__row {
     position: absolute;
     padding: 0 8px;
-    font-size: 22px;
-    letter-spacing: 2px;
+    font-size: 18px;
     -unity-text-align: middle-left;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-    color: rgb(252, 210, 132);
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
+    color: rgb(170, 157, 134);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
 .databank__row--entry {
-    font-size: 19px;
-    letter-spacing: 0;
-    color: rgb(238, 198, 128);
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
+    color: rgb(206, 192, 166);
 }
 
 .databank__row--focus {
-    color: rgb(19, 18, 16);
-    background-color: rgb(255, 224, 152);
+    color: rgb(255, 184, 72);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
 .databank__dot {
     position: absolute;
-    background-color: rgb(95, 243, 255);
+    background-color: rgb(206, 192, 166);
 }
 
 .databank__model {
@@ -1945,61 +1998,48 @@ Label {
     position: absolute;
     font-size: 22px;
     -unity-text-align: middle-center;
-    color: rgb(238, 198, 128);
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
+    color: rgb(170, 157, 134);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
+}
+
+.databank__name {
+    position: absolute;
+    font-size: 28px;
+    -unity-text-align: middle-left;
+    color: rgb(236, 222, 196);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
 .databank__fields {
     position: absolute;
-    font-size: 20px;
-    letter-spacing: 2px;
-    white-space: nowrap;
-    color: rgb(255, 224, 152);
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
+    font-size: 18px;
+    white-space: normal;
+    color: rgb(170, 157, 134);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
-.databank__readout {
+.databank__history {
     position: absolute;
-    font-size: 19px;
+    font-size: 22px;
     white-space: normal;
-    color: rgb(252, 210, 132);
+    color: rgb(206, 192, 166);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
 .databank__set {
     position: absolute;
-    font-size: 19px;
-    letter-spacing: 2px;
-    color: rgb(95, 243, 255);
+    font-size: 18px;
+    color: rgb(255, 184, 72);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
-.databank__history-box {
+.databank__readout {
     position: absolute;
-    padding: 8px 14px;
-    border-left-width: 3px;
-    border-color: rgb(252, 210, 132);
-}
-
-.databank__history {
-    font-size: 20px;
+    font-size: 18px;
     white-space: normal;
-    color: rgb(255, 224, 152);
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
+    color: rgb(170, 157, 134);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
-
-.databank__mark {
-    position: absolute;
-    font-size: 19px;
-    -unity-text-align: middle-center;
-    color: rgb(112, 90, 58);
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
-}
-
-.databank__mark--lit {
-    color: rgb(255, 224, 152);
-}
-
 /* 07's power-on self-test on its CRT (PostView): a terminal column of typed lines; a part that fails reads amber. */
 
 .post {

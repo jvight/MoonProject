@@ -9,9 +9,9 @@ namespace MoonProject.UI.Tests
 {
     /// <summary>
     /// The layout of 07's face screen: the hold grid on the left (four columns, names under the cells, paged three
-    /// rows at a time, one hint row where it grows, a status line and the info box under it), 07's drawing between two
-    /// upper and two lower device frames on the right, hit areas without dead strips, nothing overlapping, and words
-    /// that fit in English and Vietnamese at the sizes the screen is read at.
+    /// rows at a time, one hint row where it grows with the page count beside it, a status line and the info box under
+    /// it), 07's drawing between two upper and two lower device bays on the right, hit areas without dead strips,
+    /// nothing overlapping, and words that fit in English and Vietnamese at look A's three text sizes.
     /// </summary>
     public sealed class FaceLayoutTests
     {
@@ -20,19 +20,18 @@ namespace MoonProject.UI.Tests
 
         // Chakra Petch SemiBold's widest average advance over the names and headings it sets (measured 0.48 to 0.55).
         private const float TitleAdvance = 0.55f;
-        private const float SmallestText = 22f;
-        private const float NameText = 18f;
+        private const float TitleText = 28f;
+        private const float BodyText = 22f;
+        private const float MetaText = 18f;
 
         // A long word may carry a soft hyphen where it breaks under a cell ("Super\u00adconductor").
         private const char SoftHyphen = '\u00ad';
         private const int NameLines = 2;
         private const float NameLineHeight = 1.25f;
-        private const float InfoPadding = 36f;
-        private const int InfoLines = 3;
+        private const int InfoLines = 2;
+        private const int StateLines = 2;
         private const float GlassBottomMargin = 36f;
-        private const float HeadingLetterSpace = 2f;
-        private const float HintTextInset = 30f;
-        private const float ToastTextInset = 20f;
+        private const float TitleLetterSpace = 1f;
         private const int TwoDigits = 99;
         private static readonly int[] Tiers = { 8, 16, 24 };
 
@@ -136,8 +135,7 @@ namespace MoonProject.UI.Tests
             Rect toast = new Rect(FaceLayout.Margin, FaceLayout.ToastY, FaceLayout.HoldWidth, FaceLayout.ToastHeight);
             Rect info = new Rect(FaceLayout.InfoX, FaceLayout.InfoY, FaceLayout.InfoWidth, FaceLayout.InfoHeight);
             float lowestName = FaceLayout.HoldNameRect(FaceLayout.PageSize - 1).yMax;
-            Assert.Greater(FaceLayout.GridTop, FaceLayout.HeadingRuleY, "the grid starts under the heading's rule");
-            Assert.Greater(FaceLayout.HeadingY, FaceLayout.TitleRuleY);
+            Assert.Greater(FaceLayout.GridTop, FaceLayout.TitleY + FaceLayout.TitleHeight, "the grid starts under the title");
             Assert.LessOrEqual(lowestName, toast.yMin, "a full page clears the status line");
             Assert.LessOrEqual(toast.yMax, info.yMin);
             Assert.LessOrEqual(info.yMax, FaceLayout.FooterY, "the info box clears the foot row");
@@ -164,14 +162,16 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
-        public void ThePageCount_SharesTheHeadingRow_RightOfTheHeading()
+        public void ThePageCount_SharesTheStatusRow_RightOfTheHint()
         {
-            Rect heading = FaceLayout.HeadingRect;
             Rect page = FaceLayout.PageRect;
-            Assert.AreEqual(heading.y, page.y, 1e-3f);
-            Assert.LessOrEqual(heading.xMax, page.xMin);
             Assert.AreEqual(FaceLayout.HoldRight, page.xMax, 1e-3f);
-            Assert.Less(page.yMax, FaceLayout.HeadingRuleY);
+            Assert.GreaterOrEqual(page.yMin, FaceLayout.HoldNameRect(FaceLayout.PageSize - 1).yMax, "under a full page");
+            Assert.LessOrEqual(page.yMax, FaceLayout.ToastY, "above the status line");
+            foreach (int unlocked in Tiers)
+            {
+                Assert.LessOrEqual(FaceLayout.HintRect(unlocked).xMax, page.xMin, $"{unlocked} slots: the hint row ends first");
+            }
         }
 
         [Test]
@@ -181,7 +181,7 @@ namespace MoonProject.UI.Tests
             for (int a = 0; a < FaceDevices.Count; a++)
             {
                 Rect frame = FaceLayout.DeviceFrame(a);
-                Assert.Greater(FaceLayout.DeviceHitRect(a).yMin, FaceLayout.TitleRuleY, $"frame {a}");
+                Assert.Greater(FaceLayout.DeviceHitRect(a).yMin, FaceLayout.TitleY + FaceLayout.TitleHeight, $"frame {a}");
                 Assert.LessOrEqual(FaceLayout.DeviceHitRect(a).yMax, FaceLayout.FooterY, $"frame {a}");
                 Assert.LessOrEqual(frame.xMax, FaceLayout.RightEdge, $"frame {a}");
                 Assert.IsFalse(FaceLayout.DeviceHitRect(a).Overlaps(art), $"frame {a} clears the drawing's box");
@@ -238,41 +238,54 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
-        public void TheWordsInEveryFrame_FitTheirBox_InEveryLanguage()
+        public void TheWordsInEveryBay_FitTheirBox_InEveryLanguage()
         {
-            float room = FaceLayout.FrameWidth - FaceLayout.FrameTextX - FaceLayout.FrameEdgeInset;
-            float nameRoom = FaceLayout.FrameWidth - FaceLayout.FrameGlyphRoom - FaceLayout.FrameNamePad;
+            float room = FaceLayout.FrameWidth - 2f * FaceLayout.FramePadX;
+            Assert.GreaterOrEqual(FaceLayout.FrameStateHeight, StateLines * MetaText * NameLineHeight,
+                "two lines of state words fit");
             foreach (StringTable table in _tables)
             {
                 for (int device = 0; device < FaceDevices.Count; device++)
                 {
-                    AssertFits(table, FaceDevices.NameKey(device), nameRoom, SmallestText * TitleAdvance,
-                        $"device {device} name");
+                    AssertFits(table, FaceDevices.NameKey(device), room, BodyText * MonoAdvance, $"device {device} name");
                     RoverSystem system = FaceDevices.SystemOf(device);
-                    if (system == RoverSystem.Sockets)
-                    {
-                        AssertWrapsIn(table, SystemText.StateKey(system, RoverSystemState.Empty), room, 1,
-                            $"device {device}");
-                        continue;
-                    }
-
-                    foreach (RoverSystemState state in new[] { RoverSystemState.Ok, RoverSystemState.Fault })
+                    RoverSystemState[] states = system == RoverSystem.Sockets
+                        ? new[] { RoverSystemState.Empty }
+                        : new[] { RoverSystemState.Ok, RoverSystemState.Fault };
+                    foreach (RoverSystemState state in states)
                     {
                         if (device == FaceDevices.Scan && state == RoverSystemState.Fault)
                         {
                             continue;
                         }
 
-                        AssertWrapsIn(table, SystemText.StateKey(system, state), room, 2, $"device {device}");
+                        foreach (bool canFit in new[] { false, true })
+                        {
+                            AssertWrapsIn(table, FaceDevices.StateKey(device, state, canFit), room, StateLines,
+                                $"device {device}", MetaText * MonoAdvance);
+                        }
                     }
                 }
             }
         }
 
         [Test]
+        public void EveryBay_IsADropAreaBigEnoughToHit_AtTenEightyP()
+        {
+            // At 1920x1080 the glass shows the 1152 px panel about 1:1 (crt_crisp report: 2.05 texels/px of a 2x
+            // texture); a drop area must stay at least 120 x 80 there.
+            for (int device = 0; device < FaceDevices.Count; device++)
+            {
+                Rect frame = FaceLayout.DeviceFrame(device);
+                Assert.GreaterOrEqual(frame.width, 120f, $"device {device}");
+                Assert.GreaterOrEqual(frame.height, 80f, $"device {device}");
+            }
+        }
+
+        [Test]
         public void EveryItemName_WrapsInTwoLinesUnderItsCell_InEveryLanguage()
         {
-            float advance = NameText * TitleAdvance;
+            float advance = MetaText * MonoAdvance;
             foreach (StringTable table in _tables)
             {
                 foreach (SalvageMaterial material in Enum.GetValues(typeof(SalvageMaterial)))
@@ -287,33 +300,36 @@ namespace MoonProject.UI.Tests
                 }
             }
 
-            Assert.GreaterOrEqual(FaceLayout.NameHeight, NameLines * NameText * NameLineHeight,
+            Assert.GreaterOrEqual(FaceLayout.NameHeight, NameLines * MetaText * NameLineHeight,
                 "two lines of names fit");
         }
 
         [Test]
-        public void TheTitle_TheHeading_ThePageCount_TheHint_AndTheStatusLine_FitTheirRows_InEveryLanguage()
+        public void TheTitle_ThePageCount_TheHint_AndTheStatusLine_FitTheirRows_InEveryLanguage()
         {
             foreach (StringTable table in _tables)
             {
-                AssertFits(table, UiKeys.FaceTitle, FaceLayout.RightEdge - FaceLayout.Margin,
-                    28f * MonoAdvance + HeadingLetterSpace, "the title row");
-                AssertFits(table, UiKeys.CargoHold, FaceLayout.HeadingRect.width,
-                    SmallestText * MonoAdvance + HeadingLetterSpace, "the heading");
+                AssertFits(table, UiKeys.CargoHold, DatabankLayout.TitleRect.width,
+                    TitleText * TitleAdvance + TitleLetterSpace, "the title row");
                 int pages = FaceLayout.PageCount(FaceInventoryView.MaxHoldCells);
-                AssertFits(table, UiKeys.CargoPage, FaceLayout.PageWidth, SmallestText * MonoAdvance, "the page count",
+                AssertFits(table, UiKeys.CargoPage, FaceLayout.PageWidth, MetaText * MonoAdvance, "the page count",
                     pages, pages);
-                AssertFits(table, UiKeys.CargoMoreSlots, FaceLayout.HoldWidth - HintTextInset,
-                    SmallestText * MonoAdvance, "the hint row", FaceInventoryView.MaxHoldCells);
-                AssertFits(table, UiKeys.CargoWaiting, FaceLayout.HoldWidth - ToastTextInset,
-                    SmallestText * MonoAdvance, "the status line", TwoDigits);
+                AssertFits(table, UiKeys.CargoMoreSlots, FaceLayout.HintRect(FaceInventoryView.MaxHoldCells - 1).width,
+                    MetaText * MonoAdvance, "the hint row", FaceInventoryView.MaxHoldCells);
+                AssertFits(table, UiKeys.CargoWaiting, FaceLayout.HoldWidth, MetaText * MonoAdvance, "the status line",
+                    TwoDigits);
             }
         }
 
         [Test]
         public void TheInfoBoxLines_FitInEveryLanguage()
         {
-            float room = FaceLayout.InfoWidth - InfoPadding;
+            float room = FaceLayout.InfoWidth;
+            Assert.GreaterOrEqual(FaceLayout.InfoDescHeight, InfoLines * BodyText * NameLineHeight,
+                "two lines of the description fit");
+            Assert.AreEqual(FaceLayout.InfoHeight,
+                FaceLayout.InfoNameHeight + FaceLayout.InfoDescHeight + FaceLayout.InfoUseHeight, 1e-3f,
+                "name, description and where it goes fill the box");
             foreach (StringTable table in _tables)
             {
                 foreach (string key in new[]
@@ -323,8 +339,14 @@ namespace MoonProject.UI.Tests
                              "ui.cargo.drag.not_docked", "ui.cargo.drag.to_cutter", "ui.cargo.drag.nowhere",
                          })
                 {
-                    AssertWrapsIn(table, key, room, InfoLines, key);
+                    AssertWrapsIn(table, key, room, InfoLines, key, BodyText * MonoAdvance);
                 }
+
+                Assert.IsTrue(table.TryGet(UiKeys.CargoGoesTo, out string goesTo), UiKeys.CargoGoesTo);
+                Assert.IsTrue(table.TryGet(FaceDevices.NameKey(FaceDevices.Cutter), out string cutter));
+                AssertFits(table, UiKeys.CargoGoesToOnPad,
+                    room - goesTo.Length * MetaText * MonoAdvance - MetaText, BodyText * MonoAdvance,
+                    "where the igniter goes", cutter);
             }
         }
 
@@ -344,7 +366,7 @@ namespace MoonProject.UI.Tests
                         Assert.IsTrue(table.TryGet(FaceKeyHints.WordKey(hint), out string word),
                             $"{table.Language}: {FaceKeyHints.WordKey(hint)}");
                         Assert.LessOrEqual(cap.Length, 10, "a keycap word");
-                        width += (cap.Length + word.Length) * SmallestText * MonoAdvance + 80f;
+                        width += (cap.Length + word.Length) * MetaText * MonoAdvance + 80f;
                     }
 
                     Assert.LessOrEqual(width, FaceLayout.RightEdge - FaceLayout.Margin,
@@ -379,7 +401,7 @@ namespace MoonProject.UI.Tests
         }
 
         private static void AssertWrapsIn(StringTable table, string key, float room, int lines, string what,
-            float advance = SmallestText * MonoAdvance)
+            float advance = MetaText * MonoAdvance)
         {
             Assert.IsTrue(table.TryGet(key, out string text), $"{table.Language}: {key}");
             string[] words = text.Split(' ', SoftHyphen);

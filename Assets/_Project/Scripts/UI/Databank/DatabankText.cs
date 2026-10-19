@@ -72,28 +72,6 @@ namespace MoonProject.UI
             }
         }
 
-        /// <summary>The era strip's one-letter mark (P S B L M N).</summary>
-        public static string EraMark(DatabankEra era)
-        {
-            switch (era)
-            {
-                case DatabankEra.Probes:
-                    return "P";
-                case DatabankEra.Sorties:
-                    return "S";
-                case DatabankEra.BuildOut:
-                    return "B";
-                case DatabankEra.Lumen:
-                    return "L";
-                case DatabankEra.Meridian:
-                    return "M";
-                case DatabankEra.Now:
-                    return "N";
-                default:
-                    return EmptyMark;
-            }
-        }
-
         /// <summary>"db.maker.vis": a maker's name key; null for None.</summary>
         public static string MakerKey(DatabankMaker maker)
         {

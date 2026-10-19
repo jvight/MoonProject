@@ -7,10 +7,10 @@ using MoonProject.Core.Input;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// 07's databank page on its CRT (docs/design/databank.md §4): the category column with the open category's
-    /// entries and their unread dots, the turning model (or a scanned print, leaning a little, with paper grain), the
-    /// MAKER · YEAR · ERA row, 07's readout, the set line, the crew's history card, the era strip and the key row. It
-    /// writes its labels only when what it shows changes, never per frame.
+    /// 07's databank page on its CRT (docs/design/databank.md §4) in look A: the category column with the open
+    /// category's entries and their unread bars, the turning model (or a scanned print, leaning a little, with paper
+    /// grain), and beside it the entry's name, the MAKER · YEAR · ERA row, the crew's card (why it matters), the set
+    /// line and 07's readout, then the key row. It writes its labels only when what it shows changes, never per frame.
     /// </summary>
     internal sealed class DatabankView
     {
@@ -19,8 +19,6 @@ namespace MoonProject.UI
         private const string EntryRowClass = "databank__row--entry";
         private const string FocusClass = "databank__row--focus";
         private const string DotClass = "databank__dot";
-        private const string MarkClass = "databank__mark";
-        private const string MarkLitClass = "databank__mark--lit";
         private const int HintCount = 3;
         private const int GrainSize = 256;
         private const byte GrainAlpha = 12;
@@ -38,12 +36,11 @@ namespace MoonProject.UI
         private readonly VisualElement _print;
         private readonly VisualElement _grain;
         private readonly Label _empty;
+        private readonly Label _name;
         private readonly Label _fields;
         private readonly Label _readout;
         private readonly Label _setLine;
-        private readonly VisualElement _historyBox;
         private readonly Label _history;
-        private readonly Label[] _marks = new Label[DatabankIndex.StripEras.Length];
         private readonly Label[] _keys = new Label[HintCount];
         private readonly Label[] _words = new Label[HintCount];
         private readonly VisualElement _footer;
@@ -87,18 +84,11 @@ namespace MoonProject.UI
             _grainTexture = MakeGrain();
             _grain.style.backgroundImage = new StyleBackground(_grainTexture);
             _empty = AddLabel("databank-empty", "databank__empty");
+            _name = AddLabel("databank-name", "databank__name");
             _fields = AddLabel("databank-fields", "databank__fields");
             _readout = AddLabel("databank-readout", "databank__readout");
             _setLine = AddLabel("databank-set", "databank__set");
-            _historyBox = AddBox("databank-history-box", "databank__history-box");
-            _history = new Label { name = "databank-history", pickingMode = PickingMode.Ignore };
-            _history.AddToClassList("databank__history");
-            _historyBox.Add(_history);
-            for (int i = 0; i < _marks.Length; i++)
-            {
-                _marks[i] = AddLabel("databank-mark-" + i, MarkClass);
-                _marks[i].text = DatabankText.EraMark(DatabankIndex.StripEras[i]);
-            }
+            _history = AddLabel("databank-history", "databank__history");
 
             _footer = AddBox("databank-footer", "cargo__footer");
             for (int i = 0; i < HintCount; i++)
@@ -127,6 +117,9 @@ namespace MoonProject.UI
 
         public int RowCount => _rowCount;
 
+        /// <summary>The entry's name over its words.</summary>
+        public string NameText => _name.text;
+
         public string Fields => _fields.text;
 
         public string ReadoutText => _readout.text;
@@ -134,9 +127,6 @@ namespace MoonProject.UI
         public string SetLineText => _setLine.text;
 
         public string HistoryText => _history.text;
-
-        /// <summary>True while era mark <paramref name="index"/> (P S B L N) is lit.</summary>
-        public bool IsMarkLit(int index) => _marks[index].ClassListContains(MarkLitClass);
 
         /// <summary>True while the model rect shows the stage, false while it shows a print or nothing.</summary>
         public bool ShowsModel => _model.resolvedStyle.display == DisplayStyle.Flex;
@@ -162,15 +152,12 @@ namespace MoonProject.UI
             Position(_model, DatabankLayout.ModelRect);
             Position(_print, DatabankLayout.ModelRect);
             Position(_empty, DatabankLayout.ModelRect);
+            Position(_name, DatabankLayout.NameRect);
             Position(_fields, DatabankLayout.FieldRect);
             Position(_readout, DatabankLayout.ReadoutRect);
             Position(_setLine, DatabankLayout.SetLineRect);
-            Position(_historyBox, DatabankLayout.HistoryRect);
+            Position(_history, DatabankLayout.HistoryRect);
             Position(_footer, DatabankLayout.FooterRect);
-            for (int i = 0; i < _marks.Length; i++)
-            {
-                Position(_marks[i], DatabankLayout.StripMarkRect(i));
-            }
 
             for (int i = 0; i < _rows.Length; i++)
             {
@@ -230,15 +217,6 @@ namespace MoonProject.UI
             }
         }
 
-        /// <summary>Lights the era strip's mark for <paramref name="era"/> only (none for an entry without one).</summary>
-        private void WriteStrip(DatabankEra era)
-        {
-            for (int i = 0; i < _marks.Length; i++)
-            {
-                _marks[i].EnableInClassList(MarkLitClass, DatabankIndex.StripEras[i] == era);
-            }
-        }
-
         /// <summary>Shows <paramref name="entry"/>: its model on the stage texture, or its print.</summary>
         public void WriteEntry(DatabankEntryInfo entry, DatabankProgress progress, DatabankText text, Texture stage,
             bool colour)
@@ -260,13 +238,13 @@ namespace MoonProject.UI
                     new StyleBackground(Background.FromRenderTexture(stage as RenderTexture));
             }
 
-            WriteStrip(entry.Era);
+            _name.text = text.Name(entry);
             _fields.text = text.FieldRow(entry);
             _readout.text = text.Readout(entry);
             _setLine.text = text.SetLine(entry, progress);
             string history = text.History(entry, progress);
             _history.text = history;
-            _historyBox.style.display = history.Length > 0 ? DisplayStyle.Flex : DisplayStyle.None;
+            _history.style.display = history.Length > 0 ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         /// <summary>The archive is empty (it never is in play: 07's own card is seeded).</summary>
@@ -274,10 +252,10 @@ namespace MoonProject.UI
         {
             _model.style.display = DisplayStyle.None;
             _print.style.display = DisplayStyle.None;
-            _historyBox.style.display = DisplayStyle.None;
+            _history.style.display = DisplayStyle.None;
             _empty.style.display = DisplayStyle.Flex;
             _empty.text = _localization.Get("db.empty");
-            WriteStrip(DatabankEra.None);
+            _name.text = string.Empty;
             _fields.text = string.Empty;
             _readout.text = string.Empty;
             _setLine.text = string.Empty;

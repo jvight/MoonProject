@@ -871,14 +871,6 @@ namespace MoonProject.UI
             painter.Fill();
         }
 
-        /// <summary>Draws a tiny locked-cell padlock icon centred at <paramref name="center"/>.</summary>
-        public static void DrawPadlock(Painter2D painter, Vector2 center, Color32 color)
-        {
-            StrokeRect(painter, center.x - 5.5f, center.y - 1f, 11f, 8.5f, color, 1.4f);
-            StrokeArc(painter, new Vector2(center.x, center.y - 1f), 3.6f, 180f, 360f, color, 1.4f);
-            FillCircle(painter, new Vector2(center.x, center.y + 3.2f), 1.2f, color);
-        }
-
         /// <summary>Draws L-shaped corner bracket ticks inside rectangle <c>(x, y, w, h)</c>.</summary>
         public static void DrawCornerTicks(Painter2D painter, float x, float y, float w, float h, float length,
             Color32 color, float width)
@@ -930,34 +922,6 @@ namespace MoonProject.UI
             painter.LineTo(new Vector2(x, y + h));
             painter.ClosePath();
             painter.Stroke();
-        }
-
-        public static void StrokeDashedRect(Painter2D painter, float x, float y, float w, float h, Color32 color,
-            float width, float dash = 5f, float gap = 4f)
-        {
-            StrokeDashedLine(painter, new Vector2(x, y), new Vector2(x + w, y), color, width, dash, gap);
-            StrokeDashedLine(painter, new Vector2(x + w, y), new Vector2(x + w, y + h), color, width, dash, gap);
-            StrokeDashedLine(painter, new Vector2(x + w, y + h), new Vector2(x, y + h), color, width, dash, gap);
-            StrokeDashedLine(painter, new Vector2(x, y + h), new Vector2(x, y), color, width, dash, gap);
-        }
-
-        public static void StrokeDashedLine(Painter2D painter, Vector2 a, Vector2 b, Color32 color, float width,
-            float dash = 5f, float gap = 4f)
-        {
-            float dist = Vector2.Distance(a, b);
-            if (dist < 0.5f || color.a == 0)
-            {
-                return;
-            }
-
-            Vector2 dir = (b - a) / dist;
-            float pos = 0f;
-            while (pos < dist)
-            {
-                float end = Mathf.Min(pos + dash, dist);
-                DrawLine(painter, a + dir * pos, a + dir * end, color, width);
-                pos += dash + gap;
-            }
         }
 
         public static void FillPolygon(Painter2D painter, Vector2[] pts, int count, Color32 color)
@@ -1032,22 +996,6 @@ namespace MoonProject.UI
             painter.BeginPath();
             painter.Arc(center, radius, 0f, 360f);
             painter.ClosePath();
-            painter.Stroke();
-        }
-
-        public static void StrokeArc(Painter2D painter, Vector2 center, float radius, float startDeg, float endDeg,
-            Color32 color, float width)
-        {
-            if (radius <= 0f || color.a == 0)
-            {
-                return;
-            }
-
-            painter.strokeColor = color;
-            painter.lineWidth = width;
-            painter.lineCap = LineCap.Round;
-            painter.BeginPath();
-            painter.Arc(center, radius, Angle.Degrees(startDeg), Angle.Degrees(endDeg));
             painter.Stroke();
         }
 

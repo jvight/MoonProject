@@ -147,7 +147,7 @@ namespace MoonProject.UI.Tests
             var others = new System.Collections.Generic.List<Rect>
             {
                 new Rect(FaceLayout.Margin, FaceLayout.TitleY, FaceLayout.RightEdge - FaceLayout.Margin,
-                    FaceLayout.TitleRuleY - FaceLayout.TitleY),
+                    FaceLayout.TitleHeight),
                 new Rect(FaceLayout.InfoX, FaceLayout.InfoY, FaceLayout.InfoWidth, FaceLayout.InfoHeight),
                 new Rect(FaceLayout.Margin, FaceLayout.FooterY, FaceLayout.RightEdge - FaceLayout.Margin,
                     FaceLayout.FooterHeight),

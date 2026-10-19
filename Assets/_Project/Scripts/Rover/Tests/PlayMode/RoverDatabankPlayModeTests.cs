@@ -113,11 +113,7 @@ namespace MoonProject.Rover.PlayModeTests
             StringAssert.Contains("VIS", page.View.Fields);
             StringAssert.Contains("1967", page.View.Fields);
             Assert.IsFalse(archive.IsUnread(ScoutId), "the page read the Scout's card");
-            for (int i = 0; i < DatabankIndex.StripEras.Length; i++)
-            {
-                Assert.AreEqual(DatabankIndex.StripEras[i] == DatabankEra.Probes, page.View.IsMarkLit(i),
-                    $"the era strip lights only the Scout's era (mark {i})");
-            }
+            Assert.IsNotEmpty(page.View.NameText, "the Scout's name heads its words");
 
             Capture("databank_scout_wire");
 

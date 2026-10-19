@@ -36,7 +36,6 @@ namespace MoonProject.UI
         public const string ScanKnown = "scan.known";
         public const string RecipeRow = "ui.recipe.row";
         public const string CargoHold = "ui.cargo.hold";
-        public const string FaceTitle = "ui.face.title";
         public const string CargoMoreSlots = "ui.cargo.more_slots";
         public const string CargoPage = "ui.cargo.page";
         public const string CargoEmptyName = "ui.cargo.empty_name";
@@ -47,6 +46,9 @@ namespace MoonProject.UI
         public const string CargoDragNotDocked = "ui.cargo.drag.not_docked";
         public const string CargoDragToCutter = "ui.cargo.drag.to_cutter";
         public const string CargoDragNowhere = "ui.cargo.drag.nowhere";
+        public const string CargoReleaseFit = "ui.cargo.release_fit";
+        public const string CargoGoesTo = "ui.cargo.goes_to";
+        public const string CargoGoesToOnPad = "ui.cargo.goes_to.on_pad";
         public const string KeyDragOrE = "glyph.combo.drag_e";
         public const string KeyMouseOrE = "glyph.combo.mouse_e";
         public const string KeyBOrEscape = "glyph.combo.b_esc";
