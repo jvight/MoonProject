@@ -304,24 +304,22 @@ namespace MoonProject.Art.Editor
                 GameObject lander = SpawnProp(landerPrefabPath, Vector3.zero, 0f, temp);
 
                 GetDecalWorldPose(lander, "Decal_VIS_1", out Vector3 vis1Pos, out Vector3 vis1Normal, out Vector3 vis1Up);
-                GetDecalWorldPose(lander, "Decal_VIS_2", out Vector3 vis2Pos, out _, out _);
                 GetDecalWorldPose(lander, "Decal_ILC_1", out Vector3 ilcPos, out Vector3 ilcNormal, out Vector3 ilcUp);
 
                 AimDayCSunAtSurface(vis1Normal);
 
-                Vector3 visMid = 0.5f * (vis1Pos + vis2Pos);
                 Vector3 visRight = Vector3.Cross(vis1Up, vis1Normal).normalized;
 
-                // Park Rover 07 beside the descent-stage panel for scale in the 7 m shot
-                Vector3 roverPos = new Vector3(visMid.x, 0f, visMid.z) + vis1Normal * 1.45f - visRight * 2.15f;
+                // Park Rover 07 beside the descent-stage panel for scale in the 7 m and 15 m shots
+                Vector3 roverPos = new Vector3(vis1Pos.x, 0f, vis1Pos.z) + vis1Normal * 1.45f - visRight * 2.15f;
                 float roverYaw = Mathf.Atan2(vis1Normal.x, vis1Normal.z) * Mathf.Rad2Deg + 25f;
                 SpawnRover07(temp, roverPos, roverYaw, false);
 
-                // 1. Close-up of VIS 1985 mark + "VIS" stencil on the descent-stage panel
+                // 1. Close-up of the ~0.7 m wide VIS 1985 mark on the descent-stage panel
                 RenderShot(
-                    visMid + vis1Normal * 1.05f + vis1Up * 0.02f,
-                    visMid,
-                    35f,
+                    vis1Pos + vis1Normal * 1.38f + vis1Up * 0.02f,
+                    vis1Pos,
+                    36f,
                     bg,
                     Path.Combine(outDir, "decal_lander_closeup_dayC.png"));
 
@@ -337,7 +335,7 @@ namespace MoonProject.Art.Editor
                 // 3. Normal ~7 m gameplay camera distance showing the lander descent panel, upper hatch seal, and 07
                 Vector3 midNormal = (vis1Normal * 0.72f + ilcNormal * 0.28f).normalized;
                 AimDayCSunAtSurface(midNormal);
-                Vector3 look7m = visMid + Vector3.up * 0.35f - visRight * 0.35f;
+                Vector3 look7m = vis1Pos + Vector3.up * 0.35f - visRight * 0.35f;
                 Vector3 cam7m = look7m + (midNormal * 0.90f + Vector3.up * 0.34f - visRight * 0.12f).normalized * 7.2f;
                 RenderShot(
                     cam7m,
@@ -345,6 +343,16 @@ namespace MoonProject.Art.Editor
                     44f,
                     bg,
                     Path.Combine(outDir, "decal_lander_7m_dayC.png"));
+
+                // 4. 15 m distance shot showing the full CargoLander and Rover 07 with the ~0.7 m VIS mark readable at 15 m
+                Vector3 look15m = vis1Pos + Vector3.up * 0.65f - visRight * 0.25f;
+                Vector3 cam15m = look15m + (midNormal * 0.92f + Vector3.up * 0.30f - visRight * 0.10f).normalized * 15.0f;
+                RenderShot(
+                    cam15m,
+                    look15m,
+                    42f,
+                    bg,
+                    Path.Combine(outDir, "decal_lander_15m_dayC.png"));
             }
             finally
             {

@@ -2003,7 +2003,7 @@ def _prepare_ao_bake_pose(root: bpy.types.Object) -> None:
 
 def _build_maker_decals(root: bpy.types.Object, d: dict[str, Any]) -> list[bpy.types.Object]:
     """Add maker decal child nodes (`Decal_VIS_1` ~0.7 m wide on descent stage, `Decal_ILC_1` near hatch) 1.6 mm off lander panels."""
-    low_ang_rad = math.radians(-59.0)
+    low_ang_rad = math.radians(-59.3)
     low_nx = math.sin(low_ang_rad)
     low_nz = math.cos(low_ang_rad)
     low_r_out = d["low_panel_radius"] + d["low_panel_thick"]
@@ -2012,13 +2012,13 @@ def _build_maker_decals(root: bpy.types.Object, d: dict[str, Any]) -> list[bpy.t
         parent=root,
         name="Decal_VIS_1",
         cell_key="VIS_1985",
-        center_u=(low_nx * low_r_out, 1.90, low_nz * low_r_out),
+        center_u=(low_nx * low_r_out, 1.87, low_nz * low_r_out),
         normal_u=(low_nx, 0.0, low_nz),
         up_u=(0.0, 1.0, 0.0),
         width=0.70,
-        height=0.64,
-        u_crop=(0.06, 0.94),
-        v_crop=(0.12, 0.92),
+        height=0.60,
+        u_crop=(0.0, 1.0),
+        v_crop=(0.08, 0.94),
         cyl_patch=(low_r_out, -51.0, 38.0, 5),
     )
 
