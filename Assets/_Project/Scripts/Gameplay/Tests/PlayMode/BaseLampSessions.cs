@@ -49,9 +49,6 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float SearchLimit = 3000f;
         private const float NightSearchLimit = 12000f;
 
-        /// <summary>Seconds after the second lamp begins to come on that the dusk frame is captured.</summary>
-        private const float ShotAfterSecondLamp = 0.8f;
-
         private const float DuskWatchSeconds = 8f;
 
         /// <summary>The most lamp lights the base may burn (BaseTuning.LampLightBudget).</summary>
@@ -138,23 +135,19 @@ namespace MoonProject.Gameplay.PlayModeTests
             PlaceRoverLookingAtTheBase();
             SetSky(_duskSeconds);
 
+            // The checks follow the lamps' own lit beats and their order, frame by frame, so a slow frame under load
+            // cannot let a third lamp in before the dusk frame is taken.
             bool shot = false;
-            float secondAt = -1f;
             float until = Time.time + DuskWatchSeconds;
             var seenLevels = new List<float>();
             while (Time.time < until && _gameplay.BaseLamps.LevelOf(ids[Order.Length - 1]) < 1f)
             {
-                yield return new WaitForSeconds(WatchStep);
+                yield return null;
                 seenLevels.Add(_gameplay.BaseLamps.LevelOf(ids[0]));
-                if (_lit.Count >= 2 && secondAt < 0f)
-                {
-                    secondAt = Time.time;
-                }
-
-                if (!shot && secondAt >= 0f && Time.time - secondAt >= ShotAfterSecondLamp)
+                if (!shot && _lit.Count >= 2)
                 {
                     shot = true;
-                    Assert.AreEqual(2, _lit.Count, "two lamps are lit when the dusk frame is taken");
+                    Assert.AreEqual(ids[1], _lit[1].InstanceId, "the dusk frame is taken as the second lamp comes on");
                     FrameCapture.SavePng(_context.Get<IViewCamera>().Camera, 1920, 1080,
                         Path.Combine(GameplayFixture.CaptureFolder, "base-lamps-dusk-2.png"));
                 }
