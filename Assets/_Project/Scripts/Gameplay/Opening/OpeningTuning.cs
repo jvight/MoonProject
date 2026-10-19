@@ -87,6 +87,10 @@ namespace MoonProject.Gameplay
         [Tooltip("The rows after Power: their lamps, dark through the opening.")]
         [SerializeField] private RecoveryLamps _recoveryLamps = new RecoveryLamps(4, 4, 1);
 
+        [Header("The call from the sky (opening v3 §2)")]
+        [Tooltip("The sender's identity and its decode, and where its point of light stands beside Earth.")]
+        [SerializeField] private CallSettings _call = new CallSettings();
+
         [Header("Supply (§4, §10: the lander's open crate and the sealed ones)")]
         [Tooltip("Every crate of the opening. A crate stands by a world anchor or a Lumen ruin piece " +
                  "([World]/Ruins/<id>) or the lander's service port (lander.port), in its frame. The lander's open " +
@@ -160,5 +164,7 @@ namespace MoonProject.Gameplay
 
         public float CrateRimLightLift => _crateRimLightLift;
         public RecoveryLamps RecoveryLamps => _recoveryLamps;
+
+        public CallSettings Call => _call;
     }
 }
