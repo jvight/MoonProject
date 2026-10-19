@@ -181,5 +181,94 @@ namespace MoonProject.Audio.PlayModeTests
             _rig.Events.Publish(new BootCheckPulse(BootCheckStep.Begin, 2, 0f));
             AssertLastFrom07("boot_begin_lamps");
         }
+
+        [Test]
+        public void TheTubePowersOn_OnceFrom07()
+        {
+            int plays = _rig.Director.PlayCount;
+            _rig.Events.Publish(new CrtPowerOn(1.2f));
+            Assert.AreEqual(plays + 1, _rig.Director.PlayCount);
+            AssertLastFrom07("face_power_on");
+        }
+
+        [Test]
+        public void ElevenStrokes_GiveElevenStrokeSounds_ClimbingInPairs_ThenTheWordmarkResolves()
+        {
+            string[] expected =
+            {
+                "face_logo_stroke_01", "face_logo_stroke_01", "face_logo_stroke_02", "face_logo_stroke_02",
+                "face_logo_stroke_03", "face_logo_stroke_03", "face_logo_stroke_04", "face_logo_stroke_04",
+                "face_logo_stroke_05", "face_logo_stroke_05", "face_logo_stroke_06",
+            };
+            int plays = _rig.Director.PlayCount;
+            for (int i = 0; i < expected.Length; i++)
+            {
+                _rig.Events.Publish(new LogoStrokeDrawn(i));
+                AssertLastFrom07(expected[i]);
+            }
+
+            Assert.AreEqual(plays + expected.Length, _rig.Director.PlayCount, "one hum per stroke");
+            _rig.Events.Publish(new BootLineCompleted(0));
+            AssertLastFrom07("face_logo_resolve");
+            Assert.AreEqual(plays + expected.Length + 1, _rig.Director.PlayCount);
+        }
+
+        [Test]
+        public void FiveLoadSteps_GiveFiveSteps_TheLastResolving()
+        {
+            int plays = _rig.Director.PlayCount;
+            for (int i = 0; i < 5; i++)
+            {
+                _rig.Events.Publish(new LoadStep(i));
+                AssertLastFrom07($"face_load_step_0{i + 1}");
+            }
+
+            Assert.AreEqual(plays + 5, _rig.Director.PlayCount);
+        }
+
+        [Test]
+        public void ASettledLine_PlaysOneHeavierTick()
+        {
+            int plays = _rig.Director.PlayCount;
+            _rig.Events.Publish(new BootLineCompleted(1));
+            _rig.Events.Publish(new BootLineCompleted(5));
+            Assert.AreEqual(plays + 2, _rig.Director.PlayCount);
+            AssertLastFrom07("face_line_done");
+        }
+
+        [UnityTest]
+        public IEnumerator TypedText_TicksOncePerEvent_ButABurstInOneInstantTicksOnce()
+        {
+            int plays = _rig.Director.PlayCount;
+            const int typed = 6;
+            for (int i = 0; i < typed; i++)
+            {
+                _rig.Events.Publish(new BootTextTyped(2, i * 2));
+                StringAssert.StartsWith("face_text_tick_", _rig.Director.LastClip.name);
+                yield return new WaitForSecondsRealtime(0.08f);
+            }
+
+            Assert.AreEqual(plays + typed, _rig.Director.PlayCount, "one counter tick per typed pair");
+
+            plays = _rig.Director.PlayCount;
+            for (int i = 0; i < 5; i++)
+            {
+                _rig.Events.Publish(new BootTextTyped(3, i * 2));
+            }
+
+            Assert.AreEqual(plays + 1, _rig.Director.PlayCount, "ticks closer than the minimum interval are skipped");
+        }
+
+        [Test]
+        public void WhileTheRushStandsIn_TheFaceIsSilent()
+        {
+            _rig.Events.Publish(new BootCheckFastForwarded(6f));
+            int plays = _rig.Director.PlayCount;
+            _rig.Events.Publish(new BootTextTyped(4, 2));
+            _rig.Events.Publish(new BootLineCompleted(4));
+            _rig.Events.Publish(new LogoStrokeDrawn(3));
+            _rig.Events.Publish(new LoadStep(2));
+            Assert.AreEqual(plays, _rig.Director.PlayCount);
+        }
     }
 }

@@ -334,6 +334,28 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
+        /// Leaves build mode as Esc does, for a screen that takes over (the face screen's Tab): the ghost goes, a weld
+        /// in progress is put down as a cancelled weld, and nothing already paid is lost. Nothing happens when build
+        /// mode is closed.
+        /// </summary>
+        public void Close()
+        {
+            if (!_initialized || !_controller.IsOpen)
+            {
+                return;
+            }
+
+            if (_controller.State == BuildModeState.Welding)
+            {
+                PublishCancelWeld(_controller.ActiveWeldInstanceId, _controller.ActiveWeldProgress01);
+                _weldingInstanceId = 0;
+            }
+
+            _controller.Close();
+            _waitExcavateRelease = _input.ExcavateHeld;
+        }
+
+        /// <summary>
         /// True when 07 is in <see cref="BuildModeState.Closed"/> and looking at an unfinished structure within
         /// <see cref="BuildingTuning.WeldRange"/> that can be resumed with <c>Excavate</c>.
         /// </summary>
@@ -974,9 +996,9 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// Where the placing ghost stands: <see cref="BuildingTuning.GhostAheadMetres"/> in front of 07, which drives
-        /// it to its spot, settling onto the apron's bay for the charging pad (see <see cref="GhostAim"/>; a test's aim
-        /// point wins).
+        /// Where the placing ghost stands: where the camera's centre meets the ground, within the placement distances
+        /// of 07, settling onto the apron's bay for the charging pad (see <see cref="GhostAim"/>; a test's aim point
+        /// wins).
         /// </summary>
         private Vector3 SampleAimPoint(Vector3 roverPosition, StructureDefinition selected)
         {
@@ -987,11 +1009,11 @@ namespace MoonProject.Gameplay
             }
             else
             {
-                point = GhostAim.Point(
-                    roverPosition,
-                    _rover.Rotation * Vector3.forward,
-                    selected.Id == StructureIds.ChargingPad ? _apronCentre : null,
-                    _tuning);
+                Vector3? apron = selected.Id == StructureIds.ChargingPad ? _apronCentre : null;
+                Transform view = _view != null && _view.Camera != null ? _view.Camera.transform : null;
+                point = view != null
+                    ? GhostAim.PointFromView(_terrain, view.position, view.forward, roverPosition, apron, _tuning)
+                    : GhostAim.Point(roverPosition, _rover.Rotation * Vector3.forward, apron, _tuning);
             }
 
             return SurfaceRules.OnSurface(_terrain, point.x, point.z);

@@ -515,8 +515,8 @@ namespace MoonProject.Rover
         /// <summary>
         /// A view of the player's own keeps up with 07 (light position and aim damping), so 07 stays put on screen
         /// and the rendered heading holds while 07 drives and turns under it; the floaty lag comes back as the camera
-        /// follows 07 again. Eased both ways, so the switch never jolts. Scales down to zero during face-inspect mode
-        /// and the wake opening so the camera tracks scripted trajectories with zero residual lag.
+        /// follows 07 again. Eased both ways, so the switch never jolts. Scales down to zero with the face-inspect shot's
+        /// weight and during the wake opening so the camera tracks scripted trajectories with zero residual lag.
         /// </summary>
         private void StepFreeLookDamping(float deltaTime)
         {
@@ -524,7 +524,9 @@ namespace MoonProject.Rover
             _freeLook = deltaTime > 0f
                 ? Smoothing.Damp(_freeLook, target, _tuning.FreeLookDampingHalfLife, deltaTime)
                 : target;
-            bool zeroDamping = _faceInspectOpen || _opening.IsActive;
+            // The face shot takes the damping away with its own weight (below): zeroing it the moment Tab is pressed
+            // would snap a camera that trails 07 at speed forward onto the undamped pose in one frame.
+            bool zeroDamping = _opening.IsActive;
             _openingDampingFade = zeroDamping
                 ? 0f
                 : (deltaTime > 0f

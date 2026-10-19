@@ -112,6 +112,9 @@ namespace MoonProject.Gameplay
         /// <summary>The ruins' and the lander's scan targets, scanned to learn structures (0.5.5 §1).</summary>
         public ScanField Scans { get; private set; }
 
+        /// <summary>The wire box that shows which target E would scan.</summary>
+        public ScanTargetMark ScanMark { get; private set; }
+
         /// <summary>07's scan archive: what the scans and milestones unlocked (docs/design/databank.md).</summary>
         public Databank Databank { get; private set; }
 
@@ -273,6 +276,7 @@ namespace MoonProject.Gameplay
             _salvage.ConnectScans(Scans);
             ApronGlow = new ApronGlow(_apronOutline, _building.Tuning.ApronGlowFadeSeconds);
             ApronGuide = new ApronGuide(transform, _apronOutline, _visuals.BeamCore, _building.Tuning);
+            ScanMark = new ScanTargetMark(transform, _visuals.BeamCore, _scanTuning);
             _building.MarkApron(_apronOutline.bounds.center);
             var hints = new InteractionHints(_salvage, Containers, Scans, _building, services.Beam, Cutter,
                 services.Pickups);
@@ -505,6 +509,7 @@ namespace MoonProject.Gameplay
             Bundles.Step(now);
             Containers.Step(now, deltaTime);
             Scans.Step(now, deltaTime);
+            ScanMark.Step(Scans.Scanning == null ? Scans.Candidate : null, deltaTime);
             Opening.Step(deltaTime);
             PadLock.Step(deltaTime);
             BaseLamps.Step(deltaTime);
@@ -586,6 +591,7 @@ namespace MoonProject.Gameplay
         private void OnDestroy()
         {
             ApronGuide?.Dispose();
+            ScanMark?.Dispose();
             foreach (IDisposable token in _saveTokens)
             {
                 token.Dispose();

@@ -19,7 +19,7 @@ namespace MoonProject.Rover.Tests
         [Test]
         public void APartWhoseCheckIsLeftOut_KeepsItsCoatUntilThePerformance_ThenIsClean()
         {
-            var opening = new PostSettings();
+            PostSettings opening = PostSequencerTests.WithoutWheels();
             Assert.IsFalse(opening.Runs(BootCheckStep.Wheels));
             var dust = new PostDust(opening);
             dust.Update(OpeningPhase.Post, BootCheckStep.Cutter, 0.5f);

@@ -22,8 +22,14 @@ namespace MoonProject.Audio
     /// even where Rover repeats one as progress; 07's fault voice when a check comes out
     /// <see cref="BootCheckResult.Fault"/> (<see cref="BootCheckCompleted"/>). When the player fast-forwards the
     /// readout (<see cref="BootCheckFastForwarded"/>) one soft rush plays instead of the remaining lines' sounds, which
-    /// would otherwise chatter, and the ready performance after <see cref="BootCheckFinished"/> sounds as usual. The lines of information (Carrier, Resume, Agenda) have no motion of their
-    /// own, and the cells' ticks are the battery's (<see cref="BatteryAudio"/>).</item>
+    /// would otherwise chatter, and the ready performance after <see cref="BootCheckFinished"/> sounds as usual. The
+    /// lines of information (Carrier, Resume, Agenda) have no motion of their own, and the cells' ticks are the
+    /// battery's (<see cref="BatteryAudio"/>).</item>
+    /// <item>07's face booting: the tube's degauss thunk and whine (<see cref="CrtPowerOn"/>), the maker's mark traced
+    /// stroke by stroke up the pentatonic (<see cref="LogoStrokeDrawn"/>) and resolving as its wordmark settles
+    /// (<see cref="BootLineCompleted"/> of line 0), each typed character pair's soft counter tick, softened in a run
+    /// (<see cref="BootTextTyped"/>), each settled line's heavier tick, and the load bar's steps, the fifth resolving
+    /// (<see cref="LoadStep"/>); silent too while a fast-forward's rush stands in.</item>
     /// </list>
     /// The pause menu ducks all of it with the world (<see cref="AudioDirector.WorldGain"/>), and delayed cues wait.
     /// Initialises after the <see cref="AudioDirector"/>, whose library it resolves its cues from.
@@ -91,6 +97,14 @@ namespace MoonProject.Audio
         private IRoverState _rover;
         private CueHandle _fault;
         private CueHandle _rush;
+        private CueHandle _powerOn;
+        private CueHandle _stroke;
+        private CueHandle _resolve;
+        private CueHandle _textTick;
+        private CueHandle _lineDone;
+        private CueHandle _loadStep;
+        private readonly RepeatSoftener _textRepeats = new RepeatSoftener();
+        private int _strokeNotes;
         private WakeCueSheet _sheet;
         private WakeAudioSettings _settings;
         private IDisposable[] _subscriptions;
@@ -129,7 +143,14 @@ namespace MoonProject.Audio
             _cues[(int)WakeCueKind.Tick] = _director.Resolve(AudioCueIds.LidTick);
             _fault = _director.Resolve(AudioCueIds.BootFault);
             _rush = _director.Resolve(AudioCueIds.BootRush);
-            bool resolved = asleep.IsValid && _fault.IsValid && _rush.IsValid;
+            _powerOn = _director.Resolve(AudioCueIds.FacePowerOn);
+            _stroke = _director.Resolve(AudioCueIds.FaceLogoStroke);
+            _resolve = _director.Resolve(AudioCueIds.FaceLogoResolve);
+            _textTick = _director.Resolve(AudioCueIds.FaceTextTick);
+            _lineDone = _director.Resolve(AudioCueIds.FaceLineDone);
+            _loadStep = _director.Resolve(AudioCueIds.FaceLoadStep);
+            bool resolved = asleep.IsValid && _fault.IsValid && _rush.IsValid && _powerOn.IsValid && _stroke.IsValid &&
+                            _resolve.IsValid && _textTick.IsValid && _lineDone.IsValid && _loadStep.IsValid;
             foreach (CueHandle cue in _cues)
             {
                 resolved &= cue.IsValid;
@@ -154,6 +175,7 @@ namespace MoonProject.Audio
             }
 
             _settings = _tuning.Wake;
+            _strokeNotes = _director.Library.GetCue(_stroke).ClipCount;
             _sheet = new WakeCueSheet(_settings);
             _staticCueVolume = _director.Library.GetCue(asleep).VolumeMax;
             _static = _director.CreateLoopSource(transform, "AsleepStatic", asleep, 0f);
@@ -171,6 +193,11 @@ namespace MoonProject.Audio
                 events.Subscribe<BootCheckPulse>(OnCheckPulse),
                 events.Subscribe<BootCheckFastForwarded>(OnFastForwarded),
                 events.Subscribe<BootCheckFinished>(OnChecksFinished),
+                events.Subscribe<CrtPowerOn>(OnCrtPowerOn),
+                events.Subscribe<LogoStrokeDrawn>(OnLogoStrokeDrawn),
+                events.Subscribe<BootTextTyped>(OnBootTextTyped),
+                events.Subscribe<BootLineCompleted>(OnBootLineCompleted),
+                events.Subscribe<LoadStep>(OnLoadStep),
             };
         }
 
@@ -232,6 +259,58 @@ namespace MoonProject.Audio
 
             _rushed = true;
             _director.PlayAt(_rush, _rover.Position, _settings.Rush * _director.WorldGain);
+        }
+
+        private void OnCrtPowerOn(CrtPowerOn powerOn)
+        {
+            _director.PlayAt(_powerOn, _rover.Position, _settings.FacePowerOn * _director.WorldGain);
+        }
+
+        /// <summary>A stroke of the mark: a step up the pentatonic every few strokes, held at the top.</summary>
+        private void OnLogoStrokeDrawn(LogoStrokeDrawn drawn)
+        {
+            if (_rushed)
+            {
+                return;
+            }
+
+            int note = Mathf.Clamp(drawn.Index / Mathf.Max(1, _settings.StrokesPerNote), 0, _strokeNotes - 1);
+            _director.PlayVariantAt(_stroke, note, _rover.Position, _settings.FaceStroke * _director.WorldGain);
+        }
+
+        /// <summary>A character pair typed: a random counter tick, skipped when too close and softer in a run.</summary>
+        private void OnBootTextTyped(BootTextTyped typed)
+        {
+            if (_rushed || !_textRepeats.TryTrigger(Time.unscaledTime, _settings.TextMinInterval,
+                    _settings.TextStreakWindow, _settings.TextStreakDecay, _settings.TextStreakFloor, out float gain))
+            {
+                return;
+            }
+
+            _director.PlayAt(_textTick, _rover.Position, _settings.FaceText * gain * _director.WorldGain);
+        }
+
+        /// <summary>A line settled: the heavier tick; the wordmark's (line 0) is the mark whole, so it resolves.</summary>
+        private void OnBootLineCompleted(BootLineCompleted completed)
+        {
+            if (_rushed)
+            {
+                return;
+            }
+
+            CueHandle cue = completed.LineIndex == 0 ? _resolve : _lineDone;
+            float level = completed.LineIndex == 0 ? _settings.FaceResolve : _settings.FaceLine;
+            _director.PlayAt(cue, _rover.Position, level * _director.WorldGain);
+        }
+
+        private void OnLoadStep(LoadStep step)
+        {
+            if (_rushed)
+            {
+                return;
+            }
+
+            _director.PlayVariantAt(_loadStep, step.Index, _rover.Position, _settings.FaceLoad * _director.WorldGain);
         }
 
         /// <summary>The readout is done: the ready performance that follows sounds as usual.</summary>

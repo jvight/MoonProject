@@ -55,6 +55,7 @@ namespace MoonProject.UI
         private readonly GlyphView _secondaryGlyph;
         private readonly Reveal _stripReveal;
         private readonly Reveal _reasonReveal;
+        private readonly Reveal _reticleReveal;
         private readonly WorldAnchor _reasonAnchor;
         private readonly RecipeView _recipe;
         private readonly Dictionary<string, Texture2D> _icons =
@@ -111,6 +112,9 @@ namespace MoonProject.UI
             _stripReveal = new Reveal(layout.BuildStrip, stripReveal);
             _stripReveal.Snap(false);
 
+            _reticleReveal = new Reveal(layout.BuildReticle, stripReveal);
+            _reticleReveal.Snap(false);
+
             _reasonReveal = new Reveal(layout.BuildReason, promptSettings.Reveal);
             _reasonReveal.Snap(false);
 
@@ -140,6 +144,9 @@ namespace MoonProject.UI
 
         /// <summary>True while the card row is visible or easing.</summary>
         public bool IsVisible => !_stripReveal.IsHidden;
+
+        /// <summary>The centre reticle shows (a structure is placed or welded).</summary>
+        public bool IsReticleVisible => !_reticleReveal.IsHidden;
 
         /// <summary>True while the build mode is in Menu or Placing state.</summary>
         public bool IsOpen =>
@@ -192,6 +199,8 @@ namespace MoonProject.UI
 
             _stripReveal.Set(wantsStrip);
             _stripReveal.Tick(deltaTime);
+            _reticleReveal.Set(gateOpen && (state == BuildModeState.Placing || state == BuildModeState.Welding));
+            _reticleReveal.Tick(deltaTime);
 
             Step = gateOpen && controller != null
                 ? BuildSteps.Of(state, controller.ActiveWeldInstanceId)

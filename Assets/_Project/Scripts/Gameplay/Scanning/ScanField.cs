@@ -441,13 +441,10 @@ namespace MoonProject.Gameplay
         private ScanFragment Pick()
         {
             float reachSq = _tuning.Reach * _tuning.Reach;
-            ScanFragment nearest = null;
-            float nearestSq = float.MaxValue;
             for (int i = 0; i < _fragments.Count; i++)
             {
                 ScanFragment fragment = _fragments[i];
-                float distSq = (fragment.Point - _rover.Position).sqrMagnitude;
-                if (fragment.Scanned || distSq > reachSq)
+                if (fragment.Scanned || (fragment.Point - _rover.Position).sqrMagnitude > reachSq)
                 {
                     continue;
                 }
@@ -456,16 +453,9 @@ namespace MoonProject.Gameplay
                 {
                     return fragment;
                 }
-
-                if (distSq < nearestSq)
-                {
-                    nearestSq = distSq;
-                    nearest = fragment;
-                }
             }
 
-            ScanFragment looked = LookedAt(out _);
-            return looked != null ? looked : nearest;
+            return LookedAt(out _);
         }
 
         /// <summary>
