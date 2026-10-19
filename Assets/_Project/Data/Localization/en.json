@@ -552,7 +552,7 @@
         },
         {
             "key": "hint.hold",
-            "text": "Hold"
+            "text": "Inventory"
         },
         {
             "key": "ui.hold.boot",
