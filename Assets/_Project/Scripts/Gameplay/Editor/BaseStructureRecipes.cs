@@ -24,7 +24,8 @@ namespace MoonProject.Gameplay.Editor
         private const string StagePrefix = "Stage_";
         private const string SocketPowerPrefix = "Socket_Power_";
         private const string LampAmberMaterialName = "R1_LampAmber";
-        private const float StatusLightIntensity = 1.6f;
+        // A finished piece's small status glow: a warm point, soft enough not to wash its own panels out at night.
+        private const float StatusLightIntensity = 0.8f;
         private const float StatusLightRange = 5.0f;
         private static readonly Color StatusLightColor = new Color(1.0f, 0.74f, 0.36f);
 

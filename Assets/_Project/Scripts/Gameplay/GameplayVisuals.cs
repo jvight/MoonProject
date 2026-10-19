@@ -28,6 +28,9 @@ namespace MoonProject.Gameplay
         [Tooltip("The cutting beam's cyan sheath round the core (SoftGlow, additive, soft across, faint bands).")]
         [SerializeField] private Material _beamSheath;
 
+        [Tooltip("The built base's cables between pieces: Art's R1 rubber (R1Lit, dark matte).")]
+        [SerializeField] private Material _cable;
+
         [Tooltip("The molten seam on a piece, emission by heat (HeatSeam shader).")]
         [SerializeField] private Material _heatSeam;
 
@@ -49,6 +52,8 @@ namespace MoonProject.Gameplay
         public Material PartGlint => _partGlint;
         public Material FeelSprite => _feelSprite;
         public Material BeamCore => _beamCore;
+
+        public Material Cable => _cable;
         public Material BeamSheath => _beamSheath;
         public Material HeatSeam => _heatSeam;
         public FeelVfxTuning FeelTuning => _feelTuning;
@@ -84,6 +89,7 @@ namespace MoonProject.Gameplay
                 : _feelTuning == null ? "the feel VFX tuning is missing (run Gameplay/FeelVfx)"
                 : _hologramValid == null ? "hologram valid material is missing (run Gameplay/Materials)"
                 : _hologramInvalid == null ? "hologram invalid material is missing (run Gameplay/Materials)"
+                : _cable == null ? "the base cables' material is missing (run Gameplay/Materials)"
                 : null;
         }
 
@@ -98,6 +104,11 @@ namespace MoonProject.Gameplay
             _beamCore = beamCore;
             _beamSheath = beamSheath;
             _heatSeam = heatSeam;
+        }
+
+        internal void PopulateCable(Material cable)
+        {
+            _cable = cable;
         }
 
         internal void PopulateContainers(GameObject[] containers)
