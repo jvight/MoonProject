@@ -964,6 +964,44 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator AfterTheB4Collect_TheBuildPadLineShowsWithinTheNormalDwell()
+        {
+            const float LineWithin = 10f;
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            _rig.Ui.Ledger.RecordLookTaught();
+            _rig.Ui.Ledger.RecordDriveTaught();
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            Events.Publish(new NextStepChanged("next.v2.scan_lander"));
+            yield return Seconds(1f);
+            Events.Publish(new ScanStarted("lander.cargo.1", Vector3.zero));
+            Events.Publish(new FragmentScanned("lander.cargo.1", "charging_pad", 0, 2, false, 0));
+            yield return Seconds(0.5f);
+            Events.Publish(new ScanStarted("lander.cargo.2", Vector3.zero));
+            Events.Publish(new FragmentScanned("lander.cargo.2", "charging_pad", 1, 2, false, 0));
+            Events.Publish(new NextStepChanged("next.v2.collect_parts"));
+            yield return Seconds(1f);
+            _rig.Fakes.Hold.Set(8, new MaterialSlot(SalvageMaterial.Metal, 4, 4));
+            _rig.Fakes.Hold.AddPart("part.igniter");
+            Events.Publish(new CargoChanged(2, 8));
+            Events.Publish(new NextStepChanged("next.v2.build_pad"));
+            string expected = Text("next.v2.build_pad");
+            float until = Time.realtimeSinceStartup + LineWithin;
+            while (!(_rig.Ui.Objective.ShowsObjective && _rig.Ui.Layout.NextLineText.text == expected) &&
+                   Time.realtimeSinceStartup < until)
+            {
+                yield return null;
+            }
+
+            Assert.IsTrue(_rig.Ui.Objective.ShowsObjective,
+                "the build-pad line comes back after the collect: the set's card and the Tab chip each teach briefly " +
+                $"(slot {_rig.Ui.Slot.Granted}, readout {_rig.Ui.Readout.Showing}, " +
+                $"chip '{_rig.Ui.Layout.LookHintWord.text}')");
+            Assert.AreEqual(expected, _rig.Ui.Layout.NextLineText.text);
+        }
+
+        [UnityTest]
         public IEnumerator AnUnlearnedReadyVerb_TakesTheSlotFromTheObjectiveLine_WhenSevenNosesIntoACrate()
         {
             InputSystem.AddDevice<Keyboard>();

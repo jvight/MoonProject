@@ -58,6 +58,11 @@ namespace MoonProject.UI
         [Range(3f, 20f)]
         [SerializeField] private float _storyHoldSeconds = 9f;
 
+        [Tooltip("Seconds a scan set's progress card rests (\"Solar Array · blueprint 1/3\"): a glance, so the " +
+                 "objective line is back soon.")]
+        [Range(1f, 8f)]
+        [SerializeField] private float _scanSetHoldSeconds = 2.5f;
+
         [Tooltip("Seconds a line stays lit after its system changed or refused.")]
         [Range(0.3f, 4f)]
         [SerializeField] private float _flashSeconds = 1.2f;
@@ -115,6 +120,8 @@ namespace MoonProject.UI
         public float StatusHoldSeconds => _statusHoldSeconds;
 
         public float StoryHoldSeconds => _storyHoldSeconds;
+
+        public float ScanSetHoldSeconds => _scanSetHoldSeconds;
 
         public float FlashSeconds => _flashSeconds;
 

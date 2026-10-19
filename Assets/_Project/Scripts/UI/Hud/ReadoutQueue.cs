@@ -57,6 +57,16 @@ namespace MoonProject.UI
         /// <summary>The pieces in that set.</summary>
         public int Of { get; }
 
+        /// <summary>
+        /// True when <paramref name="other"/> tells about the same thing with newer words (a scan set's next piece):
+        /// it takes this card's place instead of queueing after it.
+        /// </summary>
+        public bool Supersedes(ReadoutRequest other)
+        {
+            return Kind == ReadoutKind.ScanSet && other.Kind == ReadoutKind.ScanSet &&
+                   string.Equals(TextKey, other.TextKey, StringComparison.Ordinal);
+        }
+
         public bool Matches(ReadoutRequest other)
         {
             return Kind == other.Kind && System == other.System &&
@@ -68,7 +78,9 @@ namespace MoonProject.UI
     /// <summary>
     /// The order and timing of the readout's cards (pure, EditMode-tested). One card shows at a time; a card waits for
     /// the guidance slot, rests for its hold, fades, and then the next one comes, in the order asked. A card asked for
-    /// again while it shows keeps the screen for a fresh hold instead of queueing twice.
+    /// again while it shows keeps the screen for a fresh hold instead of queueing twice, and a newer card about the
+    /// same thing (a scan set's next piece) takes the older one's place, so cards never pile up between the
+    /// objective's lines.
     /// </summary>
     internal sealed class ReadoutQueue
     {
@@ -99,13 +111,14 @@ namespace MoonProject.UI
         public bool IsShowing => _phase == Phase.Showing;
 
         /// <summary>
-        /// Asks for a card. Returns true when it is the card already showing (its hold starts afresh), so the caller
-        /// can flash it.
+        /// Asks for a card. Returns true when it lands on the card already showing (the same card, or newer words about
+        /// the same thing, now <see cref="Current"/>; its hold starts afresh), so the caller can rewrite or flash it.
         /// </summary>
         public bool Offer(ReadoutRequest request)
         {
-            if (_phase == Phase.Showing && Current.Matches(request))
+            if (_phase == Phase.Showing && (Current.Matches(request) || Current.Supersedes(request)))
             {
+                Current = request;
                 _hold = HoldOf(request.Kind);
                 return true;
             }
@@ -114,6 +127,12 @@ namespace MoonProject.UI
             {
                 if (_pending[i].Matches(request))
                 {
+                    return false;
+                }
+
+                if (_pending[i].Supersedes(request))
+                {
+                    _pending[i] = request;
                     return false;
                 }
             }
@@ -174,6 +193,8 @@ namespace MoonProject.UI
             {
                 case ReadoutKind.Story:
                     return _settings.StoryHoldSeconds;
+                case ReadoutKind.ScanSet:
+                    return _settings.ScanSetHoldSeconds;
                 default:
                     return _settings.StatusHoldSeconds;
             }
