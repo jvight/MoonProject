@@ -147,6 +147,7 @@ namespace MoonProject.Rover.Editor
             roadLightSettings.ApplyModifiedPropertiesWithoutUndo();
 
             RoverFlankLamps flankLamps = BuildFlankLamps(visual, m, rigTuning);
+            RoverGrowth growth = BuildGrowth(visual, m, rigTuning);
             RoverWheelFx wheelFx = BuildWheelFx(scratch, root.transform, m, fxTuning, trackMaterial, dustMaterial);
             RoverLampMotes lampMotes = BuildLampMotes(scratch, headlamp, fxTuning, moteMaterial);
 
@@ -164,6 +165,7 @@ namespace MoonProject.Rover.Editor
                 ("_wheelFx", wheelFx),
                 ("_lampMotes", lampMotes),
                 ("_flankLamps", flankLamps),
+                ("_growth", growth),
                 ("_headlamp", roadLight),
                 ("_nozzleDevice", nozzleDevice),
                 ("_tetherOrigin", eyeOrigin),
@@ -401,6 +403,17 @@ namespace MoonProject.Rover.Editor
             BuildWiring.AssignArray(flankLamps, "_lamps", lamps);
             BuildWiring.AssignArray(flankLamps, "_glasses", glasses);
             return flankLamps;
+        }
+
+        /// <summary>The antenna's second segment and the igniter cartridge already in RoverModel, grown by events.</summary>
+        private static RoverGrowth BuildGrowth(GameObject host, Transform model, RoverRigTuning tuning)
+        {
+            var growth = host.AddComponent<RoverGrowth>();
+            BuildWiring.Assign(growth, ("_tuning", tuning),
+                ("_antennaSegment", BuildWiring.Node(model, RoverModelNodes.AntennaSegment2)),
+                ("_igniter", BuildWiring.Node(model, RoverModelNodes.CutterIgniter)),
+                ("_turret", BuildWiring.Node(model, RoverModelNodes.CutterTurret)));
+            return growth;
         }
 
         private static void SnapCutterOriginToLensApex(Transform cutterHead, Transform cutterOrigin)
