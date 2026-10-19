@@ -209,6 +209,7 @@ MonoBehaviour:
       - 32
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: item_circuit_chips
     _fill:
       _commands: 00020203
@@ -529,6 +530,7 @@ MonoBehaviour:
       - 36
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: item_coolant
     _fill:
       _commands: 00020203
@@ -717,6 +719,7 @@ MonoBehaviour:
       - 51
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: item_crystal
     _fill:
       _commands: 0001010103
@@ -877,6 +880,7 @@ MonoBehaviour:
       - 44
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: item_glass
     _fill:
       _commands: 00020203
@@ -1063,6 +1067,7 @@ MonoBehaviour:
       - 43
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: item_ilmenite
     _fill:
       _commands: 0001010103
@@ -1213,6 +1218,7 @@ MonoBehaviour:
       - 35
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: item_metal
     _fill:
       _commands: 00020203
@@ -1433,6 +1439,7 @@ MonoBehaviour:
       - 1
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: item_optics
     _fill:
       _commands: 00020203
@@ -1593,6 +1600,7 @@ MonoBehaviour:
       - 51
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: item_orange_beads
     _fill:
       _commands: 00020203
@@ -1725,6 +1733,7 @@ MonoBehaviour:
       - 1
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: item_rare_earths
     _fill:
       _commands: 00020203
@@ -1889,6 +1898,7 @@ MonoBehaviour:
       - 1
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: item_superconductor
     _fill:
       _commands: 000101010103
@@ -2241,6 +2251,7 @@ MonoBehaviour:
       - 24
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: item_water_ice
     _fill:
       _commands: 00020203
@@ -2441,6 +2452,7 @@ MonoBehaviour:
       - 18.5
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: item_wiring
     _fill:
       _commands: 00020203
@@ -2709,6 +2721,7 @@ MonoBehaviour:
       - 1
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: kit_antenna
     _fill:
       _commands: 00020203
@@ -2883,6 +2896,7 @@ MonoBehaviour:
       - 37
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: kit_back
     _fill:
       _commands: 00020203
@@ -3151,6 +3165,7 @@ MonoBehaviour:
       - 1
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: kit_belly
     _fill:
       _commands: 00020203
@@ -3651,6 +3666,7 @@ MonoBehaviour:
       - 1
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: kit_cutter
     _fill:
       _commands: 00020203
@@ -3853,6 +3869,7 @@ MonoBehaviour:
       - 32
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: kit_deck
     _fill:
       _commands: 00020203
@@ -4287,6 +4304,7 @@ MonoBehaviour:
       - 1
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: kit_flanks
     _fill:
       _commands: 000101010103
@@ -4571,6 +4589,7 @@ MonoBehaviour:
       - 1
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: kit_hold
     _fill:
       _commands: 000101010103
@@ -4905,6 +4924,7 @@ MonoBehaviour:
       - 52
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: kit_lamp
     _fill:
       _commands: 00020203
@@ -5139,6 +5159,7 @@ MonoBehaviour:
       - 9
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: kit_panniers
     _fill:
       _commands: 000101010103
@@ -5457,6 +5478,7 @@ MonoBehaviour:
       - 1
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: kit_tether
     _fill:
       _commands: 00020203
@@ -5645,6 +5667,7 @@ MonoBehaviour:
       - 41
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: kit_wheels
     _fill:
       _commands: 00020203
@@ -5905,6 +5928,7 @@ MonoBehaviour:
       - 1
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: kit_wing
     _fill:
       _commands: 00020203
@@ -6065,6 +6089,7 @@ MonoBehaviour:
       - 37
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   _faceIcons:
   - _id: icon_cutter
     _fill:
@@ -6308,6 +6333,7 @@ MonoBehaviour:
       - 38.9625
       _strokeWidth: 0.95
       _filled: 0
+    _tones: []
   - _id: icon_empty_socket
     _fill:
       _commands: 
@@ -7996,6 +8022,7 @@ MonoBehaviour:
       - 34.5
       _strokeWidth: 0.95
       _filled: 0
+    _tones: []
   - _id: icon_ice_core_tube
     _fill:
       _commands: 
@@ -8212,6 +8239,7 @@ MonoBehaviour:
       - 44.4375
       _strokeWidth: 0.95
       _filled: 0
+    _tones: []
   - _id: icon_lens
     _fill:
       _commands: 
@@ -8846,6 +8874,7 @@ MonoBehaviour:
       - 1
       _strokeWidth: 0.95
       _filled: 0
+    _tones: []
   - _id: icon_metal_plates
     _fill:
       _commands: 
@@ -10084,6 +10113,7 @@ MonoBehaviour:
       - 1
       _strokeWidth: 0.95
       _filled: 0
+    _tones: []
   - _id: icon_spare_igniter
     _fill:
       _commands: 
@@ -10446,6 +10476,7 @@ MonoBehaviour:
       - 30.5375
       _strokeWidth: 0.95
       _filled: 0
+    _tones: []
   - _id: icon_warning
     _fill:
       _commands: 
@@ -10502,6 +10533,7 @@ MonoBehaviour:
       - 46.5
       _strokeWidth: 0.95
       _filled: 0
+    _tones: []
   - _id: icon_wiring_spool
     _fill:
       _commands: 
@@ -12240,6 +12272,7 @@ MonoBehaviour:
       - 11.75
       _strokeWidth: 0.95
       _filled: 0
+    _tones: []
   _faceArt: {fileID: 2800000, guid: b0afa56549496061e55f6633b3694d6b, type: 3}
   _faceArtContent:
     serializedVersion: 2

@@ -191,6 +191,7 @@ MonoBehaviour:
       - 32
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: item_circuit_chips
     _fill:
       _commands: 00020203
@@ -511,6 +512,7 @@ MonoBehaviour:
       - 36
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: item_coolant
     _fill:
       _commands: 00020203
@@ -699,6 +701,7 @@ MonoBehaviour:
       - 51
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: item_crystal
     _fill:
       _commands: 0001010103
@@ -859,6 +862,7 @@ MonoBehaviour:
       - 44
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: item_glass
     _fill:
       _commands: 00020203
@@ -1045,6 +1049,7 @@ MonoBehaviour:
       - 43
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: item_ilmenite
     _fill:
       _commands: 0001010103
@@ -1195,6 +1200,7 @@ MonoBehaviour:
       - 35
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: item_metal
     _fill:
       _commands: 00020203
@@ -1415,6 +1421,7 @@ MonoBehaviour:
       - 1
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: item_optics
     _fill:
       _commands: 00020203
@@ -1575,6 +1582,7 @@ MonoBehaviour:
       - 51
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: item_orange_beads
     _fill:
       _commands: 00020203
@@ -1707,6 +1715,7 @@ MonoBehaviour:
       - 1
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: item_rare_earths
     _fill:
       _commands: 00020203
@@ -1871,6 +1880,7 @@ MonoBehaviour:
       - 1
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: item_superconductor
     _fill:
       _commands: 000101010103
@@ -2223,6 +2233,7 @@ MonoBehaviour:
       - 24
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: item_water_ice
     _fill:
       _commands: 00020203
@@ -2423,6 +2434,7 @@ MonoBehaviour:
       - 18.5
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: item_wiring
     _fill:
       _commands: 00020203
@@ -2691,6 +2703,7 @@ MonoBehaviour:
       - 1
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: kit_antenna
     _fill:
       _commands: 00020203
@@ -2865,6 +2878,7 @@ MonoBehaviour:
       - 37
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: kit_back
     _fill:
       _commands: 00020203
@@ -3133,6 +3147,7 @@ MonoBehaviour:
       - 1
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: kit_belly
     _fill:
       _commands: 00020203
@@ -3633,6 +3648,7 @@ MonoBehaviour:
       - 1
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: kit_cutter
     _fill:
       _commands: 00020203
@@ -3835,6 +3851,7 @@ MonoBehaviour:
       - 32
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: kit_deck
     _fill:
       _commands: 00020203
@@ -4269,6 +4286,7 @@ MonoBehaviour:
       - 1
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: kit_flanks
     _fill:
       _commands: 000101010103
@@ -4553,6 +4571,7 @@ MonoBehaviour:
       - 1
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: kit_hold
     _fill:
       _commands: 000101010103
@@ -4887,6 +4906,7 @@ MonoBehaviour:
       - 52
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: kit_lamp
     _fill:
       _commands: 00020203
@@ -5121,6 +5141,7 @@ MonoBehaviour:
       - 9
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: kit_panniers
     _fill:
       _commands: 000101010103
@@ -5439,6 +5460,7 @@ MonoBehaviour:
       - 1
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: kit_tether
     _fill:
       _commands: 00020203
@@ -5627,6 +5649,7 @@ MonoBehaviour:
       - 41
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: kit_wheels
     _fill:
       _commands: 00020203
@@ -5887,6 +5910,7 @@ MonoBehaviour:
       - 1
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
   - _id: kit_wing
     _fill:
       _commands: 00020203
@@ -6047,3 +6071,4 @@ MonoBehaviour:
       - 37
       _strokeWidth: 1.5
       _filled: 0
+    _tones: []
