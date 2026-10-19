@@ -1,0 +1,323 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cbbe26c1080f154c8b6df6027cfb018, type: 3}
+  m_Name: DatabankCatalogue
+  m_EditorClassIdentifier: 
+  _entries:
+  - _id: db.unit07
+    _category: 0
+    _nameKey: db.unit07.name
+    _maker: 2
+    _year: 1983
+    _era: 4
+    _readoutKey: db.unit07.readout
+    _historyKey: notes.unit07
+    _view: 0
+    _model: {fileID: 9151376675619698006, guid: 75ace44f4d9851344a3451fee0c31efe, type: 3}
+    _hiddenNodes: []
+    _framingYaw: 0
+    _print: {fileID: 0}
+    _unlock:
+      _kind: 0
+      _target: 
+      _milestone: 0
+  - _id: db.elder06
+    _category: 0
+    _nameKey: db.elder06.name
+    _maker: 2
+    _year: 1978
+    _era: 3
+    _readoutKey: elder.06.manifest
+    _historyKey: db.elder06.history
+    _view: 0
+    _model: {fileID: 9015765694771908943, guid: 8d42257fd88d2eb4ea09b9c56b398515, type: 3}
+    _hiddenNodes: []
+    _framingYaw: 0
+    _print: {fileID: 0}
+    _unlock:
+      _kind: 1
+      _target: elder06
+      _milestone: 0
+  - _id: db.elder01
+    _category: 0
+    _nameKey: db.elder01.name
+    _maker: 2
+    _year: 1978
+    _era: 3
+    _readoutKey: db.elder01.readout
+    _historyKey: db.elder01.history
+    _view: 0
+    _model: {fileID: 4928122742167231833, guid: 2412cbd3726d8e24e893a5ef43d4f2a8, type: 3}
+    _hiddenNodes: []
+    _framingYaw: 0
+    _print: {fileID: 0}
+    _unlock:
+      _kind: 1
+      _target: elder01
+      _milestone: 0
+  - _id: db.scout3
+    _category: 0
+    _nameKey: scan.scout3.name
+    _maker: 3
+    _year: 1967
+    _era: 1
+    _readoutKey: scan.scout3.manifest
+    _historyKey: scan.scout3.note
+    _view: 0
+    _model: {fileID: 6581727231108877234, guid: a797e27d01108b34882ee92925941d06, type: 3}
+    _hiddenNodes:
+    - TvCamera
+    - ScoopArm
+    _framingYaw: 0
+    _print: {fileID: 0}
+    _unlock:
+      _kind: 1
+      _target: scout3
+      _milestone: 0
+  - _id: db.cargo_lander
+    _category: 0
+    _nameKey: db.cargo_lander.name
+    _maker: 3
+    _year: 1987
+    _era: 4
+    _readoutKey: db.cargo_lander.readout
+    _historyKey: db.cargo_lander.history
+    _view: 0
+    _model: {fileID: 5925416941865530382, guid: a33c40756dadb494b81d13061f2ecb66, type: 3}
+    _hiddenNodes: []
+    _framingYaw: 0
+    _print: {fileID: 0}
+    _unlock:
+      _kind: 2
+      _target: LanderCargo
+      _milestone: 0
+  - _id: db.kestrel3
+    _category: 0
+    _nameKey: db.kestrel3.name
+    _maker: 4
+    _year: 1985
+    _era: 5
+    _readoutKey: db.kestrel3.readout
+    _historyKey: db.kestrel3.history
+    _view: 0
+    _model: {fileID: 6452073641338690709, guid: 0382be6e5dabbda49989eee33d564b49, type: 3}
+    _hiddenNodes: []
+    _framingYaw: 0
+    _print: {fileID: 0}
+    _unlock:
+      _kind: 1
+      _target: kestrel3
+      _milestone: 0
+  - _id: db.habitat
+    _category: 1
+    _nameKey: db.habitat.name
+    _maker: 3
+    _year: 1984
+    _era: 4
+    _readoutKey: db.habitat.readout
+    _historyKey: db.habitat.history
+    _view: 0
+    _model: {fileID: 6301579637323314965, guid: 27ede276d7fbf1f4fb55644eafd78dfa, type: 3}
+    _hiddenNodes: []
+    _framingYaw: 0
+    _print: {fileID: 0}
+    _unlock:
+      _kind: 2
+      _target: HabitatModules
+      _milestone: 0
+  - _id: db.solar_array
+    _category: 1
+    _nameKey: db.solar_array.name
+    _maker: 3
+    _year: 1984
+    _era: 4
+    _readoutKey: db.solar_array.readout
+    _historyKey: db.solar_array.history
+    _view: 0
+    _model: {fileID: 3602504054786581633, guid: 63fe8235b33caa644862c58e69926f76, type: 3}
+    _hiddenNodes: []
+    _framingYaw: 0
+    _print: {fileID: 0}
+    _unlock:
+      _kind: 2
+      _target: FallenSolarArray
+      _milestone: 0
+  - _id: db.radio_tower
+    _category: 1
+    _nameKey: db.radio_tower.name
+    _maker: 3
+    _year: 1984
+    _era: 4
+    _readoutKey: db.radio_tower.readout
+    _historyKey: db.radio_tower.history
+    _view: 0
+    _model: {fileID: 6536362398612892809, guid: 4f961965fbef447498f580530d50b34d, type: 3}
+    _hiddenNodes: []
+    _framingYaw: 0
+    _print: {fileID: 0}
+    _unlock:
+      _kind: 2
+      _target: RadioTower
+      _milestone: 0
+  - _id: db.seismic_station
+    _category: 1
+    _nameKey: db.seismic_station.name
+    _maker: 1
+    _year: "1971 \xB7 1984"
+    _era: 2
+    _readoutKey: db.seismic_station.readout
+    _historyKey: db.seismic_station.history
+    _view: 0
+    _model: {fileID: 1902764977431908069, guid: b47fb27dfda379a4eb151d5792fca91f, type: 3}
+    _hiddenNodes: []
+    _framingYaw: 0
+    _print: {fileID: 0}
+    _unlock:
+      _kind: 1
+      _target: seismic
+      _milestone: 0
+  - _id: db.retroreflector
+    _category: 1
+    _nameKey: db.retroreflector.name
+    _maker: 1
+    _year: "1971 \xB7 1984"
+    _era: 2
+    _readoutKey: db.retroreflector.readout
+    _historyKey: db.retroreflector.history
+    _view: 0
+    _model: {fileID: 1609176470523442783, guid: 9091bb428c2429a4fbc101aadf225546, type: 3}
+    _hiddenNodes: []
+    _framingYaw: 0
+    _print: {fileID: 0}
+    _unlock:
+      _kind: 1
+      _target: retroreflector
+      _milestone: 0
+  - _id: db.lumen
+    _category: 2
+    _nameKey: db.lumen.name
+    _maker: 0
+    _year: 1984
+    _era: 4
+    _readoutKey: db.lumen.readout
+    _historyKey: db.lumen.history
+    _view: 1
+    _model: {fileID: 0}
+    _hiddenNodes: []
+    _framingYaw: 0
+    _print: {fileID: 0}
+    _unlock:
+      _kind: 2
+      _target: FallenSolarArray,HabitatModules,RadioTower
+      _milestone: 0
+  - _id: db.earth_eclipse
+    _category: 3
+    _nameKey: db.earth_eclipse.name
+    _maker: 0
+    _year: 
+    _era: 0
+    _readoutKey: db.earth_eclipse.readout
+    _historyKey: db.earth_eclipse.history
+    _view: 1
+    _model: {fileID: 0}
+    _hiddenNodes: []
+    _framingYaw: 0
+    _print: {fileID: 0}
+    _unlock:
+      _kind: 0
+      _target: 
+      _milestone: 0
+  - _id: db.crew
+    _category: 4
+    _nameKey: db.crew.name
+    _maker: 1
+    _year: 1985
+    _era: 4
+    _readoutKey: story.airlock_panel
+    _historyKey: db.crew.history
+    _view: 1
+    _model: {fileID: 0}
+    _hiddenNodes: []
+    _framingYaw: 0
+    _print: {fileID: 0}
+    _unlock:
+      _kind: 1
+      _target: airlock
+      _milestone: 0
+  - _id: db.card_kessler_arai
+    _category: 4
+    _nameKey: db.card_kessler_arai.name
+    _maker: 2
+    _year: 1983
+    _era: 4
+    _readoutKey: db.card_kessler_arai.readout
+    _historyKey: db.card_kessler_arai.history
+    _view: 1
+    _model: {fileID: 0}
+    _hiddenNodes: []
+    _framingYaw: 0
+    _print: {fileID: 0}
+    _unlock:
+      _kind: 0
+      _target: 
+      _milestone: 0
+  - _id: db.card_ilc
+    _category: 4
+    _nameKey: db.card_ilc.name
+    _maker: 1
+    _year: 1984
+    _era: 4
+    _readoutKey: db.card_ilc.readout
+    _historyKey: db.card_ilc.history
+    _view: 1
+    _model: {fileID: 0}
+    _hiddenNodes: []
+    _framingYaw: 0
+    _print: {fileID: 0}
+    _unlock:
+      _kind: 1
+      _target: flag
+      _milestone: 0
+  - _id: db.card_tycho
+    _category: 4
+    _nameKey: db.card_tycho.name
+    _maker: 4
+    _year: 1985
+    _era: 5
+    _readoutKey: db.card_tycho.readout
+    _historyKey: db.card_tycho.history
+    _view: 1
+    _model: {fileID: 0}
+    _hiddenNodes: []
+    _framingYaw: 0
+    _print: {fileID: 0}
+    _unlock:
+      _kind: 1
+      _target: kestrel3
+      _milestone: 0
+  - _id: db.card_vis
+    _category: 4
+    _nameKey: db.card_vis.name
+    _maker: 3
+    _year: 1967
+    _era: 1
+    _readoutKey: db.card_vis.readout
+    _historyKey: db.card_vis.history
+    _view: 1
+    _model: {fileID: 0}
+    _hiddenNodes: []
+    _framingYaw: 0
+    _print: {fileID: 0}
+    _unlock:
+      _kind: 3
+      _target: LanderCargo
+      _milestone: 0
