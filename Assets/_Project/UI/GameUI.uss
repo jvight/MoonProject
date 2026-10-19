@@ -1706,7 +1706,7 @@ Label {
     font-size: 28px;
     letter-spacing: 1px;
     -unity-text-align: middle-left;
-    color: rgb(236, 222, 196);
+    color: rgb(248, 238, 214);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
@@ -1714,7 +1714,7 @@ Label {
     position: absolute;
     font-size: 18px;
     -unity-text-align: middle-right;
-    color: rgb(170, 157, 134);
+    color: rgb(182, 168, 143);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
@@ -1723,7 +1723,7 @@ Label {
     position: absolute;
     font-size: 28px;
     letter-spacing: 1px;
-    color: rgb(236, 222, 196);
+    color: rgb(248, 238, 214);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
@@ -1737,7 +1737,7 @@ Label {
     right: 4px;
     bottom: 0;
     font-size: 18px;
-    color: rgb(170, 157, 134);
+    color: rgb(182, 168, 143);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
@@ -1753,7 +1753,7 @@ Label {
     font-size: 18px;
     -unity-text-align: middle-center;
     background-color: rgb(19, 18, 16);
-    color: rgb(255, 184, 72);
+    color: rgb(255, 196, 96);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
@@ -1765,12 +1765,12 @@ Label {
     padding: 0;
     font-size: 18px;
     -unity-text-align: upper-center;
-    color: rgb(170, 157, 134);
+    color: rgb(182, 168, 143);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
 .cargo__cell-name--on {
-    color: rgb(206, 192, 166);
+    color: rgb(224, 210, 182);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
@@ -1782,7 +1782,7 @@ Label {
     position: absolute;
     font-size: 22px;
     -unity-text-align: middle-left;
-    color: rgb(206, 192, 166);
+    color: rgb(224, 210, 182);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
@@ -1791,12 +1791,12 @@ Label {
     font-size: 18px;
     white-space: normal;
     -unity-text-align: upper-left;
-    color: rgb(170, 157, 134);
+    color: rgb(182, 168, 143);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
 .cargo__device-state--accent {
-    color: rgb(255, 184, 72);
+    color: rgb(255, 196, 96);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
@@ -1816,12 +1816,12 @@ Label {
     font-size: 18px;
     -unity-text-align: middle-center;
     background-color: rgb(19, 18, 16);
-    color: rgb(255, 184, 72);
+    color: rgb(255, 196, 96);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
 .cargo__release--quiet {
-    color: rgb(170, 157, 134);
+    color: rgb(182, 168, 143);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
@@ -1834,7 +1834,7 @@ Label {
     height: 36px;
     font-size: 28px;
     -unity-text-align: middle-left;
-    color: rgb(236, 222, 196);
+    color: rgb(248, 238, 214);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
@@ -1842,7 +1842,7 @@ Label {
     height: 60px;
     font-size: 22px;
     white-space: normal;
-    color: rgb(206, 192, 166);
+    color: rgb(224, 210, 182);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
@@ -1855,18 +1855,18 @@ Label {
 .cargo__tooltip-use-label {
     margin-right: 12px;
     font-size: 18px;
-    color: rgb(170, 157, 134);
+    color: rgb(182, 168, 143);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
 .cargo__tooltip-use-target {
     font-size: 22px;
-    color: rgb(206, 192, 166);
+    color: rgb(224, 210, 182);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
 .cargo__tooltip-use-target--accent {
-    color: rgb(255, 184, 72);
+    color: rgb(255, 196, 96);
 }
 
 .cargo__toast {
@@ -1878,7 +1878,7 @@ Label {
 .cargo__toast-text {
     white-space: normal;
     font-size: 18px;
-    color: rgb(255, 184, 72);
+    color: rgb(255, 196, 96);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
@@ -1888,7 +1888,7 @@ Label {
     position: absolute;
     font-size: 18px;
     -unity-text-align: middle-left;
-    color: rgb(170, 157, 134);
+    color: rgb(182, 168, 143);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
@@ -1910,9 +1910,9 @@ Label {
     padding: 0 8px;
     border-width: 1.5px;
     border-radius: 5px;
-    border-color: rgb(170, 157, 134);
+    border-color: rgb(182, 168, 143);
     font-size: 18px;
-    color: rgb(206, 192, 166);
+    color: rgb(224, 210, 182);
     -unity-text-align: middle-center;
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
@@ -1920,7 +1920,7 @@ Label {
 .cargo__key-word {
     margin-left: 10px;
     font-size: 18px;
-    color: rgb(170, 157, 134);
+    color: rgb(182, 168, 143);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
@@ -1941,15 +1941,15 @@ Label {
     font-size: 18px;
     letter-spacing: 1px;
     -unity-text-align: middle-center;
-    color: rgb(170, 157, 134);
+    color: rgb(182, 168, 143);
     border-bottom-width: 2px;
     border-color: rgba(0, 0, 0, 0);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
 .page-tab--active {
-    color: rgb(236, 222, 196);
-    border-color: rgb(255, 184, 72);
+    color: rgb(248, 238, 214);
+    border-color: rgb(255, 196, 96);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
@@ -1961,22 +1961,22 @@ Label {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-    color: rgb(170, 157, 134);
+    color: rgb(182, 168, 143);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
 .databank__row--entry {
-    color: rgb(206, 192, 166);
+    color: rgb(224, 210, 182);
 }
 
 .databank__row--focus {
-    color: rgb(255, 184, 72);
+    color: rgb(255, 196, 96);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
 .databank__dot {
     position: absolute;
-    background-color: rgb(206, 192, 166);
+    background-color: rgb(224, 210, 182);
 }
 
 .databank__model {
@@ -2002,7 +2002,7 @@ Label {
     position: absolute;
     font-size: 22px;
     -unity-text-align: middle-center;
-    color: rgb(170, 157, 134);
+    color: rgb(182, 168, 143);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
@@ -2010,7 +2010,7 @@ Label {
     position: absolute;
     font-size: 28px;
     -unity-text-align: middle-left;
-    color: rgb(236, 222, 196);
+    color: rgb(248, 238, 214);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
@@ -2018,7 +2018,7 @@ Label {
     position: absolute;
     font-size: 18px;
     white-space: normal;
-    color: rgb(170, 157, 134);
+    color: rgb(182, 168, 143);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
@@ -2026,14 +2026,14 @@ Label {
     position: absolute;
     font-size: 22px;
     white-space: normal;
-    color: rgb(206, 192, 166);
+    color: rgb(224, 210, 182);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
 .databank__set {
     position: absolute;
     font-size: 18px;
-    color: rgb(255, 184, 72);
+    color: rgb(255, 196, 96);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
@@ -2041,7 +2041,7 @@ Label {
     position: absolute;
     font-size: 18px;
     white-space: normal;
-    color: rgb(170, 157, 134);
+    color: rgb(182, 168, 143);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 /* 07's power-on self-test on its CRT (PostView): a terminal column of typed lines; a part that fails reads amber. */

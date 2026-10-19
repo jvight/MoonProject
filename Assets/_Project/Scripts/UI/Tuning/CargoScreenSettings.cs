@@ -114,23 +114,23 @@ namespace MoonProject.UI
 
         [Header("07's line drawing on the face (Art/UI/Face/rover_07_line_3q.png)")]
         [Tooltip("Tint over the drawing's cream lines: a quiet neutral, so the hold and the bays read first.")]
-        [SerializeField] private Color32 _artTint = new Color32(176, 160, 132, 255);
+        [SerializeField] private Color32 _artTint = new Color32(192, 177, 148, 255);
 
         [Header("Look A, quiet amber CRT: one accent over warm neutrals, nothing drawn that carries nothing")]
         [Tooltip("The hold's item icons and the dragged part.")]
-        [SerializeField] private Color32 _iconColor = new Color32(206, 192, 166, 255);
+        [SerializeField] private Color32 _iconColor = new Color32(224, 210, 182, 255);
 
         [Tooltip("Quiet strokes: empty slot outlines, the brackets of a bay at rest and resting leaders.")]
         [SerializeField] private Color32 _faintColor = new Color32(96, 88, 74, 255);
 
         [Tooltip("The frame of a slot that holds something: clearer than an empty slot's, still quieter than the words.")]
-        [SerializeField] private Color32 _itemFrameColor = new Color32(140, 129, 109, 255);
+        [SerializeField] private Color32 _itemFrameColor = new Color32(136, 125, 106, 255);
 
         [Tooltip("The one accent: the selection, the bays the carried part fits and what can be fitted right now.")]
-        [SerializeField] private Color32 _accentColor = new Color32(255, 184, 72, 255);
+        [SerializeField] private Color32 _accentColor = new Color32(255, 196, 96, 255);
 
         [Tooltip("Soft fill of a bay the carried part fits, and of a cell or bay for a moment after a press.")]
-        [SerializeField] private Color32 _accentFill = new Color32(255, 184, 72, 20);
+        [SerializeField] private Color32 _accentFill = new Color32(255, 196, 96, 20);
 
         [Tooltip("Opaque near-neutral warm-black CRT backing plate behind count badges, tooltips, and toasts.")]
         [SerializeField] private Color32 _plateBackground = new Color32(19, 18, 16, 255);

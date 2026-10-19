@@ -521,22 +521,22 @@ MonoBehaviour:
     _toastDurationSeconds: 3.5
     _artTint:
       serializedVersion: 2
-      rgba: 4286881968
+      rgba: 4287934912
     _iconColor:
       serializedVersion: 2
-      rgba: 4289118414
+      rgba: 4290171616
     _faintColor:
       serializedVersion: 2
       rgba: 4283062368
     _itemFrameColor:
       serializedVersion: 2
-      rgba: 4285366668
+      rgba: 4285169032
     _accentColor:
       serializedVersion: 2
-      rgba: 4282956031
+      rgba: 4284531967
     _accentFill:
       serializedVersion: 2
-      rgba: 340310271
+      rgba: 341886207
     _plateBackground:
       serializedVersion: 2
       rgba: 4161079566
