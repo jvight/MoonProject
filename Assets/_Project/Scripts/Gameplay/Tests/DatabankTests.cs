@@ -79,8 +79,8 @@ namespace MoonProject.Gameplay.Tests
         public void ThePiecesOfAScanSet_UnlockItsEntryOnTheFirst_AndCountUpToFull()
         {
             Fragment("ruin.Array.0", 0, 3);
-            Assert.AreEqual(1, _added.Count);
-            Assert.AreEqual("db.array", _added[0].EntryId);
+            Assert.AreEqual(1, CountAdded("db.array"));
+            Assert.AreEqual(1, CountAdded("db.lumen"), "The place entry names this set too.");
             AssertProgress("db.array", 1, 3);
             Assert.IsFalse(_databank.Progress("db.array").IsComplete);
 
@@ -90,7 +90,7 @@ namespace MoonProject.Gameplay.Tests
             AssertProgress("db.array", 3, 3);
 
             Assert.IsTrue(_databank.Progress("db.array").IsComplete);
-            Assert.AreEqual(1, _added.Count, "The entry is added once, on the first piece.");
+            Assert.AreEqual(1, CountAdded("db.array"), "The entry is added once, on the first piece.");
             Assert.AreEqual(3, _progressed.Count);
             Assert.AreEqual(1, _progressed[0].Found);
             Assert.AreEqual(3, _progressed[2].Found);
@@ -170,7 +170,7 @@ namespace MoonProject.Gameplay.Tests
             _events.Publish(new StoryScanned("story.airlock", "k", Vector3.zero));
             Fragment("ruin.Array.0", 0, 3);
 
-            CollectionAssert.AreEqual(new[] { "db.me", "db.panel", "db.array" }, _databank.UnlockedIds);
+            CollectionAssert.AreEqual(new[] { "db.me", "db.panel", "db.array", "db.lumen" }, _databank.UnlockedIds);
         }
 
         [Test]
