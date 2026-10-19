@@ -1,6 +1,6 @@
 # Text: Crew Logs, Friend Logs & Supply Crate Notes (Story v4)
 
-> **Status:** Locked for Story v4 (`1985–1988` crew mission, `2024` rover wake).
+> **Status:** Locked for Story v4 (Lumen built `1984`, crewed from `1985` to `1988`; `2024` rover wake).
 > **Target files for UI port:** `Assets/_Project/Data/Localization/en.json` and `Assets/_Project/Data/Localization/vi.json`.
 > **Writing rules (`docs/design/writing-style.md`):**
 > - Crew logs are entries a person wrote in their own notebook or recorded for the station archive.
@@ -38,10 +38,10 @@
 | `ticker.bell.found_1` | `en.json:786` | **KEEP** | Unchanged. |
 | `ticker.bell.found_2` | `en.json:790` | **REPLACE** | Replaces past-counterfactual `"Ro would have liked that"` (premature death tell) with `"Bell chimes: one of Ro's old favourites."` |
 | `crate.depot.note` | `en.json:1774` | **REPLACE** | Replaces `"Spares for the next rotation"` with ridge-line spares. |
-| `crate.kestrel.note` | `en.json:1778` | **REPLACE** | Clarifies `Kestrel-3` is the `'71` survey probe (`Site_KestrelCrash`), not a relay satellite. |
+| `crate.kestrel.note` | `en.json:1778` | **REPLACE** | Clarifies `Kestrel-3` is Meridian's relay satellite (`Site_KestrelCrash`), down in October 1988. |
 | `crate.drill.note` | `en.json:1782` | **REPLACE** | Replaces `"next season"` with the deep-core ice survey. |
 | `crate.garage.note` | `en.json:1786` | **KEEP** | Third-person maintenance tag (`"For 07, next time it breaks. It will. — Kenji"`). |
-| `crate.lander.note` | `en.json:1790` | **REPLACE** | Clarifies the `'87` uncrewed resupply drop (`Site_SupplyLander`). |
+| `crate.lander.note` | `en.json:1790` | **REPLACE** | Clarifies the `'87` uncrewed drop (`Site_SupplyLander`, the cargo lander's sister). |
 
 ---
 
@@ -107,7 +107,7 @@ Stencil notes painted or taped onto the five field supply crates in the basin (`
 | Key & `en.json` Line | Status | Current `en.json` String | v4 English | v4 Tiếng Việt |
 |---|---|---|---|---|
 | `crate.depot.note` (`en.json:1774`) | **REPLACE** | `Spares for the next rotation. Don't let Ines take the good wire. — Kenji` | `Spares for the ridge line. Don't let Ines take the good copper wire for her core tags. — Kenji` | `Đồ dự phòng cho đường dây sống núi. Đừng để Ines lấy cuộn dây đồng xịn đi buộc nhãn mẫu đá. — Kenji` |
-| `crate.kestrel.note` (`en.json:1778`) | **REPLACE** | `Lenses off the old relay. Handle them like records. — Ro` | `Camera lenses salvaged off the '71 Kestrel probe. Handle them like vinyl records. — Ro` | `Thấu kính máy ảnh tháo từ tàu thăm dò Kestrel năm 71. Cầm nhẹ tay như cầm đĩa than nhé. — Ro` |
+| `crate.kestrel.note` (`en.json:1778`) | **REPLACE** | `Lenses off the old relay. Handle them like records. — Ro` | `Lenses off Meridian's relay satellite. Handle them like records. — Ro` | `Thấu kính tháo từ vệ tinh tiếp sóng của Meridian. Cầm nhẹ tay như cầm đĩa than nhé. — Ro` |
 | `crate.drill.note` (`en.json:1782`) | **REPLACE** | `Wire for the drill's next season. Labelled, counted, twice. — I. Kalani` | `Spare cable for the deep-core ice survey. Labelled, coiled, counted twice. — I. Kalani` | `Cáp dự phòng cho đợt khoan thăm dò băng tầng sâu. Đã dán nhãn, cuộn gọn, đếm hai lần. — I. Kalani` |
 | `crate.garage.note` (`en.json:1786`) | **KEEP** | `For 07, next time it breaks. It will. — Kenji` | *(Keep current)* `For 07, next time it breaks. It will. — Kenji` | *(Keep current)* `Cho 07, lần tới nó hỏng. Thế nào cũng hỏng. — Kenji` |
 | `crate.lander.note` (`en.json:1790`) | **REPLACE** | `Seed trays went up top. This is everything else. — Theo` | `Seed trays from the '87 supply drop went up to the dome. Left the spare fittings boxed here. — Theo` | `Khay hạt giống từ chuyến hàng thả xuống năm 87 đã mang lên mái vòm. Phụ tùng dư đóng thùng để lại đây. — Theo` |

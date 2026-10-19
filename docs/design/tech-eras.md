@@ -89,7 +89,7 @@ Bare aluminium uses `R1_BareSteel`, which reads the same at chase distance.
 Kestrel-3 (6). All are material swaps, plus four geometry changes: the station's Lumen junction box, the optional
 RTG, a Kestrel piece to replace the landing foot, and the Scout's mirror patches.
 
-## 5. Story conflicts with v4 (for the Director)
+## 5. Story conflicts with v4 (ruled by the Director, 2026-10-19: all five as recommended)
 1. **Kestrel-3 has two identities.** Story v4 §2.2 has Meridian's relay *satellite* coming down in October 1988, and
    that fact carries plot: it is why Meridian routes through Lumen's dish. But `text/crew-map.md` and
    `text/crew-logs.md` call it "the 1971 survey probe" (`map.site.kestrel.note`, `crate.kestrel.note`),
@@ -97,8 +97,9 @@ RTG, a Kestrel piece to replace the landing foot, and the Scout's mirror patches
    livery as above. A foreign white-and-teal wreck in the basin also seeds Meridian early.
 2. `crew-map.md` gives "1985–1988 Lumen crew"; v4 says commissioned 1984. These fit as "built 1984, crewed from
    1985". Write it that way in both docs.
-3. `crew-map.md` makes the cargo lander "the 1987 resupply drop", but `07-identity.md` has 07 *unloading* it on
-   28 Oct 1988. Either it landed in October 1988 for the pack-out, or 07 was *loading* it. Pick one.
+3. **Ruled:** the crew's cargo lander landed in the 1987 drop, and 07 unloaded its last cargo in October 1988.
+   The "1987 drop" in `crew-map.md` was the Canyon Supply Lander, the cargo lander's sister, which came down hard in
+   the same drop.
 4. The seismic station's scan line (basin-dressing §4) should carry both eras:
    `SEISMIC STATION · DEPLOYED 1971 · LUMEN BUS 1984 · LAST RECORD 28 OCT 1988 · CELL 0%` `[PROPOSAL]`.
 5. **Gap:** a 1971 crew would leave a descent stage. Lumen cleared it off its landing field. Proposed for 0.6: its
@@ -107,13 +108,13 @@ RTG, a Kestrel piece to replace the landing foot, and the Scout's mirror patches
 ## 6. Makers & agencies
 Like Alterra in Subnautica, a maker's mark ties an object to its era and its story: the player learns who built what,
 and expects a mark's machines to behave alike. There are **three marks** (ILC, Kessler–Arai, Tycho) plus one
-structures contractor. Argon is drawing logos for the three marks, so these names are stable.
+structures contractor, VIS. Argon is drawing logos for the three marks, so these names are stable.
 
 | Mark | Role | Era | Product lines in the game | Design language |
 |---|---|---|---|---|
 | **ILC**, International Lunar Commission (v4 `[PROPOSAL]`) | the programme: owns Lumen, contracts the makers, sets the livery | S onward (formed after 1969) | owns everything at Lumen. Its own hardware: the 1971 sortie instruments, the relay masts, the Great Dish (built to its spec) | sets the rules, not the shapes: stencil codes, asset numbers (`07`), the white livery then cream and coral (1984). **Seal:** a round programme seal. The atlas's crescent `LOGO` stays Lumen's station patch. |
 | **Kessler–Arai Field Systems** (07's maker, decided) | field robotics | B and L (SSR-3 1978, SSR-5 1983) | SSR-3 (elders 01–06) and SSR-5 (07); the `Kit_*` modules; the trickle post and the charging pad's contacts | **wheels, sockets, modular kit:** deep-dish 8-bolt chevron wheels, one maker's plate on the rear flank, one display per machine, the five-tone annunciator in D major pentatonic. Tools that grow. **Logo:** a monoline vector mark that a CRT can draw; it shows on 07's CRT at boot, before the self-test lines. |
-| **Halvard Orbital Works** `[PROPOSAL]` | ILC's structures contractor | P to L (built Scout 3 in 1967) | the cargo lander, habitat modules, workshop, radio tower, solar arrays, battery banks, pylons, crates, and the flat-packs that 07 assembles; Atlas (1979, 0.6+) | **big fixed things:** ribbed cylinders, bellows joints, round hatches, bolted feet, heavy plant. Its stencil sits on hulls and crates. **The mark ages:** a plain 1960s wordmark on the Scout, then a 1980s mark on Lumen's hulls. |
+| **VIS, Vanguard Interplanetary Structures** (decided, owner 2026-10-19; the V carries a quiet "Việt" hint) | ILC's structures contractor | P to L (built Scout 3 in 1967) | the cargo lander, habitat modules, workshop, radio tower, solar arrays, battery banks, pylons, crates, and the flat-packs that 07 assembles; Atlas (1979, 0.6+) | **big fixed things:** ribbed cylinders, bellows joints, round hatches, bolted feet, heavy plant. Hull and crate stencil: `VIS` plus the wordmark `VANGUARD INTERPLANETARY STRUCTURES`. **The mark ages:** VIS's plain 1960s wordmark on the Scout, then the 1980s mark on Lumen's hulls. |
 | **Tycho Consortium** (v4 `[PROPOSAL]`) | builds and runs automated Meridian | parallel to L (1984–88) | Meridian's machines (survey flock, sorters, array wipers, cable climbers, ice tappers), the hex docks, Kestrel-3 | **no people in mind:** white composite, teal marks, hexagonal contact docks, legs and tracks, white strobes. No screens and no handles at suit height. **Logo:** a teal hexagon. |
 
 **The boot moment:** 07's CRT draws the Kessler–Arai mark in amber vector lines, holds it briefly, then prints the
@@ -123,9 +124,9 @@ as a bitmap, because a 1983 CRT draws line drawings. No mark ever appears as a U
 **How makers diversify the ecosystem later:**
 - **Each maker builds differently, so a silhouette tells you who made it:**
   - Kessler–Arai: wheels and sockets;
-  - Halvard: big static plant;
+  - VIS: big static plant;
   - Tycho: legs, tracks, hexes and swarms.
-- **Each maker sounds different:** Kessler–Arai uses pentatonic status tones; Halvard uses relays, hydraulics and
+- **Each maker sounds different:** Kessler–Arai uses pentatonic status tones; VIS uses relays, hydraulics and
   heavy clunks; Tycho uses dry clicks and strobe rhythms, with no tones.
 - **Each maker is a compatibility class.** Scanning a maker's machine teaches its fit. For example, Tycho's hex dock
   teaches the Charge Adapter (v4 §7 Q7). That makes the makers a progression gate, which fits ruling 11.
@@ -133,11 +134,11 @@ as a bitmap, because a 1983 CRT draws line drawings. No mark ever appears as a U
   2026-10-17), whose maker is still open. Add one only when a region needs a new kind of machine. Never add a mark as
   decoration.
 
-**Does the 1967 Scout need its own contractor?** No. Halvard built it, under the national programme that came before
-the ILC, so the Scout carries Halvard's 1960s wordmark beside `S-3`. One maker across two decades lets the player
+**Does the 1967 Scout need its own contractor?** No. VIS built it, under the national programme that came before
+the ILC, so the Scout carries VIS's 1960s wordmark beside `S-3`. One maker across two decades lets the player
 watch a mark mature, which is the era progression in miniature, and it adds no fourth logo. The 1971 sortie
 instruments carry only an early ILC stencil, with no maker mark.
 
-**Scan pages:** one line names the maker. For example: `SCOUT 3 · HALVARD ORBITAL WORKS · LANDED 1967` and
+**Scan pages:** one line names the maker. For example: `SCOUT 3 · VIS · LANDED 1967` and
 `SSR-3 · KESSLER–ARAI · UNIT 06 …`. Each maker gets a databank page in Kenji's voice, `[PROPOSAL]` text after the
 logos land.
