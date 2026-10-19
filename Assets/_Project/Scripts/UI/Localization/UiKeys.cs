@@ -47,6 +47,7 @@ namespace MoonProject.UI
         public const string CargoDragNotDocked = "ui.cargo.drag.not_docked";
         public const string CargoDragToCutter = "ui.cargo.drag.to_cutter";
         public const string CargoDragNowhere = "ui.cargo.drag.nowhere";
+        public const string CargoIgniterFitHint = "ui.cargo.igniter.fit_hint";
         public const string KeyDragOrE = "glyph.combo.drag_e";
         public const string KeyMouseOrE = "glyph.combo.mouse_e";
         public const string KeyBOrEscape = "glyph.combo.b_esc";
