@@ -92,6 +92,7 @@ namespace MoonProject.Gameplay
             Model.SetOpeningReserve(true);
             Model.HoldChargeFloor(true);
             _subscriptions.Add(_events.Subscribe<OpeningMilestoneReached>(OnMilestone));
+            _subscriptions.Add(_events.Subscribe<CallStateChanged>(OnCallState));
             _lastPosition = _rover.Position;
             _subscriptions.Add(_events.Subscribe<RoverJumped>(OnJumped));
             _subscriptions.Add(_events.Subscribe<RoverBoostChanged>(OnBoostChanged));
@@ -143,14 +144,19 @@ namespace MoonProject.Gameplay
             }
         }
 
-        /// <summary>The first charge lifts the reserve's speed cap; the mast catching the signal (the opening's last built beat) lifts the charge floor.</summary>
+        /// <summary>The first charge lifts the reserve's speed cap.</summary>
         private void OnMilestone(OpeningMilestoneReached reached)
         {
             if (reached.Milestone == OpeningMilestone.FirstCharge)
             {
                 Model.SetOpeningReserve(false);
             }
-            else if (reached.Milestone == OpeningMilestone.SignalWest)
+        }
+
+        /// <summary>The call answered (the release) lifts the charge floor: from here 07 can run flat.</summary>
+        private void OnCallState(CallStateChanged changed)
+        {
+            if (changed.State == CallState.Answered)
             {
                 Model.HoldChargeFloor(false);
             }
