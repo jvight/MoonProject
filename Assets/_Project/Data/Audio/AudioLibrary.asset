@@ -61,16 +61,28 @@ MonoBehaviour:
     _volumeMax: 0.6
     _pitchMin: 1
     _pitchMax: 1
-  - _id: dock_clamp
+  - _id: pad_lock_close
     _clips:
-    - {fileID: 8300000, guid: 3ab4e35120a03aa44931af539662125c, type: 3}
+    - {fileID: 8300000, guid: 265bc49e53267584e9e83270529289c5, type: 3}
     _variantLabels:
-    - dock_clamp
+    - pad_lock_close
     _bus: 2
     _spatial: 1
     _loop: 0
     _volumeMin: 0.65
     _volumeMax: 0.65
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: pad_lock_open
+    _clips:
+    - {fileID: 8300000, guid: ce86dc082f8fe8543b6bf5b9f3440fe2, type: 3}
+    _variantLabels:
+    - pad_lock_open
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.75
+    _volumeMax: 0.75
     _pitchMin: 1
     _pitchMax: 1
   - _id: dock_walls_settle
