@@ -1753,15 +1753,18 @@ Label {
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
-/* The small accent tag at the foot of a part that can be fitted right now, on the tube's dark over the cell's edge:
-   where it goes ("-> Cutter"). */
+/* The small accent badge on the top edge of a part that can be fitted right now, on the tube's dark: where it goes
+   ("-> Cutter"). On the edge, never stacked with the name under the cell. */
 .cargo__tag {
     display: none;
     position: absolute;
-    left: -6px;
-    right: -6px;
-    bottom: 0;
+    left: -18px;
+    right: -18px;
+    top: -11px;
     height: 22px;
+    border-width: 1.5px;
+    border-radius: 4px;
+    border-color: rgb(255, 196, 96);
     font-size: 18px;
     -unity-text-align: middle-center;
     background-color: rgb(19, 18, 16);

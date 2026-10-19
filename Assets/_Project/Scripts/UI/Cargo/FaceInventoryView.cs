@@ -49,9 +49,6 @@ namespace MoonProject.UI
         private const string UseAccentClass = "cargo__tooltip-use-target--accent";
         private const string ReleaseQuietClass = "cargo__release--quiet";
 
-        // A tagged cell lifts its icon this far (share of the cell) to leave its foot to the tag.
-        private const float TaggedIconLift = 0.12f;
-
         private readonly VisualElement _panel;
         private readonly VisualElement _art;
         private readonly VisualElement _canvas;
@@ -638,8 +635,8 @@ namespace MoonProject.UI
         }
 
         /// <summary>
-        /// The small accent tag at the foot of a cell whose part can be fitted right now, naming where it goes, so the
-        /// way on is on the screen before anything is pressed.
+        /// The small accent badge on the top edge of a cell whose part can be fitted right now, naming where it goes,
+        /// so the way on is on the screen before anything is pressed (on the edge, never stacked with the name).
         /// </summary>
         private void WriteTags()
         {
@@ -1595,8 +1592,7 @@ namespace MoonProject.UI
                 float lifted = _drag.ShowsGhost && i == _drag.Cell ? _settings.DragSourceAlpha : 1f;
                 Color32 tint = RoverLineArtPainter.WithAlpha(_settings.IconColor,
                     (byte)Mathf.RoundToInt(FullIconAlpha * bootProgress * lifted));
-                float rise = IsTagged(i) ? TaggedIconLift : 0f;
-                Vector2 iconCenter = new Vector2(cx + cw * 0.5f + slideX, cy + ch * (0.5f - rise));
+                Vector2 iconCenter = new Vector2(cx + cw * 0.5f + slideX, cy + ch * 0.5f);
                 UiIconPainter.Draw(painter, in icon, iconCenter, _settings.HoldIconSize * s, tint);
             }
         }
