@@ -96,6 +96,41 @@ namespace MoonProject.Gameplay
         [SerializeField] private string[] _lampOrder =
             { "charging_pad", "solar_array", "battery_bank", "antenna_mast" };
 
+        [Tooltip("How much brighter than a finished piece's standby glow a lit lamp's bulb burns (a multiplier of its " +
+                 "emission), so the bulbs read from across the base.")]
+        [Range(1f, 8f)] [SerializeField] private float _lampEmissionGain = 3.5f;
+
+        [Tooltip("The warm tungsten amber of the pool of light a lit lamp throws on the regolith.")]
+        [SerializeField] private Color _lampLightColor = new Color(1f, 0.62f, 0.28f, 1f);
+
+        [Tooltip("Metres the warm light of a lit lamp reaches.")]
+        [Range(1f, 10f)] [SerializeField] private float _lampLightRange = 4.5f;
+
+        [Tooltip("Intensity of a lamp's warm light at full glow (it follows the lamp as it eases on and off).")]
+        [Range(0f, 30f)] [SerializeField] private float _lampLightIntensity = 8f;
+
+        [Tooltip("How high the light hangs, as a share of the piece's height.")]
+        [Range(0.2f, 1f)] [SerializeField] private float _lampLightHeightShare = 0.85f;
+
+        [Tooltip("The charging pad's light is a spot pointing down at the pad: its cone, in degrees.")]
+        [Range(40f, 160f)] [SerializeField] private float _padSpotAngleDegrees = 120f;
+
+        [Tooltip("How high above the deck the charging pad's spot hangs, in metres: the pad is a low plate, so its " +
+                 "light needs a mast to pool on the plate.")]
+        [Range(0.5f, 5f)] [SerializeField] private float _padSpotHeightMetres = 2.4f;
+
+        [Tooltip("The most lamp lights the base burns at once (none casts a shadow); the first lamps in the lighting " +
+                 "order get them, the rest only glow.")]
+        [Range(0, 8)] [SerializeField] private int _lampLightBudget = 4;
+
+        public float LampEmissionGain => _lampEmissionGain;
+        public Color LampLightColor => _lampLightColor;
+        public float LampLightRange => _lampLightRange;
+        public float LampLightIntensity => _lampLightIntensity;
+        public float LampLightHeightShare => _lampLightHeightShare;
+        public float PadSpotAngleDegrees => _padSpotAngleDegrees;
+        public float PadSpotHeightMetres => _padSpotHeightMetres;
+        public int LampLightBudget => _lampLightBudget;
         public float LampDuskAboveLastLightDegrees => _lampDuskAboveLastLightDegrees;
         public float LampDawnMarginDegrees => _lampDawnMarginDegrees;
         public float LampStaggerSeconds => _lampStaggerSeconds;
