@@ -65,6 +65,8 @@ namespace MoonProject.UI
         public const string KeyTab = "glyph.keyboard.tab";
         public const string PadView = "glyph.gamepad.select";
         public const string ControlsLook = "ui.controls.look";
+        public const string BootMaker = "boot.maker";
+        public const string BootLoading = "boot.loading";
         public const string ControlsFace = "ui.controls.face";
         public const string ControlsLights = "ui.controls.lights";
         public const string CargoWaiting = "ui.cargo.waiting";

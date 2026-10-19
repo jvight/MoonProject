@@ -14,7 +14,7 @@ namespace MoonProject.UI.Tests
         // out for pace keep the seconds they had, so they still fit if they are put back.
         private static readonly float[] StepSeconds =
         {
-            0.7f, 0.8f, 1.4f, 1.0f, 1.2f, 1.8f, 1.8f, 1.6f, 1.4f, 2.0f, 1.8f, 0.9f, 0.7f, 0.6f,
+            0.6f, 0.8f, 1.4f, 1.0f, 1.2f, 1.8f, 1.8f, 1.6f, 1.4f, 2.0f, 1.8f, 0.9f, 0.7f, 0.5f,
         };
 
         private PostLineSettings _settings;

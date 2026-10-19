@@ -570,6 +570,47 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator TheFaceBoot_TracesTheMakersMark_LoadsThenGivesWayToTheLines_CueingEachStrokeStepAndLine()
+        {
+            Boot();
+            yield return null;
+            int strokes = 0;
+            int steps = 0;
+            int typed = 0;
+            var completed = new System.Collections.Generic.List<int>();
+            Events.Subscribe<LogoStrokeDrawn>(_ => strokes++);
+            Events.Subscribe<LoadStep>(_ => steps++);
+            Events.Subscribe<BootTextTyped>(_ => typed++);
+            Events.Subscribe<BootLineCompleted>(line => completed.Add(line.LineIndex));
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            Events.Publish(new CrtPowerOn(0.6f));
+            yield return Seconds(0.7f);
+            Assert.IsTrue(_rig.Ui.BootFace.IsShowing, "the tube woke");
+            Events.Publish(new BootLogoBegan(2f));
+            yield return Seconds(1f);
+            Assert.AreEqual(DisplayStyle.Flex, _rig.Ui.BootFaceView.Root.resolvedStyle.display, "the mark is on the face");
+            Assert.Greater(strokes, 0, "the beam is tracing");
+            yield return Seconds(1.1f);
+            Assert.AreEqual(Text(UiKeys.BootMaker), _rig.Ui.BootFaceView.Wordmark.text, "the wordmark has typed");
+            Events.Publish(new BootLoadBegan(0.8f));
+            yield return Seconds(0.9f);
+            Assert.AreEqual(Text(UiKeys.BootLoading), _rig.Ui.BootFaceView.LoadText.text);
+            Assert.IsTrue(_rig.Ui.BootFaceView.Step(4).ClassListContains(BootFaceView.StepFilledClass), "loaded");
+            Events.Publish(new BootCheckStarted(BootCheckStep.Carrier));
+            yield return Seconds(0.8f);
+            Events.Publish(new BootCheckCompleted(BootCheckStep.Carrier, BootCheckResult.Info));
+            yield return Seconds(0.2f);
+
+            Assert.IsFalse(_rig.Ui.BootFace.IsShowing, "the lines have the face");
+            Assert.AreEqual(DisplayStyle.None, _rig.Ui.BootFaceView.Root.resolvedStyle.display);
+            Assert.AreEqual(_rig.Tuning.BootFace.Linework.StrokeCount, strokes, "each stroke cued once");
+            Assert.AreEqual(_rig.Tuning.BootFace.LoadSteps, steps, "each load step cued once");
+            Assert.Greater(typed, 10, "typing cues for the wordmark, the load line and the first line");
+            CollectionAssert.AreEqual(new[] { BootFace.WordmarkLine, BootFace.LoadLine, BootFace.FirstPostLine },
+                completed, "each line done once, in order");
+        }
+
+        [UnityTest]
         public IEnumerator TheControlsCard_ShowsOnceAfterTheOpening_GoesOnceThePlayerDroveAndLooked_AndNotOnAReload()
         {
             InputSystem.AddDevice<Keyboard>();

@@ -1039,6 +1039,14 @@
             "text": "Hold {0} to assemble"
         },
         {
+            "key": "boot.maker",
+            "text": "KESSLER–ARAI FIELD SYSTEMS"
+        },
+        {
+            "key": "boot.loading",
+            "text": "LOADING FIELD PROFILE"
+        },
+        {
             "key": "post.carrier",
             "text": "UNIT 07 · CARRIER DETECTED"
         },
