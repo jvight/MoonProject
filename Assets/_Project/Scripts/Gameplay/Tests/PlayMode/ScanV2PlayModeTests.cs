@@ -401,7 +401,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 yield return null;
             }
 
-            // Wait ~110 ms into the completion dissolve so the warm-amber completion ping edge is at peak while the lens beam ramps off
+            // Wait ~110 ms into the completion dissolve so the teal completion ping edge is at peak while the lens beam ramps off
             yield return WaitSeconds(0.11f);
             panels[3] = CapturePanel("ruin_behind_4_completion_ping.png");
             string frame4Path = Path.Combine(ScanFolder, "ruin_behind_4_completion_ping.png");
