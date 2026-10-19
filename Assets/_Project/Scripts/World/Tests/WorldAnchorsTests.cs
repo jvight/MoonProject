@@ -68,6 +68,7 @@ namespace MoonProject.World.Tests
             expected.Add(WorldAnchorIds.SitePrefix + "kestrel");
             expected.Add(WorldAnchorIds.KestrelTrail);
             expected.Add(WorldAnchorIds.Micro06);
+            expected.Add(WorldAnchors.PeakRoad);
             expected.Add(WorldAnchorIds.PlaceWake);
             expected.Add(WorldAnchorIds.PlaceLander);
             expected.Add(WorldAnchorIds.PlaceApron);

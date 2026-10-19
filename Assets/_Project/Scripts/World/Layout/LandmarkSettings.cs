@@ -50,7 +50,6 @@ namespace MoonProject.World
             new PropPlacement(KestrelAnchor, "Kestrel_Tank", new Vector2(3.2f, 1.8f), 15f, 0.3f),
             new PropPlacement(KestrelAnchor, "Kestrel_EngineBell", new Vector2(-3.4f, 2.2f), 250f, 0.4f),
             new PropPlacement(KestrelAnchor, "Kestrel_LandingFoot", new Vector2(0.6f, -4.2f), 80f, 0.2f),
-            new PropPlacement(KestrelAnchor, "Kestrel_HullPanel", new Vector2(-2.2f, -1.4f), 160f, 0.3f),
         };
 
         [Tooltip("Art's big R1 boulders (Rock_10..13, 3-8 m) hand-placed near the opening's routes as landmarks and " +
@@ -135,6 +134,37 @@ namespace MoonProject.World
         [Range(1f, 8f)]
         [SerializeField] private float _signalPillarWidth = 3f;
 
+        [Header("The databank's story scan hosts (docs/design/text/databank-entries.md)")]
+        [Tooltip("Kestrel-3's hull panel at the impact crater, the host of its story scan (entry 6): one of Art's " +
+            "debris pieces (Generated/Art/R1/Models/Wreck), stood in [World]/BasinProps under its own host name.")]
+        [SerializeField] private PropPlacement _kestrelPanel =
+            new PropPlacement(KestrelAnchor, "Kestrel_HullPanel", new Vector2(-2.2f, -1.4f), 160f, 0.3f);
+
+        [Tooltip("06, the SSR-3 relay keeper, stopped at micro.06 by the old canyon-mouth mast (entry 2): Art's " +
+            "Elder06 (Generated/Art/R1/Models/Rover). It faces the canyon mouth, where relay.2 stood; its yaw turns " +
+            "it from there, degrees clockwise.")]
+        [SerializeField] private PropPlacement _elder06 =
+            new PropPlacement(WorldAnchorIds.Micro06, "Elder06", Vector2.zero, 0f, 0.08f);
+
+        [Tooltip("How far 06 slumps over onto its left side, degrees: its cell ran dry and it settled where a wheel " +
+            "sank into the dust.")]
+        [Range(0f, 20f)]
+        [SerializeField] private float _elder06Slump = 7f;
+
+        [Tooltip("01, the SSR-3 survey cart, stopped by a rockfall where the Peak road leaves the basin (entry 3): " +
+            "Art's Elder01, turned a little off the road so its mast reads from the drive up.")]
+        [SerializeField] private PropPlacement _elder01 =
+            new PropPlacement(WorldAnchors.PeakRoad, "Elder01", Vector2.zero, 30f, 0f);
+
+        [Tooltip("The rockfall that stopped 01: Art's boulders across the Peak road a few metres ahead of it, settled " +
+            "in the dust.")]
+        [SerializeField] private PropPlacement[] _rockfall =
+        {
+            new PropPlacement(WorldAnchors.PeakRoad, "Rock_09", new Vector2(0.4f, 6.6f), 70f, 0.5f),
+            new PropPlacement(WorldAnchors.PeakRoad, "Rock_08", new Vector2(3.7f, 4.8f), 205f, 0.4f),
+            new PropPlacement(WorldAnchors.PeakRoad, "Rock_08", new Vector2(-2f, 9.1f), 320f, 0.45f),
+        };
+
         public RuinPlacement[] Ruins => _ruins;
         public float LanderTilt => _landerTilt;
         public GroundCableSettings WakeCable => _wakeCable;
@@ -153,5 +183,10 @@ namespace MoonProject.World
         public float SignalPillarSetback => _signalPillarSetback;
         public float SignalPillarGlow => _signalPillarGlow;
         public float SignalPillarWidth => _signalPillarWidth;
+        public PropPlacement KestrelPanel => _kestrelPanel;
+        public PropPlacement Elder06 => _elder06;
+        public float Elder06Slump => _elder06Slump;
+        public PropPlacement Elder01 => _elder01;
+        public PropPlacement[] Rockfall => _rockfall;
     }
 }
