@@ -58,38 +58,43 @@ namespace MoonProject.Gameplay
         [Tooltip("Degrees of the ring the centre marker covers (a segment, never a full ring).")]
         [Range(60f, 300f)] [SerializeField] private float _apronGuideMarkerArcDegrees = 200f;
 
-        [Header("Taking a piece apart")]
-        [Tooltip("Seconds the take-apart runs once the hold completes: the piece eases down, comes apart and its " +
-                 "pieces fly to 07 (the reverse of the print).")]
-        [Range(0.6f, 2.5f)] [SerializeField] private float _takeApartSeconds = 1.2f;
+        [Header("Taking a piece down (the build played backwards)")]
+        [Tooltip("Seconds the Deconstruct key is held to take a piece down: the build, backwards, stage by stage.")]
+        [Range(0.6f, 3f)] [SerializeField] private float _deconstructHoldSeconds = 1.2f;
 
-        [Tooltip("How many pieces a taken-apart structure comes apart into (fewer when it has fewer parts).")]
-        [Range(2, 3)] [SerializeField] private int _takeApartPieces = 3;
+        [Tooltip("Seconds a part-filled take-down takes to build the piece back up when the key is let go.")]
+        [Range(0.2f, 2f)] [SerializeField] private float _deconstructRewindSeconds = 0.6f;
 
-        [Tooltip("Share (0..1) of the take-apart spent easing down and gathering before the pieces fly.")]
-        [Range(0.1f, 0.5f)] [SerializeField] private float _takeApartEaseShare = 0.3f;
+        [Tooltip("The take-down beam's colour: a soft, desaturated cool tone, not the build's amber-cyan.")]
+        [SerializeField] private Color _takeDownBeamColor = new Color(0.58f, 0.68f, 0.76f, 0.7f);
 
-        [Tooltip("Metres the piece sinks while it eases down.")]
-        [Range(0f, 0.3f)] [SerializeField] private float _takeApartSinkMetres = 0.06f;
-
-        [Tooltip("Metres the pieces arc above their straight path to 07 (a gentle float, never a throw).")]
-        [Range(0f, 1.5f)] [SerializeField] private float _takeApartArcMetres = 0.35f;
-
-        [Tooltip("The take-apart beam's colour: a soft, desaturated cool tone, not the build's amber-cyan.")]
-        [SerializeField] private Color _takeApartBeamColor = new Color(0.58f, 0.68f, 0.76f, 0.7f);
-
-        [Tooltip("Brightness (the glow material's intensity) of the take-apart beam: low, so nothing near the piece " +
+        [Tooltip("Brightness (the glow material's intensity) of the take-down beam: low, so nothing near the piece " +
                  "clips to white (the build beam's own intensity is far higher).")]
-        [Range(0.02f, 1f)] [SerializeField] private float _takeApartBeamIntensity = 0.18f;
+        [Range(0.02f, 1f)] [SerializeField] private float _takeDownBeamIntensity = 0.18f;
 
-        [Tooltip("Width of the take-apart beam as a share of the build beam's: a thin, quiet line.")]
-        [Range(0.1f, 1f)] [SerializeField] private float _takeApartBeamWidthShare = 0.5f;
+        [Tooltip("Width of the take-down beam as a share of the build beam's: a thin, quiet line.")]
+        [Range(0.1f, 1f)] [SerializeField] private float _takeDownBeamWidthShare = 0.5f;
 
-        [Tooltip("Dust grains in the small puff where the piece stood once it is gone.")]
-        [Range(4, 24)] [SerializeField] private int _takeApartDustCount = 10;
+        [Tooltip("Motes per second leaving the dissolving edge for 07 at the end of the hold (fewer earlier).")]
+        [Range(2f, 40f)] [SerializeField] private float _takeDownMoteRate = 12f;
 
-        [Tooltip("Strength (0..1) of that dust puff.")]
-        [Range(0.1f, 1f)] [SerializeField] private float _takeApartDustStrength = 0.4f;
+        [Tooltip("Smallest and largest mote, metres: they differ so the stream never reads as a field of identical dots.")]
+        [SerializeField] private Vector2 _takeDownMoteSize = new Vector2(0.025f, 0.065f);
+
+        [Tooltip("Shortest and longest seconds a mote takes to reach 07's emitter.")]
+        [SerializeField] private Vector2 _takeDownMoteSeconds = new Vector2(0.4f, 0.75f);
+
+        [Tooltip("How bright the motes are (0..1 of the beam colour's alpha): soft, never clipping.")]
+        [Range(0.1f, 1f)] [SerializeField] private float _takeDownMoteBrightness = 0.5f;
+
+        [Tooltip("Most motes in flight at once.")]
+        [Range(8, 64)] [SerializeField] private int _takeDownMotePool = 32;
+
+        [Tooltip("Dust grains in the small settle where the piece stood once it is gone.")]
+        [Range(4, 24)] [SerializeField] private int _takeDownDustCount = 10;
+
+        [Tooltip("Strength (0..1) of that dust settle.")]
+        [Range(0.1f, 1f)] [SerializeField] private float _takeDownDustStrength = 0.4f;
 
         [Tooltip("Seconds the apron's bay outline takes to warm to its glow as build mode opens, and to cool as it " +
                  "closes: a slow breath, never a switch.")]
@@ -269,25 +274,29 @@ namespace MoonProject.Gameplay
 
         public float ApronGuideMarkerArcDegrees => _apronGuideMarkerArcDegrees;
 
-        public float TakeApartSeconds => _takeApartSeconds;
+        public float DeconstructHoldSeconds => _deconstructHoldSeconds;
 
-        public int TakeApartPieces => _takeApartPieces;
+        public float DeconstructRewindSeconds => _deconstructRewindSeconds;
 
-        public float TakeApartEaseShare => _takeApartEaseShare;
+        public Color TakeDownBeamColor => _takeDownBeamColor;
 
-        public float TakeApartSinkMetres => _takeApartSinkMetres;
+        public float TakeDownBeamIntensity => _takeDownBeamIntensity;
 
-        public float TakeApartArcMetres => _takeApartArcMetres;
+        public float TakeDownBeamWidthShare => _takeDownBeamWidthShare;
 
-        public Color TakeApartBeamColor => _takeApartBeamColor;
+        public float TakeDownMoteRate => _takeDownMoteRate;
 
-        public float TakeApartBeamIntensity => _takeApartBeamIntensity;
+        public Vector2 TakeDownMoteSize => _takeDownMoteSize;
 
-        public float TakeApartBeamWidthShare => _takeApartBeamWidthShare;
+        public Vector2 TakeDownMoteSeconds => _takeDownMoteSeconds;
 
-        public int TakeApartDustCount => _takeApartDustCount;
+        public float TakeDownMoteBrightness => _takeDownMoteBrightness;
 
-        public float TakeApartDustStrength => _takeApartDustStrength;
+        public int TakeDownMotePool => _takeDownMotePool;
+
+        public int TakeDownDustCount => _takeDownDustCount;
+
+        public float TakeDownDustStrength => _takeDownDustStrength;
 
         public float ApronGlowFadeSeconds => _apronGlowFadeSeconds;
 

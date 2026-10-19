@@ -14,7 +14,6 @@ namespace MoonProject.Gameplay
     public sealed class StructureView : MonoBehaviour
     {
         private const float StagePopStartScale = 0.91f;
-        private const float DeconstructFoldScale = 0.96f;
         private const float StageScaleHalfLife = 0.065f;
         private const float LampWarmHalfLife = 0.14f;
         private const float CompletionLampFlash = 1.45f;
@@ -94,6 +93,7 @@ namespace MoonProject.Gameplay
         private bool _initialized;
         private float _buildProgress01;
         private float _deconstructProgress01;
+        private float _standingProgress01;
         private float _targetLampIntensity;
         private bool _lampsDriven;
         private float _lampDrive;
@@ -530,8 +530,9 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// Visualizes hold-to-deconstruct progress (0..1) by folding solid stages back into hologram from top to
-        /// bottom. Passing 0 restores the current <see cref="_buildProgress01"/> state.
+        /// Visualizes hold-to-deconstruct progress (0..1) as the build played backwards: the same stages and the same
+        /// live print the build uses, run from the piece's own progress down to nothing (the print plane sinks, the
+        /// topmost stage dissolves first). Letting go rewinds it the way it came; 0 restores the piece as it stood.
         /// </summary>
         public void SetDeconstructProgress(float deconstruct01)
         {
@@ -546,17 +547,19 @@ namespace MoonProject.Gameplay
                 return;
             }
 
-            // The piece settles a little under the held key and keeps every stage drawn: it comes apart in one piece,
-            // in the take-apart that follows, not stage by stage into holograms.
-            _deconstructProgress01 = clamped;
-            float foldScale = Mathf.Lerp(1f, DeconstructFoldScale, clamped);
-            for (int s = 0; s < _stageRoots.Length; s++)
+            if (_deconstructProgress01 <= 0f)
             {
-                if (_stageRoots[s] != null)
-                {
-                    _stageRoots[s].localScale = _stageBaseScale[s] * foldScale;
-                }
+                _standingProgress01 = _buildProgress01;
             }
+
+            if (clamped <= 0f)
+            {
+                SetPlacedState(_standingProgress01, instant: true);
+                return;
+            }
+
+            SetPlacedState(_standingProgress01 * (1f - clamped), instant: false);
+            _deconstructProgress01 = clamped;
         }
 
         /// <summary>Steps per-stage scale settle eases, variant unfolding/thermal visuals, and standby lamp <see cref="EmissionGlow"/>.</summary>

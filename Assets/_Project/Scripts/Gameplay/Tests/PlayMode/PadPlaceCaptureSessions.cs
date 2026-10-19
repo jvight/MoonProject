@@ -31,7 +31,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float ApproachBack = 9f;
         private const float SettleSeconds = 1f;
         private const float WakeTimeout = 120f;
-        private static readonly float[] TakeApartMarks = { 0.15f, 0.55f, 0.95f };
+        private static readonly float[] TakeDownMarks = { 0.33f, 0.66f, 0.97f };
 
         private Keyboard _keyboard;
         private GameContext _context;
@@ -114,22 +114,23 @@ namespace MoonProject.Gameplay.PlayModeTests
                 yield return StandFacing(stand, apron);
                 Assert.IsTrue(building.Controller.TryOpenMenu());
                 yield return Until(() => building.HoveredInstanceId == id, 5f, "the pad is in view to take down");
+                Capture("pad-take-down-000");
                 Press(_keyboard.xKey);
-                yield return Until(() => removed.Count > 0, 4f, "a held X takes the pad down");
-                Release(_keyboard.xKey);
-                float started = Time.time;
-                foreach (float mark in TakeApartMarks)
+                foreach (float mark in TakeDownMarks)
                 {
-                    float wait = started + mark * building.Tuning.TakeApartSeconds - Time.time;
-                    if (wait > 0f)
+                    yield return Until(() => building.Controller.DeconstructProgress01 >= mark || removed.Count > 0, 4f,
+                        "the held X fills the take-down");
+                    if (removed.Count == 0)
                     {
-                        yield return new WaitForSeconds(wait);
+                        Assert.Greater(building.TakeDownLevel, 0f, "the beam is on the piece while it is held");
+                        Capture("pad-take-down-" + ((int)(mark * 100f)).ToString("000"));
                     }
-
-                    Capture("pad-take-apart-" + (int)(mark * 100f));
                 }
 
-                yield return Until(() => !building.TakeApartRunning, 3f, "the take-apart ends by itself");
+                yield return Until(() => removed.Count > 0, 4f, "a held X takes the pad down");
+                Release(_keyboard.xKey);
+                yield return new WaitForSeconds(0.3f);
+                Assert.AreEqual(0f, building.TakeDownLevel, 1e-4f, "the beam lets go once it is gone");
                 Assert.AreEqual(1, removed.Count, "the pad is taken down once");
                 Assert.AreEqual(metalBefore + pad.BuildCost.Metal, _gameplay.Materials.Metal, "all of its Metal back");
                 Assert.AreEqual(wiringBefore + pad.BuildCost.Wiring, _gameplay.Materials.Wiring, "all of its Wiring back");

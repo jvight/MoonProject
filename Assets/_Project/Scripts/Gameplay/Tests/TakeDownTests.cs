@@ -10,10 +10,10 @@ using Object = UnityEngine.Object;
 namespace MoonProject.Gameplay.Tests
 {
     /// <summary>
-    /// The first pad's home and the way a piece comes down (docs: owner playtest, B5): the apron's snap, a taken-down
-    /// piece paying back all of its cost exactly once, and the take-apart picture that ends by itself without a pop.
+    /// The first pad's home and the way a piece comes down (owner playtest, B5): the apron's snap and guide, a held
+    /// take-down that fills and rewinds, and a taken-down piece paying back all of its cost exactly once.
     /// </summary>
-    public sealed class TakeApartTests
+    public sealed class TakeDownTests
     {
         private BuildingTuning _tuning;
 
@@ -103,93 +103,79 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void TheMotion_EasesDown_ThenEachPieceFlies_ShrinksToNothing_AndNothingJumps()
+        public void AHeldTakeDown_FillsOverTheHold_AndALetGoRewindsIt_WithoutPayingAnything()
         {
-            var motion = new TakeApartMotion(_tuning.TakeApartEaseShare, 3);
-            Assert.AreEqual(0f, motion.Sink01(0f), 1e-5f);
-            Assert.AreEqual(1f, motion.Sink01(1f), 1e-5f);
-            for (int piece = 0; piece < 3; piece++)
-            {
-                Assert.AreEqual(0f, motion.Flight01(piece, 0f), 1e-5f, "nothing has left at the start");
-                Assert.AreEqual(1f, motion.Flight01(piece, 1f), 1e-5f, "every piece has arrived at the end");
-                Assert.AreEqual(1f, motion.Scale(piece, 0f), 1e-5f);
-                Assert.AreEqual(TakeApartMotion.ArrivalScale, motion.Scale(piece, 1f), 1e-5f);
-                float previousFlight = 0f;
-                float previousScale = 1f;
-                for (int step = 1; step <= 120; step++)
-                {
-                    float t = step / 120f;
-                    float flight = motion.Flight01(piece, t);
-                    float scale = motion.Scale(piece, t);
-                    Assert.GreaterOrEqual(flight, previousFlight - 1e-5f, "a piece never flies back");
-                    Assert.LessOrEqual(scale, previousScale + 1e-5f, "a piece only shrinks");
-                    Assert.Less(flight - previousFlight, 0.08f, "no jump in the flight");
-                    Assert.Less(previousScale - scale, 0.1f, "no pop in the scale");
-                    previousFlight = flight;
-                    previousScale = scale;
-                }
-            }
-
-            Assert.Greater(motion.Flight01(0, 0.6f), motion.Flight01(2, 0.6f), "the first piece leaves before the last");
-            Assert.IsFalse(motion.BeamRetracting(0.5f));
-            Assert.IsTrue(motion.BeamRetracting(0.95f));
-        }
-
-        [Test]
-        public void TheTakeApart_ComesApartInTwoOrThreePieces_AndEndsOnceWithOneDustPuff_InAboutOnePointTwoSeconds()
-        {
-            var root = new GameObject("TakenDown");
-            var view = root.AddComponent<StructureView>();
-            for (int i = 0; i < 5; i++)
-            {
-                GameObject part = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                part.transform.SetParent(root.transform, false);
-                part.transform.localPosition = new Vector3(i - 2f, 0.5f, 0f);
-            }
-
-            var puffs = new List<(Vector3 Position, int Grains, float Strength)>();
-            var destroyed = new List<GameObject>();
-            Vector3 body = new Vector3(0f, 0.8f, -6f);
+            StructureCatalog catalog = BaseStructureRecipes.CreateCatalog();
+            MaterialCatalog materials = CargoFixtures.Catalog();
             try
             {
-                var takeApart = new TakeApart(view, _tuning, () => body, go =>
-                {
-                    destroyed.Add(go);
-                    Object.DestroyImmediate(go);
-                });
-                int pieces = 0;
-                foreach (Transform child in root.transform)
-                {
-                    pieces += child.name.StartsWith("TakeApartPiece", System.StringComparison.Ordinal) ? 1 : 0;
-                }
+                var events = new EventBus();
+                var known = new KnownStructures(catalog, events);
+                var placedBase = new PlacedBase(catalog, _tuning, events, known);
+                MaterialStock stock = CargoFixtures.Stock(events, materials);
+                var controller = new BuildModeController(catalog, known, placedBase, stock, _tuning,
+                    deconstructHoldSeconds: 1.2f, deconstructRewindSeconds: 0.6f);
+                StructureDefinition pad = catalog.Find(StructureIds.ChargingPad);
+                int id = placedBase.PlaceUnchecked(pad, new StructurePose(Vector3.forward * 4f, 0f), 1f);
 
-                Assert.That(pieces, Is.InRange(2, 3));
+                controller.StepDeconstruct(0.6f, id, Vector3.zero, deconstructHeld: true, out _, out _);
+                Assert.AreEqual(0.5f, controller.DeconstructProgress01, 1e-4f, "half the hold, half taken down");
+                Assert.AreEqual(id, controller.DeconstructTargetId);
 
-                float seconds = 0f;
-                int endings = 0;
-                while (!takeApart.IsDone && seconds < 3f)
-                {
-                    endings += takeApart.Step(1f / 60f, (at, grains, strength) => puffs.Add((at, grains, strength)))
-                        ? 1
-                        : 0;
-                    seconds += 1f / 60f;
-                }
+                controller.StepDeconstruct(0.3f, id, Vector3.zero, deconstructHeld: false, out int early, out _);
+                Assert.AreEqual(0, early);
+                Assert.AreEqual(0f, controller.DeconstructProgress01, 1e-4f, "0.3 s of rewind at 0.6 s for the lot");
+                Assert.AreEqual(0, controller.DeconstructTargetId, "nothing left of the hold, so the target is let go");
+                Assert.AreEqual(0, stock.Metal, "a take-down let go of pays nothing");
+                Assert.AreEqual(1, placedBase.Count);
 
-                Assert.IsTrue(takeApart.IsDone);
-                Assert.AreEqual(_tuning.TakeApartSeconds, seconds, 0.05f, "about 1.2 s");
-                Assert.AreEqual(1, endings, "it ends once");
-                Assert.AreEqual(1, puffs.Count, "one small puff of dust");
-                Assert.AreEqual(_tuning.TakeApartDustCount, puffs[0].Grains);
-                Assert.AreEqual(1, destroyed.Count, "the view goes once");
-                Assert.IsFalse(takeApart.Step(1f / 60f, (a, g, s) => puffs.Add((a, g, s))), "and does nothing after");
-                Assert.AreEqual(1, puffs.Count);
+                controller.StepDeconstruct(0.6f, id, Vector3.zero, deconstructHeld: true, out _, out _);
+                controller.StepDeconstruct(0.1f, id, Vector3.zero, deconstructHeld: false, out _, out _);
+                Assert.Greater(controller.DeconstructProgress01, 0.2f, "a short let-go only rewinds part of the way");
+                Assert.Less(controller.DeconstructProgress01, 0.5f);
             }
             finally
             {
-                if (root != null)
+                for (int i = 0; i < catalog.Count; i++)
                 {
-                    Object.DestroyImmediate(root);
+                    Object.DestroyImmediate(catalog.StructureAt(i));
                 }
+
+                Object.DestroyImmediate(catalog);
+                Object.DestroyImmediate(materials);
+            }
+        }
+
+        [Test]
+        public void TheMoteStream_RunsFromTheEdgeToTheEmitter_WithinItsPool_AndEmptiesOnceTheHoldLetsGo()
+        {
+            var host = new GameObject("MoteHost");
+            var sprite = new Material(Shader.Find("Sprites/Default"));
+            try
+            {
+                var motes = new MoteStream(host.transform, sprite, _tuning, _tuning.TakeDownMotePool);
+                Vector3 edge = new Vector3(0f, 0.6f, 4f);
+                Vector3 emitter = new Vector3(0f, 0.8f, 0f);
+                int most = 0;
+                for (int i = 0; i < 120; i++)
+                {
+                    motes.Step(1f / 60f, edge, emitter, 1f);
+                    most = Mathf.Max(most, motes.Live);
+                }
+
+                Assert.Greater(most, 2, "a stream, not one mote");
+                Assert.LessOrEqual(most, _tuning.TakeDownMotePool);
+                for (int i = 0; i < 120; i++)
+                {
+                    motes.Step(1f / 60f, edge, emitter, 0f);
+                }
+
+                Assert.AreEqual(0, motes.Live, "motes already in flight finish their way, then none are left");
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+                Object.DestroyImmediate(sprite);
             }
         }
 

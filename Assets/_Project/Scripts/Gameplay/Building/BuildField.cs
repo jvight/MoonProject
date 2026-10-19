@@ -59,9 +59,6 @@ namespace MoonProject.Gameplay
         private const string TintProperty = "_Color";
         private const string IntensityProperty = "_Intensity";
 
-        /// <summary>Metres above 07's origin the taken-apart pieces float to: about its body.</summary>
-        private const float TakeApartBodyHeight = 0.8f;
-
         private const int SeamSlotCount = 4;
 
         private Transform _structuresRoot;
@@ -69,11 +66,14 @@ namespace MoonProject.Gameplay
         private CutBeam _weldBeam;
         private LightPulse _weldLight;
         private VacuumDebris _weldDebris;
-        private Action<Vector3, int, float> _dustPuff;
-        private CutBeam _takeApartBeam;
-        private TakeApart _takeApart;
-        private Material _takeApartCore;
-        private Material _takeApartSheath;
+        private CutBeam _takeDownBeam;
+        private MoteStream _takeDownMotes;
+        private Material _takeDownCore;
+        private Material _takeDownSheath;
+        private Bounds _takeDownBounds;
+        private int _takeDownBoundsId;
+        private float _takeDownLevel;
+        private Vector3 _takeDownEdge;
         private readonly HeatSeam[] _weldSeams = new HeatSeam[SeamSlotCount];
         private GridLinkLine _gridLink;
         private readonly Vector3[] _seamLine = new Vector3[3];
@@ -211,7 +211,9 @@ namespace MoonProject.Gameplay
 
             _known = new KnownStructures(_catalog, _events);
             _placedBase = new PlacedBase(_catalog, _tuning, _events, _known);
-            _controller = new BuildModeController(_catalog, _known, _placedBase, _stock, _tuning);
+            _controller = new BuildModeController(_catalog, _known, _placedBase, _stock, _tuning,
+                deconstructHoldSeconds: _tuning.DeconstructHoldSeconds,
+                deconstructRewindSeconds: _tuning.DeconstructRewindSeconds);
             _controller.RefreshAvailable();
 
             _structuresRoot = new GameObject("PlacedStructures").transform;
@@ -226,11 +228,11 @@ namespace MoonProject.Gameplay
             _weldBeam = new CutBeam(vfxRoot, feelTuning, _visuals.BeamCore, _visuals.BeamSheath);
             _weldLight = new LightPulse("BuildWeldLight", vfxRoot, feelTuning.CutLightColor, feelTuning.CutRange);
             _weldDebris = new VacuumDebris(vfxRoot, feelTuning, _visuals.FeelSprite);
-            _dustPuff = _weldDebris.Ring;
-            _takeApartCore = Tinted(_visuals.BeamCore, _tuning.TakeApartBeamColor, _tuning.TakeApartBeamIntensity);
-            _takeApartSheath = Tinted(_visuals.BeamSheath, _tuning.TakeApartBeamColor, _tuning.TakeApartBeamIntensity);
-            _takeApartBeam = new CutBeam(vfxRoot, feelTuning, _takeApartCore, _takeApartSheath,
-                _tuning.TakeApartBeamWidthShare);
+            _takeDownCore = Tinted(_visuals.BeamCore, _tuning.TakeDownBeamColor, _tuning.TakeDownBeamIntensity);
+            _takeDownSheath = Tinted(_visuals.BeamSheath, _tuning.TakeDownBeamColor, _tuning.TakeDownBeamIntensity);
+            _takeDownBeam = new CutBeam(vfxRoot, feelTuning, _takeDownCore, _takeDownSheath,
+                _tuning.TakeDownBeamWidthShare);
+            _takeDownMotes = new MoteStream(vfxRoot, _visuals.FeelSprite, _tuning, _tuning.TakeDownMotePool);
             for (int i = 0; i < SeamSlotCount; i++)
             {
                 _weldSeams[i] = new HeatSeam(vfxRoot, feelTuning, _visuals.HeatSeam);
@@ -307,8 +309,8 @@ namespace MoonProject.Gameplay
         /// <summary>The apron bay's centre the charging pad's ghost settles on, or null before it is marked.</summary>
         public Vector3? ApronCentre => _apronCentre;
 
-        /// <summary>True while a taken-down piece is still coming apart on screen.</summary>
-        public bool TakeApartRunning => _takeApart != null;
+        /// <summary>How far the take-down on screen has come (0 when none), for tests and captures.</summary>
+        public float TakeDownLevel => _takeDownLevel;
 
         /// <summary>
         /// Opens the build menu as the Build key would, for a screen that closes and hands over to build mode (the
@@ -442,52 +444,59 @@ namespace MoonProject.Gameplay
                                    (_rig == null || _rig.HasCutterLineOfSight(weldPoint));
             StepWeldVfx(weldingNow, activelyWelding, weldPoint, deltaTime);
             StepWeldLoopAudio(activelyWelding, weldPoint);
-            StepTakeApart(deltaTime);
+            StepTakeDown(deltaTime);
         }
 
-        /// <summary>A copy of a beam material in the take-apart's cool, desaturated colour.</summary>
+        /// <summary>A copy of a beam material in the take-down's cool, desaturated colour.</summary>
         private static Material Tinted(Material source, Color color, float intensity)
         {
-            var copy = new Material(source) { name = source.name + "_TakeApart" };
+            var copy = new Material(source) { name = source.name + "_TakeDown" };
             copy.SetColor(TintProperty, color);
             copy.SetFloat(IntensityProperty, intensity);
             return copy;
         }
 
         /// <summary>
-        /// Runs the take-apart picture of a piece 07 has taken down: a soft cool beam reaches it while it eases down and
-        /// its pieces float to 07; the beam thins out and the last of it goes in a small puff of dust.
+        /// Draws the take-down: while the hold fills, the same beam as the build in a quiet cool tint reaches the
+        /// dissolving edge of the piece and a thin stream of motes runs from it into 07's emitter; both let go as the
+        /// hold does.
         /// </summary>
-        private void StepTakeApart(float deltaTime)
+        private void StepTakeDown(float deltaTime)
         {
             Vector3 emitter = _rig != null ? _rig.CutterOrigin.position : _rover.Position;
-            if (_takeApart == null)
+            if (_takeDownLevel > 0f)
             {
-                _takeApartBeam.Retract();
-                _takeApartBeam.Step(deltaTime, emitter, emitter);
-                return;
-            }
-
-            if (_takeApart.BeamOut)
-            {
-                _takeApartBeam.Extend();
+                _takeDownBeam.Extend();
             }
             else
             {
-                _takeApartBeam.Retract();
+                _takeDownBeam.Retract();
             }
 
-            _takeApartBeam.Step(deltaTime, emitter, _takeApart.Centre);
-            if (_takeApart.Step(deltaTime, _dustPuff))
-            {
-                _takeApart = null;
-            }
+            _takeDownBeam.Step(deltaTime, emitter, _takeDownEdge);
+            _takeDownMotes.Step(deltaTime, _takeDownEdge, emitter, _takeDownLevel);
         }
 
-        /// <summary>07's body, where taken-apart pieces go.</summary>
-        private Vector3 TakeApartDestination()
+        /// <summary>Where the dissolving edge of the piece being taken down is: the print plane, sinking as the hold fills.</summary>
+        private Vector3 TakeDownEdgeOf(int instanceId, StructureView view, float progress01)
         {
-            return _rover.Position + Vector3.up * TakeApartBodyHeight;
+            if (_takeDownBoundsId != instanceId)
+            {
+                Renderer[] renderers = view.GetComponentsInChildren<Renderer>();
+                _takeDownBounds = renderers.Length > 0
+                    ? renderers[0].bounds
+                    : new Bounds(view.transform.position, Vector3.one);
+                for (int i = 1; i < renderers.Length; i++)
+                {
+                    _takeDownBounds.Encapsulate(renderers[i].bounds);
+                }
+
+                _takeDownBoundsId = instanceId;
+            }
+
+            Vector3 centre = _takeDownBounds.center;
+            return new Vector3(centre.x, Mathf.Lerp(_takeDownBounds.min.y, _takeDownBounds.max.y, 1f - progress01),
+                centre.z);
         }
 
         private void StepWeldVfx(bool weldingNow, bool activelyWelding, Vector3 weldPoint, float deltaTime)
@@ -894,7 +903,14 @@ namespace MoonProject.Gameplay
             int currentTarget = _controller.DeconstructTargetId;
             if (currentTarget > 0 && _viewsById.TryGetValue(currentTarget, out StructureView activeView))
             {
-                activeView.SetDeconstructProgress(_controller.DeconstructProgress01);
+                float progress = _controller.DeconstructProgress01;
+                activeView.SetDeconstructProgress(progress);
+                _takeDownLevel = progress;
+                _takeDownEdge = TakeDownEdgeOf(currentTarget, activeView, progress);
+            }
+            else
+            {
+                _takeDownLevel = 0f;
             }
 
             if (previousTarget > 0 &&
@@ -1297,13 +1313,13 @@ namespace MoonProject.Gameplay
                 if (view != null)
                 {
                     RegisterManagedColliders(view, false);
+                    Destroy(view.gameObject);
                     if (_controller.DeconstructTargetId == e.InstanceId)
                     {
-                        BeginTakeApart(view);
-                    }
-                    else
-                    {
-                        Destroy(view.gameObject);
+                        // The last stage has dissolved: a small settle of dust where it stood, and the count ticks as
+                        // the materials arrive.
+                        _weldDebris.Ring(e.Position, _tuning.TakeDownDustCount, _tuning.TakeDownDustStrength);
+                        _events.Publish(new UiCue(UiCueKind.PartDrop));
                     }
                 }
 
@@ -1312,17 +1328,6 @@ namespace MoonProject.Gameplay
 
             _events.Publish(new FeelBeat(FeelKind.Build, FeelPhase.Cancel, e.Position, Vector3.up, 1f, 0f));
             _save?.SaveNow();
-        }
-
-        /// <summary>
-        /// The removed structure comes apart on screen instead of vanishing: it stands as it was, then eases down and its
-        /// pieces float to 07. A take-apart still running is ended first (its picture only; it has been paid already).
-        /// </summary>
-        private void BeginTakeApart(StructureView view)
-        {
-            _takeApart?.Finish(_dustPuff);
-            view.SetDeconstructProgress(0f);
-            _takeApart = new TakeApart(view, _tuning, TakeApartDestination);
         }
 
         /// <summary>Where 07's weld beam meets structure <paramref name="instanceId"/>: its real surface.</summary>
@@ -1472,14 +1477,14 @@ namespace MoonProject.Gameplay
             }
 
             _subscriptions.Clear();
-            if (_takeApartCore != null)
+            if (_takeDownCore != null)
             {
-                Destroy(_takeApartCore);
+                Destroy(_takeDownCore);
             }
 
-            if (_takeApartSheath != null)
+            if (_takeDownSheath != null)
             {
-                Destroy(_takeApartSheath);
+                Destroy(_takeDownSheath);
             }
         }
 
