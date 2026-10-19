@@ -978,12 +978,12 @@ def build_prop_old_lander(out_fbx: Path) -> None:
         parent=root,
         name="Decal_VIS_1",
         cell_key="VIS_1967",
-        center_u=_pose_pt((box_a_center[0], box_a_center[1] + 0.138, box_a_center[2] + 0.170)),
+        center_u=_pose_pt((box_a_center[0], box_a_center[1] + 0.140, box_a_center[2] + 0.170)),
         normal_u=(float(decal_n_b.x), float(decal_n_b.z), float(decal_n_b.y)),
         up_u=(float(decal_up_b.x), float(decal_up_b.z), float(decal_up_b.y)),
         width=0.175,
         height=0.1225,
-        v_crop=(0.15, 0.85),
+        v_crop=(0.20, 0.90),
     )
 
     r1kit.apply_triplanar_uvs(root)
