@@ -2134,12 +2134,22 @@ Label {
     justify-content: center;
 }
 
+/* Phosphor amber, brighter along the middle: the raster opens as a warm glow, not a slab */
 .boot-face__raster {
     position: absolute;
     min-width: 6px;
     min-height: 4px;
     border-radius: 2px;
-    background-color: rgb(255, 224, 152);
+    background-color: rgba(255, 174, 56, 0.7);
+}
+
+.boot-face__raster-core {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 35%;
+    bottom: 35%;
+    background-color: rgba(255, 222, 160, 0.6);
 }
 
 .boot-face__logo {

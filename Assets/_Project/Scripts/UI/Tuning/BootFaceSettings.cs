@@ -22,9 +22,10 @@ namespace MoonProject.UI
         [Range(0.1f, 0.6f)]
         [SerializeField] private float _openShare = 0.35f;
 
-        [Tooltip("How bright the raster blooms at its peak (0..1 of the phosphor colour).")]
+        [Tooltip("How bright the raster blooms once it is full (0..1 of the phosphor glow); it falls there fast as " +
+                 "the line opens, so the opening reads as a glow.")]
         [Range(0.1f, 1f)]
-        [SerializeField] private float _bloomPeak = 0.3f;
+        [SerializeField] private float _bloomPeak = 0.2f;
 
         [Header("Maker's mark (shares of its seconds)")]
         [Tooltip("The beam tracing the strokes, one after another, each the same time.")]

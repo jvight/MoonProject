@@ -227,7 +227,7 @@ namespace MoonProject.UI
             RasterWidth = Ease(0f, line, u);
             RasterHeight = Ease(line, open, u);
             RasterGlow = u < line ? 1f
-                : u < open ? Mathf.Lerp(1f, _settings.BloomPeak, (u - line) / (open - line))
+                : u < open ? Mathf.Lerp(1f, _settings.BloomPeak, Mathf.Sqrt((u - line) / (open - line)))
                 : _settings.BloomPeak * (1f - Ease(open, 1f, u));
         }
 
