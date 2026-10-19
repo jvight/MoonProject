@@ -229,6 +229,42 @@ MonoBehaviour:
     _volumeMax: 0.4
     _pitchMin: 1
     _pitchMax: 1
+  - _id: ui_relay_click
+    _clips:
+    - {fileID: 8300000, guid: 4baba7eed0417974c91a5a8b4bed8da8, type: 3}
+    _variantLabels:
+    - ui_relay_click
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.45
+    _volumeMax: 0.45
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: ui_tube_thunk
+    _clips:
+    - {fileID: 8300000, guid: 118a04f086726db418062b77e78f1b43, type: 3}
+    _variantLabels:
+    - ui_tube_thunk
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.45
+    _volumeMax: 0.45
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: ui_tape_tick
+    _clips:
+    - {fileID: 8300000, guid: a5e9aa69e6c42ed448c4fd0a256c2510, type: 3}
+    _variantLabels:
+    - ui_tape_tick
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.4
+    _volumeMax: 0.4
+    _pitchMin: 1
+    _pitchMax: 1
   - _id: sheet_complete
     _clips:
     - {fileID: 8300000, guid: f843faffbc2085540911cbc32cc5aff5, type: 3}

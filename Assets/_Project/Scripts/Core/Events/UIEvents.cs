@@ -76,6 +76,15 @@ namespace MoonProject.Core.Events
 
         /// <summary>A part was dropped where it does not fit: a quiet refusal.</summary>
         PartRefuse = 13,
+
+        /// <summary>A databank page started to flip on 07's face: Audio plays a small relay click.</summary>
+        DatabankPageFlip = 14,
+
+        /// <summary>The databank's picture settled on its new page (the CRT channel settling): a soft tube thunk.</summary>
+        DatabankChannelSettle = 15,
+
+        /// <summary>The databank's list cursor moved one line: a tape-head tick (rate-limited like focus steps).</summary>
+        DatabankListStep = 16,
     }
 
     /// <summary>
