@@ -5,6 +5,7 @@
         "MoonProject.Core",
         "MoonProject.Rover",
         "MoonProject.UI",
+        "MoonProject.Gameplay",
         "MoonProject.App",
         "MoonProject.Testing",
         "Unity.Cinemachine",

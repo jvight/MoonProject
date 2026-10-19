@@ -102,6 +102,11 @@ namespace MoonProject.UI.Tests
             Assert.AreEqual(DropOutcome.NotDocked, DropRule.Decide(igniter, -1, false));
             Assert.AreEqual(DropOutcome.ToCutter, DropRule.Decide(igniter, FaceDevices.Scan, true));
             Assert.AreEqual(DropOutcome.ToCutter, DropRule.Decide(igniter, -1, true));
+            Assert.AreEqual(DropOutcome.Fit, DropRule.Decide(igniter, FaceDevices.Scan, true, onDevicePanel: true),
+                "a drop anywhere on the device panel goes to the cutter");
+            Assert.AreEqual(DropOutcome.Fit, DropRule.Decide(igniter, -1, true, onDevicePanel: true));
+            Assert.AreEqual(DropOutcome.NotDocked, DropRule.Decide(igniter, FaceDevices.Scan, false, onDevicePanel: true),
+                "the panel takes nothing while the cutter will not");
             Assert.AreEqual(DropOutcome.Nowhere, DropRule.Decide("part.icecore", FaceDevices.Cutter, true));
             Assert.AreEqual(DropOutcome.Nowhere, DropRule.Decide(null, FaceDevices.Cutter, true), "a material");
 

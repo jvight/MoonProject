@@ -618,13 +618,20 @@ namespace MoonProject.UI
         }
 
         /// <summary>
-        /// Selects where the screen opens: the cutter while it offers the spare igniter (one confirm fits it), else the
-        /// first thing in the hold, else the first slot.
+        /// Selects where the screen opens: the spare igniter in the hold while the cutter offers to take it (the cutter
+        /// stands highlighted, and Enter or E fits it), else the first thing in the hold, else the first slot.
         /// </summary>
         public void FocusFirst()
         {
             if (_systems.CanFitIgniter)
             {
+                int igniter = FindIgniterCell();
+                if (igniter >= 0)
+                {
+                    FocusHoldCell(igniter);
+                    return;
+                }
+
                 FocusDevice(FaceDevices.Cutter);
                 return;
             }
@@ -776,10 +783,39 @@ namespace MoonProject.UI
             {
                 _lastSubmitFrame = Time.frameCount;
                 Press(_focusedHoldCell, -1);
+                if (IsOfferedIgniter(_focusedHoldCell) && _systems.TryFitIgniter())
+                {
+                    _events.Publish(new UiCue(UiCueKind.PartDrop));
+                    Refresh();
+                    FocusDevice(FaceDevices.Cutter);
+                }
+
                 return true;
             }
 
             return false;
+        }
+
+        /// <summary>Hold cell <paramref name="index"/> holds the spare igniter and the cutter offers to take it.</summary>
+        private bool IsOfferedIgniter(int index)
+        {
+            return _systems.CanFitIgniter && _holdStates[index].Kind == HoldCellKind.StoryPart &&
+                   _holdStates[index].StoryPartId == DropRule.SpareIgniterPart;
+        }
+
+        /// <summary>The hold cell holding the spare igniter, or -1.</summary>
+        private int FindIgniterCell()
+        {
+            for (int i = 0; i < _unlockedHoldCount; i++)
+            {
+                if (_holdStates[i].Kind == HoldCellKind.StoryPart &&
+                    _holdStates[i].StoryPartId == DropRule.SpareIgniterPart)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
 
         /// <summary>
@@ -968,7 +1004,7 @@ namespace MoonProject.UI
 
             int cell = _drag.Cell;
             DropOutcome outcome = DropRule.Decide(_holdStates[cell].StoryPartId, FindDeviceAtReferencePos(refPos),
-                _systems.CanFitIgniter);
+                _systems.CanFitIgniter, FaceLayout.DevicePanel.Contains(refPos));
             if (outcome == DropOutcome.Fit && _systems.TryFitIgniter())
             {
                 _drag.Fit(FaceDevices.CenterOf(FaceDevices.Cutter));
@@ -1186,6 +1222,10 @@ namespace MoonProject.UI
                 else if (_focusedHoldCell == _dropReasonCell && _dropReasonKey != null)
                 {
                     ShowTooltipBox(HoldItemName(_focusedHoldCell), _localization.Get(_dropReasonKey));
+                }
+                else if (IsOfferedIgniter(_focusedHoldCell))
+                {
+                    ShowTooltipBox(HoldItemName(_focusedHoldCell), _localization.Get(UiKeys.CargoIgniterFitHint));
                 }
                 else
                 {
