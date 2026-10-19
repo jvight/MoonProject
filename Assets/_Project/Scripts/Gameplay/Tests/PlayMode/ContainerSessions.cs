@@ -46,10 +46,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             _fixture = GameplayFixture.Boot(_controls, slot);
             yield return null;
             GameplaySystem gameplay = _fixture.Gameplay;
-            SealedContainer crate = gameplay.Containers.Find("supply.wake");
+            SealedContainer crate = gameplay.Containers.Find("supply.array.junction");
             _fixture.Rover.Place(crate.CutPoint.position + crate.Root.forward * 1.5f,
                 Quaternion.LookRotation(-crate.Root.forward).eulerAngles.y);
-            yield return SealCut.Hold(this, gameplay, crate, "the wake crate");
+            yield return SealCut.Hold(this, gameplay, crate, "the junction box's crate");
             Quaternion open = crate.Lid.localRotation;
 
             _fixture.Dispose(true);
@@ -59,7 +59,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _fixture.Bootstrap.Context.Events.Subscribe<ContainerOpened>(opens.Add);
             yield return null;
             yield return null;
-            crate = _fixture.Gameplay.Containers.Find("supply.wake");
+            crate = _fixture.Gameplay.Containers.Find("supply.array.junction");
             Assert.IsTrue(crate.StandsOpen, "the cut was a checkpoint: it stands open");
             Assert.Less(Quaternion.Angle(open, crate.Lid.localRotation), 1f, "its lid back where it swung to");
             Assert.IsEmpty(opens, "a load is not an opening");
@@ -85,7 +85,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _fixture = GameplayFixture.Boot(_controls);
             yield return null;
             GameplaySystem gameplay = _fixture.Gameplay;
-            SealedContainer crate = gameplay.Containers.Find("supply.wake");
+            SealedContainer crate = gameplay.Containers.Find("supply.array.junction");
             _fixture.Rover.Place(crate.CutPoint.position + crate.Root.forward * 1.5f,
                 Quaternion.LookRotation(-crate.Root.forward).eulerAngles.y);
             yield return null;
@@ -114,7 +114,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _fixture = GameplayFixture.Boot(_controls);
             yield return null;
             GameplaySystem gameplay = _fixture.Gameplay;
-            SealedContainer crate = gameplay.Containers.Find("supply.wake");
+            SealedContainer crate = gameplay.Containers.Find("supply.array.junction");
             Vector3 stand = crate.CutPoint.position + crate.Root.forward * BesideSeal;
             _fixture.Rover.Place(stand, Quaternion.LookRotation(-crate.Root.forward).eulerAngles.y);
             ScanFragment fragment = gameplay.Scans.Find("ruin." + ScanTuning.LanderCargoId + ".0");

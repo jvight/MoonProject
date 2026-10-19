@@ -700,7 +700,7 @@
         },
         {
             "key": "next.v2.cut_optics",
-            "text": "Cắt tàn tích để lấy thấu kính."
+            "text": "Cắt các tấm pin và hộp nối dây của dàn pin đổ."
         },
         {
             "key": "next.v2.build_solar",

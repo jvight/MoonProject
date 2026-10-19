@@ -9,7 +9,6 @@ namespace MoonProject.Gameplay
     /// </summary>
     public static class ContainerKinds
     {
-        public const string CrateS = "Crate_S";
         public const string CrateM = "Crate_M";
         public const string CrateL = "Crate_L";
 
@@ -26,7 +25,6 @@ namespace MoonProject.Gameplay
         {
             switch (prefab)
             {
-                case CrateS:
                 case CrateM:
                 case CrateL:
                 case CrateCargoOpen:

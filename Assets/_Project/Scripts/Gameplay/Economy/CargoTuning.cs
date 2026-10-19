@@ -3,8 +3,8 @@ using UnityEngine;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// Cargo (docs/features/M3-25, opening-v2 §5): the slots of 07's hold, its spares, the pieces held on their wrecks
-    /// while the hold is full, and the sealed containers. Pure data.
+    /// Cargo (docs/features/M3-25, opening-v2 §5): the slots of 07's hold (empty at a new game, opening-v3 §4), the
+    /// pieces held on their wrecks while the hold is full, and the sealed containers. Pure data.
     /// </summary>
     [CreateAssetMenu(menuName = "MoonProject/Gameplay/Cargo Tuning", fileName = "CargoTuning")]
     public sealed class CargoTuning : ScriptableObject
@@ -12,10 +12,6 @@ namespace MoonProject.Gameplay
         [Header("07's hold (§2.2)")]
         [Tooltip("Slots of 07's own body hold.")]
         [Range(1, 32)] [SerializeField] private int _holdSlots = 8;
-
-        [Tooltip("07's spares: what its hold carries at the start of a new game (opening-v2 §10: Metal 2, Wiring 1). " +
-                 "A loaded save keeps its own hold instead.")]
-        [SerializeField] private Recipe _starterItems = new Recipe(2, 1, 0);
 
         [Header("Held pieces (§2.3, 0.5.5 §2)")]
         [Tooltip("Seconds between a held piece's slow breaths of its amber halo.")]
@@ -81,7 +77,6 @@ namespace MoonProject.Gameplay
             : new Vector2(_containerSealFade.y, _containerSealFade.x);
 
         public int HoldSlots => _holdSlots;
-        public Recipe StarterItems => _starterItems;
         public float BundlePulseSeconds => _bundlePulseSeconds;
         public float BundlePulse => _bundlePulse;
         public float HeldHalo => _heldHalo;
