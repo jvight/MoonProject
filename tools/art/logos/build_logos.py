@@ -570,5 +570,483 @@ def generate_brand_ilc():
     print("[build_logos] Generated ILC logos in", out_dir)
 
 
+# ==============================================================================
+# BRAND 2: KESSLER–ARAI FIELD SYSTEMS (Robot Maker of 07 & Elders, 1983)
+# ==============================================================================
+
+def build_kessler_a() -> Image.Image:
+    """
+    Kessler–Arai Direction A: 'The KA Single-Lens & Rocker-Bogie Badge'
+    Chunky rounded-bezel industrial monogram uniting a stencil 'K–A' with 07's hooded single-lens
+    eye and rocker-bogie suspension link—friendly, reliable, and built for 07's CRT boot screen.
+    """
+    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+
+    # Rounded squircle equipment bezel (x: 164..860, y: 78..582), echoing 07's visor hood
+    bx0, by0, bx1, by1 = 164, 78, 860, 582
+    d.rounded_rectangle((s(bx0), s(by0), s(bx1), s(by1)), radius=s(84), fill=WARM_DARK, outline=CREAM, width=s(12))
+    d.rounded_rectangle((s(bx0 + 20), s(by0 + 20), s(bx1 - 20), s(by1 - 20)), radius=s(66), outline=CORAL, width=s(6))
+
+    # Top visor hood brow bar in Coral-Orange (#FF8A5B)
+    d.rounded_rectangle((s(bx0 + 54), s(by0 + 44), s(bx1 - 54), s(by0 + 72)), radius=s(10), fill=CORAL)
+
+    # --- Left 'K' Monogram (x: 248..456, y: 184..444) ---
+    # Heavy vertical stem in Cream
+    d.rounded_rectangle((s(252), s(184), s(304), s(444)), radius=s(8), fill=CREAM)
+    # Upper diagonal arm of K in Cream
+    k_up = [(sf(314), sf(304)), (sf(418), sf(184)), (sf(466), sf(184)), (sf(356), sf(314))]
+    d.polygon(k_up, fill=CREAM)
+    # Lower diagonal strut of K in Coral-Orange (#FF8A5B) acting as articulated hydraulic link
+    k_dn = [(sf(344), sf(296)), (sf(388), sf(296)), (sf(472), sf(444)), (sf(418), sf(444))]
+    d.polygon(k_dn, fill=CORAL)
+
+    # Central hyphen / structural coupling bridge linking K and A
+    d.rounded_rectangle((s(452), s(300), s(532), s(336)), radius=s(8), fill=AMBER)
+
+    # --- Right 'A' Survey Frame & 07 Hooded Single Lens (x: 528..772, y: 184..444) ---
+    ax_c = 652
+    # Left & right angled legs of 'A' in Cream
+    a_left = [(sf(ax_c - 34), sf(184)), (sf(ax_c + 12), sf(184)), (sf(584), sf(444)), (sf(532), sf(444))]
+    a_right = [(sf(ax_c - 12), sf(184)), (sf(ax_c + 34), sf(184)), (sf(772), sf(444)), (sf(720), sf(444))]
+    d.polygon(a_left, fill=CREAM)
+    d.polygon(a_right, fill=CREAM)
+    # Crossbar of 'A'
+    d.rectangle((s(572), s(352), s(732), s(388)), fill=CREAM)
+
+    # 07's Iconic Single Round Survey Lens mounted at the 'A' upper hub (cx=652, cy=268)
+    lx, ly, lr = 652, 268, 62
+    d.ellipse((s(lx - lr - 10), s(ly - lr - 10), s(lx + lr + 10), s(ly + lr + 10)), fill=WARM_DARK)
+    draw_thick_arc(d, lx, ly, lr, lr, 0, 360, 14.0, AMBER)
+    # Inner warm amber lens core
+    d.ellipse((s(lx - 32), s(ly - 32), s(lx + 32), s(ly + 32)), fill=CORAL)
+    # Half-lidded shutter brow across top of lens (where 07's gentle melancholy lives, VISION.md:76)
+    d.chord((s(lx - lr - 2), s(ly - lr - 2), s(lx + lr + 2), s(ly + lr + 2)), start=195, end=345, fill=CREAM)
+    # Specular crescent arc on lower lens
+    draw_thick_arc(d, lx, ly, 42, 42, 25, 155, 6.0, CREAM, round_caps=True)
+
+    # --- Lower Rocker-Bogie Suspension Link Bar (y: 472..526) ---
+    # Connects left wheel bogie pivot to right wheel bogie pivot
+    rb_pts = [
+        (sf(244), sf(516)),
+        (sf(296), sf(474)),
+        (sf(728), sf(474)),
+        (sf(780), sf(516)),
+        (sf(748), sf(532)),
+        (sf(712), sf(502)),
+        (sf(312), sf(502)),
+        (sf(276), sf(532)),
+    ]
+    d.polygon(rb_pts, fill=CORAL)
+    # Left and right trapezoidal wheel-pad feet (no round holes)
+    d.polygon([(sf(224), sf(536)), (sf(296), sf(536)), (sf(284), sf(514)), (sf(236), sf(514))], fill=AMBER)
+    d.polygon([(sf(728), sf(536)), (sf(800), sf(536)), (sf(788), sf(514)), (sf(740), sf(514))], fill=AMBER)
+
+    # --- 2. Industrial Wordmark Lockup ---
+    f_main = load_font("ChakraPetch-Bold.ttf", 72)
+    draw_tracked_text(d, 512, 656, "KESSLER–ARAI", f_main, CREAM, tracking=6.5)
+
+    # Coral-orange ribbon bar with dark knock-out 'FIELD SYSTEMS'
+    d.rounded_rectangle((s(192), s(722), s(832), s(788)), radius=s(12), fill=CORAL)
+    f_ribbon = load_font("ChakraPetch-Bold.ttf", 38)
+    draw_tracked_text(d, 512, 755, "FIELD SYSTEMS", f_ribbon, WARM_DARK, tracking=10.0)
+
+    # Chassis spec subline
+    f_sub = load_font("IBMPlexMono-Bold.ttf", 21)
+    draw_tracked_text(d, 512, 838, "SSR-3 / SSR-5 SERIES  ·  STUTTGART & TSUKUBA  ·  EST. 1974", f_sub, AMBER, tracking=2.0)
+    draw_tracked_text(d, 512, 884, "MODULAR PLANETARY & WAYSTATION ROBOTICS", f_sub, CREAM, tracking=3.0)
+
+    return downsample(img)
+
+
+def build_kessler_b() -> Image.Image:
+    """
+    Kessler–Arai Direction B: 'The Rising Solar Disc & Crater-Ridge Lozenge'
+    1980s Komatsu/Braun-inspired heavy machinery stamp pairing a warm solar disc (Arai)
+    with a stepped crater-ridge chevron (Kessler) inside chamfered chassis brackets.
+    """
+    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+
+    # Chamfered octagonal industrial housing (x: 148..876, y: 84..576)
+    cx, cy = 512, 330
+    chamf = 72
+    bx0, by0, bx1, by1 = 156, 84, 868, 576
+    oct_pts = [
+        (sf(bx0 + chamf), sf(by0)),
+        (sf(bx1 - chamf), sf(by0)),
+        (sf(bx1), sf(by0 + chamf)),
+        (sf(bx1), sf(by1 - chamf)),
+        (sf(bx1 - chamf), sf(by1)),
+        (sf(bx0 + chamf), sf(by1)),
+        (sf(bx0), sf(by1 - chamf)),
+        (sf(bx0), sf(by0 + chamf)),
+    ]
+    d.polygon(oct_pts, fill=WARM_DARK)
+
+    # Heavy left & right Coral-Orange C-clamp bumper brackets
+    bw = 26
+    for side in (-1, 1):
+        x_edge = bx0 if side == -1 else bx1
+        x_in = x_edge - side * (chamf + 24)
+        clamp = [
+            (sf(x_in), sf(by0)),
+            (sf(x_edge - side * chamf), sf(by0)),
+            (sf(x_edge), sf(by0 + chamf)),
+            (sf(x_edge), sf(by1 - chamf)),
+            (sf(x_edge - side * chamf), sf(by1)),
+            (sf(x_in), sf(by1)),
+            (sf(x_in), sf(by1 - bw)),
+            (sf(x_edge - side * (chamf - 10)), sf(by1 - bw)),
+            (sf(x_edge - side * bw), sf(by1 - chamf + 10)),
+            (sf(x_edge - side * bw), sf(by0 + chamf - 10)),
+            (sf(x_edge - side * (chamf - 10)), sf(by0 + bw)),
+            (sf(x_in), sf(by0 + bw)),
+        ]
+        d.polygon(clamp, fill=CORAL)
+
+    # Top and bottom Cream tie-bars between clamps
+    d.rectangle((s(bx0 + chamf + 38), s(by0 + 6), s(bx1 - chamf - 38), s(by0 + 20)), fill=CREAM)
+    d.rectangle((s(bx0 + chamf + 38), s(by1 - 20), s(bx1 - chamf - 38), s(by1 - 6)), fill=CREAM)
+
+    # --- Rising Amber Solar Disc (Arai) at (512, 292), r = 136 ---
+    sun_y, sun_r = 294, 138
+    d.ellipse((s(cx - sun_r), s(sun_y - sun_r), s(cx + sun_r), s(sun_y + sun_r)), fill=AMBER)
+    # Two clean horizontal 1980s scan-cuts across the sun disc
+    d.rectangle((s(cx - sun_r - 10), s(sun_y + 18), s(cx + sun_r + 10), s(sun_y + 32)), fill=WARM_DARK)
+    d.rectangle((s(cx - sun_r - 10), s(sun_y + 52), s(cx + sun_r + 10), s(sun_y + 70)), fill=WARM_DARK)
+
+    # --- Twin-Peak Crater Ridge & Survey Path Chevron (Kessler) ---
+    # Dark knock-out border above the ridge
+    ridge_ko = [
+        (sf(236), sf(518)),
+        (sf(396), sf(296)),
+        (sf(472), sf(374)),
+        (sf(512), sf(334)),
+        (sf(552), sf(374)),
+        (sf(628), sf(296)),
+        (sf(788), sf(518)),
+    ]
+    d.polygon(ridge_ko, fill=WARM_DARK)
+
+    # Left crater peak in Cream (#F4E6C8)
+    left_peak = [
+        (sf(252), sf(518)),
+        (sf(398), sf(318)),
+        (sf(488), sf(412)),
+        (sf(438), sf(518)),
+    ]
+    d.polygon(left_peak, fill=CREAM)
+
+    # Right crater peak in Coral-Orange (#FF8A5B)
+    right_peak = [
+        (sf(772), sf(518)),
+        (sf(626), sf(318)),
+        (sf(536), sf(412)),
+        (sf(586), sf(518)),
+    ]
+    d.polygon(right_peak, fill=CORAL)
+
+    # Central rover survey beam / road rising between the peaks toward the sun
+    road_pts = [
+        (sf(466), sf(518)),
+        (sf(500), sf(404)),
+        (sf(524), sf(404)),
+        (sf(558), sf(518)),
+    ]
+    d.polygon(road_pts, fill=AMBER)
+
+    # --- 2. Heavy Mechanical Wordmark Lockup ---
+    f_main = load_font("ChakraPetch-Bold.ttf", 70)
+    draw_tracked_text(d, 512, 650, "KESSLER – ARAI", f_main, CREAM, tracking=6.0)
+
+    # Hazard-chevron flanked 'FIELD SYSTEMS' bar
+    f_mid = load_font("ChakraPetch-Bold.ttf", 36)
+    draw_tracked_text(d, 512, 742, "FIELD SYSTEMS", f_mid, CORAL, tracking=9.0)
+    # 3 bold angled industrial stripes on left and right (no dots)
+    for side in (-1, 1):
+        for i, col in enumerate([CORAL, AMBER, CREAM]):
+            bx = 512 + side * (252 + i * 34)
+            stripe = [
+                (sf(bx), sf(724)),
+                (sf(bx + side * 20), sf(724)),
+                (sf(bx + side * 8), sf(760)),
+                (sf(bx - side * 12), sf(760)),
+            ]
+            d.polygon(stripe, fill=col)
+
+    d.rectangle((s(156), s(796), s(868), s(802)), fill=AMBER)
+    f_sub = load_font("IBMPlexMono-Bold.ttf", 20)
+    draw_tracked_text(d, 512, 842, "HEAVY LUNAR & PLANETARY FIELD EQUIPMENT  ·  1983", f_sub, CREAM, tracking=2.2)
+    draw_tracked_text(d, 512, 886, "SSR-3 UTILITY CART  //  SSR-5 MODULAR SERVICE ROVER", f_sub, AMBER, tracking=2.0)
+
+    return downsample(img)
+
+
+def build_kessler_c() -> Image.Image:
+    """
+    Kessler–Arai Direction C: 'The 1983 SSR-5 Stamped Enamel Chassis Nameplate'
+    Diegetic equipment plate ready to weld onto 07's rear flank (07-identity.md §3),
+    featuring a geometric 2D SSR-5 rover silhouette and split-block 'K/A' stencil.
+    """
+    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+
+    # Stamped metal chassis plate frame (x: 104..920, y: 84..592)
+    px0, py0, px1, py1 = 104, 84, 920, 592
+    d.rounded_rectangle((s(px0), s(py0), s(px1), s(py1)), radius=s(24), fill=WARM_DARK, outline=CREAM, width=s(10))
+    d.rounded_rectangle((s(px0 + 18), s(py0 + 18), s(px1 - 18), s(py1 - 18)), radius=s(14), outline=CORAL, width=s(5))
+
+    # Corner L-shaped weld brackets (zero circular screw holes!)
+    for cx0, cy0, dx, dy in [(px0 + 32, py0 + 32, 1, 1), (px1 - 32, py0 + 32, -1, 1), (px0 + 32, py1 - 32, 1, -1), (px1 - 32, py1 - 32, -1, -1)]:
+        d.line([(s(cx0), s(cy0)), (s(cx0 + 32 * dx), s(cy0))], fill=AMBER, width=s(7))
+        d.line([(s(cx0), s(cy0)), (s(cx0), s(cy0 + 32 * dy))], fill=AMBER, width=s(7))
+
+    # Vertical divider at x = 524
+    div_x = 524
+    d.line([(s(div_x), s(py0 + 18)), (s(div_x), s(py1 - 18))], fill=CORAL, width=s(8))
+
+    # --- LEFT HALF (x: 122..524): Iconic Geometric 2D SSR-5 Rover Profile Emblem ---
+    # Whip antenna at rear-left (x=212) with diamond sonar loop and amber tip beacon
+    d.line([(s(214), s(310)), (s(194), s(166))], fill=CREAM, width=s(7))
+    draw_4pt_star(d, 194, 156, 20, 6, AMBER)
+
+    # Folded solar wing along upper back
+    d.polygon([(sf(204), sf(304)), (sf(334), sf(288)), (sf(340), sf(308)), (sf(208), sf(322))], fill=AMBER)
+
+    # Rounded beetle/boxy carapace hull in Cream (#F4E6C8) with Coral-Orange (#FF8A5B) stripe
+    hull_pts = [
+        (sf(192), sf(416)),
+        (sf(192), sf(334)),
+        (sf(232), sf(312)),
+        (sf(368), sf(312)),
+        (sf(406), sf(348)),
+        (sf(406), sf(416)),
+    ]
+    d.polygon(hull_pts, fill=CREAM)
+    d.rectangle((s(192), s(368), s(406), s(392)), fill=CORAL)
+
+    # Slender neck + hooded CRT sensor head looking forward-right
+    d.polygon([(sf(348), sf(314)), (sf(374), sf(246)), (sf(398), sf(246)), (sf(378), sf(314))], fill=CREAM)
+    # Visor hood & CRT head
+    head_pts = [
+        (sf(352), sf(248)),
+        (sf(364), sf(188)),
+        (sf(448), sf(188)),
+        (sf(468), sf(214)),
+        (sf(452), sf(256)),
+    ]
+    d.polygon(head_pts, fill=CREAM)
+    # Amber lens glow at front of visor
+    d.polygon([(sf(444), sf(198)), (sf(466), sf(214)), (sf(450), sf(248)), (sf(434), sf(248))], fill=AMBER)
+
+    # Front scoop blade
+    d.polygon([(sf(406), sf(396)), (sf(464), sf(414)), (sf(478), sf(448)), (sf(406), sf(448))], fill=CORAL)
+
+    # Rocker-bogie struts & two chunky octagonal off-road wheels (octagonal outer + solid amber hub, no hole clusters)
+    bogie_poly = [
+        (sf(240), sf(466)),
+        (sf(315), sf(402)),
+        (sf(390), sf(466)),
+        (sf(376), sf(478)),
+        (sf(315), sf(424)),
+        (sf(254), sf(478)),
+    ]
+    d.polygon(bogie_poly, fill=CORAL)
+    for wx in (248, 382):
+        wy = 466
+        w_oct = reg_polygon(wx, wy, 44, 8, rot_deg=22.5)
+        d.polygon(w_oct, fill=WARM_DARK)
+        d.polygon(reg_polygon(wx, wy, 42, 8, rot_deg=22.5), outline=CREAM, width=s(8))
+        d.polygon(reg_polygon(wx, wy, 18, 6, rot_deg=0), fill=AMBER)
+
+    f_plate_tag = load_font("IBMPlexMono-Bold.ttf", 19)
+    d.text((s(154), s(532)), "MODEL SSR-5  //  UNIT 07", font=f_plate_tag, fill=AMBER)
+
+    # --- RIGHT HALF (x: 524..902): Stencil 'K/A' & Stamped Spec Bars ---
+    f_ka = load_font("ChakraPetch-Bold.ttf", 148)
+    draw_tracked_text(d, 712, 224, "K/A", f_ka, CREAM, tracking=8.0)
+    # Stencil bridge cut across K/A
+    d.rectangle((s(556), s(222), s(872), s(230)), fill=WARM_DARK)
+
+    # Three stamped enamel spec bands
+    specs = [
+        ("KESSLER–ARAI 1983", CORAL, WARM_DARK),
+        ("S/N 3-0417 // ILC", AMBER, WARM_DARK),
+        ("MODE: CONTINUE", INDIGO_MID, CREAM),
+    ]
+    f_spec = load_font("IBMPlexMono-Bold.ttf", 22)
+    for idx, (txt, bg_col, fg_col) in enumerate(specs):
+        by = 344 + idx * 68
+        d.rounded_rectangle((s(558), s(by), s(876), s(by + 52)), radius=s(8), fill=bg_col)
+        draw_tracked_text(d, 717, by + 26, txt, f_spec, fg_col, tracking=1.5)
+
+    # --- 2. Full-Width Stencil Wordmark Lockup Below Plate ---
+    d.rectangle((s(px0), s(634), s(px1), s(642)), fill=CORAL)
+    f_title = load_font("ChakraPetch-Bold.ttf", 52)
+    f_sub = load_font("IBMPlexMono-Bold.ttf", 22)
+    f_sub2 = load_font("IBMPlexMono-Medium.ttf", 19)
+
+    draw_tracked_text(d, 512, 704, "KESSLER–ARAI FIELD SYSTEMS", f_title, CREAM, tracking=4.5)
+    draw_tracked_text(d, 512, 774, "ILC · SSR-5 STATION SERVICE ROVER · S/N 3-0417", f_sub, CORAL, tracking=2.5)
+    d.rectangle((s(180), s(818), s(844), s(822)), fill=AMBER)
+    draw_tracked_text(d, 512, 862, "SCAN  //  CUT  //  BUILD  //  TOW  //  WAKE ON CARRIER", f_sub2, AMBER, tracking=3.0)
+
+    return downsample(img)
+
+
+def build_kessler_crt_boot(logo_rgba: Image.Image, variant_code: str = "A") -> Image.Image:
+    """
+    Renders a 1024x1024 mock frame of 07's 1-colour amber CRT boot screen (matching R1CrtFace.shader
+    and Logs/captures style: warm black #20140A/#120B05, beacon amber #FFB547, hot core #FFF3CC,
+    phosphor halo bloom, horizontal scanlines, and 07's visor hood bezel).
+    """
+    # 1. Outer 07 Head Visor Hood & Bezel Frame (1024x1024)
+    frame = Image.new("RGBA", (OUT_SIZE, OUT_SIZE), (14, 11, 9, 255))
+    fd = ImageDraw.Draw(frame)
+
+    # Outer cream/orange visor hood casing around the CRT aperture
+    fd.rounded_rectangle((28, 44, 996, 980), radius=76, fill=(42, 33, 26, 255), outline=(92, 72, 54, 255), width=4)
+    # Warm coral-orange visor brow trim at top (07's hood signature)
+    fd.rounded_rectangle((68, 56, 956, 86), radius=12, fill=(168, 82, 48, 255))
+
+    # CRT glass screen aperture: 900 x 810 inside (62, 108, 962, 918)
+    sx0, sy0, sx1, sy1 = 62, 108, 962, 918
+    sw, sh = sx1 - sx0, sy1 - sy0
+
+    # 2. Build radial warm-black phosphor screen base (#20140A center -> #120B05 edge, from R1CrtFace.shader:5-6)
+    yy, xx = np.mgrid[0:sh, 0:sw].astype(np.float32)
+    nx = (xx / sw - 0.5) * 2.0
+    ny = (yy / sh - 0.5) * 2.0
+    r2 = np.clip(nx * nx * 0.85 + ny * ny * 0.85, 0.0, 1.4)
+    vig = np.clip(1.0 - 0.55 * r2, 0.25, 1.0)
+
+    base_rgb = np.zeros((sh, sw, 3), dtype=np.float32)
+    # _ScreenBaseColor = (32, 20, 10), _ScreenEdgeColor = (18, 11, 5)
+    base_rgb[:, :, 0] = 18.0 + (34.0 - 18.0) * vig
+    base_rgb[:, :, 1] = 11.0 + (21.0 - 11.0) * vig
+    base_rgb[:, :, 2] = 5.0 + (10.0 - 5.0) * vig
+
+    # 3. Compose 1-colour amber phosphor content layer (intensity 0.0 .. 1.0)
+    content = Image.new("L", (sw, sh), 0)
+    cd = ImageDraw.Draw(content)
+
+    f_hdr = ImageFont.truetype(str(FONT_DIR / "IBMPlexMono-Bold.ttf"), 17)
+    f_boot_title = ImageFont.truetype(str(FONT_DIR / "ChakraPetch-Bold.ttf"), 33)
+    f_boot_sub = ImageFont.truetype(str(FONT_DIR / "IBMPlexMono-Bold.ttf"), 19)
+    f_boot_dim = ImageFont.truetype(str(FONT_DIR / "IBMPlexMono-Medium.ttf"), 17)
+
+    # Top CRT diagnostic header bar
+    cd.text((38, 26), "KESSLER–ARAI ROM BIOS v1983.4", font=f_hdr, fill=185)
+    cd.text((sw - 310, 26), "BUS: CONTINUE [LOCKED]", font=f_hdr, fill=185)
+    cd.line([(38, 56), (sw - 38, 56)], fill=120, width=2)
+
+    # Convert the brand logo's upper mark (or full lockup) into a crisp 1-colour amber phosphor stencil
+    # Crop mark region (y: 65..615 of the 1024x1024 logo) so we can pair it with the exact CRT boot typography
+    mark_crop = logo_rgba.crop((100, 68, 924, 608))
+    mark_resized = mark_crop.resize((440, 288), Image.Resampling.LANCZOS)
+    m_arr = np.array(mark_resized, dtype=np.float32)
+    m_lum = 0.299 * m_arr[:, :, 0] + 0.587 * m_arr[:, :, 1] + 0.114 * m_arr[:, :, 2]
+    m_alpha = m_arr[:, :, 3] / 255.0
+    # Bright cream/amber/coral strokes become high phosphor intensity; dark plate backing becomes 0
+    phosphor_mark = np.clip((m_lum - 50.0) / 140.0, 0.0, 1.0) * m_alpha
+    mark_l = Image.fromarray((phosphor_mark * 255.0).astype(np.uint8), mode="L")
+    content.paste(mark_l, ((sw - 440) // 2, 78))
+
+    # Main 1-colour amber boot headline requested in TASK.md:
+    # "KESSLER–ARAI FIELD SYSTEMS · SSR-5"
+    headline = "KESSLER–ARAI FIELD SYSTEMS · SSR-5"
+    hb = f_boot_title.getbbox(headline)
+    hw = hb[2] - hb[0]
+    cd.text(((sw - hw) // 2, 392), headline, font=f_boot_title, fill=255)
+
+    # Double horizontal amber rule with diagnostic ticks
+    cd.line([(64, 444), (sw - 64, 444)], fill=210, width=3)
+    cd.line([(64, 452), (sw - 64, 452)], fill=110, width=1)
+
+    # Self-test & identity lines (from docs/design/07-identity.md §3 & story-v4.md §4.1 — solid dashes, zero dot rows)
+    boot_lines = [
+        ("ILC · STATION SERVICE ROVER · S/N 3-0417 · BUILT 1983", 230, f_boot_sub),
+        ("UNIT 07 · SSR-5 · CONTINUE · 13 148 DAYS", 245, f_boot_sub),
+        ("OPTIC PROFILER Ø 0.245m ———————————— [OK]   CUTTER TURRET ———————————— [OK]", 175, f_boot_dim),
+        ("ADAPTIVE SCHEDULER ————————————————— [WEIGHTS RETAINED · 36Y DRIFT]", 175, f_boot_dim),
+        ("TRICKLE POST: WAKE ON CARRIER —————— [ORBITAL SIGNAL · DETECTED]", 240, f_boot_sub),
+    ]
+    for i, (btxt, val, fnt) in enumerate(boot_lines):
+        cd.text((68, 474 + i * 42), btxt, font=fnt, fill=val)
+
+    # Bottom command prompt bar
+    cd.rectangle((68, 704, sw - 68, 756), outline=195, width=2)
+    cd.text((88, 718), "> UPLINK · OFFLINE   //   BEGIN LUMEN RECOVERY PROTOCOL", font=f_boot_sub, fill=255)
+    # Solid phosphor cursor block
+    cd.rectangle((738, 719, 754, 741), fill=255)
+
+    # 4. Apply R1CrtFace.shader phosphor bloom + hot core + scanlines
+    c_norm = np.array(content, dtype=np.float32) / 255.0
+    halo_tight = np.array(content.filter(ImageFilter.GaussianBlur(radius=3.2)), dtype=np.float32) / 255.0
+    halo_wide = np.array(content.filter(ImageFilter.GaussianBlur(radius=14.0)), dtype=np.float32) / 255.0
+
+    # _PhosphorColor = (255, 174, 56), _PhosphorGlowColor = (200, 106, 20), _HotCoreColor = (255, 243, 204)
+    phos_r = base_rgb[:, :, 0] + halo_wide * 200.0 * 0.55 + halo_tight * 255.0 * 0.65 + c_norm * 255.0
+    phos_g = base_rgb[:, :, 1] + halo_wide * 106.0 * 0.55 + halo_tight * 174.0 * 0.65 + c_norm * 184.0 + (c_norm ** 3) * 65.0
+    phos_b = base_rgb[:, :, 2] + halo_wide * 20.0 * 0.55 + halo_tight * 56.0 * 0.65 + c_norm * 68.0 + (c_norm ** 4) * 135.0
+
+    # Horizontal CRT scanlines (~270 lines across sh=810 -> 3px pitch) + subtle rolling refresh band
+    scan_wave = 1.0 - 0.19 * (0.5 + 0.5 * np.cos(yy * (2.0 * math.pi / 3.0)))
+    rolling_band = 1.0 + 0.07 * np.exp(-((yy - sh * 0.38) / 65.0) ** 2)
+    mult = scan_wave * rolling_band
+
+    scr_rgb = np.stack([phos_r * mult, phos_g * mult, phos_b * mult], axis=-1)
+    scr_rgb = np.clip(scr_rgb, 0.0, 255.0).astype(np.uint8)
+    scr_img = Image.fromarray(scr_rgb, mode="RGB")
+
+    # Mask into rounded CRT bezel aperture
+    scr_mask = Image.new("L", (sw, sh), 0)
+    ImageDraw.Draw(scr_mask).rounded_rectangle((0, 0, sw - 1, sh - 1), radius=54, fill=255)
+    frame.paste(scr_img, (sx0, sy0), scr_mask)
+
+    # Inner CRT glass bezel rim highlight
+    fd.rounded_rectangle((sx0, sy0, sx1, sy1), radius=54, outline=(120, 78, 36, 255), width=3)
+    fd.text((68, 938), f"07 CRT FACE BOOT MOCKUP (VARIANT {variant_code}) · R1CrtFace.shader AMBER PHOSPHOR", font=f_hdr, fill=(185, 145, 95, 255))
+
+    return frame.convert("RGB")
+
+
+def generate_brand_kessler():
+    out_dir = OUT_ROOT / "kessler-arai"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    im_a = build_kessler_a()
+    im_b = build_kessler_b()
+    im_c = build_kessler_c()
+
+    im_a.save(out_dir / "a.png")
+    im_b.save(out_dir / "b.png")
+    im_c.save(out_dir / "c.png")
+
+    make_on_black(im_a, "KESSLER–ARAI // DIRECTION A", "SINGLE-LENS & ROCKER-BOGIE BADGE").save(out_dir / "a_black.png")
+    make_on_black(im_b, "KESSLER–ARAI // DIRECTION B", "RISING SOLAR DISC & CRATER LOZENGE").save(out_dir / "b_black.png")
+    make_on_black(im_c, "KESSLER–ARAI // DIRECTION C", "1983 SSR-5 CHASSIS NAMEPLATE").save(out_dir / "c_black.png")
+
+    sheet = make_brand_sheet_on_black(
+        [im_a, im_b, im_c],
+        ["A · LENS & BOGIE BADGE", "B · SOLAR CRATER STAMP", "C · CHASSIS NAMEPLATE"],
+        "2 · KESSLER–ARAI FIELD SYSTEMS (SSR-3 / SSR-5 · 1983)",
+        AMBER,
+    )
+    sheet.save(out_dir / "on_black.png")
+
+    # 1-colour amber CRT boot screens on 07's face
+    crt_a = build_kessler_crt_boot(im_a, "A")
+    crt_b = build_kessler_crt_boot(im_b, "B")
+    crt_c = build_kessler_crt_boot(im_c, "C")
+    crt_a.save(out_dir / "crt_a.png")
+    crt_b.save(out_dir / "crt_b.png")
+    crt_c.save(out_dir / "crt_c.png")
+    crt_a.save(out_dir / "crt.png")
+    print("[build_logos] Generated Kessler-Arai logos + CRT boot screens in", out_dir)
+
+
 if __name__ == "__main__":
     generate_brand_ilc()
+    generate_brand_kessler()
+
