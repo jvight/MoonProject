@@ -171,6 +171,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 GlowMaterial(shader, GlowRole.Flash), GlowMaterial(shader, GlowRole.PieceHalo),
                 Asset<FeelVfxTuning>());
             visuals.PopulateHologram(GlowMaterial(shader, GlowRole.PieceHalo), GlowMaterial(shader, GlowRole.Flash));
+            visuals.PopulateCable(GlowMaterial(shader, GlowRole.PieceHalo));
             visuals.PopulateContainers(new[]
             {
                 CrateTemplate(ContainerKinds.CrateS, 0.6f), CrateTemplate(ContainerKinds.CrateM, 0.9f),
