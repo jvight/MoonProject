@@ -74,18 +74,6 @@ def dock_walls_rise(_variant, gen):
     return filters.lowpass(mix, 4000.0)
 
 
-def dock_clamp(_variant, gen):
-    """The clamp closing on 07: a soft clunk felt through the chassis and a 100 ms connection crackle."""
-    n = samples(0.6)
-    mix = 0.9 * np.concatenate((_chassis_thump(0.16, 70.0), np.zeros(n - samples(0.16))))
-    crackle = filters.bandpass(noise.white(samples(0.1), gen), 2600.0, 1.2)
-    crackle *= envelope.ar(samples(0.1), 0.002, 0.06) * (gen.random(samples(0.1)) > 0.85)
-    place(mix, 0.5 * crackle, samples(0.05))
-    clunk = osc.sine(samples(0.2), note_freq("D3")) * envelope.ar(samples(0.2), 0.002, 0.1)
-    place(mix, 0.3 * clunk, 0)
-    return filters.lowpass(mix, 4500.0)
-
-
 def dock_walls_settle(_variant, gen):
     """Full: the walls lowering, staggered (600 ms), and settling with two soft ticks on A and D."""
     n = samples(1.2)

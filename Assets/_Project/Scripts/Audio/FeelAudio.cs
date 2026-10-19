@@ -17,8 +17,10 @@ namespace MoonProject.Audio
     /// the sizzle through 07's body following progress, with a deeper undertone per tier (later Acts); the tick-slide
     /// onto the next cut line (Follow 0.5); the crack (Impact); a strap tuk at the fold (Follow 1). The beam's singing
     /// climb and the collect melody stay <see cref="SalvageAudio"/>'s;</item>
-    /// <item>charging on the pad (opening v2 B6): the DockLock walls rising (Kind Dock Anticipate), the clamp
-    /// (Impact), the walls settling (Reward) and the quick drop when 07 drives off early (Cancel); while a charger fills
+    /// <item>charging on the pad (opening v2 B6): the DockLock walls rising (Kind Dock Anticipate), the walls settling
+    /// (Reward) and the quick drop when 07 drives off early (Cancel); the pad's clamp arms seating on 07 with the
+    /// rams' settle and a padded clunk (<see cref="PadLockClosed"/>, which ends the swing that Impact starts) and
+    /// letting go with a release hiss and a lighter clunk (<see cref="PadLockOpened"/>); while a charger fills
     /// the cells a soft hum breathes, and a full D major chord rings when the last cell fills
     /// (<see cref="ChargingChanged"/>, <see cref="BatteryChanged"/>; the per-cell notes are
     /// <see cref="BatteryAudio"/>'s);</item>
@@ -36,7 +38,7 @@ namespace MoonProject.Audio
     [DisallowMultipleComponent]
     public sealed class FeelAudio : MonoBehaviour
     {
-        private const int SubscriptionCount = 15;
+        private const int SubscriptionCount = 17;
         private const float SegmentFollow = 0.5f;
         private const float SilentVolume = 0.001f;
         private const int ScanQuarters = 4;
@@ -93,7 +95,8 @@ namespace MoonProject.Audio
         private CueHandle _crack;
         private CueHandle _strap;
         private CueHandle _wallsRise;
-        private CueHandle _clamp;
+        private CueHandle _padLockClose;
+        private CueHandle _padLockOpen;
         private CueHandle _wallsSettle;
         private CueHandle _wallsDrop;
         private CueHandle _chargeFull;
@@ -148,7 +151,8 @@ namespace MoonProject.Audio
             _crack = director.Resolve(AudioCueIds.CutCrack);
             _strap = director.Resolve(AudioCueIds.StrapTuk);
             _wallsRise = director.Resolve(AudioCueIds.DockWallsRise);
-            _clamp = director.Resolve(AudioCueIds.DockClamp);
+            _padLockClose = director.Resolve(AudioCueIds.PadLockClose);
+            _padLockOpen = director.Resolve(AudioCueIds.PadLockOpen);
             _wallsSettle = director.Resolve(AudioCueIds.DockWallsSettle);
             _wallsDrop = director.Resolve(AudioCueIds.DockWallsDrop);
             _chargeFull = director.Resolve(AudioCueIds.DockFull);
@@ -170,7 +174,7 @@ namespace MoonProject.Audio
             if (!(_brace.IsValid && _detent.IsValid && _lock.IsValid && whine.IsValid && hum.IsValid &&
                   undertone.IsValid && sizzle.IsValid && boost.IsValid && sweep.IsValid && charger.IsValid &&
                   _segmentSlide.IsValid && _ignite.IsValid && _crack.IsValid && _strap.IsValid &&
-                  _wallsRise.IsValid && _clamp.IsValid && _wallsSettle.IsValid && _wallsDrop.IsValid &&
+                  _wallsRise.IsValid && _padLockClose.IsValid && _padLockOpen.IsValid && _wallsSettle.IsValid && _wallsDrop.IsValid &&
                   _chargeFull.IsValid && _cargoTok.IsValid && _holdBoot.IsValid &&
                   _holdSlot.IsValid && _itemSlide.IsValid && _sealCut.IsValid && _containerOpen.IsValid &&
                   _scanStep.IsValid && _scanLiftoff.IsValid && _sheetComplete.IsValid && _boostRelease.IsValid &&
@@ -214,6 +218,8 @@ namespace MoonProject.Audio
             _subscriptions[12] = events.Subscribe<ContainerOpened>(OnContainerOpened);
             _subscriptions[13] = events.Subscribe<BlueprintCompleted>(OnBlueprintCompleted);
             _subscriptions[14] = events.Subscribe<ContainerSealCut>(OnContainerSealCut);
+            _subscriptions[15] = events.Subscribe<PadLockClosed>(OnPadLockClosed);
+            _subscriptions[16] = events.Subscribe<PadLockOpened>(OnPadLockOpened);
         }
 
         private AudioSource Loop(AudioDirector director, string name, CueHandle cue, out float cueVolume)
@@ -382,9 +388,6 @@ namespace MoonProject.Audio
                 case FeelPhase.Anticipate:
                     _director.PlayAt(_wallsRise, beat.Position);
                     break;
-                case FeelPhase.Impact:
-                    _director.PlayAt(_clamp, beat.Position);
-                    break;
                 case FeelPhase.Reward:
                     _director.PlayAt(_wallsSettle, beat.Position);
                     break;
@@ -392,6 +395,18 @@ namespace MoonProject.Audio
                     _director.PlayAt(_wallsDrop, beat.Position);
                     break;
             }
+        }
+
+        /// <summary>The clamp arms have seated on 07: the clamp is heard here, as they meet its flanks.</summary>
+        private void OnPadLockClosed(PadLockClosed closed)
+        {
+            _director.PlayAt(_padLockClose, closed.Position);
+        }
+
+        /// <summary>The pad lets 07 go: the rams vent and the arms swing clear.</summary>
+        private void OnPadLockOpened(PadLockOpened opened)
+        {
+            _director.PlayAt(_padLockOpen, opened.Position);
         }
 
         /// <summary>A charger started or stopped filling the cells: the hum follows it, the chord if they are full.
