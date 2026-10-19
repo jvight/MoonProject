@@ -45,10 +45,9 @@ namespace MoonProject.World
         [Range(0.2f, 1.5f)]
         [SerializeField] private float _rimWidth = 0.68f;
 
-        [Tooltip("Bowl paint weight at a crater's centre (0..1). Under the terrain painter's crater floor, so the whole " +
-            "small bowl takes the shaded wall tone: a dark floor under a light rim.")]
+        [Tooltip("Bowl paint weight at a crater's centre (0..1). Kept low so small weathered bowls shade gently without dark cavity dots.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _bowlShade = 0.72f;
+        [SerializeField] private float _bowlShade = 0.22f;
 
         [Tooltip("Clear ground (metres) kept beyond the base pad and around every world anchor's radius.")]
         [Range(0f, 40f)]

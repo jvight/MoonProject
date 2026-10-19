@@ -193,94 +193,6 @@ Shader "MoonProject/World/R1Terrain"
                 }
             }
 
-            // Evaluates non-tiling craters (irregular 2x2 cell scatter, power-law size spread, crisp bowl + soft raised rim).
-            // rotCosSin = (cos(theta), sin(theta)) of the coordinate rotation so normal perturbations un-rotate to world XZ.
-            void AccumulateScatteredCraters2x2(
-                float2 coord,
-                float2 rotCosSin,
-                float occupancy,
-                float radMin,
-                float radMax,
-                float powerExp,
-                float normalStrength,
-                float rimBright,
-                float bowlAo,
-                inout half2 normDelta,
-                inout half albedoMod,
-                inout half aoMod)
-            {
-                float2 startCell = floor(coord - 0.5);
-                [unroll]
-                for (int iy = 0; iy <= 1; iy++)
-                {
-                    [unroll]
-                    for (int ix = 0; ix <= 1; ix++)
-                    {
-                        float2 cell = startCell + float2(ix, iy);
-                        float3 h = Hash23(cell);
-                        if (h.z >= occupancy)
-                        {
-                            continue;
-                        }
-
-                        // Full-cell 2D random offset (82% of cell) so craters scatter organically, never on a grid
-                        float2 jitter = float2(frac(h.x * 13.37 + h.y * 5.19), frac(h.y * 17.73 + h.z * 9.41)) - 0.5;
-                        float2 craterCenter = cell + 0.5 + jitter * 0.82;
-                        float2 d = coord - craterCenter;
-
-                        // Subtle organic ellipticity
-                        float angle = h.x * 6.2831853;
-                        float ca = cos(angle), sa = sin(angle);
-                        float2 dRot = float2(d.x * ca - d.y * sa, d.x * sa + d.y * ca);
-                        dRot.x *= lerp(0.86, 1.14, frac(h.y * 11.13));
-
-                        float r = max(length(dRot), 1e-4);
-                        float sizePick = pow(frac(h.x * 7.13 + h.y * 3.71 + h.z * 5.39), powerExp);
-                        float rad = lerp(radMin, radMax, sizePick);
-                        float u = r / rad;
-                        if (u >= 1.92)
-                        {
-                            continue;
-                        }
-
-                        // Un-rotate 2D outward radial vector back to world XZ so lighting direction is exact
-                        float2 dirLocal = d / max(length(d), 1e-4);
-                        float2 dirWS = float2(
-                            dirLocal.x * rotCosSin.x + dirLocal.y * rotCosSin.y,
-                            -dirLocal.x * rotCosSin.y + dirLocal.y * rotCosSin.x);
-
-                        // Paraboloid concave bowl (u < 0.86) smoothly rounding over the raised rim crest (u = 1.0)
-                        // onto a soft outer ejecta flank (1.0 < u < 1.85). Linear slope (-u) near the center prevents
-                        // any flat central dot or dark bullseye ring.
-                        float bowlSlope;
-                        if (u < 0.86)
-                        {
-                            bowlSlope = -u * (1.05 - 0.18 * u);
-                        }
-                        else if (u < 1.0)
-                        {
-                            float tRim = (u - 0.86) / 0.14;
-                            float smoothRim = 1.0 - tRim * tRim * (3.0 - 2.0 * tRim);
-                            bowlSlope = -0.86 * (1.05 - 0.18 * 0.86) * smoothRim;
-                        }
-                        else
-                        {
-                            float w = saturate((u - 1.0) / 0.85);
-                            bowlSlope = sin(w * 3.14159265) * (1.0 - w * 0.48) * 0.44;
-                        }
-
-                        float sizeWeight = lerp(0.60, 1.0, saturate((rad - radMin) / max(radMax - radMin, 1e-3)));
-                        normDelta += (half2)(dirWS * (bowlSlope * normalStrength * sizeWeight));
-
-                        // Subtle raised rim brightening around u ~ 1.05 and gentle bowl cavity AO (never dark polka-dot rings)
-                        float softRim = exp(-(u - 1.05) * (u - 1.05) * 9.0);
-                        float bowlInterior = saturate(1.0 - u * u);
-                        albedoMod *= (half)(1.0 + (softRim * rimBright - bowlInterior * bowlAo * 0.18) * sizeWeight);
-                        aoMod *= (half)(1.0 - bowlInterior * bowlAo * sizeWeight);
-                    }
-                }
-            }
-
             // Diffuse response for punctual lights (lander floodlights, beacons, pylon lamps).
             half3 PunctualDiffuse(Light light, half3 normalWS, half microAo)
             {
@@ -308,7 +220,7 @@ Shader "MoonProject/World/R1Terrain"
                 return frac(sin(dot(cell, float2(12.9898, 78.233))) * 43758.5453);
             }
 
-            // Smooth value noise in world metres (0..1), for the halo's blotchy edge and mottle.
+            // Smooth value noise in world metres (0..1), for the halo's blotchy edge, mottle, and crater outline warping.
             float BlastNoise(float2 p)
             {
                 float2 cell = floor(p);
@@ -321,12 +233,12 @@ Shader "MoonProject/World/R1Terrain"
                 return lerp(lerp(a, b, t.x), lerp(c, d, t.x), t.y);
             }
 
-            // Near-to-chase-field craters (0-58 m): irregular clustered small craters + a few medium ones with soft raised rims,
-            // clearly readable from 07's chase camera height, with calm sparse stretches between clusters.
-            half4 SampleNearMicroRelief(float2 wp, float camDist)
+            // Soft 3D tyre ruts where 07 drives off the ChargingPad toward the lander and basin.
+            // (Dense near-field small-crater stamps removed completely so no field of round holes appears.)
+            half4 SampleNearTyreRuts(float2 wp, float camDist)
             {
                 half microFade = 1.0h - (half)smoothstep(26.0, 58.0, camDist);
-                if (microFade <= 0.001h)
+                if (microFade <= 0.001h || dot(wp, wp) >= 260.0)
                 {
                     return half4(0.0h, 0.0h, 1.0h, 1.0h);
                 }
@@ -335,61 +247,116 @@ Shader "MoonProject/World/R1Terrain"
                 half albedoMod = 1.0h;
                 half aoMod = 1.0h;
 
-                // Domain warp and multi-scale clustering so craters group irregularly in pockets and leave sparse open patches
-                float2 warp = float2(
-                    BlastNoise(wp * 0.16 + float2(3.7, 11.3)) - 0.5,
-                    BlastNoise(wp * 0.16 + float2(19.1, 7.9)) - 0.5) * 0.34;
-                float c1 = BlastNoise(wp * 0.055 + float2(15.4, 23.1));
-                float c2 = BlastNoise(wp * 0.024 + float2(37.8, 11.6));
-                float c3 = BlastNoise(wp * 0.125 + float2(9.2, 47.5));
-                float clusterField = c1 * 0.46 + c2 * 0.34 + c3 * 0.20;
-                float clusterMask = smoothstep(0.28, 0.70, clusterField);
-                float densePocket = smoothstep(0.46, 0.76, clusterField);
-
-                // Scale A: Small craters (~1.85 m cells, diameter ~0.18–0.52 m), sparse in open dust (0.08) and clustered in pockets (0.44)
-                AccumulateScatteredCraters2x2(
-                    wp * 0.54 + warp + float2(6.3, 14.2),
-                    float2(1.0, 0.0),
-                    lerp(0.08, 0.44, clusterMask),
-                    0.048, 0.138, 1.72,
-                    0.85, 0.044, 0.068,
-                    normDelta, albedoMod, aoMod);
-
-                // Scale B: Clustered tiny secondary pits (~1.05 m rotated cells, diameter ~0.10–0.28 m) inside pockets
-                float2 wpRotA = float2(wp.x * 0.7986 - wp.y * 0.6018, wp.x * 0.6018 + wp.y * 0.7986);
-                half pocketFade = 1.0h - (half)smoothstep(18.0, 42.0, camDist);
-                if (pocketFade > 0.01h)
-                {
-                    AccumulateScatteredCraters2x2(
-                        wpRotA * 0.95 + warp * 1.10 + float2(17.3, 31.9),
-                        float2(0.7986, 0.6018),
-                        lerp(0.03, 0.38, densePocket),
-                        0.044, 0.125, 1.82,
-                        0.70 * pocketFade, 0.035 * pocketFade, 0.054 * pocketFade,
-                        normDelta, albedoMod, aoMod);
-                }
-
-                // Scale C: A few medium craters with soft raised rims (~4.5 m rotated cells, diameter ~0.55–1.30 m)
-                float2 wpRotB = float2(wp.x * 0.5878 + wp.y * 0.8090, -wp.x * 0.8090 + wp.y * 0.5878);
-                AccumulateScatteredCraters2x2(
-                    wpRotB * 0.22 + warp * 0.50 + float2(27.8, 13.4),
-                    float2(0.5878, -0.8090),
-                    lerp(0.06, 0.24, clusterMask),
-                    0.058, 0.140, 1.62,
-                    0.90, 0.052, 0.075,
-                    normDelta, albedoMod, aoMod);
-
-                // Soft 3D tyre ruts where 07 drives off the ChargingPad toward the lander and basin.
-                if (dot(wp, wp) < 260.0)
-                {
-                    AccumulateHomeTyreRut(wp, float2(1.80, -5.50), float2(1.10, -12.80), 0.18, normDelta, albedoMod, aoMod);
-                    AccumulateHomeTyreRut(wp, float2(1.75, -3.35), float2(0.15, 0.60), -0.16, normDelta, albedoMod, aoMod);
-                }
+                AccumulateHomeTyreRut(wp, float2(1.80, -5.50), float2(1.10, -12.80), 0.18, normDelta, albedoMod, aoMod);
+                AccumulateHomeTyreRut(wp, float2(1.75, -3.35), float2(0.15, 0.60), -0.16, normDelta, albedoMod, aoMod);
 
                 normDelta *= microFade;
                 albedoMod = lerp(1.0h, albedoMod, microFade);
                 aoMod = lerp(1.0h, aoMod, microFade);
                 return half4(normDelta, albedoMod, aoMod);
+            }
+
+            // Evaluates a sparse, ancient weathered medium/large lunar depression in a 2x2 cell neighborhood:
+            // - Wide power-law size range (most cells empty, steep powerExp)
+            // - Strongly noise-warped, irregular outline (never circular)
+            // - Shallow bowl with BROKEN, discontinuous low rim segments (never a full ring or bright polka-dot)
+            // - Soft, low-contrast normal shading and zero dark cavity dots.
+            void AccumulateWeatheredCrater2x2(
+                float2 coord,
+                float2 wpWorld,
+                float2 rotCosSin,
+                float occupancy,
+                float radMin,
+                float radMax,
+                float powerExp,
+                float normalStrength,
+                inout half2 normDelta,
+                inout half aoMod)
+            {
+                float2 startCell = floor(coord - 0.5);
+                [unroll]
+                for (int iy = 0; iy <= 1; iy++)
+                {
+                    [unroll]
+                    for (int ix = 0; ix <= 1; ix++)
+                    {
+                        float2 cell = startCell + float2(ix, iy);
+                        float3 h = Hash23(cell);
+                        if (h.z >= occupancy)
+                        {
+                            continue;
+                        }
+
+                        // Full-cell random offset so sparse craters never align to a grid
+                        float2 jitter = float2(frac(h.x * 13.37 + h.y * 5.19), frac(h.y * 17.73 + h.z * 9.41)) - 0.5;
+                        float2 craterCenter = cell + 0.5 + jitter * 0.78;
+                        float2 d = coord - craterCenter;
+
+                        // Asymmetric elongation + random orientation
+                        float angle = h.x * 6.2831853;
+                        float ca = cos(angle), sa = sin(angle);
+                        float2 dRot = float2(d.x * ca - d.y * sa, d.x * sa + d.y * ca);
+                        dRot.x *= lerp(0.68, 1.38, frac(h.y * 11.13));
+                        dRot.y *= lerp(0.74, 1.28, frac(h.z * 7.91));
+
+                        // Power-law radius selection across a wide size range
+                        float sizePick = pow(frac(h.x * 7.13 + h.y * 3.71 + h.z * 5.39), powerExp);
+                        float rad = lerp(radMin, radMax, sizePick);
+
+                        // Domain-warp the local coordinates with multi-octave world noise so the outline is scalloped and irregular
+                        float2 noiseSeed = cell * 7.13 + float2(h.x * 19.3, h.y * 31.7);
+                        float warpA = BlastNoise(wpWorld * 0.14 + noiseSeed) - 0.5;
+                        float warpB = BlastNoise(wpWorld * 0.31 + noiseSeed.yx + float2(11.4, 5.8)) - 0.5;
+                        float warpC = BlastNoise(wpWorld * 0.065 + noiseSeed * 0.5) - 0.5;
+                        dRot += float2(warpA * 0.34 + warpB * 0.16, warpC * 0.34 - warpA * 0.18) * rad;
+
+                        // Also warp effective radius around the perimeter so it is never a circle
+                        float shapeMod = 1.0 + warpA * 0.32 + warpB * 0.22 + warpC * 0.24;
+                        float r = max(length(dRot), 1e-4);
+                        float u = r / max(rad * shapeMod, 1e-3);
+                        if (u >= 1.65)
+                        {
+                            continue;
+                        }
+
+                        // Broken rim mask: over half of the perimeter is slumped/eroded flat (no continuous ring)
+                        float rimNoise = BlastNoise(wpWorld * 0.19 + noiseSeed * 1.3) * 0.62
+                                       + BlastNoise(wpWorld * 0.43 + noiseSeed.yx * 1.9) * 0.38;
+                        float brokenRimMask = smoothstep(0.52, 0.78, rimNoise);
+
+                        // Also break up the inner wall slope irregularly so shading is soft and non-uniform
+                        float wallSlump = lerp(0.42, 1.0, smoothstep(0.25, 0.80, warpC + 0.5));
+
+                        // Gently dished shallow profile: soft broad interior depression (u < 0.92),
+                        // transitioning into a low, broken outer rim (0.92 <= u < 1.65) that only exists where brokenRimMask > 0.
+                        float bowlSlope = 0.0;
+                        if (u < 0.92)
+                        {
+                            float t = u / 0.92;
+                            // Smooth bell derivative: 0 at center, gentle peak mid-wall, 0 at rim crest
+                            bowlSlope = -sin(t * 3.14159265) * (1.0 - 0.25 * t) * 0.52 * wallSlump;
+                        }
+                        else
+                        {
+                            float w = saturate((u - 0.92) / 0.73);
+                            bowlSlope = sin(w * 3.14159265) * (1.0 - w * 0.45) * 0.24 * brokenRimMask;
+                        }
+
+                        // Un-rotate local gradient direction back to world XZ
+                        float2 dirLocal = dRot / r;
+                        float2 dirCell = float2(dirLocal.x * ca + dirLocal.y * sa, -dirLocal.x * sa + dirLocal.y * ca);
+                        float2 dirWS = float2(
+                            dirCell.x * rotCosSin.x + dirCell.y * rotCosSin.y,
+                            -dirCell.x * rotCosSin.y + dirCell.y * rotCosSin.x);
+
+                        float sizeWeight = lerp(0.55, 1.0, sizePick);
+                        normDelta += (half2)(dirWS * (bowlSlope * normalStrength * sizeWeight));
+
+                        // Very gentle interior AO only (no albedo rim brightening, no dark cavity dots)
+                        float softInterior = saturate(1.0 - u * u) * wallSlump;
+                        aoMod *= (half)(1.0 - softInterior * 0.035 * sizeWeight);
+                    }
+                }
             }
 
             // One faint ray in sector `sector` of `sectors` round the lander, or 0: some sectors hold one, at a random
@@ -519,11 +486,10 @@ Shader "MoonProject/World/R1Terrain"
                 }
             }
 
-            // Multi-scale crater decals across BOTH the flat plain and the mountain slopes:
-            // irregular clustered small craters + a few medium ones with soft raised rims.
-            // Uses slope-compensated coordinates so craters on inclined 30-40 deg slopes remain round and crisp.
-            // Returns: xy = world XZ normal perturbation, z = albedo multiplier, w = cavity AO [0..1].
-            half4 SampleSlopeCraterDecals(float3 wp3, half3 geomNormalWS, half slopeFactor, float camDist)
+            // Sparse, ancient weathered medium/large craters with wide power-law size spread, noise-warped irregular outlines,
+            // broken low rims, and soft low-contrast shading. Clustered in patches with long empty stretches across the plain.
+            // Returns: xy = world XZ normal perturbation, z = albedo multiplier (1.0), w = cavity AO [0..1].
+            half4 SampleWeatheredCraters(float3 wp3, half3 geomNormalWS, half slopeFactor, float camDist)
             {
                 half rangeFade = 1.0h - (half)smoothstep(320.0, 620.0, camDist);
                 if (rangeFade <= 0.001h)
@@ -531,77 +497,61 @@ Shader "MoonProject/World/R1Terrain"
                     return half4(0.0h, 0.0h, 1.0h, 1.0h);
                 }
 
-                // Slope-compensated projection prevents foreshortening into horizontal slits on steep mountain walls
+                // Slope-compensated projection prevents foreshortening on mountain walls
                 float2 sp = wp3.xz - geomNormalWS.xz * (wp3.y * 0.48);
                 float2 warpLarge = float2(
-                    BlastNoise(sp * 0.032 + float2(3.1, 9.7)) - 0.5,
-                    BlastNoise(sp * 0.032 + float2(14.3, 2.9)) - 0.5);
-                float2 warpSmall = float2(
-                    BlastNoise(sp * 0.11 + float2(21.7, 5.3)) - 0.5,
-                    BlastNoise(sp * 0.11 + float2(8.9, 31.1)) - 0.5);
-                float2 warp = warpLarge * 0.45 + warpSmall * 0.18;
+                    BlastNoise(sp * 0.018 + float2(3.1, 9.7)) - 0.5,
+                    BlastNoise(sp * 0.018 + float2(14.3, 2.9)) - 0.5);
 
-                // Irregular spatial clustering: dense clusters in some regions, sparse open regolith in others
-                float clusterA = BlastNoise(sp * 0.028 + float2(11.3, 24.1));
-                float clusterB = BlastNoise(sp * 0.0115 + float2(33.4, 8.7));
-                float clusterC = BlastNoise(sp * 0.062 + float2(47.1, 15.3));
-                float clusterField = clusterA * 0.46 + clusterB * 0.34 + clusterC * 0.20;
-                float clusterGate = smoothstep(0.28, 0.70, clusterField);
-                float denseGate = smoothstep(0.46, 0.76, clusterField);
+                // Strong spatial clustering with long empty stretches: over 65% of the plain has zero craters
+                float clusterA = BlastNoise(sp * 0.012 + float2(11.3, 24.1));
+                float clusterB = BlastNoise(sp * 0.0055 + float2(33.4, 8.7));
+                float clusterField = clusterA * 0.58 + clusterB * 0.42;
+                float patchMask = smoothstep(0.55, 0.80, clusterField);
 
-                // Keep craters clearly visible on both flat plains (1.0) and mountain slopes (0.92)
-                half slopePresence = lerp(1.0h, 0.92h, slopeFactor);
+                // Keep the home pad, apron, and lander blast core clear of procedural depressions
+                float padClear = smoothstep(14.0, 28.0, length(wp3.xz));
+                float landerClear = _MoonBlastZone.z > 0.001
+                    ? smoothstep(_MoonBlastZone.z * 0.55, _MoonBlastZone.z * 1.15, length(wp3.xz - _MoonBlastZone.xy))
+                    : 1.0;
+                float openGate = patchMask * padClear * landerClear;
+                if (openGate <= 0.001)
+                {
+                    return half4(0.0h, 0.0h, 1.0h, 1.0h);
+                }
+
+                // Soft, low-contrast shading on the flat plain; slightly firmer on distant mountain slopes
+                half strengthScale = lerp(0.11h, 0.24h, slopeFactor) * rangeFade;
 
                 half2 normDelta = half2(0.0h, 0.0h);
-                half albedoMod = 1.0h;
                 half aoMod = 1.0h;
 
-                // Scale 1 (Small Craters on Plain & Slopes): ~5.0 m warped cells, diameter ~0.48–1.35 m
+                // Layer 1 (Medium-to-Large Weathered Craters): ~26 m cells, radius ~2.0–7.5 m (diameter ~4–15 m), steep power-law (2.8)
                 float2 spRotA = float2(sp.x * 0.7986 - sp.y * 0.6018, sp.x * 0.6018 + sp.y * 0.7986);
-                half fadeSmall = (1.0h - (half)smoothstep(190.0, 350.0, camDist)) * slopePresence;
-                if (fadeSmall > 0.01h)
-                {
-                    float occSmall = lerp(0.08, 0.44, clusterGate);
-                    AccumulateScatteredCraters2x2(
-                        spRotA * 0.198 + warp * 0.95 + float2(15.7, 29.3),
-                        float2(0.7986, 0.6018),
-                        occSmall, 0.048, 0.132, 1.72,
-                        0.85 * fadeSmall,
-                        0.044 * fadeSmall, 0.068 * fadeSmall,
-                        normDelta, albedoMod, aoMod);
-                }
+                float occMed = 0.34 * openGate;
+                AccumulateWeatheredCrater2x2(
+                    spRotA * 0.038 + warpLarge * 0.25 + float2(15.7, 29.3),
+                    sp,
+                    float2(0.7986, 0.6018),
+                    occMed, 0.075, 0.285, 2.80,
+                    strengthScale,
+                    normDelta, aoMod);
 
-                // Scale 1B (Clustered Small Slope/Plain Pits): ~3.0 m warped cells, diameter ~0.28–0.80 m, active at 20-230 m
-                float2 spRotC = float2(sp.x * 0.9063 + sp.y * 0.4226, -sp.x * 0.4226 + sp.y * 0.9063);
-                half fadeClusterSmall = (1.0h - (half)smoothstep(165.0, 250.0, camDist)) * slopePresence;
-                if (fadeClusterSmall > 0.01h)
-                {
-                    float occCluster = lerp(0.04, 0.38, denseGate);
-                    AccumulateScatteredCraters2x2(
-                        spRotC * 0.33 + warp * 1.10 + float2(31.2, 14.8),
-                        float2(0.9063, -0.4226),
-                        occCluster, 0.045, 0.125, 1.80,
-                        0.76 * fadeClusterSmall,
-                        0.038 * fadeClusterSmall, 0.058 * fadeClusterSmall,
-                        normDelta, albedoMod, aoMod);
-                }
-
-                // Scale 2 (A Few Medium Craters with Soft Raised Rims): ~12.2 m warped cells, diameter ~1.15–2.9 m
+                // Layer 2 (Large Ancient Basins): ~58 m cells, radius ~5.2–16.8 m (diameter ~10–33 m), steep power-law (2.6)
                 float2 spRotB = float2(sp.x * 0.5878 + sp.y * 0.8090, -sp.x * 0.8090 + sp.y * 0.5878);
-                half fadeMed = (1.0h - (half)smoothstep(240.0, 480.0, camDist)) * slopePresence;
-                if (fadeMed > 0.01h)
+                float occLarge = 0.28 * smoothstep(0.48, 0.76, clusterB) * padClear * landerClear;
+                if (occLarge > 0.005)
                 {
-                    float occMed = lerp(0.045, 0.22, smoothstep(0.34, 0.74, clusterB * 0.6 + clusterA * 0.4));
-                    AccumulateScatteredCraters2x2(
-                        spRotB * 0.082 + warp * 0.58 + float2(21.4, 9.2),
+                    AccumulateWeatheredCrater2x2(
+                        spRotB * 0.0172 + warpLarge * 0.14 + float2(21.4, 9.2),
+                        sp,
                         float2(0.5878, -0.8090),
-                        occMed, 0.050, 0.124, 1.65,
-                        0.88 * fadeMed,
-                        0.048 * fadeMed, 0.070 * fadeMed,
-                        normDelta, albedoMod, aoMod);
+                        occLarge, 0.090, 0.290, 2.60,
+                        strengthScale * 0.90h,
+                        normDelta, aoMod);
                 }
 
-                return half4(normDelta, albedoMod, aoMod);
+                return half4(normDelta, 1.0h, aoMod);
             }
 
             // Multi-scale non-repeating macro albedo variation across 25 m – 1200 m (ejecta blankets, mare/highland patches).
@@ -634,7 +584,7 @@ Shader "MoonProject/World/R1Terrain"
                 return (half)clamp(1.0 + softShaped * 0.26 + broadDrift + heightLift, 0.82, 1.20);
             }
 
-            // Crisp lunar terminator shading on ridges, rock ledges, and craters at low sun / grazing earthlight.
+            // Crisp lunar terminator shading on ridges and rock ledges, with soft low-contrast shading on flat-plain depressions.
             half3 MainSunDiffuseStylized(
                 Light light,
                 half3 normalWS,
@@ -649,24 +599,24 @@ Shader "MoonProject/World/R1Terrain"
                 half geomNdotL = dot(geomNormalWS, light.direction);
                 half deltaNdotL = ndotl - geomNdotL;
 
-                // In Earthlight (sunlit == 0), signed normal relief (deltaNdotL) carves both sunlit rims and shadowed bowls
-                // so craters and broken rock ledges read crisply even under broad Earthshine.
+                // In Earthlight (sunlit == 0), keep flat-plain normal relief soft and low-contrast while mountain slopes stay crisp.
                 half earthWrap = saturate(ndotl * 0.84h + 0.16h);
-                half earthRelief = clamp(deltaNdotL * 1.55h, -0.38h, 0.55h);
+                half earthReliefGain = lerp(0.32h, 1.55h, slopeFactor);
+                half earthRelief = clamp(deltaNdotL * earthReliefGain, -0.38h, 0.55h);
                 half earthDiffuse = saturate(pow(earthWrap, 1.15h) * 1.06h + earthRelief);
 
-                // At low sun (sunlit > 0), the 0.5-deg solar disc carves a razor-crisp terminator across ridges, ledges, and craters.
+                // At low sun (sunlit > 0), the 0.5-deg solar disc carves a crisp terminator across ridges and ledges.
                 half terminatorKnee = smoothstep(-0.006h, 0.032h, ndotl);
                 half grazingContrast = pow(saturate(ndotl + 0.005h), 1.08h) * terminatorKnee;
 
-                // Lunar opposition / Lommel-Seeliger balance on flat floors while slopes and craters keep crisp relief contrast.
+                // Lunar opposition / Lommel-Seeliger balance on flat floors while slopes keep crisp relief contrast.
                 half ndotv = max(0.22h, saturate(dot(normalWS, viewDirWS)));
                 half lommel = grazingContrast / max(0.36h, grazingContrast + ndotv * 0.40h);
                 half sunDiffuse = lerp(lommel * 1.04h, grazingContrast * 1.24h, saturate(slopeFactor * 0.75h + 0.25h));
 
-                // Accentuate grazing sunlit ridge crests, crater rims, and rock-ledge lips near the terminator.
+                // Accentuate grazing sunlit ridge crests and rock-ledge lips on slopes without creating bright crater rings on the plain.
                 half terminatorZone = smoothstep(-0.04h, 0.06h, geomNdotL) * (1.0h - smoothstep(0.06h, 0.40h, geomNdotL));
-                half ridgeCrestBoost = saturate(deltaNdotL) * (0.35h + terminatorZone * 0.52h);
+                half ridgeCrestBoost = saturate(deltaNdotL) * (0.35h + terminatorZone * 0.52h) * lerp(0.08h, 1.0h, slopeFactor);
                 sunDiffuse += ridgeCrestBoost;
 
                 half highlandDiffuse = lerp(earthDiffuse, sunDiffuse, sunlit);
@@ -685,7 +635,7 @@ Shader "MoonProject/World/R1Terrain"
                 half painterlyRidgeStroke = (ridgeCrestMask * smoothstep(-0.02h, 0.10h, ndotl) * 0.28h) + rimGrazing * slopeFactor * 0.16h;
                 half stylizedDiffuse = lerp(highlandDiffuse, painterlyRamp, 0.45h) + painterlyRidgeStroke;
 
-                // Micro-cavity AO self-shadows craters, broken rock ledges, and cleavage joints.
+                // Micro-cavity AO self-shadows broken rock ledges and cleavage joints.
                 half directCavity = lerp(1.0h, microAo, 0.44h + 0.26h * sunlit);
                 half diffuse = stylizedDiffuse * directCavity;
 
@@ -744,10 +694,10 @@ Shader "MoonProject/World/R1Terrain"
                 half3 tangentWS = normalize(half3(1.0h, 0.0h, 0.0h) - geomNormalWS * geomNormalWS.x);
                 half3 bitangentWS = normalize(cross(geomNormalWS, tangentWS));
 
-                // Multi-scale craters on both flat plain and slopes (small irregular clusters + medium soft-rimmed craters).
-                half4 slopeCraters = SampleSlopeCraterDecals(input.positionWS, geomNormalWS, slopeFactor, camDist);
-                baseAlbedo *= slopeCraters.z;
-                microAo = min(microAo, slopeCraters.w);
+                // Sparse, ancient weathered medium/large craters (warped outlines, broken low rims, soft low-contrast shading).
+                half4 weatheredCraters = SampleWeatheredCraters(input.positionWS, geomNormalWS, slopeFactor, camDist);
+                baseAlbedo *= weatheredCraters.z;
+                microAo = min(microAo, weatheredCraters.w);
 
                 // Slope geological structure:
                 // - Gentle slopes and talus chutes hold lighter cool-grey regolith.
@@ -881,57 +831,75 @@ Shader "MoonProject/World/R1Terrain"
                     smoothness = max(smoothness, exposedRockMask * 0.080h);
                 }
 
-                // Multi-scale regolith detail normal and near-to-chase-field crater relief
+                // Organic regolith grain/normal noise for micro & mid detail (continuous wind/ejecta drift + warped fine grain, never dots)
                 UNITY_BRANCH
                 if (macroWeight > 0.001h)
                 {
                     float2 wp = input.positionWS.xz;
                     float2 wpRot = float2(wp.x * 0.80 - wp.y * 0.60, wp.x * 0.60 + wp.y * 0.80);
-                    float2 uvMacro = wpRot * _MacroTiling + float2(0.37, 0.71);
-                    float2 uvFar = wp * (_MacroTiling * 0.38) + float2(0.61, 0.23);
-                    float2 uvMid = wp * 0.115 + float2(0.14, 0.52);
+                    float2 wpRotB = float2(wp.x * 0.55 + wp.y * 0.835, -wp.x * 0.835 + wp.y * 0.55);
 
-                    half3 regolithTex = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uvMacro).rgb;
-                    half3 regolithMid = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uvMid).rgb;
-                    regolithTex = lerp(regolithTex, regolithMid, midDetailWeight * 0.42h);
+                    // Non-linear domain warp breaks up any circular bubbles baked in _BaseMap / _BumpMap so they act purely as organic dust grain
+                    float2 grainWarp = float2(
+                        BlastNoise(wp * 0.95 + float2(4.1, 13.7)) - 0.5,
+                        BlastNoise(wpRot * 0.95 + float2(19.3, 6.8)) - 0.5) * 0.42;
+                    float2 uvGrainA = (wpRot + grainWarp) * (_NearTiling * 0.42) + float2(0.37, 0.71);
+                    float2 uvGrainB = (wpRotB - grainWarp.yx) * (_NearTiling * 0.29) + float2(0.14, 0.52);
 
-                    // Keep _BumpMap gentle so its baked circular bubbles only provide fine dust grain
-                    half slopeNormalBoost = lerp(0.18h, 0.22h, slopeFactor);
-                    half macroBumpStrength = max(_MacroBumpScale, 0.44h) * macroWeight * slopeNormalBoost;
-                    half3 macroNormal = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, uvMacro), macroBumpStrength);
-                    half3 farNormal = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, uvFar), macroBumpStrength * 0.80h);
-                    half3 midNormal = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, uvMid), 0.44h * midDetailWeight * slopeNormalBoost);
+                    half3 regolithTexA = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uvGrainA).rgb;
+                    half3 regolithTexB = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uvGrainB).rgb;
+                    half3 regolithTex = lerp(regolithTexA, regolithTexB, 0.50h);
 
-                    // Evaluate near-to-chase-field craters (0-58 m) without double-multiplying by nearWeight
-                    half4 microRelief = SampleNearMicroRelief(wp, camDist);
-                    baseAlbedo *= microRelief.z;
-                    microAo = min(microAo, microRelief.w);
+                    // Continuous, anisotropic multi-octave regolith undulation & organic grain normal (zero circles/dots)
+                    float gEps = 0.28;
+                    float2 wpAnisoA = float2(wpRot.x * 0.42, wpRot.y * 0.78);
+                    float2 wpAnisoB = float2(wpRotB.x * 1.35, wpRotB.y * 0.82);
+                    float g0 = (BlastNoise(wpAnisoA + grainWarp * 0.45) - 0.5) * 0.62
+                             + (BlastNoise(wpAnisoB - grainWarp.yx * 0.65 + float2(11.3, 7.9)) - 0.5) * 0.38;
+                    float gx = (BlastNoise(wpAnisoA + float2(gEps * 0.42, 0.0) + grainWarp * 0.45) - 0.5) * 0.62
+                             + (BlastNoise(wpAnisoB + float2(gEps * 1.35, 0.0) - grainWarp.yx * 0.65 + float2(11.3, 7.9)) - 0.5) * 0.38;
+                    float gz = (BlastNoise(wpAnisoA + float2(0.0, gEps * 0.78) + grainWarp * 0.45) - 0.5) * 0.62
+                             + (BlastNoise(wpAnisoB + float2(0.0, gEps * 0.82) - grainWarp.yx * 0.65 + float2(11.3, 7.9)) - 0.5) * 0.38;
+                    half grainNormalStrength = max(_MacroBumpScale, 0.35h) * macroWeight * lerp(0.16h, 0.28h, slopeFactor) * (0.45h + 0.55h * midDetailWeight);
+                    half2 organicGrainXY = half2(gx - g0, gz - g0) * grainNormalStrength;
 
-                    half2 distNormalXY = macroNormal.xy * 0.70h + farNormal.xy * 0.60h + midNormal.xy * 0.65h
-                        + slopeCraters.xy + microRelief.xy * (1.0h - slopeFactor * 0.45h);
+                    half fineMidScale = 0.14h * midDetailWeight * lerp(0.45h, 0.85h, slopeFactor);
+                    half3 midNormalA = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, uvGrainA), fineMidScale);
+                    half3 midNormalB = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, uvGrainB), fineMidScale);
+
+                    // Evaluate home-pad tyre ruts only (no small crater stamps)
+                    half4 tyreRuts = SampleNearTyreRuts(wp, camDist);
+                    baseAlbedo *= tyreRuts.z;
+                    microAo = min(microAo, tyreRuts.w);
+
+                    half2 distNormalXY = organicGrainXY + (midNormalA.xy + midNormalB.yx) * 0.35h
+                        + weatheredCraters.xy + tyreRuts.xy * (1.0h - slopeFactor * 0.45h);
 
                     UNITY_BRANCH
                     if (nearWeight > 0.001h)
                     {
-                        float2 uvNear1 = wp * _NearTiling;
+                        float2 fineWarp = float2(
+                            BlastNoise(wp * 3.4 + float2(7.3, 2.9)) - 0.5,
+                            BlastNoise(wpRot * 3.4 + float2(15.1, 11.4)) - 0.5) * 0.18;
+                        float2 uvNear1 = (wp + fineWarp) * _NearTiling;
                         float2 wpNearRot = float2(wp.x * 0.7986 - wp.y * 0.6018, wp.x * 0.6018 + wp.y * 0.7986);
-                        float2 uvNear2 = wpNearRot * (_NearTiling * 0.47) + float2(0.19, 0.63);
+                        float2 uvNear2 = (wpNearRot - fineWarp.yx) * (_NearTiling * 0.63) + float2(0.19, 0.63);
 
                         half3 albedoNear1 = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uvNear1).rgb;
                         half3 albedoNear2 = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uvNear2).rgb;
-                        half3 albedoNear = lerp(albedoNear1, albedoNear2, 0.48h);
+                        half3 albedoNear = lerp(albedoNear1, albedoNear2, 0.50h);
 
                         half4 maskNear1 = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, uvNear1);
                         half4 maskNear2 = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, uvNear2);
-                        half4 maskNear = lerp(maskNear1, maskNear2, 0.48h);
+                        half4 maskNear = lerp(maskNear1, maskNear2, 0.50h);
 
-                        half bumpScale = (_NearBumpScale * 0.20h + _MacroBumpScale * 0.12h) * nearWeight;
+                        half bumpScale = (_NearBumpScale * 0.14h + _MacroBumpScale * 0.08h) * nearWeight;
                         half3 tsNormal1 = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, uvNear1), bumpScale);
-                        half3 tsNormal2Raw = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, uvNear2), bumpScale * 0.82h);
+                        half3 tsNormal2Raw = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, uvNear2), bumpScale * 0.85h);
                         half2 tsRot2 = half2(
                             tsNormal2Raw.x * 0.7986h + tsNormal2Raw.y * 0.6018h,
                             -tsNormal2Raw.x * 0.6018h + tsNormal2Raw.y * 0.7986h);
-                        half2 combinedTsXY = tsNormal1.xy * 0.65h + tsRot2 * 0.55h + distNormalXY;
+                        half2 combinedTsXY = tsNormal1.xy * 0.55h + tsRot2 * 0.50h + distNormalXY;
 
                         half3 tsNormal = normalize(half3(combinedTsXY, 1.0h));
                         regolithTex = lerp(regolithTex, albedoNear, nearWeight * 0.45h);
@@ -941,7 +909,7 @@ Shader "MoonProject/World/R1Terrain"
                             bitangentWS * tsNormal.y +
                             normalWS * tsNormal.z);
 
-                        half texAo = lerp(1.0h, saturate(maskNear.g / 0.870h), 0.25h);
+                        half texAo = lerp(1.0h, saturate(maskNear.g / 0.870h), 0.16h);
                         microAo = min(microAo, saturate(lerp(1.0h, texAo, _OcclusionStrength * nearWeight)));
                         smoothness = saturate(maskNear.a * _SmoothnessScale * nearWeight * (1.0h + slopeFactor * 0.25h));
                     }
@@ -955,7 +923,7 @@ Shader "MoonProject/World/R1Terrain"
                     }
 
                     half3 regolithCentered = regolithTex / 0.525h;
-                    half detailStrength = lerp(0.14h, 0.30h, slopeFactor) * macroWeight * (0.55h + 0.45h * max(nearWeight, midDetailWeight));
+                    half detailStrength = lerp(0.10h, 0.28h, slopeFactor) * macroWeight * (0.55h + 0.45h * max(nearWeight, midDetailWeight));
                     baseAlbedo *= lerp(1.0h.xxx, regolithCentered, detailStrength);
                 }
 
@@ -974,9 +942,10 @@ Shader "MoonProject/World/R1Terrain"
                     half ambientAo = microAo;
                 #endif
 
-                // Subtle sky-dome / Earthshine directional normal relief so craters and ledges read cleanly without glowing bars in shadow
+                // Subtle sky-dome / Earthshine directional normal relief: soft on the flat plain, crisp on mountain slopes
                 half deltaNdotLAmb = dot(normalWS, mainLight.direction) - dot(geomNormalWS, mainLight.direction);
-                half craterAmbRelief = clamp(1.0h + deltaNdotLAmb * 0.42h, 0.72h, 1.22h);
+                half ambReliefGain = lerp(0.12h, 0.42h, slopeFactor);
+                half craterAmbRelief = clamp(1.0h + deltaNdotLAmb * ambReliefGain, 0.84h, 1.18h);
                 half skyLedgeRelief = lerp(craterAmbRelief, clamp(1.0h + (normalWS.y - geomNormalWS.y) * 0.65h + deltaNdotLAmb * 0.35h - (1.0h - microAo) * 0.35h, 0.72h, 1.18h), slopeFactor * 0.80h);
                 half3 rawSH = SampleSH(normalWS);
                 half shLuma = dot(rawSH, half3(0.2126h, 0.7152h, 0.0722h));
