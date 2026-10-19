@@ -124,6 +124,9 @@ namespace MoonProject.Gameplay
         /// flow.</summary>
         public OpeningField Opening { get; private set; }
 
+        /// <summary>The call from the sky (opening v3 §2): its state, its decode and its point of light.</summary>
+        public CallProgress Call { get; private set; }
+
         /// <summary>The dock lock on the built pad 07 charges on (opening-v2 §5).</summary>
         public PadLock PadLock { get; private set; }
 
@@ -273,6 +276,7 @@ namespace MoonProject.Gameplay
                 services.Pickups);
             Hints = hints;
             Recovery = new RecoveryProgress(context.Events, PowerLamps, PowerSteps, _openingTuning.RecoveryLamps);
+            Call = new CallProgress(context.Events, _openingTuning.Call, services.Layout);
             _flowTokens.Add(context.Events.Subscribe<ChargingChanged>(OnChargingChanged));
             context.Register<IMaterialStock>(Materials);
             context.Register<IMaterialCatalog>(_materialCatalog);
@@ -286,6 +290,7 @@ namespace MoonProject.Gameplay
             context.Register<IBuildEnergy>(_battery);
             context.Register<IBeamStatus>(services.Beam);
             context.Register<IRecoveryProgress>(Recovery);
+            context.Register<ICallSource>(Call);
             context.Register<IDatabank>(Databank);
             context.Register<BuildField>(_building);
             RegisterSaveSections(save);
@@ -309,6 +314,8 @@ namespace MoonProject.Gameplay
                 GameplaySaveKeys.ScansVersion, Scans.Capture, Scans.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<DatabankSaveData>(GameplaySaveKeys.Databank,
                 GameplaySaveKeys.DatabankVersion, Databank.Capture, Databank.Restore)));
+            _saveTokens.Add(save.Register(new SaveSection<CallSaveData>(GameplaySaveKeys.Call,
+                GameplaySaveKeys.CallVersion, Call.Capture, Call.Restore)));
             _saveTokens.Add(_building.RegisterSave(save));
         }
 
@@ -486,6 +493,7 @@ namespace MoonProject.Gameplay
         {
             StartKit.Announce();
             Recovery.Announce();
+            Call.Announce();
             Opening.Announce();
         }
 
@@ -551,6 +559,7 @@ namespace MoonProject.Gameplay
                 : _databankCatalogue == null ? "DatabankCatalogue is not assigned (run Gameplay/Content)."
                 : _baseTuning == null ? "BaseTuning is not assigned."
                 : _openingTuning == null ? "OpeningTuning is not assigned."
+                : _openingTuning.Call.Validate() != null ? "OpeningTuning: " + _openingTuning.Call.Validate() + "."
                 : _salvage == null ? "SalvageField is not assigned."
                 : _battery == null ? "BatteryField is not assigned."
                 : _building == null ? "BuildField is not assigned."
@@ -592,6 +601,7 @@ namespace MoonProject.Gameplay
 
             _flowTokens.Clear();
             Databank?.Dispose();
+            Call?.Dispose();
             Bundles?.Dispose();
             Opening?.Dispose();
             _meshes?.Dispose();
