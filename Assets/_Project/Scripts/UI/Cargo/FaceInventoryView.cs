@@ -178,16 +178,11 @@ namespace MoonProject.UI
             }
 
             _warningIcon = diagram.GetIcon(WarningIconId);
-            _page.pickingMode = PickingMode.Position;
-            _page.RegisterCallback<PointerDownEvent>(OnPagePointerDown);
 
             _canvas.generateVisualContent += OnGenerateCanvas;
             _ghostLayer.generateVisualContent += OnGenerateGhost;
             BuildHoldCells();
             BuildDeviceBubbles();
-
-            _panel.RegisterCallback<PointerMoveEvent>(OnPanelPointerMove);
-            _panel.RegisterCallback<PointerUpEvent>(OnPanelPointerUp);
         }
 
         /// <summary>Unlocked hold cell count (typically 8, 16, or 24).</summary>
@@ -622,18 +617,6 @@ namespace MoonProject.UI
             NoteMoved(changed);
         }
 
-        private void OnPagePointerDown(PointerDownEvent evt)
-        {
-            if (evt.button != 0 || _lastPointerDownFrame == Time.frameCount)
-            {
-                return;
-            }
-
-            _lastPointerDownFrame = Time.frameCount;
-            _handoff.NoteMouse();
-            TurnPage();
-        }
-
         /// <summary>
         /// Selects where the screen opens: the cutter while it offers the spare igniter (one confirm fits it), else the
         /// first thing in the hold, else the first slot.
@@ -704,8 +687,9 @@ namespace MoonProject.UI
         }
 
         /// <summary>
-        /// Handles a pointer-down at <paramref name="panelPos"/> in panel coordinates (mapped from 07's curved CRT
-        /// <c>Screen</c> mesh via <see cref="FaceScreenMapper.ScreenToPanel"/>).
+        /// Handles a pointer-down at <paramref name="panelPos"/>, from this panel's top-left (mapped from 07's curved
+        /// CRT <c>Screen</c> mesh via <see cref="FaceScreenMapper.ScreenToPanel"/>). UISystem's mouse is the view's only
+        /// pointer feed: UI Toolkit's own events would map the cursor a second, different way.
         /// </summary>
         public void PointerDownAtPanel(Vector2 panelPos)
         {
@@ -720,8 +704,8 @@ namespace MoonProject.UI
         }
 
         /// <summary>
-        /// Handles a pointer-move/hover at <paramref name="panelPos"/> in panel coordinates (mapped from 07's curved CRT
-        /// <c>Screen</c> mesh via <see cref="FaceScreenMapper.ScreenToPanel"/>).
+        /// Handles a pointer-move/hover at <paramref name="panelPos"/>, from this panel's top-left (mapped from 07's
+        /// curved CRT <c>Screen</c> mesh via <see cref="FaceScreenMapper.ScreenToPanel"/>).
         /// </summary>
         public void PointerMoveAtPanel(Vector2 panelPos)
         {
@@ -730,8 +714,8 @@ namespace MoonProject.UI
         }
 
         /// <summary>
-        /// Handles a pointer-up at <paramref name="panelPos"/> in panel coordinates: it ends a drag of a hold part (the
-        /// drop) or the click that never became one.
+        /// Handles a pointer-up at <paramref name="panelPos"/>, from this panel's top-left: it ends a drag of a hold
+        /// part (the drop) or the click that never became one.
         /// </summary>
         public void PointerUpAtPanel(Vector2 panelPos)
         {
@@ -858,8 +842,6 @@ namespace MoonProject.UI
                 cell.Add(name);
 
                 cell.RegisterCallback<FocusInEvent>(_ => OnHoldCellFocus(index));
-                cell.RegisterCallback<PointerEnterEvent>(_ => OnHoldCellHover(index));
-                cell.RegisterCallback<PointerDownEvent>(evt => OnHoldCellPointerDown(index, evt));
                 cell.RegisterCallback<NavigationMoveEvent>(evt => OnHoldNavigationMove(index, evt));
 
                 _holdCells[i] = cell;
@@ -886,15 +868,6 @@ namespace MoonProject.UI
                 bubble.Add(state);
 
                 bubble.RegisterCallback<FocusInEvent>(_ => OnDeviceFocus(device));
-                bubble.RegisterCallback<PointerEnterEvent>(_ => OnDeviceHover(device));
-                bubble.RegisterCallback<PointerDownEvent>(evt =>
-                {
-                    if (evt.button == 0 && _lastPointerDownFrame != Time.frameCount)
-                    {
-                        _lastPointerDownFrame = Time.frameCount;
-                        OnDeviceSubmit(device);
-                    }
-                });
                 bubble.RegisterCallback<NavigationSubmitEvent>(_ =>
                 {
                     if (_lastSubmitFrame != Time.frameCount)
@@ -965,44 +938,6 @@ namespace MoonProject.UI
             bool changed = _focusedDevice != device;
             OnDeviceFocus(device);
             NoteMoved(changed);
-        }
-
-        private void OnHoldCellPointerDown(int index, PointerDownEvent evt)
-        {
-            if (evt.button != 0 || index >= _unlockedHoldCount || _lastPointerDownFrame == Time.frameCount)
-            {
-                return;
-            }
-
-            _lastPointerDownFrame = Time.frameCount;
-            _handoff.NoteMouse();
-            EnsureInteractiveDuringBoot();
-            OnHoldCellFocus(index);
-            Press(index, -1);
-            if (BeginPress(index, EventToReference(evt)))
-            {
-                _panel.CapturePointer(evt.pointerId);
-            }
-        }
-
-        private void OnPanelPointerMove(PointerMoveEvent evt)
-        {
-            HandlePointerMoveAtReferencePos(EventToReference(evt));
-        }
-
-        private void OnPanelPointerUp(PointerUpEvent evt)
-        {
-            if (evt.button != 0)
-            {
-                return;
-            }
-
-            if (_panel.HasPointerCapture(evt.pointerId))
-            {
-                _panel.ReleasePointer(evt.pointerId);
-            }
-
-            HandlePointerUpAtReferencePos(EventToReference(evt));
         }
 
         /// <summary>A press on a cell that holds something may become a drag of it; true when it can.</summary>
@@ -1616,15 +1551,6 @@ namespace MoonProject.UI
             RoverLineArtPainter.FillCircle(painter,
                 new Vector2((FaceLayout.Margin + ToastDotX) * s, (FaceLayout.ToastY + FaceLayout.ToastHeight * 0.5f) * s),
                 ToastDotRadius * s, _settings.AmberBright);
-        }
-
-        private Vector2 EventToReference(IPointerEvent evt)
-        {
-            Rect wb = _panel.worldBound;
-            Vector2 local = !float.IsNaN(wb.width) && wb.width > 0f
-                ? (Vector2)evt.position - wb.position
-                : (Vector2)evt.localPosition;
-            return PanelToReference(local);
         }
 
         private Vector2 PanelToReference(Vector2 localPos)

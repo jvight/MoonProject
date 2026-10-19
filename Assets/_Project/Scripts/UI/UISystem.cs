@@ -865,7 +865,8 @@ namespace MoonProject.UI
             }
 
             _lastFaceMouseScreenPos = rawMouse;
-            Vector2 panelPos = onFace ? FacePanelPoint(rawMouse) : MainPanelPoint(rawMouse) - _cargo.PanelRect.position;
+            // The view's own pointer feed: the only one, on either host, so the dragged part sits where the mouse is.
+            Vector2 panelPos = (onFace ? FacePanelPoint(rawMouse) : MainPanelPoint(rawMouse)) - _cargo.PanelRect.position;
             if (!float.IsNaN(panelPos.x) && !float.IsNaN(panelPos.y))
             {
                 if (down)
