@@ -488,14 +488,14 @@ def _generate_regolith_maps(res: int = 1024, seed: int = 2026) -> dict[str, np.n
     # 2. Continuous multi-scale lumpy regolith bed across Fibonacci frequencies (2, 3, 5, 8, 13, 21, 34, 55, 89)
     # Combines rounded billow clod-mounds, asymmetric slumped troughs, and broken crusty soil ridges at every scale.
     octave_specs = [
-        (2, 3, 0.165, uw_broad, vw_broad, seed + 121),
-        (3, 5, 0.155, uw_broad + 0.37, vw_broad + 0.61, seed + 149),
-        (5, 8, 0.145, uw_med, vw_med, seed + 179),
-        (8, 13, 0.135, uw_med + 0.19, vw_med + 0.73, seed + 211),
-        (13, 21, 0.120, uw_med + 0.53, vw_med + 0.29, seed + 241),
-        (21, 34, 0.105, uw_fine, vw_fine, seed + 277),
-        (34, 55, 0.090, uw_fine + 0.41, vw_fine + 0.17, seed + 313),
-        (55, 89, 0.075, uw_fine + 0.67, vw_fine + 0.83, seed + 353),
+        (2, 3, 0.220, uw_broad, vw_broad, seed + 121),
+        (3, 5, 0.170, uw_broad + 0.37, vw_broad + 0.61, seed + 149),
+        (5, 8, 0.125, uw_med, vw_med, seed + 179),
+        (8, 13, 0.088, uw_med + 0.19, vw_med + 0.73, seed + 211),
+        (13, 21, 0.058, uw_med + 0.53, vw_med + 0.29, seed + 241),
+        (21, 34, 0.038, uw_fine, vw_fine, seed + 277),
+        (34, 55, 0.024, uw_fine + 0.41, vw_fine + 0.17, seed + 313),
+        (55, 89, 0.015, uw_fine + 0.67, vw_fine + 0.83, seed + 353),
     ]
 
     lumpy_bed = np.zeros((res, res), dtype=np.float32)
@@ -520,8 +520,8 @@ def _generate_regolith_maps(res: int = 1024, seed: int = 2026) -> dict[str, np.n
         ridge = (0.36 - np.sqrt((na - 0.50) ** 2 + 0.003)) * np.clip((nc - 0.35) / 0.45, 0.0, 1.0)
 
         lumpy_bed += mound.astype(np.float32) * weight
-        dimple_troughs += hollow.astype(np.float32) * (weight * 1.35)
-        crust_ridges += ridge.astype(np.float32) * (weight * 0.85)
+        dimple_troughs += hollow.astype(np.float32) * (weight * 1.45)
+        crust_ridges += ridge.astype(np.float32) * (weight * 0.65)
 
     # 3. High-frequency crusty sintered crumbs & granular regolith grit (frequencies 89, 144, 216, 300)
     fine_89 = _tileable_aniso_noise(res, 89, 96, seed + 401)
@@ -545,14 +545,18 @@ def _generate_regolith_maps(res: int = 1024, seed: int = 2026) -> dict[str, np.n
     irregular_dimples = np.zeros((res, res), dtype=np.float32)
     n_warp_local = _tileable_aniso_noise(res, 32, 32, seed + 563)
 
-    for _ in range(135):
+    for i in range(155):
         cx = float(rng.random())
         cy = float(rng.random())
-        # Power-law radius across a 12x size span: mostly small/medium irregular indentations, a few broad shallow hollows
-        size_u = float(rng.random()) ** 2.10
-        radius = 0.006 + 0.072 * size_u
-        depth = float(rng.uniform(0.032, 0.082)) * ((radius / 0.028) ** 0.38)
-        aspect = float(rng.uniform(1.35, 2.65))
+        # Mixed-size irregular soft depressions: broad hollows, medium dimples, and small irregular pockets
+        if i < 22:
+            radius = float(rng.uniform(0.045, 0.092))
+        elif i < 70:
+            radius = float(rng.uniform(0.018, 0.046))
+        else:
+            radius = float(rng.uniform(0.007, 0.020))
+        depth = float(rng.uniform(0.065, 0.145)) * ((radius / 0.028) ** 0.42)
+        aspect = float(rng.uniform(1.38, 2.75))
         ang = float(rng.uniform(0.0, np.pi))
         ca = float(np.cos(ang))
         sa = float(np.sin(ang))
@@ -579,8 +583,8 @@ def _generate_regolith_maps(res: int = 1024, seed: int = 2026) -> dict[str, np.n
 
         w_loc_a = fine_89[np.ix_(iy, ix)] - 0.5
         w_loc_b = n_warp_local[np.ix_(iy, ix)] - 0.5
-        rx = (dx * ca + dy * sa) + (w_loc_a * 0.30 + w_loc_b * 0.38) * radius
-        ry = (-dx * sa + dy * ca) * aspect + (w_loc_b * 0.32 - w_loc_a * 0.26) * radius
+        rx = (dx * ca + dy * sa) + (w_loc_a * 0.22 + w_loc_b * 0.36) * radius
+        ry = (-dx * sa + dy * ca) * aspect + (w_loc_b * 0.30 - w_loc_a * 0.20) * radius
 
         d1 = np.sqrt(rx * rx + ry * ry) / radius
         rx2 = rx - lobe_off_x
@@ -593,7 +597,7 @@ def _generate_regolith_maps(res: int = 1024, seed: int = 2026) -> dict[str, np.n
 
         # Pure soft concave depression with asymmetric wall slump and ZERO outer rim
         asym = np.clip(1.0 + asym_slope * (rx / radius), 0.52, 1.48)
-        bowl = (np.clip(1.0 - d_merged * d_merged, 0.0, 1.0) ** 2.25) * depth * asym
+        bowl = (np.clip(1.0 - d_merged * d_merged, 0.0, 1.0) ** 2.15) * depth * asym
         sub = irregular_dimples[np.ix_(iy, ix)]
         irregular_dimples[np.ix_(iy, ix)] = np.maximum(sub, bowl.astype(np.float32))
 
@@ -604,19 +608,19 @@ def _generate_regolith_maps(res: int = 1024, seed: int = 2026) -> dict[str, np.n
 
     cluster_field = _tileable_aniso_noise(res, 4, 5, seed + 601)
 
-    # 5a. 320 compound soil clods (crumbly compacted regolith clumps that blend smoothly into the soil bed)
-    for i in range(320):
+    # 5a. 360 compound soil clods (crumbly compacted regolith clumps that blend smoothly into the soil bed)
+    for i in range(360):
         cx = float(rng.random())
         cy = float(rng.random())
         c_val = float(cluster_field[int(cy * res) % res, int(cx * res) % res])
-        if i >= 55 and rng.random() > (0.25 + 0.75 * c_val):
+        if i >= 65 and rng.random() > (0.25 + 0.75 * c_val):
             continue
 
-        size_u = float(rng.random()) ** 2.05
-        pr = float(rng.uniform(0.015, 0.038)) if i < 45 else (0.0045 + 0.0155 * size_u)
-        ph = float(rng.uniform(0.032, 0.078)) * ((pr / 0.015) ** 0.36)
+        size_u = float(rng.random()) ** 1.95
+        pr = float(rng.uniform(0.016, 0.042)) if i < 55 else (0.0050 + 0.0165 * size_u)
+        ph = float(rng.uniform(0.055, 0.125)) * ((pr / 0.016) ** 0.38)
         # Subtle powdery tone on clods (never flat sticker blobs)
-        tone = float(rng.uniform(-0.018, 0.036))
+        tone = float(rng.uniform(-0.022, 0.045))
         aspect = float(rng.uniform(1.25, 2.35))
         ang = float(rng.uniform(0.0, np.pi))
         ca = float(np.cos(ang))
@@ -644,8 +648,8 @@ def _generate_regolith_maps(res: int = 1024, seed: int = 2026) -> dict[str, np.n
         w_b = fine_89[np.ix_(iy, ix)] - 0.5
         w_c = fine_144[np.ix_(iy, ix)] - 0.5
 
-        rx = (dx * ca + dy * sa) + (w_a * 0.36 + w_b * 0.25) * pr
-        ry = (-dx * sa + dy * ca) * aspect + (w_b * 0.32 - w_a * 0.24) * pr
+        rx = (dx * ca + dy * sa) + (w_a * 0.32 + w_b * 0.18) * pr
+        ry = (-dx * sa + dy * ca) * aspect + (w_b * 0.24 - w_a * 0.20) * pr
 
         d1 = (np.abs(rx) ** 1.55 + np.abs(ry) ** 1.55) ** (1.0 / 1.55) / pr
         rx2 = rx - lobe_x
@@ -656,8 +660,8 @@ def _generate_regolith_maps(res: int = 1024, seed: int = 2026) -> dict[str, np.n
         d_clod = d2 * (1.0 - hb) + d1 * hb - k_c * hb * (1.0 - hb)
 
         # Soft-shouldered crumbly clod profile that feathers into the regolith bed (no sharp sticker edge, no moat)
-        falloff = np.clip(1.0 - d_clod * d_clod, 0.0, 1.0) ** 1.65
-        crumb_top = 0.82 + 0.36 * np.clip(w_b + 0.5, 0.0, 1.0) + 0.24 * w_c
+        falloff = np.clip(1.0 - d_clod * d_clod, 0.0, 1.0) ** 1.55
+        crumb_top = 0.88 + 0.22 * np.clip(w_b + 0.5, 0.0, 1.0) + 0.12 * w_c
         clod = falloff * ph * crumb_top
 
         cur_h = clod_height[np.ix_(iy, ix)]
@@ -667,13 +671,13 @@ def _generate_regolith_maps(res: int = 1024, seed: int = 2026) -> dict[str, np.n
         clod_height[np.ix_(iy, ix)] = new_h
         clod_tone[np.ix_(iy, ix)] = np.where(clod > cur_h, (falloff * tone).astype(np.float32), cur_t)
 
-    # 5b. 680 small angular rubble chips & coarse regolith fragments (polygonal/faceted, mixed sizes, zero moats)
-    for _ in range(680):
+    # 5b. 740 small angular rubble chips & coarse regolith fragments (polygonal/faceted, mixed sizes, zero moats)
+    for _ in range(740):
         px = float(rng.random())
         py = float(rng.random())
-        pr = 0.0020 + 0.0090 * (float(rng.random()) ** 1.95)
-        ph = float(rng.uniform(0.022, 0.062)) * ((pr / 0.0055) ** 0.34)
-        tone = float(rng.uniform(-0.045, 0.065))
+        pr = 0.0024 + 0.0105 * (float(rng.random()) ** 1.85)
+        ph = float(rng.uniform(0.036, 0.088)) * ((pr / 0.0055) ** 0.36)
+        tone = float(rng.uniform(-0.048, 0.072))
         aspect = float(rng.uniform(0.52, 1.92))
         ang = float(rng.uniform(0.0, np.pi))
         ca = float(np.cos(ang))
@@ -696,8 +700,8 @@ def _generate_regolith_maps(res: int = 1024, seed: int = 2026) -> dict[str, np.n
         dy = dy_1d[:, None]
 
         w_g = fine_144[np.ix_(iy, ix)] - 0.5
-        rx = (dx * ca + dy * sa) * aspect + w_g * pr * 0.34
-        ry = (-dx * sa + dy * ca) - w_g * pr * 0.28
+        rx = (dx * ca + dy * sa) * aspect + w_g * pr * 0.26
+        ry = (-dx * sa + dy * ca) - w_g * pr * 0.22
 
         rn = (np.abs(rx) ** 1.35 + np.abs(ry) ** 1.35) ** (1.0 / 1.35) / pr
         facet_plane = np.clip(1.0 + tilt_x * (rx / pr) + tilt_y * (ry / pr), 0.52, 1.48)
@@ -713,33 +717,37 @@ def _generate_regolith_maps(res: int = 1024, seed: int = 2026) -> dict[str, np.n
         rubble_sharpness[np.ix_(iy, ix)] = np.where(mask_up, chip_falloff.astype(np.float32), cur_r)
 
     # 6. Combine all height layers into a rich, cohesive, multi-scale lumpy regolith heightfield
+    # Attenuate high-frequency crumb grain inside dimple walls and on clod faces so their shadow planes read crisply
+    feature_envelope = np.clip(irregular_dimples * 5.0 + clod_height * 3.5, 0.0, 1.0)
     raw_height = (
         0.50
         + lumpy_bed
         - dimple_troughs
         - irregular_dimples
         + crust_ridges
-        + crumb_grain * 0.072
+        + crumb_grain * (0.018 * (1.0 - 0.55 * feature_envelope))
         + clod_height
     )
 
     # Normalize height into [0.03, 0.97] centered near 0.50 so Mask.r carries full dynamic range
     h_mean = float(np.mean(raw_height))
     h_std = max(float(np.std(raw_height)), 1e-4)
-    height_01 = np.clip(0.50 + (raw_height - h_mean) / (h_std * 2.95), 0.03, 0.97).astype(np.float32)
+    height_01 = np.clip(0.50 + (raw_height - h_mean) / (h_std * 2.85), 0.03, 0.97).astype(np.float32)
 
-    # 7. Multi-scale gradient tangent-space normal map so both fine crumbs and broader clods/dimples have strong 3D relief
+    # 7. Multi-scale gradient tangent-space normal map so both fine clods/rubble and broader dimples/mounds have strong 3D relief
     dh_dx_1 = (np.roll(raw_height, -1, axis=1) - np.roll(raw_height, 1, axis=1)) * 0.5
     dh_dy_1 = (np.roll(raw_height, -1, axis=0) - np.roll(raw_height, 1, axis=0)) * 0.5
     dh_dx_3 = (np.roll(raw_height, -3, axis=1) - np.roll(raw_height, 3, axis=1)) / 6.0
     dh_dy_3 = (np.roll(raw_height, -3, axis=0) - np.roll(raw_height, 3, axis=0)) / 6.0
     dh_dx_7 = (np.roll(raw_height, -7, axis=1) - np.roll(raw_height, 7, axis=1)) / 14.0
     dh_dy_7 = (np.roll(raw_height, -7, axis=0) - np.roll(raw_height, 7, axis=0)) / 14.0
+    dh_dx_14 = (np.roll(raw_height, -14, axis=1) - np.roll(raw_height, 14, axis=1)) / 28.0
+    dh_dy_14 = (np.roll(raw_height, -14, axis=0) - np.roll(raw_height, 14, axis=0)) / 28.0
 
-    dh_dx = 0.42 * dh_dx_1 + 0.34 * dh_dx_3 + 0.24 * dh_dx_7
-    dh_dy = 0.42 * dh_dy_1 + 0.34 * dh_dy_3 + 0.24 * dh_dy_7
+    dh_dx = 0.25 * dh_dx_1 + 0.30 * dh_dx_3 + 0.27 * dh_dx_7 + 0.18 * dh_dx_14
+    dh_dy = 0.25 * dh_dy_1 + 0.30 * dh_dy_3 + 0.27 * dh_dy_7 + 0.18 * dh_dy_14
 
-    normal_strength = 22.0
+    normal_strength = 26.0
     nx = -dh_dx * normal_strength
     ny = -dh_dy * normal_strength
     nz = np.ones_like(raw_height, dtype=np.float32)
@@ -756,7 +764,7 @@ def _generate_regolith_maps(res: int = 1024, seed: int = 2026) -> dict[str, np.n
     # 8. Compute true multi-directional horizon & cavity ambient occlusion from the heightfield
     horizon_occ = np.zeros((res, res), dtype=np.float32)
     directions = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, 1), (1, -1), (-1, -1)]
-    for step_px, weight in ((2, 0.28), (5, 0.28), (12, 0.24), (24, 0.20)):
+    for step_px, weight in ((2, 0.24), (5, 0.28), (12, 0.26), (24, 0.22)):
         step_occ = np.zeros((res, res), dtype=np.float32)
         inv_dist = 1.0 / float(step_px)
         for dx_i, dy_i in directions:
@@ -768,21 +776,21 @@ def _generate_regolith_maps(res: int = 1024, seed: int = 2026) -> dict[str, np.n
 
     micro_ao = np.clip(
         0.92
-        - horizon_occ * 10.5
-        - (dimple_troughs + irregular_dimples) * 1.15
-        + np.clip(clod_height * 1.5, 0.0, 0.06),
-        0.22,
+        - horizon_occ * 11.2
+        - (dimple_troughs + irregular_dimples) * 1.25
+        + np.clip(clod_height * 1.4, 0.0, 0.06),
+        0.18,
         1.0,
     ).astype(np.float32)
 
     # 9. Albedo: cohesive powdery lunar grey regolith with subtle dry clod crests, mineral grain & soft hollows
     lum = (
         0.525
-        + (height_01 - 0.50) * 0.14
-        + crust_ridges * 0.18
-        + crumb_grain * 0.12
+        + (height_01 - 0.50) * 0.15
+        + crust_ridges * 0.16
+        + crumb_grain * 0.09
         + clod_tone * 0.85
-        - (dimple_troughs + irregular_dimples) * 0.16
+        - (dimple_troughs + irregular_dimples) * 0.18
     )
     lum = np.clip(lum, 0.38, 0.68).astype(np.float32)
     albedo_rgb = np.stack([lum * 0.995, lum * 1.000, lum * 1.005], axis=-1)

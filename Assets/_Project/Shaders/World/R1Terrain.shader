@@ -11,17 +11,17 @@ Shader "MoonProject/World/R1Terrain"
         [NoScaleOffset] _RockBumpMap("Exposed Basalt Normal Map", 2D) = "bump" {}
         [NoScaleOffset] _RockMaskMap("Exposed Basalt Mask", 2D) = "white" {}
 
-        _NearTiling("Near Tiling (uv/m)", Float) = 0.44
-        _MacroTiling("Macro Tiling (uv/m)", Float) = 0.042
+        _NearTiling("Near Tiling (uv/m)", Float) = 0.56
+        _MacroTiling("Macro Tiling (uv/m)", Float) = 0.16
         _RockTiling("Triplanar Rock Tiling (uv/m)", Float) = 0.12
-        _NearBumpScale("Near Normal Scale", Range(0.0, 2.0)) = 1.05
-        _MacroBumpScale("Macro Normal Scale", Range(0.0, 2.0)) = 0.24
+        _NearBumpScale("Near Normal Scale", Range(0.0, 2.0)) = 1.45
+        _MacroBumpScale("Macro Normal Scale", Range(0.0, 2.0)) = 0.75
         _RockBumpScale("Triplanar Rock Normal Scale", Range(0.0, 2.0)) = 0.88
-        _NearFadeStart("Near Detail Fade Start (m)", Float) = 12.0
-        _NearFadeEnd("Near Detail Fade End (m)", Float) = 32.0
-        _DetailAlbedoStrength("Regolith Albedo Modulation", Range(0.0, 0.6)) = 0.30
-        _SmoothnessScale("Smoothness Scale", Range(0.0, 0.5)) = 0.13
-        _OcclusionStrength("Micro-Cavity AO Strength", Range(0.0, 1.0)) = 0.52
+        _NearFadeStart("Near Detail Fade Start (m)", Float) = 38.0
+        _NearFadeEnd("Near Detail Fade End (m)", Float) = 120.0
+        _DetailAlbedoStrength("Regolith Albedo Modulation", Range(0.0, 0.6)) = 0.42
+        _SmoothnessScale("Smoothness Scale", Range(0.0, 0.5)) = 0.15
+        _OcclusionStrength("Micro-Cavity AO Strength", Range(0.0, 1.0)) = 0.78
         _SlopeThreshold("Steep Slope Threshold (Normal Y)", Range(0.3, 0.98)) = 0.88
         _SlopeBlendRange("Steep Slope Blend Width", Range(0.02, 0.4)) = 0.10
     }
@@ -193,11 +193,32 @@ Shader "MoonProject/World/R1Terrain"
                 }
             }
 
-            // Diffuse response for punctual lights (lander floodlights, beacons, pylon lamps).
-            half3 PunctualDiffuse(Light light, half3 normalWS, half microAo)
+            // Diffuse response for punctual lights (07's headlamps, lander floodlights, beacons, pylon lamps)
+            // with grazing micro-shadow and clod-face highlight so regolith relief reads crisply in eclipse lamplight.
+            half3 PunctualDiffuse(
+                Light light,
+                half3 normalWS,
+                half3 geomNormalWS,
+                half microAo,
+                half regolithHeight,
+                half clodProminence,
+                half regolithFade120,
+                inout half ambientShadowCarve)
             {
+                half geomNdotL = saturate(dot(geomNormalWS, light.direction));
                 half ndotl = saturate(dot(normalWS, light.direction));
-                float atten = min(light.distanceAttenuation, 16.0) * light.shadowAttenuation * lerp(1.0, (float)microAo, 0.35);
+                half deltaNdotL = dot(normalWS, light.direction) - dot(geomNormalWS, light.direction);
+
+                half grazingRatio = deltaNdotL / max(geomNdotL * 0.52h + 0.035h, 0.055h);
+                half shadowSignal = grazingRatio + (regolithHeight - 0.50h) * 0.68h - (1.0h - microAo) * 0.88h;
+                half microShadow = lerp(1.0h, smoothstep(-0.62h, 0.22h, shadowSignal), regolithFade120);
+                half clodHighlight = 1.0h + saturate(grazingRatio) * (0.68h + 0.48h * clodProminence) * regolithFade120;
+
+                float rawAtten = min(light.distanceAttenuation, 16.0) * light.shadowAttenuation;
+                half lampWeight = saturate((half)(rawAtten * 2.2)) * regolithFade120;
+                ambientShadowCarve = min(ambientShadowCarve, lerp(1.0h, lerp(0.28h, 1.0h, microShadow) * microAo, lampWeight));
+
+                float atten = rawAtten * (float)(microShadow * clodHighlight * lerp(1.0h, microAo, 0.72h));
                 return light.color * (half)(ndotl * atten);
             }
 
@@ -615,7 +636,7 @@ Shader "MoonProject/World/R1Terrain"
                 return 1.0h + (half)(rayMask * 0.25 * padFade) * levelGround * basinEnv;
             }
 
-            // Crisp lunar terminator shading on ridges and rock ledges, with soft low-contrast shading on flat-plain depressions.
+            // Crisp lunar terminator shading on ridges and rock ledges, plus rich grazing micro-shadows across near-field regolith clods and dimples.
             half3 MainSunDiffuseStylized(
                 Light light,
                 half3 normalWS,
@@ -624,19 +645,31 @@ Shader "MoonProject/World/R1Terrain"
                 half sunlit,
                 half microAo,
                 half slopeFactor,
-                half ridgeCrestMask)
+                half ridgeCrestMask,
+                half regolithShadowWeight,
+                half regolithHeight)
             {
                 half ndotl = dot(normalWS, light.direction);
                 half geomNdotL = dot(geomNormalWS, light.direction);
                 half deltaNdotL = ndotl - geomNdotL;
 
-                // In Earthlight (sunlit == 0), keep flat-plain normal relief soft and low-contrast while mountain slopes stay crisp.
+                // Relative grazing slope tilt: leeward sides of clods, crusty ridges, and dimple walls tilt away from the sun (grazingSlope < 0)
+                // and cast rich, deep little micro-shadows when the sun is low.
+                half grazingDenom = max(abs(geomNdotL) * 0.52h + 0.032h, 0.048h);
+                half grazingSlope = deltaNdotL / grazingDenom;
+                half dimpleDepth = saturate((0.49h - regolithHeight) * 2.2h);
+                half cavityDepth = saturate((0.84h - microAo) * 2.4h);
+                half shadowSignal = grazingSlope - dimpleDepth * 0.22h - cavityDepth * 0.20h;
+                half clodLeeShadow = smoothstep(0.04h, -0.38h, shadowSignal) * regolithShadowWeight;
+                half clodSunCatch = smoothstep(-0.02h, 0.48h, grazingSlope + saturate(regolithHeight - 0.50h) * 0.35h) * regolithShadowWeight;
+
+                // In Earthlight / eclipse (sunlit == 0), keep subtle clod/dimple relief readable while mountain slopes stay crisp.
                 half earthWrap = saturate(ndotl * 0.84h + 0.16h);
-                half earthReliefGain = lerp(0.28h, 1.55h, slopeFactor);
-                half earthRelief = clamp(deltaNdotL * earthReliefGain, -0.38h, 0.55h);
+                half earthReliefGain = lerp(0.55h + 0.60h * regolithShadowWeight, 1.55h, slopeFactor);
+                half earthRelief = clamp(deltaNdotL * earthReliefGain, -0.46h, 0.58h);
                 half earthDiffuse = saturate(pow(earthWrap, 1.15h) * 1.06h + earthRelief);
 
-                // At low sun (sunlit > 0), the 0.5-deg solar disc carves a crisp terminator across ridges and ledges.
+                // At low sun (sunlit > 0), the 0.5-deg solar disc carves a crisp terminator across ridges, ledges, and regolith clods.
                 half terminatorKnee = smoothstep(-0.006h, 0.032h, ndotl);
                 half grazingContrast = pow(saturate(ndotl + 0.005h), 1.08h) * terminatorKnee;
 
@@ -645,10 +678,10 @@ Shader "MoonProject/World/R1Terrain"
                 half lommel = grazingContrast / max(0.36h, grazingContrast + ndotv * 0.40h);
                 half sunDiffuse = lerp(lommel * 1.04h, grazingContrast * 1.24h, saturate(slopeFactor * 0.75h + 0.25h));
 
-                // Accentuate grazing sunlit ridge crests and rock-ledge lips on slopes without creating bright crater rings on the plain.
+                // Accentuate grazing sunlit ridge crests, rock-ledge lips, and sunlit clod tops.
                 half terminatorZone = smoothstep(-0.04h, 0.06h, geomNdotL) * (1.0h - smoothstep(0.06h, 0.40h, geomNdotL));
-                half ridgeCrestBoost = saturate(deltaNdotL) * (0.35h + terminatorZone * 0.52h) * lerp(0.05h, 1.0h, slopeFactor);
-                sunDiffuse += ridgeCrestBoost;
+                half ridgeCrestBoost = saturate(deltaNdotL) * (0.35h + terminatorZone * 0.52h) * lerp(0.22h + 0.48h * regolithShadowWeight, 1.0h, slopeFactor);
+                sunDiffuse += ridgeCrestBoost + clodSunCatch * 0.24h;
 
                 half highlandDiffuse = lerp(earthDiffuse, sunDiffuse, sunlit);
 
@@ -664,11 +697,14 @@ Shader "MoonProject/World/R1Terrain"
                 // Graphic rim-light along convex ridge crests and broken ledge lips
                 half rimGrazing = pow(1.0h - saturate(dot(normalWS, viewDirWS)), 2.2h) * smoothstep(-0.04h, 0.14h, ndotl);
                 half painterlyRidgeStroke = (ridgeCrestMask * smoothstep(-0.02h, 0.10h, ndotl) * 0.28h) + rimGrazing * slopeFactor * 0.16h;
-                half stylizedDiffuse = lerp(highlandDiffuse, painterlyRamp, 0.45h) + painterlyRidgeStroke;
+                half stylizedDiffuse = lerp(highlandDiffuse, painterlyRamp, 0.42h) + painterlyRidgeStroke + clodSunCatch * 0.12h * sunlit;
 
-                // Micro-cavity AO self-shadows broken rock ledges and cleavage joints.
-                half directCavity = lerp(1.0h, microAo, 0.44h + 0.26h * sunlit);
-                half diffuse = stylizedDiffuse * directCavity;
+                // Attenuate leeward flanks of clods and dimples so low sun carves rich, deep little shadows across the regolith plain.
+                half clodShadowAtten = lerp(1.0h, lerp(0.48h, 0.08h, sunlit), clodLeeShadow);
+
+                // Micro-cavity AO self-shadows clod bases, irregular dimples, broken rock ledges, and cleavage joints.
+                half directCavity = lerp(1.0h, microAo, 0.52h + 0.32h * sunlit);
+                half diffuse = stylizedDiffuse * clodShadowAtten * directCavity;
 
                 // Crisp lunar shadows in DirectSun (shadowFloor = 0.042) so shadowed slopes stay dark while retaining subtle form
                 half shadowFloor = lerp(0.18h, 0.042h, sunlit);
@@ -696,9 +732,16 @@ Shader "MoonProject/World/R1Terrain"
                     (half)smoothstep(285.0, 345.0, length(input.positionWS.xz)));
                 half3 geomNormalWS = normalize(lerp(rawGeomNormalWS, half3(0.0h, 1.0h, 0.0h), (1.0h - mountainMask) * 0.78h));
 
-                // Detail normal & slope geology weights extended across 500 m – 1800 m so distant rim slopes and The Peak
-                // retain crisp surface normal relief.
-                half nearWeight = 1.0h - (half)smoothstep(_NearFadeStart, max(_NearFadeStart + 1.0, _NearFadeEnd), camDist);
+                // Regolith near-field weights:
+                // - Strong near-field regolith relief in 0–40 m (where low sun and 07's headlamps make clods/dimples read)
+                // - Smooth fade to the existing macro look by ~120 m
+                // - Extra fine micro-crust clarity within 0–20 m for low close-up views (1.5 m up) and immediate chase foreground
+                half regolithClose20 = 1.0h - (half)smoothstep(6.0, 20.0, camDist);
+                half regolithNear40 = 1.0h - (half)smoothstep(28.0, 46.0, camDist);
+                half regolithFade120 = 1.0h - (half)smoothstep(38.0, 120.0, camDist);
+                half nearWeight = max(
+                    1.0h - (half)smoothstep(_NearFadeStart, max(_NearFadeStart + 1.0, _NearFadeEnd), camDist),
+                    regolithFade120);
                 half midDetailWeight = 1.0h - (half)smoothstep(220.0, 720.0, camDist);
                 half macroWeight = 1.0h - (half)smoothstep(720.0, 1550.0, camDist);
                 half hillDetailWeight = 1.0h - (half)smoothstep(900.0, 1850.0, camDist);
@@ -732,6 +775,9 @@ Shader "MoonProject/World/R1Terrain"
                 half microAo = 1.0h;
                 half smoothness = 0.04h;
                 half ridgeCrestMask = 0.0h;
+                half regolithShadowWeight = 0.0h;
+                half regolithHeight = 0.50h;
+                half clodProminence = 0.0h;
 
                 // Construct world-space tangent frame aligned with +X (U) and +Z (V) around the smooth terrain normal.
                 half3 tangentWS = normalize(half3(1.0h, 0.0h, 0.0h) - geomNormalWS * geomNormalWS.x);
@@ -873,7 +919,7 @@ Shader "MoonProject/World/R1Terrain"
                     smoothness = max(smoothness, exposedRockMask * 0.080h);
                 }
 
-                // Organic regolith grain/normal noise for micro & mid detail (continuous wind/ejecta drift + warped fine grain, never dots)
+                // Multi-scale lumpy compacted regolith, clods, irregular soft dimples, and crusty surface (0–40 m strong, fading to macro look by ~120 m)
                 UNITY_BRANCH
                 if (macroWeight > 0.001h)
                 {
@@ -881,18 +927,18 @@ Shader "MoonProject/World/R1Terrain"
                     float2 wpRot = float2(wp.x * 0.80 - wp.y * 0.60, wp.x * 0.60 + wp.y * 0.80);
                     float2 wpRotB = float2(wp.x * 0.55 + wp.y * 0.835, -wp.x * 0.835 + wp.y * 0.55);
 
-                    // Non-linear domain warp breaks up any circular bubbles baked in _BaseMap / _BumpMap so they act purely as organic dust grain
+                    // Macro / mid-distance domain-warped regolith grain (>120 m)
                     float2 grainWarp = float2(
-                        BlastNoise(wp * 0.95 + float2(4.1, 13.7)) - 0.5,
-                        BlastNoise(wpRot * 0.95 + float2(19.3, 6.8)) - 0.5) * 0.42;
-                    float2 uvGrainA = (wpRot + grainWarp) * (_NearTiling * 0.42) + float2(0.37, 0.71);
-                    float2 uvGrainB = (wpRotB - grainWarp.yx) * (_NearTiling * 0.29) + float2(0.14, 0.52);
+                        BlastNoise(wp * 0.42 + float2(4.1, 13.7)) - 0.5,
+                        BlastNoise(wpRot * 0.42 + float2(19.3, 6.8)) - 0.5) * 0.55;
+                    float2 uvMacroA = (wpRot + grainWarp) * 0.165 + float2(0.37, 0.71);
+                    float2 uvMacroB = (wpRotB - grainWarp.yx) * 0.112 + float2(0.14, 0.52);
 
-                    half3 regolithTexA = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uvGrainA).rgb;
-                    half3 regolithTexB = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uvGrainB).rgb;
+                    half3 regolithTexA = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uvMacroA).rgb;
+                    half3 regolithTexB = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uvMacroB).rgb;
                     half3 regolithTex = lerp(regolithTexA, regolithTexB, 0.50h);
 
-                    // Continuous, anisotropic multi-octave regolith undulation & organic grain normal (zero circles/dots)
+                    // Continuous, anisotropic multi-octave regolith undulation normal for mid/far distances
                     float gEps = 0.28;
                     float2 wpAnisoA = float2(wpRot.x * 0.42, wpRot.y * 0.78);
                     float2 wpAnisoB = float2(wpRotB.x * 1.35, wpRotB.y * 0.82);
@@ -902,58 +948,132 @@ Shader "MoonProject/World/R1Terrain"
                              + (BlastNoise(wpAnisoB + float2(gEps * 1.35, 0.0) - grainWarp.yx * 0.65 + float2(11.3, 7.9)) - 0.5) * 0.38;
                     float gz = (BlastNoise(wpAnisoA + float2(0.0, gEps * 0.78) + grainWarp * 0.45) - 0.5) * 0.62
                              + (BlastNoise(wpAnisoB + float2(0.0, gEps * 0.82) - grainWarp.yx * 0.65 + float2(11.3, 7.9)) - 0.5) * 0.38;
-                    half grainNormalStrength = max(_MacroBumpScale, 0.35h) * macroWeight * lerp(0.16h, 0.28h, slopeFactor) * (0.45h + 0.55h * midDetailWeight);
+                    half grainNormalStrength = max(_MacroBumpScale, 0.35h) * macroWeight * lerp(0.18h, 0.30h, slopeFactor) * (0.45h + 0.55h * midDetailWeight);
                     half2 organicGrainXY = half2(gx - g0, gz - g0) * grainNormalStrength;
 
-                    half fineMidScale = 0.14h * midDetailWeight * lerp(0.45h, 0.85h, slopeFactor);
-                    half3 midNormalA = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, uvGrainA), fineMidScale);
-                    half3 midNormalB = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, uvGrainB), fineMidScale);
+                    half fineMidScale = 0.22h * midDetailWeight * lerp(0.50h, 0.85h, slopeFactor);
+                    half3 midNormalA = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, uvMacroA), fineMidScale);
+                    half3 midNormalB = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, uvMacroB), fineMidScale);
+                    half2 midRotA = half2(midNormalA.x * 0.80h + midNormalA.y * 0.60h, -midNormalA.x * 0.60h + midNormalA.y * 0.80h);
+                    half2 midRotB = half2(midNormalB.x * 0.55h - midNormalB.y * 0.835h, midNormalB.x * 0.835h + midNormalB.y * 0.55h);
 
                     // Evaluate home-pad tyre ruts only (no small crater stamps)
                     half4 tyreRuts = SampleNearTyreRuts(wp, camDist);
                     baseAlbedo *= tyreRuts.z;
                     microAo = min(microAo, tyreRuts.w);
 
-                    half2 distNormalXY = organicGrainXY + (midNormalA.xy + midNormalB.yx) * 0.35h
+                    half2 distNormalXY = organicGrainXY + (midRotA + midRotB) * 0.35h
                         + weatheredCraters.xy + tyreRuts.xy * (1.0h - slopeFactor * 0.45h);
 
                     UNITY_BRANCH
                     if (nearWeight > 0.001h)
                     {
+                        // Non-repeating two-scale regolith blend with organic domain warp & noise-driven rotation/offset:
+                        // Scale 1 (Medium lumpy mounds, coarse clod clusters & irregular soft dimples: ~6.4 m and ~9.6 m tiles)
+                        // Scale 2 (Fine compacted clods, small rubble & crusty regolith: ~2.3 m and ~3.5 m tiles)
+                        // Plus close micro-crust pass (<20 m: ~1.1 m tile) so 1.5 m close-up views match Apollo 11 granularity.
+                        float2 medWarp = float2(
+                            BlastNoise(wp * 0.22 + float2(3.7, 9.2)) - 0.5,
+                            BlastNoise(wpRot * 0.22 + float2(14.6, 5.1)) - 0.5) * 0.65;
                         float2 fineWarp = float2(
-                            BlastNoise(wp * 3.4 + float2(7.3, 2.9)) - 0.5,
-                            BlastNoise(wpRot * 3.4 + float2(15.1, 11.4)) - 0.5) * 0.18;
-                        float2 uvNear1 = (wp + fineWarp) * _NearTiling;
-                        float2 wpNearRot = float2(wp.x * 0.7986 - wp.y * 0.6018, wp.x * 0.6018 + wp.y * 0.7986);
-                        float2 uvNear2 = (wpNearRot - fineWarp.yx) * (_NearTiling * 0.63) + float2(0.19, 0.63);
+                            BlastNoise(wp * 0.72 + float2(7.3, 2.9)) - 0.5,
+                            BlastNoise(wpRot * 0.72 + float2(15.1, 11.4)) - 0.5) * 0.22;
 
-                        half3 albedoNear1 = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uvNear1).rgb;
-                        half3 albedoNear2 = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uvNear2).rgb;
-                        half3 albedoNear = lerp(albedoNear1, albedoNear2, 0.50h);
+                        // Rotated frames for Medium Scale: A (~26.6 deg: c=0.8944, s=0.4472), B (~-51.3 deg: c=0.6247, s=-0.7809)
+                        float2 wpMedA = float2(wp.x * 0.8944 - wp.y * 0.4472, wp.x * 0.4472 + wp.y * 0.8944) + medWarp;
+                        float2 wpMedB = float2(wp.x * 0.6247 + wp.y * 0.7809, -wp.x * 0.7809 + wp.y * 0.6247) - medWarp.yx * 0.85;
+                        float2 uvMedA = wpMedA * 0.156 + float2(0.13, 0.47);
+                        float2 uvMedB = wpMedB * 0.104 + float2(0.61, 0.29);
 
-                        half4 maskNear1 = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, uvNear1);
-                        half4 maskNear2 = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, uvNear2);
-                        half4 maskNear = lerp(maskNear1, maskNear2, 0.50h);
+                        // Rotated frames for Fine Scale: A (~11.5 deg: c=0.9799, s=0.1994), B (~47.9 deg: c=0.6704, s=0.7420)
+                        float2 wpFineA = float2(wp.x * 0.9799 - wp.y * 0.1994, wp.x * 0.1994 + wp.y * 0.9799) + fineWarp;
+                        float2 wpFineB = float2(wp.x * 0.6704 - wp.y * 0.7420, wp.x * 0.7420 + wp.y * 0.6704) - fineWarp.yx * 0.80;
+                        float2 uvFineA = wpFineA * 0.435 + float2(0.07, 0.83);
+                        float2 uvFineB = wpFineB * 0.285 + float2(0.41, 0.19);
 
-                        half bumpScale = (_NearBumpScale * 0.14h + _MacroBumpScale * 0.08h) * nearWeight;
-                        half3 tsNormal1 = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, uvNear1), bumpScale);
-                        half3 tsNormal2Raw = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, uvNear2), bumpScale * 0.85h);
-                        half2 tsRot2 = half2(
-                            tsNormal2Raw.x * 0.7986h + tsNormal2Raw.y * 0.6018h,
-                            -tsNormal2Raw.x * 0.6018h + tsNormal2Raw.y * 0.7986h);
-                        half2 combinedTsXY = tsNormal1.xy * 0.55h + tsRot2 * 0.50h + distNormalXY;
+                        // Spatially varying noise blend masks eliminate any periodic repetition across the plain
+                        half medNoiseBlend = (half)smoothstep(0.28, 0.72, BlastNoise(wp * 0.085 + medWarp * 0.3 + float2(21.4, 8.7)));
+                        half fineNoiseBlend = (half)smoothstep(0.26, 0.74, BlastNoise(wpRot * 0.26 + fineWarp * 0.5 + float2(9.3, 31.2)));
 
+                        half4 maskMedA = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, uvMedA);
+                        half4 maskMedB = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, uvMedB);
+                        // Height-preserving blend between MedA and MedB so clods and dimples stay crisp instead of averaging flat
+                        half medBlend = saturate(medNoiseBlend + (maskMedB.r - maskMedA.r) * 0.48h);
+                        half4 maskMed = lerp(maskMedA, maskMedB, medBlend);
+
+                        half4 maskFineA = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, uvFineA);
+                        half4 maskFineB = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, uvFineB);
+                        half fineBlend = saturate(fineNoiseBlend + (maskFineB.r - maskFineA.r) * 0.48h);
+                        half4 maskFine = lerp(maskFineA, maskFineB, fineBlend);
+
+                        half3 albedoMedA = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uvMedA).rgb;
+                        half3 albedoMedB = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uvMedB).rgb;
+                        half3 albedoMed = lerp(albedoMedA, albedoMedB, medBlend);
+
+                        half3 albedoFineA = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uvFineA).rgb;
+                        half3 albedoFineB = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uvFineB).rgb;
+                        half3 albedoFine = lerp(albedoFineA, albedoFineB, fineBlend);
+
+                        // Strong near-field relief in 0–40 m fading smoothly to macro by ~120 m
+                        half nearPlainBoost = lerp(1.0h, 0.55h, slopeFactor);
+                        half medBumpScale = (0.94h * regolithFade120 + 0.72h * regolithNear40) * nearPlainBoost;
+                        half fineBumpScale = (0.54h * regolithFade120 + 0.66h * regolithNear40 + 0.28h * regolithClose20) * nearPlainBoost;
+
+                        half3 nMedARaw = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, uvMedA), medBumpScale);
+                        half3 nMedBRaw = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, uvMedB), medBumpScale);
+                        // Rotate tangent normals back into world (+X, +Z) tangent frame
+                        half2 nMedA = half2(nMedARaw.x * 0.8944h + nMedARaw.y * 0.4472h, -nMedARaw.x * 0.4472h + nMedARaw.y * 0.8944h);
+                        half2 nMedB = half2(nMedBRaw.x * 0.6247h - nMedBRaw.y * 0.7809h, nMedBRaw.x * 0.7809h + nMedBRaw.y * 0.6247h);
+                        half2 tsMedXY = lerp(nMedA, nMedB, medBlend);
+
+                        half3 nFineARaw = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, uvFineA), fineBumpScale);
+                        half3 nFineBRaw = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, uvFineB), fineBumpScale);
+                        half2 nFineA = half2(nFineARaw.x * 0.9799h + nFineARaw.y * 0.1994h, -nFineARaw.x * 0.1994h + nFineARaw.y * 0.9799h);
+                        half2 nFineB = half2(nFineBRaw.x * 0.6704h + nFineBRaw.y * 0.7420h, -nFineARaw.x * 0.7420h + nFineBRaw.y * 0.6704h);
+                        half2 tsFineXY = lerp(nFineA, nFineB, fineBlend);
+
+                        // Close-range (<20 m) micro-crust & pebble pass for the 1.5 m close-up camera
+                        half2 tsCloseXY = half2(0.0h, 0.0h);
+                        half closeAlbedoMod = 1.0h;
+                        half closeAo = 1.0h;
+                        if (regolithClose20 > 0.005h)
+                        {
+                            float2 wpClose = float2(wp.x * 0.3907 + wp.y * 0.9205, -wp.x * 0.9205 + wp.y * 0.3907) + fineWarp * 0.35;
+                            float2 uvClose = wpClose * 0.92 + float2(0.73, 0.19);
+                            half closeScale = 0.38h * regolithClose20 * nearPlainBoost;
+                            half3 nCloseRaw = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, uvClose), closeScale);
+                            tsCloseXY = half2(nCloseRaw.x * 0.3907h - nCloseRaw.y * 0.9205h, nCloseRaw.x * 0.9205h + nCloseRaw.y * 0.3907h);
+                            half4 maskClose = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, uvClose);
+                            closeAlbedoMod = lerp(1.0h, 0.93h + 0.14h * maskClose.r + 0.05h * maskClose.b, regolithClose20 * 0.45h);
+                            closeAo = lerp(1.0h, saturate(maskClose.g / 0.85h), regolithClose20 * 0.38h);
+                        }
+
+                        half2 combinedTsXY = tsMedXY + tsFineXY + tsCloseXY + distNormalXY;
                         half3 tsNormal = normalize(half3(combinedTsXY, 1.0h));
-                        regolithTex = lerp(regolithTex, albedoNear, nearWeight * 0.45h);
+
+                        // Combine medium and fine regolith albedo & clod/dimple height contrast
+                        half3 albedoNear = lerp(albedoMed, albedoFine, 0.52h) * closeAlbedoMod;
+                        half clodReliefTone = 0.91h + 0.17h * lerp(maskMed.r, maskFine.r, 0.50h) + 0.07h * lerp(maskMed.b, maskFine.b, 0.55h);
+                        albedoNear *= lerp(1.0h, clodReliefTone, 0.58h + 0.36h * regolithNear40);
+
+                        regolithTex = lerp(regolithTex, albedoNear, saturate(regolithFade120 * 0.85h + regolithNear40 * 0.15h));
 
                         normalWS = normalize(
                             tangentWS * tsNormal.x -
                             bitangentWS * tsNormal.y +
                             normalWS * tsNormal.z);
 
-                        half texAo = lerp(1.0h, saturate(maskNear.g / 0.870h), 0.16h);
-                        microAo = min(microAo, saturate(lerp(1.0h, texAo, _OcclusionStrength * nearWeight)));
-                        smoothness = saturate(maskNear.a * _SmoothnessScale * nearWeight * (1.0h + slopeFactor * 0.25h));
+                        // Multi-scale micro-cavity AO (mask.g = baked horizon/cavity AO around clods and inside irregular dimples)
+                        half combinedMaskG = min(lerp(maskMed.g, maskFine.g, 0.54h), min(maskMed.g, maskFine.g) * 0.5h + 0.42h);
+                        half texAo = saturate(combinedMaskG / 0.855h) * closeAo;
+                        half aoWeight = saturate(regolithFade120 * 0.62h + regolithNear40 * 0.38h) * max(_OcclusionStrength, 0.78h);
+                        microAo = min(microAo, saturate(lerp(1.0h, texAo, aoWeight)));
+
+                        half maskSmooth = lerp(maskMed.a, maskFine.a, 0.60h);
+                        smoothness = saturate(maskSmooth * max(_SmoothnessScale, 0.25h) * regolithFade120 * (1.0h + slopeFactor * 0.25h));
+                        regolithShadowWeight = saturate(regolithFade120 * 0.62h + regolithNear40 * 0.38h) * nearPlainBoost;
+                        regolithHeight = lerp(maskMed.r, maskFine.r, 0.52h);
+                        clodProminence = lerp(maskMed.b, maskFine.b, 0.56h);
                     }
                     else
                     {
@@ -965,7 +1085,8 @@ Shader "MoonProject/World/R1Terrain"
                     }
 
                     half3 regolithCentered = regolithTex / 0.525h;
-                    half detailStrength = lerp(0.10h, 0.28h, slopeFactor) * macroWeight * (0.55h + 0.45h * max(nearWeight, midDetailWeight));
+                    half plainDetailStrength = lerp(0.12h, 0.44h, saturate(regolithFade120 * 0.65h + regolithNear40 * 0.35h));
+                    half detailStrength = lerp(plainDetailStrength, 0.30h, slopeFactor) * macroWeight;
                     baseAlbedo *= lerp(1.0h.xxx, regolithCentered, detailStrength);
                 }
 
@@ -984,16 +1105,23 @@ Shader "MoonProject/World/R1Terrain"
                     half ambientAo = microAo;
                 #endif
 
-                // Subtle sky-dome / Earthshine directional normal relief: soft on the flat plain, crisp on mountain slopes
-                half deltaNdotLAmb = dot(normalWS, mainLight.direction) - dot(geomNormalWS, mainLight.direction);
-                half ambReliefGain = lerp(0.12h, 0.42h, slopeFactor);
-                half craterAmbRelief = clamp(1.0h + deltaNdotLAmb * ambReliefGain, 0.84h, 1.18h);
+                // Directional ambient relief: leeward sides of clods and dimples also dip in ambient fill so low-sun micro-shadows stay rich
+                half geomNdotLMain = dot(geomNormalWS, mainLight.direction);
+                half deltaNdotLAmb = dot(normalWS, mainLight.direction) - geomNdotLMain;
+                half ambGrazingSlope = deltaNdotLAmb / max(abs(geomNdotLMain) * 0.52h + 0.032h, 0.048h);
+                half ambDimpleDepth = saturate((0.49h - regolithHeight) * 2.2h);
+                half ambCavityDepth = saturate((0.84h - microAo) * 2.4h);
+                half ambShadowSignal = ambGrazingSlope - ambDimpleDepth * 0.22h - ambCavityDepth * 0.20h;
+                half ambClodShadow = smoothstep(0.04h, -0.38h, ambShadowSignal) * regolithShadowWeight;
+                half ambReliefGain = lerp(0.18h + 0.42h * regolithShadowWeight, 0.42h, slopeFactor);
+                half craterAmbRelief = clamp(1.0h + deltaNdotLAmb * ambReliefGain, 0.68h, 1.22h) * lerp(1.0h, lerp(0.50h, 0.22h, sunlit), ambClodShadow);
                 half skyLedgeRelief = lerp(craterAmbRelief, clamp(1.0h + (normalWS.y - geomNormalWS.y) * 0.65h + deltaNdotLAmb * 0.35h - (1.0h - microAo) * 0.35h, 0.72h, 1.18h), slopeFactor * 0.80h);
                 half3 rawSH = SampleSH(normalWS);
                 half shLuma = dot(rawSH, half3(0.2126h, 0.7152h, 0.0722h));
                 half3 coolSH = lerp(rawSH, shLuma * half3(0.985h, 0.998h, 1.010h), 0.90h);
                 half3 ambient = coolSH * ambientAo * skyLedgeRelief;
-                half3 lighting = ambient + MainSunDiffuseStylized(mainLight, normalWS, geomNormalWS, viewDirWS, sunlit, microAo, slopeFactor, ridgeCrestMask);
+                half ambientShadowCarve = 1.0h;
+                half3 directLighting = MainSunDiffuseStylized(mainLight, normalWS, geomNormalWS, viewDirWS, sunlit, microAo, slopeFactor, ridgeCrestMask, regolithShadowWeight, regolithHeight);
                 half3 specular = RegolithMicroSpecular(mainLight, normalWS, viewDirWS, smoothness);
 
                 #if defined(_ADDITIONAL_LIGHTS)
@@ -1015,11 +1143,12 @@ Shader "MoonProject/World/R1Terrain"
                         #if defined(_SCREEN_SPACE_OCCLUSION)
                             light.color *= aoFactor.directAmbientOcclusion;
                         #endif
-                        lighting += PunctualDiffuse(light, normalWS, microAo);
+                        directLighting += PunctualDiffuse(light, normalWS, geomNormalWS, microAo, regolithHeight, clodProminence, regolithShadowWeight, ambientShadowCarve);
                         specular += RegolithMicroSpecular(light, normalWS, viewDirWS, smoothness);
                     LIGHT_LOOP_END
                 #endif
 
+                half3 lighting = ambient * ambientShadowCarve + directLighting;
                 half3 color = baseAlbedo * lighting + specular;
 
                 // Keep the power overlay reach ring working.
