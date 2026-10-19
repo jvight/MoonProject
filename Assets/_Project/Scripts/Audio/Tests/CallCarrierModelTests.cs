@@ -49,6 +49,11 @@ namespace MoonProject.Audio.Tests
             CallCarrierSettings settings = Settings;
             var model = new CallCarrierModel(settings, 11u);
             model.SetState(CallState.Broken);
+            for (int i = 0; i < 120; i++)
+            {
+                model.Step(Step, 1f);
+            }
+
             int dropouts = 0;
             bool wasIn = false;
             float minGain = float.PositiveInfinity;
