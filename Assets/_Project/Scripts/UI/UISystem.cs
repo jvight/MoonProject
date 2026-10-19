@@ -481,6 +481,8 @@ namespace MoonProject.UI
             }
             else if (menu.CargoPressed && CanOpenCargo())
             {
+                // One context at a time: Tab leaves build mode (ghost gone, nothing lost) as it opens 07's screen.
+                _services.BuildField?.Close();
                 OpenCargo();
             }
             else if (pausePressed && !buildTookCancel)

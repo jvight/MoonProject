@@ -135,6 +135,7 @@ namespace MoonProject.UI
             TextSizeButton = Require<Button>("button-text-size");
             SettingsBackButton = Require<Button>("button-settings-back");
 
+            BuildReticle = Require<VisualElement>("build-reticle");
             BuildReasonAnchor = Require<VisualElement>("build-reason-anchor");
             BuildReason = Require<VisualElement>("build-reason");
             BuildReasonShadow = Require<VisualElement>("build-reason-shadow");
@@ -414,6 +415,9 @@ namespace MoonProject.UI
 
         /// <summary>Cycles the text size: 100, 125, 150%.</summary>
         public Button TextSizeButton { get; }
+
+        /// <summary>The ring at the screen centre while a structure is placed or welded.</summary>
+        public VisualElement BuildReticle { get; }
 
         public VisualElement BuildReasonAnchor { get; }
 
