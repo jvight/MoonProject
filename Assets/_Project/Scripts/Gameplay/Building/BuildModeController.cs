@@ -16,6 +16,9 @@ namespace MoonProject.Gameplay
         public const float DefaultYawStepDegrees = 15f;
         public const float DefaultDeconstructHoldSeconds = 1.1f;
 
+        /// <summary>Seconds a released, part-filled take-down takes to rewind to nothing.</summary>
+        public const float DefaultDeconstructRewindSeconds = 0.6f;
+
         private readonly StructureCatalog _catalog;
         private readonly KnownStructures _known;
         private readonly PlacedBase _placedBase;
@@ -23,6 +26,7 @@ namespace MoonProject.Gameplay
         private readonly BuildingTuning _tuning;
         private readonly float _yawStepDegrees;
         private readonly float _deconstructHoldSeconds;
+        private readonly float _deconstructRewindSeconds;
         private readonly List<StructureDefinition> _available = new List<StructureDefinition>(StructureIds.Count);
 
         public BuildModeController(
@@ -32,7 +36,8 @@ namespace MoonProject.Gameplay
             MaterialStock stock,
             BuildingTuning tuning,
             float yawStepDegrees = DefaultYawStepDegrees,
-            float deconstructHoldSeconds = DefaultDeconstructHoldSeconds)
+            float deconstructHoldSeconds = DefaultDeconstructHoldSeconds,
+            float deconstructRewindSeconds = DefaultDeconstructRewindSeconds)
         {
             _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
             _known = known ?? throw new ArgumentNullException(nameof(known));
@@ -41,6 +46,7 @@ namespace MoonProject.Gameplay
             _tuning = tuning ?? throw new ArgumentNullException(nameof(tuning));
             _yawStepDegrees = Mathf.Max(1f, yawStepDegrees);
             _deconstructHoldSeconds = Mathf.Max(0.1f, deconstructHoldSeconds);
+            _deconstructRewindSeconds = Mathf.Max(0.05f, deconstructRewindSeconds);
         }
 
         public BuildModeState State { get; private set; } = BuildModeState.Closed;
@@ -383,6 +389,26 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
+        /// A take-down the key was let go of (or lost) runs back as it came: the piece builds itself up again over
+        /// <see cref="DefaultDeconstructRewindSeconds"/>, and the target is let go once nothing is left of the hold.
+        /// </summary>
+        private void RewindDeconstruct(float deltaTime)
+        {
+            if (DeconstructTargetId > 0 && DeconstructProgress01 > 0f &&
+                _placedBase.TryGetStructure(DeconstructTargetId, out _))
+            {
+                DeconstructProgress01 = Mathf.Max(0f, DeconstructProgress01 - deltaTime / _deconstructRewindSeconds);
+                if (DeconstructProgress01 > 0f)
+                {
+                    return;
+                }
+            }
+
+            DeconstructTargetId = 0;
+            DeconstructProgress01 = 0f;
+        }
+
+        /// <summary>
         /// Enters <see cref="BuildModeState.Welding"/> on an existing unfinished structure within
         /// <see cref="BuildingTuning.WeldRange"/> so 07 can resume welding it.
         /// </summary>
@@ -504,16 +530,14 @@ namespace MoonProject.Gameplay
             if (!deconstructHeld || targetInstanceId <= 0 ||
                 !_placedBase.TryGetStructure(targetInstanceId, out PlacedStructure target))
             {
-                DeconstructTargetId = 0;
-                DeconstructProgress01 = 0f;
+                RewindDeconstruct(deltaTime);
                 return false;
             }
 
             float distance = SurfaceRules.HorizontalDistance(target.Pose.Position, roverPosition);
             if (distance > _tuning.WeldRange || !HasRoomFor(target.Definition.BuildCost))
             {
-                DeconstructTargetId = 0;
-                DeconstructProgress01 = 0f;
+                RewindDeconstruct(deltaTime);
                 return false;
             }
 

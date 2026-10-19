@@ -17,11 +17,11 @@ MonoBehaviour:
   _snapDistance: 0.6
   _snapAngleDegrees: 20
   _weldRange: 6
-  _deconstructRefundShare: 0.75
+  _deconstructRefundShare: 1
   _apronGlowFadeSeconds: 0.8
   _ghostAheadMetres: 4.5
   _apronPadYaw: 180
-  _apronSnapRadius: 3
+  _apronSnapRadius: 4
   _settleThumpMeters: 0.042
   _settleDustRingCount: 18
   _linkHeight: 0.6

@@ -27,8 +27,74 @@ namespace MoonProject.Gameplay
         [Tooltip("Maximum horizontal distance (m) from a structure's pivot within which 07's welding beam can build it.")]
         [Range(1f, 20f)] [SerializeField] private float _weldRange = 6.0f;
 
-        [Tooltip("Share (0..1) of a structure's Recipe build cost returned when 07 deconstructs it.")]
-        [Range(0f, 1f)] [SerializeField] private float _deconstructRefundShare = 0.75f;
+        [Tooltip("Share (0..1) of a structure's Recipe build cost returned when 07 deconstructs it: all of it, so a " +
+                 "misplaced piece never costs the player progress.")]
+        [Range(0f, 1f)] [SerializeField] private float _deconstructRefundShare = 1f;
+
+        [Header("The first pad's home (the apron guide)")]
+        [Tooltip("Colour of the guide laid round the marked apron while the first pad is placed: a calm cool white, " +
+                 "never the scan's cyan.")]
+        [SerializeField] private Color _apronGuideColor = new Color(0.82f, 0.9f, 1f, 1f);
+
+        [Tooltip("Brightness (glow intensity) of the apron guide at the top of its breath: bright enough to read from " +
+                 "the chase camera 8-10 m back, never clipping to white.")]
+        [Range(0.05f, 2f)] [SerializeField] private float _apronGuideIntensity = 0.55f;
+
+        [Tooltip("Metres wide the guide's lines are (Art's worn outline is a hairline).")]
+        [Range(0.05f, 0.5f)] [SerializeField] private float _apronGuideWidth = 0.18f;
+
+        [Tooltip("Seconds of one slow breath of the guide.")]
+        [Range(0.6f, 4f)] [SerializeField] private float _apronGuidePeriodSeconds = 1.5f;
+
+        [Tooltip("Share (0..1) of the guide's brightness it keeps at the bottom of its breath.")]
+        [Range(0f, 0.9f)] [SerializeField] private float _apronGuideFloorShare = 0.35f;
+
+        [Tooltip("Seconds the guide takes to fade in when build mode opens and out once the first pad is placed.")]
+        [Range(0.2f, 3f)] [SerializeField] private float _apronGuideFadeSeconds = 0.8f;
+
+        [Tooltip("Radius, metres, of the soft ring segment laid at the bay's centre.")]
+        [Range(0.3f, 2.5f)] [SerializeField] private float _apronGuideMarkerRadius = 0.9f;
+
+        [Tooltip("Degrees of the ring the centre marker covers (a segment, never a full ring).")]
+        [Range(60f, 300f)] [SerializeField] private float _apronGuideMarkerArcDegrees = 200f;
+
+        [Header("Taking a piece down (the build played backwards)")]
+        [Tooltip("Seconds the Deconstruct key is held to take a piece down: the build, backwards, stage by stage.")]
+        [Range(0.6f, 3f)] [SerializeField] private float _deconstructHoldSeconds = 1.2f;
+
+        [Tooltip("Seconds a part-filled take-down takes to build the piece back up when the key is let go.")]
+        [Range(0.2f, 2f)] [SerializeField] private float _deconstructRewindSeconds = 0.6f;
+
+        [Tooltip("The take-down beam's colour: a soft, desaturated cool tone, not the build's amber-cyan.")]
+        [SerializeField] private Color _takeDownBeamColor = new Color(0.8f, 0.9f, 0.97f, 0.9f);
+
+        [Tooltip("Brightness (the glow material's intensity) of the take-down beam: low, so nothing near the piece " +
+                 "clips to white (the build beam's own intensity is far higher).")]
+        [Range(0.02f, 1f)] [SerializeField] private float _takeDownBeamIntensity = 0.3f;
+
+        [Tooltip("Width of the take-down beam as a share of the build beam's: a thin, quiet line.")]
+        [Range(0.1f, 1f)] [SerializeField] private float _takeDownBeamWidthShare = 0.5f;
+
+        [Tooltip("Motes per second leaving the dissolving edge for 07 at the end of the hold (fewer earlier).")]
+        [Range(2f, 40f)] [SerializeField] private float _takeDownMoteRate = 18f;
+
+        [Tooltip("Smallest and largest mote, metres: they differ so the stream never reads as a field of identical dots.")]
+        [SerializeField] private Vector2 _takeDownMoteSize = new Vector2(0.05f, 0.12f);
+
+        [Tooltip("Shortest and longest seconds a mote takes to reach 07's emitter.")]
+        [SerializeField] private Vector2 _takeDownMoteSeconds = new Vector2(0.4f, 0.75f);
+
+        [Tooltip("How bright the motes are (0..1 of the beam colour's alpha): soft, never clipping.")]
+        [Range(0.1f, 1f)] [SerializeField] private float _takeDownMoteBrightness = 0.85f;
+
+        [Tooltip("Most motes in flight at once.")]
+        [Range(8, 64)] [SerializeField] private int _takeDownMotePool = 48;
+
+        [Tooltip("Dust grains in the small settle where the piece stood once it is gone.")]
+        [Range(4, 24)] [SerializeField] private int _takeDownDustCount = 10;
+
+        [Tooltip("Strength (0..1) of that dust settle.")]
+        [Range(0.1f, 1f)] [SerializeField] private float _takeDownDustStrength = 0.4f;
 
         [Tooltip("Seconds the apron's bay outline takes to warm to its glow as build mode opens, and to cool as it " +
                  "closes: a slow breath, never a switch.")]
@@ -45,7 +111,7 @@ namespace MoonProject.Gameplay
 
         [Tooltip("Metres from the apron's centre within which the charging pad's riding ghost settles onto the " +
                  "apron's marked bay.")]
-        [Range(0.5f, 8f)] [SerializeField] private float _apronSnapRadius = 3f;
+        [Range(0.5f, 8f)] [SerializeField] private float _apronSnapRadius = 4f;
 
         [Tooltip("Metres kept inside the weld range when the riding ghost settles onto the apron: the bay only " +
                  "catches the ghost while 07 stands this much closer than the weld range, so a placed frame can " +
@@ -191,6 +257,46 @@ namespace MoonProject.Gameplay
         public float WeldRange => _weldRange;
 
         public float DeconstructRefundShare => _deconstructRefundShare;
+
+        public Color ApronGuideColor => _apronGuideColor;
+
+        public float ApronGuideIntensity => _apronGuideIntensity;
+
+        public float ApronGuideWidth => _apronGuideWidth;
+
+        public float ApronGuidePeriodSeconds => _apronGuidePeriodSeconds;
+
+        public float ApronGuideFloorShare => _apronGuideFloorShare;
+
+        public float ApronGuideFadeSeconds => _apronGuideFadeSeconds;
+
+        public float ApronGuideMarkerRadius => _apronGuideMarkerRadius;
+
+        public float ApronGuideMarkerArcDegrees => _apronGuideMarkerArcDegrees;
+
+        public float DeconstructHoldSeconds => _deconstructHoldSeconds;
+
+        public float DeconstructRewindSeconds => _deconstructRewindSeconds;
+
+        public Color TakeDownBeamColor => _takeDownBeamColor;
+
+        public float TakeDownBeamIntensity => _takeDownBeamIntensity;
+
+        public float TakeDownBeamWidthShare => _takeDownBeamWidthShare;
+
+        public float TakeDownMoteRate => _takeDownMoteRate;
+
+        public Vector2 TakeDownMoteSize => _takeDownMoteSize;
+
+        public Vector2 TakeDownMoteSeconds => _takeDownMoteSeconds;
+
+        public float TakeDownMoteBrightness => _takeDownMoteBrightness;
+
+        public int TakeDownMotePool => _takeDownMotePool;
+
+        public int TakeDownDustCount => _takeDownDustCount;
+
+        public float TakeDownDustStrength => _takeDownDustStrength;
 
         public float ApronGlowFadeSeconds => _apronGlowFadeSeconds;
 

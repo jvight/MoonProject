@@ -102,6 +102,9 @@ namespace MoonProject.Gameplay
         /// <summary>The apron's bay outline, glowing while build mode is open (B5: where a base belongs).</summary>
         public ApronGlow ApronGlow { get; private set; }
 
+        /// <summary>The first pad's home: a readable frame and marker on the apron until a pad is placed.</summary>
+        public ApronGuide ApronGuide { get; private set; }
+
         /// <summary>The ruins' and the lander's scan targets, scanned to learn structures (0.5.5 §1).</summary>
         public ScanField Scans { get; private set; }
 
@@ -260,6 +263,7 @@ namespace MoonProject.Gameplay
                 new WorldDatabankSources(Scans, Opening.Flow.HasReached));
             _salvage.ConnectScans(Scans);
             ApronGlow = new ApronGlow(_apronOutline, _building.Tuning.ApronGlowFadeSeconds);
+            ApronGuide = new ApronGuide(transform, _apronOutline, _visuals.BeamCore, _building.Tuning);
             _building.MarkApron(_apronOutline.bounds.center);
             var hints = new InteractionHints(_salvage, Containers, Scans, _building, services.Beam, Cutter,
                 services.Pickups);
@@ -493,6 +497,7 @@ namespace MoonProject.Gameplay
             PadLock.Step(deltaTime);
             BaseLamps.Step(deltaTime);
             ApronGlow.Step(_building.State != BuildModeState.Closed, deltaTime);
+            ApronGuide.Step(_building.State != BuildModeState.Closed && !AnyPadStands(), deltaTime);
             Recovery.Refresh();
         }
 
@@ -549,8 +554,24 @@ namespace MoonProject.Gameplay
                 : null;
         }
 
+        /// <summary>A charging pad is placed (even unwelded): the first pad has found its home.</summary>
+        private bool AnyPadStands()
+        {
+            PlacedBase placed = PlacedBase;
+            for (int i = 0; i < placed.Count; i++)
+            {
+                if (placed.StructureAt(i).Definition.Id == StructureIds.ChargingPad)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private void OnDestroy()
         {
+            ApronGuide?.Dispose();
             foreach (IDisposable token in _saveTokens)
             {
                 token.Dispose();

@@ -93,6 +93,7 @@ namespace MoonProject.Gameplay
         private bool _initialized;
         private float _buildProgress01;
         private float _deconstructProgress01;
+        private float _standingProgress01;
         private float _targetLampIntensity;
         private bool _lampsDriven;
         private float _lampDrive;
@@ -514,6 +515,7 @@ namespace MoonProject.Gameplay
                 _targetLampIntensity = 0f;
                 LampIntensity = 0f;
                 _lampCascadeElapsed = -1f;
+                ApplyLampGlow(0f);
                 if (_statusLight != null)
                 {
                     _statusLight.enabled = false;
@@ -529,8 +531,9 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// Visualizes hold-to-deconstruct progress (0..1) by folding solid stages back into hologram from top to
-        /// bottom. Passing 0 restores the current <see cref="_buildProgress01"/> state.
+        /// Visualizes hold-to-deconstruct progress (0..1) as the build played backwards: the same stages and the same
+        /// live print the build uses, run from the piece's own progress down to nothing (the print plane sinks, the
+        /// topmost stage dissolves first). Letting go rewinds it the way it came; 0 restores the piece as it stood.
         /// </summary>
         public void SetDeconstructProgress(float deconstruct01)
         {
@@ -545,30 +548,19 @@ namespace MoonProject.Gameplay
                 return;
             }
 
-            _deconstructProgress01 = clamped;
-            int stageCount = _stageRenderers.Length;
-            int baseSolid = ComputeSolidStages(_buildProgress01, stageCount);
-            int remainingSolid = clamped <= 0f
-                ? baseSolid
-                : Mathf.Clamp(Mathf.CeilToInt(baseSolid * (1f - clamped)), 0, baseSolid);
-
-            float foldScale = Mathf.Lerp(1f, 0.93f, clamped);
-            for (int s = 0; s < stageCount; s++)
+            if (_deconstructProgress01 <= 0f)
             {
-                bool shouldBeSolid = s < remainingSolid;
-                if (_stageIsSolid[s] != shouldBeSolid)
-                {
-                    _stageIsSolid[s] = shouldBeSolid;
-                    ApplyStageMaterials(s, shouldBeSolid);
-                }
-
-                if (_stageRoots[s] != null)
-                {
-                    _stageRoots[s].localScale = _stageBaseScale[s] * foldScale;
-                }
+                _standingProgress01 = _buildProgress01;
             }
 
-            SolidStageCount = remainingSolid;
+            if (clamped <= 0f)
+            {
+                SetPlacedState(_standingProgress01, instant: true);
+                return;
+            }
+
+            SetPlacedState(_standingProgress01 * (1f - clamped), instant: false);
+            _deconstructProgress01 = clamped;
         }
 
         /// <summary>Steps per-stage scale settle eases, variant unfolding/thermal visuals, and standby lamp <see cref="EmissionGlow"/>.</summary>

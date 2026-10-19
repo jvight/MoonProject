@@ -137,7 +137,9 @@ namespace MoonProject.Gameplay
                 lamp.Light = MakeLight(lamp, view);
             }
 
-            float level = lamp.Ease.Level;
+            // A piece coming apart puts its lamps out, and its light with them: a warm spot left on a bare white
+            // surface blows it out.
+            float level = view.LampsLit ? lamp.Ease.Level : 0f;
             bool lit = level > LightOffLevel;
             if (lamp.Light.enabled != lit)
             {

@@ -680,7 +680,7 @@
         },
         {
             "key": "next.v2.build_pad",
-            "text": "Build a charging pad beside the lander."
+            "text": "Build the charging pad on the marked apron."
         },
         {
             "key": "next.v2.charge",
