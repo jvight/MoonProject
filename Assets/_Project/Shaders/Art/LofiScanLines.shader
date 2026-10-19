@@ -1,5 +1,5 @@
 // A scannable fragment's feature-edge trace (SCAN v2): hidden during the scan sweep so only the crisp cyan scan line
-// and low-contrast raster band show on the surface; at the completion ping (_Dissolve), a thin anti-aliased warm-amber
+// and low-contrast raster band show on the surface; at the completion ping (_Dissolve), a thin anti-aliased teal
 // emissive edge traces the object's feature edges, then fades.
 Shader "MoonProject/Art/LofiScanLines"
 {

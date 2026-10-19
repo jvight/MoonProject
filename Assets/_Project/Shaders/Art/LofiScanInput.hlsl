@@ -1,6 +1,6 @@
 // The scan's shared helpers (LofiScanSolid, LofiScanLines, R1Lit; SCAN v2). Each renderer is driven with
 // a MaterialPropertyBlock: _ScanProgress (0..1, the laser line climbing the renderer's world bounds) and _Dissolve (0..1,
-// the 900 ms close: the warm-amber completion ping traces the object's edges, then fades as the object dissolves).
+// the 900 ms close: the teal completion ping traces the object's edges, then fades as the object dissolves).
 #ifndef MOON_LOFI_SCAN_INPUT_INCLUDED
 #define MOON_LOFI_SCAN_INPUT_INCLUDED
 
@@ -13,7 +13,7 @@
 
 // Global tuning parameters populated by ScanTuning.ApplyShaderGlobals (zero-GC):
 // _MoonScanLineColor:  linear RGB colour tinting the wireframe's rising front (cyan)
-// _MoonScanPingColor:  linear RGB colour of the CRT-amber wireframe and its completion ping
+// _MoonScanPingColor:  linear RGB colour of the faint teal wireframe and its completion ping
 // _MoonScanParams:     x = frontWidthMeters, y = wireGridPitchMeters, z = wireIntensity, w = edgeThickness
 // _MoonScanPingParams: x = pingDurationSeconds, y = pingEdgeIntensity
 half4 _MoonScanLineColor;
@@ -28,7 +28,7 @@ half3 MoonScanGetLineColor()
 
 half3 MoonScanGetPingColor()
 {
-    return (_MoonScanParams.y > 1e-4) ? _MoonScanPingColor.rgb : half3(1.000h, 0.431h, 0.040h);
+    return (_MoonScanParams.y > 1e-4) ? _MoonScanPingColor.rgb : half3(0.073h, 0.955h, 0.604h);
 }
 
 float4 MoonScanGetParams()
@@ -167,8 +167,9 @@ float MoonScanTriplanarWireframe(float3 positionWS, float3 n, float gridPitch)
     return saturate(wire + node * 0.45);
 }
 
-// The wireframe reveal: the object's silhouette and key edges light up as a soft wireframe hologram in CRT amber
-// that fills in from bottom to top as scanProgress rises, under a soft rising front.
+// The wireframe reveal: the object's silhouette and key edges light up as a faint teal wireframe hologram that fills
+// in from bottom to top as scanProgress rises, under a soft rising front. Every tint derives from the scan's own
+// line and ping colours, so the scan never shares a hue with 07's warm amber lamps.
 void MoonApplyWireframeReveal(
     inout half3 color,
     float3 positionWS,
@@ -195,22 +196,22 @@ void MoonApplyWireframeReveal(
     float revealedMask = smoothstep(-fwSurface * 1.5, fwSurface * 1.5, signedBehindMeters);
     float activeReveal = smoothstep(0.001, 0.02, prog) * (1.0 - smoothstep(0.58, 0.82, diss));
 
-    // Progressive fill: once swept, the CRT-amber wireframe stays lit and strengthens as progress rises
+    // Progressive fill: once swept, the teal wireframe stays lit and strengthens as progress rises
     float fillEnvelope = revealedMask * activeReveal * lerp(0.78, 1.0, prog);
 
     float thinEdge = MoonScanComputeEdgeMask(positionWS, n, edgeCurvature, h, edgeThickness * 1.12);
     float cadWire = MoonScanTriplanarWireframe(positionWS, n, gridPitch);
 
-    // Subtle warm-amber holographic phosphor wash on the revealed mesh surface
+    // A soft cool phosphor wash on the swept surface: the sweep band
     half surfLuma = clamp(dot(color, half3(0.299h, 0.587h, 0.114h)), 0.12h, 0.72h);
-    half amberWash = (half)saturate(fillEnvelope * (0.20 + 0.12 * cadWire));
-    color = lerp(color, surfLuma * half3(1.00h, 0.62h, 0.18h) + pingColor * 0.08h, amberWash);
+    half sweepWash = (half)saturate(fillEnvelope * (0.12 + 0.08 * cadWire));
+    color = lerp(color, surfLuma * (lineColor * 0.85h + 0.15h) + pingColor * 0.06h, sweepWash);
 
-    // Soft CRT-amber wireframe hologram combining silhouette/bevel key edges and fine 3D CAD surface mesh
+    // The faint teal wireframe hologram combining silhouette/bevel key edges and fine 3D CAD surface mesh
     float wirePattern = max(thinEdge, cadWire * 0.58);
     half wireWeight = (half)saturate(wirePattern * fillEnvelope * 0.92);
-    half3 amberCore = lerp(pingColor, half3(1.00h, 0.88h, 0.55h), (half)saturate(thinEdge * 0.55));
-    half3 wireTarget = amberCore * (half)(wireframeIntensity * (0.72 + 0.48 * thinEdge));
+    half3 wireCore = lerp(pingColor, lerp(pingColor, half3(1.0h, 1.0h, 1.0h), 0.6h), (half)saturate(thinEdge * 0.55));
+    half3 wireTarget = wireCore * (half)(wireframeIntensity * (0.72 + 0.48 * thinEdge));
     color = lerp(color, wireTarget, wireWeight) + pingColor * (wireWeight * (half)(wireframeIntensity * 0.18));
 
     // Soft rising wavefront at the top edge of the wireframe reveal
@@ -222,10 +223,10 @@ void MoonApplyWireframeReveal(
     float frontGlow = (1.0 - smoothstep(halfWidth, halfWidth * 3.6 + aaWidth, surfaceDistMeters)) * 0.36 * activeSweep;
     half frontMask = (half)saturate(frontCore * 0.92 + frontGlow * 1.45);
     half3 frontColor = lerp(pingColor, lineColor, 0.22h) * (half)(wireframeIntensity * 1.12)
-        + half3(0.45h, 0.34h, 0.14h) * (half)(frontCore * frontCore);
+        + (lineColor * 0.3h + 0.12h) * (half)(frontCore * frontCore);
     color = lerp(color, frontColor, frontMask);
 
-    // Completion pulse & inward collapse of the amber wireframe hologram
+    // Completion pulse & inward collapse of the teal wireframe hologram
     if (dissolve > 0.001h)
     {
         float3 boundsMin = unity_RendererBounds_Min.xyz;
@@ -241,7 +242,7 @@ void MoonApplyWireframeReveal(
 
         half pingEnv = MoonScanPingEnvelope(dissolve);
         half closeMask = (half)saturate((wirePattern * (float)pingEnv + collapseRing * 0.85) * insideCollapse);
-        half3 closeTarget = amberCore * (half)(wireframeIntensity * 1.25);
+        half3 closeTarget = wireCore * (half)(wireframeIntensity * 1.25);
         color = lerp(color, closeTarget, closeMask * 0.92h) + pingColor * (closeMask * 0.32h);
     }
 }

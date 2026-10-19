@@ -56,29 +56,31 @@ namespace MoonProject.Gameplay
         [Range(0, 12)] [SerializeField] private int _knownMetal = 3;
 
         [Header("Surface scan look (SCAN v2)")]
-        [Tooltip("Cyan colour of the crisp surface scan line and low-contrast swept raster band (same palette as the face).")]
+        [Tooltip("Cyan colour of the scan: the thin beam, the crisp surface scan line and the soft swept band. The " +
+                 "scan's colours all live here and stay cool, never sharing a hue with 07's warm amber lamps.")]
         [SerializeField] private Color _scanLineColor = new Color(0.20f, 0.86f, 0.96f, 1f);
 
-        [Tooltip("Warm amber accent colour for the completion ping outline and lens pulse (same palette as the CRT face).")]
-        [SerializeField] private Color _completionPingColor = new Color(1.00f, 0.682f, 0.220f, 1f);
+        [Tooltip("Teal accent colour of the scan's faint wireframe pulse, its completion ping outline and the lens " +
+                 "pulse: cool like the scan line, never the lamps' amber.")]
+        [SerializeField] private Color _completionPingColor = new Color(0.30f, 0.98f, 0.80f, 1f);
 
         [Tooltip("World-space half-width of the wireframe reveal's bright rising front on the object (m).")]
         [Range(0.003f, 0.05f)] [SerializeField] private float _scanLineWidth = 0.014f;
 
-        [Tooltip("Seconds the thin anti-aliased warm-amber edge traces the object at the completion ping before fading.")]
+        [Tooltip("Seconds the thin anti-aliased teal edge traces the object at the completion ping before fading.")]
         [Range(0.1f, 0.9f)] [SerializeField] private float _pingDurationSeconds = 0.38f;
 
         [Tooltip("Screen-derivative thickness multiplier for the thin anti-aliased completion ping edge.")]
         [Range(0.5f, 3f)] [SerializeField] private float _pingEdgeThickness = 1.35f;
 
-        [Tooltip("Emissive intensity of the warm-amber completion ping edge.")]
+        [Tooltip("Emissive intensity of the teal completion ping edge.")]
         [Range(0.1f, 2f)] [SerializeField] private float _pingEdgeIntensity = 1.25f;
 
         [Tooltip("World-space cell pitch (m) of the surface wireframe lattice  the scan reveals.")]
         [Range(0.015f, 0.12f)] [SerializeField] private float _surfaceGridPitchMeters = 0.044f;
 
-        [Tooltip("Emissive intensity of the progressive CRT-amber wireframe hologram.")]
-        [Range(0.2f, 2.0f)] [SerializeField] private float _wireframeRevealIntensity = 1.18f;
+        [Tooltip("Emissive intensity of the progressive teal wireframe hologram.")]
+        [Range(0.2f, 2.0f)] [SerializeField] private float _wireframeRevealIntensity = 0.7f;
 
         [Tooltip("Speed (cycles/s) of the data ticks streaming along the beam to the lens.")]
         [Range(0.5f, 8.0f)] [SerializeField] private float _beamPulseSpeed = 3.2f;
