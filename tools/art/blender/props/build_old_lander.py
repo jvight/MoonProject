@@ -963,7 +963,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
     removed.build_object(parent=root)
 
     # -----------------------------------------------------------------------
-    # I. Semantic Empty Anchors
+    # I. Semantic Empty Anchors & Maker Decal (Decal_VIS_1: 1967 VIS wordmark)
     # -----------------------------------------------------------------------
     r1kit.create_empty("Base_Anchor", root, (0.0, 0.0, 0.0))
     r1kit.create_empty("MastTop_Anchor", root, _pose_pt((0.0, 2.86, 0.0)))
@@ -971,6 +971,20 @@ def build_prop_old_lander(out_fbx: Path) -> None:
     r1kit.create_empty("Scoop_Anchor", root, _pose_pt(tip_u))
     r1kit.create_empty("RemovedSpot_1_Anchor", root, _pose_pt(s1_center))
     r1kit.create_empty("RemovedSpot_2_Anchor", root, _pose_pt(s2_center))
+
+    decal_n_b = _TILT_MAT_B @ Vector((0.0, 1.0, 0.0))
+    decal_up_b = _TILT_MAT_B @ Vector((0.0, 0.0, 1.0))
+    r1kit.add_maker_decal_node(
+        parent=root,
+        name="Decal_VIS_1",
+        cell_key="VIS_1967",
+        center_u=_pose_pt((box_a_center[0], box_a_center[1] + 0.140, box_a_center[2] + 0.170)),
+        normal_u=(float(decal_n_b.x), float(decal_n_b.z), float(decal_n_b.y)),
+        up_u=(float(decal_up_b.x), float(decal_up_b.z), float(decal_up_b.y)),
+        width=0.175,
+        height=0.1225,
+        v_crop=(0.20, 0.90),
+    )
 
     r1kit.apply_triplanar_uvs(root)
     r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))
@@ -989,7 +1003,7 @@ def _boost_weathering(
     """Enhance vertex-color edge wear (G) and dust (B) for decades-old lunar weathering (chalking white paint toward grey-tan)."""
     strut_meshes = {"Spaceframe", "LandingLegs", "MastAndSolar", "ScoopArm", "RemovedPartSpots"}
     for obj in r1kit.collect_hierarchy(root):
-        if obj.type != "MESH" or obj.data is None or not obj.data.color_attributes:
+        if obj.type != "MESH" or obj.data is None or not obj.data.color_attributes or obj.name.startswith("Decal_"):
             continue
         is_strut_mesh = obj.name in strut_meshes
         attr = obj.data.color_attributes[0]

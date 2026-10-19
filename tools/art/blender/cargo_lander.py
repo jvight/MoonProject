@@ -2001,6 +2001,44 @@ def _prepare_ao_bake_pose(root: bpy.types.Object) -> None:
     bpy.context.view_layer.update()
 
 
+def _build_maker_decals(root: bpy.types.Object, d: dict[str, Any]) -> list[bpy.types.Object]:
+    """Add maker decal child nodes (`Decal_VIS_1` ~0.7 m wide on descent stage, `Decal_ILC_1` near hatch) 1.6 mm off lander panels."""
+    low_ang_rad = math.radians(-59.3)
+    low_nx = math.sin(low_ang_rad)
+    low_nz = math.cos(low_ang_rad)
+    low_r_out = d["low_panel_radius"] + d["low_panel_thick"]
+
+    vis1 = r1kit.add_maker_decal_node(
+        parent=root,
+        name="Decal_VIS_1",
+        cell_key="VIS_1985",
+        center_u=(low_nx * low_r_out, 1.87, low_nz * low_r_out),
+        normal_u=(low_nx, 0.0, low_nz),
+        up_u=(0.0, 1.0, 0.0),
+        width=0.70,
+        height=0.60,
+        u_crop=(0.0, 1.0),
+        v_crop=(0.08, 0.94),
+        cyl_patch=(low_r_out, -51.0, 38.0, 5),
+    )
+
+    ilc_ang_rad = math.radians(-19.425)
+    ilc_nx = math.sin(ilc_ang_rad)
+    ilc_nz = math.cos(ilc_ang_rad)
+    ilc_r_plane = (d["drum_panel_radius"] + d["drum_panel_thick"]) * math.cos(math.radians(2.175))
+    ilc1 = r1kit.add_maker_decal_node(
+        parent=root,
+        name="Decal_ILC_1",
+        cell_key="ILC_SEAL",
+        center_u=(ilc_nx * ilc_r_plane, 3.68, ilc_nz * ilc_r_plane),
+        normal_u=(ilc_nx, 0.0, ilc_nz),
+        up_u=(0.0, 1.0, 0.0),
+        width=0.115,
+        height=0.115,
+    )
+    return [vis1, ilc1]
+
+
 def build_asset() -> bpy.types.Object:
     """Build the complete `CargoLander` hierarchy and bake vertex colours."""
     d = CARGO_LANDER_DIMS
@@ -2023,6 +2061,7 @@ def build_asset() -> bpy.types.Object:
     _build_bay_lights(root, d)
     _build_charge_contacts(root, d)
     _build_bay_repair_parts(root, d)
+    _build_maker_decals(root, d)
 
     # Power socket empties
     for sock_name, sock_pos_u in sorted(d["power_sockets_u"].items()):

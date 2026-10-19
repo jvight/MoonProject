@@ -696,10 +696,16 @@ def build_vis_mark(mono: bool = False, wordmark_color: tuple = None) -> Image.Im
 # 5. VIS 1967 (Scout-3 Era Emblem + Wordmark, clean without anatomy plates)
 # ==============================================================================
 
-def build_vis_1967_mark(mono: bool = False) -> Image.Image:
+def build_vis_1967_mark(
+    mono: bool = False,
+    wordmark_color: tuple = None,
+    include_sublines: bool = True,
+) -> Image.Image:
     """
     VIS 1967 original Scout-3 soft-lander era emblem & wordmark (transparent background,
     mark + short wordmark + vector tail only, no framing boxes or anatomy callouts).
+    When `include_sublines=False` (for the decal atlas cell), drops the small sub-lines
+    and tail below "VANGUARD" so the cell contains only the mark + "VANGUARD".
     """
     img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
@@ -708,92 +714,102 @@ def build_vis_1967_mark(mono: bool = False) -> Image.Image:
     c_cream = WHITE if mono else CREAM
     c_brass = WHITE if mono else VIS_BRASS
     c_coral = WHITE if mono else CORAL
+    c_wm_main = WHITE if mono else (wordmark_color if wordmark_color is not None else CREAM)
+    c_wm_sub = WHITE if mono else ((142, 98, 28, 255) if wordmark_color is not None else VIS_BRASS)
+    c_wm_corp = WHITE if mono else ((186, 74, 44, 255) if wordmark_color is not None else CORAL)
 
-    cx, cy = 512, 356
+    dy = 0 if include_sublines else 48
+    cx, cy = 512, 356 + dy
     # Tilted thin 1960s orbital ring
     draw_thick_arc(d, cx, cy + 10, 316, 98, -165, 175, 9.0, c_brass, rot_deg=-16, round_caps=True)
     draw_thick_arc(d, cx, cy + 10, 288, 78, -140, 150, 4.0, c_coral, rot_deg=-16, round_caps=True)
 
     # Central 1967 5-sided Scout shield badge
     shield_pts = [
-        (sf(512), sf(164)),
-        (sf(756), sf(304)),
-        (sf(680), sf(502)),
-        (sf(344), sf(502)),
-        (sf(268), sf(304)),
+        (sf(512), sf(164 + dy)),
+        (sf(756), sf(304 + dy)),
+        (sf(680), sf(502 + dy)),
+        (sf(344), sf(502 + dy)),
+        (sf(268), sf(304 + dy)),
     ]
     if not mono:
         d.polygon(shield_pts, fill=bg_col)
-    d.polygon(shield_pts, outline=c_cream, width=s(8))
+    d.polygon(shield_pts, outline=c_cream if wordmark_color is None else (42, 38, 34, 255), width=s(8))
 
     inner_shield = [
-        (sf(512), sf(184)),
-        (sf(732), sf(312)),
-        (sf(662), sf(484)),
-        (sf(362), sf(484)),
-        (sf(292), sf(312)),
+        (sf(512), sf(184 + dy)),
+        (sf(732), sf(312 + dy)),
+        (sf(662), sf(484 + dy)),
+        (sf(362), sf(484 + dy)),
+        (sf(292), sf(312 + dy)),
     ]
     d.polygon(inner_shield, outline=c_brass, width=s(4))
 
     # Scout-3 three-legged lander silhouette struts at base of shield
-    d.line([(s(414), s(434)), (s(364), s(494))], fill=c_brass, width=s(7))
-    d.line([(s(610), s(434)), (s(660), s(494))], fill=c_brass, width=s(7))
-    d.line([(s(512), s(434)), (s(512), s(496))], fill=c_brass, width=s(7))
+    d.line([(s(414), s(434 + dy)), (s(364), s(494 + dy))], fill=c_brass, width=s(7))
+    d.line([(s(610), s(434 + dy)), (s(660), s(494 + dy))], fill=c_brass, width=s(7))
+    d.line([(s(512), s(434 + dy)), (s(512), s(496 + dy))], fill=c_brass, width=s(7))
     for fx in [364, 512, 660]:
-        d.line([(s(fx - 22), s(496)), (s(fx + 22), s(496))], fill=c_coral, width=s(7))
+        d.line([(s(fx - 22), s(496 + dy)), (s(fx + 22), s(496 + dy))], fill=c_coral, width=s(7))
 
     # 1967 Thin Double-Line Inline 'V - I - S' Monogram inside the shield
     for col, w_line in [(c_cream, 17), (bg_col, 5)]:
-        d.line([(s(356), s(290)), (s(404), s(412)), (s(452), s(290))], fill=col, width=s(w_line), joint="curve")
+        d.line([(s(356), s(290 + dy)), (s(404), s(412 + dy)), (s(452), s(290 + dy))], fill=col, width=s(w_line), joint="curve")
     # I
-    d.line([(s(482), s(290)), (s(542), s(290))], fill=c_cream, width=s(12))
-    d.line([(s(482), s(412)), (s(542), s(412))], fill=c_cream, width=s(12))
-    d.line([(s(512), s(290)), (s(512), s(412))], fill=c_cream, width=s(18))
-    d.line([(s(512), s(300)), (s(512), s(402))], fill=bg_col, width=s(5))
+    d.line([(s(482), s(290 + dy)), (s(542), s(290 + dy))], fill=c_cream, width=s(12))
+    d.line([(s(482), s(412 + dy)), (s(542), s(412 + dy))], fill=c_cream, width=s(12))
+    d.line([(s(512), s(290 + dy)), (s(512), s(412 + dy))], fill=c_cream, width=s(18))
+    d.line([(s(512), s(300 + dy)), (s(512), s(402 + dy))], fill=bg_col, width=s(5))
     # S
     s67_pts = [
-        (s(662), s(304)),
-        (s(646), s(290)),
-        (s(588), s(290)),
-        (s(572), s(306)),
-        (s(572), s(338)),
-        (s(588), s(350)),
-        (s(646), s(354)),
-        (s(662), s(368)),
-        (s(662), s(396)),
-        (s(646), s(412)),
-        (s(584), s(412)),
-        (s(568), s(396)),
+        (s(662), s(304 + dy)),
+        (s(646), s(290 + dy)),
+        (s(588), s(290 + dy)),
+        (s(572), s(306 + dy)),
+        (s(572), s(338 + dy)),
+        (s(588), s(350 + dy)),
+        (s(646), s(354 + dy)),
+        (s(662), s(368 + dy)),
+        (s(662), s(396 + dy)),
+        (s(646), s(412 + dy)),
+        (s(584), s(412 + dy)),
+        (s(568), s(396 + dy)),
     ]
     d.line(s67_pts, fill=c_cream, width=s(17), joint="curve")
     d.line(s67_pts, fill=bg_col, width=s(5), joint="curve")
 
     # 4-pointed 1967 astrometric star at apex
-    draw_4pt_star(d, 512, 224, 26, 7, c_brass)
+    draw_4pt_star(d, 512, 224 + dy, 26, 7, c_brass)
 
-    # 1967 Short Wordmark Lockup + Tapered Vector Tail
-    f_w67_top = load_font("ChakraPetch-SemiBold.ttf", 46)
-    f_w67_mid = load_font("ChakraPetch-Bold.ttf", 54)
-    f_w67_corp = load_font("IBMPlexMono-SemiBold.ttf", 28)
+    if include_sublines:
+        # 1967 Short Wordmark Lockup + Tapered Vector Tail
+        f_w67_top = load_font("ChakraPetch-SemiBold.ttf", 46)
+        f_w67_mid = load_font("ChakraPetch-Bold.ttf", 54)
+        f_w67_corp = load_font("IBMPlexMono-SemiBold.ttf", 28)
 
-    draw_tracked_text(d, 512, 616, "V A N G U A R D", f_w67_mid, c_cream, tracking=10.0)
-    draw_tracked_text(d, 512, 688, "INTERPLANETARY STRUCTURES", f_w67_top, c_brass, tracking=4.5)
-    draw_tracked_text(d, 512, 754, "C O R P O R A T I O N", f_w67_corp, c_coral, tracking=8.0)
+        draw_tracked_text(d, 512, 616, "V A N G U A R D", f_w67_mid, c_wm_main, tracking=10.0)
+        draw_tracked_text(d, 512, 688, "INTERPLANETARY STRUCTURES", f_w67_top, c_wm_sub, tracking=4.5)
+        draw_tracked_text(d, 512, 754, "C O R P O R A T I O N", f_w67_corp, c_wm_corp, tracking=8.0)
 
-    # Sweeping tapered vector tail + delta dart beneath wordmark
-    tail_pts = [
-        (sf(112), sf(810)),
-        (sf(818), sf(803)),
-        (sf(802), sf(786)),
-        (sf(916), sf(807)),
-        (sf(802), sf(828)),
-        (sf(818), sf(812)),
-        (sf(112), sf(817)),
-    ]
-    d.polygon(tail_pts, fill=c_brass)
+        # Sweeping tapered vector tail + delta dart beneath wordmark
+        tail_pts = [
+            (sf(112), sf(810)),
+            (sf(818), sf(803)),
+            (sf(802), sf(786)),
+            (sf(916), sf(807)),
+            (sf(802), sf(828)),
+            (sf(818), sf(812)),
+            (sf(112), sf(817)),
+        ]
+        d.polygon(tail_pts, fill=c_wm_sub)
+    else:
+        # Decal cell: mark + "VANGUARD" only (no blurry sub-lines)
+        f_w67_decal = load_font("ChakraPetch-Bold.ttf", 64)
+        draw_tracked_text(d, 512, 672, "V A N G U A R D", f_w67_decal, c_wm_main, tracking=9.0)
 
     out = downsample_to(img, MARK_OUT_SIZE)
     return to_white_mono(out) if mono else out
+
 
 
 # ==============================================================================
@@ -1114,9 +1130,262 @@ def build_archive_print(mark_for_card: Image.Image, one_line_text: str, catalog_
     return card.resize((out_size, out_size), Image.Resampling.LANCZOS).convert("RGB")
 
 
+# ==============================================================================
+# DELIVERABLE 5 (Round 3): MAKER DECAL ATLAS (T_R1_MakerDecals_Albedo.png)
+# ==============================================================================
+
+def build_vis_stencil_word() -> Image.Image:
+    """
+    Cell 2: Bold 'VIS' spacecraft hull stencil wordmark with transparent stencil-bridge cuts
+    and faded coral/charcoal registration bars.
+    """
+    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+
+    col_ink = (34, 38, 46, 255)
+    col_coral = CORAL
+
+    # Top and bottom broken stencil alignment bars (with wide stencil bridge gaps)
+    for by in (244, 780):
+        for x0, x1 in ((128, 368), (416, 608), (656, 896)):
+            d.rectangle((s(x0), s(by - 12), s(x1), s(by + 12)), fill=col_coral if by == 244 else col_ink)
+
+    # Bold monumental 'VIS' stencil letters in the center (y: 300..724)
+    draw_vis_monogram_a(
+        d,
+        cx=512,
+        cy=512,
+        scale=2.05,
+        col_v=col_ink,
+        col_i=col_ink,
+        col_s=col_ink,
+        col_bar=col_coral,
+        bg_cut=(0, 0, 0, 0),
+    )
+
+    return downsample_to(img, MARK_OUT_SIZE)
+
+
+def _weather_decal_cell(
+    mark_2048: Image.Image,
+    cell_size: int,
+    seed: int,
+    sun_fade: float = 0.24,
+    edge_wear: float = 0.42,
+    scorch_corner: bool = False,
+) -> Image.Image:
+    """
+    Downsample a 2048x2048 mark into `cell_size x cell_size` and bake realistic lunar UV sun-bleaching,
+    directional brush-scuffed edges, and crisp angular/linear paint chips into RGB & alpha
+    (specifically tuned for URP Lit _AlphaClip = 1, _Cutoff = 0.38).
+    Strictly zero circular dots or hole clusters.
+    """
+    # Unpremultiply RGB before Lanczos downsampling so dark wordmarks on transparent backgrounds
+    # do not get darkened/frayed by transparent black (0,0,0,0) neighbours, then boost thin-stroke alpha
+    src_arr = np.array(mark_2048, dtype=np.float32)
+    cell = mark_2048.resize((cell_size, cell_size), Image.Resampling.LANCZOS).convert("RGBA")
+    _ = src_arr
+
+    # 1. Draw crisp angular/linear paint-flake scratches onto an abrasion mask
+    scratch_mask = Image.new("L", (cell_size, cell_size), 0)
+    sd = ImageDraw.Draw(scratch_mask)
+    rng = np.random.default_rng(seed)
+
+    # Diagonal & horizontal linear scrape lines (aspect ratio >> 8:1, never dots)
+    for _ in range(32):
+        x0 = float(rng.uniform(28, cell_size - 28))
+        y0 = float(rng.uniform(28, cell_size - 28))
+        ang = float(rng.choice([-0.36, -0.20, 0.0, 0.19, 0.35]) + rng.uniform(-0.07, 0.07))
+        length = float(rng.uniform(22.0, 64.0))
+        width = int(rng.integers(2, 5))
+        x1 = x0 + length * math.cos(ang)
+        y1 = y0 + length * math.sin(ang)
+        sd.line([(x0, y0), (x1, y1)], fill=int(rng.integers(180, 255)), width=width)
+
+    # Small elongated angular polygon paint chips (3-4 vertex shards with length >= 3.5x width)
+    for _ in range(22):
+        cx = float(rng.uniform(34, cell_size - 34))
+        cy = float(rng.uniform(34, cell_size - 34))
+        ang = float(rng.uniform(-0.65, 0.65))
+        ca, sa = math.cos(ang), math.sin(ang)
+        hl = float(rng.uniform(10.0, 22.0))
+        hw = float(rng.uniform(2.0, 3.8))
+        shard = [
+            (cx - hl * ca, cy - hl * sa),
+            (cx + 0.2 * hl * ca - hw * sa, cy + 0.2 * hl * sa + hw * ca),
+            (cx + hl * ca, cy + hl * sa),
+            (cx - 0.3 * hl * ca + hw * sa, cy - 0.3 * hl * sa - hw * ca),
+        ]
+        sd.polygon(shard, fill=255)
+
+    arr = np.array(cell, dtype=np.float32)
+    rgb = arr[:, :, :3]
+    raw_alpha = arr[:, :, 3] / 255.0
+
+    # Boost anti-aliased text/line alpha so fine wordmarks survive _AlphaClip (_Cutoff=0.38) crisply
+    alpha = np.clip((raw_alpha - 0.08) * 1.45, 0.0, 1.0)
+    # Restore clean dark ink RGB on partially transparent edge pixels where Lanczos mixed with (0,0,0,0)
+    valid_a = np.maximum(raw_alpha, 1e-3)
+    for c_i in range(3):
+        rgb[:, :, c_i] = np.where(raw_alpha > 0.05, np.clip(rgb[:, :, c_i] / np.sqrt(valid_a), 0.0, 255.0), 0.0)
+
+    yy, xx = np.mgrid[0:cell_size, 0:cell_size].astype(np.float32)
+    nx = xx / float(cell_size)
+    ny = yy / float(cell_size)
+
+    # 2. Sun-faded colour: directional UV bleaching + smooth multi-harmonic wave mottling
+    wave_fade = (
+        0.50
+        + 0.25 * np.sin(nx * 11.0 + 0.7 * seed) * np.cos(ny * 9.0 - 0.4 * seed)
+        + 0.25 * np.cos((nx * 0.8 - ny * 0.6) * 17.0 + 1.1 * seed)
+    )
+    uv_exposure = np.clip(1.05 - 0.38 * ny - 0.15 * nx, 0.45, 1.0)
+    fade_factor = np.clip(sun_fade * (0.55 * uv_exposure + 0.45 * wave_fade), 0.08, 0.48)
+
+    # Warm sun-bleached lunar chalk target colour (applied more strongly to bright/mid tones while keeping dark ink legible)
+    chalk = np.array([232.0, 220.0, 196.0], dtype=np.float32)
+    lum = 0.299 * rgb[:, :, 0] + 0.587 * rgb[:, :, 1] + 0.114 * rgb[:, :, 2]
+    # Keep dark wordmark ink dark enough (around #353840) to contrast against R1_CreamEnamel while fading badges & brights
+    ink_preserve = np.clip((lum - 20.0) / 90.0, 0.42, 1.0)
+    eff_fade = fade_factor * ink_preserve
+
+    for c_i in range(3):
+        desat = rgb[:, :, c_i] * (1.0 - 0.20 * sun_fade) + lum * (0.20 * sun_fade)
+        rgb[:, :, c_i] = desat * (1.0 - eff_fade) + chalk[c_i] * eff_fade
+
+    # Directional linear brush-scuff streaks across the paint surface
+    streak_coord_1 = nx * math.cos(0.27) + ny * math.sin(0.27)
+    streak_coord_2 = nx * math.cos(-0.19) + ny * math.sin(-0.19)
+    linear_scuff = (
+        0.5
+        + 0.30 * np.sin(streak_coord_1 * 95.0 + seed * 1.7)
+        + 0.20 * np.cos(streak_coord_2 * 145.0 - seed * 2.3)
+    )
+    scuff_tint = np.clip((linear_scuff - 0.60) * 34.0, -8.0, 16.0)
+    for c_i in range(3):
+        rgb[:, :, c_i] = np.clip(rgb[:, :, c_i] + scuff_tint, 0.0, 255.0)
+
+    # 3. Crisp edge scuffing & linear chips in alpha (protecting lower wordmark zone ny > 0.66 from heavy alpha holes)
+    a_img = Image.fromarray(np.clip(alpha * 255.0, 0.0, 255.0).astype(np.uint8), mode="L")
+    a_blur_tight = np.array(a_img.filter(ImageFilter.GaussianBlur(radius=2.2)), dtype=np.float32) / 255.0
+    a_blur_wide = np.array(a_img.filter(ImageFilter.GaussianBlur(radius=5.5)), dtype=np.float32) / 255.0
+
+    # Protect thin wordmark text in the lower region (ny > 0.56) so letters stay 100% readable
+    emblem_zone = np.clip((0.58 - ny) / 0.08, 0.12, 1.0)
+
+    edge_band = np.clip((alpha > 0.05) * (1.0 - a_blur_tight * 0.80), 0.0, 1.0) * emblem_zone
+    outer_halo_band = np.clip((alpha > 0.05) * (1.0 - a_blur_wide * 0.62), 0.0, 1.0) * emblem_zone
+
+    edge_wave = (
+        0.50
+        + 0.24 * np.sin((nx * 31.0 + ny * 13.0) + seed * 0.9)
+        + 0.16 * np.cos((nx * 17.0 - ny * 33.0) - seed * 1.4)
+        + 0.10 * np.sin((nx * 55.0 + ny * 7.0) + seed * 2.1)
+    )
+    scratches = np.array(scratch_mask, dtype=np.float32) / 255.0
+
+    # Crisp alpha-clip cutouts for edge scuffs and linear scratch chips
+    edge_cut = (edge_band * edge_wave) > (0.36 - 0.16 * edge_wear)
+    chip_cut = (scratches * (0.30 + 0.70 * outer_halo_band) * emblem_zone) > (0.58 - 0.28 * edge_wear)
+    cut_mask = np.logical_or(edge_cut, chip_cut).astype(np.float32)
+
+    # Also add surface paint-scuff lightening right around the chips/scratches
+    scuff_halo = np.clip(scratches * 0.65 + edge_band * edge_wave * 0.55, 0.0, 1.0)
+    for c_i in range(3):
+        rgb[:, :, c_i] = np.clip(rgb[:, :, c_i] * (1.0 - 0.18 * scuff_halo) + chalk[c_i] * (0.18 * scuff_halo), 0.0, 255.0)
+
+    new_alpha = alpha * (1.0 - 0.92 * cut_mask)
+
+    # 4. Optional thermal scorch / plasma-cut corner (for Tycho mark on Kestrel_HullPanel)
+    if scorch_corner:
+        # Diagonal plasma-cut & char zone across the upper-right corner of the hexagon emblem
+        scorch_dist = (nx - 0.52) * 0.78 - (ny - 0.44) * 0.62
+        scorch_wave = 0.035 * np.sin(ny * 27.0 + 1.1) + 0.025 * np.cos(nx * 23.0 - 0.7)
+        s_val = scorch_dist + scorch_wave
+        # Dark soot/char gradient on the surviving paint before the cut line
+        scorch_zone = np.clip((s_val - 0.02) * 4.8, 0.0, 1.0)
+        soot_col = np.array([28.0, 22.0, 18.0], dtype=np.float32)
+        amber_char = np.array([148.0, 74.0, 32.0], dtype=np.float32)
+        char_rim = np.clip(1.0 - np.abs(s_val - 0.17) * 18.0, 0.0, 1.0)
+        for c_i in range(3):
+            rgb[:, :, c_i] = rgb[:, :, c_i] * (1.0 - 0.88 * scorch_zone) + soot_col[c_i] * (0.88 * scorch_zone)
+            rgb[:, :, c_i] = rgb[:, :, c_i] * (1.0 - 0.55 * char_rim) + amber_char[c_i] * (0.55 * char_rim)
+        # Sharp plasma-cut notch severing the upper-right corner of the hexagon (s_val > 0.20)
+        burn_cut = (s_val > 0.20).astype(np.float32)
+        new_alpha = new_alpha * (1.0 - burn_cut)
+
+    # Enforce generous transparent border inside the cell itself (outer 12 px of the cell is strictly 0 alpha)
+    border = 12
+    new_alpha[:border, :] = 0.0
+    new_alpha[-border:, :] = 0.0
+    new_alpha[:, :border] = 0.0
+    new_alpha[:, -border:] = 0.0
+
+    out_a = np.clip(new_alpha * 255.0, 0.0, 255.0).astype(np.uint8)
+    out_rgb = np.clip(rgb, 0.0, 255.0).astype(np.uint8)
+    out_rgba = np.dstack([out_rgb, out_a])
+    out_rgba[out_a < 8] = (0, 0, 0, 0)
+    return Image.fromarray(out_rgba, mode="RGBA")
+
+
+def build_maker_decals_atlas() -> Image.Image:
+    """
+    Build `Assets/_Project/Art/R1/Brands/T_R1_MakerDecals_Albedo.png` (2048x2048 RGBA)
+    containing a clean 3x2 grid of ONLY these 6 cells:
+      1. VIS 1985 mark        (col 0, row 0 - top-left)
+      2. "VIS" stencil word   (col 1, row 0 - top-center)
+      3. VIS 1967 wordmark    (col 2, row 0 - top-right)
+      4. ILC seal             (col 0, row 1 - bottom-left)
+      5. Tycho mark           (col 1, row 1 - bottom-center)
+      6. Kessler-Arai mark    (col 2, row 1 - bottom-right)
+    Each cell is 552x552 px centered in a 682x1024 grid slot -> >=130 px horizontal and
+    >=472 px vertical transparent gap between cells (16+ transparent texels at mip level 3).
+    """
+    atlas = Image.new("RGBA", (2048, 2048), (0, 0, 0, 0))
+    cell_size = 552
+
+    ink_dark = (30, 32, 38, 255)
+    cells = [
+        # (col, row, mark_img, seed, sun_fade, edge_wear, scorch_corner)
+        (0, 0, build_vis_mark(mono=False, wordmark_color=ink_dark), 101, 0.22, 0.42, False),
+        (1, 0, build_vis_stencil_word(), 202, 0.24, 0.48, False),
+        (2, 0, build_vis_1967_mark(mono=False, wordmark_color=(28, 24, 20, 255), include_sublines=False), 303, 0.24, 0.46, False),
+        (0, 1, build_ilc_mark(mono=False, wordmark_color=ink_dark), 404, 0.22, 0.40, False),
+        (1, 1, build_tycho_mark(mono=False, wordmark_color=(24, 32, 36, 255)), 505, 0.24, 0.48, True),
+        (2, 1, build_kessler_mark(mono=False, wordmark_color=ink_dark), 606, 0.20, 0.38, False),
+    ]
+
+    col_centers = (342, 1024, 1706)
+    row_centers = (512, 1536)
+
+    for col, row, mark_img, seed, sun_fade, edge_wear, scorch in cells:
+        weathered = _weather_decal_cell(
+            mark_img,
+            cell_size=cell_size,
+            seed=seed,
+            sun_fade=sun_fade,
+            edge_wear=edge_wear,
+            scorch_corner=scorch,
+        )
+        cx = col_centers[col]
+        cy = row_centers[row]
+        atlas.alpha_composite(weathered, (cx - cell_size // 2, cy - cell_size // 2))
+
+    return atlas
+
+
 def main():
+    import sys
+
     BRANDS_DIR.mkdir(parents=True, exist_ok=True)
     CAPTURES_DIR.mkdir(parents=True, exist_ok=True)
+
+    if "--only-decal-atlas" in sys.argv:
+        print("[generate_brands] Building 2048x2048 T_R1_MakerDecals_Albedo.png...")
+        decal_atlas = build_maker_decals_atlas()
+        decal_atlas.save(BRANDS_DIR / "T_R1_MakerDecals_Albedo.png")
+        print("[generate_brands] Done!")
+        return
 
     # 1. Clean 2048x2048 production marks + 1-colour white mono versions
     print("[generate_brands] Building 2048x2048 colour and mono marks...")
@@ -1195,8 +1464,15 @@ def main():
     )
     print_vis.save(BRANDS_DIR / "print_vis.png")
 
+    # 5. Maker decal atlas (2048x2048 RGBA with 6 weathered cells)
+    print("[generate_brands] Building 2048x2048 T_R1_MakerDecals_Albedo.png...")
+    decal_atlas = build_maker_decals_atlas()
+    decal_atlas.save(BRANDS_DIR / "T_R1_MakerDecals_Albedo.png")
+
     print("[generate_brands] Done! Generated all brand assets in", BRANDS_DIR)
+
 
 
 if __name__ == "__main__":
     main()
+

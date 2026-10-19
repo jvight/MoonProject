@@ -27,6 +27,7 @@ ALLOWED_MATERIALS: tuple[str, ...] = (
     "R1_SolarCell",
     "R1_Basalt",
     "R1_Brass",
+    "R1_Signage",
 )
 
 
@@ -158,6 +159,26 @@ MATERIAL_SPECS: dict[str, dict[str, object]] = {
         "emission": (0.0, 0.0, 0.0, 1.0),
         "emission_strength": 0.0,
     },
+    "R1_Signage": {
+        "base_color": _srgb_to_linear("#EDE3CE"),
+        "wear_color": _srgb_to_linear("#464952"),
+        "dust_color": _srgb_to_linear("#8D8B86"),
+        "metallic": 0.04,
+        "roughness": 0.36,
+        "emission": (0.0, 0.0, 0.0, 1.0),
+        "emission_strength": 0.0,
+    },
+}
+
+# 2048x2048 Maker Decals Atlas (Assets/_Project/Art/R1/Brands/T_R1_MakerDecals_Albedo.png)
+# 3 columns (centers x = 342, 1024, 1706 px) x 2 rows (centers y = 512, 1536 px from top -> V = 0.75, 0.25)
+MAKER_DECAL_CELLS: dict[str, tuple[float, float, float, float]] = {
+    "VIS_1985": (342.0 / 2048.0, 1.0 - 512.0 / 2048.0, 520.0 / 2048.0, 520.0 / 2048.0),
+    "VIS_STENCIL": (1024.0 / 2048.0, 1.0 - 512.0 / 2048.0, 520.0 / 2048.0, 325.0 / 2048.0),
+    "VIS_1967": (1706.0 / 2048.0, 1.0 - 512.0 / 2048.0, 520.0 / 2048.0, 520.0 / 2048.0),
+    "ILC_SEAL": (342.0 / 2048.0, 1.0 - 1536.0 / 2048.0, 520.0 / 2048.0, 520.0 / 2048.0),
+    "TYCHO": (1024.0 / 2048.0, 1.0 - 1536.0 / 2048.0, 520.0 / 2048.0, 520.0 / 2048.0),
+    "KESSLER_ARAI": (1706.0 / 2048.0, 1.0 - 1536.0 / 2048.0, 520.0 / 2048.0, 520.0 / 2048.0),
 }
 
 VCOL_ATTRIBUTE_NAME = "Color"
@@ -2922,7 +2943,7 @@ def apply_triplanar_uvs(
         return
 
     for mesh_obj in collect_hierarchy(target):
-        if mesh_obj.type != "MESH" or mesh_obj.data is None:
+        if mesh_obj.type != "MESH" or mesh_obj.data is None or mesh_obj.name.startswith("Decal_"):
             continue
         me = mesh_obj.data
         uv_layer = me.uv_layers.get(UV_MAP_NAME)
@@ -2992,6 +3013,207 @@ def create_mesh_node(
     obj.rotation_euler = (0.0, 0.0, 0.0)
     obj.scale = (1.0, 1.0, 1.0)
     return obj
+
+
+def add_maker_decal_node(
+    name: str,
+    parent: bpy.types.Object | None,
+    center_u: tuple[float, float, float],
+    normal_u: tuple[float, float, float],
+    width: float,
+    height: float,
+    cell_key: str,
+    *,
+    up_u: tuple[float, float, float] = (0.0, 1.0, 0.0),
+    offset: float = 0.0016,
+    thickness: float = 0.0008,
+    pivot_u: tuple[float, float, float] = (0.0, 0.0, 0.0),
+    u_crop: tuple[float, float] = (0.0, 1.0),
+    v_crop: tuple[float, float] = (0.0, 1.0),
+    mat_name: str = "R1_Signage",
+    material_override: bpy.types.Material | None = None,
+    local_space: bool = False,
+    cyl_patch: tuple[float, float, float, int] | None = None,
+) -> bpy.types.Object:
+    """Create a closed manifold wafer decal node (`Decal_<Maker>_<n>`) 1-2 mm off a flat or faceted-cylindrical panel mapped to MAKER_DECAL_CELLS."""
+    if not name.startswith("Decal_"):
+        raise ValueError(f"Decal node name '{name}' must start with 'Decal_'")
+    if cell_key not in MAKER_DECAL_CELLS:
+        raise ValueError(f"Unknown maker decal cell '{cell_key}'. Valid: {sorted(MAKER_DECAL_CELLS.keys())}")
+
+    u_center, v_center, u_span, v_span = MAKER_DECAL_CELLS[cell_key]
+    u_min_cell = u_center - 0.5 * u_span
+    v_min_cell = v_center - 0.5 * v_span
+    u0 = round(u_min_cell + u_crop[0] * u_span, 5)
+    u1 = round(u_min_cell + u_crop[1] * u_span, 5)
+    v0 = round(v_min_cell + v_crop[0] * v_span, 5)
+    v1 = round(v_min_cell + v_crop[1] * v_span, 5)
+
+    # Transparent border region of the cell (270..278 px from cell center -> alpha == 0, clipped by _AlphaClip)
+    ut0 = round(u_center - 0.135, 5)
+    ut1 = round(u_center - 0.132, 5)
+    vt0 = round(v_center - 0.135, 5)
+    vt1 = round(v_center - 0.132, 5)
+
+    n_b = u_vec(normal_u).normalized()
+    u_hint_b = u_vec(up_u).normalized()
+    up_b = u_hint_b - n_b * u_hint_b.dot(n_b)
+    if up_b.length < 1e-4:
+        fallback = Vector((0.0, 1.0, 0.0)) if abs(n_b.y) < 0.9 else Vector((1.0, 0.0, 0.0))
+        up_b = fallback - n_b * fallback.dot(n_b)
+    up_b.normalize()
+    right_b = up_b.cross(n_b).normalized()
+
+    piv_b = u_pos(*pivot_u)
+    hw = 0.5 * float(width)
+    hh = 0.5 * float(height)
+
+    bm = bmesh.new()
+    uv_layer = bm.loops.layers.uv.verify()
+    trim_uvs = ((ut0, vt0), (ut1, vt0), (ut1, vt1), (ut0, vt1))
+
+    if cyl_patch is not None:
+        r_out, patch_ang_center_deg, patch_ang_span_deg, patch_arc_segments = cyl_patch
+        step_deg = float(patch_ang_span_deg) / float(patch_arc_segments)
+        a0_deg = float(patch_ang_center_deg) - 0.5 * float(patch_ang_span_deg)
+        cos_half = math.cos(math.radians(0.5 * step_deg))
+        r_front = float(r_out) + float(offset) / cos_half
+        r_back = float(r_out) + (float(offset) - float(thickness)) / cos_half
+
+        center_ang_deg = math.degrees(math.atan2(float(normal_u[0]), float(normal_u[2])))
+        half_span_deg = math.degrees(hw / float(r_out))
+        theta_left = center_ang_deg + half_span_deg
+        theta_right = center_ang_deg - half_span_deg
+
+        sample_angles = [theta_left]
+        for k in range(patch_arc_segments - 1, 0, -1):
+            j_deg = a0_deg + k * step_deg
+            if theta_right + 1e-4 < j_deg < theta_left - 1e-4:
+                sample_angles.append(j_deg)
+        sample_angles.append(theta_right)
+
+        def _facet_pt_local(theta_deg: float, r_poly: float, y_val: float) -> Vector:
+            f_pos = (theta_deg - a0_deg) / step_deg
+            k_idx = max(0, min(int(patch_arc_segments) - 1, int(math.floor(f_pos + 1e-7))))
+            t_val = max(0.0, min(1.0, f_pos - k_idx))
+            ak0 = math.radians(a0_deg + k_idx * step_deg)
+            ak1 = math.radians(a0_deg + (k_idx + 1) * step_deg)
+            xu = r_poly * ((1.0 - t_val) * math.sin(ak0) + t_val * math.sin(ak1))
+            zu = r_poly * ((1.0 - t_val) * math.cos(ak0) + t_val * math.cos(ak1))
+            return u_pos(xu, y_val, zu) - piv_b
+
+        cy_u = float(center_u[1])
+        vf_bot = [bm.verts.new(_facet_pt_local(th, r_front, cy_u - hh)) for th in sample_angles]
+        vf_top = [bm.verts.new(_facet_pt_local(th, r_front, cy_u + hh)) for th in sample_angles]
+        vb_bot = [bm.verts.new(_facet_pt_local(th, r_back, cy_u - hh)) for th in sample_angles]
+        vb_top = [bm.verts.new(_facet_pt_local(th, r_back, cy_u + hh)) for th in sample_angles]
+
+        side_faces: list[bmesh.types.BMFace] = []
+        n_strips = len(sample_angles) - 1
+        for i in range(n_strips):
+            s0 = (theta_left - sample_angles[i]) / max(1e-6, theta_left - theta_right)
+            s1 = (theta_left - sample_angles[i + 1]) / max(1e-6, theta_left - theta_right)
+            ui0 = round(u0 + s0 * (u1 - u0), 5)
+            ui1 = round(u0 + s1 * (u1 - u0), 5)
+
+            f_fr = bm.faces.new((vf_bot[i], vf_bot[i + 1], vf_top[i + 1], vf_top[i]))
+            for loop, uv in zip(f_fr.loops, ((ui0, v0), (ui1, v0), (ui1, v1), (ui0, v1))):
+                loop[uv_layer].uv = uv
+
+            side_faces.append(bm.faces.new((vb_bot[i], vb_top[i], vb_top[i + 1], vb_bot[i + 1])))
+            side_faces.append(bm.faces.new((vb_bot[i], vb_bot[i + 1], vf_bot[i + 1], vf_bot[i])))
+            side_faces.append(bm.faces.new((vb_top[i + 1], vb_top[i], vf_top[i], vf_top[i + 1])))
+
+        side_faces.append(bm.faces.new((vb_top[0], vb_bot[0], vf_bot[0], vf_top[0])))
+        side_faces.append(bm.faces.new((vb_bot[-1], vb_top[-1], vf_top[-1], vf_bot[-1])))
+        for side_f in side_faces:
+            for loop, uv in zip(side_f.loops, trim_uvs):
+                loop[uv_layer].uv = uv
+    else:
+        front_center_b = u_pos(*center_u) + n_b * float(offset)
+        back_center_b = front_center_b - n_b * float(thickness)
+        fc_local = front_center_b - piv_b
+        bc_local = back_center_b - piv_b
+
+        vf0 = bm.verts.new(fc_local - hw * right_b - hh * up_b)
+        vf1 = bm.verts.new(fc_local + hw * right_b - hh * up_b)
+        vf2 = bm.verts.new(fc_local + hw * right_b + hh * up_b)
+        vf3 = bm.verts.new(fc_local - hw * right_b + hh * up_b)
+        vb0 = bm.verts.new(bc_local - hw * right_b - hh * up_b)
+        vb1 = bm.verts.new(bc_local + hw * right_b - hh * up_b)
+        vb2 = bm.verts.new(bc_local + hw * right_b + hh * up_b)
+        vb3 = bm.verts.new(bc_local - hw * right_b + hh * up_b)
+
+        f_front = bm.faces.new((vf0, vf1, vf2, vf3))
+        f_back = bm.faces.new((vb0, vb3, vb2, vb1))
+        f_bot = bm.faces.new((vb0, vb1, vf1, vf0))
+        f_right = bm.faces.new((vb1, vb2, vf2, vf1))
+        f_top = bm.faces.new((vb2, vb3, vf3, vf2))
+        f_left = bm.faces.new((vb3, vb0, vf0, vf3))
+
+        front_uvs = ((u0, v0), (u1, v0), (u1, v1), (u0, v1))
+        for loop, uv in zip(f_front.loops, front_uvs):
+            loop[uv_layer].uv = uv
+
+        for side_f in (f_back, f_bot, f_right, f_top, f_left):
+            for loop, uv in zip(side_f.loops, trim_uvs):
+                loop[uv_layer].uv = uv
+
+    for f in bm.faces:
+        f.material_index = 0
+        f.smooth = True
+    for e in bm.edges:
+        e.smooth = False
+    bm.normal_update()
+
+    me = bpy.data.meshes.new(name)
+    bm.to_mesh(me)
+    bm.free()
+
+    if material_override is not None:
+        me.materials.append(material_override)
+    else:
+        mats = ensure_materials(use_vertex_color_shading=False)
+        me.materials.append(mats[mat_name])
+
+    apply_weighted_normals(me, sharp_angle_deg=42.0, area_power=1.6, use_modifier=False)
+    _init_solid_vcol_mesh(me, (0.96, 0.0, 0.0, 1.0))
+
+    obj = bpy.data.objects.new(name, me)
+    bpy.context.collection.objects.link(obj)
+    if local_space:
+        if parent is not None:
+            obj.parent = parent
+        obj.location = piv_b
+    else:
+        if parent is not None:
+            bpy.context.view_layer.update()
+            obj.parent = parent
+            obj.location = piv_b - parent.matrix_world.translation
+        else:
+            obj.location = piv_b
+    obj.rotation_euler = (0.0, 0.0, 0.0)
+    obj.scale = (1.0, 1.0, 1.0)
+    return obj
+
+
+def _init_solid_vcol_mesh(
+    me: bpy.types.Mesh,
+    rgba: tuple[float, float, float, float] = (0.96, 0.0, 0.0, 1.0),
+    *,
+    byte_color: bool = False,
+) -> None:
+    """Set uniform vertex color attribute on a Mesh."""
+    while len(me.color_attributes) > 0:
+        me.color_attributes.remove(me.color_attributes[0])
+    attr_name = COLOR_ATTR_NAME if byte_color else VCOL_ATTRIBUTE_NAME
+    attr_type = "BYTE_COLOR" if byte_color else "FLOAT_COLOR"
+    ca = me.color_attributes.new(name=attr_name, type=attr_type, domain="CORNER")
+    me.color_attributes.active_color = ca
+    me.color_attributes.render_color_index = 0
+    arr = np.tile(np.array(rgba, dtype=np.float32), len(me.loops))
+    ca.data.foreach_set("color", arr)
+    me.update()
 
 
 def merge_child_meshes_into_host(
@@ -3244,7 +3466,13 @@ def bake_vertex_colors(
 ) -> None:
     """Bake Cycles AO into R, convex edge wear into G, crease/cavity dust into B, and 1.0 into A."""
     if rover_cfg is not None:
-        mesh_objects = [root] if isinstance(root, bpy.types.Object) else list(root)
+        all_mesh_objects = [root] if isinstance(root, bpy.types.Object) else list(root)
+        decal_objects = [o for o in all_mesh_objects if o.name.startswith("Decal_")]
+        mesh_objects = [o for o in all_mesh_objects if not o.name.startswith("Decal_")]
+        for d_obj in decal_objects:
+            d_obj.hide_render = True
+            _init_solid_vcol_mesh(d_obj.data, (0.96, 0.0, 0.0, 1.0), byte_color=True)
+
         scene = bpy.context.scene
         ground_obj = None
         if include_ground_occluder:
@@ -3285,6 +3513,9 @@ def bake_vertex_colors(
             scene.render.bake.target = "VERTEX_COLORS"
             bpy.ops.object.bake(type="AO")
             scene.render.engine = prev_engine
+
+        for d_obj in decal_objects:
+            d_obj.hide_render = False
 
         if ground_obj is not None:
             gnd_data = ground_obj.data
@@ -3372,8 +3603,15 @@ def bake_vertex_colors(
 
     if not isinstance(root, bpy.types.Object):
         raise TypeError("root must be a bpy.types.Object when rover_cfg is None")
-    mesh_objs = [o for o in collect_hierarchy(root) if o.type == "MESH" and len(o.data.polygons) > 0]
+    all_mesh_objs = [o for o in collect_hierarchy(root) if o.type == "MESH" and len(o.data.polygons) > 0]
+    decal_objs = [o for o in all_mesh_objs if o.name.startswith("Decal_")]
+    mesh_objs = [o for o in all_mesh_objs if not o.name.startswith("Decal_")]
+    for d_obj in decal_objs:
+        d_obj.hide_render = True
+        _init_solid_vcol_mesh(d_obj.data, (0.96, 0.0, 0.0, 1.0), byte_color=False)
     if not mesh_objs:
+        for d_obj in decal_objs:
+            d_obj.hide_render = False
         return
 
     # Find lowest world Z so the ground AO plane sits just below all geometry
@@ -3422,6 +3660,9 @@ def bake_vertex_colors(
         obj.select_set(True)
     bpy.context.view_layer.objects.active = mesh_objs[0]
     bpy.ops.object.bake(type="AO")
+
+    for d_obj in decal_objs:
+        d_obj.hide_render = False
 
     # Delete temporary ground object and its mesh
     ground_mesh = ground_obj.data

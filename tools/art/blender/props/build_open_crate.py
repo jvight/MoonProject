@@ -900,6 +900,20 @@ def build_open_crate() -> bpy.types.Object:
     build_wiring_spool_into(mb_spool, center_u=spool_pivot_u)
     ruins_common.to_ruin_object(mb_spool, "WiringSpool", parent=root_obj, origin_u=spool_pivot_u)
 
+    # 4. `Decal_VIS_1` (VIS 1985 mark on the flat front panel corner)
+    dx, dy = spec["decal_center_xy"]
+    d_size = float(spec["decal_size"])
+    r1kit.add_maker_decal_node(
+        parent=root_obj,
+        name="Decal_VIS_1",
+        cell_key="VIS_1985",
+        center_u=(dx, dy, shell_d * 0.5),
+        normal_u=(0.0, 0.0, 1.0),
+        up_u=(0.0, 1.0, 0.0),
+        width=d_size,
+        height=d_size,
+    )
+
     return root_obj
 
 

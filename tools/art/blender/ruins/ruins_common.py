@@ -964,7 +964,7 @@ def bake_ruins_vertex_colors(root: bpy.types.Object, footprint_radius: float = 3
         objs = [
             o
             for o in r1kit.collect_hierarchy(root)
-            if o.type == "MESH" and o.data is not None and not o.name.startswith("UCX_")
+            if o.type == "MESH" and o.data is not None and not o.name.startswith("UCX_") and not o.name.startswith("Decal_")
         ]
         z_min, z_max = 0.0, 2.5
         for obj in objs:
