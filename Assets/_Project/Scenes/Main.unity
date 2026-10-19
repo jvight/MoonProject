@@ -6189,6 +6189,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8772850120413425448, guid: 8b7abd99e47382247bf5b38ee09d45f8, type: 3}
   m_PrefabInstance: {fileID: 2550123733782479192}
   m_PrefabAsset: {fileID: 0}
+--- !u!4 &1248569055712700836 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3386647433589080021, guid: 23014f257a2810d4987d5dc968193cd0, type: 3}
+  m_PrefabInstance: {fileID: 3539125952162853236}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1252380085157033542 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8844023891893761288, guid: a8332e6bb2c828e4ca12f88a58e196a0, type: 3}
@@ -22959,6 +22964,7 @@ MonoBehaviour:
   - {fileID: 2920566219565095780}
   _landerPort: {fileID: 2942263687204587172}
   _apronOutline: {fileID: 1170521435475302056}
+  _apronCableChannel: {fileID: 1248569055712700836}
 --- !u!1 &4243590577046967862
 GameObject:
   m_ObjectHideFlags: 0
