@@ -698,9 +698,9 @@ MonoBehaviour:
     _menuAspect: 1.7778
     _edgeMargin: 48
   _databank:
-    _flipCollapseSeconds: 0.16
-    _flipOpenSeconds: 0.22
-    _flipLineShare: 0.02
+    _flipFadeSeconds: 0.12
+    _flipDrawSeconds: 0.2
+    _flipEdgePixels: 24
     _idleTurnDegreesPerSecond: 6
     _idleResumeSeconds: 2.5
     _dragDegreesPerPixel: 0.35

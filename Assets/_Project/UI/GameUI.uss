@@ -1993,8 +1993,13 @@ Label {
 
 .page-tab--active {
     color: rgb(248, 238, 214);
-    border-color: rgb(255, 196, 96);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
+}
+
+/* The one accent underline under the lit tab; it glides to the other tab while the page changes. */
+.page-tab__underline {
+    position: absolute;
+    background-color: rgb(255, 196, 96);
 }
 
 .databank__row {
