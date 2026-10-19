@@ -42,7 +42,7 @@ namespace MoonProject.Rover
 
         [Tooltip("The one eased move round to the chase frame behind 07, after which control is the player's.")]
         [Range(1f, 4f)]
-        [SerializeField] private float _moveBehindSeconds = 1.2f;
+        [SerializeField] private float _moveBehindSeconds = 1.6f;
 
         [Header("The lines")]
         [Tooltip("The lines 07's self-test prints on its face, in step order, Carrier first and the Lamps check " +

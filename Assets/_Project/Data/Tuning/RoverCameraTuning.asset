@@ -187,7 +187,7 @@ MonoBehaviour:
       _readyEyesSeconds: 0.6
       _pullBackSeconds: 1.2
       _performSeconds: 1.6
-      _moveBehindSeconds: 1.2
+      _moveBehindSeconds: 1.6
       _lines:
       - _step: 0
         _seconds: 0.7
