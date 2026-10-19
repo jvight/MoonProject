@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 
 namespace MoonProject.Rover.Tests
@@ -43,6 +44,15 @@ namespace MoonProject.Rover.Tests
         public void TearDown()
         {
             Object.DestroyImmediate(_tuning);
+        }
+
+        /// <summary>Gives the tuning a front limit short of 180 degrees (the default lets the view go all the way round).
+        /// </summary>
+        private void LimitTheFrontTo(float degrees)
+        {
+            var serialized = new SerializedObject(_tuning);
+            serialized.FindProperty("_maxLookYaw").floatValue = degrees;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
         private void Park()
@@ -98,8 +108,9 @@ namespace MoonProject.Rover.Tests
         [Test]
         public void TunedDefaults_AreTheComfortRules()
         {
-            Assert.AreEqual(5f, _tuning.RecenterDelay);
-            Assert.AreEqual(4f, _tuning.StickRecenterDelay);
+            Assert.AreEqual(1.5f, _tuning.RecenterDelay);
+            Assert.AreEqual(1.5f, _tuning.StickRecenterDelay);
+            Assert.AreEqual(180f, _tuning.MaxLookYaw, "the view goes all the way round 07");
             Assert.AreEqual(2f, _tuning.RecenterMinSpeed);
             Assert.AreEqual(1f, _tuning.RecenterDriveSeconds);
             Assert.AreEqual(25f, _tuning.RecenterDeadzone);
@@ -217,7 +228,7 @@ namespace MoonProject.Rover.Tests
 
             Run(0.3f, Vector2.zero);
             Assert.Greater(_orbit.RecenterWeight, 0f);
-            Assert.Less(_tuning.StickRecenterDelay, _tuning.RecenterDelay);
+            Assert.LessOrEqual(_tuning.StickRecenterDelay, _tuning.RecenterDelay);
         }
 
         [Test]
@@ -294,8 +305,9 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void Recenter_FromTheFrontLimit_TakesAboutFiveSeconds()
+        public void Recenter_FromATunedFrontLimit_TakesAboutFiveSeconds()
         {
+            LimitTheFrontTo(135f);
             DriveForward(Cruise);
             Run(2.5f, Right);
             Run(0.5f, Vector2.zero);
@@ -308,8 +320,9 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void Look_StopsShortOfFacing07HeadOn()
+        public void Look_WithATunedFrontLimit_StopsShortOfFacing07HeadOn()
         {
+            LimitTheFrontTo(135f);
             Run(8f, Right);
             Run(1f, Vector2.zero);
 
@@ -321,6 +334,7 @@ namespace MoonProject.Rover.Tests
         [Test]
         public void Look_SlowsOverTheSoftBand_NeverStopsDead()
         {
+            LimitTheFrontTo(135f);
             Run(2f, Right);
             float before = _orbit.YawOffset;
             Run(Frame, Right);
@@ -333,6 +347,72 @@ namespace MoonProject.Rover.Tests
             float openStep = Mathf.Abs(_orbit.YawOffset - early);
 
             Assert.Less(nearLimitStep, openStep, "the look slows against the limit");
+        }
+
+        [Test]
+        public void FreeLook_GoesAllRound07_ItsFaceIncluded_AndOnPastIt()
+        {
+            float travelled = 0f;
+            bool atTheFront = false;
+            float last = _orbit.Bearing;
+            for (int i = 0; i < Mathf.RoundToInt(12f / Frame); i++)
+            {
+                StepOnce(Right);
+                travelled += Mathf.DeltaAngle(last, _orbit.Bearing);
+                last = _orbit.Bearing;
+                atTheFront |= Mathf.Abs(_orbit.YawOffset) > 179f;
+            }
+
+            Assert.IsTrue(atTheFront, "sustained look brings the view round to 07's face (180 degrees)");
+            Assert.Greater(travelled, 360f, "and on round the other side: a full turn and more, with no stop");
+        }
+
+        [Test]
+        public void FreeLook_AtTheFront_StaysPutWhileParked_OrWhileReversing()
+        {
+            Run(3f, Right);
+            Run(0.5f, Vector2.zero);
+            float offset = _orbit.YawOffset;
+            Assert.Greater(Mathf.Abs(offset), 90f, "the view is well round 07");
+            Park();
+            Run(30f, Vector2.zero);
+            Assert.AreEqual(offset, _orbit.YawOffset, Held, "parked, the view stays where the player put it");
+
+            _speed = -3f;
+            _throttle = -1f;
+            Run(30f, Vector2.zero);
+            Assert.AreEqual(offset, _orbit.YawOffset, Held, "reversing, the recenter never fights the player");
+        }
+
+        [Test]
+        public void FreeLook_Recenter_StartsOnlyAfterTheDelay_WhileDriving_AndNeverWhileLooking()
+        {
+            Run(3f, Right);
+            Run(0.5f, Vector2.zero);
+            DriveForward(Cruise);
+            Run(_tuning.RecenterDriveSeconds, Right);
+            float held = _orbit.YawOffset;
+            Run(_tuning.RecenterDelay * 4f, new Vector2(0.01f, 0f));
+            Assert.AreEqual(0f, _orbit.RecenterWeight, "while the player is looking there is no recenter");
+
+            Run(_tuning.RecenterDelay * 0.5f, Vector2.zero);
+            Assert.AreEqual(0f, _orbit.RecenterWeight, "nor before the delay has run");
+            Run(_tuning.RecenterDelay * 2f, Vector2.zero);
+            Assert.Greater(_orbit.RecenterWeight, 0f, "once driving and not looking for the delay, it starts");
+            Assert.AreNotEqual(Mathf.Abs(held), Mathf.Abs(_orbit.YawOffset), "and the view is on its way back");
+        }
+
+        [Test]
+        public void FreeLook_Recenter_FromTheFront_NeverSnaps()
+        {
+            Run(3.2f, Right);
+            Run(0.5f, Vector2.zero);
+            Assert.Greater(Mathf.Abs(_orbit.YawOffset), 150f, "07 is seen from the front");
+            DriveForward(Cruise);
+            Run(_tuning.RecenterDelay + _tuning.RecenterDriveSeconds, Vector2.zero);
+            Assert.LessOrEqual(FastestTurn(20f), _tuning.RecenterMaxRate + RateSlack, "never faster than the cap, never a snap");
+            Run(15f, Vector2.zero);
+            Assert.AreEqual(0f, _orbit.YawOffset, 0.05f, "it comes home behind 07");
         }
 
         [Test]

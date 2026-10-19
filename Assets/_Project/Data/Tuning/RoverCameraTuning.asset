@@ -17,7 +17,7 @@ MonoBehaviour:
   _invertY: 0
   _minSensitivity: 0.25
   _maxSensitivity: 3
-  _maxLookYaw: 135
+  _maxLookYaw: 180
   _lookYawSoftBand: 30
   _lookHalfLife: 0.05
   _distance: 7.5
@@ -40,8 +40,8 @@ MonoBehaviour:
   _stargazeBeginShare: 0.6
   _stargazeHoldShare: 0.3
   _stargazeMaxSpeed: 0.3
-  _recenterDelay: 5
-  _stickRecenterDelay: 4
+  _recenterDelay: 1.5
+  _stickRecenterDelay: 1.5
   _recenterMinSpeed: 2
   _recenterFullSpeed: 5
   _recenterSlowDelayScale: 1.6
