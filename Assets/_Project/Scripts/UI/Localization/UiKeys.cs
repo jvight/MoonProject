@@ -64,6 +64,7 @@ namespace MoonProject.UI
         public const string PadView = "glyph.gamepad.select";
         public const string ControlsLook = "ui.controls.look";
         public const string ControlsFace = "ui.controls.face";
+        public const string ControlsLights = "ui.controls.lights";
         public const string CargoWaiting = "ui.cargo.waiting";
         public const string CargoSummary = "ui.cargo.summary";
         public const string BuildStripTitle = "build.strip.title";

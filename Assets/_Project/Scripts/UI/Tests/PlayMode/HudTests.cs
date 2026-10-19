@@ -587,6 +587,8 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(Text(UiKeys.Drive), _rig.Ui.Layout.ControlsDriveWord.text);
             Assert.AreEqual(Text(UiKeys.MouseLook), _rig.Ui.Layout.ControlsLookGlyphLabel.text);
             Assert.AreEqual(Text(UiKeys.KeyTab), _rig.Ui.Layout.ControlsFaceGlyphLabel.text);
+            Assert.AreEqual("L", _rig.Ui.Layout.ControlsLightsGlyphLabel.text, "the lights key's real binding");
+            Assert.AreEqual(Text(UiKeys.ControlsLights), _rig.Ui.Layout.ControlsLightsWord.text);
             Rect card = _rig.Ui.Layout.ControlsCard.worldBound;
             Rect root = _rig.Ui.Layout.Root.worldBound;
             Assert.Less(card.center.x, root.center.x, "at the left");
@@ -597,6 +599,7 @@ namespace MoonProject.UI.PlayModeTests
             yield return Seconds(0.1f);
             Assert.AreEqual(Text(UiKeys.PadDrive), _rig.Ui.Layout.ControlsDriveGlyphLabel.text, "the pad's caps");
             Assert.AreEqual(Text(UiKeys.PadView), _rig.Ui.Layout.ControlsFaceGlyphLabel.text);
+            Assert.AreEqual(Text("glyph.gamepad.leftstickpress"), _rig.Ui.Layout.ControlsLightsGlyphLabel.text);
 
             _rig.Fakes.Speed = 3f;
             yield return Seconds(1f);

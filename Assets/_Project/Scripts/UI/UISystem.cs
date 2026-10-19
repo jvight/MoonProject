@@ -359,7 +359,7 @@ namespace MoonProject.UI
             _firstPrompt = new FirstPrompt(_tuning.Stargaze, _ledger);
             _lookUpChip = new LookUpChip(_layout, _tuning.Stargaze, _localization, _glyphs);
             _controlsCard = new ControlsCard(_tuning.ControlsCard);
-            _controlsView = new ControlsCardView(_layout, _tuning.ControlsCard, _localization);
+            _controlsView = new ControlsCardView(_layout, _tuning.ControlsCard, _localization, _glyphs);
             _objective = new ObjectiveLine(_tuning.Guidance, _ledger);
             _objectiveView = new ObjectiveView(_layout, _tuning.Guidance, _localization);
             _slot = new GuidanceSlot(_tuning.Guidance.HandOverSeconds);

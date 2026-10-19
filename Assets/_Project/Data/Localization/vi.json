@@ -59,6 +59,10 @@
             "text": "07"
         },
         {
+            "key": "ui.controls.lights",
+            "text": "Đèn"
+        },
+        {
             "key": "glyph.keyboard.wasd",
             "text": "WASD"
         },

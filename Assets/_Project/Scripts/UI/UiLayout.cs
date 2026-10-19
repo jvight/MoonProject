@@ -62,6 +62,9 @@ namespace MoonProject.UI
             ControlsFaceGlyph = Require<VisualElement>("controls-face-glyph");
             ControlsFaceGlyphLabel = Require<Label>("controls-face-glyph-label");
             ControlsFaceWord = Require<Label>("controls-face-word");
+            ControlsLightsGlyph = Require<VisualElement>("controls-lights-glyph");
+            ControlsLightsGlyphLabel = Require<Label>("controls-lights-glyph-label");
+            ControlsLightsWord = Require<Label>("controls-lights-word");
 
             Pause = Require<VisualElement>("pause");
             PauseVeil = Require<VisualElement>("pause-veil");
@@ -252,6 +255,12 @@ namespace MoonProject.UI
         public Label ControlsFaceGlyphLabel { get; }
 
         public Label ControlsFaceWord { get; }
+
+        public VisualElement ControlsLightsGlyph { get; }
+
+        public Label ControlsLightsGlyphLabel { get; }
+
+        public Label ControlsLightsWord { get; }
 
         public VisualElement Pause { get; }
 
