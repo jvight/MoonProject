@@ -30,6 +30,9 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// </summary>
     public sealed class ScanV2PlayModeTests : InputTestFixture
     {
+        // The scan beam's widest at the target (m): a thin crisp line, never a fan.
+        private const float ThinBeamMaxWidth = 0.15f;
+
         private const int CaptureWidth = 1920;
         private const int CaptureHeight = 1080;
         private const int StripPanelWidth = 960;
@@ -557,8 +560,11 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             float lensWidth = Vector3.Distance(verts[0], verts[slices - 1]);
             float targetWidth = Vector3.Distance(verts[(rings - 1) * slices], verts[(rings - 1) * slices + slices - 1]);
-            Assert.Greater(targetWidth, lensWidth * 3.5f,
-                "ScanBeamWedge must taper from a narrow lens aperture to a wider fan spanning the target scan line.");
+            // The owner's playtest: a thin, crisp beam that lands on the scan line, no wide fan spilling past it.
+            Assert.GreaterOrEqual(targetWidth, lensWidth,
+                "ScanBeamWedge must open from the lens aperture toward the target scan line.");
+            Assert.LessOrEqual(targetWidth, ThinBeamMaxWidth,
+                "ScanBeamWedge must stay a thin beam at the target, not a fan spilling past the scan line.");
 
             float lensAlpha = colors[centerSlice].a;
             float midAlpha = colors[(rings / 2) * slices + centerSlice].a;
