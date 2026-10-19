@@ -21,7 +21,10 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// </summary>
     public sealed class StoryScanSceneSessions : InputTestFixture
     {
-        private static readonly string[] Required = { "airlock", "scout3", "seismic", "retroreflector", "flag" };
+        private static readonly string[] Required =
+        {
+            "airlock", "scout3", "seismic", "retroreflector", "flag", "kestrel3", "elder06", "elder01",
+        };
 
         private GameplaySystem _gameplay;
         private Scene _scene;

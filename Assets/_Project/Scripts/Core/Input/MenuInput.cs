@@ -119,6 +119,25 @@ namespace MoonProject.Core.Input
         /// <summary>The databank model's turn (right stick, -1..1).</summary>
         public Vector2 Turn => _turn.ReadValue<Vector2>();
 
+        /// <summary>
+        /// Any key, mouse button or gamepad button went down this frame (a skippable splash's skip). Reads the devices
+        /// themselves, so it counts whatever map is on.
+        /// </summary>
+        public bool AnyPressed
+        {
+            get
+            {
+                Keyboard keyboard = Keyboard.current;
+                Mouse mouse = Mouse.current;
+                Gamepad pad = Gamepad.current;
+                return (keyboard != null && keyboard.anyKey.wasPressedThisFrame) ||
+                       (mouse != null &&
+                        (mouse.leftButton.wasPressedThisFrame || mouse.rightButton.wasPressedThisFrame)) ||
+                       (pad != null && (pad.buttonSouth.wasPressedThisFrame || pad.buttonEast.wasPressedThisFrame ||
+                                        pad.startButton.wasPressedThisFrame));
+            }
+        }
+
         /// <summary>Primary mouse button pressed this frame (used to recapture the cursor).</summary>
         public bool ClickPressed => _click.WasPressedThisFrame();
 

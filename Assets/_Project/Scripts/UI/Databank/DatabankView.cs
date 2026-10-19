@@ -230,12 +230,12 @@ namespace MoonProject.UI
             }
         }
 
-        /// <summary>Lights the era strip's marks for the eras the collection has reached.</summary>
-        public void WriteStrip(DatabankIndex index)
+        /// <summary>Lights the era strip's mark for <paramref name="era"/> only (none for an entry without one).</summary>
+        private void WriteStrip(DatabankEra era)
         {
             for (int i = 0; i < _marks.Length; i++)
             {
-                _marks[i].EnableInClassList(MarkLitClass, index.EraFound(DatabankIndex.StripEras[i]));
+                _marks[i].EnableInClassList(MarkLitClass, DatabankIndex.StripEras[i] == era);
             }
         }
 
@@ -260,6 +260,7 @@ namespace MoonProject.UI
                     new StyleBackground(Background.FromRenderTexture(stage as RenderTexture));
             }
 
+            WriteStrip(entry.Era);
             _fields.text = text.FieldRow(entry);
             _readout.text = text.Readout(entry);
             _setLine.text = text.SetLine(entry, progress);
@@ -276,6 +277,7 @@ namespace MoonProject.UI
             _historyBox.style.display = DisplayStyle.None;
             _empty.style.display = DisplayStyle.Flex;
             _empty.text = _localization.Get("db.empty");
+            WriteStrip(DatabankEra.None);
             _fields.text = string.Empty;
             _readout.text = string.Empty;
             _setLine.text = string.Empty;

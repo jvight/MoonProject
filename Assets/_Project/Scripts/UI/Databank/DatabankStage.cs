@@ -26,6 +26,7 @@ namespace MoonProject.UI
         private const float ExtentFloor = 0.05f;
         private static readonly int BlueprintModeId = Shader.PropertyToID("_BlueprintMode");
         private static readonly int StageFadeId = Shader.PropertyToID("_StageFade");
+        private static readonly int RimPowerId = Shader.PropertyToID("_RimPower");
 
         private readonly DatabankSettings _settings;
         private readonly GameObject _root;
@@ -226,13 +227,14 @@ namespace MoonProject.UI
             }
 
             _model.transform.position -= bounds.center - _pivot.position;
-            // Fit the height as it stands and the width as it turns (the circle its footprint sweeps), each to its own
-            // half-angle of the wide frame.
+            // Fit the height as it stands and the width as it turns (the circle its footprint sweeps) to the fill
+            // share of the frame at the model's centre, and never closer than its nearest point.
             Vector3 extents = Vector3.Max(bounds.extents, Vector3.one * ExtentFloor);
             float sweep = Mathf.Sqrt(extents.x * extents.x + extents.z * extents.z);
             float tanHigh = Mathf.Tan(_settings.StageFieldOfView * 0.5f * Mathf.Deg2Rad);
             float tanWide = tanHigh * _camera.aspect;
-            float distance = Mathf.Max(extents.y / tanHigh, sweep / tanWide) * _settings.StageFrameMargin + sweep;
+            float fit = Mathf.Max(extents.y / tanHigh, sweep / tanWide) / _settings.StageFill;
+            float distance = Mathf.Max(fit, sweep + NearClip * FarClipMargin);
             _camera.transform.localPosition = new Vector3(0f, 0f, -distance);
             _camera.transform.localRotation = Quaternion.identity;
             _camera.farClipPlane = distance + sweep * FarClipMargin;
@@ -253,6 +255,7 @@ namespace MoonProject.UI
                 _block.Clear();
                 _block.SetFloat(BlueprintModeId, 1f);
                 _block.SetFloat(StageFadeId, _fade);
+                _block.SetFloat(RimPowerId, _settings.WireRimPower);
                 renderer.SetPropertyBlock(_block);
             }
         }

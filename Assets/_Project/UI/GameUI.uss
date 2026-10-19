@@ -705,6 +705,39 @@ Label {
     background-color: var(--moon-sky-top);
 }
 
+/* The Outsight Worlds splash on the boot's dark (BootSplashView): four layers stacked in one centred square. */
+
+.boot-splash {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    justify-content: center;
+    align-items: center;
+}
+
+.boot-splash__square {
+    position: relative;
+}
+
+.boot-splash__layer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.boot-splash__clip {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    overflow: hidden;
+}
+
 /*
  * Floating names (the next line): cream type on a soft dusk of
  * shadow and no plate, so each reads even over the bright Earth or a lit sky. One look for every name.
@@ -1847,14 +1880,15 @@ Label {
     font-size: 20px;
     letter-spacing: 2px;
     -unity-text-align: middle-center;
-    color: rgb(214, 170, 96);
+    color: rgb(150, 118, 70);
     border-bottom-width: 2px;
     border-color: rgb(44, 36, 24);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
 .page-tab--active {
-    color: rgb(255, 224, 152);
+    color: rgb(19, 18, 16);
+    background-color: rgb(255, 224, 152);
     border-color: rgb(255, 224, 152);
 }
 

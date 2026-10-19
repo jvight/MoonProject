@@ -9,14 +9,21 @@ namespace MoonProject.Gameplay.Editor
     /// <summary>
     /// The opening basin's 18 databank entries (docs/design/databank.md, docs/design/text/databank-entries.md): ids,
     /// categories, makers, years, eras, text keys, the Art model each turns on the page, and the rule that unlocks it.
-    /// The content builder writes them into the <see cref="DatabankCatalogue"/>. Print entries leave the sheet empty
-    /// until Art's prints exist.
+    /// The content builder writes them into the <see cref="DatabankCatalogue"/>. The four maker cards show Art's
+    /// prints; the other print entries leave the sheet empty until theirs exist.
     /// </summary>
     internal static class DatabankRecipes
     {
         private const string Models = ArtPaths.R1ModelsFolder;
         private const string LanderCargo = ScanTuning.LanderCargoId;
         private const string LumenSets = "FallenSolarArray,HabitatModules,RadioTower";
+        private const string Prints = "Assets/_Project/Art/R1/Brands/print_";
+
+        /// <summary>
+        /// Degrees an SSR rover turns on the page so its CRT face looks out over its front-left shoulder (its art faces
+        /// away from the stage camera at 0).
+        /// </summary>
+        private const float RoverFramingYaw = 145f;
 
         /// <summary>Art's prefab for the Scout, whose camera and scoop the 1971 crew took home.</summary>
         private static readonly string[] ScoutRemovedParts = { "TvCamera", "ScoopArm" };
@@ -26,11 +33,13 @@ namespace MoonProject.Gameplay.Editor
             return new[]
             {
                 Machine("unit07", DatabankMaker.KesslerArai, "1983", DatabankEra.Lumen, "db.unit07.readout",
-                    "notes.unit07", Models + "/Rover/RoverModel.prefab", DatabankUnlock.Seeded),
+                    "notes.unit07", Models + "/Rover/RoverModel.prefab", DatabankUnlock.Seeded, RoverFramingYaw),
                 Machine("elder06", DatabankMaker.KesslerArai, "1978", DatabankEra.BuildOut, "elder.06.manifest",
-                    "db.elder06.history", Models + "/Rover/Elder06.prefab", DatabankUnlock.StoryScan("elder06")),
+                    "db.elder06.history", Models + "/Rover/Elder06.prefab", DatabankUnlock.StoryScan("elder06"),
+                    RoverFramingYaw),
                 Machine("elder01", DatabankMaker.KesslerArai, "1978", DatabankEra.BuildOut, "db.elder01.readout",
-                    "db.elder01.history", Models + "/Rover/Elder01.prefab", DatabankUnlock.StoryScan("elder01")),
+                    "db.elder01.history", Models + "/Rover/Elder01.prefab", DatabankUnlock.StoryScan("elder01"),
+                    RoverFramingYaw),
                 new DatabankEntry("db.scout3", DatabankCategory.Machines, "scan.scout3.name", DatabankMaker.VIS, "1967",
                     DatabankEra.Probes, "scan.scout3.manifest", "scan.scout3.note", DatabankViewKind.Model,
                     LoadModel(Models + "/Props/Prop_OldLander.prefab"), ScoutRemovedParts, 0f, null,
@@ -57,23 +66,18 @@ namespace MoonProject.Gameplay.Editor
                     "db.earth_eclipse.readout", "db.earth_eclipse.history", DatabankUnlock.Seeded),
                 Print("crew", DatabankCategory.Archive, DatabankMaker.ILC, "1985", DatabankEra.Lumen,
                     "story.airlock_panel", "db.crew.history", DatabankUnlock.StoryScan("airlock")),
-                Print("card_kessler_arai", DatabankCategory.Archive, DatabankMaker.KesslerArai, "1983",
-                    DatabankEra.Lumen, "db.card_kessler_arai.readout", "db.card_kessler_arai.history",
-                    DatabankUnlock.Seeded),
-                Print("card_ilc", DatabankCategory.Archive, DatabankMaker.ILC, "1984", DatabankEra.Lumen,
-                    "db.card_ilc.readout", "db.card_ilc.history", DatabankUnlock.StoryScan("flag")),
-                Print("card_tycho", DatabankCategory.Archive, DatabankMaker.Tycho, "1985", DatabankEra.Meridian,
-                    "db.card_tycho.readout", "db.card_tycho.history", DatabankUnlock.StoryScan("kestrel3")),
-                Print("card_vis", DatabankCategory.Archive, DatabankMaker.VIS, "1967", DatabankEra.Probes,
-                    "db.card_vis.readout", "db.card_vis.history", DatabankUnlock.SetComplete(LanderCargo)),
+                Card("kessler_arai", DatabankMaker.KesslerArai, "1983", DatabankEra.Lumen, DatabankUnlock.Seeded),
+                Card("ilc", DatabankMaker.ILC, "1984", DatabankEra.Lumen, DatabankUnlock.StoryScan("flag")),
+                Card("tycho", DatabankMaker.Tycho, "1985", DatabankEra.Meridian, DatabankUnlock.StoryScan("kestrel3")),
+                Card("vis", DatabankMaker.VIS, "1967", DatabankEra.Probes, DatabankUnlock.SetComplete(LanderCargo)),
             };
         }
 
         private static DatabankEntry Machine(string name, DatabankMaker maker, string year, DatabankEra era,
-            string readoutKey, string historyKey, string modelPath, DatabankUnlock unlock)
+            string readoutKey, string historyKey, string modelPath, DatabankUnlock unlock, float framingYaw = 0f)
         {
             return new DatabankEntry("db." + name, DatabankCategory.Machines, "db." + name + ".name", maker, year, era,
-                readoutKey, historyKey, DatabankViewKind.Model, LoadModel(modelPath), null, 0f, null, unlock);
+                readoutKey, historyKey, DatabankViewKind.Model, LoadModel(modelPath), null, framingYaw, null, unlock);
         }
 
         private static DatabankEntry Structure(string name, DatabankMaker maker, string year, DatabankEra era,
@@ -89,6 +93,28 @@ namespace MoonProject.Gameplay.Editor
         {
             return new DatabankEntry("db." + name, category, "db." + name + ".name", maker, year, era, readoutKey,
                 historyKey, DatabankViewKind.Print, null, null, 0f, null, unlock);
+        }
+
+        /// <summary>A maker's archive card: Art's print of its mark (Art/R1/Brands/print_&lt;brand&gt;.png).</summary>
+        private static DatabankEntry Card(string brand, DatabankMaker maker, string year, DatabankEra era,
+            DatabankUnlock unlock)
+        {
+            string name = "card_" + brand;
+            return new DatabankEntry("db." + name, DatabankCategory.Archive, "db." + name + ".name", maker, year, era,
+                "db." + name + ".readout", "db." + name + ".history", DatabankViewKind.Print, null, null, 0f,
+                LoadPrint(Prints + brand + ".png"), unlock);
+        }
+
+        private static Texture2D LoadPrint(string path)
+        {
+            var print = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+            if (print == null)
+            {
+                throw new InvalidOperationException(
+                    $"{GameplayContentBuilder.BuilderPath}: Art print {path} is missing (databank archive card).");
+            }
+
+            return print;
         }
 
         private static GameObject LoadModel(string path)

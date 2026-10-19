@@ -14,6 +14,7 @@ using MoonProject.App;
 using MoonProject.Core;
 using MoonProject.Core.Events;
 using MoonProject.Rover;
+using MoonProject.Routing;
 using MoonProject.Testing;
 using Object = UnityEngine.Object;
 #if UNITY_EDITOR
@@ -140,6 +141,21 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>Seconds a scan may take beyond its size's time (the press, 07 easing to a stop).</summary>
         private const float ScanAllowance = 3f;
+
+        /// <summary>Times 07 lets go and holds E again when the scan does not begin or is lost half way.</summary>
+        private const int HoldAttempts = 3;
+
+        private const float HoldReleaseSeconds = 0.3f;
+
+        /// <summary>Seconds a held E may take to begin a scan before the player lets go and looks again.</summary>
+        private const float HoldBeginSeconds = 1.5f;
+
+        private const float RouteCellMetres = 2f;
+        private const float RouteMarginMetres = 40f;
+        private const float RouteClearance = 1f;
+        private const float RouteRelaxMetres = 4f;
+        private const float RouteArriveRadius = 2.5f;
+        private readonly List<Vector2> _routePoints = new List<Vector2>();
 
         /// <summary>Seconds 07's view may take to settle on a fragment once it is parked facing it.</summary>
         private const float ScanLookTimeout = 3f;
@@ -415,6 +431,8 @@ namespace MoonProject.Gameplay.PlayModeTests
                 Vector3 outward = Flat(panel.Point - Ruin("HabitatModules").position).normalized;
                 yield return Scan(panel, "the airlock panel", outward, PanelStandOff);
                 Assert.AreEqual(1, read.Count, "the panel's readout shows once");
+                Assert.AreEqual(panel.FragmentId, read[0].StoryId, "it is the airlock panel that was read");
+                Assert.IsTrue(panel.Scanned, "the airlock panel is scanned");
             }
 
             Capture("07-the-airlock-panel");
@@ -450,7 +468,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Look(fragment.Point);
             yield return Until(() => OnSetCandidate(scans, fragment), ScanLookTimeout,
                 $"07's view rests on {fragment.FragmentId}: its brackets and the Scan chip show",
-                () => $"scan candidate {scans.Candidate?.FragmentId ?? "none"}, primary hint " +
+                () => $"scan candidate {scans.Candidate?.FragmentId ?? "none"} (scanned " +
+                      $"{scans.Candidate?.Scanned}, airlock scanned {scans.Find("story.airlock")?.Scanned}), primary hint " +
                       $"{_gameplay.Hints.Primary.Kind} at {_gameplay.Hints.Primary.Position} (piece " +
                       $"{_gameplay.Salvage.Candidate?.Site.Id}/{_gameplay.Salvage.Candidate?.Number}, crate " +
                       $"{_gameplay.Containers.Candidate?.Id}); the target at {fragment.Point}, the view " +
@@ -466,10 +485,29 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             yield return FirstUse("scan: hold E", VerbScanKey);
-            Press(_keyboard.eKey);
-            yield return Until(() => fragment.Scanned, scans.Tuning.Seconds(fragment.Size) + ScanAllowance,
-                $"held E scans {fragment.FragmentId}");
-            Release(_keyboard.eKey);
+            for (int attempt = 0; attempt < HoldAttempts && !fragment.Scanned; attempt++)
+            {
+                // The framing camera can swing a neighbour into the brackets as the key goes down, or take them off
+                // the target half way: the player lets go, looks at the target again and holds again (progress stays).
+                Look(fragment.Point);
+                Press(_keyboard.eKey);
+                float begin = Time.time + HoldBeginSeconds;
+                while (scans.Scanning == null && !fragment.Scanned && Time.time < begin)
+                {
+                    yield return null;
+                }
+
+                float limit = Time.time + scans.Tuning.Seconds(fragment.Size) + ScanAllowance;
+                while (scans.Scanning != null && !fragment.Scanned && Time.time < limit)
+                {
+                    yield return null;
+                }
+
+                Release(_keyboard.eKey);
+                yield return new WaitForSeconds(HoldReleaseSeconds);
+            }
+
+            yield return Until(() => fragment.Scanned, 0f, $"held E scans {fragment.FragmentId}");
             yield return null;
         }
 
@@ -483,7 +521,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             int split = fragment.FragmentId.LastIndexOf('.');
-            return candidate == fragment || (!candidate.Scanned && split > 0 &&
+            bool story = fragment.FragmentId.StartsWith(StoryScan.IdPrefix, StringComparison.Ordinal);
+            return candidate == fragment || (!story && !candidate.Scanned && split > 0 &&
                    candidate.FragmentId.StartsWith(fragment.FragmentId.Substring(0, split + 1),
                        StringComparison.Ordinal));
         }
@@ -825,6 +864,36 @@ namespace MoonProject.Gameplay.PlayModeTests
         private IEnumerator DriveTo(Vector3 target, float arriveRadius, string what, float maxThrottle = 1f,
             Func<string> detail = null)
         {
+            var terrain = _context.Get<ITerrainQuery>();
+            Vector3 position = _rover.Position;
+            bool Blocked(Vector2 point)
+            {
+                float ground = terrain.SampleHeight(point.x, point.y);
+                return Physics.CheckSphere(new Vector3(point.x, ground + RouteClearance, point.y), RouteClearance,
+                    Layers.PropMask, QueryTriggerInteraction.Ignore);
+            }
+
+            // Round the props that stand between, as a player drives (a straight line stays one drive).
+            RoutePlanner.Plan(new Vector2(position.x, position.z), new Vector2(target.x, target.z), Blocked,
+                RouteCellMetres, RouteMarginMetres, RouteRelaxMetres, _routePoints);
+            var route = new List<Vector3>();
+            foreach (Vector2 point in _routePoints)
+            {
+                route.Add(new Vector3(point.x, target.y, point.y));
+            }
+
+            for (int i = 0; i < route.Count - 1; i++)
+            {
+                yield return DriveDirect(route[i], RouteArriveRadius, what + " (round the props)", maxThrottle, detail,
+                    false);
+            }
+
+            yield return DriveDirect(target, arriveRadius, what, maxThrottle, detail, true);
+        }
+
+        private IEnumerator DriveDirect(Vector3 target, float arriveRadius, string what, float maxThrottle,
+            Func<string> detail, bool settle)
+        {
             _pilot.GoTo(target, arriveRadius, maxThrottle);
             float deadline = Time.time + DriveTimeout;
             int unsticks = 0;
@@ -851,6 +920,11 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             yield return Until(() => _pilot.Arrived, 0f, "07 reaches " + what,
                 () => $"{unsticks} unstick(s); " + (detail != null ? detail() : string.Empty));
+            if (!settle)
+            {
+                yield break;
+            }
+
             _pilot.Target = null;
             yield return Until(() => _rover.Speed < StopSpeed, 6f, "07 comes to rest at " + what);
         }

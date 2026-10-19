@@ -3,6 +3,7 @@
     "rootNamespace": "MoonProject.Gameplay.PlayModeTests",
     "references": [
         "MoonProject.Gameplay",
+        "MoonProject.Routing",
         "MoonProject.Core",
         "MoonProject.Rover",
         "MoonProject.App",

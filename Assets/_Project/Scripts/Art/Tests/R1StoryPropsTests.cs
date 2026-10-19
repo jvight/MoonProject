@@ -511,33 +511,48 @@ namespace MoonProject.Art.Tests
             BoxCollider[] boxColliders = landerPrefab.GetComponentsInChildren<BoxCollider>(true);
             Assert.GreaterOrEqual(boxColliders.Length, 4, "Prop_OldLander must have simple BoxColliders.");
 
-            // ThermalBoxes uses sun-faded tan enamel material
+            // ThermalBoxes uses Era-P R1_WhitePaint body and R1_SilverFoil top mirror patches (no cream or gold foil)
             Renderer thermalRenderer = landerPrefab.transform.Find("ThermalBoxes").GetComponent<Renderer>();
             Assert.IsNotNull(thermalRenderer);
-            bool hasTanEnamel = false;
+            bool hasWhitePaint = false;
+            bool hasSilverFoil = false;
             foreach (Material m in thermalRenderer.sharedMaterials)
             {
-                if (m != null && m.name == R1StoryPropsBuilder.OldLanderTanEnamelMaterialName)
+                if (m != null && m.name == R1MaterialRecipes.WhitePaintSlot)
                 {
-                    hasTanEnamel = true;
+                    hasWhitePaint = true;
                 }
+                if (m != null && m.name == R1MaterialRecipes.SilverFoilSlot)
+                {
+                    hasSilverFoil = true;
+                }
+                Assert.AreNotEqual(R1MaterialRecipes.CreamEnamelSlot, m?.name, "Prop_OldLander ThermalBoxes must not use R1_CreamEnamel.");
+                Assert.AreNotEqual(R1MaterialRecipes.GoldFoilSlot, m?.name, "Prop_OldLander ThermalBoxes must not use R1_GoldFoil.");
             }
-            Assert.IsTrue(hasTanEnamel, "Prop_OldLander ThermalBoxes must use R1_OldLanderTanEnamel (sun-faded white turned tan/brown).");
+            Assert.IsTrue(hasWhitePaint, "Prop_OldLander ThermalBoxes must use R1_WhitePaint.");
+            Assert.IsTrue(hasSilverFoil, "Prop_OldLander ThermalBoxes must use R1_SilverFoil mirror patches.");
 
-            // Struts use low-smoothness R1_OldLanderStrut so thin struts do not sparkle 1-2 px at 30-80 m
+            // Spaceframe and LandingLegs use bare aluminium (R1_BareSteel) with no painted R1_GreyMetal or R1_GoldFoil
             Renderer spaceframeRenderer = landerPrefab.transform.Find("Spaceframe").GetComponent<Renderer>();
+            Renderer legsRenderer = landerPrefab.transform.Find("LandingLegs").GetComponent<Renderer>();
             Assert.IsNotNull(spaceframeRenderer);
-            bool hasStrutMaterial = false;
+            Assert.IsNotNull(legsRenderer);
+            bool hasBareSteel = false;
             foreach (Material m in spaceframeRenderer.sharedMaterials)
             {
-                if (m != null && m.name == R1StoryPropsBuilder.OldLanderStrutMaterialName)
+                if (m != null && m.name == R1MaterialRecipes.BareSteelSlot)
                 {
-                    hasStrutMaterial = true;
-                    Assert.LessOrEqual(m.GetFloat("_SmoothnessMax"), 0.25f, "R1_OldLanderStrut _SmoothnessMax must be lowered.");
-                    Assert.LessOrEqual(m.GetFloat("_EdgeWearSmoothness"), 0.25f, "R1_OldLanderStrut _EdgeWearSmoothness must be lowered.");
+                    hasBareSteel = true;
                 }
+                Assert.AreNotEqual(R1MaterialRecipes.GreyMetalSlot, m?.name, "Prop_OldLander Spaceframe must not use painted R1_GreyMetal.");
+                Assert.AreNotEqual(R1MaterialRecipes.GoldFoilSlot, m?.name, "Prop_OldLander Spaceframe must not use R1_GoldFoil.");
             }
-            Assert.IsTrue(hasStrutMaterial, "Prop_OldLander Spaceframe must use R1_OldLanderStrut.");
+            Assert.IsTrue(hasBareSteel, "Prop_OldLander Spaceframe must use R1_BareSteel.");
+            foreach (Material m in legsRenderer.sharedMaterials)
+            {
+                Assert.AreNotEqual(R1MaterialRecipes.GreyMetalSlot, m?.name, "Prop_OldLander LandingLegs must not use painted R1_GreyMetal.");
+                Assert.AreNotEqual(R1MaterialRecipes.GoldFoilSlot, m?.name, "Prop_OldLander LandingLegs must not use R1_GoldFoil.");
+            }
 
             // Long-dead lander: no lit R1_LampAmber or active emission
             Renderer[] landerRenderers = landerPrefab.GetComponentsInChildren<Renderer>(true);
@@ -831,8 +846,11 @@ namespace MoonProject.Art.Tests
 
             Mesh prismMesh = prismArray.GetComponent<MeshFilter>().sharedMesh;
             Assert.IsNotNull(prismMesh);
-            Assert.GreaterOrEqual(prismMesh.triangles.Length / 3, 600,
-                "PrismArray must contain sculpted 10x10 corner-cube prism facets.");
+            int prismTriangles = prismMesh.triangles.Length / 3;
+            Assert.GreaterOrEqual(prismTriangles, 90,
+                "PrismArray must contain sculpted 3x3 large corner-cube prism facets.");
+            Assert.LessOrEqual(prismTriangles, 400,
+                "PrismArray must use a few large corner-cube prisms (no dense field of small repeated cells).");
 
             bool hasWindowGlint = false;
             foreach (Material m in prismArray.GetComponent<Renderer>().sharedMaterials)
@@ -958,8 +976,8 @@ namespace MoonProject.Art.Tests
             Assert.AreEqual(0.18f, Vector3.Distance(sStartPos, sEndPos), 0.02f,
                 "Geophone_Sensor Start_Anchor to End_Anchor span must match the 0.18 m ribbon pass-through.");
 
-            Assert.AreEqual(R1MaterialRecipes.OrangeStripeSlot, orangeCap.GetComponent<Renderer>().sharedMaterial.name,
-                "Geophone_Sensor OrangeCap must use R1_OrangeStripe.");
+            Assert.AreEqual(R1MaterialRecipes.BareSteelSlot, orangeCap.GetComponent<Renderer>().sharedMaterial.name,
+                "Geophone_Sensor OrangeCap must use R1_BareSteel (1971 Era-S bare metal).");
             AssertNoEmissiveMaterials(sensorPrefab);
 
             // 2. Geophone_Ribbon_10m (10 m straight flat ribbon cable segment with Start/End anchors)

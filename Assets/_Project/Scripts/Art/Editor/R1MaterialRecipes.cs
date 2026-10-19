@@ -44,6 +44,9 @@ namespace MoonProject.Art.Editor
         public const string CrtFaceMaterialName = "R1_CrtFace";
         public const string BasaltSlot = "R1_Basalt";
         public const string SignageSlot = "R1_Signage";
+        public const string WhitePaintSlot = "R1_WhitePaint";
+        public const string TealMarkSlot = "R1_TealMark";
+        public const string SilverFoilSlot = "R1_SilverFoil";
 
         public const float DefaultBloomSafeMax = 1.06f;
         public const float DefaultHotCoreThreshold = 0.85f;
@@ -338,10 +341,67 @@ namespace MoonProject.Art.Editor
                 0.24f,
                 true,
                 new Color(1.00f, 0.74f, 0.30f, 1f),
-                1.00f)
+                1.00f),
+            new R1MaterialSpec(
+                R1MaterialSlot.WhitePaint,
+                WhitePaintSlot,
+                WhitePaintSlot,
+                "T_R1_WhitePaint",
+                "Chalky cool-white low-gloss thermal control paint for 1960s-70s landers, experiment boxes, flat white Kapton ribbon, utility trusses, and Kestrel-3.",
+                new Color(0.91f, 0.92f, 0.90f, 1f),
+                0.65f,
+                1.00f,
+                0.15f,
+                0.22f,
+                new Color(0.76f, 0.78f, 0.80f, 1f),
+                0.58f,
+                0.55f,
+                0.34f,
+                0.24f,
+                false,
+                Color.black,
+                0f),
+            new R1MaterialSpec(
+                R1MaterialSlot.TealMark,
+                TealMarkSlot,
+                TealMarkSlot,
+                "T_R1_TealMark",
+                "Muted teal painted markings and trim for Meridian and Kestrel-3 hardware.",
+                new Color(0.18f, 0.43f, 0.45f, 1f),
+                0.70f,
+                1.00f,
+                0.22f,
+                0.48f,
+                new Color(0.66f, 0.74f, 0.76f, 1f),
+                0.64f,
+                0.58f,
+                0.42f,
+                0.22f,
+                false,
+                Color.black,
+                0f),
+            new R1MaterialSpec(
+                R1MaterialSlot.SilverFoil,
+                SilverFoilSlot,
+                SilverFoilSlot,
+                "T_R1_SilverFoil",
+                "Crinkled aluminised Mylar/Teflon thermal blanket and reflector film for 1960s-70s probes and sortie packages.",
+                new Color(0.79f, 0.81f, 0.82f, 1f),
+                1.35f,
+                1.00f,
+                0.38f,
+                0.72f,
+                new Color(0.92f, 0.94f, 0.96f, 1f),
+                0.46f,
+                0.92f,
+                0.68f,
+                0.10f,
+                false,
+                Color.black,
+                0f)
         };
 
-        /// <summary>All 15 fixed R1 material slot specifications in slot enum order.</summary>
+        /// <summary>All 18 fixed R1 material slot specifications in slot enum order.</summary>
         public static IReadOnlyList<R1MaterialSpec> All => Specs;
 
         /// <summary>Returns the specification for a given <see cref="R1MaterialSlot"/>.</summary>

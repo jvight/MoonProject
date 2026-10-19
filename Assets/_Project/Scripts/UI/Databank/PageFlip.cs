@@ -39,6 +39,9 @@ namespace MoonProject.UI
         /// <summary>True on the step the page changed.</summary>
         public bool Switched { get; private set; }
 
+        /// <summary>True on the step the line finished opening: the new page has settled on the tube.</summary>
+        public bool Settled { get; private set; }
+
         /// <summary>The page's height as a share of its own (1 at rest, the line share at the thinnest).</summary>
         public float ScaleY
         {
@@ -91,6 +94,7 @@ namespace MoonProject.UI
         public void Tick(float deltaTime)
         {
             Switched = false;
+            Settled = false;
             switch (_phase)
             {
                 case Phase.Collapsing:
@@ -110,6 +114,7 @@ namespace MoonProject.UI
                     {
                         _t = 0f;
                         _phase = Phase.Idle;
+                        Settled = true;
                     }
 
                     break;

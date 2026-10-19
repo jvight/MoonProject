@@ -4,6 +4,7 @@ using System.Globalization;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using MoonProject.Core;
+using MoonProject.Routing;
 
 namespace MoonProject.Autoplay
 {

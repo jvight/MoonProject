@@ -61,6 +61,12 @@ namespace MoonProject.Gameplay
         public float Charge01 => Charge / Cells;
 
         /// <summary>Whole cells of charge (what the flank lamps show lit).</summary>
+        /// <summary>07 has stood still on a charger long enough for it to charge, charging or not.</summary>
+        public bool RestsOnCharger { get; private set; }
+
+        /// <summary>Every cell is full (the drums apart).</summary>
+        public bool CellsFull => Charge >= Cells - CellEpsilon;
+
         public int FullCells => Mathf.Min(Cells, Mathf.FloorToInt(Charge + CellEpsilon));
 
         public bool IsLowPower { get; private set; }
@@ -249,6 +255,7 @@ namespace MoonProject.Gameplay
         {
             bool stopped = step.OnCharger && step.Speed <= _tuning.ChargeStopSpeed;
             _chargerStopTime = stopped ? _chargerStopTime + deltaTime : 0f;
+            RestsOnCharger = stopped && _chargerStopTime >= _tuning.ChargeStopHold;
             if (stopped && !IsCharging && _chargerStopTime >= _tuning.ChargeStopHold && NeedsCharge())
             {
                 IsCharging = true;

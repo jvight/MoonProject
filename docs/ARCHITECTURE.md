@@ -60,6 +60,7 @@ Core  <- Audio
 Core, Gameplay(read-only queries) <- UI
 everything <- App
 everything <- Editor (editor only)
+Routing (pure, no references) <- Autoplay, Gameplay PlayMode tests: the coarse route round obstacles the test bots share
 ```
 Domains talk **through Core**: shared event structs in `Core/Events`, shared interfaces in `Core`.
 Never add an asmdef reference that creates a sideways dependency (e.g. Audio -> Gameplay); publish an event instead.

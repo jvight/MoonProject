@@ -57,6 +57,9 @@ namespace MoonProject.UI
         private readonly float _handOffSeconds;
         private readonly Reveal _titleKeyHint;
         private readonly Reveal _curtain;
+        private readonly BootSplash _splash;
+        private readonly BootSplashView _splashView;
+        private bool _lockedSplashTime;
         private BootGate _bootGate;
         private readonly TitleScenePainter _titleScenePainter;
         private readonly TitleCrtOverlayPainter _titleCrtOverlayPainter;
@@ -115,6 +118,8 @@ namespace MoonProject.UI
             _titleCrtOverlay = new Reveal(layout.TitleCrtOverlay, title.Reveal);
             _titleKeyHint = new Reveal(layout.TitleKeyHint, title.Reveal);
             _curtain = new Reveal(layout.Curtain, title.Curtain);
+            _splash = new BootSplash(title.Splash);
+            _splashView = new BootSplashView(layout.Curtain, title.Splash);
             _titleScenePainter = new TitleScenePainter(layout.TitleCrt, title, new VisualElement[]
             {
                 layout.TitleScreen,
@@ -320,14 +325,39 @@ namespace MoonProject.UI
             {
                 _bootGate = new BootGate(_title.BootSteadyMilliseconds, _title.BootSteadyFrames, _title.BootMinSeconds,
                     _title.BootMaxSeconds);
+                // The studio splash plays in the boot's dark while the engine warms up; the very first launch
+                // (no settings file yet) plays it whole, later ones let a key or click skip it.
+                _splash.Start(_settingsStore.IsStored);
+                _lockedSplashTime = false;
+                _layout.Curtain.pickingMode = PickingMode.Position;
             }
             else
             {
                 _curtain.Hide();
             }
 
-            _navigator.ResetOnOpen(_input.Menu.PointerPosition, _navigator.DefaultFocus(NavigationContext()));
+            if (_splash.IsPlaying)
+            {
+                _navigator.ClearFocus();
+            }
+            else
+            {
+                _navigator.ResetOnOpen(_input.Menu.PointerPosition, _navigator.DefaultFocus(NavigationContext()));
+            }
         }
+
+        /// <summary>
+        /// Evaluates the boot splash at an exact time (deterministic captures); it no longer advances.
+        /// </summary>
+        public void SetBootSplashTime(float timeSeconds)
+        {
+            _lockedSplashTime = true;
+            _splash.Seek(timeSeconds);
+            _splashView.Apply(_splash, _layout.Root.layout.height);
+        }
+
+        /// <summary>The studio splash still holds the boot's dark (tests).</summary>
+        public bool IsSplashPlaying => _splash.IsPlaying;
 
         /// <summary>Closes the title if it is open when an external caller starts or continues a game.</summary>
         public void CloseTitleIfOpen()
@@ -369,10 +399,13 @@ namespace MoonProject.UI
             _titleCrt.Tick(unscaledDeltaTime);
             _titleCrtOverlay.Tick(unscaledDeltaTime);
             _titleKeyHint.Tick(unscaledDeltaTime);
-            if (_bootGate != null && _bootGate.Tick(unscaledDeltaTime))
+            StepSplash(unscaledDeltaTime);
+            if (_bootGate != null && _bootGate.Tick(unscaledDeltaTime) && !_splash.IsPlaying)
             {
                 _bootGate = null;
                 _curtain.Hide();
+                _layout.Curtain.pickingMode = PickingMode.Ignore;
+                _navigator.ResetOnOpen(_input.Menu.PointerPosition, _navigator.DefaultFocus(NavigationContext()));
             }
 
             _curtain.Tick(unscaledDeltaTime);
@@ -400,7 +433,30 @@ namespace MoonProject.UI
                 Go();
             }
 
-            _navigator.Tick(unscaledDeltaTime, _input.Menu.PointerPosition, _input.Menu.NavigateVector);
+            if (!_splash.IsPlaying)
+            {
+                _navigator.Tick(unscaledDeltaTime, _input.Menu.PointerPosition, _input.Menu.NavigateVector);
+            }
+        }
+
+        /// <summary>
+        /// The splash's own frame: a key or click skips a skippable one, its time runs on real seconds (capped per
+        /// frame, so a hitch never jumps the draw), and the curtain catches the pointer until it is over, so a press
+        /// meant for the splash never reaches the title's buttons beneath.
+        /// </summary>
+        private void StepSplash(float unscaledDeltaTime)
+        {
+            if (_splash.IsPlaying && !_lockedSplashTime)
+            {
+                if (_input.Menu.AnyPressed)
+                {
+                    _splash.Skip();
+                }
+
+                _splash.Tick(unscaledDeltaTime);
+            }
+
+            _splashView.Apply(_splash, _layout.Root.layout.height);
         }
 
         /// <summary>Re-reads the words set from code (the language selector).</summary>
