@@ -12,7 +12,7 @@ namespace MoonProject.Gameplay
     /// staggered as 07 starts charging on it, and its four <c>Stage_n</c> lamps fill one per quarter of the charge,
     /// tinting toward gold when full. The timing and the beats are <see cref="DockLock"/>'s, unchanged, but they begin
     /// once 07 has eased onto the pad's centre line and heading (the rover does the easing, asked by
-    /// <see cref="RoverDockChanged"/>); a touch of the wheel lets 07 go at once. Reads the pad's nodes once each time
+    /// <see cref="RoverDockChanged"/>); a clear push on the throttle once it has settled lets 07 go at once; charging never waits on any of it. Reads the pad's nodes once each time
     /// 07 comes to a different pad; allocation-free per frame otherwise.
     /// </summary>
     public sealed class PadLock
@@ -83,9 +83,9 @@ namespace MoonProject.Gameplay
             }
 
             bool charging = _battery.IsCharging && _battery.Charger == ChargerKind.Pad && pad == _pad;
-            bool touched = _rover.DriveInput.magnitude > _tuning.DockTouch;
-            StepDock(charging && !touched, pose);
-            _lock.Step(pad == _pad, charging && !touched && (_settled || _lock.Raised), _battery.Charge,
+            bool driveOff = _settled && Mathf.Abs(_rover.DriveInput.y) > _tuning.DockDriveOff;
+            StepDock(charging && !driveOff, pose);
+            _lock.Step(pad == _pad, charging && !driveOff && (_settled || _lock.Raised), _battery.Charge,
                 _battery.Cells, centre, deltaTime);
             Color tint = Color.Lerp(_tuning.StripCharging, _tuning.StripFull, _lock.Sweep);
             for (int i = 0; i < DockLock.Walls; i++)

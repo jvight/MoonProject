@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 
 namespace MoonProject.Gameplay.PlayModeTests
 {
@@ -8,7 +10,7 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// Stands in for the Rover domain: a kinematic body the test moves directly, with an eye (the cutter's and the
     /// scan's origin), a cargo socket and a following camera. Registers IRoverState, IRoverRig, IViewCamera,
     /// IRoverAbilities and IRoverPlacement, and records every gaze and hold-still request so tests can assert 07's
-    /// attention.
+    /// attention. A dock the gameplay asks for (<see cref="RoverDockChanged"/>) puts it on the dock's pose at once.
     /// </summary>
     public sealed class GameplayFakeRover : MonoBehaviour, IGameSystem, IRoverState, IRoverRig, IViewCamera,
         IRoverAbilities, IRoverPlacement
@@ -21,6 +23,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private Transform _cargo;
         private Rigidbody _body;
         private Camera _camera;
+        private IDisposable _dockChanges;
 
         public Vector3 Position => transform.position;
 
@@ -76,6 +79,20 @@ namespace MoonProject.Gameplay.PlayModeTests
             context.Register<IViewCamera>(this);
             context.Register<IRoverAbilities>(this);
             context.Register<IRoverPlacement>(this);
+            _dockChanges = context.Events.Subscribe<RoverDockChanged>(OnDockChanged);
+        }
+
+        private void OnDestroy()
+        {
+            _dockChanges?.Dispose();
+        }
+
+        private void OnDockChanged(RoverDockChanged dock)
+        {
+            if (dock.Docked)
+            {
+                transform.SetPositionAndRotation(dock.Position, dock.Rotation);
+            }
         }
 
         public bool Has(RoverAbility ability)

@@ -57,8 +57,9 @@ namespace MoonProject.Gameplay
         [Tooltip("Degrees off the pad's heading 07 may rest at and still count as settled onto the dock.")]
         [Range(0.2f, 10f)] [SerializeField] private float _dockSettledDegrees = 1f;
 
-        [Tooltip("Drive input (0..1) beyond which a touch of the wheel lets 07 go from the dock at once.")]
-        [Range(0.02f, 0.5f)] [SerializeField] private float _dockTouch = 0.08f;
+        [Tooltip("Throttle (0..1, forward or back) beyond which 07, settled on the dock, is let go at once: a clear push " +
+                 "to drive off. Steering alone and a light touch let nothing go, and nothing does while 07 settles.")]
+        [Range(0.1f, 0.9f)] [SerializeField] private float _dockDriveOff = 0.4f;
 
         [Tooltip("Degrees 07's heading on a charging pad lies from the pad's forward axis: 180 noses 07 in toward the " +
                  "pad's cooling tower at its rear, so the tower never stands between the chase camera and 07.")]
@@ -67,7 +68,7 @@ namespace MoonProject.Gameplay
         public float DockHeadingOffset => _dockHeadingOffset;
         public float DockSettledMetres => _dockSettledMetres;
         public float DockSettledDegrees => _dockSettledDegrees;
-        public float DockTouch => _dockTouch;
+        public float DockDriveOff => _dockDriveOff;
         public float WallStagger => _wallStagger;
         public float WallRiseSeconds => _wallRiseSeconds;
         public float WallOvershoot => _wallOvershoot;

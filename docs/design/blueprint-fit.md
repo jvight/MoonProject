@@ -38,7 +38,7 @@
 |---|---|---|---|
 | **A · ILC-R** ("rover-serviceable") | Lumen station hardware designed to the ILC standard so that service rovers can assemble and maintain it. It uses a few **formable members** (struts, plates, cable runs) plus salvaged standard components. Every interface sits at rover height. | **build directly** with the assembly program | Lumen's lander, ruins, masts and depots |
 | **B · SSR-K** (SSR kits) | tool modules for the SSR family. The elders (SSR-3) carry the single-purpose versions; the SSR-5 library has a socket version of each. | **fit at a dock** (opening v2 §10: the socket screen on the CRT, docked only) | the elders' tools, Lumen kit crates, Kenji's workshop |
-| **C · FOREIGN** | the Tycho Consortium's standard (Meridian, Kestrel-3): hex contact docks, its own cells, voltages and fasteners | **scan gives knowledge** (a Notes page and a "foreign" blueprint). **Building needs the Charge Adapter (or a Power Bridge for structures) first.** | Meridian's machines and station, Kestrel-3 |
+| **C · FOREIGN** | the Tycho Consortium's standard (Meridian, Kestrel-3): hex contact docks, its own cells, voltages and fasteners | **scan gives knowledge** (a Notes page and a "foreign" blueprint). **Building needs the Charge Adapter (or a Power Bridge for structures) first.** Both come from Tycho understanding (`maker-understanding.md`: TY·1, TY·2). | Meridian's machines and station, Kestrel-3 |
 | **D · CREW** | human-only equipment: the habitat, airlocks, suits, bunks, galley, ladders, seats | **never buildable.** A scan gives lore (a Notes page) or, for a separable part, raw Metal | the habitat ruins, the lander's crew deck, Meridian's (empty) crew provisions |
 
 ### F2. It names how 07 physically assembles it (ruling 14)
@@ -47,6 +47,7 @@
 | **Form + weld** | Stock goes in through the hatch, and the hold's small former presses ILC members. The frame unfolds and self-raises (telescoping masts, folding arrays), and 07 welds the seams at its work band. | A |
 | **Socket fit** | docked at a pad or bay, the kit is fitted into a mount or socket (the CRT socket screen, the bay's fitting arm) | B |
 | **Adapter, then form or fit** | as above, but only once the Charge Adapter or Power Bridge exists | C |
+| **Adapt** (`maker-understanding.md`) | understanding of a maker unlocks 07's home-made version: the donor maker's parts on 07's own frame, joined by weld beads and a cut `07` tag. It still uses form + weld (A) or socket fit (B). | adapted A, B and C items |
 | **Repair only** | an existing machine's damaged parts are cut out and replaced, then welded | A machines in the world (relays, the mass driver, glasshouse pumps) |
 | **None** | not buildable | D |
 
@@ -94,6 +95,7 @@ an extra guidance element. It shows 3 s, in one line, and once per fragment set 
 | D, lore only | CREW EQUIPMENT · LOGGED | THIẾT BỊ PHI HÀNH ĐOÀN · ĐÃ GHI |
 | Known blueprint | KNOWN · → METAL 3 | ĐÃ BIẾT · → KIM LOẠI 3 |
 | Repair target | ILC-R · REPAIRABLE | ILC-R · SỬA ĐƯỢC |
+| Adapted (maker understanding) | ADAPTED · BUILDABLE | TỰ CHẾ · DỰNG ĐƯỢC |
 
 **On the CRT build menu,** a C blueprint shows dimmed with the adapter's icon (no sentence). The build menu's
 need/have rows stay as they are.
@@ -117,7 +119,7 @@ sockets**; the 0.5.5 equipment spec drew 12 sockets. Proposed reconciliation:
   - capacitor drums;
   - scoop;
   - seismic bell.
-- A **third socket** can be a late upgrade.
+- A **third socket** is a late upgrade: Kessler–Arai understanding level 3 (`maker-understanding.md`).
 - **Owner decision:** this makes kits a real choice. Two sockets also limits what 07 can do at once.
 
 ### 3.1 Structures (`StructureCatalog`, 10)
@@ -216,12 +218,14 @@ The lint fails the build (box_check) on any violation, so new content can't drif
 | **Panel mites** (Lumen) | cleaned panels | nothing to fit (too small); their scan page teaches *why* clean arrays matter | — |
 | **Lumen lander, ruins, masts** | station hardware | pad, solar, battery bank, pylon, mast, smelter, fabricator, rack, bay, vehicle pad | A |
 | **Kenji's workshop** (ruin) | built and fixed rovers | **Focus Lens** (lens/cutter mount), the **igniter** spare | B |
-| **Meridian hex docks** (foreign) | Meridian's chargers | **Charge Adapter** (the key that opens C) | B (built from C knowledge) |
+| **Meridian hex docks** (foreign) | Meridian's chargers | feeds Tycho understanding, and at TY·1 the **Charge Adapter** (the key that opens C) | B (built from C knowledge) |
 | **Meridian survey flock / prospector** (foreign) | sounded the mare | **Sounding kit** (kit socket) after the adapter | C |
 | **Meridian ice tappers** (foreign) | prospected the crater | **Core drill** (kit socket) after the adapter | C |
 | **Meridian vault** (foreign) | the station's store | **Thermic Oxy-Lance** (cutter tier 3) after the adapter | C |
 | **Kestrel-3** (foreign relay satellite) | Meridian's relay bird | knowledge only (the foreign standard's first hint) and Metal | C |
 | **Crew habitat, airlock, suits** | the crew's world | story pages, Metal | D |
+
+**Makers and standards** (`tech-eras.md` §6, `maker-understanding.md`): Kessler–Arai makes B; VIS builds A to the ILC's spec; the ILC's own instruments are A; Tycho makes C; crew equipment is D. Each robot above also adds one point of understanding to its maker when its databank entry completes.
 
 **The rule this table keeps:**
 - **07's own family (Lumen, SSR) teaches what it can use now;**
