@@ -55,6 +55,25 @@ namespace MoonProject.Gameplay
         [Tooltip("Metal a fragment of an already known blueprint gives after its dissolve, so leftovers still pay.")]
         [Range(0, 12)] [SerializeField] private int _knownMetal = 3;
 
+        [Header("The target E would scan")]
+        [Tooltip("Metres across the faint wire box that rests on the target E would scan, in the scan teal.")]
+        [Range(0.004f, 0.08f)] [SerializeField] private float _targetMarkWidth = 0.05f;
+
+        [Tooltip("Glow of the target wire box at the top of its breath; faint, so it only says which one.")]
+        [Range(0.05f, 1f)] [SerializeField] private float _targetMarkIntensity = 1f;
+
+        [Tooltip("Seconds of one slow breath of the target wire box.")]
+        [Range(0.5f, 6f)] [SerializeField] private float _targetMarkPeriodSeconds = 2.2f;
+
+        [Tooltip("Share of its full glow the wire box never dims below while it shows.")]
+        [Range(0f, 1f)] [SerializeField] private float _targetMarkFloorShare = 0.4f;
+
+        [Tooltip("Seconds the wire box takes to fade in on a target, and out again.")]
+        [Range(0.05f, 1.5f)] [SerializeField] private float _targetMarkFadeSeconds = 0.35f;
+
+        [Tooltip("Metres the wire box stands off the target's own bounds, so it never cuts into the mesh.")]
+        [Range(0f, 0.3f)] [SerializeField] private float _targetMarkMargin = 0.15f;
+
         [Header("Surface scan look (SCAN v2)")]
         [Tooltip("Cyan colour of the scan: the thin beam, the crisp surface scan line and the soft swept band. The " +
                  "scan's colours all live here and stay cool, never sharing a hue with 07's warm amber lamps.")]
@@ -220,6 +239,12 @@ namespace MoonProject.Gameplay
         public float AimToleranceDegrees => _aimToleranceDegrees;
         public float DissolveSeconds => _dissolveSeconds;
         public int KnownMetal => _knownMetal;
+        public float TargetMarkWidth => _targetMarkWidth;
+        public float TargetMarkIntensity => _targetMarkIntensity;
+        public float TargetMarkPeriodSeconds => _targetMarkPeriodSeconds;
+        public float TargetMarkFloorShare => _targetMarkFloorShare;
+        public float TargetMarkFadeSeconds => _targetMarkFadeSeconds;
+        public float TargetMarkMargin => _targetMarkMargin;
         public Color ScanLineColor => _scanLineColor;
         public Color CompletionPingColor => _completionPingColor;
         public float ScanLineWidth => _scanLineWidth;
