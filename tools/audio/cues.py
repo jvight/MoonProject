@@ -728,8 +728,11 @@ CUES = (
         notes="A strap cinching: the bundle's fold, a relic stowed in the cradle. A muted tuk on E."),
     Cue("dock_walls_rise", "oneshot_3d", feel.dock_walls_rise, volume=(0.6, 0.6), milestone="M3",
         notes="The dock's walls rising, staggered: soft ticks D A D A over a short servo push."),
-    Cue("dock_clamp", "oneshot_3d", feel.dock_clamp, volume=(0.65, 0.65), milestone="M3",
-        notes="The clamp closing on 07: a felt clunk and a 100 ms connection crackle."),
+    Cue("pad_lock_close", "oneshot_3d", picks.renderer("pad_lock_close"), volume=(0.65, 0.65), milestone="M3",
+        sampled=True, notes="The charging pad's clamp arms seating on 07 (PadLockClosed): the rams' gear settling, a "
+                            "padded heavy clunk and the latch."),
+    Cue("pad_lock_open", "tick_3d", picks.renderer("pad_lock_open"), volume=(0.75, 0.75), milestone="M3",
+        sampled=True, notes="The charging pad letting 07 go (PadLockOpened): a short release hiss, a lighter clunk."),
     Cue("dock_walls_settle", "tick_3d", feel.dock_walls_settle, volume=(0.55, 0.55), milestone="M3",
         notes="Full: the walls lowering and settling, two soft ticks on A and D."),
     Cue("dock_walls_drop", "tick_3d", feel.dock_walls_drop, volume=(0.5, 0.5), milestone="M3",
