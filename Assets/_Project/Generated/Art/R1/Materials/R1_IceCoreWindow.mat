@@ -50,6 +50,7 @@ Material:
     - _ColorVarAmount: 0.025
     - _ColorVarScale: 1.8
     - _Dissolve: 0
+    - _DistanceFade: 0
     - _DustAmount: 0.46
     - _DustOcclusionWeight: 0.8
     - _DustSharpness: 1.15
@@ -73,6 +74,7 @@ Material:
     - _BaseColor: {r: 1.65, g: 1.95, b: 2.35, a: 1}
     - _BuildBoundsY: {r: 0, g: 2, b: 0, a: 0}
     - _BuildSeamPointWS: {r: 0, g: 0, b: 0, a: 0.6}
+    - _DistanceFadeRange: {r: 32, g: 40, b: 0, a: 0}
     - _DustColor: {r: 0.58, g: 0.56, b: 0.52, a: 1}
     - _EdgeWearColor: {r: 0.58, g: 0.72, b: 0.88, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
