@@ -658,7 +658,7 @@ MonoBehaviour:
     _eclipseBreakoutLead: 1
     _goldenHourSeconds: 45
     _lastLightElevation: 3
-    _lastLightSinkSeconds: 120
+    _lastLightSinkSeconds: 200
     _nightfallElevation: -1.5
     _firstSunsetSeconds: 150
     _fallbackSunlitTimeSeconds: 900

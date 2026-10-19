@@ -36,7 +36,7 @@ namespace MoonProject.World
 
         [Tooltip("Real seconds the Sun takes to sink from golden hour to last light after power-on.")]
         [Range(10f, 600f)]
-        [SerializeField] private float _lastLightSinkSeconds = 120f;
+        [SerializeField] private float _lastLightSinkSeconds = 200f;
 
         [Tooltip("Elevation where the first sunset is over and the normal day pace takes over, degrees (below 0).")]
         [Range(-4f, -0.1f)]
