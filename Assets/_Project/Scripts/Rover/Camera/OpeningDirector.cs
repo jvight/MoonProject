@@ -14,10 +14,13 @@ namespace MoonProject.Rover
     /// <item>While the title is up (<see cref="IGameFlow"/>, <see cref="TitleShown"/>) 07 stays asleep. A fresh title
     /// holds the rig's lens shot on the closed lens, drifting after a while; over a save, the rig holds the wide shot
     /// of 07 where it was left (<see cref="TitleFrame"/>).</item>
-    /// <item><see cref="SessionStarted"/> with a fresh game plays the full opening once: from the title the picture
-    /// fades to black where the camera is (no camera move). In the black the shot camera takes the one fixed shot of
-    /// 07's face (<see cref="PostShot"/>) and holds it: the picture opens and the self-test prints on the face while
-    /// each part does its check; any key after its first moments fast-forwards the remaining lines
+    /// <item><see cref="SessionStarted"/> with a fresh game plays the full opening once. From a fresh title the shot
+    /// camera takes over where the title's camera is and pushes in, in one eased move, onto the one fixed shot of
+    /// 07's dark face while the title fades and 07 lifts its head; over a save the title's wide shot is covered (UI's
+    /// vignette), App reloads under the cover and the new game opens on the dark face. There the tube wakes, the
+    /// maker's mark draws itself and a field profile loads (Core's <see cref="CrtPowerOn"/>,
+    /// <see cref="BootLogoBegan"/>, <see cref="BootLoadBegan"/>; UI draws them on the face), then the self-test
+    /// prints while each part does its check; any key after its first moments fast-forwards the rest
     /// (<see cref="OpeningScript.FastForward"/>). The readout holds and 07's eyes come back to the face, the camera
     /// eases back and out on a diagonal to a wide shot, 07 shows it is ready (a double blink, the headlamps clicked
     /// off and on as the last dust settles off, a glance at the lander's beacon) and the camera eases round to the
@@ -78,13 +81,11 @@ namespace MoonProject.Rover
         private PostShot _shot;
         private PostLights _lights;
         private PostDust _dust;
-        private GameContext _context;
         private EventBus _events;
         private InputReader _input;
         private IRoverState _rover;
         private IRoverRig _roverRig;
         private IWorldLayout _world;
-        private ILensView _lens;
         private IGameFlow _flow;
         private IDisposable[] _subscriptions;
         private FaceInspectShot _faceShot;
@@ -93,13 +94,11 @@ namespace MoonProject.Rover
         private Vector3 _faceShotFrom;
         private Quaternion _faceShotFacing;
         private bool _shotWasLive;
+        private ShotPose _pushFrom;
         private bool _rigReleased;
         private bool _titleHasSave;
         private bool _inTitle;
         private bool _paused;
-        private bool _lensApplied;
-        private bool _lensWarmed;
-        private bool _lensMissing;
         private bool _gazing;
         private bool _holding;
         private bool _initialized;
@@ -125,7 +124,6 @@ namespace MoonProject.Rover
                 return;
             }
 
-            _context = context;
             _events = context.Events;
             _input = context.Input;
             _rover = context.Get<IRoverState>();
@@ -190,7 +188,6 @@ namespace MoonProject.Rover
             _titleHasSave = shown.HasSave;
             _body.HoldAsleep();
             _lamps.HoldDark();
-            WarmLens();
             if (shown.HasSave)
             {
                 _rig.HoldTitleFrame();
@@ -204,7 +201,6 @@ namespace MoonProject.Rover
         private void OnSessionStarted(SessionStarted started)
         {
             bool fromLensShot = _inTitle && _rig.Opening.IsActive;
-            WarmLens();
             _inTitle = false;
             if (_flow == null || !_flow.ShowsTitle)
             {
@@ -218,7 +214,7 @@ namespace MoonProject.Rover
             if (started.FreshGame)
             {
                 _body.HoldOpeningScreenDark(true);
-                BeginFull(fromLensShot);
+                BeginFull(fromLensShot ? OpeningStart.PushIn : OpeningStart.Settle);
                 return;
             }
 
@@ -229,8 +225,8 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// New Game that App answers with a reload (over a save, from the title or from play): the picture fades to
-        /// black where the camera is; App puts the save away and reloads under the black
+        /// New Game that App answers with a reload (over a save, from the title or from play): the picture is covered
+        /// where the camera is (UI's dark-tube vignette); App puts the save away and reloads under the cover
         /// (<see cref="WakeBeat.FadedOut"/>). Over a fresh title App starts the session itself right after this, and
         /// that begins the opening instead.
         /// </summary>
@@ -243,7 +239,7 @@ namespace MoonProject.Rover
             }
 
             _script.Stop();
-            BeginFull(true);
+            BeginFull(OpeningStart.Cover);
         }
 
         private void OnPauseChanged(PauseChanged pause)
@@ -253,28 +249,29 @@ namespace MoonProject.Rover
 
         /// <summary>
         /// The full opening. The rig holds its wake shot underneath from the start, which keeps its wide shot and
-        /// stargazing closed until the ready performance lets it go.
+        /// stargazing closed until the ready performance lets it go. The push-in starts from the title's own wake
+        /// shot where its drift froze; a cover keeps the title's frame until the reload.
         /// </summary>
-        private void BeginFull(bool fromTitle)
+        private void BeginFull(OpeningStart start)
         {
             _body.HoldOpeningScreenDark(true);
             _hasFaceShot = false;
             _rigReleased = false;
-            _script.BeginFull(fromTitle);
-            _wakeWaitsForBlack = fromTitle;
-            if (fromTitle)
+            _script.BeginFull(start);
+            _wakeWaitsForBlack = start == OpeningStart.Cover;
+            if (start == OpeningStart.Settle)
             {
-                _rig.Opening.FreezeDrift();
+                StartWakeShot();
             }
             else
             {
-                StartWakeShot();
+                _rig.Opening.FreezeDrift();
             }
         }
 
         /// <summary>
-        /// Puts 07's head into the face close-up's pose and the rig's wake shot underneath. From the title this waits
-        /// until the picture has faded to black, so nothing moves in view while the title goes.
+        /// Puts 07's head into the face close-up's pose and the rig's wake shot underneath. Behind a cover this waits
+        /// until the cover is closed, so nothing moves in view while the title goes.
         /// </summary>
         private void StartWakeShot()
         {
@@ -348,15 +345,14 @@ namespace MoonProject.Rover
             ApplyPostMotion(deltaTime);
             AimHead();
             PlaceShotCamera();
-            ApplyPicture();
             ApplyPostLights();
             ApplyPostDust();
         }
 
-        /// <summary>A key pressed while the self-test prints fast-forwards its remaining lines (pause stays pause).</summary>
+        /// <summary>A key pressed while the face boots or the self-test prints fast-forwards the rest (pause stays pause).</summary>
         private void StepFastForward()
         {
-            if (_script.Phase != OpeningPhase.Post || !_input.Menu.AnyPressed || _input.Menu.PausePressed)
+            if (!_input.Menu.AnyPressed || _input.Menu.PausePressed)
             {
                 return;
             }
@@ -417,7 +413,27 @@ namespace MoonProject.Rover
                     case PostEventKind.Blink:
                         _body.BlinkFace();
                         break;
+                    case PostEventKind.FaceBegan:
+                        PublishFace((BootFacePart)postEvent.Index, postEvent.Seconds);
+                        break;
                 }
+            }
+        }
+
+        /// <summary>A part of the face's boot begins: Core's event for it (UI draws it on the face, Audio voices it).</summary>
+        private void PublishFace(BootFacePart part, float seconds)
+        {
+            switch (part)
+            {
+                case BootFacePart.PowerOn:
+                    _events.Publish(new CrtPowerOn(seconds));
+                    break;
+                case BootFacePart.Logo:
+                    _events.Publish(new BootLogoBegan(seconds));
+                    break;
+                default:
+                    _events.Publish(new BootLoadBegan(seconds));
+                    break;
             }
         }
 
@@ -493,6 +509,7 @@ namespace MoonProject.Rover
 
             float hold = _script.Phase == OpeningPhase.MoveBehind
                 ? 1f - WakeOpening.SmoothStepC2(0f, 1f, _script.PhaseShare)
+                : _script.Phase == OpeningPhase.PushIn ? WakeOpening.SmoothStepC2(0f, 1f, _script.PhaseShare)
                 : 1f;
             _body.PoseOpeningHead(yaw, pitch, hold, true);
         }
@@ -602,6 +619,12 @@ namespace MoonProject.Rover
             }
 
             OpeningPhase phase = _script.Phase;
+            if (phase == OpeningPhase.PushIn && !_shotWasLive)
+            {
+                Transform title = _rig.Camera.transform;
+                _pushFrom = new ShotPose(title.position, title.rotation, _rig.Camera.fieldOfView);
+            }
+
             // Not before the camera is wide: a released rig hides 07's head while the live camera is this close to it.
             if (phase >= OpeningPhase.Perform)
             {
@@ -619,8 +642,11 @@ namespace MoonProject.Rover
             ShotPose pose;
             switch (phase)
             {
+                case OpeningPhase.PushIn:
+                    pose = PostShot.Glide(_pushFrom, face, _script.PhaseShare);
+                    break;
                 case OpeningPhase.PullBack:
-                    pose = PostShot.PullBack(face, _shot.Wide(body, heading), _script.PhaseShare);
+                    pose = PostShot.Glide(face, _shot.Wide(body, heading), _script.PhaseShare);
                     break;
                 case OpeningPhase.Perform:
                     pose = _shot.Wide(body, heading);
@@ -667,11 +693,10 @@ namespace MoonProject.Rover
             OpeningPhase phase = _script.Phase;
             PostSettings post = _tuning.Opening.Post;
             float share = _script.PhaseShare;
-            float sinceFaceOn = phase == OpeningPhase.Post ? _script.PhaseTime
-                : phase < OpeningPhase.Post ? 0f : post.FillRampSeconds;
             Transform screen = _body.ScreenTransform;
             _lights.Apply(_rover.Position, _world.EarthDirection, screen.position, screen.forward,
-                PostLighting.Rim(phase, share), PostLighting.Fill(phase, share, sinceFaceOn, post.FillRampSeconds));
+                PostLighting.Rim(phase, share),
+                PostLighting.Fill(phase, share, _script.ScreenOnSeconds, post.FillRampSeconds));
         }
 
         /// <summary>Lets the rig go behind 07, once per opening.</summary>
@@ -725,47 +750,6 @@ namespace MoonProject.Rover
         private void OnDisable()
         {
             RestoreBlend();
-        }
-
-        /// <summary>Has the lens view build itself now (on the title, or in a new game's black), once.</summary>
-        private void WarmLens()
-        {
-            if (!_lensWarmed && (_lens != null || _context.TryGet(out _lens)))
-            {
-                _lens.Warm();
-                _lensWarmed = true;
-            }
-        }
-
-        /// <summary>The fades and the handover's dip: the lens view darkens the picture, kept sharp on 07.</summary>
-        private void ApplyPicture()
-        {
-            if (!_script.PictureDimmed)
-            {
-                if (_lensApplied)
-                {
-                    _lens.Release();
-                    _lensApplied = false;
-                }
-
-                return;
-            }
-
-            if (_lens == null && !_context.TryGet(out _lens))
-            {
-                if (!_lensMissing)
-                {
-                    _lensMissing = true;
-                    Debug.LogError($"{nameof(OpeningDirector)}: no ILensView is registered, so the opening's fades " +
-                        "cannot darken the picture. Rebuild the Main scene (World's lens view).", this);
-                }
-
-                return;
-            }
-
-            float toLens = Vector3.Distance(_rig.Camera.transform.position, ScanLensOrigin.position);
-            _lens.Apply(new LensViewState(_script.Picture01, toLens));
-            _lensApplied = true;
         }
 
         private void OnDestroy()

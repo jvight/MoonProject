@@ -57,14 +57,16 @@ namespace MoonProject.Rover.PlayModeTests
         private const float TextCheckEvery = 0.5f;
         private const float TitleQuietSeconds = 4f;
         private const float MaxUntouched = 45f;
-        private const float MinSelfTest = 13f;
-        private const float MaxSelfTest = 16.5f;
+        private const float MinSelfTest = 16f;
+        private const float MaxSelfTest = 22f;
 
-        /// <summary>The opening's lines, as the shipped tuning prints them (the other checks are left out for pace).</summary>
+        /// <summary>The opening's lines, as the shipped tuning prints them: every check.</summary>
         private static readonly BootCheckStep[] OpeningLines =
         {
-            BootCheckStep.Carrier, BootCheckStep.Resume, BootCheckStep.Agenda, BootCheckStep.Lamps,
-            BootCheckStep.Cutter, BootCheckStep.Battery, BootCheckStep.Begin,
+            BootCheckStep.Carrier, BootCheckStep.Resume, BootCheckStep.Agenda, BootCheckStep.Lens,
+            BootCheckStep.Lamps, BootCheckStep.Head, BootCheckStep.Wheels, BootCheckStep.Motor,
+            BootCheckStep.Cutter, BootCheckStep.SolarWing, BootCheckStep.Antenna, BootCheckStep.Battery,
+            BootCheckStep.Assembly, BootCheckStep.Begin,
         };
 
         /// <summary>The shot may turn this little (deg) and stray this little (m) off its push-in line.</summary>
@@ -204,10 +206,12 @@ namespace MoonProject.Rover.PlayModeTests
             _context.Events.Publish(new NewGameRequested());
             var shots = new (OpeningPhase Phase, float Share, string Name)[]
             {
-                (OpeningPhase.FadeOut, 0.6f, "fade_out"),
-                (OpeningPhase.Dark, 0.5f, "stage_1_dark"),
-                (OpeningPhase.Post, 0.03f, "stage_2_picture_opens_on_the_face"),
-                (OpeningPhase.Post, 0.12f, "stage_3_lines_on_the_face"),
+                (OpeningPhase.PushIn, 0.5f, "stage_1_push_in"),
+                (OpeningPhase.PowerOn, 0.5f, "stage_2_power_on"),
+                (OpeningPhase.Logo, 0.35f, "stage_3_logo_drawing"),
+                (OpeningPhase.Logo, 0.72f, "stage_4_logo_complete"),
+                (OpeningPhase.Load, 0.6f, "stage_5_loading"),
+                (OpeningPhase.Post, 0.12f, "stage_6_lines_on_the_face"),
                 (OpeningPhase.Ready, 0.3f, "end_1_ready_readout"),
                 (OpeningPhase.Ready, 0.95f, "end_2_eyes_back"),
                 (OpeningPhase.PullBack, 0.5f, "end_3_pull_back"),
@@ -220,10 +224,15 @@ namespace MoonProject.Rover.PlayModeTests
             };
             var keyShots = new (OpeningPhase Phase, float Share, string Name)[]
             {
-                (OpeningPhase.Post, 0.12f, "key_01_first_lines_on_face"),
-                (OpeningPhase.Post, 0.5f, "key_02_lines_on_face"),
-                (OpeningPhase.Perform, 0.58f, "key_03_ready_performance"),
-                (OpeningPhase.MoveBehind, 0.98f, "key_04_chase_frame"),
+                (OpeningPhase.PowerOn, 0.5f, "key_01_power_on"),
+                (OpeningPhase.Logo, 0.35f, "key_02_logo_drawing"),
+                (OpeningPhase.Logo, 0.72f, "key_03_logo_complete"),
+                (OpeningPhase.Load, 0.6f, "key_04_loading"),
+                (OpeningPhase.Post, 0.05f, "key_05_first_line"),
+                (OpeningPhase.Post, 0.5f, "key_06_lines_on_face"),
+                (OpeningPhase.Post, 0.97f, "key_06b_log_scrolled"),
+                (OpeningPhase.Perform, 0.58f, "key_07_ready_performance"),
+                (OpeningPhase.MoveBehind, 0.98f, "key_08_chase_frame"),
             };
             var taken = new bool[shots.Length];
             var keyTaken = new bool[keyShots.Length];
@@ -260,6 +269,11 @@ namespace MoonProject.Rover.PlayModeTests
                     firstLineSeen = true;
                     Assert.IsTrue(_beats.Contains(WakeBeat.ChecksBegin), "the first line comes as the picture opens");
                     Assert.AreEqual(0, face.BootCount, "straight into the lines: no eyes-open stage before them");
+                }
+
+                if (script.Phase == OpeningPhase.Logo || script.Phase == OpeningPhase.Load)
+                {
+                    Assert.IsTrue(face.State.IsReadout, $"the face's boot shows on the face ({script.Phase})");
                 }
 
                 if (script.Phase == OpeningPhase.Post && script.PostStep >= BootCheckStep.Lens)
@@ -332,14 +346,16 @@ namespace MoonProject.Rover.PlayModeTests
             WriteBeats();
             _report.AppendLine().AppendLine(Line("untouched opening, O1 to the chase frame (s)", chase - crackle));
             Assert.AreEqual(1, Count(WakeBeat.Crackle), "the full opening plays once");
-            Assert.AreEqual(1, Count(WakeBeat.FadedOut), "New Game faded the picture to black");
+            Assert.AreEqual(0, Count(WakeBeat.FadedOut), "a fresh title pushes in: no cover, no black");
             Assert.AreEqual(1, _awoke, "RoverAwoke goes with the crackle, once");
             Assert.AreEqual(1, _body.FaceDirector.Director.BootCount, "the CRT face boots once, as the eyes come back");
-            Assert.That(chase - crackle, Is.InRange(MinSelfTest, MaxSelfTest), "the wake lasts about 15 s: its two moves are slow and gradual");
+            Assert.That(chase - crackle, Is.InRange(MinSelfTest, MaxSelfTest), "New Game to control in at most about 22 s: the two moves are slow and gradual");
             CollectionAssert.AreEqual(OpeningLines, _checksStartedList, "the lines print in the story's order");
             Assert.AreEqual(OpeningLines.Length, _checksCompleted.Count, "every line is completed");
             Assert.AreEqual(1, _checksFinished, "and the test finishes once");
             Assert.AreEqual(BootCheckResult.Fault, _checksCompleted[BootCheckStep.Cutter], "the missing igniter");
+            Assert.AreEqual(BootCheckResult.Jammed, _checksCompleted[BootCheckStep.SolarWing]);
+            Assert.AreEqual(BootCheckResult.ReceiveOnly, _checksCompleted[BootCheckStep.Antenna]);
             for (int i = 0; i < shots.Length; i++)
             {
                 Assert.IsTrue(taken[i], $"{shots[i].Name} was captured");

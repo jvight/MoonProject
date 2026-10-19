@@ -16,7 +16,7 @@ namespace MoonProject.Rover
 
     /// <summary>
     /// How much of the long-sleep regolith coat is still on each part of 07 during its wake, as a pure model
-    /// (EditMode-tested): the whole coat is on from the black until the checks; each part sheds most of it while its
+    /// (EditMode-tested): the whole coat is on from the title until the checks; each part sheds most of it while its
     /// own check moves it (a part whose check is not run keeps it all); the rest settles off in the ready performance
     /// as the headlamps come back on. It also counts what has fallen, so the opening can drop a puff of dust at the
     /// part each time enough has gone.
@@ -81,7 +81,11 @@ namespace MoonProject.Rover
             switch (phase)
             {
                 case OpeningPhase.FadeOut:
+                case OpeningPhase.PushIn:
                 case OpeningPhase.Dark:
+                case OpeningPhase.PowerOn:
+                case OpeningPhase.Logo:
+                case OpeningPhase.Load:
                     return 1f;
                 case OpeningPhase.Post:
                     return DuringChecks(zone, step, p);

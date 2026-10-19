@@ -58,4 +58,15 @@ MonoBehaviour:
     _check: 0.8
     _fault: 0.8
     _rush: 0.7
+    _facePowerOn: 0.8
+    _faceStroke: 0.7
+    _strokesPerNote: 2
+    _faceResolve: 0.7
+    _faceText: 0.6
+    _faceLine: 0.7
+    _faceLoad: 0.75
+    _textMinInterval: 0.045
+    _textStreakWindow: 0.2
+    _textStreakDecay: 0.95
+    _textStreakFloor: 0.7
   _loopSpatialBlend: 0.75
