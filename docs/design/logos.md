@@ -19,11 +19,12 @@ Like Alterra in *Subnautica*, the machines and stations of *Lunarion* belong to 
    - Transparent-background RGBA lockups: `Logs/logos/<brand>/{a,b,c}.png`
    - On-black presentation frames: `Logs/logos/<brand>/{a,b,c}_black.png` + `Logs/logos/<brand>/on_black.png`
    - 07 1-colour amber CRT boot screen mockups: `Logs/logos/kessler-arai/{crt,crt_a,crt_b,crt_c}.png`
+   - VIS wordmark evolution (`1967` → `1985`) & worn hull-stencil mock: `Logs/logos/vis/{1967,1985,stencil}.png`
    - Side-by-side HTML comparison gallery: `Logs/logos/index.html`
 
 ---
 
-## 2. The Three Brands & Concept Directions
+## 2. The Four Brands & Concept Directions
 
 ### 2.1 Brand 1 — **ILC** (*International Lunar Commission*, 1969 onward)
 - **Role in Story (`story-v4.md` §2.2, §3.1):** The international lunar programme formed after the July 1969 Moon landing to operate the lunar waystations (`LUMEN-04`), hydrological surveys (`"WATER IS GRAVITY"`), and the Earth–Moon L4/L5 Ark transit corridor.
@@ -74,3 +75,19 @@ Like Alterra in *Subnautica*, the machines and stations of *Lunarion* belong to 
 | **`a` (★ Pick)** — *Hex-Dock & Isometric TC Prism* | `a.png`, `a_black.png` | Precision hexagonal contact-dock emblem forming an interlocking isometric "TC" prism in stark white and muted teal—cold, corporate, and built to double as the physical alignment target on Meridian's hex docks. |
 | **`b`** — *Deep-Radar Hexagonal Sounding Array* | `b.png`, `b_black.png` | Downward-stepping half-hexagonal radar chevrons beneath a stark white lunar datum spire, visually encoding Meridian Station's automated 36-year deep-ice radar soundings. |
 | **`c`** — *Tri-Facet Hexagonal Syndicate Turbine* | `c.png`, `c_black.png` | Late-1970s brutalist corporate mark built from three solid interlocking isometric chevron wings arranged in a 120° hexagonal turbine around a solid white core prism (zero holes). |
+
+---
+
+### 2.4 Brand 4 — **VIS — Vanguard Interplanetary Structures** (*ILC Structures Contractor, 1960s–1985*)
+- **Role in Story (`basin-dressing.md` §4, `blueprint-fit.md` §1):** ILC's prime heavy-structures contractor since the 1960s—builders of the **1967 `Scout 3` soft lander**, Lumen's **cargo lander**, **ribbed habitat**, **workshop**, **radio tower**, **solar arrays**, and **supply crates** (`ILC-R` rover-serviceable hardware standard).
+- **Visual Family & Palette:** TRW / RCA-era heavy aerospace plant identity built around a bold 3-letter `"VIS"` hull stencil, ribbed pressure cylinders, and round airlock hatches in Hull Cream (`#F4E6C8`), Coral-Orange (`#FF8A5B`), Beacon Amber / 1967 Brass (`#FFB547` / `#E0A644`), and Structural Steel (`#6C7A8C`).
+
+| Deliverable | Files (`Logs/logos/vis/`) | One-Line Rationale |
+|---|---|---|
+| **`a` (★ Pick)** — *1968 RCA/TRW Ribbed-Cylinder Block Stencil* | `a.png`, `a_black.png`, `on_black.png` | 1968 RCA/TRW-era heavy block-slab "VIS" stencil mark locked inside a ribbed pressure-cylinder stadium frame with side bulkhead lugs and a 1967→1985 wordmark evolution bar. |
+| **`b`** — *TRW Stepped Monogram & Round Airlock Hatch* | `b.png`, `b_black.png` | Saul Bass / TRW-inspired stepped "V–I–S" heavy-plant monogram rising across a round airlock hatch with four solid dogging latches and ribbed interior pressure bands. |
+| **`c`** — *Girder-Truss & Corrugated Crate Stencil* | `c.png`, `c_black.png` | Chamfered octagonal crate-and-bulkhead stencil uniting "V I S" between continuous top and bottom structural I-beam chords with a radio-tower truss pillar. |
+| **`1967`** — *1967 Original Wordmark (`Scout 3` Era)* | `1967.png`, `1967_black.png` | 1967 Scout-3 soft-lander era heritage mark: thin double-line "VIS" monogram inside a tripod lander shield above the three-tier "VANGUARD INTERPLANETARY STRUCTURES CORPORATION" wordmark and vector tail. |
+| **`1985`** — *1985 Matured Wordmark (`Lumen-04 / ILC-R` Era)* | `1985.png`, `1985_black.png` | 1985 Lumen-04 / ILC-R era matured standard: inline strokes fused into a single-weight hull stencil, "CORPORATION" dropped, and typography locked into a two-tier industrial grid. |
+| **`stencil`** — *Worn Cream & Orange Hull-Stencil Mock* | `stencil.png` | The 1985 "VIS" mark and wordmark spray-stencilled across a ribbed cream enamel hull panel (`#F4E6C8`) with a worn coral-orange stripe (`#FF8A5B`), low-poly paint chips, seam oxide streaks, and basal regolith dust. |
+

@@ -1351,8 +1351,1005 @@ def generate_brand_tycho():
     print("[build_logos] Generated Tycho Consortium logos in", out_dir)
 
 
+# ==============================================================================
+# BRAND 4: VIS — Vanguard Interplanetary Structures (1960s–1985)
+# ILC's structures contractor since the 1960s (cargo lander, habitat, workshop,
+# radio tower, solar arrays, crates, the 1967 Scout). Heavy plant, ribbed
+# cylinders, round hatches.
+# ==============================================================================
+
+VIS_STEEL = (108, 122, 140, 255)      # #6C7A8C structural truss steel
+VIS_STEEL_DARK = (58, 68, 82, 255)    # #3A4452 dark rib shadow
+VIS_PANEL_DARK = (20, 24, 32, 255)    # #141820 heavy plant dark plate
+VIS_BRASS = (224, 166, 68, 255)       # #E0A644 1967 Scout-3 brass yoke gold
+
+
+def draw_vis_monogram_a(
+    d: ImageDraw.ImageDraw,
+    cx: float,
+    cy: float,
+    scale: float,
+    col_v: tuple,
+    col_i: tuple,
+    col_s: tuple,
+    col_bar: tuple,
+    bg_cut: tuple,
+):
+    """
+    Draws the core 3-letter 'VIS' TRW/RCA-era heavy block stencil monogram around (cx, cy).
+    Completely solid geometric polygons + clean stencil bridges (zero holes/dots).
+    Base reference box at scale=1.0 is width ~380, height ~190.
+    """
+    def pt(dx: float, dy: float) -> tuple:
+        return (sf(cx + dx * scale), sf(cy + dy * scale))
+
+    # --- Letter V (left: x from -188 to -52, y from -92 to +92) ---
+    # Outer V contour with flat heavy bottom apex and angled truss legs
+    v_left_leg = [
+        pt(-188, -92),
+        pt(-142, -92),
+        pt(-108, 42),
+        pt(-114, 92),
+        pt(-142, 92),
+    ]
+    v_right_leg = [
+        pt(-98, -92),
+        pt(-52, -92),
+        pt(-98, 92),
+        pt(-130, 92),
+        pt(-118, 42),
+    ]
+    # Draw unified V and cut a vertical stencil bridge through the bottom apex
+    v_full = [
+        pt(-188, -92),
+        pt(-140, -92),
+        pt(-120, 18),
+        pt(-100, -92),
+        pt(-52, -92),
+        pt(-98, 92),
+        pt(-142, 92),
+    ]
+    d.polygon(v_full, fill=col_v)
+    # Stencil bridge cut at bottom center of V so left and right halves are stencil-separated
+    d.polygon([pt(-125, 10), pt(-115, 10), pt(-115, 96), pt(-125, 96)], fill=bg_cut)
+
+    # --- Letter I (center ribbed column: x from -24 to +24, y from -92 to +92) ---
+    # Top and bottom heavy slab serifs/caps with a stencil split in the middle for the cross-bar
+    d.polygon([pt(-24, -92), pt(24, -92), pt(24, -16), pt(-24, -16)], fill=col_i)
+    d.polygon([pt(-24, 16), pt(24, 16), pt(24, 92), pt(-24, 92)], fill=col_i)
+
+    # --- Letter S (right: x from +52 to +188, y from -92 to +92) ---
+    # 1968 RCA-style chamfered geometric block S constructed in 3 stencil-bridged segments
+    c_cham = 28
+    # Top bar + upper-left drop of S
+    s_top = [
+        pt(52 + c_cham, -92),
+        pt(188, -92),
+        pt(188, -52),
+        pt(96, -52),
+        pt(96, -18),
+        pt(52, -18),
+        pt(52, -92 + c_cham),
+    ]
+    d.polygon(s_top, fill=col_s)
+    # Middle diagonal/horizontal spine of S (separated by 10px stencil bridges)
+    s_mid = [
+        pt(64, -8),
+        pt(176, -8),
+        pt(188, 4),
+        pt(188, 18),
+        pt(52, 18),
+        pt(52, -8),
+    ]
+    d.polygon(s_mid, fill=col_s)
+    # Bottom right drop + bottom bar of S
+    s_bot = [
+        pt(144, 28),
+        pt(188, 28),
+        pt(188, 92 - c_cham),
+        pt(188 - c_cham, 92),
+        pt(52, 92),
+        pt(52, 52),
+        pt(144, 52),
+    ]
+    d.polygon(s_bot, fill=col_s)
+
+    # Central horizontal pressure-seal tie-bar across the I (and notched into V/S)
+    if col_bar is not None:
+        d.polygon([pt(-36, -9), pt(36, -9), pt(36, 9), pt(-36, 9)], fill=col_bar)
+
+
+def build_vis_a() -> Image.Image:
+    """
+    VIS Direction A (★ PICK): '1968 RCA/TRW Ribbed-Cylinder Block Stencil'
+    Bold 3-letter 'VIS' industrial block-slab mark locked inside a ribbed pressure-cylinder
+    stadium frame with horizontal stiffening ribs, plus 1967 -> 1985 wordmark evolution bar.
+    """
+    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+
+    cx, cy = 512, 310
+    # Outer ribbed-cylinder pressure module backing plate
+    d.rounded_rectangle((s(118), s(104), s(906), s(516)), radius=s(88), fill=VIS_PANEL_DARK)
+
+    # Top and bottom external structural cylinder ribs (3 wide solid trapezoidal lugs on top & bottom)
+    for rx0, rx1 in [(248, 368), (452, 572), (656, 776)]:
+        # Top rib flange
+        d.polygon(
+            [(sf(rx0), sf(104)), (sf(rx0 + 14), sf(82)), (sf(rx1 - 14), sf(82)), (sf(rx1), sf(104))],
+            fill=CREAM,
+        )
+        # Bottom rib flange
+        d.polygon(
+            [(sf(rx0), sf(516)), (sf(rx0 + 14), sf(538)), (sf(rx1 - 14), sf(538)), (sf(rx1), sf(516))],
+            fill=CREAM,
+        )
+
+    # Main stadium pressure-hull border in Cream + inner Coral-Orange structural seal ring
+    d.rounded_rectangle((s(126), s(112), s(898), s(508)), radius=s(82), outline=CREAM, width=s(11))
+    d.rounded_rectangle((s(146), s(132), s(878), s(488)), radius=s(64), outline=CORAL, width=s(5))
+
+    # Left and right round hatch / bulkhead side-flange clamps (solid geometric bars, zero holes)
+    for side_x, dx in [(146, 1), (878, -1)]:
+        d.polygon(
+            [
+                (sf(side_x), sf(238)),
+                (sf(side_x + 32 * dx), sf(254)),
+                (sf(side_x + 32 * dx), sf(366)),
+                (sf(side_x), sf(382)),
+            ],
+            fill=CORAL,
+        )
+        d.line(
+            [(sf(side_x + 42 * dx), sf(186)), (sf(side_x + 42 * dx), sf(434))],
+            fill=VIS_STEEL_DARK,
+            width=s(4),
+        )
+
+    # Horizontal ribbed-cylinder background grooves inside the frame
+    for ry in [184, 436]:
+        d.line([(s(204), s(ry)), (s(820), s(ry))], fill=VIS_STEEL_DARK, width=s(5))
+
+    # Draw the monumental 3-letter 'VIS' stencil mark in the center
+    draw_vis_monogram_a(
+        d,
+        cx=512,
+        cy=310,
+        scale=1.22,
+        col_v=CREAM,
+        col_i=CREAM,
+        col_s=CREAM,
+        col_bar=CORAL,
+        bg_cut=VIS_PANEL_DARK,
+    )
+
+    # Stencilled spec micro-labels inside the badge
+    f_spec = load_font("IBMPlexMono-Bold.ttf", 13.5)
+    draw_tracked_text(d, 512, 160, "ILC-R STANDARD · RIBBED PRESSURE STRUCTURES · HULL STENCIL", f_spec, AMBER, tracking=1.6)
+    draw_tracked_text(d, 512, 460, "LANDERS · HABITATS · WORKSHOPS · TOWERS · SOLAR ARRAYS", f_spec, VIS_STEEL, tracking=1.8)
+
+    # --- 1985 Wordmark Lockup ---
+    f_main = load_font("ChakraPetch-Bold.ttf", 50)
+    f_sub = load_font("ChakraPetch-Bold.ttf", 34)
+    f_meta = load_font("IBMPlexMono-Bold.ttf", 18)
+
+    draw_tracked_text(d, 512, 598, "VANGUARD INTERPLANETARY", f_main, CREAM, tracking=5.8)
+
+    # Coral-orange structural girder bar with 'STRUCTURES'
+    d.rounded_rectangle((s(164), s(646), s(860), s(710)), radius=s(8), fill=CORAL)
+    # Stencil notch cutouts on left and right of orange bar
+    d.rectangle((s(164), s(672), s(186), s(684)), fill=VIS_PANEL_DARK)
+    d.rectangle((s(838), s(672), s(860), s(684)), fill=VIS_PANEL_DARK)
+    draw_tracked_text(d, 512, 678, "S T R U C T U R E S", f_sub, WARM_DARK, tracking=8.0)
+
+    # --- 1967 -> 1985 Wordmark Maturation Comparison Strip ---
+    d.rounded_rectangle((s(96), s(746), s(928), s(884)), radius=s(10), fill=VIS_PANEL_DARK, outline=VIS_STEEL_DARK, width=s(3))
+    d.line([(s(512), s(758)), (s(512), s(872))], fill=VIS_STEEL_DARK, width=s(3))
+
+    f_era_lbl = load_font("IBMPlexMono-Bold.ttf", 13.5)
+    f_1967_wm = load_font("IBMPlexMono-SemiBold.ttf", 14.5)
+    f_1985_wm = load_font("ChakraPetch-Bold.ttf", 16.5)
+
+    # Left half (x: 96..512, center=304): 1967 Scout-3 Era Wordmark
+    draw_tracked_text(d, 304, 772, "1967 WORDMARK (SCOUT-3 PROBE ERA)", f_era_lbl, VIS_BRASS, tracking=0.8)
+    draw_tracked_text(d, 304, 808, "V.I.S. · VANGUARD INTERPLANETARY", f_1967_wm, CREAM, tracking=0.8)
+    draw_tracked_text(d, 304, 836, "STRUCTURES CORPORATION", f_1967_wm, VIS_BRASS, tracking=2.2)
+    # 1967 vector underline with delta arrow
+    d.line([(s(134), s(858)), (s(462), s(858))], fill=CORAL, width=s(3))
+    d.polygon([(sf(456), sf(851)), (sf(474), sf(858)), (sf(456), sf(865))], fill=CORAL)
+
+    # Right half (x: 512..928, center=720): 1985 Matured ILC-R Wordmark
+    draw_tracked_text(d, 720, 772, "1985 WORDMARK (LUMEN-04 / ILC-R ERA)", f_era_lbl, CORAL, tracking=0.8)
+    draw_tracked_text(d, 720, 808, "VIS · VANGUARD INTERPLANETARY", f_1985_wm, CREAM, tracking=1.2)
+    d.rectangle((s(556), s(828), s(884), s(858)), fill=CORAL)
+    draw_tracked_text(d, 720, 843, "STRUCTURES  ·  ILC-R", f_era_lbl, WARM_DARK, tracking=2.8)
+
+    draw_tracked_text(
+        d,
+        512,
+        926,
+        "ILC PRIME STRUCTURES CONTRACTOR  ·  1967 SCOUT-3  →  1985 LUMEN STATION",
+        f_meta,
+        AMBER,
+        tracking=1.8,
+    )
+
+    return downsample(img)
+
+
+def build_vis_b() -> Image.Image:
+    """
+    VIS Direction B: '1970s TRW Stepped-Monogram & Round Airlock Hatch'
+    Inspired by Saul Bass's stepped TRW logotype locked inside VIS's signature round
+    airlock hatch and ribbed cylinder cross-section (4 solid dogging latches, zero holes).
+    """
+    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+
+    cx, cy = 512, 314
+    r_outer = 228
+
+    # 4 external solid rectangular hatch-dogging lugs at 45, 135, 225, 315 deg
+    for ang_deg in [45, 135, 225, 315]:
+        rad = math.radians(ang_deg)
+        nx, ny = math.cos(rad), math.sin(rad)
+        tx, ty = -ny, nx
+        r0, r1, hw = 202, 252, 28
+        pts = [
+            (sf(cx + nx * r0 - tx * hw), sf(cy + ny * r0 - ty * hw)),
+            (sf(cx + nx * r1 - tx * (hw - 6)), sf(cy + ny * r1 - ty * (hw - 6))),
+            (sf(cx + nx * r1 + tx * (hw - 6)), sf(cy + ny * r1 + ty * (hw - 6))),
+            (sf(cx + nx * r0 + tx * hw), sf(cy + ny * r0 + ty * hw)),
+        ]
+        d.polygon(pts, fill=CORAL)
+
+    # Round hatch backing disc
+    d.ellipse((s(cx - r_outer), s(cy - r_outer), s(cx + r_outer), s(cy + r_outer)), fill=VIS_PANEL_DARK)
+
+    # Interior horizontal ribbed-cylinder bands + stepped VIS monogram clipped cleanly inside the round hatch
+    hatch_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    hd = ImageDraw.Draw(hatch_layer)
+    for ry in [-132, -96, 96, 132]:
+        hd.rectangle((s(cx - 190), s(cy + ry - 7), s(cx + 190), s(cy + ry + 7)), fill=VIS_STEEL_DARK)
+
+    # TRW-inspired Stepped 'V - I - S' Monogram inside the circular hatch (fits inside r=184)
+    # V (x: 344..450, y: 264..398)
+    v_pts = [
+        (sf(344), sf(264)),
+        (sf(380), sf(264)),
+        (sf(397), sf(354)),
+        (sf(414), sf(264)),
+        (sf(450), sf(264)),
+        (sf(414), sf(398)),
+        (sf(380), sf(398)),
+    ]
+    hd.polygon(v_pts, fill=CREAM)
+    hd.rectangle((s(393), s(346), s(401), s(402)), fill=VIS_PANEL_DARK)
+
+    # I (stepped up 20px: x: 476..526, y: 244..378)
+    hd.rectangle((s(476), s(244), s(526), s(304)), fill=CORAL)
+    hd.rectangle((s(476), s(318), s(526), s(378)), fill=CORAL)
+
+    # S (stepped up another 20px: x: 552..674, y: 224..358)
+    s_x0, s_x1 = 552, 674
+    s_y0, s_y1 = 224, 358
+    s_ym = (s_y0 + s_y1) // 2  # 291
+    ch = 20
+    hd.polygon(
+        [
+            (sf(s_x0 + ch), sf(s_y0)),
+            (sf(s_x1), sf(s_y0)),
+            (sf(s_x1), sf(s_y0 + 32)),
+            (sf(s_x0 + 38), sf(s_y0 + 32)),
+            (sf(s_x0 + 38), sf(s_ym - 12)),
+            (sf(s_x0), sf(s_ym - 12)),
+            (sf(s_x0), sf(s_y0 + ch)),
+        ],
+        fill=CREAM,
+    )
+    hd.polygon(
+        [
+            (sf(s_x0), sf(s_ym - 5)),
+            (sf(s_x1 - 10), sf(s_ym - 5)),
+            (sf(s_x1), sf(s_ym + 5)),
+            (sf(s_x1), sf(s_ym + 14)),
+            (sf(s_x0 + 10), sf(s_ym + 14)),
+            (sf(s_x0), sf(s_ym + 4)),
+        ],
+        fill=AMBER,
+    )
+    hd.polygon(
+        [
+            (sf(s_x1 - 38), sf(s_ym + 22)),
+            (sf(s_x1), sf(s_ym + 22)),
+            (sf(s_x1), sf(s_y1 - ch)),
+            (sf(s_x1 - ch), sf(s_y1)),
+            (sf(s_x0), sf(s_y1)),
+            (sf(s_x0), sf(s_y1 - 32)),
+            (sf(s_x1 - 38), sf(s_y1 - 32)),
+        ],
+        fill=CREAM,
+    )
+
+    # Stepped baseline structural rule under V - I - S
+    hd.line([(s(344), s(412)), (s(450), s(412))], fill=CORAL, width=s(6))
+    hd.line([(s(476), s(392)), (s(526), s(392))], fill=AMBER, width=s(6))
+    hd.line([(s(552), s(372)), (s(674), s(372))], fill=CORAL, width=s(6))
+
+    hatch_mask = Image.new("L", (W, H), 0)
+    ImageDraw.Draw(hatch_mask).ellipse((s(cx - 188), s(cy - 188), s(cx + 188), s(cy + 188)), fill=255)
+    img.paste(hatch_layer, (0, 0), hatch_mask)
+    d = ImageDraw.Draw(img)
+
+    # Crisp double circular airlock hatch rings
+    draw_thick_arc(d, cx, cy, 220, 220, 0, 360, 12.0, CREAM)
+    draw_thick_arc(d, cx, cy, 196, 196, 0, 360, 5.5, CORAL)
+
+    # Typography below
+    f_main = load_font("ChakraPetch-Bold.ttf", 50)
+    f_sub = load_font("ChakraPetch-SemiBold.ttf", 32)
+    f_meta = load_font("IBMPlexMono-Bold.ttf", 18)
+    f_era = load_font("IBMPlexMono-SemiBold.ttf", 15)
+
+    draw_tracked_text(d, 512, 608, "VANGUARD INTERPLANETARY", f_main, CREAM, tracking=5.8)
+    draw_tracked_text(d, 512, 668, "STRUCTURES", f_sub, CORAL, tracking=14.0)
+
+    d.line([(s(156), s(712)), (s(868), s(712))], fill=CREAM, width=s(4))
+    d.line([(s(236), s(724)), (s(788), s(724))], fill=CORAL, width=s(3))
+
+    # 1967 vs 1985 wordmark evolution callout box
+    d.rounded_rectangle((s(96), s(752), s(928), s(864)), radius=s(8), fill=VIS_PANEL_DARK, outline=VIS_STEEL_DARK, width=s(3))
+    draw_tracked_text(
+        d,
+        512,
+        784,
+        "1967: V.I.S. VANGUARD INTERPLANETARY STRUCTURES CORP. (SCOUT-3)",
+        f_era,
+        VIS_BRASS,
+        tracking=1.0,
+    )
+    draw_tracked_text(
+        d,
+        512,
+        830,
+        "1985: VIS · VANGUARD INTERPLANETARY STRUCTURES · ILC-R (LUMEN-04)",
+        f_era,
+        CREAM,
+        tracking=1.0,
+    )
+
+    draw_tracked_text(
+        d,
+        512,
+        916,
+        "HEAVY PLANT  ·  RIBBED CYLINDERS  ·  ROUND HATCHES  ·  EST. 1963",
+        f_meta,
+        AMBER,
+        tracking=2.2,
+    )
+
+    return downsample(img)
+
+
+def build_vis_c() -> Image.Image:
+    """
+    VIS Direction C: '1980s Integrated Girder-Truss & Corrugated Crate Stencil'
+    Heavy octagonal crate/bulkhead stencil frame with top/bottom corrugated cylinder ribs,
+    where V-I-S is carved from a continuous structural I-beam girder and tower truss.
+    """
+    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+
+    # Chamfered octagonal heavy-plant plate (x: 112..912, y: 108..516)
+    ch = 58
+    x0, y0, x1, y1 = 112, 108, 912, 516
+    oct_pts = [
+        (sf(x0 + ch), sf(y0)),
+        (sf(ix1 := x1 - ch), sf(y0)),
+        (sf(x1), sf(y0 + ch)),
+        (sf(x1), sf(y1 - ch)),
+        (sf(x1 - ch), sf(y1)),
+        (sf(x0 + ch), sf(y1)),
+        (sf(x0), sf(y1 - ch)),
+        (sf(x0), sf(y0 + ch)),
+    ]
+    d.polygon(oct_pts, fill=VIS_PANEL_DARK)
+    d.polygon(oct_pts, outline=CREAM, width=s(10))
+
+    # Inner chamfered border
+    ch2 = 48
+    ix0, iy0, ix1, iy1 = 134, 130, 890, 494
+    in_pts = [
+        (sf(ix0 + ch2), sf(iy0)),
+        (sf(ix1 - ch2), sf(iy0)),
+        (sf(ix1), sf(iy0 + ch2)),
+        (sf(ix1), sf(iy1 - ch2)),
+        (sf(ix1 - ch2), sf(iy1)),
+        (sf(ix0 + ch2), sf(iy1)),
+        (sf(ix0), sf(iy1 - ch2)),
+        (sf(ix0), sf(iy0 + ch2)),
+    ]
+    d.polygon(in_pts, outline=VIS_STEEL, width=s(4))
+
+    # Top and bottom continuous I-beam structural chords inside the plate
+    d.rectangle((s(184), s(166), s(840), s(194)), fill=CORAL)
+    d.rectangle((s(184), s(430), s(840), s(458)), fill=CORAL)
+    # Stencil breaks along the top/bottom chords
+    for bx in [398, 594]:
+        d.rectangle((s(bx), s(162), s(bx + 14), s(198)), fill=VIS_PANEL_DARK)
+        d.rectangle((s(bx), s(426), s(bx + 14), s(462)), fill=VIS_PANEL_DARK)
+
+    # Monolithic Girder 'V I S' between y=210 and y=414
+    # V (x: 196..384)
+    d.polygon(
+        [
+            (sf(196), sf(210)),
+            (sf(248), sf(210)),
+            (sf(290), sf(346)),
+            (sf(332), sf(210)),
+            (sf(384), sf(210)),
+            (sf(316), sf(414)),
+            (sf(264), sf(414)),
+        ],
+        fill=CREAM,
+    )
+    d.rectangle((s(285), s(336), s(295), s(418)), fill=VIS_PANEL_DARK)
+
+    # I (x: 428..556 — wide girder H/I pillar with diagonal radio-tower truss brace)
+    d.rectangle((s(428), s(210), s(556), s(248)), fill=CREAM)
+    d.rectangle((s(428), s(376), s(556), s(414)), fill=CREAM)
+    d.rectangle((s(468), s(258), s(516), s(366)), fill=AMBER)
+    # Diagonal structural truss cut across the center column
+    d.polygon(
+        [(sf(462), sf(298)), (sf(522), sf(278)), (sf(522), sf(292)), (sf(462), sf(312))],
+        fill=VIS_PANEL_DARK,
+    )
+    d.polygon(
+        [(sf(462), sf(332)), (sf(522), sf(312)), (sf(522), sf(326)), (sf(462), sf(346))],
+        fill=VIS_PANEL_DARK,
+    )
+
+    # S (x: 600..828 — heavy angular girder S)
+    d.polygon(
+        [
+            (sf(628), sf(210)),
+            (sf(828), sf(210)),
+            (sf(828), sf(250)),
+            (sf(652), sf(250)),
+            (sf(652), sf(292)),
+            (sf(600), sf(292)),
+            (sf(600), sf(238)),
+        ],
+        fill=CREAM,
+    )
+    d.polygon(
+        [
+            (sf(600), sf(302)),
+            (sf(800), sf(302)),
+            (sf(828), sf(322)),
+            (sf(628), sf(322)),
+        ],
+        fill=CORAL,
+    )
+    d.polygon(
+        [
+            (sf(776), sf(332)),
+            (sf(828), sf(332)),
+            (sf(828), sf(386)),
+            (sf(800), sf(414)),
+            (sf(600), sf(414)),
+            (sf(600), sf(374)),
+            (sf(776), sf(374)),
+        ],
+        fill=CREAM,
+    )
+
+    # Typography below
+    f_main = load_font("ChakraPetch-Bold.ttf", 50)
+    f_sub = load_font("IBMPlexMono-Bold.ttf", 21)
+    f_era = load_font("IBMPlexMono-SemiBold.ttf", 15.5)
+
+    draw_tracked_text(d, 512, 594, "VANGUARD INTERPLANETARY", f_main, CREAM, tracking=5.8)
+    draw_tracked_text(d, 512, 654, "STRUCTURES", f_main, CORAL, tracking=12.0)
+
+    d.rectangle((s(136), s(702), s(888), s(710)), fill=AMBER)
+
+    # Dual 1967 / 1985 wordmark heritage bar
+    d.rounded_rectangle((s(96), s(736), s(928), s(856)), radius=s(8), fill=VIS_PANEL_DARK, outline=VIS_STEEL_DARK, width=s(3))
+    draw_tracked_text(d, 512, 768, "1967 ORIG:  V.I.S. · VANGUARD INTERPLANETARY STRUCTURES CORP.", f_era, VIS_BRASS, tracking=1.2)
+    d.line([(s(140), s(796)), (s(884), s(796))], fill=VIS_STEEL_DARK, width=s(2))
+    draw_tracked_text(d, 512, 826, "1985 SPEC:  VIS · VANGUARD INTERPLANETARY STRUCTURES · ILC-R", f_era, CREAM, tracking=1.2)
+
+    draw_tracked_text(
+        d,
+        512,
+        912,
+        "LANDERS · HABITATS · WORKSHOPS · TOWERS · SOLAR ARRAYS · CRATES",
+        f_sub,
+        AMBER,
+        tracking=1.5,
+    )
+
+    return downsample(img)
+
+
+def build_vis_1967() -> Image.Image:
+    """
+    Generates Logs/logos/vis/1967.png (1024x1024):
+    The 1967 original VIS wordmark & emblem from the 'Scout 3' soft-lander era
+    (two years before the 1969 Moon landing). Shows the mid-1960s double-line 'V-I-S'
+    inside an asymmetric Scout tripod/delta wing, slab-serifed 'CORPORATION' wordmark,
+    and sweeping orbital vector tail.
+    """
+    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+
+    # Outer 1967 anodized brass-and-charcoal equipment plate so it reads on any background
+    d.rounded_rectangle((s(56), s(56), s(968), s(968)), radius=s(28), fill=(18, 20, 28, 255), outline=VIS_BRASS, width=s(7))
+    d.rounded_rectangle((s(74), s(74), s(950), s(950)), radius=s(20), outline=(92, 78, 52, 255), width=s(3))
+
+    # Top era header bar
+    d.rectangle((s(74), s(74), s(950), s(138)), fill=(32, 28, 24, 255))
+    d.line([(s(74), s(138)), (s(950), s(138))], fill=VIS_BRASS, width=s(4))
+    f_hdr = load_font("IBMPlexMono-Bold.ttf", 19)
+    draw_tracked_text(
+        d,
+        512,
+        106,
+        "1967 ORIGINAL WORDMARK  ·  SCOUT-3 LUNAR SOFT-LANDER ERA",
+        f_hdr,
+        VIS_BRASS,
+        tracking=2.0,
+    )
+
+    # --- 1967 Mid-Century Space-Age Emblem (y: 170..465) ---
+    cx, cy = 512, 318
+    # Tilted thin 1960s orbital ring
+    draw_thick_arc(d, cx, cy + 8, 265, 82, -165, 175, 7.0, VIS_BRASS, rot_deg=-16, round_caps=True)
+    draw_thick_arc(d, cx, cy + 8, 242, 66, -140, 150, 3.0, CORAL, rot_deg=-16, round_caps=True)
+
+    # Central 1967 diamond/shield badge
+    shield_pts = [
+        (sf(512), sf(162)),
+        (sf(716), sf(278)),
+        (sf(652), sf(442)),
+        (sf(372), sf(442)),
+        (sf(308), sf(278)),
+    ]
+    d.polygon(shield_pts, fill=(24, 26, 36, 255), outline=CREAM, width=s(6))
+    inner_shield = [
+        (sf(512), sf(178)),
+        (sf(696), sf(284)),
+        (sf(638), sf(428)),
+        (sf(386), sf(428)),
+        (sf(328), sf(284)),
+    ]
+    d.polygon(inner_shield, outline=VIS_BRASS, width=s(3))
+
+    # Scout-3 three-legged lander silhouette struts at base of shield
+    d.line([(s(430), s(386)), (s(388), s(436))], fill=VIS_BRASS, width=s(6))
+    d.line([(s(594), s(386)), (s(636), s(436))], fill=VIS_BRASS, width=s(6))
+    d.line([(s(512), s(386)), (s(512), s(438))], fill=VIS_BRASS, width=s(6))
+    for fx in [388, 512, 636]:
+        d.line([(s(fx - 18), s(438)), (s(fx + 18), s(438))], fill=CORAL, width=s(6))
+
+    # 1967 Thin Double-Line Inline 'V - I - S' Monogram inside the shield (kept cleanly inside pentagon)
+    for col, w_line in [(CREAM, 14), ((24, 26, 36, 255), 4)]:
+        d.line([(s(382), s(266)), (s(422), s(368)), (s(462), s(266))], fill=col, width=s(w_line), joint="curve")
+    # I (with flared top and bottom slab serifs, double-stroke)
+    d.line([(s(488), s(266)), (s(536), s(266))], fill=CREAM, width=s(10))
+    d.line([(s(488), s(368)), (s(536), s(368))], fill=CREAM, width=s(10))
+    d.line([(s(512), s(266)), (s(512), s(368))], fill=CREAM, width=s(15))
+    d.line([(s(512), s(274)), (s(512), s(360))], fill=(24, 26, 36, 255), width=s(4))
+    # S (slender angular 1960s double-line S)
+    s67_pts = [
+        (s(638), s(278)),
+        (s(624), s(266)),
+        (s(576), s(266)),
+        (s(562), s(280)),
+        (s(562), s(306)),
+        (s(576), s(316)),
+        (s(624), s(320)),
+        (s(638), s(332)),
+        (s(638), s(354)),
+        (s(624), s(368)),
+        (s(572), s(368)),
+        (s(558), s(354)),
+    ]
+    d.line(s67_pts, fill=CREAM, width=s(14), joint="curve")
+    d.line(s67_pts, fill=(24, 26, 36, 255), width=s(4), joint="curve")
+
+    # 4-pointed 1967 astrometric star at apex
+    draw_4pt_star(d, 512, 212, 22, 6, VIS_BRASS)
+
+    # --- 1967 Full Wordmark Lockup (y: 490..720) ---
+    f_w67_top = load_font("ChakraPetch-SemiBold.ttf", 40)
+    f_w67_mid = load_font("ChakraPetch-Bold.ttf", 46)
+    f_w67_corp = load_font("IBMPlexMono-SemiBold.ttf", 24)
+    f_w67_sub = load_font("IBMPlexMono-Medium.ttf", 16)
+
+    draw_tracked_text(d, 512, 514, "V A N G U A R D", f_w67_mid, CREAM, tracking=8.0)
+    draw_tracked_text(d, 512, 574, "INTERPLANETARY STRUCTURES", f_w67_top, VIS_BRASS, tracking=3.8)
+    draw_tracked_text(d, 512, 628, "C O R P O R A T I O N", f_w67_corp, CORAL, tracking=6.5)
+
+    # Iconic 1967 sweeping tapered vector tail + delta dart beneath wordmark
+    tail_pts = [
+        (sf(132), sf(666)),
+        (sf(796), sf(660)),
+        (sf(782), sf(646)),
+        (sf(884), sf(664)),
+        (sf(782), sf(682)),
+        (sf(796), sf(668)),
+        (sf(132), sf(672)),
+    ]
+    d.polygon(tail_pts, fill=VIS_BRASS)
+
+    draw_tracked_text(
+        d,
+        512,
+        708,
+        "AEROSPACE & LUNAR PROBE STRUCTURES  ·  SCOUT-3 CONTRACT (1967)",
+        f_w67_sub,
+        CREAM,
+        tracking=1.6,
+    )
+
+    # --- Bottom 1967 Design Anatomy Box (y: 748..922) ---
+    d.rounded_rectangle((s(88), s(748), s(936), s(920)), radius=s(12), fill=(12, 14, 20, 255), outline=(72, 64, 46, 255), width=s(3))
+    f_box_t = load_font("IBMPlexMono-Bold.ttf", 15.5)
+    f_box_b = load_font("IBMPlexMono-Regular.ttf", 13.0)
+    draw_tracked_text(d, 512, 776, "1967 WORDMARK CHARACTERISTICS (BEFORE 1985 STANDARDIZATION)", f_box_t, VIS_BRASS, tracking=1.0)
+    draw_tracked_text(d, 512, 814, "1. DOUBLE-LINE INLINE 'VIS' MONOGRAM: Intricate thin parallel strokes & 5-sided Scout shield.", f_box_b, CREAM, tracking=0.0)
+    draw_tracked_text(d, 512, 846, "2. THREE-STACKED 'CORPORATION' TITLE: Wide-tracked 1960s aerospace lettering in brass gold.", f_box_b, CREAM, tracking=0.0)
+    draw_tracked_text(d, 512, 878, "3. TAPERED VECTOR TAIL: Sweeping 1960s delta-arrow underline (retired in 1985 for hull stencils).", f_box_b, CORAL, tracking=0.0)
+
+    return downsample(img)
+
+
+def build_vis_1985() -> Image.Image:
+    """
+    Generates Logs/logos/vis/1985.png (1024x1024):
+    The matured 1985 VIS wordmark & industrial stencil mark from the 'Lumen-04 / ILC-R'
+    Departure era. Shows how the 1967 mark stripped its thin inline strokes, tripod shield,
+    and 'CORPORATION' suffix to become a bold single-weight TRW/RCA-era stencil lockup.
+    """
+    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+
+    # Outer 1985 heavy-plant dark steel & coral-orange specification plate
+    d.rounded_rectangle((s(56), s(56), s(968), s(968)), radius=s(28), fill=VIS_PANEL_DARK, outline=CORAL, width=s(7))
+    d.rounded_rectangle((s(74), s(74), s(950), s(950)), radius=s(20), outline=VIS_STEEL_DARK, width=s(3))
+
+    # Top era header bar
+    d.rectangle((s(74), s(74), s(950), s(138)), fill=(34, 22, 18, 255))
+    d.line([(s(74), s(138)), (s(950), s(138))], fill=CORAL, width=s(4))
+    f_hdr = load_font("IBMPlexMono-Bold.ttf", 19)
+    draw_tracked_text(
+        d,
+        512,
+        106,
+        "1985 MATURED WORDMARK  ·  LUMEN-04 / ILC-R HEAVY STRUCTURES ERA",
+        f_hdr,
+        CORAL,
+        tracking=1.8,
+    )
+
+    # --- 1985 Matured Heavy Stencil Emblem (y: 162..452) ---
+    d.rounded_rectangle((s(156), s(164), s(868), s(452)), radius=s(68), fill=(12, 15, 22, 255), outline=CREAM, width=s(9))
+    d.rounded_rectangle((s(174), s(182), s(850), s(434)), radius=s(52), outline=CORAL, width=s(4))
+
+    # Ribbed cylinder flanges on top and bottom
+    for rx0, rx1 in [(272, 376), (460, 564), (648, 752)]:
+        d.polygon([(sf(rx0), sf(164)), (sf(rx0 + 12), sf(146)), (sf(rx1 - 12), sf(146)), (sf(rx1), sf(164))], fill=CREAM)
+        d.polygon([(sf(rx0), sf(452)), (sf(rx0 + 12), sf(470)), (sf(rx1 - 12), sf(470)), (sf(rx1), sf(452))], fill=CREAM)
+
+    draw_vis_monogram_a(
+        d,
+        cx=512,
+        cy=308,
+        scale=1.18,
+        col_v=CREAM,
+        col_i=CREAM,
+        col_s=CREAM,
+        col_bar=CORAL,
+        bg_cut=(12, 15, 22, 255),
+    )
+
+    # --- 1985 Matured Wordmark Lockup (y: 492..716) ---
+    f_w85_main = load_font("ChakraPetch-Bold.ttf", 45)
+    f_w85_sub = load_font("ChakraPetch-Bold.ttf", 34)
+    f_w85_meta = load_font("IBMPlexMono-Bold.ttf", 15.0)
+
+    # Top structural I-beam rule
+    d.rectangle((s(124), s(494), s(900), s(504)), fill=CORAL)
+    draw_tracked_text(d, 512, 548, "VANGUARD INTERPLANETARY", f_w85_main, CREAM, tracking=4.8)
+
+    # Solid Coral-Orange Stencil Banner for 'STRUCTURES'
+    d.rounded_rectangle((s(124), s(596), s(900), s(662)), radius=s(8), fill=CORAL)
+    d.rectangle((s(124), s(622), s(148), s(636)), fill=VIS_PANEL_DARK)
+    d.rectangle((s(876), s(622), s(900), s(636)), fill=VIS_PANEL_DARK)
+    draw_tracked_text(d, 512, 629, "S T R U C T U R E S", f_w85_sub, WARM_DARK, tracking=9.0)
+
+    draw_tracked_text(
+        d,
+        512,
+        702,
+        "ILC-R PRIME STRUCTURES CONTRACTOR · CARGO LANDERS · HABITATS · TOWERS · CRATES",
+        f_w85_meta,
+        AMBER,
+        tracking=0.9,
+    )
+
+    # --- Bottom 1967 -> 1985 Maturation Summary Box (y: 748..922) ---
+    d.rounded_rectangle((s(88), s(748), s(936), s(920)), radius=s(12), fill=(12, 14, 20, 255), outline=VIS_STEEL_DARK, width=s(3))
+    f_box_t = load_font("IBMPlexMono-Bold.ttf", 15.5)
+    f_box_b = load_font("IBMPlexMono-Regular.ttf", 13.0)
+    draw_tracked_text(d, 512, 776, "HOW THE 1967 WORDMARK MATURED INTO THE 1985 VERSION", f_box_t, CORAL, tracking=1.0)
+    draw_tracked_text(d, 512, 814, "1. INLINE -> SOLID STENCIL: 1967 thin double-lines fused into 1985 heavy single-weight slabs.", f_box_b, CREAM, tracking=0.0)
+    draw_tracked_text(d, 512, 846, "2. STREAMLINED NAME: Dropped 'CORPORATION' & periods; locked into a 2-tier geometric grid.", f_box_b, CREAM, tracking=0.0)
+    draw_tracked_text(d, 512, 878, "3. HULL-READY GEOMETRY: 24px stencil bridges & ribbed-cylinder frame survive vacuum abrasion.", f_box_b, AMBER, tracking=0.0)
+
+    return downsample(img)
+
+
+def build_vis_stencil() -> Image.Image:
+    """
+    Generates Logs/logos/vis/stencil.png (1024x1024 RGB):
+    Hull-stencil mock: the VIS mark & wordmark stencilled on a ribbed cream enamel panel
+    (#F4E6C8) with a warm coral-orange stripe (#FF8A5B), weathered/worn in Lunarion's
+    low-poly/flat-facet art style (zero clusters of dots or holes).
+    """
+    img = Image.new("RGBA", (W, H), (235, 220, 190, 255))
+    d = ImageDraw.Draw(img)
+
+    # 1. Base Cream Enamel Hull Panel (#F4E6C8) with subtle horizontal structural rib bands
+    d.rectangle((0, 0, W, H), fill=CREAM)
+
+    # Horizontal ribbed hull corrugations (top lit bevel, mid face, lower shadow bevel)
+    rib_ys = [88, 196, 780, 912]
+    for ry in rib_ys:
+        # Sunlit top bevel
+        d.rectangle((0, s(ry - 18), W, s(ry - 6)), fill=(252, 242, 220, 255))
+        # Raised rib face
+        d.rectangle((0, s(ry - 6), W, s(ry + 14)), fill=(236, 221, 190, 255))
+        # Earthlit underside shadow bevel
+        d.rectangle((0, s(ry + 14), W, s(ry + 26)), fill=(196, 182, 154, 255))
+
+    # Vertical hull plate seam lines near left and right edges + rectangular weld clamps (ZERO round rivets)
+    for sx in [76, 948]:
+        d.line([(s(sx), 0), (s(sx), H)], fill=(176, 162, 136, 255), width=s(5))
+        d.line([(s(sx + 5), 0), (s(sx + 5), H)], fill=(250, 240, 216, 255), width=s(3))
+        # Rectangular flat seam clamps (3 widely spaced clamps per seam, zero holes)
+        for cy_clamp in [142, 512, 846]:
+            d.rectangle(
+                (s(sx - 18), s(cy_clamp - 12), s(sx + 22), s(cy_clamp + 12)),
+                fill=(162, 148, 124, 255),
+                outline=(120, 108, 90, 255),
+                width=s(3),
+            )
+            # Subtle vertical rust/oxide streak running down from clamp (VISION.md line 243)
+            d.polygon(
+                [
+                    (sf(sx - 8), sf(cy_clamp + 12)),
+                    (sf(sx + 10), sf(cy_clamp + 12)),
+                    (sf(sx + 4), sf(cy_clamp + 78)),
+                    (sf(sx - 4), sf(cy_clamp + 64)),
+                ],
+                fill=(208, 142, 108, 255),
+            )
+
+    # Low-poly flat-facet sun-faded enamel patches on the cream hull
+    fade_polys = [
+        [(120, 40), (380, 40), (330, 165), (95, 140)],
+        [(680, 215), (935, 215), (910, 340), (720, 310)],
+        [(110, 795), (420, 805), (390, 895), (105, 885)],
+    ]
+    for poly in fade_polys:
+        d.polygon([(sf(x), sf(y)) for x, y in poly], fill=(232, 216, 184, 255))
+
+    # 2. Warm Coral-Orange Hull Stripe (#FF8A5B) across lower-middle panel (y: 556..718)
+    stripe_y0, stripe_y1 = 556, 718
+    d.rectangle((s(78), s(stripe_y0), s(946), s(stripe_y1)), fill=CORAL)
+    # Narrow amber trim rule above the coral stripe
+    d.rectangle((s(78), s(stripe_y0 - 18), s(946), s(stripe_y0 - 6)), fill=AMBER)
+
+    # Worn / chipped low-poly facets along the orange stripe edges (exposing cream primer & slate metal)
+    stripe_chips = [
+        [(78, 556), (168, 556), (142, 588), (78, 596)],
+        [(390, 556), (465, 556), (448, 574), (404, 570)],
+        [(770, 556), (860, 556), (842, 584), (788, 576)],
+        [(210, 696), (310, 688), (335, 718), (195, 718)],
+        [(620, 692), (745, 684), (768, 718), (604, 718)],
+        [(882, 640), (946, 622), (946, 718), (896, 718)],
+    ]
+    for chip in stripe_chips:
+        d.polygon([(sf(x), sf(y)) for x, y in chip], fill=(236, 220, 188, 255))
+
+    # Darker sun-baked oxide patch on right side of orange stripe
+    d.polygon(
+        [(sf(710), sf(580)), (sf(910), sf(572)), (sf(890), sf(668)), (sf(740), sf(650))],
+        fill=RUST,
+    )
+
+    # 3. Stencilled 'VIS' Industrial Mark on the Cream Hull Panel (y: 232..514)
+    stencil_ink = (36, 42, 52, 255)       # Worn charcoal stencil paint
+    stencil_ink_faded = (58, 64, 74, 255) # Slightly sun-faded charcoal
+
+    st_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    sd = ImageDraw.Draw(st_layer)
+
+    # Outer stencil frame corners & horizontal ribbed-hull bars in charcoal stencil ink
+    sd.polygon(
+        [(sf(148), sf(232)), (sf(216), sf(232)), (sf(216), sf(248)), (sf(166), sf(248)),
+         (sf(166), sf(498)), (sf(216), sf(498)), (sf(216), sf(514)), (sf(148), sf(514))],
+        fill=stencil_ink,
+    )
+    sd.polygon(
+        [(sf(876), sf(232)), (sf(808), sf(232)), (sf(808), sf(248)), (sf(858), sf(248)),
+         (sf(858), sf(498)), (sf(808), sf(498)), (sf(808), sf(514)), (sf(876), sf(514))],
+        fill=stencil_ink,
+    )
+    # Top and bottom broken stencil frame bars (with clear 20px breathing gap above/below VIS)
+    for bx0, bx1 in [(242, 382), (412, 612), (642, 782)]:
+        sd.rectangle((s(bx0), s(232), s(bx1), s(246)), fill=stencil_ink)
+        sd.rectangle((s(bx0), s(500), s(bx1), s(514)), fill=stencil_ink)
+
+    # Bold 3-letter 'VIS' stencil mark in center of cream panel (y spans 373 +- 106 = 267..479)
+    draw_vis_monogram_a(
+        sd,
+        cx=512,
+        cy=373,
+        scale=1.15,
+        col_v=stencil_ink,
+        col_i=stencil_ink,
+        col_s=stencil_ink_faded,
+        col_bar=RUST,
+        bg_cut=(0, 0, 0, 0),
+    )
+
+    # Re-punch the stencil bridges on st_layer with transparent alpha so cream hull shows through
+    sd.rectangle((s(512 - 144), s(373 + 10), s(512 - 131), s(373 + 115)), fill=(0, 0, 0, 0))
+    sd.rectangle((s(512 - 32), s(373 - 20), s(512 + 32), s(373 - 10)), fill=(0, 0, 0, 0))
+    sd.rectangle((s(512 - 32), s(373 + 10), s(512 + 32), s(373 + 20)), fill=(0, 0, 0, 0))
+
+    # 4. Stencilled Wordmark inside the Coral-Orange Stripe (knockout Cream stencil)
+    f_stripe_main = load_font("ChakraPetch-Bold.ttf", 44)
+    f_stripe_sub = load_font("IBMPlexMono-Bold.ttf", 21)
+    draw_tracked_text(
+        sd,
+        512,
+        610,
+        "VANGUARD INTERPLANETARY",
+        f_stripe_main,
+        CREAM,
+        tracking=5.0,
+    )
+    draw_tracked_text(
+        sd,
+        512,
+        668,
+        "STRUCTURES  ·  ILC-R PRIME CONTRACTOR",
+        f_stripe_sub,
+        (30, 24, 20, 255),
+        tracking=3.2,
+    )
+
+    # 5. Stencilled Hull Manifest markings at top and bottom of panel (well clear of x=76 and x=948 clamps)
+    f_hull_code = load_font("IBMPlexMono-Bold.ttf", 16)
+    f_hull_sm = load_font("IBMPlexMono-SemiBold.ttf", 15)
+    draw_tracked_text(
+        sd,
+        512,
+        142,
+        "ILC-R · PRESSURE MODULE HULL SEC-04 · LOT 85-V · MASS 4 200 KG",
+        f_hull_code,
+        stencil_ink_faded,
+        tracking=1.2,
+    )
+    draw_tracked_text(
+        sd,
+        512,
+        848,
+        "FORM + WELD COMPATIBLE  //  ROVER WORK BAND 0.35–1.46m  //  VIS-1985",
+        f_hull_sm,
+        stencil_ink_faded,
+        tracking=1.5,
+    )
+
+    # 6. Apply realistic low-poly wear, diagonal scrape scratches, and paint chips across the stencil layer
+    wear_scratches = [
+        # Diagonal micro-meteorite / cargo-handling scrape across V and I
+        [(230, 290), (244, 284), (430, 445), (418, 452)],
+        # Scrape across the S and right bracket
+        [(630, 260), (642, 256), (790, 410), (778, 416)],
+        # Chip on the V left leg
+        [(264, 330), (306, 322), (298, 358), (258, 352)],
+        # Chip on the S bottom bar
+        [(690, 458), (748, 450), (742, 492), (684, 486)],
+        # Scrape across the wordmark on the orange stripe
+        [(310, 585), (324, 582), (410, 688), (396, 692)],
+        [(660, 590), (672, 586), (735, 682), (722, 686)],
+    ]
+    for wpoly in wear_scratches:
+        sd.polygon([(sf(x), sf(y)) for x, y in wpoly], fill=(0, 0, 0, 0))
+
+    img.alpha_composite(st_layer)
+    d = ImageDraw.Draw(img)
+
+    # Draw visible pale metal/primer scratch traces along the main diagonal scrapes
+    d.polygon(
+        [(sf(232), sf(290)), (sf(240), sf(286)), (sf(426), sf(445)), (sf(420), sf(449))],
+        fill=(212, 198, 172, 255),
+    )
+    d.polygon(
+        [(sf(632), sf(260)), (sf(639), sf(257)), (sf(786), sf(410)), (sf(780), sf(414))],
+        fill=(212, 198, 172, 255),
+    )
+
+    # 7. Lunar Regolith Dust Drift piled gently along the bottom rib ledge (VISION.md line 244)
+    dust_poly = [
+        (0, sf(946)),
+        (sf(180), sf(924)),
+        (sf(410), sf(936)),
+        (sf(690), sf(918)),
+        (sf(890), sf(932)),
+        (W, sf(920)),
+        (W, H),
+        (0, H),
+    ]
+    d.polygon(dust_poly, fill=(166, 167, 171, 255))
+    dust_shadow = [
+        (0, sf(968)),
+        (sf(240), sf(952)),
+        (sf(560), sf(960)),
+        (sf(820), sf(946)),
+        (W, sf(954)),
+        (W, H),
+        (0, H),
+    ]
+    d.polygon(dust_shadow, fill=(120, 122, 128, 255))
+
+    return downsample(img).convert("RGB")
+
+
+def generate_brand_vis():
+    out_dir = OUT_ROOT / "vis"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    a = build_vis_a()
+    b = build_vis_b()
+    c = build_vis_c()
+    w1967 = build_vis_1967()
+    w1985 = build_vis_1985()
+    stencil = build_vis_stencil()
+
+    a.save(out_dir / "a.png")
+    b.save(out_dir / "b.png")
+    c.save(out_dir / "c.png")
+
+    make_on_black(a, "VIS", "DIRECTION A").save(out_dir / "a_black.png")
+    make_on_black(b, "VIS", "DIRECTION B").save(out_dir / "b_black.png")
+    make_on_black(c, "VIS", "DIRECTION C").save(out_dir / "c_black.png")
+
+    w1967.save(out_dir / "1967.png")
+    w1985.save(out_dir / "1985.png")
+    make_on_black(w1967, "VIS", "1967 WORDMARK").save(out_dir / "1967_black.png")
+    make_on_black(w1985, "VIS", "1985 WORDMARK").save(out_dir / "1985_black.png")
+
+    stencil.save(out_dir / "stencil.png")
+
+    sheet = make_brand_sheet_on_black(
+        [a, b, c],
+        ["A · RCA/TRW RIBBED BLOCK", "B · STEPPED HATCH RING", "C · GIRDER CRATE STENCIL"],
+        "4 · VIS (VANGUARD INTERPLANETARY STRUCTURES)",
+        CORAL,
+    )
+    sheet.save(out_dir / "on_black.png")
+    print("[build_logos] Generated VIS logos in", out_dir)
+
+
 def generate_index_html():
-    """Writes Logs/logos/index.html showing all 3 brands side by side with a one-line rationale each."""
+    """Writes Logs/logos/index.html showing all 4 brands side by side with a one-line rationale each."""
     html = """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1544,7 +2541,7 @@ def generate_index_html():
   <header>
     <div>
       <h1>Lunarion — Maker &amp; Agency Brand Identities (1970s–80s Concepts)</h1>
-      <div class="subtitle">1024×1024 Transparent PNGs + On-Black Frames + 07 1-Colour Amber CRT Boot Screen · Zero Dot/Hole Clusters</div>
+      <div class="subtitle">1024×1024 Transparent PNGs + On-Black Frames + 07 CRT Boot Screen + VIS 1967→1985 &amp; Worn Hull Stencil · Zero Dot/Hole Clusters</div>
     </div>
     <div class="controls">
       <button class="btn active" id="btn-trans" onclick="setMode('trans')">Transparent PNGs (a/b/c.png)</button>
@@ -1681,6 +2678,70 @@ def generate_index_html():
     </div>
   </section>
 
+  <!-- 4. VIS — VANGUARD INTERPLANETARY STRUCTURES -->
+  <section class="brand">
+    <div class="brand-header">
+      <div class="brand-title" style="color: var(--coral);">4 · VIS — Vanguard Interplanetary Structures</div>
+      <div class="brand-meta">ILC's structures contractor since the 1960s (lander, habitat, workshop, tower, solar arrays, crates, 1967 Scout) · Heavy plant, ribbed cylinders, round hatches</div>
+    </div>
+    <div class="grid-3">
+      <div class="card pick">
+        <div class="img-wrap trans-preview"><img data-trans="vis/a.png" data-black="vis/a_black.png" src="vis/a.png" alt="VIS Direction A" /></div>
+        <div class="card-body">
+          <div class="card-label"><span>VIS · DIRECTION A — RCA/TRW RIBBED BLOCK STENCIL</span><span class="badge-pick">★ PICK</span></div>
+          <p class="rationale">1968 RCA/TRW-era heavy block-slab "VIS" stencil mark locked inside a ribbed pressure-cylinder stadium frame with side bulkhead lugs and a 1967→1985 wordmark evolution bar.</p>
+          <div class="file-links">Files: <a href="vis/a.png">vis/a.png</a> (transparent) · <a href="vis/a_black.png">vis/a_black.png</a> · <a href="vis/on_black.png">vis/on_black.png</a></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="img-wrap trans-preview"><img data-trans="vis/b.png" data-black="vis/b_black.png" src="vis/b.png" alt="VIS Direction B" /></div>
+        <div class="card-body">
+          <div class="card-label"><span>VIS · DIRECTION B — TRW STEPPED MONOGRAM &amp; ROUND HATCH</span></div>
+          <p class="rationale">Saul Bass / TRW-inspired stepped "V–I–S" heavy-plant monogram rising across a round airlock hatch with four solid dogging latches and ribbed interior pressure bands.</p>
+          <div class="file-links">Files: <a href="vis/b.png">vis/b.png</a> (transparent) · <a href="vis/b_black.png">vis/b_black.png</a></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="img-wrap trans-preview"><img data-trans="vis/c.png" data-black="vis/c_black.png" src="vis/c.png" alt="VIS Direction C" /></div>
+        <div class="card-body">
+          <div class="card-label"><span>VIS · DIRECTION C — GIRDER-TRUSS &amp; CRATE STENCIL</span></div>
+          <p class="rationale">Chamfered octagonal crate-and-bulkhead stencil uniting "V I S" between continuous top and bottom structural I-beam chords with a radio-tower truss pillar.</p>
+          <div class="file-links">Files: <a href="vis/c.png">vis/c.png</a> (transparent) · <a href="vis/c_black.png">vis/c_black.png</a></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="crt-section">
+      <div class="crt-title">VIS Wordmark Maturation (1967 Scout-3 Era → 1985 Lumen-04 Era) &amp; Worn Cream/Orange Hull-Stencil Mockup</div>
+      <div class="grid-3">
+        <div class="card">
+          <div class="img-wrap trans-preview"><img data-trans="vis/1967.png" data-black="vis/1967_black.png" src="vis/1967.png" alt="VIS 1967 Wordmark" /></div>
+          <div class="card-body">
+            <div class="card-label"><span>VIS · 1967 WORDMARK (vis/1967.png)</span></div>
+            <p class="rationale">1967 Scout-3 soft-lander era heritage mark: thin double-line "VIS" monogram inside a tripod lander shield above the three-tier "VANGUARD INTERPLANETARY STRUCTURES CORPORATION" wordmark and vector tail.</p>
+            <div class="file-links">Files: <a href="vis/1967.png">vis/1967.png</a> · <a href="vis/1967_black.png">vis/1967_black.png</a></div>
+          </div>
+        </div>
+        <div class="card pick">
+          <div class="img-wrap trans-preview"><img data-trans="vis/1985.png" data-black="vis/1985_black.png" src="vis/1985.png" alt="VIS 1985 Wordmark" /></div>
+          <div class="card-body">
+            <div class="card-label"><span>VIS · 1985 MATURED WORDMARK (vis/1985.png)</span><span class="badge-pick">★ 1985 SPEC</span></div>
+            <p class="rationale">1985 Lumen-04 / ILC-R era matured standard: inline strokes fused into a single-weight hull stencil, "CORPORATION" dropped, and typography locked into a two-tier industrial grid.</p>
+            <div class="file-links">Files: <a href="vis/1985.png">vis/1985.png</a> · <a href="vis/1985_black.png">vis/1985_black.png</a></div>
+          </div>
+        </div>
+        <div class="card pick">
+          <div class="img-wrap"><img src="vis/stencil.png" alt="VIS Worn Hull Stencil Mock" /></div>
+          <div class="card-body">
+            <div class="card-label"><span>VIS · WORN HULL STENCIL MOCK (vis/stencil.png)</span><span class="badge-pick">★ HULL MOCK</span></div>
+            <p class="rationale">The 1985 "VIS" mark and wordmark spray-stencilled across a ribbed cream enamel hull panel (#F4E6C8) with a worn coral-orange stripe (#FF8A5B), low-poly paint chips, seam oxide streaks, and basal regolith dust.</p>
+            <div class="file-links">File: <a href="vis/stencil.png">vis/stencil.png</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <script>
     function setMode(mode) {
       document.getElementById('btn-trans').classList.toggle('active', mode === 'trans');
@@ -1700,9 +2761,9 @@ def generate_index_html():
 
 
 if __name__ == "__main__":
-    generate_brand_ilc()
-    generate_brand_kessler()
-    generate_brand_tycho()
+    # Round 2: ILC / Kessler-Arai / Tycho are DONE - only generate VIS and update index.html
+    generate_brand_vis()
     generate_index_html()
+
 
 
