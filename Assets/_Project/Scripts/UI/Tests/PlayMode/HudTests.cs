@@ -611,6 +611,29 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator TheSelfTestLog_ScrollsUpOnceItFillsTheFace_KeepingTheNewestLineInView()
+        {
+            Boot();
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            for (int i = 0; i <= (int)BootCheckStep.Begin; i++)
+            {
+                var step = (BootCheckStep)i;
+                Events.Publish(new BootCheckStarted(step));
+                yield return Seconds(0.25f);
+                Events.Publish(new BootCheckCompleted(step, BootCheckResult.Ok));
+                yield return Seconds(0.15f);
+            }
+
+            PostView view = _rig.Ui.PostView;
+            Assert.Greater(view.ScrolledBy, 0f, "fourteen lines and two blocks overfill the face: the log scrolled up");
+            Rect last = view.Line((int)BootCheckStep.Begin).worldBound;
+            Rect room = view.Root.worldBound;
+            Assert.LessOrEqual(last.yMax, room.yMax + 1f, "the newest line is in view");
+            Assert.Greater(last.yMin, room.yMin, "not scrolled past it");
+        }
+
+        [UnityTest]
         public IEnumerator TheControlsCard_ShowsOnceAfterTheOpening_GoesOnceThePlayerDroveAndLooked_AndNotOnAReload()
         {
             InputSystem.AddDevice<Keyboard>();

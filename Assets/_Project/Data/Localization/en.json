@@ -1048,7 +1048,7 @@
         },
         {
             "key": "post.carrier",
-            "text": "UNIT 07 · CARRIER DETECTED"
+            "text": "UNIT 07 · CARRIER DETECTED\nMEM 64K · OK\nROM K-A 1983.4 · OK"
         },
         {
             "key": "post.resume",

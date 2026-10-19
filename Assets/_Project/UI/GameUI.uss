@@ -2095,6 +2095,11 @@ Label {
     bottom: 0;
     padding: 72px 96px;
     justify-content: flex-start;
+    overflow: hidden;
+}
+
+.post__column {
+    flex-shrink: 0;
 }
 
 .post__line {
