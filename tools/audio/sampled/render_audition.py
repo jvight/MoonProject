@@ -26,8 +26,7 @@ SKY_LUFS = -20.0
 UI_LUFS = -28.0
 BASE_LUFS = -24.0
 ROVER_LUFS = -26.0
-FACE_LUFS = {"face_text_tick_counter": -28.0, "face_text_tick_teletype": -28.0, "face_line_done": -26.0,
-             "face_load_step": -26.0}
+FACE_LUFS = {"face_text_tick": -28.0, "face_line_done": -26.0, "face_load_step": -26.0}
 FACE_DEFAULT_LUFS = -22.0
 TARGETS = {
     "build_place": -19.0, "build_snap": -21.5, "build_weld_loop": -21.5, "build_structure_complete": -18.5,

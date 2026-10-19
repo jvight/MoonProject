@@ -1,6 +1,6 @@
 """07's face booting, heard from 07, from recorded sources: the picture tube powering on (a degauss thunk and the
 high-voltage whine rising and settling), the maker's mark traced stroke by stroke (a faint beam hum per stroke on the
-D major pentatonic, a gentle resolve when the mark is whole), the readout typing (a soft, dry counter or teletype tick,
+D major pentatonic, a gentle resolve when the mark is whole), the readout typing (a counting machine's soft, dry tick,
 varied and quiet so a 7 s run never tires), each line's heavier tick, and the load steps (small ratchet steps, the
 last one resolving onto D). Never a beep: every tone is a recorded metal or motor carried onto its note."""
 import numpy as np
@@ -13,7 +13,6 @@ from . import dsp, parts
 STROKE_NOTES = ("D4", "E4", "F#4", "A4", "B4", "D5")
 TEXT_TICKS = 4
 LOAD_STEPS = 5
-TEXT_FAMILIES = ("counter", "teletype")
 
 
 def _glow(lib, gen, n: int, note: str, points, lp: float) -> np.ndarray:
@@ -23,22 +22,17 @@ def _glow(lib, gen, n: int, note: str, points, lp: float) -> np.ndarray:
     return dsp.peak_normalize(filters.butter(filters.highpass(x, 80.0), "lowpass", lp, order=2))
 
 
-def power_on(lib, gen, variant: int) -> np.ndarray:
+def power_on(lib, gen, _variant: int) -> np.ndarray:
     """The picture tube coming on: the degauss coil's thunk with the steel's ring on D2, then the high-voltage whine
-    rising and settling soft (variant 1: the whine a fifth lower, on A, and a breath of mains hum under it)."""
+    rising onto D6 and settling soft."""
     n = samples(1.6)
     out = np.zeros(n)
     dsp.place(out, parts.clip(lib, "latch_thunk", 1600.0, 60.0, 0.75), 0.0, 0.5)
     ring = parts.clip(lib, "metal_thud", 600.0, 62.0, 1.012)[:samples(0.6)]
     dsp.place(out, ring * dsp.shape(len(ring), [(0.0, 1.0), (0.6, 0.0)]), 0.0, 0.3)
     whine_n = samples(1.4)
-    note = ("D6", "A5")[variant]
-    whine = parts.servo(lib, gen, whine_n, note, ((0.0, -7.0), (0.6, 0.5), (1.0, 0.0)), 1.0)
+    whine = parts.servo(lib, gen, whine_n, "D6", ((0.0, -7.0), (0.6, 0.5), (1.0, 0.0)), 1.0)
     dsp.place(out, whine * dsp.shape(whine_n, [(0.0, 0.0), (0.3, 1.0), (0.8, 0.5), (1.4, 0.0)]), 0.12, 0.1)
-    if variant == 1:
-        hum_n = samples(1.2)
-        hum = parts.hum(lib, hum_n, 1.0, float(gen.uniform(1.0, 6.0)))
-        dsp.place(out, hum * dsp.shape(hum_n, [(0.0, 0.0), (0.4, 1.0), (1.2, 0.0)]), 0.1, 0.25)
     return out
 
 
@@ -50,52 +44,31 @@ def logo_stroke(lib, gen, variant: int) -> np.ndarray:
     return glow * dsp.shape(n, [(0.0, 0.0), (0.08, 1.0), (0.25, 0.6), (0.45, 0.0)])
 
 
-def logo_resolve(lib, gen, variant: int) -> np.ndarray:
-    """The mark whole: a gentle resolve on D, the bowed metal and its fifth easing in and out (variant 1: D and its
-    octave, with a soft relay tick as the picture holds)."""
+def logo_resolve(lib, gen, _variant: int) -> np.ndarray:
+    """The mark whole: a gentle resolve on D, the bowed metal and its fifth easing in and out."""
     n = samples(1.5)
     swell = dsp.shape(n, [(0.0, 0.0), (0.35, 1.0), (0.8, 0.8), (1.5, 0.0)])
     body = _glow(lib, gen, n, "D4", ((0.0, -0.3), (0.3, 0.0), (1.5, 0.0)), 2000.0)
-    upper = _glow(lib, gen, n, ("A4", "D5")[variant], ((0.0, -0.3), (0.3, 0.0), (1.5, 0.0)), 2400.0)
-    out = (body + 0.5 * upper) * swell
-    if variant == 1:
-        dsp.place(out, parts.clip(lib, "relay_click", 2400.0, 200.0, 0.9), 0.0, 0.2)
-    return to_mono(effects.reverb(out, room=0.5, damping=0.6, wet=0.15))
+    fifth = _glow(lib, gen, n, "A4", ((0.0, -0.3), (0.3, 0.0), (1.5, 0.0)), 2400.0)
+    return to_mono(effects.reverb((body + 0.5 * fifth) * swell, room=0.5, damping=0.6, wet=0.15))
 
 
-def text_tick(lib, gen, variant: int, family: str) -> np.ndarray:
-    """One typed character pair: a soft dry tick, each variant a touch different (family counter: the counting
-    machine's tick; family teletype: a typewriter carriage's notch)."""
+def text_tick(lib, gen, variant: int) -> np.ndarray:
+    """One typed character pair: the counting machine's soft dry tick, each variant a touch different in pitch and
+    brightness (chosen at random, so a long readout never repeats itself)."""
     n = samples(0.08)
     out = np.zeros(n)
     rate = (0.92, 1.0, 1.08, 1.16)[variant]
-    if family == "counter":
-        dsp.place(out, parts.clip(lib, "count_tick", 2200.0 + 150.0 * variant, 450.0, rate), 0.0, 0.7)
-    else:
-        notch = parts.clip(lib, "typewriter_carriage", 2200.0 + 150.0 * variant, 350.0, rate)[:samples(0.07)]
-        dsp.place(out, notch * dsp.shape(len(notch), [(0.0, 1.0), (0.07, 0.0)]), 0.0, 0.7)
+    dsp.place(out, parts.clip(lib, "count_tick", 2200.0 + 150.0 * variant, 450.0, rate), 0.0, 0.7)
     return out
 
 
-def text_tick_counter(lib, gen, variant: int) -> np.ndarray:
-    """A typed character pair, the counting machine's soft dry tick (4 variants, chosen at random)."""
-    return text_tick(lib, gen, variant, "counter")
-
-
-def text_tick_teletype(lib, gen, variant: int) -> np.ndarray:
-    """A typed character pair, a typewriter carriage's soft notch (4 variants, chosen at random)."""
-    return text_tick(lib, gen, variant, "teletype")
-
-
-def line_done(lib, gen, variant: int) -> np.ndarray:
-    """A readout line complete: a slightly heavier tick, the carriage settling (variant 1: a small latch instead)."""
+def line_done(lib, gen, _variant: int) -> np.ndarray:
+    """A readout line complete: a slightly heavier tick, the counter settling with a relay's contact."""
     n = samples(0.25)
     out = np.zeros(n)
-    if variant == 0:
-        dsp.place(out, parts.clip(lib, "count_tick", 1900.0, 250.0, 0.85), 0.0, 0.6)
-        dsp.place(out, parts.clip(lib, "relay_click", 1800.0, 150.0, 0.8), 0.012, 0.3)
-    else:
-        dsp.place(out, parts.clip(lib, "latch_thunk", 2000.0, 120.0, 1.25), 0.0, 0.6)
+    dsp.place(out, parts.clip(lib, "count_tick", 1900.0, 250.0, 0.85), 0.0, 0.6)
+    dsp.place(out, parts.clip(lib, "relay_click", 1800.0, 150.0, 0.8), 0.012, 0.3)
     return out
 
 
@@ -117,14 +90,12 @@ def load_step(lib, gen, variant: int) -> np.ndarray:
     return out
 
 
-# Cue id -> (recipe, variants). Per-index cues ship every variant (strokes, text ticks, load steps); the single
-# moments have an A and a B for the owner's audition (picks.FACE).
+# Cue id -> (recipe, variants). Every variant ships: one per stroke, per text tick (random) and per load step.
 SOUNDS = {
-    "face_power_on": (power_on, 2),
+    "face_power_on": (power_on, 1),
     "face_logo_stroke": (logo_stroke, len(STROKE_NOTES)),
-    "face_logo_resolve": (logo_resolve, 2),
-    "face_text_tick_counter": (text_tick_counter, TEXT_TICKS),
-    "face_text_tick_teletype": (text_tick_teletype, TEXT_TICKS),
-    "face_line_done": (line_done, 2),
+    "face_logo_resolve": (logo_resolve, 1),
+    "face_text_tick": (text_tick, TEXT_TICKS),
+    "face_line_done": (line_done, 1),
     "face_load_step": (load_step, LOAD_STEPS),
 }

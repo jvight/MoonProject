@@ -17,6 +17,7 @@ from synth.loop import periodic
 
 from sampled import base as sampled_base
 from sampled import boot as sampled_boot
+from sampled import face as sampled_face
 from sampled import rover as sampled_rover
 from sampled import picks
 import feel_cues as feel
@@ -883,6 +884,22 @@ CUES = (
     Cue("boot_begin_lamps", "oneshot_3d", picks.renderer("boot_begin_lamps"), variants=sampled_boot.SOUNDS["boot_begin_lamps"][1],
         volume=(0.6, 0.6), milestone="M3", sampled=True,
         notes="New Game self-test, the headlamps and a D F# A ready chord (Pulse 2)."),
+    Cue("face_power_on", "oneshot_3d", picks.renderer("face_power_on"), volume=(0.55, 0.55), milestone="M3",
+        sampled=True, notes="07's face booting (CrtPowerOn): the degauss thunk with a steel ring on D2, the "
+                            "high-voltage whine rising onto D6 and settling."),
+    Cue("face_logo_stroke", "tick_3d", picks.renderer("face_logo_stroke"),
+        variants=sampled_face.SOUNDS["face_logo_stroke"][1], volume=(0.5, 0.5), milestone="M3", sampled=True,
+        notes="The maker's mark, one stroke (LogoStrokeDrawn): a faint beam hum climbing D4 E4 F#4 A4 B4 D5."),
+    Cue("face_logo_resolve", "oneshot_3d", picks.renderer("face_logo_resolve"), volume=(0.5, 0.5), milestone="M3",
+        sampled=True, notes="The maker's mark whole: a gentle swell on D and its fifth in bowed metal."),
+    Cue("face_text_tick", "tick_3d", picks.renderer("face_text_tick"),
+        variants=sampled_face.SOUNDS["face_text_tick"][1], volume=(0.3, 0.3), milestone="M3", sampled=True,
+        notes="The readout typing (BootTextTyped): a counting machine's soft dry tick, 4 variants at random."),
+    Cue("face_line_done", "tick_3d", picks.renderer("face_line_done"), volume=(0.42, 0.42), milestone="M3",
+        sampled=True, notes="A readout line complete (BootLineCompleted): a heavier counter tick and a relay contact."),
+    Cue("face_load_step", "tick_3d", picks.renderer("face_load_step"),
+        variants=sampled_face.SOUNDS["face_load_step"][1], volume=(0.5, 0.5), milestone="M3", sampled=True,
+        notes="A load step (LoadStep 0..4): small ratchet steps rising, the fifth resolving on a latch and D."),
     Cue("boot_rush", "oneshot_3d", picks.renderer("boot_rush"), variants=sampled_boot.SOUNDS["boot_rush"][1],
         volume=(0.5, 0.5), milestone="M3", sampled=True,
         notes="New Game self-test fast-forwarded (BootCheckFastForwarded): a relay chattering through the remaining "
