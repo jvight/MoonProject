@@ -55,13 +55,15 @@ def slot_for(root):
     return f"{SLOT_PREFIX}-{hashlib.sha1(str(root).lower().encode()).hexdigest()[:8]}"
 
 
-def launch_arguments(slot, out_dir, log_path, scenario, until, timeout, shot_seconds):
+def launch_arguments(slot, out_dir, log_path, scenario, until, timeout, shot_seconds, lines=True):
     """The player's command line: window size, own save slot, own log, and the bot's flags."""
     args = ["-screen-width", str(WINDOW_WIDTH), "-screen-height", str(WINDOW_HEIGHT), "-screen-fullscreen", "0",
             "-saveSlot", slot, "-logFile", str(log_path), "-autoplay", scenario, "-autoplay-out", str(out_dir),
             "-autoplay-timeout", str(timeout), "-autoplay-shot-seconds", str(shot_seconds)]
     if until:
         args += ["-autoplay-until", until]
+    if not lines:
+        args += ["-autoplay-lines", "0"]
     return args
 
 
@@ -120,6 +122,8 @@ def main():
     ap.add_argument("--out", help="output folder (default Logs/autoplay/<timestamp>)")
     ap.add_argument("--timeout", type=int, default=1500, help="seconds the bot may play before it fails the run")
     ap.add_argument("--shot-seconds", type=int, default=20)
+    ap.add_argument("--no-lines", action="store_true",
+                    help="the opening shows no objective line: any line on screen is a fallback reminder and fails the run")
     ap.add_argument("--backend", choices=("mono", "il2cpp"), default=build_player.DEFAULT_BACKEND,
                     help="scripting backend of the --build player; the default is the one owner builds ship with")
     ap.add_argument("--visible", action="store_true", help="leave the window where the system puts it")
@@ -145,7 +149,7 @@ def main():
     slot = slot_for(root)
     build_player.delete_slot_files(saves_dir, slot)
     command = [str(exe)] + launch_arguments(slot, out_dir, out_dir / "player.log", args.scenario, args.until, args.timeout,
-                                            args.shot_seconds)
+                                            args.shot_seconds, not args.no_lines)
     say(f"launching {exe.name} on save slot '{slot}', output {out_dir}")
     guard = procutil.ProcessTreeGuard()
     # The window shows without taking focus, so a run never jumps in front of what the owner is doing.

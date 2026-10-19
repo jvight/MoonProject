@@ -5,7 +5,8 @@ namespace MoonProject.Autoplay
 {
     /// <summary>
     /// What the command line asks of the bot: <c>-autoplay opening -autoplay-out &lt;dir&gt;</c>, with optional
-    /// <c>-autoplay-shot-seconds</c>, <c>-autoplay-timeout</c> and <c>-autoplay-until</c> (the last beat to play).
+    /// <c>-autoplay-shot-seconds</c>, <c>-autoplay-timeout</c> and <c>-autoplay-until</c> (the last beat to play) and <c>-autoplay-lines 0</c> (the game shows no objective line
+    /// unless a stall reminder fired, which fails the run).
     /// </summary>
     public sealed class AutoplayOptions
     {
@@ -14,18 +15,20 @@ namespace MoonProject.Autoplay
         public const string ShotSecondsFlag = "-autoplay-shot-seconds";
         public const string TimeoutFlag = "-autoplay-timeout";
         public const string UntilFlag = "-autoplay-until";
+        public const string LinesFlag = "-autoplay-lines";
 
         public const float DefaultShotSeconds = 20f;
         public const float DefaultTimeoutSeconds = 900f;
 
         private AutoplayOptions(string scenario, string outDirectory, float shotSeconds, float timeoutSeconds,
-            string untilBeat)
+            string untilBeat, bool linesExpected)
         {
             Scenario = scenario;
             OutDirectory = outDirectory;
             ShotSeconds = shotSeconds;
             TimeoutSeconds = timeoutSeconds;
             UntilBeat = untilBeat;
+            LinesExpected = linesExpected;
         }
 
         /// <summary>The scenario to play; today only "opening".</summary>
@@ -41,6 +44,9 @@ namespace MoonProject.Autoplay
 
         /// <summary>Id of the last beat to play ("B3"), or empty to play the scenario to its end.</summary>
         public string UntilBeat { get; }
+
+        /// <summary>The objective lines are part of the opening: the bot checks them on screen. Off, any line is a fallback.</summary>
+        public bool LinesExpected { get; }
 
         /// <summary>
         /// True when the command line asks for the bot; <paramref name="problem"/> says what is wrong when it asks
@@ -76,7 +82,7 @@ namespace MoonProject.Autoplay
             }
 
             options = new AutoplayOptions(scenario, outDirectory, shotSeconds, timeout,
-                Value(args, UntilFlag) ?? string.Empty);
+                Value(args, UntilFlag) ?? string.Empty, Value(args, LinesFlag) != "0");
             return true;
         }
 

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine.UIElements;
 
 namespace MoonProject.Autoplay
@@ -9,6 +10,15 @@ namespace MoonProject.Autoplay
     public sealed class UiProbe
     {
         private const float VisibleOpacity = 0.05f;
+
+        /// <summary>An element this opaque counts as on screen for the one-guidance-element rule (not a fade's tail).</summary>
+        private const float GuidanceOpacity = 0.5f;
+
+        /// <summary>The guidance elements: the objective line, the chips, the call display and the controls card.</summary>
+        private static readonly string[] GuidanceNames =
+        {
+            "next-line", "prompt", "look-hint", "controls-card", "unlock-card", "call-display",
+        };
 
         public const string ObjectiveLineName = "next-line-text";
         private const string LookHintName = "look-hint";
@@ -55,6 +65,30 @@ namespace MoonProject.Autoplay
         public string ObjectiveLine()
         {
             return TextOf("next-line", "next-line-text");
+        }
+
+        /// <summary>
+        /// Fills <paramref name="into"/> with the names of the guidance elements on screen now (an objective line only
+        /// while it has words); elements the HUD does not have yet are not on screen.
+        /// </summary>
+        public void GuidanceShown(List<string> into)
+        {
+            into.Clear();
+            for (int i = 0; i < GuidanceNames.Length; i++)
+            {
+                VisualElement element = _root.Q<VisualElement>(GuidanceNames[i]);
+                if (element == null || !IsShown(element, GuidanceOpacity))
+                {
+                    continue;
+                }
+
+                if (GuidanceNames[i] == "next-line" && ObjectiveLine().Length == 0)
+                {
+                    continue;
+                }
+
+                into.Add(GuidanceNames[i]);
+            }
         }
 
         /// <summary>The key cap on the prompt chip when it is showing, else empty.</summary>
@@ -128,9 +162,14 @@ namespace MoonProject.Autoplay
 
         private static bool IsShown(VisualElement element)
         {
+            return IsShown(element, VisibleOpacity);
+        }
+
+        private static bool IsShown(VisualElement element, float minOpacity)
+        {
             for (VisualElement e = element; e != null; e = e.parent)
             {
-                if (e.resolvedStyle.display == DisplayStyle.None || e.resolvedStyle.opacity < VisibleOpacity
+                if (e.resolvedStyle.display == DisplayStyle.None || e.resolvedStyle.opacity < minOpacity
                     || e.resolvedStyle.visibility == Visibility.Hidden)
                 {
                     return false;
