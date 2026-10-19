@@ -20,6 +20,9 @@ namespace MoonProject.Gameplay
     {
         private const float GhostGlideHalfLife = 0.045f;
         private const float GhostYawHalfLife = 0.04f;
+
+        /// <summary>Squared metres within which an aim point counts as the apron bay's centre.</summary>
+        private const float ApronBayEpsilonSq = 0.01f;
         private const float WinchRepeatCooldown = 0.14f;
         private const float HoverConeDegrees = 55f;
         private const float HoverDistanceWeight = 0.25f;
@@ -571,6 +574,7 @@ namespace MoonProject.Gameplay
         }
 
         private bool _wasSnapped;
+        private bool _wasOnApron;
         private bool _wasValid = true;
 
         private void StepMenuState(Vector2 nav, float winch, bool excavatePressed, float now)
@@ -640,6 +644,7 @@ namespace MoonProject.Gameplay
 
             _ghostPoseSeeded = false;
             _wasSnapped = false;
+            _wasOnApron = false;
             _wasValid = true;
             return picked;
         }
@@ -673,6 +678,14 @@ namespace MoonProject.Gameplay
 
             Vector3 roverPosition = _rover.Position;
             Vector3 groundPoint = SampleAimPoint(roverPosition, selected);
+            bool onApron = selected.Id == StructureIds.ChargingPad && _apronCentre.HasValue &&
+                           SurfaceRules.HorizontalDistanceSquared(groundPoint, _apronCentre.Value) < ApronBayEpsilonSq;
+            if (onApron && !_wasOnApron)
+            {
+                _controller.SetGhostYaw(_tuning.ApronPadYaw);
+            }
+
+            _wasOnApron = onApron;
             var freePose = new StructurePose(groundPoint, _controller.GhostYaw);
             StructurePose snappedPose = _placedBase.SolveSnap(selected, freePose, true);
             float snappedY = _terrain.SampleHeight(snappedPose.Position.x, snappedPose.Position.z);
