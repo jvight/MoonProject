@@ -12,7 +12,7 @@ import numpy as np
 
 from synth.core import note_freq
 
-from . import boot, build, dsp, sky, voice
+from . import boot, build, dsp, sky, ui, voice
 
 LIBRARY_ENV = "MOONPROJECT_SOUND_LIBRARY"
 
@@ -48,6 +48,14 @@ SKY = {
     "sky_diamond_ring": 0,
 }
 
+# The databank on 07's face -> variant of its recipe in ui.SOUNDS: the light relay, the tube settling on D, and the
+# typewriter's single ratchet notch (warmer than the counter tick).
+UI = {
+    "ui_relay_click": 0,
+    "ui_tube_thunk": 0,
+    "ui_tape_tick": 1,
+}
+
 # 07's eye and antenna read each syllable's pitch as 0..1 between these (log).
 EYE_LOW_HZ = note_freq("D4")
 EYE_HIGH_HZ = note_freq("E6")
@@ -80,6 +88,8 @@ def label(cue_id: str) -> str:
         return cue_id
     if cue_id in SKY:
         return f"{cue_id} v{SKY[cue_id] + 1}"
+    if cue_id in UI:
+        return f"{cue_id} v{UI[cue_id] + 1}"
     return f"{cue_id} v{BUILD[cue_id] + 1}"
 
 
@@ -112,6 +122,9 @@ def renderer(cue_id: str):
     if cue_id in SKY:
         fn, _ = sky.SOUNDS[cue_id]
         pick = SKY[cue_id]
+    elif cue_id in UI:
+        fn, _ = ui.SOUNDS[cue_id]
+        pick = UI[cue_id]
     else:
         fn, _ = build.SOUNDS[cue_id]
         pick = BUILD[cue_id]

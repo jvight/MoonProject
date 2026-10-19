@@ -20,6 +20,7 @@ namespace MoonProject.Audio
 
         private readonly RepeatSoftener _focusRepeats = new RepeatSoftener();
         private readonly RepeatSoftener _sliderRepeats = new RepeatSoftener();
+        private readonly RepeatSoftener _listRepeats = new RepeatSoftener();
         private AudioDirector _director;
         private CueHandle _panelOpen;
         private CueHandle _panelClose;
@@ -31,6 +32,9 @@ namespace MoonProject.Audio
         private CueHandle _partPick;
         private CueHandle _partDrop;
         private CueHandle _partRefuse;
+        private CueHandle _relayClick;
+        private CueHandle _tubeThunk;
+        private CueHandle _tapeTick;
         private AudioSource _holdSwell;
         private float _holdCueVolume;
         private bool _holdStopping;
@@ -62,11 +66,14 @@ namespace MoonProject.Audio
             _partPick = director.Resolve(AudioCueIds.PartPick);
             _partDrop = director.Resolve(AudioCueIds.PartDrop);
             _partRefuse = director.Resolve(AudioCueIds.PartRefuse);
+            _relayClick = director.Resolve(AudioCueIds.UiRelayClick);
+            _tubeThunk = director.Resolve(AudioCueIds.UiTubeThunk);
+            _tapeTick = director.Resolve(AudioCueIds.UiTapeTick);
             CueHandle holdFill = director.Resolve(AudioCueIds.UiHoldFill);
             if (!(_panelOpen.IsValid && _panelClose.IsValid && _cursorMove.IsValid && _confirm.IsValid &&
                   _cancel.IsValid && _toast.IsValid &&
                   _holdComplete.IsValid && holdFill.IsValid && _partPick.IsValid && _partDrop.IsValid &&
-                  _partRefuse.IsValid))
+                  _partRefuse.IsValid && _relayClick.IsValid && _tubeThunk.IsValid && _tapeTick.IsValid))
             {
                 enabled = false;
                 return;
@@ -153,6 +160,15 @@ namespace MoonProject.Audio
                     break;
                 case UiCueKind.PartRefuse:
                     _director.Play2D(_partRefuse);
+                    break;
+                case UiCueKind.DatabankPageFlip:
+                    _director.Play2D(_relayClick);
+                    break;
+                case UiCueKind.DatabankChannelSettle:
+                    _director.Play2D(_tubeThunk);
+                    break;
+                case UiCueKind.DatabankListStep:
+                    PlaySoftened(_tapeTick, _listRepeats, _tuning.FocusMinInterval);
                     break;
                 default:
                     Debug.LogError($"{nameof(UiAudio)}: no sound for UI cue {cue.Kind}.", this);
