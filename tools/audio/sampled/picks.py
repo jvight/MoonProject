@@ -12,7 +12,7 @@ import numpy as np
 
 from synth.core import note_freq
 
-from . import base, boot, build, dsp, sky, ui, voice
+from . import base, boot, build, dsp, rover, sky, ui, voice
 
 LIBRARY_ENV = "MOONPROJECT_SOUND_LIBRARY"
 
@@ -37,13 +37,13 @@ BUILD = {
     "structure_power_on": 0,
 }
 
-# The New Game self-test: each check's motions (sampled/boot.py, every variant ships: the wheels, the sparks and the
-# flickers each have their own), and the cutter's fault on its result (the short strain-and-choke, so it is 07's fault
-# voice but quicker than worried's).
-BOOT = tuple(boot.SOUNDS)
+# Cues whose every variant ships: the New Game self-test's motions (sampled/boot.py: the wheels, the sparks and the
+# flickers each have their own), the base's lamps at dusk (sampled/base.py: one per lamp in the lighting order) and
+# 07's lamp switch (sampled/rover.py: on and off).
+_EVERY_VARIANT = {**boot.SOUNDS, **base.SOUNDS, **rover.SOUNDS}
 
-# The base's lamps at dusk (sampled/base.py): every variant ships, one per lamp in the lighting order.
-BASE = tuple(base.SOUNDS)
+# The self-test cutter's fault on its result: the short strain-and-choke, so it is 07's fault voice but quicker than
+# worried's.
 BOOT_FAULT = ("voice_fault", 1)
 
 # The sky's moments -> variant of its recipe in sky.SOUNDS.
@@ -87,7 +87,7 @@ def label(cue_id: str) -> str:
         return f"{tone} v{variant + 1}"
     if cue_id == "boot_fault":
         return f"{BOOT_FAULT[0]} v{BOOT_FAULT[1] + 1}"
-    if cue_id in BOOT or cue_id in BASE:
+    if cue_id in _EVERY_VARIANT:
         return cue_id
     if cue_id in SKY:
         return f"{cue_id} v{SKY[cue_id] + 1}"
@@ -114,8 +114,8 @@ def renderer(cue_id: str):
 
         render.__doc__ = f"The self-test's fault result: {voice.GESTURES[tone][pick].description}"
         return render
-    if cue_id in BOOT or cue_id in BASE:
-        step, _ = (boot.SOUNDS if cue_id in BOOT else base.SOUNDS)[cue_id]
+    if cue_id in _EVERY_VARIANT:
+        step, _ = _EVERY_VARIANT[cue_id]
 
         def render(variant, gen):
             return step(_library(), gen, variant)

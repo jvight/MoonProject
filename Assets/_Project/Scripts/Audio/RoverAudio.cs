@@ -9,7 +9,8 @@ namespace MoonProject.Audio
     /// The rover's own sounds, following <see cref="IRoverState"/> every frame: an electric hum (silent until
     /// <see cref="RoverAwoke"/>, then pitch/volume from speed and throttle), dust crunch under the wheels while
     /// grounded, soft suspension creaks on landings and bumps, and the servo lift + settle of a
-    /// <see cref="RoverRecovering"/>. Logic lives in <see cref="RoverAudioModel"/> and <see cref="RecoveryLift"/>;
+    /// <see cref="RoverRecovering"/>, and the lamps' switch at the headlamp when the player turns them on or off
+    /// (<see cref="RoverLightsSwitched"/>). Logic lives in <see cref="RoverAudioModel"/> and <see cref="RecoveryLift"/>;
     /// this component only moves the emitter and applies values. Initialised by <see cref="AudioDirector"/>.
     /// </summary>
     [DisallowMultipleComponent]
@@ -28,11 +29,13 @@ namespace MoonProject.Audio
         private AudioSource _hum;
         private AudioSource _crunch;
         private CueHandle _creak;
+        private CueHandle _lightsSwitch;
         private float _humCueVolume;
         private float _crunchCueVolume;
         private IDisposable _landedSubscription;
         private IDisposable _awokeSubscription;
         private IDisposable _recoveringSubscription;
+        private IDisposable _lightsSubscription;
 
         /// <summary>True while 07 is awake and its motor hum can play.</summary>
         public bool IsAwake => _model != null && _model.IsAwake;
@@ -61,7 +64,9 @@ namespace MoonProject.Audio
             _creak = director.Resolve(AudioCueIds.SuspensionCreak);
             CueHandle lift = director.Resolve(AudioCueIds.RecoveryLift);
             _settle = director.Resolve(AudioCueIds.RecoverySettle);
-            if (!hum.IsValid || !crunch.IsValid || !_creak.IsValid || !lift.IsValid || !_settle.IsValid)
+            _lightsSwitch = director.Resolve(AudioCueIds.RoverLightsSwitch);
+            if (!hum.IsValid || !crunch.IsValid || !_creak.IsValid || !lift.IsValid || !_settle.IsValid ||
+                !_lightsSwitch.IsValid)
             {
                 enabled = false;
                 return;
@@ -81,6 +86,7 @@ namespace MoonProject.Audio
             _landedSubscription = context.Events.Subscribe<RoverLanded>(OnRoverLanded);
             _awokeSubscription = context.Events.Subscribe<RoverAwoke>(OnRoverAwoke);
             _recoveringSubscription = context.Events.Subscribe<RoverRecovering>(OnRoverRecovering);
+            _lightsSubscription = context.Events.Subscribe<RoverLightsSwitched>(OnRoverLightsSwitched);
         }
 
         internal void Wire(RoverAudioTuning tuning)
@@ -130,6 +136,13 @@ namespace MoonProject.Audio
             }
         }
 
+        /// <summary>The lamps' switch at the headlamp: variant 0 is on (tick and filament breath), 1 is off.</summary>
+        private void OnRoverLightsSwitched(RoverLightsSwitched switched)
+        {
+            _director.PlayVariantAt(_lightsSwitch, switched.On ? 0 : 1, switched.Position,
+                switched.On ? _tuning.LightsOnVolume : _tuning.LightsOffVolume);
+        }
+
         private void OnRoverAwoke(RoverAwoke awoke)
         {
             _model?.NotifyAwoke();
@@ -162,6 +175,8 @@ namespace MoonProject.Audio
             _awokeSubscription = null;
             _recoveringSubscription?.Dispose();
             _recoveringSubscription = null;
+            _lightsSubscription?.Dispose();
+            _lightsSubscription = null;
         }
     }
 }
