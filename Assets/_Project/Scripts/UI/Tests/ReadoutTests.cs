@@ -220,6 +220,29 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
+        public void AScanSetsNextPiece_TakesItsCardsPlace_WaitingOrShowing_SoCardsNeverPileUp()
+        {
+            var settings = new GuidanceSettings();
+            var queue = new ReadoutQueue(settings);
+            const string array = "structure.solar_array.name";
+            Assert.IsFalse(queue.Offer(new ReadoutRequest(ReadoutKind.ScanSet, textKey: array, step: 1, of: 3)));
+            Assert.IsFalse(queue.Offer(new ReadoutRequest(ReadoutKind.ScanSet, textKey: array, step: 2, of: 3)),
+                "the newer piece replaces the waiting card");
+            Assert.IsTrue(queue.Tick(Frame, true, true));
+            Assert.AreEqual(2, queue.Current.Step, "only the newest shows");
+            Run(queue, settings.ScanSetHoldSeconds - 0.5f, true);
+            Assert.IsTrue(queue.Offer(new ReadoutRequest(ReadoutKind.ScanSet, textKey: array, step: 3, of: 3)),
+                "the last piece lands on the card that shows");
+            Assert.AreEqual(3, queue.Current.Step);
+            Run(queue, settings.ScanSetHoldSeconds - 0.5f, true);
+            Assert.IsTrue(queue.IsShowing, "with a fresh, short hold");
+            Run(queue, 1f, true);
+            Assert.IsFalse(queue.IsShowing);
+            Assert.IsFalse(queue.Offer(new ReadoutRequest(ReadoutKind.ScanSet, textKey: "structure.charging_pad.name",
+                step: 1, of: 2)), "another set is another card");
+        }
+
+        [Test]
         public void ACardAskedForTwice_QueuesOnce_AndOneThatShowsRestsAgain()
         {
             var settings = new GuidanceSettings();

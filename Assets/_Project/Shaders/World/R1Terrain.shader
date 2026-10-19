@@ -211,7 +211,7 @@ Shader "MoonProject/World/R1Terrain"
                 half spec = PositivePow(max(ndoth, 0.0001h), specPower) * (smoothness * 0.16h) * ndotl;
                 float atten = min(light.distanceAttenuation, 16.0) * light.shadowAttenuation;
                 half lightLuma = dot(light.color, half3(0.2126h, 0.7152h, 0.0722h));
-                half3 coolLight = lerp(light.color, lightLuma * half3(0.92h, 0.98h, 1.10h), 0.85h);
+                half3 coolLight = lerp(light.color, lightLuma * half3(0.95h, 0.99h, 1.03h), 0.88h);
                 return coolLight * (half)(spec * atten);
             }
 
@@ -220,12 +220,12 @@ Shader "MoonProject/World/R1Terrain"
                 return frac(sin(dot(cell, float2(12.9898, 78.233))) * 43758.5453);
             }
 
-            // Smooth value noise in world metres (0..1), for the halo's blotchy edge, mottle, and crater outline warping.
+            // Smooth quintic C2 value noise in world metres (0..1), for organic patches, rays, and halo warping.
             float BlastNoise(float2 p)
             {
                 float2 cell = floor(p);
                 float2 t = frac(p);
-                t = t * t * (3.0 - 2.0 * t);
+                t = t * t * t * (t * (t * 6.0 - 15.0) + 10.0);
                 float a = BlastHash(cell);
                 float b = BlastHash(cell + float2(1.0, 0.0));
                 float c = BlastHash(cell + float2(0.0, 1.0));
@@ -486,102 +486,133 @@ Shader "MoonProject/World/R1Terrain"
                 }
             }
 
-            // Sparse, ancient weathered medium/large craters with wide power-law size spread, noise-warped irregular outlines,
-            // broken low rims, and soft low-contrast shading. Clustered in patches with long empty stretches across the plain.
-            // Returns: xy = world XZ normal perturbation, z = albedo multiplier (1.0), w = cavity AO [0..1].
+            // Procedural crater normal bowls are disabled in the shader so no fields of round depressions or pocks
+            // are stamped across the plain (height relief is owned by GroundShaping).
             half4 SampleWeatheredCraters(float3 wp3, half3 geomNormalWS, half slopeFactor, float camDist)
             {
-                half rangeFade = 1.0h - (half)smoothstep(320.0, 620.0, camDist);
-                if (rangeFade <= 0.001h)
-                {
-                    return half4(0.0h, 0.0h, 1.0h, 1.0h);
-                }
-
-                // Slope-compensated projection prevents foreshortening on mountain walls
-                float2 sp = wp3.xz - geomNormalWS.xz * (wp3.y * 0.48);
-                float2 warpLarge = float2(
-                    BlastNoise(sp * 0.018 + float2(3.1, 9.7)) - 0.5,
-                    BlastNoise(sp * 0.018 + float2(14.3, 2.9)) - 0.5);
-
-                // Strong spatial clustering with long empty stretches: most of the plain has zero craters
-                float clusterA = BlastNoise(sp * 0.012 + float2(11.3, 24.1));
-                float clusterB = BlastNoise(sp * 0.0055 + float2(33.4, 8.7));
-                float clusterField = clusterA * 0.58 + clusterB * 0.42;
-                float patchMask = smoothstep(0.46, 0.74, clusterField);
-
-                // Keep the home pad, apron, and lander blast core clear of procedural depressions
-                float padClear = smoothstep(14.0, 26.0, length(wp3.xz));
-                float landerClear = _MoonBlastZone.z > 0.001
-                    ? smoothstep(_MoonBlastZone.z * 0.45, _MoonBlastZone.z * 0.95, length(wp3.xz - _MoonBlastZone.xy))
-                    : 1.0;
-                float openGate = patchMask * padClear * landerClear;
-                if (openGate <= 0.001)
-                {
-                    return half4(0.0h, 0.0h, 1.0h, 1.0h);
-                }
-
-                // Soft, low-contrast shading on the flat plain; slightly firmer on distant mountain slopes
-                half strengthScale = lerp(0.24h, 0.34h, slopeFactor) * rangeFade;
-
-                half2 normDelta = half2(0.0h, 0.0h);
-                half aoMod = 1.0h;
-
-                // Layer 1 (Medium-to-Large Weathered Craters): ~26 m cells, radius ~2.0–7.5 m (diameter ~4–15 m), steep power-law (2.8)
-                float2 spRotA = float2(sp.x * 0.7986 - sp.y * 0.6018, sp.x * 0.6018 + sp.y * 0.7986);
-                float occMed = 0.38 * openGate;
-                AccumulateWeatheredCrater2x2(
-                    spRotA * 0.038 + warpLarge * 0.25 + float2(15.7, 29.3),
-                    sp,
-                    float2(0.7986, 0.6018),
-                    occMed, 0.075, 0.285, 2.80,
-                    strengthScale,
-                    normDelta, aoMod);
-
-                // Layer 2 (Large Ancient Basins): ~58 m cells, radius ~5.2–16.8 m (diameter ~10–33 m), steep power-law (2.6)
-                float2 spRotB = float2(sp.x * 0.5878 + sp.y * 0.8090, -sp.x * 0.8090 + sp.y * 0.5878);
-                float occLarge = 0.32 * smoothstep(0.42, 0.72, clusterB) * padClear * landerClear;
-                if (occLarge > 0.005)
-                {
-                    AccumulateWeatheredCrater2x2(
-                        spRotB * 0.0172 + warpLarge * 0.14 + float2(21.4, 9.2),
-                        sp,
-                        float2(0.5878, -0.8090),
-                        occLarge, 0.090, 0.290, 2.60,
-                        strengthScale * 0.90h,
-                        normDelta, aoMod);
-                }
-
-                return half4(normDelta, 1.0h, aoMod);
+                return half4(0.0h, 0.0h, 1.0h, 1.0h);
             }
 
-            // Multi-scale non-repeating macro albedo variation across 25 m – 1200 m (ejecta blankets, mare/highland patches).
-            half SampleMacroRegolithVariation(float3 wp3, half slopeFactor)
+            // Large-scale organic noise-warped albedo patches (50–300 m): darker basalt-mare regolith regions and
+            // lighter highland-ejecta regions with soft gradients and low contrast.
+            half3 SampleMacroRegolithVariation(float3 wp3, half slopeFactor)
             {
                 float2 wp = wp3.xz;
-                float2 wpRot1 = float2(wp.x * 0.80 - wp.y * 0.60, wp.x * 0.60 + wp.y * 0.80);
-                float2 wpRot2 = float2(wp.x * 0.60 + wp.y * 0.80, -wp.x * 0.80 + wp.y * 0.60);
 
-                // Domain-warped coordinates so broad regolith patches flow organically
-                float2 macroWarp = float2(
-                    BlastNoise(wp * 0.0085 + float2(13.2, 7.9)) - 0.5,
-                    BlastNoise(wp * 0.0085 + float2(29.1, 18.4)) - 0.5) * 18.0;
-                float2 wpWarped = wp + macroWarp;
+                // Three incommensurate rotated frames prevent axis alignment or grid patterns
+                float2 wpRotA = float2(wp.x * 0.8290 - wp.y * 0.5592, wp.x * 0.5592 + wp.y * 0.8290);
+                float2 wpRotB = float2(wp.x * 0.2924 + wp.y * 0.9563, -wp.x * 0.9563 + wp.y * 0.2924);
+                float2 wpRotC = float2(wp.x * 0.6293 + wp.y * 0.7771, -wp.x * 0.7771 + wp.y * 0.6293);
 
-                // Scale 1 (~42 m): ejecta blanket & regolith drift mottling
-                float n38 = BlastNoise(wpRot1 * 0.024 + float2(5.3, 11.7)) * 0.65
-                    + BlastNoise(wpWarped * 0.052 + float2(17.1, 4.9)) * 0.35;
-                // Scale 2 (~150 m): highland anorthosite vs mature mare regolith patches
-                float n140 = BlastNoise((wpRot2 + macroWarp * 0.6) * 0.0068 + float2(31.4, 19.2));
-                // Scale 3 (~420 m): broad mountain/basin tonal variation surviving past 1 km
+                // Two-stage domain warp so 50–300 m mare and ejecta regions flow organically with soft gradients
+                float2 warpBroad = float2(
+                    BlastNoise(wpRotA * 0.0052 + float2(13.2, 7.9)) - 0.5,
+                    BlastNoise(wpRotB * 0.0052 + float2(29.1, 18.4)) - 0.5) * 98.0;
+                float2 warpMed = float2(
+                    BlastNoise((wpRotB + warpBroad * 0.45) * 0.0130 + float2(41.7, 11.3)) - 0.5,
+                    BlastNoise((wpRotC + warpBroad * 0.45) * 0.0130 + float2(6.4, 53.8)) - 0.5) * 44.0;
+
+                float2 pLarge = wp + warpBroad + warpMed * 0.40;
+                float2 pMed = wpRotA + warpBroad * 0.65 + warpMed;
+                float2 pSmall = wpRotC + warpBroad * 0.35 + warpMed * 0.85;
+
+                // Scale 1 (~240–300 m): broad basalt-mare vs highland-ejecta provinces
+                float n260 = BlastNoise(float2(pLarge.x * 0.0042, pLarge.y * 0.0052) + float2(14.8, 26.3));
+                // Scale 2 (~110–150 m): intermediate organic regolith units
+                float n130 = BlastNoise(float2(pMed.x * 0.0086, pMed.y * 0.0106) + float2(19.6, 8.3));
+                // Scale 3 (~55–75 m): smaller organic ejecta lobes and mare bays
+                float n65 = BlastNoise(float2(pSmall.x * 0.0165, pSmall.y * 0.0205) + float2(7.2, 34.1));
+                // Scale 4 (~420 m): broad mountain/backdrop tonal variation surviving past 1 km
                 float n420 = BlastNoise(wp * 0.0024 + float2(7.8, 43.1));
 
-                float combined = (n38 - 0.5) * 0.24 + (n140 - 0.5) * 0.38 + (n420 - 0.5) * 0.26;
-                float heightLift = saturate(wp3.y / 115.0) * (1.0 - slopeFactor * 0.75) * 0.06;
+                float rawField = (n260 - 0.50) * 0.48 + (n130 - 0.50) * 0.36 + (n65 - 0.50) * 0.28;
+                float patch01 = smoothstep(-0.135, 0.135, rawField);
 
-                // Soft painterly S-curve shaping on broad regolith drifts (no periodic contour rings or hard steps)
-                float softShaped = smoothstep(-0.34, 0.34, combined) - 0.5;
-                float broadDrift = (smoothstep(0.28, 0.72, n140) - 0.5) * 0.12;
-                return (half)clamp(1.0 + softShaped * 0.26 + broadDrift + heightLift, 0.82, 1.20);
+                // Low-contrast modulation between darker basalt-mare regolith and lighter highland-ejecta
+                float floorPatchMod = lerp(0.75, 1.23, patch01);
+                float mountainMod = 1.0 + (n420 - 0.5) * 0.14 + saturate(wp3.y / 115.0) * 0.06;
+                half patchScalar = (half)clamp(lerp(floorPatchMod, mountainMod, slopeFactor * 0.68), 0.75, 1.24);
+
+                // Subtle cool-grey mineral nuance (no beige, no blue tint)
+                half3 patchTone = lerp(half3(0.992h, 0.998h, 1.006h), half3(1.004h, 1.001h, 0.995h), (half)patch01);
+                return patchScalar * lerp(patchTone, half3(1.0h, 1.0h, 1.0h), slopeFactor * 0.70h);
+            }
+
+            // Evaluates a single faint, long, slightly wavy, tapering, broken bright ray from a far-away (off-map)
+            // fresh crater (~2.16 km WSW at (-2100, -520); no ring and no centre exist or are ever visible).
+            float EvaluateDistantCraterRay(
+                float2 wp,
+                float rayAngle,
+                float startDist,
+                float endDist,
+                float maxHalfWidth,
+                float seed)
+            {
+                float2 dir = float2(cos(rayAngle), sin(rayAngle));
+                float2 perp = float2(-dir.y, dir.x);
+                float2 rel = wp - float2(-2100.0, -520.0);
+
+                float along = dot(rel, dir);
+                if (along <= startDist || along >= endDist)
+                {
+                    return 0.0;
+                }
+
+                float across = dot(rel, perp);
+                float u = saturate((along - startDist) / (endDist - startDist));
+                float lengthEnv = sin(pow(u, 0.78) * 3.14159265);
+
+                // Gentle multi-scale lateral waviness along the ray's path
+                float wave = (BlastNoise(float2(along * 0.0036 + seed, seed * 1.7)) - 0.5) * 26.0
+                           + (BlastNoise(float2(along * 0.0088 + seed * 2.3, seed * 3.1)) - 0.5) * 9.0;
+                float dAcross = across - wave;
+
+                // Width tapers from WSW toward ENE and breathes gently along its length
+                float widthMod = 0.80 + 0.42 * BlastNoise(float2(along * 0.0068 + seed * 4.1, seed * 0.9));
+                float taper = lerp(1.10, 0.36, u) * smoothstep(0.0, 0.10, u) * smoothstep(1.0, 0.85, u);
+                float halfWidth = max(maxHalfWidth * taper * widthMod, 1.5);
+
+                float normAcross = abs(dAcross) / halfWidth;
+                if (normAcross >= 1.0)
+                {
+                    return 0.0;
+                }
+
+                // Discontinuous breaks along the ray's length plus 10:1 anisotropic feathery ejecta streaks (never dots)
+                float segNoise = BlastNoise(float2(along * 0.0115 + seed * 5.3, dAcross * 0.015 + seed * 2.1)) * 0.65
+                               + BlastNoise(float2(along * 0.0240 + seed * 8.7, dAcross * 0.032 - seed * 1.4)) * 0.35;
+                float brokenMask = smoothstep(0.36, 0.54, segNoise);
+
+                float filament = BlastNoise(float2(along * 0.012 + seed * 11.1, dAcross * 0.13 + seed * 6.7)) * 0.65
+                               + BlastNoise(float2(along * 0.026 - seed * 3.9, dAcross * 0.24 + seed * 4.3)) * 0.35;
+                float streakDetail = 0.78 + 0.32 * smoothstep(0.28, 0.72, filament);
+
+                float crossProfile = 1.0 - normAcross;
+                crossProfile = crossProfile * crossProfile * (3.0 - 2.0 * crossProfile);
+                return lengthEnv * crossProfile * brokenMask * streakDetail;
+            }
+
+            // Four faint, broken bright rays crossing the basin from a far-away off-map fresh crater.
+            half SampleDistantCraterRays(float3 wp3, half normalY)
+            {
+                float2 wp = wp3.xz;
+                // Only on the basin plain and gentle lower slopes; nothing on steep mountain walls or far backdrop
+                half levelGround = (half)smoothstep(0.74, 0.92, normalY);
+                half basinEnv = (half)(1.0 - smoothstep(320.0, 460.0, length(wp)));
+                if (levelGround * basinEnv <= 0.001h)
+                {
+                    return 1.0h;
+                }
+
+                float r0 = EvaluateDistantCraterRay(wp, 0.1750, 1700.0, 2580.0, 26.0, 5.8);
+                float r1 = EvaluateDistantCraterRay(wp, 0.2580, 1720.0, 2600.0, 25.0, 12.3);
+                float r2 = EvaluateDistantCraterRay(wp, 0.3080, 1710.0, 2620.0, 28.0, 7.1);
+                float r3 = EvaluateDistantCraterRay(wp, 0.3540, 1740.0, 2580.0, 22.0, 1.3);
+                float rayMask = max(max(r0, r1), max(r2, r3));
+
+                // Softly attenuate across the compacted home pad center
+                float padFade = lerp(0.45, 1.0, smoothstep(8.0, 24.0, length(wp)));
+                return 1.0h + (half)(rayMask * 0.25 * padFade) * levelGround * basinEnv;
             }
 
             // Crisp lunar terminator shading on ridges and rock ledges, with soft low-contrast shading on flat-plain depressions.
@@ -601,7 +632,7 @@ Shader "MoonProject/World/R1Terrain"
 
                 // In Earthlight (sunlit == 0), keep flat-plain normal relief soft and low-contrast while mountain slopes stay crisp.
                 half earthWrap = saturate(ndotl * 0.84h + 0.16h);
-                half earthReliefGain = lerp(0.32h, 1.55h, slopeFactor);
+                half earthReliefGain = lerp(0.28h, 1.55h, slopeFactor);
                 half earthRelief = clamp(deltaNdotL * earthReliefGain, -0.38h, 0.55h);
                 half earthDiffuse = saturate(pow(earthWrap, 1.15h) * 1.06h + earthRelief);
 
@@ -616,7 +647,7 @@ Shader "MoonProject/World/R1Terrain"
 
                 // Accentuate grazing sunlit ridge crests and rock-ledge lips on slopes without creating bright crater rings on the plain.
                 half terminatorZone = smoothstep(-0.04h, 0.06h, geomNdotL) * (1.0h - smoothstep(0.06h, 0.40h, geomNdotL));
-                half ridgeCrestBoost = saturate(deltaNdotL) * (0.35h + terminatorZone * 0.52h) * lerp(0.08h, 1.0h, slopeFactor);
+                half ridgeCrestBoost = saturate(deltaNdotL) * (0.35h + terminatorZone * 0.52h) * lerp(0.05h, 1.0h, slopeFactor);
                 sunDiffuse += ridgeCrestBoost;
 
                 half highlandDiffuse = lerp(earthDiffuse, sunDiffuse, sunlit);
@@ -643,9 +674,9 @@ Shader "MoonProject/World/R1Terrain"
                 half shadowFloor = lerp(0.18h, 0.042h, sunlit);
                 half atten = max(light.shadowAttenuation, shadowFloor) * light.distanceAttenuation;
 
-                // Neutralize warm golden-hour / dawn sun tint so lunar regolith always reads as neutral cool grey, never beige-brown
+                // Neutralize warm golden-hour / dawn sun tint so lunar regolith reads as subtle cool grey (no beige, no blue tint)
                 half lightLuma = dot(light.color, half3(0.2126h, 0.7152h, 0.0722h));
-                half3 lunarLightColor = lerp(light.color, lightLuma * half3(0.89h, 0.98h, 1.13h), 0.90h);
+                half3 lunarLightColor = lerp(light.color, lightLuma * half3(0.985h, 0.998h, 1.010h), 0.94h);
                 return lunarLightColor * (diffuse * atten);
             }
 
@@ -653,10 +684,17 @@ Shader "MoonProject/World/R1Terrain"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
 
-                half3 geomNormalWS = NormalizeNormalPerPixel(input.normalWS);
+                half3 rawGeomNormalWS = NormalizeNormalPerPixel(input.normalWS);
                 half3 viewDirWS = GetWorldSpaceNormalizeViewDir(input.positionWS);
                 float camDist = distance(_WorldSpaceCameraPos, input.positionWS);
                 half sunlit = saturate((half)_MoonSunlitGround);
+
+                // Separate the flat interior basin floor from the surrounding mountain rim / hills / canyon walls so
+                // small mesh depressions on the basin floor never trigger steep rock-scarp darkening or sharp hole shadows.
+                half mountainMask = saturate(
+                    (half)smoothstep(5.5, 16.0, input.positionWS.y) +
+                    (half)smoothstep(285.0, 345.0, length(input.positionWS.xz)));
+                half3 geomNormalWS = normalize(lerp(rawGeomNormalWS, half3(0.0h, 1.0h, 0.0h), (1.0h - mountainMask) * 0.78h));
 
                 // Detail normal & slope geology weights extended across 500 m – 1800 m so distant rim slopes and The Peak
                 // retain crisp surface normal relief.
@@ -666,24 +704,29 @@ Shader "MoonProject/World/R1Terrain"
                 half hillDetailWeight = 1.0h - (half)smoothstep(900.0, 1850.0, camDist);
 
                 // Slope masks: gentle slopes keep lighter regolith, steep faces expose darker basalt rock and broken ledges.
-                half slopeFactor = 1.0h - (half)smoothstep(0.75h, 0.945h, geomNormalWS.y);
-                half steepFaceMask = 1.0h - (half)smoothstep(0.68h, 0.855h, geomNormalWS.y);
+                half slopeFactor = (1.0h - (half)smoothstep(0.75h, 0.945h, geomNormalWS.y)) * mountainMask;
+                half steepFaceMask = (1.0h - (half)smoothstep(0.68h, 0.855h, geomNormalWS.y)) * mountainMask;
                 half gentleSlopeMask = (half)smoothstep(0.80h, 0.92h, geomNormalWS.y);
 
                 // Neutral cool grey lunar regolith base reflectance (~0.12-0.16 linear).
-                // Normalized smoothly so baked dark mountain vertex colors don't create a pale collar at the base of the slopes.
+                // Preserve home-pad and Kestrel-scorch vertex darkening while suppressing CraterField vertex pockmarks on the open plain.
                 half3 vertexLinear = SRGBToLinear(input.color.rgb) * _BaseColor.rgb;
                 half vLuma = dot(vertexLinear, half3(0.2126h, 0.7152h, 0.0722h));
-                half vNorm = smoothstep(0.025h, 0.22h, vLuma);
-                half lunarReflectance = lerp(0.124h, 0.158h, vNorm);
+                half padOrScorchWeight = max(
+                    (half)(1.0 - smoothstep(18.0, 32.0, length(input.positionWS.xz))),
+                    (half)(1.0 - smoothstep(8.0, 16.0, length(input.positionWS.xz - float2(-12.0, 16.0)))));
+                half vertexToneWeight = max(padOrScorchWeight, mountainMask);
+                half vNorm = lerp(0.66h, smoothstep(0.025h, 0.22h, vLuma), vertexToneWeight);
+                half lunarReflectance = lerp(0.118h, 0.160h, vNorm);
 
-                // Cool neutral silver-slate compensation neutralizes post-processing warm split-toning (_splitHighlights / _gain)
-                // so regolith is true neutral cool grey with zero beige-brown cast.
-                half3 coolNeutralTint = lerp(half3(0.89h, 0.96h, 1.10h), half3(0.81h, 0.95h, 1.18h), sunlit);
+                // Calibrated neutral-cool grey compensation: counteracts post-processing warm split-toning (_splitHighlights / _gain)
+                // without over-pushing blue, so regolith stays a subtle cool grey with no beige and no blue tint.
+                half3 coolNeutralTint = lerp(half3(0.975h, 0.995h, 1.005h), half3(0.935h, 0.992h, 1.042h), sunlit);
                 half3 baseAlbedo = lunarReflectance * coolNeutralTint;
 
-                // Multi-scale macro albedo variation across 25 m – 1200 m.
+                // Large-scale 50–300 m organic mare/ejecta albedo patches + faint broken rays from a far-away off-map crater.
                 baseAlbedo *= SampleMacroRegolithVariation(input.positionWS, slopeFactor);
+                baseAlbedo *= SampleDistantCraterRays(input.positionWS, geomNormalWS.y);
 
                 half3 normalWS = geomNormalWS;
                 half microAo = 1.0h;
@@ -694,7 +737,6 @@ Shader "MoonProject/World/R1Terrain"
                 half3 tangentWS = normalize(half3(1.0h, 0.0h, 0.0h) - geomNormalWS * geomNormalWS.x);
                 half3 bitangentWS = normalize(cross(geomNormalWS, tangentWS));
 
-                // Sparse, ancient weathered medium/large craters (warped outlines, broken low rims, soft low-contrast shading).
                 half4 weatheredCraters = SampleWeatheredCraters(input.positionWS, geomNormalWS, slopeFactor, camDist);
                 baseAlbedo *= weatheredCraters.z;
                 microAo = min(microAo, weatheredCraters.w);
@@ -808,8 +850,8 @@ Shader "MoonProject/World/R1Terrain"
                     slopeAlbedoMod = lerp(slopeAlbedoMod, 1.08h, terraceBench * strataFadeWeight * 0.65h);
                     slopeAlbedoMod = lerp(slopeAlbedoMod, 0.56h * rockTexDetail, rockJoint * strataFadeWeight * 0.65h);
 
-                    // Cool neutral slate-basalt tint on dark exposed rock (never warm brown)
-                    half3 darkRockTint = lerp(half3(1.0h, 1.0h, 1.0h), half3(0.89h, 0.94h, 1.05h), saturate(exposedRockMask * 0.70h + terraceRiser * 0.45h));
+                    // Subtle neutral cool-grey basalt tint on dark exposed rock (no beige, no blue cast)
+                    half3 darkRockTint = lerp(half3(1.0h, 1.0h, 1.0h), half3(0.98h, 0.995h, 1.010h), saturate(exposedRockMask * 0.70h + terraceRiser * 0.45h));
 
                     half3 dNdx = ddx(geomNormalWS);
                     half3 dNdy = ddy(geomNormalWS);
@@ -949,7 +991,7 @@ Shader "MoonProject/World/R1Terrain"
                 half skyLedgeRelief = lerp(craterAmbRelief, clamp(1.0h + (normalWS.y - geomNormalWS.y) * 0.65h + deltaNdotLAmb * 0.35h - (1.0h - microAo) * 0.35h, 0.72h, 1.18h), slopeFactor * 0.80h);
                 half3 rawSH = SampleSH(normalWS);
                 half shLuma = dot(rawSH, half3(0.2126h, 0.7152h, 0.0722h));
-                half3 coolSH = lerp(rawSH, shLuma * half3(0.90h, 0.97h, 1.10h), 0.80h);
+                half3 coolSH = lerp(rawSH, shLuma * half3(0.985h, 0.998h, 1.010h), 0.90h);
                 half3 ambient = coolSH * ambientAo * skyLedgeRelief;
                 half3 lighting = ambient + MainSunDiffuseStylized(mainLight, normalWS, geomNormalWS, viewDirWS, sunlit, microAo, slopeFactor, ridgeCrestMask);
                 half3 specular = RegolithMicroSpecular(mainLight, normalWS, viewDirWS, smoothness);

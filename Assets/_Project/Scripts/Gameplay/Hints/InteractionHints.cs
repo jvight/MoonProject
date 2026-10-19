@@ -129,7 +129,10 @@ namespace MoonProject.Gameplay
                     return piece != null || sealedOne != null;
                 case InteractionKind.Scan:
                     ScanFragment fragment = _scans.Candidate;
-                    hint = fragment != null ? new InteractionHint(kind, fragment.Point, true) : InteractionHint.None;
+                    _scans.TryGetSetStep(fragment, out int step, out int count);
+                    hint = fragment != null
+                        ? new InteractionHint(kind, fragment.Point, true, null, step, count)
+                        : InteractionHint.None;
                     return fragment != null;
                 default:
                     hint = InteractionHint.None;

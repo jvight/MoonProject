@@ -326,6 +326,26 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>How many targets of <paramref name="blueprintId"/>'s set are scanned.</summary>
+        /// <summary>
+        /// For a piece of an unlearned structure set of two or more: scanning <paramref name="fragment"/> would make it
+        /// piece <paramref name="step"/> of <paramref name="count"/>. False for a story target, a one-piece set and a
+        /// set whose structures are all known (it pays Metal instead).
+        /// </summary>
+        public bool TryGetSetStep(ScanFragment fragment, out int step, out int count)
+        {
+            step = 0;
+            count = 0;
+            if (fragment == null || fragment.StoryKey != null || fragment.Count < 2 ||
+                NextUnlearnedStructure(fragment.StructureIds) == null)
+            {
+                return false;
+            }
+
+            count = fragment.Count;
+            step = Mathf.Min(count, ScannedOf(fragment.BlueprintId) + 1);
+            return true;
+        }
+
         public int ScannedOf(string blueprintId)
         {
             int scanned = 0;
