@@ -16,14 +16,14 @@ namespace MoonProject.World
 
         [Header("Lumen station ruins cluster (RUINS-WORLD)")]
         [Tooltip("Pieces of the Lumen station ruins cluster arranged relative to SiteSettings.RuinsCenter: " +
-            "habitat left, radio tower behind, workshop right, fallen solar array in front, plus scatter set, " +
-            "with drivable lanes between them.")]
+            "habitat left, radio tower behind, workshop right, plus scatter set, with drivable lanes between them; " +
+            "the fallen solar array lies off them on its own sunlit footprint (SiteSettings.FallenArrayCenter).")]
         [SerializeField] private RuinPlacement[] _ruins =
         {
             new RuinPlacement("HabitatModules", new Vector2(-5.5f, 2.0f), 10f, 5.8f),
             new RuinPlacement("RadioTower", new Vector2(1.5f, 8.2f), 8f, 3.8f),
             new RuinPlacement("KenjiWorkshop", new Vector2(6.8f, 1.2f), 16f, 3.6f),
-            new RuinPlacement("FallenSolarArray", new Vector2(2.2f, -5.8f), 20f, 3.8f),
+            new RuinPlacement("FallenSolarArray", new Vector2(-22f, -24f), 20f, 3.8f),
             new RuinPlacement("ScatterSet", new Vector2(-5.2f, -5.2f), -18f, 2.6f),
         };
 
@@ -38,6 +38,9 @@ namespace MoonProject.World
 
         [Tooltip("The lander's amber emergency beacon on top of its hull.")]
         [SerializeField] private LanderBeaconSettings _landerBeacon = new LanderBeaconSettings();
+
+        [Tooltip("The fallen solar array's glint in the new sunlight (opening v3 R4).")]
+        [SerializeField] private ArrayGlintSettings _arrayGlint = new ArrayGlintSettings();
 
         [Header("Kestrel-3's debris and the big boulders (opening v2 §4)")]
         [Tooltip("Art's R1 Kestrel-3 debris (Generated/Art/R1/Models/Wreck): a few pieces at the first drive's midway " +
@@ -169,6 +172,7 @@ namespace MoonProject.World
         public float LanderTilt => _landerTilt;
         public GroundCableSettings WakeCable => _wakeCable;
         public LanderBeaconSettings LanderBeacon => _landerBeacon;
+        public ArrayGlintSettings ArrayGlint => _arrayGlint;
         public PropPlacement[] Debris => _debris;
         public PropPlacement[] Boulders => _boulders;
         public float ScoutYaw => _scoutYaw;

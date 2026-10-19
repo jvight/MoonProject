@@ -27,6 +27,9 @@ namespace MoonProject.World.Editor
 
         /// <summary>The small halo each cable marker lamp blooms with as the Begin wave passes.</summary>
         public const string CableMarkerHaloMaterial = GeneratedRoot + "/M_CableMarkerHalo.mat";
+
+        /// <summary>The fallen solar array's sun-white glint halo (LofiBeaconHalo).</summary>
+        public const string ArrayGlintMaterial = GeneratedRoot + "/M_ArrayGlint.mat";
         public const string CableTearSparkMaterial = GeneratedRoot + "/M_CableTearSpark.mat";
         public const string SkyShader = "Assets/_Project/Shaders/World/LofiSky.shader";
         public const string EarthShader = "Assets/_Project/Shaders/World/LofiEarth.shader";

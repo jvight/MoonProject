@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -18,6 +19,14 @@ namespace MoonProject.World.Editor
     public sealed class WorldSceneContributor : ISceneContributor
     {
         public const string RuinsRootName = "Ruins";
+
+        // The ruin whose fallen wings glint, the material its cells wear, and how far off the cells its glint floats.
+        private const string FallenSolarArrayName = "FallenSolarArray";
+        private const string SolarCellMaterial = "R1_SolarCell";
+        private const float GlintLift = 0.03f;
+
+        /// <summary>[World]/ArrayGlint: the fallen solar array's glints, beside the ruins.</summary>
+        public const string ArrayGlintName = "ArrayGlint";
 
         public int Order => 200;
 
@@ -94,7 +103,121 @@ namespace MoonProject.World.Editor
                 GameObject instance = context.InstantiatePrefab(prefab, ruinsRoot, position, rotation);
                 instance.name = piece.Id;
                 RuinColliderBuilder.Fit(instance);
+                if (piece.Id == FallenSolarArrayName)
+                {
+                    StandArrayGlint(context, settings, instance, root);
+                }
             }
+        }
+
+        /// <summary>
+        /// A sun-white glint halo over the middle of each fallen wing's solar cells and the <see cref="ArrayGlint"/>
+        /// that flares them in the sunlight, under [World]/ArrayGlint: kept out of the ruin itself, whose renderers are
+        /// its scan targets' and which Gameplay reads as a ruin piece. Each glint is a cracked cell that throws the
+        /// golden-hour Sun (where the Sun holds from the first charge to power-on, opening v3 R4) at the apron's eye,
+        /// so it calls from the base, as the retroreflector's facet does.
+        /// </summary>
+        private static void StandArrayGlint(SceneBuildContext context, WorldSettings settings, GameObject array,
+            Transform root)
+        {
+            var mesh = context.LoadAsset<Mesh>(WorldPaths.BeaconHaloMesh);
+            var material = context.LoadAsset<Material>(WorldPaths.ArrayGlintMaterial);
+            GameObject holder = context.CreateChild(ArrayGlintName, root);
+            MoonSurface surface = settings.CreateSurface();
+            Vector2 apron = settings.Surface.Sites.ApronCenter;
+            float eyeHeight = surface.SampleHeight(apron.x, apron.y) + settings.Landmarks.ReflectorEyeHeight;
+            var eye = new Vector3(apron.x, eyeHeight, apron.y);
+            Vector3 towardSun = OpeningLayoutPlacer.GoldenHourSun(settings);
+            var halos = new List<Renderer>();
+            var normals = new List<Vector3>();
+            foreach (MeshRenderer wing in array.GetComponentsInChildren<MeshRenderer>())
+            {
+                if (!TryCellsMiddle(wing, out Vector3 middle))
+                {
+                    continue;
+                }
+
+                Vector3 facet = (towardSun + (eye - middle).normalized).normalized;
+                GameObject halo = context.CreateChild("Glint", holder.transform);
+                halo.transform.SetPositionAndRotation(middle + facet * GlintLift, Quaternion.identity);
+                halo.AddComponent<MeshFilter>().sharedMesh = mesh;
+                var renderer = halo.AddComponent<MeshRenderer>();
+                renderer.sharedMaterial = material;
+                renderer.shadowCastingMode = ShadowCastingMode.Off;
+                renderer.receiveShadows = false;
+                renderer.lightProbeUsage = LightProbeUsage.Off;
+                renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+                halos.Add(renderer);
+                normals.Add(facet);
+            }
+
+            if (halos.Count == 0)
+            {
+                throw new System.InvalidOperationException($"World scene build: Art's {FallenSolarArrayName} has no " +
+                    $"{SolarCellMaterial} cells to glint.");
+            }
+
+            var glint = holder.AddComponent<ArrayGlint>();
+            var serialized = new SerializedObject(glint);
+            serialized.FindProperty("_settings").objectReferenceValue = settings;
+            SerializedProperty haloList = serialized.FindProperty("_halos");
+            SerializedProperty normalList = serialized.FindProperty("_normals");
+            haloList.arraySize = halos.Count;
+            normalList.arraySize = normals.Count;
+            for (int i = 0; i < halos.Count; i++)
+            {
+                haloList.GetArrayElementAtIndex(i).objectReferenceValue = halos[i];
+                normalList.GetArrayElementAtIndex(i).vector3Value = normals[i];
+            }
+
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            context.AddSystem(glint);
+        }
+
+        /// <summary>
+        /// The area-weighted middle (world space) of <paramref name="renderer"/>'s solar-cell faces; false when it has
+        /// none.
+        /// </summary>
+        private static bool TryCellsMiddle(MeshRenderer renderer, out Vector3 middle)
+        {
+            middle = Vector3.zero;
+            Material[] materials = renderer.sharedMaterials;
+            var filter = renderer.GetComponent<MeshFilter>();
+            Mesh mesh = filter != null ? filter.sharedMesh : null;
+            if (mesh == null)
+            {
+                return false;
+            }
+
+            Vector3[] vertices = mesh.vertices;
+            Matrix4x4 toWorld = renderer.transform.localToWorldMatrix;
+            float area = 0f;
+            for (int slot = 0; slot < materials.Length && slot < mesh.subMeshCount; slot++)
+            {
+                if (materials[slot] == null || materials[slot].name != SolarCellMaterial)
+                {
+                    continue;
+                }
+
+                int[] triangles = mesh.GetTriangles(slot);
+                for (int t = 0; t < triangles.Length; t += 3)
+                {
+                    Vector3 a = toWorld.MultiplyPoint3x4(vertices[triangles[t]]);
+                    Vector3 b = toWorld.MultiplyPoint3x4(vertices[triangles[t + 1]]);
+                    Vector3 c = toWorld.MultiplyPoint3x4(vertices[triangles[t + 2]]);
+                    float faceArea = Vector3.Cross(b - a, c - a).magnitude * 0.5f;
+                    middle += (a + b + c) / 3f * faceArea;
+                    area += faceArea;
+                }
+            }
+
+            if (area <= 0f)
+            {
+                return false;
+            }
+
+            middle /= area;
+            return true;
         }
 
         /// <summary>
