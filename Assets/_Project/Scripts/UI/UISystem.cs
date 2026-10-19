@@ -1159,6 +1159,11 @@ namespace MoonProject.UI
                 ShowPage(device);
             }
 
+            if (_pages.Settled)
+            {
+                _events.Publish(new UiCue(UiCueKind.DatabankChannelSettle));
+            }
+
             if (!Mathf.Approximately(_databankLaidOutAt, _cargo.PanelScale))
             {
                 _databankLaidOutAt = _cargo.PanelScale;
@@ -1177,7 +1182,7 @@ namespace MoonProject.UI
 
             _pages.Toggle();
             _events.Publish(new FacePageChanged(_pages.Target));
-            _events.Publish(new UiCue(UiCueKind.Confirm));
+            _events.Publish(new UiCue(UiCueKind.DatabankPageFlip));
         }
 
         /// <summary>A click on the other page's tab flips to it; true when the click was on a tab.</summary>
