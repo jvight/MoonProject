@@ -6,11 +6,8 @@
     "R1_BareSteel",
     "R1_Basalt",
     "R1_Brass",
-    "R1_CreamEnamel",
     "R1_DarkGlass",
-    "R1_GoldFoil",
-    "R1_GreyMetal",
-    "R1_OrangeStripe"
+    "R1_GoldFoil"
   ],
   "max_triangles": 4000,
   "max_meshes": 4,

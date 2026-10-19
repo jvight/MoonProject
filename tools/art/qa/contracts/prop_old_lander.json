@@ -7,14 +7,12 @@
     "R1_Basalt",
     "R1_Brass",
     "R1_Copper",
-    "R1_CreamEnamel",
     "R1_DarkGlass",
-    "R1_GoldFoil",
-    "R1_GreyMetal",
-    "R1_OrangeStripe",
     "R1_Rubber",
-    "R1_SagePatch",
-    "R1_SolarCell"
+    "R1_SilverFoil",
+    "R1_SolarCell",
+    "R1_TealMark",
+    "R1_WhitePaint"
   ],
   "max_triangles": 16000,
   "max_meshes": 10,

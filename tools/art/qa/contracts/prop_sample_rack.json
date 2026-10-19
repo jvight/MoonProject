@@ -6,10 +6,8 @@
     "R1_BareSteel",
     "R1_Basalt",
     "R1_Brass",
-    "R1_CreamEnamel",
     "R1_DarkGlass",
-    "R1_GreyMetal",
-    "R1_OrangeStripe"
+    "R1_Rubber"
   ],
   "max_triangles": 5500,
   "max_meshes": 7,
