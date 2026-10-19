@@ -27,8 +27,35 @@ namespace MoonProject.Gameplay
         [Tooltip("Maximum horizontal distance (m) from a structure's pivot within which 07's welding beam can build it.")]
         [Range(1f, 20f)] [SerializeField] private float _weldRange = 6.0f;
 
-        [Tooltip("Share (0..1) of a structure's Recipe build cost returned when 07 deconstructs it.")]
-        [Range(0f, 1f)] [SerializeField] private float _deconstructRefundShare = 0.75f;
+        [Tooltip("Share (0..1) of a structure's Recipe build cost returned when 07 deconstructs it: all of it, so a " +
+                 "misplaced piece never costs the player progress.")]
+        [Range(0f, 1f)] [SerializeField] private float _deconstructRefundShare = 1f;
+
+        [Header("Taking a piece apart")]
+        [Tooltip("Seconds the take-apart runs once the hold completes: the piece eases down, comes apart and its " +
+                 "pieces fly to 07 (the reverse of the print).")]
+        [Range(0.6f, 2.5f)] [SerializeField] private float _takeApartSeconds = 1.2f;
+
+        [Tooltip("How many pieces a taken-apart structure comes apart into (fewer when it has fewer parts).")]
+        [Range(2, 3)] [SerializeField] private int _takeApartPieces = 3;
+
+        [Tooltip("Share (0..1) of the take-apart spent easing down and gathering before the pieces fly.")]
+        [Range(0.1f, 0.5f)] [SerializeField] private float _takeApartEaseShare = 0.3f;
+
+        [Tooltip("Metres the piece sinks while it eases down.")]
+        [Range(0f, 0.3f)] [SerializeField] private float _takeApartSinkMetres = 0.06f;
+
+        [Tooltip("Metres the pieces arc above their straight path to 07 (a gentle float, never a throw).")]
+        [Range(0f, 1.5f)] [SerializeField] private float _takeApartArcMetres = 0.35f;
+
+        [Tooltip("The take-apart beam's colour: a soft, desaturated cool tone, not the build's amber-cyan.")]
+        [SerializeField] private Color _takeApartBeamColor = new Color(0.58f, 0.68f, 0.76f, 0.7f);
+
+        [Tooltip("Dust grains in the small puff where the piece stood once it is gone.")]
+        [Range(4, 24)] [SerializeField] private int _takeApartDustCount = 10;
+
+        [Tooltip("Strength (0..1) of that dust puff.")]
+        [Range(0.1f, 1f)] [SerializeField] private float _takeApartDustStrength = 0.4f;
 
         [Tooltip("Seconds the apron's bay outline takes to warm to its glow as build mode opens, and to cool as it " +
                  "closes: a slow breath, never a switch.")]
@@ -45,7 +72,7 @@ namespace MoonProject.Gameplay
 
         [Tooltip("Metres from the apron's centre within which the charging pad's riding ghost settles onto the " +
                  "apron's marked bay.")]
-        [Range(0.5f, 8f)] [SerializeField] private float _apronSnapRadius = 3f;
+        [Range(0.5f, 8f)] [SerializeField] private float _apronSnapRadius = 4f;
 
         [Tooltip("Metres kept inside the weld range when the riding ghost settles onto the apron: the bay only " +
                  "catches the ghost while 07 stands this much closer than the weld range, so a placed frame can " +
@@ -191,6 +218,22 @@ namespace MoonProject.Gameplay
         public float WeldRange => _weldRange;
 
         public float DeconstructRefundShare => _deconstructRefundShare;
+
+        public float TakeApartSeconds => _takeApartSeconds;
+
+        public int TakeApartPieces => _takeApartPieces;
+
+        public float TakeApartEaseShare => _takeApartEaseShare;
+
+        public float TakeApartSinkMetres => _takeApartSinkMetres;
+
+        public float TakeApartArcMetres => _takeApartArcMetres;
+
+        public Color TakeApartBeamColor => _takeApartBeamColor;
+
+        public int TakeApartDustCount => _takeApartDustCount;
+
+        public float TakeApartDustStrength => _takeApartDustStrength;
 
         public float ApronGlowFadeSeconds => _apronGlowFadeSeconds;
 

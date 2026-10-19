@@ -14,6 +14,7 @@ namespace MoonProject.Gameplay
     public sealed class StructureView : MonoBehaviour
     {
         private const float StagePopStartScale = 0.91f;
+        private const float DeconstructFoldScale = 0.96f;
         private const float StageScaleHalfLife = 0.065f;
         private const float LampWarmHalfLife = 0.14f;
         private const float CompletionLampFlash = 1.45f;
@@ -545,30 +546,17 @@ namespace MoonProject.Gameplay
                 return;
             }
 
+            // The piece settles a little under the held key and keeps every stage drawn: it comes apart in one piece,
+            // in the take-apart that follows, not stage by stage into holograms.
             _deconstructProgress01 = clamped;
-            int stageCount = _stageRenderers.Length;
-            int baseSolid = ComputeSolidStages(_buildProgress01, stageCount);
-            int remainingSolid = clamped <= 0f
-                ? baseSolid
-                : Mathf.Clamp(Mathf.CeilToInt(baseSolid * (1f - clamped)), 0, baseSolid);
-
-            float foldScale = Mathf.Lerp(1f, 0.93f, clamped);
-            for (int s = 0; s < stageCount; s++)
+            float foldScale = Mathf.Lerp(1f, DeconstructFoldScale, clamped);
+            for (int s = 0; s < _stageRoots.Length; s++)
             {
-                bool shouldBeSolid = s < remainingSolid;
-                if (_stageIsSolid[s] != shouldBeSolid)
-                {
-                    _stageIsSolid[s] = shouldBeSolid;
-                    ApplyStageMaterials(s, shouldBeSolid);
-                }
-
                 if (_stageRoots[s] != null)
                 {
                     _stageRoots[s].localScale = _stageBaseScale[s] * foldScale;
                 }
             }
-
-            SolidStageCount = remainingSolid;
         }
 
         /// <summary>Steps per-stage scale settle eases, variant unfolding/thermal visuals, and standby lamp <see cref="EmissionGlow"/>.</summary>
