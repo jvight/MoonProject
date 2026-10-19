@@ -576,7 +576,7 @@ namespace MoonProject.Gameplay
                 case BuildModeState.Closed:
                 default:
                     HideAllGhosts();
-                    StepClosedState(excavateHeld, deconstructHeld, deltaTime);
+                    StepClosedState(excavateHeld, deltaTime);
                     break;
             }
         }
@@ -788,7 +788,7 @@ namespace MoonProject.Gameplay
             }
         }
 
-        private void StepClosedState(bool excavateHeld, bool deconstructHeld, float deltaTime)
+        private void StepClosedState(bool excavateHeld, float deltaTime)
         {
             _lastNavSign = 0;
             _weldingInstanceId = 0;
@@ -808,7 +808,8 @@ namespace MoonProject.Gameplay
                 }
             }
 
-            StepDeconstructTarget(deconstructHeld, deltaTime);
+            // Deconstruct needs the builder out: held X does nothing outside build mode, and lets go of any target.
+            StepDeconstructTarget(false, deltaTime);
         }
 
         /// <summary>

@@ -289,6 +289,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsFalse(
                 _gameplay.Hints.TryGet(InteractionKind.Deconstruct, out _),
                 "No Deconstruct prompt while 07 merely stands by a built piece outside build mode.");
+            Press(_keyboard.xKey);
+            yield return new WaitForSeconds(BuildModeController.DefaultDeconstructHoldSeconds + 0.5f);
+            Release(_keyboard.xKey);
+            yield return null;
+            Assert.AreEqual(1, _gameplay.PlacedBase.Count, "Holding X outside build mode deconstructs nothing.");
             Press(_keyboard.bKey);
             yield return null;
             Release(_keyboard.bKey);
