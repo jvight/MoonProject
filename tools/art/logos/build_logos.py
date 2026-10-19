@@ -1046,7 +1046,663 @@ def generate_brand_kessler():
     print("[build_logos] Generated Kessler-Arai logos + CRT boot screens in", out_dir)
 
 
+# ==============================================================================
+# BRAND 3: TYCHO CONSORTIUM (Automated Meridian Station Operator)
+# ==============================================================================
+
+def build_tycho_a() -> Image.Image:
+    """
+    Tycho Consortium Direction A: 'The Hex-Dock & Isometric TC Prism'
+    Precision hexagonal contact-dock emblem forming an interlocking isometric 'TC' prism—cold,
+    corporate, and built to double as the physical alignment target on Meridian's hex charging docks.
+    """
+    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+
+    cx, cy = 512, 336
+    r_outer = 252
+    r_mid = 228
+    r_inner = 206
+
+    # Outer Clean White (#F0F6F7) regular hexagon (pointy-top, rot_deg=-90)
+    d.polygon(reg_polygon(cx, cy, r_outer, 6, rot_deg=-90), fill=TYCHO_WHITE)
+    d.polygon(reg_polygon(cx, cy, r_outer - 12, 6, rot_deg=-90), fill=TYCHO_PANEL)
+
+    # Inner Muted Teal (#489EA2) hexagonal contact-dock ring
+    d.polygon(reg_polygon(cx, cy, r_mid, 6, rot_deg=-90), fill=TYCHO_TEAL)
+    d.polygon(reg_polygon(cx, cy, r_mid - 10, 6, rot_deg=-90), fill=TYCHO_PANEL)
+
+    # 6 radial alignment dock contact bars at the 6 vertices (solid bars, zero holes)
+    for i in range(6):
+        ang = math.radians(-90 + i * 60.0)
+        x0 = cx + (r_inner - 14) * math.cos(ang)
+        y0 = cy + (r_inner - 14) * math.sin(ang)
+        x1 = cx + (r_mid + 2) * math.cos(ang)
+        y1 = cy + (r_mid + 2) * math.sin(ang)
+        d.line([(sf(x0), sf(y0)), (sf(x1), sf(y1))], fill=TYCHO_TEAL, width=s(10))
+
+    # --- Central Isometric Hexagonal Prism forming interlocking 'T' (White) and 'C' (Muted Teal) ---
+    # Isometric cube/prism radius
+    rp = 148
+    # Vertices of inner hexagon: 0=Top, 1=TopRight, 2=BotRight, 3=Bot, 4=BotLeft, 5=TopLeft
+    v = [
+        (cx + rp * math.cos(math.radians(-90 + i * 60.0)), cy + rp * math.sin(math.radians(-90 + i * 60.0)))
+        for i in range(6)
+    ]
+
+    # Top-and-Left 'T' Monogram in Clean White (#F0F6F7):
+    # Top isometric diamond cap + central vertical stem plunging to bottom vertex
+    t_cap = [
+        (sf(v[0][0]), sf(v[0][1])),
+        (sf(v[1][0]), sf(v[1][1])),
+        (sf(cx), sf(cy - 18)),
+        (sf(v[5][0]), sf(v[5][1])),
+    ]
+    d.polygon(t_cap, fill=TYCHO_WHITE)
+    # Central vertical stem of 'T'
+    stem_w = 24
+    t_stem = [
+        (sf(cx - stem_w), sf(cy - 32)),
+        (sf(cx + stem_w), sf(cy - 32)),
+        (sf(cx + stem_w), sf(v[3][1] - 14)),
+        (sf(cx), sf(v[3][1])),
+        (sf(cx - stem_w), sf(v[3][1] - 14)),
+    ]
+    d.polygon(t_stem, fill=TYCHO_WHITE)
+
+    # Left isometric flank wing bar (completing the architectural symmetry)
+    left_wing = [
+        (sf(v[5][0]), sf(v[5][1] + 22)),
+        (sf(cx - stem_w - 16), sf(cy + 10)),
+        (sf(cx - stem_w - 16), sf(v[3][1] - 26)),
+        (sf(v[4][0]), sf(v[4][1])),
+    ]
+    d.polygon(left_wing, fill=TYCHO_TEAL_DARK)
+
+    # Right Isometric 'C' Chevron in Muted Teal (#489EA2):
+    # Clean parallel-edged isometric 'C' on the right face of the cube (zero self-intersection)
+    rx_in = cx + stem_w + 18     # 554
+    rx_out = v[1][0]             # ~640
+    # Slope of isometric right face is dy/dx = tan(30 deg) = +0.57735 from left to right (top edge)
+    # and dy/dx = -0.57735 from left to right (bottom edge)
+    dy_iso = (rx_out - rx_in) * math.tan(math.radians(30.0))  # ~49.7
+    top_y_in = cy - 6
+    bot_y_in = v[3][1] - 22
+    bar_t = 34
+    c_outer = [
+        (sf(rx_in), sf(top_y_in)),
+        (sf(rx_out), sf(top_y_in - dy_iso)),
+        (sf(rx_out), sf(bot_y_in - dy_iso)),
+        (sf(rx_in), sf(bot_y_in)),
+        (sf(rx_in), sf(bot_y_in - bar_t)),
+        (sf(rx_out - bar_t * 0.866), sf(bot_y_in - dy_iso - bar_t * 0.5)),
+        (sf(rx_out - bar_t * 0.866), sf(top_y_in - dy_iso + bar_t * 1.5)),
+        (sf(rx_in), sf(top_y_in + bar_t)),
+    ]
+    d.polygon(c_outer, fill=TYCHO_TEAL)
+
+    # --- 2. Cold Corporate Wordmark Lockup ---
+    f_main = load_font("ChakraPetch-Bold.ttf", 76)
+    draw_tracked_text(d, 512, 650, "TYCHO", f_main, TYCHO_WHITE, tracking=18.0)
+
+    # Muted teal rule + wide-tracked 'CONSORTIUM'
+    d.rectangle((s(164), s(718), s(860), s(724)), fill=TYCHO_TEAL)
+    f_cons = load_font("BeVietnamPro-SemiBold.ttf", 34)
+    draw_tracked_text(d, 512, 764, "C O N S O R T I U M", f_cons, TYCHO_TEAL, tracking=6.5)
+    d.rectangle((s(164), s(806), s(860), s(810)), fill=TYCHO_TEAL_DARK)
+
+    f_sub = load_font("IBMPlexMono-Bold.ttf", 20)
+    draw_tracked_text(d, 512, 852, "AUTOMATED LUNAR PROSPECTING  //  MERIDIAN STATION", f_sub, TYCHO_WHITE, tracking=2.2)
+    draw_tracked_text(d, 512, 896, "HEX-DOCK TELEMETRY & RESOURCE EXTRACTION  ·  L5", f_sub, TYCHO_SLATE, tracking=2.0)
+
+    return downsample(img)
+
+
+def build_tycho_b() -> Image.Image:
+    """
+    Tycho Consortium Direction B: 'The Deep-Radar Hexagonal Sounding Array'
+    Downward-stepping hexagonal radar chevrons beneath a stark white lunar datum spire,
+    visually encoding Meridian Station's automated 36-year deep-ice radar soundings.
+    """
+    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+
+    # Wide flat-top hexagonal shield (cx=512, cy=336)
+    cx, cy = 512, 336
+    hex_w, hex_h = 376, 246
+    shield_pts = [
+        (sf(cx - 210), sf(cy - hex_h)),
+        (sf(cx + 210), sf(cy - hex_h)),
+        (sf(cx + hex_w), sf(cy)),
+        (sf(cx + 210), sf(cy + hex_h)),
+        (sf(cx - 210), sf(cy + hex_h)),
+        (sf(cx - hex_w), sf(cy)),
+    ]
+    d.polygon(shield_pts, fill=TYCHO_PANEL, outline=TYCHO_TEAL, width=s(10))
+
+    # Inner white frame lines along top and bottom flats
+    d.line([(s(cx - 194), s(cy - hex_h + 22)), (s(cx + 194), s(cy - hex_h + 22))], fill=TYCHO_WHITE, width=s(6))
+    d.line([(s(cx - 194), s(cy + hex_h - 22)), (s(cx + 194), s(cy + hex_h - 22))], fill=TYCHO_TEAL_DARK, width=s(6))
+
+    # --- Three Nested Downward Half-Hexagonal Radar Sounding Chevrons (Muted Teal) ---
+    datum_y = 268
+    for idx, (span_x, depth_y, thickness, col) in enumerate([
+        (268, 256, 22, TYCHO_TEAL_DARK),
+        (206, 198, 22, TYCHO_TEAL),
+        (144, 140, 22, (112, 196, 200, 255)),
+    ]):
+        # Half-hexagon chevron from left datum -> bottom-left -> bottom-right -> right datum
+        w_flat = span_x * 0.46
+        y_bot = datum_y + depth_y
+        outer = [
+            (sf(cx - span_x), sf(datum_y + 16)),
+            (sf(cx - w_flat), sf(y_bot)),
+            (sf(cx + w_flat), sf(y_bot)),
+            (sf(cx + span_x), sf(datum_y + 16)),
+            (sf(cx + span_x - thickness * 1.15), sf(datum_y + 16)),
+            (sf(cx + w_flat - thickness * 0.6), sf(y_bot - thickness)),
+            (sf(cx - w_flat + thickness * 0.6), sf(y_bot - thickness)),
+            (sf(cx - span_x + thickness * 1.15), sf(datum_y + 16)),
+        ]
+        d.polygon(outer, fill=col)
+
+    # Central vertical deep-sounding radar axis beam piercing through the chevrons
+    d.rectangle((s(cx - 16), s(160), s(cx + 16), s(532)), fill=TYCHO_PANEL)
+    d.rectangle((s(cx - 7), s(168), s(cx + 7), s(536)), fill=TYCHO_WHITE)
+
+    # --- Stark Clean White Lunar Rim Horizon Bar & Tycho Central Spire ---
+    d.rectangle((s(cx - 306), s(datum_y - 12), s(cx + 306), s(datum_y + 12)), fill=TYCHO_WHITE)
+
+    # Central hexagonal radar spire / Tycho peak rising above the horizon bar
+    spire_pts = [
+        (sf(cx), sf(132)),
+        (sf(cx + 58), sf(datum_y - 8)),
+        (sf(cx - 58), sf(datum_y - 8)),
+    ]
+    d.polygon(spire_pts, fill=TYCHO_WHITE)
+    # Inner teal facet on spire
+    d.polygon([(sf(cx), sf(158)), (sf(cx + 32), sf(datum_y - 8)), (sf(cx), sf(datum_y - 8))], fill=TYCHO_TEAL)
+
+    # --- 2. Corporate Lockup Below Shield ---
+    f_main = load_font("ChakraPetch-Bold.ttf", 58)
+    draw_tracked_text(d, 512, 650, "TYCHO CONSORTIUM", f_main, TYCHO_WHITE, tracking=6.0)
+
+    # Hexagonal-end Muted Teal ribbon bar (wide with generous margin around text)
+    rx0, ry0, rx1, ry1 = 108, 714, 916, 778
+    rmid_y = (ry0 + ry1) / 2.0
+    ribbon_hex = [
+        (sf(rx0 + 26), sf(ry0)),
+        (sf(rx1 - 26), sf(ry0)),
+        (sf(rx1), sf(rmid_y)),
+        (sf(rx1 - 26), sf(ry1)),
+        (sf(rx0 + 26), sf(ry1)),
+        (sf(rx0), sf(rmid_y)),
+    ]
+    d.polygon(ribbon_hex, fill=TYCHO_TEAL)
+    f_rib = load_font("ChakraPetch-Bold.ttf", 27)
+    draw_tracked_text(d, 512, rmid_y, "DEEP-RADAR & RESOURCE EXTRACTION", f_rib, TYCHO_PANEL, tracking=3.5)
+
+    f_sub = load_font("IBMPlexMono-Bold.ttf", 20)
+    draw_tracked_text(d, 512, 836, "UNCREWED PROSPECTING OPERATIONS  ·  RIM TERRACES", f_sub, TYCHO_WHITE, tracking=2.2)
+    draw_tracked_text(d, 512, 882, "KESTREL-3 RELAY LINK  //  AUTONOMOUS SOUNDING QUEUE", f_sub, TYCHO_TEAL, tracking=2.0)
+
+    return downsample(img)
+
+
+def build_tycho_c() -> Image.Image:
+    """
+    Tycho Consortium Direction C: 'The Isometric Hex-Vault & Tri-Facet Syndicate Emblem'
+    Late-1970s brutalist corporate mark built from three solid interlocking isometric chevron
+    wings arranged in a 120-degree hexagonal turbine around a solid white core diamond (zero holes).
+    """
+    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+
+    # Brutalist chamfered rectangular corporate frame (x: 136..888, y: 78..592)
+    bx0, by0, bx1, by1 = 136, 78, 888, 592
+    ch = 48
+    frame_pts = [
+        (sf(bx0 + ch), sf(by0)),
+        (sf(bx1 - ch), sf(by0)),
+        (sf(bx1), sf(by0 + ch)),
+        (sf(bx1), sf(by1 - ch)),
+        (sf(bx1 - ch), sf(by1)),
+        (sf(bx0 + ch), sf(by1)),
+        (sf(bx0), sf(by1 - ch)),
+        (sf(bx0), sf(by0 + ch)),
+    ]
+    d.polygon(frame_pts, fill=TYCHO_PANEL, outline=TYCHO_WHITE, width=s(8))
+
+    # Top and bottom heavy corporate bracket bars
+    d.rectangle((s(bx0 + ch + 16), s(by0 + 18), s(bx1 - ch - 16), s(by0 + 32)), fill=TYCHO_TEAL)
+    d.rectangle((s(bx0 + ch + 16), s(by1 - 32), s(bx1 - ch - 16), s(by1 - 18)), fill=TYCHO_TEAL)
+
+    # --- Three Solid Interlocking Isometric Chevron Wings (120-degree rotational triad, ZERO holes) ---
+    cx, cy = 512, 336
+    # Outer flat-top hexagonal perimeter ring in Muted Teal
+    d.polygon(reg_polygon(cx, cy, 212, 6, rot_deg=0), outline=TYCHO_TEAL_DARK, width=s(5))
+
+    # Build 3 solid heavy geometric chevron blades rotated by 0, 120, 240 degrees
+    blade_colors = [TYCHO_WHITE, TYCHO_TEAL, (108, 192, 196, 255)]
+    base_blade = [
+        (0.0, -42.0),
+        (0.0, -188.0),
+        (126.0, -115.0),
+        (126.0, 26.0),
+        (74.0, 56.0),
+        (74.0, -84.0),
+    ]
+    for i, col in enumerate(blade_colors):
+        ang = math.radians(i * 120.0)
+        ca, sa = math.cos(ang), math.sin(ang)
+        pts = []
+        for px, py in base_blade:
+            rx = cx + px * ca - py * sa
+            ry = cy + px * sa + py * ca
+            pts.append((sf(rx), sf(ry)))
+        d.polygon(pts, fill=col)
+
+    # Central solid white hexagonal core prism (zero holes)
+    d.polygon(reg_polygon(cx, cy, 32, 6, rot_deg=30), fill=TYCHO_WHITE)
+
+    # Left and right corporate division stencil tags inside the frame
+    f_vert = load_font("IBMPlexMono-Bold.ttf", 18)
+    d.text((s(bx0 + 36), s(by1 - 68)), "DIV // 81-TC", font=f_vert, fill=TYCHO_SLATE)
+    d.text((s(bx1 - 196), s(by1 - 68)), "MERIDIAN // 0.7", font=f_vert, fill=TYCHO_SLATE)
+
+    # --- 2. Brutalist Corporate Wordmark Lockup ---
+    d.rectangle((s(bx0), s(632), s(512), s(644)), fill=TYCHO_WHITE)
+    d.rectangle((s(512), s(632), s(bx1), s(644)), fill=TYCHO_TEAL)
+
+    f_main = load_font("ChakraPetch-Bold.ttf", 58)
+    draw_tracked_text(d, 512, 704, "TYCHO // CONSORTIUM", f_main, TYCHO_WHITE, tracking=5.5)
+
+    f_sub = load_font("IBMPlexMono-Bold.ttf", 22)
+    f_sub2 = load_font("IBMPlexMono-Medium.ttf", 19)
+    draw_tracked_text(d, 512, 774, "AUTONOMOUS RESOURCE COOPERATIVE  ·  MERIDIAN SECTOR", f_sub, TYCHO_TEAL, tracking=2.2)
+    d.rectangle((s(180), s(818), s(844), s(822)), fill=TYCHO_SLATE)
+    draw_tracked_text(d, 512, 862, "HEXAGONAL CONTACT DOCKS  //  UNCREWED PROSPECTING FLEET", f_sub2, TYCHO_WHITE, tracking=2.2)
+
+    return downsample(img)
+
+
+def generate_brand_tycho():
+    out_dir = OUT_ROOT / "tycho"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    im_a = build_tycho_a()
+    im_b = build_tycho_b()
+    im_c = build_tycho_c()
+
+    im_a.save(out_dir / "a.png")
+    im_b.save(out_dir / "b.png")
+    im_c.save(out_dir / "c.png")
+
+    make_on_black(im_a, "TYCHO // DIRECTION A", "HEX-DOCK & ISOMETRIC TC PRISM").save(out_dir / "a_black.png")
+    make_on_black(im_b, "TYCHO // DIRECTION B", "DEEP-RADAR HEXAGONAL SOUNDING ARRAY").save(out_dir / "b_black.png")
+    make_on_black(im_c, "TYCHO // DIRECTION C", "TRI-HEX SYNDICATE TRIAD").save(out_dir / "c_black.png")
+
+    sheet = make_brand_sheet_on_black(
+        [im_a, im_b, im_c],
+        ["A · HEX-DOCK TC PRISM", "B · DEEP-RADAR ARRAY", "C · TRI-HEX SYNDICATE"],
+        "3 · TYCHO CONSORTIUM (AUTOMATED MERIDIAN STATION · PROSPECTING)",
+        TYCHO_TEAL,
+    )
+    sheet.save(out_dir / "on_black.png")
+    print("[build_logos] Generated Tycho Consortium logos in", out_dir)
+
+
+def generate_index_html():
+    """Writes Logs/logos/index.html showing all 3 brands side by side with a one-line rationale each."""
+    html = """<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lunarion — Brand Identities &amp; Maker Logos (1970s–80s Concepts)</title>
+  <style>
+    :root {
+      --bg: #0a0c12;
+      --card: #121520;
+      --border: #2a3142;
+      --cream: #f4e6c8;
+      --coral: #ff8a5b;
+      --amber: #ffb547;
+      --teal: #489ea2;
+      --muted: #9aa6b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--cream);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      line-height: 1.5;
+      padding: 32px 40px 64px;
+      max-width: 1640px;
+      margin: 0 auto;
+    }
+    header {
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 20px;
+      margin-bottom: 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    h1 {
+      font-size: 1.75rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--cream);
+    }
+    .subtitle {
+      color: var(--amber);
+      font-family: ui-monospace, 'Cascadia Mono', 'Consolas', monospace;
+      font-size: 0.92rem;
+      margin-top: 6px;
+    }
+    .controls {
+      display: flex;
+      gap: 10px;
+    }
+    .btn {
+      background: #1a2030;
+      color: var(--cream);
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: ui-monospace, monospace;
+      font-size: 0.84rem;
+    }
+    .btn.active {
+      border-color: var(--amber);
+      color: var(--amber);
+      background: #261e14;
+    }
+    section.brand {
+      margin-bottom: 48px;
+      background: #0e111a;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 24px 28px 28px;
+    }
+    .brand-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .brand-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .brand-meta {
+      font-family: ui-monospace, monospace;
+      font-size: 0.86rem;
+      color: var(--muted);
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .card.pick {
+      border-color: var(--amber);
+      box-shadow: 0 0 0 1px rgba(255, 181, 71, 0.25);
+    }
+    .img-wrap {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      background: #080a0f;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    body.checker .img-wrap.trans-preview {
+      background-image:
+        linear-gradient(45deg, #1a1e29 25%, transparent 25%),
+        linear-gradient(-45deg, #1a1e29 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #1a1e29 75%),
+        linear-gradient(-45deg, transparent 75%, #1a1e29 75%);
+      background-size: 24px 24px;
+      background-position: 0 0, 0 12px, 12px -12px, -12px 0;
+      background-color: #10131c;
+    }
+    .img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .card-body {
+      padding: 14px 16px 16px;
+    }
+    .card-label {
+      font-family: ui-monospace, monospace;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--amber);
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .badge-pick {
+      background: var(--amber);
+      color: #181006;
+      font-size: 0.72rem;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 800;
+    }
+    .rationale {
+      font-size: 0.92rem;
+      color: var(--cream);
+    }
+    .file-links {
+      margin-top: 8px;
+      font-family: ui-monospace, monospace;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    .file-links a {
+      color: var(--coral);
+      text-decoration: none;
+    }
+    .crt-section {
+      margin-top: 26px;
+      padding-top: 22px;
+      border-top: 1px dashed var(--border);
+    }
+    .crt-title {
+      font-family: ui-monospace, monospace;
+      font-size: 0.95rem;
+      color: var(--amber);
+      margin-bottom: 14px;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body class="checker">
+  <header>
+    <div>
+      <h1>Lunarion — Maker &amp; Agency Brand Identities (1970s–80s Concepts)</h1>
+      <div class="subtitle">1024×1024 Transparent PNGs + On-Black Frames + 07 1-Colour Amber CRT Boot Screen · Zero Dot/Hole Clusters</div>
+    </div>
+    <div class="controls">
+      <button class="btn active" id="btn-trans" onclick="setMode('trans')">Transparent PNGs (a/b/c.png)</button>
+      <button class="btn" id="btn-black" onclick="setMode('black')">On-Black Frames (a/b/c_black.png)</button>
+    </div>
+  </header>
+
+  <!-- 1. ILC -->
+  <section class="brand">
+    <div class="brand-header">
+      <div class="brand-title" style="color: var(--coral);">1 · ILC (International Lunar Commission)</div>
+      <div class="brand-meta">1969 onward · The international lunar agency (NASA-like role) · Earnest, geometric, 1970s–80s space-programme print style</div>
+    </div>
+    <div class="grid-3">
+      <div class="card pick">
+        <div class="img-wrap trans-preview"><img data-trans="ilc/a.png" data-black="ilc/a_black.png" src="ilc/a.png" alt="ILC Direction A" /></div>
+        <div class="card-body">
+          <div class="card-label"><span>ILC · DIRECTION A — 1975 ORBITAL WORM</span><span class="badge-pick">★ PICK</span></div>
+          <p class="rationale">1975 Danne &amp; Blackburn "Worm"-inspired tubular logotype paired with an Earth-to-Moon transfer ellipse and L4/L5 apex star—earnest, optimistic, and instantly readable on a station bulkhead.</p>
+          <div class="file-links">Files: <a href="ilc/a.png">ilc/a.png</a> (transparent) · <a href="ilc/a_black.png">ilc/a_black.png</a> · <a href="ilc/on_black.png">ilc/on_black.png</a></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="img-wrap trans-preview"><img data-trans="ilc/b.png" data-black="ilc/b_black.png" src="ilc/b.png" alt="ILC Direction B" /></div>
+        <div class="card-body">
+          <div class="card-label"><span>ILC · DIRECTION B — 1969 MISSION SEAL</span></div>
+          <p class="rationale">1969–78 Apollo/UN-era circular agency insignia uniting Earth's meridian dome, the lunar disc, and a rising coral-orange delta vector—built for suit patches and lander hull decals.</p>
+          <div class="file-links">Files: <a href="ilc/b.png">ilc/b.png</a> (transparent) · <a href="ilc/b_black.png">ilc/b_black.png</a></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="img-wrap trans-preview"><img data-trans="ilc/c.png" data-black="ilc/c_black.png" src="ilc/c.png" alt="ILC Direction C" /></div>
+        <div class="card-body">
+          <div class="card-label"><span>ILC · DIRECTION C — 1982 SWISS WAYSTATION GRID</span></div>
+          <p class="rationale">1982 Lance Wyman / Otl Aicher architectural grid badge combining the L4/L5 transit diagram, stencil "ILC", and hydrological strata bars for silkscreened station bulkheads.</p>
+          <div class="file-links">Files: <a href="ilc/c.png">ilc/c.png</a> (transparent) · <a href="ilc/c_black.png">ilc/c_black.png</a></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. KESSLER-ARAI -->
+  <section class="brand">
+    <div class="brand-header">
+      <div class="brand-title" style="color: var(--amber);">2 · Kessler–Arai Field Systems</div>
+      <div class="brand-meta">Built 07 (SSR-5, 1983) &amp; the SSR-3 elders (01–06) · Industrial, friendly, reliable field equipment · Cream &amp; Orange family</div>
+    </div>
+    <div class="grid-3">
+      <div class="card pick">
+        <div class="img-wrap trans-preview"><img data-trans="kessler-arai/a.png" data-black="kessler-arai/a_black.png" src="kessler-arai/a.png" alt="Kessler-Arai Direction A" /></div>
+        <div class="card-body">
+          <div class="card-label"><span>KESSLER–ARAI · DIRECTION A — LENS &amp; BOGIE BADGE</span><span class="badge-pick">★ PICK</span></div>
+          <p class="rationale">Chunky rounded-bezel industrial monogram uniting a stencil "K–A" with 07's hooded single-lens eye and rocker-bogie suspension link—warm, approachable, and unmistakable on 07's 1-colour amber CRT.</p>
+          <div class="file-links">Files: <a href="kessler-arai/a.png">kessler-arai/a.png</a> (transparent) · <a href="kessler-arai/a_black.png">kessler-arai/a_black.png</a> · <a href="kessler-arai/crt.png">kessler-arai/crt.png</a></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="img-wrap trans-preview"><img data-trans="kessler-arai/b.png" data-black="kessler-arai/b_black.png" src="kessler-arai/b.png" alt="Kessler-Arai Direction B" /></div>
+        <div class="card-body">
+          <div class="card-label"><span>KESSLER–ARAI · DIRECTION B — SOLAR CRATER STAMP</span></div>
+          <p class="rationale">1980s Komatsu/Braun-inspired heavy machinery stamp pairing a warm rising solar disc (Arai) with a stepped crater-ridge chevron (Kessler) inside chamfered chassis bumper clamps.</p>
+          <div class="file-links">Files: <a href="kessler-arai/b.png">kessler-arai/b.png</a> (transparent) · <a href="kessler-arai/b_black.png">kessler-arai/b_black.png</a> · <a href="kessler-arai/crt_b.png">kessler-arai/crt_b.png</a></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="img-wrap trans-preview"><img data-trans="kessler-arai/c.png" data-black="kessler-arai/c_black.png" src="kessler-arai/c.png" alt="Kessler-Arai Direction C" /></div>
+        <div class="card-body">
+          <div class="card-label"><span>KESSLER–ARAI · DIRECTION C — 1983 CHASSIS NAMEPLATE</span></div>
+          <p class="rationale">1983 stamped-enamel equipment nameplate pairing a geometric 2D SSR-5 rover profile with a split-block "K/A" stencil and CONTINUE bus spec bars, ready to weld onto 07's rear flank.</p>
+          <div class="file-links">Files: <a href="kessler-arai/c.png">kessler-arai/c.png</a> (transparent) · <a href="kessler-arai/c_black.png">kessler-arai/c_black.png</a> · <a href="kessler-arai/crt_c.png">kessler-arai/crt_c.png</a></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="crt-section">
+      <div class="crt-title">07 CRT Face · 1-Colour Amber Boot Screen Mockups ("KESSLER–ARAI FIELD SYSTEMS · SSR-5" · R1CrtFace.shader Phosphor &amp; Scanlines)</div>
+      <div class="grid-3">
+        <div class="card pick">
+          <div class="img-wrap"><img src="kessler-arai/crt.png" alt="07 CRT Boot Variant A" /></div>
+          <div class="card-body">
+            <div class="card-label"><span>07 CRT BOOT · DIRECTION A (crt.png)</span><span class="badge-pick">★ PICK</span></div>
+            <p class="rationale">1-colour amber phosphor boot screen on 07's curved CRT face before the self-test lines finish: the hooded-lens "K–A" badge reads immediately through scanlines and phosphor bloom.</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="img-wrap"><img src="kessler-arai/crt_b.png" alt="07 CRT Boot Variant B" /></div>
+          <div class="card-body">
+            <div class="card-label"><span>07 CRT BOOT · DIRECTION B (crt_b.png)</span></div>
+            <p class="rationale">The rising solar disc &amp; crater-ridge lozenge rendered as a 1-colour amber phosphor boot emblem above the SSR-5 self-test readout.</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="img-wrap"><img src="kessler-arai/crt_c.png" alt="07 CRT Boot Variant C" /></div>
+          <div class="card-body">
+            <div class="card-label"><span>07 CRT BOOT · DIRECTION C (crt_c.png)</span></div>
+            <p class="rationale">The stamped SSR-5 rover profile &amp; "K/A" chassis nameplate rendered in 1-colour amber phosphor on 07's boot screen.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. TYCHO CONSORTIUM -->
+  <section class="brand">
+    <div class="brand-header">
+      <div class="brand-title" style="color: var(--teal);">3 · Tycho Consortium</div>
+      <div class="brand-meta">Rival industrial prospecting operator of automated Meridian Station · Clean White + Muted Teal · Hexagonal motifs, colder, corporate</div>
+    </div>
+    <div class="grid-3">
+      <div class="card pick">
+        <div class="img-wrap trans-preview"><img data-trans="tycho/a.png" data-black="tycho/a_black.png" src="tycho/a.png" alt="Tycho Direction A" /></div>
+        <div class="card-body">
+          <div class="card-label"><span style="color: var(--teal);">TYCHO · DIRECTION A — HEX-DOCK TC PRISM</span><span class="badge-pick">★ PICK</span></div>
+          <p class="rationale">Precision hexagonal contact-dock emblem forming an interlocking isometric "TC" prism in stark white and muted teal—cold, corporate, and built to double as the physical alignment target on Meridian's hex docks.</p>
+          <div class="file-links">Files: <a href="tycho/a.png">tycho/a.png</a> (transparent) · <a href="tycho/a_black.png">tycho/a_black.png</a> · <a href="tycho/on_black.png">tycho/on_black.png</a></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="img-wrap trans-preview"><img data-trans="tycho/b.png" data-black="tycho/b_black.png" src="tycho/b.png" alt="Tycho Direction B" /></div>
+        <div class="card-body">
+          <div class="card-label"><span style="color: var(--teal);">TYCHO · DIRECTION B — DEEP-RADAR SOUNDING ARRAY</span></div>
+          <p class="rationale">Downward-stepping half-hexagonal radar chevrons beneath a stark white lunar datum spire, visually encoding Meridian Station's automated 36-year deep-ice radar soundings.</p>
+          <div class="file-links">Files: <a href="tycho/b.png">tycho/b.png</a> (transparent) · <a href="tycho/b_black.png">tycho/b_black.png</a></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="img-wrap trans-preview"><img data-trans="tycho/c.png" data-black="tycho/c_black.png" src="tycho/c.png" alt="Tycho Direction C" /></div>
+        <div class="card-body">
+          <div class="card-label"><span style="color: var(--teal);">TYCHO · DIRECTION C — TRI-FACET HEXAGONAL TURBINE</span></div>
+          <p class="rationale">Late-1970s brutalist corporate mark built from three solid interlocking isometric chevron wings arranged in a 120° hexagonal turbine around a solid white core prism (zero holes).</p>
+          <div class="file-links">Files: <a href="tycho/c.png">tycho/c.png</a> (transparent) · <a href="tycho/c_black.png">tycho/c_black.png</a></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    function setMode(mode) {
+      document.getElementById('btn-trans').classList.toggle('active', mode === 'trans');
+      document.getElementById('btn-black').classList.toggle('active', mode === 'black');
+      document.body.classList.toggle('checker', mode === 'trans');
+      document.querySelectorAll('img[data-trans]').forEach(img => {
+        img.src = mode === 'trans' ? img.getAttribute('data-trans') : img.getAttribute('data-black');
+      });
+    }
+  </script>
+</body>
+</html>
+"""
+    index_path = OUT_ROOT / "index.html"
+    index_path.write_text(html, encoding="utf-8")
+    print("[build_logos] Wrote gallery to", index_path)
+
+
 if __name__ == "__main__":
     generate_brand_ilc()
     generate_brand_kessler()
+    generate_brand_tycho()
+    generate_index_html()
+
 
