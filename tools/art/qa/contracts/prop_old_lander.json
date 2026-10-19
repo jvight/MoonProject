@@ -14,10 +14,11 @@
     "R1_OrangeStripe",
     "R1_Rubber",
     "R1_SagePatch",
+    "R1_Signage",
     "R1_SolarCell"
   ],
   "max_triangles": 16000,
-  "max_meshes": 10,
+  "max_meshes": 11,
   "max_draw_calls": 40,
   "scale_tolerance": 0.001,
   "allow_boundary_edges": false,
@@ -132,6 +133,13 @@
         -0.3622,
         0.2993,
         0.8316
+      ]
+    },
+    "Decal_VIS_1": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
       ]
     }
   },

@@ -522,9 +522,23 @@ def build_mission_flag() -> bpy.types.Object:
 
     flag_obj = flag_mb.build_object(parent=root)
 
-    # Anchors
+    # Anchors & Maker Decal (Decal_ILC_1: small ILC seal patch on the flat cloth face near the pole)
     r1kit.create_empty("Base_Anchor", parent=root, pivot_u=(0.0, 0.0, 0.0))
     r1kit.create_empty("Flag_Anchor", parent=root, pivot_u=tp(0.44, 1.20, 0.0))
+
+    flag_n_u = _rotate_u((-0.1005, -0.0180, 0.9948), pole_rot, (0.0, 0.0, 0.0))
+    flag_up_u = _rotate_u((0.0, 1.0, 0.0), pole_rot, (0.0, 0.0, 0.0))
+    r1kit.add_maker_decal_node(
+        parent=root,
+        name="Decal_ILC_1",
+        cell_key="ILC_SEAL",
+        center_u=tp(0.084, 1.076, 0.0102),
+        normal_u=flag_n_u,
+        up_u=flag_up_u,
+        width=0.068,
+        height=0.068,
+        offset=0.0018,
+    )
 
     r1kit.apply_triplanar_uvs(root)
     r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))
