@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
+using MoonProject.Routing;
 
 namespace MoonProject.Autoplay.Tests
 {
