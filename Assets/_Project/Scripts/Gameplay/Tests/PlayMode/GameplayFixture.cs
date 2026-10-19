@@ -202,6 +202,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Gameplay.WireCargo(materials, CargoTuning);
             Gameplay.WireCutter(Asset<CutterTuning>());
             Gameplay.WireScans(ScanTuning);
+            Gameplay.WireDatabank(DatabankEntries());
             Gameplay.WireBuilding(build);
             Gameplay.WireRuins(Ruins(root.transform));
             Gameplay.WireLanderPort(Node("ServicePort", root.transform, new Vector3(35f, 0f, 157f)));
@@ -316,6 +317,30 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             return ruins;
+        }
+
+        /// <summary>
+        /// A small databank over the stand-in ruins: 07 (seeded), the airlock panel, the fallen array's set (counted)
+        /// and the Lumen place (any piece).
+        /// </summary>
+        private DatabankCatalogue DatabankEntries()
+        {
+            DatabankEntry Entry(string id, DatabankUnlock unlock)
+            {
+                return new DatabankEntry(id, DatabankCategory.Structures, id + ".name", DatabankMaker.None, "1984",
+                    DatabankEra.Lumen, id + ".readout", id + ".history", DatabankViewKind.Print, null, null, 0f, null,
+                    unlock);
+            }
+
+            var catalogue = Asset<DatabankCatalogue>();
+            catalogue.Populate(new[]
+            {
+                Entry("db.me", DatabankUnlock.Seeded),
+                Entry("db.panel", DatabankUnlock.StoryScan("airlock")),
+                Entry("db.array", DatabankUnlock.FragmentOf("FallenSolarArray")),
+                Entry("db.lumen", DatabankUnlock.FragmentOf("FallenSolarArray,HabitatModules,RadioTower")),
+            });
+            return catalogue;
         }
 
         private void BuildStructures(BuildField field)

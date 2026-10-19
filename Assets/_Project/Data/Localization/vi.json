@@ -1093,6 +1093,314 @@
         {
             "key": "ui.readout.sunset_soon",
             "text": "SẮP LẶN"
+        },
+        {
+            "key": "db.title",
+            "text": "DỮ LIỆU"
+        },
+        {
+            "key": "db.cat.machines",
+            "text": "MÁY MÓC"
+        },
+        {
+            "key": "db.cat.structures",
+            "text": "CÔNG TRÌNH"
+        },
+        {
+            "key": "db.cat.places",
+            "text": "ĐỊA ĐIỂM"
+        },
+        {
+            "key": "db.cat.phenomena",
+            "text": "HIỆN TƯỢNG"
+        },
+        {
+            "key": "db.cat.archive",
+            "text": "LƯU TRỮ"
+        },
+        {
+            "key": "db.field.maker",
+            "text": "HÃNG"
+        },
+        {
+            "key": "db.field.year",
+            "text": "NĂM"
+        },
+        {
+            "key": "db.field.era",
+            "text": "THỜI KỲ"
+        },
+        {
+            "key": "db.era.p",
+            "text": "TÀU THĂM DÒ"
+        },
+        {
+            "key": "db.era.s",
+            "text": "ĐỔ BỘ NGẮN NGÀY"
+        },
+        {
+            "key": "db.era.b",
+            "text": "XÂY DỰNG"
+        },
+        {
+            "key": "db.era.l",
+            "text": "LUMEN"
+        },
+        {
+            "key": "db.era.m",
+            "text": "MERIDIAN"
+        },
+        {
+            "key": "db.era.n",
+            "text": "HIỆN TẠI"
+        },
+        {
+            "key": "db.maker.ilc",
+            "text": "ILC"
+        },
+        {
+            "key": "db.maker.kessler_arai",
+            "text": "KESSLER–ARAI"
+        },
+        {
+            "key": "db.maker.vis",
+            "text": "VIS"
+        },
+        {
+            "key": "db.maker.tycho",
+            "text": "TYCHO"
+        },
+        {
+            "key": "db.no_record",
+            "text": "KHÔNG CÓ HỒ SƠ LUMEN"
+        },
+        {
+            "key": "db.scan_progress",
+            "text": "ĐÃ QUÉT {0}/{1}"
+        },
+        {
+            "key": "db.blueprint",
+            "text": "BẢN VẼ · {0}"
+        },
+        {
+            "key": "db.toast.added",
+            "text": "Đã thêm vào dữ liệu: {0}"
+        },
+        {
+            "key": "db.colour",
+            "text": "Màu thật"
+        },
+        {
+            "key": "db.unit07.name",
+            "text": "07"
+        },
+        {
+            "key": "db.unit07.readout",
+            "text": "SSR-5 · S/N 3-0417 · TÀI SẢN LUMEN SỐ 07"
+        },
+        {
+            "key": "db.elder06.name",
+            "text": "06"
+        },
+        {
+            "key": "db.elder06.readout",
+            "text": "SSR-3 · ĐƠN VỊ 06 · GIỮ TRẠM TIẾP SÓNG · NHIỆM VỤ: GIỮ LIÊN LẠC RELAY.2 · DỪNG: PIN 0%"
+        },
+        {
+            "key": "db.elder06.history",
+            "text": "Đơn vị thứ sáu của trạm, một xe SSR-3 giữ trạm tiếp sóng. Một việc, không có ổ lắp: giữ liên lạc cho trạm, ngoài ra không làm gì. — K."
+        },
+        {
+            "key": "db.elder01.name",
+            "text": "01"
+        },
+        {
+            "key": "db.elder01.readout",
+            "text": "SSR-3 · ĐƠN VỊ 01 · XE KHẢO SÁT · NHIỆM VỤ: KHẢO SÁT ĐƯỜNG LÊN ĐỈNH · DỪNG: ĐÁ LỞ"
+        },
+        {
+            "key": "db.elder01.history",
+            "text": "Đơn vị 01 lên đây cùng mấy thùng mô-đun nhà ở đầu tiên năm 84. Lúc ấy nó đã sáu tuổi, vậy mà vẫn leo dốc vững nhất trạm. — K."
+        },
+        {
+            "key": "db.cargo_lander.name",
+            "text": "Tàu đổ bộ"
+        },
+        {
+            "key": "db.cargo_lander.readout",
+            "text": "TÀU ĐỔ BỘ CHỞ HÀNG · VIS CL-4 · HẠ CÁNH 1987"
+        },
+        {
+            "key": "db.cargo_lander.history",
+            "text": "Xuống trong đợt thả hàng năm 87. Chiếc chị em của nó đáp xuống hẻm, mạnh tay hơn. Tháng Mười năm 88, 07 dỡ mấy thùng cuối cùng khỏi chiếc này. — K."
+        },
+        {
+            "key": "db.kestrel3.name",
+            "text": "Kestrel-3"
+        },
+        {
+            "key": "db.kestrel3.readout",
+            "text": "KESTREL-3 · VỆ TINH TIẾP SÓNG · RƠI 10/1988"
+        },
+        {
+            "key": "db.kestrel3.history",
+            "text": "Vệ tinh tiếp sóng của Meridian. Mất định hướng rồi rơi xuống lòng chảo của tụi mình, vẫn chĩa về phía các tàu Ark. Giờ Meridian phải nói chuyện qua chảo ăng-ten lớn của tụi mình. — Ro"
+        },
+        {
+            "key": "db.habitat.name",
+            "text": "Nhà ở & phòng thí nghiệm"
+        },
+        {
+            "key": "db.habitat.readout",
+            "text": "SEC-04 · NHÀ Ở & PHÒNG THÍ NGHIỆM · CỬA KÍN ĐÃ KHÓA · CHƯA CÓ ĐIỆN"
+        },
+        {
+            "key": "db.habitat.history",
+            "text": "Ba mô-đun VIS, đội xây dựng dựng lên năm 84, một năm trước khi tụi mình dọn tới: chỗ ở, phòng thí nghiệm và kho. — K."
+        },
+        {
+            "key": "db.solar_array.name",
+            "text": "Giàn pin mặt trời đổ"
+        },
+        {
+            "key": "db.solar_array.readout",
+            "text": "GIÀN PIN MẶT TRỜI CHÍNH · ĐỔ · KHÔNG CÓ ĐIỆN RA"
+        },
+        {
+            "key": "db.solar_array.history",
+            "text": "Giàn pin chính của Lumen. Ở vùng cực, Mặt Trời chẳng bao giờ lên cao, nên giàn xoay suốt ngày, đuổi theo nó quanh đường chân trời. — K."
+        },
+        {
+            "key": "db.radio_tower.name",
+            "text": "Tháp radio"
+        },
+        {
+            "key": "db.radio_tower.readout",
+            "text": "THÁP RADIO · LIÊN KẾT LÊN ĐỈNH · ĐANG TẮT"
+        },
+        {
+            "key": "db.radio_tower.history",
+            "text": "Mọi thứ tụi mình gửi đi đều qua tháp này trước, rồi mới lên chảo ăng-ten lớn trên Đỉnh núi. Chủ nhật thì nó phát chương trình của mình. — Ro"
+        },
+        {
+            "key": "db.seismic_station.name",
+            "text": "Trạm địa chấn"
+        },
+        {
+            "key": "db.seismic_station.readout",
+            "text": "TRẠM ĐỊA CHẤN · ĐẶT 1971 · NỐI ĐIỆN LUMEN 1984 · BẢN GHI CUỐI 28/10/1988 · PIN 0%"
+        },
+        {
+            "key": "db.seismic_station.history",
+            "text": "Tổ bay năm 71 để lại. Nó đã ghi được mười ba năm nền đất yên ổn, nên ILC đặt Lumen ở đây. Chúng tôi nối nó vào lưới điện của trạm. — Ines"
+        },
+        {
+            "key": "db.retroreflector.name",
+            "text": "Gương phản xạ laser"
+        },
+        {
+            "key": "db.retroreflector.readout",
+            "text": "GƯƠNG PHẢN XẠ · 100 LĂNG KÍNH · ĐẶT 1971 · CHỈNH HƯỚNG 1984"
+        },
+        {
+            "key": "db.retroreflector.history",
+            "text": "Tổ bay năm 71 đặt nó để đón tia laser từ Trái Đất. Chúng tôi xoay nó về phía đường hạ cánh, để tàu đổ bộ đo được khoảng cách. — Ines"
+        },
+        {
+            "key": "db.lumen.name",
+            "text": "Tàn tích Lumen"
+        },
+        {
+            "key": "db.lumen.readout",
+            "text": "LUMEN · ILC · SEC-04 · CHƯA CÓ ĐIỆN"
+        },
+        {
+            "key": "db.lumen.history",
+            "text": "Lumen. Xây năm 84, bốn đứa tụi mình ở đây từ năm 85: Ines, Kenji, Theo và mình. Hô hiệu: ba ngắn, một dài. — Ro"
+        },
+        {
+            "key": "db.earth_eclipse.name",
+            "text": "Trái Đất che Mặt Trời"
+        },
+        {
+            "key": "db.earth_eclipse.readout",
+            "text": "TRÁI ĐẤT CHE MẶT TRỜI · MẶT ĐÊM · ĐÈN THÀNH PHỐ: 0"
+        },
+        {
+            "key": "db.earth_eclipse.history",
+            "text": "Khi Trái Đất che Mặt Trời, cả mặt đêm của nó hiện ra, thành phố nào cũng sáng đèn. Ines ngồi đếm. Mình thì bật một đĩa nhạc. — Ro"
+        },
+        {
+            "key": "db.crew.name",
+            "text": "Phi hành đoàn Lumen"
+        },
+        {
+            "key": "db.crew.history",
+            "text": "I. Kalani, trưởng nhóm, địa chất. K. Morrow, cơ khí, hệ thống. T. Lindqvist, thực vật, bếp. R. Amadi, liên lạc."
+        },
+        {
+            "key": "db.card_kessler_arai.name",
+            "text": "Kessler–Arai Field Systems"
+        },
+        {
+            "key": "db.card_kessler_arai.readout",
+            "text": "KESSLER–ARAI FIELD SYSTEMS · RÔ-BỐT HIỆN TRƯỜNG · DÒNG SSR"
+        },
+        {
+            "key": "db.card_kessler_arai.history",
+            "text": "Hãng này làm xe tự hành lắp được đồ nghề: cắm vào ổ, chứ không hàn chết. Xe SSR-3 làm một việc. SSR-5 thì lắp gì làm nấy. — K."
+        },
+        {
+            "key": "db.card_ilc.name",
+            "text": "Ủy ban Mặt Trăng Quốc tế"
+        },
+        {
+            "key": "db.card_ilc.readout",
+            "text": "ỦY BAN MẶT TRĂNG QUỐC TẾ · ILC"
+        },
+        {
+            "key": "db.card_ilc.history",
+            "text": "Lập ra sau lần đổ bộ năm 69 để quản lý Mặt Trăng cho mọi người. Giờ thì quản lý cho các tàu Ark. Phiếu lương của tụi mình ghi ILC. — Ro"
+        },
+        {
+            "key": "db.card_tycho.name",
+            "text": "Tycho Consortium"
+        },
+        {
+            "key": "db.card_tycho.readout",
+            "text": "TYCHO CONSORTIUM · TRẠM MERIDIAN · KHÔNG NGƯỜI"
+        },
+        {
+            "key": "db.card_tycho.history",
+            "text": "Tycho vận hành Meridian, trên Bậc thềm vành hố. Không có người, chỉ có máy. Radar dò sâu của họ tốt nhất trên Mặt Trăng. — Ines"
+        },
+        {
+            "key": "db.card_vis.name",
+            "text": "VIS"
+        },
+        {
+            "key": "db.card_vis.readout",
+            "text": "VANGUARD INTERPLANETARY STRUCTURES · TÀU ĐỔ BỘ · MÔ-ĐUN"
+        },
+        {
+            "key": "db.card_vis.history",
+            "text": "VIS làm mô-đun cho tụi mình, làm cả tàu đổ bộ, và hồi 67 làm luôn con tàu Scout dưới hố kia. Hai mươi năm vẫn một kiểu bu-lông. — K."
+        },
+        {
+            "key": "scan.scout3.name",
+            "text": "Tàu thăm dò Scout 3"
+        },
+        {
+            "key": "scan.scout3.note",
+            "text": "Nó hạ cánh ở đây năm 1967, hai năm trước khi có người đặt chân lên Mặt Trăng. Năm 71, một tổ bay đi bộ tới, tháo máy quay với gầu xúc mang về Trái Đất xem Mặt Trăng làm gì với kim loại, phần còn lại để nguyên. Nó đến trước tất cả chúng mình."
+        },
+        {
+            "key": "elder.06.manifest",
+            "text": "SSR-3 · ĐƠN VỊ 06 · GIỮ TRẠM TIẾP SÓNG · NHIỆM VỤ: GIỮ LIÊN LẠC RELAY.2 · DỪNG: PIN 0%"
+        },
+        {
+            "key": "notes.unit07",
+            "text": "Xe dịch vụ SSR-5. Quét linh kiện cho xưởng, cắt chỗ hỏng, dựng đồ mới. Chiếc này lắp lại từ một khung xe dự phòng. — K."
         }
     ]
 }
