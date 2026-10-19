@@ -38,10 +38,17 @@ namespace MoonProject.UI
         public const float StripY = 672f;
         public const float StripHeight = 22f;
         public const float StripMarkPitch = 44f;
+        public const float TabWidth = 150f;
+        public const float TabGap = 12f;
+        public const float TabsX = RightEdge - 2f * TabWidth;
         public const float FooterY = FaceLayout.FooterY;
         public const float FooterHeight = FaceLayout.FooterHeight;
 
-        public static Rect TitleRect => new Rect(Margin, TitleY, RightEdge - Margin, TitleHeight);
+        /// <summary>The title row left of the page tabs.</summary>
+        public static Rect TitleRect => new Rect(Margin, TitleY, TabsX - TabGap - Margin, TitleHeight);
+
+        /// <summary>Page tab <paramref name="index"/> (0 HOLD, 1 DATABANK) at the right of the title row.</summary>
+        public static Rect TabRect(int index) => new Rect(TabsX + index * TabWidth, TitleY, TabWidth, TitleHeight);
 
         public static Rect ModelRect => new Rect(RightX, ModelTop, RightWidth, ModelHeight);
 

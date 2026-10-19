@@ -47,12 +47,12 @@ namespace MoonProject.UI
         public const string CargoDragNotDocked = "ui.cargo.drag.not_docked";
         public const string CargoDragToCutter = "ui.cargo.drag.to_cutter";
         public const string CargoDragNowhere = "ui.cargo.drag.nowhere";
-        public const string KeyDragOrEnter = "glyph.combo.drag_enter";
+        public const string KeyDragOrE = "glyph.combo.drag_e";
         public const string KeyMouseOrE = "glyph.combo.mouse_e";
         public const string KeyBOrEscape = "glyph.combo.b_esc";
         public const string KeyPadYOrB = "glyph.combo.pad_y_b";
         public const string KeyB = "glyph.keyboard.b";
-        public const string KeyQe = "glyph.keyboard.qe";
+        public const string KeyQ = "glyph.keyboard.q";
         public const string KeyF = "glyph.keyboard.f";
         public const string KeyShoulders = "glyph.gamepad.shoulders";
         public const string CargoWaiting = "ui.cargo.waiting";

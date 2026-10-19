@@ -11,7 +11,7 @@ namespace MoonProject.UI.Tests
     /// 07's databank page (docs/design/databank.md): its index of the archive, the focus walk, the turning model,
     /// the CRT page flip and the page's words.
     /// </summary>
-    public sealed class DatabankTests
+    public sealed class DatabankPageTests
     {
         private const float Step = 0.02f;
 

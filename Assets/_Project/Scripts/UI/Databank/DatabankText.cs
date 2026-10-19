@@ -11,6 +11,7 @@ namespace MoonProject.UI
     internal sealed class DatabankText
     {
         public const string TitleKey = "db.title";
+        public const string HoldPageKey = "db.page.hold";
         public const string NoRecordKey = "db.no_record";
         public const string ScanProgressKey = "db.scan_progress";
         public const string BlueprintKey = "db.blueprint";

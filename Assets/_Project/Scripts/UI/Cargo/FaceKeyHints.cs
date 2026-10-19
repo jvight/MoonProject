@@ -13,7 +13,7 @@ namespace MoonProject.UI
         /// <summary>Close the screen and open the build menu.</summary>
         Build = 2,
 
-        /// <summary>Flip the face to the databank page (Q / E).</summary>
+        /// <summary>Flip the face to the databank page (Q, gamepad LB or RB).</summary>
         Databank = 3,
     }
 
@@ -32,13 +32,13 @@ namespace MoonProject.UI
             switch (hint)
             {
                 case FaceHint.Fit:
-                    return pad ? "glyph.gamepad.buttonsouth" : UiKeys.KeyDragOrEnter;
+                    return pad ? "glyph.gamepad.buttonsouth" : UiKeys.KeyDragOrE;
                 case FaceHint.Close:
                     return pad ? "glyph.gamepad.select" : "glyph.keyboard.tab";
                 case FaceHint.Build:
                     return pad ? "glyph.gamepad.buttonnorth" : UiKeys.KeyB;
                 default:
-                    return pad ? UiKeys.KeyShoulders : UiKeys.KeyQe;
+                    return pad ? UiKeys.KeyShoulders : UiKeys.KeyQ;
             }
         }
 

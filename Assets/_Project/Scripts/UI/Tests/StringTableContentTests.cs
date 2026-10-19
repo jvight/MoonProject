@@ -106,7 +106,7 @@ namespace MoonProject.UI.Tests
                           UiKeys.HintHold, UiKeys.VerbScan, UiKeys.VerbCut, UiKeys.VerbBuild, UiKeys.VerbFit,
                           UiKeys.CargoMoreSlots, UiKeys.CargoEmptyName, UiKeys.CargoEmptyDesc,
                           UiKeys.FaceClose, UiKeys.FaceFit, UiKeys.FaceBuild, UiKeys.CargoDragNotDocked,
-                          UiKeys.CargoDragToCutter, UiKeys.CargoDragNowhere, UiKeys.KeyDragOrEnter, UiKeys.KeyMouseOrE,
+                          UiKeys.CargoDragToCutter, UiKeys.CargoDragNowhere, UiKeys.KeyDragOrE, UiKeys.KeyMouseOrE,
                           UiKeys.KeyBOrEscape, UiKeys.KeyPadYOrB, UiKeys.KeyB,
                           UiKeys.BuildStripTitle, UiKeys.BuildCostAffordable, UiKeys.BuildCostShort,
                           UiKeys.BuildHintPick, UiKeys.BuildHintLeave, UiKeys.BuildStepPlace, UiKeys.BuildStepWeld,

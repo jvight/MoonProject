@@ -468,18 +468,9 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "PagePrev",
+                    "name": "PageToggle",
                     "type": "Button",
-                    "id": "421dbd1b-793f-436d-8bab-e661ba9aae2a",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "PageNext",
-                    "type": "Button",
-                    "id": "979f998e-087c-4d5c-be20-c83c7f6e6ef4",
+                    "id": "d0795753-1dd2-453c-b656-fe27b4c15561",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -716,45 +707,34 @@
                 },
                 {
                     "name": "",
-                    "id": "52bca0cd-da6b-449e-8a0d-173527304573",
+                    "id": "aa5b5672-21dc-443b-be07-761edabb4c16",
                     "path": "<Keyboard>/q",
                     "interactions": "",
                     "processors": "",
                     "groups": "Keyboard&Mouse",
-                    "action": "PagePrev",
+                    "action": "PageToggle",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
                 {
                     "name": "",
-                    "id": "4f7fb255-b8f5-451e-a208-0ddcc5923565",
+                    "id": "996d4002-dc6e-4b5f-80d5-426288ca3dd3",
                     "path": "<Gamepad>/leftShoulder",
                     "interactions": "",
                     "processors": "",
                     "groups": "Gamepad",
-                    "action": "PagePrev",
+                    "action": "PageToggle",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
                 {
                     "name": "",
-                    "id": "e1981be7-75ed-4415-ac13-62d1e0e3f7da",
-                    "path": "<Keyboard>/e",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "Keyboard&Mouse",
-                    "action": "PageNext",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "03aee4ea-4ad4-404b-961f-05b1d3b8c8bf",
+                    "id": "17eb30c8-7823-46d3-af50-389f469cd72c",
                     "path": "<Gamepad>/rightShoulder",
                     "interactions": "",
                     "processors": "",
                     "groups": "Gamepad",
-                    "action": "PageNext",
+                    "action": "PageToggle",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },

@@ -89,6 +89,8 @@ namespace MoonProject.UI
         private bool _postOnCrt;
         private BlockedCue _blockedCue;
         private PageFlip _pages;
+        private PageTabs _tabs;
+        private VisualElement[] _pageRoots;
         private DatabankPage _databank;
         private DatabankText _databankText;
         private float _databankLaidOutAt = -1f;
@@ -374,6 +376,9 @@ namespace MoonProject.UI
             _faceNotice = new FaceNotice(_layout.Cargo.parent);
             _blockedCue = new BlockedCue(_tuning.Guidance);
             _pages = new PageFlip(_tuning.Databank);
+            _tabs = new PageTabs(_cargo.Panel, _localization);
+            _tabs.SetShown(_faceDocument != null);
+            _pageRoots = new VisualElement[] { _tabs.Tab(0), _tabs.Tab(1), null };
             _databankText = new DatabankText(_localization);
             _unlockCard = new UnlockCard(_layout, _tuning.UnlockCard, _localization);
             _pause = new PauseMenu(_layout, _tuning.Pause, _tuning.Title, _player, _localization, services.Input,
@@ -866,12 +871,17 @@ namespace MoonProject.UI
                 }
             }
 
-            if (menu.SubmitPressed)
+            if (menu.SubmitPressed || menu.UsePressed)
             {
                 view.SubmitFocused();
             }
 
             if (!TryFacePointer(menu, out Vector2 panelPos, out bool down, out bool moved, out bool up))
+            {
+                return;
+            }
+
+            if (down && ClickedTab(panelPos))
             {
                 return;
             }
@@ -1136,32 +1146,63 @@ namespace MoonProject.UI
         /// </summary>
         private void StepPages(MenuInput menu, float deltaTime, InputDeviceKind device)
         {
-            if (menu.PagePressed && _faceDocument != null && (_pages.Target == FacePage.Databank || EnsureDatabank()))
+            if (menu.PagePressed)
             {
-                _pages.Toggle();
-                _events.Publish(new FacePageChanged(_pages.Target));
-                _events.Publish(new UiCue(UiCueKind.Confirm));
+                FlipPage();
             }
 
             _pages.Tick(deltaTime);
+            _tabs.Light(_pages.Target);
             _cargo.SetPageScale(_pages.ScaleY);
             if (_pages.Switched)
             {
                 ShowPage(device);
             }
 
-            if (_databank != null && !Mathf.Approximately(_databankLaidOutAt, _cargo.PanelScale))
+            if (!Mathf.Approximately(_databankLaidOutAt, _cargo.PanelScale))
             {
                 _databankLaidOutAt = _cargo.PanelScale;
-                _databank.Layout(_cargo.PanelScale);
+                _tabs.Layout(_cargo.PanelScale);
+                _databank?.Layout(_cargo.PanelScale);
             }
+        }
+
+        /// <summary>Flips to the face's other page (Q, LB / RB, or a click on its tab), on 07's face only.</summary>
+        private void FlipPage()
+        {
+            if (_faceDocument == null || (_pages.Target == FacePage.Hold && !EnsureDatabank()))
+            {
+                return;
+            }
+
+            _pages.Toggle();
+            _events.Publish(new FacePageChanged(_pages.Target));
+            _events.Publish(new UiCue(UiCueKind.Confirm));
+        }
+
+        /// <summary>A click on the other page's tab flips to it; true when the click was on a tab.</summary>
+        private bool ClickedTab(Vector2 panelPos)
+        {
+            Vector2 refPos = panelPos / Mathf.Max(0.01f, _cargo.PanelScale);
+            if (!PageTabs.TryPageAt(refPos, out FacePage page))
+            {
+                return false;
+            }
+
+            if (page != _pages.Target)
+            {
+                FlipPage();
+            }
+
+            return true;
         }
 
         /// <summary>The page now on the tube shows; the other steps aside.</summary>
         private void ShowPage(InputDeviceKind device)
         {
             bool databank = _pages.Page == FacePage.Databank;
-            _cargo.SetHoldShown(!databank, _databank?.View.Root);
+            _pageRoots[_pageRoots.Length - 1] = _databank?.View.Root;
+            _cargo.SetHoldShown(!databank, _pageRoots);
             _databank?.SetOpen(databank, device);
         }
 
@@ -1214,6 +1255,11 @@ namespace MoonProject.UI
             if (TryFacePointer(menu, out Vector2 panelPos, out bool down, out bool moved, out bool up))
             {
                 Vector2 refPos = panelPos / Mathf.Max(0.01f, _cargo.PanelScale);
+                if (down && ClickedTab(panelPos))
+                {
+                    return;
+                }
+
                 if (down)
                 {
                     _databank.PointerDown(refPos);
@@ -1376,6 +1422,7 @@ namespace MoonProject.UI
             _staticText.Apply();
             _prompt.Relocalize();
             _lookUpChip.Relocalize();
+            _tabs.Relocalize();
             _lowBattery.Relocalize();
             _objectiveView.Relocalize(_lowBattery);
             _readout.Relocalize();

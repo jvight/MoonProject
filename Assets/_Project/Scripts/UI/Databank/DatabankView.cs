@@ -64,7 +64,7 @@ namespace MoonProject.UI
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _root = new VisualElement { name = "databank", pickingMode = PickingMode.Ignore };
             _root.AddToClassList(RootClass);
-            _title = AddLabel("databank-title", "cargo__heading", "cargo__heading--title");
+            _title = AddLabel("databank-title", "cargo__heading");
             int rows = DatabankLayout.VisibleRows;
             _rows = new Label[rows];
             _dots = new VisualElement[rows];
@@ -189,8 +189,8 @@ namespace MoonProject.UI
 
             _footerDevice = device;
             bool pad = device == InputDeviceKind.Gamepad;
-            _keys[0].text = _localization.Get(pad ? UiKeys.KeyShoulders : UiKeys.KeyQe);
-            _words[0].text = _localization.Get("db.page.hold");
+            _keys[0].text = _localization.Get(pad ? UiKeys.KeyShoulders : UiKeys.KeyQ);
+            _words[0].text = _localization.Get(DatabankText.HoldPageKey);
             _keys[1].text = _localization.Get(pad ? "glyph.gamepad.buttonnorth" : UiKeys.KeyF);
             _words[1].text = _localization.Get(DatabankText.ColourKey);
             _keys[2].text = _localization.Get(pad ? "glyph.gamepad.select" : "glyph.keyboard.tab");

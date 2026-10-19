@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using System.IO;
 using NUnit.Framework;
@@ -11,16 +10,13 @@ using MoonProject.Core.Events;
 using MoonProject.Testing;
 using MoonProject.UI;
 using Object = UnityEngine.Object;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 namespace MoonProject.Rover.PlayModeTests
 {
     /// <summary>
-    /// 07's databank page on its real CRT face (docs/design/databank.md), driven by the real keyboard over a scripted
-    /// archive: Q flips the face from the hold to the databank and the camera eases in, the Scout turns in the amber
-    /// wireframe and F shows it in colour, an archive card shows as a print, E flips back, and a new entry's line shows
+    /// 07's databank page on its real CRT face (docs/design/databank.md), driven by the real keyboard and mouse over
+    /// Gameplay's archive (07, the Kessler–Arai card and the eclipse seeded; the Scout's story scan unlocks it): Q flips the face from the hold to the databank and the camera eases in, the Scout turns in the amber
+    /// wireframe and F shows it in colour, an archive card shows as a print, the HOLD tab and Q flip back, and a new entry's line shows
     /// on 07's face once the screen is closed. Writes ultrawide captures to Logs/captures/databank/.
     /// </summary>
     public sealed class RoverDatabankPlayModeTests : InputTestFixture
@@ -33,20 +29,15 @@ namespace MoonProject.Rover.PlayModeTests
         private const int CaptureWidth = 3440;
         private const int CaptureHeight = 1440;
         private const int MaxSteps = 12;
+        private const string ScoutId = "db.scout3";
         private const float DatabankShare = 0.90f / 1.08f;
-        private const string RoverPrefab = "Assets/_Project/Generated/Rover/Rover.prefab";
-        private const string ScoutPrefab = "Assets/_Project/Generated/Art/R1/Models/Props/Prop_OldLander.prefab";
-        private const string ArrayPrefab = "Assets/_Project/Generated/Art/R1/Models/Ruins/FallenSolarArray.prefab";
-        private const string PrintStandIn = "Assets/_Project/Art/R1/Textures/T_R1_CargoCrateLabel_Albedo.png";
-
-        /// <summary>The parts the '71 crew took home: the page leaves them off, as the world does.</summary>
-        private static readonly string[] ScoutRemoved = { "TvCamera", "ScoopArm" };
 
         private static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "captures", "databank"));
 
         private readonly RealRoverScene _scene = new RealRoverScene();
         private Keyboard _keyboard;
+        private Mouse _mouse;
         private RenderTexture _target;
 
         public override void Setup()
@@ -80,25 +71,15 @@ namespace MoonProject.Rover.PlayModeTests
         [PostBuildCleanup(typeof(RoverSessionScene))]
         public IEnumerator RealScene_TheDatabankPage_FlipsIn_TurnsTheScoutInWireAndColour_AndShowsAPrint()
         {
-#if UNITY_EDITOR
             Directory.CreateDirectory(CaptureFolder);
             _keyboard = InputSystem.AddDevice<Keyboard>();
-            InputSystem.AddDevice<Mouse>();
+            _mouse = InputSystem.AddDevice<Mouse>();
             yield return _scene.Boot();
-            var archive = new FakeDatabank();
-            archive.Unlock(Model("db.unit07", DatabankCategory.Machines, DatabankMaker.KesslerArai, "1983",
-                DatabankEra.Lumen, RoverPrefab, 200f));
-            archive.Unlock(Model("db.earth_eclipse", DatabankCategory.Phenomena, DatabankMaker.None, string.Empty,
-                DatabankEra.None, null, 0f));
-            archive.Unlock(Model("db.solar_array", DatabankCategory.Structures, DatabankMaker.VIS, "1984",
-                DatabankEra.Lumen, ArrayPrefab, 30f), 1, 3);
-            archive.Unlock(Model("db.scout3", DatabankCategory.Machines, DatabankMaker.VIS, "1967", DatabankEra.Probes,
-                ScoutPrefab, 35f, ScoutRemoved));
-            archive.Unlock(new DatabankEntryInfo("db.card_kessler_arai", DatabankCategory.Archive,
-                "db.card_kessler_arai.name", DatabankMaker.KesslerArai, "1983", DatabankEra.Lumen,
-                "db.card_kessler_arai.readout", "db.card_kessler_arai.history", DatabankViewKind.Print, null, null, 0f,
-                AssetDatabase.LoadAssetAtPath<Texture2D>(PrintStandIn)));
-            _scene.Context.Register<IDatabank>(archive);
+            IDatabank archive = _scene.Context.Get<IDatabank>();
+            Assert.IsTrue(archive.TryGetEntry(ScoutId, out _), "the catalogue knows the Scout");
+            _scene.Context.Events.Publish(new StoryScanned(ScoutId.Substring("db.".Length), "scan.scout3.note",
+                Vector3.zero));
+            Assert.Contains(ScoutId, (System.Collections.ICollection)archive.UnlockedIds, "its story scan unlocked it");
             _target = new RenderTexture(CaptureWidth, CaptureHeight, 24);
             _scene.View.targetTexture = _target;
             IRoverFaceScreen face = _scene.Context.Get<IRoverFaceScreen>();
@@ -125,13 +106,13 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreEqual(holdDistance * DatabankShare, databankDistance, holdDistance * 0.03f,
                 "the camera eased in on the databank (docs/design/databank.md §4: 1.08 m to 0.90 m)");
 
-            yield return StepTo(page, "db.scout3");
+            yield return StepTo(page, ScoutId);
             yield return RealRoverScene.WaitSeconds(1.2f);
             Assert.IsTrue(page.StageHasModel, "the Scout stands on the stage");
             Assert.IsFalse(page.IsColour, "in the tube's amber wireframe");
             StringAssert.Contains("VIS", page.View.Fields);
             StringAssert.Contains("1967", page.View.Fields);
-            Assert.IsFalse(archive.IsUnread("db.scout3"), "the page read the Scout's card");
+            Assert.IsFalse(archive.IsUnread(ScoutId), "the page read the Scout's card");
             Capture("databank_scout_wire");
 
             yield return Tap(_keyboard.fKey);
@@ -140,33 +121,38 @@ namespace MoonProject.Rover.PlayModeTests
             Capture("databank_scout_colour");
             yield return Tap(_keyboard.fKey);
 
-            yield return StepTo(page, "db.solar_array");
-            yield return RealRoverScene.WaitSeconds(0.8f);
-            StringAssert.Contains("1/3", page.View.SetLineText, "a set at its first piece counts its scans");
-            Capture("databank_array_1of3");
-
             yield return StepTo(page, "db.card_kessler_arai");
             yield return RealRoverScene.WaitSeconds(0.6f);
-            Assert.IsTrue(page.View.ShowsPrint, "an archive card shows as a print");
+            Assert.IsTrue(page.View.ShowsPrint, "an archive card shows as a print (its sheet is Art's, still to come)");
             Assert.IsFalse(page.View.ShowsModel);
             Capture("databank_archive_card");
 
-            yield return Tap(_keyboard.eKey);
+            Vector2 holdTab = DatabankLayout.TabRect(0).center * _scene.Ui.Cargo.PanelScale;
+            Assert.IsTrue(FaceScreenMapper.TryPanelToScreen(holdTab, _scene.View, face,
+                FaceScreenMapper.DefaultPanelSize, out Vector2 tabOnScreen), "the HOLD tab is on the glass");
+            Set(_mouse.position, tabOnScreen);
+            yield return null;
+            Press(_mouse.leftButton);
+            yield return null;
+            Release(_mouse.leftButton);
             yield return UntilPage(FacePage.Hold);
-            Assert.IsFalse(page.View.IsShown, "E flips back to the hold");
+            Assert.IsFalse(page.View.IsShown, "a click on the HOLD tab flips back");
+            yield return Tap(_keyboard.qKey);
+            yield return UntilPage(FacePage.Databank);
+            yield return Tap(_keyboard.qKey);
+            yield return UntilPage(FacePage.Hold);
+            Assert.IsFalse(page.View.IsShown, "and Q flips there and back");
             yield return Tap(_keyboard.escapeKey);
             yield return RealRoverScene.WaitSeconds(1f);
             Assert.IsFalse(face.IsOpen);
 
-            _scene.Context.Events.Publish(new DatabankEntryAdded("db.solar_array", DatabankCategory.Structures));
+            _scene.Context.Events.Publish(new StoryScanned("retroreflector", "db.retroreflector.history",
+                Vector3.zero));
             yield return null;
             yield return null;
             Assert.IsTrue(_scene.Ui.FaceNotice.IsShown, "the new entry's line shows on 07's face");
-            StringAssert.Contains(_scene.Context.Get<ILocalization>().Get("db.solar_array.name"),
+            StringAssert.Contains(_scene.Context.Get<ILocalization>().Get("db.retroreflector.name"),
                 _scene.Ui.FaceNotice.Text);
-#else
-            throw new NotSupportedException("RoverDatabankPlayModeTests loads assets through the editor.");
-#endif
         }
 
         private IEnumerator Tap(KeyControl key)
@@ -211,16 +197,5 @@ namespace MoonProject.Rover.PlayModeTests
                 Object.DestroyImmediate(image);
             }
         }
-
-#if UNITY_EDITOR
-        private static DatabankEntryInfo Model(string id, DatabankCategory category, DatabankMaker maker, string year,
-            DatabankEra era, string prefab, float yaw, string[] hidden = null)
-        {
-            string name = id.Substring("db.".Length);
-            return new DatabankEntryInfo(id, category, $"db.{name}.name", maker, year, era, $"db.{name}.readout",
-                $"db.{name}.history", DatabankViewKind.Model,
-                prefab != null ? AssetDatabase.LoadAssetAtPath<GameObject>(prefab) : null, hidden, yaw, null);
-        }
-#endif
     }
 }

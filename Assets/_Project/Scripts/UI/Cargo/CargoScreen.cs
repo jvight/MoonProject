@@ -103,14 +103,17 @@ namespace MoonProject.UI
         /// <summary>Panel pixels per reference pixel of the 1152 x 768 layout.</summary>
         public float PanelScale => _panelScale;
 
-        /// <summary>The hold page's own elements show, or step aside for <paramref name="otherPage"/>.</summary>
-        public void SetHoldShown(bool shown, VisualElement otherPage)
+        /// <summary>
+        /// The hold page's own elements show, or step aside; <paramref name="keep"/> (the page tabs, another page)
+        /// are not the hold's and are left as they are.
+        /// </summary>
+        public void SetHoldShown(bool shown, VisualElement[] keep)
         {
             Visibility visibility = shown ? Visibility.Visible : Visibility.Hidden;
             for (int i = 0; i < _panel.childCount; i++)
             {
                 VisualElement child = _panel[i];
-                if (child != otherPage)
+                if (Array.IndexOf(keep, child) < 0)
                 {
                     child.style.visibility = visibility;
                 }

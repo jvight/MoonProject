@@ -1842,6 +1842,22 @@ Label {
     bottom: 0;
 }
 
+.page-tab {
+    position: absolute;
+    font-size: 20px;
+    letter-spacing: 2px;
+    -unity-text-align: middle-center;
+    color: rgb(214, 170, 96);
+    border-bottom-width: 2px;
+    border-color: rgb(44, 36, 24);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
+}
+
+.page-tab--active {
+    color: rgb(255, 224, 152);
+    border-color: rgb(255, 224, 152);
+}
+
 .databank__row {
     position: absolute;
     padding: 0 8px;
