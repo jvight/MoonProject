@@ -56,7 +56,7 @@ rover):
 | # | Time | Beat | The player does | 07's verbs / devices | Sees / hears | Exit |
 |---|---|---|---|---|---|---|
 | **B0** | 0:00–1:30 | **Eclipse wake** (exists) | nothing, then look | lens shutter, face boot | Black sky, Earth eclipsed with a copper ring, no city lights, the faint Ark point, the Peak's red blink. The amber boot lines. Silence, then 07's servos and a faint signal hiss on the radio. | the pull-out to the chase frame completes |
-| **B1** | 1:30–3:00 | **First look at the hold** (exists: the face boot shows the hold) | look; drive or press Tab | the CRT face (hold left, sockets right) | The hold boots: Metal 2, Wiring 1 slide in. The battery reads **50%**. The face shows a dim protocol line: `POWER · OFFLINE`. | the player drives > 5 m |
+| **B1** | 1:30–3:00 | **First look at the hold** (exists: the face boot shows the hold) | look; drive or press Tab | the CRT face (hold left, sockets right) | The hold boots: Metal 2, Wiring 1 slide in (*v3: the hold starts empty*). The battery reads **50%**. The face shows a dim protocol line: `POWER · OFFLINE`. | the player drives > 5 m |
 | **B2** | 3:00–4:30 | **The first drive** | drive 165 m toward the lander's amber beacon, along 07's old charging cable, past the Kestrel furrow's debris | driving | The dead charging post at the wake point, its cable on the ground leading away. The crew's faded ruts. The lander grows from a silhouette into a 13 m machine with one amber beacon. Earth eclipsed above. 07's motor, regolith crunch. | 07 within 25 m of the lander |
 | **B3** | 4:30–8:00 | **Scan the lander** | scan 2 fragments of the charging-pad blueprint resting in the lander's open cargo bay | **scan beam** (hold E) | Corner brackets on the fragments (a pad coil plate, a guide rail). The beam draws white lines; each fragment dissolves into its lines, which stream into the lens (0.5.5 D2). The second fragment completes the blueprint: a Proud chirp, the CRT shows the pad's line drawing. | the charging-pad blueprint is learned |
 | **B4** | 8:00–10:00 | **Cut the crates** | cut 1–2 sealed cargo crates and a loose hull panel for Metal and Wiring | **cutter turret** (hold E on a seam; the weighted charge-up, 0.5.5 §5) | The seal glows, the charge builds, the cut; bundles spiral into the rear hatch; the hold fills on the CRT. **The battery passes 30%:** the Low warning (one line, one chirp). | the hold has ≥ Metal 4, Wiring 2 |
@@ -137,7 +137,7 @@ assume ~5 m/s average (07's top speed is 8 m/s; boost cruise ≈ 6.8 m/s).
 **Supply vs. needs** (ruling 5, about 2×):
 - **Needs:** pad 4/2/0 + solar 3/2/1 + battery bank 3/3/0 + mast 4/3/2 = **Metal 14, Wiring 10, Optics 3**.
 - **Supply:**
-  - start: Metal 2, Wiring 1;
+  - start: Metal 2, Wiring 1 (*v3: none; the hold starts empty*);
   - wake crate: Metal 3, Wiring 1;
   - midway crate: Metal 2, Wiring 1;
   - lander: Metal 12, Wiring 4;
@@ -329,6 +329,11 @@ content.
 The owner: 07 must not start with too many functions; what works, what is broken and what comes later must be clear.
 Identity: `docs/design/07-identity.md` (SSR-5 service rover).
 
+> **As built (2026-10-20):** the boot is now the New Game boot face, about 18–22 s: CRT power-on, the Kessler–Arai
+> mark, the field-profile load, then a **14-line POST** (`post.*`) and the ready performance (`cutscenes.md` §1.8).
+> The faults below (cutter, solar wing, antenna) and the 50% battery are in it; the readout block below is the
+> original spec.
+
 **The boot readout** (B1, on the CRT; it is the one guidance element while it shows):
 ```
 UNIT 07 · SSR-5 · CONTINUE · 13 148 DAYS        ĐƠN VỊ 07 · SSR-5 · TIẾP TỤC · 13 148 NGÀY
@@ -358,7 +363,7 @@ BATTERY ······· 50%                             PIN ··········�
 | Sockets 1-2 | empty | later kits (scoop, winch, ...) |
 
 **B4 changes:** "Cut the crates" becomes "Collect the parts from the lander's open crate" (no cutting before B6).
-- The hold starts with Metal 2 and Wiring 1.
+- The hold starts with Metal 2 and Wiring 1. **Superseded by opening v3 (2026-10-19): the start hold is empty** (`opening-v3-purpose.md` §4, §8).
 - The open crate adds Metal 2, Wiring 1 and the igniter, which together cover the pad (Metal 4, Wiring 2).
 - New objective lines:
   - B4: "Collect the parts from the lander's open crate." / "Lấy phụ tùng trong thùng hàng mở của tàu đổ bộ."

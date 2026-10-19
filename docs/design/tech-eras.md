@@ -117,8 +117,9 @@ structures contractor, VIS. Argon is drawing logos for the three marks, so these
 | **VIS, Vanguard Interplanetary Structures** (decided, owner 2026-10-19; the V carries a quiet "Việt" hint) | ILC's structures contractor | P to L (built Scout 3 in 1967) | the cargo lander, habitat modules, workshop, radio tower, solar arrays, battery banks, pylons, crates, and the flat-packs that 07 assembles; Atlas (1979, 0.6+) | **big fixed things:** ribbed cylinders, bellows joints, round hatches, bolted feet, heavy plant. Hull and crate stencil: `VIS` plus the wordmark `VANGUARD INTERPLANETARY STRUCTURES`. **The mark ages:** VIS's plain 1960s wordmark on the Scout, then the 1980s mark on Lumen's hulls. |
 | **Tycho Consortium** (v4 `[PROPOSAL]`) | builds and runs automated Meridian | parallel to L (1984–88) | Meridian's machines (survey flock, sorters, array wipers, cable climbers, ice tappers), the hex docks, Kestrel-3 | **no people in mind:** white composite, teal marks, hexagonal contact docks, legs and tracks, white strobes. No screens and no handles at suit height. **Logo:** a teal hexagon. |
 
-**The boot moment:** 07's CRT draws the Kessler–Arai mark in amber vector lines, holds it briefly, then prints the
-self-test (`UNIT 07 · SSR-5 · CONTINUE · 13 148 DAYS`, `07-identity.md` §3). The mark is drawn as linework, not shown
+**The boot moment** (as built, `cutscenes.md` §1.8): 07's CRT powers on, draws the Kessler–Arai mark in amber vector
+lines with `KESSLER–ARAI FIELD SYSTEMS` under it, loads its field profile, then prints the 14-line self-test
+(`UNIT 07 · CARRIER DETECTED`, `CONTINUE · n DAYS`, …, `BEGIN RECOVERY`). The mark is drawn as linework, not shown
 as a bitmap, because a 1983 CRT draws line drawings. No mark ever appears as a UI overlay.
 
 **How makers diversify the ecosystem later:**
