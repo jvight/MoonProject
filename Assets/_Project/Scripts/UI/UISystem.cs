@@ -289,6 +289,7 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<BootCheckStarted>(OnBootCheckStarted));
             _tokens.Add(events.Subscribe<BootCheckCompleted>(OnBootCheckCompleted));
             _tokens.Add(events.Subscribe<BootCheckFinished>(_ => _postLog.Finish()));
+            _tokens.Add(events.Subscribe<BootCheckFastForwarded>(forwarded => _postLog.Rush(forwarded.Scale)));
             _tokens.Add(events.Subscribe<BootCheckPulse>(OnBootCheckPulse));
             _tokens.Add(events.Subscribe<LanguageChanged>(OnLanguageChanged));
             _tokens.Add(events.Subscribe<TickerLine>(OnTickerLine));

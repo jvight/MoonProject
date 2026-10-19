@@ -774,8 +774,9 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         /// <summary>
-        /// 07's power-on self-test typed from a replayed Rover event stream, in Vietnamese and English: the checks with
-        /// their dots, the alerts in amber, no guidance until it finishes. Rerun with --filter CapturePost.
+        /// 07's power-on self-test typed from a replayed Rover event stream (the opening's lines), in Vietnamese and
+        /// English: the checks with their dots, the alert in amber, no guidance until it finishes. Rerun with
+        /// --filter CapturePost.
         /// </summary>
         [UnityTest]
         public IEnumerator CapturePost_TypesEachCheck_AlertsInAmber_AndHoldsGuidanceUntilItEnds()
@@ -810,7 +811,8 @@ namespace MoonProject.UI.PlayModeTests
 
                 yield return new WaitForSecondsRealtime(0.6f);
                 Assert.IsTrue(ui.PostView.Line(PostStream.Length - 1).text.Length > 0, "the last line has typed");
-                Assert.IsTrue(ui.PostView.Line(8).ClassListContains(PostView.AlertClass), "the cutter's fault is amber");
+                Assert.IsTrue(ui.PostView.Line(CutterLine).ClassListContains(PostView.AlertClass),
+                    "the cutter's fault is amber");
                 yield return Capture(camera, folder, "post_done_" + language);
                 context.Events.Publish(new BootCheckFinished());
                 yield return null;
@@ -825,19 +827,18 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         private const float PostStepSeconds = 0.9f;
+        private const int CutterLine = 4;
 
         private static readonly BootCheckStep[] PostStream =
         {
-            BootCheckStep.Carrier, BootCheckStep.Resume, BootCheckStep.Agenda, BootCheckStep.Lens, BootCheckStep.Lamps,
-            BootCheckStep.Head, BootCheckStep.Wheels, BootCheckStep.Motor, BootCheckStep.Cutter, BootCheckStep.SolarWing,
-            BootCheckStep.Antenna, BootCheckStep.Battery, BootCheckStep.Assembly, BootCheckStep.Begin,
+            BootCheckStep.Carrier, BootCheckStep.Resume, BootCheckStep.Agenda, BootCheckStep.Lamps,
+            BootCheckStep.Cutter, BootCheckStep.Battery, BootCheckStep.Begin,
         };
 
         private static readonly BootCheckResult[] PostResults =
         {
-            BootCheckResult.Info, BootCheckResult.Info, BootCheckResult.Info, BootCheckResult.Ok, BootCheckResult.Ok,
-            BootCheckResult.Ok, BootCheckResult.Ok, BootCheckResult.Ok, BootCheckResult.Fault, BootCheckResult.Jammed,
-            BootCheckResult.ReceiveOnly, BootCheckResult.Ok, BootCheckResult.Info, BootCheckResult.Info,
+            BootCheckResult.Info, BootCheckResult.Info, BootCheckResult.Info, BootCheckResult.Ok,
+            BootCheckResult.Fault, BootCheckResult.Ok, BootCheckResult.Info,
         };
 
         private IEnumerator Capture(Camera camera, string folder, string name)
