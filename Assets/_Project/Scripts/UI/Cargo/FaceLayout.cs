@@ -158,6 +158,10 @@ namespace MoonProject.UI
             return FrameOrigins[device].y < ArtY;
         }
 
+        /// <summary>The whole right-hand half: 07 and its devices. A part dropped anywhere on it goes to its device.</summary>
+        public static Rect DevicePanel => new Rect(DeviceX, 0f, FaceInventoryView.ReferenceWidth - DeviceX,
+            FaceInventoryView.ReferenceHeight);
+
         /// <summary>The area that selects a device: its frame and a little around it.</summary>
         public static Rect DeviceHitRect(int device)
         {

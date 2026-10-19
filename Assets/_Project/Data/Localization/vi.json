@@ -975,6 +975,10 @@
             "text": "Thả vào mỏ cắt"
         },
         {
+            "key": "ui.cargo.igniter.fit_hint",
+            "text": "Kéo vào mỏ cắt, hoặc bấm E"
+        },
+        {
             "key": "ui.cargo.drag.nowhere",
             "text": "07 chưa có chỗ lắp món này"
         },

@@ -167,12 +167,18 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(Text(UiKeys.CargoReleaseFit), view.ReleaseText);
             Assert.Less(view.DeviceElement(FaceDevices.SocketOne).resolvedStyle.opacity, 0.5f, "dimmed to about 40%");
 
+            yield return MoveTo(mouse, CellOnScreen(4));
+            Assert.AreEqual(BayLook.Valid, view.BayLookOf(FaceDevices.Cutter), "back over the hold the cutter still lights");
+            Assert.IsEmpty(view.ReleaseText, "and nothing says release there");
+
             yield return MoveTo(mouse, DeviceOnScreen(FaceDevices.SocketOne));
-            Assert.AreEqual(BayLook.Valid, view.BayLookOf(FaceDevices.Cutter), "away from it the cutter still lights");
-            Assert.IsEmpty(view.ReleaseText, "and nothing says release over a socket");
+            Assert.AreEqual(BayLook.Hover, view.BayLookOf(FaceDevices.Cutter),
+                "anywhere on the device panel a drop goes to the cutter, so the cutter answers");
+            Assert.AreEqual(Text(UiKeys.CargoReleaseFit), view.ReleaseText);
             Release(mouse.leftButton);
-            yield return Seconds(_rig.Tuning.Cargo.DragReturnSeconds + 0.1f);
-            Assert.AreEqual(0, _rig.Fakes.Systems.Fits, "a socket does not take the igniter");
+            yield return Seconds(_rig.Tuning.Cargo.DragFitSeconds + 0.1f);
+            Assert.AreEqual(1, _rig.Fakes.Systems.Fits, "and the release fits it");
+            _rig.Fakes.Systems.Set(RoverSystem.Cutter, RoverSystemState.Fault);
 
             _rig.Fakes.Systems.CanFitIgniter = false;
             yield return Seconds(0.2f);

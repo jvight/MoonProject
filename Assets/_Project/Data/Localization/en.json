@@ -975,6 +975,10 @@
             "text": "Drop it on the cutter"
         },
         {
+            "key": "ui.cargo.igniter.fit_hint",
+            "text": "Drag to the cutter, or press E"
+        },
+        {
             "key": "ui.cargo.drag.nowhere",
             "text": "Nothing on 07 takes this yet"
         },

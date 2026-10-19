@@ -18,8 +18,9 @@ namespace MoonProject.UI
 
     /// <summary>
     /// Where a dragged part may go (pure, EditMode-tested). Today one part fits one device: the spare igniter, into the
-    /// cutter, while <see cref="MoonProject.Core.IRoverSystems.CanFitIgniter"/> says 07 stands on its pad. Everything
-    /// else returns home with a short reason, so a drag always answers.
+    /// cutter (or anywhere on the device panel, which sends it there), while
+    /// <see cref="MoonProject.Core.IRoverSystems.CanFitIgniter"/> says 07 stands on its pad. Everything else returns
+    /// home with a short reason, so a drag always answers.
     /// </summary>
     internal static class DropRule
     {
@@ -30,7 +31,7 @@ namespace MoonProject.UI
         public const string SpareIgniterPart = "part.igniter";
 
         /// <summary>The outcome of dropping story part <paramref name="partId"/> on <paramref name="device"/> (-1: none).</summary>
-        public static DropOutcome Decide(string partId, int device, bool canFitIgniter)
+        public static DropOutcome Decide(string partId, int device, bool canFitIgniter, bool onDevicePanel = false)
         {
             if (partId != SpareIgniterPart)
             {
@@ -42,7 +43,8 @@ namespace MoonProject.UI
                 return DropOutcome.NotDocked;
             }
 
-            return device == FaceDevices.Cutter ? DropOutcome.Fit : DropOutcome.ToCutter;
+            // The igniter has one place to go: a drop anywhere on the device panel is a drop on the cutter.
+            return device == FaceDevices.Cutter || onDevicePanel ? DropOutcome.Fit : DropOutcome.ToCutter;
         }
 
         /// <summary>The device story part <paramref name="partId"/> belongs in, or -1 when none of 07's takes it.</summary>
