@@ -17,6 +17,4 @@ MonoBehaviour:
   _powerOnVolume: 0.85
   _powerOnBuildGrace: 1.5
   _powerOnMinInterval: 1.2
-  _nightLampDelay: 2.5
-  _nightLampInterval: 0.7
-  _nightLampVolume: 0.75
+  _baseLampVolume: 0.75

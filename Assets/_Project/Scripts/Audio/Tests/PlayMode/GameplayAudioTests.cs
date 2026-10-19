@@ -116,51 +116,40 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.AreEqual(plays, _rig.Director.PlayCount);
         }
 
-        [UnityTest]
-        public IEnumerator TheFirstNightfall_LightsTheBaseOneByOne_NearestFirst_ClimbingTheScale()
+        [Test]
+        public void EachBaseLampLit_PlaysOneLampSound_AtItsStructure_AStepHigherAlongTheOrder()
         {
-            var near = new Vector3(3f, 0f, 0f);
-            var far = new Vector3(0f, 0f, 20f);
-            _rig.Events.Publish(new StructureBuilt(1, "solar_array", far, 0f, true));
-            _rig.Events.Publish(new StructureBuilt(2, "charge_pad", near, 0f, true));
-            Assert.AreEqual(2, _rig.Gameplay.NightLampCount);
-
-            _rig.Events.Publish(new SkyPhaseChanged(SkyPhase.Sunset, 0f));
-            _rig.Events.Publish(new SkyPhaseChanged(SkyPhase.Earthlit, 0f));
-            Assert.IsTrue(_rig.Gameplay.NightLightsRunning);
-
-            AudioSource firstLamp = null;
-            float deadline = Time.realtimeSinceStartup + 10f;
-            while (firstLamp == null && Time.realtimeSinceStartup < deadline)
+            Vector3[] spots = { new Vector3(3f, 0f, 0f), new Vector3(0f, 0f, 9f), new Vector3(-6f, 0f, 2f) };
+            for (int i = 0; i < spots.Length; i++)
             {
-                yield return null;
-                firstLamp = _rig.FindPlayingVoice("base_lamp_on");
+                _rig.Events.Publish(new StructureBuilt(i + 1, "solar_array", spots[i], 0f, true));
             }
 
-            Assert.IsNotNull(firstLamp, "the first lamp clicks on after the night settles");
-            Assert.AreEqual("base_lamp_on_01", firstLamp.clip.name, "the first lamp is the lowest note");
-            Assert.Less(Vector3.Distance(near, firstLamp.transform.position), 1e-4f, "nearest to the base first");
-
-            while (_rig.Gameplay.NightLightsRunning && Time.realtimeSinceStartup < deadline)
+            int plays = _rig.Director.PlayCount;
+            for (int i = 0; i < spots.Length; i++)
             {
-                yield return null;
+                _rig.Events.Publish(new BaseLampLit(i + 1, i));
+                AssertLastPlayed($"base_lamp_on_0{i + 1}", spots[i]);
             }
 
-            Assert.AreEqual("base_lamp_on_02", Last.clip.name, "each lamp a step higher");
-            Assert.Less(Vector3.Distance(far, Last.transform.position), 1e-4f);
+            Assert.AreEqual(plays + spots.Length, _rig.Director.PlayCount, "one lamp sound per BaseLampLit");
         }
 
-        [Test]
-        public void ANightLoaded_OrADawn_DoesNotLightTheLamps()
+        [UnityTest]
+        public IEnumerator TheSkyPhaseAlone_PlaysNoLampSound()
         {
             _rig.Events.Publish(new StructureBuilt(1, "solar_array", Vector3.one, 0f, true));
-            _rig.Events.Publish(new SkyPhaseChanged(SkyPhase.Earthlit, 0f));
-            Assert.IsFalse(_rig.Gameplay.NightLightsRunning, "night without a sunset (a load) is already lit");
-
+            int plays = _rig.Director.PlayCount;
             _rig.Events.Publish(new SkyPhaseChanged(SkyPhase.Sunset, 0f));
             _rig.Events.Publish(new SkyPhaseChanged(SkyPhase.Earthlit, 0f));
-            _rig.Events.Publish(new SkyPhaseChanged(SkyPhase.Sunrise, 0f));
-            Assert.IsFalse(_rig.Gameplay.NightLightsRunning, "a dawn stops the sequence");
+            float until = Time.realtimeSinceStartup + 4f;
+            while (Time.realtimeSinceStartup < until)
+            {
+                yield return null;
+            }
+
+            Assert.AreEqual(plays, _rig.Director.PlayCount, "nightfall itself lights nothing: BaseLamps does");
+            Assert.IsNull(_rig.FindPlayingVoice("base_lamp_on"));
         }
     }
 }
