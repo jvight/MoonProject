@@ -54,6 +54,14 @@ namespace MoonProject.Autoplay
         private const float ApproachThrottleRadius = 0.5f;
         private const float SunsetSeconds = 300f;
         private const float ChargeSeconds = 60f;
+
+        /// <summary>The bot heads back to the pad to charge when 07's cells fall to this share.</summary>
+        private const float TopUpBelow = 0.3f;
+
+        /// <summary>...and stays until they are back to this share.</summary>
+        private const float TopUpTo = 0.85f;
+
+        private const float TopUpSeconds = 300f;
         private const float ClearHeight = 0.9f;
         private const float ClearRadius = 1.1f;
         private const int ApproachSides = 8;
@@ -238,6 +246,8 @@ namespace MoonProject.Autoplay
                     yield break;
                 }
 
+                yield return TopUpIfLow();
+
                 Vector3 away = Flat(_bot.World.Rover.Position - fragment.Point);
                 yield return Scan(fragment, away.sqrMagnitude > 1e-4f ? away.normalized : Vector3.back, ScanStandOff);
             }
@@ -272,6 +282,33 @@ namespace MoonProject.Autoplay
         }
 
         /// <summary>Cuts every sealed crate standing by <paramref name="frame"/> (an anchor or a ruin piece).</summary>
+        /// <summary>
+        /// Like a player who reads "Battery low. Return to your pad.": when the cells run low and a pad stands, drive
+        /// back and charge before going on (the routes round the props are longer than a straight line).
+        /// </summary>
+        public IEnumerator TopUpIfLow()
+        {
+            BatteryModel battery = G.Battery.Model;
+            Vector3? pad = null;
+            foreach (PlacedStructure structure in G.PlacedBase.Structures)
+            {
+                if (structure.Definition.Id == StructureIds.ChargingPad && structure.IsBuilt)
+                {
+                    pad = structure.Pose.Position;
+                }
+            }
+
+            if (_bot.Failed || !pad.HasValue || battery.Charge01 > TopUpBelow)
+            {
+                yield break;
+            }
+
+            _bot.Warn("07's cells ran low (" + (battery.Charge01 * 100f).ToString("0", CultureInfo.InvariantCulture) +
+                      "%): the bot went back to the pad to charge.");
+            yield return _bot.DriveTo(Flat(pad.Value), ApproachThrottleRadius, "the pad to charge", DriveSeconds);
+            yield return _bot.Until(() => battery.Charge01 >= TopUpTo, TopUpSeconds, "07's cells to charge on the pad");
+        }
+
         public IEnumerator CutTheCrates(string frame)
         {
             SupplyCaches caches = G.Opening.Caches;
@@ -283,6 +320,8 @@ namespace MoonProject.Autoplay
                 {
                     continue;
                 }
+
+                yield return TopUpIfLow();
 
                 Vector3 side = ClearSide(crate.CutPoint.position, crate.SealSide(_bot.World.Rover.Position),
                     SealStandOff, crate.Root);
@@ -376,6 +415,7 @@ namespace MoonProject.Autoplay
 
         public IEnumerator DriveToTheRuinsGate(string what)
         {
+            yield return TopUpIfLow();
             yield return _bot.DriveTo(RuinsGate(), LineUpArrive, what, DriveSeconds);
         }
 

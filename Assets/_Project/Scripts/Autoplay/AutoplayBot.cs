@@ -22,6 +22,11 @@ namespace MoonProject.Autoplay
         private const float AlignTimeoutSeconds = 12f;
         private const float LookTimeoutSeconds = 8f;
         private const float LookAroundSweepPixels = 6f;
+        private const float RouteCellMetres = 2f;
+        private const float RouteMarginMetres = 40f;
+        private const float RouteClearance = 1.0f;
+        private const float RouteRelaxMetres = 4f;
+        private const float RouteArriveRadius = 2.5f;
 
         private readonly AutoplayWorld _world;
         private readonly VirtualInput _input;
@@ -29,6 +34,8 @@ namespace MoonProject.Autoplay
         private readonly Action<string> _screenshot;
         private readonly ThrottleGate _gate = new ThrottleGate();
         private readonly System.Collections.Generic.List<string> _warnings = new System.Collections.Generic.List<string>();
+        private readonly System.Collections.Generic.List<Vector2> _points = new System.Collections.Generic.List<Vector2>();
+        private readonly System.Collections.Generic.List<Vector3> _route = new System.Collections.Generic.List<Vector3>();
         private string _beatId;
         private string _beatTitle;
         private float _beatStart;
@@ -145,8 +152,58 @@ namespace MoonProject.Autoplay
             }
         }
 
-        /// <summary>Drives 07 to within <paramref name="arriveRadius"/> metres of <paramref name="target"/>.</summary>
+        /// <summary>
+        /// Drives 07 to within <paramref name="arriveRadius"/> metres of <paramref name="target"/>, round the props
+        /// that stand between (a coarse route over their colliders, so it never drives into a lander or a crate).
+        /// </summary>
         public IEnumerator DriveTo(Vector3 target, float arriveRadius, string what, float timeoutSeconds)
+        {
+            PlanRoute(target);
+            for (int i = 0; i < _route.Count - 1 && !Failed; i++)
+            {
+                yield return DriveDirect(_route[i], RouteArriveRadius, what + " (round the props)", timeoutSeconds,
+                    false);
+            }
+
+            if (!Failed)
+            {
+                yield return DriveDirect(target, arriveRadius, what, timeoutSeconds, true);
+            }
+        }
+
+        /// <summary>The way from 07 to <paramref name="target"/> into <see cref="_route"/>: one point when it is clear.</summary>
+        private void PlanRoute(Vector3 target)
+        {
+            _route.Clear();
+            var terrain = _world.Context.Get<ITerrainQuery>();
+            Vector3 position = _world.Rover.Position;
+            bool Blocked(Vector2 point)
+            {
+                float ground = terrain.SampleHeight(point.x, point.y);
+                return Physics.CheckSphere(new Vector3(point.x, ground + RouteClearance, point.y), RouteClearance,
+                    Layers.PropMask, QueryTriggerInteraction.Ignore);
+            }
+
+            bool planned = RoutePlanner.Plan(new Vector2(position.x, position.z), new Vector2(target.x, target.z),
+                Blocked, RouteCellMetres, RouteMarginMetres, RouteRelaxMetres, _points);
+            if (!planned)
+            {
+                Warn("no way round the props to " + target + " was found; the bot drives straight.");
+            }
+
+            foreach (Vector2 point in _points)
+            {
+                _route.Add(new Vector3(point.x, target.y, point.y));
+            }
+
+            if (_route.Count > 1)
+            {
+                Debug.Log($"Autoplay: {Activity}: {_route.Count} waypoints round the props from {position} to {target}.");
+            }
+        }
+
+        private IEnumerator DriveDirect(Vector3 target, float arriveRadius, string what, float timeoutSeconds,
+            bool settle)
         {
             Activity = "driving to " + what;
             float deadline = Time.unscaledTime + timeoutSeconds;
@@ -186,6 +243,11 @@ namespace MoonProject.Autoplay
 
                 windowStart = distance;
                 windowEnd = Time.unscaledTime + StuckWindowSeconds;
+            }
+
+            if (!settle)
+            {
+                yield break;
             }
 
             ReleaseDrive();

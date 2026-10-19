@@ -192,6 +192,10 @@ namespace MoonProject.Gameplay
                 ScanSize.Medium, Vector3.zero),
             new StoryScan("flag", "Prop_MissionFlag", "FlagSheet", "db.card_ilc.readout", ScanSize.Small,
                 Vector3.zero),
+            new StoryScan("kestrel3", "Kestrel3_HullPanel", "Kestrel_HullPanel", "db.kestrel3.readout",
+                ScanSize.Medium, Vector3.zero),
+            new StoryScan("elder06", "Elder06", "Body", "elder.06.manifest", ScanSize.Medium, Vector3.zero),
+            new StoryScan("elder01", "Elder01", "Body", "db.elder01.readout", ScanSize.Medium, Vector3.zero),
         };
 
         private static readonly int ScanLineColorShaderId = Shader.PropertyToID("_MoonScanLineColor");
