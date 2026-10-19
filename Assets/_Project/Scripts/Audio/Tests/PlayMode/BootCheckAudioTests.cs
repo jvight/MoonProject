@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -8,7 +9,7 @@ using MoonProject.Core.Events;
 namespace MoonProject.Audio.PlayModeTests
 {
     /// <summary>The New Game self-test heard from 07: single motions as their check starts, the others on their pulses,
-    /// the fault on its result.</summary>
+    /// the fault on its result, and one rush instead of them all when the player fast-forwards the readout.</summary>
     public sealed class BootCheckAudioTests
     {
         private AudioTestRig _rig;
@@ -76,7 +77,6 @@ namespace MoonProject.Audio.PlayModeTests
         [TestCase(BootCheckStep.Antenna, 0, "boot_antenna_rise")]
         [TestCase(BootCheckStep.Antenna, 1, "boot_antenna_signal")]
         [TestCase(BootCheckStep.Begin, 0, "boot_begin_turn")]
-        [TestCase(BootCheckStep.Begin, 1, "boot_begin_shiver")]
         [TestCase(BootCheckStep.Begin, 2, "boot_begin_lamps")]
         public void EachMotion_PlaysOnItsPulse_From07(BootCheckStep step, int index, string clip)
         {
@@ -99,7 +99,7 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.AreEqual(plays, _rig.Director.PlayCount, "the 10 Hz progress pulses add nothing");
 
             _rig.Events.Publish(new BootCheckStarted(BootCheckStep.Begin));
-            _rig.Events.Publish(new BootCheckPulse(BootCheckStep.Begin, 1, 0f));
+            _rig.Events.Publish(new BootCheckPulse(BootCheckStep.Begin, 0, 0f));
             Assert.AreEqual(plays + 1, _rig.Director.PlayCount);
         }
 
@@ -126,6 +126,60 @@ namespace MoonProject.Audio.PlayModeTests
             _rig.Events.Publish(new BootCheckCompleted(BootCheckStep.Cutter, BootCheckResult.Fault));
             Assert.AreEqual(plays + 1, _rig.Director.PlayCount);
             Assert.AreEqual("boot_fault", _rig.Director.LastClip.name);
+        }
+
+        [UnityTest]
+        public IEnumerator AFastForward_PlaysOneRush_NoBurstOfCues_ThenTheReadyPerformanceSounds()
+        {
+            _rig.Events.Publish(new BootCheckStarted(BootCheckStep.Lens));
+            int plays = _rig.Director.PlayCount;
+            var playedAt = new List<float>();
+
+            _rig.Events.Publish(new BootCheckFastForwarded(6f));
+            Assert.AreEqual(plays + 1, _rig.Director.PlayCount);
+            Assert.AreEqual("boot_rush", _rig.Director.LastClip.name);
+            playedAt.Add(Time.realtimeSinceStartup);
+            plays = _rig.Director.PlayCount;
+
+            // The remaining lines at 6x: a start, its motions and its result every frame or so, a fault among them.
+            BootCheckStep[] remaining =
+            {
+                BootCheckStep.Lamps, BootCheckStep.Head, BootCheckStep.Wheels, BootCheckStep.Motor,
+                BootCheckStep.Cutter, BootCheckStep.SolarWing, BootCheckStep.Antenna, BootCheckStep.Battery,
+                BootCheckStep.Assembly,
+            };
+            foreach (BootCheckStep step in remaining)
+            {
+                _rig.Events.Publish(new BootCheckStarted(step));
+                for (int index = 0; index < 4; index++)
+                {
+                    _rig.Events.Publish(new BootCheckPulse(step, index, 0f));
+                }
+
+                BootCheckResult result = step == BootCheckStep.Cutter ? BootCheckResult.Fault : BootCheckResult.Ok;
+                _rig.Events.Publish(new BootCheckCompleted(step, result));
+                if (_rig.Director.PlayCount != plays)
+                {
+                    playedAt.Add(Time.realtimeSinceStartup);
+                    plays = _rig.Director.PlayCount;
+                }
+
+                yield return null;
+            }
+
+            _rig.Events.Publish(new BootCheckFinished());
+            for (int i = 2; i < playedAt.Count; i++)
+            {
+                Assert.Greater(playedAt[i] - playedAt[i - 2], 0.1f, "no more than 2 cues within 100 ms");
+            }
+
+            Assert.AreEqual(1, playedAt.Count, "the rush stands in for every remaining line, the fault too");
+
+            _rig.Events.Publish(new BootCheckStarted(BootCheckStep.Begin));
+            _rig.Events.Publish(new BootCheckPulse(BootCheckStep.Begin, 0, 0f));
+            AssertLastFrom07("boot_begin_turn");
+            _rig.Events.Publish(new BootCheckPulse(BootCheckStep.Begin, 2, 0f));
+            AssertLastFrom07("boot_begin_lamps");
         }
     }
 }

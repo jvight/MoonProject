@@ -130,7 +130,7 @@ namespace MoonProject.Audio
         public const string BootBattery = "boot_battery";
         public const string BootAssembly = "boot_assembly";
         public const string BootBeginTurn = "boot_begin_turn";
-        public const string BootBeginShiver = "boot_begin_shiver";
+        public const string BootRush = "boot_rush";
         public const string BootBeginLamps = "boot_begin_lamps";
         public const string BootFault = "boot_fault";
 
