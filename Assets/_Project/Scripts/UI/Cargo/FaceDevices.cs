@@ -22,12 +22,6 @@ namespace MoonProject.UI
             RoverSystem.Scan, RoverSystem.Cutter, RoverSystem.Sockets, RoverSystem.Sockets,
         };
 
-        // The face icon in each device's status disc (RoverDiagramData.FaceIconIds).
-        private static readonly string[] IconIds =
-        {
-            "icon_lens", "icon_cutter", "icon_empty_socket", "icon_empty_socket",
-        };
-
         private static readonly string[] NameKeys =
         {
             "ui.device.scan.name", "ui.device.cutter.name", "ui.device.socket1.name", "ui.device.socket2.name",
@@ -37,12 +31,6 @@ namespace MoonProject.UI
         public static RoverSystem SystemOf(int device)
         {
             return Systems[device];
-        }
-
-        /// <summary>The face icon drawn in device <paramref name="device"/>'s status disc.</summary>
-        public static string IconId(int device)
-        {
-            return IconIds[device];
         }
 
         /// <summary>Centre of the device's frame in the 1152x768 reference frame.</summary>
@@ -66,6 +54,25 @@ namespace MoonProject.UI
         public static bool OffersIgniter(int device, bool canFitIgniter)
         {
             return device == Cutter && canFitIgniter;
+        }
+
+        /// <summary>
+        /// The few plain words under a device's name on the face screen: an empty socket invites a part, the cutter
+        /// says what it needs (or that it can take it now), a working device says OK.
+        /// </summary>
+        public static string StateKey(int device, RoverSystemState state, bool canFitIgniter)
+        {
+            if (state == RoverSystemState.Empty)
+            {
+                return "ui.device.state.socket_empty";
+            }
+
+            if (device == Cutter && IsFaulty(state))
+            {
+                return canFitIgniter ? "ui.device.state.cutter_ready" : "ui.device.state.cutter_needs";
+            }
+
+            return state == RoverSystemState.Ok ? "ui.device.state.ok" : SystemText.StateKey(SystemOf(device), state);
         }
 
         /// <summary>The one short line the tooltip says about the device in its current state.</summary>

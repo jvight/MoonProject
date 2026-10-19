@@ -305,6 +305,9 @@ namespace MoonProject.Art.Editor
         public const float CrtContentGlowMip = 1.25f;
         public const float CrtContentScanlineAtten = 0.60f;
 
+        // The face UI's look keeps its own contrast in its palette: no stroke is lifted toward a floor.
+        public const float CrtContentMinStrokeLuma = 0f;
+
         private static void ConfigureCrtFaceMaterial(Material material, Shader shader, R1MaterialSpec spec)
         {
             material.shader = shader;
@@ -325,6 +328,7 @@ namespace MoonProject.Art.Editor
             material.SetFloat("_ContentGlowIntensity", CrtContentGlowIntensity);
             material.SetFloat("_ContentGlowMip", CrtContentGlowMip);
             material.SetFloat("_ContentScanlineAtten", CrtContentScanlineAtten);
+            material.SetFloat("_ContentMinStrokeLuma", CrtContentMinStrokeLuma);
 
             var defaultLeftRect = new Vector4(0.31f, 0.50f, 0.2006f, 0.4012f);
             var defaultRightRect = new Vector4(0.69f, 0.50f, 0.2006f, 0.4012f);

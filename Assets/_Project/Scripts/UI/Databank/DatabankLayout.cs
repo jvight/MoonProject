@@ -3,9 +3,10 @@ using UnityEngine;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// The databank page's geometry in the 1152 x 768 face panel (docs/design/databank.md §4), inside the same glass
-    /// margins as the hold page: the category column on the left, the model or print on the right with the field row,
-    /// readout, set line and history card under it, the era strip and the footer along the bottom.
+    /// The databank page's geometry in the 1152 x 768 face panel (docs/design/databank.md §4), on the hold page's grid
+    /// and inside the same glass margins: the category column on the left, the model or print in the middle, and the
+    /// words beside it, read top-down in the order a first look needs them: the name, what it is (maker, year, era),
+    /// why it matters (the crew's card), then the scan line and 07's readout; the key row along the bottom.
     /// </summary>
     internal static class DatabankLayout
     {
@@ -13,31 +14,32 @@ namespace MoonProject.UI
         public const float RightEdge = FaceLayout.RightEdge;
         public const float TitleY = FaceLayout.TitleY;
         public const float TitleHeight = FaceLayout.TitleHeight;
-        public const float TitleRuleY = FaceLayout.TitleRuleY;
-        public const float ListTop = 92f;
-        public const float ListWidth = 220f;
-        public const float ListBottom = 690f;
-        public const float RowPitch = 30f;
-        public const float EntryIndent = 18f;
+        public const float ListTop = FaceLayout.GridTop;
+        public const float ListWidth = 192f;
+        public const float ListBottom = 680f;
+        public const float RowPitch = 36f;
+        public const float EntryIndent = 20f;
         public const float UnreadBarGap = 8f;
-        public const float UnreadBarWidth = 4f;
-        public const float UnreadBarInset = 6f;
-        public const float ColumnGap = 16f;
-        public const float RightX = Margin + ListWidth + ColumnGap;
-        public const float RightWidth = RightEdge - RightX;
-        public const float ModelTop = 92f;
-        public const float ModelHeight = 330f;
-        public const float FieldY = 430f;
-        public const float FieldHeight = 26f;
-        public const float ReadoutY = 460f;
-        public const float ReadoutHeight = 52f;
-        public const float SetLineY = 514f;
+        public const float UnreadBarWidth = 3f;
+        public const float UnreadBarInset = 8f;
+        public const float ColumnGap = 40f;
+        public const float ModelX = Margin + ListWidth + ColumnGap;
+        public const float ModelTop = FaceLayout.GridTop;
+        public const float ModelWidth = 376f;
+        public const float ModelHeight = 444f;
+        public const float TextGap = 24f;
+        public const float TextX = ModelX + ModelWidth + TextGap;
+        public const float TextWidth = RightEdge - TextX;
+        public const float NameY = ModelTop;
+        public const float NameHeight = 36f;
+        public const float FieldY = 160f;
+        public const float FieldHeight = 52f;
+        public const float HistoryY = 224f;
+        public const float HistoryHeight = 236f;
+        public const float SetLineY = 472f;
         public const float SetLineHeight = 24f;
-        public const float HistoryY = 544f;
-        public const float HistoryHeight = 122f;
-        public const float StripY = 672f;
-        public const float StripHeight = 22f;
-        public const float StripMarkPitch = 44f;
+        public const float ReadoutY = 504f;
+        public const float ReadoutHeight = 56f;
         public const float TabWidth = 150f;
         public const float TabGap = 12f;
         public const float TabsX = RightEdge - 2f * TabWidth;
@@ -50,17 +52,17 @@ namespace MoonProject.UI
         /// <summary>Page tab <paramref name="index"/> (0 HOLD, 1 DATABANK) at the right of the title row.</summary>
         public static Rect TabRect(int index) => new Rect(TabsX + index * TabWidth, TitleY, TabWidth, TitleHeight);
 
-        public static Rect ModelRect => new Rect(RightX, ModelTop, RightWidth, ModelHeight);
+        public static Rect ModelRect => new Rect(ModelX, ModelTop, ModelWidth, ModelHeight);
 
-        public static Rect FieldRect => new Rect(RightX, FieldY, RightWidth, FieldHeight);
+        public static Rect NameRect => new Rect(TextX, NameY, TextWidth, NameHeight);
 
-        public static Rect ReadoutRect => new Rect(RightX, ReadoutY, RightWidth, ReadoutHeight);
+        public static Rect FieldRect => new Rect(TextX, FieldY, TextWidth, FieldHeight);
 
-        public static Rect SetLineRect => new Rect(RightX, SetLineY, RightWidth, SetLineHeight);
+        public static Rect HistoryRect => new Rect(TextX, HistoryY, TextWidth, HistoryHeight);
 
-        public static Rect HistoryRect => new Rect(RightX, HistoryY, RightWidth, HistoryHeight);
+        public static Rect SetLineRect => new Rect(TextX, SetLineY, TextWidth, SetLineHeight);
 
-        public static Rect StripRect => new Rect(RightX, StripY, RightWidth, StripHeight);
+        public static Rect ReadoutRect => new Rect(TextX, ReadoutY, TextWidth, ReadoutHeight);
 
         public static Rect FooterRect => new Rect(Margin, FooterY, RightEdge - Margin, FooterHeight);
 
@@ -72,12 +74,6 @@ namespace MoonProject.UI
         {
             float indent = entry ? EntryIndent : 0f;
             return new Rect(Margin + indent, ListTop + row * RowPitch, ListWidth - indent, RowPitch);
-        }
-
-        /// <summary>The rect of era mark <paramref name="index"/> on the strip.</summary>
-        public static Rect StripMarkRect(int index)
-        {
-            return new Rect(RightX + index * StripMarkPitch, StripY, StripMarkPitch, StripHeight);
         }
     }
 }

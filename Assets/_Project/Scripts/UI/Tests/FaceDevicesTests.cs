@@ -95,18 +95,26 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
-        public void EachDevice_HasAFaceIcon_AndOnlyBrokenStatesReadAsFaults()
+        public void OnlyBrokenStatesReadAsFaults()
         {
-            for (int device = 0; device < FaceDevices.Count; device++)
-            {
-                CollectionAssert.Contains(RoverDiagramData.FaceIconIds, FaceDevices.IconId(device));
-            }
-
             Assert.IsFalse(FaceDevices.IsFaulty(RoverSystemState.Ok));
             Assert.IsFalse(FaceDevices.IsFaulty(RoverSystemState.Empty));
             Assert.IsTrue(FaceDevices.IsFaulty(RoverSystemState.Fault));
             Assert.IsTrue(FaceDevices.IsFaulty(RoverSystemState.Jammed));
             Assert.IsTrue(FaceDevices.IsFaulty(RoverSystemState.ReceiveOnly));
+        }
+
+        [Test]
+        public void TheWordsUnderEachName_InviteAPart_SayWhatTheCutterNeeds_OrSayOk()
+        {
+            Assert.AreEqual("ui.device.state.socket_empty",
+                FaceDevices.StateKey(FaceDevices.SocketOne, RoverSystemState.Empty, false));
+            Assert.AreEqual("ui.device.state.cutter_needs",
+                FaceDevices.StateKey(FaceDevices.Cutter, RoverSystemState.Fault, false));
+            Assert.AreEqual("ui.device.state.cutter_ready",
+                FaceDevices.StateKey(FaceDevices.Cutter, RoverSystemState.Fault, true));
+            Assert.AreEqual("ui.device.state.ok", FaceDevices.StateKey(FaceDevices.Cutter, RoverSystemState.Ok, true));
+            Assert.AreEqual("ui.device.state.ok", FaceDevices.StateKey(FaceDevices.Scan, RoverSystemState.Ok, false));
         }
 
         [Test]

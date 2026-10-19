@@ -18,14 +18,16 @@ namespace MoonProject.UI
 
     /// <summary>
     /// 07's screen on its CRT face (<c>FACE-INV view</c>, <see cref="FaceLayout"/>): a flat <c>1152x768</c> (1.5:1)
-    /// equipment diagnostic. The left half is the hold, a grid of four columns (up to 24 slots, three rows to a page)
-    /// with each item named under its slot, one hint row where the hold will grow and the info box under it. The right
-    /// half is Art's three-quarter line drawing of 07 with its four fixed devices (<see cref="FaceDevices"/>: the scan
-    /// lens, the cutter and two sockets) in labelled frames above and below it, a leader from each to its part, and
-    /// each state in its own colour and mark. While the spare igniter is in the hold and 07 stands on its pad, the
-    /// cutter offers it and a confirm fits it. With the mouse a part can also be dragged out of the hold
-    /// (<see cref="HoldDrag"/>) and dropped on a device: the cutter takes the igniter on the pad; any other drop eases
-    /// the part home and the info box says why (<see cref="DropRule"/>).
+    /// page in look A, "quiet amber CRT": warm neutrals and one amber accent. The left half is the hold, a grid of four
+    /// columns (up to 24 slots, three rows to a page) with each item named under its slot, one hint row where the hold
+    /// will grow and the info box under it, which says what the selection is and where it goes. The right half is
+    /// Art's three-quarter line drawing of 07 with its four fixed devices (<see cref="FaceDevices"/>: the scan lens,
+    /// the cutter and two sockets) as bays above and below it, each with a leader to its part. A device that can take a
+    /// part is a drop area (<see cref="DropTargets"/>): quiet brackets at rest, accent brackets when the hold has a
+    /// part it can take now (that part's cell carries a small tag saying where it goes), and while a part is dragged or
+    /// selected the bays it fits light and breathe, the one under it thickens and says "Release to fit", and during a
+    /// drag every other device dims. A confirm fits the spare igniter from the cutter; a drop does the same, and any
+    /// other drop eases the part home while the info box says why (<see cref="DropRule"/>).
     /// </summary>
     public sealed class FaceInventoryView
     {
@@ -40,32 +42,21 @@ namespace MoonProject.UI
 
         public const int MaxTooltipDescriptionChars = 72;
 
-        private const string WarningIconId = "icon_warning";
-        private const float CellTickLength = 10f;
-        private const float FrameTickLength = 14f;
-        private const float FrameRuleInset = 8f;
-        private const float ToastDotX = 8f;
-        private const float ToastDotRadius = 4f;
-        private const float BadgeWidth = 28f;
-        private const float BadgeHeight = 23f;
-        private const float BadgeInsetX = 30f;
-        private const float BadgeInsetY = 25f;
         private const float FullIconAlpha = 248f;
+        private const string AccentStateClass = "cargo__device-state--accent";
+        private const string RightBayClass = "cargo__socket-bubble--right";
+        private const string NameOnClass = "cargo__cell-name--on";
+        private const string UseAccentClass = "cargo__tooltip-use-target--accent";
+        private const string ReleaseQuietClass = "cargo__release--quiet";
 
-        // Two-colour amber CRT palette + cyan focus accent read from CargoScreenSettings.
-        private Color32 BgCell => _settings.CellBackground;
-        private Color32 AmberText => _settings.AmberText;
-        private Color32 AmberFaint => _settings.AmberFaint;
-        private Color32 AmberMuted => _settings.AmberMuted;
-        private Color32 AmberLocked => _settings.AmberLocked;
-        private Color32 Cyan => _settings.CyanAccent;
+        // A tagged cell lifts its icon this far (share of the cell) to leave its foot to the tag.
+        private const float TaggedIconLift = 0.12f;
 
         private readonly VisualElement _panel;
         private readonly VisualElement _art;
         private readonly VisualElement _canvas;
         private readonly VisualElement _ghostLayer;
         private readonly Label _page;
-        private readonly Label _holdTitle;
         private readonly Label _title;
         private readonly Label _bootLabel;
         private readonly VisualElement _holdGrid;
@@ -73,6 +64,9 @@ namespace MoonProject.UI
         private readonly VisualElement _tooltip;
         private readonly Label _tooltipName;
         private readonly Label _tooltipDesc;
+        private readonly VisualElement _tooltipUse;
+        private readonly Label _tooltipUseTarget;
+        private readonly Label _release;
         private readonly VisualElement _toast;
         private readonly Label _toastText;
         private readonly Label _more;
@@ -91,15 +85,15 @@ namespace MoonProject.UI
         private readonly VisualElement[] _holdCells = new VisualElement[MaxHoldCells];
         private readonly Label[] _holdBadges = new Label[MaxHoldCells];
         private readonly Label[] _holdNames = new Label[MaxHoldCells];
+        private readonly Label[] _holdTags = new Label[MaxHoldCells];
         private readonly HoldCellState[] _holdStates = new HoldCellState[MaxHoldCells];
 
         private readonly VisualElement[] _deviceBubbles = new VisualElement[FaceDevices.Count];
         private readonly Label[] _deviceNames = new Label[FaceDevices.Count];
         private readonly Label[] _deviceStates = new Label[FaceDevices.Count];
         private readonly RoverSystemState[] _deviceStateOf = new RoverSystemState[FaceDevices.Count];
-        private readonly UiIconShape[] _deviceIcons = new UiIconShape[FaceDevices.Count];
+        private readonly BayLook[] _bayLooks = new BayLook[FaceDevices.Count];
         private readonly Vector2[] _leaderTargets = new Vector2[FaceDevices.Count];
-        private readonly UiIconShape _warningIcon;
 
         private int _unlockedHoldCount;
         private int _holdPage;
@@ -119,6 +113,8 @@ namespace MoonProject.UI
         private int _dropReasonCell = -1;
         private string _dropReasonKey;
         private int _lastSubmitFrame = -1;
+        private Vector2 _pointer = new Vector2(float.NaN, float.NaN);
+        private float _breath;
 
         private bool _bootRunning;
         private bool _userInteractedDuringBoot;
@@ -145,7 +141,6 @@ namespace MoonProject.UI
             _canvas = Require<VisualElement>(_panel, "cargo-canvas");
             _page = Require<Label>(_panel, "cargo-page");
             _ghostLayer = Require<VisualElement>(_panel, "cargo-ghost");
-            _holdTitle = Require<Label>(_panel, "cargo-hold-title");
             _title = Require<Label>(_panel, "cargo-right-title");
             _bootLabel = Require<Label>(_panel, "cargo-boot");
             _holdGrid = Require<VisualElement>(_panel, "cargo-hold-grid");
@@ -153,6 +148,9 @@ namespace MoonProject.UI
             _tooltip = Require<VisualElement>(_panel, "cargo-tooltip");
             _tooltipName = Require<Label>(_panel, "cargo-tooltip-name");
             _tooltipDesc = Require<Label>(_panel, "cargo-tooltip-desc");
+            _tooltipUse = Require<VisualElement>(_panel, "cargo-tooltip-use");
+            _tooltipUseTarget = Require<Label>(_panel, "cargo-tooltip-use-target");
+            _release = Require<Label>(_panel, "cargo-release");
             _toast = Require<VisualElement>(_panel, "cargo-toast");
             _toastText = Require<Label>(_panel, "cargo-toast-text");
             _more = Require<Label>(_panel, "cargo-more");
@@ -173,11 +171,8 @@ namespace MoonProject.UI
             _art.style.unityBackgroundImageTintColor = (Color)settings.ArtTint;
             for (int i = 0; i < FaceDevices.Count; i++)
             {
-                _deviceIcons[i] = diagram.GetIcon(FaceDevices.IconId(i));
                 _leaderTargets[i] = FaceLayout.ArtPoint(diagram.FaceAnchor(i), diagram.FaceArtContent);
             }
-
-            _warningIcon = diagram.GetIcon(WarningIconId);
 
             _canvas.generateVisualContent += OnGenerateCanvas;
             _ghostLayer.generateVisualContent += OnGenerateGhost;
@@ -214,9 +209,23 @@ namespace MoonProject.UI
         /// <summary>The dragged icon's centre in the 1152x768 reference frame (tests and captures).</summary>
         internal Vector2 DragGhost => _drag.Ghost;
 
-        public string LeftHeaderText => _holdTitle.text;
+        /// <summary>The words on the title row ("HOLD").</summary>
+        public string TitleText => _title.text;
 
-        public string RightHeaderText => _title.text;
+        /// <summary>How device <paramref name="device"/>'s bay reads right now.</summary>
+        internal BayLook BayLookOf(int device) => _bayLooks[device];
+
+        /// <summary>The line beside the dragged part ("Release to fit"), empty while it is hidden.</summary>
+        public string ReleaseText => _release.style.display == DisplayStyle.Flex ? _release.text : string.Empty;
+
+        /// <summary>The words of the small tag under hold slot <paramref name="index"/>, empty while it has none.</summary>
+        public string HoldTagText(int index) =>
+            _holdTags[index].style.display == DisplayStyle.Flex ? _holdTags[index].text : string.Empty;
+
+        /// <summary>Where the info box says the selection goes, empty while it says nothing about that.</summary>
+        public string UseText => IsTooltipVisible && _tooltipUse.style.display == DisplayStyle.Flex
+            ? _tooltipUseTarget.text
+            : string.Empty;
 
         public bool IsTooltipVisible => _tooltip.style.display == DisplayStyle.Flex;
 
@@ -286,7 +295,6 @@ namespace MoonProject.UI
             if (_bootRunning)
             {
                 _bootLabel.style.display = DisplayStyle.None;
-                _holdTitle.style.display = DisplayStyle.Flex;
                 _title.style.display = DisplayStyle.Flex;
                 for (int i = 0; i < MaxHoldCells; i++)
                 {
@@ -305,6 +313,8 @@ namespace MoonProject.UI
             _userInteractedDuringBoot = false;
             _handoff.Reset();
             _drag.Clear();
+            _pointer = new Vector2(float.NaN, float.NaN);
+            _release.style.display = DisplayStyle.None;
             ClearDropReason();
         }
 
@@ -340,6 +350,86 @@ namespace MoonProject.UI
                 _canvas.MarkDirtyRepaint();
                 _ghostLayer.MarkDirtyRepaint();
             }
+
+            UpdateBays(deltaTime);
+        }
+
+        /// <summary>
+        /// Reads every bay's look from what is carried (a dragged part, the selected hold item, or the igniter the
+        /// selected cutter offers), dims the devices a drag cannot use, lets lit bays breathe and places the line
+        /// beside the dragged part.
+        /// </summary>
+        private void UpdateBays(float deltaTime)
+        {
+            bool dragging = _drag.Phase == HoldDragPhase.Dragging && !HideForBoot;
+            string part = null;
+            bool carrying = false;
+            int target = -1;
+            if (dragging)
+            {
+                carrying = true;
+                part = _holdStates[_drag.Cell].StoryPartId;
+                target = OutcomeAt(part, _pointer) == DropOutcome.Fit ? DropRule.TargetOf(part) : -1;
+            }
+            else if (_focusedHoldCell >= 0 && _focusedHoldCell < _unlockedHoldCount && !HideForBoot &&
+                     _holdStates[_focusedHoldCell].Kind != HoldCellKind.Empty)
+            {
+                carrying = true;
+                part = _holdStates[_focusedHoldCell].StoryPartId;
+            }
+            else if (_focusedDevice >= 0 && FaceDevices.OffersIgniter(_focusedDevice, _igniterOffered))
+            {
+                carrying = true;
+                part = DropRule.SpareIgniterPart;
+                target = _focusedDevice;
+            }
+
+            bool lit = false;
+            bool changed = false;
+            int over = -1;
+            for (int i = 0; i < FaceDevices.Count; i++)
+            {
+                BayLook look = DropTargets.Look(i, _deviceStateOf[i], part, carrying, dragging, target, _igniterOffered);
+                changed |= look != _bayLooks[i];
+                _bayLooks[i] = look;
+                lit |= DropTargets.IsLit(look);
+                _deviceBubbles[i].style.opacity = look == BayLook.Invalid ? _settings.BayDimAlpha : 1f;
+                if (dragging && FaceLayout.DeviceHitRect(i).Contains(_pointer))
+                {
+                    over = i;
+                }
+            }
+
+            _breath = lit ? Mathf.Repeat(_breath + deltaTime / _settings.BayBreathSeconds, 1f) : 0f;
+            if (lit || changed)
+            {
+                _canvas.MarkDirtyRepaint();
+            }
+
+            ShowRelease(dragging, target, over);
+        }
+
+        /// <summary>
+        /// The one line beside the dragged part: "Release to fit" over a bay it fits, the reason over the bay it
+        /// belongs in while it cannot be fitted yet, nothing elsewhere.
+        /// </summary>
+        private void ShowRelease(bool dragging, int target, int over)
+        {
+            bool fits = dragging && target >= 0;
+            bool blocked = !fits && dragging && over >= 0 && _bayLooks[over] == BayLook.Blocked;
+            if (!fits && !blocked)
+            {
+                _release.style.display = DisplayStyle.None;
+                return;
+            }
+
+            _release.text = _localization.Get(fits ? UiKeys.CargoReleaseFit : UiKeys.CargoDragNotDocked);
+            _release.EnableInClassList(ReleaseQuietClass, blocked);
+            // Centred under the dragged part, on its own dark plate, so it reads over any bay's words or the drawing.
+            Vector2 at = _drag.Ghost + new Vector2(-FaceLayout.ReleaseWidth * 0.5f, FaceLayout.ReleaseOffsetY);
+            PositionBox(_release, at.x * _scale, at.y * _scale, FaceLayout.ReleaseWidth * _scale,
+                FaceLayout.ReleaseHeight * _scale);
+            _release.style.display = DisplayStyle.Flex;
         }
 
         /// <summary>The foot row: each hint's keycap on <paramref name="device"/> and the word for what it does.</summary>
@@ -366,7 +456,6 @@ namespace MoonProject.UI
                 int clamped = Mathf.Clamp(typedLength, 0, bootTitle.Length);
                 _bootLabel.text = clamped >= bootTitle.Length ? bootTitle : bootTitle.Substring(0, clamped);
                 _bootLabel.style.display = DisplayStyle.Flex;
-                _holdTitle.style.display = DisplayStyle.None;
                 _title.style.display = DisplayStyle.None;
                 _socketsRoot.style.display = DisplayStyle.None;
                 _tooltip.style.display = DisplayStyle.None;
@@ -385,12 +474,12 @@ namespace MoonProject.UI
                     }
 
                     _holdNames[i].style.display = DisplayStyle.None;
+                    _holdTags[i].style.display = DisplayStyle.None;
                 }
             }
             else
             {
                 _bootLabel.style.display = DisplayStyle.None;
-                _holdTitle.style.display = DisplayStyle.Flex;
                 _title.style.display = DisplayStyle.Flex;
                 _footerRoot.style.display = DisplayStyle.Flex;
                 _art.style.display = DisplayStyle.Flex;
@@ -400,6 +489,7 @@ namespace MoonProject.UI
                     WriteHoldName(i);
                 }
 
+                WriteTags();
                 WritePage(_scale);
             }
 
@@ -415,7 +505,6 @@ namespace MoonProject.UI
                 (DatabankLayout.TabsX - DatabankLayout.TabGap - FaceLayout.Margin) * s, FaceLayout.TitleHeight * s);
             PositionElement(_bootLabel, FaceLayout.Margin * s, FaceLayout.TitleY * s);
             PositionRect(_art, FaceLayout.ArtImageRect(_diagram.FaceArtContent), s);
-            PositionRect(_holdTitle, FaceLayout.HeadingRect, s);
 
             for (int i = 0; i < MaxHoldCells; i++)
             {
@@ -428,16 +517,19 @@ namespace MoonProject.UI
             for (int i = 0; i < FaceDevices.Count; i++)
             {
                 Rect frame = FaceLayout.DeviceFrame(i);
+                float textWidth = (frame.width - 2f * FaceLayout.FramePadX) * s;
                 PositionBox(_deviceBubbles[i], frame.x * s, frame.y * s, frame.width * s, frame.height * s);
-                PositionBox(_deviceNames[i], 0f, 0f, (frame.width - FaceLayout.FrameGlyphRoom) * s,
+                PositionBox(_deviceNames[i], FaceLayout.FramePadX * s, FaceLayout.FrameNameY * s, textWidth,
                     FaceLayout.FrameNameHeight * s);
-                PositionBox(_deviceStates[i], FaceLayout.FrameTextX * s, FaceLayout.FrameNameHeight * s,
-                    (frame.width - FaceLayout.FrameTextX - FaceLayout.FrameEdgeInset) * s,
-                    (frame.height - FaceLayout.FrameNameHeight) * s);
+                PositionBox(_deviceStates[i], FaceLayout.FramePadX * s, FaceLayout.FrameStateY * s, textWidth,
+                    FaceLayout.FrameStateHeight * s);
             }
 
             PositionBox(_tooltip, FaceLayout.InfoX * s, FaceLayout.InfoY * s, FaceLayout.InfoWidth * s,
                 FaceLayout.InfoHeight * s);
+            _tooltipName.style.height = FaceLayout.InfoNameHeight * s;
+            _tooltipDesc.style.height = FaceLayout.InfoDescHeight * s;
+            _tooltipUse.style.height = FaceLayout.InfoUseHeight * s;
             PositionBox(_toast, FaceLayout.Margin * s, FaceLayout.ToastY * s, FaceLayout.HoldWidth * s,
                 FaceLayout.ToastHeight * s);
             PositionBox(_footerRoot, FaceLayout.Margin * s, FaceLayout.FooterY * s,
@@ -451,8 +543,7 @@ namespace MoonProject.UI
         public void Refresh()
         {
             bool hideForBoot = HideForBoot;
-            _holdTitle.text = _localization.Get(UiKeys.CargoHold);
-            _title.text = _localization.Get(UiKeys.FaceTitle);
+            _title.text = _localization.Get(UiKeys.CargoHold);
 
             int baseHoldSlots = Mathf.Clamp(_hold.SlotCount, 0, MaxHoldCells);
 
@@ -509,12 +600,11 @@ namespace MoonProject.UI
             _socketsRoot.style.display = !hideForBoot ? DisplayStyle.Flex : DisplayStyle.None;
             for (int i = 0; i < FaceDevices.Count; i++)
             {
-                RoverSystem system = FaceDevices.SystemOf(i);
-                RoverSystemState state = _systems.StateOf(system);
+                RoverSystemState state = _systems.StateOf(FaceDevices.SystemOf(i));
                 _deviceStateOf[i] = state;
                 _deviceNames[i].text = _localization.Get(FaceDevices.NameKey(i));
-                _deviceStates[i].text = _localization.Get(SystemText.StateKey(system, state));
-                _deviceStates[i].style.color = (Color)StatusColorOf(state);
+                _deviceStates[i].text = _localization.Get(FaceDevices.StateKey(i, state, _igniterOffered));
+                _deviceStates[i].EnableInClassList(AccentStateClass, i == FaceDevices.Cutter && FaceDevices.IsFaulty(state));
                 _deviceBubbles[i].style.display = !hideForBoot ? DisplayStyle.Flex : DisplayStyle.None;
                 _deviceBubbles[i].focusable = true;
                 _deviceBubbles[i].EnableInClassList(CargoScreen.FittedClass, state == RoverSystemState.Ok);
@@ -522,6 +612,7 @@ namespace MoonProject.UI
                 _deviceBubbles[i].EnableInClassList(CargoScreen.EmptyDeviceClass, state == RoverSystemState.Empty);
             }
 
+            WriteTags();
             WritePage(_scale);
             _footerRoot.style.display = !hideForBoot ? DisplayStyle.Flex : DisplayStyle.None;
             if (_footerDevice >= 0)
@@ -539,10 +630,38 @@ namespace MoonProject.UI
         {
             bool shown = !HideForBoot && index < _unlockedHoldCount && _holdStates[index].Kind != HoldCellKind.Empty;
             _holdNames[index].style.display = shown ? DisplayStyle.Flex : DisplayStyle.None;
+            _holdNames[index].EnableInClassList(NameOnClass, index == _focusedHoldCell);
             if (shown)
             {
                 _holdNames[index].text = HoldItemName(index);
             }
+        }
+
+        /// <summary>
+        /// The small accent tag at the foot of a cell whose part can be fitted right now, naming where it goes, so the
+        /// way on is on the screen before anything is pressed.
+        /// </summary>
+        private void WriteTags()
+        {
+            for (int i = 0; i < MaxHoldCells; i++)
+            {
+                bool tagged = IsTagged(i);
+                _holdTags[i].style.display = tagged ? DisplayStyle.Flex : DisplayStyle.None;
+                if (tagged)
+                {
+                    _holdTags[i].text = "→ " + _localization.Get(FaceDevices.NameKey(DropRule.TargetOf(
+                        _holdStates[i].StoryPartId)));
+                }
+            }
+        }
+
+        /// <summary>True when hold slot <paramref name="index"/> holds a part a device can take right now.</summary>
+        private bool IsTagged(int index)
+        {
+            return !HideForBoot && index < _unlockedHoldCount && _igniterOffered &&
+                   _holdStates[index].Kind == HoldCellKind.StoryPart &&
+                   DropRule.Decide(_holdStates[index].StoryPartId, DropRule.TargetOf(_holdStates[index].StoryPartId),
+                       true) == DropOutcome.Fit;
         }
 
         /// <summary>True when hold slot <paramref name="index"/> is unlocked and on the page shown.</summary>
@@ -657,8 +776,10 @@ namespace MoonProject.UI
         /// <summary>Focuses hold cell <paramref name="index"/> (for tests and captures).</summary>
         public void FocusHoldCell(int index)
         {
+            int previous = _focusedHoldCell;
             _focusedHoldCell = index;
             _focusedDevice = -1;
+            WriteNameStates(previous);
             if (index >= 0 && index < MaxHoldCells)
             {
                 ShowPage(FaceLayout.PageOf(index));
@@ -672,8 +793,10 @@ namespace MoonProject.UI
         /// <summary>Focuses device <paramref name="device"/> (for tests and captures).</summary>
         public void FocusDevice(int device)
         {
+            int previous = _focusedHoldCell;
             _focusedDevice = device;
             _focusedHoldCell = -1;
+            WriteNameStates(previous);
             if (device >= 0 && device < FaceDevices.Count)
             {
                 _deviceBubbles[device].Focus();
@@ -686,11 +809,27 @@ namespace MoonProject.UI
         /// <summary>Clears any active cell or device focus and hides the tooltip (for resting-state captures).</summary>
         public void ClearFocus()
         {
+            int previous = _focusedHoldCell;
             _focusedHoldCell = -1;
             _focusedDevice = -1;
+            WriteNameStates(previous);
             _panel.Blur();
             UpdateTooltip();
             _canvas.MarkDirtyRepaint();
+        }
+
+        /// <summary>The name under the cell the selection left goes quiet; the one under the selected cell reads on.</summary>
+        private void WriteNameStates(int previous)
+        {
+            if (previous >= 0 && previous < MaxHoldCells)
+            {
+                _holdNames[previous].EnableInClassList(NameOnClass, false);
+            }
+
+            if (_focusedHoldCell >= 0 && _focusedHoldCell < MaxHoldCells)
+            {
+                _holdNames[_focusedHoldCell].EnableInClassList(NameOnClass, true);
+            }
         }
 
         /// <summary>
@@ -877,12 +1016,17 @@ namespace MoonProject.UI
                 name.AddToClassList("cargo__cell-name");
                 cell.Add(name);
 
+                var tag = new Label { name = "cargo-hold-tag-" + i, pickingMode = PickingMode.Ignore };
+                tag.AddToClassList("cargo__tag");
+                cell.Add(tag);
+
                 cell.RegisterCallback<FocusInEvent>(_ => OnHoldCellFocus(index));
                 cell.RegisterCallback<NavigationMoveEvent>(evt => OnHoldNavigationMove(index, evt));
 
                 _holdCells[i] = cell;
                 _holdBadges[i] = badge;
                 _holdNames[i] = name;
+                _holdTags[i] = tag;
                 _holdGrid.Add(cell);
             }
         }
@@ -894,6 +1038,7 @@ namespace MoonProject.UI
                 int device = i;
                 var bubble = new VisualElement { name = "seven-device-" + i };
                 bubble.AddToClassList("cargo__socket-bubble");
+                bubble.EnableInClassList(RightBayClass, FaceLayout.DeviceFrame(i).xMin > FaceLayout.DeviceX);
 
                 var deviceName = new Label { name = "seven-device-name-" + i, pickingMode = PickingMode.Ignore };
                 deviceName.AddToClassList("cargo__device-name");
@@ -932,8 +1077,10 @@ namespace MoonProject.UI
                 ClearDropReason();
             }
 
+            int previous = _focusedHoldCell;
             _focusedHoldCell = index;
             _focusedDevice = -1;
+            WriteNameStates(previous);
             UpdateTooltip();
             _canvas.MarkDirtyRepaint();
         }
@@ -947,8 +1094,10 @@ namespace MoonProject.UI
 
             EnsureInteractiveDuringBoot();
             bool changed = _focusedHoldCell != index;
+            int previous = _focusedHoldCell;
             _focusedHoldCell = index;
             _focusedDevice = -1;
+            WriteNameStates(previous);
             UpdateTooltip();
             _canvas.MarkDirtyRepaint();
             NoteMoved(changed);
@@ -957,8 +1106,10 @@ namespace MoonProject.UI
         private void OnDeviceFocus(int device)
         {
             ClearDropReason();
+            int previous = _focusedHoldCell;
             _focusedDevice = device;
             _focusedHoldCell = -1;
+            WriteNameStates(previous);
             UpdateTooltip();
             _canvas.MarkDirtyRepaint();
         }
@@ -1003,8 +1154,9 @@ namespace MoonProject.UI
             }
 
             int cell = _drag.Cell;
-            DropOutcome outcome = DropRule.Decide(_holdStates[cell].StoryPartId, FindDeviceAtReferencePos(refPos),
-                _systems.CanFitIgniter, FaceLayout.DevicePanel.Contains(refPos));
+            _pointer = new Vector2(float.NaN, float.NaN);
+            _release.style.display = DisplayStyle.None;
+            DropOutcome outcome = OutcomeAt(_holdStates[cell].StoryPartId, refPos);
             if (outcome == DropOutcome.Fit && _systems.TryFitIgniter())
             {
                 _drag.Fit(FaceDevices.CenterOf(FaceDevices.Cutter));
@@ -1019,6 +1171,16 @@ namespace MoonProject.UI
             _dropReasonCell = cell;
             _dropReasonKey = DropRule.ReasonKey(outcome == DropOutcome.Fit ? DropOutcome.NotDocked : outcome);
             FocusHoldCell(cell);
+        }
+
+        /// <summary>
+        /// What dropping story part <paramref name="partId"/> at <paramref name="refPos"/> would do (anywhere on the
+        /// device panel counts as its device): the one rule the drop, the lit bay and the "Release to fit" line follow.
+        /// </summary>
+        private DropOutcome OutcomeAt(string partId, Vector2 refPos)
+        {
+            return DropRule.Decide(partId, FindDeviceAtReferencePos(refPos), _systems.CanFitIgniter,
+                FaceLayout.DevicePanel.Contains(refPos));
         }
 
         private void ClearDropReason()
@@ -1069,6 +1231,7 @@ namespace MoonProject.UI
 
             if (_drag.Phase == HoldDragPhase.Pressed || _drag.Phase == HoldDragPhase.Dragging)
             {
+                _pointer = refPos;
                 if (_drag.Move(refPos))
                 {
                     _events.Publish(new UiCue(UiCueKind.PartPick));
@@ -1218,6 +1381,8 @@ namespace MoonProject.UI
                 if (state.Kind == HoldCellKind.Empty)
                 {
                     ShowTooltipBox(_localization.Get(UiKeys.CargoEmptyName), _localization.Get(UiKeys.CargoEmptyDesc));
+                    _tooltipUse.style.display = DisplayStyle.None;
+                    return;
                 }
                 else if (_focusedHoldCell == _dropReasonCell && _dropReasonKey != null)
                 {
@@ -1232,6 +1397,7 @@ namespace MoonProject.UI
                     ShowTooltipBox(HoldItemName(_focusedHoldCell), HoldItemDescription(_focusedHoldCell));
                 }
 
+                ShowUse(state);
                 return;
             }
 
@@ -1241,10 +1407,35 @@ namespace MoonProject.UI
                 string name = _localization.Get(FaceDevices.NameKey(_focusedDevice));
                 string desc = _localization.Get(FaceDevices.DescriptionKey(_focusedDevice, state, _systems.CanFitIgniter));
                 ShowTooltipBox(name, desc);
+                _tooltipUse.style.display = DisplayStyle.None;
                 return;
             }
 
             _tooltip.style.display = DisplayStyle.None;
+        }
+
+        /// <summary>
+        /// The info box's last line, where the selected item goes: a part names the device that takes it (accent when
+        /// it can be fitted now, else when it can), a material goes into builds; nothing for anything else.
+        /// </summary>
+        private void ShowUse(HoldCellState state)
+        {
+            string target = null;
+            bool now = false;
+            if (state.Kind == HoldCellKind.Material)
+            {
+                target = _localization.Get(UiKeys.FaceBuild);
+            }
+            else if (state.Kind == HoldCellKind.StoryPart && DropRule.TargetOf(state.StoryPartId) >= 0)
+            {
+                string device = _localization.Get(FaceDevices.NameKey(DropRule.TargetOf(state.StoryPartId)));
+                now = _systems.CanFitIgniter;
+                target = now ? device : string.Format(_localization.Get(UiKeys.CargoGoesToOnPad), device);
+            }
+
+            _tooltipUse.style.display = target != null ? DisplayStyle.Flex : DisplayStyle.None;
+            _tooltipUseTarget.text = target ?? string.Empty;
+            _tooltipUseTarget.EnableInClassList(UseAccentClass, now);
         }
 
         private string HoldItemDescription(int index)
@@ -1301,32 +1492,18 @@ namespace MoonProject.UI
                 return;
             }
 
-            bool hideForBoot = HideForBoot;
             Painter2D painter = context.painter2D;
             float s = rect.width / ReferenceWidth;
-
-            if (!hideForBoot)
-            {
-                float rule = _settings.CellStrokeWidth * s;
-                RoverLineArtPainter.DrawLine(painter, new Vector2(FaceLayout.Margin * s, FaceLayout.TitleRuleY * s),
-                    new Vector2(FaceLayout.RightEdge * s, FaceLayout.TitleRuleY * s), AmberMuted, rule);
-                RoverLineArtPainter.DrawLine(painter, new Vector2(FaceLayout.Margin * s, FaceLayout.HeadingRuleY * s),
-                    new Vector2(FaceLayout.HoldRight * s, FaceLayout.HeadingRuleY * s), AmberMuted, rule);
-            }
-
             DrawHoldGrid(painter, s);
-
-            if (!hideForBoot)
+            if (!HideForBoot)
             {
-                DrawMoreRow(painter, s);
                 DrawDevices(painter, s);
-                DrawToastDot(painter, s);
             }
         }
 
         /// <summary>
-        /// The dragged part's icon over everything (its own layer above the frames' words), on a cell-sized plate so
-        /// it reads over the line art.
+        /// The dragged part's icon over everything (its own layer above the bays' words), on a cell-sized plate with
+        /// the accent's outline so it reads over the line art.
         /// </summary>
         private void OnGenerateGhost(MeshGenerationContext context)
         {
@@ -1342,14 +1519,17 @@ namespace MoonProject.UI
             Vector2 center = _drag.Ghost * s;
             float half = CellSize * 0.5f * s;
             RoverLineArtPainter.FillRect(painter, center.x - half, center.y - half, half * 2f, half * 2f,
-                RoverLineArtPainter.WithAlpha(_settings.SelectionFill, (byte)Mathf.RoundToInt(BgCell.a * alpha)));
+                Faded(_settings.PlateBackground, alpha));
             RoverLineArtPainter.StrokeRect(painter, center.x - half, center.y - half, half * 2f, half * 2f,
-                RoverLineArtPainter.WithAlpha(Cyan, (byte)Mathf.RoundToInt(Cyan.a * alpha)),
-                _settings.FocusStrokeWidth * s);
+                Faded(_settings.AccentColor, alpha), _settings.FocusStrokeWidth * s);
             UiIconPainter.Draw(painter, in _dragIcon, center, _settings.HoldIconSize * s,
-                RoverLineArtPainter.WithAlpha(AmberText, (byte)Mathf.RoundToInt(FullIconAlpha * alpha)));
+                RoverLineArtPainter.WithAlpha(_settings.IconColor, (byte)Mathf.RoundToInt(FullIconAlpha * alpha)));
         }
 
+        /// <summary>
+        /// The hold's cells, every one framed: an empty slot faintly, a slot that holds something a little clearer,
+        /// and the selection in the one accent (with a brief fill just after a press).
+        /// </summary>
         private void DrawHoldGrid(Painter2D painter, float s)
         {
             bool hideForBoot = HideForBoot;
@@ -1376,17 +1556,16 @@ namespace MoonProject.UI
                 bool focused = !hideForBoot && i == _focusedHoldCell;
                 bool hasItem = state.Kind != HoldCellKind.Empty;
 
-                RoverLineArtPainter.FillRect(painter, cx, cy, cw, ch, focused ? SelectionFillOf(i, -1) : BgCell);
                 if (focused)
                 {
-                    float ring = _settings.FocusStrokeWidth * s;
-                    RoverLineArtPainter.StrokeRect(painter, cx, cy, cw, ch, Cyan, ring);
-                    RoverLineArtPainter.DrawCornerTicks(painter, cx, cy, cw, ch, CellTickLength * s, Cyan, ring);
+                    RoverLineArtPainter.FillRect(painter, cx, cy, cw, ch, PressFillOf(i, -1));
+                    RoverLineArtPainter.StrokeRect(painter, cx, cy, cw, ch, _settings.AccentColor,
+                        _settings.FocusStrokeWidth * s);
                 }
                 else
                 {
-                    RoverLineArtPainter.StrokeRect(painter, cx, cy, cw, ch, hasItem ? AmberFaint : AmberMuted,
-                        (hasItem ? _settings.ItemStrokeWidth : _settings.CellStrokeWidth) * s);
+                    RoverLineArtPainter.StrokeRect(painter, cx, cy, cw, ch,
+                        hasItem ? _settings.ItemFrameColor : _settings.FaintColor, _settings.SlotStrokeWidth * s);
                 }
 
                 if (!hasItem)
@@ -1414,38 +1593,19 @@ namespace MoonProject.UI
 
                 UiIconShape icon = GetHoldCellIcon(state);
                 float lifted = _drag.ShowsGhost && i == _drag.Cell ? _settings.DragSourceAlpha : 1f;
-                Color32 tint = RoverLineArtPainter.WithAlpha(AmberText,
+                Color32 tint = RoverLineArtPainter.WithAlpha(_settings.IconColor,
                     (byte)Mathf.RoundToInt(FullIconAlpha * bootProgress * lifted));
-                Vector2 iconCenter = new Vector2(cx + cw * 0.5f + slideX, cy + ch * 0.5f);
+                float rise = IsTagged(i) ? TaggedIconLift : 0f;
+                Vector2 iconCenter = new Vector2(cx + cw * 0.5f + slideX, cy + ch * (0.5f - rise));
                 UiIconPainter.Draw(painter, in icon, iconCenter, _settings.HoldIconSize * s, tint);
-
-                if (!hideForBoot && state.Kind == HoldCellKind.Material && state.Units > 1)
-                {
-                    RoverLineArtPainter.FillRect(painter, cx + cw - BadgeInsetX * s, cy + ch - BadgeInsetY * s,
-                        BadgeWidth * s, BadgeHeight * s, focused ? SelectionFillOf(i, -1) : BgCell);
-                }
             }
         }
 
-        /// <summary>The one hint row that stands for every locked slot: a padlock before its words.</summary>
-        private void DrawMoreRow(Painter2D painter, float s)
-        {
-            if (!HintShown)
-            {
-                return;
-            }
-
-            Rect row = FaceLayout.HintRect(_unlockedHoldCount);
-            RoverLineArtPainter.DrawPadlock(painter, new Vector2((row.x + FaceLayout.HintPadlockX) * s, row.center.y * s),
-                AmberLocked);
-        }
-
-        /// <summary>The fill of the selected cell or frame: the selection colour, brighter just after a press.</summary>
-        private Color32 SelectionFillOf(int holdCell, int device)
+        /// <summary>The brief fill of a cell or bay just pressed, easing away; clear otherwise.</summary>
+        private Color32 PressFillOf(int holdCell, int device)
         {
             bool pressed = _pressFlash > 0f && (holdCell >= 0 ? holdCell == _pressedHoldCell : device == _pressedDevice);
-            return pressed ? Color32.Lerp(_settings.SelectionFill, _settings.PressFill, _pressFlash)
-                : _settings.SelectionFill;
+            return pressed ? Faded(_settings.AccentFill, _pressFlash) : default;
         }
 
         private UiIconShape GetHoldCellIcon(HoldCellState state)
@@ -1461,15 +1621,14 @@ namespace MoonProject.UI
             }
         }
 
-        /// <summary>The leaders over 07's drawing (an element under the canvas), then the four device frames.</summary>
+        /// <summary>The leaders over 07's drawing (an element under the canvas), the lit ones last, then the bays.</summary>
         private void DrawDevices(Painter2D painter, float s)
         {
             for (int pass = 0; pass < 2; pass++)
             {
-                bool drawFocusPass = pass == 1;
                 for (int i = 0; i < FaceDevices.Count; i++)
                 {
-                    if ((i == _focusedDevice) == drawFocusPass)
+                    if (DropTargets.IsLit(_bayLooks[i]) == (pass == 1))
                     {
                         DrawLeader(painter, s, i);
                     }
@@ -1478,14 +1637,13 @@ namespace MoonProject.UI
 
             for (int i = 0; i < FaceDevices.Count; i++)
             {
-                DrawDeviceFrame(painter, s, i);
+                DrawBay(painter, s, i);
             }
         }
 
         /// <summary>
-        /// The leader from a device's frame to its part on 07's drawing (the anchor Art marked): straight out of the
-        /// frame, then on to the part. Faint while the device is not working, subtle amber when it works, crisp cyan
-        /// under focus; the focused one is drawn last so it sits on top.
+        /// The leader from a bay to its part on 07's drawing (the anchor Art marked): straight out of the bay to the
+        /// part's height, then across to it. Quiet, and brighter and heavier while the carried part fits that bay.
         /// </summary>
         private void DrawLeader(Painter2D painter, float s, int device)
         {
@@ -1493,104 +1651,78 @@ namespace MoonProject.UI
             Vector2 anchor = FaceLayout.LeaderStart(device, target) * s;
             Vector2 knee = FaceLayout.LeaderKneeOf(device, target) * s;
             Vector2 mount = target * s;
-            Color32 color;
-            float width;
-            float dot;
-            if (device == _focusedDevice)
-            {
-                color = _settings.LeaderFocusColor;
-                width = _settings.LeaderFocusWidth;
-                dot = _settings.LeaderFocusDotRadius;
-            }
-            else if (_deviceStateOf[device] == RoverSystemState.Ok)
-            {
-                color = _settings.LeaderInstalledColor;
-                width = _settings.LeaderInstalledWidth;
-                dot = _settings.LeaderInstalledDotRadius;
-            }
-            else
-            {
-                color = _settings.LeaderEmptyColor;
-                width = _settings.LeaderEmptyWidth;
-                dot = _settings.LeaderEmptyDotRadius;
-            }
-
-            RoverLineArtPainter.DrawLine(painter, anchor, knee, color, width * s);
-            RoverLineArtPainter.DrawLine(painter, knee, mount, color, width * s);
-            RoverLineArtPainter.FillCircle(painter, mount, dot * s, color);
+            BayLook look = _bayLooks[device];
+            bool lit = DropTargets.IsLit(look);
+            Color32 color = lit ? _settings.AccentColor
+                : look == BayLook.Invalid ? Faded(_settings.FaintColor, _settings.BayDimAlpha)
+                : _settings.FaintColor;
+            float width = (lit ? _settings.LeaderLitWidth : _settings.LeaderWidth) * s;
+            RoverLineArtPainter.DrawLine(painter, anchor, knee, color, width);
+            RoverLineArtPainter.DrawLine(painter, knee, mount, color, width);
+            RoverLineArtPainter.FillCircle(painter, mount, _settings.LeaderDotRadius * s, color);
         }
 
         /// <summary>
-        /// A device's labelled frame, drawn in its state: working in teal with a solid outline and disc, faulty in
-        /// amber with the warning mark on its name row, empty in a quiet grey with a broken outline and a thin disc;
-        /// the selection (or the cutter offering the igniter) rings it in cyan. The words are the frame's labels.
+        /// A device's bay in its look: corner brackets around the drop area at rest (accent when the hold has a part it
+        /// takes now), a solid accent outline over a soft fill that breathes while the carried part fits it (heavier
+        /// and still while the part is over it), dimmed while a drag cannot use it; the selection outlines it in the
+        /// accent. A working device that takes nothing is just its words.
         /// </summary>
-        private void DrawDeviceFrame(Painter2D painter, float s, int device)
+        private void DrawBay(Painter2D painter, float s, int device)
         {
             Rect frame = FaceLayout.DeviceFrame(device);
-            RoverSystemState state = _deviceStateOf[device];
-            bool empty = state == RoverSystemState.Empty;
-            bool fault = FaceDevices.IsFaulty(state);
-            Color32 status = StatusColorOf(state);
-            bool focused = device == _focusedDevice;
-            bool offered = FaceDevices.OffersIgniter(device, _igniterOffered);
             float x = frame.x * s;
             float y = frame.y * s;
             float w = frame.width * s;
             float h = frame.height * s;
-            float stateWidth = (empty ? _settings.CellStrokeWidth : _settings.ItemStrokeWidth) * s;
-
-            RoverLineArtPainter.FillRect(painter, x, y, w, h, focused ? SelectionFillOf(-1, device) : BgCell);
-            if (focused || offered)
+            float bracket = FaceLayout.BracketLength * s;
+            BayLook look = _bayLooks[device];
+            RoverLineArtPainter.FillRect(painter, x, y, w, h, PressFillOf(-1, device));
+            switch (look)
             {
-                float ring = _settings.FocusStrokeWidth * s;
-                RoverLineArtPainter.StrokeRect(painter, x, y, w, h, Cyan, ring);
-                RoverLineArtPainter.DrawCornerTicks(painter, x, y, w, h, FrameTickLength * s, Cyan, ring);
+                case BayLook.Valid:
+                {
+                    float breath = 1f - _settings.BayBreathDepth * 0.5f * (1f - Mathf.Cos(_breath * 2f * Mathf.PI));
+                    RoverLineArtPainter.FillRect(painter, x, y, w, h, Faded(_settings.AccentFill, breath));
+                    RoverLineArtPainter.StrokeRect(painter, x, y, w, h, Faded(_settings.AccentColor, breath),
+                        _settings.BayLitStrokeWidth * s);
+                    return;
+                }
+                case BayLook.Hover:
+                    RoverLineArtPainter.FillRect(painter, x, y, w, h, _settings.AccentFill);
+                    RoverLineArtPainter.StrokeRect(painter, x, y, w, h, _settings.AccentColor,
+                        _settings.BayHoverStrokeWidth * s);
+                    return;
+                case BayLook.Ready:
+                    RoverLineArtPainter.DrawCornerTicks(painter, x, y, w, h, bracket, _settings.AccentColor,
+                        _settings.BayStrokeWidth * s);
+                    break;
+                case BayLook.Rest:
+                case BayLook.Blocked:
+                    RoverLineArtPainter.DrawCornerTicks(painter, x, y, w, h, bracket, _settings.FaintColor,
+                        _settings.BayStrokeWidth * s);
+                    break;
+                case BayLook.Invalid:
+                    if (DropTargets.IsBay(device, _deviceStateOf[device]))
+                    {
+                        RoverLineArtPainter.DrawCornerTicks(painter, x, y, w, h, bracket,
+                            Faded(_settings.FaintColor, _settings.BayDimAlpha), _settings.BayStrokeWidth * s);
+                    }
+
+                    break;
             }
-            else if (empty)
-            {
-                RoverLineArtPainter.StrokeDashedRect(painter, x, y, w, h, status, stateWidth, _settings.EmptyDash * s,
-                    _settings.EmptyDashGap * s);
-            }
-            else
-            {
-                RoverLineArtPainter.StrokeRect(painter, x, y, w, h, status, stateWidth);
-            }
 
-            float nameRule = (frame.y + FaceLayout.FrameNameHeight) * s;
-            float inset = FrameRuleInset * s;
-            RoverLineArtPainter.DrawLine(painter, new Vector2(x + inset, nameRule), new Vector2(x + w - inset, nameRule),
-                AmberMuted, _settings.CellStrokeWidth * s);
-
-            Vector2 disc = FaceLayout.DeviceIconCenter(device) * s;
-            RoverLineArtPainter.StrokeCircle(painter, disc, _settings.BubbleRadius * s, status, stateWidth);
-            UiIconPainter.Draw(painter, in _deviceIcons[device], disc, _settings.DeviceIconSize * s, status);
-
-            if (fault)
+            if (device == _focusedDevice)
             {
-                UiIconPainter.Draw(painter, in _warningIcon, FaceLayout.WarningCenter(device) * s,
-                    _settings.WarningIconSize * s, status);
+                RoverLineArtPainter.StrokeRect(painter, x, y, w, h, _settings.AccentColor,
+                    _settings.FocusStrokeWidth * s);
             }
         }
 
-        /// <summary>The colour of a device's state: teal when it works, grey when its socket is empty, else amber.</summary>
-        private Color32 StatusColorOf(RoverSystemState state)
+        /// <summary><paramref name="color"/> with its alpha scaled by <paramref name="share"/>.</summary>
+        private static Color32 Faded(Color32 color, float share)
         {
-            return state == RoverSystemState.Ok ? _settings.StatusOk
-                : state == RoverSystemState.Empty ? _settings.StatusEmpty
-                : _settings.StatusFault;
-        }
-
-        private void DrawToastDot(Painter2D painter, float s)
-        {
-            if (_toast.style.display != DisplayStyle.Flex)
-            {
-                return;
-            }
-
-            RoverLineArtPainter.FillCircle(painter,
-                new Vector2((FaceLayout.Margin + ToastDotX) * s, (FaceLayout.ToastY + FaceLayout.ToastHeight * 0.5f) * s),
-                ToastDotRadius * s, _settings.AmberBright);
+            return RoverLineArtPainter.WithAlpha(color, (byte)Mathf.RoundToInt(color.a * Mathf.Clamp01(share)));
         }
 
         private Vector2 PanelToReference(Vector2 localPos)

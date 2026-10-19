@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using UnityEngine;
+using MoonProject.Core;
 using MoonProject.Core.Input;
 using MoonProject.Gameplay;
 
@@ -8,7 +9,8 @@ namespace MoonProject.UI.Tests
     /// <summary>
     /// The interaction pass's pure rules: the cursor shows on every screen the mouse can click and hides while the mouse
     /// turns the camera; build mode's guidance line names one step at a time; the menu's keys name real controls; a
-    /// dragged part fits only where it belongs and otherwise goes home with a reason.
+    /// dragged part fits only where it belongs and otherwise goes home with a reason, and the bays it fits read
+    /// at a glance.
     /// </summary>
     public sealed class InteractionRulesTests
     {
@@ -110,10 +112,76 @@ namespace MoonProject.UI.Tests
             Assert.AreEqual(DropOutcome.Nowhere, DropRule.Decide("part.icecore", FaceDevices.Cutter, true));
             Assert.AreEqual(DropOutcome.Nowhere, DropRule.Decide(null, FaceDevices.Cutter, true), "a material");
 
+            Assert.AreEqual(FaceDevices.Cutter, DropRule.TargetOf(igniter));
+            Assert.AreEqual(-1, DropRule.TargetOf("part.icecore"));
+            Assert.AreEqual(-1, DropRule.TargetOf(null), "a material");
+
             Assert.IsNull(DropRule.ReasonKey(DropOutcome.Fit));
             Assert.AreEqual(UiKeys.CargoDragNotDocked, DropRule.ReasonKey(DropOutcome.NotDocked));
             Assert.AreEqual(UiKeys.CargoDragToCutter, DropRule.ReasonKey(DropOutcome.ToCutter));
             Assert.AreEqual(UiKeys.CargoDragNowhere, DropRule.ReasonKey(DropOutcome.Nowhere));
+        }
+
+        [Test]
+        public void TheBays_AreTheDevicesThatTakeAPart_TheEmptySocketsAndTheCutterMissingItsIgniter()
+        {
+            Assert.IsTrue(DropTargets.IsBay(FaceDevices.SocketOne, RoverSystemState.Empty));
+            Assert.IsTrue(DropTargets.IsBay(FaceDevices.Cutter, RoverSystemState.Fault));
+            Assert.IsFalse(DropTargets.IsBay(FaceDevices.Cutter, RoverSystemState.Ok), "a working cutter");
+            Assert.IsFalse(DropTargets.IsBay(FaceDevices.Scan, RoverSystemState.Ok), "the working lens");
+        }
+
+        [Test]
+        public void AtRest_ABayIsQuiet_UntilTheHoldHasAPartItTakesNow()
+        {
+            const RoverSystemState fault = RoverSystemState.Fault;
+            Assert.AreEqual(BayLook.Rest, DropTargets.Look(FaceDevices.Cutter, fault, null, false, false, -1, false));
+            Assert.AreEqual(BayLook.Ready, DropTargets.Look(FaceDevices.Cutter, fault, null, false, false, -1, true),
+                "the igniter can be fitted now: the cutter shows it before any drag");
+            Assert.AreEqual(BayLook.Rest,
+                DropTargets.Look(FaceDevices.SocketOne, RoverSystemState.Empty, null, false, false, -1, true));
+            Assert.AreEqual(BayLook.None,
+                DropTargets.Look(FaceDevices.Scan, RoverSystemState.Ok, null, false, false, -1, true));
+        }
+
+        [Test]
+        public void ADraggedIgniter_LightsTheCutter_ThickensItUnderThePointer_AndDimsTheRest()
+        {
+            const string igniter = DropRule.SpareIgniterPart;
+            Assert.AreEqual(BayLook.Valid,
+                DropTargets.Look(FaceDevices.Cutter, RoverSystemState.Fault, igniter, true, true, -1, true));
+            Assert.AreEqual(BayLook.Hover, DropTargets.Look(FaceDevices.Cutter, RoverSystemState.Fault, igniter, true,
+                true, FaceDevices.Cutter, true));
+            Assert.AreEqual(BayLook.Invalid,
+                DropTargets.Look(FaceDevices.SocketOne, RoverSystemState.Empty, igniter, true, true, -1, true));
+            Assert.AreEqual(BayLook.Invalid,
+                DropTargets.Look(FaceDevices.Scan, RoverSystemState.Ok, igniter, true, true, -1, true));
+            Assert.IsTrue(DropTargets.IsLit(BayLook.Valid) && DropTargets.IsLit(BayLook.Hover));
+            Assert.IsFalse(DropTargets.IsLit(BayLook.Ready) || DropTargets.IsLit(BayLook.Invalid));
+        }
+
+        [Test]
+        public void OffItsPad_TheIgnitersCutter_StaysQuietButUndimmed_AndAMaterialFitsNowhere()
+        {
+            const string igniter = DropRule.SpareIgniterPart;
+            Assert.AreEqual(BayLook.Blocked,
+                DropTargets.Look(FaceDevices.Cutter, RoverSystemState.Fault, igniter, true, true, -1, false));
+            Assert.AreEqual(BayLook.Invalid,
+                DropTargets.Look(FaceDevices.SocketTwo, RoverSystemState.Empty, igniter, true, true, -1, false));
+            Assert.AreEqual(BayLook.Invalid,
+                DropTargets.Look(FaceDevices.Cutter, RoverSystemState.Fault, null, true, true, -1, true), "a material");
+        }
+
+        [Test]
+        public void SelectedFromTheKeys_TheIgniterLightsTheCutter_WithoutDimmingAnything()
+        {
+            const string igniter = DropRule.SpareIgniterPart;
+            Assert.AreEqual(BayLook.Valid,
+                DropTargets.Look(FaceDevices.Cutter, RoverSystemState.Fault, igniter, true, false, -1, true));
+            Assert.AreEqual(BayLook.Rest,
+                DropTargets.Look(FaceDevices.SocketOne, RoverSystemState.Empty, igniter, true, false, -1, true));
+            Assert.AreEqual(BayLook.None,
+                DropTargets.Look(FaceDevices.Scan, RoverSystemState.Ok, igniter, true, false, -1, true));
         }
 
         [Test]

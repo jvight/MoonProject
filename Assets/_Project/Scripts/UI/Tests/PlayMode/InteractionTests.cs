@@ -116,7 +116,78 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(1, _rig.Fakes.Systems.Fits, "on the pad the cutter takes the dropped igniter");
             CollectionAssert.Contains(cues, UiCueKind.PartDrop);
             Assert.AreEqual(FaceDevices.Cutter, view.FocusedDeviceIndex, "the cutter is selected, now fitted");
-            Assert.AreEqual(Text("ui.system.state.ok"), view.DeviceStateText(FaceDevices.Cutter));
+            Assert.AreEqual(Text("ui.device.state.ok"), view.DeviceStateText(FaceDevices.Cutter));
+        }
+
+        /// <summary>
+        /// Where a part can go reads at a glance (owner, 2026-10-19): at rest the cutter that can take the igniter now
+        /// wears the accent brackets and the igniter's cell says where it goes; selected from the keys the igniter
+        /// lights the cutter; dragged with the real mouse it lights the cutter, thickens it under the pointer with
+        /// "Release to fit" and dims every other device; off the pad the cutter stays quiet and says why.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator TheBays_SayWhereAPartGoes_AtRest_FromTheKeys_AndUnderTheMouse()
+        {
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            Mouse mouse = InputSystem.AddDevice<Mouse>();
+            _rig = UiTestRig.Boot(_controls, _slot);
+            _rig.Ui.Ledger.RecordHoldBooted();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Fakes.Hold.Set(7, new MaterialSlot(SalvageMaterial.Metal, 3, 4));
+            _rig.Fakes.Hold.AddPart(DropRule.SpareIgniterPart);
+            _rig.Fakes.Systems.CanFitIgniter = true;
+            yield return Seconds(0.3f);
+            yield return Tap(keyboard.tabKey);
+            yield return Seconds(Settle);
+            FaceInventoryView view = _rig.Ui.Cargo.View;
+            string cutter = Text(FaceDevices.NameKey(FaceDevices.Cutter));
+
+            view.ClearFocus();
+            yield return null;
+            Assert.AreEqual(BayLook.Ready, view.BayLookOf(FaceDevices.Cutter), "the cutter can take the igniter now");
+            Assert.AreEqual(BayLook.Rest, view.BayLookOf(FaceDevices.SocketOne), "an empty socket is a quiet bay");
+            Assert.AreEqual(BayLook.None, view.BayLookOf(FaceDevices.Scan), "the working lens takes nothing");
+            StringAssert.EndsWith(cutter, view.HoldTagText(1), "the igniter's cell says where it goes");
+            Assert.IsEmpty(view.HoldTagText(0), "metal has no device to go to");
+            Assert.AreEqual(Text("ui.device.state.socket_empty"), view.DeviceStateText(FaceDevices.SocketOne));
+
+            view.FocusHoldCell(1);
+            yield return null;
+            Assert.AreEqual(BayLook.Valid, view.BayLookOf(FaceDevices.Cutter), "selected, the igniter lights the cutter");
+            Assert.AreEqual(BayLook.Rest, view.BayLookOf(FaceDevices.SocketOne), "and dims nothing from the keys");
+            Assert.AreEqual(cutter, view.UseText, "the info box says where it goes");
+            view.FocusHoldCell(0);
+            yield return null;
+            Assert.AreEqual(Text(UiKeys.FaceBuild), view.UseText, "metal goes into builds");
+
+            yield return DragTo(mouse, CellOnScreen(1), DeviceOnScreen(FaceDevices.Cutter), view);
+            Assert.AreEqual(BayLook.Hover, view.BayLookOf(FaceDevices.Cutter), "over the cutter it thickens");
+            Assert.AreEqual(BayLook.Invalid, view.BayLookOf(FaceDevices.SocketOne), "the sockets dim");
+            Assert.AreEqual(BayLook.Invalid, view.BayLookOf(FaceDevices.Scan), "and so does the lens");
+            Assert.AreEqual(Text(UiKeys.CargoReleaseFit), view.ReleaseText);
+            Assert.Less(view.DeviceElement(FaceDevices.SocketOne).resolvedStyle.opacity, 0.5f, "dimmed to about 40%");
+
+            yield return MoveTo(mouse, CellOnScreen(4));
+            Assert.AreEqual(BayLook.Valid, view.BayLookOf(FaceDevices.Cutter), "back over the hold the cutter still lights");
+            Assert.IsEmpty(view.ReleaseText, "and nothing says release there");
+
+            yield return MoveTo(mouse, DeviceOnScreen(FaceDevices.SocketOne));
+            Assert.AreEqual(BayLook.Hover, view.BayLookOf(FaceDevices.Cutter),
+                "anywhere on the device panel a drop goes to the cutter, so the cutter answers");
+            Assert.AreEqual(Text(UiKeys.CargoReleaseFit), view.ReleaseText);
+            Release(mouse.leftButton);
+            yield return Seconds(_rig.Tuning.Cargo.DragFitSeconds + 0.1f);
+            Assert.AreEqual(1, _rig.Fakes.Systems.Fits, "and the release fits it");
+            _rig.Fakes.Systems.Set(RoverSystem.Cutter, RoverSystemState.Fault);
+
+            _rig.Fakes.Systems.CanFitIgniter = false;
+            yield return Seconds(0.2f);
+            yield return DragTo(mouse, CellOnScreen(1), DeviceOnScreen(FaceDevices.Cutter), view);
+            Assert.AreEqual(BayLook.Blocked, view.BayLookOf(FaceDevices.Cutter), "off the pad it stays quiet, undimmed");
+            Assert.AreEqual(Text(UiKeys.CargoDragNotDocked), view.ReleaseText, "and says why beside the part");
+            Release(mouse.leftButton);
+            yield return Seconds(_rig.Tuning.Cargo.DragReturnSeconds + 0.1f);
+            Assert.AreEqual(1, _rig.Fakes.Systems.Fits, "off the pad the release fits nothing more");
         }
 
         [UnityTest]
@@ -295,6 +366,30 @@ namespace MoonProject.UI.PlayModeTests
             yield return Seconds(0.2f);
             Release(mouse.leftButton);
             yield return null;
+        }
+
+        /// <summary>Presses on <paramref name="from"/> and drags to <paramref name="to"/>, still holding the button.</summary>
+        private IEnumerator DragTo(Mouse mouse, Vector2 from, Vector2 to, FaceInventoryView view)
+        {
+            const int steps = 8;
+            Set(mouse.position, from);
+            yield return null;
+            Press(mouse.leftButton);
+            yield return null;
+            for (int i = 1; i <= steps; i++)
+            {
+                Set(mouse.position, Vector2.Lerp(from, to, i / (float)steps));
+                yield return null;
+            }
+
+            Assert.AreEqual(HoldDragPhase.Dragging, view.DragPhase, "the part is being dragged");
+            yield return Seconds(0.2f);
+        }
+
+        private IEnumerator MoveTo(Mouse mouse, Vector2 to)
+        {
+            Set(mouse.position, to);
+            yield return Seconds(0.2f);
         }
 
         private Vector2 CellOnScreen(int cell)

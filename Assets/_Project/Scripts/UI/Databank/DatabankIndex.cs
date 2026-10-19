@@ -18,14 +18,6 @@ namespace MoonProject.UI
             DatabankCategory.Phenomena, DatabankCategory.Archive,
         };
 
-        /// <summary>
-        /// The marks of the era strip, P S B L N (Meridian machines count for their own era, unmarked).
-        /// </summary>
-        public static readonly DatabankEra[] StripEras =
-        {
-            DatabankEra.Probes, DatabankEra.Sorties, DatabankEra.BuildOut, DatabankEra.Lumen, DatabankEra.Now,
-        };
-
         private readonly List<string>[] _entries = new List<string>[Categories.Length];
 
         public DatabankIndex()

@@ -17,6 +17,7 @@ Shader "MoonProject/R1/CrtFace"
         _ContentGlowIntensity ("Content Phosphor Glow Intensity", Range(0.0, 0.5)) = 0.20
         _ContentGlowMip ("Content Phosphor Glow Mip", Range(0.5, 4.0)) = 1.25
         _ContentScanlineAtten ("Content Scanline Attenuation", Range(0.0, 1.0)) = 0.60
+        _ContentMinStrokeLuma ("Content Min Stroke Luma", Range(0.0, 1.0)) = 0.0
 
         _EyeLeftRect ("Left Eye Rect (cx, cy, w, h)", Vector) = (0.31, 0.50, 0.2006, 0.4012)
         _EyeLeftShape ("Left Eye Shape (tilt, cut, squint, open)", Vector) = (0, 0, 0, 1)

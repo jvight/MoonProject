@@ -47,6 +47,12 @@ namespace MoonProject.UI
             return device == FaceDevices.Cutter || onDevicePanel ? DropOutcome.Fit : DropOutcome.ToCutter;
         }
 
+        /// <summary>The device story part <paramref name="partId"/> belongs in, or -1 when none of 07's takes it.</summary>
+        public static int TargetOf(string partId)
+        {
+            return partId == SpareIgniterPart ? FaceDevices.Cutter : -1;
+        }
+
         /// <summary>The localization key of the short reason a refused drop shows; null for a fit.</summary>
         public static string ReasonKey(DropOutcome outcome)
         {

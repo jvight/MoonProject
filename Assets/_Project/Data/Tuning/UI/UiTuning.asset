@@ -518,74 +518,41 @@ MonoBehaviour:
     _cellGapX: 10
     _cellGapY: 8
     _dividerX: 478
-    _bubbleRadius: 22
     _toastDurationSeconds: 3.5
     _artTint:
       serializedVersion: 2
-      rgba: 4294967295
-    _statusOk:
+      rgba: 4287934912
+    _iconColor:
       serializedVersion: 2
-      rgba: 4288079400
-    _statusFault:
+      rgba: 4290171616
+    _faintColor:
       serializedVersion: 2
-      rgba: 4280312063
-    _statusEmpty:
+      rgba: 4283062368
+    _itemFrameColor:
       serializedVersion: 2
-      rgba: 4288976024
-    _emptyDash: 10
-    _emptyDashGap: 7
-    _warningIconSize: 26
-    _leaderEmptyColor:
+      rgba: 4285169032
+    _accentColor:
       serializedVersion: 2
-      rgba: 1145345740
-    _leaderEmptyWidth: 2
-    _leaderEmptyDotRadius: 3.5
-    _leaderInstalledColor:
+      rgba: 4284531967
+    _accentFill:
       serializedVersion: 2
-      rgba: 1616031464
-    _leaderInstalledWidth: 2.4
-    _leaderInstalledDotRadius: 4
-    _leaderFocusColor:
-      serializedVersion: 2
-      rgba: 3959419743
-    _leaderFocusWidth: 3.2
-    _leaderFocusDotRadius: 5.5
-    _cellStrokeWidth: 2.4
-    _itemStrokeWidth: 3.2
-    _focusStrokeWidth: 5
-    _holdIconSize: 58
-    _deviceIconSize: 36
-    _selectionFill:
-      serializedVersion: 2
-      rgba: 4280689158
-    _pressFill:
-      serializedVersion: 2
-      rgba: 4281347082
-    _pressFlashSeconds: 0.22
-    _cellBackground:
-      serializedVersion: 2
-      rgba: 3943042066
+      rgba: 341886207
     _plateBackground:
       serializedVersion: 2
       rgba: 4161079566
-    _amberBright:
-      serializedVersion: 2
-      rgba: 4286633727
-    _amberText:
-      serializedVersion: 2
-      rgba: 4284269311
-    _amberFaint:
-      serializedVersion: 2
-      rgba: 2772735692
-    _amberMuted:
-      serializedVersion: 2
-      rgba: 1598330572
-    _amberLocked:
-      serializedVersion: 2
-      rgba: 1145345740
-    _cyanAccent:
-      serializedVersion: 2
-      rgba: 4294964063
+    _slotStrokeWidth: 1.5
+    _focusStrokeWidth: 2.5
+    _holdIconSize: 52
+    _pressFlashSeconds: 0.22
+    _bayStrokeWidth: 1.5
+    _bayLitStrokeWidth: 2
+    _bayHoverStrokeWidth: 3.5
+    _bayBreathSeconds: 1.2
+    _bayBreathDepth: 0.45
+    _bayDimAlpha: 0.4
+    _leaderWidth: 1.5
+    _leaderLitWidth: 2.5
+    _leaderDotRadius: 3.5
   _unlockCard:
     _reveal:
       _fadeIn: 0.7
@@ -731,7 +698,7 @@ MonoBehaviour:
     _turnFollowSeconds: 0.12
     _stageFieldOfView: 26
     _stageFill: 0.8
-    _stageResolution: {x: 1720, y: 840}
+    _stageResolution: {x: 752, y: 888}
     _stagePosition: {x: 0, y: -4000, z: 0}
     _wireMaterial: {fileID: 2100000, guid: 3652bba78b6499f46b3aa88a5fb63f39, type: 2}
     _wireFirstPieceFade: 0.35

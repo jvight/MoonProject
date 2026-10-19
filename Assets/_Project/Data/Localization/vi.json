@@ -655,10 +655,6 @@
             "text": "Chưa tìm thấy bản vẽ"
         },
         {
-            "key": "ui.face.title",
-            "text": "CHẨN ĐOÁN TRANG BỊ · ĐƠN VỊ 07 · SSR-5"
-        },
-        {
             "key": "ui.title.continue_note",
             "text": "BẢN LƯU · 02:14"
         },
@@ -839,6 +835,22 @@
             "text": "Trống. Sau này lắp thêm phụ kiện vào đây."
         },
         {
+            "key": "ui.device.state.socket_empty",
+            "text": "Trống · thả phụ tùng vào đây"
+        },
+        {
+            "key": "ui.device.state.cutter_needs",
+            "text": "Cần bộ đánh lửa"
+        },
+        {
+            "key": "ui.device.state.cutter_ready",
+            "text": "Sẵn sàng lắp bộ đánh lửa"
+        },
+        {
+            "key": "ui.device.state.ok",
+            "text": "Ổn"
+        },
+        {
             "key": "pickup.part.igniter",
             "text": "Bộ đánh lửa dự phòng"
         },
@@ -973,6 +985,18 @@
         {
             "key": "ui.cargo.drag.nowhere",
             "text": "07 chưa có chỗ lắp món này"
+        },
+        {
+            "key": "ui.cargo.release_fit",
+            "text": "Thả ra để lắp"
+        },
+        {
+            "key": "ui.cargo.goes_to",
+            "text": "Dùng cho"
+        },
+        {
+            "key": "ui.cargo.goes_to.on_pad",
+            "text": "{0} · khi đỗ trên bệ"
         },
         {
             "key": "glyph.combo.drag_e",
