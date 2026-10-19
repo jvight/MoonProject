@@ -1,8 +1,12 @@
-"""07's own small switches from recorded sources: the lamps' switch when the player turns them on or off (L / L3,
-RoverLightsSwitched), at the headlamp. On: a small relay ticking closed and a faint breath of the filament's hum on
-D3 as the lamps ease up. Off: a softer, lower tick and nothing after. Close and quiet; no tone of its own."""
+"""07's own small switches and gaps from recorded sources. The lamps' switch when the player turns them on or off
+(L / L3, RoverLightsSwitched), at the headlamp. On: a small relay ticking closed and a faint breath of the filament's
+hum on D3 as the lamps ease up. Off: a softer, lower tick and nothing after. Close and quiet; no tone of its own.
+
+The cutter's sputter (CutterSputtered, the first cut tried without an igniter): a spark gap that will not catch, two
+dry clicks of the contact and a short fizzle dying away. Dry and physical, no tone."""
 import numpy as np
 
+from synth import filters
 from synth.core import samples
 
 from . import dsp, parts
@@ -28,7 +32,27 @@ def lights_switch(lib, gen, variant: int) -> np.ndarray:
     return out
 
 
-# Cue id -> (recipe, variants). Every variant ships: on and off.
+def cutter_sputter(lib, gen, _variant: int) -> np.ndarray:
+    """The cutter tried without its igniter: click, click, a fizzle. Two dry contact clicks, each with a tiny spark
+    snap that does not catch, then a short crackle dying away."""
+    n = samples(0.7)
+    out = np.zeros(n)
+    snap_src = lib("arc_spark")
+    for i, at in enumerate((0.0, 0.14)):
+        dsp.place(out, parts.clip(lib, "relay_click", 3200.0, 250.0, 1.05 - 0.08 * i), at, 0.45)
+        start = samples(0.04 + 0.05 * i)
+        snap = snap_src[start:start + samples(0.03)]
+        snap = filters.butter(filters.bandpass(snap, 2600.0, 0.7), "lowpass", 3800.0, order=4)
+        dsp.place(out, dsp.peak_normalize(snap) * dsp.shape(len(snap), [(0.0, 1.0), (len(snap) / 48000.0, 0.0)]),
+                  at + 0.008, 0.25)
+    fizz_n = samples(0.4)
+    fizz = parts.clip(lib, "crackle", 3200.0, 700.0)[:fizz_n]
+    dsp.place(out, fizz * dsp.shape(len(fizz), [(0.0, 0.0), (0.02, 1.0), (len(fizz) / 48000.0, 0.0)]), 0.24, 0.3)
+    return out
+
+
+# Cue id -> (recipe, variants). Every variant ships: on and off, and the one sputter.
 SOUNDS = {
     "rover_lights_switch": (lights_switch, len(LABELS)),
+    "cutter_sputter": (cutter_sputter, 1),
 }

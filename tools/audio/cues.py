@@ -1019,6 +1019,9 @@ CUES = (
         volume=(0.5, 0.5), milestone="M3", sampled=True,
         notes="07's lamps switched by the player (RoverLightsSwitched), at the headlamp: on = a relay tick, its "
               "contact and a faint filament breath on D3; off = a softer, darker tick."),
+    Cue("cutter_sputter", "tick_3d", picks.renderer("cutter_sputter"), volume=(0.8, 0.8), milestone="M3",
+        sampled=True, notes="Opening v3: the first cut tried without an igniter (CutterSputtered): a spark gap that "
+                            "won't catch, click, click, a short fizzle. Dry."),
     Cue("lamp_tick", "tick_3d", lamp_tick, volume=(0.45, 0.45), fade_out=0.03, milestone="M3",
         notes="A flank lamp lighting as 07 wakes: a tiny relay tick with a breath of filament on D6."),
 )

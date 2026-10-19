@@ -3474,6 +3474,35 @@
       "pick": "rover_lights_switch"
     },
     {
+      "id": "cutter_sputter",
+      "category": "tick_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/cutter_sputter.wav"
+      ],
+      "variantLabels": [
+        "cutter_sputter"
+      ],
+      "sha256": [
+        "6fedcf4cafbbca6654bf67869236cd6cf7ef25ff9f55aeccca22c25f35df0505"
+      ],
+      "volumeMin": 0.8,
+      "volumeMax": 0.8,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -26.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Opening v3: the first cut tried without an igniter (CutterSputtered): a spark gap that won't catch, click, click, a short fizzle. Dry.",
+      "source": "sampled",
+      "pick": "cutter_sputter"
+    },
+    {
       "id": "lamp_tick",
       "category": "tick_3d",
       "milestone": "M3",
