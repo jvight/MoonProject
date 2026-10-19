@@ -17,7 +17,7 @@ namespace MoonProject.Rover
         [Tooltip("New Game on a fresh title: the one eased move from the title's shot onto 07's dark face while the " +
                  "title fades and 07 lifts its head.")]
         [Range(0.3f, 3f)]
-        [SerializeField] private float _pushInSeconds = 0.7f;
+        [SerializeField] private float _pushInSeconds = 0.6f;
 
         [Tooltip("After the reload a New Game over a save needs: on 07's dark face while the cover opens (UI's " +
                  "vignette) and 07 lifts its head.")]
@@ -30,11 +30,11 @@ namespace MoonProject.Rover
 
         [Tooltip("The maker's mark draws itself stroke by stroke, its wordmark types under it, holds, then dims away.")]
         [Range(1f, 5f)]
-        [SerializeField] private float _logoSeconds = 2f;
+        [SerializeField] private float _logoSeconds = 1.9f;
 
         [Tooltip("The machine loads its field profile in five steps.")]
         [Range(0.3f, 3f)]
-        [SerializeField] private float _loadSeconds = 0.8f;
+        [SerializeField] private float _loadSeconds = 0.7f;
 
         [Header("The end of the wake (s)")]
         [Tooltip("After the last line: the readout holds its success, then gives way to the eyes. Longer than the " +

@@ -181,11 +181,11 @@ MonoBehaviour:
     _blinkLow: 0.25
     _blinkSigh: 0.5
     _post:
-      _pushInSeconds: 0.7
+      _pushInSeconds: 0.6
       _darkSeconds: 0.5
       _powerOnSeconds: 0.6
-      _logoSeconds: 2
-      _loadSeconds: 0.8
+      _logoSeconds: 1.9
+      _loadSeconds: 0.7
       _readySeconds: 0.6
       _readyEyesSeconds: 0.4
       _pullBackSeconds: 1.2
