@@ -28,6 +28,7 @@ namespace MoonProject.UI
         [SerializeField] private CreditsSettings _credits = new CreditsSettings();
         [SerializeField] private CellRowSettings _battery = new CellRowSettings();
         [SerializeField] private SafeFrameSettings _safe = new SafeFrameSettings();
+        [SerializeField] private DatabankSettings _databank = new DatabankSettings();
 
         public PauseSettings Pause => _pause;
 
@@ -61,18 +62,21 @@ namespace MoonProject.UI
 
         public SafeFrameSettings Safe => _safe;
 
+        public DatabankSettings Databank => _databank;
+
         /// <summary>Null when the tuning is usable, else the first problem.</summary>
         public string Validate()
         {
             if (_pause == null || _title == null || _prompts == null || _pickupFeed == null || _salvage == null ||
                 _stargaze == null || _guidance == null || _backdrop == null || _battery == null || _safe == null ||
-                _saveTick == null || _credits == null || _cargo == null || _unlockCard == null || _post == null)
+                _saveTick == null || _credits == null || _cargo == null || _unlockCard == null || _post == null ||
+                _databank == null)
             {
                 return "a settings section is missing";
             }
 
             return _title.Validate() ?? _prompts.Validate() ?? _safe.Validate() ?? _pause.Validate() ??
-                _cargo.Validate();
+                _cargo.Validate() ?? _databank.Validate();
         }
     }
 }

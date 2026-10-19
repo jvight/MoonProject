@@ -19,6 +19,10 @@ namespace MoonProject.UI.Editor
         public const string TuningFolder = "Assets/_Project/Data/Tuning/UI";
         public const string Tuning = TuningFolder + "/UiTuning.asset";
 
+        /// <summary>The build ghost's material (Art's LofiHologram), drawn as lines on the databank's stage.</summary>
+        public const string WireMaterial =
+            MoonProject.Editor.Builders.GeneratedAssets.Root + "/Art/Palette/M_Hologram.mat";
+
         public const string LocalizationFolder = "Assets/_Project/Data/Localization";
         public const string PrimaryLanguage = "en";
 
@@ -29,7 +33,9 @@ namespace MoonProject.UI.Editor
         public const string FacePanelSettings = GeneratedFolder + "/LofiLunarFacePanel.asset";
         public const string FaceRenderTexture = GeneratedFolder + "/LofiLunarFaceTarget.asset";
 
-        /// <summary>The approved Lunarion wordmark (v2, cream-on-night variant), the source of the title's mark.</summary>
+        /// <summary>
+        /// The approved Lunarion wordmark (v2, cream-on-night variant), the source of the title's mark.
+        /// </summary>
         public const string WordmarkSource = SourceFolder + "/Wordmark/LunarionWordmark.svg";
 
         /// <summary>The wordmark's path commands, parsed from <see cref="WordmarkSource"/> by UI/Wordmark.</summary>
@@ -41,10 +47,14 @@ namespace MoonProject.UI.Editor
         /// <summary>The parsed 64x64 UI vector icons asset, built by UI/Icons.</summary>
         public const string Icons = GeneratedFolder + "/UiIcons.asset";
 
-        /// <summary>The generated 07 v3 rover model prefab whose socket transforms feed <see cref="RoverDiagram"/>.</summary>
+        /// <summary>
+        /// The generated 07 v3 rover model prefab whose socket transforms feed <see cref="RoverDiagram"/>.
+        /// </summary>
         public const string RoverModelPrefab = GeneratedAssets.Root + "/Art/R1/Models/Rover/RoverModel.prefab";
 
-        /// <summary>Argon's art for 07's face screen: the line drawing, its leader anchors and the face icons.</summary>
+        /// <summary>
+        /// Argon's art for 07's face screen: the line drawing, its leader anchors and the face icons.
+        /// </summary>
         public const string FaceArtFolder = "Assets/_Project/Art/UI/Face";
 
         /// <summary>07's three-quarter line drawing (2048x2048, clear around cream lines).</summary>
@@ -74,10 +84,14 @@ namespace MoonProject.UI.Editor
             return StructureIconFolder + "/" + id + ".png";
         }
 
-        /// <summary>Text: body, buttons, toasts, terminal readouts (file names IBMPlexMono-&lt;style&gt;.ttf).</summary>
+        /// <summary>
+        /// Text: body, buttons, toasts, terminal readouts (file names IBMPlexMono-&lt;style&gt;.ttf).
+        /// </summary>
         public const string TextFamily = "IBMPlexMono";
 
-        /// <summary>Numbers and titles: dials, the meter, names, headings (file names ChakraPetch-&lt;style&gt;.ttf).</summary>
+        /// <summary>
+        /// Numbers and titles: dials, the meter, names, headings (file names ChakraPetch-&lt;style&gt;.ttf).
+        /// </summary>
         public const string NumberFamily = "ChakraPetch";
 
         /// <summary>Crew documents and paper notes (file names BeVietnamPro-&lt;style&gt;.ttf).</summary>

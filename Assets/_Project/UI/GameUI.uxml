@@ -137,6 +137,10 @@
                         <ui:Label name="cargo-key-2" class="cargo__key" picking-mode="Ignore" />
                         <ui:Label name="cargo-word-2" class="cargo__key-word" picking-mode="Ignore" />
                     </ui:VisualElement>
+                    <ui:VisualElement name="cargo-hint-3" class="cargo__hint" picking-mode="Ignore">
+                        <ui:Label name="cargo-key-3" class="cargo__key" picking-mode="Ignore" />
+                        <ui:Label name="cargo-word-3" class="cargo__key-word" picking-mode="Ignore" />
+                    </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement name="cargo-ghost" class="cargo__canvas" picking-mode="Ignore" />
             </ui:VisualElement>

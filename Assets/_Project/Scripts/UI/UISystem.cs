@@ -88,6 +88,12 @@ namespace MoonProject.UI
         private PostView _postView;
         private bool _postOnCrt;
         private BlockedCue _blockedCue;
+        private PageFlip _pages;
+        private DatabankPage _databank;
+        private DatabankText _databankText;
+        private float _databankLaidOutAt = -1f;
+        private string _toastText;
+        private float _toastLeft;
         private FaceNotice _faceNotice;
         private bool _noticeOnCrt;
         private EventBus _events;
@@ -290,6 +296,8 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<LanderReserveChanged>(OnLanderReserveChanged));
             _tokens.Add(events.Subscribe<StoryScanned>(OnStoryScanned));
             _tokens.Add(events.Subscribe<InteractionBlocked>(OnInteractionBlocked));
+            _tokens.Add(events.Subscribe<DatabankEntryAdded>(OnDatabankEntryAdded));
+            _tokens.Add(events.Subscribe<DatabankEntryProgressed>(_ => _databank?.Refresh()));
             _tokens.Add(events.Subscribe<StructureLearned>(OnStructureLearned));
             _tokens.Add(events.Subscribe<BatteryArcRevealed>(OnBatteryArcRevealed));
             _tokens.Add(events.Subscribe<StructurePlaced>(_ => _director.NotifyUsed(InteractionKind.Build)));
@@ -365,6 +373,8 @@ namespace MoonProject.UI
             _postView = new PostView(_layout.Cargo.parent, _postLog);
             _faceNotice = new FaceNotice(_layout.Cargo.parent);
             _blockedCue = new BlockedCue(_tuning.Guidance);
+            _pages = new PageFlip(_tuning.Databank);
+            _databankText = new DatabankText(_localization);
             _unlockCard = new UnlockCard(_layout, _tuning.UnlockCard, _localization);
             _pause = new PauseMenu(_layout, _tuning.Pause, _tuning.Title, _player, _localization, services.Input,
                 services.Events, _settings, services.Flow,
@@ -407,7 +417,8 @@ namespace MoonProject.UI
             }
             else if (_cargo.IsOpen)
             {
-                if (menu.BuildPressed)
+                // On the databank page the pad's Y is the colour toggle, not the hand-over to build mode.
+                if (menu.BuildPressed && _pages.Target == FacePage.Hold)
                 {
                     CloseCargo();
                     _services.BuildField?.TryOpen();
@@ -438,7 +449,15 @@ namespace MoonProject.UI
             _cargo.Tick(deltaTime, CargoScreenSize(), input.ActiveDevice);
             if (_cargo.IsOpen)
             {
-                StepCargoInput(menu, deltaTime);
+                StepPages(menu, deltaTime, input.ActiveDevice);
+                if (!_pages.IsFlipping && _pages.Page == FacePage.Hold)
+                {
+                    StepCargoInput(menu, deltaTime);
+                }
+                else if (!_pages.IsFlipping)
+                {
+                    StepDatabankInput(menu, deltaTime, input.ActiveDevice);
+                }
             }
 
             SetFacePanelVisible(_cargo.IsOpen || _cargo.Openness > 0f || PostShown);
@@ -503,6 +522,7 @@ namespace MoonProject.UI
             _lookUpChip.SetCount(counting ? aimed.SetStep : 0, counting ? aimed.SetCount : 0);
             _lookUpChip.Tick(deltaTime, paused ? HintWord.None : hint, device);
             _blockedCue.Tick(paused ? 0f : deltaTime);
+            _toastLeft = Mathf.Max(0f, _toastLeft - (paused ? 0f : deltaTime));
             _lookUpChip.Nudge(_blockedCue.ChipOffset, _blockedCue.ChipOpacity);
             StepFaceNotice();
             _objectiveView.Tick(deltaTime, _objective, ObjectiveOpen(paused) && _slot.Allows(GuidanceKind.Objective),
@@ -639,6 +659,12 @@ namespace MoonProject.UI
 
         /// <summary>The self-test column beside the cargo screen on the face panel (tests and captures).</summary>
         internal PostView PostView => _postView;
+
+        /// <summary>07's face pages and their flip (tests).</summary>
+        internal PageFlip Pages => _pages;
+
+        /// <summary>The databank page, once it has been opened (tests and captures).</summary>
+        internal DatabankPage Databank => _databank;
 
         /// <summary>The line on 07's face that says why a held E did nothing (tests).</summary>
         internal FaceNotice FaceNotice => _faceNotice;
@@ -840,52 +866,64 @@ namespace MoonProject.UI
                 }
             }
 
-            if (menu.SubmitPressed || menu.UsePressed)
+            if (menu.SubmitPressed)
             {
                 view.SubmitFocused();
             }
 
+            if (!TryFacePointer(menu, out Vector2 panelPos, out bool down, out bool moved, out bool up))
+            {
+                return;
+            }
+
+            if (down)
+            {
+                view.PointerDownAtPanel(panelPos);
+            }
+            else if (moved)
+            {
+                view.PointerMoveAtPanel(panelPos);
+            }
+
+            if (up)
+            {
+                view.PointerUpAtPanel(panelPos);
+            }
+        }
+
+        /// <summary>
+        /// The mouse on the screen's panel this frame, from its top-left: the views' own pointer feed, the only one on
+        /// either host, so what they draw at the pointer sits where the mouse is. False when it did nothing or missed.
+        /// </summary>
+        private bool TryFacePointer(MenuInput menu, out Vector2 panelPos, out bool down, out bool moved, out bool up)
+        {
+            panelPos = default;
+            down = menu.ClickPressed;
+            up = menu.ClickReleased;
+            moved = false;
             bool onFace = _faceDocument != null;
             if (onFace && (_services.FaceScreen == null || !_services.FaceScreen.IsOpen))
             {
-                return;
+                return false;
             }
 
             Vector2 rawMouse = menu.PointerPosition;
             if (float.IsNaN(rawMouse.x) || float.IsNaN(rawMouse.y))
             {
-                return;
+                return false;
             }
 
-            bool moved = float.IsNaN(_lastFaceMouseScreenPos.x)
+            moved = float.IsNaN(_lastFaceMouseScreenPos.x)
                 ? rawMouse.sqrMagnitude > 0.01f
                 : (rawMouse - _lastFaceMouseScreenPos).sqrMagnitude > 0.01f;
-            bool down = menu.ClickPressed;
-            bool up = menu.ClickReleased;
             if (!moved && !down && !up)
             {
-                return;
+                return false;
             }
 
             _lastFaceMouseScreenPos = rawMouse;
-            // The view's own pointer feed: the only one, on either host, so the dragged part sits where the mouse is.
-            Vector2 panelPos = (onFace ? FacePanelPoint(rawMouse) : MainPanelPoint(rawMouse)) - _cargo.PanelRect.position;
-            if (!float.IsNaN(panelPos.x) && !float.IsNaN(panelPos.y))
-            {
-                if (down)
-                {
-                    view.PointerDownAtPanel(panelPos);
-                }
-                else if (moved)
-                {
-                    view.PointerMoveAtPanel(panelPos);
-                }
-
-                if (up)
-                {
-                    view.PointerUpAtPanel(panelPos);
-                }
-            }
+            panelPos = (onFace ? FacePanelPoint(rawMouse) : MainPanelPoint(rawMouse)) - _cargo.PanelRect.position;
+            return !float.IsNaN(panelPos.x) && !float.IsNaN(panelPos.y);
         }
 
         /// <summary>The mouse (Input System pixels, bottom-left origin) on 07's curved face, in face panel space.</summary>
@@ -975,6 +1013,14 @@ namespace MoonProject.UI
         {
             _lastCargoNavDirection = NavigationMoveEvent.Direction.None;
             _cargoNavRepeatTimer = 0f;
+            if (_pages.Target != FacePage.Hold || _pages.IsFlipping)
+            {
+                _pages.Snap(FacePage.Hold);
+                _cargo.SetPageScale(1f);
+                ShowPage(_services.Input.ActiveDevice);
+                _events.Publish(new FacePageChanged(FacePage.Hold));
+            }
+
             _cargo.Close();
             _services.FaceScreen?.SetScreenOpen(false, FaceTargetTexture());
             _services.Input.Enable();
@@ -1062,6 +1108,130 @@ namespace MoonProject.UI
         }
 
         /// <summary>The scan beam started: the scan prompt yields to the beam, and the objective's Scan chip retires.</summary>
+        /// <summary>
+        /// An entry joined 07's databank: the CRT's event line on its face says so once (docs/design/databank.md §3),
+        /// and an open page lists it.
+        /// </summary>
+        private void OnDatabankEntryAdded(DatabankEntryAdded added)
+        {
+            if (!_services.TryGetDatabank(out IDatabank archive))
+            {
+                Debug.LogError(
+                    $"UISystem: '{added.EntryId}' joined the databank, but no IDatabank is registered.", this);
+                return;
+            }
+
+            if (archive.TryGetEntry(added.EntryId, out DatabankEntryInfo entry))
+            {
+                _toastText = _databankText.Toast(entry);
+                _toastLeft = _tuning.Databank.ToastSeconds;
+            }
+
+            _databank?.Refresh();
+        }
+
+        /// <summary>
+        /// Q / E flip 07's face between its pages with the CRT channel flip; the page on the tube changes at the flip's
+        /// thinnest moment, and the camera's face shot follows the page.
+        /// </summary>
+        private void StepPages(MenuInput menu, float deltaTime, InputDeviceKind device)
+        {
+            if (menu.PagePressed && _faceDocument != null && (_pages.Target == FacePage.Databank || EnsureDatabank()))
+            {
+                _pages.Toggle();
+                _events.Publish(new FacePageChanged(_pages.Target));
+                _events.Publish(new UiCue(UiCueKind.Confirm));
+            }
+
+            _pages.Tick(deltaTime);
+            _cargo.SetPageScale(_pages.ScaleY);
+            if (_pages.Switched)
+            {
+                ShowPage(device);
+            }
+
+            if (_databank != null && !Mathf.Approximately(_databankLaidOutAt, _cargo.PanelScale))
+            {
+                _databankLaidOutAt = _cargo.PanelScale;
+                _databank.Layout(_cargo.PanelScale);
+            }
+        }
+
+        /// <summary>The page now on the tube shows; the other steps aside.</summary>
+        private void ShowPage(InputDeviceKind device)
+        {
+            bool databank = _pages.Page == FacePage.Databank;
+            _cargo.SetHoldShown(!databank, _databank?.View.Root);
+            _databank?.SetOpen(databank, device);
+        }
+
+        /// <summary>
+        /// Builds the databank page on first use; false (logged) when nothing registered 07's archive.
+        /// </summary>
+        private bool EnsureDatabank()
+        {
+            if (_databank != null)
+            {
+                return true;
+            }
+
+            if (!_services.TryGetDatabank(out IDatabank archive))
+            {
+                Debug.LogError("UISystem: the databank page needs an IDatabank, and none is registered.", this);
+                return false;
+            }
+
+            _databank = new DatabankPage(_tuning.Databank, archive, _events, _localization, _cargo.Panel);
+            _databankLaidOutAt = -1f;
+            return true;
+        }
+
+        /// <summary>The databank page's input: the list, the colour toggle, the turn by stick or by drag.</summary>
+        private void StepDatabankInput(MenuInput menu, float deltaTime, InputDeviceKind device)
+        {
+            NavigationMoveEvent.Direction dir = QuantizeNavigationDirection(menu.NavigateVector);
+            NavigationMoveEvent.Direction step = NavigationMoveEvent.Direction.None;
+            if (dir == NavigationMoveEvent.Direction.None)
+            {
+                _lastCargoNavDirection = NavigationMoveEvent.Direction.None;
+            }
+            else if (dir != _lastCargoNavDirection)
+            {
+                _lastCargoNavDirection = dir;
+                _cargoNavRepeatTimer = CargoNavInitialRepeatDelay;
+                step = dir;
+            }
+            else
+            {
+                _cargoNavRepeatTimer -= deltaTime;
+                if (_cargoNavRepeatTimer <= 0f)
+                {
+                    _cargoNavRepeatTimer = CargoNavRepeatInterval;
+                    step = dir;
+                }
+            }
+
+            if (TryFacePointer(menu, out Vector2 panelPos, out bool down, out bool moved, out bool up))
+            {
+                Vector2 refPos = panelPos / Mathf.Max(0.01f, _cargo.PanelScale);
+                if (down)
+                {
+                    _databank.PointerDown(refPos);
+                }
+                else if (moved)
+                {
+                    _databank.PointerMove(refPos);
+                }
+
+                if (up)
+                {
+                    _databank.PointerUp();
+                }
+            }
+
+            _databank.Tick(deltaTime, step, menu.ColourPressed, menu.Turn, device);
+        }
+
         /// <summary>A held E could not work: the chip and 07's face answer it quietly.</summary>
         private void OnInteractionBlocked(InteractionBlocked blocked)
         {
@@ -1077,10 +1247,11 @@ namespace MoonProject.UI
         /// </summary>
         private void StepFaceNotice()
         {
-            bool show = _blockedCue.FaceShown && !_postOnCrt && !_cargo.IsOpen;
+            bool blocked = _blockedCue.FaceShown;
+            bool show = (blocked || _toastLeft > 0f) && !_postOnCrt && !_cargo.IsOpen;
             if (show)
             {
-                _faceNotice.Show(_localization.Get(UiKeys.FaceNoLine));
+                _faceNotice.Show(blocked ? _localization.Get(UiKeys.FaceNoLine) : _toastText);
                 if (!_noticeOnCrt)
                 {
                     _noticeOnCrt = true;
@@ -1237,6 +1408,7 @@ namespace MoonProject.UI
                 return;
             }
 
+            _databank?.Dispose();
             if (_bound)
             {
                 if (_pause.IsOpen || _cargo.IsOpen)

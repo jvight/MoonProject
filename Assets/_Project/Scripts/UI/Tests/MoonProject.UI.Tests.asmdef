@@ -7,6 +7,7 @@
         "MoonProject.Core",
         "MoonProject.Art",
         "MoonProject.Gameplay",
+        "MoonProject.Testing",
         "Unity.InputSystem",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"

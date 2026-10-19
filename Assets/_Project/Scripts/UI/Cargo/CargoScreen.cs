@@ -40,6 +40,7 @@ namespace MoonProject.UI
         private int _bootSlots;
         private int _bootItems;
         private Vector2 _fittedFor;
+        private float _panelScale = 1f;
 
         public CargoScreen(UiLayout layout, CargoScreenSettings settings, ILocalization localization,
             ICargoHold hold, IRoverSystems systems, RoverDiagramData diagram, GlyphLabels glyphs, IntText numbers,
@@ -93,6 +94,34 @@ namespace MoonProject.UI
         public string TooltipDescText => _view.TooltipDescText;
 
         public Rect PanelRect => _panel.worldBound;
+
+        /// <summary>
+        /// The face panel the pages live in: other pages (the databank) hang beside the hold's elements.
+        /// </summary>
+        public VisualElement Panel => _panel;
+
+        /// <summary>Panel pixels per reference pixel of the 1152 x 768 layout.</summary>
+        public float PanelScale => _panelScale;
+
+        /// <summary>The hold page's own elements show, or step aside for <paramref name="otherPage"/>.</summary>
+        public void SetHoldShown(bool shown, VisualElement otherPage)
+        {
+            Visibility visibility = shown ? Visibility.Visible : Visibility.Hidden;
+            for (int i = 0; i < _panel.childCount; i++)
+            {
+                VisualElement child = _panel[i];
+                if (child != otherPage)
+                {
+                    child.style.visibility = visibility;
+                }
+            }
+        }
+
+        /// <summary>The channel flip's squash of the whole panel toward the tube's line (1 at rest).</summary>
+        public void SetPageScale(float scaleY)
+        {
+            _panel.style.scale = new Scale(new Vector3(1f, scaleY, 1f));
+        }
 
         public void Open()
         {
@@ -284,6 +313,7 @@ namespace MoonProject.UI
             _panel.style.backgroundColor = FillPanelHeight
                 ? new StyleColor(Color.clear)
                 : new StyleColor((Color)_settings.PlateBackground);
+            _panelScale = width / FaceInventoryView.ReferenceWidth;
             _view.ApplyScale(width, height);
         }
 

@@ -12,6 +12,9 @@ namespace MoonProject.UI
 
         /// <summary>Close the screen and open the build menu.</summary>
         Build = 2,
+
+        /// <summary>Flip the face to the databank page (Q / E).</summary>
+        Databank = 3,
     }
 
     /// <summary>
@@ -20,7 +23,7 @@ namespace MoonProject.UI
     /// </summary>
     internal static class FaceKeyHints
     {
-        public const int Count = 3;
+        public const int Count = 4;
 
         /// <summary>The localization key of the keycap for <paramref name="hint"/> on <paramref name="device"/>.</summary>
         public static string CapKey(FaceHint hint, InputDeviceKind device)
@@ -29,11 +32,13 @@ namespace MoonProject.UI
             switch (hint)
             {
                 case FaceHint.Fit:
-                    return pad ? "glyph.gamepad.buttonsouth" : UiKeys.KeyDragOrE;
+                    return pad ? "glyph.gamepad.buttonsouth" : UiKeys.KeyDragOrEnter;
                 case FaceHint.Close:
                     return pad ? "glyph.gamepad.select" : "glyph.keyboard.tab";
-                default:
+                case FaceHint.Build:
                     return pad ? "glyph.gamepad.buttonnorth" : UiKeys.KeyB;
+                default:
+                    return pad ? UiKeys.KeyShoulders : UiKeys.KeyQe;
             }
         }
 
@@ -46,8 +51,10 @@ namespace MoonProject.UI
                     return UiKeys.FaceFit;
                 case FaceHint.Close:
                     return UiKeys.FaceClose;
-                default:
+                case FaceHint.Build:
                     return UiKeys.FaceBuild;
+                default:
+                    return DatabankText.TitleKey;
             }
         }
     }
