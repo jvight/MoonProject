@@ -149,6 +149,24 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
+    /// The player switched 07's lamps on (<see cref="On"/>) or off with the lights key; they ease there over a quarter
+    /// second. A soft mechanical switch click belongs here, at the lamp.
+    /// </summary>
+    public readonly struct RoverLightsSwitched
+    {
+        public RoverLightsSwitched(bool on, Vector3 position)
+        {
+            On = on;
+            Position = position;
+        }
+
+        public bool On { get; }
+
+        /// <summary>The headlamp, where the switch clicks.</summary>
+        public Vector3 Position { get; }
+    }
+
+    /// <summary>
     /// 07 was set down somewhere else in one step (<see cref="IRoverPlacement.PlaceAt"/>, e.g. a radio-hop while the
     /// view is dark): the camera and anything that follows 07 snap with it instead of easing across.
     /// </summary>

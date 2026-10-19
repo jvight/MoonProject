@@ -239,6 +239,10 @@
             "text": "R3"
         },
         {
+            "key": "glyph.gamepad.leftstickpress",
+            "text": "L3"
+        },
+        {
             "key": "glyph.gamepad.dpad",
             "text": "D-Pad"
         },

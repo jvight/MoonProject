@@ -12,7 +12,8 @@ namespace MoonProject.UI
     /// Shows the <see cref="PromptDirector"/>'s prompt: a glyph and one word (the localized "hint.&lt;kind&gt;" string)
     /// floating above the relevant world point, projected through the player's camera and softly following it on
     /// screen. It hides while its point is behind the camera. Each appearance is published as a
-    /// <see cref="UiCue"/>.
+    /// <see cref="UiCue"/>. A hold verb's keycap (scan, cut, weld, fold down) wears a thin ring, faint at rest so the
+    /// key reads as one to hold, that fills while the hold runs.
     /// </summary>
     internal sealed class ContextPrompt
     {
@@ -26,6 +27,8 @@ namespace MoonProject.UI
         private readonly Label _word;
         private readonly VisualElement _chip;
         private readonly GlyphView _glyph;
+        private readonly VisualElement _holdRingElement;
+        private readonly ProgressRingPainter _holdRing;
         private readonly VisualElement[] _cards;
         private readonly float _cardGap;
         private readonly float _screenMargin;
@@ -71,6 +74,8 @@ namespace MoonProject.UI
             _word = layout.PromptWord;
             _chip = layout.Prompt;
             _glyph = new GlyphView(layout.PromptGlyph, layout.PromptGlyphLabel);
+            _holdRingElement = layout.PromptHoldRing;
+            _holdRing = new ProgressRingPainter(_holdRingElement);
             _reveal = new Reveal(layout.Prompt, settings.Reveal);
             _reveal.Snap(false);
             new ShadowPainter(layout.PromptShadow);
@@ -115,6 +120,8 @@ namespace MoonProject.UI
                 _glyph.Set(_labels.For(entry.Action, device), device);
             }
 
+            ShowHold(entry, primary);
+
             bool snap = _director.Started || _reveal.IsHidden;
             bool onScreen = entry != null && _anchor.Track(_director.WorldPoint, panelSize, deltaTime, snap);
             if (onScreen)
@@ -136,6 +143,19 @@ namespace MoonProject.UI
                 _word.text = string.Empty;
                 _glyph.Set(string.Empty, device);
             }
+        }
+
+        /// <summary>The keycap's hold ring: shown for a hold verb, filled as far as its hold has come.</summary>
+        private void ShowHold(PromptEntry entry, InteractionHint primary)
+        {
+            bool hold = entry != null && entry.Kind == primary.Kind && primary.IsHold;
+            DisplayStyle display = hold ? DisplayStyle.Flex : DisplayStyle.None;
+            if (_holdRingElement.style.display != display)
+            {
+                _holdRingElement.style.display = display;
+            }
+
+            _holdRing.Progress = hold ? primary.HoldProgress : 0f;
         }
 
         /// <summary>Eases the prompt up (or down) off any card it would sit over, and back when the card goes.</summary>

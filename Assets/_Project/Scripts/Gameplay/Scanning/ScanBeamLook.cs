@@ -149,24 +149,24 @@ namespace MoonProject.Gameplay
         [Tooltip("Share of white at the target end of the wedge.")]
         [Range(0f, 1f)] [SerializeField] private float _contactWhite = 0.34f;
 
-        [Tooltip("Share of the beam's length over which its cyan warms toward amber (x: start, y: end).")]
-        [SerializeField] private Vector2 _amberRamp = new Vector2(0.25f, 0.95f);
+        [Tooltip("Share of the beam's length over which its cyan shades toward the teal ping colour (x: start, y: end).")]
+        [SerializeField] private Vector2 _pingRamp = new Vector2(0.25f, 0.95f);
 
-        [Tooltip("Most amber the wedge warms to at its target end.")]
-        [Range(0f, 1f)] [SerializeField] private float _amberShare = 0.82f;
+        [Tooltip("Most the wedge shades toward the teal ping colour at its target end.")]
+        [Range(0f, 1f)] [SerializeField] private float _pingShare = 0.6f;
 
         [Header("The beam wedge's far edge")]
         [Tooltip("The far edge's width at the start and end of a scan against its width mid-scan.")]
         [Range(0.1f, 1f)] [SerializeField] private float _targetEdgeShare = 0.75f;
 
         [Tooltip("Narrowest and widest the far edge spans on the target (m).")]
-        [Min(0.01f)] [SerializeField] private Vector2 _targetWidthRange = new Vector2(0.32f, 0.92f);
+        [Min(0.01f)] [SerializeField] private Vector2 _targetWidthRange = new Vector2(0.05f, 0.1f);
 
         [Tooltip("Radius the far edge wraps round the target with, against the sweep height.")]
-        [Range(0f, 1f)] [SerializeField] private float _wrapShare = 0.26f;
+        [Range(0f, 1f)] [SerializeField] private float _wrapShare = 0.06f;
 
         [Tooltip("Smallest and largest wrap radius (m).")]
-        [Min(0f)] [SerializeField] private Vector2 _wrapRadiusRange = new Vector2(0.06f, 0.24f);
+        [Min(0f)] [SerializeField] private Vector2 _wrapRadiusRange = new Vector2(0.015f, 0.05f);
 
         [Tooltip("Largest wrap radius against the beam's length, so a near target is never swallowed.")]
         [Range(0f, 1f)] [SerializeField] private float _wrapLengthShare = 0.25f;
@@ -177,7 +177,7 @@ namespace MoonProject.Gameplay
         [Header("The beam wedge's fan")]
         [Tooltip("Tilt of the two crossed sheets out of level, at the lens (x) and at the target (y), so the fan " +
                  "reads from the low chase camera.")]
-        [SerializeField] private Vector2 _sheetTilt = new Vector2(0.68f, 0.34f);
+        [SerializeField] private Vector2 _sheetTilt = new Vector2(0.3f, 0.12f);
 
         [Tooltip("The second sheet's opacity against the first, at the lens (x) and at the target (y).")]
         [SerializeField] private Vector2 _secondSheetAlpha = new Vector2(0.78f, 0.52f);
@@ -252,7 +252,7 @@ namespace MoonProject.Gameplay
         [Tooltip("Share of white in the cyan a tick cools to near the lens.")]
         [Range(0f, 1f)] [SerializeField] private float _tickCyanWhite = 0.55f;
 
-        [Tooltip("Most a tick cools from amber toward cyan as it reaches the lens.")]
+        [Tooltip("Most a tick shades from the teal ping colour toward cyan as it reaches the lens.")]
         [Range(0f, 1f)] [SerializeField] private float _tickCyanShare = 0.35f;
 
         [Tooltip("Peak opacity of a tick.")]
@@ -396,8 +396,8 @@ namespace MoonProject.Gameplay
         public float WidthEase => _widthEase;
         public float LensWhite => _lensWhite;
         public float ContactWhite => _contactWhite;
-        public Vector2 AmberRamp => _amberRamp;
-        public float AmberShare => _amberShare;
+        public Vector2 PingRamp => _pingRamp;
+        public float PingShare => _pingShare;
         public float TargetEdgeShare => _targetEdgeShare;
         public Vector2 TargetWidthRange => _targetWidthRange;
         public float WrapShare => _wrapShare;

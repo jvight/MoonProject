@@ -37,6 +37,7 @@ namespace MoonProject.UI
             PromptShadow = Require<VisualElement>("prompt-shadow");
             PromptGlyph = Require<VisualElement>("prompt-glyph");
             PromptGlyphLabel = Require<Label>("prompt-glyph-label");
+            PromptHoldRing = Require<VisualElement>("prompt-hold-ring");
             PromptWord = Require<Label>("prompt-word");
 
             PickupFeed = Require<VisualElement>("pickup-feed");
@@ -206,6 +207,9 @@ namespace MoonProject.UI
         public VisualElement PromptGlyph { get; }
 
         public Label PromptGlyphLabel { get; }
+
+        /// <summary>The ring round the prompt's keycap that fills while a hold verb runs.</summary>
+        public VisualElement PromptHoldRing { get; }
 
         public Label PromptWord { get; }
 

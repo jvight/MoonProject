@@ -8,6 +8,7 @@
                         <ui:VisualElement name="prompt-shadow" class="soft-shadow soft-shadow--chip" />
                         <ui:VisualElement name="prompt-body" class="chip">
                             <ui:VisualElement name="prompt-glyph" class="glyph">
+                                <ui:VisualElement name="prompt-hold-ring" class="glyph__hold-ring" picking-mode="Ignore" />
                                 <ui:Label name="prompt-glyph-label" class="glyph__label" />
                             </ui:VisualElement>
                             <ui:Label name="prompt-word" class="chip__word" />

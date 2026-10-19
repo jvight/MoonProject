@@ -22,10 +22,10 @@ namespace MoonProject.Gameplay
         /// <summary>B6: "Park on the pad to charge."</summary>
         public const string Charge = "next.v2.charge";
 
-        /// <summary>B6, the igniter in the hold and 07 off the pad's plate: "Park on the charging pad."</summary>
+        /// <summary>B6, a part in the hold that needs the pad and 07 off its plate: "Park on the charging pad."</summary>
         public const string ParkOnPad = "next.v2.park_on_pad";
 
-        /// <summary>B6, the igniter in the hold and 07 on the pad's plate: "Fit the igniter to the cutter."</summary>
+        /// <summary>B6, the igniter in the hold (anywhere, as it is a field swap): "Fit the igniter to the cutter."</summary>
         public const string FitIgniter = "next.v2.fit_igniter";
 
         /// <summary>B7: "Find a solar blueprint in the Lumen ruins."</summary>
