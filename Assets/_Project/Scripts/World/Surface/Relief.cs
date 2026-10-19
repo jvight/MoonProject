@@ -35,6 +35,10 @@ namespace MoonProject.World
         private readonly float[] _keepReachSq;
         private readonly float _fade;
 
+        // The keep-level lists hold the opening's sites first, then its protected lanes, then the craters.
+        private readonly int _openingSites;
+        private readonly int _openingKeeps;
+
         /// <param name="craters">The floor's craters: the relief gives way round each, so their walls stay as gentle
         /// as they were.</param>
         public Relief(ReliefSettings settings, SiteSettings sites, float padRadius, IReadOnlyList<Crater> craters,
@@ -82,6 +86,8 @@ namespace MoonProject.World
                 (sites.MidwayCenter, sites.MidwayRadius),
             };
             int count = spots.Length + lanes.Length + craters.Count;
+            _openingSites = spots.Length;
+            _openingKeeps = spots.Length + lanes.Length;
             _keepFrom = new Vector2[count];
             _keepTo = new Vector2[count];
             _keepLevel = new float[count];
@@ -160,6 +166,36 @@ namespace MoonProject.World
             }
 
             return level;
+        }
+
+        /// <summary>
+        /// True where <paramref name="point"/> lies on one of the opening's sites (the pad, apron, lander, ruins, Scout
+        /// crater and midway, each with its margin), short of the relief's fade round them: ground kept smooth to build
+        /// on.
+        /// </summary>
+        public bool OnOpeningSite(Vector2 point)
+        {
+            for (int i = 0; i < _openingSites; i++)
+            {
+                if (DistanceToSegmentSq(point, _keepFrom[i], _keepTo[i]) < _keepLevel[i] * _keepLevel[i])
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>Distance from <paramref name="point"/> to the nearest protected lane's centre line, metres.</summary>
+        public float DistanceToProtectedLanes(Vector2 point)
+        {
+            float best = float.MaxValue;
+            for (int i = _openingSites; i < _openingKeeps; i++)
+            {
+                best = Mathf.Min(best, DistanceToSegmentSq(point, _keepFrom[i], _keepTo[i]));
+            }
+
+            return Mathf.Sqrt(best);
         }
 
         private float Ridge(int index, Vector2 point)

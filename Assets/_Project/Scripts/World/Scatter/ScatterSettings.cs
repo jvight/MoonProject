@@ -95,6 +95,56 @@ namespace MoonProject.World
         [Range(0f, 1f)]
         [SerializeField] private float _boulderDensity = 0.025f;
 
+        [Header("Rubble")]
+        [Tooltip("Grid cell of the near-field rubble, metres: at most one clod or stone per cell (owner's Apollo 11 " +
+            "reference: the ground near the camera is full of small rocks and clods).")]
+        [Range(0.3f, 3f)]
+        [SerializeField] private float _rubbleSpacing = 0.6f;
+
+        [Tooltip("Rubble size range (x = min, y = max), metres across: clods and small stones, all below the cobble " +
+            "collider cutoff, so they never collide.")]
+        [SerializeField] private Vector2 _rubbleSize = new Vector2(0.08f, 0.3f);
+
+        [Tooltip("Share of rubble cells that hold a stone on the plain's emptier stretches (0..1).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _rubbleSparse = 0.06f;
+
+        [Tooltip("Share of rubble cells that hold a stone inside a rubble patch (0..1).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _rubbleDense = 0.5f;
+
+        [Tooltip("Size of the rubble patches and the emptier stretches between them, metres.")]
+        [Range(5f, 200f)]
+        [SerializeField] private float _rubblePatchWavelength = 24f;
+
+        [Tooltip("Share of the plain the rubble patches cover (0..1).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _rubblePatchCoverage = 0.35f;
+
+        [Tooltip("Stones in the apron round each boulder, per metre of the boulder's size.")]
+        [Range(0f, 80f)]
+        [SerializeField] private float _rubbleApronCount = 26f;
+
+        [Tooltip("How far the apron reaches from a boulder's middle, in the boulder's sizes.")]
+        [Range(0.6f, 6f)]
+        [SerializeField] private float _rubbleApronReach = 2.4f;
+
+        [Tooltip("Rubble keeps this far from the centre line of every driving lane and protected lane, metres: " +
+            "narrower than the pebbles' lanes, so the rubble lies close beside the opening's drives and reads from " +
+            "the chase camera, while the line 07 drives stays clean.")]
+        [Range(2f, 20f)]
+        [SerializeField] private float _rubbleLaneHalfWidth = 6f;
+
+        [Tooltip("Rubble shows only within about this distance of the camera, metres: it reads from the chase " +
+            "camera, and stays cheap.")]
+        [Range(10f, 120f)]
+        [SerializeField] private float _rubbleCullDistance = 40f;
+
+        [Tooltip("Rubble is meshed in chunks this wide, metres: small, so the distance cull follows the camera " +
+            "closely.")]
+        [Range(4f, 64f)]
+        [SerializeField] private float _rubbleChunkSize = 32f;
+
         [Tooltip("Size of the boulder fields and the long empty stretches between them, metres: boulders gather in a " +
             "few places and leave open plain elsewhere.")]
         [Range(80f, 800f)]
@@ -157,6 +207,17 @@ namespace MoonProject.World
         public float BoulderSpacing => _boulderSpacing;
         public Vector2 BoulderSize => _boulderSize;
         public float BoulderDensity => _boulderDensity;
+        public float RubbleSpacing => _rubbleSpacing;
+        public Vector2 RubbleSize => _rubbleSize;
+        public float RubbleSparse => _rubbleSparse;
+        public float RubbleDense => _rubbleDense;
+        public float RubblePatchWavelength => _rubblePatchWavelength;
+        public float RubblePatchCoverage => _rubblePatchCoverage;
+        public float RubbleApronCount => _rubbleApronCount;
+        public float RubbleApronReach => _rubbleApronReach;
+        public float RubbleLaneHalfWidth => _rubbleLaneHalfWidth;
+        public float RubbleCullDistance => _rubbleCullDistance;
+        public float RubbleChunkSize => _rubbleChunkSize;
         public float BoulderFieldWavelength => _boulderFieldWavelength;
         public float BoulderFieldCoverage => _boulderFieldCoverage;
         public float BoulderFieldDensity => _boulderFieldDensity;

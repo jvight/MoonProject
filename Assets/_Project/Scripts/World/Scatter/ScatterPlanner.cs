@@ -22,6 +22,21 @@ namespace MoonProject.World
         private const uint AcceptSalt = 0xB0E5A9F1u;
         private const uint ShapeSalt = 0x7DFC2C4Du;
         private const uint FieldSalt = 0x1B873593u;
+        private const uint RubbleSalt = 0x5BE0CD19u;
+
+        // A rubble stone's height is scaled by a share in this range, and it sinks by up to this share of its scaled
+        // size: low and set in the dust, but standing proud enough to cast a shadow in raking light.
+        private const float RubbleSquatMin = 0.8f;
+        private const float RubbleSquatMax = 1.3f;
+        private const float RubbleBurial = 0.15f;
+
+        // A pebble in a lane is held to this share of the cobble cutoff: below it, so it never gets a collider.
+        private const float LaneCobbleShare = 0.95f;
+        private const uint PatchSalt = 0x9B05688Cu;
+        private const uint ApronSalt = 0x510E527Fu;
+
+        // The rubble patch mask eases in over this much of the patch noise's range around its threshold.
+        private const float PatchEdge = 0.15f;
 
         // The boulder field mask eases in over this much of the field noise's range around its threshold.
         private const float FieldEdge = 0.12f;
@@ -36,6 +51,8 @@ namespace MoonProject.World
         private readonly GradientNoise _trailNoise;
         private readonly GradientNoise _fieldNoise;
         private readonly float _fieldThreshold;
+        private readonly GradientNoise _patchNoise;
+        private readonly float _patchThreshold;
         private readonly Vector2[] _laneEnds;
 
         // Spaces kept clear of rocks, the anchors' and the Scout's crater (no flat anchor): x, z of the centre and its
@@ -85,6 +102,8 @@ namespace MoonProject.World
 
             // Fractal noise sits near 0 with a spread of about +-0.5: a threshold this far up leaves the coverage asked.
             _fieldThreshold = 0.5f - settings.BoulderFieldCoverage;
+            _patchNoise = new GradientNoise(Hashing.Mix(_seed ^ PatchSalt));
+            _patchThreshold = 0.5f - settings.RubblePatchCoverage;
             _pebbleMaxSlopeCos = Mathf.Cos(settings.PebbleMaxSlope * Mathf.Deg2Rad);
             _boulderMaxSlopeCos = Mathf.Cos(settings.BoulderMaxSlope * Mathf.Deg2Rad);
 
@@ -125,6 +144,7 @@ namespace MoonProject.World
             var instances = new List<ScatterInstance>();
             AddClass(instances, ScatterKind.Pebble, _settings.PebbleSpacing, Hashing.Mix(_seed ^ PebbleSalt));
             AddClass(instances, ScatterKind.Boulder, _settings.BoulderSpacing, Hashing.Mix(_seed ^ BoulderSalt));
+            AddRubble(instances, Hashing.Mix(_seed ^ RubbleSalt));
             return instances;
         }
 
@@ -313,6 +333,15 @@ namespace MoonProject.World
                     continue;
                 }
 
+                if (!boulder && (_surface.Relief.OnOpeningSite(site)
+                        || Mathf.Min(DistanceToLanes(site), _surface.Relief.DistanceToProtectedLanes(site))
+                        < _settings.LaneHalfWidth))
+                {
+                    // In a lane or on the opening's ground a pebble stays below the cobble cutoff: it never collides,
+                    // so driving there stays smooth.
+                    size = Mathf.Min(size, _settings.CobbleColliderMinSize * LaneCobbleShare);
+                }
+
                 float yaw = Hashing.ToUnit(Hashing.Mix(shape ^ 0x5bd1e995u)) * 360f;
                 var position = new Vector3(site.x, _surface.SampleHeight(site.x, site.y), site.y);
 
@@ -338,6 +367,94 @@ namespace MoonProject.World
                     scaleAspect,
                     burialDepth));
             }
+        }
+
+        /// <summary>
+        /// The near-field rubble (owner's Apollo 11 reference): one jittered stone per grid cell where it is kept,
+        /// thick in patches and thin on the stretches between, and an apron of stones round every boulder. None on the
+        /// opening's sites and lanes, the pad, the ruins, the scorch, the canyon, the anchors' clearings or steep
+        /// ground; visual only.
+        /// </summary>
+        private void AddRubble(List<ScatterInstance> instances, uint seed)
+        {
+            float cell = _settings.RubbleSpacing;
+            float radius = _surface.DrivableRadius;
+            int cells = Mathf.CeilToInt(radius / cell);
+            for (int j = -cells; j < cells; j++)
+            {
+                for (int i = -cells; i < cells; i++)
+                {
+                    float x = (i + Hashing.ToUnit(Hashing.Hash(i, j, 1, seed))) * cell;
+                    float z = (j + Hashing.ToUnit(Hashing.Hash(i, j, 2, seed))) * cell;
+                    if (x * x + z * z > radius * radius)
+                    {
+                        continue;
+                    }
+
+                    float chance = Mathf.Lerp(_settings.RubbleSparse, _settings.RubbleDense, RubblePatch(x, z));
+                    if (Hashing.ToUnit(Hashing.Hash(i, j, 3, seed)) < chance)
+                    {
+                        AddStone(instances, x, z, Hashing.Hash(i, j, 4, seed));
+                    }
+                }
+            }
+
+            int boulders = instances.Count;
+            for (int b = 0; b < boulders; b++)
+            {
+                ScatterInstance boulder = instances[b];
+                if (boulder.Kind != ScatterKind.Boulder)
+                {
+                    continue;
+                }
+
+                int count = Mathf.RoundToInt(_settings.RubbleApronCount * boulder.Size);
+                float reach = boulder.Size * _settings.RubbleApronReach;
+                for (int k = 0; k < count; k++)
+                {
+                    uint hash = Hashing.Hash(b, k, seed ^ ApronSalt);
+                    float angle = Hashing.ToUnit(Hashing.Mix(hash)) * Mathf.PI * 2f;
+                    float t = Hashing.ToUnit(Hashing.Mix(hash ^ 0x2545F491u));
+                    float distance = Mathf.Lerp(boulder.Size * 0.5f, reach, t * t);
+                    AddStone(instances, boulder.Position.x + Mathf.Sin(angle) * distance,
+                        boulder.Position.z + Mathf.Cos(angle) * distance, Hashing.Mix(hash ^ 0x68E31DA4u));
+                }
+            }
+        }
+
+        /// <summary>One rubble stone at (x, z) when the ground there keeps rubble.</summary>
+        private void AddStone(List<ScatterInstance> instances, float x, float z, uint shape)
+        {
+            var point = new Vector2(x, z);
+            float sizeT = Hashing.ToUnit(Hashing.Mix(shape));
+            float size = Mathf.Lerp(_settings.RubbleSize.x, _settings.RubbleSize.y, sizeT * sizeT);
+            float lanes = Mathf.Min(DistanceToLanes(point), _surface.Relief.DistanceToProtectedLanes(point));
+            if (point.magnitude < _surface.PadRadius + _settings.PadClearance || _surface.Relief.OnOpeningSite(point)
+                || lanes < _settings.RubbleLaneHalfWidth || NearRuins(point) || Scorched(x, z)
+                || _surface.Canyon.Bounds.Contains(point) || InClearing(point, size))
+            {
+                return;
+            }
+
+            Vector3 normal = _surface.SampleNormal(x, z);
+            if (normal.y < _pebbleMaxSlopeCos)
+            {
+                return;
+            }
+
+            float yaw = Hashing.ToUnit(Hashing.Mix(shape ^ 0x5bd1e995u)) * 360f;
+            float squat = Mathf.Lerp(RubbleSquatMin, RubbleSquatMax, Hashing.ToUnit(Hashing.Mix(shape ^ 0x165667b1u)));
+            float burial = size * squat * RubbleBurial * Hashing.ToUnit(Hashing.Mix(shape ^ 0xfd7046c5u));
+            instances.Add(new ScatterInstance(ScatterKind.Rubble, new Vector3(x, _surface.SampleHeight(x, z), z),
+                normal, yaw, size, (int)(shape >> 1), new Vector3(1f, squat, 1f), burial));
+        }
+
+        /// <summary>How deep inside a rubble patch (x, z) lies: 0 on the emptier stretches, 1 within.</summary>
+        private float RubblePatch(float x, float z)
+        {
+            float wavelength = _settings.RubblePatchWavelength;
+            float noise = _patchNoise.Fractal(x / wavelength, z / wavelength, 2, 2f, 0.5f);
+            return SmoothMath.Smootherstep(_patchThreshold - PatchEdge, _patchThreshold + PatchEdge, noise);
         }
 
         /// <summary>How deep inside a boulder field (x, z) lies: 0 on the bare plain between, 1 within.</summary>

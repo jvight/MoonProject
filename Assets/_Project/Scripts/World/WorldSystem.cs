@@ -17,6 +17,9 @@ namespace MoonProject.World
     [ExecuteAlways]
     public sealed class WorldSystem : MonoBehaviour, IGameSystem, IWorldPreview
     {
+        // Shapes of the rubble's clods: enough that no two neighbours read as one stamp.
+        private const int RubbleVariants = 6;
+
         private const string GeneratedRootName = "Generated";
 
         [Tooltip("World tuning (Assets/_Project/Data/Tuning/WorldSettings.asset).")]
@@ -60,6 +63,7 @@ namespace MoonProject.World
         private readonly CanyonGateBuilder _gateBuilder = new CanyonGateBuilder();
         private GameObject _generatedRoot;
         private Mesh _earthMesh;
+        private Mesh[] _rubbleRocks = System.Array.Empty<Mesh>();
         private Mesh _tracksMesh;
 
         public MoonSurface Surface { get; private set; }
@@ -141,8 +145,10 @@ namespace MoonProject.World
             _gateBuilder.Build(_generatedRoot.transform, surface.Canyon.Slabs, _paletteMaterial, hideFlags);
             List<ScatterInstance> scatterInstances = scatterPlan.GetAwaiter().GetResult();
             AddHomeApronStones(scatterInstances, surface);
+            _rubbleRocks = CreateRubbleRocks(hideFlags);
             LastScatter = _scatterBuilder.Build(_generatedRoot.transform, scatterInstances,
-                scatterSettings, _settings.Mesh.ChunkSize, _pebbleRocks, _boulderRocks, _paletteMaterial, hideFlags);
+                scatterSettings, _settings.Mesh.ChunkSize, _pebbleRocks, _boulderRocks, _rubbleRocks, _paletteMaterial,
+                hideFlags);
             BuildEarth(hideFlags);
             BuildWornTracks(hideFlags);
             _peakBeacon.transform.position = Layout.PeakPosition;
@@ -354,6 +360,21 @@ namespace MoonProject.World
             return false;
         }
 
+        /// <summary>The rubble's clods (<see cref="ClodMesh"/>), in the pebbles' own basalt tone.</summary>
+        private Mesh[] CreateRubbleRocks(HideFlags hideFlags)
+        {
+            Color32[] pebble = _pebbleRocks[0].colors32;
+            Color32 basalt = pebble.Length > 0 ? pebble[0] : new Color32(255, 0, 0, 255);
+            var clods = new Mesh[RubbleVariants];
+            for (int i = 0; i < clods.Length; i++)
+            {
+                clods[i] = ClodMesh.Create(i, basalt);
+                clods[i].hideFlags = hideFlags;
+            }
+
+            return clods;
+        }
+
         private void DestroyGenerated()
         {
             if (_generatedRoot != null)
@@ -371,6 +392,12 @@ namespace MoonProject.World
                 Release(_tracksMesh);
             }
 
+            foreach (Mesh clod in _rubbleRocks)
+            {
+                Release(clod);
+            }
+
+            _rubbleRocks = System.Array.Empty<Mesh>();
             _tracksMesh = null;
             _generatedRoot = null;
             _earthMesh = null;
