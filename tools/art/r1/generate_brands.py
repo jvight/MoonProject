@@ -696,10 +696,16 @@ def build_vis_mark(mono: bool = False, wordmark_color: tuple = None) -> Image.Im
 # 5. VIS 1967 (Scout-3 Era Emblem + Wordmark, clean without anatomy plates)
 # ==============================================================================
 
-def build_vis_1967_mark(mono: bool = False, wordmark_color: tuple = None) -> Image.Image:
+def build_vis_1967_mark(
+    mono: bool = False,
+    wordmark_color: tuple = None,
+    include_sublines: bool = True,
+) -> Image.Image:
     """
     VIS 1967 original Scout-3 soft-lander era emblem & wordmark (transparent background,
     mark + short wordmark + vector tail only, no framing boxes or anatomy callouts).
+    When `include_sublines=False` (for the decal atlas cell), drops the small sub-lines
+    and tail below "VANGUARD" so the cell contains only the mark + "VANGUARD".
     """
     img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
@@ -712,88 +718,94 @@ def build_vis_1967_mark(mono: bool = False, wordmark_color: tuple = None) -> Ima
     c_wm_sub = WHITE if mono else ((142, 98, 28, 255) if wordmark_color is not None else VIS_BRASS)
     c_wm_corp = WHITE if mono else ((186, 74, 44, 255) if wordmark_color is not None else CORAL)
 
-    cx, cy = 512, 356
+    dy = 0 if include_sublines else 48
+    cx, cy = 512, 356 + dy
     # Tilted thin 1960s orbital ring
     draw_thick_arc(d, cx, cy + 10, 316, 98, -165, 175, 9.0, c_brass, rot_deg=-16, round_caps=True)
     draw_thick_arc(d, cx, cy + 10, 288, 78, -140, 150, 4.0, c_coral, rot_deg=-16, round_caps=True)
 
     # Central 1967 5-sided Scout shield badge
     shield_pts = [
-        (sf(512), sf(164)),
-        (sf(756), sf(304)),
-        (sf(680), sf(502)),
-        (sf(344), sf(502)),
-        (sf(268), sf(304)),
+        (sf(512), sf(164 + dy)),
+        (sf(756), sf(304 + dy)),
+        (sf(680), sf(502 + dy)),
+        (sf(344), sf(502 + dy)),
+        (sf(268), sf(304 + dy)),
     ]
     if not mono:
         d.polygon(shield_pts, fill=bg_col)
     d.polygon(shield_pts, outline=c_cream if wordmark_color is None else (42, 38, 34, 255), width=s(8))
 
     inner_shield = [
-        (sf(512), sf(184)),
-        (sf(732), sf(312)),
-        (sf(662), sf(484)),
-        (sf(362), sf(484)),
-        (sf(292), sf(312)),
+        (sf(512), sf(184 + dy)),
+        (sf(732), sf(312 + dy)),
+        (sf(662), sf(484 + dy)),
+        (sf(362), sf(484 + dy)),
+        (sf(292), sf(312 + dy)),
     ]
     d.polygon(inner_shield, outline=c_brass, width=s(4))
 
     # Scout-3 three-legged lander silhouette struts at base of shield
-    d.line([(s(414), s(434)), (s(364), s(494))], fill=c_brass, width=s(7))
-    d.line([(s(610), s(434)), (s(660), s(494))], fill=c_brass, width=s(7))
-    d.line([(s(512), s(434)), (s(512), s(496))], fill=c_brass, width=s(7))
+    d.line([(s(414), s(434 + dy)), (s(364), s(494 + dy))], fill=c_brass, width=s(7))
+    d.line([(s(610), s(434 + dy)), (s(660), s(494 + dy))], fill=c_brass, width=s(7))
+    d.line([(s(512), s(434 + dy)), (s(512), s(496 + dy))], fill=c_brass, width=s(7))
     for fx in [364, 512, 660]:
-        d.line([(s(fx - 22), s(496)), (s(fx + 22), s(496))], fill=c_coral, width=s(7))
+        d.line([(s(fx - 22), s(496 + dy)), (s(fx + 22), s(496 + dy))], fill=c_coral, width=s(7))
 
     # 1967 Thin Double-Line Inline 'V - I - S' Monogram inside the shield
     for col, w_line in [(c_cream, 17), (bg_col, 5)]:
-        d.line([(s(356), s(290)), (s(404), s(412)), (s(452), s(290))], fill=col, width=s(w_line), joint="curve")
+        d.line([(s(356), s(290 + dy)), (s(404), s(412 + dy)), (s(452), s(290 + dy))], fill=col, width=s(w_line), joint="curve")
     # I
-    d.line([(s(482), s(290)), (s(542), s(290))], fill=c_cream, width=s(12))
-    d.line([(s(482), s(412)), (s(542), s(412))], fill=c_cream, width=s(12))
-    d.line([(s(512), s(290)), (s(512), s(412))], fill=c_cream, width=s(18))
-    d.line([(s(512), s(300)), (s(512), s(402))], fill=bg_col, width=s(5))
+    d.line([(s(482), s(290 + dy)), (s(542), s(290 + dy))], fill=c_cream, width=s(12))
+    d.line([(s(482), s(412 + dy)), (s(542), s(412 + dy))], fill=c_cream, width=s(12))
+    d.line([(s(512), s(290 + dy)), (s(512), s(412 + dy))], fill=c_cream, width=s(18))
+    d.line([(s(512), s(300 + dy)), (s(512), s(402 + dy))], fill=bg_col, width=s(5))
     # S
     s67_pts = [
-        (s(662), s(304)),
-        (s(646), s(290)),
-        (s(588), s(290)),
-        (s(572), s(306)),
-        (s(572), s(338)),
-        (s(588), s(350)),
-        (s(646), s(354)),
-        (s(662), s(368)),
-        (s(662), s(396)),
-        (s(646), s(412)),
-        (s(584), s(412)),
-        (s(568), s(396)),
+        (s(662), s(304 + dy)),
+        (s(646), s(290 + dy)),
+        (s(588), s(290 + dy)),
+        (s(572), s(306 + dy)),
+        (s(572), s(338 + dy)),
+        (s(588), s(350 + dy)),
+        (s(646), s(354 + dy)),
+        (s(662), s(368 + dy)),
+        (s(662), s(396 + dy)),
+        (s(646), s(412 + dy)),
+        (s(584), s(412 + dy)),
+        (s(568), s(396 + dy)),
     ]
     d.line(s67_pts, fill=c_cream, width=s(17), joint="curve")
     d.line(s67_pts, fill=bg_col, width=s(5), joint="curve")
 
     # 4-pointed 1967 astrometric star at apex
-    draw_4pt_star(d, 512, 224, 26, 7, c_brass)
+    draw_4pt_star(d, 512, 224 + dy, 26, 7, c_brass)
 
-    # 1967 Short Wordmark Lockup + Tapered Vector Tail
-    f_w67_top = load_font("ChakraPetch-SemiBold.ttf", 46)
-    f_w67_mid = load_font("ChakraPetch-Bold.ttf", 54)
-    f_w67_corp = load_font("IBMPlexMono-SemiBold.ttf", 28)
+    if include_sublines:
+        # 1967 Short Wordmark Lockup + Tapered Vector Tail
+        f_w67_top = load_font("ChakraPetch-SemiBold.ttf", 46)
+        f_w67_mid = load_font("ChakraPetch-Bold.ttf", 54)
+        f_w67_corp = load_font("IBMPlexMono-SemiBold.ttf", 28)
 
-    draw_tracked_text(d, 512, 616, "V A N G U A R D", f_w67_mid, c_wm_main, tracking=10.0)
-    draw_tracked_text(d, 512, 688, "INTERPLANETARY STRUCTURES", f_w67_top, c_wm_sub, tracking=4.5)
-    draw_tracked_text(d, 512, 754, "C O R P O R A T I O N", f_w67_corp, c_wm_corp, tracking=8.0)
+        draw_tracked_text(d, 512, 616, "V A N G U A R D", f_w67_mid, c_wm_main, tracking=10.0)
+        draw_tracked_text(d, 512, 688, "INTERPLANETARY STRUCTURES", f_w67_top, c_wm_sub, tracking=4.5)
+        draw_tracked_text(d, 512, 754, "C O R P O R A T I O N", f_w67_corp, c_wm_corp, tracking=8.0)
 
-    # Sweeping tapered vector tail + delta dart beneath wordmark
-    tail_pts = [
-        (sf(112), sf(810)),
-        (sf(818), sf(803)),
-        (sf(802), sf(786)),
-        (sf(916), sf(807)),
-        (sf(802), sf(828)),
-        (sf(818), sf(812)),
-        (sf(112), sf(817)),
-    ]
-    d.polygon(tail_pts, fill=c_wm_sub)
+        # Sweeping tapered vector tail + delta dart beneath wordmark
+        tail_pts = [
+            (sf(112), sf(810)),
+            (sf(818), sf(803)),
+            (sf(802), sf(786)),
+            (sf(916), sf(807)),
+            (sf(802), sf(828)),
+            (sf(818), sf(812)),
+            (sf(112), sf(817)),
+        ]
+        d.polygon(tail_pts, fill=c_wm_sub)
+    else:
+        # Decal cell: mark + "VANGUARD" only (no blurry sub-lines)
+        f_w67_decal = load_font("ChakraPetch-Bold.ttf", 64)
+        draw_tracked_text(d, 512, 672, "V A N G U A R D", f_w67_decal, c_wm_main, tracking=9.0)
 
     out = downsample_to(img, MARK_OUT_SIZE)
     return to_white_mono(out) if mono else out
@@ -1337,7 +1349,7 @@ def build_maker_decals_atlas() -> Image.Image:
         # (col, row, mark_img, seed, sun_fade, edge_wear, scorch_corner)
         (0, 0, build_vis_mark(mono=False, wordmark_color=ink_dark), 101, 0.22, 0.42, False),
         (1, 0, build_vis_stencil_word(), 202, 0.24, 0.48, False),
-        (2, 0, build_vis_1967_mark(mono=False, wordmark_color=(38, 32, 26, 255)), 303, 0.32, 0.52, False),
+        (2, 0, build_vis_1967_mark(mono=False, wordmark_color=(28, 24, 20, 255), include_sublines=False), 303, 0.24, 0.46, False),
         (0, 1, build_ilc_mark(mono=False, wordmark_color=ink_dark), 404, 0.22, 0.40, False),
         (1, 1, build_tycho_mark(mono=False, wordmark_color=(24, 32, 36, 255)), 505, 0.24, 0.48, True),
         (2, 1, build_kessler_mark(mono=False, wordmark_color=ink_dark), 606, 0.20, 0.38, False),
