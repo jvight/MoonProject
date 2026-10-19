@@ -1095,6 +1095,26 @@
             "text": "SẮP LẶN"
         },
         {
+            "key": "db.empty",
+            "text": "Chưa quét gì"
+        },
+        {
+            "key": "db.page.hold",
+            "text": "KHOANG HÀNG"
+        },
+        {
+            "key": "glyph.gamepad.shoulders",
+            "text": "LB RB"
+        },
+        {
+            "key": "glyph.keyboard.f",
+            "text": "F"
+        },
+        {
+            "key": "glyph.keyboard.q",
+            "text": "Q"
+        },
+        {
             "key": "db.title",
             "text": "DỮ LIỆU"
         },

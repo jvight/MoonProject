@@ -642,6 +642,15 @@ namespace MoonProject.Rover
         [Range(0.35f, 1.50f)]
         [SerializeField] private float _faceInspectDistance = 0.67f;
 
+        [Tooltip("Share of the face shot's distance on the databank page, so the tube nearly fills the frame " +
+                 "(docs/design/databank.md §4: 1.08 m to 0.90 m). Under gentle camera the shot crops instead.")]
+        [Range(0.5f, 1f)]
+        [SerializeField] private float _faceInspectDatabankShare = 0.833f;
+
+        [Tooltip("Seconds the face shot eases between the pages' distances (smooth step).")]
+        [Range(0.05f, 1.5f)]
+        [SerializeField] private float _facePageEaseSeconds = 0.35f;
+
         [Tooltip("Closest pulled-in camera distance (m) allowed when rocks or terrain occlude the default and side views.")]
         [Range(0.25f, 1.00f)]
         [SerializeField] private float _faceInspectMinDistance = 0.42f;
@@ -965,6 +974,10 @@ namespace MoonProject.Rover
         public float FaceInspectDistance => _faceInspectDistance;
 
         public float FaceInspectMinDistance => _faceInspectMinDistance;
+
+        public float FaceInspectDatabankShare => _faceInspectDatabankShare;
+
+        public float FacePageEaseSeconds => _facePageEaseSeconds;
 
         public float FaceInspectMinRadius => _faceInspectMinRadius;
 

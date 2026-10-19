@@ -1095,6 +1095,26 @@
             "text": "SETTING"
         },
         {
+            "key": "db.empty",
+            "text": "Nothing scanned yet"
+        },
+        {
+            "key": "db.page.hold",
+            "text": "HOLD"
+        },
+        {
+            "key": "glyph.gamepad.shoulders",
+            "text": "LB RB"
+        },
+        {
+            "key": "glyph.keyboard.f",
+            "text": "F"
+        },
+        {
+            "key": "glyph.keyboard.q",
+            "text": "Q"
+        },
+        {
             "key": "db.title",
             "text": "DATABANK"
         },

@@ -10,7 +10,8 @@ namespace MoonProject.Core.Input
     /// Typed, allocation-free view over the Controls asset's "UI" map, owned by <see cref="InputReader"/>. It stays
     /// enabled while the rover controls are disabled (pause), so Pause can always be undone. UI Toolkit receives
     /// pointer, navigation and submit events through the Input System's own UI provider; this map carries what the
-    /// game decides itself: pause, back, focus recovery and cursor recapture. It also reads the rover map's Build and
+    /// game decides itself: pause, back, focus recovery and cursor recapture, and on 07's face the page flip (Q, LB or
+    /// RB), the databank's colour toggle (F) and its model turn (right stick). It also reads the rover map's Build and
     /// Excavate keys while that map is off (07's face screen is up), so the face can hand over to build mode and take
     /// the same key that fits a part in the world.
     /// </summary>
@@ -25,6 +26,9 @@ namespace MoonProject.Core.Input
         private readonly InputAction _pause;
         private readonly InputAction _click;
         private readonly InputAction _cargo;
+        private readonly InputAction _pageToggle;
+        private readonly InputAction _colour;
+        private readonly InputAction _turn;
         private readonly InputAction _roverBuild;
         private readonly InputAction _roverUse;
 
@@ -37,6 +41,9 @@ namespace MoonProject.Core.Input
             _pause = map.FindAction("Pause", throwIfNotFound: true);
             _click = map.FindAction("Click", throwIfNotFound: true);
             _cargo = map.FindAction("Cargo", throwIfNotFound: true);
+            _pageToggle = map.FindAction("PageToggle", throwIfNotFound: true);
+            _colour = map.FindAction("Colour", throwIfNotFound: true);
+            _turn = map.FindAction("Turn", throwIfNotFound: true);
             InputActionMap rover = map.asset != null
                 ? map.asset.FindActionMap(InputReader.RoverMapName, throwIfNotFound: true)
                 : throw new ArgumentException("The UI map must live in the Controls asset beside the Rover map.",
@@ -99,9 +106,18 @@ namespace MoonProject.Core.Input
 
         /// <summary>
         /// The rover's Excavate key (E, gamepad West) went down this frame, read from its controls so it counts while
-        /// the rover map is off behind a menu.
+        /// the rover map is off behind a menu: E is the game's one "do it" key, on the face too (it fits a part).
         /// </summary>
         public bool UsePressed => _map.enabled && AnyPressedThisFrame(_roverUse);
+
+        /// <summary>Flip 07's face to its other page (Q, gamepad LB or RB) this frame.</summary>
+        public bool PagePressed => _pageToggle.WasPressedThisFrame();
+
+        /// <summary>The databank's full-colour toggle (F, gamepad Y) went down this frame.</summary>
+        public bool ColourPressed => _colour.WasPressedThisFrame();
+
+        /// <summary>The databank model's turn (right stick, -1..1).</summary>
+        public Vector2 Turn => _turn.ReadValue<Vector2>();
 
         /// <summary>Primary mouse button pressed this frame (used to recapture the cursor).</summary>
         public bool ClickPressed => _click.WasPressedThisFrame();

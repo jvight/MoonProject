@@ -72,6 +72,7 @@ MonoBehaviour:
       _scaleFrom: 0.985
       _springFrequency: 0.6
       _springDamping: 0.8
+    _handOffSeconds: 0.6
     _curtain:
       _fadeIn: 0.9
       _fadeOut: 1.4
@@ -79,6 +80,10 @@ MonoBehaviour:
       _scaleFrom: 1
       _springFrequency: 1
       _springDamping: 1
+    _bootSteadyMilliseconds: 40
+    _bootSteadyFrames: 12
+    _bootMinSeconds: 0.5
+    _bootMaxSeconds: 8
     _backdropWeight: 0.55
     _moonTurnPeriodSeconds: 48
     _morsePeriodSeconds: 4.2
@@ -423,18 +428,6 @@ MonoBehaviour:
     _followHalfLife: 0.08
     _screenMargin: 72
     _cardGap: 18
-  _reticle:
-    _reveal:
-      _fadeIn: 0.25
-      _fadeOut: 0.3
-      _slide: 0
-      _scaleFrom: 0.7
-      _springFrequency: 1.4
-      _springDamping: 0.6
-    _hoverScale: 1.35
-    _hoverFadeSeconds: 0.25
-    _hoverSpringFrequency: 1.6
-    _hoverSpringDamping: 0.55
   _pickupFeed:
     _reveal:
       _fadeIn: 0.35
@@ -444,59 +437,21 @@ MonoBehaviour:
       _springFrequency: 1.8
       _springDamping: 0.6
     _maxRows: 3
+    _partRows: 2
+    _partLingerSeconds: 4
     _slideDistance: 72
     _stepSeconds: 0.08
     _maxCountSeconds: 1.4
     _lingerSeconds: 3
     _tickPulseSeconds: 0.14
     _tickPulseScale: 0.08
-  _memoryCard:
-    _reveal:
-      _fadeIn: 0.18
-      _fadeOut: 0.9
-      _slide: 8
-      _scaleFrom: 0.97
-      _springFrequency: 0.9
-      _springDamping: 0.75
-    _appearDelay: 1.1
-    _readBaseSeconds: 4
-    _readSecondsPerCharacter: 0.06
-    _minReadSeconds: 6
-    _maxReadSeconds: 16
-  _towerPanel:
-    _reveal:
-      _fadeIn: 0.45
-      _fadeOut: 0.35
-      _slide: 14
-      _scaleFrom: 0.96
-      _springFrequency: 1.3
-      _springDamping: 0.65
-    _holdSeconds: 0.6
-    _drainSeconds: 0.35
-    _armVisibility: 0.9
-    _celebrateSeconds: 1.4
-    _cueWaitSeconds: 20
-    _tapSeconds: 0.2
-    _winchStep: 0.5
-  _kitTitle:
-    _reveal:
-      _fadeIn: 0.9
-      _fadeOut: 1.4
-      _slide: 12
-      _scaleFrom: 0.94
-      _springFrequency: 1
-      _springDamping: 0.7
-    _delay: 0.35
-    _holdSeconds: 2.6
-  _rewardCard:
-    _reveal:
-      _fadeIn: 0.9
-      _fadeOut: 1.4
-      _slide: 14
-      _scaleFrom: 0.96
-      _springFrequency: 1
-      _springDamping: 0.7
-    _holdSeconds: 6
+  _buildStripReveal:
+    _fadeIn: 0.45
+    _fadeOut: 0.35
+    _slide: 14
+    _scaleFrom: 0.96
+    _springFrequency: 1.3
+    _springDamping: 0.65
   _cargo:
     _reveal:
       _fadeIn: 0.2
@@ -518,6 +473,10 @@ MonoBehaviour:
     _bootSlideDistance: 64
     _bootHatchLingerSeconds: 0.2
     _dragThreshold: 6
+    _dragFollowSeconds: 0.05
+    _dragReturnSeconds: 0.32
+    _dragFitSeconds: 0.26
+    _dragSourceAlpha: 0.3
     _tooltipGap: 10
     _holdGridX: 34
     _holdGridY: 54
@@ -527,6 +486,21 @@ MonoBehaviour:
     _dividerX: 478
     _bubbleRadius: 22
     _toastDurationSeconds: 3.5
+    _artTint:
+      serializedVersion: 2
+      rgba: 4294967295
+    _statusOk:
+      serializedVersion: 2
+      rgba: 4288079400
+    _statusFault:
+      serializedVersion: 2
+      rgba: 4280312063
+    _statusEmpty:
+      serializedVersion: 2
+      rgba: 4288976024
+    _emptyDash: 10
+    _emptyDashGap: 7
+    _warningIconSize: 26
     _leaderEmptyColor:
       serializedVersion: 2
       rgba: 1145345740
@@ -542,6 +516,18 @@ MonoBehaviour:
       rgba: 3959419743
     _leaderFocusWidth: 3.2
     _leaderFocusDotRadius: 5.5
+    _cellStrokeWidth: 2.4
+    _itemStrokeWidth: 3.2
+    _focusStrokeWidth: 5
+    _holdIconSize: 58
+    _deviceIconSize: 36
+    _selectionFill:
+      serializedVersion: 2
+      rgba: 4280689158
+    _pressFill:
+      serializedVersion: 2
+      rgba: 4281347082
+    _pressFlashSeconds: 0.22
     _cellBackground:
       serializedVersion: 2
       rgba: 3943042066
@@ -576,81 +562,12 @@ MonoBehaviour:
       _springDamping: 0.7
     _holdSeconds: 3
     _minReadSeconds: 1.5
-  _crateNote:
-    _reveal:
-      _fadeIn: 0.9
-      _fadeOut: 1.4
-      _slide: 12
-      _scaleFrom: 0.97
-      _springFrequency: 1
-      _springDamping: 0.7
-    _baseSeconds: 3.5
-    _secondsPerCharacter: 0.055
-    _maxSeconds: 12
-  _friends:
-    _name:
-      _fadeIn: 0.9
-      _fadeOut: 1.4
-      _slide: 12
-      _scaleFrom: 0.94
-      _springFrequency: 1
-      _springDamping: 0.7
-    _nameHoldSeconds: 3.5
-    _nameLiftMetres: 1.1
-    _nameLifts:
-    - _friendId: bell
-      _liftMetres: 2
-  _ticker:
-    _reveal:
-      _fadeIn: 0.9
-      _fadeOut: 1.1
-      _slide: 6
-      _scaleFrom: 1
-      _springFrequency: 1
-      _springDamping: 1
-    _holdBaseSeconds: 2.5
-    _holdSecondsPerCharacter: 0.055
-    _minHoldSeconds: 4
-    _maxHoldSeconds: 9
-    _gapSeconds: 1.5
-    _capacity: 5
-    _maxYields: 1
-    _lampBreathSeconds: 3.2
-    _lampMinOpacity: 0.45
-    _voiceTailSeconds: 1.5
-  _dialReadout:
-    _reveal:
-      _fadeIn: 0.3
-      _fadeOut: 0.8
-      _slide: 8
-      _scaleFrom: 0.96
-      _springFrequency: 1.8
-      _springDamping: 0.7
-    _holdSeconds: 2.4
-  _relays:
-    _veilMaxChangePerSecond: 3
-    _veilMaxDarkness: 0.94
-    _grainOpacity: 0.05
-    _grainTexels: 256
-    _grainTilePixels: 256
-    _grainDensity: 0.5
-    _grainStepsPerSecond: 12
-    _list:
-      _fadeIn: 0.3
-      _fadeOut: 0.35
-      _slide: 8
-      _scaleFrom: 0.96
-      _springFrequency: 1.8
-      _springDamping: 0.7
-    _tag:
-      _fadeIn: 0.4
-      _fadeOut: 0.4
-      _slide: 8
-      _scaleFrom: 0.9
-      _springFrequency: 1.4
-      _springDamping: 0.6
-    _tagLiftMetres: 0.9
-    _tagStackGap: 8
+  _post:
+    _charsPerSecond: 48
+    _maxLineSeconds: 0.9
+    _dotSeconds: 0.22
+    _resumeDays: 13148
+    _lingerSeconds: 1.2
   _salvage:
     _ring:
       _fadeIn: 0.3
@@ -659,15 +576,6 @@ MonoBehaviour:
       _scaleFrom: 0.85
       _springFrequency: 1.8
       _springDamping: 0.6
-    _siteName:
-      _fadeIn: 0.9
-      _fadeOut: 1.4
-      _slide: 12
-      _scaleFrom: 0.94
-      _springFrequency: 1
-      _springDamping: 0.7
-    _siteNameHoldSeconds: 3
-    _siteNameLiftMetres: 6
     _chargeEmptySeconds: 0.2
     _chargeHandoffSeconds: 0.35
   _stargaze:
@@ -685,7 +593,6 @@ MonoBehaviour:
       _scaleFrom: 0.9
       _springFrequency: 1.4
       _springDamping: 0.6
-    _hintDelay: 2
     _hintHoldSeconds: 4
     _firstPromptRestSeconds: 3
     _firstPromptHoldSeconds: 6
@@ -698,21 +605,14 @@ MonoBehaviour:
       _scaleFrom: 1
       _springFrequency: 1.4
       _springDamping: 0.6
-    _stepPatienceSeconds: 120
     _lowBatteryHoldSeconds: 8
-    _teachingPatienceSeconds: 20
     _stillSpeed: 0.4
     _handOverSeconds: 0.3
-    _stillSeconds: 1.2
-    _place:
-      _fadeIn: 1
-      _fadeOut: 1.4
-      _slide: 12
-      _scaleFrom: 0.94
-      _springFrequency: 1
-      _springDamping: 0.7
-    _placeHoldSeconds: 4
-    _towerCardDelay: 4
+    _objectiveDelaySeconds: 1.5
+    _objectiveStillSeconds: 1
+    _objectiveRestSeconds: 8
+    _objectiveRebrightStillSeconds: 4
+    _objectiveIdleSeconds: 90
     _readout:
       _fadeIn: 0.8
       _fadeOut: 1.1
@@ -720,11 +620,31 @@ MonoBehaviour:
       _scaleFrom: 0.97
       _springFrequency: 1
       _springDamping: 0.8
+    _statusHoldSeconds: 4
+    _storyHoldSeconds: 9
+    _scanSetHoldSeconds: 2.5
+    _flashSeconds: 1.2
+    _blockedChipSeconds: 0.9
+    _blockedChipOpacity: 0.45
+    _blockedShakePixels: 5
+    _blockedShakeHertz: 5
+    _blockedFaceSeconds: 1.8
+    _sunArc:
+      _fadeIn: 1.2
+      _fadeOut: 1.5
+      _slide: 6
+      _scaleFrom: 0.97
+      _springFrequency: 1
+      _springDamping: 0.8
+    _sunArcFullElevation: 17.3
   _backdrop:
     _blurStartMetres: 0
     _blurEndMetres: 4
     _blurRadius: 1.5
     _saturation: -30
+    _faceBlurStartMetres: 1.35
+    _faceBlurEndMetres: 6.5
+    _faceSaturation: 0
   _saveTick:
     _reveal:
       _fadeIn: 0.25
@@ -735,19 +655,6 @@ MonoBehaviour:
       _springDamping: 0.8
     _holdSeconds: 1
     _burstSeconds: 2
-  _homeMeter:
-    _reveal:
-      _fadeIn: 0.6
-      _fadeOut: 0.8
-      _slide: -6
-      _scaleFrom: 0.97
-      _springFrequency: 1.2
-      _springDamping: 0.8
-    _nearMetres: 40
-    _fullArcMetres: 800
-    _stepMetres: 5
-    _maxShownMetres: 9995
-    _easeRate: 4
   _credits:
     _reveal:
       _fadeIn: 0.5
@@ -760,38 +667,6 @@ MonoBehaviour:
     _startDelaySeconds: 2
     _resumeAfterSeconds: 5
     _lineStepPixels: 110
-  _lab:
-    _prompts:
-      _fadeIn: 0.6
-      _fadeOut: 0.5
-      _slide: 10
-      _scaleFrom: 0.9
-      _springFrequency: 1.4
-      _springDamping: 0.6
-    _chip:
-      _fadeIn: 0.4
-      _fadeOut: 0.4
-      _slide: 6
-      _scaleFrom: 0.9
-      _springFrequency: 1.6
-      _springDamping: 0.7
-    _place:
-      _fadeIn: 0.8
-      _fadeOut: 1.2
-      _slide: 10
-      _scaleFrom: 0.95
-      _springFrequency: 1.4
-      _springDamping: 0.7
-    _board:
-      _fadeIn: 0.7
-      _fadeOut: 0.5
-      _slide: 8
-      _scaleFrom: 0.96
-      _springFrequency: 1.2
-      _springDamping: 0.7
-    _placeSeconds: 5
-    _promptDelay: 1.5
-    _learnedPush: 0.6
   _battery:
     _reveal:
       _fadeIn: 1.2
@@ -810,17 +685,28 @@ MonoBehaviour:
     _hudAspect: 2.3333
     _menuAspect: 1.7778
     _edgeMargin: 48
-  _letterCard:
-    _reveal:
-      _fadeIn: 0.35
-      _fadeOut: 0.75
-      _slide: 10
-      _scaleFrom: 0.98
-      _springFrequency: 1.1
-      _springDamping: 0.75
-    _appearDelay: 0.4
-    _charactersPerSecond: 42
-    _tickIntervalSeconds: 0.055
-    _holdAfterRevealSeconds: 8
-    _minHoldSeconds: 10
-    _voiceTailSeconds: 1.5
+  _databank:
+    _flipCollapseSeconds: 0.16
+    _flipOpenSeconds: 0.22
+    _flipLineShare: 0.02
+    _idleTurnDegreesPerSecond: 6
+    _idleResumeSeconds: 2.5
+    _dragDegreesPerPixel: 0.35
+    _stickDegreesPerSecond: 110
+    _pitchLimitDegrees: 30
+    _turnFollowSeconds: 0.12
+    _stageFieldOfView: 26
+    _stageFrameMargin: 1.25
+    _stageResolution: {x: 1720, y: 840}
+    _stagePosition: {x: 0, y: -4000, z: 0}
+    _wireMaterial: {fileID: 2100000, guid: 3652bba78b6499f46b3aa88a5fb63f39, type: 2}
+    _wireFirstPieceFade: 0.35
+    _keyColour: {r: 1, g: 0.93, b: 0.82, a: 1}
+    _keyIntensity: 1.6
+    _keyAngles: {x: 35, y: -40, z: 0}
+    _fillColour: {r: 0.62, g: 0.72, b: 0.92, a: 1}
+    _fillIntensity: 0.55
+    _fillAngles: {x: -10, y: 140, z: 0}
+    _printSkewDegrees: 1.4
+    _printAmberTint: {r: 1, g: 0.78, b: 0.42, a: 1}
+    _toastSeconds: 3
