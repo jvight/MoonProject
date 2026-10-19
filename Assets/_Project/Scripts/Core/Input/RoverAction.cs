@@ -13,5 +13,6 @@ namespace MoonProject.Core.Input
         Recenter = 5,
         Build = 6,
         Deconstruct = 7,
+        Lights = 8,
     }
 }

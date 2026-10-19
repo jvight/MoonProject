@@ -372,7 +372,8 @@ MonoBehaviour:
   _antennaDegreesPerAcceleration: 2.2
   _antennaMaxAngle: 22
   _headlampDownTilt: 7.5
-  _headlampIntensity: 165
-  _headlampRange: 18
+  _headlampIntensity: 55
+  _headlampRange: 13
   _headlampSpotAngle: 48
   _headlampInnerSpotAngle: 20
+  _lampSwitchSeconds: 0.25

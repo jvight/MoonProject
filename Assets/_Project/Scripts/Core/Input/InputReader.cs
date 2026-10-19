@@ -22,6 +22,7 @@ namespace MoonProject.Core.Input
         private readonly InputAction _winch;
         private readonly InputAction _jump;
         private readonly InputAction _recenter;
+        private readonly InputAction _lights;
         private readonly InputAction _build;
         private readonly InputAction _deconstruct;
         private readonly Action<InputAction.CallbackContext> _onPerformed;
@@ -45,6 +46,7 @@ namespace MoonProject.Core.Input
             _winch = _roverMap.FindAction("Winch", throwIfNotFound: true);
             _jump = _roverMap.FindAction("Jump", throwIfNotFound: true);
             _recenter = _roverMap.FindAction("Recenter", throwIfNotFound: true);
+            _lights = _roverMap.FindAction("Lights", throwIfNotFound: true);
             _build = _roverMap.FindAction("Build", throwIfNotFound: true);
             _deconstruct = _roverMap.FindAction("Deconstruct", throwIfNotFound: true);
             Menu = new MenuInput(actions.FindActionMap(MenuInput.MapName, throwIfNotFound: true));
@@ -143,6 +145,9 @@ namespace MoonProject.Core.Input
         /// <summary>The camera's recenter button (middle mouse, the right stick's click) went down this frame.</summary>
         public bool RecenterPressed => _recenter.WasPressedThisFrame();
 
+        /// <summary>The player switched 07's lamps on or off this frame (L, pad L3), in any mode.</summary>
+        public bool LightsPressed => _lights.WasPressedThisFrame();
+
         /// <summary>The build-mode button (B on keyboard, Y / buttonNorth on gamepad) went down this frame.</summary>
         public bool BuildPressed => _build.WasPressedThisFrame();
 
@@ -222,6 +227,8 @@ namespace MoonProject.Core.Input
                     return _jump;
                 case RoverAction.Recenter:
                     return _recenter;
+                case RoverAction.Lights:
+                    return _lights;
                 case RoverAction.Build:
                     return _build;
                 case RoverAction.Deconstruct:

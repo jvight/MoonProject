@@ -78,6 +78,15 @@
                     "initialStateCheck": false
                 },
                 {
+                    "name": "Lights",
+                    "type": "Button",
+                    "id": "44a63762-815b-494e-8830-65600c95466c",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
                     "name": "Build",
                     "type": "Button",
                     "id": "c4194b82-7f61-4d38-9a51-6e2b3c4d5e6f",
@@ -369,6 +378,28 @@
                     "processors": "",
                     "groups": "Gamepad",
                     "action": "Recenter",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "44e7057e-9ecb-46b4-b94d-34cf2418493d",
+                    "path": "<Keyboard>/l",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "Lights",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "219545ae-9c54-43fc-a2ed-3987d951f54b",
+                    "path": "<Gamepad>/leftStickPress",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "Lights",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
