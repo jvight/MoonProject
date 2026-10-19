@@ -66,29 +66,29 @@ namespace MoonProject.Gameplay
         [Range(0.2f, 2f)] [SerializeField] private float _deconstructRewindSeconds = 0.6f;
 
         [Tooltip("The take-down beam's colour: a soft, desaturated cool tone, not the build's amber-cyan.")]
-        [SerializeField] private Color _takeDownBeamColor = new Color(0.58f, 0.68f, 0.76f, 0.7f);
+        [SerializeField] private Color _takeDownBeamColor = new Color(0.8f, 0.9f, 0.97f, 0.9f);
 
         [Tooltip("Brightness (the glow material's intensity) of the take-down beam: low, so nothing near the piece " +
                  "clips to white (the build beam's own intensity is far higher).")]
-        [Range(0.02f, 1f)] [SerializeField] private float _takeDownBeamIntensity = 0.18f;
+        [Range(0.02f, 1f)] [SerializeField] private float _takeDownBeamIntensity = 0.3f;
 
         [Tooltip("Width of the take-down beam as a share of the build beam's: a thin, quiet line.")]
         [Range(0.1f, 1f)] [SerializeField] private float _takeDownBeamWidthShare = 0.5f;
 
         [Tooltip("Motes per second leaving the dissolving edge for 07 at the end of the hold (fewer earlier).")]
-        [Range(2f, 40f)] [SerializeField] private float _takeDownMoteRate = 12f;
+        [Range(2f, 40f)] [SerializeField] private float _takeDownMoteRate = 18f;
 
         [Tooltip("Smallest and largest mote, metres: they differ so the stream never reads as a field of identical dots.")]
-        [SerializeField] private Vector2 _takeDownMoteSize = new Vector2(0.025f, 0.065f);
+        [SerializeField] private Vector2 _takeDownMoteSize = new Vector2(0.05f, 0.12f);
 
         [Tooltip("Shortest and longest seconds a mote takes to reach 07's emitter.")]
         [SerializeField] private Vector2 _takeDownMoteSeconds = new Vector2(0.4f, 0.75f);
 
         [Tooltip("How bright the motes are (0..1 of the beam colour's alpha): soft, never clipping.")]
-        [Range(0.1f, 1f)] [SerializeField] private float _takeDownMoteBrightness = 0.5f;
+        [Range(0.1f, 1f)] [SerializeField] private float _takeDownMoteBrightness = 0.85f;
 
         [Tooltip("Most motes in flight at once.")]
-        [Range(8, 64)] [SerializeField] private int _takeDownMotePool = 32;
+        [Range(8, 64)] [SerializeField] private int _takeDownMotePool = 48;
 
         [Tooltip("Dust grains in the small settle where the piece stood once it is gone.")]
         [Range(4, 24)] [SerializeField] private int _takeDownDustCount = 10;

@@ -1195,6 +1195,13 @@ namespace MoonProject.Gameplay
                     continue;
                 }
 
+                if (placed.InstanceId == _controller.DeconstructTargetId)
+                {
+                    // The take-down owns the view while it runs: setting it back to the built state here would
+                    // re-weld every stage each frame, with the sparks and cues of a build.
+                    continue;
+                }
+
                 int newlySolid = view.SetPlacedState(placed.BuildProgress01, instant: false);
                 if (newlySolid > 0)
                 {
