@@ -152,6 +152,10 @@ namespace MoonProject.Audio
         [Tooltip("Tick volume scale when hot (cooler ticks are softer).")]
         [Range(0f, 1f)] [SerializeField] private float _tickVolume = 0.6f;
 
+        [Header("The call (opening v3)")]
+        [Tooltip("The carrier from the light beside Earth: level, facing swell, break-up and static.")]
+        [SerializeField] private CallCarrierSettings _call = new CallCarrierSettings();
+
         public float SilenceWidth => _silenceWidth;
         public float FarnessEase => _farnessEase;
         public float FarRadioDb => _farRadioDb;
@@ -194,5 +198,6 @@ namespace MoonProject.Audio
         public float TickGapJitter => _tickGapJitter;
         public float TickMinHeat => _tickMinHeat;
         public float TickVolume => _tickVolume;
+        public CallCarrierSettings Call => _call;
     }
 }

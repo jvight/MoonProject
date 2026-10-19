@@ -85,7 +85,7 @@ namespace MoonProject.Gameplay
 
         public MaterialStock Materials { get; private set; }
 
-        /// <summary>Cargo tuning (07's spares, the hold, the containers).</summary>
+        /// <summary>Cargo tuning (the hold, the containers).</summary>
         public CargoTuning Cargo => _cargo;
 
         /// <summary>07's cutter as its fitted kits and its start kit make it (docs/features/M3-26, opening-v2
@@ -237,7 +237,6 @@ namespace MoonProject.Gameplay
             _meshes = new GlowMeshSet();
             Materials = new MaterialStock(context.Events,
                 new CargoHold(context.Events, _materialCatalog, _cargo.HoldSlots));
-            Materials.Stow(_cargo.StarterItems);
             var save = context.Get<ISaveService>();
             var services = new GameplayServices(context.Events, context.Input, context.Get<ITerrainQuery>(),
                 context.Get<IWorldLayout>(), context.Get<IWorldAnchors>(), context.Get<IRoverState>(),
