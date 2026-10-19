@@ -33,6 +33,10 @@ namespace MoonProject.Gameplay
         [Tooltip("Metres around a built pad's centre within which 07, stopped, charges on it.")]
         [Range(0.5f, 4f)] [SerializeField] private float _padChargeRadius = 1.6f;
 
+        [Tooltip("Metres past a built pad's plate (its footprint's half-extents) 07 may still stand and count as on " +
+                 "the pad: the cutter socket takes the igniter there.")]
+        [Range(0f, 1.5f)] [SerializeField] private float _padPlateMargin = 0.3f;
+
         [Tooltip("The open crate whose cargo 07 scans for the pad's blueprint (B3) and then collects (B4).")]
         [SerializeField] private string _cargoCrate = "supply.lander.open";
 
@@ -118,6 +122,7 @@ namespace MoonProject.Gameplay
         public float ReserveCells => _reserveCells;
         public float PortCableReach => _portCableReach;
         public float PadChargeRadius => _padChargeRadius;
+        public float PadPlateMargin => _padPlateMargin;
         public string CargoCrate => _cargoCrate;
         public IReadOnlyList<GameObject> CargoFragments => _cargoFragments ?? Array.Empty<GameObject>();
         public IReadOnlyList<SupplyCache> Caches => _caches;

@@ -102,6 +102,8 @@ namespace MoonProject.Gameplay
 
         public bool CarriesIgniter => _kit.CarriesIgniter;
 
+        public bool OnPad => _kit.OnPad;
+
         public bool IgniterFitted => _kit.IgniterFitted;
 
         public bool FirstCharge => Port.Drawn;

@@ -322,7 +322,7 @@ namespace MoonProject.Gameplay
                     _landerPort, transform, _salvage.Tuning.ReachRadius, StartKit);
                 _battery.ConnectPads(opening);
                 PadLock = new PadLock(context.Events, _baseTuning, _building, _battery.Model, services.Rover,
-                    _openingTuning.PadChargeRadius);
+                    _openingTuning.PadChargeRadius, _openingTuning.PadPlateMargin);
                 BaseLamps = new BaseLamps(context.Events, _baseTuning, _building, sunlight);
                 return opening;
             }

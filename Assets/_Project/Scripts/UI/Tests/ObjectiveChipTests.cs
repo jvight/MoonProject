@@ -29,6 +29,7 @@ namespace MoonProject.UI.Tests
         [TestCase(OpeningKeys.DriveToLander, "None")]
         [TestCase(OpeningKeys.CollectParts, "None")]
         [TestCase(OpeningKeys.Charge, "None")]
+        [TestCase(OpeningKeys.ParkOnPad, "None")]
         [TestCase("", "None")]
         public void EveryStep_NamesItsVerb(string key, string expected)
         {

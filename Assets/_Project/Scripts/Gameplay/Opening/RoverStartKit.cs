@@ -45,6 +45,9 @@ namespace MoonProject.Gameplay
         /// <summary>The spare igniter is in the hold.</summary>
         public bool CarriesIgniter => _hold.HasPart(_igniter);
 
+        /// <summary>07 stands on a pad it built.</summary>
+        public bool OnPad => _docked();
+
         public bool CanFitIgniter => !IgniterFitted && CarriesIgniter && _docked();
 
         public RoverSystemState StateOf(RoverSystem system)

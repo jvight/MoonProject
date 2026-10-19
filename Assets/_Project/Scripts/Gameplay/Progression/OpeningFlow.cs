@@ -36,7 +36,10 @@ namespace MoonProject.Gameplay
                       (_game.CarriesIgniter || _game.IgniterFitted));
             _steps.Add(OpeningKeys.BuildPad, () => _game.Built(StructureIds.ChargingPad));
             _steps.Add(OpeningKeys.Charge, () => _game.FirstCharge);
-            _steps.Add(() => _game.CarriesIgniter ? OpeningKeys.FitIgniter : string.Empty, () => _game.IgniterFitted);
+            // The line says what the screen will accept: the cutter takes the igniter only on the pad's plate.
+            _steps.Add(() => !_game.CarriesIgniter ? string.Empty
+                    : _game.OnPad ? OpeningKeys.FitIgniter : OpeningKeys.ParkOnPad,
+                () => _game.IgniterFitted);
             _steps.Add(() => _game.ReserveSpent ? OpeningKeys.FindSolar : string.Empty,
                 () => _game.Knows(StructureIds.SolarArray));
             _steps.Add(() => _game.Covers(StructureIds.SolarArray) ? OpeningKeys.BuildSolar : OpeningKeys.CutOptics,
