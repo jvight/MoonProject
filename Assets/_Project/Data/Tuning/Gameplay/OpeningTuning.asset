@@ -18,6 +18,7 @@ MonoBehaviour:
   _reserveCells: 4
   _portCableReach: 10
   _padChargeRadius: 1.6
+  _padPlateMargin: 0.3
   _cargoCrate: supply.lander.open
   _cargoFragments:
   - {fileID: 8696612848487809347, guid: 66b25dee22c9770429dcf34fd5521062, type: 3}

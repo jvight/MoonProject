@@ -683,6 +683,10 @@
             "text": "Park on the pad to charge."
         },
         {
+            "key": "next.v2.park_on_pad",
+            "text": "Park on the charging pad."
+        },
+        {
             "key": "next.v2.fit_igniter",
             "text": "Fit the igniter to the cutter."
         },

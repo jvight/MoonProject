@@ -43,6 +43,11 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Metres south of the pad the autoplay bot lines up before it drives in.</summary>
         private const float BotLineUpMetres = -6f;
 
+        /// <summary>Metres past the plate's edge that count as on the pad (inside the 0.3 m margin), and not.</summary>
+        private const float InsideMargin = 0.2f;
+
+        private const float OutsideMargin = 0.45f;
+
         private const float LightThrottle = 0.15f;
         private const float HeldSteer = 0.8f;
         private const float PoseDegrees = 2f;
@@ -193,6 +198,41 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             Assert.IsTrue(docked, "07 docks on the pad though a light throttle is held");
             Assert.IsTrue(_rover.IsDocked, "a light touch of the wheel does not let 07 go from the dock");
+        }
+
+        [UnityTest]
+        [Timeout(200000)]
+        [PrebuildSetup(typeof(PlaythroughScene))]
+        [PostBuildCleanup(typeof(PlaythroughScene))]
+        public IEnumerator OnThePadMeansOnItsPlate_EdgeIncluded_NotAMetreAndAHalfFromItsCentre()
+        {
+            yield return Stage(0f);
+            StructureDefinition definition = _gameplay.Building.Catalog.Find(StructureIds.ChargingPad);
+            var terrain = _context.Get<ITerrainQuery>();
+            float edge = definition.Width * 0.5f;
+            Vector3 along = Vector3.right;
+
+            yield return PlaceAt(terrain, along * (edge + InsideMargin));
+            Assert.IsTrue(_gameplay.PadLock.OnPad, "just past the plate's edge, within the margin, is on the pad");
+            Assert.IsTrue(_gameplay.StartKit.OnPad, "and the cutter socket is reached there");
+
+            yield return PlaceAt(terrain, along * (edge + OutsideMargin));
+            Assert.IsFalse(_gameplay.PadLock.OnPad, "beyond the margin 07 is off the pad");
+            Assert.IsFalse(_gameplay.StartKit.OnPad);
+
+            yield return PlaceAt(terrain, Vector3.forward * (definition.Depth * 0.5f + InsideMargin));
+            Assert.IsTrue(_gameplay.PadLock.OnPad, "the plate's front and back edges count as well");
+
+            yield return PlaceAt(terrain, Vector3.zero);
+            Assert.IsTrue(_gameplay.PadLock.OnPad, "the centre is on the pad");
+        }
+
+        private IEnumerator PlaceAt(ITerrainQuery terrain, Vector3 offset)
+        {
+            Vector3 at = SurfaceRules.OnSurface(terrain, _centre.x + offset.x, _centre.z + offset.z);
+            _context.Get<IRoverPlacement>().PlaceAt(at, Quaternion.LookRotation(Vector3.forward, Vector3.up));
+            yield return null;
+            yield return null;
         }
 
         /// <summary>

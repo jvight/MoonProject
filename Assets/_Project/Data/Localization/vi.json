@@ -683,6 +683,10 @@
             "text": "Đỗ lên bệ để sạc."
         },
         {
+            "key": "next.v2.park_on_pad",
+            "text": "Đỗ lên bệ sạc."
+        },
+        {
             "key": "next.v2.fit_igniter",
             "text": "Lắp bộ đánh lửa vào mỏ cắt."
         },
