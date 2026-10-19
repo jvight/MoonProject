@@ -767,4 +767,22 @@ namespace MoonProject.Core.Events
 
         public Vector3 Position { get; }
     }
+
+    /// <summary>
+    /// One of the base's lamps began to come on at dusk (docs/design: the first nightfall's payoff): the lamp of
+    /// structure <see cref="InstanceId"/>, <see cref="Index"/> places along the base's lighting order (0 = the first).
+    /// Raised once per lamp as it starts easing up; audio can follow it.
+    /// </summary>
+    public readonly struct BaseLampLit
+    {
+        public BaseLampLit(int instanceId, int index)
+        {
+            InstanceId = instanceId;
+            Index = index;
+        }
+
+        public int InstanceId { get; }
+
+        public int Index { get; }
+    }
 }

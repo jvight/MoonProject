@@ -94,6 +94,9 @@ namespace MoonProject.Gameplay
         private float _buildProgress01;
         private float _deconstructProgress01;
         private float _targetLampIntensity;
+        private bool _lampsDriven;
+        private float _lampDrive;
+        private float _lampFlash;
 
         public string StructureId => _structureId;
 
@@ -112,6 +115,16 @@ namespace MoonProject.Gameplay
         public float LampIntensity { get; private set; }
 
         public bool LampsLit => LampIntensity > 0.01f;
+
+        /// <summary>
+        /// The base's lamps take over the glow (<see cref="BaseLamps"/>): it is <paramref name="level"/> (0..1) every
+        /// frame instead of full once built, with the completion flash on top.
+        /// </summary>
+        public void DriveLamps(float level)
+        {
+            _lampsDriven = true;
+            _lampDrive = level;
+        }
 
         public IReadOnlyList<Collider> Colliders => _colliders;
 
@@ -492,6 +505,7 @@ namespace MoonProject.Gameplay
                     _settleElapsed = 0f;
                     _lampCascadeElapsed = 0f;
                     LampIntensity = CompletionLampFlash;
+                    _lampFlash = CompletionLampFlash;
                     ApplyLampGlow(CompletionLampFlash);
                 }
             }
@@ -602,7 +616,16 @@ namespace MoonProject.Gameplay
 
             if (SolidStageCount == stageCount && (_lampGlows.Length > 0 || _statusLight != null))
             {
-                LampIntensity = Damp.Toward(LampIntensity, _targetLampIntensity, LampWarmHalfLife, deltaTime);
+                if (_lampsDriven)
+                {
+                    _lampFlash = Damp.Toward(_lampFlash, 0f, LampWarmHalfLife, deltaTime);
+                    LampIntensity = Mathf.Max(_lampDrive, _lampFlash);
+                }
+                else
+                {
+                    LampIntensity = Damp.Toward(LampIntensity, _targetLampIntensity, LampWarmHalfLife, deltaTime);
+                }
+
                 if (_lampCascadeElapsed >= 0f)
                 {
                     _lampCascadeElapsed += deltaTime;

@@ -48,6 +48,19 @@ MonoBehaviour:
   _dockSettledMetres: 0.03
   _dockSettledDegrees: 1
   _dockDriveOff: 0.4
+  _lampDuskAboveLastLightDegrees: 4
+  _lampDawnMarginDegrees: 1.5
+  _lampStaggerSeconds: 0.9
+  _lampRiseSeconds: 1.5
+  _lampFallSeconds: 2.5
+  _lampFlickerDepth: 0.4
+  _lampFlickerHertz: 6
+  _lampFlickerSeconds: 0.7
+  _lampOrder:
+  - charging_pad
+  - solar_array
+  - battery_bank
+  - antenna_mast
   _wallStagger: 0.06
   _wallRiseSeconds: 0.45
   _wallOvershoot: 1.2
