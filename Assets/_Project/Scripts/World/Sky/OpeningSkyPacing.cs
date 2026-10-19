@@ -8,7 +8,9 @@ namespace MoonProject.World
     /// The first lunar day follows the opening's progress, never a timer (opening v2 §9.2): the eclipse holds until
     /// the first charge on a built pad; the Sun then clears Earth and holds at golden hour until the base is powered;
     /// after power-on it sinks to last light, low over the rim, and holds there until a battery bank is ready for the
-    /// night; then the first sunset runs, and after nightfall the day cycle runs at its normal pace. A milestone
+    /// night. The moment the night is ready the first sunset runs, a watched beat rather than a wait: from wherever the
+    /// sink has brought the Sun to nightfall in one tuned length. After nightfall the day cycle runs at its normal
+    /// pace. A milestone
     /// replayed from a save snaps the clock to where that milestone leaves the Sun, with no transition. Plain logic:
     /// it only decides how far the <see cref="SunClock"/> may advance each frame.
     /// </summary>
@@ -24,6 +26,10 @@ namespace MoonProject.World
 
         private readonly SkyCycleSettings _settings;
 
+        // Clock time the first sunset starts from: where the Sun stood when the night was ready (until then, last
+        // light).
+        private float _sunsetFrom;
+
         public OpeningSkyPacing(SkyCycleSettings settings, SunClock clock)
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
@@ -36,6 +42,7 @@ namespace MoonProject.World
             GoldenHourTime = Mathf.Max(settings.GoldenHourSeconds, BreakoutTime);
             LastLightTime = FirstTimeAtOrBelow(clock, settings.LastLightElevation, GoldenHourTime);
             NightfallTime = FirstTimeAtOrBelow(clock, settings.NightfallElevation, LastLightTime);
+            _sunsetFrom = LastLightTime;
         }
 
         /// <summary>Clock time when the Sun's limb first breaks out from behind Earth after the opening eclipse.</summary>
@@ -69,12 +76,19 @@ namespace MoonProject.World
             }
 
             bool releasing = clock.IsHoldingEclipse;
+            bool nightWasReady = NightReady;
             FirstCharge = true;
             PowerOn |= milestone >= OpeningMilestone.PowerOn;
             NightReady |= milestone >= OpeningMilestone.NightReady;
             clock.ReleaseOpeningEclipse();
             if (!restored)
             {
+                if (NightReady && !nightWasReady && clock.TimeSeconds < LastLightTime)
+                {
+                    // The night is ready while the Sun is still sinking: the sunset starts here, not at last light.
+                    _sunsetFrom = Mathf.Max(clock.TimeSeconds, GoldenHourTime);
+                }
+
                 // The limb breaks out a breath after the first charge, however the clock stood in the hold.
                 float lead = BreakoutTime - _settings.EclipseBreakoutLead;
                 if (releasing && clock.TimeSeconds < lead)
@@ -145,9 +159,10 @@ namespace MoonProject.World
                 return GoldenHourTime;
             }
 
-            if (time < LastLightTime)
+            float sunset = NightReady ? _sunsetFrom : LastLightTime;
+            if (time < sunset)
             {
-                return LastLightTime;
+                return sunset;
             }
 
             return time < NightfallTime ? NightfallTime : float.PositiveInfinity;
@@ -165,14 +180,14 @@ namespace MoonProject.World
 
         private float Rate(float time)
         {
+            if (NightReady && time >= _sunsetFrom && time < NightfallTime)
+            {
+                return (NightfallTime - _sunsetFrom) / _settings.FirstSunsetSeconds;
+            }
+
             if (time >= GoldenHourTime && time < LastLightTime)
             {
                 return (LastLightTime - GoldenHourTime) / _settings.LastLightSinkSeconds;
-            }
-
-            if (time >= LastLightTime && time < NightfallTime)
-            {
-                return (NightfallTime - LastLightTime) / _settings.FirstSunsetSeconds;
             }
 
             return 1f;

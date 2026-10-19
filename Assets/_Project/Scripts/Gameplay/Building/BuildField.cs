@@ -270,8 +270,9 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// True when 07 is in <see cref="BuildModeState.Closed"/> and looking at any placed structure within
-        /// <see cref="BuildingTuning.WeldRange"/> that can be deconstructed by holding <c>Deconstruct</c>.
+        /// True while the build menu is open (07's builder is out) and 07 looks at a placed structure within
+        /// <see cref="BuildingTuning.WeldRange"/> that can be deconstructed by holding <c>Deconstruct</c>: the only time
+        /// its prompt shows, never while 07 merely rests by its pad.
         /// </summary>
         public bool TryGetDeconstructCandidate(out Vector3 position)
         {
@@ -326,13 +327,13 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// True when 07 is in <see cref="BuildModeState.Closed"/> and looking at any placed structure within
-        /// <see cref="BuildingTuning.WeldRange"/> that can be deconstructed by holding <c>Deconstruct</c>.
+        /// True while the build menu is open and 07 looks at a placed structure within
+        /// <see cref="BuildingTuning.WeldRange"/> (see <see cref="TryGetDeconstructCandidate"/>).
         /// </summary>
         public bool TryGetDeconstructHint(out Vector3 position)
         {
             if (_initialized &&
-                _controller.State == BuildModeState.Closed &&
+                _controller.State == BuildModeState.Menu &&
                 HoveredInstanceId > 0 &&
                 _placedBase.TryGetStructure(HoveredInstanceId, out _))
             {
@@ -552,6 +553,13 @@ namespace MoonProject.Gameplay
                     HideAllGhosts();
                     HoveredInstanceId = 0;
                     StepMenuState(nav, winch, excavatePressed, now);
+                    if (_controller.State == BuildModeState.Menu)
+                    {
+                        // With the builder out, a built piece in view can be taken down: its prompt shows here only.
+                        UpdateHovered();
+                        StepDeconstructTarget(deconstructHeld, deltaTime);
+                    }
+
                     break;
 
                 case BuildModeState.Placing:
@@ -568,7 +576,7 @@ namespace MoonProject.Gameplay
                 case BuildModeState.Closed:
                 default:
                     HideAllGhosts();
-                    StepClosedState(excavateHeld, deconstructHeld, deltaTime);
+                    StepClosedState(excavateHeld, deltaTime);
                     break;
             }
         }
@@ -780,7 +788,7 @@ namespace MoonProject.Gameplay
             }
         }
 
-        private void StepClosedState(bool excavateHeld, bool deconstructHeld, float deltaTime)
+        private void StepClosedState(bool excavateHeld, float deltaTime)
         {
             _lastNavSign = 0;
             _weldingInstanceId = 0;
@@ -800,6 +808,15 @@ namespace MoonProject.Gameplay
                 }
             }
 
+            // Deconstruct needs the builder out: held X does nothing outside build mode, and lets go of any target.
+            StepDeconstructTarget(false, deltaTime);
+        }
+
+        /// <summary>
+        /// Holds <c>Deconstruct</c> on the hovered piece: its progress shows on the view and resets when the target changes.
+        /// </summary>
+        private void StepDeconstructTarget(bool deconstructHeld, float deltaTime)
+        {
             int previousTarget = _controller.DeconstructTargetId;
             _controller.StepDeconstruct(
                 deltaTime,
