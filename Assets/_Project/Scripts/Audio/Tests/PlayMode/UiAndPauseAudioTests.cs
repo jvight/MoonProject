@@ -53,6 +53,8 @@ namespace MoonProject.Audio.PlayModeTests
                 (UiCueKind.CardShown, "ui_toast"), (UiCueKind.PromptShown, "ui_toast"),
                 (UiCueKind.HoldComplete, "ui_hold_complete"), (UiCueKind.PartPick, "part_pick"),
                 (UiCueKind.PartDrop, "part_drop"), (UiCueKind.PartRefuse, "part_refuse"),
+                (UiCueKind.DatabankPageFlip, "ui_relay_click"), (UiCueKind.DatabankChannelSettle, "ui_tube_thunk"),
+                (UiCueKind.DatabankListStep, "ui_tape_tick"),
             };
 
             foreach ((UiCueKind kind, string clip) in expected)

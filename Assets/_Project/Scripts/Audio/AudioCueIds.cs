@@ -44,6 +44,9 @@ namespace MoonProject.Audio
         public const string PartPick = "part_pick";
         public const string PartDrop = "part_drop";
         public const string PartRefuse = "part_refuse";
+        public const string UiRelayClick = "ui_relay_click";
+        public const string UiTubeThunk = "ui_tube_thunk";
+        public const string UiTapeTick = "ui_tape_tick";
         public const string PickupLift = "pickup_lift";
         public const string PickupClunk = "pickup_clunk";
         public const string RadioTune = "radio_tune";
