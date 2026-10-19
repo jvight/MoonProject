@@ -520,27 +520,6 @@ namespace MoonProject.Art.Editor
             }
             else if (modelPath.EndsWith("/Prop_OldLander.fbx", StringComparison.Ordinal))
             {
-                Material tanMat = LoadOrBuildMaterial(OldLanderTanEnamelMaterialPath);
-                Material strutMat = LoadOrBuildMaterial(OldLanderStrutMaterialPath);
-                ReplaceRendererSlotMaterial(root, "ThermalBoxes", R1MaterialRecipes.CreamEnamelSlot, tanMat);
-                ReplaceRendererSlotMaterial(root, "TvCamera", R1MaterialRecipes.CreamEnamelSlot, tanMat);
-                ReplaceRendererSlotMaterial(root, "LandingLegs", R1MaterialRecipes.CreamEnamelSlot, tanMat);
-
-                string[] strutChildren =
-                {
-                    "Spaceframe",
-                    "LandingLegs",
-                    "MastAndSolar",
-                    "Array_Hinge",
-                    "ScoopArm",
-                    "RemovedPartSpots",
-                };
-                for (int i = 0; i < strutChildren.Length; i++)
-                {
-                    ReplaceRendererSlotMaterial(root, strutChildren[i], R1MaterialRecipes.BareSteelSlot, strutMat);
-                    ReplaceRendererSlotMaterial(root, strutChildren[i], R1MaterialRecipes.GreyMetalSlot, strutMat);
-                }
-
                 AddOldLanderBoxColliders(root);
             }
             else if (modelPath.EndsWith("/Decal_OldLanderBlast.fbx", StringComparison.Ordinal))

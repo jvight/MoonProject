@@ -23,6 +23,45 @@ import r1kit  # noqa: E402
 from mathutils import Euler, Vector  # noqa: E402
 
 
+EXTENDED_R1_MATERIAL_SPECS = {
+    "R1_WhitePaint": {
+        "base_color": r1kit._srgb_to_linear("#E8EAE6"),
+        "wear_color": r1kit._srgb_to_linear("#C2C7CC"),
+        "dust_color": r1kit._srgb_to_linear("#8D8B86"),
+        "metallic": 0.02,
+        "roughness": 0.82,
+        "emission": (0.0, 0.0, 0.0, 1.0),
+        "emission_strength": 0.0,
+    },
+    "R1_TealMark": {
+        "base_color": r1kit._srgb_to_linear("#2F6E73"),
+        "wear_color": r1kit._srgb_to_linear("#A8BDC2"),
+        "dust_color": r1kit._srgb_to_linear("#788086"),
+        "metallic": 0.04,
+        "roughness": 0.65,
+        "emission": (0.0, 0.0, 0.0, 1.0),
+        "emission_strength": 0.0,
+    },
+    "R1_SilverFoil": {
+        "base_color": r1kit._srgb_to_linear("#C9CED2"),
+        "wear_color": r1kit._srgb_to_linear("#EBF0F5"),
+        "dust_color": r1kit._srgb_to_linear("#8A8E94"),
+        "metallic": 0.85,
+        "roughness": 0.45,
+        "emission": (0.0, 0.0, 0.0, 1.0),
+        "emission_strength": 0.0,
+    },
+}
+
+
+def ensure_extended_r1_materials() -> None:
+    """Register Era-P/Era-S palette slots in r1kit at runtime."""
+    for name, spec in EXTENDED_R1_MATERIAL_SPECS.items():
+        if name not in r1kit.ALLOWED_MATERIALS:
+            r1kit.ALLOWED_MATERIALS = tuple(r1kit.ALLOWED_MATERIALS) + (name,)
+        r1kit.MATERIAL_SPECS[name] = spec
+
+
 # ---------------------------------------------------------------------------
 # Pose helper: ~8-degree lander tilt toward the front-right (+60 deg) half-buried
 # footpad so the tilt and buried footpad read unmistakably from front & 3/4 views.
@@ -74,6 +113,7 @@ def _cyl_pt(radius: float, deg: float, y: float) -> tuple[float, float, float]:
 # ===========================================================================
 def build_prop_old_lander(out_fbx: Path) -> None:
     r1kit.reset_scene()
+    ensure_extended_r1_materials()
     r1kit.ensure_materials(use_vertex_color_shading=False)
     root = r1kit.create_empty("Prop_OldLander", None, (0.0, 0.0, 0.0))
 
@@ -91,7 +131,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
     upper_corners = [_cyl_pt(r_upper, a, y_upper) for a in corner_angles]
 
     # -----------------------------------------------------------------------
-    # A. Spaceframe (triangular aluminium truss, retro-thruster, tanks)
+    # A. Spaceframe (triangular bare-aluminium truss, retro-thruster, tanks)
     # -----------------------------------------------------------------------
     sf = r1kit.MeshBuilder("Spaceframe", pivot_u=(0.0, 0.85, 0.0))
 
@@ -102,16 +142,16 @@ def build_prop_old_lander(out_fbx: Path) -> None:
         p0_u = _pose_pt(upper_corners[i])
         p1_u = _pose_pt(upper_corners[j])
 
-        # Main lower perimeter aluminium tubes
-        sf.add_pipe(p0_l, p1_l, radius=0.036, mat="R1_GreyMetal", segments=10)
+        # Main lower perimeter bare-aluminium tubes
+        sf.add_pipe(p0_l, p1_l, radius=0.036, mat="R1_BareSteel", segments=10)
         # Secondary lower inner chord tubes
         p0_li = _pose_pt(_cyl_pt(r_lower * 0.70, corner_angles[i], y_lower - 0.06))
         p1_li = _pose_pt(_cyl_pt(r_lower * 0.70, corner_angles[j], y_lower - 0.06))
-        sf.add_pipe(p0_li, p1_li, radius=0.028, mat="R1_GreyMetal", segments=8)
+        sf.add_pipe(p0_li, p1_li, radius=0.028, mat="R1_BareSteel", segments=8)
         sf.add_pipe(p0_l, p0_li, radius=0.026, mat="R1_BareSteel", segments=8)
 
         # Upper perimeter triangle tubes
-        sf.add_pipe(p0_u, p1_u, radius=0.032, mat="R1_GreyMetal", segments=10)
+        sf.add_pipe(p0_u, p1_u, radius=0.032, mat="R1_BareSteel", segments=10)
 
         # Primary rising corner columns & V-diagonals
         sf.add_pipe(p0_l, p0_u, radius=0.034, mat="R1_BareSteel", segments=10)
@@ -122,8 +162,8 @@ def build_prop_old_lander(out_fbx: Path) -> None:
                 (lower_corners[i][2] + lower_corners[j][2]) * 0.5,
             )
         )
-        sf.add_pipe(mid_low, p0_u, radius=0.026, mat="R1_GreyMetal", segments=8)
-        sf.add_pipe(mid_low, p1_u, radius=0.026, mat="R1_GreyMetal", segments=8)
+        sf.add_pipe(mid_low, p0_u, radius=0.026, mat="R1_BareSteel", segments=8)
+        sf.add_pipe(mid_low, p1_u, radius=0.026, mat="R1_BareSteel", segments=8)
 
         # Machined aluminium corner gusset blocks at lower & upper vertices
         sf.add_bevel_box(
@@ -152,7 +192,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
         center_u=mast_base_u,
         radius=0.14,
         length=0.12,
-        mat="R1_GreyMetal",
+        mat="R1_BareSteel",
         axis_u="Y",
         segments=12,
         bevel=0.010,
@@ -166,7 +206,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
         radius=0.28,
         radius_top=0.24,
         length=0.34,
-        mat="R1_GreyMetal",
+        mat="R1_BareSteel",
         axis_u="Y",
         segments=16,
         bevel=0.014,
@@ -194,9 +234,9 @@ def build_prop_old_lander(out_fbx: Path) -> None:
             segments=8,
         )
 
-    # Spherical helium/propellant pressure tanks inside the open spaceframe
+    # Spherical helium/propellant pressure tanks inside the open spaceframe (bare metal & copper, no gold foil)
     tank_specs = (
-        (0.26, 0.88, -0.18, 0.16, "R1_GoldFoil"),
+        (0.26, 0.88, -0.18, 0.16, "R1_BareSteel"),
         (-0.26, 0.88, -0.18, 0.15, "R1_BareSteel"),
         (0.0, 0.86, -0.34, 0.14, "R1_Copper"),
     )
@@ -218,7 +258,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
             center_u=t_pos,
             major_radius=trad * 0.96,
             minor_radius=0.012,
-            mat="R1_GreyMetal",
+            mat="R1_BareSteel",
             axis_u="Y",
             major_segments=14,
             minor_segments=6,
@@ -244,7 +284,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
     sf.build_object(parent=root)
 
     # -----------------------------------------------------------------------
-    # B. LandingLegs (3 hinged A-frame landing legs + round crushable footpads;
+    # B. LandingLegs (3 hinged A-frame bare-aluminium landing legs + round crushable footpads;
     #    Leg 1 at +60 deg is half-buried below Y = 0 with disturbed regolith collar)
     # -----------------------------------------------------------------------
     legs = r1kit.MeshBuilder("LandingLegs", pivot_u=(0.0, 0.35, 0.0))
@@ -270,9 +310,9 @@ def build_prop_old_lander(out_fbx: Path) -> None:
 
         wrist_u = (foot_u[0] - rad_x * 0.04, foot_u[1] + 0.09, foot_u[2] - rad_z * 0.04)
 
-        # A-frame twin lower tubular struts
-        legs.add_pipe(h_left, wrist_u, radius=0.032, mat="R1_GreyMetal", segments=10)
-        legs.add_pipe(h_right, wrist_u, radius=0.032, mat="R1_GreyMetal", segments=10)
+        # A-frame twin lower tubular bare-aluminium struts
+        legs.add_pipe(h_left, wrist_u, radius=0.032, mat="R1_BareSteel", segments=10)
+        legs.add_pipe(h_right, wrist_u, radius=0.032, mat="R1_BareSteel", segments=10)
 
         # Crossbar between the A-frame legs
         mid_l = tuple(h_left[k] * 0.52 + wrist_u[k] * 0.48 for k in range(3))
@@ -288,7 +328,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
             leaf_width=0.075,
             leaf_thickness=0.018,
             rot_deg_u=_pose_rot((0.0, az_deg, 0.0)),
-            mat_body="R1_GreyMetal",
+            mat_body="R1_BareSteel",
             mat_pin="R1_BareSteel",
         )
 
@@ -296,13 +336,13 @@ def build_prop_old_lander(out_fbx: Path) -> None:
         c_up = _pose_pt(_cyl_pt(r_upper + 0.04, az_deg, y_upper - 0.04))
         shock_bot = tuple((mid_l[k] + mid_r[k]) * 0.5 + (wrist_u[k] - c_low[k]) * 0.18 for k in range(3))
         shock_mid = tuple(c_up[k] * 0.56 + shock_bot[k] * 0.44 for k in range(3))
-        legs.add_pipe(c_up, shock_mid, radius=0.042, mat="R1_GreyMetal", segments=10)
+        legs.add_pipe(c_up, shock_mid, radius=0.042, mat="R1_BareSteel", segments=10)
         legs.add_pipe(shock_mid, shock_bot, radius=0.030, mat="R1_BareSteel", segments=10)
         legs.add_cylinder(
             center_u=shock_mid,
             radius=0.046,
             length=0.05,
-            mat="R1_GreyMetal",
+            mat="R1_BareSteel",
             axis_u="Y",
             segments=10,
             bevel=0.005,
@@ -310,14 +350,14 @@ def build_prop_old_lander(out_fbx: Path) -> None:
             rot_deg_u=_pose_rot((25.0, az_deg, 0.0)),
         )
 
-        # Round crushable honeycomb aluminium footpad
+        # Round crushable honeycomb bare-aluminium footpad (no gold foil or cream)
         pad_rot = (0.0, az_deg, 0.0) if not is_buried else (-5.0, az_deg, -6.0)
         legs.add_cylinder(
             center_u=(foot_u[0], foot_u[1] - 0.030, foot_u[2]),
             radius=0.22,
             radius_top=0.26,
             length=0.090,
-            mat="R1_GoldFoil",
+            mat="R1_BareSteel",
             axis_u="Y",
             segments=18,
             bevel=0.012,
@@ -329,7 +369,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
             radius=0.26,
             radius_top=0.14,
             length=0.060,
-            mat="R1_CreamEnamel",
+            mat="R1_BareSteel",
             axis_u="Y",
             segments=18,
             bevel=0.008,
@@ -340,7 +380,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
             center_u=(foot_u[0], foot_u[1] + 0.012, foot_u[2]),
             major_radius=0.255,
             minor_radius=0.018,
-            mat="R1_GreyMetal",
+            mat="R1_BareSteel",
             axis_u="Y",
             major_segments=18,
             minor_segments=8,
@@ -390,7 +430,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
     m_bot = _pose_pt((0.0, 1.40, 0.0))
     m_mid = _pose_pt((0.0, 2.18, 0.0))
     m_top = _pose_pt((0.0, 2.84, 0.0))
-    mast.add_pipe(m_bot, m_mid, radius=0.046, mat="R1_GreyMetal", segments=12)
+    mast.add_pipe(m_bot, m_mid, radius=0.046, mat="R1_BareSteel", segments=12)
     mast.add_pipe(m_mid, m_top, radius=0.038, mat="R1_BareSteel", segments=12)
 
     for ym in (1.60, 1.90, 2.20, 2.48, 2.74):
@@ -417,7 +457,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
     mast.add_bevel_box(
         center_u=gimbal_u,
         size_u=(0.24, 0.16, 0.18),
-        mat="R1_GreyMetal",
+        mat="R1_BareSteel",
         bevel=0.014,
         segments=1,
         rot_deg_u=_pose_rot(),
@@ -471,7 +511,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
     mast.add_bevel_box(
         center_u=_pose_pt(sp_center_local),
         size_u=(0.76, 0.036, 0.56),
-        mat="R1_GreyMetal",
+        mat="R1_BareSteel",
         bevel=0.008,
         segments=1,
         rot_deg_u=sp_rot,
@@ -528,7 +568,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
         center_u=array_hinge_pivot_u,
         radius=0.068,
         length=0.048,
-        mat="R1_GreyMetal",
+        mat="R1_BareSteel",
         axis_u="X",
         segments=12,
         bevel=0.005,
@@ -538,7 +578,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
     array_hinge.add_bevel_box(
         center_u=_pose_pt(pa_center_local),
         size_u=(0.68, 0.048, 0.74),
-        mat="R1_GreyMetal",
+        mat="R1_BareSteel",
         bevel=0.010,
         segments=1,
         rot_deg_u=pa_rot,
@@ -546,7 +586,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
     array_hinge.add_bevel_box(
         center_u=_pose_pt((pa_center_local[0], pa_center_local[1] + 0.012, pa_center_local[2] + 0.014)),
         size_u=(0.60, 0.036, 0.66),
-        mat="R1_CreamEnamel",
+        mat="R1_WhitePaint",
         bevel=0.006,
         segments=1,
         rot_deg_u=pa_rot,
@@ -579,7 +619,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
     cam.add_bevel_box(
         center_u=_pose_pt((cam_x, 1.22, cam_z)),
         size_u=(0.18, 0.10, 0.18),
-        mat="R1_GreyMetal",
+        mat="R1_BareSteel",
         bevel=0.010,
         segments=1,
         rot_deg_u=_pose_rot((0.0, 20.0, 0.0)),
@@ -589,7 +629,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
         radius=0.078,
         radius_top=0.068,
         length=0.28,
-        mat="R1_CreamEnamel",
+        mat="R1_WhitePaint",
         axis_u="Y",
         segments=14,
         bevel=0.008,
@@ -611,7 +651,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
     cam.add_bevel_box(
         center_u=_pose_pt((cam_x, 1.67, cam_z)),
         size_u=(0.15, 0.22, 0.16),
-        mat="R1_CreamEnamel",
+        mat="R1_WhitePaint",
         bevel=0.012,
         segments=1,
         rot_deg_u=_pose_rot((0.0, hood_yaw, 0.0)),
@@ -621,7 +661,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
     cam.add_bevel_box(
         center_u=_pose_pt((cam_x + visor_off_x, 1.71, cam_z + visor_off_z)),
         size_u=(0.16, 0.12, 0.12),
-        mat="R1_GreyMetal",
+        mat="R1_BareSteel",
         bevel=0.008,
         segments=1,
         rot_deg_u=_pose_rot((0.0, hood_yaw, 0.0)),
@@ -648,7 +688,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
     scoop.add_bevel_box(
         center_u=_pose_pt(base_s),
         size_u=(0.16, 0.14, 0.16),
-        mat="R1_GreyMetal",
+        mat="R1_BareSteel",
         bevel=0.010,
         segments=1,
         rot_deg_u=_pose_rot((0.0, -14.0, 0.0)),
@@ -679,7 +719,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
         up_b = _pose_pt((p_b[0] - 0.03, p_b[1] + 0.055, p_b[2]))
         dn_b = _pose_pt((p_b[0] + 0.03, p_b[1] - 0.055, p_b[2]))
         scoop.add_strut(up_a, dn_b, width=0.030, thickness=0.022, mat="R1_BareSteel", bevel=0.003)
-        scoop.add_strut(dn_a, up_b, width=0.030, thickness=0.022, mat="R1_GreyMetal", bevel=0.003)
+        scoop.add_strut(dn_a, up_b, width=0.030, thickness=0.022, mat="R1_BareSteel", bevel=0.003)
         scoop.add_cylinder(
             center_u=_pose_pt(((p_a[0] + p_b[0]) * 0.5, (p_a[1] + p_b[1]) * 0.5, (p_a[2] + p_b[2]) * 0.5)),
             radius=0.018,
@@ -697,7 +737,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
     scoop.add_bevel_box(
         center_u=_pose_pt(tip_u),
         size_u=(0.13, 0.10, 0.18),
-        mat="R1_OrangeStripe",
+        mat="R1_TealMark",
         bevel=0.008,
         segments=1,
         rot_deg_u=scoop_rot,
@@ -714,7 +754,8 @@ def build_prop_old_lander(out_fbx: Path) -> None:
     scoop.build_object(parent=root)
 
     # -----------------------------------------------------------------------
-    # F. ThermalBoxes (Sun-faded white paint turned tan/brown from decades of sunlight;
+    # F. ThermalBoxes (Chalky white thermal paint R1_WhitePaint chalked toward grey-tan,
+    #    with a small silver mirror patch R1_SilverFoil topping each compartment;
     #    Compartment A centered on the front (+Z) bay between Leg 1 & Leg 2 so its
     #    "S-3" stencil is 100% unobstructed by leg shock struts!)
     # -----------------------------------------------------------------------
@@ -726,7 +767,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
     tboxes.add_bevel_box(
         center_u=_pose_pt(box_a_center),
         size_u=(0.50, 0.44, 0.34),
-        mat="R1_CreamEnamel",
+        mat="R1_WhitePaint",
         bevel=0.016,
         segments=2,
         rot_deg_u=box_a_rot,
@@ -734,7 +775,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
     tboxes.add_bevel_box(
         center_u=_pose_pt((box_a_center[0], box_a_center[1] + 0.225, box_a_center[2])),
         size_u=(0.42, 0.028, 0.26),
-        mat="R1_GoldFoil",
+        mat="R1_SilverFoil",
         bevel=0.005,
         segments=1,
         rot_deg_u=box_a_rot,
@@ -754,7 +795,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
     tboxes.add_bevel_box(
         center_u=_pose_pt(box_b_center),
         size_u=(0.50, 0.42, 0.34),
-        mat="R1_CreamEnamel",
+        mat="R1_WhitePaint",
         bevel=0.016,
         segments=2,
         rot_deg_u=box_b_rot,
@@ -762,7 +803,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
     tboxes.add_bevel_box(
         center_u=_pose_pt((box_b_center[0], box_b_center[1] + 0.215, box_b_center[2])),
         size_u=(0.42, 0.028, 0.26),
-        mat="R1_GoldFoil",
+        mat="R1_SilverFoil",
         bevel=0.005,
         segments=1,
         rot_deg_u=box_b_rot,
@@ -792,7 +833,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
         stencil.add_bevel_box(
             center_u=_pose_pt((cx, cy, cz)),
             size_u=(w, h, 0.016),
-            mat="R1_GreyMetal",
+            mat="R1_Rubber",
             bevel=0.002,
             segments=1,
             rot_deg_u=box_a_rot,
@@ -835,7 +876,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
     removed.add_bevel_box(
         center_u=_pose_pt(s1_center),
         size_u=(0.28, 0.24, 0.026),
-        mat="R1_SagePatch",
+        mat="R1_TealMark",
         bevel=0.004,
         segments=1,
         rot_deg_u=s1_rot,
@@ -894,7 +935,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
     removed.add_bevel_box(
         center_u=_pose_pt((s2_center[0], s2_center[1], s2_center[2])),
         size_u=(0.12, 0.28, 0.032),
-        mat="R1_GreyMetal",
+        mat="R1_BareSteel",
         bevel=0.005,
         segments=1,
         rot_deg_u=s2_rot,
@@ -934,7 +975,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
     r1kit.apply_triplanar_uvs(root)
     r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(root, footprint_radius=1.65)
-    _boost_weathering(root, extra_dust=0.24, extra_wear=0.10, darken_ao=0.88)
+    _boost_weathering(root, extra_dust=0.28, extra_wear=0.18, darken_ao=0.88)
     r1kit.export_fbx(root, out_fbx, bake_space_transform=False)
     print(f"Exported {out_fbx}")
 
@@ -945,7 +986,7 @@ def _boost_weathering(
     extra_wear: float = 0.12,
     darken_ao: float = 0.88,
 ) -> None:
-    """Enhance vertex-color edge wear (G) and dust (B) for decades-old lunar weathering."""
+    """Enhance vertex-color edge wear (G) and dust (B) for decades-old lunar weathering (chalking white paint toward grey-tan)."""
     strut_meshes = {"Spaceframe", "LandingLegs", "MastAndSolar", "ScoopArm", "RemovedPartSpots"}
     for obj in r1kit.collect_hierarchy(root):
         if obj.type != "MESH" or obj.data is None or not obj.data.color_attributes:
@@ -954,7 +995,7 @@ def _boost_weathering(
         attr = obj.data.color_attributes[0]
         for item in attr.data:
             r, g, b, a = item.color
-            new_g = (g * 0.52) if is_strut_mesh else (g * 1.12 + extra_wear)
+            new_g = (g * 0.52) if is_strut_mesh else (g * 1.18 + extra_wear)
             item.color = (
                 max(0.16, min(1.0, r * darken_ao)),
                 max(0.0, min(1.0, new_g)),
