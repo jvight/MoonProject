@@ -208,6 +208,9 @@ namespace MoonProject.UI
         [Range(2f, 15f)]
         [SerializeField] private float _bootMaxSeconds = 8f;
 
+        [Tooltip("The Outsight Worlds studio splash that plays in the boot's dark before the title fades in.")]
+        [SerializeField] private BootSplashSettings _splash = new BootSplashSettings();
+
         [Tooltip("How much of the menu blur the world takes behind the title (the pause takes all of it).")]
         [Range(0f, 1f)]
         [SerializeField] private float _backdropWeight = 0.55f;
@@ -538,6 +541,8 @@ namespace MoonProject.UI
 
         public float BootMaxSeconds => _bootMaxSeconds;
 
+        public BootSplashSettings Splash => _splash;
+
         public float HandOffSeconds => _handOffSeconds;
 
         public float MoonTurnPeriodSeconds => _moonTurnPeriodSeconds;
@@ -706,9 +711,15 @@ namespace MoonProject.UI
 
         public string Validate()
         {
-            if (_reveal == null || _curtain == null)
+            if (_reveal == null || _curtain == null || _splash == null)
             {
-                return "title reveal or curtain is missing";
+                return "title reveal, curtain or boot splash is missing";
+            }
+
+            string splash = _splash.Validate();
+            if (splash != null)
+            {
+                return splash;
             }
 
             if (_moonTurnPeriodSeconds <= 0f || _morsePeriodSeconds <= 0f || _eyeBlinkPeriodSeconds <= 0f ||

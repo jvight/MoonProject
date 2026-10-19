@@ -22,7 +22,7 @@ namespace MoonProject.UI.Editor
             if (existing != null)
             {
                 int added = existing.Prompts.AddMissingDefaults();
-                bool wired = AssignWireMaterial(existing);
+                bool wired = AssignWireMaterial(existing) | AssignSplashLayers(existing);
                 if (added > 0 || wired)
                 {
                     EditorUtility.SetDirty(existing);
@@ -35,8 +35,35 @@ namespace MoonProject.UI.Editor
 
             var created = ScriptableObject.CreateInstance<UiTuning>();
             AssignWireMaterial(created);
+            AssignSplashLayers(created);
             GeneratedAssets.CreateOrReplace(created, UiAssetPaths.Tuning);
             Debug.Log($"{BuilderPath}: created {UiAssetPaths.Tuning} with default values");
+        }
+
+        /// <summary>Points the boot splash at its four studio layers; true when any changed.</summary>
+        private static bool AssignSplashLayers(UiTuning tuning)
+        {
+            var serialized = new SerializedObject(tuning);
+            bool changed = false;
+            foreach (string layer in UiAssetPaths.SplashLayers)
+            {
+                string path = UiAssetPaths.SplashLayer(layer);
+                var image = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+                if (image == null)
+                {
+                    throw new System.InvalidOperationException($"{BuilderPath}: the splash layer {path} is missing.");
+                }
+
+                SerializedProperty property = serialized.FindProperty("_title._splash._" + layer);
+                if (property.objectReferenceValue != image)
+                {
+                    property.objectReferenceValue = image;
+                    changed = true;
+                }
+            }
+
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            return changed;
         }
 
         /// <summary>Points the databank at the wireframe material; true when it changed.</summary>
