@@ -515,6 +515,7 @@ namespace MoonProject.Gameplay
                 _targetLampIntensity = 0f;
                 LampIntensity = 0f;
                 _lampCascadeElapsed = -1f;
+                ApplyLampGlow(0f);
                 if (_statusLight != null)
                 {
                     _statusLight.enabled = false;
