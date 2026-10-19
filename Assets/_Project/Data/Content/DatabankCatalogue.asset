@@ -265,7 +265,7 @@ MonoBehaviour:
     _model: {fileID: 0}
     _hiddenNodes: []
     _framingYaw: 0
-    _print: {fileID: 0}
+    _print: {fileID: 2800000, guid: f6940f5b8b89d88459bfa0900db39f9a, type: 3}
     _unlock:
       _kind: 0
       _target: 
@@ -282,7 +282,7 @@ MonoBehaviour:
     _model: {fileID: 0}
     _hiddenNodes: []
     _framingYaw: 0
-    _print: {fileID: 0}
+    _print: {fileID: 2800000, guid: 3a541fcaff60b124b801b1e505c7aff1, type: 3}
     _unlock:
       _kind: 1
       _target: flag
@@ -299,7 +299,7 @@ MonoBehaviour:
     _model: {fileID: 0}
     _hiddenNodes: []
     _framingYaw: 0
-    _print: {fileID: 0}
+    _print: {fileID: 2800000, guid: 9a93aa3754a565747b47eadecb6a3048, type: 3}
     _unlock:
       _kind: 1
       _target: kestrel3
@@ -316,7 +316,7 @@ MonoBehaviour:
     _model: {fileID: 0}
     _hiddenNodes: []
     _framingYaw: 0
-    _print: {fileID: 0}
+    _print: {fileID: 2800000, guid: 649735cf5a96d114080ba5606ce249b7, type: 3}
     _unlock:
       _kind: 3
       _target: LanderCargo
