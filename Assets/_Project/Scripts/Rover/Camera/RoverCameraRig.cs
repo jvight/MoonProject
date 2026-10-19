@@ -426,10 +426,14 @@ namespace MoonProject.Rover
             Vector3 desiredEye = follow + (back * Mathf.Cos(pitchRad) + Vector3.up * Mathf.Sin(pitchRad)) * radius;
             float rayReach = SightReach(follow, desiredEye, _tuning.CameraRadius);
             float effectiveDist = rayReach;
+            // The head hides only for a lens that is really that close: a prop beside 07 (the charging post) cuts the
+            // sight line short without bringing the camera in, and 07's head must not vanish from a view that shows it.
+            float headDist = rayReach;
             if (!snap && _camera.PreviousStateIsValid && _viewCamera != null)
             {
                 float liveDist = Vector3.Distance(_viewCamera.transform.position, _rover.Position);
                 effectiveDist = Mathf.Min(rayReach, liveDist);
+                headDist = liveDist;
             }
 
             float wanted = Mathf.InverseLerp(_tuning.WallLiftStartDistance, _tuning.WallLiftFullDistance, effectiveDist);
@@ -447,7 +451,7 @@ namespace MoonProject.Rover
             float fadeThreshold = _headHidden
                 ? _tuning.HeadFadeStartDistance + _tuning.HeadFadeHysteresis
                 : _tuning.HeadFadeStartDistance;
-            SetHeadHidden(effectiveDist < fadeThreshold);
+            SetHeadHidden(headDist < fadeThreshold);
         }
 
         private void Update()

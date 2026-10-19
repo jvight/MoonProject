@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using UnityEngine;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 
 namespace MoonProject.Gameplay
 {
@@ -9,14 +10,20 @@ namespace MoonProject.Gameplay
     /// The dock lock on a charging pad 07 built (docs/design/opening-v2.md §5: DockLock rebound to the built pad, the
     /// owner's favourite charge moment): the pad's four <c>TotemBar_n</c> are the lock's walls, sunk at rest and rising
     /// staggered as 07 starts charging on it, and its four <c>Stage_n</c> lamps fill one per quarter of the charge,
-    /// tinting toward gold when full. The timing and the beats are <see cref="DockLock"/>'s, unchanged. Reads the pad's
-    /// nodes once each time 07 comes to a different pad; allocation-free per frame otherwise.
+    /// tinting toward gold when full. The timing and the beats are <see cref="DockLock"/>'s, unchanged, but they begin
+    /// once 07 has eased onto the pad's centre line and heading (the rover does the easing, asked by
+    /// <see cref="RoverDockChanged"/>); a touch of the wheel lets 07 go at once. Reads the pad's nodes once each time
+    /// 07 comes to a different pad; allocation-free per frame otherwise.
     /// </summary>
     public sealed class PadLock
     {
         private const string BarPrefix = "TotemBar_";
         private const string StagePrefix = "Stage_";
 
+        /// <summary>Metres above the pad's centre a cast down for its deck starts.</summary>
+        private const float DockProbeHeight = 3f;
+
+        private readonly EventBus _events;
         private readonly DockLock _lock;
         private readonly BaseTuning _tuning;
         private readonly BuildField _building;
@@ -28,6 +35,10 @@ namespace MoonProject.Gameplay
         private readonly EmissionGlow[] _stages = new EmissionGlow[DockLock.Walls];
         private readonly float[] _stageLevels = new float[DockLock.Walls];
         private int _pad = -1;
+        private bool _docked;
+        private bool _settled;
+        private Vector3 _dockPoint;
+        private float _dockYaw;
 
         /// <param name="radius">Metres around a pad's centre within which 07 is on it.</param>
         public PadLock(EventBus events, BaseTuning tuning, BuildField building, BatteryModel battery,
@@ -38,6 +49,7 @@ namespace MoonProject.Gameplay
             _battery = battery ?? throw new ArgumentNullException(nameof(battery));
             _rover = rover ?? throw new ArgumentNullException(nameof(rover));
             _radius = radius;
+            _events = events ?? throw new ArgumentNullException(nameof(events));
             _lock = new DockLock(events, tuning);
         }
 
@@ -55,10 +67,12 @@ namespace MoonProject.Gameplay
 
         public void Step(float deltaTime)
         {
-            int pad = PadUnder(out Vector3 centre);
+            int pad = PadUnder(out StructurePose pose);
+            Vector3 centre = pose.Position;
             OnPad = pad >= 0;
             if (pad != _pad && !_lock.Raised)
             {
+                Release();
                 Rest();
                 _pad = pad >= 0 && Read(pad) ? pad : -1;
             }
@@ -68,8 +82,11 @@ namespace MoonProject.Gameplay
                 return;
             }
 
-            bool charging = _battery.IsCharging && _battery.Charger == ChargerKind.Pad;
-            _lock.Step(pad == _pad, charging, _battery.Charge, _battery.Cells, centre, deltaTime);
+            bool charging = _battery.IsCharging && _battery.Charger == ChargerKind.Pad && pad == _pad;
+            bool touched = _rover.DriveInput.magnitude > _tuning.DockTouch;
+            StepDock(charging && !touched, pose);
+            _lock.Step(pad == _pad, charging && !touched && (_settled || _lock.Raised), _battery.Charge,
+                _battery.Cells, centre, deltaTime);
             Color tint = Color.Lerp(_tuning.StripCharging, _tuning.StripFull, _lock.Sweep);
             for (int i = 0; i < DockLock.Walls; i++)
             {
@@ -82,8 +99,67 @@ namespace MoonProject.Gameplay
             }
         }
 
+        /// <summary>
+        /// Holds 07 on the pad while it charges: asks the rover to ease it onto the pad's centre line and heading, then
+        /// notes when it has settled there; lets it go when charging stops or the wheel is touched.
+        /// </summary>
+        private void StepDock(bool dock, StructurePose pose)
+        {
+            if (!dock)
+            {
+                Release();
+                return;
+            }
+
+            if (!_docked)
+            {
+                if (!TryDockPoint(pose.Position, out _dockPoint))
+                {
+                    return;
+                }
+
+                _docked = true;
+                _dockYaw = Mathf.Repeat(pose.Yaw + _tuning.DockHeadingOffset, 360f);
+                _events.Publish(new RoverDockChanged(true, _dockPoint, Quaternion.Euler(0f, _dockYaw, 0f)));
+            }
+
+            Vector3 off = _rover.Position - _dockPoint;
+            off.y = 0f;
+            float turned = Mathf.Abs(Mathf.DeltaAngle(_rover.Rotation.eulerAngles.y, _dockYaw));
+            _settled = off.magnitude <= _tuning.DockSettledMetres && turned <= _tuning.DockSettledDegrees;
+        }
+
+        /// <summary>07 goes free of the dock (when it held it).</summary>
+        private void Release()
+        {
+            if (!_docked)
+            {
+                return;
+            }
+
+            _docked = false;
+            _settled = false;
+            _events.Publish(new RoverDockChanged(false, _dockPoint, Quaternion.Euler(0f, _dockYaw, 0f)));
+        }
+
+        /// <summary>The top of the pad at its centre, where 07's pivot rests; false (logged) when there is none.</summary>
+        private bool TryDockPoint(Vector3 centre, out Vector3 point)
+        {
+            Vector3 from = centre + Vector3.up * DockProbeHeight;
+            if (Physics.Raycast(from, Vector3.down, out RaycastHit hit, DockProbeHeight * 2f, Layers.DriveableMask,
+                    QueryTriggerInteraction.Ignore))
+            {
+                point = hit.point;
+                return true;
+            }
+
+            Debug.LogError($"{nameof(PadLock)}: no ground or pad deck under the pad at {centre} to dock 07 on.");
+            point = centre;
+            return false;
+        }
+
         /// <summary>The built pad 07 is on, by instance id, or -1.</summary>
-        private int PadUnder(out Vector3 centre)
+        private int PadUnder(out StructurePose pose)
         {
             PlacedBase placed = _building.PlacedBase;
             float radiusSq = _radius * _radius;
@@ -93,12 +169,12 @@ namespace MoonProject.Gameplay
                 if (pad.IsBuilt && pad.Definition.Id == StructureIds.ChargingPad &&
                     SurfaceRules.HorizontalDistanceSquared(_rover.Position, pad.Pose.Position) <= radiusSq)
                 {
-                    centre = pad.Pose.Position;
+                    pose = pad.Pose;
                     return pad.InstanceId;
                 }
             }
 
-            centre = Vector3.zero;
+            pose = default;
             return -1;
         }
 
