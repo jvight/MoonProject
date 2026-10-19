@@ -25,6 +25,8 @@ namespace MoonProject.Gameplay.Tests
 
         /// <summary>Where Art's R1 story props are built (the basin's story scans lie on them).</summary>
         private const string PropsFolder = "Assets/_Project/Generated/Art/R1/Models/Props";
+        private const string RoverFolder = "Assets/_Project/Generated/Art/R1/Models/Rover";
+        private const string WreckFolder = "Assets/_Project/Generated/Art/R1/Models/Wreck";
 
         private static readonly int ProgressId = Shader.PropertyToID("_ScanProgress");
         private static readonly int DissolveId = Shader.PropertyToID("_Dissolve");
@@ -105,9 +107,7 @@ namespace MoonProject.Gameplay.Tests
 
             foreach (StoryScan story in scans.Stories)
             {
-                string ruinPath = RuinsFolder + "/" + story.HostId + ".prefab";
-                GameObject ruin = Instance(AssetDatabase.LoadAssetAtPath<GameObject>(ruinPath) != null ? ruinPath
-                    : PropsFolder + "/" + story.HostId + ".prefab");
+                GameObject ruin = Instance(StoryHostPrefab(story));
                 Transform node = Descendant(ruin.transform, story.Node);
                 Assert.IsNotNull(node, $"{story.HostId} has {story.Node}");
                 var target = new GameObject(story.FragmentId).transform;
@@ -143,6 +143,28 @@ namespace MoonProject.Gameplay.Tests
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
             Assert.IsNotNull(prefab, path);
             return Made(Object.Instantiate(prefab));
+        }
+
+        /// <summary>
+        /// Art's prefab behind a story scan's host: a ruin piece, a basin prop, a machine (the elders), or the wreck
+        /// part a World host (an empty parent) stands over, named after the scan's node.
+        /// </summary>
+        private static string StoryHostPrefab(StoryScan story)
+        {
+            string[] candidates =
+            {
+                RuinsFolder + "/" + story.HostId + ".prefab", PropsFolder + "/" + story.HostId + ".prefab",
+                RoverFolder + "/" + story.HostId + ".prefab", WreckFolder + "/" + story.Node + ".prefab",
+            };
+            foreach (string path in candidates)
+            {
+                if (AssetDatabase.LoadAssetAtPath<GameObject>(path) != null)
+                {
+                    return path;
+                }
+            }
+
+            return candidates[1];
         }
 
         private static Transform Descendant(Transform root, string name)
