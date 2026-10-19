@@ -1340,7 +1340,7 @@
         },
         {
             "key": "db.card_kessler_arai.name",
-            "text": "Kessler–Arai Field Systems"
+            "text": "KESSLER–ARAI"
         },
         {
             "key": "db.card_kessler_arai.readout",
@@ -1352,7 +1352,7 @@
         },
         {
             "key": "db.card_ilc.name",
-            "text": "International Lunar Commission"
+            "text": "ILC"
         },
         {
             "key": "db.card_ilc.readout",
@@ -1392,7 +1392,7 @@
         },
         {
             "key": "scan.scout3.note",
-            "text": "Landed here in 1967, two years before anyone walked on the Moon. A crew came over in '71, took its camera and scoop home to see what the Moon does to metal, and left the rest. It got here before any of us."
+            "text": "Landed here in 1967, two years before anyone walked on the Moon. A '71 crew took its camera and scoop home to see what the Moon does to metal, and left the rest. It got here before any of us."
         },
         {
             "key": "elder.06.manifest",
