@@ -49,15 +49,11 @@ namespace MoonProject.Rover
         [Range(0.2f, 4f)]
         [SerializeField] private float _lampRampSeconds = 0.45f;
 
-        [Header("Title and the fade to black")]
-        [Tooltip("Seconds New Game takes to fade the title's picture to black before the wake begins; it runs with " +
-                 "the title's own switch-off.")]
+        [Header("Title and the cover")]
+        [Tooltip("Seconds New Game over a save keeps the picture before App reloads under the cover (UI's dark-tube " +
+                 "vignette closes inside it); it runs with the title's own switch-off.")]
         [Range(0.3f, 2f)]
         [SerializeField] private float _fadeOutSeconds = 0.6f;
-
-        [Tooltip("Share of the fade-out after which the picture starts to darken to black.")]
-        [Range(0.2f, 0.95f)]
-        [SerializeField] private float _fadeOutFrom = 0.1f;
 
         [Tooltip("Seconds untouched on the title before the camera starts to drift.")]
         [Range(5f, 60f)]
@@ -103,7 +99,6 @@ namespace MoonProject.Rover
         public float LampDarkGapSeconds => _lampDarkGapSeconds;
         public float LampRampSeconds => _lampRampSeconds;
         public float FadeOutSeconds => _fadeOutSeconds;
-        public float FadeOutFrom => _fadeOutFrom;
 
         public float TitleFrameMinLanderDistance => _titleFrameMinLanderDistance;
         public float TitleDriftDelay => _titleDriftDelay;

@@ -862,18 +862,20 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         private const float PostStepSeconds = 0.9f;
-        private const int CutterLine = 4;
+        private const int CutterLine = 8;
 
         private static readonly BootCheckStep[] PostStream =
         {
-            BootCheckStep.Carrier, BootCheckStep.Resume, BootCheckStep.Agenda, BootCheckStep.Lamps,
-            BootCheckStep.Cutter, BootCheckStep.Battery, BootCheckStep.Begin,
+            BootCheckStep.Carrier, BootCheckStep.Resume, BootCheckStep.Agenda, BootCheckStep.Lens, BootCheckStep.Lamps,
+            BootCheckStep.Head, BootCheckStep.Wheels, BootCheckStep.Motor, BootCheckStep.Cutter, BootCheckStep.SolarWing,
+            BootCheckStep.Antenna, BootCheckStep.Battery, BootCheckStep.Assembly, BootCheckStep.Begin,
         };
 
         private static readonly BootCheckResult[] PostResults =
         {
-            BootCheckResult.Info, BootCheckResult.Info, BootCheckResult.Info, BootCheckResult.Ok,
-            BootCheckResult.Fault, BootCheckResult.Ok, BootCheckResult.Info,
+            BootCheckResult.Info, BootCheckResult.Info, BootCheckResult.Info, BootCheckResult.Ok, BootCheckResult.Ok,
+            BootCheckResult.Ok, BootCheckResult.Ok, BootCheckResult.Ok, BootCheckResult.Fault, BootCheckResult.Jammed,
+            BootCheckResult.ReceiveOnly, BootCheckResult.Ok, BootCheckResult.Info, BootCheckResult.Info,
         };
 
         private IEnumerator Capture(Camera camera, string folder, string name)
