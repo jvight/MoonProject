@@ -257,6 +257,325 @@ namespace MoonProject.Art.Editor
             });
         }
 
+        /// <summary>
+        /// Dedicated fast batch entry point for capturing Day C close-up and ~7 m gameplay-distance shots
+        /// of the maker decals on <c>CargoLander</c>, <c>Crate_L</c>/<c>Crate_M</c>/<c>Crate_Cargo_Open</c>,
+        /// <c>Prop_OldLander</c> (Scout 3), and <c>Prop_MissionFlag</c>:
+        /// <c>python tools/unity_batch.py exec --method MoonProject.Art.Editor.R1StoryPropsCapture.CaptureMakerDecals</c>
+        /// </summary>
+        public static void CaptureMakerDecals()
+        {
+            BatchRunner.Run(nameof(CaptureMakerDecals), args =>
+            {
+                AssetDatabase.Refresh();
+                R1MaterialLibrary.BuildMaterials();
+                R1ModelBuilder.Build();
+
+                string capturesDir = Path.GetFullPath("Logs/captures");
+                Directory.CreateDirectory(capturesDir);
+
+                bool prevAsync = ShaderUtil.allowAsyncCompilation;
+                ShaderUtil.allowAsyncCompilation = false;
+                try
+                {
+                    CaptureMakerDecal_CargoLander(capturesDir);
+                    CaptureMakerDecal_VisCrate(capturesDir);
+                    CaptureMakerDecal_Scout(capturesDir);
+                    CaptureMakerDecal_MissionFlag(capturesDir);
+                }
+                finally
+                {
+                    ShaderUtil.allowAsyncCompilation = prevAsync;
+                }
+
+                return true;
+            });
+        }
+
+        private static void CaptureMakerDecal_CargoLander(string outDir)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(temp, false);
+                const string landerPrefabPath = ArtPaths.R1ModelsFolder + "/Lander/CargoLander.prefab";
+                GameObject lander = SpawnProp(landerPrefabPath, Vector3.zero, 0f, temp);
+
+                GetDecalWorldPose(lander, "Decal_VIS_1", out Vector3 vis1Pos, out Vector3 vis1Normal, out Vector3 vis1Up);
+                GetDecalWorldPose(lander, "Decal_VIS_2", out Vector3 vis2Pos, out _, out _);
+                GetDecalWorldPose(lander, "Decal_ILC_1", out Vector3 ilcPos, out Vector3 ilcNormal, out Vector3 ilcUp);
+
+                AimDayCSunAtSurface(vis1Normal);
+
+                Vector3 visMid = 0.5f * (vis1Pos + vis2Pos);
+                Vector3 visRight = Vector3.Cross(vis1Up, vis1Normal).normalized;
+
+                // Park Rover 07 beside the descent-stage panel for scale in the 7 m shot
+                Vector3 roverPos = new Vector3(visMid.x, 0f, visMid.z) + vis1Normal * 1.45f - visRight * 2.15f;
+                float roverYaw = Mathf.Atan2(vis1Normal.x, vis1Normal.z) * Mathf.Rad2Deg + 25f;
+                SpawnRover07(temp, roverPos, roverYaw, false);
+
+                // 1. Close-up of VIS 1985 mark + "VIS" stencil on the descent-stage panel
+                RenderShot(
+                    visMid + vis1Normal * 1.05f + vis1Up * 0.02f,
+                    visMid,
+                    35f,
+                    bg,
+                    Path.Combine(outDir, "decal_lander_closeup_dayC.png"));
+
+                // 2. Close-up of the small ILC seal near the hatch
+                AimDayCSunAtSurface(ilcNormal);
+                RenderShot(
+                    ilcPos + ilcNormal * 0.62f + ilcUp * 0.02f,
+                    ilcPos,
+                    34f,
+                    bg,
+                    Path.Combine(outDir, "decal_lander_ilc_closeup_dayC.png"));
+
+                // 3. Normal ~7 m gameplay camera distance showing the lander descent panel, upper hatch seal, and 07
+                Vector3 midNormal = (vis1Normal * 0.72f + ilcNormal * 0.28f).normalized;
+                AimDayCSunAtSurface(midNormal);
+                Vector3 look7m = visMid + Vector3.up * 0.35f - visRight * 0.35f;
+                Vector3 cam7m = look7m + (midNormal * 0.90f + Vector3.up * 0.34f - visRight * 0.12f).normalized * 7.2f;
+                RenderShot(
+                    cam7m,
+                    look7m,
+                    44f,
+                    bg,
+                    Path.Combine(outDir, "decal_lander_7m_dayC.png"));
+            }
+            finally
+            {
+                temp.Dispose();
+            }
+        }
+
+        private static void CaptureMakerDecal_VisCrate(string outDir)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(temp, false);
+                const string crateLPath = ArtPaths.R1ModelsFolder + "/Crates/Crate_L.prefab";
+                const string crateMPath = ArtPaths.R1ModelsFolder + "/Crates/Crate_M.prefab";
+                const string crateSPath = ArtPaths.R1ModelsFolder + "/Crates/Crate_S.prefab";
+
+                GameObject crateL = SpawnProp(crateLPath, Vector3.zero, 0f, temp);
+                SpawnProp(crateMPath, new Vector3(0.76f, 0f, 0.08f), -12f, temp);
+                SpawnProp(crateSPath, new Vector3(-0.68f, 0f, 0.06f), 10f, temp);
+                SpawnProp(R1StoryPropsBuilder.CrateCargoOpenPrefabPath, new Vector3(-1.85f, 0f, 0.35f), 14f, temp);
+
+                GetDecalWorldPose(crateL, "Decal_VIS_1", out Vector3 decalPos, out Vector3 decalNormal, out Vector3 decalUp);
+                Vector3 decalRight = Vector3.Cross(decalUp, decalNormal).normalized;
+
+                AimDayCSunAtSurface(decalNormal);
+
+                Vector3 roverPos = new Vector3(1.75f, 0f, 0.25f) + decalNormal * 0.20f;
+                float roverYaw = Mathf.Atan2(decalNormal.x, decalNormal.z) * Mathf.Rad2Deg - 32f;
+                SpawnRover07(temp, roverPos, roverYaw, false);
+
+                // 1. Close-up of the VIS 1985 mark on the front panel corner of Crate_L
+                Vector3 closeLook = decalPos + decalRight * 0.06f - decalUp * 0.02f;
+                Vector3 closeCam = closeLook + decalNormal * 0.44f + decalUp * 0.04f;
+                RenderShot(
+                    closeCam,
+                    closeLook,
+                    34f,
+                    bg,
+                    Path.Combine(outDir, "decal_vis_crate_closeup_dayC.png"));
+
+                // 2. Normal ~7 m gameplay camera distance showing the VIS crates beside Rover 07
+                Vector3 look7m = new Vector3(0.15f, 0.42f, 0.0f);
+                Vector3 cam7m = look7m + (decalNormal * 0.88f + Vector3.up * 0.42f + decalRight * 0.10f).normalized * 6.8f;
+                RenderShot(
+                    cam7m,
+                    look7m,
+                    40f,
+                    bg,
+                    Path.Combine(outDir, "decal_vis_crate_7m_dayC.png"));
+            }
+            finally
+            {
+                temp.Dispose();
+            }
+        }
+
+        private static void CaptureMakerDecal_Scout(string outDir)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(temp, false);
+                Vector3 scoutPos = Vector3.zero;
+                const float scoutYaw = 168f;
+                SpawnProp(R1StoryPropsBuilder.DecalOldLanderBlastPrefabPath, scoutPos, scoutYaw, temp);
+                GameObject scout = SpawnProp(R1StoryPropsBuilder.PropOldLanderPrefabPath, scoutPos, scoutYaw, temp);
+
+                GetDecalWorldPose(scout, "Decal_VIS_1", out Vector3 decalPos, out Vector3 decalNormal, out Vector3 decalUp);
+                Vector3 decalRight = Vector3.Cross(decalUp, decalNormal).normalized;
+
+                AimDayCSunAtSurface(decalNormal);
+
+                Vector3 roverPos = scoutPos - decalRight * 2.35f + decalNormal * 0.35f;
+                float roverYaw = Mathf.Atan2(decalNormal.x, decalNormal.z) * Mathf.Rad2Deg + 24f;
+                SpawnRover07(temp, roverPos, roverYaw, false);
+
+                // 1. Close-up of the 1967 VIS wordmark on the Scout equipment box face (above the S-3 stencil)
+                Vector3 closeLook = decalPos - decalUp * 0.045f;
+                Vector3 closeCam = closeLook + decalNormal * 0.62f + decalUp * 0.04f;
+                RenderShot(
+                    closeCam,
+                    closeLook,
+                    34f,
+                    bg,
+                    Path.Combine(outDir, "decal_scout_closeup_dayC.png"));
+
+                // 2. Normal ~7 m gameplay camera distance showing the Scout and Rover 07
+                Vector3 look7m = decalPos - decalRight * 0.45f + Vector3.up * 0.05f;
+                Vector3 cam7m = look7m + (decalNormal * 0.90f + Vector3.up * 0.36f - decalRight * 0.12f).normalized * 7.0f;
+                RenderShot(
+                    cam7m,
+                    look7m,
+                    42f,
+                    bg,
+                    Path.Combine(outDir, "decal_scout_7m_dayC.png"));
+            }
+            finally
+            {
+                temp.Dispose();
+            }
+        }
+
+        private static void CaptureMakerDecal_MissionFlag(string outDir)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(temp, false);
+                GameObject flag = SpawnProp(R1StoryPropsBuilder.PropMissionFlagPrefabPath, Vector3.zero, 8f, temp);
+
+                GetDecalWorldPose(flag, "Decal_ILC_1", out Vector3 decalPos, out Vector3 decalNormal, out Vector3 decalUp);
+                Vector3 decalRight = Vector3.Cross(decalUp, decalNormal).normalized;
+
+                AimDayCSunAtSurface(decalNormal);
+
+                Vector3 roverPos = decalRight * 1.65f - decalNormal * 0.20f;
+                roverPos.y = 0f;
+                float roverYaw = Mathf.Atan2(decalNormal.x, decalNormal.z) * Mathf.Rad2Deg - 28f;
+                SpawnRover07(temp, roverPos, roverYaw, false);
+
+                // 1. Close-up of the small ILC seal patch on the cloth near the pole
+                Vector3 closeLook = decalPos + decalRight * 0.06f - decalUp * 0.01f;
+                Vector3 closeCam = closeLook + decalNormal * 0.38f + decalUp * 0.015f;
+                RenderShot(
+                    closeCam,
+                    closeLook,
+                    34f,
+                    bg,
+                    Path.Combine(outDir, "decal_flag_closeup_dayC.png"));
+
+                // 2. Normal ~7 m gameplay camera distance showing Prop_MissionFlag beside Rover 07
+                Vector3 look7m = new Vector3(0.45f, 0.78f, 0.0f);
+                Vector3 cam7m = look7m + (decalNormal * 0.88f + Vector3.up * 0.38f + decalRight * 0.10f).normalized * 6.8f;
+                RenderShot(
+                    cam7m,
+                    look7m,
+                    40f,
+                    bg,
+                    Path.Combine(outDir, "decal_flag_7m_dayC.png"));
+            }
+            finally
+            {
+                temp.Dispose();
+            }
+        }
+
+        private static void AimDayCSunAtSurface(Vector3 surfaceOutwardNormal)
+        {
+            if (RenderSettings.sun == null)
+            {
+                return;
+            }
+
+            Vector3 horiz = new Vector3(surfaceOutwardNormal.x, 0f, surfaceOutwardNormal.z);
+            if (horiz.sqrMagnitude < 1e-4f)
+            {
+                horiz = Vector3.back;
+            }
+            horiz.Normalize();
+            Vector3 side = Vector3.Cross(Vector3.up, horiz).normalized;
+
+            // Low golden lunar sun (20 deg elevation) shining onto the surface from 24 deg off-axis
+            Vector3 lightDirToSurface = (-horiz * 0.91f + side * 0.41f).normalized;
+            float elevRad = 20f * Mathf.Deg2Rad;
+            Vector3 sunForward = new Vector3(
+                lightDirToSurface.x * Mathf.Cos(elevRad),
+                -Mathf.Sin(elevRad),
+                lightDirToSurface.z * Mathf.Cos(elevRad)).normalized;
+
+            RenderSettings.sun.transform.rotation = Quaternion.LookRotation(sunForward, Vector3.up);
+            RenderSettings.sun.intensity = 1.45f;
+        }
+
+        private static void GetDecalWorldPose(
+            GameObject root,
+            string decalNodeName,
+            out Vector3 worldCenter,
+            out Vector3 worldNormal,
+            out Vector3 worldUp)
+        {
+            Transform decalTf = FindChildRecursive(root.transform, decalNodeName);
+            if (decalTf == null)
+            {
+                throw new InvalidOperationException(
+                    $"R1StoryPropsCapture: Model '{root.name}' is missing expected decal child '{decalNodeName}'.");
+            }
+
+            var renderer = decalTf.GetComponent<Renderer>();
+            var filter = decalTf.GetComponent<MeshFilter>();
+            if (renderer == null || filter == null || filter.sharedMesh == null)
+            {
+                throw new InvalidOperationException(
+                    $"R1StoryPropsCapture: Decal child '{root.name}/{decalNodeName}' is missing Renderer or MeshFilter.");
+            }
+
+            worldCenter = renderer.bounds.center;
+            Mesh mesh = filter.sharedMesh;
+            Vector2[] uvs = mesh.uv;
+            Vector3[] normals = mesh.normals;
+            int[] tris = mesh.triangles;
+
+            Vector3 localNormal = Vector3.forward;
+            float bestUvSpanSq = -1f;
+            for (int t = 0; t + 2 < tris.Length; t += 3)
+            {
+                int i0 = tris[t];
+                int i1 = tris[t + 1];
+                int i2 = tris[t + 2];
+                float spanSq = (uvs[i1] - uvs[i0]).sqrMagnitude + (uvs[i2] - uvs[i0]).sqrMagnitude;
+                if (spanSq > bestUvSpanSq)
+                {
+                    bestUvSpanSq = spanSq;
+                    localNormal = (normals[i0] + normals[i1] + normals[i2]).normalized;
+                }
+            }
+
+            worldNormal = decalTf.TransformDirection(localNormal).normalized;
+            worldUp = Vector3.ProjectOnPlane(Vector3.up, worldNormal);
+            if (worldUp.sqrMagnitude < 1e-4f)
+            {
+                worldUp = Vector3.forward;
+            }
+            worldUp.Normalize();
+
+            BatchRunner.Log(
+                $"decal {root.name}/{decalNodeName}: center={worldCenter:F3} normal={worldNormal:F3} size={renderer.bounds.size:F3} mat={renderer.sharedMaterial?.name}");
+        }
+
         private static void CaptureDeliverable1_PostAndCable(string outDir, bool nightEclipse)
         {
             EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
