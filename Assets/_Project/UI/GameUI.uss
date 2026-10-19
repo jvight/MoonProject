@@ -1741,15 +1741,18 @@ Label {
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
-/* The small accent tag under a part that can be fitted right now: where it goes ("-> Cutter"). */
+/* The small accent tag at the foot of a part that can be fitted right now, on the tube's dark over the cell's edge:
+   where it goes ("-> Cutter"). */
 .cargo__tag {
     display: none;
     position: absolute;
-    left: -18px;
-    right: -18px;
+    left: -6px;
+    right: -6px;
     bottom: 0;
+    height: 22px;
     font-size: 18px;
-    -unity-text-align: lower-center;
+    -unity-text-align: middle-center;
+    background-color: rgb(19, 18, 16);
     color: rgb(255, 184, 72);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
@@ -1806,12 +1809,13 @@ Label {
     -unity-text-align: upper-right;
 }
 
-/* "Release to fit": one line beside the dragged part while it is over a bay it fits. */
+/* "Release to fit": one line under the dragged part while it is over a bay it fits, on the tube's dark. */
 .cargo__release {
     display: none;
     position: absolute;
     font-size: 18px;
-    -unity-text-align: middle-left;
+    -unity-text-align: middle-center;
+    background-color: rgb(19, 18, 16);
     color: rgb(255, 184, 72);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }

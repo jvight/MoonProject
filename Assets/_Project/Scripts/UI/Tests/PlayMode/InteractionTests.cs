@@ -187,7 +187,7 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(Text(UiKeys.CargoDragNotDocked), view.ReleaseText, "and says why beside the part");
             Release(mouse.leftButton);
             yield return Seconds(_rig.Tuning.Cargo.DragReturnSeconds + 0.1f);
-            Assert.AreEqual(0, _rig.Fakes.Systems.Fits);
+            Assert.AreEqual(1, _rig.Fakes.Systems.Fits, "off the pad the release fits nothing more");
         }
 
         [UnityTest]

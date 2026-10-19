@@ -528,12 +528,15 @@ MonoBehaviour:
     _faintColor:
       serializedVersion: 2
       rgba: 4283062368
+    _itemFrameColor:
+      serializedVersion: 2
+      rgba: 4285366668
     _accentColor:
       serializedVersion: 2
       rgba: 4282956031
     _accentFill:
       serializedVersion: 2
-      rgba: 675854591
+      rgba: 340310271
     _plateBackground:
       serializedVersion: 2
       rgba: 4161079566
@@ -695,7 +698,7 @@ MonoBehaviour:
     _turnFollowSeconds: 0.12
     _stageFieldOfView: 26
     _stageFill: 0.8
-    _stageResolution: {x: 832, y: 888}
+    _stageResolution: {x: 752, y: 888}
     _stagePosition: {x: 0, y: -4000, z: 0}
     _wireMaterial: {fileID: 2100000, guid: 3652bba78b6499f46b3aa88a5fb63f39, type: 2}
     _wireFirstPieceFade: 0.35

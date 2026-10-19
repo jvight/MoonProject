@@ -267,7 +267,9 @@ namespace MoonProject.UI.Tests
             Assert.IsNull(uiTuning.Validate());
             CargoScreenSettings cargo = uiTuning.Cargo;
             Assert.Greater(cargo.LeaderLitWidth, cargo.LeaderWidth, "a lit bay's leader is heavier than a resting one");
-            Assert.Less(Luma(cargo.FaintColor), Luma(cargo.IconColor), "resting strokes stay quieter than the icons");
+            Assert.Less(Luma(cargo.FaintColor), Luma(cargo.ItemFrameColor),
+                "a slot that holds something is framed clearer than an empty one");
+            Assert.Less(Luma(cargo.ItemFrameColor), Luma(cargo.IconColor), "and its frame stays quieter than its icon");
             Assert.Greater(cargo.AccentColor.r - cargo.AccentColor.b, cargo.IconColor.r - cargo.IconColor.b,
                 "the one accent is the warm, saturated colour on the page");
 

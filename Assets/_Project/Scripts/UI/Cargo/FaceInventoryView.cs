@@ -425,7 +425,8 @@ namespace MoonProject.UI
 
             _release.text = _localization.Get(fits ? UiKeys.CargoReleaseFit : UiKeys.CargoDragNotDocked);
             _release.EnableInClassList(ReleaseQuietClass, blocked);
-            Vector2 at = _drag.Ghost + new Vector2(FaceLayout.ReleaseOffsetX, FaceLayout.ReleaseOffsetY);
+            // Centred under the dragged part, on its own dark plate, so it reads over any bay's words or the drawing.
+            Vector2 at = _drag.Ghost + new Vector2(-FaceLayout.ReleaseWidth * 0.5f, FaceLayout.ReleaseOffsetY);
             PositionBox(_release, at.x * _scale, at.y * _scale, FaceLayout.ReleaseWidth * _scale,
                 FaceLayout.ReleaseHeight * _scale);
             _release.style.display = DisplayStyle.Flex;
@@ -1526,8 +1527,8 @@ namespace MoonProject.UI
         }
 
         /// <summary>
-        /// The hold's cells: an empty slot is a quiet outline, a slot that holds something shows only its icon, and
-        /// the selection is the one accent outline (with a brief fill just after a press).
+        /// The hold's cells, every one framed: an empty slot faintly, a slot that holds something a little clearer,
+        /// and the selection in the one accent (with a brief fill just after a press).
         /// </summary>
         private void DrawHoldGrid(Painter2D painter, float s)
         {
@@ -1561,10 +1562,10 @@ namespace MoonProject.UI
                     RoverLineArtPainter.StrokeRect(painter, cx, cy, cw, ch, _settings.AccentColor,
                         _settings.FocusStrokeWidth * s);
                 }
-                else if (!hasItem)
+                else
                 {
-                    RoverLineArtPainter.StrokeRect(painter, cx, cy, cw, ch, _settings.FaintColor,
-                        _settings.SlotStrokeWidth * s);
+                    RoverLineArtPainter.StrokeRect(painter, cx, cy, cw, ch,
+                        hasItem ? _settings.ItemFrameColor : _settings.FaintColor, _settings.SlotStrokeWidth * s);
                 }
 
                 if (!hasItem)

@@ -63,10 +63,9 @@ namespace MoonProject.UI
         public const float ArtHeight = 356f;
         public const float LeaderEdgeInset = 24f;
 
-        public const float ReleaseOffsetX = 40f;
-        public const float ReleaseOffsetY = -36f;
-        public const float ReleaseWidth = 200f;
-        public const float ReleaseHeight = 26f;
+        public const float ReleaseOffsetY = CellSize * 0.5f + 8f;
+        public const float ReleaseWidth = 220f;
+        public const float ReleaseHeight = 28f;
 
         private static readonly Vector2[] FrameOrigins =
         {

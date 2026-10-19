@@ -123,16 +123,19 @@ namespace MoonProject.UI
         [Tooltip("Quiet strokes: empty slot outlines, the brackets of a bay at rest and resting leaders.")]
         [SerializeField] private Color32 _faintColor = new Color32(96, 88, 74, 255);
 
+        [Tooltip("The frame of a slot that holds something: clearer than an empty slot's, still quieter than the words.")]
+        [SerializeField] private Color32 _itemFrameColor = new Color32(140, 129, 109, 255);
+
         [Tooltip("The one accent: the selection, the bays the carried part fits and what can be fitted right now.")]
         [SerializeField] private Color32 _accentColor = new Color32(255, 184, 72, 255);
 
         [Tooltip("Soft fill of a bay the carried part fits, and of a cell or bay for a moment after a press.")]
-        [SerializeField] private Color32 _accentFill = new Color32(255, 184, 72, 40);
+        [SerializeField] private Color32 _accentFill = new Color32(255, 184, 72, 20);
 
         [Tooltip("Opaque near-neutral warm-black CRT backing plate behind count badges, tooltips, and toasts.")]
         [SerializeField] private Color32 _plateBackground = new Color32(19, 18, 16, 255);
 
-        [Tooltip("Stroke width (px at 1152x768) of an empty slot's outline.")]
+        [Tooltip("Stroke width (px at 1152x768) of a slot's outline, empty or holding something.")]
         [Range(0.5f, 4f)]
         [SerializeField] private float _slotStrokeWidth = 1.5f;
 
@@ -230,6 +233,8 @@ namespace MoonProject.UI
         public Color32 IconColor => _iconColor;
 
         public Color32 FaintColor => _faintColor;
+
+        public Color32 ItemFrameColor => _itemFrameColor;
 
         public Color32 AccentColor => _accentColor;
 

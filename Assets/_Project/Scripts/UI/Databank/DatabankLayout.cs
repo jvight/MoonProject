@@ -25,7 +25,7 @@ namespace MoonProject.UI
         public const float ColumnGap = 40f;
         public const float ModelX = Margin + ListWidth + ColumnGap;
         public const float ModelTop = FaceLayout.GridTop;
-        public const float ModelWidth = 416f;
+        public const float ModelWidth = 376f;
         public const float ModelHeight = 444f;
         public const float TextGap = 24f;
         public const float TextX = ModelX + ModelWidth + TextGap;

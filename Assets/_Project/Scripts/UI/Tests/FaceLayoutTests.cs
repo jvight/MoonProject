@@ -216,7 +216,7 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
-        public void TheLeaders_LeaveTheEdgeFacingSeven_OverThePart_AndBendTowardsIt()
+        public void TheLeaders_LeaveTheEdgeFacingSeven_OverThePart_AndBendAtItsHeight()
         {
             Rect box = FaceLayout.ArtBox;
             Vector2[] targets = { box.min, box.center, box.max, new Vector2(box.xMin, box.yMax) };
@@ -231,8 +231,9 @@ namespace MoonProject.UI.Tests
                     Assert.GreaterOrEqual(start.x, frame.xMin + FaceLayout.LeaderEdgeInset - 1e-3f);
                     Assert.LessOrEqual(start.x, frame.xMax - FaceLayout.LeaderEdgeInset + 1e-3f);
                     Assert.AreEqual(start.x, knee.x, 1e-3f, "straight out of the frame");
+                    Assert.AreEqual(target.y, knee.y, 1e-3f, "to the part's height, then across to it");
                     Assert.AreEqual(FaceLayout.IsTopFrame(device), knee.y > start.y, "towards 07");
-                    Assert.IsTrue(box.Contains(knee), $"device {device}: the bend is over the drawing's box");
+                    Assert.IsTrue(knee.x >= box.xMin && knee.x <= box.xMax, $"device {device}: the bend is over the box");
                 }
             }
         }
