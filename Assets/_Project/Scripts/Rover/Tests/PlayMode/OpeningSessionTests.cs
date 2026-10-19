@@ -490,13 +490,18 @@ namespace MoonProject.Rover.PlayModeTests
             float maxFacing = 0f;
             bool headHidden = false;
             Renderer screen = _body.FaceDirector.Display.ScreenRenderer;
+            // The rendered view trails the script by a frame, so each pose was reached over the previous frame's
+            // time: its Seconds is that frame's delta, or a long frame would inflate the turn speed measured over a
+            // window.
+            float renderedOver = Time.deltaTime;
             var poses = new List<(OpeningPhase Phase, Vector3 Position, Quaternion Rotation, float Seconds)>(4096);
             while (!_beats.Contains(WakeBeat.ChaseFrame))
             {
                 Assert.Less(Time.time - started, RunTimeout, "the opening reaches the chase frame");
                 OpeningScript script = _director.Script;
                 maxBodyYaw = Mathf.Max(maxBodyYaw, Mathf.Abs(Mathf.DeltaAngle(bodyYaw, _rover.transform.eulerAngles.y)));
-                poses.Add((script.Phase, _view.transform.position, _view.transform.rotation, Time.deltaTime));
+                poses.Add((script.Phase, _view.transform.position, _view.transform.rotation, renderedOver));
+                renderedOver = Time.deltaTime;
                 headHidden |= script.ShotLive && screen.shadowCastingMode == UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly;
                 bool still = script.Phase == OpeningPhase.Post;
                 if (script.Phase == OpeningPhase.Ready)
