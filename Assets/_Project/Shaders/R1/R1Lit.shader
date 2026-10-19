@@ -53,6 +53,10 @@ Shader "MoonProject/R1/Lit"
         _ScanProgress("Scan Progress", Range(0.0, 1.0)) = 0.0
         _Dissolve("Scan Dissolve", Range(0.0, 1.0)) = 0.0
 
+        [Header(Distance Fade)]
+        _DistanceFade("Distance Fade (0 or 1)", Float) = 0.0
+        _DistanceFadeRange("Distance Fade Range (x: start, y: gone, metres)", Vector) = (32, 40, 0, 0)
+
         [Header(Build Print)]
         _BuildPrint("Build Printing (0 or 1)", Float) = 0.0
         _BuildRevealProgress("Build Print Progress", Range(0.0, 1.0)) = 1.0
@@ -180,6 +184,7 @@ Shader "MoonProject/R1/Lit"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+                R1DistanceFadeClip(input.positionWS, input.positionCS);
                 if (_BuildPrint > 0.5h)
                 {
                     float minY = _BuildBoundsY.x;
@@ -244,6 +249,7 @@ Shader "MoonProject/R1/Lit"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+                R1DistanceFadeClip(input.positionWS, input.positionCS);
                 if (_BuildPrint > 0.5h)
                 {
                     float minY = _BuildBoundsY.x;
@@ -315,6 +321,7 @@ Shader "MoonProject/R1/Lit"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+                R1DistanceFadeClip(input.positionWS, input.positionCS);
 
                 if (_BuildPrint > 0.5h)
                 {

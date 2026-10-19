@@ -34,9 +34,10 @@ namespace MoonProject.World.PlayModeTests
         private static readonly string[] BoulderRocks = { "Rock_05", "Rock_06", "Rock_07", "Rock_08", "Rock_09" };
 
         private const int BootRuns = 3;
-        // The boot's work in CPU milliseconds across all threads (16 cores, 2026-10-19: about 6.6 s with the
-        // near-field rubble, 4.0 s without it, steady within 6 % under three other batch editors).
-        private const double BootCpuBudgetMs = 8000.0;
+        // The boot's work in CPU milliseconds across all threads (16 cores, 2026-10-19: 4.06-4.11 s once the
+        // near-field rubble streams in round the camera instead of at boot, steady within 6 % under three other batch
+        // editors; it was 6.6 s with the rubble built at boot).
+        private const double BootCpuBudgetMs = 5000.0;
         private const float ColliderTolerance = 0.25f;
         private const float ScatterProbeRadius = 1000f;
 

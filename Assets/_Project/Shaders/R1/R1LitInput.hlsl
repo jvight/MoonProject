@@ -2,6 +2,7 @@
 #define MOONPROJECT_R1_LIT_INPUT_INCLUDED
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Random.hlsl"
 
 TEXTURE2D(_BaseMap);
 SAMPLER(sampler_BaseMap);
@@ -55,6 +56,24 @@ CBUFFER_START(UnityPerMaterial)
     half   _BuildStageHeat;
     float4 _BuildBoundsY;
     float4 _BuildSeamPointWS;
+    half   _DistanceFade;
+    float4 _DistanceFadeRange;
 CBUFFER_END
+
+// Where the distance fade measures from (World sets it to the view camera every frame), so shadow and depth passes
+// fade with the view, not with the light.
+float4 _MoonDistanceFadeOrigin;
+
+// A material with _DistanceFade on (the near-field rubble) dithers out between _DistanceFadeRange.x and .y metres from
+// the view, in every pass, so its far edge thins away instead of popping.
+void R1DistanceFadeClip(float3 positionWS, float4 positionCS)
+{
+    if (_DistanceFade > 0.5h)
+    {
+        float span = max(_DistanceFadeRange.y - _DistanceFadeRange.x, 1e-3);
+        float keep = 1.0 - saturate((distance(positionWS, _MoonDistanceFadeOrigin.xyz) - _DistanceFadeRange.x) / span);
+        clip(keep - InterleavedGradientNoise(positionCS.xy, 0));
+    }
+}
 
 #endif

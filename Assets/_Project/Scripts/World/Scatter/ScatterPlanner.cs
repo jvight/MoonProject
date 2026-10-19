@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using UnityEngine;
 using MoonProject.Core;
 
@@ -57,6 +56,7 @@ namespace MoonProject.World
         private readonly GradientNoise _fieldNoise;
         private readonly float _fieldThreshold;
         private readonly GradientNoise _patchNoise;
+        private readonly uint _rubbleSeed;
         private readonly float _patchThreshold;
         private readonly Vector2[] _laneEnds;
 
@@ -108,6 +108,7 @@ namespace MoonProject.World
             // Fractal noise sits near 0 with a spread of about +-0.5: a threshold this far up leaves the coverage asked.
             _fieldThreshold = 0.5f - settings.BoulderFieldCoverage;
             _patchNoise = new GradientNoise(Hashing.Mix(_seed ^ PatchSalt));
+            _rubbleSeed = Hashing.Mix(_seed ^ RubbleSalt);
             _patchThreshold = 0.5f - settings.RubblePatchCoverage;
             _pebbleMaxSlopeCos = Mathf.Cos(settings.PebbleMaxSlope * Mathf.Deg2Rad);
             _boulderMaxSlopeCos = Mathf.Cos(settings.BoulderMaxSlope * Mathf.Deg2Rad);
@@ -149,7 +150,6 @@ namespace MoonProject.World
             var instances = new List<ScatterInstance>();
             AddClass(instances, ScatterKind.Pebble, _settings.PebbleSpacing, Hashing.Mix(_seed ^ PebbleSalt));
             AddClass(instances, ScatterKind.Boulder, _settings.BoulderSpacing, Hashing.Mix(_seed ^ BoulderSalt));
-            AddRubble(instances, Hashing.Mix(_seed ^ RubbleSalt));
             return instances;
         }
 
@@ -375,68 +375,68 @@ namespace MoonProject.World
         }
 
         /// <summary>
-        /// The near-field rubble (owner's Apollo 11 reference): one jittered stone per grid cell where it is kept,
-        /// thick in patches and thin on the stretches between, and an apron of stones round every boulder. None on the
-        /// opening's sites and lanes, the pad, the ruins, the scorch, the canyon, the anchors' clearings or steep
-        /// ground; visual only.
+        /// Plans rubble grid cell (<paramref name="i"/>, <paramref name="j"/>), <see cref="ScatterSettings.RubbleSpacing"/>
+        /// wide (owner's Apollo 11 reference): at most one jittered stone, kept more often inside a rubble patch than on
+        /// the stretches between, never on the opening's sites and lanes, the pad, the ruins, the scorch, the canyon,
+        /// the anchors' clearings or steep ground. The same cell always gives the same stone. Visual only.
         /// </summary>
-        private void AddRubble(List<ScatterInstance> instances, uint seed)
+        public void PlanRubbleCell(int i, int j, List<ScatterInstance> stones)
         {
             float cell = _settings.RubbleSpacing;
             float radius = _surface.DrivableRadius;
-            int cells = Mathf.CeilToInt(radius / cell);
-            int planned = instances.Count;
-
-            // Tens of thousands of stones each sample the ground: the grid's rows are planned side by side, each into
-            // its own list, and joined in order, so the plan stays the same from run to run.
-            var rows = new List<ScatterInstance>[2 * cells];
-            Parallel.For(0, rows.Length, row =>
+            float x = (i + Hashing.ToUnit(Hashing.Hash(i, j, 1, _rubbleSeed))) * cell;
+            float z = (j + Hashing.ToUnit(Hashing.Hash(i, j, 2, _rubbleSeed))) * cell;
+            if (x * x + z * z > radius * radius)
             {
-                int j = row - cells;
-                var stones = new List<ScatterInstance>();
-                for (int i = -cells; i < cells; i++)
-                {
-                    float x = (i + Hashing.ToUnit(Hashing.Hash(i, j, 1, seed))) * cell;
-                    float z = (j + Hashing.ToUnit(Hashing.Hash(i, j, 2, seed))) * cell;
-                    if (x * x + z * z > radius * radius)
-                    {
-                        continue;
-                    }
-
-                    float chance = Mathf.Lerp(_settings.RubbleSparse, _settings.RubbleDense, RubblePatch(x, z));
-                    if (Hashing.ToUnit(Hashing.Hash(i, j, 3, seed)) < chance)
-                    {
-                        AddStone(stones, x, z, Hashing.Hash(i, j, 4, seed));
-                    }
-                }
-
-                rows[row] = stones;
-            });
-            foreach (List<ScatterInstance> stones in rows)
-            {
-                instances.AddRange(stones);
+                return;
             }
 
-            for (int b = 0; b < planned; b++)
+            float chance = Mathf.Lerp(_settings.RubbleSparse, _settings.RubbleDense, RubblePatch(x, z));
+            if (Hashing.ToUnit(Hashing.Hash(i, j, 3, _rubbleSeed)) < chance)
             {
-                ScatterInstance boulder = instances[b];
-                if (boulder.Kind != ScatterKind.Boulder)
-                {
-                    continue;
-                }
+                AddStone(stones, x, z, Hashing.Hash(i, j, 4, _rubbleSeed));
+            }
+        }
 
-                int count = Mathf.RoundToInt(_settings.RubbleApronCount * boulder.Size);
-                float reach = boulder.Size * _settings.RubbleApronReach;
-                for (int k = 0; k < count; k++)
+        /// <summary>
+        /// The boulders of <paramref name="plan"/> that wear an apron of rubble, each with its place in the plan (which
+        /// seeds its apron).
+        /// </summary>
+        public void CollectRubbleAprons(IReadOnlyList<ScatterInstance> plan, List<RubbleApron> aprons)
+        {
+            for (int b = 0; b < plan.Count; b++)
+            {
+                ScatterInstance boulder = plan[b];
+                if (boulder.Kind == ScatterKind.Boulder)
                 {
-                    uint hash = Hashing.Hash(b, k, seed ^ ApronSalt);
-                    float angle = Hashing.ToUnit(Hashing.Mix(hash)) * Mathf.PI * 2f;
-                    float t = Hashing.ToUnit(Hashing.Mix(hash ^ 0x2545F491u));
-                    float distance = Mathf.Lerp(boulder.Size * 0.5f, reach, t * t);
-                    AddStone(instances, boulder.Position.x + Mathf.Sin(angle) * distance,
-                        boulder.Position.z + Mathf.Cos(angle) * distance, Hashing.Mix(hash ^ 0x68E31DA4u));
+                    aprons.Add(new RubbleApron(b, new Vector2(boulder.Position.x, boulder.Position.z), boulder.Size,
+                        boulder.Size * _settings.RubbleApronReach,
+                        Mathf.RoundToInt(_settings.RubbleApronCount * boulder.Size)));
                 }
             }
+        }
+
+        /// <summary>
+        /// The stones of <paramref name="apron"/>'s rubble that lie inside <paramref name="area"/> (the rest belong to
+        /// the chunks round it); returns how many of its stones it looked at.
+        /// </summary>
+        public int PlanRubbleApron(RubbleApron apron, Rect area, List<ScatterInstance> stones)
+        {
+            for (int k = 0; k < apron.Count; k++)
+            {
+                uint hash = Hashing.Hash(apron.Index, k, _rubbleSeed ^ ApronSalt);
+                float angle = Hashing.ToUnit(Hashing.Mix(hash)) * Mathf.PI * 2f;
+                float t = Hashing.ToUnit(Hashing.Mix(hash ^ 0x2545F491u));
+                float distance = Mathf.Lerp(apron.Size * 0.5f, apron.Reach, t * t);
+                float x = apron.Center.x + Mathf.Sin(angle) * distance;
+                float z = apron.Center.y + Mathf.Cos(angle) * distance;
+                if (x >= area.xMin && x < area.xMax && z >= area.yMin && z < area.yMax)
+                {
+                    AddStone(stones, x, z, Hashing.Mix(hash ^ 0x68E31DA4u));
+                }
+            }
+
+            return apron.Count;
         }
 
         /// <summary>One rubble stone at (x, z) when the ground there keeps rubble.</summary>

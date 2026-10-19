@@ -214,6 +214,7 @@ half4 R1LitFrag(R1LitVaryings input) : SV_Target
 {
     UNITY_SETUP_INSTANCE_ID(input);
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+    R1DistanceFadeClip(input.positionWS, input.positionCS);
 
     float2 uv = input.uv;
 
