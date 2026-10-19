@@ -64,6 +64,15 @@ namespace MoonProject.UI
         [Tooltip("Where the stroke's art begins and ends across the layer (px of 1024): the draw sweeps between them.")]
         [SerializeField] private Vector2 _strokeSpanPixels = new Vector2(334f, 651f);
 
+        [Tooltip("How soft the stroke's drawing edge is (px of 1024): it fades in over this width ahead of the drawn " +
+                 "part.")]
+        [Range(0f, 160f)]
+        [SerializeField] private float _strokeFeatherPixels = 48f;
+
+        [Tooltip("How many steps that soft edge is drawn in (more is smoother, each is one more clipped layer).")]
+        [Range(1, 8)]
+        [SerializeField] private int _strokeFeatherBands = 4;
+
         [Tooltip("Glint fade-in starts (s).")]
         [Range(0f, 4f)]
         [SerializeField] private float _glintIn0 = 1.30f;
@@ -123,6 +132,10 @@ namespace MoonProject.UI
         [Range(0f, 8f)]
         [SerializeField] private float _glintOut1 = 4.00f;
 
+        [Tooltip("Seconds into the splash before a key or click may skip it (never on the very first launch).")]
+        [Range(0f, 4f)]
+        [SerializeField] private float _skipAfterSeconds = 1f;
+
         [Tooltip("Seconds a skipped splash takes to fade out (any key or click, never on the very first launch).")]
         [Range(0.05f, 1f)]
         [SerializeField] private float _skipFadeSeconds = 0.25f;
@@ -156,6 +169,11 @@ namespace MoonProject.UI
         /// <summary>The stroke art's left and right edges as shares of the layer's width.</summary>
         public Vector2 StrokeSpan => _strokeSpanPixels / LayerPixels;
 
+        /// <summary>The soft drawing edge's width as a share of the layer's width.</summary>
+        public float StrokeFeather => _strokeFeatherPixels / LayerPixels;
+
+        public int StrokeFeatherBands => _strokeFeatherBands;
+
         public float GlintIn0 => _glintIn0;
 
         public float GlintIn1 => _glintIn1;
@@ -187,6 +205,8 @@ namespace MoonProject.UI
         public float GlintOut0 => _glintOut0;
 
         public float GlintOut1 => _glintOut1;
+
+        public float SkipAfterSeconds => _skipAfterSeconds;
 
         public float SkipFadeSeconds => _skipFadeSeconds;
 

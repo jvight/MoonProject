@@ -66,7 +66,7 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
-        public void TheFirstLaunch_PlaysItWhole_LaterOnesMaySkipIt()
+        public void TheFirstLaunch_PlaysItWhole_LaterOnesMaySkipItAfterItsFirstSecond()
         {
             _splash.Start(false);
             _splash.Skip();
@@ -76,7 +76,11 @@ namespace MoonProject.UI.Tests
             Assert.IsTrue(_splash.IsDone, "it plays out on its own");
 
             _splash.Start(true);
-            Run(1f);
+            Run(_settings.SkipAfterSeconds * 0.5f);
+            _splash.Skip();
+            Run(_settings.SkipFadeSeconds + 0.1f);
+            Assert.IsTrue(_splash.IsPlaying, "not in its first second");
+            Run(_settings.SkipAfterSeconds);
             _splash.Skip();
             float ring = _splash.RingAlpha;
             Run(_settings.SkipFadeSeconds * 0.5f);

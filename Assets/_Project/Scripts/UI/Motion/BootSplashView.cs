@@ -19,6 +19,8 @@ namespace MoonProject.UI
         private readonly VisualElement _stroke;
         private readonly VisualElement _glint;
         private readonly VisualElement _wordmark;
+        private readonly VisualElement[] _featherClips;
+        private readonly VisualElement[] _featherStrokes;
         private bool _shown = true;
 
         public BootSplashView(VisualElement curtain, BootSplashSettings settings)
@@ -36,6 +38,16 @@ namespace MoonProject.UI
             _strokeClip = Box("boot-splash-stroke-clip", "boot-splash__clip");
             _square.Add(_strokeClip);
             _stroke = Layer("boot-splash-stroke", settings.Stroke, _strokeClip);
+            // The soft drawing edge: bands just ahead of the drawn part, each showing the stroke a little fainter.
+            int bands = settings.StrokeFeatherBands;
+            _featherClips = new VisualElement[bands];
+            _featherStrokes = new VisualElement[bands];
+            for (int i = 0; i < bands; i++)
+            {
+                _featherClips[i] = Box("boot-splash-feather-" + i, "boot-splash__clip");
+                _square.Add(_featherClips[i]);
+                _featherStrokes[i] = Layer("boot-splash-feather-stroke-" + i, settings.Stroke, _featherClips[i]);
+            }
             _glint = Layer("boot-splash-glint", settings.Glint);
             Vector2 centre = settings.GlintCentre;
             _glint.style.transformOrigin = new TransformOrigin(Length.Percent(centre.x * 100f),
@@ -63,14 +75,33 @@ namespace MoonProject.UI
             _square.style.height = side;
             _ring.style.opacity = splash.RingAlpha;
             Vector2 span = _settings.StrokeSpan;
-            _strokeClip.style.width = side * Mathf.Lerp(span.x, span.y, splash.StrokeProgress);
+            float drawn = Mathf.Lerp(span.x, span.y, splash.StrokeProgress);
+            _strokeClip.style.width = side * drawn;
             _stroke.style.width = side;
             _stroke.style.opacity = splash.StrokeAlpha;
+            ApplyFeather(splash, side, drawn, span.y);
             _glint.style.opacity = splash.GlintAlpha;
             float scale = splash.GlintScale;
             _glint.style.scale = new Scale(new Vector3(scale, scale, 1f));
             _wordmark.style.opacity = splash.WordAlpha;
             _wordmark.style.translate = new Translate(0f, side * splash.WordDrop);
+        }
+
+        /// <summary>The bands of the soft edge, fading out ahead of <paramref name="drawn"/>, never past the art.</summary>
+        private void ApplyFeather(BootSplash splash, float side, float drawn, float end)
+        {
+            int bands = _featherClips.Length;
+            float band = _settings.StrokeFeather / bands;
+            for (int i = 0; i < bands; i++)
+            {
+                float left = Mathf.Min(drawn + band * i, end);
+                float width = Mathf.Max(0f, Mathf.Min(left + band, end) - left);
+                _featherClips[i].style.left = side * left;
+                _featherClips[i].style.width = side * width;
+                _featherStrokes[i].style.width = side;
+                _featherStrokes[i].style.left = -side * left;
+                _featherStrokes[i].style.opacity = splash.StrokeAlpha * (1f - (i + 1f) / (bands + 1f));
+            }
         }
 
         private void SetShown(bool shown)

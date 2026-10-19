@@ -6,7 +6,7 @@ namespace MoonProject.UI
     /// <summary>
     /// The Outsight Worlds boot splash's timeline (pure, EditMode-tested; BOOT_SPLASH_SPEC.md): what each layer shows
     /// at the splash's time, with every move a smooth step. It plays while the boot's dark already hides the engine's
-    /// warm-up; on any launch after the first, a key or click fades it out early.
+    /// warm-up; on any launch after the first, a key or click after its first second fades it out early.
     /// </summary>
     internal sealed class BootSplash
     {
@@ -76,10 +76,12 @@ namespace MoonProject.UI
             _skipFade = 1f;
         }
 
-        /// <summary>A key or click: a skippable splash fades out now; the first launch's plays on.</summary>
+        /// <summary>
+        /// A key or click: a skippable splash past its first second fades out now; the first launch's plays on.
+        /// </summary>
         public void Skip()
         {
-            if (Skippable && IsPlaying)
+            if (Skippable && IsPlaying && Time >= _settings.SkipAfterSeconds)
             {
                 _skipping = true;
             }
