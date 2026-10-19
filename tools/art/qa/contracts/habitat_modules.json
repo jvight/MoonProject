@@ -30,6 +30,13 @@
         0.0
       ]
     },
+    "PowerModule_StatusLamp": {
+      "pivot": [
+        -4.35,
+        -1.39,
+        1.68
+      ]
+    },
     "BellowsJoints": {
       "pivot": [
         0.0,
