@@ -927,6 +927,167 @@ def build_kestrel_landing_foot() -> bpy.types.Object:
     )
 
 
+def build_kestrel_antenna_boom() -> bpy.types.Object:
+    """Piece 7: Broken Kestrel-3 solar-boom & high-gain antenna fragment (1.85 x 1.25 x 1.05 m)."""
+    slot_names = [
+        "R1_Basalt",
+        "R1_GreyMetal",
+        "R1_BareSteel",
+        "R1_WhitePaint",
+        "R1_TealMark",
+        "R1_SolarCell",
+        "R1_Copper",
+        "R1_Brass",
+        "R1_Rubber",
+    ]
+    m = {name: i for i, name in enumerate(slot_names)}
+    bm = bmesh.new()
+
+    # Half-buried base skirt beneath the torn root hinge & lower solar wing corner
+    _add_buried_skirt_plinth(bm, 1.52, 0.98, 1.78, 1.18, -0.16, 0.05, m["R1_Basalt"])
+
+    # Torn root deployment hinge housing & scorched fracture collar at (-0.62, -0.10, 0.22)
+    root_rot = (8.0, -24.0, 10.0)
+    _add_oriented_box(
+        bm,
+        (0.34, 0.32, 0.24),
+        (-0.62, -0.10, 0.22),
+        root_rot,
+        m["R1_GreyMetal"],
+        bevel=0.006,
+    )
+    _add_oriented_box(
+        bm,
+        (0.18, 0.36, 0.28),
+        (-0.74, -0.12, 0.18),
+        root_rot,
+        m["R1_Rubber"],
+        bevel=0.005,
+    )
+    # Teal Kestrel-3 livery band on root boom collar
+    _add_oriented_box(
+        bm,
+        (0.16, 0.34, 0.26),
+        (-0.48, -0.08, 0.28),
+        root_rot,
+        m["R1_TealMark"],
+        bevel=0.005,
+    )
+
+    # Primary tubular white-painted deployment boom spar rising from root hinge to elbow
+    boom_rot = (6.0, 64.0, 12.0)
+    _add_oriented_frustum(
+        bm, 0.085, 0.075, 1.18, 12, (-0.08, -0.02, 0.48), boom_rot, m["R1_WhitePaint"]
+    )
+    # Parallel secondary bare-steel truss longerons & cross-braces along the boom
+    for sy in (-0.13, 0.13):
+        _add_oriented_frustum(
+            bm, 0.032, 0.032, 1.12, 10, (-0.08, sy, 0.44), boom_rot, m["R1_BareSteel"]
+        )
+    for frac, z_brace in ((-0.38, 0.34), (-0.06, 0.49), (0.26, 0.64)):
+        _add_oriented_box(
+            bm,
+            (0.06, 0.30, 0.12),
+            (frac, -0.02, z_brace),
+            (6.0, -26.0, 12.0),
+            m["R1_GreyMetal"],
+            bevel=0.004,
+        )
+
+    # Copper power / telemetry harness conduit running along the boom to the cut point
+    _add_oriented_frustum(
+        bm, 0.034, 0.034, 1.08, 10, (-0.04, 0.08, 0.54), boom_rot, m["R1_Copper"]
+    )
+
+    # Sheared elbow actuator collar at CutPoint (0.12, 0.04, 0.78)
+    _add_oriented_box(
+        bm,
+        (0.26, 0.26, 0.18),
+        (0.12, 0.04, 0.76),
+        (4.0, -22.0, 8.0),
+        m["R1_BareSteel"],
+        bevel=0.005,
+    )
+    _add_oriented_box(
+        bm,
+        (0.12, 0.28, 0.20),
+        (0.22, 0.05, 0.80),
+        (4.0, -22.0, 8.0),
+        m["R1_TealMark"],
+        bevel=0.004,
+    )
+
+    # Broken solar-wing paddle cantilevered off the -Y flank of the boom (tilted into the regolith)
+    wing_rot = (28.0, -16.0, 8.0)
+    # Aluminum honeycomb backing plate & white perimeter frame
+    _add_oriented_box(
+        bm,
+        (0.96, 0.56, 0.048),
+        (-0.14, -0.34, 0.34),
+        wing_rot,
+        m["R1_WhitePaint"],
+        bevel=0.005,
+    )
+    _add_oriented_box(
+        bm,
+        (0.88, 0.48, 0.054),
+        (-0.14, -0.34, 0.345),
+        wing_rot,
+        m["R1_GreyMetal"],
+        bevel=0.004,
+    )
+    # Two deep-violet photovoltaic cell bays separated by a bare-steel busbar rib
+    for sx_cell in (-0.22, 0.22):
+        _add_oriented_box(
+            bm,
+            (0.38, 0.42, 0.036),
+            (-0.14 + sx_cell, -0.33, 0.37),
+            wing_rot,
+            m["R1_SolarCell"],
+            bevel=0.003,
+        )
+    _add_oriented_box(
+        bm,
+        (0.05, 0.46, 0.042),
+        (-0.14, -0.33, 0.372),
+        wing_rot,
+        m["R1_BareSteel"],
+        bevel=0.003,
+    )
+    # Fractured outer solar-wing corner bent at a sharp angle with charred edge
+    bent_wing_rot = (-18.0, 26.0, -14.0)
+    _add_oriented_box(
+        bm,
+        (0.36, 0.44, 0.045),
+        (-0.62, -0.38, 0.22),
+        bent_wing_rot,
+        m["R1_SolarCell"],
+        bevel=0.004,
+    )
+
+    # Cantilevered high-gain dish & brass feed horn at the upper +X end of the boom
+    dish_rot = (-22.0, 34.0, -12.0)
+    _add_oriented_frustum(
+        bm, 0.24, 0.44, 0.14, 16, (0.56, 0.18, 0.56), dish_rot, m["R1_WhitePaint"], cap_mat_idx=m["R1_GreyMetal"]
+    )
+    _add_oriented_frustum(
+        bm, 0.44, 0.46, 0.05, 16, (0.60, 0.20, 0.62), dish_rot, m["R1_TealMark"], cap_mat_idx=m["R1_GreyMetal"]
+    )
+    # Central brass waveguide feed horn + copper sub-reflector cap
+    _add_oriented_frustum(
+        bm, 0.065, 0.042, 0.28, 12, (0.64, 0.23, 0.70), dish_rot, m["R1_Brass"], cap_mat_idx=m["R1_Copper"]
+    )
+
+    return _finalize_debris_object(
+        name="Kestrel_AntennaBoom",
+        bm=bm,
+        slot_names=slot_names,
+        target_size=(1.85, 1.25, 1.05),
+        target_min_z=-0.16,
+        cut_pivot=(0.12, 0.04, 0.78),
+    )
+
+
 DEBRIS_BUILDERS = (
     ("Kestrel_HullPanel", build_kestrel_hull_panel),
     ("Kestrel_StrutFrame", build_kestrel_strut_frame),
@@ -934,6 +1095,7 @@ DEBRIS_BUILDERS = (
     ("Kestrel_EngineBell", build_kestrel_engine_bell),
     ("Kestrel_CableTray", build_kestrel_cable_tray),
     ("Kestrel_LandingFoot", build_kestrel_landing_foot),
+    ("Kestrel_AntennaBoom", build_kestrel_antenna_boom),
 )
 
 
