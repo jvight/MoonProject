@@ -1021,11 +1021,493 @@ def render_storyboard_c():
     print("[build_studio_logos] Rendered Direction C 4-frame boot splash storyboard")
 
 
+# ==============================================================================
+# DIRECTION D — "TWO PERSPECTIVES" (Negative-Space Shape Reading Two Ways)
+# ==============================================================================
+
+def draw_mark_d(
+    draw: ImageDraw.ImageDraw,
+    cx: float,
+    cy: float,
+    scale: float,
+    ink: tuple,
+    accent: tuple,
+    bg_cut: tuple | None = None,
+    ss: int = SS,
+):
+    """
+    Draws Direction D ('Two Perspectives'):
+      - A reversible figure-ground circular medallion ('O') that reads two ways simultaneously:
+          1. PERSPECTIVE 1 — THE OUTWARD EYE: A bold circular medallion pierced by a negative-space almond eye,
+             containing a circular iris and a warm ochre-amber pupil with a lower catchlight wedge.
+          2. PERSPECTIVE 2 — THE CANYON PORTAL & HORIZON: Flip figure and ground, and the iris walls become
+             two towering canyon cliffs framing a perspective pathway that leads outward toward a warm sun
+             hanging above a distant horizon.
+      - 100% symmetric, crisp geometric arcs and planes (zero stray notches, zero dot/hole clusters).
+    """
+    w_img, h_img = draw.im.size
+    R_med = 176.0 * scale * ss
+    cxs, cys = cx * ss, cy * ss
+
+    # 1. Outer circular medallion mask (solid disk of radius R_med = 176 px)
+    mask_med = Image.new("L", (w_img, h_img), 0)
+    ImageDraw.Draw(mask_med).ellipse((cxs - R_med, cys - R_med, cxs + R_med, cys + R_med), fill=255)
+
+    # 2. Negative-space Vesica (Eye Sclera / Sky Vault) carved cleanly inside the medallion
+    mask_vesica = Image.new("L", (w_img, h_img), 0)
+    v_pts = vesica_points(cx, cy, half_len=152.0 * scale, half_width=86.0 * scale, tilt_deg=0.0, ss=ss, steps=128)
+    ImageDraw.Draw(mask_vesica).polygon(v_pts, fill=255)
+
+    # Medallion minus vesica = upper and lower eyelid/vault crescents
+    mask_ink = Image.composite(Image.new("L", (w_img, h_img), 0), mask_med, mask_vesica)
+
+    # 3. Central Iris / Canyon Cliffs (radius 68 px) inside the negative-space eye
+    r_iris = 68.0 * scale * ss
+    mask_iris = Image.new("L", (w_img, h_img), 0)
+    di = ImageDraw.Draw(mask_iris)
+    di.ellipse((cxs - r_iris, cys - r_iris, cxs + r_iris, cys + r_iris), fill=255)
+
+    # Carve the circular cradle for the warm Pupil / Distant Sun at (cx, cy - 12)
+    sun_cy = (cy - 12.0 * scale) * ss
+    r_sun = 25.0 * scale * ss
+    r_sun_gap = (25.0 + 11.0) * scale * ss
+    di.ellipse((cxs - r_sun_gap, sun_cy - r_sun_gap, cxs + r_sun_gap, sun_cy + r_sun_gap), fill=0)
+
+    # Carve the negative-space Perspective Pathway / Lower Iris Catchlight Wedge opening downward from the sun cradle
+    # to the lower sclera of the eye — turning the two sides of the iris into canyon portal walls!
+    w_top = 13.0 * scale * ss
+    w_bot = 46.0 * scale * ss
+    y_top_path = sun_cy + 18.0 * scale * ss
+    y_bot_path = (cy + 92.0 * scale) * ss
+    di.polygon(
+        [
+            (cxs - w_top, y_top_path),
+            (cxs + w_top, y_top_path),
+            (cxs + w_bot, y_bot_path),
+            (cxs - w_bot, y_bot_path),
+        ],
+        fill=0,
+    )
+
+    # Clip the iris strictly inside the vesica with a 12 px breathing collar at top & bottom eyelids
+    mask_vesica_inner = Image.new("L", (w_img, h_img), 0)
+    v_in_pts = vesica_points(cx, cy, half_len=140.0 * scale, half_width=74.0 * scale, tilt_deg=0.0, ss=ss, steps=128)
+    ImageDraw.Draw(mask_vesica_inner).polygon(v_in_pts, fill=255)
+    mask_iris = Image.composite(mask_iris, Image.new("L", (w_img, h_img), 0), mask_vesica_inner)
+
+    # Combine outer medallion and inner iris/cliffs
+    mask_final = Image.composite(Image.new("L", (w_img, h_img), 255), mask_ink, mask_iris)
+    draw.bitmap((0, 0), mask_final, fill=ink)
+
+    # 4. Warm Ochre-Amber Pupil / Rising World Disc at the focal apex of the perspective corridor
+    draw.ellipse((cxs - r_sun, sun_cy - r_sun, cxs + r_sun, sun_cy + r_sun), fill=accent)
+
+
+def generate_index_html():
+    html = """<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OUTSIGHT — Studio Identity Concepts &amp; 5s Boot Splash Storyboards</title>
+  <style>
+    :root {
+      --bg-page: #0B0D14;
+      --bg-card: #121622;
+      --bg-navy: #0B0E2A;
+      --border: #232A3E;
+      --ivory: #F4EFE6;
+      --ochre: #E2A856;
+      --muted: #9A9892;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg-page);
+      color: var(--ivory);
+      font-family: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.55;
+      padding: 36px 42px 72px;
+      max-width: 1680px;
+      margin: 0 auto;
+    }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 20px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 32px;
+    }
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: var(--ivory);
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.94rem;
+      margin-top: 6px;
+      max-width: 920px;
+    }
+    .controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      background: #171C2B;
+      color: var(--ivory);
+      border: 1px solid var(--border);
+      padding: 8px 15px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn.active, .btn:hover {
+      background: var(--ochre);
+      color: #0B0C10;
+      border-color: var(--ochre);
+      font-weight: 600;
+    }
+    .section-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ochre);
+      margin: 34px 0 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .section-note {
+      font-size: 0.88rem;
+      color: var(--muted);
+      font-weight: 400;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+    @media (max-width: 1280px) {
+      .grid-4 { grid-template-columns: repeat(2, 1fr); }
+    }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .card.pick {
+      border-color: rgba(226, 168, 86, 0.65);
+      box-shadow: 0 0 0 1px rgba(226, 168, 86, 0.22);
+    }
+    .pair-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-bottom: 1px solid var(--border);
+      background: #0B0C10;
+    }
+    body.mode-black .pair-wrap,
+    body.mode-white .pair-wrap {
+      grid-template-columns: 1fr;
+    }
+    body.mode-black .img-white { display: none; }
+    body.mode-white .img-black { display: none; }
+    .pair-wrap img {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      display: block;
+    }
+    .img-black { border-right: 1px solid var(--border); }
+    .card-body {
+      padding: 16px 18px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+    }
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .dir-title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--ivory);
+    }
+    .badge {
+      background: rgba(226, 168, 86, 0.16);
+      color: var(--ochre);
+      border: 1px solid rgba(226, 168, 86, 0.45);
+      font-size: 0.70rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+    }
+    .rationale {
+      font-size: 0.87rem;
+      color: #D8D4CA;
+      flex: 1;
+    }
+    .favicon-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      font-size: 0.76rem;
+      color: var(--muted);
+    }
+    .favicon-row img {
+      border-radius: 3px;
+      border: 1px solid rgba(255,255,255,0.14);
+      image-rendering: auto;
+    }
+    .links {
+      font-size: 0.76rem;
+      color: var(--muted);
+    }
+    .links a {
+      color: var(--ochre);
+      text-decoration: none;
+    }
+    .links a:hover { text-decoration: underline; }
+    .splash-block {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    .splash-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .splash-title {
+      font-size: 1.0rem;
+      font-weight: 600;
+      color: var(--ivory);
+      letter-spacing: 0.04em;
+    }
+    .frame-card {
+      background: var(--bg-navy);
+      border: 1px solid #242B52;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .frame-card img {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      display: block;
+    }
+  </style>
+</head>
+<body class="mode-both">
+  <header>
+    <div>
+      <h1>OUTSIGHT — STUDIO LOGO CONCEPTS (A · B · C · D)</h1>
+      <p class="subtitle">
+        Studio identity for <strong>"Outsight"</strong> (shown as <code>OUTSIGHT</code> or <code>Outsight Games</code>) — the opposite of insight, looking outward beyond what humans know; games about worlds and perspectives nobody has made yet. Timeless, calm, curious, a little mysterious. Zero dot/hole clusters.
+      </p>
+    </div>
+    <div class="controls">
+      <button class="btn active" id="btn-both" onclick="setMode('both')">Side-by-Side (Black + Off-White)</button>
+      <button class="btn" id="btn-black" onclick="setMode('black')">On Black (1024 px)</button>
+      <button class="btn" id="btn-white" onclick="setMode('white')">On Off-White (1024 px)</button>
+    </div>
+  </header>
+
+  <div class="section-title">
+    <span>1 · Four Distinct Studio Logo Directions (Mark + Wordmark · 1024×1024 PNG)</span>
+    <span class="section-note">Click any image link below a card to open the full 1024×1024 PNG</span>
+  </div>
+
+  <div class="grid-4">
+    <!-- DIRECTION A -->
+    <div class="card pick">
+      <div class="pair-wrap">
+        <img class="img-black" src="a/on_black.png" alt="Direction A on Black" />
+        <img class="img-white" src="a/on_offwhite.png" alt="Direction A on Off-White" />
+      </div>
+      <div class="card-body">
+        <div class="card-head">
+          <span class="dir-title">A · THE OUTER APERTURE</span>
+          <span class="badge">★ BEST PICK #1</span>
+        </div>
+        <p class="rationale">
+          A circular boundary ("O") that parts on its upper-right arc as a calm vesica lens looks outward beyond the ring—turning "insight" inside out into a timeless mark that reads at 16 px and 4K.
+        </p>
+        <div class="favicon-row">
+          <span>Favicon scale:</span>
+          <img src="a/favicon_64.png" width="32" height="32" alt="32px" title="32x32 px" />
+          <img src="a/favicon_64.png" width="16" height="16" alt="16px" title="16x16 px" />
+        </div>
+        <div class="links">
+          1024 px: <a href="a/on_black.png">a/on_black.png</a> · <a href="a/on_offwhite.png">a/on_offwhite.png</a> · <a href="a/transparent.png">a/transparent.png</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- DIRECTION B -->
+    <div class="card">
+      <div class="pair-wrap">
+        <img class="img-black" src="b/on_black.png" alt="Direction B on Black" />
+        <img class="img-white" src="b/on_offwhite.png" alt="Direction B on Off-White" />
+      </div>
+      <div class="card-body">
+        <div class="card-head">
+          <span class="dir-title">B · THE OPEN HORIZON</span>
+        </div>
+        <p class="rationale">
+          A quiet horizontal datum that parts at its center to let a vaulted portal and warm perspective light-beam pass across the threshold—evoking an unmapped doorway on the edge of a calm horizon.
+        </p>
+        <div class="favicon-row">
+          <span>Favicon scale:</span>
+          <img src="b/favicon_64.png" width="32" height="32" alt="32px" title="32x32 px" />
+          <img src="b/favicon_64.png" width="16" height="16" alt="16px" title="16x16 px" />
+        </div>
+        <div class="links">
+          1024 px: <a href="b/on_black.png">b/on_black.png</a> · <a href="b/on_offwhite.png">b/on_offwhite.png</a> · <a href="b/transparent.png">b/transparent.png</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- DIRECTION C -->
+    <div class="card pick">
+      <div class="pair-wrap">
+        <img class="img-black" src="c/on_black.png" alt="Direction C on Black" />
+        <img class="img-white" src="c/on_offwhite.png" alt="Direction C on Off-White" />
+      </div>
+      <div class="card-body">
+        <div class="card-head">
+          <span class="dir-title">C · THE LEAVING LINE</span>
+          <span class="badge">★ BEST PICK #2</span>
+        </div>
+        <p class="rationale">
+          A single unbroken geometric ribbon that traces a circle, smoothly inflects across its center, and departs straight through an opening in its own rim—an iconic monogram of leaving the known loop.
+        </p>
+        <div class="favicon-row">
+          <span>Favicon scale:</span>
+          <img src="c/favicon_64.png" width="32" height="32" alt="32px" title="32x32 px" />
+          <img src="c/favicon_64.png" width="16" height="16" alt="16px" title="16x16 px" />
+        </div>
+        <div class="links">
+          1024 px: <a href="c/on_black.png">c/on_black.png</a> · <a href="c/on_offwhite.png">c/on_offwhite.png</a> · <a href="c/transparent.png">c/transparent.png</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- DIRECTION D -->
+    <div class="card">
+      <div class="pair-wrap">
+        <img class="img-black" src="d/on_black.png" alt="Direction D on Black" />
+        <img class="img-white" src="d/on_offwhite.png" alt="Direction D on Off-White" />
+      </div>
+      <div class="card-body">
+        <div class="card-head">
+          <span class="dir-title">D · TWO PERSPECTIVES</span>
+        </div>
+        <p class="rationale">
+          A reversible figure-ground medallion whose negative space reads simultaneously as an open eye with a warm pupil and as a canyon portal opening onto a distant sun—two perspectives in one shape.
+        </p>
+        <div class="favicon-row">
+          <span>Favicon scale:</span>
+          <img src="d/favicon_64.png" width="32" height="32" alt="32px" title="32x32 px" />
+          <img src="d/favicon_64.png" width="16" height="16" alt="16px" title="16x16 px" />
+        </div>
+        <div class="links">
+          1024 px: <a href="d/on_black.png">d/on_black.png</a> · <a href="d/on_offwhite.png">d/on_offwhite.png</a> · <a href="d/transparent.png">d/transparent.png</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5-SECOND BOOT SPLASH STORYBOARDS FOR BEST 2 DIRECTIONS -->
+  <div class="section-title">
+    <span>2 · 5-Second Calm Navy (#0B0E2A) Boot "Splash" Storyboards (Best 2 Directions: A &amp; C)</span>
+    <span class="section-note">Subtle animated reveal before the game's title screen — weightless easing, zero flashy effects</span>
+  </div>
+
+  <div class="splash-block">
+    <div class="splash-header">
+      <div class="splash-title">STORYBOARD 1 — DIRECTION A ("THE OUTER APERTURE" · 0.0 s → 5.0 s)</div>
+      <div class="links">
+        Composite 2×2 sheet: <a href="a/splash_storyboard.png">a/splash_storyboard.png</a> · Frames:
+        <a href="a/splash_1.png">splash_1.png</a> · <a href="a/splash_2.png">splash_2.png</a> ·
+        <a href="a/splash_3.png">splash_3.png</a> · <a href="a/splash_4.png">splash_4.png</a>
+      </div>
+    </div>
+    <div class="grid-4">
+      <div class="frame-card"><img src="a/splash_1.png" alt="Direction A Frame 1" /></div>
+      <div class="frame-card"><img src="a/splash_2.png" alt="Direction A Frame 2" /></div>
+      <div class="frame-card"><img src="a/splash_3.png" alt="Direction A Frame 3" /></div>
+      <div class="frame-card"><img src="a/splash_4.png" alt="Direction A Frame 4" /></div>
+    </div>
+  </div>
+
+  <div class="splash-block">
+    <div class="splash-header">
+      <div class="splash-title">STORYBOARD 2 — DIRECTION C ("THE LEAVING LINE" · 0.0 s → 5.0 s)</div>
+      <div class="links">
+        Composite 2×2 sheet: <a href="c/splash_storyboard.png">c/splash_storyboard.png</a> · Frames:
+        <a href="c/splash_1.png">splash_1.png</a> · <a href="c/splash_2.png">splash_2.png</a> ·
+        <a href="c/splash_3.png">splash_3.png</a> · <a href="c/splash_4.png">splash_4.png</a>
+      </div>
+    </div>
+    <div class="grid-4">
+      <div class="frame-card"><img src="c/splash_1.png" alt="Direction C Frame 1" /></div>
+      <div class="frame-card"><img src="c/splash_2.png" alt="Direction C Frame 2" /></div>
+      <div class="frame-card"><img src="c/splash_3.png" alt="Direction C Frame 3" /></div>
+      <div class="frame-card"><img src="c/splash_4.png" alt="Direction C Frame 4" /></div>
+    </div>
+  </div>
+
+  <script>
+    function setMode(mode) {
+      document.body.className = 'mode-' + mode;
+      document.getElementById('btn-both').classList.toggle('active', mode === 'both');
+      document.getElementById('btn-black').classList.toggle('active', mode === 'black');
+      document.getElementById('btn-white').classList.toggle('active', mode === 'white');
+    }
+  </script>
+</body>
+</html>
+"""
+    OUT_ROOT.mkdir(parents=True, exist_ok=True)
+    index_path = OUT_ROOT / "index.html"
+    index_path.write_text(html, encoding="utf-8")
+    print("[build_studio_logos] Wrote side-by-side gallery to", index_path)
+
+
 if __name__ == "__main__":
     render_direction_lockups("a", draw_mark_a, wordmark_style="geometric", show_games=True)
     render_storyboard_a()
     render_direction_lockups("b", draw_mark_b, wordmark_style="geometric", show_games=True)
-    render_direction_lockups("c", draw_mark_c, wordmark_style="geometric", show_games=True)
+    render_direction_lockups("c", draw_mark_c, wordmark_style="geometric", show_games=False)
     render_storyboard_c()
+    render_direction_lockups("d", draw_mark_d, wordmark_style="mixed_case", show_games=True)
+    generate_index_html()
+
+
 
 
