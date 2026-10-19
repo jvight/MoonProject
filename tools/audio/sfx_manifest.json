@@ -1228,6 +1228,64 @@
       "notes": "The part seating on 07's back (Collect Impact): a solid little clunk on D."
     },
     {
+      "id": "call_carrier",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/call_carrier_loop.wav"
+      ],
+      "variantLabels": [
+        "call_carrier"
+      ],
+      "sha256": [
+        "d3aac4926aabc9aa1a5984e1d2db5ad621bca8eba7855bef1b4e0245ad578018"
+      ],
+      "volumeMin": 0.35,
+      "volumeMax": 0.35,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Opening v3 2.1, the call: Lumen's sign (three short, one long) on A5 from the Ark IV sweep beside Earth, faint and far. 4 s seamless; the game breaks it up on reserve and swells it with 07's facing.",
+      "source": "sampled",
+      "pick": "call_carrier v1"
+    },
+    {
+      "id": "call_answered",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/call_answered_loop.wav"
+      ],
+      "variantLabels": [
+        "call_answered"
+      ],
+      "sha256": [
+        "eaf0234909288769d1b7b4b0fad449184d0b5f1dbc0eadb8ddf39c124e3afb12"
+      ],
+      "volumeMin": 0.35,
+      "volumeMax": 0.35,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The call answered: the sign on A5, then relay.1 keying it back on E5, softer. 6 s seamless.",
+      "source": "sampled",
+      "pick": "call_answered v1"
+    },
+    {
       "id": "sky_diamond_ring",
       "category": "stinger_2d",
       "milestone": "M3",

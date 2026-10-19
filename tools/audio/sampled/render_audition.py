@@ -18,7 +18,7 @@ sys.path.insert(0, str(AUDIO_TOOLS))
 from synth import io  # noqa: E402
 from synth.core import rng  # noqa: E402
 
-from sampled import base, boot, build, dsp, face, rover, sky, ui, voice  # noqa: E402
+from sampled import base, boot, build, call, dsp, face, rover, sky, ui, voice  # noqa: E402
 
 VOICE_LUFS = -22.0
 BOOT_LUFS = -22.0
@@ -28,6 +28,7 @@ BASE_LUFS = -24.0
 ROVER_LUFS = -26.0
 FACE_LUFS = {"face_text_tick": -28.0, "face_line_done": -26.0, "face_load_step": -26.0}
 FACE_DEFAULT_LUFS = -22.0
+CALL_LUFS = -30.0
 TARGETS = {
     "build_place": -19.0, "build_snap": -21.5, "build_weld_loop": -21.5, "build_structure_complete": -18.5,
     "structure_power_on": -22.0,
@@ -47,6 +48,8 @@ def _entries():
         yield cue, "base", (fn.__doc__ or "").strip(), fn, count, BASE_LUFS, False
     for cue, (fn, count) in rover.SOUNDS.items():
         yield cue, "rover", (fn.__doc__ or "").strip(), fn, count, ROVER_LUFS, False
+    for cue, (fn, count) in call.SOUNDS.items():
+        yield cue, "call", (fn.__doc__ or "").strip(), fn, count, CALL_LUFS, True
     for cue, (fn, count) in face.SOUNDS.items():
         yield cue, "face", (fn.__doc__ or "").strip(), fn, count, FACE_LUFS.get(cue, FACE_DEFAULT_LUFS), False
     for cue, (fn, count) in ui.SOUNDS.items():
@@ -59,7 +62,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--library", required=True, help="the extracted Sonniss GDC 2026 folder (read only)")
     parser.add_argument("--out", required=True, help="where the OGGs and index.json go")
-    parser.add_argument("--group", help="only this group (voice, boot, sky, build, base, rover, face, ui)")
+    parser.add_argument("--group", help="only this group (voice, boot, sky, build, base, rover, face, call, ui)")
     args = parser.parse_args()
     lib = dsp.Library(args.library)
     out = Path(args.out)
