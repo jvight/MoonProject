@@ -244,7 +244,7 @@ namespace MoonProject.Gameplay
             _salvage.ConnectHeld(Bundles);
             _salvage.Connect(Containers);
             StartKit = new RoverStartKit(context.Events, Materials.Hold, () => PadLock != null && PadLock.OnPad,
-                _openingTuning.IgniterPart);
+                _openingTuning.IgniterPart, _openingTuning.IsFieldFit(_openingTuning.IgniterPart));
             Cutter.ConnectSystems(StartKit);
             _battery.ConnectSystems(StartKit);
             _battery.ConnectStructures(_building.Catalog);
@@ -326,7 +326,7 @@ namespace MoonProject.Gameplay
                     _landerPort, transform, _salvage.Tuning.ReachRadius, StartKit);
                 _battery.ConnectPads(opening);
                 PadLock = new PadLock(context.Events, _baseTuning, _building, _battery.Model, services.Rover,
-                    _openingTuning.PadChargeRadius);
+                    _openingTuning.PadChargeRadius, _openingTuning.PadPlateMargin);
                 BaseLamps = new BaseLamps(context.Events, _baseTuning, _building, sunlight);
                 return opening;
             }

@@ -6,10 +6,10 @@
     "R1_BareSteel",
     "R1_Brass",
     "R1_Copper",
-    "R1_CreamEnamel",
     "R1_DarkGlass",
     "R1_GreyMetal",
-    "R1_SagePatch"
+    "R1_SagePatch",
+    "R1_WhitePaint"
   ],
   "max_triangles": 22000,
   "max_meshes": 6,

@@ -167,6 +167,18 @@ Label {
     -unity-text-align: middle-center;
 }
 
+/* A hold verb's keycap ring: faint at rest, so the key reads as one you hold; it fills while the hold runs. */
+.glyph__hold-ring {
+    position: absolute;
+    left: -6px;
+    top: -6px;
+    right: -6px;
+    bottom: -6px;
+    --track-color: var(--moon-amber-soft);
+    --fill-color: var(--glass-hi);
+    --ring-width: 2.5;
+}
+
 .glyph--small {
     min-width: 30px;
     height: 30px;
@@ -1730,7 +1742,7 @@ Label {
     position: absolute;
     font-size: 24px;
     letter-spacing: 2px;
-    color: rgb(242, 192, 104);
+    color: rgb(252, 210, 132);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
@@ -1756,7 +1768,7 @@ Label {
     padding: 0;
     font-size: 18px;
     -unity-text-align: upper-center;
-    color: rgb(242, 192, 104);
+    color: rgb(252, 210, 132);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
@@ -1803,7 +1815,7 @@ Label {
     margin-top: 2px;
     font-size: 22px;
     white-space: normal;
-    color: rgb(242, 192, 104);
+    color: rgb(252, 210, 132);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
@@ -1817,7 +1829,7 @@ Label {
     padding-left: 20px;
     white-space: normal;
     font-size: 22px;
-    color: rgb(242, 192, 104);
+    color: rgb(252, 210, 132);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
@@ -1860,7 +1872,7 @@ Label {
 .cargo__key-word {
     margin-left: 12px;
     font-size: 22px;
-    color: rgb(242, 192, 104);
+    color: rgb(252, 210, 132);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
@@ -1901,14 +1913,14 @@ Label {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-    color: rgb(242, 192, 104);
+    color: rgb(252, 210, 132);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
 .databank__row--entry {
     font-size: 19px;
     letter-spacing: 0;
-    color: rgb(214, 170, 96);
+    color: rgb(238, 198, 128);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
@@ -1945,7 +1957,7 @@ Label {
     position: absolute;
     font-size: 22px;
     -unity-text-align: middle-center;
-    color: rgb(214, 170, 96);
+    color: rgb(238, 198, 128);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
@@ -1962,7 +1974,7 @@ Label {
     position: absolute;
     font-size: 19px;
     white-space: normal;
-    color: rgb(242, 192, 104);
+    color: rgb(252, 210, 132);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
@@ -1978,7 +1990,7 @@ Label {
     position: absolute;
     padding: 8px 14px;
     border-left-width: 3px;
-    border-color: rgb(242, 192, 104);
+    border-color: rgb(252, 210, 132);
 }
 
 .databank__history {
@@ -1992,7 +2004,7 @@ Label {
     position: absolute;
     font-size: 19px;
     -unity-text-align: middle-center;
-    color: rgb(44, 36, 24);
+    color: rgb(112, 90, 58);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 

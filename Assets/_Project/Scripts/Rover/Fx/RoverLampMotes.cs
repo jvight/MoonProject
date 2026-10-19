@@ -140,7 +140,10 @@ namespace MoonProject.Rover
         public void Tick(float deltaTime)
         {
             bool kickingUpRegolith = _rover.IsGrounded && _rover.HasGroundContact;
-            float target = kickingUpRegolith ? LampMoteLight.SpeedVisibility(_tuning, _rover.Speed) : 0f;
+            // The motes are dust caught in the lamp's beam: with the lamps switched off there is no beam to catch.
+            float target = kickingUpRegolith
+                ? LampMoteLight.SpeedVisibility(_tuning, _rover.Speed) * _rover.LampSwitchLevel
+                : 0f;
             Visibility = Smoothing.Damp(Visibility, target, _tuning.MoteVisibilityHalfLife, deltaTime);
 
             ParticleSystem.EmissionModule emission = _motes.emission;

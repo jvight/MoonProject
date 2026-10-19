@@ -231,6 +231,10 @@
             "text": "R3"
         },
         {
+            "key": "glyph.gamepad.leftstickpress",
+            "text": "L3"
+        },
+        {
             "key": "glyph.gamepad.dpad",
             "text": "D-Pad"
         },
@@ -312,7 +316,7 @@
         },
         {
             "key": "hint.build",
-            "text": "Weld"
+            "text": "Assemble"
         },
         {
             "key": "hint.scan",
@@ -560,7 +564,7 @@
         },
         {
             "key": "hint.deconstruct",
-            "text": "Deconstruct"
+            "text": "Dismantle"
         },
         {
             "key": "build.strip.title",
@@ -600,11 +604,11 @@
         },
         {
             "key": "build.hint.weld",
-            "text": "Hold to weld"
+            "text": "Hold to assemble"
         },
         {
             "key": "build.hint.deconstruct",
-            "text": "Hold to deconstruct"
+            "text": "Hold to dismantle"
         },
         {
             "key": "structure.charging_pad.name",
@@ -683,6 +687,10 @@
             "text": "Park on the pad to charge."
         },
         {
+            "key": "next.v2.park_on_pad",
+            "text": "Park on the charging pad."
+        },
+        {
             "key": "next.v2.fit_igniter",
             "text": "Fit the igniter to the cutter."
         },
@@ -716,7 +724,7 @@
         },
         {
             "key": "battery.low.lander",
-            "text": "Battery low. The lander's port can charge you once a pad stands there."
+            "text": "Battery low. Build a pad at the lander to charge."
         },
         {
             "key": "battery.low.pad",
@@ -959,6 +967,10 @@
             "text": "Drop it on the cutter"
         },
         {
+            "key": "ui.cargo.igniter.fit_hint",
+            "text": "Drag to the cutter, or press E"
+        },
+        {
             "key": "ui.cargo.drag.nowhere",
             "text": "Nothing on 07 takes this yet"
         },
@@ -996,7 +1008,7 @@
         },
         {
             "key": "build.step.weld",
-            "text": "Hold {0} to weld"
+            "text": "Hold {0} to assemble"
         },
         {
             "key": "post.carrier",

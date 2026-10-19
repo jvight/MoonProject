@@ -96,7 +96,7 @@ namespace MoonProject.Gameplay
             float shellRadius = Mathf.Clamp(Mathf.Abs(_span.y) * look.RibbonShellShare, shellRange.x, shellRange.y);
             float baseSize = Mathf.Max(_scanTuning.LensMoteSize * look.RibbonBeadShare, look.RibbonBeadMin);
             float beadAlpha = _scanTuning.LensMoteAlpha * look.RibbonAlphaShare;
-            Color amberColor = _scanTuning.CompletionPingColor;
+            Color pingColor = _scanTuning.CompletionPingColor;
             int rows = look.RibbonShellRows;
             float middleRow = (rows - 1) * 0.5f;
 
@@ -124,7 +124,7 @@ namespace MoonProject.Gameplay
                 Vector3 dirToLens = distToLens > MinDistance ? toLens / distToLens : -forward;
                 float stretchLength = Mathf.Lerp(look.RibbonStretch.x, look.RibbonStretch.y, Mathf.Sin(s * Mathf.PI));
                 Vector3 stretch = dirToLens * (stretchLength * weight);
-                Color color = Color.Lerp(amberColor, Color.white, look.RibbonHeadWhite * toHead);
+                Color color = Color.Lerp(pingColor, Color.white, look.RibbonHeadWhite * toHead);
                 color.a = Mathf.Min(look.RibbonAlphaCap, beadAlpha * weight * env);
                 _sprites.Add(pos, baseSize * weight, color, stretch);
             }
@@ -132,7 +132,7 @@ namespace MoonProject.Gameplay
             if (t > look.CatchStart)
             {
                 float catchWeight = Mathf.InverseLerp(look.CatchStart, 1f, t);
-                Color lensCatch = amberColor;
+                Color lensCatch = pingColor;
                 float catchAlpha = _tuning.ScanLensCoreAlpha * Mathf.Lerp(look.CatchAlphaStart, 1f, catchWeight);
                 lensCatch.a = Mathf.Min(look.CatchAlphaCap, catchAlpha * env);
                 float catchSize = _tuning.ScanLensCoreSize * (1f + look.CatchSwell * catchWeight);

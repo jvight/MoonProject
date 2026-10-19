@@ -180,7 +180,6 @@ def _add_bolted_cut_seam_band(
     m_grey = mat_map["R1_GreyMetal"]
     m_bare = mat_map["R1_BareSteel"]
     m_rubber = mat_map["R1_Rubber"]
-    m_orange = mat_map["R1_OrangeStripe"]
 
     rot_mat = Euler(
         (math.radians(rot_deg[0]), math.radians(rot_deg[1]), math.radians(rot_deg[2])),
@@ -205,10 +204,12 @@ def _add_bolted_cut_seam_band(
         bevel=0.005,
     )
     # Irregular outer soot/scorch blotches along the cut line
-    for side_y in (-band_depth * 0.95, band_depth * 0.95):
+    for side_y in (-band_depth * 0.90, band_depth * 0.90):
         for frac in (-0.34, 0.0, 0.34):
+            if side_y < 0.0 and abs(frac) < 0.05:
+                continue
             place_local_box(
-                (span_w * 0.22, band_depth * 0.65, band_thick * 0.92),
+                (span_w * 0.20, band_depth * 0.55, band_thick * 0.54),
                 (span_w * frac, side_y, 0.0),
                 m_rubber,
                 bevel=0.004,
@@ -233,12 +234,13 @@ def _add_bolted_cut_seam_band(
             bevel=0.003,
         )
 
-    # 4. Orange hazard cutter-target brackets at both ends of the seam ("cutter goes here" read)
+    # 4. Teal Kestrel-3 cutter-target brackets at both ends of the seam ("cutter goes here" read)
+    m_teal = mat_map["R1_TealMark"]
     for sx in (-1.0, 1.0):
         place_local_box(
             (0.11, band_depth * 1.38, band_thick * 1.30),
             (sx * (span_w * 0.46), 0.0, 0.0),
-            m_orange,
+            m_teal,
             bevel=0.004,
         )
 
@@ -256,6 +258,34 @@ def _add_bolted_cut_seam_band(
                 )
 
 
+def _register_kestrel_era_materials() -> None:
+    """Register R1_WhitePaint and R1_TealMark into r1kit at runtime without modifying r1kit.py on disk."""
+    extra_specs = {
+        "R1_WhitePaint": {
+            "base_color": r1kit._srgb_to_linear("#ECEAE4"),
+            "wear_color": r1kit._srgb_to_linear("#565A63"),
+            "dust_color": r1kit._srgb_to_linear("#8D8B86"),
+            "metallic": 0.04,
+            "roughness": 0.38,
+            "emission": (0.0, 0.0, 0.0, 1.0),
+            "emission_strength": 0.0,
+        },
+        "R1_TealMark": {
+            "base_color": r1kit._srgb_to_linear("#3E7A82"),
+            "wear_color": r1kit._srgb_to_linear("#9BA8AC"),
+            "dust_color": r1kit._srgb_to_linear("#85888A"),
+            "metallic": 0.06,
+            "roughness": 0.40,
+            "emission": (0.0, 0.0, 0.0, 1.0),
+            "emission_strength": 0.0,
+        },
+    }
+    for name, spec in extra_specs.items():
+        if name not in r1kit.ALLOWED_MATERIALS:
+            r1kit.ALLOWED_MATERIALS = tuple(r1kit.ALLOWED_MATERIALS) + (name,)
+        r1kit.MATERIAL_SPECS[name] = spec
+
+
 def _finalize_debris_object(
     name: str,
     bm: bmesh.types.BMesh,
@@ -267,6 +297,7 @@ def _finalize_debris_object(
 ) -> bpy.types.Object:
     """Normalize bounds, build Blender mesh, assign R1 materials/UVs/vertex colors, and attach CutPoint."""
     rc.register_ruins_materials()
+    _register_kestrel_era_materials()
     canonical_mats = r1kit.ensure_materials(use_vertex_color_shading=False)
 
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
@@ -345,14 +376,13 @@ def _finalize_debris_object(
 def build_kestrel_hull_panel() -> bpy.types.Object:
     """Piece 1: Curved Kestrel-3 hull panel with bolted cut seam band + scorch marks (2.80 x 1.85 x 1.35 m)."""
     slot_names = [
-        "R1_CreamEnamel",
+        "R1_WhitePaint",
         "R1_GreyMetal",
         "R1_Basalt",
         "R1_BareSteel",
-        "R1_OrangeStripe",
+        "R1_TealMark",
         "R1_GoldFoil",
         "R1_Rubber",
-        "R1_Signage",
     ]
     m = {name: i for i, name in enumerate(slot_names)}
     bm = bmesh.new()
@@ -373,7 +403,7 @@ def build_kestrel_hull_panel() -> bpy.types.Object:
             (0.58, 1.52, 0.085),
             (sx, -0.04, sz),
             (16.0, tilt_y, 3.0),
-            m["R1_CreamEnamel"],
+            m["R1_WhitePaint"],
             bevel=0.008,
         )
         # Inner gold MLI backing blanket pad
@@ -396,57 +426,76 @@ def build_kestrel_hull_panel() -> bpy.types.Object:
         )
 
     # Transverse bulkhead frame arcs at front and rear edges
-    for y_off in (-0.68, 0.58):
+    for y_off in (-0.74, 0.62):
         _add_oriented_box(
             bm,
-            (2.42, 0.12, 0.18),
+            (2.42, 0.11, 0.17),
             (0.0, y_off, 0.48),
             (16.0, 0.0, 3.0),
             m["R1_GreyMetal"],
             bevel=0.006,
         )
 
-    # Orange Kestrel-3 livery stripe across upper hull strakes
+    # Teal Kestrel-3 livery stripe across upper hull strakes
     _add_oriented_box(
         bm,
         (2.15, 0.22, 0.095),
-        (0.0, 0.36, 0.76),
+        (0.0, 0.42, 0.78),
         (16.0, 0.0, 3.0),
-        m["R1_OrangeStripe"],
+        m["R1_TealMark"],
         bevel=0.004,
     )
 
     # Prominent bolted cut seam band + scorch marks wrapping proud over the hull panel crest!
     _add_bolted_cut_seam_band(
         bm,
-        center=(0.0, -0.04, 0.72),
+        center=(0.0, 0.04, 0.73),
         rot_deg=(16.0, 0.0, 3.0),
         span_w=2.34,
-        band_thick=0.18,
-        band_depth=0.30,
+        band_thick=0.16,
+        band_depth=0.22,
         mat_map=m,
         bolt_count=7,
     )
 
-    # Kestrel-3 stencilled identification plate (R1_Signage) mounted proud on forward strake
-    _add_oriented_box(
-        bm,
-        (0.52, 0.24, 0.05),
-        (-0.52, -0.44, 0.58),
-        (16.0, 11.0, 3.0),
-        m["R1_Signage"],
-        bevel=0.003,
-    )
-
-    return _finalize_debris_object(
+    root = _finalize_debris_object(
         name="Kestrel_HullPanel",
         bm=bm,
         slot_names=slot_names,
         target_size=(2.80, 1.85, 1.35),
         target_min_z=-0.22,
         cut_pivot=(0.0, -0.05, 0.72),
-        signage_cell="LUMEN_STN",
     )
+
+    # Attach ~0.4 m Tycho Heavy Industries maker decal (Decal_Tycho_1) on the central white hull strake,
+    # positioned in the open bay so its plasma-cut / scorched upper-right corner kisses the cut-seam collar.
+    white_idx = m["R1_WhitePaint"]
+    central_polys = [
+        p
+        for p in root.data.polygons
+        if p.material_index == white_idx and abs(p.center.x) < 0.14 and p.normal.z > 0.85 and p.area > 0.30
+    ]
+    top_poly = max(central_polys, key=lambda p: p.area)
+    n_bl = Vector(top_poly.normal).normalized()
+    p0_bl = Vector(top_poly.center)
+    decal_x_bl = -0.02
+    decal_y_bl = -0.44
+    decal_z_bl = p0_bl.z - (n_bl.x * (decal_x_bl - p0_bl.x) + n_bl.y * (decal_y_bl - p0_bl.y)) / n_bl.z
+    p_bl = Vector((decal_x_bl, decal_y_bl, decal_z_bl))
+    up_bl = (Vector((0.0, 1.0, 0.0)) - n_bl * n_bl.y).normalized()
+
+    r1kit.add_maker_decal_node(
+        "Decal_Tycho_1",
+        root,
+        cell_key="TYCHO",
+        center_u=(p_bl.x, p_bl.z, p_bl.y),
+        normal_u=(n_bl.x, n_bl.z, n_bl.y),
+        up_u=(up_bl.x, up_bl.z, up_bl.y),
+        width=0.40,
+        height=0.40,
+        offset=0.002,
+    )
+    return root
 
 
 def build_kestrel_strut_frame() -> bpy.types.Object:
@@ -455,8 +504,8 @@ def build_kestrel_strut_frame() -> bpy.types.Object:
         "R1_Basalt",
         "R1_GreyMetal",
         "R1_BareSteel",
-        "R1_CreamEnamel",
-        "R1_OrangeStripe",
+        "R1_WhitePaint",
+        "R1_TealMark",
         "R1_Copper",
         "R1_Brass",
         "R1_Rubber",
@@ -521,7 +570,7 @@ def build_kestrel_strut_frame() -> bpy.types.Object:
         (1.55, 0.46, 0.07),
         (-0.18, -0.52, 0.46),
         (28.0, -10.0, 4.0),
-        m["R1_CreamEnamel"],
+        m["R1_WhitePaint"],
         bevel=0.005,
     )
 
@@ -558,14 +607,13 @@ def build_kestrel_strut_frame() -> bpy.types.Object:
 def build_kestrel_tank() -> bpy.types.Object:
     """Piece 3: Half-buried Kestrel-3 propellant pressure tank with gold MLI wrap (1.95 x 1.35 x 1.15 m)."""
     slot_names = [
-        "R1_CreamEnamel",
+        "R1_WhitePaint",
         "R1_GoldFoil",
         "R1_Basalt",
         "R1_GreyMetal",
-        "R1_OrangeStripe",
+        "R1_TealMark",
         "R1_Brass",
         "R1_Copper",
-        "R1_Signage",
     ]
     m = {name: i for i, name in enumerate(slot_names)}
     bm = bmesh.new()
@@ -575,14 +623,14 @@ def build_kestrel_tank() -> bpy.types.Object:
 
     # Main cylindrical propellant vessel with domed ends (tilted at 9 deg pitch as if half-sunk)
     _add_oriented_frustum(
-        bm, 0.48, 0.48, 1.28, 16, (-0.04, 0.0, 0.42), (0.0, 81.0, 4.0), m["R1_CreamEnamel"]
+        bm, 0.48, 0.48, 1.28, 16, (-0.04, 0.0, 0.42), (0.0, 81.0, 4.0), m["R1_WhitePaint"]
     )
     # Domed end caps (stepped frustums)
     _add_oriented_frustum(
-        bm, 0.48, 0.28, 0.24, 16, (-0.78, -0.05, 0.30), (0.0, 81.0, 4.0), m["R1_CreamEnamel"]
+        bm, 0.48, 0.28, 0.24, 16, (-0.78, -0.05, 0.30), (0.0, 81.0, 4.0), m["R1_WhitePaint"]
     )
     _add_oriented_frustum(
-        bm, 0.28, 0.48, 0.24, 16, (0.70, 0.05, 0.54), (0.0, 81.0, 4.0), m["R1_CreamEnamel"]
+        bm, 0.28, 0.48, 0.24, 16, (0.70, 0.05, 0.54), (0.0, 81.0, 4.0), m["R1_WhitePaint"]
     )
 
     # Gold foil MLI thermal blanket wrap sleeve around center section
@@ -596,9 +644,9 @@ def build_kestrel_tank() -> bpy.types.Object:
             bm, 0.53, 0.53, 0.11, 16, (x_off, 0.0, z_off), (0.0, 81.0, 4.0), m["R1_Basalt"]
         )
 
-    # Orange hazard stripe band near forward dome
+    # Teal Kestrel-3 livery stripe band near forward dome
     _add_oriented_frustum(
-        bm, 0.515, 0.515, 0.14, 16, (0.52, 0.03, 0.51), (0.0, 81.0, 4.0), m["R1_OrangeStripe"]
+        bm, 0.515, 0.515, 0.14, 16, (0.52, 0.03, 0.51), (0.0, 81.0, 4.0), m["R1_TealMark"]
     )
 
     # Upper propellant feed manifold box & brass/copper valves
@@ -618,13 +666,13 @@ def build_kestrel_tank() -> bpy.types.Object:
         bm, 0.04, 0.04, 0.54, 10, (-0.12, 0.24, 0.82), (14.0, 76.0, 0.0), m["R1_Copper"]
     )
 
-    # Signage stencil plate on upper flank
+    # Tycho identification badge plate on upper flank
     _add_oriented_box(
         bm,
         (0.38, 0.18, 0.03),
         (-0.22, -0.38, 0.72),
         (38.0, -8.0, 4.0),
-        m["R1_Signage"],
+        m["R1_TealMark"],
         bevel=0.003,
     )
 
@@ -635,7 +683,6 @@ def build_kestrel_tank() -> bpy.types.Object:
         target_size=(1.95, 1.35, 1.15),
         target_min_z=-0.20,
         cut_pivot=(0.18, 0.0, 0.88),
-        signage_cell="CAUTION_RAD",
     )
 
 
@@ -648,7 +695,7 @@ def build_kestrel_engine_bell() -> bpy.types.Object:
         "R1_Copper",
         "R1_Brass",
         "R1_Rubber",
-        "R1_OrangeStripe",
+        "R1_TealMark",
     ]
     m = {name: i for i, name in enumerate(slot_names)}
     bm = bmesh.new()
@@ -694,7 +741,7 @@ def build_kestrel_engine_bell() -> bpy.types.Object:
         (0.68, 0.18, 0.14),
         (-0.14, 0.28, 0.96),
         tilt,
-        m["R1_OrangeStripe"],
+        m["R1_TealMark"],
         bevel=0.005,
     )
 
@@ -722,7 +769,7 @@ def build_kestrel_cable_tray() -> bpy.types.Object:
         "R1_Rubber",
         "R1_Copper",
         "R1_Brass",
-        "R1_OrangeStripe",
+        "R1_TealMark",
     ]
     m = {name: i for i, name in enumerate(slot_names)}
     bm = bmesh.new()
@@ -790,7 +837,7 @@ def build_kestrel_cable_tray() -> bpy.types.Object:
         (0.42, 0.14, 0.28),
         (0.02, 0.0, 0.44),
         (0.0, -4.0, 0.0),
-        m["R1_OrangeStripe"],
+        m["R1_TealMark"],
         bevel=0.004,
     )
     _add_oriented_frustum(
@@ -813,9 +860,9 @@ def build_kestrel_landing_foot() -> bpy.types.Object:
         "R1_Basalt",
         "R1_GreyMetal",
         "R1_BareSteel",
-        "R1_CreamEnamel",
+        "R1_WhitePaint",
         "R1_GoldFoil",
-        "R1_OrangeStripe",
+        "R1_TealMark",
         "R1_Rubber",
     ]
     m = {name: i for i, name in enumerate(slot_names)}
@@ -840,7 +887,7 @@ def build_kestrel_landing_foot() -> bpy.types.Object:
     # Main oleo-pneumatic shock strut (tilted at 22 deg)
     strut_rot = (14.0, -20.0, 8.0)
     _add_oriented_frustum(
-        bm, 0.12, 0.12, 0.44, 12, (-0.06, -0.05, 0.48), strut_rot, m["R1_CreamEnamel"]
+        bm, 0.12, 0.12, 0.44, 12, (-0.06, -0.05, 0.48), strut_rot, m["R1_WhitePaint"]
     )
     _add_oriented_frustum(
         bm, 0.085, 0.085, 0.24, 12, (-0.12, -0.10, 0.66), strut_rot, m["R1_BareSteel"]
@@ -849,14 +896,14 @@ def build_kestrel_landing_foot() -> bpy.types.Object:
         bm, 0.135, 0.135, 0.10, 12, (-0.09, -0.07, 0.56), strut_rot, m["R1_Rubber"]
     )
 
-    # Twin A-frame drag brace links with orange hazard stripes
+    # Twin A-frame drag brace links with teal livery stripes
     for sy in (-1.0, 1.0):
         _add_oriented_box(
             bm,
             (0.52, 0.09, 0.09),
             (0.14, sy * 0.22, 0.38),
             (sy * 18.0, 32.0, sy * -14.0),
-            m["R1_OrangeStripe"],
+            m["R1_TealMark"],
             bevel=0.004,
         )
 
@@ -880,6 +927,172 @@ def build_kestrel_landing_foot() -> bpy.types.Object:
     )
 
 
+def build_kestrel_antenna_boom() -> bpy.types.Object:
+    """Piece 7: Broken Kestrel-3 solar-boom & high-gain antenna fragment (1.85 x 1.25 x 1.05 m)."""
+    slot_names = [
+        "R1_Basalt",
+        "R1_GreyMetal",
+        "R1_BareSteel",
+        "R1_WhitePaint",
+        "R1_TealMark",
+        "R1_SolarCell",
+        "R1_Copper",
+        "R1_Brass",
+        "R1_Rubber",
+    ]
+    m = {name: i for i, name in enumerate(slot_names)}
+    bm = bmesh.new()
+
+    # Half-buried base skirt beneath the torn root hinge & lower solar wing corner
+    _add_buried_skirt_plinth(bm, 1.52, 0.98, 1.78, 1.18, -0.16, 0.05, m["R1_Basalt"])
+
+    # Torn root deployment hinge housing & scorched fracture collar at (-0.62, -0.10, 0.22)
+    root_rot = (8.0, -24.0, 10.0)
+    _add_oriented_box(
+        bm,
+        (0.34, 0.32, 0.24),
+        (-0.62, -0.10, 0.22),
+        root_rot,
+        m["R1_GreyMetal"],
+        bevel=0.006,
+    )
+    _add_oriented_box(
+        bm,
+        (0.18, 0.36, 0.28),
+        (-0.74, -0.12, 0.18),
+        root_rot,
+        m["R1_Rubber"],
+        bevel=0.005,
+    )
+    # Teal Kestrel-3 livery band on root boom collar
+    _add_oriented_box(
+        bm,
+        (0.16, 0.34, 0.26),
+        (-0.48, -0.08, 0.28),
+        root_rot,
+        m["R1_TealMark"],
+        bevel=0.005,
+    )
+
+    # Primary tubular white-painted deployment boom spar rising from root hinge to elbow
+    boom_rot = (6.0, 64.0, 12.0)
+    _add_oriented_frustum(
+        bm, 0.085, 0.075, 1.18, 12, (-0.08, -0.02, 0.48), boom_rot, m["R1_WhitePaint"]
+    )
+    # Parallel secondary bare-steel truss longerons & cross-braces along the boom
+    for sy in (-0.13, 0.13):
+        _add_oriented_frustum(
+            bm, 0.032, 0.032, 1.12, 10, (-0.08, sy, 0.44), boom_rot, m["R1_BareSteel"]
+        )
+    for frac, z_brace in ((-0.38, 0.34), (-0.06, 0.49), (0.26, 0.64)):
+        _add_oriented_box(
+            bm,
+            (0.06, 0.30, 0.12),
+            (frac, -0.02, z_brace),
+            (6.0, -26.0, 12.0),
+            m["R1_GreyMetal"],
+            bevel=0.004,
+        )
+
+    # Copper power / telemetry harness conduit running along the boom to the cut point
+    _add_oriented_frustum(
+        bm, 0.034, 0.034, 1.08, 10, (-0.04, 0.08, 0.54), boom_rot, m["R1_Copper"]
+    )
+
+    # Sheared elbow actuator collar at CutPoint (0.12, 0.04, 0.78)
+    _add_oriented_box(
+        bm,
+        (0.26, 0.26, 0.18),
+        (0.12, 0.04, 0.76),
+        (4.0, -22.0, 8.0),
+        m["R1_BareSteel"],
+        bevel=0.005,
+    )
+    _add_oriented_box(
+        bm,
+        (0.12, 0.28, 0.20),
+        (0.22, 0.05, 0.80),
+        (4.0, -22.0, 8.0),
+        m["R1_TealMark"],
+        bevel=0.004,
+    )
+
+    # Broken solar-wing paddle cantilevered off the -Y flank of the boom (tilted into the regolith)
+    wing_rot = (26.0, -14.0, 8.0)
+    wing_rot_mat = Euler(
+        (math.radians(wing_rot[0]), math.radians(wing_rot[1]), math.radians(wing_rot[2])),
+        "XYZ",
+    ).to_matrix()
+    wing_ctr = Vector((-0.14, -0.34, 0.34))
+
+    def place_wing_box(
+        lsize: tuple[float, float, float],
+        lpos: tuple[float, float, float],
+        m_idx: int,
+        bevel: float = 0.004,
+    ) -> None:
+        wpos = wing_ctr + (wing_rot_mat @ Vector(lpos))
+        _add_oriented_box(bm, lsize, (wpos.x, wpos.y, wpos.z), wing_rot, m_idx, bevel=bevel)
+
+    # Aluminum honeycomb backing plate & white perimeter frame
+    place_wing_box((0.96, 0.56, 0.046), (0.0, 0.0, 0.0), m["R1_WhitePaint"], bevel=0.005)
+    place_wing_box((0.88, 0.48, 0.048), (0.0, 0.0, 0.006), m["R1_GreyMetal"], bevel=0.004)
+    # Teal Tycho trim strip along the upper edge of the solar wing frame
+    place_wing_box((0.88, 0.048, 0.052), (0.0, 0.22, 0.010), m["R1_TealMark"], bevel=0.003)
+    # Two deep-violet photovoltaic cell bays separated by a bare-steel busbar rib
+    for sx_cell in (-0.22, 0.22):
+        place_wing_box((0.38, 0.40, 0.040), (sx_cell, -0.01, 0.022), m["R1_SolarCell"], bevel=0.003)
+    place_wing_box((0.048, 0.42, 0.044), (0.0, -0.01, 0.024), m["R1_BareSteel"], bevel=0.003)
+
+    # Fractured outer solar-wing corner bent at a sharp angle with charred edge
+    bent_wing_rot = (18.0, 22.0, -14.0)
+    _add_oriented_box(
+        bm,
+        (0.36, 0.44, 0.045),
+        (-0.62, -0.38, 0.24),
+        bent_wing_rot,
+        m["R1_SolarCell"],
+        bevel=0.004,
+    )
+
+    # Cantilevered high-gain dish & brass feed horn at the upper +X end of the boom,
+    # angled so its white dish reflector face, teal rim collar, and brass/copper feed horn are visible
+    dish_rot = (28.0, 22.0, -10.0)
+    dish_rot_mat = Euler(
+        (math.radians(dish_rot[0]), math.radians(dish_rot[1]), math.radians(dish_rot[2])),
+        "XYZ",
+    ).to_matrix()
+    dish_ctr = Vector((0.56, 0.14, 0.56))
+
+    def place_dish_frustum(
+        r_b: float,
+        r_t: float,
+        length: float,
+        segs: int,
+        lpos: tuple[float, float, float],
+        m_idx: int,
+        cap_m_idx: int,
+    ) -> None:
+        wpos = dish_ctr + (dish_rot_mat @ Vector(lpos))
+        _add_oriented_frustum(
+            bm, r_b, r_t, length, segs, (wpos.x, wpos.y, wpos.z), dish_rot, m_idx, cap_mat_idx=cap_m_idx
+        )
+
+    place_dish_frustum(0.22, 0.43, 0.12, 16, (0.0, 0.0, 0.0), m["R1_WhitePaint"], m["R1_WhitePaint"])
+    place_dish_frustum(0.43, 0.46, 0.048, 16, (0.0, 0.0, 0.068), m["R1_TealMark"], m["R1_WhitePaint"])
+    place_dish_frustum(0.095, 0.080, 0.040, 12, (0.0, 0.0, 0.100), m["R1_GreyMetal"], m["R1_GreyMetal"])
+    place_dish_frustum(0.062, 0.042, 0.26, 12, (0.0, 0.0, 0.220), m["R1_Brass"], m["R1_Copper"])
+
+    return _finalize_debris_object(
+        name="Kestrel_AntennaBoom",
+        bm=bm,
+        slot_names=slot_names,
+        target_size=(1.85, 1.25, 1.05),
+        target_min_z=-0.16,
+        cut_pivot=(0.12, 0.04, 0.78),
+    )
+
+
 DEBRIS_BUILDERS = (
     ("Kestrel_HullPanel", build_kestrel_hull_panel),
     ("Kestrel_StrutFrame", build_kestrel_strut_frame),
@@ -887,6 +1100,7 @@ DEBRIS_BUILDERS = (
     ("Kestrel_EngineBell", build_kestrel_engine_bell),
     ("Kestrel_CableTray", build_kestrel_cable_tray),
     ("Kestrel_LandingFoot", build_kestrel_landing_foot),
+    ("Kestrel_AntennaBoom", build_kestrel_antenna_boom),
 )
 
 

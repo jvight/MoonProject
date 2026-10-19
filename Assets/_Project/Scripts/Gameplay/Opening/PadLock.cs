@@ -30,6 +30,7 @@ namespace MoonProject.Gameplay
         private readonly BatteryModel _battery;
         private readonly IRoverState _rover;
         private readonly float _radius;
+        private readonly float _plateMargin;
         private readonly Transform[] _bars = new Transform[DockLock.Walls];
         private readonly Vector3[] _barRest = new Vector3[DockLock.Walls];
         private readonly EmissionGlow[] _stages = new EmissionGlow[DockLock.Walls];
@@ -40,20 +41,22 @@ namespace MoonProject.Gameplay
         private Vector3 _dockPoint;
         private float _dockYaw;
 
-        /// <param name="radius">Metres around a pad's centre within which 07 is on it.</param>
+        /// <param name="radius">Metres around a pad's centre within which the dock takes hold of 07.</param>
+        /// <param name="plateMargin">Metres past a pad's plate 07 may stand and still be on the pad.</param>
         public PadLock(EventBus events, BaseTuning tuning, BuildField building, BatteryModel battery,
-            IRoverState rover, float radius)
+            IRoverState rover, float radius, float plateMargin)
         {
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
             _building = building != null ? building : throw new ArgumentNullException(nameof(building));
             _battery = battery ?? throw new ArgumentNullException(nameof(battery));
             _rover = rover ?? throw new ArgumentNullException(nameof(rover));
             _radius = radius;
+            _plateMargin = plateMargin;
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _lock = new DockLock(events, tuning);
         }
 
-        /// <summary>07 stands on a pad it built (powered or not).</summary>
+        /// <summary>07 stands on the plate of a pad it built (powered or not), as a player sees it.</summary>
         public bool OnPad { get; private set; }
 
         /// <summary>The lock's walls are up (rising, locked or lowering) on the pad 07 is on.</summary>
@@ -69,7 +72,7 @@ namespace MoonProject.Gameplay
         {
             int pad = PadUnder(out StructurePose pose);
             Vector3 centre = pose.Position;
-            OnPad = pad >= 0;
+            OnPad = OnPlate();
             if (pad != _pad && !_lock.Raised)
             {
                 Release();
@@ -155,6 +158,29 @@ namespace MoonProject.Gameplay
 
             Debug.LogError($"{nameof(PadLock)}: no ground or pad deck under the pad at {centre} to dock 07 on.");
             point = centre;
+            return false;
+        }
+
+        /// <summary>07 is over a built pad's plate: its footprint, turned with the pad, and a margin.</summary>
+        private bool OnPlate()
+        {
+            PlacedBase placed = _building.PlacedBase;
+            for (int i = 0; i < placed.Count; i++)
+            {
+                PlacedStructure pad = placed.StructureAt(i);
+                if (!pad.IsBuilt || pad.Definition.Id != StructureIds.ChargingPad)
+                {
+                    continue;
+                }
+
+                Vector3 local = Quaternion.Inverse(pad.Pose.Rotation) * (_rover.Position - pad.Pose.Position);
+                if (Mathf.Abs(local.x) <= pad.Definition.Width * 0.5f + _plateMargin &&
+                    Mathf.Abs(local.z) <= pad.Definition.Depth * 0.5f + _plateMargin)
+                {
+                    return true;
+                }
+            }
+
             return false;
         }
 

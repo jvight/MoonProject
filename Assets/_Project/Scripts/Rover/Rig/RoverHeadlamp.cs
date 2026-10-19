@@ -7,8 +7,8 @@ namespace MoonProject.Rover
     /// 07's road light, one of the few things that works from the start and costs no battery: the warm spot at the
     /// RoverModel's HeadlampSocket and the glow of the headlamp glasses (<see cref="HeadlampGlass"/>), set up from
     /// the rig tuning, dimmed (eased) while 07 rests on its charging pad (<see cref="RoverController.IsDocked"/>) and
-    /// while it crawls on the reserve; the wake's lamp power switches both. Ticked by <see cref="RoverController"/> in
-    /// Update.
+    /// while it crawls on the reserve; the wake's lamp power switches both, and so does the player's lights key, easing
+    /// them on or off (<see cref="SetLightsOn"/>). Ticked by <see cref="RoverController"/> in Update.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class RoverHeadlamp : MonoBehaviour
@@ -34,11 +34,18 @@ namespace MoonProject.Rover
         private HeadlampGlass _glow;
         private float _baseIntensity;
         private float _level = 1f;
+        private float _switch = 1f;
         private float _appliedLevel = -1f;
         private bool _docked;
 
         /// <summary>How bright the road light is right now as a share of normal (dimmed on the pad and in the crawl).</summary>
         public float LampLevel => _level;
+
+        /// <summary>The player has 07's lamps switched on (they ease to this over the tuned switch time).</summary>
+        public bool LightsOn { get; private set; } = true;
+
+        /// <summary>How far the lamps have eased toward <see cref="LightsOn"/>: 0 dark, 1 lit.</summary>
+        public float SwitchLevel => _switch;
 
         /// <summary>Checks wiring and sets the road light up; false when broken (logged).</summary>
         public bool Initialize(GameContext context, RoverController rover)
@@ -70,6 +77,20 @@ namespace MoonProject.Rover
             return true;
         }
 
+        /// <summary>
+        /// Switches 07's lamps on or off: they ease there over the tuned switch time, or at once when
+        /// <paramref name="instant"/> (a restored save).
+        /// </summary>
+        public void SetLightsOn(bool on, bool instant)
+        {
+            LightsOn = on;
+            if (instant)
+            {
+                _switch = on ? 1f : 0f;
+                ApplyLevel();
+            }
+        }
+
         /// <summary>07 rests on its charging pad (the road light dims) or left it.</summary>
         public void SetDocked(bool docked)
         {
@@ -82,13 +103,15 @@ namespace MoonProject.Rover
             DockSettings dock = _rover.Tuning.Dock;
             float target = _docked ? dock.LampDim : _battery.IsLowPower ? _tuning.FlankLamps.CrawlHeadlamp : 1f;
             _level = Smoothing.Damp(_level, target, dock.LampHalfLife, deltaTime);
+            _switch = Mathf.MoveTowards(_switch, LightsOn ? 1f : 0f, deltaTime / _tuning.LampSwitchSeconds);
             ApplyLevel(power);
         }
 
         private void ApplyLevel(float power = 1f)
         {
-            float level = _level * power;
-            if (Mathf.Abs(level - _appliedLevel) < LevelEpsilon)
+            float level = _level * power * Mathf.SmoothStep(0f, 1f, _switch);
+            // A tiny step is not worth writing, except the last one to dark: switched off, the lamp goes fully out.
+            if (Mathf.Abs(level - _appliedLevel) < LevelEpsilon && (level > 0f || _appliedLevel == 0f))
             {
                 return;
             }

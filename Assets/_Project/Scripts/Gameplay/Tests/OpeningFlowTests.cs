@@ -45,6 +45,7 @@ namespace MoonProject.Gameplay.Tests
             _game.BuiltIds.Add(StructureIds.ChargingPad);
             Expect(OpeningKeys.Charge);
             _game.FirstCharge = true;
+            _game.CanFitIgniter = true;
             Expect(OpeningKeys.FitIgniter, "charging, the igniter in the hold");
             _game.CarriesIgniter = false;
             _game.IgniterFitted = true;
@@ -65,6 +66,51 @@ namespace MoonProject.Gameplay.Tests
             Expect(OpeningKeys.BuildMast);
             _game.BuiltIds.Add(StructureIds.AntennaMast);
             Expect(string.Empty, "the pillar in the west is the message");
+        }
+
+        [Test]
+        public void WithAPadPartInTheHold_TheLineAsksToParkOffThePad_AndToFitOnIt()
+        {
+            ReachTheCharge();
+            _game.CanFitIgniter = false;
+            Expect(OpeningKeys.ParkOnPad, "a part that needs the pad: the line says to park there");
+            _game.CanFitIgniter = true;
+            Expect(OpeningKeys.FitIgniter, "on the plate (or anywhere, for a field swap) the cutter takes it");
+            _game.CanFitIgniter = false;
+            Expect(OpeningKeys.ParkOnPad, "driving off the plate asks again");
+        }
+
+        [Test]
+        public void TheFitLine_ShowsExactlyWhenTheScreenWillTakeTheIgniter()
+        {
+            ReachTheCharge();
+            foreach (bool carries in new[] { false, true })
+            {
+                foreach (bool canFit in new[] { false, true })
+                {
+                    foreach (bool fitted in new[] { false, true })
+                    {
+                        _game.CarriesIgniter = carries;
+                        _game.CanFitIgniter = canFit;
+                        _game.IgniterFitted = fitted;
+                        _flow.Tick();
+                        bool screenTakesIt = !fitted && carries && canFit;
+                        Assert.AreEqual(screenTakesIt, _flow.Current == OpeningKeys.FitIgniter,
+                            $"carries {carries}, can fit {canFit}, fitted {fitted}: '{_flow.Current}'");
+                    }
+                }
+            }
+        }
+
+        private void ReachTheCharge()
+        {
+            _game.ReachedLander = true;
+            _game.Known.Add(StructureIds.ChargingPad);
+            _game.Covered.Add(StructureIds.ChargingPad);
+            _game.CarriesIgniter = true;
+            _game.BuiltIds.Add(StructureIds.ChargingPad);
+            _game.FirstCharge = true;
+            _flow.Tick();
         }
 
         [Test]
@@ -154,6 +200,7 @@ namespace MoonProject.Gameplay.Tests
 
             public bool ReachedLander { get; set; }
             public bool CarriesIgniter { get; set; }
+            public bool CanFitIgniter { get; set; }
             public bool IgniterFitted { get; set; }
             public bool FirstCharge { get; set; }
             public bool ReserveSpent { get; set; }

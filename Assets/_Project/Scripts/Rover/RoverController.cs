@@ -3,6 +3,7 @@ using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
 using MoonProject.Core.Input;
+using MoonProject.Core.Save;
 
 namespace MoonProject.Rover
 {
@@ -123,6 +124,11 @@ namespace MoonProject.Rover
         private ObstacleProbe _obstacleProbe;
         private ContactResponse _contacts;
         private IDisposable _dockChanges;
+        private IDisposable _lightsSave;
+
+        /// <summary>Save section "rover.lights": whether the player switched 07's lamps off. Never rename the key.</summary>
+        private const string LightsSaveKey = "rover.lights";
+        private const int LightsSaveVersion = 1;
         private RoverFeel _feel;
         private ChargeCellHardware _chargeCells;
         private CargoHatch _hatch;
@@ -225,6 +231,9 @@ namespace MoonProject.Rover
         public Vector2 RequestedDrive => _driveSource != null ? _driveSource.Drive : _input.Drive;
 
         public bool IsGrounded => _landing.IsGrounded;
+
+        /// <summary>How far 07's lamps have eased toward the player's lights switch: 0 off, 1 on.</summary>
+        public float LampSwitchLevel => _headlamp.SwitchLevel;
 
         public float AirTime => _landing.AirTime;
 
@@ -473,6 +482,9 @@ namespace MoonProject.Rover
             }
 
             bool headlampReady = _headlamp.Initialize(context, this);
+            _lightsSave = context.Get<ISaveService>().Register(new SaveSection<RoverLightsSaveData>(LightsSaveKey,
+                LightsSaveVersion, () => new RoverLightsSaveData { lightsOff = !_headlamp.LightsOn },
+                data => _headlamp.SetLightsOn(!data.lightsOff, true)));
             bool effectsReady = _wheelFx.Initialize(context, this);
             bool motesReady = _lampMotes.Initialize(this);
             bool lampsReady = _flankLamps.Initialize(context);
@@ -1000,10 +1012,23 @@ namespace MoonProject.Rover
             _nozzleDevice?.Tick(deltaTime, Time.time);
             _hatch.Tick(deltaTime);
             _visualRig.Tick(deltaTime);
+            if (_input.LightsPressed)
+            {
+                SwitchLights();
+            }
+
             _headlamp.Tick(deltaTime, _bodyLanguage != null ? _bodyLanguage.LampPower01 : 1f);
             _wheelFx.Tick();
             _lampMotes.Tick(deltaTime);
             _flankLamps.Tick(deltaTime);
+        }
+
+        /// <summary>The lights key: 07's lamps ease on or off, and the switch clicks at the lamp.</summary>
+        private void SwitchLights()
+        {
+            bool on = !_headlamp.LightsOn;
+            _headlamp.SetLightsOn(on, false);
+            _events.Publish(new RoverLightsSwitched(on, _headlamp.transform.position));
         }
 
         /// <summary>This frame's motion and the player's hands, as <see cref="RoverStillness"/> reads them.</summary>
@@ -1034,6 +1059,7 @@ namespace MoonProject.Rover
         private void OnDestroy()
         {
             _dockChanges?.Dispose();
+            _lightsSave?.Dispose();
             _feel?.Dispose();
             _chargeCells?.Dispose();
             _nozzleDevice?.Dispose();
