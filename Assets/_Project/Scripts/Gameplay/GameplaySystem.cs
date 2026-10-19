@@ -65,6 +65,10 @@ namespace MoonProject.Gameplay
                  "glows while build mode is open.")]
         [SerializeField] private Renderer _apronOutline;
 
+        [Tooltip("World's apron cable channel ([World]/OpeningProps/ApronMarkings/CableChannel_Anchor): where the " +
+                 "lander's cable across the apron takes a pad's own cable.")]
+        [SerializeField] private Transform _apronCableChannel;
+
         /// <summary>The recovery protocol's Power steps: the pad, solar power on, a night-ready base
         /// (opening-v2).</summary>
         private const int PowerSteps = 3;
@@ -192,6 +196,11 @@ namespace MoonProject.Gameplay
         internal void WireApronOutline(Renderer apronOutline)
         {
             _apronOutline = apronOutline;
+        }
+
+        internal void WireApronCableChannel(Transform channel)
+        {
+            _apronCableChannel = channel;
         }
 
         internal void WireDatabank(DatabankCatalogue catalogue)
@@ -325,6 +334,9 @@ namespace MoonProject.Gameplay
                 var opening = new OpeningField(_openingTuning, services, _building, sunlight, Containers, _ruins,
                     _landerPort, transform, _salvage.Tuning.ReachRadius, StartKit);
                 _battery.ConnectPads(opening);
+                services.Anchors.TryGet(_openingTuning.ApronAnchor, out WorldAnchor apron);
+                _building.SetApronCable(new ApronCable(_apronCableChannel.position, apron.Position,
+                    _openingTuning.PortCableReach));
                 PadLock = new PadLock(context.Events, _baseTuning, _building, _battery.Model, services.Rover,
                     _openingTuning.PadChargeRadius, _openingTuning.PadPlateMargin);
                 BaseLamps = new BaseLamps(context.Events, _baseTuning, _building, sunlight);
@@ -551,6 +563,8 @@ namespace MoonProject.Gameplay
                 : _building == null ? "BuildField is not assigned."
                 : _landerPort == null ? "The lander's service port is not assigned (rebuild the Main scene)."
                 : _apronOutline == null ? "The apron's bay outline is not assigned (rebuild the Main scene)."
+                : _apronCableChannel == null
+                    ? "The apron's cable channel is not assigned (rebuild the Main scene)."
                 : null;
         }
 

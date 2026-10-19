@@ -208,6 +208,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Gameplay.WireLanderPort(Node("ServicePort", root.transform, new Vector3(35f, 0f, 157f)));
             Gameplay.WireApronOutline(Node("BayGlowOutline", root.transform, Vector3.zero).gameObject
                 .AddComponent<MeshRenderer>());
+            Gameplay.WireApronCableChannel(Node("CableChannel_Anchor", root.transform, Vector3.zero));
             Gameplay.WireOpening(OpeningTuning, BaseTuning);
             root.SetActive(true);
 
