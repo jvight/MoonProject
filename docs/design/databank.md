@@ -49,7 +49,7 @@ Each category shows **found count only** (no totals, no percentages), plus a sma
 | `id` | string | `db.<name>`, saved, never renamed |
 | `category` | enum | §1 |
 | `nameKey` | loc key | ≤ 24 chars, in both languages |
-| `maker` | enum: `None, ILC, KesslerArai, Halvard, Tycho` | tech-eras §6. Places and phenomena: `None` |
+| `maker` | enum: `None, ILC, KesslerArai, VIS, Tycho` | tech-eras §6. Places and phenomena: `None` |
 | `year` | string | the year it was made or placed: `1967`, `1971`, or `1971 · 1984` for two eras |
 | `era` | enum: `P, S, B, L, M, N, None` | tech-eras §1 |
 | `readoutKey` | loc key | **07's measured line**: uppercase, `·`-separated, ≤ 2 lines of 48 chars (vi ≤ 56) |
@@ -81,7 +81,7 @@ Each category shows **found count only** (no totals, no percentages), plus a sma
   - **Right, top, ~860 × 420:** the **live model** in the amber scan wireframe. It turns slowly (6°/s) when idle;
     drag or the right stick turns it (yaw free, pitch ±30°). A print shows as a flat scanned sheet with halftone
     grain and a slight skew.
-  - **Right, below:** the field row `MAKER · HALVARD   YEAR · 1967   ERA · PROBES`, then the readout line, then the
+  - **Right, below:** the field row `MAKER · VIS   YEAR · 1967   ERA · PROBES`, then the readout line, then the
     history card and its signature.
   - **Bottom:** the era strip (5 small marks).
 - **F (Y on a gamepad): full colour.** The model renders with its real materials, and a print in its true colours.
@@ -106,7 +106,7 @@ widened).
 | **Gameplay** | the `DatabankCatalogue` asset (§2); the unlock rules wired to `StoryScanned`, `FragmentScanned`, `BlueprintCompleted` and `OpeningMilestoneReached`; save (unlocked, progress, read); **new story scans:** the seismic station, the retroreflector, the flag (unlocks the ILC card), a Kestrel-3 hull panel, 06's chassis, and the ruins' first fragment for the Lumen place entry |
 | **UI** | the databank page in the CRT panel; the Q/E page flip; the model preview stage (an isolated layer, camera and light rendering one prefab into a sub-rect of `_ScreenUiTex`, reusing the scan wireframe material and honouring `hiddenNodes`); the print viewer; the colour toggle; the era strip; the toast |
 | **Rover** | the per-page face-shot distance (0.90 m), driven from the page state |
-| **Art (Argon)** | the prints: the 4 maker cards (the 3 logos plus Halvard's wordmark), the ILC poster, the crew roster sheet |
+| **Art (Argon)** | the prints: the 4 maker cards (the 3 logos plus the VIS wordmark), the ILC poster, the crew roster sheet |
 | **Story** | `text/databank-entries.md` (done: 18 entries, en and vi) |
 
 ## 6. Playtest signal

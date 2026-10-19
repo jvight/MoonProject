@@ -37,8 +37,8 @@
   - ILC, the programme: a round seal; the crescent stays Lumen's station patch;
   - Kessler–Arai, the SSR rovers: a vector mark on 07's CRT at boot;
   - Tycho, Meridian: a teal hexagon.
-- Halvard Orbital Works `[PROPOSAL]`: ILC's structures contractor (lander, habitat, arrays, flat-packs, Atlas). It
-  also built the 1967 Scout, so the Scout needs no fourth logo.
+- VIS, Vanguard Interplanetary Structures (decided, owner 2026-10-19; it replaces the earlier VIS proposal): ILC's structures contractor (lander, habitat, arrays, flat-packs, Atlas). It
+  also built the 1967 Scout, so the Scout wears VIS's 1960s wordmark and needs no fourth logo.
 - Next: maker databank pages and maker lines on scan pages, once Argon's logos land.
 
 ## Rulings applied (e64547b3) and the databank
