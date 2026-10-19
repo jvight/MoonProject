@@ -40,6 +40,12 @@ namespace MoonProject.Autoplay
         /// <summary>Seconds the base may take to become night-ready: a sunset that comes first leaves the array idle, so the bank never charges.</summary>
         private const float NightReadySeconds = 150f;
 
+        /// <summary>Where the first day's Sun holds at last light (SkyCycleSettings.LastLightElevation), degrees.</summary>
+        private const float LastLightElevationDegrees = 3f;
+
+        /// <summary>Degrees under last light that still count as last light (the Sun settles onto it).</summary>
+        private const float LastLightToleranceDegrees = 0.5f;
+
         private readonly AutoplayBot _bot;
         private readonly string _untilBeat;
         private bool _awoke;
@@ -311,11 +317,19 @@ namespace MoonProject.Autoplay
             yield return _base.Build(StructureIds.BatteryBank, _base.Pad() + Vector3.left * OpeningBase.BankSpacing);
             yield return _base.UntilReached(OpeningMilestone.NightReady, "the NightReady milestone",
                 NightReadySeconds);
-            if (!_bot.Failed && _bot.World.Context.Get<ISunlight>().Phase != SkyPhase.Sunlit)
+            if (!_bot.Failed)
             {
-                _bot.Warn("the base became night-ready only after the sun had set (sky " +
-                          _bot.World.Context.Get<ISunlight>().Phase + "): the array stood idle through the dusk.");
+                float elevation = SunElevationDegrees(_bot.World.Context.Get<ISunlight>().SunDirection);
+                if (elevation < LastLightElevationDegrees - LastLightToleranceDegrees)
+                {
+                    _bot.Warn("the base became night-ready with the sun at " +
+                              elevation.ToString("0.0", CultureInfo.InvariantCulture) +
+                              " degrees, past last light (" +
+                              LastLightElevationDegrees.ToString("0", CultureInfo.InvariantCulture) +
+                              "): the array stood idle through the dusk.");
+                }
             }
+
             _bot.EndBeat("the battery bank stands and the base is night-ready");
         }
 
@@ -354,6 +368,11 @@ namespace MoonProject.Autoplay
             }
 
             return best;
+        }
+
+        private static float SunElevationDegrees(Vector3 towardTheSun)
+        {
+            return Mathf.Asin(Mathf.Clamp(towardTheSun.normalized.y, -1f, 1f)) * Mathf.Rad2Deg;
         }
 
         private WorldAnchor Lander()
