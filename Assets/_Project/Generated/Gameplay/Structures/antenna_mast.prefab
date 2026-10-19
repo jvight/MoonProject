@@ -85,7 +85,7 @@ MonoBehaviour:
   - {fileID: 137219990142325439}
   - {fileID: 6090917520351538647}
   _statusLight: {fileID: 7178195731060025230}
-  _statusLightIntensity: 1.6
+  _statusLightIntensity: 0.8
 --- !u!1 &4485259647388984525
 GameObject:
   m_ObjectHideFlags: 0
@@ -129,7 +129,7 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.74, b: 0.36, a: 1}
-  m_Intensity: 1.6
+  m_Intensity: 0.8
   m_Range: 5
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208

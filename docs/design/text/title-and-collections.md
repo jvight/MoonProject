@@ -12,6 +12,8 @@
 
 *(Cross-referenced with `docs/design/text/radio-letters.md` §2 and §5.)*
 
+> **Update 2026-10-20:** the `lens.boot.*` keys and World's `LensView` were removed (ec86da65). The wake is now 07's boot face (`cutscenes.md` §1.8): its readout is the 14-line POST (`post.*`), which ends `BEGIN RECOVERY`, and the orbital signal reads `ANTENNA · RECEIVE ONLY · ORBITAL SIGNAL` (`post.antenna.receive_only`). The three `lens.boot.*` rows below are history.
+
 | Key & `en.json` Line | Status | Current `en.json` String | v4 English | v4 Tiếng Việt | Why Kept / Changed |
 |---|---|---|---|---|---|
 | `lens.boot.signal` (`en.json:1626`) | **REPLACE** | `EARTH SIGNAL · DETECTED` | `ORBITAL SIGNAL · DETECTED` | `TÍN HIỆU QUỸ ĐẠO · ĐÃ NHẬN` | The wake ping comes from Meridian / the L4/L5 orbital arks (`ArkSignal.cs`), not from Earth's surface. |

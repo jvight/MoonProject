@@ -34,9 +34,10 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// fragments (the charging pad), collects the lander's open crate (the cutter is FAULT: no igniter), builds the pad
     /// on the apron, charges on it from the lander's reserve until the reserve gives out and fits the spare igniter
     /// while docked, drives to the Lumen ruins and scans the fallen
-    /// array (solar), reads the habitat's airlock panel, cuts the workshop's lockers, builds the array (Power on),
-    /// scans the habitat (battery bank) and builds it (night-ready), waits out the first sunset, scans the radio tower
-    /// (antenna) and cuts its panels, and builds the mast: the west signal ends the opening. Every objective line is
+    /// array (solar), reads the habitat's airlock panel, cuts the array's panels and junction box, builds the array
+    /// (Power on), scans the habitat (battery bank), cuts its cable reel and power module and builds it (night-ready),
+    /// waits out the first sunset, scans the radio tower (antenna) and cuts its mast sections, feed cable and dish
+    /// panels, and builds the mast: the west signal ends the opening. Every objective line is
     /// checked as it shows; the milestones FirstCharge, PowerOn, NightReady and SignalWest each come once. Every step
     /// is timed
     /// (Logs/gameplay-captures/playthrough.md) and captured; any error or exception in the log fails it, and so does a
@@ -283,21 +284,21 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return DriveTo(RuinsGate(), 3f, "the Lumen ruins");
             yield return ScanTheSet("ruin.FallenSolarArray", "the fallen solar array");
             yield return ReadTheAirlockPanel();
-            yield return ExpectLine(OpeningKeys.CutOptics, "B7: the array needs optics, the workshop's lockers hold some");
-            yield return CutTheCrates("KenjiWorkshop", "Kenji's workshop lockers");
+            yield return ExpectLine(OpeningKeys.CutOptics, "B7: the array's own panels and junction box cover it");
+            yield return CutTheCrates("FallenSolarArray", "the fallen array's panels and junction box");
             yield return ExpectLine(OpeningKeys.BuildSolar, "B8: the array's cost is covered");
             yield return DriveTo(RuinsGate(), 3f, "out of the Lumen ruins");
             yield return Build(StructureIds.SolarArray, pad + Vector3.right * BaseSpacing, "B8: the solar array");
             yield return UntilReached(OpeningMilestone.PowerOn, "Power on: the array powers the pad");
             yield return ExpectLine(OpeningKeys.BuildBatteryBank, "B9: night is coming");
             yield return ScanTheSet("ruin.HabitatModules", "the habitat's power modules");
-            yield return CutTheCrates("HabitatModules", "the habitat's cable reel");
+            yield return CutTheCrates("HabitatModules", "the habitat's cable reel and power module");
             yield return DriveTo(RuinsGate(), 3f, "out of the Lumen ruins");
             yield return Build(StructureIds.BatteryBank, pad + Vector3.left * BaseSpacing, "B9: the battery bank");
             yield return UntilReached(OpeningMilestone.NightReady, "night-ready: the bank is built and wired to the pad");
             yield return TheFirstNightfall();
             yield return ExpectLine(OpeningKeys.ScanTower, "B11: after nightfall");
-            yield return CutTheCrates("RadioTower", "the tower's dish-frame panels");
+            yield return CutTheCrates("RadioTower", "the tower's mast sections, feed cable and dish panels");
             yield return ScanTheSet("ruin.RadioTower", "the radio tower ruin");
             yield return ExpectLine(OpeningKeys.BuildMast, "B11");
             yield return DriveTo(RuinsGate(), 3f, "out of the Lumen ruins");

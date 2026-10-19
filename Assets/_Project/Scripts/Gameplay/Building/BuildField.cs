@@ -79,6 +79,8 @@ namespace MoonProject.Gameplay
         private Vector3 _takeDownEdge;
         private readonly HeatSeam[] _weldSeams = new HeatSeam[SeamSlotCount];
         private GridLinkLine _gridLink;
+        private BaseCables _cables;
+        private ApronCable _apronCable;
         private readonly Vector3[] _seamLine = new Vector3[3];
         private int _seamInstanceId;
         private int _seamStageIndex = -1;
@@ -242,6 +244,7 @@ namespace MoonProject.Gameplay
             }
 
             _gridLink = new GridLinkLine(vfxRoot, _visuals.BeamCore, _tuning);
+            _cables = new BaseCables(_events, _placedBase, _tuning, _terrain, _visuals.Cable, transform);
 
             PrewarmGhosts();
 
@@ -1202,14 +1205,33 @@ namespace MoonProject.Gameplay
                 return;
             }
 
-            if (GridLinkPreview.TryFindLink(_placedBase, selected, standsAt, out Vector3 hub))
+            var stand = new StructurePose(standsAt, _ghostYaw);
+            if (GridLinkPreview.TryFindCable(_placedBase, selected, stand, _placedBase.Count, 0, _apronCable,
+                    out Vector3 from, out Vector3 to, out _))
             {
-                _gridLink.ShowLink(_ghostPosition, hub);
+                // The ghost eases after its spot: the cable's near end rides along with it.
+                _gridLink.ShowLink(from + (_ghostPosition - standsAt), to, _terrain);
             }
             else
             {
                 _gridLink.ShowLoose(_ghostPosition, _ghostYaw);
             }
+        }
+
+        /// <summary>The built pieces' cables (and how many lie between them).</summary>
+        public BaseCables Cables => _cables;
+
+        /// <summary>The lander's apron cable that a pad on the apron cables to (none before the opening lays it).</summary>
+        public ApronCable ApronCable => _apronCable;
+
+        /// <summary>
+        /// The opening laid the lander's cable across the apron: a pad standing on it cables to its channel, in the
+        /// preview and once built.
+        /// </summary>
+        public void SetApronCable(ApronCable apron)
+        {
+            _apronCable = apron;
+            _cables.SetApronCable(apron);
         }
 
         private void HideAllGhosts()
@@ -1525,6 +1547,7 @@ namespace MoonProject.Gameplay
             }
 
             _subscriptions.Clear();
+            _cables?.Dispose();
             if (_takeDownCore != null)
             {
                 Destroy(_takeDownCore);

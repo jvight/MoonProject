@@ -35,6 +35,14 @@ namespace MoonProject.Rover
         [Range(0.05f, 1f)]
         [SerializeField] private float _crawlHeadlamp = 0.35f;
 
+        [Tooltip("Share of the flank lamps' glow while the opening runs on the reserve (until the first charge).")]
+        [Range(0.1f, 1f)]
+        [SerializeField] private float _openingReserveGlow = 0.5f;
+
+        [Tooltip("Share of the road light while the opening runs on the reserve (until the first charge).")]
+        [Range(0.1f, 1f)]
+        [SerializeField] private float _openingReserveHeadlamp = 0.55f;
+
         [Tooltip("Seconds between the lamps lighting one by one as 07 wakes in the opening (after O5's flicker).")]
         [Range(0.05f, 2f)]
         [SerializeField] private float _wakeInterval = 0.4f;
@@ -45,6 +53,8 @@ namespace MoonProject.Rover
         public float ReserveGlow => _reserveGlow;
         public float HalfLife => _halfLife;
         public float CrawlHeadlamp => _crawlHeadlamp;
+        public float OpeningReserveGlow => _openingReserveGlow;
+        public float OpeningReserveHeadlamp => _openingReserveHeadlamp;
         public float WakeInterval => _wakeInterval;
     }
 }

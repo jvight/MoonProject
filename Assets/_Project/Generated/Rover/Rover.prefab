@@ -44,6 +44,7 @@ GameObject:
   - component: {fileID: 6631098553578937384}
   - component: {fileID: 5269268273630261221}
   - component: {fileID: 7359969068745781515}
+  - component: {fileID: 7781716104226200389}
   - component: {fileID: 5387885757252602064}
   - component: {fileID: 1082378557564823599}
   m_Layer: 0
@@ -149,6 +150,22 @@ MonoBehaviour:
   - {fileID: 3395116283449887868}
   - {fileID: 1287809109113958758}
   - {fileID: 2882556929149448548}
+--- !u!114 &7781716104226200389
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1371937972557353393}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14b04eb4881fcfb47bb9431c04039377, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _tuning: {fileID: 11400000, guid: adde50c7ec3f1254cb40c209e6a907de, type: 2}
+  _antennaSegment: {fileID: 385102848943588446}
+  _igniter: {fileID: 3022498965585180218}
+  _turret: {fileID: 1324628270645303360}
 --- !u!114 &5387885757252602064
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10495,6 +10512,7 @@ MonoBehaviour:
   _lampMotes: {fileID: 3103531170111216204}
   _headlamp: {fileID: 5269268273630261221}
   _flankLamps: {fileID: 7359969068745781515}
+  _growth: {fileID: 7781716104226200389}
   _nozzleDevice: {fileID: 5387885757252602064}
   _portrait: {fileID: 1082378557564823599}
   _bodyLanguage: {fileID: 2569486542426885151}
@@ -21689,6 +21707,10 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 7
       objectReference: {fileID: 0}
+    - target: {fileID: 918886904539666376, guid: 75ace44f4d9851344a3451fee0c31efe, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     - target: {fileID: 963049623490812392, guid: 75ace44f4d9851344a3451fee0c31efe, type: 3}
       propertyPath: m_Layer
       value: 7
@@ -21942,6 +21964,10 @@ PrefabInstance:
       value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 4265558850202515302, guid: 75ace44f4d9851344a3451fee0c31efe, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 4300110984873335583, guid: 75ace44f4d9851344a3451fee0c31efe, type: 3}
       propertyPath: m_Layer
       value: 7
       objectReference: {fileID: 0}
@@ -22333,6 +22359,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6660140321847258518, guid: 75ace44f4d9851344a3451fee0c31efe, type: 3}
   m_PrefabInstance: {fileID: 6898874241504782136}
   m_PrefabAsset: {fileID: 0}
+--- !u!4 &385102848943588446 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6549800190150845286, guid: 75ace44f4d9851344a3451fee0c31efe, type: 3}
+  m_PrefabInstance: {fileID: 6898874241504782136}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &477311844919125187 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6422829103270953979, guid: 75ace44f4d9851344a3451fee0c31efe, type: 3}
@@ -22446,6 +22477,11 @@ MeshRenderer:
 --- !u!23 &2882556929149448548 stripped
 MeshRenderer:
   m_CorrespondingSourceObject: {fileID: 8628157821159413340, guid: 75ace44f4d9851344a3451fee0c31efe, type: 3}
+  m_PrefabInstance: {fileID: 6898874241504782136}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &3022498965585180218 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8525221021518434562, guid: 75ace44f4d9851344a3451fee0c31efe, type: 3}
   m_PrefabInstance: {fileID: 6898874241504782136}
   m_PrefabAsset: {fileID: 0}
 --- !u!23 &3109038626101658705 stripped

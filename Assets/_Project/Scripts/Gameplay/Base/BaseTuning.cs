@@ -120,8 +120,8 @@ namespace MoonProject.Gameplay
             { "charging_pad", "solar_array", "battery_bank", "antenna_mast" };
 
         [Tooltip("How much brighter than a finished piece's standby glow a lit lamp's bulb burns (a multiplier of its " +
-                 "emission), so the bulbs read from across the base.")]
-        [Range(1f, 8f)] [SerializeField] private float _lampEmissionGain = 3.5f;
+                 "emission), so the bulbs read from across the base as warm points without blooming to white.")]
+        [Range(1f, 8f)] [SerializeField] private float _lampEmissionGain = 1.8f;
 
         [Tooltip("The warm tungsten amber of the pool of light a lit lamp throws on the regolith.")]
         [SerializeField] private Color _lampLightColor = new Color(1f, 0.62f, 0.28f, 1f);
@@ -129,11 +129,16 @@ namespace MoonProject.Gameplay
         [Tooltip("Metres the warm light of a lit lamp reaches.")]
         [Range(1f, 10f)] [SerializeField] private float _lampLightRange = 4.5f;
 
-        [Tooltip("Intensity of a lamp's warm light at full glow (it follows the lamp as it eases on and off).")]
-        [Range(0f, 30f)] [SerializeField] private float _lampLightIntensity = 8f;
+        [Tooltip("Intensity of a lamp's warm light at full glow (it follows the lamp as it eases on and off): a soft " +
+                 "pool on the ground that never burns the piece's own panels or dish white close up.")]
+        [Range(0f, 30f)] [SerializeField] private float _lampLightIntensity = 3.5f;
 
         [Tooltip("How high the light hangs, as a share of the piece's height.")]
-        [Range(0.2f, 1f)] [SerializeField] private float _lampLightHeightShare = 0.85f;
+        [Range(0.2f, 1f)] [SerializeField] private float _lampLightHeightShare = 0.6f;
+
+        [Tooltip("Metres beyond the back of the piece's footprint the light stands: clear of its own panels, dish and " +
+                 "lattice, so its pool lies on the ground and nothing of the piece burns white at the light.")]
+        [Range(0f, 3f)] [SerializeField] private float _lampLightStandOff = 1.5f;
 
         [Tooltip("The charging pad's light is a spot pointing down at the pad: its cone, in degrees.")]
         [Range(40f, 160f)] [SerializeField] private float _padSpotAngleDegrees = 120f;
@@ -155,6 +160,7 @@ namespace MoonProject.Gameplay
         public float LampLightRange => _lampLightRange;
         public float LampLightIntensity => _lampLightIntensity;
         public float LampLightHeightShare => _lampLightHeightShare;
+        public float LampLightStandOff => _lampLightStandOff;
         public float PadSpotAngleDegrees => _padSpotAngleDegrees;
         public float PadSpotHeightMetres => _padSpotHeightMetres;
         public int LampLightBudget => _lampLightBudget;

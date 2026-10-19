@@ -73,6 +73,28 @@ namespace MoonProject.Gameplay
 
         public float DriveCap01 { get; private set; }
 
+        /// <summary>The opening runs on the reserve: top speed is capped until the first charge.</summary>
+        public bool OnOpeningReserve { get; private set; }
+
+        /// <summary>The charge may not fall below <see cref="BatteryTuning.OpeningChargeFloor"/> (the opening).</summary>
+        public bool ChargeFloorHeld { get; private set; }
+
+        /// <summary>Starts or lifts the opening's reserve cap on top speed.</summary>
+        public void SetOpeningReserve(bool on)
+        {
+            OnOpeningReserve = on;
+        }
+
+        /// <summary>Holds or releases the opening's charge floor.</summary>
+        public void HoldChargeFloor(bool held)
+        {
+            ChargeFloorHeld = held;
+            if (held)
+            {
+                Charge = Mathf.Max(Charge, _tuning.OpeningChargeFloor);
+            }
+        }
+
         public bool CanLeap => !IsLowPower && Drums + Charge >= _tuning.FullLeapCost - CellEpsilon;
 
         /// <summary>Cells held in the capacitor drums (0 while they are not fitted).</summary>
@@ -113,7 +135,7 @@ namespace MoonProject.Gameplay
         public void PayLeap(float strength)
         {
             float cost = Mathf.Lerp(_tuning.TapLeapCost, _tuning.FullLeapCost, Mathf.Clamp01(strength));
-            Charge = Mathf.Max(0f, Charge - PayFromDrums(cost));
+            Charge = Mathf.Max(Floor, Charge - PayFromDrums(cost));
         }
 
         public void Step(in BatteryStep step, float deltaTime)
@@ -220,8 +242,10 @@ namespace MoonProject.Gameplay
             float beam = step.BeamSeconds / _tuning.BeamSecondsPerCell;
             float scan = step.ScanSeconds / _tuning.ScanSecondsPerCell;
             float weld = _tuning.WeldCells(step.WeldSeconds);
-            Charge = Mathf.Max(0f, Charge - drive - beam - scan - weld);
+            Charge = Mathf.Max(Floor, Charge - drive - beam - scan - weld);
         }
+
+        private float Floor => ChargeFloorHeld ? _tuning.OpeningChargeFloor : 0f;
 
         /// <summary>
         /// What the drums cannot pay of <paramref name="cost"/> (cells); the drums pay what they hold.
@@ -304,7 +328,7 @@ namespace MoonProject.Gameplay
                 _events.Publish(new LowPowerChanged(false, false));
             }
 
-            float cap = IsLowPower ? _tuning.CrawlCap : 1f;
+            float cap = IsLowPower ? _tuning.CrawlCap : OnOpeningReserve ? _tuning.OpeningReserveCap : 1f;
             DriveCap01 = Damp.Toward(DriveCap01, cap, _tuning.CapEase, deltaTime);
         }
 

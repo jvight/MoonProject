@@ -74,15 +74,14 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>
         /// Builds and boots everything; 07 starts at the wake post facing +Z. A new game (no save yet) starts with an
-        /// empty hold unless <paramref name="spares"/> keeps 07's starting spares (Metal 2, Wiring 1) in it, and with
-        /// the cutter's igniter fitted unless <paramref name="startKit"/> keeps the opening's faulted cutter
-        /// (opening-v2 §10): most sessions are about what the cutter does, not how it is fixed.
+        /// empty hold (opening-v3 §4), and with the cutter's igniter fitted unless <paramref name="startKit"/> keeps
+        /// the opening's faulted cutter (opening-v2 §10): most sessions are about what the cutter does, not how it is
+        /// fixed.
         /// </summary>
-        public static GameplayFixture Boot(InputActionAsset controls, string saveSlot = null, bool spares = false,
-            bool startKit = false)
+        public static GameplayFixture Boot(InputActionAsset controls, string saveSlot = null, bool startKit = false)
         {
             var fixture = new GameplayFixture(controls, saveSlot ?? BootstrapHarness.NewTestSlot());
-            fixture.Build(spares, startKit);
+            fixture.Build(startKit);
             return fixture;
         }
 
@@ -152,7 +151,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
         }
 
-        private void Build(bool spares, bool startKit)
+        private void Build(bool startKit)
         {
             World = Track(FlatWorldSystem.Create());
             Rover = Track(GameplayFakeRover.Create(Vector3.zero, 0f));
@@ -171,10 +170,11 @@ namespace MoonProject.Gameplay.PlayModeTests
                 GlowMaterial(shader, GlowRole.Flash), GlowMaterial(shader, GlowRole.PieceHalo),
                 Asset<FeelVfxTuning>());
             visuals.PopulateHologram(GlowMaterial(shader, GlowRole.PieceHalo), GlowMaterial(shader, GlowRole.Flash));
+            visuals.PopulateCable(GlowMaterial(shader, GlowRole.PieceHalo));
             visuals.PopulateContainers(new[]
             {
-                CrateTemplate(ContainerKinds.CrateS, 0.6f), CrateTemplate(ContainerKinds.CrateM, 0.9f),
-                CrateTemplate(ContainerKinds.CrateL, 1.2f), CargoCrateTemplate(),
+                CrateTemplate(ContainerKinds.CrateM, 0.9f), CrateTemplate(ContainerKinds.CrateL, 1.2f),
+                CargoCrateTemplate(),
             });
             OpeningTuning.PopulateCargoFragments(new[]
             {
@@ -208,17 +208,13 @@ namespace MoonProject.Gameplay.PlayModeTests
             Gameplay.WireLanderPort(Node("ServicePort", root.transform, new Vector3(35f, 0f, 157f)));
             Gameplay.WireApronOutline(Node("BayGlowOutline", root.transform, Vector3.zero).gameObject
                 .AddComponent<MeshRenderer>());
+            Gameplay.WireApronCableChannel(Node("CableChannel_Anchor", root.transform, Vector3.zero));
             Gameplay.WireOpening(OpeningTuning, BaseTuning);
             root.SetActive(true);
 
             Bootstrap = BootstrapHarness.Create(_controls, SaveSlot, World, Rover, Gameplay);
             bool newGame = Gameplay.Materials != null &&
                            Bootstrap.Context.Get<ISaveService>().LoadResult == SaveLoadResult.NoSave;
-            if (newGame && !spares && !Gameplay.Materials.TrySpend(CargoTuning.StarterItems))
-            {
-                throw new InvalidOperationException("A new game's hold should carry 07's spares.");
-            }
-
             if (newGame && !startKit)
             {
                 Gameplay.StartKit.Restore(new StartKitSaveData { igniterFitted = true });

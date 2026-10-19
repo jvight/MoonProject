@@ -37,6 +37,9 @@ namespace MoonProject.Rover
         /// <summary>Share of the normal top speed allowed now (the crawl's cap; 1 without a battery).</summary>
         public float DriveCap01 => Battery != null ? Battery.DriveCap01 : 1f;
 
+        /// <summary>The opening still runs on the reserve: the lamps are dimmed.</summary>
+        public bool OnOpeningReserve => Battery != null && Battery.OnOpeningReserve;
+
         /// <summary>The battery can pay for a full leap now.</summary>
         public bool CanLeap => Battery == null || Battery.CanLeap;
 

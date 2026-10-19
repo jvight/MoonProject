@@ -132,6 +132,9 @@ namespace MoonProject.Audio
         public const string BootAssembly = "boot_assembly";
         public const string BootBeginTurn = "boot_begin_turn";
         public const string BootRush = "boot_rush";
+        public const string CallCarrier = "call_carrier";
+        public const string CallAnswered = "call_answered";
+        public const string CallDecoded = "call_decoded";
         public const string FacePowerOn = "face_power_on";
         public const string FaceLogoStroke = "face_logo_stroke";
         public const string FaceLogoResolve = "face_logo_resolve";

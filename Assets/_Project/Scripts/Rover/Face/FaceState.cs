@@ -111,6 +111,9 @@ namespace MoonProject.Rover
         /// <summary>Current symbol opacity in [0..1].</summary>
         public float SymbolAlpha { get; private set; }
 
+        /// <summary>A scan is running: 07's face shows its scanning look.</summary>
+        public bool ScanFocusActive => _scanFocusActive;
+
         /// <summary>Normalized scan-focus eye narrowing blend in [0..1].</summary>
         public float ScanFocusBlend => _scanFocusBlend;
 

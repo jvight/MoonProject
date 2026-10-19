@@ -206,6 +206,22 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(OpeningMilestone.SignalWest, _milestones[3].Milestone);
             Assert.IsFalse(_milestones[3].Restored);
             Assert.IsTrue(_flow.HasReached(OpeningMilestone.SignalWest));
+            Assert.IsFalse(_flow.HasReached(OpeningMilestone.CallAnswered), "the answer publishes its own milestone");
+        }
+
+        [Test]
+        public void ALoadedGame_AtTheOpeningsEnd_ReplaysOnlyTheMilestonesTheFlowDerives()
+        {
+            _game.FirstCharge = true;
+            _game.PowerOn = true;
+            _game.NightReady = true;
+            _game.BuiltIds.Add(StructureIds.AntennaMast);
+            Assert.DoesNotThrow(() => _flow.Announce(), "every milestone the enum has is safe to replay past");
+            Assert.AreEqual(4, _milestones.Count);
+            foreach (OpeningMilestoneReached reached in _milestones)
+            {
+                Assert.AreNotEqual(OpeningMilestone.CallAnswered, reached.Milestone);
+            }
         }
 
         [Test]

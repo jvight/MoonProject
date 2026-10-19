@@ -49,15 +49,24 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float SearchLimit = 3000f;
         private const float NightSearchLimit = 12000f;
 
-        /// <summary>Seconds after the second lamp begins to come on that the dusk frame is captured.</summary>
-        private const float ShotAfterSecondLamp = 0.8f;
-
         private const float DuskWatchSeconds = 8f;
 
         /// <summary>The most lamp lights the base may burn (BaseTuning.LampLightBudget).</summary>
         private const int MaxLampLights = 4;
 
         private const float NightShotMetres = 15f;
+
+        // The cable frames: 9 m back from the row's middle, a little above it, looking down onto the ground.
+        private const float CableShotMetres = 9f;
+        private const float CableShotRise = 3f;
+        private const float CableShotLook = 0.4f;
+
+        // The cabled row's pieces stand this far apart: within every piece's reach, all four in one 9 m frame.
+        private const float CableRowSpacing = 5f;
+
+        // A pixel this bright (luminance) has blown out toward white; a lit base keeps them to the bulbs' specks.
+        private const float ClipLuminance = 0.95f;
+        private const float MaxClippedShare = 0.0004f;
         private const float NightShotRise = 2.2f;
         private const float DawnWatchSeconds = 4f;
         private const float WatchStep = 0.1f;
@@ -126,23 +135,19 @@ namespace MoonProject.Gameplay.PlayModeTests
             PlaceRoverLookingAtTheBase();
             SetSky(_duskSeconds);
 
+            // The checks follow the lamps' own lit beats and their order, frame by frame, so a slow frame under load
+            // cannot let a third lamp in before the dusk frame is taken.
             bool shot = false;
-            float secondAt = -1f;
             float until = Time.time + DuskWatchSeconds;
             var seenLevels = new List<float>();
             while (Time.time < until && _gameplay.BaseLamps.LevelOf(ids[Order.Length - 1]) < 1f)
             {
-                yield return new WaitForSeconds(WatchStep);
+                yield return null;
                 seenLevels.Add(_gameplay.BaseLamps.LevelOf(ids[0]));
-                if (_lit.Count >= 2 && secondAt < 0f)
-                {
-                    secondAt = Time.time;
-                }
-
-                if (!shot && secondAt >= 0f && Time.time - secondAt >= ShotAfterSecondLamp)
+                if (!shot && _lit.Count >= 2)
                 {
                     shot = true;
-                    Assert.AreEqual(2, _lit.Count, "two lamps are lit when the dusk frame is taken");
+                    Assert.AreEqual(ids[1], _lit[1].InstanceId, "the dusk frame is taken as the second lamp comes on");
                     FrameCapture.SavePng(_context.Get<IViewCamera>().Camera, 1920, 1080,
                         Path.Combine(GameplayFixture.CaptureFolder, "base-lamps-dusk-2.png"));
                 }
@@ -256,6 +261,133 @@ namespace MoonProject.Gameplay.PlayModeTests
             FrameCapture.SavePng(lens, 1920, 1080, Path.Combine(GameplayFixture.CaptureFolder, "base-lamps-night-15m.png"));
             lens.transform.SetPositionAndRotation(position, rotation);
             Assert.AreEqual(Order.Length, LitLights().Count, "the base is lit in the night frame");
+        }
+
+        [UnityTest]
+        [Timeout(200000)]
+        [PrebuildSetup(typeof(PlaythroughScene))]
+        [PostBuildCleanup(typeof(PlaythroughScene))]
+        public IEnumerator TheBuiltPieces_LieCabled_AsTheirPreviewShowed_AndACableGoesAndComesBackWithItsPiece()
+        {
+            yield return Boot();
+            int[] ids = BuildCabledRow();
+            yield return null;
+            BaseCables cables = _gameplay.Building.Cables;
+            AssertCablesMatchThePreview(cables, "built");
+            Assert.AreEqual(Order.Length, cables.Count,
+                "the pad cables to the lander's apron cable, and each piece after it to the one before");
+
+            PlacedBase placed = _gameplay.PlacedBase;
+            Assert.IsTrue(placed.TryGetStructure(ids[ids.Length - 1], out PlacedStructure built), "the mast stands");
+            StructurePose mast = built.Pose;
+            Assert.IsTrue(placed.TryDeconstruct(ids[ids.Length - 1], out _), "the mast comes down");
+            yield return null;
+            Assert.AreEqual(Order.Length - 1, cables.Count, "its cable goes with it");
+            AssertCablesMatchThePreview(cables, "after the take-down");
+
+            placed.PlaceUnchecked(_gameplay.Building.Catalog.Find(StructureIds.AntennaMast), mast, 1f);
+            yield return null;
+            Assert.AreEqual(Order.Length, cables.Count, "and comes back when it is rebuilt");
+            AssertCablesMatchThePreview(cables, "after the rebuild");
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(PlaythroughScene))]
+        [PostBuildCleanup(typeof(PlaythroughScene))]
+        public IEnumerator ADuskAndANightFrame_FromNineMetres_ShowTheCables_AndNothingBlowsOutToWhite()
+        {
+            yield return Boot();
+            BuildCabledRow();
+            Camera lens = _context.Get<IViewCamera>().Camera;
+            var terrain = _context.Get<ITerrainQuery>();
+            _context.Get<IWorldAnchors>().TryGet("place.apron", out WorldAnchor apron);
+            Vector3 middle = SurfaceRules.OnSurface(terrain, apron.Position.x + CableRowSpacing * 1.5f,
+                                 apron.Position.z)
+                             + Vector3.up * CableShotLook;
+            Vector3 eye = middle + new Vector3(0f, CableShotRise, -CableShotMetres);
+            foreach ((string name, float seconds) in new[] { ("dusk", _duskSeconds), ("night", _nightSeconds) })
+            {
+                SetSky(seconds);
+                yield return new WaitForSeconds(DuskWatchSeconds);
+                Vector3 position = lens.transform.position;
+                Quaternion rotation = lens.transform.rotation;
+                lens.transform.SetPositionAndRotation(eye, Quaternion.LookRotation(middle - eye, Vector3.up));
+                Texture2D frame = FrameCapture.Render(lens, 1920, 1080);
+                lens.transform.SetPositionAndRotation(position, rotation);
+                FrameCapture.WritePng(frame,
+                    Path.Combine(GameplayFixture.CaptureFolder, $"base-cables-{name}-9m.png"));
+                float clipped = ClippedShare(frame);
+                Object.Destroy(frame);
+                Debug.Log($"[base-cables] {name}: {clipped:P3} of the frame clips to white");
+                Assert.LessOrEqual(clipped, MaxClippedShare, $"at {name} nothing on the base blows out to white");
+            }
+        }
+
+        /// <summary>
+        /// Every cable runs where the build preview says the piece's cable runs (same rule, same ports), and every
+        /// piece the preview cables has its cable.
+        /// </summary>
+        private void AssertCablesMatchThePreview(BaseCables cables, string when)
+        {
+            PlacedBase placed = _gameplay.PlacedBase;
+            int expected = 0;
+            for (int i = 0; i < placed.Count; i++)
+            {
+                PlacedStructure piece = placed.StructureAt(i);
+                if (!piece.IsBuilt || !GridLinkPreview.TryFindCable(placed, piece.Definition, piece.Pose, i,
+                        piece.InstanceId, _gameplay.Building.ApronCable, out Vector3 from, out Vector3 to, out _))
+                {
+                    continue;
+                }
+
+                expected++;
+                bool laid = false;
+                for (int c = 0; c < cables.Count && !laid; c++)
+                {
+                    cables.GetEnds(c, out Vector3 cableFrom, out Vector3 cableTo);
+                    laid = Vector3.Distance(cableFrom, from) < 1e-3f && Vector3.Distance(cableTo, to) < 1e-3f;
+                }
+
+                Assert.IsTrue(laid, $"{when}: the {piece.Definition.Id}'s cable runs from {from} to {to}");
+            }
+
+            Assert.AreEqual(expected, cables.Count, $"{when}: one cable for each piece the preview cables");
+        }
+
+        /// <summary>
+        /// The opening's four pieces in a row east from the apron's middle: the pad on the apron (on the lander's
+        /// cable), each next piece a spacing on, so it cables to the one before.
+        /// </summary>
+        private int[] BuildCabledRow()
+        {
+            var terrain = _context.Get<ITerrainQuery>();
+            Assert.IsTrue(_context.Get<IWorldAnchors>().TryGet("place.apron", out WorldAnchor apron),
+                "the World has the apron");
+            var ids = new int[Order.Length];
+            for (int i = 0; i < Order.Length; i++)
+            {
+                Vector3 at = SurfaceRules.OnSurface(terrain, apron.Position.x + i * CableRowSpacing, apron.Position.z);
+                ids[i] = _gameplay.PlacedBase.PlaceUnchecked(_gameplay.Building.Catalog.Find(Order[i]),
+                    new StructurePose(at, 0f), 1f);
+            }
+
+            return ids;
+        }
+
+        /// <summary>The share of the frame's pixels blown out toward white (warm or not): light past the display.</summary>
+        private static float ClippedShare(Texture2D frame)
+        {
+            Color32[] pixels = frame.GetPixels32();
+            int clipped = 0;
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                Color32 c = pixels[i];
+                float luminance = (0.2126f * c.r + 0.7152f * c.g + 0.0722f * c.b) / 255f;
+                clipped += luminance >= ClipLuminance ? 1 : 0;
+            }
+
+            return clipped / (float)pixels.Length;
         }
 
         private static List<Light> LitLights()

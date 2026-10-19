@@ -58,7 +58,7 @@ namespace MoonProject.Rover.PlayModeTests
         private const float TitleQuietSeconds = 4f;
         private const float MaxUntouched = 45f;
         private const float MinSelfTest = 16f;
-        private const float MaxSelfTest = 20f;
+        private const float MaxSelfTest = 22f;
 
         /// <summary>The opening's lines, as the shipped tuning prints them: every check.</summary>
         private static readonly BootCheckStep[] OpeningLines =
@@ -349,7 +349,7 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreEqual(0, Count(WakeBeat.FadedOut), "a fresh title pushes in: no cover, no black");
             Assert.AreEqual(1, _awoke, "RoverAwoke goes with the crackle, once");
             Assert.AreEqual(1, _body.FaceDirector.Director.BootCount, "the CRT face boots once, as the eyes come back");
-            Assert.That(chase - crackle, Is.InRange(MinSelfTest, MaxSelfTest), "New Game to control in at most about 20 s");
+            Assert.That(chase - crackle, Is.InRange(MinSelfTest, MaxSelfTest), "New Game to control in at most about 22 s: the two moves are slow and gradual");
             CollectionAssert.AreEqual(OpeningLines, _checksStartedList, "the lines print in the story's order");
             Assert.AreEqual(OpeningLines.Length, _checksCompleted.Count, "every line is completed");
             Assert.AreEqual(1, _checksFinished, "and the test finishes once");

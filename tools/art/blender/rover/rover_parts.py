@@ -15,7 +15,9 @@ from r1kit import (
     FLAT_UV_SCALE,
     FULL_CIRCLE_RAD,
     HALF_PI_RAD,
+    MAKER_DECAL_CELLS,
     UNIT_EPSILON,
+    _init_solid_vcol_mesh,
     add_maker_decal_node,
     append_beveled_box,
     append_cylinder,
@@ -26,6 +28,7 @@ from r1kit import (
     append_prism_extrusion,
     append_spherical_dome,
     append_torus,
+    apply_weighted_normals,
     create_empty,
     create_mesh_node,
     ensure_outward_normals,
@@ -567,10 +570,10 @@ def _append_body_cut_panels_and_seams(bm, cfg):
             (0.660, -0.180),
             (0.735, -0.180),
             (0.785, -0.180),
-            (0.835, -0.140),
-            (0.855, -0.060),
-            (0.855, 0.060),
-            (0.835, 0.155),
+            (0.840, -0.155),
+            (0.860, -0.075),
+            (0.860, 0.075),
+            (0.840, 0.165),
             (0.785, 0.200),
             (0.735, 0.200),
             (0.660, 0.200),
@@ -593,26 +596,28 @@ def _append_body_cut_panels_and_seams(bm, cfg):
                 guard_inset=False,
             )
 
-        # Flush recessed service door latch handle on the curved flank door panel
-        latch_x = _hull_flank_x(0.775, 0.095, cfg)
+        # Flush recessed service door latch handle near the forward edge of the curved flank door panel
+        latch_y = 0.755
+        latch_z = 0.150
+        latch_x = _hull_flank_x(latch_y, latch_z, cfg)
         append_beveled_box(
             bm,
             size_xyz=(0.012, 0.032, 0.062),
-            center_xyz=(sx * (latch_x - 0.001), 0.775, 0.095),
+            center_xyz=(sx * (latch_x - 0.001), latch_y, latch_z),
             bevel_width=0.003,
             bevel_segments=1,
             mat_idx=2,
-            rot_euler=(0.0, 0.0, -sx * 0.12),
+            rot_euler=(0.0, 0.0, -sx * 0.10),
             guard_inset=False,
         )
         append_beveled_box(
             bm,
             size_xyz=(0.010, 0.016, 0.044),
-            center_xyz=(sx * (latch_x + 0.003), 0.775, 0.095),
+            center_xyz=(sx * (latch_x + 0.003), latch_y, latch_z),
             bevel_width=0.002,
             bevel_segments=1,
             mat_idx=10,  # R1_Brass latch pull
-            rot_euler=(0.0, 0.0, -sx * 0.12),
+            rot_euler=(0.0, 0.0, -sx * 0.10),
             guard_inset=False,
         )
 
@@ -2199,12 +2204,109 @@ def build_front_tools_and_lamps(rover_root, body_obj, cfg, mats):
         mat_idx=0,
         ring_mat_indices=[0, 0, 0, 0, 1, 1],
     )
+
+    # Igniter socket housing + dark empty socket recess on upper-right shoulder of CutterTurret
+    ign_piv = cfg["piv_cutter_igniter_local"]
+    append_beveled_box(
+        bm_ct,
+        size_xyz=(0.044, 0.040, 0.026),
+        center_xyz=(ign_piv[0] - 0.008, ign_piv[1] - 0.006, ign_piv[2] - 0.016),
+        bevel_width=0.005,
+        bevel_segments=2,
+        mat_idx=1,
+    )
+    for by_off in (-0.014, 0.012):
+        append_hex_bolt(
+            bm_ct,
+            radius=0.005,
+            height=0.008,
+            axis="X",
+            center_xyz=(ign_piv[0] + 0.014, ign_piv[1] + by_off, ign_piv[2] - 0.014),
+            mat_idx=2,
+        )
+    ign_socket_profile = [
+        (0.0, -0.018),
+        (0.025, -0.018),
+        (0.025, 0.008),
+        (0.027, 0.010),
+        (0.027, 0.018),
+        (0.021, 0.018),
+        (0.0175, 0.014),
+        (0.0175, 0.002),
+        (0.0, 0.002),
+    ]
+    append_lathe_profile(
+        bm_ct,
+        ign_socket_profile,
+        axis="Z",
+        center_xyz=ign_piv,
+        segments=24,
+        mat_idx=1,
+        ring_mat_indices=[1, 1, 0, 0, 0, 2, 3, 3],
+        auto_chamfer=False,
+    )
     ct_obj = create_mesh_node(
         "CutterTurret",
         bm_ct,
         cfg["piv_cutter_turret"],
         parent=rover_root,
-        mat_list=[mats["R1_Brass"], mats["R1_GreyMetal"], mats["R1_BareSteel"]],
+        mat_list=[mats["R1_Brass"], mats["R1_GreyMetal"], mats["R1_BareSteel"], mats["R1_Rubber"]],
+        cfg=cfg,
+    )
+
+    # Cutter_Igniter: spark-plug-like ceramic white + brass igniter cartridge seated in the CutterTurret socket
+    bm_ign = bmesh.new()
+    ign_profile = [
+        (0.0, 0.003),
+        (0.0168, 0.003),
+        (0.0168, 0.018),
+        (0.0195, 0.018),
+        (0.0195, 0.031),
+        (0.0145, 0.032),
+        (0.0190, 0.035),
+        (0.0190, 0.041),
+        (0.0140, 0.044),
+        (0.0190, 0.047),
+        (0.0190, 0.053),
+        (0.0140, 0.056),
+        (0.0185, 0.059),
+        (0.0185, 0.065),
+        (0.0135, 0.068),
+        (0.0115, 0.069),
+        (0.0115, 0.076),
+        (0.0072, 0.077),
+        (0.0072, 0.084),
+        (0.0050, 0.086),
+        (0.0, 0.086),
+    ]
+    append_lathe_profile(
+        bm_ign,
+        ign_profile,
+        axis="Z",
+        center_xyz=(0.0, 0.0, 0.0),
+        segments=24,
+        mat_idx=0,
+        ring_mat_indices=[1] * 5 + [0] * 9 + [1] * 6,
+        auto_chamfer=False,
+    )
+    append_cylinder(
+        bm_ign,
+        radius1=0.0235,
+        radius2=0.0235,
+        length=0.011,
+        axis="Z",
+        center_xyz=(0.0, 0.0, 0.0235),
+        segments=6,
+        bevel_width=0.002,
+        bevel_segments=1,
+        mat_idx=1,
+    )
+    create_mesh_node(
+        "Cutter_Igniter",
+        bm_ign,
+        ign_piv,
+        parent=ct_obj,
+        mat_list=[mats["R1_WhitePaint"], mats["R1_Brass"]],
         cfg=cfg,
     )
 
@@ -3058,8 +3160,8 @@ def build_rear_and_shoulder_nodes(rover_root, body_obj, cfg, mats):
     )
     append_cylinder(
         bm_ant,
-        radius1=0.012,
-        radius2=0.009,
+        radius1=0.0125,
+        radius2=0.0105,
         length=0.64,
         axis="Y",
         center_xyz=(0.0, 0.35, 0.0),
@@ -3075,6 +3177,76 @@ def build_rear_and_shoulder_nodes(rover_root, body_obj, cfg, mats):
         cfg=cfg,
     )
     create_empty("AntennaSocket", parent=ant_obj, pivot_u=(0.0, 0.0, 0.0), local_space=True, empty_size=0.04)
+
+    # Antenna_Segment2: telescoping second mast segment retracted inside Antenna mast in rest pose
+    # (pivot at its base, local +Y up axis = extension axis; extends +0.35 m straight up when raised)
+    bm_seg2 = bmesh.new()
+    append_cylinder(
+        bm_seg2,
+        radius1=0.0078,
+        radius2=0.0068,
+        length=0.358,
+        axis="Y",
+        center_xyz=(0.0, 0.179, 0.0),
+        segments=12,
+        mat_idx=0,
+    )
+    append_cylinder(
+        bm_seg2,
+        radius1=0.0086,
+        radius2=0.0086,
+        length=0.024,
+        axis="Y",
+        center_xyz=(0.0, 0.180, 0.0),
+        segments=12,
+        bevel_width=0.002,
+        bevel_segments=1,
+        mat_idx=0,
+    )
+    append_cylinder(
+        bm_seg2,
+        radius1=0.0092,
+        radius2=0.0092,
+        length=0.016,
+        axis="Y",
+        center_xyz=(0.0, 0.350, 0.0),
+        segments=12,
+        bevel_width=0.002,
+        bevel_segments=1,
+        mat_idx=0,
+    )
+    append_cylinder(
+        bm_seg2,
+        radius1=0.0135,
+        radius2=0.0130,
+        length=0.032,
+        axis="Y",
+        center_xyz=(0.0, 0.374, 0.0),
+        segments=16,
+        bevel_width=0.003,
+        bevel_segments=2,
+        mat_idx=1,
+    )
+    append_cylinder(
+        bm_seg2,
+        radius1=0.0095,
+        radius2=0.0075,
+        length=0.008,
+        axis="Y",
+        center_xyz=(0.0, 0.393, 0.0),
+        segments=12,
+        bevel_width=0.002,
+        bevel_segments=1,
+        mat_idx=0,
+    )
+    create_mesh_node(
+        "Antenna_Segment2",
+        bm_seg2,
+        cfg["piv_antenna_segment2_local"],
+        parent=ant_obj,
+        mat_list=[mats["R1_BareSteel"], mats["R1_LampAmber"]],
+        cfg=cfg,
+    )
 
     bm_loop = bmesh.new()
     append_torus(
@@ -3212,29 +3384,149 @@ def build_rear_and_shoulder_nodes(rover_root, body_obj, cfg, mats):
         cfg=cfg,
     )
 
-    # Kessler-Arai maker decals (~0.12 m) on both flank panels above the orange stripe, symmetric on the flat door panel
-    ka_uy = 0.702
-    ka_uz = -0.050
+    # Kessler-Arai maker decals matching the SSR-3 chassis decal physical size (width=0.25, height=0.175,
+    # u_crop=(0.04, 0.96), v_crop=(0.15, 0.85)) on both flank panels above the orange stripe, symmetric
+    ka_uy = 0.7545
+    ka_uz = -0.030
+    ka_width = 0.25
+    ka_height = 0.175
+    ka_u_crop = (0.04, 0.96)
+    ka_v_crop = (0.14, 0.84)
+    ka_offset = 0.0020
+    ka_thickness = 0.0008
     ka_flank_x = _hull_flank_x(ka_uy, ka_uz, cfg)
     for side_label, sx in (("L", -1.0), ("R", 1.0)):
         ka_center = (round(sx * ka_flank_x, 4), ka_uy, ka_uz)
-        add_maker_decal_node(
+        decal_obj = add_maker_decal_node(
             f"Decal_KA_{side_label}",
             body_obj,
             center_u=ka_center,
             normal_u=(sx, 0.0133, 0.0),
-            width=0.120,
-            height=0.072,
+            width=ka_width,
+            height=ka_height,
             cell_key="KESSLER_ARAI",
             up_u=(0.0, 1.0, 0.0),
-            offset=0.0018,
-            thickness=0.0008,
+            offset=ka_offset,
+            thickness=ka_thickness,
             pivot_u=ka_center,
-            u_crop=(0.04, 0.96),
-            v_crop=(0.14, 0.86),
+            u_crop=ka_u_crop,
+            v_crop=ka_v_crop,
             material_override=mats["R1_Signage"],
             local_space=True,
         )
+        _conform_flank_decal_wafer(
+            decal_obj,
+            sx=sx,
+            ka_center=ka_center,
+            width=ka_width,
+            height=ka_height,
+            u_crop=ka_u_crop,
+            v_crop=ka_v_crop,
+            offset=ka_offset,
+            thickness=ka_thickness,
+            cfg=cfg,
+        )
+
+
+def _conform_flank_decal_wafer(
+    decal_obj,
+    sx,
+    ka_center,
+    width,
+    height,
+    u_crop,
+    v_crop,
+    offset,
+    thickness,
+    cfg,
+):
+    """
+    Conform a flank maker decal wafer to _hull_flank_x(uy, uz, cfg) across the hull's exact
+    vertical contour rings (0.667..0.842 m) and longitudinal barrel curve so the 0.25 m x 0.175 m
+    decal sits a uniform 2.0 mm proud of the flank panel with zero hull clipping.
+    """
+    u_center, v_center, u_span, v_span = MAKER_DECAL_CELLS["KESSLER_ARAI"]
+    u_min_cell = u_center - 0.5 * u_span
+    v_min_cell = v_center - 0.5 * v_span
+    u0 = round(u_min_cell + u_crop[0] * u_span, 5)
+    u1 = round(u_min_cell + u_crop[1] * u_span, 5)
+    v0 = round(v_min_cell + v_crop[0] * v_span, 5)
+    v1 = round(v_min_cell + v_crop[1] * v_span, 5)
+
+    ut0 = round(u_center - 0.135, 5)
+    ut1 = round(u_center - 0.132, 5)
+    vt0 = round(v_center - 0.135, 5)
+    vt1 = round(v_center - 0.132, 5)
+    trim_uvs = ((ut0, vt0), (ut1, vt0), (ut1, vt1), (ut0, vt1))
+
+    piv_b = u_pos(*ka_center)
+    ka_uy = ka_center[1]
+    ka_uz = ka_center[2]
+    y_bot = round(ka_uy - 0.5 * height, 4)
+    y_top = round(ka_uy + 0.5 * height, 4)
+    y_vals = (y_bot, 0.7350, 0.7900, 0.8350, y_top)
+    u_fracs = (0.0, 0.25, 0.50, 0.75, 1.0)
+
+    bm = bmesh.new()
+    uv_layer = bm.loops.layers.uv.verify()
+
+    vf_grid = []
+    vb_grid = []
+    for uy in y_vals:
+        rf = []
+        rb = []
+        for uf in u_fracs:
+            uz = ka_uz + sx * (uf - 0.5) * width
+            hx = _hull_flank_x(uy, uz, cfg)
+            xf = sx * (hx + offset)
+            xb = sx * (hx + offset - thickness)
+            rf.append(bm.verts.new(u_pos(xf, uy, uz) - piv_b))
+            rb.append(bm.verts.new(u_pos(xb, uy, uz) - piv_b))
+        vf_grid.append(rf)
+        vb_grid.append(rb)
+
+    nrows = len(y_vals)
+    ncols = len(u_fracs)
+    side_faces = []
+    for j in range(nrows - 1):
+        vf_0 = (y_vals[j] - y_bot) / height
+        vf_1 = (y_vals[j + 1] - y_bot) / height
+        vj0 = round(v0 + vf_0 * (v1 - v0), 5)
+        vj1 = round(v0 + vf_1 * (v1 - v0), 5)
+        for i in range(ncols - 1):
+            ui0 = round(u0 + u_fracs[i] * (u1 - u0), 5)
+            ui1 = round(u0 + u_fracs[i + 1] * (u1 - u0), 5)
+            f_fr = bm.faces.new((vf_grid[j][i], vf_grid[j][i + 1], vf_grid[j + 1][i + 1], vf_grid[j + 1][i]))
+            for loop, uv in zip(f_fr.loops, ((ui0, vj0), (ui1, vj0), (ui1, vj1), (ui0, vj1))):
+                loop[uv_layer].uv = uv
+            side_faces.append(
+                bm.faces.new((vb_grid[j][i], vb_grid[j + 1][i], vb_grid[j + 1][i + 1], vb_grid[j][i + 1]))
+            )
+
+    for i in range(ncols - 1):
+        side_faces.append(bm.faces.new((vb_grid[0][i], vb_grid[0][i + 1], vf_grid[0][i + 1], vf_grid[0][i])))
+        side_faces.append(bm.faces.new((vb_grid[-1][i + 1], vb_grid[-1][i], vf_grid[-1][i], vf_grid[-1][i + 1])))
+    for j in range(nrows - 1):
+        side_faces.append(bm.faces.new((vb_grid[j + 1][0], vb_grid[j][0], vf_grid[j][0], vf_grid[j + 1][0])))
+        side_faces.append(bm.faces.new((vb_grid[j][-1], vb_grid[j + 1][-1], vf_grid[j + 1][-1], vf_grid[j][-1])))
+
+    for sf in side_faces:
+        for loop, uv in zip(sf.loops, trim_uvs):
+            loop[uv_layer].uv = uv
+
+    for f in bm.faces:
+        f.material_index = 0
+        f.smooth = True
+    for e in bm.edges:
+        e.smooth = False
+    ensure_outward_normals(bm)
+
+    me = decal_obj.data
+    bm.to_mesh(me)
+    bm.free()
+    apply_weighted_normals(me, sharp_angle_deg=42.0, area_power=1.6, use_modifier=False)
+    _init_solid_vcol_mesh(me, (0.96, 0.0, 0.0, 1.0))
+    me.update()
 
 
 def build_suspension_and_sockets(rover_root, cfg, mats):

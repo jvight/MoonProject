@@ -154,14 +154,16 @@ namespace MoonProject.Gameplay
 
         private Light MakeLight(Lamp lamp, StructureView view)
         {
-            float height = _building.PlacedBase.TryGetStructure(lamp.InstanceId, out PlacedStructure placed)
-                ? placed.Definition.Height
-                : 1f;
+            Vector3 footprint = _building.PlacedBase.TryGetStructure(lamp.InstanceId, out PlacedStructure placed)
+                ? placed.Definition.Footprint
+                : Vector3.one;
             bool pad = string.Equals(lamp.StructureId, StructureIds.ChargingPad, StringComparison.Ordinal);
             var host = new GameObject("BaseLampLight");
             host.transform.SetParent(view.transform, false);
-            host.transform.localPosition = Vector3.up *
-                                           (pad ? _tuning.PadSpotHeightMetres : height * _tuning.LampLightHeightShare);
+            host.transform.localPosition = pad
+                ? Vector3.up * _tuning.PadSpotHeightMetres
+                : Vector3.up * (footprint.y * _tuning.LampLightHeightShare)
+                  + Vector3.back * (footprint.z * 0.5f + _tuning.LampLightStandOff);
             Light light = host.AddComponent<Light>();
             light.type = pad ? LightType.Spot : LightType.Point;
             if (pad)

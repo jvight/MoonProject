@@ -194,7 +194,7 @@ def _build_main_module(root) -> None:
         axis="x",
         segs=24,
         barrel_rings=1,
-        cap_rings=2,
+        cap_rings=1,
         clip_min_y_u=None,
     )
 
@@ -261,9 +261,6 @@ def _build_main_module(root) -> None:
     kx, ky, kz = cx - 0.90, 1.25, door_z + 0.05
     mb.add_bevel_box((kx, ky, kz), (0.36, 0.48, 0.14), bevel=0.016, mat="R1_GreyMetal", segs=1)
     mb.add_bevel_box((kx, ky + 0.02, kz - 0.04), (0.28, 0.38, 0.08), bevel=0.010, mat="R1_CreamEnamel", segs=1)
-    # Upper small dark status slot & amber LED
-    mb.add_bevel_box((kx, ky + 0.12, kz - 0.075), (0.22, 0.11, 0.03), bevel=0.004, mat="R1_DarkGlass", segs=1)
-    mb.add_bevel_box((kx - 0.05, ky + 0.13, kz - 0.088), (0.07, 0.022, 0.02), bevel=0.003, mat="R1_LampAmber", segs=1)
     # Angled lower keypad shelf with 3x3 tactile keys
     mb.add_bevel_box(
         (kx, ky - 0.09, kz - 0.085),
@@ -341,6 +338,34 @@ def _build_airlock_readout(root) -> None:
         rivets=False,
     )
     ruins_common.to_ruin_object(mb, "AirlockReadout", parent=root)
+
+
+def _build_power_module_status_lamp(root) -> None:
+    """Build the separate `PowerModule_StatusLamp` child mesh node (7.0 cm round amber lamp lens in a 7.8 cm short bezel)."""
+    lx, ly, lz = -4.35, 1.68, -1.39
+    mb = r1kit.MeshBuilder("PowerModule_StatusLamp", pivot_u=(lx, ly, lz))
+    # Short machined brass bezel collar (7.8 cm outer diameter, seated into the front bulkhead)
+    mb.add_cylinder(
+        (lx, ly, lz + 0.014),
+        radius=0.039,
+        height=0.044,
+        segs=12,
+        axis="z",
+        mat="R1_Brass",
+        bevel=0.003,
+    )
+    # Round amber status lamp lens dome (7.0 cm diameter at bezel tapering to 6.2 cm at front tip, R1_LampAmber slot 0)
+    mb.add_cylinder(
+        (lx, ly, lz - 0.010),
+        radius=0.031,
+        radius_top=0.035,
+        height=0.028,
+        segs=12,
+        axis="z",
+        mat="R1_LampAmber",
+        bevel=0.005,
+    )
+    ruins_common.to_ruin_object(mb, "PowerModule_StatusLamp", parent=root, origin_u=(lx, ly, lz))
 
 
 def _build_bellows_joints(root) -> None:
@@ -646,6 +671,7 @@ def build(skip_renders: bool = False) -> None:
     _build_main_module(root)
     _build_airlock_panel(root)
     _build_airlock_readout(root)
+    _build_power_module_status_lamp(root)
     _build_bellows_joints(root)
     _build_lab_module(root)
     _build_crushed_module(root)

@@ -202,6 +202,13 @@ namespace MoonProject.Rover
         public void SetReadout(Texture contentTexture)
         {
             EnsureState();
+            if (contentTexture != null && _state.ScanFocusActive)
+            {
+                // A line of words would take the eyes off the face; the scan's look (eyes toward the target, the
+                // progress ring) is what the player should see while the key is held.
+                return;
+            }
+
             if (contentTexture != null)
             {
                 _contentTexture = contentTexture;

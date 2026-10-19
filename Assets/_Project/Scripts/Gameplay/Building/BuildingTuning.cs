@@ -129,11 +129,8 @@ namespace MoonProject.Gameplay
         [Range(4, 32)] [SerializeField] private int _settleDustRingCount = 18;
 
         [Header("The ghost's grid link preview")]
-        [Tooltip("Metres above the ground the preview cable leaves the ghost and meets the hub it would join.")]
+        [Tooltip("Metres above the ground the loose preview cable end leaves the ghost when nothing is in reach.")]
         [Range(0.1f, 2f)] [SerializeField] private float _linkHeight = 0.6f;
-
-        [Tooltip("Metres the in-reach cable droops at its middle: a cable lying slack, not a laser line.")]
-        [Range(0f, 2f)] [SerializeField] private float _linkSag = 0.35f;
 
         [Tooltip("Width of the preview cable, metres.")]
         [Range(0.01f, 0.2f)] [SerializeField] private float _linkWidth = 0.05f;
@@ -149,6 +146,22 @@ namespace MoonProject.Gameplay
 
         [Tooltip("Width of the loose cable's plug end, metres: a small blunt end that reads as unplugged.")]
         [Range(0.02f, 0.4f)] [SerializeField] private float _loosePlugWidth = 0.14f;
+
+        [Header("The built pieces' cables (and the path their preview shows)")]
+        [Tooltip("Radius of a built cable, metres: a thick rubber power lead.")]
+        [Range(0.005f, 0.1f)] [SerializeField] private float _cableRadius = 0.022f;
+
+        [Tooltip("Horizontal metres over which a cable falls slack from its port to the ground.")]
+        [Range(0.1f, 3f)] [SerializeField] private float _cableDrop = 0.7f;
+
+        [Tooltip("Metres between the points a cable's path follows the ground through.")]
+        [Range(0.05f, 1f)] [SerializeField] private float _cableStep = 0.3f;
+
+        [Tooltip("Radius of the plug sleeve at each end of a cable, metres.")]
+        [Range(0.01f, 0.2f)] [SerializeField] private float _connectorRadius = 0.05f;
+
+        [Tooltip("Length of the plug sleeve at each end of a cable, metres.")]
+        [Range(0.02f, 0.5f)] [SerializeField] private float _connectorLength = 0.14f;
 
         [Header("Printed in place (build C)")]
         [Tooltip("Layers a print rises in: its layer line steps up one layer at a time, so the rise reads as made.")]
@@ -319,7 +332,6 @@ namespace MoonProject.Gameplay
 
         public float LinkHeight => _linkHeight;
 
-        public float LinkSag => _linkSag;
 
         public float LinkWidth => _linkWidth;
 
@@ -330,6 +342,11 @@ namespace MoonProject.Gameplay
         public Color LooseColor => _looseColor;
 
         public float LoosePlugWidth => _loosePlugWidth;
+        public float CableRadius => _cableRadius;
+        public float CableDrop => _cableDrop;
+        public float CableStep => _cableStep;
+        public float ConnectorRadius => _connectorRadius;
+        public float ConnectorLength => _connectorLength;
 
         public int PrintLayers => _printLayers;
 
