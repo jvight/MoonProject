@@ -327,6 +327,13 @@ MATERIALS = {
         "emission_color": (0.95, 0.62, 0.18),
         "emission_strength": 1.35,
     },
+    "R1_Signage": {
+        "base_color": (0.85, 0.81, 0.72),
+        "metallic": 0.04,
+        "roughness": 0.42,
+        "emission_color": (0.0, 0.0, 0.0),
+        "emission_strength": 0.0,
+    },
 }
 
 

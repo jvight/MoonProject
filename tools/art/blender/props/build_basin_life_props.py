@@ -500,7 +500,7 @@ def build_mission_flag() -> bpy.types.Object:
         segments=1,
         rot_deg_u=pole_rot,
     )
-    # Inner bleached field of canton + raised bleached lunar emblem disc
+    # Inner bleached field of canton + small ILC seal plate in canton
     flag_mb.add_bevel_box(
         center_u=tp(canton_x, canton_y, 0.001),
         size_u=(0.245, 0.175, 0.0145),
@@ -509,14 +509,14 @@ def build_mission_flag() -> bpy.types.Object:
         segments=1,
         rot_deg_u=pole_rot,
     )
-    flag_mb.add_cylinder(
+    seal_w = 0.160
+    seal_h = 0.150
+    flag_mb.add_bevel_box(
         center_u=tp(canton_x, canton_y, 0.001),
-        radius=0.052,
-        length=0.016,
+        size_u=(seal_w, seal_h, 0.017),
         mat="R1_Signage",
-        axis_u="Z",
-        segments=14,
         bevel=0.002,
+        segments=1,
         rot_deg_u=pole_rot,
     )
 
@@ -527,18 +527,70 @@ def build_mission_flag() -> bpy.types.Object:
     r1kit.create_empty("Flag_Anchor", parent=root, pivot_u=tp(0.44, 1.20, 0.0))
 
     r1kit.apply_triplanar_uvs(root)
+
+    # Map the canton ILC seal plate onto the ILC_SEAL cell of T_R1_Signage_Albedo.png
+    # and the sun-bleached stripes onto a clean uniform bleached band texel.
+    if flag_obj.data is not None:
+        mesh = flag_obj.data
+        mat_names = [m.name if m else "" for m in mesh.materials]
+        if "R1_Signage" in mat_names:
+            sig_idx = mat_names.index("R1_Signage")
+            uv_layer = mesh.uv_layers.get("UVMap") or mesh.uv_layers.new(name="UVMap")
+            uv_data = uv_layer.data
+            piv_b = r1kit.u_pos(*tp(0.44, 1.20, 0.0))
+            c_seal_local = r1kit.u_pos(*tp(canton_x, canton_y, 0.001)) - piv_b
+            u_dir_b = (r1kit.u_pos(*tp(canton_x + 1.0, canton_y, 0.001)) - r1kit.u_pos(*tp(canton_x, canton_y, 0.001))).normalized()
+            v_dir_b = (r1kit.u_pos(*tp(canton_x, canton_y + 1.0, 0.001)) - r1kit.u_pos(*tp(canton_x, canton_y, 0.001))).normalized()
+            u0, v0, u1, v1 = (0.015, 0.760, 0.235, 0.990)
+            for poly in mesh.polygons:
+                if poly.material_index != sig_idx:
+                    continue
+                is_seal = all(
+                    abs((mesh.vertices[vi].co - c_seal_local).dot(u_dir_b)) < 0.092
+                    and abs((mesh.vertices[vi].co - c_seal_local).dot(v_dir_b)) < 0.088
+                    for vi in poly.vertices
+                )
+                if is_seal:
+                    for li in poly.loop_indices:
+                        co = mesh.vertices[mesh.loops[li].vertex_index].co
+                        rel = co - c_seal_local
+                        s = max(0.02, min(0.98, (rel.dot(u_dir_b) / seal_w) + 0.5))
+                        t = max(0.02, min(0.98, (rel.dot(v_dir_b) / seal_h) + 0.5))
+                        uv_data[li].uv = (round(u0 + s * (u1 - u0), 5), round(v0 + t * (v1 - v0), 5))
+                else:
+                    for li in poly.loop_indices:
+                        uv_data[li].uv = (0.280, 0.220)
+            mesh.update()
+
     r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(root, footprint_radius=0.55)
 
     # Boost sun-bleached vertex color (high R=AO and high G=convex wear -> chalky almost-white bleached fabric,
-    # with subtle B=dust variation on the faint stripes so they read softly without harsh contrast)
+    # while keeping moderate wear on the canton ILC seal so the sun-faded seal mark reads clearly)
     if flag_obj.data is not None and "Col" in flag_obj.data.color_attributes:
-        attr = flag_obj.data.color_attributes["Col"]
-        for poly in flag_obj.data.polygons:
+        mesh = flag_obj.data
+        attr = mesh.color_attributes["Col"]
+        piv_b = r1kit.u_pos(*tp(0.44, 1.20, 0.0))
+        c_seal_local = r1kit.u_pos(*tp(canton_x, canton_y, 0.001)) - piv_b
+        u_dir_b = (r1kit.u_pos(*tp(canton_x + 1.0, canton_y, 0.001)) - r1kit.u_pos(*tp(canton_x, canton_y, 0.001))).normalized()
+        v_dir_b = (r1kit.u_pos(*tp(canton_x, canton_y + 1.0, 0.001)) - r1kit.u_pos(*tp(canton_x, canton_y, 0.001))).normalized()
+        for poly in mesh.polygons:
             is_stripe = poly.material_index > 0
+            is_seal = is_stripe and all(
+                abs((mesh.vertices[vi].co - c_seal_local).dot(u_dir_b)) < 0.092
+                and abs((mesh.vertices[vi].co - c_seal_local).dot(v_dir_b)) < 0.088
+                for vi in poly.vertices
+            )
             for loop_idx in poly.loop_indices:
                 r, g, b, a = attr.data[loop_idx].color
-                if is_stripe:
+                if is_seal:
+                    attr.data[loop_idx].color = (
+                        max(0.88, min(1.0, r * 0.96)),
+                        max(0.18, min(0.38, g * 0.45)),
+                        max(0.12, min(0.28, b * 0.40)),
+                        a,
+                    )
+                elif is_stripe:
                     # Faint sun-bleached stripe: slightly dustier warm grey-cream
                     attr.data[loop_idx].color = (
                         max(0.86, min(1.0, r * 0.96)),

@@ -27,26 +27,40 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 
+from pathlib import Path
+
+
 # Canonical UV cell bounds (u_min, v_min, u_max, v_max) with V=0 at bottom, V=1 at top
 SIGNAGE_UV_CELLS: dict[str, tuple[float, float, float, float]] = {
     "LOGO": (0.00, 0.75, 0.25, 1.00),
+    "ILC_SEAL": (0.00, 0.75, 0.25, 1.00),
     "LUMEN": (0.25, 0.75, 0.75, 1.00),
+    "VIS_STENCIL": (0.25, 0.75, 0.75, 1.00),
     "EVAC_1988": (0.75, 0.75, 1.00, 1.00),
+    "SEC_04": (0.75, 0.75, 1.00, 1.00),
     "SEC04_HABITAT": (0.00, 0.50, 0.50, 0.75),
+    "VIS_1985": (0.00, 0.50, 0.50, 0.75),
     "AIRLOCK_STATUS": (0.50, 0.50, 1.00, 0.75),
-    "SEC_04": (0.50, 0.50, 0.75, 0.75),
     "HABITAT_LAB": (0.75, 0.50, 1.00, 0.75),
     "WORKSHOP": (0.00, 0.25, 0.50, 0.50),
     "HAZARD": (0.50, 0.25, 1.00, 0.50),
     "PICT_ROVER": (0.00, 0.00, 0.25, 0.25),
+    "KA_MARK": (0.00, 0.00, 0.25, 0.25),
     "PICT_RADIO": (0.25, 0.00, 0.50, 0.25),
+    "VIS_1967": (0.25, 0.00, 0.50, 0.25),
     "PICT_BOTANY": (0.50, 0.00, 0.75, 0.25),
+    "CAUTION_RAD": (0.50, 0.00, 0.75, 0.25),
+    "TYCHO_PANEL": (0.50, 0.00, 0.75, 0.25),
     "PICT_AIRLOCK": (0.75, 0.00, 1.00, 0.25),
+    "LUMEN_STN": (0.75, 0.00, 1.00, 0.25),
+    "TYCHO_MARK": (0.75, 0.00, 1.00, 0.25),
 }
 
 # Palette colours in 0..255 sRGB matching identity_v1_helios_lumen.png & identity_v3_cassette_futurism.png
 CREAM_BG = (236, 226, 204)
 CREAM_TILE = (242, 233, 212)
+SCOUT_TAN_BG = (204, 179, 134)
+TYCHO_HULL_BG = (224, 220, 210)
 STENCIL_DARK = (32, 36, 48)
 NAVY_DARK = (24, 29, 46)
 ORANGE_BAND = (224, 114, 68)
@@ -60,6 +74,8 @@ STATUS_AMBER_BRIGHT = (255, 192, 78)
 STATUS_AMBER_CORE = (255, 234, 164)
 STATUS_AMBER_DIM = (182, 114, 38)
 STATUS_AMBER_RULE = (132, 82, 28)
+
+BRANDS_DIR = Path(__file__).resolve().parents[3] / "Assets" / "_Project" / "Art" / "R1" / "Brands"
 
 
 def _draw_thick_seg(
@@ -332,45 +348,154 @@ def _draw_stencil_text(
             )
 
 
-def _draw_lumen_logo(draw: ImageDraw.ImageDraw, cx: float, cy: float, radius: float) -> None:
-    """Draw the circular Lumen Commission emblem matching identity_v1_helios_lumen.png."""
-    # Outer dark navy circle
-    r_out = radius
-    draw.ellipse([cx - r_out, cy - r_out, cx + r_out, cy + r_out], fill=NAVY_DARK)
+PICKED_DIR = Path(__file__).resolve().parents[3] / "Logs" / "picked"
 
-    # Outer coral-orange ring
-    r1 = radius * 0.86
-    draw.ellipse([cx - r1, cy - r1, cx + r1, cy + r1], fill=ORANGE_BAND)
-    r1_in = radius * 0.76
-    draw.ellipse([cx - r1_in, cy - r1_in, cx + r1_in, cy + r1_in], fill=NAVY_DARK)
 
-    # Middle warm-amber ring
-    r2 = radius * 0.68
-    draw.ellipse([cx - r2, cy - r2, cx + r2, cy + r2], fill=AMBER_STRIPE)
-    r2_in = radius * 0.56
-    draw.ellipse([cx - r2_in, cy - r2_in, cx + r2_in, cy + r2_in], fill=NAVY_DARK)
+def _stamp_worn_brand_mark(
+    canvas: Image.Image,
+    mark_filename: str,
+    box: tuple[int, int, int, int],
+    bg_color: tuple[int, int, int] = CREAM_BG,
+    sun_fade: float = 0.22,
+    scorch_strength: float = 0.0,
+    badge_only_crop_frac: float | None = None,
+    wordmark_split_y: float = 0.58,
+    seed: int = 1985,
+) -> None:
+    """Load a production brand mark PNG from Assets/_Project/Art/R1/Brands/, apply era-specific
+    solar UV sun-fading and non-periodic angular paint wear, and composite onto canvas.
+    """
+    x0, y0, x1, y1 = box
+    w = max(1, x1 - x0)
+    h = max(1, y1 - y0)
+    mark_path = BRANDS_DIR / mark_filename
+    if not mark_path.exists():
+        return
 
-    # Cream crescent moon inside the dark core
-    r_moon = radius * 0.44
-    draw.ellipse([cx - r_moon, cy - r_moon * 1.05, cx + r_moon, cy + r_moon * 0.95], fill=CREAM_TILE)
-    # Cut out inner crescent shadow shifted upper-right
-    r_cut = radius * 0.34
-    cx_cut = cx + radius * 0.14
-    cy_cut = cy - radius * 0.10
-    draw.ellipse([cx_cut - r_cut, cy_cut - r_cut, cx_cut + r_cut, cy_cut + r_cut], fill=NAVY_DARK)
+    src = Image.open(mark_path).convert("RGBA")
+    alpha_np = np.asarray(src, dtype=np.uint8)[..., 3]
+    ys, xs = np.nonzero(alpha_np > 8)
+    if len(xs) > 0 and len(ys) > 0:
+        pad = 16
+        bx0 = max(0, int(xs.min()) - pad)
+        by0 = max(0, int(ys.min()) - pad)
+        bx1 = min(src.width, int(xs.max()) + pad + 1)
+        by1 = min(src.height, int(ys.max()) + pad + 1)
+        if badge_only_crop_frac is not None:
+            by1 = min(by1, by0 + int(round((by1 - by0) * badge_only_crop_frac)))
+        src = src.crop((bx0, by0, bx1, by1))
 
-    # Lower arched horizon bands in navy + orange + amber across bottom quarter of circle
-    horizon_y1 = cy + radius * 0.42
-    horizon_y2 = cy + radius * 0.64
-    draw.rectangle([cx - radius * 0.72, horizon_y1, cx + radius * 0.72, horizon_y1 + radius * 0.08], fill=NAVY_DARK)
-    draw.rectangle(
-        [cx - radius * 0.66, horizon_y1 + radius * 0.08, cx + radius * 0.66, horizon_y2],
-        fill=AMBER_STRIPE,
+    # Convert light-cream poster sub-caption letters (below wordmark_split_y) to dark stencil charcoal
+    # when stamping onto a light hull background so the wordmark is crisp and legible.
+    src_arr = np.asarray(src, dtype=np.float32) / 255.0
+    bg_norm = np.asarray(bg_color, dtype=np.float32) / 255.0
+    bg_luma = 0.299 * bg_norm[0] + 0.587 * bg_norm[1] + 0.114 * bg_norm[2]
+    if bg_luma > 0.55 and badge_only_crop_frac is None:
+        sh, sw = src_arr.shape[:2]
+        split_row = int(round(sh * wordmark_split_y))
+        sub = src_arr[split_row:, :, :]
+        sub_rgb = sub[..., :3]
+        sub_a = sub[..., 3]
+        luma = 0.299 * sub_rgb[..., 0] + 0.587 * sub_rgb[..., 1] + 0.114 * sub_rgb[..., 2]
+        chroma = np.max(sub_rgb, axis=-1) - np.min(sub_rgb, axis=-1)
+        is_cream_letter = (sub_a > 0.15) & (luma > 0.76) & (chroma < 0.24)
+        dark_ink = np.array([0.15, 0.17, 0.22], dtype=np.float32)
+        sub_rgb[is_cream_letter] = dark_ink
+        if bg_color == SCOUT_TAN_BG:
+            is_colored_wordmark = (sub_a > 0.15) & (~is_cream_letter) & (luma > 0.42)
+            sub_rgb[is_colored_wordmark] *= 0.48
+        src_arr[split_row:, :, :3] = sub_rgb
+        src = Image.fromarray(np.clip(np.rint(src_arr * 255.0), 0, 255).astype(np.uint8), mode="RGBA")
+
+    # Preserve aspect ratio inside target box
+    scale = min(w / max(1, src.width), h / max(1, src.height))
+    nw = max(1, int(round(src.width * scale)))
+    nh = max(1, int(round(src.height * scale)))
+    resized = src.resize((nw, nh), resample=Image.Resampling.LANCZOS)
+
+    patch = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    px = (w - nw) // 2
+    py = (h - nh) // 2
+    patch.paste(resized, (px, py))
+
+    arr = np.asarray(patch, dtype=np.float32) / 255.0
+    rgb = arr[..., :3]
+    alpha = arr[..., 3]
+
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    u = xx / max(1.0, float(w))
+    v = yy / max(1.0, float(h))
+
+    # Smooth solar UV bleaching gradient (stronger toward upper sun-facing half & outer edges)
+    edge_dist = np.minimum(np.minimum(u, 1.0 - u), np.minimum(v, 1.0 - v))
+    edge_fade = np.exp(-edge_dist * 10.0) * 0.16
+    uv_bleach = 0.65 + 0.35 * (0.65 * (1.0 - v) + 0.35 * (1.0 - u))
+    fade_mix = np.clip(sun_fade * uv_bleach + edge_fade, 0.0, 0.78)
+    rgb_worn = rgb * (1.0 - fade_mix[..., None]) + bg_norm[None, None, :] * fade_mix[..., None]
+    alpha_worn = alpha
+
+    base_crop = np.asarray(canvas.crop((x0, y0, x0 + w, y0 + h)), dtype=np.float32) / 255.0
+    comp = base_crop * (1.0 - alpha_worn[..., None]) + rgb_worn * alpha_worn[..., None]
+
+    if scorch_strength > 0.0:
+        # Smooth thermal scorch & crash-site soot around panel edges for Kestrel-3 Tycho debris
+        edge_dist = np.minimum(np.minimum(u, 1.0 - u), np.minimum(v, 1.0 - v))
+        edge_scorch = np.exp(-edge_dist * 8.5)
+        diag_soot = np.clip(1.0 - (0.6 * u + 0.4 * v), 0.0, 1.0) ** 1.8
+        soot = np.clip(scorch_strength * (0.70 * edge_scorch + 0.30 * diag_soot), 0.0, 0.72)
+        soot_col = np.array([0.15, 0.14, 0.13], dtype=np.float32)
+        comp = comp * (1.0 - soot[..., None]) + soot_col[None, None, :] * soot[..., None]
+
+    out_u8 = np.clip(np.rint(comp * 255.0), 0, 255).astype(np.uint8)
+    canvas.paste(Image.fromarray(out_u8, mode="RGB"), (x0, y0))
+
+
+def _stamp_vis_hull_stencil(
+    canvas: Image.Image,
+    box: tuple[int, int, int, int],
+    bg_color: tuple[int, int, int] = CREAM_BG,
+    sun_fade: float = 0.14,
+) -> None:
+    """Stamp the owner's picked 1985 VIS hull stencil (Logs/picked/vis_stencil.png central bracketed
+    '[ V I S ]' + coral-orange 'VANGUARD INTERPLANETARY / STRUCTURES' block) into box.
+    """
+    x0, y0, x1, y1 = box
+    w = max(1, x1 - x0)
+    h = max(1, y1 - y0)
+    stencil_path = PICKED_DIR / "vis_stencil.png"
+    if not stencil_path.exists():
+        _stamp_worn_brand_mark(canvas, "vis_mark.png", box, bg_color=bg_color, sun_fade=sun_fade)
+        return
+
+    src = Image.open(stencil_path).convert("RGB")
+    # Crop exact bracketed '[ V I S ]' + coral-orange banner from the 2048x2048 picked sheet
+    sw, sh = src.size
+    crop_box = (
+        int(round(sw * 0.125)),
+        int(round(sh * 0.210)),
+        int(round(sw * 0.875)),
+        int(round(sh * 0.705)),
     )
-    draw.rectangle(
-        [cx - radius * 0.56, horizon_y2 + radius * 0.04, cx + radius * 0.56, horizon_y2 + radius * 0.13],
-        fill=ORANGE_BAND,
-    )
+    cropped = src.crop(crop_box)
+    scale = min(w / max(1, cropped.width), h / max(1, cropped.height))
+    nw = max(1, int(round(cropped.width * scale)))
+    nh = max(1, int(round(cropped.height * scale)))
+    resized = np.asarray(cropped.resize((nw, nh), resample=Image.Resampling.LANCZOS), dtype=np.float32) / 255.0
+
+    # Replace the sheet's pale cream background (#F3E8CC) with bg_color while preserving dark navy,
+    # coral-orange, amber rule, and the worn diagonal scrape marks.
+    sheet_bg = np.array([243.0 / 255.0, 232.0 / 255.0, 204.0 / 255.0], dtype=np.float32)
+    bg_norm = np.asarray(bg_color, dtype=np.float32) / 255.0
+    diff = np.linalg.norm(resized - sheet_bg[None, None, :], axis=-1)
+    fg_mask = np.clip((diff - 0.04) / 0.08, 0.0, 1.0)
+    fg_rgb = resized * (1.0 - sun_fade) + bg_norm[None, None, :] * sun_fade
+
+    px = x0 + (w - nw) // 2
+    py = y0 + (h - nh) // 2
+    base_crop = np.asarray(canvas.crop((px, py, px + nw, py + nh)), dtype=np.float32) / 255.0
+    comp = base_crop * (1.0 - fg_mask[..., None]) + fg_rgb * fg_mask[..., None]
+    out_u8 = np.clip(np.rint(comp * 255.0), 0, 255).astype(np.uint8)
+    canvas.paste(Image.fromarray(out_u8, mode="RGB"), (px, py))
 
 
 def _draw_hazard_cell(canvas: Image.Image, x0: int, y0: int, x1: int, y1: int) -> None:
@@ -396,174 +521,174 @@ def _draw_hazard_cell(canvas: Image.Image, x0: int, y0: int, x1: int, y1: int) -
     canvas.paste(cell_img, (x0, y0))
 
 
-
-def _draw_pictogram_tile_frame(draw: ImageDraw.ImageDraw, x0: int, y0: int, x1: int, y1: int) -> tuple[float, float, float]:
-    """Draw the warm-orange stripe background and rounded cream pictogram badge frame."""
-    draw.rectangle([x0, y0, x1, y1], fill=ORANGE_BAND)
-    pad = 26
-    bx0, by0, bx1, by1 = x0 + pad, y0 + pad, x1 - pad, y1 - pad
-    draw.rounded_rectangle([bx0, by0, bx1, by1], radius=28, fill=CREAM_TILE, outline=STENCIL_DARK, width=8)
-    cx = 0.5 * (bx0 + bx1)
-    cy = 0.5 * (by0 + by1)
-    size = (bx1 - bx0) * 0.68
-    return cx, cy, size
-
-
-def _draw_pictograms(draw: ImageDraw.ImageDraw, res: int) -> None:
-    """Draw the 4 cassette-futurism pictograms in Row 0 (bottom row, y = 0.75*res .. res)."""
+def _draw_row0_brand_cells(canvas: Image.Image, draw: ImageDraw.ImageDraw, res: int) -> None:
+    """Populate Row 0 (bottom row in PNG, y = 0.75*res .. res -> UV V = 0.00 .. 0.25) with era-correct maker marks:
+    - Cell 0 (U = 0.00..0.25, KA_MARK / PICT_ROVER): Kessler-Arai Direction B mark on warm cream enamel
+    - Cell 1 (U = 0.25..0.50, VIS_1967 / PICT_RADIO): 1967 VIS wordmark sun-bleached on 1960s Scout tan enamel
+    - Cell 2 (U = 0.50..0.75, TYCHO_PANEL / CAUTION_RAD): Scorched Tycho Direction B mark + 'TYCHO · KESTREL-3'
+    - Cell 3 (U = 0.75..1.00, TYCHO_MARK / LUMEN_STN): Large scorched Tycho Direction B mark on Kestrel hull skin
+    """
     y0 = int(res * 0.75)
     y1 = res
     cell_w = res // 4
 
-    # 1. PICT_ROVER (U = 0.00..0.25)
-    cx, cy, s = _draw_pictogram_tile_frame(draw, 0, y0, cell_w, y1)
-    # Rover body & cab
+    # 1. KA_MARK / PICT_ROVER (x = 0 .. 256, y = 768 .. 1024):
+    # Worn 1978-1986 Kessler-Arai chassis mark on warm cream enamel
+    draw.rectangle([0, y0, cell_w - 1, y1 - 1], fill=CREAM_BG)
+    draw.rounded_rectangle([8, y0 + 8, cell_w - 9, y1 - 9], radius=12, fill=CREAM_TILE, outline=(54, 58, 70), width=4)
+    _stamp_worn_brand_mark(
+        canvas,
+        "kessler_arai_mark.png",
+        (14, y0 + 12, cell_w - 14, y1 - 12),
+        bg_color=CREAM_TILE,
+        sun_fade=0.18,
+        wordmark_split_y=0.58,
+        seed=1982,
+    )
+
+    # 2. VIS_1967 / PICT_RADIO (x = 256 .. 512, y = 768 .. 1024):
+    # Sun-bleached 1967 VIS pentagon shield & wordmark on Scout tan/ochre thermal enamel
+    x1_0, x1_1 = cell_w, 2 * cell_w
+    draw.rectangle([x1_0, y0, x1_1 - 1, y1 - 1], fill=SCOUT_TAN_BG)
     draw.rounded_rectangle(
-        [cx - s * 0.42, cy - s * 0.06, cx + s * 0.42, cy + s * 0.22],
+        [x1_0 + 8, y0 + 8, x1_1 - 9, y1 - 9],
         radius=8,
-        fill=STENCIL_DARK,
+        fill=SCOUT_TAN_BG,
+        outline=(86, 74, 58),
+        width=4,
     )
+    _stamp_worn_brand_mark(
+        canvas,
+        "vis_1967_mark.png",
+        (x1_0 + 14, y0 + 12, x1_1 - 14, y1 - 12),
+        bg_color=SCOUT_TAN_BG,
+        sun_fade=0.28,
+        wordmark_split_y=0.56,
+        seed=1967,
+    )
+
+    # 3. TYCHO_PANEL / CAUTION_RAD (x = 512 .. 768, y = 768 .. 1024):
+    # Scorched 1996 Tycho Colony Corp hexagon mark + 'TYCHO · KESTREL-3' stencil
+    x2_0, x2_1 = 2 * cell_w, 3 * cell_w
+    draw.rectangle([x2_0, y0, x2_1 - 1, y1 - 1], fill=TYCHO_HULL_BG)
     draw.rounded_rectangle(
-        [cx + s * 0.02, cy - s * 0.30, cx + s * 0.36, cy - s * 0.02],
-        radius=6,
-        fill=STENCIL_DARK,
+        [x2_0 + 8, y0 + 8, x2_1 - 9, y1 - 9],
+        radius=10,
+        fill=TYCHO_HULL_BG,
+        outline=(44, 52, 58),
+        width=4,
     )
-    # Antenna mast on left rear
-    _draw_thick_seg(draw, cx - s * 0.24, cy - s * 0.06, cx - s * 0.24, cy - s * 0.34, 7, STENCIL_DARK)
-    draw.ellipse([cx - s * 0.29, cy - s * 0.40, cx - s * 0.19, cy - s * 0.30], fill=STENCIL_DARK)
-    # Two wheels with cream hub cutouts
-    for wx in (cx - s * 0.24, cx + s * 0.24):
-        wy = cy + s * 0.26
-        wr = s * 0.16
-        draw.ellipse([wx - wr, wy - wr, wx + wr, wy + wr], fill=STENCIL_DARK)
-        draw.ellipse([wx - wr * 0.42, wy - wr * 0.42, wx + wr * 0.42, wy + wr * 0.42], fill=CREAM_TILE)
-
-    # 2. PICT_RADIO (U = 0.25..0.50)
-    cx, cy, s = _draw_pictogram_tile_frame(draw, cell_w, y0, 2 * cell_w, y1)
-    # A-frame lattice radio tower
-    top_y = cy - s * 0.26
-    bot_y = cy + s * 0.42
-    _draw_thick_seg(draw, cx, top_y, cx - s * 0.24, bot_y, 8, STENCIL_DARK)
-    _draw_thick_seg(draw, cx, top_y, cx + s * 0.24, bot_y, 8, STENCIL_DARK)
-    _draw_thick_seg(draw, cx - s * 0.12, cy + s * 0.04, cx + s * 0.12, cy + s * 0.04, 6, STENCIL_DARK)
-    _draw_thick_seg(draw, cx - s * 0.18, cy + s * 0.24, cx + s * 0.18, cy + s * 0.24, 6, STENCIL_DARK)
-    draw.ellipse([cx - 8, top_y - 8, cx + 8, top_y + 8], fill=STENCIL_DARK)
-    # Concentric radio wave arcs on left & right of mast tip
-    for r_arc in (s * 0.20, s * 0.34):
-        bbox = [cx - r_arc, top_y - r_arc, cx + r_arc, top_y + r_arc]
-        draw.arc(bbox, start=-45, end=45, fill=STENCIL_DARK, width=7)
-        draw.arc(bbox, start=135, end=225, fill=STENCIL_DARK, width=7)
-
-    # 3. PICT_BOTANY (U = 0.50..0.75)
-    cx, cy, s = _draw_pictogram_tile_frame(draw, 2 * cell_w, y0, 3 * cell_w, y1)
-    # Arch greenhouse dome + horizontal ground baseline
-    dome_r = s * 0.42
-    base_y = cy + s * 0.30
-    draw.pieslice(
-        [cx - dome_r, base_y - dome_r * 1.65, cx + dome_r, base_y + dome_r * 0.2],
-        start=180,
-        end=360,
-        outline=STENCIL_DARK,
-        width=8,
+    _stamp_worn_brand_mark(
+        canvas,
+        "tycho_mark.png",
+        (x2_0 + 14, y0 + 12, x2_1 - 14, y1 - 42),
+        bg_color=TYCHO_HULL_BG,
+        sun_fade=0.16,
+        scorch_strength=0.28,
+        wordmark_split_y=0.60,
+        seed=1996,
     )
-    _draw_thick_seg(draw, cx - dome_r * 1.1, base_y, cx + dome_r * 1.1, base_y, 8, STENCIL_DARK)
-    # Central seedling stem + two symmetric leaves
-    _draw_thick_seg(draw, cx, base_y, cx, cy - s * 0.12, 7, STENCIL_DARK)
-    draw.polygon(
-        [(cx, cy + s * 0.10), (cx - s * 0.22, cy - s * 0.02), (cx - s * 0.08, cy - s * 0.14)],
-        fill=STENCIL_DARK,
-    )
-    draw.polygon(
-        [(cx, cy + s * 0.10), (cx + s * 0.22, cy - s * 0.02), (cx + s * 0.08, cy - s * 0.14)],
-        fill=STENCIL_DARK,
+    _draw_stencil_text(
+        draw,
+        "TYCHO · KESTREL-3",
+        cx=x2_0 + cell_w * 0.5,
+        cy=y1 - 24.0,
+        char_w=9.5,
+        char_h=18.0,
+        stroke_w=3.2,
+        spacing=2.8,
+        color=(36, 48, 54),
+        bg_color=TYCHO_HULL_BG,
+        stencil_bridges=True,
     )
 
-    # 4. PICT_AIRLOCK (U = 0.75..1.00)
-    cx, cy, s = _draw_pictogram_tile_frame(draw, 3 * cell_w, y0, 4 * cell_w, y1)
-    # Airlock hatch portal frame on left + bold outward arrow on right
-    px0, py0, px1, py1 = cx - s * 0.38, cy - s * 0.36, cx + s * 0.04, cy + s * 0.36
-    draw.rounded_rectangle([px0, py0, px1, py1], radius=10, outline=STENCIL_DARK, width=8)
-    # Inner angled door leaf
-    draw.polygon(
-        [(px0 + 6, py0 + 6), (px0 + s * 0.22, py0 + s * 0.12), (px0 + s * 0.22, py1 - s * 0.12), (px0 + 6, py1 - 6)],
-        fill=STENCIL_DARK,
-    )
-    # Right-pointing EVA arrow
-    _draw_thick_seg(draw, cx - s * 0.02, cy, cx + s * 0.34, cy, 12, STENCIL_DARK)
-    draw.polygon(
-        [(cx + s * 0.44, cy), (cx + s * 0.22, cy - s * 0.20), (cx + s * 0.22, cy + s * 0.20)],
-        fill=STENCIL_DARK,
+    # 4. TYCHO_MARK / LUMEN_STN (x = 768 .. 1024, y = 768 .. 1024):
+    # Large scorched Tycho Colony Corp hexagon mark on Kestrel-3 hull panel
+    x3_0, x3_1 = 3 * cell_w, 4 * cell_w
+    draw.rectangle([x3_0, y0, x3_1 - 1, y1 - 1], fill=TYCHO_HULL_BG)
+    _stamp_worn_brand_mark(
+        canvas,
+        "tycho_mark.png",
+        (x3_0 + 12, y0 + 12, x3_1 - 12, y1 - 12),
+        bg_color=TYCHO_HULL_BG,
+        sun_fade=0.14,
+        scorch_strength=0.32,
+        wordmark_split_y=0.60,
+        seed=1997,
     )
 
 
-def generate_signage_maps(res: int = 512, seed: int = 1988) -> dict[str, np.ndarray]:
-    """Generate 512x512 Albedo, Normal, and Mask maps for R1_Signage."""
-    hi_res = res * 2  # 1024x1024 supersampled canvas
+def generate_signage_maps(res: int = 1024, seed: int = 1988) -> dict[str, np.ndarray]:
+    """Generate 1024x1024 Albedo, Normal, Mask, and Emission maps for R1_Signage."""
+    hi_res = 1024  # Canonical 1024x1024 layout canvas
     canvas = Image.new("RGB", (hi_res, hi_res), color=CREAM_BG)
     draw = ImageDraw.Draw(canvas)
 
-    row_h = hi_res // 4  # 256 px per row at 1024x1024
-
     # -------------------------------------------------------------------------
     # Row 3 (Top row in PNG, y = 0 .. 256 -> UV V = 0.75 .. 1.00):
-    #   LOGO (0..256), LUMEN (256..768), EVAC_1988 (768..1024)
+    #   LOGO / ILC_SEAL (0..256), LUMEN / VIS_STENCIL (256..768), SEC_04 (768..1024)
     # -------------------------------------------------------------------------
-    _draw_lumen_logo(draw, cx=128.0, cy=128.0, radius=104.0)
-
-    # LUMEN title block (x = 256..768, y = 0..256)
-    _draw_stencil_text(
-        draw,
-        "LUMEN",
-        cx=512.0,
-        cy=92.0,
-        char_w=68.0,
-        char_h=96.0,
-        stroke_w=17.0,
-        spacing=16.0,
-        color=NAVY_DARK,
+    # 1. LOGO / ILC_SEAL (x = 0..256, y = 0..256): Worn, sun-faded ILC round seal
+    _stamp_worn_brand_mark(
+        canvas,
+        "ilc_mark.png",
+        (12, 10, 244, 246),
         bg_color=CREAM_BG,
-        stencil_bridges=False,
+        sun_fade=0.22,
+        wordmark_split_y=0.62,
+        seed=1979,
     )
-    _draw_thick_seg(draw, 300.0, 162.0, 724.0, 162.0, 5.0, NAVY_DARK)
+
+    # 2. LUMEN / VIS_STENCIL (x = 256..768, y = 0..256):
+    # Worn 1985 VIS mark (left) + picked '[ V I S ]' hull stencil (right)
+    _stamp_worn_brand_mark(
+        canvas,
+        "vis_mark.png",
+        (264, 14, 488, 242),
+        bg_color=CREAM_BG,
+        sun_fade=0.18,
+        wordmark_split_y=0.62,
+        seed=1985,
+    )
+    _stamp_vis_hull_stencil(
+        canvas,
+        (494, 14, 758, 242),
+        bg_color=CREAM_BG,
+        sun_fade=0.14,
+    )
+
+    # 3. SEC_04 / EVAC_1988 (x = 768..1024, y = 0..256):
+    # Worn 1985 VIS crate plaque with orange header band, VIS mark + VIS stencil, and 'SEC-04'
+    draw.rounded_rectangle([776, 14, 1014, 242], radius=12, outline=STENCIL_DARK, width=5)
+    draw.rectangle([784, 22, 1006, 50], fill=ORANGE_BAND)
     _draw_stencil_text(
         draw,
-        "ILP · EST. 1973",
-        cx=512.0,
-        cy=202.0,
-        char_w=20.0,
+        "VIS · SEC-04",
+        cx=895.0,
+        cy=36.0,
+        char_w=11.0,
+        char_h=18.0,
+        stroke_w=3.4,
+        spacing=3.5,
+        color=CREAM_TILE,
+        bg_color=ORANGE_BAND,
+        stencil_bridges=True,
+    )
+    _stamp_vis_hull_stencil(
+        canvas,
+        (784, 54, 1006, 194),
+        bg_color=CREAM_BG,
+        sun_fade=0.14,
+    )
+    _draw_stencil_text(
+        draw,
+        "SEC-04",
+        cx=895.0,
+        cy=216.0,
+        char_w=22.0,
         char_h=30.0,
-        stroke_w=5.0,
-        spacing=6.0,
-        color=NAVY_DARK,
-        bg_color=CREAM_BG,
-        stencil_bridges=True,
-    )
-
-    # EVAC 1988 stencil plaque (x = 768..1024, y = 0..256)
-    draw.rounded_rectangle([784, 24, 1008, 232], radius=14, outline=STENCIL_DARK, width=6)
-    draw.rectangle([796, 36, 1000, 62], fill=ORANGE_BAND)
-    _draw_stencil_text(
-        draw,
-        "EVAC",
-        cx=896.0,
-        cy=110.0,
-        char_w=38.0,
-        char_h=54.0,
-        stroke_w=10.0,
-        spacing=9.0,
-        color=STENCIL_DARK,
-        bg_color=CREAM_BG,
-        stencil_bridges=True,
-    )
-    _draw_stencil_text(
-        draw,
-        "1988",
-        cx=896.0,
-        cy=182.0,
-        char_w=38.0,
-        char_h=54.0,
-        stroke_w=10.0,
-        spacing=9.0,
+        stroke_w=6.0,
+        spacing=5.5,
         color=STENCIL_DARK,
         bg_color=CREAM_BG,
         stencil_bridges=True,
@@ -571,31 +696,34 @@ def generate_signage_maps(res: int = 512, seed: int = 1988) -> dict[str, np.ndar
 
     # -------------------------------------------------------------------------
     # Row 2 (y = 256 .. 512 -> UV V = 0.50 .. 0.75):
-    #   SEC04_HABITAT (0..512), AIRLOCK_STATUS (512..1024)
+    #   SEC04_HABITAT / VIS_1985 (0..512), AIRLOCK_STATUS (512..1024)
     # -------------------------------------------------------------------------
-    # Combined two-line SEC-04 / HABITAT & LAB (matching identity_v1_helios_lumen.png top-right)
-    _draw_stencil_text(
-        draw,
-        "SEC-04",
-        cx=256.0,
-        cy=338.0,
-        char_w=58.0,
-        char_h=82.0,
-        stroke_w=14.0,
-        spacing=12.0,
-        color=STENCIL_DARK,
+    # Large 1985 VIS mark (left) + '[ V I S ]' hull stencil (upper right) + 'SEC-04 · HABITAT' (lower right)
+    _stamp_worn_brand_mark(
+        canvas,
+        "vis_mark.png",
+        (12, 264, 244, 504),
         bg_color=CREAM_BG,
-        stencil_bridges=True,
+        sun_fade=0.18,
+        wordmark_split_y=0.62,
+        seed=198501,
     )
+    _stamp_vis_hull_stencil(
+        canvas,
+        (248, 264, 500, 424),
+        bg_color=CREAM_BG,
+        sun_fade=0.14,
+    )
+    _draw_thick_seg(draw, 256.0, 432.0, 492.0, 432.0, 4.5, STENCIL_DARK)
     _draw_stencil_text(
         draw,
-        "HABITAT & LAB",
-        cx=256.0,
-        cy=438.0,
-        char_w=26.0,
-        char_h=44.0,
-        stroke_w=8.0,
-        spacing=7.5,
+        "SEC-04 · HABITAT",
+        cx=374.0,
+        cy=468.0,
+        char_w=11.5,
+        char_h=32.0,
+        stroke_w=5.2,
+        spacing=3.5,
         color=STENCIL_DARK,
         bg_color=CREAM_BG,
         stencil_bridges=True,
@@ -603,7 +731,7 @@ def generate_signage_maps(res: int = 512, seed: int = 1988) -> dict[str, np.ndar
 
     # AIRLOCK_STATUS cell (x = 512..1024, y = 256..512 -> UV U = 0.50..1.00, V = 0.50..0.75):
     # Dark status display backing with warm amber stencil/segment text:
-    #   Primary line:   SEALED · 1988 · STANDBY
+    #   Primary line:   HABITAT SEAL · LOCKED
     #   Secondary line: SUIT 01-04 · OFFLINE (dimmer)
     emissive_canvas = Image.new("RGB", (hi_res, hi_res), color=(0, 0, 0))
     em_draw = ImageDraw.Draw(emissive_canvas)
@@ -718,28 +846,37 @@ def generate_signage_maps(res: int = 512, seed: int = 1988) -> dict[str, np.ndar
     # -------------------------------------------------------------------------
     draw.rounded_rectangle([18, 530, 494, 750], radius=14, outline=STENCIL_DARK, width=6)
     draw.rectangle([28, 540, 484, 570], fill=SAGE_ACCENT)
+    _stamp_worn_brand_mark(
+        canvas,
+        "vis_mark.png",
+        (28, 576, 184, 742),
+        bg_color=CREAM_BG,
+        sun_fade=0.18,
+        wordmark_split_y=0.62,
+        seed=198503,
+    )
     _draw_stencil_text(
         draw,
         "WORKSHOP",
-        cx=256.0,
-        cy=636.0,
-        char_w=42.0,
-        char_h=72.0,
-        stroke_w=12.0,
-        spacing=10.0,
+        cx=336.0,
+        cy=632.0,
+        char_w=30.0,
+        char_h=60.0,
+        stroke_w=10.0,
+        spacing=7.5,
         color=STENCIL_DARK,
         bg_color=CREAM_BG,
         stencil_bridges=True,
     )
     _draw_stencil_text(
         draw,
-        "SEC-04 ·LUM-07",
-        cx=256.0,
-        cy=716.0,
-        char_w=18.0,
-        char_h=28.0,
-        stroke_w=5.0,
-        spacing=5.5,
+        "VIS · SEC-04 · LUM-07",
+        cx=336.0,
+        cy=712.0,
+        char_w=11.5,
+        char_h=24.0,
+        stroke_w=4.2,
+        spacing=3.5,
         color=STENCIL_DARK,
         bg_color=CREAM_BG,
         stencil_bridges=True,
@@ -750,18 +887,22 @@ def generate_signage_maps(res: int = 512, seed: int = 1988) -> dict[str, np.ndar
 
     # -------------------------------------------------------------------------
     # Row 0 (Bottom row in PNG, y = 768 .. 1024 -> UV V = 0.00 .. 0.25):
-    #   4 Pictogram tiles on warm orange band
+    #   KA_MARK, VIS_1967, TYCHO_PANEL, TYCHO_MARK
     # -------------------------------------------------------------------------
-    _draw_pictograms(draw, hi_res)
+    _draw_row0_brand_cells(canvas, draw, hi_res)
 
-    # Downsample 1024 -> 512 with high-quality box/lanczos filter
-    img_512 = canvas.resize((res, res), resample=Image.Resampling.LANCZOS)
-    em_512 = emissive_canvas.resize((res, res), resample=Image.Resampling.LANCZOS)
+    if res != hi_res:
+        img_out = canvas.resize((res, res), resample=Image.Resampling.LANCZOS)
+        em_out = emissive_canvas.resize((res, res), resample=Image.Resampling.LANCZOS)
+    else:
+        img_out = canvas
+        em_out = emissive_canvas
+
     # Flip vertically so row 0 of the returned numpy array corresponds to V=0 (bottom),
     # matching generate_r1_textures._save_rgba_or_rgb which calls np.flipud() on save.
-    albedo_topdown = np.asarray(img_512, dtype=np.float32) / 255.0
+    albedo_topdown = np.asarray(img_out, dtype=np.float32) / 255.0
     albedo_v0 = np.flipud(albedo_topdown).copy()
-    emission_topdown = np.asarray(em_512, dtype=np.float32) / 255.0
+    emission_topdown = np.asarray(em_out, dtype=np.float32) / 255.0
     emission_v0 = np.clip(np.flipud(emission_topdown).copy(), 0.0, 1.0)
     # Zero out any filter ringing outside the AIRLOCK_STATUS cell (U = 0.50..1.00, V = 0.50..0.75)
     u_mid = res // 2
@@ -772,7 +913,7 @@ def generate_signage_maps(res: int = 512, seed: int = 1988) -> dict[str, np.ndar
 
     # Add subtle deterministic baked-enamel micro-grain & stencil paint wear
     rng = np.random.default_rng(seed)
-    grain = rng.normal(0.0, 0.010, size=(res, res)).astype(np.float32)
+    grain = rng.normal(0.0, 0.008, size=(res, res)).astype(np.float32)
     albedo_rgb = np.clip(albedo_v0 + grain[..., None], 0.0, 1.0)
 
     # Compute ink mask (1 where dark stencil ink or orange/amber paint is printed, 0 on cream base)
@@ -821,11 +962,10 @@ def _save_png(path: Path, arr: np.ndarray) -> None:
 
 
 def main() -> None:
-    from pathlib import Path
     repo_root = Path(__file__).resolve().parents[3]
     out_dir = repo_root / "Assets" / "_Project" / "Art" / "R1" / "Textures"
     out_dir.mkdir(parents=True, exist_ok=True)
-    maps = generate_signage_maps(512)
+    maps = generate_signage_maps(1024)
     _save_png(out_dir / "T_R1_Signage_Albedo.png", maps["albedo"])
     _save_png(out_dir / "T_R1_Signage_Normal.png", maps["normal"])
     _save_png(out_dir / "T_R1_Signage_Mask.png", maps["mask"])

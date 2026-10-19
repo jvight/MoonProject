@@ -1,5 +1,7 @@
 using System.IO;
+using System.Linq;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 
 namespace MoonProject.Art.Tests
@@ -9,6 +11,7 @@ namespace MoonProject.Art.Tests
     /// 1. Clean 2048x2048 transparent colour marks and 1-colour white mono stencils in Assets/_Project/Art/R1/Brands/.
     /// 2. Kessler-Arai CRT boot monoline polyline asset (<= 12 strokes in 0..1 space) and 1024x1024 preview PNG.
     /// 3. Databank archive prints (print_&lt;brand&gt;.png at 1024x1024).
+    /// 4. Maker livery decal slots on lander, crates, Scout, mission flag, Kestrel panels, 07, and elders.
     /// </summary>
     public sealed class R1BrandAssetsTests
     {
@@ -133,6 +136,43 @@ namespace MoonProject.Art.Tests
 
             string previewPath = Path.Combine(BrandsDir, "kessler_arai_crt_linework_preview.png");
             Assert.IsTrue(File.Exists(previewPath), $"Missing CRT linework preview PNG at {previewPath}");
+        }
+
+        [Test]
+        public void ModelLiveries_IncludeSignageSlotOnAllTargetModels()
+        {
+            (string fbxPath, string childPath)[] targets =
+            {
+                ("Assets/_Project/Art/R1/Models/Lander/CargoLander.fbx", "Body"),
+                ("Assets/_Project/Art/R1/Models/Lander/CargoLander.fbx", "CargoHatch"),
+                ("Assets/_Project/Art/R1/Models/Crates/Crate_S.fbx", "Body"),
+                ("Assets/_Project/Art/R1/Models/Crates/Crate_M.fbx", "Body"),
+                ("Assets/_Project/Art/R1/Models/Crates/Crate_L.fbx", "Body"),
+                ("Assets/_Project/Art/R1/Models/Props/Prop_OldLander.fbx", "ThermalBoxes"),
+                ("Assets/_Project/Art/R1/Models/Props/Prop_MissionFlag.fbx", "FlagSheet"),
+                ("Assets/_Project/Art/R1/Models/Wreck/Kestrel_HullPanel.fbx", "Body"),
+                ("Assets/_Project/Art/R1/Models/Wreck/Kestrel_StrutFrame.fbx", "Body"),
+                ("Assets/_Project/Art/R1/Models/Wreck/Kestrel_Tank.fbx", "Body"),
+                ("Assets/_Project/Art/R1/Models/Rover/RoverModel.fbx", "Body"),
+                ("Assets/_Project/Art/R1/Models/Rover/SSR3_Chassis.fbx", "Body")
+            };
+
+            foreach (var (fbxPath, childPath) in targets)
+            {
+                GameObject fbx = AssetDatabase.LoadAssetAtPath<GameObject>(fbxPath);
+                Assert.IsNotNull(fbx, $"Missing FBX at {fbxPath}");
+                Transform node = fbx.transform.Find(childPath);
+                Assert.IsNotNull(node, $"Missing node '{childPath}' in {fbxPath}");
+                var renderer = node.GetComponent<MeshRenderer>();
+                Assert.IsNotNull(renderer, $"Missing MeshRenderer on '{childPath}' in {fbxPath}");
+                string[] matNames = renderer.sharedMaterials
+                    .Where(m => m != null)
+                    .Select(m => m.name)
+                    .ToArray();
+                Assert.IsTrue(
+                    matNames.Any(n => n.Contains("R1_Signage") || n.Contains("R1_MissionFlagStripe")),
+                    $"Expected R1_Signage livery slot on '{childPath}' in {fbxPath}, found: [{string.Join(", ", matNames)}]");
+            }
         }
     }
 }

@@ -381,13 +381,13 @@ namespace MoonProject.Art.Editor
             cargoCrateLabelMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
             GeneratedAssets.CreateOrReplace(cargoCrateLabelMat, CargoCrateLabelMaterialPath);
 
-            // 15. R1_MissionFlagStripe: sun-bleached faint stripe & canton trim (almost white warm grey-cream, zero emission)
-            Material flagStripeMat = R1MaterialLibrary.CreateMaterial(r1Lit, creamSpec);
+            // 15. R1_MissionFlagStripe: sun-bleached signage & canton trim (uses R1_Signage atlas with zero emission)
+            Material flagStripeMat = R1MaterialLibrary.CreateMaterial(r1Lit, signageSpec);
             flagStripeMat.name = MissionFlagStripeMaterialName;
-            flagStripeMat.SetColor("_BaseColor", new Color(0.84f, 0.80f, 0.74f, 1f));
+            flagStripeMat.SetColor("_BaseColor", new Color(0.96f, 0.94f, 0.90f, 1f));
             flagStripeMat.SetColor("_EdgeWearColor", new Color(0.95f, 0.93f, 0.89f, 1f));
-            flagStripeMat.SetFloat("_EdgeWearAmount", 0.55f);
-            flagStripeMat.SetFloat("_DustAmount", 0.34f);
+            flagStripeMat.SetFloat("_EdgeWearAmount", 0.24f);
+            flagStripeMat.SetFloat("_DustAmount", 0.14f);
             flagStripeMat.SetFloat("_SmoothnessMin", 0.08f);
             flagStripeMat.SetFloat("_SmoothnessMax", 0.22f);
             flagStripeMat.SetTexture("_EmissionMap", null);
@@ -522,7 +522,9 @@ namespace MoonProject.Art.Editor
             {
                 Material tanMat = LoadOrBuildMaterial(OldLanderTanEnamelMaterialPath);
                 Material strutMat = LoadOrBuildMaterial(OldLanderStrutMaterialPath);
+                Material nonEmissiveSignageMat = LoadOrBuildMaterial(MissionFlagStripeMaterialPath);
                 ReplaceRendererSlotMaterial(root, "ThermalBoxes", R1MaterialRecipes.CreamEnamelSlot, tanMat);
+                ReplaceRendererSlotMaterial(root, "ThermalBoxes", R1MaterialRecipes.SignageSlot, nonEmissiveSignageMat);
                 ReplaceRendererSlotMaterial(root, "TvCamera", R1MaterialRecipes.CreamEnamelSlot, tanMat);
                 ReplaceRendererSlotMaterial(root, "LandingLegs", R1MaterialRecipes.CreamEnamelSlot, tanMat);
 

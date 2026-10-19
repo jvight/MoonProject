@@ -895,7 +895,7 @@
   "require_vertex_colors": true,
   "max_triangles": 80000,
   "max_meshes": 65,
-  "max_draw_calls": 130,
+  "max_draw_calls": 132,
   "allow_rotation": [
     "ScoopCyl_*",
     "Shock_*"

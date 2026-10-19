@@ -924,6 +924,27 @@ def _append_body_small_hardware(bm, cfg):
                 mat_idx=10,  # R1_Brass mount collar
             )
 
+    # 7. Small Kessler–Arai maker's livery plate on both rear flanks behind the door seam
+    for sx in (-1.0, 1.0):
+        append_beveled_box(
+            bm,
+            size_xyz=(0.008, 0.090, 0.114),
+            center_xyz=(sx * 0.443, 0.715, -0.270),
+            bevel_width=0.002,
+            bevel_segments=1,
+            mat_idx=2,  # R1_GreyMetal backing frame
+            guard_inset=False,
+        )
+        append_beveled_box(
+            bm,
+            size_xyz=(0.009, 0.080, 0.104),
+            center_xyz=(sx * 0.4445, 0.715, -0.270),
+            bevel_width=0.0015,
+            bevel_segments=1,
+            mat_idx=11,  # R1_Signage (KA_MARK cell)
+            guard_inset=False,
+        )
+
 
 def build_contoured_body_mesh(cfg, mats):
     """
@@ -939,6 +960,7 @@ def build_contoured_body_mesh(cfg, mats):
       - Material 8: R1_LampAmber (rear tail lamp glowing cores)
       - Material 9: R1_Rubber (armored lower-chassis conduit cables)
       - Material 10: R1_Brass (machined brass rivets, bolts, latch fittings, mount collars)
+      - Material 11: R1_Signage (small Kessler–Arai maker's plate on rear flanks)
     """
     bm = bmesh.new()
     mat_list = [
@@ -953,6 +975,7 @@ def build_contoured_body_mesh(cfg, mats):
         mats["R1_LampAmber"],
         mats["R1_Rubber"],
         mats["R1_Brass"],
+        mats["R1_Signage"],
     ]
 
     # 1. Pillowed rounded beetle body tub with beltline seam channels & semicircular wheel-arch cutouts
@@ -1016,10 +1039,25 @@ def build_contoured_body_mesh(cfg, mats):
     # 5. Smooth 16-segment semicircular wheel-arch fender flare lips & deep splash liners over all 4 wheels
     _append_wheel_arch_flares_and_liners(bm, cfg)
 
-    # 6. Riveted SagePatch_RL, bumper bolts/clevises, tail lamps, cable run, side vents & grab handles
+    # 6. Riveted SagePatch_RL, bumper bolts/clevises, tail lamps, cable run, side vents, grab handles & K-A maker plates
     _append_body_small_hardware(bm, cfg)
 
-    return create_mesh_node("Body", bm, (0.0, 0.0, 0.0), mat_list=mat_list, cfg=cfg)
+    body_obj = create_mesh_node("Body", bm, (0.0, 0.0, 0.0), mat_list=mat_list, cfg=cfg)
+    mesh = body_obj.data
+    uv_layer = mesh.uv_layers.get("UVMap") or mesh.uv_layers.new(name="UVMap")
+    uv_data = uv_layer.data
+    u0, v0, u1, v1 = (0.015, 0.015, 0.235, 0.235)  # KA_MARK cell in T_R1_Signage_Albedo.png
+    for poly in mesh.polygons:
+        if poly.material_index != 11:
+            continue
+        side_sign = 1.0 if poly.center.x >= 0.0 else -1.0
+        for li in poly.loop_indices:
+            co = mesh.vertices[mesh.loops[li].vertex_index].co
+            s = max(0.02, min(0.98, (side_sign * (co.y - (-0.270)) / 0.104) + 0.5))
+            t = max(0.02, min(0.98, ((co.z - 0.715) / 0.080) + 0.5))
+            uv_data[li].uv = (round(u0 + s * (u1 - u0), 5), round(v0 + t * (v1 - v0), 5))
+    mesh.update()
+    return body_obj
 
 
 def build_head_assembly(rover_root, cfg, mats):

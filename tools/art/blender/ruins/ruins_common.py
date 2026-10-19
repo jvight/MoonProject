@@ -42,21 +42,30 @@ SIGNAGE_EMISSION_PATH = REPO_ROOT / "Assets" / "_Project" / "Art" / "R1" / "Text
 SIGNAGE_UV_CELLS: Dict[str, Tuple[float, float, float, float]] = {
     # Row 3 (Top row, V = 0.75..1.00)
     "LOGO": (0.020, 0.760, 0.230, 0.990),
+    "ILC_SEAL": (0.015, 0.760, 0.235, 0.990),
     "LUMEN": (0.260, 0.760, 0.740, 0.990),
+    "VIS_STENCIL": (0.260, 0.760, 0.740, 0.990),
     "EVAC_1988": (0.765, 0.765, 0.985, 0.985),
+    "SEC_04": (0.765, 0.765, 0.985, 0.985),
     # Row 2 (Upper-middle row, V = 0.50..0.75)
     "SEC04_HABITAT": (0.020, 0.515, 0.480, 0.735),
+    "VIS_1985": (0.015, 0.510, 0.485, 0.740),
     "AIRLOCK_STATUS": (0.512, 0.515, 0.988, 0.735),
-    "SEC_04": (0.510, 0.520, 0.740, 0.730),
     "HABITAT_LAB": (0.760, 0.520, 0.985, 0.730),
     # Row 1 (Lower-middle row, V = 0.25..0.50)
     "WORKSHOP": (0.020, 0.265, 0.480, 0.485),
     "HAZARD": (0.510, 0.265, 0.990, 0.485),
     # Row 0 (Bottom row, V = 0.00..0.25)
     "PICT_ROVER": (0.020, 0.020, 0.230, 0.230),
+    "KA_MARK": (0.015, 0.015, 0.235, 0.235),
     "PICT_RADIO": (0.270, 0.020, 0.480, 0.230),
+    "VIS_1967": (0.265, 0.015, 0.485, 0.235),
     "PICT_BOTANY": (0.520, 0.020, 0.730, 0.230),
+    "CAUTION_RAD": (0.515, 0.015, 0.735, 0.235),
+    "TYCHO_PANEL": (0.515, 0.015, 0.735, 0.235),
     "PICT_AIRLOCK": (0.770, 0.020, 0.980, 0.230),
+    "LUMEN_STN": (0.765, 0.015, 0.985, 0.235),
+    "TYCHO_MARK": (0.765, 0.015, 0.985, 0.235),
 }
 
 # Per-object registered signage plates: obj_name -> list of (center_bl, u_dir_bl, v_dir_bl, width, height, cell_name)

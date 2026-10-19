@@ -12,12 +12,13 @@
     "R1_OrangeStripe",
     "R1_Copper",
     "R1_Brass",
-    "R1_Rubber"
+    "R1_Rubber",
+    "R1_Signage"
   ],
   "require_vertex_colors": true,
   "max_triangles": 3200,
   "max_meshes": 1,
-  "max_draw_calls": 8,
+  "max_draw_calls": 9,
   "allow_boundary_edges": false,
   "bounds": {
     "size": [2.45, 1.60, 1.25],

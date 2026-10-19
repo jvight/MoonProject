@@ -428,10 +428,10 @@ def build_kestrel_hull_panel() -> bpy.types.Object:
         bolt_count=7,
     )
 
-    # Kestrel-3 stencilled identification plate (R1_Signage) mounted proud on forward strake
+    # Kestrel-3 Tycho Aerospace identification plate (R1_Signage) mounted proud on forward strake
     _add_oriented_box(
         bm,
-        (0.52, 0.24, 0.05),
+        (0.62, 0.44, 0.055),
         (-0.52, -0.44, 0.58),
         (16.0, 11.0, 3.0),
         m["R1_Signage"],
@@ -445,7 +445,7 @@ def build_kestrel_hull_panel() -> bpy.types.Object:
         target_size=(2.80, 1.85, 1.35),
         target_min_z=-0.22,
         cut_pivot=(0.0, -0.05, 0.72),
-        signage_cell="LUMEN_STN",
+        signage_cell="TYCHO_MARK",
     )
 
 
@@ -460,6 +460,7 @@ def build_kestrel_strut_frame() -> bpy.types.Object:
         "R1_Copper",
         "R1_Brass",
         "R1_Rubber",
+        "R1_Signage",
     ]
     m = {name: i for i, name in enumerate(slot_names)}
     bm = bmesh.new()
@@ -525,6 +526,16 @@ def build_kestrel_strut_frame() -> bpy.types.Object:
         bevel=0.005,
     )
 
+    # Tycho Aerospace Kestrel-3 identification plate (R1_Signage) on remnant hull flange
+    _add_oriented_box(
+        bm,
+        (0.54, 0.34, 0.048),
+        (-0.22, -0.54, 0.49),
+        (28.0, -10.0, 4.0),
+        m["R1_Signage"],
+        bevel=0.003,
+    )
+
     # Severed hydraulic / pneumatic lines running along the truss
     _add_oriented_frustum(
         bm, 0.038, 0.038, 1.75, 10, (-0.05, 0.32, 0.48), (0.0, 78.0, 6.0), m["R1_Copper"]
@@ -552,6 +563,7 @@ def build_kestrel_strut_frame() -> bpy.types.Object:
         target_size=(2.45, 1.60, 1.25),
         target_min_z=-0.20,
         cut_pivot=(0.02, 0.0, 0.74),
+        signage_cell="TYCHO_PANEL",
     )
 
 

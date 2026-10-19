@@ -29,6 +29,9 @@ if str(THIS_DIR) not in sys.path:
 sys.dont_write_bytecode = True
 
 import r1kit  # noqa: E402
+from ruins import ruins_common  # noqa: E402
+
+ruins_common.register_ruins_materials()
 
 # ---------------------------------------------------------------------------
 # SSR-3 Chassis Envelope & Rig Constants (Unity coordinates: +X right, +Y up, +Z forward)
@@ -681,18 +684,29 @@ def _build_ssr3_body(root: bpy.types.Object) -> bpy.types.Object:
         mat="R1_Copper",
     )
 
-    # 6. Flank `ILC · SSR-3` stencil lettering on the rear half of the orange beltline
+    # 6. Flank `ILC · SSR-3` stencil lettering and small Kessler–Arai maker's plate on the orange beltline
     for sx in (-1.0, 1.0):
         _add_stencil_text_flank(
             mb,
             text="ILC · SSR-3",
             side_x=sx * 0.442,
             center_y=stripe_y,
-            center_z=-0.20,
-            char_w=0.036,
-            char_h=0.052,
+            center_z=-0.08,
+            char_w=0.032,
+            char_h=0.050,
             relief_x=0.004,
             mat="R1_GreyMetal",
+        )
+        ruins_common.add_signage_plate(
+            mb,
+            center_u=(sx * 0.436, stripe_y, -0.365),
+            width=0.145,
+            height=0.105,
+            cell_name="KA_MARK",
+            rot_deg_u=(0.0, 90.0 * sx, 0.0),
+            thickness=0.008,
+            frame_mat="R1_GreyMetal",
+            rivets=False,
         )
 
     # 7. Brake-bent vertical panel seam channels, corner bolts/rivets, and right-flank R1_SagePatch repair plate
@@ -867,7 +881,10 @@ def _build_ssr3_body(root: bpy.types.Object) -> bpy.types.Object:
             segments=1,
         )
 
-    return mb.build_object(parent=root)
+    body_obj = ruins_common.to_ruin_object(mb, "Body", parent=root, origin_u=(0.0, 0.0, 0.0))
+    r1kit.apply_triplanar_uvs(body_obj)
+    ruins_common.apply_signage_uvs(body_obj)
+    return body_obj
 
 
 # ---------------------------------------------------------------------------
@@ -884,6 +901,9 @@ def _apply_ssr3_decades_at_rest_weathering(root: bpy.types.Object, footprint_rad
         if ca is None:
             continue
 
+        mat_names = [m.name if m else "" for m in me.materials]
+        sig_idx = mat_names.index("R1_Signage") if "R1_Signage" in mat_names else -1
+
         num_loops = len(me.loops)
         rgba = np.ones(num_loops * 4, dtype=np.float32)
         ca.data.foreach_get("color", rgba)
@@ -897,6 +917,7 @@ def _apply_ssr3_decades_at_rest_weathering(root: bpy.types.Object, footprint_rad
             wn = (rot_mat @ poly.normal).normalized()
             # In Blender space: +Z is up, +Y is forward
             up_dot = float(wn.z)
+            is_sig = poly.material_index == sig_idx
             for l_i in poly.loop_indices:
                 v_idx = me.loops[l_i].vertex_index
                 wp = world_mat @ me.vertices[v_idx].co
@@ -905,6 +926,14 @@ def _apply_ssr3_decades_at_rest_weathering(root: bpy.types.Object, footprint_rad
                 r_ao = float(rgba[loop_idx, 0])
                 g_wear = float(rgba[loop_idx, 1])
                 b_dust = float(rgba[loop_idx, 2])
+
+                if is_sig:
+                    rgba[loop_idx, 0] = max(0.82, r_ao)
+                    rgba[loop_idx, 1] = float(np.clip(g_wear * 0.45, 0.0, 0.28))
+                    rgba[loop_idx, 2] = float(np.clip(b_dust * 0.55 + 0.08, 0.0, 0.34))
+                    rgba[loop_idx, 3] = 1.0
+                    loop_idx += 1
+                    continue
 
                 # Sun-bleached upper chamfers & coaming edges (boost G on upper surfaces and bevels)
                 sun_bleach = max(0.0, min(1.0, (h_z - 0.45) / 0.30)) * max(0.0, up_dot + 0.25)

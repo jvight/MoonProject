@@ -331,13 +331,13 @@ def _build_cargo_crate_label(w: int = 512, h: int = 128) -> Image.Image:
 
         gsa._draw_stencil_text(
             draw,
-            "PART NO. LC-04 · PAD ASSY 01/02",
+            "VIS · PART NO. LC-04 · PAD ASSY 01/02",
             cx=hi_w * 0.5,
             cy=(12 + header_bottom) * 0.5,
-            char_w=17.5,
+            char_w=16.5,
             char_h=30.0,
             stroke_w=4.6,
-            spacing=5.5,
+            spacing=5.0,
             color=gsa.CREAM_TILE,
             bg_color=gsa.ORANGE_BAND,
             stencil_bridges=True,
@@ -353,16 +353,39 @@ def _build_cargo_crate_label(w: int = 512, h: int = 128) -> Image.Image:
                     width=2,
                 )
 
+        # Worn 1985 VIS mark + '[ V I S ]' hull stencil on the left of the plaque
+        rgb_canvas = albedo.convert("RGB")
+        gsa._stamp_worn_brand_mark(
+            rgb_canvas,
+            "vis_mark.png",
+            (46, header_bottom + 6, 206, hi_h - 12),
+            bg_color=gsa.CREAM_TILE,
+            sun_fade=0.18,
+            wordmark_split_y=0.62,
+            seed=198511,
+        )
+        gsa._stamp_vis_hull_stencil(
+            rgb_canvas,
+            (214, header_bottom + 8, 422, hi_h - 14),
+            bg_color=gsa.CREAM_TILE,
+            sun_fade=0.14,
+        )
+        albedo.paste(rgb_canvas.convert("RGBA"), (0, 0))
+        draw = ImageDraw.Draw(albedo)
+
+        # Vertical divider rule between VIS emblem/stencil and LUMEN CARGO
+        gsa._draw_thick_seg(draw, 434.0, header_bottom + 18.0, 434.0, hi_h - 20.0, 5.0, gsa.STENCIL_DARK)
+
         # Main bold stencilled label text: LUMEN CARGO
         gsa._draw_stencil_text(
             draw,
             "LUMEN CARGO",
-            cx=hi_w * 0.5,
+            cx=704.0,
             cy=hi_h * 0.67,
-            char_w=52.0,
-            char_h=92.0,
-            stroke_w=12.5,
-            spacing=14.0,
+            char_w=36.0,
+            char_h=86.0,
+            stroke_w=10.5,
+            spacing=10.0,
             color=gsa.STENCIL_DARK,
             bg_color=gsa.CREAM_TILE,
             stencil_bridges=True,

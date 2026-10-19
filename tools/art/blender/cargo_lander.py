@@ -21,6 +21,7 @@ if str(THIS_DIR) not in sys.path:
 sys.dont_write_bytecode = True
 
 import r1kit
+from ruins import ruins_common
 
 
 CARGO_LANDER_DIMS: dict[str, Any] = {
@@ -999,6 +1000,49 @@ def _add_middle_cargo_drum_and_hold(mb: r1kit.MeshBuilder, d: dict[str, Any]) ->
         bevel=0.007,
     )
 
+    # VIS 1985 mark + 'VIS' stencil on the front-right (-36 deg) and rear (180 deg) upper drum panels
+    sig_r = panel_r + panel_t + 0.008
+    for vis_ang in (-36.0, 180.0):
+        vrad = math.radians(vis_ang)
+        ruins_common.add_signage_plate(
+            mb,
+            center_u=(math.sin(vrad) * sig_r, upper_band_y, math.cos(vrad) * sig_r),
+            width=0.86,
+            height=0.42,
+            cell_name="SEC04_HABITAT",
+            rot_deg_u=(0.0, vis_ang, 0.0),
+            thickness=0.010,
+            frame_mat="R1_GreyMetal",
+            rivets=True,
+        )
+
+    # Small ILC seal on the front-left (+32 deg) lower drum panel and beside the rover bay arch (-34 deg)
+    ilc_rad_1 = math.radians(32.0)
+    ruins_common.add_signage_plate(
+        mb,
+        center_u=(math.sin(ilc_rad_1) * sig_r, lower_band_y, math.cos(ilc_rad_1) * sig_r),
+        width=0.38,
+        height=0.38,
+        cell_name="LOGO",
+        rot_deg_u=(0.0, 32.0, 0.0),
+        thickness=0.010,
+        frame_mat="R1_GreyMetal",
+        rivets=True,
+    )
+    low_sig_r = d["low_panel_radius"] + d["low_panel_thick"] + 0.008
+    ilc_rad_2 = math.radians(-34.0)
+    ruins_common.add_signage_plate(
+        mb,
+        center_u=(math.sin(ilc_rad_2) * low_sig_r, 2.02, math.cos(ilc_rad_2) * low_sig_r),
+        width=0.28,
+        height=0.28,
+        cell_name="LOGO",
+        rot_deg_u=(0.0, -34.0, 0.0),
+        thickness=0.009,
+        frame_mat="R1_GreyMetal",
+        rivets=False,
+    )
+
     # Upper Cargo Hold recessed compartment on +Z with rounded portal surround (housing Crate behind CargoHatch)
     hold_w = d["hold_width"]
     hold_h = d["hold_height"]
@@ -1592,7 +1636,20 @@ def _build_cargo_hatch(root: bpy.types.Object, d: dict[str, Any]) -> bpy.types.O
         bevel=0.005,
     )
 
-    return mb.build_object(parent=root)
+    # VIS mark + 'VIS' stencil plaque on the upper half of CargoHatch
+    ruins_common.add_signage_plate(
+        mb,
+        center_u=(0.0, py + 0.24, panel_r + panel_t + 0.010),
+        width=0.52,
+        height=0.26,
+        cell_name="LUMEN",
+        rot_deg_u=(0.0, 0.0, 0.0),
+        thickness=0.009,
+        frame_mat="R1_GreyMetal",
+        rivets=True,
+    )
+
+    return ruins_common.to_ruin_object(mb, "CargoHatch", parent=root, origin_u=piv)
 
 
 def _build_crate_and_lid(root: bpy.types.Object, d: dict[str, Any]) -> tuple[bpy.types.Object, bpy.types.Object]:
@@ -2003,6 +2060,7 @@ def _prepare_ao_bake_pose(root: bpy.types.Object) -> None:
 
 def build_asset() -> bpy.types.Object:
     """Build the complete `CargoLander` hierarchy and bake vertex colours."""
+    ruins_common.register_ruins_materials()
     d = CARGO_LANDER_DIMS
     root = r1kit.create_empty("CargoLander", pivot_u=(0.0, 0.0, 0.0))
 
@@ -2012,7 +2070,7 @@ def build_asset() -> bpy.types.Object:
     _add_splayed_landing_legs(body_mb, d)
     _add_middle_cargo_drum_and_hold(body_mb, d)
     _add_upper_conical_section_and_top(body_mb, d)
-    body_mb.build_object(parent=root)
+    ruins_common.to_ruin_object(body_mb, "Body", parent=root, origin_u=(0.0, 0.0, 0.0))
 
     # Moving & separate parts
     _build_ramp_door(root, d)
@@ -2027,6 +2085,9 @@ def build_asset() -> bpy.types.Object:
     # Power socket empties
     for sock_name, sock_pos_u in sorted(d["power_sockets_u"].items()):
         r1kit.create_empty(sock_name, parent=root, pivot_u=sock_pos_u)
+
+    r1kit.apply_triplanar_uvs(root)
+    ruins_common.apply_signage_uvs(root)
 
     # Bake vertex colours with doors separated so both exterior and interior faces receive clean AO
     _prepare_ao_bake_pose(root)
@@ -2238,7 +2299,7 @@ def generate(
     do_renders: bool = True,
 ) -> bpy.types.Object:
     """Clean scene, build `CargoLander`, export FBX, and optionally render the diagnostic & showcase suite."""
-    r1kit.reset_scene()
+    ruins_common.reset_ruins_scene()
     root = build_asset()
 
     fbx_path = Path(fbx_out) if fbx_out is not None else Path("Assets/_Project/Art/R1/Models/Lander/CargoLander.fbx")

@@ -18,6 +18,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
 
 import r1kit  # noqa: E402
+from ruins import ruins_common  # noqa: E402
 
 
 from mathutils import Euler, Vector  # noqa: E402
@@ -73,7 +74,7 @@ def _cyl_pt(radius: float, deg: float, y: float) -> tuple[float, float, float]:
 # 1. Prop_OldLander.fbx (~3.0 m tall 1960s Surveyor-style lander)
 # ===========================================================================
 def build_prop_old_lander(out_fbx: Path) -> None:
-    r1kit.reset_scene()
+    ruins_common.reset_ruins_scene()
     r1kit.ensure_materials(use_vertex_color_shading=False)
     root = r1kit.create_empty("Prop_OldLander", None, (0.0, 0.0, 0.0))
 
@@ -776,18 +777,51 @@ def build_prop_old_lander(out_fbx: Path) -> None:
         rot_deg_u=box_b_rot,
     )
 
-    tboxes.build_object(parent=root)
+    # 1967 VIS pre-merger pentagon shield & wordmark plate on Compartment A (+Z front door below S-3)
+    ruins_common.add_signage_plate(
+        tboxes,
+        center_u=_pose_pt((box_a_center[0], box_a_center[1] - 0.088, box_a_center[2] + 0.172)),
+        width=0.34,
+        height=0.18,
+        cell_name="VIS_1967",
+        rot_deg_u=box_a_rot,
+        thickness=0.010,
+        frame_mat="R1_GreyMetal",
+        rivets=True,
+    )
+
+    # Second 1967 VIS wordmark plate on Compartment B outer door
+    b_rad = math.radians(-120.0)
+    ruins_common.add_signage_plate(
+        tboxes,
+        center_u=_pose_pt(
+            (
+                box_b_center[0] + math.sin(b_rad) * 0.172,
+                box_b_center[1] - 0.020,
+                box_b_center[2] + math.cos(b_rad) * 0.172,
+            )
+        ),
+        width=0.32,
+        height=0.17,
+        cell_name="VIS_1967",
+        rot_deg_u=box_b_rot,
+        thickness=0.010,
+        frame_mat="R1_GreyMetal",
+        rivets=True,
+    )
+
+    ruins_common.to_ruin_object(tboxes, "ThermalBoxes", parent=root, origin_u=(0.0, 0.90, 0.0))
 
     # -----------------------------------------------------------------------
     # G. SerialStencil (Faded stencilled serial "S-3" proud on Compartment A's
-    #    vertical +Z door; generic livery, NO real agency logos, flags, or names)
+    #    vertical +Z door above the 1967 VIS wordmark plate)
     # -----------------------------------------------------------------------
     stencil = r1kit.MeshBuilder("SerialStencil", pivot_u=_pose_pt((box_a_center[0], box_a_center[1], box_a_center[2] + 0.172)))
 
     def _add_stencil_bar(u_x: float, u_y: float, w: float, h: float) -> None:
         # Compartment A front wall is at z = box_a_center[2] + 0.17; place 14 mm thick bar centered at +0.173
         cx = box_a_center[0] + u_x
-        cy = box_a_center[1] + u_y
+        cy = box_a_center[1] + u_y + 0.095
         cz = box_a_center[2] + 0.173
         stencil.add_bevel_box(
             center_u=_pose_pt((cx, cy, cz)),
@@ -932,6 +966,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
     r1kit.create_empty("RemovedSpot_2_Anchor", root, _pose_pt(s2_center))
 
     r1kit.apply_triplanar_uvs(root)
+    ruins_common.apply_signage_uvs(root)
     r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(root, footprint_radius=1.65)
     _boost_weathering(root, extra_dust=0.24, extra_wear=0.10, darken_ao=0.88)
@@ -951,16 +986,28 @@ def _boost_weathering(
         if obj.type != "MESH" or obj.data is None or not obj.data.color_attributes:
             continue
         is_strut_mesh = obj.name in strut_meshes
+        mat_names = [m.name if m else "" for m in obj.data.materials]
+        sig_idx = mat_names.index("R1_Signage") if "R1_Signage" in mat_names else -1
         attr = obj.data.color_attributes[0]
-        for item in attr.data:
-            r, g, b, a = item.color
-            new_g = (g * 0.52) if is_strut_mesh else (g * 1.12 + extra_wear)
-            item.color = (
-                max(0.16, min(1.0, r * darken_ao)),
-                max(0.0, min(1.0, new_g)),
-                max(0.0, min(1.0, b + extra_dust)),
-                a,
-            )
+        for poly in obj.data.polygons:
+            is_sig = poly.material_index == sig_idx
+            for li in poly.loop_indices:
+                r, g, b, a = attr.data[li].color
+                if is_sig:
+                    attr.data[li].color = (
+                        max(0.76, min(1.0, r * 0.96)),
+                        max(0.0, min(0.32, g * 0.40)),
+                        max(0.0, min(0.38, b * 0.50 + 0.08)),
+                        a,
+                    )
+                else:
+                    new_g = (g * 0.52) if is_strut_mesh else (g * 1.12 + extra_wear)
+                    attr.data[li].color = (
+                        max(0.16, min(1.0, r * darken_ao)),
+                        max(0.0, min(1.0, new_g)),
+                        max(0.0, min(1.0, b + extra_dust)),
+                        a,
+                    )
 
 
 # ===========================================================================
