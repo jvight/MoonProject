@@ -156,6 +156,13 @@ namespace MoonProject.Gameplay
                 _pads.Port.Draw(Model.Charge - before);
             }
 
+            if (_padFromReserve && Model.RestsOnCharger && !Model.IsCharging && Model.CellsFull)
+            {
+                // 07 reached its pad already full: the old cells top it up and give out all the same, so the first
+                // charge happens whatever 07 arrived with.
+                _pads.Port.GiveOut();
+            }
+
             if (_chargingOnReserve && !onReserve)
             {
                 _pads.Port.GiveOut();
