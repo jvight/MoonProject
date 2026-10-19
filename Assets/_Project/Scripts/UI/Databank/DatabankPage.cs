@@ -123,14 +123,14 @@ namespace MoonProject.UI
                     _cursor.Up();
                 }
 
-                _events.Publish(new UiCue(UiCueKind.FocusMove));
+                _events.Publish(new UiCue(UiCueKind.DatabankListStep));
                 ShowFocused();
             }
 
             if (colourPressed)
             {
                 _colour = !_colour;
-                _events.Publish(new UiCue(UiCueKind.Confirm));
+                _events.Publish(new UiCue(UiCueKind.DatabankChannelSettle));
                 ShowFocused(force: true);
             }
 
@@ -148,7 +148,7 @@ namespace MoonProject.UI
             if (row >= 0)
             {
                 _cursor.Focus(_view.RowCategory(row), _view.RowEntry(row));
-                _events.Publish(new UiCue(UiCueKind.FocusMove));
+                _events.Publish(new UiCue(UiCueKind.DatabankListStep));
                 ShowFocused();
                 return;
             }

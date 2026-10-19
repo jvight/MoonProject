@@ -109,11 +109,13 @@ namespace MoonProject.UI.Tests
             flip.Toggle();
             Assert.AreEqual(FacePage.Databank, flip.Target);
             bool switched = false;
+            int settled = 0;
             float thinnest = 1f;
             for (float t = 0f; t < _settings.FlipCollapseSeconds + _settings.FlipOpenSeconds + 0.1f; t += Step)
             {
                 flip.Tick(Step);
                 switched |= flip.Switched;
+                settled += flip.Settled ? 1 : 0;
                 thinnest = Mathf.Min(thinnest, flip.ScaleY);
                 if (flip.Switched)
                 {
@@ -122,6 +124,7 @@ namespace MoonProject.UI.Tests
             }
 
             Assert.IsTrue(switched);
+            Assert.AreEqual(1, settled, "the page settles once, when the line has opened (the tube's thunk)");
             Assert.AreEqual(FacePage.Databank, flip.Page);
             Assert.AreEqual(1f, flip.ScaleY);
             Assert.IsFalse(flip.IsFlipping);
