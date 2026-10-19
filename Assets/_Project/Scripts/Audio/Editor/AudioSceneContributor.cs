@@ -7,7 +7,7 @@ namespace MoonProject.Audio.Editor
     /// Adds the Audio domain to Main.unity: under [Audio], an AudioDirector (the system, initialised after World, Rover
     /// and Gameplay) wired to the library and tuning assets, plus its RoverAudio, GameplayAudio, UiAudio,
     /// RadioStation, TitleMusic, FeelAudio, RoverChirpAudio, AmbienceBed, Soundscape, RoverSmallSounds, SalvageAudio
-    /// and BatteryAudio parts.
+    /// BatteryAudio and CallCarrier parts.
     /// Voices and loop sources are created by the components at initialisation, not baked into the scene.
     /// </summary>
     public sealed class AudioSceneContributor : ISceneContributor
@@ -44,6 +44,7 @@ namespace MoonProject.Audio.Editor
             var smallSounds = context.CreateChild("RoverSmallSounds", root).AddComponent<RoverSmallSounds>();
             var salvage = context.CreateChild("SalvageAudio", root).AddComponent<SalvageAudio>();
             var battery = context.CreateChild("BatteryAudio", root).AddComponent<BatteryAudio>();
+            var call = context.CreateChild("CallCarrier", root).AddComponent<CallCarrier>();
 
             rover.Wire(roverTuning);
             gameplay.Wire(gameplayTuning);
@@ -59,6 +60,8 @@ namespace MoonProject.Audio.Editor
                 salvage);
             director.WireTitleMusic(titleMusic);
             director.WireBattery(battery);
+            call.Wire(soundscapeTuning);
+            director.WireCall(call);
             director.WireFeel(feel, chirps);
             context.AddSystem(director);
         }

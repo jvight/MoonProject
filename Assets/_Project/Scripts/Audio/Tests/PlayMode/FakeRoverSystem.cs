@@ -17,6 +17,9 @@ namespace MoonProject.Audio.PlayModeTests
         /// <summary>The cutter tests change (tier, lamps).</summary>
         public FakeCutter Cutter { get; } = new FakeCutter();
 
+        /// <summary>The call from the sky tests point 07 at (direction, state, name).</summary>
+        public FakeCallSource Call { get; } = new FakeCallSource();
+
         /// <summary>The parts on 07 at boot (a loaded game); set before the rig boots.</summary>
         public AudioFakeEquipment Equipment { get; } = new AudioFakeEquipment();
 
@@ -90,6 +93,7 @@ namespace MoonProject.Audio.PlayModeTests
             context.Register<IRoverStillness>(this);
             context.Register<ICutter>(Cutter);
             context.Register<IRoverEquipment>(Equipment);
+            context.Register<ICallSource>(Call);
         }
     }
 }

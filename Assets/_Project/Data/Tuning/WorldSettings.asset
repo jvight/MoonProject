@@ -646,17 +646,6 @@ MonoBehaviour:
       _offset: {x: -2, y: 9.1}
       _yaw: 320
       _sink: 0.45
-  _lensView:
-    _lidSoftness: 0.14
-    _lidCurve: 0.12
-    _lidOpenGamma: 0.75
-    _focalLength: 60
-    _aperture: 1.6
-    _nearestFocus: 0.1
-    _wakeGain: 1.5
-    _gainHoldLid: 0.2
-    _gainGoneLid: 0.65
-    _volumePriority: 90
   _skyCycle:
     _dayLengthSeconds: 7200
     _eclipseBreakoutLead: 1

@@ -6,14 +6,16 @@
 >
 > **Voice & Style Rules (`docs/design/writing-style.md`):**
 > - Every letter is strictly **human-to-human** (dispatch control to station, scientist to scientist, shuttle to station, or fleet bulletin). **No human ever confides in or addresses `07`.**
-> - Operational readouts (`lens.boot.*`, `recovery.*`) are plain, short, functional lines (`writing-style.md` §1–§2).
+> - Operational readouts (`post.*`, `recovery.*`) are plain, short, functional lines (`writing-style.md` §1–§2).
 > - Vietnamese is written natively (`writing-style.md` §3), using `dd/mm/yyyy` for numeric dates and canonical glossary terms (`Lumen Station`, `Đỉnh núi`, `chảo ăng-ten lớn`, `Bậc thềm vành hố`, `Kestrel-3`).
 
 ---
 
-## 1. Boot Readout & Recovery Protocol Strings (`lens.boot.*`, `ui.recovery.title`, `recovery.*`, `ticker.recovery.*`)
+## 1. Boot Readout & Recovery Protocol Strings (`post.*`, `ui.recovery.title`, `recovery.*`, `ticker.recovery.*`)
 
-Every key below is verified against `Assets/_Project/Data/Localization/en.json` and `Assets/_Project/Scripts/World/Lens/LensView.cs:31`.
+> **Update 2026-10-20:** the `lens.boot.*` keys and World's `LensView` were removed (ec86da65). The wake is now 07's boot face (`cutscenes.md` §1.8): its readout is the 14-line POST (`post.*`), which ends `BEGIN RECOVERY`, and the orbital signal reads `ANTENNA · RECEIVE ONLY · ORBITAL SIGNAL` (`post.antenna.receive_only`). The three `lens.boot.*` rows below are history.
+
+The other keys below are verified against `Assets/_Project/Data/Localization/en.json`.
 
 | Key (`en.json` line) | Status | Current `en.json` Text | Story v4 English (`[PROPOSAL]`) | Story v4 Tiếng Việt (`[PROPOSAL]`) |
 |---|---|---|---|---|

@@ -162,6 +162,39 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
+        /// Dedicated fast batch entry point for capturing <c>HabitatModules</c>'s <c>PowerModule_StatusLamp</c>
+        /// at ~10 m in Day C and Dusk lighting (<c>Logs/captures/module_lamp_dayC.png</c> and
+        /// <c>Logs/captures/module_lamp_dusk.png</c>):
+        /// <c>python tools/unity_batch.py exec --project . --method MoonProject.Art.Editor.R1StoryPropsCapture.CaptureModuleLamp</c>
+        /// </summary>
+        public static void CaptureModuleLamp()
+        {
+            BatchRunner.Run(nameof(CaptureModuleLamp), args =>
+            {
+                AssetDatabase.Refresh();
+                R1MaterialLibrary.BuildMaterials();
+                R1ModelBuilder.Build();
+
+                string capturesDir = Path.GetFullPath("Logs/captures");
+                Directory.CreateDirectory(capturesDir);
+
+                bool prevAsync = ShaderUtil.allowAsyncCompilation;
+                ShaderUtil.allowAsyncCompilation = false;
+                try
+                {
+                    CaptureModuleLampShot(capturesDir, false);
+                    CaptureModuleLampShot(capturesDir, true);
+                }
+                finally
+                {
+                    ShaderUtil.allowAsyncCompilation = prevAsync;
+                }
+
+                return true;
+            });
+        }
+
+        /// <summary>
         /// Dedicated fast batch entry point for capturing the 6-piece R1 ground power-cable kit
         /// (<c>Cable_Straight_2m</c>, <c>Cable_Bend_45</c>, <c>Cable_Bend_90</c>, <c>Cable_BrokenEnd</c>,
         /// <c>Cable_Plug</c>, <c>Cable_Splice_Box</c>) laid out next to Rover 07 in Day C and in Eclipse light:
@@ -1165,6 +1198,73 @@ namespace MoonProject.Art.Editor
                     42f,
                     bg,
                     Path.Combine(outDir, $"r1props_04_airlock_readout_{suffix}.png"));
+            }
+            finally
+            {
+                temp.Dispose();
+            }
+        }
+
+        private static void CaptureModuleLampShot(string outDir, bool dusk)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(temp, dusk);
+                if (dusk)
+                {
+                    RenderSettings.ambientSkyColor = new Color(0.15f, 0.18f, 0.28f, 1f);
+                    RenderSettings.ambientEquatorColor = new Color(0.14f, 0.13f, 0.20f, 1f);
+                    RenderSettings.ambientGroundColor = new Color(0.07f, 0.07f, 0.11f, 1f);
+                    bg = new Color(0.07f, 0.09f, 0.15f, 1f);
+
+                    Light duskSun = ArtLightingPreview.NewLight(
+                        "DuskHorizonSun",
+                        LightType.Directional,
+                        new Color(1.00f, 0.68f, 0.42f, 1f),
+                        0.45f);
+                    duskSun.transform.rotation = Quaternion.Euler(6f, 128f, 0f);
+                    duskSun.shadows = LightShadows.Soft;
+                    duskSun.shadowStrength = 0.80f;
+                    RenderSettings.sun = duskSun;
+                    temp.Add(duskSun.gameObject);
+                }
+
+                SpawnRover07(temp, new Vector3(-1.65f, 0f, -5.20f), 18f, dusk);
+
+                // Place HabitatModules so PowerModule_StatusLamp (local (-4.35, 1.68, -1.39)) sits at world (0.0, 1.68, 0.0)
+                GameObject habitat = SpawnProp(R1StoryPropsBuilder.HabitatModulesPrefabPath, new Vector3(4.35f, 0f, 1.39f), 0f, temp);
+                Transform lampNode = habitat.transform.Find("PowerModule_StatusLamp");
+                if (lampNode != null && lampNode.TryGetComponent(out Renderer lampRenderer))
+                {
+                    var block = new MaterialPropertyBlock();
+                    lampRenderer.GetPropertyBlock(block);
+                    block.SetFloat("_EmissionStrength", dusk ? 1.85f : 1.0f);
+                    lampRenderer.SetPropertyBlock(block);
+
+                    if (dusk)
+                    {
+                        Light lampGlow = ArtLightingPreview.NewLight(
+                            "PowerModuleStatusLampGlow",
+                            LightType.Point,
+                            new Color(1.00f, 0.68f, 0.28f, 1f),
+                            1.65f);
+                        lampGlow.transform.position = lampNode.position + new Vector3(0f, 0f, -0.06f);
+                        lampGlow.range = 2.6f;
+                        lampGlow.shadows = LightShadows.None;
+                        temp.Add(lampGlow.gameObject);
+                    }
+                }
+
+                // Camera at (-1.20, 1.85, -9.93) -> exactly 10.00 m from PowerModule_StatusLamp at (0.0, 1.68, 0.0)
+                string suffix = dusk ? "dusk" : "dayC";
+                RenderShot(
+                    new Vector3(-1.20f, 1.85f, -9.93f),
+                    new Vector3(0.35f, 1.60f, 0.0f),
+                    38f,
+                    bg,
+                    Path.Combine(outDir, $"module_lamp_{suffix}.png"));
             }
             finally
             {
