@@ -64,6 +64,7 @@ namespace MoonProject.World
         private readonly GradientNoise _farRangeNoise;
         private readonly GradientNoise _gullyNoise;
         private readonly GradientNoise _grainNoise;
+        private readonly Relief _relief;
 
         private readonly float _padRadius;
         private readonly float _padRadiusSq;
@@ -253,6 +254,7 @@ namespace MoonProject.World
             float minCalmSpan = settings.DuneWavelength * MinCalmSpanInWavelengths;
             _kestrel = new KestrelImpact(settings.Sites.Kestrel, baseSeed, minCalmSpan);
             _craters = PlaceCraters(settings, baseSeed);
+            _relief = new Relief(settings.Relief, settings.Sites, settings.PadRadius, _craters, baseSeed);
             int count = _craters.Length;
             _craterX = new float[count];
             _craterZ = new float[count];
@@ -310,6 +312,9 @@ namespace MoonProject.World
 
         /// <summary>Whispering Canyon, carved into the rim (docs/features/M3-04).</summary>
         public Canyon Canyon { get; }
+
+        /// <summary>The basin floor's gentle relief: swells, wrinkle ridges and rolled boulders' furrows.</summary>
+        public Relief Relief => _relief;
 
         /// <summary>Kestrel-3's impact crater and furrow (docs/features/M3-13).</summary>
         public KestrelImpact Kestrel => _kestrel;
@@ -464,7 +469,8 @@ namespace MoonProject.World
                 float floorDetail = floorWeight * SmoothMath.Smootherstep(_padRadius, _padBlendEnd, r);
                 if (floorDetail > 0f)
                 {
-                    height += floorDetail * (Hills(x, z) + calm * Dunes(x, z)
+                    height += floorDetail * (Hills(x, z) + calm * Dunes(x, z) + _relief.Rise(x, z)
+                        - _relief.Furrow(x, z)
                         + _grainHeight * _grainNoise.Sample(x * _invGrainWavelength, z * _invGrainWavelength));
                 }
             }

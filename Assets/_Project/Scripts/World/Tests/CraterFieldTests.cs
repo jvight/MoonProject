@@ -41,7 +41,7 @@ namespace MoonProject.World.Tests
             _anchors = new WorldAnchors(_cratered, _settings.Canyon, new RelaySettings());
             _field = new CraterField(_settings.CraterField, WorldSettings.DefaultSeed,
                 _settings.FloorRadius - _settings.RimWarpAmplitude, _settings.PadRadius + _settings.PadBlend, _anchors,
-                _cratered.Canyon.Bounds);
+                _cratered.Canyon.Bounds, _cratered.SampleNormal);
             _cratered.AttachCraterField(_field);
         }
 

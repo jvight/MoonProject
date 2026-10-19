@@ -34,13 +34,19 @@ namespace MoonProject.World
         /// <param name="padRadius">The base pad's radius: craters stay clear of it.</param>
         /// <param name="anchors">World anchors whose ground stays untouched.</param>
         /// <param name="keepOut">Area left alone (Whispering Canyon's bounds, XZ).</param>
+        /// <param name="groundNormal">The ground's normal at (x, z) without the field: no crater on a hillside.</param>
         public CraterField(CraterFieldSettings settings, int seed, float floorRadius, float padRadius,
-            IWorldAnchors anchors, Rect keepOut)
+            IWorldAnchors anchors, Rect keepOut, Func<float, float, Vector3> groundNormal)
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             if (anchors == null)
             {
                 throw new ArgumentNullException(nameof(anchors));
+            }
+
+            if (groundNormal == null)
+            {
+                throw new ArgumentNullException(nameof(groundNormal));
             }
 
             string problem = settings.Validate();
@@ -60,6 +66,7 @@ namespace MoonProject.World
             uint placeSeed = Hashing.Mix((uint)seed ^ PlaceSalt);
             float invField = 1f / settings.FieldWavelength;
             float outerShare = 1f + settings.RimWidth;
+            float flatEnough = Mathf.Cos(settings.MaxGroundSlope * Mathf.Deg2Rad);
             int count = 0;
             for (int j = 0; j < _cells; j++)
             {
@@ -81,7 +88,8 @@ namespace MoonProject.World
                     float size = Mathf.Pow(Hashing.ToUnit(Hashing.Hash(ci, cj, 3, placeSeed)), settings.SizePower);
                     float radius = Mathf.Lerp(settings.Radius.x, settings.Radius.y, size);
                     float reach = radius * outerShare + settings.Clearance;
-                    if (!IsOpenFloor(x, z, reach, floorRadius, padRadius, anchors, keepOut))
+                    if (!IsOpenFloor(x, z, reach, floorRadius, padRadius, anchors, keepOut)
+                        || !OnLevelGround(x, z, radius * outerShare, flatEnough, groundNormal))
                     {
                         continue;
                     }
@@ -95,6 +103,15 @@ namespace MoonProject.World
             }
 
             Count = count;
+        }
+
+        /// <summary>The ground under a crater's centre and round its rim lies flatter than the slope limit.</summary>
+        private static bool OnLevelGround(float x, float z, float reach, float flatEnough,
+            Func<float, float, Vector3> groundNormal)
+        {
+            return groundNormal(x, z).y >= flatEnough && groundNormal(x + reach, z).y >= flatEnough
+                   && groundNormal(x - reach, z).y >= flatEnough && groundNormal(x, z + reach).y >= flatEnough
+                   && groundNormal(x, z - reach).y >= flatEnough;
         }
 
         /// <summary>How many small craters the field holds.</summary>
