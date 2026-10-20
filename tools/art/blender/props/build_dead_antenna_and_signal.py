@@ -26,6 +26,8 @@ if str(BLENDER_DIR) not in sys.path:
 
 import antenna_mast  # noqa: E402
 import r1kit  # noqa: E402
+import relay_repair  # noqa: E402
+import socket_rack  # noqa: E402
 
 
 PROPS_DIR = REPO_ROOT / "Assets" / "_Project" / "Art" / "R1" / "Models" / "Props"
@@ -379,42 +381,9 @@ def _build_dead_mast_stage_4(root: bpy.types.Object) -> bpy.types.Object:
     if az_obj is not None:
         _build_bent_weathered_dish(az_obj)
 
-    # 3. SonarLoop (`Stage_4/Mast/SonarLoop`)
-    sx = d["sonar_x"]
-    sy = d["sonar_y"]
-    sz = d["sonar_z"]
-    arm_l = d["sonar_loop_len"]
-    sonar_mb = r1kit.MeshBuilder("SonarLoop", pivot_u=(sx, sy, sz))
-    sonar_mb.add_cylinder(
-        center_u=(sx, sy, sz),
-        radius=0.028,
-        length=0.048,
-        mat="R1_Copper",
-        axis_u="Z",
-        segments=8,
-        bevel=0.0,
-        bevel_segments=0,
-    )
-    for diag_deg in (42.0, 138.0, 222.0, 318.0):
-        rad = math.radians(diag_deg)
-        dx = math.cos(rad)
-        dy_l = math.sin(rad)
-        px_n = -dy_l
-        py_n = dx
-        tip_x = sx + dx * arm_l
-        tip_y = sy + dy_l * arm_l
-        mid_x = sx + dx * (arm_l * 0.68)
-        mid_y = sy + dy_l * (arm_l * 0.68)
-        w_l = 0.046
-        p_l = (mid_x + px_n * w_l, mid_y + py_n * w_l, sz)
-        p_r = (mid_x - px_n * w_l, mid_y - py_n * w_l, sz)
-        p_t1 = (tip_x + px_n * (w_l * 0.55), tip_y + py_n * (w_l * 0.55), sz)
-        p_t2 = (tip_x - px_n * (w_l * 0.55), tip_y - py_n * (w_l * 0.55), sz)
-        sonar_mb.add_strut((sx, sy, sz), p_l, 0.015, 0.015, "R1_Copper", bevel=0.0)
-        sonar_mb.add_strut((sx, sy, sz), p_r, 0.015, 0.015, "R1_Copper", bevel=0.0)
-        sonar_mb.add_strut(p_l, p_t1, 0.015, 0.015, "R1_Copper", bevel=0.0)
-        sonar_mb.add_strut(p_r, p_t2, 0.015, 0.015, "R1_Copper", bevel=0.0)
-        sonar_mb.add_strut(p_t1, p_t2, 0.015, 0.015, "R1_Copper", bevel=0.0)
+    # 3. SonarLoop (`Stage_4/Mast/SonarLoop`): the same crossed-loop direction finder as the base's mast
+    sonar_mb = r1kit.MeshBuilder("SonarLoop", pivot_u=(d["sonar_x"], d["sonar_y"], d["sonar_z"]))
+    antenna_mast.add_crossed_loop_antenna(sonar_mb)
     sonar_mb.build_object(parent=mast_obj)
 
     # 4. TapeReel_L and TapeReel_R (`Stage_4/TapeReel_L`, `Stage_4/TapeReel_R`)
@@ -490,9 +459,86 @@ def _build_dead_mast_stage_4(root: bpy.types.Object) -> bpy.types.Object:
     return stage_4
 
 
+# relay.1's feed socket: a bolted-on housing on the cabinet's +X flank, clear of the conduit pipes (z <= 0.08)
+FEED_SOCKET_DIMS: dict[str, float] = {
+    "flank_x": antenna_mast.ANTENNA_MAST_DIMS["cab_width"] * 0.5,
+    "center_y": 0.74,
+    "center_z": 0.25,
+    "depth": 0.11,
+    "wall": 0.025,
+    "clearance": 0.01,
+    "line_width": 0.007,
+    "line_depth": 0.004,
+}
+
+
+def _build_feed_socket(root: bpy.types.Object) -> None:
+    """relay.1's empty feed socket: an open dark housing cut to the feed unit's cross-section, the severed stub of
+    the failed unit's connector at its back, and a thin `R1_RackOutline` frame round the mouth in the socket rack's
+    bay language (Gameplay drives its `_EmissionColor`). `FeedSocket_Anchor` sits at the mouth, facing out (+X)."""
+    d = FEED_SOCKET_DIMS
+    u = relay_repair.FEED_UNIT_DIMS
+    x0 = d["flank_x"]
+    cy, cz = d["center_y"], d["center_z"]
+    wall = d["wall"]
+    open_z = u["body_width"] + 2 * d["clearance"]
+    open_y = u["body_height"] + 2 * d["clearance"]
+    out_z = open_z + 2 * wall
+    out_y = open_y + 2 * wall
+    mouth_x = x0 + d["depth"]
+    mid_x = x0 + d["depth"] * 0.5
+
+    mb = r1kit.MeshBuilder("FeedSocket", pivot_u=(x0, cy, cz))
+    mb.add_bevel_box(center_u=(x0 + 0.005, cy, cz), size_u=(0.010, out_y + 0.05, out_z + 0.05), mat="R1_GreyMetal",
+                     bevel=0.004, segments=1)
+    for sy in (-1.0, 1.0):
+        mb.add_bevel_box(center_u=(mid_x, cy + sy * (open_y + wall) * 0.5, cz), size_u=(d["depth"], wall, out_z),
+                         mat="R1_GreyMetal", bevel=0.005, segments=1)
+    for sz in (-1.0, 1.0):
+        mb.add_bevel_box(center_u=(mid_x, cy, cz + sz * (open_z + wall) * 0.5), size_u=(d["depth"], open_y, wall),
+                         mat="R1_GreyMetal", bevel=0.005, segments=1)
+    # Dark rubber liner on the socket's back: the hole reads as a hole
+    mb.add_bevel_box(center_u=(x0 + 0.014, cy, cz), size_u=(0.008, open_y, open_z), mat="R1_Rubber", bevel=0.0,
+                     segments=0)
+    # Two clamp straps over the flange, one each side, off-centre so they don't read as a dotted row
+    for y_off, z_off in ((0.04, -(out_z * 0.5 + 0.012)), (-0.05, out_z * 0.5 + 0.012)):
+        mb.add_bevel_box(center_u=(x0 + 0.014, cy + y_off, cz + z_off), size_u=(0.010, 0.05, 0.022),
+                         mat="R1_GreyMetal", bevel=0.003, segments=1)
+    # The failed unit's connector, snapped off: its collar, a scorched copper face, the bent blade and a jagged lip
+    stub_x = x0 + 0.018
+    mb.add_cylinder(center_u=(stub_x + 0.014, cy, cz), radius=u["connector_radius"] * 0.9, length=0.028,
+                    mat="R1_GreyMetal", axis_u="X", segments=12, bevel=0.003)
+    mb.add_cylinder(center_u=(stub_x + 0.030, cy, cz), radius=u["connector_radius"] * 0.6, length=0.006,
+                    mat="R1_Copper", axis_u="X", segments=12, bevel=0.0)
+    mb.add_strut((stub_x + 0.032, cy + 0.006, cz), (stub_x + 0.056, cy + 0.022, cz - 0.016), 0.012, 0.024,
+                 "R1_Copper", bevel=0.002)
+    for y_off, z_off, reach in ((0.034, 0.010, 0.030), (-0.020, 0.030, 0.018), (-0.028, -0.026, 0.024)):
+        mb.add_bevel_box(center_u=(stub_x + 0.028 + reach * 0.5, cy + y_off, cz + z_off),
+                         size_u=(reach, 0.012, 0.016), mat="R1_GreyMetal", bevel=0.002, segments=1,
+                         rot_deg_u=(25.0 * y_off / abs(y_off), 0.0, 0.0))
+    mb.build_object(parent=root)
+
+    lw, ld = d["line_width"], d["line_depth"]
+    frame_z = open_z + wall
+    frame_y = open_y + wall
+    line_x = mouth_x + ld * 0.5 + 0.0005
+    outline = r1kit.MeshBuilder("FeedSocket_Outline", pivot_u=(mouth_x, cy, cz))
+    for sy in (-1.0, 1.0):
+        outline.add_bevel_box(center_u=(line_x, cy + sy * frame_y * 0.5, cz), size_u=(ld, lw, frame_z + lw),
+                              mat="R1_RackOutline", bevel=0.0, segments=0)
+    for sz in (-1.0, 1.0):
+        outline.add_bevel_box(center_u=(line_x, cy, cz + sz * frame_z * 0.5), size_u=(ld, frame_y - lw, lw),
+                              mat="R1_RackOutline", bevel=0.0, segments=0)
+    outline.build_object(parent=root)
+
+    r1kit.create_empty("FeedSocket_Anchor", parent=root, pivot_u=(mouth_x, cy, cz), outward_dir_u=(1.0, 0.0, 0.0))
+
+
 def build_dead_antenna_mast() -> bpy.types.Object:
-    """Build DeadAntennaMast (relay.1 silhouette on the west rim: weathered, bent dish, caged RelayLamp_Lens)."""
+    """Build DeadAntennaMast (relay.1 silhouette on the west rim: weathered, bent dish, caged RelayLamp_Lens, and the
+    empty `FeedSocket` its spare feed unit plugs into)."""
     r1kit.reset_scene()
+    socket_rack.register_rack_materials()
     r1kit.ensure_materials(use_vertex_color_shading=False)
 
     root = r1kit.create_empty("DeadAntennaMast", pivot_u=(0.0, 0.0, 0.0))
@@ -500,6 +546,7 @@ def build_dead_antenna_mast() -> bpy.types.Object:
     antenna_mast._build_stage_2(root)
     antenna_mast._build_stage_3(root)
     _build_dead_mast_stage_4(root)
+    _build_feed_socket(root)
 
     # Replace emissive materials (R1_LampAmber, R1_Screen) with cold dark R1_DarkGlass on all nodes EXCEPT RelayLamp_Lens
     mats = r1kit.ensure_materials(use_vertex_color_shading=False)

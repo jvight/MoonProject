@@ -114,8 +114,9 @@ RACK_MATERIALS: dict[str, dict[str, object]] = {
 Point2 = tuple[float, float]
 
 
-def _register_rack_materials() -> None:
-    """Register R1_RackOutline and R1_RackFill into r1kit at runtime, as kestrel_debris does for its era slots."""
+def register_rack_materials() -> None:
+    """Register R1_RackOutline and R1_RackFill into r1kit at runtime (as kestrel_debris does for its era slots); other
+    builders that draw in the rack's outline language (relay.1's feed socket) call it too."""
     for name, spec in RACK_MATERIALS.items():
         if name not in r1kit.ALLOWED_MATERIALS:
             r1kit.ALLOWED_MATERIALS = tuple(r1kit.ALLOWED_MATERIALS) + (name,)
@@ -487,7 +488,7 @@ def pose_socket_rack_rest(root: bpy.types.Object) -> None:
 
 def build_socket_rack() -> bpy.types.Object:
     """Build the complete SocketRack hierarchy in the current scene and bake vertex colours."""
-    _register_rack_materials()
+    register_rack_materials()
     root = r1kit.create_empty("SocketRack", pivot_u=(0.0, 0.0, 0.0))
     _build_frame(root)
     _build_feet(root)

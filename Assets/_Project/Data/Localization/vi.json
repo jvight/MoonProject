@@ -939,6 +939,14 @@
             "text": "Bộ sạc lục giác · từ Kestrel-3"
         },
         {
+            "key": "hint.tether",
+            "text": "Móc cáp"
+        },
+        {
+            "key": "hint.install",
+            "text": "Lắp"
+        },
+        {
             "key": "pickup.crate.contents",
             "text": "phụ tùng"
         },

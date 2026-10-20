@@ -224,6 +224,7 @@ namespace MoonProject.UI.Tests
             }
 
             Assert.AreEqual("icon_spare_igniter", diagram.GetPartIcon("part.igniter").Id, "the igniter has its own icon");
+            Assert.AreEqual("icon_feed_unit", diagram.GetPartIcon("part.feedunit").Id, "so has relay.1's feed unit");
             Assert.AreEqual("icon_ice_core_tube", diagram.GetPartIcon("part.icecore").Id, "and so has the ice core");
             Assert.AreEqual("icon_metal_plates", diagram.GetIcon(SalvageMaterial.Metal).Id);
             Assert.AreEqual("icon_wiring_spool", diagram.GetIcon(SalvageMaterial.Wiring).Id);
