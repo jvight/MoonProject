@@ -1,5 +1,6 @@
 using System.Collections;
 using System.IO;
+using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -19,7 +20,7 @@ namespace MoonProject.Rover.PlayModeTests
     /// same at rest with nothing selected (the cutter's accent brackets), the igniter dragged over the cutter
     /// ("Release to fit", the other devices dimmed), metal dragged over a socket (it fits nowhere: every device dims)
     /// and the databank; and the call on the face at rest (broken, nothing decoded) and after the first charge (locked,
-    /// its first letter in the accent). Writes Logs/captures/face_a/.
+    /// its first letter in the accent), and at night clear and then answered. Writes Logs/captures/face_a/.
     /// </summary>
     public sealed class RoverFaceLookCaptures : InputTestFixture
     {
@@ -33,6 +34,12 @@ namespace MoonProject.Rover.PlayModeTests
         private const int MetalUnits = 5;
         private const int Width = 1920;
         private const int Height = 1080;
+
+        // From in front of 07 and a little to its side, so the CRT face reads (as the face-inventory captures).
+        private const float FrontBearing = 162f;
+
+        // The sky's clock in the earthlit night (SkyPhase.Earthlit).
+        private const float NightClockSeconds = 4800f;
 
         private static readonly string Folder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "captures", "face_a"));
@@ -161,6 +168,58 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreEqual(1, call.AccentLetters, "the one accent");
             Capture("call_locked");
             CaptureFace("call_locked_panel");
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator LookA_TheCallAtNight_ClearThenAnswered_OnTheRealFace()
+        {
+            Directory.CreateDirectory(Folder);
+            _keyboard = InputSystem.AddDevice<Keyboard>();
+            yield return _scene.Boot();
+            _target = new RenderTexture(Width, Height, 24);
+            _scene.View.targetTexture = _target;
+            SetNight();
+            _scene.Context.Events.Publish(new NextStepChanged(string.Empty));
+            _scene.CameraRig.Orbit.AdoptBearing(_scene.Rover.Heading + FrontBearing);
+            CallDisplayView call = _scene.Ui.CallView;
+
+            _scene.Context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.FirstCharge, false));
+            _scene.Context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.NightReady, false));
+            yield return UntilCall(call, CallState.Clear, "A?? ??");
+            Capture("call_clear_night");
+            CaptureFace("call_clear_panel");
+
+            _scene.Context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.CallAnswered, false));
+            yield return UntilCall(call, CallState.Answered, "ARK ??");
+            Assert.AreEqual(3, call.AccentLetters, "the answer decodes two more letters into the accent");
+            Capture("call_answered_night");
+            CaptureFace("call_answered_panel");
+        }
+
+        /// <summary>The sky's clock set to the earthlit night (the sky exposes no setter on its Core interface).</summary>
+        private void SetNight()
+        {
+            ISunlight sun = _scene.Context.Get<ISunlight>();
+            MethodInfo setClockTime = sun.GetType().GetMethod("SetClockTime", BindingFlags.Instance | BindingFlags.Public);
+            Assert.IsNotNull(setClockTime, "the sky can be set to a time of day");
+            setClockTime.Invoke(sun, new object[] { NightClockSeconds, false, true });
+        }
+
+        /// <summary>Waits until the face shows the call in <paramref name="state"/> with <paramref name="letters"/>.</summary>
+        private IEnumerator UntilCall(CallDisplayView call, CallState state, string letters)
+        {
+            float deadline = Time.time + OpenTimeout;
+            while (!call.IsVisible || _scene.Ui.Call.State != state || call.Letters != letters)
+            {
+                Assert.Less(Time.time, deadline, $"the face shows the call {state} with {letters}");
+                yield return null;
+            }
+
+            yield return RealRoverScene.WaitSeconds(1f);
+            Assert.IsTrue(call.IsVisible, "and holds it");
         }
 
         /// <summary>The pad built, 07 parked on it with the igniter and metal in the hold, the face open at 1080p.</summary>

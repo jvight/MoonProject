@@ -1022,6 +1022,42 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator AimingAtARackOutline_NamesThePartAndWhereItWasSeen_OnAChipWithNoKey()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            _rig.Ui.Ledger.RecordLookTaught();
+            _rig.Ui.Ledger.RecordDriveTaught();
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Rack, new Vector3(1.9f, 0.7f, 4f), true,
+                "rack.headlamp");
+            float limit = Time.realtimeSinceStartup + 4f;
+            while (!_rig.Ui.Prompt.IsVisible && Time.realtimeSinceStartup < limit)
+            {
+                yield return null;
+            }
+
+            Assert.IsTrue(_rig.Ui.Prompt.IsVisible, "the chip names the outline 07 looks at");
+            Assert.AreEqual(Text("rack.headlamp"), _rig.Ui.Layout.PromptWord.text, "the part and where 07 saw it");
+            Assert.AreEqual(DisplayStyle.None, _rig.Ui.Layout.PromptGlyph.style.display.value, "no key to press");
+            Assert.AreEqual(DisplayStyle.None, _rig.Ui.Layout.PromptHoldRing.style.display.value);
+            Assert.IsFalse(_rig.Ui.Objective.ShowsObjective, "it is the one guidance element");
+
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Build, new Vector3(0f, 0f, 4f), true);
+            limit = Time.realtimeSinceStartup + 6f;
+            while (_rig.Ui.Layout.PromptWord.text != Text(UiKeys.Hint(InteractionKind.Build)) &&
+                   Time.realtimeSinceStartup < limit)
+            {
+                yield return null;
+            }
+
+            Assert.AreEqual(Text(UiKeys.Hint(InteractionKind.Build)), _rig.Ui.Layout.PromptWord.text);
+            Assert.AreEqual(DisplayStyle.Flex, _rig.Ui.Layout.PromptGlyph.style.display.value,
+                "a verb's chip has its key again");
+        }
+
+        [UnityTest]
         public IEnumerator TheCall_ShowsOn07sFace_AfterTwoSecondsStill_AndForThreeOnAChange_NeverBesideAChip()
         {
             InputSystem.AddDevice<Keyboard>();

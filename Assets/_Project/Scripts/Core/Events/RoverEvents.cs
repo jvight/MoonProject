@@ -132,6 +132,12 @@ namespace MoonProject.Core.Events
         /// <summary>The Side Bins, a mirrored pair low between the wheels (M3-25; the Panniers socket, 0.5.5 §3.5).
         /// </summary>
         SideBins = 10,
+
+        /// <summary>
+        /// The Hex Charge Adapter, a Tycho socket kit that lets 07 charge on a hex contact plate such as Kestrel-3's
+        /// (docs/design/opening-v3-purpose.md §5).
+        /// </summary>
+        HexChargeAdapter = 11,
     }
 
     /// <summary>

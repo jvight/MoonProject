@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using MoonProject.Core.Events;
 
 namespace MoonProject.Gameplay
 {
@@ -100,6 +101,16 @@ namespace MoonProject.Gameplay
         [Header("The call from the sky (opening v3 §2)")]
         [Tooltip("The sender's identity and its decode, and where its point of light stands beside Earth.")]
         [SerializeField] private CallSettings _call = new CallSettings();
+
+        [Header("The socket rack at the pad (opening v3 4.3)")]
+        [Tooltip("The rack's bays, left to right, matching Art's Bay_0.. nodes: each part's outline, when 07 sees it " +
+                 "and what fills it. A bay's id is also the string key of its words on the aim chip.")]
+        [SerializeField] private RackBaySettings[] _rackBays =
+        {
+            new RackBaySettings("rack.headlamp", true, string.Empty, RoverKitPiece.LampBar),
+            new RackBaySettings("rack.cell_pack", true, string.Empty, RoverKitPiece.BatterySpine),
+            new RackBaySettings("rack.hex_adapter", false, "rover.hex_adapter", RoverKitPiece.HexChargeAdapter),
+        };
 
         [Header("The failed reply and the raised mast (opening v3 R7)")]
         [Tooltip("When 07 tries to answer the call, and how the antenna mast's segments lift and lock.")]
@@ -220,5 +231,35 @@ namespace MoonProject.Gameplay
         public IReadOnlyList<string> DuskSites => _duskSites ?? Array.Empty<string>();
 
         public float DuskSiteReach => _duskSiteReach;
+
+        public IReadOnlyList<RackBaySettings> RackBays => _rackBays;
+
+        /// <summary>Null when the rack's bays can work, else the first problem.</summary>
+        public string ValidateRack()
+        {
+            if (_rackBays == null || _rackBays.Length == 0)
+            {
+                return "the socket rack has no bays";
+            }
+
+            for (int i = 0; i < _rackBays.Length; i++)
+            {
+                string problem = _rackBays[i] != null ? _rackBays[i].Validate() : $"rack bay {i} is empty";
+                if (problem != null)
+                {
+                    return problem;
+                }
+
+                for (int j = 0; j < i; j++)
+                {
+                    if (string.Equals(_rackBays[j].Id, _rackBays[i].Id, StringComparison.Ordinal))
+                    {
+                        return $"two rack bays share the id '{_rackBays[i].Id}'";
+                    }
+                }
+            }
+
+            return null;
+        }
     }
 }
