@@ -901,8 +901,9 @@ namespace MoonProject.Autoplay
                 yield break;
             }
 
+            // The rack stands beside the pad's dock: 07 reads it from its outer side, the pad behind 07.
             Vector3 point = bay.position;
-            Vector3 stand = point + Flat(Pad() - point).normalized * RackStandOff;
+            Vector3 stand = point + Flat(point - PlacedPosition(StructureIds.ChargingPad)).normalized * RackStandOff;
             yield return _bot.DriveTo(Flat(stand), RelayArrive, "the stand in front of the rack", DriveSeconds);
             yield return _bot.TurnToward(point, "the rack's headlamp bay");
             yield return _bot.Until(() => G.Hints.TryGet(InteractionKind.Rack, out InteractionHint hint) &&

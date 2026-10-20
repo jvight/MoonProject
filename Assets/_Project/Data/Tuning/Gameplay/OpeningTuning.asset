@@ -205,8 +205,8 @@ MonoBehaviour:
     _parts: []
   - _id: supply.six.field
     _anchorId: micro.06
-    _offset: {x: 4.5, y: 0, z: -2.5}
-    _yaw: 30
+    _offset: {x: -2.5, y: 0, z: -1.6}
+    _yaw: 200
     _container: Crate_M
     _yield:
       _metal: 2
