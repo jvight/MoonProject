@@ -129,7 +129,7 @@ namespace MoonProject.Autoplay
             _naive.SetBudget("B8", FreeChoiceBudgetSeconds);
             _naive.Declare("R5", new NextAction("WASD", new[] { drive }, new[] { "night", "module", "habitat", "store" },
                 new[] { "lamp" }));
-            _naive.Declare("B9a", new NextAction("RMB", new string[0], new[] { "tow", "home", "frame" }, null));
+            _naive.Declare("B9a", new NextAction("RMB", new string[0], new[] { "tow", "home", "frame", "hook" }, null));
             _naive.Declare("B9b", new NextAction("B", new[] { "hint.openbuild" }, new[] { "bank", "build", "module" },
                 null));
             // The first nightfall plays by itself (B10): nothing is asked of the player after the bank.

@@ -27,7 +27,7 @@ namespace MoonProject.Autoplay
         /// <summary>Localization keys whose words a chip must carry ("hint.openbuild").</summary>
         public string[] VerbKeys { get; }
 
-        /// <summary>Words (any one) a line must contain to name the goal.</summary>
+        /// <summary>Words (any one) a line, or a chip with no verb key of its own, must contain to name the goal.</summary>
         public string[] LineWords { get; }
 
         /// <summary>Parts (any one) of a lit world cue's name that points at the goal.</summary>
@@ -177,7 +177,7 @@ namespace MoonProject.Autoplay
             ILocalization words = _bot.World.Context.Get<ILocalization>();
             if (ui.ChipInView(out string chip))
             {
-                if (action == null || ChipNames(action, chip, words))
+                if (action == null || ChipNames(action, chip, words) || Contains(chip, action.LineWords))
                 {
                     return "chip '" + chip + "'";
                 }
