@@ -102,6 +102,8 @@ namespace MoonProject.Gameplay
 
         public bool CarriesIgniter => _kit.CarriesIgniter;
 
+        public bool CutterSputtered => _kit.Sputtered;
+
         public bool CanFitIgniter => _kit.CanFitIgniter;
 
         public bool IgniterFitted => _kit.IgniterFitted;

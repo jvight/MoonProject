@@ -82,6 +82,10 @@ namespace MoonProject.Gameplay
         [Tooltip("Cells of charge that end the crawl, so it never flickers on and off at empty.")]
         [Range(0.05f, 1f)] [SerializeField] private float _exitMargin = 0.25f;
 
+        [Header("The range ring (opening v3 R3 and R9)")]
+        [Tooltip("The edge of what 07 can reach and come back from: how it is worked out and how it shows.")]
+        [SerializeField] private RangeRingSettings _rangeRing = new RangeRingSettings();
+
         [Header("The opening reserve (opening v3, R2)")]
         [Tooltip("Share of 07's top speed while the opening runs on the reserve, until the first charge. It caps top " +
                  "speed only: acceleration and turning are untouched, so 07 still feels quick off the line.")]
@@ -148,6 +152,19 @@ namespace MoonProject.Gameplay
         public float UphillMultiplier => _uphillMultiplier;
         public float DownhillMultiplier => _downhillMultiplier;
         public float FullSlope => _fullSlope;
+        public RangeRingSettings RangeRing => _rangeRing;
+
+        /// <summary>
+        /// What driving costs on a slope of <paramref name="slopeDegrees"/> (positive uphill), against the flat's 1:
+        /// dearer uphill, cheaper downhill, in proportion to the slope up to <see cref="FullSlope"/>.
+        /// </summary>
+        public float SlopeMultiplier(float slopeDegrees)
+        {
+            float share = Mathf.Clamp01(Mathf.Abs(slopeDegrees) / _fullSlope);
+            return slopeDegrees >= 0f
+                ? Mathf.Lerp(1f, _uphillMultiplier, share)
+                : Mathf.Lerp(1f, _downhillMultiplier, share);
+        }
         public float SlopeEase => _slopeEase;
         public float BoostMultiplier => _boostMultiplier;
         public float BeamSecondsPerCell => _beamSecondsPerCell;

@@ -8,10 +8,11 @@ namespace MoonProject.Gameplay
     /// 07's start kit (docs/design/opening-v2.md §10): drive with lamps, scan and build work from the wake; the cutter
     /// is FAULT (no igniter) until the spare igniter from the lander's open crate is fitted while 07 stands on the pad
     /// it built (B6); the solar wing stays JAMMED (no stand-still trickle), the antenna RECEIVE ONLY and sockets 1-2
-    /// EMPTY through the opening. Saved as "gameplay.startkit": whether the igniter is fitted, and whether 07 carries
-    /// it. Plain state; allocation-free.
+    /// EMPTY through the opening. The first refused cut sputters (<see cref="CutterSputtered"/>, opening v3 slice 1.6),
+    /// once per game. Saved as "gameplay.startkit": whether the igniter is fitted, whether 07 carries it, and whether the
+    /// cutter has sputtered. Plain state; allocation-free.
     /// </summary>
-    public sealed class RoverStartKit : IRoverSystems
+    public sealed class RoverStartKit : IRoverSystems, IDisposable
     {
         private static readonly RoverSystem[] Systems =
         {
@@ -24,6 +25,7 @@ namespace MoonProject.Gameplay
         private readonly Func<bool> _docked;
         private readonly string _igniter;
         private readonly bool _fieldFit;
+        private readonly IDisposable _refusals;
         private bool _carriedOnLoad;
 
         /// <param name="docked">07 stands on a pad it built (the cutter socket is reached there, B6).</param>
@@ -38,10 +40,14 @@ namespace MoonProject.Gameplay
             _igniter = !string.IsNullOrEmpty(igniter)
                 ? igniter
                 : throw new ArgumentException("The spare igniter needs its part id.", nameof(igniter));
+            _refusals = events.Subscribe<CutterRefused>(OnCutterRefused);
         }
 
         /// <summary>The cutter has its igniter: it cuts.</summary>
         public bool IgniterFitted { get; private set; }
+
+        /// <summary>The cutter has tried to light without its igniter and sputtered (once per game).</summary>
+        public bool Sputtered { get; private set; }
 
         public string IgniterPartId => _igniter;
 
@@ -102,7 +108,10 @@ namespace MoonProject.Gameplay
 
         public StartKitSaveData Capture()
         {
-            return new StartKitSaveData { igniterFitted = IgniterFitted, igniterCarried = _hold.HasPart(_igniter) };
+            return new StartKitSaveData
+            {
+                igniterFitted = IgniterFitted, igniterCarried = _hold.HasPart(_igniter), cutterSputtered = Sputtered,
+            };
         }
 
         public void Restore(StartKitSaveData data)
@@ -114,6 +123,24 @@ namespace MoonProject.Gameplay
 
             IgniterFitted = data.igniterFitted;
             _carriedOnLoad = data.igniterCarried;
+            Sputtered = data.cutterSputtered;
+        }
+
+        public void Dispose()
+        {
+            _refusals.Dispose();
+        }
+
+        /// <summary>The first refused cut sputters: the cutter tries to light with no igniter.</summary>
+        private void OnCutterRefused(CutterRefused refused)
+        {
+            if (Sputtered || IgniterFitted)
+            {
+                return;
+            }
+
+            Sputtered = true;
+            _events.Publish(new CutterSputtered(refused.Point));
         }
     }
 }

@@ -56,8 +56,7 @@ MonoBehaviour:
       _optics: 0
     _forStructure: charging_pad
     _startsOpen: 1
-    _parts:
-    - part.igniter
+    _parts: []
   - _id: supply.array.panels
     _anchorId: FallenSolarArray
     _offset: {x: 5, y: 0, z: 0}
@@ -82,6 +81,19 @@ MonoBehaviour:
     _forStructure: solar_array
     _startsOpen: 0
     _parts: []
+  - _id: supply.array.spares
+    _anchorId: FallenSolarArray
+    _offset: {x: 4.4, y: 0, z: 3.6}
+    _yaw: 90
+    _container: Crate_M
+    _yield:
+      _metal: 0
+      _wiring: 0
+      _optics: 0
+    _forStructure: solar_array
+    _startsOpen: 1
+    _parts:
+    - part.igniter
   - _id: supply.habitat.reel
     _anchorId: HabitatModules
     _offset: {x: -3.3, y: 0, z: -6.5}

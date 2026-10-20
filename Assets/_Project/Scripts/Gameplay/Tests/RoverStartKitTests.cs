@@ -39,6 +39,7 @@ namespace MoonProject.Gameplay.Tests
         [TearDown]
         public void TearDown()
         {
+            _kit.Dispose();
             Object.DestroyImmediate(_catalog);
         }
 
@@ -118,6 +119,37 @@ namespace MoonProject.Gameplay.Tests
             _kit.TryFitIgniter();
             Assert.IsTrue(cutter.Ready, "the igniter fitted, the cutter cuts");
             Object.DestroyImmediate(tuning);
+        }
+
+        [Test]
+        public void TheFirstRefusedCut_Sputters_OnceAGame_EvenAcrossALoad()
+        {
+            var sputters = new List<CutterSputtered>();
+            _events.Subscribe<CutterSputtered>(sputters.Add);
+            var point = new Vector3(1f, 2f, 3f);
+            _events.Publish(new CutterRefused(point));
+            _events.Publish(new CutterRefused(point));
+            Assert.AreEqual(1, sputters.Count, "the first attempt sputters, the next only refuses");
+            Assert.AreEqual(point, sputters[0].Point);
+            Assert.AreEqual(RoverSystemState.Fault, _kit.StateOf(RoverSystem.Cutter), "still FAULT until fitted");
+
+            var loaded = new RoverStartKit(_events, _hold, () => _docked, Igniter, false);
+            loaded.Restore(_kit.Capture());
+            _events.Publish(new CutterRefused(point));
+            Assert.AreEqual(1, sputters.Count, "a loaded game has sputtered already");
+            loaded.Dispose();
+        }
+
+        [Test]
+        public void AFittedCutter_NeverSputters()
+        {
+            var sputters = new List<CutterSputtered>();
+            _events.Subscribe<CutterSputtered>(sputters.Add);
+            _hold.TryAddPart(Igniter);
+            _docked = true;
+            Assert.IsTrue(_kit.TryFitIgniter());
+            _events.Publish(new CutterRefused(Vector3.zero));
+            Assert.IsEmpty(sputters);
         }
 
         [Test]

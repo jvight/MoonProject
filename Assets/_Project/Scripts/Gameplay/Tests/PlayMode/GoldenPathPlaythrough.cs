@@ -32,9 +32,10 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// stands still until the objective line reads on screen, and on each verb's first use its prompt chip must show
     /// (a missing one is a guidance gap, listed at the end). 07 drives to the landed lander, scans its cargo bay's two
     /// fragments (the charging pad), collects the lander's open crate (the cutter is FAULT: no igniter), builds the pad
-    /// on the apron, charges on it from the lander's reserve until the reserve gives out and fits the spare igniter
-    /// while docked, drives to the Lumen ruins and scans the fallen
-    /// array (solar), reads the habitat's airlock panel, cuts the array's panels and junction box, builds the array
+    /// on the apron, charges on it from the lander's reserve until the reserve gives out, drives to the Lumen ruins
+    /// and scans the fallen array (solar), reads the habitat's airlock panel, tries to cut the array's crates (the
+    /// cutter sputters), takes the spare igniter from the rack beside the array and fits it where 07 stands, cuts
+    /// the array's panels and junction box, builds the array
     /// (Power on), scans the habitat (battery bank), cuts its cable reel and power module and builds it (night-ready),
     /// waits out the first sunset, scans the radio tower (antenna) and cuts its mast sections, feed cable and dish
     /// panels, and builds the mast: the west signal ends the opening. Every objective line is
@@ -62,6 +63,10 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float LensFacing = 25f;
         private const float FacedWithin = 8f;
         private const float SealStandOff = 1.6f;
+
+        /// <summary>The lander's open charger kit (B4) and the CUTTER SPARES rack by the fallen array (B7).</summary>
+        private const string ChargerKit = "supply.lander.open";
+        private const string SparesRack = "supply.array.spares";
 
         /// <summary>
         /// Throttle (0..1) 07 creeps the last metres to a seal or a scan target at, steering at it: it stops short and
@@ -274,7 +279,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return ExpectLine(OpeningKeys.ScanLander, "B3: at the lander");
             yield return ScanTheSet("ruin." + ScanTuning.LanderCargoId, "the lander's cargo bay");
             Assert.IsTrue(Known(StructureIds.ChargingPad), "the cargo bay's two fragments teach the pad");
-            yield return CollectTheOpenCrate();
+            yield return TakeFromTheOpenCrate(ChargerKit, "B4: collect the lander's open crate");
             yield return ExpectLine(OpeningKeys.BuildPad, "B5: the hold covers the pad");
             Vector3 pad = Anchor("place.apron").Position;
             yield return Build(StructureIds.ChargingPad, pad, "B5: the charging pad on the apron");
@@ -285,6 +290,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return ScanTheSet("ruin.FallenSolarArray", "the fallen solar array");
             yield return ReadTheAirlockPanel();
             yield return ExpectLine(OpeningKeys.CutOptics, "B7: the array's own panels and junction box cover it");
+            yield return TryTheFaultedCutter("FallenSolarArray");
+            yield return ExpectLine(OpeningKeys.TakeIgniter, "B7: the cutter sputtered, the rack is pointed at");
+            yield return TakeFromTheOpenCrate(SparesRack, "B7: take the spare igniter from the rack");
+            yield return ExpectLine(OpeningKeys.FitIgniter, "B7: the spare igniter in the hold");
+            yield return FitTheIgniter();
+            yield return ExpectLine(OpeningKeys.CutOptics, "B7: the cutter works");
             yield return CutTheCrates("FallenSolarArray", "the fallen array's panels and junction box");
             yield return ExpectLine(OpeningKeys.BuildSolar, "B8: the array's cost is covered");
             yield return DriveTo(RuinsGate(), 3f, "out of the Lumen ruins");
@@ -529,32 +540,86 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// B4: the objective line says to collect the parts; up to the lander's open crate, where a held E takes Metal 2,
-        /// Wiring 1 and the spare igniter.
+        /// An open crate (B4: the lander's charger kit, once the line says to collect the parts; B7: the spares rack by
+        /// the fallen array): up to it, where a held E takes everything it holds.
         /// </summary>
-        private IEnumerator CollectTheOpenCrate()
+        private IEnumerator TakeFromTheOpenCrate(string cacheId, string what)
         {
             Begin();
-            SealedContainer crate = _gameplay.Containers.Find("supply.lander.open");
-            Assert.IsTrue(crate.StandsOpen, "the lander's crate stands open from the start: no cutting before B6");
-            Assert.IsFalse(_gameplay.StartKit.CarriesIgniter, "the crate gives nothing until 07 takes it");
-            yield return ExpectLine(OpeningKeys.CollectParts, "B4: the cutter is FAULT, the crate holds parts");
+            SealedContainer crate = _gameplay.Containers.Find(cacheId);
+            Assert.IsTrue(crate.StandsOpen, $"{cacheId} stands open from the start: no cutting before the igniter");
+            Assert.IsFalse(Taken(cacheId), $"{cacheId} gives nothing until 07 takes it");
+            if (cacheId == ChargerKit)
+            {
+                yield return ExpectLine(OpeningKeys.CollectParts, "B4: the cutter is FAULT, the crate holds parts");
+            }
+
             if (!_gameplay.Hints.TryGet(InteractionKind.PickUp, out _))
             {
-                // Out of the crate's reach after the scan: drive up to it, as a player would.
+                // Out of the crate's reach: drive up to it, as a player would.
                 Vector3 side = crate.SealSide(_context.Get<IRoverState>().Position);
                 Vector3 front = Flat(crate.CutPoint.position) + side * SealStandOff;
-                yield return DriveTo(front + side * SealLineUp, LineUpArrive, "a line-up for the open crate");
-                yield return DriveTo(front, 1f, "the open crate");
+                yield return DriveTo(front + side * SealLineUp, LineUpArrive, "a line-up for " + cacheId);
+                yield return DriveTo(front, 1f, cacheId);
             }
 
             yield return Until(() => _gameplay.Hints.TryGet(InteractionKind.PickUp, out _), FollowTimeout,
-                "the open crate offers its parts (Pick up)");
+                cacheId + " offers what it holds (Pick up)");
             Press(_keyboard.eKey);
-            yield return Until(() => _gameplay.StartKit.CarriesIgniter, FollowTimeout, "held E takes the spare igniter");
+            yield return Until(() => Taken(cacheId), FollowTimeout, "held E takes what " + cacheId + " holds");
             Release(_keyboard.eKey);
-            Capture("04-the-open-crate");
-            End("B4: collect the lander's open crate", $"the igniter; hold {Hold()}");
+            Capture(cacheId == ChargerKit ? "04-the-open-crate" : "07-the-spares-rack");
+            End(what, $"igniter in the hold {_gameplay.StartKit.CarriesIgniter}; hold {Hold()}");
+        }
+
+        /// <summary>Open crate <paramref name="cacheId"/> has given everything it held to 07's hold.</summary>
+        private bool Taken(string cacheId)
+        {
+            SupplyCaches caches = _gameplay.Opening.Caches;
+            for (int i = 0; i < caches.Count; i++)
+            {
+                if (caches.Get(i).Id == cacheId)
+                {
+                    return caches.Left(i).IsFree && !caches.PartLeft(i);
+                }
+            }
+
+            Assert.Fail($"the opening has a supply crate {cacheId}");
+            return true;
+        }
+
+        /// <summary>
+        /// B7: the first try at <paramref name="frame"/>'s sealed crates before the igniter is fitted: a held E at the
+        /// first seal, and the faulted cutter sputters (CUTTER · NO IGNITER), cutting nothing.
+        /// </summary>
+        private IEnumerator TryTheFaultedCutter(string frame)
+        {
+            Begin();
+            SupplyCaches caches = _gameplay.Opening.Caches;
+            for (int i = 0; i < caches.Count; i++)
+            {
+                SupplyCache cache = caches.Get(i);
+                SealedContainer crate = _gameplay.Containers.Find(cache.Id);
+                if (cache.AnchorId != frame || crate.Opened)
+                {
+                    continue;
+                }
+
+                yield return ApproachTheSeal(cache, crate);
+                yield return FirstUse("cut: hold E", VerbCutKey);
+                Press(_keyboard.eKey);
+                yield return Until(() => _gameplay.StartKit.Sputtered, FollowTimeout,
+                    $"held E at the seal of {cache.Id} sputters the faulted cutter",
+                    () => $"crate candidate {_gameplay.Containers.Candidate?.Id ?? "none"}, cutter " +
+                          $"{_gameplay.StartKit.StateOf(RoverSystem.Cutter)}");
+                Release(_keyboard.eKey);
+                Assert.AreEqual(0f, crate.Progress, "the faulted cutter cuts nothing");
+                Capture("07-the-cutter-sputters");
+                End("B7: the faulted cutter sputters", $"at {cache.Id}: CUTTER · NO IGNITER");
+                yield break;
+            }
+
+            Assert.Fail($"{frame} has a sealed crate for the cutter to try");
         }
 
         /// <summary>Cuts every sealed crate standing by <paramref name="frame"/> (an anchor or a ruin piece).</summary>
@@ -572,34 +637,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                     continue;
                 }
 
-                Vector3 side = ClearSide(crate.CutPoint.position, crate.SealSide(_context.Get<IRoverState>().Position),
-                    SealStandOff,
-                    $"{crate.Id} (its seal at {crate.CutPoint.position}; its frame {Frame(cache.AnchorId)})",
-                    crate.Root);
-                Vector3 front = Flat(crate.CutPoint.position) + side * SealStandOff;
-                if (Clear(crate.CutPoint.position + side * (SealStandOff + SealLineUp), crate.Root))
-                {
-                    // Out to the open ground before the seal first (CrateApproachSessions keeps it clear): a
-                    // straight run between crates may cross a ruin.
-                    yield return DriveTo(front + side * (SealLineUp + SealOpenGround), LineUpArrive,
-                        "the open ground before " + cache.Id);
-                    yield return DriveTo(front + side * SealLineUp, LineUpArrive, "a line-up for " + cache.Id);
-                }
-
-                yield return DriveTo(front, SealArrive, "the seal of " + cache.Id, ApproachThrottle,
-                    () => $"the crate at {crate.Root.position} facing {crate.Root.forward}; its frame " +
-                          $"{cache.AnchorId}: {Frame(cache.AnchorId)}");
-                yield return NoseIn(crate);
-                for (int attempt = 1; attempt < SealTries && _gameplay.Containers.Candidate != crate; attempt++)
-                {
-                    // Too close to swing onto a small crate's seal: back straight off for room to turn, and nose in
-                    // again from there, as a player would.
-                    _pilot.Reverse = UnstickReverseThrottle;
-                    yield return new WaitForSeconds(SealBackOffSeconds);
-                    _pilot.Reverse = 0f;
-                    yield return NoseIn(crate);
-                }
-
+                yield return ApproachTheSeal(cache, crate);
                 yield return FirstUse("cut: hold E", VerbCutKey);
                 Press(_keyboard.eKey);
                 yield return Until(() => crate.Opened, SealCutTimeout, $"held E cuts the seal of {cache.Id}",
@@ -620,6 +658,41 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             Assert.Greater(cut, 0, $"{what}: crates to cut");
             End($"Cut {what}", $"{cut} crate(s); hold {Hold()}");
+        }
+
+        /// <summary>
+        /// Out to the open ground before <paramref name="crate"/>'s seal, in to it and nosing at it until the crate
+        /// claims E, backing off for room to turn when too close, as a player would.
+        /// </summary>
+        private IEnumerator ApproachTheSeal(SupplyCache cache, SealedContainer crate)
+        {
+            Vector3 side = ClearSide(crate.CutPoint.position, crate.SealSide(_context.Get<IRoverState>().Position),
+                SealStandOff,
+                $"{crate.Id} (its seal at {crate.CutPoint.position}; its frame {Frame(cache.AnchorId)})",
+                crate.Root);
+            Vector3 front = Flat(crate.CutPoint.position) + side * SealStandOff;
+            if (Clear(crate.CutPoint.position + side * (SealStandOff + SealLineUp), crate.Root))
+            {
+                // Out to the open ground before the seal first (CrateApproachSessions keeps it clear): a
+                // straight run between crates may cross a ruin.
+                yield return DriveTo(front + side * (SealLineUp + SealOpenGround), LineUpArrive,
+                    "the open ground before " + cache.Id);
+                yield return DriveTo(front + side * SealLineUp, LineUpArrive, "a line-up for " + cache.Id);
+            }
+
+            yield return DriveTo(front, SealArrive, "the seal of " + cache.Id, ApproachThrottle,
+                () => $"the crate at {crate.Root.position} facing {crate.Root.forward}; its frame " +
+                      $"{cache.AnchorId}: {Frame(cache.AnchorId)}");
+            yield return NoseIn(crate);
+            for (int attempt = 1; attempt < SealTries && _gameplay.Containers.Candidate != crate; attempt++)
+            {
+                // Too close to swing onto a small crate's seal: back straight off for room to turn, and nose in
+                // again from there, as a player would.
+                _pilot.Reverse = UnstickReverseThrottle;
+                yield return new WaitForSeconds(SealBackOffSeconds);
+                _pilot.Reverse = 0f;
+                yield return NoseIn(crate);
+            }
         }
 
         /// <summary>
@@ -703,11 +776,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return UntilReached(OpeningMilestone.FirstCharge, "FirstCharge: the eclipse ends");
             yield return Until(() => _gameplay.PadLock.Raised, FollowTimeout, "the pad's dock lock rises round 07");
             Capture("06-the-pad-locks");
-            yield return ExpectLine(OpeningKeys.FitIgniter, "B6: charging, the igniter in the hold");
-            RoverStartKit kit = _gameplay.StartKit;
-            Assert.IsTrue(kit.CanFitIgniter, "docked on its pad, the cutter socket takes the igniter");
-            yield return FitTheIgniter();
-            Assert.AreEqual(RoverSystemState.Ok, kit.StateOf(RoverSystem.Cutter), "the cutter's pilot light is on");
             yield return Until(() => !battery.IsCharging, battery.Cells * 6f, "07 charges full");
             Assert.IsTrue(_gameplay.Opening.Port.Spent, "the lander's old cells gave out after one charge");
             End("B6: charge on the pad", $"{battery.Charge01:P0}, LANDER RESERVE · 0%");
@@ -830,12 +898,13 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// B6's fit, as a player does it: Tab opens 07's face screen, the arrows walk the focus to the cutter's socket,
-        /// Enter fits the spare igniter there, Tab closes the screen.
+        /// B7's fit where 07 stands (a field swap), as a player does it: Tab opens 07's face screen, the arrows walk
+        /// the focus to the cutter's socket, Enter fits the spare igniter there, Tab closes the screen.
         /// </summary>
         private IEnumerator FitTheIgniter()
         {
             RoverStartKit kit = _gameplay.StartKit;
+            Assert.IsTrue(kit.CanFitIgniter, "off the pad, the cutter socket takes the field-swap igniter");
             yield return FirstUse("fit the igniter: Tab", VerbFitKey);
             yield return Tap(_keyboard.tabKey);
             yield return Until(() => _hud.FaceFocus.Length > 0, FollowTimeout, "the face screen opens with a focus");
