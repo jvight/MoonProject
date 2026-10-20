@@ -26,9 +26,6 @@ namespace MoonProject.World.Editor
         private const string FallenSolarArray = "FallenSolarArray";
         private const string SolarCellMaterial = "R1_SolarCell";
 
-        // Art's amber lamp lens, lit for relay.1's service cabinet.
-        private const string LampLensSlot = "R1_LampAmber";
-
         [MoonBuilder("World/Settings", 200)]
         public static void BuildSettings()
         {
@@ -274,9 +271,6 @@ namespace MoonProject.World.Editor
             moduleHalo.SetFloat("_Radius", moduleLamp.HaloRadius);
             moduleHalo.SetFloat("_MinAngleTan", Mathf.Tan(moduleLamp.HaloMinAngle * Mathf.Deg2Rad));
             GeneratedAssets.CreateOrReplace(moduleHalo, WorldPaths.ModuleLampHaloMaterial);
-            var cabinetLamp = new Material(LoadMaterial(WorldPaths.R1Material(LampLensSlot)));
-            cabinetLamp.SetFloat("_EmissionStrength", LoadSettings().Landmarks.Relay1Site.LampLensGlow);
-            GeneratedAssets.CreateOrReplace(cabinetLamp, WorldPaths.Relay1CabinetLampMaterial);
             AssetDatabase.SaveAssets();
         }
 
@@ -442,17 +436,6 @@ namespace MoonProject.World.Editor
             }
 
             return texture;
-        }
-
-        private static Material LoadMaterial(string path)
-        {
-            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
-            if (material == null)
-            {
-                throw new InvalidOperationException($"Material at '{path}' not found.");
-            }
-
-            return material;
         }
     }
 }

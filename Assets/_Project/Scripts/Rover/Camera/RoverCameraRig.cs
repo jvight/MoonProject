@@ -45,6 +45,9 @@ namespace MoonProject.Rover
         /// <summary>Smallest share of the orbit a moment leaves, so adopting the wide yaw never divides by 0.</summary>
         private const float MinOrbitShare = 0.05f;
 
+        /// <summary>The tow's sideways swing follows its solution with a half-life this many times shorter than its ease.</summary>
+        private const float TowYawHalfLivesPerEase = 3f;
+
         /// <summary>Blend weight below this is settled enough to treat a framed shot or face-inspect mode as inactive.</summary>
         private const float ShotWeightEpsilon = 0.01f;
 
@@ -82,6 +85,17 @@ namespace MoonProject.Rover
         private bool _paused;
         private bool _crawling;
         private float _crawl;
+        private bool _towing;
+        private float _towT;
+        private bool _towSolved;
+        private Vector3 _towLook;
+        private float _towElevation;
+        private float _towScale = 1f;
+        private float _towYaw;
+        private float _towYawT;
+        private float _towSide = 1f;
+        private ITowLine _towLine;
+        private Renderer[] _towRenderers = System.Array.Empty<Renderer>();
         private float _freeLook;
         private float _momentYaw;
         private float _momentLift;
@@ -267,6 +281,8 @@ namespace MoonProject.Rover
                 context.Events.Subscribe<RadioHopListChanged>(OnHopListChanged),
                 context.Events.Subscribe<RoverPlaced>(OnPlaced),
                 context.Events.Subscribe<LowPowerChanged>(OnLowPowerChanged),
+                context.Events.Subscribe<TowAttached>(OnTowAttached),
+                context.Events.Subscribe<TowReleased>(_ => _towing = false),
                 context.Events.Subscribe<ChargingChanged>(OnChargingChanged),
                 context.Events.Subscribe<FacePageChanged>(OnFacePageChanged),
             };
@@ -499,6 +515,7 @@ namespace MoonProject.Rover
             StepWideShot(deltaTime);
             StepHeldShot(viewInput, deltaTime);
             StepMomentFraming(deltaTime);
+            StepTowLook(deltaTime);
             _beam.Framing.Step(deltaTime);
             _orbitState.Step(OrbitInput(look, recenter), deltaTime);
             StepTargetFraming(look, deltaTime);
@@ -509,6 +526,8 @@ namespace MoonProject.Rover
 
             _bumpSpring.Step(0f, _tuning.BumpFrequency, _tuning.BumpDamping, deltaTime);
             _crawl = Smoothing.Damp(_crawl, _crawling ? 1f : 0f, _tuning.CrawlHalfLife, deltaTime);
+            _towT = Mathf.MoveTowards(_towT, _towing ? 1f : 0f, deltaTime / _tuning.TowEaseSeconds);
+            _towYawT = Mathf.MoveTowards(_towYawT, _towing ? 1f : 0f, deltaTime / _tuning.TowYawEaseSeconds);
             ApplyOrbit();
         }
 
@@ -849,7 +868,7 @@ namespace MoonProject.Rover
         private void PlaceTarget(float deltaTime = 0f, bool snap = true)
         {
             float targetHeight = _tuning.TargetHeight + _wallCompression * _tuning.WallMaxTargetLift;
-            Vector3 point = _rover.Position + Vector3.up * targetHeight + _momentShift + _framing.Shift;
+            Vector3 point = _rover.Position + Vector3.up * targetHeight + _momentShift + _framing.Shift + _towLook;
             float cut = _beam.Framing.Weight;
             if (cut > 0f)
             {
@@ -908,11 +927,120 @@ namespace MoonProject.Rover
             elevation = _orbitState.Elevation + _momentLift + _wallCompression * _tuning.WallMaxPitchLift
                 - _crawl * _tuning.CrawlLower;
             radius = _tuning.Distance * (1f + _momentPullBack) * (1f + _crawl * _tuning.CrawlPullBack);
+            if (_towT > 0f || _towYawT > 0f)
+            {
+                BlendTowFraming(ref yaw, ref elevation, ref radius);
+            }
+
             float cutFrame = _beam.Framing.Weight;
             if (cutFrame > 0f)
             {
                 BlendCutFraming(cutFrame, ref yaw, ref elevation, ref radius);
             }
+        }
+
+        /// <summary>07 hooked a load: its renderers are the obstacle the chase camera keeps clear of.</summary>
+        private void OnTowAttached(TowAttached attached)
+        {
+            if (_towLine == null)
+            {
+                _context.TryGet(out _towLine);
+            }
+
+            _towRenderers = _towLine != null && _towLine.TryFindLoad(attached.TowId, out Transform root)
+                ? root.GetComponentsInChildren<Renderer>()
+                : System.Array.Empty<Renderer>();
+            _towing = _towRenderers.Length > 0;
+            _towSolved = false;
+        }
+
+        /// <summary>
+        /// While 07 tows, the look point moves part of the way from 07 toward the load (eased with the tow), so the
+        /// rope and the load stay in frame beside 07 instead of trailing out of the shot.
+        /// </summary>
+        private void StepTowLook(float deltaTime)
+        {
+            Vector3 wanted = Vector3.zero;
+            if (_towT > 0f && TowLoadBounds(out Bounds load))
+            {
+                float weight = _towT * _towT * (3f - 2f * _towT);
+                wanted = (load.center - _rover.Position) * (_tuning.TowLookShare * weight);
+            }
+
+            _towLook = Smoothing.Damp(_towLook, wanted, _tuning.TowSolveHalfLife, deltaTime);
+        }
+
+        /// <summary>The bounds of everything the tow holds; false when it holds nothing.</summary>
+        private bool TowLoadBounds(out Bounds load)
+        {
+            load = default;
+            bool hasLoad = false;
+            for (int i = 0; i < _towRenderers.Length; i++)
+            {
+                if (_towRenderers[i] == null)
+                {
+                    continue;
+                }
+
+                if (!hasLoad)
+                {
+                    load = _towRenderers[i].bounds;
+                    hasLoad = true;
+                }
+                else
+                {
+                    load.Encapsulate(_towRenderers[i].bounds);
+                }
+            }
+
+            return hasLoad;
+        }
+
+        /// <summary>
+        /// While 07 tows, the camera rises and draws back just enough to see 07 over the load behind it, with its eye
+        /// outside the load (<see cref="TowFraming"/>), eased in and out by the hook and the release; the player's own
+        /// swing of the view is the one it solves for, so they can still orbit freely.
+        /// </summary>
+        private void BlendTowFraming(ref float yaw, ref float elevation, ref float radius)
+        {
+            float weight = _towT * _towT * (3f - 2f * _towT);
+            float solvedElevation = elevation;
+            float solvedScale = 1f;
+            float solvedYaw = 0f;
+            if (TowLoadBounds(out Bounds load))
+            {
+                TowFraming.SolveSide(_target.position, _targetYaw + yaw, elevation, radius, load, _tuning.TowMargin,
+                    _tuning.TowMaxElevation, _tuning.TowMaxRadiusScale, _tuning.TowMaxYawSwing, _towSide,
+                    out solvedElevation, out solvedScale, out solvedYaw);
+                if (solvedYaw != 0f)
+                {
+                    _towSide = Mathf.Sign(solvedYaw);
+                }
+            }
+
+            float follow = Time.deltaTime > 0f
+                ? Smoothing.Damp(0f, 1f, _tuning.TowSolveHalfLife, Time.deltaTime)
+                : 1f;
+            if (!_towSolved)
+            {
+                _towElevation = solvedElevation;
+                _towScale = solvedScale;
+                _towYaw = solvedYaw;
+                _towSolved = true;
+            }
+            else
+            {
+                _towElevation = Mathf.Lerp(_towElevation, solvedElevation, follow);
+                _towScale = Mathf.Lerp(_towScale, solvedScale, follow);
+                float yawFollow = Time.deltaTime > 0f
+                    ? Smoothing.Damp(0f, 1f, _tuning.TowYawEaseSeconds / TowYawHalfLivesPerEase, Time.deltaTime)
+                    : 1f;
+                _towYaw = Mathf.Lerp(_towYaw, solvedYaw, yawFollow);
+            }
+
+            elevation = Mathf.Lerp(elevation, _towElevation, weight);
+            radius *= 1f + weight * (_towScale - 1f);
+            yaw += _towYawT * _towYawT * (3f - 2f * _towYawT) * _towYaw;
         }
 
         /// <summary>
