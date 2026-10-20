@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using NUnit.Framework;
@@ -34,6 +35,15 @@ namespace MoonProject.Rover.PlayModeTests
         private const int MetalUnits = 5;
         private const int Width = 1920;
         private const int Height = 1080;
+
+        // The wake's parts as rover now times them (PostSettings), and the strip's beat.
+        private const float WakePowerOnSeconds = 1.2f;
+        private const float WakeLogoSeconds = 5f;
+        private const float WakeLoadSeconds = 2.4f;
+        private const float StripEverySeconds = 0.25f;
+        private const int StripColumns = 6;
+        private const int TileWidth = 384;
+        private const int TileHeight = 256;
 
         // From in front of 07 and a little to its side, so the CRT face reads (as the face-inventory captures).
         private const float FrontBearing = 162f;
@@ -197,6 +207,120 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreEqual(3, call.AccentLetters, "the answer decodes two more letters into the accent");
             Capture("call_answered_night");
             CaptureFace("call_answered_panel");
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator TheWakeOn07sFace_AsAStrip_EveryQuarterSecond()
+        {
+            Directory.CreateDirectory(Folder);
+            _keyboard = InputSystem.AddDevice<Keyboard>();
+            yield return _scene.Boot();
+            var face = _scene.Ui.FaceTexture as RenderTexture;
+            Assert.IsNotNull(face, "the UI draws 07's face into a render texture");
+            var tiles = new List<Texture2D>();
+            float[] parts = { WakePowerOnSeconds, WakeLogoSeconds, WakeLoadSeconds };
+            float clock = 0f;
+            float nextShot = 0f;
+            for (int part = 0; part < parts.Length; part++)
+            {
+                if (part == 0)
+                {
+                    _scene.Context.Events.Publish(new CrtPowerOn(parts[part]));
+                }
+                else if (part == 1)
+                {
+                    _scene.Context.Events.Publish(new BootLogoBegan(parts[part]));
+                }
+                else
+                {
+                    _scene.Context.Events.Publish(new BootLoadBegan(parts[part]));
+                }
+
+                float end = clock + parts[part];
+                while (clock < end - 1e-4f)
+                {
+                    yield return null;
+                    clock += FrameTime;
+                    if (clock + 1e-4f >= nextShot)
+                    {
+                        tiles.Add(Tile(face));
+                        nextShot += StripEverySeconds;
+                    }
+                }
+            }
+
+            Texture2D strip = Grid(tiles);
+            try
+            {
+                FrameCapture.WritePng(strip, Path.Combine(Folder, "wake_face_strip.png"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(strip);
+                foreach (Texture2D tile in tiles)
+                {
+                    Object.DestroyImmediate(tile);
+                }
+            }
+
+            Assert.AreEqual(Mathf.CeilToInt((WakePowerOnSeconds + WakeLogoSeconds + WakeLoadSeconds) /
+                                            StripEverySeconds), tiles.Count, 1, "a frame every quarter second");
+        }
+
+        /// <summary>The face panel now, small, as one tile of the strip.</summary>
+        private static Texture2D Tile(RenderTexture face)
+        {
+            RenderTexture small = RenderTexture.GetTemporary(TileWidth, TileHeight, 0);
+            RenderTexture previous = RenderTexture.active;
+            var tile = new Texture2D(TileWidth, TileHeight, TextureFormat.RGBA32, false);
+            try
+            {
+                Graphics.Blit(face, small);
+                RenderTexture.active = small;
+                tile.ReadPixels(new Rect(0f, 0f, TileWidth, TileHeight), 0, 0);
+                tile.Apply();
+            }
+            finally
+            {
+                RenderTexture.active = previous;
+                RenderTexture.ReleaseTemporary(small);
+            }
+
+            return tile;
+        }
+
+        /// <summary>The tiles in reading order, <see cref="StripColumns"/> to a row, on the face's dark.</summary>
+        private static Texture2D Grid(List<Texture2D> tiles)
+        {
+            int rows = (tiles.Count + StripColumns - 1) / StripColumns;
+            var grid = new Texture2D(StripColumns * TileWidth, rows * TileHeight, TextureFormat.RGBA32, false);
+            var dark = new Color[grid.width * grid.height];
+            for (int i = 0; i < dark.Length; i++)
+            {
+                dark[i] = Color.black;
+            }
+
+            grid.SetPixels(dark);
+            for (int i = 0; i < tiles.Count; i++)
+            {
+                int column = i % StripColumns;
+                int row = rows - 1 - i / StripColumns;
+                Color[] pixels = tiles[i].GetPixels();
+                for (int p = 0; p < pixels.Length; p++)
+                {
+                    // The panel draws on a clear background: over black, as the CRT shows it.
+                    pixels[p] = new Color(pixels[p].r * pixels[p].a, pixels[p].g * pixels[p].a,
+                        pixels[p].b * pixels[p].a, 1f);
+                }
+
+                grid.SetPixels(column * TileWidth, row * TileHeight, TileWidth, TileHeight, pixels);
+            }
+
+            grid.Apply();
+            return grid;
         }
 
         /// <summary>The sky's clock set to the earthlit night (the sky exposes no setter on its Core interface).</summary>

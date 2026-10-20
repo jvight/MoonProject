@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 using UnityEngine.UIElements;
 using MoonProject.Core;
 
@@ -7,8 +8,9 @@ namespace MoonProject.UI
     /// <summary>
     /// Draws <see cref="BootFace"/> on 07's CRT, in the face panel beside the self-test's column: the waking raster
     /// (phosphor amber, brighter along its middle, so it opens as a glow rather than a slab),
-    /// the maker's mark (<see cref="LogoTracePainter"/>) with its wordmark typing under it, and the load line with its
-    /// bar of steps. It writes labels and classes only when what they show changes.
+    /// the maker's mark (<see cref="LogoTracePainter"/>) with its wordmark typing under it behind a block cursor (in a
+    /// row as wide as the whole wordmark, so the typed text never shifts), and the load line with its bar of steps. It
+    /// writes labels and classes only when what they show changes.
     /// </summary>
     internal sealed class BootFaceView
     {
@@ -23,6 +25,10 @@ namespace MoonProject.UI
         private readonly VisualElement _raster;
         private readonly VisualElement _logo;
         private readonly Label _wordmark;
+        private readonly VisualElement _wordmarkRow;
+        private readonly VisualElement _cursor;
+        private bool _cursorShown;
+        private bool _rowSized;
         private readonly VisualElement _load;
         private readonly Label _loadText;
         private readonly VisualElement[] _steps;
@@ -34,8 +40,13 @@ namespace MoonProject.UI
         private int _shownSteps = -1;
         private BootFaceStage _shownStage = BootFaceStage.None;
 
-        public BootFaceView(VisualElement parent, BootFace face, MakerLinework linework, ILocalization localization)
+        public BootFaceView(VisualElement parent, BootFace face, BootFaceSettings settings, ILocalization localization)
         {
+            if (settings == null)
+            {
+                throw new ArgumentNullException(nameof(settings));
+            }
+
             if (parent == null)
             {
                 throw new ArgumentNullException(nameof(parent));
@@ -49,8 +60,13 @@ namespace MoonProject.UI
             _raster = Element("boot-face-raster", "boot-face__raster");
             _raster.Add(Element("boot-face-raster-core", "boot-face__raster-core"));
             _logo = Element("boot-face-logo", "boot-face__logo");
+            _wordmarkRow = Element("boot-face-wordmark-row", "boot-face__wordmark-row");
             _wordmark = new Label { name = "boot-face-wordmark", pickingMode = PickingMode.Ignore };
             _wordmark.AddToClassList("boot-face__wordmark");
+            _cursor = Element("boot-face-cursor", "boot-face__cursor");
+            _cursor.style.display = DisplayStyle.None;
+            _wordmarkRow.Add(_wordmark);
+            _wordmarkRow.Add(_cursor);
             _load = Element("boot-face-load", "boot-face__load");
             _loadText = new Label { name = "boot-face-load-text", pickingMode = PickingMode.Ignore };
             _loadText.AddToClassList("boot-face__load-text");
@@ -64,10 +80,10 @@ namespace MoonProject.UI
 
             _root.Add(_raster);
             _root.Add(_logo);
-            _root.Add(_wordmark);
+            _root.Add(_wordmarkRow);
             _root.Add(_load);
             parent.Add(_root);
-            _trace = new LogoTracePainter(_logo, linework, face);
+            _trace = new LogoTracePainter(_logo, settings, face);
             Relocalize();
             Refresh();
         }
@@ -76,6 +92,9 @@ namespace MoonProject.UI
         public VisualElement Root => _root;
 
         public Label Wordmark => _wordmark;
+
+        /// <summary>The block cursor after the wordmark (tests).</summary>
+        public VisualElement Cursor => _cursor;
 
         public Label LoadText => _loadText;
 
@@ -90,6 +109,7 @@ namespace MoonProject.UI
             _face.SetTexts(_wordmarkText.Length, _loadLine.Length);
             _shownWordmark = -1;
             _shownLoad = -1;
+            _rowSized = false;
         }
 
         /// <summary>Shows what the boot is at now.</summary>
@@ -105,7 +125,7 @@ namespace MoonProject.UI
                 _root.style.display = stage == BootFaceStage.None ? DisplayStyle.None : DisplayStyle.Flex;
                 Show(_raster, stage == BootFaceStage.PowerOn);
                 Show(_logo, stage == BootFaceStage.Logo);
-                Show(_wordmark, stage == BootFaceStage.Logo);
+                Show(_wordmarkRow, stage == BootFaceStage.Logo);
                 Show(_load, stage == BootFaceStage.Load);
             }
 
@@ -121,14 +141,46 @@ namespace MoonProject.UI
                     break;
                 case BootFaceStage.Logo:
                     _trace.Refresh();
-                    _wordmark.style.opacity = _face.LogoAlpha;
+                    SizeRow();
+                    _wordmarkRow.style.opacity = _face.LogoAlpha;
                     WriteTyped(_wordmark, _wordmarkText, _face.WordmarkVisible, ref _shownWordmark);
+                    if (_face.CursorVisible != _cursorShown)
+                    {
+                        _cursorShown = _face.CursorVisible;
+                        Show(_cursor, _cursorShown);
+                    }
+
                     break;
                 case BootFaceStage.Load:
                     WriteTyped(_loadText, _loadLine, _face.LoadVisible, ref _shownLoad);
                     WriteSteps();
                     break;
             }
+        }
+
+        /// <summary>
+        /// The row takes the whole wordmark's width (and the cursor's) once its font has resolved, so the typed text
+        /// grows from a fixed left edge as a terminal's does instead of re-centring each character, the cursor just
+        /// after it.
+        /// </summary>
+        private void SizeRow()
+        {
+            if (_rowSized || _wordmark.resolvedStyle.fontSize <= 0f)
+            {
+                return;
+            }
+
+            Vector2 size = _wordmark.MeasureTextSize(_wordmarkText, 0f, VisualElement.MeasureMode.Undefined, 0f,
+                VisualElement.MeasureMode.Undefined);
+            if (float.IsNaN(size.x) || size.x <= 0f)
+            {
+                return;
+            }
+
+            // The row, not the label, takes the whole width: the typed text grows from its left edge and the cursor
+            // follows the last character.
+            _wordmarkRow.style.width = size.x + _cursor.resolvedStyle.width + _cursor.resolvedStyle.marginLeft;
+            _rowSized = true;
         }
 
         private void WriteSteps()
