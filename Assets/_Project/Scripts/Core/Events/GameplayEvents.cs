@@ -829,4 +829,26 @@ namespace MoonProject.Core.Events
 
         public Vector3 Position { get; }
     }
+
+    /// <summary>
+    /// A bay of the socket rack at the pad changed what it shows (<see cref="IRackStatus"/>): its outline appeared
+    /// (the rack came out at a dock, or 07 saw the part) or it filled (the part was fitted). Restored is true when a
+    /// session start replays a saved rack, which plays no reveal.
+    /// </summary>
+    public readonly struct RackChanged
+    {
+        public RackChanged(int bay, RackBayState state, bool restored)
+        {
+            Bay = bay;
+            State = state;
+            Restored = restored;
+        }
+
+        /// <summary>The bay's index on the rack, left to right.</summary>
+        public int Bay { get; }
+
+        public RackBayState State { get; }
+
+        public bool Restored { get; }
+    }
 }

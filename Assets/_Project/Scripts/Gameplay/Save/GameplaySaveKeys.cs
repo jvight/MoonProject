@@ -28,5 +28,7 @@ namespace MoonProject.Gameplay
         public const int DatabankVersion = 1;
         public const string Call = "gameplay.call";
         public const int CallVersion = 1;
+        public const string Rack = "gameplay.rack";
+        public const int RackVersion = 1;
     }
 }

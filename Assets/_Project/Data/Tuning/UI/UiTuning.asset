@@ -464,6 +464,11 @@ MonoBehaviour:
       _dwellSeconds: 0.6
       _liftMetres: 1.6
       _usesToRetire: 1
+    - _kind: 19
+      _action: 1
+      _dwellSeconds: 0.8
+      _liftMetres: 0.4
+      _usesToRetire: 1
     _startDelay: 9
     _maxShowSeconds: 7
     _repeatCooldown: 25

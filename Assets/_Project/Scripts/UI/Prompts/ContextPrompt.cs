@@ -29,6 +29,7 @@ namespace MoonProject.UI
         private int _setCount;
         private readonly VisualElement _chip;
         private readonly GlyphView _glyph;
+        private readonly VisualElement _keycap;
         private readonly VisualElement _holdRingElement;
         private readonly ProgressRingPainter _holdRing;
         private readonly VisualElement[] _cards;
@@ -76,6 +77,7 @@ namespace MoonProject.UI
             _word = layout.PromptWord;
             _chip = layout.Prompt;
             _glyph = new GlyphView(layout.PromptGlyph, layout.PromptGlyphLabel);
+            _keycap = layout.PromptGlyph;
             _holdRingElement = layout.PromptHoldRing;
             _holdRing = new ProgressRingPainter(_holdRingElement);
             _reveal = new Reveal(layout.Prompt, settings.Reveal);
@@ -125,6 +127,7 @@ namespace MoonProject.UI
                 }
 
                 _glyph.Set(GlyphOf(entry, device), device);
+                ShowKeycap(entry.Kind != InteractionKind.Rack);
             }
 
             ShowHold(entry, primary);
@@ -149,6 +152,16 @@ namespace MoonProject.UI
                 // A hidden chip holds no words: nothing reads a stale prompt (the last one shown, out of its context).
                 _word.text = string.Empty;
                 _glyph.Set(string.Empty, device);
+            }
+        }
+
+        /// <summary>The keycap shows for a verb; the rack's chip, which only names a part, has none.</summary>
+        private void ShowKeycap(bool shown)
+        {
+            DisplayStyle display = shown ? DisplayStyle.Flex : DisplayStyle.None;
+            if (_keycap.style.display != display)
+            {
+                _keycap.style.display = display;
             }
         }
 
@@ -222,9 +235,19 @@ namespace MoonProject.UI
             return _localization.Get(device == InputDeviceKind.Gamepad ? UiKeys.PadView : UiKeys.KeyTab);
         }
 
-        /// <summary>The verb's word, then what it acts on when the hint names one ("Pick up Tower Coil").</summary>
+        /// <summary>
+        /// The verb's word, then what it acts on when the hint names one ("Pick up Tower Coil"); the rack's chip, only
+        /// its part ("SSR-3 headlamp · from unit 06").
+        /// </summary>
         private void WriteWord(PromptEntry entry)
         {
+            if (entry.Kind == InteractionKind.Rack)
+            {
+                // The rack's chip names a goal, not a verb: the part and where 07 saw it.
+                _word.text = _localization.Get(_director.NounKey);
+                return;
+            }
+
             string verb = _localization.Get(_wordKeys[(int)entry.Kind]);
             if (entry.Kind == InteractionKind.Scan && _setCount > 1)
             {

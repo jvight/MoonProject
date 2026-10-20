@@ -134,6 +134,9 @@ namespace MoonProject.Gameplay
 
         public CallReply Reply { get; private set; }
 
+        /// <summary>The socket rack at the pad (opening v3 4.3): held until the west signal, then out at a dock.</summary>
+        public SocketRackField Rack { get; private set; }
+
         public MastRaise MastRaise { get; private set; }
 
         /// <summary>How the mast raises and the reply times (tests).</summary>
@@ -306,6 +309,7 @@ namespace MoonProject.Gameplay
             Recovery = new RecoveryProgress(context.Events, PowerLamps, PowerSteps, _openingTuning.RecoveryLamps);
             Call = new CallProgress(context.Events, _openingTuning.Call, services.Layout);
             Reply = new CallReply(context.Events, Call, _openingTuning.Reply);
+            Rack = new SocketRackField(context.Events, _openingTuning.RackBays);
             MastRaise = new MastRaise(context.Events, _openingTuning.Reply);
             RangeRing = new RangeRingField(context.Events, _battery.Tuning.RangeRing,
                 new RangeRingModel(_battery.Tuning, _battery.Tuning.RangeRing, services.Terrain), _battery.Model,
@@ -325,6 +329,7 @@ namespace MoonProject.Gameplay
             context.Register<IBeamStatus>(services.Beam);
             context.Register<IRecoveryProgress>(Recovery);
             context.Register<ICallSource>(Call);
+            context.Register<IRackStatus>(Rack);
             context.Register<IRangeRing>(RangeRing);
             context.Register<IDatabank>(Databank);
             context.Register<BuildField>(_building);
@@ -364,6 +369,8 @@ namespace MoonProject.Gameplay
                 GameplaySaveKeys.DatabankVersion, Databank.Capture, Databank.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<CallSaveData>(GameplaySaveKeys.Call,
                 GameplaySaveKeys.CallVersion, CaptureCall, RestoreCall)));
+            _saveTokens.Add(save.Register(new SaveSection<RackSaveData>(GameplaySaveKeys.Rack,
+                GameplaySaveKeys.RackVersion, Rack.Capture, Rack.Restore)));
             _saveTokens.Add(_building.RegisterSave(save));
         }
 
@@ -545,6 +552,7 @@ namespace MoonProject.Gameplay
             StartKit.Announce();
             Recovery.Announce();
             Call.Announce();
+            Rack.Announce();
             Opening.Announce();
         }
 
@@ -615,6 +623,7 @@ namespace MoonProject.Gameplay
                 : _baseTuning == null ? "BaseTuning is not assigned."
                 : _openingTuning == null ? "OpeningTuning is not assigned."
                 : _openingTuning.Call.Validate() != null ? "OpeningTuning: " + _openingTuning.Call.Validate() + "."
+                : _openingTuning.ValidateRack() != null ? "OpeningTuning: " + _openingTuning.ValidateRack() + "."
                 : _salvage == null ? "SalvageField is not assigned."
                 : _battery == null ? "BatteryField is not assigned."
                 : _building == null ? "BuildField is not assigned."
@@ -660,6 +669,7 @@ namespace MoonProject.Gameplay
             Databank?.Dispose();
             StartKit?.Dispose();
             Call?.Dispose();
+            Rack?.Dispose();
             MastRaise?.Dispose();
             RangeRing?.Dispose();
             Bundles?.Dispose();
