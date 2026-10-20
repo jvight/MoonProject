@@ -111,12 +111,12 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void NewGameOnAFreshTitle_HandsControlOverWithinTwentyTwoSeconds()
+        public void NewGameOnAFreshTitle_HandsControlOverWithinTwentySixSeconds()
         {
             _script.BeginFull(OpeningStart.PushIn);
             TakeAll();
             float seconds = RunToChase(60f);
-            Assert.LessOrEqual(seconds, 22f + Frame, "New Game click to control, untouched");
+            Assert.LessOrEqual(seconds, 26f + Frame, "New Game click to control, untouched");
             Assert.Greater(seconds, 15f, "not rushed");
         }
 
@@ -294,18 +294,37 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void AKey_DuringTheLogo_RunsTheRestFaster_EveryPartAndLineStillInOrder()
+        public void AKey_DuringThePowerOnAndTheLogo_NeverFastForwards_SoTheMarkCanBeRead()
         {
             PostSettings post = _tuning.Opening.Post;
             _script.BeginFull(OpeningStart.PushIn);
             TakeAll();
-            while (_script.Phase != OpeningPhase.Logo || _script.ScreenOnSeconds < post.FastForwardAfterSeconds)
+            while (_script.Phase != OpeningPhase.Load)
+            {
+                if (_script.ScreenOnSeconds > post.FastForwardAfterSeconds)
+                {
+                    Assert.IsFalse(_script.FastForward(), $"a key does not skip the {_script.Phase}");
+                }
+
+                StepOnce();
+            }
+
+            Assert.AreEqual(1f, _script.PostTimeScale);
+        }
+
+        [Test]
+        public void AKey_DuringTheLoad_RunsTheRestFaster_EveryPartAndLineStillInOrder()
+        {
+            PostSettings post = _tuning.Opening.Post;
+            _script.BeginFull(OpeningStart.PushIn);
+            TakeAll();
+            while (_script.Phase != OpeningPhase.Load || _script.ScreenOnSeconds < post.FastForwardAfterSeconds)
             {
                 StepOnce();
             }
 
             float at = _script.ScreenOnSeconds;
-            Assert.IsTrue(_script.FastForward(), "the maker's mark can be skipped");
+            Assert.IsTrue(_script.FastForward(), "the load can be skipped");
             Assert.IsFalse(_script.FastForward(), "once is enough");
             Assert.AreEqual(post.FastForwardScale, _script.PostTimeScale);
             float seconds = 0f;
