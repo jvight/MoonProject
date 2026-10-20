@@ -295,6 +295,35 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
+        public void Postprocessor_RejectsRepeatedNodeNames_SoGeneratedPrefabsKeepTheirFileIds()
+        {
+            const string ModelPath = "Assets/_Project/Art/R1/Models/UnitTest.fbx";
+            var uniqueRoot = new GameObject("UniqueRoot");
+            new GameObject("Lamp_0").transform.SetParent(uniqueRoot.transform);
+            new GameObject("Lamp_1").transform.SetParent(uniqueRoot.transform);
+            var repeatedRoot = new GameObject("RepeatedRoot");
+            var bay0 = new GameObject("Bay_0");
+            var bay1 = new GameObject("Bay_1");
+            bay0.transform.SetParent(repeatedRoot.transform);
+            bay1.transform.SetParent(repeatedRoot.transform);
+            new GameObject("Lamp").transform.SetParent(bay0.transform);
+            new GameObject("Lamp").transform.SetParent(bay1.transform);
+
+            try
+            {
+                Assert.IsTrue(R1ModelPostprocessor.ValidateUniqueNodeNames(uniqueRoot, ModelPath));
+
+                LogAssert.Expect(LogType.Error, new Regex(@"UnitTest\.fbx.*'Lamp'"));
+                Assert.IsFalse(R1ModelPostprocessor.ValidateUniqueNodeNames(repeatedRoot, ModelPath));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(uniqueRoot);
+                UnityEngine.Object.DestroyImmediate(repeatedRoot);
+            }
+        }
+
+        [Test]
         public void ModelBuilder_ReplacesRendererMaterialsWithLibraryMaterials_AndThrowsOnUnknownSlot()
         {
             const string ModelPath = "Assets/_Project/Art/R1/Models/Rover/TestPart.fbx";

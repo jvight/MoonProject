@@ -69,7 +69,7 @@ ANTENNA_MAST_DIMS: dict[str, float] = {
     "sonar_x": -0.38,
     "sonar_y": 2.28,
     "sonar_z": 0.0,
-    "sonar_loop_len": 0.24,
+    "sonar_loop_radius": 0.12,
     # Top masthead omni-beacon
     "beacon_y": 2.72,
     # Power socket on lower viewer-right (-X) cabinet beltline
@@ -816,6 +816,27 @@ def _build_dish_and_azimuth(parent_obj: bpy.types.Object) -> None:
     dish_mb.build_object(parent=az_obj)
 
 
+def add_crossed_loop_antenna(mb: r1kit.MeshBuilder) -> None:
+    """The mast's radio direction finder, the way real ones are built: a small copper preamp housing on the outrigger's end,
+    a stub, and two closed copper loops crossed at 90 deg standing on it (each loop nulls along its own plane,
+    so the pair finds a bearing). Two rings, never flat blades: it must not read as a propeller or an anemometer."""
+    d = ANTENNA_MAST_DIMS
+    sx, sy, sz = d["sonar_x"], d["sonar_y"], d["sonar_z"]
+    r = d["sonar_loop_radius"]
+    mb.add_bevel_box(center_u=(sx, sy, sz), size_u=(0.07, 0.05, 0.07), mat="R1_Copper", bevel=0.008, segments=1)
+    mb.add_cylinder(center_u=(sx, sy + 0.050, sz), radius=0.010, length=0.05, mat="R1_Copper", axis_u="Y",
+                    segments=8, bevel=0.0, bevel_segments=0)
+    loop_cy = sy + 0.075 + r
+    for yaw in (45.0, -45.0):
+        mb.add_torus(center_u=(sx, loop_cy, sz), major_radius=r, minor_radius=0.009, mat="R1_Copper", axis_u="Z",
+                     major_segments=20, minor_segments=6, rot_deg_u=(0.0, yaw, 0.0))
+    # A copper collar where the two loops cross at the top, and the feed collar at their foot
+    mb.add_cylinder(center_u=(sx, loop_cy + r, sz), radius=0.016, length=0.024, mat="R1_Copper", axis_u="Y",
+                    segments=8, bevel=0.0, bevel_segments=0)
+    mb.add_cylinder(center_u=(sx, loop_cy - r, sz), radius=0.018, length=0.026, mat="R1_Copper", axis_u="Y",
+                    segments=8, bevel=0.0, bevel_segments=0)
+
+
 def _build_stage_4(root: bpy.types.Object) -> bpy.types.Object:
     """Stage 4: `Mast` (`Mast_Seg1..3`), `DishAzimuth` -> `Dish`, `SonarLoop`, `TapeReel_L/R`, `BeaconLamp`, and `DialLamp`."""
     d = ANTENNA_MAST_DIMS
@@ -827,44 +848,9 @@ def _build_stage_4(root: bpy.types.Object) -> bpy.types.Object:
     # 2. DishAzimuth and Ø 0.95 m parabolic Dish (re-parented under Mast_Seg2)
     _build_dish_and_azimuth(seg2_obj)
 
-    # 3. SonarLoop: crossed-loop brass figure-8 direction-finding antenna on viewer-right (-X) outrigger (re-parented under Mast_Seg2)
-    sx = d["sonar_x"]
-    sy = d["sonar_y"]
-    sz = d["sonar_z"]
-    arm_l = d["sonar_loop_len"]
-    sonar_mb = r1kit.MeshBuilder("SonarLoop", pivot_u=(sx, sy, sz))
-    sonar_mb.add_cylinder(
-        center_u=(sx, sy, sz),
-        radius=0.028,
-        length=0.048,
-        mat="R1_Copper",
-        axis_u="Z",
-        segments=8,
-        bevel=0.0,
-        bevel_segments=0,
-    )
-    # 4 diagonal figure-8 brass loop petals at +-45° and +-135° in the XY plane + orthogonal Z cross-loop
-    for diag_deg in (42.0, 138.0, 222.0, 318.0):
-        rad = math.radians(diag_deg)
-        dx = math.cos(rad)
-        dy_l = math.sin(rad)
-        px_n = -dy_l
-        py_n = dx
-        tip_x = sx + dx * arm_l
-        tip_y = sy + dy_l * arm_l
-        mid_x = sx + dx * (arm_l * 0.68)
-        mid_y = sy + dy_l * (arm_l * 0.68)
-        w_l = 0.046
-        # Two sides of the petal + rounded tip chord
-        p_l = (mid_x + px_n * w_l, mid_y + py_n * w_l, sz)
-        p_r = (mid_x - px_n * w_l, mid_y - py_n * w_l, sz)
-        p_t1 = (tip_x + px_n * (w_l * 0.55), tip_y + py_n * (w_l * 0.55), sz)
-        p_t2 = (tip_x - px_n * (w_l * 0.55), tip_y - py_n * (w_l * 0.55), sz)
-        sonar_mb.add_strut((sx, sy, sz), p_l, 0.015, 0.015, "R1_Copper", bevel=0.0)
-        sonar_mb.add_strut((sx, sy, sz), p_r, 0.015, 0.015, "R1_Copper", bevel=0.0)
-        sonar_mb.add_strut(p_l, p_t1, 0.015, 0.015, "R1_Copper", bevel=0.0)
-        sonar_mb.add_strut(p_r, p_t2, 0.015, 0.015, "R1_Copper", bevel=0.0)
-        sonar_mb.add_strut(p_t1, p_t2, 0.015, 0.015, "R1_Copper", bevel=0.0)
+    # 3. SonarLoop: crossed-loop direction-finding antenna on the viewer-right (-X) outrigger (under Mast_Seg2)
+    sonar_mb = r1kit.MeshBuilder("SonarLoop", pivot_u=(d["sonar_x"], d["sonar_y"], d["sonar_z"]))
+    add_crossed_loop_antenna(sonar_mb)
     sonar_mb.build_object(parent=seg2_obj)
 
     # 4. TapeReel_L (+X) and TapeReel_R (-X) inside the front recessed telemetry window
