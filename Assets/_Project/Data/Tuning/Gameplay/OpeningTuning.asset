@@ -44,6 +44,10 @@ MonoBehaviour:
     _decodedAtAnswer: 2
     _yawFromEarth: 7
     _pitchFromEarth: 2
+  _duskSites:
+  - Prop_SeismicStation
+  - HabitatModules
+  _duskSiteReach: 12
   _caches:
   - _id: supply.lander.open
     _anchorId: lander.port

@@ -59,7 +59,9 @@ namespace MoonProject.Gameplay.Tests
             _game.Covered.Add(StructureIds.SolarArray);
             Expect(OpeningKeys.BuildSolar);
             _game.PowerOn = true;
-            Expect(OpeningKeys.BuildBatteryBank, "Night is coming shows at PowerOn");
+            Expect(string.Empty, "R5, the first free choice: the near sites are the lure, no line");
+            _game.DuskBegun = true;
+            Expect(OpeningKeys.BuildBatteryBank, "Night is coming shows as the first dusk begins");
             _game.NightReady = true;
             Expect(string.Empty, "the first nightfall says nothing");
             _game.NightFallen = true;
@@ -205,6 +207,7 @@ namespace MoonProject.Gameplay.Tests
             _game.IgniterFitted = true;
             _game.ReserveSpent = true;
             _game.PowerOn = true;
+            _game.DuskBegun = true;
             _flow.Announce();
             _flow.Tick();
             Assert.AreEqual(new[] { OpeningKeys.BuildBatteryBank }, _lines.ToArray(), "no stored step: read at once");
@@ -264,6 +267,7 @@ namespace MoonProject.Gameplay.Tests
             _game.IgniterFitted = true;
             _game.ReserveSpent = true;
             _game.PowerOn = true;
+            _game.DuskBegun = true;
             Expect(OpeningKeys.BuildBatteryBank);
             _game.BuiltIds.Add(StructureIds.BatteryBank);
             Expect(OpeningKeys.MoveBatteryBank, "built, but the grid does not reach it");
@@ -292,6 +296,7 @@ namespace MoonProject.Gameplay.Tests
             public bool FirstCharge { get; set; }
             public bool ReserveSpent { get; set; }
             public bool PowerOn { get; set; }
+            public bool DuskBegun { get; set; }
             public bool NightReady { get; set; }
             public bool NightFallen { get; set; }
 

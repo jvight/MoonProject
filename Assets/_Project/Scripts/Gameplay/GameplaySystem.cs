@@ -380,7 +380,7 @@ namespace MoonProject.Gameplay
             try
             {
                 var opening = new OpeningField(_openingTuning, services, _building, sunlight, Containers, _ruins,
-                    _landerPort, transform, _salvage.Tuning.ReachRadius, StartKit);
+                    _storyProps, _landerPort, transform, _salvage.Tuning.ReachRadius, StartKit);
                 _battery.ConnectPads(opening);
                 services.Anchors.TryGet(_openingTuning.ApronAnchor, out WorldAnchor apron);
                 _building.SetApronCable(new ApronCable(_apronCableChannel.position, apron.Position,
