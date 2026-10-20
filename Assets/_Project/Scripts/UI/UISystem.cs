@@ -427,8 +427,8 @@ namespace MoonProject.UI
             // The face panel takes the cargo screen when there is one; the log sits beside it either way.
             _postView = new PostView(_layout.Cargo.parent, _postLog);
             BootFaceSettings boot = _tuning.BootFace;
-            _bootFace = new BootFace(boot, boot.Linework.StrokeCount);
-            _bootFaceView = new BootFaceView(_layout.Cargo.parent, _bootFace, boot.Linework, _localization);
+            _bootFace = new BootFace(boot, boot.Linework.StrokeLengths());
+            _bootFaceView = new BootFaceView(_layout.Cargo.parent, _bootFace, boot, _localization);
             var coverElement = new VisualElement { name = "cover-vignette", pickingMode = PickingMode.Ignore };
             coverElement.AddToClassList("cover-vignette");
             root.Add(coverElement);
