@@ -276,6 +276,12 @@ namespace MoonProject.Rover.PlayModeTests
             }
 
             var flank = visual.gameObject.AddComponent<RoverFlankLamps>();
+            var towRope = Node("TowRope", visual, Vector3.zero).gameObject.AddComponent<LineRenderer>();
+            var towClamp = Node("TowClamp", visual, Vector3.zero).gameObject.AddComponent<LineRenderer>();
+            towRope.sharedMaterial = material;
+            towClamp.sharedMaterial = material;
+            var towCable = visual.gameObject.AddComponent<RoverTowCable>();
+            Assign(towCable, ("_tuning", rigTuning), ("_rope", towRope), ("_hook", towClamp), ("_winch", winchOrigin));
             var growth = visual.gameObject.AddComponent<RoverGrowth>();
             Assign(growth, ("_tuning", rigTuning), ("_antennaSegment", antennaSegment), ("_igniter", igniter),
                 ("_turret", cutterTurret));
@@ -336,7 +342,7 @@ namespace MoonProject.Rover.PlayModeTests
             AssignArray(flank, "_glasses", flankGlasses);
             Assign(controller, ("_tuning", tuning), ("_body", rigidbody), ("_sphere", collider), ("_visualRig", rig),
                 ("_wheelFx", fx), ("_lampMotes", lampMotes), ("_headlamp", roadLight),
-                ("_flankLamps", flank), ("_growth", growth), ("_nozzleDevice", nozzleDevice),
+                ("_flankLamps", flank), ("_growth", growth), ("_towCable", towCable), ("_nozzleDevice", nozzleDevice),
                 ("_tetherOrigin", eyeOrigin), ("_cutterOrigin", cutterOrigin), ("_scanOrigin", eyeOrigin),
                 ("_winchOrigin", winchOrigin), ("_scoopOrigin", scoopOrigin), ("_cargoSocket", cargo));
             Transform hatch = Node(RoverModelNodes.CargoHatch, model, new Vector3(0f, HatchY, HatchZ));

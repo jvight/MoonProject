@@ -3713,13 +3713,16 @@
       "spatial": true,
       "loop": false,
       "files": [
-        "Assets/_Project/Audio/SFX/tow_release.wav"
+        "Assets/_Project/Audio/SFX/tow_release_release.wav",
+        "Assets/_Project/Audio/SFX/tow_release_snap.wav"
       ],
       "variantLabels": [
-        "tow_release"
+        "release",
+        "snap"
       ],
       "sha256": [
-        "f7ba2160688ba5d80021dad25c4dabf5f4392a7d9a6ea6fe29010c7e90d87535"
+        "f7ba2160688ba5d80021dad25c4dabf5f4392a7d9a6ea6fe29010c7e90d87535",
+        "20aee924460090b9d40b7cf378507bf4fffbe8179aeb87e8e6eac906e090929d"
       ],
       "volumeMin": 0.6,
       "volumeMax": 0.6,
@@ -3730,7 +3733,7 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "The tow let go: the hook's latch clunking open and the slack cable's slap.",
+      "notes": "The tow let go (TowReleased): release = the hook's latch clunking open and the slack cable's slap; snap = the cable parting under load, a metal whip and a rougher recoiling slap.",
       "source": "sampled",
       "pick": "tow_release"
     },

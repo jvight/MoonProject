@@ -1,7 +1,8 @@
 // Lofi Lunar night sky (skybox): zenith-to-horizon gradient whose horizon is the fog colour, a soft violet
 // horizon glow with a thin band of light along the horizon line, a hash-based starfield whose brightnesses follow a
 // power law (faint dust, a handful of bright stars with a soft glow, a few slow twinklers), a faint milky-way band,
-// a soft halo and a thin atmospheric limb around Earth, and an occasional slow shooting star. Every parameter is a
+// a soft halo and a thin atmospheric limb around Earth, an occasional slow shooting star, and a small star-free sky
+// round the call's point of light (_MoonCallPointClear, set by MoonProject.World.CallSkyPoint). Every parameter is a
 // _Moon* global set from WorldSettings by MoonProject.World.SkyShaderGlobals, so this shader has no material
 // properties of its own.
 Shader "MoonProject/World/LofiSky"
@@ -43,6 +44,7 @@ Shader "MoonProject/World/LofiSky"
             float4 _MoonSunDirection;    // xyz unit direction to the Sun, w angular radius (radians)
             float4 _MoonSunColor;        // rgb hot core colour (linear), a soft corona strength (linear)
             float4 _MoonEclipseRing;     // rgb refracted eclipse ring colour (linear), a ring width fraction of radius
+            float4 _MoonCallPointClear;  // xyz direction to the call's point of light, w radius kept clear of stars (rad)
 
             struct Attributes
             {
@@ -177,6 +179,15 @@ Shader "MoonProject/World/LofiSky"
                 float2 starLocal = 0.32 + 0.36 * Hash33(cellId + 19.19).xy;
                 float3 starDir = CubeFaceToDirection(face, (cell + starLocal) / faceCells);
 
+                // No star stands near the call's point of light: whole stars fade out toward it, never cut.
+                float clearRadius = _MoonCallPointClear.w;
+                float cleared = 1.0;
+                if (clearRadius > 0.0)
+                {
+                    float toPoint = dot(starDir, _MoonCallPointClear.xyz);
+                    cleared = 1.0 - smoothstep(cos(clearRadius), cos(clearRadius * 0.7), toPoint);
+                }
+
                 float brightness = min(faintest * pow(max(h.y, 1e-3), -1.0 / _MoonStarParams.z), min(_MoonStarShape.y, maxBright));
                 float distancePx = length(dir - starDir) / pixel;
 
@@ -204,7 +215,7 @@ Shader "MoonProject/World/LofiSky"
 
                 float3 tint = lerp(float3(0.72, 0.8, 1.0), float3(1.0, 0.88, 0.78), h.z);
                 tint = lerp(tint, float3(0.86, 0.78, 1.0), saturate(h.y * 2.0 - 1.0));
-                return tint * (core + glow) * borderFade * brightness * twinkle;
+                return tint * (core + glow) * borderFade * brightness * twinkle * cleared;
             }
 
             float3 ShootingStar(float3 dir, float pixel)

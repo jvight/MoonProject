@@ -59,6 +59,9 @@ namespace MoonProject.Rover
         [Tooltip("The parts 07 grows in the opening: the antenna's second segment and the igniter cartridge.")]
         [SerializeField] private RoverGrowth _growth;
 
+        [Tooltip("The tow cable's rope and clamp, and the winch drum's turn.")]
+        [SerializeField] private RoverTowCable _towCable;
+
         [Tooltip("The chest cutter nozzle's 6-blade mechanical iris, hot core and warm spill light on CutterOrigin.")]
         [SerializeField] private CutterNozzleDevice _nozzleDevice;
 
@@ -369,6 +372,9 @@ namespace MoonProject.Rover
         /// <summary>The antenna segment and the igniter cartridge 07 grows in the opening.</summary>
         public RoverGrowth Growth => _growth;
 
+        /// <summary>The tow cable's rope, clamp and drum turn (tests and captures).</summary>
+        public RoverTowCable TowCable => _towCable;
+
         /// <summary>How much of the Boost Coils' extra cruise is in, 0..1 (eased; the drums glow with it).</summary>
         public float BoostLevel => _boost.Level;
 
@@ -495,6 +501,7 @@ namespace MoonProject.Rover
             bool motesReady = _lampMotes.Initialize(this);
             bool lampsReady = _flankLamps.Initialize(context);
             bool growthReady = _growth.Initialize(context);
+            bool towReady = _towCable.Initialize(context);
             bool nozzleReady = _nozzleDevice.Initialize(context);
             bool portraitReady = _portrait.Initialize();
             if (portraitReady)
@@ -503,7 +510,7 @@ namespace MoonProject.Rover
             }
 
             _initialized = visualsReady && headlampReady && effectsReady && motesReady && lampsReady
-                && growthReady && nozzleReady && portraitReady;
+                && growthReady && towReady && nozzleReady && portraitReady;
             enabled = _initialized;
         }
 
@@ -551,6 +558,7 @@ namespace MoonProject.Rover
             ok &= Require(_lampMotes != null, "RoverLampMotes is not assigned.");
             ok &= Require(_flankLamps != null, "RoverFlankLamps is not assigned.");
             ok &= Require(_growth != null, "RoverGrowth is not assigned.");
+            ok &= Require(_towCable != null, "RoverTowCable is not assigned.");
             ok &= Require(_nozzleDevice != null, "CutterNozzleDevice is not assigned.");
             ok &= Require(_portrait != null, "RoverPortrait is not assigned.");
             ok &= Require(_cargoHatch != null && _hatchCrates.Length > 0 && Array.TrueForAll(_hatchCrates, c => c != null),
@@ -1030,6 +1038,11 @@ namespace MoonProject.Rover
             _lampMotes.Tick(deltaTime);
             _flankLamps.Tick(deltaTime);
             _growth.Tick(deltaTime);
+            _towCable.Tick(deltaTime);
+            if (_bodyLanguage != null)
+            {
+                _bodyLanguage.SetTow(_towCable.SpoolDegrees, _towCable.Strain01);
+            }
         }
 
         /// <summary>The lights key: 07's lamps ease on or off, and the switch clicks at the lamp.</summary>

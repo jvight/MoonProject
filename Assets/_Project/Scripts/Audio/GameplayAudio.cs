@@ -15,12 +15,21 @@ namespace MoonProject.Audio
     /// sound per lamp as its light starts easing up, at that structure, a step higher along the lighting order).
     /// The antenna mast raised segment by segment (<see cref="MastSegmentRaised"/>): a heavy telescoping clunk at the
     /// mast per segment, a pentatonic step higher each, and the settle when the top locks; a restored mast is silent.
+    /// 07's tow: the winch spooling out at the winch as the hook attaches (<see cref="TowAttached"/>), the cable's creak
+    /// along it while towing, louder and higher with <see cref="ITowLine.Strain01"/> and silent when slack
+    /// (<see cref="TowStrainVoice"/>), and its release: a soft clunk, or a harsher snap when the cable parted
+    /// (<see cref="TowReleased"/>).
     /// Initialised by <see cref="AudioDirector"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class GameplayAudio : MonoBehaviour
     {
-        private const int SubscriptionCount = 8;
+        private const int SubscriptionCount = 10;
+        private const int TowReleaseVariant = 0;
+        private const int TowSnapVariant = 1;
+
+        /// <summary>Below this the creak is inaudible (-60 dB): an easing toward silence stops here.</summary>
+        private const float SilenceFloor = 0.001f;
 
         /// <summary>The D major pentatonic's steps above D in semitones: segment k's clunk is pitched up step k.</summary>
         private static readonly float[] PentatonicSemitones = { 0f, 2f, 4f, 7f, 9f, 12f };
@@ -46,6 +55,13 @@ namespace MoonProject.Audio
         private CueHandle _baseLamp;
         private CueHandle _mastClunk;
         private CueHandle _mastSettle;
+        private CueHandle _towSpool;
+        private CueHandle _towRelease;
+        private AudioSource _towStrain;
+        private float _towStrainCueVolume;
+        private readonly EasedValue _strainGain = new EasedValue(0f);
+        private ITowLine _tow;
+        private IRoverRig _rig;
         private AudioSource _weldLoop;
         private float _weldLoopCueVolume;
         private int _lampNotes;
@@ -55,6 +71,8 @@ namespace MoonProject.Audio
         public bool BuildWeldAudible => _weldFader.IsAudible;
 
         internal AudioSource BuildWeldSource => _weldLoop;
+
+        internal AudioSource TowStrainSource => _towStrain;
 
         internal void Wire(GameplayAudioTuning tuning)
         {
@@ -81,11 +99,14 @@ namespace MoonProject.Audio
             _baseLamp = director.Resolve(AudioCueIds.BaseLampOn);
             _mastClunk = director.Resolve(AudioCueIds.MastClunk);
             _mastSettle = director.Resolve(AudioCueIds.MastSettle);
+            _towSpool = director.Resolve(AudioCueIds.TowSpool);
+            _towRelease = director.Resolve(AudioCueIds.TowRelease);
+            CueHandle towStrain = director.Resolve(AudioCueIds.TowStrainLoop);
             CueHandle weldLoop = director.Resolve(AudioCueIds.BuildWeldLoop);
             if (!(_buildGhost.IsValid && _buildSnap.IsValid && _buildInvalid.IsValid && _buildPlace.IsValid &&
                   weldLoop.IsValid && _buildStageComplete.IsValid && _buildStructureComplete.IsValid &&
                   _buildDeconstruct.IsValid && _powerOn.IsValid && _baseLamp.IsValid && _mastClunk.IsValid &&
-                  _mastSettle.IsValid))
+                  _mastSettle.IsValid && _towSpool.IsValid && _towRelease.IsValid && towStrain.IsValid))
             {
                 enabled = false;
                 return;
@@ -95,6 +116,10 @@ namespace MoonProject.Audio
             _weldLoopCueVolume = director.Library.GetCue(weldLoop).VolumeMax;
             _lampNotes = director.Library.GetCue(_baseLamp).ClipCount;
             _weldLoop = director.CreateLoopSource(transform, "BuildWeldLoop", weldLoop, 1f);
+            _towStrain = director.CreateLoopSource(transform, "TowStrain", towStrain, 1f);
+            _towStrainCueVolume = director.Library.GetCue(towStrain).VolumeMax;
+            _tow = context.Get<ITowLine>();
+            _rig = context.Get<IRoverRig>();
 
             EventBus events = context.Events;
             _subscriptions[0] = events.Subscribe<StructurePlaced>(OnStructurePlaced);
@@ -105,6 +130,8 @@ namespace MoonProject.Audio
             _subscriptions[5] = events.Subscribe<BuildWeldStateChanged>(OnBuildWeldStateChanged);
             _subscriptions[6] = events.Subscribe<BaseLampLit>(OnBaseLampLit);
             _subscriptions[7] = events.Subscribe<MastSegmentRaised>(OnMastSegmentRaised);
+            _subscriptions[8] = events.Subscribe<TowAttached>(OnTowAttached);
+            _subscriptions[9] = events.Subscribe<TowReleased>(OnTowReleased);
         }
 
         private void Update()
@@ -126,6 +153,8 @@ namespace MoonProject.Audio
             {
                 _weldLoop.Stop();
             }
+
+            UpdateTowStrain(dt, sfx);
         }
 
         private void OnStructurePlaced(StructurePlaced placed)
@@ -209,6 +238,47 @@ namespace MoonProject.Audio
             {
                 _weldFader.FadeOut();
             }
+        }
+
+        /// <summary>The cable's creak along it: louder and higher with the strain, silent when slack or not towing.
+        /// </summary>
+        private void UpdateTowStrain(float dt, float sfx)
+        {
+            float strain = _tow.IsTowing ? _tow.Strain01 : 0f;
+            float target = TowStrainVoice.Gain(strain, _tuning.TowSlackStrain);
+            float gain = _strainGain.Step(target, dt, _tuning.TowStrainSmoothing);
+            if (target <= 0f && gain < SilenceFloor)
+            {
+                _strainGain.Snap(0f);
+                gain = 0f;
+            }
+
+            _towStrain.volume = gain * _tuning.TowStrainVolume * _towStrainCueVolume * sfx;
+            _towStrain.pitch = TowStrainVoice.Pitch(strain, _tuning.TowStrainLowPitch, _tuning.TowStrainHighPitch);
+            if (gain > 0f && !_towStrain.isPlaying)
+            {
+                _towStrain.Play();
+            }
+            else if (gain <= 0f && _towStrain.isPlaying)
+            {
+                _towStrain.Stop();
+            }
+
+            if (_tow.IsTowing)
+            {
+                _towStrain.transform.position = (_rig.WinchOrigin.position + _tow.LoadHitch) * 0.5f;
+            }
+        }
+
+        private void OnTowAttached(TowAttached attached)
+        {
+            _director.PlayAt(_towSpool, _rig.WinchOrigin.position, _tuning.TowSpoolVolume);
+        }
+
+        private void OnTowReleased(TowReleased released)
+        {
+            int variant = released.Reason == TowRelease.Snapped ? TowSnapVariant : TowReleaseVariant;
+            _director.PlayVariantAt(_towRelease, variant, released.Position, _tuning.TowReleaseVolume);
         }
 
         /// <summary>A mast segment locked home: its clunk a step higher than the last; the top one settles too.</summary>

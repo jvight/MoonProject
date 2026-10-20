@@ -17,6 +17,7 @@ from synth.core import samples
 from . import dsp, parts
 
 SWITCH_S = 0.45
+TOW_RELEASE_LABELS = ("release", "snap")
 STRAIN_LOOP_S = 4.0
 LOOP_SEAM_S = 0.35
 LABELS = ("on", "off")
@@ -100,10 +101,21 @@ def tow_strain_loop(lib, gen, _variant: int) -> np.ndarray:
     return body
 
 
-def tow_release(lib, gen, _variant: int) -> np.ndarray:
-    """The tow let go: the hook's latch clunking open and the slack cable slapping the ground."""
-    n = samples(0.7)
+def tow_release(lib, gen, variant: int) -> np.ndarray:
+    """The tow let go (variant 1, release: the hook's latch clunking open and the slack cable slapping the ground;
+    variant 2, snap: the cable parting under load, a hard metal whip, the latch kicked open and a longer, rougher
+    slap as the end recoils)."""
+    n = samples(0.7 if variant == 0 else 0.9)
     out = np.zeros(n)
+    if variant == 1:
+        dsp.place(out, parts.clip(lib, "metal_tap", 3200.0, 300.0, 1.1), 0.0, 0.35)
+        dsp.place(out, parts.clip(lib, "pedal_clunk", 1400.0, 60.0, 1.05), 0.01, 0.35)
+        whip = parts.clip(lib, "scrape_grit", 2800.0, 300.0)[:samples(0.55)]
+        dsp.place(out, whip * dsp.shape(len(whip), [(0.0, 1.0), (0.15, 0.7), (0.55, 0.0)]), 0.05, 0.45)
+        slap = parts.clip(lib, "grit_roll", 2500.0, 200.0)[:samples(0.45)]
+        dsp.place(out, slap * dsp.shape(len(slap), [(0.0, 1.0), (0.45, 0.0)]), 0.3, 0.4)
+        return out
+
     dsp.place(out, parts.clip(lib, "pedal_clunk", 1100.0, 60.0, 0.9), 0.0, 0.35)
     dsp.place(out, parts.clip(lib, "latch_thunk", 1700.0, 90.0, 1.05), 0.02, 0.2)
     slap = parts.clip(lib, "grit_roll", 2500.0, 200.0)[:samples(0.4)]
@@ -118,5 +130,5 @@ SOUNDS = {
     "cutter_refuse": (cutter_refuse, 1),
     "tow_spool": (tow_spool, 1),
     "tow_strain_loop": (tow_strain_loop, 1),
-    "tow_release": (tow_release, 1),
+    "tow_release": (tow_release, len(TOW_RELEASE_LABELS)),
 }
