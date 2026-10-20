@@ -6,6 +6,7 @@
         "MoonProject.App",
         "MoonProject.Gameplay",
         "MoonProject.Routing",
+        "MoonProject.World",
         "Unity.InputSystem"
     ],
     "includePlatforms": [],

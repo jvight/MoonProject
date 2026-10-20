@@ -298,6 +298,7 @@ namespace MoonProject.Autoplay
             Begin("B7", "The Lumen ruins: scan the array and the airlock, the cutter sputters, fit the spare igniter " +
                         "from the rack, cut the array's panels and junction box");
             yield return _base.ExpectStep(OpeningSteps.FindSolar, OpeningKeys.FindSolar, "B7: the reserve is spent");
+            yield return _base.SeeWorldCue(WorldCues.ArrayGlint(_bot.World), "B7: the fallen array glints in the sunrise");
             yield return _base.DriveToTheRuinsGate("the Lumen ruins");
             yield return _base.ScanTheSet("ruin.FallenSolarArray");
             yield return _base.ReadTheAirlockPanel();
