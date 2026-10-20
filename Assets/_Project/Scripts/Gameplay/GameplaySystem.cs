@@ -362,9 +362,6 @@ namespace MoonProject.Gameplay
                 _openingTuning.Relay, _relaySpare.position, _relaySocket.position, _relayPad.position,
                 _relaySpare.gameObject, _relayFitted.gameObject);
             _battery.ConnectRelay(Relay);
-            var hints = new InteractionHints(_salvage, Containers, Scans, _building, services.Beam, Cutter,
-                services.Pickups, firstUse, Tow, Relay, RackView);
-            Hints = hints;
             Recovery = new RecoveryProgress(context.Events, PowerLamps, PowerSteps, _openingTuning.RecoveryLamps);
             Call = new CallProgress(context.Events, _openingTuning.Call, services.Layout);
             Reply = new CallReply(context.Events, Call, _openingTuning.Reply);
@@ -373,6 +370,9 @@ namespace MoonProject.Gameplay
             services.Anchors.TryGet(WorldAnchorIds.RelayPrefix + "1", out WorldAnchor relay);
             Answer = new CallAnswer(context.Events, Call, Reply, MastRaise, _openingTuning.Answer, relay.Position,
                 services.Layout.PeakPosition);
+            var hints = new InteractionHints(_salvage, Containers, Scans, _building, services.Beam, Cutter,
+                services.Pickups, firstUse, Tow, Relay, RackView, Answer);
+            Hints = hints;
             RangeRing = new RangeRingField(context.Events, _battery.Tuning.RangeRing,
                 new RangeRingModel(_battery.Tuning, _battery.Tuning.RangeRing, services.Terrain), _battery.Model,
                 new ChargePoints(Opening.Pads, Relay), services.Rover);
