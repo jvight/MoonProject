@@ -385,6 +385,44 @@ namespace MoonProject.Rover
         [Range(0.1f, 3f)]
         [SerializeField] private float _crawlHalfLife = 0.9f;
 
+        [Header("Towing a load (opening v3 3.2b)")]
+        [Tooltip("Seconds the chase camera takes to rise and draw back when 07 hooks a load, and to settle again when " +
+                 "it lets go (eased in and out).")]
+        [Range(0.2f, 2f)]
+        [SerializeField] private float _towEaseSeconds = 0.6f;
+
+        [Tooltip("Metres of clearance the camera keeps round the load it tows: the load is an obstacle, so the camera " +
+                 "rises over it to see 07 and never sits inside it.")]
+        [Range(0.1f, 2f)]
+        [SerializeField] private float _towMargin = 0.5f;
+
+        [Tooltip("Highest (deg) the camera may rise to see 07 over its load.")]
+        [Range(20f, 80f)]
+        [SerializeField] private float _towMaxElevation = 52f;
+
+        [Tooltip("Furthest the camera may draw back while towing, as a share of the chase distance.")]
+        [Range(1f, 3f)]
+        [SerializeField] private float _towMaxRadiusScale = 1.8f;
+
+        [Tooltip("Half-life (s) of the solved framing following a swing of the player's view, so it never jumps.")]
+        [Range(0.02f, 1f)]
+        [SerializeField] private float _towSolveHalfLife = 0.15f;
+
+        [Tooltip("Widest (deg) the camera may swing to a side of the line behind 07 while towing, for a 3/4 rear view that " +
+                 "keeps the load and the rope in frame beside 07.")]
+        [Range(0f, 80f)]
+        [SerializeField] private float _towMaxYawSwing = 45f;
+
+        [Tooltip("Seconds the camera takes to swing round to the side of a load it tows, and to swing back: slower than " +
+                 "the rise, so the turn is a gentle drift, never a whip.")]
+        [Range(0.6f, 4f)]
+        [SerializeField] private float _towYawEaseSeconds = 1.8f;
+
+        [Tooltip("How far the camera's look point moves from 07 toward the load while towing (a share of the way), so the " +
+                 "load and the rope stay in frame with 07: a tow reads as 07, the rope and the load together.")]
+        [Range(0f, 0.8f)]
+        [SerializeField] private float _towLookShare = 0.55f;
+
         [Header("Camera moments")]
         [Tooltip("Digging: while the excavation beam is on, ease to the side and up so the beam and the rising "
             + "relic are seen beside 07, not hidden behind it. Flows into the relic moment when it surfaces.")]
@@ -859,6 +897,22 @@ namespace MoonProject.Rover
         public float CrawlLower => _crawlLower;
 
         public float CrawlHalfLife => _crawlHalfLife;
+
+        public float TowEaseSeconds => _towEaseSeconds;
+
+        public float TowMargin => _towMargin;
+
+        public float TowMaxElevation => _towMaxElevation;
+
+        public float TowMaxRadiusScale => _towMaxRadiusScale;
+
+        public float TowSolveHalfLife => _towSolveHalfLife;
+
+        public float TowLookShare => _towLookShare;
+
+        public float TowMaxYawSwing => _towMaxYawSwing;
+
+        public float TowYawEaseSeconds => _towYawEaseSeconds;
 
         public CameraMomentSettings DigMoment => _digMoment;
 
