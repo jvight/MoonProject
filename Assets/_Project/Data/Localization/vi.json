@@ -911,6 +911,14 @@
             "text": "Nhặt"
         },
         {
+            "key": "hint.openbuild",
+            "text": "Xây dựng"
+        },
+        {
+            "key": "hint.fitpart",
+            "text": "Lắp"
+        },
+        {
             "key": "pickup.crate.contents",
             "text": "phụ tùng"
         },

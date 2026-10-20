@@ -79,6 +79,7 @@ namespace MoonProject.UI
         private SunArcView _sunArc;
         private readonly OpeningProtocol _openingProtocol = new OpeningProtocol();
         private ContextPrompt _prompt;
+        private bool _cutBegun;
         private PickupFeed _pickups;
         private SalvageRing _salvageRing;
         private GuidanceSlot _slot;
@@ -302,7 +303,8 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<StargazingChanged>(OnStargazingChanged));
             _tokens.Add(events.Subscribe<NextStepChanged>(OnNextStepChanged));
             _tokens.Add(events.Subscribe<ScanStarted>(OnScanStarted));
-            _tokens.Add(events.Subscribe<SalvageCutStarted>(_ => _objectiveChip.Used(ObjectiveVerb.Cut)));
+            _tokens.Add(events.Subscribe<SalvageCutStarted>(OnCutStarted));
+            _tokens.Add(events.Subscribe<ContainerSealCut>(_ => _director.NotifyUsed(InteractionKind.Salvage)));
             _tokens.Add(events.Subscribe<FragmentScanned>(OnFragmentScanned));
             _tokens.Add(events.Subscribe<ScanStopped>(_ => _scanning = false));
             _tokens.Add(events.Subscribe<RoverWakeBeatReached>(OnWakeBeat));
@@ -326,6 +328,7 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<DatabankEntryProgressed>(_ => _databank?.Refresh()));
             _tokens.Add(events.Subscribe<StructureLearned>(OnStructureLearned));
             _tokens.Add(events.Subscribe<BatteryArcRevealed>(OnBatteryArcRevealed));
+            _tokens.Add(events.Subscribe<PartFitted>(_ => _director.NotifyUsed(InteractionKind.FitPart)));
             _tokens.Add(events.Subscribe<StructurePlaced>(_ => _director.NotifyUsed(InteractionKind.Build)));
             _tokens.Add(events.Subscribe<StoryPartCollected>(collected => _pickups?.PartCollected(collected.PartId)));
             _tokens.Add(events.Subscribe<StructureRemoved>(_ => _director.NotifyUsed(InteractionKind.Deconstruct)));
@@ -569,6 +572,7 @@ namespace MoonProject.UI
             if (BuildMenuOpen())
             {
                 _objectiveChip.Used(ObjectiveVerb.Build);
+                _director.NotifyUsed(InteractionKind.OpenBuild);
             }
 
             // The verb chip is the objective's own: it shows only with its line, and a teaching prompt takes the chip.
@@ -1220,6 +1224,7 @@ namespace MoonProject.UI
             _lastCargoNavDirection = NavigationMoveEvent.Direction.None;
             _cargoNavRepeatTimer = 0f;
             SetFacePanelVisible(true);
+            _director.NotifyUsed(InteractionKind.FitPart);
             _cargo.Open();
             _services.FaceScreen?.SetScreenOpen(true, FaceTargetTexture());
             _services.Input.Disable();
@@ -1307,8 +1312,10 @@ namespace MoonProject.UI
             if (_bound)
             {
                 _salvageRing.OnBeat(beat);
-                if (beat.Kind == FeelKind.Collect && beat.Phase == FeelPhase.Reward)
+                // Taking a part from an open crate is not cutting: the cut is learned by a cut that ends in a take.
+                if (beat.Kind == FeelKind.Collect && beat.Phase == FeelPhase.Reward && _cutBegun)
                 {
+                    _cutBegun = false;
                     _director.NotifyUsed(InteractionKind.Salvage);
                 }
 
@@ -1321,6 +1328,12 @@ namespace MoonProject.UI
             {
                 _stargaze.SetStargazing(changed.IsStargazing);
             }
+        }
+
+        private void OnCutStarted(SalvageCutStarted started)
+        {
+            _cutBegun = true;
+            _objectiveChip.Used(ObjectiveVerb.Cut);
         }
 
         private void OnNextStepChanged(NextStepChanged changed)
