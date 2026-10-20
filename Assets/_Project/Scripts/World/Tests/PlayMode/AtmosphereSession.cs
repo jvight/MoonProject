@@ -79,8 +79,9 @@ namespace MoonProject.World.PlayModeTests
 
         // relay.1's repair site: its cabinet and the spare inside, and how far in front of the cabinet the near eye
         // stands.
+        private const string RelaySiteName = "Relay1Site";
         private const string RelaySiteCabinet = "ServiceCabinet";
-        private const string RelaySiteSpare = "FeedUnitSpare";
+        private const string RelaySiteSpare = "ServiceCabinet/FeedUnitSpare_Slot/FeedUnitSpare";
         private const float RelaySiteStandOff = 15f;
 
         // The call's point of light: when the face shot holds, one sign's length, how near its brightest a shot waits
@@ -793,6 +794,8 @@ namespace MoonProject.World.PlayModeTests
             {
                 yield return null;
             }
+
+            WorldSettings settings = AssetDatabase.LoadAssetAtPath<WorldSettings>(OpeningSettingsPath);
 #else
             throw new NotSupportedException("The atmosphere session loads the scene through the editor.");
 #endif
@@ -822,9 +825,14 @@ namespace MoonProject.World.PlayModeTests
             }
 
             yield return new WaitForSeconds(SettleSeconds);
-            Transform cabinet = FindNamed(RelaySiteCabinet);
-            Transform spare = FindNamed(RelaySiteSpare);
-            Vector3 front = Vector3.ProjectOnPlane(cabinet.forward, Vector3.up).normalized;
+            Transform site = FindNamed(RelaySiteName);
+            Transform cabinet = site.Find(RelaySiteCabinet);
+            Transform spare = site.Find(RelaySiteSpare);
+            Assert.IsNotNull(cabinet, "relay.1's site has its cabinet");
+            Assert.IsNotNull(spare, "the cabinet holds the spare");
+
+            // The cabinet's open front: the site's facing (toward the base) turned by the cabinet's tuned yaw.
+            Vector3 front = Quaternion.Euler(0f, settings.Landmarks.Relay1Site.CabinetYaw, 0f) * site.forward;
             Vector3 near = OnGround(context.Get<ITerrainQuery>(),
                     new Vector2(cabinet.position.x + front.x * RelaySiteStandOff,
                         cabinet.position.z + front.z * RelaySiteStandOff))
