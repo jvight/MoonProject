@@ -105,6 +105,10 @@ namespace MoonProject.World.Editor
             CallSkyPointSettings point = LoadSettings().Sky.CallPoint;
             var pointMaterial = new Material(LoadShader(WorldPaths.SkyPointShader));
             pointMaterial.SetColor("_Color", point.Color);
+            pointMaterial.SetColor("_EmberColor", point.EmberColor);
+            pointMaterial.SetFloat("_RingPixels", point.RingPixels);
+            pointMaterial.SetFloat("_RingWidthPixels", point.RingWidthPixels);
+            pointMaterial.SetFloat("_RingBrightness", point.RingBrightness);
             pointMaterial.SetFloat("_Peak", point.Peak);
             pointMaterial.SetFloat("_CorePixels", point.CorePixels);
             pointMaterial.SetFloat("_GlowPixels", point.GlowPixels);
