@@ -59,10 +59,18 @@ namespace MoonProject.Autoplay
         private const float SealNudgeMetres = 1f;
         private const float ScanLookSeconds = 12f;
         private const float ScanAllowanceSeconds = 8f;
-        private const float ChipSeconds = 3f;
+
+        /// <summary>Seconds a first-use chip may take to show once its verb is at hand: the bottom hint fades first, then its dwell runs.</summary>
+        private const float FirstUseSeconds = 15f;
         private const float ApproachThrottleRadius = 0.5f;
         private const float SunsetSeconds = 300f;
         private const float ChargeSeconds = 60f;
+
+        /// <summary>Seconds the pad may take to take 07 in once it rests there (a full 07 waits out the rest time).</summary>
+        private const float DuskSeconds = 15f;
+
+        /// <summary>The 1971 seismic station's story scan (R5's curiosity scan).</summary>
+        private const string SeismicStory = "seismic";
 
         /// <summary>The bot heads back to the pad to charge when 07's cells fall to this share.</summary>
         private const float TopUpBelow = 0.3f;
@@ -113,7 +121,7 @@ namespace MoonProject.Autoplay
         /// The objective lines are part of the opening and checked on screen. Off (the lines have become stall
         /// reminders), a line showing at all fails the run, so the bot follows the game's steps and the world's cues.
         /// </summary>
-        public bool LinesExpected { get; set; } = true;
+        public bool LinesExpected { get; set; }
 
         /// <summary>Where the last world cue the bot waited for stood.</summary>
         public Vector3 CuePoint { get; private set; }
@@ -235,7 +243,7 @@ namespace MoonProject.Autoplay
                 yield break;
             }
 
-            yield return FirstUse("build: B");
+            yield return FirstUse("build: B", "hint.openbuild");
             yield return _bot.Tap(Key.B);
             yield return _bot.Until(() => build.State == BuildModeState.Menu, FollowSeconds, "B to open the build menu");
             yield return _bot.Until(() => _bot.World.Ui.BuildStripShown(), FollowSeconds, "the build strip to show");
@@ -348,6 +356,38 @@ namespace MoonProject.Autoplay
         }
 
         /// <summary>B7: the habitat's airlock panel, read from square on.</summary>
+        /// <summary>
+        /// R5, the first free choice: out to the 1971 seismic station, one of the two near sites, to read its dead
+        /// station box (its curiosity scan).
+        /// </summary>
+        public IEnumerator VisitTheSeismicStation()
+        {
+            ScanFragment station = G.Scans.Find(StoryScan.IdPrefix + SeismicStory);
+            if (station == null)
+            {
+                _bot.Fail("the seismic station has no curiosity scan.");
+                yield break;
+            }
+
+            Vector3 home = Flat(Pad() - station.Point).normalized;
+            yield return Scan(station, home, PanelStandOff);
+            if (!_bot.Failed && !G.Opening.Dusk.Visited)
+            {
+                _bot.Fail("07 read the seismic station but the opening never counted the visit.");
+            }
+        }
+
+        /// <summary>R6: back onto the pad; the dock after the visit begins the first dusk.</summary>
+        public IEnumerator DockForTheDusk(string structureId)
+        {
+            Vector3 pad = PlacedPosition(structureId);
+            yield return _bot.DriveTo(Flat(pad) + Vector3.back * 6f, 2f, "a line-up for the pad", DriveSeconds);
+            yield return _bot.DriveTo(Flat(pad), ApproachThrottleRadius, "the pad", DriveSeconds);
+            yield return _bot.Until(() => G.Opening.DuskBegun, DuskSeconds,
+                "the dock after the visit to begin the first dusk",
+                () => "On the pad " + G.PadLock.OnPad + ", lock raised " + G.PadLock.Raised + ".");
+        }
+
         public IEnumerator ReadTheAirlockPanel()
         {
             ScanFragment panel = G.Scans.Find(StoryScan.IdPrefix + "airlock");
@@ -405,7 +445,7 @@ namespace MoonProject.Autoplay
                     continue;
                 }
 
-                yield return ApproachTheSeal(cache, crate);
+                yield return ApproachTheSeal(cache, crate, false);
                 yield return _bot.Hold(Key.E, () =>
                     {
                         _bot.KeepLookingAt(crate.CutPoint.position);
@@ -436,7 +476,7 @@ namespace MoonProject.Autoplay
                     continue;
                 }
 
-                yield return ApproachTheSeal(cache, crate);
+                yield return ApproachTheSeal(cache, crate, true);
                 yield return _bot.Hold(Key.E, () =>
                     {
                         _bot.KeepLookingAt(crate.CutPoint.position);
@@ -451,9 +491,9 @@ namespace MoonProject.Autoplay
 
         /// <summary>
         /// Out to the open ground before <paramref name="crate"/>'s seal, in to it and facing it, until the game makes
-        /// it the cut candidate (the cut chip noted on its first use).
+        /// it the cut candidate (with <paramref name="teachesCut"/>, the cut chip noted on its first use).
         /// </summary>
-        private IEnumerator ApproachTheSeal(SupplyCache cache, SealedContainer crate)
+        private IEnumerator ApproachTheSeal(SupplyCache cache, SealedContainer crate, bool teachesCut)
         {
             yield return TopUpIfLow();
 
@@ -484,7 +524,12 @@ namespace MoonProject.Autoplay
                 yield return _bot.TurnToward(seal, "the seal of " + cache.Id);
             }
 
-            yield return FirstUse("cut: hold E", crate.CutPoint.position);
+            if (teachesCut)
+            {
+                // The Cut chip shows once the cutter works: the faulted first try (CUTTER · NO IGNITER) has none.
+                yield return FirstUse("cut: hold E", "hint.salvage", crate.CutPoint.position);
+            }
+
             yield return WaitForTheSealCandidate(crate.CutPoint.position, cache.Id);
         }
 
@@ -632,15 +677,21 @@ namespace MoonProject.Autoplay
         }
 
         /// <summary>Notes a verb's chip on its first use (the chip waits for 07's gaze on the target); a missing chip is a guidance gap, not a stop.</summary>
-        private IEnumerator FirstUse(string verb, Vector3? gaze = null)
+        /// <summary>
+        /// The verb's first use: its chip, with <paramref name="word"/> on it (the verb's localized word), has been on
+        /// screen by now (the world shows it when the verb first becomes possible, not when the bot gets to it), or
+        /// shows within a few seconds; a verb with no chip is listed as a guidance gap.
+        /// </summary>
+        private IEnumerator FirstUse(string verb, string wordKey, Vector3? gaze = null)
         {
             if (!_verbsUsed.Add(verb))
             {
                 yield break;
             }
 
-            float deadline = Time.unscaledTime + ChipSeconds;
-            while (_bot.World.Ui.Chip().Length == 0 && Time.unscaledTime < deadline)
+            string word = _bot.World.Context.Get<ILocalization>().Get(wordKey);
+            float deadline = Time.unscaledTime + FirstUseSeconds;
+            while (!ChipSeen(word) && Time.unscaledTime < deadline)
             {
                 if (gaze.HasValue)
                 {
@@ -650,11 +701,25 @@ namespace MoonProject.Autoplay
                 yield return null;
             }
 
-            if (_bot.World.Ui.Chip().Length == 0)
+            if (!ChipSeen(word))
             {
-                _bot.Warn("guidance gap: " + verb + " showed no prompt chip on its first use (line on screen: '" +
-                          _bot.World.Ui.ObjectiveLine() + "'; " + _bot.World.Ui.DescribeChip() + ").");
+                _bot.Warn("guidance gap: " + verb + " showed no '" + word + "' chip by its first use (primary hint " +
+                          G.Hints.Primary.Kind + ", chips seen " + string.Join("; ", _bot.World.ChipsSeen) + "; " +
+                          _bot.World.Ui.DescribeChip() + ").");
             }
+        }
+
+        private bool ChipSeen(string word)
+        {
+            foreach (string chip in _bot.World.ChipsSeen)
+            {
+                if (chip.Contains(word))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private IEnumerator Scan(ScanFragment fragment, Vector3 preferred, float standOff)
@@ -685,7 +750,7 @@ namespace MoonProject.Autoplay
             }
 
             fragment = scans.Candidate;
-            yield return FirstUse(ScanVerb);
+            yield return FirstUse(ScanVerb, "hint.scan");
             yield return _bot.Hold(Key.E, () =>
                 {
                     _bot.KeepLookingAt(fragment.Point);
@@ -767,7 +832,7 @@ namespace MoonProject.Autoplay
 
             RoverStartKit kit = G.StartKit;
             UiProbe ui = _bot.World.Ui;
-            yield return FirstUse("fit the igniter: Tab");
+            yield return FirstUse("fit the igniter: Tab", "hint.fitpart");
             yield return _bot.Tap(Key.Tab);
             yield return _bot.Until(() => ui.FaceFocus().Length > 0, FollowSeconds,
                 "the face screen to open with a focus");

@@ -59,6 +59,9 @@ namespace MoonProject.UI.PlayModeTests
         /// <summary>The sky, set by a test.</summary>
         public FakeSunlight Sun { get; } = new FakeSunlight();
 
+        /// <summary>The call from the sky: its sender, for 07's face.</summary>
+        public FakeCall Call { get; } = new FakeCall();
+
         public int Metal => _units[(int)SalvageMaterial.Metal];
 
         public int Wiring => _units[(int)SalvageMaterial.Wiring];
@@ -157,6 +160,7 @@ namespace MoonProject.UI.PlayModeTests
             context.Register<IMaterialCatalog>(Catalog);
             context.Register<IRoverSystems>(Systems);
             context.Register<ISunlight>(Sun);
+            context.Register<ICallSource>(Call);
         }
 
         /// <summary>Sets the materials held and publishes the change like the real stock.</summary>

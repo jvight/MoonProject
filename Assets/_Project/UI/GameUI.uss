@@ -490,6 +490,16 @@ Label {
     display: flex;
 }
 
+/* The in-game pause menu selects with an amber fill: its cursor takes the dark selection ink; the title menu
+ * selects with a cyan fill and keeps its cyan cursor. */
+.pause .menu-button:focus .menu-button__cursor {
+    color: var(--glass-sel-text);
+}
+
+.pause--title .pause__main .menu-button:focus .menu-button__cursor {
+    color: var(--moon-tech-glow);
+}
+
 .setting-row .menu-button__cursor {
     left: 6px;
     font-size: 22px;
@@ -2249,4 +2259,48 @@ Label {
     white-space: nowrap;
     color: rgb(214, 190, 140);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
+}
+
+/* The call on 07's face (opening-v3 2.4), look A: warm neutrals, the decoded letters the one amber accent. */
+.call-display {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    justify-content: center;
+    align-items: center;
+}
+
+.call-display__word {
+    font-size: 22px;
+    letter-spacing: 6px;
+    color: rgb(182, 168, 143);
+    margin-bottom: 18px;
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
+}
+
+.call-display__wave {
+    width: 640px;
+    height: 150px;
+    --wave-color: rgb(224, 210, 182);
+    --baseline-color: rgba(182, 168, 143, 0.35);
+    --wave-width: 4;
+}
+
+.call-display__letters {
+    flex-direction: row;
+    margin-top: 26px;
+}
+
+.call-display__letter {
+    width: 50px;
+    font-size: 54px;
+    -unity-text-align: middle-center;
+    color: rgb(182, 168, 143);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
+}
+
+.call-display__letter--decoded {
+    color: rgb(255, 196, 96);
 }

@@ -22,11 +22,11 @@ namespace MoonProject.Rover.Tests
             _call = new CallListen(_settings);
         }
 
-        private void Run(float seconds, CallState state, bool listening)
+        private void Run(float seconds, CallState state, bool listening, float keying = 0f)
         {
             for (float t = 0f; t < seconds; t += Step)
             {
-                _call.Step(Step, state, listening);
+                _call.Step(Step, state, listening, keying);
             }
         }
 
@@ -51,7 +51,7 @@ namespace MoonProject.Rover.Tests
             float time = 0f;
             for (; time < 60f; time += Step)
             {
-                _call.Step(Step, CallState.Broken, true);
+                _call.Step(Step, CallState.Broken, true, 0f);
                 highest = System.Math.Max(highest, _call.LampGlow);
                 lowest = System.Math.Min(lowest, _call.LampGlow);
                 bool lit = _call.LampGlow > Lit;
@@ -76,9 +76,9 @@ namespace MoonProject.Rover.Tests
         public void TheStutter_StopsWhenTheCallLocks_AndNeverComesBack()
         {
             Run(10f, CallState.Broken, true);
-            _call.Step(Step, CallState.Locked, true);
-            Run(_settings.KeyDelay * 0.8f, CallState.Locked, true);
-            Assert.Less(_call.LampGlow, 0.05f, "the lamp is dark between the stutter and the first key");
+            _call.Step(Step, CallState.Locked, true, 0f);
+            Run(1.2f, CallState.Locked, true);
+            Assert.Less(_call.LampGlow, 0.05f, "the lamp is dark between the stutter and the first tone");
             Run(30f, CallState.Clear, true);
             Assert.AreEqual(_settings.ClearGlow, _call.LampGlow, 0.02f, "a clear call is a steady glow: no stutter, no pattern");
         }
@@ -108,7 +108,7 @@ namespace MoonProject.Rover.Tests
             float fastest = 0f;
             for (float t = 0f; t < 10f; t += Step)
             {
-                _call.Step(Step, CallState.Clear, true);
+                _call.Step(Step, CallState.Clear, true, 0f);
                 fastest = System.Math.Max(fastest, System.Math.Abs(_call.Dejection - previous));
                 previous = _call.Dejection;
             }
@@ -117,66 +117,47 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void TheLockedCall_KeysThreeShortAndOneLong_AfterItsDelay_OnceAndThenOnEachRepeat()
+        public void TheLockedLamp_FollowsTheSignsKeying_InPhase_ToItsGlow()
         {
             Run(5f, CallState.Broken, true);
-            _call.Step(Step, CallState.Locked, true);
-            var keys = new System.Collections.Generic.List<float>();
-            float down = -1f;
-            float time = 0f;
-            float total = _settings.KeyDelay + _call.PatternSeconds + _settings.KeyRepeat + _call.PatternSeconds + 1f;
-            for (; time < total; time += Step)
-            {
-                _call.Step(Step, CallState.Locked, true);
-                bool lit = _call.LampGlow > Lit;
-                if (lit && down < 0f)
-                {
-                    down = time;
-                }
-                else if (!lit && down >= 0f)
-                {
-                    keys.Add(time - down);
-                    down = -1f;
-                }
-            }
-
-            Assert.AreEqual(8, keys.Count, "two runs of four keys: the pattern, then its repeat");
-            for (int run = 0; run < 2; run++)
-            {
-                for (int i = 0; i < 3; i++)
-                {
-                    Assert.AreEqual(_settings.ShortSeconds, keys[run * 4 + i], 0.15f, "three short");
-                }
-
-                Assert.AreEqual(_settings.LongSeconds, keys[run * 4 + 3], 0.15f, "then one long");
-            }
+            Run(1f, CallState.Locked, true, 0f);
+            Assert.Less(_call.LampGlow, 0.05f, "between the tones the lamp is dark");
+            Run(0.6f, CallState.Locked, true, 1f);
+            Assert.AreEqual(_settings.KeyGlow, _call.LampGlow, 0.05f, "a tone at full strength lights it fully");
+            Run(0.6f, CallState.Locked, true, 0.5f);
+            Assert.AreEqual(_settings.KeyGlow * 0.5f, _call.LampGlow, 0.05f, "and half a tone, half the glow");
+            Run(0.6f, CallState.Locked, true, 0f);
+            Assert.Less(_call.LampGlow, 0.05f, "back to dark with the tone");
         }
 
         [Test]
-        public void ACallThatIsAlreadyLocked_WhenFirstSeen_IsNotKeyedAtOnce()
+        public void TheLockedLamp_IsDark_WithNoSignal_AndRaisesNoError()
         {
-            float early = _settings.KeyRepeat - 1f;
-            Run(early, CallState.Locked, true);
-            Assert.Less(_call.LampGlow, 0.05f, "a loaded game's lamp stays quiet");
-            Assert.IsFalse(_call.KeyingPattern, "not before the repeat interval");
-            Run(2f, CallState.Locked, true);
-            Assert.IsTrue(_call.KeyingPattern, "its first repeat comes after the repeat interval");
+            Run(60f, CallState.Locked, true, 0f);
+            Assert.Less(_call.LampGlow, 0.02f, "no ICallSignal, no keying: the lamp stays dark");
         }
 
         [Test]
-        public void TheKeys_AreOnlyDown_WhileO7Listens()
+        public void TheLockedLamp_KeysInPhaseWhileDriving_Too()
         {
-            Run(2f, CallState.Broken, true);
-            _call.Step(Step, CallState.Locked, true);
-            Run(0.5f, CallState.Locked, false);
-            float highest = 0f;
-            for (float t = 0f; t < _settings.KeyDelay + _call.PatternSeconds + 1f; t += Step)
+            Run(1f, CallState.Locked, false, 1f);
+            Assert.AreEqual(_settings.KeyGlow, _call.LampGlow, 0.05f, "the sign is the sky's, not 07's idling");
+        }
+
+        [Test]
+        public void TheLockedLamp_EasesBetweenTones_NeverJumping()
+        {
+            Run(1f, CallState.Locked, true, 0f);
+            float previous = _call.LampGlow;
+            float fastest = 0f;
+            for (float t = 0f; t < 2f; t += Step)
             {
-                _call.Step(Step, CallState.Locked, false);
-                highest = System.Math.Max(highest, _call.LampGlow);
+                _call.Step(Step, CallState.Locked, true, t < 1f ? 1f : 0f);
+                fastest = System.Math.Max(fastest, System.Math.Abs(_call.LampGlow - previous));
+                previous = _call.LampGlow;
             }
 
-            Assert.Less(highest, 0.05f, "driving, the lamp keeps quiet");
+            Assert.Less(fastest, _settings.KeyGlow * 0.4f, "the lamp's own soft edge stays between the signal's");
         }
 
         [Test]
@@ -189,7 +170,7 @@ namespace MoonProject.Rover.Tests
             bool up = false;
             for (float t = 0f; t < 60f; t += Step)
             {
-                _call.Step(Step, CallState.Broken, true);
+                _call.Step(Step, CallState.Broken, true, 0f);
                 peak = System.Math.Max(peak, _call.Reach);
                 bool nowUp = _call.Reach > 0.9f;
                 if (nowUp && !up)
@@ -214,7 +195,7 @@ namespace MoonProject.Rover.Tests
             float fastest = 0f;
             for (float t = 0f; t < 6f; t += Step)
             {
-                _call.Step(Step, CallState.Broken, true);
+                _call.Step(Step, CallState.Broken, true, 0f);
                 fastest = System.Math.Max(fastest, System.Math.Abs(_call.Reach - previous));
                 previous = _call.Reach;
             }

@@ -68,6 +68,12 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const string ChargerKit = "supply.lander.open";
         private const string SparesRack = "supply.array.spares";
 
+        /// <summary>The 1971 seismic station's story scan (R5's curiosity scan).</summary>
+        private const string SeismicStory = "seismic";
+
+        /// <summary>Seconds the pad may take to take 07 in once it rests there (a full 07 waits out the rest time).</summary>
+        private const float DuskTimeout = 15f;
+
         /// <summary>
         /// Throttle (0..1) 07 creeps the last metres to a seal or a scan target at, steering at it: it stops short and
         /// facing it instead of past it.
@@ -301,6 +307,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return DriveTo(RuinsGate(), 3f, "out of the Lumen ruins");
             yield return Build(StructureIds.SolarArray, pad + Vector3.right * BaseSpacing, "B8: the solar array");
             yield return UntilReached(OpeningMilestone.PowerOn, "Power on: the array powers the pad");
+            yield return ExpectLine(string.Empty, "R5: the first free choice says nothing");
+            yield return VisitTheSeismicStation();
+            yield return DockForTheDusk(pad);
             yield return ExpectLine(OpeningKeys.BuildBatteryBank, "B9: night is coming");
             yield return ScanTheSet("ruin.HabitatModules", "the habitat's power modules");
             yield return CutTheCrates("HabitatModules", "the habitat's cable reel and power module");
@@ -432,6 +441,37 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>B7: the habitat's airlock panel, read as 07 passes it; its readout shows on the CRT.</summary>
+        /// <summary>
+        /// R5, the first free choice: out to the 1971 seismic station, one of the two near sites, to read its dead
+        /// station box (its curiosity scan); the sky holds in the afternoon the whole way.
+        /// </summary>
+        private IEnumerator VisitTheSeismicStation()
+        {
+            Begin();
+            ScanFragment station = _gameplay.Scans.Find(StoryScan.IdPrefix + SeismicStory);
+            Assert.IsNotNull(station, "the seismic station has its curiosity scan");
+            float held = _context.Get<ISunlight>().TimeSeconds;
+            Vector3 home = Flat(Anchor("place.apron").Position - station.Point).normalized;
+            yield return Scan(station, "the seismic station", home, PanelStandOff);
+            Assert.IsTrue(_gameplay.Opening.Dusk.Visited, "R5: 07 visited a near site");
+            Assert.IsFalse(_gameplay.Opening.DuskBegun, "the afternoon holds until 07 docks");
+            Assert.AreEqual(held, _context.Get<ISunlight>().TimeSeconds, 1f, "the Sun held while 07 looked round");
+            Capture("08-the-seismic-station");
+            End("R5: visit the seismic station", "SEISMIC STATION · DEPLOYED 1971");
+        }
+
+        /// <summary>R6: back onto the pad; the dock after the visit begins the first dusk.</summary>
+        private IEnumerator DockForTheDusk(Vector3 pad)
+        {
+            Begin();
+            yield return DriveTo(Flat(pad) + Vector3.back * 6f, 2f, "a line-up for the pad");
+            yield return DriveTo(Flat(pad), 0.5f, "the pad", ApproachThrottle);
+            yield return Until(() => _gameplay.Opening.DuskBegun, DuskTimeout,
+                "the dock after the visit begins the first dusk",
+                () => $"on the pad {_gameplay.PadLock.OnPad}, lock raised {_gameplay.PadLock.Raised}");
+            End("R6: dock, and the first dusk begins", $"{_gameplay.Battery.Model.Charge01:P0}");
+        }
+
         private IEnumerator ReadTheAirlockPanel()
         {
             Begin();

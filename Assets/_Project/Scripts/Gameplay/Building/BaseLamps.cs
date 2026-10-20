@@ -204,7 +204,12 @@ namespace MoonProject.Gameplay
             }
 
             var lamp = new Lamp(built.InstanceId, built.StructureId, Rank(built.StructureId));
-            if (_started && !built.Restored)
+            if (_started && built.Restored)
+            {
+                // A piece put back after the lamps began (a loaded base, a test's finished base) starts as the sky says.
+                lamp.Ease.Snap(_dusk);
+            }
+            else if (_started)
             {
                 lamp.Ease.Snap(false);
                 if (_dusk)

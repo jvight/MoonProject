@@ -15,16 +15,15 @@ namespace MoonProject.Rover
     public sealed class CallListen
     {
         private const int StutterSeed = 7919;
-        private const int ShortKeys = 3;
 
         private readonly CallListenSettings _settings;
         private CallState _state;
         private bool _seen;
-        private float _patternAt = float.PositiveInfinity;
         private float _idleSeconds;
         private float _reachAt = float.PositiveInfinity;
         private float _dejectedFor = float.PositiveInfinity;
         private float _darkFor = float.PositiveInfinity;
+        private float _keying;
         private int _slot = -1;
         private float _slotLeft;
         private bool _slotLit;
@@ -54,32 +53,19 @@ namespace MoonProject.Rover
             _reachAt = float.PositiveInfinity;
         }
 
-        /// <summary>The pattern is being keyed (a key is down or the pattern is between keys).</summary>
-        public bool KeyingPattern => _patternAt >= 0f && _patternAt < PatternSeconds && _state == CallState.Locked;
-
-        /// <summary>Seconds the whole pattern lasts: three short keys and one long, a gap after each.</summary>
-        public float PatternSeconds => ShortKeys * (_settings.ShortSeconds + _settings.GapSeconds)
-                                       + _settings.LongSeconds;
-
         /// <param name="state">How clearly 07 hears the call now.</param>
         /// <param name="listening">07 idles or charges: it turns toward the call.</param>
-        public void Step(float deltaTime, CallState state, bool listening)
+        /// <param name="keying">How strongly the call's sign keys now, 0..1 (Audio's carrier, in phase with the sound
+        /// and the point of light); 0 when there is no such signal, so the locked lamp stays dark.</param>
+        public void Step(float deltaTime, CallState state, bool listening, float keying)
         {
             if (!_seen)
             {
                 _seen = true;
-                _state = state;
-                _patternAt = state == CallState.Locked ? -_settings.KeyRepeat : float.PositiveInfinity;
             }
-            else if (state != _state)
-            {
-                _state = state;
-                _patternAt = float.PositiveInfinity;
-                if (state == CallState.Locked)
-                {
-                    _patternAt = -_settings.KeyDelay;
-                }
-            }
+
+            _state = state;
+            _keying = Mathf.Clamp01(keying);
 
             HeadWeight = Smoothing.Damp(HeadWeight, listening ? 1f : 0f, _settings.HeadHalfLife, deltaTime);
             _idleSeconds = listening ? _idleSeconds + deltaTime : 0f;
@@ -88,33 +74,7 @@ namespace MoonProject.Rover
             Dejection = Smoothing.Damp(Dejection, _dejectedFor < _settings.DejectedHoldSeconds ? 1f : 0f,
                 _settings.DejectedHalfLife, deltaTime);
             StepReach(deltaTime, listening);
-            StepLamp(deltaTime, listening);
-        }
-
-        /// <summary>True while a short or the long key of the pattern is down at <paramref name="time"/> seconds.</summary>
-        public bool KeyDown(float time)
-        {
-            if (time < 0f)
-            {
-                return false;
-            }
-
-            float t = time;
-            for (int i = 0; i < ShortKeys; i++)
-            {
-                if (t < _settings.ShortSeconds)
-                {
-                    return true;
-                }
-
-                t -= _settings.ShortSeconds + _settings.GapSeconds;
-                if (t < 0f)
-                {
-                    return false;
-                }
-            }
-
-            return t < _settings.LongSeconds;
+            StepLamp(deltaTime);
         }
 
         private void StepReach(float deltaTime, bool listening)
@@ -153,7 +113,7 @@ namespace MoonProject.Rover
             return 1f - Smoothing.SmoothStep(fall, fall + _settings.ReachFall, time);
         }
 
-        private void StepLamp(float deltaTime, bool listening)
+        private void StepLamp(float deltaTime)
         {
             float glow = 0f;
             if (_state == CallState.Broken)
@@ -162,7 +122,7 @@ namespace MoonProject.Rover
             }
             else if (_state == CallState.Locked)
             {
-                glow = StepPattern(deltaTime) && listening ? _settings.KeyGlow : 0f;
+                glow = _keying * _settings.KeyGlow;
             }
             else if (_state == CallState.Clear)
             {
@@ -175,19 +135,6 @@ namespace MoonProject.Rover
             }
 
             LampGlow = Smoothing.Damp(LampGlow, glow, _settings.LampHalfLife, deltaTime);
-        }
-
-        /// <summary>The pattern's clock runs while the call is locked; the key is down only while 07 listens.</summary>
-        private bool StepPattern(float deltaTime)
-        {
-            _patternAt += deltaTime;
-            if (_patternAt >= PatternSeconds)
-            {
-                _patternAt = -_settings.KeyRepeat;
-                return false;
-            }
-
-            return KeyDown(_patternAt);
         }
 
         /// <summary>

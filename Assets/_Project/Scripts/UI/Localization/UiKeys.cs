@@ -32,6 +32,7 @@ namespace MoonProject.UI
         public const string VerbFit = "ui.verb.fit";
         public const string FaceNoLine = "ui.face.no_line";
         public const string FaceTxNoRange = "ui.face.tx_no_range";
+        public const string FaceCall = "ui.face.call";
         public const string HoldBoot = "ui.hold.boot";
         public const string ScanFragment = "scan.fragment";
         public const string ScanKnown = "scan.known";

@@ -196,6 +196,32 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
+        public void TheBuildAndFitChips_ShowOnceAtTheirObject_AreSaved_AndNeverReturn()
+        {
+            foreach (InteractionKind kind in new[] { InteractionKind.OpenBuild, InteractionKind.FitPart })
+            {
+                PromptEntry entry = _settings.Find(kind);
+                Assert.IsNotNull(entry, kind + " is taught");
+                Assert.AreEqual(1, entry.UsesToRetire, "once the key is used it is known");
+                InteractionHint hint = Ready(kind);
+                Assert.IsFalse(hint.IsHold, kind + " is a press, not a hold");
+                Run(entry.DwellSeconds + 0.1f, hint);
+                Assert.AreEqual(kind, _director.Displayed, "shows at its object once it is possible");
+                Assert.AreEqual(Site + Vector3.up * entry.LiftMetres, _director.WorldPoint, "anchored at the object");
+                _director.NotifyUsed(kind);
+                Assert.IsFalse(_ledger.ShouldTeach(kind), "using the key retires the chip");
+                Run(_settings.RepeatCooldown + 60f, hint);
+                Assert.AreEqual(InteractionKind.None, _director.Displayed, "never again");
+                Assert.AreEqual(1, _ledger.Shown(kind), "shown exactly once");
+            }
+
+            var restored = new PromptLedger(_settings);
+            restored.Restore(JsonUtility.FromJson<PromptsSaveData>(JsonUtility.ToJson(_ledger.Capture())));
+            Assert.IsFalse(restored.ShouldTeach(InteractionKind.OpenBuild), "saved: not shown again after a load");
+            Assert.IsFalse(restored.ShouldTeach(InteractionKind.FitPart));
+        }
+
+        [Test]
         public void EveryPrompt_IsLearnedAfterTheDefaultNumberOfUses()
         {
             foreach (PromptEntry entry in _settings.Entries)
@@ -274,7 +300,7 @@ namespace MoonProject.UI.Tests
             InteractionKind[] taught =
             {
                 InteractionKind.Salvage, InteractionKind.PickUp, InteractionKind.Build, InteractionKind.Scan,
-                InteractionKind.Deconstruct,
+                InteractionKind.Deconstruct, InteractionKind.OpenBuild, InteractionKind.FitPart,
             };
             Assert.AreEqual(taught.Length, _settings.Entries.Length, "no prompt teaches a verb the opening lacks");
             foreach (InteractionKind kind in taught)

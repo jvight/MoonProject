@@ -104,6 +104,10 @@ namespace MoonProject.Gameplay
                  "placement distances).")]
         [Range(2f, 12f)] [SerializeField] private float _ghostAheadMetres = 4.5f;
 
+        [Tooltip("The apron counts as in view for the Build key's first-use chip this far in from each screen edge (a " +
+                 "share of the viewport).")]
+        [Range(0f, 0.4f)] [SerializeField] private float _firstUseViewMargin = 0.08f;
+
         [Tooltip("Metres the view's centre ray is followed to find the ground the ghost stands on; a view that never " +
                  "meets the ground in this reach puts the ghost at the farthest placement distance straight ahead.")]
         [Range(10f, 200f)] [SerializeField] private float _viewRayMetres = 80f;
@@ -317,6 +321,7 @@ namespace MoonProject.Gameplay
 
         public float ApronGlowFadeSeconds => _apronGlowFadeSeconds;
 
+        public float FirstUseViewMargin => _firstUseViewMargin;
         public float ViewRayMetres => _viewRayMetres;
         public float GhostAheadMetres => Mathf.Clamp(_ghostAheadMetres, _minPlacementDistance, _maxPlacementDistance);
 

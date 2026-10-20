@@ -25,6 +25,8 @@ namespace MoonProject.UI
         private readonly Reveal _reveal;
         private readonly WorldAnchor _anchor;
         private readonly Label _word;
+        private int _setStep;
+        private int _setCount;
         private readonly VisualElement _chip;
         private readonly GlyphView _glyph;
         private readonly VisualElement _holdRingElement;
@@ -110,14 +112,19 @@ namespace MoonProject.UI
         {
             _director.Step(deltaTime, gateOpen, primary, _reveal.IsHidden, slotGranted);
             PromptEntry entry = _director.Entry;
+            int step = primary.Kind == InteractionKind.Scan ? primary.SetStep : 0;
+            int count = primary.Kind == InteractionKind.Scan ? primary.SetCount : 0;
+            bool placeChanged = step != _setStep || count != _setCount;
+            _setStep = step;
+            _setCount = count;
             if (entry != null)
             {
-                if (_director.Started)
+                if (_director.Started || placeChanged)
                 {
                     WriteWord(entry);
                 }
 
-                _glyph.Set(_labels.For(entry.Action, device), device);
+                _glyph.Set(GlyphOf(entry, device), device);
             }
 
             ShowHold(entry, primary);
@@ -201,10 +208,30 @@ namespace MoonProject.UI
             }
         }
 
+        /// <summary>
+        /// The key on the chip: the entry's rover action, except for the first-use chip at 07 whose key is Tab (07's
+        /// screen: View on a pad), which no rover action carries.
+        /// </summary>
+        private string GlyphOf(PromptEntry entry, InputDeviceKind device)
+        {
+            if (entry.Kind != InteractionKind.FitPart)
+            {
+                return _labels.For(entry.Action, device);
+            }
+
+            return _localization.Get(device == InputDeviceKind.Gamepad ? UiKeys.PadView : UiKeys.KeyTab);
+        }
+
         /// <summary>The verb's word, then what it acts on when the hint names one ("Pick up Tower Coil").</summary>
         private void WriteWord(PromptEntry entry)
         {
             string verb = _localization.Get(_wordKeys[(int)entry.Kind]);
+            if (entry.Kind == InteractionKind.Scan && _setCount > 1)
+            {
+                // The piece's place in its set (Scan 1/2) lives on the one chip the world shows.
+                verb = $"{verb} {_setStep}/{_setCount}";
+            }
+
             string noun = _director.NounKey;
             _word.text = string.IsNullOrEmpty(noun)
                 ? verb

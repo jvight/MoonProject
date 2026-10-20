@@ -36,6 +36,8 @@ namespace MoonProject.Gameplay
 
         public CallState State { get; private set; } = CallState.Broken;
 
+        public string Sender => _settings.Identity;
+
         public int Decoded { get; private set; }
 
         public int Total { get; }

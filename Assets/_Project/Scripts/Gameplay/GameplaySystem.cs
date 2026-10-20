@@ -298,8 +298,10 @@ namespace MoonProject.Gameplay
             ApronGuide = new ApronGuide(transform, _apronOutline, _visuals.BeamCore, _building.Tuning);
             ScanMark = new ScanTargetMark(transform, _visuals.BeamCore, _scanTuning);
             _building.MarkApron(_apronOutline.bounds.center);
+            var firstUse = new FirstUseSpots(Opening, _building, context.Get<IViewCamera>(), context.Get<IRoverState>(),
+                _building.Tuning.FirstUseViewMargin);
             var hints = new InteractionHints(_salvage, Containers, Scans, _building, services.Beam, Cutter,
-                services.Pickups);
+                services.Pickups, firstUse);
             Hints = hints;
             Recovery = new RecoveryProgress(context.Events, PowerLamps, PowerSteps, _openingTuning.RecoveryLamps);
             Call = new CallProgress(context.Events, _openingTuning.Call, services.Layout);
@@ -380,7 +382,7 @@ namespace MoonProject.Gameplay
             try
             {
                 var opening = new OpeningField(_openingTuning, services, _building, sunlight, Containers, _ruins,
-                    _landerPort, transform, _salvage.Tuning.ReachRadius, StartKit);
+                    _storyProps, _landerPort, transform, _salvage.Tuning.ReachRadius, StartKit);
                 _battery.ConnectPads(opening);
                 services.Anchors.TryGet(_openingTuning.ApronAnchor, out WorldAnchor apron);
                 _building.SetApronCable(new ApronCable(_apronCableChannel.position, apron.Position,
