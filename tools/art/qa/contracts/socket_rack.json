@@ -63,49 +63,49 @@
         0.72
       ]
     },
-    "BackPlate": {
+    "BackPlate_0": {
       "pivot": [
         0.48,
         0.1,
         0.72
       ]
     },
-    "Outline": {
+    "Outline_0": {
       "pivot": [
         0.48,
         0.12,
         0.72
       ]
     },
-    "Fill": {
+    "Fill_0": {
       "pivot": [
         0.48,
         0.119,
         0.72
       ]
     },
-    "PartSocket": {
+    "PartSocket_0": {
       "pivot": [
         0.48,
         0.16,
         0.72
       ]
     },
-    "Lamp": {
+    "Lamp_0": {
       "pivot": [
         0.65,
         0.13,
         0.91
       ]
     },
-    "Clamp_L": {
+    "Clamp_L_0": {
       "pivot": [
         0.29,
         0.15,
         0.72
       ]
     },
-    "Clamp_R": {
+    "Clamp_R_0": {
       "pivot": [
         0.67,
         0.15,
@@ -119,49 +119,49 @@
         0.72
       ]
     },
-    "BackPlate.001": {
+    "BackPlate_1": {
       "pivot": [
         0.0,
         0.1,
         0.72
       ]
     },
-    "Outline.001": {
+    "Outline_1": {
       "pivot": [
         0.0,
         0.12,
         0.72
       ]
     },
-    "Fill.001": {
+    "Fill_1": {
       "pivot": [
         0.0,
         0.119,
         0.72
       ]
     },
-    "PartSocket.001": {
+    "PartSocket_1": {
       "pivot": [
         0.0,
         0.16,
         0.72
       ]
     },
-    "Lamp.001": {
+    "Lamp_1": {
       "pivot": [
         0.17,
         0.13,
         0.91
       ]
     },
-    "Clamp_L.001": {
+    "Clamp_L_1": {
       "pivot": [
         -0.19,
         0.15,
         0.72
       ]
     },
-    "Clamp_R.001": {
+    "Clamp_R_1": {
       "pivot": [
         0.19,
         0.15,
@@ -175,49 +175,49 @@
         0.72
       ]
     },
-    "BackPlate.002": {
+    "BackPlate_2": {
       "pivot": [
         -0.48,
         0.1,
         0.72
       ]
     },
-    "Outline.002": {
+    "Outline_2": {
       "pivot": [
         -0.48,
         0.12,
         0.72
       ]
     },
-    "Fill.002": {
+    "Fill_2": {
       "pivot": [
         -0.48,
         0.119,
         0.72
       ]
     },
-    "PartSocket.002": {
+    "PartSocket_2": {
       "pivot": [
         -0.48,
         0.16,
         0.72
       ]
     },
-    "Lamp.002": {
+    "Lamp_2": {
       "pivot": [
         -0.31,
         0.13,
         0.91
       ]
     },
-    "Clamp_L.002": {
+    "Clamp_L_2": {
       "pivot": [
         -0.67,
         0.15,
         0.72
       ]
     },
-    "Clamp_R.002": {
+    "Clamp_R_2": {
       "pivot": [
         -0.29,
         0.15,

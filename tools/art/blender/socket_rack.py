@@ -2,8 +2,10 @@
 
 The in-world goal board beside 07's charging pad (opening v3, slice 4.3): a low cream-enamel service board with three
 bays in a row, one per part 07 can earn. Each bay's back plate carries the part's silhouette as a thin lit line
-(`Outline`, `R1_RackOutline`) over a flat filled shape (`Fill`, `R1_RackFill`); Gameplay drives both through
-`_EmissionColor`, lights the bay's `Lamp` and closes its two hinged `Clamp_L`/`Clamp_R` jaws when the part is fitted.
+(`Outline_<i>`, `R1_RackOutline`) over a flat filled shape (`Fill_<i>`, `R1_RackFill`); Gameplay drives both through
+`_EmissionColor`, lights the bay's `Lamp_<i>` and closes its two hinged `Clamp_L_<i>`/`Clamp_R_<i>` jaws when the part
+is fitted. Every node name in the model is unique (the bay index on each part): Unity keeps a regenerated prefab's
+fileIDs only by matching names, so repeated names would rewrite SocketRack.prefab on every clean build.
 Spec: `agy-brands/Logs/socket_rack_art_spec.md`. Vacuum logic: power comes by cable from the pad; no hole patterns
 (louvres, ribs and plain panels only).
 """
@@ -415,7 +417,7 @@ def _build_bay(root: bpy.types.Object, index: int) -> None:
     bpy.context.view_layer.update()
 
     plate_front = d["plate_z"] + d["plate_depth"] * 0.5
-    back = r1kit.MeshBuilder("BackPlate", pivot_u=(bx, by, bz + d["plate_z"]))
+    back = r1kit.MeshBuilder(f"BackPlate_{index}", pivot_u=(bx, by, bz + d["plate_z"]))
     back.add_bevel_box(center_u=(bx, by, bz + d["plate_z"]), size_u=(d["plate_size"], d["plate_size"],
                        d["plate_depth"]), mat="R1_GreyMetal", bevel=0.004, segments=1)
     half = d["plate_size"] * 0.5 - d["rim_width"] * 0.5
@@ -434,14 +436,14 @@ def _build_bay(root: bpy.types.Object, index: int) -> None:
     origin = (bx, by, bz)
     line_back = plate_front + 0.0005
     line_front = line_back + d["line_depth"]
-    outline = r1kit.MeshBuilder("Outline", pivot_u=origin)
+    outline = r1kit.MeshBuilder(f"Outline_{index}", pivot_u=origin)
     for loop in loops:
         _add_ribbon(outline, origin, loop, d["line_width"], line_back, line_front, True, "R1_RackOutline")
     for path in paths:
         _add_ribbon(outline, origin, path, d["line_width"], line_back, line_front, False, "R1_RackOutline")
     outline.build_object(parent=bay)
 
-    fill = r1kit.MeshBuilder("Fill", pivot_u=(bx, by, bz - 0.001))
+    fill = r1kit.MeshBuilder(f"Fill_{index}", pivot_u=(bx, by, bz - 0.001))
     fill_back = plate_front + 0.0002
     fill_front = fill_back + d["fill_depth"]
     for poly in fills:
@@ -450,14 +452,14 @@ def _build_bay(root: bpy.types.Object, index: int) -> None:
         _add_ribbon(fill, origin, path, width, fill_back, fill_front, False, "R1_RackFill")
     fill.build_object(parent=bay)
 
-    r1kit.create_empty("PartSocket", parent=bay, pivot_u=(bx, by, bz + 0.04))
+    r1kit.create_empty(f"PartSocket_{index}", parent=bay, pivot_u=(bx, by, bz + 0.04))
 
-    lamp = r1kit.MeshBuilder("Lamp", pivot_u=(bx + d["lamp_x"], by + d["lamp_y"], bz + d["lamp_z"]))
+    lamp = r1kit.MeshBuilder(f"Lamp_{index}", pivot_u=(bx + d["lamp_x"], by + d["lamp_y"], bz + d["lamp_z"]))
     lamp.add_cylinder(center_u=(bx + d["lamp_x"], by + d["lamp_y"], bz + d["lamp_z"]), radius=d["lamp_radius"],
                       length=0.014, mat="R1_LampAmber", axis_u="Z", segments=10, bevel=0.003)
     lamp.build_object(parent=bay)
 
-    for side, name in ((-1.0, "Clamp_L"), (1.0, "Clamp_R")):
+    for side, name in ((-1.0, f"Clamp_L_{index}"), (1.0, f"Clamp_R_{index}")):
         hx = bx + side * d["clamp_x"]
         hz = bz + d["clamp_z"]
         jaw = r1kit.MeshBuilder(name, pivot_u=(hx, by, hz))
