@@ -75,7 +75,7 @@ namespace MoonProject.UI
         }
 
         /// <param name="deltaTime">Unscaled seconds; 0 while paused.</param>
-        /// <param name="still">07 is under the still speed now.</param>
+        /// <param name="still">07 rests now: under the still speed, with nothing else on its face.</param>
         /// <param name="changeOnScreen">The change is on 07's face now: its seconds count only then.</param>
         public void Step(float deltaTime, bool still, bool changeOnScreen)
         {

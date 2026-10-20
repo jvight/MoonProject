@@ -594,7 +594,11 @@ namespace MoonProject.UI
             _blockedCue.Tick(paused ? 0f : deltaTime);
             _toastLeft = Mathf.Max(0f, _toastLeft - (paused ? 0f : deltaTime));
             _replyLeft = Mathf.Max(0f, _replyLeft - (paused || !_replyOnFace ? 0f : deltaTime));
-            _call.Step(hudTime, _services.Rover.Speed < _tuning.Guidance.StillSpeed, _callShown && _callAsLine);
+            // Rest counts only while the face is free, so a face just handed back (the hold closing) shows 07's eyes
+            // first instead of the call at once.
+            bool resting = _services.Rover.Speed < _tuning.Guidance.StillSpeed && CallFaceOpen(paused) &&
+                           _cargo.Openness <= 0f;
+            _call.Step(hudTime, resting, _callShown && _callAsLine);
             _lookUpChip.Nudge(_blockedCue.ChipOffset, _blockedCue.ChipOpacity);
             StepFaceNotice(hudTime);
             _objectiveView.Tick(deltaTime, _objective, ObjectiveOpen(paused) && _slot.Allows(GuidanceKind.Objective),
