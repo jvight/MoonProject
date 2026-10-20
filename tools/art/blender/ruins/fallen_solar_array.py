@@ -73,7 +73,6 @@ def _add_crumpled_gold_foil_skirt(
         t_row: List[bmesh.types.BMVert] = []
         b_row: List[bmesh.types.BMVert] = []
         for i, lx in enumerate(xs):
-            i_frac = i / nx
             # Deterministic broad crinkle on the lower draped gold foil
             crinkle_x = 0.035 * math.sin(i * 2.3 + j * 1.9 + wing_cx)
             crinkle_z = 0.040 * math.cos(i * 1.7 - j * 2.5 + wing_cx)
@@ -85,9 +84,12 @@ def _add_crumpled_gold_foil_skirt(
             out_z = 0.04 if j == 0 else (-0.04 if j == nz else 0.0)
             bx = tx + out_x + crinkle_x
             bz = tz + out_z + crinkle_z
-            by = max(0.02, 0.025 + 0.04 * max(0.0, crinkle_y) + 0.03 * i_frac)
-            if ty <= by + 0.035:
-                ty = by + 0.040
+            # The foil hangs only a short ragged drop from the wing's underside and stops well above the ground, so
+            # it sits in the wing's own shadow with dark ground showing under it and the wing reads as a raised panel
+            drop = 0.12 + 0.05 * math.sin(i * 2.1 + j * 1.3 + wing_cx) + 0.02 * max(0.0, crinkle_y) / 0.035
+            by = ty - drop
+            if by < 0.10:
+                by = max(0.02, ty - 0.03)
 
             t_row.append(mb.bm.verts.new(mb._to_local_b((tx, ty, tz))))
             b_row.append(mb.bm.verts.new(mb._to_local_b((bx, by, bz))))
