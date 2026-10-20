@@ -109,10 +109,10 @@ namespace MoonProject.Autoplay
 
         private const string TricklePostEntry = "db.trickle_post";
 
-        /// <summary>The rack's headlamp bay: its id, Art's node, and the stand 07 reads it from (R12).</summary>
+        /// <summary>The rack's headlamp bay: its id, Art's outline node, and the stand 07 reads it from (R12).</summary>
         private const string HeadlampBayId = "rack.headlamp";
 
-        private const string HeadlampBayNode = "Bay_0";
+        private const string HeadlampOutlineNode = "Outline_0";
         private const float RackStandOff = 2.5f;
 
         private static readonly Recipe HeadlampCost = new Recipe(2, 1, 0);
@@ -887,10 +887,11 @@ namespace MoonProject.Autoplay
                 }
             }
 
-            Transform bay = Descendant(G.RackView.Instance.transform, HeadlampBayNode);
-            if (bay == null)
+            Transform bay = Descendant(G.RackView.Instance.transform, HeadlampOutlineNode);
+            Renderer outline = bay != null ? bay.GetComponent<Renderer>() : null;
+            if (outline == null)
             {
-                _bot.Fail("the socket rack has no " + HeadlampBayNode + " node.");
+                _bot.Fail("the socket rack has no " + HeadlampOutlineNode + " outline.");
                 yield break;
             }
 
@@ -902,15 +903,19 @@ namespace MoonProject.Autoplay
             }
 
             // The rack stands beside the pad's dock: 07 reads it from its outer side, the pad behind 07.
-            Vector3 point = bay.position;
+            Vector3 point = outline.bounds.center;
             Vector3 stand = point + Flat(point - PlacedPosition(StructureIds.ChargingPad)).normalized * RackStandOff;
             yield return _bot.DriveTo(Flat(stand), RelayArrive, "the stand in front of the rack", DriveSeconds);
             yield return _bot.TurnToward(point, "the rack's headlamp bay");
-            yield return _bot.Until(() => G.Hints.TryGet(InteractionKind.Rack, out InteractionHint hint) &&
+            yield return _bot.Until(() => _bot.KeepLookingAt(point) &&
+                                          G.Hints.TryGet(InteractionKind.Rack, out InteractionHint hint) &&
                                           hint.NounKey == HeadlampBayId, FollowSeconds,
                 "07 to read the rack's headlamp bay", () => _bot.Where());
-            yield return _bot.Hold(Key.E, () => G.Opening.HeadlampFitted, FollowSeconds,
-                "a held E to assemble the SSR-3 headlamp");
+            yield return _bot.Hold(Key.E, () =>
+                {
+                    _bot.KeepLookingAt(point);
+                    return G.Opening.HeadlampFitted;
+                }, FollowSeconds, "a held E to assemble the SSR-3 headlamp");
         }
 
         private static Transform Descendant(Transform root, string name)
