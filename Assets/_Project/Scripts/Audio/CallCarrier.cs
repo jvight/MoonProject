@@ -51,19 +51,14 @@ namespace MoonProject.Audio
         internal AudioSource StaticSource => _static;
 
         /// <inheritdoc />
-        public float Keying
-        {
-            get
-            {
-                if (_model == null)
-                {
-                    return 0f;
-                }
+        /// <remarks>Sampled once per frame (<see cref="KeyingPlayhead"/>), so every reader in a frame agrees.</remarks>
+        public float Keying { get; private set; }
 
-                AudioSource playing = _model.Answered ? _answered : _carrier;
-                return CallKeying.Envelope(playing.time) * _model.Cut;
-            }
-        }
+        /// <summary>
+        /// Seconds into the playing loop where this frame's <see cref="Keying"/> was read: the source's sample position,
+        /// taken once per frame because the audio thread moves the live playhead between any two reads.
+        /// </summary>
+        internal float KeyingPlayhead { get; private set; }
 
         internal void Wire(SoundscapeTuning tuning)
         {
@@ -125,6 +120,9 @@ namespace MoonProject.Audio
             _carrier.volume = _model.Answered ? 0f : _model.Gain * _carrierCueVolume * world;
             _answered.volume = _model.Answered ? _model.Gain * _answeredCueVolume * world : 0f;
             _carrier.pitch = _model.Pitch;
+            AudioSource playing = _model.Answered ? _answered : _carrier;
+            KeyingPlayhead = playing.timeSamples / (float)playing.clip.frequency;
+            Keying = CallKeying.Envelope(KeyingPlayhead) * _model.Cut;
             _static.volume = _model.Static * _staticCueVolume * _director.Buses.Effective(AudioBus.Music) *
                              _director.WorldGain;
         }
