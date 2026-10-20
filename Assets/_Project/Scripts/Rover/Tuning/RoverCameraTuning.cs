@@ -408,6 +408,21 @@ namespace MoonProject.Rover
         [Range(0.02f, 1f)]
         [SerializeField] private float _towSolveHalfLife = 0.15f;
 
+        [Tooltip("Widest (deg) the camera may swing to a side of the line behind 07 while towing, for a 3/4 rear view that " +
+                 "keeps the load and the rope in frame beside 07.")]
+        [Range(0f, 80f)]
+        [SerializeField] private float _towMaxYawSwing = 45f;
+
+        [Tooltip("Seconds the camera takes to swing round to the side of a load it tows, and to swing back: slower than " +
+                 "the rise, so the turn is a gentle drift, never a whip.")]
+        [Range(0.6f, 4f)]
+        [SerializeField] private float _towYawEaseSeconds = 1.8f;
+
+        [Tooltip("How far the camera's look point moves from 07 toward the load while towing (a share of the way), so the " +
+                 "load and the rope stay in frame with 07: a tow reads as 07, the rope and the load together.")]
+        [Range(0f, 0.8f)]
+        [SerializeField] private float _towLookShare = 0.55f;
+
         [Header("Camera moments")]
         [Tooltip("Digging: while the excavation beam is on, ease to the side and up so the beam and the rising "
             + "relic are seen beside 07, not hidden behind it. Flows into the relic moment when it surfaces.")]
@@ -892,6 +907,12 @@ namespace MoonProject.Rover
         public float TowMaxRadiusScale => _towMaxRadiusScale;
 
         public float TowSolveHalfLife => _towSolveHalfLife;
+
+        public float TowLookShare => _towLookShare;
+
+        public float TowMaxYawSwing => _towMaxYawSwing;
+
+        public float TowYawEaseSeconds => _towYawEaseSeconds;
 
         public CameraMomentSettings DigMoment => _digMoment;
 

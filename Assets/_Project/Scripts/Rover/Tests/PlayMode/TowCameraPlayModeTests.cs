@@ -95,14 +95,17 @@ namespace MoonProject.Rover.PlayModeTests
                 "it has drawn back from 07");
             AssertSees07(view, rover, parts, "driving straight");
             Capture(view, "tow-cam-straight");
+            AssertLoadInFrame(view, parts, "driving straight");
 
             Set(_gamepad.leftStick, new Vector2(0.85f, 1f));
             yield return RealRoverScene.WaitSeconds(1.2f);
             AssertSees07(view, rover, parts, "turning");
             Capture(view, "tow-cam-turning-1");
+            AssertLoadInFrame(view, parts, "turning");
             yield return RealRoverScene.WaitSeconds(1.8f);
             AssertSees07(view, rover, parts, "still turning");
             Capture(view, "tow-cam-turning-2");
+            AssertLoadInFrame(view, parts, "still turning");
 
             Set(_gamepad.leftStick, Vector2.zero);
             Press(_mouse.rightButton);
@@ -141,6 +144,21 @@ namespace MoonProject.Rover.PlayModeTests
                     Assert.Greater(distance, length - 0.3f, $"{when}: the load ({part.name}) hides 07 from the camera");
                 }
             }
+        }
+
+        /// <summary>The load's centre is in the view, in front of the lens: a tow reads as 07, the rope and the load.</summary>
+        private static void AssertLoadInFrame(Camera view, Renderer[] load, string when)
+        {
+            Bounds all = load[0].bounds;
+            foreach (Renderer part in load)
+            {
+                all.Encapsulate(part.bounds);
+            }
+
+            Vector3 screen = view.WorldToViewportPoint(all.center);
+            Assert.Greater(screen.z, 0f, $"{when}: the load is behind the camera");
+            Assert.That(screen.x, Is.InRange(0.05f, 0.95f), $"{when}: the load is off the side of the frame {screen}");
+            Assert.That(screen.y, Is.InRange(0.05f, 0.95f), $"{when}: the load is off the top or bottom {screen}");
         }
 
         private static void Capture(Camera view, string name)

@@ -54,6 +54,41 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
+        public void ASideSwing_ClearsTheLoad_WithLessRiseThanStraightBehind_AndNeverBeyondItsLimit()
+        {
+            Bounds obstacle = LoadBehind();
+            obstacle.Expand(Margin * 2f);
+            Solve(0f, LoadBehind(), out float straightElevation, out float straightScale);
+            TowFraming.SolveSide(Target, 0f, BaseElevation, Radius, LoadBehind(), Margin, MaxElevation, MaxScale, 45f, 1f,
+                out float elevation, out float scale, out float swing);
+
+            Assert.LessOrEqual(Mathf.Abs(swing), 45f);
+            Assert.AreNotEqual(0f, swing, "the camera swings to a side");
+            Assert.LessOrEqual(elevation, straightElevation, "and needs no more rise than straight behind");
+            Assert.IsTrue(TowFraming.Clear(Target, swing, elevation, Radius * scale, obstacle));
+        }
+
+        [Test]
+        public void ASideSwing_KeepsTheSideItHad_WhenBothClear()
+        {
+            TowFraming.SolveSide(Target, 0f, BaseElevation, Radius, LoadBehind(), Margin, MaxElevation, MaxScale, 45f, -1f,
+                out _, out _, out float swing);
+
+            Assert.LessOrEqual(swing, 0f, "it stays on the side it was on");
+        }
+
+        [Test]
+        public void ASideSwing_IsNotUsed_ForAClearView()
+        {
+            TowFraming.SolveSide(Target, 90f, BaseElevation, Radius, LoadBehind(), Margin, MaxElevation, MaxScale, 45f, 1f,
+                out float elevation, out float scale, out float swing);
+
+            Assert.AreEqual(0f, swing);
+            Assert.AreEqual(BaseElevation, elevation, 1e-3f);
+            Assert.AreEqual(1f, scale, 1e-3f);
+        }
+
+        [Test]
         public void AClearView_IsLeftAlone_WhateverWayThePlayerSwingsIt()
         {
             foreach (float yaw in new[] { 90f, -90f, 180f, 135f })
