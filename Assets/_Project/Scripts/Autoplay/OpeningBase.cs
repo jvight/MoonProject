@@ -92,6 +92,9 @@ namespace MoonProject.Autoplay
         /// <summary>Metres short of the apron's centre 07 stops towing: the module trails onto the apron behind it.</summary>
         private const float HomeStop = 1f;
 
+        /// <summary>Metres from that stop point 07 counts as there: close, so the module trails onto the apron.</summary>
+        private const float HomeArrive = 1f;
+
         /// <summary>Seconds the pad may take to take 07 in once it rests there (a full 07 waits out the rest time).</summary>
         private const float DuskSeconds = 15f;
 
@@ -759,7 +762,7 @@ namespace MoonProject.Autoplay
                 () => "The winch stands " + DriveSteering.FlatDistance(winch.position, hitch)
                     .ToString("0.0", CultureInfo.InvariantCulture) + " m from the hitch.");
             Vector3 fromHome = Flat(module.position - Pad()).normalized;
-            yield return _bot.DriveTo(Flat(Pad()) + fromHome * HomeStop, LineUpArrive, "home to the apron, towing",
+            yield return _bot.DriveTo(Flat(Pad()) + fromHome * HomeStop, HomeArrive, "home to the apron, towing",
                 DriveSeconds);
             yield return _bot.Until(() => !G.Tow.IsTowing, FollowSeconds, "the winch to let the module go on the apron",
                 () => "The module stands " + DriveSteering.FlatDistance(module.position, Pad())

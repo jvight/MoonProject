@@ -186,7 +186,9 @@ namespace MoonProject.Gameplay
                 return;
             }
 
-            if (SurfaceRules.HorizontalDistanceSquared(_load.Hitch, _home) <= _settings.HomeRadius * _settings.HomeRadius)
+            // The load itself, not its hitch, must be home: the same test a structure built on it reads.
+            if (SurfaceRules.HorizontalDistanceSquared(_load.Root.position, _home) <=
+                _settings.HomeRadius * _settings.HomeRadius)
             {
                 Release(TowRelease.Arrived);
             }
