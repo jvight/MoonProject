@@ -34,7 +34,7 @@ namespace MoonProject.Autoplay
         private const float CueMargin = 0.05f;
 
         /// <summary>Seconds of one sweep of the view while the bot looks for a lit cue.</summary>
-        private const float CueSweepSeconds = 1.5f;
+        private const float CueSweepSeconds = 3f;
         private const float DriveSeconds = 150f;
         private const float BaseSpacing = 7f;
         private const float RuinsGateOffset = 10f;
@@ -59,8 +59,8 @@ namespace MoonProject.Autoplay
         // Closer than this (metres, flat) a small crate's seal lies under 07's nose, out of the chest cutter's sight.
         private const float SealTooClose = 1f;
 
-        /// <summary>Closer than this (metres, flat) to a scan piece 07 has rolled in over it.</summary>
-        private const float ScanTooClose = 1.5f;
+        /// <summary>Closer than this share of the stand-off to a scan piece 07 has rolled in too near: the lens cannot see it.</summary>
+        private const float ScanTooCloseShare = 0.7f;
 
         /// <summary>...and it backs off to this share of the stand-off.</summary>
         private const float ScanBackOffShare = 0.8f;
@@ -910,7 +910,7 @@ namespace MoonProject.Autoplay
 
             yield return _bot.DriveTo(Flat(fragment.Point), standOff, "the spot facing " + fragment.FragmentId,
                 DriveSeconds);
-            if (DriveSteering.FlatDistance(fragment.Point, _bot.World.Rover.Position) < ScanTooClose)
+            if (DriveSteering.FlatDistance(fragment.Point, _bot.World.Rover.Position) < standOff * ScanTooCloseShare)
             {
                 // Rolled in over the piece: the scan lens cannot see it past 07's own body, so back off and face it
                 // again, as a player would.
