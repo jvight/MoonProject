@@ -9,6 +9,7 @@
     "R1_DarkGlass",
     "R1_GoldFoil",
     "R1_GreyMetal",
+    "R1_LampAmber",
     "R1_OrangeStripe",
     "R1_Rubber",
     "R1_SagePatch",
@@ -108,6 +109,13 @@
       ]
     },
     "BeaconLamp": {
+      "pivot": [
+        0.0,
+        0.0,
+        2.72
+      ]
+    },
+    "RelayLamp_Lens": {
       "pivot": [
         0.0,
         0.0,
