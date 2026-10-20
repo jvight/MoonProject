@@ -125,6 +125,8 @@ namespace MoonProject.Rover
         private float _tetherStrain;
         private float _winchReel;
         private float _winchAngle;
+        private float _towSpool;
+        private float _towStrain;
         private float _cargoTarget;
         private float _cargoSag;
         private float _cutEnds = -1f;
@@ -989,7 +991,17 @@ namespace MoonProject.Rover
             _scoopKick = Smoothing.Damp(_scoopKick, 0f, halfLife, deltaTime);
             _winchReel = Smoothing.Damp(_winchReel, _tetherActive ? 1f : 0f, 0.15f, deltaTime);
             _winchAngle = Mathf.Repeat(_winchAngle + _winchReel * 360f * deltaTime, 360f);
-            _mood.SetEffort(_tetherStrain);
+            _mood.SetEffort(Mathf.Max(_tetherStrain, _towStrain));
+        }
+
+        /// <summary>
+        /// The tow cable's work this frame (<see cref="RoverTowCable"/>): the degrees the winch drum has turned for the
+        /// rope's travel, out positive, and how hard the cable pulls, 0..1, which 07 leans into.
+        /// </summary>
+        public void SetTow(float spoolDegrees, float strain01)
+        {
+            _towSpool = spoolDegrees;
+            _towStrain = Mathf.Clamp01(strain01);
         }
 
         /// <summary>The tired look below the Low share and the quieter crawl, each eased in and out.</summary>
@@ -1187,7 +1199,7 @@ namespace MoonProject.Rover
 
             if (_winchSpool != null)
             {
-                _winchSpool.localRotation = _winchSpoolRest * Quaternion.AngleAxis(_winchAngle, Vector3.right);
+                _winchSpool.localRotation = _winchSpoolRest * Quaternion.AngleAxis(_winchAngle + _towSpool, Vector3.right);
             }
 
             float wingOpen = Mathf.Max(_mood.WingOpen * Mathf.Lerp(1f, battery.LowWingOpen, _tired),
