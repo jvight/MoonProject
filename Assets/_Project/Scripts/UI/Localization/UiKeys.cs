@@ -49,6 +49,9 @@ namespace MoonProject.UI
         public const string CargoReleaseFit = "ui.cargo.release_fit";
         public const string CargoGoesTo = "ui.cargo.goes_to";
         public const string CargoGoesToOnPad = "ui.cargo.goes_to.on_pad";
+
+        /// <summary>"pickup.for.charging_pad": what a pickup is for, after its count ("for the charging pad").</summary>
+        public static string PickupPurpose(string structureId) => "pickup.for." + structureId;
         public const string CargoIgniterFitHint = "ui.cargo.igniter.fit_hint";
         public const string KeyDragOrE = "glyph.combo.drag_e";
         public const string KeyMouseOrE = "glyph.combo.mouse_e";

@@ -263,6 +263,11 @@ namespace MoonProject.Gameplay
             _battery.ConnectSystems(StartKit);
             _battery.ConnectStructures(_building.Catalog);
             Opening = NewOpening(context, services);
+            if (Opening != null)
+            {
+                context.Register<ISupplyPurposes>(Opening.Caches);
+            }
+
             Scans = Opening != null ? NewScans(services) : null;
             Containers.YieldTo(ScanComesFirst);
             _salvage.YieldTo(ScanComesFirst);

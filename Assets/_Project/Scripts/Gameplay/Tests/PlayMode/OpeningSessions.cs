@@ -86,7 +86,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Release(_keyboard.eKey);
             yield return null;
             Assert.IsTrue(kit.CarriesIgniter, "B4: a held E takes the spare igniter from the lander's open crate");
-            Assert.AreEqual(2, _parts.Count, "with a pickup note each: the igniter and Ines's ice core");
+            Assert.AreEqual(1, _parts.Count, "with its pickup note: the kit holds no part the opening does not use");
             CargoHold hold = _fixture.Gameplay.Materials.Hold;
             Assert.AreEqual(4, hold.Units(SalvageMaterial.Metal), "the charger kit's Metal 4, into an empty hold");
             Assert.AreEqual(2, hold.Units(SalvageMaterial.Wiring), "and its Wiring 2: the pad's whole cost");

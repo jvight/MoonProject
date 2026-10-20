@@ -103,7 +103,7 @@ namespace MoonProject.Gameplay
         {
             new SupplyCache("supply.lander.open", OpeningField.LanderPortFrame, new Vector3(4.2f, 0f, -1.4f), 45f,
                 ContainerKinds.CrateCargoOpen, new Recipe(4, 2, 0), StructureIds.ChargingPad, true,
-                new[] { "part.igniter", "part.icecore" }),
+                new[] { "part.igniter" }),
             new SupplyCache("supply.array.panels", "FallenSolarArray", new Vector3(5f, 0f, 0f), 90f,
                 ContainerKinds.CrateL, new Recipe(3, 0, 1), StructureIds.SolarArray),
             new SupplyCache("supply.array.junction", "FallenSolarArray", new Vector3(9.7f, 0f, -2.6f), 90f,
