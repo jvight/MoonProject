@@ -105,6 +105,10 @@ namespace MoonProject.Gameplay
         [Tooltip("When 07 tries to answer the call, and how the antenna mast's segments lift and lock.")]
         [SerializeField] private CallReplySettings _reply = new CallReplySettings();
 
+        [Header("The answer (opening v3 R8)")]
+        [Tooltip("Where and how long 07 holds to transmit, and how the pulse of the old network runs to relay.1 and the Peak.")]
+        [SerializeField] private CallAnswerSettings _answer = new CallAnswerSettings();
+
         [Header("The first free choice and dusk (opening v3 R5–R6)")]
         [Tooltip("The near sites 07 is free to visit after power-on, either order, by their frames: a Lumen ruin " +
                  "piece ([World]/Ruins/<id>) or a story prop ([World]/BasinProps/<id>). The sky holds in the " +
@@ -199,6 +203,8 @@ namespace MoonProject.Gameplay
         public CallSettings Call => _call;
 
         public CallReplySettings Reply => _reply;
+
+        public CallAnswerSettings Answer => _answer;
 
         public IReadOnlyList<string> DuskSites => _duskSites ?? Array.Empty<string>();
 
