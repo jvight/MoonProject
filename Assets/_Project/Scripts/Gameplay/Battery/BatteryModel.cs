@@ -224,10 +224,7 @@ namespace MoonProject.Gameplay
                 return;
             }
 
-            float share = Mathf.Clamp01(Mathf.Abs(step.SlopeDegrees) / _tuning.FullSlope);
-            float target = step.SlopeDegrees >= 0f
-                ? Mathf.Lerp(1f, _tuning.UphillMultiplier, share)
-                : Mathf.Lerp(1f, _tuning.DownhillMultiplier, share);
+            float target = _tuning.SlopeMultiplier(step.SlopeDegrees);
             _slopeMultiplier = Damp.Toward(_slopeMultiplier, target, _tuning.SlopeEase, deltaTime);
         }
 

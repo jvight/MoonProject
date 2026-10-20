@@ -544,6 +544,12 @@ namespace MoonProject.Rover
             OnRecovering();
         }
 
+        /// <summary>The cutter sputtered with no igniter (once per game): brief <see cref="FaceFeeling.Startled"/>.</summary>
+        public void OnCutterSputtered(CutterSputtered evt)
+        {
+            TriggerBeat(BeatKind.Startled, _tuning.StartledHoldSeconds);
+        }
+
         /// <summary>Rover recovering from a tumble or fall: brief <see cref="FaceFeeling.Startled"/>.</summary>
         public void OnRecovering()
         {

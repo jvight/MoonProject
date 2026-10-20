@@ -695,6 +695,10 @@
             "text": "Fit the igniter to the cutter."
         },
         {
+            "key": "next.v2.take_igniter",
+            "text": "Take the spare igniter from the rack by the array."
+        },
+        {
             "key": "next.v2.find_solar",
             "text": "Find a solar blueprint in the Lumen ruins."
         },
@@ -1112,7 +1116,7 @@
         },
         {
             "key": "post.cutter.fault",
-            "text": "FAULT · NO IGNITER · SPARE: LANDER"
+            "text": "FAULT · NO IGNITER"
         },
         {
             "key": "post.solar_wing",

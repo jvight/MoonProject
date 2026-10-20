@@ -86,3 +86,11 @@ MonoBehaviour:
       - 0.6154
       _lengths:
       - 0.42
+  - _cueId: chirp_ask
+    _variants:
+    - _onsets:
+      - 0
+      _pitches:
+      - 0.2692
+      _lengths:
+      - 0.5

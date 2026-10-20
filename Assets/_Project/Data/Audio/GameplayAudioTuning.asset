@@ -18,3 +18,5 @@ MonoBehaviour:
   _powerOnBuildGrace: 1.5
   _powerOnMinInterval: 1.2
   _baseLampVolume: 0.75
+  _mastClunkVolume: 0.85
+  _mastSettleVolume: 0.75

@@ -97,29 +97,10 @@ namespace MoonProject.Rover
         [Range(0.5f, 20f)]
         [SerializeField] private float _lampDarkSeconds = 6f;
 
-        [Header("The locked call: the lamp keys the pattern back")]
-        [Tooltip("Seconds of a short key-down and of the long one.")]
-        [Range(0.34f, 1.5f)]
-        [SerializeField] private float _shortSeconds = 0.4f;
-
-        [Range(0.5f, 3f)]
-        [SerializeField] private float _longSeconds = 1.2f;
-
-        [Tooltip("Seconds of dark between the keys.")]
-        [Range(0.2f, 1f)]
-        [SerializeField] private float _gapSeconds = 0.35f;
-
-        [Tooltip("Lamp glow while a key is down (linear fraction of authored).")]
+        [Header("The locked call: the lamp keys the pattern back, in phase with the sign")]
+        [Tooltip("Lamp glow at the sign's full keying (linear fraction of authored); the keying itself comes from Audio's carrier.")]
         [Range(0f, 3f)]
         [SerializeField] private float _keyGlow = 1.5f;
-
-        [Tooltip("Seconds after the call locks before 07 first keys the pattern back.")]
-        [Range(0f, 10f)]
-        [SerializeField] private float _keyDelay = 1.5f;
-
-        [Tooltip("Seconds between the pattern's repeats while the call stays locked and 07 idles.")]
-        [Range(4f, 60f)]
-        [SerializeField] private float _keyRepeat = 12f;
 
         [Tooltip("Half-life (s) of the lamp's glow easing to a new level: the soft edge of every key and stutter.")]
         [Range(0.02f, 0.5f)]
@@ -140,12 +121,7 @@ namespace MoonProject.Rover
         public float ReachHeadPitch => _reachHeadPitch;
         public float ReachNeckLift => _reachNeckLift;
         public float ReachAntennaLift => _reachAntennaLift;
-        public float ShortSeconds => _shortSeconds;
-        public float LongSeconds => _longSeconds;
-        public float GapSeconds => _gapSeconds;
         public float KeyGlow => _keyGlow;
-        public float KeyDelay => _keyDelay;
-        public float KeyRepeat => _keyRepeat;
         public float LampHalfLife => _lampHalfLife;
         public float ClearGlow => _clearGlow;
         public float DejectedHoldSeconds => _dejectedHoldSeconds;

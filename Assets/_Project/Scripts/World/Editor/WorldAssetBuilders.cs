@@ -18,6 +18,9 @@ namespace MoonProject.World.Editor
     {
         private const string OcclusionFeature = "ScreenSpaceAmbientOcclusion";
 
+        // The sky point's quad is drawn round the camera by its shader, so its bounds must never be culled.
+        private const float SkyPointNeverCulled = 1e7f;
+
         [MoonBuilder("World/Settings", 200)]
         public static void BuildSettings()
         {
@@ -99,7 +102,32 @@ namespace MoonProject.World.Editor
             var earthMaterial = new Material(LoadShader(WorldPaths.EarthShader));
             earthMaterial.SetTexture("_EarthAlbedoMap", LoadTexture(WorldPaths.EarthAlbedoTexture));
             GeneratedAssets.CreateOrReplace(earthMaterial, WorldPaths.EarthMaterial);
+            CallSkyPointSettings point = LoadSettings().Sky.CallPoint;
+            var pointMaterial = new Material(LoadShader(WorldPaths.SkyPointShader));
+            pointMaterial.SetColor("_Color", point.Color);
+            pointMaterial.SetFloat("_Peak", point.Peak);
+            pointMaterial.SetFloat("_CorePixels", point.CorePixels);
+            pointMaterial.SetFloat("_GlowPixels", point.GlowPixels);
+            pointMaterial.SetFloat("_GlowShare", point.GlowShare);
+            GeneratedAssets.CreateOrReplace(pointMaterial, WorldPaths.SkyPointMaterial);
+            GeneratedAssets.CreateOrReplace(SkyPointQuad(), WorldPaths.SkyPointMesh);
             AssetDatabase.SaveAssets();
+        }
+
+        /// <summary>
+        /// The sky point's quad, corners at ±1 (the shader scales them to pixels round the point): it is drawn round
+        /// whichever camera looks, so CPU culling must never reject it.
+        /// </summary>
+        private static Mesh SkyPointQuad()
+        {
+            var mesh = new Mesh { name = "CallSkyPointQuad" };
+            mesh.SetVertices(new[]
+            {
+                new Vector3(-1f, -1f, 0f), new Vector3(1f, -1f, 0f), new Vector3(1f, 1f, 0f), new Vector3(-1f, 1f, 0f),
+            });
+            mesh.SetTriangles(new[] { 0, 2, 1, 0, 3, 2 }, 0, false);
+            mesh.bounds = new Bounds(Vector3.zero, Vector3.one * SkyPointNeverCulled);
+            return mesh;
         }
 
         /// <summary>

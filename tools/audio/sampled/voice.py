@@ -90,6 +90,11 @@ GESTURES = {
                 (Syllable(0.02, 0.56, "F#5", ((0.0, -9.0), (0.22, -4.0), (0.44, 0.0), (0.56, 1.0)), attack=0.03),),
                 0.66, squeal=0.3),
     ),
+    "voice_ask": (
+        Gesture("F# up to A: a small hopeful question scooping up from F#4, held a breath, then nothing answers.",
+                (Syllable(0.02, 0.5, "A4", ((0.0, -3.0), (0.18, -2.4), (0.4, 0.2), (0.5, 0.0)), attack=0.025,
+                          release=0.18),), 0.62),
+    ),
     "voice_done": (
         Gesture("A: falls onto A and settles, the task finished.",
                 (Syllable(0.02, 0.5, "A5", ((0.0, 2.0), (0.08, 1.8), (0.3, 0.0), (0.5, -0.2))),), 0.6),
