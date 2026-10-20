@@ -95,6 +95,9 @@ namespace MoonProject.Autoplay
         /// <summary>Metres from that stop point 07 counts as there: close, so the module trails onto the apron.</summary>
         private const float HomeArrive = 1f;
 
+        /// <summary>Tows the bot tries before the module counts as stuck (a snag lets it go; a player hooks again).</summary>
+        private const int TowAttempts = 3;
+
         /// <summary>Seconds the pad may take to take 07 in once it rests there (a full 07 waits out the rest time).</summary>
         private const float DuskSeconds = 15f;
 
@@ -760,6 +763,33 @@ namespace MoonProject.Autoplay
                 yield break;
             }
 
+            TowRelease reason = TowRelease.Player;
+            using (_bot.World.Context.Events.Subscribe<TowReleased>(released => reason = released.Reason))
+            {
+                for (int attempt = 1; attempt <= TowAttempts && !_bot.Failed; attempt++)
+                {
+                    yield return HookAndTowHome(module);
+                    if (_bot.Failed || reason == TowRelease.Arrived)
+                    {
+                        yield break;
+                    }
+
+                    _bot.Warn("the cable let the power module go on the way home (" + reason + ", " +
+                              DriveSteering.FlatDistance(module.position, Pad())
+                                  .ToString("0.0", CultureInfo.InvariantCulture) +
+                              " m from the apron): hooking it again, as a player would.");
+                }
+            }
+
+            if (!_bot.Failed && reason != TowRelease.Arrived)
+            {
+                _bot.Fail("the power module never reached the apron in " + TowAttempts + " tows.");
+            }
+        }
+
+        /// <summary>Hooks the module where it stands and drives it home until the winch lets it go.</summary>
+        private IEnumerator HookAndTowHome(Transform module)
+        {
             Vector3 hitch = HitchOf(module);
             Vector3 outward = Flat(hitch - module.position).normalized;
             Vector3 stand = Flat(hitch) + outward * HookStandOff;
