@@ -939,6 +939,10 @@
             "text": "Móc cáp"
         },
         {
+            "key": "hint.install",
+            "text": "Lắp"
+        },
+        {
             "key": "pickup.crate.contents",
             "text": "phụ tùng"
         },
