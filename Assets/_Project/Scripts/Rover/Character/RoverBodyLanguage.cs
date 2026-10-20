@@ -138,6 +138,7 @@ namespace MoonProject.Rover
         private AntennaListen _listen;
         private CallListen _call;
         private ICallSource _callSource;
+        private ICallSignal _callSignal;
         private bool _charging;
         private IWorldLayout _world;
         private GameContext _context;
@@ -928,8 +929,13 @@ namespace MoonProject.Rover
                 return;
             }
 
+            if (_callSignal == null)
+            {
+                _context.TryGet(out _callSignal);
+            }
+
             bool listening = _mood.Idle > _tuning.CallListen.IdleShare || _charging;
-            _call.Step(deltaTime, _callSource.State, listening);
+            _call.Step(deltaTime, _callSource.State, listening, _callSignal != null ? _callSignal.Keying : 0f);
         }
 
         private void StepTools(float halfLife, float deltaTime)
