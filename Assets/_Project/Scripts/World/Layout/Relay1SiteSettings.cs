@@ -64,6 +64,19 @@ namespace MoonProject.World
         [Range(0f, 4f)]
         [SerializeField] private float _outlineNeedsPart = 1f;
 
+        [Tooltip("How bright the outline glows round the fitted unit once the relay is relit.")]
+        [Range(0f, 4f)]
+        [SerializeField] private float _outlineFitted = 1.4f;
+
+        [Header("Relit")]
+        [Tooltip("How bright the contact pad's lamp glows once relit (times the lamp's colour): 07's charge spot.")]
+        [Range(0f, 6f)]
+        [SerializeField] private float _padLampGlow = 1f;
+
+        [Tooltip("How bright the mast's relay lens glows once relit (times the lamp's colour).")]
+        [Range(0f, 6f)]
+        [SerializeField] private float _relayLensGlow = 1f;
+
         public Vector2 CabinetOffset => _cabinetOffset;
         public float CabinetYaw => _cabinetYaw;
         public float PadDistance => _padDistance;
@@ -77,5 +90,8 @@ namespace MoonProject.World
         public float LampStripGlow => _lampStripGlow;
         public Color OutlineColor => _outlineColor;
         public float OutlineNeedsPart => _outlineNeedsPart;
+        public float OutlineFitted => _outlineFitted;
+        public float PadLampGlow => _padLampGlow;
+        public float RelayLensGlow => _relayLensGlow;
     }
 }

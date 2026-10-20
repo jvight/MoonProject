@@ -155,6 +155,8 @@ namespace MoonProject.World.Editor
             var sparkleMaterial = context.LoadAsset<Material>(WorldPaths.ArrayGlintMaterial);
             var sheenMaterial = context.LoadAsset<Material>(WorldPaths.ArrayGlintSheenMaterial);
             GameObject holder = context.CreateChild(ArrayGlintName, root);
+            // The holder stands at the array, so the glint's own position is where it calls from.
+            holder.transform.position = array.transform.position;
             MoonSurface surface = settings.CreateSurface();
             Vector2 apron = settings.Surface.Sites.ApronCenter;
             float eyeHeight = surface.SampleHeight(apron.x, apron.y) + settings.Landmarks.ReflectorEyeHeight;

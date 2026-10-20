@@ -60,6 +60,9 @@ namespace MoonProject.World
             _levels = new float[wings];
         }
 
+        /// <summary>How many fallen wings glint.</summary>
+        public int WingCount => _sparkles != null ? _sparkles.Length : 0;
+
         /// <summary>The glint (0..1, before its shimmer and brightness) each wing showed on the last frame.</summary>
         public float LevelOf(int wing) => wing >= 0 && wing < _levels.Length ? _levels[wing] : 0f;
 

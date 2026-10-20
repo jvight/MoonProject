@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
 
@@ -35,6 +36,10 @@ namespace MoonProject.Gameplay
         }
 
         public bool Shown => _rack.Shown;
+
+        public Vector3 Position => _rack.Position;
+
+        public Quaternion Rotation => _rack.Rotation;
 
         public int Count => _rack.Count;
 
@@ -81,7 +86,7 @@ namespace MoonProject.Gameplay
 
         private void OnRevealed(SocketRackRevealed revealed)
         {
-            if (_rack.Reveal())
+            if (_rack.Reveal(revealed.Position, revealed.Rotation))
             {
                 PublishChanges();
             }
@@ -90,9 +95,10 @@ namespace MoonProject.Gameplay
         /// <summary>A loaded game whose release is done: the rack is out, replayed by <see cref="Announce"/>.</summary>
         private void OnReleaseStage(ReleaseStageChanged changed)
         {
-            if (changed.Restored && changed.Stage == ReleaseStage.Done)
+            if (changed.Restored && changed.Stage == ReleaseStage.Done && !_rack.RevealSaved())
             {
-                _rack.Reveal();
+                Debug.LogError($"{nameof(SocketRackField)}: the release is done but the save placed the rack " +
+                               "nowhere, so it stays hidden.");
             }
         }
 
