@@ -412,21 +412,27 @@ namespace MoonProject.Core.Events
     /// The objective line changed (docs/design/opening-v3-guidance-audit.md G2, G4): a localization key for the next
     /// small action, or empty when the line goes. Gameplay decides how long it stays (it publishes the empty key).
     /// <see cref="Reason"/> says whether it follows a success or is a stall reminder; while <see cref="ShowsKey"/>, the
-    /// line leads with <see cref="Key"/>'s glyph (a key the player has never pressed, or not for a while).
+    /// line leads with <see cref="Key"/>'s glyph (a key the player has never pressed, or not for a while). While
+    /// <see cref="HasTarget"/>, the action has a place in the world (the apron, a crate, the module's hitch, the mast):
+    /// <see cref="TargetId"/> names it and <see cref="TargetPosition"/> is where it stands, for a look toward it (G5).
     /// </summary>
     public readonly struct NextStepChanged
     {
         public NextStepChanged(string lineKey)
-            : this(lineKey, NextLineReason.Next, default, false)
+            : this(lineKey, NextLineReason.Next, default, false, false, string.Empty, Vector3.zero)
         {
         }
 
-        public NextStepChanged(string lineKey, NextLineReason reason, RoverAction key, bool showsKey)
+        public NextStepChanged(string lineKey, NextLineReason reason, RoverAction key, bool showsKey, bool hasTarget,
+            string targetId, Vector3 targetPosition)
         {
             LineKey = lineKey;
             Reason = reason;
             Key = key;
             ShowsKey = showsKey;
+            HasTarget = hasTarget;
+            TargetId = targetId ?? string.Empty;
+            TargetPosition = targetPosition;
         }
 
         public string LineKey { get; }
@@ -437,6 +443,13 @@ namespace MoonProject.Core.Events
         public RoverAction Key { get; }
 
         public bool ShowsKey { get; }
+
+        public bool HasTarget { get; }
+
+        /// <summary>The place's id (a world anchor, a crate, a ruin piece, a tow load or a structure id); empty with none.</summary>
+        public string TargetId { get; }
+
+        public Vector3 TargetPosition { get; }
     }
 
     /// <summary>

@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
 using MoonProject.Core.Input;
@@ -238,7 +239,8 @@ namespace MoonProject.Gameplay
             _showSeconds = seconds;
             RoverAction action = OpeningKeys.KeyOf(key);
             bool showsKey = action != default && !_keys.UsedWithin(action, _timing.KeyFreshSeconds);
-            _events.Publish(new NextStepChanged(key, reason, action, showsKey));
+            bool hasTarget = _game.TryGetPlace(key, out string placeId, out Vector3 place);
+            _events.Publish(new NextStepChanged(key, reason, action, showsKey, hasTarget, placeId, place));
         }
 
         private void Clear()

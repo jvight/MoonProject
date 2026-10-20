@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using NUnit.Framework;
+using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
 using MoonProject.Core.Input;
@@ -348,6 +349,27 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void TheLine_CarriesThePlaceOfItsAction_WhenItHasOne()
+        {
+            var apron = new Vector3(3f, 0f, 9f);
+            _game.Places[OpeningKeys.BuildPad] = apron;
+            _flow.Tick(1f);
+            _game.ReachedLander = true;
+            _game.Known.Add(StructureIds.ChargingPad);
+            _game.Covered.Add(StructureIds.ChargingPad);
+            _flow.Tick(1f);
+            NextStepChanged build = _changes[_changes.Count - 1];
+            Assert.AreEqual(OpeningKeys.BuildPad, build.LineKey);
+            Assert.IsTrue(build.HasTarget, "B  Build the charging pad: over there");
+            Assert.AreEqual("place." + OpeningKeys.BuildPad, build.TargetId);
+            Assert.AreEqual(apron, build.TargetPosition);
+
+            _game.BuiltIds.Add(StructureIds.ChargingPad);
+            _flow.Tick(1f);
+            Assert.IsFalse(_changes[_changes.Count - 1].HasTarget, "a line with no place carries none");
+        }
+
+        [Test]
         public void NoProgress_MovingOrStill_BringsTheLineBack_ThenOnceMore_ThenNever()
         {
             _flow.Tick(1f);
@@ -419,6 +441,14 @@ namespace MoonProject.Gameplay.Tests
             public bool NightFallen { get; set; }
             public bool DuskVisited { get; set; }
             public bool CallAnswered { get; set; }
+            public readonly Dictionary<string, Vector3> Places = new Dictionary<string, Vector3>();
+
+            public bool TryGetPlace(string lineKey, out string placeId, out Vector3 position)
+            {
+                bool has = Places.TryGetValue(lineKey, out position);
+                placeId = has ? "place." + lineKey : string.Empty;
+                return has;
+            }
 
             public bool Knows(string structureId)
             {

@@ -355,6 +355,7 @@ namespace MoonProject.Gameplay
 
             _battery.ConnectTow(Tow);
             _building.ConnectTow(Tow);
+            Opening.ConnectTow(Tow);
             TowFrames = new TowFrames(context.Events, _building.Catalog, Tow);
             Rack = new SocketRackField(context.Events, _openingTuning.RackBays);
             RackView = new SocketRackView(context.Events, Rack, _openingTuning.RackView, services.Terrain,

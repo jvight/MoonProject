@@ -1,3 +1,5 @@
+using UnityEngine;
+
 namespace MoonProject.Gameplay
 {
     /// <summary>
@@ -60,5 +62,11 @@ namespace MoonProject.Gameplay
 
         /// <summary>07 transmitted from the mast and relay.1 answered the call (R8).</summary>
         bool CallAnswered { get; }
+
+        /// <summary>
+        /// The place in the world where the action of line <paramref name="lineKey"/> happens (the apron, a crate, the
+        /// power module, the mast), by id and position; false when it has none (a field fit) or it is not there yet.
+        /// </summary>
+        bool TryGetPlace(string lineKey, out string placeId, out Vector3 position);
     }
 }
