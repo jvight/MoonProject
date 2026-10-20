@@ -20,6 +20,12 @@ namespace MoonProject.World
         [Range(1f, 200f)]
         [SerializeField] private float _sharpness = 4f;
 
+        [Tooltip("Share of the Sun's disc that has to clear Earth (or the shade) for the glint to catch at full " +
+            "strength: a glint off glass is as bright as the Sun's surface, not its size, so the first sliver of the " +
+            "limb already throws it, seconds after the breakout.")]
+        [Range(0.01f, 1f)]
+        [SerializeField] private float _fullCatchAtSunlight = 0.08f;
+
         [Header("The panel's sheen")]
         [Tooltip("Brightness the wing's cell faces add on the Sun's mirror: the panel itself lit, in its own shape.")]
         [Range(0f, 4f)]
@@ -69,6 +75,7 @@ namespace MoonProject.World
 
         public Color Color => _color;
         public float Sharpness => _sharpness;
+        public float FullCatchAtSunlight => _fullCatchAtSunlight;
         public float SheenIntensity => _sheenIntensity;
         public float SheenLift => _sheenLift;
         public float SparkleIntensity => _sparkleIntensity;
