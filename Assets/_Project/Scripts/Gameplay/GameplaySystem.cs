@@ -136,6 +136,8 @@ namespace MoonProject.Gameplay
 
         public MastRaise MastRaise { get; private set; }
 
+        public MastRaiseView MastRaiseView { get; private set; }
+
         /// <summary>How the mast raises and the reply times (tests).</summary>
         public CallReplySettings MastRaiseSettings => _openingTuning.Reply;
 
@@ -305,6 +307,7 @@ namespace MoonProject.Gameplay
             Call = new CallProgress(context.Events, _openingTuning.Call, services.Layout);
             Reply = new CallReply(context.Events, Call, _openingTuning.Reply);
             MastRaise = new MastRaise(context.Events, _openingTuning.Reply);
+            MastRaiseView = new MastRaiseView(context.Events, _building, MastRaise, _openingTuning.Reply);
             RangeRing = new RangeRingField(context.Events, _battery.Tuning.RangeRing,
                 new RangeRingModel(_battery.Tuning, _battery.Tuning.RangeRing, services.Terrain), _battery.Model,
                 Opening.Pads, services.Rover);
@@ -558,6 +561,7 @@ namespace MoonProject.Gameplay
             Opening.Step(deltaTime);
             Reply.Step(deltaTime, Opening.NightFallen, _roverState.Speed);
             MastRaise.Step(deltaTime);
+            MastRaiseView.Step();
             RangeRing.Step(deltaTime);
             RangeRingLine.Step();
             PadLock.Step(deltaTime);
@@ -659,6 +663,7 @@ namespace MoonProject.Gameplay
             StartKit?.Dispose();
             Call?.Dispose();
             MastRaise?.Dispose();
+            MastRaiseView?.Dispose();
             RangeRing?.Dispose();
             Bundles?.Dispose();
             Opening?.Dispose();
