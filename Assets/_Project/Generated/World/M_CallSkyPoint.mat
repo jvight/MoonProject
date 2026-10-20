@@ -28,10 +28,16 @@ Material:
     - _CorePixels: 2.2
     - _GlowPixels: 12
     - _GlowShare: 0.3
+    - _Key: 0
     - _Level: 0
-    - _Peak: 1
+    - _Peak: 0.85
+    - _Pulse: 1
+    - _RingBrightness: 0.38
+    - _RingPixels: 26
+    - _RingWidthPixels: 1.6
     m_Colors:
-    - _Color: {r: 1, g: 0.95, b: 0.86, a: 1}
+    - _Color: {r: 1, g: 0.82, b: 0.56, a: 1}
+    - _EmberColor: {r: 1, g: 0.58, b: 0.26, a: 1}
     - _SkyPointDirection: {r: 0, g: 0, b: 1, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

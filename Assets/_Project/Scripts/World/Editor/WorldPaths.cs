@@ -33,8 +33,17 @@ namespace MoonProject.World.Editor
         /// <summary>The small halo each cable marker lamp blooms with as the Begin wave passes.</summary>
         public const string CableMarkerHaloMaterial = GeneratedRoot + "/M_CableMarkerHalo.mat";
 
-        /// <summary>The fallen solar array's sun-white glint halo (LofiBeaconHalo).</summary>
+        /// <summary>The fallen solar array's four-point sparkle (LofiGlintStar).</summary>
         public const string ArrayGlintMaterial = GeneratedRoot + "/M_ArrayGlint.mat";
+
+        /// <summary>The sunlight laid on the fallen array's cells (LofiGlintSheen).</summary>
+        public const string ArrayGlintSheenMaterial = GeneratedRoot + "/M_ArrayGlintSheen.mat";
+
+        public const string GlintStarShader = "Assets/_Project/Shaders/World/LofiGlintStar.shader";
+        public const string GlintSheenShader = "Assets/_Project/Shaders/World/LofiGlintSheen.shader";
+
+        /// <summary>The sheen laid on one fallen wing's cells, cut from Art's array (named after the wing's node).</summary>
+        public static string ArrayGlintSheenMesh(string wing) => GeneratedRoot + "/ArrayGlintSheen_" + wing + ".asset";
 
         /// <summary>The habitat power module status lamp's amber halo (LofiBeaconHalo).</summary>
         public const string ModuleLampHaloMaterial = GeneratedRoot + "/M_ModuleLampHalo.mat";

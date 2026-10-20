@@ -17,5 +17,8 @@ namespace MoonProject.Gameplay
 
         /// <summary>07 has tried its one failed reply (<see cref="CallReply"/>).</summary>
         public bool replyTried;
+
+        /// <summary>The release's socket rack has been shown (<see cref="ReleaseSequence"/>).</summary>
+        public bool rackShown;
     }
 }

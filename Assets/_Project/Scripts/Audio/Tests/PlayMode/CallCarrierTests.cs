@@ -103,8 +103,9 @@ namespace MoonProject.Audio.PlayModeTests
                 yield return null;
                 float keying = signal.Keying;
                 Assert.That(keying, Is.InRange(0f, 1f));
-                Assert.AreEqual(CallKeying.Envelope(_rig.Call.CarrierSource.time) * _rig.Call.Model.Cut, keying, 0.05f,
-                    "read off the loop's own playhead");
+                float expected = CallKeying.Envelope(_rig.Call.KeyingPlayhead) * _rig.Call.Model.Cut;
+                Assert.AreEqual(expected, keying, 1e-6f, "read off the loop's own playhead, sampled once this frame");
+                Assert.AreEqual(keying, signal.Keying, "every reader in a frame gets the same keying");
                 keyed |= keying > 0.9f;
             }
 

@@ -148,6 +148,7 @@ namespace MoonProject.Rover.Editor
 
             RoverFlankLamps flankLamps = BuildFlankLamps(visual, m, rigTuning);
             RoverGrowth growth = BuildGrowth(visual, m, rigTuning);
+            RoverTowCable towCable = BuildTowCable(visual, m, rigTuning);
             RoverWheelFx wheelFx = BuildWheelFx(scratch, root.transform, m, fxTuning, trackMaterial, dustMaterial);
             RoverLampMotes lampMotes = BuildLampMotes(scratch, headlamp, fxTuning, moteMaterial);
 
@@ -166,6 +167,7 @@ namespace MoonProject.Rover.Editor
                 ("_lampMotes", lampMotes),
                 ("_flankLamps", flankLamps),
                 ("_growth", growth),
+                ("_towCable", towCable),
                 ("_headlamp", roadLight),
                 ("_nozzleDevice", nozzleDevice),
                 ("_tetherOrigin", eyeOrigin),
@@ -403,6 +405,37 @@ namespace MoonProject.Rover.Editor
             BuildWiring.AssignArray(flankLamps, "_lamps", lamps);
             BuildWiring.AssignArray(flankLamps, "_glasses", glasses);
             return flankLamps;
+        }
+
+        /// <summary>
+        /// The tow cable's rope and clamp: two world-space lines of Art's dark matte rubber on the visual rig, drawn by
+        /// <see cref="RoverTowCable"/> from the winch to the load's hitch.
+        /// </summary>
+        private static RoverTowCable BuildTowCable(GameObject host, Transform model, RoverRigTuning tuning)
+        {
+            var rubber = BuildWiring.Require<Material>(RoverAssetPaths.TowCableMaterial, "Art's rubber material");
+            LineRenderer rope = TowLine(host, "TowRope", rubber);
+            LineRenderer hook = TowLine(host, "TowHook", rubber);
+            var cable = host.AddComponent<RoverTowCable>();
+            BuildWiring.Assign(cable, ("_tuning", tuning), ("_rope", rope), ("_hook", hook),
+                ("_winch", BuildWiring.Node(model, RoverModelNodes.WinchOrigin)));
+            return cable;
+        }
+
+        private static LineRenderer TowLine(GameObject host, string name, Material material)
+        {
+            var node = new GameObject(name);
+            node.transform.SetParent(host.transform, false);
+            var line = node.AddComponent<LineRenderer>();
+            line.sharedMaterial = material;
+            line.useWorldSpace = true;
+            line.numCapVertices = 2;
+            line.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            line.receiveShadows = true;
+            line.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
+            line.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+            line.enabled = false;
+            return line;
         }
 
         /// <summary>The antenna's second segment and the igniter cartridge already in RoverModel, grown by events.</summary>
