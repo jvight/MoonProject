@@ -37,6 +37,11 @@ namespace MoonProject.Autoplay
         /// <summary>The bank stands close to the pad, well inside the cable reach, as a sensible player places it.</summary>
         private const float BankPadSpacing = 4.5f;
         private const float RuinsGateOffset = 10f;
+        private const float AnswerReadySeconds = 120f;
+        private const float MastArriveRadius = 4f;
+        private const float MastSettleSeconds = 10f;
+        private const float TransmitSeconds = 40f;
+        private const float PulseSeconds = 60f;
         private const float ScanStandOff = 3.5f;
         private const float PanelStandOff = 2.5f;
         private const float ScanLineUp = 3f;
@@ -480,6 +485,24 @@ namespace MoonProject.Autoplay
         {
             var sunlight = _bot.World.Context.Get<ISunlight>();
             yield return _bot.Until(() => sunlight.Phase == SkyPhase.Earthlit, SunsetSeconds, "the first night to fall");
+        }
+
+        /// <summary>
+        /// B12: the mast has been raised and 07's reply has failed; the answer becomes possible, 07 goes to the mast,
+        /// holds E to transmit, relay.1 answers (CallAnswered) and the pulse runs on to the Peak.
+        /// </summary>
+        public IEnumerator AnswerTheCall()
+        {
+            var answer = _bot.World.Context.Get<IAnswerStatus>();
+            yield return _bot.Until(() => answer.Phase >= AnswerPhase.Ready, AnswerReadySeconds,
+                "the answer to become possible (the mast raised, the reply failed)", () => "Phase " + answer.Phase + ".");
+            yield return _bot.DriveTo(answer.MastPoint, MastArriveRadius, "to the mast", DriveSeconds);
+            yield return _bot.Until(() => answer.AtTheMast, MastSettleSeconds, "07 to stand still at the mast");
+            yield return _bot.Hold(Key.E, () => answer.Phase >= AnswerPhase.Transmitting, TransmitSeconds,
+                "the transmission to go out");
+            yield return UntilReached(OpeningMilestone.CallAnswered, "relay.1 to answer the call", TransmitSeconds);
+            yield return _bot.Until(() => answer.Phase == AnswerPhase.Done, PulseSeconds,
+                "the pulse to reach the Peak's dish");
         }
 
         public IEnumerator DriveToTheRuinsGate(string what)

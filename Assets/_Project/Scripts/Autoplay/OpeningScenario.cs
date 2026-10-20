@@ -69,7 +69,7 @@ namespace MoonProject.Autoplay
             foreach (Func<IEnumerator> beat in new Func<IEnumerator>[]
                      {
                          Drive, Scan, CollectParts, BuildThePad, ChargeAndFit, TheRuins, BuildTheArray,
-                         TheHabitat, Nightfall, TheTower,
+                         TheHabitat, Nightfall, TheTower, TheAnswer,
                      })
             {
                 if (_bot.Failed || Reached(_lastBeat))
@@ -357,6 +357,13 @@ namespace MoonProject.Autoplay
             yield return _base.Build(StructureIds.AntennaMast, _base.Pad() + Vector3.back * OpeningBase.Spacing);
             yield return _base.UntilReached(OpeningMilestone.SignalWest, "the SignalWest milestone");
             _bot.EndBeat("the mast stands and the west signal answered");
+        }
+
+        private IEnumerator TheAnswer()
+        {
+            Begin("B12", "The answer");
+            yield return _base.AnswerTheCall();
+            _bot.EndBeat("07 transmitted from the mast and relay.1 answered the call");
         }
 
         /// <summary>The next unscanned fragment of the lander's cargo, in the order the blueprint numbers them.</summary>

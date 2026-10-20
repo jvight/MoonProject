@@ -142,6 +142,9 @@ namespace MoonProject.Gameplay
 
         public NetworkPulseView PulseView { get; private set; }
 
+        /// <summary>Seconds of holding E at the mast to transmit (tests).</summary>
+        public float HoldSecondsForTests => _openingTuning.Answer.HoldSeconds;
+
         /// <summary>How the mast raises and the reply times (tests).</summary>
         public CallReplySettings MastRaiseSettings => _openingTuning.Reply;
 
