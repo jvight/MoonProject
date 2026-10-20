@@ -14,7 +14,7 @@ namespace MoonProject.UI
     public sealed class PromptSettings
     {
         [Tooltip("The prompt chip easing in and out.")]
-        [SerializeField] private RevealSettings _reveal = new RevealSettings(0.35f, 0.3f, 10f, 0.88f, 1.6f, 0.55f);
+        [SerializeField] private RevealSettings _reveal = new RevealSettings(0.35f, 0.25f, 10f, 0.88f, 1.6f, 0.55f);
 
         [Tooltip("Teachable actions, and the rack's chip, which names a part and shows no key (its action is unused).")]
         [SerializeField] private PromptEntry[] _entries =

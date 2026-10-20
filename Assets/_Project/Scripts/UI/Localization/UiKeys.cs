@@ -29,7 +29,6 @@ namespace MoonProject.UI
         public const string VerbScan = "ui.verb.scan";
         public const string VerbCut = "ui.verb.cut";
         public const string VerbBuild = "ui.verb.build";
-        public const string VerbFit = "ui.verb.fit";
         public const string FaceNoLine = "ui.face.no_line";
         public const string FaceTxNoRange = "ui.face.tx_no_range";
         public const string FaceTxReady = "ui.face.tx_ready";

@@ -822,10 +822,14 @@ Label {
     text-shadow: 0 2px 12px var(--moon-shadow);
 }
 
-/* After its bright rest the objective line is a small dim line (docs/design/opening-v2.md §3) */
-.next-line--dim .next-line__text {
-    font-size: 18px;
-    opacity: 0.7;
+/* The next line's key comes first when the key is new (guidance audit G2): the chips' own keycap */
+.next-line__row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.next-line__glyph {
+    margin-right: 12px;
 }
 
 /* The weld's bar under the build step's line: a calm cyan fill on an amber track */
@@ -1083,6 +1087,20 @@ Label {
     margin: 0 12px;
     border-radius: 2px;
     background-color: var(--moon-text-faint);
+}
+
+/* A key the card adds when it first matters (B Build, the hook cable): its own dot, and a soft amber wash while new */
+.controls-card__item {
+    flex-direction: row;
+    align-items: center;
+    border-radius: 12px;
+    padding-right: 6px;
+    transition-property: background-color;
+    transition-duration: 0.6s;
+}
+
+.controls-card__item--new {
+    background-color: var(--moon-amber-soft);
 }
 
 .controls-card .glyph--small.glyph--pad {

@@ -81,6 +81,8 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(BuildModeState.Closed, build.State, "Esc leaves build mode");
             Assert.IsFalse(ui.Pause.IsOpen, "and does not also pause the game");
             Assert.AreEqual(CursorMode.Drive, ui.Cursor.Mode);
+            Assert.IsFalse(ui.Objective.ShowsBuildStep, "the placing line has gone");
+            Assert.AreEqual(string.Empty, ui.Layout.NextLineText.text, "and holds no stale words once hidden");
         }
 
         [UnityTest]

@@ -423,7 +423,7 @@ MonoBehaviour:
   _prompts:
     _reveal:
       _fadeIn: 0.35
-      _fadeOut: 0.3
+      _fadeOut: 0.25
       _slide: 10
       _scaleFrom: 0.88
       _springFrequency: 1.6
@@ -642,7 +642,7 @@ MonoBehaviour:
       _springDamping: 0.6
     _hint:
       _fadeIn: 0.6
-      _fadeOut: 0.8
+      _fadeOut: 0.25
       _slide: 10
       _scaleFrom: 0.9
       _springFrequency: 1.4
@@ -654,19 +654,13 @@ MonoBehaviour:
   _guidance:
     _line:
       _fadeIn: 0.9
-      _fadeOut: 0.5
+      _fadeOut: 0.25
       _slide: 6
       _scaleFrom: 1
       _springFrequency: 1.4
       _springDamping: 0.6
     _lowBatteryHoldSeconds: 8
     _stillSpeed: 0.4
-    _handOverSeconds: 0.3
-    _objectiveDelaySeconds: 1.5
-    _objectiveStillSeconds: 1
-    _objectiveRestSeconds: 8
-    _objectiveRebrightStillSeconds: 4
-    _objectiveIdleSeconds: 90
     _readout:
       _fadeIn: 0.8
       _fadeOut: 1.1
@@ -706,6 +700,7 @@ MonoBehaviour:
     _driveMetres: 4
     _lookSeconds: 0.6
     _maxSeconds: 20
+    _addedSeconds: 7
   _backdrop:
     _blurStartMetres: 0
     _blurEndMetres: 4

@@ -67,6 +67,7 @@ namespace MoonProject.UI
         private ControlsCard _controlsCard;
         private ControlsCardView _controlsView;
         private readonly ObjectiveChip _objectiveChip = new ObjectiveChip();
+        private HintWord _objectiveWord;
         private ObjectiveLine _objective;
         private ObjectiveView _objectiveView;
         private LowBatteryHint _lowBattery;
@@ -409,9 +410,9 @@ namespace MoonProject.UI
             _lookUpChip = new LookUpChip(_layout, _tuning.Stargaze, _localization, _glyphs);
             _controlsCard = new ControlsCard(_tuning.ControlsCard);
             _controlsView = new ControlsCardView(_layout, _tuning.ControlsCard, _localization, _glyphs);
-            _objective = new ObjectiveLine(_tuning.Guidance, _ledger);
-            _objectiveView = new ObjectiveView(_layout, _tuning.Guidance, _localization);
-            _slot = new GuidanceSlot(_tuning.Guidance.HandOverSeconds);
+            _objective = new ObjectiveLine();
+            _objectiveView = new ObjectiveView(_layout, _tuning.Guidance, _localization, _glyphs);
+            _slot = new GuidanceSlot();
             _lowBattery = new LowBatteryHint(_tuning.Guidance, services.Battery, _localization);
             _batteryDial = new BatteryDial(_layout, _tuning.Battery, services.Battery, services.Beam);
             _saveTick = new SaveTick(_layout, _tuning.SaveTick);
@@ -563,16 +564,23 @@ namespace MoonProject.UI
 
             InputDeviceKind device = input.ActiveDevice;
             _textScale.Apply(_player.TextScale);
-            _objective.Tick(hudTime, _services.Rover.Speed, _player.Guidance, _objectiveView.ShowsObjective,
-                _objectiveChip.AtHand(_services.Hints.Primary.Kind));
+            _objective.Tick(_player.Guidance);
             _lowBattery.Tick(paused ? 0f : deltaTime, _objectiveView.ShowsBattery);
             float stick = _tuning.Stargaze.FirstPromptStick * _tuning.Stargaze.FirstPromptStick;
             bool looking = !paused && (input.LookDelta.sqrMagnitude > 0f || input.LookRate.sqrMagnitude > stick);
             bool cardOpen = ControlsCardOpen(paused, cargoOpen);
-            _controlsCard.Tick(hudTime, cardOpen, _services.Rover.Speed * hudTime, looking, _player.Guidance);
-            PromptHolder holder = DecideGuidance(paused, hudTime);
+            AddControlsKey(ControlsKeyOf(_services.Hints.Primary.Kind));
+            _controlsCard.Tick(hudTime, cardOpen, _services.Rover.Speed * hudTime, looking, _player.Guidance,
+                _controlsView.IsVisible);
+            // The objective's verb chip may replace a reminder line (never stand beside it) once its object is in reach
+            // and ready, or at work; a next line carries its own key and has no chip. A target E cannot act on yet (a
+            // faulted cutter) gets no chip: the line says why.
+            InteractionHint primary = _services.Hints.Primary;
+            _objectiveWord = _objectiveChip.Word(_objective.WantsShown && !_objective.IsNext && !_objective.ShowsKey,
+                primary.Ready ? primary.Kind : InteractionKind.None, HeldNow());
+            PromptHolder holder = DecideGuidance(paused);
             _controlsView.Tick(deltaTime, holder == PromptHolder.Controls && _controlsCard.WantsShown && cardOpen,
-                device);
+                device, _ledger.ControlsAdded, _controlsCard.Fresh);
             _unlockCard.Tick(hudTime, !cargoOpen && holder == PromptHolder.Unlock,
                 _services.Rover.Speed >= _tuning.Guidance.StillSpeed || _buildStrip.State != BuildModeState.Closed);
             _pickups.Tick(deltaTime);
@@ -603,15 +611,14 @@ namespace MoonProject.UI
                 : _holdHint.WantsShown ? HintWord.Hold : HintWord.None;
             if (BuildMenuOpen())
             {
-                _objectiveChip.Used(ObjectiveVerb.Build);
                 _director.NotifyUsed(InteractionKind.OpenBuild);
             }
 
-            // The verb chip is the objective's own: it shows only with its line, and a teaching prompt takes the chip.
-            // One chip at a time: while the world's own chip shows over its target, the bottom slot stays empty.
-            hint = hint != HintWord.None || _prompt.IsVisible ? hint
-                : _objectiveChip.Word(_objectiveView.ShowsObjective && _objective.WantsShown,
-                    _services.Systems.CanFitIgniter, cargoOpen, OfferedNow(), HeldNow());
+            // One chip at a time, and only when the guidance slot gives the chips the turn: a teaching prompt takes the
+            // chip first; while the world's own chip shows over its target, the bottom slot stays empty.
+            hint = holder != PromptHolder.Chip ? HintWord.None
+                : hint != HintWord.None || _prompt.IsVisible ? hint
+                : _objectiveWord;
             InteractionHint aimed = _services.Hints.Primary;
             bool counting = hint == HintWord.Scan && aimed.Kind == InteractionKind.Scan;
             _lookUpChip.SetCount(counting ? aimed.SetStep : 0, counting ? aimed.SetCount : 0);
@@ -626,9 +633,10 @@ namespace MoonProject.UI
             _call.Step(hudTime, resting, _callShown && _callAsLine);
             _lookUpChip.Nudge(_blockedCue.ChipOffset, _blockedCue.ChipOpacity);
             StepFaceNotice(hudTime);
-            _objectiveView.Tick(deltaTime, _objective, ObjectiveOpen(paused) && _slot.Allows(GuidanceKind.Objective),
+            bool lineGranted = _slot.Allows(_objective.IsNext ? GuidanceKind.NextLine : GuidanceKind.Objective);
+            _objectiveView.Tick(deltaTime, _objective, ObjectiveOpen(paused) && lineGranted,
                 _lowBattery, ObjectiveOpen(paused) && _slot.Allows(GuidanceKind.Battery), _buildStrip,
-                BuildStepOpen(paused) && _slot.Allows(GuidanceKind.BuildStep));
+                BuildStepOpen(paused) && _slot.Allows(GuidanceKind.BuildStep), device);
             bool hudOpen = !paused && _awake && !_inOpening && !_stargaze.IsVeiled && !cargoOpen;
             _batteryDial.Tick(deltaTime, _cellRowRevealed, hudOpen);
             _sunArc.Tick(deltaTime, hudOpen && _openingProtocol.IsPowerOn);
@@ -637,16 +645,36 @@ namespace MoonProject.UI
         }
 
         /// <summary>The gameplay's action in reach and ready now, or None.</summary>
-        private InteractionKind OfferedNow()
-        {
-            InteractionHint primary = _services.Hints.Primary;
-            return primary.Ready ? primary.Kind : InteractionKind.None;
-        }
-
         /// <summary>
         /// What a held E is doing now (the cut's charge-up counts), or None. A scan counts only while E is down, so a
         /// scan whose end the UI missed can never outrank the target in reach.
         /// </summary>
+        /// <summary>The controls card's key that <paramref name="kind"/>'s first-use chip teaches (None for others).</summary>
+        private static ControlsKeys ControlsKeyOf(InteractionKind kind)
+        {
+            switch (kind)
+            {
+                case InteractionKind.OpenBuild:
+                    return ControlsKeys.Build;
+                case InteractionKind.Tether:
+                    return ControlsKeys.Hook;
+                default:
+                    return ControlsKeys.None;
+            }
+        }
+
+        /// <summary><paramref name="key"/> matters now: the first time in this save, the controls card adds it.</summary>
+        private void AddControlsKey(ControlsKeys key)
+        {
+            if (key == ControlsKeys.None || (_ledger.ControlsAdded & key) != 0)
+            {
+                return;
+            }
+
+            _ledger.RecordControlsAdded(key);
+            _controlsCard.Add(key, _player.Guidance);
+        }
+
         private InteractionKind HeldNow()
         {
             ISalvageStatus salvage = _services.Salvage;
@@ -731,9 +759,10 @@ namespace MoonProject.UI
         /// passes on once the screen is clear. Inside the prompt kind the one already up keeps the screen, else the
         /// controls card, the blueprint card, the readout and the chips take turns in that order.
         /// </summary>
-        private PromptHolder DecideGuidance(bool paused, float deltaTime)
+        private PromptHolder DecideGuidance(bool paused)
         {
-            bool looks = LookHintsOpen() && (_firstPrompt.Word != HintWord.None || _holdHint.Wants(_awake && _carrying));
+            bool looks = LookHintsOpen() && (_firstPrompt.Word != HintWord.None || _holdHint.Wants(_awake && _carrying) ||
+                                             _objectiveWord != HintWord.None);
             bool chipWants = (PromptsOpen(paused) && _director.ReadyToShow) || looks;
             bool unlockWants = !_cargo.IsOpen && _unlockCard.IsWaiting;
             bool readoutWants = ReadoutOpen(paused) && _readout.Wants;
@@ -754,13 +783,17 @@ namespace MoonProject.UI
             _guidanceWants[(int)GuidanceKind.BuildStep] = BuildStepOpen(paused) && _buildStrip.Step != BuildStep.None;
             _guidanceWants[(int)GuidanceKind.Prompt] = holder != PromptHolder.None;
             _guidanceWants[(int)GuidanceKind.Battery] = ObjectiveOpen(paused) && _lowBattery.WantsShown;
-            _guidanceWants[(int)GuidanceKind.Objective] = ObjectiveOpen(paused) && _objective.WantsShown;
+            _guidanceWants[(int)GuidanceKind.NextLine] = ObjectiveOpen(paused) && _objective.IsNext;
+            _guidanceWants[(int)GuidanceKind.Objective] =
+                ObjectiveOpen(paused) && _objective.WantsShown && !_objective.IsNext;
             _guidanceShown[(int)GuidanceKind.BuildStep] = _objectiveView.ShowsBuildStep;
-            _guidanceShown[(int)GuidanceKind.Prompt] = chipUp || _unlockCard.IsVisible || _readout.IsVisible ||
-                                                       _controlsView.IsVisible;
+            // Every chip in the bottom slot counts, the objective's own too, so a hand-over from the line ends.
+            _guidanceShown[(int)GuidanceKind.Prompt] = chipUp || _lookUpChip.IsVisible || _unlockCard.IsVisible ||
+                                                       _readout.IsVisible || _controlsView.IsVisible;
             _guidanceShown[(int)GuidanceKind.Battery] = _objectiveView.ShowsBattery;
-            _guidanceShown[(int)GuidanceKind.Objective] = _objectiveView.ShowsObjective;
-            _slot.Step(_guidanceWants, _guidanceShown, deltaTime);
+            _guidanceShown[(int)GuidanceKind.NextLine] = _objectiveView.ShowsObjective && _objective.IsNext;
+            _guidanceShown[(int)GuidanceKind.Objective] = _objectiveView.ShowsObjective && !_objective.IsNext;
+            _slot.Step(_guidanceWants, _guidanceShown);
             return _slot.Allows(GuidanceKind.Prompt) ? holder : PromptHolder.None;
         }
 
@@ -1393,16 +1426,15 @@ namespace MoonProject.UI
         private void OnCutStarted(SalvageCutStarted started)
         {
             _cutBegun = true;
-            _objectiveChip.Used(ObjectiveVerb.Cut);
         }
 
         private void OnNextStepChanged(NextStepChanged changed)
         {
-            _objective.SetKey(changed.LineKey);
+            _objective.Set(changed);
             _objectiveChip.SetKey(changed.LineKey);
         }
 
-        /// <summary>The scan beam started: the scan prompt yields to the beam, and the objective's Scan chip retires.</summary>
+        /// <summary>The scan beam started: the scan prompt yields to the beam.</summary>
         /// <summary>
         /// An entry joined 07's databank: the CRT's event line on its face says so once (docs/design/databank.md §3),
         /// and an open page lists it.
@@ -1605,12 +1637,6 @@ namespace MoonProject.UI
             }
         }
 
-        /// <summary>
-        /// 07's face says "no line of sight" while the cue lasts (or the failed reply's line, or a databank toast), and
-        /// otherwise shows the call when the guidance slot grants it, unless the self-test or the hold already has the
-        /// face; a line cuts the call at once rather than overlapping it. The face is handed back only if nothing else
-        /// took it meanwhile.
-        /// </summary>
         /// <summary>07's face puts one of the story's lines up for <paramref name="seconds"/>, as the one element.</summary>
         private void ShowFaceLine(string key, float seconds)
         {
@@ -1618,6 +1644,12 @@ namespace MoonProject.UI
             _replyLeft = seconds;
         }
 
+        /// <summary>
+        /// 07's face says "no line of sight" while the cue lasts (or the failed reply's line, or a databank toast), and
+        /// otherwise shows the call when the guidance slot grants it, unless the self-test or the hold already has the
+        /// face; a line cuts the call at once rather than overlapping it. The face is handed back only if nothing else
+        /// took it meanwhile.
+        /// </summary>
         private void StepFaceNotice(float deltaTime)
         {
             bool blocked = _blockedCue.FaceShown;
@@ -1735,7 +1767,6 @@ namespace MoonProject.UI
         {
             _scanning = true;
             _director.Yield(InteractionKind.Scan);
-            _objectiveChip.Used(ObjectiveVerb.Scan);
         }
 
         private void OnStructureLearned(StructureLearned learned)
