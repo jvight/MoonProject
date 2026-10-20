@@ -21,6 +21,7 @@ namespace MoonProject.Autoplay
         private readonly Key[] _keyBuffer = new Key[16];
         private readonly InputSettings.BackgroundBehavior _backgroundBehavior;
         private bool _leftHeld;
+        private bool _rightHeld;
 
         public VirtualInput()
         {
@@ -88,6 +89,17 @@ namespace MoonProject.Autoplay
             InputSystem.QueueDeltaStateEvent(_mouse.leftButton, down ? 1f : 0f);
         }
 
+        public void SetRightButton(bool down)
+        {
+            if (_rightHeld == down)
+            {
+                return;
+            }
+
+            _rightHeld = down;
+            InputSystem.QueueDeltaStateEvent(_mouse.rightButton, down ? 1f : 0f);
+        }
+
         public void MoveMouseTo(Vector2 screenPosition)
         {
             InputSystem.QueueDeltaStateEvent(_mouse.position, screenPosition);
@@ -97,6 +109,7 @@ namespace MoonProject.Autoplay
         {
             ReleaseAll();
             SetLeftButton(false);
+            SetRightButton(false);
             InputSystem.RemoveDevice(_keyboard);
             InputSystem.RemoveDevice(_mouse);
             foreach (InputDevice device in _disabled)

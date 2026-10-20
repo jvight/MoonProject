@@ -615,6 +615,10 @@
             "text": "Cần dọn chỗ trước"
         },
         {
+            "key": "build.reason.frame",
+            "text": "Kéo mô-đun nguồn về sân trước"
+        },
+        {
             "key": "structure.charging_pad.name",
             "text": "Bệ sạc"
         },

@@ -66,9 +66,10 @@ namespace MoonProject.Gameplay
         [SerializeField] private float _letGoDistance = 12f;
 
         [Tooltip("Metres (flat) from the apron's centre within which a towed load has come home: the winch unhooks " +
-                 "it there.")]
+                 "it there. Wide enough for the load trailing 07 and its cable as 07 pulls up at the pad, inside the " +
+                 "battery bank's reach of the pad, so a bank built on it links.")]
         [Range(1f, 20f)]
-        [SerializeField] private float _homeRadius = 6f;
+        [SerializeField] private float _homeRadius = 9f;
 
         [Tooltip("Friction of a load's skids on the regolith (0..1): enough that a load never runs away down a basin " +
                  "slope or overruns 07, little enough that the rope draws it at a walk.")]

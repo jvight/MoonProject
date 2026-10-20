@@ -288,7 +288,8 @@ namespace MoonProject.Gameplay
             Vector3 roverPosition,
             ITerrainQuery terrain,
             bool propBlocked,
-            bool snapEnabled = true)
+            bool snapEnabled = true,
+            bool frameMissing = false)
         {
             if (State != BuildModeState.Placing || SelectedStructure == null || terrain == null)
             {
@@ -322,6 +323,11 @@ namespace MoonProject.Gameplay
             if (reason == PlacementReason.Valid && propBlocked)
             {
                 reason = PlacementReason.Blocked;
+            }
+
+            if (reason == PlacementReason.Valid && frameMissing)
+            {
+                reason = PlacementReason.NeedsFrame;
             }
 
             CandidatePose = snappedPose;

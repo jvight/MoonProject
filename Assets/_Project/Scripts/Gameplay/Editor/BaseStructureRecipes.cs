@@ -68,11 +68,12 @@ namespace MoonProject.Gameplay.Editor
                 consumeWatts: 0f,
                 storeWattHours: 360f,
                 connectionRadius: PadAndBankReach,
-                buildCost: new Recipe(3, 3, 0),
+                buildCost: new Recipe(0, 3, 0),
                 buildSeconds: 2.5f,
                 ports: Array.Empty<StructurePort>(),
                 artPending: false,
-                r1ModelName: "BatteryBank"),
+                r1ModelName: "BatteryBank",
+                frameLoad: TowLoads.PowerModule),
             new Entry(
                 StructureIds.PowerPylon,
                 Vector3.zero,
@@ -182,7 +183,8 @@ namespace MoonProject.Gameplay.Editor
                     entry.BuildSeconds,
                     ports,
                     prefab,
-                    entry.ArtPending);
+                    entry.ArtPending,
+                    entry.FrameLoad);
                 definitions[i] = definition;
             }
 
@@ -471,7 +473,8 @@ namespace MoonProject.Gameplay.Editor
                 float buildSeconds,
                 StructurePort[] ports,
                 bool artPending,
-                string r1ModelName = null)
+                string r1ModelName = null,
+                string frameLoad = null)
             {
                 Id = id;
                 Footprint = footprint;
@@ -486,6 +489,7 @@ namespace MoonProject.Gameplay.Editor
                 Ports = ports;
                 ArtPending = artPending;
                 R1ModelName = r1ModelName;
+                FrameLoad = frameLoad;
             }
 
             public string Id { get; }
@@ -513,6 +517,8 @@ namespace MoonProject.Gameplay.Editor
             public bool ArtPending { get; }
 
             public string R1ModelName { get; }
+
+            public string FrameLoad { get; }
         }
     }
 }
