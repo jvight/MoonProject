@@ -1356,6 +1356,35 @@
       "pick": "call_decoded"
     },
     {
+      "id": "sky_dusk_swell",
+      "category": "stinger_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/sky_dusk_swell.wav"
+      ],
+      "variantLabels": [
+        "sky_dusk_swell"
+      ],
+      "sha256": [
+        "6a1259694328d74a33ef90b4b40c9fe8151ae85c73e675d2f08003f6c73df589"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -20.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Opening v3 R6, the first dusk (OpeningDuskBegan): a soft low swell on D, a scraped drone under bowed metal over 8 s; the beds shift toward evening under it. No stinger.",
+      "source": "sampled",
+      "pick": "sky_dusk_swell v1"
+    },
+    {
       "id": "sky_diamond_ring",
       "category": "stinger_2d",
       "milestone": "M3",
@@ -3617,6 +3646,93 @@
       "notes": "A cut the cutter refused (CutterRefused): a soft, low fault tick, the turret's latch thudding shut with a breath of dry buzz. Skipped in a CutterSputtered frame.",
       "source": "sampled",
       "pick": "cutter_refuse"
+    },
+    {
+      "id": "tow_spool",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/tow_spool.wav"
+      ],
+      "variantLabels": [
+        "tow_spool"
+      ],
+      "sha256": [
+        "3d2658da308a3efaa66109b2718508f1f303f20eb70e4ce8de48bf7b71b6bfc4"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Opening v3 3.2, the tow hook attaching: the winch drum's ratchet paying out, its gear easing onto D.",
+      "source": "sampled",
+      "pick": "tow_spool"
+    },
+    {
+      "id": "tow_strain_loop",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/tow_strain_loop.wav"
+      ],
+      "variantLabels": [
+        "tow_strain_loop"
+      ],
+      "sha256": [
+        "eb4cfed3d884ae19af496734eb8eb6f3fdb9ac3ec92c85f18f88a980a4a6d0ea"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The tow cable under load: a slow creak over a low tension hum on D, 4 s seamless; level and pitch follow the load.",
+      "source": "sampled",
+      "pick": "tow_strain_loop"
+    },
+    {
+      "id": "tow_release",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/tow_release.wav"
+      ],
+      "variantLabels": [
+        "tow_release"
+      ],
+      "sha256": [
+        "f7ba2160688ba5d80021dad25c4dabf5f4392a7d9a6ea6fe29010c7e90d87535"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The tow let go: the hook's latch clunking open and the slack cable's slap.",
+      "source": "sampled",
+      "pick": "tow_release"
     },
     {
       "id": "lamp_tick",
