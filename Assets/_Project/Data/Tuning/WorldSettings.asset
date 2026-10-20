@@ -572,6 +572,13 @@ MonoBehaviour:
       _haloMinFrom: 40
       _haloMinFull: 500
       _haloLift: 0.2
+      _relitLevel: 0.85
+      _warmUpSeconds: 1.2
+      _flickerStepSeconds: 0.07
+      _flickerOnFrom: 0.35
+      _flickerOnTo: 0.95
+      _flickerRiseFrom: 0.5
+      _flickerOffShare: 0.08
     _relay1Site:
       _cabinetOffset: {x: 2.2, y: 0.8}
       _cabinetYaw: -25
@@ -586,6 +593,9 @@ MonoBehaviour:
       _lampStripGlow: 2
       _outlineColor: {r: 1, g: 0.7, b: 0.4, a: 1}
       _outlineNeedsPart: 1
+      _outlineFitted: 1.4
+      _padLampGlow: 1
+      _relayLensGlow: 1
     _relay2Site:
       _scanApproachDistance: 4
       _hutYaw: 15

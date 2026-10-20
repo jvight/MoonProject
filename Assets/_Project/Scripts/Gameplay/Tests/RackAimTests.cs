@@ -52,6 +52,10 @@ namespace MoonProject.Gameplay.Tests
 
             public bool Shown => true;
 
+            public Vector3 Position => Vector3.zero;
+
+            public Quaternion Rotation => Quaternion.identity;
+
             public int Count => _states.Length;
 
             public string IdOf(int bay)
