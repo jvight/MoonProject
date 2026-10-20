@@ -75,9 +75,10 @@ namespace MoonProject.UI
         [Range(1f, 6f)]
         [SerializeField] private float _txPromptSeconds = 3f;
 
-        [Tooltip("Seconds 07's face shows the answer's ACK line (the route read out), the one element on screen.")]
+        [Tooltip("Seconds 07's face shows the answer's ACK line (the route read out), the one element on screen. Short, so " +
+                 "the next line with its drive key follows within the first-time player's few seconds.")]
         [Range(2f, 12f)]
-        [SerializeField] private float _ackSeconds = 7f;
+        [SerializeField] private float _ackSeconds = 3f;
 
         [Tooltip("The Sun's arc easing in and out.")]
         [SerializeField] private RevealSettings _sunArc = new RevealSettings(1.2f, 1.5f, 6f, 0.97f, 1f, 0.8f);
