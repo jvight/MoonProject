@@ -1035,6 +1035,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _settings: {fileID: 11400000, guid: 3c7a28d294b9986468e4aeb35b23d7c1, type: 2}
+  _ruin: {fileID: 62195207517378869}
   _halo: {fileID: 2956000651347588447}
 --- !u!4 &189082930818383732 stripped
 Transform:
