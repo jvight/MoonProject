@@ -716,7 +716,8 @@ namespace MoonProject.Autoplay
                 yield return null;
             }
 
-            fragment = scans.Candidate;
+            // The brackets may have left between the check and here (a frame's flicker): scan what was framed.
+            fragment = scans.Candidate ?? fragment;
             yield return FirstUse(ScanVerb);
             yield return _bot.Hold(Key.E, () =>
                 {
