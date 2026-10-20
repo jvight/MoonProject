@@ -88,7 +88,8 @@ namespace MoonProject.Rover.PlayModeTests
 
             bool hasSignal = _scene.Context.TryGet(out ICallSignal signal);
             float lampHigh = 0f;
-            float worstGap = 0f;
+            float totalGap = 0f;
+            int frames = 0;
             float watch = Time.time + SignalWatchSeconds;
             while (Time.time < watch)
             {
@@ -96,14 +97,16 @@ namespace MoonProject.Rover.PlayModeTests
                 lampHigh = Mathf.Max(lampHigh, body.CallLampGlow);
                 if (hasSignal)
                 {
-                    worstGap = Mathf.Max(worstGap, Mathf.Abs(body.CallLampGlow - signal.Keying * settings.KeyGlow));
+                    totalGap += Mathf.Abs(body.CallLampGlow - signal.Keying * settings.KeyGlow);
+                    frames++;
                 }
             }
 
             if (hasSignal)
             {
                 Assert.Greater(lampHigh, LitGlow, "the lamp keys with the sign's tones");
-                Assert.Less(worstGap, settings.KeyGlow * 0.6f, "in phase with ICallSignal.Keying, to its own soft edge");
+                Assert.Less(totalGap / Mathf.Max(1, frames), settings.KeyGlow * 0.25f,
+                    "in phase with ICallSignal.Keying: on average within the lamp's own soft edge of it");
             }
             else
             {
