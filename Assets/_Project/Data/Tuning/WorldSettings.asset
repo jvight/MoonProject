@@ -403,6 +403,8 @@ MonoBehaviour:
     _westMast: {x: -204.853, y: -74.56037}
     _elderSite: {x: 265.42465, y: 84.128975}
     _elderRadius: 4
+    _hutOffset: {x: -1.8, y: 0.2}
+    _hutRadius: 3
   _atmosphere:
     _lightColor: {r: 0.92, g: 0.94, b: 1, a: 1}
     _lightIntensity: 1.95
@@ -584,6 +586,9 @@ MonoBehaviour:
       _lampStripGlow: 2
       _outlineColor: {r: 1, g: 0.7, b: 0.4, a: 1}
       _outlineNeedsPart: 1
+    _relay2Site:
+      _scanApproachDistance: 4
+      _hutYaw: 15
     _debris:
     - _anchor: place.midway
       _id: Kestrel_HullPanel
@@ -688,7 +693,7 @@ MonoBehaviour:
       _offset: {x: 0, y: 0}
       _yaw: 0
       _sink: 0.08
-    _elder06Slump: 7
+    _elder06Slump: 9
     _elder01:
       _anchor: site.peakroad
       _id: Elder01

@@ -52,6 +52,9 @@ namespace MoonProject.World
             "(opening v3 5.1).")]
         [SerializeField] private Relay1SiteSettings _relay1Site = new Relay1SiteSettings();
 
+        [Tooltip("relay.2's hut by the canyon mouth, 06 slumped against it, and 07's scan spot (opening v3 5.2b).")]
+        [SerializeField] private Relay2SiteSettings _relay2Site = new Relay2SiteSettings();
+
         [Header("Kestrel-3's debris and the big boulders (opening v2 §4)")]
         [Tooltip("Art's R1 Kestrel-3 debris (Generated/Art/R1/Models/Wreck): a few pieces at the first drive's midway " +
             "point and more round the impact crater, settled in the dust.")]
@@ -160,9 +163,9 @@ namespace MoonProject.World
             new PropPlacement(WorldAnchorIds.Micro06, "Elder06", Vector2.zero, 0f, 0.08f);
 
         [Tooltip("How far 06 slumps over onto its left side, degrees: its cell ran dry and it settled where a wheel " +
-            "sank into the dust.")]
+            "sank into the dust, its top come to rest against relay.2's hut.")]
         [Range(0f, 20f)]
-        [SerializeField] private float _elder06Slump = 7f;
+        [SerializeField] private float _elder06Slump = 9f;
 
         [Tooltip("01, the SSR-3 survey cart, stopped by a rockfall where the Peak road leaves the basin (entry 3): " +
             "Art's Elder01, turned a little off the road so its mast reads from the drive up.")]
@@ -187,6 +190,7 @@ namespace MoonProject.World
 
         public RelayLampSettings RelayLamp => _relayLamp;
         public Relay1SiteSettings Relay1Site => _relay1Site;
+        public Relay2SiteSettings Relay2Site => _relay2Site;
         public PropPlacement[] Debris => _debris;
         public PropPlacement[] Boulders => _boulders;
         public float ScoutYaw => _scoutYaw;

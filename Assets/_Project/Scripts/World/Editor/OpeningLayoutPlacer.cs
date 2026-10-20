@@ -148,6 +148,8 @@ namespace MoonProject.World.Editor
             StandScout(context, landmarks, surface, basin);
             StandCrewTraces(context, settings, surface, anchors, basin);
             StandStoryHosts(context, landmarks, surface, anchors, basin, boulders);
+            Relay2SitePlacer.Stand(context, settings, root, surface, Require(anchors, WorldAnchorIds.RelayPrefix + 2),
+                Require(anchors, WorldAnchorIds.Micro06));
             PressBootprints(context, landmarks, surface, context.CreateChild(BootprintTrailName, props).transform);
         }
 
