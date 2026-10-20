@@ -28,6 +28,7 @@ namespace MoonProject.Autoplay
         private readonly GuidanceCounter _guidance = new GuidanceCounter(GuidanceGraceSeconds);
         private readonly List<string> _guidanceShown = new List<string>();
         private bool _guidanceReported;
+        private NaiveGuard _naive;
         private readonly FrameTimeLog _frames = new FrameTimeLog();
         private readonly List<string> _screenshots = new List<string>();
         private readonly List<string> _errors = new List<string>();
@@ -137,7 +138,8 @@ namespace MoonProject.Autoplay
 
         private IEnumerator Play()
         {
-            var scenario = new OpeningScenario(_bot, _options.UntilBeat, _options.LinesExpected);
+            _naive = _options.Naive ? new NaiveGuard(_bot) : null;
+            var scenario = new OpeningScenario(_bot, _options.UntilBeat, _options.LinesExpected, _naive);
             IEnumerator run = scenario.Run();
             while (!_bot.Failed && run.MoveNext())
             {
@@ -172,6 +174,16 @@ namespace MoonProject.Autoplay
 
             string report = _beats.Render(_options.Scenario, BuildInfo(), Time.unscaledTime - _startedAt, _frames,
                 _screenshots, stop);
+            if (_naive != null)
+            {
+                report += _naive.Render();
+                if (!_naive.Passed && string.IsNullOrEmpty(stop))
+                {
+                    stop = "the first-time player check found beats with no readable next-action cue.";
+                    report = report.Replace("**Result: PASS**", "**Result: FAIL**");
+                }
+            }
+
             report += ErrorSection();
             File.WriteAllText(Path.Combine(_options.OutDirectory, ReportFile), report, new UTF8Encoding(false));
             bool passed = _beats.Passed && string.IsNullOrEmpty(stop);

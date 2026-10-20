@@ -58,8 +58,12 @@ namespace MoonProject.Autoplay
 
         private readonly bool _linesExpected;
 
-        public OpeningScenario(AutoplayBot bot, string untilBeat, bool linesExpected)
+        private readonly NaiveGuard _naive;
+
+        public OpeningScenario(AutoplayBot bot, string untilBeat, bool linesExpected, NaiveGuard naive = null)
         {
+            _naive = naive;
+            DeclareNextActions();
             _bot = bot;
             _untilBeat = untilBeat;
             _linesExpected = linesExpected;
@@ -83,9 +87,44 @@ namespace MoonProject.Autoplay
                 }
 
                 yield return beat();
+                if (_naive != null && !_bot.Failed && _lastBeat != null)
+                {
+                    yield return _naive.Check(_lastBeat);
+                }
             }
 
             _base.Stop();
+        }
+
+        /// <summary>
+        /// What a first-time player must do after each beat (the first-time check passes only a cue that names it):
+        /// the key, the verb words of a chip, the words of a line and the world cues that point at it.
+        /// </summary>
+        private void DeclareNextActions()
+        {
+            if (_naive == null)
+            {
+                return;
+            }
+
+            const string drive = "ui.hint.drive";
+            _naive.Declare("B0", new NextAction("WASD", new[] { drive }, new[] { "lander" }, new[] { "lander" }));
+            _naive.Declare("B2", new NextAction("E", new[] { "hint.scan" }, new[] { "scan", "crate" }, null));
+            _naive.Declare("B3", new NextAction("E", new[] { "hint.pickup" }, new[] { "take", "parts", "crate" }, null));
+            _naive.Declare("B4", new NextAction("B", new[] { "hint.openbuild" }, new[] { "pad", "apron" }, null));
+            _naive.Declare("B5", new NextAction("WASD", new[] { drive }, new[] { "pad", "park" }, null));
+            _naive.Declare("B6", new NextAction("WASD", new[] { drive }, new[] { "Lumen", "solar", "ruins" },
+                new[] { "glint" }));
+            _naive.Declare("B7", new NextAction("B", new[] { "hint.openbuild" }, new[] { "solar", "array" }, null));
+            _naive.Declare("B8", new NextAction("WASD", new[] { drive }, new[] { "seismic", "habitat", "module" },
+                new[] { "glint", "lamp" }));
+            _naive.Declare("R5", new NextAction("WASD", new[] { drive }, new[] { "module", "habitat", "tow" },
+                new[] { "lamp" }));
+            _naive.Declare("B9", new NextAction("WASD", new[] { drive }, new[] { "tower", "night" }, new[] { "lamp" }));
+            _naive.Declare("B10", new NextAction("E", new[] { "hint.scan" }, new[] { "tower", "scan" }, null));
+            _naive.Declare("B11", new NextAction("E", new[] { "hint.openbuild" }, new[] { "transmit", "mast", "answer" },
+                null));
+            _naive.Declare("B12", new NextAction("WASD", new[] { drive }, new[] { "relay" }, new[] { "relay" }));
         }
 
         private bool Reached(string beat)
@@ -121,6 +160,12 @@ namespace MoonProject.Autoplay
                 yield return _bot.Until(() => _bot.World.Flow.State == GameFlowState.Playing, BootTimeoutSeconds,
                     "New Game to start play from the title");
                 yield return _bot.Until(() => _awoke, WakeTimeoutSeconds, "07 to wake in the eclipse");
+            }
+
+            if (!_bot.Failed && _naive != null)
+            {
+                // Control is handed over: what does a player who has woken see to do?
+                yield return _naive.Check("B0");
             }
 
             if (!_bot.Failed)

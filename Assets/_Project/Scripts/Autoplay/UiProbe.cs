@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace MoonProject.Autoplay
@@ -119,6 +120,33 @@ namespace MoonProject.Autoplay
                 default:
                     return null;
             }
+        }
+
+        /// <summary>
+        /// True when a prompt chip (the world's own or the bottom hint) is on screen with words and its middle lies
+        /// inside the view: what a player looking at the screen can read. <paramref name="text"/> is what it says.
+        /// </summary>
+        public bool ChipInView(out string text)
+        {
+            Rect view = _root.worldBound;
+            foreach (string name in new[] { "prompt", "look-hint" })
+            {
+                VisualElement element = _root.Q<VisualElement>(name);
+                if (element == null || !IsShown(element, GuidanceOpacity))
+                {
+                    continue;
+                }
+
+                string words = WordsOf(name);
+                if (!string.IsNullOrEmpty(words) && view.Contains(element.worldBound.center))
+                {
+                    text = words;
+                    return true;
+                }
+            }
+
+            text = string.Empty;
+            return false;
         }
 
         /// <summary>The key cap on the prompt chip when it is showing, else empty.</summary>

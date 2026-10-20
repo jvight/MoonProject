@@ -1,9 +1,12 @@
 """The databank on 07's face from recorded sources: a relay closing as a page starts to flip, a picture tube's channel
 settling with a soft thunk and a breath of its hum on D, and a tape head stepping one line down the list. Small,
-close and warm: switch gear and latches with their highs taken off, nothing brighter than a desk lamp's click."""
+close and warm: switch gear and latches with their highs taken off, nothing brighter than a desk lamp's click.
+The next line on 07's face (opening v3 G2): the same soft arrival every time, a CRT relay ticking over and a faint
+bowed-metal tone on D5 under it."""
 import numpy as np
 
-from synth.core import samples
+from synth import filters
+from synth.core import note_freq, samples
 
 from . import dsp, parts
 
@@ -51,9 +54,26 @@ def tape_tick(lib, gen, variant: int) -> np.ndarray:
     return out
 
 
+def next_line(lib, gen, variant: int) -> np.ndarray:
+    """The next line arriving on 07's face: a CRT relay ticking over with its contact, and a faint bowed-metal tone on
+    D5 swelling under it and away, quiet and the same every time."""
+    n = samples(0.75)
+    out = np.zeros(n)
+    dsp.place(out, parts.clip(lib, "relay_click", 2200.0, 180.0, 0.9), 0.0, 0.5)
+    dsp.place(out, parts.clip(lib, "count_tick", 2000.0, 400.0, 1.0), 0.03, 0.15)
+    tone_n = samples(0.7)
+    f = note_freq("D5")
+    rate = dsp.ratio_for("D5", lib.f0("bowed_metal"), np.zeros(tone_n))
+    tone = dsp.varispeed(lib("bowed_metal"), rate, tone_n, float(gen.uniform(0.0, 1.0)))
+    tone = dsp.peak_normalize(filters.butter(filters.highpass(tone, f * 0.6), "lowpass", f * 2.2, order=4))
+    dsp.place(out, tone * dsp.shape(tone_n, [(0.0, 0.0), (0.1, 1.0), (0.3, 0.6), (0.7, 0.0)]), 0.02, 0.22)
+    return out
+
+
 # Cue id -> (recipe, variants).
 SOUNDS = {
     "ui_relay_click": (relay_click, 2),
     "ui_tube_thunk": (tube_thunk, 2),
     "ui_tape_tick": (tape_tick, 2),
+    "ui_next_line": (next_line, 1),
 }

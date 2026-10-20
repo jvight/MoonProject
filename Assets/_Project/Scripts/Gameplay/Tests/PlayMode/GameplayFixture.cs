@@ -28,6 +28,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>Art's R1 surface: the stand-in ruins and pad fragments show their scans on it.</summary>
         public const string R1LitShaderPath = "Assets/_Project/Shaders/R1/R1Lit.shader";
+        public const string SocketRackPath = "Assets/_Project/Generated/Art/R1/Models/Structures/SocketRack.prefab";
 
         /// <summary>Where the stand-in relay.1 site stands: its spare, its feed socket and its contact pad.</summary>
         public static readonly Vector3 RelaySite = new Vector3(-60f, 0f, 160f);
@@ -186,6 +187,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 FragmentTemplate("CoilPlate"), FragmentTemplate("GuideRail"),
             });
+            OpeningTuning.RackView.PopulatePrefab(LoadPrefab(SocketRackPath));
 
             var root = new GameObject("[Gameplay]");
             root.SetActive(false);
@@ -542,6 +544,21 @@ namespace MoonProject.Gameplay.PlayModeTests
         {
             _created.Add(created is Component component ? component.gameObject : (Object)created);
             return created;
+        }
+
+        private static GameObject LoadPrefab(string path)
+        {
+#if UNITY_EDITOR
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (prefab == null)
+            {
+                throw new InvalidOperationException($"Art's prefab missing at {path}.");
+            }
+
+            return prefab;
+#else
+            throw new NotSupportedException("The fixture loads Art's prefab through the editor's AssetDatabase.");
+#endif
         }
 
         private static Shader LoadShader(string path)

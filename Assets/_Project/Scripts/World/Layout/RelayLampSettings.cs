@@ -37,7 +37,43 @@ namespace MoonProject.World
         [Range(0f, 2f)]
         [SerializeField] private float _haloLift = 0.2f;
 
+        [Header("Relit (opening v3 5.1)")]
+        [Tooltip("Share of the keyed peak the lamp holds once relit: a calm steady glow.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _relitLevel = 0.85f;
+
+        [Tooltip("Seconds the lamp flickers as it warms up on relighting.")]
+        [Range(0.1f, 4f)]
+        [SerializeField] private float _warmUpSeconds = 1.2f;
+
+        [Tooltip("Seconds each flicker step of the warm-up lasts.")]
+        [Range(0.02f, 0.3f)]
+        [SerializeField] private float _flickerStepSeconds = 0.07f;
+
+        [Tooltip("Chance a flicker step is on as the warm-up begins.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _flickerOnFrom = 0.35f;
+
+        [Tooltip("Chance a flicker step is on as the warm-up ends.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _flickerOnTo = 0.95f;
+
+        [Tooltip("Share of the steady glow an on step reaches as the warm-up begins (it rises to all of it).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _flickerRiseFrom = 0.5f;
+
+        [Tooltip("Share of the steady glow an off step keeps (a filament never quite cold).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _flickerOffShare = 0.08f;
+
         public float HaloIntensity => _haloIntensity;
+        public float RelitLevel => _relitLevel;
+        public float WarmUpSeconds => _warmUpSeconds;
+        public float FlickerStepSeconds => _flickerStepSeconds;
+        public float FlickerOnFrom => _flickerOnFrom;
+        public float FlickerOnTo => _flickerOnTo;
+        public float FlickerRiseFrom => _flickerRiseFrom;
+        public float FlickerOffShare => _flickerOffShare;
         public float HaloRadius => _haloRadius;
         public float HaloMinAngle => _haloMinAngle;
         public float HaloMinFrom => _haloMinFrom;

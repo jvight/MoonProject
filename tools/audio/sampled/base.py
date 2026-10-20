@@ -6,11 +6,15 @@ its step of the pentatonic ladder, so the base climbs gently into the dark. Phys
 
 The charging pad's lock: as the clamp arms seat against 07's flanks (PadLockClosed), the rams settling and a padded,
 heavy-but-soft clunk; as they let go (PadLockOpened), a short release hiss and a lighter clunk.
+
+The socket rack (RackChanged): a bay filling as its part is fitted, the two jaws easing shut into a solid clunk-latch
+and the bay lamp's low warm hum swelling on D; a bay's outline first appearing, a quiet relay click and a faint
+pentatonic tone of bowed metal.
 """
 import numpy as np
 
 from synth import filters
-from synth.core import samples
+from synth.core import note_freq, samples
 
 from . import dsp, parts
 
@@ -86,6 +90,36 @@ def mast_settle(lib, gen, _variant: int) -> np.ndarray:
     return out
 
 
+def rack_fill(lib, gen, _variant: int) -> np.ndarray:
+    """A rack bay filling: the two jaws easing shut on their gear, a solid clunk-latch as they close on the part,
+    then the bay lamp's low warm hum swelling on D3."""
+    n = samples(1.9)
+    out = np.zeros(n)
+    jaw_n = samples(0.4)
+    jaw = parts.gear(lib, gen, jaw_n, "A4") * dsp.shape(jaw_n, [(0.0, 0.0), (0.06, 1.0), (0.3, 0.7), (0.4, 0.0)])
+    dsp.place(out, jaw, 0.0, 0.3)
+    dsp.place(out, parts.clip(lib, "pedal_clunk", 1300.0, 60.0, 0.95), 0.36, 0.45)
+    dsp.place(out, parts.clip(lib, "latch_thunk", 1900.0, 80.0, 0.9), 0.39, 0.35)
+    hum_n = samples(1.4)
+    hum = parts.hum(lib, hum_n, 1.0, float(gen.uniform(1.0, 6.0)))
+    dsp.place(out, hum * dsp.shape(hum_n, [(0.0, 0.0), (0.45, 1.0), (0.8, 0.8), (1.4, 0.0)]), 0.45, 0.4)
+    return out
+
+
+def rack_outline(lib, gen, _variant: int) -> np.ndarray:
+    """A bay's outline first appearing: a quiet relay click and a faint bowed-metal tone on A5, there and gone."""
+    n = samples(0.8)
+    out = np.zeros(n)
+    dsp.place(out, parts.clip(lib, "relay_click", 2400.0, 200.0, 0.95), 0.0, 0.35)
+    tone_n = samples(0.7)
+    f = note_freq("A5")
+    rate = dsp.ratio_for("A5", lib.f0("bowed_metal"), np.zeros(tone_n))
+    tone = dsp.varispeed(lib("bowed_metal"), rate, tone_n, float(gen.uniform(0.0, 1.0)))
+    tone = dsp.peak_normalize(filters.butter(filters.highpass(tone, f * 0.6), "lowpass", f * 2.4, order=4))
+    dsp.place(out, tone * dsp.shape(tone_n, [(0.0, 0.0), (0.08, 1.0), (0.25, 0.6), (0.7, 0.0)]), 0.03, 0.3)
+    return out
+
+
 # Cue id -> (recipe, variants). Every variant ships: one per lamp in the lighting order, one each for the lock.
 SOUNDS = {
     "base_lamp_on": (lamp_on, len(LAMP_STEPS)),
@@ -93,4 +127,6 @@ SOUNDS = {
     "pad_lock_open": (pad_lock_open, 1),
     "mast_clunk": (mast_clunk, 1),
     "mast_settle": (mast_settle, 1),
+    "rack_fill": (rack_fill, 1),
+    "rack_outline": (rack_outline, 1),
 }

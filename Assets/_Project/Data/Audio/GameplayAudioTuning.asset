@@ -27,3 +27,5 @@ MonoBehaviour:
   _towStrainHighPitch: 1.2
   _towStrainSmoothing: 0.15
   _towReleaseVolume: 0.8
+  _rackFillVolume: 0.8
+  _rackOutlineVolume: 0.7
