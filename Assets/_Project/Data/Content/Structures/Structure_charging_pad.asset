@@ -28,6 +28,7 @@ MonoBehaviour:
     _wiring: 2
     _optics: 0
   _buildSeconds: 3
+  _frameLoad: 
   _ports:
   - _localPosition: {x: 0, y: 0.20000017, z: -1.6399999}
     _localDirection: {x: 0, y: 0, z: -1}

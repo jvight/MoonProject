@@ -87,6 +87,7 @@ namespace MoonProject.UI
         public const string BuildReasonFar = "build.reason.far";
         public const string BuildReasonOutside = "build.reason.outside";
         public const string BuildReasonBlocked = "build.reason.blocked";
+        public const string BuildReasonFrame = "build.reason.frame";
         public const string BuildHintPick = "build.hint.pick";
         public const string BuildHintLeave = "build.hint.leave";
         public const string BuildStepPlace = "build.step.place";
@@ -182,6 +183,8 @@ namespace MoonProject.UI
                     return BuildReasonOutside;
                 case PlacementReason.Blocked:
                     return BuildReasonBlocked;
+                case PlacementReason.NeedsFrame:
+                    return BuildReasonFrame;
                 default:
                     return null;
             }

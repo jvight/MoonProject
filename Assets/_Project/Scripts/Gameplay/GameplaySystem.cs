@@ -168,6 +168,9 @@ namespace MoonProject.Gameplay
         /// <summary>07's winch cable: what it tows, hooked and let go with the tether key (opening v3 R6).</summary>
         public TowLine Tow { get; private set; }
 
+        /// <summary>Structures built on a towed load take it in (the battery bank on the power module).</summary>
+        public TowFrames TowFrames { get; private set; }
+
         public SalvageField Salvage => _salvage;
 
         /// <summary>07's battery: drains, chargers, the crawl and the warnings (docs/features/M3-20).</summary>
@@ -326,6 +329,8 @@ namespace MoonProject.Gameplay
             }
 
             _battery.ConnectTow(Tow);
+            _building.ConnectTow(Tow);
+            TowFrames = new TowFrames(context.Events, _building.Catalog, Tow);
             var firstUse = new FirstUseSpots(Opening, _building, context.Get<IViewCamera>(), context.Get<IRoverState>(),
                 _building.Tuning.FirstUseViewMargin);
             var hints = new InteractionHints(_salvage, Containers, Scans, _building, services.Beam, Cutter,
@@ -760,6 +765,7 @@ namespace MoonProject.Gameplay
             _flowTokens.Clear();
             Databank?.Dispose();
             StartKit?.Dispose();
+            TowFrames?.Dispose();
             Call?.Dispose();
             Rack?.Dispose();
             MastRaise?.Dispose();

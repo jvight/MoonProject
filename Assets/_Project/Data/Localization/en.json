@@ -615,6 +615,10 @@
             "text": "Clear the ground first"
         },
         {
+            "key": "build.reason.frame",
+            "text": "Tow the power module onto the apron first"
+        },
+        {
             "key": "structure.charging_pad.name",
             "text": "Charging Pad"
         },
