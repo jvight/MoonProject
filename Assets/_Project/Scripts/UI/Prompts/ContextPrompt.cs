@@ -69,7 +69,8 @@ namespace MoonProject.UI
             _wordKeys = new string[kinds];
             foreach (PromptEntry entry in settings.Entries)
             {
-                _wordKeys[(int)entry.Kind] = UiKeys.Hint(entry.Kind);
+                // The rack's chip has no verb: its words are the bay's.
+                _wordKeys[(int)entry.Kind] = entry.Kind == InteractionKind.Rack ? null : UiKeys.Hint(entry.Kind);
             }
 
             _anchor = new WorldAnchor(layout.PromptAnchor, view, settings.ScreenMargin, settings.FollowHalfLife,
