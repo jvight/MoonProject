@@ -53,7 +53,7 @@ namespace MoonProject.UI.PlayModeTests
             Camera camera = context.Get<IViewCamera>().Camera;
             UISystem ui = BuildUi(context, out FakeGameServices fakes, out _);
             var serializedTuning = new UnityEditor.SerializedObject(_tuning);
-            serializedTuning.FindProperty("_guidance._teachingPatienceSeconds").floatValue = 0.5f;
+            serializedTuning.FindProperty("_guidance._objectiveDelaySeconds").floatValue = 0.5f;
             serializedTuning.ApplyModifiedPropertiesWithoutUndo();
             FreezeWorld();
             yield return null;

@@ -51,6 +51,7 @@ BOOT_FAULT = ("voice_fault", 1)
 # The sky's moments -> variant of its recipe in sky.SOUNDS.
 SKY = {
     "sky_diamond_ring": 0,
+    "sky_dusk_swell": 0,
 }
 
 # The databank on 07's face -> variant of its recipe in ui.SOUNDS: the light relay, the tube settling on D, and the

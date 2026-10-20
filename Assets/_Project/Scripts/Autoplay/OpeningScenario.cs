@@ -73,7 +73,7 @@ namespace MoonProject.Autoplay
             foreach (Func<IEnumerator> beat in new Func<IEnumerator>[]
                      {
                          Drive, Scan, CollectParts, BuildThePad, ChargeOnThePad, TheRuins, BuildTheArray,
-                         TheHabitat, Nightfall, TheTower, TheAnswer,
+                         TheFirstChoice, TheHabitat, Nightfall, TheTower, TheAnswer,
                      })
             {
                 if (_bot.Failed || Reached(_lastBeat))
@@ -298,6 +298,7 @@ namespace MoonProject.Autoplay
             Begin("B7", "The Lumen ruins: scan the array and the airlock, the cutter sputters, fit the spare igniter " +
                         "from the rack, cut the array's panels and junction box");
             yield return _base.ExpectStep(OpeningSteps.FindSolar, OpeningKeys.FindSolar, "B7: the reserve is spent");
+            yield return _base.SeeWorldCue(WorldCues.ArrayGlint(_bot.World), "B7: the fallen array glints in the sunrise");
             yield return _base.DriveToTheRuinsGate("the Lumen ruins");
             yield return _base.ScanTheSet("ruin.FallenSolarArray");
             yield return _base.ReadTheAirlockPanel();
@@ -325,6 +326,15 @@ namespace MoonProject.Autoplay
             yield return _base.Build(StructureIds.SolarArray, _base.Pad() + Vector3.right * OpeningBase.Spacing);
             yield return _base.UntilReached(OpeningMilestone.PowerOn, "the PowerOn milestone");
             _bot.EndBeat("the array stands and the base has power");
+        }
+
+        private IEnumerator TheFirstChoice()
+        {
+            Begin("R5", "The first free choice: visit the seismic station, dock, and the first dusk begins");
+            yield return _base.ExpectStep(OpeningSteps.BuildBatteryBank, string.Empty, "R5: the afternoon says nothing");
+            yield return _base.VisitTheSeismicStation();
+            yield return _base.DockForTheDusk(StructureIds.ChargingPad);
+            _bot.EndBeat("07 read the 1971 seismic station, docked, and the first dusk began");
         }
 
         private IEnumerator TheHabitat()

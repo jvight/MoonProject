@@ -833,6 +833,9 @@ CUES = (
         volume=(0.35, 0.35), milestone="M3", sampled=True,
         notes="A character of the sender's name decoded (CallDecoded): one soft bowed-metal note climbing "
               "E4 F#4 A4 B4, landing on D5 when ARK IV is whole."),
+    Cue("sky_dusk_swell", "stinger_2d", picks.renderer("sky_dusk_swell"), volume=(0.45, 0.45), milestone="M3",
+        sampled=True, notes="Opening v3 R6, the first dusk (OpeningDuskBegan): a soft low swell on D, a scraped drone "
+                            "under bowed metal over 8 s; the beds shift toward evening under it. No stinger."),
     Cue("sky_diamond_ring", "stinger_2d", picks.renderer("sky_diamond_ring"), volume=(0.74, 0.74), milestone="M3",
         sampled=True, notes="Opening v2 B6: the Sun breaking out behind Earth on the first charge: bowed metal "
                             "rising onto D, its octave opening like light, a breath of creak."),
@@ -1033,6 +1036,13 @@ CUES = (
     Cue("cutter_refuse", "tick_3d", picks.renderer("cutter_refuse"), volume=(0.6, 0.6), milestone="M3",
         sampled=True, notes="A cut the cutter refused (CutterRefused): a soft, low fault tick, the turret's latch "
                             "thudding shut with a breath of dry buzz. Skipped in a CutterSputtered frame."),
+    Cue("tow_spool", "oneshot_3d", picks.renderer("tow_spool"), volume=(0.6, 0.6), milestone="M3", sampled=True,
+        notes="Opening v3 3.2, the tow hook attaching: the winch drum's ratchet paying out, its gear easing onto D."),
+    Cue("tow_strain_loop", "loop_3d", picks.renderer("tow_strain_loop"), loop=True, volume=(0.55, 0.55),
+        milestone="M3", sampled=True, notes="The tow cable under load: a slow creak over a low tension hum on D, "
+                                            "4 s seamless; level and pitch follow the load."),
+    Cue("tow_release", "oneshot_3d", picks.renderer("tow_release"), volume=(0.6, 0.6), milestone="M3", sampled=True,
+        notes="The tow let go: the hook's latch clunking open and the slack cable's slap."),
     Cue("lamp_tick", "tick_3d", lamp_tick, volume=(0.45, 0.45), fade_out=0.03, milestone="M3",
         notes="A flank lamp lighting as 07 wakes: a tiny relay tick with a breath of filament on D6."),
 )

@@ -44,6 +44,8 @@ namespace MoonProject.UI
             _face = face ?? throw new ArgumentNullException(nameof(face));
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
             _root = Element("boot-face", RootClass);
+            // Hidden until a boot begins: a loaded game never boots the face, and other content shares the panel.
+            _root.style.display = DisplayStyle.None;
             _raster = Element("boot-face-raster", "boot-face__raster");
             _raster.Add(Element("boot-face-raster-core", "boot-face__raster-core"));
             _logo = Element("boot-face-logo", "boot-face__logo");

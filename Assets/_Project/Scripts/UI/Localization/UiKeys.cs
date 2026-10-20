@@ -34,6 +34,7 @@ namespace MoonProject.UI
         public const string FaceTxNoRange = "ui.face.tx_no_range";
         public const string FaceTxReady = "ui.face.tx_ready";
         public const string FaceAck = "ui.face.ack_route";
+        public const string FaceCall = "ui.face.call";
         public const string HoldBoot = "ui.hold.boot";
         public const string ScanFragment = "scan.fragment";
         public const string ScanKnown = "scan.known";

@@ -52,6 +52,7 @@ namespace MoonProject.Art.Tests
             ("geophone_ribbon_10m.json", "Props/Geophone_Ribbon_10m.fbx"),
             ("geophone_plug.json", "Props/Geophone_Plug.fbx"),
             ("prop_geophone_line.json", "Props/Prop_GeophoneLine.fbx"),
+            ("power_module.json", "Ruins/PowerModule.fbx"),
         };
 
         [Serializable]
@@ -270,13 +271,31 @@ namespace MoonProject.Art.Tests
 
             GameObject deadMastPrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.DeadAntennaMastPrefabPath);
             Assert.IsNotNull(deadMastPrefab.transform.Find("Stage_4/Mast/DishAzimuth/Dish"));
+            Transform beaconLamp = deadMastPrefab.transform.Find("Stage_4/Mast/BeaconLamp");
+            Assert.IsNotNull(beaconLamp, "DeadAntennaMast must preserve BeaconLamp cage node under Stage_4/Mast.");
+            Transform relayLens = deadMastPrefab.transform.Find("Stage_4/Mast/BeaconLamp/RelayLamp_Lens");
+            Assert.IsNotNull(relayLens, "DeadAntennaMast must expose separate RelayLamp_Lens node under BeaconLamp.");
+            Renderer lensRenderer = relayLens.GetComponent<Renderer>();
+            Assert.IsNotNull(lensRenderer, "RelayLamp_Lens must have its own Renderer.");
+            Assert.AreEqual(R1MaterialRecipes.LampAmberSlot, lensRenderer.sharedMaterial.name,
+                "RelayLamp_Lens must carry the R1_LampAmber material slot.");
+            Bounds lensBounds = lensRenderer.bounds;
+            Assert.That(lensBounds.size.x, Is.InRange(0.095f, 0.13f));
+            Assert.That(lensBounds.size.y, Is.InRange(0.095f, 0.13f));
+            Assert.That(lensBounds.size.z, Is.InRange(0.095f, 0.13f));
+
             Renderer[] mastRenderers = deadMastPrefab.GetComponentsInChildren<Renderer>(true);
             foreach (Renderer r in mastRenderers)
             {
+                if (r == lensRenderer)
+                {
+                    continue;
+                }
+
                 foreach (Material m in r.sharedMaterials)
                 {
                     Assert.AreNotEqual(R1MaterialRecipes.LampAmberSlot, m.name,
-                        "DeadAntennaMast must have no lit R1_LampAmber material slots.");
+                        "DeadAntennaMast renderers outside RelayLamp_Lens must have no R1_LampAmber material slots.");
                 }
             }
 
@@ -1092,6 +1111,60 @@ namespace MoonProject.Art.Tests
                     }
                 }
             }
+        }
+
+        [Test]
+        public void PowerModule_HasTowHitchAtEyeCentre_Skid_Lid_StatusLamp_MakerDecal_AndBodyBoxCollider()
+        {
+            GameObject prefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.PowerModulePrefabPath);
+            Assert.IsNotNull(prefab, "PowerModule prefab must exist at Generated/Art/R1/Models/Ruins/PowerModule.prefab.");
+
+            Transform towHitch = prefab.transform.Find("TowHitch");
+            Transform skid = prefab.transform.Find("Skid");
+            Transform lid = prefab.transform.Find("Lid");
+            Transform statusLamp = prefab.transform.Find("PowerModule_StatusLamp");
+            Transform decal = prefab.transform.Find("Decal_VIS_1");
+
+            Assert.IsNotNull(towHitch, "PowerModule missing TowHitch child node.");
+            Assert.IsNotNull(skid, "PowerModule missing Skid child node.");
+            Assert.IsNotNull(lid, "PowerModule missing Lid child node.");
+            Assert.IsNotNull(statusLamp, "PowerModule missing PowerModule_StatusLamp child node.");
+            Assert.IsNotNull(decal, "PowerModule missing Decal_VIS_1 child node.");
+
+            // TowHitch must sit on the front (+Z) face with its pivot at the eye centre
+            Vector3 hitchInPrefab = prefab.transform.localRotation * towHitch.localPosition;
+            Assert.AreEqual(0f, hitchInPrefab.x, 0.01f, "TowHitch pivot must be centered on X.");
+            Assert.Greater(hitchInPrefab.z, 0.42f, "TowHitch pivot must sit on the front (+Z) face at the eye centre.");
+            Assert.Greater(hitchInPrefab.y, 0.15f, "TowHitch pivot must sit at lower chassis tow height.");
+
+            // PowerModule_StatusLamp must have its own MeshRenderer with R1_LampAmber lens (~7 cm diameter)
+            Renderer lampRenderer = statusLamp.GetComponent<Renderer>();
+            Assert.IsNotNull(lampRenderer, "PowerModule_StatusLamp must have its own MeshRenderer.");
+            bool hasLampAmber = false;
+            foreach (Material m in lampRenderer.sharedMaterials)
+            {
+                if (m != null && m.name == R1MaterialRecipes.LampAmberSlot)
+                {
+                    hasLampAmber = true;
+                }
+            }
+            Assert.IsTrue(hasLampAmber, "PowerModule_StatusLamp must carry an R1_LampAmber lens slot.");
+            float lampDiameter = Mathf.Max(lampRenderer.bounds.size.x, lampRenderer.bounds.size.y);
+            Assert.GreaterOrEqual(lampDiameter, 0.06f, "PowerModule_StatusLamp diameter must be >= 6 cm.");
+            Assert.LessOrEqual(lampDiameter, 0.08f, "PowerModule_StatusLamp diameter must be <= 8 cm.");
+
+            // Decal_VIS_1 must use M_R1_MakerDecal with shadow casting disabled
+            Renderer decalRenderer = decal.GetComponent<Renderer>();
+            Assert.IsNotNull(decalRenderer, "Decal_VIS_1 must have a Renderer.");
+            Assert.AreEqual(R1StoryPropsBuilder.MakerDecalMaterialName, decalRenderer.sharedMaterial.name);
+            Assert.AreEqual(UnityEngine.Rendering.ShadowCastingMode.Off, decalRenderer.shadowCastingMode);
+
+            // BoxCollider sized to the body
+            BoxCollider box = prefab.GetComponent<BoxCollider>();
+            Assert.IsNotNull(box, "PowerModule prefab must have a BoxCollider sized to the body.");
+            Assert.Greater(box.size.x, 1.35f, "PowerModule BoxCollider width must span the module body.");
+            Assert.Greater(box.size.y, 0.85f, "PowerModule BoxCollider depth/height must span the module body.");
+            Assert.Greater(box.size.z, 0.80f, "PowerModule BoxCollider height/depth must span the module body.");
         }
 
         private static Bounds MeasureInstantiatedRendererBounds(GameObject prefab)

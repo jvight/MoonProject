@@ -19,6 +19,16 @@ namespace MoonProject.Gameplay
         [Tooltip("The build site's anchor (the old unloading apron), where the lander's port cable ends.")]
         [SerializeField] private string _apronAnchor = "place.apron";
 
+        [Header("The stall reminder (opening-v3 §1.5)")]
+        [Tooltip("Seconds with no progress and 07 standing still after which the step's objective line shows, once.")]
+        [Range(30f, 600f)] [SerializeField] private float _stallSeconds = 120f;
+
+        [Tooltip("Seconds a reminder line stays up before it goes for good.")]
+        [Range(5f, 60f)] [SerializeField] private float _reminderSeconds = 20f;
+
+        [Tooltip("07 counts as standing still at or under this speed (m/s).")]
+        [Range(0.05f, 1f)] [SerializeField] private float _stillSpeed = 0.3f;
+
         [Header("The lander (B2, B6)")]
         [Tooltip("Metres from the lander's centre within which 07 has reached it (B2's exit).")]
         [Range(5f, 60f)] [SerializeField] private float _landerReach = 25f;
@@ -99,6 +109,15 @@ namespace MoonProject.Gameplay
         [Tooltip("Where and how long 07 holds to transmit, and how the pulse of the old network runs to relay.1 and the Peak.")]
         [SerializeField] private CallAnswerSettings _answer = new CallAnswerSettings();
 
+        [Header("The first free choice and dusk (opening v3 R5–R6)")]
+        [Tooltip("The near sites 07 is free to visit after power-on, either order, by their frames: a Lumen ruin " +
+                 "piece ([World]/Ruins/<id>) or a story prop ([World]/BasinProps/<id>). The sky holds in the " +
+                 "afternoon until 07 docks after visiting one of them (or learns the battery bank), then dusk begins.")]
+        [SerializeField] private string[] _duskSites = { "Prop_SeismicStation", "HabitatModules" };
+
+        [Tooltip("Metres (flat) from a site's frame within which 07 has visited it.")]
+        [Range(2f, 30f)] [SerializeField] private float _duskSiteReach = 12f;
+
         [Header("Supply (opening-v3 §4: fixed sources, each for one structure)")]
         [Tooltip("Every source of the opening's materials, and nothing else: each stands by the thing it comes from " +
                  "and is for one structure (its link), which it covers on its own with the link's other sources " +
@@ -139,6 +158,9 @@ namespace MoonProject.Gameplay
 
         public string LanderAnchor => _landerAnchor;
         public string ApronAnchor => _apronAnchor;
+        public float StallSeconds => _stallSeconds;
+        public float ReminderSeconds => _reminderSeconds;
+        public float StillSpeed => _stillSpeed;
         public float LanderReach => _landerReach;
         public float ReserveCells => _reserveCells;
         public float PortCableReach => _portCableReach;
@@ -183,5 +205,9 @@ namespace MoonProject.Gameplay
         public CallReplySettings Reply => _reply;
 
         public CallAnswerSettings Answer => _answer;
+
+        public IReadOnlyList<string> DuskSites => _duskSites ?? Array.Empty<string>();
+
+        public float DuskSiteReach => _duskSiteReach;
     }
 }

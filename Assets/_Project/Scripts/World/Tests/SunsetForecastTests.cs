@@ -78,6 +78,11 @@ namespace MoonProject.World.Tests
 
             _pacing.Reach(OpeningMilestone.PowerOn, false, _clock);
             Assert.AreEqual(float.PositiveInfinity,
+                _pacing.RealSecondsBetween(_pacing.GoldenHourTime, _pacing.LastLightTime),
+                "powered, the afternoon holds until the first dusk");
+
+            _pacing.BeginDusk(false, _clock);
+            Assert.AreEqual(float.PositiveInfinity,
                 _pacing.RealSecondsBetween(_pacing.GoldenHourTime, _pacing.NightfallTime), "held at last light");
             Assert.AreEqual(_cycle.LastLightSinkSeconds,
                 _pacing.RealSecondsBetween(_pacing.GoldenHourTime, _pacing.LastLightTime), 1e-2f,

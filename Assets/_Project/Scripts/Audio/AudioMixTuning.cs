@@ -83,6 +83,13 @@ namespace MoonProject.Audio
         [Tooltip("Seconds for the three sky-phase ambience beds (earthlit night, sunlit day, eclipse) to crossfade.")]
         [Range(4f, 8f)] [SerializeField] private float _ambienceCrossfade = 6f;
 
+        [Tooltip("The first dusk (OpeningDuskBegan): share of the earthlit night bed blended under the day bed while " +
+                 "the Sun holds at last light.")]
+        [Range(0f, 1f)] [SerializeField] private float _duskNightShare = 0.45f;
+
+        [Tooltip("Seconds for the beds to shift toward evening at the first dusk (an eased glide, mostly done by then).")]
+        [Range(4f, 60f)] [SerializeField] private float _duskShiftSeconds = 20f;
+
         [Header("Title music")]
         [Tooltip("Assets/_Project/Data/Audio/TitleMusicLibrary.asset (variants, selected variant, fade-in/out).")]
         [SerializeField] private TitleMusicLibrary _titleMusic;
@@ -106,6 +113,8 @@ namespace MoonProject.Audio
         public float ThumpHardPitch => _thumpHardPitch;
         public float AmbienceFadeIn => _ambienceFadeIn;
         public float AmbienceCrossfade => _ambienceCrossfade;
+        public float DuskNightShare => _duskNightShare;
+        public float DuskShiftSeconds => _duskShiftSeconds;
         public float PauseDuckTime => _pauseDuckTime;
         public float ResumeTime => _resumeTime;
         public float PausedWorldGain => _pausedWorldGain;

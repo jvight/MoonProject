@@ -181,7 +181,7 @@ namespace MoonProject.Audio
             _feel.Initialize(context, this);
             _chirps.Initialize(context, this);
             _soundscape.Initialize(context, this, _radio, _mixTuning.AmbienceFadeIn);
-            _ambience.Initialize(context, this, _soundscape, _mixTuning.AmbienceFadeIn, _mixTuning.AmbienceCrossfade);
+            _ambience.Initialize(context, this, _soundscape, _mixTuning);
             _smallSounds.Initialize(context, this, _soundscape);
             _salvage.Initialize(context, this);
             _battery.Initialize(context, this);

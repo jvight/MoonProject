@@ -57,6 +57,13 @@ namespace MoonProject.Audio
         [Tooltip("Volume scale of the charging hum (very soft).")]
         [Range(0f, 1f)] [SerializeField] private float _chargeVolume = 0.5f;
 
+        [Tooltip("The first dusk: semitones the pad's charging hum slows by as the light goes (a pentatonic step down " +
+                 "from D: -3 is B).")]
+        [Range(-7f, 0f)] [SerializeField] private float _duskChargeSemitones = -3f;
+
+        [Tooltip("Seconds for the charging hum to slow at the first dusk (an eased glide, mostly done by then).")]
+        [Range(1f, 60f)] [SerializeField] private float _duskChargeSeconds = 20f;
+
         [Header("07 speaks machine (feel-pass section 7.2)")]
         [Tooltip("Level of 07's chirps (mezzo-piano).")]
         [Range(0f, 1f)] [SerializeField] private float _chirpVolume = 0.8f;
@@ -103,6 +110,8 @@ namespace MoonProject.Audio
         public float ChargeFadeIn => _chargeFadeIn;
         public float ChargeFadeOut => _chargeFadeOut;
         public float ChargeVolume => _chargeVolume;
+        public float DuskChargeSemitones => _duskChargeSemitones;
+        public float DuskChargeSeconds => _duskChargeSeconds;
         public float ScanVolume => _scanVolume;
         public float ScanEase => _scanEase;
         public float SheetCompleteDelay => _sheetCompleteDelay;

@@ -20,6 +20,8 @@ namespace MoonProject.Gameplay.Tests
 
             public CallState State { get; set; }
 
+            public string Sender => "ARK";
+
             public int Decoded => 0;
 
             public int Total => 4;
