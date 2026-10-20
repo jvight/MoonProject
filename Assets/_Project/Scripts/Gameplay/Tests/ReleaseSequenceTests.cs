@@ -23,6 +23,8 @@ namespace MoonProject.Gameplay.Tests
             public int Decoded => 0;
 
             public int Total => 4;
+
+            public string Sender => "ARK";
         }
 
         private sealed class FakeRing : IRangeRing
