@@ -1,21 +1,33 @@
 using System.Collections.Generic;
 using NUnit.Framework;
+using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
+using MoonProject.Core.Input;
 
 namespace MoonProject.Gameplay.Tests
 {
     /// <summary>
-    /// The opening's objective flow (docs/design/opening-v2.md §3): the lines in order as the game moves on, the lines
-    /// that wait for the world, nothing stored (a loaded game's state shows its step at once), and the milestones
-    /// published once, replayed as Restored on a load.
+    /// The opening's objective flow (docs/design/opening-v2.md §3, opening-v3 guidance audit): the lines in order as
+    /// the game moves on, the lines that wait for the world, nothing stored (a loaded game's state shows its step at
+    /// once), the next line after each success with its key's glyph while the key is new or idle (G2), the reminder
+    /// after a stall, moving or still, once more later, then never (G4), and the milestones published once, replayed as
+    /// Restored on a load.
     /// </summary>
     public sealed class OpeningFlowTests
     {
+        private const int NextLine = 6;
+        private const int Stall = 25;
+        private const int Again = 90;
+        private const int Reminder = 20;
+        private const int KeyFresh = 300;
+
         private EventBus _events;
         private List<string> _lines;
+        private List<NextStepChanged> _changes;
         private List<OpeningMilestoneReached> _milestones;
         private FakeProgress _game;
+        private KeyUse _keys;
         private OpeningFlow _flow;
 
         [SetUp]
@@ -23,11 +35,17 @@ namespace MoonProject.Gameplay.Tests
         {
             _events = new EventBus();
             _lines = new List<string>();
+            _changes = new List<NextStepChanged>();
             _milestones = new List<OpeningMilestoneReached>();
-            _events.Subscribe<NextStepChanged>(changed => _lines.Add(changed.LineKey));
+            _events.Subscribe<NextStepChanged>(changed =>
+            {
+                _lines.Add(changed.LineKey);
+                _changes.Add(changed);
+            });
             _events.Subscribe<OpeningMilestoneReached>(_milestones.Add);
             _game = new FakeProgress();
-            _flow = new OpeningFlow(_events, _game);
+            _keys = new KeyUse();
+            _flow = new OpeningFlow(_events, _game, _keys, new GuidanceTiming(NextLine, Stall, Again, Reminder, KeyFresh));
         }
 
         [Test]
@@ -60,8 +78,12 @@ namespace MoonProject.Gameplay.Tests
             Expect(OpeningKeys.BuildSolar);
             _game.PowerOn = true;
             Expect(string.Empty, "R5, the first free choice: the near sites are the lure, no line");
+            _game.DuskVisited = true;
+            Expect(OpeningKeys.DockForDusk, "a site visited: the dock that ends the day is named (G6)");
             _game.DuskBegun = true;
-            Expect(OpeningKeys.BuildBatteryBank, "Night is coming shows as the first dusk begins");
+            Expect(OpeningKeys.ScanModule, "night is coming: the habitat's power module can store it");
+            _game.Known.Add(StructureIds.BatteryBank);
+            Expect(OpeningKeys.BuildBatteryBank, "the module is the bank's frame: tow it home, build on it (G6)");
             _game.NightReady = true;
             Expect(string.Empty, "the first nightfall says nothing");
             _game.NightFallen = true;
@@ -69,7 +91,9 @@ namespace MoonProject.Gameplay.Tests
             _game.Known.Add(StructureIds.AntennaMast);
             Expect(OpeningKeys.BuildMast);
             _game.BuiltIds.Add(StructureIds.AntennaMast);
-            Expect(string.Empty, "the pillar in the west is the message");
+            Expect(OpeningKeys.Transmit, "the mast stands: transmit from it (G6)");
+            _game.CallAnswered = true;
+            Expect(string.Empty, "relay.1 answered: the opening's lines are done");
         }
 
         [Test]
@@ -108,6 +132,9 @@ namespace MoonProject.Gameplay.Tests
             _flow.Tick();
             Assert.AreEqual(OpeningSteps.BuildMast, _flow.CurrentIndex);
             _game.BuiltIds.Add(StructureIds.AntennaMast);
+            _flow.Tick();
+            Assert.AreEqual(OpeningSteps.Transmit, _flow.CurrentIndex);
+            _game.CallAnswered = true;
             _flow.Tick();
             Assert.AreEqual(OpeningSteps.Count, _flow.CurrentIndex, "the index is the step count once the opening is over");
         }
@@ -208,10 +235,11 @@ namespace MoonProject.Gameplay.Tests
             _game.ReserveSpent = true;
             _game.PowerOn = true;
             _game.DuskBegun = true;
+            _game.Known.Add(StructureIds.BatteryBank);
             _flow.Announce();
             _flow.Tick();
             Assert.AreEqual(OpeningKeys.BuildBatteryBank, _flow.Current, "no stored step: read at once");
-            Assert.IsEmpty(_lines, "and no line is published before a stall");
+            Assert.IsEmpty(_lines, "the line a session starts on is no success: no next line");
             Assert.AreEqual(2, _milestones.Count);
             Assert.AreEqual(OpeningMilestone.FirstCharge, _milestones[0].Milestone);
             Assert.AreEqual(OpeningMilestone.PowerOn, _milestones[1].Milestone);
@@ -269,6 +297,7 @@ namespace MoonProject.Gameplay.Tests
             _game.ReserveSpent = true;
             _game.PowerOn = true;
             _game.DuskBegun = true;
+            _game.Known.Add(StructureIds.BatteryBank);
             Expect(OpeningKeys.BuildBatteryBank);
             _game.BuiltIds.Add(StructureIds.BatteryBank);
             Expect(OpeningKeys.MoveBatteryBank, "built, but the grid does not reach it");
@@ -277,68 +306,108 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void NoLineShows_BeforeAStallOf120Seconds_NoMatterHowManyStepsPass()
+        public void ASuccess_ShowsTheNextLine_ForItsSeconds_ButNotTheLineASessionStartsOn()
         {
+            _flow.Tick(1f);
+            Assert.IsEmpty(_lines, "the first line of a session is no success");
             _game.ReachedLander = true;
-            for (int i = 0; i < 119; i++)
-            {
-                _flow.Tick(1f, true);
-            }
+            _flow.Tick(1f);
+            CollectionAssert.AreEqual(new[] { OpeningKeys.ScanLander }, _lines, "at the lander: the next small action");
+            Assert.AreEqual(NextLineReason.Next, _changes[0].Reason);
+            Assert.AreEqual(NextLineReason.Next, _flow.ShownReason);
+            Tick(NextLine);
+            CollectionAssert.AreEqual(new[] { OpeningKeys.ScanLander, string.Empty }, _lines, "then it goes");
+        }
 
-            Assert.IsEmpty(_lines, "119 s standing still is not yet a stall");
+        [Test]
+        public void TheNextLine_LeadsWithItsKey_WhileTheKeyIsNewOrIdle()
+        {
+            _flow.Tick(1f);
+            _game.ReachedLander = true;
+            _flow.Tick(1f);
+            Assert.AreEqual(RoverAction.Excavate, _changes[0].Key);
+            Assert.IsTrue(_changes[0].ShowsKey, "E has never been pressed");
+
+            _keys.Pressed(RoverAction.Excavate);
             _game.Known.Add(StructureIds.ChargingPad);
-            _flow.Tick(1f, true);
-            Assert.IsEmpty(_lines, "a new step starts the count again");
-            Assert.AreEqual(string.Empty, _flow.Shown);
+            _flow.Tick(1f);
+            Assert.AreEqual(OpeningKeys.CollectParts, _changes[_changes.Count - 1].LineKey);
+            Assert.IsFalse(_changes[_changes.Count - 1].ShowsKey, "E was just pressed: the words alone");
+
+            _game.Covered.Add(StructureIds.ChargingPad);
+            _flow.Tick(1f);
+            Assert.AreEqual(RoverAction.Build, _changes[_changes.Count - 1].Key);
+            Assert.IsTrue(_changes[_changes.Count - 1].ShowsKey, "B, never pressed: B  Build the charging pad");
+
+            _keys.Step(KeyFresh);
+            _game.BuiltIds.Add(StructureIds.ChargingPad);
+            _flow.Tick(1f);
+            Assert.AreEqual(OpeningKeys.Charge, _changes[_changes.Count - 1].LineKey);
+            Assert.AreEqual(default(RoverAction), _changes[_changes.Count - 1].Key, "a drive takes no action key");
+            Assert.IsFalse(_changes[_changes.Count - 1].ShowsKey);
+            Assert.IsFalse(_keys.UsedWithin(RoverAction.Excavate, KeyFresh), "five idle minutes make E new again");
         }
 
         [Test]
-        public void AStalledStep_ShowsItsLineOnce_ThenItGoesAndNeverComesBackForThatStep()
+        public void TheLine_CarriesThePlaceOfItsAction_WhenItHasOne()
         {
-            Assert.AreEqual(OpeningKeys.DriveToLander, FirstStepKey());
-            for (int i = 0; i < 120; i++)
-            {
-                _flow.Tick(1f, true);
-            }
-
-            CollectionAssert.AreEqual(new[] { OpeningKeys.DriveToLander }, _lines, "one line after the stall");
-            Assert.AreEqual(OpeningKeys.DriveToLander, _flow.Shown);
-            for (int i = 0; i < (int)OpeningFlow.DefaultReminderSeconds; i++)
-            {
-                _flow.Tick(1f, true);
-            }
-
-            CollectionAssert.AreEqual(new[] { OpeningKeys.DriveToLander, string.Empty }, _lines, "then it goes");
-            for (int i = 0; i < 600; i++)
-            {
-                _flow.Tick(1f, true);
-            }
-
-            Assert.AreEqual(2, _lines.Count, "never again for that step");
-        }
-
-        [Test]
-        public void MovingResetsTheStall_AndTheNextStepGetsItsOwnReminder()
-        {
-            for (int round = 0; round < 3; round++)
-            {
-                for (int i = 0; i < 100; i++)
-                {
-                    _flow.Tick(1f, true);
-                }
-
-                _flow.Tick(1f, false);
-            }
-
-            Assert.IsEmpty(_lines, "100 s of standing, then a move, three times: no stall");
+            var apron = new Vector3(3f, 0f, 9f);
+            _game.Places[OpeningKeys.BuildPad] = apron;
+            _flow.Tick(1f);
             _game.ReachedLander = true;
-            _flow.Tick(1f, true);
-            for (int i = 0; i < 120; i++)
-            {
-                _flow.Tick(1f, true);
-            }
+            _game.Known.Add(StructureIds.ChargingPad);
+            _game.Covered.Add(StructureIds.ChargingPad);
+            _flow.Tick(1f);
+            NextStepChanged build = _changes[_changes.Count - 1];
+            Assert.AreEqual(OpeningKeys.BuildPad, build.LineKey);
+            Assert.IsTrue(build.HasTarget, "B  Build the charging pad: over there");
+            Assert.AreEqual("place." + OpeningKeys.BuildPad, build.TargetId);
+            Assert.AreEqual(apron, build.TargetPosition);
 
-            CollectionAssert.AreEqual(new[] { OpeningKeys.ScanLander }, _lines, "the next step's own reminder");
+            _game.BuiltIds.Add(StructureIds.ChargingPad);
+            _flow.Tick(1f);
+            Assert.IsFalse(_changes[_changes.Count - 1].HasTarget, "a line with no place carries none");
+        }
+
+        [Test]
+        public void NoProgress_MovingOrStill_BringsTheLineBack_ThenOnceMore_ThenNever()
+        {
+            _flow.Tick(1f);
+            Tick(Stall - 1);
+            Assert.IsEmpty(_lines, "a second short of the stall is not yet a stall");
+            _flow.Tick(1f);
+            CollectionAssert.AreEqual(new[] { OpeningKeys.DriveToLander }, _lines, "the reminder after the stall");
+            Assert.AreEqual(NextLineReason.Reminder, _changes[0].Reason);
+            Tick(Reminder);
+            Assert.AreEqual(string.Empty, _flow.Shown, "it goes after its time");
+            Tick(Again - 1);
+            Assert.AreEqual(2, _lines.Count, "not yet again");
+            _flow.Tick(1f);
+            Assert.AreEqual(OpeningKeys.DriveToLander, _flow.Shown, "still stuck: once more");
+            Tick(Reminder + 600);
+            Assert.AreEqual(4, _lines.Count, "then never again for that step");
+        }
+
+        [Test]
+        public void Progress_StartsTheStallAgain_AndTheNewLineGetsItsOwnReminders()
+        {
+            _flow.Tick(1f);
+            Tick(Stall - 1);
+            _game.ReachedLander = true;
+            _flow.Tick(1f);
+            CollectionAssert.AreEqual(new[] { OpeningKeys.ScanLander }, _lines, "the next line, no reminder");
+            Tick(NextLine + Stall);
+            CollectionAssert.AreEqual(new[] { OpeningKeys.ScanLander, string.Empty, OpeningKeys.ScanLander }, _lines,
+                "the new line's own reminder, counted from when its next line went");
+            Assert.AreEqual(NextLineReason.Reminder, _changes[2].Reason);
+        }
+
+        private void Tick(int seconds)
+        {
+            for (int i = 0; i < seconds; i++)
+            {
+                _flow.Tick(1f);
+            }
         }
 
         private string FirstStepKey()
@@ -370,6 +439,16 @@ namespace MoonProject.Gameplay.Tests
             public bool DuskBegun { get; set; }
             public bool NightReady { get; set; }
             public bool NightFallen { get; set; }
+            public bool DuskVisited { get; set; }
+            public bool CallAnswered { get; set; }
+            public readonly Dictionary<string, Vector3> Places = new Dictionary<string, Vector3>();
+
+            public bool TryGetPlace(string lineKey, out string placeId, out Vector3 position)
+            {
+                bool has = Places.TryGetValue(lineKey, out position);
+                placeId = has ? "place." + lineKey : string.Empty;
+                return has;
+            }
 
             public bool Knows(string structureId)
             {

@@ -27,12 +27,21 @@ namespace MoonProject.Gameplay
 
         private readonly OpeningTuning _tuning;
         private readonly IRoverState _rover;
+        private ICallSource _call;
         private readonly ISunlight _sunlight;
         private readonly KnownStructures _known;
         private readonly StructureCatalog _catalog;
         private readonly MaterialStock _stock;
         private readonly RoverStartKit _kit;
+        // The ruin pieces whose lines send 07 there (their names in [World]/Ruins).
+        private const string SolarRuin = "FallenSolarArray";
+        private const string HabitatRuin = "HabitatModules";
+        private const string TowerRuin = "RadioTower";
+
         private readonly Vector3 _lander;
+        private readonly Vector3 _apron;
+        private readonly PlacedBase _placed;
+        private ITowLine _tow;
         private readonly Dictionary<string, Transform> _frames =
             new Dictionary<string, Transform>(StringComparer.Ordinal);
 
@@ -76,6 +85,8 @@ namespace MoonProject.Gameplay
             WorldAnchor lander = Anchor(services.Anchors, tuning.LanderAnchor);
             WorldAnchor apron = Anchor(services.Anchors, tuning.ApronAnchor);
             _lander = lander.Position;
+            _apron = apron.Position;
+            _placed = building.PlacedBase;
             Port = new LanderPort(services.Events, tuning.ReserveCells);
             Pads = new PadChargers(building.PlacedBase, Port, apron.Position, tuning);
             Transform frames = new GameObject("OpeningFrames").transform;
@@ -89,7 +100,7 @@ namespace MoonProject.Gameplay
             Caches = new SupplyCaches(tuning, FrameOf, parent, services, containers, crateReach);
             LanderCargo = CargoBay(Caches.RootOf(tuning.CargoCrate), Caches.LevelOf(tuning.CargoCrate));
             Dusk = new DuskCue(services.Events, DuskSites(tuning), tuning.DuskSiteReach);
-            Flow = new OpeningFlow(services.Events, this, tuning.StallSeconds, tuning.ReminderSeconds);
+            Flow = new OpeningFlow(services.Events, this, Keys, tuning.Guidance);
         }
 
         public LanderPort Port { get; }
@@ -102,6 +113,9 @@ namespace MoonProject.Gameplay
 
         /// <summary>When the first dusk begins (R5–R6).</summary>
         public DuskCue Dusk { get; }
+
+        /// <summary>Which action keys the player has pressed lately: GameplaySystem feeds it, the flow reads it.</summary>
+        public KeyUse Keys { get; } = new KeyUse();
 
         /// <summary>The lander's cargo scan host, its open crate: Scan_1..N on what it holds (the pad's fragments).
         /// </summary>
@@ -130,6 +144,114 @@ namespace MoonProject.Gameplay
         public bool NightReady => Pads.NightReady;
 
         public bool NightFallen => NightFallenSaved;
+
+        public bool DuskVisited => Dusk.Visited;
+
+        public bool CallAnswered => _call != null && _call.State >= CallState.Answered;
+
+        /// <summary>07's winch cable, made after the opening: where the power module stands for its line.</summary>
+        public void ConnectTow(ITowLine tow)
+        {
+            _tow = tow ?? throw new ArgumentNullException(nameof(tow));
+        }
+
+        public bool TryGetPlace(string lineKey, out string placeId, out Vector3 position)
+        {
+            switch (lineKey)
+            {
+                case OpeningKeys.DriveToLander:
+                    return Place(_tuning.LanderAnchor, _lander, out placeId, out position);
+                case OpeningKeys.ScanLander:
+                case OpeningKeys.CollectParts:
+                    return Crate(_tuning.CargoCrate, out placeId, out position);
+                case OpeningKeys.TakeIgniter:
+                    return Crate(CrateHolding(_tuning.IgniterPart), out placeId, out position);
+                case OpeningKeys.FindSolar:
+                case OpeningKeys.CutOptics:
+                    return Frame(SolarRuin, out placeId, out position);
+                case OpeningKeys.ScanModule:
+                    return Frame(HabitatRuin, out placeId, out position);
+                case OpeningKeys.ScanTower:
+                    return Frame(TowerRuin, out placeId, out position);
+                case OpeningKeys.BuildBatteryBank:
+                    Transform load = null;
+                    bool module = _tow != null && _tow.TryFindLoad(TowLoads.PowerModule, out load);
+                    return Place(module ? TowLoads.PowerModule : string.Empty, module ? load.position : Vector3.zero,
+                        out placeId, out position);
+                case OpeningKeys.Transmit:
+                    return Structure(StructureIds.AntennaMast, out placeId, out position);
+                case OpeningKeys.BuildPad:
+                case OpeningKeys.Charge:
+                case OpeningKeys.ParkOnPad:
+                case OpeningKeys.BuildSolar:
+                case OpeningKeys.DockForDusk:
+                case OpeningKeys.MoveBatteryBank:
+                case OpeningKeys.BuildMast:
+                    return Place(_tuning.ApronAnchor, _apron, out placeId, out position);
+                default:
+                    return Place(string.Empty, Vector3.zero, out placeId, out position);
+            }
+        }
+
+        private static bool Place(string id, Vector3 at, out string placeId, out Vector3 position)
+        {
+            placeId = id;
+            position = at;
+            return id.Length > 0;
+        }
+
+        private bool Crate(string id, out string placeId, out Vector3 position)
+        {
+            Transform crate = id.Length > 0 ? Caches.RootOf(id) : null;
+            return Place(crate != null ? id : string.Empty, crate != null ? crate.position : Vector3.zero, out placeId,
+                out position);
+        }
+
+        private bool Frame(string id, out string placeId, out Vector3 position)
+        {
+            Transform frame = FrameOf(id);
+            return Place(frame != null ? id : string.Empty, frame != null ? frame.position : Vector3.zero,
+                out placeId, out position);
+        }
+
+        private bool Structure(string structureId, out string placeId, out Vector3 position)
+        {
+            for (int i = 0; i < _placed.Count; i++)
+            {
+                PlacedStructure placed = _placed.StructureAt(i);
+                if (placed.IsBuilt && placed.Definition.Id == structureId)
+                {
+                    return Place(structureId, placed.Pose.Position, out placeId, out position);
+                }
+            }
+
+            return Place(string.Empty, Vector3.zero, out placeId, out position);
+        }
+
+        /// <summary>The supply crate whose parts include <paramref name="partId"/>; empty when none does.</summary>
+        private string CrateHolding(string partId)
+        {
+            for (int i = 0; i < Caches.Count; i++)
+            {
+                SupplyCache cache = Caches.Get(i);
+                IReadOnlyList<string> parts = cache.Parts;
+                for (int p = 0; p < parts.Count; p++)
+                {
+                    if (parts[p] == partId)
+                    {
+                        return cache.Id;
+                    }
+                }
+            }
+
+            return string.Empty;
+        }
+
+        /// <summary>The call from the sky, made after the opening: what <see cref="CallAnswered"/> reads.</summary>
+        public void ConnectCall(ICallSource call)
+        {
+            _call = call ?? throw new ArgumentNullException(nameof(call));
+        }
 
         public bool Knows(string structureId)
         {
@@ -179,7 +301,8 @@ namespace MoonProject.Gameplay
 
             Caches.Step(deltaTime);
             Dusk.Step(PowerOn, _rover.Position, Knows(StructureIds.BatteryBank));
-            Flow.Tick(deltaTime, _rover.Speed <= _tuning.StillSpeed);
+            Keys.Step(deltaTime);
+            Flow.Tick(deltaTime);
         }
 
         public OpeningSaveData Capture()

@@ -21,7 +21,10 @@ namespace MoonProject.Gameplay
         public const int ScanTower = 9;
         public const int BuildMast = 10;
 
+        /// <summary>R8: transmit from the mast until relay.1 answers.</summary>
+        public const int Transmit = 11;
+
         /// <summary>The number of steps; the index once the opening is over.</summary>
-        public const int Count = 11;
+        public const int Count = 12;
     }
 }

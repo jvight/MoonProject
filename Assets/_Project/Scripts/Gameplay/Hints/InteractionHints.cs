@@ -91,7 +91,7 @@ namespace MoonProject.Gameplay
                 return 0;
             }
 
-            points[0] = hint.Position;
+            points[0] = hint.Target;
             if (hint.Kind != InteractionKind.Scan)
             {
                 return 1;
@@ -162,7 +162,7 @@ namespace MoonProject.Gameplay
                     return fragment != null;
                 case InteractionKind.OpenBuild:
                     bool atApron = _firstUse.TryGetOpenBuild(out Vector3 apron);
-                    hint = atApron ? new InteractionHint(kind, apron, true) : InteractionHint.None;
+                    hint = atApron ? FirstUse(kind, apron) : InteractionHint.None;
                     return atApron;
                 case InteractionKind.FitPart:
                     bool atRover = _firstUse.TryGetFitPart(out Vector3 rover);
@@ -170,17 +170,15 @@ namespace MoonProject.Gameplay
                     return atRover;
                 case InteractionKind.Tether:
                     bool hookable = _tow.TryGetHookable(out Vector3 hitch);
-                    hint = hookable ? new InteractionHint(kind, hitch, true) : InteractionHint.None;
+                    hint = hookable ? FirstUse(kind, hitch) : InteractionHint.None;
                     return hookable;
                 case InteractionKind.Install:
                     bool atSocket = _relay.TryGetInstall(out Vector3 socket);
-                    hint = atSocket ? new InteractionHint(kind, socket, true) : InteractionHint.None;
+                    hint = atSocket ? FirstUse(kind, socket) : InteractionHint.None;
                     return atSocket;
                 case InteractionKind.Transmit:
                     bool sendable = _answer.Phase == AnswerPhase.Ready || _answer.Phase == AnswerPhase.Transmitting;
-                    hint = sendable
-                        ? new InteractionHint(kind, _answer.MastPoint, true, null, 0, 0, _answer.HoldProgress01)
-                        : InteractionHint.None;
+                    hint = sendable ? FirstUse(kind, _answer.MastPoint, _answer.HoldProgress01) : InteractionHint.None;
                     return sendable;
                 case InteractionKind.Rack:
                     bool reads = _rack.TryGetRead(out Vector3 bay, out string bayId);
@@ -190,6 +188,16 @@ namespace MoonProject.Gameplay
                     hint = InteractionHint.None;
                     return false;
             }
+        }
+
+        /// <summary>
+        /// A key taught at <paramref name="target"/>: its chip stands there, or on 07 while it is off screen; a hold's
+        /// chip carries how far the hold has come.
+        /// </summary>
+        private InteractionHint FirstUse(InteractionKind kind, Vector3 target, float holdProgress = 0f)
+        {
+            Vector3 chip = _firstUse.Place(target, out bool onRover);
+            return new InteractionHint(kind, chip, true, target, onRover, null, 0, 0, holdProgress);
         }
     }
 }
