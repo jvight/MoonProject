@@ -321,10 +321,20 @@ namespace MoonProject.Gameplay
             ApronGuide = new ApronGuide(transform, _apronOutline, _visuals.BeamCore, _building.Tuning);
             ScanMark = new ScanTargetMark(transform, _visuals.BeamCore, _scanTuning);
             _building.MarkApron(_apronOutline.bounds.center);
+            Tow = NewTow(services);
+            if (Tow == null)
+            {
+                Fail("the tow did not stand (see its error).");
+                return;
+            }
+
+            _battery.ConnectTow(Tow);
+            _building.ConnectTow(Tow);
+            TowFrames = new TowFrames(context.Events, _building.Catalog, Tow);
             var firstUse = new FirstUseSpots(Opening, _building, context.Get<IViewCamera>(), context.Get<IRoverState>(),
                 _building.Tuning.FirstUseViewMargin);
             var hints = new InteractionHints(_salvage, Containers, Scans, _building, services.Beam, Cutter,
-                services.Pickups, firstUse);
+                services.Pickups, firstUse, Tow);
             Hints = hints;
             Recovery = new RecoveryProgress(context.Events, PowerLamps, PowerSteps, _openingTuning.RecoveryLamps);
             Call = new CallProgress(context.Events, _openingTuning.Call, services.Layout);
@@ -339,16 +349,6 @@ namespace MoonProject.Gameplay
                 new RangeRingModel(_battery.Tuning, _battery.Tuning.RangeRing, services.Terrain), _battery.Model,
                 Opening.Pads, services.Rover);
             RangeRingLine = new RangeRingLine(transform, _visuals.BeamCore, RangeRing, _battery.Tuning.RangeRing);
-            Tow = NewTow(services);
-            if (Tow == null)
-            {
-                Fail("the tow did not stand (see its error).");
-                return;
-            }
-
-            _battery.ConnectTow(Tow);
-            _building.ConnectTow(Tow);
-            TowFrames = new TowFrames(context.Events, _building.Catalog, Tow);
             _flowTokens.Add(context.Events.Subscribe<ChargingChanged>(OnChargingChanged));
             context.Register<IMaterialStock>(Materials);
             context.Register<IMaterialCatalog>(_materialCatalog);

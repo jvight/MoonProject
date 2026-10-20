@@ -939,6 +939,10 @@
             "text": "Hex charge adapter · from Kestrel-3"
         },
         {
+            "key": "hint.tether",
+            "text": "Hook cable"
+        },
+        {
             "key": "pickup.crate.contents",
             "text": "the parts"
         },
