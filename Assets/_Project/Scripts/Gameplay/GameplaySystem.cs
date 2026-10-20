@@ -374,13 +374,13 @@ namespace MoonProject.Gameplay
                 _building.Tuning.FirstUseGazePriority, _building.Tuning.FirstUseAskIntensity);
             Recovery = new RecoveryProgress(context.Events, PowerLamps, PowerSteps, _openingTuning.RecoveryLamps);
             Call = new CallProgress(context.Events, _openingTuning.Call, services.Layout);
-            Opening.ConnectCall(Call);
             Reply = new CallReply(context.Events, Call, _openingTuning.Reply);
             MastRaise = new MastRaise(context.Events, _openingTuning.Reply);
             MastRaiseView = new MastRaiseView(context.Events, _building, MastRaise, _openingTuning.Reply);
             services.Anchors.TryGet(WorldAnchorIds.RelayPrefix + "1", out WorldAnchor relay);
             Answer = new CallAnswer(context.Events, Call, Reply, MastRaise, _openingTuning.Answer, relay.Position,
                 services.Layout.PeakPosition);
+            Opening.ConnectAnswer(Answer);
             RangeRing = new RangeRingField(context.Events, _battery.Tuning.RangeRing,
                 new RangeRingModel(_battery.Tuning, _battery.Tuning.RangeRing, services.Terrain), _battery.Model,
                 new ChargePoints(Opening.Pads, Relay), services.Rover);

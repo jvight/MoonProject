@@ -77,7 +77,7 @@ namespace MoonProject.Gameplay
             _steps.Add(() => _game.NightFallen ? OpeningKeys.ScanTower : OpeningKeys.AwaitNight,
                 () => _game.Knows(StructureIds.AntennaMast));
             _steps.Add(OpeningKeys.BuildMast, () => _game.Built(StructureIds.AntennaMast));
-            _steps.Add(OpeningKeys.Transmit, () => _game.CallAnswered);
+            _steps.Add(OpeningKeys.Transmit, () => _game.AnswerDone);
             _steps.Add(OpeningKeys.GoToRelay, () => _game.RelayRelit);
             _wake = events.Subscribe<BootCheckFinished>(_ => _woke = true);
         }
