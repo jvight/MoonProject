@@ -113,6 +113,22 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void TheWinchLetsGo_OnlyOnceTheLoadItself_IsHome_SoALoadLetGoCanBeBuiltOn()
+        {
+            TowableBody load = Load("module", new Vector3(0f, 0f, -1f));
+            load.Root.GetChild(0).localPosition = Vector3.forward;
+            _tow.Step(true);
+            load.Root.position = Home + new Vector3(0f, 0f, -(_settings.HomeRadius + 0.5f));
+            _tow.Step(false);
+            Assert.IsTrue(_tow.IsTowing, "its hitch is on the apron, the module not yet");
+
+            load.Root.position = Home + new Vector3(0f, 0f, -(_settings.HomeRadius - 0.5f));
+            _tow.Step(false);
+            Assert.IsFalse(_tow.IsTowing);
+            Assert.IsTrue(_tow.TryFindHome("module", out _), "let go home: a structure may stand on it");
+        }
+
+        [Test]
         public void ALoadThatFellFarBehind_IsLetGoSoftly()
         {
             TowableBody load = Load("module", new Vector3(0f, 0f, -1f));

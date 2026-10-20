@@ -25115,6 +25115,10 @@ MonoBehaviour:
   _landerPort: {fileID: 864208171499334172}
   _apronOutline: {fileID: 4457812933194612169}
   _apronCableChannel: {fileID: 393180354155222818}
+  _relaySpare: {fileID: 407556637446712843}
+  _relaySocket: {fileID: 982137842842755771}
+  _relayFitted: {fileID: 1950844425872920807}
+  _relayPad: {fileID: 4263061600648895475}
 --- !u!4 &4243991453312975281
 Transform:
   m_ObjectHideFlags: 0

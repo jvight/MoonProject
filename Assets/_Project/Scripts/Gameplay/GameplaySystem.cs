@@ -70,6 +70,14 @@ namespace MoonProject.Gameplay
                  "lander's cable across the apron takes a pad's own cable.")]
         [SerializeField] private Transform _apronCableChannel;
 
+        [Tooltip("relay.1's site (World's [World]/Relay1Site): the spare in its open cabinet, the mast box's feed " +
+                 "socket and the fitted unit in it (inactive until fitted), and the contact pad.")]
+        [SerializeField] private Transform _relaySpare;
+
+        [SerializeField] private Transform _relaySocket;
+        [SerializeField] private Transform _relayFitted;
+        [SerializeField] private Transform _relayPad;
+
         /// <summary>The recovery protocol's Power steps: the pad, solar power on, a night-ready base
         /// (opening-v2).</summary>
         private const int PowerSteps = 3;
@@ -168,6 +176,9 @@ namespace MoonProject.Gameplay
         /// <summary>The base's lamps, which follow the Sun (null while the opening could not be built).</summary>
         public BaseLamps BaseLamps { get; private set; }
 
+        /// <summary>relay.1's repair (opening v3 R10): its spare taken, fitted, the relay lit.</summary>
+        public RelayRepair Relay { get; private set; }
+
         /// <summary>07's winch cable: what it tows, hooked and let go with the tether key (opening v3 R6).</summary>
         public TowLine Tow { get; private set; }
 
@@ -244,6 +255,14 @@ namespace MoonProject.Gameplay
         internal void WireApronCableChannel(Transform channel)
         {
             _apronCableChannel = channel;
+        }
+
+        internal void WireRelay(Transform spare, Transform socket, Transform fitted, Transform pad)
+        {
+            _relaySpare = spare;
+            _relaySocket = socket;
+            _relayFitted = fitted;
+            _relayPad = pad;
         }
 
         internal void WireDatabank(DatabankCatalogue catalogue)
@@ -339,8 +358,12 @@ namespace MoonProject.Gameplay
                 context.Get<IViewCamera>(), context.Get<IRoverState>(), transform);
             var firstUse = new FirstUseSpots(Opening, _building, context.Get<IViewCamera>(), context.Get<IRoverState>(),
                 _building.Tuning.FirstUseViewMargin);
+            Relay = new RelayRepair(context.Events, Materials.Hold, services.Rover, services.Pickups,
+                _openingTuning.Relay, _relaySpare.position, _relaySocket.position, _relayPad.position,
+                _relaySpare.gameObject, _relayFitted.gameObject);
+            _battery.ConnectRelay(Relay);
             var hints = new InteractionHints(_salvage, Containers, Scans, _building, services.Beam, Cutter,
-                services.Pickups, firstUse, Tow, RackView);
+                services.Pickups, firstUse, Tow, Relay, RackView);
             Hints = hints;
             Recovery = new RecoveryProgress(context.Events, PowerLamps, PowerSteps, _openingTuning.RecoveryLamps);
             Call = new CallProgress(context.Events, _openingTuning.Call, services.Layout);
@@ -352,7 +375,8 @@ namespace MoonProject.Gameplay
                 services.Layout.PeakPosition);
             RangeRing = new RangeRingField(context.Events, _battery.Tuning.RangeRing,
                 new RangeRingModel(_battery.Tuning, _battery.Tuning.RangeRing, services.Terrain), _battery.Model,
-                Opening.Pads, services.Rover);
+                new ChargePoints(Opening.Pads, Relay), services.Rover);
+            _flowTokens.Add(context.Events.Subscribe<RelayRelit>(OnRelayRelit));
             RangeRingLine = new RangeRingLine(transform, _visuals.BeamCore, RangeRing, _battery.Tuning.RangeRing);
             _flowTokens.Add(context.Events.Subscribe<ChargingChanged>(OnChargingChanged));
             context.Register<IMaterialStock>(Materials);
@@ -418,6 +442,8 @@ namespace MoonProject.Gameplay
                 GameplaySaveKeys.DatabankVersion, Databank.Capture, Databank.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<CallSaveData>(GameplaySaveKeys.Call,
                 GameplaySaveKeys.CallVersion, CaptureCall, RestoreCall)));
+            _saveTokens.Add(save.Register(new SaveSection<RelaySaveData>(GameplaySaveKeys.Relay,
+                GameplaySaveKeys.RelayVersion, Relay.Capture, Relay.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<TowSaveData>(GameplaySaveKeys.Tow,
                 GameplaySaveKeys.TowVersion, Tow.Capture, Tow.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<RackSaveData>(GameplaySaveKeys.Rack,
@@ -603,6 +629,7 @@ namespace MoonProject.Gameplay
             StartKit.Announce();
             Recovery.Announce();
             Call.Announce();
+            Relay.Announce();
             Release.Announce();
             Rack.Announce();
             Opening.Announce();
@@ -618,6 +645,7 @@ namespace MoonProject.Gameplay
             Scans.Step(now, deltaTime);
             ScanMark.Step(Scans.Scanning == null ? Scans.Candidate : null, deltaTime);
             Opening.Step(deltaTime);
+            Relay.Step(Time.frameCount, _input.ExcavateHeld);
             Tow.Step(_input.TetherPressed);
             Reply.Step(deltaTime, Opening.NightFallen, _roverState.Speed);
             MastRaise.Step(deltaTime);
@@ -633,6 +661,15 @@ namespace MoonProject.Gameplay
             ApronGlow.Step(_building.State != BuildModeState.Closed, deltaTime);
             ApronGuide.Step(_building.State != BuildModeState.Closed && !AnyPadStands(), deltaTime);
             Recovery.Refresh();
+        }
+
+        /// <summary>A relay lit now: the ring shows once, full, grown by the new charge point (opening v3 R10).</summary>
+        private void OnRelayRelit(RelayRelit relit)
+        {
+            if (!relit.Restored)
+            {
+                RangeRing.Show(RangeRingMode.Full);
+            }
         }
 
         private void FixedUpdate()
@@ -736,6 +773,9 @@ namespace MoonProject.Gameplay
                 : _apronOutline == null ? "The apron's bay outline is not assigned (rebuild the Main scene)."
                 : _apronCableChannel == null
                     ? "The apron's cable channel is not assigned (rebuild the Main scene)."
+                : _relaySpare == null || _relaySocket == null || _relayFitted == null || _relayPad == null
+                    ? "relay.1's site (spare, feed socket, fitted unit, contact pad) is not assigned (rebuild the Main " +
+                      "scene)."
                 : null;
         }
 
@@ -774,6 +814,7 @@ namespace MoonProject.Gameplay
             Databank?.Dispose();
             StartKit?.Dispose();
             TowFrames?.Dispose();
+            Relay?.Dispose();
             Call?.Dispose();
             Rack?.Dispose();
             RackView?.Dispose();
