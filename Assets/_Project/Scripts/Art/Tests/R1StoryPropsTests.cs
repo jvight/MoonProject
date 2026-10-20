@@ -271,13 +271,31 @@ namespace MoonProject.Art.Tests
 
             GameObject deadMastPrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.DeadAntennaMastPrefabPath);
             Assert.IsNotNull(deadMastPrefab.transform.Find("Stage_4/Mast/DishAzimuth/Dish"));
+            Transform beaconLamp = deadMastPrefab.transform.Find("Stage_4/Mast/BeaconLamp");
+            Assert.IsNotNull(beaconLamp, "DeadAntennaMast must preserve BeaconLamp cage node under Stage_4/Mast.");
+            Transform relayLens = deadMastPrefab.transform.Find("Stage_4/Mast/BeaconLamp/RelayLamp_Lens");
+            Assert.IsNotNull(relayLens, "DeadAntennaMast must expose separate RelayLamp_Lens node under BeaconLamp.");
+            Renderer lensRenderer = relayLens.GetComponent<Renderer>();
+            Assert.IsNotNull(lensRenderer, "RelayLamp_Lens must have its own Renderer.");
+            Assert.AreEqual(R1MaterialRecipes.LampAmberSlot, lensRenderer.sharedMaterial.name,
+                "RelayLamp_Lens must carry the R1_LampAmber material slot.");
+            Bounds lensBounds = lensRenderer.bounds;
+            Assert.That(lensBounds.size.x, Is.InRange(0.095f, 0.13f));
+            Assert.That(lensBounds.size.y, Is.InRange(0.095f, 0.13f));
+            Assert.That(lensBounds.size.z, Is.InRange(0.095f, 0.13f));
+
             Renderer[] mastRenderers = deadMastPrefab.GetComponentsInChildren<Renderer>(true);
             foreach (Renderer r in mastRenderers)
             {
+                if (r == lensRenderer)
+                {
+                    continue;
+                }
+
                 foreach (Material m in r.sharedMaterials)
                 {
                     Assert.AreNotEqual(R1MaterialRecipes.LampAmberSlot, m.name,
-                        "DeadAntennaMast must have no lit R1_LampAmber material slots.");
+                        "DeadAntennaMast renderers outside RelayLamp_Lens must have no R1_LampAmber material slots.");
                 }
             }
 
