@@ -36,6 +36,9 @@ namespace MoonProject.Autoplay
 
         private const float RouteGrowMetres = 0.5f;
 
+        /// <summary>Seconds 07 may take to settle before a new route is driven.</summary>
+        private const float ReplanSettleSeconds = 2f;
+
         /// <summary>Metres round a place 07 stuck that the next plan treats as blocked.</summary>
         private const float StuckAvoidMetres = 3f;
         private const float RouteArriveRadius = 2.5f;
@@ -199,7 +202,12 @@ namespace MoonProject.Autoplay
                 Vector3 here = _world.Rover.Position;
                 _stuckAt.Add(new Vector2(here.x, here.z));
                 Debug.Log($"Autoplay: {Activity}: stuck near {here} on the way to {what}; planning again (plan {attempt + 2}).");
-                yield return Until(() => Rover().Speed < 0.3f, 4f, "07 to stop before the new route");
+                // 07 may still be rolling on a slope: give it a moment to settle, and go on either way.
+                float settleUntil = Time.unscaledTime + ReplanSettleSeconds;
+                while (Rover().Speed >= 0.3f && Time.unscaledTime < settleUntil)
+                {
+                    yield return null;
+                }
             }
         }
 
