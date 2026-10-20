@@ -916,7 +916,7 @@ MonoBehaviour:
     _nodes:
     - _ruleId: antenna.azimuth
       _labelVi: "Xoay ph\u01B0\u01A1ng v\u1ECB ch\u1EA3o thu ph\xE1t (DishAzimuth)"
-      _nodePath: Stage_4/Mast/DishAzimuth
+      _nodePath: Stage_4/Mast/Mast_Seg2/DishAzimuth
       _motionKind: 0
       _axis: {x: 0, y: 0, z: 1}
       _restValue: 0
@@ -928,7 +928,7 @@ MonoBehaviour:
       _defaultActive: 0
     - _ruleId: antenna.dish
       _labelVi: "Ng\u1EA9ng / h\u1EA1 l\xF2ng ch\u1EA3o \u0103ng-ten (Dish)"
-      _nodePath: Stage_4/Mast/DishAzimuth/Dish
+      _nodePath: Stage_4/Mast/Mast_Seg2/DishAzimuth/Dish
       _motionKind: 0
       _axis: {x: -1, y: 0, z: 0}
       _restValue: 0
@@ -940,7 +940,7 @@ MonoBehaviour:
       _defaultActive: 0
     - _ruleId: antenna.sonar
       _labelVi: "Quay v\xF2ng c\u1EA3m bi\u1EBFn \u0111\u1ECBnh v\u1ECB (SonarLoop)"
-      _nodePath: Stage_4/Mast/SonarLoop
+      _nodePath: Stage_4/Mast/Mast_Seg2/SonarLoop
       _motionKind: 2
       _axis: {x: 0, y: 0, z: 1}
       _restValue: 0
