@@ -152,6 +152,9 @@ namespace MoonProject.Autoplay
         /// </summary>
         public bool LinesExpected { get; set; }
 
+        /// <summary>The first-time player check, when the run has one: moments inside a beat are checked too.</summary>
+        public NaiveGuard Naive { get; set; }
+
         /// <summary>Where the last world cue the bot waited for stood.</summary>
         public Vector3 CuePoint { get; private set; }
 
@@ -320,6 +323,12 @@ namespace MoonProject.Autoplay
             yield return _bot.Tap(Key.E);
             yield return _bot.Until(() => build.State == BuildModeState.Placing, FollowSeconds,
                 "E to take " + structureId + " up to place");
+            if (Naive != null && structureId == StructureIds.ChargingPad)
+            {
+                // The menu closed on the pad: what tells a player to put it on the bay and press E?
+                yield return Naive.Check("B4b");
+            }
+
             yield return PutTheGhostOn(build, at, structureId);
             if (_bot.Failed)
             {
