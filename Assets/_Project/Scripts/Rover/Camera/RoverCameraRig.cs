@@ -1458,14 +1458,22 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// The release's view (opening v3 4.4): one slow pan relay.1 -> the Peak's dish -> Kestrel-3 as a held camera
-        /// moment, so 07 stays in the foreground, nothing cuts, and any look or drive input ends it with a soft ease back.
+        /// The release's view (opening v3 4.4): one slow turn toward relay.1's lamp, the next goal, as a held camera
+        /// moment, so 07 stays in the foreground, nothing cuts, and any look or drive input ends it with a soft ease
+        /// back. A lamp far behind the camera turns nothing: 07's head and its chirp carry the look.
         /// </summary>
         private void OnReleaseViewOpened(ReleaseViewOpened view)
         {
-            _releasePan.Begin(_rover.Position, RoverYaw() + _orbitState.YawOffset, view.Relay, view.Dish, view.Kestrel, _tuning.ReleasePanLead,
-                _tuning.ReleasePanDishSeconds, _tuning.ReleasePanKestrelSeconds, _tuning.ReleasePanSweep, _tuning.ReleasePanRise, _tuning.ReleasePanHalfLife,
-                _tuning.ReleasePanSlack);
+            float looking = RoverYaw() + _orbitState.YawOffset;
+            float lamp = Mathf.Abs(Mathf.DeltaAngle(looking, ReleasePan.BearingTo(_rover.Position, view.Relay)));
+            if (lamp > _tuning.ReleasePanMaxBearing)
+            {
+                return;
+            }
+
+            _releasePan.Begin(_rover.Position, looking, view.Relay, _tuning.ReleasePanTravelSeconds,
+                _tuning.ReleasePanHoldSeconds, _tuning.ReleasePanSweep, _tuning.ReleasePanRise,
+                _tuning.ReleasePanHalfLife, _tuning.ReleasePanSlack);
             _moment.Start(_tuning.ReleaseMoment, _releasePan.Subject, true);
         }
 

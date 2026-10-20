@@ -92,9 +92,9 @@ namespace MoonProject.Gameplay
         [Range(1f, 10f)]
         [SerializeField] private float _viewSecondsEach = 3f;
 
-        [Tooltip("Seconds the camera takes to settle on the first lure before the pan runs on (its ease in).")]
+        [Tooltip("Seconds the view gives relay.1's lamp before the dish first glints.")]
         [Range(0.5f, 3f)]
-        [SerializeField] private float _viewLeadSeconds = 2.9f;
+        [SerializeField] private float _viewLeadSeconds = 1.5f;
 
         [Tooltip("Soft glints on the Peak's dish while the view looks at it, the first as the view reaches it.")]
         [Range(1, 5)]

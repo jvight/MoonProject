@@ -295,6 +295,15 @@ namespace MoonProject.Rover
             + "recent).")]
         [SerializeField] private int _reactionGazePriority = -1;
 
+        [Tooltip("Seconds 07's head looks at relay.1's lamp when the release's view opens (the camera turns toward it " +
+                 "and holds for about as long).")]
+        [Range(1f, 8f)]
+        [SerializeField] private float _releaseRelayLookSeconds = 4.5f;
+
+        [Tooltip("Seconds 07's head then glances at the Peak's dish, where the glint is: head only, no camera move.")]
+        [Range(0.5f, 4f)]
+        [SerializeField] private float _releasePeakLookSeconds = 1.6f;
+
         [Tooltip("Perk-up strength when 07 is lifted out of a stuck spot (a little 'whee', never a scold).")]
         [Range(0f, 1f)]
         [SerializeField] private float _recoveryPerk = 0.5f;
@@ -628,6 +637,10 @@ namespace MoonProject.Rover
         public float RelicGlanceSeconds => _relicGlanceSeconds;
 
         public int ReactionGazePriority => _reactionGazePriority;
+
+        public float ReleaseRelayLookSeconds => _releaseRelayLookSeconds;
+
+        public float ReleasePeakLookSeconds => _releasePeakLookSeconds;
 
         public float RelayRestoredPerk => _relayRestoredPerk;
 

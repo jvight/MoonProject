@@ -137,7 +137,7 @@ namespace MoonProject.Rover
 
         private RoverMood _mood;
         private LookAround _lookAround;
-        private const int ReleaseLureCount = 3;
+        private const int ReleaseLureCount = 2;
 
         private AntennaListen _listen;
         private CallListen _call;
@@ -152,7 +152,6 @@ namespace MoonProject.Rover
         private float _glanceEnds = -1f;
         private readonly Vector3[] _releaseLooks = new Vector3[ReleaseLureCount];
         private int _releaseLook = -1;
-        private float _releaseSeconds;
         private float _releaseNextAt;
         private MaterialPropertyBlock _glowBlock;
         private RoverDustCoat _dustCoat;
@@ -668,21 +667,19 @@ namespace MoonProject.Rover
 
         /// <summary>07 glances at <paramref name="point"/> for a moment (gameplay requests can override it).</summary>
         /// <summary>
-        /// The release's view from the rise: 07 looks at relay.1's lamp, the Peak's dish and Kestrel-3 in turn, so the
-        /// player's eye is led to the three lures.
+        /// The release's view from the rise: 07's head looks at relay.1's lamp, the next goal, then briefly at the
+        /// Peak's dish where the glint is, so the player's eye is led to the lamp first. Head only: the body stays put.
         /// </summary>
         private void OnReleaseView(ReleaseViewOpened opened)
         {
             _releaseLooks[0] = opened.Relay;
             _releaseLooks[1] = opened.Dish;
-            _releaseLooks[2] = opened.Kestrel;
-            _releaseSeconds = opened.SecondsEach;
             _releaseLook = 0;
-            _releaseNextAt = Time.time + _releaseSeconds;
-            Glance(_releaseLooks[0], _tuning.ReactionGazePriority, _releaseSeconds);
+            _releaseNextAt = Time.time + _tuning.ReleaseRelayLookSeconds;
+            Glance(_releaseLooks[0], _tuning.ReactionGazePriority, _tuning.ReleaseRelayLookSeconds);
         }
 
-        /// <summary>Moves 07's release look on to the next lure when its time is up.</summary>
+        /// <summary>Moves 07's release look on from the lamp to the dish when the lamp's time is up.</summary>
         private void StepReleaseView()
         {
             if (_releaseLook < 0 || Time.time < _releaseNextAt)
@@ -697,8 +694,8 @@ namespace MoonProject.Rover
                 return;
             }
 
-            _releaseNextAt = Time.time + _releaseSeconds;
-            Glance(_releaseLooks[_releaseLook], _tuning.ReactionGazePriority, _releaseSeconds);
+            _releaseNextAt = Time.time + _tuning.ReleasePeakLookSeconds;
+            Glance(_releaseLooks[_releaseLook], _tuning.ReactionGazePriority, _tuning.ReleasePeakLookSeconds);
         }
 
         private void Glance(Vector3 point)

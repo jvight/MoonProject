@@ -13,7 +13,7 @@ namespace MoonProject.Rover.PlayModeTests
 {
     /// <summary>
     /// What the player sees during the release (opening v3 4.4): in the real Main scene, after a live answer, the chase
-    /// camera through the whole view: one slow pan from relay.1's lamp to the Peak's dish to Kestrel-3 with 07 in the
+    /// camera through the whole view: one slow turn toward relay.1's lamp with 07 in the
     /// foreground, then a run where the player drives mid-pan and the camera eases back. Captures (a sheet every
     /// 0.75 s) in Logs/captures/release-view/.
     /// </summary>
@@ -22,11 +22,13 @@ namespace MoonProject.Rover.PlayModeTests
         private const float FrameTime = 1f / 60f;
         private const float ReadyTimeout = 40f;
         private const float StageTimeout = 90f;
-        private const float ViewSeconds = 10f;
+        private const float ViewSeconds = 9f;
         private const float SheetStep = 0.75f;
         private const float InterruptAt = 2.5f;
         private const float EaseBackSeconds = 2f;
-        private const float MaxTurnDegreesPerSecond = 60f;
+        private const float MaxTurnDegreesPerSecond = 30f;
+        private const float RelayWithinReach = 60f;
+        private const float RelayBehind = 170f;
 
         private static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "captures", "release-view"));
@@ -54,9 +56,9 @@ namespace MoonProject.Rover.PlayModeTests
         [Timeout(600000)]
         [PrebuildSetup(typeof(RoverSessionScene))]
         [PostBuildCleanup(typeof(RoverSessionScene))]
-        public IEnumerator TheViewIsOneSlowPan_FromTheRelayToTheDishToKestrel_With07AlwaysInFrame()
+        public IEnumerator TheViewIsOneSlowTurnTowardRelay1_With07AlwaysInFrame()
         {
-            yield return RunToTheView();
+            yield return RunToTheView(RelayWithinReach);
             float start = Time.time;
             float lastYaw = _scene.View.transform.eulerAngles.y;
             float fastest = 0f;
@@ -91,7 +93,7 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.LessOrEqual(fastest, MaxTurnDegreesPerSecond, "the camera never whips round");
             Assert.Greater(lowestFraming, 0.15f, "07 stays in the frame, in the foreground");
             Assert.Less(highestFraming, 0.85f, "07 stays in the frame, in the foreground");
-            Assert.Less(_scene.CameraRig.MomentWeight, 0.05f, "the camera is back behind 07 when the nine seconds end");
+            Assert.Less(_scene.CameraRig.MomentWeight, 0.05f, "the camera is back behind 07 when the view ends");
         }
 
         [UnityTest]
@@ -100,7 +102,7 @@ namespace MoonProject.Rover.PlayModeTests
         [PostBuildCleanup(typeof(RoverSessionScene))]
         public IEnumerator DrivingDuringTheView_EndsThePanAtOnce_WithASoftEaseBack()
         {
-            yield return RunToTheView();
+            yield return RunToTheView(RelayWithinReach);
             float start = Time.time;
             while (Time.time - start < InterruptAt)
             {
@@ -137,8 +139,27 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.Less(biggestDrop, 0.1f, "and the camera eased back, it did not cut");
         }
 
+        [UnityTest]
+        [Timeout(600000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator WhenRelay1IsFarBehindTheCamera_TheCameraStaysPut()
+        {
+            yield return RunToTheView(RelayBehind);
+            float start = Time.time;
+            float strongest = 0f;
+            while (Time.time - start < ViewSeconds)
+            {
+                yield return null;
+                strongest = Mathf.Max(strongest, _scene.CameraRig.MomentWeight);
+            }
+
+            Assert.AreEqual(0f, strongest, 1e-3f, "no camera turn: 07's head and its chirp carry the look");
+        }
+
         /// <summary>Boots the real scene, answers the call live, and waits for the release's view to open.</summary>
-        private IEnumerator RunToTheView()
+        /// <param name="relayAheadDegrees">How far (deg) relay.1 lies to the side of where 07 faces and the camera looks.</param>
+        private IEnumerator RunToTheView(float relayAheadDegrees)
         {
             Directory.CreateDirectory(CaptureFolder);
             _glinted = false;
@@ -167,7 +188,10 @@ namespace MoonProject.Rover.PlayModeTests
             yield return RealRoverScene.WaitSeconds(MastRaise.TotalSeconds(gameplay.MastRaiseSettings) + 1.5f);
 
             Assert.AreEqual(AnswerPhase.Ready, context.Get<IAnswerStatus>().Phase);
-            context.Get<IRoverPlacement>().PlaceAt(foot + new Vector3(3f, 0f, 0f), Quaternion.identity);
+            Assert.IsTrue(context.Get<IWorldAnchors>().TryGet("relay.1", out WorldAnchor relay));
+            Vector3 stand = foot + new Vector3(3f, 0f, 0f);
+            float relayBearing = ReleasePan.BearingTo(stand, relay.Position);
+            context.Get<IRoverPlacement>().PlaceAt(stand, Quaternion.Euler(0f, relayBearing - relayAheadDegrees, 0f));
             yield return RealRoverScene.WaitSeconds(1f);
             Press(_keyboard.eKey);
             float deadline = Time.time + ReadyTimeout;
