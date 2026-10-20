@@ -48,6 +48,10 @@ namespace MoonProject.UI
         private readonly IMaterialStock _stock;
         private readonly BuildField _buildField;
         private readonly GlyphLabels _glyphs;
+        private readonly GlyphView _placeGlyph;
+        private readonly GlyphView _rotateGlyph;
+        private InputDeviceKind _keysDevice;
+        private bool _keysWritten;
         private readonly IWeldEnergy _weldEnergy;
         private readonly EventBus _events;
         private readonly string[] _energyTexts = new string[WeldEnergyShare.MaxPercent + 1];
@@ -111,6 +115,8 @@ namespace MoonProject.UI
             _buildField = buildField;
             _weldEnergy = weldEnergy;
             _primaryGlyph = new GlyphView(layout.BuildStripGlyphPrimary, layout.BuildStripGlyphPrimaryLabel);
+            _placeGlyph = new GlyphView(layout.BuildPlaceGlyph, layout.BuildPlaceGlyphLabel);
+            _rotateGlyph = new GlyphView(layout.BuildRotateGlyph, layout.BuildRotateGlyphLabel);
             _secondaryGlyph = new GlyphView(layout.BuildStripGlyphSecondary, layout.BuildStripGlyphSecondaryLabel);
 
             _stripReveal = new Reveal(layout.BuildStrip, stripReveal);
@@ -237,8 +243,31 @@ namespace MoonProject.UI
 
             _reasonReveal.Set(wantsReason && onScreen);
             _reasonReveal.Tick(deltaTime);
-            TickCost(deltaTime, gateOpen, panelSize, controller, state);
+            TickCost(deltaTime, gateOpen, panelSize, controller, state, device);
         }
+
+        /// <summary>
+        /// The ghost's controls under its cost rows, from the real bindings (rover's alternates included): written when
+        /// the device or the language changes, never per frame.
+        /// </summary>
+        private void WriteGhostKeys(InputDeviceKind device)
+        {
+            if (_keysWritten && device == _keysDevice)
+            {
+                return;
+            }
+
+            _keysWritten = true;
+            _keysDevice = device;
+            _placeGlyph.Set(_glyphs.AllFor(RoverAction.Excavate, device), device);
+            _rotateGlyph.Set(_glyphs.AllFor(RoverAction.Winch, device), device);
+            _layout.BuildPlaceWord.text = _localization.Get(UiKeys.BuildHintPlace);
+            _layout.BuildRotateWord.text = _localization.Get(UiKeys.BuildHintRotate);
+        }
+
+        /// <summary>The ghost's controls as the player reads them (tests and captures).</summary>
+        public string GhostKeys => _layout.BuildPlaceGlyphLabel.text + " " + _layout.BuildPlaceWord.text + " · " +
+                                  _layout.BuildRotateGlyphLabel.text + " " + _layout.BuildRotateWord.text;
 
         /// <summary>True while the ghost's cost chip is up (or easing).</summary>
         public bool IsCostShown => !_costReveal.IsHidden;
@@ -248,7 +277,7 @@ namespace MoonProject.UI
 
         /// <summary>The ghost's cost rows at its foot while it is placed: what it takes against what 07 carries.</summary>
         private void TickCost(float deltaTime, bool gateOpen, Vector2 panelSize, BuildModeController controller,
-            BuildModeState state)
+            BuildModeState state, InputDeviceKind device)
         {
             bool wantsCost = gateOpen &&
                              controller != null &&
@@ -259,6 +288,7 @@ namespace MoonProject.UI
             if (wantsCost)
             {
                 _cost.Show(controller.SelectedStructure.BuildCost, _stock);
+                WriteGhostKeys(device);
                 // At the ghost's foot, under the reason chip above it, so the two never stack.
                 onScreen = _costAnchor.Track(controller.CandidatePose.Position, panelSize, deltaTime,
                     _costReveal.IsHidden);
@@ -275,6 +305,7 @@ namespace MoonProject.UI
             Array.Clear(_energyTexts, 0, _energyTexts.Length);
             Array.Clear(_stepTexts, 0, _stepTexts.Length);
             _stale = true;
+            _keysWritten = false;
             _shownReason = PlacementReason.Valid;
         }
 

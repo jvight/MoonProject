@@ -1774,7 +1774,28 @@ Label {
 }
 
 /* The build ghost's cost (opening-v3 §4, E7): what it takes against what 07 carries, at its foot while placing. */
+/* The ghost's controls under its cost rows: the place key(s) and the rotate key(s), from the real bindings */
+.build-cost__keys {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin-top: 6px;
+}
+
+.build-cost__key-word {
+    font-size: 18px;
+    margin-left: 6px;
+    color: var(--moon-text);
+}
+
+.build-cost .glyph--small.glyph--pad {
+    width: auto;
+    padding: 0 8px;
+}
+
 .build-cost__body {
+    flex-direction: column;
+    align-items: stretch;
     padding: 6px 14px 7px 14px;
     border-radius: 8px;
 }

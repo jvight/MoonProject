@@ -1139,6 +1139,14 @@
             "text": "Thoát"
         },
         {
+            "key": "build.hint.place",
+            "text": "Đặt"
+        },
+        {
+            "key": "build.hint.rotate",
+            "text": "Xoay"
+        },
+        {
             "key": "build.step.place",
             "text": "Lái đến vạch sáng trên sân rồi bấm {0} để đặt"
         },

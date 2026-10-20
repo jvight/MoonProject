@@ -38,6 +38,17 @@
                         <ui:VisualElement name="build-cost-shadow" class="soft-shadow soft-shadow--chip" />
                         <ui:VisualElement name="build-cost-body" class="chip build-cost__body" picking-mode="Ignore">
                             <ui:VisualElement name="build-cost-recipe" class="recipe build-cost__recipe" picking-mode="Ignore" />
+                            <ui:VisualElement name="build-cost-keys" class="build-cost__keys" picking-mode="Ignore">
+                                <ui:VisualElement name="build-place-glyph" class="glyph glyph--small" picking-mode="Ignore">
+                                    <ui:Label name="build-place-glyph-label" class="glyph__label" picking-mode="Ignore" />
+                                </ui:VisualElement>
+                                <ui:Label name="build-place-word" class="build-cost__key-word" picking-mode="Ignore" />
+                                <ui:VisualElement class="controls-card__dot" picking-mode="Ignore" />
+                                <ui:VisualElement name="build-rotate-glyph" class="glyph glyph--small" picking-mode="Ignore">
+                                    <ui:Label name="build-rotate-glyph-label" class="glyph__label" picking-mode="Ignore" />
+                                </ui:VisualElement>
+                                <ui:Label name="build-rotate-word" class="build-cost__key-word" picking-mode="Ignore" />
+                            </ui:VisualElement>
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>

@@ -89,6 +89,8 @@ namespace MoonProject.UI
         public const string BuildReasonFrame = "build.reason.frame";
         public const string BuildHintPick = "build.hint.pick";
         public const string BuildHintLeave = "build.hint.leave";
+        public const string BuildHintPlace = "build.hint.place";
+        public const string BuildHintRotate = "build.hint.rotate";
         public const string BuildStepPlace = "build.step.place";
         public const string BuildStepWeld = "build.step.weld";
         public const string BuildLocked = "build.locked";

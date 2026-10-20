@@ -154,6 +154,12 @@ namespace MoonProject.UI
             BuildCost = Require<VisualElement>("build-cost");
             BuildCostShadow = Require<VisualElement>("build-cost-shadow");
             BuildCostRecipe = Require<VisualElement>("build-cost-recipe");
+            BuildPlaceGlyph = Require<VisualElement>("build-place-glyph");
+            BuildPlaceGlyphLabel = Require<Label>("build-place-glyph-label");
+            BuildPlaceWord = Require<Label>("build-place-word");
+            BuildRotateGlyph = Require<VisualElement>("build-rotate-glyph");
+            BuildRotateGlyphLabel = Require<Label>("build-rotate-glyph-label");
+            BuildRotateWord = Require<Label>("build-rotate-word");
             BuildStrip = Require<VisualElement>("build-strip");
             BuildStripShadow = Require<VisualElement>("build-strip-shadow");
             BuildStripTitle = Require<Label>("build-strip-title");
@@ -472,6 +478,20 @@ namespace MoonProject.UI
         public VisualElement BuildCostShadow { get; }
 
         public VisualElement BuildCostRecipe { get; }
+
+        /// <summary>The ghost's place keys under its cost rows (every binding of Excavate: E and LMB).</summary>
+        public VisualElement BuildPlaceGlyph { get; }
+
+        public Label BuildPlaceGlyphLabel { get; }
+
+        public Label BuildPlaceWord { get; }
+
+        /// <summary>The ghost's rotate keys (every binding of Winch: the wheel, Z and C).</summary>
+        public VisualElement BuildRotateGlyph { get; }
+
+        public Label BuildRotateGlyphLabel { get; }
+
+        public Label BuildRotateWord { get; }
 
         public VisualElement BuildStrip { get; }
 

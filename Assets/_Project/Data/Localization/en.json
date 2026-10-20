@@ -1139,6 +1139,14 @@
             "text": "Leave"
         },
         {
+            "key": "build.hint.place",
+            "text": "Place"
+        },
+        {
+            "key": "build.hint.rotate",
+            "text": "Rotate"
+        },
+        {
             "key": "build.step.place",
             "text": "Drive to the glowing marks on the apron, then press {0} to place"
         },
