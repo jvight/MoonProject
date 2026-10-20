@@ -955,6 +955,14 @@
             "text": "TX · NGOÀI TẦM"
         },
         {
+            "key": "ui.face.tx_ready",
+            "text": "TX · SẴN SÀNG"
+        },
+        {
+            "key": "ui.face.ack_route",
+            "text": "ACK · RELAY.1 · TUYẾN · ĐĨA ĐỈNH NÚI · NGẮT"
+        },
+        {
             "key": "ui.verb.cut",
             "text": "Cắt"
         },

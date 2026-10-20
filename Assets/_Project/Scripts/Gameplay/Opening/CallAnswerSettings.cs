@@ -47,7 +47,57 @@ namespace MoonProject.Gameplay
         [Range(0f, 20f)]
         [SerializeField] private float _dishHeight = 3f;
 
+        [Header("The pulse and the glint (what the player sees)")]
+        [Tooltip("Metres above the mast's foot where the pulse starts (the top of the mast).")]
+        [Range(0.5f, 8f)]
+        [SerializeField] private float _mastTopHeight = 2.8f;
+
+        [Tooltip("Metres above relay.1's ground where the pulse ends and its lamp stands.")]
+        [Range(0.5f, 10f)]
+        [SerializeField] private float _relayLampHeight = 3.5f;
+
+        [Tooltip("How high the pulse arcs, as a share of the way it runs.")]
+        [Range(0f, 0.5f)]
+        [SerializeField] private float _arcRise = 0.1f;
+
+        [Tooltip("The most metres the pulse's arc rises.")]
+        [Range(1f, 120f)]
+        [SerializeField] private float _arcMaxRise = 35f;
+
+        [Tooltip("Share of the way the pulse's bright tail trails behind its head.")]
+        [Range(0.01f, 0.4f)]
+        [SerializeField] private float _tailShare = 0.12f;
+
+        [Tooltip("Width (m) of the pulse's streak.")]
+        [Range(0.05f, 6f)]
+        [SerializeField] private float _pulseWidth = 0.9f;
+
+        [Tooltip("The pulse's colour: the cool blue-white of the old network (HDR).")]
+        [ColorUsage(false, true)]
+        [SerializeField] private Color _pulseColor = new Color(0.5f, 0.95f, 1.6f, 1f);
+
+        [Tooltip("Radii (m) the glint on the Peak's dish grows from and to.")]
+        [SerializeField] private Vector2 _glintRadius = new Vector2(4f, 40f);
+
+        [Tooltip("Brightness of the glint on the Peak's dish.")]
+        [Range(0.2f, 8f)]
+        [SerializeField] private float _glintIntensity = 3f;
+
+        [Tooltip("Seconds the glint on the dish takes to flare and fade.")]
+        [Range(0.3f, 5f)]
+        [SerializeField] private float _glintSeconds = 1.8f;
+
         public float TransmitRadius => _transmitRadius;
+        public float MastTopHeight => _mastTopHeight;
+        public float RelayLampHeight => _relayLampHeight;
+        public float ArcRise => _arcRise;
+        public float ArcMaxRise => _arcMaxRise;
+        public float TailShare => _tailShare;
+        public float PulseWidth => _pulseWidth;
+        public Color PulseColor => _pulseColor;
+        public Vector2 GlintRadius => _glintRadius;
+        public float GlintIntensity => _glintIntensity;
+        public float GlintSeconds => _glintSeconds;
         public float StillSpeed => _stillSpeed;
         public float HoldSeconds => _holdSeconds;
         public float HoldDrainRate => _holdDrainRate;

@@ -140,6 +140,8 @@ namespace MoonProject.Gameplay
 
         public CallAnswer Answer { get; private set; }
 
+        public NetworkPulseView PulseView { get; private set; }
+
         /// <summary>How the mast raises and the reply times (tests).</summary>
         public CallReplySettings MastRaiseSettings => _openingTuning.Reply;
 
@@ -332,6 +334,8 @@ namespace MoonProject.Gameplay
             context.Register<IRecoveryProgress>(Recovery);
             context.Register<ICallSource>(Call);
             context.Register<IAnswerStatus>(Answer);
+            PulseView = new NetworkPulseView(transform, _visuals.BeamCore, services.Meshes.Sphere, _visuals.Flash,
+                context.Events, _openingTuning.Answer);
             context.Register<IRangeRing>(RangeRing);
             context.Register<IDatabank>(Databank);
             context.Register<BuildField>(_building);
@@ -567,6 +571,7 @@ namespace MoonProject.Gameplay
             Opening.Step(deltaTime);
             Reply.Step(deltaTime, Opening.NightFallen, _roverState.Speed);
             MastRaise.Step(deltaTime);
+            PulseView.Step(deltaTime);
             Answer.Step(deltaTime, Opening.NightFallen, _input.ExcavateHeld, _roverState.Position, _roverState.Speed);
             RangeRing.Step(deltaTime);
             RangeRingLine.Step();
@@ -669,6 +674,7 @@ namespace MoonProject.Gameplay
             Call?.Dispose();
             MastRaise?.Dispose();
             Answer?.Dispose();
+            PulseView?.Dispose();
             RangeRing?.Dispose();
             Bundles?.Dispose();
             Opening?.Dispose();
