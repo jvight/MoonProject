@@ -10,7 +10,7 @@ namespace MoonProject.Rover
     /// </summary>
     public sealed class ChirpVoice
     {
-        private const int MoodCount = 8;
+        private static readonly int MoodCount = Enum.GetNames(typeof(ChirpMood)).Length;
 
         private readonly ChirpSettings _settings;
         private readonly float[] _lastByMood = new float[MoodCount];
