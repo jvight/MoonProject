@@ -88,6 +88,8 @@ namespace MoonProject.World.PlayModeTests
         // The array's glint watched from the pad: how long after the lamp-out, and a frame every few seconds.
         private const int GlintWatchSeconds = 20;
         private const int GlintShotEvery = 4;
+        private const float GlintZoomFov = 10f;
+        private const string GlintSparkleName = "Sparkle";
         private const string CueLampLens = "PowerModule_StatusLamp";
         private const float CueLampStandOff = 10f;
         private const float CueLampPeak = 0.9f;
@@ -561,15 +563,22 @@ namespace MoonProject.World.PlayModeTests
                 var line = new StringBuilder($"[glint-pad] {second:00} s: sun {SunReport(context)}; " +
                     $"array {Vector3.Distance(view.transform.position, array.position):F0} m off, viewport " +
                     $"{view.WorldToViewportPoint(array.position)}; wings");
-                for (int wing = 0; wing < halos.childCount; wing++)
+                int wing = 0;
+                foreach (Transform sparkle in halos)
                 {
-                    Vector3 at = halos.GetChild(wing).position;
+                    if (sparkle.name != GlintSparkleName)
+                    {
+                        continue;
+                    }
+
+                    Vector3 at = sparkle.position;
                     bool hitSomething = Physics.Linecast(view.transform.position, at, out RaycastHit hit,
                         Layers.GroundMask | Layers.PropMask, QueryTriggerInteraction.Ignore);
                     string between = hitSomething && !hit.collider.transform.IsChildOf(array)
                         ? $"blocked by {hit.collider.name} at {hit.distance:F0} m"
                         : "clear";
                     line.Append($" {wing}: {glint.LevelOf(wing):F2} ({between})");
+                    wing++;
                 }
 
                 Debug.Log(line.ToString());
@@ -591,6 +600,8 @@ namespace MoonProject.World.PlayModeTests
                 CopyPipelineSettings(view, camera);
                 Place(camera, LookPose("glint-pad-turned", view.transform.position, array.position, OpeningFov));
                 Shoot(camera, "glint-pad-turned");
+                Place(camera, LookPose("glint-pad-zoom", view.transform.position, array.position, GlintZoomFov));
+                Shoot(camera, "glint-pad-zoom");
                 Debug.Log($"[glint-pad] turned toward the array: wings {glint.LevelOf(0):F2} / {glint.LevelOf(1):F2}");
             }
             finally
