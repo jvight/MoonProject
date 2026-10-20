@@ -43,9 +43,10 @@ namespace MoonProject.Gameplay
         [ColorUsage(false, true)]
         [SerializeField] private Color _outlineColor = new Color(1f, 0.70f, 0.40f);
 
-        [Tooltip("The outline's strength while the part is seen but not yet earned.")]
+        [Tooltip("The outline's strength while the part is seen but not yet earned: the goal board, so it reads at a " +
+                 "glance from the chase camera in daylight.")]
         [Range(0f, 2f)]
-        [SerializeField] private float _outlineDim = 0.35f;
+        [SerializeField] private float _outlineDim = 0.6f;
 
         [Tooltip("The outline's strength once the part is fitted.")]
         [Range(0f, 4f)]
