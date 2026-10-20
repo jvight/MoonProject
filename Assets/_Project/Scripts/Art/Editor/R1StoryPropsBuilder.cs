@@ -1,5 +1,6 @@
 using System;
 using UnityEditor;
+using UnityEditor.Rendering.Universal.ShaderGUI;
 using UnityEngine;
 using UnityEngine.Rendering;
 using MoonProject.Editor.Builders;
@@ -423,6 +424,8 @@ namespace MoonProject.Art.Editor
 
             // 17. M_R1_MakerDecal: URP Lit with alpha clip (_AlphaClip = 1, _Cutoff = 0.35), no shadow casting,
             //     slight smoothness (0.22) so painted maker stencils catch low-angle sun like real vehicle paint.
+            //     URP's own Lit validation then derives the queue, keywords, tags and passes, so the saved asset is
+            //     already what URP would rewrite it to on a fresh import (a clean build leaves it unchanged).
             Shader urpLit = R1MaterialLibrary.LoadUrpLitShader();
             var makerDecalMat = new Material(urpLit) { name = MakerDecalMaterialName };
             makerDecalMat.SetTexture("_BaseMap", LoadRequiredTexture(MakerDecalsAlbedoPath));
@@ -434,10 +437,9 @@ namespace MoonProject.Art.Editor
             makerDecalMat.SetFloat("_Smoothness", 0.22f);
             makerDecalMat.SetFloat("_SpecularHighlights", 1.0f);
             makerDecalMat.SetFloat("_EnvironmentReflections", 1.0f);
-            makerDecalMat.EnableKeyword("_ALPHATEST_ON");
-            makerDecalMat.renderQueue = (int)RenderQueue.AlphaTest;
             makerDecalMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
             makerDecalMat.enableInstancing = true;
+            BaseShaderGUI.SetMaterialKeywords(makerDecalMat, LitGUI.SetMaterialKeywords);
             GeneratedAssets.CreateOrReplace(makerDecalMat, MakerDecalMaterialPath);
         }
 
