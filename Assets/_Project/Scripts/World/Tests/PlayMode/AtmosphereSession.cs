@@ -116,6 +116,12 @@ namespace MoonProject.World.PlayModeTests
         private const string GlintSparkleName = "Sparkle";
         private const string CueLampLens = "PowerModule_StatusLamp";
         private const string CueLampTowId = "habitat.power_module";
+
+        // The module lamp's purpose: the peak a lure shot waits for, one blink's length, and where on the apron the
+        // module is set down when brought home.
+        private const float ModuleLampPeak = 0.9f;
+        private const float ModuleBlinkSeconds = 4f;
+        private const float ModuleHomeOffset = 6f;
         private const float CueLampStandOff = 10f;
         private const float CueLampPeak = 0.9f;
         private const float CueLampTimeout = 30f;
@@ -990,6 +996,105 @@ namespace MoonProject.World.PlayModeTests
             }
 
             Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        /// <summary>
+        /// The power module's lamp for as long as it has a purpose (opening v3 R4), on a real New Game at night: a
+        /// blinking lure while the module waits unhooked at the habitat ruin; brought home to the apron, a calm steady
+        /// glow and no lure. Logs/world-captures/module-lamp-*.png, its level and lure state in the log.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(CanyonSessionScene))]
+        [PostBuildCleanup(typeof(CanyonSessionScene))]
+        public IEnumerator ModuleLamp_LuresAtTheRuin_ThenGlowsSteadyAtHome()
+        {
+            BootstrapHarness.DeleteSaveFiles(CanyonSessionScene.SaveSlot);
+#if UNITY_EDITOR
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(CanyonSessionScene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            while (!loading.isDone)
+            {
+                yield return null;
+            }
+
+            WorldSettings settings = AssetDatabase.LoadAssetAtPath<WorldSettings>(OpeningSettingsPath);
+#else
+            throw new NotSupportedException("The atmosphere session loads the scene through the editor.");
+#endif
+            GameBootstrap bootstrap = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
+            {
+                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
+            }
+
+            Assert.IsNotNull(bootstrap, "the scene has its bootstrap");
+            GameContext context = bootstrap.Context;
+            _awoke = context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
+            float started = Time.time;
+            while (!_awake)
+            {
+                Assert.Less(Time.time - started, WakeTimeout, "07 wakes up");
+                yield return null;
+            }
+
+            foreach (OpeningMilestone milestone in new[]
+                {
+                    OpeningMilestone.FirstCharge, OpeningMilestone.PowerOn, OpeningMilestone.NightReady,
+                })
+            {
+                context.Events.Publish(new OpeningMilestoneReached(milestone, true));
+            }
+
+            yield return new WaitForSeconds(SettleSeconds);
+            var lamp = FindNamed(CueLampName).GetComponent<ModuleStatusLamp>();
+            Assert.IsTrue(context.Get<ITowLine>().TryFindLoad(CueLampTowId, out Transform module),
+                "the towable power module stands beside the habitat");
+            Assert.IsTrue(lamp.IsLure, "waiting at the ruin, the lamp is a lure");
+            Vector3 apron = Anchor(context.Get<IWorldAnchors>(), WorldAnchorIds.PlaceApron).Position;
+            Camera view = context.Get<IViewCamera>().Camera;
+            var host = new GameObject("ModuleLampCamera");
+            try
+            {
+                var camera = host.AddComponent<Camera>();
+                camera.CopyFrom(view);
+                camera.enabled = false;
+                CopyPipelineSettings(view, camera);
+                Vector3 toModule = Vector3.ProjectOnPlane(module.position - apron, Vector3.up).normalized;
+                Vector3 eye = module.position - toModule * CueLampStandOff + Vector3.up * CueLowEyeHeight;
+                yield return WaitForLampPeak(lamp);
+                Place(camera, LookPose("module-lamp-lure", eye, lamp.transform.position, OpeningFov));
+                Shoot(camera, "module-lamp-lure");
+                Debug.Log($"[module-lamp] at the ruin: level {lamp.Level:F2}, lure {lamp.IsLure}");
+
+                // Brought home: the module stands on the apron, off the cable.
+                module.position = OnGround(context.Get<ITerrainQuery>(), new Vector2(
+                    apron.x + toModule.x * ModuleHomeOffset, apron.z + toModule.z * ModuleHomeOffset));
+                Physics.SyncTransforms();
+                yield return new WaitForSeconds(settings.Landmarks.ModuleLamp.PurposeFadeSeconds + SettleSeconds);
+                Assert.IsFalse(lamp.IsLure, "home, the lamp is no lure");
+                Assert.AreEqual(settings.Landmarks.ModuleLamp.PoweredLevel, lamp.Level, 1e-3f, "a steady glow");
+                eye = module.position - toModule * CueLampStandOff + Vector3.up * CueLowEyeHeight;
+                Place(camera, LookPose("module-lamp-home", eye, lamp.transform.position, OpeningFov));
+                Shoot(camera, "module-lamp-home");
+                Debug.Log($"[module-lamp] home: level {lamp.Level:F2}, lure {lamp.IsLure}");
+            }
+            finally
+            {
+                Object.Destroy(host);
+            }
+
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        // Waits through one blink for the lamp's peak, so the lure shot shows it lit.
+        private static IEnumerator WaitForLampPeak(ModuleStatusLamp lamp)
+        {
+            float started = Time.time;
+            while (lamp.Level < ModuleLampPeak && Time.time - started < ModuleBlinkSeconds)
+            {
+                yield return null;
+            }
         }
 
         /// <summary>

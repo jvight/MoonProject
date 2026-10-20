@@ -566,6 +566,9 @@ MonoBehaviour:
       _haloRadius: 0.12
       _haloMinAngle: 0.25
       _haloLift: 0.08
+      _lureRadius: 12
+      _poweredLevel: 0.55
+      _purposeFadeSeconds: 1.5
     _relayLamp:
       _haloIntensity: 1.2
       _haloRadius: 0.6

@@ -23,6 +23,9 @@ namespace MoonProject.World.Editor
         // The ruin whose fallen wings glint, the material its cells wear, and how far off the cells its glint floats.
         private const string FallenSolarArrayName = "FallenSolarArray";
         private const string SolarCellMaterial = "R1_SolarCell";
+
+        // The ruin the towable power module waits beside.
+        private const string HabitatModulesName = "HabitatModules";
         private const float GlintLift = 0.03f;
 
         /// <summary>[World]/ArrayGlint: the fallen solar array's glints, beside the ruins.</summary>
@@ -58,7 +61,7 @@ namespace MoonProject.World.Editor
             PeakBeacon beacon = CreateBeacon(context, settings, root);
             CreateCallSkyPoint(context, settings, root);
             CreateRuins(context, settings, root);
-            StandModuleLamp(context, settings, root);
+            StandModuleLamp(context, settings, root, root.Find(RuinsRootName + "/" + HabitatModulesName));
             OpeningLayoutPlacer.Place(context, settings, root);
 
             var world = context.CreateChild("World", root).AddComponent<WorldSystem>();
@@ -215,8 +218,15 @@ namespace MoonProject.World.Editor
         /// (07 tows it, and it is Gameplay's), and the <see cref="ModuleStatusLamp"/> that finds the towable module's
         /// lamp at runtime and blinks lens and halo together from dusk.
         /// </summary>
-        private static void StandModuleLamp(SceneBuildContext context, WorldSettings settings, Transform root)
+        private static void StandModuleLamp(SceneBuildContext context, WorldSettings settings, Transform root,
+            Transform habitat)
         {
+            if (habitat == null)
+            {
+                throw new System.InvalidOperationException($"World scene build: no {HabitatModulesName} ruin for the " +
+                    "power module's lamp to wait by.");
+            }
+
             GameObject holder = context.CreateChild(ModuleLampName, root);
             GameObject halo = context.CreateChild("Halo", holder.transform);
             Renderer haloRenderer = Glow(halo, context.LoadAsset<Mesh>(WorldPaths.BeaconHaloMesh),
@@ -226,6 +236,7 @@ namespace MoonProject.World.Editor
             var serialized = new SerializedObject(lamp);
             serialized.FindProperty("_settings").objectReferenceValue = settings;
             serialized.FindProperty("_halo").objectReferenceValue = haloRenderer;
+            serialized.FindProperty("_ruin").objectReferenceValue = habitat;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             context.AddSystem(lamp);
         }
