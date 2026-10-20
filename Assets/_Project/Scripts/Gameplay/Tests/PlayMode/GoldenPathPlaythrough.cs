@@ -188,8 +188,11 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// frame).</summary>
         private const float FollowTimeout = 3f;
 
-        /// <summary>Seconds a verb's prompt chip may take to show once 07 is in place for it.</summary>
-        private const float ChipTimeout = 3f;
+        /// <summary>
+        /// Seconds a verb's first-use chip may take to show once 07 is in place for it, if it has not shown already
+        /// (opening v3 1.5: the world shows it when the verb first becomes possible; the bottom hint fades first).
+        /// </summary>
+        private const float FirstUseTimeout = 15f;
 
         /// <summary>Taps of an arrow a menu or the face screen may take to reach what is wanted.</summary>
         private const int MaxMenuSteps = 12;
@@ -224,7 +227,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private readonly List<string> _chips = new List<string>();
         private readonly List<string> _guidanceGaps = new List<string>();
         private HudReader _hud;
-        private string _stepChip = string.Empty;
+        private ChipWatch _chipWatch;
         private ILocalization _localization;
         private int _warnings;
         private int _crawls;
@@ -249,6 +252,11 @@ namespace MoonProject.Gameplay.PlayModeTests
         public override void TearDown()
         {
             Application.logMessageReceived -= OnLog;
+            if (_chipWatch != null)
+            {
+                Object.DestroyImmediate(_chipWatch.gameObject);
+            }
+
             _rover?.SetDriveSource(null);
             _awoke?.Dispose();
             _crawled?.Dispose();
@@ -369,6 +377,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsNotNull(_gameplay.Opening, "the opening is wired");
             _context = bootstrap.Context;
             _hud = new HudReader(scene);
+            _chipWatch = new GameObject(nameof(ChipWatch)).AddComponent<ChipWatch>();
+            _chipWatch.Watch(_hud);
             _localization = _context.Get<ILocalization>();
             _rover = (RoverController)_context.Get<IRoverRig>();
             _awoke = _context.Events.Subscribe<RoverAwoke>(_ => _awokeAt = Time.time);
@@ -640,8 +650,8 @@ namespace MoonProject.Gameplay.PlayModeTests
                     continue;
                 }
 
+                // The faulted try teaches nothing: the Cut chip comes once the cutter works.
                 yield return ApproachTheSeal(cache, crate);
-                yield return FirstUse("cut: hold E", VerbCutKey);
                 Press(_keyboard.eKey);
                 yield return Until(() => _gameplay.StartKit.Sputtered, FollowTimeout,
                     $"held E at the seal of {cache.Id} sputters the faulted cutter",
@@ -841,14 +851,13 @@ namespace MoonProject.Gameplay.PlayModeTests
                     $"the step's line is not on screen at '{key}' ({why}): the world leads");
             }
 
-            _stepChip = _hud.KeyChip;
         }
 
         /// <summary>
-        /// On <paramref name="verb"/>'s first use a chip named it: the key chip shown with the step's line (its word,
-        /// <paramref name="wordKey"/>, UI's) when the line came or once 07 is in place, or a prompt chip there. The key
-        /// chip names what E does where 07 stands, so the line's first sample may name another verb. A missing chip is a guidance
-        /// gap the run lists at the end rather than stopping on.
+        /// On <paramref name="verb"/>'s first use a chip with its word (<paramref name="wordKey"/>, UI's) has shown:
+        /// the world shows it once, when the verb first becomes possible (opening v3 1.5), so it may have come and gone
+        /// before 07 is in place, or it shows within a little while. A missing chip is a guidance gap the run lists at
+        /// the end rather than stopping on.
         /// </summary>
         private IEnumerator FirstUse(string verb, string wordKey)
         {
@@ -858,23 +867,21 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             string word = _localization.Get(wordKey);
-            string chip = _stepChip.EndsWith(" " + word, StringComparison.Ordinal) ? _stepChip + " (with the line)"
-                : string.Empty;
-            float deadline = Time.time + ChipTimeout;
+            float deadline = Time.time + FirstUseTimeout;
+            string chip = _chipWatch.SeenWith(word);
             while (chip.Length == 0 && Time.time < deadline)
             {
-                string keyChip = _hud.KeyChip;
-                chip = keyChip.EndsWith(" " + word, StringComparison.Ordinal) ? keyChip + " (with the line)"
-                    : _hud.Chip;
                 yield return null;
+                chip = _chipWatch.SeenWith(word);
             }
 
             if (chip.Length == 0)
             {
                 InteractionHint primary = _gameplay.Hints.Primary;
-                _guidanceGaps.Add($"{verb}: no chip on its first use (with the line: '{_stepChip}'; line on " +
-                                  $"screen: '{_hud.Line}', key chip '{_hud.KeyChip}'; primary hint {primary.Kind}, " +
-                                  $"ready {primary.Ready}; step {_gameplay.Opening.Flow.Current})");
+                _guidanceGaps.Add($"{verb}: no '{word}' chip by its first use (chips seen: " +
+                                  $"{_chipWatch.Describe()}; on screen: chip '{_hud.Chip}', key chip " +
+                                  $"'{_hud.KeyChip}'; primary hint {primary.Kind}, ready {primary.Ready}; step " +
+                                  $"{_gameplay.Opening.Flow.Current})");
                 Capture("gap-" + _verbsUsed.Count.ToString(CultureInfo.InvariantCulture));
             }
 
@@ -1297,6 +1304,59 @@ namespace MoonProject.Gameplay.PlayModeTests
             Directory.CreateDirectory(GameplayFixture.CaptureFolder);
             File.WriteAllText(ReportPath, report.ToString());
             Debug.Log("[playthrough] report: " + ReportPath + "\n" + report);
+        }
+
+        /// <summary>
+        /// Every chip the HUD shows over the run, prompt chip or key chip, as it read: a first-use chip shows once, at
+        /// the moment its verb becomes possible, so the run notes it then and checks it at the verb's first use.
+        /// </summary>
+        private sealed class ChipWatch : MonoBehaviour
+        {
+            private readonly HashSet<string> _seen = new HashSet<string>();
+            private HudReader _hud;
+
+            public void Watch(HudReader hud)
+            {
+                _hud = hud;
+            }
+
+            /// <summary>The first chip seen whose word is <paramref name="word"/>, or empty.</summary>
+            public string SeenWith(string word)
+            {
+                foreach (string chip in _seen)
+                {
+                    if (chip.Contains(" " + word, StringComparison.Ordinal))
+                    {
+                        return chip;
+                    }
+                }
+
+                return string.Empty;
+            }
+
+            public string Describe()
+            {
+                return _seen.Count == 0 ? "none" : string.Join("; ", _seen);
+            }
+
+            private void Update()
+            {
+                if (_hud == null)
+                {
+                    return;
+                }
+
+                Note(_hud.Chip);
+                Note(_hud.KeyChip);
+            }
+
+            private void Note(string chip)
+            {
+                if (chip.Length > 0)
+                {
+                    _seen.Add(chip);
+                }
+            }
         }
     }
 }
