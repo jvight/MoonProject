@@ -29,6 +29,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float WakeTimeout = 20f;
         private const float RaiseSlack = 1.5f;
         private const float AnswerTimeout = 40f;
+        private const float ReleaseTimeout = 60f;
 
         private readonly List<string> _log = new List<string>();
         private GameContext _context;
@@ -114,6 +115,23 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(_log.Contains("glint"), "and on to glint on the Peak's dish");
             Assert.AreEqual(1, _log.FindAll(entry => entry == "milestone").Count, "once");
             Assert.AreEqual(AnswerPhase.Done, answer.Phase);
+            Assert.IsFalse(_gameplay.Battery.Model.ChargeFloorHeld, "wear starts: the opening's charge floor has lifted");
+
+            deadline = Time.time + ReleaseTimeout;
+            while (_gameplay.Release.Stage != ReleaseStage.RackPending && Time.time < deadline)
+            {
+                yield return null;
+            }
+
+            Assert.AreEqual(ReleaseStage.RackPending, _gameplay.Release.Stage, "the release ran its ring and its view");
+            int ring = _log.IndexOf("ring:Full");
+            int view = _log.IndexOf("view");
+            Assert.GreaterOrEqual(ring, 0, "the full range ring showed");
+            Assert.Greater(view, ring, "then the view from the rise");
+            Assert.IsFalse(_log.Contains("rack"), "the rack waits for a dock");
+            _context.Events.Publish(new RoverDockChanged(true, foot, Quaternion.identity));
+            Assert.IsTrue(_log.Contains("rack"), "at the next dock the socket rack is revealed");
+            Assert.AreEqual(ReleaseStage.Done, _gameplay.Release.Stage);
         }
 
         private static IEnumerator Wait(float seconds)
@@ -151,6 +169,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             _context.Events.Subscribe<NetworkPulseLaunched>(pulse => _log.Add("pulse" + pulse.Leg));
             _context.Events.Subscribe<RelayAcked>(_ => _log.Add("ack"));
             _context.Events.Subscribe<PeakDishGlinted>(_ => _log.Add("glint"));
+            _context.Events.Subscribe<RangeRingShown>(shown => _log.Add("ring:" + shown.Mode));
+            _context.Events.Subscribe<ReleaseViewOpened>(_ => _log.Add("view"));
+            _context.Events.Subscribe<SocketRackRevealed>(_ => _log.Add("rack"));
             _context.Events.Subscribe<OpeningMilestoneReached>(reached =>
             {
                 if (reached.Milestone == OpeningMilestone.CallAnswered)
