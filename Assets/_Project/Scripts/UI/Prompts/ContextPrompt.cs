@@ -124,7 +124,7 @@ namespace MoonProject.UI
                     WriteWord(entry);
                 }
 
-                _glyph.Set(_labels.For(entry.Action, device), device);
+                _glyph.Set(GlyphOf(entry, device), device);
             }
 
             ShowHold(entry, primary);
@@ -206,6 +206,20 @@ namespace MoonProject.UI
             {
                 WriteWord(entry);
             }
+        }
+
+        /// <summary>
+        /// The key on the chip: the entry's rover action, except for the first-use chip at 07 whose key is Tab (07's
+        /// screen: View on a pad), which no rover action carries.
+        /// </summary>
+        private string GlyphOf(PromptEntry entry, InputDeviceKind device)
+        {
+            if (entry.Kind != InteractionKind.FitPart)
+            {
+                return _labels.For(entry.Action, device);
+            }
+
+            return _localization.Get(device == InputDeviceKind.Gamepad ? UiKeys.PadView : UiKeys.KeyTab);
         }
 
         /// <summary>The verb's word, then what it acts on when the hint names one ("Pick up Tower Coil").</summary>

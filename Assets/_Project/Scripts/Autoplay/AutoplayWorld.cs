@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
@@ -88,6 +89,9 @@ namespace MoonProject.Autoplay
 
             return null;
         }
+
+        /// <summary>Every distinct text a chip has carried on screen this run ("E Scan 1/2", "B Build", "Tab Fit").</summary>
+        public HashSet<string> ChipsSeen { get; } = new HashSet<string>();
 
         public GameContext Context => _bootstrap.Context;
 

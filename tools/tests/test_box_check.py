@@ -101,7 +101,10 @@ class TestCommandTests(unittest.TestCase):
             "MoonProject.Gameplay.Feel.Tests;MoonProject.Rover.Tests",
             "playmode MoonProject.Gameplay.PlayModeTests;MoonProject.World.PlayModeTests;"
             "MoonProject.Gameplay.Feel.PlayModeTests;MoonProject.Rover.PlayModeTests",
+            "editmode MoonProject.Autoplay.Tests",
         ])
+        self.assertEqual(planned[2][1][-4:], ["--assembly", "MoonProject.Autoplay.Tests", "--define",
+                                              "LUNARION_AUTOPLAY"], "the Autoplay tests compile with their define")
         self.assertEqual(planned[1][1][-2:], ["--category", "!Playthrough"])
         self.assertEqual(planned[1][1][planned[1][1].index("--timeout") + 1], "7200")
         self.assertNotIn("--timeout", planned[0][1])
@@ -122,6 +125,7 @@ class TestCommandTests(unittest.TestCase):
                 "MoonProject.Gameplay.Feel.Tests;MoonProject.Rover.Tests",
                 "playmode MoonProject.Gameplay.PlayModeTests;MoonProject.UI.PlayModeTests;"
                 "MoonProject.Gameplay.Feel.PlayModeTests;MoonProject.Rover.PlayModeTests",
+                "editmode MoonProject.Autoplay.Tests",
             ])
 
     def test_filter_or_assembly_is_one_custom_step_and_unknown_boxes_have_none(self):

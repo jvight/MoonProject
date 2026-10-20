@@ -31,6 +31,7 @@ namespace MoonProject.UI
         [SerializeField] private CellRowSettings _battery = new CellRowSettings();
         [SerializeField] private SafeFrameSettings _safe = new SafeFrameSettings();
         [SerializeField] private DatabankSettings _databank = new DatabankSettings();
+        [SerializeField] private CallDisplaySettings _callDisplay = new CallDisplaySettings();
 
         public PauseSettings Pause => _pause;
 
@@ -69,6 +70,8 @@ namespace MoonProject.UI
         public SafeFrameSettings Safe => _safe;
 
         public DatabankSettings Databank => _databank;
+
+        public CallDisplaySettings CallDisplay => _callDisplay;
 
         /// <summary>Null when the tuning is usable, else the first problem.</summary>
         public string Validate()

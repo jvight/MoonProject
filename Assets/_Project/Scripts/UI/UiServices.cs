@@ -16,6 +16,7 @@ namespace MoonProject.UI
         private readonly GameContext _context;
         private IDatabank _databank;
         private ISupplyPurposes _purposes;
+        private ICallSource _call;
 
         public UiServices(EventBus events, InputReader input, IViewCamera view, IRoverState rover, IAudioSettings audio,
             ILookSettings look, IFeelSettings feel, ISaveService save, IMaterialStock materials,
@@ -131,6 +132,21 @@ namespace MoonProject.UI
 
             databank = _databank;
             return databank != null;
+        }
+
+        /// <summary>
+        /// The call from the sky, from the GameContext, looked up when the call is first heard (Gameplay registers it;
+        /// false while nothing has).
+        /// </summary>
+        public bool TryGetCall(out ICallSource call)
+        {
+            if (_call == null && _context != null)
+            {
+                _context.TryGet(out _call);
+            }
+
+            call = _call;
+            return call != null;
         }
 
         /// <summary>

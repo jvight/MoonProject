@@ -28,6 +28,9 @@ namespace MoonProject.Gameplay
             _built = events.Subscribe<StructureBuilt>(OnBuilt);
         }
 
+        /// <summary>The instance id of the mast being raised (or last built).</summary>
+        public int InstanceId { get; private set; }
+
         /// <summary>Segments in the raise.</summary>
         public int Segments => _settings.Segments;
 
@@ -51,6 +54,26 @@ namespace MoonProject.Gameplay
             }
 
             return _active ? Lift(_settings, index, _seconds) : 0f;
+        }
+
+        /// <summary>
+        /// How far segment <paramref name="index"/> gives as it locks, -1..1 and 0 at rest: it sinks back and comes up
+        /// again over the settle, a soft clunk (0 before it locks and once it has settled).
+        /// </summary>
+        public float SettleGive(int index)
+        {
+            if (!_active)
+            {
+                return 0f;
+            }
+
+            float into = (_seconds - LockTime(_settings, index)) / _settings.SettleSeconds;
+            if (into < 0f || into >= 1f)
+            {
+                return 0f;
+            }
+
+            return Mathf.Sin(into * Mathf.PI * 2f) * (1f - into) * (1f - into) * 4f;
         }
 
         public void Step(float deltaTime)
@@ -111,6 +134,7 @@ namespace MoonProject.Gameplay
             }
 
             _position = built.Position;
+            InstanceId = built.InstanceId;
             if (built.Restored)
             {
                 _active = false;

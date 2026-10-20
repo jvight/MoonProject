@@ -915,6 +915,14 @@
             "text": "Nhặt"
         },
         {
+            "key": "hint.openbuild",
+            "text": "Xây dựng"
+        },
+        {
+            "key": "hint.fitpart",
+            "text": "Lắp"
+        },
+        {
             "key": "pickup.crate.contents",
             "text": "phụ tùng"
         },
@@ -957,6 +965,10 @@
         {
             "key": "ui.face.tx_no_range",
             "text": "TX · NGOÀI TẦM"
+        },
+        {
+            "key": "ui.face.call",
+            "text": "TÍN HIỆU"
         },
         {
             "key": "ui.verb.cut",

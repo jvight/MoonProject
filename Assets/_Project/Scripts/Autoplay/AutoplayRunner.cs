@@ -108,6 +108,12 @@ namespace MoonProject.Autoplay
                 return;
             }
 
+            string chip = _world.Ui.Chip();
+            if (chip.Length > 0)
+            {
+                _world.ChipsSeen.Add(chip);
+            }
+
             _world.Ui.GuidanceShown(_guidanceShown);
             _guidance.Step(Time.unscaledDeltaTime, _guidanceShown);
             if (_guidance.Failed && !_guidanceReported)
@@ -157,6 +163,7 @@ namespace MoonProject.Autoplay
                 yield return null;
             }
 
+            Debug.Log("Autoplay: chips seen: " + string.Join("; ", _world.ChipsSeen));
             string stop = _bot.Failed && _beats.Passed ? _bot.Failure : string.Empty;
             if (_exceptions > 0 && string.IsNullOrEmpty(stop))
             {

@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.TestTools;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 using MoonProject.Gameplay;
 using MoonProject.Testing;
 using MoonProject.UI;
@@ -17,7 +18,8 @@ namespace MoonProject.Rover.PlayModeTests
     /// hold and the real mouse: the hold as it opens (the igniter selected, the cutter lit, the igniter's tag), the
     /// same at rest with nothing selected (the cutter's accent brackets), the igniter dragged over the cutter
     /// ("Release to fit", the other devices dimmed), metal dragged over a socket (it fits nowhere: every device dims)
-    /// and the databank. Writes Logs/captures/face_a/.
+    /// and the databank; and the call on the face at rest (broken, nothing decoded) and after the first charge (locked,
+    /// its first letter in the accent). Writes Logs/captures/face_a/.
     /// </summary>
     public sealed class RoverFaceLookCaptures : InputTestFixture
     {
@@ -126,6 +128,41 @@ namespace MoonProject.Rover.PlayModeTests
             Capture("databank");
         }
 
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator LookA_TheCallOnTheRealFace_BrokenAtRest_ThenLockedWithItsFirstLetter()
+        {
+            Directory.CreateDirectory(Folder);
+            _keyboard = InputSystem.AddDevice<Keyboard>();
+            yield return _scene.Boot();
+            _target = new RenderTexture(Width, Height, 24);
+            _scene.View.targetTexture = _target;
+            CallDisplayView call = _scene.Ui.CallView;
+            // The still call is the quietest guidance: with no objective line wanting the slot, it shows at rest.
+            _scene.Context.Events.Publish(new NextStepChanged(string.Empty));
+            float deadline = Time.time + OpenTimeout;
+            while (!call.IsVisible)
+            {
+                Assert.Less(Time.time, deadline, "standing still, 07's face shows the call");
+                yield return null;
+            }
+
+            yield return RealRoverScene.WaitSeconds(1f);
+            Assert.AreEqual("??? ??", call.Letters, "on the reserve nothing has decoded");
+            Capture("call_broken");
+            CaptureFace("call_broken_panel");
+
+            _scene.Context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.FirstCharge, false));
+            yield return RealRoverScene.WaitSeconds(1f);
+            Assert.IsTrue(call.IsVisible);
+            Assert.AreEqual("A?? ??", call.Letters, "the first charge decodes one letter");
+            Assert.AreEqual(1, call.AccentLetters, "the one accent");
+            Capture("call_locked");
+            CaptureFace("call_locked_panel");
+        }
+
         /// <summary>The pad built, 07 parked on it with the igniter and metal in the hold, the face open at 1080p.</summary>
         private IEnumerator OpenOnThePad()
         {
@@ -210,6 +247,27 @@ namespace MoonProject.Rover.PlayModeTests
         {
             Set(_mouse.position, ToScreen(panelPoint));
             yield return RealRoverScene.WaitSeconds(0.2f);
+        }
+
+        /// <summary>The face panel itself, as the UI hands it to 07's CRT (before the glass and its shader).</summary>
+        private void CaptureFace(string name)
+        {
+            var face = _scene.Ui.FaceTexture as RenderTexture;
+            Assert.IsNotNull(face, "the UI draws 07's face into a render texture");
+            RenderTexture previous = RenderTexture.active;
+            var image = new Texture2D(face.width, face.height, TextureFormat.RGBA32, false);
+            try
+            {
+                RenderTexture.active = face;
+                image.ReadPixels(new Rect(0f, 0f, face.width, face.height), 0, 0);
+                image.Apply();
+                FrameCapture.WritePng(image, Path.Combine(Folder, name + ".png"));
+            }
+            finally
+            {
+                RenderTexture.active = previous;
+                Object.DestroyImmediate(image);
+            }
         }
 
         private void Capture(string name)

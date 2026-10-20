@@ -4,10 +4,11 @@ using MoonProject.Core.Events;
 namespace MoonProject.World.Tests
 {
     /// <summary>
-    /// The first day follows the opening (opening v2 §9.2): the eclipse holds until the first charge and ends within 2 s
-    /// of it; the Sun never sets before the night is ready; it holds at golden hour until power-on and at last light
-    /// until the night is ready; the first sunset starts the moment the night is ready, wherever the sink has brought
-    /// the Sun, and reaches nightfall in its tuned length; a restored milestone snaps the clock.
+    /// The first day follows the opening (opening v2 §9.2, opening v3 R5–R6): the eclipse holds until the first charge
+    /// and ends within 2 s of it; the Sun never sets before the night is ready; it holds at golden hour through
+    /// power-on until the first dusk begins, and at last light until the night is ready; the first sunset starts the
+    /// moment the night is ready, wherever the sink has brought the Sun, and reaches nightfall in its tuned length; a
+    /// restored milestone or dusk snaps the clock, in whatever order a load states them.
     /// </summary>
     public sealed class OpeningSkyPacingTests
     {
@@ -53,16 +54,21 @@ namespace MoonProject.World.Tests
         }
 
         [Test]
-        public void Sun_HoldsAtGoldenHour_ThenLastLight_AndNeverSetsBeforeTheNightIsReady()
+        public void Sun_HoldsAtGoldenHour_ThroughPowerOn_ThenDuskSinksToLastLight_AndNeverSetsBeforeTheNightIsReady()
         {
             _pacing.Reach(OpeningMilestone.FirstCharge, false, _clock);
             Run(Hour);
             Assert.AreEqual(_pacing.GoldenHourTime, _clock.TimeSeconds, Frame, "holds at golden hour until power-on");
 
             _pacing.Reach(OpeningMilestone.PowerOn, false, _clock);
+            Run(Hour);
+            Assert.AreEqual(_pacing.GoldenHourTime, _clock.TimeSeconds, Frame,
+                "after power-on the afternoon holds: no dusk by the clock (R5, the first free choice)");
+
+            _pacing.BeginDusk(false, _clock);
             Run(_cycle.LastLightSinkSeconds + 1f);
             Assert.AreEqual(_pacing.LastLightTime, _clock.TimeSeconds, Frame,
-                "sinks to last light in its tuned length after power-on");
+                "sinks to last light in its tuned length once the first dusk begins");
             Run(Hour);
             Assert.AreEqual(_pacing.LastLightTime, _clock.TimeSeconds, Frame, "and holds there");
             Assert.Greater(_clock.Elevation, 0f, "the Sun never sets before the night is ready");
@@ -93,6 +99,7 @@ namespace MoonProject.World.Tests
         {
             _pacing.Reach(OpeningMilestone.FirstCharge, true, _clock);
             _pacing.Reach(OpeningMilestone.PowerOn, false, _clock);
+            _pacing.BeginDusk(false, _clock);
             Run(_cycle.LastLightSinkSeconds * sinkProgress + (sinkProgress >= 1f ? 1f : 0f));
             float readyAt = _clock.TimeSeconds;
 
@@ -117,7 +124,10 @@ namespace MoonProject.World.Tests
             Assert.AreEqual(_pacing.GoldenHourTime, _clock.TimeSeconds, Frame);
 
             _pacing.Reach(OpeningMilestone.PowerOn, true, _clock);
-            Assert.AreEqual(_pacing.LastLightTime, _clock.TimeSeconds, Frame);
+            Assert.AreEqual(_pacing.GoldenHourTime, _clock.TimeSeconds, Frame, "powered, no dusk yet: the afternoon");
+
+            _pacing.BeginDusk(true, _clock);
+            Assert.AreEqual(_pacing.LastLightTime, _clock.TimeSeconds, Frame, "a begun dusk: last light");
 
             _pacing.Reach(OpeningMilestone.NightReady, true, _clock);
             Assert.AreEqual(_pacing.NightfallTime, _clock.TimeSeconds, Frame);
@@ -126,6 +136,28 @@ namespace MoonProject.World.Tests
             _pacing.Reach(OpeningMilestone.NightReady, true, _clock);
             Assert.AreEqual(_pacing.NightfallTime + Hour, _clock.TimeSeconds, Frame,
                 "a save from later in the game keeps its own time");
+        }
+
+        [Test]
+        public void ARestoredDusk_StatedBeforeItsMilestones_StillSettlesAtLastLight()
+        {
+            _pacing.BeginDusk(true, _clock);
+            Assert.IsFalse(_clock.IsHoldingEclipse, "a dusk implies the first charge");
+            Assert.AreEqual(_pacing.LastLightTime, _clock.TimeSeconds, Frame);
+            _pacing.Reach(OpeningMilestone.FirstCharge, true, _clock);
+            _pacing.Reach(OpeningMilestone.PowerOn, true, _clock);
+            Assert.AreEqual(_pacing.LastLightTime, _clock.TimeSeconds, Frame, "the milestones never pull it back");
+            Run(Hour);
+            Assert.AreEqual(_pacing.LastLightTime, _clock.TimeSeconds, Frame, "and it holds there until night is ready");
+        }
+
+        [Test]
+        public void TheNightReadyBeforeTheDusk_StartsTheSunsetFromTheAfternoon()
+        {
+            _pacing.Reach(OpeningMilestone.PowerOn, true, _clock);
+            _pacing.Reach(OpeningMilestone.NightReady, false, _clock);
+            Run(_cycle.FirstSunsetSeconds + 1f);
+            Assert.Less(_clock.Elevation, 0f, "the first sunset runs from golden hour in its tuned length");
         }
 
         private void Run(float seconds)

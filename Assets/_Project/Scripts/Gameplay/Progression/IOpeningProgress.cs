@@ -43,6 +43,12 @@ namespace MoonProject.Gameplay
         /// <summary>A built solar array powers a built pad (B8).</summary>
         bool PowerOn { get; }
 
+        /// <summary>
+        /// The first dusk has begun (R6): 07 docked after visiting a near site since power-on, or learned the battery
+        /// bank.
+        /// </summary>
+        bool DuskBegun { get; }
+
         /// <summary>A built battery bank is connected to the powered base (B9).</summary>
         bool NightReady { get; }
 
