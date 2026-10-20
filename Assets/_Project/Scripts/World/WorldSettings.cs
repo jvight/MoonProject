@@ -91,7 +91,8 @@ namespace MoonProject.World
         public string Validate()
         {
             return _surface.Validate() ?? _mesh.Validate() ?? _scatter.Validate()
-                ?? _skyCycle.Validate() ?? FallenArrayOnItsSite() ?? CallPointUnderBloom();
+                ?? _skyCycle.Validate() ?? FallenArrayOnItsSite() ?? CallPointUnderBloom()
+                ?? RelayLampUnderBloom();
         }
 
         // The call's point of light must glow, never flare: its core and its ring together stay under the bloom.
@@ -106,6 +107,20 @@ namespace MoonProject.World
             if (point.ToneOff >= point.ToneOn)
             {
                 return "Sky: the call's point of light ends a tone (off) at or above where it begins one (on).";
+            }
+
+            return null;
+        }
+
+        // relay.1's lamp wears the module lamp's amber halo: at the top of a key its brightest channel stays under the
+        // bloom, so it glows as a lamp and never flares.
+        private string RelayLampUnderBloom()
+        {
+            Color amber = _landmarks.ModuleLamp.HaloColor;
+            float brightest = Mathf.Max(amber.r, Mathf.Max(amber.g, amber.b));
+            if (_landmarks.RelayLamp.HaloIntensity * brightest >= _postProcessing.BloomThreshold)
+            {
+                return "Landmarks: relay.1's lamp reaches the bloom threshold at the top of a key and would flare.";
             }
 
             return null;

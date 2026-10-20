@@ -562,6 +562,13 @@ MonoBehaviour:
       _haloRadius: 0.12
       _haloMinAngle: 0.25
       _haloLift: 0.08
+    _relayLamp:
+      _haloIntensity: 1.2
+      _haloRadius: 0.6
+      _haloMinAngle: 0.9
+      _haloMinFrom: 40
+      _haloMinFull: 500
+      _haloLift: 0.2
     _debris:
     - _anchor: place.midway
       _id: Kestrel_HullPanel
