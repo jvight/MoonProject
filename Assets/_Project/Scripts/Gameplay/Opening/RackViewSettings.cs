@@ -113,6 +113,12 @@ namespace MoonProject.Gameplay
 
         public float ViewMargin => _viewMargin;
 
+        /// <summary>Art's rack for a tuning made in code (tests); the shipped asset names its own.</summary>
+        internal void PopulatePrefab(GameObject prefab)
+        {
+            _prefab = prefab != null ? prefab : throw new ArgumentNullException(nameof(prefab));
+        }
+
         /// <summary>Null when the rack can be seen, else the first problem.</summary>
         public string Validate()
         {
