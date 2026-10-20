@@ -8,10 +8,11 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// 07's scan archive (docs/design/databank.md): the entries unlocked so far, how far each scan set has come, and
     /// which are read. Story scans unlock an entry whole; the first fragment of a scan set unlocks its entry, each
-    /// further fragment counts it up until the last draws it full. Publishes
-    /// <see cref="DatabankEntryAdded"/> and <see cref="DatabankEntryProgressed"/> for what is found live, never for a
-    /// load. A load that finds scans or milestones the saved databank does not know (an older save) unlocks their
-    /// entries silently the first time the databank is read. Plain logic: no engine objects.
+    /// further fragment counts it up until the last draws it full; what 07 reads as it wakes joins silently at the end
+    /// of the self-test. Publishes <see cref="DatabankEntryAdded"/> and <see cref="DatabankEntryProgressed"/> for what
+    /// is found live, never for a load. A load that finds scans or milestones the saved databank does not know (an
+    /// older save) unlocks their entries silently the first time the databank is read. Plain logic: no engine
+    /// objects.
     /// </summary>
     public sealed class Databank : IDatabank, IDisposable
     {
@@ -44,6 +45,7 @@ namespace MoonProject.Gameplay
             _subscriptions.Add(events.Subscribe<StoryScanned>(OnStoryScanned));
             _subscriptions.Add(events.Subscribe<FragmentScanned>(OnFragmentScanned));
             _subscriptions.Add(events.Subscribe<OpeningMilestoneReached>(OnMilestoneReached));
+            _subscriptions.Add(events.Subscribe<BootCheckFinished>(_ => OnWoke()));
         }
 
         public IReadOnlyList<string> UnlockedIds
@@ -215,6 +217,9 @@ namespace MoonProject.Gameplay
                         }
 
                         break;
+                    case DatabankUnlockKind.Wake:
+                        Add(entry, false);
+                        break;
                 }
             }
         }
@@ -305,6 +310,20 @@ namespace MoonProject.Gameplay
                 if (entry.Unlock.Kind == DatabankUnlockKind.Milestone && entry.Unlock.Milestone == reached.Milestone)
                 {
                     Add(entry, !reached.Restored);
+                }
+            }
+        }
+
+        /// <summary>The New Game self-test is over: what 07 read as it woke joins the databank, without a line.</summary>
+        private void OnWoke()
+        {
+            Reconcile();
+            for (int i = 0; i < _catalogue.Count; i++)
+            {
+                DatabankEntry entry = _catalogue.EntryAt(i);
+                if (entry.Unlock.Kind == DatabankUnlockKind.Wake)
+                {
+                    Add(entry, false);
                 }
             }
         }

@@ -8,8 +8,8 @@ namespace MoonProject.Gameplay.Tests
 {
     /// <summary>
     /// 07's databank (docs/design/databank.md §3): every unlock rule (Seeded, StoryScan, FragmentOf with its set
-    /// progress, SetComplete, Milestone), the unread dots, and a save that round-trips and survives a catalogue that
-    /// gained or lost entries.
+    /// progress, SetComplete, Milestone, Wake), the unread dots, and a save that round-trips and survives a catalogue
+    /// that gained or lost entries.
     /// </summary>
     public sealed class DatabankTests
     {
@@ -255,6 +255,32 @@ namespace MoonProject.Gameplay.Tests
             CollectionAssert.Contains(unlocked, "db.signal");
             AssertProgress("db.array", 2, 3);
             Assert.IsEmpty(_added);
+        }
+
+        [Test]
+        public void WhatItReadsAsItWakes_JoinsAtTheEndOfTheSelfTest_Silently_AndALoadedGameHasWoken()
+        {
+            DatabankCatalogue catalogue = Catalogue(Entry("db.post", DatabankUnlock.OnWake));
+            var databank = new Databank(catalogue, _events, _sources);
+            try
+            {
+                Assert.IsEmpty(databank.UnlockedIds);
+
+                _events.Publish(new BootCheckFinished());
+                CollectionAssert.AreEqual(new[] { "db.post" }, databank.UnlockedIds);
+                Assert.IsTrue(databank.Progress("db.post").IsComplete);
+                Assert.IsTrue(databank.IsUnread("db.post"), "Found on the page, not announced.");
+                Assert.IsEmpty(_added);
+
+                databank.Restore(new DatabankSaveData());
+                CollectionAssert.AreEqual(new[] { "db.post" }, databank.UnlockedIds, "An older save woke too.");
+                Assert.IsEmpty(_added);
+            }
+            finally
+            {
+                databank.Dispose();
+                Object.DestroyImmediate(catalogue);
+            }
         }
 
         [Test]

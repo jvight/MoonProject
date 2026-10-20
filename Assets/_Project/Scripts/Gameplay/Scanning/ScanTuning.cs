@@ -219,6 +219,10 @@ namespace MoonProject.Gameplay
             new StoryScan("elder01", "Elder01", "Body", "db.elder01.readout", ScanSize.Medium, Vector3.zero),
         };
 
+        [Header("Maker understanding (maker-understanding.md)")]
+        [Tooltip("How completed databank entries teach 07 each maker's standards, and what each level unlocks.")]
+        [SerializeField] private MakerUnderstandingSettings _understanding = new MakerUnderstandingSettings();
+
         private static readonly int ScanLineColorShaderId = Shader.PropertyToID("_MoonScanLineColor");
         private static readonly int ScanPingColorShaderId = Shader.PropertyToID("_MoonScanPingColor");
         private static readonly int ScanParamsShaderId = Shader.PropertyToID("_MoonScanParams");
@@ -230,6 +234,8 @@ namespace MoonProject.Gameplay
         public RuinScanSet LanderCargo => _landerCargo;
 
         public IReadOnlyList<StoryScan> Stories => _stories;
+
+        public MakerUnderstandingSettings Understanding => _understanding;
         public float Reach => _reach;
         public float Cone => _cone;
         public float LookStickiness => _lookStickiness;

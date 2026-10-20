@@ -129,6 +129,9 @@ namespace MoonProject.Gameplay
         /// <summary>07's scan archive: what the scans and milestones unlocked (docs/design/databank.md).</summary>
         public Databank Databank { get; private set; }
 
+        /// <summary>What the databank has taught 07 of each maker, and the adapted parts it unlocked.</summary>
+        public MakerUnderstanding Understanding { get; private set; }
+
         /// <summary>The recovery protocol's rows (docs/features/M3-21).</summary>
         public RecoveryProgress Recovery { get; private set; }
 
@@ -335,6 +338,8 @@ namespace MoonProject.Gameplay
 
             Databank = new Databank(_databankCatalogue, context.Events,
                 new WorldDatabankSources(Scans, Opening.Flow.HasReached));
+            Understanding = new MakerUnderstanding(context.Events, Databank, _databankCatalogue,
+                _scanTuning.Understanding);
             _salvage.ConnectScans(Scans);
             ApronGlow = new ApronGlow(_apronOutline, _building.Tuning.ApronGlowFadeSeconds);
             ApronGuide = new ApronGuide(transform, _apronOutline, _visuals.BeamCore, _building.Tuning);
@@ -627,6 +632,7 @@ namespace MoonProject.Gameplay
             Relay.Announce();
             Release.Announce();
             Rack.Announce();
+            Understanding.Announce();
             Opening.Announce();
         }
 
@@ -753,6 +759,8 @@ namespace MoonProject.Gameplay
                 : _cargo == null ? "CargoTuning is not assigned."
                 : _cutterTuning == null ? "CutterTuning is not assigned."
                 : _scanTuning == null ? "ScanTuning is not assigned."
+                : _scanTuning.Understanding.Validate() != null
+                    ? "ScanTuning: " + _scanTuning.Understanding.Validate() + "."
                 : _databankCatalogue == null ? "DatabankCatalogue is not assigned (run Gameplay/Content)."
                 : _baseTuning == null ? "BaseTuning is not assigned."
                 : _openingTuning == null ? "OpeningTuning is not assigned."
@@ -803,6 +811,7 @@ namespace MoonProject.Gameplay
             }
 
             _flowTokens.Clear();
+            Understanding?.Dispose();
             Databank?.Dispose();
             StartKit?.Dispose();
             TowFrames?.Dispose();
