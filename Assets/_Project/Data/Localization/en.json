@@ -1439,6 +1439,18 @@
             "text": "Left by the '71 crew. It had thirteen years of quiet ground on record, so the ILC put Lumen here. We wired it into the station bus. — Ines"
         },
         {
+            "key": "db.trickle_post.name",
+            "text": "Trickle post"
+        },
+        {
+            "key": "db.trickle_post.readout",
+            "text": "KESSLER–ARAI · TRICKLE POST · 1983 · DEEP-CHARGE BUS · CABLE: OPEN · LAST LOAD: UNIT 07"
+        },
+        {
+            "key": "db.trickle_post.history",
+            "text": "Parked 07 on its post in the lander's lee and patched the post into the deep-charge bus. Set to wake on carrier. Sleep well. — K."
+        },
+        {
             "key": "db.retroreflector.name",
             "text": "Retroreflector"
         },

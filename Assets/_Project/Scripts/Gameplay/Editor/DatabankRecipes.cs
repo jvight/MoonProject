@@ -7,7 +7,7 @@ using MoonProject.Core;
 namespace MoonProject.Gameplay.Editor
 {
     /// <summary>
-    /// The opening basin's 18 databank entries (docs/design/databank.md, docs/design/text/databank-entries.md): ids,
+    /// The opening basin's 19 databank entries (docs/design/databank.md, docs/design/text/databank-entries.md): ids,
     /// categories, makers, years, eras, text keys, the Art model each turns on the page, and the rule that unlocks it.
     /// The content builder writes them into the <see cref="DatabankCatalogue"/>. The four maker cards show Art's
     /// prints; the other print entries leave the sheet empty until theirs exist.
@@ -58,6 +58,8 @@ namespace MoonProject.Gameplay.Editor
                     Models + "/Ruins/RadioTower.prefab", DatabankUnlock.FragmentOf("RadioTower")),
                 Structure("seismic_station", DatabankMaker.ILC, "1971 · 1984", DatabankEra.Sorties,
                     Models + "/Props/Prop_SeismicStation.prefab", DatabankUnlock.StoryScan("seismic")),
+                Structure("trickle_post", DatabankMaker.KesslerArai, "1983", DatabankEra.Lumen,
+                    Models + "/Props/DeadChargingPost.prefab", DatabankUnlock.OnWake),
                 Structure("retroreflector", DatabankMaker.ILC, "1971 · 1984", DatabankEra.Sorties,
                     Models + "/Props/Prop_Retroreflector.prefab", DatabankUnlock.StoryScan("retroreflector")),
                 Print("lumen", DatabankCategory.Places, DatabankMaker.None, "1984", DatabankEra.Lumen,

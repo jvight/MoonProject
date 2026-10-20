@@ -1439,6 +1439,18 @@
             "text": "Tổ bay năm 71 để lại. Nó đã ghi được mười ba năm nền đất yên ổn, nên ILC đặt Lumen ở đây. Chúng tôi nối nó vào lưới điện của trạm. — Ines"
         },
         {
+            "key": "db.trickle_post.name",
+            "text": "Trụ sạc nhỏ giọt"
+        },
+        {
+            "key": "db.trickle_post.readout",
+            "text": "KESSLER–ARAI · TRỤ SẠC NHỎ GIỌT · 1983 · LƯỚI SẠC SÂU · CÁP: ĐỨT · TẢI CUỐI: ĐƠN VỊ 07"
+        },
+        {
+            "key": "db.trickle_post.history",
+            "text": "Đỗ 07 lên trụ sạc khuất sau tàu đổ bộ, nối trụ vào lưới sạc sâu. Đặt chế độ thức khi có sóng mang. Ngủ ngon nhé. — K."
+        },
+        {
             "key": "db.retroreflector.name",
             "text": "Gương phản xạ laser"
         },

@@ -101,6 +101,11 @@ namespace MoonProject.Autoplay
         /// <summary>The 1971 seismic station's story scan (R5's curiosity scan).</summary>
         private const string SeismicStory = "seismic";
 
+        /// <summary>06 at relay.2, Kessler–Arai's second point after the trickle post 07 read as it woke (R11).</summary>
+        private const string Elder06Story = "elder06";
+
+        private const string TricklePostEntry = "db.trickle_post";
+
         /// <summary>The bot heads back to the pad to charge when 07's cells fall to this share.</summary>
         private const float TopUpBelow = 0.3f;
 
@@ -792,6 +797,35 @@ namespace MoonProject.Autoplay
                 DriveSeconds);
             yield return _bot.Until(() => battery.CellsFull || battery.IsCharging && battery.Charger == ChargerKind.Mast,
                 ChargeSeconds, "relay.1's pad to charge 07");
+        }
+
+        /// <summary>
+        /// R11, Kessler–Arai's standards: 07 read the trickle post it slept on as it woke; now it drives out to 06
+        /// slumped at relay.2 and reads it. Two completed entries of its own maker reach understanding level 1, which
+        /// (past the west signal) unlocks the adapted SSR-3 headlamp.
+        /// </summary>
+        public IEnumerator LearnKesslerArai()
+        {
+            ScanFragment six = G.Scans.Find(StoryScan.IdPrefix + Elder06Story);
+            if (six == null)
+            {
+                _bot.Fail("06 has no story scan.");
+                yield break;
+            }
+
+            if (!G.Databank.Progress(TricklePostEntry).IsComplete)
+            {
+                _bot.Fail("07 woke without reading its trickle post into the databank.");
+                yield break;
+            }
+
+            yield return TopUpIfLow();
+            yield return Scan(six, Flat(Pad() - six.Point).normalized, ScanStandOff);
+            MakerUnderstanding understanding = G.Understanding;
+            yield return _bot.Until(() => understanding.IsUnlocked(MakerUnderstandingSettings.Ssr3Headlamp),
+                FollowSeconds, "Kessler–Arai level 1 to unlock the SSR-3 headlamp",
+                () => "Kessler–Arai points " + understanding.PointsOf(DatabankMaker.KesslerArai) + ", released " +
+                      understanding.Released + ".");
         }
 
         /// <summary>Where the module stands now: the battery bank is built on it.</summary>

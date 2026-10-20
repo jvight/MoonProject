@@ -74,6 +74,7 @@ namespace MoonProject.Autoplay
                      {
                          Drive, Scan, CollectParts, BuildThePad, ChargeOnThePad, TheRuins, BuildTheArray,
                          TheFirstChoice, TheHabitat, Nightfall, TheTower, TheAnswer, TheRelay,
+                         KesslerArai,
                      })
             {
                 if (_bot.Failed || Reached(_lastBeat))
@@ -398,6 +399,13 @@ namespace MoonProject.Autoplay
             Begin("R10", "relay.1's repair: take the spare from its cabinet, fit it, charge on its pad");
             yield return _base.RepairTheRelay();
             _bot.EndBeat("relay.1 relit: its spare fitted at the feed socket, and its pad charges 07");
+        }
+
+        private IEnumerator KesslerArai()
+        {
+            Begin("R11", "Kessler–Arai: 07 woke on its trickle post; read 06 at relay.2 and the SSR-3 headlamp unlocks");
+            yield return _base.LearnKesslerArai();
+            _bot.EndBeat("07 read 06 after its trickle post: Kessler–Arai level 1, the SSR-3 headlamp unlocked");
         }
 
         /// <summary>The next unscanned fragment of the lander's cargo, in the order the blueprint numbers them.</summary>
