@@ -381,42 +381,9 @@ def _build_dead_mast_stage_4(root: bpy.types.Object) -> bpy.types.Object:
     if az_obj is not None:
         _build_bent_weathered_dish(az_obj)
 
-    # 3. SonarLoop (`Stage_4/Mast/SonarLoop`)
-    sx = d["sonar_x"]
-    sy = d["sonar_y"]
-    sz = d["sonar_z"]
-    arm_l = d["sonar_loop_len"]
-    sonar_mb = r1kit.MeshBuilder("SonarLoop", pivot_u=(sx, sy, sz))
-    sonar_mb.add_cylinder(
-        center_u=(sx, sy, sz),
-        radius=0.028,
-        length=0.048,
-        mat="R1_Copper",
-        axis_u="Z",
-        segments=8,
-        bevel=0.0,
-        bevel_segments=0,
-    )
-    for diag_deg in (42.0, 138.0, 222.0, 318.0):
-        rad = math.radians(diag_deg)
-        dx = math.cos(rad)
-        dy_l = math.sin(rad)
-        px_n = -dy_l
-        py_n = dx
-        tip_x = sx + dx * arm_l
-        tip_y = sy + dy_l * arm_l
-        mid_x = sx + dx * (arm_l * 0.68)
-        mid_y = sy + dy_l * (arm_l * 0.68)
-        w_l = 0.046
-        p_l = (mid_x + px_n * w_l, mid_y + py_n * w_l, sz)
-        p_r = (mid_x - px_n * w_l, mid_y - py_n * w_l, sz)
-        p_t1 = (tip_x + px_n * (w_l * 0.55), tip_y + py_n * (w_l * 0.55), sz)
-        p_t2 = (tip_x - px_n * (w_l * 0.55), tip_y - py_n * (w_l * 0.55), sz)
-        sonar_mb.add_strut((sx, sy, sz), p_l, 0.015, 0.015, "R1_Copper", bevel=0.0)
-        sonar_mb.add_strut((sx, sy, sz), p_r, 0.015, 0.015, "R1_Copper", bevel=0.0)
-        sonar_mb.add_strut(p_l, p_t1, 0.015, 0.015, "R1_Copper", bevel=0.0)
-        sonar_mb.add_strut(p_r, p_t2, 0.015, 0.015, "R1_Copper", bevel=0.0)
-        sonar_mb.add_strut(p_t1, p_t2, 0.015, 0.015, "R1_Copper", bevel=0.0)
+    # 3. SonarLoop (`Stage_4/Mast/SonarLoop`): the same crossed-loop direction finder as the base's mast
+    sonar_mb = r1kit.MeshBuilder("SonarLoop", pivot_u=(d["sonar_x"], d["sonar_y"], d["sonar_z"]))
+    antenna_mast.add_crossed_loop_antenna(sonar_mb)
     sonar_mb.build_object(parent=mast_obj)
 
     # 4. TapeReel_L and TapeReel_R (`Stage_4/TapeReel_L`, `Stage_4/TapeReel_R`)
