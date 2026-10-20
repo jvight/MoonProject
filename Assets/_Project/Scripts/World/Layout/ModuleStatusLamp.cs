@@ -4,8 +4,11 @@ using MoonProject.Core;
 namespace MoonProject.World
 {
     /// <summary>
-    /// The Lumen habitat's power module status lamp (opening v3 R4): blinks slow amber from dusk through the night
-    /// (<see cref="StatusLampBlink"/>), its lens and a small halo in front of it together. The lamp is on the towable
+    /// The Lumen habitat's power module status lamp (opening v3 R4), for as long as it has a purpose: while the module
+    /// waits unhooked at the ruin it is a lure, blinking slow amber from dusk through the night
+    /// (<see cref="StatusLampBlink"/>); once on 07's cable, home or built into the bank it has done its job and eases
+    /// to a calm steady "powered" glow (<see cref="ModuleLampPurpose"/>, <see cref="IsLure"/>). Its lens and a small
+    /// halo in front of it light together. The lamp is on the towable
     /// power module Gameplay stands beside the habitat (<see cref="ITowLine.TryFindLoad"/>, the module's tow id in
     /// tuning), found once (<see cref="StatusLampLens"/>: Art's PowerModule_StatusLamp, its amber slot by name, never the
     /// bezel); the lamp itself, with its halo at its origin, stands apart under [World]/ModuleLamp and follows the lens
@@ -24,10 +27,17 @@ namespace MoonProject.World
         [Tooltip("World tuning (Assets/_Project/Data/Tuning/WorldSettings.asset); its landmarks' module lamp.")]
         [SerializeField] private WorldSettings _settings;
 
+        [Tooltip("The habitat ruin the module waits beside (Art's HabitatModules in [World]/Ruins): near it, unhooked, " +
+            "the lamp is a lure.")]
+        [SerializeField] private Transform _ruin;
+
         [Tooltip("The lamp's halo at this lamp's origin, stood apart from the module (LofiBeaconHalo, amber).")]
         [SerializeField] private Renderer _halo;
 
         private readonly StatusLampBlink _blink = new StatusLampBlink();
+        private readonly ModuleLampPurpose _purpose = new ModuleLampPurpose();
+        private ITowLine _tow;
+        private Transform _load;
         private GameContext _context;
         private ISunlight _sunlight;
         private StatusLampLens _lens;
@@ -35,10 +45,10 @@ namespace MoonProject.World
 
         public void Initialize(GameContext context)
         {
-            if (_settings == null || _halo == null)
+            if (_settings == null || _halo == null || _ruin == null)
             {
-                Debug.LogError($"{nameof(ModuleStatusLamp)}: World Settings and the lamp's halo must be assigned " +
-                    "(the scene build wires them).", this);
+                Debug.LogError($"{nameof(ModuleStatusLamp)}: World Settings, the lamp's halo and the habitat ruin " +
+                    "must be assigned (the scene build wires them).", this);
                 enabled = false;
                 return;
             }
@@ -50,6 +60,12 @@ namespace MoonProject.World
 
         /// <summary>The lamp's level (0..1) on the last frame.</summary>
         public float Level { get; private set; }
+
+        /// <summary>
+        /// The lamp is a lure now: the module waits unhooked at the ruin, the thing to go to. Once on the cable, home
+        /// or built into the bank it is not, however it glows.
+        /// </summary>
+        public bool IsLure => _lens != null && _purpose.IsLure;
 
         private void Update()
         {
@@ -76,7 +92,10 @@ namespace MoonProject.World
 
             _blink.OnSky(_sunlight.Phase, false);
             _blink.Step(Time.deltaTime, lamp.WakeSeconds);
-            Level = _blink.Level(Time.time, lamp.BlinkSeconds, lamp.OnShare, lamp.EaseShare);
+            bool atRuin = ModuleLampPurpose.AtRuin(_tow.IsTowing, _load.position, _ruin.position, lamp.LureRadius);
+            _purpose.Step(atRuin, Time.deltaTime, lamp.PurposeFadeSeconds);
+            float blink = _blink.Level(Time.time, lamp.BlinkSeconds, lamp.OnShare, lamp.EaseShare);
+            Level = _purpose.Level(blink, lamp.PoweredLevel);
             transform.position = _lens.InFront(lamp.HaloLift);
             _lens.Renderer.GetPropertyBlock(_block, _lens.Slot);
             _block.SetFloat(EmissionStrengthId, Level * lamp.LampGlow);
@@ -92,6 +111,9 @@ namespace MoonProject.World
             {
                 return false;
             }
+
+            _tow = tow;
+            _load = load;
 
             _lens = StatusLampLens.Find(load, LampNode, LensMaterial, out string problem);
             if (_lens == null)
