@@ -66,7 +66,10 @@ namespace MoonProject.Autoplay
         private const float ScanBackOffShare = 0.8f;
         private const float SealCutSeconds = 30f;
         private const float SealCandidateSeconds = 3f;
-        private const int SealCandidateAttempts = 3;
+        private const int SealCandidateAttempts = 6;
+
+        /// <summary>How far to the side of the way back a repositioning steps (a share of the step).</summary>
+        private const float SealSideStep = 0.6f;
         private const float SealNudgeMetres = 1f;
         private const float ScanLookSeconds = 12f;
         private const float ScanAllowanceSeconds = 8f;
@@ -624,15 +627,22 @@ namespace MoonProject.Autoplay
                     yield break;
                 }
 
+                // As a player does when the chip sits on nothing or on the wrong crate: step back a little farther each
+                // time, to alternate sides, and face the seal again until the chip is on it.
                 Vector3 away = Flat(_bot.World.Rover.Position - seal);
                 away = away.sqrMagnitude > 1e-4f ? away.normalized : Vector3.back;
-                yield return _bot.DriveTo(Flat(seal) + away * SealNudgeMetres, SealArrive, "a nudge off the seal of " + cacheId,
-                    DriveSeconds);
+                Vector3 across = Vector3.Cross(Vector3.up, away) * (attempt % 2 == 0 ? 1f : -1f);
+                Vector3 stand = Flat(seal) + (away + across * SealSideStep).normalized * (SealNudgeMetres * (attempt + 1));
+                yield return _bot.DriveTo(stand, SealArrive, "a step back from the seal of " + cacheId, DriveSeconds);
                 yield return _bot.DriveTo(Flat(seal), SealNose, "nose to the seal of " + cacheId, DriveSeconds);
                 yield return _bot.TurnToward(seal, "the seal of " + cacheId);
             }
 
-            _bot.Warn("the game never made " + cacheId + " the cut candidate (chip '" + _bot.World.Ui.Chip() + "'); the bot held E anyway.");
+            // Two crates too close to tell apart, or a chip that never comes: a finding, not something to hold through.
+            _bot.Fail("the cut chip never settled on " + cacheId + " after " + SealCandidateAttempts +
+                      " repositionings (candidate " +
+                      (G.Containers.Candidate != null ? G.Containers.Candidate.Id : "none") + ", chip '" +
+                      _bot.World.Ui.Chip() + "'): a player could not tell which crate E would cut. " + _bot.Where());
         }
 
         private bool IsSealCandidate(string cacheId)
