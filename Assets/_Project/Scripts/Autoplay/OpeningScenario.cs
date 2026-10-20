@@ -43,21 +43,27 @@ namespace MoonProject.Autoplay
         /// <summary>Degrees under last light that still count as last light (the Sun settles onto it).</summary>
         private const float LastLightToleranceDegrees = 0.5f;
 
+        /// <summary>The lander cargo set's fragment ids start with this; a story scan standing nearby is not part of it.</summary>
+        private static readonly string CargoPrefix = "ruin." + ScanTuning.LanderCargoId + ".";
+
         private readonly AutoplayBot _bot;
         private readonly string _untilBeat;
         private bool _awoke;
         private OpeningBase _base;
         private string _lastBeat;
 
-        public OpeningScenario(AutoplayBot bot, string untilBeat)
+        private readonly bool _linesExpected;
+
+        public OpeningScenario(AutoplayBot bot, string untilBeat, bool linesExpected)
         {
             _bot = bot;
             _untilBeat = untilBeat;
+            _linesExpected = linesExpected;
         }
 
         public IEnumerator Run()
         {
-            _base = new OpeningBase(_bot);
+            _base = new OpeningBase(_bot) { LinesExpected = _linesExpected };
             yield return Boot();
             _base.Listen();
             foreach (Func<IEnumerator> beat in new Func<IEnumerator>[]
@@ -124,8 +130,9 @@ namespace MoonProject.Autoplay
         private IEnumerator Drive()
         {
             Begin("B2", "Drive to the lander");
-            yield return _bot.Until(() => _bot.World.Refresh() && _bot.World.Gameplay.Opening.Flow.Current ==
-                OpeningKeys.DriveToLander, LineTimeoutSeconds, "the objective line to say '" + OpeningKeys.DriveToLander + "'");
+            yield return _bot.Until(() => _bot.World.Refresh(), LineTimeoutSeconds, "the game to be up");
+            yield return _base.ExpectStep(OpeningSteps.DriveToLander, OpeningKeys.DriveToLander, "B2", LineTimeoutSeconds,
+                onScreen: false);
             if (!_bot.Failed)
             {
                 WorldAnchor lander = Lander();
@@ -141,8 +148,7 @@ namespace MoonProject.Autoplay
         private IEnumerator Scan()
         {
             Begin("B3", "Scan the two parts in the open crate by the lander");
-            yield return _bot.Until(() => _bot.World.Gameplay.Opening.Flow.Current == OpeningKeys.ScanLander,
-                FollowSeconds, "the objective line to say '" + OpeningKeys.ScanLander + "'");
+            yield return _base.ExpectStep(OpeningSteps.ScanLander, OpeningKeys.ScanLander, "B3", onScreen: false);
             var chips = new List<string>();
             ScanField scans = _bot.World.Gameplay.Scans;
             ScanFragment next;
@@ -154,15 +160,15 @@ namespace MoonProject.Autoplay
 
             if (!_bot.Failed)
             {
-                yield return _bot.Until(() => _bot.World.Gameplay.Opening.Flow.Current != OpeningKeys.ScanLander,
-                    FollowSeconds, "the objective line to move on from '" + OpeningKeys.ScanLander + "'");
+                yield return _bot.Until(() => _bot.World.Gameplay.Opening.Flow.CurrentIndex > OpeningSteps.ScanLander,
+                    FollowSeconds, "the opening to move on from step " + OpeningSteps.ScanLander);
             }
 
-            string line = _bot.World.Gameplay.Opening.Flow.Current;
-            if (!_bot.Failed && line != OpeningKeys.CollectParts)
+            int step = _bot.World.Gameplay.Opening.Flow.CurrentIndex;
+            if (!_bot.Failed && step != OpeningSteps.CollectParts)
             {
-                _bot.Warn("after the scan the objective line says '" + line + "', not '" + OpeningKeys.CollectParts +
-                          "' (opening-v2 B4).");
+                _bot.Warn("after the scan the opening stands at step " + step + ", not " + OpeningSteps.CollectParts +
+                          " (opening-v2 B4).");
             }
 
             _bot.EndBeat("both fragments scanned (chips seen: " + string.Join("; ", chips) + ")");
@@ -262,7 +268,7 @@ namespace MoonProject.Autoplay
             yield return _base.CollectTheOpenCrate();
             if (!_bot.Failed)
             {
-                yield return _base.ExpectLine(OpeningKeys.BuildPad, "B5: the hold covers the pad");
+                yield return _base.ExpectStep(OpeningSteps.BuildPad, OpeningKeys.BuildPad, "B5: the hold covers the pad");
             }
 
             _bot.EndBeat("07 took the open crate's parts and the spare igniter");
@@ -278,7 +284,7 @@ namespace MoonProject.Autoplay
         private IEnumerator ChargeAndFit()
         {
             Begin("B6", "Charge on the pad and fit the igniter");
-            yield return _base.ExpectLine(OpeningKeys.Charge, "B6");
+            yield return _base.ExpectStep(OpeningSteps.Charge, OpeningKeys.Charge, "B6");
             yield return _base.ChargeOnThePad(StructureIds.ChargingPad);
             _bot.EndBeat("07 charged on the pad and fitted the igniter on its face screen");
         }
@@ -286,7 +292,7 @@ namespace MoonProject.Autoplay
         private IEnumerator TheRuins()
         {
             Begin("B7", "The Lumen ruins: scan the array and the airlock, cut the array's panels and junction box");
-            yield return _base.ExpectLine(OpeningKeys.FindSolar, "B7: the reserve is spent");
+            yield return _base.ExpectStep(OpeningSteps.FindSolar, OpeningKeys.FindSolar, "B7: the reserve is spent");
             yield return _base.DriveToTheRuinsGate("the Lumen ruins");
             yield return _base.ScanTheSet("ruin.FallenSolarArray");
             yield return _base.ReadTheAirlockPanel();
@@ -297,7 +303,8 @@ namespace MoonProject.Autoplay
         private IEnumerator BuildTheArray()
         {
             Begin("B8", "Build the solar array");
-            yield return _base.ExpectLine(OpeningKeys.BuildSolar, "B8: the array's cost is covered");
+            yield return _base.ExpectStep(OpeningSteps.BuildSolar, OpeningKeys.BuildSolar,
+                "B8: the array's cost is covered");
             yield return _base.DriveToTheRuinsGate("out of the Lumen ruins");
             yield return _base.Build(StructureIds.SolarArray, _base.Pad() + Vector3.right * OpeningBase.Spacing);
             yield return _base.UntilReached(OpeningMilestone.PowerOn, "the PowerOn milestone");
@@ -307,7 +314,8 @@ namespace MoonProject.Autoplay
         private IEnumerator TheHabitat()
         {
             Begin("B9", "The habitat: scan the modules, cut the cable reel and power module, build the bank");
-            yield return _base.ExpectLine(OpeningKeys.BuildBatteryBank, "B9: night is coming");
+            yield return _base.ExpectStep(OpeningSteps.BuildBatteryBank, OpeningKeys.BuildBatteryBank,
+                "B9: night is coming");
             yield return _base.ScanTheSet("ruin.HabitatModules");
             yield return _base.CutTheCrates("HabitatModules");
             yield return _base.DriveToTheRuinsGate("out of the Lumen ruins");
@@ -341,10 +349,10 @@ namespace MoonProject.Autoplay
         private IEnumerator TheTower()
         {
             Begin("B11", "The radio tower and the antenna mast");
-            yield return _base.ExpectLine(OpeningKeys.ScanTower, "B11: after nightfall");
+            yield return _base.ExpectStep(OpeningSteps.ScanTower, OpeningKeys.ScanTower, "B11: after nightfall");
             yield return _base.CutTheCrates("RadioTower");
             yield return _base.ScanTheSet("ruin.RadioTower");
-            yield return _base.ExpectLine(OpeningKeys.BuildMast, "B11");
+            yield return _base.ExpectStep(OpeningSteps.BuildMast, OpeningKeys.BuildMast, "B11");
             yield return _base.DriveToTheRuinsGate("out of the Lumen ruins");
             yield return _base.Build(StructureIds.AntennaMast, _base.Pad() + Vector3.back * OpeningBase.Spacing);
             yield return _base.UntilReached(OpeningMilestone.SignalWest, "the SignalWest milestone");
@@ -358,7 +366,8 @@ namespace MoonProject.Autoplay
             ScanFragment best = null;
             foreach (ScanFragment fragment in scans.Fragments)
             {
-                if (!fragment.Scanned && DriveSteering.FlatDistance(fragment.Point, lander) <= LanderCargoRadius &&
+                if (!fragment.Scanned && fragment.FragmentId.StartsWith(CargoPrefix, StringComparison.Ordinal) &&
+                    DriveSteering.FlatDistance(fragment.Point, lander) <= LanderCargoRadius &&
                     (best == null || fragment.Index < best.Index))
                 {
                     best = fragment;
