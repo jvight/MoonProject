@@ -955,6 +955,10 @@
             "text": "TX · NGOÀI TẦM"
         },
         {
+            "key": "ui.face.call",
+            "text": "TÍN HIỆU"
+        },
+        {
             "key": "ui.verb.cut",
             "text": "Cắt"
         },

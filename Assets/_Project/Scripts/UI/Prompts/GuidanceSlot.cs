@@ -6,8 +6,8 @@ namespace MoonProject.UI
     internal enum GuidanceKind
     {
         /// <summary>
-        /// A line 07 puts on its own CRT face at a story moment (the failed reply's <c>TX · NO RANGE</c>): the moment is
-        /// the whole screen's, so it takes the slot from everything else, which fades first and returns after it.
+        /// A line 07 puts on its own CRT face at a story moment (the failed reply's <c>TX · NO RANGE</c>, the call's
+        /// display for a few seconds when its state changes or a letter decodes): the moment is the whole screen's, so it takes the slot from everything else, which fades first and returns after it.
         /// </summary>
         CallLine = 0,
 
@@ -26,8 +26,14 @@ namespace MoonProject.UI
         /// <summary>The low-battery hint: once per charge cycle, on the objective line's own line.</summary>
         Battery = 3,
 
+        /// <summary>
+        /// The call on 07's face while 07 stands still (docs/design/opening-v3-purpose.md §2: the call is the goal
+        /// display on the face): it outranks only the objective line, and any chip, card or hint takes the slot first.
+        /// </summary>
+        CallStatus = 4,
+
         /// <summary>The objective line: what to do next.</summary>
-        Objective = 4,
+        Objective = 5,
     }
 
     /// <summary>
@@ -40,7 +46,7 @@ namespace MoonProject.UI
     /// </summary>
     internal sealed class GuidanceSlot
     {
-        public const int KindCount = 5;
+        public const int KindCount = 6;
 
         private readonly float _handOverSeconds;
         private float _promptUp;
