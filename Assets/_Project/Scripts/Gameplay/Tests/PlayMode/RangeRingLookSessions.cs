@@ -39,6 +39,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float ChaseStep = 1f;
         private const float PixelSlack = 0.15f;
 
+        /// <summary>A vertex colour is stored in 8 bits: one step of rounding.</summary>
+        private const float ColourStep = 1f / 255f;
+
         private static readonly Color OldColor = new Color(0.55f, 0.9f, 1.4f, 1f);
         private static readonly float[] RevealShots = { 0.4f, 1f, 1.6f, 2.4f };
 
@@ -202,7 +205,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             Color color = line.startColor;
-            Assert.LessOrEqual(color.a, settings.FullStrength + 1e-3f, "dim");
+            Assert.LessOrEqual(color.a, settings.FullStrength + ColourStep, "dim");
             Assert.LessOrEqual(Mathf.Max(color.r, color.g, color.b), 1.05f, "under bloom: nothing hotter than white");
             Assert.Greater(Mathf.Min(color.r, color.g, color.b), 0.6f, "desaturated toward moonlit white");
         }
