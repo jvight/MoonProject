@@ -32,11 +32,20 @@ namespace MoonProject.Audio
                  "moment).")]
         [Range(0f, 1f)] [SerializeField] private float _baseLampVolume = 0.75f;
 
+        [Header("Antenna mast (MastSegmentRaised)")]
+        [Tooltip("Volume scale of each segment's telescoping clunk as it locks home.")]
+        [Range(0f, 1f)] [SerializeField] private float _mastClunkVolume = 0.85f;
+
+        [Tooltip("Volume scale of the raised mast's settle, after its top segment locks.")]
+        [Range(0f, 1f)] [SerializeField] private float _mastSettleVolume = 0.75f;
+
         public float WeldFadeIn => _weldFadeIn;
         public float WeldFadeOut => _weldFadeOut;
         public float PowerOnVolume => _powerOnVolume;
         public float PowerOnBuildGrace => _powerOnBuildGrace;
         public float PowerOnMinInterval => _powerOnMinInterval;
         public float BaseLampVolume => _baseLampVolume;
+        public float MastClunkVolume => _mastClunkVolume;
+        public float MastSettleVolume => _mastSettleVolume;
     }
 }

@@ -22,3 +22,5 @@ MonoBehaviour:
   _textureVolume: 0.85
   _toneVolume: 0.6
   _melodyTopWindow: 4
+  _sputterVolume: 0.9
+  _refuseVolume: 0.8
