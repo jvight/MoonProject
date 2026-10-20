@@ -59,11 +59,12 @@ def _add_crumpled_gold_foil_skirt(
         rb = rot_b @ Vector((lx, lz, ly))
         return (wing_cx + rb.x, max(0.02, cy + rb.z), wing_cz + rb.y)
 
-    # Build a closed crinkled prism under the raised rear (+Z) and outer (+X) portion of the tilted wing
-    nx = 6
-    nz = 4
-    xs = [-wing_w * 0.44 + wing_w * 0.94 * (i / nx) for i in range(nx + 1)]
-    zs = [-wing_d * 0.10 + wing_d * 0.58 * (j / nz) for j in range(nz + 1)]
+    # Build a closed crinkled prism under the raised rear (+Z) portion of the tilted wing, a few big facets, tucked
+    # fully inside the wing's footprint so no foil spills onto the ground beside it
+    nx = 4
+    nz = 3
+    xs = [-wing_w * 0.40 + wing_w * 0.80 * (i / nx) for i in range(nx + 1)]
+    zs = [-wing_d * 0.08 + wing_d * 0.46 * (j / nz) for j in range(nz + 1)]
 
     top_grid: List[List[bmesh.types.BMVert]] = []
     bot_grid: List[List[bmesh.types.BMVert]] = []
@@ -71,18 +72,17 @@ def _add_crumpled_gold_foil_skirt(
     for j, lz in enumerate(zs):
         t_row: List[bmesh.types.BMVert] = []
         b_row: List[bmesh.types.BMVert] = []
-        z_frac = j / nz
         for i, lx in enumerate(xs):
             i_frac = i / nx
-            # Deterministic crinkle facets on the lower draped gold foil
-            crinkle_x = 0.055 * math.sin(i * 2.3 + j * 1.9 + wing_cx)
-            crinkle_z = 0.060 * math.cos(i * 1.7 - j * 2.5 + wing_cx)
-            crinkle_y = 0.045 * math.sin(i * 2.9 + j * 2.1)
+            # Deterministic broad crinkle on the lower draped gold foil
+            crinkle_x = 0.035 * math.sin(i * 2.3 + j * 1.9 + wing_cx)
+            crinkle_z = 0.040 * math.cos(i * 1.7 - j * 2.5 + wing_cx)
+            crinkle_y = 0.035 * math.sin(i * 2.9 + j * 2.1)
 
             tx, ty, tz = panel_world(lx, -0.028, lz)
-            # Billow slightly outward on the right (+X) and rear (+Z) edges so the crinkled gold foil is visible beside/under the wing
-            out_x = (0.18 * (1.0 - z_frac * 0.3)) if i == nx else ((-0.05) if i == 0 else 0.0)
-            out_z = 0.12 if j == nz else (-0.06 if j == 0 else 0.0)
+            # Draw the edges in under the wing (never out past it)
+            out_x = 0.04 if i == 0 else (-0.04 if i == nx else 0.0)
+            out_z = 0.04 if j == 0 else (-0.04 if j == nz else 0.0)
             bx = tx + out_x + crinkle_x
             bz = tz + out_z + crinkle_z
             by = max(0.02, 0.025 + 0.04 * max(0.0, crinkle_y) + 0.03 * i_frac)
