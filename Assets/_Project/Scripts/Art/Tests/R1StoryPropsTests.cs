@@ -315,6 +315,7 @@ namespace MoonProject.Art.Tests
             GameObject peakPrefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.PeakBeaconPrefabPath);
             Assert.IsNotNull(peakPrefab.transform.Find("Mast"));
             Assert.IsNotNull(peakPrefab.transform.Find("Dish_Anchor"));
+            Assert.IsNotNull(peakPrefab.transform.Find("DishGlint_Anchor"));
             Assert.IsNotNull(peakPrefab.transform.Find("SummitBase_Anchor"));
 
             Transform lamp = peakPrefab.transform.Find("Lamp");

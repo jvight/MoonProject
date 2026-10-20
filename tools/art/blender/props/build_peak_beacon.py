@@ -4,6 +4,7 @@
 Replaces the legacy procedural PeakBeacon model while preserving:
 - Child mesh node `Mast` at pivot (0, 0, 0)
 - Child mesh node `Lamp` at pivot (0, 6.72, 0) matching PeakBeaconBuilder.LampNodeName = "Lamp" and LampHeight = 6.72 m.
+- Empty node `DishGlint_Anchor` at the dish focal point (0, 4.86, 1.05) and a thin `R1_BareSteel` rim ring on the dish perimeter.
 
 Run headless:
   D:/Blender/blender.exe -b --factory-startup --python-exit-code 1 -P tools/art/blender/props/build_peak_beacon.py -- --skip-renders
@@ -221,23 +222,59 @@ def build_peak_beacon() -> bpy.types.Object:
         bevel=0.006,
         rot_deg_u=(dish_pitch_deg, 0.0, 0.0),
     )
-    # Orange rim band on dish perimeter
+    # Orange rim band on dish perimeter (stepped slightly behind the bare-steel rim ring)
     mast.add_cylinder(
-        _dish_world(0.0, 0.0, 0.23),
-        radius=0.91,
-        radius_top=0.92,
-        length=0.035,
+        _dish_world(0.0, 0.0, 0.222),
+        radius=0.905,
+        radius_top=0.916,
+        length=0.028,
         mat="R1_OrangeStripe",
         axis_u="Z",
         segments=16,
         bevel=0.004,
         rot_deg_u=(dish_pitch_deg, 0.0, 0.0),
     )
+    # Thin bare-steel (R1_BareSteel) rim ring on the dish perimeter so it catches a sunlit/pulse glint
+    mast.add_cylinder(
+        _dish_world(0.0, 0.0, 0.242),
+        radius=0.916,
+        radius_top=0.920,
+        length=0.016,
+        mat="R1_BareSteel",
+        axis_u="Z",
+        segments=16,
+        bevel=0.003,
+        rot_deg_u=(dish_pitch_deg, 0.0, 0.0),
+    )
+    n_rim_segs = 16
+    r_rim_hoop = 0.896
+    for i_rim in range(n_rim_segs):
+        th0 = (2.0 * math.pi * i_rim) / n_rim_segs
+        th1 = (2.0 * math.pi * ((i_rim + 1) % n_rim_segs)) / n_rim_segs
+        mast.add_strut(
+            _dish_world(r_rim_hoop * math.cos(th0), r_rim_hoop * math.sin(th0), 0.249),
+            _dish_world(r_rim_hoop * math.cos(th1), r_rim_hoop * math.sin(th1), 0.249),
+            0.020,
+            0.016,
+            "R1_BareSteel",
+            bevel=0.003,
+        )
+    # Inner cream reflector face inside the bare-steel rim hoop
+    mast.add_cylinder(
+        _dish_world(0.0, 0.0, 0.244),
+        radius=0.875,
+        length=0.012,
+        mat="R1_CreamEnamel",
+        axis_u="Z",
+        segments=16,
+        bevel=0.003,
+        rot_deg_u=(dish_pitch_deg, 0.0, 0.0),
+    )
     # Central dark receiver aperture inside dish
     mast.add_cylinder(
-        _dish_world(0.0, 0.0, 0.225),
+        _dish_world(0.0, 0.0, 0.250),
         radius=0.38,
-        length=0.018,
+        length=0.014,
         mat="R1_GreyMetal",
         axis_u="Z",
         segments=14,
@@ -331,6 +368,7 @@ def build_peak_beacon() -> bpy.types.Object:
     lamp.build_object(parent=root)
 
     r1kit.create_empty("Dish_Anchor", parent=root, pivot_u=(0.0, 4.40, 0.42))
+    r1kit.create_empty("DishGlint_Anchor", parent=root, pivot_u=(0.0, 4.86, 1.05))
     r1kit.create_empty("SummitBase_Anchor", parent=root, pivot_u=(0.0, 0.0, 0.0))
 
     r1kit.apply_triplanar_uvs(root)
