@@ -4745,6 +4745,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _settings: {fileID: 11400000, guid: 3c7a28d294b9986468e4aeb35b23d7c1, type: 2}
   _lens: {fileID: 4324472070064390962}
+  _lensSlot: 1
   _halo: {fileID: 482927838204438324}
 --- !u!1 &770310751816899419
 GameObject:
@@ -9922,7 +9923,7 @@ Transform:
   m_GameObject: {fileID: 114542755651543583}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 85.066025, y: 6.723875, z: 186.46979}
+  m_LocalPosition: {x: 85.03545, y: 6.7238746, z: 186.29646}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

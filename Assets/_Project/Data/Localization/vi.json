@@ -955,6 +955,10 @@
             "text": "BỊ CHE KHUẤT"
         },
         {
+            "key": "ui.face.tx_no_range",
+            "text": "TX · NGOÀI TẦM"
+        },
+        {
             "key": "ui.verb.cut",
             "text": "Cắt"
         },

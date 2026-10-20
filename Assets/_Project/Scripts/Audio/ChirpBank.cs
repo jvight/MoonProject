@@ -12,7 +12,7 @@ namespace MoonProject.Audio
     public sealed class ChirpBank : ScriptableObject
     {
         /// <summary>Moods there are (<see cref="ChirpMood"/> values 0 .. MoodCount-1).</summary>
-        public const int MoodCount = 8;
+        public const int MoodCount = 9;
 
         [SerializeField] private Mood[] _moods = Array.Empty<Mood>();
 

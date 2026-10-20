@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using MoonProject.Core;
 
@@ -11,7 +12,7 @@ namespace MoonProject.Gameplay
     /// milestones from the base: Power on (a built solar array connected to a built pad) and night-ready (a built
     /// battery bank connected to it as well). Allocation-free.
     /// </summary>
-    public sealed class PadChargers
+    public sealed class PadChargers : IChargePointSource
     {
         private const float PoweredSupply = 0.01f;
 
@@ -97,6 +98,23 @@ namespace MoonProject.Gameplay
             }
 
             return bestSq < float.MaxValue;
+        }
+
+        /// <summary>
+        /// Adds to <paramref name="points"/> where every built pad that can charge 07 stands (powered, or on the
+        /// lander's cable while its reserve lasts): the range ring's charge points.
+        /// </summary>
+        public void CopyChargePoints(List<Vector3> points)
+        {
+            for (int i = 0; i < _base.Count; i++)
+            {
+                PlacedStructure pad = _base.StructureAt(i);
+                if (pad.IsBuilt && pad.Definition.Id == StructureIds.ChargingPad &&
+                    (Powered(pad) || (OnCable(pad) && !_port.Spent)))
+                {
+                    points.Add(pad.Pose.Position);
+                }
+            }
         }
 
         /// <summary>A built solar array is connected to a built pad.</summary>
