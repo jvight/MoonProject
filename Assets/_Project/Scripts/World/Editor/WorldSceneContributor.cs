@@ -23,11 +23,6 @@ namespace MoonProject.World.Editor
         // The ruin whose fallen wings glint, the material its cells wear, and how far off the cells its glint floats.
         private const string FallenSolarArrayName = "FallenSolarArray";
         private const string SolarCellMaterial = "R1_SolarCell";
-
-        // The ruin whose power module still blinks at dusk, and Art's node for the lamp's lens on it.
-        private const string HabitatModulesName = "HabitatModules";
-        private const string ModuleLampNode = "PowerModule_StatusLamp";
-        private const string LampLensMaterial = "R1_LampAmber";
         private const float GlintLift = 0.03f;
 
         /// <summary>[World]/ArrayGlint: the fallen solar array's glints, beside the ruins.</summary>
@@ -63,6 +58,7 @@ namespace MoonProject.World.Editor
             PeakBeacon beacon = CreateBeacon(context, settings, root);
             CreateCallSkyPoint(context, settings, root);
             CreateRuins(context, settings, root);
+            StandModuleLamp(context, settings, root);
             OpeningLayoutPlacer.Place(context, settings, root);
 
             var world = context.CreateChild("World", root).AddComponent<WorldSystem>();
@@ -141,33 +137,31 @@ namespace MoonProject.World.Editor
                 {
                     StandArrayGlint(context, settings, instance, root);
                 }
-
-                if (piece.Id == HabitatModulesName)
-                {
-                    StandModuleLamp(context, settings, instance, root);
-                }
             }
         }
 
         /// <summary>
-        /// A sun-white glint halo over the middle of each fallen wing's solar cells and the <see cref="ArrayGlint"/>
-        /// that flares them in the sunlight, under [World]/ArrayGlint: kept out of the ruin itself, whose renderers are
-        /// its scan targets' and which Gameplay reads as a ruin piece. Each glint is a cracked cell that throws the
+        /// Sunlight off each fallen wing's glass under [World]/ArrayGlint: the wing's sheen (its cells, cut by the
+        /// World builder) laid on it and a four-point sparkle over the middle of its cells, and the
+        /// <see cref="ArrayGlint"/> that lights them in the sunlight. Kept out of the ruin itself, whose renderers are
+        /// its scan targets' and which Gameplay reads as a ruin piece. Each wing is a cracked facet that throws the
         /// golden-hour Sun (where the Sun holds from the first charge to power-on, opening v3 R4) at the apron's eye,
         /// so it calls from the base, as the retroreflector's facet does.
         /// </summary>
         private static void StandArrayGlint(SceneBuildContext context, WorldSettings settings, GameObject array,
             Transform root)
         {
-            var mesh = context.LoadAsset<Mesh>(WorldPaths.BeaconHaloMesh);
-            var material = context.LoadAsset<Material>(WorldPaths.ArrayGlintMaterial);
+            var quad = context.LoadAsset<Mesh>(WorldPaths.BeaconHaloMesh);
+            var sparkleMaterial = context.LoadAsset<Material>(WorldPaths.ArrayGlintMaterial);
+            var sheenMaterial = context.LoadAsset<Material>(WorldPaths.ArrayGlintSheenMaterial);
             GameObject holder = context.CreateChild(ArrayGlintName, root);
             MoonSurface surface = settings.CreateSurface();
             Vector2 apron = settings.Surface.Sites.ApronCenter;
             float eyeHeight = surface.SampleHeight(apron.x, apron.y) + settings.Landmarks.ReflectorEyeHeight;
             var eye = new Vector3(apron.x, eyeHeight, apron.y);
             Vector3 towardSun = OpeningLayoutPlacer.GoldenHourSun(settings);
-            var halos = new List<Renderer>();
+            var sparkles = new List<Renderer>();
+            var sheens = new List<Renderer>();
             var normals = new List<Vector3>();
             foreach (MeshRenderer wing in array.GetComponentsInChildren<MeshRenderer>())
             {
@@ -177,20 +171,18 @@ namespace MoonProject.World.Editor
                 }
 
                 Vector3 facet = (towardSun + (eye - middle).normalized).normalized;
-                GameObject halo = context.CreateChild("Glint", holder.transform);
-                halo.transform.SetPositionAndRotation(middle + facet * GlintLift, Quaternion.identity);
-                halo.AddComponent<MeshFilter>().sharedMesh = mesh;
-                var renderer = halo.AddComponent<MeshRenderer>();
-                renderer.sharedMaterial = material;
-                renderer.shadowCastingMode = ShadowCastingMode.Off;
-                renderer.receiveShadows = false;
-                renderer.lightProbeUsage = LightProbeUsage.Off;
-                renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
-                halos.Add(renderer);
+                GameObject sparkle = context.CreateChild("Sparkle", holder.transform);
+                sparkle.transform.SetPositionAndRotation(middle + facet * GlintLift, Quaternion.identity);
+                sparkles.Add(Glow(sparkle, quad, sparkleMaterial));
+                GameObject sheen = context.CreateChild("Sheen", holder.transform);
+                sheen.transform.SetPositionAndRotation(wing.transform.position, wing.transform.rotation);
+                sheen.transform.localScale = wing.transform.lossyScale;
+                sheens.Add(Glow(sheen, context.LoadAsset<Mesh>(WorldPaths.ArrayGlintSheenMesh(wing.name)),
+                    sheenMaterial));
                 normals.Add(facet);
             }
 
-            if (halos.Count == 0)
+            if (sparkles.Count == 0)
             {
                 throw new System.InvalidOperationException($"World scene build: Art's {FallenSolarArrayName} has no " +
                     $"{SolarCellMaterial} cells to glint.");
@@ -199,13 +191,16 @@ namespace MoonProject.World.Editor
             var glint = holder.AddComponent<ArrayGlint>();
             var serialized = new SerializedObject(glint);
             serialized.FindProperty("_settings").objectReferenceValue = settings;
-            SerializedProperty haloList = serialized.FindProperty("_halos");
+            SerializedProperty sparkleList = serialized.FindProperty("_sparkles");
+            SerializedProperty sheenList = serialized.FindProperty("_sheens");
             SerializedProperty normalList = serialized.FindProperty("_normals");
-            haloList.arraySize = halos.Count;
+            sparkleList.arraySize = sparkles.Count;
+            sheenList.arraySize = sheens.Count;
             normalList.arraySize = normals.Count;
-            for (int i = 0; i < halos.Count; i++)
+            for (int i = 0; i < sparkles.Count; i++)
             {
-                haloList.GetArrayElementAtIndex(i).objectReferenceValue = halos[i];
+                sparkleList.GetArrayElementAtIndex(i).objectReferenceValue = sparkles[i];
+                sheenList.GetArrayElementAtIndex(i).objectReferenceValue = sheens[i];
                 normalList.GetArrayElementAtIndex(i).vector3Value = normals[i];
             }
 
@@ -214,70 +209,36 @@ namespace MoonProject.World.Editor
         }
 
         /// <summary>
-        /// The habitat power module's status lamp under [World]/ModuleLamp: Art's lens on the ruin and a small amber
-        /// halo floated out in front of it, kept out of the ruin itself (its renderers are its scan targets'), and the
-        /// <see cref="ModuleStatusLamp"/> that blinks them from dusk.
+        /// The power module's status lamp halo under [World]/ModuleLamp, a small amber halo kept apart from the module
+        /// (07 tows it, and it is Gameplay's), and the <see cref="ModuleStatusLamp"/> that finds the towable module's
+        /// lamp at runtime and blinks lens and halo together from dusk.
         /// </summary>
-        private static void StandModuleLamp(SceneBuildContext context, WorldSettings settings, GameObject habitat,
-            Transform root)
+        private static void StandModuleLamp(SceneBuildContext context, WorldSettings settings, Transform root)
         {
-            Transform node = habitat.transform.Find(ModuleLampNode);
-            var lens = node != null ? node.GetComponent<MeshRenderer>() : null;
-            Mesh lensMesh = lens != null ? lens.GetComponent<MeshFilter>().sharedMesh : null;
-            int slot = lensMesh != null ? LensSlot(lens, lensMesh) : -1;
-            if (slot < 0)
-            {
-                throw new System.InvalidOperationException($"World scene build: Art's {HabitatModulesName} has no " +
-                    $"{ModuleLampNode} with an {LampLensMaterial} lens to blink.");
-            }
-
-            // The lens bulges out of its bezel: its middle sits in front of the node's pivot, on the bulkhead.
-            Vector3 lensMiddle = lensMesh.GetSubMesh(slot).bounds.center;
-            Vector3 facing = node.TransformDirection(lensMiddle);
-            if (facing.sqrMagnitude <= 0f)
-            {
-                throw new System.InvalidOperationException($"World scene build: Art's {ModuleLampNode} has its " +
-                    "pivot in its middle, so the way it faces cannot be read.");
-            }
-
             GameObject holder = context.CreateChild(ModuleLampName, root);
             GameObject halo = context.CreateChild("Halo", holder.transform);
-            Vector3 lift = facing.normalized * settings.Landmarks.ModuleLamp.HaloLift;
-            halo.transform.SetPositionAndRotation(node.TransformPoint(lensMiddle) + lift, Quaternion.identity);
-            halo.AddComponent<MeshFilter>().sharedMesh = context.LoadAsset<Mesh>(WorldPaths.BeaconHaloMesh);
-            var haloRenderer = halo.AddComponent<MeshRenderer>();
-            haloRenderer.sharedMaterial = context.LoadAsset<Material>(WorldPaths.ModuleLampHaloMaterial);
-            haloRenderer.shadowCastingMode = ShadowCastingMode.Off;
-            haloRenderer.receiveShadows = false;
-            haloRenderer.lightProbeUsage = LightProbeUsage.Off;
-            haloRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+            Renderer haloRenderer = Glow(halo, context.LoadAsset<Mesh>(WorldPaths.BeaconHaloMesh),
+                context.LoadAsset<Material>(WorldPaths.ModuleLampHaloMaterial));
 
             var lamp = holder.AddComponent<ModuleStatusLamp>();
             var serialized = new SerializedObject(lamp);
             serialized.FindProperty("_settings").objectReferenceValue = settings;
-            serialized.FindProperty("_lens").objectReferenceValue = lens;
-            serialized.FindProperty("_lensSlot").intValue = slot;
             serialized.FindProperty("_halo").objectReferenceValue = haloRenderer;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             context.AddSystem(lamp);
         }
 
-        /// <summary>
-        /// The material slot of <paramref name="lens"/> that wears the amber lens, found by name (the bezel shares the
-        /// node, in whatever slot order Art exports); -1 when none does.
-        /// </summary>
-        private static int LensSlot(MeshRenderer lens, Mesh mesh)
+        /// <summary>An unlit glow drawn on <paramref name="node"/>: <paramref name="mesh"/> in <paramref name="material"/>.</summary>
+        private static Renderer Glow(GameObject node, Mesh mesh, Material material)
         {
-            Material[] materials = lens.sharedMaterials;
-            for (int slot = 0; slot < materials.Length && slot < mesh.subMeshCount; slot++)
-            {
-                if (materials[slot] != null && materials[slot].name == LampLensMaterial)
-                {
-                    return slot;
-                }
-            }
-
-            return -1;
+            node.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var renderer = node.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = material;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            renderer.lightProbeUsage = LightProbeUsage.Off;
+            renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+            return renderer;
         }
 
         /// <summary>

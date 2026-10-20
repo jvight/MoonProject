@@ -923,6 +923,18 @@
             "text": "Lắp"
         },
         {
+            "key": "rack.headlamp",
+            "text": "Đèn pha SSR-3 · từ đơn vị 06"
+        },
+        {
+            "key": "rack.cell_pack",
+            "text": "Khối pin · từ đơn vị 06"
+        },
+        {
+            "key": "rack.hex_adapter",
+            "text": "Bộ sạc lục giác · từ Kestrel-3"
+        },
+        {
             "key": "pickup.crate.contents",
             "text": "phụ tùng"
         },
@@ -965,6 +977,14 @@
         {
             "key": "ui.face.tx_no_range",
             "text": "TX · NGOÀI TẦM"
+        },
+        {
+            "key": "ui.face.tx_ready",
+            "text": "TX · SẴN SÀNG"
+        },
+        {
+            "key": "ui.face.ack_route",
+            "text": "ACK · RELAY.1 · TUYẾN · ĐĨA ĐỈNH NÚI · NGẮT"
         },
         {
             "key": "ui.face.call",

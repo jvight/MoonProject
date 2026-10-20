@@ -39,6 +39,28 @@ namespace MoonProject.Audio
         [Tooltip("Volume scale of the raised mast's settle, after its top segment locks.")]
         [Range(0f, 1f)] [SerializeField] private float _mastSettleVolume = 0.75f;
 
+        [Header("Tow (TowAttached, ITowLine, TowReleased)")]
+        [Tooltip("Volume scale of the winch spooling out as the hook attaches.")]
+        [Range(0f, 1f)] [SerializeField] private float _towSpoolVolume = 0.8f;
+
+        [Tooltip("Volume scale of the cable's creak at full strain (kept under 07's drive).")]
+        [Range(0f, 1f)] [SerializeField] private float _towStrainVolume = 0.6f;
+
+        [Tooltip("Strain (0..1) at or below which the cable is slack and silent.")]
+        [Range(0f, 0.5f)] [SerializeField] private float _towSlackStrain = 0.08f;
+
+        [Tooltip("The creak's pitch just taut.")]
+        [Range(0.5f, 1.5f)] [SerializeField] private float _towStrainLowPitch = 0.85f;
+
+        [Tooltip("The creak's pitch stretched to the limit.")]
+        [Range(0.5f, 2f)] [SerializeField] private float _towStrainHighPitch = 1.2f;
+
+        [Tooltip("Seconds for the creak to follow the strain (time constant).")]
+        [Range(0.01f, 1f)] [SerializeField] private float _towStrainSmoothing = 0.15f;
+
+        [Tooltip("Volume scale of the release clunk (and of the harsher snap).")]
+        [Range(0f, 1f)] [SerializeField] private float _towReleaseVolume = 0.8f;
+
         public float WeldFadeIn => _weldFadeIn;
         public float WeldFadeOut => _weldFadeOut;
         public float PowerOnVolume => _powerOnVolume;
@@ -47,5 +69,12 @@ namespace MoonProject.Audio
         public float BaseLampVolume => _baseLampVolume;
         public float MastClunkVolume => _mastClunkVolume;
         public float MastSettleVolume => _mastSettleVolume;
+        public float TowSpoolVolume => _towSpoolVolume;
+        public float TowStrainVolume => _towStrainVolume;
+        public float TowSlackStrain => _towSlackStrain;
+        public float TowStrainLowPitch => _towStrainLowPitch;
+        public float TowStrainHighPitch => _towStrainHighPitch;
+        public float TowStrainSmoothing => _towStrainSmoothing;
+        public float TowReleaseVolume => _towReleaseVolume;
     }
 }

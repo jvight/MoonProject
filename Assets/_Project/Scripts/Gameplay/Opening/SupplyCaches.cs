@@ -479,7 +479,7 @@ namespace MoonProject.Gameplay
         /// The level frame a crate's offset is in: the frame's heading on the ground. A ruin piece keeps Art's FBX
         /// root turn (its forward points down, its up along the ground), so its heading is its up laid flat.
         /// </summary>
-        private static Quaternion Heading(Transform frame)
+        internal static Quaternion Heading(Transform frame)
         {
             Vector3 forward = frame.forward;
             forward.y = 0f;

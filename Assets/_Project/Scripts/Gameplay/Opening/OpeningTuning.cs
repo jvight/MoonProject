@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using MoonProject.Core.Events;
 
 namespace MoonProject.Gameplay
 {
@@ -101,9 +102,32 @@ namespace MoonProject.Gameplay
         [Tooltip("The sender's identity and its decode, and where its point of light stands beside Earth.")]
         [SerializeField] private CallSettings _call = new CallSettings();
 
+        [Header("The socket rack at the pad (opening v3 4.3)")]
+        [Tooltip("The rack's bays, left to right, matching Art's Bay_0.. nodes: each part's outline, when 07 sees it " +
+                 "and what fills it. A bay's id is also the string key of its words on the aim chip.")]
+        [SerializeField] private RackBaySettings[] _rackBays =
+        {
+            new RackBaySettings("rack.headlamp", true, string.Empty, RoverKitPiece.LampBar),
+            new RackBaySettings("rack.cell_pack", true, string.Empty, RoverKitPiece.BatterySpine),
+            new RackBaySettings("rack.hex_adapter", false, "rover.hex_adapter", RoverKitPiece.HexChargeAdapter),
+        };
+
         [Header("The failed reply and the raised mast (opening v3 R7)")]
         [Tooltip("When 07 tries to answer the call, and how the antenna mast's segments lift and lock.")]
         [SerializeField] private CallReplySettings _reply = new CallReplySettings();
+
+        [Header("The tow (opening v3 R6, ruling 4)")]
+        [Tooltip("07's winch cable: its reach, its rope's pull, how a caught load is lifted free and where a load " +
+                 "comes home.")]
+        [SerializeField] private TowSettings _tow = new TowSettings();
+
+        [Tooltip("The opening's towable loads and where they first stand: the habitat's power module, the battery " +
+                 "bank's frame (Art's PowerModule, its TowHitch on its front face).")]
+        [SerializeField] private TowLoadSpot[] _towLoads = Array.Empty<TowLoadSpot>();
+
+        [Header("The answer (opening v3 R8)")]
+        [Tooltip("Where and how long 07 holds to transmit, and how the pulse of the old network runs to relay.1 and the Peak.")]
+        [SerializeField] private CallAnswerSettings _answer = new CallAnswerSettings();
 
         [Header("The first free choice and dusk (opening v3 R5–R6)")]
         [Tooltip("The near sites 07 is free to visit after power-on, either order, by their frames: a Lumen ruin " +
@@ -200,8 +224,44 @@ namespace MoonProject.Gameplay
 
         public CallReplySettings Reply => _reply;
 
+        public TowSettings Tow => _tow;
+
+        public IReadOnlyList<TowLoadSpot> TowLoads => _towLoads ?? Array.Empty<TowLoadSpot>();
+
+        public CallAnswerSettings Answer => _answer;
+
         public IReadOnlyList<string> DuskSites => _duskSites ?? Array.Empty<string>();
 
         public float DuskSiteReach => _duskSiteReach;
+
+        public IReadOnlyList<RackBaySettings> RackBays => _rackBays;
+
+        /// <summary>Null when the rack's bays can work, else the first problem.</summary>
+        public string ValidateRack()
+        {
+            if (_rackBays == null || _rackBays.Length == 0)
+            {
+                return "the socket rack has no bays";
+            }
+
+            for (int i = 0; i < _rackBays.Length; i++)
+            {
+                string problem = _rackBays[i] != null ? _rackBays[i].Validate() : $"rack bay {i} is empty";
+                if (problem != null)
+                {
+                    return problem;
+                }
+
+                for (int j = 0; j < i; j++)
+                {
+                    if (string.Equals(_rackBays[j].Id, _rackBays[i].Id, StringComparison.Ordinal))
+                    {
+                        return $"two rack bays share the id '{_rackBays[i].Id}'";
+                    }
+                }
+            }
+
+            return null;
+        }
     }
 }

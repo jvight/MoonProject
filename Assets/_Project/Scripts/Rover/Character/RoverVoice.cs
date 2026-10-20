@@ -50,6 +50,7 @@ namespace MoonProject.Rover
                 events.Subscribe<LowPowerChanged>(OnLowPowerChanged),
                 events.Subscribe<RoverRecovering>(_ => Say(ChirpMood.Worried, Gentle)),
                 events.Subscribe<ChargingChanged>(OnChargingChanged),
+                events.Subscribe<TowReleased>(OnTowReleased),
                 events.Subscribe<CutterTierChanged>(changed => _upgradedCutPending |= !changed.Restored),
                 events.Subscribe<FriendRepaired>(_ => Say(ChirpMood.Happy, Gentle)),
                 events.Subscribe<CallReplyFailed>(_ => Say(ChirpMood.Ask, 1f)),
@@ -90,6 +91,22 @@ namespace MoonProject.Rover
             else if (scanned.Index + 1 < scanned.Count)
             {
                 Say(ChirpMood.Curious, Gentle);
+            }
+        }
+
+        /// <summary>
+        /// A tow ends (opening v3 3.2b): the load that comes home is 07's "full" chirp, the happy one of a battery
+        /// that is full at the dock; a cable that gives way is a short, worried one; letting go by choice is silent.
+        /// </summary>
+        private void OnTowReleased(TowReleased released)
+        {
+            if (released.Reason == TowRelease.Arrived)
+            {
+                Say(ChirpMood.Happy, 1f);
+            }
+            else if (released.Reason == TowRelease.Snapped)
+            {
+                Say(ChirpMood.Worried, Gentle);
             }
         }
 

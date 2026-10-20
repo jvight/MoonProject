@@ -32,12 +32,20 @@ namespace MoonProject.Autoplay
 
         /// <summary>A cue counts as on screen this far in from each edge of the view (a share of the viewport).</summary>
         private const float CueMargin = 0.05f;
+
+        /// <summary>Seconds of one sweep of the view while the bot looks for a lit cue.</summary>
+        private const float CueSweepSeconds = 1.5f;
         private const float DriveSeconds = 150f;
         private const float BaseSpacing = 7f;
 
         /// <summary>The bank stands close to the pad, well inside the cable reach, as a sensible player places it.</summary>
         private const float BankPadSpacing = 4.5f;
         private const float RuinsGateOffset = 10f;
+        private const float AnswerReadySeconds = 120f;
+        private const float MastArriveRadius = 4f;
+        private const float MastSettleSeconds = 10f;
+        private const float TransmitSeconds = 40f;
+        private const float PulseSeconds = 60f;
         private const float ScanStandOff = 3.5f;
         private const float PanelStandOff = 2.5f;
         private const float ScanLineUp = 3f;
@@ -53,6 +61,12 @@ namespace MoonProject.Autoplay
 
         // Closer than this (metres, flat) a small crate's seal lies under 07's nose, out of the chest cutter's sight.
         private const float SealTooClose = 1f;
+
+        /// <summary>Closer than this (metres, flat) to a scan piece 07 has rolled in over it.</summary>
+        private const float ScanTooClose = 1.5f;
+
+        /// <summary>...and it backs off to this share of the stand-off.</summary>
+        private const float ScanBackOffShare = 0.8f;
         private const float SealCutSeconds = 30f;
         private const float SealCandidateSeconds = 3f;
         private const int SealCandidateAttempts = 3;
@@ -156,6 +170,35 @@ namespace MoonProject.Autoplay
                 () => "Lit " + cue.Lit() + ", at " + cue.Point() + ", in the view at " +
                       _bot.World.Context.Get<IViewCamera>().Camera.WorldToViewportPoint(cue.Point()) + ".");
             CuePoint = cue.Point();
+        }
+
+        /// <summary>
+        /// The player's look for a cue: the bot turns the view round until the cue is lit and on screen, within
+        /// <paramref name="seconds"/>; a cue that never shows is listed as a warning (the glint depends on where the
+        /// view stands against the Sun, so a miss is a note for the world's slice, not a failed run).
+        /// </summary>
+        public IEnumerator SeeWorldCue(WorldCue cue, string why, float seconds = CueSeconds)
+        {
+            if (cue == null)
+            {
+                _bot.Warn("the scene has no cue for " + why + ".");
+                yield break;
+            }
+
+            float deadline = Time.unscaledTime + seconds;
+            while (Time.unscaledTime < deadline)
+            {
+                if (cue.Lit() && WorldCue.OnScreen(_bot.World.Context.Get<IViewCamera>().Camera, cue.Point(), CueMargin))
+                {
+                    CuePoint = cue.Point();
+                    yield break;
+                }
+
+                yield return cue.Lit() ? _bot.LookAround(CueSweepSeconds) : null;
+            }
+
+            _bot.Warn("world cue '" + cue.Name + "' was not lit and on screen within " +
+                      seconds.ToString("0", CultureInfo.InvariantCulture) + " s (" + why + "): lit " + cue.Lit() + ".");
         }
 
         /// <summary>The objective line the game must be on, and reading on screen once 07 stands still.</summary>
@@ -582,6 +625,24 @@ namespace MoonProject.Autoplay
             yield return _bot.Until(() => sunlight.Phase == SkyPhase.Earthlit, SunsetSeconds, "the first night to fall");
         }
 
+        /// <summary>
+        /// B12: the mast has been raised and 07's reply has failed; the answer becomes possible, 07 goes to the mast,
+        /// holds E to transmit, relay.1 answers (CallAnswered) and the pulse runs on to the Peak.
+        /// </summary>
+        public IEnumerator AnswerTheCall()
+        {
+            var answer = _bot.World.Context.Get<IAnswerStatus>();
+            yield return _bot.Until(() => answer.Phase >= AnswerPhase.Ready, AnswerReadySeconds,
+                "the answer to become possible (the mast raised, the reply failed)", () => "Phase " + answer.Phase + ".");
+            yield return _bot.DriveTo(answer.MastPoint, MastArriveRadius, "to the mast", DriveSeconds);
+            yield return _bot.Until(() => answer.AtTheMast, MastSettleSeconds, "07 to stand still at the mast");
+            yield return _bot.Hold(Key.E, () => answer.Phase >= AnswerPhase.Transmitting, TransmitSeconds,
+                "the transmission to go out");
+            yield return UntilReached(OpeningMilestone.CallAnswered, "relay.1 to answer the call", TransmitSeconds);
+            yield return _bot.Until(() => answer.Phase == AnswerPhase.Done, PulseSeconds,
+                "the pulse to reach the Peak's dish");
+        }
+
         public IEnumerator DriveToTheRuinsGate(string what)
         {
             yield return TopUpIfLow();
@@ -734,6 +795,15 @@ namespace MoonProject.Autoplay
 
             yield return _bot.DriveTo(Flat(fragment.Point), standOff, "the spot facing " + fragment.FragmentId,
                 DriveSeconds);
+            if (DriveSteering.FlatDistance(fragment.Point, _bot.World.Rover.Position) < ScanTooClose)
+            {
+                // Rolled in over the piece: the scan lens cannot see it past 07's own body, so back off and face it
+                // again, as a player would.
+                Vector3 point = fragment.Point;
+                yield return _bot.BackOff(() => DriveSteering.FlatDistance(point, _bot.World.Rover.Position) >=
+                                                standOff * ScanBackOffShare, DriveSeconds, fragment.FragmentId);
+            }
+
             yield return _bot.TurnToward(fragment.Point, fragment.FragmentId);
             UiProbe ui = _bot.World.Ui;
             float deadline = Time.unscaledTime + ScanLookSeconds;
@@ -749,7 +819,8 @@ namespace MoonProject.Autoplay
                 yield return null;
             }
 
-            fragment = scans.Candidate;
+            // The brackets may have left between the check and here (a frame's flicker): scan what was framed.
+            fragment = scans.Candidate ?? fragment;
             yield return FirstUse(ScanVerb, "hint.scan");
             yield return _bot.Hold(Key.E, () =>
                 {

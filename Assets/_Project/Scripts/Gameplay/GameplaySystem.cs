@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
+using MoonProject.Core.Input;
 using MoonProject.Core.Save;
 
 namespace MoonProject.Gameplay
@@ -82,6 +83,7 @@ namespace MoonProject.Gameplay
         private readonly List<IDisposable> _saveTokens = new List<IDisposable>();
         private readonly List<IDisposable> _flowTokens = new List<IDisposable>();
         private IRoverState _roverState;
+        private InputReader _input;
         private GlowMeshSet _meshes;
 
         public MaterialStock Materials { get; private set; }
@@ -134,9 +136,21 @@ namespace MoonProject.Gameplay
 
         public CallReply Reply { get; private set; }
 
+        /// <summary>The socket rack at the pad (opening v3 4.3): held until the west signal, then out at a dock.</summary>
+        public SocketRackField Rack { get; private set; }
+
         public MastRaise MastRaise { get; private set; }
 
         public MastRaiseView MastRaiseView { get; private set; }
+
+        public CallAnswer Answer { get; private set; }
+
+        public NetworkPulseView PulseView { get; private set; }
+
+        public ReleaseSequence Release { get; private set; }
+
+        /// <summary>Seconds of holding E at the mast to transmit (tests).</summary>
+        public float HoldSecondsForTests => _openingTuning.Answer.HoldSeconds;
 
         /// <summary>How the mast raises and the reply times (tests).</summary>
         public CallReplySettings MastRaiseSettings => _openingTuning.Reply;
@@ -150,6 +164,9 @@ namespace MoonProject.Gameplay
 
         /// <summary>The base's lamps, which follow the Sun (null while the opening could not be built).</summary>
         public BaseLamps BaseLamps { get; private set; }
+
+        /// <summary>07's winch cable: what it tows, hooked and let go with the tether key (opening v3 R6).</summary>
+        public TowLine Tow { get; private set; }
 
         public SalvageField Salvage => _salvage;
 
@@ -256,6 +273,7 @@ namespace MoonProject.Gameplay
                 context.Get<IWorldLayout>(), context.Get<IWorldAnchors>(), context.Get<IRoverState>(),
                 context.Get<IRoverRig>(), context.Get<IViewCamera>(), save, Materials, _visuals, _glints, _meshes);
             _roverState = services.Rover;
+            _input = services.Input;
             GlintVeil veil = services.GlintVeil;
             _flowTokens.Add(context.Events.Subscribe<TitleShown>(_ => veil.Hide()));
             _flowTokens.Add(context.Events.Subscribe<SessionStarted>(_ => veil.Show(Time.time)));
@@ -308,12 +326,24 @@ namespace MoonProject.Gameplay
             Recovery = new RecoveryProgress(context.Events, PowerLamps, PowerSteps, _openingTuning.RecoveryLamps);
             Call = new CallProgress(context.Events, _openingTuning.Call, services.Layout);
             Reply = new CallReply(context.Events, Call, _openingTuning.Reply);
+            Rack = new SocketRackField(context.Events, _openingTuning.RackBays);
             MastRaise = new MastRaise(context.Events, _openingTuning.Reply);
             MastRaiseView = new MastRaiseView(context.Events, _building, MastRaise, _openingTuning.Reply);
+            services.Anchors.TryGet(WorldAnchorIds.RelayPrefix + "1", out WorldAnchor relay);
+            Answer = new CallAnswer(context.Events, Call, Reply, MastRaise, _openingTuning.Answer, relay.Position,
+                services.Layout.PeakPosition);
             RangeRing = new RangeRingField(context.Events, _battery.Tuning.RangeRing,
                 new RangeRingModel(_battery.Tuning, _battery.Tuning.RangeRing, services.Terrain), _battery.Model,
                 Opening.Pads, services.Rover);
             RangeRingLine = new RangeRingLine(transform, _visuals.BeamCore, RangeRing, _battery.Tuning.RangeRing);
+            Tow = NewTow(services);
+            if (Tow == null)
+            {
+                Fail("the tow did not stand (see its error).");
+                return;
+            }
+
+            _battery.ConnectTow(Tow);
             _flowTokens.Add(context.Events.Subscribe<ChargingChanged>(OnChargingChanged));
             context.Register<IMaterialStock>(Materials);
             context.Register<IMaterialCatalog>(_materialCatalog);
@@ -328,7 +358,16 @@ namespace MoonProject.Gameplay
             context.Register<IBeamStatus>(services.Beam);
             context.Register<IRecoveryProgress>(Recovery);
             context.Register<ICallSource>(Call);
+            context.Register<IRackStatus>(Rack);
+            context.Register<IAnswerStatus>(Answer);
+            services.Anchors.TryGet(WorldAnchorIds.SitePrefix + "kestrel", out WorldAnchor kestrel);
+            Release = new ReleaseSequence(context.Events, Call, RangeRing, RangeRing.Show, _openingTuning.Answer,
+                relay.Position + Vector3.up * _openingTuning.Answer.RelayLampHeight,
+                services.Layout.PeakPosition + Vector3.up * _openingTuning.Answer.DishHeight, kestrel.Position);
+            PulseView = new NetworkPulseView(transform, _visuals.BeamCore, services.Meshes.Sphere, _visuals.Flash,
+                context.Events, _openingTuning.Answer);
             context.Register<IRangeRing>(RangeRing);
+            context.Register<ITowLine>(Tow);
             context.Register<IDatabank>(Databank);
             context.Register<BuildField>(_building);
             RegisterSaveSections(save);
@@ -338,6 +377,7 @@ namespace MoonProject.Gameplay
         {
             CallSaveData data = Call.Capture();
             Reply.Capture(data);
+            Release.Capture(data);
             return data;
         }
 
@@ -345,6 +385,7 @@ namespace MoonProject.Gameplay
         {
             Call.Restore(data);
             Reply.Restore(data);
+            Release.Restore(data);
         }
 
         private void RegisterSaveSections(ISaveService save)
@@ -367,6 +408,10 @@ namespace MoonProject.Gameplay
                 GameplaySaveKeys.DatabankVersion, Databank.Capture, Databank.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<CallSaveData>(GameplaySaveKeys.Call,
                 GameplaySaveKeys.CallVersion, CaptureCall, RestoreCall)));
+            _saveTokens.Add(save.Register(new SaveSection<TowSaveData>(GameplaySaveKeys.Tow,
+                GameplaySaveKeys.TowVersion, Tow.Capture, Tow.Restore)));
+            _saveTokens.Add(save.Register(new SaveSection<RackSaveData>(GameplaySaveKeys.Rack,
+                GameplaySaveKeys.RackVersion, Rack.Capture, Rack.Restore)));
             _saveTokens.Add(_building.RegisterSave(save));
         }
 
@@ -548,6 +593,8 @@ namespace MoonProject.Gameplay
             StartKit.Announce();
             Recovery.Announce();
             Call.Announce();
+            Release.Announce();
+            Rack.Announce();
             Opening.Announce();
         }
 
@@ -561,9 +608,13 @@ namespace MoonProject.Gameplay
             Scans.Step(now, deltaTime);
             ScanMark.Step(Scans.Scanning == null ? Scans.Candidate : null, deltaTime);
             Opening.Step(deltaTime);
+            Tow.Step(_input.TetherPressed);
             Reply.Step(deltaTime, Opening.NightFallen, _roverState.Speed);
             MastRaise.Step(deltaTime);
             MastRaiseView.Step();
+            PulseView.Step(deltaTime);
+            Release.Step(deltaTime);
+            Answer.Step(deltaTime, Opening.NightFallen, _input.ExcavateHeld, _roverState.Position, _roverState.Speed);
             RangeRing.Step(deltaTime);
             RangeRingLine.Step();
             PadLock.Step(deltaTime);
@@ -571,6 +622,51 @@ namespace MoonProject.Gameplay
             ApronGlow.Step(_building.State != BuildModeState.Closed, deltaTime);
             ApronGuide.Step(_building.State != BuildModeState.Closed && !AnyPadStands(), deltaTime);
             Recovery.Refresh();
+        }
+
+        private void FixedUpdate()
+        {
+            Tow?.FixedStep(Time.fixedDeltaTime);
+        }
+
+        /// <summary>
+        /// 07's winch cable, with home at the apron, and the opening's towable loads stood on it; null (logged) without
+        /// the winch, the apron or Art's loads.
+        /// </summary>
+        private TowLine NewTow(GameplayServices services)
+        {
+            Transform winch = services.Rig != null ? services.Rig.WinchOrigin : null;
+            if (winch == null)
+            {
+                Debug.LogError($"{nameof(GameplaySystem)}: the tow needs IRoverRig.WinchOrigin (07's winch).", this);
+                return null;
+            }
+
+            if (!services.Anchors.TryGet(_openingTuning.ApronAnchor, out WorldAnchor apron))
+            {
+                Debug.LogError($"{nameof(GameplaySystem)}: the tow's home is world anchor " +
+                               $"'{_openingTuning.ApronAnchor}', which the World does not publish.", this);
+                return null;
+            }
+
+            var tow = new TowLine(services.Events, _openingTuning.Tow, winch, services.Rover, apron.Position);
+            Transform loads = new GameObject("TowLoads").transform;
+            loads.SetParent(transform, false);
+            try
+            {
+                foreach (TowLoadSpot spot in _openingTuning.TowLoads)
+                {
+                    tow.Add(TowLoads.Stand(spot, Opening.FrameOf(spot.AnchorId), loads, services.Terrain,
+                        _openingTuning.Tow));
+                }
+            }
+            catch (InvalidOperationException exception)
+            {
+                Debug.LogError($"{nameof(GameplaySystem)}: {exception.Message}", this);
+                return null;
+            }
+
+            return tow;
         }
 
         /// <summary>
@@ -619,6 +715,7 @@ namespace MoonProject.Gameplay
                 : _baseTuning == null ? "BaseTuning is not assigned."
                 : _openingTuning == null ? "OpeningTuning is not assigned."
                 : _openingTuning.Call.Validate() != null ? "OpeningTuning: " + _openingTuning.Call.Validate() + "."
+                : _openingTuning.ValidateRack() != null ? "OpeningTuning: " + _openingTuning.ValidateRack() + "."
                 : _salvage == null ? "SalvageField is not assigned."
                 : _battery == null ? "BatteryField is not assigned."
                 : _building == null ? "BuildField is not assigned."
@@ -664,8 +761,12 @@ namespace MoonProject.Gameplay
             Databank?.Dispose();
             StartKit?.Dispose();
             Call?.Dispose();
+            Rack?.Dispose();
             MastRaise?.Dispose();
             MastRaiseView?.Dispose();
+            Answer?.Dispose();
+            PulseView?.Dispose();
+            Release?.Dispose();
             RangeRing?.Dispose();
             Bundles?.Dispose();
             Opening?.Dispose();

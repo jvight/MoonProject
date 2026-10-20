@@ -112,6 +112,7 @@ namespace MoonProject.UI
         private string _toastText;
         private float _toastLeft;
         private float _replyLeft;
+        private string _replyKey;
         private bool _replyOnFace;
         private FaceNotice _faceNotice;
         private bool _noticeOnCrt;
@@ -300,7 +301,18 @@ namespace MoonProject.UI
             EventBus events = services.Events;
             _events = events;
             _tokens.Add(events.Subscribe<RoverAwoke>(OnRoverAwoke));
-            _tokens.Add(events.Subscribe<CallReplyFailed>(_ => _replyLeft = _tuning.Guidance.ReplyFaceSeconds));
+            _tokens.Add(events.Subscribe<CallReplyFailed>(_ => ShowFaceLine(UiKeys.FaceTxNoRange,
+                _tuning.Guidance.ReplyFaceSeconds)));
+            _tokens.Add(events.Subscribe<CallAnswerPhaseChanged>(changed =>
+            {
+                if (changed.Phase == AnswerPhase.Ready && !changed.Restored)
+                {
+                    ShowFaceLine(UiKeys.FaceTxReady, _tuning.Guidance.TxReadySeconds);
+                }
+            }));
+            _tokens.Add(events.Subscribe<TransmitPrompted>(_ => ShowFaceLine(UiKeys.FaceTxReady,
+                _tuning.Guidance.TxPromptSeconds)));
+            _tokens.Add(events.Subscribe<RelayAcked>(_ => ShowFaceLine(UiKeys.FaceAck, _tuning.Guidance.AckSeconds)));
             _tokens.Add(events.Subscribe<CallStateChanged>(OnCallStateChanged));
             _tokens.Add(events.Subscribe<CallDecoded>(OnCallDecoded));
             _tokens.Add(events.Subscribe<TitleShown>(OnTitleShown));
@@ -572,7 +584,8 @@ namespace MoonProject.UI
                 : Mathf.Max(0f, _pickUpGrace - deltaTime);
             _prompt.Tick(deltaTime, PromptsOpen(paused), holder == PromptHolder.Chip, _services.Hints.Primary, device,
                 panelSize);
-            _salvageRing.Tick(deltaTime, !paused && _awake, panelSize);
+            _services.TryGetAnswer(out IAnswerStatus answer);
+            _salvageRing.Tick(deltaTime, !paused && _awake, panelSize, answer);
             _readout.Tick(hudTime, holder == PromptHolder.Readout);
             // The look-up chip is the gentlest of the prompts: a teaching prompt that wants the screen takes it first.
             bool hintOpen = LookHintsOpen() && holder == PromptHolder.Chip &&
@@ -1591,6 +1604,13 @@ namespace MoonProject.UI
         /// face; a line cuts the call at once rather than overlapping it. The face is handed back only if nothing else
         /// took it meanwhile.
         /// </summary>
+        /// <summary>07's face puts one of the story's lines up for <paramref name="seconds"/>, as the one element.</summary>
+        private void ShowFaceLine(string key, float seconds)
+        {
+            _replyKey = key;
+            _replyLeft = seconds;
+        }
+
         private void StepFaceNotice(float deltaTime)
         {
             bool blocked = _blockedCue.FaceShown;
@@ -1617,7 +1637,7 @@ namespace MoonProject.UI
 
             if (show)
             {
-                _faceNotice.Show(reply ? _localization.Get(UiKeys.FaceTxNoRange)
+                _faceNotice.Show(reply ? _localization.Get(_replyKey)
                     : blocked ? _localization.Get(UiKeys.FaceNoLine) : _toastText);
             }
             else

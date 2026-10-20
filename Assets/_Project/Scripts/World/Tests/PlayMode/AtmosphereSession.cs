@@ -72,13 +72,31 @@ namespace MoonProject.World.PlayModeTests
         private const float CueTowerLook = 7f;
         private const string CueLampName = "ModuleLamp";
 
+        // relay.1's lamp: its node, the answered loop's length, and the crop's lens.
+        private const string RelayLampName = "RelayLamp";
+        private const float RelayAnsweredSignSeconds = 6f;
+        private const float RelayCropFov = 6f;
+
         // The call's point of light: when the face shot holds, one sign's length, how near its brightest a shot waits
         // for.
         private const string SkyPointName = "CallSkyPoint";
         private const float SkyPointFaceShotSeconds = 3f;
         private const float SkyPointSignSeconds = 4f;
         private const float SkyPointPeakSlack = 0.02f;
+
+        // The live series: a frame every tenth of a second, in its own folder, after the call settles from broken.
+        private const float SkyPointFrameSeconds = 0.1f;
+        private const float SkyPointSettleSeconds = 0.5f;
+        private const string SkyPointSeriesFolder = "skypoint-series";
+        private const float SkyPointProbeDistance = 100f;
+
+        // The array's glint watched from the pad: how long after the lamp-out, and a frame every few seconds.
+        private const int GlintWatchSeconds = 20;
+        private const int GlintShotEvery = 4;
+        private const float GlintZoomFov = 10f;
+        private const string GlintSparkleName = "Sparkle";
         private const string CueLampLens = "PowerModule_StatusLamp";
+        private const string CueLampTowId = "habitat.power_module";
         private const float CueLampStandOff = 10f;
         private const float CueLampPeak = 0.9f;
         private const float CueLampTimeout = 30f;
@@ -440,6 +458,202 @@ namespace MoonProject.World.PlayModeTests
         }
 
         /// <summary>
+        /// The call's point of light live, from 07's chase camera turned toward it on a real New Game: one full 4 s sign
+        /// while the call is broken, then, once 07's first charge locks it, one full sign steady, as a frame series
+        /// (Logs/world-captures/skypoint-series/broken-NN.png, locked-NN.png) with each frame's level and ring in the
+        /// log.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(CanyonSessionScene))]
+        [PostBuildCleanup(typeof(CanyonSessionScene))]
+        public IEnumerator CallSkyPoint_IsFilmedThroughOneSign_BrokenThenLocked()
+        {
+            BootstrapHarness.DeleteSaveFiles(CanyonSessionScene.SaveSlot);
+#if UNITY_EDITOR
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(CanyonSessionScene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            while (!loading.isDone)
+            {
+                yield return null;
+            }
+
+            WorldSettings settings = AssetDatabase.LoadAssetAtPath<WorldSettings>(OpeningSettingsPath);
+#else
+            throw new NotSupportedException("The atmosphere session loads the scene through the editor.");
+#endif
+            GameBootstrap bootstrap = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
+            {
+                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
+            }
+
+            Assert.IsNotNull(bootstrap, "the scene has its bootstrap");
+            GameContext context = bootstrap.Context;
+            _awoke = context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
+            float started = Time.time;
+            while (!_awake)
+            {
+                Assert.Less(Time.time - started, WakeTimeout, "07 wakes up");
+                yield return null;
+            }
+
+            var point = FindNamed(SkyPointName).GetComponent<CallSkyPoint>();
+            Camera view = context.Get<IViewCamera>().Camera;
+            Vector3 toward = Vector3.ProjectOnPlane(context.Get<ICallSource>().Direction, Vector3.up).normalized;
+            Vector3 at = context.Get<IRoverState>().Position;
+            context.Get<IRoverPlacement>().PlaceAt(OnGround(context.Get<ITerrainQuery>(), new Vector2(at.x, at.z)),
+                Quaternion.LookRotation(toward, Vector3.up));
+            yield return new WaitForSeconds(SettleSeconds);
+            yield return FilmSkyPoint(context, view, point, "broken");
+
+            context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.FirstCharge, false));
+            yield return new WaitForSeconds(settings.Sky.CallPoint.StateFadeSeconds + SkyPointSettleSeconds);
+            Assert.AreEqual(CallState.Locked, context.Get<ICallSource>().State, "the first charge locks the call");
+            yield return FilmSkyPoint(context, view, point, "locked");
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        /// <summary>
+        /// The fallen array's glint from the pad at the lamp-out (opening v3 R4), on a real New Game: 07 on the apron
+        /// facing the array as its first charge ends, the lander's reserve spent and the eclipse breaking; every second
+        /// for <see cref="GlintWatchSeconds"/> the Sun, each wing's glint and whatever stands between the chase view and
+        /// each wing go to the log, with frames at Logs/world-captures/glint-pad-NN.png.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(CanyonSessionScene))]
+        [PostBuildCleanup(typeof(CanyonSessionScene))]
+        public IEnumerator ArrayGlint_IsWatchedFromThePad_AtTheLampOut()
+        {
+            BootstrapHarness.DeleteSaveFiles(CanyonSessionScene.SaveSlot);
+#if UNITY_EDITOR
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(CanyonSessionScene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            while (!loading.isDone)
+            {
+                yield return null;
+            }
+#else
+            throw new NotSupportedException("The atmosphere session loads the scene through the editor.");
+#endif
+            GameBootstrap bootstrap = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
+            {
+                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
+            }
+
+            Assert.IsNotNull(bootstrap, "the scene has its bootstrap");
+            GameContext context = bootstrap.Context;
+            _awoke = context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
+            float started = Time.time;
+            while (!_awake)
+            {
+                Assert.Less(Time.time - started, WakeTimeout, "07 wakes up");
+                yield return null;
+            }
+
+            Vector3 apron = Anchor(context.Get<IWorldAnchors>(), WorldAnchorIds.PlaceApron).Position;
+            Transform array = FindNamed(CueArrayName);
+            Transform halos = FindNamed(CueGlintName);
+            var glint = halos.GetComponent<ArrayGlint>();
+            Vector3 toArray = Vector3.ProjectOnPlane(array.position - apron, Vector3.up).normalized;
+            context.Get<IRoverPlacement>().PlaceAt(OnGround(context.Get<ITerrainQuery>(),
+                new Vector2(apron.x, apron.z)), Quaternion.LookRotation(toArray, Vector3.up));
+            yield return new WaitForSeconds(SettleSeconds);
+            context.Events.Publish(new LanderReserveChanged(0f, false));
+            context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.FirstCharge, false));
+            Camera view = context.Get<IViewCamera>().Camera;
+            for (int second = 0; second <= GlintWatchSeconds; second++)
+            {
+                var line = new StringBuilder($"[glint-pad] {second:00} s: sun {SunReport(context)}; " +
+                    $"array {Vector3.Distance(view.transform.position, array.position):F0} m off, viewport " +
+                    $"{view.WorldToViewportPoint(array.position)}; wings");
+                int wing = 0;
+                foreach (Transform sparkle in halos)
+                {
+                    if (sparkle.name != GlintSparkleName)
+                    {
+                        continue;
+                    }
+
+                    Vector3 at = sparkle.position;
+                    bool hitSomething = Physics.Linecast(view.transform.position, at, out RaycastHit hit,
+                        Layers.GroundMask | Layers.PropMask, QueryTriggerInteraction.Ignore);
+                    string between = hitSomething && !hit.collider.transform.IsChildOf(array)
+                        ? $"blocked by {hit.collider.name} at {hit.distance:F0} m"
+                        : "clear";
+                    line.Append($" {wing}: {glint.LevelOf(wing):F2} ({between})");
+                    wing++;
+                }
+
+                Debug.Log(line.ToString());
+                if (second % GlintShotEvery == 0)
+                {
+                    Shoot(view, $"glint-pad-{second:00}");
+                }
+
+                yield return new WaitForSeconds(1f);
+            }
+
+            // The player turning from the dark lander toward the light: the same eye, looking at the array.
+            var host = new GameObject("GlintTurnCamera");
+            try
+            {
+                var camera = host.AddComponent<Camera>();
+                camera.CopyFrom(view);
+                camera.enabled = false;
+                CopyPipelineSettings(view, camera);
+                Place(camera, LookPose("glint-pad-turned", view.transform.position, array.position, OpeningFov));
+                Shoot(camera, "glint-pad-turned");
+                Place(camera, LookPose("glint-pad-zoom", view.transform.position, array.position, GlintZoomFov));
+                Shoot(camera, "glint-pad-zoom");
+                Debug.Log($"[glint-pad] turned toward the array: wings {glint.LevelOf(0):F2} / {glint.LevelOf(1):F2}");
+            }
+            finally
+            {
+                Object.Destroy(host);
+            }
+
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        /// <summary>
+        /// One full sign of the point, a frame about every <see cref="SkyPointFrameSeconds"/> (each frame's own time
+        /// is logged, as a capture takes time of its own).
+        /// </summary>
+        private static IEnumerator FilmSkyPoint(GameContext context, Camera camera, CallSkyPoint point, string phase)
+        {
+            int frames = Mathf.CeilToInt(SkyPointSignSeconds / SkyPointFrameSeconds);
+            var log = new StringBuilder($"[skypoint] {phase} (seconds level/ring @pixel):");
+            float started = Time.time;
+            for (int i = 0; i < frames; i++)
+            {
+                FrameCapture.SavePng(camera, CaptureWidth, CaptureHeight,
+                    Path.Combine(CaptureFolder, SkyPointSeriesFolder, $"{phase}-{i:00}.png"));
+                Vector2 pixel = CapturePixel(camera,
+                    camera.transform.position + context.Get<ICallSource>().Direction * SkyPointProbeDistance);
+                log.Append($" {Time.time - started:F2} {point.Level:F2}/{point.Pulse:F2} @{pixel.x:F0},{pixel.y:F0};");
+                yield return new WaitForSeconds(SkyPointFrameSeconds);
+            }
+
+            Debug.Log(log.ToString());
+        }
+
+        /// <summary>
+        /// Where <paramref name="world"/> lands in a capture of <paramref name="camera"/>, in pixels from its top left:
+        /// projected at the capture's own aspect, which the camera takes while it renders into the capture's target.
+        /// </summary>
+        private static Vector2 CapturePixel(Camera camera, Vector3 world)
+        {
+            float aspect = (float)CaptureWidth / CaptureHeight;
+            Matrix4x4 projection = Matrix4x4.Perspective(camera.fieldOfView, aspect, camera.nearClipPlane,
+                camera.farClipPlane);
+            Vector3 clip = projection.MultiplyPoint(camera.worldToCameraMatrix.MultiplyPoint(world));
+            return new Vector2((clip.x + 1f) * 0.5f * CaptureWidth, (1f - clip.y) * 0.5f * CaptureHeight);
+        }
+
+        /// <summary>
         /// Waits through one sign for the point's brightest moment, then shoots <paramref name="camera"/> and logs
         /// its level, the call's state and whether its signal is heard.
         /// </summary>
@@ -466,11 +680,100 @@ namespace MoonProject.World.PlayModeTests
         }
 
         /// <summary>
+        /// relay.1's lamp, the first lure after the answer (opening v3 R8), on a real New Game: the night ready and the
+        /// call answered, seen from the apron at the top of a key, as the whole night frame and as a close crop on the
+        /// mast. Logs/world-captures/relay-lamp-*.png, its distance and level in the log.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(CanyonSessionScene))]
+        [PostBuildCleanup(typeof(CanyonSessionScene))]
+        public IEnumerator RelayLamp_IsCapturedFromTheApron_AfterTheAnswer()
+        {
+            BootstrapHarness.DeleteSaveFiles(CanyonSessionScene.SaveSlot);
+#if UNITY_EDITOR
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(CanyonSessionScene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            while (!loading.isDone)
+            {
+                yield return null;
+            }
+#else
+            throw new NotSupportedException("The atmosphere session loads the scene through the editor.");
+#endif
+            GameBootstrap bootstrap = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
+            {
+                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
+            }
+
+            Assert.IsNotNull(bootstrap, "the scene has its bootstrap");
+            GameContext context = bootstrap.Context;
+            _awoke = context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
+            float started = Time.time;
+            while (!_awake)
+            {
+                Assert.Less(Time.time - started, WakeTimeout, "07 wakes up");
+                yield return null;
+            }
+
+            foreach (OpeningMilestone milestone in new[]
+                {
+                    OpeningMilestone.FirstCharge, OpeningMilestone.PowerOn, OpeningMilestone.NightReady,
+                    OpeningMilestone.CallAnswered,
+                })
+            {
+                context.Events.Publish(new OpeningMilestoneReached(milestone, true));
+            }
+
+            yield return new WaitForSeconds(SettleSeconds);
+            Assert.AreEqual(CallState.Answered, context.Get<ICallSource>().State, "the call is answered");
+            var lamp = FindNamed(RelayLampName).GetComponent<RelayAnswerLamp>();
+            Vector3 apronEye = Anchor(context.Get<IWorldAnchors>(), WorldAnchorIds.PlaceApron).Position
+                + Vector3.up * OpeningEyeHeight;
+            Camera view = context.Get<IViewCamera>().Camera;
+            var host = new GameObject("RelayLampCamera");
+            try
+            {
+                var camera = host.AddComponent<Camera>();
+                camera.CopyFrom(view);
+                camera.enabled = false;
+                CopyPipelineSettings(view, camera);
+                started = Time.time;
+                float brightest = 0f;
+                while (Time.time - started < RelayAnsweredSignSeconds)
+                {
+                    brightest = Mathf.Max(brightest, lamp.Level);
+                    yield return null;
+                }
+
+                started = Time.time;
+                while (lamp.Level < brightest - SkyPointPeakSlack && Time.time - started < RelayAnsweredSignSeconds)
+                {
+                    yield return null;
+                }
+
+                Place(camera, LookPose("relay-lamp-night", apronEye, lamp.transform.position, OpeningFov));
+                Shoot(camera, "relay-lamp-night");
+                Place(camera, LookPose("relay-lamp-crop", apronEye, lamp.transform.position, RelayCropFov));
+                Shoot(camera, "relay-lamp-crop");
+                Debug.Log($"[relay-lamp] {Vector3.Distance(apronEye, lamp.transform.position):F0} m from the apron; " +
+                          $"level {lamp.Level:F2} (brightest {brightest:F2})");
+            }
+            finally
+            {
+                Object.Destroy(host);
+            }
+
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        /// <summary>
         /// The opening v3 world cues at their fixed points (opening-v3-plan slice 1.2), on a real New Game:
         /// the lander's amber beacon in 07's first forward view; the lander from the apron, lit, and dark once its
         /// reserve is spent (its beacon, its port's pilot lamp and the glow along its cables die together); the fallen
         /// array glinting in the new sunlight once the eclipse ends; and the radio tower ruin against the stars at
-        /// night, with the habitat's power module lamp blinking beside it. Logs/world-captures/cue-*.png, with the
+        /// night, with the habitat's towable power module lamp blinking beside it. Logs/world-captures/cue-*.png, with the
         /// array's glint levels in the log.
         /// </summary>
         [UnityTest]
@@ -561,7 +864,15 @@ namespace MoonProject.World.PlayModeTests
                 Shoot(camera, "cue-4-night-tower");
 
                 var lamp = FindNamed(CueLampName).GetComponent<ModuleStatusLamp>();
-                Transform lens = FindNamed(CueLampLens);
+                Assert.IsTrue(context.Get<ITowLine>().TryFindLoad(CueLampTowId, out Transform module),
+                    "the towable power module stands beside the habitat");
+                Transform lens = null;
+                foreach (Transform node in module.GetComponentsInChildren<Transform>())
+                {
+                    lens = node.name == CueLampLens ? node : lens;
+                }
+
+                Assert.IsNotNull(lens, "the power module has its status lamp");
                 Vector3 toLamp = Vector3.ProjectOnPlane(lens.position - apron, Vector3.up).normalized;
                 Vector3 lampEye = lens.position - toLamp * CueLampStandOff + Vector3.up * CueLowEyeHeight;
                 Place(camera, LookPose("cue-5-module-lamp-night", lampEye, lens.position, OpeningFov));

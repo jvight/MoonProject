@@ -1661,9 +1661,11 @@ MonoBehaviour:
     _pitchMax: 1
   - _id: tow_release
     _clips:
-    - {fileID: 8300000, guid: 376e7d88ffdd3224aa6ce8fcf790cc34, type: 3}
+    - {fileID: 8300000, guid: e4681391476657743892b831e40360b8, type: 3}
+    - {fileID: 8300000, guid: 66fbc07783f391043aea484898808d54, type: 3}
     _variantLabels:
-    - tow_release
+    - release
+    - snap
     _bus: 2
     _spatial: 1
     _loop: 0

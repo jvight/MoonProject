@@ -28,18 +28,20 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// measurement: the built Main scene (on its own save slot) boots, 07 wakes at half charge, and a calm autopilot
     /// holds the wheel while every verb goes through the keys a player presses: held E scans and cuts; B opens the
     /// build menu, the arrows pick, E takes the structure up, E places it where 07 looks and a held E welds it; Tab
-    /// opens 07's face screen, the arrows reach the cutter's socket and Enter fits the igniter. Before each beat 07
-    /// stands still until the objective line reads on screen, and on each verb's first use its prompt chip must show
+    /// opens 07's face screen, the arrows reach the cutter's socket and Enter fits the igniter. Each beat starts at
+    /// its step of the opening with no line on screen (the world leads, opening v3 1.5), and on each verb's first use
+    /// its prompt chip must show
     /// (a missing one is a guidance gap, listed at the end). 07 drives to the landed lander, scans its cargo bay's two
     /// fragments (the charging pad), collects the lander's open crate (the cutter is FAULT: no igniter), builds the pad
     /// on the apron, charges on it from the lander's reserve until the reserve gives out, drives to the Lumen ruins
     /// and scans the fallen array (solar), reads the habitat's airlock panel, tries to cut the array's crates (the
     /// cutter sputters), takes the spare igniter from the rack beside the array and fits it where 07 stands, cuts
     /// the array's panels and junction box, builds the array
-    /// (Power on), scans the habitat (battery bank), cuts its cable reel and power module and builds it (night-ready),
+    /// (Power on), reads the 1971 seismic station and docks for the first dusk (R5–R6), scans the habitat (battery
+    /// bank), cuts its cable reel and power module and builds it (night-ready),
     /// waits out the first sunset, scans the radio tower (antenna) and cuts its mast sections, feed cable and dish
-    /// panels, and builds the mast: the west signal ends the opening. Every objective line is
-    /// checked as it shows; the milestones FirstCharge, PowerOn, NightReady and SignalWest each come once. Every step
+    /// panels, and builds the mast: the west signal ends the opening. Every step is checked as
+    /// the opening reaches it; the milestones FirstCharge, PowerOn, NightReady and SignalWest each come once. Every step
     /// is timed
     /// (Logs/gameplay-captures/playthrough.md) and captured; any error or exception in the log fails it, and so does a
     /// crawl or a run over the budget. Slow: run on demand with --category Playthrough.
@@ -67,6 +69,11 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>The lander's open charger kit (B4) and the CUTTER SPARES rack by the fallen array (B7).</summary>
         private const string ChargerKit = "supply.lander.open";
         private const string SparesRack = "supply.array.spares";
+
+        /// <summary>The habitat's towable power module (opening v3 R6), and how far from the habitat it stands.</summary>
+        private const string PowerModule = "habitat.power_module";
+
+        private const float PowerModuleReach = 15f;
 
         /// <summary>The 1971 seismic station's story scan (R5's curiosity scan).</summary>
         private const string SeismicStory = "seismic";
@@ -187,13 +194,10 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float FollowTimeout = 3f;
 
         /// <summary>
-        /// Seconds the objective line may take to read on screen once 07 stands still: UI's 1.5 s after the step and
-        /// 1 s still, its fade in, and a new blueprint's unlock card before it (the guidance slot holds one at a time).
+        /// Seconds a verb's first-use chip may take to show once 07 is in place for it, if it has not shown already
+        /// (opening v3 1.5: the world shows it when the verb first becomes possible; the bottom hint fades first).
         /// </summary>
-        private const float LineTimeout = 15f;
-
-        /// <summary>Seconds a verb's prompt chip may take to show once 07 is in place for it.</summary>
-        private const float ChipTimeout = 3f;
+        private const float FirstUseTimeout = 15f;
 
         /// <summary>Taps of an arrow a menu or the face screen may take to reach what is wanted.</summary>
         private const int MaxMenuSteps = 12;
@@ -226,10 +230,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         private readonly List<OpeningMilestoneReached> _milestones = new List<OpeningMilestoneReached>();
         private readonly HashSet<string> _verbsUsed = new HashSet<string>();
         private readonly List<string> _chips = new List<string>();
-        private readonly List<string> _lineWaits = new List<string>();
         private readonly List<string> _guidanceGaps = new List<string>();
         private HudReader _hud;
-        private string _stepChip = string.Empty;
+        private ChipWatch _chipWatch;
         private ILocalization _localization;
         private int _warnings;
         private int _crawls;
@@ -254,6 +257,11 @@ namespace MoonProject.Gameplay.PlayModeTests
         public override void TearDown()
         {
             Application.logMessageReceived -= OnLog;
+            if (_chipWatch != null)
+            {
+                Object.DestroyImmediate(_chipWatch.gameObject);
+            }
+
             _rover?.SetDriveSource(null);
             _awoke?.Dispose();
             _crawled?.Dispose();
@@ -280,51 +288,51 @@ namespace MoonProject.Gameplay.PlayModeTests
             float started = Time.time;
             yield return Boot();
             yield return WakeUp();
-            yield return ExpectLine(OpeningKeys.DriveToLander, "B1: woken half empty, the lander's beacon ahead");
+            yield return ExpectStep(OpeningKeys.DriveToLander, "B1: woken half empty, the lander's beacon ahead");
             yield return DriveToTheLander();
-            yield return ExpectLine(OpeningKeys.ScanLander, "B3: at the lander");
+            yield return ExpectStep(OpeningKeys.ScanLander, "B3: at the lander");
             yield return ScanTheSet("ruin." + ScanTuning.LanderCargoId, "the lander's cargo bay");
             Assert.IsTrue(Known(StructureIds.ChargingPad), "the cargo bay's two fragments teach the pad");
             yield return TakeFromTheOpenCrate(ChargerKit, "B4: collect the lander's open crate");
-            yield return ExpectLine(OpeningKeys.BuildPad, "B5: the hold covers the pad");
+            yield return ExpectStep(OpeningKeys.BuildPad, "B5: the hold covers the pad");
             Vector3 pad = Anchor("place.apron").Position;
             yield return Build(StructureIds.ChargingPad, pad, "B5: the charging pad on the apron");
-            yield return ExpectLine(OpeningKeys.Charge, "B6");
+            yield return ExpectStep(OpeningKeys.Charge, "B6");
             yield return ChargeOnThePad(pad);
-            yield return ExpectLine(OpeningKeys.FindSolar, "B7: LANDER RESERVE · 0%");
+            yield return ExpectStep(OpeningKeys.FindSolar, "B7: LANDER RESERVE · 0%");
             yield return DriveTo(RuinsGate(), 3f, "the Lumen ruins");
             yield return ScanTheSet("ruin.FallenSolarArray", "the fallen solar array");
             yield return ReadTheAirlockPanel();
-            yield return ExpectLine(OpeningKeys.CutOptics, "B7: the array's own panels and junction box cover it");
+            yield return ExpectStep(OpeningKeys.CutOptics, "B7: the array's own panels and junction box cover it");
             yield return TryTheFaultedCutter("FallenSolarArray");
-            yield return ExpectLine(OpeningKeys.TakeIgniter, "B7: the cutter sputtered, the rack is pointed at");
+            yield return ExpectStep(OpeningKeys.TakeIgniter, "B7: the cutter sputtered, the rack is pointed at");
             yield return TakeFromTheOpenCrate(SparesRack, "B7: take the spare igniter from the rack");
-            yield return ExpectLine(OpeningKeys.FitIgniter, "B7: the spare igniter in the hold");
+            yield return ExpectStep(OpeningKeys.FitIgniter, "B7: the spare igniter in the hold");
             yield return FitTheIgniter();
-            yield return ExpectLine(OpeningKeys.CutOptics, "B7: the cutter works");
+            yield return ExpectStep(OpeningKeys.CutOptics, "B7: the cutter works");
             yield return CutTheCrates("FallenSolarArray", "the fallen array's panels and junction box");
-            yield return ExpectLine(OpeningKeys.BuildSolar, "B8: the array's cost is covered");
+            yield return ExpectStep(OpeningKeys.BuildSolar, "B8: the array's cost is covered");
             yield return DriveTo(RuinsGate(), 3f, "out of the Lumen ruins");
             yield return Build(StructureIds.SolarArray, pad + Vector3.right * BaseSpacing, "B8: the solar array");
             yield return UntilReached(OpeningMilestone.PowerOn, "Power on: the array powers the pad");
-            yield return ExpectLine(string.Empty, "R5: the first free choice says nothing");
+            yield return ExpectStep(string.Empty, "R5: the first free choice says nothing");
             yield return VisitTheSeismicStation();
             yield return DockForTheDusk(pad);
-            yield return ExpectLine(OpeningKeys.BuildBatteryBank, "B9: night is coming");
+            yield return ExpectStep(OpeningKeys.BuildBatteryBank, "B9: night is coming");
             yield return ScanTheSet("ruin.HabitatModules", "the habitat's power modules");
             yield return CutTheCrates("HabitatModules", "the habitat's cable reel and power module");
             yield return DriveTo(RuinsGate(), 3f, "out of the Lumen ruins");
             yield return Build(StructureIds.BatteryBank, pad + Vector3.left * BaseSpacing, "B9: the battery bank");
             yield return UntilReached(OpeningMilestone.NightReady, "night-ready: the bank is built and wired to the pad");
             yield return TheFirstNightfall();
-            yield return ExpectLine(OpeningKeys.ScanTower, "B11: after nightfall");
+            yield return ExpectStep(OpeningKeys.ScanTower, "B11: after nightfall");
             yield return CutTheCrates("RadioTower", "the tower's mast sections, feed cable and dish panels");
             yield return ScanTheSet("ruin.RadioTower", "the radio tower ruin");
-            yield return ExpectLine(OpeningKeys.BuildMast, "B11");
+            yield return ExpectStep(OpeningKeys.BuildMast, "B11");
             yield return DriveTo(RuinsGate(), 3f, "out of the Lumen ruins");
             yield return Build(StructureIds.AntennaMast, pad + Vector3.back * BaseSpacing, "B11: the antenna mast");
             yield return UntilReached(OpeningMilestone.SignalWest, "the west signal answers");
-            yield return ExpectLine(string.Empty, "the pillar in the west is the message: the opening ends");
+            yield return ExpectStep(string.Empty, "the pillar in the west is the message: the opening ends");
 
             float total = Time.time - started;
             WriteReport(total);
@@ -373,7 +381,13 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsNotNull(_gameplay, "the scene has the gameplay system");
             Assert.IsNotNull(_gameplay.Opening, "the opening is wired");
             _context = bootstrap.Context;
+            Assert.IsTrue(_gameplay.Tow.TryFindLoad(PowerModule, out Transform module),
+                "the habitat's power module stands, towable (R6)");
+            Assert.Less(SurfaceRules.HorizontalDistance(module.position, Ruin("HabitatModules").position),
+                PowerModuleReach, "beside the habitat it came out of");
             _hud = new HudReader(scene);
+            _chipWatch = new GameObject(nameof(ChipWatch)).AddComponent<ChipWatch>();
+            _chipWatch.Watch(_hud);
             _localization = _context.Get<ILocalization>();
             _rover = (RoverController)_context.Get<IRoverRig>();
             _awoke = _context.Events.Subscribe<RoverAwoke>(_ => _awokeAt = Time.time);
@@ -591,7 +605,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsFalse(Taken(cacheId), $"{cacheId} gives nothing until 07 takes it");
             if (cacheId == ChargerKit)
             {
-                yield return ExpectLine(OpeningKeys.CollectParts, "B4: the cutter is FAULT, the crate holds parts");
+                yield return ExpectStep(OpeningKeys.CollectParts, "B4: the cutter is FAULT, the crate holds parts");
             }
 
             if (!_gameplay.Hints.TryGet(InteractionKind.PickUp, out _))
@@ -645,8 +659,8 @@ namespace MoonProject.Gameplay.PlayModeTests
                     continue;
                 }
 
+                // The faulted try teaches nothing: the Cut chip comes once the cutter works.
                 yield return ApproachTheSeal(cache, crate);
-                yield return FirstUse("cut: hold E", VerbCutKey);
                 Press(_keyboard.eKey);
                 yield return Until(() => _gameplay.StartKit.Sputtered, FollowTimeout,
                     $"held E at the seal of {cache.Id} sputters the faulted cutter",
@@ -832,40 +846,27 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// The step is <paramref name="key"/>, and 07, standing still like a player wondering what next, reads its line
-        /// on screen.
+        /// The opening stands at the step whose line is <paramref name="key"/>. The world leads (opening v3 1.5): a
+        /// step's line shows only as a stall reminder after long without progress, so it is not on screen here (the
+        /// slot may hold a verb's first-use hint).
         /// </summary>
-        private IEnumerator ExpectLine(string key, string why)
+        private IEnumerator ExpectStep(string key, string why)
         {
             yield return Until(() => _gameplay.Opening.Flow.Current == key, FollowTimeout,
-                $"the objective line is '{key}' ({why}), not '{_gameplay.Opening.Flow.Current}'");
-            if (key.Length == 0)
+                $"the opening stands at '{key}' ({why}), not '{_gameplay.Opening.Flow.Current}'");
+            if (key.Length > 0)
             {
-                yield break;
+                Assert.AreNotEqual(_localization.Get(key), _hud.Line,
+                    $"the step's line is not on screen at '{key}' ({why}): the world leads");
             }
 
-            _pilot.Target = null;
-            yield return Until(() => _rover.Speed < StopSpeed, 6f, "07 stands still to read the line");
-            string expected = _localization.Get(key);
-            float still = Time.time;
-            yield return Until(() => _hud.Line == expected, LineTimeout,
-                $"the objective line reads '{expected}' on screen ({why})",
-                () => $"on screen: line '{_hud.Line}', chip '{_hud.Chip}'");
-            _lineWaits.Add(string.Format(CultureInfo.InvariantCulture, "{0}: {1:F1} s", expected, Time.time - still));
-            float chipBy = Time.time + ChipTimeout;
-            while (_hud.KeyChip.Length == 0 && Time.time < chipBy)
-            {
-                yield return null;
-            }
-
-            _stepChip = _hud.KeyChip;
         }
 
         /// <summary>
-        /// On <paramref name="verb"/>'s first use a chip named it: the key chip shown with the step's line (its word,
-        /// <paramref name="wordKey"/>, UI's) when the line came or once 07 is in place, or a prompt chip there. The key
-        /// chip names what E does where 07 stands, so the line's first sample may name another verb. A missing chip is a guidance
-        /// gap the run lists at the end rather than stopping on.
+        /// On <paramref name="verb"/>'s first use a chip with its word (<paramref name="wordKey"/>, UI's) has shown:
+        /// the world shows it once, when the verb first becomes possible (opening v3 1.5), so it may have come and gone
+        /// before 07 is in place, or it shows within a little while. A missing chip is a guidance gap the run lists at
+        /// the end rather than stopping on.
         /// </summary>
         private IEnumerator FirstUse(string verb, string wordKey)
         {
@@ -875,23 +876,21 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             string word = _localization.Get(wordKey);
-            string chip = _stepChip.EndsWith(" " + word, StringComparison.Ordinal) ? _stepChip + " (with the line)"
-                : string.Empty;
-            float deadline = Time.time + ChipTimeout;
+            float deadline = Time.time + FirstUseTimeout;
+            string chip = _chipWatch.SeenWith(word);
             while (chip.Length == 0 && Time.time < deadline)
             {
-                string keyChip = _hud.KeyChip;
-                chip = keyChip.EndsWith(" " + word, StringComparison.Ordinal) ? keyChip + " (with the line)"
-                    : _hud.Chip;
                 yield return null;
+                chip = _chipWatch.SeenWith(word);
             }
 
             if (chip.Length == 0)
             {
                 InteractionHint primary = _gameplay.Hints.Primary;
-                _guidanceGaps.Add($"{verb}: no chip on its first use (with the line: '{_stepChip}'; line on " +
-                                  $"screen: '{_hud.Line}', key chip '{_hud.KeyChip}'; primary hint {primary.Kind}, " +
-                                  $"ready {primary.Ready}; step {_gameplay.Opening.Flow.Current})");
+                _guidanceGaps.Add($"{verb}: no '{word}' chip by its first use (chips seen: " +
+                                  $"{_chipWatch.Describe()}; on screen: chip '{_hud.Chip}', key chip " +
+                                  $"'{_hud.KeyChip}'; primary hint {primary.Kind}, ready {primary.Ready}; step " +
+                                  $"{_gameplay.Opening.Flow.Current})");
                 Capture("gap-" + _verbsUsed.Count.ToString(CultureInfo.InvariantCulture));
             }
 
@@ -1305,13 +1304,6 @@ namespace MoonProject.Gameplay.PlayModeTests
                 "| **Total** | **{0:F1}** | budget {1:F0} s; {2} error(s), {3} warning(s); {4} crawl(s) | |", total,
                 TotalBudget, _problems.Count, _warnings, _crawls));
             report.AppendLine();
-            report.AppendLine("Objective lines, and how long 07 stood still before each read on screen:");
-            foreach (string line in _lineWaits)
-            {
-                report.AppendLine("- " + line);
-            }
-
-            report.AppendLine();
             report.AppendLine("Prompt chips on each verb's first use:");
             foreach (string chip in _chips)
             {
@@ -1321,6 +1313,59 @@ namespace MoonProject.Gameplay.PlayModeTests
             Directory.CreateDirectory(GameplayFixture.CaptureFolder);
             File.WriteAllText(ReportPath, report.ToString());
             Debug.Log("[playthrough] report: " + ReportPath + "\n" + report);
+        }
+
+        /// <summary>
+        /// Every chip the HUD shows over the run, prompt chip or key chip, as it read: a first-use chip shows once, at
+        /// the moment its verb becomes possible, so the run notes it then and checks it at the verb's first use.
+        /// </summary>
+        private sealed class ChipWatch : MonoBehaviour
+        {
+            private readonly HashSet<string> _seen = new HashSet<string>();
+            private HudReader _hud;
+
+            public void Watch(HudReader hud)
+            {
+                _hud = hud;
+            }
+
+            /// <summary>The first chip seen whose word is <paramref name="word"/>, or empty.</summary>
+            public string SeenWith(string word)
+            {
+                foreach (string chip in _seen)
+                {
+                    if (chip.Contains(" " + word, StringComparison.Ordinal))
+                    {
+                        return chip;
+                    }
+                }
+
+                return string.Empty;
+            }
+
+            public string Describe()
+            {
+                return _seen.Count == 0 ? "none" : string.Join("; ", _seen);
+            }
+
+            private void Update()
+            {
+                if (_hud == null)
+                {
+                    return;
+                }
+
+                Note(_hud.Chip);
+                Note(_hud.KeyChip);
+            }
+
+            private void Note(string chip)
+            {
+                if (chip.Length > 0)
+                {
+                    _seen.Add(chip);
+                }
+            }
         }
     }
 }
