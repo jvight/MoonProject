@@ -15,26 +15,31 @@ namespace MoonProject.Rover
     {
         [Header("The wake on the face (s)")]
         [Tooltip("New Game on a fresh title: the one eased move from the title's shot onto 07's dark face while the " +
-                 "title fades and 07 lifts its head.")]
+                 "title fades and 07 lifts its head. Unhurried: the wake's beginning has to breathe.")]
         [Range(0.3f, 3f)]
-        [SerializeField] private float _pushInSeconds = 0.6f;
+        [SerializeField] private float _pushInSeconds = 1f;
 
         [Tooltip("After the reload a New Game over a save needs: on 07's dark face while the cover opens (UI's " +
                  "vignette) and 07 lifts its head.")]
         [Range(0.3f, 3f)]
         [SerializeField] private float _darkSeconds = 0.5f;
 
-        [Tooltip("The tube wakes on 07's face: a dot, a line, then the full raster with a warm bloom.")]
+        [Tooltip("The tube wakes on 07's face: a dot, a line, then the full raster with a warm bloom, a couple of " +
+                 "irregular flickers as the tube catches.")]
         [Range(0.2f, 2f)]
-        [SerializeField] private float _powerOnSeconds = 0.6f;
+        [SerializeField] private float _powerOnSeconds = 1.2f;
 
-        [Tooltip("The maker's mark draws itself stroke by stroke, its wordmark types under it, holds, then dims away.")]
-        [Range(1f, 5f)]
-        [SerializeField] private float _logoSeconds = 1.9f;
+        [Tooltip("The maker's mark draws itself stroke by stroke at a plotter's pace, its wordmark types under it, " +
+                 "holds at full brightness long enough to read, then dims away with an afterglow (about 1.6 s of " +
+                 "strokes, the wordmark at ~14 characters a second, a hold of 1.2 s or more, a 0.5 s dim; the shares " +
+                 "are UI's BootFaceSettings).")]
+        [Range(1f, 6f)]
+        [SerializeField] private float _logoSeconds = 4f;
 
-        [Tooltip("The machine loads its field profile in five steps.")]
-        [Range(0.3f, 3f)]
-        [SerializeField] private float _loadSeconds = 0.7f;
+        [Tooltip("The machine loads its field profile in five discrete steps, each a jump after an irregular dwell " +
+                 "(UI's BootFaceSettings shapes them), never a smooth bar.")]
+        [Range(0.3f, 4f)]
+        [SerializeField] private float _loadSeconds = 2.4f;
 
         [Header("The end of the wake (s)")]
         [Tooltip("After the last line: the readout holds its success, then gives way to the eyes. Longer than the " +
