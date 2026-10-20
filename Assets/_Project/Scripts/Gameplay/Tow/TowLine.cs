@@ -76,6 +76,53 @@ namespace MoonProject.Gameplay
             return load != null;
         }
 
+        /// <summary>
+        /// The load <paramref name="towId"/> stands home, on the apron off the cable, and is still in the world: a
+        /// structure built on it may stand where it stands (<paramref name="root"/>).
+        /// </summary>
+        internal bool TryFindHome(string towId, out Transform root)
+        {
+            ITowable load = Find(towId);
+            root = null;
+            if (load == null || load == _load || !load.Root.gameObject.activeSelf ||
+                SurfaceRules.HorizontalDistanceSquared(load.Root.position, _home) >
+                _settings.HomeRadius * _settings.HomeRadius)
+            {
+                return false;
+            }
+
+            root = load.Root;
+            return true;
+        }
+
+        /// <summary>
+        /// A structure was placed on the load <paramref name="towId"/>: it is set into it at its pose and leaves the
+        /// world (off the cable first, should it be on it).
+        /// </summary>
+        internal void TakeIn(string towId, Vector3 position, float yaw)
+        {
+            ITowable load = Find(towId);
+            if (load == null)
+            {
+                return;
+            }
+
+            if (load == _load)
+            {
+                Release(TowRelease.Arrived);
+            }
+
+            load.Place(position, Quaternion.Euler(0f, yaw, 0f) * Quaternion.Inverse(Quaternion.Euler(0f,
+                load.Root.rotation.eulerAngles.y, 0f)) * load.Root.rotation);
+            load.Root.gameObject.SetActive(false);
+        }
+
+        /// <summary>The structure on the load <paramref name="towId"/> is gone: the load stands where it stood.</summary>
+        internal void GiveBack(string towId)
+        {
+            Find(towId)?.Root.gameObject.SetActive(true);
+        }
+
         /// <summary>Where each load was left (a tow in progress is not kept).</summary>
         public TowSaveData Capture()
         {
@@ -150,7 +197,7 @@ namespace MoonProject.Gameplay
         {
             for (int i = 0; i < _loads.Count; i++)
             {
-                if (_loads[i] != _load)
+                if (_loads[i] != _load && _loads[i].Root.gameObject.activeSelf)
                 {
                     _loads[i].Settle(deltaTime);
                 }
@@ -216,7 +263,7 @@ namespace MoonProject.Gameplay
             for (int i = 0; i < _loads.Count; i++)
             {
                 float distance = SurfaceRules.HorizontalDistanceSquared(_loads[i].Hitch, winch);
-                if (distance <= best)
+                if (distance <= best && _loads[i].Root.gameObject.activeSelf)
                 {
                     best = distance;
                     nearest = _loads[i];
