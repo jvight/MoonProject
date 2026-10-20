@@ -21,6 +21,7 @@ namespace MoonProject.Autoplay
         private readonly Key[] _keyBuffer = new Key[16];
         private readonly InputSettings.BackgroundBehavior _backgroundBehavior;
         private bool _leftHeld;
+        private bool _rightHeld;
 
         public VirtualInput()
         {
@@ -85,7 +86,18 @@ namespace MoonProject.Autoplay
             }
 
             _leftHeld = down;
-            InputSystem.QueueDeltaStateEvent(_mouse.leftButton, down ? 1f : 0f);
+            SendButtons();
+        }
+
+        public void SetRightButton(bool down)
+        {
+            if (_rightHeld == down)
+            {
+                return;
+            }
+
+            _rightHeld = down;
+            SendButtons();
         }
 
         public void MoveMouseTo(Vector2 screenPosition)
@@ -97,6 +109,7 @@ namespace MoonProject.Autoplay
         {
             ReleaseAll();
             SetLeftButton(false);
+            SetRightButton(false);
             InputSystem.RemoveDevice(_keyboard);
             InputSystem.RemoveDevice(_mouse);
             foreach (InputDevice device in _disabled)
@@ -105,6 +118,18 @@ namespace MoonProject.Autoplay
             }
 
             InputSystem.settings.backgroundBehavior = _backgroundBehavior;
+        }
+
+        /// <summary>
+        /// The mouse's buttons are bits of one field, which a delta event cannot change: a whole mouse state goes in,
+        /// carrying the position the bot has set and no movement.
+        /// </summary>
+        private void SendButtons()
+        {
+            MouseState state = default;
+            state.position = _mouse.position.value;
+            state = state.WithButton(MouseButton.Left, _leftHeld).WithButton(MouseButton.Right, _rightHeld);
+            InputSystem.QueueStateEvent(_mouse, state);
         }
 
         private void Send()

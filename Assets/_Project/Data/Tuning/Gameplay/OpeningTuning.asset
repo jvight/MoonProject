@@ -70,7 +70,7 @@ MonoBehaviour:
     _snagSeconds: 0.6
     _unsnagLift: 1.6
     _letGoDistance: 12
-    _homeRadius: 6
+    _homeRadius: 9
     _skidFriction: 0.45
     _loadDrag: 0.1
     _loadAngularDrag: 3
@@ -145,18 +145,6 @@ MonoBehaviour:
     _yield:
       _metal: 0
       _wiring: 3
-      _optics: 0
-    _forStructure: battery_bank
-    _startsOpen: 0
-    _parts: []
-  - _id: supply.habitat.module
-    _anchorId: HabitatModules
-    _offset: {x: -13.5, y: 0, z: -3.6}
-    _yaw: -90
-    _container: Crate_L
-    _yield:
-      _metal: 3
-      _wiring: 0
       _optics: 0
     _forStructure: battery_bank
     _startsOpen: 0

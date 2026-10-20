@@ -125,6 +125,8 @@ namespace MoonProject.UI
                     return "icon_spare_igniter";
                 case "part.icecore":
                     return "icon_ice_core_tube";
+                case "part.feedunit":
+                    return "icon_feed_unit";
                 default:
                     throw new InvalidOperationException($"Story part '{partId}' has no icon id.");
             }

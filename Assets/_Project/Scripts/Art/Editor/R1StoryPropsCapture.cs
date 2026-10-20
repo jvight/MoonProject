@@ -208,9 +208,9 @@ namespace MoonProject.Art.Editor
                 // The rack 1.9 m to the pad's right at its mid length, its bays facing the docked 07
                 GameObject rack = SpawnProp(ArtPaths.R1ModelsFolder + "/Structures/SocketRack.prefab",
                     new Vector3(1.9f, 0f, 0f), -90f, temp);
-                SetBayState(rack.transform.Find("Bay_0"), 0);
-                SetBayState(rack.transform.Find("Bay_1"), 1);
-                SetBayState(rack.transform.Find("Bay_2"), 2);
+                SetBayState(rack.transform, 0, 0);
+                SetBayState(rack.transform, 1, 1);
+                SetBayState(rack.transform, 2, 2);
                 if (!night)
                 {
                     AimDayCSunAtSurface(Vector3.left);
@@ -230,21 +230,22 @@ namespace MoonProject.Art.Editor
 
         // 0 hidden: everything dark, jaws open. 1 outline: a dim line. 2 filled: bright line, warm fill, lamp lit and
         // the jaws closed, as Gameplay drives them.
-        private static void SetBayState(Transform bay, int state)
+        private static void SetBayState(Transform rack, int index, int state)
         {
+            Transform bay = rack.Find("Bay_" + index);
             if (bay == null)
             {
-                throw new InvalidOperationException("R1StoryPropsCapture: the socket rack has no bay node.");
+                throw new InvalidOperationException($"R1StoryPropsCapture: the socket rack has no Bay_{index} node.");
             }
 
             var line = new Color(1.00f, 0.70f, 0.40f, 1f);
-            SetEmission(bay.Find("Outline"), state == 0 ? Color.black : line * (state == 1 ? 0.35f : 1.4f));
-            SetEmission(bay.Find("Fill"), state == 2 ? new Color(0.95f, 0.62f, 0.34f, 1f) : Color.black);
-            SetEmission(bay.Find("Lamp"), state == 2 ? new Color(1.00f, 0.76f, 0.32f, 1f) : Color.black);
+            SetEmission(bay.Find("Outline_" + index), state == 0 ? Color.black : line * (state == 1 ? 0.35f : 1.4f));
+            SetEmission(bay.Find("Fill_" + index), state == 2 ? new Color(0.95f, 0.62f, 0.34f, 1f) : Color.black);
+            SetEmission(bay.Find("Lamp_" + index), state == 2 ? new Color(1.00f, 0.76f, 0.32f, 1f) : Color.black);
             if (state == 2)
             {
-                bay.Find("Clamp_L").localRotation = Quaternion.identity;
-                bay.Find("Clamp_R").localRotation = Quaternion.identity;
+                bay.Find("Clamp_L_" + index).localRotation = Quaternion.identity;
+                bay.Find("Clamp_R_" + index).localRotation = Quaternion.identity;
             }
         }
 
@@ -338,6 +339,67 @@ namespace MoonProject.Art.Editor
 
                 return true;
             });
+        }
+
+        /// <summary>
+        /// The masts' crossed-loop direction finder (<c>SonarLoop</c>) as the player sees it: from the chase camera
+        /// (7.5 m behind 07, 16 deg down, 52 deg FOV, as <c>RoverCameraTuning</c> ships) with 07 driving at each mast,
+        /// the camera about 15 m out, plus a tight crop of the same view, for the base's <c>AntennaMast</c> and
+        /// relay.1's <c>DeadAntennaMast</c> in Day C (<c>Logs/captures/mast_topper_*.png</c>):
+        /// <c>python tools/unity_batch.py exec --project . --method MoonProject.Art.Editor.R1StoryPropsCapture.CaptureMastTopper</c>
+        /// </summary>
+        public static void CaptureMastTopper()
+        {
+            BatchRunner.Run(nameof(CaptureMastTopper), args =>
+            {
+                AssetDatabase.Refresh();
+                R1MaterialLibrary.BuildMaterials();
+                R1ModelBuilder.Build();
+
+                string capturesDir = Path.GetFullPath("Logs/captures");
+                Directory.CreateDirectory(capturesDir);
+
+                bool prevAsync = ShaderUtil.allowAsyncCompilation;
+                ShaderUtil.allowAsyncCompilation = false;
+                try
+                {
+                    CaptureMastTopperShots(capturesDir, ArtPaths.R1ModelsFolder + "/Structures/AntennaMast.prefab",
+                        "base");
+                    CaptureMastTopperShots(capturesDir, R1StoryPropsBuilder.DeadAntennaMastPrefabPath, "relay1");
+                }
+                finally
+                {
+                    ShaderUtil.allowAsyncCompilation = prevAsync;
+                }
+
+                return true;
+            });
+        }
+
+        private static void CaptureMastTopperShots(string outDir, string mastPrefabPath, string tag)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(temp, false);
+                SpawnProp(mastPrefabPath, Vector3.zero, 0f, temp);
+                // 07 heading for the mast with the loops' (-X) side a little toward the camera
+                var rover = new Vector3(1.2f, 0f, -7.8f);
+                SpawnRover07(temp, rover, -8f, false);
+                AimDayCSunAtSurface(Vector3.left);
+
+                Vector3 target = rover + new Vector3(0f, 1.1f, 0f);
+                Vector3 back = Quaternion.Euler(16f, -8f, 0f) * Vector3.back;
+                Vector3 cam = target + back * 7.5f;
+                RenderShot(cam, target, 52f, bg, Path.Combine(outDir, $"mast_topper_{tag}_chase15m.png"));
+                RenderShot(cam, new Vector3(-0.38f, 2.4f, 0f), 9f, bg,
+                    Path.Combine(outDir, $"mast_topper_{tag}_chase15m_crop.png"));
+            }
+            finally
+            {
+                temp.Dispose();
+            }
         }
 
         /// <summary>
@@ -2313,6 +2375,104 @@ namespace MoonProject.Art.Editor
             finally
             {
                 UnityEngine.Object.DestroyImmediate(camObj);
+            }
+        }
+
+        /// <summary>
+        /// relay.1's repair (opening v3, slice 5.1) at night: the dead mast with its empty feed socket's outline lit,
+        /// the service cabinet at its foot with the door hanging open, the interior lamp on (plus the small point light
+        /// Gameplay hangs at its <c>Light_Anchor</c>) and the spare on its shelf, from 15 m tight and game-wide,
+        /// and the contact pad in front; then relit, with the spare fitted, the relay lens and the pad lamp on and 07
+        /// parked on the pad (<c>Logs/captures/relay_repair_*.png</c>):
+        /// <c>python tools/unity_batch.py exec --project . --method MoonProject.Art.Editor.R1StoryPropsCapture.CaptureRelayRepair</c>
+        /// </summary>
+        public static void CaptureRelayRepair()
+        {
+            BatchRunner.Run(nameof(CaptureRelayRepair), args =>
+            {
+                AssetDatabase.Refresh();
+                R1MaterialLibrary.BuildMaterials();
+                R1ModelBuilder.Build();
+
+                string capturesDir = Path.GetFullPath("Logs/captures");
+                Directory.CreateDirectory(capturesDir);
+
+                bool prevAsync = ShaderUtil.allowAsyncCompilation;
+                ShaderUtil.allowAsyncCompilation = false;
+                try
+                {
+                    CaptureRelayRepairShots(capturesDir, false);
+                    CaptureRelayRepairShots(capturesDir, true);
+                }
+                finally
+                {
+                    ShaderUtil.allowAsyncCompilation = prevAsync;
+                }
+
+                return true;
+            });
+        }
+
+        private static void CaptureRelayRepairShots(string outDir, bool relit)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(temp, true);
+                var amber = new Color(1.00f, 0.76f, 0.32f, 1f);
+                var line = new Color(1.00f, 0.70f, 0.40f, 1f);
+                string models = ArtPaths.R1ModelsFolder;
+                GameObject mast = SpawnProp(R1StoryPropsBuilder.DeadAntennaMastPrefabPath, Vector3.zero, 0f, temp);
+                GameObject cabinet = SpawnProp(models + "/Structures/ServiceCabinet.prefab",
+                    new Vector3(-1.15f, 0f, 0.65f), 0f, temp);
+                GameObject pad = SpawnProp(models + "/Structures/RelayContactPad.prefab", new Vector3(0f, 0f, 2.0f), 0f,
+                    temp);
+                SetEmission(cabinet.transform.Find("InteriorLamp"), relit ? Color.black : amber * 2f);
+                SetEmission(mast.transform.Find("FeedSocket_Outline"), line * (relit ? 1.4f : 1f));
+                SetEmission(pad.transform.Find("PadLamp"), relit ? amber : Color.black);
+                SetEmission(mast.transform.Find("Stage_4/Mast/BeaconLamp/RelayLamp_Lens"), relit ? amber : Color.black);
+
+                if (relit)
+                {
+                    // The spare pushed home, connector first (-X), its back end and pigtail standing out of the mouth
+                    Vector3 mouth = mast.transform.Find("FeedSocket_Anchor").position;
+                    SpawnProp(models + "/Props/FeedUnitSpare.prefab", mouth + new Vector3(0.08f, -0.07f, 0f), -90f,
+                        temp);
+                    SpawnRover07(temp, new Vector3(0f, 0.06f, 2.0f), 180f, true);
+                    RenderShot(new Vector3(4.6f, 2.3f, 5.6f), new Vector3(0f, 0.6f, 1.2f), 40f, bg,
+                        Path.Combine(outDir, "relay_repair_relit_with_07.png"));
+                    RenderShot(new Vector3(1.7f, 1.0f, 1.1f), new Vector3(0.52f, 0.74f, 0.25f), 30f, bg,
+                        Path.Combine(outDir, "relay_repair_socket_relit.png"));
+                }
+                else
+                {
+                    // Gameplay's small warm light at the cabinet's Light_Anchor (the art ships the lamp strip only)
+                    Light cabinetLight = ArtLightingPreview.NewLight("CabinetInteriorLight", LightType.Point, amber,
+                        1.6f);
+                    cabinetLight.transform.position = cabinet.transform.Find("Light_Anchor").position;
+                    cabinetLight.range = 1.4f;
+                    temp.Add(cabinetLight.gameObject);
+                    Vector3 shelf = cabinet.transform.Find("Part_Anchor").position;
+                    SpawnProp(models + "/Props/FeedUnitSpare.prefab", shelf + new Vector3(-0.04f, 0f, 0f), 90f, temp);
+                    SpawnProp(models + "/Props/FeedUnitSpare.prefab", new Vector3(2.0f, 0f, 0.9f), 30f, temp);
+                    var view = new Vector3(0.50f, 0.25f, 0.83f).normalized;
+                    var target = new Vector3(-0.3f, 0.6f, 0.9f);
+                    RenderShot(target + view * 15f, target, 14f, bg,
+                        Path.Combine(outDir, "relay_repair_dead_15m.png"));
+                    RenderShot(target + view * 15f, target, 45f, bg,
+                        Path.Combine(outDir, "relay_repair_dead_15m_wide.png"));
+                    RenderShot(new Vector3(-0.25f, 0.95f, 2.3f), new Vector3(-1.15f, 0.45f, 0.6f), 34f, bg,
+                        Path.Combine(outDir, "relay_repair_cabinet_close.png"));
+                    RenderShot(new Vector3(1.7f, 1.0f, 1.1f), new Vector3(0.52f, 0.74f, 0.25f), 30f, bg,
+                        Path.Combine(outDir, "relay_repair_socket_dead.png"));
+                    RenderShot(new Vector3(2.75f, 0.55f, 1.55f), new Vector3(2.0f, 0.08f, 0.9f), 28f, bg,
+                        Path.Combine(outDir, "relay_repair_feed_unit.png"));
+                }
+            }
+            finally
+            {
+                temp.Dispose();
             }
         }
 
