@@ -1,0 +1,74 @@
+{
+  "model": "kit_cell_pod",
+  "pivot_tolerance": 0.005,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_BareSteel",
+    "R1_CreamEnamel",
+    "R1_DarkGlass",
+    "R1_GreyMetal",
+    "R1_LampAmber",
+    "R1_Rubber"
+  ],
+  "max_triangles": 1400,
+  "max_meshes": 5,
+  "max_draw_calls": 10,
+  "allow_rotation": [],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "bounds": {
+    "size": [
+      0.28,
+      0.34,
+      0.41
+    ],
+    "tolerance": 0.04,
+    "min_size": [
+      0.24,
+      0.3,
+      0.37
+    ],
+    "max_size": [
+      0.32,
+      0.38,
+      0.45
+    ]
+  },
+  "nodes": {
+    "ChargeBar_0": {
+      "pivot": [
+        0.221,
+        0.0,
+        -0.072
+      ]
+    },
+    "ChargeBar_1": {
+      "pivot": [
+        0.221,
+        0.0,
+        -0.02
+      ]
+    },
+    "ChargeBar_2": {
+      "pivot": [
+        0.221,
+        0.0,
+        0.032
+      ]
+    },
+    "Kit_CellPod": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Pod": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  }
+}
