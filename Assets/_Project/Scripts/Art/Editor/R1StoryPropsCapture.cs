@@ -162,9 +162,10 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// The fallen solar array's gold foil under a golden-hour sun (8 degrees, warm, from beyond the array toward
-        /// the camera: the light that made the old foil read as piles of glowing grains), from 15 m and 75 m
-        /// (<c>Logs/captures/foil_golden_&lt;tag&gt;_15m.png</c> and <c>_75m.png</c>; <c>--arg tag=before|after</c>):
+        /// A gold-foil model under a golden-hour sun (8 degrees, warm, from beyond it toward the camera: the light
+        /// that made the old foil read as piles of glowing grains), from 15 m and 75 m
+        /// (<c>Logs/captures/foil_golden_&lt;tag&gt;_15m.png</c> and <c>_75m.png</c>; <c>--arg tag=before|after</c>,
+        /// <c>--arg prefab=Ruins/FallenSolarArray</c> by default, any R1 model path under Generated/Art/R1/Models):
         /// <c>python tools/unity_batch.py exec --project . --method MoonProject.Art.Editor.R1StoryPropsCapture.CaptureFoilGoldenHour --arg tag=after</c>
         /// </summary>
         public static void CaptureFoilGoldenHour()
@@ -178,6 +179,7 @@ namespace MoonProject.Art.Editor
                 string capturesDir = Path.GetFullPath("Logs/captures");
                 Directory.CreateDirectory(capturesDir);
                 string tag = args.GetString("tag", "after");
+                string prefab = args.GetString("prefab", "Ruins/FallenSolarArray");
 
                 bool prevAsync = ShaderUtil.allowAsyncCompilation;
                 ShaderUtil.allowAsyncCompilation = false;
@@ -186,7 +188,7 @@ namespace MoonProject.Art.Editor
                 try
                 {
                     Color bg = SetupEnvironment(temp, false);
-                    SpawnProp(ArtPaths.R1ModelsFolder + "/Ruins/FallenSolarArray.prefab", Vector3.zero, 0f, temp);
+                    SpawnProp(ArtPaths.R1ModelsFolder + "/" + prefab + ".prefab", Vector3.zero, 0f, temp);
                     Light sun = RenderSettings.sun;
                     sun.color = new Color(1.00f, 0.78f, 0.52f, 1f);
                     sun.intensity = 1.6f;
