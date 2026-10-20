@@ -215,6 +215,17 @@ namespace MoonProject.Gameplay.Tests
             Assert.Less(_settings.FaintStrength, _settings.FullStrength, "faint is fainter than full");
 
             field.Show(RangeRingMode.Full);
+            Assert.AreEqual(0f, field.Reveal01, 1e-3f, "the full ring starts at 07");
+            Assert.AreEqual(rover.Position, field.Centre);
+            float lastReveal = 0f;
+            for (float t = 0f; t < _settings.RevealSeconds + 0.5f; t += 0.05f)
+            {
+                field.Step(0.05f);
+                Assert.GreaterOrEqual(field.Reveal01, lastReveal, "it only draws outward");
+                lastReveal = field.Reveal01;
+            }
+
+            Assert.AreEqual(1f, lastReveal, 1e-3f, "to its edge, then holds");
             Assert.AreEqual(RangeRingMode.Full, field.Mode);
             Assert.AreEqual(2, shown.Count);
             Assert.AreEqual(_settings.FullSeconds, shown[1].Seconds);
