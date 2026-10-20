@@ -31,6 +31,7 @@ namespace MoonProject.UI
         public const string VerbBuild = "ui.verb.build";
         public const string VerbFit = "ui.verb.fit";
         public const string FaceNoLine = "ui.face.no_line";
+        public const string FaceTxNoRange = "ui.face.tx_no_range";
         public const string HoldBoot = "ui.hold.boot";
         public const string ScanFragment = "scan.fragment";
         public const string ScanKnown = "scan.known";
@@ -49,6 +50,9 @@ namespace MoonProject.UI
         public const string CargoReleaseFit = "ui.cargo.release_fit";
         public const string CargoGoesTo = "ui.cargo.goes_to";
         public const string CargoGoesToOnPad = "ui.cargo.goes_to.on_pad";
+
+        /// <summary>"pickup.for.charging_pad": what a pickup is for, after its count ("for the charging pad").</summary>
+        public static string PickupPurpose(string structureId) => "pickup.for." + structureId;
         public const string CargoIgniterFitHint = "ui.cargo.igniter.fit_hint";
         public const string KeyDragOrE = "glyph.combo.drag_e";
         public const string KeyMouseOrE = "glyph.combo.mouse_e";

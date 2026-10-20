@@ -10,7 +10,7 @@ namespace MoonProject.Gameplay
     /// line is only a stall reminder: it is published through <see cref="NextStepChanged"/> after
     /// <c>stallSeconds</c> with no progress and 07 still, once per step, held for <c>reminderSeconds</c> and never
     /// shown again for that step. A step whose line would say something the world has not set up yet has no line
-    /// (B6's igniter line waits for the igniter in the hold; B7's for the spent lander reserve; B11's for nightfall).
+    /// (B7's for the spent lander reserve; B11's for nightfall), and B7's rack line waits for the cutter to sputter.
     /// It also publishes <see cref="OpeningMilestoneReached"/> as the opening reaches FirstCharge (B6), PowerOn (B8),
     /// NightReady (B9) and SignalWest (B11), the milestones it reads from the game; <see cref="Announce"/> replays the
     /// ones a loaded game has reached, with Restored = true, before the first <see cref="Tick"/>. CallAnswered (R8) is
@@ -59,23 +59,39 @@ namespace MoonProject.Gameplay
             _steps.Add(OpeningKeys.DriveToLander, () => _game.ReachedLander || _game.Knows(StructureIds.ChargingPad));
             _steps.Add(OpeningKeys.ScanLander, () => _game.Knows(StructureIds.ChargingPad));
             _steps.Add(OpeningKeys.CollectParts,
-                () => (_game.Covers(StructureIds.ChargingPad) || _game.Built(StructureIds.ChargingPad)) &&
-                      (_game.CarriesIgniter || _game.IgniterFitted));
+                () => _game.Covers(StructureIds.ChargingPad) || _game.Built(StructureIds.ChargingPad));
             _steps.Add(OpeningKeys.BuildPad, () => _game.Built(StructureIds.ChargingPad));
             _steps.Add(OpeningKeys.Charge, () => _game.FirstCharge);
-            // The line says what the screen will accept: a field swap fits where 07 stands, a pad part on the plate.
-            _steps.Add(() => !_game.CarriesIgniter ? string.Empty
-                    : _game.CanFitIgniter ? OpeningKeys.FitIgniter : OpeningKeys.ParkOnPad,
-                () => _game.IgniterFitted);
             _steps.Add(() => _game.ReserveSpent ? OpeningKeys.FindSolar : string.Empty,
                 () => _game.Knows(StructureIds.SolarArray));
-            _steps.Add(() => _game.Covers(StructureIds.SolarArray) ? OpeningKeys.BuildSolar : OpeningKeys.CutOptics,
-                () => _game.PowerOn);
+            _steps.Add(IgniterLine, () => _game.IgniterFitted);
+            _steps.Add(SolarLine, () => _game.PowerOn);
             _steps.Add(() => _game.Built(StructureIds.BatteryBank) ? OpeningKeys.MoveBatteryBank
                     : OpeningKeys.BuildBatteryBank, () => _game.NightReady);
             _steps.Add(() => _game.NightFallen ? OpeningKeys.ScanTower : string.Empty,
                 () => _game.Knows(StructureIds.AntennaMast));
             _steps.Add(OpeningKeys.BuildMast, () => _game.Built(StructureIds.AntennaMast));
+        }
+
+        /// <summary>
+        /// B7: the array's crates need the cutter, which has no igniter. The line asks to cut as if it worked (the rack
+        /// stands in plain view, so a player may find the igniter unasked); only once the cutter has sputtered does it
+        /// point at the rack. With the igniter in the hold it says what the screen will accept: a field swap fits
+        /// where 07 stands, a pad part on the plate.
+        /// </summary>
+        private string IgniterLine()
+        {
+            if (_game.CarriesIgniter)
+            {
+                return _game.CanFitIgniter ? OpeningKeys.FitIgniter : OpeningKeys.ParkOnPad;
+            }
+
+            return _game.CutterSputtered ? OpeningKeys.TakeIgniter : SolarLine();
+        }
+
+        private string SolarLine()
+        {
+            return _game.Covers(StructureIds.SolarArray) ? OpeningKeys.BuildSolar : OpeningKeys.CutOptics;
         }
 
         /// <summary>The key of the line the current step would say, or empty when it has none (not shown).</summary>

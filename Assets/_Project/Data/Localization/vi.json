@@ -695,12 +695,16 @@
             "text": "Bộ đánh lửa dự phòng đang ở trong khoang. Hãy lắp vào mỏ cắt."
         },
         {
+            "key": "next.v2.take_igniter",
+            "text": "Lấy bộ đánh lửa dự phòng ở giá cạnh dàn pin."
+        },
+        {
             "key": "next.v2.find_solar",
             "text": "Tàn tích Lumen vẫn còn giữ bản vẽ pin mặt trời."
         },
         {
             "key": "next.v2.cut_optics",
-            "text": "Có thể cắt rời các tấm pin và hộp nối dây của dàn pin đổ."
+            "text": "Có thể cắt rời các tấm pin và hộp nối dây của giàn pin đổ."
         },
         {
             "key": "next.v2.build_solar",
@@ -923,6 +927,22 @@
             "text": "phụ tùng"
         },
         {
+            "key": "pickup.for.charging_pad",
+            "text": "cho bệ sạc"
+        },
+        {
+            "key": "pickup.for.solar_array",
+            "text": "cho giàn pin mặt trời"
+        },
+        {
+            "key": "pickup.for.battery_bank",
+            "text": "cho cụm pin tích điện"
+        },
+        {
+            "key": "pickup.for.antenna_mast",
+            "text": "cho cột ăng-ten"
+        },
+        {
             "key": "pickup.part.icecore",
             "text": "LÕI BĂNG 41 · H₂O"
         },
@@ -941,6 +961,10 @@
         {
             "key": "ui.face.no_line",
             "text": "BỊ CHE KHUẤT"
+        },
+        {
+            "key": "ui.face.tx_no_range",
+            "text": "TX · NGOÀI TẦM"
         },
         {
             "key": "ui.verb.cut",
@@ -1096,7 +1120,7 @@
         },
         {
             "key": "post.cutter.fault",
-            "text": "LỖI · MẤT BỘ ĐÁNH LỬA · PHỤ TÙNG: TÀU ĐỔ BỘ"
+            "text": "LỖI · MẤT BỘ ĐÁNH LỬA"
         },
         {
             "key": "post.solar_wing",

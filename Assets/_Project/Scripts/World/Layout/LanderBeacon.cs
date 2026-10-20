@@ -14,7 +14,10 @@ namespace MoonProject.World
     /// copper. 07's New Game self-test cues two answers (a Continue's short wake runs no self-test): the beacon
     /// flashes sharply, its halo swelling a little, with each spark of 07's failing cutter (the spare part is at the
     /// lander), and one bright wave runs from 07's post when 07 begins its recovery and dies at the tear, where the
-    /// last clip stutters and a tiny cold spark ticks once (<see cref="TearCue"/>). Allocation-free per frame.
+    /// last clip stutters and a tiny cold spark ticks once (<see cref="TearCue"/>). The lander's charge also glows along
+    /// the port's cable across the build apron and in the port's pilot lamp; once its reserve is spent the beacon, the
+    /// pilot lamp and both cables' lander-side glow die together (<see cref="LanderReserveLight"/>, opening v3 R4).
+    /// Allocation-free per frame.
     /// </summary>
     public sealed class LanderBeacon : MonoBehaviour, IGameSystem
     {
@@ -46,9 +49,19 @@ namespace MoonProject.World
         [Tooltip("The spark's halo at the torn copper on 07's side (LofiBeaconHalo, cold).")]
         [SerializeField] private Renderer _spark;
 
+        [Tooltip("The halos on the stake clips of the port's cable across the build apron, in order from the port to " +
+            "the apron: the lander's charge glows along it to the pad, and goes dark with the reserve.")]
+        [SerializeField] private Renderer[] _apronClips = new Renderer[0];
+
+        [Tooltip("Art's reserve pilot lamp on the lander's service port (ReservePilotLamp, R1_LanderBeaconAmber).")]
+        [SerializeField] private Renderer _pilotLamp;
+
+        private readonly LanderReserveLight _reserve = new LanderReserveLight();
+
         private MaterialPropertyBlock _block;
         private IDisposable _checkPulses;
         private IDisposable _checksStarted;
+        private IDisposable _reserveChanges;
         private float _flashStart = float.NegativeInfinity;
         private float _waveStart = float.NegativeInfinity;
 
@@ -56,11 +69,13 @@ namespace MoonProject.World
         {
             if (_settings == null || _lens == null || _halo == null || _light == null || _spark == null
                 || _postClips == null || _postClips.Length == 0 || Array.IndexOf(_postClips, null) >= 0
-                || _landerClips == null || _landerClips.Length == 0 || Array.IndexOf(_landerClips, null) >= 0)
+                || _landerClips == null || _landerClips.Length == 0 || Array.IndexOf(_landerClips, null) >= 0
+                || _apronClips == null || _apronClips.Length == 0 || Array.IndexOf(_apronClips, null) >= 0
+                || _pilotLamp == null)
             {
                 Debug.LogError($"{nameof(LanderBeacon)}: World Settings, the lens, the halo, the light, the tear's " +
-                    "spark and the clip halos on both sides of the tear must be assigned (the scene build wires them " +
-                    "on the lander).", this);
+                    "spark, the clip halos on both sides of the tear and along the apron cable, and the port's pilot " +
+                    "lamp must be assigned (the scene build wires them on the lander).", this);
                 enabled = false;
                 return;
             }
@@ -69,12 +84,22 @@ namespace MoonProject.World
             _block = new MaterialPropertyBlock();
             _checkPulses = context.Events.Subscribe<BootCheckPulse>(OnCheckPulse);
             _checksStarted = context.Events.Subscribe<BootCheckStarted>(OnCheckStarted);
+            _reserveChanges = context.Events.Subscribe<LanderReserveChanged>(OnReserveChanged);
         }
+
+        /// <summary>How lit the lander's own lights are: 1 while it holds a reserve, 0 once it has died.</summary>
+        public float ReserveLevel => _reserve.Level;
 
         private void OnDestroy()
         {
             _checkPulses?.Dispose();
             _checksStarted?.Dispose();
+            _reserveChanges?.Dispose();
+        }
+
+        private void OnReserveChanged(LanderReserveChanged changed)
+        {
+            _reserve.OnReserve(changed.Reserve01, changed.Restored);
         }
 
         private void OnCheckPulse(BootCheckPulse pulse)
@@ -104,9 +129,12 @@ namespace MoonProject.World
 
             float time = Time.time;
             LanderBeaconSettings beacon = _settings.Landmarks.LanderBeacon;
+            _reserve.Step(Time.deltaTime, beacon.ReserveDarkSeconds);
+            float live = _reserve.Level;
             float flash = BeaconFlash.Level(time - _flashStart, beacon.FlashSeconds, beacon.FlashEdgeSeconds);
-            float level = Mathf.Max(LocatorBlink.Level(time, beacon.Period, beacon.Sharpness, beacon.Floor),
+            float level = live * Mathf.Max(LocatorBlink.Level(time, beacon.Period, beacon.Sharpness, beacon.Floor),
                 flash * beacon.FlashBoost);
+            Glow(_pilotLamp, live * beacon.PilotLampGlow);
             Glow(_lens, level * beacon.LensGlow);
             float swell = 1f + flash * (beacon.FlashHaloSwell - 1f);
             _block.Clear();
@@ -119,7 +147,14 @@ namespace MoonProject.World
             {
                 float lift = CableMarkerWave.Lift(time, i, _landerClips.Length, beacon.MarkerRunSeconds,
                     beacon.MarkerRepeatSeconds, beacon.MarkerWaveWidth);
-                Halo(_landerClips[i], beacon.ClipHaloRest + lift * beacon.ClipHaloPulse);
+                Halo(_landerClips[i], live * (beacon.ClipHaloRest + lift * beacon.ClipHaloPulse));
+            }
+
+            for (int i = 0; i < _apronClips.Length; i++)
+            {
+                float lift = CableMarkerWave.Lift(time, i, _apronClips.Length, beacon.MarkerRunSeconds,
+                    beacon.MarkerRepeatSeconds, beacon.MarkerWaveWidth);
+                Halo(_apronClips[i], live * (beacon.ClipHaloRest + lift * beacon.ClipHaloPulse));
             }
 
             float sinceBegin = time - _waveStart;

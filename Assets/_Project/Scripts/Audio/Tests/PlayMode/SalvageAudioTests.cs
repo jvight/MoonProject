@@ -103,5 +103,23 @@ namespace MoonProject.Audio.PlayModeTests
             _rig.Events.Publish(new MaterialSalvaged(SalvageMaterial.Optics, 1, cargo, "site.kestrel", 0));
             Assert.AreEqual("salvage_chime_D5", LastClip, "a new chain starts at the bottom");
         }
+
+        [UnityTest]
+        public IEnumerator ARefusedCut_TicksOnce_ButTheFirstSputterSpeaksAlone()
+        {
+            int plays = _rig.Director.PlayCount;
+            _rig.Events.Publish(new CutterRefused(CutPoint));
+            yield return null;
+            Assert.AreEqual(plays + 1, _rig.Director.PlayCount, "one refusal, one tick");
+            Assert.AreEqual("cutter_refuse", LastClip);
+            Assert.Less(Vector3.Distance(CutPoint, _rig.Director.LastVoice.transform.position), 1e-4f);
+
+            plays = _rig.Director.PlayCount;
+            _rig.Events.Publish(new CutterRefused(CutPoint));
+            _rig.Events.Publish(new CutterSputtered(CutPoint));
+            yield return null;
+            Assert.AreEqual(plays + 1, _rig.Director.PlayCount, "the sputter, not doubled by the refusal's tick");
+            Assert.AreEqual("cutter_sputter", LastClip);
+        }
     }
 }

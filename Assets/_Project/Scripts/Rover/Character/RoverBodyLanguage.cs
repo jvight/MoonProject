@@ -136,6 +136,10 @@ namespace MoonProject.Rover
         private RoverMood _mood;
         private LookAround _lookAround;
         private AntennaListen _listen;
+        private CallListen _call;
+        private ICallSource _callSource;
+        private ICallSignal _callSignal;
+        private bool _charging;
         private IWorldLayout _world;
         private GameContext _context;
         private ISkyGaze _sky;
@@ -397,6 +401,7 @@ namespace MoonProject.Rover
             _mood = new RoverMood(_tuning, MoodSeed, _tuning.SleepOnBoot);
             _lookAround = new LookAround(_tuning);
             _listen = new AntennaListen(_tuning.Listening);
+            _call = new CallListen(_tuning.CallListen);
             _glowBlock = new MaterialPropertyBlock();
             _battery = new BatteryLink(context);
             _neckRest = _neck.localRotation;
@@ -451,6 +456,7 @@ namespace MoonProject.Rover
                 events.Subscribe<FriendSpotted>(spotted => Glance(spotted.Position)),
                 events.Subscribe<CargoChanged>(OnCargoChanged),
                 events.Subscribe<SonarPinged>(OnListened),
+                events.Subscribe<CallReplyFailed>(_ => _call.ReplyFailed()),
             };
             _initialized = true;
             _faceDirector.Initialize(context);
@@ -743,6 +749,7 @@ namespace MoonProject.Rover
         /// <summary>A charger started filling the cells: 07 perks up (head lift, brighter eye, antenna wiggle).</summary>
         private void OnChargingChanged(ChargingChanged charging)
         {
+            _charging = charging.Charging;
             if (charging.Charging)
             {
                 PerkUp(_tuning.Battery.ChargePerk);
@@ -890,12 +897,45 @@ namespace MoonProject.Rover
             _cargoSag = Smoothing.Damp(_cargoSag, _cargoTarget, 0.25f, deltaTime);
             _headNudge.Step(deltaTime);
             _listen.Step(deltaTime);
-            _rig.SetAntennaLift(_listen.Lift + _postAntenna);
+            StepCall(deltaTime);
+            _rig.SetAntennaLift(_listen.Lift + _postAntenna + _call.Reach * _tuning.CallListen.ReachAntennaLift);
             _lookAround.Step(deltaTime);
             float sky = SkyLift();
             StepGaze(sky, deltaTime);
             Apply(sky);
             _faceDirector.Step(deltaTime, _hasActiveGaze, _targetGazeAim.x, _targetGazeAim.y, _yaw.Value, _pitch.Value);
+        }
+
+        /// <summary>Glow the antenna lamp adds for the call now (the stutter while it is broken, the keyed pattern once it
+        /// locks).</summary>
+        public float CallLampGlow => _call != null ? _call.LampGlow : 0f;
+
+        /// <summary>The call-listening tuning in use.</summary>
+        public CallListenSettings CallSettings => _tuning.CallListen;
+
+        /// <summary>
+        /// The call from the sky, once Gameplay has registered it (picked up on the first frame it exists; a scene
+        /// without one has no call to listen to): 07 listens while it idles or charges.
+        /// </summary>
+        private void StepCall(float deltaTime)
+        {
+            if (_callSource == null)
+            {
+                _context.TryGet(out _callSource);
+            }
+
+            if (_callSource == null)
+            {
+                return;
+            }
+
+            if (_callSignal == null)
+            {
+                _context.TryGet(out _callSignal);
+            }
+
+            bool listening = _mood.Idle > _tuning.CallListen.IdleShare || _charging;
+            _call.Step(deltaTime, _callSource.State, listening, _callSignal != null ? _callSignal.Keying : 0f);
         }
 
         private void StepTools(float halfLife, float deltaTime)
@@ -1001,8 +1041,9 @@ namespace MoonProject.Rover
             else
             {
                 var travel = new Vector2(_rover.SteerInput * _tuning.LookIntoTurn, _tuning.TravelHeadPitch);
-                float idle = _mood.EarthGaze;
-                Vector2 earth = Aim(frame.InverseTransformDirection(_world.EarthDirection));
+                float idle = Mathf.Max(_mood.EarthGaze, _call.HeadWeight);
+                Vector3 skyDirection = _callSource != null ? _callSource.Direction : _world.EarthDirection;
+                Vector2 earth = Aim(frame.InverseTransformDirection(skyDirection));
                 aim = Vector2.Lerp(travel, earth, idle);
                 frequency = Mathf.Lerp(_tuning.TravelGazeFrequency, _tuning.IdleGazeFrequency, idle);
                 hasExplicitGaze = Mathf.Abs(_rover.SteerInput) > 0.01f || idle > 0.05f || sky > 0.01f;
@@ -1047,8 +1088,9 @@ namespace MoonProject.Rover
             float breathing = _tuning.IdleHeadBreath * _mood.Idle * (2f * _mood.Breath - 1f);
             BatteryMoodSettings battery = _tuning.Battery;
             float bow = _tired * battery.LowHeadBow + _crawl * battery.CrawlHeadBow;
+            CallListenSettings call = _tuning.CallListen;
             float rawPitch = _pitch.Value + (_mood.HeadPitchOffset + breathing - bow - _headNudge.Pitch
-                - _chirpPose.HeadDip) * idleScale;
+                - _chirpPose.HeadDip + _call.Reach * call.ReachHeadPitch - _call.Dejection * call.DejectedHeadPitch) * idleScale;
             float targetPitch = opening >= inspect ? _openingPitchDeg : _screenInspectPitchDeg;
             float targetYaw = opening >= inspect ? _openingYawDeg : _screenInspectYawDeg;
             float scanSweepWeight = (1f - steady) * _scanAimBlend;
@@ -1060,7 +1102,7 @@ namespace MoonProject.Rover
             {
                 float neckDroop = (_tuning.NeckSleepDroop * _mood.Wake.Sleep + _tuning.NeckTiredDroop * _tired
                     + _tuning.NeckCrawlExtend * _crawl + _tuning.NeckCargoExtend * _cargoSag
-                    - _tuning.NeckAlertLift * Mathf.Clamp01(_mood.Perk)) * idleScale;
+                    - _tuning.NeckAlertLift * Mathf.Clamp01(_mood.Perk) - _call.Reach * call.ReachNeckLift + _call.Dejection * call.DejectedNeckDroop) * idleScale;
                 _neckLift.localRotation = _neckLiftRest * Quaternion.AngleAxis(neckDroop, Vector3.right);
             }
 
@@ -1146,7 +1188,7 @@ namespace MoonProject.Rover
             {
                 _scanFan.enabled = false;
             }
-            SetGlow(_antennaTipRenderer, _listen.TipEmission(_mood.TipGlow));
+            SetGlow(_antennaTipRenderer, _listen.TipEmission(_mood.TipGlow + _call.LampGlow));
         }
 
         /// <summary>

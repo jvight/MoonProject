@@ -1,0 +1,224 @@
+using System;
+using System.Collections.Generic;
+using NUnit.Framework;
+using UnityEngine;
+using MoonProject.Core;
+using MoonProject.Core.Events;
+
+namespace MoonProject.Gameplay.Tests
+{
+    /// <summary>
+    /// The range ring (opening v3, plan 4.2): the energy out and back, on flat ground, with a slope's cost, and with
+    /// an extra charge point; and the ring's showing (faint at the first charge, full when asked, fading).
+    /// </summary>
+    public sealed class RangeRingTests
+    {
+        private const float StepSlack = 8f;
+        private const int East = 18;
+        private const int West = 54;
+
+        private sealed class FakeTerrain : ITerrainQuery
+        {
+            public Func<float, float, float> Height = (x, z) => 0f;
+
+            public Rect PlayableArea => new Rect(-5000f, -5000f, 10000f, 10000f);
+
+            public bool IsDrivable(float x, float z) => true;
+
+            public float SampleHeight(float x, float z) => Height(x, z);
+
+            public Vector3 SampleNormal(float x, float z) => Vector3.up;
+        }
+
+        private sealed class FakeRover : IRoverState
+        {
+            public Vector3 Position { get; set; }
+
+            public Quaternion Rotation => Quaternion.identity;
+
+            public Vector3 Velocity => Vector3.zero;
+
+            public float Speed => 0f;
+
+            public float NormalizedSpeed => 0f;
+
+            public Vector2 DriveInput => Vector2.zero;
+
+            public bool IsGrounded => true;
+
+            public float AirTime => 0f;
+
+            public Vector3 GroundNormal => Vector3.up;
+        }
+
+        private sealed class FakePoints : IChargePointSource
+        {
+            public readonly List<Vector3> Points = new List<Vector3> { Vector3.zero };
+
+            public void CopyChargePoints(List<Vector3> points)
+            {
+                points.AddRange(Points);
+            }
+        }
+
+        private BatteryTuning _battery;
+        private RangeRingSettings _settings;
+        private FakeTerrain _terrain;
+        private RangeRingModel _model;
+        private Vector3[] _ring;
+
+        [SetUp]
+        public void SetUp()
+        {
+            _battery = ScriptableObject.CreateInstance<BatteryTuning>();
+            _settings = _battery.RangeRing;
+            _terrain = new FakeTerrain();
+            _model = new RangeRingModel(_battery, _settings, _terrain);
+            _ring = new Vector3[_settings.Points];
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            UnityEngine.Object.DestroyImmediate(_battery);
+        }
+
+        private float Radius(int index, Vector3 origin)
+        {
+            Vector3 flat = _ring[index] - origin;
+            flat.y = 0f;
+            return flat.magnitude;
+        }
+
+        [Test]
+        public void OnFlatGround_TheRingIsHalfTheRange_OnEveryBearing_ForOneCellOfCharge()
+        {
+            _model.Compute(Vector3.zero, 1f, new List<Vector3> { Vector3.zero }, _ring);
+            float half = _battery.MetresPerCell * 0.5f;
+            for (int k = 0; k < _ring.Length; k++)
+            {
+                Assert.AreEqual(half, Radius(k, Vector3.zero), StepSlack, $"bearing {k}: out and back is one cell");
+            }
+        }
+
+        [Test]
+        public void TheRing_GrowsWithTheCharge_AndIsGoneWithNone()
+        {
+            var home = new List<Vector3> { Vector3.zero };
+            _model.Compute(Vector3.zero, 0.5f, home, _ring);
+            float small = Radius(East, Vector3.zero);
+            _model.Compute(Vector3.zero, 1.5f, home, _ring);
+            float large = Radius(East, Vector3.zero);
+            Assert.AreEqual(small * 3f, large, StepSlack * 2f, "three times the charge, three times the ring");
+            _model.Compute(Vector3.zero, 0f, home, _ring);
+            Assert.AreEqual(0f, Radius(East, Vector3.zero), 1e-3f, "nothing in the battery, no reach");
+        }
+
+        [Test]
+        public void WithNoChargePointAtAll_07sOwnPlaceIsTheWayHome()
+        {
+            _model.Compute(Vector3.zero, 1f, new List<Vector3>(), _ring);
+            Assert.AreEqual(_battery.MetresPerCell * 0.5f, Radius(East, Vector3.zero), StepSlack);
+        }
+
+        [Test]
+        public void ASlope_CostsMoreUphill_AndLessDownhill_SoTheWayBackIsNotTheWayOut()
+        {
+            float rise = Mathf.Tan(10f * Mathf.Deg2Rad);
+            _terrain.Height = (x, z) => x * rise;
+            Vector3 foot = Vector3.zero;
+            Vector3 top = new Vector3(100f, 100f * rise, 0f);
+            float up = _model.PathCost(foot, top, _settings.PathStepMetres);
+            float down = _model.PathCost(top, foot, _settings.PathStepMetres);
+            _terrain.Height = (x, z) => 0f;
+            float flat = _model.PathCost(Vector3.zero, new Vector3(100f, 0f, 0f), _settings.PathStepMetres);
+            Assert.Greater(up, flat * 1.2f, "uphill is dearer than the flat");
+            Assert.Less(down, flat * 0.8f, "downhill is cheaper");
+            Assert.AreEqual(flat * 2f, up + down, flat * 0.05f, "and the pair of them comes to the flat's cost both ways");
+        }
+
+        [Test]
+        public void WithAChargePointUphill_TheRingReachesFurtherPastItThanAwayFromIt()
+        {
+            float rise = Mathf.Tan(10f * Mathf.Deg2Rad);
+            _terrain.Height = (x, z) => x * rise;
+            var top = new List<Vector3> { new Vector3(100f, 100f * rise, 0f) };
+            _model.Compute(Vector3.zero, 1f, top, _ring);
+            float past = Radius(East, Vector3.zero);
+            float away = Radius(West, Vector3.zero);
+            Assert.Greater(past, away + 50f, "the way home is uphill from the foot: the ring is lopsided");
+            for (int k = 0; k < _ring.Length; k++)
+            {
+                Vector3 edge = _ring[k];
+                float way = _model.PathCost(Vector3.zero, edge, _settings.StepMetres) +
+                            _model.PathCost(edge, top[0], _settings.PathStepMetres);
+                Assert.LessOrEqual(way, 1.15f, $"bearing {k}: the edge can still be come back from");
+            }
+        }
+
+        [Test]
+        public void AnExtraChargePoint_WithinReach_ExtendsTheRing()
+        {
+            var home = new List<Vector3> { Vector3.zero };
+            _model.Compute(Vector3.zero, 1f, home, _ring);
+            float before = Radius(East, Vector3.zero);
+            var two = new List<Vector3> { Vector3.zero, new Vector3(150f, 0f, 0f) };
+            _model.Compute(Vector3.zero, 1f, two, _ring);
+            Assert.Greater(Radius(East, Vector3.zero), before + 50f, "toward the new point the ring grows");
+            Assert.Greater(Radius(West, Vector3.zero), before - StepSlack, "and never shrinks elsewhere");
+        }
+
+        [Test]
+        public void AChargePointOutOfReach_ChangesNothing()
+        {
+            var home = new List<Vector3> { Vector3.zero };
+            _model.Compute(Vector3.zero, 1f, home, _ring);
+            float before = Radius(East, Vector3.zero);
+            var far = new List<Vector3> { Vector3.zero, new Vector3(600f, 0f, 0f) };
+            _model.Compute(Vector3.zero, 1f, far, _ring);
+            Assert.AreEqual(before, Radius(East, Vector3.zero), StepSlack * 2f, "07 could not get there to use it");
+        }
+
+        [Test]
+        public void TheRing_ShowsFaintAtTheFirstCharge_FullWhenAsked_AndFadesInAndOut()
+        {
+            var events = new EventBus();
+            var shown = new List<RangeRingShown>();
+            events.Subscribe<RangeRingShown>(shown.Add);
+            var rover = new FakeRover();
+            var model = new BatteryModel(_battery, events);
+            var field = new RangeRingField(events, _settings, _model, model, new FakePoints(), rover);
+            Assert.IsFalse(field.IsShown);
+
+            events.Publish(new OpeningMilestoneReached(OpeningMilestone.FirstCharge, true));
+            Assert.IsFalse(field.IsShown, "a loaded game's first charge shows no ring");
+            events.Publish(new OpeningMilestoneReached(OpeningMilestone.FirstCharge, false));
+            Assert.IsTrue(field.IsShown);
+            Assert.AreEqual(RangeRingMode.Faint, field.Mode);
+            Assert.AreEqual(1, shown.Count);
+            Assert.AreEqual(_settings.FaintSeconds, shown[0].Seconds);
+            Assert.AreEqual(0f, field.Visibility01, 1e-3f, "it fades in");
+            Assert.AreEqual(_settings.Points, field.Count);
+
+            float peak = 0f;
+            float seconds = 0f;
+            while (field.IsShown && seconds < 30f)
+            {
+                field.Step(0.05f);
+                seconds += 0.05f;
+                peak = Mathf.Max(peak, field.Visibility01);
+            }
+
+            Assert.AreEqual(1f, peak, 0.02f, "to its full visibility");
+            Assert.AreEqual(_settings.FaintSeconds, seconds, 0.15f, "and is gone after its seconds");
+            Assert.AreEqual(0f, field.Visibility01);
+            Assert.Less(_settings.FaintStrength, _settings.FullStrength, "faint is fainter than full");
+
+            field.Show(RangeRingMode.Full);
+            Assert.AreEqual(RangeRingMode.Full, field.Mode);
+            Assert.AreEqual(2, shown.Count);
+            Assert.AreEqual(_settings.FullSeconds, shown[1].Seconds);
+            field.Dispose();
+        }
+    }
+}

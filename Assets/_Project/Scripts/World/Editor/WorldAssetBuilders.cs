@@ -18,6 +18,9 @@ namespace MoonProject.World.Editor
     {
         private const string OcclusionFeature = "ScreenSpaceAmbientOcclusion";
 
+        // The sky point's quad is drawn round the camera by its shader, so its bounds must never be culled.
+        private const float SkyPointNeverCulled = 1e7f;
+
         [MoonBuilder("World/Settings", 200)]
         public static void BuildSettings()
         {
@@ -99,12 +102,38 @@ namespace MoonProject.World.Editor
             var earthMaterial = new Material(LoadShader(WorldPaths.EarthShader));
             earthMaterial.SetTexture("_EarthAlbedoMap", LoadTexture(WorldPaths.EarthAlbedoTexture));
             GeneratedAssets.CreateOrReplace(earthMaterial, WorldPaths.EarthMaterial);
+            CallSkyPointSettings point = LoadSettings().Sky.CallPoint;
+            var pointMaterial = new Material(LoadShader(WorldPaths.SkyPointShader));
+            pointMaterial.SetColor("_Color", point.Color);
+            pointMaterial.SetFloat("_Peak", point.Peak);
+            pointMaterial.SetFloat("_CorePixels", point.CorePixels);
+            pointMaterial.SetFloat("_GlowPixels", point.GlowPixels);
+            pointMaterial.SetFloat("_GlowShare", point.GlowShare);
+            GeneratedAssets.CreateOrReplace(pointMaterial, WorldPaths.SkyPointMaterial);
+            GeneratedAssets.CreateOrReplace(SkyPointQuad(), WorldPaths.SkyPointMesh);
             AssetDatabase.SaveAssets();
         }
 
         /// <summary>
+        /// The sky point's quad, corners at ±1 (the shader scales them to pixels round the point): it is drawn round
+        /// whichever camera looks, so CPU culling must never reject it.
+        /// </summary>
+        private static Mesh SkyPointQuad()
+        {
+            var mesh = new Mesh { name = "CallSkyPointQuad" };
+            mesh.SetVertices(new[]
+            {
+                new Vector3(-1f, -1f, 0f), new Vector3(1f, -1f, 0f), new Vector3(1f, 1f, 0f), new Vector3(-1f, 1f, 0f),
+            });
+            mesh.SetTriangles(new[] { 0, 2, 1, 0, 3, 2 }, 0, false);
+            mesh.bounds = new Bounds(Vector3.zero, Vector3.one * SkyPointNeverCulled);
+            return mesh;
+        }
+
+        /// <summary>
         /// The landed lander's amber emergency beacon (opening v2 §4): a LofiBeaconHalo in its colour, the cable
-        /// clips' small halo (its brightness set per clip by the beacon) and the tear's cold spark.
+        /// clips' small halo (its brightness set per clip by the beacon), the tear's cold spark, and the fallen solar
+        /// array's sun-white glint and the habitat power module lamp's amber halo (opening v3 R4).
         /// </summary>
         [MoonBuilder("World/Lander Beacon", 240)]
         public static void BuildLanderBeacon()
@@ -128,6 +157,20 @@ namespace MoonProject.World.Editor
             spark.SetFloat("_Radius", beacon.SparkRadius);
             spark.SetFloat("_MinAngleTan", 0f);
             GeneratedAssets.CreateOrReplace(spark, WorldPaths.CableTearSparkMaterial);
+            ArrayGlintSettings glint = LoadSettings().Landmarks.ArrayGlint;
+            var arrayGlint = new Material(LoadShader(WorldPaths.BeaconHaloShader));
+            arrayGlint.SetColor("_Color", glint.Color);
+            arrayGlint.SetFloat("_Intensity", 0f);
+            arrayGlint.SetFloat("_Radius", glint.Radius);
+            arrayGlint.SetFloat("_MinAngleTan", Mathf.Tan(glint.MinAngle * Mathf.Deg2Rad));
+            GeneratedAssets.CreateOrReplace(arrayGlint, WorldPaths.ArrayGlintMaterial);
+            ModuleLampSettings moduleLamp = LoadSettings().Landmarks.ModuleLamp;
+            var moduleHalo = new Material(LoadShader(WorldPaths.BeaconHaloShader));
+            moduleHalo.SetColor("_Color", moduleLamp.HaloColor);
+            moduleHalo.SetFloat("_Intensity", 0f);
+            moduleHalo.SetFloat("_Radius", moduleLamp.HaloRadius);
+            moduleHalo.SetFloat("_MinAngleTan", Mathf.Tan(moduleLamp.HaloMinAngle * Mathf.Deg2Rad));
+            GeneratedAssets.CreateOrReplace(moduleHalo, WorldPaths.ModuleLampHaloMaterial);
             AssetDatabase.SaveAssets();
         }
 

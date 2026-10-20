@@ -658,6 +658,7 @@ MonoBehaviour:
     _blockedShakePixels: 5
     _blockedShakeHertz: 5
     _blockedFaceSeconds: 1.8
+    _replyFaceSeconds: 3
     _sunArc:
       _fadeIn: 1.2
       _fadeOut: 1.5

@@ -79,6 +79,35 @@ namespace MoonProject.Audio.Tests
             Assert.LessOrEqual(pitchSpread, settings.WowDepth + 1e-4f);
         }
 
+        [Test]
+        public void BrokenDropouts_CutTheKeying_AndNothingElseDoes()
+        {
+            CallCarrierSettings settings = Settings;
+            var model = new CallCarrierModel(settings, 5u);
+            model.SetState(CallState.Broken);
+            float deepest = 1f;
+            for (int i = 0; i < 60 * 30; i++)
+            {
+                model.Step(Step, -1f);
+                if (!model.InDropout && model.Cut < 1f - 1e-4f)
+                {
+                    continue;
+                }
+
+                deepest = Mathf.Min(deepest, model.Cut);
+            }
+
+            Assert.AreEqual(settings.DropoutGain, deepest, 0.02f, "a dropout cuts the keying to the tuned depth");
+
+            model.SetState(CallState.Clear);
+            for (int i = 0; i < 60 * 5; i++)
+            {
+                model.Step(Step, -1f);
+            }
+
+            Assert.AreEqual(1f, model.Cut, 1e-4f, "facing away never cuts the keying: only the break-up does");
+        }
+
         [TestCase(5)]
         [TestCase(6)]
         [TestCase(3)]

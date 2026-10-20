@@ -145,6 +145,23 @@
           ]
         }
       ]
+    },
+    {
+      "mood": "ask",
+      "cue": "chirp_ask",
+      "variants": [
+        {
+          "onsets": [
+            0.0
+          ],
+          "pitches": [
+            0.2692
+          ],
+          "lengths": [
+            0.5
+          ]
+        }
+      ]
     }
   ]
 }

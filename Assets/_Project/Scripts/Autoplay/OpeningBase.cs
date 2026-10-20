@@ -12,8 +12,9 @@ namespace MoonProject.Autoplay
 {
     /// <summary>
     /// The steps of the opening after the lander (B4..B11) played as a player does: take the lander's open crate,
-    /// build with the build key, the arrows and E, charge on the pad and fit the igniter on 07's face screen, scan and
-    /// cut among the ruins, wait out the first sunset. A step names the objective line the game must show before it
+    /// build with the build key, the arrows and E, charge on the pad, scan among the ruins, try the faulted cutter
+    /// (it sputters), take the spare igniter from the rack by the fallen array and fit it on 07's face screen, cut,
+    /// wait out the first sunset. A step names the objective line the game must show before it
     /// starts, and a chip that never shows on a verb's first use is listed as a guidance gap in the beat's warnings.
     /// </summary>
     internal sealed class OpeningBase
@@ -177,29 +178,47 @@ namespace MoonProject.Autoplay
                 () => "On screen: line '" + _bot.World.Ui.ObjectiveLine() + "', chip '" + _bot.World.Ui.Chip() + "'.");
         }
 
-        /// <summary>B4: the lander's open crate gives Metal, Wiring and the spare igniter.</summary>
-        public IEnumerator CollectTheOpenCrate()
+        /// <summary>
+        /// An open crate (B4: the lander's charger kit; B7: the spares rack by the fallen array) gives everything it
+        /// holds on a held E once 07 is within its reach.
+        /// </summary>
+        public IEnumerator TakeFromTheOpenCrate(string cacheId)
         {
-            if (!G.StartKit.CarriesIgniter)
+            if (Taken(cacheId))
             {
-                SealedContainer crate = G.Containers.Find("supply.lander.open");
-                if (!G.Hints.TryGet(InteractionKind.PickUp, out _))
-                {
-                    // Out of the crate's reach after the scan: drive up to it, as a player would.
-                    Vector3 side = crate.SealSide(_bot.World.Rover.Position);
-                    Vector3 front = Flat(crate.CutPoint.position) + side * SealStandOff;
-                    yield return _bot.DriveTo(front + side * SealLineUp, LineUpArrive,
-                        "a line-up for the open crate", DriveSeconds);
-                    yield return _bot.DriveTo(front, 1f, "the open crate", DriveSeconds);
-                }
-
-                yield return _bot.Until(() => G.Hints.TryGet(InteractionKind.PickUp, out _), FollowSeconds,
-                    "the open crate to offer its parts (Pick up)");
-                yield return _bot.Hold(Key.E, () => G.StartKit.CarriesIgniter, FollowSeconds,
-                    "E to take the parts from the open crate");
+                yield break;
             }
 
-            yield return _bot.Until(() => G.StartKit.CarriesIgniter, FollowSeconds, "07 to take the spare igniter");
+            SealedContainer crate = G.Containers.Find(cacheId);
+            if (!G.Hints.TryGet(InteractionKind.PickUp, out _))
+            {
+                // Out of the crate's reach: drive up to it, as a player would.
+                Vector3 side = crate.SealSide(_bot.World.Rover.Position);
+                Vector3 front = Flat(crate.CutPoint.position) + side * SealStandOff;
+                yield return _bot.DriveTo(front + side * SealLineUp, LineUpArrive,
+                    "a line-up for " + cacheId, DriveSeconds);
+                yield return _bot.DriveTo(front, 1f, cacheId, DriveSeconds);
+            }
+
+            yield return _bot.Until(() => G.Hints.TryGet(InteractionKind.PickUp, out _), FollowSeconds,
+                cacheId + " to offer what it holds (Pick up)");
+            yield return _bot.Hold(Key.E, () => Taken(cacheId), FollowSeconds, "E to take what " + cacheId + " holds");
+        }
+
+        /// <summary>Open crate <paramref name="cacheId"/> has given everything it held to 07's hold.</summary>
+        private bool Taken(string cacheId)
+        {
+            SupplyCaches caches = G.Opening.Caches;
+            for (int i = 0; i < caches.Count; i++)
+            {
+                if (caches.Get(i).Id == cacheId)
+                {
+                    return caches.Left(i).IsFree && !caches.PartLeft(i);
+                }
+            }
+
+            _bot.Fail("the opening has no supply crate '" + cacheId + "'.");
+            return true;
         }
 
         /// <summary>B5, B8, B9, B11: B opens the menu, arrows pick, E takes up, 07's look finds a spot, E places and welds.</summary>
@@ -273,7 +292,7 @@ namespace MoonProject.Autoplay
             }
         }
 
-        /// <summary>B6: onto the pad, the dock locks 07 in, the spare igniter is fitted on the face screen, the reserve runs out.</summary>
+        /// <summary>B6: onto the pad, the dock locks 07 in, 07 charges until the lander's reserve runs out.</summary>
         public IEnumerator ChargeOnThePad(string structureId)
         {
             BatteryModel battery = G.Battery.Model;
@@ -294,14 +313,6 @@ namespace MoonProject.Autoplay
                 yield return _bot.Until(() => G.PadLock.Raised, FollowSeconds, "the pad's dock lock to rise round 07");
             }
 
-            yield return ExpectStep(OpeningSteps.FitIgniter, OpeningKeys.FitIgniter,
-                "B6: charging, the igniter in the hold");
-            if (_bot.Failed)
-            {
-                yield break;
-            }
-
-            yield return FitTheIgniter();
             yield return _bot.Until(() => !battery.IsCharging, ChargeSeconds, "07 to charge full");
         }
 
@@ -380,6 +391,41 @@ namespace MoonProject.Autoplay
             yield return _bot.Until(() => battery.Charge01 >= TopUpTo, TopUpSeconds, "07's cells to charge on the pad");
         }
 
+        /// <summary>
+        /// B7: the first try at <paramref name="frame"/>'s sealed crates, before the igniter is fitted: a held E at the
+        /// first seal and the faulted cutter sputters (CUTTER · NO IGNITER), cutting nothing.
+        /// </summary>
+        public IEnumerator TryTheFaultedCutter(string frame)
+        {
+            SupplyCaches caches = G.Opening.Caches;
+            for (int i = 0; i < caches.Count; i++)
+            {
+                SupplyCache cache = caches.Get(i);
+                SealedContainer crate = G.Containers.Find(cache.Id);
+                if (cache.AnchorId != frame || crate.Opened)
+                {
+                    continue;
+                }
+
+                yield return ApproachTheSeal(cache, crate, false);
+                yield return _bot.Hold(Key.E, () =>
+                    {
+                        _bot.KeepLookingAt(crate.CutPoint.position);
+                        return G.StartKit.Sputtered;
+                    }, FollowSeconds, "a held E at the seal of " + cache.Id + " to sputter the faulted cutter",
+                    () => "Crate candidate " + (G.Containers.Candidate != null ? G.Containers.Candidate.Id : "none") +
+                          ", cutter state " + G.StartKit.StateOf(RoverSystem.Cutter) + ".");
+                if (!_bot.Failed && crate.Progress > 0f)
+                {
+                    _bot.Fail("the faulted cutter cut into " + cache.Id + ".");
+                }
+
+                yield break;
+            }
+
+            _bot.Fail(frame + " has no sealed crate for the cutter to try.");
+        }
+
         public IEnumerator CutTheCrates(string frame)
         {
             SupplyCaches caches = G.Opening.Caches;
@@ -392,37 +438,7 @@ namespace MoonProject.Autoplay
                     continue;
                 }
 
-                yield return TopUpIfLow();
-
-                Vector3 side = ClearSide(crate.CutPoint.position, crate.SealSide(_bot.World.Rover.Position),
-                    SealStandOff, crate.Root);
-                Vector3 front = Flat(crate.CutPoint.position) + side * SealStandOff;
-                if (Clear(crate.CutPoint.position + side * (SealStandOff + SealLineUp), crate.Root))
-                {
-                    // Out to the open ground before the seal first (CrateApproachSessions keeps it clear): a
-                    // straight run between crates may cross a ruin.
-                    yield return _bot.DriveTo(front + side * (SealLineUp + SealOpenGround), LineUpArrive,
-                        "the open ground before " + cache.Id, DriveSeconds);
-                    yield return _bot.DriveTo(front + side * SealLineUp, LineUpArrive, "a line-up for " + cache.Id,
-                        DriveSeconds);
-                }
-
-                yield return _bot.DriveTo(front, SealArrive, "the seal of " + cache.Id, DriveSeconds);
-                yield return _bot.DriveTo(Flat(crate.CutPoint.position), SealNose, "nose to the seal of " + cache.Id,
-                    DriveSeconds);
-                yield return _bot.TurnToward(crate.CutPoint.position, "the seal of " + cache.Id);
-                if (DriveSteering.FlatDistance(crate.CutPoint.position, _bot.World.Rover.Position) < SealTooClose)
-                {
-                    // Rolled in over the seal (a small crate goes under 07's nose): the cutter in 07's chest cannot
-                    // see it there, so back off a little and face it again, as a player would.
-                    Vector3 seal = crate.CutPoint.position;
-                    yield return _bot.BackOff(() => DriveSteering.FlatDistance(seal, _bot.World.Rover.Position) >=
-                                                    SealNose, DriveSeconds, "the seal of " + cache.Id);
-                    yield return _bot.TurnToward(seal, "the seal of " + cache.Id);
-                }
-
-                yield return FirstUse("cut: hold E", "hint.salvage", crate.CutPoint.position);
-                yield return WaitForTheSealCandidate(crate.CutPoint.position, cache.Id);
+                yield return ApproachTheSeal(cache, crate, true);
                 yield return _bot.Hold(Key.E, () =>
                     {
                         _bot.KeepLookingAt(crate.CutPoint.position);
@@ -433,6 +449,50 @@ namespace MoonProject.Autoplay
                 yield return _bot.Until(() => crate.StandsOpen, G.Cargo.ContainerLidSeconds + FollowSeconds,
                     cache.Id + " to stand open");
             }
+        }
+
+        /// <summary>
+        /// Out to the open ground before <paramref name="crate"/>'s seal, in to it and facing it, until the game makes
+        /// it the cut candidate (with <paramref name="teachesCut"/>, the cut chip noted on its first use).
+        /// </summary>
+        private IEnumerator ApproachTheSeal(SupplyCache cache, SealedContainer crate, bool teachesCut)
+        {
+            yield return TopUpIfLow();
+
+            Vector3 side = ClearSide(crate.CutPoint.position, crate.SealSide(_bot.World.Rover.Position),
+                SealStandOff, crate.Root);
+            Vector3 front = Flat(crate.CutPoint.position) + side * SealStandOff;
+            if (Clear(crate.CutPoint.position + side * (SealStandOff + SealLineUp), crate.Root))
+            {
+                // Out to the open ground before the seal first (CrateApproachSessions keeps it clear): a
+                // straight run between crates may cross a ruin.
+                yield return _bot.DriveTo(front + side * (SealLineUp + SealOpenGround), LineUpArrive,
+                    "the open ground before " + cache.Id, DriveSeconds);
+                yield return _bot.DriveTo(front + side * SealLineUp, LineUpArrive, "a line-up for " + cache.Id,
+                    DriveSeconds);
+            }
+
+            yield return _bot.DriveTo(front, SealArrive, "the seal of " + cache.Id, DriveSeconds);
+            yield return _bot.DriveTo(Flat(crate.CutPoint.position), SealNose, "nose to the seal of " + cache.Id,
+                DriveSeconds);
+            yield return _bot.TurnToward(crate.CutPoint.position, "the seal of " + cache.Id);
+            if (DriveSteering.FlatDistance(crate.CutPoint.position, _bot.World.Rover.Position) < SealTooClose)
+            {
+                // Rolled in over the seal (a small crate goes under 07's nose): the cutter in 07's chest cannot
+                // see it there, so back off a little and face it again, as a player would.
+                Vector3 seal = crate.CutPoint.position;
+                yield return _bot.BackOff(() => DriveSteering.FlatDistance(seal, _bot.World.Rover.Position) >=
+                                                SealNose, DriveSeconds, "the seal of " + cache.Id);
+                yield return _bot.TurnToward(seal, "the seal of " + cache.Id);
+            }
+
+            if (teachesCut)
+            {
+                // The Cut chip shows once the cutter works: the faulted first try (CUTTER · NO IGNITER) has none.
+                yield return FirstUse("cut: hold E", "hint.salvage", crate.CutPoint.position);
+            }
+
+            yield return WaitForTheSealCandidate(crate.CutPoint.position, cache.Id);
         }
 
         /// <summary>
@@ -721,9 +781,17 @@ namespace MoonProject.Autoplay
                       build.Controller.CandidatePose.Position + ", last reason " + build.Controller.CandidateReason + ").");
         }
 
-        /// <summary>Tab opens 07's face screen, the arrows walk the focus to the cutter's socket, Enter fits, Tab closes.</summary>
-        private IEnumerator FitTheIgniter()
+        /// <summary>
+        /// B7: Tab opens 07's face screen, the arrows walk the focus to the cutter's socket, Enter fits the spare
+        /// igniter where 07 stands (a field swap), Tab closes.
+        /// </summary>
+        public IEnumerator FitTheIgniter()
         {
+            if (_bot.Failed)
+            {
+                yield break;
+            }
+
             RoverStartKit kit = G.StartKit;
             UiProbe ui = _bot.World.Ui;
             yield return FirstUse("fit the igniter: Tab", "hint.fitpart");

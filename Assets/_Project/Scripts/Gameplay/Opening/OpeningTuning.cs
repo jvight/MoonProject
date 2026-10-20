@@ -60,8 +60,8 @@ namespace MoonProject.Gameplay
                  "igniter into the cutter): no pad and no dock needed. Any other part needs the service bay.")]
         [SerializeField] private string[] _fieldFitParts = { "part.igniter" };
 
-        [Tooltip("The spare igniter's story-part id in 07's hold: the lander's open crate holds it, the cutter " +
-                 "takes it at B6.")]
+        [Tooltip("The spare igniter's story-part id in 07's hold: Kenji's CUTTER SPARES rack by the fallen array " +
+                 "holds it, the cutter takes it at B7.")]
         [SerializeField] private string _igniterPart = "part.igniter";
 
         [Tooltip("Metres from an open crate within which it offers what it holds, from any side: a held E takes it " +
@@ -101,23 +101,30 @@ namespace MoonProject.Gameplay
         [Tooltip("The sender's identity and its decode, and where its point of light stands beside Earth.")]
         [SerializeField] private CallSettings _call = new CallSettings();
 
+        [Header("The failed reply and the raised mast (opening v3 R7)")]
+        [Tooltip("When 07 tries to answer the call, and how the antenna mast's segments lift and lock.")]
+        [SerializeField] private CallReplySettings _reply = new CallReplySettings();
+
         [Header("Supply (opening-v3 §4: fixed sources, each for one structure)")]
         [Tooltip("Every source of the opening's materials, and nothing else: each stands by the thing it comes from " +
                  "and is for one structure (its link), which it covers on its own with the link's other sources " +
                  "(EditMode: supply >= need and <= 1.5x). A source stands by a world anchor, a Lumen ruin piece " +
                  "([World]/Ruins/<id>) or the lander's service port (lander.port), in its frame. The lander's open " +
-                 "charger kit (CHARGER KIT · ILC-R: the pad's Metal 4 and Wiring 2, and the spare igniter) stands at " +
-                 "the port where the cable ends; the sealed ones stand at the ruins they come from, cut once the " +
-                 "cutter works.")]
+                 "charger kit (CHARGER KIT · ILC-R: the pad's Metal 4 and Wiring 2) stands at the port where the " +
+                 "cable ends; Kenji's open CUTTER SPARES rack (the spare igniter) stands by the fallen array, in its " +
+                 "frame so it moves with it; the sealed ones stand at the ruins they come from, cut once the cutter " +
+                 "works.")]
         [SerializeField] private SupplyCache[] _caches =
         {
             new SupplyCache("supply.lander.open", OpeningField.LanderPortFrame, new Vector3(4.2f, 0f, -1.4f), 45f,
-                ContainerKinds.CrateCargoOpen, new Recipe(4, 2, 0), StructureIds.ChargingPad, true,
-                new[] { "part.igniter", "part.icecore" }),
+                ContainerKinds.CrateCargoOpen, new Recipe(4, 2, 0), StructureIds.ChargingPad, true),
             new SupplyCache("supply.array.panels", "FallenSolarArray", new Vector3(5f, 0f, 0f), 90f,
                 ContainerKinds.CrateL, new Recipe(3, 0, 1), StructureIds.SolarArray),
             new SupplyCache("supply.array.junction", "FallenSolarArray", new Vector3(9.7f, 0f, -2.6f), 90f,
                 ContainerKinds.CrateM, new Recipe(0, 2, 0), StructureIds.SolarArray),
+            new SupplyCache("supply.array.spares", "FallenSolarArray", new Vector3(4.4f, 0f, 3.6f), 90f,
+                ContainerKinds.CrateM, new Recipe(0, 0, 0), StructureIds.SolarArray, true,
+                new[] { "part.igniter" }),
             new SupplyCache("supply.habitat.reel", "HabitatModules", new Vector3(-3.3f, 0f, -6.5f), 207f,
                 ContainerKinds.CrateM, new Recipe(0, 3, 0), StructureIds.BatteryBank),
             new SupplyCache("supply.habitat.module", "HabitatModules", new Vector3(-13.5f, 0f, -3.6f), -90f,
@@ -181,5 +188,7 @@ namespace MoonProject.Gameplay
         public RecoveryLamps RecoveryLamps => _recoveryLamps;
 
         public CallSettings Call => _call;
+
+        public CallReplySettings Reply => _reply;
     }
 }

@@ -42,8 +42,8 @@ MonoBehaviour:
     _identity: ARK IV
     _decodedAtFirstCharge: 1
     _decodedAtAnswer: 2
-    _yawFromEarth: 7
-    _pitchFromEarth: 2
+    _yawFromEarth: -8.5
+    _pitchFromEarth: 1.5
   _caches:
   - _id: supply.lander.open
     _anchorId: lander.port
@@ -56,10 +56,7 @@ MonoBehaviour:
       _optics: 0
     _forStructure: charging_pad
     _startsOpen: 1
-    _parts:
-    - part.igniter
-    - part.icecore
-    _prop: {fileID: 703351103347903336, guid: 3a2ed291bf34a90459e85da9d8125b67, type: 3}
+    _parts: []
   - _id: supply.array.panels
     _anchorId: FallenSolarArray
     _offset: {x: 5, y: 0, z: 0}
@@ -72,7 +69,6 @@ MonoBehaviour:
     _forStructure: solar_array
     _startsOpen: 0
     _parts: []
-    _prop: {fileID: 0}
   - _id: supply.array.junction
     _anchorId: FallenSolarArray
     _offset: {x: 9.7, y: 0, z: -2.6}
@@ -85,7 +81,19 @@ MonoBehaviour:
     _forStructure: solar_array
     _startsOpen: 0
     _parts: []
-    _prop: {fileID: 0}
+  - _id: supply.array.spares
+    _anchorId: FallenSolarArray
+    _offset: {x: 4.4, y: 0, z: 3.6}
+    _yaw: 90
+    _container: Crate_M
+    _yield:
+      _metal: 0
+      _wiring: 0
+      _optics: 0
+    _forStructure: solar_array
+    _startsOpen: 1
+    _parts:
+    - part.igniter
   - _id: supply.habitat.reel
     _anchorId: HabitatModules
     _offset: {x: -3.3, y: 0, z: -6.5}
@@ -98,7 +106,6 @@ MonoBehaviour:
     _forStructure: battery_bank
     _startsOpen: 0
     _parts: []
-    _prop: {fileID: 0}
   - _id: supply.habitat.module
     _anchorId: HabitatModules
     _offset: {x: -13.5, y: 0, z: -3.6}
@@ -111,7 +118,6 @@ MonoBehaviour:
     _forStructure: battery_bank
     _startsOpen: 0
     _parts: []
-    _prop: {fileID: 0}
   - _id: supply.tower.mast
     _anchorId: RadioTower
     _offset: {x: -6.5, y: 0, z: 0}
@@ -124,7 +130,6 @@ MonoBehaviour:
     _forStructure: antenna_mast
     _startsOpen: 0
     _parts: []
-    _prop: {fileID: 0}
   - _id: supply.tower.feed
     _anchorId: RadioTower
     _offset: {x: -5.4, y: 0, z: 5.6}
@@ -137,7 +142,6 @@ MonoBehaviour:
     _forStructure: antenna_mast
     _startsOpen: 0
     _parts: []
-    _prop: {fileID: 0}
   - _id: supply.tower.dish
     _anchorId: RadioTower
     _offset: {x: 6.8, y: 0, z: 1.8}
@@ -150,4 +154,3 @@ MonoBehaviour:
     _forStructure: antenna_mast
     _startsOpen: 0
     _parts: []
-    _prop: {fileID: 0}
