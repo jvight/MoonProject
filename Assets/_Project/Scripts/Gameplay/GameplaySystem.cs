@@ -806,6 +806,7 @@ namespace MoonProject.Gameplay
             Databank?.Dispose();
             StartKit?.Dispose();
             TowFrames?.Dispose();
+            Relay?.Dispose();
             Call?.Dispose();
             Rack?.Dispose();
             MastRaise?.Dispose();

@@ -7,10 +7,11 @@ using MoonProject.Core.Events;
 namespace MoonProject.Gameplay.Tests
 {
     /// <summary>
-    /// relay.1's repair (opening v3 R10): a held E takes the spare from the open cabinet into the hold; let go and held
-    /// again at the feed socket it fits it, and only then: the relay is lit (published once), its contact pad charges a
-    /// 07 standing on it, and it counts as a charge point for the range ring; a save keeps all of it, lays a carried
-    /// spare back into the hold, and replays a lit relay as Restored.
+    /// relay.1's repair (opening v3 R10): nothing is offered until relay.1 has answered the call; then a held E takes
+    /// the spare from the open cabinet into the hold; let go and held again at the feed socket it fits it, and only
+    /// then: the relay is lit (published once), its contact pad charges a 07 standing on it, and it counts as a charge
+    /// point for the range ring; a save keeps all of it, lays a carried spare back into the hold, and replays a lit
+    /// relay as Restored.
     /// </summary>
     public sealed class RelayRepairTests
     {
@@ -50,6 +51,7 @@ namespace MoonProject.Gameplay.Tests
             _fittedProp = Make("FeedUnitFitted");
             _fittedProp.SetActive(false);
             _relay = NewRelay();
+            Answer();
         }
 
         [TearDown]
@@ -62,6 +64,22 @@ namespace MoonProject.Gameplay.Tests
 
             _made.Clear();
             Object.DestroyImmediate(_catalog);
+        }
+
+        [Test]
+        public void BeforeTheAnswer_TheCabinetAndTheSocketOfferNothing()
+        {
+            RelayRepair silent = NewRelay();
+            _rover.Position = Spare;
+            for (int i = 0; i < 3; i++)
+            {
+                silent.Step(++_frame, true);
+            }
+
+            Assert.IsFalse(silent.Open);
+            Assert.IsFalse(silent.SpareTaken, "relay.1 has not answered yet: its cabinet is not 07's to open");
+            Assert.IsTrue(_relay.Open, "answered (a loaded game's replayed milestone too)");
+            silent.Dispose();
         }
 
         [Test]
@@ -132,6 +150,7 @@ namespace MoonProject.Gameplay.Tests
 
             _hold.RemovePart(_settings.FeedPart);
             RelayRepair loaded = NewRelay();
+            Answer();
             loaded.Restore(carried);
             Assert.IsFalse(_spareProp.activeSelf, "the cabinet stays empty");
             loaded.Announce();
@@ -147,12 +166,19 @@ namespace MoonProject.Gameplay.Tests
             _fittedProp.SetActive(false);
 
             RelayRepair reloaded = NewRelay();
+            Answer();
             reloaded.Restore(lit);
             Assert.IsTrue(_fittedProp.activeSelf, "a lit relay shows its unit at once");
             reloaded.Announce();
             Assert.AreEqual(1, _relit.Count, "stated at the session start");
             Assert.IsTrue(_relit[0].Restored, "as Restored, so World's lamp burns steady at once");
             Assert.IsFalse(_hold.HasPart(_settings.FeedPart), "a fitted spare is not laid back");
+        }
+
+        /// <summary>relay.1 answers the call (R8), or a loaded game replays that it did.</summary>
+        private void Answer()
+        {
+            _events.Publish(new OpeningMilestoneReached(OpeningMilestone.CallAnswered, true));
         }
 
         private void Repair()

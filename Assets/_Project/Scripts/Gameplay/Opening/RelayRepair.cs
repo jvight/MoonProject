@@ -7,15 +7,16 @@ using MoonProject.Core.Events;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// relay.1's repair (docs/design/opening-v3-purpose.md R10): its open service cabinet holds the labelled spare
-    /// (RELAY SPARE · FEED UNIT), offered with a held E within reach; the mast box's empty feed socket takes it from
-    /// the hold with a held E within reach (<see cref="InteractionKind.Install"/>). Fitted, the relay is lit
-    /// (<see cref="RelayRelit"/>, once, and replayed as Restored at each session start of a game where it is): its
+    /// relay.1's repair (docs/design/opening-v3-purpose.md R10), open once relay.1 has answered the call (R8,
+    /// <see cref="OpeningMilestone.CallAnswered"/>, replayed for a loaded game): its open service cabinet holds the
+    /// labelled spare (RELAY SPARE · FEED UNIT), offered with a held E within reach; the mast box's empty feed socket
+    /// takes it from the hold with a held E within reach (<see cref="InteractionKind.Install"/>). Fitted, the relay is
+    /// lit (<see cref="RelayRelit"/>, once, and replayed as Restored at each session start of a game where it is): its
     /// contact pad charges 07 like a pad (<see cref="ChargerKind.Mast"/>) and it counts as a charge point, so the range
     /// ring grows. The props are World's: the spare in the cabinet hides once taken, the fitted unit in the socket
     /// shows once fitted. Allocation-free per step.
     /// </summary>
-    public sealed class RelayRepair : IChargePointSource
+    public sealed class RelayRepair : IChargePointSource, IDisposable
     {
         private const string SpareNoun = "pickup.part.feedunit";
 
@@ -29,6 +30,7 @@ namespace MoonProject.Gameplay
         private readonly Vector3 _pad;
         private readonly GameObject _spareProp;
         private readonly GameObject _fittedProp;
+        private readonly IDisposable _milestones;
         private bool _carriedAtLoad;
 
         // The E held to take the spare must be let go before it fits it: one press, one act.
@@ -53,8 +55,21 @@ namespace MoonProject.Gameplay
             _spare = spare;
             _socket = socket;
             _pad = pad;
+            _milestones = events.Subscribe<OpeningMilestoneReached>(OnMilestone);
             ShowProps();
         }
+
+        /// <summary>relay.1 has answered the call: its cabinet and socket are open to 07.</summary>
+        public bool Open { get; private set; }
+
+        /// <summary>Where the spare lies in the open cabinet.</summary>
+        public Vector3 SparePoint => _spare;
+
+        /// <summary>The mast box's feed socket.</summary>
+        public Vector3 SocketPoint => _socket;
+
+        /// <summary>The contact pad's centre.</summary>
+        public Vector3 PadPoint => _pad;
 
         /// <summary>07 took the spare from the cabinet.</summary>
         public bool SpareTaken { get; private set; }
@@ -72,7 +87,7 @@ namespace MoonProject.Gameplay
         public void Step(int frame, bool held)
         {
             _awaitRelease &= held;
-            if (Fitted)
+            if (Fitted || !Open)
             {
                 return;
             }
@@ -104,7 +119,7 @@ namespace MoonProject.Gameplay
         public bool TryGetInstall(out Vector3 at)
         {
             at = _socket;
-            return !Fitted && _hold.HasPart(_settings.FeedPart) &&
+            return Open && !Fitted && _hold.HasPart(_settings.FeedPart) &&
                    SurfaceRules.HorizontalDistanceSquared(_rover.Position, _socket) <=
                    _settings.FitReach * _settings.FitReach;
         }
@@ -164,6 +179,16 @@ namespace MoonProject.Gameplay
             SpareTaken = data.spareTaken || data.fitted;
             _carriedAtLoad = data.spareCarried && !data.fitted;
             ShowProps();
+        }
+
+        public void Dispose()
+        {
+            _milestones.Dispose();
+        }
+
+        private void OnMilestone(OpeningMilestoneReached reached)
+        {
+            Open |= reached.Milestone == OpeningMilestone.CallAnswered;
         }
 
         private void ShowProps()

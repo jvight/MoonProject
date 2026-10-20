@@ -77,6 +77,9 @@ namespace MoonProject.Autoplay
         private const float SunsetSeconds = 300f;
         private const float ChargeSeconds = 60f;
 
+        /// <summary>Metres from relay.1's cabinet or socket 07 stops at: well inside the take and fit reach.</summary>
+        private const float RelayArrive = 2f;
+
         /// <summary>Metres out from the module's hitch where 07 turns its back to it before reversing.</summary>
         private const float HookStandOff = 4f;
 
@@ -761,6 +764,31 @@ namespace MoonProject.Autoplay
             yield return _bot.Until(() => !G.Tow.IsTowing, FollowSeconds, "the winch to let the module go on the apron",
                 () => "The module stands " + DriveSteering.FlatDistance(module.position, Pad())
                     .ToString("0.0", CultureInfo.InvariantCulture) + " m from the apron's centre.");
+        }
+
+        /// <summary>
+        /// R10, relay.1's repair, as a player does it: up to the open cabinet where the labelled spare waits, a held E
+        /// takes it; to the mast box's empty feed socket, a held E fits it and the relay is lit; onto its contact pad,
+        /// which charges 07 like a pad of its own.
+        /// </summary>
+        public IEnumerator RepairTheRelay()
+        {
+            RelayRepair relay = G.Relay;
+            yield return _bot.Until(() => relay.Open, FollowSeconds, "relay.1 to have answered the call");
+            Vector3 spare = relay.SparePoint;
+            yield return _bot.DriveTo(Flat(spare), RelayArrive, "relay.1's open cabinet", DriveSeconds);
+            yield return _bot.Until(() => G.Hints.TryGet(InteractionKind.PickUp, out _), FollowSeconds,
+                "the cabinet to offer its spare (Pick up)");
+            yield return _bot.Hold(Key.E, () => relay.SpareTaken, FollowSeconds, "E to take relay.1's spare");
+            yield return _bot.DriveTo(Flat(relay.SocketPoint), RelayArrive, "relay.1's feed socket", DriveSeconds);
+            yield return _bot.Until(() => G.Hints.TryGet(InteractionKind.Install, out _), FollowSeconds,
+                "the feed socket to offer the spare (Fit)");
+            yield return _bot.Hold(Key.E, () => relay.Fitted, FollowSeconds, "E to fit the spare: relay.1 lit");
+            BatteryModel battery = G.Battery.Model;
+            yield return _bot.DriveTo(Flat(relay.PadPoint), ApproachThrottleRadius, "relay.1's contact pad",
+                DriveSeconds);
+            yield return _bot.Until(() => battery.CellsFull || battery.IsCharging && battery.Charger == ChargerKind.Mast,
+                ChargeSeconds, "relay.1's pad to charge 07");
         }
 
         /// <summary>Where the module stands now: the battery bank is built on it.</summary>
