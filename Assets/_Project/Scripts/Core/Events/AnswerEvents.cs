@@ -59,14 +59,21 @@ namespace MoonProject.Core.Events
         public Vector3 Position { get; }
     }
 
-    /// <summary>The pulse reached the Peak's dark dish and glinted on it.</summary>
+    /// <summary>
+    /// The pulse reached the Peak's dark dish and glinted on it (<see cref="Strength"/> 1), and again, softer, while the
+    /// release's view looks at it.
+    /// </summary>
     public readonly struct PeakDishGlinted
     {
-        public PeakDishGlinted(Vector3 position)
+        public PeakDishGlinted(Vector3 position, float strength = 1f)
         {
             Position = position;
+            Strength = strength;
         }
 
         public Vector3 Position { get; }
+
+        /// <summary>How bright the glint is, as a share of the flare at the answer (0..1).</summary>
+        public float Strength { get; }
     }
 }

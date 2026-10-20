@@ -9,11 +9,14 @@ using MoonProject.Testing;
 namespace MoonProject.Rover.PlayModeTests
 {
     /// <summary>
-    /// The release's view from the rise (opening v3 R9) on 07: it looks at relay.1's lamp, the Peak's dish and
-    /// Kestrel-3 in turn, so the player's eye is led to the three lures.
+    /// The release's view from the rise (opening v3 R9) on 07: its head looks at relay.1's lamp, the next goal, then
+    /// glances at the Peak's dish where the glint is, and never at Kestrel-3.
     /// </summary>
     public sealed class ReleaseViewPlayModeTests
     {
+        private const float RelayLookSeconds = 4.5f;
+        private const float PeakLookSeconds = 1.6f;
+        private const float DishGlanceAfterSeconds = 0.9f;
         private const float FrameTime = 1f / 60f;
         private const float SecondsEach = 2.5f;
         private const float SettleSeconds = 1.4f;
@@ -40,7 +43,7 @@ namespace MoonProject.Rover.PlayModeTests
         [Timeout(300000)]
         [PrebuildSetup(typeof(RoverSessionScene))]
         [PostBuildCleanup(typeof(RoverSessionScene))]
-        public IEnumerator TheViewFromTheRise_Has07LookAtEachLureInTurn()
+        public IEnumerator TheViewFromTheRise_Has07LookAtRelay1_ThenGlanceAtThePeak_AndNeverAtKestrel()
         {
             yield return _scene.Boot();
             RoverBodyLanguage body = _scene.Body;
@@ -56,10 +59,10 @@ namespace MoonProject.Rover.PlayModeTests
 
             yield return RealRoverScene.WaitSeconds(SettleSeconds);
             Assert.Less(Aim(body, at, relay), OnTargetDegrees, "first, relay.1's lamp");
-            yield return RealRoverScene.WaitSeconds(SecondsEach);
-            Assert.Less(Aim(body, at, dish), OnTargetDegrees, "then the Peak's dish");
-            yield return RealRoverScene.WaitSeconds(SecondsEach);
-            Assert.Less(Aim(body, at, kestrel), OnTargetDegrees, "then Kestrel-3");
+            yield return RealRoverScene.WaitSeconds(RelayLookSeconds - SettleSeconds + DishGlanceAfterSeconds);
+            Assert.Less(Aim(body, at, dish), OnTargetDegrees, "then a glance at the Peak's dish");
+            yield return RealRoverScene.WaitSeconds(PeakLookSeconds + SettleSeconds);
+            Assert.Greater(Aim(body, at, kestrel), OnTargetDegrees, "and never a look at Kestrel-3: the lamp is the goal");
             _scene.Context.Get<IRoverRig>().SetHoldStill(_holdOwner, false);
         }
 

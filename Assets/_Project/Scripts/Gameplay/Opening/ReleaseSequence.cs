@@ -28,6 +28,8 @@ namespace MoonProject.Gameplay
         private bool _rackShown;
         private bool _announced;
         private bool _pendingView;
+        private float _viewClock;
+        private int _glintsGiven;
 
         public ReleaseSequence(EventBus events, ICallSource call, IRangeRing ring, Action<RangeRingMode> showRing,
             CallAnswerSettings settings, Vector3 relay, Vector3 dish, Vector3 kestrel)
@@ -93,9 +95,17 @@ namespace MoonProject.Gameplay
                     break;
                 case ReleaseStage.View:
                     _left -= deltaTime;
+                    if (!_pendingView)
+                    {
+                        _viewClock += deltaTime;
+                        StepGlints();
+                    }
+
                     if (_pendingView && _left <= 0f)
                     {
                         _pendingView = false;
+                        _viewClock = 0f;
+                        _glintsGiven = 0;
                         _left = _settings.ViewSecondsEach * 3f;
                         _events.Publish(new ReleaseViewOpened(_relay, _dish, _kestrel, _settings.ViewSecondsEach));
                     }
@@ -113,6 +123,22 @@ namespace MoonProject.Gameplay
             foreach (IDisposable token in _tokens)
             {
                 token.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// The dish glints softly as the view reaches it (after the camera has settled on relay.1 and the pan has run on
+        /// to the dish), and twice more a moment apart, each softer than the last.
+        /// </summary>
+        private void StepGlints()
+        {
+            while (_glintsGiven < _settings.DishGlints &&
+                   _viewClock >= _settings.ViewLeadSeconds + _settings.ViewSecondsEach +
+                   _glintsGiven * _settings.DishGlintGapSeconds)
+            {
+                float strength = _settings.DishGlintStrength * Mathf.Pow(_settings.DishGlintFade, _glintsGiven);
+                _events.Publish(new PeakDishGlinted(_dish, strength));
+                _glintsGiven++;
             }
         }
 

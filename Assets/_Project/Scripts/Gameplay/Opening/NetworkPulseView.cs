@@ -45,12 +45,12 @@ namespace MoonProject.Gameplay
             _line.lightProbeUsage = LightProbeUsage.Off;
             _line.reflectionProbeUsage = ReflectionProbeUsage.Off;
             _line.enabled = false;
-            _flashes = new GlowFlashPool(host.transform, sphere, flash, 2, settings.GlintSeconds, settings.GlintRadius,
+            _flashes = new GlowFlashPool(host.transform, sphere, flash, 4, settings.GlintSeconds, settings.GlintRadius,
                 settings.GlintIntensity);
             _tokens = new[]
             {
                 events.Subscribe<NetworkPulseLaunched>(OnLaunched),
-                events.Subscribe<PeakDishGlinted>(glint => _flashes.Spawn(glint.Position)),
+                events.Subscribe<PeakDishGlinted>(glint => _flashes.Spawn(glint.Position, glint.Strength)),
             };
         }
 
