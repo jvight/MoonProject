@@ -23,6 +23,9 @@ namespace MoonProject.Audio.PlayModeTests
         /// <summary>07's tow cable the tests load and strain.</summary>
         public FakeTowLine Tow { get; } = new FakeTowLine();
 
+        /// <summary>The socket rack at the pad the tests fill.</summary>
+        public FakeRackStatus Rack { get; } = new FakeRackStatus();
+
         /// <summary>The parts on 07 at boot (a loaded game); set before the rig boots.</summary>
         public AudioFakeEquipment Equipment { get; } = new AudioFakeEquipment();
 
@@ -98,6 +101,7 @@ namespace MoonProject.Audio.PlayModeTests
             context.Register<IRoverEquipment>(Equipment);
             context.Register<ICallSource>(Call);
             context.Register<ITowLine>(Tow);
+            context.Register<IRackStatus>(Rack);
         }
     }
 }

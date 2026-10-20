@@ -10,8 +10,8 @@ namespace MoonProject.World.Editor
     /// Light_Anchor and the feed-unit spare on its shelf at Part_Anchor (FeedUnitSpare_Slot/FeedUnitSpare); the mast
     /// box's feed socket at the mast's own FeedSocket_Anchor (FeedSocket), the fitted unit waiting inactive in its mouth
     /// (FeedUnitFitted); and the contact pad in front of the mast (ContactPad, drivable). Gameplay finds these by path
-    /// at its scene build and drives the take, the fit and the charge; <see cref="Relay1SiteLights"/> lights the
-    /// cabinet's lamp strip and the socket's outline.
+    /// at its scene build and drives the take, the fit and the charge; <see cref="Relay1SiteLights"/> lights the site
+    /// for waiting and for relit.
     /// </summary>
     internal static class Relay1SitePlacer
     {
@@ -32,6 +32,7 @@ namespace MoonProject.World.Editor
         private const string SocketAnchor = "FeedSocket_Anchor";
         private const string SocketOutline = "FeedSocket_Outline";
         private const string PadLamp = "PadLamp";
+        private const string RelayLens = "RelayLamp_Lens";
 
         public static void Stand(SceneBuildContext context, WorldSettings settings, Transform root, MoonSurface surface,
             WorldAnchor anchor, GameObject mast)
@@ -55,7 +56,7 @@ namespace MoonProject.World.Editor
             slot.SetPositionAndRotation(part.position + cabinetTurn * site.SpareOnShelf,
                 cabinetTurn * Quaternion.Euler(0f, site.SpareYaw, 0f));
             Prop(context, WorldPaths.FeedUnitSparePrefab, SpareName, slot, slot.position, slot.rotation);
-            StandLight(context, Find(cabinet.transform, LightAnchor), site);
+            Light interior = StandLight(context, Find(cabinet.transform, LightAnchor), site);
 
             Transform mouth = Find(mast.transform, SocketAnchor);
             Transform socket = context.CreateChild(SocketName, holder).transform;
@@ -76,6 +77,8 @@ namespace MoonProject.World.Editor
             serialized.FindProperty("_interiorLamp").objectReferenceValue = RendererOf(cabinet.transform, InteriorLamp);
             serialized.FindProperty("_socketOutline").objectReferenceValue = RendererOf(mast.transform, SocketOutline);
             serialized.FindProperty("_padLamp").objectReferenceValue = RendererOf(pad.transform, PadLamp);
+            serialized.FindProperty("_interiorLight").objectReferenceValue = interior;
+            serialized.FindProperty("_relayLens").objectReferenceValue = RendererOf(mast.transform, RelayLens);
             serialized.ApplyModifiedPropertiesWithoutUndo();
             context.AddSystem(lights);
         }
@@ -120,7 +123,7 @@ namespace MoonProject.World.Editor
             prop.layer = layer;
         }
 
-        private static void StandLight(SceneBuildContext context, Transform at, Relay1SiteSettings site)
+        private static Light StandLight(SceneBuildContext context, Transform at, Relay1SiteSettings site)
         {
             var light = context.CreateChild("LampLight", at).AddComponent<Light>();
             light.type = LightType.Point;
@@ -128,6 +131,7 @@ namespace MoonProject.World.Editor
             light.intensity = site.LampIntensity;
             light.range = site.LampRange;
             light.shadows = LightShadows.None;
+            return light;
         }
 
         private static Renderer RendererOf(Transform root, string node)

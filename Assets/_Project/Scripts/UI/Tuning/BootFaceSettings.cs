@@ -1,11 +1,14 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace MoonProject.UI
 {
     /// <summary>
     /// How 07's face boots before its self-test lines (<see cref="BootFace"/>), and the cover over a New Game that
-    /// reloads (<see cref="CoverVignette"/>). Rover sets how long each part lasts; these are the shares inside each.
+    /// reloads (<see cref="CoverVignette"/>). Rover sets how long each part lasts; these say how a machine fills each:
+    /// shares of a part's seconds where the part sets the pace, and rates where the machine does (the beam, the
+    /// typing).
     /// </summary>
     [Serializable]
     public sealed class BootFaceSettings
@@ -27,18 +30,69 @@ namespace MoonProject.UI
         [Range(0.1f, 1f)]
         [SerializeField] private float _bloomPeak = 0.2f;
 
-        [Header("Maker's mark (shares of its seconds)")]
-        [Tooltip("The beam tracing the strokes, one after another, each the same time.")]
-        [Range(0.2f, 0.8f)]
-        [SerializeField] private float _strokesShare = 0.55f;
+        [Header("Maker's mark")]
+        [Tooltip("Share of the logo's seconds the vector beam plots the strokes in, at one constant speed (a long " +
+                 "stroke takes longer), lifts between strokes included.")]
+        [Range(0.1f, 0.6f)]
+        [SerializeField] private float _strokesShare = 0.22f;
 
-        [Tooltip("The wordmark typing under the mark.")]
+        [Tooltip("Seconds the beam lifts between one stroke and the next: a plotter's pause, no easing.")]
+        [Range(0f, 0.3f)]
+        [SerializeField] private float _strokeLiftSeconds = 0.05f;
+
+        [Tooltip("Seconds after the last stroke before the wordmark starts typing.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _typeGapSeconds = 0.15f;
+
+        [Tooltip("Characters a second the wordmark types at, one by one behind a block cursor.")]
+        [Range(4f, 40f)]
+        [SerializeField] private float _typeCharsPerSecond = 14f;
+
+        [Tooltip("Times a second the block cursor blinks once the wordmark is typed.")]
+        [Range(0.5f, 4f)]
+        [SerializeField] private float _cursorBlinkHertz = 2f;
+
+        [Tooltip("How much (0..1) the held mark's brightness shimmers, at most: a faint scanline flicker only.")]
+        [Range(0f, 0.2f)]
+        [SerializeField] private float _shimmerDepth = 0.04f;
+
+        [Tooltip("Times a second the held mark shimmers.")]
+        [Range(1f, 20f)]
+        [SerializeField] private float _shimmerHertz = 6f;
+
+        [Tooltip("Share of the logo's seconds, at its end, the phosphor's afterglow takes: the image decays to a ghost, " +
+                 "then the raster clears. The hold is what is left between the typing and this.")]
         [Range(0.05f, 0.4f)]
-        [SerializeField] private float _wordmarkShare = 0.15f;
+        [SerializeField] private float _dimShare = 0.12f;
 
-        [Tooltip("The finished mark holding; the rest of the logo's seconds dim it away.")]
-        [Range(0.05f, 0.5f)]
-        [SerializeField] private float _holdShare = 0.22f;
+        [Tooltip("How fast the image decays in the afterglow (higher: a sharper first fall to the ghost).")]
+        [Range(1f, 10f)]
+        [SerializeField] private float _decaySharpness = 4f;
+
+        [Tooltip("The ghost's brightness (0..1) the image decays to before the raster clears.")]
+        [Range(0f, 0.5f)]
+        [SerializeField] private float _ghostLevel = 0.2f;
+
+        [Tooltip("Share of the afterglow, at its end, the ghost takes to clear.")]
+        [Range(0.1f, 0.6f)]
+        [SerializeField] private float _ghostClearShare = 0.3f;
+
+        [Tooltip("The bright trail behind the beam's head while it plots, as a share of the mark's size.")]
+        [Range(0f, 0.3f)]
+        [SerializeField] private float _trailShare = 0.08f;
+
+        [Tooltip("How much brighter (0..1) the trail glows than the plotted line.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _trailBoost = 0.7f;
+
+        [Tooltip("The beam head's wobble across its path, as a share of the mark's size: a vector tube's deflection, " +
+                 "barely there.")]
+        [Range(0f, 0.02f)]
+        [SerializeField] private float _beamWobble = 0.003f;
+
+        [Tooltip("Times a second the beam head wobbles.")]
+        [Range(5f, 60f)]
+        [SerializeField] private float _beamWobbleHertz = 23f;
 
         [Tooltip("Seconds a stroke glows brighter right after the beam has traced it (the phosphor's afterglow).")]
         [Range(0.05f, 1f)]
@@ -53,22 +107,14 @@ namespace MoonProject.UI
         [Range(0.05f, 0.5f)]
         [SerializeField] private float _loadTextShare = 0.25f;
 
-        [Tooltip("Steps in the load bar.")]
-        [Range(3, 8)]
-        [SerializeField] private int _loadSteps = 5;
-
-        [Tooltip("The step (from 0) the machine lingers on, as an old drive does.")]
-        [Range(0, 7)]
-        [SerializeField] private int _loadPauseStep = 3;
-
-        [Tooltip("How many steps' time the lingering step takes.")]
-        [Range(1f, 4f)]
-        [SerializeField] private float _loadPauseWeight = 2f;
+        [Tooltip("The load bar's steps, each its dwell before the bar jumps to it (relative weights): uneven, like an " +
+                 "old drive's seeks. One step each.")]
+        [SerializeField] private float[] _loadDwells = { 1f, 0.45f, 2.4f, 0.7f, 1.6f };
 
         [Header("Typing sounds")]
-        [Tooltip("A typing cue every this many characters (Audio voices them).")]
+        [Tooltip("A typing cue every this many characters (Audio voices them; it softens a fast run).")]
         [Range(1, 4)]
-        [SerializeField] private int _typeCueEvery = 2;
+        [SerializeField] private int _typeCueEvery = 1;
 
         [Header("The cover over a reloading New Game")]
         [Tooltip("Seconds the dark-tube vignette takes to close in from the edges; inside Rover's 0.6 s cover.")]
@@ -93,9 +139,33 @@ namespace MoonProject.UI
 
         public float StrokesShare => _strokesShare;
 
-        public float WordmarkShare => _wordmarkShare;
+        public float StrokeLiftSeconds => _strokeLiftSeconds;
 
-        public float HoldShare => _holdShare;
+        public float TypeGapSeconds => _typeGapSeconds;
+
+        public float TypeCharsPerSecond => _typeCharsPerSecond;
+
+        public float CursorBlinkHertz => _cursorBlinkHertz;
+
+        public float ShimmerDepth => _shimmerDepth;
+
+        public float ShimmerHertz => _shimmerHertz;
+
+        public float DimShare => _dimShare;
+
+        public float DecaySharpness => _decaySharpness;
+
+        public float GhostLevel => _ghostLevel;
+
+        public float GhostClearShare => _ghostClearShare;
+
+        public float TrailShare => _trailShare;
+
+        public float TrailBoost => _trailBoost;
+
+        public float BeamWobble => _beamWobble;
+
+        public float BeamWobbleHertz => _beamWobbleHertz;
 
         public float AfterglowSeconds => _afterglowSeconds;
 
@@ -103,11 +173,7 @@ namespace MoonProject.UI
 
         public float LoadTextShare => _loadTextShare;
 
-        public int LoadSteps => _loadSteps;
-
-        public int LoadPauseStep => _loadPauseStep;
-
-        public float LoadPauseWeight => _loadPauseWeight;
+        public IReadOnlyList<float> LoadDwells => _loadDwells;
 
         public int TypeCueEvery => _typeCueEvery;
 
@@ -125,12 +191,25 @@ namespace MoonProject.UI
                 return "has no maker's mark for the face's boot (rebuild UI/MakerLinework and UI/Tuning)";
             }
 
-            if (_lineShare + _openShare > 1f || _strokesShare + _wordmarkShare + _holdShare > 1f)
+            if (_lineShare + _openShare > 1f || _strokesShare + _dimShare > 1f)
             {
                 return "has boot shares over the whole";
             }
 
-            return _loadPauseStep < _loadSteps ? _linework.Validate() : "lingers on a load step past the bar";
+            if (_loadDwells == null || _loadDwells.Length < 1)
+            {
+                return "has a load bar with no steps";
+            }
+
+            for (int i = 0; i < _loadDwells.Length; i++)
+            {
+                if (_loadDwells[i] <= 0f)
+                {
+                    return $"has load step {i} with no dwell";
+                }
+            }
+
+            return _linework.Validate();
         }
     }
 }

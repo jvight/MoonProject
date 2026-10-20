@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
 
@@ -14,6 +15,9 @@ namespace MoonProject.Gameplay.Tests
         private const int CellPack = 1;
         private const int HexAdapter = 2;
         private const string HexBlueprint = "rover.hex_adapter";
+
+        private static readonly Vector3 Dock = new Vector3(12f, 1f, -30f);
+        private static readonly Quaternion Heading = Quaternion.Euler(0f, 180f, 0f);
 
         private SocketRack _rack;
 
@@ -38,9 +42,12 @@ namespace MoonProject.Gameplay.Tests
         [Test]
         public void TheReveal_ShowsTheOutlinesOfThePartsSeen_Once()
         {
-            Assert.IsTrue(_rack.Reveal(), "it appears");
+            Assert.IsTrue(_rack.Reveal(Dock, Heading), "it appears");
             AssertStates(RackBayState.Outline, RackBayState.Outline, RackBayState.Hidden);
-            Assert.IsFalse(_rack.Reveal(), "and only once");
+            Assert.AreEqual(Dock, _rack.Position, "beside the dock the release revealed it at");
+            Assert.AreEqual(Heading, _rack.Rotation);
+            Assert.IsFalse(_rack.Reveal(Vector3.zero, Quaternion.identity), "and only once, where it first stood");
+            Assert.AreEqual(Dock, _rack.Position);
         }
 
         [Test]
@@ -90,8 +97,18 @@ namespace MoonProject.Gameplay.Tests
             SetUp();
             _rack.Restore(saved);
             Assert.IsFalse(_rack.Shown, "out or not is the release's to say");
-            ShowTheRack();
+            Assert.IsTrue(_rack.RevealSaved(), "a done release brings it back");
+            Assert.AreEqual(Dock, _rack.Position, "where the save placed it");
+            Assert.AreEqual(Heading, _rack.Rotation);
             AssertStates(RackBayState.Outline, RackBayState.Filled, RackBayState.Outline);
+        }
+
+        [Test]
+        public void ASaveThatPlacedTheRackNowhere_LeavesItHidden()
+        {
+            _rack.Restore(new RackSaveData { seen = new string[0], filled = new string[0] });
+            Assert.IsFalse(_rack.RevealSaved(), "no other place it may stand");
+            Assert.IsFalse(_rack.Shown);
         }
 
         [Test]
@@ -113,7 +130,7 @@ namespace MoonProject.Gameplay.Tests
 
         private void ShowTheRack()
         {
-            Assert.IsTrue(_rack.Reveal());
+            Assert.IsTrue(_rack.Reveal(Dock, Heading));
         }
 
         private void AssertStates(RackBayState headlamp, RackBayState cellPack, RackBayState hexAdapter)

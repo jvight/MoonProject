@@ -24,6 +24,15 @@ namespace MoonProject.World
             return Mathf.Pow(Mathf.Max(0f, Vector3.Dot(mirrored, towardEye)), sharpness);
         }
 
+        /// <summary>
+        /// How strongly glass catches the Sun with <paramref name="sunlit"/> of its disc showing (0..1): full once
+        /// <paramref name="fullAt"/> of it shows, as a glint's brightness is the Sun's surface, not its size.
+        /// </summary>
+        public static float Catch(float sunlit, float fullAt)
+        {
+            return Mathf.Clamp01(sunlit / Mathf.Max(fullAt, 1e-4f));
+        }
+
         /// <summary>The glint's slow shimmer at <paramref name="time"/>: 1 - depth .. 1, never two wings alike.</summary>
         public static float Shimmer(float time, float hertz, float depth, float phase)
         {

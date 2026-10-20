@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 using MoonProject.Core;
 using MoonProject.Core.Events;
 
@@ -13,6 +14,9 @@ namespace MoonProject.Gameplay.Tests
     /// </summary>
     public sealed class SocketRackFieldTests
     {
+        private static readonly Vector3 Dock = new Vector3(4f, 0.5f, 9f);
+        private static readonly Quaternion Heading = Quaternion.Euler(0f, 90f, 0f);
+
         private OpeningTuning _tuning;
         private EventBus _events;
         private SocketRackField _field;
@@ -44,6 +48,7 @@ namespace MoonProject.Gameplay.Tests
 
             Reveal();
             Assert.IsTrue(_field.Shown);
+            Assert.AreEqual(Dock, _field.Position, "at the dock the release revealed it at");
             Assert.AreEqual(2, _changes.Count, "the headlamp's and the cell pack's outlines");
             Assert.AreEqual(RackBayState.Outline, _changes[0].State);
             Assert.IsFalse(_changes[0].Restored);
@@ -75,12 +80,27 @@ namespace MoonProject.Gameplay.Tests
         [Test]
         public void ALoadedGameWhoseReleaseIsDone_ReplaysTheRackAsRestored()
         {
-            _field.Restore(new RackSaveData { seen = new string[0], filled = new[] { "rack.cell_pack" } });
+            _field.Restore(new RackSaveData
+            {
+                placed = true, position = Dock, rotation = Heading, seen = new string[0],
+                filled = new[] { "rack.cell_pack" },
+            });
             _events.Publish(new ReleaseStageChanged(ReleaseStage.Done, true));
             _field.Announce();
             Assert.AreEqual(2, _changes.Count);
             Assert.IsTrue(_changes[0].Restored && _changes[1].Restored);
             Assert.AreEqual(RackBayState.Filled, _changes[1].State);
+            Assert.AreEqual(Dock, _field.Position, "it stands where the save placed it");
+            Assert.AreEqual(Heading, _field.Rotation);
+        }
+
+        [Test]
+        public void ADoneReleaseWithNoSavedPlace_SaysSo_AndKeepsTheRackHidden()
+        {
+            _field.Restore(new RackSaveData { seen = new string[0], filled = new string[0] });
+            LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex("placed the rack nowhere"));
+            _events.Publish(new ReleaseStageChanged(ReleaseStage.Done, true));
+            Assert.IsFalse(_field.Shown);
         }
 
         [Test]
@@ -101,7 +121,7 @@ namespace MoonProject.Gameplay.Tests
 
         private void Reveal()
         {
-            _events.Publish(new SocketRackRevealed(Vector3.zero));
+            _events.Publish(new SocketRackRevealed(Dock, Heading));
         }
     }
 }

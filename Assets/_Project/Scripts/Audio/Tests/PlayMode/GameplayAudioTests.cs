@@ -197,6 +197,27 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.IsFalse(_rig.Gameplay.TowStrainSource.isPlaying, "no cable, no creak");
         }
 
+        [Test]
+        public void TheRack_ClunksAsABayFills_ClicksOnceForOutlines_AndIsSilentWhenRestored()
+        {
+            var rack = new Vector3(-5f, 0f, 7f);
+            _rig.Rover.Rack.Position = rack;
+            int plays = _rig.Director.PlayCount;
+            _rig.Events.Publish(new RackChanged(0, RackBayState.Outline, false));
+            _rig.Events.Publish(new RackChanged(1, RackBayState.Outline, false));
+            _rig.Events.Publish(new RackChanged(2, RackBayState.Outline, false));
+            Assert.AreEqual(plays + 1, _rig.Director.PlayCount, "one click for the outlines the release shows together");
+            AssertLastPlayed("rack_outline", rack);
+
+            _rig.Events.Publish(new RackChanged(0, RackBayState.Filled, false));
+            Assert.AreEqual(plays + 2, _rig.Director.PlayCount);
+            AssertLastPlayed("rack_fill", rack);
+
+            _rig.Events.Publish(new RackChanged(1, RackBayState.Filled, true));
+            _rig.Events.Publish(new RackChanged(2, RackBayState.Outline, true));
+            Assert.AreEqual(plays + 2, _rig.Director.PlayCount, "a loaded rack shows itself silently");
+        }
+
         private static IEnumerator Settle(float seconds)
         {
             float until = Time.realtimeSinceStartup + seconds;
