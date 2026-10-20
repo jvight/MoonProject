@@ -149,6 +149,29 @@ namespace MoonProject.Autoplay
             return false;
         }
 
+        /// <summary>
+        /// True while the controls card (the first-minutes card naming WASD, the mouse, Tab and L) is on screen inside
+        /// the view; <paramref name="text"/> is every word on it.
+        /// </summary>
+        public bool ControlsCardInView(out string text)
+        {
+            text = string.Empty;
+            VisualElement card = _root.Q<VisualElement>("controls-card");
+            if (card == null || !IsShown(card, GuidanceOpacity) || !_root.worldBound.Contains(card.worldBound.center))
+            {
+                return false;
+            }
+
+            var words = new System.Text.StringBuilder();
+            foreach (Label label in card.Query<Label>().ToList())
+            {
+                words.Append(label.text).Append(' ');
+            }
+
+            text = words.ToString().Trim();
+            return text.Length > 0;
+        }
+
         /// <summary>The key cap on the prompt chip when it is showing, else empty.</summary>
         public string ChipGlyph()
         {

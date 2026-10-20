@@ -177,7 +177,10 @@ namespace MoonProject.Autoplay
                 yield break;
             }
 
+            bool chaseFrame = false;
             using (_bot.World.Context.Events.Subscribe<RoverAwoke>(_ => _awoke = true))
+            using (_bot.World.Context.Events.Subscribe<RoverWakeBeatReached>(
+                       reached => chaseFrame |= reached.Beat == WakeBeat.ChaseFrame))
             {
                 for (int attempt = 0; attempt < TitleAttempts && _bot.World.Flow.State == GameFlowState.Title; attempt++)
                 {
@@ -188,11 +191,17 @@ namespace MoonProject.Autoplay
                 yield return _bot.Until(() => _bot.World.Flow.State == GameFlowState.Playing, BootTimeoutSeconds,
                     "New Game to start play from the title");
                 yield return _bot.Until(() => _awoke, WakeTimeoutSeconds, "07 to wake in the eclipse");
+                if (_naive != null)
+                {
+                    // Control is handed over at the chase frame, after the lines and the move behind 07: the first-time
+                    // clock starts there, not while the face still prints its self-test.
+                    yield return _bot.Until(() => chaseFrame, WakeTimeoutSeconds, "the chase frame (control handed over)");
+                }
             }
 
             if (!_bot.Failed && _naive != null)
             {
-                // Control is handed over: what does a player who has woken see to do?
+                // Control is handed over (the chase frame): what does a player see to do?
                 yield return _naive.Check("B0");
             }
 

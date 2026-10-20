@@ -188,6 +188,17 @@ namespace MoonProject.Autoplay
                 other = "chip '" + chip + "'";
             }
 
+            if (ui.ControlsCardInView(out string card))
+            {
+                // The card names keys, not goals: it counts when it carries the key the action is done with.
+                if (action == null || Contains(card, new[] { action.Key }))
+                {
+                    return "controls card '" + card + "'";
+                }
+
+                other = other ?? "controls card '" + card + "'";
+            }
+
             string line = ui.ObjectiveLine();
             if (line.Length > 0)
             {
