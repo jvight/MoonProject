@@ -14,6 +14,9 @@ namespace MoonProject.Gameplay
 
         Rigidbody Body { get; }
 
+        /// <summary>The load's root in the world (what World's lamp and a save read).</summary>
+        Transform Root { get; }
+
         /// <summary>Where the cable meets it, in the world.</summary>
         Vector3 Hitch { get; }
 
@@ -27,5 +30,8 @@ namespace MoonProject.Gameplay
 
         /// <summary>One physics step off the cable: once it has come to rest it stands fast.</summary>
         void Settle(float deltaTime);
+
+        /// <summary>A loaded game sets it down where it was left, standing fast.</summary>
+        void Place(Vector3 position, Quaternion rotation);
     }
 }

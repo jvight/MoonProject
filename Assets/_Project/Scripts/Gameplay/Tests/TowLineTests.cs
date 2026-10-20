@@ -9,7 +9,8 @@ namespace MoonProject.Gameplay.Tests
     /// <summary>
     /// 07's winch cable (opening v3 R6): the tether key hooks the nearest load whose hitch is in reach of the winch and
     /// lets it go again; a load towed home to the apron is unhooked there; one that fell far behind is let go softly;
-    /// each hook and release is published with the load's id; a load stands fast off the cable and slides free on it.
+    /// each hook and release is published with the load's id; a load stands fast off the cable and slides free on it;
+    /// a load is found by its tow id, and a save puts each load back where it was left, off the cable.
     /// </summary>
     public sealed class TowLineTests
     {
@@ -120,6 +121,39 @@ namespace MoonProject.Gameplay.Tests
             Assert.IsFalse(_tow.IsTowing);
             Assert.AreEqual(TowRelease.Snapped, _released[0].Reason);
             Assert.AreEqual(0f, _tow.Strain01);
+        }
+
+        [Test]
+        public void ALoad_IsFoundByItsTowId_TowedOrNot()
+        {
+            TowableBody load = Load("habitat.power_module", new Vector3(0f, 0f, -1f));
+            Assert.IsTrue(_tow.TryFindLoad("habitat.power_module", out Transform root));
+            Assert.AreEqual(load.Root, root);
+            _tow.Step(true);
+            Assert.IsTrue(_tow.TryFindLoad("habitat.power_module", out root), "on the cable too");
+            Assert.IsFalse(_tow.TryFindLoad("no.such.load", out root));
+            Assert.IsNull(root);
+            Assert.Throws<System.ArgumentException>(() => _tow.Add(load), "a tow id is one load's");
+        }
+
+        [Test]
+        public void ASave_PutsEachLoadBackWhereItWasLeft_OffTheCable()
+        {
+            TowableBody load = Load("habitat.power_module", new Vector3(0f, 0f, -1f));
+            _tow.Step(true);
+            var left = new Vector3(12f, 0.5f, 30f);
+            Quaternion turned = Quaternion.Euler(0f, 40f, 0f);
+            load.Root.SetPositionAndRotation(left, turned);
+            TowSaveData data = _tow.Capture();
+            Assert.AreEqual(new[] { "habitat.power_module" }, data.ids);
+
+            load.Root.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+            _tow.Restore(data);
+            Assert.IsFalse(_tow.IsTowing, "a loaded game finds it off the cable");
+            Assert.IsFalse(load.IsTowed);
+            Assert.IsTrue(load.StandsFast);
+            Assert.AreEqual(left, load.Root.position);
+            Assert.AreEqual(turned.eulerAngles.y, load.Root.rotation.eulerAngles.y, 1e-3f);
         }
 
         private TowableBody Load(string id, Vector3 at)

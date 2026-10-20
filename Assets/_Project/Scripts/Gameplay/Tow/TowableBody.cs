@@ -59,6 +59,8 @@ namespace MoonProject.Gameplay
 
         public Rigidbody Body { get; }
 
+        public Transform Root => Body.transform;
+
         public Vector3 Hitch => _hitch.position;
 
         public bool IsTowed { get; private set; }
@@ -94,6 +96,15 @@ namespace MoonProject.Gameplay
             {
                 StandFast();
             }
+        }
+
+        public void Place(Vector3 position, Quaternion rotation)
+        {
+            IsTowed = false;
+            StandFast();
+            Body.transform.SetPositionAndRotation(position, rotation);
+            Body.position = position;
+            Body.rotation = rotation;
         }
 
         private void StandFast()

@@ -63,6 +63,13 @@ MonoBehaviour:
     _loadAngularDrag: 3
     _restSpeed: 0.15
     _restSeconds: 1
+  _towLoads:
+  - _id: habitat.power_module
+    _anchorId: HabitatModules
+    _offset: {x: -6.5, y: 0, z: -8}
+    _yaw: -141
+    _prefab: {fileID: 9037060669980301910, guid: cd660088da276e64b839a0488ccaaddf, type: 3}
+    _mass: 250
   _duskSites:
   - Prop_SeismicStation
   - HabitatModules

@@ -24,5 +24,11 @@ namespace MoonProject.Core
         /// something and the winch gives it a lift.
         /// </summary>
         float Strain01 { get; }
+
+        /// <summary>
+        /// The towable load called <paramref name="towId"/> (e.g. the habitat's power module), towed or not; false
+        /// when the opening stands no such load. Its root moves while it is towed: read it each frame.
+        /// </summary>
+        bool TryFindLoad(string towId, out Transform root);
     }
 }

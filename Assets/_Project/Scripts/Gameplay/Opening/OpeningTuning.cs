@@ -110,6 +110,10 @@ namespace MoonProject.Gameplay
                  "comes home.")]
         [SerializeField] private TowSettings _tow = new TowSettings();
 
+        [Tooltip("The opening's towable loads and where they first stand: the habitat's power module, the battery " +
+                 "bank's frame (Art's PowerModule, its TowHitch on its front face).")]
+        [SerializeField] private TowLoadSpot[] _towLoads = Array.Empty<TowLoadSpot>();
+
         [Header("The first free choice and dusk (opening v3 R5–R6)")]
         [Tooltip("The near sites 07 is free to visit after power-on, either order, by their frames: a Lumen ruin " +
                  "piece ([World]/Ruins/<id>) or a story prop ([World]/BasinProps/<id>). The sky holds in the " +
@@ -206,6 +210,8 @@ namespace MoonProject.Gameplay
         public CallReplySettings Reply => _reply;
 
         public TowSettings Tow => _tow;
+
+        public IReadOnlyList<TowLoadSpot> TowLoads => _towLoads ?? Array.Empty<TowLoadSpot>();
 
         public IReadOnlyList<string> DuskSites => _duskSites ?? Array.Empty<string>();
 

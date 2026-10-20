@@ -382,6 +382,8 @@ namespace MoonProject.Gameplay
                 GameplaySaveKeys.DatabankVersion, Databank.Capture, Databank.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<CallSaveData>(GameplaySaveKeys.Call,
                 GameplaySaveKeys.CallVersion, CaptureCall, RestoreCall)));
+            _saveTokens.Add(save.Register(new SaveSection<TowSaveData>(GameplaySaveKeys.Tow,
+                GameplaySaveKeys.TowVersion, Tow.Capture, Tow.Restore)));
             _saveTokens.Add(_building.RegisterSave(save));
         }
 
@@ -594,7 +596,10 @@ namespace MoonProject.Gameplay
             Tow?.FixedStep(Time.fixedDeltaTime);
         }
 
-        /// <summary>07's winch cable, with home at the apron; null (logged) without the winch or the apron.</summary>
+        /// <summary>
+        /// 07's winch cable, with home at the apron, and the opening's towable loads stood on it; null (logged) without
+        /// the winch, the apron or Art's loads.
+        /// </summary>
         private TowLine NewTow(GameplayServices services)
         {
             Transform winch = services.Rig != null ? services.Rig.WinchOrigin : null;
@@ -611,7 +616,24 @@ namespace MoonProject.Gameplay
                 return null;
             }
 
-            return new TowLine(services.Events, _openingTuning.Tow, winch, services.Rover, apron.Position);
+            var tow = new TowLine(services.Events, _openingTuning.Tow, winch, services.Rover, apron.Position);
+            Transform loads = new GameObject("TowLoads").transform;
+            loads.SetParent(transform, false);
+            try
+            {
+                foreach (TowLoadSpot spot in _openingTuning.TowLoads)
+                {
+                    tow.Add(TowLoads.Stand(spot, Opening.FrameOf(spot.AnchorId), loads, services.Terrain,
+                        _openingTuning.Tow));
+                }
+            }
+            catch (InvalidOperationException exception)
+            {
+                Debug.LogError($"{nameof(GameplaySystem)}: {exception.Message}", this);
+                return null;
+            }
+
+            return tow;
         }
 
         /// <summary>

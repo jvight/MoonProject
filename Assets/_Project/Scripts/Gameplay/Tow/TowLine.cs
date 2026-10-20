@@ -52,7 +52,7 @@ namespace MoonProject.Gameplay
         /// <summary>Times the winch has lifted the load on the cable free (it caught on the ground).</summary>
         public int Lifts => _snag.Lifts;
 
-        /// <summary>A load the cable may hook.</summary>
+        /// <summary>A load the cable may hook; its tow id is its own.</summary>
         internal void Add(ITowable load)
         {
             if (load == null)
@@ -60,7 +60,64 @@ namespace MoonProject.Gameplay
                 throw new ArgumentNullException(nameof(load));
             }
 
+            if (Find(load.Id) != null)
+            {
+                throw new ArgumentException($"A towable load '{load.Id}' is on the winch's list already.",
+                    nameof(load));
+            }
+
             _loads.Add(load);
+        }
+
+        public bool TryFindLoad(string towId, out Transform root)
+        {
+            ITowable load = Find(towId);
+            root = load?.Root;
+            return load != null;
+        }
+
+        /// <summary>Where each load was left (a tow in progress is not kept).</summary>
+        public TowSaveData Capture()
+        {
+            var data = new TowSaveData
+            {
+                ids = new string[_loads.Count],
+                positions = new Vector3[_loads.Count],
+                rotations = new Quaternion[_loads.Count],
+            };
+            for (int i = 0; i < _loads.Count; i++)
+            {
+                Transform root = _loads[i].Root;
+                data.ids[i] = _loads[i].Id;
+                data.positions[i] = root.position;
+                data.rotations[i] = root.rotation;
+            }
+
+            return data;
+        }
+
+        /// <summary>A loaded game: each saved load is set down where it was left, off the cable.</summary>
+        public void Restore(TowSaveData data)
+        {
+            if (data == null)
+            {
+                throw new ArgumentNullException(nameof(data));
+            }
+
+            if (_load != null)
+            {
+                ITowable held = _load;
+                _load = null;
+                held.EndTow();
+            }
+
+            string[] ids = data.ids ?? Array.Empty<string>();
+            Vector3[] positions = data.positions ?? Array.Empty<Vector3>();
+            Quaternion[] rotations = data.rotations ?? Array.Empty<Quaternion>();
+            for (int i = 0; i < ids.Length && i < positions.Length && i < rotations.Length; i++)
+            {
+                Find(ids[i])?.Place(positions[i], rotations[i]);
+            }
         }
 
         /// <summary>One frame: the tether key (<paramref name="tetherPressed"/> this frame) hooks or lets go.</summary>
@@ -165,6 +222,19 @@ namespace MoonProject.Gameplay
             Strain01 = 0f;
             _load.BeginTow();
             _events.Publish(new TowAttached(_load.Id, _load.Hitch, _load.Body.mass));
+        }
+
+        private ITowable Find(string towId)
+        {
+            for (int i = 0; i < _loads.Count; i++)
+            {
+                if (string.Equals(_loads[i].Id, towId, StringComparison.Ordinal))
+                {
+                    return _loads[i];
+                }
+            }
+
+            return null;
         }
 
         private void Release(TowRelease reason)
