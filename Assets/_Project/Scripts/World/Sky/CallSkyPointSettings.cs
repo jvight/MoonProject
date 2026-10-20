@@ -33,11 +33,11 @@ namespace MoonProject.World
 
         [Tooltip("Radius of the bright core in screen pixels: a point, the same from every camera.")]
         [Range(0.5f, 6f)]
-        [SerializeField] private float _corePixels = 1.8f;
+        [SerializeField] private float _corePixels = 2.2f;
 
         [Tooltip("Radius of the soft glow round it in screen pixels.")]
         [Range(2f, 32f)]
-        [SerializeField] private float _glowPixels = 9f;
+        [SerializeField] private float _glowPixels = 12f;
 
         [Tooltip("How much of the light the soft glow carries against the core.")]
         [Range(0f, 1f)]

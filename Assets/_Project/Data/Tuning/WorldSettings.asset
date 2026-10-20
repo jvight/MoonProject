@@ -375,8 +375,8 @@ MonoBehaviour:
       _rest: 0.35
       _brokenRest: 0.12
       _stateFadeSeconds: 1.2
-      _corePixels: 1.8
-      _glowPixels: 9
+      _corePixels: 2.2
+      _glowPixels: 12
       _glowShare: 0.3
   _beacon:
     _period: 3.2

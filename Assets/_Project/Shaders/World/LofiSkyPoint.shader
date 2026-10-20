@@ -10,8 +10,8 @@ Shader "MoonProject/World/LofiSkyPoint"
     {
         _Color ("Colour", Color) = (1, 0.95, 0.86, 1)
         _Peak ("Peak brightness", Float) = 1
-        _CorePixels ("Core radius (px)", Float) = 1.8
-        _GlowPixels ("Glow radius (px)", Float) = 9
+        _CorePixels ("Core radius (px)", Float) = 2.2
+        _GlowPixels ("Glow radius (px)", Float) = 12
         _GlowShare ("Glow share", Float) = 0.3
         _SkyPointDirection ("Direction (set by code)", Vector) = (0, 0, 1, 0)
         _Level ("Level (set by code)", Float) = 0
