@@ -77,7 +77,7 @@ namespace MoonProject.Gameplay.Tests
             _game.Covered.Add(StructureIds.SolarArray);
             Expect(OpeningKeys.BuildSolar);
             _game.PowerOn = true;
-            Expect(string.Empty, "R5, the first free choice: the near sites are the lure, no line");
+            Expect(OpeningKeys.VisitSite, "R5, the first free choice: the near sites are named");
             _game.DuskVisited = true;
             Expect(OpeningKeys.DockForDusk, "a site visited: the dock that ends the day is named (G6)");
             _game.DuskBegun = true;
@@ -85,7 +85,7 @@ namespace MoonProject.Gameplay.Tests
             _game.Known.Add(StructureIds.BatteryBank);
             Expect(OpeningKeys.BuildBatteryBank, "the module is the bank's frame: tow it home, build on it (G6)");
             _game.NightReady = true;
-            Expect(string.Empty, "the first nightfall says nothing");
+            Expect(OpeningKeys.AwaitNight, "night-ready: the base waits for the night");
             _game.NightFallen = true;
             Expect(OpeningKeys.ScanTower);
             _game.Known.Add(StructureIds.AntennaMast);
@@ -93,7 +93,9 @@ namespace MoonProject.Gameplay.Tests
             _game.BuiltIds.Add(StructureIds.AntennaMast);
             Expect(OpeningKeys.Transmit, "the mast stands: transmit from it (G6)");
             _game.CallAnswered = true;
-            Expect(string.Empty, "relay.1 answered: the opening's lines are done");
+            Expect(OpeningKeys.GoToRelay, "relay.1 answered: drive to it");
+            _game.RelayRelit = true;
+            Expect(string.Empty, "relay.1 lit: the opening's lines are done");
         }
 
         [Test]
@@ -135,6 +137,9 @@ namespace MoonProject.Gameplay.Tests
             _flow.Tick();
             Assert.AreEqual(OpeningSteps.Transmit, _flow.CurrentIndex);
             _game.CallAnswered = true;
+            _flow.Tick();
+            Assert.AreEqual(OpeningSteps.GoToRelay, _flow.CurrentIndex);
+            _game.RelayRelit = true;
             _flow.Tick();
             Assert.AreEqual(OpeningSteps.Count, _flow.CurrentIndex, "the index is the step count once the opening is over");
         }
@@ -302,7 +307,7 @@ namespace MoonProject.Gameplay.Tests
             _game.BuiltIds.Add(StructureIds.BatteryBank);
             Expect(OpeningKeys.MoveBatteryBank, "built, but the grid does not reach it");
             _game.NightReady = true;
-            Expect(string.Empty, "moved within reach: the first nightfall says nothing");
+            Expect(OpeningKeys.AwaitNight, "moved within reach: the base waits for the night");
         }
 
         [Test]
@@ -317,6 +322,20 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(NextLineReason.Next, _flow.ShownReason);
             Tick(NextLine);
             CollectionAssert.AreEqual(new[] { OpeningKeys.ScanLander, string.Empty }, _lines, "then it goes");
+        }
+
+        [Test]
+        public void TheEndOfANewGamesWake_ShowsTheFirstLine_AsTheNextLine()
+        {
+            _flow.Tick(1f);
+            Assert.IsEmpty(_lines);
+            _events.Publish(new BootCheckFinished());
+            _flow.Tick(1f);
+            CollectionAssert.AreEqual(new[] { OpeningKeys.DriveToLander }, _lines, "the wake is done: drive to it");
+            Assert.AreEqual(NextLineReason.Next, _changes[0].Reason);
+            Tick(NextLine);
+            _flow.Tick(1f);
+            Assert.AreEqual(2, _lines.Count, "once");
         }
 
         [Test]
@@ -441,6 +460,7 @@ namespace MoonProject.Gameplay.Tests
             public bool NightFallen { get; set; }
             public bool DuskVisited { get; set; }
             public bool CallAnswered { get; set; }
+            public bool RelayRelit { get; set; }
             public readonly Dictionary<string, Vector3> Places = new Dictionary<string, Vector3>();
 
             public bool TryGetPlace(string lineKey, out string placeId, out Vector3 position)

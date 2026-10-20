@@ -63,6 +63,9 @@ namespace MoonProject.Gameplay
         /// <summary>07 transmitted from the mast and relay.1 answered the call (R8).</summary>
         bool CallAnswered { get; }
 
+        /// <summary>relay.1's spare is fitted and it is lit (R10).</summary>
+        bool RelayRelit { get; }
+
         /// <summary>
         /// The place in the world where the action of line <paramref name="lineKey"/> happens (the apron, a crate, the
         /// power module, the mast), by id and position; false when it has none (a field fit) or it is not there yet.

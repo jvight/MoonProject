@@ -339,7 +339,8 @@ namespace MoonProject.Autoplay
         private IEnumerator TheFirstChoice()
         {
             Begin("R5", "The first free choice: visit the seismic station, dock, and the first dusk begins");
-            yield return _base.ExpectStep(OpeningSteps.BuildBatteryBank, string.Empty, "R5: the afternoon says nothing");
+            yield return _base.ExpectStep(OpeningSteps.BuildBatteryBank, OpeningKeys.VisitSite,
+                "R5: the afternoon names the near sites");
             yield return _base.VisitTheSeismicStation();
             yield return _base.DockForTheDusk(StructureIds.ChargingPad);
             _bot.EndBeat("07 read the 1971 seismic station, docked, and the first dusk began");

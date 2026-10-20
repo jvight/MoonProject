@@ -743,6 +743,18 @@
             "text": "Phát sóng từ cột ăng-ten."
         },
         {
+            "key": "next.v3.visit_site",
+            "text": "Đã có điện. Hãy ghé trạm địa chấn hoặc khu nhà ở trước khi chiều xuống."
+        },
+        {
+            "key": "next.v3.await_night",
+            "text": "Căn cứ đã sẵn sàng cho đêm."
+        },
+        {
+            "key": "next.v3.go_relay",
+            "text": "relay.1 đã đáp lời từ vành phía tây. Hãy lái tới đó."
+        },
+        {
             "key": "battery.low.lander",
             "text": "Pin yếu. Xây bệ sạc cạnh tàu đổ bộ để sạc."
         },
