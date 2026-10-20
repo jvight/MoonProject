@@ -1058,6 +1058,41 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator AChipOn07_PointsItsCaretTowardItsOffScreenObject_AndAChipAtItsObjectHasNone()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            _rig.Ui.Ledger.RecordLookTaught();
+            _rig.Ui.Ledger.RecordDriveTaught();
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            Transform camera = _rig.Fakes.Camera.transform;
+            Vector3 overRover = camera.position + camera.forward * 6f;
+            Vector3 offRight = camera.position + camera.forward * 4f + camera.right * 40f;
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.OpenBuild, overRover, true, offRight, true);
+            float limit = Time.realtimeSinceStartup + 4f;
+            while (!(_rig.Ui.Prompt.IsVisible && _rig.Ui.Prompt.Caret.IsShown) && Time.realtimeSinceStartup < limit)
+            {
+                yield return null;
+            }
+
+            Assert.IsTrue(_rig.Ui.Prompt.IsVisible, "the Build chip rides on 07");
+            Assert.IsTrue(_rig.Ui.Prompt.Caret.IsShown, "with a caret");
+            Assert.AreEqual(0f, Mathf.DeltaAngle(0f, _rig.Ui.Prompt.Caret.Angle), 20f, "pointing right, to the bay");
+
+            Vector3 behind = camera.position - camera.forward * 10f - camera.right * 5f;
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.OpenBuild, overRover, true, behind, true);
+            yield return Seconds(0.2f);
+            Assert.IsTrue(_rig.Ui.Prompt.Caret.IsShown);
+            Assert.Greater(Mathf.Abs(Mathf.DeltaAngle(0f, _rig.Ui.Prompt.Caret.Angle)), 90f,
+                "an object behind the camera, to the left: the caret points left, not through the screen");
+
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.OpenBuild, overRover, true);
+            yield return Seconds(0.2f);
+            Assert.IsFalse(_rig.Ui.Prompt.Caret.IsShown, "a chip at its object needs no caret");
+        }
+
+        [UnityTest]
         public IEnumerator ALoadInHookReach_TeachesTheTetherKeyOnce_AtItsHitch()
         {
             InputSystem.AddDevice<Keyboard>();

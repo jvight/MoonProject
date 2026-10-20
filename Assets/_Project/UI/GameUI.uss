@@ -111,6 +111,24 @@ Label {
     background-color: rgba(0, 0, 0, 0);
 }
 
+/* The caret on a chip that rides on 07, pointing to its off-screen object (G3): it turns round the chip's centre */
+.prompt-caret {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0;
+    height: 0;
+}
+
+.prompt-caret__tip {
+    position: absolute;
+    left: 0;
+    top: -8px;
+    width: 12px;
+    height: 16px;
+    --caret-color: rgb(255, 196, 96);
+}
+
 .prompt .chip__word {
     padding: 4px 20px 6px 20px;
     border-radius: 10px;
