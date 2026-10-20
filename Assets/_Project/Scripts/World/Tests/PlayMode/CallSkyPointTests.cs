@@ -111,6 +111,7 @@ namespace MoonProject.World.PlayModeTests
 
             public Vector3 Direction => new Vector3(-0.3f, 0.3f, 0.9f).normalized;
             public CallState State { get; }
+            public string Sender => "A";
             public int Decoded => 0;
             public int Total => 1;
         }

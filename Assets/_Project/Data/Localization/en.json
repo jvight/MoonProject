@@ -959,6 +959,10 @@
             "text": "TX · NO RANGE"
         },
         {
+            "key": "ui.face.call",
+            "text": "CALL"
+        },
+        {
             "key": "ui.verb.cut",
             "text": "Cut"
         },
