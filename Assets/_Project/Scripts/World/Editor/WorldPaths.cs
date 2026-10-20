@@ -7,6 +7,11 @@ namespace MoonProject.World.Editor
         public const string Settings = "Assets/_Project/Data/Tuning/WorldSettings.asset";
         public const string SkyMaterial = GeneratedRoot + "/M_Sky.mat";
         public const string EarthMaterial = GeneratedRoot + "/M_Earth.mat";
+
+        /// <summary>The call's point of light beside Earth (LofiSkyPoint) and its never-culled quad.</summary>
+        public const string SkyPointMaterial = GeneratedRoot + "/M_CallSkyPoint.mat";
+        public const string SkyPointMesh = GeneratedRoot + "/CallSkyPointQuad.asset";
+        public const string SkyPointShader = "Assets/_Project/Shaders/World/LofiSkyPoint.shader";
         public const string GroundMaterial = GeneratedRoot + "/M_Ground.mat";
         /// <summary>Marks pressed into the dust: the rover's track shader, World's tint and fade.</summary>
         public const string GroundMarkMaterial = GeneratedRoot + "/M_GroundMarks.mat";
@@ -27,6 +32,12 @@ namespace MoonProject.World.Editor
 
         /// <summary>The small halo each cable marker lamp blooms with as the Begin wave passes.</summary>
         public const string CableMarkerHaloMaterial = GeneratedRoot + "/M_CableMarkerHalo.mat";
+
+        /// <summary>The fallen solar array's sun-white glint halo (LofiBeaconHalo).</summary>
+        public const string ArrayGlintMaterial = GeneratedRoot + "/M_ArrayGlint.mat";
+
+        /// <summary>The habitat power module status lamp's amber halo (LofiBeaconHalo).</summary>
+        public const string ModuleLampHaloMaterial = GeneratedRoot + "/M_ModuleLampHalo.mat";
         public const string CableTearSparkMaterial = GeneratedRoot + "/M_CableTearSpark.mat";
         public const string SkyShader = "Assets/_Project/Shaders/World/LofiSky.shader";
         public const string EarthShader = "Assets/_Project/Shaders/World/LofiEarth.shader";

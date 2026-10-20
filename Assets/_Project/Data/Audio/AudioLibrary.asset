@@ -205,6 +205,18 @@ MonoBehaviour:
     _volumeMax: 0.55
     _pitchMin: 1
     _pitchMax: 1
+  - _id: chirp_ask
+    _clips:
+    - {fileID: 8300000, guid: 5217bd024ce308c449ea729c13c3c573, type: 3}
+    _variantLabels:
+    - chirp_ask
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.55
+    _volumeMax: 0.55
+    _pitchMin: 1
+    _pitchMax: 1
   - _id: part_pick
     _clips:
     - {fileID: 8300000, guid: 3c6bb0bc447f92e4bba634734b0ba5e8, type: 3}
@@ -1561,6 +1573,54 @@ MonoBehaviour:
     _loop: 0
     _volumeMin: 0.5
     _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: mast_clunk
+    _clips:
+    - {fileID: 8300000, guid: 7f35322137defbf45a70ad474fbe95a2, type: 3}
+    _variantLabels:
+    - mast_clunk
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.7
+    _volumeMax: 0.7
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: mast_settle
+    _clips:
+    - {fileID: 8300000, guid: 5ae76e206b3c67146a94c9b5e2997ddf, type: 3}
+    _variantLabels:
+    - mast_settle
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: cutter_sputter
+    _clips:
+    - {fileID: 8300000, guid: 29252c95b4fcd7a4689b4b849e1720bd, type: 3}
+    _variantLabels:
+    - cutter_sputter
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.8
+    _volumeMax: 0.8
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: cutter_refuse
+    _clips:
+    - {fileID: 8300000, guid: 0ea1f8454c1bf694fa0b6bcfc9124041, type: 3}
+    _variantLabels:
+    - cutter_refuse
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
     _pitchMin: 1
     _pitchMax: 1
   - _id: lamp_tick

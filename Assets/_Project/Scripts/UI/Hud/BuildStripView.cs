@@ -20,8 +20,9 @@ namespace MoonProject.UI
     /// weld takes (<see cref="IWeldEnergy"/>). The mouse hovers a card to select it and clicks to pick it; the keys
     /// under the row name the real controls of the active device (<see cref="BuildKeyHints"/>).</description></item>
     /// <item><description><see cref="BuildModeState.Placing"/>: the cards leave; <see cref="Step"/> and
-    /// <see cref="StepText"/> give the guidance line its one instruction, and when the ghost sits on an invalid spot a
-    /// one-line reason chip floats above it via <see cref="WorldAnchor"/>.</description></item>
+    /// <see cref="StepText"/> give the guidance line its one instruction; the ghost carries its cost rows at its foot
+    /// (what it takes against what 07 carries, opening-v3 §4 E7), and when it sits on an invalid spot a one-line reason
+    /// chip floats above it, each via a <see cref="WorldAnchor"/>.</description></item>
     /// <item><description><see cref="BuildModeState.Welding"/>: the guidance line says to hold the key, with
     /// <see cref="WeldProgress01"/> for its bar.</description></item>
     /// </list>
@@ -57,6 +58,9 @@ namespace MoonProject.UI
         private readonly Reveal _reasonReveal;
         private readonly Reveal _reticleReveal;
         private readonly WorldAnchor _reasonAnchor;
+        private readonly Reveal _costReveal;
+        private readonly WorldAnchor _costAnchor;
+        private readonly RecipeView _cost;
         private readonly RecipeView _recipe;
         private readonly Dictionary<string, Texture2D> _icons =
             new Dictionary<string, Texture2D>(StructureIds.Count, StringComparer.Ordinal);
@@ -125,9 +129,16 @@ namespace MoonProject.UI
                 promptSettings.FollowHalfLife,
                 true);
 
+            _costReveal = new Reveal(layout.BuildCost, promptSettings.Reveal);
+            _costReveal.Snap(false);
+            _costAnchor = new WorldAnchor(layout.BuildCostAnchor, view, promptSettings.ScreenMargin,
+                promptSettings.FollowHalfLife, true);
+
             _recipe = new RecipeView(layout.BuildStripRecipe, localization, numbers, haveNeed: false, names: false);
+            _cost = new RecipeView(layout.BuildCostRecipe, localization, numbers);
             new ShadowPainter(layout.BuildStripShadow);
             new ShadowPainter(layout.BuildReasonShadow);
+            new ShadowPainter(layout.BuildCostShadow);
 
             if (structureIcons != null)
             {
@@ -226,11 +237,41 @@ namespace MoonProject.UI
 
             _reasonReveal.Set(wantsReason && onScreen);
             _reasonReveal.Tick(deltaTime);
+            TickCost(deltaTime, gateOpen, panelSize, controller, state);
+        }
+
+        /// <summary>True while the ghost's cost chip is up (or easing).</summary>
+        public bool IsCostShown => !_costReveal.IsHidden;
+
+        /// <summary>The cost chip's material rows (tests and captures).</summary>
+        public MaterialSlots CostSlots => _cost.Slots;
+
+        /// <summary>The ghost's cost rows at its foot while it is placed: what it takes against what 07 carries.</summary>
+        private void TickCost(float deltaTime, bool gateOpen, Vector2 panelSize, BuildModeController controller,
+            BuildModeState state)
+        {
+            bool wantsCost = gateOpen &&
+                             controller != null &&
+                             state == BuildModeState.Placing &&
+                             controller.HasCandidatePoint &&
+                             controller.SelectedStructure != null;
+            bool onScreen = false;
+            if (wantsCost)
+            {
+                _cost.Show(controller.SelectedStructure.BuildCost, _stock);
+                // At the ghost's foot, under the reason chip above it, so the two never stack.
+                onScreen = _costAnchor.Track(controller.CandidatePose.Position, panelSize, deltaTime,
+                    _costReveal.IsHidden);
+            }
+
+            _costReveal.Set(wantsCost && onScreen);
+            _costReveal.Tick(deltaTime);
         }
 
         public void Relocalize()
         {
             _recipe.Relocalize();
+            _cost.Relocalize();
             Array.Clear(_energyTexts, 0, _energyTexts.Length);
             Array.Clear(_stepTexts, 0, _stepTexts.Length);
             _stale = true;

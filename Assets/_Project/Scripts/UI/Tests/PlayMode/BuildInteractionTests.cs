@@ -72,6 +72,7 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(BuildStep.Place, ui.BuildStrip.Step);
             Assert.IsTrue(ui.BuildStrip.IsReticleVisible, "the centre ring shows where the ghost follows the aim");
             Assert.IsFalse(ui.BuildStrip.IsVisible, "the cards leave for placing");
+            Assert.IsTrue(ui.BuildStrip.IsCostShown, "the ghost carries its cost rows (opening-v3 E7)");
             Assert.IsTrue(ui.Objective.ShowsBuildStep, "the one placing line takes the guidance slot");
             StringAssert.Contains("E", ui.Layout.NextLineText.text, "it names the real place key");
 

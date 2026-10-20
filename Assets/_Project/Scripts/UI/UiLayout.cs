@@ -140,6 +140,10 @@ namespace MoonProject.UI
             BuildReason = Require<VisualElement>("build-reason");
             BuildReasonShadow = Require<VisualElement>("build-reason-shadow");
             BuildReasonText = Require<Label>("build-reason-text");
+            BuildCostAnchor = Require<VisualElement>("build-cost-anchor");
+            BuildCost = Require<VisualElement>("build-cost");
+            BuildCostShadow = Require<VisualElement>("build-cost-shadow");
+            BuildCostRecipe = Require<VisualElement>("build-cost-recipe");
             BuildStrip = Require<VisualElement>("build-strip");
             BuildStripShadow = Require<VisualElement>("build-strip-shadow");
             BuildStripTitle = Require<Label>("build-strip-title");
@@ -426,6 +430,15 @@ namespace MoonProject.UI
         public VisualElement BuildReasonShadow { get; }
 
         public Label BuildReasonText { get; }
+
+        /// <summary>The build ghost's cost chip, at its foot while it is placed (opening-v3 §4, E7).</summary>
+        public VisualElement BuildCostAnchor { get; }
+
+        public VisualElement BuildCost { get; }
+
+        public VisualElement BuildCostShadow { get; }
+
+        public VisualElement BuildCostRecipe { get; }
 
         public VisualElement BuildStrip { get; }
 

@@ -8,8 +8,7 @@ namespace MoonProject.Gameplay
     /// One fixed source of the opening's supply (docs/design/opening-v3-purpose.md §4): where it stands, in a world
     /// anchor's frame, which of Art's containers it is, what it gives 07's hold and the one structure that supply is
     /// for (its link: every item is spent within it). A sealed source gives when its seal is cut, an open one (the
-    /// lander's charger kit) when 07 comes within reach; it may also hold story parts (the spare igniter, Ines's ice
-    /// core) and show one of Art's props lying in it until they are taken.
+    /// lander's charger kit) when 07 comes within reach; it may also hold story parts (the spare igniter).
     /// </summary>
     [Serializable]
     public struct SupplyCache
@@ -43,17 +42,12 @@ namespace MoonProject.Gameplay
         [Tooltip("Story parts the crate also holds (their ids in 07's hold, e.g. the spare igniter), taken together.")]
         [SerializeField] private string[] _parts;
 
-        [Tooltip("Art's prop lying in the crate on its ItemSocket while it holds its parts (the ice-core tube), or " +
-                 "none.")]
-        [SerializeField] private GameObject _prop;
-
         public SupplyCache(string id, string anchorId, Vector3 offset, float yaw, string container, Recipe yield,
             string forStructure, bool startsOpen = false, string[] parts = null)
         {
             _forStructure = forStructure;
             _startsOpen = startsOpen;
             _parts = parts;
-            _prop = null;
             _id = id;
             _anchorId = anchorId;
             _offset = offset;
@@ -82,6 +76,5 @@ namespace MoonProject.Gameplay
 
         public IReadOnlyList<string> Parts => _parts ?? Array.Empty<string>();
 
-        public GameObject Prop => _prop;
     }
 }

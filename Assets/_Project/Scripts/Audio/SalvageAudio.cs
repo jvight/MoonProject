@@ -12,12 +12,14 @@ namespace MoonProject.Audio
     /// fades it softly; the piece coming loose (<see cref="SalvageCutStopped"/> completed) breaks off with its
     /// material's crack. Each piece folding into 07 (<see cref="MaterialSalvaged"/>) plays the salvage melody: a chime
     /// climbing the pentatonic with the site's combo step (<see cref="SalvageMelody"/>), back at the bottom for a new
-    /// chain. Game-time loops duck while paused. Initialised by <see cref="AudioDirector"/>.
+    /// chain. The faulted cutter: a refused cut's soft, low fault tick at its point (<see cref="CutterRefused"/>), and
+    /// the one-time sputter (<see cref="CutterSputtered"/>) speaking alone in the frame it comes with its refusal
+    /// (<see cref="RefusalGate"/>). Game-time loops duck while paused. Initialised by <see cref="AudioDirector"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class SalvageAudio : MonoBehaviour
     {
-        private const int SubscriptionCount = 3;
+        private const int SubscriptionCount = 5;
         private const int MaterialCount = 3;
 
         [Tooltip("Assets/_Project/Data/Audio/SalvageAudioTuning.asset.")]
@@ -27,6 +29,9 @@ namespace MoonProject.Audio
         private readonly AudioClip[] _cutClips = new AudioClip[MaterialCount];
         private readonly float[] _cutVolumes = new float[MaterialCount];
         private readonly int[] _breakVariants = new int[MaterialCount];
+        private readonly RefusalGate _refusals = new RefusalGate();
+        private CueHandle _sputter;
+        private CueHandle _refuse;
         private AudioDirector _director;
         private CutBeamModel _beam;
         private CueHandle _break;
@@ -57,7 +62,10 @@ namespace MoonProject.Audio
             _break = director.Resolve(AudioCueIds.SalvageBreak);
             _chime = director.Resolve(AudioCueIds.SalvageChime);
             CueHandle tone = director.Resolve(AudioCueIds.SalvageCutTone);
-            if (!_break.IsValid || !_chime.IsValid || !tone.IsValid || !TryResolveMaterials(director))
+            _sputter = director.Resolve(AudioCueIds.CutterSputter);
+            _refuse = director.Resolve(AudioCueIds.CutterRefuse);
+            if (!_break.IsValid || !_chime.IsValid || !tone.IsValid || !_sputter.IsValid || !_refuse.IsValid ||
+                !TryResolveMaterials(director))
             {
                 enabled = false;
                 return;
@@ -73,6 +81,28 @@ namespace MoonProject.Audio
             _subscriptions[0] = events.Subscribe<SalvageCutStarted>(OnCutStarted);
             _subscriptions[1] = events.Subscribe<SalvageCutStopped>(OnCutStopped);
             _subscriptions[2] = events.Subscribe<MaterialSalvaged>(OnMaterialSalvaged);
+            _subscriptions[3] = events.Subscribe<CutterRefused>(OnCutterRefused);
+            _subscriptions[4] = events.Subscribe<CutterSputtered>(OnCutterSputtered);
+        }
+
+        private void OnCutterRefused(CutterRefused refused)
+        {
+            _refusals.Refuse(Time.frameCount, refused.Point);
+        }
+
+        private void OnCutterSputtered(CutterSputtered sputtered)
+        {
+            _refusals.Sputter(Time.frameCount);
+            _director.PlayAt(_sputter, sputtered.Point, _tuning.SputterVolume);
+        }
+
+        /// <summary>After the frame's events: a refusal's tick, unless the sputter came with it.</summary>
+        private void LateUpdate()
+        {
+            if (_director != null && _refusals.TryTakeRefusal(out Vector3 point))
+            {
+                _director.PlayAt(_refuse, point, _tuning.RefuseVolume);
+            }
         }
 
         internal void Wire(SalvageAudioTuning tuning)

@@ -694,6 +694,21 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
+    /// The first time the faulted cutter is asked to cut (opening v3 slice 1.6): it tries to light without its igniter
+    /// and sputters at <see cref="Point"/>. Audio plays the dry sputter, Rover a startled beat on 07's face; UI's
+    /// cutter card (CUTTER · FAULT · NO IGNITER) follows the <see cref="CutterRefused"/> it comes with. Once per game.
+    /// </summary>
+    public readonly struct CutterSputtered
+    {
+        public CutterSputtered(Vector3 point)
+        {
+            Point = point;
+        }
+
+        public Vector3 Point { get; }
+    }
+
+    /// <summary>
     /// A story scan is fully scanned (docs/design/opening-v2.md B7, the habitat's airlock panel): 07's CRT shows the
     /// readout <see cref="TextKey"/>, read off <see cref="Point"/>. It teaches and pays nothing; once per save, never
     /// on a load.

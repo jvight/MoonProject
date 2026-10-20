@@ -12,8 +12,10 @@ namespace MoonProject.Gameplay
         public const int CollectParts = 2;
         public const int BuildPad = 3;
         public const int Charge = 4;
-        public const int FitIgniter = 5;
-        public const int FindSolar = 6;
+        public const int FindSolar = 5;
+
+        /// <summary>B7, the spare igniter: the cut line, the rack line once the cutter sputters, the fit line.</summary>
+        public const int FitIgniter = 6;
         public const int BuildSolar = 7;
         public const int BuildBatteryBank = 8;
         public const int ScanTower = 9;

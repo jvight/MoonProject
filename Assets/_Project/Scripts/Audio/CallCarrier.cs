@@ -12,10 +12,12 @@ namespace MoonProject.Audio
     /// while Locked, clean when Clear, and the call-and-response with relay.1 once Answered
     /// (<see cref="CallStateChanged"/>). Each newly decoded character of the sender's name plays one soft note from the
     /// same point, climbing to D as the name completes (<see cref="CallDecoded"/>); a restored state or name stays
-    /// silent. Logic lives in <see cref="CallCarrierModel"/>. Initialised by <see cref="AudioDirector"/>.
+    /// silent. It registers <see cref="ICallSignal"/>: the sign's keying read off the playing loop's own playhead
+    /// (<see cref="CallKeying"/>) times the dropouts, so the light beside Earth keys in phase with what is heard. Logic
+    /// lives in <see cref="CallCarrierModel"/>. Initialised by <see cref="AudioDirector"/>.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class CallCarrier : MonoBehaviour
+    public sealed class CallCarrier : MonoBehaviour, ICallSignal
     {
         private const int SubscriptionCount = 2;
         private const uint Seed = 0x0CA11u;
@@ -47,6 +49,21 @@ namespace MoonProject.Audio
         internal AudioSource AnsweredSource => _answered;
 
         internal AudioSource StaticSource => _static;
+
+        /// <inheritdoc />
+        public float Keying
+        {
+            get
+            {
+                if (_model == null)
+                {
+                    return 0f;
+                }
+
+                AudioSource playing = _model.Answered ? _answered : _carrier;
+                return CallKeying.Envelope(playing.time) * _model.Cut;
+            }
+        }
 
         internal void Wire(SoundscapeTuning tuning)
         {
@@ -91,6 +108,7 @@ namespace MoonProject.Audio
             _static.Play();
             _subscriptions[0] = context.Events.Subscribe<CallStateChanged>(OnCallStateChanged);
             _subscriptions[1] = context.Events.Subscribe<CallDecoded>(OnCallDecoded);
+            context.Register<ICallSignal>(this);
         }
 
         private void Update()
