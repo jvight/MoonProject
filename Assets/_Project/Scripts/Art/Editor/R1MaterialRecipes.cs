@@ -47,6 +47,8 @@ namespace MoonProject.Art.Editor
         public const string WhitePaintSlot = "R1_WhitePaint";
         public const string TealMarkSlot = "R1_TealMark";
         public const string SilverFoilSlot = "R1_SilverFoil";
+        public const string RackOutlineSlot = "R1_RackOutline";
+        public const string RackFillSlot = "R1_RackFill";
 
         public const float DefaultBloomSafeMax = 1.06f;
         public const float DefaultHotCoreThreshold = 0.85f;
@@ -157,16 +159,16 @@ namespace MoonProject.Art.Editor
                 GoldFoilSlot,
                 GoldFoilSlot,
                 "T_R1_GoldFoil",
-                "Fine-crinkled golden Kapton multi-layer thermal insulation blankets tucked into instrument cavities and lander undersides.",
+                "Broad-crinkled golden Kapton multi-layer thermal insulation blankets tucked into instrument cavities and lander undersides.",
                 new Color(0.94f, 0.79f, 0.36f, 1f),
-                1.35f,
+                0.80f,
                 1.00f,
-                0.45f,
-                0.92f,
+                0.35f,
+                0.50f,
                 new Color(1.00f, 0.91f, 0.62f, 1f),
-                0.48f,
+                0.25f,
                 0.98f,
-                0.88f,
+                0.55f,
                 0.08f,
                 false,
                 Color.black,
@@ -398,10 +400,48 @@ namespace MoonProject.Art.Editor
                 0.10f,
                 false,
                 Color.black,
-                0f)
+                0f),
+            new R1MaterialSpec(
+                R1MaterialSlot.RackOutline,
+                RackOutlineSlot,
+                RackOutlineSlot,
+                "T_R1_RackOutline",
+                "The socket rack's lit silhouette line: an even warm glow Gameplay sets per bay through _EmissionColor.",
+                new Color(0.23f, 0.18f, 0.13f, 1f),
+                0.30f,
+                1.00f,
+                0.36f,
+                0.44f,
+                new Color(0.23f, 0.18f, 0.13f, 1f),
+                0.00f,
+                0.00f,
+                0.40f,
+                0.00f,
+                true,
+                new Color(1.00f, 0.78f, 0.48f, 1f),
+                1.00f),
+            new R1MaterialSpec(
+                R1MaterialSlot.RackFill,
+                RackFillSlot,
+                RackFillSlot,
+                "T_R1_RackFill",
+                "The socket rack's filled silhouette behind the line: a softer warm glow Gameplay sets per bay through _EmissionColor.",
+                new Color(0.18f, 0.15f, 0.12f, 1f),
+                0.30f,
+                1.00f,
+                0.30f,
+                0.38f,
+                new Color(0.18f, 0.15f, 0.12f, 1f),
+                0.00f,
+                0.00f,
+                0.34f,
+                0.00f,
+                true,
+                new Color(1.00f, 0.70f, 0.40f, 1f),
+                1.00f)
         };
 
-        /// <summary>All 18 fixed R1 material slot specifications in slot enum order.</summary>
+        /// <summary>All 20 fixed R1 material slot specifications in slot enum order.</summary>
         public static IReadOnlyList<R1MaterialSpec> All => Specs;
 
         /// <summary>Returns the specification for a given <see cref="R1MaterialSlot"/>.</summary>

@@ -77,6 +77,13 @@ namespace MoonProject.World.PlayModeTests
         private const float RelayAnsweredSignSeconds = 6f;
         private const float RelayCropFov = 6f;
 
+        // relay.1's repair site: its cabinet and the spare inside, and how far in front of the cabinet the near eye
+        // stands.
+        private const string RelaySiteName = "Relay1Site";
+        private const string RelaySiteCabinet = "ServiceCabinet";
+        private const string RelaySiteSpare = "ServiceCabinet/FeedUnitSpare_Slot/FeedUnitSpare";
+        private const float RelaySiteStandOff = 15f;
+
         // The call's point of light: when the face shot holds, one sign's length, how near its brightest a shot waits
         // for.
         private const string SkyPointName = "CallSkyPoint";
@@ -96,6 +103,7 @@ namespace MoonProject.World.PlayModeTests
         private const float GlintZoomFov = 10f;
         private const string GlintSparkleName = "Sparkle";
         private const string CueLampLens = "PowerModule_StatusLamp";
+        private const string CueLampTowId = "habitat.power_module";
         private const float CueLampStandOff = 10f;
         private const float CueLampPeak = 0.9f;
         private const float CueLampTimeout = 30f;
@@ -768,11 +776,98 @@ namespace MoonProject.World.PlayModeTests
         }
 
         /// <summary>
+        /// relay.1's repair site at night after the answer (opening v3 5.1), on a real New Game: the open service
+        /// cabinet lit inside by its own lamp with the feed-unit spare on its shelf, the mast's feed socket and the
+        /// contact pad, from 15 m in front of the cabinet and from the apron. Logs/world-captures/relay-site-*.png.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(CanyonSessionScene))]
+        [PostBuildCleanup(typeof(CanyonSessionScene))]
+        public IEnumerator RelaySite_IsCapturedAtNight_From15mAndTheApron()
+        {
+            BootstrapHarness.DeleteSaveFiles(CanyonSessionScene.SaveSlot);
+#if UNITY_EDITOR
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(CanyonSessionScene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            while (!loading.isDone)
+            {
+                yield return null;
+            }
+
+            WorldSettings settings = AssetDatabase.LoadAssetAtPath<WorldSettings>(OpeningSettingsPath);
+#else
+            throw new NotSupportedException("The atmosphere session loads the scene through the editor.");
+#endif
+            GameBootstrap bootstrap = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
+            {
+                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
+            }
+
+            Assert.IsNotNull(bootstrap, "the scene has its bootstrap");
+            GameContext context = bootstrap.Context;
+            _awoke = context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
+            float started = Time.time;
+            while (!_awake)
+            {
+                Assert.Less(Time.time - started, WakeTimeout, "07 wakes up");
+                yield return null;
+            }
+
+            foreach (OpeningMilestone milestone in new[]
+                {
+                    OpeningMilestone.FirstCharge, OpeningMilestone.PowerOn, OpeningMilestone.NightReady,
+                    OpeningMilestone.CallAnswered,
+                })
+            {
+                context.Events.Publish(new OpeningMilestoneReached(milestone, true));
+            }
+
+            yield return new WaitForSeconds(SettleSeconds);
+            Transform site = FindNamed(RelaySiteName);
+            Transform cabinet = site.Find(RelaySiteCabinet);
+            Transform spare = site.Find(RelaySiteSpare);
+            Assert.IsNotNull(cabinet, "relay.1's site has its cabinet");
+            Assert.IsNotNull(spare, "the cabinet holds the spare");
+
+            // The cabinet's open front: the site's facing (toward the base) turned by the cabinet's tuned yaw.
+            Vector3 front = Quaternion.Euler(0f, settings.Landmarks.Relay1Site.CabinetYaw, 0f) * site.forward;
+            Vector3 near = OnGround(context.Get<ITerrainQuery>(),
+                    new Vector2(cabinet.position.x + front.x * RelaySiteStandOff,
+                        cabinet.position.z + front.z * RelaySiteStandOff))
+                + Vector3.up * CueLowEyeHeight;
+            Vector3 apronEye = Anchor(context.Get<IWorldAnchors>(), WorldAnchorIds.PlaceApron).Position
+                + Vector3.up * OpeningEyeHeight;
+            Camera view = context.Get<IViewCamera>().Camera;
+            var host = new GameObject("RelaySiteCamera");
+            try
+            {
+                var camera = host.AddComponent<Camera>();
+                camera.CopyFrom(view);
+                camera.enabled = false;
+                CopyPipelineSettings(view, camera);
+                Place(camera, LookPose("relay-site-15m-before", near, spare.position, OpeningFov));
+                Shoot(camera, "relay-site-15m-before");
+                Place(camera, LookPose("relay-site-apron-before", apronEye, cabinet.position, OpeningFov));
+                Shoot(camera, "relay-site-apron-before");
+                Debug.Log($"[relay-site] cabinet {Vector3.Distance(near, spare.position):F1} m from the near eye, " +
+                          $"{Vector3.Distance(apronEye, cabinet.position):F0} m from the apron");
+            }
+            finally
+            {
+                Object.Destroy(host);
+            }
+
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        /// <summary>
         /// The opening v3 world cues at their fixed points (opening-v3-plan slice 1.2), on a real New Game:
         /// the lander's amber beacon in 07's first forward view; the lander from the apron, lit, and dark once its
         /// reserve is spent (its beacon, its port's pilot lamp and the glow along its cables die together); the fallen
         /// array glinting in the new sunlight once the eclipse ends; and the radio tower ruin against the stars at
-        /// night, with the habitat's power module lamp blinking beside it. Logs/world-captures/cue-*.png, with the
+        /// night, with the habitat's towable power module lamp blinking beside it. Logs/world-captures/cue-*.png, with the
         /// array's glint levels in the log.
         /// </summary>
         [UnityTest]
@@ -863,7 +958,15 @@ namespace MoonProject.World.PlayModeTests
                 Shoot(camera, "cue-4-night-tower");
 
                 var lamp = FindNamed(CueLampName).GetComponent<ModuleStatusLamp>();
-                Transform lens = FindNamed(CueLampLens);
+                Assert.IsTrue(context.Get<ITowLine>().TryFindLoad(CueLampTowId, out Transform module),
+                    "the towable power module stands beside the habitat");
+                Transform lens = null;
+                foreach (Transform node in module.GetComponentsInChildren<Transform>())
+                {
+                    lens = node.name == CueLampLens ? node : lens;
+                }
+
+                Assert.IsNotNull(lens, "the power module has its status lamp");
                 Vector3 toLamp = Vector3.ProjectOnPlane(lens.position - apron, Vector3.up).normalized;
                 Vector3 lampEye = lens.position - toLamp * CueLampStandOff + Vector3.up * CueLowEyeHeight;
                 Place(camera, LookPose("cue-5-module-lamp-night", lampEye, lens.position, OpeningFov));

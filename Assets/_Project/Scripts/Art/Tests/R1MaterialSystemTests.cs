@@ -140,7 +140,7 @@ namespace MoonProject.Art.Tests
         public void MaterialLibrary_AllTwelveMaterialsExist_AndHaveTexturesAssigned()
         {
             IReadOnlyList<R1MaterialSpec> specs = R1MaterialRecipes.All;
-            Assert.AreEqual(18, specs.Count, "R1MaterialRecipes must define all 18 fixed Blender material slots.");
+            Assert.AreEqual(20, specs.Count, "R1MaterialRecipes must define all 20 fixed Blender material slots.");
 
             if (AssetDatabase.LoadAssetAtPath<Material>(R1MaterialRecipes.GetMaterialPath(specs[specs.Count - 1])) == null)
             {
@@ -291,6 +291,35 @@ namespace MoonProject.Art.Tests
                 UnityEngine.Object.DestroyImmediate(validMesh);
                 UnityEngine.Object.DestroyImmediate(invalidRoot);
                 UnityEngine.Object.DestroyImmediate(invalidMesh);
+            }
+        }
+
+        [Test]
+        public void Postprocessor_RejectsRepeatedNodeNames_SoGeneratedPrefabsKeepTheirFileIds()
+        {
+            const string ModelPath = "Assets/_Project/Art/R1/Models/UnitTest.fbx";
+            var uniqueRoot = new GameObject("UniqueRoot");
+            new GameObject("Lamp_0").transform.SetParent(uniqueRoot.transform);
+            new GameObject("Lamp_1").transform.SetParent(uniqueRoot.transform);
+            var repeatedRoot = new GameObject("RepeatedRoot");
+            var bay0 = new GameObject("Bay_0");
+            var bay1 = new GameObject("Bay_1");
+            bay0.transform.SetParent(repeatedRoot.transform);
+            bay1.transform.SetParent(repeatedRoot.transform);
+            new GameObject("Lamp").transform.SetParent(bay0.transform);
+            new GameObject("Lamp").transform.SetParent(bay1.transform);
+
+            try
+            {
+                Assert.IsTrue(R1ModelPostprocessor.ValidateUniqueNodeNames(uniqueRoot, ModelPath));
+
+                LogAssert.Expect(LogType.Error, new Regex(@"UnitTest\.fbx.*'Lamp'"));
+                Assert.IsFalse(R1ModelPostprocessor.ValidateUniqueNodeNames(repeatedRoot, ModelPath));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(uniqueRoot);
+                UnityEngine.Object.DestroyImmediate(repeatedRoot);
             }
         }
 

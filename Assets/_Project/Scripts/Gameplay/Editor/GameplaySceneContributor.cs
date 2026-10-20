@@ -16,6 +16,13 @@ namespace MoonProject.Gameplay.Editor
     {
         /// <summary>World's service port under [World] (World's opening layout contract).</summary>
         private const string LanderPortPath = "Lander/ServicePort";
+
+        /// <summary>relay.1's site World stands (opening v3 R10): the spare, the feed socket, the fitted unit, the pad.</summary>
+        private const string RelaySparePath = "Relay1Site/ServiceCabinet/FeedUnitSpare_Slot/FeedUnitSpare";
+
+        private const string RelaySocketPath = "Relay1Site/FeedSocket";
+        private const string RelayFittedPath = "Relay1Site/FeedSocket/FeedUnitFitted";
+        private const string RelayPadPath = "Relay1Site/ContactPad";
         private const string ApronOutlinePath = "OpeningProps/ApronMarkings/BayGlowOutline";
         private const string ApronCableChannelPath = "OpeningProps/ApronMarkings/CableChannel_Anchor";
 
@@ -63,6 +70,9 @@ namespace MoonProject.Gameplay.Editor
             gameplay.WireLanderPort(LanderPort(context.WorldRoot.transform));
             gameplay.WireApronOutline(ApronOutline(context.WorldRoot.transform));
             gameplay.WireApronCableChannel(ApronCableChannel(context.WorldRoot.transform));
+            Transform world = context.WorldRoot.transform;
+            gameplay.WireRelay(RelayNode(world, RelaySparePath), RelayNode(world, RelaySocketPath),
+                RelayNode(world, RelayFittedPath), RelayNode(world, RelayPadPath));
             gameplay.WireOpening(openingTuning, baseTuning);
             context.AddSystem(gameplay);
         }
@@ -118,6 +128,19 @@ namespace MoonProject.Gameplay.Editor
             }
 
             return port;
+        }
+
+        /// <summary>A node of World's relay.1 site (opening v3 R10), found by its path under [World].</summary>
+        private static Transform RelayNode(Transform worldRoot, string path)
+        {
+            Transform node = worldRoot.Find(path);
+            if (node == null)
+            {
+                throw new InvalidOperationException($"Gameplay scene build: [World] has no '{path}' (relay.1's site, " +
+                                                    "opening v3 R10).");
+            }
+
+            return node;
         }
 
         /// <summary>World's apron cable channel: a pad on the apron cables to it, into the lander's cable.</summary>

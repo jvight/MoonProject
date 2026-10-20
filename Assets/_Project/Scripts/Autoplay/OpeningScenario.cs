@@ -73,7 +73,7 @@ namespace MoonProject.Autoplay
             foreach (Func<IEnumerator> beat in new Func<IEnumerator>[]
                      {
                          Drive, Scan, CollectParts, BuildThePad, ChargeOnThePad, TheRuins, BuildTheArray,
-                         TheFirstChoice, TheHabitat, Nightfall, TheTower, TheAnswer,
+                         TheFirstChoice, TheHabitat, Nightfall, TheTower, TheAnswer, TheRelay,
                      })
             {
                 if (_bot.Failed || Reached(_lastBeat))
@@ -323,7 +323,8 @@ namespace MoonProject.Autoplay
             yield return _base.ExpectStep(OpeningSteps.BuildSolar, OpeningKeys.BuildSolar,
                 "B8: the array's cost is covered");
             yield return _base.DriveToTheRuinsGate("out of the Lumen ruins");
-            yield return _base.Build(StructureIds.SolarArray, _base.Pad() + Vector3.right * OpeningBase.Spacing);
+            // West of the pad: the ruins side stays open for the power module towed home at R6.
+            yield return _base.Build(StructureIds.SolarArray, _base.Pad() + Vector3.left * OpeningBase.Spacing);
             yield return _base.UntilReached(OpeningMilestone.PowerOn, "the PowerOn milestone");
             _bot.EndBeat("the array stands and the base has power");
         }
@@ -339,13 +340,13 @@ namespace MoonProject.Autoplay
 
         private IEnumerator TheHabitat()
         {
-            Begin("B9", "The habitat: scan the modules, cut the cable reel and power module, build the bank");
+            Begin("B9", "The habitat: scan the modules, cut the cable reel, tow the power module home, build the bank on it");
             yield return _base.ExpectStep(OpeningSteps.BuildBatteryBank, OpeningKeys.BuildBatteryBank,
                 "B9: night is coming");
             yield return _base.ScanTheSet("ruin.HabitatModules");
             yield return _base.CutTheCrates("HabitatModules");
-            yield return _base.DriveToTheRuinsGate("out of the Lumen ruins");
-            yield return _base.Build(StructureIds.BatteryBank, _base.Pad() + Vector3.left * OpeningBase.BankSpacing);
+            yield return _base.TowTheModuleHome();
+            yield return _base.Build(StructureIds.BatteryBank, _base.ModulePosition());
             yield return _base.UntilReached(OpeningMilestone.NightReady, "the NightReady milestone",
                 NightReadySeconds);
             if (!_bot.Failed)
@@ -362,7 +363,7 @@ namespace MoonProject.Autoplay
                 }
             }
 
-            _bot.EndBeat("the battery bank stands and the base is night-ready");
+            _bot.EndBeat("the module towed home, the battery bank stands on it and the base is night-ready");
         }
 
         private IEnumerator Nightfall()
@@ -390,6 +391,13 @@ namespace MoonProject.Autoplay
             Begin("B12", "The answer");
             yield return _base.AnswerTheCall();
             _bot.EndBeat("07 transmitted from the mast and relay.1 answered the call");
+        }
+
+        private IEnumerator TheRelay()
+        {
+            Begin("R10", "relay.1's repair: take the spare from its cabinet, fit it, charge on its pad");
+            yield return _base.RepairTheRelay();
+            _bot.EndBeat("relay.1 relit: its spare fitted at the feed socket, and its pad charges 07");
         }
 
         /// <summary>The next unscanned fragment of the lander's cargo, in the order the blueprint numbers them.</summary>

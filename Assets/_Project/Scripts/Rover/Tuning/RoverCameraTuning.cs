@@ -385,6 +385,44 @@ namespace MoonProject.Rover
         [Range(0.1f, 3f)]
         [SerializeField] private float _crawlHalfLife = 0.9f;
 
+        [Header("Towing a load (opening v3 3.2b)")]
+        [Tooltip("Seconds the chase camera takes to rise and draw back when 07 hooks a load, and to settle again when " +
+                 "it lets go (eased in and out).")]
+        [Range(0.2f, 2f)]
+        [SerializeField] private float _towEaseSeconds = 0.6f;
+
+        [Tooltip("Metres of clearance the camera keeps round the load it tows: the load is an obstacle, so the camera " +
+                 "rises over it to see 07 and never sits inside it.")]
+        [Range(0.1f, 2f)]
+        [SerializeField] private float _towMargin = 0.5f;
+
+        [Tooltip("Highest (deg) the camera may rise to see 07 over its load.")]
+        [Range(20f, 80f)]
+        [SerializeField] private float _towMaxElevation = 52f;
+
+        [Tooltip("Furthest the camera may draw back while towing, as a share of the chase distance.")]
+        [Range(1f, 3f)]
+        [SerializeField] private float _towMaxRadiusScale = 1.8f;
+
+        [Tooltip("Half-life (s) of the solved framing following a swing of the player's view, so it never jumps.")]
+        [Range(0.02f, 1f)]
+        [SerializeField] private float _towSolveHalfLife = 0.15f;
+
+        [Tooltip("Widest (deg) the camera may swing to a side of the line behind 07 while towing, for a 3/4 rear view that " +
+                 "keeps the load and the rope in frame beside 07.")]
+        [Range(0f, 80f)]
+        [SerializeField] private float _towMaxYawSwing = 45f;
+
+        [Tooltip("Seconds the camera takes to swing round to the side of a load it tows, and to swing back: slower than " +
+                 "the rise, so the turn is a gentle drift, never a whip.")]
+        [Range(0.6f, 4f)]
+        [SerializeField] private float _towYawEaseSeconds = 1.8f;
+
+        [Tooltip("How far the camera's look point moves from 07 toward the load while towing (a share of the way), so the " +
+                 "load and the rope stay in frame with 07: a tow reads as 07, the rope and the load together.")]
+        [Range(0f, 0.8f)]
+        [SerializeField] private float _towLookShare = 0.55f;
+
         [Header("Camera moments")]
         [Tooltip("Digging: while the excavation beam is on, ease to the side and up so the beam and the rising "
             + "relic are seen beside 07, not hidden behind it. Flows into the relic moment when it surfaces.")]
@@ -408,6 +446,43 @@ namespace MoonProject.Rover
             + "past 07 at the mast and its warming lamp against the sky, then returns (~8 s).")]
         [SerializeField] private CameraMomentSettings _relayMoment =
             new CameraMomentSettings(3f, 2.6f, 2.6f, 0.22f, 3f, 0.5f, 26f, 40f, -13f, 0.65f, 40f);
+
+        [Tooltip("The release's view (opening v3 4.4): one slow turn toward relay.1's lamp, the next goal, with 07 kept in " +
+                 "the foreground, a hold, then the ease back. The pan below starts where the camera already looks and " +
+                 "moves the subject itself, so the share and swing here only say how far the camera follows it; the " +
+                 "ease out is the way back (about 6 s in all with the travel and the hold).")]
+        [SerializeField] private CameraMomentSettings _releaseMoment =
+            new CameraMomentSettings(1.4f, 0f, 2.4f, 1f, 1.2f, 1f, 0f, 120f, -3f, 0f, 100000f);
+
+        [Tooltip("Fastest the release pan turns the camera round (deg/s): a gentle drift, never a whip.")]
+        [Range(5f, 40f)]
+        [SerializeField] private float _releasePanSweep = 22f;
+
+        [Tooltip("Seconds the pan gives the turn toward relay.1's lamp.")]
+        [Range(1f, 4f)]
+        [SerializeField] private float _releasePanTravelSeconds = 1.8f;
+
+        [Tooltip("Seconds the pan then holds the lamp while 07's head looks at it.")]
+        [Range(1f, 4f)]
+        [SerializeField] private float _releasePanHoldSeconds = 2.2f;
+
+        [Tooltip("How far (deg) short of the lamp's bearing the pan settles: the lamp sits on a third of the frame, " +
+                 "not its centre.")]
+        [Range(0f, 35f)]
+        [SerializeField] private float _releasePanSlack = 15f;
+
+        [Tooltip("Furthest (deg) the lamp may lie from where the camera looks for the camera to turn at all; behind that, " +
+                 "07's head turn and its chirp carry the look and the camera stays put.")]
+        [Range(30f, 180f)]
+        [SerializeField] private float _releasePanMaxBearing = 120f;
+
+        [Tooltip("Fastest the release pan tilts toward the lamp's height (deg/s).")]
+        [Range(2f, 30f)]
+        [SerializeField] private float _releasePanRise = 8f;
+
+        [Tooltip("Half-life (s) of the pan's speed easing: soft starts and stops.")]
+        [Range(0.1f, 1.5f)]
+        [SerializeField] private float _releasePanHalfLife = 0.5f;
 
         [Tooltip("07's first look up the crew's ladder, then at the lift: the camera eases low and a little back, "
             + "looking up past 07 at the ladder to the deck, follows the gaze across to the lift, and returns once "
@@ -860,6 +935,22 @@ namespace MoonProject.Rover
 
         public float CrawlHalfLife => _crawlHalfLife;
 
+        public float TowEaseSeconds => _towEaseSeconds;
+
+        public float TowMargin => _towMargin;
+
+        public float TowMaxElevation => _towMaxElevation;
+
+        public float TowMaxRadiusScale => _towMaxRadiusScale;
+
+        public float TowSolveHalfLife => _towSolveHalfLife;
+
+        public float TowLookShare => _towLookShare;
+
+        public float TowMaxYawSwing => _towMaxYawSwing;
+
+        public float TowYawEaseSeconds => _towYawEaseSeconds;
+
         public CameraMomentSettings DigMoment => _digMoment;
 
         public CameraMomentSettings RelicMoment => _relicMoment;
@@ -869,6 +960,22 @@ namespace MoonProject.Rover
         public CameraMomentSettings GentleTowerMoment => _gentleTowerMoment;
 
         public CameraMomentSettings RelayMoment => _relayMoment;
+
+        public CameraMomentSettings ReleaseMoment => _releaseMoment;
+
+        public float ReleasePanSweep => _releasePanSweep;
+
+        public float ReleasePanTravelSeconds => _releasePanTravelSeconds;
+
+        public float ReleasePanHoldSeconds => _releasePanHoldSeconds;
+
+        public float ReleasePanSlack => _releasePanSlack;
+
+        public float ReleasePanMaxBearing => _releasePanMaxBearing;
+
+        public float ReleasePanRise => _releasePanRise;
+
+        public float ReleasePanHalfLife => _releasePanHalfLife;
 
         public CameraMomentSettings LadderMoment => _ladderMoment;
 

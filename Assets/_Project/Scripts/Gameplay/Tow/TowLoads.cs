@@ -15,6 +15,9 @@ namespace MoonProject.Gameplay
         /// <summary>The prefab node where the cable meets the load.</summary>
         public const string HitchNode = "TowHitch";
 
+        /// <summary>The habitat's power module's tow id: the battery bank's frame (OpeningTuning's tow loads).</summary>
+        public const string PowerModule = "habitat.power_module";
+
         /// <summary>Stands <paramref name="spot"/>'s load by <paramref name="frame"/>; throws when Art's prefab is wrong.</summary>
         public static TowableBody Stand(TowLoadSpot spot, Transform frame, Transform parent, ITerrainQuery terrain,
             TowSettings settings)

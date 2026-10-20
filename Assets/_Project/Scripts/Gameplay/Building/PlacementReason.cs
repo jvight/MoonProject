@@ -25,5 +25,11 @@ namespace MoonProject.Gameplay
 
         /// <summary>A world prop or collider on <c>Layers.Prop</c> blocks the structure's footprint.</summary>
         Blocked = 6,
+
+        /// <summary>
+        /// The structure is built on a towable load (<see cref="StructureDefinition.FrameLoad"/>) that does not stand
+        /// on the apron, off the cable: tow it home first.
+        /// </summary>
+        NeedsFrame = 7,
     }
 }

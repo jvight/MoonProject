@@ -8,7 +8,8 @@ namespace MoonProject.Gameplay
     public interface IInteractionHints
     {
         /// <summary>
-        /// The most relevant action now, in this order: PickUp, Build, Salvage, Scan, Deconstruct
+        /// The most relevant action now, in this order: PickUp, Build, Salvage, Scan, Deconstruct, OpenBuild, FitPart,
+        /// Tether
         /// (<see cref="InteractionKind.None"/> before the game is running).
         /// </summary>
         InteractionHint Primary { get; }

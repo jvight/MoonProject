@@ -59,6 +59,7 @@ namespace MoonProject.World.Editor
         public const string BasaltNormalTexture = "Assets/_Project/Art/R1/Textures/T_R1_Basalt_Normal.png";
         public const string BasaltMaskTexture = "Assets/_Project/Art/R1/Textures/T_R1_Basalt_Mask.png";
         public const string R1BasaltMaterial = "Assets/_Project/Generated/Art/R1/Materials/R1_Basalt.mat";
+
         public const string R1RocksFolder = "Assets/_Project/Art/R1/Models/Rocks";
         /// <summary>R1 basalt rocks (Art/R1/Models/Rocks) used as pebbles: 5 irregular rounded cobble and lump shapes.</summary>
         public static readonly string[] PebbleRocks = { "Rock_00", "Rock_01", "Rock_02", "Rock_03", "Rock_04" };
@@ -76,6 +77,12 @@ namespace MoonProject.World.Editor
 
         /// <summary>Art's R1 story props for the opening (Generated/Art/R1/Models/Props, opening v2 §4).</summary>
         public const string R1PropsFolder = "Assets/_Project/Generated/Art/R1/Models/Props/";
+        public const string R1StructuresFolder = "Assets/_Project/Generated/Art/R1/Models/Structures/";
+
+        /// <summary>relay.1's repair site in Art's props (opening v3 5.1).</summary>
+        public const string ServiceCabinetPrefab = R1StructuresFolder + "ServiceCabinet.prefab";
+        public const string FeedUnitSparePrefab = R1PropsFolder + "FeedUnitSpare.prefab";
+        public const string RelayContactPadPrefab = R1StructuresFolder + "RelayContactPad.prefab";
         public const string DeadChargingPostPrefab = R1PropsFolder + "DeadChargingPost.prefab";
         public const string CableStraightPrefab = R1PropsFolder + "Cable_Straight_2m.prefab";
         public const string CableBend45Prefab = R1PropsFolder + "Cable_Bend_45.prefab";

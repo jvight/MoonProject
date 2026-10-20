@@ -37,9 +37,6 @@ namespace MoonProject.Autoplay
         private const float CueSweepSeconds = 1.5f;
         private const float DriveSeconds = 150f;
         private const float BaseSpacing = 7f;
-
-        /// <summary>The bank stands close to the pad, well inside the cable reach, as a sensible player places it.</summary>
-        private const float BankPadSpacing = 4.5f;
         private const float RuinsGateOffset = 10f;
         private const float AnswerReadySeconds = 120f;
         private const float MastArriveRadius = 4f;
@@ -79,6 +76,24 @@ namespace MoonProject.Autoplay
         private const float ApproachThrottleRadius = 0.5f;
         private const float SunsetSeconds = 300f;
         private const float ChargeSeconds = 60f;
+
+        /// <summary>Metres from relay.1's cabinet or socket 07 stops at: well inside the take and fit reach.</summary>
+        private const float RelayArrive = 2f;
+
+        /// <summary>Metres out from the module's hitch where 07 turns its back to it before reversing.</summary>
+        private const float HookStandOff = 4f;
+
+        /// <summary>Metres beyond that stand 07 lines up from, so it comes in facing the hitch.</summary>
+        private const float HookLineUp = 6f;
+
+        /// <summary>Metres (flat) from the hitch the winch backs up to: inside the hook's reach.</summary>
+        private const float HookBackTo = 2f;
+
+        /// <summary>Metres short of the apron's centre 07 stops towing: the module trails onto the apron behind it.</summary>
+        private const float HomeStop = 1f;
+
+        /// <summary>Metres from that stop point 07 counts as there: close, so the module trails onto the apron.</summary>
+        private const float HomeArrive = 1f;
 
         /// <summary>Seconds the pad may take to take 07 in once it rests there (a full 07 waits out the rest time).</summary>
         private const float DuskSeconds = 15f;
@@ -719,14 +734,91 @@ namespace MoonProject.Autoplay
             return Vector3.zero;
         }
 
+        /// <summary>
+        /// R6: the habitat's power module home on the winch cable, as a player tows it: out beyond its hitch, 07 turns
+        /// its back to it and reverses until the winch is in reach, the tether key hooks it, and 07 drives home; the
+        /// winch lets it go on the apron.
+        /// </summary>
+        public IEnumerator TowTheModuleHome()
+        {
+            if (!G.Tow.TryFindLoad(TowLoads.PowerModule, out Transform module))
+            {
+                _bot.Fail("the habitat's power module does not stand to be towed.");
+                yield break;
+            }
+
+            Vector3 hitch = HitchOf(module);
+            Vector3 outward = Flat(hitch - module.position).normalized;
+            Vector3 stand = Flat(hitch) + outward * HookStandOff;
+            yield return _bot.DriveTo(stand + outward * HookLineUp, LineUpArrive, "a line-up beyond the module's hitch",
+                DriveSeconds);
+            yield return _bot.DriveTo(stand, ScanArrive, "the module's hitch", DriveSeconds);
+            yield return _bot.TurnToward(stand + outward * HookLineUp, "away from the module, the winch to its hitch");
+            Transform winch = _bot.World.Context.Get<IRoverRig>().WinchOrigin;
+            yield return _bot.BackOff(() => DriveSteering.FlatDistance(winch.position, hitch) <= HookBackTo,
+                FollowSeconds, "the winch to the module's hitch");
+            yield return _bot.TapRightButton();
+            yield return _bot.Until(() => G.Tow.IsTowing, FollowSeconds, "the tether key to hook the module",
+                () => "The winch stands " + DriveSteering.FlatDistance(winch.position, hitch)
+                    .ToString("0.0", CultureInfo.InvariantCulture) + " m from the hitch.");
+            Vector3 fromHome = Flat(module.position - Pad()).normalized;
+            yield return _bot.DriveTo(Flat(Pad()) + fromHome * HomeStop, HomeArrive, "home to the apron, towing",
+                DriveSeconds);
+            yield return _bot.Until(() => !G.Tow.IsTowing, FollowSeconds, "the winch to let the module go on the apron",
+                () => "The module stands " + DriveSteering.FlatDistance(module.position, Pad())
+                    .ToString("0.0", CultureInfo.InvariantCulture) + " m from the apron's centre.");
+        }
+
+        /// <summary>
+        /// R10, relay.1's repair, as a player does it: up to the open cabinet where the labelled spare waits, a held E
+        /// takes it; to the mast box's empty feed socket, a held E fits it and the relay is lit; onto its contact pad,
+        /// which charges 07 like a pad of its own.
+        /// </summary>
+        public IEnumerator RepairTheRelay()
+        {
+            RelayRepair relay = G.Relay;
+            yield return _bot.Until(() => relay.Open, FollowSeconds, "relay.1 to have answered the call");
+            Vector3 spare = relay.SparePoint;
+            yield return _bot.DriveTo(Flat(spare), RelayArrive, "relay.1's open cabinet", DriveSeconds);
+            yield return _bot.Until(() => G.Hints.TryGet(InteractionKind.PickUp, out _), FollowSeconds,
+                "the cabinet to offer its spare (Pick up)");
+            yield return _bot.Hold(Key.E, () => relay.SpareTaken, FollowSeconds, "E to take relay.1's spare");
+            yield return _bot.DriveTo(Flat(relay.SocketPoint), RelayArrive, "relay.1's feed socket", DriveSeconds);
+            yield return _bot.Until(() => G.Hints.TryGet(InteractionKind.Install, out _), FollowSeconds,
+                "the feed socket to offer the spare (Fit)");
+            yield return _bot.Hold(Key.E, () => relay.Fitted, FollowSeconds, "E to fit the spare: relay.1 lit");
+            BatteryModel battery = G.Battery.Model;
+            yield return _bot.DriveTo(Flat(relay.PadPoint), ApproachThrottleRadius, "relay.1's contact pad",
+                DriveSeconds);
+            yield return _bot.Until(() => battery.CellsFull || battery.IsCharging && battery.Charger == ChargerKind.Mast,
+                ChargeSeconds, "relay.1's pad to charge 07");
+        }
+
+        /// <summary>Where the module stands now: the battery bank is built on it.</summary>
+        public Vector3 ModulePosition()
+        {
+            return G.Tow.TryFindLoad(TowLoads.PowerModule, out Transform module) ? module.position : Pad();
+        }
+
+        private static Vector3 HitchOf(Transform load)
+        {
+            foreach (Transform node in load.GetComponentsInChildren<Transform>())
+            {
+                if (node.name == TowLoads.HitchNode)
+                {
+                    return node.position;
+                }
+            }
+
+            return load.position;
+        }
+
         public Vector3 Pad()
         {
             return _bot.World.Anchors.TryGet("place.apron", out WorldAnchor apron) ? apron.Position : Vector3.zero;
         }
 
         public static float Spacing => BaseSpacing;
-
-        public static float BankSpacing => BankPadSpacing;
 
         /// <summary>The scan verb's first-use key, shared with B3's own scan loop.</summary>
         public const string ScanVerb = "scan: hold E";

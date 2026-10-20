@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEditor.AssetImporters;
@@ -9,12 +10,12 @@ namespace MoonProject.Art.Editor
     /// <summary>
     /// Enforces R1 import rules on Blender FBX models under <c>Assets/_Project/Art/R1/Models/</c> and texture maps
     /// under <c>Assets/_Project/Art/R1/Textures/</c>. Validates source material slot names via
-    /// <see cref="OnPreprocessMaterialDescription"/> and baked vertex colour attributes via
+    /// <see cref="OnPreprocessMaterialDescription"/>, and baked vertex colour attributes and unique node names via
     /// <see cref="OnPostprocessModel"/>, logging <see cref="Debug.LogError(object)"/> on violations.
     /// </summary>
     public sealed class R1ModelPostprocessor : AssetPostprocessor
     {
-        public const uint PostprocessorVersion = 4;
+        public const uint PostprocessorVersion = 6;
         public const string CollisionProxyPrefix = "UCX_";
         public const string ModelsPrefix = "Assets/_Project/Art/R1/Models/";
         public const string RocksPrefix = "Assets/_Project/Art/R1/Models/Rocks/";
@@ -64,6 +65,35 @@ namespace MoonProject.Art.Editor
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Validates that no two nodes under <paramref name="root"/> share a name. Unity keeps a regenerated prefab's
+        /// fileIDs by matching node names, so a model with repeated names (Blender exports them as <c>Name.001</c>)
+        /// rewrites its generated prefab with all-new fileIDs on every clean build. Logs
+        /// <see cref="Debug.LogError(object)"/> with <paramref name="modelPath"/> for each repeated name.
+        /// </summary>
+        public static bool ValidateUniqueNodeNames(GameObject root, string modelPath)
+        {
+            if (root == null)
+            {
+                return true;
+            }
+
+            bool allUnique = true;
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            foreach (Transform node in root.GetComponentsInChildren<Transform>(true))
+            {
+                if (!seen.Add(node.name))
+                {
+                    Debug.LogError(
+                        $"R1ModelPostprocessor: Model '{modelPath}' has more than one node named '{node.name}'. " +
+                        "Give every node a unique name in Blender (e.g. a part index suffix) so its prefab stays stable.");
+                    allUnique = false;
+                }
+            }
+
+            return allUnique;
         }
 
         /// <summary>
@@ -227,7 +257,9 @@ namespace MoonProject.Art.Editor
             }
 
             DisableCollisionProxyRenderers(root);
-            ValidateVertexColors(root, NormalizePath(assetPath));
+            string modelPath = NormalizePath(assetPath);
+            ValidateUniqueNodeNames(root, modelPath);
+            ValidateVertexColors(root, modelPath);
         }
 
         private static string NormalizePath(string path)

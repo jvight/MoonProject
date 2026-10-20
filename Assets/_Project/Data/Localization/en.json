@@ -615,6 +615,10 @@
             "text": "Clear the ground first"
         },
         {
+            "key": "build.reason.frame",
+            "text": "Tow the power module onto the apron first"
+        },
+        {
             "key": "structure.charging_pad.name",
             "text": "Charging Pad"
         },
@@ -859,6 +863,14 @@
             "text": "OK"
         },
         {
+            "key": "pickup.part.feedunit",
+            "text": "Relay feed unit"
+        },
+        {
+            "key": "pickup.part.feedunit.job",
+            "text": "Fits relay.1's mast box."
+        },
+        {
             "key": "pickup.part.igniter",
             "text": "Spare igniter"
         },
@@ -933,6 +945,14 @@
         {
             "key": "rack.hex_adapter",
             "text": "Hex charge adapter · from Kestrel-3"
+        },
+        {
+            "key": "hint.tether",
+            "text": "Hook cable"
+        },
+        {
+            "key": "hint.install",
+            "text": "Fit"
         },
         {
             "key": "pickup.crate.contents",

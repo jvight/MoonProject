@@ -10,7 +10,8 @@ namespace MoonProject.Gameplay.Tests
     /// 07's winch cable (opening v3 R6): the tether key hooks the nearest load whose hitch is in reach of the winch and
     /// lets it go again; a load towed home to the apron is unhooked there; one that fell far behind is let go softly;
     /// each hook and release is published with the load's id; a load stands fast off the cable and slides free on it;
-    /// a load is found by its tow id, and a save puts each load back where it was left, off the cable.
+    /// a load is found by its tow id, the load the key would hook is known before it is pressed, and a save puts each
+    /// load back where it was left, off the cable.
     /// </summary>
     public sealed class TowLineTests
     {
@@ -112,6 +113,22 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void TheWinchLetsGo_OnlyOnceTheLoadItself_IsHome_SoALoadLetGoCanBeBuiltOn()
+        {
+            TowableBody load = Load("module", new Vector3(0f, 0f, -1f));
+            load.Root.GetChild(0).localPosition = Vector3.forward;
+            _tow.Step(true);
+            load.Root.position = Home + new Vector3(0f, 0f, -(_settings.HomeRadius + 0.5f));
+            _tow.Step(false);
+            Assert.IsTrue(_tow.IsTowing, "its hitch is on the apron, the module not yet");
+
+            load.Root.position = Home + new Vector3(0f, 0f, -(_settings.HomeRadius - 0.5f));
+            _tow.Step(false);
+            Assert.IsFalse(_tow.IsTowing);
+            Assert.IsTrue(_tow.TryFindHome("module", out _), "let go home: a structure may stand on it");
+        }
+
+        [Test]
         public void ALoadThatFellFarBehind_IsLetGoSoftly()
         {
             TowableBody load = Load("module", new Vector3(0f, 0f, -1f));
@@ -121,6 +138,22 @@ namespace MoonProject.Gameplay.Tests
             Assert.IsFalse(_tow.IsTowing);
             Assert.AreEqual(TowRelease.Snapped, _released[0].Reason);
             Assert.AreEqual(0f, _tow.Strain01);
+        }
+
+        [Test]
+        public void TheLoadToHook_IsTheNearestInReach_AndNoneWhileTowing()
+        {
+            Assert.IsFalse(_tow.TryGetHookable(out _), "no load stands");
+            Load("module.far", new Vector3(0f, 0f, -(_settings.HookReach + 1f)));
+            Assert.IsFalse(_tow.TryGetHookable(out _), "out of hook reach");
+
+            TowableBody near = Load("module.near", new Vector3(0.5f, 0f, -1f));
+            Assert.IsTrue(_tow.TryGetHookable(out Vector3 hitch), "a load in reach is where the tether key is taught");
+            Assert.AreEqual(near.Hitch, hitch);
+
+            _tow.Step(true);
+            Assert.IsTrue(_tow.IsTowing);
+            Assert.IsFalse(_tow.TryGetHookable(out _), "nothing to hook while the cable holds a load");
         }
 
         [Test]

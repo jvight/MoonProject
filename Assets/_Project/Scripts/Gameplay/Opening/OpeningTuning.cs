@@ -125,6 +125,10 @@ namespace MoonProject.Gameplay
                  "bank's frame (Art's PowerModule, its TowHitch on its front face).")]
         [SerializeField] private TowLoadSpot[] _towLoads = Array.Empty<TowLoadSpot>();
 
+        [Header("relay.1's repair (opening v3 R10)")]
+        [Tooltip("The relay, its labelled spare and how near 07 takes it, fits it and charges on the lit relay.")]
+        [SerializeField] private RelayRepairSettings _relay = new RelayRepairSettings();
+
         [Header("The answer (opening v3 R8)")]
         [Tooltip("Where and how long 07 holds to transmit, and how the pulse of the old network runs to relay.1 and the Peak.")]
         [SerializeField] private CallAnswerSettings _answer = new CallAnswerSettings();
@@ -160,8 +164,6 @@ namespace MoonProject.Gameplay
                 new[] { "part.igniter" }),
             new SupplyCache("supply.habitat.reel", "HabitatModules", new Vector3(-3.3f, 0f, -6.5f), 207f,
                 ContainerKinds.CrateM, new Recipe(0, 3, 0), StructureIds.BatteryBank),
-            new SupplyCache("supply.habitat.module", "HabitatModules", new Vector3(-13.5f, 0f, -3.6f), -90f,
-                ContainerKinds.CrateL, new Recipe(3, 0, 0), StructureIds.BatteryBank),
             new SupplyCache("supply.tower.mast", "RadioTower", new Vector3(-6.5f, 0f, 0f), -100f,
                 ContainerKinds.CrateL, new Recipe(4, 0, 0), StructureIds.AntennaMast),
             new SupplyCache("supply.tower.feed", "RadioTower", new Vector3(-5.4f, 0f, 5.6f), -143f,
@@ -225,6 +227,8 @@ namespace MoonProject.Gameplay
         public CallReplySettings Reply => _reply;
 
         public TowSettings Tow => _tow;
+
+        public RelayRepairSettings Relay => _relay;
 
         public IReadOnlyList<TowLoadSpot> TowLoads => _towLoads ?? Array.Empty<TowLoadSpot>();
 

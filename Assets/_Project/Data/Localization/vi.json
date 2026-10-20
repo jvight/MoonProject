@@ -615,6 +615,10 @@
             "text": "Cần dọn chỗ trước"
         },
         {
+            "key": "build.reason.frame",
+            "text": "Kéo mô-đun nguồn về sân trước"
+        },
+        {
             "key": "structure.charging_pad.name",
             "text": "Bệ sạc"
         },
@@ -859,6 +863,14 @@
             "text": "Ổn"
         },
         {
+            "key": "pickup.part.feedunit",
+            "text": "Bộ cấp nguồn trạm chuyển tiếp"
+        },
+        {
+            "key": "pickup.part.feedunit.job",
+            "text": "Lắp vào hộp cột của relay.1."
+        },
+        {
             "key": "pickup.part.igniter",
             "text": "Bộ đánh lửa dự phòng"
         },
@@ -933,6 +945,14 @@
         {
             "key": "rack.hex_adapter",
             "text": "Bộ sạc lục giác · từ Kestrel-3"
+        },
+        {
+            "key": "hint.tether",
+            "text": "Móc cáp"
+        },
+        {
+            "key": "hint.install",
+            "text": "Lắp"
         },
         {
             "key": "pickup.crate.contents",

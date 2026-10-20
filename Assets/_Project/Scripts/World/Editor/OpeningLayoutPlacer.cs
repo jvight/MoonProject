@@ -102,6 +102,7 @@ namespace MoonProject.World.Editor
             GameObject westMast = Stand(context, props, WestMastName, WorldPaths.DeadAntennaMastPrefab, mast.Position,
                 mast.Forward, true);
             StandRelayLamp(context, settings, props, westMast);
+            Relay1SitePlacer.Stand(context, settings, root, surface, mast, westMast);
             Vector3 pillarSpot = mast.Position - mast.Forward * landmarks.SignalPillarSetback;
             GameObject pillar = Stand(context, props, SignalPillarName, WorldPaths.SignalPillarPrefab,
                 Ground(surface, pillarSpot), mast.Forward, false);

@@ -552,6 +552,7 @@ MonoBehaviour:
       _shimmerDepth: 0.35
       _sunlightSampleSeconds: 0.1
     _moduleLamp:
+      _towId: habitat.power_module
       _blinkSeconds: 3.2
       _onShare: 0.3
       _easeShare: 0.6
@@ -569,6 +570,20 @@ MonoBehaviour:
       _haloMinFrom: 40
       _haloMinFull: 500
       _haloLift: 0.2
+    _relay1Site:
+      _cabinetOffset: {x: 2.2, y: 0.8}
+      _cabinetYaw: -25
+      _padDistance: 2.8
+      _spareOnShelf: {x: -0.04, y: 0, z: 0}
+      _spareYaw: 90
+      _fittedInSocket: {x: 0.08, y: -0.07, z: 0}
+      _fittedYaw: -90
+      _lampColor: {r: 1, g: 0.76, b: 0.32, a: 1}
+      _lampIntensity: 1.6
+      _lampRange: 1.4
+      _lampStripGlow: 2
+      _outlineColor: {r: 1, g: 0.7, b: 0.4, a: 1}
+      _outlineNeedsPart: 1
     _debris:
     - _anchor: place.midway
       _id: Kestrel_HullPanel

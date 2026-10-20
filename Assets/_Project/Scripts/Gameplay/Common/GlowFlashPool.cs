@@ -12,6 +12,7 @@ namespace MoonProject.Gameplay
         private readonly Transform[] _flashes;
         private readonly GlowRenderer[] _glows;
         private readonly float[] _ages;
+        private readonly float[] _strengths;
         private readonly float _duration;
         private readonly Vector2 _radius;
         private readonly float _intensity;
@@ -28,6 +29,7 @@ namespace MoonProject.Gameplay
             _flashes = new Transform[size];
             _glows = new GlowRenderer[size];
             _ages = new float[size];
+            _strengths = new float[size];
             _duration = Mathf.Max(0.01f, duration);
             _radius = radius;
             _intensity = intensity;
@@ -40,9 +42,11 @@ namespace MoonProject.Gameplay
             }
         }
 
-        public void Spawn(Vector3 position)
+        /// <param name="strength">The flash's brightness as a share of the pool's (1 = full).</param>
+        public void Spawn(Vector3 position, float strength = 1f)
         {
             _flashes[_next].position = position;
+            _strengths[_next] = Mathf.Clamp01(strength);
             _ages[_next] = 0f;
             _next = (_next + 1) % _flashes.Length;
         }
@@ -59,7 +63,7 @@ namespace MoonProject.Gameplay
                 _ages[i] += deltaTime;
                 float t = Mathf.Clamp01(_ages[i] / _duration);
                 _flashes[i].localScale = Vector3.one * Mathf.Lerp(_radius.x, _radius.y, Ease.OutCubic(t));
-                _glows[i].Apply(_intensity * (1f - Ease.InOutSine(t)));
+                _glows[i].Apply(_intensity * _strengths[i] * (1f - Ease.InOutSine(t)));
             }
         }
     }

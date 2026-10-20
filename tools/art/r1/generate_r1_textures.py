@@ -172,28 +172,25 @@ def _generate_surface_maps(
         normal_strength = 4.5
 
     elif style == "foil":
-        # Fine-crinkled golden Kapton thermal foil with sharp small angular facets and glints
-        c1 = _tileable_noise(res, 24, seed + 13)
-        c2 = _tileable_noise(res, 40, seed + 29)
-        c3 = _tileable_noise(res, 64, seed + 47)
-        c4 = _tileable_noise(res, 48, seed + 71)
+        # Broad-crinkled golden Kapton thermal foil: a few wide soft creases and no small glint facets, so a low sun
+        # rolls across it as broad sheens instead of sparkling like piles of glowing grains
+        c1 = _tileable_noise(res, 5, seed + 13)
+        c2 = _tileable_noise(res, 8, seed + 29)
+        c3 = _tileable_noise(res, 12, seed + 47)
         r1 = 1.0 - np.abs(c1 * 2.0 - 1.0)
         r2 = 1.0 - np.abs(c2 * 2.0 - 1.0)
         r3 = 1.0 - np.abs(c3 * 2.0 - 1.0)
-        r4 = 1.0 - np.abs(c4 * 2.0 - 1.0)
-        # Sharp crease network + small angular glint facets
-        crinkle_h = 0.30 * (r1**1.4) + 0.35 * (r2**1.6) + 0.20 * (r3**1.8) + 0.15 * r4
-        glints = np.clip((r2 * r3 - 0.42) * 3.2, 0.0, 1.0)
-        height = 0.35 + 0.35 * crinkle_h + 0.08 * glints
-        # Keep hue distinctly golden-yellow (never orange) with bright pale-gold glints
+        crinkle_h = 0.45 * (r1**1.3) + 0.35 * (r2**1.4) + 0.20 * r3
+        height = 0.40 + 0.25 * crinkle_h
+        # Keep hue distinctly golden-yellow (never orange)
         gold_tint = np.empty_like(albedo)
-        gold_tint[..., 0] = base_rgb[0] * (0.94 + 0.08 * crinkle_h) + 0.06 * glints
-        gold_tint[..., 1] = base_rgb[1] * (0.93 + 0.09 * crinkle_h) + 0.11 * glints
-        gold_tint[..., 2] = base_rgb[2] * (0.90 + 0.12 * crinkle_h) + 0.22 * glints
+        gold_tint[..., 0] = base_rgb[0] * (0.94 + 0.08 * crinkle_h)
+        gold_tint[..., 1] = base_rgb[1] * (0.93 + 0.09 * crinkle_h)
+        gold_tint[..., 2] = base_rgb[2] * (0.90 + 0.12 * crinkle_h)
         albedo = np.clip(gold_tint, 0.0, 1.0)
-        smoothness = np.clip(smoothness_val + (crinkle_h - 0.5) * 0.14 + glints * 0.12, 0.55, 0.96)
+        smoothness = np.clip(smoothness_val + (crinkle_h - 0.5) * 0.10, 0.35, 0.50)
         micro_wear = np.clip(0.5 + (crinkle_h - 0.5) * 0.6, 0.0, 1.0)
-        normal_strength = 9.5
+        normal_strength = 4.5
 
     elif style == "glass":
         # Seamless smooth dark optical glass (no baked frame)
@@ -425,6 +422,16 @@ def _generate_surface_maps(
         smoothness = np.clip(smoothness_val + (crinkle_h - 0.5) * 0.14, 0.42, 0.68)
         micro_wear = np.clip(0.5 + (crinkle_h - 0.5) * 0.55, 0.0, 1.0)
         normal_strength = 8.0
+
+    elif style in ("rackline", "rackfill"):
+        # The socket rack's lit silhouette: a flat dark body under an even warm glow (no core, no rings, no dots),
+        # so Gameplay's _EmissionColor alone sets how bright a bay's line or fill reads
+        height = 0.50 + (mottle - 0.5) * 0.004
+        normal_strength = 1.0
+        glow = 0.92 if style == "rackline" else 0.80
+        warmth = (1.00, 0.78, 0.48) if style == "rackline" else (1.00, 0.70, 0.40)
+        for channel in range(3):
+            emission[..., channel] = glow * warmth[channel]
 
     normal_rgb = _height_to_normal(height, normal_strength=normal_strength)
 
@@ -994,7 +1001,7 @@ def main() -> None:
         ("GreyMetal", (0.48, 0.51, 0.56), 0.32, 0.56, 303, "greymetal"),
         ("BareSteel", (0.74, 0.77, 0.81), 0.88, 0.68, 404, "steel"),
         ("Rubber", (0.17, 0.18, 0.21), 0.02, 0.20, 505, "rubber"),
-        ("GoldFoil", (0.94, 0.79, 0.36), 0.94, 0.82, 606, "foil"),
+        ("GoldFoil", (0.94, 0.79, 0.36), 0.94, 0.42, 606, "foil"),
         ("DarkGlass", (0.09, 0.12, 0.16), 0.10, 0.92, 707, "glass"),
         ("Copper", (0.76, 0.53, 0.49), 0.90, 0.72, 808, "copper"),
         ("SagePatch", (0.54, 0.64, 0.55), 0.04, 0.46, 909, "patch"),
@@ -1005,6 +1012,8 @@ def main() -> None:
         ("WhitePaint", (0.91, 0.92, 0.90), 0.02, 0.18, 1313, "whitepaint"),
         ("TealMark", (0.18, 0.43, 0.45), 0.04, 0.35, 1414, "tealmark"),
         ("SilverFoil", (0.79, 0.81, 0.82), 0.85, 0.55, 1515, "silverfoil"),
+        ("RackOutline", (0.23, 0.18, 0.13), 0.0, 0.40, 1616, "rackline"),
+        ("RackFill", (0.18, 0.15, 0.12), 0.0, 0.34, 1717, "rackfill"),
     ]
 
     surfaces: list[dict[str, np.ndarray]] = []
@@ -1014,7 +1023,7 @@ def main() -> None:
         _save_rgba_or_rgb(OUTPUT_DIR / f"T_R1_{name}_Albedo.png", surf["albedo"])
         _save_rgba_or_rgb(OUTPUT_DIR / f"T_R1_{name}_Normal.png", surf["normal"])
         _save_rgba_or_rgb(OUTPUT_DIR / f"T_R1_{name}_Mask.png", surf["mask"])
-        if name == "LampAmber":
+        if name in ("LampAmber", "RackOutline", "RackFill"):
             _save_rgba_or_rgb(OUTPUT_DIR / f"T_R1_{name}_Emission.png", surf["emission"])
 
     trim = _generate_trim_sheet(512, surfaces)

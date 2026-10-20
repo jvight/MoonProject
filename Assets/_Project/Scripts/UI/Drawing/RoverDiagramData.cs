@@ -20,7 +20,7 @@ namespace MoonProject.UI
         /// <summary>The face icons (<c>Art/UI/Face/&lt;id&gt;.svg</c>) the screen draws, in ordinal order.</summary>
         public static readonly string[] FaceIconIds =
         {
-            "icon_cutter", "icon_empty_socket", "icon_ice_core_tube", "icon_lens", "icon_metal_plates",
+            "icon_cutter", "icon_empty_socket", "icon_feed_unit", "icon_ice_core_tube", "icon_lens", "icon_metal_plates",
             "icon_spare_igniter", "icon_warning", "icon_wiring_spool",
         };
 

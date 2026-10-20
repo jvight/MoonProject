@@ -71,9 +71,33 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const string SparesRack = "supply.array.spares";
 
         /// <summary>The habitat's towable power module (opening v3 R6), and how far from the habitat it stands.</summary>
-        private const string PowerModule = "habitat.power_module";
+        private const string PowerModule = TowLoads.PowerModule;
 
         private const float PowerModuleReach = 15f;
+
+        /// <summary>Seconds the chase view takes to settle on a new bearing before a capture.</summary>
+        private const float ViewSettleSeconds = 1.5f;
+
+        /// <summary>Metres out from the module's hitch where 07 turns its back to it before reversing.</summary>
+        private const float HookStandOff = 4f;
+
+        /// <summary>Metres beyond that stand 07 lines up from, so it comes in facing the hitch.</summary>
+        private const float HookLineUp = 6f;
+
+        /// <summary>Metres (flat) from the hitch the winch backs up to: inside the hook's reach.</summary>
+        private const float HookBackTo = 2f;
+
+        /// <summary>Seconds 07 may take to reverse its winch up to the hitch.</summary>
+        private const float HookBackSeconds = 8f;
+
+        /// <summary>Metres short of the apron's centre 07 stops towing: the module trails onto the apron behind it.</summary>
+        private const float HomeStop = 1f;
+
+        /// <summary>Metres from that stop point 07 counts as there: close, so the module trails onto the apron.</summary>
+        private const float HomeArrive = 1f;
+
+        /// <summary>Seconds after 07 stops for the trailing module to come onto the apron and be let go.</summary>
+        private const float HomeLetGoSeconds = 8f;
 
         /// <summary>The 1971 seismic station's story scan (R5's curiosity scan).</summary>
         private const string SeismicStory = "seismic";
@@ -236,13 +260,16 @@ namespace MoonProject.Gameplay.PlayModeTests
         private ILocalization _localization;
         private int _warnings;
         private int _crawls;
+        private int _towLetGo;
         private Keyboard _keyboard;
+        private Mouse _mouse;
         private GameContext _context;
         private GameplaySystem _gameplay;
         private RoverController _rover;
         private Autopilot _pilot;
         private IDisposable _awoke;
         private IDisposable _crawled;
+        private IDisposable _towReleased;
         private IDisposable _reached;
         private float _awokeAt = -1f;
         private float _stepStart;
@@ -251,6 +278,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         {
             base.Setup();
             _keyboard = InputSystem.AddDevice<Keyboard>();
+            _mouse = InputSystem.AddDevice<Mouse>();
             Application.logMessageReceived += OnLog;
         }
 
@@ -265,6 +293,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _rover?.SetDriveSource(null);
             _awoke?.Dispose();
             _crawled?.Dispose();
+            _towReleased?.Dispose();
             _reached?.Dispose();
             Scene scene = SceneManager.GetSceneByPath(PlaythroughScene.ScenePath);
             if (scene.IsValid() && scene.isLoaded)
@@ -299,6 +328,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Build(StructureIds.ChargingPad, pad, "B5: the charging pad on the apron");
             yield return ExpectStep(OpeningKeys.Charge, "B6");
             yield return ChargeOnThePad(pad);
+            yield return LookAtTheModuleFromTheApron();
             yield return ExpectStep(OpeningKeys.FindSolar, "B7: LANDER RESERVE · 0%");
             yield return DriveTo(RuinsGate(), 3f, "the Lumen ruins");
             yield return ScanTheSet("ruin.FallenSolarArray", "the fallen solar array");
@@ -313,16 +343,17 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return CutTheCrates("FallenSolarArray", "the fallen array's panels and junction box");
             yield return ExpectStep(OpeningKeys.BuildSolar, "B8: the array's cost is covered");
             yield return DriveTo(RuinsGate(), 3f, "out of the Lumen ruins");
-            yield return Build(StructureIds.SolarArray, pad + Vector3.right * BaseSpacing, "B8: the solar array");
+            // West of the pad: the ruins side stays open for the power module towed home at R6.
+            yield return Build(StructureIds.SolarArray, pad + Vector3.left * BaseSpacing, "B8: the solar array");
             yield return UntilReached(OpeningMilestone.PowerOn, "Power on: the array powers the pad");
             yield return ExpectStep(string.Empty, "R5: the first free choice says nothing");
             yield return VisitTheSeismicStation();
             yield return DockForTheDusk(pad);
             yield return ExpectStep(OpeningKeys.BuildBatteryBank, "B9: night is coming");
             yield return ScanTheSet("ruin.HabitatModules", "the habitat's power modules");
-            yield return CutTheCrates("HabitatModules", "the habitat's cable reel and power module");
-            yield return DriveTo(RuinsGate(), 3f, "out of the Lumen ruins");
-            yield return Build(StructureIds.BatteryBank, pad + Vector3.left * BaseSpacing, "B9: the battery bank");
+            yield return CutTheCrates("HabitatModules", "the habitat's cable reel");
+            yield return TowTheModuleHome(pad);
+            yield return Build(StructureIds.BatteryBank, ModulePosition(), "B9: the battery bank on the module");
             yield return UntilReached(OpeningMilestone.NightReady, "night-ready: the bank is built and wired to the pad");
             yield return TheFirstNightfall();
             yield return ExpectStep(OpeningKeys.ScanTower, "B11: after nightfall");
@@ -392,6 +423,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             _rover = (RoverController)_context.Get<IRoverRig>();
             _awoke = _context.Events.Subscribe<RoverAwoke>(_ => _awokeAt = Time.time);
             _crawled = _context.Events.Subscribe<LowPowerChanged>(low => _crawls += low.LowPower ? 1 : 0);
+            _towReleased = _context.Events.Subscribe<TowReleased>(
+                released => _towLetGo += released.Reason == TowRelease.Snapped ? 1 : 0);
             _reached = _context.Events.Subscribe<OpeningMilestoneReached>(_milestones.Add);
             _pilot = new Autopilot(_rover);
             _rover.SetDriveSource(_pilot);
@@ -472,6 +505,73 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(held, _context.Get<ISunlight>().TimeSeconds, 1f, "the Sun held while 07 looked round");
             Capture("08-the-seismic-station");
             End("R5: visit the seismic station", "SEISMIC STATION · DEPLOYED 1971");
+        }
+
+        /// <summary>
+        /// R6: the habitat's power module home on the winch cable, as a player tows it: out beyond its hitch, 07 turns
+        /// its back to it and reverses until the winch is in reach, the tether key (RMB) hooks it, and 07 tows it out
+        /// of the ruins and home; the winch lets it go on the apron.
+        /// </summary>
+        private IEnumerator TowTheModuleHome(Vector3 pad)
+        {
+            Begin();
+            Assert.IsTrue(_gameplay.Tow.TryFindLoad(PowerModule, out Transform module), "the module stands to be towed");
+            Vector3 hitch = HitchOf(module);
+            Vector3 outward = Flat(hitch - module.position).normalized;
+            Vector3 stand = Flat(hitch) + outward * HookStandOff;
+            yield return DriveTo(stand + outward * HookLineUp, LineUpArrive, "a line-up beyond the module's hitch");
+            yield return DriveTo(stand, 1f, "the module's hitch", ApproachThrottle);
+            yield return FaceToward(stand + outward * HookLineUp, "away from the module, the winch to its hitch");
+            Transform winch = _context.Get<IRoverRig>().WinchOrigin;
+            _pilot.Reverse = UnstickReverseThrottle;
+            yield return Until(() => SurfaceRules.HorizontalDistance(winch.position, hitch) <= HookBackTo,
+                HookBackSeconds, "07 backs its winch up to the module's hitch");
+            _pilot.Reverse = 0f;
+            yield return Until(() => _rover.Speed < StopSpeed, FollowTimeout, "07 comes to rest at the hitch");
+            yield return Tap(_mouse.rightButton);
+            yield return Until(() => _gameplay.Tow.IsTowing, FollowTimeout, "the tether key hooks the module",
+                () => $"the winch {SurfaceRules.HorizontalDistance(winch.position, hitch):F1} m from the hitch");
+            Capture("09-the-module-hooked");
+            yield return DriveTo(RuinsGate(), 3f, "out of the Lumen ruins, towing");
+            Vector3 fromHome = Flat(module.position - pad).normalized;
+            yield return DriveTo(Flat(pad) + fromHome * HomeStop, HomeArrive, "home to the apron, towing");
+            yield return Until(() => !_gameplay.Tow.IsTowing, HomeLetGoSeconds,
+                "the winch lets the module go on the apron",
+                () => $"the module {SurfaceRules.HorizontalDistance(module.position, pad):F1} m from the apron");
+            Assert.AreEqual(0, _towLetGo, "the cable never let the module go on the way");
+            Capture("09-the-module-home");
+            End("R6: tow the power module home", $"{_gameplay.Tow.Lifts} lift(s) free on the way");
+        }
+
+        /// <summary>
+        /// Sunrise over the apron (B6, the Sun just out from behind Earth): from the pad, the view turns to where the
+        /// habitat's power module stands waiting to be towed home, and the capture keeps it (R6's spot, read from home).
+        /// </summary>
+        private IEnumerator LookAtTheModuleFromTheApron()
+        {
+            Look(ModulePosition());
+            yield return new WaitForSeconds(ViewSettleSeconds);
+            Capture("06-the-module-from-the-apron");
+        }
+
+        private Vector3 ModulePosition()
+        {
+            Assert.IsTrue(_gameplay.Tow.TryFindLoad(PowerModule, out Transform module));
+            return module.position;
+        }
+
+        private static Vector3 HitchOf(Transform load)
+        {
+            foreach (Transform node in load.GetComponentsInChildren<Transform>())
+            {
+                if (node.name == TowLoads.HitchNode)
+                {
+                    return node.position;
+                }
+            }
+
+            Assert.Fail($"{load.name} has its {TowLoads.HitchNode}");
+            return load.position;
         }
 
         /// <summary>R6: back onto the pad; the dock after the visit begins the first dusk.</summary>

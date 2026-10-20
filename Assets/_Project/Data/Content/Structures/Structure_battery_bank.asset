@@ -24,10 +24,11 @@ MonoBehaviour:
   _storeWattHours: 360
   _connectionRadius: 10
   _buildCost:
-    _metal: 3
+    _metal: 0
     _wiring: 3
     _optics: 0
   _buildSeconds: 2.5
+  _frameLoad: habitat.power_module
   _ports:
   - _localPosition: {x: -0.74, y: 1.01, z: -0.26999986}
     _localDirection: {x: -0.9394223, y: 0, z: -0.342762}
