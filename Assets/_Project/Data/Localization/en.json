@@ -1011,6 +1011,10 @@
             "text": "for the antenna mast"
         },
         {
+            "key": "pickup.for.ssr3_lamp",
+            "text": "for the SSR-3 headlamp"
+        },
+        {
             "key": "pickup.part.icecore",
             "text": "CORE 41 · H₂O"
         },

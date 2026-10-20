@@ -1011,6 +1011,10 @@
             "text": "cho cột ăng-ten"
         },
         {
+            "key": "pickup.for.ssr3_lamp",
+            "text": "cho đèn pha SSR-3"
+        },
+        {
             "key": "pickup.part.icecore",
             "text": "LÕI BĂNG 41 · H₂O"
         },

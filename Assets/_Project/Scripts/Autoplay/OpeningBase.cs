@@ -859,6 +859,7 @@ namespace MoonProject.Autoplay
 
             yield return TopUpIfLow();
             yield return Scan(six, Flat(Pad() - six.Point).normalized, ScanStandOff);
+            yield return CutTheCrates(WorldAnchorIds.Micro06);
             MakerUnderstanding understanding = G.Understanding;
             yield return _bot.Until(() => understanding.IsUnlocked(MakerUnderstandingSettings.Ssr3Headlamp),
                 FollowSeconds, "Kessler–Arai level 1 to unlock the SSR-3 headlamp",

@@ -147,6 +147,12 @@ namespace MoonProject.Gameplay
         [Tooltip("Metres (flat) from a site's frame within which 07 has visited it.")]
         [Range(2f, 30f)] [SerializeField] private float _duskSiteReach = 12f;
 
+        /// <summary>06's field crate at relay.2: the SSR-3 headlamp's Metal 2 + Wiring 1 (opening v3 5.2).</summary>
+        public const string SixCrate = "supply.six.field";
+
+        /// <summary>What the field crate's pickup row says its parts are for ("for the SSR-3 headlamp").</summary>
+        public const string HeadlampPurpose = "ssr3_lamp";
+
         [Header("Supply (opening-v3 §4: fixed sources, each for one structure)")]
         [Tooltip("Every source of the opening's materials, and nothing else: each stands by the thing it comes from " +
                  "and is for one structure (its link), which it covers on its own with the link's other sources " +
@@ -175,6 +181,8 @@ namespace MoonProject.Gameplay
                 ContainerKinds.CrateM, new Recipe(0, 3, 0), StructureIds.AntennaMast),
             new SupplyCache("supply.tower.dish", "RadioTower", new Vector3(6.8f, 0f, 1.8f), 90f,
                 ContainerKinds.CrateM, new Recipe(0, 0, 2), StructureIds.AntennaMast),
+            new SupplyCache(SixCrate, WorldAnchorIds.Micro06, new Vector3(4.5f, 0f, -2.5f), 30f,
+                ContainerKinds.CrateM, new Recipe(2, 1, 0), HeadlampPurpose),
         };
 
         /// <summary>Art's pad fragments for a tuning made in code (tests); the shipped asset names its own.</summary>
