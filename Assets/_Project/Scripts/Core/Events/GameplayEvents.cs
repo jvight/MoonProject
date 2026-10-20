@@ -851,4 +851,21 @@ namespace MoonProject.Core.Events
 
         public bool Restored { get; }
     }
+
+    /// <summary>
+    /// The first dusk begins (docs/design/opening-v3-purpose.md R6): after power-on the sky held in the afternoon
+    /// until 07 docked after visiting a near site, or learned the battery bank; now the Sun sinks to last light and
+    /// holds there until the night is ready. Published once by Gameplay's opening, and again at each session start of
+    /// a game where it has begun, with <see cref="Restored"/> true, so the sky snaps to it with no transition.
+    /// </summary>
+    public readonly struct OpeningDuskBegan
+    {
+        public OpeningDuskBegan(bool restored)
+        {
+            Restored = restored;
+        }
+
+        /// <summary>Replayed from a loaded game, not begun now.</summary>
+        public bool Restored { get; }
+    }
 }

@@ -35,6 +35,17 @@ namespace MoonProject.Gameplay
         [Range(1, 6)]
         [SerializeField] private int _segments = 3;
 
+        [Tooltip("Metres each segment sits lower than its authored place per segment above the cabinet: segment 1 starts one " +
+                 "this far down, segment 2 two, segment 3 three, telescoped into the cabinet.")]
+        [Range(0.1f, 1f)]
+        [SerializeField] private float _segmentTravelMetres = 0.375f;
+
+        [Tooltip("Metres a segment gives (sinks back, then rises again) as it locks home.")]
+        [Range(0f, 0.05f)]
+        [SerializeField] private float _settleMetres = 0.012f;
+
+        public float SegmentTravelMetres => _segmentTravelMetres;
+        public float SettleMetres => _settleMetres;
         public float StillSeconds => _stillSeconds;
         public float StillSpeed => _stillSpeed;
         public float SegmentLiftSeconds => _segmentLiftSeconds;

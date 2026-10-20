@@ -116,6 +116,15 @@ namespace MoonProject.Gameplay
         [Tooltip("When 07 tries to answer the call, and how the antenna mast's segments lift and lock.")]
         [SerializeField] private CallReplySettings _reply = new CallReplySettings();
 
+        [Header("The first free choice and dusk (opening v3 R5–R6)")]
+        [Tooltip("The near sites 07 is free to visit after power-on, either order, by their frames: a Lumen ruin " +
+                 "piece ([World]/Ruins/<id>) or a story prop ([World]/BasinProps/<id>). The sky holds in the " +
+                 "afternoon until 07 docks after visiting one of them (or learns the battery bank), then dusk begins.")]
+        [SerializeField] private string[] _duskSites = { "Prop_SeismicStation", "HabitatModules" };
+
+        [Tooltip("Metres (flat) from a site's frame within which 07 has visited it.")]
+        [Range(2f, 30f)] [SerializeField] private float _duskSiteReach = 12f;
+
         [Header("Supply (opening-v3 §4: fixed sources, each for one structure)")]
         [Tooltip("Every source of the opening's materials, and nothing else: each stands by the thing it comes from " +
                  "and is for one structure (its link), which it covers on its own with the link's other sources " +
@@ -201,6 +210,10 @@ namespace MoonProject.Gameplay
         public CallSettings Call => _call;
 
         public CallReplySettings Reply => _reply;
+
+        public IReadOnlyList<string> DuskSites => _duskSites ?? Array.Empty<string>();
+
+        public float DuskSiteReach => _duskSiteReach;
 
         public IReadOnlyList<RackBaySettings> RackBays => _rackBays;
 

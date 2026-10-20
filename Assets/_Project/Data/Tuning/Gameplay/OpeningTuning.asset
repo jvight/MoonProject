@@ -57,6 +57,10 @@ MonoBehaviour:
     _seenAtRelease: 0
     _seenByBlueprint: rover.hex_adapter
     _filledBy: 11
+  _duskSites:
+  - Prop_SeismicStation
+  - HabitatModules
+  _duskSiteReach: 12
   _caches:
   - _id: supply.lander.open
     _anchorId: lander.port

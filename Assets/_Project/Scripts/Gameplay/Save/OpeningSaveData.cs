@@ -19,6 +19,12 @@ namespace MoonProject.Gameplay
 
         public bool nightFallen;
 
+        /// <summary>07 has visited a near site since power-on (R5): its next dock begins the first dusk.</summary>
+        public bool duskSiteVisited;
+
+        /// <summary>The first dusk has begun (R6).</summary>
+        public bool duskBegun;
+
         /// <summary>Opened supply crates that still hold what 07's hold had no room for, matched with
         /// <see cref="left"/>.
         /// </summary>

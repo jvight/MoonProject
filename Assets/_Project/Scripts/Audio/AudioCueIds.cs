@@ -139,6 +139,7 @@ namespace MoonProject.Audio
         public const string MastSettle = "mast_settle";
         public const string CutterSputter = "cutter_sputter";
         public const string CutterRefuse = "cutter_refuse";
+        public const string SkyDuskSwell = "sky_dusk_swell";
         public const string FacePowerOn = "face_power_on";
         public const string FaceLogoStroke = "face_logo_stroke";
         public const string FaceLogoResolve = "face_logo_resolve";

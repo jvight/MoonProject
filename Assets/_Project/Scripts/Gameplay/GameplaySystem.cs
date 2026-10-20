@@ -139,6 +139,8 @@ namespace MoonProject.Gameplay
 
         public MastRaise MastRaise { get; private set; }
 
+        public MastRaiseView MastRaiseView { get; private set; }
+
         /// <summary>How the mast raises and the reply times (tests).</summary>
         public CallReplySettings MastRaiseSettings => _openingTuning.Reply;
 
@@ -311,6 +313,7 @@ namespace MoonProject.Gameplay
             Reply = new CallReply(context.Events, Call, _openingTuning.Reply);
             Rack = new SocketRackField(context.Events, _openingTuning.RackBays);
             MastRaise = new MastRaise(context.Events, _openingTuning.Reply);
+            MastRaiseView = new MastRaiseView(context.Events, _building, MastRaise, _openingTuning.Reply);
             RangeRing = new RangeRingField(context.Events, _battery.Tuning.RangeRing,
                 new RangeRingModel(_battery.Tuning, _battery.Tuning.RangeRing, services.Terrain), _battery.Model,
                 Opening.Pads, services.Rover);
@@ -389,7 +392,7 @@ namespace MoonProject.Gameplay
             try
             {
                 var opening = new OpeningField(_openingTuning, services, _building, sunlight, Containers, _ruins,
-                    _landerPort, transform, _salvage.Tuning.ReachRadius, StartKit);
+                    _storyProps, _landerPort, transform, _salvage.Tuning.ReachRadius, StartKit);
                 _battery.ConnectPads(opening);
                 services.Anchors.TryGet(_openingTuning.ApronAnchor, out WorldAnchor apron);
                 _building.SetApronCable(new ApronCable(_apronCableChannel.position, apron.Position,
@@ -568,6 +571,7 @@ namespace MoonProject.Gameplay
             Opening.Step(deltaTime);
             Reply.Step(deltaTime, Opening.NightFallen, _roverState.Speed);
             MastRaise.Step(deltaTime);
+            MastRaiseView.Step();
             RangeRing.Step(deltaTime);
             RangeRingLine.Step();
             PadLock.Step(deltaTime);
@@ -671,6 +675,7 @@ namespace MoonProject.Gameplay
             Call?.Dispose();
             Rack?.Dispose();
             MastRaise?.Dispose();
+            MastRaiseView?.Dispose();
             RangeRing?.Dispose();
             Bundles?.Dispose();
             Opening?.Dispose();
