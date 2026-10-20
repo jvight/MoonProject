@@ -2,6 +2,7 @@ using System.Collections;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
+using MoonProject.Core;
 using MoonProject.Core.Events;
 
 namespace MoonProject.Audio.PlayModeTests
@@ -88,6 +89,26 @@ namespace MoonProject.Audio.PlayModeTests
 
             _rig.Events.Publish(new CallDecoded(3, 5, true));
             Assert.AreEqual(plays + 2, _rig.Director.PlayCount, "a loaded name is shown silently");
+        }
+
+        [UnityTest]
+        public IEnumerator TheKeying_IsRegistered_AndFollowsTheCarriersPlayhead()
+        {
+            Assert.IsTrue(_rig.Bootstrap.Context.TryGet(out ICallSignal signal), "Audio registers the call's keying");
+            _rig.Events.Publish(new CallStateChanged(CallState.Clear, false));
+            bool keyed = false;
+            float until = Time.realtimeSinceStartup + 4.5f;
+            while (Time.realtimeSinceStartup < until)
+            {
+                yield return null;
+                float keying = signal.Keying;
+                Assert.That(keying, Is.InRange(0f, 1f));
+                Assert.AreEqual(CallKeying.Envelope(_rig.Call.CarrierSource.time) * _rig.Call.Model.Cut, keying, 0.05f,
+                    "read off the loop's own playhead");
+                keyed |= keying > 0.9f;
+            }
+
+            Assert.IsTrue(keyed, "a full loop keys the sign");
         }
     }
 }
