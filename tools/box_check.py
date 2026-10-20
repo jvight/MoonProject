@@ -103,6 +103,11 @@ DEFAULT_PLAYMODE = {"art": "MoonProject.Gameplay.Feel.PlayModeTests;MoonProject.
                     "ui-fit": "MoonProject.UI.PlayModeTests", "voice": "MoonProject.Audio.PlayModeTests",
                     "clarity": "MoonProject.Gameplay.PlayModeTests;MoonProject.UI.PlayModeTests",
                     "camera": "MoonProject.Rover.PlayModeTests"}
+# The development-only Autoplay module compiles only with LUNARION_AUTOPLAY: its tests run in one extra EditMode step
+# with that define, for the boxes that touch what the bot drives.
+AUTOPLAY_TESTS = "MoonProject.Autoplay.Tests"
+AUTOPLAY_DEFINE = "LUNARION_AUTOPLAY"
+AUTOPLAY_BOXES = ("gameplay", "ui", "director")
 # The Playthrough is [Explicit], yet an --assembly filter selects it (the runner counts a matching assembly as an
 # explicit match), and it outlasts the PlayMode timeout; verify runs it on the merged main.
 NO_PLAYTHROUGH = ["--category", "!Playthrough"]
@@ -378,13 +383,16 @@ def test_commands(root, args):
     if args.assembly:
         return [(f"{args.platform} {' '.join(args.assembly)}",
                  command(args.platform, [arg for name in args.assembly for arg in ("--assembly", name)]))]
+    autoplay = ([(f"editmode {AUTOPLAY_TESTS}", command("editmode", ["--assembly", AUTOPLAY_TESTS,
+                                                                    "--define", AUTOPLAY_DEFINE]))]
+                if any(box in AUTOPLAY_BOXES for box in args.boxes) else [])
     defaults = [("editmode", box_assemblies(DEFAULT_TESTS, args.boxes))]
     if not args.fast:
         defaults.append(("playmode", box_assemblies(DEFAULT_PLAYMODE, args.boxes)))
     budget = ["--timeout", str(PLAYMODE_SECONDS_PER_BOX * len(args.boxes))] if len(args.boxes) > 1 else []
     return [(f"{platform} {name}",
              command(platform, (budget if platform == "playmode" else []) + ["--assembly", name]))
-            for platform, name in defaults if name]
+            for platform, name in defaults if name] + autoplay
 
 
 def needs_merge(root):

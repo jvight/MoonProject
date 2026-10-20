@@ -668,31 +668,31 @@
         },
         {
             "key": "next.v2.drive_lander",
-            "text": "Drive to the lander."
+            "text": "The lander's pilot lamp is still lit."
         },
         {
             "key": "next.v2.scan_lander",
-            "text": "Scan the two parts in the open crate by the lander."
+            "text": "Two parts lie in the lander's open crate. Scan them."
         },
         {
             "key": "next.v2.collect_parts",
-            "text": "Collect the parts from the open crate by the lander's service port."
+            "text": "The crate's parts are still there. Take them."
         },
         {
             "key": "next.v2.build_pad",
-            "text": "Build the charging pad on the marked apron."
+            "text": "The painted apron by the lander is for the charging pad."
         },
         {
             "key": "next.v2.charge",
-            "text": "Park on the pad to charge."
+            "text": "The pad is up. Park on it."
         },
         {
             "key": "next.v2.park_on_pad",
-            "text": "Park on the charging pad."
+            "text": "The igniter fits on the pad's plate. Park there."
         },
         {
             "key": "next.v2.fit_igniter",
-            "text": "Fit the igniter to the cutter."
+            "text": "The spare igniter is in the hold. Fit it to the cutter."
         },
         {
             "key": "next.v2.take_igniter",
@@ -700,31 +700,31 @@
         },
         {
             "key": "next.v2.find_solar",
-            "text": "Find a solar blueprint in the Lumen ruins."
+            "text": "The Lumen ruins still hold a solar blueprint."
         },
         {
             "key": "next.v2.cut_optics",
-            "text": "Cut the fallen array's panels and its junction box."
+            "text": "The fallen array's panels and junction box can be cut loose."
         },
         {
             "key": "next.v2.build_solar",
-            "text": "Build a solar array near the pad."
+            "text": "There is room beside the pad for a solar array."
         },
         {
             "key": "next.v2.build_battery_bank",
-            "text": "Night is coming. Build a battery bank."
+            "text": "Night is coming. The base needs a battery bank."
         },
         {
             "key": "next.v2.move_battery_bank",
-            "text": "Move the battery bank closer to the pad."
+            "text": "The battery bank stands off the grid. Move it closer to the pad."
         },
         {
             "key": "next.v2.scan_tower",
-            "text": "Scan the radio tower for an antenna."
+            "text": "The radio tower still stands against the stars. Scan it."
         },
         {
             "key": "next.v2.build_mast",
-            "text": "Build an antenna mast."
+            "text": "The antenna blueprint is learned. Build a mast."
         },
         {
             "key": "battery.low.lander",
@@ -915,6 +915,14 @@
             "text": "Pick up"
         },
         {
+            "key": "hint.openbuild",
+            "text": "Build"
+        },
+        {
+            "key": "hint.fitpart",
+            "text": "Fit"
+        },
+        {
             "key": "pickup.crate.contents",
             "text": "the parts"
         },
@@ -957,6 +965,10 @@
         {
             "key": "ui.face.tx_no_range",
             "text": "TX · NO RANGE"
+        },
+        {
+            "key": "ui.face.call",
+            "text": "CALL"
         },
         {
             "key": "ui.verb.cut",

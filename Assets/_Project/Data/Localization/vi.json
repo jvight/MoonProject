@@ -668,31 +668,31 @@
         },
         {
             "key": "next.v2.drive_lander",
-            "text": "Lái tới tàu đổ bộ."
+            "text": "Đèn hiệu trên tàu đổ bộ vẫn còn sáng."
         },
         {
             "key": "next.v2.scan_lander",
-            "text": "Quét hai bộ phận trong thùng hàng mở cạnh tàu đổ bộ."
+            "text": "Hai bộ phận nằm trong thùng hàng mở của tàu đổ bộ. Hãy quét chúng."
         },
         {
             "key": "next.v2.collect_parts",
-            "text": "Lấy phụ tùng trong thùng hàng mở cạnh cổng dịch vụ của tàu đổ bộ."
+            "text": "Các bộ phận vẫn còn trong thùng hàng. Hãy lấy chúng."
         },
         {
             "key": "next.v2.build_pad",
-            "text": "Xây bệ sạc trên bãi đã kẻ vạch."
+            "text": "Bãi kẻ vạch cạnh tàu đổ bộ dành cho bệ sạc."
         },
         {
             "key": "next.v2.charge",
-            "text": "Đỗ lên bệ để sạc."
+            "text": "Bệ sạc đã dựng xong. Hãy đỗ lên nó."
         },
         {
             "key": "next.v2.park_on_pad",
-            "text": "Đỗ lên bệ sạc."
+            "text": "Bộ đánh lửa lắp được trên tấm bệ sạc. Hãy đỗ ở đó."
         },
         {
             "key": "next.v2.fit_igniter",
-            "text": "Lắp bộ đánh lửa vào mỏ cắt."
+            "text": "Bộ đánh lửa dự phòng đang ở trong khoang. Hãy lắp vào mỏ cắt."
         },
         {
             "key": "next.v2.take_igniter",
@@ -700,31 +700,31 @@
         },
         {
             "key": "next.v2.find_solar",
-            "text": "Tìm bản vẽ pin mặt trời trong tàn tích Lumen."
+            "text": "Tàn tích Lumen vẫn còn giữ bản vẽ pin mặt trời."
         },
         {
             "key": "next.v2.cut_optics",
-            "text": "Cắt các tấm pin và hộp nối dây của giàn pin đổ."
+            "text": "Có thể cắt rời các tấm pin và hộp nối dây của giàn pin đổ."
         },
         {
             "key": "next.v2.build_solar",
-            "text": "Xây một giàn pin mặt trời gần bệ sạc."
+            "text": "Cạnh bệ sạc còn chỗ cho một giàn pin mặt trời."
         },
         {
             "key": "next.v2.build_battery_bank",
-            "text": "Đêm sắp xuống. Hãy xây một cụm pin tích điện."
+            "text": "Đêm sắp xuống. Căn cứ cần một cụm pin tích điện."
         },
         {
             "key": "next.v2.move_battery_bank",
-            "text": "Dời cụm pin tích điện lại gần bệ sạc."
+            "text": "Cụm pin tích điện đang nằm ngoài lưới điện. Dời nó lại gần bệ sạc."
         },
         {
             "key": "next.v2.scan_tower",
-            "text": "Quét tháp radio để tìm bản vẽ ăng-ten."
+            "text": "Tháp radio vẫn đứng sừng sững trước các vì sao. Hãy quét nó."
         },
         {
             "key": "next.v2.build_mast",
-            "text": "Xây một cột ăng-ten."
+            "text": "Đã có bản vẽ ăng-ten. Hãy xây một cột ăng-ten."
         },
         {
             "key": "battery.low.lander",
@@ -915,6 +915,14 @@
             "text": "Nhặt"
         },
         {
+            "key": "hint.openbuild",
+            "text": "Xây dựng"
+        },
+        {
+            "key": "hint.fitpart",
+            "text": "Lắp"
+        },
+        {
             "key": "pickup.crate.contents",
             "text": "phụ tùng"
         },
@@ -957,6 +965,10 @@
         {
             "key": "ui.face.tx_no_range",
             "text": "TX · NGOÀI TẦM"
+        },
+        {
+            "key": "ui.face.call",
+            "text": "TÍN HIỆU"
         },
         {
             "key": "ui.verb.cut",
