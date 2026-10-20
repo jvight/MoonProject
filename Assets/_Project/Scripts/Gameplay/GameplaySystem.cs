@@ -81,11 +81,12 @@ namespace MoonProject.Gameplay
 
         private readonly List<IDisposable> _saveTokens = new List<IDisposable>();
         private readonly List<IDisposable> _flowTokens = new List<IDisposable>();
+        private IRoverState _roverState;
         private GlowMeshSet _meshes;
 
         public MaterialStock Materials { get; private set; }
 
-        /// <summary>Cargo tuning (07's spares, the hold, the containers).</summary>
+        /// <summary>Cargo tuning (the hold, the containers).</summary>
         public CargoTuning Cargo => _cargo;
 
         /// <summary>07's cutter as its fitted kits and its start kit make it (docs/features/M3-26, opening-v2
@@ -130,6 +131,13 @@ namespace MoonProject.Gameplay
 
         /// <summary>The call from the sky (opening v3 §2): its state, its decode and its point of light.</summary>
         public CallProgress Call { get; private set; }
+
+        public CallReply Reply { get; private set; }
+
+        public MastRaise MastRaise { get; private set; }
+
+        /// <summary>How the mast raises and the reply times (tests).</summary>
+        public CallReplySettings MastRaiseSettings => _openingTuning.Reply;
 
         /// <summary>The dock lock on the built pad 07 charges on (opening-v2 §5).</summary>
         public PadLock PadLock { get; private set; }
@@ -237,11 +245,11 @@ namespace MoonProject.Gameplay
             _meshes = new GlowMeshSet();
             Materials = new MaterialStock(context.Events,
                 new CargoHold(context.Events, _materialCatalog, _cargo.HoldSlots));
-            Materials.Stow(_cargo.StarterItems);
             var save = context.Get<ISaveService>();
             var services = new GameplayServices(context.Events, context.Input, context.Get<ITerrainQuery>(),
                 context.Get<IWorldLayout>(), context.Get<IWorldAnchors>(), context.Get<IRoverState>(),
                 context.Get<IRoverRig>(), context.Get<IViewCamera>(), save, Materials, _visuals, _glints, _meshes);
+            _roverState = services.Rover;
             GlintVeil veil = services.GlintVeil;
             _flowTokens.Add(context.Events.Subscribe<TitleShown>(_ => veil.Hide()));
             _flowTokens.Add(context.Events.Subscribe<SessionStarted>(_ => veil.Show(Time.time)));
@@ -264,6 +272,11 @@ namespace MoonProject.Gameplay
             _battery.ConnectSystems(StartKit);
             _battery.ConnectStructures(_building.Catalog);
             Opening = NewOpening(context, services);
+            if (Opening != null)
+            {
+                context.Register<ISupplyPurposes>(Opening.Caches);
+            }
+
             Scans = Opening != null ? NewScans(services) : null;
             Containers.YieldTo(ScanComesFirst);
             _salvage.YieldTo(ScanComesFirst);
@@ -286,6 +299,8 @@ namespace MoonProject.Gameplay
             Hints = hints;
             Recovery = new RecoveryProgress(context.Events, PowerLamps, PowerSteps, _openingTuning.RecoveryLamps);
             Call = new CallProgress(context.Events, _openingTuning.Call, services.Layout);
+            Reply = new CallReply(context.Events, Call, _openingTuning.Reply);
+            MastRaise = new MastRaise(context.Events, _openingTuning.Reply);
             _flowTokens.Add(context.Events.Subscribe<ChargingChanged>(OnChargingChanged));
             context.Register<IMaterialStock>(Materials);
             context.Register<IMaterialCatalog>(_materialCatalog);
@@ -303,6 +318,19 @@ namespace MoonProject.Gameplay
             context.Register<IDatabank>(Databank);
             context.Register<BuildField>(_building);
             RegisterSaveSections(save);
+        }
+
+        private CallSaveData CaptureCall()
+        {
+            CallSaveData data = Call.Capture();
+            Reply.Capture(data);
+            return data;
+        }
+
+        private void RestoreCall(CallSaveData data)
+        {
+            Call.Restore(data);
+            Reply.Restore(data);
         }
 
         private void RegisterSaveSections(ISaveService save)
@@ -324,7 +352,7 @@ namespace MoonProject.Gameplay
             _saveTokens.Add(save.Register(new SaveSection<DatabankSaveData>(GameplaySaveKeys.Databank,
                 GameplaySaveKeys.DatabankVersion, Databank.Capture, Databank.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<CallSaveData>(GameplaySaveKeys.Call,
-                GameplaySaveKeys.CallVersion, Call.Capture, Call.Restore)));
+                GameplaySaveKeys.CallVersion, CaptureCall, RestoreCall)));
             _saveTokens.Add(_building.RegisterSave(save));
         }
 
@@ -519,6 +547,8 @@ namespace MoonProject.Gameplay
             Scans.Step(now, deltaTime);
             ScanMark.Step(Scans.Scanning == null ? Scans.Candidate : null, deltaTime);
             Opening.Step(deltaTime);
+            Reply.Step(deltaTime, Opening.NightFallen, _roverState.Speed);
+            MastRaise.Step(deltaTime);
             PadLock.Step(deltaTime);
             BaseLamps.Step(deltaTime);
             ApronGlow.Step(_building.State != BuildModeState.Closed, deltaTime);
@@ -616,6 +646,7 @@ namespace MoonProject.Gameplay
             _flowTokens.Clear();
             Databank?.Dispose();
             Call?.Dispose();
+            MastRaise?.Dispose();
             Bundles?.Dispose();
             Opening?.Dispose();
             _meshes?.Dispose();

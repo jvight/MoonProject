@@ -15,6 +15,7 @@ namespace MoonProject.UI
     {
         private readonly GameContext _context;
         private IDatabank _databank;
+        private ISupplyPurposes _purposes;
 
         public UiServices(EventBus events, InputReader input, IViewCamera view, IRoverState rover, IAudioSettings audio,
             ILookSettings look, IFeelSettings feel, ISaveService save, IMaterialStock materials,
@@ -101,6 +102,21 @@ namespace MoonProject.UI
 
         /// <summary>What a weld takes from 07's battery: the build menu says it (optional in isolated test rigs).</summary>
         public IWeldEnergy WeldEnergy { get; }
+
+        /// <summary>
+        /// What each of the opening's sources is for (the pickup notice's purpose), from the GameContext, looked up on
+        /// the first pickup (Gameplay registers it; false while nothing has, as in isolated test rigs).
+        /// </summary>
+        public bool TryGetSupplyPurposes(out ISupplyPurposes purposes)
+        {
+            if (_purposes == null && _context != null)
+            {
+                _context.TryGet(out _purposes);
+            }
+
+            purposes = _purposes;
+            return purposes != null;
+        }
 
         /// <summary>
         /// 07's scan archive: the one handed in, else the GameContext's, looked up when the databank page first opens

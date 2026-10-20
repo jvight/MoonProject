@@ -63,6 +63,44 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void TheOpeningReserve_CapsTopSpeed_ToTheTunedShare_AndLiftsAtTheFirstCharge()
+        {
+            _battery.SetOpeningReserve(true);
+            Step(new BatteryStep(), 3f);
+            Assert.IsTrue(_battery.OnOpeningReserve);
+            Assert.AreEqual(_tuning.OpeningReserveCap, _battery.DriveCap01, 0.01f, "the cap settles on the tuned share");
+            Assert.AreEqual(0.7f, _tuning.OpeningReserveCap, "the opening starts at 0.7 of top speed");
+            Assert.IsFalse(_battery.IsLowPower, "the reserve cap is not the crawl");
+
+            _battery.SetOpeningReserve(false);
+            Step(new BatteryStep(), 3f);
+            Assert.AreEqual(1f, _battery.DriveCap01, 0.01f, "the first charge lifts it, eased");
+        }
+
+        [Test]
+        public void TheChargeFloor_HoldsUnderEveryDrain_UntilItIsReleased()
+        {
+            _battery.HoldChargeFloor(true);
+            Drive(2000f, 0f);
+            Work(600f);
+            _battery.PayLeap(1f);
+            Assert.AreEqual(_tuning.OpeningChargeFloor, _battery.Charge, 1e-4f, "07 never falls below the floor");
+            Assert.IsFalse(_battery.IsLowPower, "so it never crawls and never dies in the opening");
+
+            _battery.HoldChargeFloor(false);
+            Drive(120f, 0f);
+            Assert.Less(_battery.Charge, _tuning.OpeningChargeFloor, "once released, the charge falls as before");
+        }
+
+        [Test]
+        public void TheChargeFloor_RaisesAnEmptierBattery_WhenItStarts()
+        {
+            _battery.Restore(new BatterySaveData { cells = 4, charge = 0.1f });
+            _battery.HoldChargeFloor(true);
+            Assert.AreEqual(_tuning.OpeningChargeFloor, _battery.Charge, 1e-4f);
+        }
+
+        [Test]
         public void A_NewGame_StartsWithFourFullCells_AndDrivesFree()
         {
             Assert.AreEqual(4, _battery.Cells);

@@ -159,6 +159,10 @@ namespace MoonProject.Rover
         [Tooltip("The amber lamps along the stripe, one per cell (docs/features/M3-20).")]
         [SerializeField] private FlankLampSettings _flankLamps = new FlankLampSettings();
 
+        [Header("Growth parts (the antenna's second segment, the igniter cartridge)")]
+        [Tooltip("How the parts 07 grows in the opening move: slow, mechanical, soft.")]
+        [SerializeField] private GrowthSettings _growth = new GrowthSettings();
+
         [Header("The Tab \"07\" page's portrait")]
         [Tooltip("The live portrait's fixed side-three-quarter camera and its render size (0.5.5 §3.5).")]
         [SerializeField] private PortraitSettings _portrait = new PortraitSettings();
@@ -270,6 +274,8 @@ namespace MoonProject.Rover
         public float AccelerationLimit => _accelerationLimit;
 
         public FlankLampSettings FlankLamps => _flankLamps;
+
+        public GrowthSettings Growth => _growth;
 
         public PortraitSettings Portrait => _portrait;
 

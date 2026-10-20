@@ -103,8 +103,8 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// A new game's spares (0.5.5 D4): <paramref name="spares"/> go into 07's hold. A loaded save lays its own hold
-        /// in over them (<see cref="Restore"/> empties the hold first), so only a new save keeps them.
+        /// Puts <paramref name="spares"/> straight into 07's hold (a session's stock laid in by hand). A loaded save
+        /// lays its own hold in over them (<see cref="Restore"/> empties the hold first).
         /// </summary>
         public void Stow(Recipe spares)
         {

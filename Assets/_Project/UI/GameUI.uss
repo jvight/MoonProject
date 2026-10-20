@@ -988,6 +988,14 @@ Label {
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
+/* What a source's pickup is for, after its count: "· for the charging pad" (opening-v3 §4, E3). */
+.pickup-row__purpose {
+    margin-left: 12px;
+    font-size: 20px;
+    color: var(--moon-text-dim);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
+}
+
 /* Salvage: the hold ring centred on a piece's cut point, and a site's name over it */
 
 .world-anchor__middle {
@@ -1717,6 +1725,12 @@ Label {
     font-size: 22px;
     color: var(--moon-warm-accent);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
+}
+
+/* The build ghost's cost (opening-v3 §4, E7): what it takes against what 07 carries, at its foot while placing. */
+.build-cost__body {
+    padding: 6px 14px 7px 14px;
+    border-radius: 8px;
 }
 
 /*

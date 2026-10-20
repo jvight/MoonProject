@@ -57,6 +57,16 @@ namespace MoonProject.World
         [Range(2f, 40f)]
         [SerializeField] private float _lightRange = 16f;
 
+        [Tooltip("Seconds the lander's lights take to die once its reserve is spent (opening v3 R4): the beacon, its " +
+            "port's pilot lamp and the glow along its cables fade out together, like an old lamp losing its power.")]
+        [Range(0.2f, 8f)]
+        [SerializeField] private float _reserveDarkSeconds = 2.4f;
+
+        [Tooltip("Glow of the service port's reserve pilot lamp while the lander still holds charge: a steady warm " +
+            "point beside the socket.")]
+        [Range(0f, 5f)]
+        [SerializeField] private float _pilotLampGlow = 1.4f;
+
         [Tooltip("Brightness the dim warm halo on each of the old cable's stake clips rests at: a faint amber dotted " +
             "line on the dust.")]
         [Range(0f, 1f)]
@@ -160,6 +170,8 @@ namespace MoonProject.World
         public float HaloMinAngle => _haloMinAngle;
         public float LightIntensity => _lightIntensity;
         public float LightRange => _lightRange;
+        public float ReserveDarkSeconds => _reserveDarkSeconds;
+        public float PilotLampGlow => _pilotLampGlow;
         public float ClipHaloRest => _clipHaloRest;
         public float ClipHaloPulse => _clipHaloPulse;
         public float MarkerRunSeconds => _markerRunSeconds;

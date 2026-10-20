@@ -9,13 +9,12 @@ namespace MoonProject.Gameplay
     /// </summary>
     public static class ContainerKinds
     {
-        public const string CrateS = "Crate_S";
         public const string CrateM = "Crate_M";
         public const string CrateL = "Crate_L";
 
         /// <summary>
         /// The lander's big open cargo crate (B3, B4), at true size: the charging pad's two fragments rest on its
-        /// PartSocket_0/1 above the rim, the ice-core tube on its ItemSocket, and its RimGlow warms as 07 comes near.
+        /// PartSocket_0/1 above the rim, and its RimGlow warms as 07 comes near.
         /// </summary>
         public const string CrateCargoOpen = "Crate_Cargo_Open";
 
@@ -26,7 +25,6 @@ namespace MoonProject.Gameplay
         {
             switch (prefab)
             {
-                case CrateS:
                 case CrateM:
                 case CrateL:
                 case CrateCargoOpen:

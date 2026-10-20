@@ -19,7 +19,7 @@ namespace MoonProject.Gameplay.Editor
         /// <summary>Art's R1 crates (opening-v2 §4), each named as its prefab: the supply crates' models.</summary>
         private static readonly string[] CrateNames =
         {
-            ContainerKinds.CrateS, ContainerKinds.CrateM, ContainerKinds.CrateL, ContainerKinds.CrateCargoOpen,
+            ContainerKinds.CrateM, ContainerKinds.CrateL, ContainerKinds.CrateCargoOpen,
         };
 
         [MoonBuilder(BuilderPath, BuilderOrder)]

@@ -110,6 +110,8 @@ namespace MoonProject.UI
         private float _databankLaidOutAt = -1f;
         private string _toastText;
         private float _toastLeft;
+        private float _replyLeft;
+        private bool _replyOnFace;
         private FaceNotice _faceNotice;
         private bool _noticeOnCrt;
         private EventBus _events;
@@ -292,6 +294,7 @@ namespace MoonProject.UI
             EventBus events = services.Events;
             _events = events;
             _tokens.Add(events.Subscribe<RoverAwoke>(OnRoverAwoke));
+            _tokens.Add(events.Subscribe<CallReplyFailed>(_ => _replyLeft = _tuning.Guidance.ReplyFaceSeconds));
             _tokens.Add(events.Subscribe<TitleShown>(OnTitleShown));
             _tokens.Add(events.Subscribe<NewGameRequested>(_ => OnNewGameRequested()));
             _tokens.Add(events.Subscribe<SessionStarted>(OnSessionStarted));
@@ -328,6 +331,7 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<BatteryArcRevealed>(OnBatteryArcRevealed));
             _tokens.Add(events.Subscribe<StructurePlaced>(_ => _director.NotifyUsed(InteractionKind.Build)));
             _tokens.Add(events.Subscribe<StoryPartCollected>(collected => _pickups?.PartCollected(collected.PartId)));
+            _tokens.Add(events.Subscribe<MaterialSalvaged>(OnMaterialSalvaged));
             _tokens.Add(events.Subscribe<StructureRemoved>(_ => _director.NotifyUsed(InteractionKind.Deconstruct)));
 
             services.Input.Menu.Enable();
@@ -581,6 +585,7 @@ namespace MoonProject.UI
             _lookUpChip.Tick(deltaTime, paused ? HintWord.None : hint, device);
             _blockedCue.Tick(paused ? 0f : deltaTime);
             _toastLeft = Mathf.Max(0f, _toastLeft - (paused ? 0f : deltaTime));
+            _replyLeft = Mathf.Max(0f, _replyLeft - (paused || !_replyOnFace ? 0f : deltaTime));
             _lookUpChip.Nudge(_blockedCue.ChipOffset, _blockedCue.ChipOpacity);
             StepFaceNotice();
             _objectiveView.Tick(deltaTime, _objective, ObjectiveOpen(paused) && _slot.Allows(GuidanceKind.Objective),
@@ -698,6 +703,8 @@ namespace MoonProject.UI
                 : unlockWants ? PromptHolder.Unlock
                 : readoutWants ? PromptHolder.Readout
                 : chipWants ? PromptHolder.Chip : PromptHolder.None;
+            _guidanceWants[(int)GuidanceKind.CallLine] = _replyLeft > 0f;
+            _guidanceShown[(int)GuidanceKind.CallLine] = _replyOnFace;
             _guidanceWants[(int)GuidanceKind.BuildStep] = BuildStepOpen(paused) && _buildStrip.Step != BuildStep.None;
             _guidanceWants[(int)GuidanceKind.Prompt] = holder != PromptHolder.None;
             _guidanceWants[(int)GuidanceKind.Battery] = ObjectiveOpen(paused) && _lowBattery.WantsShown;
@@ -1438,6 +1445,19 @@ namespace MoonProject.UI
         }
 
         /// <summary>
+        /// A source of the opening gave a material: its pickup row says what it is for ("for the charging pad").
+        /// </summary>
+        private void OnMaterialSalvaged(MaterialSalvaged salvaged)
+        {
+            if (_pickups != null && salvaged.Source == MaterialSource.Crate &&
+                _services.TryGetSupplyPurposes(out ISupplyPurposes purposes) &&
+                purposes.TryPurposeOf(salvaged.SiteId, out string structureId))
+            {
+                _pickups.ForStructure(salvaged.Material, structureId);
+            }
+        }
+
+        /// <summary>
         /// Builds the databank page on first use; false (logged) when nothing registered 07's archive.
         /// </summary>
         private bool EnsureDatabank()
@@ -1525,10 +1545,13 @@ namespace MoonProject.UI
         private void StepFaceNotice()
         {
             bool blocked = _blockedCue.FaceShown;
-            bool show = (blocked || _toastLeft > 0f) && !_postOnCrt && !_cargo.IsOpen;
+            bool reply = _replyLeft > 0f && _slot.Allows(GuidanceKind.CallLine);
+            bool show = (reply || blocked || _toastLeft > 0f) && !_postOnCrt && !_cargo.IsOpen;
+            _replyOnFace = reply && show;
             if (show)
             {
-                _faceNotice.Show(blocked ? _localization.Get(UiKeys.FaceNoLine) : _toastText);
+                _faceNotice.Show(reply ? _localization.Get(UiKeys.FaceTxNoRange)
+                    : blocked ? _localization.Get(UiKeys.FaceNoLine) : _toastText);
                 if (!_noticeOnCrt)
                 {
                     _noticeOnCrt = true;

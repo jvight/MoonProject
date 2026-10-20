@@ -53,6 +53,7 @@ namespace MoonProject.World.Editor
         private const string PostCableOrigin = "CableOrigin_Anchor";
         private const string PortWakeSocket = "CableSocket";
         private const string PortApronSocket = "Socket_Cable";
+        private const string PortPilotLamp = "ReservePilotLamp";
         private const string BeaconLightAnchor = "Light_Anchor";
         private const string BeaconLens = "BeaconLens";
         private const string ApronCableChannel = "CableChannel_Anchor";
@@ -118,9 +119,11 @@ namespace MoonProject.World.Editor
                 Node(post, PostCableOrigin).position, Node(port, PortWakeSocket).position, haloMesh,
                 context.LoadAsset<Material>(WorldPaths.CableMarkerHaloMaterial),
                 context.LoadAsset<Material>(WorldPaths.CableTearSparkMaterial));
-            GroundCableLayer.LayApronCable(context, props, surface, cables, Node(markings, ApronCableChannel).position,
-                Node(port, PortApronSocket).position);
-            StandBeacon(context, settings, landerRoot, lander, upright, wiring);
+            Renderer[] apronClips = GroundCableLayer.LayApronCable(context, props, surface, cables,
+                Node(markings, ApronCableChannel).position, Node(port, PortApronSocket).position, haloMesh,
+                context.LoadAsset<Material>(WorldPaths.CableMarkerHaloMaterial));
+            StandBeacon(context, settings, landerRoot, lander, upright, wiring, apronClips,
+                Node(port, PortPilotLamp).GetComponent<Renderer>());
 
             StandAll(context, context.CreateChild("Debris", props).transform, anchors, surface, landmarks.Debris);
             Transform boulders = context.CreateChild("Boulders", props).transform;
@@ -351,7 +354,7 @@ namespace MoonProject.World.Editor
         }
 
         /// <summary>Where the Sun stands as the opening holds at golden hour (B6-B8), toward it.</summary>
-        private static Vector3 GoldenHourSun(WorldSettings settings)
+        internal static Vector3 GoldenHourSun(WorldSettings settings)
         {
             var clock = new SunClock(settings.SkyCycle, settings.Sky);
             clock.SetTime(new OpeningSkyPacing(settings.SkyCycle, clock).GoldenHourTime);
@@ -531,7 +534,8 @@ namespace MoonProject.World.Editor
         /// <see cref="LanderBeacon"/> that pulses them and runs the waves along the wake cable's clip halos.
         /// </summary>
         private static void StandBeacon(SceneBuildContext context, WorldSettings settings, Transform landerRoot,
-            GameObject lander, Matrix4x4 upright, GroundCableLayer.Wiring wiring)
+            GameObject lander, Matrix4x4 upright, GroundCableLayer.Wiring wiring, Renderer[] apronClips,
+            Renderer pilotLamp)
         {
             Bounds local = LocalBounds(upright, lander);
             Vector3 top = upright.MultiplyPoint3x4(new Vector3(local.center.x, local.max.y, local.center.z));
@@ -564,6 +568,8 @@ namespace MoonProject.World.Editor
             Assign(serialized.FindProperty("_postClips"), wiring.PostClips);
             Assign(serialized.FindProperty("_landerClips"), wiring.LanderClips);
             serialized.FindProperty("_spark").objectReferenceValue = wiring.Spark;
+            Assign(serialized.FindProperty("_apronClips"), apronClips);
+            serialized.FindProperty("_pilotLamp").objectReferenceValue = pilotLamp;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             context.AddSystem(pulse);
         }

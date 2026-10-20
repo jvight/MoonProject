@@ -91,31 +91,37 @@ namespace MoonProject.Gameplay
         [Tooltip("The sender's identity and its decode, and where its point of light stands beside Earth.")]
         [SerializeField] private CallSettings _call = new CallSettings();
 
-        [Header("Supply (§4, §10: the lander's open crate and the sealed ones)")]
-        [Tooltip("Every crate of the opening. A crate stands by a world anchor or a Lumen ruin piece " +
+        [Header("The failed reply and the raised mast (opening v3 R7)")]
+        [Tooltip("When 07 tries to answer the call, and how the antenna mast's segments lift and lock.")]
+        [SerializeField] private CallReplySettings _reply = new CallReplySettings();
+
+        [Header("Supply (opening-v3 §4: fixed sources, each for one structure)")]
+        [Tooltip("Every source of the opening's materials, and nothing else: each stands by the thing it comes from " +
+                 "and is for one structure (its link), which it covers on its own with the link's other sources " +
+                 "(EditMode: supply >= need and <= 1.5x). A source stands by a world anchor, a Lumen ruin piece " +
                  "([World]/Ruins/<id>) or the lander's service port (lander.port), in its frame. The lander's open " +
-                 "crate (B4: Metal 2, Wiring 1 and the spare igniter) stands at the port where the cable ends; the " +
-                 "sealed ones stand among the ruins, cut once the cutter works (after B6).")]
+                 "charger kit (CHARGER KIT · ILC-R: the pad's Metal 4 and Wiring 2, and the spare igniter) stands at " +
+                 "the port where the cable ends; the sealed ones stand at the ruins they come from, cut once the " +
+                 "cutter works.")]
         [SerializeField] private SupplyCache[] _caches =
         {
-            new SupplyCache("supply.wake", "place.wake", new Vector3(2.5f, 0f, -1.5f), 30f, "Crate_S",
-                new Recipe(3, 1, 0)),
-            new SupplyCache("supply.midway", "place.midway", new Vector3(1.5f, 0f, 0f), 67f, "Crate_S",
-                new Recipe(2, 1, 0)),
             new SupplyCache("supply.lander.open", OpeningField.LanderPortFrame, new Vector3(4.2f, 0f, -1.4f), 45f,
-                ContainerKinds.CrateCargoOpen, new Recipe(2, 1, 0), true, new[] { "part.igniter", "part.icecore" }),
-            new SupplyCache("supply.habitat.reel", "HabitatModules", new Vector3(-3.3f, 0f, -6.5f), 207f, "Crate_M",
-                new Recipe(6, 4, 0)),
-            new SupplyCache("supply.workshop.a", "KenjiWorkshop", new Vector3(3.9f, 0f, -11.6f), -151f, "Crate_S",
-                new Recipe(3, 4, 2)),
-            new SupplyCache("supply.workshop.b", "KenjiWorkshop", new Vector3(9f, 0f, -9.1f), -151f, "Crate_S",
-                new Recipe(3, 4, 2)),
-            new SupplyCache("supply.tower.a", "RadioTower", new Vector3(-6.5f, 0f, 0f), -100f, "Crate_S",
-                new Recipe(2, 0, 1)),
-            new SupplyCache("supply.tower.b", "RadioTower", new Vector3(-5.4f, 0f, 5.6f), -143f, "Crate_S",
-                new Recipe(2, 0, 1)),
-            new SupplyCache("supply.scatter", "ScatterSet", new Vector3(0f, 0f, -3f), 180f, "Crate_M",
-                new Recipe(6, 0, 0)),
+                ContainerKinds.CrateCargoOpen, new Recipe(4, 2, 0), StructureIds.ChargingPad, true,
+                new[] { "part.igniter" }),
+            new SupplyCache("supply.array.panels", "FallenSolarArray", new Vector3(5f, 0f, 0f), 90f,
+                ContainerKinds.CrateL, new Recipe(3, 0, 1), StructureIds.SolarArray),
+            new SupplyCache("supply.array.junction", "FallenSolarArray", new Vector3(9.7f, 0f, -2.6f), 90f,
+                ContainerKinds.CrateM, new Recipe(0, 2, 0), StructureIds.SolarArray),
+            new SupplyCache("supply.habitat.reel", "HabitatModules", new Vector3(-3.3f, 0f, -6.5f), 207f,
+                ContainerKinds.CrateM, new Recipe(0, 3, 0), StructureIds.BatteryBank),
+            new SupplyCache("supply.habitat.module", "HabitatModules", new Vector3(-13.5f, 0f, -3.6f), -90f,
+                ContainerKinds.CrateL, new Recipe(3, 0, 0), StructureIds.BatteryBank),
+            new SupplyCache("supply.tower.mast", "RadioTower", new Vector3(-6.5f, 0f, 0f), -100f,
+                ContainerKinds.CrateL, new Recipe(4, 0, 0), StructureIds.AntennaMast),
+            new SupplyCache("supply.tower.feed", "RadioTower", new Vector3(-5.4f, 0f, 5.6f), -143f,
+                ContainerKinds.CrateM, new Recipe(0, 3, 0), StructureIds.AntennaMast),
+            new SupplyCache("supply.tower.dish", "RadioTower", new Vector3(6.8f, 0f, 1.8f), 90f,
+                ContainerKinds.CrateM, new Recipe(0, 0, 2), StructureIds.AntennaMast),
         };
 
         /// <summary>Art's pad fragments for a tuning made in code (tests); the shipped asset names its own.</summary>
@@ -166,5 +172,7 @@ namespace MoonProject.Gameplay
         public RecoveryLamps RecoveryLamps => _recoveryLamps;
 
         public CallSettings Call => _call;
+
+        public CallReplySettings Reply => _reply;
     }
 }

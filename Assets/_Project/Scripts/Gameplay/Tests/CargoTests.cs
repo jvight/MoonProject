@@ -9,8 +9,8 @@ using Object = UnityEngine.Object;
 namespace MoonProject.Gameplay.Tests
 {
     /// <summary>
-    /// 07's hold (docs/features/M3-25): packing into stacks, a new game's spares, a partial fit that hands back the
-    /// rest, and the material catalog.
+    /// 07's hold (docs/features/M3-25): packing into stacks, stock laid in by hand until a save lays its own, a
+    /// partial fit that hands back the rest, and the material catalog.
     /// </summary>
     public sealed class CargoTests
     {
@@ -53,7 +53,7 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void ANewGamesSpares_GoInto07sHold_UntilASaveLaysItsOwnHoldIn()
+        public void WhatIsStowed_GoesInto07sHold_UntilASaveLaysItsOwnHoldIn()
         {
             var totals = new List<MaterialsChanged>();
             _events.Subscribe<MaterialsChanged>(totals.Add);
@@ -63,7 +63,7 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(2, totals[totals.Count - 1].Metal, "the totals count them");
 
             _stock.Restore(new MaterialsSaveData { holdSlots = CargoFixtures.HoldSlots });
-            Assert.AreEqual(0, _stock.Total, "a loaded save keeps its own hold: no spares added");
+            Assert.AreEqual(0, _stock.Total, "a loaded save keeps its own hold");
         }
 
         [Test]

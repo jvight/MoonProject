@@ -21,7 +21,13 @@ namespace MoonProject.Autoplay
         private const int SettleFrames = 3;
         private const int KeptErrors = 20;
 
+        /// <summary>Seconds two guidance elements may show together while one fades over the other (a hand-over).</summary>
+        private const float GuidanceGraceSeconds = 1f;
+
         private readonly BeatLog _beats = new BeatLog();
+        private readonly GuidanceCounter _guidance = new GuidanceCounter(GuidanceGraceSeconds);
+        private readonly List<string> _guidanceShown = new List<string>();
+        private bool _guidanceReported;
         private readonly FrameTimeLog _frames = new FrameTimeLog();
         private readonly List<string> _screenshots = new List<string>();
         private readonly List<string> _errors = new List<string>();
@@ -82,6 +88,7 @@ namespace MoonProject.Autoplay
                 Shot("t" + ((int)(Time.unscaledTime - _startedAt)).ToString("0000", CultureInfo.InvariantCulture));
             }
 
+            WatchGuidance();
             if (Time.unscaledTime - _startedAt > _options.TimeoutSeconds)
             {
                 _bot.Fail("the run exceeded its " + _options.TimeoutSeconds.ToString("0", CultureInfo.InvariantCulture) +
@@ -89,9 +96,41 @@ namespace MoonProject.Autoplay
             }
         }
 
+        /// <summary>
+        /// The one-element rule, every frame: two guidance elements showing together fail the run, and so does an
+        /// objective line while the lines are not expected (a stall reminder fired where the world should have led).
+        /// </summary>
+        private void WatchGuidance()
+        {
+            if (_bot.Failed || !_world.Refresh() || _world.Ui.TitleShown())
+            {
+                return;
+            }
+
+            _world.Ui.GuidanceShown(_guidanceShown);
+            _guidance.Step(Time.unscaledDeltaTime, _guidanceShown);
+            if (_guidance.Failed && !_guidanceReported)
+            {
+                _guidanceReported = true;
+                if (_options.StrictGuidance)
+                {
+                    _bot.Fail(_guidance.Message + " " + _bot.Where());
+                }
+                else
+                {
+                    _bot.Warn("guidance: " + _guidance.Message + " " + _bot.Where());
+                }
+            }
+            else if (!_options.LinesExpected && _world.Ui.ObjectiveLine().Length > 0)
+            {
+                _bot.Fail("a fallback reminder fired: the objective line '" + _world.Ui.ObjectiveLine() +
+                          "' showed where the world cues should have led. " + _bot.Where());
+            }
+        }
+
         private IEnumerator Play()
         {
-            var scenario = new OpeningScenario(_bot, _options.UntilBeat);
+            var scenario = new OpeningScenario(_bot, _options.UntilBeat, _options.LinesExpected);
             IEnumerator run = scenario.Run();
             while (!_bot.Failed && run.MoveNext())
             {

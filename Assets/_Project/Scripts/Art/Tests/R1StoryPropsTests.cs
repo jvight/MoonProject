@@ -227,6 +227,30 @@ namespace MoonProject.Art.Tests
             Material[] readoutMats = habitatReadout.GetComponent<Renderer>().sharedMaterials;
             Assert.AreEqual(2, readoutMats.Length);
             Assert.AreEqual(R1StoryPropsBuilder.AirlockReadoutMaterialName, readoutMats[1].name);
+
+            Transform statusLamp = habitatPrefab.transform.Find("PowerModule_StatusLamp");
+            Assert.IsNotNull(statusLamp,
+                "HabitatModules must contain separate PowerModule_StatusLamp child node on the power module face.");
+            var statusLampRenderer = statusLamp.GetComponent<MeshRenderer>();
+            Assert.IsNotNull(statusLampRenderer, "PowerModule_StatusLamp must have its own MeshRenderer.");
+            Assert.IsNotNull(statusLampRenderer.sharedMaterial);
+            Assert.AreEqual(R1MaterialRecipes.LampAmberSlot, statusLampRenderer.sharedMaterial.name,
+                "PowerModule_StatusLamp primary slot must be R1_LampAmber so code can blink it via MaterialPropertyBlock.");
+
+            var statusLampFilter = statusLamp.GetComponent<MeshFilter>();
+            Assert.IsNotNull(statusLampFilter);
+            Vector3 lampSize = statusLampFilter.sharedMesh.bounds.size;
+            float lampDiameter = Mathf.Max(lampSize.x, lampSize.z);
+            Assert.GreaterOrEqual(lampDiameter, 0.06f, "PowerModule_StatusLamp diameter must be >= 6 cm.");
+            Assert.LessOrEqual(lampDiameter, 0.08f, "PowerModule_StatusLamp diameter must be <= 8 cm.");
+
+            Transform mainModule = habitatPrefab.transform.Find("ModuleA_Main");
+            Assert.IsNotNull(mainModule);
+            foreach (Material m in mainModule.GetComponent<Renderer>().sharedMaterials)
+            {
+                Assert.AreNotEqual(R1MaterialRecipes.LampAmberSlot, m.name,
+                    "ModuleA_Main must not retain an un-blinkable R1_LampAmber submesh.");
+            }
         }
 
         [Test]
