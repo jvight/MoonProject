@@ -114,6 +114,9 @@ namespace MoonProject.Gameplay
 
         public IInteractionHints Hints { get; private set; }
 
+        /// <summary>07 looks toward an off-screen first-use place while its chip stands on 07.</summary>
+        public FirstUsePointer FirstUsePointer { get; private set; }
+
         /// <summary>The apron's bay outline, glowing while build mode is open (B5: where a base belongs).</summary>
         public ApronGlow ApronGlow { get; private set; }
 
@@ -360,6 +363,7 @@ namespace MoonProject.Gameplay
 
             _battery.ConnectTow(Tow);
             _building.ConnectTow(Tow);
+            Opening.ConnectTow(Tow);
             TowFrames = new TowFrames(context.Events, _building.Catalog, Tow);
             Rack = new SocketRackField(context.Events, _openingTuning.RackBays);
             RackView = new SocketRackView(context.Events, Rack, _openingTuning.RackView, services.Terrain,
@@ -367,16 +371,20 @@ namespace MoonProject.Gameplay
             RackAssembly = new RackAssembly(context.Events, Rack, Understanding, Materials, _openingTuning.RackBays,
                 _openingTuning.RackAssemblies);
             var firstUse = new FirstUseSpots(Opening, _building, context.Get<IViewCamera>(), context.Get<IRoverState>(),
-                _building.Tuning.FirstUseViewMargin);
+                _building.Tuning.FirstUseViewMargin, _building.Tuning.FirstUseRoverRise);
             Relay = new RelayRepair(context.Events, Materials.Hold, services.Rover, services.Pickups,
                 _openingTuning.Relay, _relaySpare.position, _relaySocket.position, _relayPad.position,
                 _relaySpare.gameObject, _relayFitted.gameObject);
             _battery.ConnectRelay(Relay);
+            Opening.ConnectRelay(Relay);
             var hints = new InteractionHints(_salvage, Containers, Scans, _building, services.Beam, Cutter,
                 services.Pickups, firstUse, Tow, Relay, RackView, RackAssembly);
             Hints = hints;
+            FirstUsePointer = new FirstUsePointer(context.Events, hints, services.Rig,
+                _building.Tuning.FirstUseGazePriority, _building.Tuning.FirstUseAskIntensity);
             Recovery = new RecoveryProgress(context.Events, PowerLamps, PowerSteps, _openingTuning.RecoveryLamps);
             Call = new CallProgress(context.Events, _openingTuning.Call, services.Layout);
+            Opening.ConnectCall(Call);
             Reply = new CallReply(context.Events, Call, _openingTuning.Reply);
             MastRaise = new MastRaise(context.Events, _openingTuning.Reply);
             MastRaiseView = new MastRaiseView(context.Events, _building, MastRaise, _openingTuning.Reply);
@@ -655,8 +663,10 @@ namespace MoonProject.Gameplay
             Containers.Step(now, deltaTime);
             Scans.Step(now, deltaTime);
             ScanMark.Step(Scans.Scanning == null ? Scans.Candidate : null, deltaTime);
+            NoteKeys(Opening.Keys);
             Opening.Step(deltaTime);
             Relay.Step(Time.frameCount, _input.ExcavateHeld);
+            FirstUsePointer.Step();
             Tow.Step(_input.TetherPressed);
             Reply.Step(deltaTime, Opening.NightFallen, _roverState.Speed);
             MastRaise.Step(deltaTime);
@@ -703,6 +713,25 @@ namespace MoonProject.Gameplay
             }
 
             return null;
+        }
+
+        /// <summary>The action keys pressed this frame, for the objective line's key glyph.</summary>
+        private void NoteKeys(KeyUse keys)
+        {
+            if (_input.ExcavatePressed)
+            {
+                keys.Pressed(RoverAction.Excavate);
+            }
+
+            if (_input.BuildPressed)
+            {
+                keys.Pressed(RoverAction.Build);
+            }
+
+            if (_input.TetherPressed)
+            {
+                keys.Pressed(RoverAction.Tether);
+            }
         }
 
         /// <summary>
