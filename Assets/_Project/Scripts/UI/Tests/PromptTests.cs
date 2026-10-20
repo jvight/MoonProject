@@ -301,7 +301,7 @@ namespace MoonProject.UI.Tests
             {
                 InteractionKind.Salvage, InteractionKind.PickUp, InteractionKind.Build, InteractionKind.Scan,
                 InteractionKind.Deconstruct, InteractionKind.OpenBuild, InteractionKind.FitPart, InteractionKind.Rack,
-                InteractionKind.Tether,
+                InteractionKind.Tether, InteractionKind.Install,
             };
             Assert.AreEqual(taught.Length, _settings.Entries.Length, "no prompt teaches a verb the opening lacks");
             foreach (InteractionKind kind in taught)

@@ -943,6 +943,10 @@
             "text": "Hook cable"
         },
         {
+            "key": "hint.install",
+            "text": "Fit"
+        },
+        {
             "key": "pickup.crate.contents",
             "text": "the parts"
         },

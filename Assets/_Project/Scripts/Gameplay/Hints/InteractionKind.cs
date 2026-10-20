@@ -54,5 +54,11 @@ namespace MoonProject.Gameplay
         /// it (the world's chip at the hitch, a first time only).
         /// </summary>
         Tether = 20,
+
+        /// <summary>
+        /// A part in the hold fits a socket on a world object within reach (relay.1's feed socket, opening v3 5.1):
+        /// hold E to fit it there.
+        /// </summary>
+        Install = 21,
     }
 }
