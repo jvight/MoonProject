@@ -33,6 +33,23 @@ namespace MoonProject.Gameplay
 
         public IReadOnlyList<MakerTrack> Tracks => _tracks;
 
+        /// <summary>True when some maker's level unlocks <paramref name="adaptedId"/>.</summary>
+        public bool Unlocks(string adaptedId)
+        {
+            for (int i = 0; _tracks != null && i < _tracks.Length; i++)
+            {
+                for (int level = 1; _tracks[i] != null && level <= _tracks[i].Levels; level++)
+                {
+                    if (string.Equals(_tracks[i].Adapted(level), adaptedId, StringComparison.Ordinal))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         /// <summary>Null when every track can work and no maker has two, else the first problem.</summary>
         public string Validate()
         {

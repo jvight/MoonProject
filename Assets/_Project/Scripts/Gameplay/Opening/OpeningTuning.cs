@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using MoonProject.Core;
 using MoonProject.Core.Events;
 
 namespace MoonProject.Gameplay
@@ -110,6 +111,13 @@ namespace MoonProject.Gameplay
             new RackBaySettings("rack.headlamp", true, string.Empty, RoverKitPiece.LampBar),
             new RackBaySettings("rack.cell_pack", true, string.Empty, RoverKitPiece.BatterySpine),
             new RackBaySettings("rack.hex_adapter", false, "rover.hex_adapter", RoverKitPiece.HexChargeAdapter),
+        };
+
+        [Tooltip("The adapted parts 07 assembles at the rack's bays once maker understanding unlocks them (5.2).")]
+        [SerializeField] private RackAssemblySettings[] _rackAssemblies =
+        {
+            new RackAssemblySettings("rack.headlamp", MakerUnderstandingSettings.Ssr3Headlamp, new Recipe(2, 1, 0),
+                RoverSocket.Lamp, 1.6f),
         };
 
         [Tooltip("The rack in the world: Art's prefab beside the dock, its rise, its bays' glow and jaws, its reading.")]
@@ -245,6 +253,8 @@ namespace MoonProject.Gameplay
 
         public RackViewSettings RackView => _rackView;
 
+        public IReadOnlyList<RackAssemblySettings> RackAssemblies => _rackAssemblies;
+
         /// <summary>Null when the rack's bays can work, else the first problem.</summary>
         public string ValidateRack()
         {
@@ -267,6 +277,21 @@ namespace MoonProject.Gameplay
                     {
                         return $"two rack bays share the id '{_rackBays[i].Id}'";
                     }
+                }
+            }
+
+            for (int i = 0; _rackAssemblies != null && i < _rackAssemblies.Length; i++)
+            {
+                RackAssemblySettings assembly = _rackAssemblies[i];
+                string problem = assembly != null ? assembly.Validate() : $"rack assembly {i} is empty";
+                if (problem != null)
+                {
+                    return problem;
+                }
+
+                if (Array.FindIndex(_rackBays, bay => bay.Id == assembly.BayId) < 0)
+                {
+                    return $"the rack has no bay '{assembly.BayId}' to assemble at";
                 }
             }
 

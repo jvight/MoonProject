@@ -153,6 +153,9 @@ namespace MoonProject.Gameplay
         /// <summary>The socket rack in the world: Art's prefab beside the pad, its bays glowing.</summary>
         public SocketRackView RackView { get; private set; }
 
+        /// <summary>Adapted parts assembled at the rack's bays with a held E (opening v3 5.2: the SSR-3 headlamp).</summary>
+        public RackAssembly RackAssembly { get; private set; }
+
         public MastRaise MastRaise { get; private set; }
 
         public MastRaiseView MastRaiseView { get; private set; }
@@ -361,6 +364,8 @@ namespace MoonProject.Gameplay
             Rack = new SocketRackField(context.Events, _openingTuning.RackBays);
             RackView = new SocketRackView(context.Events, Rack, _openingTuning.RackView, services.Terrain,
                 context.Get<IViewCamera>(), context.Get<IRoverState>(), transform);
+            RackAssembly = new RackAssembly(context.Events, Rack, Understanding, Materials, _openingTuning.RackBays,
+                _openingTuning.RackAssemblies);
             var firstUse = new FirstUseSpots(Opening, _building, context.Get<IViewCamera>(), context.Get<IRoverState>(),
                 _building.Tuning.FirstUseViewMargin);
             Relay = new RelayRepair(context.Events, Materials.Hold, services.Rover, services.Pickups,
@@ -368,7 +373,7 @@ namespace MoonProject.Gameplay
                 _relaySpare.gameObject, _relayFitted.gameObject);
             _battery.ConnectRelay(Relay);
             var hints = new InteractionHints(_salvage, Containers, Scans, _building, services.Beam, Cutter,
-                services.Pickups, firstUse, Tow, Relay, RackView);
+                services.Pickups, firstUse, Tow, Relay, RackView, RackAssembly);
             Hints = hints;
             Recovery = new RecoveryProgress(context.Events, PowerLamps, PowerSteps, _openingTuning.RecoveryLamps);
             Call = new CallProgress(context.Events, _openingTuning.Call, services.Layout);
@@ -659,6 +664,8 @@ namespace MoonProject.Gameplay
             PulseView.Step(deltaTime);
             Release.Step(deltaTime);
             RackView.Step(deltaTime);
+            RackAssembly.Step(deltaTime, RackView.TryGetRead(out _, out string readBay) ? readBay : null,
+                _input.ExcavateHeld);
             Answer.Step(deltaTime, Opening.NightFallen, _input.ExcavateHeld, _roverState.Position, _roverState.Speed);
             RangeRing.Step(deltaTime);
             RangeRingLine.Step();
@@ -681,6 +688,21 @@ namespace MoonProject.Gameplay
         private void FixedUpdate()
         {
             Tow?.FixedStep(Time.fixedDeltaTime);
+        }
+
+        /// <summary>The adapted blueprint of a rack assembly no maker understanding unlocks, or null.</summary>
+        private string UnknownAssembly()
+        {
+            IReadOnlyList<RackAssemblySettings> assemblies = _openingTuning.RackAssemblies;
+            for (int i = 0; i < assemblies.Count; i++)
+            {
+                if (assemblies[i] != null && !_scanTuning.Understanding.Unlocks(assemblies[i].AdaptedId))
+                {
+                    return assemblies[i].AdaptedId;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -774,6 +796,8 @@ namespace MoonProject.Gameplay
                 : _openingTuning.ValidateRack() != null ? "OpeningTuning: " + _openingTuning.ValidateRack() + "."
                 : _openingTuning.RackView.Validate() != null
                     ? "OpeningTuning: " + _openingTuning.RackView.Validate() + "."
+                : UnknownAssembly() != null
+                    ? "OpeningTuning: no maker understanding unlocks '" + UnknownAssembly() + "' (ScanTuning)."
                 : _salvage == null ? "SalvageField is not assigned."
                 : _battery == null ? "BatteryField is not assigned."
                 : _building == null ? "BuildField is not assigned."
