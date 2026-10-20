@@ -16,19 +16,21 @@ namespace MoonProject.World
 
         [Tooltip("Brightness of a wing's halo when the view sits right on the Sun's mirror in its cells.")]
         [Range(0f, 10f)]
-        [SerializeField] private float _intensity = 3f;
+        [SerializeField] private float _intensity = 3.5f;
 
         [Tooltip("Radius of the glint's halo, metres.")]
         [Range(0.05f, 2f)]
         [SerializeField] private float _radius = 0.35f;
 
-        [Tooltip("Smallest angular size of the glint, degrees: it still reads as a point from across the basin.")]
+        [Tooltip("Smallest angular size of the glint, degrees: it still reads as a point from the pad, 70-85 m off, " +
+            "and from across the basin.")]
         [Range(0f, 3f)]
-        [SerializeField] private float _minAngle = 0.5f;
+        [SerializeField] private float _minAngle = 0.9f;
 
-        [Tooltip("How tightly the glint follows the Sun's mirror: higher is a smaller, sharper catch of light.")]
+        [Tooltip("How tightly the glint follows the Sun's mirror: higher is a smaller, sharper catch of light. Broad " +
+            "enough that it calls from anywhere round the base, not only from the apron's centre.")]
         [Range(1f, 200f)]
-        [SerializeField] private float _sharpness = 12f;
+        [SerializeField] private float _sharpness = 4f;
 
         [Tooltip("Shimmers a second of the glint (the cracked cells catching light unevenly).")]
         [Range(0f, 5f)]
