@@ -161,6 +161,51 @@ namespace MoonProject.Audio.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator TheTow_SpoolsOut_CreaksWithStrain_SilentWhenSlack_AndLetsGo()
+        {
+            var load = new Vector3(3f, 0f, -9f);
+            int plays = _rig.Director.PlayCount;
+            _rig.Events.Publish(new TowAttached("power_module", load, 400f));
+            Assert.AreEqual(plays + 1, _rig.Director.PlayCount);
+            AssertLastPlayed("tow_spool", _rig.Rover.WinchOrigin.position);
+
+            FakeTowLine tow = _rig.Rover.Tow;
+            tow.IsTowing = true;
+            tow.LoadHitch = load;
+            tow.Strain01 = 0f;
+            yield return Settle(0.5f);
+            Assert.IsFalse(_rig.Gameplay.TowStrainSource.isPlaying, "a slack cable is silent");
+
+            tow.Strain01 = 0.4f;
+            yield return Settle(0.8f);
+            float some = _rig.Gameplay.TowStrainSource.volume;
+            tow.Strain01 = 1f;
+            yield return Settle(0.8f);
+            Assert.Greater(_rig.Gameplay.TowStrainSource.volume, some, "harder pulls creak louder");
+            Assert.Greater(_rig.Gameplay.TowStrainSource.pitch, 1f, "and higher");
+
+            plays = _rig.Director.PlayCount;
+            _rig.Events.Publish(new TowReleased("power_module", load, TowRelease.Arrived));
+            AssertLastPlayed("tow_release_release", load);
+            _rig.Events.Publish(new TowReleased("power_module", load, TowRelease.Snapped));
+            AssertLastPlayed("tow_release_snap", load);
+            Assert.AreEqual(plays + 2, _rig.Director.PlayCount);
+
+            tow.IsTowing = false;
+            yield return Settle(1f);
+            Assert.IsFalse(_rig.Gameplay.TowStrainSource.isPlaying, "no cable, no creak");
+        }
+
+        private static IEnumerator Settle(float seconds)
+        {
+            float until = Time.realtimeSinceStartup + seconds;
+            while (Time.realtimeSinceStartup < until)
+            {
+                yield return null;
+            }
+        }
+
+        [UnityTest]
         public IEnumerator TheSkyPhaseAlone_PlaysNoLampSound()
         {
             _rig.Events.Publish(new StructureBuilt(1, "solar_array", Vector3.one, 0f, true));
