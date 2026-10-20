@@ -5,8 +5,9 @@ namespace MoonProject.Autoplay
 {
     /// <summary>
     /// What the command line asks of the bot: <c>-autoplay opening -autoplay-out &lt;dir&gt;</c>, with optional
-    /// <c>-autoplay-shot-seconds</c>, <c>-autoplay-timeout</c> and <c>-autoplay-until</c> (the last beat to play) and <c>-autoplay-strict-guidance 1</c> (two guidance elements together fail the run) and <c>-autoplay-lines 0</c> (the game shows no objective line
-    /// unless a stall reminder fired, which fails the run).
+    /// <c>-autoplay-shot-seconds</c>, <c>-autoplay-timeout</c> and <c>-autoplay-until</c> (the last beat to play) and <c>-autoplay-strict-guidance 0</c> (two guidance elements together only warn instead of failing the run) and
+    /// <c>-autoplay-lines 1</c> (objective lines are part of the opening and are checked on screen; by default the
+    /// game shows none, and one showing is a stall reminder that fails the run).
     /// </summary>
     public sealed class AutoplayOptions
     {
@@ -48,8 +49,7 @@ namespace MoonProject.Autoplay
         public string UntilBeat { get; }
 
         /// <summary>
-        /// Two guidance elements on screen together fail the run. Off, the run only warns (the opening shows an
-        /// objective line, a floating chip and a bottom chip together until slice 1.5 removes the lines).
+        /// Two guidance elements on screen together fail the run (the default); off, the run only warns.
         /// </summary>
         public bool StrictGuidance { get; }
 
@@ -90,7 +90,7 @@ namespace MoonProject.Autoplay
             }
 
             options = new AutoplayOptions(scenario, outDirectory, shotSeconds, timeout,
-                Value(args, UntilFlag) ?? string.Empty, Value(args, LinesFlag) != "0", Value(args, StrictGuidanceFlag) == "1");
+                Value(args, UntilFlag) ?? string.Empty, Value(args, LinesFlag) == "1", Value(args, StrictGuidanceFlag) != "0");
             return true;
         }
 

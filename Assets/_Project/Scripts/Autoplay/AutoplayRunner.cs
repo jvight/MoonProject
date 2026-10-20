@@ -98,13 +98,20 @@ namespace MoonProject.Autoplay
 
         /// <summary>
         /// The one-element rule, every frame: two guidance elements showing together fail the run, and so does an
-        /// objective line while the lines are not expected (a stall reminder fired where the world should have led).
+        /// stall reminder from the opening's flow while the lines are not expected (a reminder fired where the world should
+        /// have led; the build mode's own step line is not one).
         /// </summary>
         private void WatchGuidance()
         {
             if (_bot.Failed || !_world.Refresh() || _world.Ui.TitleShown())
             {
                 return;
+            }
+
+            string chip = _world.Ui.Chip();
+            if (chip.Length > 0)
+            {
+                _world.ChipsSeen.Add(chip);
             }
 
             _world.Ui.GuidanceShown(_guidanceShown);
@@ -121,9 +128,9 @@ namespace MoonProject.Autoplay
                     _bot.Warn("guidance: " + _guidance.Message + " " + _bot.Where());
                 }
             }
-            else if (!_options.LinesExpected && _world.Ui.ObjectiveLine().Length > 0)
+            else if (!_options.LinesExpected && _world.Gameplay.Opening.Flow.Shown.Length > 0)
             {
-                _bot.Fail("a fallback reminder fired: the objective line '" + _world.Ui.ObjectiveLine() +
+                _bot.Fail("a fallback reminder fired: the objective line '" + _world.Gameplay.Opening.Flow.Shown +
                           "' showed where the world cues should have led. " + _bot.Where());
             }
         }
@@ -156,6 +163,7 @@ namespace MoonProject.Autoplay
                 yield return null;
             }
 
+            Debug.Log("Autoplay: chips seen: " + string.Join("; ", _world.ChipsSeen));
             string stop = _bot.Failed && _beats.Passed ? _bot.Failure : string.Empty;
             if (_exceptions > 0 && string.IsNullOrEmpty(stop))
             {

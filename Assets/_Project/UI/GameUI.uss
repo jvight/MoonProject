@@ -490,6 +490,16 @@ Label {
     display: flex;
 }
 
+/* The in-game pause menu selects with an amber fill: its cursor takes the dark selection ink; the title menu
+ * selects with a cyan fill and keeps its cyan cursor. */
+.pause .menu-button:focus .menu-button__cursor {
+    color: var(--glass-sel-text);
+}
+
+.pause--title .pause__main .menu-button:focus .menu-button__cursor {
+    color: var(--moon-tech-glow);
+}
+
 .setting-row .menu-button__cursor {
     left: 6px;
     font-size: 22px;

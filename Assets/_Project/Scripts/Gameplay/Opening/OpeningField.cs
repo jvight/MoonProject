@@ -81,7 +81,7 @@ namespace MoonProject.Gameplay
 
             Caches = new SupplyCaches(tuning, FrameOf, parent, services, containers, crateReach);
             LanderCargo = CargoBay(Caches.RootOf(tuning.CargoCrate), Caches.LevelOf(tuning.CargoCrate));
-            Flow = new OpeningFlow(services.Events, this);
+            Flow = new OpeningFlow(services.Events, this, tuning.StallSeconds, tuning.ReminderSeconds);
         }
 
         public LanderPort Port { get; }
@@ -164,7 +164,7 @@ namespace MoonProject.Gameplay
             }
 
             Caches.Step(deltaTime);
-            Flow.Tick();
+            Flow.Tick(deltaTime, _rover.Speed <= _tuning.StillSpeed);
         }
 
         public OpeningSaveData Capture()
