@@ -18,6 +18,7 @@ namespace MoonProject.Gameplay
         {
             InteractionKind.PickUp, InteractionKind.Build, InteractionKind.Salvage, InteractionKind.Scan,
             InteractionKind.Deconstruct, InteractionKind.OpenBuild, InteractionKind.FitPart, InteractionKind.Tether,
+            InteractionKind.Install,
         };
 
         private readonly SalvageField _salvage;
@@ -29,6 +30,7 @@ namespace MoonProject.Gameplay
         private readonly PickupReach _pickups;
         private readonly FirstUseSpots _firstUse;
         private readonly TowLine _tow;
+        private readonly RelayRepair _relay;
         private readonly Vector3[] _scanBuffer = new Vector3[MaxFocusPoints];
 
         /// <param name="beam">
@@ -38,9 +40,10 @@ namespace MoonProject.Gameplay
         /// <param name="tow">07's tow cable: a load in hook reach is where the tether key is taught.</param>
         public InteractionHints(SalvageField salvage, SealedContainers containers, ScanField scans,
             BuildField building, BeamWork beam, Cutter cutter, PickupReach pickups, FirstUseSpots firstUse,
-            TowLine tow)
+            TowLine tow, RelayRepair relay)
         {
             _tow = tow ?? throw new ArgumentNullException(nameof(tow));
+            _relay = relay ?? throw new ArgumentNullException(nameof(relay));
             _firstUse = firstUse ?? throw new ArgumentNullException(nameof(firstUse));
             _salvage = salvage != null ? salvage : throw new ArgumentNullException(nameof(salvage));
             _containers = containers ?? throw new ArgumentNullException(nameof(containers));
@@ -161,6 +164,10 @@ namespace MoonProject.Gameplay
                     bool hookable = _tow.TryGetHookable(out Vector3 hitch);
                     hint = hookable ? new InteractionHint(kind, hitch, true) : InteractionHint.None;
                     return hookable;
+                case InteractionKind.Install:
+                    bool atSocket = _relay.TryGetInstall(out Vector3 socket);
+                    hint = atSocket ? new InteractionHint(kind, socket, true) : InteractionHint.None;
+                    return atSocket;
                 default:
                     hint = InteractionHint.None;
                     return false;

@@ -125,6 +125,10 @@ namespace MoonProject.Gameplay
                  "bank's frame (Art's PowerModule, its TowHitch on its front face).")]
         [SerializeField] private TowLoadSpot[] _towLoads = Array.Empty<TowLoadSpot>();
 
+        [Header("relay.1's repair (opening v3 R10)")]
+        [Tooltip("The relay, its labelled spare and how near 07 takes it, fits it and charges on the lit relay.")]
+        [SerializeField] private RelayRepairSettings _relay = new RelayRepairSettings();
+
         [Header("The answer (opening v3 R8)")]
         [Tooltip("Where and how long 07 holds to transmit, and how the pulse of the old network runs to relay.1 and the Peak.")]
         [SerializeField] private CallAnswerSettings _answer = new CallAnswerSettings();
@@ -223,6 +227,8 @@ namespace MoonProject.Gameplay
         public CallReplySettings Reply => _reply;
 
         public TowSettings Tow => _tow;
+
+        public RelayRepairSettings Relay => _relay;
 
         public IReadOnlyList<TowLoadSpot> TowLoads => _towLoads ?? Array.Empty<TowLoadSpot>();
 

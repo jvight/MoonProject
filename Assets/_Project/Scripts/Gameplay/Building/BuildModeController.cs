@@ -325,8 +325,9 @@ namespace MoonProject.Gameplay
                 reason = PlacementReason.Blocked;
             }
 
-            if (reason == PlacementReason.Valid && frameMissing)
+            if (frameMissing)
             {
+                // The missing load is the one thing to fix first; its own body may block the spot meanwhile.
                 reason = PlacementReason.NeedsFrame;
             }
 

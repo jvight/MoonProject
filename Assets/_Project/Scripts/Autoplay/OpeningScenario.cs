@@ -73,7 +73,7 @@ namespace MoonProject.Autoplay
             foreach (Func<IEnumerator> beat in new Func<IEnumerator>[]
                      {
                          Drive, Scan, CollectParts, BuildThePad, ChargeOnThePad, TheRuins, BuildTheArray,
-                         TheFirstChoice, TheHabitat, Nightfall, TheTower, TheAnswer,
+                         TheFirstChoice, TheHabitat, Nightfall, TheTower, TheAnswer, TheRelay,
                      })
             {
                 if (_bot.Failed || Reached(_lastBeat))
@@ -391,6 +391,13 @@ namespace MoonProject.Autoplay
             Begin("B12", "The answer");
             yield return _base.AnswerTheCall();
             _bot.EndBeat("07 transmitted from the mast and relay.1 answered the call");
+        }
+
+        private IEnumerator TheRelay()
+        {
+            Begin("R10", "relay.1's repair: take the spare from its cabinet, fit it, charge on its pad");
+            yield return _base.RepairTheRelay();
+            _bot.EndBeat("relay.1 relit: its spare fitted at the feed socket, and its pad charges 07");
         }
 
         /// <summary>The next unscanned fragment of the lander's cargo, in the order the blueprint numbers them.</summary>

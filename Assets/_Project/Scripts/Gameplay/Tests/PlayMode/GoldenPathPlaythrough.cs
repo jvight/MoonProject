@@ -93,6 +93,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Metres short of the apron's centre 07 stops towing: the module trails onto the apron behind it.</summary>
         private const float HomeStop = 1f;
 
+        /// <summary>Metres from that stop point 07 counts as there: close, so the module trails onto the apron.</summary>
+        private const float HomeArrive = 1f;
+
         /// <summary>Seconds after 07 stops for the trailing module to come onto the apron and be let go.</summary>
         private const float HomeLetGoSeconds = 8f;
 
@@ -531,7 +534,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Capture("09-the-module-hooked");
             yield return DriveTo(RuinsGate(), 3f, "out of the Lumen ruins, towing");
             Vector3 fromHome = Flat(module.position - pad).normalized;
-            yield return DriveTo(Flat(pad) + fromHome * HomeStop, LineUpArrive, "home to the apron, towing");
+            yield return DriveTo(Flat(pad) + fromHome * HomeStop, HomeArrive, "home to the apron, towing");
             yield return Until(() => !_gameplay.Tow.IsTowing, HomeLetGoSeconds,
                 "the winch lets the module go on the apron",
                 () => $"the module {SurfaceRules.HorizontalDistance(module.position, pad):F1} m from the apron");
