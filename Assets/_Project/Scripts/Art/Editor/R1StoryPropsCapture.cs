@@ -2228,7 +2228,11 @@ namespace MoonProject.Art.Editor
             return new Color(0.07f, 0.09f, 0.15f, 1f);
         }
 
-        private static void ConfigurePowerModuleLampGlow(GameObject powerModule, bool dusk, ArtLightingPreview.TemporaryObjects temp)
+        private static void ConfigurePowerModuleLampGlow(
+            GameObject powerModule,
+            float yawDeg,
+            bool dusk,
+            ArtLightingPreview.TemporaryObjects temp)
         {
             Transform lampNode = powerModule.transform.Find("PowerModule_StatusLamp");
             if (lampNode == null || !lampNode.TryGetComponent(out Renderer lampRenderer))
@@ -2249,18 +2253,19 @@ namespace MoonProject.Art.Editor
 
             var block = new MaterialPropertyBlock();
             lampRenderer.GetPropertyBlock(block, amberSlot);
-            block.SetFloat("_EmissionStrength", dusk ? 2.10f : 1.05f);
+            block.SetFloat("_EmissionStrength", dusk ? 2.15f : 1.15f);
             lampRenderer.SetPropertyBlock(block, amberSlot);
 
             if (dusk)
             {
+                Vector3 frontOut = Quaternion.Euler(0f, yawDeg, 0f) * Vector3.forward;
                 Light lampGlow = ArtLightingPreview.NewLight(
                     "PowerModuleStatusLampGlow",
                     LightType.Point,
                     new Color(1.00f, 0.68f, 0.28f, 1f),
-                    1.55f);
-                lampGlow.transform.position = lampNode.position + powerModule.transform.forward * 0.08f;
-                lampGlow.range = 2.4f;
+                    1.60f);
+                lampGlow.transform.position = lampNode.position + frontOut * 0.09f;
+                lampGlow.range = 2.5f;
                 lampGlow.shadows = LightShadows.None;
                 temp.Add(lampGlow.gameObject);
             }
@@ -2275,13 +2280,13 @@ namespace MoonProject.Art.Editor
                 Color bg = SetupEnvironment(temp, dusk);
                 bg = ApplyDuskEnvironmentIfRequested(temp, bg, dusk);
 
-                GameObject module = SpawnProp(R1StoryPropsBuilder.PowerModulePrefabPath, Vector3.zero, 180f, temp);
-                ConfigurePowerModuleLampGlow(module, dusk, temp);
+                GameObject module = SpawnProp(R1StoryPropsBuilder.PowerModulePrefabPath, Vector3.zero, 0f, temp);
+                ConfigurePowerModuleLampGlow(module, 0f, dusk, temp);
 
                 string suffix = dusk ? "dusk" : "dayC";
                 RenderShot(
-                    new Vector3(1.25f, 1.02f, -1.78f),
-                    new Vector3(-0.04f, 0.44f, 0.02f),
+                    new Vector3(-1.22f, 0.98f, 1.76f),
+                    new Vector3(0.02f, 0.44f, -0.02f),
                     38f,
                     bg,
                     Path.Combine(outDir, $"power_module_alone_{suffix}.png"));
@@ -2301,18 +2306,18 @@ namespace MoonProject.Art.Editor
                 Color bg = SetupEnvironment(temp, dusk);
                 bg = ApplyDuskEnvironmentIfRequested(temp, bg, dusk);
 
-                SpawnRover07(temp, new Vector3(-0.98f, 0f, -0.08f), 158f, dusk);
+                SpawnRover07(temp, new Vector3(0.98f, 0f, 0.08f), -22f, dusk);
 
-                GameObject moduleFront = SpawnProp(R1StoryPropsBuilder.PowerModulePrefabPath, new Vector3(0.78f, 0f, 0.06f), 192f, temp);
-                ConfigurePowerModuleLampGlow(moduleFront, dusk, temp);
+                GameObject moduleFront = SpawnProp(R1StoryPropsBuilder.PowerModulePrefabPath, new Vector3(-0.78f, 0f, -0.06f), 14f, temp);
+                ConfigurePowerModuleLampGlow(moduleFront, 14f, dusk, temp);
 
-                GameObject moduleRear = SpawnProp(R1StoryPropsBuilder.PowerModulePrefabPath, new Vector3(2.15f, 0f, 0.72f), 28f, temp);
-                ConfigurePowerModuleLampGlow(moduleRear, dusk, temp);
+                GameObject moduleRear = SpawnProp(R1StoryPropsBuilder.PowerModulePrefabPath, new Vector3(-2.15f, 0f, -0.72f), -152f, temp);
+                ConfigurePowerModuleLampGlow(moduleRear, -152f, dusk, temp);
 
                 string suffix = dusk ? "dusk" : "dayC";
                 RenderShot(
-                    new Vector3(0.45f, 1.52f, -3.15f),
-                    new Vector3(0.28f, 0.56f, 0.14f),
+                    new Vector3(-0.45f, 1.48f, 3.15f),
+                    new Vector3(-0.28f, 0.54f, -0.14f),
                     40f,
                     bg,
                     Path.Combine(outDir, $"power_module_scale_07_{suffix}.png"));
