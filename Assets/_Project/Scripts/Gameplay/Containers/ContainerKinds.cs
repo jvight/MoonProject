@@ -14,7 +14,7 @@ namespace MoonProject.Gameplay
 
         /// <summary>
         /// The lander's big open cargo crate (B3, B4), at true size: the charging pad's two fragments rest on its
-        /// PartSocket_0/1 above the rim, the ice-core tube on its ItemSocket, and its RimGlow warms as 07 comes near.
+        /// PartSocket_0/1 above the rim, and its RimGlow warms as 07 comes near.
         /// </summary>
         public const string CrateCargoOpen = "Crate_Cargo_Open";
 

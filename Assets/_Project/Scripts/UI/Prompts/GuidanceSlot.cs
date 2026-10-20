@@ -6,22 +6,28 @@ namespace MoonProject.UI
     internal enum GuidanceKind
     {
         /// <summary>
+        /// A line 07 puts on its own CRT face at a story moment (the failed reply's <c>TX · NO RANGE</c>): the moment is
+        /// the whole screen's, so it takes the slot from everything else, which fades first and returns after it.
+        /// </summary>
+        CallLine = 0,
+
+        /// <summary>
         /// The build step while 07 places or welds (<see cref="BuildSteps"/>): the player is in the middle of a task,
         /// so its one line waits for nothing and nothing interrupts it.
         /// </summary>
-        BuildStep = 0,
+        BuildStep = 1,
 
         /// <summary>
         /// A chip or a card: the teaching prompt (glyph and one verb), the look/drive/hold chips, the recipe card, the
         /// blueprint-learned card.
         /// </summary>
-        Prompt = 1,
+        Prompt = 2,
 
         /// <summary>The low-battery hint: once per charge cycle, on the objective line's own line.</summary>
-        Battery = 2,
+        Battery = 3,
 
         /// <summary>The objective line: what to do next.</summary>
-        Objective = 3,
+        Objective = 4,
     }
 
     /// <summary>
@@ -34,7 +40,7 @@ namespace MoonProject.UI
     /// </summary>
     internal sealed class GuidanceSlot
     {
-        public const int KindCount = 4;
+        public const int KindCount = 5;
 
         private readonly float _handOverSeconds;
         private float _promptUp;

@@ -73,6 +73,7 @@ namespace MoonProject.World.Tests
             expected.Add(WorldAnchorIds.PlaceLander);
             expected.Add(WorldAnchorIds.PlaceApron);
             expected.Add(WorldAnchorIds.PlaceRuins);
+            expected.Add(WorldAnchors.FallenArray);
             expected.Add(WorldAnchorIds.PlaceMidway);
 
             Assert.AreEqual(expected.Count, _anchors.Count);

@@ -89,17 +89,23 @@ namespace MoonProject.World.Editor
             return new Wiring(postClips.ToArray(), landerSide.ToArray(), spark);
         }
 
-        /// <summary>The port's cable from the build apron's channel into the port's apron socket.</summary>
-        public static void LayApronCable(SceneBuildContext context, Transform parent, MoonSurface surface,
-            GroundCableSettings tuning, Vector3 from, Vector3 socket)
+        /// <summary>
+        /// The port's cable from the build apron's channel into the port's apron socket; returns its clips' halos in
+        /// order from the port to the apron (the lander's charge glows along it toward the pad).
+        /// </summary>
+        public static Renderer[] LayApronCable(SceneBuildContext context, Transform parent, MoonSurface surface,
+            GroundCableSettings tuning, Vector3 from, Vector3 socket, Mesh haloMesh, Material clipHalo)
         {
             Kit kit = Kit.Load(context);
             Transform cable = context.CreateChild("ApronCable", parent).transform;
             Vector2 into = (Flat2(socket) - Flat2(from)).normalized;
             Vector2 plugStart = Flat2(socket) - into * kit.Plug.Reach;
+            var clips = new List<Renderer>();
             Vector3 plugIn = LayRun(context, cable, surface, kit, Flat2(from), plugStart, tuning.Wander, tuning.Bends,
-                null, null, null);
+                clips, haloMesh, clipHalo);
             Lay(context, cable, kit.Plug, plugIn, into, surface);
+            clips.Reverse();
+            return clips.ToArray();
         }
 
         /// <summary>

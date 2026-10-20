@@ -190,7 +190,10 @@ namespace MoonProject.World
             // 1. Deterministic companion cobbles and spall pebbles around large boulders on the basin floor
             // so every major boulder sits in a fragmented lunar boulder family with smaller spall stones at its base.
             int baseCount = instances.Count;
-            GroundShape[] footprints = { surface.Shaping.Ruins, surface.Shaping.Lander, surface.Shaping.Apron };
+            GroundShape[] footprints =
+            {
+                surface.Shaping.Ruins, surface.Shaping.Lander, surface.Shaping.Apron, surface.Shaping.FallenArray,
+            };
             for (int i = 0; i < baseCount; i++)
             {
                 ScatterInstance b = instances[i];

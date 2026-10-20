@@ -32,6 +32,16 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
+            <ui:VisualElement name="build-cost-anchor" class="world-anchor" picking-mode="Ignore">
+                <ui:VisualElement name="build-cost-center" class="world-anchor__center" picking-mode="Ignore">
+                    <ui:VisualElement name="build-cost" class="build-cost" picking-mode="Ignore">
+                        <ui:VisualElement name="build-cost-shadow" class="soft-shadow soft-shadow--chip" />
+                        <ui:VisualElement name="build-cost-body" class="chip build-cost__body" picking-mode="Ignore">
+                            <ui:VisualElement name="build-cost-recipe" class="recipe build-cost__recipe" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
             <ui:VisualElement name="hud-frame" class="safe-frame" picking-mode="Ignore">
                 <ui:VisualElement class="unlock-anchor" picking-mode="Ignore">
                     <ui:VisualElement name="unlock-card" class="unlock-card" picking-mode="Ignore">
