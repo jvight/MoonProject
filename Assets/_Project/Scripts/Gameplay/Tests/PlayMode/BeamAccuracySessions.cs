@@ -97,7 +97,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float PlaceAhead = 4.6f;
         private const float StructureSpacing = 14f;
 
-        /// <summary>Metres from the base a structure built on a towed load stands: on the apron, where it came home.</summary>
+        /// <summary>Metres from the apron's centre a structure built on a towed load stands, where it came home.</summary>
         private const float FrameHomeOffset = 5f;
 
         /// <summary>Metres in front of 07 a structure is welded in the framing test: right at its nose.</summary>
@@ -329,6 +329,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             _gameplay.Materials.Stow(definition.BuildCost);
 
             var terrain = _context.Get<ITerrainQuery>();
+            if (definition.FrameLoad.Length > 0)
+            {
+                at = FrameHome();
+            }
+
             yield return StandFacing(at, Vector3.back, PlaceAhead);
             var rover = _context.Get<IRoverState>();
             Vector3 spot = rover.Position + Flat(rover.Rotation * Vector3.forward).normalized * PlaceAhead;
@@ -477,6 +482,13 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// A structure built on a towed load (the battery bank on the habitat's power module) needs its load home: it
         /// is set down at <paramref name="at"/> first, as if towed there.
         /// </summary>
+        /// <summary>Where a towed load comes home: on the apron, beside its centre.</summary>
+        private Vector3 FrameHome()
+        {
+            Assert.IsTrue(_context.Get<IWorldAnchors>().TryGet("place.apron", out WorldAnchor apron), "the apron");
+            return apron.Position + Vector3.left * FrameHomeOffset;
+        }
+
         private void SetDownItsFrame(StructureDefinition definition, Vector3 at)
         {
             if (definition.FrameLoad.Length == 0)
@@ -499,9 +511,8 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             var terrain = _context.Get<ITerrainQuery>();
             // A structure built on a towed load stands where its load came home, on the apron.
-            Vector3 home = _context.Get<IWorldLayout>().BasePosition + (definition.FrameLoad.Length > 0
-                ? Vector3.left * FrameHomeOffset
-                : Vector3.right * (index * StructureSpacing));
+            Vector3 home = definition.FrameLoad.Length > 0 ? FrameHome()
+                : _context.Get<IWorldLayout>().BasePosition + Vector3.right * (index * StructureSpacing);
             yield return StandFacing(home + Vector3.forward * (WeldAhead + 2f), Vector3.back, WeldAhead);
             var rover = _context.Get<IRoverState>();
             Vector3 spot = rover.Position + Flat(rover.Rotation * Vector3.forward).normalized * WeldAhead;
