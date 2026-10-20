@@ -135,6 +135,31 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.AreEqual(plays + spots.Length, _rig.Director.PlayCount, "one lamp sound per BaseLampLit");
         }
 
+        [Test]
+        public void TheMast_ClunksPerSegment_AStepHigherEach_SettlesAtTheTop_AndIsSilentWhenRestored()
+        {
+            var mast = new Vector3(8f, 0f, -4f);
+            int plays = _rig.Director.PlayCount;
+            float previousPitch = 0f;
+            for (int i = 0; i < 3; i++)
+            {
+                _rig.Events.Publish(new MastSegmentRaised(i, 3, mast, false));
+                if (i < 2)
+                {
+                    AssertLastPlayed("mast_clunk", mast);
+                    Assert.Greater(Last.pitch, previousPitch, "each segment a step higher");
+                    previousPitch = Last.pitch;
+                }
+            }
+
+            AssertLastPlayed("mast_settle", mast);
+            Assert.AreEqual(plays + 4, _rig.Director.PlayCount, "three clunks and the settle");
+
+            _rig.Events.Publish(new MastSegmentRaised(1, 3, mast, true));
+            _rig.Events.Publish(new MastSegmentRaised(2, 3, mast, true));
+            Assert.AreEqual(plays + 4, _rig.Director.PlayCount, "a loaded mast stands silently");
+        }
+
         [UnityTest]
         public IEnumerator TheSkyPhaseAlone_PlaysNoLampSound()
         {

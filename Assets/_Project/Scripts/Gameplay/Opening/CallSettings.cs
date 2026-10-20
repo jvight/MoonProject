@@ -22,13 +22,14 @@ namespace MoonProject.Gameplay
         [Range(0, 8)]
         [SerializeField] private int _decodedAtAnswer = 2;
 
-        [Tooltip("Degrees round the world's up from Earth's direction to the call's point of light: beside Earth.")]
+        [Tooltip("Degrees round the world's up from Earth's direction to the call's point of light: beside Earth, on " +
+            "the side away from where the Sun breaks out of the eclipse, so its corona never swallows the light.")]
         [Range(-30f, 30f)]
-        [SerializeField] private float _yawFromEarth = 7f;
+        [SerializeField] private float _yawFromEarth = -8.5f;
 
         [Tooltip("Degrees above Earth's direction the point of light stands.")]
         [Range(-15f, 15f)]
-        [SerializeField] private float _pitchFromEarth = 2f;
+        [SerializeField] private float _pitchFromEarth = 1.5f;
 
         public string Identity => _identity;
 
