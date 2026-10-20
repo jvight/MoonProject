@@ -19,14 +19,19 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// lander's reserve until it gives out, the faulted cutter sputtering at the fallen array and the spare igniter
     /// taken from the rack beside it and fitted where 07 stands, the first dusk begun by the dock after a visit to the
     /// seismic station (R5–R6), the milestones FirstCharge, PowerOn, NightReady and
-    /// SignalWest, the supply crates' yields, and a load that shows its step at once and replays its milestones as
-    /// Restored.
+    /// SignalWest, the supply crates' yields, a load that shows its step at once and replays its milestones as
+    /// Restored, and the Build key's chip standing on 07 (07 looking toward the apron) while the apron is out of view.
     /// </summary>
     public sealed class OpeningSessions : InputTestFixture
     {
         private const float PressTimeout = 1f;
         private const float Park = 4f;
         private const float SealStandOff = 1.6f;
+
+        // The view camera's spot over 07, how far it looks, and how near 07 a chip on 07 stands.
+        private const float CameraRise = 3f;
+        private const float CameraReach = 10f;
+        private const float OnRoverReach = 1f;
 
         private readonly List<OpeningMilestoneReached> _milestones = new List<OpeningMilestoneReached>();
         private readonly List<LanderReserveChanged> _reserve = new List<LanderReserveChanged>();
@@ -260,6 +265,65 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(0f, crate.Progress, "and nothing is cut");
             Assert.IsFalse(_fixture.Gameplay.Hints.TryGet(InteractionKind.Salvage, out InteractionHint hint) &&
                            hint.Ready, "the cut hint shows as not ready");
+        }
+
+        [UnityTest]
+        public IEnumerator TheBuildKey_StandsOn07_WhileTheApronIsBehindTheCamera_And07LooksThere_AskingOnce()
+        {
+            Boot(BootstrapHarness.NewTestSlot());
+            yield return null;
+            yield return null;
+            var asks = new List<RoverChirpRequested>();
+            System.IDisposable askToken = _fixture.Bootstrap.Context.Events.Subscribe<RoverChirpRequested>(chirp =>
+            {
+                if (chirp.Mood == ChirpMood.Ask)
+                {
+                    asks.Add(chirp);
+                }
+            });
+            try
+            {
+                yield return PlaceAt(_fixture.World.Anchor("place.lander").Position + new Vector3(0f, 0f, -10f));
+                yield return ScanSet("ruin." + ScanTuning.LanderCargoId, 2);
+                yield return PlaceAt(_fixture.Gameplay.Containers.Find("supply.lander.open").CutPoint.position);
+                yield return TapE();
+                Assert.AreEqual(OpeningKeys.BuildPad, _fixture.Gameplay.Opening.Flow.Current, "the pad's cost is in");
+
+                Vector3 apron = _fixture.Gameplay.Building.ApronCentre.Value;
+                Vector3 eye = _fixture.Rover.Position + Vector3.up * CameraRise;
+                Vector3 away = new Vector3(eye.x - apron.x, 0f, eye.z - apron.z).normalized;
+                _fixture.Rover.Aim(eye, eye + away * CameraReach);
+                yield return null;
+                yield return null;
+                InteractionHints hints = (InteractionHints)_fixture.Gameplay.Hints;
+                Assert.AreEqual(InteractionKind.OpenBuild, hints.Primary.Kind, "the Build key is the thing to teach");
+                Assert.IsTrue(hints.TryGet(InteractionKind.OpenBuild, out InteractionHint behind));
+                Assert.IsTrue(behind.OnRover, "the apron is behind the camera: the chip stands on 07");
+                Assert.Less(Vector3.Distance(behind.Position, _fixture.Rover.Position), OnRoverReach,
+                    "on 07, which is always in view");
+                Assert.AreEqual(apron, behind.Target, "and still points at the apron");
+                Assert.IsTrue(_fixture.Rover.TryGetGaze(_fixture.Gameplay.FirstUsePointer, out Vector3 gaze, out _),
+                    "07 turns its head toward the apron");
+                Assert.AreEqual(apron, gaze);
+                Assert.AreEqual(1, asks.Count, "with one short ask");
+
+                _fixture.Rover.Aim(eye, apron);
+                yield return null;
+                yield return null;
+                Assert.IsTrue(hints.TryGet(InteractionKind.OpenBuild, out InteractionHint ahead));
+                Assert.IsFalse(ahead.OnRover, "in view, the chip stands at the apron itself");
+                Assert.AreEqual(apron, ahead.Position);
+                Assert.IsFalse(_fixture.Rover.TryGetGaze(_fixture.Gameplay.FirstUsePointer, out _, out _),
+                    "07 stops pointing");
+
+                _fixture.Rover.Aim(eye, eye + away * CameraReach);
+                yield return null;
+                Assert.AreEqual(1, asks.Count, "07 asks once per kind of key, not every time it points");
+            }
+            finally
+            {
+                askToken.Dispose();
+            }
         }
 
         private void Boot(string slot)

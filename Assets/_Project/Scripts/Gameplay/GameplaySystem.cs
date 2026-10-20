@@ -114,6 +114,9 @@ namespace MoonProject.Gameplay
 
         public IInteractionHints Hints { get; private set; }
 
+        /// <summary>07 looks toward an off-screen first-use place while its chip stands on 07.</summary>
+        public FirstUsePointer FirstUsePointer { get; private set; }
+
         /// <summary>The apron's bay outline, glowing while build mode is open (B5: where a base belongs).</summary>
         public ApronGlow ApronGlow { get; private set; }
 
@@ -351,7 +354,7 @@ namespace MoonProject.Gameplay
             _building.ConnectTow(Tow);
             TowFrames = new TowFrames(context.Events, _building.Catalog, Tow);
             var firstUse = new FirstUseSpots(Opening, _building, context.Get<IViewCamera>(), context.Get<IRoverState>(),
-                _building.Tuning.FirstUseViewMargin);
+                _building.Tuning.FirstUseViewMargin, _building.Tuning.FirstUseRoverRise);
             Relay = new RelayRepair(context.Events, Materials.Hold, services.Rover, services.Pickups,
                 _openingTuning.Relay, _relaySpare.position, _relaySocket.position, _relayPad.position,
                 _relaySpare.gameObject, _relayFitted.gameObject);
@@ -359,6 +362,8 @@ namespace MoonProject.Gameplay
             var hints = new InteractionHints(_salvage, Containers, Scans, _building, services.Beam, Cutter,
                 services.Pickups, firstUse, Tow, Relay);
             Hints = hints;
+            FirstUsePointer = new FirstUsePointer(context.Events, hints, services.Rig,
+                _building.Tuning.FirstUseGazePriority, _building.Tuning.FirstUseAskIntensity);
             Recovery = new RecoveryProgress(context.Events, PowerLamps, PowerSteps, _openingTuning.RecoveryLamps);
             Call = new CallProgress(context.Events, _openingTuning.Call, services.Layout);
             Reply = new CallReply(context.Events, Call, _openingTuning.Reply);
@@ -641,6 +646,7 @@ namespace MoonProject.Gameplay
             ScanMark.Step(Scans.Scanning == null ? Scans.Candidate : null, deltaTime);
             Opening.Step(deltaTime);
             Relay.Step(Time.frameCount, _input.ExcavateHeld);
+            FirstUsePointer.Step();
             Tow.Step(_input.TetherPressed);
             Reply.Step(deltaTime, Opening.NightFallen, _roverState.Speed);
             MastRaise.Step(deltaTime);

@@ -108,6 +108,16 @@ namespace MoonProject.Gameplay
                  "share of the viewport).")]
         [Range(0f, 0.4f)] [SerializeField] private float _firstUseViewMargin = 0.08f;
 
+        [Tooltip("Metres above 07's root a first-use chip stands when its place is off screen: with the prompt's own " +
+                 "lift it floats over 07's face, like the Tab key's chip.")]
+        [Range(0f, 2f)] [SerializeField] private float _firstUseRoverRise = 0.4f;
+
+        [Tooltip("Gaze priority of 07's head turn toward an off-screen first-use place (below a scan's aim).")]
+        [Range(5, 50)] [SerializeField] private int _firstUseGazePriority = 20;
+
+        [Tooltip("How strongly 07 asks (its chirp) the first time each kind of first-use chip points off screen.")]
+        [Range(0f, 1f)] [SerializeField] private float _firstUseAskIntensity = 0.5f;
+
         [Tooltip("Metres the view's centre ray is followed to find the ground the ghost stands on; a view that never " +
                  "meets the ground in this reach puts the ghost at the farthest placement distance straight ahead.")]
         [Range(10f, 200f)] [SerializeField] private float _viewRayMetres = 80f;
@@ -322,6 +332,9 @@ namespace MoonProject.Gameplay
         public float ApronGlowFadeSeconds => _apronGlowFadeSeconds;
 
         public float FirstUseViewMargin => _firstUseViewMargin;
+        public float FirstUseRoverRise => _firstUseRoverRise;
+        public int FirstUseGazePriority => _firstUseGazePriority;
+        public float FirstUseAskIntensity => _firstUseAskIntensity;
         public float ViewRayMetres => _viewRayMetres;
         public float GhostAheadMetres => Mathf.Clamp(_ghostAheadMetres, _minPlacementDistance, _maxPlacementDistance);
 
