@@ -82,9 +82,9 @@ namespace MoonProject.Audio
         [Range(0f, 1f)]
         [SerializeField] private float _faceResolve = 0.7f;
 
-        [Tooltip("Each typed character pair's counter tick.")]
+        [Tooltip("Each typed character's counter tick (per character since the plotter face: kept under the mix).")]
         [Range(0f, 1f)]
-        [SerializeField] private float _faceText = 0.6f;
+        [SerializeField] private float _faceText = 0.45f;
 
         [Tooltip("A typed line settling: the heavier tick.")]
         [Range(0f, 1f)]
@@ -110,6 +110,18 @@ namespace MoonProject.Audio
         [Range(0.1f, 1f)]
         [SerializeField] private float _textStreakFloor = 0.7f;
 
+        [Tooltip("Stroke hums within this many seconds of the last count as a run and soften (none is ever skipped).")]
+        [Range(0.05f, 1f)]
+        [SerializeField] private float _strokeStreakWindow = 0.3f;
+
+        [Tooltip("Volume multiplier per stroke hum within a run: the plotter's quick strokes overlap their hums.")]
+        [Range(0.5f, 1f)]
+        [SerializeField] private float _strokeStreakDecay = 0.85f;
+
+        [Tooltip("Softest a run of stroke hums gets (volume scale), so the climb stays audible without stacking up.")]
+        [Range(0.1f, 1f)]
+        [SerializeField] private float _strokeStreakFloor = 0.45f;
+
         public float OpeningStatic => _openingStatic;
         public float SwellSeconds => _swellSeconds;
         public float HandOverSeconds => _handOverSeconds;
@@ -133,5 +145,8 @@ namespace MoonProject.Audio
         public float TextStreakWindow => _textStreakWindow;
         public float TextStreakDecay => _textStreakDecay;
         public float TextStreakFloor => _textStreakFloor;
+        public float StrokeStreakWindow => _strokeStreakWindow;
+        public float StrokeStreakDecay => _strokeStreakDecay;
+        public float StrokeStreakFloor => _strokeStreakFloor;
     }
 }
