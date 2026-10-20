@@ -26,14 +26,14 @@ namespace MoonProject.UI
         /// <summary>The low-battery hint: once per charge cycle, on the objective line's own line.</summary>
         Battery = 3,
 
-        /// <summary>
-        /// The call on 07's face while 07 stands still (docs/design/opening-v3-purpose.md §2: the call is the goal
-        /// display on the face): it outranks only the objective line, and any chip, card or hint takes the slot first.
-        /// </summary>
-        CallStatus = 4,
-
         /// <summary>The objective line: what to do next.</summary>
-        Objective = 5,
+        Objective = 4,
+
+        /// <summary>
+        /// The call on 07's face while 07 rests (docs/design/opening-v3-purpose.md §2): the quietest element, so it
+        /// shows only when nothing else guides, and anything that wants the slot fades it out first.
+        /// </summary>
+        CallStatus = 5,
     }
 
     /// <summary>

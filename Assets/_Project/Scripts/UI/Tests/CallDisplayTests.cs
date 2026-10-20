@@ -142,10 +142,17 @@ namespace MoonProject.UI.Tests
             Assert.IsTrue(slot.Allows(GuidanceKind.Prompt), "a chip outranks the still call");
             Assert.IsFalse(slot.Allows(GuidanceKind.CallStatus));
 
-            wants[(int)GuidanceKind.Prompt] = false;
             wants[(int)GuidanceKind.Objective] = true;
             slot.Step(wants, visible, Frame);
-            Assert.IsTrue(slot.Allows(GuidanceKind.CallStatus), "and the call outranks the objective line");
+            Assert.IsTrue(slot.Allows(GuidanceKind.Prompt), "the objective line waits too");
+
+            wants[(int)GuidanceKind.Prompt] = false;
+            slot.Step(wants, visible, Frame);
+            Assert.IsTrue(slot.Allows(GuidanceKind.Objective), "the objective line outranks the still call");
+
+            wants[(int)GuidanceKind.Objective] = false;
+            slot.Step(wants, visible, Frame);
+            Assert.IsTrue(slot.Allows(GuidanceKind.CallStatus), "which shows when nothing else guides");
 
             visible[(int)GuidanceKind.CallStatus] = true;
             wants[(int)GuidanceKind.Prompt] = true;

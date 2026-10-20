@@ -140,6 +140,8 @@ namespace MoonProject.Rover.PlayModeTests
             _target = new RenderTexture(Width, Height, 24);
             _scene.View.targetTexture = _target;
             CallDisplayView call = _scene.Ui.CallView;
+            // The still call is the quietest guidance: with no objective line wanting the slot, it shows at rest.
+            _scene.Context.Events.Publish(new NextStepChanged(string.Empty));
             float deadline = Time.time + OpenTimeout;
             while (!call.IsVisible)
             {
