@@ -32,6 +32,8 @@ namespace MoonProject.UI
         public const string VerbFit = "ui.verb.fit";
         public const string FaceNoLine = "ui.face.no_line";
         public const string FaceTxNoRange = "ui.face.tx_no_range";
+        public const string FaceRelay2Joined = "ui.face.relay2_joined";
+        public const string FaceRelay2Status = "ui.face.relay2_status";
         public const string FaceTxReady = "ui.face.tx_ready";
         public const string FaceAck = "ui.face.ack_route";
         public const string FaceCall = "ui.face.call";

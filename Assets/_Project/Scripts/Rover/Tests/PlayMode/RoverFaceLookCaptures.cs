@@ -199,6 +199,33 @@ namespace MoonProject.Rover.PlayModeTests
             CaptureFace("call_answered_panel");
         }
 
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator LookA_Relay2JoinsTheNetwork_OnTheRealFace()
+        {
+            Directory.CreateDirectory(Folder);
+            _keyboard = InputSystem.AddDevice<Keyboard>();
+            yield return _scene.Boot();
+            _target = new RenderTexture(Width, Height, 24);
+            _scene.View.targetTexture = _target;
+            SetNight();
+            _scene.CameraRig.Orbit.AdoptBearing(_scene.Rover.Heading + FrontBearing);
+            _scene.Context.Events.Publish(new RelayRelit("relay.1", false));
+            float deadline = Time.time + OpenTimeout;
+            while (!_scene.Ui.FaceNotice.IsShown)
+            {
+                Assert.Less(Time.time, deadline, "07's face reads out relay.2 joining");
+                yield return null;
+            }
+
+            yield return RealRoverScene.WaitSeconds(1f);
+            Assert.IsNotEmpty(_scene.Ui.FaceNotice.Detail, "with who holds it and its cell");
+            Capture("relay2_joined_night");
+            CaptureFace("relay2_joined_panel");
+        }
+
         /// <summary>The sky's clock set to the earthlit night (the sky exposes no setter on its Core interface).</summary>
         private void SetNight()
         {

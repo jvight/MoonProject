@@ -104,6 +104,13 @@ namespace MoonProject.UI
         [Range(2f, 12f)]
         [SerializeField] private float _ackSeconds = 7f;
 
+        [Tooltip("The relay whose relighting brings relay.2 onto the network (opening v3 R10): its RelayRelit id.")]
+        [SerializeField] private string _networkJoinRelay = "relay.1";
+
+        [Tooltip("Seconds 07's face reads out relay.2 joining the network (who holds it and its cell), the one element.")]
+        [Range(2f, 12f)]
+        [SerializeField] private float _networkJoinSeconds = 6f;
+
         [Tooltip("The Sun's arc easing in and out.")]
         [SerializeField] private RevealSettings _sunArc = new RevealSettings(1.2f, 1.5f, 6f, 0.97f, 1f, 0.8f);
 
@@ -158,6 +165,10 @@ namespace MoonProject.UI
         public float TxPromptSeconds => _txPromptSeconds;
 
         public float AckSeconds => _ackSeconds;
+
+        public string NetworkJoinRelay => _networkJoinRelay;
+
+        public float NetworkJoinSeconds => _networkJoinSeconds;
 
         public RevealSettings SunArc => _sunArc;
 

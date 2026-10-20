@@ -113,6 +113,7 @@ namespace MoonProject.UI
         private float _toastLeft;
         private float _replyLeft;
         private string _replyKey;
+        private string _replyDetailKey;
         private bool _replyOnFace;
         private FaceNotice _faceNotice;
         private bool _noticeOnCrt;
@@ -313,6 +314,7 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<TransmitPrompted>(_ => ShowFaceLine(UiKeys.FaceTxReady,
                 _tuning.Guidance.TxPromptSeconds)));
             _tokens.Add(events.Subscribe<RelayAcked>(_ => ShowFaceLine(UiKeys.FaceAck, _tuning.Guidance.AckSeconds)));
+            _tokens.Add(events.Subscribe<RelayRelit>(OnRelayRelit));
             _tokens.Add(events.Subscribe<CallStateChanged>(OnCallStateChanged));
             _tokens.Add(events.Subscribe<CallDecoded>(OnCallDecoded));
             _tokens.Add(events.Subscribe<TitleShown>(OnTitleShown));
@@ -1600,18 +1602,35 @@ namespace MoonProject.UI
         }
 
         /// <summary>
-        /// 07's face says "no line of sight" while the cue lasts (or the failed reply's line, or a databank toast), and
-        /// otherwise shows the call when the guidance slot grants it, unless the self-test or the hold already has the
-        /// face; a line cuts the call at once rather than overlapping it. The face is handed back only if nothing else
-        /// took it meanwhile.
+        /// 07's face puts one of the story's lines up for <paramref name="seconds"/>, as the one element, with an
+        /// optional smaller detail line under it.
         /// </summary>
-        /// <summary>07's face puts one of the story's lines up for <paramref name="seconds"/>, as the one element.</summary>
-        private void ShowFaceLine(string key, float seconds)
+        private void ShowFaceLine(string key, float seconds, string detailKey = null)
         {
             _replyKey = key;
+            _replyDetailKey = detailKey;
             _replyLeft = seconds;
         }
 
+        /// <summary>
+        /// relay.1 relit live (opening v3 R10): relay.2 joins the network, and 07's face reads out who holds it. A
+        /// loaded game's replay shows nothing.
+        /// </summary>
+        private void OnRelayRelit(RelayRelit relit)
+        {
+            if (!relit.Restored && string.Equals(relit.RelayId, _tuning.Guidance.NetworkJoinRelay,
+                    StringComparison.Ordinal))
+            {
+                ShowFaceLine(UiKeys.FaceRelay2Joined, _tuning.Guidance.NetworkJoinSeconds, UiKeys.FaceRelay2Status);
+            }
+        }
+
+        /// <summary>
+        /// 07's face says "no line of sight" while the cue lasts (or a story line, or a databank toast), and otherwise
+        /// shows the call when the guidance slot grants it, unless the self-test or the hold already has the face; a
+        /// line cuts the call at once rather than overlapping it. The face is handed back only if nothing else took it
+        /// meanwhile.
+        /// </summary>
         private void StepFaceNotice(float deltaTime)
         {
             bool blocked = _blockedCue.FaceShown;
@@ -1639,7 +1658,8 @@ namespace MoonProject.UI
             if (show)
             {
                 _faceNotice.Show(reply ? _localization.Get(_replyKey)
-                    : blocked ? _localization.Get(UiKeys.FaceNoLine) : _toastText);
+                    : blocked ? _localization.Get(UiKeys.FaceNoLine) : _toastText,
+                    reply && _replyDetailKey != null ? _localization.Get(_replyDetailKey) : string.Empty);
             }
             else
             {

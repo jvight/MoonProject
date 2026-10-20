@@ -999,6 +999,14 @@
             "text": "TX · NO RANGE"
         },
         {
+            "key": "ui.face.relay2_joined",
+            "text": "RELAY.2 · ON THE NETWORK"
+        },
+        {
+            "key": "ui.face.relay2_status",
+            "text": "SSR-3 · UNIT 06 · HOLD RELAY.2 LINK · CELL 0%"
+        },
+        {
             "key": "ui.face.tx_ready",
             "text": "TX · READY"
         },

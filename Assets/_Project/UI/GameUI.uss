@@ -2250,6 +2250,7 @@ Label {
     top: 0;
     right: 0;
     bottom: 0;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
 }
@@ -2258,6 +2259,16 @@ Label {
     font-size: 30px;
     white-space: nowrap;
     color: rgb(214, 190, 140);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
+}
+
+/* A story line's read-out under it (relay.2 joining): quieter, in look A's body neutral. */
+.face-notice__detail {
+    display: none;
+    margin-top: 16px;
+    font-size: 24px;
+    white-space: nowrap;
+    color: rgb(182, 168, 143);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 

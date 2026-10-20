@@ -984,6 +984,47 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator Relay1Relit_ReadsOutRelay2JoiningOn07sFace_ForItsSeconds_AndAReplayShowsNothing()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            _rig.Ui.Ledger.RecordLookTaught();
+            _rig.Ui.Ledger.RecordDriveTaught();
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            yield return Seconds(1f);
+
+            Events.Publish(new RelayRelit("relay.1", true));
+            yield return Seconds(1f);
+            Assert.IsFalse(_rig.Ui.FaceNotice.IsShown, "a loaded game's replay reads nothing out");
+
+            Events.Publish(new RelayRelit("relay.1", false));
+            float limit = Time.realtimeSinceStartup + 3f;
+            while (!_rig.Ui.FaceNotice.IsShown && Time.realtimeSinceStartup < limit)
+            {
+                yield return null;
+            }
+
+            Assert.IsTrue(_rig.Ui.FaceNotice.IsShown, "07's face reads out relay.2 joining");
+            Assert.AreEqual(Text(UiKeys.FaceRelay2Joined), _rig.Ui.FaceNotice.Text);
+            Assert.AreEqual(Text(UiKeys.FaceRelay2Status), _rig.Ui.FaceNotice.Detail, "who holds it, and its cell");
+            float shownAt = Time.realtimeSinceStartup;
+            while (_rig.Ui.FaceNotice.IsShown && Time.realtimeSinceStartup < shownAt + 12f)
+            {
+                Assert.IsFalse(_rig.Ui.Prompt.IsVisible || _rig.Ui.LookUp.IsVisible, "the one element");
+                yield return null;
+            }
+
+            float seconds = _rig.Tuning.Guidance.NetworkJoinSeconds;
+            Assert.That(Time.realtimeSinceStartup - shownAt, Is.InRange(seconds - 0.4f, seconds + 0.8f),
+                "a short readable moment");
+
+            Events.Publish(new CallReplyFailed());
+            yield return Seconds(0.5f);
+            Assert.AreEqual(string.Empty, _rig.Ui.FaceNotice.Detail, "a plain story line has no detail");
+        }
+
+        [UnityTest]
         public IEnumerator TheFailedReply_PutsTxNoRangeOn07sFace_AsTheOneElement_ForAboutThreeSeconds()
         {
             InputSystem.AddDevice<Keyboard>();

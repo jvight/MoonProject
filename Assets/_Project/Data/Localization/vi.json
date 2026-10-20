@@ -999,6 +999,14 @@
             "text": "TX · NGOÀI TẦM"
         },
         {
+            "key": "ui.face.relay2_joined",
+            "text": "RELAY.2 · ĐÃ VÀO MẠNG"
+        },
+        {
+            "key": "ui.face.relay2_status",
+            "text": "SSR-3 · ĐƠN VỊ 06 · GIỮ LIÊN LẠC RELAY.2 · PIN 0%"
+        },
+        {
             "key": "ui.face.tx_ready",
             "text": "TX · SẴN SÀNG"
         },
