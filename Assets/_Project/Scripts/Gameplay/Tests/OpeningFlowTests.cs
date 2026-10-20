@@ -71,6 +71,46 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void TheStepIndexes_FollowTheOpening_AsOpeningStepsNamesThem()
+        {
+            Assert.AreEqual(OpeningSteps.DriveToLander, _flow.CurrentIndex);
+            _game.ReachedLander = true;
+            _flow.Tick();
+            Assert.AreEqual(OpeningSteps.ScanLander, _flow.CurrentIndex);
+            _game.Known.Add(StructureIds.ChargingPad);
+            _flow.Tick();
+            Assert.AreEqual(OpeningSteps.CollectParts, _flow.CurrentIndex);
+            _game.Covered.Add(StructureIds.ChargingPad);
+            _flow.Tick();
+            Assert.AreEqual(OpeningSteps.BuildPad, _flow.CurrentIndex);
+            _game.BuiltIds.Add(StructureIds.ChargingPad);
+            _flow.Tick();
+            Assert.AreEqual(OpeningSteps.Charge, _flow.CurrentIndex);
+            _game.FirstCharge = true;
+            _flow.Tick();
+            Assert.AreEqual(OpeningSteps.FindSolar, _flow.CurrentIndex, "a step with no line yet still has its place");
+            _game.ReserveSpent = true;
+            _game.Known.Add(StructureIds.SolarArray);
+            _flow.Tick();
+            Assert.AreEqual(OpeningSteps.FitIgniter, _flow.CurrentIndex);
+            _game.IgniterFitted = true;
+            _flow.Tick();
+            Assert.AreEqual(OpeningSteps.BuildSolar, _flow.CurrentIndex);
+            _game.PowerOn = true;
+            _flow.Tick();
+            Assert.AreEqual(OpeningSteps.BuildBatteryBank, _flow.CurrentIndex);
+            _game.NightReady = true;
+            _flow.Tick();
+            Assert.AreEqual(OpeningSteps.ScanTower, _flow.CurrentIndex);
+            _game.Known.Add(StructureIds.AntennaMast);
+            _flow.Tick();
+            Assert.AreEqual(OpeningSteps.BuildMast, _flow.CurrentIndex);
+            _game.BuiltIds.Add(StructureIds.AntennaMast);
+            _flow.Tick();
+            Assert.AreEqual(OpeningSteps.Count, _flow.CurrentIndex, "the index is the step count once the opening is over");
+        }
+
+        [Test]
         public void WithAPadPartInTheHold_TheLineAsksToParkOffThePad_AndToFitOnIt()
         {
             ReachTheArray();

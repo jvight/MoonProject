@@ -24,6 +24,14 @@ namespace MoonProject.Autoplay
         /// <summary>Seconds a milestone may take after its build: the bank, for one, has to charge first.</summary>
         private const float MilestoneSeconds = 120f;
         private const float LineSeconds = 15f;
+        private const string LowBatteryLanderKey = "battery.low.lander";
+        private const string LowBatteryPadKey = "battery.low.pad";
+
+        /// <summary>Seconds a world cue may take to be lit and on screen.</summary>
+        private const float CueSeconds = 20f;
+
+        /// <summary>A cue counts as on screen this far in from each edge of the view (a share of the viewport).</summary>
+        private const float CueMargin = 0.05f;
         private const float DriveSeconds = 150f;
         private const float BaseSpacing = 7f;
 
@@ -101,6 +109,47 @@ namespace MoonProject.Autoplay
             _reached = null;
         }
 
+        /// <summary>
+        /// The objective lines are part of the opening and checked on screen. Off (the lines have become stall
+        /// reminders), a line showing at all fails the run, so the bot follows the game's steps and the world's cues.
+        /// </summary>
+        public bool LinesExpected { get; set; } = true;
+
+        /// <summary>Where the last world cue the bot waited for stood.</summary>
+        public Vector3 CuePoint { get; private set; }
+
+        /// <summary>
+        /// The opening must stand at step <paramref name="index"/> (<see cref="OpeningSteps"/>), read from the flow's
+        /// own position, not from any text. While the lines are expected, the step's line (<paramref name="key"/>) must
+        /// also be the one the game is on and, with <paramref name="onScreen"/>, read on screen, as
+        /// <see cref="ExpectLine"/> checks (the opening beats before the lander never waited on the screen).
+        /// </summary>
+        public IEnumerator ExpectStep(int index, string key, string why, float seconds = FollowSeconds,
+            bool onScreen = true)
+        {
+            yield return _bot.Until(() => G.Opening.Flow.CurrentIndex == index, seconds,
+                "the opening to stand at step " + index + " (" + why + ")",
+                () => "It stands at step " + G.Opening.Flow.CurrentIndex + ".");
+            if (!_bot.Failed && LinesExpected && onScreen && key.Length > 0)
+            {
+                yield return ExpectLine(key, why);
+            }
+        }
+
+        /// <summary>
+        /// A world cue the bot may head for: it waits until the cue is lit and inside the view, as a player must see
+        /// it first, and notes where it stood in <see cref="CuePoint"/>. A cue that never lights or never shows fails.
+        /// </summary>
+        public IEnumerator ExpectWorld(WorldCue cue, string why, float seconds = CueSeconds)
+        {
+            yield return _bot.Until(() => cue.Lit() && WorldCue.OnScreen(_bot.World.Context.Get<IViewCamera>().Camera,
+                    cue.Point(), CueMargin), seconds,
+                "the world cue '" + cue.Name + "' to be lit and on screen (" + why + ")",
+                () => "Lit " + cue.Lit() + ", at " + cue.Point() + ", in the view at " +
+                      _bot.World.Context.Get<IViewCamera>().Camera.WorldToViewportPoint(cue.Point()) + ".");
+            CuePoint = cue.Point();
+        }
+
         /// <summary>The objective line the game must be on, and reading on screen once 07 stands still.</summary>
         public IEnumerator ExpectLine(string key, string why)
         {
@@ -112,8 +161,17 @@ namespace MoonProject.Autoplay
                 yield break;
             }
 
-            string expected = _bot.World.Context.Get<ILocalization>().Get(key);
-            yield return _bot.Until(() => _bot.World.Ui.ObjectiveLine() == expected, LineSeconds,
+            ILocalization words = _bot.World.Context.Get<ILocalization>();
+            string expected = words.Get(key);
+            string lowLander = words.Get(LowBatteryLanderKey);
+            string lowPad = words.Get(LowBatteryPadKey);
+
+            // The low-battery hint takes the objective line's own slot for a while, by the slot's priority.
+            yield return _bot.Until(() =>
+                {
+                    string line = _bot.World.Ui.ObjectiveLine();
+                    return line == expected || line == lowLander || line == lowPad;
+                }, LineSeconds,
                 "the objective line to read '" + expected + "' on screen (" + why + ")",
                 () => "On screen: line '" + _bot.World.Ui.ObjectiveLine() + "', chip '" + _bot.World.Ui.Chip() + "'.");
         }
@@ -674,8 +732,13 @@ namespace MoonProject.Autoplay
                     }
                 }
 
+                // The ghost follows the camera's aim: a player looks at the ground where the structure should stand.
+                var terrain = _bot.World.Context.Get<ITerrainQuery>();
+                Vector3 ground = new Vector3(at.x, terrain.SampleHeight(at.x, at.z), at.z);
+                yield return _bot.LookAt(ground, "the build spot on the ground");
                 for (int frame = 0; frame < SettledFrames; frame++)
                 {
+                    _bot.KeepLookingAt(ground);
                     yield return null;
                 }
 

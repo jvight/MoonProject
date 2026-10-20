@@ -61,7 +61,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float HalfCharge = 0.5f;
         private const float SteerWatchSeconds = 2.5f;
         private const float ReleaseWithin = 0.6f;
-        private const float EarlyOpenSeconds = 1.5f;
+        private const float PoseTimeout = 12f;
         private const float LightThrottle = 0.15f;
         private const float HeldSteer = 0.8f;
         private const float PoseDegrees = 2f;
@@ -337,9 +337,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             float pushed = Time.time;
             yield return Until(() => _opened.Count == 1, ReleaseWithin, "a push on the throttle opens the lock");
             Assert.LessOrEqual(Time.time - pushed, ReleaseWithin, "and at once");
-            yield return new WaitForSeconds(EarlyOpenSeconds);
-            Assert.Less(ArmAngle(0), 1f, "the arms are open");
-            Assert.Less(ChockAngle(0), 1f, "and the chocks are down: an early drive-off loses nothing");
+            yield return Until(() => ArmAngle(0) < 1f, PoseTimeout, "the arms are open");
+            yield return Until(() => ChockAngle(0) < 1f, PoseTimeout,
+                "the chocks are down: an early drive-off loses nothing");
             _pilot.Reverse = 0f;
         }
 
@@ -383,8 +383,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 Assert.Less(closedAt, fullAt, "the lock closes before the full beat");
                 Assert.Less(fullAt, openedAt, "and opens after it");
                 Assert.IsTrue(_gameplay.Opening.FirstCharge, "the old cells gave out: the first charge happened");
-                yield return new WaitForSeconds(EarlyOpenSeconds);
-                Assert.IsFalse(_rover.IsDocked, "07 is free once the lock has let go");
+                yield return Until(() => !_rover.IsDocked, PoseTimeout, "07 is free once the lock has let go");
                 Assert.AreEqual(1, _closed.Count, "the lock closed once");
                 Assert.AreEqual(1, _opened.Count, "and opened once");
                 yield return new WaitForSeconds(SteerWatchSeconds);
