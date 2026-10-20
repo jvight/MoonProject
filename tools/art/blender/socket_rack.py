@@ -61,7 +61,7 @@ RACK_DIMS: dict[str, float] = {
     "foot_x": 0.62,
     "foot_length": 0.40,
     "foot_splay_deg": 7.0,
-    # Bays (spec): centres x = -0.48, 0, +0.48 at y = 0.72, z = 0.12
+    # Bays: centres x = +0.48, 0, -0.48 for bays 0..2 (left to right as the player faces the rack) at y = 0.72, z = 0.12
     "bay_x_step": 0.48,
     "bay_y": 0.72,
     "bay_z": 0.12,
@@ -330,7 +330,7 @@ def _build_frame(root: bpy.types.Object) -> None:
     # Bay mounting standoffs: one steel block carrying each bay plate off the board
     for i in range(3):
         mb.add_bevel_box(
-            center_u=((i - 1) * d["bay_x_step"], d["bay_y"], 0.078),
+            center_u=((1 - i) * d["bay_x_step"], d["bay_y"], 0.078),
             size_u=(0.30, 0.30, 0.036),
             mat="R1_GreyMetal",
             bevel=0.0,
@@ -407,7 +407,8 @@ def _build_label_plate(root: bpy.types.Object) -> None:
 def _build_bay(root: bpy.types.Object, index: int) -> None:
     """Bay `index`: its back plate with a raised rim and lamp bezel, the line silhouette, the fill, lamp and jaws."""
     d = RACK_DIMS
-    bx = (index - 1) * d["bay_x_step"]
+    # Bay 0 sits on the left as the player faces the rack's front (+Z toward them puts local +X on their left)
+    bx = (1 - index) * d["bay_x_step"]
     by = d["bay_y"]
     bz = d["bay_z"]
     bay = r1kit.create_empty(f"Bay_{index}", parent=root, pivot_u=(bx, by, bz))
