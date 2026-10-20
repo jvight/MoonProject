@@ -716,7 +716,7 @@
         },
         {
             "key": "next.v2.build_battery_bank",
-            "text": "Tow the power module home and build the battery bank on it."
+            "text": "Build the battery bank on the module."
         },
         {
             "key": "next.v2.move_battery_bank",
@@ -733,6 +733,10 @@
         {
             "key": "next.v3.scan_module",
             "text": "Night is coming. Scan the habitat's power module."
+        },
+        {
+            "key": "next.v3.tow_module",
+            "text": "The power module is the bank's frame. Tow it home to the apron."
         },
         {
             "key": "next.v3.dock_for_dusk",

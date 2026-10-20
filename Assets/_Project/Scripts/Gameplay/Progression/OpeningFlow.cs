@@ -110,8 +110,8 @@ namespace MoonProject.Gameplay
 
         /// <summary>
         /// R5 to B9: the first free choice names the near sites, then, once one is visited, the dock that ends the day;
-        /// at dusk, the power module to scan, then the module to tow home and build the bank on, or the bank to move
-        /// into the grid's reach.
+        /// at dusk, the power module to scan, then the module to tow home, then the bank to build on it, or the bank to
+        /// move into the grid's reach.
         /// </summary>
         private string NightLine()
         {
@@ -122,7 +122,8 @@ namespace MoonProject.Gameplay
 
             return !_game.Knows(StructureIds.BatteryBank) ? OpeningKeys.ScanModule
                 : _game.Built(StructureIds.BatteryBank) ? OpeningKeys.MoveBatteryBank
-                : OpeningKeys.BuildBatteryBank;
+                : _game.ModuleHome ? OpeningKeys.BuildBatteryBank
+                : OpeningKeys.TowModuleHome;
         }
 
         /// <summary>The key of the line the current step would say, or empty when it has none (not shown).</summary>
