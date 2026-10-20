@@ -215,8 +215,12 @@ namespace MoonProject.Autoplay
                 yield return cue.Lit() ? _bot.LookAround(CueSweepSeconds) : null;
             }
 
+            Camera view = _bot.World.Context.Get<IViewCamera>().Camera;
+            Vector3 seen = view.WorldToViewportPoint(cue.Point());
             _bot.Warn("world cue '" + cue.Name + "' was not lit and on screen within " +
-                      seconds.ToString("0", CultureInfo.InvariantCulture) + " s (" + why + "): lit " + cue.Lit() + ".");
+                      seconds.ToString("0", CultureInfo.InvariantCulture) + " s (" + why + "): lit " + cue.Lit() +
+                      ", at " + cue.Point() + ", " + Vector3.Distance(view.transform.position, cue.Point()).ToString("0") +
+                      " m from the camera, in the view at " + seen + ".");
         }
 
         /// <summary>The objective line the game must be on, and reading on screen once 07 stands still.</summary>
