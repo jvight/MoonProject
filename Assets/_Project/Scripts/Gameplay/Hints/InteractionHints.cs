@@ -19,6 +19,7 @@ namespace MoonProject.Gameplay
             InteractionKind.PickUp, InteractionKind.Build, InteractionKind.Salvage, InteractionKind.Scan,
             InteractionKind.Deconstruct, InteractionKind.OpenBuild, InteractionKind.FitPart, InteractionKind.Tether,
             InteractionKind.Install,
+            InteractionKind.Rack,
         };
 
         private readonly SalvageField _salvage;
@@ -31,6 +32,7 @@ namespace MoonProject.Gameplay
         private readonly FirstUseSpots _firstUse;
         private readonly TowLine _tow;
         private readonly RelayRepair _relay;
+        private readonly SocketRackView _rack;
         private readonly Vector3[] _scanBuffer = new Vector3[MaxFocusPoints];
 
         /// <param name="beam">
@@ -38,12 +40,15 @@ namespace MoonProject.Gameplay
         /// </param>
         /// <param name="cutter">07's cutter: while it is faulted (opening-v2 §10) a cut's hint shows not ready.</param>
         /// <param name="tow">07's tow cable: a load in hook reach is where the tether key is taught.</param>
+        /// <param name="relay">relay.1's repair: its feed socket in reach is where a held part is fitted.</param>
+        /// <param name="rack">The socket rack in the world: the outline 07 reads names its part.</param>
         public InteractionHints(SalvageField salvage, SealedContainers containers, ScanField scans,
             BuildField building, BeamWork beam, Cutter cutter, PickupReach pickups, FirstUseSpots firstUse,
-            TowLine tow, RelayRepair relay)
+            TowLine tow, RelayRepair relay, SocketRackView rack)
         {
             _tow = tow ?? throw new ArgumentNullException(nameof(tow));
             _relay = relay ?? throw new ArgumentNullException(nameof(relay));
+            _rack = rack ?? throw new ArgumentNullException(nameof(rack));
             _firstUse = firstUse ?? throw new ArgumentNullException(nameof(firstUse));
             _salvage = salvage != null ? salvage : throw new ArgumentNullException(nameof(salvage));
             _containers = containers ?? throw new ArgumentNullException(nameof(containers));
@@ -168,6 +173,10 @@ namespace MoonProject.Gameplay
                     bool atSocket = _relay.TryGetInstall(out Vector3 socket);
                     hint = atSocket ? new InteractionHint(kind, socket, true) : InteractionHint.None;
                     return atSocket;
+                case InteractionKind.Rack:
+                    bool reads = _rack.TryGetRead(out Vector3 bay, out string bayId);
+                    hint = reads ? new InteractionHint(kind, bay, true, bayId) : InteractionHint.None;
+                    return reads;
                 default:
                     hint = InteractionHint.None;
                     return false;

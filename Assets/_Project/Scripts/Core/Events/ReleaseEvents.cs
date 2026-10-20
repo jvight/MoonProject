@@ -60,14 +60,19 @@ namespace MoonProject.Core.Events
 
     /// <summary>
     /// 07 docked after the release's view: the socket rack at the pad shows its first outlines (slice 4.3 subscribes).
+    /// <see cref="Position"/> and <see cref="Rotation"/> are the dock's: 07's place and heading on the pad, the frame
+    /// the rack stands beside.
     /// </summary>
     public readonly struct SocketRackRevealed
     {
-        public SocketRackRevealed(Vector3 position)
+        public SocketRackRevealed(Vector3 position, Quaternion rotation)
         {
             Position = position;
+            Rotation = rotation;
         }
 
         public Vector3 Position { get; }
+
+        public Quaternion Rotation { get; }
     }
 }
