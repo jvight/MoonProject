@@ -44,7 +44,8 @@ namespace MoonProject.Gameplay
         /// that fills with <see cref="HoldProgress"/>.
         /// </summary>
         public bool IsHold => Kind != InteractionKind.None && Kind != InteractionKind.PickUp &&
-                              Kind != InteractionKind.OpenBuild && Kind != InteractionKind.FitPart;
+                              Kind != InteractionKind.OpenBuild && Kind != InteractionKind.FitPart &&
+                              Kind != InteractionKind.Tether;
 
         /// <summary>How far the hold has come while the key is down (0..1); 0 at rest.</summary>
         public float HoldProgress { get; }

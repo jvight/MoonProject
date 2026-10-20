@@ -17,7 +17,7 @@ namespace MoonProject.Gameplay
         private static readonly InteractionKind[] Priority =
         {
             InteractionKind.PickUp, InteractionKind.Build, InteractionKind.Salvage, InteractionKind.Scan,
-            InteractionKind.Deconstruct, InteractionKind.OpenBuild, InteractionKind.FitPart,
+            InteractionKind.Deconstruct, InteractionKind.OpenBuild, InteractionKind.FitPart, InteractionKind.Tether,
         };
 
         private readonly SalvageField _salvage;
@@ -28,15 +28,19 @@ namespace MoonProject.Gameplay
         private readonly Cutter _cutter;
         private readonly PickupReach _pickups;
         private readonly FirstUseSpots _firstUse;
+        private readonly TowLine _tow;
         private readonly Vector3[] _scanBuffer = new Vector3[MaxFocusPoints];
 
         /// <param name="beam">
         /// 07's beam work: while new work sleeps (the crawl, docs/features/M3-20) a beam verb's hint shows as not ready.
         /// </param>
         /// <param name="cutter">07's cutter: while it is faulted (opening-v2 §10) a cut's hint shows not ready.</param>
+        /// <param name="tow">07's tow cable: a load in hook reach is where the tether key is taught.</param>
         public InteractionHints(SalvageField salvage, SealedContainers containers, ScanField scans,
-            BuildField building, BeamWork beam, Cutter cutter, PickupReach pickups, FirstUseSpots firstUse)
+            BuildField building, BeamWork beam, Cutter cutter, PickupReach pickups, FirstUseSpots firstUse,
+            TowLine tow)
         {
+            _tow = tow ?? throw new ArgumentNullException(nameof(tow));
             _firstUse = firstUse ?? throw new ArgumentNullException(nameof(firstUse));
             _salvage = salvage != null ? salvage : throw new ArgumentNullException(nameof(salvage));
             _containers = containers ?? throw new ArgumentNullException(nameof(containers));
@@ -153,6 +157,10 @@ namespace MoonProject.Gameplay
                     bool atRover = _firstUse.TryGetFitPart(out Vector3 rover);
                     hint = atRover ? new InteractionHint(kind, rover, true) : InteractionHint.None;
                     return atRover;
+                case InteractionKind.Tether:
+                    bool hookable = _tow.TryGetHookable(out Vector3 hitch);
+                    hint = hookable ? new InteractionHint(kind, hitch, true) : InteractionHint.None;
+                    return hookable;
                 default:
                     hint = InteractionHint.None;
                     return false;

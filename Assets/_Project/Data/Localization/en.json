@@ -923,6 +923,10 @@
             "text": "Fit"
         },
         {
+            "key": "hint.tether",
+            "text": "Hook cable"
+        },
+        {
             "key": "pickup.crate.contents",
             "text": "the parts"
         },

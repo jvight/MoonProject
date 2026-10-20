@@ -42,5 +42,11 @@ namespace MoonProject.Gameplay
         /// first time only).
         /// </summary>
         FitPart = 18,
+
+        /// <summary>
+        /// A towable load's hitch lies within the winch's hook reach and nothing is on the cable: press Tether to hook
+        /// it (the world's chip at the hitch, a first time only).
+        /// </summary>
+        Tether = 20,
     }
 }

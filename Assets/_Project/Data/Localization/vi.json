@@ -923,6 +923,10 @@
             "text": "Lắp"
         },
         {
+            "key": "hint.tether",
+            "text": "Móc cáp"
+        },
+        {
             "key": "pickup.crate.contents",
             "text": "phụ tùng"
         },

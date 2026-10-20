@@ -196,8 +196,19 @@ namespace MoonProject.Gameplay
             }
         }
 
-        /// <summary>The nearest load not on the cable whose hitch lies within the hook reach of the winch.</summary>
-        private void Hook()
+        /// <summary>
+        /// While nothing is on the cable, the hitch of the load the tether key would hook now (the nearest within hook
+        /// reach of the winch): where the world teaches the key (<see cref="InteractionKind.Tether"/>).
+        /// </summary>
+        public bool TryGetHookable(out Vector3 hitch)
+        {
+            ITowable nearest = _load == null ? Nearest() : null;
+            hitch = nearest != null ? nearest.Hitch : Vector3.zero;
+            return nearest != null;
+        }
+
+        /// <summary>The nearest load whose hitch lies within the hook reach of the winch, or null.</summary>
+        private ITowable Nearest()
         {
             Vector3 winch = _winch.position;
             float best = _settings.HookReach * _settings.HookReach;
@@ -212,6 +223,13 @@ namespace MoonProject.Gameplay
                 }
             }
 
+            return nearest;
+        }
+
+        /// <summary>Hooks the nearest load not on the cable whose hitch lies within the hook reach of the winch.</summary>
+        private void Hook()
+        {
+            ITowable nearest = Nearest();
             if (nearest == null)
             {
                 return;

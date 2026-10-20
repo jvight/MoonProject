@@ -1022,6 +1022,44 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator ALoadInHookReach_TeachesTheTetherKeyOnce_AtItsHitch()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            InputSystem.AddDevice<Mouse>();
+            Boot();
+            _rig.Ui.Ledger.RecordLookTaught();
+            _rig.Ui.Ledger.RecordDriveTaught();
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            var hitch = new Vector3(1f, 0.5f, 4f);
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Tether, hitch, true);
+            float limit = Time.realtimeSinceStartup + 4f;
+            while (!_rig.Ui.Prompt.IsVisible && Time.realtimeSinceStartup < limit)
+            {
+                yield return null;
+            }
+
+            Assert.IsTrue(_rig.Ui.Prompt.IsVisible, "the chip shows at the load's hitch");
+            Assert.AreEqual(Text(UiKeys.Hint(InteractionKind.Tether)), _rig.Ui.Layout.PromptWord.text, "Hook cable");
+            Assert.AreEqual(Text("glyph.mouse.rightbutton"), _rig.Ui.Layout.PromptGlyphLabel.text, "the tether key");
+            Assert.AreEqual(DisplayStyle.None, _rig.Ui.Layout.PromptHoldRing.style.display.value, "a press, not a hold");
+
+            Events.Publish(new TowAttached("habitat.power_module", hitch, 1f));
+            yield return Seconds(1.5f);
+            Assert.IsFalse(_rig.Ui.Prompt.IsVisible, "hooking a load ends the chip");
+
+            _rig.Fakes.PrimaryHint = InteractionHint.None;
+            yield return Seconds(0.5f);
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Tether, hitch + Vector3.right * 20f, true);
+            float until = Time.realtimeSinceStartup + 3f;
+            while (Time.realtimeSinceStartup < until)
+            {
+                Assert.IsFalse(_rig.Ui.Prompt.IsVisible, "it teaches once: never again, even at another load");
+                yield return null;
+            }
+        }
+
+        [UnityTest]
         public IEnumerator TheCall_ShowsOn07sFace_AfterTwoSecondsStill_AndForThreeOnAChange_NeverBesideAChip()
         {
             InputSystem.AddDevice<Keyboard>();
