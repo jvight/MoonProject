@@ -64,6 +64,12 @@ namespace MoonProject.Autoplay
         private const float SunsetSeconds = 300f;
         private const float ChargeSeconds = 60f;
 
+        /// <summary>Seconds the pad may take to take 07 in once it rests there (a full 07 waits out the rest time).</summary>
+        private const float DuskSeconds = 15f;
+
+        /// <summary>The 1971 seismic station's story scan (R5's curiosity scan).</summary>
+        private const string SeismicStory = "seismic";
+
         /// <summary>The bot heads back to the pad to charge when 07's cells fall to this share.</summary>
         private const float TopUpBelow = 0.3f;
 
@@ -348,6 +354,38 @@ namespace MoonProject.Autoplay
         }
 
         /// <summary>B7: the habitat's airlock panel, read from square on.</summary>
+        /// <summary>
+        /// R5, the first free choice: out to the 1971 seismic station, one of the two near sites, to read its dead
+        /// station box (its curiosity scan).
+        /// </summary>
+        public IEnumerator VisitTheSeismicStation()
+        {
+            ScanFragment station = G.Scans.Find(StoryScan.IdPrefix + SeismicStory);
+            if (station == null)
+            {
+                _bot.Fail("the seismic station has no curiosity scan.");
+                yield break;
+            }
+
+            Vector3 home = Flat(Pad() - station.Point).normalized;
+            yield return Scan(station, home, PanelStandOff);
+            if (!_bot.Failed && !G.Opening.Dusk.Visited)
+            {
+                _bot.Fail("07 read the seismic station but the opening never counted the visit.");
+            }
+        }
+
+        /// <summary>R6: back onto the pad; the dock after the visit begins the first dusk.</summary>
+        public IEnumerator DockForTheDusk(string structureId)
+        {
+            Vector3 pad = PlacedPosition(structureId);
+            yield return _bot.DriveTo(Flat(pad) + Vector3.back * 6f, 2f, "a line-up for the pad", DriveSeconds);
+            yield return _bot.DriveTo(Flat(pad), ApproachThrottleRadius, "the pad", DriveSeconds);
+            yield return _bot.Until(() => G.Opening.DuskBegun, DuskSeconds,
+                "the dock after the visit to begin the first dusk",
+                () => "On the pad " + G.PadLock.OnPad + ", lock raised " + G.PadLock.Raised + ".");
+        }
+
         public IEnumerator ReadTheAirlockPanel()
         {
             ScanFragment panel = G.Scans.Find(StoryScan.IdPrefix + "airlock");
