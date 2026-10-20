@@ -3532,6 +3532,64 @@
       "pick": "rover_lights_switch"
     },
     {
+      "id": "rack_fill",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/rack_fill.wav"
+      ],
+      "variantLabels": [
+        "rack_fill"
+      ],
+      "sha256": [
+        "22b5c117cf71c88914a587f407060e0f8b36d6975289ca1710c294e588d6202f"
+      ],
+      "volumeMin": 0.65,
+      "volumeMax": 0.65,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Opening v3 4.3, a rack bay filled (RackChanged Filled): the two jaws easing shut into a solid clunk-latch, then the bay lamp's low warm hum swelling on D3.",
+      "source": "sampled",
+      "pick": "rack_fill"
+    },
+    {
+      "id": "rack_outline",
+      "category": "tick_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/rack_outline.wav"
+      ],
+      "variantLabels": [
+        "rack_outline"
+      ],
+      "sha256": [
+        "05d42b75de31168be2dbc226a3b8815ac15595f834b2881b6b196b6472cc9bc3"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -26.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "A rack bay's outline first appearing (RackChanged Outline): a quiet relay click, a faint tone on A5.",
+      "source": "sampled",
+      "pick": "rack_outline"
+    },
+    {
       "id": "mast_clunk",
       "category": "oneshot_3d",
       "milestone": "M3",
