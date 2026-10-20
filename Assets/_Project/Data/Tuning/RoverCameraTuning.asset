@@ -184,7 +184,7 @@ MonoBehaviour:
       _pushInSeconds: 1
       _darkSeconds: 0.5
       _powerOnSeconds: 1.2
-      _logoSeconds: 4
+      _logoSeconds: 5
       _loadSeconds: 2.4
       _readySeconds: 0.6
       _readyEyesSeconds: 0.4

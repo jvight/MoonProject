@@ -31,10 +31,10 @@ namespace MoonProject.Rover
 
         [Tooltip("The maker's mark draws itself stroke by stroke at a plotter's pace, its wordmark types under it, " +
                  "holds at full brightness long enough to read, then dims away with an afterglow (about 1.6 s of " +
-                 "strokes, the wordmark at ~14 characters a second, a hold of 1.2 s or more, a 0.5 s dim; the shares " +
+                 "strokes, the wordmark at ~14 characters a second, a hold of 1.3 s or more, a 0.5 s dim; the shares " +
                  "are UI's BootFaceSettings).")]
         [Range(1f, 6f)]
-        [SerializeField] private float _logoSeconds = 4f;
+        [SerializeField] private float _logoSeconds = 5f;
 
         [Tooltip("The machine loads its field profile in five discrete steps, each a jump after an irregular dwell " +
                  "(UI's BootFaceSettings shapes them), never a smooth bar.")]
