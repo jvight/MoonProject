@@ -1,0 +1,90 @@
+{
+  "model": "relay_contact_pad",
+  "pivot_tolerance": 0.005,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_BareSteel",
+    "R1_Copper",
+    "R1_CreamEnamel",
+    "R1_GreyMetal",
+    "R1_LampAmber",
+    "R1_OrangeStripe",
+    "R1_Rubber",
+    "R1_SagePatch"
+  ],
+  "max_triangles": 1500,
+  "max_meshes": 6,
+  "max_draw_calls": 15,
+  "allow_rotation": [],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "bounds": {
+    "size": [
+      2.15,
+      3.13,
+      0.22
+    ],
+    "tolerance": 0.04,
+    "min_size": [
+      2.11,
+      3.09,
+      0.18
+    ],
+    "max_size": [
+      2.19,
+      3.17,
+      0.26
+    ]
+  },
+  "nodes": {
+    "Conduit": {
+      "pivot": [
+        0.0,
+        -1.15,
+        0.0
+      ]
+    },
+    "ContactShoes": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.06
+      ]
+    },
+    "Contact_Anchor": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.1
+      ]
+    },
+    "Deck": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "PadLamp": {
+      "pivot": [
+        0.0,
+        -1.21,
+        0.18
+      ]
+    },
+    "RelayContactPad": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "WheelPads": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.066
+      ]
+    }
+  }
+}

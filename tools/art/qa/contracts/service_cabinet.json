@@ -1,0 +1,98 @@
+{
+  "model": "service_cabinet",
+  "pivot_tolerance": 0.005,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_BareSteel",
+    "R1_CreamEnamel",
+    "R1_GreyMetal",
+    "R1_LampAmber",
+    "R1_OrangeStripe",
+    "R1_Rubber",
+    "R1_SagePatch"
+  ],
+  "max_triangles": 2600,
+  "max_meshes": 6,
+  "max_draw_calls": 17,
+  "allow_rotation": [
+    "Door*"
+  ],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "bounds": {
+    "size": [
+      0.9,
+      1.06,
+      0.85
+    ],
+    "tolerance": 0.04,
+    "min_size": [
+      0.86,
+      1.02,
+      0.81
+    ],
+    "max_size": [
+      0.94,
+      1.1,
+      0.89
+    ]
+  },
+  "nodes": {
+    "Body": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Door": {
+      "pivot": [
+        -0.306,
+        0.222,
+        0.445
+      ]
+    },
+    "DoorSeal": {
+      "pivot": [
+        -0.536,
+        0.791,
+        0.391
+      ]
+    },
+    "InteriorLamp": {
+      "pivot": [
+        0.0,
+        0.11,
+        0.785
+      ]
+    },
+    "Light_Anchor": {
+      "pivot": [
+        0.0,
+        0.11,
+        0.745
+      ]
+    },
+    "Part_Anchor": {
+      "pivot": [
+        0.0,
+        -0.01,
+        0.406
+      ]
+    },
+    "ServiceCabinet": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Shelf": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.4
+      ]
+    }
+  }
+}
