@@ -72,6 +72,14 @@ namespace MoonProject.World.PlayModeTests
         private const float CueTowerLook = 7f;
         private const string CueLampName = "ModuleLamp";
 
+        // relay.2's hut: its site and nodes, 06 against it, how far out the far eye stands and how high it looks.
+        private const string HutSiteName = "Relay2Site";
+        private const string HutName = "RelayHut";
+        private const string HutApproachName = "ScanApproach";
+        private const string HutElderName = "Elder06";
+        private const float HutStandOff = 15f;
+        private const float HutLookHeight = 1f;
+
         // relay.1's lamp: its node, the answered loop's length, and the crop's lens.
         private const string RelayLampName = "RelayLamp";
         private const float RelayAnsweredSignSeconds = 6f;
@@ -873,6 +881,89 @@ namespace MoonProject.World.PlayModeTests
                 Shoot(camera, "relay-lamp-crop-after");
                 Debug.Log($"[relay-site] relit: lamp level {lamp.Level:F2}; sun {SunReport(context)}, " +
                           $"{context.Get<ISunlight>().Phase}");
+            }
+            finally
+            {
+                Object.Destroy(host);
+            }
+
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        /// <summary>
+        /// relay.2's hut by the canyon mouth at night (opening v3 5.2b), on a real New Game: the small 1980s hut with
+        /// its dark relay lamp and 06 slumped against it, from 15 m out on the approach and from the scan spot.
+        /// Logs/world-captures/relay2-hut-*.png.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(CanyonSessionScene))]
+        [PostBuildCleanup(typeof(CanyonSessionScene))]
+        public IEnumerator RelayHut_IsCapturedAtNight_From15m()
+        {
+            BootstrapHarness.DeleteSaveFiles(CanyonSessionScene.SaveSlot);
+#if UNITY_EDITOR
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(CanyonSessionScene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            while (!loading.isDone)
+            {
+                yield return null;
+            }
+#else
+            throw new NotSupportedException("The atmosphere session loads the scene through the editor.");
+#endif
+            GameBootstrap bootstrap = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
+            {
+                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
+            }
+
+            Assert.IsNotNull(bootstrap, "the scene has its bootstrap");
+            GameContext context = bootstrap.Context;
+            _awoke = context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
+            float started = Time.time;
+            while (!_awake)
+            {
+                Assert.Less(Time.time - started, WakeTimeout, "07 wakes up");
+                yield return null;
+            }
+
+            foreach (OpeningMilestone milestone in new[]
+                {
+                    OpeningMilestone.FirstCharge, OpeningMilestone.PowerOn, OpeningMilestone.NightReady,
+                })
+            {
+                context.Events.Publish(new OpeningMilestoneReached(milestone, true));
+            }
+
+            yield return new WaitForSeconds(SettleSeconds);
+            Transform site = FindNamed(HutSiteName);
+            Transform hut = site.Find(HutName);
+            Transform approach = site.Find(HutApproachName);
+            Transform six = FindNamed(HutElderName);
+            Assert.IsNotNull(hut, "relay.2's site has its hut");
+            Assert.IsNotNull(approach, "relay.2's site has its scan spot");
+            Vector3 middle = (hut.position + six.position) * 0.5f;
+            Vector3 far = OnGround(context.Get<ITerrainQuery>(),
+                    new Vector2(middle.x + site.forward.x * HutStandOff, middle.z + site.forward.z * HutStandOff))
+                + Vector3.up * CueLowEyeHeight;
+            Vector3 look = middle + Vector3.up * HutLookHeight;
+            Camera view = context.Get<IViewCamera>().Camera;
+            var host = new GameObject("RelayHutCamera");
+            try
+            {
+                var camera = host.AddComponent<Camera>();
+                camera.CopyFrom(view);
+                camera.enabled = false;
+                CopyPipelineSettings(view, camera);
+                Place(camera, LookPose("relay2-hut-15m", far, look, OpeningFov));
+                Shoot(camera, "relay2-hut-15m");
+                Place(camera, LookPose("relay2-hut-scan-spot", approach.position + Vector3.up * CueLowEyeHeight,
+                    six.position + Vector3.up * HutLookHeight, OpeningFov));
+                Shoot(camera, "relay2-hut-scan-spot");
+                Debug.Log($"[relay2-hut] hut {Vector3.Distance(hut.position, six.position):F1} m from 06; scan spot " +
+                          $"{Vector3.Distance(approach.position, six.position):F1} m out; eye " +
+                          $"{Vector3.Distance(far, middle):F1} m");
             }
             finally
             {
