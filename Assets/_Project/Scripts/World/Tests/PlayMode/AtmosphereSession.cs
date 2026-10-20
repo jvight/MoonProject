@@ -73,12 +73,11 @@ namespace MoonProject.World.PlayModeTests
         private const string CueLampName = "ModuleLamp";
 
         // The call's point of light: when the face shot holds, one sign's length, how near its brightest a shot waits
-        // for, and how far along its direction the screen probe looks.
+        // for.
         private const string SkyPointName = "CallSkyPoint";
         private const float SkyPointFaceShotSeconds = 3f;
         private const float SkyPointSignSeconds = 4f;
         private const float SkyPointPeakSlack = 0.02f;
-        private const float SkyPointProbeDistance = 100f;
         private const string CueLampLens = "PowerModule_StatusLamp";
         private const float CueLampStandOff = 10f;
         private const float CueLampPeak = 0.9f;
@@ -386,8 +385,8 @@ namespace MoonProject.World.PlayModeTests
         /// <summary>
         /// The call's point of light beside dark Earth (opening v3 purpose §2) on a real New Game, at R1: from 07's
         /// face shot, from the first chase view after the hand-over, and from the chase camera with 07 turned toward
-        /// it, each at the brightest moment of one 4 s sign, with its screen spot, level and whether a call signal is
-        /// heard in the log. Logs/world-captures/skypoint-*.png.
+        /// it, each at the brightest moment of one 4 s sign, with its level and whether a call signal is heard in the
+        /// log. Logs/world-captures/skypoint-*.png.
         /// </summary>
         [UnityTest]
         [Timeout(300000)]
@@ -442,7 +441,7 @@ namespace MoonProject.World.PlayModeTests
 
         /// <summary>
         /// Waits through one sign for the point's brightest moment, then shoots <paramref name="camera"/> and logs
-        /// where on screen the point is.
+        /// its level, the call's state and whether its signal is heard.
         /// </summary>
         private static IEnumerator ShootSkyPoint(GameContext context, Camera camera, CallSkyPoint point, string name)
         {
@@ -461,12 +460,9 @@ namespace MoonProject.World.PlayModeTests
             }
 
             Shoot(camera, name);
-            Vector3 sky = camera.transform.position + context.Get<ICallSource>().Direction * SkyPointProbeDistance;
-            Vector3 screen = camera.WorldToViewportPoint(sky);
             bool heard = context.TryGet(out ICallSignal _);
             Debug.Log($"[skypoint] {name}: level {point.Level:F2} (brightest {brightest:F2}), call " +
-                      $"{context.Get<ICallSource>().State}, signal heard {heard}; viewport ({screen.x:F2}, " +
-                      $"{screen.y:F2}, ahead {screen.z > 0f})");
+                      $"{context.Get<ICallSource>().State}, signal heard {heard}");
         }
 
         /// <summary>
