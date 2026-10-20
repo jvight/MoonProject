@@ -13,12 +13,17 @@ namespace MoonProject.Audio
     /// not on a restore, not just after its own build, one swell for several at once): a relay thunk and a
     /// transformer swell rising onto its lamp; and each base lamp warming on at dusk (<see cref="BaseLampLit"/>, one
     /// sound per lamp as its light starts easing up, at that structure, a step higher along the lighting order).
+    /// The antenna mast raised segment by segment (<see cref="MastSegmentRaised"/>): a heavy telescoping clunk at the
+    /// mast per segment, a pentatonic step higher each, and the settle when the top locks; a restored mast is silent.
     /// Initialised by <see cref="AudioDirector"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class GameplayAudio : MonoBehaviour
     {
-        private const int SubscriptionCount = 7;
+        private const int SubscriptionCount = 8;
+
+        /// <summary>The D major pentatonic's steps above D in semitones: segment k's clunk is pitched up step k.</summary>
+        private static readonly float[] PentatonicSemitones = { 0f, 2f, 4f, 7f, 9f, 12f };
         private const int InitialStructureCapacity = 32;
 
         [Tooltip("Assets/_Project/Data/Audio/GameplayAudioTuning.asset.")]
@@ -39,6 +44,8 @@ namespace MoonProject.Audio
         private CueHandle _buildDeconstruct;
         private CueHandle _powerOn;
         private CueHandle _baseLamp;
+        private CueHandle _mastClunk;
+        private CueHandle _mastSettle;
         private AudioSource _weldLoop;
         private float _weldLoopCueVolume;
         private int _lampNotes;
@@ -72,10 +79,13 @@ namespace MoonProject.Audio
             _buildDeconstruct = director.Resolve(AudioCueIds.BuildDeconstruct);
             _powerOn = director.Resolve(AudioCueIds.StructurePowerOn);
             _baseLamp = director.Resolve(AudioCueIds.BaseLampOn);
+            _mastClunk = director.Resolve(AudioCueIds.MastClunk);
+            _mastSettle = director.Resolve(AudioCueIds.MastSettle);
             CueHandle weldLoop = director.Resolve(AudioCueIds.BuildWeldLoop);
             if (!(_buildGhost.IsValid && _buildSnap.IsValid && _buildInvalid.IsValid && _buildPlace.IsValid &&
                   weldLoop.IsValid && _buildStageComplete.IsValid && _buildStructureComplete.IsValid &&
-                  _buildDeconstruct.IsValid && _powerOn.IsValid && _baseLamp.IsValid))
+                  _buildDeconstruct.IsValid && _powerOn.IsValid && _baseLamp.IsValid && _mastClunk.IsValid &&
+                  _mastSettle.IsValid))
             {
                 enabled = false;
                 return;
@@ -94,6 +104,7 @@ namespace MoonProject.Audio
             _subscriptions[4] = events.Subscribe<BuildCue>(OnBuildCue);
             _subscriptions[5] = events.Subscribe<BuildWeldStateChanged>(OnBuildWeldStateChanged);
             _subscriptions[6] = events.Subscribe<BaseLampLit>(OnBaseLampLit);
+            _subscriptions[7] = events.Subscribe<MastSegmentRaised>(OnMastSegmentRaised);
         }
 
         private void Update()
@@ -197,6 +208,22 @@ namespace MoonProject.Audio
             else
             {
                 _weldFader.FadeOut();
+            }
+        }
+
+        /// <summary>A mast segment locked home: its clunk a step higher than the last; the top one settles too.</summary>
+        private void OnMastSegmentRaised(MastSegmentRaised raised)
+        {
+            if (raised.Restored)
+            {
+                return;
+            }
+
+            float semitones = PentatonicSemitones[Mathf.Clamp(raised.Index, 0, PentatonicSemitones.Length - 1)];
+            _director.PlayAt(_mastClunk, raised.Position, _tuning.MastClunkVolume, Mathf.Pow(2f, semitones / 12f));
+            if (raised.IsLast)
+            {
+                _director.PlayAt(_mastSettle, raised.Position, _tuning.MastSettleVolume);
             }
         }
 
