@@ -11,9 +11,11 @@ namespace MoonProject.Rover
     {
         /// <summary>
         /// Glow of lamp <paramref name="socket"/> with <paramref name="charge"/> cells of charge, at
-        /// <paramref name="time"/> seconds (for the breath).
+        /// <paramref name="time"/> seconds (for the breath). While <paramref name="charging"/> on a pad the cell being
+        /// filled breathes quicker and deeper, and a slow warm pulse runs along the full cells, lamp after lamp.
         /// </summary>
-        public static float Level(FlankLampSettings settings, int socket, float charge, bool lowPower, float time)
+        public static float Level(FlankLampSettings settings, int socket, float charge, bool lowPower, float time,
+            bool charging = false)
         {
             if (lowPower)
             {
@@ -23,10 +25,25 @@ namespace MoonProject.Rover
             float left = Mathf.Clamp01(charge - socket);
             if (left >= 1f)
             {
-                return settings.LitGlow;
+                return charging ? settings.LitGlow * (1f + settings.ChargePulseDepth * Pulse(settings, socket, time))
+                    : settings.LitGlow;
             }
 
-            return settings.LitGlow * left * Breath(settings, time);
+            float breath = charging
+                ? 1f - settings.ChargeBreathDepth * (1f - Wave(time / settings.ChargeBreathPeriod))
+                : Breath(settings, time);
+            return settings.LitGlow * left * breath;
+        }
+
+        /// <summary>0..1: the charging pulse's crest passing <paramref name="socket"/> at <paramref name="time"/>.</summary>
+        public static float Pulse(FlankLampSettings settings, int socket, float time)
+        {
+            return Wave((time - socket * settings.ChargePulseLag) / settings.ChargePulsePeriod);
+        }
+
+        private static float Wave(float cycles)
+        {
+            return 0.5f + 0.5f * Mathf.Cos(2f * Mathf.PI * cycles);
         }
 
         /// <summary>1 at the top of a breath, 1 - depth at its bottom.</summary>

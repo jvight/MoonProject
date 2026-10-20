@@ -48,6 +48,9 @@ namespace MoonProject.Rover
         /// <summary>The tow's sideways swing follows its solution with a half-life this many times shorter than its ease.</summary>
         private const float TowYawHalfLivesPerEase = 3f;
 
+        /// <summary>The dock frame looks toward 07's right (deg from its heading): the camera sits behind-left of it.</summary>
+        private const float DockSideDegrees = 90f;
+
         /// <summary>Blend weight below this is settled enough to treat a framed shot or face-inspect mode as inactive.</summary>
         private const float ShotWeightEpsilon = 0.01f;
 
@@ -500,7 +503,7 @@ namespace MoonProject.Rover
                 _beam.Framing.End(_tuning.CutFrameHandBackSeconds);
             }
 
-            if (driving && (IsTowerMoment || _releasePan.IsActive))
+            if (driving && (IsTowerMoment || _releasePan.IsActive || IsDockMoment))
             {
                 _moment.Cancel(_tuning.MomentCancelEaseOut);
             }
@@ -1480,8 +1483,21 @@ namespace MoonProject.Rover
         private void OnChargingChanged(ChargingChanged charging)
         {
             _charging = charging.Charging;
-            _chargeAsks = _charging && !_held.IsOpen;
+            bool pad = charging.Charger == ChargerKind.Pad;
+            _chargeAsks = _charging && !_held.IsOpen && !pad;
+            if (pad && _charging && !_moment.IsActive && !_held.IsOpen && !_opening.IsActive)
+            {
+                Vector3 side = Quaternion.Euler(0f, RoverYaw() + DockSideDegrees, 0f) * Vector3.forward;
+                _moment.Start(_tuning.DockMoment, _rover.Position + side * _tuning.DockSideMetres, true);
+            }
+            else if (!_charging && IsDockMoment)
+            {
+                _moment.Release();
+            }
         }
+
+        /// <summary>The camera moment running now is the closer frame while 07 charges on its pad.</summary>
+        private bool IsDockMoment => _moment.IsActive && ReferenceEquals(_moment.Settings, _tuning.DockMoment);
 
         private void OnLowPowerChanged(LowPowerChanged lowPower)
         {
