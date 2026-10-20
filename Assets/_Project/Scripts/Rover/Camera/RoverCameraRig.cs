@@ -75,6 +75,7 @@ namespace MoonProject.Rover
         [SerializeField] private RoverCameraBump _bump;
 
         private readonly CameraMoment _moment = new CameraMoment();
+        private readonly ReleasePan _releasePan = new ReleasePan();
         private WideShot _wide;
         private bool _wideSteersYaw;
         private bool _tethered;
@@ -255,6 +256,7 @@ namespace MoonProject.Rover
                 context.Events.Subscribe<ExcavationStopped>(OnExcavationStopped),
                 context.Events.Subscribe<RelicSurfaced>(OnRelicSurfaced),
                 context.Events.Subscribe<RelayRestored>(OnRelayRestored),
+                context.Events.Subscribe<ReleaseViewOpened>(OnReleaseViewOpened),
                 context.Events.Subscribe<LadderLookChanged>(OnLadderLookChanged),
                 context.Events.Subscribe<FeelBeat>(OnFeelBeat),
                 context.Events.Subscribe<CutChargeStaged>(OnChargeStaged),
@@ -482,7 +484,7 @@ namespace MoonProject.Rover
                 _beam.Framing.End(_tuning.CutFrameHandBackSeconds);
             }
 
-            if (driving && IsTowerMoment)
+            if (driving && (IsTowerMoment || _releasePan.IsActive))
             {
                 _moment.Cancel(_tuning.MomentCancelEaseOut);
             }
@@ -495,6 +497,7 @@ namespace MoonProject.Rover
             _opening.Step(deltaTime);
             ApplyCameraRadius(_tuning.CameraRadius);
             StepFaceInspect(deltaTime);
+            StepReleasePan(deltaTime);
             _moment.Step(deltaTime);
             StepWideShot(deltaTime);
             StepHeldShot(viewInput, deltaTime);
@@ -671,6 +674,7 @@ namespace MoonProject.Rover
                 }
 
                 _moment.Clear();
+                _releasePan.End();
                 SolveFaceInspectShot();
                 if (_faceInspectBody != null && _faceInspectHasShot)
                 {
@@ -1368,6 +1372,7 @@ namespace MoonProject.Rover
             _evening = false;
             _wideSteersYaw = false;
             _moment.Clear();
+            _releasePan.End();
             _faceInspectOpen = false;
             _faceInspectHasShot = false;
             _faceInspectEase = 0f;
@@ -1450,6 +1455,41 @@ namespace MoonProject.Rover
         private void OnRelayRestored(RelayRestored relay)
         {
             _moment.Start(_tuning.RelayMoment, relay.Position, false);
+        }
+
+        /// <summary>
+        /// The release's view (opening v3 4.4): one slow pan relay.1 -> the Peak's dish -> Kestrel-3 as a held camera
+        /// moment, so 07 stays in the foreground, nothing cuts, and any look or drive input ends it with a soft ease back.
+        /// </summary>
+        private void OnReleaseViewOpened(ReleaseViewOpened view)
+        {
+            _releasePan.Begin(_rover.Position, RoverYaw() + _orbitState.YawOffset, view.Relay, view.Dish, view.Kestrel, _tuning.ReleasePanLead,
+                _tuning.ReleasePanDishSeconds, _tuning.ReleasePanKestrelSeconds, _tuning.ReleasePanSweep, _tuning.ReleasePanRise, _tuning.ReleasePanHalfLife,
+                _tuning.ReleasePanSlack);
+            _moment.Start(_tuning.ReleaseMoment, _releasePan.Subject, true);
+        }
+
+        /// <summary>Moves the held release moment's subject along the pan, and lets it go once the pan has run its course.</summary>
+        private void StepReleasePan(float deltaTime)
+        {
+            if (!_releasePan.IsActive)
+            {
+                return;
+            }
+
+            if (!_moment.IsHeld)
+            {
+                _releasePan.End();
+                return;
+            }
+
+            _releasePan.Step(deltaTime);
+            _moment.MoveSubject(_releasePan.Subject);
+            if (_releasePan.Arrived)
+            {
+                _releasePan.End();
+                _moment.Release();
+            }
         }
 
         /// <summary>

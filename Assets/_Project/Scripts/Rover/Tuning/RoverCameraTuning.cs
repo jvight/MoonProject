@@ -409,6 +409,43 @@ namespace MoonProject.Rover
         [SerializeField] private CameraMomentSettings _relayMoment =
             new CameraMomentSettings(3f, 2.6f, 2.6f, 0.22f, 3f, 0.5f, 26f, 40f, -13f, 0.65f, 40f);
 
+        [Tooltip("The release's view (opening v3 4.4): one slow, continuous pan from relay.1's lamp to the Peak's dish to " +
+                 "Kestrel-3 with 07 kept in the foreground. The pan below starts where the camera " +
+                 "already looks and moves the subject itself, so the share and swing here only say how far the camera " +
+                 "follows it.")]
+        [SerializeField] private CameraMomentSettings _releaseMoment =
+            new CameraMomentSettings(1.4f, 0f, 1.6f, 1f, 1.2f, 1f, 0f, 180f, -3f, 0f, 100000f);
+
+        [Tooltip("Fastest the release pan turns the camera round (deg/s): well under a quick look, never a whip.")]
+        [Range(5f, 60f)]
+        [SerializeField] private float _releasePanSweep = 55f;
+
+        [Tooltip("Seconds the pan gives the way from where the camera looks to relay.1's lamp and its time there (keep " +
+                 "the answer's view lead equal to this).")]
+        [Range(1f, 4f)]
+        [SerializeField] private float _releasePanLead = 2.9f;
+
+        [Tooltip("How far (deg) short of a lure's bearing the pan may settle: it is in frame well before it is centred.")]
+        [Range(0f, 35f)]
+        [SerializeField] private float _releasePanSlack = 18f;
+
+        [Tooltip("Seconds the pan gives the way from the lamp to the Peak's dish and its time there; the dish glints " +
+                 "as the view reaches it.")]
+        [Range(2f, 6f)]
+        [SerializeField] private float _releasePanDishSeconds = 3.0f;
+
+        [Tooltip("Seconds the pan gives the way on to Kestrel-3 and its time there.")]
+        [Range(1f, 5f)]
+        [SerializeField] private float _releasePanKestrelSeconds = 1.4f;
+
+        [Tooltip("Fastest the release pan tilts toward a lure's height (deg/s).")]
+        [Range(2f, 30f)]
+        [SerializeField] private float _releasePanRise = 10f;
+
+        [Tooltip("Half-life (s) of the pan's speed easing: soft starts and stops between lures.")]
+        [Range(0.1f, 1.5f)]
+        [SerializeField] private float _releasePanHalfLife = 0.3f;
+
         [Tooltip("07's first look up the crew's ladder, then at the lift: the camera eases low and a little back, "
             + "looking up past 07 at the ladder to the deck, follows the gaze across to the lift, and returns once "
             + "the look ends (held while 07 looks).")]
@@ -869,6 +906,22 @@ namespace MoonProject.Rover
         public CameraMomentSettings GentleTowerMoment => _gentleTowerMoment;
 
         public CameraMomentSettings RelayMoment => _relayMoment;
+
+        public CameraMomentSettings ReleaseMoment => _releaseMoment;
+
+        public float ReleasePanSweep => _releasePanSweep;
+
+        public float ReleasePanLead => _releasePanLead;
+
+        public float ReleasePanSlack => _releasePanSlack;
+
+        public float ReleasePanDishSeconds => _releasePanDishSeconds;
+
+        public float ReleasePanKestrelSeconds => _releasePanKestrelSeconds;
+
+        public float ReleasePanRise => _releasePanRise;
+
+        public float ReleasePanHalfLife => _releasePanHalfLife;
 
         public CameraMomentSettings LadderMoment => _ladderMoment;
 

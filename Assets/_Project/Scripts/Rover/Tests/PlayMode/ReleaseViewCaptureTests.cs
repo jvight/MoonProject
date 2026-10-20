@@ -12,18 +12,21 @@ using MoonProject.Testing;
 namespace MoonProject.Rover.PlayModeTests
 {
     /// <summary>
-    /// What the player sees during the release (opening v3 R9): in the real Main scene, after a live answer, the chase
-    /// camera behind 07 as it faces each lure in turn: the dish glint when the pulse lands, then relay.1's blinking lamp,
-    /// the Peak's dish and Kestrel-3 during the View stage. Captures in Logs/captures/release-view/.
+    /// What the player sees during the release (opening v3 4.4): in the real Main scene, after a live answer, the chase
+    /// camera through the whole view: one slow pan from relay.1's lamp to the Peak's dish to Kestrel-3 with 07 in the
+    /// foreground, then a run where the player drives mid-pan and the camera eases back. Captures (a sheet every
+    /// 0.75 s) in Logs/captures/release-view/.
     /// </summary>
     public sealed class ReleaseViewCaptureTests : InputTestFixture
     {
         private const float FrameTime = 1f / 60f;
         private const float ReadyTimeout = 40f;
         private const float StageTimeout = 90f;
-        private const float SettleSeconds = 0.7f;
-        private const float LampLitKeying = 0.8f;
-        private const float LampWait = 8f;
+        private const float ViewSeconds = 10f;
+        private const float SheetStep = 0.75f;
+        private const float InterruptAt = 2.5f;
+        private const float EaseBackSeconds = 2f;
+        private const float MaxTurnDegreesPerSecond = 60f;
 
         private static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "captures", "release-view"));
@@ -51,9 +54,95 @@ namespace MoonProject.Rover.PlayModeTests
         [Timeout(600000)]
         [PrebuildSetup(typeof(RoverSessionScene))]
         [PostBuildCleanup(typeof(RoverSessionScene))]
-        public IEnumerator AfterALiveAnswer_TheChaseCameraSeesTheGlintAndEachLure()
+        public IEnumerator TheViewIsOneSlowPan_FromTheRelayToTheDishToKestrel_With07AlwaysInFrame()
+        {
+            yield return RunToTheView();
+            float start = Time.time;
+            float lastYaw = _scene.View.transform.eulerAngles.y;
+            float fastest = 0f;
+            float lowestFraming = 1f;
+            float highestFraming = 0f;
+            float peakWeight = 0f;
+            float nextShot = 0f;
+            int shot = 0;
+            while (Time.time - start < ViewSeconds)
+            {
+                yield return null;
+                float yaw = _scene.View.transform.eulerAngles.y;
+                float rate = Mathf.Abs(Mathf.DeltaAngle(lastYaw, yaw)) / Time.deltaTime;
+                fastest = Mathf.Max(fastest, rate);
+                lastYaw = yaw;
+                Vector3 rover = _scene.View.WorldToViewportPoint(_scene.Rover.Position + Vector3.up * 0.5f);
+                lowestFraming = Mathf.Min(lowestFraming, rover.x);
+                highestFraming = Mathf.Max(highestFraming, rover.x);
+                peakWeight = Mathf.Max(peakWeight, _scene.CameraRig.MomentWeight);
+                if (Time.time - start >= nextShot)
+                {
+                    FrameCapture.SavePng(_scene.View, 1920, 1080,
+                        Path.Combine(CaptureFolder, $"pan-{shot++:D2}-t{Time.time - start:F1}.png"));
+                    nextShot += SheetStep;
+                }
+            }
+
+            Debug.Log($"[releasecap] pan: fastest camera turn {fastest:F0} deg/s, 07 across x " +
+                      $"{lowestFraming:F2}..{highestFraming:F2}, peak weight {peakWeight:F2}, weight now " +
+                      $"{_scene.CameraRig.MomentWeight:F2}");
+            Assert.Greater(peakWeight, 0.9f, "the pan held the camera");
+            Assert.LessOrEqual(fastest, MaxTurnDegreesPerSecond, "the camera never whips round");
+            Assert.Greater(lowestFraming, 0.15f, "07 stays in the frame, in the foreground");
+            Assert.Less(highestFraming, 0.85f, "07 stays in the frame, in the foreground");
+            Assert.Less(_scene.CameraRig.MomentWeight, 0.05f, "the camera is back behind 07 when the nine seconds end");
+        }
+
+        [UnityTest]
+        [Timeout(600000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator DrivingDuringTheView_EndsThePanAtOnce_WithASoftEaseBack()
+        {
+            yield return RunToTheView();
+            float start = Time.time;
+            while (Time.time - start < InterruptAt)
+            {
+                yield return null;
+            }
+
+            float before = _scene.CameraRig.MomentWeight;
+            FrameCapture.SavePng(_scene.View, 1920, 1080, Path.Combine(CaptureFolder, "interrupt-0-before.png"));
+            Press(_keyboard.wKey);
+            float pressed = Time.time;
+            float lastWeight = before;
+            float biggestDrop = 0f;
+            int shot = 1;
+            float nextShot = 0.3f;
+            while (Time.time - pressed < EaseBackSeconds)
+            {
+                yield return null;
+                float weight = _scene.CameraRig.MomentWeight;
+                biggestDrop = Mathf.Max(biggestDrop, lastWeight - weight);
+                lastWeight = weight;
+                if (Time.time - pressed >= nextShot)
+                {
+                    FrameCapture.SavePng(_scene.View, 1920, 1080,
+                        Path.Combine(CaptureFolder, $"interrupt-{shot++}-t{Time.time - pressed:F1}.png"));
+                    nextShot += 0.3f;
+                }
+            }
+
+            Release(_keyboard.wKey);
+            Debug.Log($"[releasecap] interrupt: weight {before:F2} -> {lastWeight:F2}, biggest drop in one frame " +
+                      $"{biggestDrop:F3}");
+            Assert.Greater(before, 0.5f, "the pan was holding the camera when the player drove");
+            Assert.Less(lastWeight, 0.1f, "driving ended the pan");
+            Assert.Less(biggestDrop, 0.1f, "and the camera eased back, it did not cut");
+        }
+
+        /// <summary>Boots the real scene, answers the call live, and waits for the release's view to open.</summary>
+        private IEnumerator RunToTheView()
         {
             Directory.CreateDirectory(CaptureFolder);
+            _glinted = false;
+            _viewOpened = false;
             _keyboard = InputSystem.AddDevice<Keyboard>();
             yield return _scene.Boot();
             GameplaySystem gameplay = Object.FindFirstObjectByType<GameplaySystem>();
@@ -77,8 +166,7 @@ namespace MoonProject.Rover.PlayModeTests
             gameplay.Reply.Restore(new CallSaveData { replyTried = true });
             yield return RealRoverScene.WaitSeconds(MastRaise.TotalSeconds(gameplay.MastRaiseSettings) + 1.5f);
 
-            IAnswerStatus answer = context.Get<IAnswerStatus>();
-            Assert.AreEqual(AnswerPhase.Ready, answer.Phase);
+            Assert.AreEqual(AnswerPhase.Ready, context.Get<IAnswerStatus>().Phase);
             context.Get<IRoverPlacement>().PlaceAt(foot + new Vector3(3f, 0f, 0f), Quaternion.identity);
             yield return RealRoverScene.WaitSeconds(1f);
             Press(_keyboard.eKey);
@@ -90,11 +178,6 @@ namespace MoonProject.Rover.PlayModeTests
 
             Release(_keyboard.eKey);
             Assert.IsTrue(_glinted, "the answer ran to the glint on the dish");
-            Vector3 dish = context.Get<IWorldLayout>().PeakPosition;
-            yield return RealRoverScene.WaitSeconds(0.25f);
-            Aimed(dish + Vector3.up * 3f, "release-1b-dish-glint-aimed");
-            yield return Look(dish, "release-1-dish-glint", 0.1f);
-
             deadline = Time.time + StageTimeout;
             while (!_viewOpened && Time.time < deadline)
             {
@@ -102,65 +185,7 @@ namespace MoonProject.Rover.PlayModeTests
             }
 
             Assert.IsTrue(_viewOpened, "the view from the rise opened");
-            ICallSignal signal = null;
-            context.TryGet(out signal);
-            float lampDeadline = Time.time + LampWait;
-            while (signal != null && signal.Keying < LampLitKeying && Time.time < lampDeadline)
-            {
-                yield return null;
-            }
-
-            yield return Look(_view.Relay, "release-2-relay-lamp", SettleSeconds);
-            yield return Look(_view.Dish, "release-3-peak-dish", SettleSeconds);
-            yield return Look(_view.Kestrel, "release-4-kestrel", SettleSeconds);
-        }
-
-        /// <summary>The player's own camera position, aimed straight at <paramref name="point"/> (what a pitched-up view shows).</summary>
-        private void Aimed(Vector3 point, string name)
-        {
-            var host = new GameObject("AimedLens");
-            Camera camera = host.AddComponent<Camera>();
-            camera.enabled = false;
-            camera.CopyFrom(_scene.View);
-            camera.enabled = false;
-            host.transform.position = _scene.View.transform.position;
-            host.transform.rotation = Quaternion.LookRotation(point - host.transform.position, Vector3.up);
-            FrameCapture.SavePng(camera, 1920, 1080, Path.Combine(CaptureFolder, name + ".png"));
-            Object.Destroy(host);
-        }
-
-        private static string LampLevels()
-        {
-            var text = new System.Text.StringBuilder();
-            foreach (MonoBehaviour behaviour in Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
-            {
-                if (behaviour.GetType().Name == "RelayAnswerLamp")
-                {
-                    object level = behaviour.GetType().GetProperty("Level").GetValue(behaviour);
-                    text.Append(behaviour.name).Append('=').Append(level).Append('@').Append(behaviour.transform.position);
-                }
-            }
-
-            return text.Length == 0 ? "none" : text.ToString();
-        }
-
-        /// <summary>07 faces <paramref name="point"/>, the chase camera comes round behind it, and the player's view is taken.</summary>
-        private IEnumerator Look(Vector3 point, string name, float settle)
-        {
-            RoverController rover = _scene.Rover;
-            Vector3 toward = point - rover.Position;
-            toward.y = 0f;
-            _scene.Context.Get<IRoverPlacement>().PlaceAt(rover.Position, Quaternion.LookRotation(toward, Vector3.up));
-            _scene.CameraRig.Snap();
-            yield return RealRoverScene.WaitSeconds(settle);
-            FrameCapture.SavePng(_scene.View, 1920, 1080, Path.Combine(CaptureFolder, name + ".png"));
-            Vector3 screen = _scene.View.WorldToScreenPoint(point);
-            ICallSignal signal;
-            _scene.Context.TryGet(out signal);
-            Debug.Log($"[releasecap] {name}: screen ({screen.x:F0}, {screen.y:F0}, depth {screen.z:F0}) of " +
-                      $"{_scene.View.pixelWidth}x{_scene.View.pixelHeight}, fov {_scene.View.fieldOfView:F0}, keying " +
-                      $"{(signal != null ? signal.Keying : -1f):F2}, call {_scene.Context.Get<ICallSource>().State}, " +
-                      $"lamp levels {LampLevels()}");
+            Assert.AreNotEqual(Vector3.zero, _view.Dish);
         }
     }
 }
