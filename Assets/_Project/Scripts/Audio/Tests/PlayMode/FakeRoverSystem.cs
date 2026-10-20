@@ -20,6 +20,9 @@ namespace MoonProject.Audio.PlayModeTests
         /// <summary>The call from the sky tests point 07 at (direction, state, name).</summary>
         public FakeCallSource Call { get; } = new FakeCallSource();
 
+        /// <summary>07's tow cable the tests load and strain.</summary>
+        public FakeTowLine Tow { get; } = new FakeTowLine();
+
         /// <summary>The parts on 07 at boot (a loaded game); set before the rig boots.</summary>
         public AudioFakeEquipment Equipment { get; } = new AudioFakeEquipment();
 
@@ -94,6 +97,7 @@ namespace MoonProject.Audio.PlayModeTests
             context.Register<ICutter>(Cutter);
             context.Register<IRoverEquipment>(Equipment);
             context.Register<ICallSource>(Call);
+            context.Register<ITowLine>(Tow);
         }
     }
 }
