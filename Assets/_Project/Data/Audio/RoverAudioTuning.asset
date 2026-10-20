@@ -62,11 +62,14 @@ MonoBehaviour:
     _faceStroke: 0.7
     _strokesPerNote: 2
     _faceResolve: 0.7
-    _faceText: 0.6
+    _faceText: 0.45
     _faceLine: 0.7
     _faceLoad: 0.75
     _textMinInterval: 0.045
     _textStreakWindow: 0.2
     _textStreakDecay: 0.95
     _textStreakFloor: 0.7
+    _strokeStreakWindow: 0.3
+    _strokeStreakDecay: 0.85
+    _strokeStreakFloor: 0.45
   _loopSpatialBlend: 0.75
