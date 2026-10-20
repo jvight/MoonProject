@@ -295,6 +295,15 @@ namespace MoonProject.Rover
             + "recent).")]
         [SerializeField] private int _reactionGazePriority = -1;
 
+        [Tooltip("Seconds 07's head looks toward the next action's object when it is off screen (G5).")]
+        [Range(0.5f, 4f)]
+        [SerializeField] private float _nextActionLookSeconds = 1.8f;
+
+        [Tooltip("Share of the view's width and height, from each edge, within which the next action's object counts as " +
+                 "on screen: no head turn.")]
+        [Range(0f, 0.3f)]
+        [SerializeField] private float _nextActionScreenMargin = 0.08f;
+
         [Tooltip("Seconds 07's head looks at relay.1's lamp when the release's view opens (the camera turns toward it " +
                  "and holds for about as long).")]
         [Range(1f, 8f)]
@@ -637,6 +646,10 @@ namespace MoonProject.Rover
         public float RelicGlanceSeconds => _relicGlanceSeconds;
 
         public int ReactionGazePriority => _reactionGazePriority;
+
+        public float NextActionLookSeconds => _nextActionLookSeconds;
+
+        public float NextActionScreenMargin => _nextActionScreenMargin;
 
         public float ReleaseRelayLookSeconds => _releaseRelayLookSeconds;
 

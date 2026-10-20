@@ -464,6 +464,7 @@ namespace MoonProject.Rover
                 events.Subscribe<CargoChanged>(OnCargoChanged),
                 events.Subscribe<SonarPinged>(OnListened),
                 events.Subscribe<ReleaseViewOpened>(OnReleaseView),
+                events.Subscribe<NextActionShown>(OnNextActionShown),
                 events.Subscribe<CallReplyFailed>(_ => _call.ReplyFailed()),
             };
             _initialized = true;
@@ -677,6 +678,24 @@ namespace MoonProject.Rover
             _releaseLook = 0;
             _releaseNextAt = Time.time + _tuning.ReleaseRelayLookSeconds;
             Glance(_releaseLooks[0], _tuning.ReactionGazePriority, _tuning.ReleaseRelayLookSeconds);
+        }
+
+        /// <summary>
+        /// The next action's object is off screen (G5): 07's head turns toward it for a moment, wordless and diegetic,
+        /// as the camera drifts the same way. On screen, it is already seen: no turn.
+        /// </summary>
+        private void OnNextActionShown(NextActionShown action)
+        {
+            if (_context == null || !_context.TryGet(out IViewCamera view) || view.Camera == null)
+            {
+                return;
+            }
+
+            if (GuidanceNudge.OffScreen(view.Camera.WorldToViewportPoint(action.Position),
+                    _tuning.NextActionScreenMargin))
+            {
+                Glance(action.Position, _tuning.ReactionGazePriority, _tuning.NextActionLookSeconds);
+            }
         }
 
         /// <summary>Moves 07's release look on from the lamp to the dish when the lamp's time is up.</summary>
