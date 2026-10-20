@@ -4,12 +4,16 @@ using UnityEngine;
 namespace MoonProject.World
 {
     /// <summary>
-    /// The Lumen habitat's power module status lamp (opening v3 R4): dark by day, a slow, soft amber blink from dusk
+    /// The Lumen habitat's power module status lamp, on the towable module (opening v3 R4): dark by day, a slow, soft amber blink from dusk
     /// through the night, so the one thing in the ruins still holding a trickle of charge calls 07 over in the dark.
     /// </summary>
     [Serializable]
     public sealed class ModuleLampSettings
     {
+        [Tooltip("Tow id of the power module whose lamp blinks: the towable module Gameplay stands beside the habitat " +
+            "(the same id as in OpeningTuning).")]
+        [SerializeField] private string _towId = "habitat.power_module";
+
         [Tooltip("Seconds from one blink to the next: slow, a sleeping machine's pulse, never an alarm.")]
         [Range(1f, 8f)]
         [SerializeField] private float _blinkSeconds = 3.2f;
@@ -49,6 +53,7 @@ namespace MoonProject.World
         [Range(0f, 0.5f)]
         [SerializeField] private float _haloLift = 0.08f;
 
+        public string TowId => _towId;
         public float BlinkSeconds => _blinkSeconds;
         public float OnShare => _onShare;
         public float EaseShare => _easeShare;

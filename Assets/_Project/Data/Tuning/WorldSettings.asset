@@ -539,6 +539,7 @@ MonoBehaviour:
       _shimmerDepth: 0.35
       _sunlightSampleSeconds: 0.1
     _moduleLamp:
+      _towId: habitat.power_module
       _blinkSeconds: 3.2
       _onShare: 0.3
       _easeShare: 0.6

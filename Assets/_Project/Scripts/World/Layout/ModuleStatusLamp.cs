@@ -5,46 +5,47 @@ namespace MoonProject.World
 {
     /// <summary>
     /// The Lumen habitat's power module status lamp (opening v3 R4): blinks slow amber from dusk through the night
-    /// (<see cref="StatusLampBlink"/>), its lens and a small halo in front of it together. The scene build wires the
-    /// lens (Art's PowerModule_StatusLamp node) and stands the halo apart from the ruin, whose renderers are its scan
-    /// targets'. It lights only the lens's own material slot (found by name, so never the bezel).
-    /// Allocation-free per frame.
+    /// (<see cref="StatusLampBlink"/>), its lens and a small halo in front of it together. The lamp is on the towable
+    /// power module Gameplay stands beside the habitat (<see cref="ITowLine.TryFindLoad"/>, the module's tow id in
+    /// tuning), found once (<see cref="StatusLampLens"/>: Art's PowerModule_StatusLamp, its amber slot by name, never the
+    /// bezel); the halo, which the scene build stands apart under [World]/ModuleLamp, follows the lens each frame as 07
+    /// tows it. No tow line or no such load (the opening did not stand it): no blink, no error. A load with no lamp to
+    /// blink is broken wiring, reported once. Allocation-free per frame.
     /// </summary>
     public sealed class ModuleStatusLamp : MonoBehaviour, IGameSystem
     {
         private static readonly int EmissionStrengthId = Shader.PropertyToID("_EmissionStrength");
         private static readonly int IntensityId = Shader.PropertyToID("_Intensity");
 
+        // Art's lamp on the power module and the material its lens wears.
+        private const string LampNode = "PowerModule_StatusLamp";
+        private const string LensMaterial = "R1_LampAmber";
+
         [Tooltip("World tuning (Assets/_Project/Data/Tuning/WorldSettings.asset); its landmarks' module lamp.")]
         [SerializeField] private WorldSettings _settings;
 
-        [Tooltip("The lamp's node (Art's PowerModule_StatusLamp on HabitatModules): its amber lens and its bezel.")]
-        [SerializeField] private Renderer _lens;
-
-        [Tooltip("The material slot on the lamp's node that wears the amber lens (the scene build finds it by name).")]
-        [Min(0)]
-        [SerializeField] private int _lensSlot;
-
-        [Tooltip("The lamp's halo in front of the lens (LofiBeaconHalo, amber).")]
+        [Tooltip("The lamp's halo, stood apart from the module by the scene build (LofiBeaconHalo, amber).")]
         [SerializeField] private Renderer _halo;
 
         private readonly StatusLampBlink _blink = new StatusLampBlink();
         private GameContext _context;
         private ISunlight _sunlight;
+        private StatusLampLens _lens;
         private MaterialPropertyBlock _block;
 
         public void Initialize(GameContext context)
         {
-            if (_settings == null || _lens == null || _halo == null || _lensSlot >= _lens.sharedMaterials.Length)
+            if (_settings == null || _halo == null)
             {
-                Debug.LogError($"{nameof(ModuleStatusLamp)}: World Settings, the lamp's lens (and its slot) and its " +
-                    "halo must be assigned (the scene build wires them beside the habitat).", this);
+                Debug.LogError($"{nameof(ModuleStatusLamp)}: World Settings and the lamp's halo must be assigned " +
+                    "(the scene build wires them).", this);
                 enabled = false;
                 return;
             }
 
             _context = context;
             _block = new MaterialPropertyBlock();
+            _halo.enabled = false;
         }
 
         /// <summary>The lamp's level (0..1) on the last frame.</summary>
@@ -53,6 +54,12 @@ namespace MoonProject.World
         private void Update()
         {
             if (_block == null)
+            {
+                return;
+            }
+
+            ModuleLampSettings lamp = _settings.Landmarks.ModuleLamp;
+            if (_lens == null && !TryFindLens(lamp.TowId))
             {
                 return;
             }
@@ -67,16 +74,35 @@ namespace MoonProject.World
                 _blink.OnSky(_sunlight.Phase, true);
             }
 
-            ModuleLampSettings lamp = _settings.Landmarks.ModuleLamp;
             _blink.OnSky(_sunlight.Phase, false);
             _blink.Step(Time.deltaTime, lamp.WakeSeconds);
             Level = _blink.Level(Time.time, lamp.BlinkSeconds, lamp.OnShare, lamp.EaseShare);
-            _lens.GetPropertyBlock(_block, _lensSlot);
+            _halo.transform.position = _lens.InFront(lamp.HaloLift);
+            _lens.Renderer.GetPropertyBlock(_block, _lens.Slot);
             _block.SetFloat(EmissionStrengthId, Level * lamp.LampGlow);
-            _lens.SetPropertyBlock(_block, _lensSlot);
+            _lens.Renderer.SetPropertyBlock(_block, _lens.Slot);
             _halo.GetPropertyBlock(_block);
             _block.SetFloat(IntensityId, Level * lamp.HaloIntensity);
             _halo.SetPropertyBlock(_block);
+        }
+
+        private bool TryFindLens(string towId)
+        {
+            if (!_context.TryGet(out ITowLine tow) || !tow.TryFindLoad(towId, out Transform load) || load == null)
+            {
+                return false;
+            }
+
+            _lens = StatusLampLens.Find(load, LampNode, LensMaterial, out string problem);
+            if (_lens == null)
+            {
+                Debug.LogError($"{nameof(ModuleStatusLamp)}: the tow load '{towId}' cannot blink: {problem}", this);
+                enabled = false;
+                return false;
+            }
+
+            _halo.enabled = true;
+            return true;
         }
     }
 }
