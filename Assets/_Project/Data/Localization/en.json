@@ -863,6 +863,18 @@
             "text": "OK"
         },
         {
+            "key": "pickup.part.feedunit",
+            "text": "Relay feed unit"
+        },
+        {
+            "key": "pickup.part.feedunit.job",
+            "text": "Fits relay.1's mast box."
+        },
+        {
+            "key": "hint.install",
+            "text": "Fit"
+        },
+        {
             "key": "pickup.part.igniter",
             "text": "Spare igniter"
         },

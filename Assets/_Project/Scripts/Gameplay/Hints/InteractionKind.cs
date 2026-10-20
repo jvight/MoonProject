@@ -48,5 +48,10 @@ namespace MoonProject.Gameplay
         /// and where 07 saw it (<see cref="InteractionHint.NounKey"/> is the bay's id). It names a goal; it has no key.
         /// </summary>
         Rack = 19,
+
+        /// <summary>
+        /// A part in the hold fits the thing in reach (relay.1's feed socket, opening v3 R10): hold E to fit it.
+        /// </summary>
+        Install = 20,
     }
 }

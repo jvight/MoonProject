@@ -830,6 +830,27 @@ namespace MoonProject.Core.Events
         public Vector3 Position { get; }
     }
 
+    /// <summary>
+    /// A relay of the old network is lit again (docs/design/opening-v3-purpose.md R10: relay.1, its feed unit fitted
+    /// from the spare in its cabinet): its lamp burns steady, its contact pad charges 07 and the range ring counts it.
+    /// Published once by Gameplay, and again at each session start of a game where it is lit, with
+    /// <see cref="Restored"/> true.
+    /// </summary>
+    public readonly struct RelayRelit
+    {
+        public RelayRelit(string relayId, bool restored)
+        {
+            RelayId = relayId;
+            Restored = restored;
+        }
+
+        /// <summary>The relay's id, its world anchor (relay.1).</summary>
+        public string RelayId { get; }
+
+        /// <summary>Replayed from a loaded game, not lit now.</summary>
+        public bool Restored { get; }
+    }
+
     /// <summary>Why 07's tow cable let its load go (<see cref="TowReleased"/>).</summary>
     public enum TowRelease
     {

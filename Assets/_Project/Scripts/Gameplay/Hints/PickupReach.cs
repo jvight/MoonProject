@@ -19,6 +19,9 @@ namespace MoonProject.Gameplay
         /// <summary>Owner id of the open supply crates' contents (<see cref="SupplyCaches"/>).</summary>
         public const int OpenCrates = 5;
 
+        /// <summary>Owner id of relay.1's spare in its open cabinet (<see cref="RelayRepair"/>).</summary>
+        public const int Relay = 6;
+
         private int _frame = int.MinValue;
         private bool _held;
         private float _bestSq;

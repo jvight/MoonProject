@@ -30,6 +30,8 @@ namespace MoonProject.Gameplay
         public const int CallVersion = 1;
         public const string Tow = "gameplay.tow";
         public const int TowVersion = 1;
+        public const string Relay = "gameplay.relay";
+        public const int RelayVersion = 1;
         public const string Rack = "gameplay.rack";
         public const int RackVersion = 1;
     }

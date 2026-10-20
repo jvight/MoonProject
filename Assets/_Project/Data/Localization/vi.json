@@ -863,6 +863,18 @@
             "text": "Ổn"
         },
         {
+            "key": "pickup.part.feedunit",
+            "text": "Bộ cấp nguồn trạm chuyển tiếp"
+        },
+        {
+            "key": "pickup.part.feedunit.job",
+            "text": "Lắp vào hộp cột của relay.1."
+        },
+        {
+            "key": "hint.install",
+            "text": "Lắp"
+        },
+        {
             "key": "pickup.part.igniter",
             "text": "Bộ đánh lửa dự phòng"
         },
