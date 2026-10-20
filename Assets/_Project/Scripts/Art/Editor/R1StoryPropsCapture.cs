@@ -563,10 +563,9 @@ namespace MoonProject.Art.Editor
                     foreach (string socket in new[] { "PodSocket_L", "PodSocket_R" })
                     {
                         Transform pod = MountKit(kits + "Kit_CellPod.prefab", rover.transform, socket, temp);
-                        // Two of three bars lit: a pack mostly charged
+                        // One of two segments lit: a pack half charged
                         SetEmission(pod.Find("ChargeBar_0"), amber);
-                        SetEmission(pod.Find("ChargeBar_1"), amber);
-                        SetEmission(pod.Find("ChargeBar_2"), Color.black);
+                        SetEmission(pod.Find("ChargeBar_1"), Color.black);
                     }
                 }
 

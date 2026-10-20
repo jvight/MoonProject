@@ -224,7 +224,7 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
-        public void SlimUpgrades_SSR3HeadlampAndCellPods_ReadAsEarsAndSaddlePods_InsideTheStance()
+        public void PillUpgrades_SSR3HeadlampAndCellPods_HugTheHeadAndFlanks_InsideTheStance()
         {
             string lampMat = R1MaterialRecipes.Get(R1MaterialSlot.LampAmber).MaterialAssetName;
             foreach (string kitName in new[] { "Kit_SSR3Headlamp", "Kit_CellPod" })
@@ -247,7 +247,7 @@ namespace MoonProject.Art.Tests
             }
 
             GameObject pod = LoadPrefab("Kit_CellPod");
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < 2; i++)
             {
                 Transform bar = pod.transform.Find($"ChargeBar_{i}");
                 AssertHasMesh(bar, $"Kit_CellPod/ChargeBar_{i}");
@@ -258,10 +258,11 @@ namespace MoonProject.Art.Tests
             Bounds head = NodeBoundsInRoverSpace(root.Find("Neck/NeckLift/Head"));
             Bounds screen = NodeBoundsInRoverSpace(root.Find("Neck/NeckLift/Head/Screen"));
             Bounds lamps = MountedBounds("Kit_SSR3Headlamp", "Neck/NeckLift/Head/BrowSocket");
-            Assert.Greater(lamps.max.x, head.max.x + 0.15f, "The right flood stands out past the head like an ear");
-            Assert.Less(lamps.min.x, head.min.x - 0.15f, "The left flood stands out past the head like an ear");
-            Assert.Greater(lamps.min.y, screen.min.y, "The floods sit at the brow, above the screen's lower edge");
-            Assert.Less(lamps.max.y, head.max.y + 0.15f, "The floods stay low on the brow: ears, not antlers");
+            Assert.Greater(lamps.max.x, head.max.x + 0.10f, "The right pill lamp reads past the head's side");
+            Assert.Less(lamps.min.x, head.min.x - 0.10f, "The left pill lamp reads past the head's side");
+            Assert.Less(lamps.max.x, head.max.x + 0.25f, "The right pill lamp stays tucked to the head");
+            Assert.Greater(lamps.min.y, screen.min.y, "The pill lamps ride high, above the screen's lower edge");
+            Assert.Less(lamps.max.y, head.max.y, "The pill lamps stay under the crown");
 
             Bounds podL = MountedBounds("Kit_CellPod", "PodSocket_L");
             Bounds podR = MountedBounds("Kit_CellPod", "PodSocket_R");

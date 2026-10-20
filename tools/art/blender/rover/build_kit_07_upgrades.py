@@ -1,16 +1,17 @@
 """
-Headless-Blender builder for 07's first two visible upgrades (opening v3 5.2, the owner's slim round-2 picks):
+Headless-Blender builder for 07's first two visible upgrades (opening v3 5.2), in 07's own soft shape language: the
+owner's round-3 V1 ("pill pods") at 1.5x, the size that reads from the 7.5 m chase cam.
 
-- `Assets/_Project/Art/R1/Models/Rover/Kit_SSR3Headlamp.fbx` (c = A): elder 06's sealed-beam lamp adapted to 07, two
-  compact white box floodlights on brake-bent brackets at the head's brow corners, like ears. Root = 07's
-  `Neck/Head/BrowSocket`. `Lens_L` / `Lens_R` (R1_LampAmber: the front sealed beam and the rear pilot slit, so the
-  lamp reads lit from the chase cam behind 07) are Rover's glow renderers; `Beam_L` / `Beam_R` sit at the lens
-  fronts facing +Z, for Rover's spot lights. Its one accent is the thin orange stripe round each housing.
-- `Assets/_Project/Art/R1/Models/Rover/Kit_CellPod.fbx` (d = A): one battery saddle pod of the auxiliary cell pack,
+- `Assets/_Project/Art/R1/Models/Rover/Kit_SSR3Headlamp.fbx` (c): elder 06's sealed-beam lamp redrawn for 07, two
+  cream enamel pill lamps lying fore-and-aft, tucked tight to the head's upper sides on short grey saddles. Root =
+  07's `Neck/NeckLift/Head/BrowSocket`. `Lens_L` / `Lens_R` (R1_LampAmber: the round front lens and a small rear
+  pilot, so the lamp reads lit from the chase cam behind 07) are Rover's glow renderers; `Beam_L` / `Beam_R` sit at
+  the lens fronts facing +Z, for Rover's spot lights. The amber lens is its one accent.
+- `Assets/_Project/Art/R1/Models/Rover/Kit_CellPod.fbx` (d): one soft rounded saddle pod of the auxiliary cell pack,
   mounted with identity on each of 07's `PodSocket_R` / `PodSocket_L` (+X outboard; Rover turns the left socket half
-  round, as it does DrumSocket_L), so its outer face stays inside the tyre stance. Latched straps, a bail handle and a cable into the body; its one
-  accent is three short charge bars on the outer face (`ChargeBar_0..2`, R1_LampAmber, bottom to top), lit by Rover.
-  The pod is symmetric front to back, so the same kit fits both sides.
+  round, as it does DrumSocket_L). It hugs the flank in the gap between the front and rear tyres, inside the stance.
+  Its one accent is a short slim charge bar of two segments on the outer face (`ChargeBar_0..1`, R1_LampAmber, bottom
+  to top), lit by Rover. Symmetric front to back, so the same kit fits both sides.
 
 Every node name is unique. Unity metres: X right, Y up, Z forward (07's front).
 
@@ -35,34 +36,37 @@ import r1kit  # noqa: E402
 REPO_ROOT = SCRIPT_DIR.parents[3]
 ROVER_MODELS_DIR = REPO_ROOT / "Assets" / "_Project" / "Art" / "R1" / "Models" / "Rover"
 
-# Kit-local metres from BrowSocket (the brow's centre on the crown's front edge, world (0, 1.53, 0.30) at rest).
-# The housings sit just outboard of the 0.75 m head, their tops ~0.1 m above the crown: ears, not antlers.
+# Kit-local metres from BrowSocket (the brow's centre on the crown's front edge, world (0, 1.53, 0.30) at rest). The
+# pills hug the 0.75 m head's sides just under the crown, their fronts flush with the screen's bezel.
 HEADLAMP_DIMS: dict[str, float] = {
-    "lamp_x": 0.482,
-    "lamp_y": -0.01,
-    "lamp_z": 0.0,
-    "housing_width": 0.205,
-    "housing_height": 0.215,
-    "housing_depth": 0.225,
-    "lens_size": 0.150,
-    "bezel_width": 0.016,
-    "head_half_width": 0.375,
-    "crown_y": -0.02,
+    "pill_radius": 0.093,
+    "pill_length": 0.36,
+    "pill_x": 0.454,
+    "pill_y": -0.13,
+    "pill_z": -0.07,
+    "lens_radius": 0.066,
+    "pilot_radius": 0.026,
+    "saddle_x": 0.385,
 }
 
-# Kit-local metres from PodSocket (the pod's inner face centre on the flank, +X outboard). 0.34 m deep so it stands in
-# the gap between the front and rear tyres (z -0.18..0.18), its underside just above the tyre tops.
+# Kit-local metres from PodSocket (the pod's inner face centre on the flank, +X outboard). 0.34 m deep so it stands
+# in the gap between the front and rear tyres (z -0.18..0.18); the outer face stays inside the tyre stance.
 POD_DIMS: dict[str, float] = {
-    "width": 0.215,
-    "height": 0.34,
+    "width": 0.195,
+    "height": 0.39,
     "depth": 0.34,
-    "bevel": 0.028,
-    "strap_inset_z": 0.10,
-    "bar_width": 0.020,
-    "bar_height": 0.034,
-    "bar_length": 0.11,
-    "bar_step": 0.052,
+    "round": 0.42,
+    "bar_low_y": -0.02,
+    "bar_step": 0.075,
+    "bar_height": 0.039,
+    "bar_length": 0.135,
 }
+
+
+def _pill_z(mb: r1kit.MeshBuilder, center, radius: float, length: float, mat: str) -> None:
+    """A capsule lying along Z: a cylinder whose deep bevel rounds both ends into domes."""
+    mb.add_cylinder(center_u=center, radius=radius, length=length, mat=mat, axis_u="Z", segments=16,
+                    bevel=radius * 0.9, bevel_segments=4)
 
 
 # ----------------------------------------------------------------------------------------------------------------
@@ -71,54 +75,26 @@ POD_DIMS: dict[str, float] = {
 
 
 def _build_headlamp_side(root: bpy.types.Object, side: float, suffix: str) -> None:
-    """One floodlight: a cream box housing with a thin orange stripe, a raised grey bezel round the square lens, a
-    brake-bent bracket and gusset down to the crown's corner, and a short cable into the head."""
+    """One pill lamp on a short grey saddle against the head's side, its round lens forward and a small pilot aft."""
     d = HEADLAMP_DIMS
-    cx, cy, cz = side * d["lamp_x"], d["lamp_y"], d["lamp_z"]
-    w, h, dp = d["housing_width"], d["housing_height"], d["housing_depth"]
-    front = cz + dp * 0.5
-    back = cz - dp * 0.5
+    x, y, z = side * d["pill_x"], d["pill_y"], d["pill_z"]
+    r, length = d["pill_radius"], d["pill_length"]
+    front = z + length * 0.5
+    back = z - length * 0.5
 
-    mb = r1kit.MeshBuilder(f"Housing_{suffix}", pivot_u=(cx, cy, cz))
-    mb.add_bevel_box(center_u=(cx, cy, cz), size_u=(w, h, dp), mat="R1_CreamEnamel", bevel=0.018, segments=2)
-    mb.add_bevel_box(center_u=(cx, cy - h * 0.18, cz), size_u=(w + 0.006, 0.020, dp + 0.006), mat="R1_OrangeStripe",
-                     bevel=0.004, segments=1)
-    half = d["lens_size"] * 0.5 + d["bezel_width"] * 0.5
-    bw = d["bezel_width"]
-    for sy in (-1.0, 1.0):
-        mb.add_bevel_box(center_u=(cx, cy + sy * half, front + 0.008), size_u=(d["lens_size"] + 2 * bw, bw, 0.018),
-                         mat="R1_GreyMetal", bevel=0.004, segments=1)
-    for sx in (-1.0, 1.0):
-        mb.add_bevel_box(center_u=(cx + sx * half, cy, front + 0.008), size_u=(bw, d["lens_size"], 0.018),
-                         mat="R1_GreyMetal", bevel=0.004, segments=1)
-    # Dark reflector field behind the sealed beam, and the rear pilot slit's grey hood
-    mb.add_bevel_box(center_u=(cx, cy, front + 0.001), size_u=(d["lens_size"], d["lens_size"], 0.004),
-                     mat="R1_DarkGlass", bevel=0.0, segments=0)
-    mb.add_bevel_box(center_u=(cx, cy + 0.045, back - 0.006), size_u=(0.13, 0.034, 0.014), mat="R1_GreyMetal",
-                     bevel=0.003, segments=1)
-    # Brake-bent bracket: a plate along the crown's corner, welded to the housing's inner face, with a gusset
-    inner_x = cx - side * w * 0.5
-    head_x = side * d["head_half_width"]
-    plate_x = (inner_x + head_x - side * 0.07) * 0.5
-    plate_w = abs(inner_x - (head_x - side * 0.07))
-    mb.add_bevel_box(center_u=(plate_x, d["crown_y"] + 0.006, cz - 0.02), size_u=(plate_w, 0.012, 0.12),
-                     mat="R1_GreyMetal", bevel=0.003, segments=1)
-    mb.add_strut((inner_x - side * 0.004, cy - h * 0.40, cz - 0.02), (inner_x - side * 0.05, d["crown_y"] + 0.012,
-                 cz - 0.02), 0.012, 0.09, "R1_GreyMetal", bevel=0.003)
-    # Power cable from the housing's back into the crown
-    mb.add_tube_path([(cx - side * 0.04, cy - 0.03, back - 0.004), (cx - side * 0.06, cy - 0.06, back - 0.05),
-                      (head_x - side * 0.12, d["crown_y"] + 0.02, back - 0.04),
-                      (head_x - side * 0.16, d["crown_y"] - 0.004, back - 0.01)],
-                     radius=0.010, mat="R1_Rubber", segments=8)
+    mb = r1kit.MeshBuilder(f"Housing_{suffix}", pivot_u=(x, y, z))
+    _pill_z(mb, (x, y, z), r, length, "R1_CreamEnamel")
+    mb.add_bevel_box(center_u=(side * d["saddle_x"], y, z), size_u=(0.03, 0.075, 0.15), mat="R1_GreyMetal",
+                     bevel=0.012, segments=2)
     housing = mb.build_object(parent=root)
 
-    lens = r1kit.MeshBuilder(f"Lens_{suffix}", pivot_u=(cx, cy, front))
-    lens.add_bevel_box(center_u=(cx, cy, front + 0.008), size_u=(d["lens_size"] - 0.004, d["lens_size"] - 0.004,
-                       0.014), mat="R1_LampAmber", bevel=0.006, segments=2)
-    lens.add_bevel_box(center_u=(cx, cy + 0.045, back - 0.002), size_u=(0.11, 0.016, 0.010), mat="R1_LampAmber",
-                       bevel=0.003, segments=1)
+    lens = r1kit.MeshBuilder(f"Lens_{suffix}", pivot_u=(x, y, front))
+    lens.add_cylinder(center_u=(x, y, front - 0.002), radius=d["lens_radius"], length=0.024, mat="R1_LampAmber",
+                      axis_u="Z", segments=20, bevel=0.012, bevel_segments=2)
+    lens.add_cylinder(center_u=(x, y, back + 0.002), radius=d["pilot_radius"], length=0.012, mat="R1_LampAmber",
+                      axis_u="Z", segments=12, bevel=0.005, bevel_segments=1)
     lens.build_object(parent=housing)
-    r1kit.create_empty(f"Beam_{suffix}", parent=root, pivot_u=(cx, cy, front + 0.02))
+    r1kit.create_empty(f"Beam_{suffix}", parent=root, pivot_u=(x, y, front + 0.012))
 
 
 def build_kit_ssr3_headlamp() -> bpy.types.Object:
@@ -137,53 +113,26 @@ def build_kit_ssr3_headlamp() -> bpy.types.Object:
 
 
 def _build_pod_body(root: bpy.types.Object) -> None:
-    """The cream chamfered cell box, two grey straps with over-centre latches, a bail handle on top and the cable that
-    leaves the inner face into 07's flank."""
+    """One soft rounded cream pod against the flank, and the short cable gland on its inner face into the body."""
     d = POD_DIMS
     w, h, dp = d["width"], d["height"], d["depth"]
-    cx = w * 0.5
     mb = r1kit.MeshBuilder("Pod", pivot_u=(0.0, 0.0, 0.0))
-    mb.add_bevel_box(center_u=(cx, 0.0, 0.0), size_u=(w, h, dp), mat="R1_CreamEnamel", bevel=d["bevel"], segments=2)
-    # A grey back plate against the flank, the pod's mount
-    mb.add_bevel_box(center_u=(0.008, 0.0, 0.0), size_u=(0.016, h - 0.04, dp - 0.06), mat="R1_GreyMetal",
-                     bevel=0.004, segments=1)
-    for sz in (-1.0, 1.0):
-        z = sz * d["strap_inset_z"]
-        mb.add_bevel_box(center_u=(cx + 0.004, 0.0, z), size_u=(w + 0.008, h + 0.010, 0.030), mat="R1_GreyMetal",
-                         bevel=0.004, segments=1)
-        # Over-centre latch on the outer face, high on the strap: a steel lever over a grey keeper
-        mb.add_bevel_box(center_u=(w + 0.010, h * 0.30, z), size_u=(0.012, 0.050, 0.034), mat="R1_GreyMetal",
-                         bevel=0.003, segments=1)
-        mb.add_bevel_box(center_u=(w + 0.018, h * 0.30 - 0.012, z), size_u=(0.010, 0.060, 0.020),
-                         mat="R1_BareSteel", bevel=0.003, segments=1, rot_deg_u=(0.0, 0.0, -8.0 * sz))
-    # Bail handle across the top, on two grey lugs
-    top = h * 0.5
-    for sz in (-1.0, 1.0):
-        mb.add_bevel_box(center_u=(cx, top + 0.010, sz * 0.070), size_u=(0.044, 0.020, 0.026), mat="R1_GreyMetal",
-                         bevel=0.004, segments=1)
-    mb.add_tube_path([(cx, top + 0.016, -0.070), (cx, top + 0.042, -0.058), (cx, top + 0.052, -0.025),
-                      (cx, top + 0.052, 0.025), (cx, top + 0.042, 0.058), (cx, top + 0.016, 0.070)],
-                     radius=0.009, mat="R1_BareSteel", segments=8)
-    # Dark window round the charge bars on the outer face
-    mb.add_bevel_box(center_u=(w + 0.001, -0.02, 0.0), size_u=(0.006, 0.19, d["bar_length"] + 0.05),
-                     mat="R1_DarkGlass", bevel=0.004, segments=1)
-    # Power cable: out of the inner face's top through a gland, into the flank
-    mb.add_cylinder(center_u=(0.030, top - 0.05, 0.0), radius=0.020, length=0.03, mat="R1_GreyMetal", axis_u="X",
-                    segments=10, bevel=0.003)
-    mb.add_tube_path([(0.040, top - 0.05, 0.0), (0.020, top + 0.004, 0.0), (-0.010, top - 0.01, 0.0),
-                      (-0.030, top - 0.06, 0.0)], radius=0.012, mat="R1_Rubber", segments=8)
+    mb.add_bevel_box(center_u=(w * 0.5 - 0.01, 0.0, 0.0), size_u=(w, h, dp), mat="R1_CreamEnamel",
+                     bevel=min(w, h, dp) * d["round"], segments=4)
+    mb.add_cylinder(center_u=(0.0, h * 0.25, 0.0), radius=0.024, length=0.03, mat="R1_GreyMetal", axis_u="X",
+                    segments=12, bevel=0.006, bevel_segments=1)
     mb.build_object(parent=root)
 
 
-def _build_pod_charge_bars(root: bpy.types.Object) -> None:
-    """Three short horizontal amber bars, bottom to top, each its own node so Rover can light the charge level."""
+def _build_pod_charge_bar(root: bpy.types.Object) -> None:
+    """A short slim charge bar of two segments on the outer face, bottom to top, each its own node for Rover."""
     d = POD_DIMS
-    x = d["width"] + 0.006
-    for i in range(3):
-        y = -0.02 - d["bar_step"] + i * d["bar_step"]
+    x = d["width"] - 0.009
+    for i in range(2):
+        y = d["bar_low_y"] + i * d["bar_step"]
         mb = r1kit.MeshBuilder(f"ChargeBar_{i}", pivot_u=(x, y, 0.0))
-        mb.add_bevel_box(center_u=(x, y, 0.0), size_u=(d["bar_width"], d["bar_height"], d["bar_length"]),
-                         mat="R1_LampAmber", bevel=0.006, segments=1)
+        mb.add_bevel_box(center_u=(x, y, 0.0), size_u=(0.014, d["bar_height"], d["bar_length"]),
+                         mat="R1_LampAmber", bevel=0.009, segments=2)
         mb.build_object(parent=root)
 
 
@@ -191,7 +140,7 @@ def build_kit_cell_pod() -> bpy.types.Object:
     """Build the Kit_CellPod hierarchy and bake its vertex colours."""
     root = r1kit.create_empty("Kit_CellPod", pivot_u=(0.0, 0.0, 0.0))
     _build_pod_body(root)
-    _build_pod_charge_bars(root)
+    _build_pod_charge_bar(root)
     bpy.context.view_layer.update()
     r1kit.bake_vertex_colors(root, footprint_radius=0.35)
     return root
