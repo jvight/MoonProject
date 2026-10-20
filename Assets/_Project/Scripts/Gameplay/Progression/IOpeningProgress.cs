@@ -57,6 +57,9 @@ namespace MoonProject.Gameplay
         /// <summary>The first night has fallen over a night-ready base (B10's exit).</summary>
         bool NightFallen { get; }
 
+        /// <summary>The habitat's power module stands home on the apron, off the cable: a battery bank can stand on it.</summary>
+        bool ModuleHome { get; }
+
         /// <summary>Since power-on 07 has visited a near site, so docking now begins the first dusk (R5).</summary>
         bool DuskVisited { get; }
 
