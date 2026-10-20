@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using MoonProject.Core;
+using MoonProject.Core.Input;
 using MoonProject.Core.Events;
 using MoonProject.Core.Save;
 
@@ -82,6 +83,7 @@ namespace MoonProject.Gameplay
         private readonly List<IDisposable> _saveTokens = new List<IDisposable>();
         private readonly List<IDisposable> _flowTokens = new List<IDisposable>();
         private IRoverState _roverState;
+        private InputReader _input;
         private GlowMeshSet _meshes;
 
         public MaterialStock Materials { get; private set; }
@@ -135,6 +137,8 @@ namespace MoonProject.Gameplay
         public CallReply Reply { get; private set; }
 
         public MastRaise MastRaise { get; private set; }
+
+        public CallAnswer Answer { get; private set; }
 
         /// <summary>How the mast raises and the reply times (tests).</summary>
         public CallReplySettings MastRaiseSettings => _openingTuning.Reply;
@@ -254,6 +258,7 @@ namespace MoonProject.Gameplay
                 context.Get<IWorldLayout>(), context.Get<IWorldAnchors>(), context.Get<IRoverState>(),
                 context.Get<IRoverRig>(), context.Get<IViewCamera>(), save, Materials, _visuals, _glints, _meshes);
             _roverState = services.Rover;
+            _input = services.Input;
             GlintVeil veil = services.GlintVeil;
             _flowTokens.Add(context.Events.Subscribe<TitleShown>(_ => veil.Hide()));
             _flowTokens.Add(context.Events.Subscribe<SessionStarted>(_ => veil.Show(Time.time)));
@@ -305,6 +310,9 @@ namespace MoonProject.Gameplay
             Call = new CallProgress(context.Events, _openingTuning.Call, services.Layout);
             Reply = new CallReply(context.Events, Call, _openingTuning.Reply);
             MastRaise = new MastRaise(context.Events, _openingTuning.Reply);
+            services.Anchors.TryGet(WorldAnchorIds.RelayPrefix + "1", out WorldAnchor relay);
+            Answer = new CallAnswer(context.Events, Call, Reply, MastRaise, _openingTuning.Answer, relay.Position,
+                services.Layout.PeakPosition);
             RangeRing = new RangeRingField(context.Events, _battery.Tuning.RangeRing,
                 new RangeRingModel(_battery.Tuning, _battery.Tuning.RangeRing, services.Terrain), _battery.Model,
                 Opening.Pads, services.Rover);
@@ -323,6 +331,7 @@ namespace MoonProject.Gameplay
             context.Register<IBeamStatus>(services.Beam);
             context.Register<IRecoveryProgress>(Recovery);
             context.Register<ICallSource>(Call);
+            context.Register<IAnswerStatus>(Answer);
             context.Register<IRangeRing>(RangeRing);
             context.Register<IDatabank>(Databank);
             context.Register<BuildField>(_building);
@@ -558,6 +567,7 @@ namespace MoonProject.Gameplay
             Opening.Step(deltaTime);
             Reply.Step(deltaTime, Opening.NightFallen, _roverState.Speed);
             MastRaise.Step(deltaTime);
+            Answer.Step(deltaTime, Opening.NightFallen, _input.ExcavateHeld, _roverState.Position, _roverState.Speed);
             RangeRing.Step(deltaTime);
             RangeRingLine.Step();
             PadLock.Step(deltaTime);
@@ -658,6 +668,7 @@ namespace MoonProject.Gameplay
             Databank?.Dispose();
             Call?.Dispose();
             MastRaise?.Dispose();
+            Answer?.Dispose();
             RangeRing?.Dispose();
             Bundles?.Dispose();
             Opening?.Dispose();

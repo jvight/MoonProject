@@ -95,6 +95,10 @@ namespace MoonProject.Gameplay
         [Tooltip("When 07 tries to answer the call, and how the antenna mast's segments lift and lock.")]
         [SerializeField] private CallReplySettings _reply = new CallReplySettings();
 
+        [Header("The answer (opening v3 R8)")]
+        [Tooltip("Where and how long 07 holds to transmit, and how the pulse of the old network runs to relay.1 and the Peak.")]
+        [SerializeField] private CallAnswerSettings _answer = new CallAnswerSettings();
+
         [Header("Supply (opening-v3 §4: fixed sources, each for one structure)")]
         [Tooltip("Every source of the opening's materials, and nothing else: each stands by the thing it comes from " +
                  "and is for one structure (its link), which it covers on its own with the link's other sources " +
@@ -174,5 +178,7 @@ namespace MoonProject.Gameplay
         public CallSettings Call => _call;
 
         public CallReplySettings Reply => _reply;
+
+        public CallAnswerSettings Answer => _answer;
     }
 }
