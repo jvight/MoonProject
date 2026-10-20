@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
 
@@ -37,6 +38,15 @@ namespace MoonProject.Gameplay
         /// <summary>The rack stands at the pad (the release revealed it).</summary>
         public bool Shown { get; private set; }
 
+        /// <summary>The dock the release revealed the rack at (kept by the save).</summary>
+        public Vector3 Position { get; private set; }
+
+        /// <summary>07's heading on that dock.</summary>
+        public Quaternion Rotation { get; private set; } = Quaternion.identity;
+
+        /// <summary>A pose is known: the release placed the rack, now or in a loaded game.</summary>
+        public bool Placed { get; private set; }
+
         public int Count => _bays.Length;
 
         /// <summary>Goes up by one each time anything the rack shows changes (views redraw then).</summary>
@@ -62,17 +72,29 @@ namespace MoonProject.Gameplay
             return _bays[bay].SeenAtRelease || _seen[bay] ? RackBayState.Outline : RackBayState.Hidden;
         }
 
-        /// <summary>The release reveals the rack. True when it appeared this time.</summary>
-        public bool Reveal()
+        /// <summary>The release reveals the rack at its dock. True when it appeared this time.</summary>
+        public bool Reveal(Vector3 position, Quaternion rotation)
         {
             if (Shown)
             {
                 return false;
             }
 
+            Position = position;
+            Rotation = rotation;
+            Placed = true;
             Shown = true;
             Version++;
             return true;
+        }
+
+        /// <summary>
+        /// A loaded game whose release is done: the rack stands where the save placed it. False when the save placed
+        /// it nowhere (the rack stays hidden: there is no other place it may stand).
+        /// </summary>
+        public bool RevealSaved()
+        {
+            return Placed && Reveal(Position, Rotation);
         }
 
         /// <summary>A fragment of <paramref name="blueprintId"/> was scanned: bays of that blueprint are seen.</summary>
@@ -124,16 +146,23 @@ namespace MoonProject.Gameplay
                 }
             }
 
-            return new RackSaveData { seen = seen.ToArray(), filled = filled.ToArray() };
+            return new RackSaveData
+            {
+                placed = Placed, position = Position, rotation = Rotation, seen = seen.ToArray(),
+                filled = filled.ToArray(),
+            };
         }
 
         /// <summary>
-        /// A save's bays (null: a new game). Ids no bay has any more are dropped. Whether the rack is out is the
-        /// release's to say (<see cref="Reveal"/>), not the rack's save.
+        /// A save's bays and pose (null: a new game). Ids no bay has any more are dropped. Whether the rack is out is
+        /// the release's to say (<see cref="RevealSaved"/>), not the rack's save.
         /// </summary>
         public void Restore(RackSaveData data)
         {
             Shown = false;
+            Placed = data != null && data.placed;
+            Position = Placed ? data.position : Vector3.zero;
+            Rotation = Placed ? data.rotation : Quaternion.identity;
             for (int i = 0; i < _bays.Length; i++)
             {
                 _seen[i] = data != null && Contains(data.seen, _bays[i].Id);

@@ -8,8 +8,8 @@ namespace MoonProject.World
     /// (<see cref="StatusLampBlink"/>), its lens and a small halo in front of it together. The lamp is on the towable
     /// power module Gameplay stands beside the habitat (<see cref="ITowLine.TryFindLoad"/>, the module's tow id in
     /// tuning), found once (<see cref="StatusLampLens"/>: Art's PowerModule_StatusLamp, its amber slot by name, never the
-    /// bezel); the halo, which the scene build stands apart under [World]/ModuleLamp, follows the lens each frame as 07
-    /// tows it. No tow line or no such load (the opening did not stand it): no blink, no error. A load with no lamp to
+    /// bezel); the lamp itself, with its halo at its origin, stands apart under [World]/ModuleLamp and follows the lens
+    /// each frame as 07 tows it, so its position is the lamp's. No tow line or no such load (the opening did not stand it): no blink, no error. A load with no lamp to
     /// blink is broken wiring, reported once. Allocation-free per frame.
     /// </summary>
     public sealed class ModuleStatusLamp : MonoBehaviour, IGameSystem
@@ -24,7 +24,7 @@ namespace MoonProject.World
         [Tooltip("World tuning (Assets/_Project/Data/Tuning/WorldSettings.asset); its landmarks' module lamp.")]
         [SerializeField] private WorldSettings _settings;
 
-        [Tooltip("The lamp's halo, stood apart from the module by the scene build (LofiBeaconHalo, amber).")]
+        [Tooltip("The lamp's halo at this lamp's origin, stood apart from the module (LofiBeaconHalo, amber).")]
         [SerializeField] private Renderer _halo;
 
         private readonly StatusLampBlink _blink = new StatusLampBlink();
@@ -77,7 +77,7 @@ namespace MoonProject.World
             _blink.OnSky(_sunlight.Phase, false);
             _blink.Step(Time.deltaTime, lamp.WakeSeconds);
             Level = _blink.Level(Time.time, lamp.BlinkSeconds, lamp.OnShare, lamp.EaseShare);
-            _halo.transform.position = _lens.InFront(lamp.HaloLift);
+            transform.position = _lens.InFront(lamp.HaloLift);
             _lens.Renderer.GetPropertyBlock(_block, _lens.Slot);
             _block.SetFloat(EmissionStrengthId, Level * lamp.LampGlow);
             _lens.Renderer.SetPropertyBlock(_block, _lens.Slot);
