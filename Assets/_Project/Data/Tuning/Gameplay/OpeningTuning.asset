@@ -44,6 +44,19 @@ MonoBehaviour:
     _decodedAtAnswer: 2
     _yawFromEarth: -8.5
     _pitchFromEarth: 1.5
+  _rackBays:
+  - _id: rack.headlamp
+    _seenAtRelease: 1
+    _seenByBlueprint: 
+    _filledBy: 1
+  - _id: rack.cell_pack
+    _seenAtRelease: 1
+    _seenByBlueprint: 
+    _filledBy: 6
+  - _id: rack.hex_adapter
+    _seenAtRelease: 0
+    _seenByBlueprint: rover.hex_adapter
+    _filledBy: 11
   _tow:
     _cableLength: 4
     _hookReach: 3

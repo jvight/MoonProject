@@ -16,7 +16,7 @@ namespace MoonProject.UI
         [Tooltip("The prompt chip easing in and out.")]
         [SerializeField] private RevealSettings _reveal = new RevealSettings(0.35f, 0.3f, 10f, 0.88f, 1.6f, 0.55f);
 
-        [Tooltip("Teachable actions.")]
+        [Tooltip("Teachable actions, and the rack's chip, which names a part and shows no key (its action is unused).")]
         [SerializeField] private PromptEntry[] _entries =
         {
             new PromptEntry(InteractionKind.Salvage, RoverAction.Excavate, 0.4f, 0.6f),
@@ -26,6 +26,7 @@ namespace MoonProject.UI
             new PromptEntry(InteractionKind.Deconstruct, RoverAction.Deconstruct, 0.4f, 0.9f),
             new PromptEntry(InteractionKind.OpenBuild, RoverAction.Build, 0.6f, 1.2f),
             new PromptEntry(InteractionKind.FitPart, RoverAction.Build, 0.6f, 1.6f),
+            new PromptEntry(InteractionKind.Rack, RoverAction.Excavate, 0.8f, 0.4f),
             new PromptEntry(InteractionKind.Tether, RoverAction.Tether, 0.6f, 1.2f),
         };
 

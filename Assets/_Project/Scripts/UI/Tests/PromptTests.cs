@@ -294,13 +294,14 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
-        public void Settings_DefaultTable_IsValid_AndTeachesTheOpeningsVerbs()
+        public void Settings_DefaultTable_IsValid_TeachesTheOpeningsVerbs_AndNamesTheRacksParts()
         {
             Assert.IsNull(_settings.Validate());
             InteractionKind[] taught =
             {
                 InteractionKind.Salvage, InteractionKind.PickUp, InteractionKind.Build, InteractionKind.Scan,
-                InteractionKind.Deconstruct, InteractionKind.OpenBuild, InteractionKind.FitPart, InteractionKind.Tether,
+                InteractionKind.Deconstruct, InteractionKind.OpenBuild, InteractionKind.FitPart, InteractionKind.Rack,
+                InteractionKind.Tether,
             };
             Assert.AreEqual(taught.Length, _settings.Entries.Length, "no prompt teaches a verb the opening lacks");
             foreach (InteractionKind kind in taught)

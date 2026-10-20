@@ -44,6 +44,12 @@ namespace MoonProject.Gameplay
         FitPart = 18,
 
         /// <summary>
+        /// An outline on the socket rack at the pad, in reach and in the aim (opening v3 4.3): the chip names the part
+        /// and where 07 saw it (<see cref="InteractionHint.NounKey"/> is the bay's id). It names a goal; it has no key.
+        /// </summary>
+        Rack = 19,
+
+        /// <summary>
         /// A towable load's hitch lies within the winch's hook reach and nothing is on the cable: press Tether to hook
         /// it (the world's chip at the hitch, a first time only).
         /// </summary>
