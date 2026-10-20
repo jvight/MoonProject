@@ -763,6 +763,9 @@ CUES = (
     Cue("chirp_greeting", "oneshot_3d", picks.renderer("chirp_greeting"), volume=(0.55, 0.55), milestone="M3",
         sampled=True, notes="07's voice, greeting: an annunciator gesture from a real motor whine (sampled/picks.py); "
                             "syllables in chirp_syllables.json."),
+    Cue("chirp_ask", "oneshot_3d", picks.renderer("chirp_ask"), volume=(0.55, 0.55), milestone="M3",
+        sampled=True, notes="07's voice, ask: a small hopeful question scooping F#4 up to A4, then nothing answers "
+                            "(CallReplyFailed); syllables in chirp_syllables.json."),
     Cue("part_pick", "tick_2d", feel.part_pick, volume=(0.45, 0.45), milestone="M3",
         notes="0.5.5: picking a part up in the 07 tab: a light tick rising E5 -> A5."),
     Cue("part_drop", "tick_2d", feel.part_drop, volume=(0.45, 0.45), milestone="M3",
@@ -1019,6 +1022,17 @@ CUES = (
         volume=(0.5, 0.5), milestone="M3", sampled=True,
         notes="07's lamps switched by the player (RoverLightsSwitched), at the headlamp: on = a relay tick, its "
               "contact and a faint filament breath on D3; off = a softer, darker tick."),
+    Cue("mast_clunk", "oneshot_3d", picks.renderer("mast_clunk"), volume=(0.7, 0.7), milestone="M3", sampled=True,
+        notes="A mast segment telescoping up and locking home (MastSegmentRaised): a heavy padded clunk, a steel ring "
+              "on D2, the collar's latch; pitched up a step per segment in game."),
+    Cue("mast_settle", "oneshot_3d", picks.renderer("mast_settle"), volume=(0.6, 0.6), milestone="M3", sampled=True,
+        notes="The raised mast settling (the last segment): its gear easing onto D and a long soft ring."),
+    Cue("cutter_sputter", "tick_3d", picks.renderer("cutter_sputter"), volume=(0.8, 0.8), milestone="M3",
+        sampled=True, notes="Opening v3: the first cut tried without an igniter (CutterSputtered): a spark gap that "
+                            "won't catch, click, click, a short fizzle. Dry."),
+    Cue("cutter_refuse", "tick_3d", picks.renderer("cutter_refuse"), volume=(0.6, 0.6), milestone="M3",
+        sampled=True, notes="A cut the cutter refused (CutterRefused): a soft, low fault tick, the turret's latch "
+                            "thudding shut with a breath of dry buzz. Skipped in a CutterSputtered frame."),
     Cue("lamp_tick", "tick_3d", lamp_tick, volume=(0.45, 0.45), fade_out=0.03, milestone="M3",
         notes="A flank lamp lighting as 07 wakes: a tiny relay tick with a breath of filament on D6."),
 )

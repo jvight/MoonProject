@@ -61,9 +61,36 @@ def pad_lock_open(lib, gen, _variant: int) -> np.ndarray:
     return out
 
 
+def mast_clunk(lib, gen, _variant: int) -> np.ndarray:
+    """A segment of the antenna mast telescoping up and locking home: a heavy, padded clunk with the steel's low ring
+    on D2 and the collar's latch (the game pitches it up a step per segment)."""
+    n = samples(0.9)
+    out = np.zeros(n)
+    dsp.place(out, parts.clip(lib, "door_clunk", 1300.0, 60.0, 0.8), 0.0, 0.5)
+    ring = parts.clip(lib, "metal_thud", 650.0, 62.0, 1.012)[:samples(0.8)]
+    dsp.place(out, ring * dsp.shape(len(ring), [(0.0, 1.0), (0.8, 0.0)]), 0.0, 0.4)
+    dsp.place(out, parts.clip(lib, "latch_thunk", 1800.0, 80.0, 0.9), 0.05, 0.3)
+    return out
+
+
+def mast_settle(lib, gen, _variant: int) -> np.ndarray:
+    """The raised mast settling: its gear easing down onto D and a long, soft ring of the whole steel column."""
+    n = samples(1.6)
+    out = np.zeros(n)
+    gear_n = samples(0.5)
+    gear = parts.gear(lib, gen, gear_n, "D5") * dsp.shape(gear_n, [(0.0, 0.0), (0.08, 1.0), (0.5, 0.0)])
+    dsp.place(out, gear, 0.0, 0.3)
+    ring = parts.clip(lib, "metal_thud", 600.0, 62.0, 1.012)[:samples(1.4)]
+    dsp.place(out, ring * dsp.shape(len(ring), [(0.0, 0.0), (0.05, 1.0), (1.4, 0.0)]), 0.1, 0.45)
+    dsp.place(out, parts.clip(lib, "latch_thunk", 1500.0, 70.0, 0.75), 0.12, 0.25)
+    return out
+
+
 # Cue id -> (recipe, variants). Every variant ships: one per lamp in the lighting order, one each for the lock.
 SOUNDS = {
     "base_lamp_on": (lamp_on, len(LAMP_STEPS)),
     "pad_lock_close": (pad_lock_close, 1),
     "pad_lock_open": (pad_lock_open, 1),
+    "mast_clunk": (mast_clunk, 1),
+    "mast_settle": (mast_settle, 1),
 }

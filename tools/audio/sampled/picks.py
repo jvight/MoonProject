@@ -26,6 +26,7 @@ VOICE = {
     "chirp_tired": ("voice_ack", 2),
     "chirp_relieved": ("voice_done", 2),
     "chirp_greeting": ("voice_query", 0),
+    "chirp_ask": ("voice_ask", 0),
 }
 
 # Build cues -> variant of its recipe in build.SOUNDS.
