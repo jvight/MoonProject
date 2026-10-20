@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine.InputSystem;
 
 namespace MoonProject.Core.Input
@@ -41,6 +42,51 @@ namespace MoonProject.Core.Input
             return path == null
                 ? string.Empty
                 : path.Replace("<", string.Empty).Replace(">", string.Empty).Replace('/', '.').ToLowerInvariant();
+        }
+
+        /// <summary>
+        /// Adds the short label of every distinct control bound to <paramref name="action"/> for the device, in binding
+        /// order (the parts of a composite included: a Z and a C key are two labels), to <paramref name="into"/>.
+        /// </summary>
+        public static void AllLabels(InputAction action, InputDeviceKind device, List<string> into)
+        {
+            ForEachPath(action, device, path =>
+            {
+                string label = InputControlPath.ToHumanReadableString(path,
+                    InputControlPath.HumanReadableStringOptions.OmitDevice |
+                    InputControlPath.HumanReadableStringOptions.UseShortNames);
+                if (!into.Contains(label))
+                {
+                    into.Add(label);
+                }
+            });
+        }
+
+        /// <summary>The stable control id of every distinct control bound to <paramref name="action"/> for the device.</summary>
+        public static void AllControlIds(InputAction action, InputDeviceKind device, List<string> into)
+        {
+            ForEachPath(action, device, path =>
+            {
+                string id = path.Replace("<", string.Empty).Replace(">", string.Empty).Replace('/', '.')
+                    .ToLowerInvariant();
+                if (!into.Contains(id))
+                {
+                    into.Add(id);
+                }
+            });
+        }
+
+        private static void ForEachPath(InputAction action, InputDeviceKind device, System.Action<string> visit)
+        {
+            InputBinding mask = InputBinding.MaskByGroup(
+                device == InputDeviceKind.Gamepad ? GamepadGroup : KeyboardMouseGroup);
+            foreach (InputBinding binding in action.bindings)
+            {
+                if (!binding.isComposite && mask.Matches(binding))
+                {
+                    visit(PhysicalControlPath(binding.effectivePath));
+                }
+            }
         }
 
         /// <summary>The physical control path of the first matching binding, or null.</summary>
