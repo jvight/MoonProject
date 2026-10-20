@@ -811,20 +811,10 @@ namespace MoonProject.Gameplay
 
             Vector3 roverPosition = _rover.Position;
             Transform frame = null;
-            if (selected.FrameLoad.Length > 0 && (_tow == null || !_tow.TryFindHome(selected.FrameLoad, out frame)))
-            {
-                // Built on a towed load that is not home yet: nothing to place, and the reason says why.
-                _controller.ClearCandidate(PlacementReason.NeedsFrame);
-                HideAllGhosts();
-                _wasValid = false;
-                if (excavatePressed && !_waitExcavateRelease)
-                {
-                    _events.Publish(new UiCue(UiCueKind.PartRefuse));
-                }
-
-                return;
-            }
-
+            // Built on a towed load that is not home yet: the ghost follows the aim as ever, its cost on it, but it
+            // cannot be placed, and the reason says why.
+            bool frameMissing = selected.FrameLoad.Length > 0 &&
+                                (_tow == null || !_tow.TryFindHome(selected.FrameLoad, out frame));
             Vector3 groundPoint;
             if (frame != null)
             {
@@ -853,7 +843,8 @@ namespace MoonProject.Gameplay
                 snappedPose.Yaw);
 
             bool propBlocked = IsPropBlocked(selected, snappedPose, frame);
-            _controller.UpdateCandidate(groundPoint, roverPosition, _terrain, propBlocked, snapEnabled: frame == null);
+            _controller.UpdateCandidate(groundPoint, roverPosition, _terrain, propBlocked, snapEnabled: frame == null,
+                frameMissing: frameMissing);
 
             bool snappedNow = _controller.CandidateSnapped;
             if (snappedNow && !_wasSnapped)

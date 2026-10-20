@@ -97,6 +97,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float PlaceAhead = 4.6f;
         private const float StructureSpacing = 14f;
 
+        /// <summary>Metres from the base a structure built on a towed load stands: on the apron, where it came home.</summary>
+        private const float FrameHomeOffset = 5f;
+
         /// <summary>Metres in front of 07 a structure is welded in the framing test: right at its nose.</summary>
         private const float WeldAhead = 3f;
         private const float FramingSettleSeconds = 2f;
@@ -329,6 +332,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return StandFacing(at, Vector3.back, PlaceAhead);
             var rover = _context.Get<IRoverState>();
             Vector3 spot = rover.Position + Flat(rover.Rotation * Vector3.forward).normalized * PlaceAhead;
+            SetDownItsFrame(definition, SurfaceRules.OnSurface(terrain, spot.x, spot.z));
             build.SetAimPointOverride(SurfaceRules.OnSurface(terrain, spot.x, spot.z));
 
             yield return Tap(_keyboard.bKey);
@@ -469,6 +473,23 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// the layer line being welded is never hidden by 07's body and stays in the middle
         /// <see cref="CentralShare"/> of the screen, every frame of the weld.
         /// </summary>
+        /// <summary>
+        /// A structure built on a towed load (the battery bank on the habitat's power module) needs its load home: it
+        /// is set down at <paramref name="at"/> first, as if towed there.
+        /// </summary>
+        private void SetDownItsFrame(StructureDefinition definition, Vector3 at)
+        {
+            if (definition.FrameLoad.Length == 0)
+            {
+                return;
+            }
+
+            Assert.IsTrue(_gameplay.Tow.TryFindLoad(definition.FrameLoad, out Transform load),
+                $"{definition.Id}'s load {definition.FrameLoad} stands");
+            load.SetPositionAndRotation(at, Quaternion.identity);
+            Physics.SyncTransforms();
+        }
+
         private IEnumerator WeldInView(string structureId, int index)
         {
             BuildField build = _gameplay.Building;
@@ -477,10 +498,14 @@ namespace MoonProject.Gameplay.PlayModeTests
             _gameplay.Materials.Stow(definition.BuildCost);
 
             var terrain = _context.Get<ITerrainQuery>();
-            Vector3 home = _context.Get<IWorldLayout>().BasePosition + Vector3.right * (index * StructureSpacing);
+            // A structure built on a towed load stands where its load came home, on the apron.
+            Vector3 home = _context.Get<IWorldLayout>().BasePosition + (definition.FrameLoad.Length > 0
+                ? Vector3.left * FrameHomeOffset
+                : Vector3.right * (index * StructureSpacing));
             yield return StandFacing(home + Vector3.forward * (WeldAhead + 2f), Vector3.back, WeldAhead);
             var rover = _context.Get<IRoverState>();
             Vector3 spot = rover.Position + Flat(rover.Rotation * Vector3.forward).normalized * WeldAhead;
+            SetDownItsFrame(definition, SurfaceRules.OnSurface(terrain, spot.x, spot.z));
             build.SetAimPointOverride(SurfaceRules.OnSurface(terrain, spot.x, spot.z));
 
             yield return Tap(_keyboard.bKey);
