@@ -79,6 +79,9 @@ namespace MoonProject.Autoplay
         /// <summary>Game seconds a cue may take to show after a beat, unless a beat's own budget says otherwise.</summary>
         public const float DefaultBudgetSeconds = 5f;
 
+        /// <summary>A cue counts as readable this far in from each edge of the frame (a share of the viewport): one at the very edge is not.</summary>
+        private const float CueMargin = 0.05f;
+
         private readonly AutoplayBot _bot;
         private readonly Dictionary<string, float> _budgets = new Dictionary<string, float>();
         private readonly Dictionary<string, NextAction> _next = new Dictionary<string, NextAction>();
@@ -199,7 +202,7 @@ namespace MoonProject.Autoplay
             Camera camera = _bot.World.Context.Get<IViewCamera>().Camera;
             foreach (WorldCue cue in WorldCues.All(_bot.World))
             {
-                if (cue.Lit() && WorldCue.OnScreen(camera, cue.Point(), 0f))
+                if (cue.Lit() && WorldCue.OnScreen(camera, cue.Point(), CueMargin))
                 {
                     if (action == null || Contains(cue.Name, action.CueNames))
                     {
