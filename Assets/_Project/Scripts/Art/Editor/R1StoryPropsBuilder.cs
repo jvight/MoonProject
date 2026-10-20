@@ -93,6 +93,7 @@ namespace MoonProject.Art.Editor
         public const string CablePlugPrefabPath = PropsModelsFolder + "/Cable_Plug.prefab";
         public const string CableSpliceBoxPrefabPath = PropsModelsFolder + "/Cable_Splice_Box.prefab";
         public const string HabitatModulesPrefabPath = ArtPaths.R1ModelsFolder + "/Ruins/HabitatModules.prefab";
+        public const string PowerModulePrefabPath = ArtPaths.R1ModelsFolder + "/Ruins/PowerModule.prefab";
         public const string PropOldLanderPrefabPath = PropsModelsFolder + "/Prop_OldLander.prefab";
         public const string DecalOldLanderBlastPrefabPath = PropsModelsFolder + "/Decal_OldLanderBlast.prefab";
         public const string PropMissionFlagPrefabPath = PropsModelsFolder + "/Prop_MissionFlag.prefab";
@@ -556,6 +557,11 @@ namespace MoonProject.Art.Editor
                 ReplaceRendererSlotMaterial(root, "BlastPatch", R1MaterialRecipes.CreamEnamelSlot, blastMat);
                 ReplaceRendererSlotMaterial(root, "FootpadScuffs", R1MaterialRecipes.CreamEnamelSlot, blastMat);
                 DisableShadowCastingOnHierarchy(root);
+            }
+
+            else if (modelPath.EndsWith("/PowerModule.fbx", StringComparison.Ordinal))
+            {
+                EnsureSimpleBoxCollider(root);
             }
 
             ApplyMakerDecalOverrides(root);

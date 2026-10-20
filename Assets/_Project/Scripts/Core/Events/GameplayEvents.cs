@@ -694,6 +694,21 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
+    /// The first time the faulted cutter is asked to cut (opening v3 slice 1.6): it tries to light without its igniter
+    /// and sputters at <see cref="Point"/>. Audio plays the dry sputter, Rover a startled beat on 07's face; UI's
+    /// cutter card (CUTTER · FAULT · NO IGNITER) follows the <see cref="CutterRefused"/> it comes with. Once per game.
+    /// </summary>
+    public readonly struct CutterSputtered
+    {
+        public CutterSputtered(Vector3 point)
+        {
+            Point = point;
+        }
+
+        public Vector3 Point { get; }
+    }
+
+    /// <summary>
     /// A story scan is fully scanned (docs/design/opening-v2.md B7, the habitat's airlock panel): 07's CRT shows the
     /// readout <see cref="TextKey"/>, read off <see cref="Point"/>. It teaches and pays nothing; once per save, never
     /// on a load.
@@ -813,5 +828,22 @@ namespace MoonProject.Core.Events
         }
 
         public Vector3 Position { get; }
+    }
+
+    /// <summary>
+    /// The first dusk begins (docs/design/opening-v3-purpose.md R6): after power-on the sky held in the afternoon
+    /// until 07 docked after visiting a near site, or learned the battery bank; now the Sun sinks to last light and
+    /// holds there until the night is ready. Published once by Gameplay's opening, and again at each session start of
+    /// a game where it has begun, with <see cref="Restored"/> true, so the sky snaps to it with no transition.
+    /// </summary>
+    public readonly struct OpeningDuskBegan
+    {
+        public OpeningDuskBegan(bool restored)
+        {
+            Restored = restored;
+        }
+
+        /// <summary>Replayed from a loaded game, not begun now.</summary>
+        public bool Restored { get; }
     }
 }

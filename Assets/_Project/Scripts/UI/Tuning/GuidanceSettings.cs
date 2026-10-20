@@ -92,6 +92,18 @@ namespace MoonProject.UI
         [Range(1f, 6f)]
         [SerializeField] private float _replyFaceSeconds = 3f;
 
+        [Tooltip("Seconds 07's face shows TX · READY when the answer first becomes possible.")]
+        [Range(1f, 10f)]
+        [SerializeField] private float _txReadySeconds = 5f;
+
+        [Tooltip("Seconds 07's face shows TX · READY again when it steps up to the mast.")]
+        [Range(1f, 6f)]
+        [SerializeField] private float _txPromptSeconds = 3f;
+
+        [Tooltip("Seconds 07's face shows the answer's ACK line (the route read out), the one element on screen.")]
+        [Range(2f, 12f)]
+        [SerializeField] private float _ackSeconds = 7f;
+
         [Tooltip("The Sun's arc easing in and out.")]
         [SerializeField] private RevealSettings _sunArc = new RevealSettings(1.2f, 1.5f, 6f, 0.97f, 1f, 0.8f);
 
@@ -140,6 +152,12 @@ namespace MoonProject.UI
         public float BlockedFaceSeconds => _blockedFaceSeconds;
 
         public float ReplyFaceSeconds => _replyFaceSeconds;
+
+        public float TxReadySeconds => _txReadySeconds;
+
+        public float TxPromptSeconds => _txPromptSeconds;
+
+        public float AckSeconds => _ackSeconds;
 
         public RevealSettings SunArc => _sunArc;
 

@@ -22,6 +22,7 @@ namespace MoonProject.Rover.PlayModeTests
         private const float StutterWatchSeconds = 12f;
         private const float OnTargetDegrees = 12f;
         private const float LitGlow = 0.5f;
+        private const float SignalWatchSeconds = 14f;
 
         private readonly RealRoverScene _scene = new RealRoverScene();
         private readonly object _holdOwner = new object();
@@ -84,35 +85,34 @@ namespace MoonProject.Rover.PlayModeTests
             yield return null;
             Assert.AreEqual(CallState.Locked, call.State, "the first charge locks the call");
             CallListenSettings settings = body.CallSettings;
-            yield return RealRoverScene.WaitSeconds(0.5f);
-            Assert.Less(body.CallLampGlow, 0.1f, "the stutter is gone");
 
-            var keys = new List<float>();
-            float down = -1f;
-            float watch = Time.time + settings.KeyDelay + 3f * (settings.ShortSeconds + settings.GapSeconds) +
-                          settings.LongSeconds + 1.5f;
+            bool hasSignal = _scene.Context.TryGet(out ICallSignal signal);
+            float lampHigh = 0f;
+            float totalGap = 0f;
+            int frames = 0;
+            float watch = Time.time + SignalWatchSeconds;
             while (Time.time < watch)
             {
                 yield return null;
-                bool lit = body.CallLampGlow > LitGlow;
-                if (lit && down < 0f)
+                lampHigh = Mathf.Max(lampHigh, body.CallLampGlow);
+                if (hasSignal)
                 {
-                    down = Time.time;
-                }
-                else if (!lit && down >= 0f)
-                {
-                    keys.Add(Time.time - down);
-                    down = -1f;
+                    totalGap += Mathf.Abs(body.CallLampGlow - signal.Keying * settings.KeyGlow);
+                    frames++;
                 }
             }
 
-            Assert.AreEqual(4, keys.Count, "the lamp keys four times");
-            for (int i = 0; i < 3; i++)
+            if (hasSignal)
             {
-                Assert.AreEqual(settings.ShortSeconds, keys[i], 0.2f, "three short");
+                Assert.Greater(lampHigh, LitGlow, "the lamp keys with the sign's tones");
+                Assert.Less(totalGap / Mathf.Max(1, frames), settings.KeyGlow * 0.25f,
+                    "in phase with ICallSignal.Keying: on average within the lamp's own soft edge of it");
+            }
+            else
+            {
+                Assert.Less(lampHigh, 0.05f, "with no ICallSignal the locked lamp stays dark");
             }
 
-            Assert.AreEqual(settings.LongSeconds, keys[3], 0.25f, "then one long");
             _scene.Context.Get<IRoverRig>().SetHoldStill(_holdOwner, false);
         }
 

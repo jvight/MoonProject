@@ -6,8 +6,8 @@ namespace MoonProject.Core
     /// <summary>
     /// The call from the sky (docs/design/opening-v3-purpose.md §2), registered in the <see cref="GameContext"/> by
     /// Gameplay: where its point of light is, how clearly 07 hears it and how much of its sender has decoded. Rover
-    /// turns 07's head toward <see cref="Direction"/>; Audio swells the carrier as 07 faces it. Changes are announced
-    /// with <see cref="CallStateChanged"/> and <see cref="CallDecoded"/>.
+    /// turns 07's head toward <see cref="Direction"/>; Audio swells the carrier as 07 faces it; UI shows the decoded
+    /// letters on 07's face. Changes are announced with <see cref="CallStateChanged"/> and <see cref="CallDecoded"/>.
     /// </summary>
     public interface ICallSource
     {
@@ -16,6 +16,9 @@ namespace MoonProject.Core
 
         /// <summary>How clearly 07 hears the call now.</summary>
         CallState State { get; }
+
+        /// <summary>The sender's identity in full (<c>ARK IV</c>); 07's face shows only its decoded characters.</summary>
+        string Sender { get; }
 
         /// <summary>Characters of the sender's identity decoded so far (0 to <see cref="Total"/>).</summary>
         int Decoded { get; }

@@ -19,8 +19,11 @@ namespace MoonProject.Gameplay
         /// <summary>At least one <paramref name="structureId"/> stands built.</summary>
         bool Built(string structureId);
 
-        /// <summary>The spare igniter is in 07's hold (B4, from the lander's open crate).</summary>
+        /// <summary>The spare igniter is in 07's hold (B7, from the CUTTER SPARES rack by the fallen array).</summary>
         bool CarriesIgniter { get; }
+
+        /// <summary>The faulted cutter has sputtered: a cut was tried before the igniter was fitted (B7).</summary>
+        bool CutterSputtered { get; }
 
         /// <summary>
         /// The cutter takes the spare igniter now: it is in the hold and 07 may fit it where it stands (a field swap
@@ -28,7 +31,7 @@ namespace MoonProject.Gameplay
         /// </summary>
         bool CanFitIgniter { get; }
 
-        /// <summary>The spare igniter is fitted to 07's cutter (B6): the cutter works.</summary>
+        /// <summary>The spare igniter is fitted to 07's cutter (B7): the cutter works.</summary>
         bool IgniterFitted { get; }
 
         /// <summary>07 has charged on a pad it built (B6): the lander's reserve has been drawn on.</summary>
@@ -39,6 +42,12 @@ namespace MoonProject.Gameplay
 
         /// <summary>A built solar array powers a built pad (B8).</summary>
         bool PowerOn { get; }
+
+        /// <summary>
+        /// The first dusk has begun (R6): 07 docked after visiting a near site since power-on, or learned the battery
+        /// bank.
+        /// </summary>
+        bool DuskBegun { get; }
 
         /// <summary>A built battery bank is connected to the powered base (B9).</summary>
         bool NightReady { get; }

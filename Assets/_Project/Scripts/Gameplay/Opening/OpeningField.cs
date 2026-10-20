@@ -41,15 +41,17 @@ namespace MoonProject.Gameplay
         /// <param name="landerPort">World's service port on the lander ([World]/Lander/ServicePort): the open crate's
         /// frame.</param>
         /// <param name="crateReach">Metres within which an open crate still holding something gives the rest.</param>
-        /// <param name="kit">07's start kit: the spare igniter carried and fitted (B4, B6).</param>
+        /// <param name="storyProps">World's story props in the basin ([World]/BasinProps/&lt;id&gt;): frames for the
+        /// near sites of R5.</param>
+        /// <param name="kit">07's start kit: the spare igniter carried and fitted (B7).</param>
         public OpeningField(OpeningTuning tuning, GameplayServices services, BuildField building, ISunlight sunlight,
-            SealedContainers containers, IReadOnlyList<Transform> ruins, Transform landerPort, Transform parent,
-            float crateReach, RoverStartKit kit)
+            SealedContainers containers, IReadOnlyList<Transform> ruins, IReadOnlyList<Transform> storyProps,
+            Transform landerPort, Transform parent, float crateReach, RoverStartKit kit)
         {
             _kit = kit ?? throw new ArgumentNullException(nameof(kit));
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
-            if (services == null || building == null || containers == null || ruins == null || parent == null ||
-                landerPort == null)
+            if (services == null || building == null || containers == null || ruins == null || storyProps == null ||
+                parent == null || landerPort == null)
             {
                 throw new ArgumentNullException(nameof(services), "The opening is missing an input.");
             }
@@ -62,6 +64,11 @@ namespace MoonProject.Gameplay
             foreach (Transform ruin in ruins)
             {
                 _frames[ruin.name] = ruin;
+            }
+
+            foreach (Transform prop in storyProps)
+            {
+                _frames[prop.name] = prop;
             }
 
             _frames[LanderPortFrame] = landerPort;
@@ -81,7 +88,8 @@ namespace MoonProject.Gameplay
 
             Caches = new SupplyCaches(tuning, FrameOf, parent, services, containers, crateReach);
             LanderCargo = CargoBay(Caches.RootOf(tuning.CargoCrate), Caches.LevelOf(tuning.CargoCrate));
-            Flow = new OpeningFlow(services.Events, this);
+            Dusk = new DuskCue(services.Events, DuskSites(tuning), tuning.DuskSiteReach);
+            Flow = new OpeningFlow(services.Events, this, tuning.StallSeconds, tuning.ReminderSeconds);
         }
 
         public LanderPort Port { get; }
@@ -91,6 +99,9 @@ namespace MoonProject.Gameplay
         public SupplyCaches Caches { get; }
 
         public OpeningFlow Flow { get; }
+
+        /// <summary>When the first dusk begins (R5–R6).</summary>
+        public DuskCue Dusk { get; }
 
         /// <summary>The lander's cargo scan host, its open crate: Scan_1..N on what it holds (the pad's fragments).
         /// </summary>
@@ -102,6 +113,8 @@ namespace MoonProject.Gameplay
 
         public bool CarriesIgniter => _kit.CarriesIgniter;
 
+        public bool CutterSputtered => _kit.Sputtered;
+
         public bool CanFitIgniter => _kit.CanFitIgniter;
 
         public bool IgniterFitted => _kit.IgniterFitted;
@@ -111,6 +124,8 @@ namespace MoonProject.Gameplay
         public bool ReserveSpent => Port.Spent;
 
         public bool PowerOn => Pads.PowerOn;
+
+        public bool DuskBegun => Dusk.Begun;
 
         public bool NightReady => Pads.NightReady;
 
@@ -147,6 +162,7 @@ namespace MoonProject.Gameplay
         {
             Port.Announce();
             Flow.Announce();
+            Dusk.Announce();
         }
 
         public void Step(float deltaTime)
@@ -162,7 +178,8 @@ namespace MoonProject.Gameplay
             }
 
             Caches.Step(deltaTime);
-            Flow.Tick();
+            Dusk.Step(PowerOn, _rover.Position, Knows(StructureIds.BatteryBank));
+            Flow.Tick(deltaTime, _rover.Speed <= _tuning.StillSpeed);
         }
 
         public OpeningSaveData Capture()
@@ -170,6 +187,7 @@ namespace MoonProject.Gameplay
             var data = new OpeningSaveData { nightFallen = NightFallenSaved };
             Port.Capture(data);
             Caches.Capture(data);
+            Dusk.Capture(data);
             return data;
         }
 
@@ -183,11 +201,13 @@ namespace MoonProject.Gameplay
             NightFallenSaved = data.nightFallen;
             Port.Restore(data);
             Caches.Restore(data);
+            Dusk.Restore(data);
         }
 
         public void Dispose()
         {
             Caches.Dispose();
+            Dusk.Dispose();
         }
 
         private static Transform FindNode(Transform root, string name)
@@ -206,6 +226,21 @@ namespace MoonProject.Gameplay
         private Transform FrameOf(string id)
         {
             return _frames.TryGetValue(id, out Transform frame) ? frame : null;
+        }
+
+        /// <summary>Where the near sites of R5 stand, each by its frame (a ruin piece or a story prop).</summary>
+        private Vector3[] DuskSites(OpeningTuning tuning)
+        {
+            IReadOnlyList<string> ids = tuning.DuskSites;
+            var sites = new Vector3[ids.Count];
+            for (int i = 0; i < ids.Count; i++)
+            {
+                Transform frame = FrameOf(ids[i]) ?? throw new InvalidOperationException(
+                    $"The first dusk's site '{ids[i]}' is no ruin piece or story prop in the world (OpeningTuning).");
+                sites[i] = frame.position;
+            }
+
+            return sites;
         }
 
         private static WorldAnchor Anchor(IWorldAnchors anchors, string id)

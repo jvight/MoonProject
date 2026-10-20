@@ -81,6 +81,10 @@ namespace MoonProject.World.Editor
 
         private const string WestMastAnchor = WorldAnchorIds.RelayPrefix + "1";
 
+        // Art's dead mast prop: its beacon node, where the relay's lamp will stand (opening v3 R8).
+        private const string RelayLampNode = "BeaconLamp";
+        private const string RelayLampName = "RelayLamp";
+
         public static void Place(SceneBuildContext context, WorldSettings settings, Transform root)
         {
             MoonSurface surface = settings.CreateSurface();
@@ -95,7 +99,9 @@ namespace MoonProject.World.Editor
             GameObject markings = Stand(context, props, ApronMarkingsName, WorldPaths.BuildApronMarkingsPrefab,
                 apron.Position, apron.Forward, false);
             WorldAnchor mast = Require(anchors, WestMastAnchor);
-            Stand(context, props, WestMastName, WorldPaths.DeadAntennaMastPrefab, mast.Position, mast.Forward, true);
+            GameObject westMast = Stand(context, props, WestMastName, WorldPaths.DeadAntennaMastPrefab, mast.Position,
+                mast.Forward, true);
+            StandRelayLamp(context, settings, props, westMast);
             Vector3 pillarSpot = mast.Position - mast.Forward * landmarks.SignalPillarSetback;
             GameObject pillar = Stand(context, props, SignalPillarName, WorldPaths.SignalPillarPrefab,
                 Ground(surface, pillarSpot), mast.Forward, false);
@@ -643,6 +649,31 @@ namespace MoonProject.World.Editor
             }
 
             return any ? bounds : throw new InvalidOperationException($"{model.name} has no meshes to measure.");
+        }
+
+        /// <summary>
+        /// relay.1's lamp: a warm halo floated at the dead mast's beacon node, kept apart from the prop, and the
+        /// <see cref="RelayAnswerLamp"/> that keys it once the call is answered.
+        /// </summary>
+        private static void StandRelayLamp(SceneBuildContext context, WorldSettings settings, Transform props,
+            GameObject westMast)
+        {
+            Transform node = Node(westMast, RelayLampNode);
+            GameObject holder = context.CreateChild(RelayLampName, props);
+            holder.transform.position = node.position + Vector3.up * settings.Landmarks.RelayLamp.HaloLift;
+            holder.AddComponent<MeshFilter>().sharedMesh = context.LoadAsset<Mesh>(WorldPaths.BeaconHaloMesh);
+            var halo = holder.AddComponent<MeshRenderer>();
+            halo.sharedMaterial = context.LoadAsset<Material>(WorldPaths.ModuleLampHaloMaterial);
+            halo.shadowCastingMode = ShadowCastingMode.Off;
+            halo.receiveShadows = false;
+            halo.lightProbeUsage = LightProbeUsage.Off;
+            halo.reflectionProbeUsage = ReflectionProbeUsage.Off;
+            var lamp = holder.AddComponent<RelayAnswerLamp>();
+            var serialized = new SerializedObject(lamp);
+            serialized.FindProperty("_settings").objectReferenceValue = settings;
+            serialized.FindProperty("_halo").objectReferenceValue = halo;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            context.AddSystem(lamp);
         }
 
         private static Transform Node(GameObject root, string name)

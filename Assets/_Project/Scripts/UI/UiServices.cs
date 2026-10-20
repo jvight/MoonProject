@@ -16,6 +16,8 @@ namespace MoonProject.UI
         private readonly GameContext _context;
         private IDatabank _databank;
         private ISupplyPurposes _purposes;
+        private IAnswerStatus _answer;
+        private ICallSource _call;
 
         public UiServices(EventBus events, InputReader input, IViewCamera view, IRoverState rover, IAudioSettings audio,
             ILookSettings look, IFeelSettings feel, ISaveService save, IMaterialStock materials,
@@ -104,6 +106,21 @@ namespace MoonProject.UI
         public IWeldEnergy WeldEnergy { get; }
 
         /// <summary>
+        /// Where the answer to the call stands (the hold ring at the mast reads it), from the GameContext, looked up
+        /// until Gameplay has registered it (false meanwhile, as in isolated test rigs).
+        /// </summary>
+        public bool TryGetAnswer(out IAnswerStatus answer)
+        {
+            if (_answer == null && _context != null)
+            {
+                _context.TryGet(out _answer);
+            }
+
+            answer = _answer;
+            return answer != null;
+        }
+
+        /// <summary>
         /// What each of the opening's sources is for (the pickup notice's purpose), from the GameContext, looked up on
         /// the first pickup (Gameplay registers it; false while nothing has, as in isolated test rigs).
         /// </summary>
@@ -131,6 +148,21 @@ namespace MoonProject.UI
 
             databank = _databank;
             return databank != null;
+        }
+
+        /// <summary>
+        /// The call from the sky, from the GameContext, looked up when the call is first heard (Gameplay registers it;
+        /// false while nothing has).
+        /// </summary>
+        public bool TryGetCall(out ICallSource call)
+        {
+            if (_call == null && _context != null)
+            {
+                _context.TryGet(out _call);
+            }
+
+            call = _call;
+            return call != null;
         }
 
         /// <summary>

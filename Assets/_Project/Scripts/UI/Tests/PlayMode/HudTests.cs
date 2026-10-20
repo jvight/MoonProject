@@ -1022,6 +1022,132 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator TheCall_ShowsOn07sFace_AfterTwoSecondsStill_AndForThreeOnAChange_NeverBesideAChip()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            _rig.Ui.Ledger.RecordLookTaught();
+            _rig.Ui.Ledger.RecordDriveTaught();
+            _rig.Fakes.Speed = 3f;
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            Events.Publish(new CallStateChanged(CallState.Broken, true));
+            Events.Publish(new CallDecoded(0, 5, true));
+            yield return Seconds(1f);
+            Assert.IsFalse(_rig.Ui.CallView.IsVisible, "a replayed call shows nothing while 07 drives");
+
+            _rig.Fakes.Speed = 0f;
+            float stoppedAt = Time.realtimeSinceStartup;
+            float limit = stoppedAt + 4f;
+            while (!_rig.Ui.CallView.IsVisible && Time.realtimeSinceStartup < limit)
+            {
+                yield return null;
+            }
+
+            float still = _rig.Tuning.CallDisplay.StillSeconds;
+            Assert.IsTrue(_rig.Ui.CallView.IsVisible, "standing still, 07's face shows the call");
+            Assert.That(Time.realtimeSinceStartup - stoppedAt, Is.InRange(still - 0.2f, still + 0.6f), "after 2 s");
+            Assert.AreEqual("??? ??", _rig.Ui.CallView.Letters, "nothing has decoded yet");
+            Assert.AreEqual(0, _rig.Ui.CallView.AccentLetters);
+
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Build, new Vector3(0f, 0f, 4f), true);
+            yield return OneElement(3f);
+            Assert.IsTrue(_rig.Ui.Prompt.IsVisible, "a chip takes the slot from the still call");
+            Assert.IsFalse(_rig.Ui.CallView.IsVisible);
+
+            _rig.Fakes.Speed = 3f;
+            Events.Publish(new CallStateChanged(CallState.Locked, false));
+            Events.Publish(new CallDecoded(1, 5, false));
+            limit = Time.realtimeSinceStartup + 3f;
+            while (!_rig.Ui.CallView.IsVisible && Time.realtimeSinceStartup < limit)
+            {
+                Assert.IsFalse(_rig.Ui.CallView.IsVisible && _rig.Ui.Prompt.IsVisible, "never beside the chip");
+                yield return null;
+            }
+
+            Assert.IsTrue(_rig.Ui.CallView.IsVisible, "a change takes the face even while 07 drives");
+            Assert.AreEqual("A?? ??", _rig.Ui.CallView.Letters);
+            Assert.AreEqual(1, _rig.Ui.CallView.AccentLetters, "the decoded letter is the one accent");
+            float shownAt = Time.realtimeSinceStartup;
+            while (_rig.Ui.CallView.IsVisible && Time.realtimeSinceStartup < shownAt + 6f)
+            {
+                Assert.IsFalse(_rig.Ui.Prompt.IsVisible || _rig.Ui.LookUp.IsVisible, "never beside a chip");
+                yield return null;
+            }
+
+            float change = _rig.Tuning.CallDisplay.ChangeSeconds;
+            Assert.That(Time.realtimeSinceStartup - shownAt, Is.InRange(change - 0.2f, change + 0.8f),
+                "for about three seconds, then it lets go");
+            yield return OneElement(2f);
+        }
+
+        /// <summary>Waits <paramref name="seconds"/>, failing on any frame where the call shares the screen.</summary>
+        private IEnumerator OneElement(float seconds)
+        {
+            float until = Time.realtimeSinceStartup + seconds;
+            while (Time.realtimeSinceStartup < until)
+            {
+                bool chip = _rig.Ui.Prompt.IsVisible || _rig.Ui.LookUp.IsVisible;
+                Assert.IsFalse(_rig.Ui.CallView.IsVisible && chip, "the call and a chip on screen together");
+                Assert.IsFalse(_rig.Ui.CallView.IsVisible && _rig.Ui.Objective.ShowsObjective,
+                    "the call and the objective line on screen together");
+                yield return null;
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator TheAnswer_PutsTxReadyThenTheAckRouteOn07sFace_EachAsTheOneElement()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            _rig.Ui.Ledger.RecordLookTaught();
+            _rig.Ui.Ledger.RecordDriveTaught();
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            yield return Seconds(1f);
+            Assert.IsFalse(_rig.Ui.FaceNotice.IsShown);
+
+            Events.Publish(new CallAnswerPhaseChanged(AnswerPhase.Ready, true));
+            yield return Seconds(1f);
+            Assert.IsFalse(_rig.Ui.FaceNotice.IsShown, "a loaded game's ready phase shows nothing");
+            Events.Publish(new CallAnswerPhaseChanged(AnswerPhase.Ready, false));
+            yield return WaitForFaceNotice(2f);
+            Assert.IsTrue(_rig.Ui.FaceNotice.IsShown, "the answer becomes possible: 07's face says so");
+            Assert.AreEqual(Text(UiKeys.FaceTxReady), _rig.Ui.FaceNotice.Text);
+            float readyFor = 0f;
+            float since = Time.realtimeSinceStartup;
+            while (_rig.Ui.FaceNotice.IsShown && Time.realtimeSinceStartup < since + 8f)
+            {
+                yield return null;
+            }
+
+            readyFor = Time.realtimeSinceStartup - since;
+            Assert.IsFalse(_rig.Ui.FaceNotice.IsShown);
+            Assert.That(readyFor, Is.InRange(_rig.Tuning.Guidance.TxReadySeconds - 0.5f,
+                _rig.Tuning.Guidance.TxReadySeconds + 0.8f));
+
+            Events.Publish(new TransmitPrompted());
+            yield return WaitForFaceNotice(2f);
+            Assert.AreEqual(Text(UiKeys.FaceTxReady), _rig.Ui.FaceNotice.Text, "stepping up to the mast: again");
+            yield return Seconds(_rig.Tuning.Guidance.TxPromptSeconds + 1.2f);
+            Assert.IsFalse(_rig.Ui.FaceNotice.IsShown);
+
+            Events.Publish(new RelayAcked(Vector3.zero));
+            yield return WaitForFaceNotice(2f);
+            Assert.AreEqual(Text(UiKeys.FaceAck), _rig.Ui.FaceNotice.Text, "relay.1 answered: the route is read out");
+            Assert.IsFalse(_rig.Ui.Objective.ShowsObjective, "the one element");
+        }
+
+        private IEnumerator WaitForFaceNotice(float seconds)
+        {
+            float limit = Time.realtimeSinceStartup + seconds;
+            while (!_rig.Ui.FaceNotice.IsShown && Time.realtimeSinceStartup < limit)
+            {
+                yield return null;
+            }
+        }
+
+        [UnityTest]
         public IEnumerator AHeldEWithNoLineOfSight_DimsAndShakesTheChip_And07sFaceSaysWhy_WithNoNewPanel()
         {
             InputSystem.AddDevice<Keyboard>();

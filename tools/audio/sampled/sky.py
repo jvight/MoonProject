@@ -1,6 +1,8 @@
 """The sky's moments from recorded sources: the eclipse's diamond ring (docs/design/opening-v2.md B6), the Sun breaking
 out behind Earth on 07's first charge. Not a synth pad: bowed and scraped metal carried slowly up onto D, its
-harmonics opening like light, with a breath of the old creak at the start. Very soft attack, mezzo-piano at most."""
+harmonics opening like light, with a breath of the old creak at the start. Very soft attack, mezzo-piano at most.
+The first dusk (opening v3 R6, OpeningDuskBegan): a soft low swell on D as the Sun sinks to last light, a scraped
+drone under bowed metal, easing in and away over eight seconds; no stinger."""
 import numpy as np
 
 from synth import effects, filters
@@ -9,6 +11,7 @@ from synth.core import samples
 from . import dsp
 
 RING_S = 5.0
+DUSK_S = 8.0
 
 
 def _glow(lib, gen, n: int, name: str, note: str, points, lp: float) -> np.ndarray:
@@ -49,7 +52,19 @@ def diamond_ring(lib, gen, variant: int) -> np.ndarray:
     return effects.reverb(out, room=0.8, damping=0.55, wet=0.22)
 
 
+def dusk_swell(lib, gen, _variant: int) -> np.ndarray:
+    """The first dusk: a low scraped drone on D2 and the bowed metal on D3 settling a breath downward, swelling in
+    slowly and easing away, the light going long."""
+    n = samples(DUSK_S)
+    swell = dsp.shape(n, [(0.0, 0.0), (3.0, 1.0), (4.5, 0.85), (DUSK_S, 0.0)])
+    floor = _glow(lib, gen, n, "metal_drone_low", "D2", ((0.0, 0.0), (DUSK_S, 0.0)), 700.0)
+    body = _glow(lib, gen, n, "bowed_metal", "D3", ((0.0, 0.5), (4.0, 0.0), (DUSK_S, -0.3)), 1400.0)
+    out = (0.7 * floor + 0.5 * body) * swell
+    return effects.reverb(out, room=0.85, damping=0.6, wet=0.25)
+
+
 # Cue id -> (recipe, variants).
 SOUNDS = {
     "sky_diamond_ring": (diamond_ring, 2),
+    "sky_dusk_swell": (dusk_swell, 1),
 }

@@ -22,14 +22,20 @@ namespace MoonProject.Gameplay
         /// <summary>B6: "Park on the pad to charge."</summary>
         public const string Charge = "next.v2.charge";
 
-        /// <summary>B6, a part in the hold that needs the pad and 07 off its plate: "Park on the charging pad."</summary>
+        /// <summary>B7, a part in the hold that needs the pad and 07 off its plate: "Park on the charging pad."</summary>
         public const string ParkOnPad = "next.v2.park_on_pad";
 
-        /// <summary>B6, the igniter in the hold (anywhere, as it is a field swap): "Fit the igniter to the cutter."</summary>
+        /// <summary>B7, the igniter in the hold (anywhere, as it is a field swap): "Fit the igniter to the cutter."</summary>
         public const string FitIgniter = "next.v2.fit_igniter";
 
         /// <summary>B7: "Find a solar blueprint in the Lumen ruins."</summary>
         public const string FindSolar = "next.v2.find_solar";
+
+        /// <summary>
+        /// B7, once the faulted cutter has sputtered at the array's crates: "Take the spare igniter from the rack by the
+        /// array." (Kenji's CUTTER SPARES rack).
+        /// </summary>
+        public const string TakeIgniter = "next.v2.take_igniter";
 
         /// <summary>B8, while the hold does not cover the array: "Cut the ruins for optics."</summary>
         public const string CutOptics = "next.v2.cut_optics";

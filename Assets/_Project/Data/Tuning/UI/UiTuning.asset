@@ -454,6 +454,16 @@ MonoBehaviour:
       _dwellSeconds: 0.4
       _liftMetres: 0.9
       _usesToRetire: 1
+    - _kind: 17
+      _action: 6
+      _dwellSeconds: 0.6
+      _liftMetres: 1.2
+      _usesToRetire: 1
+    - _kind: 18
+      _action: 6
+      _dwellSeconds: 0.6
+      _liftMetres: 1.6
+      _usesToRetire: 1
     _startDelay: 9
     _maxShowSeconds: 7
     _repeatCooldown: 25
@@ -649,6 +659,9 @@ MonoBehaviour:
     _blockedShakeHertz: 5
     _blockedFaceSeconds: 1.8
     _replyFaceSeconds: 3
+    _txReadySeconds: 5
+    _txPromptSeconds: 3
+    _ackSeconds: 7
     _sunArc:
       _fadeIn: 1.2
       _fadeOut: 1.5

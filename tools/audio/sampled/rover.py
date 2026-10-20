@@ -4,7 +4,11 @@ hum on D3 as the lamps ease up. Off: a softer, lower tick and nothing after. Clo
 
 The cutter's sputter (CutterSputtered, the first cut tried without an igniter): a spark gap that will not catch, two
 dry clicks of the contact and a short fizzle dying away. Dry and physical, no tone. Every other refused cut
-(CutterRefused): a soft, low fault tick, the turret's latch held shut with a breath of dry buzz."""
+(CutterRefused): a soft, low fault tick, the turret's latch held shut with a breath of dry buzz.
+
+07's tow winch (opening v3 slice 3.2): the cable spooling out as the hook attaches (the drum's ratchet and its gear
+motor easing down), the cable's strain while towing (a seamless creak loop of slowed metal over a low tension hum, the
+game scaling it with the load) and the release clunk with the slack cable's slap. Physical; never a beep."""
 import numpy as np
 
 from synth import filters
@@ -13,6 +17,8 @@ from synth.core import samples
 from . import dsp, parts
 
 SWITCH_S = 0.45
+STRAIN_LOOP_S = 4.0
+LOOP_SEAM_S = 0.35
 LABELS = ("on", "off")
 
 
@@ -65,9 +71,52 @@ def cutter_refuse(lib, gen, _variant: int) -> np.ndarray:
     return out
 
 
+def tow_spool(lib, gen, _variant: int) -> np.ndarray:
+    """The tow hook attaching: the winch drum's ratchet paying out cable as its gear motor eases down onto D."""
+    n = samples(1.2)
+    out = np.zeros(n)
+    ratchet = dsp.varispeed(lib("winder"), 0.75, samples(1.0), 0.0)
+    ratchet = dsp.peak_normalize(filters.butter(filters.highpass(ratchet, 250.0), "lowpass", 2200.0, order=4))
+    dsp.place(out, ratchet * dsp.shape(len(ratchet), [(0.0, 0.0), (0.05, 1.0), (0.7, 0.7), (1.0, 0.0)]), 0.05, 0.4)
+    gear_n = samples(1.0)
+    gear = parts.gear(lib, gen, gear_n, "A5") * dsp.shape(gear_n, [(0.0, 0.0), (0.1, 1.0), (1.0, 0.0)])
+    dsp.place(out, gear, 0.0, 0.3)
+    dsp.place(out, parts.clip(lib, "latch_thunk", 1800.0, 80.0, 0.9), 0.0, 0.4)
+    return out
+
+
+def tow_strain_loop(lib, gen, _variant: int) -> np.ndarray:
+    """The cable under load: a slow creak of strained metal over a low tension hum on D, seamless over 4 s (the game
+    raises its level and pitch with the load)."""
+    n = samples(STRAIN_LOOP_S + LOOP_SEAM_S)
+    creak = dsp.fit(dsp.varispeed(lib("metal_squeal"), 0.3, n, float(gen.uniform(0.0, 0.3))), n)
+    creak = dsp.peak_normalize(filters.butter(filters.highpass(creak, 120.0), "lowpass", 1500.0, order=2))
+    hum = parts.hum(lib, n, 0.5)
+    raw = 0.6 * creak + 0.4 * hum
+    seam = samples(LOOP_SEAM_S)
+    body = raw[:samples(STRAIN_LOOP_S)].copy()
+    fade = np.sin(np.linspace(0.0, np.pi / 2.0, seam))
+    body[:seam] = body[:seam] * fade + raw[samples(STRAIN_LOOP_S):samples(STRAIN_LOOP_S) + seam] * fade[::-1]
+    return body
+
+
+def tow_release(lib, gen, _variant: int) -> np.ndarray:
+    """The tow let go: the hook's latch clunking open and the slack cable slapping the ground."""
+    n = samples(0.7)
+    out = np.zeros(n)
+    dsp.place(out, parts.clip(lib, "pedal_clunk", 1100.0, 60.0, 0.9), 0.0, 0.35)
+    dsp.place(out, parts.clip(lib, "latch_thunk", 1700.0, 90.0, 1.05), 0.02, 0.2)
+    slap = parts.clip(lib, "grit_roll", 2500.0, 200.0)[:samples(0.4)]
+    dsp.place(out, slap * dsp.shape(len(slap), [(0.0, 1.0), (0.1, 0.8), (0.4, 0.0)]), 0.1, 0.45)
+    return out
+
+
 # Cue id -> (recipe, variants). Every variant ships: on and off, the one sputter and the refusal tick.
 SOUNDS = {
     "rover_lights_switch": (lights_switch, len(LABELS)),
     "cutter_sputter": (cutter_sputter, 1),
     "cutter_refuse": (cutter_refuse, 1),
+    "tow_spool": (tow_spool, 1),
+    "tow_strain_loop": (tow_strain_loop, 1),
+    "tow_release": (tow_release, 1),
 }

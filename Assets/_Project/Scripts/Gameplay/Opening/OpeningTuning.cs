@@ -19,6 +19,16 @@ namespace MoonProject.Gameplay
         [Tooltip("The build site's anchor (the old unloading apron), where the lander's port cable ends.")]
         [SerializeField] private string _apronAnchor = "place.apron";
 
+        [Header("The stall reminder (opening-v3 §1.5)")]
+        [Tooltip("Seconds with no progress and 07 standing still after which the step's objective line shows, once.")]
+        [Range(30f, 600f)] [SerializeField] private float _stallSeconds = 120f;
+
+        [Tooltip("Seconds a reminder line stays up before it goes for good.")]
+        [Range(5f, 60f)] [SerializeField] private float _reminderSeconds = 20f;
+
+        [Tooltip("07 counts as standing still at or under this speed (m/s).")]
+        [Range(0.05f, 1f)] [SerializeField] private float _stillSpeed = 0.3f;
+
         [Header("The lander (B2, B6)")]
         [Tooltip("Metres from the lander's centre within which 07 has reached it (B2's exit).")]
         [Range(5f, 60f)] [SerializeField] private float _landerReach = 25f;
@@ -50,8 +60,8 @@ namespace MoonProject.Gameplay
                  "igniter into the cutter): no pad and no dock needed. Any other part needs the service bay.")]
         [SerializeField] private string[] _fieldFitParts = { "part.igniter" };
 
-        [Tooltip("The spare igniter's story-part id in 07's hold: the lander's open crate holds it, the cutter " +
-                 "takes it at B6.")]
+        [Tooltip("The spare igniter's story-part id in 07's hold: Kenji's CUTTER SPARES rack by the fallen array " +
+                 "holds it, the cutter takes it at B7.")]
         [SerializeField] private string _igniterPart = "part.igniter";
 
         [Tooltip("Metres from an open crate within which it offers what it holds, from any side: a held E takes it " +
@@ -95,23 +105,39 @@ namespace MoonProject.Gameplay
         [Tooltip("When 07 tries to answer the call, and how the antenna mast's segments lift and lock.")]
         [SerializeField] private CallReplySettings _reply = new CallReplySettings();
 
+        [Header("The answer (opening v3 R8)")]
+        [Tooltip("Where and how long 07 holds to transmit, and how the pulse of the old network runs to relay.1 and the Peak.")]
+        [SerializeField] private CallAnswerSettings _answer = new CallAnswerSettings();
+
+        [Header("The first free choice and dusk (opening v3 R5–R6)")]
+        [Tooltip("The near sites 07 is free to visit after power-on, either order, by their frames: a Lumen ruin " +
+                 "piece ([World]/Ruins/<id>) or a story prop ([World]/BasinProps/<id>). The sky holds in the " +
+                 "afternoon until 07 docks after visiting one of them (or learns the battery bank), then dusk begins.")]
+        [SerializeField] private string[] _duskSites = { "Prop_SeismicStation", "HabitatModules" };
+
+        [Tooltip("Metres (flat) from a site's frame within which 07 has visited it.")]
+        [Range(2f, 30f)] [SerializeField] private float _duskSiteReach = 12f;
+
         [Header("Supply (opening-v3 §4: fixed sources, each for one structure)")]
         [Tooltip("Every source of the opening's materials, and nothing else: each stands by the thing it comes from " +
                  "and is for one structure (its link), which it covers on its own with the link's other sources " +
                  "(EditMode: supply >= need and <= 1.5x). A source stands by a world anchor, a Lumen ruin piece " +
                  "([World]/Ruins/<id>) or the lander's service port (lander.port), in its frame. The lander's open " +
-                 "charger kit (CHARGER KIT · ILC-R: the pad's Metal 4 and Wiring 2, and the spare igniter) stands at " +
-                 "the port where the cable ends; the sealed ones stand at the ruins they come from, cut once the " +
-                 "cutter works.")]
+                 "charger kit (CHARGER KIT · ILC-R: the pad's Metal 4 and Wiring 2) stands at the port where the " +
+                 "cable ends; Kenji's open CUTTER SPARES rack (the spare igniter) stands by the fallen array, in its " +
+                 "frame so it moves with it; the sealed ones stand at the ruins they come from, cut once the cutter " +
+                 "works.")]
         [SerializeField] private SupplyCache[] _caches =
         {
             new SupplyCache("supply.lander.open", OpeningField.LanderPortFrame, new Vector3(4.2f, 0f, -1.4f), 45f,
-                ContainerKinds.CrateCargoOpen, new Recipe(4, 2, 0), StructureIds.ChargingPad, true,
-                new[] { "part.igniter" }),
+                ContainerKinds.CrateCargoOpen, new Recipe(4, 2, 0), StructureIds.ChargingPad, true),
             new SupplyCache("supply.array.panels", "FallenSolarArray", new Vector3(5f, 0f, 0f), 90f,
                 ContainerKinds.CrateL, new Recipe(3, 0, 1), StructureIds.SolarArray),
             new SupplyCache("supply.array.junction", "FallenSolarArray", new Vector3(9.7f, 0f, -2.6f), 90f,
                 ContainerKinds.CrateM, new Recipe(0, 2, 0), StructureIds.SolarArray),
+            new SupplyCache("supply.array.spares", "FallenSolarArray", new Vector3(4.4f, 0f, 3.6f), 90f,
+                ContainerKinds.CrateM, new Recipe(0, 0, 0), StructureIds.SolarArray, true,
+                new[] { "part.igniter" }),
             new SupplyCache("supply.habitat.reel", "HabitatModules", new Vector3(-3.3f, 0f, -6.5f), 207f,
                 ContainerKinds.CrateM, new Recipe(0, 3, 0), StructureIds.BatteryBank),
             new SupplyCache("supply.habitat.module", "HabitatModules", new Vector3(-13.5f, 0f, -3.6f), -90f,
@@ -132,6 +158,9 @@ namespace MoonProject.Gameplay
 
         public string LanderAnchor => _landerAnchor;
         public string ApronAnchor => _apronAnchor;
+        public float StallSeconds => _stallSeconds;
+        public float ReminderSeconds => _reminderSeconds;
+        public float StillSpeed => _stillSpeed;
         public float LanderReach => _landerReach;
         public float ReserveCells => _reserveCells;
         public float PortCableReach => _portCableReach;
@@ -174,5 +203,11 @@ namespace MoonProject.Gameplay
         public CallSettings Call => _call;
 
         public CallReplySettings Reply => _reply;
+
+        public CallAnswerSettings Answer => _answer;
+
+        public IReadOnlyList<string> DuskSites => _duskSites ?? Array.Empty<string>();
+
+        public float DuskSiteReach => _duskSiteReach;
     }
 }

@@ -79,6 +79,7 @@ namespace MoonProject.UI
         private SunArcView _sunArc;
         private readonly OpeningProtocol _openingProtocol = new OpeningProtocol();
         private ContextPrompt _prompt;
+        private bool _cutBegun;
         private PickupFeed _pickups;
         private SalvageRing _salvageRing;
         private GuidanceSlot _slot;
@@ -111,9 +112,14 @@ namespace MoonProject.UI
         private string _toastText;
         private float _toastLeft;
         private float _replyLeft;
+        private string _replyKey;
         private bool _replyOnFace;
         private FaceNotice _faceNotice;
         private bool _noticeOnCrt;
+        private CallDisplay _call;
+        private CallDisplayView _callView;
+        private bool _callShown;
+        private bool _callAsLine;
         private EventBus _events;
         private BuildStripView _buildStrip;
         private PauseMenu _pause;
@@ -278,6 +284,7 @@ namespace MoonProject.UI
             _numbers = new IntText(CachedNumbers);
             _ledger = new PromptLedger(_tuning.Prompts);
             _director = new PromptDirector(_tuning.Prompts, _ledger);
+            _call = new CallDisplay(_tuning.CallDisplay);
             _player = new PlayerSettings(services.Audio, services.Look, services.Feel, DisplayControl, _localization,
                 _tuning.Pause);
             _cursor = new CursorPolicy();
@@ -294,7 +301,20 @@ namespace MoonProject.UI
             EventBus events = services.Events;
             _events = events;
             _tokens.Add(events.Subscribe<RoverAwoke>(OnRoverAwoke));
-            _tokens.Add(events.Subscribe<CallReplyFailed>(_ => _replyLeft = _tuning.Guidance.ReplyFaceSeconds));
+            _tokens.Add(events.Subscribe<CallReplyFailed>(_ => ShowFaceLine(UiKeys.FaceTxNoRange,
+                _tuning.Guidance.ReplyFaceSeconds)));
+            _tokens.Add(events.Subscribe<CallAnswerPhaseChanged>(changed =>
+            {
+                if (changed.Phase == AnswerPhase.Ready && !changed.Restored)
+                {
+                    ShowFaceLine(UiKeys.FaceTxReady, _tuning.Guidance.TxReadySeconds);
+                }
+            }));
+            _tokens.Add(events.Subscribe<TransmitPrompted>(_ => ShowFaceLine(UiKeys.FaceTxReady,
+                _tuning.Guidance.TxPromptSeconds)));
+            _tokens.Add(events.Subscribe<RelayAcked>(_ => ShowFaceLine(UiKeys.FaceAck, _tuning.Guidance.AckSeconds)));
+            _tokens.Add(events.Subscribe<CallStateChanged>(OnCallStateChanged));
+            _tokens.Add(events.Subscribe<CallDecoded>(OnCallDecoded));
             _tokens.Add(events.Subscribe<TitleShown>(OnTitleShown));
             _tokens.Add(events.Subscribe<NewGameRequested>(_ => OnNewGameRequested()));
             _tokens.Add(events.Subscribe<SessionStarted>(OnSessionStarted));
@@ -305,7 +325,8 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<StargazingChanged>(OnStargazingChanged));
             _tokens.Add(events.Subscribe<NextStepChanged>(OnNextStepChanged));
             _tokens.Add(events.Subscribe<ScanStarted>(OnScanStarted));
-            _tokens.Add(events.Subscribe<SalvageCutStarted>(_ => _objectiveChip.Used(ObjectiveVerb.Cut)));
+            _tokens.Add(events.Subscribe<SalvageCutStarted>(OnCutStarted));
+            _tokens.Add(events.Subscribe<ContainerSealCut>(_ => _director.NotifyUsed(InteractionKind.Salvage)));
             _tokens.Add(events.Subscribe<FragmentScanned>(OnFragmentScanned));
             _tokens.Add(events.Subscribe<ScanStopped>(_ => _scanning = false));
             _tokens.Add(events.Subscribe<RoverWakeBeatReached>(OnWakeBeat));
@@ -329,6 +350,7 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<DatabankEntryProgressed>(_ => _databank?.Refresh()));
             _tokens.Add(events.Subscribe<StructureLearned>(OnStructureLearned));
             _tokens.Add(events.Subscribe<BatteryArcRevealed>(OnBatteryArcRevealed));
+            _tokens.Add(events.Subscribe<PartFitted>(_ => _director.NotifyUsed(InteractionKind.FitPart)));
             _tokens.Add(events.Subscribe<StructurePlaced>(_ => _director.NotifyUsed(InteractionKind.Build)));
             _tokens.Add(events.Subscribe<StoryPartCollected>(collected => _pickups?.PartCollected(collected.PartId)));
             _tokens.Add(events.Subscribe<MaterialSalvaged>(OnMaterialSalvaged));
@@ -412,6 +434,7 @@ namespace MoonProject.UI
             _cover = new CoverVignette(boot);
             _coverPainter = new CoverVignettePainter(coverElement, _cover, boot);
             _faceNotice = new FaceNotice(_layout.Cargo.parent);
+            _callView = new CallDisplayView(_layout.Cargo.parent, _tuning.CallDisplay, _localization);
             _blockedCue = new BlockedCue(_tuning.Guidance);
             _pages = new PageFlip(_tuning.Databank);
             _tabs = new PageTabs(_cargo.Panel, _localization);
@@ -561,7 +584,8 @@ namespace MoonProject.UI
                 : Mathf.Max(0f, _pickUpGrace - deltaTime);
             _prompt.Tick(deltaTime, PromptsOpen(paused), holder == PromptHolder.Chip, _services.Hints.Primary, device,
                 panelSize);
-            _salvageRing.Tick(deltaTime, !paused && _awake, panelSize);
+            _services.TryGetAnswer(out IAnswerStatus answer);
+            _salvageRing.Tick(deltaTime, !paused && _awake, panelSize, answer);
             _readout.Tick(hudTime, holder == PromptHolder.Readout);
             // The look-up chip is the gentlest of the prompts: a teaching prompt that wants the screen takes it first.
             bool hintOpen = LookHintsOpen() && holder == PromptHolder.Chip &&
@@ -573,10 +597,12 @@ namespace MoonProject.UI
             if (BuildMenuOpen())
             {
                 _objectiveChip.Used(ObjectiveVerb.Build);
+                _director.NotifyUsed(InteractionKind.OpenBuild);
             }
 
             // The verb chip is the objective's own: it shows only with its line, and a teaching prompt takes the chip.
-            hint = hint != HintWord.None ? hint
+            // One chip at a time: while the world's own chip shows over its target, the bottom slot stays empty.
+            hint = hint != HintWord.None || _prompt.IsVisible ? hint
                 : _objectiveChip.Word(_objectiveView.ShowsObjective && _objective.WantsShown,
                     _services.Systems.CanFitIgniter, cargoOpen, OfferedNow(), HeldNow());
             InteractionHint aimed = _services.Hints.Primary;
@@ -586,8 +612,13 @@ namespace MoonProject.UI
             _blockedCue.Tick(paused ? 0f : deltaTime);
             _toastLeft = Mathf.Max(0f, _toastLeft - (paused ? 0f : deltaTime));
             _replyLeft = Mathf.Max(0f, _replyLeft - (paused || !_replyOnFace ? 0f : deltaTime));
+            // Rest counts only while the face is free, so a face just handed back (the hold closing) shows 07's eyes
+            // first instead of the call at once.
+            bool resting = _services.Rover.Speed < _tuning.Guidance.StillSpeed && CallFaceOpen(paused) &&
+                           _cargo.Openness <= 0f;
+            _call.Step(hudTime, resting, _callShown && _callAsLine);
             _lookUpChip.Nudge(_blockedCue.ChipOffset, _blockedCue.ChipOpacity);
-            StepFaceNotice();
+            StepFaceNotice(hudTime);
             _objectiveView.Tick(deltaTime, _objective, ObjectiveOpen(paused) && _slot.Allows(GuidanceKind.Objective),
                 _lowBattery, ObjectiveOpen(paused) && _slot.Allows(GuidanceKind.Battery), _buildStrip,
                 BuildStepOpen(paused) && _slot.Allows(GuidanceKind.BuildStep));
@@ -641,6 +672,12 @@ namespace MoonProject.UI
         {
             return !paused && _awake && !_inOpening && !_postLog.IsRunning && !_stargaze.IsVeiled && !_cargo.IsOpen &&
                    !BuildMenuOpen();
+        }
+
+        /// <summary>07's face is free for the call: awake, live, and neither the self-test nor the hold has it.</summary>
+        private bool CallFaceOpen(bool paused)
+        {
+            return !paused && _awake && !_inOpening && !_postOnCrt && !_cargo.IsOpen;
         }
 
         /// <summary>The build step's line shows over the live HUD only (not paused, not behind the face screen).</summary>
@@ -703,8 +740,10 @@ namespace MoonProject.UI
                 : unlockWants ? PromptHolder.Unlock
                 : readoutWants ? PromptHolder.Readout
                 : chipWants ? PromptHolder.Chip : PromptHolder.None;
-            _guidanceWants[(int)GuidanceKind.CallLine] = _replyLeft > 0f;
-            _guidanceShown[(int)GuidanceKind.CallLine] = _replyOnFace;
+            _guidanceWants[(int)GuidanceKind.CallLine] = _replyLeft > 0f || (_call.WantsChange && CallFaceOpen(paused));
+            _guidanceShown[(int)GuidanceKind.CallLine] = _replyOnFace || (_callView.IsVisible && _callAsLine);
+            _guidanceWants[(int)GuidanceKind.CallStatus] = ObjectiveOpen(paused) && _call.WantsStill;
+            _guidanceShown[(int)GuidanceKind.CallStatus] = _callView.IsVisible && !_callAsLine;
             _guidanceWants[(int)GuidanceKind.BuildStep] = BuildStepOpen(paused) && _buildStrip.Step != BuildStep.None;
             _guidanceWants[(int)GuidanceKind.Prompt] = holder != PromptHolder.None;
             _guidanceWants[(int)GuidanceKind.Battery] = ObjectiveOpen(paused) && _lowBattery.WantsShown;
@@ -730,8 +769,11 @@ namespace MoonProject.UI
         private bool PostShown => _postLog.IsRunning ||
                                   (_postLog.IsFinished && _postLog.SinceFinished < _tuning.Post.LingerSeconds);
 
-        /// <summary>True while 07's CRT shows the self-test: the face's boot, the lines and their linger.</summary>
-        private bool FaceReadoutShown => (_bootFace != null && _bootFace.IsShowing) || PostShown;
+        /// <summary>
+        /// True while 07's CRT shows something of the UI's: the self-test (the face's boot, the lines and their linger),
+        /// a face line or the call.
+        /// </summary>
+        private bool FaceReadoutShown => (_bootFace != null && _bootFace.IsShowing) || PostShown || _noticeOnCrt;
 
         /// <summary>07's face booting before the lines, and its view (tests and captures).</summary>
         internal BootFace BootFace => _bootFace;
@@ -755,6 +797,15 @@ namespace MoonProject.UI
 
         /// <summary>The line on 07's face that says why a held E did nothing (tests).</summary>
         internal FaceNotice FaceNotice => _faceNotice;
+
+        /// <summary>The call on 07's face (tests).</summary>
+        internal CallDisplayView CallView => _callView;
+
+        /// <summary>When the call shows on 07's face (tests).</summary>
+        internal CallDisplay Call => _call;
+
+        /// <summary>The face panel's texture, which 07's CRT shows while the UI has the face (captures).</summary>
+        internal Texture FaceTexture => FaceTargetTexture();
 
         private void OnBootCheckStarted(BootCheckStarted started)
         {
@@ -1226,6 +1277,7 @@ namespace MoonProject.UI
             _lastCargoNavDirection = NavigationMoveEvent.Direction.None;
             _cargoNavRepeatTimer = 0f;
             SetFacePanelVisible(true);
+            _director.NotifyUsed(InteractionKind.FitPart);
             _cargo.Open();
             _services.FaceScreen?.SetScreenOpen(true, FaceTargetTexture());
             _services.Input.Disable();
@@ -1313,8 +1365,10 @@ namespace MoonProject.UI
             if (_bound)
             {
                 _salvageRing.OnBeat(beat);
-                if (beat.Kind == FeelKind.Collect && beat.Phase == FeelPhase.Reward)
+                // Taking a part from an open crate is not cutting: the cut is learned by a cut that ends in a take.
+                if (beat.Kind == FeelKind.Collect && beat.Phase == FeelPhase.Reward && _cutBegun)
                 {
+                    _cutBegun = false;
                     _director.NotifyUsed(InteractionKind.Salvage);
                 }
 
@@ -1327,6 +1381,12 @@ namespace MoonProject.UI
             {
                 _stargaze.SetStargazing(changed.IsStargazing);
             }
+        }
+
+        private void OnCutStarted(SalvageCutStarted started)
+        {
+            _cutBegun = true;
+            _objectiveChip.Used(ObjectiveVerb.Cut);
         }
 
         private void OnNextStepChanged(NextStepChanged changed)
@@ -1539,19 +1599,54 @@ namespace MoonProject.UI
         }
 
         /// <summary>
-        /// 07's face says "no line of sight" while the cue lasts, unless the self-test or the hold already has the
-        /// face; the face is handed back only if nothing else took it meanwhile.
+        /// 07's face says "no line of sight" while the cue lasts (or the failed reply's line, or a databank toast), and
+        /// otherwise shows the call when the guidance slot grants it, unless the self-test or the hold already has the
+        /// face; a line cuts the call at once rather than overlapping it. The face is handed back only if nothing else
+        /// took it meanwhile.
         /// </summary>
-        private void StepFaceNotice()
+        /// <summary>07's face puts one of the story's lines up for <paramref name="seconds"/>, as the one element.</summary>
+        private void ShowFaceLine(string key, float seconds)
+        {
+            _replyKey = key;
+            _replyLeft = seconds;
+        }
+
+        private void StepFaceNotice(float deltaTime)
         {
             bool blocked = _blockedCue.FaceShown;
+            bool faceFree = !_postOnCrt && !_cargo.IsOpen;
             bool reply = _replyLeft > 0f && _slot.Allows(GuidanceKind.CallLine);
-            bool show = (reply || blocked || _toastLeft > 0f) && !_postOnCrt && !_cargo.IsOpen;
+            bool show = (reply || blocked || _toastLeft > 0f) && faceFree;
             _replyOnFace = reply && show;
+            bool callLine = !reply && _call.WantsChange && _slot.Allows(GuidanceKind.CallLine);
+            bool callStill = _call.WantsStill && _slot.Allows(GuidanceKind.CallStatus);
+            _callShown = !show && faceFree && (callLine || callStill);
+            if (_callShown)
+            {
+                _callAsLine = callLine;
+            }
+
+            if (show || !faceFree)
+            {
+                _callView.HideNow();
+            }
+            else
+            {
+                _callView.Tick(deltaTime, _callShown, _call);
+            }
+
             if (show)
             {
-                _faceNotice.Show(reply ? _localization.Get(UiKeys.FaceTxNoRange)
+                _faceNotice.Show(reply ? _localization.Get(_replyKey)
                     : blocked ? _localization.Get(UiKeys.FaceNoLine) : _toastText);
+            }
+            else
+            {
+                _faceNotice.SetShown(false);
+            }
+
+            if (show || _callView.IsVisible)
+            {
                 if (!_noticeOnCrt)
                 {
                     _noticeOnCrt = true;
@@ -1561,7 +1656,6 @@ namespace MoonProject.UI
                 return;
             }
 
-            _faceNotice.SetShown(false);
             if (_noticeOnCrt)
             {
                 _noticeOnCrt = false;
@@ -1570,6 +1664,36 @@ namespace MoonProject.UI
                     _services.FaceScreen?.SetReadout(null);
                 }
             }
+        }
+
+        private void OnCallStateChanged(CallStateChanged changed)
+        {
+            KnowSender();
+            _call.StateChanged(changed.State, changed.Restored);
+        }
+
+        private void OnCallDecoded(CallDecoded decoded)
+        {
+            KnowSender();
+            _call.Decode(decoded.CharactersDecoded, decoded.Restored);
+        }
+
+        /// <summary>The call is heard: its sender comes from Gameplay's call, which announced it.</summary>
+        private void KnowSender()
+        {
+            if (_call.Sender != null)
+            {
+                return;
+            }
+
+            if (_services.TryGetCall(out ICallSource call))
+            {
+                _call.SetSender(call.Sender);
+                return;
+            }
+
+            Debug.LogError($"{nameof(UISystem)}: the call was heard but no {nameof(ICallSource)} is registered, so " +
+                           "07's face cannot show its sender.", this);
         }
 
         /// <summary>A story target's scan ends here, not with <see cref="FragmentScanned"/>.</summary>
@@ -1588,7 +1712,16 @@ namespace MoonProject.UI
                 _readout.ScanSetProgress(nameKey, scanned.Index + 1, scanned.Count);
             }
 
-            _director.NotifyUsed(InteractionKind.Scan);
+            // A set of several fragments is learned with its last one: until then the world's chip shows again on the
+            // next piece (with its place in the set), so no second chip is needed at the bottom of the screen.
+            if (scanned.Count <= 1 || scanned.Index + 1 >= scanned.Count)
+            {
+                _director.NotifyUsed(InteractionKind.Scan);
+            }
+            else
+            {
+                _director.ClearCooldown(InteractionKind.Scan);
+            }
         }
 
         private void OnScanStarted(ScanStarted started)
@@ -1687,6 +1820,7 @@ namespace MoonProject.UI
             _sunArc.Relocalize();
             _buildStrip?.Relocalize();
             _pickups.Relocalize();
+            _callView.Relocalize();
             _cargo.Relocalize();
             _unlockCard.Relocalize();
             _pause.Relocalize();

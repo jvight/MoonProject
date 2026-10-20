@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using MoonProject.Core;
+using MoonProject.Core.Input;
 using MoonProject.Core.Events;
 using MoonProject.Core.Save;
 
@@ -82,6 +83,7 @@ namespace MoonProject.Gameplay
         private readonly List<IDisposable> _saveTokens = new List<IDisposable>();
         private readonly List<IDisposable> _flowTokens = new List<IDisposable>();
         private IRoverState _roverState;
+        private InputReader _input;
         private GlowMeshSet _meshes;
 
         public MaterialStock Materials { get; private set; }
@@ -136,8 +138,21 @@ namespace MoonProject.Gameplay
 
         public MastRaise MastRaise { get; private set; }
 
+        public MastRaiseView MastRaiseView { get; private set; }
+
+        public CallAnswer Answer { get; private set; }
+
+        public NetworkPulseView PulseView { get; private set; }
+
+        /// <summary>Seconds of holding E at the mast to transmit (tests).</summary>
+        public float HoldSecondsForTests => _openingTuning.Answer.HoldSeconds;
+
         /// <summary>How the mast raises and the reply times (tests).</summary>
         public CallReplySettings MastRaiseSettings => _openingTuning.Reply;
+
+        public RangeRingField RangeRing { get; private set; }
+
+        public RangeRingLine RangeRingLine { get; private set; }
 
         /// <summary>The dock lock on the built pad 07 charges on (opening-v2 §5).</summary>
         public PadLock PadLock { get; private set; }
@@ -250,6 +265,7 @@ namespace MoonProject.Gameplay
                 context.Get<IWorldLayout>(), context.Get<IWorldAnchors>(), context.Get<IRoverState>(),
                 context.Get<IRoverRig>(), context.Get<IViewCamera>(), save, Materials, _visuals, _glints, _meshes);
             _roverState = services.Rover;
+            _input = services.Input;
             GlintVeil veil = services.GlintVeil;
             _flowTokens.Add(context.Events.Subscribe<TitleShown>(_ => veil.Hide()));
             _flowTokens.Add(context.Events.Subscribe<SessionStarted>(_ => veil.Show(Time.time)));
@@ -294,13 +310,23 @@ namespace MoonProject.Gameplay
             ApronGuide = new ApronGuide(transform, _apronOutline, _visuals.BeamCore, _building.Tuning);
             ScanMark = new ScanTargetMark(transform, _visuals.BeamCore, _scanTuning);
             _building.MarkApron(_apronOutline.bounds.center);
+            var firstUse = new FirstUseSpots(Opening, _building, context.Get<IViewCamera>(), context.Get<IRoverState>(),
+                _building.Tuning.FirstUseViewMargin);
             var hints = new InteractionHints(_salvage, Containers, Scans, _building, services.Beam, Cutter,
-                services.Pickups);
+                services.Pickups, firstUse);
             Hints = hints;
             Recovery = new RecoveryProgress(context.Events, PowerLamps, PowerSteps, _openingTuning.RecoveryLamps);
             Call = new CallProgress(context.Events, _openingTuning.Call, services.Layout);
             Reply = new CallReply(context.Events, Call, _openingTuning.Reply);
             MastRaise = new MastRaise(context.Events, _openingTuning.Reply);
+            MastRaiseView = new MastRaiseView(context.Events, _building, MastRaise, _openingTuning.Reply);
+            services.Anchors.TryGet(WorldAnchorIds.RelayPrefix + "1", out WorldAnchor relay);
+            Answer = new CallAnswer(context.Events, Call, Reply, MastRaise, _openingTuning.Answer, relay.Position,
+                services.Layout.PeakPosition);
+            RangeRing = new RangeRingField(context.Events, _battery.Tuning.RangeRing,
+                new RangeRingModel(_battery.Tuning, _battery.Tuning.RangeRing, services.Terrain), _battery.Model,
+                Opening.Pads, services.Rover);
+            RangeRingLine = new RangeRingLine(transform, _visuals.BeamCore, RangeRing, _battery.Tuning.RangeRing);
             _flowTokens.Add(context.Events.Subscribe<ChargingChanged>(OnChargingChanged));
             context.Register<IMaterialStock>(Materials);
             context.Register<IMaterialCatalog>(_materialCatalog);
@@ -315,6 +341,10 @@ namespace MoonProject.Gameplay
             context.Register<IBeamStatus>(services.Beam);
             context.Register<IRecoveryProgress>(Recovery);
             context.Register<ICallSource>(Call);
+            context.Register<IAnswerStatus>(Answer);
+            PulseView = new NetworkPulseView(transform, _visuals.BeamCore, services.Meshes.Sphere, _visuals.Flash,
+                context.Events, _openingTuning.Answer);
+            context.Register<IRangeRing>(RangeRing);
             context.Register<IDatabank>(Databank);
             context.Register<BuildField>(_building);
             RegisterSaveSections(save);
@@ -371,7 +401,7 @@ namespace MoonProject.Gameplay
             try
             {
                 var opening = new OpeningField(_openingTuning, services, _building, sunlight, Containers, _ruins,
-                    _landerPort, transform, _salvage.Tuning.ReachRadius, StartKit);
+                    _storyProps, _landerPort, transform, _salvage.Tuning.ReachRadius, StartKit);
                 _battery.ConnectPads(opening);
                 services.Anchors.TryGet(_openingTuning.ApronAnchor, out WorldAnchor apron);
                 _building.SetApronCable(new ApronCable(_apronCableChannel.position, apron.Position,
@@ -549,6 +579,11 @@ namespace MoonProject.Gameplay
             Opening.Step(deltaTime);
             Reply.Step(deltaTime, Opening.NightFallen, _roverState.Speed);
             MastRaise.Step(deltaTime);
+            MastRaiseView.Step();
+            PulseView.Step(deltaTime);
+            Answer.Step(deltaTime, Opening.NightFallen, _input.ExcavateHeld, _roverState.Position, _roverState.Speed);
+            RangeRing.Step(deltaTime);
+            RangeRingLine.Step();
             PadLock.Step(deltaTime);
             BaseLamps.Step(deltaTime);
             ApronGlow.Step(_building.State != BuildModeState.Closed, deltaTime);
@@ -645,8 +680,13 @@ namespace MoonProject.Gameplay
 
             _flowTokens.Clear();
             Databank?.Dispose();
+            StartKit?.Dispose();
             Call?.Dispose();
             MastRaise?.Dispose();
+            MastRaiseView?.Dispose();
+            Answer?.Dispose();
+            PulseView?.Dispose();
+            RangeRing?.Dispose();
             Bundles?.Dispose();
             Opening?.Dispose();
             _meshes?.Dispose();

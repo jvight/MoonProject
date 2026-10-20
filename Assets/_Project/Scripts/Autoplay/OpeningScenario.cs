@@ -37,6 +37,10 @@ namespace MoonProject.Autoplay
         private const float ScanAllowanceSeconds = 8f;
         private const float FollowSeconds = 6f;
 
+        /// <summary>The lander's open charger kit (B4) and the CUTTER SPARES rack by the fallen array (B7).</summary>
+        private const string ChargerKit = "supply.lander.open";
+        private const string SparesRack = "supply.array.spares";
+
         /// <summary>Seconds the base may take to become night-ready: a sunset that comes first leaves the array idle, so the bank never charges.</summary>
         private const float NightReadySeconds = 150f;
 
@@ -68,8 +72,8 @@ namespace MoonProject.Autoplay
             _base.Listen();
             foreach (Func<IEnumerator> beat in new Func<IEnumerator>[]
                      {
-                         Drive, Scan, CollectParts, BuildThePad, ChargeAndFit, TheRuins, BuildTheArray,
-                         TheHabitat, Nightfall, TheTower,
+                         Drive, Scan, CollectParts, BuildThePad, ChargeOnThePad, TheRuins, BuildTheArray,
+                         TheFirstChoice, TheHabitat, Nightfall, TheTower, TheAnswer,
                      })
             {
                 if (_bot.Failed || Reached(_lastBeat))
@@ -265,13 +269,13 @@ namespace MoonProject.Autoplay
         private IEnumerator CollectParts()
         {
             Begin("B4", "Collect the lander's open crate");
-            yield return _base.CollectTheOpenCrate();
+            yield return _base.TakeFromTheOpenCrate(ChargerKit);
             if (!_bot.Failed)
             {
                 yield return _base.ExpectStep(OpeningSteps.BuildPad, OpeningKeys.BuildPad, "B5: the hold covers the pad");
             }
 
-            _bot.EndBeat("07 took the open crate's parts and the spare igniter");
+            _bot.EndBeat("07 took the charger kit's parts from the open crate");
         }
 
         private IEnumerator BuildThePad()
@@ -281,23 +285,36 @@ namespace MoonProject.Autoplay
             _bot.EndBeat("the pad was placed and welded with the build keys");
         }
 
-        private IEnumerator ChargeAndFit()
+        private IEnumerator ChargeOnThePad()
         {
-            Begin("B6", "Charge on the pad and fit the igniter");
+            Begin("B6", "Charge on the pad");
             yield return _base.ExpectStep(OpeningSteps.Charge, OpeningKeys.Charge, "B6");
             yield return _base.ChargeOnThePad(StructureIds.ChargingPad);
-            _bot.EndBeat("07 charged on the pad and fitted the igniter on its face screen");
+            _bot.EndBeat("07 charged on the pad until the lander's reserve gave out");
         }
 
         private IEnumerator TheRuins()
         {
-            Begin("B7", "The Lumen ruins: scan the array and the airlock, cut the array's panels and junction box");
+            Begin("B7", "The Lumen ruins: scan the array and the airlock, the cutter sputters, fit the spare igniter " +
+                        "from the rack, cut the array's panels and junction box");
             yield return _base.ExpectStep(OpeningSteps.FindSolar, OpeningKeys.FindSolar, "B7: the reserve is spent");
+            yield return _base.SeeWorldCue(WorldCues.ArrayGlint(_bot.World), "B7: the fallen array glints in the sunrise");
             yield return _base.DriveToTheRuinsGate("the Lumen ruins");
             yield return _base.ScanTheSet("ruin.FallenSolarArray");
             yield return _base.ReadTheAirlockPanel();
+            yield return _base.ExpectStep(OpeningSteps.FitIgniter, OpeningKeys.CutOptics,
+                "B7: the array's crates, the cutter still FAULT");
+            yield return _base.TryTheFaultedCutter("FallenSolarArray");
+            yield return _base.ExpectStep(OpeningSteps.FitIgniter, OpeningKeys.TakeIgniter,
+                "B7: the cutter sputtered, the rack is pointed at");
+            yield return _base.TakeFromTheOpenCrate(SparesRack);
+            yield return _base.ExpectStep(OpeningSteps.FitIgniter, OpeningKeys.FitIgniter,
+                "B7: the spare igniter in the hold");
+            yield return _base.FitTheIgniter();
+            yield return _base.ExpectStep(OpeningSteps.BuildSolar, OpeningKeys.CutOptics, "B7: the cutter works");
             yield return _base.CutTheCrates("FallenSolarArray");
-            _bot.EndBeat("the fallen array scanned, the airlock panel read, its panels and junction box cut");
+            _bot.EndBeat("the fallen array scanned, the airlock panel read, the cutter sputtered, the spare igniter " +
+                         "taken from the rack and fitted, the array's panels and junction box cut");
         }
 
         private IEnumerator BuildTheArray()
@@ -309,6 +326,15 @@ namespace MoonProject.Autoplay
             yield return _base.Build(StructureIds.SolarArray, _base.Pad() + Vector3.right * OpeningBase.Spacing);
             yield return _base.UntilReached(OpeningMilestone.PowerOn, "the PowerOn milestone");
             _bot.EndBeat("the array stands and the base has power");
+        }
+
+        private IEnumerator TheFirstChoice()
+        {
+            Begin("R5", "The first free choice: visit the seismic station, dock, and the first dusk begins");
+            yield return _base.ExpectStep(OpeningSteps.BuildBatteryBank, string.Empty, "R5: the afternoon says nothing");
+            yield return _base.VisitTheSeismicStation();
+            yield return _base.DockForTheDusk(StructureIds.ChargingPad);
+            _bot.EndBeat("07 read the 1971 seismic station, docked, and the first dusk began");
         }
 
         private IEnumerator TheHabitat()
@@ -357,6 +383,13 @@ namespace MoonProject.Autoplay
             yield return _base.Build(StructureIds.AntennaMast, _base.Pad() + Vector3.back * OpeningBase.Spacing);
             yield return _base.UntilReached(OpeningMilestone.SignalWest, "the SignalWest milestone");
             _bot.EndBeat("the mast stands and the west signal answered");
+        }
+
+        private IEnumerator TheAnswer()
+        {
+            Begin("B12", "The answer");
+            yield return _base.AnswerTheCall();
+            _bot.EndBeat("07 transmitted from the mast and relay.1 answered the call");
         }
 
         /// <summary>The next unscanned fragment of the lander's cargo, in the order the blueprint numbers them.</summary>

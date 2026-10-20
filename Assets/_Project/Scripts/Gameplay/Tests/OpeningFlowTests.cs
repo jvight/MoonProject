@@ -39,25 +39,29 @@ namespace MoonProject.Gameplay.Tests
             _game.Known.Add(StructureIds.ChargingPad);
             Expect(OpeningKeys.CollectParts);
             _game.Covered.Add(StructureIds.ChargingPad);
-            Expect(OpeningKeys.CollectParts, "the materials without the igniter: the open crate is not emptied yet");
-            _game.CarriesIgniter = true;
-            Expect(OpeningKeys.BuildPad);
+            Expect(OpeningKeys.BuildPad, "the charger kit alone covers the pad: no igniter in the lander's crate");
             _game.BuiltIds.Add(StructureIds.ChargingPad);
             Expect(OpeningKeys.Charge);
             _game.FirstCharge = true;
-            _game.CanFitIgniter = true;
-            Expect(OpeningKeys.FitIgniter, "charging, the igniter in the hold");
-            _game.CarriesIgniter = false;
-            _game.IgniterFitted = true;
             Expect(string.Empty, "the reserve is not spent yet: the lander's 0% says it first");
             _game.ReserveSpent = true;
             Expect(OpeningKeys.FindSolar);
             _game.Known.Add(StructureIds.SolarArray);
+            Expect(OpeningKeys.CutOptics, "the cutter is FAULT, but the line asks to cut: the rack is in plain view");
+            _game.CutterSputtered = true;
+            Expect(OpeningKeys.TakeIgniter, "the cutter sputtered: the line points at the rack");
+            _game.CarriesIgniter = true;
+            _game.CanFitIgniter = true;
+            Expect(OpeningKeys.FitIgniter, "the igniter in the hold: a field swap, fitted where 07 stands");
+            _game.CarriesIgniter = false;
+            _game.IgniterFitted = true;
             Expect(OpeningKeys.CutOptics, "the hold does not cover the array yet");
             _game.Covered.Add(StructureIds.SolarArray);
             Expect(OpeningKeys.BuildSolar);
             _game.PowerOn = true;
-            Expect(OpeningKeys.BuildBatteryBank, "Night is coming shows at PowerOn");
+            Expect(string.Empty, "R5, the first free choice: the near sites are the lure, no line");
+            _game.DuskBegun = true;
+            Expect(OpeningKeys.BuildBatteryBank, "Night is coming shows as the first dusk begins");
             _game.NightReady = true;
             Expect(string.Empty, "the first nightfall says nothing");
             _game.NightFallen = true;
@@ -79,7 +83,6 @@ namespace MoonProject.Gameplay.Tests
             _flow.Tick();
             Assert.AreEqual(OpeningSteps.CollectParts, _flow.CurrentIndex);
             _game.Covered.Add(StructureIds.ChargingPad);
-            _game.CarriesIgniter = true;
             _flow.Tick();
             Assert.AreEqual(OpeningSteps.BuildPad, _flow.CurrentIndex);
             _game.BuiltIds.Add(StructureIds.ChargingPad);
@@ -87,12 +90,12 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(OpeningSteps.Charge, _flow.CurrentIndex);
             _game.FirstCharge = true;
             _flow.Tick();
-            Assert.AreEqual(OpeningSteps.FitIgniter, _flow.CurrentIndex);
-            _game.CarriesIgniter = false;
-            _game.IgniterFitted = true;
-            _flow.Tick();
             Assert.AreEqual(OpeningSteps.FindSolar, _flow.CurrentIndex, "a step with no line yet still has its place");
+            _game.ReserveSpent = true;
             _game.Known.Add(StructureIds.SolarArray);
+            _flow.Tick();
+            Assert.AreEqual(OpeningSteps.FitIgniter, _flow.CurrentIndex);
+            _game.IgniterFitted = true;
             _flow.Tick();
             Assert.AreEqual(OpeningSteps.BuildSolar, _flow.CurrentIndex);
             _game.PowerOn = true;
@@ -112,7 +115,8 @@ namespace MoonProject.Gameplay.Tests
         [Test]
         public void WithAPadPartInTheHold_TheLineAsksToParkOffThePad_AndToFitOnIt()
         {
-            ReachTheCharge();
+            ReachTheArray();
+            _game.CarriesIgniter = true;
             _game.CanFitIgniter = false;
             Expect(OpeningKeys.ParkOnPad, "a part that needs the pad: the line says to park there");
             _game.CanFitIgniter = true;
@@ -124,7 +128,7 @@ namespace MoonProject.Gameplay.Tests
         [Test]
         public void TheFitLine_ShowsExactlyWhenTheScreenWillTakeTheIgniter()
         {
-            ReachTheCharge();
+            ReachTheArray();
             foreach (bool carries in new[] { false, true })
             {
                 foreach (bool canFit in new[] { false, true })
@@ -143,14 +147,42 @@ namespace MoonProject.Gameplay.Tests
             }
         }
 
-        private void ReachTheCharge()
+        [Test]
+        public void AnIgniterTakenUnasked_IsFittedWithNoRackLine()
+        {
+            ReachTheArray();
+            Assert.AreEqual(OpeningKeys.CutOptics, _flow.Current);
+            _game.CarriesIgniter = true;
+            _game.CanFitIgniter = true;
+            Expect(OpeningKeys.FitIgniter, "taken from the rack before the cutter ever sputtered");
+            _game.CarriesIgniter = false;
+            _game.IgniterFitted = true;
+            Expect(OpeningKeys.CutOptics);
+            CollectionAssert.DoesNotContain(_lines, OpeningKeys.TakeIgniter, "the rack line is for a stalled player");
+        }
+
+        [Test]
+        public void AnIgniterFittedBeforeTheScan_PassesOverTheIgniterStep()
+        {
+            ReachTheArray();
+            _game.Known.Remove(StructureIds.SolarArray);
+            _game.IgniterFitted = true;
+            Expect(OpeningKeys.FindSolar);
+            _game.Known.Add(StructureIds.SolarArray);
+            Expect(OpeningKeys.CutOptics);
+            CollectionAssert.DoesNotContain(_lines, OpeningKeys.FitIgniter);
+        }
+
+        /// <summary>B7: the reserve spent and the array scanned; the cutter still has no igniter.</summary>
+        private void ReachTheArray()
         {
             _game.ReachedLander = true;
             _game.Known.Add(StructureIds.ChargingPad);
             _game.Covered.Add(StructureIds.ChargingPad);
-            _game.CarriesIgniter = true;
             _game.BuiltIds.Add(StructureIds.ChargingPad);
             _game.FirstCharge = true;
+            _game.ReserveSpent = true;
+            _game.Known.Add(StructureIds.SolarArray);
             _flow.Tick();
         }
 
@@ -160,9 +192,8 @@ namespace MoonProject.Gameplay.Tests
             _game.ReachedLander = true;
             _game.Known.Add(StructureIds.ChargingPad);
             _game.Covered.Add(StructureIds.ChargingPad);
-            _game.CarriesIgniter = true;
             Expect(OpeningKeys.BuildPad);
-            CollectionAssert.DoesNotContain(_lines, OpeningKeys.CollectParts);
+            Assert.AreNotEqual(OpeningKeys.CollectParts, _flow.Current);
         }
 
         [Test]
@@ -176,9 +207,11 @@ namespace MoonProject.Gameplay.Tests
             _game.IgniterFitted = true;
             _game.ReserveSpent = true;
             _game.PowerOn = true;
+            _game.DuskBegun = true;
             _flow.Announce();
             _flow.Tick();
-            Assert.AreEqual(new[] { OpeningKeys.BuildBatteryBank }, _lines.ToArray(), "no stored step: read at once");
+            Assert.AreEqual(OpeningKeys.BuildBatteryBank, _flow.Current, "no stored step: read at once");
+            Assert.IsEmpty(_lines, "and no line is published before a stall");
             Assert.AreEqual(2, _milestones.Count);
             Assert.AreEqual(OpeningMilestone.FirstCharge, _milestones[0].Milestone);
             Assert.AreEqual(OpeningMilestone.PowerOn, _milestones[1].Milestone);
@@ -235,6 +268,7 @@ namespace MoonProject.Gameplay.Tests
             _game.IgniterFitted = true;
             _game.ReserveSpent = true;
             _game.PowerOn = true;
+            _game.DuskBegun = true;
             Expect(OpeningKeys.BuildBatteryBank);
             _game.BuiltIds.Add(StructureIds.BatteryBank);
             Expect(OpeningKeys.MoveBatteryBank, "built, but the grid does not reach it");
@@ -242,11 +276,81 @@ namespace MoonProject.Gameplay.Tests
             Expect(string.Empty, "moved within reach: the first nightfall says nothing");
         }
 
+        [Test]
+        public void NoLineShows_BeforeAStallOf120Seconds_NoMatterHowManyStepsPass()
+        {
+            _game.ReachedLander = true;
+            for (int i = 0; i < 119; i++)
+            {
+                _flow.Tick(1f, true);
+            }
+
+            Assert.IsEmpty(_lines, "119 s standing still is not yet a stall");
+            _game.Known.Add(StructureIds.ChargingPad);
+            _flow.Tick(1f, true);
+            Assert.IsEmpty(_lines, "a new step starts the count again");
+            Assert.AreEqual(string.Empty, _flow.Shown);
+        }
+
+        [Test]
+        public void AStalledStep_ShowsItsLineOnce_ThenItGoesAndNeverComesBackForThatStep()
+        {
+            Assert.AreEqual(OpeningKeys.DriveToLander, FirstStepKey());
+            for (int i = 0; i < 120; i++)
+            {
+                _flow.Tick(1f, true);
+            }
+
+            CollectionAssert.AreEqual(new[] { OpeningKeys.DriveToLander }, _lines, "one line after the stall");
+            Assert.AreEqual(OpeningKeys.DriveToLander, _flow.Shown);
+            for (int i = 0; i < (int)OpeningFlow.DefaultReminderSeconds; i++)
+            {
+                _flow.Tick(1f, true);
+            }
+
+            CollectionAssert.AreEqual(new[] { OpeningKeys.DriveToLander, string.Empty }, _lines, "then it goes");
+            for (int i = 0; i < 600; i++)
+            {
+                _flow.Tick(1f, true);
+            }
+
+            Assert.AreEqual(2, _lines.Count, "never again for that step");
+        }
+
+        [Test]
+        public void MovingResetsTheStall_AndTheNextStepGetsItsOwnReminder()
+        {
+            for (int round = 0; round < 3; round++)
+            {
+                for (int i = 0; i < 100; i++)
+                {
+                    _flow.Tick(1f, true);
+                }
+
+                _flow.Tick(1f, false);
+            }
+
+            Assert.IsEmpty(_lines, "100 s of standing, then a move, three times: no stall");
+            _game.ReachedLander = true;
+            _flow.Tick(1f, true);
+            for (int i = 0; i < 120; i++)
+            {
+                _flow.Tick(1f, true);
+            }
+
+            CollectionAssert.AreEqual(new[] { OpeningKeys.ScanLander }, _lines, "the next step's own reminder");
+        }
+
+        private string FirstStepKey()
+        {
+            _flow.Tick();
+            return _flow.Current;
+        }
+
         private void Expect(string key, string why = "the next step")
         {
             _flow.Tick();
             Assert.AreEqual(key, _flow.Current, why);
-            Assert.AreEqual(key, _lines[_lines.Count - 1], "published as the line");
         }
 
         private sealed class FakeProgress : IOpeningProgress
@@ -257,11 +361,13 @@ namespace MoonProject.Gameplay.Tests
 
             public bool ReachedLander { get; set; }
             public bool CarriesIgniter { get; set; }
+            public bool CutterSputtered { get; set; }
             public bool CanFitIgniter { get; set; }
             public bool IgniterFitted { get; set; }
             public bool FirstCharge { get; set; }
             public bool ReserveSpent { get; set; }
             public bool PowerOn { get; set; }
+            public bool DuskBegun { get; set; }
             public bool NightReady { get; set; }
             public bool NightFallen { get; set; }
 

@@ -222,6 +222,16 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
+        public void TheCuttersFirstSputter_StartlesTheFace_ThenItSettles()
+        {
+            var director = new FaceDirector(_faceTuning, _directorTuning, seed: 7);
+            director.OnCutterSputtered(new CutterSputtered(Vector3.zero));
+            Assert.AreEqual(FaceFeeling.Startled, director.CurrentFeeling, "the cutter coughs with no igniter");
+            director.Step(_directorTuning.StartledHoldSeconds + 0.1f);
+            Assert.AreEqual(FaceFeeling.Calm, director.CurrentFeeling);
+        }
+
+        [Test]
         public void UpgradeAndPartFitted_TriggerProud_AndHardLandingOrFall_TriggerStartled()
         {
             var director = new FaceDirector(_faceTuning, _directorTuning, seed: 7);
