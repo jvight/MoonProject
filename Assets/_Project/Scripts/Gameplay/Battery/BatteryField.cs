@@ -34,6 +34,7 @@ namespace MoonProject.Gameplay
         private BeamWork _beam;
         private OpeningField _pads;
         private IRoverSystems _systems;
+        private ITowLine _tow;
         private StructureCatalog _structures;
         private bool _padFromReserve;
         private bool _chargingOnReserve;
@@ -128,6 +129,12 @@ namespace MoonProject.Gameplay
             _structures = structures ?? throw new ArgumentNullException(nameof(structures));
         }
 
+        /// <summary>07's winch cable: a tow caps top speed and makes driving cost more.</summary>
+        internal void ConnectTow(ITowLine tow)
+        {
+            _tow = tow ?? throw new ArgumentNullException(nameof(tow));
+        }
+
         /// <summary>07's systems: the solar wing's stand-still trickle only runs while the wing works.</summary>
         internal void ConnectSystems(IRoverSystems systems)
         {
@@ -218,6 +225,7 @@ namespace MoonProject.Gameplay
                 GroundDistance = counted ? travel.magnitude : 0f,
                 Speed = _rover.Speed,
                 SlopeDegrees = SlopeAlong(_rover.GroundNormal, travel),
+                Towing = _tow != null && _tow.IsTowing,
                 Boosting = _boosting,
                 BeamSeconds = _beam.Take(out float scanSeconds, out float weldSeconds),
                 ScanSeconds = scanSeconds,

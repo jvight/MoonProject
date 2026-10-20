@@ -17,6 +17,9 @@ namespace MoonProject.Gameplay
         /// <summary>Slope (degrees) of the ground along the travel: + uphill, - downhill.</summary>
         public float SlopeDegrees { get; set; }
 
+        /// <summary>07 tows a load on its winch cable: driving costs more and top speed is capped.</summary>
+        public bool Towing { get; set; }
+
         /// <summary>The Boost Coils are engaged.</summary>
         public bool Boosting { get; set; }
 

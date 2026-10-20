@@ -70,6 +70,11 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const string ChargerKit = "supply.lander.open";
         private const string SparesRack = "supply.array.spares";
 
+        /// <summary>The habitat's towable power module (opening v3 R6), and how far from the habitat it stands.</summary>
+        private const string PowerModule = "habitat.power_module";
+
+        private const float PowerModuleReach = 15f;
+
         /// <summary>The 1971 seismic station's story scan (R5's curiosity scan).</summary>
         private const string SeismicStory = "seismic";
 
@@ -376,6 +381,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsNotNull(_gameplay, "the scene has the gameplay system");
             Assert.IsNotNull(_gameplay.Opening, "the opening is wired");
             _context = bootstrap.Context;
+            Assert.IsTrue(_gameplay.Tow.TryFindLoad(PowerModule, out Transform module),
+                "the habitat's power module stands, towable (R6)");
+            Assert.Less(SurfaceRules.HorizontalDistance(module.position, Ruin("HabitatModules").position),
+                PowerModuleReach, "beside the habitat it came out of");
             _hud = new HudReader(scene);
             _chipWatch = new GameObject(nameof(ChipWatch)).AddComponent<ChipWatch>();
             _chipWatch.Watch(_hud);

@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using MoonProject.Core;
-using MoonProject.Core.Input;
 using MoonProject.Core.Events;
+using MoonProject.Core.Input;
 using MoonProject.Core.Save;
 
 namespace MoonProject.Gameplay
@@ -159,6 +159,9 @@ namespace MoonProject.Gameplay
 
         /// <summary>The base's lamps, which follow the Sun (null while the opening could not be built).</summary>
         public BaseLamps BaseLamps { get; private set; }
+
+        /// <summary>07's winch cable: what it tows, hooked and let go with the tether key (opening v3 R6).</summary>
+        public TowLine Tow { get; private set; }
 
         public SalvageField Salvage => _salvage;
 
@@ -327,6 +330,14 @@ namespace MoonProject.Gameplay
                 new RangeRingModel(_battery.Tuning, _battery.Tuning.RangeRing, services.Terrain), _battery.Model,
                 Opening.Pads, services.Rover);
             RangeRingLine = new RangeRingLine(transform, _visuals.BeamCore, RangeRing, _battery.Tuning.RangeRing);
+            Tow = NewTow(services);
+            if (Tow == null)
+            {
+                Fail("the tow did not stand (see its error).");
+                return;
+            }
+
+            _battery.ConnectTow(Tow);
             _flowTokens.Add(context.Events.Subscribe<ChargingChanged>(OnChargingChanged));
             context.Register<IMaterialStock>(Materials);
             context.Register<IMaterialCatalog>(_materialCatalog);
@@ -345,6 +356,7 @@ namespace MoonProject.Gameplay
             PulseView = new NetworkPulseView(transform, _visuals.BeamCore, services.Meshes.Sphere, _visuals.Flash,
                 context.Events, _openingTuning.Answer);
             context.Register<IRangeRing>(RangeRing);
+            context.Register<ITowLine>(Tow);
             context.Register<IDatabank>(Databank);
             context.Register<BuildField>(_building);
             RegisterSaveSections(save);
@@ -383,6 +395,8 @@ namespace MoonProject.Gameplay
                 GameplaySaveKeys.DatabankVersion, Databank.Capture, Databank.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<CallSaveData>(GameplaySaveKeys.Call,
                 GameplaySaveKeys.CallVersion, CaptureCall, RestoreCall)));
+            _saveTokens.Add(save.Register(new SaveSection<TowSaveData>(GameplaySaveKeys.Tow,
+                GameplaySaveKeys.TowVersion, Tow.Capture, Tow.Restore)));
             _saveTokens.Add(_building.RegisterSave(save));
         }
 
@@ -577,6 +591,7 @@ namespace MoonProject.Gameplay
             Scans.Step(now, deltaTime);
             ScanMark.Step(Scans.Scanning == null ? Scans.Candidate : null, deltaTime);
             Opening.Step(deltaTime);
+            Tow.Step(_input.TetherPressed);
             Reply.Step(deltaTime, Opening.NightFallen, _roverState.Speed);
             MastRaise.Step(deltaTime);
             MastRaiseView.Step();
@@ -589,6 +604,51 @@ namespace MoonProject.Gameplay
             ApronGlow.Step(_building.State != BuildModeState.Closed, deltaTime);
             ApronGuide.Step(_building.State != BuildModeState.Closed && !AnyPadStands(), deltaTime);
             Recovery.Refresh();
+        }
+
+        private void FixedUpdate()
+        {
+            Tow?.FixedStep(Time.fixedDeltaTime);
+        }
+
+        /// <summary>
+        /// 07's winch cable, with home at the apron, and the opening's towable loads stood on it; null (logged) without
+        /// the winch, the apron or Art's loads.
+        /// </summary>
+        private TowLine NewTow(GameplayServices services)
+        {
+            Transform winch = services.Rig != null ? services.Rig.WinchOrigin : null;
+            if (winch == null)
+            {
+                Debug.LogError($"{nameof(GameplaySystem)}: the tow needs IRoverRig.WinchOrigin (07's winch).", this);
+                return null;
+            }
+
+            if (!services.Anchors.TryGet(_openingTuning.ApronAnchor, out WorldAnchor apron))
+            {
+                Debug.LogError($"{nameof(GameplaySystem)}: the tow's home is world anchor " +
+                               $"'{_openingTuning.ApronAnchor}', which the World does not publish.", this);
+                return null;
+            }
+
+            var tow = new TowLine(services.Events, _openingTuning.Tow, winch, services.Rover, apron.Position);
+            Transform loads = new GameObject("TowLoads").transform;
+            loads.SetParent(transform, false);
+            try
+            {
+                foreach (TowLoadSpot spot in _openingTuning.TowLoads)
+                {
+                    tow.Add(TowLoads.Stand(spot, Opening.FrameOf(spot.AnchorId), loads, services.Terrain,
+                        _openingTuning.Tow));
+                }
+            }
+            catch (InvalidOperationException exception)
+            {
+                Debug.LogError($"{nameof(GameplaySystem)}: {exception.Message}", this);
+                return null;
+            }
+
+            return tow;
         }
 
         /// <summary>

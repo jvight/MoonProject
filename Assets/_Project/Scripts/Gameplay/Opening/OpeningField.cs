@@ -223,7 +223,8 @@ namespace MoonProject.Gameplay
             return null;
         }
 
-        private Transform FrameOf(string id)
+        /// <summary>The frame called <paramref name="id"/> (a world anchor, a ruin piece, a story prop), or null.</summary>
+        internal Transform FrameOf(string id)
         {
             return _frames.TryGetValue(id, out Transform frame) ? frame : null;
         }
