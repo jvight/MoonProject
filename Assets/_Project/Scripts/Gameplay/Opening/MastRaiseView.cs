@@ -123,6 +123,13 @@ namespace MoonProject.Gameplay
         {
             for (int i = 0; i < _segments.Length; i++)
             {
+                if (_segments[i] == null)
+                {
+                    // The mast was taken down while it was being raised: its nodes are gone, there is nothing to drive.
+                    _bound = false;
+                    return;
+                }
+
                 if (home)
                 {
                     _segments[i].localPosition = _rest[i];
