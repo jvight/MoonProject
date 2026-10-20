@@ -233,9 +233,14 @@ namespace MoonProject.Art.Tests
                 "HabitatModules must contain separate PowerModule_StatusLamp child node on the power module face.");
             var statusLampRenderer = statusLamp.GetComponent<MeshRenderer>();
             Assert.IsNotNull(statusLampRenderer, "PowerModule_StatusLamp must have its own MeshRenderer.");
-            Assert.IsNotNull(statusLampRenderer.sharedMaterial);
-            Assert.AreEqual(R1MaterialRecipes.LampAmberSlot, statusLampRenderer.sharedMaterial.name,
-                "PowerModule_StatusLamp primary slot must be R1_LampAmber so code can blink it via MaterialPropertyBlock.");
+            bool hasLampLens = false;
+            foreach (Material m in statusLampRenderer.sharedMaterials)
+            {
+                hasLampLens |= m != null && m.name == R1MaterialRecipes.LampAmberSlot;
+            }
+
+            Assert.IsTrue(hasLampLens,
+                "PowerModule_StatusLamp must carry an R1_LampAmber lens slot; World's blink finds it by name.");
 
             var statusLampFilter = statusLamp.GetComponent<MeshFilter>();
             Assert.IsNotNull(statusLampFilter);
