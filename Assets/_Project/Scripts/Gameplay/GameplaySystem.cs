@@ -139,6 +139,10 @@ namespace MoonProject.Gameplay
         /// <summary>How the mast raises and the reply times (tests).</summary>
         public CallReplySettings MastRaiseSettings => _openingTuning.Reply;
 
+        public RangeRingField RangeRing { get; private set; }
+
+        public RangeRingLine RangeRingLine { get; private set; }
+
         /// <summary>The dock lock on the built pad 07 charges on (opening-v2 §5).</summary>
         public PadLock PadLock { get; private set; }
 
@@ -301,6 +305,10 @@ namespace MoonProject.Gameplay
             Call = new CallProgress(context.Events, _openingTuning.Call, services.Layout);
             Reply = new CallReply(context.Events, Call, _openingTuning.Reply);
             MastRaise = new MastRaise(context.Events, _openingTuning.Reply);
+            RangeRing = new RangeRingField(context.Events, _battery.Tuning.RangeRing,
+                new RangeRingModel(_battery.Tuning, _battery.Tuning.RangeRing, services.Terrain), _battery.Model,
+                Opening.Pads, services.Rover);
+            RangeRingLine = new RangeRingLine(transform, _visuals.BeamCore, RangeRing, _battery.Tuning.RangeRing);
             _flowTokens.Add(context.Events.Subscribe<ChargingChanged>(OnChargingChanged));
             context.Register<IMaterialStock>(Materials);
             context.Register<IMaterialCatalog>(_materialCatalog);
@@ -315,6 +323,7 @@ namespace MoonProject.Gameplay
             context.Register<IBeamStatus>(services.Beam);
             context.Register<IRecoveryProgress>(Recovery);
             context.Register<ICallSource>(Call);
+            context.Register<IRangeRing>(RangeRing);
             context.Register<IDatabank>(Databank);
             context.Register<BuildField>(_building);
             RegisterSaveSections(save);
@@ -549,6 +558,8 @@ namespace MoonProject.Gameplay
             Opening.Step(deltaTime);
             Reply.Step(deltaTime, Opening.NightFallen, _roverState.Speed);
             MastRaise.Step(deltaTime);
+            RangeRing.Step(deltaTime);
+            RangeRingLine.Step();
             PadLock.Step(deltaTime);
             BaseLamps.Step(deltaTime);
             ApronGlow.Step(_building.State != BuildModeState.Closed, deltaTime);
@@ -647,6 +658,7 @@ namespace MoonProject.Gameplay
             Databank?.Dispose();
             Call?.Dispose();
             MastRaise?.Dispose();
+            RangeRing?.Dispose();
             Bundles?.Dispose();
             Opening?.Dispose();
             _meshes?.Dispose();
