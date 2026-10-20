@@ -772,6 +772,9 @@ CUES = (
         notes="0.5.5: a part dropped on a valid socket: a seated tick on D5 over a felt thud."),
     Cue("part_refuse", "tick_2d", feel.part_refuse, volume=(0.4, 0.4), milestone="M3",
         notes="0.5.5: a drop refused: two soft muted ticks falling B4 -> F#4."),
+    Cue("ui_next_line", "tick_2d", picks.renderer("ui_next_line"), volume=(0.45, 0.45), milestone="M3",
+        sampled=True, notes="Opening v3 G2, the next line arriving on 07's face: a CRT relay ticking over and a faint "
+                            "bowed-metal tone on D5, the same every time."),
     Cue("ui_relay_click", "tick_2d", picks.renderer("ui_relay_click"), volume=(0.45, 0.45), milestone="M3",
         sampled=True, notes="The databank's page starting to flip: a small relay pulling in, its contact settling."),
     Cue("ui_tube_thunk", "tick_2d", picks.renderer("ui_tube_thunk"), volume=(0.45, 0.45), milestone="M3",
@@ -935,8 +938,6 @@ CUES = (
         milestone="M3", notes="The capacitor drums boosting: a soft whine on A. 2 s seamless."),
     Cue("boost_release", "tick_3d", feel.boost_release, volume=(0.6, 0.6), milestone="M3",
         notes="The drums emptying: a felt fff and a tick on D."),
-    Cue("page_tick", "tick_2d", feel.page_tick, volume=(0.5, 0.5), milestone="M3",
-        notes="A new step's line: a breath-quiet page-turn tick."),
     Cue("save_tick", "tick_2d", feel.save_tick, volume=(0.4, 0.4), milestone="M3",
         notes="The game saved: a tiny soft tick on D, once per burst."),
     Cue("count_tick", "tick_2d", feel.count_tick, variants=len(feel.COUNT_TICK_NOTES), volume=(0.45, 0.45),

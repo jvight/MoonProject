@@ -248,10 +248,10 @@ namespace MoonProject.Audio.PlayModeTests
         }
 
         [Test]
-        public void ANewStep_TurnsThePage_ARepeatDoesNot()
+        public void ANewLine_ArrivesSoftly_ARepeatDoesNot()
         {
             _rig.Events.Publish(new NextStepChanged("test.step.one"));
-            Assert.AreEqual("page_tick", LastClip);
+            Assert.AreEqual("ui_next_line", LastClip);
             int plays = _rig.Director.PlayCount;
             _rig.Events.Publish(new NextStepChanged("test.step.one"));
             Assert.AreEqual(plays, _rig.Director.PlayCount);

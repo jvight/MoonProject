@@ -122,13 +122,6 @@ def boost_release(_variant, gen):
     return filters.lowpass(mix, 4000.0)
 
 
-def page_tick(_variant, gen):
-    """A new step's line showing: a breath-quiet page-turn tick."""
-    n = samples(0.2)
-    paper = filters.bandpass(noise.white(n, gen), 2400.0, 0.9) * envelope.ar(n, 0.004, 0.05)
-    return filters.lowpass(0.08 * paper + 0.15 * _tick(gen, note_freq("A5"), 0.2), 5000.0)
-
-
 def save_tick(_variant, gen):
     """The game saved: a tiny soft tick on D."""
     return filters.lowpass(0.25 * _tick(gen, note_freq("D6"), 0.15), 5000.0)
