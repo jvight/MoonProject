@@ -984,6 +984,44 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator TheFailedReply_PutsTxNoRangeOn07sFace_AsTheOneElement_ForAboutThreeSeconds()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            _rig.Ui.Ledger.RecordLookTaught();
+            _rig.Ui.Ledger.RecordDriveTaught();
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            Events.Publish(new NextStepChanged("next.v2.cut_optics"));
+            yield return Seconds(1.5f);
+            Assert.IsFalse(_rig.Ui.FaceNotice.IsShown);
+
+            Events.Publish(new CallReplyFailed());
+            float limit = Time.realtimeSinceStartup + 4f;
+            while (!_rig.Ui.FaceNotice.IsShown && Time.realtimeSinceStartup < limit)
+            {
+                yield return null;
+            }
+
+            Assert.IsTrue(_rig.Ui.FaceNotice.IsShown, "07's face shows its line");
+            Assert.AreEqual(Text(UiKeys.FaceTxNoRange), _rig.Ui.FaceNotice.Text);
+            Assert.IsFalse(_rig.Ui.Objective.ShowsObjective, "it is the one element: the objective line is gone");
+            float shownAt = Time.realtimeSinceStartup;
+            yield return Seconds(1f);
+            Assert.IsFalse(_rig.Ui.LookUp.IsVisible, "and every chip has faded away");
+            Assert.IsFalse(_rig.Ui.Prompt.IsVisible);
+            while (_rig.Ui.FaceNotice.IsShown && Time.realtimeSinceStartup < shownAt + 6f)
+            {
+                yield return null;
+            }
+
+            float shownFor = Time.realtimeSinceStartup - shownAt;
+            Assert.IsFalse(_rig.Ui.FaceNotice.IsShown, "the line lets go");
+            Assert.That(shownFor, Is.InRange(_rig.Tuning.Guidance.ReplyFaceSeconds - 0.4f,
+                _rig.Tuning.Guidance.ReplyFaceSeconds + 0.6f), "after about three seconds");
+        }
+
+        [UnityTest]
         public IEnumerator AHeldEWithNoLineOfSight_DimsAndShakesTheChip_And07sFaceSaysWhy_WithNoNewPanel()
         {
             InputSystem.AddDevice<Keyboard>();
