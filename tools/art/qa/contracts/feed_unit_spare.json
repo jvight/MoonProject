@@ -1,0 +1,96 @@
+{
+  "model": "feed_unit_spare",
+  "pivot_tolerance": 0.005,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_BareSteel",
+    "R1_Copper",
+    "R1_CreamEnamel",
+    "R1_GreyMetal",
+    "R1_OrangeStripe",
+    "R1_Rubber",
+    "R1_Signage"
+  ],
+  "max_triangles": 1800,
+  "max_meshes": 6,
+  "max_draw_calls": 16,
+  "allow_rotation": [],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "bounds": {
+    "size": [
+      0.28,
+      0.52,
+      0.22
+    ],
+    "tolerance": 0.04,
+    "min_size": [
+      0.24,
+      0.48,
+      0.18
+    ],
+    "max_size": [
+      0.32,
+      0.56,
+      0.26
+    ]
+  },
+  "nodes": {
+    "Body": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Connector": {
+      "pivot": [
+        0.0,
+        0.144,
+        0.07
+      ]
+    },
+    "Connector_Anchor": {
+      "pivot": [
+        0.0,
+        0.222,
+        0.07
+      ]
+    },
+    "FeedUnitSpare": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Grip_Anchor": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.195
+      ]
+    },
+    "Handle": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.14
+      ]
+    },
+    "LabelPlate": {
+      "pivot": [
+        -0.093,
+        0.035,
+        0.062
+      ]
+    },
+    "Pigtail": {
+      "pivot": [
+        0.0,
+        -0.144,
+        0.06
+      ]
+    }
+  }
+}
