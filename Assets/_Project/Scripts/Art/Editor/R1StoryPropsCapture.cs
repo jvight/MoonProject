@@ -208,9 +208,9 @@ namespace MoonProject.Art.Editor
                 // The rack 1.9 m to the pad's right at its mid length, its bays facing the docked 07
                 GameObject rack = SpawnProp(ArtPaths.R1ModelsFolder + "/Structures/SocketRack.prefab",
                     new Vector3(1.9f, 0f, 0f), -90f, temp);
-                SetBayState(rack.transform.Find("Bay_0"), 0);
-                SetBayState(rack.transform.Find("Bay_1"), 1);
-                SetBayState(rack.transform.Find("Bay_2"), 2);
+                SetBayState(rack.transform, 0, 0);
+                SetBayState(rack.transform, 1, 1);
+                SetBayState(rack.transform, 2, 2);
                 if (!night)
                 {
                     AimDayCSunAtSurface(Vector3.left);
@@ -230,21 +230,22 @@ namespace MoonProject.Art.Editor
 
         // 0 hidden: everything dark, jaws open. 1 outline: a dim line. 2 filled: bright line, warm fill, lamp lit and
         // the jaws closed, as Gameplay drives them.
-        private static void SetBayState(Transform bay, int state)
+        private static void SetBayState(Transform rack, int index, int state)
         {
+            Transform bay = rack.Find("Bay_" + index);
             if (bay == null)
             {
-                throw new InvalidOperationException("R1StoryPropsCapture: the socket rack has no bay node.");
+                throw new InvalidOperationException($"R1StoryPropsCapture: the socket rack has no Bay_{index} node.");
             }
 
             var line = new Color(1.00f, 0.70f, 0.40f, 1f);
-            SetEmission(bay.Find("Outline"), state == 0 ? Color.black : line * (state == 1 ? 0.35f : 1.4f));
-            SetEmission(bay.Find("Fill"), state == 2 ? new Color(0.95f, 0.62f, 0.34f, 1f) : Color.black);
-            SetEmission(bay.Find("Lamp"), state == 2 ? new Color(1.00f, 0.76f, 0.32f, 1f) : Color.black);
+            SetEmission(bay.Find("Outline_" + index), state == 0 ? Color.black : line * (state == 1 ? 0.35f : 1.4f));
+            SetEmission(bay.Find("Fill_" + index), state == 2 ? new Color(0.95f, 0.62f, 0.34f, 1f) : Color.black);
+            SetEmission(bay.Find("Lamp_" + index), state == 2 ? new Color(1.00f, 0.76f, 0.32f, 1f) : Color.black);
             if (state == 2)
             {
-                bay.Find("Clamp_L").localRotation = Quaternion.identity;
-                bay.Find("Clamp_R").localRotation = Quaternion.identity;
+                bay.Find("Clamp_L_" + index).localRotation = Quaternion.identity;
+                bay.Find("Clamp_R_" + index).localRotation = Quaternion.identity;
             }
         }
 
