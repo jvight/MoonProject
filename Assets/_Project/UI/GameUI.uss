@@ -2244,8 +2244,23 @@ Label {
 }
 
 /* The mark fills only the middle of its square: the wordmark sits just under the drawn lines */
-.boot-face__wordmark {
+.boot-face__wordmark-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
     margin-top: -72px;
+}
+
+.boot-face__wordmark {
+    -unity-text-align: middle-left;
+}
+
+/* The terminal's block cursor after the typed wordmark */
+.boot-face__cursor {
+    width: 14px;
+    height: 26px;
+    margin-left: 3px;
+    background-color: rgb(255, 224, 152);
 }
 
 .boot-face__load {

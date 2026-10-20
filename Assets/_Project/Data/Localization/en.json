@@ -743,6 +743,18 @@
             "text": "Transmit from the antenna mast."
         },
         {
+            "key": "next.v3.visit_site",
+            "text": "Power is on. Visit the seismic station or the habitat before dusk."
+        },
+        {
+            "key": "next.v3.await_night",
+            "text": "The base is ready for the night."
+        },
+        {
+            "key": "next.v3.go_relay",
+            "text": "relay.1 answered from the west rim. Drive to it."
+        },
+        {
             "key": "battery.low.lander",
             "text": "Battery low. Build a pad at the lander to charge."
         },

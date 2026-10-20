@@ -155,7 +155,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(Reached(OpeningMilestone.PowerOn), "B8: a connected solar array powers the pad");
             Assert.AreEqual(2, _fixture.Gameplay.Recovery.LitLamps(RecoveryTarget.Power),
                 "the Power row: the pad and solar lit");
-            Assert.AreEqual(string.Empty, opening.Flow.Current, "R5, the first free choice: no line");
+            Assert.AreEqual(OpeningKeys.VisitSite, opening.Flow.Current, "R5, the first free choice: the sites");
 
             yield return PlaceAt(GameplayFixture.SeismicStation);
             Assert.IsTrue(opening.Dusk.Visited, "R5: 07 visited the 1971 seismic station");
@@ -172,7 +172,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Build(StructureIds.BatteryBank, apron + new Vector3(-6f, 0f, 0f));
             yield return Waits.Until(() => Reached(OpeningMilestone.NightReady), 3f);
             Assert.IsTrue(Reached(OpeningMilestone.NightReady));
-            Assert.AreEqual(string.Empty, opening.Flow.Current, "the first nightfall says nothing");
+            Assert.AreEqual(OpeningKeys.AwaitNight, opening.Flow.Current, "night-ready: the base waits");
             _fixture.World.Phase = SkyPhase.Earthlit;
             yield return null;
             yield return null;

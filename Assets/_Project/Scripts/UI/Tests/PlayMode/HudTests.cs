@@ -637,7 +637,7 @@ namespace MoonProject.UI.PlayModeTests
             Assert.IsFalse(_rig.Ui.BootFace.IsShowing, "the lines have the face");
             Assert.AreEqual(DisplayStyle.None, _rig.Ui.BootFaceView.Root.resolvedStyle.display);
             Assert.AreEqual(_rig.Tuning.BootFace.Linework.StrokeCount, strokes, "each stroke cued once");
-            Assert.AreEqual(_rig.Tuning.BootFace.LoadSteps, steps, "each load step cued once");
+            Assert.AreEqual(_rig.Tuning.BootFace.LoadDwells.Count, steps, "each load step cued once");
             Assert.Greater(typed, 10, "typing cues for the wordmark, the load line and the first line");
             CollectionAssert.AreEqual(new[] { BootFace.WordmarkLine, BootFace.LoadLine, BootFace.FirstPostLine },
                 completed, "each line done once, in order");

@@ -366,6 +366,7 @@ namespace MoonProject.Gameplay
                 _openingTuning.Relay, _relaySpare.position, _relaySocket.position, _relayPad.position,
                 _relaySpare.gameObject, _relayFitted.gameObject);
             _battery.ConnectRelay(Relay);
+            Opening.ConnectRelay(Relay);
             Recovery = new RecoveryProgress(context.Events, PowerLamps, PowerSteps, _openingTuning.RecoveryLamps);
             Call = new CallProgress(context.Events, _openingTuning.Call, services.Layout);
             Opening.ConnectCall(Call);

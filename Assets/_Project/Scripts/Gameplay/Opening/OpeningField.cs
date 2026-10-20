@@ -42,6 +42,7 @@ namespace MoonProject.Gameplay
         private readonly Vector3 _apron;
         private readonly PlacedBase _placed;
         private ITowLine _tow;
+        private RelayRepair _relay;
         private readonly Dictionary<string, Transform> _frames =
             new Dictionary<string, Transform>(StringComparer.Ordinal);
 
@@ -149,6 +150,14 @@ namespace MoonProject.Gameplay
 
         public bool CallAnswered => _call != null && _call.State >= CallState.Answered;
 
+        public bool RelayRelit => _relay != null && _relay.Fitted;
+
+        /// <summary>relay.1's repair, made after the opening: what <see cref="RelayRelit"/> reads.</summary>
+        public void ConnectRelay(RelayRepair relay)
+        {
+            _relay = relay ?? throw new ArgumentNullException(nameof(relay));
+        }
+
         /// <summary>07's winch cable, made after the opening: where the power module stands for its line.</summary>
         public void ConnectTow(ITowLine tow)
         {
@@ -180,12 +189,19 @@ namespace MoonProject.Gameplay
                         out placeId, out position);
                 case OpeningKeys.Transmit:
                     return Structure(StructureIds.AntennaMast, out placeId, out position);
+                case OpeningKeys.VisitSite:
+                    return Frame(_tuning.DuskSites.Count > 0 ? _tuning.DuskSites[0] : string.Empty, out placeId,
+                        out position);
+                case OpeningKeys.GoToRelay:
+                    return Place(_relay != null ? _relay.RelayId : string.Empty,
+                        _relay != null ? _relay.SocketPoint : Vector3.zero, out placeId, out position);
                 case OpeningKeys.BuildPad:
                 case OpeningKeys.Charge:
                 case OpeningKeys.ParkOnPad:
                 case OpeningKeys.BuildSolar:
                 case OpeningKeys.DockForDusk:
                 case OpeningKeys.MoveBatteryBank:
+                case OpeningKeys.AwaitNight:
                 case OpeningKeys.BuildMast:
                     return Place(_tuning.ApronAnchor, _apron, out placeId, out position);
                 default:
@@ -209,7 +225,7 @@ namespace MoonProject.Gameplay
 
         private bool Frame(string id, out string placeId, out Vector3 position)
         {
-            Transform frame = FrameOf(id);
+            Transform frame = id.Length > 0 ? FrameOf(id) : null;
             return Place(frame != null ? id : string.Empty, frame != null ? frame.position : Vector3.zero,
                 out placeId, out position);
         }
@@ -331,6 +347,7 @@ namespace MoonProject.Gameplay
         {
             Caches.Dispose();
             Dusk.Dispose();
+            Flow.Dispose();
         }
 
         private static Transform FindNode(Transform root, string name)

@@ -349,7 +349,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             // West of the pad: the ruins side stays open for the power module towed home at R6.
             yield return Build(StructureIds.SolarArray, pad + Vector3.left * BaseSpacing, "B8: the solar array");
             yield return UntilReached(OpeningMilestone.PowerOn, "Power on: the array powers the pad");
-            yield return ExpectStep(string.Empty, "R5: the first free choice says nothing");
+            yield return ExpectStep(OpeningKeys.VisitSite, "R5: the first free choice names the near sites");
             yield return VisitTheSeismicStation();
             yield return DockForTheDusk(pad);
             yield return ExpectStep(OpeningKeys.ScanModule, "B9: night is coming, the power module can store it");
@@ -367,7 +367,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return DriveTo(RuinsGate(), 3f, "out of the Lumen ruins");
             yield return Build(StructureIds.AntennaMast, pad + Vector3.back * BaseSpacing, "B11: the antenna mast");
             yield return UntilReached(OpeningMilestone.SignalWest, "the west signal answers");
-            yield return ExpectStep(string.Empty, "the pillar in the west is the message: the opening ends");
+            yield return ExpectStep(OpeningKeys.Transmit, "the mast stands: transmit from it");
 
             float total = Time.time - started;
             WriteReport(total);
