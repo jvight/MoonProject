@@ -20,7 +20,9 @@ namespace MoonProject.Audio
     /// <item>charging on the pad (opening v2 B6): the DockLock walls rising (Kind Dock Anticipate), the walls settling
     /// (Reward) and the quick drop when 07 drives off early (Cancel); the pad's clamp arms seating on 07 with the
     /// rams' settle and a padded clunk (<see cref="PadLockClosed"/>, which ends the swing that Impact starts) and
-    /// letting go with a release hiss and a lighter clunk (<see cref="PadLockOpened"/>); while a charger fills
+    /// letting go with a release hiss and a lighter clunk (<see cref="PadLockOpened"/>); at the first dusk
+    /// (<see cref="OpeningDuskBegan"/>) the charging hum slows a pentatonic step as the light goes, until the next
+    /// dawn; while a charger fills
     /// the cells a soft hum breathes, and a full D major chord rings when the last cell fills
     /// (<see cref="ChargingChanged"/>, <see cref="BatteryChanged"/>; the per-cell notes are
     /// <see cref="BatteryAudio"/>'s);</item>
@@ -38,7 +40,7 @@ namespace MoonProject.Audio
     [DisallowMultipleComponent]
     public sealed class FeelAudio : MonoBehaviour
     {
-        private const int SubscriptionCount = 17;
+        private const int SubscriptionCount = 19;
         private const float SegmentFollow = 0.5f;
         private const float SilentVolume = 0.001f;
         private const int ScanQuarters = 4;
@@ -55,6 +57,8 @@ namespace MoonProject.Audio
         private readonly EasedValue _scan = new EasedValue(0f);
         private readonly ChargeVoice _charge = new ChargeVoice();
         private ChargeModel _charger;
+        private readonly EasedValue _chargerPitch = new EasedValue(1f);
+        private bool _dusk;
         private AudioDirector _director;
         private IRoverState _rover;
         private ICutter _cutter;
@@ -118,6 +122,9 @@ namespace MoonProject.Audio
 
         /// <summary>The cut's sizzle level now (0 when the beam is off).</summary>
         public float SizzleLevel => _sizzle.Value;
+
+        /// <summary>The pad's charging hum pitch now (1, slowed a step at the first dusk).</summary>
+        internal float ChargerPitch => _chargerPitch.Value;
 
         /// <summary>The pad's charging hum level now (0 when no charger fills the cells).</summary>
         public float ChargerHum => _charger != null ? _charger.Hum : 0f;
@@ -220,6 +227,8 @@ namespace MoonProject.Audio
             _subscriptions[14] = events.Subscribe<ContainerSealCut>(OnContainerSealCut);
             _subscriptions[15] = events.Subscribe<PadLockClosed>(OnPadLockClosed);
             _subscriptions[16] = events.Subscribe<PadLockOpened>(OnPadLockOpened);
+            _subscriptions[17] = events.Subscribe<OpeningDuskBegan>(OnDuskBegan);
+            _subscriptions[18] = events.Subscribe<SkyPhaseChanged>(OnSkyPhaseChanged);
         }
 
         private AudioSource Loop(AudioDirector director, string name, CueHandle cue, out float cueVolume)
@@ -251,6 +260,8 @@ namespace MoonProject.Audio
             Drive(_humSource, _charge.HumLevel * _humCueVolume * world);
             _charger.Step(dt);
             Drive(_chargerSource, _charger.Hum * _tuning.ChargeVolume * _chargerCueVolume * world);
+            // An eased glide covers ~95% of the way in three time constants: the slowing takes about DuskChargeSeconds.
+            _chargerSource.pitch = _chargerPitch.Step(DuskChargePitch, dt, _tuning.DuskChargeSeconds / 3f);
             if (_charger.TakeFull())
             {
                 _director.PlayAt(_chargeFull, _chargerAt);
@@ -394,6 +405,27 @@ namespace MoonProject.Audio
                 case FeelPhase.Cancel:
                     _director.PlayAt(_wallsDrop, beat.Position);
                     break;
+            }
+        }
+
+        private float DuskChargePitch => _dusk ? Mathf.Pow(2f, _tuning.DuskChargeSemitones / 12f) : 1f;
+
+        /// <summary>The first dusk: "the charge slows at last light"; a restored dusk starts slowed.</summary>
+        private void OnDuskBegan(OpeningDuskBegan began)
+        {
+            _dusk = true;
+            if (began.Restored)
+            {
+                _chargerPitch.Snap(DuskChargePitch);
+            }
+        }
+
+        /// <summary>A new day's light: the charge runs at its own pace again.</summary>
+        private void OnSkyPhaseChanged(SkyPhaseChanged changed)
+        {
+            if (changed.Phase == SkyPhase.Sunrise)
+            {
+                _dusk = false;
             }
         }
 
