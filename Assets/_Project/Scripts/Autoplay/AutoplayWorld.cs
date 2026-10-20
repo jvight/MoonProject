@@ -74,6 +74,21 @@ namespace MoonProject.Autoplay
             return _faceDocument != null ? _faceDocument.rootVisualElement : null;
         }
 
+        /// <summary>The first <typeparamref name="T"/> in the active scene (walking its roots), or null.</summary>
+        public T Find<T>() where T : Component
+        {
+            foreach (GameObject root in SceneManager.GetActiveScene().GetRootGameObjects())
+            {
+                T found = root.GetComponentInChildren<T>(true);
+                if (found != null)
+                {
+                    return found;
+                }
+            }
+
+            return null;
+        }
+
         public GameContext Context => _bootstrap.Context;
 
         public GameplaySystem Gameplay => _gameplay;

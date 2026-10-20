@@ -32,6 +32,9 @@ namespace MoonProject.Autoplay
 
         /// <summary>A cue counts as on screen this far in from each edge of the view (a share of the viewport).</summary>
         private const float CueMargin = 0.05f;
+
+        /// <summary>Seconds of one sweep of the view while the bot looks for a lit cue.</summary>
+        private const float CueSweepSeconds = 1.5f;
         private const float DriveSeconds = 150f;
         private const float BaseSpacing = 7f;
 
@@ -148,6 +151,35 @@ namespace MoonProject.Autoplay
                 () => "Lit " + cue.Lit() + ", at " + cue.Point() + ", in the view at " +
                       _bot.World.Context.Get<IViewCamera>().Camera.WorldToViewportPoint(cue.Point()) + ".");
             CuePoint = cue.Point();
+        }
+
+        /// <summary>
+        /// The player's look for a cue: the bot turns the view round until the cue is lit and on screen, within
+        /// <paramref name="seconds"/>; a cue that never shows is listed as a warning (the glint depends on where the
+        /// view stands against the Sun, so a miss is a note for the world's slice, not a failed run).
+        /// </summary>
+        public IEnumerator SeeWorldCue(WorldCue cue, string why, float seconds = CueSeconds)
+        {
+            if (cue == null)
+            {
+                _bot.Warn("the scene has no cue for " + why + ".");
+                yield break;
+            }
+
+            float deadline = Time.unscaledTime + seconds;
+            while (Time.unscaledTime < deadline)
+            {
+                if (cue.Lit() && WorldCue.OnScreen(_bot.World.Context.Get<IViewCamera>().Camera, cue.Point(), CueMargin))
+                {
+                    CuePoint = cue.Point();
+                    yield break;
+                }
+
+                yield return cue.Lit() ? _bot.LookAround(CueSweepSeconds) : null;
+            }
+
+            _bot.Warn("world cue '" + cue.Name + "' was not lit and on screen within " +
+                      seconds.ToString("0", CultureInfo.InvariantCulture) + " s (" + why + "): lit " + cue.Lit() + ".");
         }
 
         /// <summary>The objective line the game must be on, and reading on screen once 07 stands still.</summary>
