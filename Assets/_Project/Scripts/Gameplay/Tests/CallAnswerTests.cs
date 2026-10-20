@@ -23,6 +23,8 @@ namespace MoonProject.Gameplay.Tests
             public int Decoded => 0;
 
             public int Total => 4;
+
+            public string Sender => "ARK";
         }
 
         private static readonly Vector3 Mast = new Vector3(10f, 0f, 5f);

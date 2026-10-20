@@ -15,6 +15,8 @@ Common options:
                       has no Library yet)
   --nographics        no GPU device (faster startup; never use it for captures)
   --no-wait           fail instead of waiting when all batch slots are busy
+  --define SYMBOL     compile with this scripting define for this run only (repeatable); the Autoplay tests need
+                      LUNARION_AUTOPLAY
   --project PATH      run on another worktree of this repository instead of the current one
   --unity PATH        Unity.exe to use (default: Hub install matching ProjectSettings/ProjectVersion.txt)
 
@@ -37,7 +39,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from moonbatch import logscan, mcpguard, nunit, procutil, slots  # noqa: E402
+from moonbatch import defines, logscan, mcpguard, nunit, procutil, slots  # noqa: E402
 
 DEFAULT_TIMEOUT = 900
 PLAYMODE_TIMEOUT = 2400  # the full PlayMode suite passed 15 min (Main-scene sessions) in M3-06
@@ -264,6 +266,9 @@ def main():
         p.add_argument("--no-wait", action="store_true", help="fail if no batch slot is free")
         p.add_argument("--project", help="worktree to run on (default: git toplevel of cwd)")
         p.add_argument("--unity", help="path to Unity.exe")
+        p.add_argument("--define", action="append", default=[],
+                       help="scripting define symbol for this run only (repeatable), e.g. LUNARION_AUTOPLAY for the "
+                            "Autoplay tests; ProjectSettings.asset is put back afterwards")
         p.add_argument("--show-log-errors", action="store_true",
                        help="for tests: list exceptions / logged errors found in the log (often expected by tests)")
 
@@ -327,7 +332,8 @@ def main():
                 say("first run on this worktree (no Library): Unity resolves packages, compiles every script and "
                     f"imports every asset before running anything ({FIRST_RUN_MEASURED}). "
                     "Later runs start in seconds.")
-            code, elapsed, timed_out = run_unity(cmdline, env, log_path, timeout, slot, first_run)
+            with defines.defined(root, args.define):
+                code, elapsed, timed_out = run_unity(cmdline, env, log_path, timeout, slot, first_run)
         finally:
             slot.release()
     except KeyboardInterrupt:

@@ -17,7 +17,7 @@ namespace MoonProject.Gameplay
         private static readonly InteractionKind[] Priority =
         {
             InteractionKind.PickUp, InteractionKind.Build, InteractionKind.Salvage, InteractionKind.Scan,
-            InteractionKind.Deconstruct,
+            InteractionKind.Deconstruct, InteractionKind.OpenBuild, InteractionKind.FitPart,
         };
 
         private readonly SalvageField _salvage;
@@ -27,6 +27,7 @@ namespace MoonProject.Gameplay
         private readonly BeamWork _beam;
         private readonly Cutter _cutter;
         private readonly PickupReach _pickups;
+        private readonly FirstUseSpots _firstUse;
         private readonly Vector3[] _scanBuffer = new Vector3[MaxFocusPoints];
 
         /// <param name="beam">
@@ -34,8 +35,9 @@ namespace MoonProject.Gameplay
         /// </param>
         /// <param name="cutter">07's cutter: while it is faulted (opening-v2 §10) a cut's hint shows not ready.</param>
         public InteractionHints(SalvageField salvage, SealedContainers containers, ScanField scans,
-            BuildField building, BeamWork beam, Cutter cutter, PickupReach pickups)
+            BuildField building, BeamWork beam, Cutter cutter, PickupReach pickups, FirstUseSpots firstUse)
         {
+            _firstUse = firstUse ?? throw new ArgumentNullException(nameof(firstUse));
             _salvage = salvage != null ? salvage : throw new ArgumentNullException(nameof(salvage));
             _containers = containers ?? throw new ArgumentNullException(nameof(containers));
             _scans = scans ?? throw new ArgumentNullException(nameof(scans));
@@ -68,7 +70,8 @@ namespace MoonProject.Gameplay
         public int CopyFocus(Vector3[] points)
         {
             InteractionHint hint = Primary;
-            if (hint.Kind == InteractionKind.None || points.Length == 0)
+            if (hint.Kind == InteractionKind.None || hint.Kind == InteractionKind.OpenBuild ||
+                hint.Kind == InteractionKind.FitPart || points.Length == 0)
             {
                 return 0;
             }
@@ -142,6 +145,14 @@ namespace MoonProject.Gameplay
                         ? new InteractionHint(kind, fragment.Point, true, null, step, count, scanned)
                         : InteractionHint.None;
                     return fragment != null;
+                case InteractionKind.OpenBuild:
+                    bool atApron = _firstUse.TryGetOpenBuild(out Vector3 apron);
+                    hint = atApron ? new InteractionHint(kind, apron, true) : InteractionHint.None;
+                    return atApron;
+                case InteractionKind.FitPart:
+                    bool atRover = _firstUse.TryGetFitPart(out Vector3 rover);
+                    hint = atRover ? new InteractionHint(kind, rover, true) : InteractionHint.None;
+                    return atRover;
                 default:
                     hint = InteractionHint.None;
                     return false;

@@ -17,7 +17,8 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// game at half charge, every objective line in order as the world moves on, the lander cargo bay's two scans
     /// teaching the pad (and a ruin's set teaching only when whole), the first charge on a built pad drawing the
     /// lander's reserve until it gives out, the faulted cutter sputtering at the fallen array and the spare igniter
-    /// taken from the rack beside it and fitted where 07 stands, the milestones FirstCharge, PowerOn, NightReady and
+    /// taken from the rack beside it and fitted where 07 stands, the first dusk begun by the dock after a visit to the
+    /// seismic station (R5–R6), the milestones FirstCharge, PowerOn, NightReady and
     /// SignalWest, the supply crates' yields, and a load that shows its step at once and replays its milestones as
     /// Restored.
     /// </summary>
@@ -32,6 +33,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private readonly List<StoryPartCollected> _parts = new List<StoryPartCollected>();
         private readonly List<RoverSystemChanged> _systems = new List<RoverSystemChanged>();
         private readonly List<CutterRefused> _refused = new List<CutterRefused>();
+        private readonly List<OpeningDuskBegan> _dusk = new List<OpeningDuskBegan>();
         private InputActionAsset _controls;
         private GameplayFixture _fixture;
         private Keyboard _keyboard;
@@ -146,9 +148,19 @@ namespace MoonProject.Gameplay.PlayModeTests
             Build(StructureIds.SolarArray, apron + new Vector3(8f, 0f, 0f));
             yield return Waits.Until(() => Reached(OpeningMilestone.PowerOn), 3f);
             Assert.IsTrue(Reached(OpeningMilestone.PowerOn), "B8: a connected solar array powers the pad");
-            Assert.AreEqual(OpeningKeys.BuildBatteryBank, opening.Flow.Current, "night is coming");
             Assert.AreEqual(2, _fixture.Gameplay.Recovery.LitLamps(RecoveryTarget.Power),
                 "the Power row: the pad and solar lit");
+            Assert.AreEqual(string.Empty, opening.Flow.Current, "R5, the first free choice: no line");
+
+            yield return PlaceAt(GameplayFixture.SeismicStation);
+            Assert.IsTrue(opening.Dusk.Visited, "R5: 07 visited the 1971 seismic station");
+            Assert.IsFalse(opening.DuskBegun, "the afternoon holds until 07 docks");
+            yield return PlaceAt(apron);
+            yield return Waits.Until(() => opening.DuskBegun, 5f);
+            Assert.IsTrue(opening.DuskBegun, "R6: the dock after the visit begins the first dusk");
+            Assert.AreEqual(1, _dusk.Count, "published once");
+            Assert.IsFalse(_dusk[0].Restored);
+            Assert.AreEqual(OpeningKeys.BuildBatteryBank, opening.Flow.Current, "night is coming");
 
             Build(StructureIds.BatteryBank, apron + new Vector3(-6f, 0f, 0f));
             yield return Waits.Until(() => Reached(OpeningMilestone.NightReady), 3f);
@@ -177,6 +189,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return null;
             Assert.AreEqual(4, _milestones.Count, "a load replays every reached milestone");
             Assert.IsTrue(_milestones.TrueForAll(reached => reached.Restored), "as Restored");
+            Assert.AreEqual(1, _dusk.Count, "a load states the begun dusk once");
+            Assert.IsTrue(_dusk[0].Restored, "as Restored, so the sky snaps to it");
             Assert.IsTrue(_fixture.Gameplay.Opening.Port.Spent, "the reserve stays spent");
             Assert.IsTrue(_fixture.Gameplay.StartKit.IgniterFitted, "the cutter keeps its igniter");
             Assert.IsTrue(_systems.Exists(changed => changed.System == RoverSystem.Cutter &&
@@ -258,6 +272,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _parts.Clear();
             _systems.Clear();
             _refused.Clear();
+            _dusk.Clear();
             _fixture = GameplayFixture.Boot(_controls, slot, startKit: true);
             EventBus events = _fixture.Bootstrap.Context.Events;
             _milestoneToken = events.Subscribe<OpeningMilestoneReached>(_milestones.Add);
@@ -265,6 +280,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _kitTokens.Add(events.Subscribe<StoryPartCollected>(_parts.Add));
             _kitTokens.Add(events.Subscribe<RoverSystemChanged>(_systems.Add));
             _kitTokens.Add(events.Subscribe<CutterRefused>(_refused.Add));
+            _kitTokens.Add(events.Subscribe<OpeningDuskBegan>(_dusk.Add));
         }
 
         private void DisposeKitTokens()

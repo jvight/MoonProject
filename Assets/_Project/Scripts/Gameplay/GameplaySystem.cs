@@ -138,6 +138,8 @@ namespace MoonProject.Gameplay
 
         public MastRaise MastRaise { get; private set; }
 
+        public MastRaiseView MastRaiseView { get; private set; }
+
         public CallAnswer Answer { get; private set; }
 
         public NetworkPulseView PulseView { get; private set; }
@@ -308,13 +310,16 @@ namespace MoonProject.Gameplay
             ApronGuide = new ApronGuide(transform, _apronOutline, _visuals.BeamCore, _building.Tuning);
             ScanMark = new ScanTargetMark(transform, _visuals.BeamCore, _scanTuning);
             _building.MarkApron(_apronOutline.bounds.center);
+            var firstUse = new FirstUseSpots(Opening, _building, context.Get<IViewCamera>(), context.Get<IRoverState>(),
+                _building.Tuning.FirstUseViewMargin);
             var hints = new InteractionHints(_salvage, Containers, Scans, _building, services.Beam, Cutter,
-                services.Pickups);
+                services.Pickups, firstUse);
             Hints = hints;
             Recovery = new RecoveryProgress(context.Events, PowerLamps, PowerSteps, _openingTuning.RecoveryLamps);
             Call = new CallProgress(context.Events, _openingTuning.Call, services.Layout);
             Reply = new CallReply(context.Events, Call, _openingTuning.Reply);
             MastRaise = new MastRaise(context.Events, _openingTuning.Reply);
+            MastRaiseView = new MastRaiseView(context.Events, _building, MastRaise, _openingTuning.Reply);
             services.Anchors.TryGet(WorldAnchorIds.RelayPrefix + "1", out WorldAnchor relay);
             Answer = new CallAnswer(context.Events, Call, Reply, MastRaise, _openingTuning.Answer, relay.Position,
                 services.Layout.PeakPosition);
@@ -396,7 +401,7 @@ namespace MoonProject.Gameplay
             try
             {
                 var opening = new OpeningField(_openingTuning, services, _building, sunlight, Containers, _ruins,
-                    _landerPort, transform, _salvage.Tuning.ReachRadius, StartKit);
+                    _storyProps, _landerPort, transform, _salvage.Tuning.ReachRadius, StartKit);
                 _battery.ConnectPads(opening);
                 services.Anchors.TryGet(_openingTuning.ApronAnchor, out WorldAnchor apron);
                 _building.SetApronCable(new ApronCable(_apronCableChannel.position, apron.Position,
@@ -574,6 +579,7 @@ namespace MoonProject.Gameplay
             Opening.Step(deltaTime);
             Reply.Step(deltaTime, Opening.NightFallen, _roverState.Speed);
             MastRaise.Step(deltaTime);
+            MastRaiseView.Step();
             PulseView.Step(deltaTime);
             Answer.Step(deltaTime, Opening.NightFallen, _input.ExcavateHeld, _roverState.Position, _roverState.Speed);
             RangeRing.Step(deltaTime);
@@ -677,6 +683,7 @@ namespace MoonProject.Gameplay
             StartKit?.Dispose();
             Call?.Dispose();
             MastRaise?.Dispose();
+            MastRaiseView?.Dispose();
             Answer?.Dispose();
             PulseView?.Dispose();
             RangeRing?.Dispose();

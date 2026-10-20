@@ -32,6 +32,7 @@ namespace MoonProject.World
         private ISaveService _save;
         private IDisposable _saveToken;
         private IDisposable _milestones;
+        private IDisposable _dusk;
         private OpeningSkyPacing _pacing;
         private SunClock _clock;
         private bool _saveResolved;
@@ -145,6 +146,7 @@ namespace MoonProject.World
             _clock = new SunClock(_settings.SkyCycle, _settings.Sky);
             _pacing = new OpeningSkyPacing(_settings.SkyCycle, _clock);
             _milestones = context.Events.Subscribe<OpeningMilestoneReached>(OnMilestone);
+            _dusk = context.Events.Subscribe<OpeningDuskBegan>(OnDuskBegan);
             _saveResolved = false;
             _loggedMissingRover = false;
             _saveToken = _save.Register(_clock.CreateSaveSection());
@@ -230,6 +232,7 @@ namespace MoonProject.World
         {
             _saveToken?.Dispose();
             _milestones?.Dispose();
+            _dusk?.Dispose();
         }
 
         private void OnMilestone(OpeningMilestoneReached reached)
@@ -238,10 +241,26 @@ namespace MoonProject.World
             _pacing.Reach(reached.Milestone, reached.Restored, _clock);
             if (reached.Restored)
             {
-                _smoothedSunlight = _clock.GlobalSunlight;
-                _smoothedLocalSunlight = _clock.SunlightAt(_terrain, SampleFocusPosition());
-                ApplyVisuals(true);
+                SnapLighting();
             }
+        }
+
+        private void OnDuskBegan(OpeningDuskBegan began)
+        {
+            EnsureSaveResolved();
+            _pacing.BeginDusk(began.Restored, _clock);
+            if (began.Restored)
+            {
+                SnapLighting();
+            }
+        }
+
+        // A restored sky shows at once: the key light's smoothing starts from it, not from the sky before the load.
+        private void SnapLighting()
+        {
+            _smoothedSunlight = _clock.GlobalSunlight;
+            _smoothedLocalSunlight = _clock.SunlightAt(_terrain, SampleFocusPosition());
+            ApplyVisuals(true);
         }
 
         private void EnsureSaveResolved()
