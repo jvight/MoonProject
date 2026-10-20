@@ -46,7 +46,7 @@ Material:
     - _BuildPrint: 0
     - _BuildRevealProgress: 1
     - _BuildStageHeat: 0
-    - _BumpScale: 1.35
+    - _BumpScale: 0.8
     - _ColorVarAmount: 0.025
     - _ColorVarScale: 1.8
     - _Dissolve: 0
@@ -56,10 +56,10 @@ Material:
     - _DustSharpness: 2
     - _DustSmoothness: 0.12
     - _DustUpThreshold: 0.12
-    - _EdgeWearAmount: 0.48
+    - _EdgeWearAmount: 0.25
     - _EdgeWearMetallic: 0.98
     - _EdgeWearSharpness: 4
-    - _EdgeWearSmoothness: 0.88
+    - _EdgeWearSmoothness: 0.55
     - _EdgeWearThreshold: 0.52
     - _EmissionStrength: 0
     - _HotCorePeak: 1.65
@@ -67,8 +67,8 @@ Material:
     - _MetallicScale: 1
     - _OcclusionStrength: 1
     - _ScanProgress: 0
-    - _SmoothnessMax: 0.92
-    - _SmoothnessMin: 0.45
+    - _SmoothnessMax: 0.5
+    - _SmoothnessMin: 0.35
     - _SmoothnessScale: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
