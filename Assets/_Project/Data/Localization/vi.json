@@ -871,10 +871,6 @@
             "text": "Lắp vào hộp cột của relay.1."
         },
         {
-            "key": "hint.install",
-            "text": "Lắp"
-        },
-        {
             "key": "pickup.part.igniter",
             "text": "Bộ đánh lửa dự phòng"
         },
@@ -949,6 +945,14 @@
         {
             "key": "rack.hex_adapter",
             "text": "Bộ sạc lục giác · từ Kestrel-3"
+        },
+        {
+            "key": "hint.tether",
+            "text": "Móc cáp"
+        },
+        {
+            "key": "hint.install",
+            "text": "Lắp"
         },
         {
             "key": "pickup.crate.contents",

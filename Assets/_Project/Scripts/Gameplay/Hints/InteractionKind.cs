@@ -50,8 +50,15 @@ namespace MoonProject.Gameplay
         Rack = 19,
 
         /// <summary>
-        /// A part in the hold fits the thing in reach (relay.1's feed socket, opening v3 R10): hold E to fit it.
+        /// A towable load's hitch lies within the winch's hook reach and nothing is on the cable: press Tether to hook
+        /// it (the world's chip at the hitch, a first time only).
         /// </summary>
-        Install = 20,
+        Tether = 20,
+
+        /// <summary>
+        /// A part in the hold fits a socket on a world object within reach (relay.1's feed socket, opening v3 5.1):
+        /// hold E to fit it there.
+        /// </summary>
+        Install = 21,
     }
 }
