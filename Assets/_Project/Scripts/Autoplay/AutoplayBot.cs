@@ -148,6 +148,15 @@ namespace MoonProject.Autoplay
             yield return null;
         }
 
+        /// <summary>Taps the right mouse button: the tether key, which hooks a towable load and lets it go.</summary>
+        public IEnumerator TapRightButton()
+        {
+            _input.SetRightButton(true);
+            yield return Wait(KeyTapSeconds);
+            _input.SetRightButton(false);
+            yield return null;
+        }
+
         /// <summary>Holds <paramref name="key"/> until <paramref name="done"/> holds, then lets go.</summary>
         public IEnumerator Hold(Key key, Func<bool> done, float timeoutSeconds, string what,
             Func<string> detail = null)
