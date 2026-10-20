@@ -28,6 +28,9 @@ namespace MoonProject.Audio
         private const int TowReleaseVariant = 0;
         private const int TowSnapVariant = 1;
 
+        /// <summary>Below this the creak is inaudible (-60 dB): an easing toward silence stops here.</summary>
+        private const float SilenceFloor = 0.001f;
+
         /// <summary>The D major pentatonic's steps above D in semitones: segment k's clunk is pitched up step k.</summary>
         private static readonly float[] PentatonicSemitones = { 0f, 2f, 4f, 7f, 9f, 12f };
         private const int InitialStructureCapacity = 32;
@@ -242,8 +245,14 @@ namespace MoonProject.Audio
         private void UpdateTowStrain(float dt, float sfx)
         {
             float strain = _tow.IsTowing ? _tow.Strain01 : 0f;
-            float gain = _strainGain.Step(TowStrainVoice.Gain(strain, _tuning.TowSlackStrain), dt,
-                _tuning.TowStrainSmoothing);
+            float target = TowStrainVoice.Gain(strain, _tuning.TowSlackStrain);
+            float gain = _strainGain.Step(target, dt, _tuning.TowStrainSmoothing);
+            if (target <= 0f && gain < SilenceFloor)
+            {
+                _strainGain.Snap(0f);
+                gain = 0f;
+            }
+
             _towStrain.volume = gain * _tuning.TowStrainVolume * _towStrainCueVolume * sfx;
             _towStrain.pitch = TowStrainVoice.Pitch(strain, _tuning.TowStrainLowPitch, _tuning.TowStrainHighPitch);
             if (gain > 0f && !_towStrain.isPlaying)
