@@ -59,8 +59,8 @@ MonoBehaviour:
     _filledBy: 11
   _rackView:
     _prefab: {fileID: 7780395645222252225, guid: 1d745e48fcd75be4fbf177ef0e9aef6b, type: 3}
-    _offset: {x: 1.9, y: 0, z: 0}
-    _yawFromDock: -90
+    _offset: {x: 2.4, y: 0, z: 0.6}
+    _yawFromDock: -125
     _riseDepth: 1.4
     _riseSeconds: 1.4
     _bayStaggerSeconds: 0.25

@@ -83,9 +83,9 @@ namespace MoonProject.Gameplay
             {
                 Bay bay = _bays[i];
                 bay.OutlineGlow = Glow(bay.OutlineRenderer, bay.OutlineGlow, _look.Outline(i),
-                    _settings.OutlineColor);
-                bay.FillGlow = Glow(bay.FillRenderer, bay.FillGlow, _look.Fill(i), _settings.FillColor);
-                bay.LampGlow = Glow(bay.LampRenderer, bay.LampGlow, _look.Lamp(i), _settings.LampColor);
+                    _settings.OutlineColor, true);
+                bay.FillGlow = Glow(bay.FillRenderer, bay.FillGlow, _look.Fill(i), _settings.FillColor, true);
+                bay.LampGlow = Glow(bay.LampRenderer, bay.LampGlow, _look.Lamp(i), _settings.LampColor, false);
                 float jaw = _look.Jaw(i);
                 bay.ClampLeft.localRotation = Quaternion.Slerp(bay.LeftOpen, Quaternion.identity, jaw);
                 bay.ClampRight.localRotation = Quaternion.Slerp(bay.RightOpen, Quaternion.identity, jaw);
@@ -207,14 +207,19 @@ namespace MoonProject.Gameplay
             return found != null ? found.GetComponent<Renderer>() : null;
         }
 
-        /// <summary>Writes a glow only when it moved: the colour times <paramref name="strength"/>.</summary>
-        private float Glow(Renderer renderer, float shown, float strength, Color color)
+        /// <summary>
+        /// Writes a glow only when it moved: the colour times <paramref name="strength"/>. With
+        /// <paramref name="hideWhenDark"/> (the outline and the fill) a dark one is not drawn at all, so a part not yet
+        /// seen leaves no shape on its bay; the lamp's housing stays, dark.
+        /// </summary>
+        private float Glow(Renderer renderer, float shown, float strength, Color color, bool hideWhenDark)
         {
             if (Mathf.Abs(strength - shown) < GlowEpsilon)
             {
                 return shown;
             }
 
+            renderer.enabled = !hideWhenDark || strength > 0f;
             renderer.GetPropertyBlock(_block);
             _block.SetColor(EmissionColorId, color * strength);
             renderer.SetPropertyBlock(_block);
