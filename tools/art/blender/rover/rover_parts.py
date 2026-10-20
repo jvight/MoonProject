@@ -1402,6 +1402,9 @@ def build_head_assembly(rover_root, cfg, mats):
     # 8. DeckSocket, RingSocket & flush painted cream DeckCover on the right cheek of Head (with 4 brass corner screws)
     create_empty("DeckSocket", parent=head_obj, pivot_u=cfg["piv_deck_socket_local"], local_space=True, empty_size=0.04)
     create_empty("RingSocket", parent=head_obj, pivot_u=(0.0, 0.05, -0.09), local_space=True, empty_size=0.04)
+    # The brow's centre on the crown's front edge: the SSR-3 headlamp kit's twin floods mount here and ride the head
+    create_empty("BrowSocket", parent=head_obj, pivot_u=cfg["piv_brow_socket_local"], local_space=True,
+                 empty_size=0.04)
     bm_dcov = bmesh.new()
     append_beveled_box(
         bm_dcov,
@@ -3681,6 +3684,12 @@ def build_suspension_and_sockets(rover_root, cfg, mats):
     )
     for s_name, s_pos in socket_table:
         create_empty(s_name, parent=rover_root, pivot_u=s_pos, local_space=True, empty_size=0.04)
+
+    # The cell pack's saddle pods on the mid flanks, inside the tyre stance; like DrumSocket_L and BinSocket_L, the
+    # left socket stays unrotated here and Rover turns it half round when it builds the playable 07
+    px, py, pz = cfg["piv_pod_socket"]
+    create_empty("PodSocket_R", parent=rover_root, pivot_u=(px, py, pz), local_space=True, empty_size=0.04)
+    create_empty("PodSocket_L", parent=rover_root, pivot_u=(-px, py, pz), local_space=True, empty_size=0.04)
 
 
 def build_rover_model_hierarchy(cfg, mats):
