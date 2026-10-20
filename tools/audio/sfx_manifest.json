@@ -457,6 +457,35 @@
       "pick": "voice_query v1"
     },
     {
+      "id": "chirp_ask",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/chirp_ask.wav"
+      ],
+      "variantLabels": [
+        "chirp_ask"
+      ],
+      "sha256": [
+        "d39869df5db989a6bb076d055ea626916307bdad2ff3ac7fe35802e2257d46f7"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "07's voice, ask: a small hopeful question scooping F#4 up to A4, then nothing answers (CallReplyFailed); syllables in chirp_syllables.json.",
+      "source": "sampled",
+      "pick": "voice_ask v1"
+    },
+    {
       "id": "part_pick",
       "category": "tick_2d",
       "milestone": "M3",
@@ -3472,6 +3501,64 @@
       "notes": "07's lamps switched by the player (RoverLightsSwitched), at the headlamp: on = a relay tick, its contact and a faint filament breath on D3; off = a softer, darker tick.",
       "source": "sampled",
       "pick": "rover_lights_switch"
+    },
+    {
+      "id": "mast_clunk",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/mast_clunk.wav"
+      ],
+      "variantLabels": [
+        "mast_clunk"
+      ],
+      "sha256": [
+        "e1935049b88738f256b512d1db3a6d78bf8c14defb2827067f0aaad3ff4bd8dd"
+      ],
+      "volumeMin": 0.7,
+      "volumeMax": 0.7,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "A mast segment telescoping up and locking home (MastSegmentRaised): a heavy padded clunk, a steel ring on D2, the collar's latch; pitched up a step per segment in game.",
+      "source": "sampled",
+      "pick": "mast_clunk"
+    },
+    {
+      "id": "mast_settle",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/mast_settle.wav"
+      ],
+      "variantLabels": [
+        "mast_settle"
+      ],
+      "sha256": [
+        "b90f4043b2e650192d0dab15e594221235803dc18b1b9ebb5aaf0c28005c7364"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The raised mast settling (the last segment): its gear easing onto D and a long soft ring.",
+      "source": "sampled",
+      "pick": "mast_settle"
     },
     {
       "id": "cutter_sputter",
