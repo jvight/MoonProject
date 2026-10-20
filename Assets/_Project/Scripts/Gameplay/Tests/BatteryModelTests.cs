@@ -78,6 +78,28 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void ATow_CostsTheTowMultiplier_AndCapsTopSpeed_UntilTheCableLetsGo()
+        {
+            Drive(120f, 0f, towing: true);
+            Assert.AreEqual(4f - _tuning.TowMultiplier, _battery.Charge, Tolerance,
+                "120 m towed costs a cell times the tow's price");
+            Assert.AreEqual(_tuning.TowCap, _battery.DriveCap01, 0.01f, "towing, 07 drives at the tow's share");
+            Assert.Less(_tuning.TowCap, 1f);
+            Assert.Greater(_tuning.TowMultiplier, 1f);
+
+            Drive(60f, 0f);
+            Assert.AreEqual(1f, _battery.DriveCap01, 0.01f, "the cable let go: the cap lifts, eased");
+        }
+
+        [Test]
+        public void ATowOnTheOpeningReserve_KeepsTheLowerCap()
+        {
+            _battery.SetOpeningReserve(true);
+            Drive(30f, 0f, towing: true);
+            Assert.AreEqual(Mathf.Min(_tuning.TowCap, _tuning.OpeningReserveCap), _battery.DriveCap01, 0.01f);
+        }
+
+        [Test]
         public void TheChargeFloor_HoldsUnderEveryDrain_UntilItIsReleased()
         {
             _battery.HoldChargeFloor(true);
@@ -630,7 +652,7 @@ namespace MoonProject.Gameplay.Tests
 
         /// <summary>Drives <paramref name="metres"/> at cruise on a constant slope, one frame at a time.</summary>
         private void Drive(float metres, float slope, bool boosting = false, bool drums = false,
-            Vector3 lit = default)
+            Vector3 lit = default, bool towing = false)
         {
             float perFrame = Cruise * Dt;
             int frames = Mathf.RoundToInt(metres / perFrame);
@@ -639,6 +661,7 @@ namespace MoonProject.Gameplay.Tests
                 GroundDistance = perFrame,
                 Speed = Cruise,
                 SlopeDegrees = slope,
+                Towing = towing,
                 Boosting = boosting,
                 DrumsFitted = drums,
                 NearestLitCharger = lit,

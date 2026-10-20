@@ -8,10 +8,10 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// 07's battery as pure rules (docs/features/M3-20 §2-§3, VISION ruling 15): the battery is range, never a threat.
     /// <list type="bullet"> <item>Driving draws one cell per tuned metres on the ground, eased by the slope, more while
-    /// boosting; beam work, scanning and welding draw by the second (opening-v2 §10); a leap is paid when it happens.
+    /// towing or boosting; beam work, scanning and welding draw by the second (opening-v2 §10); a leap is paid when it happens.
     /// The capacitor drums pay boosts and leaps first. Standing still never drains.</item> <item>A verb in progress
     /// always completes: at empty, beam work in progress runs on the reserve, and the crawl starts once it is done. The
-    /// crawl caps the drive, never runs out, and ends on a charger or once the charge passes the exit margin.</item>
+    /// crawl caps the drive (so does a tow, more gently), never runs out, and ends on a charger or once the charge passes the exit margin.</item>
     /// <item>A charger starts only once 07 has stopped on it for a moment, then fills cell by cell at its tuned seconds
     /// per cell (the drums at the same rate). Leaving is free at any moment and keeps the part of a cell already
     /// filled. A working solar wing trickles a still 07 back up to one cell, never more.</item> <item>The Low warning
@@ -231,6 +231,11 @@ namespace MoonProject.Gameplay
         private void Drain(in BatteryStep step)
         {
             float drive = step.GroundDistance / _tuning.MetresPerCell * _slopeMultiplier;
+            if (step.Towing)
+            {
+                drive *= _tuning.TowMultiplier;
+            }
+
             if (step.Boosting)
             {
                 drive = PayFromDrums(drive * _tuning.BoostMultiplier);
@@ -326,6 +331,11 @@ namespace MoonProject.Gameplay
             }
 
             float cap = IsLowPower ? _tuning.CrawlCap : OnOpeningReserve ? _tuning.OpeningReserveCap : 1f;
+            if (step.Towing)
+            {
+                cap = Mathf.Min(cap, _tuning.TowCap);
+            }
+
             DriveCap01 = Damp.Toward(DriveCap01, cap, _tuning.CapEase, deltaTime);
         }
 

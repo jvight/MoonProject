@@ -615,6 +615,18 @@ MonoBehaviour:
     _volumeMax: 0.35
     _pitchMin: 1
     _pitchMax: 1
+  - _id: sky_dusk_swell
+    _clips:
+    - {fileID: 8300000, guid: c1ca6e009bb6f864eb2eaae338f21ac7, type: 3}
+    _variantLabels:
+    - sky_dusk_swell
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.45
+    _volumeMax: 0.45
+    _pitchMin: 1
+    _pitchMax: 1
   - _id: sky_diamond_ring
     _clips:
     - {fileID: 8300000, guid: f38e74750cc8b6447923429b7d82276b, type: 3}
@@ -1616,6 +1628,42 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 0ea1f8454c1bf694fa0b6bcfc9124041, type: 3}
     _variantLabels:
     - cutter_refuse
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: tow_spool
+    _clips:
+    - {fileID: 8300000, guid: f8bcd7e6c748f5048bab06ad39d66fb6, type: 3}
+    _variantLabels:
+    - tow_spool
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: tow_strain_loop
+    _clips:
+    - {fileID: 8300000, guid: 649b9520699fd8244ba1cdddcd0ca0ba, type: 3}
+    _variantLabels:
+    - tow_strain_loop
+    _bus: 2
+    _spatial: 1
+    _loop: 1
+    _volumeMin: 0.55
+    _volumeMax: 0.55
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: tow_release
+    _clips:
+    - {fileID: 8300000, guid: 376e7d88ffdd3224aa6ce8fcf790cc34, type: 3}
+    _variantLabels:
+    - tow_release
     _bus: 2
     _spatial: 1
     _loop: 0

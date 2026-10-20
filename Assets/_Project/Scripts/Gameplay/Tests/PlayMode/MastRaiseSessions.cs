@@ -98,6 +98,80 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(_gameplay.MastRaise.Done, "the raise is done after the settle");
         }
 
+        [UnityTest]
+        [Timeout(200000)]
+        [PrebuildSetup(typeof(PlaythroughScene))]
+        [PostBuildCleanup(typeof(PlaythroughScene))]
+        public IEnumerator TheMastsSegments_StartLoweredInTheCabinet_LiftHomeInOrder_AndEndExactlyAsAuthored()
+        {
+            yield return Boot();
+            var terrain = _context.Get<ITerrainQuery>();
+            Assert.IsTrue(_context.Get<IWorldAnchors>().TryGet("place.apron", out WorldAnchor apron));
+            Vector3 foot = SurfaceRules.OnSurface(terrain, apron.Position.x, apron.Position.z);
+            _context.Get<IRoverPlacement>().PlaceAt(foot + new Vector3(0f, 0f, -9f), Quaternion.identity);
+            int id = _gameplay.PlacedBase.PlaceUnchecked(_gameplay.Building.Catalog.Find(StructureIds.AntennaMast),
+                new StructurePose(foot, 0f), 1f);
+            Assert.IsTrue(_gameplay.Building.TryGetView(id, out StructureView view));
+            CallReplySettings settings = _gameplay.MastRaiseSettings;
+            Assert.IsTrue(_gameplay.MastRaiseView.IsBound, "the raise has the segments");
+            for (int i = 0; i < 3; i++)
+            {
+                Assert.AreEqual(settings.SegmentTravelMetres * (i + 1), _gameplay.MastRaiseView.Lowered(i), 0.01f,
+                    $"segment {i + 1} starts telescoped down into the cabinet");
+            }
+
+            float started = Time.time;
+            var lowered = new float[3];
+            bool inOrder = true;
+            float total = MastRaise.TotalSeconds(settings) + ExtraSeconds;
+            int shot = 0;
+            float[] shotAt =
+            {
+                0.2f, MastRaise.LockTime(settings, 0) + 0.2f, MastRaise.LockTime(settings, 1) - 0.8f,
+                MastRaise.LockTime(settings, 2) + 0.15f, total,
+            };
+            while (Time.time - started < total)
+            {
+                yield return null;
+                float t = Time.time - started;
+                for (int i = 0; i < 3; i++)
+                {
+                    float now = _gameplay.MastRaiseView.Lowered(i);
+                    inOrder &= now <= lowered[i] + settings.SettleMetres + 0.02f || t < 0.5f || lowered[i] == 0f;
+                    lowered[i] = now;
+                }
+
+                if (shot < shotAt.Length && t >= shotAt[shot])
+                {
+                    Capture($"mast-raise-{shot}", foot);
+                    shot++;
+                }
+            }
+
+            Capture("mast-raise-done", foot);
+            for (int i = 0; i < 3; i++)
+            {
+                Assert.AreEqual(0f, _gameplay.MastRaiseView.Lowered(i), 0.002f, $"segment {i + 1} ends where Art authored it");
+            }
+
+            Assert.IsTrue(_gameplay.MastRaise.Done);
+        }
+
+        private void Capture(string name, Vector3 foot)
+        {
+            var host = new GameObject("MastLens");
+            Camera camera = host.AddComponent<Camera>();
+            camera.enabled = false;
+            camera.fieldOfView = 40f;
+            host.transform.position = foot + new Vector3(2.2f, 1.9f, -5.2f);
+            host.transform.rotation = Quaternion.LookRotation(foot + Vector3.up * 1.5f - host.transform.position);
+            string folder = System.IO.Path.GetFullPath(System.IO.Path.Combine(Application.dataPath, "..", "Logs",
+                "gameplay-captures"));
+            System.IO.Directory.CreateDirectory(folder);
+            FrameCapture.SavePng(camera, 960, 720, System.IO.Path.Combine(folder, name + ".png"));
+            Object.Destroy(host);
+        }
+
         private IEnumerator Boot()
         {
             BootstrapHarness.DeleteSaveFiles(PlaythroughScene.SaveSlot);
