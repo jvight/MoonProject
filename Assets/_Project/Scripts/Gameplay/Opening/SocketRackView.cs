@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
@@ -160,7 +161,7 @@ namespace MoonProject.Gameplay
 
         private string Bind(Transform root)
         {
-            if (root.Find(BayPrefix + _rack.Count) != null)
+            if (root.Find(BayPrefix + BayIndex(_rack.Count)) != null)
             {
                 return $"the prefab has more bays than the rack's {_rack.Count}";
             }
@@ -170,19 +171,21 @@ namespace MoonProject.Gameplay
             _viewPoints = new Vector3[_rack.Count];
             for (int i = 0; i < _bays.Length; i++)
             {
-                Transform bay = root.Find(BayPrefix + i);
+                Transform bay = root.Find(BayPrefix + BayIndex(i));
                 if (bay == null)
                 {
                     return $"the prefab has no {BayPrefix}{i} for the rack's bay '{_rack.IdOf(i)}'";
                 }
 
+                // Art's leaves carry their bay's index (Bay_0/Outline_0), so the generated prefab is the same each build.
+                string index = BayIndex(i);
                 var bound = new Bay
                 {
-                    ClampLeft = bay.Find("Clamp_L"),
-                    ClampRight = bay.Find("Clamp_R"),
-                    OutlineRenderer = Renderer(bay, "Outline"),
-                    FillRenderer = Renderer(bay, "Fill"),
-                    LampRenderer = Renderer(bay, "Lamp"),
+                    ClampLeft = bay.Find("Clamp_L_" + index),
+                    ClampRight = bay.Find("Clamp_R_" + index),
+                    OutlineRenderer = Renderer(bay, "Outline_" + index),
+                    FillRenderer = Renderer(bay, "Fill_" + index),
+                    LampRenderer = Renderer(bay, "Lamp_" + index),
                     OutlineGlow = -1f,
                     FillGlow = -1f,
                     LampGlow = -1f,
@@ -190,7 +193,8 @@ namespace MoonProject.Gameplay
                 if (bound.ClampLeft == null || bound.ClampRight == null ||
                     bound.OutlineRenderer == null || bound.FillRenderer == null || bound.LampRenderer == null)
                 {
-                    return $"{bay.name} lacks one of Outline, Fill, Lamp (each with a renderer), Clamp_L, Clamp_R";
+                    return $"{bay.name} lacks one of Outline_{index}, Fill_{index}, Lamp_{index} (each with a renderer), " +
+                           $"Clamp_L_{index}, Clamp_R_{index}";
                 }
 
                 bound.LeftOpen = bound.ClampLeft.localRotation;
@@ -199,6 +203,11 @@ namespace MoonProject.Gameplay
             }
 
             return null;
+        }
+
+        private static string BayIndex(int bay)
+        {
+            return bay.ToString(CultureInfo.InvariantCulture);
         }
 
         private static Renderer Renderer(Transform bay, string node)

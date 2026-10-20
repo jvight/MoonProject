@@ -160,7 +160,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 RoverKitPiece.BatterySpine, 0));
             yield return new WaitForSeconds(Mathf.Max(ViewSettings.JawSeconds, ViewSettings.GlowSeconds) + SettleSeconds);
             Assert.AreEqual(1f, _gameplay.RackView.Look.Jaw(0), 1e-3f, "the headlamp's jaws closed");
-            Assert.Less(Quaternion.Angle(Quaternion.identity, rack.transform.Find("Bay_0/Clamp_L").localRotation),
+            Assert.Less(Quaternion.Angle(Quaternion.identity, rack.transform.Find("Bay_0/Clamp_L_0").localRotation),
                 0.1f, "to the closed pose");
             Capture("rack_filled_night");
             SetSky(DayClockSeconds);
