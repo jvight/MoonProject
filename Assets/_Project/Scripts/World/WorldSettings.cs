@@ -91,7 +91,24 @@ namespace MoonProject.World
         public string Validate()
         {
             return _surface.Validate() ?? _mesh.Validate() ?? _scatter.Validate()
-                ?? _skyCycle.Validate() ?? FallenArrayOnItsSite();
+                ?? _skyCycle.Validate() ?? FallenArrayOnItsSite() ?? CallPointUnderBloom();
+        }
+
+        // The call's point of light must glow, never flare: its core and its ring together stay under the bloom.
+        private string CallPointUnderBloom()
+        {
+            CallSkyPointSettings point = _sky.CallPoint;
+            if (point.Peak + point.RingBrightness >= _postProcessing.BloomThreshold)
+            {
+                return "Sky: the call's point of light (peak + ring) reaches the bloom threshold and would flare.";
+            }
+
+            if (point.ToneOff >= point.ToneOn)
+            {
+                return "Sky: the call's point of light ends a tone (off) at or above where it begins one (on).";
+            }
+
+            return null;
         }
 
         // The array's ruin placement and its shaped, cleared footprint are tuned apart: they must agree.

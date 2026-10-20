@@ -150,24 +150,27 @@ namespace MoonProject.World.Editor
         }
 
         /// <summary>
-        /// A sun-white glint halo over the middle of each fallen wing's solar cells and the <see cref="ArrayGlint"/>
-        /// that flares them in the sunlight, under [World]/ArrayGlint: kept out of the ruin itself, whose renderers are
-        /// its scan targets' and which Gameplay reads as a ruin piece. Each glint is a cracked cell that throws the
+        /// Sunlight off each fallen wing's glass under [World]/ArrayGlint: the wing's sheen (its cells, cut by the
+        /// World builder) laid on it and a four-point sparkle over the middle of its cells, and the
+        /// <see cref="ArrayGlint"/> that lights them in the sunlight. Kept out of the ruin itself, whose renderers are
+        /// its scan targets' and which Gameplay reads as a ruin piece. Each wing is a cracked facet that throws the
         /// golden-hour Sun (where the Sun holds from the first charge to power-on, opening v3 R4) at the apron's eye,
         /// so it calls from the base, as the retroreflector's facet does.
         /// </summary>
         private static void StandArrayGlint(SceneBuildContext context, WorldSettings settings, GameObject array,
             Transform root)
         {
-            var mesh = context.LoadAsset<Mesh>(WorldPaths.BeaconHaloMesh);
-            var material = context.LoadAsset<Material>(WorldPaths.ArrayGlintMaterial);
+            var quad = context.LoadAsset<Mesh>(WorldPaths.BeaconHaloMesh);
+            var sparkleMaterial = context.LoadAsset<Material>(WorldPaths.ArrayGlintMaterial);
+            var sheenMaterial = context.LoadAsset<Material>(WorldPaths.ArrayGlintSheenMaterial);
             GameObject holder = context.CreateChild(ArrayGlintName, root);
             MoonSurface surface = settings.CreateSurface();
             Vector2 apron = settings.Surface.Sites.ApronCenter;
             float eyeHeight = surface.SampleHeight(apron.x, apron.y) + settings.Landmarks.ReflectorEyeHeight;
             var eye = new Vector3(apron.x, eyeHeight, apron.y);
             Vector3 towardSun = OpeningLayoutPlacer.GoldenHourSun(settings);
-            var halos = new List<Renderer>();
+            var sparkles = new List<Renderer>();
+            var sheens = new List<Renderer>();
             var normals = new List<Vector3>();
             foreach (MeshRenderer wing in array.GetComponentsInChildren<MeshRenderer>())
             {
@@ -177,20 +180,18 @@ namespace MoonProject.World.Editor
                 }
 
                 Vector3 facet = (towardSun + (eye - middle).normalized).normalized;
-                GameObject halo = context.CreateChild("Glint", holder.transform);
-                halo.transform.SetPositionAndRotation(middle + facet * GlintLift, Quaternion.identity);
-                halo.AddComponent<MeshFilter>().sharedMesh = mesh;
-                var renderer = halo.AddComponent<MeshRenderer>();
-                renderer.sharedMaterial = material;
-                renderer.shadowCastingMode = ShadowCastingMode.Off;
-                renderer.receiveShadows = false;
-                renderer.lightProbeUsage = LightProbeUsage.Off;
-                renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
-                halos.Add(renderer);
+                GameObject sparkle = context.CreateChild("Sparkle", holder.transform);
+                sparkle.transform.SetPositionAndRotation(middle + facet * GlintLift, Quaternion.identity);
+                sparkles.Add(Glow(sparkle, quad, sparkleMaterial));
+                GameObject sheen = context.CreateChild("Sheen", holder.transform);
+                sheen.transform.SetPositionAndRotation(wing.transform.position, wing.transform.rotation);
+                sheen.transform.localScale = wing.transform.lossyScale;
+                sheens.Add(Glow(sheen, context.LoadAsset<Mesh>(WorldPaths.ArrayGlintSheenMesh(wing.name)),
+                    sheenMaterial));
                 normals.Add(facet);
             }
 
-            if (halos.Count == 0)
+            if (sparkles.Count == 0)
             {
                 throw new System.InvalidOperationException($"World scene build: Art's {FallenSolarArrayName} has no " +
                     $"{SolarCellMaterial} cells to glint.");
@@ -199,13 +200,16 @@ namespace MoonProject.World.Editor
             var glint = holder.AddComponent<ArrayGlint>();
             var serialized = new SerializedObject(glint);
             serialized.FindProperty("_settings").objectReferenceValue = settings;
-            SerializedProperty haloList = serialized.FindProperty("_halos");
+            SerializedProperty sparkleList = serialized.FindProperty("_sparkles");
+            SerializedProperty sheenList = serialized.FindProperty("_sheens");
             SerializedProperty normalList = serialized.FindProperty("_normals");
-            haloList.arraySize = halos.Count;
+            sparkleList.arraySize = sparkles.Count;
+            sheenList.arraySize = sheens.Count;
             normalList.arraySize = normals.Count;
-            for (int i = 0; i < halos.Count; i++)
+            for (int i = 0; i < sparkles.Count; i++)
             {
-                haloList.GetArrayElementAtIndex(i).objectReferenceValue = halos[i];
+                sparkleList.GetArrayElementAtIndex(i).objectReferenceValue = sparkles[i];
+                sheenList.GetArrayElementAtIndex(i).objectReferenceValue = sheens[i];
                 normalList.GetArrayElementAtIndex(i).vector3Value = normals[i];
             }
 
@@ -278,6 +282,19 @@ namespace MoonProject.World.Editor
             }
 
             return -1;
+        }
+
+        /// <summary>An unlit glow drawn on <paramref name="node"/>: <paramref name="mesh"/> in <paramref name="material"/>.</summary>
+        private static Renderer Glow(GameObject node, Mesh mesh, Material material)
+        {
+            node.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var renderer = node.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = material;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            renderer.lightProbeUsage = LightProbeUsage.Off;
+            renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+            return renderer;
         }
 
         /// <summary>
