@@ -17,13 +17,14 @@ namespace MoonProject.Autoplay
         public const string TimeoutFlag = "-autoplay-timeout";
         public const string UntilFlag = "-autoplay-until";
         public const string LinesFlag = "-autoplay-lines";
+        public const string NaiveFlag = "-autoplay-naive";
         public const string StrictGuidanceFlag = "-autoplay-strict-guidance";
 
         public const float DefaultShotSeconds = 20f;
         public const float DefaultTimeoutSeconds = 900f;
 
         private AutoplayOptions(string scenario, string outDirectory, float shotSeconds, float timeoutSeconds,
-            string untilBeat, bool linesExpected, bool strictGuidance)
+            string untilBeat, bool linesExpected, bool strictGuidance, bool naive)
         {
             Scenario = scenario;
             OutDirectory = outDirectory;
@@ -32,6 +33,7 @@ namespace MoonProject.Autoplay
             UntilBeat = untilBeat;
             LinesExpected = linesExpected;
             StrictGuidance = strictGuidance;
+            Naive = naive;
         }
 
         /// <summary>The scenario to play; today only "opening".</summary>
@@ -52,6 +54,12 @@ namespace MoonProject.Autoplay
         /// Two guidance elements on screen together fail the run (the default); off, the run only warns.
         /// </summary>
         public bool StrictGuidance { get; }
+
+        /// <summary>
+        /// After every beat the bot stands passive and measures how long a first-time player waits for a readable
+        /// next-action cue to be on screen (<see cref="NaiveGuard"/>); a beat that shows none in time fails the run.
+        /// </summary>
+        public bool Naive { get; }
 
         /// <summary>The objective lines are part of the opening: the bot checks them on screen. Off, any line is a fallback.</summary>
         public bool LinesExpected { get; }
@@ -90,7 +98,7 @@ namespace MoonProject.Autoplay
             }
 
             options = new AutoplayOptions(scenario, outDirectory, shotSeconds, timeout,
-                Value(args, UntilFlag) ?? string.Empty, Value(args, LinesFlag) == "1", Value(args, StrictGuidanceFlag) != "0");
+                Value(args, UntilFlag) ?? string.Empty, Value(args, LinesFlag) == "1", Value(args, StrictGuidanceFlag) != "0", Value(args, NaiveFlag) == "1");
             return true;
         }
 

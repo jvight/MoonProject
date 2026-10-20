@@ -9,8 +9,6 @@ namespace MoonProject.Autoplay
         /// <summary>The cue's level counts as lit above this share of its full glow.</summary>
         private const float LitLevel = 0.2f;
 
-        private const int ArrayWings = 4;
-
         /// <summary>The fallen array's glint in the new sunlight (opening v3 R4), or null when the scene has none.</summary>
         public static WorldCue ArrayGlint(AutoplayWorld world)
         {
@@ -22,7 +20,7 @@ namespace MoonProject.Autoplay
 
             return new WorldCue("the fallen array's glint", () =>
             {
-                for (int wing = 0; wing < ArrayWings; wing++)
+                for (int wing = 0; wing < glint.WingCount; wing++)
                 {
                     if (glint.LevelOf(wing) > LitLevel)
                     {
@@ -32,6 +30,25 @@ namespace MoonProject.Autoplay
 
                 return false;
             }, () => glint.transform.position);
+        }
+
+        /// <summary>Every cue the scene has, for a check that wants any of them.</summary>
+        public static System.Collections.Generic.List<WorldCue> All(AutoplayWorld world)
+        {
+            var cues = new System.Collections.Generic.List<WorldCue>(2);
+            WorldCue glint = ArrayGlint(world);
+            if (glint != null)
+            {
+                cues.Add(glint);
+            }
+
+            WorldCue lamp = ModuleLamp(world);
+            if (lamp != null)
+            {
+                cues.Add(lamp);
+            }
+
+            return cues;
         }
 
         /// <summary>The habitat's power module lamp, blinking from dusk (opening v3 R4), or null.</summary>

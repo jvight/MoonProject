@@ -114,7 +114,7 @@ namespace MoonProject.Audio
         private CueHandle _scanLiftoff;
         private CueHandle _sheetComplete;
         private CueHandle _boostRelease;
-        private CueHandle _pageTick;
+        private CueHandle _nextLine;
         private CueHandle _saveTick;
         private CueHandle _countTick;
         private CueHandle _pickupLift;
@@ -173,7 +173,7 @@ namespace MoonProject.Audio
             _scanLiftoff = director.Resolve(AudioCueIds.ScanLiftoff);
             _sheetComplete = director.Resolve(AudioCueIds.SheetComplete);
             _boostRelease = director.Resolve(AudioCueIds.BoostRelease);
-            _pageTick = director.Resolve(AudioCueIds.PageTick);
+            _nextLine = director.Resolve(AudioCueIds.UiNextLine);
             _saveTick = director.Resolve(AudioCueIds.SaveTick);
             _countTick = director.Resolve(AudioCueIds.CountTick);
             _pickupLift = director.Resolve(AudioCueIds.PickupLift);
@@ -185,7 +185,7 @@ namespace MoonProject.Audio
                   _chargeFull.IsValid && _cargoTok.IsValid && _holdBoot.IsValid &&
                   _holdSlot.IsValid && _itemSlide.IsValid && _sealCut.IsValid && _containerOpen.IsValid &&
                   _scanStep.IsValid && _scanLiftoff.IsValid && _sheetComplete.IsValid && _boostRelease.IsValid &&
-                  _pageTick.IsValid && _saveTick.IsValid && _countTick.IsValid && _pickupLift.IsValid &&
+                  _nextLine.IsValid && _saveTick.IsValid && _countTick.IsValid && _pickupLift.IsValid &&
                   _pickupClunk.IsValid))
             {
                 enabled = false;
@@ -550,13 +550,16 @@ namespace MoonProject.Audio
             _boosting = changed.Boosting;
         }
 
-        /// <summary>Only a new objective line turns the page, never a re-show of the same one.</summary>
+        /// <summary>
+        /// The next line arriving on 07's face: the same soft relay tick and faint D every time, only for a new line,
+        /// never a re-show of the same one.
+        /// </summary>
         private void OnNextStepChanged(NextStepChanged changed)
         {
             string key = changed.LineKey ?? string.Empty;
             if (key.Length > 0 && !string.Equals(key, _lastStep, StringComparison.Ordinal))
             {
-                _director.Play2D(_pageTick);
+                _director.Play2D(_nextLine);
             }
 
             _lastStep = key;

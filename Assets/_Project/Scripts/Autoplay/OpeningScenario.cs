@@ -58,8 +58,11 @@ namespace MoonProject.Autoplay
 
         private readonly bool _linesExpected;
 
-        public OpeningScenario(AutoplayBot bot, string untilBeat, bool linesExpected)
+        private readonly NaiveGuard _naive;
+
+        public OpeningScenario(AutoplayBot bot, string untilBeat, bool linesExpected, NaiveGuard naive = null)
         {
+            _naive = naive;
             _bot = bot;
             _untilBeat = untilBeat;
             _linesExpected = linesExpected;
@@ -82,6 +85,10 @@ namespace MoonProject.Autoplay
                 }
 
                 yield return beat();
+                if (_naive != null && !_bot.Failed && _lastBeat != null)
+                {
+                    yield return _naive.Check(_lastBeat);
+                }
             }
 
             _base.Stop();

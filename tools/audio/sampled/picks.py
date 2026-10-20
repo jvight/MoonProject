@@ -60,6 +60,7 @@ UI = {
     "ui_relay_click": 0,
     "ui_tube_thunk": 0,
     "ui_tape_tick": 1,
+    "ui_next_line": 0,
 }
 
 # 07's eye and antenna read each syllable's pitch as 0..1 between these (log).
