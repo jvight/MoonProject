@@ -45,7 +45,7 @@ R1 hard-surface forms rely on **chamfered silhouettes** that catch both cold dir
 
 ## 4. Fixed Blender Material Slot Names & Generated Assets
 
-Every mesh primitive exported under `Assets/_Project/Art/R1/Models/` must assign **only** material slots from the 15 fixed names below (`R1MaterialRecipes` in `Assets/_Project/Scripts/Art/Editor/R1MaterialRecipes.cs`):
+Every mesh primitive exported under `Assets/_Project/Art/R1/Models/` must assign **only** material slots from the 20 fixed names below (`R1MaterialRecipes` in `Assets/_Project/Scripts/Art/Editor/R1MaterialRecipes.cs`):
 
 - **Generated Materials (`[MoonBuilder("Art/R1Materials", 105)]`):** `R1MaterialLibrary.BuildMaterials` generates all 15 `.mat` assets into `Assets/_Project/Generated/Art/R1/Materials/` using `GeneratedAssets.CreateOrReplace`. Nothing under `Generated/` is committed to git.
 - **Import Validation (`R1ModelPostprocessor`):** Sets `ImportViaMaterialDescription` + `InPrefab`, validates each source material name in `OnPreprocessMaterialDescription` (logging `Debug.LogError` with the model path and slot name on unknown names), and validates vertex colours in `OnPostprocessModel`.
@@ -68,6 +68,11 @@ Every mesh primitive exported under `Assets/_Project/Art/R1/Models/` must assign
 | `R1_Brass` | `R1_Brass.mat` | Warm golden machined brass for lamp bezels, chest lens ring, cheek lens, and fittings. |
 | `R1_Basalt` | `R1_Basalt.mat` | Fractured lunar basalt stone for boulders, rock slabs, pebbles, and canyon gate monoliths. |
 | `R1_Signage` | `R1_Signage.mat` | 1980s stencil signage atlas (`LUMEN`, `SEC-04`, `HABITAT & LAB`, `WORKSHOP`, `EVAC 1988`, sealed airlock status panel `SEALED · 1988 · STANDBY` / `SUIT 01-04 · OFFLINE` with amber emission mask, programme logo mark, hazard stripes, and 4 pictograms). |
+| `R1_WhitePaint` | `R1_WhitePaint.mat` | Chalky cool-white low-gloss thermal control paint for 1960s-70s landers, experiment boxes, flat white Kapton ribbon, utility trusses, and Kestrel-3. |
+| `R1_TealMark` | `R1_TealMark.mat` | Muted teal painted markings and trim for Meridian and Kestrel-3 hardware. |
+| `R1_SilverFoil` | `R1_SilverFoil.mat` | Crinkled aluminised Mylar/Teflon thermal blanket and reflector film for 1960s-70s probes and sortie packages. |
+| `R1_RackOutline` | `R1_RackOutline.mat` | The socket rack's lit silhouette line: an even warm glow (no hot core) Gameplay sets per bay through `_EmissionColor`. |
+| `R1_RackFill` | `R1_RackFill.mat` | The socket rack's filled silhouette behind the line: a softer warm glow Gameplay sets per bay through `_EmissionColor`. |
 
 ---
 
