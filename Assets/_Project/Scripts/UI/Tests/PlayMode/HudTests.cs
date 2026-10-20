@@ -1132,6 +1132,58 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator TheAnswer_PutsTxReadyThenTheAckRouteOn07sFace_EachAsTheOneElement()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            _rig.Ui.Ledger.RecordLookTaught();
+            _rig.Ui.Ledger.RecordDriveTaught();
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            yield return Seconds(1f);
+            Assert.IsFalse(_rig.Ui.FaceNotice.IsShown);
+
+            Events.Publish(new CallAnswerPhaseChanged(AnswerPhase.Ready, true));
+            yield return Seconds(1f);
+            Assert.IsFalse(_rig.Ui.FaceNotice.IsShown, "a loaded game's ready phase shows nothing");
+            Events.Publish(new CallAnswerPhaseChanged(AnswerPhase.Ready, false));
+            yield return WaitForFaceNotice(2f);
+            Assert.IsTrue(_rig.Ui.FaceNotice.IsShown, "the answer becomes possible: 07's face says so");
+            Assert.AreEqual(Text(UiKeys.FaceTxReady), _rig.Ui.FaceNotice.Text);
+            float readyFor = 0f;
+            float since = Time.realtimeSinceStartup;
+            while (_rig.Ui.FaceNotice.IsShown && Time.realtimeSinceStartup < since + 8f)
+            {
+                yield return null;
+            }
+
+            readyFor = Time.realtimeSinceStartup - since;
+            Assert.IsFalse(_rig.Ui.FaceNotice.IsShown);
+            Assert.That(readyFor, Is.InRange(_rig.Tuning.Guidance.TxReadySeconds - 0.5f,
+                _rig.Tuning.Guidance.TxReadySeconds + 0.8f));
+
+            Events.Publish(new TransmitPrompted());
+            yield return WaitForFaceNotice(2f);
+            Assert.AreEqual(Text(UiKeys.FaceTxReady), _rig.Ui.FaceNotice.Text, "stepping up to the mast: again");
+            yield return Seconds(_rig.Tuning.Guidance.TxPromptSeconds + 1.2f);
+            Assert.IsFalse(_rig.Ui.FaceNotice.IsShown);
+
+            Events.Publish(new RelayAcked(Vector3.zero));
+            yield return WaitForFaceNotice(2f);
+            Assert.AreEqual(Text(UiKeys.FaceAck), _rig.Ui.FaceNotice.Text, "relay.1 answered: the route is read out");
+            Assert.IsFalse(_rig.Ui.Objective.ShowsObjective, "the one element");
+        }
+
+        private IEnumerator WaitForFaceNotice(float seconds)
+        {
+            float limit = Time.realtimeSinceStartup + seconds;
+            while (!_rig.Ui.FaceNotice.IsShown && Time.realtimeSinceStartup < limit)
+            {
+                yield return null;
+            }
+        }
+
+        [UnityTest]
         public IEnumerator AHeldEWithNoLineOfSight_DimsAndShakesTheChip_And07sFaceSaysWhy_WithNoNewPanel()
         {
             InputSystem.AddDevice<Keyboard>();
