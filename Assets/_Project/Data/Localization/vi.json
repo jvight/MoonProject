@@ -967,6 +967,10 @@
             "text": "Lắp"
         },
         {
+            "key": "hint.transmit",
+            "text": "Phát tín hiệu"
+        },
+        {
             "key": "pickup.crate.contents",
             "text": "phụ tùng"
         },

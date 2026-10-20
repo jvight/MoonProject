@@ -967,6 +967,10 @@
             "text": "Fit"
         },
         {
+            "key": "hint.transmit",
+            "text": "Transmit"
+        },
+        {
             "key": "pickup.crate.contents",
             "text": "the parts"
         },
