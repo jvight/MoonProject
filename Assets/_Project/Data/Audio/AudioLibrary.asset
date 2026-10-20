@@ -1587,6 +1587,30 @@ MonoBehaviour:
     _volumeMax: 0.5
     _pitchMin: 1
     _pitchMax: 1
+  - _id: rack_fill
+    _clips:
+    - {fileID: 8300000, guid: d83d166374e9e0c4a9b9b2195880016f, type: 3}
+    _variantLabels:
+    - rack_fill
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.65
+    _volumeMax: 0.65
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: rack_outline
+    _clips:
+    - {fileID: 8300000, guid: 17b4cce5bdb66d94bacc6c2a702ffe30, type: 3}
+    _variantLabels:
+    - rack_outline
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
   - _id: mast_clunk
     _clips:
     - {fileID: 8300000, guid: 7f35322137defbf45a70ad474fbe95a2, type: 3}
