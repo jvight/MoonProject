@@ -11,17 +11,19 @@ namespace MoonProject.World
     [Serializable]
     public sealed class RelayLampSettings
     {
-        [Tooltip("Brightness of the lamp's halo at the top of a key.")]
+        [Tooltip("Brightness of the lamp's halo at the top of a key. Its amber peak stays under the bloom threshold " +
+            "(checked by WorldSettings), so it is a lamp, never a sun.")]
         [Range(0f, 8f)]
-        [SerializeField] private float _haloIntensity = 3f;
+        [SerializeField] private float _haloIntensity = 1.2f;
 
         [Tooltip("Radius of the lamp's halo up close, metres.")]
         [Range(0.05f, 3f)]
         [SerializeField] private float _haloRadius = 0.6f;
 
-        [Tooltip("Smallest angular size of the halo, degrees: a point that still reads from the base at night.")]
+        [Tooltip("Smallest angular size of the halo, degrees: the first lure after the answer, so a warm point that " +
+            "still stands out in the whole night frame from the base, 300 m off.")]
         [Range(0f, 2f)]
-        [SerializeField] private float _haloMinAngle = 0.35f;
+        [SerializeField] private float _haloMinAngle = 0.9f;
 
         [Tooltip("Distance (m) from which the halo's minimum size starts to grow.")]
         [Range(1f, 200f)]

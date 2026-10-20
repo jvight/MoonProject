@@ -923,6 +923,18 @@
             "text": "Fit"
         },
         {
+            "key": "rack.headlamp",
+            "text": "SSR-3 headlamp · from unit 06"
+        },
+        {
+            "key": "rack.cell_pack",
+            "text": "Cell pack · from unit 06"
+        },
+        {
+            "key": "rack.hex_adapter",
+            "text": "Hex charge adapter · from Kestrel-3"
+        },
+        {
             "key": "pickup.crate.contents",
             "text": "the parts"
         },

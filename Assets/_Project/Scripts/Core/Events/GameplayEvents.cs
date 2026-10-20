@@ -882,6 +882,28 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
+    /// A bay of the socket rack at the pad changed what it shows (<see cref="IRackStatus"/>): its outline appeared
+    /// (the rack came out at a dock, or 07 saw the part) or it filled (the part was fitted). Restored is true when a
+    /// session start replays a saved rack, which plays no reveal.
+    /// </summary>
+    public readonly struct RackChanged
+    {
+        public RackChanged(int bay, RackBayState state, bool restored)
+        {
+            Bay = bay;
+            State = state;
+            Restored = restored;
+        }
+
+        /// <summary>The bay's index on the rack, left to right.</summary>
+        public int Bay { get; }
+
+        public RackBayState State { get; }
+
+        public bool Restored { get; }
+    }
+
+    /// <summary>
     /// The first dusk begins (docs/design/opening-v3-purpose.md R6): after power-on the sky held in the afternoon
     /// until 07 docked after visiting a near site, or learned the battery bank; now the Sun sinks to last light and
     /// holds there until the night is ready. Published once by Gameplay's opening, and again at each session start of

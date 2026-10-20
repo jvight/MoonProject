@@ -162,6 +162,102 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
+        /// The socket rack beside 07's charging pad (opening v3, slice 4.3) with its three bay states side by side:
+        /// <c>Bay_0</c> hidden, <c>Bay_1</c> outline (dim line), <c>Bay_2</c> filled (bright line, warm fill, lamp lit,
+        /// jaws closed), each from a front three-quarter and side-on with 07 docked on the pad, in Day C and at night
+        /// (<c>Logs/captures/socket_rack_*.png</c>):
+        /// <c>python tools/unity_batch.py exec --project . --method MoonProject.Art.Editor.R1StoryPropsCapture.CaptureSocketRack</c>
+        /// </summary>
+        public static void CaptureSocketRack()
+        {
+            BatchRunner.Run(nameof(CaptureSocketRack), args =>
+            {
+                AssetDatabase.Refresh();
+                R1MaterialLibrary.BuildMaterials();
+                R1ModelBuilder.Build();
+
+                string capturesDir = Path.GetFullPath("Logs/captures");
+                Directory.CreateDirectory(capturesDir);
+
+                bool prevAsync = ShaderUtil.allowAsyncCompilation;
+                ShaderUtil.allowAsyncCompilation = false;
+                try
+                {
+                    CaptureSocketRackShots(capturesDir, false);
+                    CaptureSocketRackShots(capturesDir, true);
+                }
+                finally
+                {
+                    ShaderUtil.allowAsyncCompilation = prevAsync;
+                }
+
+                return true;
+            });
+        }
+
+        private static void CaptureSocketRackShots(string outDir, bool night)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(temp, night);
+                SpawnProp(ArtPaths.R1ModelsFolder + "/Structures/ChargingPad.prefab", Vector3.zero, 0f, temp);
+                SpawnRover07(temp, new Vector3(0f, 0.16f, 0f), 0f, night);
+
+                // The rack 1.9 m to the pad's right at its mid length, its bays facing the docked 07
+                GameObject rack = SpawnProp(ArtPaths.R1ModelsFolder + "/Structures/SocketRack.prefab",
+                    new Vector3(1.9f, 0f, 0f), -90f, temp);
+                SetBayState(rack.transform.Find("Bay_0"), 0);
+                SetBayState(rack.transform.Find("Bay_1"), 1);
+                SetBayState(rack.transform.Find("Bay_2"), 2);
+                if (!night)
+                {
+                    AimDayCSunAtSurface(Vector3.left);
+                }
+
+                string suffix = night ? "night" : "dayC";
+                RenderShot(new Vector3(-0.6f, 1.35f, 1.9f), new Vector3(1.9f, 0.74f, 0f), 34f, bg,
+                    Path.Combine(outDir, $"socket_rack_front3q_{suffix}.png"));
+                RenderShot(new Vector3(0.9f, 1.7f, 6.8f), new Vector3(0.9f, 0.75f, 0f), 38f, bg,
+                    Path.Combine(outDir, $"socket_rack_side_with_07_{suffix}.png"));
+            }
+            finally
+            {
+                temp.Dispose();
+            }
+        }
+
+        // 0 hidden: everything dark, jaws open. 1 outline: a dim line. 2 filled: bright line, warm fill, lamp lit and
+        // the jaws closed, as Gameplay drives them.
+        private static void SetBayState(Transform bay, int state)
+        {
+            if (bay == null)
+            {
+                throw new InvalidOperationException("R1StoryPropsCapture: the socket rack has no bay node.");
+            }
+
+            var line = new Color(1.00f, 0.70f, 0.40f, 1f);
+            SetEmission(bay.Find("Outline"), state == 0 ? Color.black : line * (state == 1 ? 0.35f : 1.4f));
+            SetEmission(bay.Find("Fill"), state == 2 ? new Color(0.95f, 0.62f, 0.34f, 1f) : Color.black);
+            SetEmission(bay.Find("Lamp"), state == 2 ? new Color(1.00f, 0.76f, 0.32f, 1f) : Color.black);
+            if (state == 2)
+            {
+                bay.Find("Clamp_L").localRotation = Quaternion.identity;
+                bay.Find("Clamp_R").localRotation = Quaternion.identity;
+            }
+        }
+
+        private static void SetEmission(Transform node, Color linear)
+        {
+            var renderer = node.GetComponent<Renderer>();
+            var block = new MaterialPropertyBlock();
+            renderer.GetPropertyBlock(block);
+            block.SetVector(EmissionColorId, new Vector4(linear.r, linear.g, linear.b, 1f));
+            renderer.SetPropertyBlock(block);
+        }
+
+        /// <summary>
         /// A gold-foil model under a golden-hour sun (8 degrees, warm, from beyond it toward the camera: the light
         /// that made the old foil read as piles of glowing grains), from 15 m and 75 m
         /// (<c>Logs/captures/foil_golden_&lt;tag&gt;_15m.png</c> and <c>_75m.png</c>; <c>--arg tag=before|after</c>,

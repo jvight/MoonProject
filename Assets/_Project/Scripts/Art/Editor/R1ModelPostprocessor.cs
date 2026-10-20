@@ -14,7 +14,7 @@ namespace MoonProject.Art.Editor
     /// </summary>
     public sealed class R1ModelPostprocessor : AssetPostprocessor
     {
-        public const uint PostprocessorVersion = 4;
+        public const uint PostprocessorVersion = 5;
         public const string CollisionProxyPrefix = "UCX_";
         public const string ModelsPrefix = "Assets/_Project/Art/R1/Models/";
         public const string RocksPrefix = "Assets/_Project/Art/R1/Models/Rocks/";
@@ -227,7 +227,27 @@ namespace MoonProject.Art.Editor
             }
 
             DisableCollisionProxyRenderers(root);
+            StripDuplicateNameSuffixes(root);
             ValidateVertexColors(root, NormalizePath(assetPath));
+        }
+
+        /// <summary>
+        /// Blender cannot give two objects one name, so a model with repeated parts (the socket rack's three bays, each
+        /// with a <c>BackPlate</c>, <c>Outline</c>...) exports them as <c>BackPlate.001</c>, <c>BackPlate.002</c>.
+        /// Their names are a contract Gameplay finds by path, so the ".NNN" suffix comes off on import.
+        /// </summary>
+        private static void StripDuplicateNameSuffixes(GameObject root)
+        {
+            foreach (Transform node in root.GetComponentsInChildren<Transform>(true))
+            {
+                string name = node.name;
+                int dot = name.Length - 4;
+                if (dot > 0 && name[dot] == '.' && char.IsDigit(name[dot + 1]) && char.IsDigit(name[dot + 2])
+                    && char.IsDigit(name[dot + 3]))
+                {
+                    node.name = name.Substring(0, dot);
+                }
+            }
         }
 
         private static string NormalizePath(string path)

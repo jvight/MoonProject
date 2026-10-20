@@ -423,6 +423,16 @@ def _generate_surface_maps(
         micro_wear = np.clip(0.5 + (crinkle_h - 0.5) * 0.55, 0.0, 1.0)
         normal_strength = 8.0
 
+    elif style in ("rackline", "rackfill"):
+        # The socket rack's lit silhouette: a flat dark body under an even warm glow (no core, no rings, no dots),
+        # so Gameplay's _EmissionColor alone sets how bright a bay's line or fill reads
+        height = 0.50 + (mottle - 0.5) * 0.004
+        normal_strength = 1.0
+        glow = 0.92 if style == "rackline" else 0.80
+        warmth = (1.00, 0.78, 0.48) if style == "rackline" else (1.00, 0.70, 0.40)
+        for channel in range(3):
+            emission[..., channel] = glow * warmth[channel]
+
     normal_rgb = _height_to_normal(height, normal_strength=normal_strength)
 
     mask_rgba = np.stack(
@@ -1002,6 +1012,8 @@ def main() -> None:
         ("WhitePaint", (0.91, 0.92, 0.90), 0.02, 0.18, 1313, "whitepaint"),
         ("TealMark", (0.18, 0.43, 0.45), 0.04, 0.35, 1414, "tealmark"),
         ("SilverFoil", (0.79, 0.81, 0.82), 0.85, 0.55, 1515, "silverfoil"),
+        ("RackOutline", (0.23, 0.18, 0.13), 0.0, 0.40, 1616, "rackline"),
+        ("RackFill", (0.18, 0.15, 0.12), 0.0, 0.34, 1717, "rackfill"),
     ]
 
     surfaces: list[dict[str, np.ndarray]] = []
@@ -1011,7 +1023,7 @@ def main() -> None:
         _save_rgba_or_rgb(OUTPUT_DIR / f"T_R1_{name}_Albedo.png", surf["albedo"])
         _save_rgba_or_rgb(OUTPUT_DIR / f"T_R1_{name}_Normal.png", surf["normal"])
         _save_rgba_or_rgb(OUTPUT_DIR / f"T_R1_{name}_Mask.png", surf["mask"])
-        if name == "LampAmber":
+        if name in ("LampAmber", "RackOutline", "RackFill"):
             _save_rgba_or_rgb(OUTPUT_DIR / f"T_R1_{name}_Emission.png", surf["emission"])
 
     trim = _generate_trim_sheet(512, surfaces)

@@ -165,6 +165,12 @@ namespace MoonProject.UI.Tests
 
             foreach (PromptEntry entry in new PromptSettings().Entries)
             {
+                if (entry.Kind == InteractionKind.Rack)
+                {
+                    // The rack's chip has no verb: its words are the bay's (RackWordsTests).
+                    continue;
+                }
+
                 Assert.IsTrue(_english.TryGet(UiKeys.Hint(entry.Kind), out _), UiKeys.Hint(entry.Kind));
             }
         }

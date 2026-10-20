@@ -23,6 +23,8 @@ namespace MoonProject.Art.Editor
         Signage = 14,
         WhitePaint = 15,
         TealMark = 16,
-        SilverFoil = 17
+        SilverFoil = 17,
+        RackOutline = 18,
+        RackFill = 19
     }
 }
