@@ -90,13 +90,39 @@ namespace MoonProject.Gameplay
         [Header("The release (R9)")]
         [Tooltip("Seconds 07 looks at each of the three lures from the rise: relay.1, the Peak's dish, Kestrel-3.")]
         [Range(1f, 10f)]
-        [SerializeField] private float _viewSecondsEach = 3.5f;
+        [SerializeField] private float _viewSecondsEach = 3f;
+
+        [Tooltip("Seconds the view gives relay.1's lamp before the dish first glints.")]
+        [Range(0.5f, 3f)]
+        [SerializeField] private float _viewLeadSeconds = 1.5f;
+
+        [Tooltip("Soft glints on the Peak's dish while the view looks at it, the first as the view reaches it.")]
+        [Range(1, 5)]
+        [SerializeField] private int _dishGlints = 3;
+
+        [Tooltip("Seconds between those glints.")]
+        [Range(0.5f, 3f)]
+        [SerializeField] private float _dishGlintGapSeconds = 1.2f;
+
+        [Tooltip("Brightness of the first of those glints (a share of the answer's flare); each is softer than the one " +
+                 "before by the fade below.")]
+        [Range(0.1f, 1f)]
+        [SerializeField] private float _dishGlintStrength = 0.8f;
+
+        [Tooltip("Share of its brightness each repeat of the glint keeps.")]
+        [Range(0.2f, 1f)]
+        [SerializeField] private float _dishGlintFade = 0.75f;
 
         [Tooltip("Seconds between the range ring going and the view beginning.")]
         [Range(0f, 5f)]
         [SerializeField] private float _releaseGapSeconds = 1.2f;
 
         public float ViewSecondsEach => _viewSecondsEach;
+        public float ViewLeadSeconds => _viewLeadSeconds;
+        public int DishGlints => _dishGlints;
+        public float DishGlintGapSeconds => _dishGlintGapSeconds;
+        public float DishGlintStrength => _dishGlintStrength;
+        public float DishGlintFade => _dishGlintFade;
         public float ReleaseGapSeconds => _releaseGapSeconds;
         public float TransmitRadius => _transmitRadius;
         public float MastTopHeight => _mastTopHeight;

@@ -57,6 +57,12 @@ namespace MoonProject.Rover
             _phase = Phase.EasingIn;
         }
 
+        /// <summary>Moves the framed subject while the moment runs (a pan; the weight is untouched, so nothing jumps).</summary>
+        public void MoveSubject(Vector3 subject)
+        {
+            Subject = subject;
+        }
+
         /// <summary>Lets a held moment go: it eases out after its hold. Does nothing to timed moments.</summary>
         public void Release()
         {
