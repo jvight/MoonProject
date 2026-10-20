@@ -96,6 +96,7 @@ namespace MoonProject.World.PlayModeTests
         private const float GlintZoomFov = 10f;
         private const string GlintSparkleName = "Sparkle";
         private const string CueLampLens = "PowerModule_StatusLamp";
+        private const string CueLampTowId = "habitat.power_module";
         private const float CueLampStandOff = 10f;
         private const float CueLampPeak = 0.9f;
         private const float CueLampTimeout = 30f;
@@ -772,7 +773,7 @@ namespace MoonProject.World.PlayModeTests
         /// the lander's amber beacon in 07's first forward view; the lander from the apron, lit, and dark once its
         /// reserve is spent (its beacon, its port's pilot lamp and the glow along its cables die together); the fallen
         /// array glinting in the new sunlight once the eclipse ends; and the radio tower ruin against the stars at
-        /// night, with the habitat's power module lamp blinking beside it. Logs/world-captures/cue-*.png, with the
+        /// night, with the habitat's towable power module lamp blinking beside it. Logs/world-captures/cue-*.png, with the
         /// array's glint levels in the log.
         /// </summary>
         [UnityTest]
@@ -863,7 +864,15 @@ namespace MoonProject.World.PlayModeTests
                 Shoot(camera, "cue-4-night-tower");
 
                 var lamp = FindNamed(CueLampName).GetComponent<ModuleStatusLamp>();
-                Transform lens = FindNamed(CueLampLens);
+                Assert.IsTrue(context.Get<ITowLine>().TryFindLoad(CueLampTowId, out Transform module),
+                    "the towable power module stands beside the habitat");
+                Transform lens = null;
+                foreach (Transform node in module.GetComponentsInChildren<Transform>())
+                {
+                    lens = node.name == CueLampLens ? node : lens;
+                }
+
+                Assert.IsNotNull(lens, "the power module has its status lamp");
                 Vector3 toLamp = Vector3.ProjectOnPlane(lens.position - apron, Vector3.up).normalized;
                 Vector3 lampEye = lens.position - toLamp * CueLampStandOff + Vector3.up * CueLowEyeHeight;
                 Place(camera, LookPose("cue-5-module-lamp-night", lampEye, lens.position, OpeningFov));
