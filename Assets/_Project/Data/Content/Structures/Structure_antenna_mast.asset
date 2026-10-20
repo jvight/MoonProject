@@ -16,7 +16,7 @@ MonoBehaviour:
   _nameKey: structure.antenna_mast.name
   _width: 1.5533789
   _depth: 1.2645398
-  _height: 2.797027
+  _height: 2.7970266
   _maxGroundSlope: 15
   _clearance: 0.3
   _produceWatts: 0

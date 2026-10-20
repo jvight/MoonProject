@@ -40,6 +40,13 @@ namespace MoonProject.Audio
         [Tooltip("Long chains weave over this many of the highest chime notes once the climb reaches the top.")]
         [Range(2, 8)] [SerializeField] private int _melodyTopWindow = 4;
 
+        [Header("The faulted cutter")]
+        [Tooltip("Volume scale of the one-time sputter: the first cut tried without an igniter.")]
+        [Range(0f, 1f)] [SerializeField] private float _sputterVolume = 0.9f;
+
+        [Tooltip("Volume scale of a refused cut's soft, low fault tick.")]
+        [Range(0f, 1f)] [SerializeField] private float _refuseVolume = 0.8f;
+
         public float CutFadeIn => _cutFadeIn;
         public float ReleaseFade => _releaseFade;
         public float BreakFade => _breakFade;
@@ -49,6 +56,8 @@ namespace MoonProject.Audio
         public float TextureRise => _textureRise;
         public float TextureVolume => _textureVolume;
         public float ToneVolume => _toneVolume;
+        public float SputterVolume => _sputterVolume;
+        public float RefuseVolume => _refuseVolume;
         public int MelodyTopWindow => _melodyTopWindow;
     }
 }

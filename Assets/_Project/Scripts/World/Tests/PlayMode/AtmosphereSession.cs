@@ -71,6 +71,13 @@ namespace MoonProject.World.PlayModeTests
         private const float CueLowEyeHeight = 1.2f;
         private const float CueTowerLook = 7f;
         private const string CueLampName = "ModuleLamp";
+
+        // The call's point of light: when the face shot holds, one sign's length, how near its brightest a shot waits
+        // for.
+        private const string SkyPointName = "CallSkyPoint";
+        private const float SkyPointFaceShotSeconds = 3f;
+        private const float SkyPointSignSeconds = 4f;
+        private const float SkyPointPeakSlack = 0.02f;
         private const string CueLampLens = "PowerModule_StatusLamp";
         private const float CueLampStandOff = 10f;
         private const float CueLampPeak = 0.9f;
@@ -373,6 +380,89 @@ namespace MoonProject.World.PlayModeTests
             }
 
             Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        /// <summary>
+        /// The call's point of light beside dark Earth (opening v3 purpose §2) on a real New Game, at R1: from 07's
+        /// face shot, from the first chase view after the hand-over, and from the chase camera with 07 turned toward
+        /// it, each at the brightest moment of one 4 s sign, with its level and whether a call signal is heard in the
+        /// log. Logs/world-captures/skypoint-*.png.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(CanyonSessionScene))]
+        [PostBuildCleanup(typeof(CanyonSessionScene))]
+        public IEnumerator CallSkyPoint_IsCapturedFromTheFaceShotAndTheChase()
+        {
+            BootstrapHarness.DeleteSaveFiles(CanyonSessionScene.SaveSlot);
+#if UNITY_EDITOR
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(CanyonSessionScene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            while (!loading.isDone)
+            {
+                yield return null;
+            }
+#else
+            throw new NotSupportedException("The atmosphere session loads the scene through the editor.");
+#endif
+            GameBootstrap bootstrap = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
+            {
+                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
+            }
+
+            Assert.IsNotNull(bootstrap, "the scene has its bootstrap");
+            GameContext context = bootstrap.Context;
+            _awoke = context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
+            var point = FindNamed(SkyPointName).GetComponent<CallSkyPoint>();
+            Assert.IsNotNull(point, "the call's point of light stands in the sky");
+            Camera view = context.Get<IViewCamera>().Camera;
+            yield return new WaitForSeconds(SkyPointFaceShotSeconds);
+            yield return ShootSkyPoint(context, view, point, "skypoint-1-face-shot");
+
+            float started = Time.time;
+            while (!_awake)
+            {
+                Assert.Less(Time.time - started, WakeTimeout, "07 wakes up");
+                yield return null;
+            }
+
+            yield return new WaitForSeconds(SettleSeconds);
+            yield return ShootSkyPoint(context, view, point, "skypoint-2-first-chase-view");
+
+            Vector3 toward = Vector3.ProjectOnPlane(context.Get<ICallSource>().Direction, Vector3.up).normalized;
+            Vector3 at = context.Get<IRoverState>().Position;
+            context.Get<IRoverPlacement>().PlaceAt(OnGround(context.Get<ITerrainQuery>(), new Vector2(at.x, at.z)),
+                Quaternion.LookRotation(toward, Vector3.up));
+            yield return new WaitForSeconds(SettleSeconds);
+            yield return ShootSkyPoint(context, view, point, "skypoint-3-chase-toward-the-light");
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        /// <summary>
+        /// Waits through one sign for the point's brightest moment, then shoots <paramref name="camera"/> and logs
+        /// its level, the call's state and whether its signal is heard.
+        /// </summary>
+        private static IEnumerator ShootSkyPoint(GameContext context, Camera camera, CallSkyPoint point, string name)
+        {
+            float started = Time.time;
+            float brightest = -1f;
+            while (Time.time - started < SkyPointSignSeconds)
+            {
+                brightest = Mathf.Max(brightest, point.Level);
+                yield return null;
+            }
+
+            started = Time.time;
+            while (point.Level < brightest - SkyPointPeakSlack && Time.time - started < SkyPointSignSeconds)
+            {
+                yield return null;
+            }
+
+            Shoot(camera, name);
+            bool heard = context.TryGet(out ICallSignal _);
+            Debug.Log($"[skypoint] {name}: level {point.Level:F2} (brightest {brightest:F2}), call " +
+                      $"{context.Get<ICallSource>().State}, signal heard {heard}");
         }
 
         /// <summary>

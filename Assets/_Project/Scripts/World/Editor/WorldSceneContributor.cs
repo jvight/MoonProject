@@ -36,6 +36,9 @@ namespace MoonProject.World.Editor
         /// <summary>The [World] child holding the habitat power module lamp's halo and its blink.</summary>
         public const string ModuleLampName = "ModuleLamp";
 
+        /// <summary>The [World] child drawing the call's point of light beside Earth.</summary>
+        public const string CallSkyPointName = "CallSkyPoint";
+
         public int Order => 200;
 
         public void Contribute(SceneBuildContext context)
@@ -58,6 +61,7 @@ namespace MoonProject.World.Editor
             WorldAtmosphere.Apply(settings.Atmosphere, settings.Sky, earthlight, fill);
 
             PeakBeacon beacon = CreateBeacon(context, settings, root);
+            CreateCallSkyPoint(context, settings, root);
             CreateRuins(context, settings, root);
             OpeningLayoutPlacer.Place(context, settings, root);
 
@@ -84,6 +88,28 @@ namespace MoonProject.World.Editor
             skySerialized.ApplyModifiedPropertiesWithoutUndo();
             context.AddSystem(skyCycle);
 
+        }
+
+        /// <summary>
+        /// The call's point of light beside dark Earth under [World]/CallSkyPoint: a never-culled quad the sky point
+        /// shader draws round the camera, and the <see cref="CallSkyPoint"/> that keys it with the call.
+        /// </summary>
+        private static void CreateCallSkyPoint(SceneBuildContext context, WorldSettings settings, Transform root)
+        {
+            GameObject node = context.CreateChild(CallSkyPointName, root);
+            node.AddComponent<MeshFilter>().sharedMesh = context.LoadAsset<Mesh>(WorldPaths.SkyPointMesh);
+            var renderer = node.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = context.LoadAsset<Material>(WorldPaths.SkyPointMaterial);
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            renderer.lightProbeUsage = LightProbeUsage.Off;
+            renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+            var point = node.AddComponent<CallSkyPoint>();
+            var serialized = new SerializedObject(point);
+            serialized.FindProperty("_settings").objectReferenceValue = settings;
+            serialized.FindProperty("_renderer").objectReferenceValue = renderer;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            context.AddSystem(point);
         }
 
         /// <summary>

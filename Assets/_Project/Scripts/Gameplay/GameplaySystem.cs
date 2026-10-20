@@ -674,6 +674,7 @@ namespace MoonProject.Gameplay
 
             _flowTokens.Clear();
             Databank?.Dispose();
+            StartKit?.Dispose();
             Call?.Dispose();
             MastRaise?.Dispose();
             Answer?.Dispose();
