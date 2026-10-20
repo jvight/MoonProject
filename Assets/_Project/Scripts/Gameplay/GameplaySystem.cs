@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using MoonProject.Core;
-using MoonProject.Core.Input;
 using MoonProject.Core.Events;
 using MoonProject.Core.Input;
 using MoonProject.Core.Save;
