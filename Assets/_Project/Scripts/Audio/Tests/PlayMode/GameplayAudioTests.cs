@@ -192,7 +192,8 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.AreEqual(plays + 2, _rig.Director.PlayCount);
 
             tow.IsTowing = false;
-            yield return Settle(1f);
+            // From full strain to -60 dB takes about seven time constants of the smoothing.
+            yield return Settle(2f);
             Assert.IsFalse(_rig.Gameplay.TowStrainSource.isPlaying, "no cable, no creak");
         }
 
