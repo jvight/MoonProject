@@ -291,6 +291,67 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
+        /// The masts' crossed-loop direction finder (<c>SonarLoop</c>) as the player sees it: from the chase camera
+        /// (7.5 m behind 07, 16 deg down, 52 deg FOV, as <c>RoverCameraTuning</c> ships) with 07 driving at each mast,
+        /// the camera about 15 m out, plus a tight crop of the same view, for the base's <c>AntennaMast</c> and
+        /// relay.1's <c>DeadAntennaMast</c> in Day C (<c>Logs/captures/mast_topper_*.png</c>):
+        /// <c>python tools/unity_batch.py exec --project . --method MoonProject.Art.Editor.R1StoryPropsCapture.CaptureMastTopper</c>
+        /// </summary>
+        public static void CaptureMastTopper()
+        {
+            BatchRunner.Run(nameof(CaptureMastTopper), args =>
+            {
+                AssetDatabase.Refresh();
+                R1MaterialLibrary.BuildMaterials();
+                R1ModelBuilder.Build();
+
+                string capturesDir = Path.GetFullPath("Logs/captures");
+                Directory.CreateDirectory(capturesDir);
+
+                bool prevAsync = ShaderUtil.allowAsyncCompilation;
+                ShaderUtil.allowAsyncCompilation = false;
+                try
+                {
+                    CaptureMastTopperShots(capturesDir, ArtPaths.R1ModelsFolder + "/Structures/AntennaMast.prefab",
+                        "base");
+                    CaptureMastTopperShots(capturesDir, R1StoryPropsBuilder.DeadAntennaMastPrefabPath, "relay1");
+                }
+                finally
+                {
+                    ShaderUtil.allowAsyncCompilation = prevAsync;
+                }
+
+                return true;
+            });
+        }
+
+        private static void CaptureMastTopperShots(string outDir, string mastPrefabPath, string tag)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(temp, false);
+                SpawnProp(mastPrefabPath, Vector3.zero, 0f, temp);
+                // 07 heading for the mast with the loops' (-X) side a little toward the camera
+                var rover = new Vector3(1.2f, 0f, -7.8f);
+                SpawnRover07(temp, rover, -8f, false);
+                AimDayCSunAtSurface(Vector3.left);
+
+                Vector3 target = rover + new Vector3(0f, 1.1f, 0f);
+                Vector3 back = Quaternion.Euler(16f, -8f, 0f) * Vector3.back;
+                Vector3 cam = target + back * 7.5f;
+                RenderShot(cam, target, 52f, bg, Path.Combine(outDir, $"mast_topper_{tag}_chase15m.png"));
+                RenderShot(cam, new Vector3(-0.38f, 2.4f, 0f), 9f, bg,
+                    Path.Combine(outDir, $"mast_topper_{tag}_chase15m_crop.png"));
+            }
+            finally
+            {
+                temp.Dispose();
+            }
+        }
+
+        /// <summary>
         /// Dedicated fast batch entry point for capturing the 6-piece R1 ground power-cable kit
         /// (<c>Cable_Straight_2m</c>, <c>Cable_Bend_45</c>, <c>Cable_Bend_90</c>, <c>Cable_BrokenEnd</c>,
         /// <c>Cable_Plug</c>, <c>Cable_Splice_Box</c>) laid out next to Rover 07 in Day C and in Eclipse light:
