@@ -272,7 +272,7 @@ namespace MoonProject.Rover
                 context.Events.Subscribe<RelicSurfaced>(OnRelicSurfaced),
                 context.Events.Subscribe<RelayRestored>(OnRelayRestored),
                 context.Events.Subscribe<ReleaseViewOpened>(OnReleaseViewOpened),
-                context.Events.Subscribe<NextActionShown>(OnNextActionShown),
+                context.Events.Subscribe<NextStepChanged>(OnNextStepChanged),
                 context.Events.Subscribe<LadderLookChanged>(OnLadderLookChanged),
                 context.Events.Subscribe<FeelBeat>(OnFeelBeat),
                 context.Events.Subscribe<CutChargeStaged>(OnChargeStaged),
@@ -1608,28 +1608,35 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// Story showed the next line (G5): if its object is off screen, the camera is nudged once toward it, one eased
-        /// turn with 07 in the foreground, ended by any look or drive input. Nothing happens while another shot has the
-        /// camera, and never twice for the same target.
+        /// Story showed the next line and its action has a place (G5): if that place is off screen, the camera is nudged
+        /// once toward it, one eased turn with 07 in the foreground, ended by any look or drive input. Only for a line
+        /// that follows a success (not a reminder), never twice for the same target, and nothing happens while another
+        /// shot has the camera (the wake included, so a loaded game's first line never nudges). 07's own head look
+        /// toward the object is Story's chip.
         /// </summary>
-        private void OnNextActionShown(NextActionShown action)
+        private void OnNextStepChanged(NextStepChanged step)
         {
+            if (!step.HasTarget || step.Reason != NextLineReason.Next)
+            {
+                return;
+            }
+
             bool free = !_moment.IsActive && _wide.Weight <= 0f && _held.Weight <= 0f && !_tethered && !_towing &&
                         !_opening.IsActive && !_faceInspectOpen && _faceInspectWeight <= 0f && !_gazePan.IsActive;
-            if (!free || !GuidanceNudge.OffScreen(_viewCamera.WorldToViewportPoint(action.Position),
-                    _tuning.NudgeScreenMargin) || !_nudge.TryTake(action.TargetId))
+            if (!free || !GuidanceNudge.OffScreen(_viewCamera.WorldToViewportPoint(step.TargetPosition),
+                    _tuning.NudgeScreenMargin) || !_nudge.TryTake(step.TargetId))
             {
                 return;
             }
 
             float looking = RoverYaw() + _orbitState.YawOffset;
-            float bearing = Mathf.Abs(Mathf.DeltaAngle(looking, GazePan.BearingTo(_rover.Position, action.Position)));
+            float bearing = Mathf.Abs(Mathf.DeltaAngle(looking, GazePan.BearingTo(_rover.Position, step.TargetPosition)));
             if (bearing > _tuning.NudgeMaxBearing)
             {
                 return;
             }
 
-            _gazePan.Begin(_rover.Position, looking, action.Position, _tuning.NudgeTravelSeconds,
+            _gazePan.Begin(_rover.Position, looking, step.TargetPosition, _tuning.NudgeTravelSeconds,
                 _tuning.NudgeHoldSeconds, _tuning.NudgeSweep, _tuning.ReleasePanRise, _tuning.ReleasePanHalfLife,
                 _tuning.NudgeSlack);
             _moment.Start(_tuning.NudgeMoment, _gazePan.Subject, true);
