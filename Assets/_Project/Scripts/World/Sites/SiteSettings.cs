@@ -4,7 +4,8 @@ using UnityEngine;
 namespace MoonProject.World
 {
     /// <summary>
-    /// Ground shaped for the places content stands on: opening v2's ruins, lander and apron, and Kestrel-3's impact.
+    /// Ground shaped for the places content stands on: opening v2's ruins, the fallen array off them, lander and apron,
+    /// and Kestrel-3's impact.
     /// Each shape blends into the ground around it, so the surface stays smooth. Positions are bearings and distances
     /// from the base.
     /// </summary>
@@ -38,6 +39,20 @@ namespace MoonProject.World
             "the way down must stay drivable.")]
         [Range(4f, 40f)]
         [SerializeField] private float _ruinsBlend = 24f;
+
+        [Tooltip("Where the fallen solar array lies, XZ metres from the ruins cluster's centre: out of The Peak's " +
+            "shadow at the golden-hour hold, at the shadow's edge south-west of the cluster, so its wings catch the " +
+            "new Sun (opening v3 R4). Its ruin placement must stand inside this footprint.")]
+        [SerializeField] private Vector2 _fallenArrayOffset = new Vector2(-22f, -24f);
+
+        [Tooltip("Radius of the fallen array's own flat footing, metres: its wings and its panels' crate beside them.")]
+        [Range(2f, 10f)]
+        [SerializeField] private float _fallenArrayRadius = 6f;
+
+        [Tooltip("Radius round the fallen array kept clear of rocks, metres: its wings and the sources that stand " +
+            "beside it (its junction box stands about 10 m out, on the footing's gentle blend).")]
+        [Range(2f, 20f)]
+        [SerializeField] private float _fallenArrayClearance = 11f;
 
         [Header("Opening v2 layout (docs/design/opening-v2.md §4)")]
         [Tooltip("Where 07's dead charging post stands on the old pad (world XZ, metres): beside 07's wake spot.")]
@@ -130,6 +145,9 @@ namespace MoonProject.World
         public Vector2 RuinsCenter => MoonSurface.BearingToDirection(_ruinsBearing) * _ruinsDistance;
         public float RuinsRadius => _ruinsRadius;
         public float RuinsBlend => _ruinsBlend;
+        public Vector2 FallenArrayCenter => RuinsCenter + _fallenArrayOffset;
+        public float FallenArrayRadius => _fallenArrayRadius;
+        public float FallenArrayClearance => _fallenArrayClearance;
         public KestrelSettings Kestrel => _kestrel;
         public BlastZoneSettings BlastZone => _blastZone;
         public Vector2 ScoutSpot => ApronCenter + MoonSurface.BearingToDirection(_scoutBearing) * _scoutDistance;
@@ -145,6 +163,11 @@ namespace MoonProject.World
             if (_ruinsRadius + _footprintBlend > _ruinsDistance)
             {
                 return "Sites: the ruins cluster reaches back to the base.";
+            }
+
+            if (_ruinsRadius + _fallenArrayRadius + _footprintBlend > _fallenArrayOffset.magnitude)
+            {
+                return "Sites: the fallen array's footprint reaches into the ruins' flat ground.";
             }
 
             if (_scoutCraterOffset >= _scoutCraterRadius)

@@ -52,6 +52,9 @@ namespace MoonProject.World
         /// </summary>
         public const string PeakRoad = WorldAnchorIds.SitePrefix + "peakroad";
 
+        /// <summary>The fallen solar array's footprint off the ruins, facing away from the apron.</summary>
+        public const string FallenArray = "place.fallenarray";
+
         private readonly WorldAnchor[] _anchors;
         private readonly Dictionary<string, int> _byId = new Dictionary<string, int>(StringComparer.Ordinal);
 
@@ -166,6 +169,8 @@ namespace MoonProject.World
             anchors.Add(Make(surface, WorldAnchorIds.PlaceApron, apron, lander - apron, shaping.Apron.Radius));
             Vector2 ruins = shaping.Ruins.Center;
             anchors.Add(Make(surface, WorldAnchorIds.PlaceRuins, ruins, ruins - apron, shaping.Ruins.Radius));
+            Vector2 array = shaping.FallenArray.Center;
+            anchors.Add(Make(surface, FallenArray, array, array - apron, shaping.FallenArray.Radius));
             Vector2 midway = shaping.MidwayCenter;
             anchors.Add(Make(surface, WorldAnchorIds.PlaceMidway, midway, midway - wake, shaping.MidwayRadius));
         }

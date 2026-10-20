@@ -415,6 +415,30 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator PickupFeed_SaysWhatASourcesPickupIsFor_AndACutPieceSaysNothing()
+        {
+            Boot();
+            _rig.Bootstrap.Context.Register<ISupplyPurposes>(new OneSource("supply.lander.open",
+                StructureIds.ChargingPad));
+            PickupFeed feed = _rig.Ui.Pickups;
+            _rig.Fakes.SetMaterials(0, 0, 0);
+            yield return Seconds(0.3f);
+
+            Events.Publish(new MaterialSalvaged(SalvageMaterial.Metal, 4, Vector3.zero, "supply.lander.open", 0,
+                MaterialSource.Crate));
+            _rig.Fakes.SetMaterials(4, 0, 0);
+            yield return Seconds(0.3f);
+            Assert.AreEqual("· " + Text(UiKeys.PickupPurpose(StructureIds.ChargingPad)),
+                feed.PurposeText(SalvageMaterial.Metal), "opening-v3 E3: Metal 4 · for the charging pad");
+
+            Events.Publish(new MaterialSalvaged(SalvageMaterial.Wiring, 2, Vector3.zero, "site.kestrel", 0));
+            _rig.Fakes.SetMaterials(4, 2, 0);
+            yield return Seconds(0.3f);
+            Assert.IsTrue(feed.IsShowing(SalvageMaterial.Wiring));
+            Assert.IsEmpty(feed.PurposeText(SalvageMaterial.Wiring), "a piece cut from a wreck names no purpose");
+        }
+
+        [UnityTest]
         public IEnumerator BuildPrompt_SaysBuild_ForAShelfSocket()
         {
             InputSystem.AddDevice<Keyboard>();
@@ -1313,6 +1337,26 @@ namespace MoonProject.UI.PlayModeTests
             yield return null;
             Release(button, queueEventOnly: true);
             yield return null;
+        }
+
+        /// <summary>One source of the opening and the structure it is for.</summary>
+        private sealed class OneSource : ISupplyPurposes
+        {
+            private readonly string _sourceId;
+            private readonly string _structureId;
+
+            public OneSource(string sourceId, string structureId)
+            {
+                _sourceId = sourceId;
+                _structureId = structureId;
+            }
+
+            public bool TryPurposeOf(string sourceId, out string structureId)
+            {
+                bool known = sourceId == _sourceId;
+                structureId = known ? _structureId : null;
+                return known;
+            }
         }
     }
 }

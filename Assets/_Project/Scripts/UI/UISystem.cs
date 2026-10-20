@@ -328,6 +328,7 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<BatteryArcRevealed>(OnBatteryArcRevealed));
             _tokens.Add(events.Subscribe<StructurePlaced>(_ => _director.NotifyUsed(InteractionKind.Build)));
             _tokens.Add(events.Subscribe<StoryPartCollected>(collected => _pickups?.PartCollected(collected.PartId)));
+            _tokens.Add(events.Subscribe<MaterialSalvaged>(OnMaterialSalvaged));
             _tokens.Add(events.Subscribe<StructureRemoved>(_ => _director.NotifyUsed(InteractionKind.Deconstruct)));
 
             services.Input.Menu.Enable();
@@ -1435,6 +1436,19 @@ namespace MoonProject.UI
             _pageRoots[_pageRoots.Length - 1] = _databank?.View.Root;
             _cargo.SetHoldShown(!databank, _pageRoots);
             _databank?.SetOpen(databank, device);
+        }
+
+        /// <summary>
+        /// A source of the opening gave a material: its pickup row says what it is for ("for the charging pad").
+        /// </summary>
+        private void OnMaterialSalvaged(MaterialSalvaged salvaged)
+        {
+            if (_pickups != null && salvaged.Source == MaterialSource.Crate &&
+                _services.TryGetSupplyPurposes(out ISupplyPurposes purposes) &&
+                purposes.TryPurposeOf(salvaged.SiteId, out string structureId))
+            {
+                _pickups.ForStructure(salvaged.Material, structureId);
+            }
         }
 
         /// <summary>
