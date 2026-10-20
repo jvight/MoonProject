@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -20,6 +21,10 @@ namespace MoonProject.World.Editor
 
         // The sky point's quad is drawn round the camera by its shader, so its bounds must never be culled.
         private const float SkyPointNeverCulled = 1e7f;
+
+        // The ruin whose fallen wings glint, and the material its cells wear.
+        private const string FallenSolarArray = "FallenSolarArray";
+        private const string SolarCellMaterial = "R1_SolarCell";
 
         [MoonBuilder("World/Settings", 200)]
         public static void BuildSettings()
@@ -119,6 +124,92 @@ namespace MoonProject.World.Editor
         }
 
         /// <summary>
+        /// The sheen for each of the fallen array's wings (opening v3 R4): a copy of the wing's solar-cell faces, in
+        /// its own mesh space, each face floated off the cells along its normal so the panel never cuts it. The scene
+        /// build lays each on its wing.
+        /// </summary>
+        [MoonBuilder("World/Array Glint Sheens", 241)]
+        public static void BuildArrayGlintSheens()
+        {
+            float lift = LoadSettings().Landmarks.ArrayGlint.SheenLift;
+            string path = WorldPaths.RuinPrefab(FallenSolarArray);
+            var array = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (array == null)
+            {
+                throw new InvalidOperationException($"No fallen solar array at '{path}' to cut the glint sheens from.");
+            }
+
+            int sheens = 0;
+            foreach (MeshRenderer wing in array.GetComponentsInChildren<MeshRenderer>(true))
+            {
+                Mesh cells = CellsOf(wing, lift);
+                if (cells != null)
+                {
+                    GeneratedAssets.CreateOrReplace(cells, WorldPaths.ArrayGlintSheenMesh(wing.name));
+                    sheens++;
+                }
+            }
+
+            if (sheens == 0)
+            {
+                throw new InvalidOperationException($"'{path}' has no {SolarCellMaterial} cells to lay a sheen on.");
+            }
+
+            AssetDatabase.SaveAssets();
+        }
+
+        /// <summary>A copy of <paramref name="wing"/>'s solar-cell faces lifted off them; null when it has none.</summary>
+        private static Mesh CellsOf(MeshRenderer wing, float lift)
+        {
+            var filter = wing.GetComponent<MeshFilter>();
+            Mesh source = filter != null ? filter.sharedMesh : null;
+            if (source == null)
+            {
+                return null;
+            }
+
+            Vector3[] vertices = source.vertices;
+            Material[] materials = wing.sharedMaterials;
+            var positions = new List<Vector3>();
+            for (int slot = 0; slot < materials.Length && slot < source.subMeshCount; slot++)
+            {
+                if (materials[slot] == null || materials[slot].name != SolarCellMaterial)
+                {
+                    continue;
+                }
+
+                int[] triangles = source.GetTriangles(slot);
+                for (int t = 0; t < triangles.Length; t += 3)
+                {
+                    Vector3 a = vertices[triangles[t]];
+                    Vector3 b = vertices[triangles[t + 1]];
+                    Vector3 c = vertices[triangles[t + 2]];
+                    Vector3 up = Vector3.Cross(b - a, c - a).normalized * lift;
+                    positions.Add(a + up);
+                    positions.Add(b + up);
+                    positions.Add(c + up);
+                }
+            }
+
+            if (positions.Count == 0)
+            {
+                return null;
+            }
+
+            var indices = new int[positions.Count];
+            for (int i = 0; i < indices.Length; i++)
+            {
+                indices[i] = i;
+            }
+
+            var mesh = new Mesh { name = "ArrayGlintSheen_" + wing.name };
+            mesh.SetVertices(positions);
+            mesh.SetTriangles(indices, 0);
+            mesh.RecalculateBounds();
+            return mesh;
+        }
+
+        /// <summary>
         /// The sky point's quad, corners at ±1 (the shader scales them to pixels round the point): it is drawn round
         /// whichever camera looks, so CPU culling must never reject it.
         /// </summary>
@@ -137,7 +228,7 @@ namespace MoonProject.World.Editor
         /// <summary>
         /// The landed lander's amber emergency beacon (opening v2 §4): a LofiBeaconHalo in its colour, the cable
         /// clips' small halo (its brightness set per clip by the beacon), the tear's cold spark, and the fallen solar
-        /// array's sun-white glint and the habitat power module lamp's amber halo (opening v3 R4).
+        /// array's sun-white sparkle and sheen and the habitat power module lamp's amber halo (opening v3 R4).
         /// </summary>
         [MoonBuilder("World/Lander Beacon", 240)]
         public static void BuildLanderBeacon()
@@ -162,12 +253,17 @@ namespace MoonProject.World.Editor
             spark.SetFloat("_MinAngleTan", 0f);
             GeneratedAssets.CreateOrReplace(spark, WorldPaths.CableTearSparkMaterial);
             ArrayGlintSettings glint = LoadSettings().Landmarks.ArrayGlint;
-            var arrayGlint = new Material(LoadShader(WorldPaths.BeaconHaloShader));
-            arrayGlint.SetColor("_Color", glint.Color);
-            arrayGlint.SetFloat("_Intensity", 0f);
-            arrayGlint.SetFloat("_Radius", glint.Radius);
-            arrayGlint.SetFloat("_MinAngleTan", Mathf.Tan(glint.MinAngle * Mathf.Deg2Rad));
-            GeneratedAssets.CreateOrReplace(arrayGlint, WorldPaths.ArrayGlintMaterial);
+            var sparkle = new Material(LoadShader(WorldPaths.GlintStarShader));
+            sparkle.SetColor("_Color", glint.Color);
+            sparkle.SetFloat("_ArmPixels", glint.SparkleArmPixels);
+            sparkle.SetFloat("_WidthPixels", glint.SparkleWidthPixels);
+            sparkle.SetFloat("_CorePixels", glint.SparkleCorePixels);
+            sparkle.SetFloat("_Intensity", 0f);
+            GeneratedAssets.CreateOrReplace(sparkle, WorldPaths.ArrayGlintMaterial);
+            var sheen = new Material(LoadShader(WorldPaths.GlintSheenShader));
+            sheen.SetColor("_Color", glint.Color);
+            sheen.SetFloat("_Intensity", 0f);
+            GeneratedAssets.CreateOrReplace(sheen, WorldPaths.ArrayGlintSheenMaterial);
             ModuleLampSettings moduleLamp = LoadSettings().Landmarks.ModuleLamp;
             var moduleHalo = new Material(LoadShader(WorldPaths.BeaconHaloShader));
             moduleHalo.SetColor("_Color", moduleLamp.HaloColor);

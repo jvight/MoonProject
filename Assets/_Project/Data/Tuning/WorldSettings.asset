@@ -539,10 +539,15 @@ MonoBehaviour:
       _sparkColor: {r: 0.62, g: 0.86, b: 1, a: 1}
     _arrayGlint:
       _color: {r: 1, g: 0.96, b: 0.88, a: 1}
-      _intensity: 3.5
-      _radius: 0.35
-      _minAngle: 0.9
       _sharpness: 4
+      _sheenIntensity: 0.8
+      _sheenLift: 0.015
+      _sparkleIntensity: 1.4
+      _sparkleArmPixels: 8
+      _sparkleWidthPixels: 0.7
+      _sparkleCorePixels: 1.3
+      _sparkleTwinkleHertz: 2.7
+      _sparkleTwinkleDepth: 0.6
       _shimmerHertz: 1.3
       _shimmerDepth: 0.35
       _sunlightSampleSeconds: 0.1
