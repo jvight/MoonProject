@@ -80,6 +80,7 @@ namespace MoonProject.World.PlayModeTests
         // relay.1's repair site: its cabinet and the spare inside, and how far in front of the cabinet the near eye
         // stands.
         private const string RelaySiteName = "Relay1Site";
+        private const string RelaySiteRelayId = WorldAnchorIds.RelayPrefix + "1";
         private const string RelaySiteCabinet = "ServiceCabinet";
         private const string RelaySiteSpare = "ServiceCabinet/FeedUnitSpare_Slot/FeedUnitSpare";
         private const float RelaySiteStandOff = 15f;
@@ -778,7 +779,9 @@ namespace MoonProject.World.PlayModeTests
         /// <summary>
         /// relay.1's repair site at night after the answer (opening v3 5.1), on a real New Game: the open service
         /// cabinet lit inside by its own lamp with the feed-unit spare on its shelf, the mast's feed socket and the
-        /// contact pad, from 15 m in front of the cabinet and from the apron. Logs/world-captures/relay-site-*.png.
+        /// contact pad, from 15 m in front of the cabinet and from the apron; then relit (the lamp steady after its
+        /// warm-up, the cabinet dark, the pad's lamp and the relay lens on), from the same eyes.
+        /// Logs/world-captures/relay-site-*.png.
         /// </summary>
         [UnityTest]
         [Timeout(300000)]
@@ -852,7 +855,24 @@ namespace MoonProject.World.PlayModeTests
                 Place(camera, LookPose("relay-site-apron-before", apronEye, cabinet.position, OpeningFov));
                 Shoot(camera, "relay-site-apron-before");
                 Debug.Log($"[relay-site] cabinet {Vector3.Distance(near, spare.position):F1} m from the near eye, " +
-                          $"{Vector3.Distance(apronEye, cabinet.position):F0} m from the apron");
+                          $"{Vector3.Distance(apronEye, cabinet.position):F0} m from the apron; sun {SunReport(context)}, " +
+                          $"{context.Get<ISunlight>().Phase}");
+
+                // Relit: the lamp warms up and holds steady, the cabinet goes dark, the pad and the lens come on.
+                var lamp = FindNamed(RelayLampName).GetComponent<RelayAnswerLamp>();
+                var lights = site.GetComponentInChildren<Relay1SiteLights>();
+                context.Events.Publish(new RelayRelit(RelaySiteRelayId, false));
+                yield return new WaitForSeconds(settings.Landmarks.RelayLamp.WarmUpSeconds + SettleSeconds);
+                Assert.IsTrue(lights.Relit, "the site shows the relay relit");
+                Assert.AreEqual(settings.Landmarks.RelayLamp.RelitLevel, lamp.Level, 1e-4f, "the lamp holds steady");
+                Place(camera, LookPose("relay-site-15m-after", near, spare.position, OpeningFov));
+                Shoot(camera, "relay-site-15m-after");
+                Place(camera, LookPose("relay-site-apron-after", apronEye, cabinet.position, OpeningFov));
+                Shoot(camera, "relay-site-apron-after");
+                Place(camera, LookPose("relay-lamp-crop-after", apronEye, lamp.transform.position, RelayCropFov));
+                Shoot(camera, "relay-lamp-crop-after");
+                Debug.Log($"[relay-site] relit: lamp level {lamp.Level:F2}; sun {SunReport(context)}, " +
+                          $"{context.Get<ISunlight>().Phase}");
             }
             finally
             {
