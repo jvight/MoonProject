@@ -140,17 +140,15 @@ namespace MoonProject.Autoplay.Tests
         }
 
         [Test]
-        public void TheLinesFlag_DefaultsOn_AndZeroTurnsTheObjectiveLinesIntoFallbacks()
+        public void TheDefaults_ExpectNoLinesAndStrictGuidance_AndTheFlagsTurnThemBack()
         {
-            AutoplayOptions.TryParse(new[] { "-autoplay", "opening", "-autoplay-out", "o" }, out AutoplayOptions on, out _);
-            Assert.IsTrue(on.LinesExpected);
-            AutoplayOptions.TryParse(new[] { "-autoplay", "opening", "-autoplay-out", "o", AutoplayOptions.LinesFlag, "0" },
-                out AutoplayOptions off, out _);
-            Assert.IsFalse(off.LinesExpected);
-            Assert.IsFalse(on.StrictGuidance, "two elements only warn until the lines go");
-            AutoplayOptions.TryParse(new[] { "-autoplay", "opening", "-autoplay-out", "o",
-                AutoplayOptions.StrictGuidanceFlag, "1" }, out AutoplayOptions strict, out _);
-            Assert.IsTrue(strict.StrictGuidance);
+            AutoplayOptions.TryParse(new[] { "-autoplay", "opening", "-autoplay-out", "o" }, out AutoplayOptions plain, out _);
+            Assert.IsFalse(plain.LinesExpected, "a line on screen is a stall reminder: a failure");
+            Assert.IsTrue(plain.StrictGuidance, "two elements together fail the run");
+            AutoplayOptions.TryParse(new[] { "-autoplay", "opening", "-autoplay-out", "o", AutoplayOptions.LinesFlag, "1",
+                AutoplayOptions.StrictGuidanceFlag, "0" }, out AutoplayOptions old, out _);
+            Assert.IsTrue(old.LinesExpected);
+            Assert.IsFalse(old.StrictGuidance);
         }
     }
 }

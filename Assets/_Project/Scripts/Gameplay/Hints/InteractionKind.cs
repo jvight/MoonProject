@@ -30,5 +30,17 @@ namespace MoonProject.Gameplay
         /// Looking at a placed structure within reach: hold Deconstruct to fold it down and refund its materials.
         /// </summary>
         Deconstruct = 16,
+
+        /// <summary>
+        /// The charging pad can be built and the marked bay is in view: press Build opens the menu (the world's chip at
+        /// the apron, a first time only).
+        /// </summary>
+        OpenBuild = 17,
+
+        /// <summary>
+        /// The spare igniter is in the hold and can be fitted: press Tab opens 07's screen (the world's chip at 07, a
+        /// first time only).
+        /// </summary>
+        FitPart = 18,
     }
 }

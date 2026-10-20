@@ -139,6 +139,15 @@ namespace MoonProject.UI
             }
         }
 
+        /// <summary>
+        /// The next target of a set <paramref name="kind"/> has just begun lies beside the last: its prompt does not
+        /// rest at that spot, it teaches again at once.
+        /// </summary>
+        public void ClearCooldown(InteractionKind kind)
+        {
+            _cooldownUntil[(int)kind] = 0f;
+        }
+
         /// <summary>The player did <paramref name="kind"/>: it counts as learned, and its prompt bows out.</summary>
         public void NotifyUsed(InteractionKind kind)
         {
