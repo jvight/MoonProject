@@ -377,6 +377,7 @@ namespace MoonProject.Gameplay
                 _relaySpare.gameObject, _relayFitted.gameObject);
             _battery.ConnectRelay(Relay);
             Opening.ConnectRelay(Relay);
+            Opening.ConnectHeadlamp(Understanding, Rack);
             var hints = new InteractionHints(_salvage, Containers, Scans, _building, services.Beam, Cutter,
                 services.Pickups, firstUse, Tow, Relay, RackView, RackAssembly);
             Hints = hints;

@@ -106,6 +106,14 @@ namespace MoonProject.Autoplay
 
         private const string TricklePostEntry = "db.trickle_post";
 
+        /// <summary>The rack's headlamp bay: its id, Art's node, and the stand 07 reads it from (R12).</summary>
+        private const string HeadlampBayId = "rack.headlamp";
+
+        private const string HeadlampBayNode = "Bay_0";
+        private const float RackStandOff = 2.5f;
+
+        private static readonly Recipe HeadlampCost = new Recipe(2, 1, 0);
+
         /// <summary>The bot heads back to the pad to charge when 07's cells fall to this share.</summary>
         private const float TopUpBelow = 0.3f;
 
@@ -826,6 +834,57 @@ namespace MoonProject.Autoplay
                 FollowSeconds, "Kessler–Arai level 1 to unlock the SSR-3 headlamp",
                 () => "Kessler–Arai points " + understanding.PointsOf(DatabankMaker.KesslerArai) + ", released " +
                       understanding.Released + ".");
+        }
+
+        /// <summary>
+        /// R12, the SSR-3 headlamp: back at the pad, 07 faces the rack's headlamp bay (Art's Bay_0) until it reads it,
+        /// and holds E until the part is assembled and the bay fills. It costs Metal 2 + Wiring 1 from the hold.
+        /// </summary>
+        public IEnumerator AssembleTheHeadlamp()
+        {
+            IRackStatus rack = G.Rack;
+            if (!rack.Shown || G.RackView.Instance == null)
+            {
+                _bot.Fail("the socket rack is not standing at the pad.");
+                yield break;
+            }
+
+            Transform bay = Descendant(G.RackView.Instance.transform, HeadlampBayNode);
+            if (bay == null)
+            {
+                _bot.Fail("the socket rack has no " + HeadlampBayNode + " node.");
+                yield break;
+            }
+
+            if (!G.Materials.Has(HeadlampCost))
+            {
+                _bot.Fail("the hold lacks the headlamp's Metal 2 + Wiring 1 (metal " + G.Materials.Metal +
+                          ", wiring " + G.Materials.Wiring + ").");
+                yield break;
+            }
+
+            Vector3 point = bay.position;
+            Vector3 stand = point + Flat(Pad() - point).normalized * RackStandOff;
+            yield return _bot.DriveTo(Flat(stand), RelayArrive, "the stand in front of the rack", DriveSeconds);
+            yield return _bot.TurnToward(point, "the rack's headlamp bay");
+            yield return _bot.Until(() => G.Hints.TryGet(InteractionKind.Rack, out InteractionHint hint) &&
+                                          hint.NounKey == HeadlampBayId, FollowSeconds,
+                "07 to read the rack's headlamp bay", () => _bot.Where());
+            yield return _bot.Hold(Key.E, () => G.Opening.HeadlampFitted, FollowSeconds,
+                "a held E to assemble the SSR-3 headlamp");
+        }
+
+        private static Transform Descendant(Transform root, string name)
+        {
+            foreach (Transform node in root.GetComponentsInChildren<Transform>(true))
+            {
+                if (node.name == name)
+                {
+                    return node;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>Where the module stands now: the battery bank is built on it.</summary>

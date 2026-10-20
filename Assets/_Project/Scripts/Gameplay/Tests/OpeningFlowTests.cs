@@ -95,7 +95,11 @@ namespace MoonProject.Gameplay.Tests
             _game.CallAnswered = true;
             Expect(OpeningKeys.GoToRelay, "relay.1 answered: drive to it");
             _game.RelayRelit = true;
-            Expect(string.Empty, "relay.1 lit: the opening's lines are done");
+            Expect(OpeningKeys.ScanElder06, "relay.1 lit: 06 at relay.2 is next");
+            _game.HeadlampUnlocked = true;
+            Expect(OpeningKeys.AssembleHeadlamp, "Kessler–Arai understood: the headlamp at the rack");
+            _game.HeadlampFitted = true;
+            Expect(string.Empty, "the headlamp fitted: the opening's lines are done");
         }
 
         [Test]
@@ -140,6 +144,12 @@ namespace MoonProject.Gameplay.Tests
             _flow.Tick();
             Assert.AreEqual(OpeningSteps.GoToRelay, _flow.CurrentIndex);
             _game.RelayRelit = true;
+            _flow.Tick();
+            Assert.AreEqual(OpeningSteps.ScanElder06, _flow.CurrentIndex);
+            _game.HeadlampUnlocked = true;
+            _flow.Tick();
+            Assert.AreEqual(OpeningSteps.AssembleHeadlamp, _flow.CurrentIndex);
+            _game.HeadlampFitted = true;
             _flow.Tick();
             Assert.AreEqual(OpeningSteps.Count, _flow.CurrentIndex, "the index is the step count once the opening is over");
         }
@@ -461,6 +471,8 @@ namespace MoonProject.Gameplay.Tests
             public bool DuskVisited { get; set; }
             public bool CallAnswered { get; set; }
             public bool RelayRelit { get; set; }
+            public bool HeadlampUnlocked { get; set; }
+            public bool HeadlampFitted { get; set; }
             public readonly Dictionary<string, Vector3> Places = new Dictionary<string, Vector3>();
 
             public bool TryGetPlace(string lineKey, out string placeId, out Vector3 position)

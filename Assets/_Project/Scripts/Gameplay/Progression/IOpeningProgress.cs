@@ -66,6 +66,12 @@ namespace MoonProject.Gameplay
         /// <summary>relay.1's spare is fitted and it is lit (R10).</summary>
         bool RelayRelit { get; }
 
+        /// <summary>Kessler–Arai understanding has unlocked the adapted SSR-3 headlamp (5.2).</summary>
+        bool HeadlampUnlocked { get; }
+
+        /// <summary>The SSR-3 headlamp is assembled: the rack's headlamp bay is filled (5.2).</summary>
+        bool HeadlampFitted { get; }
+
         /// <summary>
         /// The place in the world where the action of line <paramref name="lineKey"/> happens (the apron, a crate, the
         /// power module, the mast), by id and position; false when it has none (a field fit) or it is not there yet.

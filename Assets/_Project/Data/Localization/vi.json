@@ -755,6 +755,14 @@
             "text": "relay.1 đã đáp lời từ vành phía tây. Hãy lái tới đó."
         },
         {
+            "key": "next.v3.scan_elder06",
+            "text": "06 nằm gục ở relay.2 cạnh cửa hẻm núi. Lái tới đó và quét nó."
+        },
+        {
+            "key": "next.v3.assemble_headlamp",
+            "text": "Lắp đèn pha SSR-3 ở giá cạnh bệ sạc."
+        },
+        {
             "key": "battery.low.lander",
             "text": "Pin yếu. Xây bệ sạc cạnh tàu đổ bộ để sạc."
         },

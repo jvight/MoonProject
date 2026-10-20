@@ -78,7 +78,7 @@ namespace MoonProject.Autoplay
                      {
                          Drive, Scan, CollectParts, BuildThePad, ChargeOnThePad, TheRuins, BuildTheArray,
                          TheFirstChoice, TheHabitat, Nightfall, TheTower, TheAnswer, TheRelay,
-                         KesslerArai,
+                         KesslerArai, Headlamp,
                      })
             {
                 if (_bot.Failed || Reached(_lastBeat))
@@ -125,6 +125,9 @@ namespace MoonProject.Autoplay
             _naive.Declare("B11", new NextAction("E", new[] { "hint.openbuild" }, new[] { "transmit", "mast", "answer" },
                 null));
             _naive.Declare("B12", new NextAction("WASD", new[] { drive }, new[] { "relay" }, new[] { "relay" }));
+            _naive.Declare("R10", new NextAction("WASD", new[] { drive }, new[] { "06", "relay.2", "scan" }, null));
+            _naive.Declare("R11", new NextAction("E", new[] { "hint.rack" }, new[] { "headlamp", "rack", "assemble" },
+                null));
         }
 
         private bool Reached(string beat)
@@ -454,6 +457,13 @@ namespace MoonProject.Autoplay
             Begin("R11", "Kessler–Arai: 07 woke on its trickle post; read 06 at relay.2 and the SSR-3 headlamp unlocks");
             yield return _base.LearnKesslerArai();
             _bot.EndBeat("07 read 06 after its trickle post: Kessler–Arai level 1, the SSR-3 headlamp unlocked");
+        }
+
+        private IEnumerator Headlamp()
+        {
+            Begin("R12", "The SSR-3 headlamp: assemble it at the rack's headlamp bay with a held E");
+            yield return _base.AssembleTheHeadlamp();
+            _bot.EndBeat("the SSR-3 headlamp assembled at the rack: its bay is filled and 07 wears it");
         }
 
         /// <summary>The next unscanned fragment of the lander's cargo, in the order the blueprint numbers them.</summary>

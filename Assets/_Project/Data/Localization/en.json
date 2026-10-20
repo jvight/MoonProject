@@ -755,6 +755,14 @@
             "text": "relay.1 answered from the west rim. Drive to it."
         },
         {
+            "key": "next.v3.scan_elder06",
+            "text": "06 is slumped at relay.2 by the canyon mouth. Drive there and scan it."
+        },
+        {
+            "key": "next.v3.assemble_headlamp",
+            "text": "Assemble the SSR-3 headlamp at the rack by the pad."
+        },
+        {
             "key": "battery.low.lander",
             "text": "Battery low. Build a pad at the lander to charge."
         },
