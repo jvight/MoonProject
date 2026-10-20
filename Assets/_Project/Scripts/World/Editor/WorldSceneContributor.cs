@@ -27,6 +27,7 @@ namespace MoonProject.World.Editor
         // The ruin whose power module still blinks at dusk, and Art's node for the lamp's lens on it.
         private const string HabitatModulesName = "HabitatModules";
         private const string ModuleLampNode = "PowerModule_StatusLamp";
+        private const string LampLensMaterial = "R1_LampAmber";
         private const float GlintLift = 0.03f;
 
         /// <summary>[World]/ArrayGlint: the fallen solar array's glints, beside the ruins.</summary>
@@ -197,14 +198,16 @@ namespace MoonProject.World.Editor
             Transform node = habitat.transform.Find(ModuleLampNode);
             var lens = node != null ? node.GetComponent<MeshRenderer>() : null;
             Mesh lensMesh = lens != null ? lens.GetComponent<MeshFilter>().sharedMesh : null;
-            if (lensMesh == null)
+            int slot = lensMesh != null ? LensSlot(lens, lensMesh) : -1;
+            if (slot < 0)
             {
                 throw new System.InvalidOperationException($"World scene build: Art's {HabitatModulesName} has no " +
-                    $"{ModuleLampNode} lens to blink.");
+                    $"{ModuleLampNode} with an {LampLensMaterial} lens to blink.");
             }
 
-            // The lens bulges out of its bezel: its mesh's middle sits in front of the node's pivot, on the bulkhead.
-            Vector3 facing = node.TransformDirection(lensMesh.bounds.center);
+            // The lens bulges out of its bezel: its middle sits in front of the node's pivot, on the bulkhead.
+            Vector3 lensMiddle = lensMesh.GetSubMesh(slot).bounds.center;
+            Vector3 facing = node.TransformDirection(lensMiddle);
             if (facing.sqrMagnitude <= 0f)
             {
                 throw new System.InvalidOperationException($"World scene build: Art's {ModuleLampNode} has its " +
@@ -214,7 +217,7 @@ namespace MoonProject.World.Editor
             GameObject holder = context.CreateChild(ModuleLampName, root);
             GameObject halo = context.CreateChild("Halo", holder.transform);
             Vector3 lift = facing.normalized * settings.Landmarks.ModuleLamp.HaloLift;
-            halo.transform.SetPositionAndRotation(lens.bounds.center + lift, Quaternion.identity);
+            halo.transform.SetPositionAndRotation(node.TransformPoint(lensMiddle) + lift, Quaternion.identity);
             halo.AddComponent<MeshFilter>().sharedMesh = context.LoadAsset<Mesh>(WorldPaths.BeaconHaloMesh);
             var haloRenderer = halo.AddComponent<MeshRenderer>();
             haloRenderer.sharedMaterial = context.LoadAsset<Material>(WorldPaths.ModuleLampHaloMaterial);
@@ -227,9 +230,28 @@ namespace MoonProject.World.Editor
             var serialized = new SerializedObject(lamp);
             serialized.FindProperty("_settings").objectReferenceValue = settings;
             serialized.FindProperty("_lens").objectReferenceValue = lens;
+            serialized.FindProperty("_lensSlot").intValue = slot;
             serialized.FindProperty("_halo").objectReferenceValue = haloRenderer;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             context.AddSystem(lamp);
+        }
+
+        /// <summary>
+        /// The material slot of <paramref name="lens"/> that wears the amber lens, found by name (the bezel shares the
+        /// node, in whatever slot order Art exports); -1 when none does.
+        /// </summary>
+        private static int LensSlot(MeshRenderer lens, Mesh mesh)
+        {
+            Material[] materials = lens.sharedMaterials;
+            for (int slot = 0; slot < materials.Length && slot < mesh.subMeshCount; slot++)
+            {
+                if (materials[slot] != null && materials[slot].name == LampLensMaterial)
+                {
+                    return slot;
+                }
+            }
+
+            return -1;
         }
 
         /// <summary>
