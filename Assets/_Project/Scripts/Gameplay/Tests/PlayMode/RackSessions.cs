@@ -30,6 +30,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float PadYaw = 180f;
         private const float AwayMetres = 12f;
         private const float SettleSeconds = 1f;
+        private const float DockReach = 0.6f;
 
         private readonly List<RackChanged> _changes = new List<RackChanged>();
         private GameContext _context;
@@ -100,6 +101,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsFalse(rack.Shown, "the view alone does not bring it out: the next dock does");
             yield return DockAt(centre);
             Assert.IsTrue(rack.Shown, "out at the first dock after the release's view");
+            Vector3 off = rack.Position - centre;
+            off.y = 0f;
+            Assert.Less(off.magnitude, DockReach, "placed at the pad 07 docked on");
             Assert.AreEqual(2, _changes.Count, "the SSR-3 headlamp's and the cell pack's outlines");
             for (int i = 0; i < _changes.Count; i++)
             {

@@ -130,7 +130,7 @@ namespace MoonProject.Gameplay
             if (dock.Docked && Stage == ReleaseStage.RackPending)
             {
                 _rackShown = true;
-                _events.Publish(new SocketRackRevealed(dock.Position));
+                _events.Publish(new SocketRackRevealed(dock.Position, dock.Rotation));
                 SetStage(ReleaseStage.Done, false);
             }
         }
