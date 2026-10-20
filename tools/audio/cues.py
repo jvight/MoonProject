@@ -1025,6 +1025,11 @@ CUES = (
         volume=(0.5, 0.5), milestone="M3", sampled=True,
         notes="07's lamps switched by the player (RoverLightsSwitched), at the headlamp: on = a relay tick, its "
               "contact and a faint filament breath on D3; off = a softer, darker tick."),
+    Cue("rack_fill", "oneshot_3d", picks.renderer("rack_fill"), volume=(0.65, 0.65), milestone="M3", sampled=True,
+        notes="Opening v3 4.3, a rack bay filled (RackChanged Filled): the two jaws easing shut into a solid "
+              "clunk-latch, then the bay lamp's low warm hum swelling on D3."),
+    Cue("rack_outline", "tick_3d", picks.renderer("rack_outline"), volume=(0.5, 0.5), milestone="M3", sampled=True,
+        notes="A rack bay's outline first appearing (RackChanged Outline): a quiet relay click, a faint tone on A5."),
     Cue("mast_clunk", "oneshot_3d", picks.renderer("mast_clunk"), volume=(0.7, 0.7), milestone="M3", sampled=True,
         notes="A mast segment telescoping up and locking home (MastSegmentRaised): a heavy padded clunk, a steel ring "
               "on D2, the collar's latch; pitched up a step per segment in game."),
