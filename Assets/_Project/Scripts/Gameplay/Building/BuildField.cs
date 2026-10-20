@@ -49,6 +49,7 @@ namespace MoonProject.Gameplay
         private ITerrainQuery _terrain;
         private IRoverState _rover;
         private IRoverRig _rig;
+        private TowLine _tow;
         private IViewCamera _view;
         private ISaveService _save;
         private MaterialStock _stock;
@@ -301,6 +302,12 @@ namespace MoonProject.Gameplay
         public bool TryGetDeconstructCandidate(out Vector3 position)
         {
             return TryGetDeconstructHint(out position);
+        }
+
+        /// <summary>07's winch cable: a structure built on a towed load stands on it once it is home.</summary>
+        internal void ConnectTow(TowLine tow)
+        {
+            _tow = tow ?? throw new ArgumentNullException(nameof(tow));
         }
 
         /// <summary>
@@ -803,7 +810,33 @@ namespace MoonProject.Gameplay
             }
 
             Vector3 roverPosition = _rover.Position;
-            Vector3 groundPoint = SampleAimPoint(roverPosition, selected);
+            Transform frame = null;
+            if (selected.FrameLoad.Length > 0 && (_tow == null || !_tow.TryFindHome(selected.FrameLoad, out frame)))
+            {
+                // Built on a towed load that is not home yet: nothing to place, and the reason says why.
+                _controller.ClearCandidate(PlacementReason.NeedsFrame);
+                HideAllGhosts();
+                _wasValid = false;
+                if (excavatePressed && !_waitExcavateRelease)
+                {
+                    _events.Publish(new UiCue(UiCueKind.PartRefuse));
+                }
+
+                return;
+            }
+
+            Vector3 groundPoint;
+            if (frame != null)
+            {
+                // The structure stands on its load, the way the load stands.
+                groundPoint = SurfaceRules.OnSurface(_terrain, frame.position.x, frame.position.z);
+                _controller.SetGhostYaw(frame.rotation.eulerAngles.y);
+            }
+            else
+            {
+                groundPoint = SampleAimPoint(roverPosition, selected);
+            }
+
             bool onApron = selected.Id == StructureIds.ChargingPad && _apronCentre.HasValue &&
                            SurfaceRules.HorizontalDistanceSquared(groundPoint, _apronCentre.Value) < ApronBayEpsilonSq;
             if (onApron && !_wasOnApron)
@@ -819,8 +852,8 @@ namespace MoonProject.Gameplay
                 new Vector3(snappedPose.Position.x, snappedY, snappedPose.Position.z),
                 snappedPose.Yaw);
 
-            bool propBlocked = IsPropBlocked(selected, snappedPose);
-            _controller.UpdateCandidate(groundPoint, roverPosition, _terrain, propBlocked, snapEnabled: true);
+            bool propBlocked = IsPropBlocked(selected, snappedPose, frame);
+            _controller.UpdateCandidate(groundPoint, roverPosition, _terrain, propBlocked, snapEnabled: frame == null);
 
             bool snappedNow = _controller.CandidateSnapped;
             if (snappedNow && !_wasSnapped)
@@ -1019,7 +1052,8 @@ namespace MoonProject.Gameplay
             return SurfaceRules.OnSurface(_terrain, point.x, point.z);
         }
 
-        private bool IsPropBlocked(StructureDefinition definition, StructurePose pose)
+        /// <param name="frame">The load the structure is built on, or null: its own colliders never block it.</param>
+        private bool IsPropBlocked(StructureDefinition definition, StructurePose pose, Transform frame)
         {
             Vector3 halfExtents = new Vector3(
                 Mathf.Max(0.05f, definition.Width * 0.5f - 0.02f),
@@ -1039,7 +1073,8 @@ namespace MoonProject.Gameplay
             for (int i = 0; i < hitCount; i++)
             {
                 Collider col = _overlapBuffer[i];
-                if (col != null && !_managedColliders.Contains(col))
+                if (col != null && !_managedColliders.Contains(col) &&
+                    (frame == null || !col.transform.IsChildOf(frame)))
                 {
                     return true;
                 }
