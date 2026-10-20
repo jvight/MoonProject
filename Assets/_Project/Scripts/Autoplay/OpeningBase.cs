@@ -31,7 +31,7 @@ namespace MoonProject.Autoplay
         private const float CueSeconds = 20f;
 
         /// <summary>A cue counts as on screen this far in from each edge of the view (a share of the viewport).</summary>
-        private const float CueMargin = 0.01f;
+        private const float CueMargin = 0.05f;
 
         /// <summary>Seconds of one sweep of the view while the bot looks for a lit cue.</summary>
         private const float CueSweepSeconds = 3f;
