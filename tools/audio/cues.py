@@ -772,6 +772,9 @@ CUES = (
         notes="0.5.5: a part dropped on a valid socket: a seated tick on D5 over a felt thud."),
     Cue("part_refuse", "tick_2d", feel.part_refuse, volume=(0.4, 0.4), milestone="M3",
         notes="0.5.5: a drop refused: two soft muted ticks falling B4 -> F#4."),
+    Cue("ui_next_line", "tick_2d", picks.renderer("ui_next_line"), volume=(0.45, 0.45), milestone="M3",
+        sampled=True, notes="Opening v3 G2, the next line arriving on 07's face: a CRT relay ticking over and a faint "
+                            "bowed-metal tone on D5, the same every time."),
     Cue("ui_relay_click", "tick_2d", picks.renderer("ui_relay_click"), volume=(0.45, 0.45), milestone="M3",
         sampled=True, notes="The databank's page starting to flip: a small relay pulling in, its contact settling."),
     Cue("ui_tube_thunk", "tick_2d", picks.renderer("ui_tube_thunk"), volume=(0.45, 0.45), milestone="M3",

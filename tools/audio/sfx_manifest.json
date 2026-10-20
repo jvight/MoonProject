@@ -567,6 +567,35 @@
       "notes": "0.5.5: a drop refused: two soft muted ticks falling B4 -> F#4."
     },
     {
+      "id": "ui_next_line",
+      "category": "tick_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/ui_next_line.wav"
+      ],
+      "variantLabels": [
+        "ui_next_line"
+      ],
+      "sha256": [
+        "11e65d5bc6ff9a7f23e74576b12738c3d9f053ae885f0ab059412865a65bdee0"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -28.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Opening v3 G2, the next line arriving on 07's face: a CRT relay ticking over and a faint bowed-metal tone on D5, the same every time.",
+      "source": "sampled",
+      "pick": "ui_next_line v1"
+    },
+    {
       "id": "ui_relay_click",
       "category": "tick_2d",
       "milestone": "M3",
