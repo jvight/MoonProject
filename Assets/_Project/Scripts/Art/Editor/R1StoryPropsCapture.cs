@@ -162,6 +162,54 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
+        /// The fallen solar array's gold foil under a golden-hour sun (8 degrees, warm, from beyond the array toward
+        /// the camera: the light that made the old foil read as piles of glowing grains), from 15 m and 75 m
+        /// (<c>Logs/captures/foil_golden_&lt;tag&gt;_15m.png</c> and <c>_75m.png</c>; <c>--arg tag=before|after</c>):
+        /// <c>python tools/unity_batch.py exec --project . --method MoonProject.Art.Editor.R1StoryPropsCapture.CaptureFoilGoldenHour --arg tag=after</c>
+        /// </summary>
+        public static void CaptureFoilGoldenHour()
+        {
+            BatchRunner.Run(nameof(CaptureFoilGoldenHour), args =>
+            {
+                AssetDatabase.Refresh();
+                R1MaterialLibrary.BuildMaterials();
+                R1ModelBuilder.Build();
+
+                string capturesDir = Path.GetFullPath("Logs/captures");
+                Directory.CreateDirectory(capturesDir);
+                string tag = args.GetString("tag", "after");
+
+                bool prevAsync = ShaderUtil.allowAsyncCompilation;
+                ShaderUtil.allowAsyncCompilation = false;
+                EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+                var temp = new ArtLightingPreview.TemporaryObjects();
+                try
+                {
+                    Color bg = SetupEnvironment(temp, false);
+                    SpawnProp(ArtPaths.R1ModelsFolder + "/Ruins/FallenSolarArray.prefab", Vector3.zero, 0f, temp);
+                    Light sun = RenderSettings.sun;
+                    sun.color = new Color(1.00f, 0.78f, 0.52f, 1f);
+                    sun.intensity = 1.6f;
+                    sun.transform.rotation = Quaternion.LookRotation(new Vector3(-0.45f, -0.14f, -0.88f));
+
+                    var view = new Vector3(0.55f, 0.22f, 0.80f).normalized;
+                    var target = new Vector3(0f, 0.4f, 0f);
+                    RenderShot(target + view * 15f, target, 36f, bg,
+                        Path.Combine(capturesDir, $"foil_golden_{tag}_15m.png"));
+                    RenderShot(target + new Vector3(0.55f, 0.09f, 0.80f).normalized * 75f, target, 12f, bg,
+                        Path.Combine(capturesDir, $"foil_golden_{tag}_75m.png"));
+                }
+                finally
+                {
+                    temp.Dispose();
+                    ShaderUtil.allowAsyncCompilation = prevAsync;
+                }
+
+                return true;
+            });
+        }
+
+        /// <summary>
         /// Dedicated fast batch entry point for capturing <c>HabitatModules</c>'s <c>PowerModule_StatusLamp</c>
         /// at ~10 m in Day C and Dusk lighting (<c>Logs/captures/module_lamp_dayC.png</c> and
         /// <c>Logs/captures/module_lamp_dusk.png</c>):
