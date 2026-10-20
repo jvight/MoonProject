@@ -27,6 +27,17 @@ namespace MoonProject.Autoplay
         private const float RouteMarginMetres = 40f;
         private const float RouteClearance = 1.0f;
         private const float RouteRelaxMetres = 4f;
+
+        /// <summary>A leg that needed this many unsticks is abandoned: the route is planned again, round the place it stuck.</summary>
+        private const int ReplanAfterUnsticks = 2;
+
+        /// <summary>Plans after the first: each avoids the places 07 stuck and keeps this much more clear of props.</summary>
+        private const int MaxReplans = 4;
+
+        private const float RouteGrowMetres = 0.5f;
+
+        /// <summary>Metres round a place 07 stuck that the next plan treats as blocked.</summary>
+        private const float StuckAvoidMetres = 3f;
         private const float RouteArriveRadius = 2.5f;
 
         private readonly AutoplayWorld _world;
@@ -37,6 +48,9 @@ namespace MoonProject.Autoplay
         private readonly System.Collections.Generic.List<string> _warnings = new System.Collections.Generic.List<string>();
         private readonly System.Collections.Generic.List<Vector2> _points = new System.Collections.Generic.List<Vector2>();
         private readonly System.Collections.Generic.List<Vector3> _route = new System.Collections.Generic.List<Vector3>();
+        private readonly System.Collections.Generic.List<Vector2> _stuckAt = new System.Collections.Generic.List<Vector2>();
+        private bool _replan;
+        private bool _mayReplan;
         private string _beatId;
         private string _beatTitle;
         private float _beatStart;
@@ -159,29 +173,55 @@ namespace MoonProject.Autoplay
         /// </summary>
         public IEnumerator DriveTo(Vector3 target, float arriveRadius, string what, float timeoutSeconds)
         {
-            PlanRoute(target);
-            for (int i = 0; i < _route.Count - 1 && !Failed; i++)
+            _stuckAt.Clear();
+            for (int attempt = 0; attempt <= MaxReplans && !Failed; attempt++)
             {
-                yield return DriveDirect(_route[i], RouteArriveRadius, what + " (round the props)", timeoutSeconds,
-                    false);
-            }
+                // The last plan is driven to the end, stuck or not: it times out as a plain drive does.
+                _mayReplan = attempt < MaxReplans;
+                _replan = false;
+                PlanRoute(target, attempt);
+                for (int i = 0; i < _route.Count - 1 && !Failed && !_replan; i++)
+                {
+                    yield return DriveDirect(_route[i], RouteArriveRadius, what + " (round the props)", timeoutSeconds,
+                        false);
+                }
 
-            if (!Failed)
-            {
-                yield return DriveDirect(target, arriveRadius, what, timeoutSeconds, true);
+                if (!Failed && !_replan)
+                {
+                    yield return DriveDirect(target, arriveRadius, what, timeoutSeconds, true);
+                }
+
+                if (Failed || !_replan)
+                {
+                    yield break;
+                }
+
+                Vector3 here = _world.Rover.Position;
+                _stuckAt.Add(new Vector2(here.x, here.z));
+                Debug.Log($"Autoplay: {Activity}: stuck near {here} on the way to {what}; planning again (plan {attempt + 2}).");
+                yield return Until(() => Rover().Speed < 0.3f, 4f, "07 to stop before the new route");
             }
         }
 
         /// <summary>The way from 07 to <paramref name="target"/> into <see cref="_route"/>: one point when it is clear.</summary>
-        private void PlanRoute(Vector3 target)
+        private void PlanRoute(Vector3 target, int attempt)
         {
             _route.Clear();
             var terrain = _world.Context.Get<ITerrainQuery>();
             Vector3 position = _world.Rover.Position;
+            float clearance = RouteClearance + attempt * RouteGrowMetres;
             bool Blocked(Vector2 point)
             {
+                for (int i = 0; i < _stuckAt.Count; i++)
+                {
+                    if ((_stuckAt[i] - point).sqrMagnitude < StuckAvoidMetres * StuckAvoidMetres)
+                    {
+                        return true;
+                    }
+                }
+
                 float ground = terrain.SampleHeight(point.x, point.y);
-                return Physics.CheckSphere(new Vector3(point.x, ground + RouteClearance, point.y), RouteClearance,
+                return Physics.CheckSphere(new Vector3(point.x, ground + clearance, point.y), clearance,
                     Layers.PropMask, QueryTriggerInteraction.Ignore);
             }
 
@@ -238,6 +278,13 @@ namespace MoonProject.Autoplay
                 if (windowStart - distance < StuckProgressMetres && command.Throttle > 0f)
                 {
                     unsticks++;
+                    if (_mayReplan && unsticks >= ReplanAfterUnsticks)
+                    {
+                        ReleaseDrive();
+                        _replan = true;
+                        yield break;
+                    }
+
                     yield return Unstick(unsticks);
                     distance = DriveSteering.FlatDistance(Rover().Position, target);
                 }
