@@ -2477,6 +2477,76 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
+        /// Elder 06's open battery bay (opening v3 5.2b) at night as 07 finds it: 06 slumped 7 deg onto its left side as
+        /// World stands it, the hatch hanging open on its right flank with the three cell fragments in
+        /// <c>FragmentSocket_CellPack_0..2</c>, 07 at 7.5 m with a warm spot at its <c>HeadlampSocket</c> standing in for
+        /// Rover's road light; from the chase cam, from 10 m and close (<c>Logs/captures/elder06_bay_*.png</c>):
+        /// <c>python tools/unity_batch.py exec --project . --method MoonProject.Art.Editor.R1StoryPropsCapture.CaptureElder06Bay</c>
+        /// </summary>
+        public static void CaptureElder06Bay()
+        {
+            BatchRunner.Run(nameof(CaptureElder06Bay), args =>
+            {
+                AssetDatabase.Refresh();
+                R1MaterialLibrary.BuildMaterials();
+                R1ModelBuilder.Build();
+                R1Ssr3Builder.Build();
+                FragmentBuilder.Build();
+
+                string capturesDir = Path.GetFullPath("Logs/captures");
+                Directory.CreateDirectory(capturesDir);
+
+                bool prevAsync = ShaderUtil.allowAsyncCompilation;
+                ShaderUtil.allowAsyncCompilation = false;
+                EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+                var temp = new ArtLightingPreview.TemporaryObjects();
+                try
+                {
+                    Color bg = SetupEnvironment(temp, true);
+                    GameObject elder = SpawnProp(R1Ssr3Builder.Elder06PrefabPath, Vector3.zero, 0f, temp);
+                    elder.transform.rotation = Quaternion.AngleAxis(-7f, elder.transform.forward)
+                                               * elder.transform.rotation;
+                    for (int i = 0; i < 3; i++)
+                    {
+                        Transform socket = FindChildRecursive(elder.transform, "FragmentSocket_CellPack_" + i);
+                        GameObject cell = InstantiatePrefab(
+                            ArtPaths.FragmentFolder + "/" + FragmentBuilder.PrefabPrefix + "CellPack_" + i + ".prefab",
+                            temp);
+                        cell.transform.SetPositionAndRotation(socket.position, socket.rotation);
+                    }
+
+                    // 07 on 06's right, facing it, its road light on the open bay
+                    var roverPos = new Vector3(7.5f, 0f, 1.2f);
+                    GameObject rover = SpawnRover07(temp, roverPos, -96f, true);
+                    Transform lampSocket = FindChildRecursive(rover.transform, "HeadlampSocket");
+                    Light road = ArtLightingPreview.NewLight("RoverRoadLight", LightType.Spot,
+                        new Color(1.00f, 0.82f, 0.56f, 1f), 30f);
+                    road.transform.SetPositionAndRotation(lampSocket.position,
+                        Quaternion.LookRotation(new Vector3(0.6f, 0.6f, 0f) - lampSocket.position));
+                    road.range = 14f;
+                    road.spotAngle = 50f;
+                    road.shadows = LightShadows.Soft;
+                    temp.Add(road.gameObject);
+
+                    var target = roverPos + new Vector3(0f, 1.1f, 0f);
+                    Vector3 chase = target + Quaternion.Euler(16f, -96f, 0f) * Vector3.back * 7.5f;
+                    RenderShot(chase, target, 52f, bg, Path.Combine(capturesDir, "elder06_bay_chase.png"));
+                    RenderShot(new Vector3(8.6f, 2.2f, -4.6f), new Vector3(0.5f, 0.6f, 0f), 34f, bg,
+                        Path.Combine(capturesDir, "elder06_bay_10m.png"));
+                    RenderShot(new Vector3(2.9f, 1.4f, 1.3f), new Vector3(0.7f, 0.6f, 0f), 40f, bg,
+                        Path.Combine(capturesDir, "elder06_bay_close.png"));
+                }
+                finally
+                {
+                    temp.Dispose();
+                    ShaderUtil.allowAsyncCompilation = prevAsync;
+                }
+
+                return true;
+            });
+        }
+
+        /// <summary>
         /// Dedicated fast batch entry point for capturing the standalone towable <c>PowerModule</c>
         /// alone and beside Rover 07 for scale in Day C and Dusk lighting:
         /// <c>python tools/unity_batch.py exec --project . --method MoonProject.Art.Editor.R1StoryPropsCapture.CapturePowerModule</c>
