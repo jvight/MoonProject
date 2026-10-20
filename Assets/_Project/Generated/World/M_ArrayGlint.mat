@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: M_ArrayGlint
-  m_Shader: {fileID: 4800000, guid: d5618d44017989145af764d3cb391936, type: 3}
+  m_Shader: {fileID: 4800000, guid: 05e85385309671749990d071adaf5760, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -25,11 +25,10 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
+    - _ArmPixels: 8
+    - _CorePixels: 1.3
     - _Intensity: 0
-    - _MinAngleFrom: 60
-    - _MinAngleFull: 80
-    - _MinAngleTan: 0.008726868
-    - _Radius: 0.35
+    - _WidthPixels: 0.7
     m_Colors:
     - _Color: {r: 1, g: 0.96, b: 0.88, a: 1}
   m_BuildTextureStacks: []
