@@ -88,6 +88,25 @@ namespace MoonProject.Gameplay.Tests
             }
         }
 
+        [Test]
+        public void TheSpareIgniter_LiesOnlyInTheSparesRack_OpenByTheFallenArray()
+        {
+            const string igniter = "part.igniter";
+            Assert.AreEqual(igniter, _tuning.IgniterPart);
+            SupplyCache rack = Find("supply.array.spares");
+            Assert.IsTrue(rack.StartsOpen, "the cutter has no igniter yet: the rack cannot need cutting");
+            Assert.AreEqual("FallenSolarArray", rack.AnchorId, "it stands in the array's frame and moves with it");
+            Assert.AreEqual(StructureIds.SolarArray, rack.ForStructure, "it opens the array's link");
+            CollectionAssert.Contains(rack.Parts, igniter);
+            foreach (SupplyCache source in _tuning.Caches)
+            {
+                if (source.Id != rack.Id)
+                {
+                    CollectionAssert.DoesNotContain(source.Parts, igniter, $"{source.Id}: one igniter, in the rack");
+                }
+            }
+        }
+
         private Dictionary<string, Recipe> SupplyByLink()
         {
             var supply = new Dictionary<string, Recipe>();

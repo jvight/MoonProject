@@ -39,20 +39,22 @@ namespace MoonProject.Gameplay.Tests
             _game.Known.Add(StructureIds.ChargingPad);
             Expect(OpeningKeys.CollectParts);
             _game.Covered.Add(StructureIds.ChargingPad);
-            Expect(OpeningKeys.CollectParts, "the materials without the igniter: the open crate is not emptied yet");
-            _game.CarriesIgniter = true;
-            Expect(OpeningKeys.BuildPad);
+            Expect(OpeningKeys.BuildPad, "the charger kit alone covers the pad: no igniter in the lander's crate");
             _game.BuiltIds.Add(StructureIds.ChargingPad);
             Expect(OpeningKeys.Charge);
             _game.FirstCharge = true;
-            _game.CanFitIgniter = true;
-            Expect(OpeningKeys.FitIgniter, "charging, the igniter in the hold");
-            _game.CarriesIgniter = false;
-            _game.IgniterFitted = true;
             Expect(string.Empty, "the reserve is not spent yet: the lander's 0% says it first");
             _game.ReserveSpent = true;
             Expect(OpeningKeys.FindSolar);
             _game.Known.Add(StructureIds.SolarArray);
+            Expect(OpeningKeys.CutOptics, "the cutter is FAULT, but the line asks to cut: the rack is in plain view");
+            _game.CutterSputtered = true;
+            Expect(OpeningKeys.TakeIgniter, "the cutter sputtered: the line points at the rack");
+            _game.CarriesIgniter = true;
+            _game.CanFitIgniter = true;
+            Expect(OpeningKeys.FitIgniter, "the igniter in the hold: a field swap, fitted where 07 stands");
+            _game.CarriesIgniter = false;
+            _game.IgniterFitted = true;
             Expect(OpeningKeys.CutOptics, "the hold does not cover the array yet");
             _game.Covered.Add(StructureIds.SolarArray);
             Expect(OpeningKeys.BuildSolar);
@@ -79,7 +81,6 @@ namespace MoonProject.Gameplay.Tests
             _flow.Tick();
             Assert.AreEqual(OpeningSteps.CollectParts, _flow.CurrentIndex);
             _game.Covered.Add(StructureIds.ChargingPad);
-            _game.CarriesIgniter = true;
             _flow.Tick();
             Assert.AreEqual(OpeningSteps.BuildPad, _flow.CurrentIndex);
             _game.BuiltIds.Add(StructureIds.ChargingPad);
@@ -87,12 +88,12 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(OpeningSteps.Charge, _flow.CurrentIndex);
             _game.FirstCharge = true;
             _flow.Tick();
-            Assert.AreEqual(OpeningSteps.FitIgniter, _flow.CurrentIndex);
-            _game.CarriesIgniter = false;
-            _game.IgniterFitted = true;
-            _flow.Tick();
             Assert.AreEqual(OpeningSteps.FindSolar, _flow.CurrentIndex, "a step with no line yet still has its place");
+            _game.ReserveSpent = true;
             _game.Known.Add(StructureIds.SolarArray);
+            _flow.Tick();
+            Assert.AreEqual(OpeningSteps.FitIgniter, _flow.CurrentIndex);
+            _game.IgniterFitted = true;
             _flow.Tick();
             Assert.AreEqual(OpeningSteps.BuildSolar, _flow.CurrentIndex);
             _game.PowerOn = true;
@@ -112,7 +113,8 @@ namespace MoonProject.Gameplay.Tests
         [Test]
         public void WithAPadPartInTheHold_TheLineAsksToParkOffThePad_AndToFitOnIt()
         {
-            ReachTheCharge();
+            ReachTheArray();
+            _game.CarriesIgniter = true;
             _game.CanFitIgniter = false;
             Expect(OpeningKeys.ParkOnPad, "a part that needs the pad: the line says to park there");
             _game.CanFitIgniter = true;
@@ -124,7 +126,7 @@ namespace MoonProject.Gameplay.Tests
         [Test]
         public void TheFitLine_ShowsExactlyWhenTheScreenWillTakeTheIgniter()
         {
-            ReachTheCharge();
+            ReachTheArray();
             foreach (bool carries in new[] { false, true })
             {
                 foreach (bool canFit in new[] { false, true })
@@ -143,14 +145,42 @@ namespace MoonProject.Gameplay.Tests
             }
         }
 
-        private void ReachTheCharge()
+        [Test]
+        public void AnIgniterTakenUnasked_IsFittedWithNoRackLine()
+        {
+            ReachTheArray();
+            Assert.AreEqual(OpeningKeys.CutOptics, _flow.Current);
+            _game.CarriesIgniter = true;
+            _game.CanFitIgniter = true;
+            Expect(OpeningKeys.FitIgniter, "taken from the rack before the cutter ever sputtered");
+            _game.CarriesIgniter = false;
+            _game.IgniterFitted = true;
+            Expect(OpeningKeys.CutOptics);
+            CollectionAssert.DoesNotContain(_lines, OpeningKeys.TakeIgniter, "the rack line is for a stalled player");
+        }
+
+        [Test]
+        public void AnIgniterFittedBeforeTheScan_PassesOverTheIgniterStep()
+        {
+            ReachTheArray();
+            _game.Known.Remove(StructureIds.SolarArray);
+            _game.IgniterFitted = true;
+            Expect(OpeningKeys.FindSolar);
+            _game.Known.Add(StructureIds.SolarArray);
+            Expect(OpeningKeys.CutOptics);
+            CollectionAssert.DoesNotContain(_lines, OpeningKeys.FitIgniter);
+        }
+
+        /// <summary>B7: the reserve spent and the array scanned; the cutter still has no igniter.</summary>
+        private void ReachTheArray()
         {
             _game.ReachedLander = true;
             _game.Known.Add(StructureIds.ChargingPad);
             _game.Covered.Add(StructureIds.ChargingPad);
-            _game.CarriesIgniter = true;
             _game.BuiltIds.Add(StructureIds.ChargingPad);
             _game.FirstCharge = true;
+            _game.ReserveSpent = true;
+            _game.Known.Add(StructureIds.SolarArray);
             _flow.Tick();
         }
 
@@ -160,7 +190,6 @@ namespace MoonProject.Gameplay.Tests
             _game.ReachedLander = true;
             _game.Known.Add(StructureIds.ChargingPad);
             _game.Covered.Add(StructureIds.ChargingPad);
-            _game.CarriesIgniter = true;
             Expect(OpeningKeys.BuildPad);
             CollectionAssert.DoesNotContain(_lines, OpeningKeys.CollectParts);
         }
@@ -257,6 +286,7 @@ namespace MoonProject.Gameplay.Tests
 
             public bool ReachedLander { get; set; }
             public bool CarriesIgniter { get; set; }
+            public bool CutterSputtered { get; set; }
             public bool CanFitIgniter { get; set; }
             public bool IgniterFitted { get; set; }
             public bool FirstCharge { get; set; }

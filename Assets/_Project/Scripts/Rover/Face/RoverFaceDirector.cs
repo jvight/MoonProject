@@ -114,6 +114,7 @@ namespace MoonProject.Rover
                 events.Subscribe<PartFitted>(_director.OnPartFitted),
                 events.Subscribe<RoverLanded>(_director.OnLanded),
                 events.Subscribe<RoverRecovering>(_director.OnRecovering),
+                events.Subscribe<CutterSputtered>(_director.OnCutterSputtered),
                 events.Subscribe<TetherReleased>(_director.OnTetherReleased),
                 events.Subscribe<FeelBeat>(_director.OnFeelBeat),
             };
