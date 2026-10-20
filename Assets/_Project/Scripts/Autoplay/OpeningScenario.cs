@@ -73,7 +73,7 @@ namespace MoonProject.Autoplay
             foreach (Func<IEnumerator> beat in new Func<IEnumerator>[]
                      {
                          Drive, Scan, CollectParts, BuildThePad, ChargeOnThePad, TheRuins, BuildTheArray,
-                         TheFirstChoice, TheHabitat, Nightfall, TheTower,
+                         TheFirstChoice, TheHabitat, Nightfall, TheTower, TheAnswer,
                      })
             {
                 if (_bot.Failed || Reached(_lastBeat))
@@ -298,6 +298,7 @@ namespace MoonProject.Autoplay
             Begin("B7", "The Lumen ruins: scan the array and the airlock, the cutter sputters, fit the spare igniter " +
                         "from the rack, cut the array's panels and junction box");
             yield return _base.ExpectStep(OpeningSteps.FindSolar, OpeningKeys.FindSolar, "B7: the reserve is spent");
+            yield return _base.SeeWorldCue(WorldCues.ArrayGlint(_bot.World), "B7: the fallen array glints in the sunrise");
             yield return _base.DriveToTheRuinsGate("the Lumen ruins");
             yield return _base.ScanTheSet("ruin.FallenSolarArray");
             yield return _base.ReadTheAirlockPanel();
@@ -382,6 +383,13 @@ namespace MoonProject.Autoplay
             yield return _base.Build(StructureIds.AntennaMast, _base.Pad() + Vector3.back * OpeningBase.Spacing);
             yield return _base.UntilReached(OpeningMilestone.SignalWest, "the SignalWest milestone");
             _bot.EndBeat("the mast stands and the west signal answered");
+        }
+
+        private IEnumerator TheAnswer()
+        {
+            Begin("B12", "The answer");
+            yield return _base.AnswerTheCall();
+            _bot.EndBeat("07 transmitted from the mast and relay.1 answered the call");
         }
 
         /// <summary>The next unscanned fragment of the lander's cargo, in the order the blueprint numbers them.</summary>

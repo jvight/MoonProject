@@ -10,7 +10,8 @@ namespace MoonProject.Gameplay
     /// line is only a stall reminder: it is published through <see cref="NextStepChanged"/> after
     /// <c>stallSeconds</c> with no progress and 07 still, once per step, held for <c>reminderSeconds</c> and never
     /// shown again for that step. A step whose line would say something the world has not set up yet has no line
-    /// (B7's for the spent lander reserve; B11's for nightfall), and B7's rack line waits for the cutter to sputter.
+    /// (B7's for the spent lander reserve; B11's for nightfall), and B7's rack line waits for the cutter to sputter
+    /// and then for the same stall: the sputter's own beats lead, the line only follows a player who is lost.
     /// It also publishes <see cref="OpeningMilestoneReached"/> as the opening reaches FirstCharge (B6), PowerOn (B8),
     /// NightReady (B9) and SignalWest (B11), the milestones it reads from the game; <see cref="Announce"/> replays the
     /// ones a loaded game has reached, with Restored = true, before the first <see cref="Tick"/>. CallAnswered (R8) is

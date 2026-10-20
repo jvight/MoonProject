@@ -21,6 +21,9 @@ namespace MoonProject.UI
     {
         public const string IconClass = "salvage-ring__icon";
 
+        /// <summary>Metres above the mast's foot where the transmit ring is centred: the middle of the mast.</summary>
+        private const float TransmitRingHeight = 1.6f;
+
         private readonly ISalvageStatus _salvage;
         private readonly Reveal _reveal;
         private readonly WorldAnchor _anchor;
@@ -105,16 +108,25 @@ namespace MoonProject.UI
         /// <param name="deltaTime">Unscaled seconds since the last tick.</param>
         /// <param name="gateOpen">False while something else has the player's attention.</param>
         /// <param name="panelSize">Size of the UI panel.</param>
-        public void Tick(float deltaTime, bool gateOpen, Vector2 panelSize)
+        /// <param name="answer">The answer to the call, or null: while 07 holds to transmit at the mast the ring is
+        /// centred on the mast's top and fills with the hold.</param>
+        public void Tick(float deltaTime, bool gateOpen, Vector2 panelSize, IAnswerStatus answer = null)
         {
             _charge.Step(deltaTime);
+            bool transmit = answer != null && answer.HoldProgress01 > 0f;
             bool dig = _charge.IsActive && _charge.Kind == FeelKind.Dig;
-            bool aimed = _salvage.HasTarget && !dig;
+            bool aimed = _salvage.HasTarget && !dig && !transmit;
             bool cut = aimed && (_salvage.IsCutting || _salvage.Progress > 0f);
-            bool show = cut || _charge.IsActive;
-            Vector3 point = aimed ? _salvage.CutPoint : _charge.Point;
+            bool show = cut || _charge.IsActive || transmit;
+            Vector3 point = transmit ? answer.MastPoint + Vector3.up * TransmitRingHeight
+                : aimed ? _salvage.CutPoint : _charge.Point;
             bool onScreen = show && _anchor.Track(point, panelSize, deltaTime, _reveal.IsHidden);
-            if (aimed)
+            if (transmit)
+            {
+                _ring.Progress = answer.HoldProgress01;
+                ShowIcon(-1);
+            }
+            else if (aimed)
             {
                 _ring.Progress = _salvage.Progress;
                 ShowIcon((int)_salvage.Material);

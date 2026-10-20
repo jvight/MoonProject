@@ -75,6 +75,21 @@ namespace MoonProject.Autoplay
             return _faceDocument != null ? _faceDocument.rootVisualElement : null;
         }
 
+        /// <summary>The first <typeparamref name="T"/> in the active scene (walking its roots), or null.</summary>
+        public T Find<T>() where T : Component
+        {
+            foreach (GameObject root in SceneManager.GetActiveScene().GetRootGameObjects())
+            {
+                T found = root.GetComponentInChildren<T>(true);
+                if (found != null)
+                {
+                    return found;
+                }
+            }
+
+            return null;
+        }
+
         /// <summary>Every distinct text a chip has carried on screen this run ("E Scan 1/2", "B Build", "Tab Fit").</summary>
         public HashSet<string> ChipsSeen { get; } = new HashSet<string>();
 
