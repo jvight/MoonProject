@@ -50,9 +50,12 @@ ANTENNA_MAST_DIMS: dict[str, float] = {
     "dial_y": 1.38,
     "dial_z": 0.43,
     "dial_tilt_deg": 20.0,
-    # Lattice mast & outrigger arms
+    # Lattice mast & outrigger arms (3 raisable segments under Mast empty)
     "mast_base_y": 1.55,
+    "mast_seg1_top_y": 1.93,
+    "mast_seg2_top_y": 2.30,
     "mast_top_y": 2.68,
+    "mast_overlap": 0.05,
     "mast_base_half_w": 0.145,
     "mast_top_half_w": 0.072,
     # Parabolic wire-mesh dish (Ø 0.95 m) on viewer-left (+X) outrigger
@@ -410,35 +413,32 @@ def _build_stage_3(root: bpy.types.Object) -> bpy.types.Object:
     return mb.build_object(parent=root)
 
 
-def _build_mast(stage_4: bpy.types.Object) -> bpy.types.Object:
-    """Build the dark-charcoal lattice `Mast` with outrigger arms for `DishAzimuth` (+X) and `SonarLoop` (-X)."""
-    d = ANTENNA_MAST_DIMS
-    y0 = d["mast_base_y"]
-    y1 = d["mast_top_y"]
-    hw0 = d["mast_base_half_w"]
-    hw1 = d["mast_top_half_w"]
-
-    mb = r1kit.MeshBuilder("Mast", pivot_u=(0.0, y0, 0.0))
-
-    # 4 tapered corner legs of the lattice mast
+def _add_mast_lattice_span(
+    mb: r1kit.MeshBuilder,
+    y_start: float,
+    y_end: float,
+    n_bays: int,
+    hw_fn,
+    sign_offset: int = 0,
+) -> None:
+    """Add 4 tapered corner legs, horizontal perimeter ties, and diagonal Warren bracing across `y_start..y_end`."""
+    hw_s = hw_fn(y_start)
+    hw_e = hw_fn(y_end)
     for sx in (-1.0, 1.0):
         for sz in (-1.0, 1.0):
             mb.add_strut(
-                p0_u=(sx * hw0, y0, sz * hw0),
-                p1_u=(sx * hw1, y1, sz * hw1),
+                p0_u=(sx * hw_s, y_start, sz * hw_s),
+                p1_u=(sx * hw_e, y_end, sz * hw_e),
                 width=0.026,
                 thickness=0.026,
                 mat="R1_GreyMetal",
                 bevel=0.004,
             )
 
-    # 4 vertical bays of horizontal collar ties + diagonal Warren/X-bracing struts
-    n_bays = 4
     for i in range(n_bays + 1):
         t = i / n_bays
-        yi = y0 + t * (y1 - y0)
-        hwi = hw0 + t * (hw1 - hw0)
-        # 4 horizontal perimeter ties at level yi
+        yi = y_start + t * (y_end - y_start)
+        hwi = hw_fn(yi)
         mb.add_strut((-hwi, yi, -hwi), (hwi, yi, -hwi), 0.018, 0.018, "R1_GreyMetal", bevel=0.0)
         mb.add_strut((-hwi, yi, hwi), (hwi, yi, hwi), 0.018, 0.018, "R1_GreyMetal", bevel=0.0)
         mb.add_strut((-hwi, yi, -hwi), (-hwi, yi, hwi), 0.018, 0.018, "R1_GreyMetal", bevel=0.0)
@@ -446,9 +446,9 @@ def _build_mast(stage_4: bpy.types.Object) -> bpy.types.Object:
 
         if i < n_bays:
             t_next = (i + 1) / n_bays
-            yn = y0 + t_next * (y1 - y0)
-            hwn = hw0 + t_next * (hw1 - hw0)
-            sign = 1.0 if (i % 2 == 0) else -1.0
+            yn = y_start + t_next * (y_end - y_start)
+            hwn = hw_fn(yn)
+            sign = 1.0 if ((i + sign_offset) % 2 == 0) else -1.0
             for sz_face in (-1.0, 1.0):
                 mb.add_strut(
                     (-sign * hwi, yi, sz_face * hwi),
@@ -468,23 +468,107 @@ def _build_mast(stage_4: bpy.types.Object) -> bpy.types.Object:
                     bevel=0.0,
                 )
 
-    # Central copper coaxial feed line running up the center of the lattice mast
-    mb.add_cylinder(
-        center_u=(0.0, 0.5 * (y0 + y1), 0.0),
+
+def _build_mast(stage_4: bpy.types.Object) -> tuple[bpy.types.Object, bpy.types.Object, bpy.types.Object, bpy.types.Object]:
+    """Build the `Mast` empty and its 3 raisable child meshes (`Mast_Seg1`, `Mast_Seg2`, `Mast_Seg3`)."""
+    d = ANTENNA_MAST_DIMS
+    y0 = d["mast_base_y"]       # 1.55 m
+    y_s1 = d["mast_seg1_top_y"] # 1.93 m
+    y_s2 = d["mast_seg2_top_y"] # 2.30 m
+    y1 = d["mast_top_y"]        # 2.68 m
+    overlap = d["mast_overlap"] # 0.05 m
+    hw0 = d["mast_base_half_w"] # 0.145 m
+    hw1 = d["mast_top_half_w"]  # 0.072 m
+
+    def hw_at(y: float) -> float:
+        return hw0 + ((y - y0) / (y1 - y0)) * (hw1 - hw0)
+
+    mast_empty = r1kit.create_empty("Mast", parent=stage_4, pivot_u=(0.0, y0, 0.0))
+    bpy.context.view_layer.update()
+
+    # 1. Mast_Seg1: z 1.55-1.93 (lower third, tapering as today), pivot (0,0,1.55) + lock collar at z = 1.93
+    seg1_mb = r1kit.MeshBuilder("Mast_Seg1", pivot_u=(0.0, y0, 0.0))
+    _add_mast_lattice_span(seg1_mb, y0, y_s1, n_bays=2, hw_fn=hw_at, sign_offset=0)
+    seg1_mb.add_cylinder(
+        center_u=(0.0, 0.5 * (y0 + y_s1), 0.0),
+        radius=0.020,
+        length=(y_s1 - y0),
+        mat="R1_GreyMetal",
+        axis_u="Y",
+        segments=8,
+        bevel=0.0,
+        bevel_segments=0,
+    )
+    hw_193 = hw_at(y_s1)
+    # Visible collar/clamp ring ("lock") at junction z = 1.93
+    seg1_mb.add_bevel_box(
+        center_u=(0.0, y_s1 - 0.006, 0.0),
+        size_u=(2.0 * hw_193 + 0.046, 0.036, 2.0 * hw_193 + 0.046),
+        mat="R1_GreyMetal",
+        bevel=0.006,
+        segments=1,
+    )
+    seg1_mb.add_bevel_box(
+        center_u=(0.0, y_s1 - 0.006, 0.0),
+        size_u=(2.0 * hw_193 + 0.078, 0.024, 0.064),
+        mat="R1_GreyMetal",
+        bevel=0.004,
+        segments=1,
+    )
+    seg1_obj = seg1_mb.build_object(parent=mast_empty)
+
+    # 2. Mast_Seg2: z 1.93-2.30, pivot (0,0,1.93), 0.05 m base overlap lip (down to 1.88), lock collar at z = 2.30,
+    #    plus outrigger arms for DishAzimuth (+X) and SonarLoop (-X)
+    seg2_mb = r1kit.MeshBuilder("Mast_Seg2", pivot_u=(0.0, y_s1, 0.0))
+    y_s2_lip = y_s1 - overlap  # 1.88 m
+    # 0.05 m base overlap lip sleeve (1.88..1.935 m) so telescoped Seg2 never shows a gap
+    seg2_mb.add_bevel_box(
+        center_u=(0.0, y_s2_lip + 0.0275, 0.0),
+        size_u=(2.0 * hw_193 - 0.016, 0.055, 2.0 * hw_193 - 0.016),
+        mat="R1_GreyMetal",
+        bevel=0.005,
+        segments=1,
+    )
+    seg2_mb.add_bevel_box(
+        center_u=(0.0, y_s2_lip + 0.008, 0.0),
+        size_u=(2.0 * hw_193 + 0.008, 0.016, 2.0 * hw_193 + 0.008),
+        mat="R1_GreyMetal",
+        bevel=0.003,
+        segments=1,
+    )
+    _add_mast_lattice_span(seg2_mb, y_s1, y_s2, n_bays=1, hw_fn=hw_at, sign_offset=0)
+    seg2_mb.add_cylinder(
+        center_u=(0.0, 0.5 * (y_s2_lip + y_s2), 0.0),
         radius=0.018,
-        length=(y1 - y0),
+        length=(y_s2 - y_s2_lip),
         mat="R1_Copper",
         axis_u="Y",
         segments=8,
         bevel=0.0,
         bevel_segments=0,
     )
+    hw_230 = hw_at(y_s2)
+    # Visible collar/clamp ring ("lock") at junction z = 2.30
+    seg2_mb.add_bevel_box(
+        center_u=(0.0, y_s2 - 0.006, 0.0),
+        size_u=(2.0 * hw_230 + 0.044, 0.036, 2.0 * hw_230 + 0.044),
+        mat="R1_GreyMetal",
+        bevel=0.006,
+        segments=1,
+    )
+    seg2_mb.add_bevel_box(
+        center_u=(0.0, y_s2 - 0.006, 0.0),
+        size_u=(2.0 * hw_230 + 0.074, 0.024, 0.058),
+        mat="R1_Copper",
+        bevel=0.004,
+        segments=1,
+    )
 
     # Viewer-left (+X) outrigger truss arm supporting DishAzimuth at (0.44, 2.12, 0.08)
     dax = d["dish_az_x"]
     day = d["dish_az_y"]
     daz = d["dish_az_z"]
-    mb.add_strut(
+    seg2_mb.add_strut(
         p0_u=(0.10, day - 0.02, 0.0),
         p1_u=(dax, day - 0.02, daz),
         width=0.036,
@@ -492,15 +576,15 @@ def _build_mast(stage_4: bpy.types.Object) -> bpy.types.Object:
         mat="R1_GreyMetal",
         bevel=0.004,
     )
-    mb.add_strut(
-        p0_u=(0.12, day - 0.24, 0.0),
+    seg2_mb.add_strut(
+        p0_u=(0.11, y_s1 + 0.015, 0.0),
         p1_u=(dax - 0.02, day - 0.03, daz),
         width=0.024,
         thickness=0.024,
         mat="R1_GreyMetal",
         bevel=0.0,
     )
-    mb.add_cylinder(
+    seg2_mb.add_cylinder(
         center_u=(dax, day - 0.015, daz),
         radius=0.056,
         length=0.034,
@@ -511,9 +595,8 @@ def _build_mast(stage_4: bpy.types.Object) -> bpy.types.Object:
     )
 
     # Viewer-right (-X) horizontal brass boom supporting SonarLoop at (-0.38, 2.28, 0.0) (matching s_antenna_mast.png)
-    sx_s = d["sonar_x"]
     sy_s = d["sonar_y"]
-    mb.add_cylinder(
+    seg2_mb.add_cylinder(
         center_u=(-0.09, sy_s, 0.0),
         radius=0.036,
         length=0.055,
@@ -523,7 +606,7 @@ def _build_mast(stage_4: bpy.types.Object) -> bpy.types.Object:
         bevel=0.0,
         bevel_segments=0,
     )
-    mb.add_cylinder(
+    seg2_mb.add_cylinder(
         center_u=(-0.23, sy_s, 0.0),
         radius=0.016,
         length=0.28,
@@ -533,9 +616,40 @@ def _build_mast(stage_4: bpy.types.Object) -> bpy.types.Object:
         bevel=0.0,
         bevel_segments=0,
     )
+    seg2_obj = seg2_mb.build_object(parent=mast_empty)
+
+    # 3. Mast_Seg3: z 2.30-2.68 with beacon pedestal/cage, pivot (0,0,2.30), 0.05 m base overlap lip (down to 2.25)
+    seg3_mb = r1kit.MeshBuilder("Mast_Seg3", pivot_u=(0.0, y_s2, 0.0))
+    y_s3_lip = y_s2 - overlap  # 2.25 m
+    # 0.05 m base overlap lip sleeve (2.25..2.305 m) so telescoped Seg3 never shows a gap
+    seg3_mb.add_bevel_box(
+        center_u=(0.0, y_s3_lip + 0.0275, 0.0),
+        size_u=(2.0 * hw_230 - 0.016, 0.055, 2.0 * hw_230 - 0.016),
+        mat="R1_GreyMetal",
+        bevel=0.005,
+        segments=1,
+    )
+    seg3_mb.add_bevel_box(
+        center_u=(0.0, y_s3_lip + 0.008, 0.0),
+        size_u=(2.0 * hw_230 + 0.008, 0.016, 2.0 * hw_230 + 0.008),
+        mat="R1_GreyMetal",
+        bevel=0.003,
+        segments=1,
+    )
+    _add_mast_lattice_span(seg3_mb, y_s2, y1, n_bays=1, hw_fn=hw_at, sign_offset=1)
+    seg3_mb.add_cylinder(
+        center_u=(0.0, 0.5 * (y_s3_lip + y1), 0.0),
+        radius=0.018,
+        length=(y1 - y_s3_lip),
+        mat="R1_Copper",
+        axis_u="Y",
+        segments=8,
+        bevel=0.0,
+        bevel_segments=0,
+    )
 
     # Top masthead beacon pedestal cap (y = 2.66 .. 2.71 m) + 4 guard cage ribs reaching y = 2.80 m
-    mb.add_cylinder(
+    seg3_mb.add_cylinder(
         center_u=(0.0, y1 + 0.015, 0.0),
         radius=0.078,
         length=0.036,
@@ -548,19 +662,20 @@ def _build_mast(stage_4: bpy.types.Object) -> bpy.types.Object:
         rad = math.radians(angle_deg)
         gx = 0.062 * math.cos(rad)
         gz = 0.062 * math.sin(rad)
-        mb.add_strut(
+        seg3_mb.add_strut(
             p0_u=(gx, y1 + 0.02, gz),
             p1_u=(gx * 0.45, d["total_height"] - 0.005, gz * 0.45),
             width=0.012,
             thickness=0.012,
-            mat="R1_BareSteel",
+            mat="R1_GreyMetal",
             bevel=0.0,
         )
+    seg3_obj = seg3_mb.build_object(parent=mast_empty)
 
-    return mb.build_object(parent=stage_4)
+    return mast_empty, seg1_obj, seg2_obj, seg3_obj
 
 
-def _build_dish_and_azimuth(mast_obj: bpy.types.Object) -> None:
+def _build_dish_and_azimuth(parent_obj: bpy.types.Object) -> None:
     """Build `DishAzimuth` (360° yaw mount) and its child `Dish` (Ø 0.95 m parabolic wire-mesh dish)."""
     d = ANTENNA_MAST_DIMS
     ax = d["dish_az_x"]
@@ -608,7 +723,7 @@ def _build_dish_and_azimuth(mast_obj: bpy.types.Object) -> None:
         bevel=0.0,
         bevel_segments=0,
     )
-    az_obj = az_mb.build_object(parent=mast_obj)
+    az_obj = az_mb.build_object(parent=parent_obj)
 
     # 2. Dish: Ø 0.95 m open parabolic wire-mesh dish (12 radial parabolic ribs + 3 concentric rings + tripod feed horn)
     dish_mb = r1kit.MeshBuilder("Dish", pivot_u=(ax, py, az))
@@ -702,17 +817,17 @@ def _build_dish_and_azimuth(mast_obj: bpy.types.Object) -> None:
 
 
 def _build_stage_4(root: bpy.types.Object) -> bpy.types.Object:
-    """Stage 4: `Mast`, `DishAzimuth` -> `Dish`, `SonarLoop`, `TapeReel_L/R`, `BeaconLamp`, and `DialLamp`."""
+    """Stage 4: `Mast` (`Mast_Seg1..3`), `DishAzimuth` -> `Dish`, `SonarLoop`, `TapeReel_L/R`, `BeaconLamp`, and `DialLamp`."""
     d = ANTENNA_MAST_DIMS
     stage_4 = r1kit.create_empty("Stage_4", parent=root, pivot_u=(0.0, 0.0, 0.0))
 
-    # 1. Lattice Mast
-    mast_obj = _build_mast(stage_4)
+    # 1. Lattice Mast empty and 3 raisable segments
+    _mast_empty, _seg1_obj, seg2_obj, seg3_obj = _build_mast(stage_4)
 
-    # 2. DishAzimuth and Ø 0.95 m parabolic Dish
-    _build_dish_and_azimuth(mast_obj)
+    # 2. DishAzimuth and Ø 0.95 m parabolic Dish (re-parented under Mast_Seg2)
+    _build_dish_and_azimuth(seg2_obj)
 
-    # 3. SonarLoop: crossed-loop brass figure-8 direction-finding antenna on viewer-right (-X) outrigger (matching s_antenna_mast.png)
+    # 3. SonarLoop: crossed-loop brass figure-8 direction-finding antenna on viewer-right (-X) outrigger (re-parented under Mast_Seg2)
     sx = d["sonar_x"]
     sy = d["sonar_y"]
     sz = d["sonar_z"]
@@ -750,7 +865,7 @@ def _build_stage_4(root: bpy.types.Object) -> bpy.types.Object:
         sonar_mb.add_strut(p_l, p_t1, 0.015, 0.015, "R1_Copper", bevel=0.0)
         sonar_mb.add_strut(p_r, p_t2, 0.015, 0.015, "R1_Copper", bevel=0.0)
         sonar_mb.add_strut(p_t1, p_t2, 0.015, 0.015, "R1_Copper", bevel=0.0)
-    sonar_mb.build_object(parent=mast_obj)
+    sonar_mb.build_object(parent=seg2_obj)
 
     # 4. TapeReel_L (+X) and TapeReel_R (-X) inside the front recessed telemetry window
     rx_reel = d["reel_x"]
@@ -802,7 +917,7 @@ def _build_stage_4(root: bpy.types.Object) -> bpy.types.Object:
         )
         reel_mb.build_object(parent=stage_4)
 
-    # 5. BeaconLamp (child of Mast, only R1_LampAmber)
+    # 5. BeaconLamp (re-parented under Mast_Seg3, only R1_LampAmber)
     by = d["beacon_y"]
     beacon_mb = r1kit.MeshBuilder("BeaconLamp", pivot_u=(0.0, by, 0.0))
     beacon_mb.add_cylinder(
@@ -815,7 +930,7 @@ def _build_stage_4(root: bpy.types.Object) -> bpy.types.Object:
         segments=10,
         bevel=0.006,
     )
-    beacon_mb.build_object(parent=mast_obj)
+    beacon_mb.build_object(parent=seg3_obj)
 
     # 6. DialLamp (child of Stage_4, only R1_LampAmber)
     dy = d["dial_y"]
