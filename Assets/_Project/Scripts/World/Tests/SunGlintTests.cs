@@ -45,6 +45,15 @@ namespace MoonProject.World.Tests
         }
 
         [Test]
+        public void TheFirstSliverOfTheSun_AlreadyCatchesInFull()
+        {
+            Assert.AreEqual(0f, SunGlint.Catch(0f, 0.08f), "nothing in the eclipse or the shade");
+            Assert.AreEqual(0.5f, SunGlint.Catch(0.04f, 0.08f), 1e-5f, "half caught at half the sliver");
+            Assert.AreEqual(1f, SunGlint.Catch(0.08f, 0.08f), 1e-5f);
+            Assert.AreEqual(1f, SunGlint.Catch(1f, 0.08f), "and never more in the full Sun");
+        }
+
+        [Test]
         public void TheShimmer_StaysWithinItsDepth()
         {
             for (float t = 0f; t < 10f; t += 0.05f)

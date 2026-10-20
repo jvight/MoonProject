@@ -542,6 +542,7 @@ MonoBehaviour:
     _arrayGlint:
       _color: {r: 1, g: 0.96, b: 0.88, a: 1}
       _sharpness: 4
+      _fullCatchAtSunlight: 0.08
       _sheenIntensity: 0.8
       _sheenLift: 0.015
       _sparkleIntensity: 1.4

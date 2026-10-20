@@ -99,7 +99,8 @@ namespace MoonProject.World
             for (int i = 0; i < _sparkles.Length; i++)
             {
                 Vector3 towardEye = (eye - _sparkles[i].transform.position).normalized;
-                float level = _sunlit[i] * SunGlint.Level(towardSun, _normals[i], towardEye, glint.Sharpness);
+                float level = SunGlint.Catch(_sunlit[i], glint.FullCatchAtSunlight)
+                    * SunGlint.Level(towardSun, _normals[i], towardEye, glint.Sharpness);
                 _levels[i] = level;
                 float sheen = SunGlint.Shimmer(time, glint.ShimmerHertz, glint.ShimmerDepth, i * WingPhase);
                 float twinkle = SunGlint.Shimmer(time, glint.SparkleTwinkleHertz, glint.SparkleTwinkleDepth,

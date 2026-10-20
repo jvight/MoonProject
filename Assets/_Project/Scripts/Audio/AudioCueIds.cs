@@ -21,7 +21,7 @@ namespace MoonProject.Audio
         public const string DockWallsDrop = "dock_walls_drop";
         public const string BoostWhine = "boost_whine";
         public const string BoostRelease = "boost_release";
-        public const string PageTick = "page_tick";
+        public const string UiNextLine = "ui_next_line";
         public const string SaveTick = "save_tick";
         public const string CountTick = "count_tick";
         public const string CutIgniteTier = "cut_ignite_tier";

@@ -16,7 +16,7 @@ namespace MoonProject.Rover
     /// face's parts, the self-test's lines and the performance's sounds and blinks queue up for
     /// <see cref="TryTakePostEvent"/>.
     /// <list type="bullet">
-    /// <item>A key can fast-forward the face's boot and the self-test's lines (<see cref="FastForward"/>), never in
+    /// <item>A key can fast-forward the face's load and the self-test's lines (<see cref="FastForward"/>), never in
     /// their first moments; nothing else skips, and 07 is held (<see cref="ControlHeld"/>) until the chase frame.</item>
     /// <item>Continue plays the short wake instead: the lid opens in one move with one blink, then a glance at
     /// Earth that never holds control.</item>
@@ -143,14 +143,16 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// A key asks to fast-forward the rest of the self-test (the face's boot and the lines): granted once, from
-        /// <see cref="PostSettings.FastForwardAfterSeconds"/> after the tube wakes, so no press skips the wake on its
-        /// first frame. The rest then runs <see cref="PostSettings.FastForwardScale"/> times faster, each part and line
+        /// A key asks to fast-forward the rest of the self-test (the face's load and the lines): granted once, never
+        /// before the load (the tube's power-on and the maker's mark always play at their own pace, so the mark can be
+        /// read) and not before <see cref="PostSettings.FastForwardAfterSeconds"/> after the tube wakes, so no press
+        /// skips the wake on its first frame. The rest then runs <see cref="PostSettings.FastForwardScale"/> times faster, each part and line
         /// still announced in order.
         /// </summary>
         public bool FastForward()
         {
-            if (!InSelfTest || _fastForward || _screenOnSeconds < _postSettings.FastForwardAfterSeconds)
+            if (!InSelfTest || _fastForward || Phase < OpeningPhase.Load ||
+                _screenOnSeconds < _postSettings.FastForwardAfterSeconds)
             {
                 return false;
             }
