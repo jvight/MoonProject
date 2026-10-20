@@ -112,6 +112,9 @@ namespace MoonProject.Gameplay
             new RackBaySettings("rack.hex_adapter", false, "rover.hex_adapter", RoverKitPiece.HexChargeAdapter),
         };
 
+        [Tooltip("The rack in the world: Art's prefab beside the dock, its rise, its bays' glow and jaws, its reading.")]
+        [SerializeField] private RackViewSettings _rackView = new RackViewSettings();
+
         [Header("The failed reply and the raised mast (opening v3 R7)")]
         [Tooltip("When 07 tries to answer the call, and how the antenna mast's segments lift and lock.")]
         [SerializeField] private CallReplySettings _reply = new CallReplySettings();
@@ -235,6 +238,8 @@ namespace MoonProject.Gameplay
         public float DuskSiteReach => _duskSiteReach;
 
         public IReadOnlyList<RackBaySettings> RackBays => _rackBays;
+
+        public RackViewSettings RackView => _rackView;
 
         /// <summary>Null when the rack's bays can work, else the first problem.</summary>
         public string ValidateRack()
