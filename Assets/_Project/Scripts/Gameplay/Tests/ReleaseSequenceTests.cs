@@ -138,6 +138,44 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void TheView_GlintsTheDishSoftlyAsItReachesIt_ThenTwiceMore_EachSofter_AllInsideTheView()
+        {
+            var glints = new List<PeakDishGlinted>();
+            var times = new List<float>();
+            float clock = 0f;
+            _events.Subscribe<PeakDishGlinted>(glint =>
+            {
+                glints.Add(glint);
+                times.Add(clock);
+            });
+            _events.Publish(new CallAnswerPhaseChanged(AnswerPhase.Done, false));
+            _ring.IsShown = false;
+            while (_log.FindAll(entry => entry == "view").Count == 0)
+            {
+                _release.Step(Step);
+            }
+
+            Assert.AreEqual(0, glints.Count, "the answer's own flare is another event; none before the view");
+            for (; clock < _settings.ViewSecondsEach * 3f; clock += Step)
+            {
+                _release.Step(Step);
+            }
+
+            Assert.AreEqual(_settings.DishGlints, glints.Count);
+            Assert.AreEqual(_settings.ViewLeadSeconds + _settings.ViewSecondsEach, times[0], 0.1f, "as the view reaches it");
+            for (int i = 0; i < glints.Count; i++)
+            {
+                Assert.AreEqual(Dish, glints[i].Position);
+                Assert.Less(glints[i].Strength, 1f, "softer than the flare at the answer");
+                if (i > 0)
+                {
+                    Assert.AreEqual(_settings.DishGlintGapSeconds, times[i] - times[i - 1], 0.1f);
+                    Assert.Less(glints[i].Strength, glints[i - 1].Strength);
+                }
+            }
+        }
+
+        [Test]
         public void ALoadedGame_AnsweredButWithNoRackYet_StartsAtTheRack_AndOneThatShowedItIsDone()
         {
             _call.State = CallState.Answered;
