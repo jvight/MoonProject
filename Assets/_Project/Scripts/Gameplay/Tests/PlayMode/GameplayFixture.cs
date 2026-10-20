@@ -29,6 +29,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Art's R1 surface: the stand-in ruins and pad fragments show their scans on it.</summary>
         public const string R1LitShaderPath = "Assets/_Project/Shaders/R1/R1Lit.shader";
 
+        /// <summary>Where the stand-in 1971 seismic station stands, east of the ruins (one of R5's near sites).</summary>
+        public static readonly Vector3 SeismicStation = new Vector3(128f, 0f, 183f);
+
         public static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "gameplay-captures"));
 
@@ -205,6 +208,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Gameplay.WireDatabank(DatabankEntries());
             Gameplay.WireBuilding(build);
             Gameplay.WireRuins(Ruins(root.transform));
+            Gameplay.WireStoryProps(StoryProps(root.transform));
             Gameplay.WireLanderPort(Node("ServicePort", root.transform, new Vector3(35f, 0f, 157f)));
             Gameplay.WireApronOutline(Node("BayGlowOutline", root.transform, Vector3.zero).gameObject
                 .AddComponent<MeshRenderer>());
@@ -278,6 +282,17 @@ namespace MoonProject.Gameplay.PlayModeTests
         {
             Transform piece = Named(Block(site, position, size), name);
             Node("CutPoint", piece, new Vector3(0f, 0f, -0.5f)).localRotation = Quaternion.Euler(0f, 180f, 0f);
+        }
+
+        /// <summary>
+        /// A stand-in for World's 1971 seismic station under [World]/BasinProps, east of the ruins as World places it:
+        /// its CentralBox carries the station's story scan, and it is one of R5's near sites (OpeningTuning).
+        /// </summary>
+        private Transform[] StoryProps(Transform parent)
+        {
+            Transform station = Node("Prop_SeismicStation", parent, SeismicStation);
+            ShowsScans(Named(Block(station, new Vector3(0f, 0.3f, 0f), new Vector3(0.6f, 0.6f, 0.6f)), "CentralBox"));
+            return new[] { station };
         }
 
         /// <summary>
