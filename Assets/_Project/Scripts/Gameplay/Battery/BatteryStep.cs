@@ -20,6 +20,9 @@ namespace MoonProject.Gameplay
         /// <summary>07 tows a load on its winch cable: driving costs more and top speed is capped.</summary>
         public bool Towing { get; set; }
 
+        /// <summary>How hard the tow cable pulls back (0 slack .. 1 caught): 07's drive falls as it strains.</summary>
+        public float TowStrain01 { get; set; }
+
         /// <summary>The Boost Coils are engaged.</summary>
         public bool Boosting { get; set; }
 
