@@ -71,7 +71,7 @@ namespace MoonProject.Autoplay
 
         public IEnumerator Run()
         {
-            _base = new OpeningBase(_bot) { LinesExpected = _linesExpected };
+            _base = new OpeningBase(_bot) { LinesExpected = _linesExpected, Naive = _naive };
             yield return Boot();
             _base.Listen();
             foreach (Func<IEnumerator> beat in new Func<IEnumerator>[]
@@ -110,20 +110,49 @@ namespace MoonProject.Autoplay
             _naive.Declare("B0", new NextAction("WASD", new[] { drive }, new[] { "lander" }, new[] { "lander" }));
             _naive.Declare("B2", new NextAction("E", new[] { "hint.scan" }, new[] { "scan", "crate" }, null));
             _naive.Declare("B3", new NextAction("E", new[] { "hint.pickup" }, new[] { "take", "parts", "crate" }, null));
-            _naive.Declare("B4", new NextAction("B", new[] { "hint.openbuild" }, new[] { "pad", "apron" }, null));
+            _naive.Declare("B4", new NextAction("B", new[] { "hint.openbuild" },
+                new[] { "pad", "apron", "build", "charging" }, null));
+            _naive.Declare("B4b", new NextAction("E", new string[0], new[] { "place", "apron", "marks" }, null));
             _naive.Declare("B5", new NextAction("WASD", new[] { drive }, new[] { "pad", "park" }, null));
-            _naive.Declare("B6", new NextAction("WASD", new[] { drive }, new[] { "Lumen", "solar", "ruins" },
+            _naive.Declare("B6", new NextAction("WASD", new[] { drive }, new[] { "Lumen", "solar", "ruins", "array" },
                 new[] { "glint" }));
-            _naive.Declare("B7", new NextAction("B", new[] { "hint.openbuild" }, new[] { "solar", "array" }, null));
-            _naive.Declare("B8", new NextAction("WASD", new[] { drive }, new[] { "seismic", "habitat", "module" },
-                new[] { "glint", "lamp" }));
-            _naive.Declare("R5", new NextAction("WASD", new[] { drive }, new[] { "module", "habitat", "tow" },
-                new[] { "lamp" }));
-            _naive.Declare("B9", new NextAction("WASD", new[] { drive }, new[] { "tower", "night" }, new[] { "lamp" }));
-            _naive.Declare("B10", new NextAction("E", new[] { "hint.scan" }, new[] { "tower", "scan" }, null));
-            _naive.Declare("B11", new NextAction("E", new[] { "hint.openbuild" }, new[] { "transmit", "mast", "answer" },
+            _naive.Declare("B7a", new NextAction("E", new[] { "hint.salvage" }, new[] { "cut", "panel", "junction" },
                 null));
-            _naive.Declare("B12", new NextAction("WASD", new[] { drive }, new[] { "relay" }, new[] { "relay" }));
+            _naive.Declare("B7b", new NextAction("E", new[] { "hint.pickup" }, new[] { "rack", "igniter" },
+                new[] { "rack" }));
+            _naive.Declare("B7c", new NextAction("Tab", new[] { "hint.fitpart" }, new[] { "igniter", "fit" }, null));
+            _naive.Declare("B7", new NextAction("B", new[] { "hint.openbuild" }, new[] { "solar", "array" }, null));
+            // R5's free choice is told by the world only: no line is expected, and the dead lamp's glance comes
+            // after 30 s with no site visited.
+            _naive.Declare("B8", new NextAction("WASD", new string[0], new[] { "seismic", "habitat" },
+                new[] { "seismic", "module" }));
+            _naive.SetBudget("B8", FreeChoiceBudgetSeconds);
+            _naive.Declare("R5", new NextAction("WASD", new[] { drive }, new[] { "night", "module", "habitat", "store" },
+                new[] { "lamp" }));
+            _naive.Declare("B9a", new NextAction("RMB", new string[0], new[] { "tow", "home", "frame", "hook" }, null));
+            _naive.Declare("B9b", new NextAction("B", new[] { "hint.openbuild" }, new[] { "bank", "build", "module" },
+                null));
+            // The first nightfall plays by itself (B10): nothing is asked of the player after the bank.
+            _naive.Skip("B9");
+            _naive.Declare("B10", new NextAction("WASD", new[] { drive }, new[] { "tower", "antenna", "transmit" },
+                new[] { "tower" }));
+            _naive.Declare("B11a", new NextAction("B", new[] { "hint.openbuild" }, new[] { "mast", "antenna", "build" },
+                null));
+            _naive.Declare("B11", new NextAction("E", new[] { "hint.transmit" }, new[] { "transmit", "answer" },
+                new[] { "foot", "TX" }));
+            _naive.Declare("B12", new NextAction("WASD", new[] { drive }, new[] { "relay", "west" }, new[] { "relay" }));
+            _naive.Skip("R10");
+        }
+
+        /// <summary>The first free choice (B8, R5) is told by the world: the dead lamp's glance comes after 30 s.</summary>
+        private const float FreeChoiceBudgetSeconds = 35f;
+
+        private IEnumerator Sub(string id)
+        {
+            if (_naive != null && !_bot.Failed)
+            {
+                yield return _naive.Check(id);
+            }
         }
 
         private bool Reached(string beat)
@@ -346,13 +375,16 @@ namespace MoonProject.Autoplay
             yield return _base.SeeWorldCue(WorldCues.ArrayGlint(_bot.World), "B7: the fallen array glints in the sunrise");
             yield return _base.DriveToTheRuinsGate("the Lumen ruins");
             yield return _base.ScanTheSet("ruin.FallenSolarArray");
+            yield return Sub("B7a");
             yield return _base.ReadTheAirlockPanel();
             yield return _base.ExpectStep(OpeningSteps.FitIgniter, OpeningKeys.CutOptics,
                 "B7: the array's crates, the cutter still FAULT");
             yield return _base.TryTheFaultedCutter("FallenSolarArray");
             yield return _base.ExpectStep(OpeningSteps.FitIgniter, OpeningKeys.TakeIgniter,
                 "B7: the cutter sputtered, the rack is pointed at");
+            yield return Sub("B7b");
             yield return _base.TakeFromTheOpenCrate(SparesRack);
+            yield return Sub("B7c");
             yield return _base.ExpectStep(OpeningSteps.FitIgniter, OpeningKeys.FitIgniter,
                 "B7: the spare igniter in the hold");
             yield return _base.FitTheIgniter();
@@ -393,7 +425,9 @@ namespace MoonProject.Autoplay
             yield return _base.ExpectStep(OpeningSteps.BuildBatteryBank, OpeningKeys.BuildBatteryBank,
                 "B9: the module is the bank's frame");
             yield return _base.CutTheCrates("HabitatModules");
+            yield return Sub("B9a");
             yield return _base.TowTheModuleHome();
+            yield return Sub("B9b");
             yield return _base.Build(StructureIds.BatteryBank, _base.ModulePosition());
             yield return _base.UntilReached(OpeningMilestone.NightReady, "the NightReady milestone",
                 NightReadySeconds);
@@ -427,6 +461,7 @@ namespace MoonProject.Autoplay
             yield return _base.ExpectStep(OpeningSteps.ScanTower, OpeningKeys.ScanTower, "B11: after nightfall");
             yield return _base.CutTheCrates("RadioTower");
             yield return _base.ScanTheSet("ruin.RadioTower");
+            yield return Sub("B11a");
             yield return _base.ExpectStep(OpeningSteps.BuildMast, OpeningKeys.BuildMast, "B11");
             yield return _base.DriveToTheRuinsGate("out of the Lumen ruins");
             yield return _base.Build(StructureIds.AntennaMast, _base.Pad() + Vector3.back * OpeningBase.Spacing);

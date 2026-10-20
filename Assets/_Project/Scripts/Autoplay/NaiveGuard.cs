@@ -27,7 +27,7 @@ namespace MoonProject.Autoplay
         /// <summary>Localization keys whose words a chip must carry ("hint.openbuild").</summary>
         public string[] VerbKeys { get; }
 
-        /// <summary>Words (any one) a line must contain to name the goal.</summary>
+        /// <summary>Words (any one) a line, or a chip with no verb key of its own, must contain to name the goal.</summary>
         public string[] LineWords { get; }
 
         /// <summary>Parts (any one) of a lit world cue's name that points at the goal.</summary>
@@ -82,6 +82,7 @@ namespace MoonProject.Autoplay
         private readonly AutoplayBot _bot;
         private readonly Dictionary<string, float> _budgets = new Dictionary<string, float>();
         private readonly Dictionary<string, NextAction> _next = new Dictionary<string, NextAction>();
+        private readonly HashSet<string> _skipped = new HashSet<string>();
         private readonly List<NaiveResult> _results = new List<NaiveResult>();
 
         public NaiveGuard(AutoplayBot bot)
@@ -114,6 +115,12 @@ namespace MoonProject.Autoplay
             _next[beat] = action;
         }
 
+        /// <summary>No check after <paramref name="beat"/>: what follows is not a player action (an observed moment).</summary>
+        public void Skip(string beat)
+        {
+            _skipped.Add(beat);
+        }
+
         /// <summary>A beat's own budget (game seconds) in place of the default.</summary>
         public void SetBudget(string beat, float seconds)
         {
@@ -123,7 +130,7 @@ namespace MoonProject.Autoplay
         /// <summary>Stands passive after <paramref name="beat"/> and measures the time to a cue.</summary>
         public IEnumerator Check(string beat)
         {
-            if (!_bot.World.Refresh() || _bot.World.Ui == null)
+            if (_skipped.Contains(beat) || !_bot.World.Refresh() || _bot.World.Ui == null)
             {
                 yield break;
             }
@@ -170,7 +177,7 @@ namespace MoonProject.Autoplay
             ILocalization words = _bot.World.Context.Get<ILocalization>();
             if (ui.ChipInView(out string chip))
             {
-                if (action == null || ChipNames(action, chip, words))
+                if (action == null || ChipNames(action, chip, words) || Contains(chip, action.LineWords))
                 {
                     return "chip '" + chip + "'";
                 }
