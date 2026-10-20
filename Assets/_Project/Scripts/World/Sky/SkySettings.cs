@@ -197,6 +197,10 @@ namespace MoonProject.World
         [Range(0f, 10f)]
         [SerializeField] private float _shootingStarBrightness = 3f;
 
+        [Header("The call's point of light (opening v3 purpose §2)")]
+        [Tooltip("The calm point of light beside dark Earth that keys the call with the carrier.")]
+        [SerializeField] private CallSkyPointSettings _callPoint = new CallSkyPointSettings();
+
         public Color SkyTop => _skyTop;
         public Color HorizonGlow => _horizonGlow;
         public float HorizonGlowHeight => _horizonGlowHeight;
@@ -219,6 +223,7 @@ namespace MoonProject.World
         public Color MilkyWayColor => _milkyWayColor;
         public float MilkyWayWidth => _milkyWayWidth;
         public float MilkyWayIntensity => _milkyWayIntensity;
+        public CallSkyPointSettings CallPoint => _callPoint;
         public float EarthBearing => _earthBearing;
         public float EarthElevation => _earthElevation;
         public float EarthDiameter => _earthDiameter;
