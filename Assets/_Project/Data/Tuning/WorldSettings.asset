@@ -369,6 +369,15 @@ MonoBehaviour:
     _shootingStarPeriod: 38
     _shootingStarDuration: 2.4
     _shootingStarBrightness: 3
+    _callPoint:
+      _color: {r: 1, g: 0.95, b: 0.86, a: 1}
+      _peak: 1
+      _rest: 0.35
+      _brokenRest: 0.12
+      _stateFadeSeconds: 1.2
+      _corePixels: 1.8
+      _glowPixels: 9
+      _glowShare: 0.3
   _beacon:
     _period: 3.2
     _sharpness: 1.6

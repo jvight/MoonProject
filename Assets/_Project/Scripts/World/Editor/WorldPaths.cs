@@ -7,6 +7,11 @@ namespace MoonProject.World.Editor
         public const string Settings = "Assets/_Project/Data/Tuning/WorldSettings.asset";
         public const string SkyMaterial = GeneratedRoot + "/M_Sky.mat";
         public const string EarthMaterial = GeneratedRoot + "/M_Earth.mat";
+
+        /// <summary>The call's point of light beside Earth (LofiSkyPoint) and its never-culled quad.</summary>
+        public const string SkyPointMaterial = GeneratedRoot + "/M_CallSkyPoint.mat";
+        public const string SkyPointMesh = GeneratedRoot + "/CallSkyPointQuad.asset";
+        public const string SkyPointShader = "Assets/_Project/Shaders/World/LofiSkyPoint.shader";
         public const string GroundMaterial = GeneratedRoot + "/M_Ground.mat";
         /// <summary>Marks pressed into the dust: the rover's track shader, World's tint and fade.</summary>
         public const string GroundMarkMaterial = GeneratedRoot + "/M_GroundMarks.mat";
