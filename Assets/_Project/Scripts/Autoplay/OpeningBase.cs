@@ -109,14 +109,12 @@ namespace MoonProject.Autoplay
 
         private const string TricklePostEntry = "db.trickle_post";
 
-        /// <summary>The rack's headlamp bay: its id, Art's outline node, and the stand 07 reads it from (R12).</summary>
+        /// <summary>The rack's headlamp bay: its id and Art's outline node (R12).</summary>
         private const string HeadlampBayId = "rack.headlamp";
 
         private const string HeadlampOutlineNode = "Outline_0";
-        private const float RackStandOff = 2.5f;
-
-        /// <summary>Seconds 07 looks at the bay from one side of the rack before it tries the next.</summary>
-        private const float RackReadSeconds = 4f;
+        /// <summary>Seconds 07 may take on the pad to turn its view onto the bay and read it.</summary>
+        private const float RackReadSeconds = 8f;
 
         private static readonly Recipe HeadlampCost = new Recipe(2, 1, 0);
 
@@ -905,30 +903,16 @@ namespace MoonProject.Autoplay
                 yield break;
             }
 
-            // A player walks round the rack until its bay reads: the bays face the dock, so try each side in turn.
+            // Where a player stands: on the pad the rack faces, looking at the bay.
             Vector3 point = outline.bounds.center;
-            Transform frame = G.RackView.Instance.transform;
-            Vector3[] sides = { frame.forward, -frame.forward, frame.right, -frame.right };
-            bool read = false;
-            for (int i = 0; i < sides.Length && !read && !_bot.Failed; i++)
-            {
-                Vector3 stand = point + Flat(sides[i]).normalized * RackStandOff;
-                yield return _bot.DriveTo(Flat(stand), RelayArrive, "a side of the rack", DriveSeconds);
-                yield return _bot.TurnToward(point, "the rack's headlamp bay");
-                float deadline = Time.unscaledTime + RackReadSeconds;
-                while (!_bot.Failed && !read && Time.unscaledTime < deadline)
-                {
-                    read = _bot.KeepLookingAt(point) && ReadsHeadlampBay();
-                    yield return null;
-                }
-            }
-
-            if (!read)
-            {
-                _bot.Fail("07 never read the rack's headlamp bay from any side. " + _bot.Where());
-                yield break;
-            }
-
+            yield return _bot.DriveTo(Flat(PlacedPosition(StructureIds.ChargingPad)), ApproachThrottleRadius,
+                "the pad, facing the rack", DriveSeconds);
+            yield return _bot.Until(() => _bot.KeepLookingAt(point) && ReadsHeadlampBay(), RackReadSeconds,
+                "07 to read the rack's headlamp bay from the pad",
+                () => "Bay at " + point + ", in the view at " +
+                      _bot.World.Context.Get<IViewCamera>().Camera.WorldToViewportPoint(point) + ", " +
+                      DriveSteering.FlatDistance(point, _bot.World.Rover.Position)
+                          .ToString("0.0", CultureInfo.InvariantCulture) + " m from 07. " + _bot.Where());
             yield return _bot.Hold(Key.E, () =>
                 {
                     _bot.KeepLookingAt(point);
