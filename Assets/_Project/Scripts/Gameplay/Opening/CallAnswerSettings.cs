@@ -87,6 +87,17 @@ namespace MoonProject.Gameplay
         [Range(0.3f, 5f)]
         [SerializeField] private float _glintSeconds = 1.8f;
 
+        [Header("The release (R9)")]
+        [Tooltip("Seconds 07 looks at each of the three lures from the rise: relay.1, the Peak's dish, Kestrel-3.")]
+        [Range(1f, 10f)]
+        [SerializeField] private float _viewSecondsEach = 3.5f;
+
+        [Tooltip("Seconds between the range ring going and the view beginning.")]
+        [Range(0f, 5f)]
+        [SerializeField] private float _releaseGapSeconds = 1.2f;
+
+        public float ViewSecondsEach => _viewSecondsEach;
+        public float ReleaseGapSeconds => _releaseGapSeconds;
         public float TransmitRadius => _transmitRadius;
         public float MastTopHeight => _mastTopHeight;
         public float RelayLampHeight => _relayLampHeight;
