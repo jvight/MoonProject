@@ -171,6 +171,9 @@ namespace MoonProject.Gameplay
         /// <summary>07's winch cable: what it tows, hooked and let go with the tether key (opening v3 R6).</summary>
         public TowLine Tow { get; private set; }
 
+        /// <summary>Structures built on a towed load take it in (the battery bank on the power module).</summary>
+        public TowFrames TowFrames { get; private set; }
+
         public SalvageField Salvage => _salvage;
 
         /// <summary>07's battery: drains, chargers, the crawl and the warnings (docs/features/M3-20).</summary>
@@ -321,13 +324,23 @@ namespace MoonProject.Gameplay
             ApronGuide = new ApronGuide(transform, _apronOutline, _visuals.BeamCore, _building.Tuning);
             ScanMark = new ScanTargetMark(transform, _visuals.BeamCore, _scanTuning);
             _building.MarkApron(_apronOutline.bounds.center);
+            Tow = NewTow(services);
+            if (Tow == null)
+            {
+                Fail("the tow did not stand (see its error).");
+                return;
+            }
+
+            _battery.ConnectTow(Tow);
+            _building.ConnectTow(Tow);
+            TowFrames = new TowFrames(context.Events, _building.Catalog, Tow);
             Rack = new SocketRackField(context.Events, _openingTuning.RackBays);
             RackView = new SocketRackView(context.Events, Rack, _openingTuning.RackView, services.Terrain,
                 context.Get<IViewCamera>(), context.Get<IRoverState>(), transform);
             var firstUse = new FirstUseSpots(Opening, _building, context.Get<IViewCamera>(), context.Get<IRoverState>(),
                 _building.Tuning.FirstUseViewMargin);
             var hints = new InteractionHints(_salvage, Containers, Scans, _building, services.Beam, Cutter,
-                services.Pickups, firstUse, RackView);
+                services.Pickups, firstUse, Tow, RackView);
             Hints = hints;
             Recovery = new RecoveryProgress(context.Events, PowerLamps, PowerSteps, _openingTuning.RecoveryLamps);
             Call = new CallProgress(context.Events, _openingTuning.Call, services.Layout);
@@ -341,14 +354,6 @@ namespace MoonProject.Gameplay
                 new RangeRingModel(_battery.Tuning, _battery.Tuning.RangeRing, services.Terrain), _battery.Model,
                 Opening.Pads, services.Rover);
             RangeRingLine = new RangeRingLine(transform, _visuals.BeamCore, RangeRing, _battery.Tuning.RangeRing);
-            Tow = NewTow(services);
-            if (Tow == null)
-            {
-                Fail("the tow did not stand (see its error).");
-                return;
-            }
-
-            _battery.ConnectTow(Tow);
             _flowTokens.Add(context.Events.Subscribe<ChargingChanged>(OnChargingChanged));
             context.Register<IMaterialStock>(Materials);
             context.Register<IMaterialCatalog>(_materialCatalog);
@@ -768,6 +773,7 @@ namespace MoonProject.Gameplay
             _flowTokens.Clear();
             Databank?.Dispose();
             StartKit?.Dispose();
+            TowFrames?.Dispose();
             Call?.Dispose();
             Rack?.Dispose();
             RackView?.Dispose();

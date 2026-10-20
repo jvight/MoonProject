@@ -351,6 +351,7 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<StructureLearned>(OnStructureLearned));
             _tokens.Add(events.Subscribe<BatteryArcRevealed>(OnBatteryArcRevealed));
             _tokens.Add(events.Subscribe<PartFitted>(_ => _director.NotifyUsed(InteractionKind.FitPart)));
+            _tokens.Add(events.Subscribe<TowAttached>(_ => _director.NotifyUsed(InteractionKind.Tether)));
             _tokens.Add(events.Subscribe<StructurePlaced>(_ => _director.NotifyUsed(InteractionKind.Build)));
             _tokens.Add(events.Subscribe<StoryPartCollected>(collected => _pickups?.PartCollected(collected.PartId)));
             _tokens.Add(events.Subscribe<MaterialSalvaged>(OnMaterialSalvaged));

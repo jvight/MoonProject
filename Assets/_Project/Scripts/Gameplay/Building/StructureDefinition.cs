@@ -52,6 +52,11 @@ namespace MoonProject.Gameplay
         [Tooltip("Seconds of active welding by 07 required to complete the structure.")]
         [Range(0.5f, 60f)] [SerializeField] private float _buildSeconds = 3f;
 
+        [Tooltip("The towable load this structure is built on, by its tow id (the battery bank on the habitat's power " +
+                 "module), or empty. It must stand on the apron, off the cable; the structure stands where it stands " +
+                 "and the weld takes it in.")]
+        [SerializeField] private string _frameLoad = string.Empty;
+
         [Tooltip("Cable and snap ports in local space (position + outward horizontal direction).")]
         [SerializeField] private StructurePort[] _ports = Array.Empty<StructurePort>();
 
@@ -89,6 +94,9 @@ namespace MoonProject.Gameplay
         public Recipe BuildCost => _buildCost;
 
         public float BuildSeconds => _buildSeconds;
+
+        /// <summary>The towable load it is built on (<see cref="TowLoads"/>' tow ids), or empty.</summary>
+        public string FrameLoad => _frameLoad ?? string.Empty;
 
         public IReadOnlyList<StructurePort> Ports => _ports;
 
@@ -130,7 +138,8 @@ namespace MoonProject.Gameplay
             float buildSeconds,
             StructurePort[] ports,
             GameObject prefab,
-            bool artPending)
+            bool artPending,
+            string frameLoad = null)
         {
             _id = id ?? string.Empty;
             _nameKey = nameKey ?? string.Empty;
@@ -148,6 +157,7 @@ namespace MoonProject.Gameplay
             _ports = ports ?? Array.Empty<StructurePort>();
             _prefab = prefab;
             _artPending = artPending;
+            _frameLoad = frameLoad ?? string.Empty;
         }
 
         /// <summary>Null when the definition is valid, else the first problem found.</summary>

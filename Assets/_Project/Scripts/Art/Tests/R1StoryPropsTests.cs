@@ -53,6 +53,9 @@ namespace MoonProject.Art.Tests
             ("geophone_plug.json", "Props/Geophone_Plug.fbx"),
             ("prop_geophone_line.json", "Props/Prop_GeophoneLine.fbx"),
             ("power_module.json", "Ruins/PowerModule.fbx"),
+            ("service_cabinet.json", "Structures/ServiceCabinet.fbx"),
+            ("feed_unit_spare.json", "Props/FeedUnitSpare.fbx"),
+            ("relay_contact_pad.json", "Structures/RelayContactPad.fbx"),
         };
 
         [Serializable]
@@ -257,6 +260,55 @@ namespace MoonProject.Art.Tests
                 Assert.AreNotEqual(R1MaterialRecipes.LampAmberSlot, m.name,
                     "ModuleA_Main must not retain an un-blinkable R1_LampAmber submesh.");
             }
+        }
+
+        [Test]
+        public void RelayRepairProps_ExposeTheNodesGameplayWires_WithTheirLitSlots()
+        {
+            GameObject mast = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.DeadAntennaMastPrefabPath);
+            Assert.IsNotNull(mast.transform.Find("FeedSocket"), "DeadAntennaMast missing FeedSocket.");
+            Assert.IsNotNull(mast.transform.Find("FeedSocket_Anchor"), "DeadAntennaMast missing FeedSocket_Anchor.");
+            AssertSingleSlot(mast.transform.Find("FeedSocket_Outline"), R1MaterialRecipes.RackOutlineSlot);
+
+            GameObject cabinet = LoadR1Prefab("Structures/ServiceCabinet.fbx");
+            Assert.IsNotNull(cabinet.transform.Find("Door/DoorSeal"), "ServiceCabinet missing Door/DoorSeal.");
+            Assert.IsNotNull(cabinet.transform.Find("Part_Anchor"), "ServiceCabinet missing Part_Anchor.");
+            AssertSingleSlot(cabinet.transform.Find("InteriorLamp"), R1MaterialRecipes.LampAmberSlot, true);
+
+            GameObject spare = LoadR1Prefab("Props/FeedUnitSpare.fbx");
+            Assert.IsNotNull(spare.transform.Find("Grip_Anchor"), "FeedUnitSpare missing Grip_Anchor.");
+            Assert.IsNotNull(spare.transform.Find("Connector_Anchor"), "FeedUnitSpare missing Connector_Anchor.");
+            Assert.IsNotNull(spare.transform.Find("LabelPlate"), "FeedUnitSpare missing LabelPlate.");
+
+            GameObject pad = LoadR1Prefab("Structures/RelayContactPad.fbx");
+            Assert.IsNotNull(pad.transform.Find("Contact_Anchor"),
+                "RelayContactPad missing Contact_Anchor.");
+            AssertSingleSlot(pad.transform.Find("PadLamp"), R1MaterialRecipes.LampAmberSlot, true);
+        }
+
+        private static GameObject LoadR1Prefab(string fbxRelativePath)
+        {
+            return MeshChecks.LoadGeneratedPrefab(
+                R1ModelBuilder.GetGeneratedPrefabPath(R1MaterialRecipes.ModelsFolder + "/" + fbxRelativePath));
+        }
+
+        // The node's renderer carries the slot Gameplay drives through _EmissionColor (with its bezel when allowed).
+        private static void AssertSingleSlot(Transform node, string slot, bool allowBezel = false)
+        {
+            Assert.IsNotNull(node, $"Missing the node that carries {slot}.");
+            Renderer renderer = node.GetComponent<Renderer>();
+            Assert.IsNotNull(renderer, $"{node.name} must have its own Renderer.");
+            bool found = false;
+            foreach (Material m in renderer.sharedMaterials)
+            {
+                found |= m.name == slot;
+                if (!allowBezel)
+                {
+                    Assert.AreEqual(slot, m.name, $"{node.name} must carry only {slot}.");
+                }
+            }
+
+            Assert.IsTrue(found, $"{node.name} must carry {slot}.");
         }
 
         [Test]

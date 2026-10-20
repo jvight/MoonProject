@@ -323,7 +323,8 @@ namespace MoonProject.Autoplay
             yield return _base.ExpectStep(OpeningSteps.BuildSolar, OpeningKeys.BuildSolar,
                 "B8: the array's cost is covered");
             yield return _base.DriveToTheRuinsGate("out of the Lumen ruins");
-            yield return _base.Build(StructureIds.SolarArray, _base.Pad() + Vector3.right * OpeningBase.Spacing);
+            // West of the pad: the ruins side stays open for the power module towed home at R6.
+            yield return _base.Build(StructureIds.SolarArray, _base.Pad() + Vector3.left * OpeningBase.Spacing);
             yield return _base.UntilReached(OpeningMilestone.PowerOn, "the PowerOn milestone");
             _bot.EndBeat("the array stands and the base has power");
         }
@@ -339,13 +340,13 @@ namespace MoonProject.Autoplay
 
         private IEnumerator TheHabitat()
         {
-            Begin("B9", "The habitat: scan the modules, cut the cable reel and power module, build the bank");
+            Begin("B9", "The habitat: scan the modules, cut the cable reel, tow the power module home, build the bank on it");
             yield return _base.ExpectStep(OpeningSteps.BuildBatteryBank, OpeningKeys.BuildBatteryBank,
                 "B9: night is coming");
             yield return _base.ScanTheSet("ruin.HabitatModules");
             yield return _base.CutTheCrates("HabitatModules");
-            yield return _base.DriveToTheRuinsGate("out of the Lumen ruins");
-            yield return _base.Build(StructureIds.BatteryBank, _base.Pad() + Vector3.left * OpeningBase.BankSpacing);
+            yield return _base.TowTheModuleHome();
+            yield return _base.Build(StructureIds.BatteryBank, _base.ModulePosition());
             yield return _base.UntilReached(OpeningMilestone.NightReady, "the NightReady milestone",
                 NightReadySeconds);
             if (!_bot.Failed)
@@ -362,7 +363,7 @@ namespace MoonProject.Autoplay
                 }
             }
 
-            _bot.EndBeat("the battery bank stands and the base is night-ready");
+            _bot.EndBeat("the module towed home, the battery bank stands on it and the base is night-ready");
         }
 
         private IEnumerator Nightfall()
