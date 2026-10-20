@@ -938,8 +938,6 @@ CUES = (
         milestone="M3", notes="The capacitor drums boosting: a soft whine on A. 2 s seamless."),
     Cue("boost_release", "tick_3d", feel.boost_release, volume=(0.6, 0.6), milestone="M3",
         notes="The drums emptying: a felt fff and a tick on D."),
-    Cue("page_tick", "tick_2d", feel.page_tick, volume=(0.5, 0.5), milestone="M3",
-        notes="A new step's line: a breath-quiet page-turn tick."),
     Cue("save_tick", "tick_2d", feel.save_tick, volume=(0.4, 0.4), milestone="M3",
         notes="The game saved: a tiny soft tick on D, once per burst."),
     Cue("count_tick", "tick_2d", feel.count_tick, variants=len(feel.COUNT_TICK_NOTES), volume=(0.45, 0.45),

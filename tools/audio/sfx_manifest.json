@@ -2491,33 +2491,6 @@
       "notes": "The drums emptying: a felt fff and a tick on D."
     },
     {
-      "id": "page_tick",
-      "category": "tick_2d",
-      "milestone": "M3",
-      "bus": "Sfx",
-      "spatial": false,
-      "loop": false,
-      "files": [
-        "Assets/_Project/Audio/SFX/2D/page_tick.wav"
-      ],
-      "variantLabels": [
-        "page_tick"
-      ],
-      "sha256": [
-        "fb2f8f92138dc63de54770ef0baa24395fee81eb69195da4a93d21eca9a45019"
-      ],
-      "volumeMin": 0.5,
-      "volumeMax": 0.5,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -28.0,
-      "loudnessMode": "momentary",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": false,
-      "notes": "A new step's line: a breath-quiet page-turn tick."
-    },
-    {
       "id": "save_tick",
       "category": "tick_2d",
       "milestone": "M3",
