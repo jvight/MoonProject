@@ -159,6 +159,10 @@ namespace MoonProject.Rover
         [Tooltip("The amber lamps along the stripe, one per cell (docs/features/M3-20).")]
         [SerializeField] private FlankLampSettings _flankLamps = new FlankLampSettings();
 
+        [Header("The tow cable (opening v3 3.2b)")]
+        [Tooltip("07's winch cable as seen: the rope, its clamp, its sag and the winch drum's turn.")]
+        [SerializeField] private TowCableSettings _towCable = new TowCableSettings();
+
         [Header("Growth parts (the antenna's second segment, the igniter cartridge)")]
         [Tooltip("How the parts 07 grows in the opening move: slow, mechanical, soft.")]
         [SerializeField] private GrowthSettings _growth = new GrowthSettings();
@@ -276,6 +280,8 @@ namespace MoonProject.Rover
         public FlankLampSettings FlankLamps => _flankLamps;
 
         public GrowthSettings Growth => _growth;
+
+        public TowCableSettings TowCable => _towCable;
 
         public PortraitSettings Portrait => _portrait;
 

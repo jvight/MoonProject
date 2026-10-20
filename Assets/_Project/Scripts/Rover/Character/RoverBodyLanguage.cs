@@ -125,6 +125,8 @@ namespace MoonProject.Rover
         private float _tetherStrain;
         private float _winchReel;
         private float _winchAngle;
+        private float _towSpool;
+        private float _towStrain;
         private float _cargoTarget;
         private float _cargoSag;
         private float _cutEnds = -1f;
@@ -135,6 +137,8 @@ namespace MoonProject.Rover
 
         private RoverMood _mood;
         private LookAround _lookAround;
+        private const int ReleaseLureCount = 3;
+
         private AntennaListen _listen;
         private CallListen _call;
         private ICallSource _callSource;
@@ -146,6 +150,10 @@ namespace MoonProject.Rover
         private EventBus _events;
         private IDisposable[] _subscriptions;
         private float _glanceEnds = -1f;
+        private readonly Vector3[] _releaseLooks = new Vector3[ReleaseLureCount];
+        private int _releaseLook = -1;
+        private float _releaseSeconds;
+        private float _releaseNextAt;
         private MaterialPropertyBlock _glowBlock;
         private RoverDustCoat _dustCoat;
         private DampedSpring _yaw;
@@ -456,6 +464,7 @@ namespace MoonProject.Rover
                 events.Subscribe<FriendSpotted>(spotted => Glance(spotted.Position)),
                 events.Subscribe<CargoChanged>(OnCargoChanged),
                 events.Subscribe<SonarPinged>(OnListened),
+                events.Subscribe<ReleaseViewOpened>(OnReleaseView),
                 events.Subscribe<CallReplyFailed>(_ => _call.ReplyFailed()),
             };
             _initialized = true;
@@ -658,6 +667,40 @@ namespace MoonProject.Rover
         }
 
         /// <summary>07 glances at <paramref name="point"/> for a moment (gameplay requests can override it).</summary>
+        /// <summary>
+        /// The release's view from the rise: 07 looks at relay.1's lamp, the Peak's dish and Kestrel-3 in turn, so the
+        /// player's eye is led to the three lures.
+        /// </summary>
+        private void OnReleaseView(ReleaseViewOpened opened)
+        {
+            _releaseLooks[0] = opened.Relay;
+            _releaseLooks[1] = opened.Dish;
+            _releaseLooks[2] = opened.Kestrel;
+            _releaseSeconds = opened.SecondsEach;
+            _releaseLook = 0;
+            _releaseNextAt = Time.time + _releaseSeconds;
+            Glance(_releaseLooks[0], _tuning.ReactionGazePriority, _releaseSeconds);
+        }
+
+        /// <summary>Moves 07's release look on to the next lure when its time is up.</summary>
+        private void StepReleaseView()
+        {
+            if (_releaseLook < 0 || Time.time < _releaseNextAt)
+            {
+                return;
+            }
+
+            _releaseLook++;
+            if (_releaseLook >= ReleaseLureCount)
+            {
+                _releaseLook = -1;
+                return;
+            }
+
+            _releaseNextAt = Time.time + _releaseSeconds;
+            Glance(_releaseLooks[_releaseLook], _tuning.ReactionGazePriority, _releaseSeconds);
+        }
+
         private void Glance(Vector3 point)
         {
             Glance(point, _tuning.ReactionGazePriority, _tuning.RelicGlanceSeconds);
@@ -871,6 +914,7 @@ namespace MoonProject.Rover
                     break;
             }
 
+            StepReleaseView();
             if (_glanceEnds >= 0f && Time.time >= _glanceEnds)
             {
                 _rover.Gaze.Clear(_glanceOwner);
@@ -947,7 +991,17 @@ namespace MoonProject.Rover
             _scoopKick = Smoothing.Damp(_scoopKick, 0f, halfLife, deltaTime);
             _winchReel = Smoothing.Damp(_winchReel, _tetherActive ? 1f : 0f, 0.15f, deltaTime);
             _winchAngle = Mathf.Repeat(_winchAngle + _winchReel * 360f * deltaTime, 360f);
-            _mood.SetEffort(_tetherStrain);
+            _mood.SetEffort(Mathf.Max(_tetherStrain, _towStrain));
+        }
+
+        /// <summary>
+        /// The tow cable's work this frame (<see cref="RoverTowCable"/>): the degrees the winch drum has turned for the
+        /// rope's travel, out positive, and how hard the cable pulls, 0..1, which 07 leans into.
+        /// </summary>
+        public void SetTow(float spoolDegrees, float strain01)
+        {
+            _towSpool = spoolDegrees;
+            _towStrain = Mathf.Clamp01(strain01);
         }
 
         /// <summary>The tired look below the Low share and the quieter crawl, each eased in and out.</summary>
@@ -1145,7 +1199,7 @@ namespace MoonProject.Rover
 
             if (_winchSpool != null)
             {
-                _winchSpool.localRotation = _winchSpoolRest * Quaternion.AngleAxis(_winchAngle, Vector3.right);
+                _winchSpool.localRotation = _winchSpoolRest * Quaternion.AngleAxis(_winchAngle + _towSpool, Vector3.right);
             }
 
             float wingOpen = Mathf.Max(_mood.WingOpen * Mathf.Lerp(1f, battery.LowWingOpen, _tired),

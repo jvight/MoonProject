@@ -25,6 +25,7 @@ namespace MoonProject.Rover.Editor
         public const string TrackMaterial = GeneratedRoot + "/Materials/M_RoverTrack.mat";
         public const string DustMaterial = GeneratedRoot + "/Materials/M_RoverDust.mat";
         public const string MoteMaterial = GeneratedRoot + "/Materials/M_RoverMote.mat";
+        public const string TowCableMaterial = "Assets/_Project/Generated/Art/R1/Materials/R1_Rubber.mat";
         public const string DustTexture = GeneratedRoot + "/Textures/DustPuff.asset";
 
         public const string TuningFolder = "Assets/_Project/Data/Tuning";

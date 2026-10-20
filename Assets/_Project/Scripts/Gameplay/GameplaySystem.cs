@@ -144,6 +144,8 @@ namespace MoonProject.Gameplay
 
         public NetworkPulseView PulseView { get; private set; }
 
+        public ReleaseSequence Release { get; private set; }
+
         /// <summary>Seconds of holding E at the mast to transmit (tests).</summary>
         public float HoldSecondsForTests => _openingTuning.Answer.HoldSeconds;
 
@@ -358,6 +360,10 @@ namespace MoonProject.Gameplay
             context.Register<IRecoveryProgress>(Recovery);
             context.Register<ICallSource>(Call);
             context.Register<IAnswerStatus>(Answer);
+            services.Anchors.TryGet(WorldAnchorIds.SitePrefix + "kestrel", out WorldAnchor kestrel);
+            Release = new ReleaseSequence(context.Events, Call, RangeRing, RangeRing.Show, _openingTuning.Answer,
+                relay.Position + Vector3.up * _openingTuning.Answer.RelayLampHeight,
+                services.Layout.PeakPosition + Vector3.up * _openingTuning.Answer.DishHeight, kestrel.Position);
             PulseView = new NetworkPulseView(transform, _visuals.BeamCore, services.Meshes.Sphere, _visuals.Flash,
                 context.Events, _openingTuning.Answer);
             context.Register<IRangeRing>(RangeRing);
@@ -371,6 +377,7 @@ namespace MoonProject.Gameplay
         {
             CallSaveData data = Call.Capture();
             Reply.Capture(data);
+            Release.Capture(data);
             return data;
         }
 
@@ -378,6 +385,7 @@ namespace MoonProject.Gameplay
         {
             Call.Restore(data);
             Reply.Restore(data);
+            Release.Restore(data);
         }
 
         private void RegisterSaveSections(ISaveService save)
@@ -583,6 +591,7 @@ namespace MoonProject.Gameplay
             StartKit.Announce();
             Recovery.Announce();
             Call.Announce();
+            Release.Announce();
             Opening.Announce();
         }
 
@@ -601,6 +610,7 @@ namespace MoonProject.Gameplay
             MastRaise.Step(deltaTime);
             MastRaiseView.Step();
             PulseView.Step(deltaTime);
+            Release.Step(deltaTime);
             Answer.Step(deltaTime, Opening.NightFallen, _input.ExcavateHeld, _roverState.Position, _roverState.Speed);
             RangeRing.Step(deltaTime);
             RangeRingLine.Step();
@@ -752,6 +762,7 @@ namespace MoonProject.Gameplay
             MastRaiseView?.Dispose();
             Answer?.Dispose();
             PulseView?.Dispose();
+            Release?.Dispose();
             RangeRing?.Dispose();
             Bundles?.Dispose();
             Opening?.Dispose();

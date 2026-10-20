@@ -370,14 +370,22 @@ MonoBehaviour:
     _shootingStarDuration: 2.4
     _shootingStarBrightness: 3
     _callPoint:
-      _color: {r: 1, g: 0.95, b: 0.86, a: 1}
-      _peak: 1
-      _rest: 0.35
-      _brokenRest: 0.12
+      _color: {r: 1, g: 0.82, b: 0.56, a: 1}
+      _emberColor: {r: 1, g: 0.58, b: 0.26, a: 1}
+      _peak: 0.85
+      _rest: 0.22
+      _brokenRest: 0.1
       _stateFadeSeconds: 1.2
       _corePixels: 2.2
       _glowPixels: 12
       _glowShare: 0.3
+      _pulseSeconds: 0.3
+      _ringPixels: 26
+      _ringWidthPixels: 1.6
+      _ringBrightness: 0.38
+      _toneOn: 0.5
+      _toneOff: 0.2
+      _clearDegrees: 3
   _beacon:
     _period: 3.2
     _sharpness: 1.6
@@ -531,10 +539,15 @@ MonoBehaviour:
       _sparkColor: {r: 0.62, g: 0.86, b: 1, a: 1}
     _arrayGlint:
       _color: {r: 1, g: 0.96, b: 0.88, a: 1}
-      _intensity: 3
-      _radius: 0.35
-      _minAngle: 0.5
-      _sharpness: 12
+      _sharpness: 4
+      _sheenIntensity: 0.8
+      _sheenLift: 0.015
+      _sparkleIntensity: 1.4
+      _sparkleArmPixels: 8
+      _sparkleWidthPixels: 0.7
+      _sparkleCorePixels: 1.3
+      _sparkleTwinkleHertz: 2.7
+      _sparkleTwinkleDepth: 0.6
       _shimmerHertz: 1.3
       _shimmerDepth: 0.35
       _sunlightSampleSeconds: 0.1
