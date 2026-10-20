@@ -38,6 +38,10 @@ namespace MoonProject.Audio
         /// <summary>The carrier's volume scale now (level x facing x the dropouts).</summary>
         public float Gain { get; private set; }
 
+        /// <summary>What the dropouts leave of the carrier now: 1, down to the tuned dropout gain inside a break while
+        /// broken (no facing swell, no level).</summary>
+        public float Cut { get; private set; } = 1f;
+
         /// <summary>The carrier's pitch scale now (1 except for the wow while broken).</summary>
         public float Pitch { get; private set; } = 1f;
 
@@ -111,8 +115,8 @@ namespace MoonProject.Audio
             _static = Mathf.MoveTowards(_static, StaticFor(State, _settings), settle * _settings.BrokenStatic);
             StepDropouts(dt);
 
-            float cut = Mathf.Lerp(1f, _settings.DropoutGain, _dropout01 * _breakUp01);
-            Gain = _settings.Level * _facingGain * cut;
+            Cut = Mathf.Lerp(1f, _settings.DropoutGain, _dropout01 * _breakUp01);
+            Gain = _settings.Level * _facingGain * Cut;
             _wowPhase = Mathf.Repeat(_wowPhase + dt * _settings.WowRate, 1f);
             Pitch = 1f + _settings.WowDepth * _breakUp01 * Mathf.Sin(2f * Mathf.PI * _wowPhase);
         }

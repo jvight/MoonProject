@@ -91,6 +91,10 @@ namespace MoonProject.Gameplay
         [Tooltip("The sender's identity and its decode, and where its point of light stands beside Earth.")]
         [SerializeField] private CallSettings _call = new CallSettings();
 
+        [Header("The failed reply and the raised mast (opening v3 R7)")]
+        [Tooltip("When 07 tries to answer the call, and how the antenna mast's segments lift and lock.")]
+        [SerializeField] private CallReplySettings _reply = new CallReplySettings();
+
         [Header("Supply (opening-v3 §4: fixed sources, each for one structure)")]
         [Tooltip("Every source of the opening's materials, and nothing else: each stands by the thing it comes from " +
                  "and is for one structure (its link), which it covers on its own with the link's other sources " +
@@ -103,7 +107,7 @@ namespace MoonProject.Gameplay
         {
             new SupplyCache("supply.lander.open", OpeningField.LanderPortFrame, new Vector3(4.2f, 0f, -1.4f), 45f,
                 ContainerKinds.CrateCargoOpen, new Recipe(4, 2, 0), StructureIds.ChargingPad, true,
-                new[] { "part.igniter", "part.icecore" }),
+                new[] { "part.igniter" }),
             new SupplyCache("supply.array.panels", "FallenSolarArray", new Vector3(5f, 0f, 0f), 90f,
                 ContainerKinds.CrateL, new Recipe(3, 0, 1), StructureIds.SolarArray),
             new SupplyCache("supply.array.junction", "FallenSolarArray", new Vector3(9.7f, 0f, -2.6f), 90f,
@@ -168,5 +172,7 @@ namespace MoonProject.Gameplay
         public RecoveryLamps RecoveryLamps => _recoveryLamps;
 
         public CallSettings Call => _call;
+
+        public CallReplySettings Reply => _reply;
     }
 }

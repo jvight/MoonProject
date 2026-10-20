@@ -29,5 +29,8 @@ namespace MoonProject.Core
 
         /// <summary>A friend meets 07 at home.</summary>
         Greeting = 7,
+
+        /// <summary>07 asks the sky and nothing answers: the reply to the call failed (CallReplyFailed).</summary>
+        Ask = 8,
     }
 }

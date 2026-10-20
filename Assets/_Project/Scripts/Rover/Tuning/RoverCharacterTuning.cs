@@ -483,6 +483,12 @@ namespace MoonProject.Rover
         [Range(0f, 3f)]
         [SerializeField] private float _tipPeakGlow = 0.55f;
 
+        [Header("The call from the sky (opening v3 2.2)")]
+        [Tooltip("07 listening to the call: its head turns toward the point of light while it idles or charges, the "
+                 + "antenna lamp stutters while the call is broken and keys the pattern back once it locks, and 07 "
+                 + "reaches up toward it now and then.")]
+        [SerializeField] private CallListenSettings _callListen = new CallListenSettings();
+
         [Header("Listening (first-hour v2 §3)")]
         [Tooltip("The antenna once 07 can listen: the cyan tip from tower level 1, the lift and blink of a listen.")]
         [SerializeField] private AntennaListenSettings _listening = new AntennaListenSettings();
@@ -716,5 +722,7 @@ namespace MoonProject.Rover
         public ChirpSettings Chirp => _chirp;
 
         public AntennaListenSettings Listening => _listening;
+
+        public CallListenSettings CallListen => _callListen;
     }
 }

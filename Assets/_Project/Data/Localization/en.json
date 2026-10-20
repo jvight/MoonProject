@@ -915,6 +915,22 @@
             "text": "the parts"
         },
         {
+            "key": "pickup.for.charging_pad",
+            "text": "for the charging pad"
+        },
+        {
+            "key": "pickup.for.solar_array",
+            "text": "for the solar array"
+        },
+        {
+            "key": "pickup.for.battery_bank",
+            "text": "for the battery bank"
+        },
+        {
+            "key": "pickup.for.antenna_mast",
+            "text": "for the antenna mast"
+        },
+        {
             "key": "pickup.part.icecore",
             "text": "CORE 41 · H₂O"
         },
@@ -933,6 +949,10 @@
         {
             "key": "ui.face.no_line",
             "text": "NO LINE OF SIGHT"
+        },
+        {
+            "key": "ui.face.tx_no_range",
+            "text": "TX · NO RANGE"
         },
         {
             "key": "ui.verb.cut",
