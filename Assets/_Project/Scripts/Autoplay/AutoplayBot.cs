@@ -16,6 +16,9 @@ namespace MoonProject.Autoplay
     public sealed class AutoplayBot
     {
         private const float KeyTapSeconds = 0.12f;
+        /// <summary>A wait that counts game time still ends after this many times its length on the wall clock.</summary>
+        private const float WallBackstopFactor = 4f;
+
         private const float StuckWindowSeconds = 2f;
         private const float StuckProgressMetres = 0.4f;
         private const float UnstickReverseSeconds = 1.3f;
@@ -117,10 +120,14 @@ namespace MoonProject.Autoplay
         /// <summary>Waits until <paramref name="condition"/> holds; fails the run when it does not within the timeout.</summary>
         public IEnumerator Until(Func<bool> condition, float timeoutSeconds, string what, Func<string> detail = null)
         {
-            float deadline = Time.unscaledTime + timeoutSeconds;
+            // The game's own time counts, not the wall's: a machine under load stalls frames for seconds while the
+            // game (its lids, its beams) moves on only by the clamped step, so a wall-clock wait fails on a slow
+            // machine for work that is not late. The wall clock is only a backstop for a game that stands still.
+            float deadline = Time.time + timeoutSeconds;
+            float wallDeadline = Time.unscaledTime + timeoutSeconds * WallBackstopFactor;
             while (!Failed && !condition())
             {
-                if (Time.unscaledTime > deadline)
+                if (Time.time > deadline || Time.unscaledTime > wallDeadline)
                 {
                     Fail($"timed out after {timeoutSeconds.ToString("0", CultureInfo.InvariantCulture)} s waiting for " +
                          $"{what}. {(detail != null ? detail() + " " : string.Empty)}{Where()}");
