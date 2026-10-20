@@ -1041,8 +1041,10 @@ CUES = (
     Cue("tow_strain_loop", "loop_3d", picks.renderer("tow_strain_loop"), loop=True, volume=(0.55, 0.55),
         milestone="M3", sampled=True, notes="The tow cable under load: a slow creak over a low tension hum on D, "
                                             "4 s seamless; level and pitch follow the load."),
-    Cue("tow_release", "oneshot_3d", picks.renderer("tow_release"), volume=(0.6, 0.6), milestone="M3", sampled=True,
-        notes="The tow let go: the hook's latch clunking open and the slack cable's slap."),
+    Cue("tow_release", "oneshot_3d", picks.renderer("tow_release"), variants=sampled_rover.SOUNDS["tow_release"][1],
+        variant_labels=sampled_rover.TOW_RELEASE_LABELS, volume=(0.6, 0.6), milestone="M3", sampled=True,
+        notes="The tow let go (TowReleased): release = the hook's latch clunking open and the slack cable's slap; "
+              "snap = the cable parting under load, a metal whip and a rougher recoiling slap."),
     Cue("lamp_tick", "tick_3d", lamp_tick, volume=(0.45, 0.45), fade_out=0.03, milestone="M3",
         notes="A flank lamp lighting as 07 wakes: a tiny relay tick with a breath of filament on D6."),
 )
