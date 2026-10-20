@@ -11,15 +11,17 @@
     "R1_GreyMetal",
     "R1_LampAmber",
     "R1_OrangeStripe",
+    "R1_RackOutline",
     "R1_Rubber",
     "R1_SagePatch",
     "R1_SolarCell"
   ],
   "max_triangles": 7000,
   "max_meshes": 16,
-  "max_draw_calls": 32,
+  "max_draw_calls": 36,
   "allow_rotation": [
-    "Socket_Power_*"
+    "Socket_Power_*",
+    "FeedSocket_Anchor"
   ],
   "scale_tolerance": 0.001,
   "allow_boundary_edges": false,
@@ -127,6 +129,27 @@
         0.0,
         0.43,
         1.38
+      ]
+    },
+    "FeedSocket": {
+      "pivot": [
+        0.45,
+        0.25,
+        0.74
+      ]
+    },
+    "FeedSocket_Outline": {
+      "pivot": [
+        0.56,
+        0.25,
+        0.74
+      ]
+    },
+    "FeedSocket_Anchor": {
+      "pivot": [
+        0.56,
+        0.25,
+        0.74
       ]
     }
   },
