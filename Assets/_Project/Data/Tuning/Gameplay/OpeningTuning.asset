@@ -44,6 +44,25 @@ MonoBehaviour:
     _decodedAtAnswer: 2
     _yawFromEarth: -8.5
     _pitchFromEarth: 1.5
+  _tow:
+    _cableLength: 4
+    _hookReach: 3
+    _stiffness: 3.5
+    _catchUp: 1.2
+    _maxPull: 4
+    _liftShare: 0.35
+    _maxLift: 0.5
+    _snagStretch: 1.2
+    _snagSpeed: 0.4
+    _snagSeconds: 0.6
+    _unsnagLift: 1.6
+    _letGoDistance: 12
+    _homeRadius: 6
+    _skidFriction: 0.45
+    _loadDrag: 0.1
+    _loadAngularDrag: 3
+    _restSpeed: 0.15
+    _restSeconds: 1
   _duskSites:
   - Prop_SeismicStation
   - HabitatModules

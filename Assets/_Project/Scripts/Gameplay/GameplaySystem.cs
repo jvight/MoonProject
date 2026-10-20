@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
+using MoonProject.Core.Input;
 using MoonProject.Core.Save;
 
 namespace MoonProject.Gameplay
@@ -82,6 +83,7 @@ namespace MoonProject.Gameplay
         private readonly List<IDisposable> _saveTokens = new List<IDisposable>();
         private readonly List<IDisposable> _flowTokens = new List<IDisposable>();
         private IRoverState _roverState;
+        private InputReader _input;
         private GlowMeshSet _meshes;
 
         public MaterialStock Materials { get; private set; }
@@ -148,6 +150,9 @@ namespace MoonProject.Gameplay
 
         /// <summary>The base's lamps, which follow the Sun (null while the opening could not be built).</summary>
         public BaseLamps BaseLamps { get; private set; }
+
+        /// <summary>07's winch cable: what it tows, hooked and let go with the tether key (opening v3 R6).</summary>
+        public TowLine Tow { get; private set; }
 
         public SalvageField Salvage => _salvage;
 
@@ -254,6 +259,7 @@ namespace MoonProject.Gameplay
                 context.Get<IWorldLayout>(), context.Get<IWorldAnchors>(), context.Get<IRoverState>(),
                 context.Get<IRoverRig>(), context.Get<IViewCamera>(), save, Materials, _visuals, _glints, _meshes);
             _roverState = services.Rover;
+            _input = services.Input;
             GlintVeil veil = services.GlintVeil;
             _flowTokens.Add(context.Events.Subscribe<TitleShown>(_ => veil.Hide()));
             _flowTokens.Add(context.Events.Subscribe<SessionStarted>(_ => veil.Show(Time.time)));
@@ -309,6 +315,14 @@ namespace MoonProject.Gameplay
                 new RangeRingModel(_battery.Tuning, _battery.Tuning.RangeRing, services.Terrain), _battery.Model,
                 Opening.Pads, services.Rover);
             RangeRingLine = new RangeRingLine(transform, _visuals.BeamCore, RangeRing, _battery.Tuning.RangeRing);
+            Tow = NewTow(services);
+            if (Tow == null)
+            {
+                Fail("the tow did not stand (see its error).");
+                return;
+            }
+
+            _battery.ConnectTow(Tow);
             _flowTokens.Add(context.Events.Subscribe<ChargingChanged>(OnChargingChanged));
             context.Register<IMaterialStock>(Materials);
             context.Register<IMaterialCatalog>(_materialCatalog);
@@ -324,6 +338,7 @@ namespace MoonProject.Gameplay
             context.Register<IRecoveryProgress>(Recovery);
             context.Register<ICallSource>(Call);
             context.Register<IRangeRing>(RangeRing);
+            context.Register<ITowLine>(Tow);
             context.Register<IDatabank>(Databank);
             context.Register<BuildField>(_building);
             RegisterSaveSections(save);
@@ -556,6 +571,7 @@ namespace MoonProject.Gameplay
             Scans.Step(now, deltaTime);
             ScanMark.Step(Scans.Scanning == null ? Scans.Candidate : null, deltaTime);
             Opening.Step(deltaTime);
+            Tow.Step(_input.TetherPressed);
             Reply.Step(deltaTime, Opening.NightFallen, _roverState.Speed);
             MastRaise.Step(deltaTime);
             RangeRing.Step(deltaTime);
@@ -565,6 +581,31 @@ namespace MoonProject.Gameplay
             ApronGlow.Step(_building.State != BuildModeState.Closed, deltaTime);
             ApronGuide.Step(_building.State != BuildModeState.Closed && !AnyPadStands(), deltaTime);
             Recovery.Refresh();
+        }
+
+        private void FixedUpdate()
+        {
+            Tow?.FixedStep(Time.fixedDeltaTime);
+        }
+
+        /// <summary>07's winch cable, with home at the apron; null (logged) without the winch or the apron.</summary>
+        private TowLine NewTow(GameplayServices services)
+        {
+            Transform winch = services.Rig != null ? services.Rig.WinchOrigin : null;
+            if (winch == null)
+            {
+                Debug.LogError($"{nameof(GameplaySystem)}: the tow needs IRoverRig.WinchOrigin (07's winch).", this);
+                return null;
+            }
+
+            if (!services.Anchors.TryGet(_openingTuning.ApronAnchor, out WorldAnchor apron))
+            {
+                Debug.LogError($"{nameof(GameplaySystem)}: the tow's home is world anchor " +
+                               $"'{_openingTuning.ApronAnchor}', which the World does not publish.", this);
+                return null;
+            }
+
+            return new TowLine(services.Events, _openingTuning.Tow, winch, services.Rover, apron.Position);
         }
 
         /// <summary>

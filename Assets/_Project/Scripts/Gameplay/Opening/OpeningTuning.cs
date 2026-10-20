@@ -95,6 +95,11 @@ namespace MoonProject.Gameplay
         [Tooltip("When 07 tries to answer the call, and how the antenna mast's segments lift and lock.")]
         [SerializeField] private CallReplySettings _reply = new CallReplySettings();
 
+        [Header("The tow (opening v3 R6, ruling 4)")]
+        [Tooltip("07's winch cable: its reach, its rope's pull, how a caught load is lifted free and where a load " +
+                 "comes home.")]
+        [SerializeField] private TowSettings _tow = new TowSettings();
+
         [Header("The first free choice and dusk (opening v3 R5–R6)")]
         [Tooltip("The near sites 07 is free to visit after power-on, either order, by their frames: a Lumen ruin " +
                  "piece ([World]/Ruins/<id>) or a story prop ([World]/BasinProps/<id>). The sky holds in the " +
@@ -186,6 +191,8 @@ namespace MoonProject.Gameplay
         public CallSettings Call => _call;
 
         public CallReplySettings Reply => _reply;
+
+        public TowSettings Tow => _tow;
 
         public IReadOnlyList<string> DuskSites => _duskSites ?? Array.Empty<string>();
 
