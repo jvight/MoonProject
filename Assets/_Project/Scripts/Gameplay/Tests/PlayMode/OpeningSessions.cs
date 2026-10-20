@@ -160,12 +160,14 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return PlaceAt(GameplayFixture.SeismicStation);
             Assert.IsTrue(opening.Dusk.Visited, "R5: 07 visited the 1971 seismic station");
             Assert.IsFalse(opening.DuskBegun, "the afternoon holds until 07 docks");
+            yield return null;
+            Assert.AreEqual(OpeningKeys.DockForDusk, opening.Flow.Current, "a site visited: the dock ends the day");
             yield return PlaceAt(apron);
             yield return Waits.Until(() => opening.DuskBegun, 5f);
             Assert.IsTrue(opening.DuskBegun, "R6: the dock after the visit begins the first dusk");
             Assert.AreEqual(1, _dusk.Count, "published once");
             Assert.IsFalse(_dusk[0].Restored);
-            Assert.AreEqual(OpeningKeys.BuildBatteryBank, opening.Flow.Current, "night is coming");
+            Assert.AreEqual(OpeningKeys.ScanModule, opening.Flow.Current, "night is coming: the power module");
 
             Build(StructureIds.BatteryBank, apron + new Vector3(-6f, 0f, 0f));
             yield return Waits.Until(() => Reached(OpeningMilestone.NightReady), 3f);
@@ -183,7 +185,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return null;
             yield return null;
             Assert.IsTrue(Reached(OpeningMilestone.SignalWest), "B11: the west signal");
-            Assert.AreEqual(string.Empty, opening.Flow.Current, "the pillar in the west is the message");
+            Assert.AreEqual(OpeningKeys.Transmit, opening.Flow.Current, "the mast stands: transmit from it");
             Assert.AreEqual(4, _milestones.Count, "each milestone once");
             Assert.IsTrue(_fixture.Bootstrap.Context.Get<ISaveService>().SaveNow());
             _fixture.Dispose(true);
@@ -201,7 +203,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(_systems.Exists(changed => changed.System == RoverSystem.Cutter &&
                                                      changed.State == RoverSystemState.Ok && changed.Restored),
                 "the readout starts from the save");
-            Assert.AreEqual(string.Empty, _fixture.Gameplay.Opening.Flow.Current, "the opening stays over");
+            Assert.AreEqual(OpeningKeys.Transmit, _fixture.Gameplay.Opening.Flow.Current,
+                "a load stands where the save stood: the call still waits for its answer");
         }
 
         [UnityTest]

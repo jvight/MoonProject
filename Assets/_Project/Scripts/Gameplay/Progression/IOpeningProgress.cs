@@ -54,5 +54,11 @@ namespace MoonProject.Gameplay
 
         /// <summary>The first night has fallen over a night-ready base (B10's exit).</summary>
         bool NightFallen { get; }
+
+        /// <summary>Since power-on 07 has visited a near site, so docking now begins the first dusk (R5).</summary>
+        bool DuskVisited { get; }
+
+        /// <summary>07 transmitted from the mast and relay.1 answered the call (R8).</summary>
+        bool CallAnswered { get; }
     }
 }

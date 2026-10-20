@@ -27,6 +27,7 @@ namespace MoonProject.Gameplay
 
         private readonly OpeningTuning _tuning;
         private readonly IRoverState _rover;
+        private ICallSource _call;
         private readonly ISunlight _sunlight;
         private readonly KnownStructures _known;
         private readonly StructureCatalog _catalog;
@@ -89,7 +90,7 @@ namespace MoonProject.Gameplay
             Caches = new SupplyCaches(tuning, FrameOf, parent, services, containers, crateReach);
             LanderCargo = CargoBay(Caches.RootOf(tuning.CargoCrate), Caches.LevelOf(tuning.CargoCrate));
             Dusk = new DuskCue(services.Events, DuskSites(tuning), tuning.DuskSiteReach);
-            Flow = new OpeningFlow(services.Events, this, tuning.StallSeconds, tuning.ReminderSeconds);
+            Flow = new OpeningFlow(services.Events, this, Keys, tuning.Guidance);
         }
 
         public LanderPort Port { get; }
@@ -102,6 +103,9 @@ namespace MoonProject.Gameplay
 
         /// <summary>When the first dusk begins (R5–R6).</summary>
         public DuskCue Dusk { get; }
+
+        /// <summary>Which action keys the player has pressed lately: GameplaySystem feeds it, the flow reads it.</summary>
+        public KeyUse Keys { get; } = new KeyUse();
 
         /// <summary>The lander's cargo scan host, its open crate: Scan_1..N on what it holds (the pad's fragments).
         /// </summary>
@@ -130,6 +134,16 @@ namespace MoonProject.Gameplay
         public bool NightReady => Pads.NightReady;
 
         public bool NightFallen => NightFallenSaved;
+
+        public bool DuskVisited => Dusk.Visited;
+
+        public bool CallAnswered => _call != null && _call.State >= CallState.Answered;
+
+        /// <summary>The call from the sky, made after the opening: what <see cref="CallAnswered"/> reads.</summary>
+        public void ConnectCall(ICallSource call)
+        {
+            _call = call ?? throw new ArgumentNullException(nameof(call));
+        }
 
         public bool Knows(string structureId)
         {
@@ -179,7 +193,8 @@ namespace MoonProject.Gameplay
 
             Caches.Step(deltaTime);
             Dusk.Step(PowerOn, _rover.Position, Knows(StructureIds.BatteryBank));
-            Flow.Tick(deltaTime, _rover.Speed <= _tuning.StillSpeed);
+            Keys.Step(deltaTime);
+            Flow.Tick(deltaTime);
         }
 
         public OpeningSaveData Capture()

@@ -372,6 +372,7 @@ namespace MoonProject.Gameplay
                 _building.Tuning.FirstUseGazePriority, _building.Tuning.FirstUseAskIntensity);
             Recovery = new RecoveryProgress(context.Events, PowerLamps, PowerSteps, _openingTuning.RecoveryLamps);
             Call = new CallProgress(context.Events, _openingTuning.Call, services.Layout);
+            Opening.ConnectCall(Call);
             Reply = new CallReply(context.Events, Call, _openingTuning.Reply);
             MastRaise = new MastRaise(context.Events, _openingTuning.Reply);
             MastRaiseView = new MastRaiseView(context.Events, _building, MastRaise, _openingTuning.Reply);
@@ -649,6 +650,7 @@ namespace MoonProject.Gameplay
             Containers.Step(now, deltaTime);
             Scans.Step(now, deltaTime);
             ScanMark.Step(Scans.Scanning == null ? Scans.Candidate : null, deltaTime);
+            NoteKeys(Opening.Keys);
             Opening.Step(deltaTime);
             Relay.Step(Time.frameCount, _input.ExcavateHeld);
             FirstUsePointer.Step();
@@ -681,6 +683,25 @@ namespace MoonProject.Gameplay
         private void FixedUpdate()
         {
             Tow?.FixedStep(Time.fixedDeltaTime);
+        }
+
+        /// <summary>The action keys pressed this frame, for the objective line's key glyph.</summary>
+        private void NoteKeys(KeyUse keys)
+        {
+            if (_input.ExcavatePressed)
+            {
+                keys.Pressed(RoverAction.Excavate);
+            }
+
+            if (_input.BuildPressed)
+            {
+                keys.Pressed(RoverAction.Build);
+            }
+
+            if (_input.TetherPressed)
+            {
+                keys.Pressed(RoverAction.Tether);
+            }
         }
 
         /// <summary>

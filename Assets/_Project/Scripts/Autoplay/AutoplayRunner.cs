@@ -5,6 +5,8 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using UnityEngine;
+using MoonProject.Core;
+using MoonProject.Gameplay;
 
 namespace MoonProject.Autoplay
 {
@@ -28,6 +30,7 @@ namespace MoonProject.Autoplay
         private readonly GuidanceCounter _guidance = new GuidanceCounter(GuidanceGraceSeconds);
         private readonly List<string> _guidanceShown = new List<string>();
         private bool _guidanceReported;
+        private string _reminderWarned = string.Empty;
         private readonly FrameTimeLog _frames = new FrameTimeLog();
         private readonly List<string> _screenshots = new List<string>();
         private readonly List<string> _errors = new List<string>();
@@ -97,9 +100,9 @@ namespace MoonProject.Autoplay
         }
 
         /// <summary>
-        /// The one-element rule, every frame: two guidance elements showing together fail the run, and so does an
-        /// stall reminder from the opening's flow while the lines are not expected (a reminder fired where the world should
-        /// have led; the build mode's own step line is not one).
+        /// The one-element rule, every frame: two guidance elements showing together fail the run. A stall reminder from
+        /// the opening's flow while the lines are not expected is listed once per line (the bot went long without
+        /// progress, where the world should have led); the next line after a success is the game's own guidance.
         /// </summary>
         private void WatchGuidance()
         {
@@ -128,10 +131,17 @@ namespace MoonProject.Autoplay
                     _bot.Warn("guidance: " + _guidance.Message + " " + _bot.Where());
                 }
             }
-            else if (!_options.LinesExpected && _world.Gameplay.Opening.Flow.Shown.Length > 0)
+            else if (!_options.LinesExpected)
             {
-                _bot.Fail("a fallback reminder fired: the objective line '" + _world.Gameplay.Opening.Flow.Shown +
-                          "' showed where the world cues should have led. " + _bot.Where());
+                OpeningFlow flow = _world.Gameplay.Opening.Flow;
+                bool reminding = flow.Shown.Length > 0 && flow.ShownReason == NextLineReason.Reminder;
+                if (reminding && flow.Shown != _reminderWarned)
+                {
+                    _bot.Warn("a stall reminder fired: the objective line '" + flow.Shown + "' came back after no " +
+                              "progress, where the world cues should have led. " + _bot.Where());
+                }
+
+                _reminderWarned = reminding ? flow.Shown : _reminderWarned;
             }
         }
 
