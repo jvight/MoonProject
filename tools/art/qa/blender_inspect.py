@@ -30,6 +30,8 @@ def topology(obj):
     mesh = bmesh.new()
     mesh.from_mesh(obj.data)
     mesh.transform(obj.matrix_world)
+    # transform() moves the vertices but leaves the face normals as they were; the signed volume needs world ones
+    mesh.normal_update()
     non_manifold = sum(1 for e in mesh.edges if len(e.link_faces) > 2 or not e.link_faces)
     boundary = sum(1 for e in mesh.edges if len(e.link_faces) == 1)
     inconsistent = 0
