@@ -2170,6 +2170,159 @@ namespace MoonProject.Art.Editor
             }
         }
 
+        /// <summary>
+        /// Dedicated fast batch entry point for capturing the standalone towable <c>PowerModule</c>
+        /// alone and beside Rover 07 for scale in Day C and Dusk lighting:
+        /// <c>python tools/unity_batch.py exec --project . --method MoonProject.Art.Editor.R1StoryPropsCapture.CapturePowerModule</c>
+        /// </summary>
+        public static void CapturePowerModule()
+        {
+            BatchRunner.Run(nameof(CapturePowerModule), args =>
+            {
+                AssetDatabase.Refresh();
+                R1MaterialLibrary.BuildMaterials();
+                R1ModelBuilder.Build();
+
+                string capturesDir = Path.GetFullPath("Logs/captures");
+                Directory.CreateDirectory(capturesDir);
+
+                bool prevAsync = ShaderUtil.allowAsyncCompilation;
+                ShaderUtil.allowAsyncCompilation = false;
+                try
+                {
+                    CapturePowerModuleAloneShot(capturesDir, false);
+                    CapturePowerModuleAloneShot(capturesDir, true);
+                    CapturePowerModuleScaleShot(capturesDir, false);
+                    CapturePowerModuleScaleShot(capturesDir, true);
+                }
+                finally
+                {
+                    ShaderUtil.allowAsyncCompilation = prevAsync;
+                }
+
+                return true;
+            });
+        }
+
+        private static Color ApplyDuskEnvironmentIfRequested(ArtLightingPreview.TemporaryObjects temp, Color bg, bool dusk)
+        {
+            if (!dusk)
+            {
+                return bg;
+            }
+
+            RenderSettings.ambientSkyColor = new Color(0.15f, 0.18f, 0.28f, 1f);
+            RenderSettings.ambientEquatorColor = new Color(0.14f, 0.13f, 0.20f, 1f);
+            RenderSettings.ambientGroundColor = new Color(0.07f, 0.07f, 0.11f, 1f);
+
+            Light duskSun = ArtLightingPreview.NewLight(
+                "DuskHorizonSun",
+                LightType.Directional,
+                new Color(1.00f, 0.68f, 0.42f, 1f),
+                0.45f);
+            duskSun.transform.rotation = Quaternion.Euler(6f, 128f, 0f);
+            duskSun.shadows = LightShadows.Soft;
+            duskSun.shadowStrength = 0.80f;
+            RenderSettings.sun = duskSun;
+            temp.Add(duskSun.gameObject);
+            return new Color(0.07f, 0.09f, 0.15f, 1f);
+        }
+
+        private static void ConfigurePowerModuleLampGlow(GameObject powerModule, bool dusk, ArtLightingPreview.TemporaryObjects temp)
+        {
+            Transform lampNode = powerModule.transform.Find("PowerModule_StatusLamp");
+            if (lampNode == null || !lampNode.TryGetComponent(out Renderer lampRenderer))
+            {
+                return;
+            }
+
+            Material[] sharedMats = lampRenderer.sharedMaterials;
+            int amberSlot = 0;
+            for (int i = 0; i < sharedMats.Length; i++)
+            {
+                if (sharedMats[i] != null && sharedMats[i].name == R1MaterialRecipes.LampAmberSlot)
+                {
+                    amberSlot = i;
+                    break;
+                }
+            }
+
+            var block = new MaterialPropertyBlock();
+            lampRenderer.GetPropertyBlock(block, amberSlot);
+            block.SetFloat("_EmissionStrength", dusk ? 2.10f : 1.05f);
+            lampRenderer.SetPropertyBlock(block, amberSlot);
+
+            if (dusk)
+            {
+                Light lampGlow = ArtLightingPreview.NewLight(
+                    "PowerModuleStatusLampGlow",
+                    LightType.Point,
+                    new Color(1.00f, 0.68f, 0.28f, 1f),
+                    1.55f);
+                lampGlow.transform.position = lampNode.position + powerModule.transform.forward * 0.08f;
+                lampGlow.range = 2.4f;
+                lampGlow.shadows = LightShadows.None;
+                temp.Add(lampGlow.gameObject);
+            }
+        }
+
+        private static void CapturePowerModuleAloneShot(string outDir, bool dusk)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(temp, dusk);
+                bg = ApplyDuskEnvironmentIfRequested(temp, bg, dusk);
+
+                GameObject module = SpawnProp(R1StoryPropsBuilder.PowerModulePrefabPath, Vector3.zero, 180f, temp);
+                ConfigurePowerModuleLampGlow(module, dusk, temp);
+
+                string suffix = dusk ? "dusk" : "dayC";
+                RenderShot(
+                    new Vector3(1.25f, 1.02f, -1.78f),
+                    new Vector3(-0.04f, 0.44f, 0.02f),
+                    38f,
+                    bg,
+                    Path.Combine(outDir, $"power_module_alone_{suffix}.png"));
+            }
+            finally
+            {
+                temp.Dispose();
+            }
+        }
+
+        private static void CapturePowerModuleScaleShot(string outDir, bool dusk)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(temp, dusk);
+                bg = ApplyDuskEnvironmentIfRequested(temp, bg, dusk);
+
+                SpawnRover07(temp, new Vector3(-0.98f, 0f, -0.08f), 158f, dusk);
+
+                GameObject moduleFront = SpawnProp(R1StoryPropsBuilder.PowerModulePrefabPath, new Vector3(0.78f, 0f, 0.06f), 192f, temp);
+                ConfigurePowerModuleLampGlow(moduleFront, dusk, temp);
+
+                GameObject moduleRear = SpawnProp(R1StoryPropsBuilder.PowerModulePrefabPath, new Vector3(2.15f, 0f, 0.72f), 28f, temp);
+                ConfigurePowerModuleLampGlow(moduleRear, dusk, temp);
+
+                string suffix = dusk ? "dusk" : "dayC";
+                RenderShot(
+                    new Vector3(0.45f, 1.52f, -3.15f),
+                    new Vector3(0.28f, 0.56f, 0.14f),
+                    40f,
+                    bg,
+                    Path.Combine(outDir, $"power_module_scale_07_{suffix}.png"));
+            }
+            finally
+            {
+                temp.Dispose();
+            }
+        }
+
         private static Transform FindChildRecursive(Transform root, string name)
         {
             if (root == null)
