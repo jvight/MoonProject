@@ -81,6 +81,9 @@ namespace MoonProject.Gameplay
         /// <summary>5.2, the SSR-3 headlamp unlocked: "Assemble the SSR-3 headlamp at the rack by the pad."</summary>
         public const string AssembleHeadlamp = "next.v3.assemble_headlamp";
 
+        /// <summary>5.2, the headlamp unlocked but the rack not out yet: "Park on the pad to bring out the rack."</summary>
+        public const string DockForRack = "next.v3.dock_for_rack";
+
         /// <summary>
         /// The key a line's action takes, for its glyph (guidance audit G2); 0 when it takes none of 07's action keys
         /// (a drive, a dock, the Tab screen).

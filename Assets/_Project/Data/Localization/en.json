@@ -763,6 +763,10 @@
             "text": "Assemble the SSR-3 headlamp at the rack by the pad."
         },
         {
+            "key": "next.v3.dock_for_rack",
+            "text": "Park on the pad to bring out the rack."
+        },
+        {
             "key": "battery.low.lander",
             "text": "Battery low. Build a pad at the lander to charge."
         },

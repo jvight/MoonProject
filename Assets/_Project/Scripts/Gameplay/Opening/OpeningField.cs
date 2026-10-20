@@ -163,6 +163,8 @@ namespace MoonProject.Gameplay
         public bool HeadlampUnlocked =>
             _understanding != null && _understanding.IsUnlocked(MakerUnderstandingSettings.Ssr3Headlamp);
 
+        public bool RackOut => _rack != null && _rack.Shown;
+
         public bool HeadlampFitted => HeadlampBay() is int bay && _rack.StateOf(bay) == RackBayState.Filled;
 
         /// <summary>
@@ -254,6 +256,7 @@ namespace MoonProject.Gameplay
                 case OpeningKeys.DockForDusk:
                 case OpeningKeys.MoveBatteryBank:
                 case OpeningKeys.AwaitNight:
+                case OpeningKeys.DockForRack:
                 case OpeningKeys.BuildMast:
                     return Place(_tuning.ApronAnchor, _apron, out placeId, out position);
                 default:

@@ -97,7 +97,9 @@ namespace MoonProject.Gameplay.Tests
             _game.RelayRelit = true;
             Expect(OpeningKeys.ScanElder06, "relay.1 lit: 06 at relay.2 is next");
             _game.HeadlampUnlocked = true;
-            Expect(OpeningKeys.AssembleHeadlamp, "Kessler–Arai understood: the headlamp at the rack");
+            Expect(OpeningKeys.DockForRack, "Kessler–Arai understood, the rack not out yet: dock to bring it out");
+            _game.RackOut = true;
+            Expect(OpeningKeys.AssembleHeadlamp, "the rack stands out: the headlamp at its bay");
             _game.HeadlampFitted = true;
             Expect(string.Empty, "the headlamp fitted: the opening's lines are done");
         }
@@ -472,6 +474,7 @@ namespace MoonProject.Gameplay.Tests
             public bool CallAnswered { get; set; }
             public bool RelayRelit { get; set; }
             public bool HeadlampUnlocked { get; set; }
+            public bool RackOut { get; set; }
             public bool HeadlampFitted { get; set; }
             public readonly Dictionary<string, Vector3> Places = new Dictionary<string, Vector3>();
 

@@ -763,6 +763,10 @@
             "text": "Lắp đèn pha SSR-3 ở giá cạnh bệ sạc."
         },
         {
+            "key": "next.v3.dock_for_rack",
+            "text": "Đỗ lên bệ sạc để mở giá linh kiện."
+        },
+        {
             "key": "battery.low.lander",
             "text": "Pin yếu. Xây bệ sạc cạnh tàu đổ bộ để sạc."
         },

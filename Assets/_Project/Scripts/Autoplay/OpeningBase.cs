@@ -873,10 +873,17 @@ namespace MoonProject.Autoplay
         public IEnumerator AssembleTheHeadlamp()
         {
             IRackStatus rack = G.Rack;
-            if (!rack.Shown || G.RackView.Instance == null)
+            if (!rack.Shown)
             {
-                _bot.Fail("the socket rack is not standing at the pad.");
-                yield break;
+                Vector3 pad = PlacedPosition(StructureIds.ChargingPad);
+                yield return _bot.DriveTo(Flat(pad), ApproachThrottleRadius, "the pad, to bring out the rack",
+                    DriveSeconds);
+                yield return _bot.Until(() => rack.Shown && G.RackView.Instance != null, FollowSeconds,
+                    "the dock to bring out the socket rack");
+                if (_bot.Failed)
+                {
+                    yield break;
+                }
             }
 
             Transform bay = Descendant(G.RackView.Instance.transform, HeadlampBayNode);

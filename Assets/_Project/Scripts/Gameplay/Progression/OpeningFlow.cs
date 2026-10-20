@@ -80,7 +80,8 @@ namespace MoonProject.Gameplay
             _steps.Add(OpeningKeys.Transmit, () => _game.CallAnswered);
             _steps.Add(OpeningKeys.GoToRelay, () => _game.RelayRelit);
             _steps.Add(OpeningKeys.ScanElder06, () => _game.HeadlampUnlocked || _game.HeadlampFitted);
-            _steps.Add(OpeningKeys.AssembleHeadlamp, () => _game.HeadlampFitted);
+            _steps.Add(() => _game.RackOut ? OpeningKeys.AssembleHeadlamp : OpeningKeys.DockForRack,
+                () => _game.HeadlampFitted);
             _wake = events.Subscribe<BootCheckFinished>(_ => _woke = true);
         }
 
