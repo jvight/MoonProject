@@ -116,6 +116,15 @@ namespace MoonProject.Gameplay
         [Tooltip("When 07 tries to answer the call, and how the antenna mast's segments lift and lock.")]
         [SerializeField] private CallReplySettings _reply = new CallReplySettings();
 
+        [Header("The tow (opening v3 R6, ruling 4)")]
+        [Tooltip("07's winch cable: its reach, its rope's pull, how a caught load is lifted free and where a load " +
+                 "comes home.")]
+        [SerializeField] private TowSettings _tow = new TowSettings();
+
+        [Tooltip("The opening's towable loads and where they first stand: the habitat's power module, the battery " +
+                 "bank's frame (Art's PowerModule, its TowHitch on its front face).")]
+        [SerializeField] private TowLoadSpot[] _towLoads = Array.Empty<TowLoadSpot>();
+
         [Header("The answer (opening v3 R8)")]
         [Tooltip("Where and how long 07 holds to transmit, and how the pulse of the old network runs to relay.1 and the Peak.")]
         [SerializeField] private CallAnswerSettings _answer = new CallAnswerSettings();
@@ -214,6 +223,10 @@ namespace MoonProject.Gameplay
         public CallSettings Call => _call;
 
         public CallReplySettings Reply => _reply;
+
+        public TowSettings Tow => _tow;
+
+        public IReadOnlyList<TowLoadSpot> TowLoads => _towLoads ?? Array.Empty<TowLoadSpot>();
 
         public CallAnswerSettings Answer => _answer;
 

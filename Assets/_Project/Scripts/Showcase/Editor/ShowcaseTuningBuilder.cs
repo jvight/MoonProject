@@ -866,7 +866,7 @@ namespace MoonProject.Showcase.Editor
                 new ShowcaseNodeRule(
                     "antenna.azimuth",
                     "Xoay phương vị chảo thu phát (DishAzimuth)",
-                    "Stage_4/Mast/DishAzimuth",
+                    "Stage_4/Mast/Mast_Seg2/DishAzimuth",
                     ShowcaseMotionKind.LocalRotation,
                     Vector3.forward,
                     restValue: 0f,
@@ -878,7 +878,7 @@ namespace MoonProject.Showcase.Editor
                 new ShowcaseNodeRule(
                     "antenna.dish",
                     "Ngẩng / hạ lòng chảo ăng-ten (Dish)",
-                    "Stage_4/Mast/DishAzimuth/Dish",
+                    "Stage_4/Mast/Mast_Seg2/DishAzimuth/Dish",
                     ShowcaseMotionKind.LocalRotation,
                     Vector3.left,
                     restValue: 0f,
@@ -890,7 +890,7 @@ namespace MoonProject.Showcase.Editor
                 new ShowcaseNodeRule(
                     "antenna.sonar",
                     "Quay vòng cảm biến định vị (SonarLoop)",
-                    "Stage_4/Mast/SonarLoop",
+                    "Stage_4/Mast/Mast_Seg2/SonarLoop",
                     ShowcaseMotionKind.ContinuousSpin,
                     Vector3.forward,
                     restValue: 0f,

@@ -830,6 +830,57 @@ namespace MoonProject.Core.Events
         public Vector3 Position { get; }
     }
 
+    /// <summary>Why 07's tow cable let its load go (<see cref="TowReleased"/>).</summary>
+    public enum TowRelease
+    {
+        /// <summary>The player let go (the tether key).</summary>
+        Player = 0,
+
+        /// <summary>The load came home: it reached the apron, and the winch unhooks it there.</summary>
+        Arrived = 1,
+
+        /// <summary>The load fell too far behind (caught fast while 07 drove on): the cable unhooked softly.</summary>
+        Snapped = 2,
+    }
+
+    /// <summary>
+    /// 07's winch hooked its cable onto a towable load (docs/design/opening-v3-purpose.md R6, ruling 4: a physical
+    /// cable, no beam): <see cref="TowId"/> names the load, <see cref="Position"/> is its hitch.
+    /// </summary>
+    public readonly struct TowAttached
+    {
+        public TowAttached(string towId, Vector3 position, float mass)
+        {
+            TowId = towId;
+            Position = position;
+            Mass = mass;
+        }
+
+        public string TowId { get; }
+
+        public Vector3 Position { get; }
+
+        /// <summary>The load's mass (kg): heavier loads strain the cable more.</summary>
+        public float Mass { get; }
+    }
+
+    /// <summary>07's tow cable let its load <see cref="TowId"/> go at <see cref="Position"/> (its hitch).</summary>
+    public readonly struct TowReleased
+    {
+        public TowReleased(string towId, Vector3 position, TowRelease reason)
+        {
+            TowId = towId;
+            Position = position;
+            Reason = reason;
+        }
+
+        public string TowId { get; }
+
+        public Vector3 Position { get; }
+
+        public TowRelease Reason { get; }
+    }
+
     /// <summary>
     /// A bay of the socket rack at the pad changed what it shows (<see cref="IRackStatus"/>): its outline appeared
     /// (the rack came out at a dock, or 07 saw the part) or it filled (the part was fitted). Restored is true when a

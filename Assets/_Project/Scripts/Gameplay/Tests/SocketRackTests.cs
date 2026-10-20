@@ -5,8 +5,8 @@ using MoonProject.Core.Events;
 namespace MoonProject.Gameplay.Tests
 {
     /// <summary>
-    /// The socket rack at the pad (opening v3 4.3, <see cref="SocketRack"/>): held until the west signal answers, shown
-    /// at the next dock, an outline per part seen and a filled bay per part fitted, and all of it kept by a save.
+    /// The socket rack at the pad (opening v3 4.3, <see cref="SocketRack"/>): hidden until the release reveals it, then
+    /// an outline per part seen and a filled bay per part fitted, the bays kept by a save.
     /// </summary>
     public sealed class SocketRackTests
     {
@@ -29,23 +29,18 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void BeforeTheWestSignal_TheRackIsHeld_EvenAtADock()
+        public void BeforeTheReveal_EveryBayIsHidden()
         {
-            Assert.IsFalse(_rack.Docked(), "a dock before the release shows nothing");
             Assert.IsFalse(_rack.Shown);
             AssertStates(RackBayState.Hidden, RackBayState.Hidden, RackBayState.Hidden);
         }
 
         [Test]
-        public void AfterTheWestSignal_TheRackShowsAtTheNextDock_WithTheOutlinesOfThePartsSeen()
+        public void TheReveal_ShowsTheOutlinesOfThePartsSeen_Once()
         {
-            _rack.Release();
-            Assert.IsFalse(_rack.Shown, "the release alone does not show it: the next dock does");
-            AssertStates(RackBayState.Hidden, RackBayState.Hidden, RackBayState.Hidden);
-
-            Assert.IsTrue(_rack.Docked(), "it appears at the dock");
+            Assert.IsTrue(_rack.Reveal(), "it appears");
             AssertStates(RackBayState.Outline, RackBayState.Outline, RackBayState.Hidden);
-            Assert.IsFalse(_rack.Docked(), "and only once");
+            Assert.IsFalse(_rack.Reveal(), "and only once");
         }
 
         [Test]
@@ -85,7 +80,7 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void ASave_KeepsTheRackOut_AndWhatWasSeenAndFitted()
+        public void ASave_KeepsWhatWasSeenAndFitted_AndLeavesTheRevealToTheRelease()
         {
             ShowTheRack();
             _rack.BlueprintScanned(HexBlueprint);
@@ -94,16 +89,16 @@ namespace MoonProject.Gameplay.Tests
 
             SetUp();
             _rack.Restore(saved);
+            Assert.IsFalse(_rack.Shown, "out or not is the release's to say");
+            ShowTheRack();
             AssertStates(RackBayState.Outline, RackBayState.Filled, RackBayState.Outline);
-            Assert.IsFalse(_rack.Docked(), "a loaded rack that is out does not appear again");
         }
 
         [Test]
         public void ANewGame_RestoresNothing()
         {
             _rack.Restore(null);
-            _rack.Release();
-            Assert.IsTrue(_rack.Docked());
+            ShowTheRack();
             AssertStates(RackBayState.Outline, RackBayState.Outline, RackBayState.Hidden);
         }
 
@@ -118,8 +113,7 @@ namespace MoonProject.Gameplay.Tests
 
         private void ShowTheRack()
         {
-            _rack.Release();
-            Assert.IsTrue(_rack.Docked());
+            Assert.IsTrue(_rack.Reveal());
         }
 
         private void AssertStates(RackBayState headlamp, RackBayState cellPack, RackBayState hexAdapter)

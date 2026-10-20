@@ -8,7 +8,7 @@ namespace MoonProject.Core
     /// </summary>
     public interface IRackStatus
     {
-        /// <summary>The rack stands at the pad (the opening released it and 07 has docked since).</summary>
+        /// <summary>The rack stands at the pad (the release revealed it, <see cref="Events.SocketRackRevealed"/>).</summary>
         bool Shown { get; }
 
         /// <summary>Bays on the rack, left to right.</summary>

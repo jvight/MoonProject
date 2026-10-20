@@ -20,6 +20,8 @@ MonoBehaviour:
   _fullSlope: 15
   _slopeEase: 0.5
   _boostMultiplier: 2
+  _towMultiplier: 1.4
+  _towCap: 0.55
   _beamSecondsPerCell: 60
   _scanSecondsPerCell: 50
   _weldSecondsPerCell: 15

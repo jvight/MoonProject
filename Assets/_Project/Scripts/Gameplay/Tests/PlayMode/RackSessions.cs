@@ -17,14 +17,16 @@ using UnityEditor.SceneManagement;
 namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
-    /// The socket rack in the real Main scene (opening v3 4.3): it is registered, held through a dock before the west
-    /// signal, and comes out at 07's dock on its pad after it, with the outlines of the two parts 07 has seen.
+    /// The socket rack in the real Main scene (opening v3 4.3, 4.4): it is registered, stays hidden through a dock before
+    /// the release, and comes out when the release reveals it, at 07's first dock after the view, with the outlines of
+    /// the two parts 07 has seen.
     /// </summary>
     [Category("Rack")]
     public sealed class RackSessions
     {
         private const float WakeTimeout = 20f;
         private const float DockTimeout = 8f;
+        private const float ReleaseTimeout = 90f;
         private const float PadYaw = 180f;
         private const float AwayMetres = 12f;
         private const float SettleSeconds = 1f;
@@ -67,7 +69,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         [Timeout(200000)]
         [PrebuildSetup(typeof(PlaythroughScene))]
         [PostBuildCleanup(typeof(PlaythroughScene))]
-        public IEnumerator AfterTheWestSignal_TheRackComesOutAtTheDock_WithTwoOutlines()
+        public IEnumerator AfterTheReleasesView_TheRackComesOutAtTheDock_WithTwoOutlines()
         {
             yield return Boot();
             IRackStatus rack = _context.Get<IRackStatus>();
@@ -83,13 +85,21 @@ namespace MoonProject.Gameplay.PlayModeTests
             battery.Restore(new BatterySaveData { cells = battery.Cells, charge = battery.Cells });
             yield return new WaitForSeconds(SettleSeconds);
             yield return DockAt(centre);
-            Assert.IsFalse(rack.Shown, "held through a dock before the west signal");
+            Assert.IsFalse(rack.Shown, "hidden through a dock before the release");
             Assert.AreEqual(0, _changes.Count);
 
             yield return LeavePad(centre);
-            _context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.SignalWest, false));
+            _context.Events.Publish(new CallAnswerPhaseChanged(AnswerPhase.Done, false));
+            float deadline = Time.time + ReleaseTimeout;
+            while (_gameplay.Release.Stage != ReleaseStage.RackPending)
+            {
+                Assert.Less(Time.time, deadline, "the release runs its ring and its view");
+                yield return null;
+            }
+
+            Assert.IsFalse(rack.Shown, "the view alone does not bring it out: the next dock does");
             yield return DockAt(centre);
-            Assert.IsTrue(rack.Shown, "out at the first dock after the west signal");
+            Assert.IsTrue(rack.Shown, "out at the first dock after the release's view");
             Assert.AreEqual(2, _changes.Count, "the SSR-3 headlamp's and the cell pack's outlines");
             for (int i = 0; i < _changes.Count; i++)
             {

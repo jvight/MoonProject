@@ -7,8 +7,9 @@ using MoonProject.Core.Events;
 namespace MoonProject.Gameplay.Tests
 {
     /// <summary>
-    /// The socket rack in the running game (<see cref="SocketRackField"/>): the game's events drive it, each bay that
-    /// changes is announced once, and a loaded rack is replayed as restored.
+    /// The socket rack in the running game (<see cref="SocketRackField"/>): the release's event reveals it (the one
+    /// source of truth; a dock alone does nothing), each bay that changes is announced once, and a loaded rack whose
+    /// release is done is replayed as restored.
     /// </summary>
     public sealed class SocketRackFieldTests
     {
@@ -35,29 +36,26 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void TheWestSignal_ThenADock_BringOutTheTwoSeenOutlines()
+        public void TheReleasesReveal_BringsOutTheTwoSeenOutlines_AndNothingElseDoes()
         {
-            Dock();
-            Assert.AreEqual(0, _changes.Count, "held before the west signal");
-
             _events.Publish(new OpeningMilestoneReached(OpeningMilestone.SignalWest, false));
-            Assert.AreEqual(0, _changes.Count, "the signal alone shows nothing yet");
+            _events.Publish(new RoverDockChanged(true, Vector3.zero, Quaternion.identity));
+            Assert.AreEqual(0, _changes.Count, "the west signal and a dock are the release's to read, not the rack's");
 
-            Dock();
+            Reveal();
             Assert.IsTrue(_field.Shown);
             Assert.AreEqual(2, _changes.Count, "the headlamp's and the cell pack's outlines");
             Assert.AreEqual(RackBayState.Outline, _changes[0].State);
             Assert.IsFalse(_changes[0].Restored);
 
-            Dock();
-            Assert.AreEqual(2, _changes.Count, "later docks change nothing");
+            Reveal();
+            Assert.AreEqual(2, _changes.Count, "a second reveal changes nothing");
         }
 
         [Test]
         public void AScanOfTheAdapter_AndAFittedPart_AreEachAnnouncedOnce()
         {
-            _events.Publish(new OpeningMilestoneReached(OpeningMilestone.SignalWest, false));
-            Dock();
+            Reveal();
             _changes.Clear();
 
             _events.Publish(new FragmentScanned("frag", "rover.hex_adapter", 0, 3, false, 0));
@@ -75,18 +73,24 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void ALoadedRack_IsReplayedAsRestored_AndStaysOut()
+        public void ALoadedGameWhoseReleaseIsDone_ReplaysTheRackAsRestored()
         {
-            _field.Restore(new RackSaveData { shown = true, seen = new string[0], filled = new[] { "rack.cell_pack" } });
+            _field.Restore(new RackSaveData { seen = new string[0], filled = new[] { "rack.cell_pack" } });
+            _events.Publish(new ReleaseStageChanged(ReleaseStage.Done, true));
             _field.Announce();
             Assert.AreEqual(2, _changes.Count);
             Assert.IsTrue(_changes[0].Restored && _changes[1].Restored);
             Assert.AreEqual(RackBayState.Filled, _changes[1].State);
+        }
 
-            _changes.Clear();
-            _events.Publish(new OpeningMilestoneReached(OpeningMilestone.SignalWest, true));
-            Dock();
-            Assert.AreEqual(0, _changes.Count, "no second reveal");
+        [Test]
+        public void ALoadedGameWhoseReleaseIsNotDone_KeepsTheRackHidden()
+        {
+            _field.Restore(new RackSaveData { seen = new string[0], filled = new[] { "rack.cell_pack" } });
+            _events.Publish(new ReleaseStageChanged(ReleaseStage.RackPending, true));
+            _field.Announce();
+            Assert.IsFalse(_field.Shown);
+            Assert.AreEqual(0, _changes.Count);
         }
 
         [Test]
@@ -95,10 +99,9 @@ namespace MoonProject.Gameplay.Tests
             Assert.IsNull(_tuning.ValidateRack());
         }
 
-        private void Dock()
+        private void Reveal()
         {
-            _events.Publish(new RoverDockChanged(true, Vector3.zero, Quaternion.identity));
-            _events.Publish(new RoverDockChanged(false, Vector3.zero, Quaternion.identity));
+            _events.Publish(new SocketRackRevealed(Vector3.zero));
         }
     }
 }

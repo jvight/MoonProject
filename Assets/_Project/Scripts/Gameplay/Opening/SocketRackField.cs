@@ -8,9 +8,10 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// The socket rack at the pad in the running game (docs/design/opening-v3-plan.md 4.3): it feeds
     /// <see cref="SocketRack"/> from the game's events and announces every bay that changes what it shows with
-    /// <see cref="RackChanged"/>. The west signal releases it, the next dock brings it out, a scan of a part's blueprint
-    /// shows that part's outline and a fitted part fills its bay. Saved; <see cref="Announce"/> replays a loaded rack
-    /// with Restored = true.
+    /// <see cref="RackChanged"/>. The release reveals it (<see cref="SocketRackRevealed"/>, live; a loaded game whose
+    /// release is done, <see cref="ReleaseStageChanged"/> to Done restored): the release is the one source of truth for
+    /// whether the rack is out. A scan of a part's blueprint shows that part's outline and a fitted part fills its bay.
+    /// Its bays are saved; <see cref="Announce"/> (after the release's) replays a loaded rack with Restored = true.
     /// </summary>
     public sealed class SocketRackField : IRackStatus, IDisposable
     {
@@ -26,8 +27,8 @@ namespace MoonProject.Gameplay
             _announced = new RackBayState[_rack.Count];
             _tokens = new[]
             {
-                events.Subscribe<OpeningMilestoneReached>(OnMilestone),
-                events.Subscribe<RoverDockChanged>(OnDockChanged),
+                events.Subscribe<SocketRackRevealed>(OnRevealed),
+                events.Subscribe<ReleaseStageChanged>(OnReleaseStage),
                 events.Subscribe<FragmentScanned>(OnFragmentScanned),
                 events.Subscribe<PartFitted>(OnPartFitted),
             };
@@ -78,19 +79,20 @@ namespace MoonProject.Gameplay
             }
         }
 
-        private void OnMilestone(OpeningMilestoneReached reached)
+        private void OnRevealed(SocketRackRevealed revealed)
         {
-            if (reached.Milestone == OpeningMilestone.SignalWest)
+            if (_rack.Reveal())
             {
-                _rack.Release();
+                PublishChanges();
             }
         }
 
-        private void OnDockChanged(RoverDockChanged dock)
+        /// <summary>A loaded game whose release is done: the rack is out, replayed by <see cref="Announce"/>.</summary>
+        private void OnReleaseStage(ReleaseStageChanged changed)
         {
-            if (dock.Docked && _rack.Docked())
+            if (changed.Restored && changed.Stage == ReleaseStage.Done)
             {
-                PublishChanges();
+                _rack.Reveal();
             }
         }
 

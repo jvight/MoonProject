@@ -8,9 +8,6 @@ namespace MoonProject.Gameplay
     [Serializable]
     public sealed class RackSaveData
     {
-        /// <summary>The rack stands at the pad.</summary>
-        public bool shown;
-
         /// <summary>Bays whose part 07 has seen by a scan.</summary>
         public string[] seen;
 

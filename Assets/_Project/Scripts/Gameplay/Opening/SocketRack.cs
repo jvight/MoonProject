@@ -7,9 +7,9 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// The socket rack at the pad as pure state (EditMode-tested; docs/design/opening-v3-plan.md 4.3, ruling 5). The
-    /// rack is held until the west signal answers. It then shows at 07's next dock (the last step of the release's
-    /// stagger), with an outline in each bay whose part 07 has seen and a filled bay for each part fitted. A bay is
-    /// seen at the release or once a fragment of its part's blueprint is scanned; a fitted bay stays filled.
+    /// rack is hidden until the release reveals it (the last step of the release's stagger, at 07's first dock after
+    /// the view). It then shows an outline in each bay whose part 07 has seen and a filled bay for each part fitted. A
+    /// bay is seen at the release or once a fragment of its part's blueprint is scanned; a fitted bay stays filled.
     /// </summary>
     public sealed class SocketRack
     {
@@ -34,10 +34,7 @@ namespace MoonProject.Gameplay
             _filled = new bool[_bays.Length];
         }
 
-        /// <summary>The west signal has answered: the rack may show at the next dock.</summary>
-        public bool Released { get; private set; }
-
-        /// <summary>The rack stands at the pad (it showed at a dock after the release).</summary>
+        /// <summary>The rack stands at the pad (the release revealed it).</summary>
         public bool Shown { get; private set; }
 
         public int Count => _bays.Length;
@@ -65,16 +62,10 @@ namespace MoonProject.Gameplay
             return _bays[bay].SeenAtRelease || _seen[bay] ? RackBayState.Outline : RackBayState.Hidden;
         }
 
-        /// <summary>The west signal answered (a replay at session start too).</summary>
-        public void Release()
+        /// <summary>The release reveals the rack. True when it appeared this time.</summary>
+        public bool Reveal()
         {
-            Released = true;
-        }
-
-        /// <summary>07 docked: a released rack shows now. True when it appeared this time.</summary>
-        public bool Docked()
-        {
-            if (!Released || Shown)
+            if (Shown)
             {
                 return false;
             }
@@ -133,13 +124,16 @@ namespace MoonProject.Gameplay
                 }
             }
 
-            return new RackSaveData { shown = Shown, seen = seen.ToArray(), filled = filled.ToArray() };
+            return new RackSaveData { seen = seen.ToArray(), filled = filled.ToArray() };
         }
 
-        /// <summary>A save's rack (null: a new game). Ids no bay has any more are dropped.</summary>
+        /// <summary>
+        /// A save's bays (null: a new game). Ids no bay has any more are dropped. Whether the rack is out is the
+        /// release's to say (<see cref="Reveal"/>), not the rack's save.
+        /// </summary>
         public void Restore(RackSaveData data)
         {
-            Shown = data != null && data.shown;
+            Shown = false;
             for (int i = 0; i < _bays.Length; i++)
             {
                 _seen[i] = data != null && Contains(data.seen, _bays[i].Id);
