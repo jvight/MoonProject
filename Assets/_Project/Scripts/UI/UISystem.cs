@@ -766,7 +766,10 @@ namespace MoonProject.UI
             bool chipWants = (PromptsOpen(paused) && _director.ReadyToShow) || looks;
             bool unlockWants = !_cargo.IsOpen && _unlockCard.IsWaiting;
             bool readoutWants = ReadoutOpen(paused) && _readout.Wants;
-            bool controlsWants = _controlsCard.WantsShown && ControlsCardOpen(paused, _cargo.IsOpen);
+            // A key the card has just added waits behind any chip that wants the screen (its own first-use chip first).
+            bool controlsWants = _controlsCard.WantsShown && ControlsCardOpen(paused, _cargo.IsOpen) &&
+                                 !(_controlsCard.Fresh != ControlsKeys.None &&
+                                   (chipWants || _director.Wants(_services.Hints.Primary)));
             bool chipUp = _prompt.IsVisible || _lookUpChip.ShowsPrompt;
             PromptHolder holder = _controlsView.IsVisible ? PromptHolder.Controls
                 : _unlockCard.IsVisible ? PromptHolder.Unlock
