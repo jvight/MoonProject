@@ -354,9 +354,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return DockForTheDusk(pad);
             yield return ExpectStep(OpeningKeys.ScanModule, "B9: night is coming, the power module can store it");
             yield return ScanTheSet("ruin.HabitatModules", "the habitat's power modules");
-            yield return ExpectStep(OpeningKeys.BuildBatteryBank, "B9: the module is the bank's frame, tow it home");
+            yield return ExpectStep(OpeningKeys.TowModuleHome, "B9: the module is the bank's frame, tow it home");
             yield return CutTheCrates("HabitatModules", "the habitat's cable reel");
             yield return TowTheModuleHome(pad);
+            yield return ExpectStep(OpeningKeys.BuildBatteryBank, "B9: the module is home, build the bank on it");
             yield return Build(StructureIds.BatteryBank, ModulePosition(), "B9: the battery bank on the module");
             yield return UntilReached(OpeningMilestone.NightReady, "night-ready: the bank is built and wired to the pad");
             yield return TheFirstNightfall();

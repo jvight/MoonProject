@@ -47,7 +47,7 @@ namespace MoonProject.Gameplay
         private readonly Vector3 _lander;
         private readonly Vector3 _apron;
         private readonly PlacedBase _placed;
-        private ITowLine _tow;
+        private TowLine _tow;
         private RelayRepair _relay;
         private MakerUnderstanding _understanding;
         private IRackStatus _rack;
@@ -156,6 +156,8 @@ namespace MoonProject.Gameplay
 
         public bool DuskVisited => Dusk.Visited;
 
+        public bool ModuleHome => _tow != null && _tow.TryFindHome(TowLoads.PowerModule, out _);
+
         public bool CallAnswered => _call != null && _call.State >= CallState.Answered;
 
         public bool RelayRelit => _relay != null && _relay.Fitted;
@@ -207,7 +209,7 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>07's winch cable, made after the opening: where the power module stands for its line.</summary>
-        public void ConnectTow(ITowLine tow)
+        public void ConnectTow(TowLine tow)
         {
             _tow = tow ?? throw new ArgumentNullException(nameof(tow));
         }
@@ -230,6 +232,7 @@ namespace MoonProject.Gameplay
                     return Frame(HabitatRuin, out placeId, out position);
                 case OpeningKeys.ScanTower:
                     return Frame(TowerRuin, out placeId, out position);
+                case OpeningKeys.TowModuleHome:
                 case OpeningKeys.BuildBatteryBank:
                     Transform load = null;
                     bool module = _tow != null && _tow.TryFindLoad(TowLoads.PowerModule, out load);

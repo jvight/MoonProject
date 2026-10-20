@@ -83,7 +83,9 @@ namespace MoonProject.Gameplay.Tests
             _game.DuskBegun = true;
             Expect(OpeningKeys.ScanModule, "night is coming: the habitat's power module can store it");
             _game.Known.Add(StructureIds.BatteryBank);
-            Expect(OpeningKeys.BuildBatteryBank, "the module is the bank's frame: tow it home, build on it (G6)");
+            Expect(OpeningKeys.TowModuleHome, "the module is the bank's frame: tow it home (G6)");
+            _game.ModuleHome = true;
+            Expect(OpeningKeys.BuildBatteryBank, "home: build the bank on it");
             _game.NightReady = true;
             Expect(OpeningKeys.AwaitNight, "night-ready: the base waits for the night");
             _game.NightFallen = true;
@@ -253,6 +255,7 @@ namespace MoonProject.Gameplay.Tests
             _game.PowerOn = true;
             _game.DuskBegun = true;
             _game.Known.Add(StructureIds.BatteryBank);
+            _game.ModuleHome = true;
             _flow.Announce();
             _flow.Tick();
             Assert.AreEqual(OpeningKeys.BuildBatteryBank, _flow.Current, "no stored step: read at once");
@@ -315,6 +318,7 @@ namespace MoonProject.Gameplay.Tests
             _game.PowerOn = true;
             _game.DuskBegun = true;
             _game.Known.Add(StructureIds.BatteryBank);
+            _game.ModuleHome = true;
             Expect(OpeningKeys.BuildBatteryBank);
             _game.BuiltIds.Add(StructureIds.BatteryBank);
             Expect(OpeningKeys.MoveBatteryBank, "built, but the grid does not reach it");
@@ -471,6 +475,7 @@ namespace MoonProject.Gameplay.Tests
             public bool NightReady { get; set; }
             public bool NightFallen { get; set; }
             public bool DuskVisited { get; set; }
+            public bool ModuleHome { get; set; }
             public bool CallAnswered { get; set; }
             public bool RelayRelit { get; set; }
             public bool HeadlampUnlocked { get; set; }

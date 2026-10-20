@@ -60,6 +60,12 @@ namespace MoonProject.Gameplay
         /// <summary>The first dusk, the battery bank not yet learned: "Night is coming. Scan the habitat's power module."</summary>
         public const string ScanModule = "next.v3.scan_module";
 
+        /// <summary>
+        /// B9, the battery bank learned, the power module not home: "The power module is the bank's frame. Tow it home
+        /// to the apron."
+        /// </summary>
+        public const string TowModuleHome = "next.v3.tow_module";
+
         /// <summary>R5, a near site visited: "Park on the pad to end the day." (the dock begins the dusk).</summary>
         public const string DockForDusk = "next.v3.dock_for_dusk";
 
@@ -105,8 +111,9 @@ namespace MoonProject.Gameplay
                 case BuildPad:
                 case BuildSolar:
                 case BuildMast:
-                    return RoverAction.Build;
                 case BuildBatteryBank:
+                    return RoverAction.Build;
+                case TowModuleHome:
                     return RoverAction.Tether;
                 default:
                     return default;
