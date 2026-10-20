@@ -71,6 +71,18 @@ namespace MoonProject.Autoplay
 
         public AutoplayWorld World => _world;
 
+        /// <summary>Takes a screenshot labelled <paramref name="label"/>.</summary>
+        public void Shot(string label)
+        {
+            _screenshot(label);
+        }
+
+        /// <summary>Lets go of every key: the bot stands still, as a player who has put the controls down.</summary>
+        public void Idle()
+        {
+            ReleaseDrive();
+        }
+
         /// <summary>The reason the run failed, or null while it has not.</summary>
         public string Failure { get; private set; }
 
