@@ -77,6 +77,9 @@ namespace MoonProject.World.PlayModeTests
         private const float RelayAnsweredSignSeconds = 6f;
         private const float RelayCropFov = 6f;
 
+        // The key level the chase shot of relay.1 waits for.
+        private const float RelayChaseKey = 0.9f;
+
         // relay.1's repair site: its cabinet and the spare inside, and how far in front of the cabinet the near eye
         // stands.
         private const string RelaySiteName = "Relay1Site";
@@ -690,7 +693,8 @@ namespace MoonProject.World.PlayModeTests
         /// <summary>
         /// relay.1's lamp, the first lure after the answer (opening v3 R8), on a real New Game: the night ready and the
         /// call answered, seen from the apron at the top of a key, as the whole night frame and as a close crop on the
-        /// mast. Logs/world-captures/relay-lamp-*.png, its distance and level in the log.
+        /// mast, then in the real chase view with 07 turned west to it. Logs/world-captures/relay-lamp-*.png, its
+        /// distance and level in the log.
         /// </summary>
         [UnityTest]
         [Timeout(300000)]
@@ -773,6 +777,21 @@ namespace MoonProject.World.PlayModeTests
                 Object.Destroy(host);
             }
 
+            // Where 07 stands after the answer, at the base's own mast on the apron, turned west to the lamp: the real
+            // chase view, at the top of a key.
+            Vector3 apron = Anchor(context.Get<IWorldAnchors>(), WorldAnchorIds.PlaceApron).Position;
+            Vector3 west = Vector3.ProjectOnPlane(lamp.transform.position - apron, Vector3.up).normalized;
+            context.Get<IRoverPlacement>().PlaceAt(OnGround(context.Get<ITerrainQuery>(),
+                new Vector2(apron.x, apron.z)), Quaternion.LookRotation(west, Vector3.up));
+            yield return new WaitForSeconds(SettleSeconds);
+            started = Time.time;
+            while (lamp.Level < RelayChaseKey && Time.time - started < RelayAnsweredSignSeconds)
+            {
+                yield return null;
+            }
+
+            Shoot(view, "relay-lamp-chase");
+            Debug.Log($"[relay-lamp] chase view toward relay.1: level {lamp.Level:F2}");
             Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
         }
 
