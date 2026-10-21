@@ -763,6 +763,10 @@
             "text": "06 is slumped at relay.2 by the canyon mouth. Drive there and scan it."
         },
         {
+            "key": "next.v3.cut_headlamp_crate",
+            "text": "Cut the crate by 06 for the headlamp's parts."
+        },
+        {
             "key": "next.v3.assemble_headlamp",
             "text": "Assemble the SSR-3 headlamp at the rack by the pad."
         },

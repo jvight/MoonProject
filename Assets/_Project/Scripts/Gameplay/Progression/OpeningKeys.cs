@@ -84,6 +84,12 @@ namespace MoonProject.Gameplay
         /// <summary>5.2, relay.1 lit: "06 is slumped at relay.2 by the canyon mouth. Drive there and scan it."</summary>
         public const string ScanElder06 = "next.v3.scan_elder06";
 
+        /// <summary>
+        /// 5.2, the headlamp unlocked and 06's crate still holding its parts: "Cut the crate by 06 for the headlamp's
+        /// parts."
+        /// </summary>
+        public const string CutHeadlampCrate = "next.v3.cut_headlamp_crate";
+
         /// <summary>5.2, the SSR-3 headlamp unlocked: "Assemble the SSR-3 headlamp at the rack by the pad."</summary>
         public const string AssembleHeadlamp = "next.v3.assemble_headlamp";
 
@@ -106,6 +112,7 @@ namespace MoonProject.Gameplay
                 case ScanTower:
                 case Transmit:
                 case ScanElder06:
+                case CutHeadlampCrate:
                 case AssembleHeadlamp:
                     return RoverAction.Excavate;
                 case BuildPad:

@@ -514,6 +514,12 @@ namespace MoonProject.Autoplay
                 yield break;
             }
 
+            if (battery.IsCharging)
+            {
+                yield return _bot.Until(() => battery.Charge01 >= TopUpTo, TopUpSeconds, "07's cells to charge");
+                yield break;
+            }
+
             _bot.Warn("07's cells ran low (" + (battery.Charge01 * 100f).ToString("0", CultureInfo.InvariantCulture) +
                       "%): the bot went back to the pad to charge.");
             yield return _bot.DriveTo(Flat(pad.Value), ApproachThrottleRadius, "the pad to charge", DriveSeconds);
@@ -883,12 +889,27 @@ namespace MoonProject.Autoplay
 
             yield return TopUpIfLow();
             yield return Scan(six, Flat(Pad() - six.Point).normalized, ScanStandOff);
-            yield return CutTheCrates(WorldAnchorIds.Micro06);
             MakerUnderstanding understanding = G.Understanding;
             yield return _bot.Until(() => understanding.IsUnlocked(MakerUnderstandingSettings.Ssr3Headlamp),
                 FollowSeconds, "Kessler–Arai level 1 to unlock the SSR-3 headlamp",
                 () => "Kessler–Arai points " + understanding.PointsOf(DatabankMaker.KesslerArai) + ", released " +
                       understanding.Released + ".");
+        }
+
+        /// <summary>R12: back onto the pad; the first dock after the release brings out the socket rack.</summary>
+        public IEnumerator DockForTheRack()
+        {
+            IRackStatus rack = G.Rack;
+            if (rack.Shown)
+            {
+                yield break;
+            }
+
+            Vector3 pad = PlacedPosition(StructureIds.ChargingPad);
+            yield return _bot.DriveTo(Flat(pad), ApproachThrottleRadius, "the pad, to bring out the rack",
+                DriveSeconds);
+            yield return _bot.Until(() => rack.Shown && G.RackView.Instance != null, FollowSeconds,
+                "the dock to bring out the socket rack");
         }
 
         /// <summary>
@@ -897,18 +918,10 @@ namespace MoonProject.Autoplay
         /// </summary>
         public IEnumerator AssembleTheHeadlamp()
         {
-            IRackStatus rack = G.Rack;
-            if (!rack.Shown)
+            yield return DockForTheRack();
+            if (_bot.Failed)
             {
-                Vector3 pad = PlacedPosition(StructureIds.ChargingPad);
-                yield return _bot.DriveTo(Flat(pad), ApproachThrottleRadius, "the pad, to bring out the rack",
-                    DriveSeconds);
-                yield return _bot.Until(() => rack.Shown && G.RackView.Instance != null, FollowSeconds,
-                    "the dock to bring out the socket rack");
-                if (_bot.Failed)
-                {
-                    yield break;
-                }
+                yield break;
             }
 
             Transform bay = Descendant(G.RackView.Instance.transform, HeadlampOutlineNode);

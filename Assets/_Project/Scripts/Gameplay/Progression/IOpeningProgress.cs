@@ -75,6 +75,9 @@ namespace MoonProject.Gameplay
         /// <summary>Kessler–Arai understanding has unlocked the adapted SSR-3 headlamp (5.2).</summary>
         bool HeadlampUnlocked { get; }
 
+        /// <summary>07's hold covers the assembly cost of the SSR-3 headlamp (5.2).</summary>
+        bool CoversHeadlamp { get; }
+
         /// <summary>The socket rack stands out at the pad (the first dock after the release brings it out).</summary>
         bool RackOut { get; }
 

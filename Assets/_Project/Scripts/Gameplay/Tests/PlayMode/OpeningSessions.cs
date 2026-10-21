@@ -237,7 +237,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             SupplyCaches caches = _fixture.Gameplay.Opening.Caches;
-            Assert.AreEqual(8, caches.Count, "the fixed sources and the spares rack; the module is towed (opening-v3 R6)");
+            Assert.AreEqual(9, caches.Count, "the fixed sources, the spares rack and 06's field crate; the module is towed (opening-v3 R6)");
             SealedContainer crate = _fixture.Gameplay.Containers.Find("supply.array.junction");
             Assert.IsNotNull(crate, "the fallen array's junction box is a sealed container the cutter opens");
             _fixture.Gameplay.Containers.StandOpen("supply.array.junction");

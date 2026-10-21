@@ -143,7 +143,10 @@ namespace MoonProject.Autoplay
                 new[] { "foot", "TX" }));
             _naive.Declare("B12", new NextAction("WASD", new[] { drive }, new[] { "relay", "west" }, new[] { "relay" }));
             _naive.Declare("R10", new NextAction("WASD", new[] { drive }, new[] { "06", "relay.2", "scan" }, null));
-            _naive.Declare("R11", new NextAction("E", new[] { "hint.rack" }, new[] { "headlamp", "rack", "assemble" },
+            _naive.Declare("R11a", new NextAction("E", new[] { "hint.salvage" }, new[] { "cut", "crate", "headlamp" },
+                null));
+            _naive.Declare("R11", new NextAction("WASD", new[] { drive }, new[] { "pad", "park" }, null));
+            _naive.Declare("R12a", new NextAction("E", new[] { "hint.rack" }, new[] { "headlamp", "assemble" },
                 null));
             _naive.Skip("R12");
         }
@@ -500,14 +503,25 @@ namespace MoonProject.Autoplay
 
         private IEnumerator KesslerArai()
         {
-            Begin("R11", "Kessler–Arai: 07 woke on its trickle post; read 06 at relay.2 and the SSR-3 headlamp unlocks");
+            Begin("R11", "Kessler–Arai: 07 woke on its trickle post; read 06 at relay.2, cut its crate and the SSR-3 headlamp unlocks");
+            yield return _base.ExpectStep(OpeningSteps.ScanElder06, OpeningKeys.ScanElder06, "R11: 06 at relay.2");
             yield return _base.LearnKesslerArai();
-            _bot.EndBeat("07 read 06 after its trickle post: Kessler–Arai level 1, the SSR-3 headlamp unlocked");
+            yield return Sub("R11a");
+            yield return _base.ExpectStep(OpeningSteps.AssembleHeadlamp, OpeningKeys.CutHeadlampCrate,
+                "R11: 06's crate holds the headlamp's parts");
+            yield return _base.CutTheCrates(WorldAnchorIds.Micro06);
+            _bot.EndBeat("07 read 06 after its trickle post and cut its crate: Kessler–Arai level 1, the SSR-3 headlamp unlocked");
         }
 
         private IEnumerator Headlamp()
         {
-            Begin("R12", "The SSR-3 headlamp: assemble it at the rack's headlamp bay with a held E");
+            Begin("R12", "The SSR-3 headlamp: dock on the pad to bring out the rack, then assemble the headlamp at its bay with a held E");
+            yield return _base.ExpectStep(OpeningSteps.AssembleHeadlamp, OpeningKeys.DockForRack,
+                "R12: dock to bring out the rack");
+            yield return _base.DockForTheRack();
+            yield return Sub("R12a");
+            yield return _base.ExpectStep(OpeningSteps.AssembleHeadlamp, OpeningKeys.AssembleHeadlamp,
+                "R12: the rack stands out");
             yield return _base.AssembleTheHeadlamp();
             _bot.EndBeat("the SSR-3 headlamp assembled at the rack: its bay is filled and 07 wears it");
         }

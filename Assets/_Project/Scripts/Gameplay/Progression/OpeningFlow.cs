@@ -80,14 +80,24 @@ namespace MoonProject.Gameplay
             _steps.Add(OpeningKeys.Transmit, () => _game.AnswerDone);
             _steps.Add(OpeningKeys.GoToRelay, () => _game.RelayRelit);
             _steps.Add(OpeningKeys.ScanElder06, () => _game.HeadlampUnlocked || _game.HeadlampFitted);
-            _steps.Add(() => _game.RackOut ? OpeningKeys.AssembleHeadlamp : OpeningKeys.DockForRack,
-                () => _game.HeadlampFitted);
+            _steps.Add(HeadlampLine, () => _game.HeadlampFitted);
             _wake = events.Subscribe<BootCheckFinished>(_ => _woke = true);
         }
 
         public void Dispose()
         {
             _wake.Dispose();
+        }
+
+        /// <summary>
+        /// 5.2: once 06 is read and the SSR-3 headlamp is unlocked, 06's crate by relay.2 holds its Metal 2 + Wiring 1;
+        /// once the hold covers it, the first dock brings out the rack, and the headlamp is assembled at its bay.
+        /// </summary>
+        private string HeadlampLine()
+        {
+            return !_game.CoversHeadlamp ? OpeningKeys.CutHeadlampCrate
+                : _game.RackOut ? OpeningKeys.AssembleHeadlamp
+                : OpeningKeys.DockForRack;
         }
 
         /// <summary>

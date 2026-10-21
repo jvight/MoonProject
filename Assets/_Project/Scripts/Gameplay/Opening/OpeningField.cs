@@ -165,9 +165,25 @@ namespace MoonProject.Gameplay
         public bool HeadlampUnlocked =>
             _understanding != null && _understanding.IsUnlocked(MakerUnderstandingSettings.Ssr3Headlamp);
 
+        public bool CoversHeadlamp => HeadlampCost() is Recipe cost && _stock.Has(cost);
+
         public bool RackOut => _rack != null && _rack.Shown;
 
         public bool HeadlampFitted => HeadlampBay() is int bay && _rack.StateOf(bay) == RackBayState.Filled;
+
+        private Recipe? HeadlampCost()
+        {
+            IReadOnlyList<RackAssemblySettings> assemblies = _tuning.RackAssemblies;
+            for (int i = 0; i < assemblies.Count; i++)
+            {
+                if (assemblies[i].AdaptedId == MakerUnderstandingSettings.Ssr3Headlamp)
+                {
+                    return assemblies[i].Cost;
+                }
+            }
+
+            return null;
+        }
 
         /// <summary>
         /// Maker understanding and the socket rack, made after the opening: what <see cref="HeadlampUnlocked"/> and
@@ -245,6 +261,8 @@ namespace MoonProject.Gameplay
                         out position);
                 case OpeningKeys.ScanElder06:
                     return Frame(Elder06Host, out placeId, out position);
+                case OpeningKeys.CutHeadlampCrate:
+                    return Crate(OpeningTuning.SixCrate, out placeId, out position);
                 case OpeningKeys.AssembleHeadlamp:
                     bool rackOut = _rack != null && _rack.Shown;
                     return Place(rackOut ? RackPlace : string.Empty, rackOut ? _rack.Position : Vector3.zero,

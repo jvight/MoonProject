@@ -763,6 +763,10 @@
             "text": "06 nằm gục ở relay.2 cạnh cửa hẻm núi. Lái tới đó và quét nó."
         },
         {
+            "key": "next.v3.cut_headlamp_crate",
+            "text": "Cắt thùng hàng cạnh 06 để lấy linh kiện đèn pha."
+        },
+        {
             "key": "next.v3.assemble_headlamp",
             "text": "Lắp đèn pha SSR-3 ở giá cạnh bệ sạc."
         },
