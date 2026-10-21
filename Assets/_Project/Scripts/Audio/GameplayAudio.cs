@@ -18,13 +18,15 @@ namespace MoonProject.Audio
     /// 07's tow: the winch spooling out at the winch as the hook attaches (<see cref="TowAttached"/>), the cable's creak
     /// along it while towing, louder and higher with <see cref="ITowLine.Strain01"/> and silent when slack
     /// (<see cref="TowStrainVoice"/>), and its release: a soft clunk, or a harsher snap when the cable parted
-    /// (<see cref="TowReleased"/>).
+    /// (<see cref="TowReleased"/>). The socket rack (<see cref="RackChanged"/>, at <see cref="IRackStatus.Position"/>): a
+    /// bay filling, its jaws' clunk-latch and the bay lamp's hum; an outline appearing, one quiet click however many
+    /// bays outline together; restored bays silent.
     /// Initialised by <see cref="AudioDirector"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class GameplayAudio : MonoBehaviour
     {
-        private const int SubscriptionCount = 10;
+        private const int SubscriptionCount = 11;
         private const int TowReleaseVariant = 0;
         private const int TowSnapVariant = 1;
 
@@ -61,6 +63,10 @@ namespace MoonProject.Audio
         private float _towStrainCueVolume;
         private readonly EasedValue _strainGain = new EasedValue(0f);
         private ITowLine _tow;
+        private IRackStatus _rack;
+        private CueHandle _rackFill;
+        private CueHandle _rackOutline;
+        private int _outlineFrame = -1;
         private IRoverRig _rig;
         private AudioSource _weldLoop;
         private float _weldLoopCueVolume;
@@ -102,11 +108,14 @@ namespace MoonProject.Audio
             _towSpool = director.Resolve(AudioCueIds.TowSpool);
             _towRelease = director.Resolve(AudioCueIds.TowRelease);
             CueHandle towStrain = director.Resolve(AudioCueIds.TowStrainLoop);
+            _rackFill = director.Resolve(AudioCueIds.RackFill);
+            _rackOutline = director.Resolve(AudioCueIds.RackOutline);
             CueHandle weldLoop = director.Resolve(AudioCueIds.BuildWeldLoop);
             if (!(_buildGhost.IsValid && _buildSnap.IsValid && _buildInvalid.IsValid && _buildPlace.IsValid &&
                   weldLoop.IsValid && _buildStageComplete.IsValid && _buildStructureComplete.IsValid &&
                   _buildDeconstruct.IsValid && _powerOn.IsValid && _baseLamp.IsValid && _mastClunk.IsValid &&
-                  _mastSettle.IsValid && _towSpool.IsValid && _towRelease.IsValid && towStrain.IsValid))
+                  _mastSettle.IsValid && _towSpool.IsValid && _towRelease.IsValid && towStrain.IsValid &&
+                  _rackFill.IsValid && _rackOutline.IsValid))
             {
                 enabled = false;
                 return;
@@ -119,6 +128,7 @@ namespace MoonProject.Audio
             _towStrain = director.CreateLoopSource(transform, "TowStrain", towStrain, 1f);
             _towStrainCueVolume = director.Library.GetCue(towStrain).VolumeMax;
             _tow = context.Get<ITowLine>();
+            _rack = context.Get<IRackStatus>();
             _rig = context.Get<IRoverRig>();
 
             EventBus events = context.Events;
@@ -132,6 +142,7 @@ namespace MoonProject.Audio
             _subscriptions[7] = events.Subscribe<MastSegmentRaised>(OnMastSegmentRaised);
             _subscriptions[8] = events.Subscribe<TowAttached>(OnTowAttached);
             _subscriptions[9] = events.Subscribe<TowReleased>(OnTowReleased);
+            _subscriptions[10] = events.Subscribe<RackChanged>(OnRackChanged);
         }
 
         private void Update()
@@ -267,6 +278,28 @@ namespace MoonProject.Audio
             if (_tow.IsTowing)
             {
                 _towStrain.transform.position = (_rig.WinchOrigin.position + _tow.LoadHitch) * 0.5f;
+            }
+        }
+
+        /// <summary>
+        /// A bay filled: the jaws' clunk-latch and the lamp's hum. An outline appeared: one quiet click, even when the
+        /// release reveals several at once. A loaded rack shows itself silently.
+        /// </summary>
+        private void OnRackChanged(RackChanged changed)
+        {
+            if (changed.Restored)
+            {
+                return;
+            }
+
+            if (changed.State == RackBayState.Filled)
+            {
+                _director.PlayAt(_rackFill, _rack.Position, _tuning.RackFillVolume);
+            }
+            else if (changed.State == RackBayState.Outline && _outlineFrame != Time.frameCount)
+            {
+                _outlineFrame = Time.frameCount;
+                _director.PlayAt(_rackOutline, _rack.Position, _tuning.RackOutlineVolume);
             }
         }
 

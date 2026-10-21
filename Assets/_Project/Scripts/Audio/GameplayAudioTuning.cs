@@ -61,6 +61,13 @@ namespace MoonProject.Audio
         [Tooltip("Volume scale of the release clunk (and of the harsher snap).")]
         [Range(0f, 1f)] [SerializeField] private float _towReleaseVolume = 0.8f;
 
+        [Header("Socket rack (RackChanged)")]
+        [Tooltip("Volume scale of a bay filling: the jaws' clunk-latch and the bay lamp's hum.")]
+        [Range(0f, 1f)] [SerializeField] private float _rackFillVolume = 0.8f;
+
+        [Tooltip("Volume scale of an outline appearing: the quiet relay click and its faint tone.")]
+        [Range(0f, 1f)] [SerializeField] private float _rackOutlineVolume = 0.7f;
+
         public float WeldFadeIn => _weldFadeIn;
         public float WeldFadeOut => _weldFadeOut;
         public float PowerOnVolume => _powerOnVolume;
@@ -76,5 +83,7 @@ namespace MoonProject.Audio
         public float TowStrainHighPitch => _towStrainHighPitch;
         public float TowStrainSmoothing => _towStrainSmoothing;
         public float TowReleaseVolume => _towReleaseVolume;
+        public float RackFillVolume => _rackFillVolume;
+        public float RackOutlineVolume => _rackOutlineVolume;
     }
 }

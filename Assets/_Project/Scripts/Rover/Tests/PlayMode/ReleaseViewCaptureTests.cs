@@ -190,7 +190,7 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreEqual(AnswerPhase.Ready, context.Get<IAnswerStatus>().Phase);
             Assert.IsTrue(context.Get<IWorldAnchors>().TryGet("relay.1", out WorldAnchor relay));
             Vector3 stand = foot + new Vector3(3f, 0f, 0f);
-            float relayBearing = ReleasePan.BearingTo(stand, relay.Position);
+            float relayBearing = GazePan.BearingTo(stand, relay.Position);
             context.Get<IRoverPlacement>().PlaceAt(stand, Quaternion.Euler(0f, relayBearing - relayAheadDegrees, 0f));
             yield return RealRoverScene.WaitSeconds(1f);
             Press(_keyboard.eKey);

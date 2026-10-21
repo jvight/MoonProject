@@ -24,7 +24,7 @@ namespace MoonProject.UI.Tests
         {
             for (float t = 0f; t < seconds; t += Frame)
             {
-                _card.Tick(Frame, open, speed * Frame, looking, guidance);
+                _card.Tick(Frame, open, speed * Frame, looking, guidance, open);
             }
         }
 
@@ -64,6 +64,38 @@ namespace MoonProject.UI.Tests
             Assert.IsTrue(_card.WantsShown);
             Run(1f + 2f * Frame, 0f, false);
             Assert.IsFalse(_card.WantsShown, "an untouched card leaves after its longest stay");
+        }
+
+        [Test]
+        public void AnAddedKey_BringsTheCardBack_MarkedNew_ForItsScreenTimeOnly()
+        {
+            _card.Add(ControlsKeys.Build, true);
+            Assert.IsTrue(_card.WantsShown, "the card comes back with B");
+            Assert.AreEqual(ControlsKeys.Build, _card.Fresh);
+            Run(_settings.AddedSeconds + 5f, 3f, true, true, true);
+            Assert.IsFalse(_card.WantsShown, "driving and looking do not matter: its few seconds are over");
+            Assert.AreEqual(ControlsKeys.None, _card.Fresh);
+        }
+
+        [Test]
+        public void AnAddedKeysTime_CountsOnlyWhileTheCardIsSeen_SoItWaitsBehindAChip()
+        {
+            _card.Add(ControlsKeys.Hook, true);
+            for (float t = 0f; t < _settings.AddedSeconds + 5f; t += Frame)
+            {
+                _card.Tick(Frame, true, 0f, false, true, false);
+            }
+
+            Assert.IsTrue(_card.WantsShown, "the hook chip held the slot: the card still waits its turn");
+            Run(_settings.AddedSeconds + 2f * Frame, 0f, false);
+            Assert.IsFalse(_card.WantsShown);
+        }
+
+        [Test]
+        public void WithGuidanceOff_AnAddedKeyDoesNotBringTheCardBack()
+        {
+            _card.Add(ControlsKeys.Build, false);
+            Assert.IsFalse(_card.WantsShown);
         }
 
         [Test]

@@ -116,6 +116,10 @@ namespace MoonProject.World
                 kestrel.TailHalfWidth));
             Vector2 elder = relays.ElderSite;
             anchors.Add(Make(surface, WorldAnchorIds.Micro06, elder, -elder, relays.ElderRadius));
+            Vector2 toMouth = (main.PointAt(0f) - elder).normalized;
+            Vector2 right = new Vector2(toMouth.y, -toMouth.x);
+            Vector2 hut = elder + right * relays.HutOffset.x + toMouth * relays.HutOffset.y;
+            anchors.Add(Make(surface, WorldAnchorIds.RelayPrefix + 2, hut, toMouth, relays.HutRadius));
             Vector2 road = surface.PeakRoadFoot;
             anchors.Add(Make(surface, PeakRoad, road, road, PeakRoadRadius));
             AddOpening(surface, anchors);

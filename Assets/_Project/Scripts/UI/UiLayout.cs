@@ -23,6 +23,8 @@ namespace MoonProject.UI
             BatteryDialValue = Require<Label>("battery-dial-value");
             NextLineShadow = Require<VisualElement>("next-line-shadow");
             NextLineText = Require<Label>("next-line-text");
+            NextLineGlyph = Require<VisualElement>("next-line-glyph");
+            NextLineGlyphLabel = Require<Label>("next-line-glyph-label");
             NextLineProgress = Require<VisualElement>("next-line-progress");
             NextLineProgressFill = Require<VisualElement>("next-line-progress-fill");
             SunArc = Require<VisualElement>("sun-arc");
@@ -65,6 +67,14 @@ namespace MoonProject.UI
             ControlsLightsGlyph = Require<VisualElement>("controls-lights-glyph");
             ControlsLightsGlyphLabel = Require<Label>("controls-lights-glyph-label");
             ControlsLightsWord = Require<Label>("controls-lights-word");
+            ControlsBuild = Require<VisualElement>("controls-build");
+            ControlsBuildGlyph = Require<VisualElement>("controls-build-glyph");
+            ControlsBuildGlyphLabel = Require<Label>("controls-build-glyph-label");
+            ControlsBuildWord = Require<Label>("controls-build-word");
+            ControlsHook = Require<VisualElement>("controls-hook");
+            ControlsHookGlyph = Require<VisualElement>("controls-hook-glyph");
+            ControlsHookGlyphLabel = Require<Label>("controls-hook-glyph-label");
+            ControlsHookWord = Require<Label>("controls-hook-word");
 
             Pause = Require<VisualElement>("pause");
             PauseVeil = Require<VisualElement>("pause-veil");
@@ -144,6 +154,12 @@ namespace MoonProject.UI
             BuildCost = Require<VisualElement>("build-cost");
             BuildCostShadow = Require<VisualElement>("build-cost-shadow");
             BuildCostRecipe = Require<VisualElement>("build-cost-recipe");
+            BuildPlaceGlyph = Require<VisualElement>("build-place-glyph");
+            BuildPlaceGlyphLabel = Require<Label>("build-place-glyph-label");
+            BuildPlaceWord = Require<Label>("build-place-word");
+            BuildRotateGlyph = Require<VisualElement>("build-rotate-glyph");
+            BuildRotateGlyphLabel = Require<Label>("build-rotate-glyph-label");
+            BuildRotateWord = Require<Label>("build-rotate-word");
             BuildStrip = Require<VisualElement>("build-strip");
             BuildStripShadow = Require<VisualElement>("build-strip-shadow");
             BuildStripTitle = Require<Label>("build-strip-title");
@@ -185,6 +201,11 @@ namespace MoonProject.UI
         public VisualElement NextLineShadow { get; }
 
         public Label NextLineText { get; }
+
+        /// <summary>The keycap before the next line's words (shown when its key is new).</summary>
+        public VisualElement NextLineGlyph { get; }
+
+        public Label NextLineGlyphLabel { get; }
 
         /// <summary>The thin bar under the line that fills while 07 welds.</summary>
         public VisualElement NextLineProgress { get; }
@@ -266,6 +287,24 @@ namespace MoonProject.UI
         public Label ControlsLightsGlyphLabel { get; }
 
         public Label ControlsLightsWord { get; }
+
+        /// <summary>The card's build key, added when the build menu first matters (<see cref="ControlsKeys"/>).</summary>
+        public VisualElement ControlsBuild { get; }
+
+        public VisualElement ControlsBuildGlyph { get; }
+
+        public Label ControlsBuildGlyphLabel { get; }
+
+        public Label ControlsBuildWord { get; }
+
+        /// <summary>The card's hook-cable key, added when the cable first matters.</summary>
+        public VisualElement ControlsHook { get; }
+
+        public VisualElement ControlsHookGlyph { get; }
+
+        public Label ControlsHookGlyphLabel { get; }
+
+        public Label ControlsHookWord { get; }
 
         public VisualElement Pause { get; }
 
@@ -439,6 +478,20 @@ namespace MoonProject.UI
         public VisualElement BuildCostShadow { get; }
 
         public VisualElement BuildCostRecipe { get; }
+
+        /// <summary>The ghost's place keys under its cost rows (every binding of Excavate: E and LMB).</summary>
+        public VisualElement BuildPlaceGlyph { get; }
+
+        public Label BuildPlaceGlyphLabel { get; }
+
+        public Label BuildPlaceWord { get; }
+
+        /// <summary>The ghost's rotate keys (every binding of Winch: the wheel, Z and C).</summary>
+        public VisualElement BuildRotateGlyph { get; }
+
+        public Label BuildRotateGlyphLabel { get; }
+
+        public Label BuildRotateWord { get; }
 
         public VisualElement BuildStrip { get; }
 

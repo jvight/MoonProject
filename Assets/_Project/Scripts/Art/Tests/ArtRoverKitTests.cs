@@ -223,12 +223,71 @@ namespace MoonProject.Art.Tests
             }
         }
 
+        [Test]
+        public void PillUpgrades_SSR3HeadlampAndCellPods_HugTheHeadAndFlanks_InsideTheStance()
+        {
+            string lampMat = R1MaterialRecipes.Get(R1MaterialSlot.LampAmber).MaterialAssetName;
+            foreach (string kitName in new[] { "Kit_SSR3Headlamp", "Kit_CellPod" })
+            {
+                Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<GameObject>(FbxFolder + kitName + ".fbx"), kitName);
+                GameObject prefab = LoadPrefab(kitName);
+                Assert.AreEqual(Quaternion.identity, prefab.transform.localRotation, $"{kitName} root localRotation");
+                Assert.That(CountTriangles(prefab), Is.InRange(500, 3000), $"{kitName} triangle count");
+            }
+
+            GameObject headlamp = LoadPrefab("Kit_SSR3Headlamp");
+            foreach (string side in new[] { "L", "R" })
+            {
+                Transform lens = headlamp.transform.Find($"Housing_{side}/Lens_{side}");
+                AssertHasMesh(lens, $"Kit_SSR3Headlamp/Housing_{side}/Lens_{side}");
+                AssertUsesSingleMaterial(lens, lampMat);
+                Transform beam = headlamp.transform.Find($"Beam_{side}");
+                Assert.IsNotNull(beam, $"Kit_SSR3Headlamp/Beam_{side}");
+                Assert.IsNull(beam.GetComponent<Renderer>(), $"Beam_{side} must be an empty transform");
+            }
+
+            GameObject pod = LoadPrefab("Kit_CellPod");
+            for (int i = 0; i < 2; i++)
+            {
+                Transform bar = pod.transform.Find($"ChargeBar_{i}");
+                AssertHasMesh(bar, $"Kit_CellPod/ChargeBar_{i}");
+                AssertUsesSingleMaterial(bar, lampMat);
+            }
+
+            Transform root = _roverPrefab.transform;
+            Bounds head = NodeBoundsInRoverSpace(root.Find("Neck/NeckLift/Head"));
+            Bounds screen = NodeBoundsInRoverSpace(root.Find("Neck/NeckLift/Head/Screen"));
+            Bounds lamps = MountedBounds("Kit_SSR3Headlamp", "Neck/NeckLift/Head/BrowSocket");
+            Assert.Greater(lamps.max.x, head.max.x + 0.10f, "The right pill lamp reads past the head's side");
+            Assert.Less(lamps.min.x, head.min.x - 0.10f, "The left pill lamp reads past the head's side");
+            Assert.Less(lamps.max.x, head.max.x + 0.25f, "The right pill lamp stays tucked to the head");
+            Assert.Greater(lamps.min.y, screen.min.y, "The pill lamps ride high, above the screen's lower edge");
+            Assert.Less(lamps.max.y, head.max.y, "The pill lamps stay under the crown");
+
+            Bounds podL = MountedBounds("Kit_CellPod", "PodSocket_L");
+            Bounds podR = MountedBounds("Kit_CellPod", "PodSocket_R");
+            float stance = 0f;
+            foreach (string wheelName in new[] { "Wheel_FL", "Wheel_FR", "Wheel_RL", "Wheel_RR" })
+            {
+                Bounds wheel = NodeBoundsInRoverSpace(root.Find(wheelName));
+                stance = Mathf.Max(stance, Mathf.Abs(wheel.max.x), Mathf.Abs(wheel.min.x));
+                Assert.IsFalse(wheel.Intersects(podL), $"{wheelName} clears the left cell pod");
+                Assert.IsFalse(wheel.Intersects(podR), $"{wheelName} clears the right cell pod");
+            }
+
+            Assert.Less(podR.max.x, stance, "The right pod's outer face stays inside the tyre stance");
+            Assert.Greater(podL.min.x, -stance, "The left pod's outer face stays inside the tyre stance");
+            Assert.Greater(podR.min.x, 0.3f, "The right pod rides on the right flank");
+            Assert.Less(podL.max.x, -0.3f, "The left pod rides on the left flank");
+        }
+
         private Matrix4x4 SocketToRoverMatrix(string socketPath)
         {
             Transform socket = _roverPrefab.transform.Find(socketPath);
             Assert.IsNotNull(socket, socketPath);
             Matrix4x4 socketToRover = _roverPrefab.transform.worldToLocalMatrix * socket.localToWorldMatrix;
-            if (socketPath == "DrumSocket_L" || socketPath == "BinSocket_L" || socketPath.EndsWith("RingSocket"))
+            if (socketPath == "DrumSocket_L" || socketPath == "BinSocket_L" || socketPath == "PodSocket_L"
+                || socketPath.EndsWith("RingSocket"))
             {
                 socketToRover *= Matrix4x4.Rotate(Quaternion.Euler(0f, 180f, 0f));
             }

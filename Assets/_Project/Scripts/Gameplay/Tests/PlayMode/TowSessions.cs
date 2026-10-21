@@ -12,7 +12,9 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// 07's winch cable in real physics (opening v3 R6, ruling 4: a physical cable, no beam): a load on skids hooked
     /// behind 07 follows it 100 m over rolling ground with basin slopes (about 19° at the steepest, where the swell and
     /// the ripple meet) along a winding line, at the tow's speed cap, without catching on the ground: never let go,
-    /// never lifted free, never flipped, never sunk or flung, and still at the cable's length behind at the end.
+    /// never lifted free, never flipped, never sunk or flung, and still at the cable's length behind at the end. A load
+    /// dragged into a prop's corner stays hooked while the winch pays out slack, and steering wide frees it on the same
+    /// hook.
     /// </summary>
     public sealed class TowSessions
     {
@@ -38,6 +40,15 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         private static readonly Vector3 LoadSize = new Vector3(1.6f, 0.9f, 1.2f);
         private const float LoadMass = 300f;
+
+        // The prop-corner session: a post the load is dragged into, 07 crawling at a strained tow.
+        private static readonly Vector3 PropSize = new Vector3(0.6f, 2f, 0.6f);
+        private const float PropX = 0.8f;
+        private const float LoadX = 2f;
+        private const float DragSpeed = 1.2f;
+        private const float CatchSeconds = 5f;
+        private const float WideSeconds = 4f;
+        private const float FreeSeconds = 8f;
 
         /// <summary>Metres from the winch the load's hitch never comes within once the rope has been taut (07's tail).
         /// </summary>
@@ -124,6 +135,58 @@ namespace MoonProject.Gameplay.PlayModeTests
                 "the load came the whole way along the line");
             Assert.LessOrEqual(Vector3.Distance(winch.position, load.Hitch), tow.Length + settings.SnagStretch,
                 "and trails at the cable's length, not stretched");
+        }
+
+        [UnityTest]
+        public IEnumerator ALoadCaughtOnAPropsCorner_StaysHooked_AndSteeringWideFreesIt_WithNoReHook()
+        {
+            var settings = new TowSettings();
+            var events = new EventBus();
+            events.Subscribe<TowReleased>(_released.Add);
+            GameObject floor = Make("Floor");
+            floor.AddComponent<BoxCollider>().size = new Vector3(60f, 1f, 60f);
+            floor.transform.position = Vector3.down * 0.5f;
+            GameObject prop = Make("PropCorner");
+            prop.AddComponent<BoxCollider>().size = PropSize;
+            prop.transform.position = new Vector3(PropX, PropSize.y * 0.5f, 0f);
+
+            var rover = new MovingRover();
+            Transform winch = Make("Winch").transform;
+            var tow = new TowLine(events, settings, winch, rover, new Vector3(0f, 0f, -1000f));
+            TowableBody load = Load(settings, new Vector3(LoadX, 0f, -2.5f));
+            tow.Add(load);
+            winch.position = load.Hitch + Vector3.up * WinchHeight;
+            yield return new WaitForFixedUpdate();
+            tow.Step(true);
+            Assert.IsTrue(tow.IsTowing, "hooked behind the prop");
+            winch.position = new Vector3(0f, WinchHeight, 1.5f);
+
+            // 07 pulls straight ahead: the load is dragged into the prop's corner and catches there.
+            yield return DriveWinch(tow, rover, winch, Vector3.forward, CatchSeconds);
+            Assert.IsTrue(tow.IsTowing, "caught, the cable never drops the load");
+            Assert.Greater(tow.Length, settings.CableLength, "the winch paid out slack");
+            Assert.Less(load.Body.position.z, PropSize.z * 0.5f + 0.2f, "the load is held behind the corner");
+
+            // 07 steers wide of the prop and drives on: the load comes free on the same hook.
+            yield return DriveWinch(tow, rover, winch, Vector3.right, WideSeconds);
+            yield return DriveWinch(tow, rover, winch, Vector3.forward, FreeSeconds);
+            Assert.IsTrue(tow.IsTowing, "still on the same hook");
+            Assert.IsEmpty(_released, "never let go, never hooked again");
+            Assert.Greater(load.Body.position.z, PropSize.z * 0.5f + 1f, "past the corner, following 07");
+        }
+
+        /// <summary>Moves the winch at the tow's crawl along <paramref name="direction"/> for a while.</summary>
+        private static IEnumerator DriveWinch(TowLine tow, MovingRover rover, Transform winch, Vector3 direction,
+            float seconds)
+        {
+            for (float t = 0f; t < seconds; t += Time.fixedDeltaTime)
+            {
+                yield return new WaitForFixedUpdate();
+                Vector3 velocity = direction * DragSpeed;
+                winch.position += velocity * Time.fixedDeltaTime;
+                rover.Move(winch.position, velocity);
+                tow.FixedStep(Time.fixedDeltaTime);
+            }
         }
 
         /// <summary>A rolling ground mesh with a mesh collider, the drive running along +z.</summary>

@@ -114,6 +114,9 @@ namespace MoonProject.Gameplay
 
         public IInteractionHints Hints { get; private set; }
 
+        /// <summary>07 looks toward an off-screen first-use place while its chip stands on 07.</summary>
+        public FirstUsePointer FirstUsePointer { get; private set; }
+
         /// <summary>The apron's bay outline, glowing while build mode is open (B5: where a base belongs).</summary>
         public ApronGlow ApronGlow { get; private set; }
 
@@ -146,6 +149,9 @@ namespace MoonProject.Gameplay
 
         /// <summary>The socket rack at the pad (opening v3 4.3): held until the west signal, then out at a dock.</summary>
         public SocketRackField Rack { get; private set; }
+
+        /// <summary>The socket rack in the world: Art's prefab beside the pad, its bays glowing.</summary>
+        public SocketRackView RackView { get; private set; }
 
         public MastRaise MastRaise { get; private set; }
 
@@ -349,30 +355,38 @@ namespace MoonProject.Gameplay
 
             _battery.ConnectTow(Tow);
             _building.ConnectTow(Tow);
+            Opening.ConnectTow(Tow);
             TowFrames = new TowFrames(context.Events, _building.Catalog, Tow);
+            Rack = new SocketRackField(context.Events, _openingTuning.RackBays);
+            RackView = new SocketRackView(context.Events, Rack, _openingTuning.RackView, services.Terrain,
+                context.Get<IViewCamera>(), context.Get<IRoverState>(), transform);
             var firstUse = new FirstUseSpots(Opening, _building, context.Get<IViewCamera>(), context.Get<IRoverState>(),
-                _building.Tuning.FirstUseViewMargin);
+                _building.Tuning.FirstUseViewMargin, _building.Tuning.FirstUseRoverRise);
             Relay = new RelayRepair(context.Events, Materials.Hold, services.Rover, services.Pickups,
                 _openingTuning.Relay, _relaySpare.position, _relaySocket.position, _relayPad.position,
                 _relaySpare.gameObject, _relayFitted.gameObject);
             _battery.ConnectRelay(Relay);
-            var hints = new InteractionHints(_salvage, Containers, Scans, _building, services.Beam, Cutter,
-                services.Pickups, firstUse, Tow, Relay);
-            Hints = hints;
+            Opening.ConnectRelay(Relay);
             Recovery = new RecoveryProgress(context.Events, PowerLamps, PowerSteps, _openingTuning.RecoveryLamps);
             Call = new CallProgress(context.Events, _openingTuning.Call, services.Layout);
             Reply = new CallReply(context.Events, Call, _openingTuning.Reply);
-            Rack = new SocketRackField(context.Events, _openingTuning.RackBays);
             MastRaise = new MastRaise(context.Events, _openingTuning.Reply);
             MastRaiseView = new MastRaiseView(context.Events, _building, MastRaise, _openingTuning.Reply);
             services.Anchors.TryGet(WorldAnchorIds.RelayPrefix + "1", out WorldAnchor relay);
             Answer = new CallAnswer(context.Events, Call, Reply, MastRaise, _openingTuning.Answer, relay.Position,
                 services.Layout.PeakPosition);
+            Opening.ConnectAnswer(Answer);
+            var hints = new InteractionHints(_salvage, Containers, Scans, _building, services.Beam, Cutter,
+                services.Pickups, firstUse, Tow, Relay, RackView, Answer);
+            Hints = hints;
+            FirstUsePointer = new FirstUsePointer(context.Events, hints, services.Rig,
+                _building.Tuning.FirstUseGazePriority, _building.Tuning.FirstUseAskIntensity);
             RangeRing = new RangeRingField(context.Events, _battery.Tuning.RangeRing,
                 new RangeRingModel(_battery.Tuning, _battery.Tuning.RangeRing, services.Terrain), _battery.Model,
                 new ChargePoints(Opening.Pads, Relay), services.Rover);
             _flowTokens.Add(context.Events.Subscribe<RelayRelit>(OnRelayRelit));
-            RangeRingLine = new RangeRingLine(transform, _visuals.BeamCore, RangeRing, _battery.Tuning.RangeRing);
+            RangeRingLine = new RangeRingLine(transform, _visuals.BeamCore, RangeRing, _battery.Tuning.RangeRing,
+                services.Terrain, context.Get<IViewCamera>());
             _flowTokens.Add(context.Events.Subscribe<ChargingChanged>(OnChargingChanged));
             context.Register<IMaterialStock>(Materials);
             context.Register<IMaterialCatalog>(_materialCatalog);
@@ -639,14 +653,17 @@ namespace MoonProject.Gameplay
             Containers.Step(now, deltaTime);
             Scans.Step(now, deltaTime);
             ScanMark.Step(Scans.Scanning == null ? Scans.Candidate : null, deltaTime);
+            NoteKeys(Opening.Keys);
             Opening.Step(deltaTime);
             Relay.Step(Time.frameCount, _input.ExcavateHeld);
+            FirstUsePointer.Step();
             Tow.Step(_input.TetherPressed);
             Reply.Step(deltaTime, Opening.NightFallen, _roverState.Speed);
             MastRaise.Step(deltaTime);
             MastRaiseView.Step();
             PulseView.Step(deltaTime);
             Release.Step(deltaTime);
+            RackView.Step(deltaTime);
             Answer.Step(deltaTime, Opening.NightFallen, _input.ExcavateHeld, _roverState.Position, _roverState.Speed);
             RangeRing.Step(deltaTime);
             RangeRingLine.Step();
@@ -669,6 +686,25 @@ namespace MoonProject.Gameplay
         private void FixedUpdate()
         {
             Tow?.FixedStep(Time.fixedDeltaTime);
+        }
+
+        /// <summary>The action keys pressed this frame, for the objective line's key glyph.</summary>
+        private void NoteKeys(KeyUse keys)
+        {
+            if (_input.ExcavatePressed)
+            {
+                keys.Pressed(RoverAction.Excavate);
+            }
+
+            if (_input.BuildPressed)
+            {
+                keys.Pressed(RoverAction.Build);
+            }
+
+            if (_input.TetherPressed)
+            {
+                keys.Pressed(RoverAction.Tether);
+            }
         }
 
         /// <summary>
@@ -758,6 +794,8 @@ namespace MoonProject.Gameplay
                 : _openingTuning == null ? "OpeningTuning is not assigned."
                 : _openingTuning.Call.Validate() != null ? "OpeningTuning: " + _openingTuning.Call.Validate() + "."
                 : _openingTuning.ValidateRack() != null ? "OpeningTuning: " + _openingTuning.ValidateRack() + "."
+                : _openingTuning.RackView.Validate() != null
+                    ? "OpeningTuning: " + _openingTuning.RackView.Validate() + "."
                 : _salvage == null ? "SalvageField is not assigned."
                 : _battery == null ? "BatteryField is not assigned."
                 : _building == null ? "BuildField is not assigned."
@@ -809,6 +847,7 @@ namespace MoonProject.Gameplay
             Relay?.Dispose();
             Call?.Dispose();
             Rack?.Dispose();
+            RackView?.Dispose();
             MastRaise?.Dispose();
             MastRaiseView?.Dispose();
             Answer?.Dispose();

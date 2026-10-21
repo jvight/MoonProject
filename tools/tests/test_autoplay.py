@@ -33,6 +33,14 @@ class LaunchArgumentTests(unittest.TestCase):
         pairs = dict(zip(shown[::2], shown[1::2]))
         self.assertEqual(pairs["-autoplay-lines"], "1")
 
+    def test_the_naive_flag_is_sent_only_when_asked_for(self):
+        plain = autoplay.launch_arguments("autoplay-slot", Path("out"), Path("out/player.log"), "opening", "", 600, 20)
+        self.assertNotIn("-autoplay-naive", plain)
+        naive = autoplay.launch_arguments("autoplay-slot", Path("out"), Path("out/player.log"), "opening", "", 600, 20,
+                                          naive=True)
+        pairs = dict(zip(naive[::2], naive[1::2]))
+        self.assertEqual(pairs["-autoplay-naive"], "1")
+
     def test_guidance_is_strict_unless_made_lenient(self):
         strict = autoplay.launch_arguments("autoplay-slot", Path("out"), Path("out/player.log"), "opening", "", 600, 20)
         self.assertNotIn("-autoplay-strict-guidance", strict)
@@ -40,6 +48,13 @@ class LaunchArgumentTests(unittest.TestCase):
                                             20, strict_guidance=False)
         pairs = dict(zip(lenient[::2], lenient[1::2]))
         self.assertEqual(pairs["-autoplay-strict-guidance"], "0")
+
+    def test_sound_is_muted_by_default_and_kept_when_sound_flag_is_on(self):
+        muted = autoplay.launch_arguments("autoplay-slot", Path("out"), Path("out/player.log"), "opening", "", 600, 20)
+        self.assertIn("-autoplay-mute", muted)
+        with_sound = autoplay.launch_arguments("autoplay-slot", Path("out"), Path("out/player.log"), "opening", "", 600,
+                                               20, sound=True)
+        self.assertNotIn("-autoplay-mute", with_sound)
 
 
 class VerdictTests(unittest.TestCase):

@@ -71,6 +71,28 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
+        public void WhileCharging_AFullCellPulsesAlongTheRow_AndTheFilledCellBreathesQuickerAndDeeper()
+        {
+            var lamps = new FlankLampSettings();
+
+            float quiet = FlankLampStrip.Level(lamps, 0, 2.5f, false, 0f, charging: false);
+            float crest = FlankLampStrip.Level(lamps, 0, 2.5f, false, 0f, charging: true);
+            Assert.AreEqual(lamps.LitGlow, quiet, 1e-5f);
+            Assert.AreEqual(lamps.LitGlow * (1f + lamps.ChargePulseDepth), crest, 1e-4f, "a full cell brightens at the crest");
+
+            float next = FlankLampStrip.Level(lamps, 1, 2.5f, false, 0f, charging: true);
+            Assert.Less(next, crest, "the pulse reaches the next lamp later: it travels along the row");
+            float trough = FlankLampStrip.Level(lamps, 0, 2.5f, false, lamps.ChargePulsePeriod * 0.5f, charging: true);
+            Assert.AreEqual(lamps.LitGlow, trough, 1e-4f, "and is only its glow at the trough: the pulse never dims it");
+
+            float bottom = FlankLampStrip.Level(lamps, 2, 2.5f, false, lamps.ChargeBreathPeriod * 0.5f, charging: true);
+            Assert.AreEqual(lamps.LitGlow * 0.5f * (1f - lamps.ChargeBreathDepth), bottom, 1e-4f,
+                "the filled cell dips deeper than its idle breath");
+            Assert.Greater(lamps.ChargeBreathDepth, lamps.BreathDepth);
+            Assert.Less(lamps.ChargeBreathPeriod, lamps.BreathPeriod);
+        }
+
+        [Test]
         public void Crawling_OnlyTheFirstLampBreathes_Faintly()
         {
             var lamps = new FlankLampSettings();

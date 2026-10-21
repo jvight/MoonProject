@@ -57,6 +57,24 @@ MonoBehaviour:
     _seenAtRelease: 0
     _seenByBlueprint: rover.hex_adapter
     _filledBy: 11
+  _rackView:
+    _prefab: {fileID: 7780395645222252225, guid: 1d745e48fcd75be4fbf177ef0e9aef6b, type: 3}
+    _offset: {x: 2.4, y: 0, z: 0.6}
+    _yawFromDock: -125
+    _riseDepth: 1.4
+    _riseSeconds: 1.4
+    _bayStaggerSeconds: 0.25
+    _glowSeconds: 0.5
+    _outlineColor: {r: 1, g: 0.7, b: 0.4, a: 1}
+    _outlineDim: 0.35
+    _outlineBright: 1.4
+    _breathSeconds: 3.5
+    _breathDepth: 0.25
+    _fillColor: {r: 0.95, g: 0.62, b: 0.34, a: 1}
+    _lampColor: {r: 1, g: 0.76, b: 0.32, a: 1}
+    _jawSeconds: 0.4
+    _readReach: 4
+    _viewMargin: 0.1
   _tow:
     _cableLength: 4
     _hookReach: 3
@@ -69,7 +87,7 @@ MonoBehaviour:
     _snagSpeed: 0.4
     _snagSeconds: 0.6
     _unsnagLift: 1.6
-    _letGoDistance: 12
+    _letGoDistance: 20
     _homeRadius: 9
     _skidFriction: 0.45
     _loadDrag: 0.1

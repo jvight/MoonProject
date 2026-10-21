@@ -65,6 +65,7 @@ namespace MoonProject.World.Tests
             }
 
             expected.Add(WestMast);
+            expected.Add(WorldAnchorIds.RelayPrefix + "2");
             expected.Add(WorldAnchorIds.SitePrefix + "kestrel");
             expected.Add(WorldAnchorIds.KestrelTrail);
             expected.Add(WorldAnchorIds.Micro06);

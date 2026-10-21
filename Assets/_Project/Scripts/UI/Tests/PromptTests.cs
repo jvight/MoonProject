@@ -88,6 +88,28 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
+        public void AFirstUseKeysChip_StaysUntilItsKeyIsUsed_WithNoTimeLimitAndNoRest()
+        {
+            foreach (InteractionKind kind in new[]
+                     {
+                         InteractionKind.OpenBuild, InteractionKind.FitPart, InteractionKind.Tether,
+                         InteractionKind.Install, InteractionKind.Transmit,
+                     })
+            {
+                SetUp();
+                Assert.IsTrue(_settings.Find(kind).PersistUntilUsed, kind.ToString());
+                Run(1f, Ready(kind));
+                Assert.IsTrue(_director.WantsShown, $"{kind}: it shows");
+                Run(_settings.MaxShowSeconds * 4f, Ready(kind));
+                Assert.IsTrue(_director.WantsShown, $"{kind}: and stays, however long, until its key is used");
+
+                _director.NotifyUsed(kind);
+                Run(_settings.RepeatCooldown + 1f, Ready(kind));
+                Assert.IsFalse(_director.WantsShown, $"{kind}: used, it is learned for good");
+            }
+        }
+
+        [Test]
         public void AnIgnoredPrompt_RestsAtItsSpot_ButANewTargetTeachesAtOnce()
         {
             Run(1f, Ready(InteractionKind.Salvage));
@@ -301,7 +323,7 @@ namespace MoonProject.UI.Tests
             {
                 InteractionKind.Salvage, InteractionKind.PickUp, InteractionKind.Build, InteractionKind.Scan,
                 InteractionKind.Deconstruct, InteractionKind.OpenBuild, InteractionKind.FitPart, InteractionKind.Rack,
-                InteractionKind.Tether, InteractionKind.Install,
+                InteractionKind.Tether, InteractionKind.Install, InteractionKind.Transmit,
             };
             Assert.AreEqual(taught.Length, _settings.Entries.Length, "no prompt teaches a verb the opening lacks");
             foreach (InteractionKind kind in taught)

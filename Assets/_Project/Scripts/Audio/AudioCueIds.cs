@@ -21,7 +21,7 @@ namespace MoonProject.Audio
         public const string DockWallsDrop = "dock_walls_drop";
         public const string BoostWhine = "boost_whine";
         public const string BoostRelease = "boost_release";
-        public const string PageTick = "page_tick";
+        public const string UiNextLine = "ui_next_line";
         public const string SaveTick = "save_tick";
         public const string CountTick = "count_tick";
         public const string CutIgniteTier = "cut_ignite_tier";
@@ -143,6 +143,8 @@ namespace MoonProject.Audio
         public const string TowSpool = "tow_spool";
         public const string TowStrainLoop = "tow_strain_loop";
         public const string TowRelease = "tow_release";
+        public const string RackFill = "rack_fill";
+        public const string RackOutline = "rack_outline";
         public const string FacePowerOn = "face_power_on";
         public const string FaceLogoStroke = "face_logo_stroke";
         public const string FaceLogoResolve = "face_logo_resolve";
