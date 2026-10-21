@@ -157,10 +157,10 @@ namespace MoonProject.World
             new PropPlacement(KestrelAnchor, "Kestrel_HullPanel", new Vector2(-2.2f, -1.4f), 160f, 0.3f);
 
         [Tooltip("06, the SSR-3 relay keeper, stopped at micro.06 by the old canyon-mouth mast (entry 2): Art's " +
-            "Elder06 (Generated/Art/R1/Models/Rover). It faces the canyon mouth, where relay.2 stood; its yaw turns " +
-            "it from there, degrees clockwise.")]
+            "Elder06 (Generated/Art/R1/Models/Rover). Its yaw turns it from facing the canyon mouth, degrees " +
+            "clockwise, so its open battery bay on its right flank faces ScanApproach.")]
         [SerializeField] private PropPlacement _elder06 =
-            new PropPlacement(WorldAnchorIds.Micro06, "Elder06", Vector2.zero, 0f, 0.08f);
+            new PropPlacement(WorldAnchorIds.Micro06, "Elder06", Vector2.zero, -90f, 0.08f);
 
         [Tooltip("How far 06 slumps over onto its left side, degrees: its cell ran dry and it settled where a wheel " +
             "sank into the dust, its top come to rest against relay.2's hut.")]

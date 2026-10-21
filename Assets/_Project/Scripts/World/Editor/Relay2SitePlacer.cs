@@ -12,7 +12,7 @@ namespace MoonProject.World.Editor
     /// approach where 07 stops to scan 06's battery bay (ScanApproach). 06 itself (Art's Elder06 in [World]/BasinProps)
     /// slumps against the hut's side; Gameplay finds the nodes by path.
     /// </summary>
-    internal static class Relay2SitePlacer
+    public static class Relay2SitePlacer
     {
         public const string SiteName = "Relay2Site";
 

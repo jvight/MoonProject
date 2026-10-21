@@ -26,8 +26,8 @@ namespace MoonProject.World
         [SerializeField] private float _elderRadius = 4f;
 
         [Tooltip("Where relay.2's hut stands from micro.06, metres in 06's frame (x to its right, z toward the canyon " +
-            "mouth): on 06's left, the side it slumps onto, so it leans against the hut.")]
-        [SerializeField] private Vector2 _hutOffset = new Vector2(-1.8f, 0.2f);
+            "mouth): beside 06, clear of the scan approach from the base.")]
+        [SerializeField] private Vector2 _hutOffset = new Vector2(-2.2f, 1.2f);
 
         [Tooltip("Radius of the ground kept clear round relay.2's hut, metres.")]
         [Range(1f, 8f)]

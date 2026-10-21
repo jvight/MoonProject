@@ -59,6 +59,10 @@ namespace MoonProject.World.Editor
         private const string ApronCableChannel = "CableChannel_Anchor";
         private const string PillarBeam = "PillarBeam";
 
+        // 06's open battery bay holds Art's three cell-pack fragments on its topper's sockets.
+        private const string CellPackSocketPrefix = "Topper_Socket/SSR3_Topper_06/FragmentSocket_CellPack_";
+        private const int CellPackCount = 3;
+
         // The Scout's parts the 1971 crew took home (basin dressing §4); its bare brackets stay.
         private static readonly string[] ScoutRemovedParts = { "TvCamera", "ScoopArm" };
 
@@ -200,8 +204,9 @@ namespace MoonProject.World.Editor
             Vector3 towardMast = Flat(Require(anchors, WorldAnchorIds.CanyonMouth).Position - rest);
             GameObject six = Stand(context, parent, keeper.Id, WorldPaths.ElderPrefab(keeper.Id), rest,
                 Quaternion.Euler(0f, keeper.Yaw, 0f) * towardMast, false);
+            SeatCellPacks(context, six);
             BlockOut(six);
-            six.transform.rotation = Quaternion.AngleAxis(-landmarks.Elder06Slump, six.transform.forward)
+            six.transform.rotation = Quaternion.AngleAxis(landmarks.Elder06Slump, six.transform.up)
                                      * six.transform.rotation;
 
             PropPlacement surveyor = landmarks.Elder01;
@@ -213,6 +218,23 @@ namespace MoonProject.World.Editor
             {
                 StandRock(context, boulders, rock.Id, Ground(surface, Near(anchors, rock)) - Vector3.up * rock.Sink,
                     rock.Yaw);
+            }
+        }
+
+        private static void SeatCellPacks(SceneBuildContext context, GameObject six)
+        {
+            for (int i = 0; i < CellPackCount; i++)
+            {
+                string path = CellPackSocketPrefix + i.ToString(CultureInfo.InvariantCulture);
+                Transform socket = six.transform.Find(path);
+                if (socket == null)
+                {
+                    throw new InvalidOperationException($"{six.name} has no '{path}' node (Art's R1 contract).");
+                }
+
+                var prefab = context.LoadAsset<GameObject>(WorldPaths.CellPackFragmentPrefab(i));
+                GameObject cell = context.InstantiatePrefab(prefab, socket, socket.position, socket.rotation);
+                cell.name = prefab.name;
             }
         }
 

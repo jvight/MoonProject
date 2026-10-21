@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Globalization;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -25,6 +26,16 @@ namespace MoonProject.World.Tests
         {
             OpeningLayoutPlacer.KestrelPanelHostName, "Elder06", "Elder01",
         };
+
+        private static readonly string[] RelayHutNodes =
+        {
+            "RelayHut", "RelayHut/Door", "RelayHut/MastStub", "RelayHut/MastStub/RelayLamp", "ScanApproach",
+        };
+
+        private const string CellPackSocketPrefix = "Topper_Socket/SSR3_Topper_06/FragmentSocket_CellPack_";
+        private const string CellPackNamePrefix = "Fragment_CellPack_";
+        private const int CellPackCount = 3;
+        private const float MaxBayOffApproachDegrees = 25f;
 
         private Scene _scene;
 
@@ -90,6 +101,41 @@ namespace MoonProject.World.Tests
                 Assert.AreEqual(1, colliders.Length, $"{name} has one simple collider");
                 Assert.AreEqual(Layers.Prop, colliders[0].gameObject.layer, $"{name}'s collider is on the Prop layer");
             }
+        }
+
+        [Test]
+        public void Relay2Site_UsesArtsHut_And06ShowsItsOpenBatteryBay_TowardScanApproach()
+        {
+            Transform world = World();
+            Transform site = world.Find(Relay2SitePlacer.SiteName);
+            Assert.IsNotNull(site, "[World] has Relay2Site");
+            foreach (string node in RelayHutNodes)
+            {
+                Assert.IsNotNull(site.Find(node), $"Relay2Site/{node} exists");
+            }
+
+            Transform hut = site.Find("RelayHut");
+            Assert.IsEmpty(hut.GetComponentsInChildren<MeshCollider>(true), "RelayHut has no mesh colliders");
+            Collider[] hutColliders = hut.GetComponentsInChildren<Collider>(true);
+            Assert.AreEqual(1, hutColliders.Length, "RelayHut has one simple collider");
+            Assert.AreEqual(Layers.Prop, hutColliders[0].gameObject.layer, "RelayHut blocks on Prop layer");
+
+            Transform six = world.Find(OpeningLayoutPlacer.BasinPropsRootName + "/Elder06");
+            Assert.IsNotNull(six, "Elder06 stands in BasinProps");
+            for (int i = 0; i < CellPackCount; i++)
+            {
+                string index = i.ToString(CultureInfo.InvariantCulture);
+                Transform cell = six.Find(CellPackSocketPrefix + index + "/" + CellPackNamePrefix + index);
+                Assert.IsNotNull(cell, $"Elder06 has {CellPackNamePrefix}{index} seated in its socket");
+                Assert.IsNotNull(cell.GetComponentInChildren<Renderer>(), $"{CellPackNamePrefix}{index} renders");
+            }
+
+            Transform approach = site.Find("ScanApproach");
+            Vector3 toApproach = Vector3.ProjectOnPlane(approach.position - six.position, Vector3.up).normalized;
+            Vector3 bayOutward = Vector3.ProjectOnPlane(six.right, Vector3.up).normalized;
+            Assert.LessOrEqual(Vector3.Angle(bayOutward, toApproach), MaxBayOffApproachDegrees,
+                "06's open battery bay faces ScanApproach");
+            Assert.Greater(Vector3.Angle(-six.forward, Vector3.up), 1f, "06 keeps its slump");
         }
 
         private Transform World()
