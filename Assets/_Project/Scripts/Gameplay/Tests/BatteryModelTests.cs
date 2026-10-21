@@ -92,6 +92,18 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void ACaughtLoad_StrainsTheDrive_TowardTheFloor_ButNeverToNothing()
+        {
+            Step(new BatteryStep { Towing = true, TowStrain01 = 1f }, 3f);
+            Assert.AreEqual(_tuning.TowCap * _tuning.TowStrainFloor, _battery.DriveCap01, 0.01f,
+                "fully strained, 07 keeps only the floor of the tow's share");
+            Assert.Greater(_tuning.TowStrainFloor, 0f, "enough to back up and free the load");
+
+            Step(new BatteryStep { Towing = true, TowStrain01 = 0f }, 3f);
+            Assert.AreEqual(_tuning.TowCap, _battery.DriveCap01, 0.01f, "slack again: the tow's share comes back");
+        }
+
+        [Test]
         public void ATowOnTheOpeningReserve_KeepsTheLowerCap()
         {
             _battery.SetOpeningReserve(true);

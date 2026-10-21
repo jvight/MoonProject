@@ -43,6 +43,10 @@ namespace MoonProject.Gameplay
         [Tooltip("Share of 07's top speed while it tows a load: slow and steady, so the load never jerks or bounds.")]
         [Range(0.2f, 1f)] [SerializeField] private float _towCap = 0.55f;
 
+        [Tooltip("Share of the tow cap 07 keeps while its cable strains fully against a caught load: the catch is " +
+                 "felt in the drive, and 07 can still back up to free it.")]
+        [Range(0.05f, 1f)] [SerializeField] private float _towStrainFloor = 0.2f;
+
         [Header("Beam work")]
         [Tooltip("Seconds of active beam work (cut, dig, stitch, feed) one cell pays for. A site's work stays " +
                  "about 0.4-0.6 cell.")]
@@ -175,6 +179,7 @@ namespace MoonProject.Gameplay
         public float BoostMultiplier => _boostMultiplier;
         public float TowMultiplier => _towMultiplier;
         public float TowCap => _towCap;
+        public float TowStrainFloor => _towStrainFloor;
         public float BeamSecondsPerCell => _beamSecondsPerCell;
         public float ScanSecondsPerCell => _scanSecondsPerCell;
         public float WeldSecondsPerCell => _weldSecondsPerCell;

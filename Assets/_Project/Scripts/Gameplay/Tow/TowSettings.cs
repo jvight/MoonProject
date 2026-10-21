@@ -60,10 +60,23 @@ namespace MoonProject.Gameplay
         [Range(0.2f, 5f)]
         [SerializeField] private float _unsnagLift = 1.6f;
 
-        [Tooltip("Metres from the winch at which the cable unhooks the load softly (it fell far behind, caught " +
-                 "fast): the load stays where it is, to be hooked again.")]
-        [Range(4f, 40f)]
-        [SerializeField] private float _letGoDistance = 12f;
+        [Tooltip("Metres the winch pays out each time the load stays caught: the cable eases, the hook stays on, " +
+                 "and backing up or steering wide frees the load.")]
+        [Range(0.1f, 2f)]
+        [SerializeField] private float _slackStep = 0.5f;
+
+        [Tooltip("Metres of slack the winch pays out at most beyond the cable's length; past it 07 only strains.")]
+        [Range(0f, 8f)]
+        [SerializeField] private float _maxSlack = 3f;
+
+        [Tooltip("Metres a second the winch takes its slack back in while the load follows again.")]
+        [Range(0.1f, 3f)]
+        [SerializeField] private float _reelInSpeed = 0.5f;
+
+        [Tooltip("Metres from the winch at which the cable snaps: only a true snap, 07 pulled far past all its " +
+                 "slack (off an edge). A caught load never drops on its own; it stays hooked to be freed.")]
+        [Range(4f, 60f)]
+        [SerializeField] private float _letGoDistance = 20f;
 
         [Tooltip("Metres (flat) from the apron's centre within which a towed load has come home: the winch unhooks " +
                  "it there. Wide enough for the load trailing 07 and its cable as 07 pulls up at the pad, inside the " +
@@ -104,6 +117,9 @@ namespace MoonProject.Gameplay
         public float SnagSpeed => _snagSpeed;
         public float SnagSeconds => _snagSeconds;
         public float UnsnagLift => _unsnagLift;
+        public float SlackStep => _slackStep;
+        public float MaxSlack => _maxSlack;
+        public float ReelInSpeed => _reelInSpeed;
         public float LetGoDistance => _letGoDistance;
         public float HomeRadius => _homeRadius;
         public float SkidFriction => _skidFriction;

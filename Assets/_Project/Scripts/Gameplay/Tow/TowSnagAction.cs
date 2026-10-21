@@ -6,10 +6,10 @@ namespace MoonProject.Gameplay
         /// <summary>Nothing: the load follows, or has only just caught.</summary>
         None = 0,
 
-        /// <summary>The load is caught: lift it up and a little toward the winch to free it.</summary>
+        /// <summary>The load is caught: lift it a little toward the winch and pay out slack; the hook stays on.</summary>
         LiftFree = 1,
 
-        /// <summary>The load fell too far behind: unhook it softly where it is.</summary>
+        /// <summary>The cable snapped: 07 was pulled far past all its slack (off an edge).</summary>
         LetGo = 2,
     }
 }
