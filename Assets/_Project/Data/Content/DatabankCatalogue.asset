@@ -185,6 +185,23 @@ MonoBehaviour:
       _kind: 1
       _target: seismic
       _milestone: 0
+  - _id: db.trickle_post
+    _category: 1
+    _nameKey: db.trickle_post.name
+    _maker: 2
+    _year: 1983
+    _era: 4
+    _readoutKey: db.trickle_post.readout
+    _historyKey: db.trickle_post.history
+    _view: 0
+    _model: {fileID: 3241190958573263422, guid: def5a92c3124e974982a24339c78e69d, type: 3}
+    _hiddenNodes: []
+    _framingYaw: 0
+    _print: {fileID: 0}
+    _unlock:
+      _kind: 5
+      _target: 
+      _milestone: 0
   - _id: db.retroreflector
     _category: 1
     _nameKey: db.retroreflector.name

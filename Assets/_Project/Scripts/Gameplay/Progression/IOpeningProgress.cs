@@ -57,6 +57,9 @@ namespace MoonProject.Gameplay
         /// <summary>The first night has fallen over a night-ready base (B10's exit).</summary>
         bool NightFallen { get; }
 
+        /// <summary>The habitat's power module is on 07's winch cable (B9).</summary>
+        bool ModuleHooked { get; }
+
         /// <summary>The habitat's power module stands home on the apron, off the cable: a battery bank can stand on it.</summary>
         bool ModuleHome { get; }
 
@@ -71,6 +74,18 @@ namespace MoonProject.Gameplay
 
         /// <summary>relay.1's spare is fitted and it is lit (R10).</summary>
         bool RelayRelit { get; }
+
+        /// <summary>Kessler–Arai understanding has unlocked the adapted SSR-3 headlamp (5.2).</summary>
+        bool HeadlampUnlocked { get; }
+
+        /// <summary>07's hold covers the assembly cost of the SSR-3 headlamp (5.2).</summary>
+        bool CoversHeadlamp { get; }
+
+        /// <summary>The socket rack stands out at the pad (the first dock after the release brings it out).</summary>
+        bool RackOut { get; }
+
+        /// <summary>The SSR-3 headlamp is assembled: the rack's headlamp bay is filled (5.2).</summary>
+        bool HeadlampFitted { get; }
 
         /// <summary>
         /// The place in the world where the action of line <paramref name="lineKey"/> happens (the apron, a crate, the

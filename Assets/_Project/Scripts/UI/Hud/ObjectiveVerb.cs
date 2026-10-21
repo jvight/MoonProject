@@ -21,8 +21,10 @@ namespace MoonProject.UI
                 case OpeningKeys.ScanLander:
                 case OpeningKeys.FindSolar:
                 case OpeningKeys.ScanTower:
+                case OpeningKeys.ScanElder06:
                     return ObjectiveVerb.Scan;
                 case OpeningKeys.CutOptics:
+                case OpeningKeys.CutHeadlampCrate:
                     return ObjectiveVerb.Cut;
                 case OpeningKeys.BuildPad:
                 case OpeningKeys.BuildSolar:

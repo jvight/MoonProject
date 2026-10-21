@@ -83,7 +83,10 @@ namespace MoonProject.Gameplay.Tests
             _game.DuskBegun = true;
             Expect(OpeningKeys.ScanModule, "night is coming: the habitat's power module can store it");
             _game.Known.Add(StructureIds.BatteryBank);
-            Expect(OpeningKeys.TowModuleHome, "the module is the bank's frame: tow it home (G6)");
+            Expect(OpeningKeys.HookModule, "the module is the bank's frame: hook it and tow it home (B9a)");
+            _game.ModuleHooked = true;
+            Expect(OpeningKeys.TowModuleHome, "the module is on the cable: tow it home (G6)");
+            _game.ModuleHooked = false;
             _game.ModuleHome = true;
             Expect(OpeningKeys.BuildBatteryBank, "home: build the bank on it");
             _game.NightReady = true;
@@ -97,7 +100,15 @@ namespace MoonProject.Gameplay.Tests
             _game.AnswerDone = true;
             Expect(OpeningKeys.GoToRelay, "relay.1 answered: drive to it");
             _game.RelayRelit = true;
-            Expect(string.Empty, "relay.1 lit: the opening's lines are done");
+            Expect(OpeningKeys.ScanElder06, "relay.1 lit: 06 at relay.2 is next");
+            _game.HeadlampUnlocked = true;
+            Expect(OpeningKeys.CutHeadlampCrate, "Kessler–Arai understood: 06's crate holds the headlamp's parts");
+            _game.CoversHeadlamp = true;
+            Expect(OpeningKeys.DockForRack, "the hold covers the headlamp, the rack not out yet: dock to bring it out");
+            _game.RackOut = true;
+            Expect(OpeningKeys.AssembleHeadlamp, "the rack stands out: the headlamp at its bay");
+            _game.HeadlampFitted = true;
+            Expect(string.Empty, "the headlamp fitted: the opening's lines are done");
         }
 
         [Test]
@@ -142,6 +153,12 @@ namespace MoonProject.Gameplay.Tests
             _flow.Tick();
             Assert.AreEqual(OpeningSteps.GoToRelay, _flow.CurrentIndex);
             _game.RelayRelit = true;
+            _flow.Tick();
+            Assert.AreEqual(OpeningSteps.ScanElder06, _flow.CurrentIndex);
+            _game.HeadlampUnlocked = true;
+            _flow.Tick();
+            Assert.AreEqual(OpeningSteps.AssembleHeadlamp, _flow.CurrentIndex);
+            _game.HeadlampFitted = true;
             _flow.Tick();
             Assert.AreEqual(OpeningSteps.Count, _flow.CurrentIndex, "the index is the step count once the opening is over");
         }
@@ -425,6 +442,50 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(NextLineReason.Reminder, _changes[2].Reason);
         }
 
+        [Test]
+        public void ScanningThePowerModule_PublishesTheHookLineWithItsKeyAndHitch_WhichHoldsUntilHooked()
+        {
+            var hitch = new Vector3(14f, 0f, 22f);
+            _game.Places[OpeningKeys.HookModule] = hitch;
+            _game.ReachedLander = true;
+            _game.Known.Add(StructureIds.ChargingPad);
+            _game.Known.Add(StructureIds.SolarArray);
+            _game.BuiltIds.Add(StructureIds.ChargingPad);
+            _game.FirstCharge = true;
+            _game.IgniterFitted = true;
+            _game.ReserveSpent = true;
+            _game.PowerOn = true;
+            _game.DuskBegun = true;
+            _flow.Tick(1f);
+            Assert.AreEqual(OpeningKeys.ScanModule, _flow.Current);
+
+            _game.Known.Add(StructureIds.BatteryBank);
+            _flow.Tick(1f);
+            NextStepChanged hook = _changes[_changes.Count - 1];
+            Assert.AreEqual(OpeningKeys.HookModule, hook.LineKey);
+            Assert.AreEqual(NextLineReason.Next, hook.Reason);
+            Assert.AreEqual(RoverAction.Tether, hook.Key);
+            Assert.IsTrue(hook.ShowsKey, "RMB has not been pressed yet");
+            Assert.IsTrue(hook.HasTarget);
+            Assert.AreEqual(hitch, hook.TargetPosition);
+
+            Tick(NextLine + 10);
+            Assert.AreEqual(OpeningKeys.HookModule, _flow.Shown,
+                "holds on screen while 07 cuts the cable reel and backs up to the hitch");
+
+            _game.ModuleHooked = true;
+            _flow.Tick(1f);
+            Assert.AreEqual(OpeningKeys.TowModuleHome, _flow.Shown);
+            Assert.AreEqual(NextLineReason.Next, _changes[_changes.Count - 1].Reason);
+            Tick(NextLine);
+            Assert.AreEqual(string.Empty, _flow.Shown, "the tow-home line clears after its normal duration");
+
+            _game.ModuleHooked = false;
+            _game.ModuleHome = true;
+            _flow.Tick(1f);
+            Assert.AreEqual(OpeningKeys.BuildBatteryBank, _flow.Shown);
+        }
+
         private void Tick(int seconds)
         {
             for (int i = 0; i < seconds; i++)
@@ -463,9 +524,14 @@ namespace MoonProject.Gameplay.Tests
             public bool NightReady { get; set; }
             public bool NightFallen { get; set; }
             public bool DuskVisited { get; set; }
+            public bool ModuleHooked { get; set; }
             public bool ModuleHome { get; set; }
             public bool AnswerDone { get; set; }
             public bool RelayRelit { get; set; }
+            public bool HeadlampUnlocked { get; set; }
+            public bool CoversHeadlamp { get; set; }
+            public bool RackOut { get; set; }
+            public bool HeadlampFitted { get; set; }
             public readonly Dictionary<string, Vector3> Places = new Dictionary<string, Vector3>();
 
             public bool TryGetPlace(string lineKey, out string placeId, out Vector3 position)

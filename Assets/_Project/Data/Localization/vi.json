@@ -735,6 +735,10 @@
             "text": "Đêm sắp xuống. Quét mô-đun điện của khu nhà ở."
         },
         {
+            "key": "next.v3.hook_module",
+            "text": "Móc cáp vào mô-đun nguồn và kéo về sân."
+        },
+        {
             "key": "next.v3.tow_module",
             "text": "Mô-đun điện là khung của cụm pin. Kéo nó về sân."
         },
@@ -757,6 +761,22 @@
         {
             "key": "next.v3.go_relay",
             "text": "relay.1 đã đáp lời từ vành phía tây. Hãy lái tới đó."
+        },
+        {
+            "key": "next.v3.scan_elder06",
+            "text": "06 nằm gục ở relay.2 cạnh cửa hẻm núi. Lái tới đó và quét nó."
+        },
+        {
+            "key": "next.v3.cut_headlamp_crate",
+            "text": "Cắt thùng hàng cạnh 06 để lấy linh kiện đèn pha."
+        },
+        {
+            "key": "next.v3.assemble_headlamp",
+            "text": "Lắp đèn pha SSR-3 ở giá cạnh bệ sạc."
+        },
+        {
+            "key": "next.v3.dock_for_rack",
+            "text": "Đỗ lên bệ sạc để mở giá linh kiện."
         },
         {
             "key": "battery.low.lander",
@@ -1005,6 +1025,10 @@
         {
             "key": "pickup.for.antenna_mast",
             "text": "cho cột ăng-ten"
+        },
+        {
+            "key": "pickup.for.ssr3_lamp",
+            "text": "cho đèn pha SSR-3"
         },
         {
             "key": "pickup.part.icecore",
@@ -1477,6 +1501,18 @@
         {
             "key": "db.seismic_station.history",
             "text": "Tổ bay năm 71 để lại. Nó đã ghi được mười ba năm nền đất yên ổn, nên ILC đặt Lumen ở đây. Chúng tôi nối nó vào lưới điện của trạm. — Ines"
+        },
+        {
+            "key": "db.trickle_post.name",
+            "text": "Trụ sạc nhỏ giọt"
+        },
+        {
+            "key": "db.trickle_post.readout",
+            "text": "KESSLER–ARAI · TRỤ SẠC NHỎ GIỌT · 1983 · LƯỚI SẠC SÂU · CÁP: ĐỨT · TẢI CUỐI: ĐƠN VỊ 07"
+        },
+        {
+            "key": "db.trickle_post.history",
+            "text": "Đỗ 07 lên trụ sạc khuất sau tàu đổ bộ, nối trụ vào lưới sạc sâu. Đặt chế độ thức khi có sóng mang. Ngủ ngon nhé. — K."
         },
         {
             "key": "db.retroreflector.name",

@@ -61,6 +61,12 @@ namespace MoonProject.Gameplay.Tests
         {
             foreach (SupplyCache source in _tuning.Caches)
             {
+                if (TryAssemblyFor(source, out RackAssemblySettings assembly))
+                {
+                    Assert.AreEqual(assembly.Cost, source.Yield, $"{source.Id} gives the {assembly.AdaptedId}'s cost");
+                    continue;
+                }
+
                 CollectionAssert.Contains(Chain, source.ForStructure, $"{source.Id} is for a structure of the opening");
                 Recipe need = _catalog.Find(source.ForStructure).BuildCost;
                 Assert.IsFalse(source.Yield.IsFree && source.Parts.Count == 0, $"{source.Id} gives something");
@@ -70,6 +76,22 @@ namespace MoonProject.Gameplay.Tests
                         $"{source.Id} gives {material}, which {source.ForStructure} does not spend");
                 }
             }
+        }
+
+        /// <summary>A source for a part assembled at the rack: its purpose names that part's adapted blueprint.</summary>
+        private bool TryAssemblyFor(SupplyCache source, out RackAssemblySettings assembly)
+        {
+            foreach (RackAssemblySettings candidate in _tuning.RackAssemblies)
+            {
+                if (candidate.AdaptedId == MakerTrack.AdaptedPrefix + source.ForStructure)
+                {
+                    assembly = candidate;
+                    return true;
+                }
+            }
+
+            assembly = null;
+            return false;
         }
 
         [Test]

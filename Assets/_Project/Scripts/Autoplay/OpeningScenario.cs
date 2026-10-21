@@ -78,6 +78,7 @@ namespace MoonProject.Autoplay
                      {
                          Drive, Scan, CollectParts, BuildThePad, ChargeOnThePad, TheRuins, BuildTheArray,
                          TheFirstChoice, TheHabitat, Nightfall, TheTower, TheAnswer, TheRelay,
+                         KesslerArai, Headlamp,
                      })
             {
                 if (_bot.Failed || Reached(_lastBeat))
@@ -120,7 +121,7 @@ namespace MoonProject.Autoplay
                 null));
             _naive.Declare("B7b", new NextAction("E", new[] { "hint.pickup" }, new[] { "rack", "igniter" },
                 new[] { "rack" }));
-            _naive.Declare("B7c", new NextAction("Tab", new[] { "hint.fitpart" }, new[] { "igniter", "fit" }, null));
+            _naive.Declare("B7c", new NextAction("Tab", new[] { "hint.fitpart" }, new[] { "fit", "cutter" }, null));
             _naive.Declare("B7", new NextAction("B", new[] { "hint.openbuild" }, new[] { "solar", "array" }, null));
             // R5's free choice is told by the world only: no line is expected, and the dead lamp's glance comes
             // after 30 s with no site visited.
@@ -141,7 +142,13 @@ namespace MoonProject.Autoplay
             _naive.Declare("B11", new NextAction("E", new[] { "hint.transmit" }, new[] { "transmit", "answer" },
                 new[] { "foot", "TX" }));
             _naive.Declare("B12", new NextAction("WASD", new[] { drive }, new[] { "relay", "west" }, new[] { "relay" }));
-            _naive.Skip("R10");
+            _naive.Declare("R10", new NextAction("WASD", new[] { drive }, new[] { "06", "relay.2", "scan" }, null));
+            _naive.Declare("R11a", new NextAction("E", new[] { "hint.salvage" }, new[] { "cut", "crate", "headlamp" },
+                null));
+            _naive.Declare("R11", new NextAction("WASD", new[] { drive }, new[] { "pad", "park" }, null));
+            _naive.Declare("R12a", new NextAction("E", new[] { "hint.rack" }, new[] { "headlamp", "assemble" },
+                null));
+            _naive.Skip("R12");
         }
 
         /// <summary>The first free choice (B8, R5) is told by the world: the dead lamp's glance comes after 30 s.</summary>
@@ -431,7 +438,7 @@ namespace MoonProject.Autoplay
             yield return _base.ExpectStep(OpeningSteps.BuildBatteryBank, OpeningKeys.ScanModule,
                 "B9: night is coming");
             yield return _base.ScanTheSet("ruin.HabitatModules");
-            yield return _base.ExpectStep(OpeningSteps.BuildBatteryBank, OpeningKeys.TowModuleHome,
+            yield return _base.ExpectStep(OpeningSteps.BuildBatteryBank, OpeningKeys.HookModule,
                 "B9: the module is the bank's frame");
             yield return _base.CutTheCrates("HabitatModules");
             yield return Sub("B9a");
@@ -492,6 +499,31 @@ namespace MoonProject.Autoplay
             Begin("R10", "relay.1's repair: take the spare from its cabinet, fit it, charge on its pad");
             yield return _base.RepairTheRelay();
             _bot.EndBeat("relay.1 relit: its spare fitted at the feed socket, and its pad charges 07");
+        }
+
+        private IEnumerator KesslerArai()
+        {
+            Begin("R11", "Kessler–Arai: 07 woke on its trickle post; read 06 at relay.2, cut its crate and the SSR-3 headlamp unlocks");
+            yield return _base.ExpectStep(OpeningSteps.ScanElder06, OpeningKeys.ScanElder06, "R11: 06 at relay.2");
+            yield return _base.LearnKesslerArai();
+            yield return Sub("R11a");
+            yield return _base.ExpectStep(OpeningSteps.AssembleHeadlamp, OpeningKeys.CutHeadlampCrate,
+                "R11: 06's crate holds the headlamp's parts");
+            yield return _base.CutTheCrates(WorldAnchorIds.Micro06);
+            _bot.EndBeat("07 read 06 after its trickle post and cut its crate: Kessler–Arai level 1, the SSR-3 headlamp unlocked");
+        }
+
+        private IEnumerator Headlamp()
+        {
+            Begin("R12", "The SSR-3 headlamp: dock on the pad to bring out the rack, then assemble the headlamp at its bay with a held E");
+            yield return _base.ExpectStep(OpeningSteps.AssembleHeadlamp, OpeningKeys.DockForRack,
+                "R12: dock to bring out the rack");
+            yield return _base.DockForTheRack();
+            yield return Sub("R12a");
+            yield return _base.ExpectStep(OpeningSteps.AssembleHeadlamp, OpeningKeys.AssembleHeadlamp,
+                "R12: the rack stands out");
+            yield return _base.AssembleTheHeadlamp();
+            _bot.EndBeat("the SSR-3 headlamp assembled at the rack: its bay is filled and 07 wears it");
         }
 
         /// <summary>The next unscanned fragment of the lander's cargo, in the order the blueprint numbers them.</summary>

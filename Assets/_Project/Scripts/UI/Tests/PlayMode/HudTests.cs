@@ -858,6 +858,14 @@ namespace MoonProject.UI.PlayModeTests
             Assert.IsTrue(_rig.Ui.Objective.ShowsGlyph, "the new key comes first");
             Assert.AreEqual("B", _rig.Ui.Layout.NextLineGlyphLabel.text, "the real binding");
 
+            Events.Publish(new NextStepChanged(OpeningKeys.FitIgniter, NextLineReason.Next, default, false, false,
+                null, Vector3.zero));
+            yield return null;
+            Assert.AreEqual(Text(OpeningKeys.FitIgniter), _rig.Ui.Layout.NextLineText.text,
+                "a new next line replaces the one on screen at once (B7c)");
+            Assert.IsTrue(_rig.Ui.Objective.ShowsGlyph, "the fit line leads with Tab");
+            Assert.AreEqual(Text(UiKeys.KeyTab), _rig.Ui.Layout.NextLineGlyphLabel.text);
+
             float until = Time.realtimeSinceStartup + 3f;
             while (Time.realtimeSinceStartup < until)
             {

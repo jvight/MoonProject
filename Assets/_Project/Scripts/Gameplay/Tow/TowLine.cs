@@ -70,6 +70,14 @@ namespace MoonProject.Gameplay
             _loads.Add(load);
         }
 
+        /// <summary>The hitch of the load <paramref name="towId"/>: where 07's winch hooks onto it.</summary>
+        public bool TryFindHitch(string towId, out Vector3 hitch)
+        {
+            ITowable load = Find(towId);
+            hitch = load != null ? load.Hitch : Vector3.zero;
+            return load != null;
+        }
+
         public bool TryFindLoad(string towId, out Transform root)
         {
             ITowable load = Find(towId);

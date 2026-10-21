@@ -38,11 +38,19 @@ namespace MoonProject.Gameplay
         private const string HabitatRuin = "HabitatModules";
         private const string TowerRuin = "RadioTower";
 
+        /// <summary>06's story scan host in [World]/BasinProps, slumped at relay.2.</summary>
+        private const string Elder06Host = "Elder06";
+
+        /// <summary>The socket rack's place id on the objective line.</summary>
+        private const string RackPlace = "socket_rack";
+
         private readonly Vector3 _lander;
         private readonly Vector3 _apron;
         private readonly PlacedBase _placed;
         private TowLine _tow;
         private RelayRepair _relay;
+        private MakerUnderstanding _understanding;
+        private IRackStatus _rack;
         private readonly Dictionary<string, Transform> _frames =
             new Dictionary<string, Transform>(StringComparer.Ordinal);
 
@@ -148,11 +156,69 @@ namespace MoonProject.Gameplay
 
         public bool DuskVisited => Dusk.Visited;
 
+        public bool ModuleHooked => _tow != null && _tow.TowingId == TowLoads.PowerModule;
+
         public bool ModuleHome => _tow != null && _tow.TryFindHome(TowLoads.PowerModule, out _);
 
         public bool AnswerDone => _answer != null && _answer.Phase == AnswerPhase.Done;
 
         public bool RelayRelit => _relay != null && _relay.Fitted;
+
+        public bool HeadlampUnlocked =>
+            _understanding != null && _understanding.IsUnlocked(MakerUnderstandingSettings.Ssr3Headlamp);
+
+        public bool CoversHeadlamp => HeadlampCost() is Recipe cost && _stock.Has(cost);
+
+        public bool RackOut => _rack != null && _rack.Shown;
+
+        public bool HeadlampFitted => HeadlampBay() is int bay && _rack.StateOf(bay) == RackBayState.Filled;
+
+        private Recipe? HeadlampCost()
+        {
+            IReadOnlyList<RackAssemblySettings> assemblies = _tuning.RackAssemblies;
+            for (int i = 0; i < assemblies.Count; i++)
+            {
+                if (assemblies[i].AdaptedId == MakerUnderstandingSettings.Ssr3Headlamp)
+                {
+                    return assemblies[i].Cost;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Maker understanding and the socket rack, made after the opening: what <see cref="HeadlampUnlocked"/> and
+        /// <see cref="HeadlampFitted"/> read.
+        /// </summary>
+        public void ConnectHeadlamp(MakerUnderstanding understanding, IRackStatus rack)
+        {
+            _understanding = understanding ?? throw new ArgumentNullException(nameof(understanding));
+            _rack = rack ?? throw new ArgumentNullException(nameof(rack));
+        }
+
+        /// <summary>The rack bay the SSR-3 headlamp is assembled at, or null before the rack is connected.</summary>
+        private int? HeadlampBay()
+        {
+            IReadOnlyList<RackAssemblySettings> assemblies = _tuning.RackAssemblies;
+            for (int i = 0; _rack != null && i < assemblies.Count; i++)
+            {
+                if (assemblies[i].AdaptedId != MakerUnderstandingSettings.Ssr3Headlamp)
+                {
+                    continue;
+                }
+
+                for (int bay = 0; bay < _rack.Count; bay++)
+                {
+                    if (_rack.IdOf(bay) == assemblies[i].BayId)
+                    {
+                        return bay;
+                    }
+                }
+            }
+
+            return null;
+        }
 
         /// <summary>relay.1's repair, made after the opening: what <see cref="RelayRelit"/> reads.</summary>
         public void ConnectRelay(RelayRepair relay)
@@ -184,6 +250,10 @@ namespace MoonProject.Gameplay
                     return Frame(HabitatRuin, out placeId, out position);
                 case OpeningKeys.ScanTower:
                     return Frame(TowerRuin, out placeId, out position);
+                case OpeningKeys.HookModule:
+                    Vector3 hitch = Vector3.zero;
+                    bool hasHitch = _tow != null && _tow.TryFindHitch(TowLoads.PowerModule, out hitch);
+                    return Place(hasHitch ? TowLoads.PowerModule : string.Empty, hitch, out placeId, out position);
                 case OpeningKeys.TowModuleHome:
                 case OpeningKeys.BuildBatteryBank:
                     Transform load = null;
@@ -195,6 +265,14 @@ namespace MoonProject.Gameplay
                 case OpeningKeys.VisitSite:
                     return Frame(_tuning.DuskSites.Count > 0 ? _tuning.DuskSites[0] : string.Empty, out placeId,
                         out position);
+                case OpeningKeys.ScanElder06:
+                    return Frame(Elder06Host, out placeId, out position);
+                case OpeningKeys.CutHeadlampCrate:
+                    return Crate(OpeningTuning.SixCrate, out placeId, out position);
+                case OpeningKeys.AssembleHeadlamp:
+                    bool rackOut = _rack != null && _rack.Shown;
+                    return Place(rackOut ? RackPlace : string.Empty, rackOut ? _rack.Position : Vector3.zero,
+                        out placeId, out position);
                 case OpeningKeys.GoToRelay:
                     return Place(_relay != null ? _relay.RelayId : string.Empty,
                         _relay != null ? _relay.SocketPoint : Vector3.zero, out placeId, out position);
@@ -205,6 +283,7 @@ namespace MoonProject.Gameplay
                 case OpeningKeys.DockForDusk:
                 case OpeningKeys.MoveBatteryBank:
                 case OpeningKeys.AwaitNight:
+                case OpeningKeys.DockForRack:
                 case OpeningKeys.BuildMast:
                     return Place(_tuning.ApronAnchor, _apron, out placeId, out position);
                 default:

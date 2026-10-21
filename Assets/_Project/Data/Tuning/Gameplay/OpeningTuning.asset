@@ -203,3 +203,15 @@ MonoBehaviour:
     _forStructure: antenna_mast
     _startsOpen: 0
     _parts: []
+  - _id: supply.six.field
+    _anchorId: micro.06
+    _offset: {x: 5.6, y: 0, z: -3.2}
+    _yaw: 200
+    _container: Crate_M
+    _yield:
+      _metal: 2
+      _wiring: 1
+      _optics: 0
+    _forStructure: ssr3_lamp
+    _startsOpen: 0
+    _parts: []

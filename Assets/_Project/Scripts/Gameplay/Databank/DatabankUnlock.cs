@@ -48,6 +48,8 @@ namespace MoonProject.Gameplay
             return new DatabankUnlock(DatabankUnlockKind.SetComplete, setId);
         }
 
+        public static DatabankUnlock OnWake => new DatabankUnlock(DatabankUnlockKind.Wake, string.Empty);
+
         public static DatabankUnlock OnMilestone(OpeningMilestone milestone)
         {
             return new DatabankUnlock(DatabankUnlockKind.Milestone, string.Empty, milestone);

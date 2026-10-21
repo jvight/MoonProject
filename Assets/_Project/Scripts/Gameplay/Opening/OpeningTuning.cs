@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using MoonProject.Core;
 using MoonProject.Core.Events;
 
 namespace MoonProject.Gameplay
@@ -106,6 +107,13 @@ namespace MoonProject.Gameplay
             new RackBaySettings("rack.hex_adapter", false, "rover.hex_adapter", RoverKitPiece.HexChargeAdapter),
         };
 
+        [Tooltip("The adapted parts 07 assembles at the rack's bays once maker understanding unlocks them (5.2).")]
+        [SerializeField] private RackAssemblySettings[] _rackAssemblies =
+        {
+            new RackAssemblySettings("rack.headlamp", MakerUnderstandingSettings.Ssr3Headlamp, new Recipe(2, 1, 0),
+                RoverSocket.Lamp, 1.6f),
+        };
+
         [Tooltip("The rack in the world: Art's prefab beside the dock, its rise, its bays' glow and jaws, its reading.")]
         [SerializeField] private RackViewSettings _rackView = new RackViewSettings();
 
@@ -139,6 +147,12 @@ namespace MoonProject.Gameplay
         [Tooltip("Metres (flat) from a site's frame within which 07 has visited it.")]
         [Range(2f, 30f)] [SerializeField] private float _duskSiteReach = 12f;
 
+        /// <summary>06's field crate at relay.2: the SSR-3 headlamp's Metal 2 + Wiring 1 (opening v3 5.2).</summary>
+        public const string SixCrate = "supply.six.field";
+
+        /// <summary>What the field crate's pickup row says its parts are for ("for the SSR-3 headlamp").</summary>
+        public const string HeadlampPurpose = "ssr3_lamp";
+
         [Header("Supply (opening-v3 §4: fixed sources, each for one structure)")]
         [Tooltip("Every source of the opening's materials, and nothing else: each stands by the thing it comes from " +
                  "and is for one structure (its link), which it covers on its own with the link's other sources " +
@@ -167,6 +181,8 @@ namespace MoonProject.Gameplay
                 ContainerKinds.CrateM, new Recipe(0, 3, 0), StructureIds.AntennaMast),
             new SupplyCache("supply.tower.dish", "RadioTower", new Vector3(6.8f, 0f, 1.8f), 90f,
                 ContainerKinds.CrateM, new Recipe(0, 0, 2), StructureIds.AntennaMast),
+            new SupplyCache(SixCrate, WorldAnchorIds.Micro06, new Vector3(5.6f, 0f, -3.2f), 200f,
+                ContainerKinds.CrateM, new Recipe(2, 1, 0), HeadlampPurpose),
         };
 
         /// <summary>Art's pad fragments for a tuning made in code (tests); the shipped asset names its own.</summary>
@@ -237,6 +253,8 @@ namespace MoonProject.Gameplay
 
         public RackViewSettings RackView => _rackView;
 
+        public IReadOnlyList<RackAssemblySettings> RackAssemblies => _rackAssemblies;
+
         /// <summary>Null when the rack's bays can work, else the first problem.</summary>
         public string ValidateRack()
         {
@@ -259,6 +277,21 @@ namespace MoonProject.Gameplay
                     {
                         return $"two rack bays share the id '{_rackBays[i].Id}'";
                     }
+                }
+            }
+
+            for (int i = 0; _rackAssemblies != null && i < _rackAssemblies.Length; i++)
+            {
+                RackAssemblySettings assembly = _rackAssemblies[i];
+                string problem = assembly != null ? assembly.Validate() : $"rack assembly {i} is empty";
+                if (problem != null)
+                {
+                    return problem;
+                }
+
+                if (Array.FindIndex(_rackBays, bay => bay.Id == assembly.BayId) < 0)
+                {
+                    return $"the rack has no bay '{assembly.BayId}' to assemble at";
                 }
             }
 

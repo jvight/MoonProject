@@ -6,7 +6,7 @@ namespace MoonProject.Autoplay
     public static class LookSteering
     {
         /// <summary>Degrees off within which the view counts as on the target.</summary>
-        public const float ToleranceDegrees = 2.5f;
+        public const float ToleranceDegrees = 1.2f;
 
         /// <summary>Mouse pixels asked per degree of error; the loop runs every frame so it settles.</summary>
         public const float PixelsPerDegree = 1.2f;

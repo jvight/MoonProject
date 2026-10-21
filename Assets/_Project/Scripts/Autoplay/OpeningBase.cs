@@ -98,11 +98,28 @@ namespace MoonProject.Autoplay
         /// <summary>Metres from that stop point 07 counts as there: close, so the module trails onto the apron.</summary>
         private const float HomeArrive = 1f;
 
+        /// <summary>Tows the bot tries before the module counts as stuck (a snag lets it go; a player hooks again).</summary>
+        private const int TowAttempts = 3;
+
         /// <summary>Seconds the pad may take to take 07 in once it rests there (a full 07 waits out the rest time).</summary>
         private const float DuskSeconds = 15f;
 
         /// <summary>The 1971 seismic station's story scan (R5's curiosity scan).</summary>
         private const string SeismicStory = "seismic";
+
+        /// <summary>06 at relay.2, Kessler–Arai's second point after the trickle post 07 read as it woke (R11).</summary>
+        private const string Elder06Story = "elder06";
+
+        private const string TricklePostEntry = "db.trickle_post";
+
+        /// <summary>The rack's headlamp bay: its id and Art's outline node (R12).</summary>
+        private const string HeadlampBayId = "rack.headlamp";
+
+        private const string HeadlampOutlineNode = "Outline_0";
+        /// <summary>Seconds 07 may take on the pad to turn its view onto the bay and read it.</summary>
+        private const float RackReadSeconds = 8f;
+
+        private static readonly Recipe HeadlampCost = new Recipe(2, 1, 0);
 
         /// <summary>The bot heads back to the pad to charge when 07's cells fall to this share.</summary>
         private const float TopUpBelow = 0.3f;
@@ -483,6 +500,12 @@ namespace MoonProject.Autoplay
         public IEnumerator TopUpIfLow()
         {
             BatteryModel battery = G.Battery.Model;
+            if (!_bot.Failed && battery.IsCharging && battery.Charge01 < TopUpTo)
+            {
+                yield return _bot.Until(() => battery.Charge01 >= TopUpTo, TopUpSeconds, "07's cells to charge");
+                yield break;
+            }
+
             Vector3? pad = null;
             foreach (PlacedStructure structure in G.PlacedBase.Structures)
             {
@@ -494,6 +517,12 @@ namespace MoonProject.Autoplay
 
             if (_bot.Failed || !pad.HasValue || battery.Charge01 > TopUpBelow)
             {
+                yield break;
+            }
+
+            if (battery.IsCharging)
+            {
+                yield return _bot.Until(() => battery.Charge01 >= TopUpTo, TopUpSeconds, "07's cells to charge");
                 yield break;
             }
 
@@ -770,6 +799,33 @@ namespace MoonProject.Autoplay
                 yield break;
             }
 
+            TowRelease reason = TowRelease.Player;
+            using (_bot.World.Context.Events.Subscribe<TowReleased>(released => reason = released.Reason))
+            {
+                for (int attempt = 1; attempt <= TowAttempts && !_bot.Failed; attempt++)
+                {
+                    yield return HookAndTowHome(module);
+                    if (_bot.Failed || reason == TowRelease.Arrived)
+                    {
+                        yield break;
+                    }
+
+                    _bot.Warn("the cable let the power module go on the way home (" + reason + ", " +
+                              DriveSteering.FlatDistance(module.position, Pad())
+                                  .ToString("0.0", CultureInfo.InvariantCulture) +
+                              " m from the apron): hooking it again, as a player would.");
+                }
+            }
+
+            if (!_bot.Failed && reason != TowRelease.Arrived)
+            {
+                _bot.Fail("the power module never reached the apron in " + TowAttempts + " tows.");
+            }
+        }
+
+        /// <summary>Hooks the module where it stands and drives it home until the winch lets it go.</summary>
+        private IEnumerator HookAndTowHome(Transform module)
+        {
             Vector3 hitch = HitchOf(module);
             Vector3 outward = Flat(hitch - module.position).normalized;
             Vector3 stand = Flat(hitch) + outward * HookStandOff;
@@ -815,6 +871,112 @@ namespace MoonProject.Autoplay
                 DriveSeconds);
             yield return _bot.Until(() => battery.CellsFull || battery.IsCharging && battery.Charger == ChargerKind.Mast,
                 ChargeSeconds, "relay.1's pad to charge 07");
+        }
+
+        /// <summary>
+        /// R11, Kessler–Arai's standards: 07 read the trickle post it slept on as it woke; now it drives out to 06
+        /// slumped at relay.2 and reads it. Two completed entries of its own maker reach understanding level 1, which
+        /// (past the west signal) unlocks the adapted SSR-3 headlamp.
+        /// </summary>
+        public IEnumerator LearnKesslerArai()
+        {
+            ScanFragment six = G.Scans.Find(StoryScan.IdPrefix + Elder06Story);
+            if (six == null)
+            {
+                _bot.Fail("06 has no story scan.");
+                yield break;
+            }
+
+            if (!G.Databank.Progress(TricklePostEntry).IsComplete)
+            {
+                _bot.Fail("07 woke without reading its trickle post into the databank.");
+                yield break;
+            }
+
+            yield return TopUpIfLow();
+            yield return Scan(six, Flat(Pad() - six.Point).normalized, ScanStandOff);
+            MakerUnderstanding understanding = G.Understanding;
+            yield return _bot.Until(() => understanding.IsUnlocked(MakerUnderstandingSettings.Ssr3Headlamp),
+                FollowSeconds, "Kessler–Arai level 1 to unlock the SSR-3 headlamp",
+                () => "Kessler–Arai points " + understanding.PointsOf(DatabankMaker.KesslerArai) + ", released " +
+                      understanding.Released + ".");
+        }
+
+        /// <summary>R12: back onto the pad; the first dock after the release brings out the socket rack.</summary>
+        public IEnumerator DockForTheRack()
+        {
+            IRackStatus rack = G.Rack;
+            if (rack.Shown)
+            {
+                yield break;
+            }
+
+            Vector3 pad = PlacedPosition(StructureIds.ChargingPad);
+            yield return _bot.DriveTo(Flat(pad), ApproachThrottleRadius, "the pad, to bring out the rack",
+                DriveSeconds);
+            yield return _bot.Until(() => rack.Shown && G.RackView.Instance != null, FollowSeconds,
+                "the dock to bring out the socket rack");
+        }
+
+        /// <summary>
+        /// R12, the SSR-3 headlamp: back at the pad, 07 faces the rack's headlamp bay (Art's Bay_0) until it reads it,
+        /// and holds E until the part is assembled and the bay fills. It costs Metal 2 + Wiring 1 from the hold.
+        /// </summary>
+        public IEnumerator AssembleTheHeadlamp()
+        {
+            yield return DockForTheRack();
+            if (_bot.Failed)
+            {
+                yield break;
+            }
+
+            Transform bay = Descendant(G.RackView.Instance.transform, HeadlampOutlineNode);
+            Renderer outline = bay != null ? bay.GetComponent<Renderer>() : null;
+            if (outline == null)
+            {
+                _bot.Fail("the socket rack has no " + HeadlampOutlineNode + " outline.");
+                yield break;
+            }
+
+            if (!G.Materials.Has(HeadlampCost))
+            {
+                _bot.Fail("the hold lacks the headlamp's Metal 2 + Wiring 1 (metal " + G.Materials.Metal +
+                          ", wiring " + G.Materials.Wiring + ").");
+                yield break;
+            }
+
+            // Where a player stands: on the pad the rack faces, looking at the bay.
+            yield return _bot.DriveTo(Flat(PlacedPosition(StructureIds.ChargingPad)), ApproachThrottleRadius,
+                "the pad, facing the rack", DriveSeconds);
+            yield return _bot.Until(() => _bot.KeepLookingAt(outline.bounds.center) && ReadsHeadlampBay(),
+                RackReadSeconds, "07 to read the rack's headlamp bay from the pad",
+                () => "Bay at " + outline.bounds.center + ", in the view at " +
+                      _bot.World.Context.Get<IViewCamera>().Camera.WorldToViewportPoint(outline.bounds.center) + ", " +
+                      DriveSteering.FlatDistance(outline.bounds.center, _bot.World.Rover.Position)
+                          .ToString("0.0", CultureInfo.InvariantCulture) + " m from 07. " + _bot.Where());
+            yield return _bot.Hold(Key.E, () =>
+                {
+                    _bot.KeepLookingAt(outline.bounds.center);
+                    return G.Opening.HeadlampFitted;
+                }, FollowSeconds, "a held E to assemble the SSR-3 headlamp");
+        }
+
+        private bool ReadsHeadlampBay()
+        {
+            return G.Hints.TryGet(InteractionKind.Rack, out InteractionHint hint) && hint.NounKey == HeadlampBayId;
+        }
+
+        private static Transform Descendant(Transform root, string name)
+        {
+            foreach (Transform node in root.GetComponentsInChildren<Transform>(true))
+            {
+                if (node.name == name)
+                {
+                    return node;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>Where the module stands now: the battery bank is built on it.</summary>

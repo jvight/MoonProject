@@ -20,5 +20,12 @@ namespace MoonProject.Gameplay
 
         /// <summary>An opening milestone (<c>OpeningMilestoneReached</c>) unlocks it whole.</summary>
         Milestone = 4,
+
+        /// <summary>
+        /// 07 reads it as it wakes (the trickle post it slept on, opening v3 5.2): the New Game self-test's end
+        /// (<c>BootCheckFinished</c>) unlocks it whole, silently, so the wake keeps its one line; a loaded game has
+        /// woken.
+        /// </summary>
+        Wake = 5,
     }
 }

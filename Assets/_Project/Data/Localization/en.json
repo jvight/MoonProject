@@ -735,6 +735,10 @@
             "text": "Night is coming. Scan the habitat's power module."
         },
         {
+            "key": "next.v3.hook_module",
+            "text": "Hook the power module and tow it home."
+        },
+        {
             "key": "next.v3.tow_module",
             "text": "The power module is the bank's frame. Tow it home to the apron."
         },
@@ -757,6 +761,22 @@
         {
             "key": "next.v3.go_relay",
             "text": "relay.1 answered from the west rim. Drive to it."
+        },
+        {
+            "key": "next.v3.scan_elder06",
+            "text": "06 is slumped at relay.2 by the canyon mouth. Drive there and scan it."
+        },
+        {
+            "key": "next.v3.cut_headlamp_crate",
+            "text": "Cut the crate by 06 for the headlamp's parts."
+        },
+        {
+            "key": "next.v3.assemble_headlamp",
+            "text": "Assemble the SSR-3 headlamp at the rack by the pad."
+        },
+        {
+            "key": "next.v3.dock_for_rack",
+            "text": "Park on the pad to bring out the rack."
         },
         {
             "key": "battery.low.lander",
@@ -1005,6 +1025,10 @@
         {
             "key": "pickup.for.antenna_mast",
             "text": "for the antenna mast"
+        },
+        {
+            "key": "pickup.for.ssr3_lamp",
+            "text": "for the SSR-3 headlamp"
         },
         {
             "key": "pickup.part.icecore",
@@ -1477,6 +1501,18 @@
         {
             "key": "db.seismic_station.history",
             "text": "Left by the '71 crew. It had thirteen years of quiet ground on record, so the ILC put Lumen here. We wired it into the station bus. — Ines"
+        },
+        {
+            "key": "db.trickle_post.name",
+            "text": "Trickle post"
+        },
+        {
+            "key": "db.trickle_post.readout",
+            "text": "KESSLER–ARAI · TRICKLE POST · 1983 · DEEP-CHARGE BUS · CABLE: OPEN · LAST LOAD: UNIT 07"
+        },
+        {
+            "key": "db.trickle_post.history",
+            "text": "Parked 07 on its post in the lander's lee and patched the post into the deep-charge bus. Set to wake on carrier. Sleep well. — K."
         },
         {
             "key": "db.retroreflector.name",

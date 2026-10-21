@@ -34,6 +34,7 @@ namespace MoonProject.Gameplay
         private readonly RelayRepair _relay;
         private readonly SocketRackView _rack;
         private readonly IAnswerStatus _answer;
+        private readonly RackAssembly _assembly;
         private readonly Vector3[] _scanBuffer = new Vector3[MaxFocusPoints];
 
         /// <param name="beam">
@@ -44,11 +45,13 @@ namespace MoonProject.Gameplay
         /// <param name="relay">relay.1's repair: its feed socket in reach is where a held part is fitted.</param>
         /// <param name="rack">The socket rack in the world: the outline 07 reads names its part.</param>
         /// <param name="answer">The call's answer: while it can be sent, the mast is where E is held to transmit.</param>
+        /// <param name="assembly">The socket rack's field assembly bays.</param>
         public InteractionHints(SalvageField salvage, SealedContainers containers, ScanField scans,
             BuildField building, BeamWork beam, Cutter cutter, PickupReach pickups, FirstUseSpots firstUse,
-            TowLine tow, RelayRepair relay, SocketRackView rack, IAnswerStatus answer)
+            TowLine tow, RelayRepair relay, SocketRackView rack, IAnswerStatus answer, RackAssembly assembly)
         {
             _answer = answer ?? throw new ArgumentNullException(nameof(answer));
+            _assembly = assembly ?? throw new ArgumentNullException(nameof(assembly));
             _tow = tow ?? throw new ArgumentNullException(nameof(tow));
             _relay = relay ?? throw new ArgumentNullException(nameof(relay));
             _rack = rack ?? throw new ArgumentNullException(nameof(rack));
@@ -182,7 +185,10 @@ namespace MoonProject.Gameplay
                     return sendable;
                 case InteractionKind.Rack:
                     bool reads = _rack.TryGetRead(out Vector3 bay, out string bayId);
-                    hint = reads ? new InteractionHint(kind, bay, true, bayId) : InteractionHint.None;
+                    hint = reads
+                        ? new InteractionHint(kind, bay, true, bayId, 0, 0,
+                            _assembly.CanAssemble(bayId, out _) ? _assembly.Progress01 : 0f)
+                        : InteractionHint.None;
                     return reads;
                 default:
                     hint = InteractionHint.None;
