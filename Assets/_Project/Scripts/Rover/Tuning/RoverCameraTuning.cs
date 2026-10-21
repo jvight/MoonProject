@@ -516,6 +516,16 @@ namespace MoonProject.Rover
         [Range(0f, 0.3f)]
         [SerializeField] private float _nudgeScreenMargin = 0.08f;
 
+        [Tooltip("07 charging on its pad: the camera eases (calm, about 20 deg/s) to a closer three-quarter rear frame " +
+                 "where the lamp bar and the clamps read, instead of pulling out to the wide shot, and eases back when " +
+                 "the charge ends. Any look or drive input gives control back at once.")]
+        [SerializeField] private CameraMomentSettings _dockMoment =
+            new CameraMomentSettings(2.4f, 0f, 2.4f, 0.1f, 0.6f, 1f, 32f, 32f, 5f, -0.35f, 100000f);
+
+        [Tooltip("Metres to 07's side the dock frame looks toward: it sets which side the three-quarter frame sits on.")]
+        [Range(1f, 20f)]
+        [SerializeField] private float _dockSideMetres = 6f;
+
         [Tooltip("07's first look up the crew's ladder, then at the lift: the camera eases low and a little back, "
             + "looking up past 07 at the ladder to the deck, follows the gaze across to the lift, and returns once "
             + "the look ends (held while 07 looks).")]
@@ -1022,6 +1032,10 @@ namespace MoonProject.Rover
         public float NudgeMaxBearing => _nudgeMaxBearing;
 
         public float NudgeScreenMargin => _nudgeScreenMargin;
+
+        public CameraMomentSettings DockMoment => _dockMoment;
+
+        public float DockSideMetres => _dockSideMetres;
 
         public CameraMomentSettings LadderMoment => _ladderMoment;
 

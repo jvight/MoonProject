@@ -16,6 +16,5 @@ namespace MoonProject.UI
         Scan = 4,
         Cut = 5,
         Build = 6,
-        Fit = 7,
     }
 }

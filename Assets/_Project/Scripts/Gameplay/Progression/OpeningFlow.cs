@@ -22,7 +22,7 @@ namespace MoonProject.Gameplay
     /// has reached, with Restored = true, before the first <see cref="Tick"/>. CallAnswered (R8) is published by the
     /// answer itself, not derived here. Allocation-free per tick.
     /// </summary>
-    public sealed class OpeningFlow
+    public sealed class OpeningFlow : IDisposable
     {
         private const int MaxReminders = 2;
 
@@ -49,6 +49,8 @@ namespace MoonProject.Gameplay
         private float _stalled;
         private float _shownFor;
         private float _showSeconds;
+        private bool _woke;
+        private readonly IDisposable _wake;
 
         /// <param name="keys">The action keys the player has pressed lately (the line's glyph).</param>
         /// <param name="timing">When the next line and the reminders speak.</param>
@@ -72,10 +74,17 @@ namespace MoonProject.Gameplay
             _steps.Add(IgniterLine, () => _game.IgniterFitted);
             _steps.Add(SolarLine, () => _game.PowerOn);
             _steps.Add(NightLine, () => _game.NightReady);
-            _steps.Add(() => _game.NightFallen ? OpeningKeys.ScanTower : string.Empty,
+            _steps.Add(() => _game.NightFallen ? OpeningKeys.ScanTower : OpeningKeys.AwaitNight,
                 () => _game.Knows(StructureIds.AntennaMast));
             _steps.Add(OpeningKeys.BuildMast, () => _game.Built(StructureIds.AntennaMast));
-            _steps.Add(OpeningKeys.Transmit, () => _game.CallAnswered);
+            _steps.Add(OpeningKeys.Transmit, () => _game.AnswerDone);
+            _steps.Add(OpeningKeys.GoToRelay, () => _game.RelayRelit);
+            _wake = events.Subscribe<BootCheckFinished>(_ => _woke = true);
+        }
+
+        public void Dispose()
+        {
+            _wake.Dispose();
         }
 
         /// <summary>
@@ -100,20 +109,21 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// R5 to B9: the first free choice says nothing (the near sites are the lure) until a site is visited, then the
-        /// dock that ends the day is named; at dusk, the power module to scan, then the module to tow home and build
-        /// the bank on, or the bank to move into the grid's reach.
+        /// R5 to B9: the first free choice names the near sites, then, once one is visited, the dock that ends the day;
+        /// at dusk, the power module to scan, then the module to tow home, then the bank to build on it, or the bank to
+        /// move into the grid's reach.
         /// </summary>
         private string NightLine()
         {
             if (!_game.DuskBegun)
             {
-                return _game.DuskVisited ? OpeningKeys.DockForDusk : string.Empty;
+                return _game.DuskVisited ? OpeningKeys.DockForDusk : OpeningKeys.VisitSite;
             }
 
             return !_game.Knows(StructureIds.BatteryBank) ? OpeningKeys.ScanModule
                 : _game.Built(StructureIds.BatteryBank) ? OpeningKeys.MoveBatteryBank
-                : OpeningKeys.BuildBatteryBank;
+                : _game.ModuleHome ? OpeningKeys.BuildBatteryBank
+                : OpeningKeys.TowModuleHome;
         }
 
         /// <summary>The key of the line the current step would say, or empty when it has none (not shown).</summary>
@@ -179,13 +189,24 @@ namespace MoonProject.Gameplay
 
         /// <summary>
         /// Progress (a new step, or the step's line changing) shows the new line as the next line, unless it is the
-        /// line a session starts on. With no progress the line counts up to a reminder: after the stall, and once more
-        /// after the second wait; a line on screen goes when its time is up.
+        /// line a session starts on; the end of a new game's wake shows the first line the same way. With no progress
+        /// the line counts up to a reminder: after the stall, and once more after the second wait; a line on screen goes
+        /// when its time is up.
         /// </summary>
         private void Speak(float deltaTime)
         {
             int index = _steps.CurrentIndex;
             string key = _steps.Current;
+            if (_woke && _watching && index == _watchedIndex && key == _watchedKey)
+            {
+                _woke = false;
+                if (key.Length > 0)
+                {
+                    Show(key, NextLineReason.Next, _timing.NextLineSeconds);
+                    return;
+                }
+            }
+
             if (index != _watchedIndex || key != _watchedKey)
             {
                 bool progress = _watching;

@@ -7,6 +7,33 @@ using MoonProject.Core;
 
 namespace MoonProject.Autoplay
 {
+    /// <summary>
+    /// What a first-time player must do next, and the cues that name it: a chip's words (localization keys of the
+    /// verb), a line's words, or a world cue's name. A cue passes the gate only if it names this action.
+    /// </summary>
+    public sealed class NextAction
+    {
+        public NextAction(string key, string[] verbKeys, string[] lineWords, string[] cueNames)
+        {
+            Key = key;
+            VerbKeys = verbKeys;
+            LineWords = lineWords;
+            CueNames = cueNames;
+        }
+
+        /// <summary>The key the action is done with ("B", "E", "WASD"), for the report.</summary>
+        public string Key { get; }
+
+        /// <summary>Localization keys whose words a chip must carry ("hint.openbuild").</summary>
+        public string[] VerbKeys { get; }
+
+        /// <summary>Words (any one) a line, or a chip with no verb key of its own, must contain to name the goal.</summary>
+        public string[] LineWords { get; }
+
+        /// <summary>Parts (any one) of a lit world cue's name that points at the goal.</summary>
+        public string[] CueNames { get; }
+    }
+
     /// <summary>One beat's first-time-player check: how long until a readable next-action cue was on screen.</summary>
     public sealed class NaiveResult
     {
@@ -52,8 +79,13 @@ namespace MoonProject.Autoplay
         /// <summary>Game seconds a cue may take to show after a beat, unless a beat's own budget says otherwise.</summary>
         public const float DefaultBudgetSeconds = 5f;
 
+        /// <summary>A cue counts as readable this far in from each edge of the frame (a share of the viewport): one at the very edge is not.</summary>
+        private const float CueMargin = 0.05f;
+
         private readonly AutoplayBot _bot;
         private readonly Dictionary<string, float> _budgets = new Dictionary<string, float>();
+        private readonly Dictionary<string, NextAction> _next = new Dictionary<string, NextAction>();
+        private readonly HashSet<string> _skipped = new HashSet<string>();
         private readonly List<NaiveResult> _results = new List<NaiveResult>();
 
         public NaiveGuard(AutoplayBot bot)
@@ -80,6 +112,18 @@ namespace MoonProject.Autoplay
             }
         }
 
+        /// <summary>What a player must do after <paramref name="beat"/>: only a cue naming it counts.</summary>
+        public void Declare(string beat, NextAction action)
+        {
+            _next[beat] = action;
+        }
+
+        /// <summary>No check after <paramref name="beat"/>: what follows is not a player action (an observed moment).</summary>
+        public void Skip(string beat)
+        {
+            _skipped.Add(beat);
+        }
+
         /// <summary>A beat's own budget (game seconds) in place of the default.</summary>
         public void SetBudget(string beat, float seconds)
         {
@@ -89,7 +133,7 @@ namespace MoonProject.Autoplay
         /// <summary>Stands passive after <paramref name="beat"/> and measures the time to a cue.</summary>
         public IEnumerator Check(string beat)
         {
-            if (!_bot.World.Refresh() || _bot.World.Ui == null)
+            if (_skipped.Contains(beat) || !_bot.World.Refresh() || _bot.World.Ui == null)
             {
                 yield break;
             }
@@ -99,11 +143,14 @@ namespace MoonProject.Autoplay
             string shotStart = "naive-" + beat + "-0s";
             _bot.Shot(shotStart);
             float start = Time.time;
+            _next.TryGetValue(beat, out NextAction action);
             string cue = null;
+            string wrong = null;
             while (Time.time - start < budget && cue == null)
             {
                 yield return null;
-                cue = FindCue();
+                cue = FindCue(action, out string other);
+                wrong = wrong ?? other;
             }
 
             float seconds = Time.time - start;
@@ -111,7 +158,8 @@ namespace MoonProject.Autoplay
             _bot.Shot(shotEnd);
             bool passed = cue != null;
             Record(new NaiveResult(beat, passed, seconds,
-                passed ? cue : "nothing readable on screen (" + _bot.World.Ui.DescribeChip() + ")", budget, shotStart,
+                passed ? cue : (wrong != null ? "only cues for something else: " + wrong : "nothing readable on screen") +
+                               (action != null ? " (needed: " + action.Key + ")" : string.Empty), budget, shotStart,
                 shotEnd));
         }
 
@@ -121,31 +169,94 @@ namespace MoonProject.Autoplay
             _results.Add(result);
         }
 
-        /// <summary>The first readable cue now, or null.</summary>
-        private string FindCue()
+        /// <summary>
+        /// The first cue now that names <paramref name="action"/> (any readable cue when none is declared), or null;
+        /// <paramref name="other"/> is a readable cue that names something else.
+        /// </summary>
+        private string FindCue(NextAction action, out string other)
         {
+            other = null;
             UiProbe ui = _bot.World.Ui;
+            ILocalization words = _bot.World.Context.Get<ILocalization>();
             if (ui.ChipInView(out string chip))
             {
-                return "chip '" + chip + "'";
+                if (action == null || ChipNames(action, chip, words) || Contains(chip, action.LineWords))
+                {
+                    return "chip '" + chip + "'";
+                }
+
+                other = "chip '" + chip + "'";
+            }
+
+            if (ui.ControlsCardInView(out string card))
+            {
+                // The card names keys, not goals: it counts when it carries the key the action is done with.
+                if (action == null || Contains(card, new[] { action.Key }))
+                {
+                    return "controls card '" + card + "'";
+                }
+
+                other = other ?? "controls card '" + card + "'";
             }
 
             string line = ui.ObjectiveLine();
             if (line.Length > 0)
             {
-                return "line '" + line + "'";
+                if (action == null || Contains(line, action.LineWords))
+                {
+                    return "line '" + line + "'";
+                }
+
+                other = other ?? "line '" + line + "'";
             }
 
             Camera camera = _bot.World.Context.Get<IViewCamera>().Camera;
             foreach (WorldCue cue in WorldCues.All(_bot.World))
             {
-                if (cue.Lit() && WorldCue.OnScreen(camera, cue.Point(), 0f))
+                if (cue.Lit() && WorldCue.OnScreen(camera, cue.Point(), CueMargin))
                 {
-                    return "world cue '" + cue.Name + "'";
+                    if (action == null || Contains(cue.Name, action.CueNames))
+                    {
+                        return "world cue '" + cue.Name + "'";
+                    }
+
+                    other = other ?? "world cue '" + cue.Name + "'";
                 }
             }
 
             return null;
+        }
+
+        private static bool ChipNames(NextAction action, string chip, ILocalization words)
+        {
+            foreach (string key in action.VerbKeys)
+            {
+                string verb = words.Get(key);
+                if (verb.Length > 0 && chip.IndexOf(verb, System.StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool Contains(string text, string[] parts)
+        {
+            if (parts == null)
+            {
+                return false;
+            }
+
+            foreach (string part in parts)
+            {
+                if (text.IndexOf(part, System.StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>The report's table: each beat's time to cue, the cue, and the two screenshots.</summary>

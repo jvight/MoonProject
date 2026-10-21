@@ -1,131 +1,49 @@
-using System;
+using MoonProject.Core;
+using MoonProject.Core.Events;
+using MoonProject.Core.Input;
 
 namespace MoonProject.UI
 {
-    /// <summary>What the objective line remembers across the save: which steps' lines have been shown.</summary>
-    internal interface IObjectiveMemory
-    {
-        bool Has(string key);
-
-        void Add(string key);
-    }
-
     /// <summary>
-    /// The objective line's rule (docs/design/opening-v2.md §3; pure, EditMode-tested). Gameplay names the current step
-    /// as a localization key (empty: no line). The line comes 1.5 s after the step began and 07 has been still for 1 s
-    /// (at once, without the stillness, when the step's own verb has its target in front of 07: its key chip must not
-    /// wait while 07 settles at the seal), rests bright for 8 s, then dims to a small line; it clears the moment the step changes (its step was done) and
-    /// re-brightens only when 07 has been still for 4 s and 90 s passed without progress. Each step's line is bright
-    /// once per save: a step already shown in this save (a loaded game) shows its line dimmed.
+    /// The objective line's rule (pure, EditMode-tested; docs/design/opening-v3-guidance-audit.md G2, G4). Gameplay says
+    /// what the line is and how long it stays (<see cref="NextStepChanged"/>): the next small action right after a
+    /// success, held briefly, or a reminder after a stall; an empty key takes it away. The line wants the screen the
+    /// moment it is given, for as long as Gameplay keeps it, with its key's glyph first when the key is new. The
+    /// player's Guidance setting turns it off.
     /// </summary>
     internal sealed class ObjectiveLine
     {
-        private readonly GuidanceSettings _settings;
-        private readonly IObjectiveMemory _memory;
-        private Phase _phase;
-        private float _sinceKey;
-        private float _sinceProgress;
-        private float _still;
-        private float _rested;
-
-        public ObjectiveLine(GuidanceSettings settings, IObjectiveMemory memory)
-        {
-            _settings = settings ?? throw new ArgumentNullException(nameof(settings));
-            _memory = memory ?? throw new ArgumentNullException(nameof(memory));
-        }
-
-        private enum Phase
-        {
-            Waiting,
-            Bright,
-            Dim,
-        }
-
-        /// <summary>The current step's localization key; empty when there is nothing to say.</summary>
+        /// <summary>The line's localization key; empty when there is nothing to say.</summary>
         public string Key { get; private set; } = string.Empty;
+
+        /// <summary>Why the line shows: the next action after a success, or a reminder after a stall.</summary>
+        public NextLineReason Reason { get; private set; }
+
+        /// <summary>The key the line asks for, whose glyph it may draw first.</summary>
+        public RoverAction Action { get; private set; }
+
+        /// <summary>The line draws its key's glyph first (the key is new, or not used for a while).</summary>
+        public bool ShowsKey { get; private set; }
 
         /// <summary>The line wants the screen (before the guidance slot decides).</summary>
         public bool WantsShown { get; private set; }
 
-        /// <summary>The line is in its bright rest rather than its small dim form.</summary>
-        public bool Bright => _phase == Phase.Bright;
+        /// <summary>The line is the next action after a success: the one element until it goes.</summary>
+        public bool IsNext => WantsShown && Reason == NextLineReason.Next;
 
-        /// <summary>A new step began (the last was done), or the line cleared (an empty key).</summary>
-        public void SetKey(string key)
+        /// <summary>Gameplay gave a new line, or took the line away (an empty key).</summary>
+        public void Set(NextStepChanged changed)
         {
-            key = key ?? string.Empty;
-            if (string.Equals(key, Key, StringComparison.Ordinal))
-            {
-                return;
-            }
-
-            Key = key;
-            _phase = Phase.Waiting;
-            _sinceKey = 0f;
-            _sinceProgress = 0f;
-            _rested = 0f;
-            WantsShown = false;
+            Key = changed.LineKey ?? string.Empty;
+            Reason = changed.Reason;
+            Action = changed.Key;
+            ShowsKey = Key.Length > 0 && changed.ShowsKey;
         }
 
-        /// <summary>Something moved the step forward without finishing it (a scan, a part built).</summary>
-        public void NoteProgress()
-        {
-            _sinceProgress = 0f;
-        }
-
-        /// <param name="deltaTime">Unscaled seconds; 0 while paused.</param>
-        /// <param name="speed">07's speed, m/s.</param>
         /// <param name="enabled">The player's Guidance setting.</param>
-        /// <param name="showing">The line is on screen now: the bright rest counts only then.</param>
-        /// <param name="verbAtHand">The step's verb has its target in front of 07 now (it needs no settling).</param>
-        public void Tick(float deltaTime, float speed, bool enabled, bool showing, bool verbAtHand)
+        public void Tick(bool enabled)
         {
-            _still = speed < _settings.StillSpeed ? _still + deltaTime : 0f;
-            _sinceKey += deltaTime;
-            _sinceProgress += deltaTime;
-            if (!enabled || Key.Length == 0)
-            {
-                WantsShown = false;
-                return;
-            }
-
-            switch (_phase)
-            {
-                case Phase.Waiting:
-                    if (_sinceKey >= _settings.ObjectiveDelaySeconds &&
-                        (_still >= _settings.ObjectiveStillSeconds || verbAtHand))
-                    {
-                        _phase = _memory.Has(Key) ? Phase.Dim : Phase.Bright;
-                        _memory.Add(Key);
-                        _rested = 0f;
-                    }
-
-                    break;
-                case Phase.Bright:
-                    if (showing)
-                    {
-                        _rested += deltaTime;
-                    }
-
-                    if (_rested >= _settings.ObjectiveRestSeconds)
-                    {
-                        _phase = Phase.Dim;
-                    }
-
-                    break;
-                case Phase.Dim:
-                    if (_still >= _settings.ObjectiveRebrightStillSeconds &&
-                        _sinceProgress >= _settings.ObjectiveIdleSeconds)
-                    {
-                        _phase = Phase.Bright;
-                        _rested = 0f;
-                        _sinceProgress = 0f;
-                    }
-
-                    break;
-            }
-
-            WantsShown = _phase != Phase.Waiting;
+            WantsShown = enabled && Key.Length > 0;
         }
     }
 }

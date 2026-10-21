@@ -57,11 +57,20 @@ namespace MoonProject.Gameplay
         /// <summary>The first night has fallen over a night-ready base (B10's exit).</summary>
         bool NightFallen { get; }
 
+        /// <summary>The habitat's power module stands home on the apron, off the cable: a battery bank can stand on it.</summary>
+        bool ModuleHome { get; }
+
         /// <summary>Since power-on 07 has visited a near site, so docking now begins the first dusk (R5).</summary>
         bool DuskVisited { get; }
 
-        /// <summary>07 transmitted from the mast and relay.1 answered the call (R8).</summary>
-        bool CallAnswered { get; }
+        /// <summary>
+        /// 07 transmitted from the mast, relay.1 answered, and the answer's moment is over (the pulse, the Peak's
+        /// glint): the next action may be named (R8).
+        /// </summary>
+        bool AnswerDone { get; }
+
+        /// <summary>relay.1's spare is fitted and it is lit (R10).</summary>
+        bool RelayRelit { get; }
 
         /// <summary>
         /// The place in the world where the action of line <paramref name="lineKey"/> happens (the apron, a crate, the

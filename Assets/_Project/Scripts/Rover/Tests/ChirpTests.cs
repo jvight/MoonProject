@@ -159,6 +159,28 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
+        public void APayoff_IsNotHeldBackByItsMoodsCooldown_ButStillWaitsForTheGlobalGap()
+        {
+            var voice = new ChirpVoice(_settings);
+            Assert.IsTrue(voice.TryChirp(ChirpMood.Happy, 0f), "the build's Happy");
+            Assert.IsFalse(voice.TryChirp(ChirpMood.Happy, 20f), "a plain Happy waits 30 s");
+            Assert.IsFalse(voice.TryChirp(ChirpMood.Happy, 3f, payoff: true), "a payoff waits for the global gap");
+            Assert.IsTrue(voice.TryChirp(ChirpMood.Happy, 20f, payoff: true), "the full charge's Happy is not swallowed");
+        }
+
+        [Test]
+        public void TheDocksFullBeat_ChirpsHappy_EvenSoonAfterTheBuildsHappy()
+        {
+            _events.Publish(new FeelBeat(FeelKind.Build, FeelPhase.Impact, Vector3.zero, Vector3.up, 1f, 0f));
+            Assert.AreEqual(ChirpMood.Happy, Last, "the pad is welded");
+            int before = _chirps.Count;
+            _now += 15f;
+            Dock(FeelPhase.Reward);
+            Assert.AreEqual(before + 1, _chirps.Count, "the charge is full: 07 says so, whatever the build said");
+            Assert.AreEqual(ChirpMood.Happy, Last);
+        }
+
+        [Test]
         public void OneAtATime_TheLastSyllableEndsThePhrase()
         {
             var voice = new ChirpVoice(_settings);

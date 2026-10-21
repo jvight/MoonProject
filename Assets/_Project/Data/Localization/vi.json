@@ -716,7 +716,7 @@
         },
         {
             "key": "next.v2.build_battery_bank",
-            "text": "Kéo mô-đun điện về sân, dựng cụm pin tích điện lên nó."
+            "text": "Dựng cụm pin tích điện lên mô-đun."
         },
         {
             "key": "next.v2.move_battery_bank",
@@ -735,12 +735,28 @@
             "text": "Đêm sắp xuống. Quét mô-đun điện của khu nhà ở."
         },
         {
+            "key": "next.v3.tow_module",
+            "text": "Mô-đun điện là khung của cụm pin. Kéo nó về sân."
+        },
+        {
             "key": "next.v3.dock_for_dusk",
             "text": "Đỗ vào bệ để kết thúc ngày."
         },
         {
             "key": "next.v3.transmit",
             "text": "Phát sóng từ cột ăng-ten."
+        },
+        {
+            "key": "next.v3.visit_site",
+            "text": "Đã có điện. Hãy ghé trạm địa chấn hoặc khu nhà ở trước khi chiều xuống."
+        },
+        {
+            "key": "next.v3.await_night",
+            "text": "Căn cứ đã sẵn sàng cho đêm."
+        },
+        {
+            "key": "next.v3.go_relay",
+            "text": "relay.1 đã đáp lời từ vành phía tây. Hãy lái tới đó."
         },
         {
             "key": "battery.low.lander",
@@ -967,6 +983,10 @@
             "text": "Lắp"
         },
         {
+            "key": "hint.transmit",
+            "text": "Phát tín hiệu"
+        },
+        {
             "key": "pickup.crate.contents",
             "text": "phụ tùng"
         },
@@ -1117,6 +1137,14 @@
         {
             "key": "build.hint.leave",
             "text": "Thoát"
+        },
+        {
+            "key": "build.hint.place",
+            "text": "Đặt"
+        },
+        {
+            "key": "build.hint.rotate",
+            "text": "Xoay"
         },
         {
             "key": "build.step.place",

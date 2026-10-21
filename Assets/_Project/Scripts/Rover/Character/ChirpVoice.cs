@@ -33,8 +33,10 @@ namespace MoonProject.Rover
         }
 
         /// <summary>True (and the chirp is booked) when <paramref name="mood"/> may sound at
-        /// <paramref name="now"/>.</summary>
-        public bool TryChirp(ChirpMood mood, float now)
+        /// <paramref name="now"/>. A <paramref name="payoff"/> (a charge that completes, a part that fits: the
+        /// moment the player was waiting for) is not held back by the mood's own cooldown, which only keeps a mood
+        /// from chattering; it still waits for a chirp that is sounding and for the global gap.</summary>
+        public bool TryChirp(ChirpMood mood, float now, bool payoff = false)
         {
             int index = (int)mood;
             if (index < 0 || index >= MoodCount || IsSounding(now) || now - _last < _settings.GlobalCooldown)
@@ -43,7 +45,7 @@ namespace MoonProject.Rover
             }
 
             float cooldown = mood == ChirpMood.Affirm ? _settings.AffirmCooldown : _settings.MoodCooldown;
-            if (now - _lastByMood[index] < cooldown)
+            if (!payoff && now - _lastByMood[index] < cooldown)
             {
                 return false;
             }

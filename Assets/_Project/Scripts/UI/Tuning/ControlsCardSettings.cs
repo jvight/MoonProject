@@ -22,6 +22,10 @@ namespace MoonProject.UI
         [Range(5f, 60f)]
         [SerializeField] private float _maxSeconds = 20f;
 
+        [Tooltip("Seconds the card comes back on screen with a key it has just added (B Build, the hook cable).")]
+        [Range(2f, 20f)]
+        [SerializeField] private float _addedSeconds = 7f;
+
         public RevealSettings Reveal => _reveal;
 
         public float DriveMetres => _driveMetres;
@@ -29,5 +33,7 @@ namespace MoonProject.UI
         public float LookSeconds => _lookSeconds;
 
         public float MaxSeconds => _maxSeconds;
+
+        public float AddedSeconds => _addedSeconds;
     }
 }

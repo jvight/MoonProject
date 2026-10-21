@@ -47,6 +47,42 @@ namespace MoonProject.Rover
         [Range(0.05f, 2f)]
         [SerializeField] private float _wakeInterval = 0.4f;
 
+        [Header("While charging on a pad")]
+        [Tooltip("Seconds per slow warm pulse that runs along the lamp row while 07 charges.")]
+        [Range(0.8f, 6f)]
+        [SerializeField] private float _chargePulsePeriod = 2.4f;
+
+        [Tooltip("How much brighter (a share of a lamp's glow) the pulse makes a full cell at its crest.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _chargePulseDepth = 0.45f;
+
+        [Tooltip("Seconds of delay between neighbouring lamps in the pulse: it travels along the row, filling to the end.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _chargePulseLag = 0.28f;
+
+        [Tooltip("Seconds per breath of the lamp being filled while 07 charges: quicker than the idle breath, deeper.")]
+        [Range(0.5f, 4f)]
+        [SerializeField] private float _chargeBreathPeriod = 1.5f;
+
+        [Tooltip("How deeply the lamp being filled breathes while 07 charges (0 = steady).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _chargeBreathDepth = 0.65f;
+
+        [Tooltip("How much brighter (a share of the glow) the whole row flashes when the last cell fills.")]
+        [Range(0f, 2f)]
+        [SerializeField] private float _fullBoost = 0.9f;
+
+        [Tooltip("Seconds the row's full flash takes to settle back to its glow.")]
+        [Range(0.3f, 4f)]
+        [SerializeField] private float _fullFlashSeconds = 1.8f;
+
+        public float ChargePulsePeriod => _chargePulsePeriod;
+        public float ChargePulseDepth => _chargePulseDepth;
+        public float ChargePulseLag => _chargePulseLag;
+        public float ChargeBreathPeriod => _chargeBreathPeriod;
+        public float ChargeBreathDepth => _chargeBreathDepth;
+        public float FullBoost => _fullBoost;
+        public float FullFlashSeconds => _fullFlashSeconds;
         public float LitGlow => _litGlow;
         public float BreathPeriod => _breathPeriod;
         public float BreathDepth => _breathDepth;

@@ -104,6 +104,7 @@ namespace MoonProject.Audio
         private CueHandle _lineDone;
         private CueHandle _loadStep;
         private readonly RepeatSoftener _textRepeats = new RepeatSoftener();
+        private readonly RepeatSoftener _strokeRepeats = new RepeatSoftener();
         private int _strokeNotes;
         private WakeCueSheet _sheet;
         private WakeAudioSettings _settings;
@@ -274,11 +275,15 @@ namespace MoonProject.Audio
                 return;
             }
 
+            // The plotter's strokes come faster than a hum fades: never skip one, soften a quick run instead.
+            _strokeRepeats.TryTrigger(Time.unscaledTime, 0f, _settings.StrokeStreakWindow, _settings.StrokeStreakDecay,
+                _settings.StrokeStreakFloor, out float gain);
             int note = Mathf.Clamp(drawn.Index / Mathf.Max(1, _settings.StrokesPerNote), 0, _strokeNotes - 1);
-            _director.PlayVariantAt(_stroke, note, _rover.Position, _settings.FaceStroke * _director.WorldGain);
+            _director.PlayVariantAt(_stroke, note, _rover.Position,
+                _settings.FaceStroke * gain * _director.WorldGain);
         }
 
-        /// <summary>A character pair typed: a random counter tick, skipped when too close and softer in a run.</summary>
+        /// <summary>A character typed: a random counter tick, skipped when too close and softer in a run.</summary>
         private void OnBootTextTyped(BootTextTyped typed)
         {
             if (_rushed || !_textRepeats.TryTrigger(Time.unscaledTime, _settings.TextMinInterval,

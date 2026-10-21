@@ -98,6 +98,7 @@ namespace MoonProject.Gameplay
         private float _lastWinchSign;
         private float _nextWinchTime;
         private bool _waitExcavateRelease;
+        private BuildModeState _lastStepState;
         private readonly BlockNotice _weldBlocked = new BlockNotice();
         private int _weldingInstanceId;
         private bool _weldLoopActive;
@@ -639,9 +640,18 @@ namespace MoonProject.Gameplay
             float winch = modeOwned ? _input.ModeWinch(this) : _input.Winch;
             bool deconstructHeld = _input.DeconstructHeld;
 
-            if (!excavateHeld)
+            // A click on a menu card is the Excavate button too, and UI picks the card on that same press: the press that
+            // entered placing is not also the one that places.
+            bool enteredPlacing = _controller.State == BuildModeState.Placing && _lastStepState != BuildModeState.Placing;
+            _lastStepState = _controller.State;
+            if (!excavateHeld && !excavatePressed)
             {
                 _waitExcavateRelease = false;
+            }
+
+            if (enteredPlacing && excavatePressed)
+            {
+                _waitExcavateRelease = true;
             }
 
             if (buildPressed)

@@ -349,14 +349,15 @@ namespace MoonProject.Gameplay.PlayModeTests
             // West of the pad: the ruins side stays open for the power module towed home at R6.
             yield return Build(StructureIds.SolarArray, pad + Vector3.left * BaseSpacing, "B8: the solar array");
             yield return UntilReached(OpeningMilestone.PowerOn, "Power on: the array powers the pad");
-            yield return ExpectStep(string.Empty, "R5: the first free choice says nothing");
+            yield return ExpectStep(OpeningKeys.VisitSite, "R5: the first free choice names the near sites");
             yield return VisitTheSeismicStation();
             yield return DockForTheDusk(pad);
             yield return ExpectStep(OpeningKeys.ScanModule, "B9: night is coming, the power module can store it");
             yield return ScanTheSet("ruin.HabitatModules", "the habitat's power modules");
-            yield return ExpectStep(OpeningKeys.BuildBatteryBank, "B9: the module is the bank's frame, tow it home");
+            yield return ExpectStep(OpeningKeys.TowModuleHome, "B9: the module is the bank's frame, tow it home");
             yield return CutTheCrates("HabitatModules", "the habitat's cable reel");
             yield return TowTheModuleHome(pad);
+            yield return ExpectStep(OpeningKeys.BuildBatteryBank, "B9: the module is home, build the bank on it");
             yield return Build(StructureIds.BatteryBank, ModulePosition(), "B9: the battery bank on the module");
             yield return UntilReached(OpeningMilestone.NightReady, "night-ready: the bank is built and wired to the pad");
             yield return TheFirstNightfall();
@@ -367,7 +368,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return DriveTo(RuinsGate(), 3f, "out of the Lumen ruins");
             yield return Build(StructureIds.AntennaMast, pad + Vector3.back * BaseSpacing, "B11: the antenna mast");
             yield return UntilReached(OpeningMilestone.SignalWest, "the west signal answers");
-            yield return ExpectStep(string.Empty, "the pillar in the west is the message: the opening ends");
+            yield return ExpectStep(OpeningKeys.Transmit, "the mast stands: transmit from it");
 
             float total = Time.time - started;
             WriteReport(total);

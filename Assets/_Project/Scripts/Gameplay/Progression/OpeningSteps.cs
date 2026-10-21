@@ -24,7 +24,10 @@ namespace MoonProject.Gameplay
         /// <summary>R8: transmit from the mast until relay.1 answers.</summary>
         public const int Transmit = 11;
 
+        /// <summary>R9 to R10: drive to relay.1 until its spare is fitted and it is lit.</summary>
+        public const int GoToRelay = 12;
+
         /// <summary>The number of steps; the index once the opening is over.</summary>
-        public const int Count = 12;
+        public const int Count = 13;
     }
 }

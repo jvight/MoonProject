@@ -716,7 +716,7 @@
         },
         {
             "key": "next.v2.build_battery_bank",
-            "text": "Tow the power module home and build the battery bank on it."
+            "text": "Build the battery bank on the module."
         },
         {
             "key": "next.v2.move_battery_bank",
@@ -735,12 +735,28 @@
             "text": "Night is coming. Scan the habitat's power module."
         },
         {
+            "key": "next.v3.tow_module",
+            "text": "The power module is the bank's frame. Tow it home to the apron."
+        },
+        {
             "key": "next.v3.dock_for_dusk",
             "text": "Park on the pad to end the day."
         },
         {
             "key": "next.v3.transmit",
             "text": "Transmit from the antenna mast."
+        },
+        {
+            "key": "next.v3.visit_site",
+            "text": "Power is on. Visit the seismic station or the habitat before dusk."
+        },
+        {
+            "key": "next.v3.await_night",
+            "text": "The base is ready for the night."
+        },
+        {
+            "key": "next.v3.go_relay",
+            "text": "relay.1 answered from the west rim. Drive to it."
         },
         {
             "key": "battery.low.lander",
@@ -967,6 +983,10 @@
             "text": "Fit"
         },
         {
+            "key": "hint.transmit",
+            "text": "Transmit"
+        },
+        {
             "key": "pickup.crate.contents",
             "text": "the parts"
         },
@@ -1117,6 +1137,14 @@
         {
             "key": "build.hint.leave",
             "text": "Leave"
+        },
+        {
+            "key": "build.hint.place",
+            "text": "Place"
+        },
+        {
+            "key": "build.hint.rotate",
+            "text": "Rotate"
         },
         {
             "key": "build.step.place",
