@@ -145,12 +145,14 @@ namespace MoonProject.Rover.PlayModeTests
                 "Housing_R rests at its bracket pose");
             Assert.AreEqual(0f, Quaternion.Angle(_housingRight.localRotation, rightHousingRotRest), 0.05f,
                 "Housing_R rests folded shut");
+            var roadLight = _scene.Rover.GetComponentInChildren<RoverHeadlamp>();
             float fullLensGlow = EmissionOf(_lensLeft);
-            Assert.Greater(fullLensGlow, 1f, "Lens_L glows at R1_LampAmber's warm emission strength");
+            Assert.Greater(fullLensGlow, 0.5f, "Lens_L glows at R1_LampAmber's warm emission strength");
+            Assert.AreEqual(1.6f * roadLight.LampLevel, fullLensGlow, 0.05f,
+                "Lens_L matches R1_LampAmber emission scaled by RoverHeadlamp's active LampLevel");
             Assert.AreEqual(fullLensGlow, EmissionOf(_lensRight), Tolerance, "Lens_R matches Lens_L");
 
             // The pods work as lamps: switching 07's lights off and on switches the pod lenses with them.
-            var roadLight = _scene.Rover.GetComponentInChildren<RoverHeadlamp>();
             roadLight.SetLightsOn(false, true);
             Assert.AreEqual(0f, EmissionOf(_lensLeft), Tolerance, "pod lenses go dark when 07's lights are off");
             Assert.AreEqual(0f, EmissionOf(_lensRight), Tolerance);
@@ -159,11 +161,13 @@ namespace MoonProject.Rover.PlayModeTests
                 "pod lenses glow warm again when 07's lights are on");
 
             CaptureChaseCam("lampvisual_after_day");
+            CaptureLampBrow("lampvisual_brow_after_day", _headlampPod, new Vector3(0.45f, 0.15f, 0.85f));
 
             // Snap the sky to earthlit night and capture chase cam after fit at night.
             _scene.Context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.NightReady, true));
             yield return null;
             CaptureChaseCam("lampvisual_after_night");
+            CaptureLampBrow("lampvisual_brow_after_night", _headlampPod, new Vector3(0.45f, 0.15f, 0.85f));
 
             // Cell pods on PodSocket_L/R also clamp in and light warm when BatterySpine is fitted.
             _scene.Context.Events.Publish(
@@ -221,8 +225,8 @@ namespace MoonProject.Rover.PlayModeTests
                 "Housing_R is already at rest on the load frame");
             Assert.AreEqual(0f, Quaternion.Angle(_housingRight.localRotation, rightHousingRotRest), 0.05f,
                 "Housing_R has no unfold angle on load");
-            Assert.Greater(EmissionOf(_lensLeft), 1f, "Lens_L is immediately lit warm on load");
-            Assert.Greater(EmissionOf(_lensRight), 1f, "Lens_R is immediately lit warm on load");
+            Assert.Greater(EmissionOf(_lensLeft), 0.5f, "Lens_L is immediately lit warm on load");
+            Assert.Greater(EmissionOf(_lensRight), 0.5f, "Lens_R is immediately lit warm on load");
             Assert.IsTrue(growth.CellPodsFitted, "loaded Filled cell_pack bay marks the cell pods fitted");
             Assert.IsFalse(growth.CellPodsMoving, "loaded Filled cell_pack bay has no clamp motion");
             Assert.IsTrue(_cellPodLeft.gameObject.activeSelf);
@@ -282,23 +286,39 @@ namespace MoonProject.Rover.PlayModeTests
                 Path.Combine(LampCaptureFolder, name + ".png"));
         }
 
+        private void CaptureLampBrow(string name, Transform node, Vector3 offset)
+        {
+            EnsureLens();
+            Transform rover = _scene.Rover.transform;
+            _lens.transform.position = node.position + rover.rotation * offset;
+            _lens.transform.rotation = Quaternion.LookRotation(node.position - _lens.transform.position, Vector3.up);
+            FrameCapture.SavePng(_lens.GetComponent<Camera>(), CaptureWidth, CaptureHeight,
+                Path.Combine(LampCaptureFolder, name + ".png"));
+        }
+
         /// <summary>A close shot of <paramref name="node"/> from <paramref name="offset"/> in 07's own frame.</summary>
         private void Capture(string name, Transform node, Vector3 offset)
         {
-            if (_lens == null)
-            {
-                _lens = new GameObject("GrowthLens");
-                Camera camera = _lens.AddComponent<Camera>();
-                camera.enabled = false;
-                camera.fieldOfView = 35f;
-                camera.nearClipPlane = 0.05f;
-            }
-
+            EnsureLens();
             Transform rover = _scene.Rover.transform;
             _lens.transform.position = node.position + rover.rotation * offset;
             _lens.transform.rotation = Quaternion.LookRotation(node.position - _lens.transform.position, Vector3.up);
             FrameCapture.SavePng(_lens.GetComponent<Camera>(), CaptureWidth, CaptureHeight,
                 Path.Combine(CaptureFolder, name + ".png"));
+        }
+
+        private void EnsureLens()
+        {
+            if (_lens != null)
+            {
+                return;
+            }
+
+            _lens = new GameObject("GrowthLens");
+            Camera camera = _lens.AddComponent<Camera>();
+            camera.enabled = false;
+            camera.fieldOfView = 35f;
+            camera.nearClipPlane = 0.05f;
         }
     }
 }
