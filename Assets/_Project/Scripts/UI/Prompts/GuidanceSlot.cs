@@ -18,66 +18,52 @@ namespace MoonProject.UI
         BuildStep = 1,
 
         /// <summary>
+        /// The next action right after a success (docs/design/opening-v3-guidance-audit.md G2): Gameplay holds it for a
+        /// few seconds, and while it is up it is the one element: a chip that wants the screen waits for it to go.
+        /// </summary>
+        NextLine = 2,
+
+        /// <summary>
         /// A chip or a card: the teaching prompt (glyph and one verb), the look/drive/hold chips, the recipe card, the
         /// blueprint-learned card.
         /// </summary>
-        Prompt = 2,
+        Prompt = 3,
 
         /// <summary>The low-battery hint: once per charge cycle, on the objective line's own line.</summary>
-        Battery = 3,
+        Battery = 4,
 
-        /// <summary>The objective line: what to do next.</summary>
-        Objective = 4,
+        /// <summary>The objective line when it is a reminder after a stall (G4): what to do next.</summary>
+        Objective = 5,
 
         /// <summary>
         /// The call on 07's face while 07 rests (docs/design/opening-v3-purpose.md §2): the quietest element, so it
         /// shows only when nothing else guides, and anything that wants the slot fades it out first.
         /// </summary>
-        CallStatus = 5,
+        CallStatus = 6,
     }
 
     /// <summary>
     /// The one guidance slot (pure, EditMode-tested): of everything that wants to guide the player, one element shows at
     /// a time, the highest priority first. A lower element waits (never stacks) and an element that holds the slot
-    /// gives it up, by fading, when a higher one wants it; the slot passes on only once the screen is clear. One
-    /// exception keeps the screen from ever going blank: a prompt that takes over from the objective line starts at
-    /// once, and the line keeps its place until the prompt has been fading in for the hand-over time, so the two
-    /// cross-fade instead of leaving a gap.
+    /// gives it up, by fading, when a higher one wants it; the slot passes on only once the screen is clear, so a
+    /// hand-over is sequential and two elements are never readable at once (the outgoing fade is short).
     /// </summary>
     internal sealed class GuidanceSlot
     {
-        public const int KindCount = 6;
-
-        private readonly float _handOverSeconds;
-        private float _promptUp;
-
-        /// <param name="handOverSeconds">Seconds the objective line stays while a prompt that replaces it fades in.</param>
-        public GuidanceSlot(float handOverSeconds)
-        {
-            if (handOverSeconds < 0f)
-            {
-                throw new ArgumentOutOfRangeException(nameof(handOverSeconds));
-            }
-
-            _handOverSeconds = handOverSeconds;
-        }
+        public const int KindCount = 7;
 
         /// <summary>The element that may show now, or null while the slot is held back for a fade.</summary>
         public GuidanceKind? Granted { get; private set; }
 
-        /// <summary>True while the objective line keeps its place under a prompt that is fading in over it.</summary>
-        public bool HandingOver { get; private set; }
-
         /// <summary>True when <paramref name="kind"/> may show now.</summary>
         public bool Allows(GuidanceKind kind)
         {
-            return Granted == kind || (kind == GuidanceKind.Objective && HandingOver);
+            return Granted == kind;
         }
 
         /// <param name="wants">Per kind: it wants to show now.</param>
         /// <param name="visible">Per kind: it is on screen (also while it fades).</param>
-        /// <param name="deltaTime">Unscaled seconds since the last step (0 while paused).</param>
-        public void Step(bool[] wants, bool[] visible, float deltaTime)
+        public void Step(bool[] wants, bool[] visible)
         {
             if (wants.Length != KindCount || visible.Length != KindCount)
             {
@@ -97,24 +83,18 @@ namespace MoonProject.UI
             if (winner < 0)
             {
                 Granted = null;
-                HandingOver = false;
-                _promptUp = 0f;
                 return;
             }
 
             // The winner starts only on a clear screen; one already up keeps the slot; every other visible element
-            // is not granted, so it fades out first. A prompt may start over the objective line (the hand-over).
-            bool overLine = winner == (int)GuidanceKind.Prompt && visible[(int)GuidanceKind.Objective];
+            // is not granted, so it fades out first.
             bool othersUp = false;
             for (int i = 0; i < KindCount; i++)
             {
-                othersUp |= i != winner && visible[i] && !(overLine && i == (int)GuidanceKind.Objective);
+                othersUp |= i != winner && visible[i];
             }
 
             Granted = othersUp ? (GuidanceKind?)null : (GuidanceKind)winner;
-            bool handOver = overLine && Granted == GuidanceKind.Prompt;
-            _promptUp = handOver && visible[(int)GuidanceKind.Prompt] ? _promptUp + deltaTime : 0f;
-            HandingOver = handOver && _promptUp < _handOverSeconds;
         }
     }
 }

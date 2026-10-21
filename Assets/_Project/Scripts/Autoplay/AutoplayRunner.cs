@@ -5,6 +5,8 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using UnityEngine;
+using MoonProject.Core;
+using MoonProject.Gameplay;
 
 namespace MoonProject.Autoplay
 {
@@ -28,6 +30,8 @@ namespace MoonProject.Autoplay
         private readonly GuidanceCounter _guidance = new GuidanceCounter(GuidanceGraceSeconds);
         private readonly List<string> _guidanceShown = new List<string>();
         private bool _guidanceReported;
+        private string _reminderWarned = string.Empty;
+        private NaiveGuard _naive;
         private readonly FrameTimeLog _frames = new FrameTimeLog();
         private readonly List<string> _screenshots = new List<string>();
         private readonly List<string> _errors = new List<string>();
@@ -97,9 +101,9 @@ namespace MoonProject.Autoplay
         }
 
         /// <summary>
-        /// The one-element rule, every frame: two guidance elements showing together fail the run, and so does an
-        /// stall reminder from the opening's flow while the lines are not expected (a reminder fired where the world should
-        /// have led; the build mode's own step line is not one).
+        /// The one-element rule, every frame: two guidance elements showing together fail the run. A stall reminder from
+        /// the opening's flow while the lines are not expected is listed once per line (the bot went long without
+        /// progress, where the world should have led); the next line after a success is the game's own guidance.
         /// </summary>
         private void WatchGuidance()
         {
@@ -128,16 +132,24 @@ namespace MoonProject.Autoplay
                     _bot.Warn("guidance: " + _guidance.Message + " " + _bot.Where());
                 }
             }
-            else if (!_options.LinesExpected && _world.Gameplay.Opening.Flow.Shown.Length > 0)
+            else if (!_options.LinesExpected)
             {
-                _bot.Fail("a fallback reminder fired: the objective line '" + _world.Gameplay.Opening.Flow.Shown +
-                          "' showed where the world cues should have led. " + _bot.Where());
+                OpeningFlow flow = _world.Gameplay.Opening.Flow;
+                bool reminding = flow.Shown.Length > 0 && flow.ShownReason == NextLineReason.Reminder;
+                if (reminding && flow.Shown != _reminderWarned)
+                {
+                    _bot.Warn("a stall reminder fired: the objective line '" + flow.Shown + "' came back after no " +
+                              "progress, where the world cues should have led. " + _bot.Where());
+                }
+
+                _reminderWarned = reminding ? flow.Shown : _reminderWarned;
             }
         }
 
         private IEnumerator Play()
         {
-            var scenario = new OpeningScenario(_bot, _options.UntilBeat, _options.LinesExpected);
+            _naive = _options.Naive ? new NaiveGuard(_bot) : null;
+            var scenario = new OpeningScenario(_bot, _options.UntilBeat, _options.LinesExpected, _naive);
             IEnumerator run = scenario.Run();
             while (!_bot.Failed && run.MoveNext())
             {
@@ -172,6 +184,16 @@ namespace MoonProject.Autoplay
 
             string report = _beats.Render(_options.Scenario, BuildInfo(), Time.unscaledTime - _startedAt, _frames,
                 _screenshots, stop);
+            if (_naive != null)
+            {
+                report += _naive.Render();
+                if (!_naive.Passed && string.IsNullOrEmpty(stop))
+                {
+                    stop = "the first-time player check found beats with no readable next-action cue.";
+                    report = report.Replace("**Result: PASS**", "**Result: FAIL**");
+                }
+            }
+
             report += ErrorSection();
             File.WriteAllText(Path.Combine(_options.OutDirectory, ReportFile), report, new UTF8Encoding(false));
             bool passed = _beats.Passed && string.IsNullOrEmpty(stop);

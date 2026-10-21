@@ -904,6 +904,27 @@
         -0.504,
         0.948
       ]
+    },
+    "BrowSocket": {
+      "pivot": [
+        0.0,
+        0.3,
+        1.53
+      ]
+    },
+    "PodSocket_L": {
+      "pivot": [
+        -0.46,
+        0.0,
+        0.88
+      ]
+    },
+    "PodSocket_R": {
+      "pivot": [
+        0.46,
+        0.0,
+        0.88
+      ]
     }
   },
   "require_vertex_colors": true,

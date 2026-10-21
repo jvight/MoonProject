@@ -1,3 +1,5 @@
+using UnityEngine;
+
 namespace MoonProject.Core
 {
     /// <summary>
@@ -10,6 +12,15 @@ namespace MoonProject.Core
     {
         /// <summary>The rack stands at the pad (the release revealed it, <see cref="Events.SocketRackRevealed"/>).</summary>
         bool Shown { get; }
+
+        /// <summary>
+        /// The pad's dock where the release revealed the rack (07's place on the pad), kept by the save: the rack
+        /// stands beside it. Meaningful only while <see cref="Shown"/>.
+        /// </summary>
+        Vector3 Position { get; }
+
+        /// <summary>07's heading on that dock: the frame the rack stands in. Meaningful only while Shown.</summary>
+        Quaternion Rotation { get; }
 
         /// <summary>Bays on the rack, left to right.</summary>
         int Count { get; }

@@ -48,6 +48,9 @@ namespace MoonProject.Rover
         /// <summary>The tow's sideways swing follows its solution with a half-life this many times shorter than its ease.</summary>
         private const float TowYawHalfLivesPerEase = 3f;
 
+        /// <summary>The dock frame looks toward 07's right (deg from its heading): the camera sits behind-left of it.</summary>
+        private const float DockSideDegrees = 90f;
+
         /// <summary>Blend weight below this is settled enough to treat a framed shot or face-inspect mode as inactive.</summary>
         private const float ShotWeightEpsilon = 0.01f;
 
@@ -78,7 +81,8 @@ namespace MoonProject.Rover
         [SerializeField] private RoverCameraBump _bump;
 
         private readonly CameraMoment _moment = new CameraMoment();
-        private readonly ReleasePan _releasePan = new ReleasePan();
+        private readonly GazePan _gazePan = new GazePan();
+        private readonly GuidanceNudge _nudge = new GuidanceNudge();
         private WideShot _wide;
         private bool _wideSteersYaw;
         private bool _tethered;
@@ -271,6 +275,7 @@ namespace MoonProject.Rover
                 context.Events.Subscribe<RelicSurfaced>(OnRelicSurfaced),
                 context.Events.Subscribe<RelayRestored>(OnRelayRestored),
                 context.Events.Subscribe<ReleaseViewOpened>(OnReleaseViewOpened),
+                context.Events.Subscribe<NextStepChanged>(OnNextStepChanged),
                 context.Events.Subscribe<LadderLookChanged>(OnLadderLookChanged),
                 context.Events.Subscribe<FeelBeat>(OnFeelBeat),
                 context.Events.Subscribe<CutChargeStaged>(OnChargeStaged),
@@ -500,7 +505,7 @@ namespace MoonProject.Rover
                 _beam.Framing.End(_tuning.CutFrameHandBackSeconds);
             }
 
-            if (driving && (IsTowerMoment || _releasePan.IsActive))
+            if (driving && (IsTowerMoment || _gazePan.IsActive || IsDockMoment))
             {
                 _moment.Cancel(_tuning.MomentCancelEaseOut);
             }
@@ -637,8 +642,9 @@ namespace MoonProject.Rover
                 float reach = weight * CameraMoment.FocusReach(moment, distance);
                 if (distance > MinSubjectDistance)
                 {
+                    float baseYaw = IsNudgeMoment ? roverYaw + _orbitState.YawOffset : roverYaw;
                     float subjectYaw = Mathf.Atan2(toSubject.x, toSubject.z) * Mathf.Rad2Deg;
-                    yaw = Mathf.DeltaAngle(roverYaw, CameraMoment.BlendYaw(moment, roverYaw, subjectYaw, reach));
+                    yaw = Mathf.DeltaAngle(baseYaw, CameraMoment.BlendYaw(moment, baseYaw, subjectYaw, reach));
                     _momentYaw -= turned * moment.YawShare * Mathf.Clamp01(reach);
                 }
 
@@ -693,7 +699,7 @@ namespace MoonProject.Rover
                 }
 
                 _moment.Clear();
-                _releasePan.End();
+                _gazePan.End();
                 SolveFaceInspectShot();
                 if (_faceInspectBody != null && _faceInspectHasShot)
                 {
@@ -921,15 +927,21 @@ namespace MoonProject.Rover
             return _look.OrbitDegrees(mouse, _input.LookRate, deltaTime);
         }
 
+        private bool IsNudgeMoment => _moment.IsActive && ReferenceEquals(_moment.Settings, _tuning.NudgeMoment);
+
         /// <summary>
         /// The chase orbit before any shot or framing moves it: the player's view and 07's moments, then the beam
         /// work's framing; <paramref name="yaw"/> is from 07's heading.
         /// </summary>
         private void ChaseOrbit(out float yaw, out float elevation, out float radius)
         {
-            yaw = _orbitState.YawOffset * (1f - _moment.Weight);
+            yaw = IsNudgeMoment ? _orbitState.YawOffset : _orbitState.YawOffset * (1f - _moment.Weight);
             elevation = _orbitState.Elevation + _momentLift + _wallCompression * _tuning.WallMaxPitchLift
                 - _crawl * _tuning.CrawlLower;
+            if (IsNudgeMoment && elevation > _tuning.DefaultPitch)
+            {
+                elevation = Mathf.Lerp(elevation, _tuning.DefaultPitch, _moment.Weight);
+            }
             radius = _tuning.Distance * (1f + _momentPullBack) * (1f + _crawl * _tuning.CrawlPullBack);
             if (_towT > 0f || _towYawT > 0f)
             {
@@ -1480,8 +1492,21 @@ namespace MoonProject.Rover
         private void OnChargingChanged(ChargingChanged charging)
         {
             _charging = charging.Charging;
-            _chargeAsks = _charging && !_held.IsOpen;
+            bool pad = charging.Charger == ChargerKind.Pad;
+            _chargeAsks = _charging && !_held.IsOpen && !pad;
+            if (pad && _charging && !_moment.IsActive && !_held.IsOpen && !_opening.IsActive)
+            {
+                Vector3 side = Quaternion.Euler(0f, RoverYaw() + DockSideDegrees, 0f) * Vector3.forward;
+                _moment.Start(_tuning.DockMoment, _rover.Position + side * _tuning.DockSideMetres, true);
+            }
+            else if (!_charging && IsDockMoment)
+            {
+                _moment.Release();
+            }
         }
+
+        /// <summary>The camera moment running now is the closer frame while 07 charges on its pad.</summary>
+        private bool IsDockMoment => _moment.IsActive && ReferenceEquals(_moment.Settings, _tuning.DockMoment);
 
         private void OnLowPowerChanged(LowPowerChanged lowPower)
         {
@@ -1500,7 +1525,7 @@ namespace MoonProject.Rover
             _evening = false;
             _wideSteersYaw = false;
             _moment.Clear();
-            _releasePan.End();
+            _gazePan.End();
             _faceInspectOpen = false;
             _faceInspectHasShot = false;
             _faceInspectEase = 0f;
@@ -1593,37 +1618,68 @@ namespace MoonProject.Rover
         private void OnReleaseViewOpened(ReleaseViewOpened view)
         {
             float looking = RoverYaw() + _orbitState.YawOffset;
-            float lamp = Mathf.Abs(Mathf.DeltaAngle(looking, ReleasePan.BearingTo(_rover.Position, view.Relay)));
+            float lamp = Mathf.Abs(Mathf.DeltaAngle(looking, GazePan.BearingTo(_rover.Position, view.Relay)));
             if (lamp > _tuning.ReleasePanMaxBearing)
             {
                 return;
             }
 
-            _releasePan.Begin(_rover.Position, looking, view.Relay, _tuning.ReleasePanTravelSeconds,
+            _gazePan.Begin(_rover.Position, looking, view.Relay, _tuning.ReleasePanTravelSeconds,
                 _tuning.ReleasePanHoldSeconds, _tuning.ReleasePanSweep, _tuning.ReleasePanRise,
                 _tuning.ReleasePanHalfLife, _tuning.ReleasePanSlack);
-            _moment.Start(_tuning.ReleaseMoment, _releasePan.Subject, true);
+            _moment.Start(_tuning.ReleaseMoment, _gazePan.Subject, true);
+        }
+
+        /// <summary>
+        /// Story showed the next line and its action has a place (G5): if that place is off screen, the camera is nudged
+        /// once toward it, one eased turn with 07 in the foreground, ended by any look or drive input. Only for a line
+        /// that follows a success (not a reminder), never twice for the same target, and nothing happens while another
+        /// shot has the camera (the wake included, so a loaded game's first line never nudges). 07's own head look
+        /// toward the object is Story's chip.
+        /// </summary>
+        private void OnNextStepChanged(NextStepChanged step)
+        {
+            if (!step.HasTarget || step.Reason != NextLineReason.Next)
+            {
+                return;
+            }
+
+            bool free = !_moment.IsActive && _wide.Weight <= 0f && _held.Weight <= 0f && !_tethered && !_towing &&
+                        !_opening.IsActive && !_faceInspectOpen && _faceInspectWeight <= 0f && !_gazePan.IsActive;
+            float looking = RoverYaw() + _orbitState.YawOffset;
+            Vector3 viewport = _viewCamera.WorldToViewportPoint(step.TargetPosition);
+            if (!free || !GuidanceNudge.ShouldNudge(_rover.Position, step.TargetPosition, looking, viewport,
+                    _tuning.NudgeScreenMargin, _tuning.NudgeMinDistance, _tuning.NudgeSlack, _tuning.NudgeMaxBearing) ||
+                !_nudge.TryTake(step.TargetId))
+            {
+                return;
+            }
+
+            _gazePan.Begin(_rover.Position, looking, step.TargetPosition, _tuning.NudgeTravelSeconds,
+                _tuning.NudgeHoldSeconds, _tuning.NudgeSweep, 0f, _tuning.ReleasePanHalfLife,
+                _tuning.NudgeSlack);
+            _moment.Start(_tuning.NudgeMoment, _gazePan.Subject, true);
         }
 
         /// <summary>Moves the held release moment's subject along the pan, and lets it go once the pan has run its course.</summary>
         private void StepReleasePan(float deltaTime)
         {
-            if (!_releasePan.IsActive)
+            if (!_gazePan.IsActive)
             {
                 return;
             }
 
             if (!_moment.IsHeld)
             {
-                _releasePan.End();
+                _gazePan.End();
                 return;
             }
 
-            _releasePan.Step(deltaTime);
-            _moment.MoveSubject(_releasePan.Subject);
-            if (_releasePan.Arrived)
+            _gazePan.Step(deltaTime);
+            _moment.MoveSubject(_gazePan.Subject);
+            if (_gazePan.Arrived)
             {
-                _releasePan.End();
+                _gazePan.End();
                 _moment.Release();
             }
         }

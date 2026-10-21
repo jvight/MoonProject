@@ -3,13 +3,14 @@ using UnityEngine;
 namespace MoonProject.Rover
 {
     /// <summary>
-    /// The release's view as one slow turn toward relay.1's lamp, the next goal (docs/design/opening-v3-plan.md 4.4, pure
-    /// and EditMode-tested): the subject the camera moment frames glides from where the camera already looks toward the
-    /// lamp, by the short way, its bearing and elevation chasing it at no more than a tuned rate with soft starts and
-    /// stops, then holds there. 07 stays the camera's centre the whole time (the moment orbits it); only the point it
-    /// looks toward moves. It stops short of the lamp's bearing, so the lamp sits off-centre, on a third of the frame.
+    /// One slow turn of the camera toward a point of interest (the release's view toward relay.1's lamp, docs/design/
+    /// opening-v3-plan.md 4.4; the nudge toward the next action, G5; pure and EditMode-tested): the subject the camera
+    /// moment frames glides from where the camera already looks toward the point, by the short way, its bearing and
+    /// elevation chasing it at no more than a tuned rate with soft starts and stops, then holds there. 07 stays the
+    /// camera's centre the whole time (the moment orbits it); only the point it looks toward moves. It stops short of
+    /// the point's bearing, so the point sits off-centre, on a third of the frame.
     /// </summary>
-    public sealed class ReleasePan
+    public sealed class GazePan
     {
         private const float Epsilon = 1e-4f;
         private const float FarthestRate = 1.2f;

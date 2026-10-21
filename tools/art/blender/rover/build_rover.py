@@ -134,6 +134,8 @@ DIMENSIONS = {
     "eye_outer_radius": 0.12,            # 0.24 m layered brass viewfinder pod
     "eye_pod_width": 0.090,
     "piv_deck_socket_local": (0.365, 0.05, -0.09),  # World (+0.365, 1.23, +0.04) on right cheek of Head
+    "piv_brow_socket_local": (0.0, 0.35, 0.17),     # World (0.00, 1.53, +0.30): brow centre, SSR-3 headlamp kit
+    "piv_pod_socket": (0.46, 0.88, 0.0),            # Flank pod sockets (+/-X) between the tyres, cell pack pods
 
     # 5. Front Lamps, Chest Cutter, Tucked Scoop, Rear Hatch, Tucked Winch, Antenna & Suspension Pivots
     "piv_headlamp_x": 0.26,              # 0.26 m from center on front nose

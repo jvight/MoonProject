@@ -1,0 +1,85 @@
+{
+  "model": "kit_ssr3_headlamp",
+  "pivot_tolerance": 0.005,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_CreamEnamel",
+    "R1_GreyMetal",
+    "R1_LampAmber"
+  ],
+  "max_triangles": 2000,
+  "max_meshes": 5,
+  "max_draw_calls": 8,
+  "allow_rotation": [],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "bounds": {
+    "size": [
+      1.09,
+      0.37,
+      0.19
+    ],
+    "tolerance": 0.04,
+    "min_size": [
+      1.05,
+      0.33,
+      0.15
+    ],
+    "max_size": [
+      1.13,
+      0.41,
+      0.23
+    ]
+  },
+  "nodes": {
+    "Beam_L": {
+      "pivot": [
+        -0.454,
+        0.122,
+        -0.13
+      ]
+    },
+    "Beam_R": {
+      "pivot": [
+        0.454,
+        0.122,
+        -0.13
+      ]
+    },
+    "Housing_L": {
+      "pivot": [
+        -0.454,
+        -0.07,
+        -0.13
+      ]
+    },
+    "Housing_R": {
+      "pivot": [
+        0.454,
+        -0.07,
+        -0.13
+      ]
+    },
+    "Kit_SSR3Headlamp": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Lens_L": {
+      "pivot": [
+        -0.454,
+        0.11,
+        -0.13
+      ]
+    },
+    "Lens_R": {
+      "pivot": [
+        0.454,
+        0.11,
+        -0.13
+      ]
+    }
+  }
+}

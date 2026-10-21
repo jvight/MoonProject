@@ -123,8 +123,6 @@ namespace MoonProject.UI
                     return UiKeys.VerbCut;
                 case HintWord.Build:
                     return UiKeys.VerbBuild;
-                case HintWord.Fit:
-                    return UiKeys.VerbFit;
                 default:
                     return UiKeys.LookUp;
             }
@@ -153,7 +151,7 @@ namespace MoonProject.UI
         private string GlyphKey(InputDeviceKind device)
         {
             bool pad = device == InputDeviceKind.Gamepad;
-            if (_word == HintWord.Hold || _word == HintWord.Fit)
+            if (_word == HintWord.Hold)
             {
                 return pad ? UiKeys.PadView : UiKeys.KeyTab;
             }

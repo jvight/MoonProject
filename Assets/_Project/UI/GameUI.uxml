@@ -38,6 +38,17 @@
                         <ui:VisualElement name="build-cost-shadow" class="soft-shadow soft-shadow--chip" />
                         <ui:VisualElement name="build-cost-body" class="chip build-cost__body" picking-mode="Ignore">
                             <ui:VisualElement name="build-cost-recipe" class="recipe build-cost__recipe" picking-mode="Ignore" />
+                            <ui:VisualElement name="build-cost-keys" class="build-cost__keys" picking-mode="Ignore">
+                                <ui:VisualElement name="build-place-glyph" class="glyph glyph--small" picking-mode="Ignore">
+                                    <ui:Label name="build-place-glyph-label" class="glyph__label" picking-mode="Ignore" />
+                                </ui:VisualElement>
+                                <ui:Label name="build-place-word" class="build-cost__key-word" picking-mode="Ignore" />
+                                <ui:VisualElement class="controls-card__dot" picking-mode="Ignore" />
+                                <ui:VisualElement name="build-rotate-glyph" class="glyph glyph--small" picking-mode="Ignore">
+                                    <ui:Label name="build-rotate-glyph-label" class="glyph__label" picking-mode="Ignore" />
+                                </ui:VisualElement>
+                                <ui:Label name="build-rotate-word" class="build-cost__key-word" picking-mode="Ignore" />
+                            </ui:VisualElement>
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
@@ -59,7 +70,12 @@
                 <ui:VisualElement class="next-line" picking-mode="Ignore">
                     <ui:VisualElement name="next-line" class="name-tag" picking-mode="Ignore">
                         <ui:VisualElement name="next-line-shadow" class="soft-shadow soft-shadow--name" />
-                        <ui:Label name="next-line-text" class="next-line__text" picking-mode="Ignore" />
+                        <ui:VisualElement name="next-line-row" class="next-line__row" picking-mode="Ignore">
+                            <ui:VisualElement name="next-line-glyph" class="glyph next-line__glyph" picking-mode="Ignore">
+                                <ui:Label name="next-line-glyph-label" class="glyph__label" picking-mode="Ignore" />
+                            </ui:VisualElement>
+                            <ui:Label name="next-line-text" class="next-line__text" picking-mode="Ignore" />
+                        </ui:VisualElement>
                         <ui:VisualElement name="next-line-progress" class="next-line__progress" picking-mode="Ignore">
                             <ui:VisualElement name="next-line-progress-fill" class="next-line__progress-fill" picking-mode="Ignore" />
                         </ui:VisualElement>
@@ -107,6 +123,20 @@
                             <ui:Label name="controls-lights-glyph-label" class="glyph__label" picking-mode="Ignore" />
                         </ui:VisualElement>
                         <ui:Label name="controls-lights-word" class="chip__word controls-card__word" picking-mode="Ignore" />
+                        <ui:VisualElement name="controls-build" class="controls-card__item" picking-mode="Ignore">
+                            <ui:VisualElement class="controls-card__dot" picking-mode="Ignore" />
+                            <ui:VisualElement name="controls-build-glyph" class="glyph glyph--small" picking-mode="Ignore">
+                                <ui:Label name="controls-build-glyph-label" class="glyph__label" picking-mode="Ignore" />
+                            </ui:VisualElement>
+                            <ui:Label name="controls-build-word" class="chip__word controls-card__word" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="controls-hook" class="controls-card__item" picking-mode="Ignore">
+                            <ui:VisualElement class="controls-card__dot" picking-mode="Ignore" />
+                            <ui:VisualElement name="controls-hook-glyph" class="glyph glyph--small" picking-mode="Ignore">
+                                <ui:Label name="controls-hook-glyph-label" class="glyph__label" picking-mode="Ignore" />
+                            </ui:VisualElement>
+                            <ui:Label name="controls-hook-word" class="chip__word controls-card__word" picking-mode="Ignore" />
+                        </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement name="build-strip" class="build-strip" picking-mode="Ignore">

@@ -52,9 +52,6 @@ namespace MoonProject.UI.PlayModeTests
             GameContext context = FindBootstrap().Context;
             Camera camera = context.Get<IViewCamera>().Camera;
             UISystem ui = BuildUi(context, out FakeGameServices fakes, out _);
-            var serializedTuning = new UnityEditor.SerializedObject(_tuning);
-            serializedTuning.FindProperty("_guidance._objectiveDelaySeconds").floatValue = 0.5f;
-            serializedTuning.ApplyModifiedPropertiesWithoutUndo();
             FreezeWorld();
             yield return null;
             Reframe(LegibleWidth, LegibleHeight);
@@ -72,8 +69,7 @@ namespace MoonProject.UI.PlayModeTests
             yield return new WaitForSecondsRealtime(1f);
 
             context.Events.Publish(new NextStepChanged("next.v2.build_pad"));
-            yield return new WaitForSecondsRealtime(1f + _tuning.Guidance.ObjectiveStillSeconds +
-                                                    _tuning.Guidance.Line.FadeIn + 1f);
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.Line.FadeIn + 1f);
             yield return LegibleShot(camera, folder, "70_next_line_over_stars", report, layout.NextLineText);
             context.Events.Publish(new NextStepChanged(string.Empty));
 

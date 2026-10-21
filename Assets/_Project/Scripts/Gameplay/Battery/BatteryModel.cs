@@ -333,7 +333,7 @@ namespace MoonProject.Gameplay
             float cap = IsLowPower ? _tuning.CrawlCap : OnOpeningReserve ? _tuning.OpeningReserveCap : 1f;
             if (step.Towing)
             {
-                cap = Mathf.Min(cap, _tuning.TowCap);
+                cap = Mathf.Min(cap, _tuning.TowCap * Mathf.Lerp(1f, _tuning.TowStrainFloor, step.TowStrain01));
             }
 
             DriveCap01 = Damp.Toward(DriveCap01, cap, _tuning.CapEase, deltaTime);

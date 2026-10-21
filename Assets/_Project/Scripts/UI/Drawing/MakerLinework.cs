@@ -35,6 +35,18 @@ namespace MoonProject.UI
             return _points[start + (index < end - start ? index : 0)];
         }
 
+        /// <summary>Every stroke's length, in drawing order (a new array).</summary>
+        public float[] StrokeLengths()
+        {
+            var lengths = new float[StrokeCount];
+            for (int i = 0; i < lengths.Length; i++)
+            {
+                lengths[i] = Length(i);
+            }
+
+            return lengths;
+        }
+
         /// <summary>Length of stroke <paramref name="stroke"/> in square units.</summary>
         public float Length(int stroke)
         {

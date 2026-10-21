@@ -30,6 +30,8 @@ namespace MoonProject.UI
         private readonly VisualElement _chip;
         private readonly GlyphView _glyph;
         private readonly VisualElement _keycap;
+        private readonly PromptCaret _caret;
+        private readonly IViewCamera _view;
         private readonly VisualElement _holdRingElement;
         private readonly ProgressRingPainter _holdRing;
         private readonly VisualElement[] _cards;
@@ -79,6 +81,8 @@ namespace MoonProject.UI
             _chip = layout.Prompt;
             _glyph = new GlyphView(layout.PromptGlyph, layout.PromptGlyphLabel);
             _keycap = layout.PromptGlyph;
+            _caret = new PromptCaret(layout.Prompt);
+            _view = view ?? throw new ArgumentNullException(nameof(view));
             _holdRingElement = layout.PromptHoldRing;
             _holdRing = new ProgressRingPainter(_holdRingElement);
             _reveal = new Reveal(layout.Prompt, settings.Reveal);
@@ -87,6 +91,9 @@ namespace MoonProject.UI
         }
 
         public bool IsVisible => !_reveal.IsHidden;
+
+        /// <summary>The caret pointing to an off-screen object from a chip on 07 (tests).</summary>
+        public PromptCaret Caret => _caret;
 
         /// <summary>
         /// Pixels something anchored at the same point must rise to rest on top of the prompt for
@@ -140,6 +147,8 @@ namespace MoonProject.UI
                 ClearCards(panelSize, deltaTime, snap);
             }
 
+            PointCaret(entry, primary, onScreen, panelSize);
+
             bool wasHidden = _reveal.IsHidden;
             _reveal.Set(_director.WantsShown && onScreen);
             if (wasHidden && _reveal.Target)
@@ -154,6 +163,27 @@ namespace MoonProject.UI
                 _word.text = string.Empty;
                 _glyph.Set(string.Empty, device);
             }
+        }
+
+        /// <summary>
+        /// A chip that rides on 07 because its object is off screen points to it: the caret turns on the chip's edge
+        /// toward where the object lies on screen (mirrored when it is behind the camera).
+        /// </summary>
+        private void PointCaret(PromptEntry entry, InteractionHint primary, bool onScreen, Vector2 panelSize)
+        {
+            Camera camera = _view.Camera;
+            if (entry == null || !onScreen || primary.Kind != entry.Kind || !primary.OnRover || camera == null ||
+                panelSize.x <= 0f)
+            {
+                _caret.Hide();
+                return;
+            }
+
+            Vector3 viewport = camera.WorldToViewportPoint(primary.Target);
+            var target = new Vector2(viewport.x * panelSize.x, (1f - viewport.y) * panelSize.y);
+            Rect chip = _chip.worldBound;
+            Vector2 toward = target - chip.center;
+            _caret.Point(chip.size, viewport.z < 0f ? -toward : toward);
         }
 
         /// <summary>The keycap shows for a verb; the rack's chip, which only names a part, has none.</summary>

@@ -1,9 +1,11 @@
+using MoonProject.Core.Input;
+
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The opening's objective line keys (docs/design/opening-v2.md §3), published through
-    /// <see cref="Core.Events.NextStepChanged"/> one at a time; UI's objective line owns their en and vi text. Never
-    /// rename a key: it is how the text is found.
+    /// The opening's objective line keys (docs/design/opening-v2.md §3, opening-v3 guidance audit), published through
+    /// <see cref="Core.Events.NextStepChanged"/> one at a time; their en and vi text live in the localization tables.
+    /// Never rename a key: it is how the text is found.
     /// </summary>
     public static class OpeningKeys
     {
@@ -52,7 +54,59 @@ namespace MoonProject.Gameplay
         /// <summary>B11: "Scan the radio tower for an antenna."</summary>
         public const string ScanTower = "next.v2.scan_tower";
 
-        /// <summary>B11: "Build an antenna mast."</summary>
+        /// <summary>B11: "Build the antenna mast."</summary>
         public const string BuildMast = "next.v2.build_mast";
+
+        /// <summary>The first dusk, the battery bank not yet learned: "Night is coming. Scan the habitat's power module."</summary>
+        public const string ScanModule = "next.v3.scan_module";
+
+        /// <summary>
+        /// B9, the battery bank learned, the power module not home: "The power module is the bank's frame. Tow it home
+        /// to the apron."
+        /// </summary>
+        public const string TowModuleHome = "next.v3.tow_module";
+
+        /// <summary>R5, a near site visited: "Park on the pad to end the day." (the dock begins the dusk).</summary>
+        public const string DockForDusk = "next.v3.dock_for_dusk";
+
+        /// <summary>R8, the mast up: "Transmit from the antenna mast."</summary>
+        public const string Transmit = "next.v3.transmit";
+
+        /// <summary>R5, power on: "Power is on. Visit the seismic station or the habitat before dusk."</summary>
+        public const string VisitSite = "next.v3.visit_site";
+
+        /// <summary>B9 to B10, the base night-ready: "The base is ready for the night."</summary>
+        public const string AwaitNight = "next.v3.await_night";
+
+        /// <summary>R9, relay.1 answered: "relay.1 answered from the west rim. Drive to it."</summary>
+        public const string GoToRelay = "next.v3.go_relay";
+
+        /// <summary>
+        /// The key a line's action takes, for its glyph (guidance audit G2); 0 when it takes none of 07's action keys
+        /// (a drive, a dock, the Tab screen).
+        /// </summary>
+        public static RoverAction KeyOf(string lineKey)
+        {
+            switch (lineKey)
+            {
+                case ScanLander:
+                case CollectParts:
+                case TakeIgniter:
+                case CutOptics:
+                case ScanModule:
+                case ScanTower:
+                case Transmit:
+                    return RoverAction.Excavate;
+                case BuildPad:
+                case BuildSolar:
+                case BuildMast:
+                case BuildBatteryBank:
+                    return RoverAction.Build;
+                case TowModuleHome:
+                    return RoverAction.Tether;
+                default:
+                    return default;
+            }
+        }
     }
 }

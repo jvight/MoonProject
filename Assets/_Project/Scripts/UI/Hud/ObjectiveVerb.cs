@@ -9,7 +9,6 @@ namespace MoonProject.UI
         Scan = 1,
         Cut = 2,
         Build = 3,
-        Fit = 4,
     }
 
     /// <summary>Which verb each opening step needs (docs/design/opening-v2.md §2, §3).</summary>
@@ -30,8 +29,6 @@ namespace MoonProject.UI
                 case OpeningKeys.BuildBatteryBank:
                 case OpeningKeys.BuildMast:
                     return ObjectiveVerb.Build;
-                case OpeningKeys.FitIgniter:
-                    return ObjectiveVerb.Fit;
                 default:
                     return ObjectiveVerb.None;
             }

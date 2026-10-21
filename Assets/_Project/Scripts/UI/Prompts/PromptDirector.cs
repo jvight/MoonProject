@@ -94,7 +94,10 @@ namespace MoonProject.UI
                 // Out of reach for a moment keeps the prompt; another target in reach replaces it at once.
                 _shownAway = desired == Displayed && slotGranted ? 0f : _shownAway + deltaTime;
                 bool otherTarget = primary.Kind != InteractionKind.None && primary.Kind != Displayed;
-                if (otherTarget || _shownAway > _settings.DwellGraceSeconds || _showTime >= _settings.MaxShowSeconds)
+                // A first-use key's chip has no time limit: only its key's use (NotifyUsed) or the target leaving
+                // ends it.
+                bool timedOut = !Entry.PersistUntilUsed && _showTime >= _settings.MaxShowSeconds;
+                if (otherTarget || _shownAway > _settings.DwellGraceSeconds || timedOut)
                 {
                     EndShowing();
                 }
@@ -186,6 +189,11 @@ namespace MoonProject.UI
         /// </summary>
         private bool CoolingDown(InteractionKind kind, Vector3 target)
         {
+            if (_settings.Find(kind).PersistUntilUsed)
+            {
+                return false;
+            }
+
             int index = (int)kind;
             return _now < _cooldownUntil[index] &&
                    (target - _cooldownPoint[index]).sqrMagnitude <= _settings.RepeatRadius * _settings.RepeatRadius;

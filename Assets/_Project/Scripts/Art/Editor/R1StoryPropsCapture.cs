@@ -500,6 +500,115 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
+        /// 07's first two visible upgrades (opening v3 5.2) as 07 grows: base, + the SSR-3 headlamp (c) and + the
+        /// headlamp and the cell pack (c + d), each from the chase cam (7.5 m behind, 16 deg down, 52 deg FOV, as
+        /// <c>RoverCameraTuning</c> ships), front three-quarter and rear three-quarter, in Day C and at night with the
+        /// lenses and the charge bars lit (<c>Logs/captures/rover_upg_&lt;state&gt;_&lt;view&gt;_&lt;light&gt;.png</c>):
+        /// <c>python tools/unity_batch.py exec --project . --method MoonProject.Art.Editor.R1StoryPropsCapture.CaptureRoverUpgrades</c>
+        /// </summary>
+        public static void CaptureRoverUpgrades()
+        {
+            BatchRunner.Run(nameof(CaptureRoverUpgrades), args =>
+            {
+                AssetDatabase.Refresh();
+                R1MaterialLibrary.BuildMaterials();
+                R1ModelBuilder.Build();
+
+                string capturesDir = Path.GetFullPath("Logs/captures");
+                Directory.CreateDirectory(capturesDir);
+
+                bool prevAsync = ShaderUtil.allowAsyncCompilation;
+                ShaderUtil.allowAsyncCompilation = false;
+                try
+                {
+                    foreach (bool night in new[] { false, true })
+                    {
+                        for (int stage = 0; stage < 3; stage++)
+                        {
+                            CaptureRoverUpgradeShots(capturesDir, stage, night);
+                        }
+                    }
+                }
+                finally
+                {
+                    ShaderUtil.allowAsyncCompilation = prevAsync;
+                }
+
+                return true;
+            });
+        }
+
+        // Stage 0 = base 07, 1 = + the SSR-3 headlamp, 2 = + the headlamp and the cell pack's two pods.
+        private static void CaptureRoverUpgradeShots(string outDir, int stage, bool night)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(temp, night);
+                GameObject rover = SpawnRover07(temp, Vector3.zero, 0f, night);
+                var amber = new Color(1.00f, 0.76f, 0.32f, 1f);
+                string kits = ArtPaths.R1ModelsFolder + "/Rover/";
+                if (stage >= 1)
+                {
+                    Transform lamp = MountKit(kits + "Kit_SSR3Headlamp.prefab", rover.transform, "BrowSocket", temp);
+                    SetEmission(lamp.Find("Housing_L/Lens_L"), night ? amber * 1.6f : Color.black);
+                    SetEmission(lamp.Find("Housing_R/Lens_R"), night ? amber * 1.6f : Color.black);
+                }
+
+                if (stage >= 2)
+                {
+                    // Rover turns the left pod socket half round, as RoverPrefabBuilder does DrumSocket_L
+                    FindChildRecursive(rover.transform, "PodSocket_L").localRotation = Quaternion.Euler(0f, 180f, 0f);
+                    foreach (string socket in new[] { "PodSocket_L", "PodSocket_R" })
+                    {
+                        Transform pod = MountKit(kits + "Kit_CellPod.prefab", rover.transform, socket, temp);
+                        // One of two segments lit: a pack half charged
+                        SetEmission(pod.Find("ChargeBar_0"), amber);
+                        SetEmission(pod.Find("ChargeBar_1"), Color.black);
+                    }
+                }
+
+                if (!night)
+                {
+                    AimDayCSunAtSurface(new Vector3(0.6f, 0f, 0.8f));
+                }
+
+                string[] states = { "base", "c", "cd" };
+                string tag = $"{states[stage]}_{{0}}_{(night ? "night" : "dayC")}";
+                var target = new Vector3(0f, 1.1f, 0f);
+                Vector3 chase = target + Quaternion.Euler(16f, 0f, 0f) * Vector3.back * 7.5f;
+                RenderShot(chase, target, 52f, bg,
+                    Path.Combine(outDir, "rover_upg_" + string.Format(tag, "chase") + ".png"));
+                RenderShot(new Vector3(2.6f, 1.7f, 3.2f), new Vector3(0f, 0.9f, 0f), 35f, bg,
+                    Path.Combine(outDir, "rover_upg_" + string.Format(tag, "front34") + ".png"));
+                RenderShot(new Vector3(-2.6f, 1.8f, -3.2f), new Vector3(0f, 0.9f, 0f), 35f, bg,
+                    Path.Combine(outDir, "rover_upg_" + string.Format(tag, "rear34") + ".png"));
+            }
+            finally
+            {
+                temp.Dispose();
+            }
+        }
+
+        // A kit prefab parented to 07's socket with identity, the way Rover mounts kit pieces.
+        private static Transform MountKit(string prefabPath, Transform rover, string socketName,
+            ArtLightingPreview.TemporaryObjects temp)
+        {
+            Transform socket = FindChildRecursive(rover, socketName);
+            if (socket == null)
+            {
+                throw new InvalidOperationException($"R1StoryPropsCapture: 07 has no '{socketName}' node.");
+            }
+
+            GameObject kit = InstantiatePrefab(prefabPath, temp);
+            kit.transform.SetParent(socket, false);
+            kit.transform.localPosition = Vector3.zero;
+            kit.transform.localRotation = Quaternion.identity;
+            return kit.transform;
+        }
+
+        /// <summary>
         /// Dedicated fast batch entry point for capturing Day C close-up and ~7 m gameplay-distance shots
         /// of the maker decals on <c>CargoLander</c>, <c>Crate_L</c>/<c>Crate_M</c>/<c>Crate_Cargo_Open</c>,
         /// <c>Prop_OldLander</c> (Scout 3), and <c>Prop_MissionFlag</c>:

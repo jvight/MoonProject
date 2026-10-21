@@ -57,8 +57,8 @@ namespace MoonProject.Rover.PlayModeTests
         private const float TextCheckEvery = 0.5f;
         private const float TitleQuietSeconds = 4f;
         private const float MaxUntouched = 45f;
-        private const float MinSelfTest = 16f;
-        private const float MaxSelfTest = 22f;
+        private const float MinSelfTest = 20f;
+        private const float MaxSelfTest = 28f;
 
         /// <summary>The opening's lines, as the shipped tuning prints them: every check.</summary>
         private static readonly BootCheckStep[] OpeningLines =
@@ -101,6 +101,9 @@ namespace MoonProject.Rover.PlayModeTests
         private const float AfterChaseSeconds = 3f;
         private const float TitleSettleSeconds = 4f;
         private const float StripInterval = 2f;
+
+        /// <summary>Seconds between the wake's frames, from New Game to the first line.</summary>
+        private const float WakeStripInterval = 0.25f;
 
         // Zero GC: extra director updates per measured frame, frames measured and the counter's slack.
         private const int MeasuredCalls = 40;
@@ -203,7 +206,13 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.IsTrue(_body.FaceDirector.Director.IsHoldingDarkForOpening, "the CRT face is held dark under the title");
             Capture("title_fresh");
 
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            Press(keyboard.enterKey);
             _context.Events.Publish(new NewGameRequested());
+            float newGameAt = Time.time;
+            int wakeFrame = 0;
+            yield return null;
+            Release(keyboard.enterKey);
             var shots = new (OpeningPhase Phase, float Share, string Name)[]
             {
                 (OpeningPhase.PushIn, 0.5f, "stage_1_push_in"),
@@ -246,6 +255,19 @@ namespace MoonProject.Rover.PlayModeTests
             {
                 Assert.Less(Time.time - started, RunTimeout, "the opening reaches the chase frame");
                 OpeningScript script = _director.Script;
+                if (!firstLineSeen && Time.time - newGameAt >= wakeFrame * WakeStripInterval)
+                {
+                    Capture(string.Format(CultureInfo.InvariantCulture, "wake_{0:000}_{1:0.00}s", wakeFrame,
+                        Time.time - newGameAt));
+                    wakeFrame++;
+                }
+
+                if (script.Phase < OpeningPhase.Load && script.Phase >= OpeningPhase.PowerOn)
+                {
+                    Assert.AreEqual(1f, script.PostTimeScale,
+                        $"the key that started New Game does not fast-forward the {script.Phase}");
+                }
+
                 if (crackleStarted < 0f && _beats.Contains(WakeBeat.Crackle))
                 {
                     crackleStarted = Time.time;
@@ -349,7 +371,7 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreEqual(0, Count(WakeBeat.FadedOut), "a fresh title pushes in: no cover, no black");
             Assert.AreEqual(1, _awoke, "RoverAwoke goes with the crackle, once");
             Assert.AreEqual(1, _body.FaceDirector.Director.BootCount, "the CRT face boots once, as the eyes come back");
-            Assert.That(chase - crackle, Is.InRange(MinSelfTest, MaxSelfTest), "New Game to control in at most about 22 s: the two moves are slow and gradual");
+            Assert.That(chase - crackle, Is.InRange(MinSelfTest, MaxSelfTest), "New Game to control in at most about 28 s: the wake breathes, the two moves are slow and gradual");
             CollectionAssert.AreEqual(OpeningLines, _checksStartedList, "the lines print in the story's order");
             Assert.AreEqual(OpeningLines.Length, _checksCompleted.Count, "every line is completed");
             Assert.AreEqual(1, _checksFinished, "and the test finishes once");

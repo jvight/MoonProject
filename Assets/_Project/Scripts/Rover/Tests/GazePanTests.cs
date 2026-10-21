@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace MoonProject.Rover.Tests
 {
-    public sealed class ReleasePanTests
+    public sealed class GazePanTests
     {
         private const float Frame = 1f / 60f;
         private const float Travel = 1.8f;
@@ -23,9 +23,9 @@ namespace MoonProject.Rover.Tests
             return new Vector3(Mathf.Sin(rad) * distance, height, Mathf.Cos(rad) * distance);
         }
 
-        private static ReleasePan Started(float startBearing)
+        private static GazePan Started(float startBearing)
         {
-            var pan = new ReleasePan();
+            var pan = new GazePan();
             pan.Begin(Origin, startBearing, Relay, Travel, Hold, Sweep, Rise, HalfLife, Slack);
             return pan;
         }
@@ -38,7 +38,7 @@ namespace MoonProject.Rover.Tests
         [Test]
         public void ItStartsWhereTheCameraAlreadyLooks()
         {
-            ReleasePan pan = Started(StartBearing);
+            GazePan pan = Started(StartBearing);
 
             Assert.IsTrue(pan.IsActive);
             Assert.AreEqual(StartBearing, Bearing(pan.Subject), 0.5f, "no jump from the chase view");
@@ -47,7 +47,7 @@ namespace MoonProject.Rover.Tests
         [Test]
         public void ItNeverTurnsFasterThanItsRate_AndNeverCuts()
         {
-            ReleasePan pan = Started(StartBearing);
+            GazePan pan = Started(StartBearing);
             float last = pan.Bearing;
             float fastest = 0f;
             for (float t = 0f; t < 6f; t += Frame)
@@ -63,7 +63,7 @@ namespace MoonProject.Rover.Tests
         [Test]
         public void ItTurnsTheShortWay_ToWithinItsSlackOfTheLamp()
         {
-            ReleasePan pan = Started(-100f);
+            GazePan pan = Started(-100f);
             for (float t = 0f; t < Travel + Hold; t += Frame)
             {
                 pan.Step(Frame);
@@ -78,7 +78,7 @@ namespace MoonProject.Rover.Tests
         [Test]
         public void ItHoldsThroughItsTravelAndItsHold_ThenHasArrived()
         {
-            ReleasePan pan = Started(StartBearing);
+            GazePan pan = Started(StartBearing);
             for (float t = 0f; t < Travel + Hold - 0.2f; t += Frame)
             {
                 pan.Step(Frame);
@@ -96,7 +96,7 @@ namespace MoonProject.Rover.Tests
         [Test]
         public void AnEndedPanStaysStill()
         {
-            ReleasePan pan = Started(StartBearing);
+            GazePan pan = Started(StartBearing);
             pan.Step(1f);
             pan.End();
             Vector3 where = pan.Subject;
@@ -109,8 +109,8 @@ namespace MoonProject.Rover.Tests
         [Test]
         public void TheBearingTo_IsTheCompassBearing()
         {
-            Assert.AreEqual(90f, ReleasePan.BearingTo(Vector3.zero, new Vector3(5f, 3f, 0f)), 0.01f);
-            Assert.AreEqual(180f, ReleasePan.BearingTo(new Vector3(1f, 0f, 1f), new Vector3(1f, 0f, -4f)), 0.01f);
+            Assert.AreEqual(90f, GazePan.BearingTo(Vector3.zero, new Vector3(5f, 3f, 0f)), 0.01f);
+            Assert.AreEqual(180f, GazePan.BearingTo(new Vector3(1f, 0f, 1f), new Vector3(1f, 0f, -4f)), 0.01f);
         }
     }
 }
