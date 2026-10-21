@@ -2565,6 +2565,88 @@ def build_elder02_combined() -> bpy.types.Object:
     return chassis_root
 
 
+# 06's battery bay: a pannier bolted on the right (+X) flank, its hatch dropped open. 06 slumps onto its left side,
+# so this face tips up toward the player. Topper-local metres (the topper's root is the chassis deck, y 0.69 m).
+BATTERY_BAY_DIMS: dict[str, float] = {
+    "inner_x": 0.46,
+    "outer_x": 0.68,
+    "bottom_y": -0.22,
+    "top_y": 0.26,
+    "half_length_z": 0.44,
+    "wall": 0.02,
+    "shelf_y": 0.0,
+    "hatch_open_deg": 128.0,
+    "hatch_twist_deg": 6.0,
+}
+
+
+def _build_topper_06_battery_bay(root: bpy.types.Object) -> None:
+    """Build 06's open battery bay (`BatteryBay`), its dropped hatch (`BayHatch`) and the three cell sockets inside
+    (`FragmentSocket_CellPack_0..2`, the story's contract): the two loose modules on the shelf, the cell rail below."""
+    d = BATTERY_BAY_DIMS
+    x0, x1 = d["inner_x"], d["outer_x"]
+    y0, y1 = d["bottom_y"], d["top_y"]
+    hz, t = d["half_length_z"], d["wall"]
+    cx = (x0 + x1) * 0.5
+    cy = (y0 + y1) * 0.5
+    depth = x1 - x0
+    height = y1 - y0
+
+    mb = r1kit.MeshBuilder("BatteryBay", pivot_u=(x0, cy, 0.0))
+    # Back plate against the hull, floor, roof and the two end walls: an open-sided box
+    mb.add_bevel_box(center_u=(x0 + t * 0.5, cy, 0.0), size_u=(t, height, 2 * hz), mat="R1_GreyMetal", bevel=0.004,
+                     segments=1)
+    for y in (y0 + t * 0.5, y1 - t * 0.5):
+        mb.add_bevel_box(center_u=(cx, y, 0.0), size_u=(depth, t, 2 * hz), mat="R1_WhitePaint", bevel=0.006,
+                         segments=1)
+    for sz in (-1.0, 1.0):
+        mb.add_bevel_box(center_u=(cx, cy, sz * (hz - t * 0.5)), size_u=(depth, height, t), mat="R1_WhitePaint",
+                         bevel=0.006, segments=1)
+    # Dark rubber liner on the back so the cells read against shadow, and the steel shelf with its front lip
+    mb.add_bevel_box(center_u=(x0 + t + 0.003, cy, 0.0), size_u=(0.006, height - 2 * t, 2 * hz - 2 * t),
+                     mat="R1_Rubber", bevel=0.0, segments=0)
+    mb.add_bevel_box(center_u=(cx, d["shelf_y"] - 0.006, 0.0), size_u=(depth - 0.004, 0.012, 2 * hz - 2 * t),
+                     mat="R1_BareSteel", bevel=0.002, segments=1)
+    mb.add_bevel_box(center_u=(x1 - 0.008, d["shelf_y"] + 0.012, 0.0), size_u=(0.008, 0.026, 2 * hz - 2 * t),
+                     mat="R1_BareSteel", bevel=0.002, segments=1)
+    # Two hanging straps that held the bay to the deck coaming, and the hatch's hinge barrel along the bottom lip
+    for z in (-0.30, 0.30):
+        mb.add_bevel_box(center_u=(x0 - 0.01, y1 + 0.02, z), size_u=(0.06, 0.012, 0.05), mat="R1_GreyMetal",
+                         bevel=0.003, segments=1)
+    mb.add_cylinder(center_u=(x1, y0, 0.0), radius=0.012, length=2 * hz - 0.04, mat="R1_BareSteel", axis_u="Z",
+                    segments=8, bevel=0.0, bevel_segments=0)
+    bay = mb.build_object(parent=root)
+
+    hatch = r1kit.MeshBuilder("BayHatch", pivot_u=(x1, y0, 0.0))
+    hatch.add_bevel_box(center_u=(x1 + 0.008, cy, 0.0), size_u=(0.014, height - 0.01, 2 * hz - 0.01),
+                        mat="R1_WhitePaint", bevel=0.005, segments=1)
+    hatch.add_bevel_box(center_u=(x1, cy, 0.0), size_u=(0.004, height - 0.06, 2 * hz - 0.06), mat="R1_GreyMetal",
+                        bevel=0.0, segments=0)
+    # A T-handle latch near the hatch's top edge, sprung open
+    hatch.add_bevel_box(center_u=(x1 + 0.024, y1 - 0.06, 0.0), size_u=(0.018, 0.024, 0.12), mat="R1_BareSteel",
+                        bevel=0.004, segments=1)
+    hatch.build_object(parent=bay)
+
+    # The fragment sockets, +Y up, each fragment's long axis (its local X) along the bay
+    along = (0.0, 90.0, 0.0)
+    shelf_top = d["shelf_y"]
+    for name, pos in (
+        ("FragmentSocket_CellPack_0", (cx, shelf_top, 0.19)),
+        ("FragmentSocket_CellPack_1", (cx, shelf_top, -0.19)),
+        ("FragmentSocket_CellPack_2", (cx, y0 + t, 0.0)),
+    ):
+        socket = r1kit.create_empty(name, parent=root, pivot_u=pos)
+        socket.rotation_euler = r1kit.u_rot(*along)
+
+
+def pose_topper_06_rest(root: bpy.types.Object) -> None:
+    """The bay hatch hangs open out and down from its hinge, a little twisted (Blender Y is Unity Z, the hinge axis)."""
+    d = BATTERY_BAY_DIMS
+    for obj in r1kit.collect_hierarchy(root):
+        if obj.name == "BayHatch":
+            obj.rotation_euler = (math.radians(d["hatch_twist_deg"]), math.radians(d["hatch_open_deg"]), 0.0)
+
+
 def build_ssr3_topper_06() -> bpy.types.Object:
     """Build the complete `SSR3_Topper_06` ("Relay Keeper") hierarchy in the active Blender scene."""
     root = r1kit.create_empty("SSR3_Topper_06", pivot_u=(0.0, 0.0, 0.0))
@@ -2572,9 +2654,12 @@ def build_ssr3_topper_06() -> bpy.types.Object:
     _build_topper_06_battery_rack(root)
     _build_topper_06_cell_tubes(root)
     _build_topper_06_cable_reel(root)
+    _build_topper_06_battery_bay(root)
 
     bpy.context.view_layer.update()
     _apply_ssr3_decades_at_rest_weathering(root, footprint_radius=0.62)
+    pose_topper_06_rest(root)
+    bpy.context.view_layer.update()
     return root
 
 
