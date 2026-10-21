@@ -418,7 +418,8 @@ namespace MoonProject.Autoplay
         private IEnumerator TheFirstChoice()
         {
             Begin("R5", "The first free choice: visit the seismic station, dock, and the first dusk begins");
-            yield return _base.ExpectStep(OpeningSteps.BuildBatteryBank, string.Empty, "R5: the afternoon says nothing");
+            yield return _base.ExpectStep(OpeningSteps.BuildBatteryBank, OpeningKeys.VisitSite,
+                "R5: the afternoon names the near sites");
             yield return _base.VisitTheSeismicStation();
             yield return _base.DockForTheDusk(StructureIds.ChargingPad);
             _bot.EndBeat("07 read the 1971 seismic station, docked, and the first dusk began");
@@ -427,13 +428,17 @@ namespace MoonProject.Autoplay
         private IEnumerator TheHabitat()
         {
             Begin("B9", "The habitat: scan the modules, cut the cable reel, tow the power module home, build the bank on it");
-            yield return _base.ExpectStep(OpeningSteps.BuildBatteryBank, OpeningKeys.BuildBatteryBank,
+            yield return _base.ExpectStep(OpeningSteps.BuildBatteryBank, OpeningKeys.ScanModule,
                 "B9: night is coming");
             yield return _base.ScanTheSet("ruin.HabitatModules");
+            yield return _base.ExpectStep(OpeningSteps.BuildBatteryBank, OpeningKeys.TowModuleHome,
+                "B9: the module is the bank's frame");
             yield return _base.CutTheCrates("HabitatModules");
             yield return Sub("B9a");
             yield return _base.TowTheModuleHome();
             yield return Sub("B9b");
+            yield return _base.ExpectStep(OpeningSteps.BuildBatteryBank, OpeningKeys.BuildBatteryBank,
+                "B9: the module is home");
             yield return _base.Build(StructureIds.BatteryBank, _base.ModulePosition());
             yield return _base.UntilReached(OpeningMilestone.NightReady, "the NightReady milestone",
                 NightReadySeconds);

@@ -111,6 +111,24 @@ Label {
     background-color: rgba(0, 0, 0, 0);
 }
 
+/* The caret on a chip that rides on 07, pointing to its off-screen object (G3): it turns round the chip's centre */
+.prompt-caret {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0;
+    height: 0;
+}
+
+.prompt-caret__tip {
+    position: absolute;
+    left: 0;
+    top: -8px;
+    width: 12px;
+    height: 16px;
+    --caret-color: rgb(255, 196, 96);
+}
+
 .prompt .chip__word {
     padding: 4px 20px 6px 20px;
     border-radius: 10px;
@@ -804,10 +822,14 @@ Label {
     text-shadow: 0 2px 12px var(--moon-shadow);
 }
 
-/* After its bright rest the objective line is a small dim line (docs/design/opening-v2.md §3) */
-.next-line--dim .next-line__text {
-    font-size: 18px;
-    opacity: 0.7;
+/* The next line's key comes first when the key is new (guidance audit G2): the chips' own keycap */
+.next-line__row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.next-line__glyph {
+    margin-right: 12px;
 }
 
 /* The weld's bar under the build step's line: a calm cyan fill on an amber track */
@@ -1065,6 +1087,20 @@ Label {
     margin: 0 12px;
     border-radius: 2px;
     background-color: var(--moon-text-faint);
+}
+
+/* A key the card adds when it first matters (B Build, the hook cable): its own dot, and a soft amber wash while new */
+.controls-card__item {
+    flex-direction: row;
+    align-items: center;
+    border-radius: 12px;
+    padding-right: 6px;
+    transition-property: background-color;
+    transition-duration: 0.6s;
+}
+
+.controls-card__item--new {
+    background-color: var(--moon-amber-soft);
 }
 
 .controls-card .glyph--small.glyph--pad {
@@ -1738,7 +1774,28 @@ Label {
 }
 
 /* The build ghost's cost (opening-v3 §4, E7): what it takes against what 07 carries, at its foot while placing. */
+/* The ghost's controls under its cost rows: the place key(s) and the rotate key(s), from the real bindings */
+.build-cost__keys {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin-top: 6px;
+}
+
+.build-cost__key-word {
+    font-size: 18px;
+    margin-left: 6px;
+    color: var(--moon-text);
+}
+
+.build-cost .glyph--small.glyph--pad {
+    width: auto;
+    padding: 0 8px;
+}
+
 .build-cost__body {
+    flex-direction: column;
+    align-items: stretch;
     padding: 6px 14px 7px 14px;
     border-radius: 8px;
 }

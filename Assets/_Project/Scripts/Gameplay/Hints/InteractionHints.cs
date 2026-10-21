@@ -18,7 +18,7 @@ namespace MoonProject.Gameplay
         {
             InteractionKind.PickUp, InteractionKind.Build, InteractionKind.Salvage, InteractionKind.Scan,
             InteractionKind.Deconstruct, InteractionKind.OpenBuild, InteractionKind.FitPart, InteractionKind.Tether,
-            InteractionKind.Install,
+            InteractionKind.Install, InteractionKind.Transmit,
             InteractionKind.Rack,
         };
 
@@ -33,6 +33,7 @@ namespace MoonProject.Gameplay
         private readonly TowLine _tow;
         private readonly RelayRepair _relay;
         private readonly SocketRackView _rack;
+        private readonly IAnswerStatus _answer;
         private readonly Vector3[] _scanBuffer = new Vector3[MaxFocusPoints];
 
         /// <param name="beam">
@@ -42,10 +43,12 @@ namespace MoonProject.Gameplay
         /// <param name="tow">07's tow cable: a load in hook reach is where the tether key is taught.</param>
         /// <param name="relay">relay.1's repair: its feed socket in reach is where a held part is fitted.</param>
         /// <param name="rack">The socket rack in the world: the outline 07 reads names its part.</param>
+        /// <param name="answer">The call's answer: while it can be sent, the mast is where E is held to transmit.</param>
         public InteractionHints(SalvageField salvage, SealedContainers containers, ScanField scans,
             BuildField building, BeamWork beam, Cutter cutter, PickupReach pickups, FirstUseSpots firstUse,
-            TowLine tow, RelayRepair relay, SocketRackView rack)
+            TowLine tow, RelayRepair relay, SocketRackView rack, IAnswerStatus answer)
         {
+            _answer = answer ?? throw new ArgumentNullException(nameof(answer));
             _tow = tow ?? throw new ArgumentNullException(nameof(tow));
             _relay = relay ?? throw new ArgumentNullException(nameof(relay));
             _rack = rack ?? throw new ArgumentNullException(nameof(rack));
@@ -88,7 +91,7 @@ namespace MoonProject.Gameplay
                 return 0;
             }
 
-            points[0] = hint.Position;
+            points[0] = hint.Target;
             if (hint.Kind != InteractionKind.Scan)
             {
                 return 1;
@@ -159,7 +162,7 @@ namespace MoonProject.Gameplay
                     return fragment != null;
                 case InteractionKind.OpenBuild:
                     bool atApron = _firstUse.TryGetOpenBuild(out Vector3 apron);
-                    hint = atApron ? new InteractionHint(kind, apron, true) : InteractionHint.None;
+                    hint = atApron ? FirstUse(kind, apron) : InteractionHint.None;
                     return atApron;
                 case InteractionKind.FitPart:
                     bool atRover = _firstUse.TryGetFitPart(out Vector3 rover);
@@ -167,12 +170,16 @@ namespace MoonProject.Gameplay
                     return atRover;
                 case InteractionKind.Tether:
                     bool hookable = _tow.TryGetHookable(out Vector3 hitch);
-                    hint = hookable ? new InteractionHint(kind, hitch, true) : InteractionHint.None;
+                    hint = hookable ? FirstUse(kind, hitch) : InteractionHint.None;
                     return hookable;
                 case InteractionKind.Install:
                     bool atSocket = _relay.TryGetInstall(out Vector3 socket);
-                    hint = atSocket ? new InteractionHint(kind, socket, true) : InteractionHint.None;
+                    hint = atSocket ? FirstUse(kind, socket) : InteractionHint.None;
                     return atSocket;
+                case InteractionKind.Transmit:
+                    bool sendable = _answer.Phase == AnswerPhase.Ready || _answer.Phase == AnswerPhase.Transmitting;
+                    hint = sendable ? FirstUse(kind, _answer.MastPoint, _answer.HoldProgress01) : InteractionHint.None;
+                    return sendable;
                 case InteractionKind.Rack:
                     bool reads = _rack.TryGetRead(out Vector3 bay, out string bayId);
                     hint = reads ? new InteractionHint(kind, bay, true, bayId) : InteractionHint.None;
@@ -181,6 +188,16 @@ namespace MoonProject.Gameplay
                     hint = InteractionHint.None;
                     return false;
             }
+        }
+
+        /// <summary>
+        /// A key taught at <paramref name="target"/>: its chip stands there, or on 07 while it is off screen; a hold's
+        /// chip carries how far the hold has come.
+        /// </summary>
+        private InteractionHint FirstUse(InteractionKind kind, Vector3 target, float holdProgress = 0f)
+        {
+            Vector3 chip = _firstUse.Place(target, out bool onRover);
+            return new InteractionHint(kind, chip, true, target, onRover, null, 0, 0, holdProgress);
         }
     }
 }

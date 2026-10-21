@@ -524,6 +524,15 @@ namespace MoonProject.UI.PlayModeTests
 
         private EventBus Events => _rig.Bootstrap.Context.Events;
 
+        /// <summary>
+        /// The objective line as a reminder (guidance audit G4): the quiet line that waits behind any chip, as these
+        /// tests' lines are; a next action after a success (G2) is the one element and has its own test.
+        /// </summary>
+        private static NextStepChanged Reminder(string key)
+        {
+            return new NextStepChanged(key, NextLineReason.Reminder, default, false, false, null, Vector3.zero);
+        }
+
         /// <summary>The tables' own words for <paramref name="key"/>, so a test never guesses copy.</summary>
         private string Text(string key)
         {
@@ -559,7 +568,7 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Ui.Ledger.RecordHoldChipShown();
             yield return null;
             Events.Publish(new RoverAwoke(Vector3.zero, false));
-            Events.Publish(new NextStepChanged("next.v2.drive_lander"));
+            Events.Publish(Reminder("next.v2.drive_lander"));
             Events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle));
             Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame));
             yield return Seconds(1f);
@@ -729,7 +738,7 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Tune("_guidance._statusHoldSeconds", 1.5f);
             yield return null;
             Events.Publish(new RoverAwoke(Vector3.zero, false));
-            Events.Publish(new NextStepChanged("next.v2.drive_lander"));
+            Events.Publish(Reminder("next.v2.drive_lander"));
             ReadoutView readout = _rig.Ui.Readout;
 
             Events.Publish(new CutterRefused(Vector3.zero));
@@ -793,7 +802,7 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator NoFrame_ShowsTwoGuidanceElements_SaveTheBriefCrossFadeFromTheLineToAPrompt()
+        public IEnumerator NoFrame_ShowsTwoGuidanceElements_EveryHandOverIsSequential()
         {
             Boot();
             _rig.Tune("_guidance._statusHoldSeconds", 2f);
@@ -803,7 +812,7 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Ui.Ledger.RecordHoldChipShown();
             yield return null;
             Events.Publish(new RoverAwoke(Vector3.zero, false));
-            Events.Publish(new NextStepChanged("next.v2.drive_lander"));
+            Events.Publish(Reminder("next.v2.drive_lander"));
             Events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle));
             Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame));
             Events.Publish(new OpeningMilestoneReached(OpeningMilestone.PowerOn, false));
@@ -811,24 +820,16 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Build, new Vector3(0f, 0f, 10f), true);
             int shownFrames = 0;
             bool readoutSeen = false;
-            float crossFade = 0f;
-            float crossFadeLimit = _rig.Tuning.Guidance.HandOverSeconds + _rig.Tuning.Guidance.Line.FadeOut + 0.2f;
             float until = Time.realtimeSinceStartup + 18f;
-            float last = Time.realtimeSinceStartup;
             while (Time.realtimeSinceStartup < until)
             {
-                float now = Time.realtimeSinceStartup;
                 readoutSeen |= _rig.Ui.Readout.IsVisible;
-                int up = (_rig.Ui.Prompt.IsVisible ? 1 : 0) + (_rig.Ui.LookUp.ShowsPrompt ? 1 : 0) +
+                int up = (_rig.Ui.Prompt.IsVisible ? 1 : 0) + (_rig.Ui.LookUp.IsVisible ? 1 : 0) +
                          (_rig.Ui.Readout.IsVisible ? 1 : 0) + (_rig.Ui.UnlockCard.IsVisible ? 1 : 0) +
                          (_rig.Ui.Objective.IsVisible ? 1 : 0) + (_rig.Ui.ControlsCardView.IsVisible ? 1 : 0);
                 shownFrames += up > 0 ? 1 : 0;
-                bool lineToPrompt = up == 2 && _rig.Ui.Prompt.IsVisible && _rig.Ui.Objective.ShowsObjective;
-                crossFade = lineToPrompt ? crossFade + (now - last) : 0f;
-                last = now;
-                Assert.LessOrEqual(crossFade, crossFadeLimit, "the line and the prompt cross-fade only briefly");
-                Assert.LessOrEqual(lineToPrompt ? 1 : up, 1, "one guidance element at a time: prompt " +
-                    _rig.Ui.Prompt.IsVisible + ", look-up " + _rig.Ui.LookUp.ShowsPrompt + ", readout " +
+                Assert.LessOrEqual(up, 1, "one guidance element at a time, even while one fades: prompt " +
+                    _rig.Ui.Prompt.IsVisible + ", look-up " + _rig.Ui.LookUp.IsVisible + ", readout " +
                     _rig.Ui.Readout.IsVisible + ", unlock " + _rig.Ui.UnlockCard.IsVisible + ", objective " +
                     _rig.Ui.Objective.IsVisible + ", controls " + _rig.Ui.ControlsCardView.IsVisible);
                 yield return null;
@@ -839,38 +840,77 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator TheVerbChip_BelongsToTheObjective_ShowsItsRealKey_AndRetiresOnTheFirstUse()
+        public IEnumerator ANextLine_ShowsAtOnceWithItsNewKey_AndAChipWaitsUntilGameplayTakesItAway()
         {
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            _rig.Ui.Ledger.RecordLookTaught();
+            _rig.Ui.Ledger.RecordDriveTaught();
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            yield return Seconds(1f);
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.OpenBuild, new Vector3(0f, 0f, 6f), true);
+            Events.Publish(new NextStepChanged("next.v2.build_pad", NextLineReason.Next, RoverAction.Build, true, false,
+                null, Vector3.zero));
+            yield return Seconds(_rig.Tuning.Guidance.Line.FadeIn + 0.3f);
+            Assert.IsTrue(_rig.Ui.Objective.ShowsObjective, "right after the success, with no wait for 07 to settle");
+            Assert.AreEqual(Text("next.v2.build_pad"), _rig.Ui.Layout.NextLineText.text);
+            Assert.IsTrue(_rig.Ui.Objective.ShowsGlyph, "the new key comes first");
+            Assert.AreEqual("B", _rig.Ui.Layout.NextLineGlyphLabel.text, "the real binding");
+
+            float until = Time.realtimeSinceStartup + 3f;
+            while (Time.realtimeSinceStartup < until)
+            {
+                Assert.IsFalse(_rig.Ui.Prompt.IsVisible, "the Build chip waits: the next line is the one element");
+                yield return null;
+            }
+
+            Events.Publish(new NextStepChanged(string.Empty));
+            float limit = Time.realtimeSinceStartup + 4f;
+            while (!_rig.Ui.Prompt.IsVisible && Time.realtimeSinceStartup < limit)
+            {
+                Assert.IsFalse(_rig.Ui.Prompt.IsVisible && _rig.Ui.Objective.ShowsObjective, "never both");
+                yield return null;
+            }
+
+            Assert.IsTrue(_rig.Ui.Prompt.IsVisible, "once Gameplay takes the line away, the chip has the screen");
+        }
+
+        [UnityTest]
+        public IEnumerator TheVerbChip_TakesTheReminderLinesPlaceAtItsObject_NeverStandsBesideIt()
+        {
+            InputSystem.AddDevice<Keyboard>();
             Boot();
             _rig.Ui.Ledger.RecordLookTaught();
             _rig.Ui.Ledger.RecordDriveTaught();
             _rig.Ui.Ledger.RecordHoldChipShown();
+            _rig.Ui.Ledger.RecordUsed(InteractionKind.Scan);
             yield return null;
             Events.Publish(new RoverAwoke(Vector3.zero, false));
-            Events.Publish(new NextStepChanged("next.v2.scan_lander"));
+            Events.Publish(Reminder("next.v2.scan_lander"));
             float limit = Time.realtimeSinceStartup + 12f;
-            while (!_rig.Ui.LookUp.IsVisible && Time.realtimeSinceStartup < limit)
+            while (!_rig.Ui.Objective.ShowsObjective && Time.realtimeSinceStartup < limit)
             {
                 yield return null;
             }
 
-            Assert.IsTrue(_rig.Ui.Objective.ShowsObjective, "the line is up");
-            Assert.IsTrue(_rig.Ui.LookUp.IsVisible, "and its chip with it");
+            yield return Seconds(1f);
+            Assert.IsTrue(_rig.Ui.Objective.ShowsObjective, "the reminder is up");
+            Assert.IsFalse(_rig.Ui.LookUp.IsVisible, "nothing in reach: no chip beside the line");
+
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Scan, new Vector3(0f, 0f, 6f), true);
+            yield return Seconds(_rig.Tuning.Guidance.Line.FadeOut + 0.5f);
+            Assert.IsTrue(_rig.Ui.LookUp.IsVisible, "at the fragment the chip takes the line's place");
+            Assert.IsFalse(_rig.Ui.Objective.ShowsObjective, "the line has handed over (a cross-fade, not a pair)");
             Assert.IsFalse(_rig.Ui.LookUp.ShowsPrompt, "the chip is the objective's, not a prompt of its own");
             Assert.AreEqual(Text("ui.verb.scan"), _rig.Ui.Layout.LookHintWord.text);
             Assert.AreEqual("E", _rig.Ui.Layout.LookHintGlyphLabel.text, "the real key of the scan beam");
-            Assert.AreEqual(GuidanceKind.Objective, _rig.Ui.Slot.Granted, "one guidance element holds the slot");
+            Assert.AreEqual(GuidanceKind.Prompt, _rig.Ui.Slot.Granted, "one guidance element holds the slot");
 
-            Events.Publish(new ScanStarted("lander.fragment.1", Vector3.zero));
-            Events.Publish(new FragmentScanned("lander.fragment.1", "lander", 0, 2, false, 0));
-            limit = Time.realtimeSinceStartup + 4f;
-            while (_rig.Ui.LookUp.IsVisible && Time.realtimeSinceStartup < limit)
-            {
-                yield return null;
-            }
-
-            Assert.IsFalse(_rig.Ui.LookUp.IsVisible, "the first scan retires the chip");
-            Assert.IsTrue(_rig.Ui.Objective.ShowsObjective, "the line stays until the step is done");
+            _rig.Fakes.PrimaryHint = InteractionHint.None;
+            yield return Seconds(_rig.Tuning.Guidance.Line.FadeIn + 1.5f);
+            Assert.IsFalse(_rig.Ui.LookUp.IsVisible, "out of reach the chip bows out");
+            Assert.IsTrue(_rig.Ui.Objective.ShowsObjective, "and the reminder is back until the step is done");
         }
 
         [UnityTest]
@@ -882,7 +922,7 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Ui.Ledger.RecordHoldChipShown();
             yield return null;
             Events.Publish(new RoverAwoke(Vector3.zero, false));
-            Events.Publish(new NextStepChanged("next.v2.scan_lander"));
+            Events.Publish(Reminder("next.v2.scan_lander"));
             float limit = Time.realtimeSinceStartup + 12f;
             while (!_rig.Ui.LookUp.IsVisible && Time.realtimeSinceStartup < limit)
             {
@@ -915,17 +955,19 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Ui.Ledger.RecordLookTaught();
             _rig.Ui.Ledger.RecordDriveTaught();
             _rig.Ui.Ledger.RecordHoldChipShown();
-            _rig.Ui.Ledger.RecordUsed(InteractionKind.Salvage);
+            LearnCut();
+            _rig.Ui.Ledger.RecordUsed(InteractionKind.Scan);
             yield return null;
             Events.Publish(new RoverAwoke(Vector3.zero, false));
-            Events.Publish(new NextStepChanged("next.v2.scan_lander"));
+            Events.Publish(Reminder("next.v2.scan_lander"));
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Scan, new Vector3(-0.6f, 0.4f, 5f), true);
             float limit = Time.realtimeSinceStartup + 12f;
             while (!_rig.Ui.LookUp.IsVisible && Time.realtimeSinceStartup < limit)
             {
                 yield return null;
             }
 
-            Assert.AreEqual(Text(UiKeys.VerbScan), _rig.Ui.Layout.LookHintWord.text, "the scan step's own key first");
+            Assert.AreEqual(Text(UiKeys.VerbScan), _rig.Ui.Layout.LookHintWord.text, "at a fragment: the scan step's key");
             var seal = new Vector3(0.4f, 0.5f, 5f);
             _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Salvage, seal, true);
             yield return UntilWord(UiKeys.VerbCut);
@@ -944,10 +986,9 @@ namespace MoonProject.UI.PlayModeTests
             }
 
             _rig.Fakes.IsCutting = false;
-            _rig.Fakes.PrimaryHint = InteractionHint.None;
             yield return UntilWord(UiKeys.VerbScan);
             Assert.AreEqual(Text(UiKeys.VerbScan), _rig.Ui.Layout.LookHintWord.text,
-                "nothing in reach: the step's own key again");
+                "the cut is over and the fragment is in front: the step's own key again");
         }
 
         [UnityTest]
@@ -969,7 +1010,7 @@ namespace MoonProject.UI.PlayModeTests
             }
 
             yield return null;
-            Events.Publish(new NextStepChanged("next.v2.cut_optics"));
+            Events.Publish(Reminder("next.v2.cut_optics"));
             var seal = new Vector3(0.4f, 0.5f, 5f);
             _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Salvage, seal, true);
             float limit = Time.realtimeSinceStartup + 12f;
@@ -992,7 +1033,7 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Ui.Ledger.RecordDriveTaught();
             yield return null;
             Events.Publish(new RoverAwoke(Vector3.zero, false));
-            Events.Publish(new NextStepChanged("next.v2.cut_optics"));
+            Events.Publish(Reminder("next.v2.cut_optics"));
             yield return Seconds(1.5f);
             Assert.IsFalse(_rig.Ui.FaceNotice.IsShown);
 
@@ -1055,6 +1096,41 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(Text(UiKeys.Hint(InteractionKind.Build)), _rig.Ui.Layout.PromptWord.text);
             Assert.AreEqual(DisplayStyle.Flex, _rig.Ui.Layout.PromptGlyph.style.display.value,
                 "a verb's chip has its key again");
+        }
+
+        [UnityTest]
+        public IEnumerator AChipOn07_PointsItsCaretTowardItsOffScreenObject_AndAChipAtItsObjectHasNone()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            _rig.Ui.Ledger.RecordLookTaught();
+            _rig.Ui.Ledger.RecordDriveTaught();
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            Transform camera = _rig.Fakes.Camera.transform;
+            Vector3 overRover = camera.position + camera.forward * 6f;
+            Vector3 offRight = camera.position + camera.forward * 4f + camera.right * 40f;
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.OpenBuild, overRover, true, offRight, true);
+            float limit = Time.realtimeSinceStartup + 4f;
+            while (!(_rig.Ui.Prompt.IsVisible && _rig.Ui.Prompt.Caret.IsShown) && Time.realtimeSinceStartup < limit)
+            {
+                yield return null;
+            }
+
+            Assert.IsTrue(_rig.Ui.Prompt.IsVisible, "the Build chip rides on 07");
+            Assert.IsTrue(_rig.Ui.Prompt.Caret.IsShown, "with a caret");
+            Assert.AreEqual(0f, Mathf.DeltaAngle(0f, _rig.Ui.Prompt.Caret.Angle), 20f, "pointing right, to the bay");
+
+            Vector3 behind = camera.position - camera.forward * 10f - camera.right * 5f;
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.OpenBuild, overRover, true, behind, true);
+            yield return Seconds(0.2f);
+            Assert.IsTrue(_rig.Ui.Prompt.Caret.IsShown);
+            Assert.Greater(Mathf.Abs(Mathf.DeltaAngle(0f, _rig.Ui.Prompt.Caret.Angle)), 90f,
+                "an object behind the camera, to the left: the caret points left, not through the screen");
+
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.OpenBuild, overRover, true);
+            yield return Seconds(0.2f);
+            Assert.IsFalse(_rig.Ui.Prompt.Caret.IsShown, "a chip at its object needs no caret");
         }
 
         [UnityTest]
@@ -1229,10 +1305,10 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Ui.Ledger.RecordLookTaught();
             _rig.Ui.Ledger.RecordDriveTaught();
             _rig.Ui.Ledger.RecordHoldChipShown();
-            _rig.Ui.Ledger.RecordUsed(InteractionKind.Salvage);
+            LearnCut();
             yield return null;
             Events.Publish(new RoverAwoke(Vector3.zero, false));
-            Events.Publish(new NextStepChanged("next.v2.cut_optics"));
+            Events.Publish(Reminder("next.v2.cut_optics"));
             var seal = new Vector3(0.4f, 0.5f, 5f);
             _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Salvage, seal, true);
             float limit = Time.realtimeSinceStartup + 12f;
@@ -1277,19 +1353,20 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Ui.Ledger.RecordDriveTaught();
             _rig.Ui.Ledger.RecordHoldChipShown();
             _rig.Ui.Ledger.RecordUsed(InteractionKind.Scan);
+            LearnCut();
             yield return null;
             Events.Publish(new RoverAwoke(Vector3.zero, false));
             Events.Publish(new ScanStarted("airlock_panel", Vector3.zero));
             Events.Publish(new StoryScanned("airlock_panel", "story.airlock_panel", Vector3.zero));
             _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Scan, new Vector3(-1f, 0.3f, 4f), true);
-            Events.Publish(new NextStepChanged("next.v2.cut_optics"));
+            Events.Publish(Reminder("next.v2.cut_optics"));
             float limit = Time.realtimeSinceStartup + 12f;
             while (!_rig.Ui.LookUp.IsVisible && Time.realtimeSinceStartup < limit)
             {
                 yield return null;
             }
 
-            Assert.AreEqual(Text("next.v2.cut_optics"), _rig.Ui.Layout.NextLineText.text, "the cut line is up");
+            Assert.IsFalse(_rig.Ui.Objective.ShowsObjective, "the chip has taken the cut line's place");
             Assert.AreEqual(Text(UiKeys.VerbScan), _rig.Ui.Layout.LookHintWord.text,
                 "by the airlock an unscanned fragment is in reach: E would scan it, and the chip says so");
 
@@ -1297,8 +1374,8 @@ namespace MoonProject.UI.PlayModeTests
             yield return UntilWord(UiKeys.VerbCut);
             Assert.IsTrue(_rig.Ui.LookUp.IsVisible);
             Assert.AreEqual(Text(UiKeys.VerbCut), _rig.Ui.Layout.LookHintWord.text,
-                "at the seal the same chip, with the same line, names the cut on its first use");
-            Assert.AreEqual(Text("next.v2.cut_optics"), _rig.Ui.Layout.NextLineText.text);
+                "at the seal the same chip names the cut");
+            Assert.IsFalse(_rig.Ui.Objective.ShowsObjective, "still the one element");
         }
 
         [UnityTest]
@@ -1308,7 +1385,7 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Tune("_guidance._statusHoldSeconds", 1.5f);
             yield return null;
             Events.Publish(new RoverAwoke(Vector3.zero, false));
-            Events.Publish(new NextStepChanged("next.v2.drive_lander"));
+            Events.Publish(Reminder("next.v2.drive_lander"));
             ReadoutView readout = _rig.Ui.Readout;
             float wait = _rig.Tuning.Guidance.Readout.FadeIn + 0.4f;
             float gone = _rig.Tuning.Guidance.StatusHoldSeconds + _rig.Tuning.Guidance.Readout.FadeOut + 0.6f;
@@ -1348,7 +1425,7 @@ namespace MoonProject.UI.PlayModeTests
             Events.Publish(new RoverAwoke(Vector3.zero, false));
             var piece = new Vector3(-1f, 0.3f, 4f);
             _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Scan, piece, true, null, 1, 3);
-            Events.Publish(new NextStepChanged("next.v2.scan_lander"));
+            Events.Publish(Reminder("next.v2.scan_lander"));
             float limit = Time.realtimeSinceStartup + 12f;
             while (!_rig.Ui.LookUp.IsVisible && Time.realtimeSinceStartup < limit)
             {
@@ -1378,19 +1455,19 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Ui.Ledger.RecordDriveTaught();
             yield return null;
             Events.Publish(new RoverAwoke(Vector3.zero, false));
-            Events.Publish(new NextStepChanged("next.v2.scan_lander"));
+            Events.Publish(Reminder("next.v2.scan_lander"));
             yield return Seconds(1f);
             Events.Publish(new ScanStarted("lander.cargo.1", Vector3.zero));
             Events.Publish(new FragmentScanned("lander.cargo.1", "charging_pad", 0, 2, false, 0));
             yield return Seconds(0.5f);
             Events.Publish(new ScanStarted("lander.cargo.2", Vector3.zero));
             Events.Publish(new FragmentScanned("lander.cargo.2", "charging_pad", 1, 2, false, 0));
-            Events.Publish(new NextStepChanged("next.v2.collect_parts"));
+            Events.Publish(Reminder("next.v2.collect_parts"));
             yield return Seconds(1f);
             _rig.Fakes.Hold.Set(8, new MaterialSlot(SalvageMaterial.Metal, 4, 4));
             _rig.Fakes.Hold.AddPart("part.igniter");
             Events.Publish(new CargoChanged(2, 8));
-            Events.Publish(new NextStepChanged("next.v2.build_pad"));
+            Events.Publish(Reminder("next.v2.build_pad"));
             string expected = Text("next.v2.build_pad");
             float until = Time.realtimeSinceStartup + LineWithin;
             while (!(_rig.Ui.Objective.ShowsObjective && _rig.Ui.Layout.NextLineText.text == expected) &&
@@ -1416,7 +1493,7 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Ui.Ledger.RecordHoldChipShown();
             yield return null;
             Events.Publish(new RoverAwoke(Vector3.zero, false));
-            Events.Publish(new NextStepChanged("next.v2.cut_optics"));
+            Events.Publish(Reminder("next.v2.cut_optics"));
             float limit = Time.realtimeSinceStartup + 12f;
             while (!_rig.Ui.Objective.ShowsObjective && Time.realtimeSinceStartup < limit)
             {
@@ -1440,7 +1517,7 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator AnUnlearnedCut_With07ArrivingToFaceTheSeal_ShowsECutWithinTheNormalDwell(
+        public IEnumerator AnUnlearnedCut_With07ArrivingToFaceTheSeal_ShowsECutWithinTheDwell_OnlyWhenItCanCut(
             [Values(true, false)] bool ready)
         {
             const float ArrivalSeconds = 2f;
@@ -1453,11 +1530,11 @@ namespace MoonProject.UI.PlayModeTests
             yield return null;
             Events.Publish(new RoverAwoke(Vector3.zero, false));
             _rig.Fakes.Speed = 3f;
-            Events.Publish(new NextStepChanged("next.v2.cut_optics"));
+            Events.Publish(Reminder("next.v2.cut_optics"));
             yield return Seconds(ArrivalSeconds);
 
             // 07 stops 4.5 m from the seal and faces it: the cut is the step's verb. Ready, its prompt teaches; not
-            // ready yet (the beam still busy), the step's own chip has to say it.
+            // ready (a faulted cutter), no key shows at all: the line says why.
             var seal = new Vector3(0.4f, 0.5f, 4.5f);
             _rig.Fakes.Speed = 0f;
             _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Salvage, seal, ready);
@@ -1479,6 +1556,13 @@ namespace MoonProject.UI.PlayModeTests
                 }
             }
 
+            if (!ready)
+            {
+                Assert.Less(shownAfter, 0f, "no E Cut while the cutter cannot cut");
+                Assert.IsTrue(_rig.Ui.Objective.ShowsObjective, "the line keeps the screen");
+                yield break;
+            }
+
             Assert.GreaterOrEqual(shownAfter, 0f, "E Cut never showed at the seal");
             Assert.LessOrEqual(shownAfter, dwell + Reveal, $"E Cut showed only after {shownAfter:0.00} s at the seal");
 
@@ -1496,7 +1580,7 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator TheHandOverFromTheLineToAnUnlearnedVerb_IsNeverBlank_TheLineGoesOnlyOnceThePromptIsComing()
+        public IEnumerator TheHandOverFromTheLineToAnUnlearnedVerb_IsSequential_TheLineFadesFirstThenThePrompt()
         {
             InputSystem.AddDevice<Keyboard>();
             Boot();
@@ -1505,7 +1589,7 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Ui.Ledger.RecordHoldChipShown();
             yield return null;
             Events.Publish(new RoverAwoke(Vector3.zero, false));
-            Events.Publish(new NextStepChanged("next.v2.cut_optics"));
+            Events.Publish(Reminder("next.v2.cut_optics"));
             float limit = Time.realtimeSinceStartup + 12f;
             while (!_rig.Ui.Objective.ShowsObjective && Time.realtimeSinceStartup < limit)
             {
@@ -1519,28 +1603,35 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Fakes.HasTarget = true;
             _rig.Fakes.CutPoint = seal;
             _rig.Fakes.Material = SalvageMaterial.Optics;
-            float lineAtPrompt = -1f;
+            float lineGone = -1f;
             limit = Time.realtimeSinceStartup + 4f;
-            while (Time.realtimeSinceStartup < limit && !(lineAtPrompt >= 0f && !_rig.Ui.Objective.ShowsObjective))
+            while (Time.realtimeSinceStartup < limit && !_rig.Ui.Prompt.IsVisible)
             {
                 yield return null;
-                Assert.IsTrue(_rig.Ui.Objective.ShowsObjective || _rig.Ui.Prompt.IsVisible,
-                    "one of the two is always on screen through the hand-over");
-                if (lineAtPrompt < 0f && _rig.Ui.Prompt.IsVisible)
+                Assert.IsFalse(_rig.Ui.Objective.IsVisible && _rig.Ui.Prompt.IsVisible, "never both, even fading");
+                if (lineGone < 0f && !_rig.Ui.Objective.IsVisible)
                 {
-                    lineAtPrompt = _rig.Ui.Layout.NextLine.resolvedStyle.opacity;
+                    lineGone = Time.realtimeSinceStartup;
                 }
             }
 
-            Assert.GreaterOrEqual(lineAtPrompt, 0f, "the cut prompt came, or the test proves nothing");
-            Assert.Greater(lineAtPrompt, 0.9f, "the line had not begun to fade when the prompt began to fade in");
-            Assert.IsFalse(_rig.Ui.Objective.ShowsObjective, "then the line gave the screen to the prompt");
-            Assert.IsTrue(_rig.Ui.Prompt.IsVisible);
+            Assert.IsTrue(_rig.Ui.Prompt.IsVisible, "the cut prompt came, or the test proves nothing");
+            Assert.GreaterOrEqual(lineGone, 0f, "the line had gone first");
+            Assert.LessOrEqual(Time.realtimeSinceStartup - lineGone, 0.25f, "and the prompt follows at once");
         }
 
         private void Boot()
         {
             _rig = UiTestRig.Boot(_controls, _slot);
+        }
+
+        /// <summary>The cut is learned: no teaching prompt is due at a seal, so the chip there is the objective's.</summary>
+        private void LearnCut()
+        {
+            for (int use = 0; use < _rig.Tuning.Prompts.Find(InteractionKind.Salvage).UsesToRetire; use++)
+            {
+                _rig.Ui.Ledger.RecordUsed(InteractionKind.Salvage);
+            }
         }
 
         /// <summary>Waits (2 s at most) for the chip to fade out its old word and show <paramref name="key"/>.</summary>

@@ -1,29 +1,30 @@
 using System;
+using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
+using MoonProject.Core.Input;
 
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The opening's objective flow (docs/design/opening-v2.md §3, opening-v3 slice 1.5): the first step not yet done,
-    /// every step read from the game (<see cref="IOpeningProgress"/>) and never stored. The world leads, so the step's
-    /// line is only a stall reminder: it is published through <see cref="NextStepChanged"/> after
-    /// <c>stallSeconds</c> with no progress and 07 still, once per step, held for <c>reminderSeconds</c> and never
-    /// shown again for that step. A step whose line would say something the world has not set up yet has no line
-    /// (B7's for the spent lander reserve; B11's for nightfall), and B7's rack line waits for the cutter to sputter
-    /// and then for the same stall: the sputter's own beats lead, the line only follows a player who is lost.
-    /// It also publishes <see cref="OpeningMilestoneReached"/> as the opening reaches FirstCharge (B6), PowerOn (B8),
-    /// NightReady (B9) and SignalWest (B11), the milestones it reads from the game; <see cref="Announce"/> replays the
-    /// ones a loaded game has reached, with Restored = true, before the first <see cref="Tick"/>. CallAnswered (R8) is
-    /// published by the answer itself, not derived here. Allocation-free per tick.
+    /// The opening's objective flow (docs/design/opening-v2.md §3, opening-v3 guidance audit): the first step not yet
+    /// done, every step read from the game (<see cref="IOpeningProgress"/>) and never stored. The world leads; the
+    /// step's line speaks through <see cref="NextStepChanged"/> only as the next line, right after progress gives the
+    /// player a new line (a step done, or a step's line changing), held for
+    /// <see cref="GuidanceTiming.NextLineSeconds"/> (G2), never for the line a session starts on; and as a reminder,
+    /// after <see cref="GuidanceTiming.StallSeconds"/> with no progress, moving or still, and once more
+    /// <see cref="GuidanceTiming.AgainSeconds"/> later, then never again for that line (G4). The line leads with its
+    /// key's glyph while that key is new or has not been pressed for <see cref="GuidanceTiming.KeyFreshSeconds"/>. A
+    /// step whose line would say something the world has not set up yet has no line (B7's for the spent lander
+    /// reserve; B11's for nightfall), and B7's rack line waits for the cutter to sputter. It also publishes
+    /// <see cref="OpeningMilestoneReached"/> as the opening reaches FirstCharge (B6), PowerOn (B8), NightReady (B9) and
+    /// SignalWest (B11), the milestones it reads from the game; <see cref="Announce"/> replays the ones a loaded game
+    /// has reached, with Restored = true, before the first <see cref="Tick"/>. CallAnswered (R8) is published by the
+    /// answer itself, not derived here. Allocation-free per tick.
     /// </summary>
-    public sealed class OpeningFlow
+    public sealed class OpeningFlow : IDisposable
     {
-        /// <summary>Seconds with no progress and 07 still after which a step's line is shown once.</summary>
-        public const float DefaultStallSeconds = 120f;
-
-        /// <summary>Seconds a reminder line stays up.</summary>
-        public const float DefaultReminderSeconds = 20f;
+        private const int MaxReminders = 2;
 
         private static readonly int MilestoneCount = Enum.GetValues(typeof(OpeningMilestone)).Length;
 
@@ -36,26 +37,31 @@ namespace MoonProject.Gameplay
 
         private readonly EventBus _events;
         private readonly IOpeningProgress _game;
+        private readonly KeyUse _keys;
+        private readonly GuidanceTiming _timing;
         private readonly StepFlow _steps;
         private readonly bool[] _reached = new bool[MilestoneCount];
-        private readonly float _stallSeconds;
-        private readonly float _reminderSeconds;
         private bool _announced;
+        private bool _watching;
         private int _watchedIndex = -1;
         private string _watchedKey = string.Empty;
-        private int _remindedIndex = -1;
+        private int _reminders;
         private float _stalled;
         private float _shownFor;
+        private float _showSeconds;
+        private bool _woke;
+        private readonly IDisposable _wake;
 
-        public OpeningFlow(EventBus events, IOpeningProgress game, float stallSeconds = DefaultStallSeconds,
-            float reminderSeconds = DefaultReminderSeconds)
+        /// <param name="keys">The action keys the player has pressed lately (the line's glyph).</param>
+        /// <param name="timing">When the next line and the reminders speak.</param>
+        public OpeningFlow(EventBus events, IOpeningProgress game, KeyUse keys, GuidanceTiming timing)
         {
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _game = game ?? throw new ArgumentNullException(nameof(game));
-            _stallSeconds = stallSeconds;
-            _reminderSeconds = reminderSeconds;
+            _keys = keys ?? throw new ArgumentNullException(nameof(keys));
+            _timing = timing ?? throw new ArgumentNullException(nameof(timing));
 
-            // The steps keep to themselves: the player is shown a line only as a stall reminder (see Tick).
+            // The steps keep to themselves: the player is shown a line only as a next line or a reminder (see Tick).
             _steps = new StepFlow(new EventBus());
             _steps.Add(OpeningKeys.DriveToLander, () => _game.ReachedLander || _game.Knows(StructureIds.ChargingPad));
             _steps.Add(OpeningKeys.ScanLander, () => _game.Knows(StructureIds.ChargingPad));
@@ -67,13 +73,18 @@ namespace MoonProject.Gameplay
                 () => _game.Knows(StructureIds.SolarArray));
             _steps.Add(IgniterLine, () => _game.IgniterFitted);
             _steps.Add(SolarLine, () => _game.PowerOn);
-            // R5, the first free choice, says nothing: the near sites are the lure. Night is coming once dusk begins.
-            _steps.Add(() => !_game.DuskBegun ? string.Empty
-                    : _game.Built(StructureIds.BatteryBank) ? OpeningKeys.MoveBatteryBank
-                    : OpeningKeys.BuildBatteryBank, () => _game.NightReady);
-            _steps.Add(() => _game.NightFallen ? OpeningKeys.ScanTower : string.Empty,
+            _steps.Add(NightLine, () => _game.NightReady);
+            _steps.Add(() => _game.NightFallen ? OpeningKeys.ScanTower : OpeningKeys.AwaitNight,
                 () => _game.Knows(StructureIds.AntennaMast));
             _steps.Add(OpeningKeys.BuildMast, () => _game.Built(StructureIds.AntennaMast));
+            _steps.Add(OpeningKeys.Transmit, () => _game.AnswerDone);
+            _steps.Add(OpeningKeys.GoToRelay, () => _game.RelayRelit);
+            _wake = events.Subscribe<BootCheckFinished>(_ => _woke = true);
+        }
+
+        public void Dispose()
+        {
+            _wake.Dispose();
         }
 
         /// <summary>
@@ -97,11 +108,32 @@ namespace MoonProject.Gameplay
             return _game.Covers(StructureIds.SolarArray) ? OpeningKeys.BuildSolar : OpeningKeys.CutOptics;
         }
 
+        /// <summary>
+        /// R5 to B9: the first free choice names the near sites, then, once one is visited, the dock that ends the day;
+        /// at dusk, the power module to scan, then the module to tow home, then the bank to build on it, or the bank to
+        /// move into the grid's reach.
+        /// </summary>
+        private string NightLine()
+        {
+            if (!_game.DuskBegun)
+            {
+                return _game.DuskVisited ? OpeningKeys.DockForDusk : OpeningKeys.VisitSite;
+            }
+
+            return !_game.Knows(StructureIds.BatteryBank) ? OpeningKeys.ScanModule
+                : _game.Built(StructureIds.BatteryBank) ? OpeningKeys.MoveBatteryBank
+                : _game.ModuleHome ? OpeningKeys.BuildBatteryBank
+                : OpeningKeys.TowModuleHome;
+        }
+
         /// <summary>The key of the line the current step would say, or empty when it has none (not shown).</summary>
         public string Current => _steps.Current;
 
-        /// <summary>The key of the reminder line on screen now, or empty.</summary>
+        /// <summary>The key of the line on screen now, or empty.</summary>
         public string Shown { get; private set; } = string.Empty;
+
+        /// <summary>Why the line on screen shows (meaningless while <see cref="Shown"/> is empty).</summary>
+        public NextLineReason ShownReason { get; private set; }
 
         /// <summary>The first step not yet done (the step count once the opening is over).</summary>
         public int CurrentIndex => _steps.CurrentIndex;
@@ -125,12 +157,11 @@ namespace MoonProject.Gameplay
         /// <summary>One tick with no time passing (the steps and milestones only).</summary>
         public void Tick()
         {
-            Tick(0f, false);
+            Tick(0f);
         }
 
         /// <param name="deltaTime">Seconds since the last tick.</param>
-        /// <param name="still">07 stands still: only then does a stall build up.</param>
-        public void Tick(float deltaTime, bool still)
+        public void Tick(float deltaTime)
         {
             if (!_announced)
             {
@@ -138,7 +169,7 @@ namespace MoonProject.Gameplay
             }
 
             _steps.Tick();
-            StepReminder(deltaTime, still);
+            Speak(deltaTime);
             Reach(false);
         }
 
@@ -157,58 +188,91 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// A step that holds its line for <see cref="_stallSeconds"/> of 07 standing still shows it once; moving, or
-        /// any progress (a new step, a new sub-step), starts the count again, and a step that was reminded is never
-        /// reminded twice.
+        /// Progress (a new step, or the step's line changing) shows the new line as the next line, unless it is the
+        /// line a session starts on; the end of a new game's wake shows the first line the same way. With no progress
+        /// the line counts up to a reminder: after the stall, and once more after the second wait; a line on screen goes
+        /// when its time is up.
         /// </summary>
-        private void StepReminder(float deltaTime, bool still)
+        private void Speak(float deltaTime)
         {
             int index = _steps.CurrentIndex;
             string key = _steps.Current;
+            if (_woke && _watching && index == _watchedIndex && key == _watchedKey)
+            {
+                _woke = false;
+                if (key.Length > 0)
+                {
+                    Show(key, NextLineReason.Next, _timing.NextLineSeconds);
+                    return;
+                }
+            }
+
             if (index != _watchedIndex || key != _watchedKey)
             {
+                bool progress = _watching;
+                _watching = true;
                 _watchedIndex = index;
                 _watchedKey = key;
                 _stalled = 0f;
-                Show(string.Empty);
+                _reminders = 0;
+                if (progress && key.Length > 0)
+                {
+                    Show(key, NextLineReason.Next, _timing.NextLineSeconds);
+                }
+                else
+                {
+                    Clear();
+                }
+
                 return;
             }
 
             if (Shown.Length > 0)
             {
                 _shownFor += deltaTime;
-                if (_shownFor >= _reminderSeconds)
+                if (_shownFor >= _showSeconds)
                 {
-                    Show(string.Empty);
+                    Clear();
                 }
 
                 return;
             }
 
-            if (!still)
+            if (key.Length == 0 || _reminders >= MaxReminders)
             {
-                _stalled = 0f;
                 return;
             }
 
             _stalled += deltaTime;
-            if (_stalled >= _stallSeconds && key.Length > 0 && index != _remindedIndex)
+            if (_stalled >= (_reminders == 0 ? _timing.StallSeconds : _timing.AgainSeconds))
             {
-                _remindedIndex = index;
-                _shownFor = 0f;
-                Show(key);
+                _stalled = 0f;
+                _reminders++;
+                Show(key, NextLineReason.Reminder, _timing.ReminderSeconds);
             }
         }
 
-        private void Show(string key)
+        private void Show(string key, NextLineReason reason, float seconds)
         {
-            if (key == Shown)
+            Shown = key;
+            ShownReason = reason;
+            _shownFor = 0f;
+            _showSeconds = seconds;
+            RoverAction action = OpeningKeys.KeyOf(key);
+            bool showsKey = action != default && !_keys.UsedWithin(action, _timing.KeyFreshSeconds);
+            bool hasTarget = _game.TryGetPlace(key, out string placeId, out Vector3 place);
+            _events.Publish(new NextStepChanged(key, reason, action, showsKey, hasTarget, placeId, place));
+        }
+
+        private void Clear()
+        {
+            if (Shown.Length == 0)
             {
                 return;
             }
 
-            Shown = key;
-            _events.Publish(new NextStepChanged(key));
+            Shown = string.Empty;
+            _events.Publish(new NextStepChanged(string.Empty));
         }
 
         private bool Holds(OpeningMilestone milestone)
