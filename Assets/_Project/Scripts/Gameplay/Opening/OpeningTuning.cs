@@ -181,7 +181,7 @@ namespace MoonProject.Gameplay
                 ContainerKinds.CrateM, new Recipe(0, 3, 0), StructureIds.AntennaMast),
             new SupplyCache("supply.tower.dish", "RadioTower", new Vector3(6.8f, 0f, 1.8f), 90f,
                 ContainerKinds.CrateM, new Recipe(0, 0, 2), StructureIds.AntennaMast),
-            new SupplyCache(SixCrate, WorldAnchorIds.Micro06, new Vector3(-2.5f, 0f, -1.6f), 200f,
+            new SupplyCache(SixCrate, WorldAnchorIds.Micro06, new Vector3(-5.6f, 0f, -3.2f), 200f,
                 ContainerKinds.CrateM, new Recipe(2, 1, 0), HeadlampPurpose),
         };
 
