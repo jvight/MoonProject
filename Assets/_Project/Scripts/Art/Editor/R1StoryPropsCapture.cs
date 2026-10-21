@@ -2477,6 +2477,59 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
+        /// relay.2's hut at night with Elder 06 stopped beside it (slumped 7 deg, as World stands it): its lamp dark, as
+        /// it ships, then lit through its <c>_EmissionColor</c>, from 12 m and close
+        /// (<c>Logs/captures/relay_hut_*.png</c>):
+        /// <c>python tools/unity_batch.py exec --project . --method MoonProject.Art.Editor.R1StoryPropsCapture.CaptureRelayHut</c>
+        /// </summary>
+        public static void CaptureRelayHut()
+        {
+            BatchRunner.Run(nameof(CaptureRelayHut), args =>
+            {
+                AssetDatabase.Refresh();
+                R1MaterialLibrary.BuildMaterials();
+                R1StoryPropsBuilder.BuildStoryPropMaterials();
+                R1ModelBuilder.Build();
+                R1Ssr3Builder.Build();
+
+                string capturesDir = Path.GetFullPath("Logs/captures");
+                Directory.CreateDirectory(capturesDir);
+
+                bool prevAsync = ShaderUtil.allowAsyncCompilation;
+                ShaderUtil.allowAsyncCompilation = false;
+                EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+                var temp = new ArtLightingPreview.TemporaryObjects();
+                try
+                {
+                    Color bg = SetupEnvironment(temp, true);
+                    GameObject hut = SpawnProp(ArtPaths.R1ModelsFolder + "/Structures/RelayHut.prefab", Vector3.zero,
+                        0f, temp);
+                    GameObject elder = SpawnProp(R1Ssr3Builder.Elder06PrefabPath, new Vector3(2.6f, 0f, 1.4f), -25f,
+                        temp);
+                    elder.transform.rotation = Quaternion.AngleAxis(-7f, elder.transform.forward)
+                                               * elder.transform.rotation;
+                    Transform lamp = hut.transform.Find("MastStub/RelayLamp");
+                    foreach (bool lit in new[] { false, true })
+                    {
+                        SetEmission(lamp, lit ? new Color(1.00f, 0.76f, 0.32f, 1f) * 2f : Color.black);
+                        string state = lit ? "lit" : "dark";
+                        RenderShot(new Vector3(7.5f, 2.4f, 9.6f), new Vector3(0.8f, 1.3f, 0f), 40f, bg,
+                            Path.Combine(capturesDir, $"relay_hut_12m_{state}.png"));
+                        RenderShot(new Vector3(3.2f, 1.9f, 4.4f), new Vector3(0.4f, 1.4f, 0f), 44f, bg,
+                            Path.Combine(capturesDir, $"relay_hut_close_{state}.png"));
+                    }
+                }
+                finally
+                {
+                    temp.Dispose();
+                    ShaderUtil.allowAsyncCompilation = prevAsync;
+                }
+
+                return true;
+            });
+        }
+
+        /// <summary>
         /// Dedicated fast batch entry point for capturing the standalone towable <c>PowerModule</c>
         /// alone and beside Rover 07 for scale in Day C and Dusk lighting:
         /// <c>python tools/unity_batch.py exec --project . --method MoonProject.Art.Editor.R1StoryPropsCapture.CapturePowerModule</c>
