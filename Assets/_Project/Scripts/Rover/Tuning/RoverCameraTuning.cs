@@ -456,33 +456,69 @@ namespace MoonProject.Rover
 
         [Tooltip("Fastest the release pan turns the camera round (deg/s): a gentle drift, never a whip.")]
         [Range(5f, 40f)]
-        [SerializeField] private float _releasePanSweep = 22f;
+        [SerializeField] private float _gazePanSweep = 22f;
 
         [Tooltip("Seconds the pan gives the turn toward relay.1's lamp.")]
         [Range(1f, 4f)]
-        [SerializeField] private float _releasePanTravelSeconds = 1.8f;
+        [SerializeField] private float _gazePanTravelSeconds = 1.8f;
 
         [Tooltip("Seconds the pan then holds the lamp while 07's head looks at it.")]
         [Range(1f, 4f)]
-        [SerializeField] private float _releasePanHoldSeconds = 2.2f;
+        [SerializeField] private float _gazePanHoldSeconds = 2.2f;
 
         [Tooltip("How far (deg) short of the lamp's bearing the pan settles: the lamp sits on a third of the frame, " +
                  "not its centre.")]
         [Range(0f, 35f)]
-        [SerializeField] private float _releasePanSlack = 15f;
+        [SerializeField] private float _gazePanSlack = 15f;
 
         [Tooltip("Furthest (deg) the lamp may lie from where the camera looks for the camera to turn at all; behind that, " +
                  "07's head turn and its chirp carry the look and the camera stays put.")]
         [Range(30f, 180f)]
-        [SerializeField] private float _releasePanMaxBearing = 120f;
+        [SerializeField] private float _gazePanMaxBearing = 120f;
 
         [Tooltip("Fastest the release pan tilts toward the lamp's height (deg/s).")]
         [Range(2f, 30f)]
-        [SerializeField] private float _releasePanRise = 8f;
+        [SerializeField] private float _gazePanRise = 8f;
 
         [Tooltip("Half-life (s) of the pan's speed easing: soft starts and stops.")]
         [Range(0.1f, 1.5f)]
-        [SerializeField] private float _releasePanHalfLife = 0.5f;
+        [SerializeField] private float _gazePanHalfLife = 0.5f;
+
+        [Tooltip("The nudge toward the next action's object when it is off screen (G5): one soft eased turn of the camera " +
+                 "toward it, with 07 in the foreground; any look or drive input ends it.")]
+        [SerializeField] private CameraMomentSettings _nudgeMoment =
+            new CameraMomentSettings(1f, 0f, 1.6f, 0f, 0f, 1f, 0f, 180f, 0f, 0f, 100000f);
+
+        [Tooltip("Fastest the nudge turns the camera (deg/s).")]
+        [Range(5f, 40f)]
+        [SerializeField] private float _nudgeSweep = 20f;
+
+        [Tooltip("Seconds the nudge gives the turn toward the object.")]
+        [Range(0.8f, 3f)]
+        [SerializeField] private float _nudgeTravelSeconds = 1.5f;
+
+        [Tooltip("Seconds the nudge holds the object before easing back.")]
+        [Range(0.2f, 3f)]
+        [SerializeField] private float _nudgeHoldSeconds = 0.5f;
+
+        [Tooltip("How far (deg) short of the object's bearing the nudge settles: the object comes into the frame's edge, " +
+                 "not its centre.")]
+        [Range(0f, 50f)]
+        [SerializeField] private float _nudgeSlack = 30f;
+
+        [Tooltip("Furthest (deg) the object may lie from where the camera looks for the camera to turn at all; behind that, " +
+                 "07's head turn carries the look.")]
+        [Range(30f, 180f)]
+        [SerializeField] private float _nudgeMaxBearing = 150f;
+
+        [Tooltip("Closest (m) an object may lie to 07 for the camera to nudge toward it; closer than this, 07's head look is enough.")]
+        [Range(0f, 40f)]
+        [SerializeField] private float _nudgeMinDistance = 12f;
+
+        [Tooltip("Share of the view's width and height, from each edge, a target must lie inside to count as on screen " +
+                 "(no nudge, no head turn).")]
+        [Range(0f, 0.3f)]
+        [SerializeField] private float _nudgeScreenMargin = 0.08f;
 
         [Tooltip("07 charging on its pad: the camera eases (calm, about 20 deg/s) to a closer three-quarter rear frame " +
                  "where the lamp bar and the clamps read, instead of pulling out to the wide shot, and eases back when " +
@@ -973,19 +1009,35 @@ namespace MoonProject.Rover
 
         public CameraMomentSettings ReleaseMoment => _releaseMoment;
 
-        public float ReleasePanSweep => _releasePanSweep;
+        public float ReleasePanSweep => _gazePanSweep;
 
-        public float ReleasePanTravelSeconds => _releasePanTravelSeconds;
+        public float ReleasePanTravelSeconds => _gazePanTravelSeconds;
 
-        public float ReleasePanHoldSeconds => _releasePanHoldSeconds;
+        public float ReleasePanHoldSeconds => _gazePanHoldSeconds;
 
-        public float ReleasePanSlack => _releasePanSlack;
+        public float ReleasePanSlack => _gazePanSlack;
 
-        public float ReleasePanMaxBearing => _releasePanMaxBearing;
+        public float ReleasePanMaxBearing => _gazePanMaxBearing;
 
-        public float ReleasePanRise => _releasePanRise;
+        public float ReleasePanRise => _gazePanRise;
 
-        public float ReleasePanHalfLife => _releasePanHalfLife;
+        public float ReleasePanHalfLife => _gazePanHalfLife;
+
+        public CameraMomentSettings NudgeMoment => _nudgeMoment;
+
+        public float NudgeSweep => _nudgeSweep;
+
+        public float NudgeTravelSeconds => _nudgeTravelSeconds;
+
+        public float NudgeHoldSeconds => _nudgeHoldSeconds;
+
+        public float NudgeSlack => _nudgeSlack;
+
+        public float NudgeMaxBearing => _nudgeMaxBearing;
+
+        public float NudgeMinDistance => _nudgeMinDistance;
+
+        public float NudgeScreenMargin => _nudgeScreenMargin;
 
         public CameraMomentSettings DockMoment => _dockMoment;
 
