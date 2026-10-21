@@ -33,6 +33,12 @@ namespace MoonProject.Autoplay
                 return;
             }
 
+            if (options.Mute)
+            {
+                AudioListener.volume = 0f;
+                Debug.Log("Autoplay: audio muted (-autoplay-mute)");
+            }
+
             var host = new GameObject("Autoplay");
             UnityEngine.Object.DontDestroyOnLoad(host);
             host.AddComponent<AutoplayRunner>().Configure(options);

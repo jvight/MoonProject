@@ -5,9 +5,11 @@ namespace MoonProject.Autoplay
 {
     /// <summary>
     /// What the command line asks of the bot: <c>-autoplay opening -autoplay-out &lt;dir&gt;</c>, with optional
-    /// <c>-autoplay-shot-seconds</c>, <c>-autoplay-timeout</c> and <c>-autoplay-until</c> (the last beat to play) and <c>-autoplay-strict-guidance 0</c> (two guidance elements together only warn instead of failing the run) and
-    /// <c>-autoplay-lines 1</c> (objective lines are part of the opening and are checked on screen; by default the
-    /// game shows none, and one showing is a stall reminder that fails the run).
+    /// <c>-autoplay-shot-seconds</c>, <c>-autoplay-timeout</c>, <c>-autoplay-until</c> (the last beat to play),
+    /// <c>-autoplay-mute</c> (silence all audio at boot), <c>-autoplay-strict-guidance 0</c> (two guidance elements
+    /// together only warn instead of failing the run) and <c>-autoplay-lines 1</c> (objective lines are part of the
+    /// opening and are checked on screen; by default the game shows none, and one showing is a stall reminder that
+    /// fails the run).
     /// </summary>
     public sealed class AutoplayOptions
     {
@@ -19,12 +21,13 @@ namespace MoonProject.Autoplay
         public const string LinesFlag = "-autoplay-lines";
         public const string NaiveFlag = "-autoplay-naive";
         public const string StrictGuidanceFlag = "-autoplay-strict-guidance";
+        public const string MuteFlag = "-autoplay-mute";
 
         public const float DefaultShotSeconds = 20f;
         public const float DefaultTimeoutSeconds = 900f;
 
         private AutoplayOptions(string scenario, string outDirectory, float shotSeconds, float timeoutSeconds,
-            string untilBeat, bool linesExpected, bool strictGuidance, bool naive)
+            string untilBeat, bool linesExpected, bool strictGuidance, bool naive, bool mute)
         {
             Scenario = scenario;
             OutDirectory = outDirectory;
@@ -34,6 +37,7 @@ namespace MoonProject.Autoplay
             LinesExpected = linesExpected;
             StrictGuidance = strictGuidance;
             Naive = naive;
+            Mute = mute;
         }
 
         /// <summary>The scenario to play; today only "opening".</summary>
@@ -63,6 +67,9 @@ namespace MoonProject.Autoplay
 
         /// <summary>The objective lines are part of the opening: the bot checks them on screen. Off, any line is a fallback.</summary>
         public bool LinesExpected { get; }
+
+        /// <summary>Silences all audio at boot (<c>AudioListener.volume = 0</c>) for this run.</summary>
+        public bool Mute { get; }
 
         /// <summary>
         /// True when the command line asks for the bot; <paramref name="problem"/> says what is wrong when it asks
@@ -98,7 +105,8 @@ namespace MoonProject.Autoplay
             }
 
             options = new AutoplayOptions(scenario, outDirectory, shotSeconds, timeout,
-                Value(args, UntilFlag) ?? string.Empty, Value(args, LinesFlag) == "1", Value(args, StrictGuidanceFlag) != "0", Value(args, NaiveFlag) == "1");
+                Value(args, UntilFlag) ?? string.Empty, Value(args, LinesFlag) == "1",
+                Value(args, StrictGuidanceFlag) != "0", Value(args, NaiveFlag) == "1", HasFlag(args, MuteFlag));
             return true;
         }
 
@@ -113,6 +121,19 @@ namespace MoonProject.Autoplay
             }
 
             return null;
+        }
+
+        private static bool HasFlag(string[] args, string flag)
+        {
+            for (int i = 0; i < args.Length; i++)
+            {
+                if (string.Equals(args[i], flag, StringComparison.OrdinalIgnoreCase))
+                {
+                    return i + 1 >= args.Length || args[i + 1] != "0";
+                }
+            }
+
+            return false;
         }
 
         private static bool TryFloat(string text, float fallback, out float value)
