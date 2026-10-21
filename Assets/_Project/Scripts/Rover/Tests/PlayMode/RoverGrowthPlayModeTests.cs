@@ -146,9 +146,10 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreEqual(0f, Quaternion.Angle(_housingRight.localRotation, rightHousingRotRest), 0.05f,
                 "Housing_R rests folded shut");
             var roadLight = _scene.Rover.GetComponentInChildren<RoverHeadlamp>();
+            float materialGlow = _lensLeft.sharedMaterial.GetFloat(EmissionStrengthId);
             float fullLensGlow = EmissionOf(_lensLeft);
             Assert.Greater(fullLensGlow, 0.5f, "Lens_L glows at R1_LampAmber's warm emission strength");
-            Assert.AreEqual(1.6f * roadLight.LampLevel, fullLensGlow, 0.05f,
+            Assert.AreEqual(materialGlow * roadLight.LampLevel, fullLensGlow, 0.05f,
                 "Lens_L matches R1_LampAmber emission scaled by RoverHeadlamp's active LampLevel");
             Assert.AreEqual(fullLensGlow, EmissionOf(_lensRight), Tolerance, "Lens_R matches Lens_L");
 
@@ -177,7 +178,8 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.IsTrue(_cellPodRight.gameObject.activeSelf);
             yield return RealRoverScene.WaitSeconds(settings.HeadlampFitSeconds + 0.1f);
             Assert.IsFalse(growth.CellPodsMoving);
-            Assert.Greater(EmissionOf(_cellBarLeft), 1f, "the cell pod charge bars light warm once fitted");
+            Assert.AreEqual(_cellBarLeft.sharedMaterial.GetFloat(EmissionStrengthId), EmissionOf(_cellBarLeft),
+                Tolerance, "the cell pod charge bars light warm once fitted");
         }
 
         [UnityTest]
