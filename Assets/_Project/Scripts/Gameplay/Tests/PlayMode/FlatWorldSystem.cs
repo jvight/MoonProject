@@ -28,6 +28,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             new WorldAnchor("place.apron", new Vector3(15f, 0f, 140f), Vector3.forward, 14f),
             new WorldAnchor("place.ruins", new Vector3(95f, 0f, 185f), Vector3.back, AnchorRadius),
             new WorldAnchor("place.midway", new Vector3(-40f, 0f, 90f), Vector3.forward, AnchorRadius),
+            new WorldAnchor(WorldAnchorIds.Micro06, new Vector3(-75f, 0f, 180f), Vector3.forward, AnchorRadius),
         };
 
         public Rect PlayableArea
