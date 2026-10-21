@@ -325,7 +325,8 @@ namespace MoonProject.Art.Tests
             Material lens = lamp.GetComponent<Renderer>().sharedMaterial;
             Assert.AreEqual(R1StoryPropsBuilder.RelayLampDarkMaterialName, lens.name, "RelayLamp wears the dark lens.");
             Assert.AreEqual(Color.black, lens.GetColor("_EmissionColor"), "RelayLamp is dark until Gameplay lights it.");
-            Assert.IsTrue(lens.IsKeywordEnabled("_EMISSION"), "RelayLamp can still be lit through _EmissionColor.");
+            Assert.IsTrue(lens.GetTexture("_EmissionMap") != null && lens.GetFloat("_EmissionStrength") > 0f,
+                "RelayLamp can still be lit through _EmissionColor.");
         }
 
         [Test]

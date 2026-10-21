@@ -2626,6 +2626,11 @@ namespace MoonProject.Art.Editor
                             Path.Combine(capturesDir, $"relay_hut_12m_{state}.png"));
                         RenderShot(new Vector3(3.2f, 1.9f, 4.4f), new Vector3(0.4f, 1.4f, 0f), 44f, bg,
                             Path.Combine(capturesDir, $"relay_hut_close_{state}.png"));
+                        if (!lit)
+                        {
+                            RenderShot(new Vector3(5.6f, 2.1f, 6.8f), new Vector3(0.9f, 1.45f, 0.2f), 42f, bg,
+                                Path.Combine(capturesDir, "relay2_hut_night.png"));
+                        }
                     }
                 }
                 finally
