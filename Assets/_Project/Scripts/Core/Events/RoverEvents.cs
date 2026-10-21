@@ -395,7 +395,7 @@ namespace MoonProject.Core.Events
         public float Seconds { get; }
     }
 
-    /// <summary>The beam has traced stroke <see cref="Index"/> (from 0) of the maker's mark on 07's face (UI).</summary>
+    /// <summary>The beam begins stroke <see cref="Index"/> (from 0) of the maker's mark on 07's face (UI).</summary>
     public readonly struct LogoStrokeDrawn
     {
         public LogoStrokeDrawn(int index)
@@ -407,9 +407,9 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
-    /// Text typed on 07's face during the boot (UI), at most once every two characters: <see cref="CharIndex"/> is the
-    /// last character on screen of line <see cref="LineIndex"/>. Lines count in the order they show: 0 the maker's
-    /// wordmark, 1 the load line, then 2 onward the self-test's lines.
+    /// Text typed on 07's face during the boot (UI), every character or every few as UI tunes it:
+    /// <see cref="CharIndex"/> is the last character on screen of line <see cref="LineIndex"/>. Lines count in the
+    /// order they show: 0 the maker's wordmark, 1 the load line, then 2 onward the self-test's lines.
     /// </summary>
     public readonly struct BootTextTyped
     {

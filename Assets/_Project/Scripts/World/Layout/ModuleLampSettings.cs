@@ -53,7 +53,24 @@ namespace MoonProject.World
         [Range(0f, 0.5f)]
         [SerializeField] private float _haloLift = 0.08f;
 
+        [Header("Its purpose")]
+        [Tooltip("How far from the habitat ruin the module still counts as waiting there, metres: inside it, unhooked, " +
+            "the lamp is a blinking lure; anywhere else (on the cable, home, built into the bank) it glows steady.")]
+        [Range(2f, 40f)]
+        [SerializeField] private float _lureRadius = 12f;
+
+        [Tooltip("Share of the blink's peak the lamp holds once its job is done: a calm, steady 'powered' glow.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _poweredLevel = 0.55f;
+
+        [Tooltip("Seconds the lamp takes to ease from the lure's blink to the steady glow.")]
+        [Range(0.1f, 6f)]
+        [SerializeField] private float _purposeFadeSeconds = 1.5f;
+
         public string TowId => _towId;
+        public float LureRadius => _lureRadius;
+        public float PoweredLevel => _poweredLevel;
+        public float PurposeFadeSeconds => _purposeFadeSeconds;
         public float BlinkSeconds => _blinkSeconds;
         public float OnShare => _onShare;
         public float EaseShare => _easeShare;

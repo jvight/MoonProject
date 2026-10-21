@@ -60,6 +60,9 @@ namespace MoonProject.World.Editor
         public const string BasaltMaskTexture = "Assets/_Project/Art/R1/Textures/T_R1_Basalt_Mask.png";
         public const string R1BasaltMaterial = "Assets/_Project/Generated/Art/R1/Materials/R1_Basalt.mat";
 
+        /// <summary>One of Art's R1 materials by its slot name (e.g. R1_GreyMetal).</summary>
+        public static string R1Material(string slot) => "Assets/_Project/Generated/Art/R1/Materials/" + slot + ".mat";
+
         public const string R1RocksFolder = "Assets/_Project/Art/R1/Models/Rocks";
         /// <summary>R1 basalt rocks (Art/R1/Models/Rocks) used as pebbles: 5 irregular rounded cobble and lump shapes.</summary>
         public static readonly string[] PebbleRocks = { "Rock_00", "Rock_01", "Rock_02", "Rock_03", "Rock_04" };

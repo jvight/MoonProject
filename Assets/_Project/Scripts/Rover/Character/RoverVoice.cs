@@ -153,7 +153,9 @@ namespace MoonProject.Rover
             }
             else if (beat.Phase == FeelPhase.Reward)
             {
-                Say(ChirpMood.Happy, 1f);
+                // The charge is full: the pad's payoff. The build's chirp (a Happy too) may have sounded a few seconds
+                // ago; the mood cooldown must not swallow this one.
+                Say(ChirpMood.Happy, 1f, payoff: true);
             }
         }
 
@@ -237,9 +239,9 @@ namespace MoonProject.Rover
             _voice.Syllable(syllable.Index, syllable.Count, syllable.Seconds, _clock());
         }
 
-        private void Say(ChirpMood mood, float intensity)
+        private void Say(ChirpMood mood, float intensity, bool payoff = false)
         {
-            if (_voice.TryChirp(mood, _clock()))
+            if (_voice.TryChirp(mood, _clock(), payoff))
             {
                 _events.Publish(new RoverChirpRequested(mood, Mathf.Clamp01(intensity)));
             }

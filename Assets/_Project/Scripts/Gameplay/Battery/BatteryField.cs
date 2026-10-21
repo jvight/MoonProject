@@ -35,6 +35,7 @@ namespace MoonProject.Gameplay
         private OpeningField _pads;
         private IRoverSystems _systems;
         private ITowLine _tow;
+        private RelayRepair _relay;
         private StructureCatalog _structures;
         private bool _padFromReserve;
         private bool _chargingOnReserve;
@@ -129,6 +130,12 @@ namespace MoonProject.Gameplay
             _structures = structures ?? throw new ArgumentNullException(nameof(structures));
         }
 
+        /// <summary>relay.1, once lit: its contact pad charges 07 too.</summary>
+        internal void ConnectRelay(RelayRepair relay)
+        {
+            _relay = relay ?? throw new ArgumentNullException(nameof(relay));
+        }
+
         /// <summary>07's winch cable: a tow caps top speed and makes driving cost more.</summary>
         internal void ConnectTow(ITowLine tow)
         {
@@ -219,6 +226,7 @@ namespace MoonProject.Gameplay
             _lastPosition = position;
 
             bool onPad = _pads.Pads.TryFindUnder(position, out Vector3 padPosition, out _padFromReserve);
+            bool onRelay = !onPad && _relay != null && _relay.TryFindUnder(position, out padPosition);
             _hasCharger = _pads.Pads.TryFindNearest(position, out _nearestCharger);
             return new BatteryStep
             {
@@ -226,6 +234,7 @@ namespace MoonProject.Gameplay
                 Speed = _rover.Speed,
                 SlopeDegrees = SlopeAlong(_rover.GroundNormal, travel),
                 Towing = _tow != null && _tow.IsTowing,
+                TowStrain01 = _tow != null && _tow.IsTowing ? _tow.Strain01 : 0f,
                 Boosting = _boosting,
                 BeamSeconds = _beam.Take(out float scanSeconds, out float weldSeconds),
                 ScanSeconds = scanSeconds,
@@ -233,8 +242,8 @@ namespace MoonProject.Gameplay
                 Still = _rover.Speed <= _tuning.StillSpeed,
                 SolarFitted = _systems.StateOf(RoverSystem.SolarWing) == RoverSystemState.Ok,
                 DrumsFitted = _abilities.Has(RoverAbility.BoostCoils),
-                OnCharger = onPad,
-                Charger = ChargerKind.Pad,
+                OnCharger = onPad || onRelay,
+                Charger = onRelay ? ChargerKind.Mast : ChargerKind.Pad,
                 ChargerPosition = padPosition,
                 Position = position,
                 NearestLitCharger = _hasCharger ? _nearestCharger : position,

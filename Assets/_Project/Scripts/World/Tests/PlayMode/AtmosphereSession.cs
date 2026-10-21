@@ -72,14 +72,26 @@ namespace MoonProject.World.PlayModeTests
         private const float CueTowerLook = 7f;
         private const string CueLampName = "ModuleLamp";
 
+        // relay.2's hut: its site and nodes, 06 against it, how far out the far eye stands and how high it looks.
+        private const string HutSiteName = "Relay2Site";
+        private const string HutName = "RelayHut";
+        private const string HutApproachName = "ScanApproach";
+        private const string HutElderName = "Elder06";
+        private const float HutStandOff = 15f;
+        private const float HutLookHeight = 1f;
+
         // relay.1's lamp: its node, the answered loop's length, and the crop's lens.
         private const string RelayLampName = "RelayLamp";
         private const float RelayAnsweredSignSeconds = 6f;
         private const float RelayCropFov = 6f;
 
+        // The key level the chase shot of relay.1 waits for.
+        private const float RelayChaseKey = 0.9f;
+
         // relay.1's repair site: its cabinet and the spare inside, and how far in front of the cabinet the near eye
         // stands.
         private const string RelaySiteName = "Relay1Site";
+        private const string RelaySiteRelayId = WorldAnchorIds.RelayPrefix + "1";
         private const string RelaySiteCabinet = "ServiceCabinet";
         private const string RelaySiteSpare = "ServiceCabinet/FeedUnitSpare_Slot/FeedUnitSpare";
         private const float RelaySiteStandOff = 15f;
@@ -104,6 +116,12 @@ namespace MoonProject.World.PlayModeTests
         private const string GlintSparkleName = "Sparkle";
         private const string CueLampLens = "PowerModule_StatusLamp";
         private const string CueLampTowId = "habitat.power_module";
+
+        // The module lamp's purpose: the peak a lure shot waits for, one blink's length, and where on the apron the
+        // module is set down when brought home.
+        private const float ModuleLampPeak = 0.9f;
+        private const float ModuleBlinkSeconds = 4f;
+        private const float ModuleHomeOffset = 6f;
         private const float CueLampStandOff = 10f;
         private const float CueLampPeak = 0.9f;
         private const float CueLampTimeout = 30f;
@@ -689,7 +707,8 @@ namespace MoonProject.World.PlayModeTests
         /// <summary>
         /// relay.1's lamp, the first lure after the answer (opening v3 R8), on a real New Game: the night ready and the
         /// call answered, seen from the apron at the top of a key, as the whole night frame and as a close crop on the
-        /// mast. Logs/world-captures/relay-lamp-*.png, its distance and level in the log.
+        /// mast, then in the real chase view with 07 turned west to it. Logs/world-captures/relay-lamp-*.png, its
+        /// distance and level in the log.
         /// </summary>
         [UnityTest]
         [Timeout(300000)]
@@ -772,13 +791,30 @@ namespace MoonProject.World.PlayModeTests
                 Object.Destroy(host);
             }
 
+            // Where 07 stands after the answer, at the base's own mast on the apron, turned west to the lamp: the real
+            // chase view, at the top of a key.
+            Vector3 apron = Anchor(context.Get<IWorldAnchors>(), WorldAnchorIds.PlaceApron).Position;
+            Vector3 west = Vector3.ProjectOnPlane(lamp.transform.position - apron, Vector3.up).normalized;
+            context.Get<IRoverPlacement>().PlaceAt(OnGround(context.Get<ITerrainQuery>(),
+                new Vector2(apron.x, apron.z)), Quaternion.LookRotation(west, Vector3.up));
+            yield return new WaitForSeconds(SettleSeconds);
+            started = Time.time;
+            while (lamp.Level < RelayChaseKey && Time.time - started < RelayAnsweredSignSeconds)
+            {
+                yield return null;
+            }
+
+            Shoot(view, "relay-lamp-chase");
+            Debug.Log($"[relay-lamp] chase view toward relay.1: level {lamp.Level:F2}");
             Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
         }
 
         /// <summary>
         /// relay.1's repair site at night after the answer (opening v3 5.1), on a real New Game: the open service
         /// cabinet lit inside by its own lamp with the feed-unit spare on its shelf, the mast's feed socket and the
-        /// contact pad, from 15 m in front of the cabinet and from the apron. Logs/world-captures/relay-site-*.png.
+        /// contact pad, from 15 m in front of the cabinet and from the apron; then relit (the lamp steady after its
+        /// warm-up, the cabinet dark, the pad's lamp and the relay lens on), from the same eyes.
+        /// Logs/world-captures/relay-site-*.png.
         /// </summary>
         [UnityTest]
         [Timeout(300000)]
@@ -852,7 +888,24 @@ namespace MoonProject.World.PlayModeTests
                 Place(camera, LookPose("relay-site-apron-before", apronEye, cabinet.position, OpeningFov));
                 Shoot(camera, "relay-site-apron-before");
                 Debug.Log($"[relay-site] cabinet {Vector3.Distance(near, spare.position):F1} m from the near eye, " +
-                          $"{Vector3.Distance(apronEye, cabinet.position):F0} m from the apron");
+                          $"{Vector3.Distance(apronEye, cabinet.position):F0} m from the apron; sun {SunReport(context)}, " +
+                          $"{context.Get<ISunlight>().Phase}");
+
+                // Relit: the lamp warms up and holds steady, the cabinet goes dark, the pad and the lens come on.
+                var lamp = FindNamed(RelayLampName).GetComponent<RelayAnswerLamp>();
+                var lights = site.GetComponentInChildren<Relay1SiteLights>();
+                context.Events.Publish(new RelayRelit(RelaySiteRelayId, false));
+                yield return new WaitForSeconds(settings.Landmarks.RelayLamp.WarmUpSeconds + SettleSeconds);
+                Assert.IsTrue(lights.Relit, "the site shows the relay relit");
+                Assert.AreEqual(settings.Landmarks.RelayLamp.RelitLevel, lamp.Level, 1e-4f, "the lamp holds steady");
+                Place(camera, LookPose("relay-site-15m-after", near, spare.position, OpeningFov));
+                Shoot(camera, "relay-site-15m-after");
+                Place(camera, LookPose("relay-site-apron-after", apronEye, cabinet.position, OpeningFov));
+                Shoot(camera, "relay-site-apron-after");
+                Place(camera, LookPose("relay-lamp-crop-after", apronEye, lamp.transform.position, RelayCropFov));
+                Shoot(camera, "relay-lamp-crop-after");
+                Debug.Log($"[relay-site] relit: lamp level {lamp.Level:F2}; sun {SunReport(context)}, " +
+                          $"{context.Get<ISunlight>().Phase}");
             }
             finally
             {
@@ -860,6 +913,188 @@ namespace MoonProject.World.PlayModeTests
             }
 
             Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        /// <summary>
+        /// relay.2's hut by the canyon mouth at night (opening v3 5.2b), on a real New Game: the small 1980s hut with
+        /// its dark relay lamp and 06 slumped against it, from 15 m out on the approach and from the scan spot.
+        /// Logs/world-captures/relay2-hut-*.png.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(CanyonSessionScene))]
+        [PostBuildCleanup(typeof(CanyonSessionScene))]
+        public IEnumerator RelayHut_IsCapturedAtNight_From15m()
+        {
+            BootstrapHarness.DeleteSaveFiles(CanyonSessionScene.SaveSlot);
+#if UNITY_EDITOR
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(CanyonSessionScene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            while (!loading.isDone)
+            {
+                yield return null;
+            }
+#else
+            throw new NotSupportedException("The atmosphere session loads the scene through the editor.");
+#endif
+            GameBootstrap bootstrap = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
+            {
+                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
+            }
+
+            Assert.IsNotNull(bootstrap, "the scene has its bootstrap");
+            GameContext context = bootstrap.Context;
+            _awoke = context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
+            float started = Time.time;
+            while (!_awake)
+            {
+                Assert.Less(Time.time - started, WakeTimeout, "07 wakes up");
+                yield return null;
+            }
+
+            foreach (OpeningMilestone milestone in new[]
+                {
+                    OpeningMilestone.FirstCharge, OpeningMilestone.PowerOn, OpeningMilestone.NightReady,
+                })
+            {
+                context.Events.Publish(new OpeningMilestoneReached(milestone, true));
+            }
+
+            yield return new WaitForSeconds(SettleSeconds);
+            Transform site = FindNamed(HutSiteName);
+            Transform hut = site.Find(HutName);
+            Transform approach = site.Find(HutApproachName);
+            Transform six = FindNamed(HutElderName);
+            Assert.IsNotNull(hut, "relay.2's site has its hut");
+            Assert.IsNotNull(approach, "relay.2's site has its scan spot");
+            Vector3 middle = (hut.position + six.position) * 0.5f;
+            Vector3 far = OnGround(context.Get<ITerrainQuery>(),
+                    new Vector2(middle.x + site.forward.x * HutStandOff, middle.z + site.forward.z * HutStandOff))
+                + Vector3.up * CueLowEyeHeight;
+            Vector3 look = middle + Vector3.up * HutLookHeight;
+            Camera view = context.Get<IViewCamera>().Camera;
+            var host = new GameObject("RelayHutCamera");
+            try
+            {
+                var camera = host.AddComponent<Camera>();
+                camera.CopyFrom(view);
+                camera.enabled = false;
+                CopyPipelineSettings(view, camera);
+                Place(camera, LookPose("relay2-hut-15m", far, look, OpeningFov));
+                Shoot(camera, "relay2-hut-15m");
+                Place(camera, LookPose("relay2-hut-scan-spot", approach.position + Vector3.up * CueLowEyeHeight,
+                    six.position + Vector3.up * HutLookHeight, OpeningFov));
+                Shoot(camera, "relay2-hut-scan-spot");
+                Debug.Log($"[relay2-hut] hut {Vector3.Distance(hut.position, six.position):F1} m from 06; scan spot " +
+                          $"{Vector3.Distance(approach.position, six.position):F1} m out; eye " +
+                          $"{Vector3.Distance(far, middle):F1} m");
+            }
+            finally
+            {
+                Object.Destroy(host);
+            }
+
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        /// <summary>
+        /// The power module's lamp for as long as it has a purpose (opening v3 R4), on a real New Game at night: a
+        /// blinking lure while the module waits unhooked at the habitat ruin; brought home to the apron, a calm steady
+        /// glow and no lure. Logs/world-captures/module-lamp-*.png, its level and lure state in the log.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(CanyonSessionScene))]
+        [PostBuildCleanup(typeof(CanyonSessionScene))]
+        public IEnumerator ModuleLamp_LuresAtTheRuin_ThenGlowsSteadyAtHome()
+        {
+            BootstrapHarness.DeleteSaveFiles(CanyonSessionScene.SaveSlot);
+#if UNITY_EDITOR
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(CanyonSessionScene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            while (!loading.isDone)
+            {
+                yield return null;
+            }
+
+            WorldSettings settings = AssetDatabase.LoadAssetAtPath<WorldSettings>(OpeningSettingsPath);
+#else
+            throw new NotSupportedException("The atmosphere session loads the scene through the editor.");
+#endif
+            GameBootstrap bootstrap = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
+            {
+                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
+            }
+
+            Assert.IsNotNull(bootstrap, "the scene has its bootstrap");
+            GameContext context = bootstrap.Context;
+            _awoke = context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
+            float started = Time.time;
+            while (!_awake)
+            {
+                Assert.Less(Time.time - started, WakeTimeout, "07 wakes up");
+                yield return null;
+            }
+
+            foreach (OpeningMilestone milestone in new[]
+                {
+                    OpeningMilestone.FirstCharge, OpeningMilestone.PowerOn, OpeningMilestone.NightReady,
+                })
+            {
+                context.Events.Publish(new OpeningMilestoneReached(milestone, true));
+            }
+
+            yield return new WaitForSeconds(SettleSeconds);
+            var lamp = FindNamed(CueLampName).GetComponent<ModuleStatusLamp>();
+            Assert.IsTrue(context.Get<ITowLine>().TryFindLoad(CueLampTowId, out Transform module),
+                "the towable power module stands beside the habitat");
+            Assert.IsTrue(lamp.IsLure, "waiting at the ruin, the lamp is a lure");
+            Vector3 apron = Anchor(context.Get<IWorldAnchors>(), WorldAnchorIds.PlaceApron).Position;
+            Camera view = context.Get<IViewCamera>().Camera;
+            var host = new GameObject("ModuleLampCamera");
+            try
+            {
+                var camera = host.AddComponent<Camera>();
+                camera.CopyFrom(view);
+                camera.enabled = false;
+                CopyPipelineSettings(view, camera);
+                Vector3 toModule = Vector3.ProjectOnPlane(module.position - apron, Vector3.up).normalized;
+                Vector3 eye = module.position - toModule * CueLampStandOff + Vector3.up * CueLowEyeHeight;
+                yield return WaitForLampPeak(lamp);
+                Place(camera, LookPose("module-lamp-lure", eye, lamp.transform.position, OpeningFov));
+                Shoot(camera, "module-lamp-lure");
+                Debug.Log($"[module-lamp] at the ruin: level {lamp.Level:F2}, lure {lamp.IsLure}");
+
+                // Brought home: the module stands on the apron, off the cable.
+                module.position = OnGround(context.Get<ITerrainQuery>(), new Vector2(
+                    apron.x + toModule.x * ModuleHomeOffset, apron.z + toModule.z * ModuleHomeOffset));
+                Physics.SyncTransforms();
+                yield return new WaitForSeconds(settings.Landmarks.ModuleLamp.PurposeFadeSeconds + SettleSeconds);
+                Assert.IsFalse(lamp.IsLure, "home, the lamp is no lure");
+                Assert.AreEqual(settings.Landmarks.ModuleLamp.PoweredLevel, lamp.Level, 1e-3f, "a steady glow");
+                eye = module.position - toModule * CueLampStandOff + Vector3.up * CueLowEyeHeight;
+                Place(camera, LookPose("module-lamp-home", eye, lamp.transform.position, OpeningFov));
+                Shoot(camera, "module-lamp-home");
+                Debug.Log($"[module-lamp] home: level {lamp.Level:F2}, lure {lamp.IsLure}");
+            }
+            finally
+            {
+                Object.Destroy(host);
+            }
+
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        // Waits through one blink for the lamp's peak, so the lure shot shows it lit.
+        private static IEnumerator WaitForLampPeak(ModuleStatusLamp lamp)
+        {
+            float started = Time.time;
+            while (lamp.Level < ModuleLampPeak && Time.time - started < ModuleBlinkSeconds)
+            {
+                yield return null;
+            }
         }
 
         /// <summary>

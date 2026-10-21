@@ -219,7 +219,8 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Fakes.Cells = 4;
             _rig.Fakes.Charge = 2f;
             events.Publish(new BatteryArcRevealed(false));
-            events.Publish(new NextStepChanged("next.v2.build_pad"));
+            events.Publish(new NextStepChanged("next.v2.build_pad", NextLineReason.Reminder, default, false, false,
+                null, Vector3.zero));
             _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Salvage, new Vector3(0f, 0f, 12f), true);
             int gain = 0;
             foreach (ScreenShape shape in ScreenShapes.All)

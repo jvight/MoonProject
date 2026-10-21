@@ -60,5 +60,11 @@ namespace MoonProject.Gameplay
         /// hold E to fit it there.
         /// </summary>
         Install = 21,
+
+        /// <summary>
+        /// The call can be answered and the antenna mast stands (opening v3 R8): hold E at the mast's foot to transmit.
+        /// The chip stays on the mast until 07 has transmitted.
+        /// </summary>
+        Transmit = 22,
     }
 }

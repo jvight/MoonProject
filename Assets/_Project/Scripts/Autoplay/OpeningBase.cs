@@ -34,7 +34,7 @@ namespace MoonProject.Autoplay
         private const float CueMargin = 0.05f;
 
         /// <summary>Seconds of one sweep of the view while the bot looks for a lit cue.</summary>
-        private const float CueSweepSeconds = 1.5f;
+        private const float CueSweepSeconds = 3f;
         private const float DriveSeconds = 150f;
         private const float BaseSpacing = 7f;
         private const float RuinsGateOffset = 10f;
@@ -59,14 +59,17 @@ namespace MoonProject.Autoplay
         // Closer than this (metres, flat) a small crate's seal lies under 07's nose, out of the chest cutter's sight.
         private const float SealTooClose = 1f;
 
-        /// <summary>Closer than this (metres, flat) to a scan piece 07 has rolled in over it.</summary>
-        private const float ScanTooClose = 1.5f;
+        /// <summary>Closer than this share of the stand-off to a scan piece 07 has rolled in too near: the lens cannot see it.</summary>
+        private const float ScanTooCloseShare = 0.7f;
 
         /// <summary>...and it backs off to this share of the stand-off.</summary>
         private const float ScanBackOffShare = 0.8f;
         private const float SealCutSeconds = 30f;
         private const float SealCandidateSeconds = 3f;
-        private const int SealCandidateAttempts = 3;
+        private const int SealCandidateAttempts = 6;
+
+        /// <summary>How far to the side of the way back a repositioning steps (a share of the step).</summary>
+        private const float SealSideStep = 0.6f;
         private const float SealNudgeMetres = 1f;
         private const float ScanLookSeconds = 12f;
         private const float ScanAllowanceSeconds = 8f;
@@ -76,6 +79,9 @@ namespace MoonProject.Autoplay
         private const float ApproachThrottleRadius = 0.5f;
         private const float SunsetSeconds = 300f;
         private const float ChargeSeconds = 60f;
+
+        /// <summary>Metres from relay.1's cabinet or socket 07 stops at: well inside the take and fit reach.</summary>
+        private const float RelayArrive = 2f;
 
         /// <summary>Metres out from the module's hitch where 07 turns its back to it before reversing.</summary>
         private const float HookStandOff = 4f;
@@ -88,6 +94,9 @@ namespace MoonProject.Autoplay
 
         /// <summary>Metres short of the apron's centre 07 stops towing: the module trails onto the apron behind it.</summary>
         private const float HomeStop = 1f;
+
+        /// <summary>Metres from that stop point 07 counts as there: close, so the module trails onto the apron.</summary>
+        private const float HomeArrive = 1f;
 
         /// <summary>Seconds the pad may take to take 07 in once it rests there (a full 07 waits out the rest time).</summary>
         private const float DuskSeconds = 15f;
@@ -145,6 +154,9 @@ namespace MoonProject.Autoplay
         /// reminders), a line showing at all fails the run, so the bot follows the game's steps and the world's cues.
         /// </summary>
         public bool LinesExpected { get; set; }
+
+        /// <summary>The first-time player check, when the run has one: moments inside a beat are checked too.</summary>
+        public NaiveGuard Naive { get; set; }
 
         /// <summary>Where the last world cue the bot waited for stood.</summary>
         public Vector3 CuePoint { get; private set; }
@@ -206,8 +218,12 @@ namespace MoonProject.Autoplay
                 yield return cue.Lit() ? _bot.LookAround(CueSweepSeconds) : null;
             }
 
+            Camera view = _bot.World.Context.Get<IViewCamera>().Camera;
+            Vector3 seen = view.WorldToViewportPoint(cue.Point());
             _bot.Warn("world cue '" + cue.Name + "' was not lit and on screen within " +
-                      seconds.ToString("0", CultureInfo.InvariantCulture) + " s (" + why + "): lit " + cue.Lit() + ".");
+                      seconds.ToString("0", CultureInfo.InvariantCulture) + " s (" + why + "): lit " + cue.Lit() +
+                      ", at " + cue.Point() + ", " + Vector3.Distance(view.transform.position, cue.Point()).ToString("0") +
+                      " m from the camera, in the view at " + seen + ".");
         }
 
         /// <summary>The objective line the game must be on, and reading on screen once 07 stands still.</summary>
@@ -314,6 +330,12 @@ namespace MoonProject.Autoplay
             yield return _bot.Tap(Key.E);
             yield return _bot.Until(() => build.State == BuildModeState.Placing, FollowSeconds,
                 "E to take " + structureId + " up to place");
+            if (Naive != null && structureId == StructureIds.ChargingPad)
+            {
+                // The menu closed on the pad: what tells a player to put it on the bay and press E?
+                yield return Naive.Check("B4b");
+            }
+
             yield return PutTheGhostOn(build, at, structureId);
             if (_bot.Failed)
             {
@@ -605,15 +627,22 @@ namespace MoonProject.Autoplay
                     yield break;
                 }
 
+                // As a player does when the chip sits on nothing or on the wrong crate: step back a little farther each
+                // time, to alternate sides, and face the seal again until the chip is on it.
                 Vector3 away = Flat(_bot.World.Rover.Position - seal);
                 away = away.sqrMagnitude > 1e-4f ? away.normalized : Vector3.back;
-                yield return _bot.DriveTo(Flat(seal) + away * SealNudgeMetres, SealArrive, "a nudge off the seal of " + cacheId,
-                    DriveSeconds);
+                Vector3 across = Vector3.Cross(Vector3.up, away) * (attempt % 2 == 0 ? 1f : -1f);
+                Vector3 stand = Flat(seal) + (away + across * SealSideStep).normalized * (SealNudgeMetres * (attempt + 1));
+                yield return _bot.DriveTo(stand, SealArrive, "a step back from the seal of " + cacheId, DriveSeconds);
                 yield return _bot.DriveTo(Flat(seal), SealNose, "nose to the seal of " + cacheId, DriveSeconds);
                 yield return _bot.TurnToward(seal, "the seal of " + cacheId);
             }
 
-            _bot.Warn("the game never made " + cacheId + " the cut candidate (chip '" + _bot.World.Ui.Chip() + "'); the bot held E anyway.");
+            // Two crates too close to tell apart, or a chip that never comes: a finding, not something to hold through.
+            _bot.Fail("the cut chip never settled on " + cacheId + " after " + SealCandidateAttempts +
+                      " repositionings (candidate " +
+                      (G.Containers.Candidate != null ? G.Containers.Candidate.Id : "none") + ", chip '" +
+                      _bot.World.Ui.Chip() + "'): a player could not tell which crate E would cut. " + _bot.Where());
         }
 
         private bool IsSealCandidate(string cacheId)
@@ -756,11 +785,36 @@ namespace MoonProject.Autoplay
                 () => "The winch stands " + DriveSteering.FlatDistance(winch.position, hitch)
                     .ToString("0.0", CultureInfo.InvariantCulture) + " m from the hitch.");
             Vector3 fromHome = Flat(module.position - Pad()).normalized;
-            yield return _bot.DriveTo(Flat(Pad()) + fromHome * HomeStop, LineUpArrive, "home to the apron, towing",
+            yield return _bot.DriveTo(Flat(Pad()) + fromHome * HomeStop, HomeArrive, "home to the apron, towing",
                 DriveSeconds);
             yield return _bot.Until(() => !G.Tow.IsTowing, FollowSeconds, "the winch to let the module go on the apron",
                 () => "The module stands " + DriveSteering.FlatDistance(module.position, Pad())
                     .ToString("0.0", CultureInfo.InvariantCulture) + " m from the apron's centre.");
+        }
+
+        /// <summary>
+        /// R10, relay.1's repair, as a player does it: up to the open cabinet where the labelled spare waits, a held E
+        /// takes it; to the mast box's empty feed socket, a held E fits it and the relay is lit; onto its contact pad,
+        /// which charges 07 like a pad of its own.
+        /// </summary>
+        public IEnumerator RepairTheRelay()
+        {
+            RelayRepair relay = G.Relay;
+            yield return _bot.Until(() => relay.Open, FollowSeconds, "relay.1 to have answered the call");
+            Vector3 spare = relay.SparePoint;
+            yield return _bot.DriveTo(Flat(spare), RelayArrive, "relay.1's open cabinet", DriveSeconds);
+            yield return _bot.Until(() => G.Hints.TryGet(InteractionKind.PickUp, out _), FollowSeconds,
+                "the cabinet to offer its spare (Pick up)");
+            yield return _bot.Hold(Key.E, () => relay.SpareTaken, FollowSeconds, "E to take relay.1's spare");
+            yield return _bot.DriveTo(Flat(relay.SocketPoint), RelayArrive, "relay.1's feed socket", DriveSeconds);
+            yield return _bot.Until(() => G.Hints.TryGet(InteractionKind.Install, out _), FollowSeconds,
+                "the feed socket to offer the spare (Fit)");
+            yield return _bot.Hold(Key.E, () => relay.Fitted, FollowSeconds, "E to fit the spare: relay.1 lit");
+            BatteryModel battery = G.Battery.Model;
+            yield return _bot.DriveTo(Flat(relay.PadPoint), ApproachThrottleRadius, "relay.1's contact pad",
+                DriveSeconds);
+            yield return _bot.Until(() => battery.CellsFull || battery.IsCharging && battery.Charger == ChargerKind.Mast,
+                ChargeSeconds, "relay.1's pad to charge 07");
         }
 
         /// <summary>Where the module stands now: the battery bank is built on it.</summary>
@@ -856,7 +910,7 @@ namespace MoonProject.Autoplay
 
             yield return _bot.DriveTo(Flat(fragment.Point), standOff, "the spot facing " + fragment.FragmentId,
                 DriveSeconds);
-            if (DriveSteering.FlatDistance(fragment.Point, _bot.World.Rover.Position) < ScanTooClose)
+            if (DriveSteering.FlatDistance(fragment.Point, _bot.World.Rover.Position) < standOff * ScanTooCloseShare)
             {
                 // Rolled in over the piece: the scan lens cannot see it past 07's own body, so back off and face it
                 // again, as a player would.

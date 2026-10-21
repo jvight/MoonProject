@@ -26,6 +26,7 @@ namespace MoonProject.Gameplay
         private readonly IDisposable _milestones;
         private float _seconds;
         private float _left;
+        private Vector3 _centre;
 
         public RangeRingField(EventBus events, RangeRingSettings settings, RangeRingModel model, BatteryModel battery,
             IChargePointSource chargePointSource, IRoverState rover)
@@ -53,13 +54,32 @@ namespace MoonProject.Gameplay
                     return 0f;
                 }
 
-                float fade = Mathf.Max(0.01f, _settings.FadeSeconds);
-                float in01 = Mathf.Clamp01((_seconds - _left) / fade);
-                float out01 = Mathf.Clamp01(_left / fade);
+                float in01 = Mathf.Clamp01((_seconds - _left) / Mathf.Max(0.01f, _settings.FadeInSeconds));
+                float out01 = Mathf.Clamp01(_left / Mathf.Max(0.01f, _settings.FadeOutSeconds));
                 float t = Mathf.Min(in01, out01);
                 return t * t * (3f - 2f * t);
             }
         }
+
+        /// <summary>
+        /// How far the ring has drawn out from 07 toward its edge, 0..1, eased: it grows outward, then holds.
+        /// </summary>
+        public float Reveal01
+        {
+            get
+            {
+                if (_left <= 0f)
+                {
+                    return 0f;
+                }
+
+                float t = Mathf.Clamp01((_seconds - _left) / Mathf.Max(0.01f, _settings.RevealSeconds));
+                return t * t * (3f - 2f * t);
+            }
+        }
+
+        /// <summary>Where the ring was worked out from: 07's place when it was shown. It draws out from here.</summary>
+        public Vector3 Centre => _centre;
 
         /// <summary>The line's strength for the mode now (the mode's own strength times the fade).</summary>
         public float Strength => Visibility01 * (Mode == RangeRingMode.Full ? _settings.FullStrength
@@ -77,7 +97,8 @@ namespace MoonProject.Gameplay
         {
             _chargePoints.Clear();
             _chargePointSource.CopyChargePoints(_chargePoints);
-            _model.Compute(_rover.Position, _battery.Charge, _chargePoints, _polygon);
+            _centre = _rover.Position;
+            _model.Compute(_centre, _battery.Charge, _chargePoints, _polygon);
             Mode = mode;
             _seconds = mode == RangeRingMode.Full ? _settings.FullSeconds : _settings.FaintSeconds;
             _left = _seconds;

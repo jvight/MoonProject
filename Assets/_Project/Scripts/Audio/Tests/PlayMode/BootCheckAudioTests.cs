@@ -201,13 +201,19 @@ namespace MoonProject.Audio.PlayModeTests
                 "face_logo_stroke_05", "face_logo_stroke_05", "face_logo_stroke_06",
             };
             int plays = _rig.Director.PlayCount;
+            float first = 0f;
             for (int i = 0; i < expected.Length; i++)
             {
                 _rig.Events.Publish(new LogoStrokeDrawn(i));
                 AssertLastFrom07(expected[i]);
+                if (i == 0)
+                {
+                    first = _rig.Director.LastVoice.volume;
+                }
             }
 
-            Assert.AreEqual(plays + expected.Length, _rig.Director.PlayCount, "one hum per stroke");
+            Assert.AreEqual(plays + expected.Length, _rig.Director.PlayCount, "one hum per stroke, none skipped");
+            Assert.Less(_rig.Director.LastVoice.volume, first * 0.9f, "a quick run of strokes softens, not stacks");
             _rig.Events.Publish(new BootLineCompleted(0));
             AssertLastFrom07("face_logo_resolve");
             Assert.AreEqual(plays + expected.Length + 1, _rig.Director.PlayCount);

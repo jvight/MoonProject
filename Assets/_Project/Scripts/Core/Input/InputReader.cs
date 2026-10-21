@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -202,6 +203,25 @@ namespace MoonProject.Core.Input
         public string GetBindingControl(RoverAction action, InputDeviceKind device)
         {
             return BindingLabels.ControlId(Resolve(action), device);
+        }
+
+        /// <summary>
+        /// Adds to <paramref name="into"/> the short label of every control bound to <paramref name="action"/> for
+        /// <paramref name="device"/>, in binding order: Excavate reads "E" and "LMB" on keyboard and mouse, Winch
+        /// "Scroll", "Z" and "C". For a prompt that names all the ways to do one thing. Allocates strings: cache them.
+        /// </summary>
+        public void GetBindingLabels(RoverAction action, InputDeviceKind device, List<string> into)
+        {
+            BindingLabels.AllLabels(Resolve(action), device, into);
+        }
+
+        /// <summary>
+        /// Adds to <paramref name="into"/> the stable control id ("keyboard.e", "mouse.leftbutton") of every control
+        /// bound to <paramref name="action"/> for <paramref name="device"/>, in binding order, for localized keycaps.
+        /// </summary>
+        public void GetBindingControls(RoverAction action, InputDeviceKind device, List<string> into)
+        {
+            BindingLabels.AllControlIds(Resolve(action), device, into);
         }
 
         public void Dispose()

@@ -58,8 +58,12 @@ namespace MoonProject.Autoplay
 
         private readonly bool _linesExpected;
 
-        public OpeningScenario(AutoplayBot bot, string untilBeat, bool linesExpected)
+        private readonly NaiveGuard _naive;
+
+        public OpeningScenario(AutoplayBot bot, string untilBeat, bool linesExpected, NaiveGuard naive = null)
         {
+            _naive = naive;
+            DeclareNextActions();
             _bot = bot;
             _untilBeat = untilBeat;
             _linesExpected = linesExpected;
@@ -67,13 +71,13 @@ namespace MoonProject.Autoplay
 
         public IEnumerator Run()
         {
-            _base = new OpeningBase(_bot) { LinesExpected = _linesExpected };
+            _base = new OpeningBase(_bot) { LinesExpected = _linesExpected, Naive = _naive };
             yield return Boot();
             _base.Listen();
             foreach (Func<IEnumerator> beat in new Func<IEnumerator>[]
                      {
                          Drive, Scan, CollectParts, BuildThePad, ChargeOnThePad, TheRuins, BuildTheArray,
-                         TheFirstChoice, TheHabitat, Nightfall, TheTower, TheAnswer,
+                         TheFirstChoice, TheHabitat, Nightfall, TheTower, TheAnswer, TheRelay,
                      })
             {
                 if (_bot.Failed || Reached(_lastBeat))
@@ -82,9 +86,73 @@ namespace MoonProject.Autoplay
                 }
 
                 yield return beat();
+                if (_naive != null && !_bot.Failed && _lastBeat != null)
+                {
+                    yield return _naive.Check(_lastBeat);
+                }
             }
 
             _base.Stop();
+        }
+
+        /// <summary>
+        /// What a first-time player must do after each beat (the first-time check passes only a cue that names it):
+        /// the key, the verb words of a chip, the words of a line and the world cues that point at it.
+        /// </summary>
+        private void DeclareNextActions()
+        {
+            if (_naive == null)
+            {
+                return;
+            }
+
+            const string drive = "ui.hint.drive";
+            _naive.Declare("B0", new NextAction("WASD", new[] { drive }, new[] { "lander" }, new[] { "lander" }));
+            _naive.Declare("B2", new NextAction("E", new[] { "hint.scan" }, new[] { "scan", "crate" }, null));
+            _naive.Declare("B3", new NextAction("E", new[] { "hint.pickup" }, new[] { "take", "parts", "crate" }, null));
+            _naive.Declare("B4", new NextAction("B", new[] { "hint.openbuild" },
+                new[] { "pad", "apron", "build", "charging" }, null));
+            _naive.Declare("B4b", new NextAction("E", new string[0], new[] { "place", "apron", "marks" }, null));
+            _naive.Declare("B5", new NextAction("WASD", new[] { drive }, new[] { "pad", "park" }, null));
+            _naive.Declare("B6", new NextAction("WASD", new[] { drive }, new[] { "Lumen", "solar", "ruins", "array" },
+                new[] { "glint" }));
+            _naive.Declare("B7a", new NextAction("E", new[] { "hint.salvage" }, new[] { "cut", "panel", "junction" },
+                null));
+            _naive.Declare("B7b", new NextAction("E", new[] { "hint.pickup" }, new[] { "rack", "igniter" },
+                new[] { "rack" }));
+            _naive.Declare("B7c", new NextAction("Tab", new[] { "hint.fitpart" }, new[] { "igniter", "fit" }, null));
+            _naive.Declare("B7", new NextAction("B", new[] { "hint.openbuild" }, new[] { "solar", "array" }, null));
+            // R5's free choice is told by the world only: no line is expected, and the dead lamp's glance comes
+            // after 30 s with no site visited.
+            _naive.Declare("B8", new NextAction("WASD", new string[0], new[] { "seismic", "habitat" },
+                new[] { "seismic", "module" }));
+            _naive.SetBudget("B8", FreeChoiceBudgetSeconds);
+            _naive.Declare("R5", new NextAction("WASD", new[] { drive }, new[] { "night", "module", "habitat", "store" },
+                new[] { "lamp" }));
+            _naive.Declare("B9a", new NextAction("RMB", new string[0], new[] { "tow", "home", "frame", "hook" }, null));
+            _naive.Declare("B9b", new NextAction("B", new[] { "hint.openbuild" }, new[] { "bank", "build", "module" },
+                null));
+            // The first nightfall plays by itself (B10): nothing is asked of the player after the bank.
+            _naive.Skip("B9");
+            _naive.Declare("B10", new NextAction("WASD", new[] { drive }, new[] { "tower", "antenna", "transmit" },
+                new[] { "tower" }));
+            _naive.Declare("B11a", new NextAction("B", new[] { "hint.openbuild" }, new[] { "mast", "antenna", "build" },
+                null));
+            _naive.Declare("B11", new NextAction("E", new[] { "hint.transmit" }, new[] { "transmit", "answer" },
+                new[] { "foot", "TX" }));
+            _naive.Declare("B12", new NextAction("WASD", new[] { drive }, new[] { "relay", "west" }, new[] { "relay" }));
+            _naive.Skip("R10");
+        }
+
+        /// <summary>The first free choice (B8, R5) is told by the world: the dead lamp's glance comes after 30 s.</summary>
+        private const float FreeChoiceBudgetSeconds = 35f;
+
+        private IEnumerator Sub(string id)
+        {
+            if (_naive != null && !_bot.Failed)
+            {
+                yield return _naive.Check(id);
+            }
         }
 
         private bool Reached(string beat)
@@ -109,7 +177,10 @@ namespace MoonProject.Autoplay
                 yield break;
             }
 
+            bool chaseFrame = false;
             using (_bot.World.Context.Events.Subscribe<RoverAwoke>(_ => _awoke = true))
+            using (_bot.World.Context.Events.Subscribe<RoverWakeBeatReached>(
+                       reached => chaseFrame |= reached.Beat == WakeBeat.ChaseFrame))
             {
                 for (int attempt = 0; attempt < TitleAttempts && _bot.World.Flow.State == GameFlowState.Title; attempt++)
                 {
@@ -120,6 +191,18 @@ namespace MoonProject.Autoplay
                 yield return _bot.Until(() => _bot.World.Flow.State == GameFlowState.Playing, BootTimeoutSeconds,
                     "New Game to start play from the title");
                 yield return _bot.Until(() => _awoke, WakeTimeoutSeconds, "07 to wake in the eclipse");
+                if (_naive != null)
+                {
+                    // Control is handed over at the chase frame, after the lines and the move behind 07: the first-time
+                    // clock starts there, not while the face still prints its self-test.
+                    yield return _bot.Until(() => chaseFrame, WakeTimeoutSeconds, "the chase frame (control handed over)");
+                }
+            }
+
+            if (!_bot.Failed && _naive != null)
+            {
+                // Control is handed over (the chase frame): what does a player see to do?
+                yield return _naive.Check("B0");
             }
 
             if (!_bot.Failed)
@@ -301,13 +384,16 @@ namespace MoonProject.Autoplay
             yield return _base.SeeWorldCue(WorldCues.ArrayGlint(_bot.World), "B7: the fallen array glints in the sunrise");
             yield return _base.DriveToTheRuinsGate("the Lumen ruins");
             yield return _base.ScanTheSet("ruin.FallenSolarArray");
+            yield return Sub("B7a");
             yield return _base.ReadTheAirlockPanel();
             yield return _base.ExpectStep(OpeningSteps.FitIgniter, OpeningKeys.CutOptics,
                 "B7: the array's crates, the cutter still FAULT");
             yield return _base.TryTheFaultedCutter("FallenSolarArray");
             yield return _base.ExpectStep(OpeningSteps.FitIgniter, OpeningKeys.TakeIgniter,
                 "B7: the cutter sputtered, the rack is pointed at");
+            yield return Sub("B7b");
             yield return _base.TakeFromTheOpenCrate(SparesRack);
+            yield return Sub("B7c");
             yield return _base.ExpectStep(OpeningSteps.FitIgniter, OpeningKeys.FitIgniter,
                 "B7: the spare igniter in the hold");
             yield return _base.FitTheIgniter();
@@ -332,7 +418,8 @@ namespace MoonProject.Autoplay
         private IEnumerator TheFirstChoice()
         {
             Begin("R5", "The first free choice: visit the seismic station, dock, and the first dusk begins");
-            yield return _base.ExpectStep(OpeningSteps.BuildBatteryBank, string.Empty, "R5: the afternoon says nothing");
+            yield return _base.ExpectStep(OpeningSteps.BuildBatteryBank, OpeningKeys.VisitSite,
+                "R5: the afternoon names the near sites");
             yield return _base.VisitTheSeismicStation();
             yield return _base.DockForTheDusk(StructureIds.ChargingPad);
             _bot.EndBeat("07 read the 1971 seismic station, docked, and the first dusk began");
@@ -341,11 +428,17 @@ namespace MoonProject.Autoplay
         private IEnumerator TheHabitat()
         {
             Begin("B9", "The habitat: scan the modules, cut the cable reel, tow the power module home, build the bank on it");
-            yield return _base.ExpectStep(OpeningSteps.BuildBatteryBank, OpeningKeys.BuildBatteryBank,
+            yield return _base.ExpectStep(OpeningSteps.BuildBatteryBank, OpeningKeys.ScanModule,
                 "B9: night is coming");
             yield return _base.ScanTheSet("ruin.HabitatModules");
+            yield return _base.ExpectStep(OpeningSteps.BuildBatteryBank, OpeningKeys.TowModuleHome,
+                "B9: the module is the bank's frame");
             yield return _base.CutTheCrates("HabitatModules");
+            yield return Sub("B9a");
             yield return _base.TowTheModuleHome();
+            yield return Sub("B9b");
+            yield return _base.ExpectStep(OpeningSteps.BuildBatteryBank, OpeningKeys.BuildBatteryBank,
+                "B9: the module is home");
             yield return _base.Build(StructureIds.BatteryBank, _base.ModulePosition());
             yield return _base.UntilReached(OpeningMilestone.NightReady, "the NightReady milestone",
                 NightReadySeconds);
@@ -379,6 +472,7 @@ namespace MoonProject.Autoplay
             yield return _base.ExpectStep(OpeningSteps.ScanTower, OpeningKeys.ScanTower, "B11: after nightfall");
             yield return _base.CutTheCrates("RadioTower");
             yield return _base.ScanTheSet("ruin.RadioTower");
+            yield return Sub("B11a");
             yield return _base.ExpectStep(OpeningSteps.BuildMast, OpeningKeys.BuildMast, "B11");
             yield return _base.DriveToTheRuinsGate("out of the Lumen ruins");
             yield return _base.Build(StructureIds.AntennaMast, _base.Pad() + Vector3.back * OpeningBase.Spacing);
@@ -391,6 +485,13 @@ namespace MoonProject.Autoplay
             Begin("B12", "The answer");
             yield return _base.AnswerTheCall();
             _bot.EndBeat("07 transmitted from the mast and relay.1 answered the call");
+        }
+
+        private IEnumerator TheRelay()
+        {
+            Begin("R10", "relay.1's repair: take the spare from its cabinet, fit it, charge on its pad");
+            yield return _base.RepairTheRelay();
+            _bot.EndBeat("relay.1 relit: its spare fitted at the feed socket, and its pad charges 07");
         }
 
         /// <summary>The next unscanned fragment of the lander's cargo, in the order the blueprint numbers them.</summary>

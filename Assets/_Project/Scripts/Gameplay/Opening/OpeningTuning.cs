@@ -20,15 +20,9 @@ namespace MoonProject.Gameplay
         [Tooltip("The build site's anchor (the old unloading apron), where the lander's port cable ends.")]
         [SerializeField] private string _apronAnchor = "place.apron";
 
-        [Header("The stall reminder (opening-v3 §1.5)")]
-        [Tooltip("Seconds with no progress and 07 standing still after which the step's objective line shows, once.")]
-        [Range(30f, 600f)] [SerializeField] private float _stallSeconds = 120f;
-
-        [Tooltip("Seconds a reminder line stays up before it goes for good.")]
-        [Range(5f, 60f)] [SerializeField] private float _reminderSeconds = 20f;
-
-        [Tooltip("07 counts as standing still at or under this speed (m/s).")]
-        [Range(0.05f, 1f)] [SerializeField] private float _stillSpeed = 0.3f;
+        [Header("The objective line (opening-v3 guidance audit G2, G4)")]
+        [Tooltip("When the next line follows a success, and when a reminder catches a player with no progress.")]
+        [SerializeField] private GuidanceTiming _guidance = new GuidanceTiming();
 
         [Header("The lander (B2, B6)")]
         [Tooltip("Metres from the lander's centre within which 07 has reached it (B2's exit).")]
@@ -112,6 +106,9 @@ namespace MoonProject.Gameplay
             new RackBaySettings("rack.hex_adapter", false, "rover.hex_adapter", RoverKitPiece.HexChargeAdapter),
         };
 
+        [Tooltip("The rack in the world: Art's prefab beside the dock, its rise, its bays' glow and jaws, its reading.")]
+        [SerializeField] private RackViewSettings _rackView = new RackViewSettings();
+
         [Header("The failed reply and the raised mast (opening v3 R7)")]
         [Tooltip("When 07 tries to answer the call, and how the antenna mast's segments lift and lock.")]
         [SerializeField] private CallReplySettings _reply = new CallReplySettings();
@@ -124,6 +121,10 @@ namespace MoonProject.Gameplay
         [Tooltip("The opening's towable loads and where they first stand: the habitat's power module, the battery " +
                  "bank's frame (Art's PowerModule, its TowHitch on its front face).")]
         [SerializeField] private TowLoadSpot[] _towLoads = Array.Empty<TowLoadSpot>();
+
+        [Header("relay.1's repair (opening v3 R10)")]
+        [Tooltip("The relay, its labelled spare and how near 07 takes it, fits it and charges on the lit relay.")]
+        [SerializeField] private RelayRepairSettings _relay = new RelayRepairSettings();
 
         [Header("The answer (opening v3 R8)")]
         [Tooltip("Where and how long 07 holds to transmit, and how the pulse of the old network runs to relay.1 and the Peak.")]
@@ -176,9 +177,7 @@ namespace MoonProject.Gameplay
 
         public string LanderAnchor => _landerAnchor;
         public string ApronAnchor => _apronAnchor;
-        public float StallSeconds => _stallSeconds;
-        public float ReminderSeconds => _reminderSeconds;
-        public float StillSpeed => _stillSpeed;
+        public GuidanceTiming Guidance => _guidance;
         public float LanderReach => _landerReach;
         public float ReserveCells => _reserveCells;
         public float PortCableReach => _portCableReach;
@@ -224,6 +223,8 @@ namespace MoonProject.Gameplay
 
         public TowSettings Tow => _tow;
 
+        public RelayRepairSettings Relay => _relay;
+
         public IReadOnlyList<TowLoadSpot> TowLoads => _towLoads ?? Array.Empty<TowLoadSpot>();
 
         public CallAnswerSettings Answer => _answer;
@@ -233,6 +234,8 @@ namespace MoonProject.Gameplay
         public float DuskSiteReach => _duskSiteReach;
 
         public IReadOnlyList<RackBaySettings> RackBays => _rackBays;
+
+        public RackViewSettings RackView => _rackView;
 
         /// <summary>Null when the rack's bays can work, else the first problem.</summary>
         public string ValidateRack()

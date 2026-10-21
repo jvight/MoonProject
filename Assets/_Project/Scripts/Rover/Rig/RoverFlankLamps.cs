@@ -16,6 +16,8 @@ namespace MoonProject.Rover
     [DisallowMultipleComponent]
     public sealed class RoverFlankLamps : MonoBehaviour
     {
+        private const float FullEpsilon = 0.001f;
+
         private static readonly int EmissionStrengthId = Shader.PropertyToID("_EmissionStrength");
 
         [Tooltip("Rig tuning (its Flank Lamps settings).")]
@@ -32,11 +34,15 @@ namespace MoonProject.Rover
         private IDisposable _wake;
         private IDisposable _title;
         private IDisposable _check;
+        private IDisposable _charging;
         private float _wakeStart = float.NegativeInfinity;
         private int _wakeLit = RoverModelNodes.FlankLampCount;
         private MaterialPropertyBlock _block;
         private float[] _levels = Array.Empty<float>();
         private int _shownCells = -1;
+        private bool _onCharger;
+        private bool _wasFull;
+        private float _fullFlash;
 
         /// <summary>The middle of the bar, where 07 glances when its leap is refused.</summary>
         public Vector3 GlancePoint => _lamps.Length > 0 ? _lamps[_lamps.Length / 2].position : transform.position;
@@ -66,6 +72,7 @@ namespace MoonProject.Rover
             _wake = _events.Subscribe<RoverWakeBeatReached>(OnWakeBeat);
             _title = _events.Subscribe<TitleShown>(OnTitleShown);
             _check = _events.Subscribe<BootCheckStarted>(OnCheckStarted);
+            _charging = _events.Subscribe<ChargingChanged>(changed => _onCharger = changed.Charging);
             _block = new MaterialPropertyBlock();
             _levels = new float[RoverModelNodes.FlankLampCount];
             for (int i = 0; i < RoverModelNodes.FlankLampCount; i++)
@@ -90,10 +97,20 @@ namespace MoonProject.Rover
             float time = Time.time;
             StepWake(settings, time);
             float dim = battery.OnOpeningReserve ? settings.OpeningReserveGlow : 1f;
+            bool full = battery.Cells > 0 && battery.Charge >= battery.Cells - FullEpsilon;
+            if (_onCharger && full && !_wasFull)
+            {
+                _fullFlash = 1f;
+            }
+
+            _wasFull = full;
+            _fullFlash = Mathf.MoveTowards(_fullFlash, 0f, deltaTime / settings.FullFlashSeconds);
+            float flash = 1f + settings.FullBoost * _fullFlash * _fullFlash;
+            bool filling = _onCharger && !full;
             for (int i = 0; i < _shownCells; i++)
             {
                 float target = i < _wakeLit
-                    ? FlankLampStrip.Level(settings, i, battery.Charge, battery.IsLowPower, time) * dim
+                    ? FlankLampStrip.Level(settings, i, battery.Charge, battery.IsLowPower, time, filling) * dim * flash
                     : 0f;
                 _levels[i] = Smoothing.Damp(_levels[i], target, settings.HalfLife, deltaTime);
                 Apply(i, _levels[i]);
@@ -156,6 +173,7 @@ namespace MoonProject.Rover
             _wake?.Dispose();
             _title?.Dispose();
             _check?.Dispose();
+            _charging?.Dispose();
         }
 
         /// <summary>Shows one segment per cell (the rest stay hidden).</summary>

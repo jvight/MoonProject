@@ -17,6 +17,12 @@ namespace MoonProject.Rover.PlayModeTests
         private const float CableLength = 6f;
         private const float Tolerance = 0.02f;
 
+        /// <summary>How far past the rope's length the taut test's hitch stands: more than the winch's sway.</summary>
+        private const float TautStretchMetres = 0.1f;
+
+        /// <summary>A taut rope has no sag at all; this is only the float's dust.</summary>
+        private const float TautSagMetres = 1e-3f;
+
         private sealed class FakeTowLine : ITowLine
         {
             public bool Towing { get; set; }
@@ -102,11 +108,16 @@ namespace MoonProject.Rover.PlayModeTests
         public IEnumerator ATautRope_RunsStraight_AndLeans07IntoItsStrain()
         {
             yield return Wait(0.2f);
-            _line.Hitch = Winch + new Vector3(0f, 0f, -CableLength);
+            // Taut means stretched past its length: a hitch exactly one length away is slack by whatever the winch
+            // sways in a frame (a rope's sag goes with the square root of its slack, so half a millimetre of slack
+            // already sags 3 cm), and a loaded editor sways it more.
+            _line.Hitch = Winch + new Vector3(0f, 0f, -(CableLength + TautStretchMetres));
             _line.Strain = 0.7f;
             _line.Towing = true;
             yield return Wait(0.2f);
-            Assert.Less(Cable.Sag, 0.01f, "taut, it runs straight");
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+            Assert.Less(Cable.Sag, TautSagMetres, "taut, it runs straight");
             Assert.AreEqual(0.7f, Cable.Strain01, Tolerance);
         }
 

@@ -106,9 +106,11 @@ namespace MoonProject.Core.Input
 
         /// <summary>
         /// The rover's Excavate key (E, gamepad West) went down this frame, read from its controls so it counts while
-        /// the rover map is off behind a menu: E is the game's one "do it" key, on the face too (it fits a part).
+        /// the rover map is off behind a menu: E is the game's one "do it" key, on the face too (it fits a part). The
+        /// mouse's left button is Excavate in the world, but on a screen a click is the pointer's own (it selects, it
+        /// picks a card), never also "do it", so only the keys and the pad count here.
         /// </summary>
-        public bool UsePressed => _map.enabled && AnyPressedThisFrame(_roverUse);
+        public bool UsePressed => _map.enabled && AnyPressedThisFrame(_roverUse, includeMouse: false);
 
         /// <summary>Flip 07's face to its other page (Q, gamepad LB or RB) this frame.</summary>
         public bool PagePressed => _pageToggle.WasPressedThisFrame();
@@ -170,12 +172,13 @@ namespace MoonProject.Core.Input
 
         internal InputActionMap Map => _map;
 
-        private static bool AnyPressedThisFrame(InputAction action)
+        private static bool AnyPressedThisFrame(InputAction action, bool includeMouse = true)
         {
             ReadOnlyArray<InputControl> controls = action.controls;
             for (int i = 0; i < controls.Count; i++)
             {
-                if (controls[i] is ButtonControl button && button.wasPressedThisFrame)
+                if (controls[i] is ButtonControl button && button.wasPressedThisFrame &&
+                    (includeMouse || !(button.device is Mouse)))
                 {
                     return true;
                 }

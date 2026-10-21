@@ -12,7 +12,6 @@ namespace MoonProject.UI.Tests
     public sealed class CallDisplayTests
     {
         private const float Frame = 1f / 60f;
-        private const float HandOver = 0.3f;
         private const float FadeSeconds = 0.4f;
         private const string Sender = "ARK IV";
 
@@ -133,37 +132,37 @@ namespace MoonProject.UI.Tests
         [Test]
         public void TheStillCall_WaitsForAChip_AndAChipThatWantsIn_FadesItOutFirst()
         {
-            var slot = new GuidanceSlot(HandOver);
+            var slot = new GuidanceSlot();
             var wants = new bool[GuidanceSlot.KindCount];
             var visible = new bool[GuidanceSlot.KindCount];
             wants[(int)GuidanceKind.CallStatus] = true;
             wants[(int)GuidanceKind.Prompt] = true;
-            slot.Step(wants, visible, Frame);
+            slot.Step(wants, visible);
             Assert.IsTrue(slot.Allows(GuidanceKind.Prompt), "a chip outranks the still call");
             Assert.IsFalse(slot.Allows(GuidanceKind.CallStatus));
 
             wants[(int)GuidanceKind.Objective] = true;
-            slot.Step(wants, visible, Frame);
+            slot.Step(wants, visible);
             Assert.IsTrue(slot.Allows(GuidanceKind.Prompt), "the objective line waits too");
 
             wants[(int)GuidanceKind.Prompt] = false;
-            slot.Step(wants, visible, Frame);
+            slot.Step(wants, visible);
             Assert.IsTrue(slot.Allows(GuidanceKind.Objective), "the objective line outranks the still call");
 
             wants[(int)GuidanceKind.Objective] = false;
-            slot.Step(wants, visible, Frame);
+            slot.Step(wants, visible);
             Assert.IsTrue(slot.Allows(GuidanceKind.CallStatus), "which shows when nothing else guides");
 
             visible[(int)GuidanceKind.CallStatus] = true;
             wants[(int)GuidanceKind.Prompt] = true;
-            slot.Step(wants, visible, Frame);
+            slot.Step(wants, visible);
             Assert.IsNull(slot.Granted, "the chip waits until the call has faded");
         }
 
         [Test]
         public void OverAWholeStop_TheCallAndAChip_AreNeverOnScreenTogether()
         {
-            var slot = new GuidanceSlot(HandOver);
+            var slot = new GuidanceSlot();
             var wants = new bool[GuidanceSlot.KindCount];
             var visible = new bool[GuidanceSlot.KindCount];
             var openness = new float[GuidanceSlot.KindCount];
@@ -186,7 +185,7 @@ namespace MoonProject.UI.Tests
                     visible[k] = openness[k] > 0f;
                 }
 
-                slot.Step(wants, visible, Frame);
+                slot.Step(wants, visible);
                 int onScreen = 0;
                 for (int k = 0; k < GuidanceSlot.KindCount; k++)
                 {

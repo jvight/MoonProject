@@ -593,10 +593,10 @@ namespace MoonProject.UI.PlayModeTests
             string folder = Path.GetFullPath(OutputFolder);
             Directory.CreateDirectory(folder);
             context.Events.Publish(new RoverAwoke(Vector3.zero, false));
-            context.Events.Publish(new NextStepChanged("next.v2.drive_lander"));
+            context.Events.Publish(new NextStepChanged("next.v2.drive_lander", NextLineReason.Reminder, default, false,
+                false, null, Vector3.zero));
             context.Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame));
-            yield return new WaitForSecondsRealtime(_tuning.Guidance.Line.FadeIn +
-                                                    _tuning.Guidance.ObjectiveDelaySeconds + 2.5f);
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.Line.FadeIn + 2.5f);
             Assert.IsFalse(ui.Readout.IsVisible, "no boot card: the diagnostics were on 07's face");
             Assert.IsTrue(ui.Objective.ShowsObjective, "the first objective line stands alone");
             yield return Capture(camera, folder, "49_objective_line");
@@ -789,14 +789,14 @@ namespace MoonProject.UI.PlayModeTests
             string folder = Path.GetFullPath(OutputFolder);
             Directory.CreateDirectory(folder);
             context.Events.Publish(new RoverAwoke(Vector3.zero, false));
-            context.Events.Publish(new NextStepChanged("next.v2.drive_lander"));
+            context.Events.Publish(new NextStepChanged("next.v2.drive_lander", NextLineReason.Reminder, default, false,
+                false, null, Vector3.zero));
             context.Events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle));
             context.Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame));
             foreach (string language in new[] { "en", "vi" })
             {
                 ui.Localization.SetLanguage(language);
-                yield return new WaitForSecondsRealtime(_tuning.ControlsCard.Reveal.FadeIn +
-                                                        _tuning.Guidance.ObjectiveDelaySeconds + 1f);
+                yield return new WaitForSecondsRealtime(_tuning.ControlsCard.Reveal.FadeIn + 1f);
                 Assert.IsTrue(ui.ControlsCardView.IsVisible, "the card holds the hand-over");
                 Assert.IsFalse(ui.Objective.IsVisible, "alone: the objective line waits for it");
                 Assert.IsFalse(ui.LookUp.IsVisible, "and no chip beside it");

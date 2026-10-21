@@ -60,6 +60,9 @@ namespace MoonProject.World
             _levels = new float[wings];
         }
 
+        /// <summary>How many fallen wings glint.</summary>
+        public int WingCount => _sparkles != null ? _sparkles.Length : 0;
+
         /// <summary>The glint (0..1, before its shimmer and brightness) each wing showed on the last frame.</summary>
         public float LevelOf(int wing) => wing >= 0 && wing < _levels.Length ? _levels[wing] : 0f;
 
@@ -96,7 +99,8 @@ namespace MoonProject.World
             for (int i = 0; i < _sparkles.Length; i++)
             {
                 Vector3 towardEye = (eye - _sparkles[i].transform.position).normalized;
-                float level = _sunlit[i] * SunGlint.Level(towardSun, _normals[i], towardEye, glint.Sharpness);
+                float level = SunGlint.Catch(_sunlit[i], glint.FullCatchAtSunlight)
+                    * SunGlint.Level(towardSun, _normals[i], towardEye, glint.Sharpness);
                 _levels[i] = level;
                 float sheen = SunGlint.Shimmer(time, glint.ShimmerHertz, glint.ShimmerDepth, i * WingPhase);
                 float twinkle = SunGlint.Shimmer(time, glint.SparkleTwinkleHertz, glint.SparkleTwinkleDepth,

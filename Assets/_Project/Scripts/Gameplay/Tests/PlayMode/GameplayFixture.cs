@@ -28,6 +28,10 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>Art's R1 surface: the stand-in ruins and pad fragments show their scans on it.</summary>
         public const string R1LitShaderPath = "Assets/_Project/Shaders/R1/R1Lit.shader";
+        public const string SocketRackPath = "Assets/_Project/Generated/Art/R1/Models/Structures/SocketRack.prefab";
+
+        /// <summary>Where the stand-in relay.1 site stands: its spare, its feed socket and its contact pad.</summary>
+        public static readonly Vector3 RelaySite = new Vector3(-60f, 0f, 160f);
 
         /// <summary>Where the stand-in 1971 seismic station stands, east of the ruins (one of R5's near sites).</summary>
         public static readonly Vector3 SeismicStation = new Vector3(128f, 0f, 183f);
@@ -183,6 +187,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 FragmentTemplate("CoilPlate"), FragmentTemplate("GuideRail"),
             });
+            OpeningTuning.RackView.PopulatePrefab(LoadPrefab(SocketRackPath));
 
             var root = new GameObject("[Gameplay]");
             root.SetActive(false);
@@ -213,6 +218,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             Gameplay.WireApronOutline(Node("BayGlowOutline", root.transform, Vector3.zero).gameObject
                 .AddComponent<MeshRenderer>());
             Gameplay.WireApronCableChannel(Node("CableChannel_Anchor", root.transform, Vector3.zero));
+            Transform relay = Node("Relay1Site", root.transform, RelaySite);
+            Transform socket = Node("FeedSocket", relay, new Vector3(0f, 1f, 1.5f));
+            Transform fitted = Node("FeedUnitFitted", socket, Vector3.zero);
+            fitted.gameObject.SetActive(false);
+            Gameplay.WireRelay(Node("FeedUnitSpare", relay, new Vector3(2.5f, 0.5f, 0f)), socket, fitted,
+                Node("ContactPad", relay, new Vector3(0f, 0f, -3f)));
             Gameplay.WireOpening(OpeningTuning, BaseTuning);
             root.SetActive(true);
 
@@ -533,6 +544,21 @@ namespace MoonProject.Gameplay.PlayModeTests
         {
             _created.Add(created is Component component ? component.gameObject : (Object)created);
             return created;
+        }
+
+        private static GameObject LoadPrefab(string path)
+        {
+#if UNITY_EDITOR
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (prefab == null)
+            {
+                throw new InvalidOperationException($"Art's prefab missing at {path}.");
+            }
+
+            return prefab;
+#else
+            throw new NotSupportedException("The fixture loads Art's prefab through the editor's AssetDatabase.");
+#endif
         }
 
         private static Shader LoadShader(string path)
