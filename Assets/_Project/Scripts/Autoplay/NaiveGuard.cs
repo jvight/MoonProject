@@ -27,7 +27,7 @@ namespace MoonProject.Autoplay
         /// <summary>Localization keys whose words a chip must carry ("hint.openbuild").</summary>
         public string[] VerbKeys { get; }
 
-        /// <summary>Words (any one) a line must contain to name the goal.</summary>
+        /// <summary>Words (any one) a line, or a chip with no verb key of its own, must contain to name the goal.</summary>
         public string[] LineWords { get; }
 
         /// <summary>Parts (any one) of a lit world cue's name that points at the goal.</summary>
@@ -79,9 +79,13 @@ namespace MoonProject.Autoplay
         /// <summary>Game seconds a cue may take to show after a beat, unless a beat's own budget says otherwise.</summary>
         public const float DefaultBudgetSeconds = 5f;
 
+        /// <summary>A cue counts as readable this far in from each edge of the frame (a share of the viewport): one at the very edge is not.</summary>
+        private const float CueMargin = 0.05f;
+
         private readonly AutoplayBot _bot;
         private readonly Dictionary<string, float> _budgets = new Dictionary<string, float>();
         private readonly Dictionary<string, NextAction> _next = new Dictionary<string, NextAction>();
+        private readonly HashSet<string> _skipped = new HashSet<string>();
         private readonly List<NaiveResult> _results = new List<NaiveResult>();
 
         public NaiveGuard(AutoplayBot bot)
@@ -114,6 +118,12 @@ namespace MoonProject.Autoplay
             _next[beat] = action;
         }
 
+        /// <summary>No check after <paramref name="beat"/>: what follows is not a player action (an observed moment).</summary>
+        public void Skip(string beat)
+        {
+            _skipped.Add(beat);
+        }
+
         /// <summary>A beat's own budget (game seconds) in place of the default.</summary>
         public void SetBudget(string beat, float seconds)
         {
@@ -123,7 +133,7 @@ namespace MoonProject.Autoplay
         /// <summary>Stands passive after <paramref name="beat"/> and measures the time to a cue.</summary>
         public IEnumerator Check(string beat)
         {
-            if (!_bot.World.Refresh() || _bot.World.Ui == null)
+            if (_skipped.Contains(beat) || !_bot.World.Refresh() || _bot.World.Ui == null)
             {
                 yield break;
             }
@@ -170,12 +180,23 @@ namespace MoonProject.Autoplay
             ILocalization words = _bot.World.Context.Get<ILocalization>();
             if (ui.ChipInView(out string chip))
             {
-                if (action == null || ChipNames(action, chip, words))
+                if (action == null || ChipNames(action, chip, words) || Contains(chip, action.LineWords))
                 {
                     return "chip '" + chip + "'";
                 }
 
                 other = "chip '" + chip + "'";
+            }
+
+            if (ui.ControlsCardInView(out string card))
+            {
+                // The card names keys, not goals: it counts when it carries the key the action is done with.
+                if (action == null || Contains(card, new[] { action.Key }))
+                {
+                    return "controls card '" + card + "'";
+                }
+
+                other = other ?? "controls card '" + card + "'";
             }
 
             string line = ui.ObjectiveLine();
@@ -192,7 +213,7 @@ namespace MoonProject.Autoplay
             Camera camera = _bot.World.Context.Get<IViewCamera>().Camera;
             foreach (WorldCue cue in WorldCues.All(_bot.World))
             {
-                if (cue.Lit() && WorldCue.OnScreen(camera, cue.Point(), 0f))
+                if (cue.Lit() && WorldCue.OnScreen(camera, cue.Point(), CueMargin))
                 {
                     if (action == null || Contains(cue.Name, action.CueNames))
                     {

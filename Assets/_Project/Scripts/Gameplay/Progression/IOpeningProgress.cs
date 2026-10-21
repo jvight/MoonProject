@@ -63,8 +63,11 @@ namespace MoonProject.Gameplay
         /// <summary>Since power-on 07 has visited a near site, so docking now begins the first dusk (R5).</summary>
         bool DuskVisited { get; }
 
-        /// <summary>07 transmitted from the mast and relay.1 answered the call (R8).</summary>
-        bool CallAnswered { get; }
+        /// <summary>
+        /// 07 transmitted from the mast, relay.1 answered, and the answer's moment is over (the pulse, the Peak's
+        /// glint): the next action may be named (R8).
+        /// </summary>
+        bool AnswerDone { get; }
 
         /// <summary>relay.1's spare is fitted and it is lit (R10).</summary>
         bool RelayRelit { get; }

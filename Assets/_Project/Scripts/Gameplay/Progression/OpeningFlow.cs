@@ -77,7 +77,7 @@ namespace MoonProject.Gameplay
             _steps.Add(() => _game.NightFallen ? OpeningKeys.ScanTower : OpeningKeys.AwaitNight,
                 () => _game.Knows(StructureIds.AntennaMast));
             _steps.Add(OpeningKeys.BuildMast, () => _game.Built(StructureIds.AntennaMast));
-            _steps.Add(OpeningKeys.Transmit, () => _game.CallAnswered);
+            _steps.Add(OpeningKeys.Transmit, () => _game.AnswerDone);
             _steps.Add(OpeningKeys.GoToRelay, () => _game.RelayRelit);
             _steps.Add(OpeningKeys.ScanElder06, () => _game.HeadlampUnlocked || _game.HeadlampFitted);
             _steps.Add(() => _game.RackOut ? OpeningKeys.AssembleHeadlamp : OpeningKeys.DockForRack,

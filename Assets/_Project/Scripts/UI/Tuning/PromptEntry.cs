@@ -33,6 +33,10 @@ namespace MoonProject.UI
         [Range(1, 10)]
         [SerializeField] private int _usesToRetire = DefaultUsesToRetire;
 
+        [Tooltip("A first-use key's chip (Build, Tab, Hook cable, Fit, Transmit): it stays up until its key is used, " +
+                 "with no time limit and no rest after it leaves (opening v3 guidance audit, G3).")]
+        [SerializeField] private bool _persistUntilUsed;
+
         public PromptEntry()
         {
         }
@@ -43,13 +47,14 @@ namespace MoonProject.UI
         }
 
         public PromptEntry(InteractionKind kind, RoverAction action, float dwellSeconds, float liftMetres,
-            int usesToRetire)
+            int usesToRetire, bool persistUntilUsed = false)
         {
             _kind = kind;
             _action = action;
             _dwellSeconds = dwellSeconds;
             _liftMetres = liftMetres;
             _usesToRetire = usesToRetire;
+            _persistUntilUsed = persistUntilUsed;
         }
 
         public InteractionKind Kind => _kind;
@@ -61,5 +66,7 @@ namespace MoonProject.UI
         public float LiftMetres => _liftMetres;
 
         public int UsesToRetire => _usesToRetire;
+
+        public bool PersistUntilUsed => _persistUntilUsed;
     }
 }

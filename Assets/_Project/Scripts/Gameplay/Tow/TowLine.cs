@@ -45,7 +45,8 @@ namespace MoonProject.Gameplay
 
         public Vector3 LoadHitch => _load != null ? _load.Hitch : Vector3.zero;
 
-        public float Length { get; }
+        /// <summary>The cable's length now: its own, plus any slack the winch paid out for a caught load.</summary>
+        public float Length { get; private set; }
 
         public float Strain01 { get; private set; }
 
@@ -227,6 +228,15 @@ namespace MoonProject.Gameplay
                     toward.y = 0f;
                     Vector3 lift = Vector3.up + (toward.sqrMagnitude > 1e-6f ? toward.normalized : Vector3.zero);
                     body.AddForce(lift.normalized * _settings.UnsnagLift, ForceMode.VelocityChange);
+                    Length = Mathf.Min(Length + _settings.SlackStep, _settings.CableLength + _settings.MaxSlack);
+                    break;
+                default:
+                    if (Length > _settings.CableLength && distance - Length <= _settings.SnagStretch &&
+                        coming > -_settings.SnagSpeed)
+                    {
+                        Length = Mathf.Max(_settings.CableLength, Length - _settings.ReelInSpeed * deltaTime);
+                    }
+
                     break;
             }
 
@@ -287,6 +297,7 @@ namespace MoonProject.Gameplay
             _load = nearest;
             _snag.Reset();
             Strain01 = 0f;
+            Length = _settings.CableLength;
             _load.BeginTow();
             _events.Publish(new TowAttached(_load.Id, _load.Hitch, _load.Body.mass));
         }

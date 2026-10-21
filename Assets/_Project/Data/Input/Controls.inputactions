@@ -262,6 +262,17 @@
                 },
                 {
                     "name": "",
+                    "id": "85e36708-dda4-45f4-9e59-d3933557c19e",
+                    "path": "<Mouse>/leftButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "Excavate",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "ee07da33-c9d5-439a-8ec1-fc08009e911c",
                     "path": "<Gamepad>/buttonWest",
                     "interactions": "",
@@ -333,6 +344,39 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "Gamepad",
+                    "action": "Winch",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "Keys",
+                    "id": "b67858f2-eae2-41d1-b840-db3a5601b8e4",
+                    "path": "1DAxis",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Winch",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "negative",
+                    "id": "c17f5bfd-5350-4730-82d8-23e45c17d202",
+                    "path": "<Keyboard>/z",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "Winch",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "positive",
+                    "id": "0453d518-1c2e-4595-abf1-f83c94c908f2",
+                    "path": "<Keyboard>/c",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
                     "action": "Winch",
                     "isComposite": false,
                     "isPartOfComposite": true

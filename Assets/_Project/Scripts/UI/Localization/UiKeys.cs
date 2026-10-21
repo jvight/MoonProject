@@ -29,7 +29,6 @@ namespace MoonProject.UI
         public const string VerbScan = "ui.verb.scan";
         public const string VerbCut = "ui.verb.cut";
         public const string VerbBuild = "ui.verb.build";
-        public const string VerbFit = "ui.verb.fit";
         public const string FaceNoLine = "ui.face.no_line";
         public const string FaceTxNoRange = "ui.face.tx_no_range";
         public const string FaceTxReady = "ui.face.tx_ready";
@@ -90,6 +89,8 @@ namespace MoonProject.UI
         public const string BuildReasonFrame = "build.reason.frame";
         public const string BuildHintPick = "build.hint.pick";
         public const string BuildHintLeave = "build.hint.leave";
+        public const string BuildHintPlace = "build.hint.place";
+        public const string BuildHintRotate = "build.hint.rotate";
         public const string BuildStepPlace = "build.step.place";
         public const string BuildStepWeld = "build.step.weld";
         public const string BuildLocked = "build.locked";

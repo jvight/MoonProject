@@ -995,6 +995,10 @@
             "text": "Fit"
         },
         {
+            "key": "hint.transmit",
+            "text": "Transmit"
+        },
+        {
             "key": "pickup.crate.contents",
             "text": "the parts"
         },
@@ -1149,6 +1153,14 @@
         {
             "key": "build.hint.leave",
             "text": "Leave"
+        },
+        {
+            "key": "build.hint.place",
+            "text": "Place"
+        },
+        {
+            "key": "build.hint.rotate",
+            "text": "Rotate"
         },
         {
             "key": "build.step.place",

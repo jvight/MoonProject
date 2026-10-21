@@ -27,7 +27,7 @@ namespace MoonProject.Gameplay
 
         private readonly OpeningTuning _tuning;
         private readonly IRoverState _rover;
-        private ICallSource _call;
+        private IAnswerStatus _answer;
         private readonly ISunlight _sunlight;
         private readonly KnownStructures _known;
         private readonly StructureCatalog _catalog;
@@ -158,7 +158,7 @@ namespace MoonProject.Gameplay
 
         public bool ModuleHome => _tow != null && _tow.TryFindHome(TowLoads.PowerModule, out _);
 
-        public bool CallAnswered => _call != null && _call.State >= CallState.Answered;
+        public bool AnswerDone => _answer != null && _answer.Phase == AnswerPhase.Done;
 
         public bool RelayRelit => _relay != null && _relay.Fitted;
 
@@ -321,10 +321,10 @@ namespace MoonProject.Gameplay
             return string.Empty;
         }
 
-        /// <summary>The call from the sky, made after the opening: what <see cref="CallAnswered"/> reads.</summary>
-        public void ConnectCall(ICallSource call)
+        /// <summary>The answer to the call, made after the opening: what <see cref="AnswerDone"/> reads.</summary>
+        public void ConnectAnswer(IAnswerStatus answer)
         {
-            _call = call ?? throw new ArgumentNullException(nameof(call));
+            _answer = answer ?? throw new ArgumentNullException(nameof(answer));
         }
 
         public bool Knows(string structureId)

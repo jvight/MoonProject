@@ -87,7 +87,7 @@ MonoBehaviour:
     _snagSpeed: 0.4
     _snagSeconds: 0.6
     _unsnagLift: 1.6
-    _letGoDistance: 12
+    _letGoDistance: 20
     _homeRadius: 9
     _skidFriction: 0.45
     _loadDrag: 0.1

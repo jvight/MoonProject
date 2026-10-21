@@ -995,6 +995,10 @@
             "text": "Lắp"
         },
         {
+            "key": "hint.transmit",
+            "text": "Phát tín hiệu"
+        },
+        {
             "key": "pickup.crate.contents",
             "text": "phụ tùng"
         },
@@ -1149,6 +1153,14 @@
         {
             "key": "build.hint.leave",
             "text": "Thoát"
+        },
+        {
+            "key": "build.hint.place",
+            "text": "Đặt"
+        },
+        {
+            "key": "build.hint.rotate",
+            "text": "Xoay"
         },
         {
             "key": "build.step.place",

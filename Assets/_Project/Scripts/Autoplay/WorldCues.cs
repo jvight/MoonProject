@@ -55,8 +55,9 @@ namespace MoonProject.Autoplay
         public static WorldCue ModuleLamp(AutoplayWorld world)
         {
             ModuleStatusLamp lamp = world.Find<ModuleStatusLamp>();
-            return lamp == null ? null : new WorldCue("the power module's status lamp", () => lamp.Level > LitLevel,
-                () => lamp.transform.position);
+            // Only while it lures: at home it keeps a steady "powered" glow that points nowhere.
+            return lamp == null ? null : new WorldCue("the power module's status lamp",
+                () => lamp.IsLure && lamp.Level > LitLevel, () => lamp.transform.position);
         }
     }
 }

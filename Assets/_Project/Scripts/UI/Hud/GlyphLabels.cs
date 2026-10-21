@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Text;
 using MoonProject.Core;
 using MoonProject.Core.Input;
 
@@ -18,6 +20,9 @@ namespace MoonProject.UI
         private readonly ILocalization _localization;
         private readonly string[] _actions;
         private readonly string[] _cancel;
+        private readonly string[] _all;
+        private readonly List<string> _controls = new List<string>();
+        private readonly List<string> _labels = new List<string>();
         private readonly int _devices;
 
         public GlyphLabels(InputReader input, ILocalization localization)
@@ -33,6 +38,7 @@ namespace MoonProject.UI
             _devices = Enum.GetValues(typeof(InputDeviceKind)).Length;
             _actions = new string[actions * _devices];
             _cancel = new string[_devices];
+            _all = new string[actions * _devices];
         }
 
         public string For(RoverAction action, InputDeviceKind device)
@@ -40,6 +46,32 @@ namespace MoonProject.UI
             int index = (int)action * _devices + (int)device;
             return _actions[index] ?? (_actions[index] = Resolve(_input.GetBindingControl(action, device),
                 _input.GetBindingLabel(action, device)));
+        }
+
+        /// <summary>
+        /// Every control bound to <paramref name="action"/> on <paramref name="device"/>, joined by a slash in binding
+        /// order ("E/LMB"), for a hint that names all the ways to do one thing. Cached per action and device.
+        /// </summary>
+        public string AllFor(RoverAction action, InputDeviceKind device)
+        {
+            int index = (int)action * _devices + (int)device;
+            if (_all[index] != null)
+            {
+                return _all[index];
+            }
+
+            _controls.Clear();
+            _labels.Clear();
+            _input.GetBindingControls(action, device, _controls);
+            _input.GetBindingLabels(action, device, _labels);
+            var joined = new StringBuilder();
+            for (int i = 0; i < _labels.Count; i++)
+            {
+                joined.Append(i > 0 ? "/" : string.Empty);
+                joined.Append(Resolve(i < _controls.Count ? _controls[i] : string.Empty, _labels[i]));
+            }
+
+            return _all[index] = joined.ToString();
         }
 
         public string Cancel(InputDeviceKind device)
@@ -54,6 +86,7 @@ namespace MoonProject.UI
         {
             Array.Clear(_actions, 0, _actions.Length);
             Array.Clear(_cancel, 0, _cancel.Length);
+            Array.Clear(_all, 0, _all.Length);
         }
 
         private string Resolve(string control, string fallback)

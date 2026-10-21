@@ -378,25 +378,26 @@ namespace MoonProject.Gameplay
             _battery.ConnectRelay(Relay);
             Opening.ConnectRelay(Relay);
             Opening.ConnectHeadlamp(Understanding, Rack);
-            var hints = new InteractionHints(_salvage, Containers, Scans, _building, services.Beam, Cutter,
-                services.Pickups, firstUse, Tow, Relay, RackView, RackAssembly);
-            Hints = hints;
-            FirstUsePointer = new FirstUsePointer(context.Events, hints, services.Rig,
-                _building.Tuning.FirstUseGazePriority, _building.Tuning.FirstUseAskIntensity);
             Recovery = new RecoveryProgress(context.Events, PowerLamps, PowerSteps, _openingTuning.RecoveryLamps);
             Call = new CallProgress(context.Events, _openingTuning.Call, services.Layout);
-            Opening.ConnectCall(Call);
             Reply = new CallReply(context.Events, Call, _openingTuning.Reply);
             MastRaise = new MastRaise(context.Events, _openingTuning.Reply);
             MastRaiseView = new MastRaiseView(context.Events, _building, MastRaise, _openingTuning.Reply);
             services.Anchors.TryGet(WorldAnchorIds.RelayPrefix + "1", out WorldAnchor relay);
             Answer = new CallAnswer(context.Events, Call, Reply, MastRaise, _openingTuning.Answer, relay.Position,
                 services.Layout.PeakPosition);
+            Opening.ConnectAnswer(Answer);
+            var hints = new InteractionHints(_salvage, Containers, Scans, _building, services.Beam, Cutter,
+                services.Pickups, firstUse, Tow, Relay, RackView, Answer, RackAssembly);
+            Hints = hints;
+            FirstUsePointer = new FirstUsePointer(context.Events, hints, services.Rig,
+                _building.Tuning.FirstUseGazePriority, _building.Tuning.FirstUseAskIntensity);
             RangeRing = new RangeRingField(context.Events, _battery.Tuning.RangeRing,
                 new RangeRingModel(_battery.Tuning, _battery.Tuning.RangeRing, services.Terrain), _battery.Model,
                 new ChargePoints(Opening.Pads, Relay), services.Rover);
             _flowTokens.Add(context.Events.Subscribe<RelayRelit>(OnRelayRelit));
-            RangeRingLine = new RangeRingLine(transform, _visuals.BeamCore, RangeRing, _battery.Tuning.RangeRing);
+            RangeRingLine = new RangeRingLine(transform, _visuals.BeamCore, RangeRing, _battery.Tuning.RangeRing,
+                services.Terrain, context.Get<IViewCamera>());
             _flowTokens.Add(context.Events.Subscribe<ChargingChanged>(OnChargingChanged));
             context.Register<IMaterialStock>(Materials);
             context.Register<IMaterialCatalog>(_materialCatalog);

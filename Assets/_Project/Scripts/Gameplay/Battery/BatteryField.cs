@@ -234,6 +234,7 @@ namespace MoonProject.Gameplay
                 Speed = _rover.Speed,
                 SlopeDegrees = SlopeAlong(_rover.GroundNormal, travel),
                 Towing = _tow != null && _tow.IsTowing,
+                TowStrain01 = _tow != null && _tow.IsTowing ? _tow.Strain01 : 0f,
                 Boosting = _boosting,
                 BeamSeconds = _beam.Take(out float scanSeconds, out float weldSeconds),
                 ScanSeconds = scanSeconds,
