@@ -121,7 +121,7 @@ namespace MoonProject.Autoplay
                 null));
             _naive.Declare("B7b", new NextAction("E", new[] { "hint.pickup" }, new[] { "rack", "igniter" },
                 new[] { "rack" }));
-            _naive.Declare("B7c", new NextAction("Tab", new[] { "hint.fitpart" }, new[] { "igniter", "fit" }, null));
+            _naive.Declare("B7c", new NextAction("Tab", new[] { "hint.fitpart" }, new[] { "fit", "cutter" }, null));
             _naive.Declare("B7", new NextAction("B", new[] { "hint.openbuild" }, new[] { "solar", "array" }, null));
             // R5's free choice is told by the world only: no line is expected, and the dead lamp's glance comes
             // after 30 s with no site visited.

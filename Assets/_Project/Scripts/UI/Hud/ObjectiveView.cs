@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using MoonProject.Core;
 using MoonProject.Core.Input;
+using MoonProject.Gameplay;
 
 namespace MoonProject.UI
 {
@@ -10,8 +11,9 @@ namespace MoonProject.UI
     /// The objective line on screen (docs/design/opening-v3-guidance-audit.md G2): one plain line, high on the left,
     /// with its key's glyph first when the key is new. The low-battery hint and the build step take the same line when
     /// the guidance slot gives them the turn; the weld step adds a thin bar that fills with the weld. A change of
-    /// source or of step fades the line out before the new words fade in. The words are looked up only when the key or
-    /// the language changes.
+    /// source or of build step fades the line out before the new words fade in; a new objective line while the
+    /// objective is already up replaces the words in place at once. The words are looked up only when the key or the
+    /// language changes.
     /// </summary>
     internal sealed class ObjectiveView
     {
@@ -88,22 +90,15 @@ namespace MoonProject.UI
                 : batteryOpen && battery.WantsShown ? LineSource.Battery
                 : lineOpen && line.WantsShown ? LineSource.Objective
                 : LineSource.None;
-            bool same = want == _source &&
-                        (want != LineSource.Objective || _key.Length == 0 ||
-                         string.Equals(_key, line.Key, StringComparison.Ordinal)) &&
-                        (want != LineSource.Build || build.Step == _step);
+            bool same = want == _source && (want != LineSource.Build || build.Step == _step);
             bool shown = want != LineSource.None && (same || _reveal.IsHidden);
-            if (shown && !same)
+            if (shown && (!same || (want == LineSource.Objective &&
+                                    !string.Equals(_key, line.Key, StringComparison.Ordinal))))
             {
                 _source = want;
                 _key = want == LineSource.Objective ? line.Key : string.Empty;
                 _step = want == LineSource.Build ? build.Step : BuildStep.None;
                 _stepText = null;
-                Relocalize(battery);
-            }
-            else if (shown && want == LineSource.Objective && _key.Length == 0)
-            {
-                _key = line.Key;
                 Relocalize(battery);
             }
             else if (shown && want == LineSource.Battery)
@@ -116,11 +111,14 @@ namespace MoonProject.UI
                 WriteBuildStep(build);
             }
 
-            bool glyph = shown && want == LineSource.Objective && line.ShowsKey;
+            bool tab = shown && want == LineSource.Objective && _key == OpeningKeys.FitIgniter;
+            bool glyph = (shown && want == LineSource.Objective && line.ShowsKey) || tab;
             ShowGlyph(glyph);
             if (glyph)
             {
-                _glyph.Set(_labels.For(line.Action, device), device);
+                _glyph.Set(tab
+                    ? _localization.Get(device == InputDeviceKind.Gamepad ? UiKeys.PadView : UiKeys.KeyTab)
+                    : _labels.For(line.Action, device), device);
             }
 
             _reveal.Set(shown);
