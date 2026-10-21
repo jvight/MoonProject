@@ -39,6 +39,10 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float SideOpenAfter = 0.8f;
         private const float SideLockedAfter = 0.8f;
         private const float WeldTimeout = 30f;
+        private const float MaxTurnDegreesPerSecond = 22f;
+        private const float TurnWindowSeconds = 1f;
+        private const float DockFrameSeconds = 3.2f;
+        private const float EaseBackSeconds = 2.5f;
         private const int Width = 1600;
         private const int Tall = 900;
 
@@ -55,6 +59,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private int _movedParts;
         private bool _fullChirp;
         private bool _fullBeat;
+        private bool _wideShot;
 
         public override void Setup()
         {
@@ -62,6 +67,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             _gameplay = null;
             _awake = false;
             _timeline.Clear();
+            _closedAt = -1f;
+            _movedParts = 0;
+            _fullChirp = false;
+            _fullBeat = false;
+            _wideShot = false;
             _keyboard = InputSystem.AddDevice<Keyboard>();
         }
 
@@ -85,6 +95,137 @@ namespace MoonProject.Gameplay.PlayModeTests
         [PrebuildSetup(typeof(PlaythroughScene))]
         [PostBuildCleanup(typeof(PlaythroughScene))]
         public IEnumerator DrivingOntoTheBuiltPad_LocksIt_ChirpsAndShowsTheChargeFilling()
+        {
+            yield return Prepare();
+            Camera view = _context.Get<IViewCamera>().Camera;
+            var rig = (MoonProject.Rover.RoverCameraRig)_context.Get<IViewCamera>();
+            float peakWeight = 0f;
+            float fastestTurn = 0f;
+            float lastYaw = view.transform.eulerAngles.y;
+            float windowAt = Time.time;
+
+            _t0 = Time.time;
+            PlacedStructure def = _gameplay.PlacedBase.StructureAt(0);
+            Line($"pad {def.Definition.Width} x {def.Definition.Depth}, plate margin check, pad y {def.Pose.Position.y:0.00}");
+            Line("drive onto the pad begins (charge " + _gameplay.Battery.Model.Charge.ToString("0.00") + " of " +
+                 _gameplay.Battery.Model.Cells + " cells)");
+            Press(_keyboard.wKey);
+            float next = 0f;
+            int shot = 0;
+            float deadline = Time.time + DriveTimeout;
+            float dockedAt = -1f;
+            bool sideOpen = false;
+            bool sideLocked = false;
+            while (Time.time < deadline && (dockedAt < 0f || Time.time - dockedAt < AfterDockSeconds))
+            {
+                yield return null;
+                if (_gameplay.Battery.Model.IsCharging)
+                {
+                    peakWeight = Mathf.Max(peakWeight, rig.MomentWeight);
+                }
+
+                // The turn is averaged over each capture interval: a capture frame renders the camera again, so its
+                // own frame-to-frame step is not the view's speed.
+                if (Time.time - windowAt >= TurnWindowSeconds)
+                {
+                    float yaw = view.transform.eulerAngles.y;
+                    if (_gameplay.Battery.Model.IsCharging)
+                    {
+                        fastestTurn = Mathf.Max(fastestTurn,
+                            Mathf.Abs(Mathf.DeltaAngle(lastYaw, yaw)) / (Time.time - windowAt));
+                    }
+
+                    lastYaw = yaw;
+                    windowAt = Time.time;
+                }
+
+                if (dockedAt < 0f && _gameplay.PadLock.OnPad)
+                {
+                    dockedAt = Time.time;
+                    Release(_keyboard.wKey);
+                    Line("07 is on the pad");
+                }
+
+                if (!sideOpen && dockedAt >= 0f && Time.time - dockedAt > SideOpenAfter)
+                {
+                    sideOpen = true;
+                    SideShot("dock-side-1-settled");
+                    Line("lock parts before the lock: " + Lock());
+                }
+
+                if (!sideLocked && _closedAt >= 0f && Time.time - _closedAt > SideLockedAfter)
+                {
+                    sideLocked = true;
+                    SideShot("dock-side-2-locked");
+                    Line("lock parts locked: " + Lock());
+                    Assert.AreEqual(6, _movedParts, "the four chocks and the two clamp arms have moved from their rest");
+                }
+
+                if (Time.time - _t0 >= next)
+                {
+                    PlacedStructure placed = _gameplay.PlacedBase.StructureAt(0);
+                    Line($"built {placed.IsBuilt}, 07 {_context.Get<IRoverState>().Position - placed.Pose.Position}, " +
+                         $"speed {_context.Get<IRoverState>().Speed:0.0}, on pad {_gameplay.PadLock.OnPad}");
+                    FrameCapture.SavePng(view, Width, Tall, Path.Combine(Folder, $"dock-{shot++:00}-t{Time.time - _t0:0.0}s.png"));
+                    next += StepSeconds;
+                }
+            }
+
+            Release(_keyboard.wKey);
+            Line("charge now " + _gameplay.Battery.Model.Charge.ToString("0.00") + ", raised " + _gameplay.PadLock.Raised);
+            File.WriteAllText(Path.Combine(Folder, "dock-timeline.md"), _timeline.ToString());
+            Line($"camera: peak moment weight while charging {peakWeight:0.00}, fastest turn {fastestTurn:0} deg/s");
+            Assert.Greater(peakWeight, 0.9f, "the camera eased to the closer three-quarter frame while it charged");
+            Assert.LessOrEqual(fastestTurn, MaxTurnDegreesPerSecond, "calmly");
+            Assert.IsFalse(_wideShot, "and did not pull out to the wide shot");
+            Assert.IsTrue(_closedAt >= 0f, "the lock's clamp closed on 07");
+            Assert.IsTrue(_fullBeat, "the charge filled");
+            Assert.IsTrue(_fullChirp, "07 chirps Happy when the charge is full, though the build's Happy was just before");
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(PlaythroughScene))]
+        [PostBuildCleanup(typeof(PlaythroughScene))]
+        public IEnumerator DrivingOffTheCharging07_GivesTheCameraBackAtOnce_WithASoftEase()
+        {
+            yield return Prepare();
+            var rig = (MoonProject.Rover.RoverCameraRig)_context.Get<IViewCamera>();
+            Press(_keyboard.wKey);
+            float deadline = Time.time + DriveTimeout;
+            while (!_gameplay.PadLock.OnPad && Time.time < deadline)
+            {
+                yield return null;
+            }
+
+            Release(_keyboard.wKey);
+            while (!_gameplay.Battery.Model.IsCharging && Time.time < deadline)
+            {
+                yield return null;
+            }
+
+            Assert.IsTrue(_gameplay.Battery.Model.IsCharging, "07 charges on the pad");
+            yield return Wait(DockFrameSeconds);
+            float before = rig.MomentWeight;
+            Assert.Greater(before, 0.5f, "the closer frame is in");
+            Press(_keyboard.wKey);
+            float last = before;
+            float biggestDrop = 0f;
+            float until = Time.time + EaseBackSeconds;
+            while (Time.time < until)
+            {
+                yield return null;
+                biggestDrop = Mathf.Max(biggestDrop, last - rig.MomentWeight);
+                last = rig.MomentWeight;
+            }
+
+            Release(_keyboard.wKey);
+            Assert.Less(last, 0.1f, "driving gave the camera back");
+            Assert.Less(biggestDrop, 0.1f, "with a soft ease, not a cut");
+        }
+
+        /// <summary>Boots, welds the pad at the apron, fills the battery to a part, and sets 07 down a drive away.</summary>
+        private IEnumerator Prepare()
         {
             Directory.CreateDirectory(Folder);
             yield return Boot();
@@ -122,61 +263,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             start.y = terrain.SampleHeight(start.x, start.z);
             _context.Get<IRoverPlacement>().PlaceAt(start, Quaternion.LookRotation(Vector3.forward, Vector3.up));
             yield return Wait(1.5f);
-            Camera view = _context.Get<IViewCamera>().Camera;
-
-            _t0 = Time.time;
-            PlacedStructure def = _gameplay.PlacedBase.StructureAt(0);
-            Line($"pad {def.Definition.Width} x {def.Definition.Depth}, plate margin check, pad y {def.Pose.Position.y:0.00}");
-            Line("drive onto the pad begins (charge " + _gameplay.Battery.Model.Charge.ToString("0.00") + " of " +
-                 _gameplay.Battery.Model.Cells + " cells)");
-            Press(_keyboard.wKey);
-            float next = 0f;
-            int shot = 0;
-            float deadline = Time.time + DriveTimeout;
-            float dockedAt = -1f;
-            bool sideOpen = false;
-            bool sideLocked = false;
-            while (Time.time < deadline && (dockedAt < 0f || Time.time - dockedAt < AfterDockSeconds))
-            {
-                yield return null;
-                if (dockedAt < 0f && _gameplay.PadLock.OnPad)
-                {
-                    dockedAt = Time.time;
-                    Release(_keyboard.wKey);
-                    Line("07 is on the pad");
-                }
-
-                if (!sideOpen && dockedAt >= 0f && Time.time - dockedAt > SideOpenAfter)
-                {
-                    sideOpen = true;
-                    SideShot("dock-side-1-settled");
-                    Line("lock parts before the lock: " + Lock());
-                }
-
-                if (!sideLocked && _closedAt >= 0f && Time.time - _closedAt > SideLockedAfter)
-                {
-                    sideLocked = true;
-                    SideShot("dock-side-2-locked");
-                    Line("lock parts locked: " + Lock());
-                    Assert.AreEqual(6, _movedParts, "the four chocks and the two clamp arms have moved from their rest");
-                }
-
-                if (Time.time - _t0 >= next)
-                {
-                    PlacedStructure placed = _gameplay.PlacedBase.StructureAt(0);
-                    Line($"built {placed.IsBuilt}, 07 {_context.Get<IRoverState>().Position - placed.Pose.Position}, " +
-                         $"speed {_context.Get<IRoverState>().Speed:0.0}, on pad {_gameplay.PadLock.OnPad}");
-                    FrameCapture.SavePng(view, Width, Tall, Path.Combine(Folder, $"dock-{shot++:00}-t{Time.time - _t0:0.0}s.png"));
-                    next += StepSeconds;
-                }
-            }
-
-            Release(_keyboard.wKey);
-            Line("charge now " + _gameplay.Battery.Model.Charge.ToString("0.00") + ", raised " + _gameplay.PadLock.Raised);
-            File.WriteAllText(Path.Combine(Folder, "dock-timeline.md"), _timeline.ToString());
-            Assert.IsTrue(_closedAt >= 0f, "the lock's clamp closed on 07");
-            Assert.IsTrue(_fullBeat, "the charge filled");
-            Assert.IsTrue(_fullChirp, "07 chirps Happy when the charge is full, though the build's Happy was just before");
         }
 
         /// <summary>07 and its pad from the side, low: the wheel chocks and the clamp arms.</summary>
@@ -237,12 +323,14 @@ namespace MoonProject.Gameplay.PlayModeTests
                 _fullBeat |= b.Kind == FeelKind.Dock && b.Phase == FeelPhase.Reward;
                 Line("feel " + b.Kind + " " + b.Phase + " " + b.Strength.ToString("0.0"));
             });
+            _context.Events.Subscribe<RoverWideShotChanged>(w => _wideShot |= w.Wide);
             _context.Events.Subscribe<BatteryChanged>(b => Line("BatteryChanged full cells " + b.FullCells));
         }
 
         private void Line(string text)
         {
             _timeline.Append("- t+").Append((Time.time - _t0).ToString("0.00")).Append(" s: ").AppendLine(text);
+            Debug.Log("[dockfind] t+" + (Time.time - _t0).ToString("0.00") + " " + text);
         }
 
         private IEnumerator Tap(UnityEngine.InputSystem.Controls.ButtonControl key)
