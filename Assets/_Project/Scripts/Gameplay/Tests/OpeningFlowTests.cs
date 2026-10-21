@@ -94,7 +94,7 @@ namespace MoonProject.Gameplay.Tests
             Expect(OpeningKeys.BuildMast);
             _game.BuiltIds.Add(StructureIds.AntennaMast);
             Expect(OpeningKeys.Transmit, "the mast stands: transmit from it (G6)");
-            _game.CallAnswered = true;
+            _game.AnswerDone = true;
             Expect(OpeningKeys.GoToRelay, "relay.1 answered: drive to it");
             _game.RelayRelit = true;
             Expect(string.Empty, "relay.1 lit: the opening's lines are done");
@@ -138,7 +138,7 @@ namespace MoonProject.Gameplay.Tests
             _game.BuiltIds.Add(StructureIds.AntennaMast);
             _flow.Tick();
             Assert.AreEqual(OpeningSteps.Transmit, _flow.CurrentIndex);
-            _game.CallAnswered = true;
+            _game.AnswerDone = true;
             _flow.Tick();
             Assert.AreEqual(OpeningSteps.GoToRelay, _flow.CurrentIndex);
             _game.RelayRelit = true;
@@ -464,7 +464,7 @@ namespace MoonProject.Gameplay.Tests
             public bool NightFallen { get; set; }
             public bool DuskVisited { get; set; }
             public bool ModuleHome { get; set; }
-            public bool CallAnswered { get; set; }
+            public bool AnswerDone { get; set; }
             public bool RelayRelit { get; set; }
             public readonly Dictionary<string, Vector3> Places = new Dictionary<string, Vector3>();
 
