@@ -735,6 +735,10 @@
             "text": "Night is coming. Scan the habitat's power module."
         },
         {
+            "key": "next.v3.hook_module",
+            "text": "Hook the power module and tow it home."
+        },
+        {
             "key": "next.v3.tow_module",
             "text": "The power module is the bank's frame. Tow it home to the apron."
         },

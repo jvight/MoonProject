@@ -735,6 +735,10 @@
             "text": "Đêm sắp xuống. Quét mô-đun điện của khu nhà ở."
         },
         {
+            "key": "next.v3.hook_module",
+            "text": "Móc cáp vào mô-đun nguồn và kéo về sân."
+        },
+        {
             "key": "next.v3.tow_module",
             "text": "Mô-đun điện là khung của cụm pin. Kéo nó về sân."
         },

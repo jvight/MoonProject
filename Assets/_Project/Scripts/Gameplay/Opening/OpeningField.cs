@@ -156,6 +156,8 @@ namespace MoonProject.Gameplay
 
         public bool DuskVisited => Dusk.Visited;
 
+        public bool ModuleHooked => _tow != null && _tow.TowingId == TowLoads.PowerModule;
+
         public bool ModuleHome => _tow != null && _tow.TryFindHome(TowLoads.PowerModule, out _);
 
         public bool AnswerDone => _answer != null && _answer.Phase == AnswerPhase.Done;
@@ -248,6 +250,10 @@ namespace MoonProject.Gameplay
                     return Frame(HabitatRuin, out placeId, out position);
                 case OpeningKeys.ScanTower:
                     return Frame(TowerRuin, out placeId, out position);
+                case OpeningKeys.HookModule:
+                    Vector3 hitch = Vector3.zero;
+                    bool hasHitch = _tow != null && _tow.TryFindHitch(TowLoads.PowerModule, out hitch);
+                    return Place(hasHitch ? TowLoads.PowerModule : string.Empty, hitch, out placeId, out position);
                 case OpeningKeys.TowModuleHome:
                 case OpeningKeys.BuildBatteryBank:
                     Transform load = null;

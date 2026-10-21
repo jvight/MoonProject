@@ -123,8 +123,8 @@ namespace MoonProject.Gameplay
 
         /// <summary>
         /// R5 to B9: the first free choice names the near sites, then, once one is visited, the dock that ends the day;
-        /// at dusk, the power module to scan, then the module to tow home, then the bank to build on it, or the bank to
-        /// move into the grid's reach.
+        /// at dusk, the power module to scan, then its hitch to hook, then the module to tow home, then the bank to
+        /// build on it, or the bank to move into the grid's reach.
         /// </summary>
         private string NightLine()
         {
@@ -136,7 +136,8 @@ namespace MoonProject.Gameplay
             return !_game.Knows(StructureIds.BatteryBank) ? OpeningKeys.ScanModule
                 : _game.Built(StructureIds.BatteryBank) ? OpeningKeys.MoveBatteryBank
                 : _game.ModuleHome ? OpeningKeys.BuildBatteryBank
-                : OpeningKeys.TowModuleHome;
+                : _game.ModuleHooked ? OpeningKeys.TowModuleHome
+                : OpeningKeys.HookModule;
         }
 
         /// <summary>The key of the line the current step would say, or empty when it has none (not shown).</summary>
@@ -242,6 +243,11 @@ namespace MoonProject.Gameplay
 
             if (Shown.Length > 0)
             {
+                if (ShownReason == NextLineReason.Next && HoldsUntilDone(Shown))
+                {
+                    return;
+                }
+
                 _shownFor += deltaTime;
                 if (_shownFor >= _showSeconds)
                 {
@@ -264,6 +270,8 @@ namespace MoonProject.Gameplay
                 Show(key, NextLineReason.Reminder, _timing.ReminderSeconds);
             }
         }
+
+        private static bool HoldsUntilDone(string key) => key == OpeningKeys.HookModule;
 
         private void Show(string key, NextLineReason reason, float seconds)
         {
