@@ -3,7 +3,7 @@
 Plays the real game with the Autoplay bot, without touching the owner's mouse, keyboard or screen.
 
   python tools/autoplay.py [--build] [--scenario opening] [--until B3] [--out DIR] [--timeout 600]
-                           [--shot-seconds 20] [--exe PATH] [--visible]
+                           [--shot-seconds 20] [--exe PATH] [--visible] [--sound]
 
 The bot lives in the development build (python tools/build_player.py --autoplay, into Builds/Lunarion-Autoplay of
 your worktree; --build makes it first). It feeds the Input System from inside the process (a virtual keyboard and
@@ -55,7 +55,7 @@ def slot_for(root):
     return f"{SLOT_PREFIX}-{hashlib.sha1(str(root).lower().encode()).hexdigest()[:8]}"
 
 
-def launch_arguments(slot, out_dir, log_path, scenario, until, timeout, shot_seconds, lines=False, strict_guidance=True, naive=False):
+def launch_arguments(slot, out_dir, log_path, scenario, until, timeout, shot_seconds, lines=False, strict_guidance=True, naive=False, sound=False):
     """The player's command line: window size, own save slot, own log, and the bot's flags."""
     args = ["-screen-width", str(WINDOW_WIDTH), "-screen-height", str(WINDOW_HEIGHT), "-screen-fullscreen", "0",
             "-saveSlot", slot, "-logFile", str(log_path), "-autoplay", scenario, "-autoplay-out", str(out_dir),
@@ -68,6 +68,8 @@ def launch_arguments(slot, out_dir, log_path, scenario, until, timeout, shot_sec
         args += ["-autoplay-strict-guidance", "0"]
     if naive:
         args += ["-autoplay-naive", "1"]
+    if not sound:
+        args.append("-autoplay-mute")
     return args
 
 
@@ -137,6 +139,7 @@ def main():
     ap.add_argument("--backend", choices=("mono", "il2cpp"), default=build_player.DEFAULT_BACKEND,
                     help="scripting backend of the --build player; the default is the one owner builds ship with")
     ap.add_argument("--visible", action="store_true", help="leave the window where the system puts it")
+    ap.add_argument("--sound", action="store_true", help="play with audio on (default: muted with -autoplay-mute)")
     args = ap.parse_args()
 
     root = build_player.git_toplevel()
@@ -159,7 +162,8 @@ def main():
     slot = slot_for(root)
     build_player.delete_slot_files(saves_dir, slot)
     command = [str(exe)] + launch_arguments(slot, out_dir, out_dir / "player.log", args.scenario, args.until, args.timeout,
-                                            args.shot_seconds, args.lines, not args.lenient_guidance, args.naive)
+                                            args.shot_seconds, args.lines, not args.lenient_guidance, args.naive,
+                                            args.sound)
     say(f"launching {exe.name} on save slot '{slot}', output {out_dir}")
     guard = procutil.ProcessTreeGuard()
     # The window shows without taking focus, so a run never jumps in front of what the owner is doing.

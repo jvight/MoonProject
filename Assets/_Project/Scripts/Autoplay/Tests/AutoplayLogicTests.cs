@@ -19,6 +19,23 @@ namespace MoonProject.Autoplay.Tests
             Assert.AreEqual("B3", options.UntilBeat);
             Assert.AreEqual(AutoplayOptions.DefaultShotSeconds, options.ShotSeconds);
             Assert.AreEqual(AutoplayOptions.DefaultTimeoutSeconds, options.TimeoutSeconds);
+            Assert.IsFalse(options.Mute);
+        }
+
+        [Test]
+        public void Options_MuteFlagIsOffByDefault_AndOnWhenPassed()
+        {
+            Assert.IsTrue(AutoplayOptions.TryParse(
+                new[] { "Lunarion.exe", "-autoplay", "opening", "-autoplay-out", "C:/out" },
+                out AutoplayOptions unmuted, out string problem));
+            Assert.IsNull(problem);
+            Assert.IsFalse(unmuted.Mute);
+
+            Assert.IsTrue(AutoplayOptions.TryParse(
+                new[] { "Lunarion.exe", "-autoplay", "opening", "-autoplay-out", "C:/out", "-autoplay-mute" },
+                out AutoplayOptions muted, out problem));
+            Assert.IsNull(problem);
+            Assert.IsTrue(muted.Mute);
         }
 
         [Test]

@@ -49,6 +49,13 @@ class LaunchArgumentTests(unittest.TestCase):
         pairs = dict(zip(lenient[::2], lenient[1::2]))
         self.assertEqual(pairs["-autoplay-strict-guidance"], "0")
 
+    def test_sound_is_muted_by_default_and_kept_when_sound_flag_is_on(self):
+        muted = autoplay.launch_arguments("autoplay-slot", Path("out"), Path("out/player.log"), "opening", "", 600, 20)
+        self.assertIn("-autoplay-mute", muted)
+        with_sound = autoplay.launch_arguments("autoplay-slot", Path("out"), Path("out/player.log"), "opening", "", 600,
+                                               20, sound=True)
+        self.assertNotIn("-autoplay-mute", with_sound)
+
 
 class VerdictTests(unittest.TestCase):
     def setUp(self):
