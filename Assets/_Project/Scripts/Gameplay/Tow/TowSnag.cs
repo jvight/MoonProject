@@ -1,10 +1,11 @@
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// When a towed load is caught on the ground (a lip, a rock's edge, a steep bank): the cable has stayed stretched
-    /// past the snag stretch for the snag time while the load hardly moved toward the winch (a load that only lags,
-    /// still coming, is never caught). The winch then lifts it free, once, and the count starts again; a load
-    /// that falls past the let-go distance is unhooked softly instead, never dragged on or lost. Pure state machine.
+    /// When a towed load is caught (a lip, a rock's edge, a prop's corner): the cable has stayed stretched past the
+    /// snag stretch for the snag time while the load hardly moved toward the winch (a load that only lags, still
+    /// coming, is never caught). The winch then lifts it a little and pays out slack, and the count starts again; the
+    /// hook stays on, so backing up or steering wide frees it. Only a load past the snap distance (07 pulled far past
+    /// all its slack) lets go. Pure state machine.
     /// </summary>
     public sealed class TowSnag
     {

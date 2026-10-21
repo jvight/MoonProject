@@ -129,7 +129,36 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void ALoadThatFellFarBehind_IsLetGoSoftly()
+        public void ACaughtLoad_StaysHooked_TheWinchPaysOutSlack_AndTakesItBackOnceItFollows()
+        {
+            const float step = 0.02f;
+            TowableBody load = Load("module", new Vector3(0f, 0f, -1f));
+            _tow.Step(true);
+            load.Body.transform.position =
+                new Vector3(0f, 0f, -(_settings.CableLength + _settings.MaxSlack + _settings.SnagStretch + 1f));
+            for (float t = 0f; t < _settings.SnagSeconds * 20f; t += step)
+            {
+                _tow.FixedStep(step);
+            }
+
+            Assert.IsTrue(_tow.IsTowing, "a caught load never drops on its own");
+            Assert.IsEmpty(_released);
+            Assert.AreEqual(_settings.CableLength + _settings.MaxSlack, _tow.Length, 1e-3f,
+                "the winch paid out its slack, a step at a time");
+            Assert.Greater(_tow.Lifts, 1, "lifted a little at each catch");
+
+            load.Body.transform.position = new Vector3(0f, 0f, -1f);
+            for (float t = 0f; t < _settings.MaxSlack / _settings.ReelInSpeed + 1f; t += step)
+            {
+                _tow.FixedStep(step);
+            }
+
+            Assert.AreEqual(_settings.CableLength, _tow.Length, 1e-3f, "freed and following: the slack is back in");
+            Assert.IsTrue(_tow.IsTowing);
+        }
+
+        [Test]
+        public void OnlyATrueSnap_FarPastAllTheSlack_LetsTheLoadGo()
         {
             TowableBody load = Load("module", new Vector3(0f, 0f, -1f));
             _tow.Step(true);
