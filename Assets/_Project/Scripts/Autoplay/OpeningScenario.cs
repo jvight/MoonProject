@@ -438,7 +438,7 @@ namespace MoonProject.Autoplay
             yield return _base.ExpectStep(OpeningSteps.BuildBatteryBank, OpeningKeys.ScanModule,
                 "B9: night is coming");
             yield return _base.ScanTheSet("ruin.HabitatModules");
-            yield return _base.ExpectStep(OpeningSteps.BuildBatteryBank, OpeningKeys.TowModuleHome,
+            yield return _base.ExpectStep(OpeningSteps.BuildBatteryBank, OpeningKeys.HookModule,
                 "B9: the module is the bank's frame");
             yield return _base.CutTheCrates("HabitatModules");
             yield return Sub("B9a");

@@ -500,6 +500,12 @@ namespace MoonProject.Autoplay
         public IEnumerator TopUpIfLow()
         {
             BatteryModel battery = G.Battery.Model;
+            if (!_bot.Failed && battery.IsCharging && battery.Charge01 < TopUpTo)
+            {
+                yield return _bot.Until(() => battery.Charge01 >= TopUpTo, TopUpSeconds, "07's cells to charge");
+                yield break;
+            }
+
             Vector3? pad = null;
             foreach (PlacedStructure structure in G.PlacedBase.Structures)
             {
@@ -940,18 +946,17 @@ namespace MoonProject.Autoplay
             }
 
             // Where a player stands: on the pad the rack faces, looking at the bay.
-            Vector3 point = outline.bounds.center;
             yield return _bot.DriveTo(Flat(PlacedPosition(StructureIds.ChargingPad)), ApproachThrottleRadius,
                 "the pad, facing the rack", DriveSeconds);
-            yield return _bot.Until(() => _bot.KeepLookingAt(point) && ReadsHeadlampBay(), RackReadSeconds,
-                "07 to read the rack's headlamp bay from the pad",
-                () => "Bay at " + point + ", in the view at " +
-                      _bot.World.Context.Get<IViewCamera>().Camera.WorldToViewportPoint(point) + ", " +
-                      DriveSteering.FlatDistance(point, _bot.World.Rover.Position)
+            yield return _bot.Until(() => _bot.KeepLookingAt(outline.bounds.center) && ReadsHeadlampBay(),
+                RackReadSeconds, "07 to read the rack's headlamp bay from the pad",
+                () => "Bay at " + outline.bounds.center + ", in the view at " +
+                      _bot.World.Context.Get<IViewCamera>().Camera.WorldToViewportPoint(outline.bounds.center) + ", " +
+                      DriveSteering.FlatDistance(outline.bounds.center, _bot.World.Rover.Position)
                           .ToString("0.0", CultureInfo.InvariantCulture) + " m from 07. " + _bot.Where());
             yield return _bot.Hold(Key.E, () =>
                 {
-                    _bot.KeepLookingAt(point);
+                    _bot.KeepLookingAt(outline.bounds.center);
                     return G.Opening.HeadlampFitted;
                 }, FollowSeconds, "a held E to assemble the SSR-3 headlamp");
         }
