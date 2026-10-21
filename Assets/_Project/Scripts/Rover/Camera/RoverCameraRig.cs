@@ -642,8 +642,9 @@ namespace MoonProject.Rover
                 float reach = weight * CameraMoment.FocusReach(moment, distance);
                 if (distance > MinSubjectDistance)
                 {
+                    float baseYaw = IsNudgeMoment ? roverYaw + _orbitState.YawOffset : roverYaw;
                     float subjectYaw = Mathf.Atan2(toSubject.x, toSubject.z) * Mathf.Rad2Deg;
-                    yaw = Mathf.DeltaAngle(roverYaw, CameraMoment.BlendYaw(moment, roverYaw, subjectYaw, reach));
+                    yaw = Mathf.DeltaAngle(baseYaw, CameraMoment.BlendYaw(moment, baseYaw, subjectYaw, reach));
                     _momentYaw -= turned * moment.YawShare * Mathf.Clamp01(reach);
                 }
 
@@ -926,15 +927,21 @@ namespace MoonProject.Rover
             return _look.OrbitDegrees(mouse, _input.LookRate, deltaTime);
         }
 
+        private bool IsNudgeMoment => _moment.IsActive && ReferenceEquals(_moment.Settings, _tuning.NudgeMoment);
+
         /// <summary>
         /// The chase orbit before any shot or framing moves it: the player's view and 07's moments, then the beam
         /// work's framing; <paramref name="yaw"/> is from 07's heading.
         /// </summary>
         private void ChaseOrbit(out float yaw, out float elevation, out float radius)
         {
-            yaw = _orbitState.YawOffset * (1f - _moment.Weight);
+            yaw = IsNudgeMoment ? _orbitState.YawOffset : _orbitState.YawOffset * (1f - _moment.Weight);
             elevation = _orbitState.Elevation + _momentLift + _wallCompression * _tuning.WallMaxPitchLift
                 - _crawl * _tuning.CrawlLower;
+            if (IsNudgeMoment && elevation > _tuning.DefaultPitch)
+            {
+                elevation = Mathf.Lerp(elevation, _tuning.DefaultPitch, _moment.Weight);
+            }
             radius = _tuning.Distance * (1f + _momentPullBack) * (1f + _crawl * _tuning.CrawlPullBack);
             if (_towT > 0f || _towYawT > 0f)
             {
@@ -1639,21 +1646,17 @@ namespace MoonProject.Rover
 
             bool free = !_moment.IsActive && _wide.Weight <= 0f && _held.Weight <= 0f && !_tethered && !_towing &&
                         !_opening.IsActive && !_faceInspectOpen && _faceInspectWeight <= 0f && !_gazePan.IsActive;
-            if (!free || !GuidanceNudge.OffScreen(_viewCamera.WorldToViewportPoint(step.TargetPosition),
-                    _tuning.NudgeScreenMargin) || !_nudge.TryTake(step.TargetId))
-            {
-                return;
-            }
-
             float looking = RoverYaw() + _orbitState.YawOffset;
-            float bearing = Mathf.Abs(Mathf.DeltaAngle(looking, GazePan.BearingTo(_rover.Position, step.TargetPosition)));
-            if (bearing > _tuning.NudgeMaxBearing)
+            Vector3 viewport = _viewCamera.WorldToViewportPoint(step.TargetPosition);
+            if (!free || !GuidanceNudge.ShouldNudge(_rover.Position, step.TargetPosition, looking, viewport,
+                    _tuning.NudgeScreenMargin, _tuning.NudgeMinDistance, _tuning.NudgeSlack, _tuning.NudgeMaxBearing) ||
+                !_nudge.TryTake(step.TargetId))
             {
                 return;
             }
 
             _gazePan.Begin(_rover.Position, looking, step.TargetPosition, _tuning.NudgeTravelSeconds,
-                _tuning.NudgeHoldSeconds, _tuning.NudgeSweep, _tuning.ReleasePanRise, _tuning.ReleasePanHalfLife,
+                _tuning.NudgeHoldSeconds, _tuning.NudgeSweep, 0f, _tuning.ReleasePanHalfLife,
                 _tuning.NudgeSlack);
             _moment.Start(_tuning.NudgeMoment, _gazePan.Subject, true);
         }

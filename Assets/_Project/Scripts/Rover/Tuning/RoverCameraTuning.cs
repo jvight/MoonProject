@@ -487,7 +487,7 @@ namespace MoonProject.Rover
         [Tooltip("The nudge toward the next action's object when it is off screen (G5): one soft eased turn of the camera " +
                  "toward it, with 07 in the foreground; any look or drive input ends it.")]
         [SerializeField] private CameraMomentSettings _nudgeMoment =
-            new CameraMomentSettings(1f, 0f, 1.6f, 1f, 1.2f, 1f, 0f, 120f, 0f, 0f, 100000f);
+            new CameraMomentSettings(1f, 0f, 1.6f, 0f, 0f, 1f, 0f, 180f, 0f, 0f, 100000f);
 
         [Tooltip("Fastest the nudge turns the camera (deg/s).")]
         [Range(5f, 40f)]
@@ -510,6 +510,10 @@ namespace MoonProject.Rover
                  "07's head turn carries the look.")]
         [Range(30f, 180f)]
         [SerializeField] private float _nudgeMaxBearing = 150f;
+
+        [Tooltip("Closest (m) an object may lie to 07 for the camera to nudge toward it; closer than this, 07's head look is enough.")]
+        [Range(0f, 40f)]
+        [SerializeField] private float _nudgeMinDistance = 12f;
 
         [Tooltip("Share of the view's width and height, from each edge, a target must lie inside to count as on screen " +
                  "(no nudge, no head turn).")]
@@ -1030,6 +1034,8 @@ namespace MoonProject.Rover
         public float NudgeSlack => _nudgeSlack;
 
         public float NudgeMaxBearing => _nudgeMaxBearing;
+
+        public float NudgeMinDistance => _nudgeMinDistance;
 
         public float NudgeScreenMargin => _nudgeScreenMargin;
 

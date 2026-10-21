@@ -11,16 +11,19 @@ namespace MoonProject.Rover.PlayModeTests
 {
     /// <summary>
     /// The camera nudge toward the next action (G5, docs/design/opening-v3-guidance-audit.md), in the real Main scene:
-    /// when Story's next line has a place that is off screen, the camera drifts that way once (a slow, eased turn); any
-    /// input ends it; a target nudged once is never nudged toward again; a place already in view, or a reminder,
-    /// changes nothing.
+    /// when Story's next line has a place that is off screen, the camera drifts that way once (a slow, eased horizontal
+    /// yaw turn at chase pitch); any input ends it; a target nudged once is never nudged toward again; a place close to
+    /// 07, already in view / horizontal field, or a reminder changes nothing; and a target that was in view never
+    /// leaves the view.
     /// </summary>
     public sealed class NextActionNudgePlayModeTests : InputTestFixture
     {
         private const string RealLine = "next.v2.build_pad";
         private const float FrameTime = 1f / 60f;
         private const float TargetDistance = 120f;
+        private const float CloseTargetDistance = 8f;
         private const float MaxTurnDegreesPerSecond = 30f;
+        private const float MaxPitchDriftDegrees = 2f;
         private const float SettleSeconds = 1.2f;
         private const float NudgeSeconds = 6f;
         private const float EaseBackSeconds = 2.5f;
@@ -46,28 +49,33 @@ namespace MoonProject.Rover.PlayModeTests
         [Timeout(300000)]
         [PrebuildSetup(typeof(RoverSessionScene))]
         [PostBuildCleanup(typeof(RoverSessionScene))]
-        public IEnumerator AnOffScreenTarget_TurnsTheHead_AndNudgesTheCameraOnce_SlowlyAndEased()
+        public IEnumerator AnOffScreenTarget_TurnsTheHead_AndNudgesTheCameraOnce_SlowlyAndEased_YawOnlyAtChasePitch()
         {
             yield return Boot();
             Vector3 at = _scene.Rover.Position;
-            Vector3 target = at + Bearing(Facing() + 100f) * TargetDistance;
+            float chasePitch = Mathf.DeltaAngle(0f, _scene.View.transform.eulerAngles.x);
+            Vector3 target = at + Bearing(Facing() + 100f) * TargetDistance + Vector3.down * 15f;
             _scene.Context.Events.Publish(Step("relay.1", target));
 
             float lastYaw = _scene.View.transform.eulerAngles.y;
             float fastest = 0f;
             float peak = 0f;
+            float maxPitchDrift = 0f;
             float until = Time.time + NudgeSeconds;
             while (Time.time < until)
             {
                 yield return null;
                 float yaw = _scene.View.transform.eulerAngles.y;
+                float pitch = Mathf.DeltaAngle(0f, _scene.View.transform.eulerAngles.x);
                 fastest = Mathf.Max(fastest, Mathf.Abs(Mathf.DeltaAngle(lastYaw, yaw)) / Time.deltaTime);
+                maxPitchDrift = Mathf.Max(maxPitchDrift, Mathf.Abs(Mathf.DeltaAngle(chasePitch, pitch)));
                 lastYaw = yaw;
                 peak = Mathf.Max(peak, _scene.CameraRig.MomentWeight);
             }
 
             Assert.Greater(peak, 0.9f, "the camera was nudged toward it");
             Assert.LessOrEqual(fastest, MaxTurnDegreesPerSecond, "a soft drift, never a whip");
+            Assert.LessOrEqual(maxPitchDrift, MaxPitchDriftDegrees, "the nudge only yaws; pitch stays at the chase pitch and never looks down at the ground");
             yield return RealRoverScene.WaitSeconds(EaseBackSeconds);
             Assert.Less(_scene.CameraRig.MomentWeight, 0.05f, "and it eased back");
 
@@ -118,11 +126,14 @@ namespace MoonProject.Rover.PlayModeTests
         [Timeout(300000)]
         [PrebuildSetup(typeof(RoverSessionScene))]
         [PostBuildCleanup(typeof(RoverSessionScene))]
-        public IEnumerator ATargetAlreadyInView_ChangesNothing()
+        public IEnumerator ATargetAlreadyInView_OrInHorizontalField_OrCloseToRover_NeverNudgesOrLeavesView()
         {
             yield return Boot();
-            Vector3 target = _scene.Rover.Position + Bearing(Facing()) * TargetDistance;
-            _scene.Context.Events.Publish(Step("lamp", target));
+
+            Vector3 inViewTarget = _scene.Rover.Position + Bearing(Facing() + 18f) * TargetDistance;
+            Vector3 beforeViewport = _scene.View.WorldToViewportPoint(inViewTarget);
+            Assert.IsTrue(GuidanceNudge.InView(beforeViewport), "target starts in view");
+            _scene.Context.Events.Publish(Step("lamp", inViewTarget));
 
             float strongest = 0f;
             float until = Time.time + NudgeSeconds * 0.5f;
@@ -130,9 +141,22 @@ namespace MoonProject.Rover.PlayModeTests
             {
                 yield return null;
                 strongest = Mathf.Max(strongest, _scene.CameraRig.MomentWeight);
+                Assert.IsTrue(GuidanceNudge.InView(_scene.View.WorldToViewportPoint(inViewTarget)),
+                    "a target that was in view never leaves the view");
             }
 
             Assert.AreEqual(0f, strongest, 1e-3f, "seen already: no camera move");
+
+            Vector3 closeTarget = _scene.Rover.Position + Bearing(Facing() + 100f) * CloseTargetDistance;
+            _scene.Context.Events.Publish(Step("habitat.power_module", closeTarget));
+            until = Time.time + NudgeSeconds * 0.5f;
+            while (Time.time < until)
+            {
+                yield return null;
+                strongest = Mathf.Max(strongest, _scene.CameraRig.MomentWeight);
+            }
+
+            Assert.AreEqual(0f, strongest, 1e-3f, "close to 07 (< 12 m): 07's head look is enough");
         }
 
         [UnityTest]
@@ -182,6 +206,5 @@ namespace MoonProject.Rover.PlayModeTests
         {
             return new Vector3(Mathf.Sin(degrees * Mathf.Deg2Rad), 0f, Mathf.Cos(degrees * Mathf.Deg2Rad));
         }
-
     }
 }
