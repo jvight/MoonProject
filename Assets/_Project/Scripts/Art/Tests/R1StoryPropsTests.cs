@@ -53,6 +53,7 @@ namespace MoonProject.Art.Tests
             ("geophone_plug.json", "Props/Geophone_Plug.fbx"),
             ("prop_geophone_line.json", "Props/Prop_GeophoneLine.fbx"),
             ("power_module.json", "Ruins/PowerModule.fbx"),
+            ("relay_hut.json", "Structures/RelayHut.fbx"),
             ("service_cabinet.json", "Structures/ServiceCabinet.fbx"),
             ("feed_unit_spare.json", "Props/FeedUnitSpare.fbx"),
             ("relay_contact_pad.json", "Structures/RelayContactPad.fbx"),
@@ -309,6 +310,23 @@ namespace MoonProject.Art.Tests
             }
 
             Assert.IsTrue(found, $"{node.name} must carry {slot}.");
+        }
+
+        [Test]
+        public void RelayHut_KeepsWorldsNodePaths_AndItsLampIsDarkUntilLit()
+        {
+            GameObject hut = MeshChecks.LoadGeneratedPrefab(R1ModelBuilder.GetGeneratedPrefabPath(
+                R1MaterialRecipes.ModelsFolder + "/Structures/RelayHut.fbx"));
+            Assert.AreEqual("RelayHut", hut.name);
+            Assert.IsNotNull(hut.transform.Find("Door")?.GetComponent<Renderer>(), "RelayHut/Door must be a mesh.");
+            Assert.IsNotNull(hut.transform.Find("MastStub"), "RelayHut/MastStub");
+            Transform lamp = hut.transform.Find("MastStub/RelayLamp");
+            Assert.IsNotNull(lamp, "RelayHut/MastStub/RelayLamp");
+            Material lens = lamp.GetComponent<Renderer>().sharedMaterial;
+            Assert.AreEqual(R1StoryPropsBuilder.RelayLampDarkMaterialName, lens.name, "RelayLamp wears the dark lens.");
+            Assert.AreEqual(Color.black, lens.GetColor("_EmissionColor"), "RelayLamp is dark until Gameplay lights it.");
+            Assert.IsTrue(lens.GetTexture("_EmissionMap") != null && lens.GetFloat("_EmissionStrength") > 0f,
+                "RelayLamp can still be lit through _EmissionColor.");
         }
 
         [Test]
