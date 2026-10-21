@@ -69,7 +69,9 @@ namespace MoonProject.Rover.Editor
         {
             var model = AssetDatabase.LoadAssetAtPath<GameObject>(RoverAssetPaths.RoverModel);
             if (model == null
-                || model.transform.Find(RoverModelNodes.SolarWing + "/" + RoverModelNodes.CellFilled) == null)
+                || model.transform.Find(RoverModelNodes.SolarWing + "/" + RoverModelNodes.CellFilled) == null
+                || AssetDatabase.LoadAssetAtPath<GameObject>(RoverAssetPaths.Ssr3Headlamp) == null
+                || AssetDatabase.LoadAssetAtPath<GameObject>(RoverAssetPaths.CellPod) == null)
             {
                 MoonProject.Art.Editor.R1ModelBuilder.Build();
             }
@@ -78,6 +80,9 @@ namespace MoonProject.Rover.Editor
             var lensGlass = BuildWiring.Require<GameObject>(RoverAssetPaths.LensGlass, "the Art box's glass builder");
             var focusLens = BuildWiring.Require<GameObject>(RoverAssetPaths.FocusLens, "the Art box's rover builder");
             var scanFan = BuildWiring.Require<GameObject>(RoverAssetPaths.ScanFan, "the Art box's rover builder");
+            var ssr3Headlamp =
+                BuildWiring.Require<GameObject>(RoverAssetPaths.Ssr3Headlamp, "the Art box's rover builder");
+            var cellPod = BuildWiring.Require<GameObject>(RoverAssetPaths.CellPod, "the Art box's rover builder");
 
             var tuning = BuildWiring.Require<RoverTuning>(RoverAssetPaths.RoverTuning, "Rover/Tuning");
             var rigTuning = BuildWiring.Require<RoverRigTuning>(RoverAssetPaths.RigTuning, "Rover/Tuning");
@@ -147,7 +152,7 @@ namespace MoonProject.Rover.Editor
             roadLightSettings.ApplyModifiedPropertiesWithoutUndo();
 
             RoverFlankLamps flankLamps = BuildFlankLamps(visual, m, rigTuning);
-            RoverGrowth growth = BuildGrowth(visual, m, rigTuning);
+            RoverGrowth growth = BuildGrowth(scratch, visual, m, rigTuning, roadLight, ssr3Headlamp, cellPod);
             RoverTowCable towCable = BuildTowCable(visual, m, rigTuning);
             RoverWheelFx wheelFx = BuildWheelFx(scratch, root.transform, m, fxTuning, trackMaterial, dustMaterial);
             RoverLampMotes lampMotes = BuildLampMotes(scratch, headlamp, fxTuning, moteMaterial);
@@ -438,14 +443,44 @@ namespace MoonProject.Rover.Editor
             return line;
         }
 
-        /// <summary>The antenna's second segment and the igniter cartridge already in RoverModel, grown by events.</summary>
-        private static RoverGrowth BuildGrowth(GameObject host, Transform model, RoverRigTuning tuning)
+        /// <summary>
+        /// The antenna's second segment and the igniter cartridge already in RoverModel, plus the SSR-3 headlamp pods
+        /// on BrowSocket and the flank cell pods on PodSocket_L/R, grown by events.
+        /// </summary>
+        private static RoverGrowth BuildGrowth(BuilderScratchScene scratch, GameObject host, Transform model,
+            RoverRigTuning tuning, RoverHeadlamp roadLight, GameObject headlampPrefab, GameObject cellPodPrefab)
         {
+            Transform headlampPod = Mount(scratch, headlampPrefab, BuildWiring.Node(model, RoverModelNodes.BrowSocket));
+            Transform housingLeft = BuildWiring.Node(headlampPod, RoverModelNodes.HeadlampHousingLeft);
+            Transform housingRight = BuildWiring.Node(headlampPod, RoverModelNodes.HeadlampHousingRight);
+            Renderer lensLeft = BuildWiring.NodeComponent<MeshRenderer>(headlampPod, RoverModelNodes.HeadlampLensLeft);
+            Renderer lensRight = BuildWiring.NodeComponent<MeshRenderer>(headlampPod, RoverModelNodes.HeadlampLensRight);
+            BuildWiring.AssignArray(roadLight, "_podLenses", new Object[] { lensLeft, lensRight });
+
+            Transform cellPodLeft = Mount(scratch, cellPodPrefab, BuildWiring.Node(model, RoverModelNodes.PodSocketLeft));
+            cellPodLeft.localRotation = Quaternion.Euler(0f, 180f, 0f);
+            Transform cellPodRight =
+                Mount(scratch, cellPodPrefab, BuildWiring.Node(model, RoverModelNodes.PodSocketRight));
+            var cellBars = new Object[RoverModelNodes.CellPodBarCount * 2];
+            for (int i = 0; i < RoverModelNodes.CellPodBarCount; i++)
+            {
+                cellBars[i] = BuildWiring.NodeComponent<MeshRenderer>(cellPodLeft, RoverModelNodes.CellPodBar(i));
+                cellBars[RoverModelNodes.CellPodBarCount + i] =
+                    BuildWiring.NodeComponent<MeshRenderer>(cellPodRight, RoverModelNodes.CellPodBar(i));
+            }
+
             var growth = host.AddComponent<RoverGrowth>();
             BuildWiring.Assign(growth, ("_tuning", tuning),
                 ("_antennaSegment", BuildWiring.Node(model, RoverModelNodes.AntennaSegment2)),
                 ("_igniter", BuildWiring.Node(model, RoverModelNodes.CutterIgniter)),
-                ("_turret", BuildWiring.Node(model, RoverModelNodes.CutterTurret)));
+                ("_turret", BuildWiring.Node(model, RoverModelNodes.CutterTurret)),
+                ("_headlamp", roadLight),
+                ("_headlampPod", headlampPod),
+                ("_headlampHousingLeft", housingLeft),
+                ("_headlampHousingRight", housingRight),
+                ("_cellPodLeft", cellPodLeft),
+                ("_cellPodRight", cellPodRight));
+            BuildWiring.AssignArray(growth, "_cellPodBars", cellBars);
             return growth;
         }
 

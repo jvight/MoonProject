@@ -4,9 +4,10 @@ using UnityEngine;
 namespace MoonProject.Rover
 {
     /// <summary>
-    /// The growth parts 07 gains in the opening (docs/design/opening-v3-plan.md 2.6): the antenna's second segment
-    /// slides out of its mast at the first charge, and the igniter cartridge seats into the cutter turret when it is
-    /// fitted. Slow, mechanical and soft: nothing snaps and nothing rattles.
+    /// The growth parts 07 gains in the opening (docs/design/opening-v3-plan.md 2.6, 5.2a): the antenna's second
+    /// segment slides out of its mast at the first charge, the igniter cartridge seats into the cutter turret when it
+    /// is fitted, and the SSR-3 headlamp pods (and flank cell pods) unfold and clamp home when fitted at the rack.
+    /// Slow, mechanical and soft: nothing snaps and nothing rattles.
     /// </summary>
     [Serializable]
     public sealed class GrowthSettings
@@ -46,6 +47,22 @@ namespace MoonProject.Rover
         [Range(0.05f, 0.6f)]
         [SerializeField] private float _igniterClickSeconds = 0.16f;
 
+        [Tooltip("Seconds the SSR-3 headlamp pods (and flank cell pods) take to unfold and clamp home when fitted.")]
+        [Range(0.2f, 1.5f)]
+        [SerializeField] private float _headlampFitSeconds = 0.6f;
+
+        [Tooltip("Metres each headlamp pod housing (or flank cell pod) starts outboard of its bracket before clamping in.")]
+        [Range(0.01f, 0.2f)]
+        [SerializeField] private float _headlampClampMetres = 0.06f;
+
+        [Tooltip("Degrees each headlamp pod housing starts unfolded outward on its bracket before clamping shut.")]
+        [Range(5f, 60f)]
+        [SerializeField] private float _headlampUnfoldDegrees = 28f;
+
+        [Tooltip("Metres each pod presses past home at the final clamp click before resting.")]
+        [Range(0f, 0.02f)]
+        [SerializeField] private float _headlampClickMetres = 0.005f;
+
         public float AntennaExtendMetres => _antennaExtendMetres;
         public float AntennaSeconds => _antennaSeconds;
         public float AntennaSettleSeconds => _antennaSettleSeconds;
@@ -55,5 +72,9 @@ namespace MoonProject.Rover
         public float IgniterSeatSeconds => _igniterSeatSeconds;
         public float IgniterClickMetres => _igniterClickMetres;
         public float IgniterClickSeconds => _igniterClickSeconds;
+        public float HeadlampFitSeconds => _headlampFitSeconds;
+        public float HeadlampClampMetres => _headlampClampMetres;
+        public float HeadlampUnfoldDegrees => _headlampUnfoldDegrees;
+        public float HeadlampClickMetres => _headlampClickMetres;
     }
 }

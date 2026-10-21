@@ -254,6 +254,38 @@ namespace MoonProject.Rover.PlayModeTests
             Transform antennaSegment = Node(RoverModelNodes.AntennaSegment2, antenna, new Vector3(0f, 0.5f, 0f));
             Transform igniter = Node(RoverModelNodes.CutterIgniter, cutterTurret, new Vector3(0f, 0.04f, 0.02f));
             Transform lampSocket = Node(RoverModelNodes.HeadlampSocket, model, new Vector3(0f, 0.55f, 1f));
+            Transform browSocket = Node(RoverModelNodes.BrowSocket, head, new Vector3(0f, 0.14f, 0.19f));
+            Transform headlampPod = Node("Kit_SSR3Headlamp", browSocket, Vector3.zero);
+            Transform housingLeft = Shape(PrimitiveType.Cube, headlampPod, new Vector3(-0.454f, -0.13f, -0.07f),
+                new Vector3(0.11f, 0.18f, 0.36f), material);
+            housingLeft.name = RoverModelNodes.HeadlampHousingLeft;
+            Transform lensLeft = Shape(PrimitiveType.Sphere, housingLeft, new Vector3(0f, 0f, 0.18f),
+                Vector3.one * 0.12f, lampGlass);
+            lensLeft.name = RoverModelNodes.HeadlampLensLeft;
+            Transform housingRight = Shape(PrimitiveType.Cube, headlampPod, new Vector3(0.454f, -0.13f, -0.07f),
+                new Vector3(0.11f, 0.18f, 0.36f), material);
+            housingRight.name = RoverModelNodes.HeadlampHousingRight;
+            Transform lensRight = Shape(PrimitiveType.Sphere, housingRight, new Vector3(0f, 0f, 0.18f),
+                Vector3.one * 0.12f, lampGlass);
+            lensRight.name = RoverModelNodes.HeadlampLensRight;
+            Transform podSocketLeft = Node(RoverModelNodes.PodSocketLeft, model, new Vector3(-0.62f, 0.58f, -0.05f));
+            Transform cellPodLeft = Node("Kit_CellPod", podSocketLeft, Vector3.zero);
+            cellPodLeft.localRotation = Quaternion.Euler(0f, 180f, 0f);
+            Transform podSocketRight = Node(RoverModelNodes.PodSocketRight, model, new Vector3(0.62f, 0.58f, -0.05f));
+            Transform cellPodRight = Node("Kit_CellPod", podSocketRight, Vector3.zero);
+            var cellPodBars = new Object[RoverModelNodes.CellPodBarCount * 2];
+            for (int i = 0; i < RoverModelNodes.CellPodBarCount; i++)
+            {
+                Transform barLeft = Shape(PrimitiveType.Cube, cellPodLeft, new Vector3(0.186f, -0.02f + i * 0.075f, 0f),
+                    new Vector3(0.014f, 0.028f, 0.44f), lampGlass);
+                barLeft.name = RoverModelNodes.CellPodBar(i);
+                cellPodBars[i] = barLeft.GetComponent<MeshRenderer>();
+                Transform barRight = Shape(PrimitiveType.Cube, cellPodRight, new Vector3(0.186f, -0.02f + i * 0.075f, 0f),
+                    new Vector3(0.014f, 0.028f, 0.44f), lampGlass);
+                barRight.name = RoverModelNodes.CellPodBar(i);
+                cellPodBars[RoverModelNodes.CellPodBarCount + i] = barRight.GetComponent<MeshRenderer>();
+            }
+
             Transform cargo = Node(RoverModelNodes.CargoSocket, model, new Vector3(0f, 1.05f, -0.4f));
             Transform dustLeft = Node(RoverModelNodes.DustSocketLeft, model, new Vector3(-HalfTrack, 0f, -AxleSpacing));
             Transform dustRight =
@@ -282,10 +314,13 @@ namespace MoonProject.Rover.PlayModeTests
             towClamp.sharedMaterial = material;
             var towCable = visual.gameObject.AddComponent<RoverTowCable>();
             Assign(towCable, ("_tuning", rigTuning), ("_rope", towRope), ("_hook", towClamp), ("_winch", winchOrigin));
+            var roadLight = visual.gameObject.AddComponent<RoverHeadlamp>();
             var growth = visual.gameObject.AddComponent<RoverGrowth>();
             Assign(growth, ("_tuning", rigTuning), ("_antennaSegment", antennaSegment), ("_igniter", igniter),
-                ("_turret", cutterTurret));
-            var roadLight = visual.gameObject.AddComponent<RoverHeadlamp>();
+                ("_turret", cutterTurret), ("_headlamp", roadLight), ("_headlampPod", headlampPod),
+                ("_headlampHousingLeft", housingLeft), ("_headlampHousingRight", housingRight),
+                ("_cellPodLeft", cellPodLeft), ("_cellPodRight", cellPodRight));
+            AssignArray(growth, "_cellPodBars", cellPodBars);
             var moteSystem = Particles("LampMotes", headlamp.transform, material);
             var lampMotes = moteSystem.gameObject.AddComponent<RoverLampMotes>();
             var nozzleDevice = visual.gameObject.AddComponent<CutterNozzleDevice>();
@@ -309,6 +344,8 @@ namespace MoonProject.Rover.PlayModeTests
 
             Assign(rig, ("_tuning", rigTuning), ("_chassis", chassis), ("_antenna", antenna));
             Assign(roadLight, ("_tuning", rigTuning), ("_headlamp", headlamp), ("_lampBody", bodyMesh));
+            AssignArray(roadLight, "_podLenses",
+                new Object[] { lensLeft.GetComponent<MeshRenderer>(), lensRight.GetComponent<MeshRenderer>() });
             SetInt(roadLight, "_lampGlassSlot", LampGlassSlot);
             AssignArray(rig, "_wheels", wheels);
             AssignArray(rig, "_arms", arms);

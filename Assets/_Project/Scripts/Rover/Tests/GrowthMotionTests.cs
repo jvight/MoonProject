@@ -2,7 +2,7 @@ using NUnit.Framework;
 
 namespace MoonProject.Rover.Tests
 {
-    /// <summary>The growth parts' motion (opening v3 2.6): slow, eased, soft, and it ends exactly at rest.</summary>
+    /// <summary>The growth parts' motion (opening v3 2.6, 5.2a): slow, eased, soft, and it ends exactly at rest.</summary>
     public sealed class GrowthMotionTests
     {
         private const float Step = 1f / 60f;
@@ -88,6 +88,28 @@ namespace MoonProject.Rover.Tests
             Assert.AreEqual(-_settings.IgniterClickMetres, deepest, 0.0006f, "the click presses a little past home");
             Assert.IsTrue(GrowthMotion.IgniterDone(_settings, clickEnd));
             Assert.AreEqual(0f, GrowthMotion.IgniterOut(_settings, clickEnd + 1f), Tolerance, "and rests exactly at home");
+        }
+
+        [Test]
+        public void TheHeadlampPods_UnfoldAndClampInPointSixSeconds_AndWarmToFull()
+        {
+            Assert.AreEqual(0.6f, _settings.HeadlampFitSeconds, Tolerance, "~0.6 s fit motion");
+            Assert.AreEqual(_settings.HeadlampClampMetres, GrowthMotion.HeadlampOut(_settings, 0f), Tolerance);
+            Assert.AreEqual(_settings.HeadlampUnfoldDegrees, GrowthMotion.HeadlampOpenDegrees(_settings, 0f), Tolerance);
+            Assert.Greater(GrowthMotion.HeadlampWarmth01(_settings, 0f), 0f, "the filament catches warm right away");
+            Assert.Less(GrowthMotion.HeadlampWarmth01(_settings, 0f), 1f);
+
+            float mid = _settings.HeadlampFitSeconds * 0.4f;
+            Assert.Greater(GrowthMotion.HeadlampOut(_settings, mid), 0f, "still clamping inward at mid-motion");
+            Assert.Less(GrowthMotion.HeadlampOut(_settings, mid), _settings.HeadlampClampMetres);
+            Assert.Greater(GrowthMotion.HeadlampOpenDegrees(_settings, mid), 0f, "still unfolding shut at mid-motion");
+            Assert.Less(GrowthMotion.HeadlampOpenDegrees(_settings, mid), _settings.HeadlampUnfoldDegrees);
+
+            float end = _settings.HeadlampFitSeconds;
+            Assert.IsTrue(GrowthMotion.HeadlampDone(_settings, end));
+            Assert.AreEqual(0f, GrowthMotion.HeadlampOut(_settings, end), Tolerance, "clamped home at 0.6 s");
+            Assert.AreEqual(0f, GrowthMotion.HeadlampOpenDegrees(_settings, end), Tolerance, "folded shut at 0.6 s");
+            Assert.AreEqual(1f, GrowthMotion.HeadlampWarmth01(_settings, end), Tolerance, "full warm glow at 0.6 s");
         }
     }
 }

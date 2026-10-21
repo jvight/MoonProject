@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using MoonProject.Core;
 
@@ -5,10 +6,11 @@ namespace MoonProject.Rover
 {
     /// <summary>
     /// 07's road light, one of the few things that works from the start and costs no battery: the warm spot at the
-    /// RoverModel's HeadlampSocket and the glow of the headlamp glasses (<see cref="HeadlampGlass"/>), set up from
-    /// the rig tuning, dimmed (eased) while 07 rests on its charging pad (<see cref="RoverController.IsDocked"/>) and
-    /// while it crawls on the reserve; the wake's lamp power switches both, and so does the player's lights key, easing
-    /// them on or off (<see cref="SetLightsOn"/>). Ticked by <see cref="RoverController"/> in Update.
+    /// RoverModel's HeadlampSocket and the glow of the headlamp glasses (<see cref="HeadlampGlass"/>, plus the SSR-3
+    /// brow pod lenses once fitted), set up from the rig tuning, dimmed (eased) while 07 rests on its charging pad
+    /// (<see cref="RoverController.IsDocked"/>) and while it crawls on the reserve; the wake's lamp power switches
+    /// both, and so does the player's lights key, easing them on or off (<see cref="SetLightsOn"/>). Ticked by
+    /// <see cref="RoverController"/> in Update.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class RoverHeadlamp : MonoBehaviour
@@ -29,13 +31,20 @@ namespace MoonProject.Rover
         [Min(0)]
         [SerializeField] private int _lampGlassSlot;
 
+        [Tooltip("Kit_SSR3Headlamp 'Lens_L' and 'Lens_R' under Head/BrowSocket: glow with the road light once fitted.")]
+        [SerializeField] private Renderer[] _podLenses = Array.Empty<Renderer>();
+
         private RoverController _rover;
         private BatteryLink _battery;
         private HeadlampGlass _glow;
+        private HeadlampGlass[] _podGlows = Array.Empty<HeadlampGlass>();
         private float _baseIntensity;
         private float _level = 1f;
         private float _switch = 1f;
+        private float _lastPower = 1f;
+        private float _podWarmth;
         private float _appliedLevel = -1f;
+        private float _appliedPodLevel = -1f;
         private bool _docked;
 
         /// <summary>How bright the road light is right now as a share of normal (dimmed on the pad and in the crawl).</summary>
@@ -46,6 +55,9 @@ namespace MoonProject.Rover
 
         /// <summary>How far the lamps have eased toward <see cref="LightsOn"/>: 0 dark, 1 lit.</summary>
         public float SwitchLevel => _switch;
+
+        /// <summary>How warm the SSR-3 brow pod lenses are from fitting: 0 before fit, 0..1 during fit, 1 fitted.</summary>
+        public float PodWarmth => _podWarmth;
 
         /// <summary>Checks wiring and sets the road light up; false when broken (logged).</summary>
         public bool Initialize(GameContext context, RoverController rover)
@@ -63,6 +75,24 @@ namespace MoonProject.Rover
                 Debug.LogError($"{nameof(RoverHeadlamp)}: {problem}", this);
                 enabled = false;
                 return false;
+            }
+
+            if (_podLenses != null && _podLenses.Length > 0)
+            {
+                _podGlows = new HeadlampGlass[_podLenses.Length];
+                for (int i = 0; i < _podLenses.Length; i++)
+                {
+                    if (!HeadlampGlass.TryCreate(_podLenses[i], 0, out _podGlows[i], out string podProblem))
+                    {
+                        Debug.LogError($"{nameof(RoverHeadlamp)}: pod lens {i}: {podProblem}", this);
+                        enabled = false;
+                        return false;
+                    }
+                }
+            }
+            else
+            {
+                _podGlows = Array.Empty<HeadlampGlass>();
             }
 
             _rover = rover;
@@ -87,7 +117,7 @@ namespace MoonProject.Rover
             if (instant)
             {
                 _switch = on ? 1f : 0f;
-                ApplyLevel();
+                ApplyLevel(_lastPower);
             }
         }
 
@@ -95,6 +125,13 @@ namespace MoonProject.Rover
         public void SetDocked(bool docked)
         {
             _docked = docked;
+        }
+
+        /// <summary>Sets the brow headlamp pods' fit warmth (0 before fit, 0..1 during fit, 1 once fitted).</summary>
+        public void SetPodWarmth(float warmth)
+        {
+            _podWarmth = Mathf.Clamp01(warmth);
+            ApplyPodLevel(_lastPower);
         }
 
         /// <param name="power">The lamp power the wake allows (1 normally; the flicker and ramp at wake).</param>
@@ -110,7 +147,9 @@ namespace MoonProject.Rover
 
         private void ApplyLevel(float power = 1f)
         {
+            _lastPower = power;
             float level = _level * power * Mathf.SmoothStep(0f, 1f, _switch);
+            ApplyPodLevel(power);
             // A tiny step is not worth writing, except the last one to dark: switched off, the lamp goes fully out.
             if (Mathf.Abs(level - _appliedLevel) < LevelEpsilon && (level > 0f || _appliedLevel == 0f))
             {
@@ -120,6 +159,27 @@ namespace MoonProject.Rover
             _headlamp.intensity = level * _baseIntensity;
             _glow.Apply(level);
             _appliedLevel = level;
+        }
+
+        private void ApplyPodLevel(float power)
+        {
+            if (_podGlows.Length == 0)
+            {
+                return;
+            }
+
+            float podLevel = _level * power * Mathf.SmoothStep(0f, 1f, _switch) * _podWarmth;
+            if (Mathf.Abs(podLevel - _appliedPodLevel) < LevelEpsilon && (podLevel > 0f || _appliedPodLevel == 0f))
+            {
+                return;
+            }
+
+            for (int i = 0; i < _podGlows.Length; i++)
+            {
+                _podGlows[i].Apply(podLevel);
+            }
+
+            _appliedPodLevel = podLevel;
         }
     }
 }
