@@ -72,13 +72,21 @@ namespace MoonProject.World.PlayModeTests
         private const float CueTowerLook = 7f;
         private const string CueLampName = "ModuleLamp";
 
-        // relay.2's hut: its site and nodes, 06 against it, how far out the far eye stands and how high it looks.
+        // relay.2's hut: its site and nodes, 06 against it, how far out the far and 10 m eyes stand, where 07 stands
+        // to light the site with its lamps, and how high the eyes look.
         private const string HutSiteName = "Relay2Site";
         private const string HutName = "RelayHut";
         private const string HutApproachName = "ScanApproach";
         private const string HutElderName = "Elder06";
         private const float HutStandOff = 15f;
+        private const float HutNearStandOff = 10f;
+        private const float HutRoverBack = 1.8f;
+        private const float HutFarRoverForward = 9.5f;
+        private const float HutFarRoverSide = 3.2f;
         private const float HutLookHeight = 1f;
+        private const float HutBayLookHeight = 0.65f;
+        private static readonly string TaskCaptureFolder =
+            Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "captures"));
 
         // relay.1's lamp: its node, the answered loop's length, and the crop's lens.
         private const string RelayLampName = "RelayLamp";
@@ -968,11 +976,18 @@ namespace MoonProject.World.PlayModeTests
             Transform six = FindNamed(HutElderName);
             Assert.IsNotNull(hut, "relay.2's site has its hut");
             Assert.IsNotNull(approach, "relay.2's site has its scan spot");
+            ITerrainQuery terrain = context.Get<ITerrainQuery>();
+            IRoverPlacement rover = context.Get<IRoverPlacement>();
             Vector3 middle = (hut.position + six.position) * 0.5f;
-            Vector3 far = OnGround(context.Get<ITerrainQuery>(),
+            Vector3 far = OnGround(terrain,
                     new Vector2(middle.x + site.forward.x * HutStandOff, middle.z + site.forward.z * HutStandOff))
                 + Vector3.up * CueLowEyeHeight;
+            Vector3 tenMetres = OnGround(terrain,
+                    new Vector2(six.position.x + site.forward.x * HutNearStandOff,
+                        six.position.z + site.forward.z * HutNearStandOff))
+                + Vector3.up * CueLowEyeHeight;
             Vector3 look = middle + Vector3.up * HutLookHeight;
+            Vector3 bayLook = six.position + Vector3.up * HutBayLookHeight;
             Camera view = context.Get<IViewCamera>().Camera;
             var host = new GameObject("RelayHutCamera");
             try
@@ -981,11 +996,47 @@ namespace MoonProject.World.PlayModeTests
                 camera.CopyFrom(view);
                 camera.enabled = false;
                 CopyPipelineSettings(view, camera);
+
+                // 15 m approach shot: 07 parked to the right side of the sightline at ~9.5 m so its lamps light the
+                // hut and 06 without blocking the 15 m camera.
+                Vector3 farRoverSpot = OnGround(terrain, new Vector2(
+                    middle.x + site.forward.x * HutFarRoverForward + site.right.x * HutFarRoverSide,
+                    middle.z + site.forward.z * HutFarRoverForward + site.right.z * HutFarRoverSide));
+                rover.PlaceAt(farRoverSpot,
+                    Quaternion.LookRotation(Vector3.ProjectOnPlane(middle - farRoverSpot, Vector3.up), Vector3.up));
+                yield return new WaitForSeconds(BlastSettleSeconds);
                 Place(camera, LookPose("relay2-hut-15m", far, look, OpeningFov));
                 Shoot(camera, "relay2-hut-15m");
+                FrameCapture.SavePng(camera, CaptureWidth, CaptureHeight,
+                    Path.Combine(TaskCaptureFolder, "relay2_site_15m.png"));
+
+                // 10 m shot: 07 stands just behind the 10 m eye so its headlamps light 06's open battery bay and
+                // three cell modules from 10 m.
+                Vector3 tenRoverSpot = OnGround(terrain, new Vector2(
+                    tenMetres.x + site.forward.x * HutRoverBack, tenMetres.z + site.forward.z * HutRoverBack));
+                rover.PlaceAt(tenRoverSpot,
+                    Quaternion.LookRotation(Vector3.ProjectOnPlane(six.position - tenRoverSpot, Vector3.up),
+                        Vector3.up));
+                yield return new WaitForSeconds(BlastSettleSeconds);
+                Place(camera, LookPose("relay2-hut-10m", tenMetres, bayLook, OpeningFov));
+                Shoot(camera, "relay2-hut-10m");
+                FrameCapture.SavePng(camera, CaptureWidth, CaptureHeight,
+                    Path.Combine(TaskCaptureFolder, "relay2_site_10m.png"));
+
+                // ScanApproach shot: 07 stands just behind ScanApproach so its headlamps shine straight into 06's
+                // open battery bay and three cell modules.
+                Vector3 scanRoverSpot = OnGround(terrain, new Vector2(
+                    approach.position.x + site.forward.x * HutRoverBack,
+                    approach.position.z + site.forward.z * HutRoverBack));
+                rover.PlaceAt(scanRoverSpot,
+                    Quaternion.LookRotation(Vector3.ProjectOnPlane(six.position - scanRoverSpot, Vector3.up),
+                        Vector3.up));
+                yield return new WaitForSeconds(BlastSettleSeconds);
                 Place(camera, LookPose("relay2-hut-scan-spot", approach.position + Vector3.up * CueLowEyeHeight,
-                    six.position + Vector3.up * HutLookHeight, OpeningFov));
+                    bayLook, OpeningFov));
                 Shoot(camera, "relay2-hut-scan-spot");
+                FrameCapture.SavePng(camera, CaptureWidth, CaptureHeight,
+                    Path.Combine(TaskCaptureFolder, "relay2_site_scan_approach.png"));
                 Debug.Log($"[relay2-hut] hut {Vector3.Distance(hut.position, six.position):F1} m from 06; scan spot " +
                           $"{Vector3.Distance(approach.position, six.position):F1} m out; eye " +
                           $"{Vector3.Distance(far, middle):F1} m");
