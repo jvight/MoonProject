@@ -49,11 +49,19 @@ namespace MoonProject.UI
         private readonly BuildField _buildField;
         private readonly GlyphLabels _glyphs;
         private readonly GlyphView _placeGlyph;
+        private const int BoundsCorners = 8;
+
         private readonly VisualElement[] _hudCards;
+        private readonly List<Rect> _shownCards = new List<Rect>(2);
+        private readonly List<Renderer> _ghostRenderers = new List<Renderer>(16);
+        private readonly Vector2[] _corners = new Vector2[BoundsCorners];
+        private readonly IViewCamera _view;
         private readonly float _cardGap;
         private readonly float _screenMargin;
         private readonly float _followHalfLife;
-        private float _costLift;
+        private StructureView _renderersOf;
+        private Vector2 _costAt;
+        private Rect _ghostRect;
         private readonly GlyphView _rotateGlyph;
         private InputDeviceKind _keysDevice;
         private bool _keysWritten;
@@ -70,7 +78,6 @@ namespace MoonProject.UI
         private readonly Reveal _reticleReveal;
         private readonly WorldAnchor _reasonAnchor;
         private readonly Reveal _costReveal;
-        private readonly WorldAnchor _costAnchor;
         private readonly RecipeView _cost;
         private readonly RecipeView _recipe;
         private readonly Dictionary<string, Texture2D> _icons =
@@ -144,8 +151,10 @@ namespace MoonProject.UI
 
             _costReveal = new Reveal(layout.BuildCost, promptSettings.Reveal);
             _costReveal.Snap(false);
-            _costAnchor = new WorldAnchor(layout.BuildCostAnchor, view, promptSettings.ScreenMargin,
-                promptSettings.FollowHalfLife, true);
+            _view = view;
+            // The chip is placed by its top-left corner (GhostChipPlacement), not hung from a world point.
+            layout.BuildCostAnchor.Q<VisualElement>("build-cost-center").style.translate =
+                new StyleTranslate(new Translate(0f, 0f));
             _hudCards = new[] { layout.BatteryDial, layout.ControlsCard };
             _cardGap = promptSettings.CardGap;
             _screenMargin = promptSettings.ScreenMargin;
@@ -314,43 +323,106 @@ namespace MoonProject.UI
                                       : _layout.BuildRotateGlyphLabel.text + " ") + _layout.BuildRotateWord.text;
 
         /// <summary>
-        /// A ghost near the screen's corner (an apron at the bottom left) would put its chip over the battery dial or
-        /// the controls card: the chip rises clear of them, easing, as the world's own chip does.
+        /// Places the chip beside the ghost, never over it (the owner must see the whole thing being placed) and never
+        /// over the HUD's corner cards, easing as the ghost moves. False while the ghost is not on the screen.
         /// </summary>
-        private void ClearHud(Vector2 panelSize, float deltaTime, bool snap)
+        private bool PlaceCost(StructureView ghost, Vector2 panelSize, float deltaTime, bool snap)
         {
+            Camera camera = _view.Camera;
             float width = _layout.BuildCost.resolvedStyle.width;
             float height = _layout.BuildCost.resolvedStyle.height;
-            if (float.IsNaN(width) || width <= 0f || float.IsNaN(height))
+            if (camera == null || ghost == null || panelSize.x <= 0f || !TryGhostRect(ghost, camera, panelSize))
             {
-                return;
+                return false;
             }
 
-            Vector2 foot = _costAnchor.Screen;
-            var chip = new Rect(foot.x - width * 0.5f, foot.y - height, width, height);
-            var screen = new Rect(Vector2.zero, panelSize);
-            float target = 0f;
+            if (float.IsNaN(width) || float.IsNaN(height) || width <= 0f)
+            {
+                // A chip not laid out yet has no size: it shows once at the ghost's foot, then finds its place.
+                width = 0f;
+                height = 0f;
+            }
+
+            _shownCards.Clear();
             for (int i = 0; i < _hudCards.Length; i++)
             {
                 VisualElement card = _hudCards[i];
-                if (card.resolvedStyle.display == DisplayStyle.None || card.resolvedStyle.opacity <= 0f)
+                if (card.resolvedStyle.display != DisplayStyle.None && card.resolvedStyle.opacity > 0f)
+                {
+                    _shownCards.Add(card.worldBound);
+                }
+            }
+
+            var safe = Rect.MinMaxRect(_screenMargin, _screenMargin, panelSize.x - _screenMargin,
+                panelSize.y - _screenMargin);
+            Vector2 target = GhostChipPlacement.Place(_ghostRect, new Vector2(width, height), safe, _cardGap,
+                _shownCards);
+            _costAt = snap ? target : ScreenAnchor.Follow(_costAt, target, _followHalfLife, deltaTime);
+            _layout.BuildCostAnchor.style.left = _costAt.x;
+            _layout.BuildCostAnchor.style.top = _costAt.y;
+            return true;
+        }
+
+        /// <summary>
+        /// The ghost's renderers' bounds projected to the panel (<see cref="_ghostRect"/>); false when the ghost is
+        /// behind the camera or off the screen. Its renderers are gathered once per ghost, never per frame.
+        /// </summary>
+        private bool TryGhostRect(StructureView ghost, Camera camera, Vector2 panelSize)
+        {
+            if (ghost != _renderersOf)
+            {
+                _renderersOf = ghost;
+                ghost.GetComponentsInChildren(false, _ghostRenderers);
+            }
+
+            bool any = false;
+            var bounds = new Bounds();
+            for (int i = 0; i < _ghostRenderers.Count; i++)
+            {
+                Renderer renderer = _ghostRenderers[i];
+                if (renderer == null || !renderer.enabled || !renderer.gameObject.activeInHierarchy)
                 {
                     continue;
                 }
 
-                float lift = PromptClearance.Lift(chip, card.worldBound, _cardGap, screen, _screenMargin);
-                chip.y -= lift;
-                target += lift;
+                if (any)
+                {
+                    bounds.Encapsulate(renderer.bounds);
+                }
+                else
+                {
+                    bounds = renderer.bounds;
+                    any = true;
+                }
             }
 
-            _costLift = snap ? target
-                : ScreenAnchor.Follow(new Vector2(0f, _costLift), new Vector2(0f, target), _followHalfLife,
-                    deltaTime).y;
-            _costAnchor.Lift = _costLift;
+            if (!any)
+            {
+                return false;
+            }
+
+            Vector3 min = bounds.min;
+            Vector3 max = bounds.max;
+            for (int i = 0; i < BoundsCorners; i++)
+            {
+                var corner = new Vector3((i & 1) == 0 ? min.x : max.x, (i & 2) == 0 ? min.y : max.y,
+                    (i & 4) == 0 ? min.z : max.z);
+                if (!ScreenAnchor.TryToPanel(camera.WorldToViewportPoint(corner), panelSize, 0f, out _corners[i]))
+                {
+                    return false;
+                }
+            }
+
+            _ghostRect = GhostChipPlacement.Around(_corners, BoundsCorners);
+            return _ghostRect.xMax > 0f && _ghostRect.xMin < panelSize.x && _ghostRect.yMax > 0f &&
+                   _ghostRect.yMin < panelSize.y;
         }
 
-        /// <summary>The cost chip's rise to clear the HUD's corner cards (tests and captures).</summary>
-        public float CostLift => _costLift;
+        /// <summary>The ghost's bounds on the screen, in panel coordinates (tests and captures).</summary>
+        public Rect GhostScreenRect => _ghostRect;
+
+        /// <summary>The cost chip's bounds on the screen (tests and captures).</summary>
+        public Rect CostScreenRect => _layout.BuildCost.worldBound;
 
         /// <summary>True while the ghost's cost chip is up (or easing).</summary>
         public bool IsCostShown => !_costReveal.IsHidden;
@@ -372,13 +444,7 @@ namespace MoonProject.UI
             {
                 _cost.Show(controller.SelectedStructure.BuildCost, _stock);
                 WriteGhostKeys(device, controller);
-                // At the ghost's foot, under the reason chip above it, so the two never stack.
-                onScreen = _costAnchor.Track(controller.CandidatePose.Position, panelSize, deltaTime,
-                    _costReveal.IsHidden);
-                if (onScreen)
-                {
-                    ClearHud(panelSize, deltaTime, _costReveal.IsHidden);
-                }
+                onScreen = PlaceCost(_buildField.GhostView, panelSize, deltaTime, _costReveal.IsHidden);
             }
 
             _costReveal.Set(wantsCost && onScreen);
