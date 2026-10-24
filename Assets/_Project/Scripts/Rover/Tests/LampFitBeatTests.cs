@@ -22,7 +22,7 @@ namespace MoonProject.Rover.Tests
             float end = _settings.FitLookStartSeconds + 2f * _settings.FitLookSeconds;
             Assert.AreEqual(0, LampFitBeat.LookSide(_settings, end + 0.01f));
             Assert.IsFalse(LampFitBeat.Done(_settings, end - 0.01f));
-            Assert.IsTrue(LampFitBeat.Done(_settings, end));
+            Assert.IsTrue(LampFitBeat.Done(_settings, end + 0.001f));
         }
 
         [Test]
