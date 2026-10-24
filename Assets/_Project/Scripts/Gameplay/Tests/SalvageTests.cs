@@ -97,14 +97,15 @@ namespace MoonProject.Gameplay.Tests
         {
             var tuning = Create<SalvageTuning>();
             var cutter = Create<CutterTuning>();
-            // 0.5.5 §5.1: the build (brace + stages) per piece and tier, fresh / warm.
-            AssertBuild(cutter, tuning, 0, PieceSize.Small, 0.95f, 0.27f);
-            AssertBuild(cutter, tuning, 0, PieceSize.Medium, 1.40f, 0.54f);
+            // 0.5.5 §5.1 with weight: the build (brace + stages, each lock held) per piece and tier, fresh / warm.
+            AssertBuild(cutter, tuning, 0, PieceSize.Small, 0.85f, 0.21f);
+            AssertBuild(cutter, tuning, 0, PieceSize.Medium, 1.35f, 0.51f);
             AssertBuild(cutter, tuning, 0, PieceSize.Large, 1.85f, 0.81f);
             AssertBuild(cutter, tuning, 0, PieceSize.Hull, 1.85f, 0.81f);
-            AssertBuild(cutter, tuning, 1, PieceSize.Small, 0.86f, 0.22f);
-            AssertBuild(cutter, tuning, 1, PieceSize.Large, 1.58f, 0.65f);
-            Assert.AreEqual(0.12f, cutter.BreathSeconds, 1e-5f, "the held breath before ignition");
+            AssertBuild(cutter, tuning, 1, PieceSize.Small, 0.78f, 0.17f);
+            AssertBuild(cutter, tuning, 1, PieceSize.Large, 1.64f, 0.68f);
+            Assert.AreEqual(0.15f, cutter.LockHoldSeconds, 1e-5f, "each lock is felt");
+            Assert.AreEqual(0.35f, cutter.BreathSeconds, 1e-5f, "the held breath before ignition: a beat");
             Assert.AreEqual(6f, cutter.WarmWindowSeconds, 1e-5f);
 
             CutterTier bare = cutter.Tier(0);
@@ -118,8 +119,9 @@ namespace MoonProject.Gameplay.Tests
         {
             float stage = cutter.Tier(tier).StageSeconds;
             int stages = tuning.Size(size).Stages;
-            Assert.AreEqual(fresh, cutter.BraceSeconds + stages * stage, 0.006f, $"tier {tier} {size} fresh");
-            Assert.AreEqual(warm, stages * stage * cutter.WarmFactor, 0.006f, $"tier {tier} {size} warm");
+            float holds = (stages - 1) * cutter.LockHoldSeconds;
+            Assert.AreEqual(fresh, cutter.BraceSeconds + stages * stage + holds, 0.006f, $"tier {tier} {size} fresh");
+            Assert.AreEqual(warm, (stages * stage + holds) * cutter.WarmFactor, 0.006f, $"tier {tier} {size} warm");
         }
 
         private T Create<T>() where T : ScriptableObject

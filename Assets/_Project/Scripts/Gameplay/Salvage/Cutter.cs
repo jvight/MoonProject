@@ -76,10 +76,12 @@ namespace MoonProject.Gameplay
         public ChargePlan Plan(int stages, bool warm)
         {
             float stage = warm ? StageSeconds * _tuning.WarmFactor : StageSeconds;
-            float fresh = _tuning.BraceSeconds + stages * StageSeconds + _tuning.BreathSeconds;
-            float total = stages * stage + _tuning.BreathSeconds;
-            float start = warm && fresh > 0f ? Mathf.Clamp01(1f - total / fresh) : 0f;
-            return new ChargePlan(_tuning.BraceSeconds, stage, stages, _tuning.BreathSeconds, warm, start);
+            float hold = warm ? _tuning.LockHoldSeconds * _tuning.WarmFactor : _tuning.LockHoldSeconds;
+            float fresh = new ChargePlan(_tuning.BraceSeconds, StageSeconds, _tuning.LockHoldSeconds, stages,
+                _tuning.BreathSeconds, false, 0f).TotalSeconds;
+            var plan = new ChargePlan(_tuning.BraceSeconds, stage, hold, stages, _tuning.BreathSeconds, warm, 0f);
+            float start = warm && fresh > 0f ? Mathf.Clamp01(1f - plan.TotalSeconds / fresh) : 0f;
+            return new ChargePlan(_tuning.BraceSeconds, stage, hold, stages, _tuning.BreathSeconds, warm, start);
         }
 
         public float SpeedFactor => _tuning.Tier(Tier).SpeedFactor;

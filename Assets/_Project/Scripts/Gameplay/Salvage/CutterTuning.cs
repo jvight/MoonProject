@@ -13,14 +13,18 @@ namespace MoonProject.Gameplay
         [Tooltip("Tier 0 (the old cutter), then each kit's tier in order (tier 1: the Focus Lens).")]
         [SerializeField] private CutterTier[] _tiers =
         {
-            new CutterTier(0.45f, 1f, 1f, 5), new CutterTier(0.36f, 1.3f, 0.85f, 7),
+            new CutterTier(0.35f, 1f, 1f, 5), new CutterTier(0.28f, 1.3f, 0.85f, 7),
         };
 
         [Tooltip("Seconds 07 plants itself before a fresh charge builds (every tier: upgrades shorten the stages).")]
         [Range(0f, 2f)] [SerializeField] private float _braceSeconds = 0.5f;
 
-        [Tooltip("Seconds of stillness after the full lock, before the beam fires (the held breath).")]
-        [Range(0f, 0.5f)] [SerializeField] private float _breathSeconds = 0.12f;
+        [Tooltip("Seconds each stage holds still once it locks, before the next one builds: every stage is felt.")]
+        [Range(0f, 0.5f)] [SerializeField] private float _lockHoldSeconds = 0.15f;
+
+        [Tooltip("Seconds of stillness after the full lock, before the beam fires (the held breath): the release is " +
+                 "a beat, not an instant.")]
+        [Range(0f, 1f)] [SerializeField] private float _breathSeconds = 0.35f;
 
         [Tooltip("A re-press at the same site within this many seconds of the last firing finds the emitter warm.")]
         [Range(0f, 20f)] [SerializeField] private float _warmWindowSeconds = 6f;
@@ -33,6 +37,7 @@ namespace MoonProject.Gameplay
 
         public int TierCount => _tiers.Length;
         public float BraceSeconds => _braceSeconds;
+        public float LockHoldSeconds => _lockHoldSeconds;
         public float BreathSeconds => _breathSeconds;
         public float WarmWindowSeconds => _warmWindowSeconds;
         public float WarmFactor => _warmFactor;
