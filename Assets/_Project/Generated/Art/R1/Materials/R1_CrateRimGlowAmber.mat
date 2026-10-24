@@ -65,6 +65,7 @@ Material:
     - _HotCorePeak: 0.42
     - _HotCoreThreshold: 0.99
     - _MetallicScale: 0
+    - _NearKeep: 1
     - _OcclusionStrength: 1
     - _ScanProgress: 0
     - _SmoothnessMax: 0.16

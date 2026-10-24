@@ -153,7 +153,7 @@ namespace MoonProject.Rover.Editor
 
             RoverFlankLamps flankLamps = BuildFlankLamps(visual, m, rigTuning);
             RoverGrowth growth = BuildGrowth(scratch, visual, m, rigTuning, roadLight, ssr3Headlamp, cellPod);
-            RoverTowCable towCable = BuildTowCable(visual, m, rigTuning);
+            RoverTowCable towCable = BuildTowCable(scratch, visual, m, rigTuning, dustMaterial);
             RoverWheelFx wheelFx = BuildWheelFx(scratch, root.transform, m, fxTuning, trackMaterial, dustMaterial);
             RoverLampMotes lampMotes = BuildLampMotes(scratch, headlamp, fxTuning, moteMaterial);
 
@@ -416,14 +416,18 @@ namespace MoonProject.Rover.Editor
         /// The tow cable's rope and clamp: two world-space lines of Art's dark matte rubber on the visual rig, drawn by
         /// <see cref="RoverTowCable"/> from the winch to the load's hitch.
         /// </summary>
-        private static RoverTowCable BuildTowCable(GameObject host, Transform model, RoverRigTuning tuning)
+        private static RoverTowCable BuildTowCable(BuilderScratchScene scratch, GameObject host, Transform model,
+            RoverRigTuning tuning, Material dustMaterial)
         {
             var rubber = BuildWiring.Require<Material>(RoverAssetPaths.TowCableMaterial, "Art's rubber material");
             LineRenderer rope = TowLine(host, "TowRope", rubber);
             LineRenderer hook = TowLine(host, "TowHook", rubber);
+            var threadMaterial = BuildWiring.Require<Material>(RoverAssetPaths.ThreadMaterial, "Rover/Materials");
+            LineRenderer thread = TowLine(host, "TowThread", threadMaterial);
             var cable = host.AddComponent<RoverTowCable>();
-            BuildWiring.Assign(cable, ("_tuning", tuning), ("_rope", rope), ("_hook", hook),
-                ("_winch", BuildWiring.Node(model, RoverModelNodes.WinchOrigin)));
+            BuildWiring.Assign(cable, ("_tuning", tuning), ("_rope", rope), ("_thread", thread), ("_hook", hook),
+                ("_winch", BuildWiring.Node(model, RoverModelNodes.WinchOrigin)),
+                ("_skidDust", Dust(scratch, "TowSkidDust", host.transform, dustMaterial)));
             return cable;
         }
 

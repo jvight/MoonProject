@@ -31,6 +31,7 @@ namespace MoonProject.Rover.Editor
         public const string TrackMaterial = GeneratedRoot + "/Materials/M_RoverTrack.mat";
         public const string DustMaterial = GeneratedRoot + "/Materials/M_RoverDust.mat";
         public const string MoteMaterial = GeneratedRoot + "/Materials/M_RoverMote.mat";
+        public const string ThreadMaterial = GeneratedRoot + "/Materials/M_RoverTowThread.mat";
         public const string TowCableMaterial = "Assets/_Project/Generated/Art/R1/Materials/R1_Rubber.mat";
         public const string DustTexture = GeneratedRoot + "/Textures/DustPuff.asset";
 
@@ -46,6 +47,7 @@ namespace MoonProject.Rover.Editor
         public const string TrackShader = "Assets/_Project/Shaders/Rover/RoverTrack.shader";
         public const string ParticlesSimpleLitShader =
             "Packages/com.unity.render-pipelines.universal/Shaders/Particles/ParticlesSimpleLit.shader";
+        public const string UnlitShader = "Packages/com.unity.render-pipelines.universal/Shaders/Unlit.shader";
         public const string ParticlesUnlitShader =
             "Packages/com.unity.render-pipelines.universal/Shaders/Particles/ParticlesUnlit.shader";
     }
