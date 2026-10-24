@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a39c84fe4997244e813057fb35d9e06, type: 3}
+  m_Name: MoonquakeDustSlideTuning
+  m_EditorClassIdentifier: 
+  _rampUpSeconds: 1.8
+  _slideDurationSeconds: 7.5
+  _settleDurationSeconds: 3.2
+  _slopeLengthMeters: 6.2
+  _slopeWidthMeters: 4.6
+  _slopeAngleDegrees: 25
+  _lunarGravityMetersPerSecondSquared: 1.62
+  _sheetSpeedMetersPerSecond: 1.65
+  _ballisticHopSpeedMetersPerSecond: 1.15
+  _settleCloudMaxHeightMeters: 0.42
+  _grainCount: 36
+  _grainSizeMeters: 0.085
+  _dayDustColor: {r: 0.76, g: 0.72, b: 0.66, a: 0.86}
+  _nightDustColor: {r: 0.54, g: 0.62, b: 0.78, a: 0.82}
+  _shadowDustColor: {r: 0.28, g: 0.32, b: 0.42, a: 1}
+  _maxOpacity: 0.84
+  _bloomCeiling: 1.05

@@ -14,11 +14,92 @@ namespace MoonProject.Gameplay
     {
         private const float RayStepMetres = 0.5f;
         private const int RayRefineSteps = 8;
+        private const float HalfLivesPerSettle = 3.32f;
+        private const float ApronMatchEpsilonSq = 1e-3f;
+        private const float MinApronViewCos = 0.7f;
 
         /// <summary>The farthest the bay may stand from 07 for the ghost to settle onto it.</summary>
         public static float SnapReach(BuildingTuning tuning)
         {
             return Mathf.Max(0f, tuning.WeldRange - tuning.ApronSnapReachMargin);
+        }
+
+        /// <summary>
+        /// Exponential damping half-life (s) so the placing ghost settles (~90%) onto a snapped bay or port over
+        /// <see cref="BuildingTuning.GhostSnapEaseSeconds"/> (~0.15 s).
+        /// </summary>
+        public static float SnapHalfLife(BuildingTuning tuning)
+        {
+            float seconds = tuning != null ? Mathf.Max(0.02f, tuning.GhostSnapEaseSeconds) : 0.15f;
+            return seconds / HalfLivesPerSettle;
+        }
+
+        /// <summary>
+        /// True when <paramref name="apronCentre"/> has a marked bay within <see cref="SnapReach"/> of 07 and no closer
+        /// than <see cref="BuildingTuning.MinPlacementDistance"/>, so a charging pad snapped onto it is valid and weldable.
+        /// </summary>
+        public static bool IsApronInReach(Vector3 roverPosition, Vector3? apronCentre, BuildingTuning tuning)
+        {
+            if (!apronCentre.HasValue || tuning == null)
+            {
+                return false;
+            }
+
+            float distSq = SurfaceRules.HorizontalDistanceSquared(roverPosition, apronCentre.Value);
+            float min = Mathf.Max(0f, tuning.MinPlacementDistance);
+            float max = SnapReach(tuning);
+            return distSq >= min * min && distSq <= max * max;
+        }
+
+        /// <summary>
+        /// Resolves the grounded world-space target point for the placing ghost. When <paramref name="apronCentre"/> is
+        /// within <see cref="IsApronInReach"/> and <paramref name="apronLatched"/> is true (or the view aims onto the
+        /// bay), the ghost settles on the marked bay; leaving reach or turning the view away
+        /// (<paramref name="lookedAwayFromApron"/>) un-snaps it. The returned point always sits on <paramref name="terrain"/>.
+        /// </summary>
+        public static Vector3 ResolvePlacingPoint(
+            ITerrainQuery terrain,
+            Vector3 eye,
+            Vector3 viewForward,
+            Vector3 roverPosition,
+            Vector3 roverHeading,
+            Vector3? apronCentre,
+            BuildingTuning tuning,
+            bool useViewAim,
+            bool lookedAwayFromApron,
+            ref bool apronLatched)
+        {
+            bool inReach = IsApronInReach(roverPosition, apronCentre, tuning);
+            if (!inReach)
+            {
+                apronLatched = false;
+            }
+
+            Vector3 point = useViewAim
+                ? PointFromView(terrain, eye, viewForward, roverPosition, apronCentre, tuning)
+                : Point(roverPosition, roverHeading, apronCentre, tuning);
+            bool pointOnApron = inReach &&
+                SurfaceRules.HorizontalDistanceSquared(point, apronCentre.Value) <= ApronMatchEpsilonSq;
+            if (pointOnApron)
+            {
+                apronLatched = true;
+            }
+            else if (lookedAwayFromApron)
+            {
+                apronLatched = false;
+            }
+
+            if (apronLatched && inReach)
+            {
+                point = apronCentre.Value;
+            }
+
+            if (terrain != null)
+            {
+                point.y = terrain.SampleHeight(point.x, point.z);
+            }
+
+            return point;
         }
 
         /// <summary>
@@ -42,9 +123,17 @@ namespace MoonProject.Gameplay
             Vector3 direction = distance > 1e-4f ? away / distance : flatForward;
             Vector3 point = roverPosition + direction * Mathf.Clamp(distance, tuning.MinPlacementDistance,
                 tuning.MaxPlacementDistance);
-            return LooksAt(eye, flatForward, apronCentre, roverPosition, tuning)
-                ? apronCentre.Value
-                : Settle(point, roverPosition, apronCentre, tuning);
+            Vector3 settled = LooksTowardApron(flatForward, apronCentre, roverPosition)
+                ? (LooksAt(eye, flatForward, apronCentre, roverPosition, tuning)
+                    ? apronCentre.Value
+                    : Settle(point, roverPosition, apronCentre, tuning))
+                : point;
+            if (terrain != null)
+            {
+                settled.y = terrain.SampleHeight(settled.x, settled.z);
+            }
+
+            return settled;
         }
 
         /// <summary>
@@ -52,6 +141,23 @@ namespace MoonProject.Gameplay
         /// centre, ahead of the eye) and the bay is within snap reach of 07: looking toward it is enough for the pad's
         /// ghost to settle there, whatever the pitch.
         /// </summary>
+        private static bool LooksTowardApron(Vector3 flatForward, Vector3? apronCentre, Vector3 roverPosition)
+        {
+            if (!apronCentre.HasValue)
+            {
+                return false;
+            }
+
+            Vector3 roverToBay = apronCentre.Value - roverPosition;
+            roverToBay.y = 0f;
+            if (roverToBay.sqrMagnitude <= 1e-4f)
+            {
+                return true;
+            }
+
+            return Vector3.Dot(roverToBay.normalized, flatForward) >= MinApronViewCos;
+        }
+
         private static bool LooksAt(Vector3 eye, Vector3 flatForward, Vector3? apronCentre, Vector3 roverPosition,
             BuildingTuning tuning)
         {

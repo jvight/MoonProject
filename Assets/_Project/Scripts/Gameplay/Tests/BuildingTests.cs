@@ -1121,6 +1121,62 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void EachShippedStoryOnARuin_StandsApartFromItsScanTargets_AndOneOnATargetIsRefused()
+        {
+            var scanTuningAsset = AssetDatabase.LoadAssetAtPath<ScanTuning>(GameplayAssetPaths.ScanTuning);
+            Assert.IsNotNull(scanTuningAsset);
+            MaterialCatalog matCatalog = CargoFixtures.Catalog();
+            var ruinInstances = new List<GameObject>();
+            try
+            {
+                MaterialStock stock = CargoFixtures.Stock(_events, matCatalog);
+                var save = new SaveService(_tempSaveDir, "story_spacing_slot", SaveService.OldestCompatibleContent);
+                save.Load();
+                var scans = new ScanField(scanTuningAsset, _events, save, stock, new KnownStructures(_catalog, _events));
+                int stories = 0;
+                for (int i = 0; i < scanTuningAsset.Ruins.Count; i++)
+                {
+                    RuinScanSet set = scanTuningAsset.Ruins[i];
+                    GameObject instance = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(
+                        "Assets/_Project/Generated/Art/R1/Models/Ruins/" + set.RuinId + ".prefab"));
+                    instance.name = set.RuinId;
+                    ruinInstances.Add(instance);
+                    Assert.IsNull(scans.AddRuin(set, instance.transform));
+                    foreach (StoryScan story in scanTuningAsset.Stories)
+                    {
+                        if (story.HostId == set.RuinId)
+                        {
+                            Assert.IsNull(scans.AddStory(story, instance.transform),
+                                "the habitat's airlock readout is its own scan, not a second scan of Scan_1's panel");
+                            stories++;
+                        }
+                    }
+                }
+
+                Assert.Greater(stories, 0, "the airlock readout is a story on a ruin");
+
+                GameObject host = ruinInstances[0];
+                Transform first = Array.Find(host.GetComponentsInChildren<Transform>(),
+                    node => node.name == ScanFragment.RuinScanPrefix + "1");
+                var onTarget = new StoryScan("on_target", host.name, ScanFragment.RuinScanPrefix + "1", "k",
+                    ScanSize.Small, Vector3.zero);
+                GameObject plate = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                plate.transform.SetParent(first, false);
+                plate.transform.localScale = Vector3.one * 0.1f;
+                StringAssert.Contains("two scans", scans.AddStory(onTarget, host.transform));
+            }
+            finally
+            {
+                for (int i = 0; i < ruinInstances.Count; i++)
+                {
+                    Object.DestroyImmediate(ruinInstances[i]);
+                }
+
+                Object.DestroyImmediate(matCatalog);
+            }
+        }
+
+        [Test]
         public void BuildModeController_TapPlaceStaysInWeldingAtZeroProgress_AndClosingAtZeroRefundsWithoutOrphanFrame()
         {
             var known = new KnownStructures(_catalog, _events);
@@ -1274,6 +1330,46 @@ namespace MoonProject.Gameplay.Tests
                 Object.DestroyImmediate(pad);
                 Object.DestroyImmediate(validHolo);
                 Object.DestroyImmediate(invalidHolo);
+            }
+        }
+
+        [Test]
+        public void BuildModeController_CanRotateGhost_IsFalseForFramedStructure_AndFrameNounKeyNamesTheFrame()
+        {
+            var known = new KnownStructures(_catalog, _events);
+            var placedBase = new PlacedBase(_catalog, _tuning, _events, known);
+            MaterialCatalog matCatalog = CargoFixtures.Catalog();
+            try
+            {
+                MaterialStock stock = CargoFixtures.Stock(_events, matCatalog);
+                var controller = new BuildModeController(_catalog, known, placedBase, stock, _tuning);
+
+                Assert.IsFalse(controller.CanRotateGhost, "No structure selected before opening build mode.");
+                Assert.AreEqual(string.Empty, controller.FrameNounKey);
+
+                known.Learn(StructureIds.ChargingPad);
+                known.Learn(StructureIds.BatteryBank);
+
+                Assert.IsTrue(controller.PickStructure(StructureIds.ChargingPad));
+                Assert.IsTrue(controller.CanRotateGhost, "Charging pad has no frame load and rotates freely.");
+                Assert.AreEqual(string.Empty, controller.FrameNounKey);
+                controller.SetGhostYaw(0f);
+                controller.RotateGhost(1f);
+                Assert.AreEqual(BuildModeController.DefaultYawStepDegrees, controller.GhostYaw, 1e-4f);
+
+                Assert.IsTrue(controller.PickStructure(StructureIds.BatteryBank));
+                Assert.IsFalse(controller.CanRotateGhost,
+                    "Battery bank takes its pose from the power module frame and cannot rotate.");
+                Assert.AreEqual(TowLoads.PowerModuleNoun, controller.FrameNounKey);
+                controller.SetGhostYaw(42f);
+                controller.RotateGhost(1f);
+                Assert.AreEqual(42f, controller.GhostYaw, 1e-4f, "RotateGhost(+1) does nothing when CanRotateGhost is false.");
+                controller.RotateGhost(-1f);
+                Assert.AreEqual(42f, controller.GhostYaw, 1e-4f, "RotateGhost(-1) does nothing when CanRotateGhost is false.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(matCatalog);
             }
         }
     }

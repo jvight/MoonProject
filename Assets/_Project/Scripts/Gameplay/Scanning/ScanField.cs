@@ -156,9 +156,20 @@ namespace MoonProject.Gameplay
                 return $"the story scan '{story.FragmentId}' lies in the world twice";
             }
 
+            Vector3 point = panel.bounds.center + story.Offset;
+            float spacingSq = _tuning.StorySpacing * _tuning.StorySpacing;
+            for (int i = 0; i < _fragments.Count; i++)
+            {
+                if ((_fragments[i].Point - point).sqrMagnitude < spacingSq)
+                {
+                    return $"the story scan '{story.FragmentId}' sits on '{_fragments[i].FragmentId}': one panel, " +
+                           "two scans";
+                }
+            }
+
             Transform target = new GameObject(story.FragmentId).transform;
             target.SetParent(node, false);
-            target.position = panel.bounds.center + story.Offset;
+            target.position = point;
             _fragments.Add(ScanFragment.ForStoryTarget(story, story.HostId, target, ruinRoot));
             return null;
         }

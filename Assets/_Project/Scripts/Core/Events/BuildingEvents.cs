@@ -163,4 +163,25 @@ namespace MoonProject.Core.Events
 
         public float Progress01 { get; }
     }
+
+    /// <summary>
+    /// Published by <c>BuildField</c> while 07 places a structure ghost (<see cref="Placing"/> = true, with its
+    /// grounded <see cref="GhostPosition"/> and whether it is settled on the marked apron bay), and when leaving
+    /// placement (<see cref="Placing"/> = false).
+    /// </summary>
+    public readonly struct BuildPlacingChanged
+    {
+        public BuildPlacingChanged(bool placing, Vector3 ghostPosition, bool snappedToApron = false)
+        {
+            Placing = placing;
+            GhostPosition = ghostPosition;
+            SnappedToApron = snappedToApron;
+        }
+
+        public bool Placing { get; }
+
+        public Vector3 GhostPosition { get; }
+
+        public bool SnappedToApron { get; }
+    }
 }

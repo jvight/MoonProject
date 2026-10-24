@@ -140,6 +140,7 @@ namespace MoonProject.World
         private readonly float[] _rampCalmBoundSq;
         private readonly KestrelImpact _kestrel;
         private readonly GroundShaping _shaping;
+        private readonly RilleNotch _rille;
 
         public MoonSurface(SurfaceSettings settings, int seed)
         {
@@ -254,6 +255,7 @@ namespace MoonProject.World
 
             float minCalmSpan = settings.DuneWavelength * MinCalmSpanInWavelengths;
             _kestrel = new KestrelImpact(settings.Sites.Kestrel, baseSeed, minCalmSpan);
+            _rille = new RilleNotch(settings.Rille, _crestRadius, settings.OuterPlainHeight);
             _craters = PlaceCraters(settings, baseSeed);
             _relief = new Relief(settings.Relief, settings.Sites, settings.PadRadius, _craters, baseSeed);
             int count = _craters.Length;
@@ -324,6 +326,15 @@ namespace MoonProject.World
 
         /// <summary>Kestrel-3's impact crater and furrow (docs/features/M3-13).</summary>
         public KestrelImpact Kestrel => _kestrel;
+
+        /// <summary>The rille notch through the rim past relay.1, the 0.6 way out to the mare.</summary>
+        public RilleNotch Rille => _rille;
+
+        /// <summary>True when a sheer face may cross <paramref name="area"/>: the canyon's or the rille's lip.</summary>
+        public bool NeedsFineCells(Rect area)
+        {
+            return Canyon.Touches(area) || _rille.Touches(area);
+        }
 
         /// <summary>The flat footprints under the opening's places, shaped into the floor.</summary>
         public GroundShaping Shaping => _shaping;
@@ -407,9 +418,9 @@ namespace MoonProject.World
                 return world;
             }
 
-            float height = Canyon.Apply(x, z, world.Height, out float floor, out float chasm);
+            float height = Canyon.Apply(x, z, world.Height, out float floor, out float chasm, out float shadowed);
             return new SurfaceSample(height, world.CraterBowl, world.CraterRim, world.RimZone, floor, chasm,
-                world.Scorch);
+                world.Scorch, world.Mare, shadowed);
         }
 
         /// <summary>The surface without Whispering Canyon.</summary>
@@ -417,7 +428,7 @@ namespace MoonProject.World
         {
             SurfaceSample natural = SampleNatural(x, z);
             return new SurfaceSample(_shaping.Apply(x, z, natural.Height), natural.CraterBowl, natural.CraterRim,
-                natural.RimZone, 0f, 0f, natural.Scorch);
+                natural.RimZone, 0f, 0f, natural.Scorch, natural.Mare);
         }
 
         /// <summary>The surface without Whispering Canyon and the shaped sites.</summary>
@@ -481,6 +492,7 @@ namespace MoonProject.World
                 }
             }
 
+            height = _rille.Apply(x, z, height);
             float dpx = x - _peakX;
             float dpz = z - _peakZ;
             float dp2 = dpx * dpx + dpz * dpz;
@@ -489,7 +501,8 @@ namespace MoonProject.World
                 height = Peak(dpx, dpz, dp2, height);
             }
 
-            return new SurfaceSample(height, craterBowl, craterRim, rimZone, 0f, 0f, scorch);
+            return new SurfaceSample(height, craterBowl, craterRim, rimZone, 0f, 0f, scorch,
+                _rille.MareWeight(x, z));
         }
 
         private float WarpedRadius(float x, float z, float r)

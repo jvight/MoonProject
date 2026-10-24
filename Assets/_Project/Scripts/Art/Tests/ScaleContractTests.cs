@@ -85,6 +85,10 @@ namespace MoonProject.Art.Tests
             ("derelict_mare_convoy.json", "Mare/Derelict_MareConvoy.fbx"),
             ("derelict_mare_survey_drone.json", "Mare/Derelict_MareSurveyDrone.fbx"),
             ("derelict_tardigrade_capsule.json", "Mare/Derelict_TardigradeCapsule.fbx"),
+            ("panel_mite.json", "Fauna/PanelMite.fbx"),
+            ("sweeper.json", "Fauna/Sweeper.fbx"),
+            ("survey_drone.json", "Fauna/SurveyDrone.fbx"),
+            ("trencher.json", "Fauna/Trencher.fbx"),
         };
 
         [Serializable]

@@ -1,0 +1,128 @@
+{
+  "model": "trencher",
+  "pivot_tolerance": 0.005,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_BareSteel",
+    "R1_Brass",
+    "R1_Copper",
+    "R1_CreamEnamel",
+    "R1_DarkGlass",
+    "R1_GoldFoil",
+    "R1_GreyMetal",
+    "R1_LampAmber",
+    "R1_OrangeStripe",
+    "R1_Rubber",
+    "R1_SagePatch"
+  ],
+  "max_triangles": 32000,
+  "max_meshes": 12,
+  "max_draw_calls": 48,
+  "allow_rotation": [],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "bounds": {
+    "size": [
+      1.964,
+      3.2852,
+      1.844
+    ],
+    "tolerance": 0.04,
+    "min_size": [
+      1.924,
+      3.245,
+      1.804
+    ],
+    "max_size": [
+      2.004,
+      3.325,
+      1.884
+    ]
+  },
+  "nodes": {
+    "Trencher": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Body": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.62
+      ]
+    },
+    "Lamp": {
+      "pivot": [
+        -0.34,
+        0.66,
+        1.54
+      ]
+    },
+    "Track_L": {
+      "pivot": [
+        -0.72,
+        -0.04,
+        0.34
+      ]
+    },
+    "Track_R": {
+      "pivot": [
+        0.72,
+        -0.04,
+        0.34
+      ]
+    },
+    "Roller_FL": {
+      "pivot": [
+        -0.72,
+        0.58,
+        0.3
+      ]
+    },
+    "Roller_FR": {
+      "pivot": [
+        0.72,
+        0.58,
+        0.3
+      ]
+    },
+    "Roller_RL": {
+      "pivot": [
+        -0.72,
+        -0.66,
+        0.3
+      ]
+    },
+    "Roller_RR": {
+      "pivot": [
+        0.72,
+        -0.66,
+        0.3
+      ]
+    },
+    "TrenchBoom": {
+      "pivot": [
+        0.0,
+        0.62,
+        0.68
+      ]
+    },
+    "TrenchWheel": {
+      "pivot": [
+        0.0,
+        1.08,
+        0.56
+      ]
+    },
+    "CableSpool": {
+      "pivot": [
+        0.0,
+        -1.04,
+        0.96
+      ]
+    }
+  }
+}

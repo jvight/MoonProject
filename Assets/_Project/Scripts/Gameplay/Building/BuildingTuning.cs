@@ -136,6 +136,9 @@ namespace MoonProject.Gameplay
                  "always be welded where 07 stands.")]
         [Range(0f, 2f)] [SerializeField] private float _apronSnapReachMargin = 0.5f;
 
+        [Tooltip("Seconds (~0.15 s) the placing ghost takes to ease onto a snapped bay or neighbour port.")]
+        [Range(0.02f, 0.5f)] [SerializeField] private float _ghostSnapEaseSeconds = 0.15f;
+
         [Tooltip("Downward physical settle thump (m) when a structure finishes welding and locks into the regolith.")]
         [Range(0.01f, 0.15f)] [SerializeField] private float _settleThumpMeters = 0.042f;
 
@@ -343,6 +346,8 @@ namespace MoonProject.Gameplay
         public float ApronSnapRadius => _apronSnapRadius;
 
         public float ApronSnapReachMargin => _apronSnapReachMargin;
+
+        public float GhostSnapEaseSeconds => _ghostSnapEaseSeconds;
 
         public float SettleThumpMeters => _settleThumpMeters;
 

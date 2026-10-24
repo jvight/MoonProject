@@ -73,5 +73,34 @@ namespace MoonProject.Art.Editor
 
         /// <summary>Invalid placement hologram material (LofiHologram with _Invalid = 1).</summary>
         public const string HologramInvalidMaterial = PaletteFolder + "/M_HologramInvalid.mat";
+
+        /// <summary>Output folder for 0.6 lunar phenomena VFX meshes, materials, and preview prefabs.</summary>
+        public const string PhenomenaFolder = Root + "/Phenomena";
+
+        /// <summary>Config folder holding committed tuning ScriptableObjects for 0.6 lunar phenomena.</summary>
+        public const string PhenomenaConfigFolder = "Assets/_Project/Config";
+
+        public const string DustGlowShader = "Assets/_Project/Shaders/Art/LofiDustGlow.shader";
+        public const string ImpactGlassShader = "Assets/_Project/Shaders/Art/LofiImpactGlass.shader";
+        public const string DustSlideShader = "Assets/_Project/Shaders/Art/LofiDustSlide.shader";
+
+        public const string DustGlowTuningAsset = PhenomenaConfigFolder + "/LevitatingDustGlowTuning.asset";
+        public const string MicrometeoriteTuningAsset = PhenomenaConfigFolder + "/MicrometeoriteFlashTuning.asset";
+        public const string MoonquakeSlideTuningAsset = PhenomenaConfigFolder + "/MoonquakeDustSlideTuning.asset";
+        public const string EarthrisePresetTuningAsset = PhenomenaConfigFolder + "/EarthriseLightPresetTuning.asset";
+
+        public const string DustGlowBandMaterial = PhenomenaFolder + "/M_DustGlowBand.mat";
+        public const string DustGlowMotesMaterial = PhenomenaFolder + "/M_DustGlowMotes.mat";
+        public const string ImpactGlassMaterial = PhenomenaFolder + "/M_ImpactGlass.mat";
+        public const string ImpactFlashMaterial = PhenomenaFolder + "/M_ImpactFlash.mat";
+        public const string DustSlideSheetMaterial = PhenomenaFolder + "/M_DustSlideSheet.mat";
+        public const string DustSlideSettleMaterial = PhenomenaFolder + "/M_DustSlideSettle.mat";
+        public const string DustSlideGrainMaterial = PhenomenaFolder + "/M_DustSlideGrain.mat";
+        public const string EarthriseDiscMaterial = PhenomenaFolder + "/M_EarthriseDisc.mat";
+
+        public const string DustGlowPrefab = PhenomenaFolder + "/FX_LevitatingDustGlow.prefab";
+        public const string MicrometeoriteFlashPrefab = PhenomenaFolder + "/FX_MicrometeoriteFlash.prefab";
+        public const string MoonquakeDustSlidePrefab = PhenomenaFolder + "/FX_MoonquakeDustSlide.prefab";
+        public const string EarthriseLightPresetPrefab = PhenomenaFolder + "/FX_EarthriseLightPreset.prefab";
     }
 }
