@@ -59,6 +59,7 @@ namespace MoonProject.UI
         private UiLayout _layout;
         private StaticTextLocalizer _staticText;
         private bool _facePanelVisible;
+        private bool _databankBuilt;
         private Reveal _hud;
         private StargazeVeil _stargaze;
         private HoldHint _holdHint;
@@ -486,6 +487,7 @@ namespace MoonProject.UI
 
         private void Tick(float deltaTime)
         {
+            BuildDatabankEarly();
             InputReader input = _services.Input;
             MenuInput menu = input.Menu;
             bool pausePressed = menu.PausePressed;
@@ -1575,6 +1577,24 @@ namespace MoonProject.UI
         /// <summary>
         /// Builds the databank page on first use; false (logged) when nothing registered 07's archive.
         /// </summary>
+        /// <summary>
+        /// The databank page (its view, its stage's render texture, camera and wire shader) was built by the first
+        /// flip to it, in the one frame the player pressed Q. It is built as soon as the archive is registered, long
+        /// before anyone flips to it.
+        /// </summary>
+        private void BuildDatabankEarly()
+        {
+            if (_databankBuilt)
+            {
+                return;
+            }
+
+            if (_databank != null || (_services.TryGetDatabank(out _) && EnsureDatabank()))
+            {
+                _databankBuilt = true;
+            }
+        }
+
         private bool EnsureDatabank()
         {
             if (_databank != null)
