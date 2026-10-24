@@ -21,6 +21,8 @@ namespace MoonProject.Gameplay.Tests
         private const int Again = 90;
         private const int Reminder = 20;
         private const int KeyFresh = 300;
+        private const float Closing = 0.5f;
+        private const float Arrival = 15f;
 
         private EventBus _events;
         private List<string> _lines;
@@ -45,7 +47,8 @@ namespace MoonProject.Gameplay.Tests
             _events.Subscribe<OpeningMilestoneReached>(_milestones.Add);
             _game = new FakeProgress();
             _keys = new KeyUse();
-            _flow = new OpeningFlow(_events, _game, _keys, new GuidanceTiming(NextLine, Stall, Again, Reminder, KeyFresh));
+            _flow = new OpeningFlow(_events, _game, _keys, new GuidanceTiming(NextLine, Stall, Again, Reminder, KeyFresh,
+                Closing, Arrival));
         }
 
         [Test]
@@ -97,8 +100,12 @@ namespace MoonProject.Gameplay.Tests
             Expect(OpeningKeys.BuildMast);
             _game.BuiltIds.Add(StructureIds.AntennaMast);
             Expect(OpeningKeys.Transmit, "the mast stands: transmit from it (G6)");
+            _game.AnswerStarted = true;
+            Expect(string.Empty, "transmitting: the answer's moment says nothing");
             _game.AnswerDone = true;
             Expect(OpeningKeys.GoToRelay, "relay.1 answered: drive to it");
+            _game.AtRelay = true;
+            Expect(string.Empty, "at relay.1: its cabinet's and socket's chips lead");
             _game.RelayRelit = true;
             Expect(OpeningKeys.ScanElder06, "relay.1 lit: 06 at relay.2 is next");
             _game.HeadlampUnlocked = true;
@@ -149,6 +156,9 @@ namespace MoonProject.Gameplay.Tests
             _game.BuiltIds.Add(StructureIds.AntennaMast);
             _flow.Tick();
             Assert.AreEqual(OpeningSteps.Transmit, _flow.CurrentIndex);
+            _game.AnswerStarted = true;
+            _flow.Tick();
+            Assert.AreEqual(OpeningSteps.GoToRelay, _flow.CurrentIndex, "the transmit step ends as 07 transmits");
             _game.AnswerDone = true;
             _flow.Tick();
             Assert.AreEqual(OpeningSteps.GoToRelay, _flow.CurrentIndex);
@@ -429,6 +439,62 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void ProgressWithinAStep_AScanACutABuildAHook_KeepsTheReminderAway()
+        {
+            _flow.Tick(1f);
+            _game.ReachedLander = true;
+            _flow.Tick(1f);
+            Tick(NextLine);
+            int before = _lines.Count;
+            Tick(Stall - 5);
+            _events.Publish(new FragmentScanned("ruin.cargo.0", "charging_pad", 0, 2, false, 0));
+            Tick(Stall - 5);
+            Assert.AreEqual(before, _lines.Count, "the first fragment scanned: 07 is getting on with it");
+            Tick(6);
+            Assert.AreEqual(OpeningKeys.ScanLander, _flow.Shown, "then a full stall with nothing done brings it back");
+            Assert.AreEqual(NextLineReason.Reminder, _flow.ShownReason);
+        }
+
+        [Test]
+        public void DrivingTowardTheLinesPlace_IsProgress_NoReminderOnTheWay()
+        {
+            var lander = new Vector3(0f, 0f, 200f);
+            _game.Places[OpeningKeys.DriveToLander] = lander;
+            _flow.Tick(1f, Vector3.zero);
+            for (int second = 1; second <= Stall * 3; second++)
+            {
+                _flow.Tick(1f, new Vector3(0f, 0f, second));
+            }
+
+            Assert.IsEmpty(_lines, "closing on the lander at 1 m/s for three stalls: on its way, never reminded");
+            for (int second = 0; second < Stall; second++)
+            {
+                _flow.Tick(1f, new Vector3(0f, 0f, Stall * 3));
+            }
+
+            Assert.AreEqual(OpeningKeys.DriveToLander, _flow.Shown, "stopped short with no progress: reminded");
+        }
+
+        [Test]
+        public void TheWaitForTheNight_IsNeverReminded()
+        {
+            _game.ReachedLander = true;
+            _game.Known.Add(StructureIds.ChargingPad);
+            _game.BuiltIds.Add(StructureIds.ChargingPad);
+            _game.FirstCharge = true;
+            _game.ReserveSpent = true;
+            _game.Known.Add(StructureIds.SolarArray);
+            _game.IgniterFitted = true;
+            _game.PowerOn = true;
+            _game.DuskBegun = true;
+            _game.NightReady = true;
+            _flow.Tick(1f);
+            Assert.AreEqual(OpeningKeys.AwaitNight, _flow.Current);
+            Tick(Stall * 10);
+            Assert.IsEmpty(_lines, "nothing to do but wait: no reminder");
+        }
+
+        [Test]
         public void Progress_StartsTheStallAgain_AndTheNewLineGetsItsOwnReminders()
         {
             _flow.Tick(1f);
@@ -527,6 +593,8 @@ namespace MoonProject.Gameplay.Tests
             public bool ModuleHooked { get; set; }
             public bool ModuleHome { get; set; }
             public bool AnswerDone { get; set; }
+            public bool AnswerStarted { get; set; }
+            public bool AtRelay { get; set; }
             public bool RelayRelit { get; set; }
             public bool HeadlampUnlocked { get; set; }
             public bool CoversHeadlamp { get; set; }
