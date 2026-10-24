@@ -64,6 +64,10 @@ namespace MoonProject.Rover
                  "regolith, where the dark rubber alone is lost in shadow. Its colour; no glow, nowhere near bloom.")]
         [SerializeField] private Color _threadColor = new Color(0.5f, 0.48f, 0.43f, 1f);
 
+        [Tooltip("Metres the thread rides above the rope, so the two never fight over the same depth.")]
+        [Range(0.005f, 0.1f)]
+        [SerializeField] private float _threadLift = 0.025f;
+
         [Tooltip("How wide the thread is, as a share of the rope's drawn width.")]
         [Range(0.2f, 1f)]
         [SerializeField] private float _threadShare = 0.55f;
@@ -109,6 +113,7 @@ namespace MoonProject.Rover
         public float RopeSheen => _ropeSheen;
         public Color ThreadColor => _threadColor;
         public float ThreadShare => _threadShare;
+        public float ThreadLift => _threadLift;
         public float MinPixels => _minPixels;
         public float HookMinPixels => _hookMinPixels;
         public float SkidMaxRate => _skidMaxRate;

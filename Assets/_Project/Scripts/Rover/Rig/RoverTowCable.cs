@@ -37,6 +37,7 @@ namespace MoonProject.Rover
         private ITerrainQuery _terrain;
         private IViewCamera _view;
         private Vector3[] _points;
+        private Vector3[] _threadPoints;
         private Vector3 _skidFrom;
         private bool _hasSkidFrom;
         private float _skidSpeed;
@@ -89,6 +90,7 @@ namespace MoonProject.Rover
             _context = context;
             TowCableSettings settings = _tuning.TowCable;
             _points = new Vector3[settings.Points];
+            _threadPoints = new Vector3[settings.Points];
             _rope.useWorldSpace = true;
             _rope.positionCount = _points.Length;
             _rope.startWidth = settings.Width;
@@ -248,7 +250,12 @@ namespace MoonProject.Rover
             }
 
             _rope.SetPositions(_points);
-            _thread.SetPositions(_points);
+            for (int i = 0; i < _points.Length; i++)
+            {
+                _threadPoints[i] = _points[i] + Vector3.up * settings.ThreadLift;
+            }
+
+            _thread.SetPositions(_threadPoints);
             SetWidths(winch, hitch, settings);
             Vector3 back = _points[_points.Length - 2];
             Vector3 along = hitch - back;
