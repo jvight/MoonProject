@@ -53,6 +53,13 @@ namespace MoonProject.Rover
         [Range(2f, 14f)]
         [SerializeField] private float _hookMinPixels = 6f;
 
+        [Tooltip("The rope's colour: dark weathered rubber, lifted off the night's regolith so it reads as a line.")]
+        [SerializeField] private Color _ropeColor = new Color(0.4f, 0.36f, 0.31f, 1f);
+
+        [Tooltip("How much the rubber's sheen catches the light (its top smoothness): a faint gleam along the rope, no glow.")]
+        [Range(0.06f, 0.9f)]
+        [SerializeField] private float _ropeSheen = 0.55f;
+
         [Header("Skid dust under the load")]
         [Tooltip("Grains a second kicked up under a load dragging at full speed (ballistic: no smoke).")]
         [Range(0f, 200f)]
@@ -90,6 +97,8 @@ namespace MoonProject.Rover
         [Range(0.2f, 3f)]
         [SerializeField] private float _skidGravity = 1f;
 
+        public Color RopeColor => _ropeColor;
+        public float RopeSheen => _ropeSheen;
         public float MinPixels => _minPixels;
         public float HookMinPixels => _hookMinPixels;
         public float SkidMaxRate => _skidMaxRate;

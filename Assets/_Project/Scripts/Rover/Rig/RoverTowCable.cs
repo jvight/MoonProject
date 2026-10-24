@@ -46,6 +46,9 @@ namespace MoonProject.Rover
 
         private const float SkidSpeedFollow = 6f;
 
+        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+        private static readonly int SmoothnessMaxId = Shader.PropertyToID("_SmoothnessMax");
+
         /// <summary>Degrees the winch drum has turned for the rope's travel so far (out positive).</summary>
         public float SpoolDegrees { get; private set; }
 
@@ -91,6 +94,11 @@ namespace MoonProject.Rover
             _hook.startWidth = settings.HookWidth;
             _hook.endWidth = settings.HookWidth;
             ConfigureSkidDust(settings);
+            var look = new MaterialPropertyBlock();
+            look.SetColor(BaseColorId, settings.RopeColor);
+            look.SetFloat(SmoothnessMaxId, settings.RopeSheen);
+            _rope.SetPropertyBlock(look);
+            _hook.SetPropertyBlock(look);
             Show(false);
             return true;
         }
