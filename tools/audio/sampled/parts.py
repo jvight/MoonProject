@@ -1,5 +1,5 @@
-"""Shared parts of the sampled recipes: the mains hum carried onto D, a small servo (the motor whine on a note), the
-crane's gear motor and a filtered clip of any source."""
+"""Shared parts of the sampled recipes: the mains hum carried onto D, a small servo (the motor whine on a note), a
+small motor held steady on a note, the crane's gear motor and a filtered clip of any source."""
 import numpy as np
 
 from synth import filters
@@ -8,6 +8,8 @@ from synth.core import note_freq
 from . import dsp
 
 D3_HZ = 146.83
+# The small motor's steady stretch: its level stays within 3 dB from here on (its first seconds swell and dip).
+MOTOR_OFFSET_S = 5.0
 
 
 def hum(lib, n: int, ratio, offset: float = 2.0) -> np.ndarray:
@@ -24,6 +26,17 @@ def servo(lib, gen, n: int, note: str, points, gain: float = 1.0) -> np.ndarray:
     f = note_freq(note)
     whine = filters.butter(filters.highpass(whine, f * 0.6), "lowpass", f * 2.2, order=4)
     return gain * dsp.peak_normalize(whine)
+
+
+def band(x: np.ndarray, low: float, high: float) -> np.ndarray:
+    """``x`` band-limited to ``low``..``high`` Hz (a steep top), peak-normalised."""
+    return dsp.peak_normalize(filters.butter(filters.highpass(x, low), "lowpass", high, order=4))
+
+
+def motor(lib, n: int, note: str) -> np.ndarray:
+    """The small motor's steady stretch held on ``note`` (raw, not yet band-limited)."""
+    return dsp.varispeed(lib("motor_whine"), dsp.ratio_for(note, lib.f0("motor_whine"), np.zeros(n)), n,
+                         MOTOR_OFFSET_S)
 
 
 def gear(lib, gen, n: int, note: str = "A5") -> np.ndarray:

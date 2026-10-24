@@ -104,27 +104,6 @@ def _grains(n: int, gen, rate: float, length, attack, t60, gain: float, sigma: f
 
 # --------------------------------------------------------------------------------------------------- rover
 
-HUM_LOOP_S = 4.0
-
-
-def rover_hum(_variant, gen):
-    """Warm electric hum on D2 with a rotation-synchronous whir. Every component completes whole cycles in the
-    loop and nothing sits above ~3 kHz, so AudioSource.pitch 0.5..2 stays clean."""
-    n = samples(HUM_LOOP_S)
-    f0 = loop_freq(note_freq("D2"), n)
-    beat = f0 + SAMPLE_RATE / n
-    harmonics = [(1, 1.0), (2, 0.85), (3, 0.42), (4, 0.33), (5, 0.16), (6, 0.15), (7, 0.07), (8, 0.07),
-                 (9, 0.035), (10, 0.03), (12, 0.02), (14, 0.012), (16, 0.008)]
-    core = osc.additive(n, f0, harmonics)
-    twin = osc.additive(n, beat, [(1, 0.35), (2, 0.25), (3, 0.08)], phase=0.31)
-    whine = osc.additive(n, f0, [(12, 0.035), (16, 0.012)], phase=0.13)
-    whine *= envelope.lfo(n, 12.0 / HUM_LOOP_S, 0.5, 0.5)
-    whir = periodic(noise.white(n, gen), lambda s: filters.bandpass(s, 1200.0, 1.2))
-    whir *= 0.06 * envelope.lfo(n, 2.0 * f0, 0.5, 0.5)
-    mix = (core + twin + whine + whir) * envelope.lfo(n, 2.0 / HUM_LOOP_S, 0.06, 1.0)
-    return periodic(mix, lambda s: filters.highpass(filters.lowpass(filters.lowpass(s, 3000.0), 3000.0), 35.0))
-
-
 CRUNCH_LOOP_S = 4.0
 
 
@@ -530,19 +509,6 @@ def stargaze_swell(_variant, gen):
     return mix
 
 
-DOCK_HUM_LOOP_S = 4.0
-
-
-def dock_charge_hum(_variant, gen):
-    """Charging: a very soft, warm hum on D3 with its octave, breathing slowly, like a lamp keeping watch."""
-    n = samples(DOCK_HUM_LOOP_S)
-    step = SAMPLE_RATE / n
-    d3 = loop_freq(note_freq("D3"), n)
-    hum = osc.additive(n, d3, [(1, 1.0), (2, 0.5), (3, 0.12)]) + 0.4 * osc.sine(n, 2.0 * d3 + step, phase=0.4)
-    hum *= envelope.lfo(n, 2.0 / DOCK_HUM_LOOP_S, 0.25, 0.75)
-    return periodic(0.3 * hum, lambda x: filters.highpass(filters.lowpass(x, 2000.0), 80.0))
-
-
 DOCK_FULL_CHORD = (("D4", 0.0, 0.8), ("F#4", 0.07, 0.55), ("A4", 0.14, 0.6), ("D5", 0.24, 0.7))
 
 
@@ -725,8 +691,8 @@ CUES = (
     # 0.5.2 "Satisfying" (docs/design/feel-pass.md, polish-pass.md 1.1): recipes in feel_cues.py.
     Cue("cut_sizzle", "loop_3d", feel.cut_sizzle, loop=True, file_stem="cut_sizzle_loop", volume=(0.5, 0.5),
         milestone="M3", notes="The beam through 07's body: a low-passed sizzle, level by cut progress. 3 s seamless."),
-    Cue("cut_crack", "oneshot_3d", feel.cut_crack, volume=(0.7, 0.7), milestone="M3",
-        notes="The piece breaks free: a soft high B pluck plus a felt thud."),
+    Cue("cut_crack", "oneshot_3d", picks.renderer("cut_crack"), volume=(0.7, 0.7), milestone="M3", sampled=True,
+        notes="The piece breaks free: a dry snap, its weight dropping into the chassis with a low ring."),
     Cue("strap_tuk", "tick_3d", feel.strap_tuk, volume=(0.7, 0.7), milestone="M3",
         notes="A strap cinching: the bundle's fold, a relic stowed in the cradle. A muted tuk on E."),
     Cue("dock_walls_rise", "oneshot_3d", feel.dock_walls_rise, volume=(0.6, 0.6), milestone="M3",
@@ -794,18 +760,18 @@ CUES = (
         notes="A quarter of the scan drawn: a tap on the lens collar and struck metal ringing on D E F# A."),
     Cue("scan_liftoff", "oneshot_3d", feel.scan_liftoff, volume=(0.6, 0.6), milestone="M3",
         notes="0.5.5 D: the dissolve into the lens: a rising shimmer and a flare chime on F#6."),
-    Cue("charge_brace", "oneshot_3d", feel.charge_brace, volume=(0.6, 0.6), milestone="M3",
-        notes="0.5.5 E: 07 bracing before a fresh charge: servo chunk and wheel-lock clack."),
+    Cue("charge_brace", "oneshot_3d", picks.renderer("charge_brace"), volume=(0.6, 0.6), milestone="M3",
+        sampled=True, notes="07 bracing before a fresh charge: a heavy servo, a padded wheel-lock clunk, a latch."),
     Cue("charge_whine", "loop_3d", picks.renderer("charge_whine"), loop=True, file_stem="charge_whine_loop",
         volume=(0.42, 0.42), milestone="M3", sampled=True,
         notes="The capacitor whine: a real small motor held on D5; pitch glides D -> A -> D' at runtime. 2 s seamless."),
     Cue("charge_hum", "loop_3d", picks.renderer("charge_hum"), loop=True, file_stem="charge_hum_loop",
         volume=(0.55, 0.55), milestone="M3", sampled=True,
         notes="The low hum under the charge: the mains hum carried to D2, level by stage. 3 s seamless."),
-    Cue("charge_detent", "tick_3d", feel.charge_detent, volume=(0.6, 0.6), milestone="M3",
-        notes="0.5.5 E: a charge stage locking: a cell sleeve slides, then the detent click."),
-    Cue("charge_lock", "oneshot_3d", feel.charge_lock, volume=(0.6, 0.6), milestone="M3",
-        notes="0.5.5 E: the full lock: a firm clunk-click before the held breath."),
+    Cue("charge_detent", "tick_3d", picks.renderer("charge_detent"), volume=(0.6, 0.6), milestone="M3",
+        sampled=True, notes="A charge stage locking: a capacitor cell seated with a dense latch and a small tick."),
+    Cue("charge_lock", "oneshot_3d", picks.renderer("charge_lock"), volume=(0.6, 0.6), milestone="M3",
+        sampled=True, notes="The full lock: a heavy clunk-latch and the chassis steel ringing on D2."),
     Cue("hold_boot", "ui_2d", feel.hold_boot, volume=(0.6, 0.6), milestone="M3",
         notes="0.5.5 B: the first Tab press, 07's hold powering on in the dark."),
     Cue("hold_slot", "tick_2d", feel.hold_slot, variants=len(feel.HOLD_SLOT_NOTES), volume=(0.45, 0.45),
@@ -820,8 +786,9 @@ CUES = (
     Cue("cut_ignite_tier", "oneshot_3d", feel.cut_ignite_tier, variants=len(feel.CUTTER_TIER_LABELS),
         variant_labels=feel.CUTTER_TIER_LABELS, volume=(0.65, 0.65), milestone="M3",
         notes="Ignition per cutter tier: the D6 zing brighter and hotter each tier, the thump a touch deeper."),
-    Cue("cut_undertone", "loop_3d", feel.cut_undertone, loop=True, file_stem="cut_undertone_loop", volume=(0.6, 0.6),
-        milestone="M3", notes="The beam's deeper hum for higher tiers: D2 + A2, level by tier. 4 s seamless."),
+    Cue("cut_undertone", "loop_3d", picks.renderer("cut_undertone"), loop=True, file_stem="cut_undertone_loop",
+        volume=(0.6, 0.6), milestone="M3", sampled=True,
+        notes="The beam's deeper body for higher tiers: mains hum on D2 under a slowed arc, level by tier. 4 s."),
     Cue("segment_slide", "oneshot_3d", feel.segment_slide, variants=len(feel.SEGMENT_NOTES), volume=(0.5, 0.5),
         milestone="M3", notes="The beam moving to the next cut line: a tick and a slide onto the next step."),
     Cue("cargo_tok", "tick_3d", feel.cargo_tok, volume=(0.7, 0.7), milestone="M3",
@@ -841,6 +808,11 @@ CUES = (
         volume=(0.35, 0.35), milestone="M3", sampled=True,
         notes="A character of the sender's name decoded (CallDecoded): one soft bowed-metal note climbing "
               "E4 F#4 A4 B4, landing on D5 when ARK IV is whole."),
+    Cue("network_pulse", "oneshot_3d", picks.renderer("network_pulse"), volume=(0.55, 0.55), milestone="M3",
+        sampled=True, notes="07's transmission leaving the mast (NetworkPulseLaunched): a contactor clunk, then the "
+                            "carrier swelling from D4 onto A5 and thinning out over the rim."),
+    Cue("relay_ack", "oneshot_3d", picks.renderer("relay_ack"), volume=(0.45, 0.45), milestone="M3", sampled=True,
+        notes="Relay.1 answering (RelayAcked), across the basin: a far dull clunk, its relay, one swell on E5."),
     Cue("sky_dusk_swell", "stinger_2d", picks.renderer("sky_dusk_swell"), volume=(0.45, 0.45), milestone="M3",
         sampled=True, notes="Opening v3 R6, the first dusk (OpeningDuskBegan): a soft low swell on D, a scraped drone "
                             "under bowed metal over 8 s; the beds shift toward evening under it. No stinger."),
@@ -939,8 +911,9 @@ CUES = (
         volume=(0.5, 0.5), milestone="M3", sampled=True,
         notes="A base lamp warming on at dusk (BaseLampLit): a relay's warm clunk, the filament's soft tick and the "
               "lamp's hum easing in on its step, D3 E3 F#3 A3 in the lighting order."),
-    Cue("boost_whine", "loop_3d", feel.boost_whine, loop=True, file_stem="boost_whine_loop", volume=(0.45, 0.45),
-        milestone="M3", notes="The capacitor drums boosting: a soft whine on A. 2 s seamless."),
+    Cue("boost_whine", "loop_3d", picks.renderer("boost_whine"), loop=True, file_stem="boost_whine_loop",
+        volume=(0.4, 0.4), milestone="M3", sampled=True,
+        notes="The capacitor drums boosting: a real small motor spinning on A4. 2 s seamless."),
     Cue("boost_release", "tick_3d", feel.boost_release, volume=(0.6, 0.6), milestone="M3",
         notes="The drums emptying: a felt fff and a tick on D."),
     Cue("save_tick", "tick_2d", feel.save_tick, volume=(0.4, 0.4), milestone="M3",
@@ -959,9 +932,10 @@ CUES = (
         notes="Felted servo tick of 07's lid: A2 (picture opens), D3 (eyes open), D5 (the short wake)."),
     Cue("neck_servo", "tick_2d", neck_servo, volume=(0.5, 0.5), fade_out=0.2, milestone="M3",
         notes="O6-O9: 07's old neck turning, a soft whirr with a faint whine lifting D5 to E5."),
-    Cue("rover_hum", "loop_3d", rover_hum, loop=True, file_stem="rover_hum_loop", volume=(0.55, 0.55),
-        hf_cutoff=6000.0, hf_max_db=-45.0,
-        tonal=True, notes="D2 electric hum, 4 s seamless; content < 3 kHz so AudioSource.pitch 0.5..2 stays clean."),
+    Cue("rover_hum", "loop_3d", picks.renderer("rover_hum"), loop=True, file_stem="rover_hum_loop",
+        volume=(0.55, 0.55), hf_cutoff=6000.0, hf_max_db=-45.0, tonal=True, sampled=True,
+        notes="07's drive motor: mains hum on D2, a slowed motor's gear whir and the crane gear for weight, 4 s "
+              "seamless; content < 2.5 kHz so AudioSource.pitch 0.5..2 stays clean."),
     Cue("dust_crunch", "loop_3d", dust_crunch, loop=True, file_stem="dust_crunch_loop", volume=(0.5, 0.5),
         notes="Granular regolith crunch under wheels, 4 s seamless; volume follows speed x grounded."),
     Cue("suspension_creak", "oneshot_3d", suspension_creak, variants=3, volume=(0.35, 0.5),
@@ -1013,9 +987,9 @@ CUES = (
         notes="A piece breaking loose: metal crack + clunk, wiring snap + spring, optics glassy crack + tinkle."),
     Cue("stargaze_swell", "stinger_2d", stargaze_swell, volume=(0.5, 0.5), fade_out=0.6, milestone="M3",
         tonal=True, notes="07 stargazing: a soft low D2/A2/D3 pad with a faint A3, swelling in under airy noise."),
-    Cue("dock_charge_hum", "loop_3d", dock_charge_hum, loop=True, file_stem="dock_charge_hum_loop",
-        volume=(0.35, 0.35), milestone="M3", tonal=True,
-        notes="Charging: a very soft warm hum on D3 + octave, breathing slowly."),
+    Cue("dock_charge_hum", "loop_3d", picks.renderer("dock_charge_hum"), loop=True,
+        file_stem="dock_charge_hum_loop", volume=(0.35, 0.35), milestone="M3", tonal=True, sampled=True,
+        notes="Charging: the pad's transformer hum on D3 + octave, breathing slowly. 4 s seamless."),
     Cue("dock_full", "oneshot_3d", dock_full, volume=(0.5, 0.5), fade_out=0.2, milestone="M3", tonal=True,
         notes="Charged: soft bell on D5 with A5 blooming above it."),
     Cue("battery_cell", "oneshot_3d", battery_cell, variants=len(BATTERY_CELL_NOTES),

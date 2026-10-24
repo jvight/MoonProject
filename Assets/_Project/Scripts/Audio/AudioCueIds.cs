@@ -135,6 +135,8 @@ namespace MoonProject.Audio
         public const string CallCarrier = "call_carrier";
         public const string CallAnswered = "call_answered";
         public const string CallDecoded = "call_decoded";
+        public const string NetworkPulse = "network_pulse";
+        public const string RelayAck = "relay_ack";
         public const string MastClunk = "mast_clunk";
         public const string MastSettle = "mast_settle";
         public const string CutterSputter = "cutter_sputter";
