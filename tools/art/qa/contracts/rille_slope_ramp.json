@@ -1,0 +1,69 @@
+{
+  "model": "rille_slope_ramp",
+  "pivot_tolerance": 0.02,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_Basalt"
+  ],
+  "max_triangles": 480,
+  "max_meshes": 2,
+  "max_draw_calls": 2,
+  "allow_rotation": [],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "End_Anchor": {
+      "pivot": [
+        0.45,
+        6.0,
+        1.75
+      ]
+    },
+    "LowRimWall": {
+      "pivot": [
+        -1.4,
+        0.0,
+        1.5
+      ]
+    },
+    "Rille_Slope_Ramp": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "SlopeBed": {
+      "pivot": [
+        0.4,
+        0.0,
+        0.8
+      ]
+    },
+    "Start_Anchor": {
+      "pivot": [
+        0.45,
+        -6.0,
+        0.0
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      5.2877,
+      12.0482,
+      3.9471
+    ],
+    "tolerance": 0.6024,
+    "min_size": [
+      4.6853,
+      11.4458,
+      3.3447
+    ],
+    "max_size": [
+      5.8901,
+      12.6506,
+      4.5495
+    ]
+  }
+}

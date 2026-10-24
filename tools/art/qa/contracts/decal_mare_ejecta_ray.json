@@ -1,0 +1,77 @@
+{
+  "model": "decal_mare_ejecta_ray",
+  "pivot_tolerance": 0.02,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_Basalt",
+    "R1_CreamEnamel"
+  ],
+  "max_triangles": 415,
+  "max_meshes": 2,
+  "max_draw_calls": 2,
+  "allow_rotation": [],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "Center_Anchor": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Decal_MareEjectaRay": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "End_Anchor": {
+      "pivot": [
+        0.0,
+        8.8,
+        -0.0
+      ]
+    },
+    "RayStreak_Main": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "RayStreak_Secondary": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Start_Anchor": {
+      "pivot": [
+        0.0,
+        -8.8,
+        0.0
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      3.652,
+      17.8348,
+      0.02
+    ],
+    "tolerance": 0.8917,
+    "min_size": [
+      2.7603,
+      16.9431,
+      0.01
+    ],
+    "max_size": [
+      4.5437,
+      18.7265,
+      0.9117
+    ]
+  }
+}

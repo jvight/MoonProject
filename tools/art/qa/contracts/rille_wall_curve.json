@@ -1,0 +1,69 @@
+{
+  "model": "rille_wall_curve",
+  "pivot_tolerance": 0.02,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_Basalt"
+  ],
+  "max_triangles": 955,
+  "max_meshes": 2,
+  "max_draw_calls": 2,
+  "allow_rotation": [],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "CliffWall": {
+      "pivot": [
+        -1.0,
+        0.0,
+        2.2
+      ]
+    },
+    "End_Anchor": {
+      "pivot": [
+        -0.45,
+        5.8,
+        -0.0
+      ]
+    },
+    "Rille_Wall_Curve": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Start_Anchor": {
+      "pivot": [
+        -0.45,
+        -5.8,
+        0.0
+      ]
+    },
+    "TalusApron": {
+      "pivot": [
+        0.65,
+        0.0,
+        0.42
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      5.3995,
+      12.8186,
+      5.3267
+    ],
+    "tolerance": 0.6409,
+    "min_size": [
+      4.7586,
+      12.1777,
+      4.6858
+    ],
+    "max_size": [
+      6.0404,
+      13.4595,
+      5.9676
+    ]
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "model": "mare_rock_05",
+  "pivot_tolerance": 0.02,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_Basalt"
+  ],
+  "max_triangles": 400,
+  "max_meshes": 1,
+  "max_draw_calls": 1,
+  "allow_rotation": [],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "MareRock_05": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      1.2512,
+      1.0785,
+      0.54
+    ],
+    "tolerance": 0.0626,
+    "min_size": [
+      1.1886,
+      1.0159,
+      0.4774
+    ],
+    "max_size": [
+      1.3138,
+      1.1411,
+      0.6026
+    ]
+  }
+}

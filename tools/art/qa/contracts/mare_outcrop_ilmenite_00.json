@@ -1,0 +1,70 @@
+{
+  "model": "mare_outcrop_ilmenite_00",
+  "pivot_tolerance": 0.02,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_BareSteel",
+    "R1_Basalt"
+  ],
+  "max_triangles": 777,
+  "max_meshes": 2,
+  "max_draw_calls": 2,
+  "allow_rotation": [],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "Base_Anchor": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "DrillTarget_Anchor": {
+      "pivot": [
+        0.06,
+        0.94,
+        0.58
+      ]
+    },
+    "HostRock": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "IlmeniteVein": {
+      "pivot": [
+        0.0,
+        0.15,
+        0.55
+      ]
+    },
+    "MareOutcrop_Ilmenite_00": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      2.8878,
+      2.1817,
+      1.7578
+    ],
+    "tolerance": 0.1444,
+    "min_size": [
+      2.7434,
+      2.0373,
+      1.6134
+    ],
+    "max_size": [
+      3.0322,
+      2.3261,
+      1.9022
+    ]
+  }
+}

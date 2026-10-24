@@ -1,0 +1,76 @@
+{
+  "model": "decal_mare_swirl",
+  "pivot_tolerance": 0.02,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_CreamEnamel"
+  ],
+  "max_triangles": 1188,
+  "max_meshes": 2,
+  "max_draw_calls": 2,
+  "allow_rotation": [],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "Center_Anchor": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Decal_MareSwirl": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "End_Anchor": {
+      "pivot": [
+        0.0,
+        7.5,
+        -0.0
+      ]
+    },
+    "Start_Anchor": {
+      "pivot": [
+        0.0,
+        -7.5,
+        0.0
+      ]
+    },
+    "SwirlCore": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "SwirlFeather": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      7.1728,
+      17.2628,
+      0.022
+    ],
+    "tolerance": 0.8631,
+    "min_size": [
+      6.3097,
+      16.3997,
+      0.01
+    ],
+    "max_size": [
+      8.0359,
+      18.1259,
+      0.8851
+    ]
+  }
+}
