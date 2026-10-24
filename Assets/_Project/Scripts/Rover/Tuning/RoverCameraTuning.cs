@@ -423,6 +423,19 @@ namespace MoonProject.Rover
         [Range(0f, 0.8f)]
         [SerializeField] private float _towLookShare = 0.55f;
 
+        [Header("Props near the lens")]
+        [Tooltip("Metres from the lens within which a prop is thinned away completely: nothing fills the foreground.")]
+        [Range(0.2f, 3f)]
+        [SerializeField] private float _nearFadeGoneMetres = 1.2f;
+
+        [Tooltip("Metres from the lens beyond which a prop is whole: it dithers away between this and the gone distance.")]
+        [Range(1f, 8f)]
+        [SerializeField] private float _nearFadeFullMetres = 3f;
+
+        [Tooltip("Half-life (s) of a prop thinning away and coming back, so it never pops.")]
+        [Range(0.02f, 1f)]
+        [SerializeField] private float _nearFadeHalfLife = 0.15f;
+
         [Header("Camera moments")]
         [Tooltip("Digging: while the excavation beam is on, ease to the side and up so the beam and the rising "
             + "relic are seen beside 07, not hidden behind it. Flows into the relic moment when it surfaces.")]
@@ -980,6 +993,12 @@ namespace MoonProject.Rover
         public float CrawlLower => _crawlLower;
 
         public float CrawlHalfLife => _crawlHalfLife;
+
+        public float NearFadeGoneMetres => _nearFadeGoneMetres;
+
+        public float NearFadeFullMetres => _nearFadeFullMetres;
+
+        public float NearFadeHalfLife => _nearFadeHalfLife;
 
         public float TowEaseSeconds => _towEaseSeconds;
 
