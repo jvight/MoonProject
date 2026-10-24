@@ -1,12 +1,14 @@
 using System;
 using Unity.Profiling;
+using UnityEngine;
 
 namespace MoonProject.Autoplay
 {
     /// <summary>
-    /// Reads the profiler's per-frame counters (managed bytes allocated in the frame, main and render thread time)
-    /// through <see cref="ProfilerRecorder"/>, which reads without allocating. A counter the player does not offer
-    /// reads -1. Dispose it when the run ends.
+    /// Reads the per-frame counters: managed growth and main thread time through <see cref="ProfilerRecorder"/>, and
+    /// the CPU main, CPU render and GPU times through <see cref="FrameTimingManager"/> (the autoplay player is built
+    /// with Frame Timing Stats on; elsewhere they read -1). Neither read allocates. Call <see cref="Capture"/> once a
+    /// frame before reading. Dispose it when the run ends.
     /// </summary>
     public sealed class FrameProbe : IDisposable
     {
@@ -14,14 +16,14 @@ namespace MoonProject.Autoplay
 
         private ProfilerRecorder _gc;
         private ProfilerRecorder _main;
-        private ProfilerRecorder _render;
+        private readonly FrameTiming[] _timing = new FrameTiming[1];
+        private bool _timingRead;
         private long _heapBefore = -1L;
 
         public FrameProbe()
         {
             _gc = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame");
             _main = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "Main Thread", 1);
-            _render = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "Render Thread", 1);
         }
 
         /// <summary>
@@ -45,14 +47,32 @@ namespace MoonProject.Autoplay
         /// <summary>The main thread's last whole frame (ms), or -1.</summary>
         public float MainMilliseconds => _main.Valid ? (float)(_main.LastValue / NanosecondsPerMillisecond) : -1f;
 
-        /// <summary>The render thread's last whole frame (ms), or -1.</summary>
-        public float RenderMilliseconds => _render.Valid ? (float)(_render.LastValue / NanosecondsPerMillisecond) : -1f;
+        /// <summary>Takes this frame's reading of the frame timing manager (it lags the frame by a few).</summary>
+        public void Capture()
+        {
+            _timingRead = false;
+            if (!FrameTimingManager.IsFeatureEnabled())
+            {
+                return;
+            }
+
+            FrameTimingManager.CaptureFrameTimings();
+            _timingRead = FrameTimingManager.GetLatestTimings(1, _timing) > 0;
+        }
+
+        /// <summary>The CPU main thread time (ms) of the latest frame the manager finished, or -1.</summary>
+        public float CpuMainMilliseconds => _timingRead ? (float)_timing[0].cpuMainThreadFrameTime : -1f;
+
+        /// <summary>The CPU render thread time (ms) of that frame, or -1.</summary>
+        public float CpuRenderMilliseconds => _timingRead ? (float)_timing[0].cpuRenderThreadFrameTime : -1f;
+
+        /// <summary>The GPU frame time (ms) of that frame, or -1.</summary>
+        public float GpuMilliseconds => _timingRead ? (float)_timing[0].gpuFrameTime : -1f;
 
         public void Dispose()
         {
             _gc.Dispose();
             _main.Dispose();
-            _render.Dispose();
         }
     }
 }

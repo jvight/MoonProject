@@ -145,12 +145,17 @@ namespace MoonProject.Editor.Build
                 PlayerSettings.SetScriptingBackend(NamedBuildTarget.Standalone, wanted);
             }
 
+            // The bot's hitch table reads FrameTimingManager (CPU main and render thread, GPU): the setting is on for the
+            // autoplay variant only, so a shipped build pays nothing for it.
+            bool frameTimingWas = PlayerSettings.enableFrameTimingStats;
+            PlayerSettings.enableFrameTimingStats = frameTimingWas || autoplay;
             try
             {
                 report = BuildPipeline.BuildPlayer(options);
             }
             finally
             {
+                PlayerSettings.enableFrameTimingStats = frameTimingWas;
                 if (switchBackend)
                 {
                     PlayerSettings.SetScriptingBackend(NamedBuildTarget.Standalone, backend);
