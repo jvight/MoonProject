@@ -53,6 +53,30 @@ namespace MoonProject.Gameplay
         /// <summary>How many cables lie between the built pieces.</summary>
         public int Count => _cables.Count;
 
+        /// <summary>Changes whenever the cables are laid again: an index may then name another cable.</summary>
+        public int Version { get; private set; }
+
+        /// <summary>The structure id of the piece cable <paramref name="index"/> runs from.</summary>
+        public string PieceOf(int index)
+        {
+            return _cables[index].PieceId;
+        }
+
+        /// <summary>The instance id of the piece cable <paramref name="index"/> runs from.</summary>
+        public int InstanceOf(int index)
+        {
+            return _cables[index].InstanceId;
+        }
+
+        /// <summary>
+        /// The point <paramref name="t01"/> of the way along cable <paramref name="index"/>'s laid path, from its piece's
+        /// port (0) to the far end (1).
+        /// </summary>
+        public Vector3 Along(int index, float t01)
+        {
+            return _cables[index].Along(t01);
+        }
+
         /// <summary>Where cable <paramref name="index"/> runs: from a piece's port to the far end.</summary>
         public void GetEnds(int index, out Vector3 from, out Vector3 to)
         {
@@ -99,7 +123,7 @@ namespace MoonProject.Gameplay
                 if (piece.IsBuilt && GridLinkPreview.TryFindCable(_placed, piece.Definition, piece.Pose, i,
                         piece.InstanceId, _apron, out Vector3 from, out Vector3 to, out _))
                 {
-                    Keep(from, to);
+                    Keep(from, to, piece.Definition.Id, piece.InstanceId);
                 }
             }
 
@@ -112,9 +136,11 @@ namespace MoonProject.Gameplay
                     _cables.RemoveAt(i);
                 }
             }
+
+            Version++;
         }
 
-        private void Keep(Vector3 from, Vector3 to)
+        private void Keep(Vector3 from, Vector3 to, string pieceId, int instanceId)
         {
             for (int i = 0; i < _cables.Count; i++)
             {
@@ -123,6 +149,8 @@ namespace MoonProject.Gameplay
                     && (cable.To - to).sqrMagnitude < SameEnd * SameEnd)
                 {
                     cable.Kept = true;
+                    cable.PieceId = pieceId;
+                    cable.InstanceId = instanceId;
                     return;
                 }
             }
@@ -131,6 +159,8 @@ namespace MoonProject.Gameplay
             int count = BaseCablePath.Write(from, to, _terrain, _tuning, _points);
             laid.Lay(from, to, _mesher, _points, count, _tuning);
             laid.Kept = true;
+            laid.PieceId = pieceId;
+            laid.InstanceId = instanceId;
             _cables.Add(laid);
         }
 
@@ -140,6 +170,9 @@ namespace MoonProject.Gameplay
             private readonly GameObject _host;
             private readonly MeshRenderer _renderer;
             private readonly Mesh _mesh;
+            private readonly Vector3[] _path = new Vector3[BaseCablePath.MaxPoints];
+            private readonly float[] _reached = new float[BaseCablePath.MaxPoints];
+            private int _count;
 
             public Cable(Transform parent, Material material)
             {
@@ -163,11 +196,40 @@ namespace MoonProject.Gameplay
 
             public bool Kept { get; set; }
 
+            public string PieceId { get; set; }
+
+            public int InstanceId { get; set; }
+
+            public Vector3 Along(float t01)
+            {
+                float target = Mathf.Clamp01(t01) * _reached[_count - 1];
+                for (int i = 1; i < _count; i++)
+                {
+                    if (_reached[i] >= target)
+                    {
+                        float span = _reached[i] - _reached[i - 1];
+                        float s = span > 1e-5f ? (target - _reached[i - 1]) / span : 1f;
+                        return Vector3.Lerp(_path[i - 1], _path[i], s);
+                    }
+                }
+
+                return _path[_count - 1];
+            }
+
             public void Lay(Vector3 from, Vector3 to, BaseCableMesh mesher, Vector3[] points, int count,
                 BuildingTuning tuning)
             {
                 From = from;
                 To = to;
+                _count = count;
+                _reached[0] = 0f;
+                _path[0] = points[0];
+                for (int i = 1; i < count; i++)
+                {
+                    _path[i] = points[i];
+                    _reached[i] = _reached[i - 1] + Vector3.Distance(points[i - 1], points[i]);
+                }
+
                 mesher.Write(_mesh, points, count, tuning);
                 _host.SetActive(true);
             }
