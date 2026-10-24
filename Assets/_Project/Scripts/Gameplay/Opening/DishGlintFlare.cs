@@ -19,6 +19,7 @@ namespace MoonProject.Gameplay
         private const MeshUpdateFlags Quiet = MeshUpdateFlags.DontRecalculateBounds | MeshUpdateFlags.DontValidateIndices;
 
         private static readonly int ColorId = Shader.PropertyToID("_Color");
+        private static readonly int DepthTestId = Shader.PropertyToID("_ZTest");
 
         private static readonly Vector2[] Corners =
         {
@@ -28,6 +29,7 @@ namespace MoonProject.Gameplay
         private readonly CallAnswerSettings _settings;
         private readonly Mesh _mesh;
         private readonly MeshRenderer _renderer;
+        private readonly Material _material;
         private readonly Vector3[] _centres;
         private readonly Vector2[] _sizeAndBrightness;
         private readonly Vector3[] _places;
@@ -87,7 +89,11 @@ namespace MoonProject.Gameplay
             host.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
             host.AddComponent<MeshFilter>().sharedMesh = _mesh;
             _renderer = host.AddComponent<MeshRenderer>();
-            GlowObject.Configure(_renderer, material);
+            // The dish stands on a far summit the camera usually sees over a ridge of that same summit; the catch of
+            // light is drawn over it, not tested against the ground it sits on.
+            _material = new Material(material) { name = "DishGlintFlare" };
+            _material.SetFloat(DepthTestId, (float)CompareFunction.Always);
+            GlowObject.Configure(_renderer, _material);
             var look = new MaterialPropertyBlock();
             look.SetColor(ColorId, settings.GlintColor);
             _renderer.SetPropertyBlock(look);
@@ -167,6 +173,11 @@ namespace MoonProject.Gameplay
             if (_mesh != null)
             {
                 Object.Destroy(_mesh);
+            }
+
+            if (_material != null)
+            {
+                Object.Destroy(_material);
             }
         }
     }
