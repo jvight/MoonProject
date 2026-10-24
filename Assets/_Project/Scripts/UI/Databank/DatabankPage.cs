@@ -64,6 +64,12 @@ namespace MoonProject.UI
         public bool StageHasModel => _stage.HasModel;
 
         /// <summary>The page became the one on the tube (true) or left it.</summary>
+        /// <summary>Draws the stage once, unseen, so the first flip to the databank is not its first render.</summary>
+        public void Warm()
+        {
+            _stage.Warm();
+        }
+
         public void SetOpen(bool open, InputDeviceKind device)
         {
             _open = open;

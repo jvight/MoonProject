@@ -69,6 +69,19 @@ namespace MoonProject.Rover.PlayModeTests
                 float open = 0f;
                 yield return Watch(_keyboard.tabKey, face, true, cycle, "open", result => open = result);
                 yield return RealRoverScene.WaitSeconds(SettleSeconds);
+                if (cycle < 2)
+                {
+                    float flip = 0f;
+                    yield return Flip(_keyboard.qKey, face, cycle, "databank (Q)", result => flip = result);
+                    yield return RealRoverScene.WaitSeconds(SettleSeconds);
+                    yield return Flip(_keyboard.qKey, face, cycle, "hold (Q)", result => flip = result);
+                    yield return RealRoverScene.WaitSeconds(SettleSeconds);
+                    if (cycle > 0)
+                    {
+                        worstLater = Mathf.Max(worstLater, flip);
+                    }
+                }
+
                 float close = 0f;
                 yield return Watch(_keyboard.tabKey, face, false, cycle, "close", result => close = result);
                 yield return RealRoverScene.WaitSeconds(SettleSeconds);
@@ -82,6 +95,30 @@ namespace MoonProject.Rover.PlayModeTests
             Debug.Log("[facehitch]\n" + _report);
             Assert.LessOrEqual(worstLater, EditorBudgetMilliseconds,
                 "no frame over the editor budget on a later open or close");
+        }
+
+        private IEnumerator Flip(KeyControl key, IRoverFaceScreen face, int cycle, string phase, System.Action<float> worst)
+        {
+            var slow = new List<string>();
+            float worstMs = 0f;
+            Press(key);
+            float start = Time.realtimeSinceStartup;
+            yield return null;
+            Release(key);
+            while (Time.realtimeSinceStartup - start < WatchSeconds)
+            {
+                float ms = Time.unscaledDeltaTime * 1000f;
+                worstMs = Mathf.Max(worstMs, ms);
+                if (ms > HitchMilliseconds)
+                {
+                    slow.Add($"{ms:F0} ({(Time.realtimeSinceStartup - start) * 1000f:F0})");
+                }
+
+                yield return null;
+            }
+
+            _report.AppendLine($"| {cycle} | {phase} | {worstMs:F0} | {string.Join(", ", slow)} | |");
+            worst(worstMs);
         }
 
         private IEnumerator Watch(KeyControl key, IRoverFaceScreen face, bool opening, int cycle, string phase,
