@@ -29,6 +29,7 @@ namespace MoonProject.Rover.PlayModeTests
         private const float MaxTurnDegreesPerSecond = 30f;
         private const float RelayWithinReach = 60f;
         private const float RelayBehind = 170f;
+        private const int MaxGlintShots = 14;
 
         private static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "captures", "release-view"));
@@ -94,6 +95,47 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.Greater(lowestFraming, 0.15f, "07 stays in the frame, in the foreground");
             Assert.Less(highestFraming, 0.85f, "07 stays in the frame, in the foreground");
             Assert.Less(_scene.CameraRig.MomentWeight, 0.05f, "the camera is back behind 07 when the view ends");
+        }
+
+        [UnityTest]
+        [Timeout(600000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator TheDishGlint_IsASmallSharpCatchOfLight_QuickToFade_AndCappedUnderBloom()
+        {
+            yield return RunToTheView(RelayWithinReach);
+            GameplaySystem gameplay = Object.FindFirstObjectByType<GameplaySystem>();
+            float cap = gameplay.AnswerSettings.GlintIntensity;
+            float brightest = 0f;
+            float aliveFor = 0f;
+            float longest = 0f;
+            int shots = 0;
+            float start = Time.time;
+            while (Time.time - start < ViewSeconds)
+            {
+                yield return null;
+                brightest = Mathf.Max(brightest, gameplay.PulseView.GlintBrightest);
+                if (gameplay.PulseView.GlintsAlive > 0)
+                {
+                    aliveFor += Time.deltaTime;
+                    longest = Mathf.Max(longest, aliveFor);
+                    if (shots < MaxGlintShots)
+                    {
+                        FrameCapture.SavePng(_scene.View, 1920, 1080,
+                            Path.Combine(CaptureFolder, $"glint-{shots++:D2}-b{gameplay.PulseView.GlintBrightest:F2}.png"));
+                    }
+                }
+                else
+                {
+                    aliveFor = 0f;
+                }
+            }
+
+            Debug.Log($"[releasecap] glint: brightest {brightest:F2} (cap {cap:F2}), longest life {longest:F2} s, " +
+                      $"{shots} shots");
+            Assert.Greater(brightest, 0.1f, "the dish glinted in view");
+            Assert.LessOrEqual(brightest, cap + 1e-3f, "capped under bloom");
+            Assert.LessOrEqual(longest, gameplay.AnswerSettings.GlintSeconds + 0.1f, "a quick catch, not a lingering ball");
         }
 
         [UnityTest]
