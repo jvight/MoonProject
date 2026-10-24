@@ -82,6 +82,9 @@ namespace MoonProject.Autoplay
         /// <summary>A cue counts as readable this far in from each edge of the frame (a share of the viewport): one at the very edge is not.</summary>
         private const float CueMargin = 0.05f;
 
+        /// <summary>The most game seconds to wait for a found cue to finish easing in before it is photographed.</summary>
+        private const float SettleCapSeconds = 1f;
+
         private readonly AutoplayBot _bot;
         private readonly Dictionary<string, float> _budgets = new Dictionary<string, float>();
         private readonly Dictionary<string, NextAction> _next = new Dictionary<string, NextAction>();
@@ -156,9 +159,21 @@ namespace MoonProject.Autoplay
             }
 
             float seconds = Time.time - start;
-            string shotEnd = "naive-" + beat + "-" + budget.ToString("0", CultureInfo.InvariantCulture) + "s";
-            _bot.Shot(shotEnd);
             bool passed = cue != null;
+            if (passed)
+            {
+                // The cue may still be easing in: the frame shows it solid, as the player ends up reading it.
+                float found = Time.time;
+                while (Time.time - found < SettleCapSeconds && !_bot.World.Ui.GuidanceSettled())
+                {
+                    yield return null;
+                }
+            }
+
+            string shotEnd = passed
+                ? "naive-" + beat + "-cue+" + (Time.time - start).ToString("0.0", CultureInfo.InvariantCulture) + "s"
+                : "naive-" + beat + "-" + budget.ToString("0", CultureInfo.InvariantCulture) + "s";
+            _bot.Shot(shotEnd);
             Record(new NaiveResult(beat, passed, seconds,
                 passed ? cue : (wrong != null ? "only cues for something else: " + wrong : "nothing readable on screen") +
                                (action != null ? " (needed: " + action.Key + ")" : string.Empty), budget, shotStart,

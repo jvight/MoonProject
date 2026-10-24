@@ -15,6 +15,9 @@ namespace MoonProject.Autoplay
         /// <summary>An element this opaque counts as on screen for the one-guidance-element rule (not a fade's tail).</summary>
         private const float GuidanceOpacity = 0.5f;
 
+        /// <summary>An element this opaque is fully eased in for a photograph.</summary>
+        private const float SolidOpacity = 0.98f;
+
         /// <summary>
         /// The guidance elements: the objective line, the chips (the prompt and the look-hint shell are one chip to the
         /// player), the unlock card, the call display and the controls card.
@@ -108,6 +111,24 @@ namespace MoonProject.Autoplay
             }
 
             return _lineFade.Steady(OpacityOf(shell), Time.frameCount) ? ObjectiveLine() : string.Empty;
+        }
+
+        /// <summary>
+        /// True when every guidance element on screen is solid: none is still easing in (or out) at part opacity. A
+        /// dimmed element that never settles is the caller's cap to bound.
+        /// </summary>
+        public bool GuidanceSettled()
+        {
+            for (int i = 0; i < GuidanceNames.Length; i++)
+            {
+                VisualElement element = _root.Q<VisualElement>(GuidanceNames[i]);
+                if (IsShown(element, VisibleOpacity) && OpacityOf(element) < SolidOpacity)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         /// <summary>
