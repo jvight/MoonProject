@@ -476,6 +476,27 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void Resting07OnACharger_SaysTheStepsLineOnceMore_OncePerStep()
+        {
+            _flow.Tick(1f);
+            _game.ReachedLander = true;
+            _flow.Tick(1f);
+            Tick(NextLine);
+            Assert.AreEqual(string.Empty, _flow.Shown, "the next line has gone");
+
+            _events.Publish(new ChargingChanged(true, ChargerKind.Mast, Vector3.zero));
+            _flow.Tick(1f);
+            Assert.AreEqual(OpeningKeys.ScanLander, _flow.Shown, "07 rests on a charger: what now, once more");
+            Assert.AreEqual(NextLineReason.Next, _flow.ShownReason);
+
+            Tick(NextLine);
+            _events.Publish(new ChargingChanged(false, ChargerKind.Mast, Vector3.zero));
+            _events.Publish(new ChargingChanged(true, ChargerKind.Mast, Vector3.zero));
+            _flow.Tick(1f);
+            Assert.AreEqual(string.Empty, _flow.Shown, "not again for the same step");
+        }
+
+        [Test]
         public void TheWaitForTheNight_IsNeverReminded()
         {
             _game.ReachedLander = true;
