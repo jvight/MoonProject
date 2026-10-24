@@ -497,6 +497,8 @@ MonoBehaviour:
     _followHalfLife: 0.08
     _screenMargin: 72
     _cardGap: 18
+    _roverClearRadius: 1.1
+    _roverClearHeight: 1.7
   _pickupFeed:
     _reveal:
       _fadeIn: 0.35
