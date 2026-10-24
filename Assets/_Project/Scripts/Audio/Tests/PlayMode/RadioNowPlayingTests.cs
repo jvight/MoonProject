@@ -9,7 +9,7 @@ using MoonProject.Core.Events;
 
 namespace MoonProject.Audio.PlayModeTests
 {
-    /// <summary>"Now playing" on the ticker (short tracks so the show moves on within seconds).</summary>
+    /// <summary>"Now playing" on the ticker (short tracks so each music moment ends within seconds).</summary>
     public sealed class RadioNowPlayingTests
     {
         private readonly List<TickerLine> _lines = new List<TickerLine>();
@@ -36,8 +36,12 @@ namespace MoonProject.Audio.PlayModeTests
         public IEnumerator EachTrack_IsAnnouncedOncePerSession()
         {
             _rig.Wake(true);
-            _rig.Answer();
-            yield return new WaitForSecondsRealtime(3f * AudioTestRig.ShortTrackSeconds + 1f);
+            for (int i = 0; i < 3; i++)
+            {
+                _rig.RequestMusic();
+                yield return new WaitForSecondsRealtime(AudioTestRig.ShortTrackSeconds + 3f);
+            }
+
             Assert.AreEqual(2, _lines.Count, "both tracks announced once, however often they come round");
             var arguments = new HashSet<string>();
             foreach (TickerLine line in _lines)

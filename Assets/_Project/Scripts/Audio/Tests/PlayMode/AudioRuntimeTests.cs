@@ -18,9 +18,9 @@ namespace MoonProject.Audio.PlayModeTests
         {
             _rig = new AudioTestRig();
             yield return null;
-            // A save past the answer: no hiss still clearing under the clarity these tests measure, and music.
+            // A powered base (no hiss still clearing under the clarity these tests measure) and a music moment.
             _rig.Milestone(OpeningMilestone.PowerOn, true);
-            _rig.Answer(true);
+            _rig.RequestMusic();
             _rig.Wake(true);
             float deadline = Time.realtimeSinceStartup + 3f;
             while (!_rig.Radio.MusicStarted && Time.realtimeSinceStartup < deadline)
@@ -28,7 +28,7 @@ namespace MoonProject.Audio.PlayModeTests
                 yield return null;
             }
 
-            Assert.IsTrue(_rig.Radio.MusicStarted, "the radio finds the music once relay.1 has answered");
+            Assert.IsTrue(_rig.Radio.MusicStarted, "the radio plays the requested music moment");
         }
 
         [TearDown]
