@@ -92,6 +92,22 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void TheNearestCharger_CountsRelayOnesPad_SoTheLowLineStaysQuietBesideIt()
+        {
+            var relays = new System.Collections.Generic.List<Vector3> { new Vector3(-70f, 0f, 46f) };
+            Assert.IsTrue(BatteryField.Nearest(new Vector3(-75f, 0f, 46f), true, new Vector3(15f, 0f, 140f), relays,
+                out Vector3 nearest));
+            Assert.AreEqual(relays[0], nearest, "beside relay.1, its pad is the nearest charger, not home's");
+            Assert.IsTrue(BatteryField.Nearest(new Vector3(10f, 0f, 140f), true, new Vector3(15f, 0f, 140f), relays,
+                out nearest));
+            Assert.AreEqual(new Vector3(15f, 0f, 140f), nearest, "at home, the pad");
+            Assert.IsTrue(BatteryField.Nearest(Vector3.zero, false, Vector3.zero, relays, out nearest),
+                "no pad yet, a lit relay still counts");
+            Assert.IsFalse(BatteryField.Nearest(Vector3.zero, false, Vector3.zero,
+                new System.Collections.Generic.List<Vector3>(), out _), "nothing lit: no charger");
+        }
+
+        [Test]
         public void ACaughtLoad_StrainsTheDrive_TowardTheFloor_ButNeverToNothing()
         {
             Step(new BatteryStep { Towing = true, TowStrain01 = 1f }, 3f);

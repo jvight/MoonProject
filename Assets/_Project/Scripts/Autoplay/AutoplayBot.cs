@@ -208,6 +208,25 @@ namespace MoonProject.Autoplay
         }
 
         /// <summary>Holds <paramref name="key"/> until <paramref name="done"/> holds, then lets go.</summary>
+        /// <summary>True when the last <see cref="TryHold"/> saw its condition before its time ran out.</summary>
+        public bool HoldReached { get; private set; }
+
+        /// <summary>Holds <paramref name="key"/> for at most <paramref name="seconds"/> (game time) or until <paramref name="done"/>;
+        /// a miss is not a failure: <see cref="HoldReached"/> says which it was, and the key is let go.</summary>
+        public IEnumerator TryHold(Key key, Func<bool> done, float seconds)
+        {
+            _input.Set(key, true);
+            float until = Time.time + seconds;
+            HoldReached = false;
+            while (!Failed && Time.time < until && !(HoldReached = done()))
+            {
+                yield return null;
+            }
+
+            _input.Set(key, false);
+            yield return null;
+        }
+
         public IEnumerator Hold(Key key, Func<bool> done, float timeoutSeconds, string what,
             Func<string> detail = null)
         {

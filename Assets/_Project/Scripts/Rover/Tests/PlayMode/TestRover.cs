@@ -278,10 +278,13 @@ namespace MoonProject.Rover.PlayModeTests
             var flank = visual.gameObject.AddComponent<RoverFlankLamps>();
             var towRope = Node("TowRope", visual, Vector3.zero).gameObject.AddComponent<LineRenderer>();
             var towClamp = Node("TowClamp", visual, Vector3.zero).gameObject.AddComponent<LineRenderer>();
+            var towThread = Node("TowThread", visual, Vector3.zero).gameObject.AddComponent<LineRenderer>();
+            towThread.sharedMaterial = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
             towRope.sharedMaterial = material;
             towClamp.sharedMaterial = material;
             var towCable = visual.gameObject.AddComponent<RoverTowCable>();
-            Assign(towCable, ("_tuning", rigTuning), ("_rope", towRope), ("_hook", towClamp), ("_winch", winchOrigin));
+            Assign(towCable, ("_tuning", rigTuning), ("_rope", towRope), ("_thread", towThread), ("_hook", towClamp), ("_winch", winchOrigin),
+                ("_skidDust", Particles("TowSkidDust", visual, material)));
             var growth = visual.gameObject.AddComponent<RoverGrowth>();
             Assign(growth, ("_tuning", rigTuning), ("_antennaSegment", antennaSegment), ("_igniter", igniter),
                 ("_turret", cutterTurret));
