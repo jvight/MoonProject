@@ -28,7 +28,7 @@ namespace MoonProject.Autoplay
         public const float DefaultTimeoutSeconds = 900f;
 
         private AutoplayOptions(string scenario, string outDirectory, float shotSeconds, float timeoutSeconds,
-            string untilBeat, bool linesExpected, bool strictGuidance, bool naive, bool mute)
+            string untilBeat, bool linesExpected, bool strictGuidance, bool naive, bool mute, bool pointer)
         {
             Scenario = scenario;
             OutDirectory = outDirectory;
@@ -39,6 +39,7 @@ namespace MoonProject.Autoplay
             StrictGuidance = strictGuidance;
             Naive = naive;
             Mute = mute;
+            Pointer = pointer;
         }
 
         /// <summary>The scenario to play; today only "opening".</summary>
@@ -113,7 +114,8 @@ namespace MoonProject.Autoplay
 
             options = new AutoplayOptions(scenario, outDirectory, shotSeconds, timeout,
                 Value(args, UntilFlag) ?? string.Empty, Value(args, LinesFlag) == "1",
-                Value(args, StrictGuidanceFlag) != "0", Value(args, NaiveFlag) == "1", HasFlag(args, MuteFlag));
+                Value(args, StrictGuidanceFlag) != "0", Value(args, NaiveFlag) == "1", HasFlag(args, MuteFlag),
+                Value(args, PointerFlag) == "1");
             return true;
         }
 
