@@ -45,7 +45,7 @@ namespace MoonProject.Gameplay
         private bool _holding;
         private bool _gazing;
         private readonly BlockNotice _blocked = new BlockNotice();
-        private bool _waitRelease;
+        private float _rearmAt;
         private Transform _cachedScanOrigin;
         private Transform _headTransform;
         private Collider[] _roverColliders;
@@ -186,9 +186,14 @@ namespace MoonProject.Gameplay
             PayOwed();
             bool held = _input.ExcavateHeld;
             bool claimed = _othersClaim();
-            _waitRelease = held && (_waitRelease || claimed && _scanning == null);
+            if (held && claimed && _scanning == null)
+            {
+                // Another verb has E: once it lets go, a still-held E carries on to the scan after a beat.
+                _rearmAt = now + _tuning.RearmSeconds;
+            }
+
             Candidate = claimed ? null : Pick();
-            bool wants = held && !_waitRelease && Candidate != null;
+            bool wants = held && now >= _rearmAt && Candidate != null;
             if (_scanning != null && (!wants || Candidate != _scanning))
             {
                 Stop();
@@ -708,14 +713,14 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// Fully scanned: the dissolve begins and its set learns (a story is read). E must be let go before the next
-        /// scan.
+        /// Fully scanned: the dissolve begins and its set learns (a story is read). A still-held E starts the next scan
+        /// after a beat (never a dead chip).
         /// </summary>
         private void Complete(ScanFragment fragment, float now)
         {
             _scanning = null;
             _aiming = null;
-            _waitRelease = true;
+            _rearmAt = now + _tuning.RearmSeconds;
             if (_rig != null)
             {
                 Hold(false);
