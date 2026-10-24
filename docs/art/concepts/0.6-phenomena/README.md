@@ -22,35 +22,35 @@ All generated materials, meshes, and prefabs are built idempotently by `Phenomen
 ## 2. Phenomenon Breakdown & Vacuum Physics Rules
 
 ### 2.1 Levitating Dust Glow (Row 1 of `sheet.png`)
-- **Visual Design:** At the lunar terminator (dawn/dusk transition), solar UV photoemission charges fine regolith grains, lifting a soft forward-scattered horizon haze band (`28 m × 3.2 m`) along the ridge alongside `7` thin vertical columns of slowly rising crystalline motes (`0.22 m/s` upward drift).
+- **Visual Design:** At the lunar terminator (dawn/dusk transition), solar UV photoemission charges fine regolith grains, lifting a soft, continuous, undulating forward-scattered horizon glow band (`36 m × 3.6 m`) along the ridge alongside `7` sparse, curved, asymmetrically spaced drifting mote wisps of varied height (`0.44×–1.18×`), width, and brightness (`0.22 m/s` upward + gentle lateral drift) and `28` non-periodically dispersed crystalline mote shards.
 - **Look A (Night) & Look C (Day):**
   - **Day C ("Low sun"):** Warm golden-silver forward scatter (`#EACC9E`, alpha `0.46`) catching grazing `11°` sunlight.
   - **Night A ("Moon grey"):** Cool earthshine silver-blue scatter (`#99BDF5`, alpha `0.40`).
-- **R1 & Bloom Discipline:** Both the horizon band (`_BandMaxIntensity = 0.74`) and rising mote columns (`_MoteMaxIntensity = 0.96`) are clamped below `_BloomCeiling = 1.10` (`< Palette.BloomThreshold = 1.25`). Mote particles use the faceted octahedral `Mesh_FacetedMoteShard` mesh and diamond-anisotropic shader mask (**zero repeated round-dot patterns**).
+- **R1 & Bloom Discipline:** Both the continuous horizon band (`_BandMaxIntensity = 0.74`) and drifting mote wisps (`_MoteMaxIntensity = 0.96`) are driven by 2D smooth value noise and clamped below `_BloomCeiling = 1.10` (`< Palette.BloomThreshold = 1.25`). Mote particles use the faceted octahedral `Mesh_FacetedMoteShard` mesh and diamond-anisotropic shader mask (**zero repeated round-dot patterns and zero evenly spaced vertical bars**).
 - **Capture Sheet Frames (Row 1, left to right):**
   1. `t = 1.8 s` (Day C): Eased SmoothStep fade-in onset behind Rover 07.
-  2. `t = 10.0 s` (Day C): Full terminator horizon haze band + rising mote columns under grazing low sun.
+  2. `t = 10.0 s` (Day C): Full continuous terminator horizon glow band + sparse drifting mote wisps under grazing low sun.
   3. `t = 12.0 s` (Night A): Full cool earthshine terminator glow behind Rover 07 with its warm eye fill.
   4. `t = 23.2 s` (Night A): Eased SmoothStep fade-out as levitated motes settle back toward the ridge.
 
 ### 2.2 Micrometeorite Flash & 10-Minute Cooling Impact Glass (Row 2 of `sheet.png`)
-- **Visual Design:** A brief distant white starlight flash (`0.06 s` eased rise, `0.48 s` eased decay) accompanied by `24` ballistic ejecta shards following clean parabolic vacuum trajectories ($g = 1.62\text{ m/s}^2$, zero air drag), revealing a `1.5 m` diameter fresh crater (`Mesh_ImpactCraterAndGlass`) with central fused impact glass shards.
+- **Visual Design:** A brief compact white starburst bloom flash (`0.03 s` eased rise, `0.22 s` eased decay — `0.25 s` total, low-pitched flattened burst geometry with zero vertical light pillar) accompanied by `24` low-angle (`20°–44°`) ballistic ejecta shards following clean parabolic vacuum trajectories ($g = 1.62\text{ m/s}^2$, zero air drag), revealing an irregular soft-rimmed `1.5 m` fresh crater (`Mesh_ImpactCraterAndGlass`) whose alpha-feathered terrain-decal skirt blends seamlessly into the surrounding Mare basalt alongside `6` irregular rim clods and `14` asymmetrically clustered, tilted 4-sided fused impact glass shards/splatters.
 - **10-Minute (`600 s`) Thermal Cool-Down Curve:**
   - `t = 0 s`: White-hot core (`#FFF0CC`, intensity `1.85`, softly crossing `Palette.BloomThreshold`) with molten amber rim (`#FF7524`).
-  - `t = 180 s` (3 min): Mid cool-down deep cherry-amber ember (`#9E290D`) on the central glass facets while the overturned crater rim catches grazing sunlight.
+  - `t = 180 s` (3 min): Mid cool-down deep cherry-amber ember (`#9E290D`) on the irregular glass shards while the soft crater rim catches grazing sunlight.
   - `t >= 600 s` (10 min+): Thermal heat reaches `0.0`, leaving dark vitreous impactite glass (`#1A212E`) with a **permanent non-zero glint floor** (`_PermanentGlintFloor = 0.24`, `#C7E6FF`) on its sharp facet ridges so the impact glass stays discoverable and collectable forever.
 - **Capture Sheet Frames (Row 2, left to right):**
-  1. `t = 0.07 s` (Night A): Peak white starlight flash burst + vacuum ballistic ejecta spray beside 07.
-  2. `t = 18.0 s` (Night A): Flash gone; fresh crater with incandescent white-amber molten impact glass.
+  1. `t = 0.04 s` (Night A): Peak compact starburst bloom flash + low-angle vacuum ballistic ejecta spray beside 07.
+  2. `t = 18.0 s` (Night A): Flash gone; soft-rimmed crater blended into the Mare ground with incandescent white-amber molten impact glass shards.
   3. `t = 180.0 s` (Day C, 3 min): Mid cool-down warm ember glow in grazing Day C sunlight.
   4. `t = 600.0 s` (Night A, 10 min): Fully cooled vitreous glass holding its faint permanent starlight glint.
 
 ### 2.3 Gentle Moonquake Dust Slide (Row 3 of `sheet.png`)
-- **Visual Design:** Dislodged regolith sheets slowly (`1.65 m/s`) down a `25°` Mare crater slope (`8.5 m` long, `4.6 m` wide) in anisotropic mineral streams (`M_DustSlideSheet`), accompanied by `36` discrete angular grain clusters hopping in low parabolic arcs under lunar gravity ($1.62\text{ m/s}^2$) and a ground-skimming toe settle apron (`<= 0.36 m` high).
+- **Visual Design:** Dislodged regolith sheets slowly (`1.65 m/s`) down a `25°` Mare crater slope (`8.5 m` long, `4.6 m` wide) in irregular, braided mineral streams across asymmetric avalanche chutes and overlapping saltation veils (`M_DustSlideSheet`, driven by object-space domain-warped 3-octave noise — zero evenly spaced stripes), accompanied by `36` discrete angular grain clusters hopping in low parabolic arcs under lunar gravity ($1.62\text{ m/s}^2$) and a continuous multi-lobed ground-skimming toe settle apron (`<= 0.36 m` high).
 - **Vacuum Honesty:** Zero turbulent billowing smoke, zero upward buoyancy, and zero circular particle sprites. Once the slide finishes, the toe settle apron drops quadratically to the ground under lunar gravity.
 - **Capture Sheet Frames (Row 3, left to right):**
   1. `t = 0.85 s` (Day C): Eased tremor onset loosening the top regolith layer beside 07.
-  2. `t = 5.0 s` (Day C): Active down-slope sheeting streams + ballistic grain arcs + low toe settle veil.
+  2. `t = 5.0 s` (Day C): Active irregular braided down-slope streams + ballistic grain arcs + low toe settle veil.
   3. `t = 5.5 s` (Night A): Active sheeting in cool earthlit slate tones (`#57637A`).
   4. `t = 10.6 s` (Day C): Slope streams subsiding as the low toe settle veil drops cleanly onto the basalt floor.
 
