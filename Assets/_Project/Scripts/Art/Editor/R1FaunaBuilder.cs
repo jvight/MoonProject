@@ -84,12 +84,13 @@ namespace MoonProject.Art.Editor
             R1MaterialSpec lampSpec = R1MaterialRecipes.Get(R1MaterialSlot.LampAmber);
             Material cyanMat = R1MaterialLibrary.CreateMaterial(r1Lit, lampSpec);
             cyanMat.name = FaunaLampCyanMaterialName;
-            cyanMat.SetColor("_BaseColor", new Color(0.55f, 0.90f, 0.98f, 1f));
-            cyanMat.SetColor("_EmissionColor", new Color(0.32f, 0.92f, 1.00f, 1f));
+            cyanMat.SetTexture("_BaseMap", Texture2D.whiteTexture);
+            cyanMat.SetColor("_BaseColor", new Color(0.24f, 0.72f, 0.86f, 1f));
+            cyanMat.SetColor("_EmissionColor", new Color(0.10f, 0.96f, 2.80f, 1f));
             cyanMat.SetFloat("_EmissionStrength", 1.00f);
-            cyanMat.SetFloat("_BloomSafeMax", 0.95f);
-            cyanMat.SetFloat("_HotCoreThreshold", 0.88f);
-            cyanMat.SetFloat("_HotCorePeak", 1.48f);
+            cyanMat.SetFloat("_BloomSafeMax", 0.96f);
+            cyanMat.SetFloat("_HotCoreThreshold", 0.86f);
+            cyanMat.SetFloat("_HotCorePeak", 0.78f);
             return GeneratedAssets.CreateOrReplace(cyanMat, FaunaLampCyanMaterialPath);
         }
 

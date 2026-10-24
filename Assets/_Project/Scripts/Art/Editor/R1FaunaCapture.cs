@@ -382,6 +382,7 @@ namespace MoonProject.Art.Editor
             bool isCyan,
             ArtLightingPreview.TemporaryObjects temp)
         {
+            _ = temp;
             if (!nightEclipse || faunaInstance == null)
             {
                 return;
@@ -390,24 +391,12 @@ namespace MoonProject.Art.Editor
             var motion = faunaInstance.GetComponent<FaunaIdleMotion>();
             if (motion != null && motion.LampRenderer != null)
             {
-                // Boost _EmissionStrength slightly at night via MaterialPropertyBlock (never overwriting _EmissionColor)
+                // Keep lamp emission at a tight point-halo tune via MaterialPropertyBlock (never overwriting _EmissionColor
+                // and never flooding the hull with a large point light, so the body stays mostly dark at night).
                 var block = new MaterialPropertyBlock();
                 motion.LampRenderer.GetPropertyBlock(block);
-                block.SetFloat("_EmissionStrength", 1.85f);
+                block.SetFloat("_EmissionStrength", isCyan ? 1.08f : 1.12f);
                 motion.LampRenderer.SetPropertyBlock(block);
-
-                Color lightColor = isCyan
-                    ? new Color(0.32f, 0.90f, 1.00f, 1f)
-                    : new Color(1.00f, 0.72f, 0.30f, 1f);
-                Light lampLight = ArtLightingPreview.NewLight(
-                    faunaInstance.name + "_LampGlow",
-                    LightType.Point,
-                    lightColor,
-                    isCyan ? 1.15f : 1.35f);
-                lampLight.transform.position = motion.LampRenderer.bounds.center + Vector3.up * 0.08f;
-                lampLight.range = isCyan ? 2.4f : 3.2f;
-                lampLight.shadows = LightShadows.None;
-                temp.Add(lampLight.gameObject);
             }
         }
 
@@ -423,29 +412,31 @@ namespace MoonProject.Art.Editor
             Color bgColor;
             if (nightEclipse)
             {
-                RenderSettings.ambientSkyColor = new Color(0.11f, 0.14f, 0.22f, 1f);
-                RenderSettings.ambientEquatorColor = new Color(0.08f, 0.10f, 0.16f, 1f);
-                RenderSettings.ambientGroundColor = new Color(0.05f, 0.06f, 0.10f, 1f);
+                // Match the dark night atmosphere tune on main (AtmosphereSettings): deep cool shadow ambient
+                // + low grazing earthlight so hulls stay mostly dark and lamps read as tiny points with a small soft halo.
+                RenderSettings.ambientSkyColor = new Color(0.068f, 0.072f, 0.088f, 1f);
+                RenderSettings.ambientEquatorColor = new Color(0.046f, 0.049f, 0.058f, 1f);
+                RenderSettings.ambientGroundColor = new Color(0.020f, 0.022f, 0.028f, 1f);
                 RenderSettings.ambientIntensity = 1.0f;
-                bgColor = new Color(0.05f, 0.07f, 0.11f, 1f);
+                bgColor = new Color(0.035f, 0.040f, 0.058f, 1f);
 
                 Light earthLight = ArtLightingPreview.NewLight(
                     "NightAEarthlight",
                     LightType.Directional,
-                    new Color(0.58f, 0.68f, 0.95f, 1f),
-                    0.52f);
-                earthLight.transform.rotation = Quaternion.Euler(26f, 38f, 0f);
+                    new Color(0.76f, 0.82f, 0.96f, 1f),
+                    0.34f);
+                earthLight.transform.rotation = Quaternion.Euler(19f, 38f, 0f);
                 earthLight.shadows = LightShadows.Soft;
-                earthLight.shadowStrength = 0.75f;
+                earthLight.shadowStrength = 0.80f;
                 RenderSettings.sun = earthLight;
                 temp.Add(earthLight.gameObject);
 
                 Light rimLight = ArtLightingPreview.NewLight(
                     "NightARimFill",
                     LightType.Directional,
-                    new Color(0.42f, 0.52f, 0.78f, 1f),
-                    0.26f);
-                rimLight.transform.rotation = Quaternion.Euler(22f, -142f, 0f);
+                    new Color(0.50f, 0.58f, 0.82f, 1f),
+                    0.14f);
+                rimLight.transform.rotation = Quaternion.Euler(12f, -142f, 0f);
                 rimLight.shadows = LightShadows.None;
                 temp.Add(rimLight.gameObject);
             }
@@ -493,8 +484,8 @@ namespace MoonProject.Art.Editor
             temp.Add(profile);
             var bloom = profile.Add<Bloom>(true);
             bloom.threshold.Override(Palette.BloomThreshold);
-            bloom.intensity.Override(nightEclipse ? 0.65f : 0.45f);
-            bloom.scatter.Override(0.65f);
+            bloom.intensity.Override(nightEclipse ? 0.36f : 0.42f);
+            bloom.scatter.Override(nightEclipse ? 0.52f : 0.62f);
             var tonemapping = profile.Add<Tonemapping>(true);
             tonemapping.mode.Override(TonemappingMode.Neutral);
 
@@ -545,9 +536,9 @@ namespace MoonProject.Art.Editor
                     "Rover07EyeFill",
                     LightType.Point,
                     new Color(1.0f, 0.68f, 0.30f, 1f),
-                    1.35f);
-                eyeWarmFill.transform.position = position + Quaternion.Euler(0f, yawDeg, 0f) * new Vector3(0f, 1.25f, 1.15f);
-                eyeWarmFill.range = 4.2f;
+                    0.28f);
+                eyeWarmFill.transform.position = position + Quaternion.Euler(0f, yawDeg, 0f) * new Vector3(0f, 1.22f, 1.02f);
+                eyeWarmFill.range = 1.15f;
                 eyeWarmFill.shadows = LightShadows.None;
                 temp.Add(eyeWarmFill.gameObject);
             }
