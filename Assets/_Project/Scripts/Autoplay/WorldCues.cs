@@ -35,7 +35,7 @@ namespace MoonProject.Autoplay
         /// <summary>Every cue the scene has, for a check that wants any of them.</summary>
         public static System.Collections.Generic.List<WorldCue> All(AutoplayWorld world)
         {
-            var cues = new System.Collections.Generic.List<WorldCue>(2);
+            var cues = new System.Collections.Generic.List<WorldCue>(3);
             WorldCue glint = ArrayGlint(world);
             if (glint != null)
             {
@@ -48,7 +48,21 @@ namespace MoonProject.Autoplay
                 cues.Add(lamp);
             }
 
+            WorldCue mast = MastGlint(world);
+            if (mast != null)
+            {
+                cues.Add(mast);
+            }
+
             return cues;
+        }
+
+        /// <summary>The radio tower's mast tip catching the earthlight at night (opening v3 B10), or null.</summary>
+        public static WorldCue MastGlint(AutoplayWorld world)
+        {
+            MastGlint glint = world.Find<MastGlint>();
+            return glint == null ? null : new WorldCue("the radio tower's mast glint", () => glint.Level > LitLevel,
+                () => glint.transform.position);
         }
 
         /// <summary>The habitat's power module lamp, blinking from dusk (opening v3 R4), or null.</summary>
