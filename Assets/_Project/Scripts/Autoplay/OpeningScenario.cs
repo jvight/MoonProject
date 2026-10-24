@@ -171,6 +171,9 @@ namespace MoonProject.Autoplay
         /// <summary>The first free choice (B8, R5) is told by the world: the dead lamp's glance comes after 30 s.</summary>
         private const float FreeChoiceBudgetSeconds = 35f;
 
+        /// <summary>Tab opens and closes at the ruins, once B7 is checked, for the hitch table (the first Tab was the igniter's fit).</summary>
+        private const int TabCycleCount = 4;
+
         private IEnumerator Sub(string id)
         {
             if (_naive != null && !_bot.Failed)
@@ -497,6 +500,8 @@ namespace MoonProject.Autoplay
 
         private IEnumerator BuildTheArray()
         {
+            // After B7's first-time check: the cycles are 15 s of standing at the ruins, which would age its cue away.
+            yield return _base.TabCycles(TabCycleCount);
             Begin("B8", "Build the solar array");
             yield return _base.ExpectStep(OpeningSteps.BuildSolar, OpeningKeys.BuildSolar,
                 "B8: the array's cost is covered");

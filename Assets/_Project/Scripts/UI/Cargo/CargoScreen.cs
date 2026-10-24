@@ -14,6 +14,12 @@ namespace MoonProject.UI
     /// </summary>
     internal sealed class CargoScreen
     {
+        /// <summary>Frames the hidden screen is laid out and drawn (invisibly) at start, so the first Tab is not the first use.</summary>
+        private const int WarmFrames = 3;
+
+        /// <summary>Opacity of those frames: nothing a player could see, but not zero, which a renderer may skip.</summary>
+        private const float WarmOpacity = 0.004f;
+
         public const string CellClass = "cargo__cell";
         public const string EmptyClass = "cargo__cell--empty";
         public const string LockedClass = "cargo__cell--locked";
@@ -33,6 +39,7 @@ namespace MoonProject.UI
         private readonly FaceInventoryView _view;
 
         private bool _dirty = true;
+        private int _warmFramesLeft = WarmFrames;
         private string _bootText = string.Empty;
         private int _bootTyped = -1;
         private int _bootLit;
@@ -199,8 +206,11 @@ namespace MoonProject.UI
             _reveal.Tick(step);
             if (_reveal.IsHidden)
             {
+                WarmUp(panelSize);
                 return;
             }
+
+            _warmFramesLeft = 0;
 
             bool booting = _boot.IsRunning;
             if (booting)
@@ -225,6 +235,35 @@ namespace MoonProject.UI
             if (booting)
             {
                 PlayBootFrame();
+            }
+        }
+
+        /// <summary>
+        /// The first Tab used to pay for everything at once: the panel's fit and layout, the hold's text and its glyphs,
+        /// the first draw (a frame well over 100 ms). While the screen is still hidden, once the panel size is known,
+        /// it is built, laid out and drawn for a few frames at an opacity nobody can see, then hidden again.
+        /// </summary>
+        private void WarmUp(Vector2 panelSize)
+        {
+            if (_warmFramesLeft <= 0 || panelSize.x <= 0f)
+            {
+                return;
+            }
+
+            if (_warmFramesLeft == WarmFrames)
+            {
+                _fittedFor = panelSize;
+                FitPanel(panelSize);
+                _view.Refresh();
+                _root.style.display = DisplayStyle.Flex;
+                _root.style.opacity = WarmOpacity;
+            }
+
+            _warmFramesLeft--;
+            if (_warmFramesLeft == 0)
+            {
+                _root.style.display = DisplayStyle.None;
+                _root.style.opacity = 0f;
             }
         }
 

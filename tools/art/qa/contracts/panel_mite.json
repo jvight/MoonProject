@@ -1,0 +1,115 @@
+{
+  "model": "panel_mite",
+  "pivot_tolerance": 0.005,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_BareSteel",
+    "R1_Brass",
+    "R1_Copper",
+    "R1_CreamEnamel",
+    "R1_DarkGlass",
+    "R1_GoldFoil",
+    "R1_GreyMetal",
+    "R1_LampAmber",
+    "R1_OrangeStripe",
+    "R1_Rubber",
+    "R1_SagePatch",
+    "R1_SolarCell"
+  ],
+  "max_triangles": 8000,
+  "max_meshes": 10,
+  "max_draw_calls": 40,
+  "allow_rotation": [],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "bounds": {
+    "size": [
+      0.4,
+      0.44,
+      0.21
+    ],
+    "tolerance": 0.015,
+    "min_size": [
+      0.385,
+      0.425,
+      0.195
+    ],
+    "max_size": [
+      0.415,
+      0.455,
+      0.225
+    ]
+  },
+  "nodes": {
+    "PanelMite": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Body": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.08
+      ]
+    },
+    "Lamp": {
+      "pivot": [
+        0.0,
+        0.18,
+        0.14
+      ]
+    },
+    "Wiper": {
+      "pivot": [
+        0.0,
+        0.18,
+        0.025
+      ]
+    },
+    "Leg_L0": {
+      "pivot": [
+        -0.11,
+        0.1,
+        0.065
+      ]
+    },
+    "Leg_L1": {
+      "pivot": [
+        -0.11,
+        0.0,
+        0.065
+      ]
+    },
+    "Leg_L2": {
+      "pivot": [
+        -0.11,
+        -0.1,
+        0.065
+      ]
+    },
+    "Leg_R0": {
+      "pivot": [
+        0.11,
+        0.1,
+        0.065
+      ]
+    },
+    "Leg_R1": {
+      "pivot": [
+        0.11,
+        0.0,
+        0.065
+      ]
+    },
+    "Leg_R2": {
+      "pivot": [
+        0.11,
+        -0.1,
+        0.065
+      ]
+    }
+  }
+}

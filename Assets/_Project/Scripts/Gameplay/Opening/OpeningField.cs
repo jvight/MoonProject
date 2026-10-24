@@ -4,6 +4,7 @@ using System.Globalization;
 using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
+using MoonProject.Core.Input;
 
 namespace MoonProject.Gameplay
 {
@@ -28,6 +29,7 @@ namespace MoonProject.Gameplay
         private readonly OpeningTuning _tuning;
         private readonly IRoverState _rover;
         private IAnswerStatus _answer;
+        private IInteractionHints _hints;
         private readonly ISunlight _sunlight;
         private readonly KnownStructures _known;
         private readonly StructureCatalog _catalog;
@@ -166,9 +168,13 @@ namespace MoonProject.Gameplay
 
         public bool AnswerStarted => _answer != null && _answer.Phase >= AnswerPhase.Transmitting;
 
-        public bool AtRelay => _relay != null &&
+        // Near relay.1 is not enough: the line goes quiet only once the spare's pickup chip or the socket's chip is up
+        // to lead, or a stop short of their reach leaves nothing on screen.
+        public bool AtRelay => _relay != null && _hints != null &&
                                SurfaceRules.HorizontalDistance(_rover.Position, _relay.SocketPoint) <=
-                               _tuning.Guidance.ArrivalReach;
+                               _tuning.Guidance.ArrivalReach &&
+                               (_hints.TryGet(InteractionKind.Install, out _) ||
+                                _hints.TryGet(InteractionKind.PickUp, out _));
 
         public bool HeadlampUnlocked =>
             _understanding != null && _understanding.IsUnlocked(MakerUnderstandingSettings.Ssr3Headlamp);
@@ -355,6 +361,35 @@ namespace MoonProject.Gameplay
         public void ConnectAnswer(IAnswerStatus answer)
         {
             _answer = answer ?? throw new ArgumentNullException(nameof(answer));
+        }
+
+        /// <summary>The world's interaction hints: a line's key chip shows only where its key would act.</summary>
+        public void ConnectHints(IInteractionHints hints)
+        {
+            _hints = hints ?? throw new ArgumentNullException(nameof(hints));
+        }
+
+        public bool CanAct(string lineKey)
+        {
+            if (_hints == null)
+            {
+                return false;
+            }
+
+            switch (lineKey)
+            {
+                case OpeningKeys.HookModule:
+                    return _hints.TryGet(InteractionKind.Tether, out _);
+                case OpeningKeys.Transmit:
+                    return _hints.TryGet(InteractionKind.Transmit, out _);
+                case OpeningKeys.AssembleHeadlamp:
+                    return _hints.TryGet(InteractionKind.Rack, out _);
+                default:
+                    return OpeningKeys.KeyOf(lineKey) != RoverAction.Excavate ||
+                           _hints.TryGet(InteractionKind.Scan, out _) ||
+                           _hints.TryGet(InteractionKind.Salvage, out _) ||
+                           _hints.TryGet(InteractionKind.PickUp, out _);
+            }
         }
 
         public bool Knows(string structureId)

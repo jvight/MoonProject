@@ -80,6 +80,7 @@ namespace MoonProject.Art.Editor
             }
 
             R1StoryPropsBuilder.BuildStoryPropMaterials(litShader);
+            R1MareKitBuilder.BuildMareMaterials(litShader);
             AssetDatabase.SaveAssets();
         }
 

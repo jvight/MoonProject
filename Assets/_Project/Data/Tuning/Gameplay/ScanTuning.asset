@@ -41,6 +41,7 @@ MonoBehaviour:
   _bracketRange: 15
   _lensBracketRange: 25
   _reach: 8
+  _storySpacing: 0.75
   _cone: 25
   _distanceWeight: 0
   _engageSpeed: 0.4
@@ -103,10 +104,10 @@ MonoBehaviour:
   _stories:
   - _storyId: airlock
     _ruinId: HabitatModules
-    _node: AirlockPanel
+    _node: AirlockReadout
     _textKey: story.airlock_panel
     _size: 0
-    _offset: {x: 0, y: -0.3, z: 0}
+    _offset: {x: 0, y: 0, z: 0}
   - _storyId: scout3
     _ruinId: Prop_OldLander
     _node: Spaceframe

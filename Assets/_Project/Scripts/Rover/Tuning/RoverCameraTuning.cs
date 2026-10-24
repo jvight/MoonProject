@@ -534,6 +534,15 @@ namespace MoonProject.Rover
         [Range(2f, 60f)]
         [SerializeField] private float _nudgePendingSeconds = 15f;
 
+        [Tooltip("Degrees per second of 07's own turn under which it counts as still: while it turns faster (the in-place " +
+                 "turn on the pad that faces the array) a nudge waits, then looks again where the target is.")]
+        [Range(1f, 60f)]
+        [SerializeField] private float _nudgeTurnRate = 8f;
+
+        [Tooltip("Seconds 07's heading must stay still before a waiting nudge is looked at again.")]
+        [Range(0f, 2f)]
+        [SerializeField] private float _nudgeTurnSettleSeconds = 0.3f;
+
         [Tooltip("Closest (m) an object may lie to 07 for the camera to nudge toward it; closer than this, 07's head look is enough.")]
         [Range(0f, 40f)]
         [SerializeField] private float _nudgeMinDistance = 12f;
@@ -847,6 +856,47 @@ namespace MoonProject.Rover
         [Range(0f, 20f)]
         [SerializeField] private float _faceInspectHeadCounterRollMax = 8f;
 
+        [Header("Build mode framing")]
+        [Tooltip("Fastest the chase camera turns or tilts (deg/s) when easing to frame 07 and the placing ghost in build mode (calm, <= 20 deg/s).")]
+        [Range(5f, 20f)]
+        [SerializeField] private float _buildFrameMaxRate = 20f;
+
+        [Tooltip("Degrees before the ghost's bearing over which build-mode yaw framing eases out to a stop.")]
+        [Range(1f, 45f)]
+        [SerializeField] private float _buildFrameEaseAngle = 10f;
+
+        [Tooltip("Modest chase elevation (deg, never top-down) the camera eases to in build mode so both 07 and the ground ghost or apron sit in frame.")]
+        [Range(14f, 32f)]
+        [SerializeField] private float _buildFrameElevation = 22f;
+
+        [Tooltip("Seconds over which build-mode target framing eases in when entering Placing.")]
+        [Range(0.2f, 3f)]
+        [SerializeField] private float _buildFrameInSeconds = 0.9f;
+
+        [Tooltip("Seconds over which build-mode framing eases back to the normal chase camera when leaving Placing.")]
+        [Range(0.2f, 3f)]
+        [SerializeField] private float _buildFrameOutSeconds = 0.9f;
+
+        [Tooltip("Half-life (s) of the look target following the ghost as it moves on the ground in build mode.")]
+        [Range(0.05f, 1f)]
+        [SerializeField] private float _buildFrameFollowHalfLife = 0.18f;
+
+        [Tooltip("Share of the horizontal offset from 07 to the placing ghost added to the chase look point so both 07 and the ghost or apron sit framed together.")]
+        [Range(0f, 0.6f)]
+        [SerializeField] private float _buildFrameLookShare = 0.25f;
+
+        [Tooltip("Largest horizontal look-point shift (m) toward the placing ghost in build mode.")]
+        [Range(0f, 4f)]
+        [SerializeField] private float _buildFrameMaxLookShift = 1.4f;
+
+        [Tooltip("Extra chase distance (share of normal distance) while framing 07 and the placing ghost in build mode.")]
+        [Range(0f, 0.5f)]
+        [SerializeField] private float _buildFramePullBack = 0.12f;
+
+        [Tooltip("Vertical screen composition (0 = centre, +y = lower) while framing 07 and the placing ghost in build mode.")]
+        [Range(-0.1f, 0.25f)]
+        [SerializeField] private float _buildFrameScreenY = 0.08f;
+
         public float MouseSensitivity => _mouseSensitivity;
 
         public float StickRate => _stickRate;
@@ -1083,6 +1133,10 @@ namespace MoonProject.Rover
 
         public float NudgePendingSeconds => _nudgePendingSeconds;
 
+        public float NudgeTurnRate => _nudgeTurnRate;
+
+        public float NudgeTurnSettleSeconds => _nudgeTurnSettleSeconds;
+
         public float NudgeMinDistance => _nudgeMinDistance;
 
         public float NudgeScreenMargin => _nudgeScreenMargin;
@@ -1222,5 +1276,25 @@ namespace MoonProject.Rover
         public float FaceInspectHeadCounterRollShare => _faceInspectHeadCounterRollShare;
 
         public float FaceInspectHeadCounterRollMax => _faceInspectHeadCounterRollMax;
+
+        public float BuildFrameMaxRate => _buildFrameMaxRate;
+
+        public float BuildFrameEaseAngle => _buildFrameEaseAngle;
+
+        public float BuildFrameElevation => _buildFrameElevation;
+
+        public float BuildFrameInSeconds => _buildFrameInSeconds;
+
+        public float BuildFrameOutSeconds => _buildFrameOutSeconds;
+
+        public float BuildFrameFollowHalfLife => _buildFrameFollowHalfLife;
+
+        public float BuildFrameLookShare => _buildFrameLookShare;
+
+        public float BuildFrameMaxLookShift => _buildFrameMaxLookShift;
+
+        public float BuildFramePullBack => _buildFramePullBack;
+
+        public float BuildFrameScreenY => _buildFrameScreenY;
     }
 }

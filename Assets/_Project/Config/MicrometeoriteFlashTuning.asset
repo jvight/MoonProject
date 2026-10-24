@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac7367e1dbb7fb846a62856d70edadf0, type: 3}
+  m_Name: MicrometeoriteFlashTuning
+  m_EditorClassIdentifier: 
+  _flashRiseSeconds: 0.03
+  _flashDecaySeconds: 0.22
+  _flashPeakIntensity: 2.15
+  _flashRadiusMeters: 0.92
+  _flashColor: {r: 1, g: 0.96, b: 0.88, a: 1}
+  _ejectaCount: 24
+  _ejectaSpeedMetersPerSecond: 4.2
+  _lunarGravityMetersPerSecondSquared: 1.62
+  _ejectaDurationSeconds: 1.65
+  _ejectaShardSizeMeters: 0.048
+  _craterRadiusMeters: 0.75
+  _coolDownDurationSeconds: 600
+  _coolingExponent: 2.4
+  _initialHeatIntensity: 1.85
+  _hotCoreColor: {r: 1, g: 0.94, b: 0.8, a: 1}
+  _warmAmberColor: {r: 1, g: 0.46, b: 0.14, a: 1}
+  _deepEmberColor: {r: 0.62, g: 0.16, b: 0.05, a: 1}
+  _glassAlbedoColor: {r: 0.1, g: 0.13, b: 0.18, a: 1}
+  _craterRimAlbedoColor: {r: 0.25, g: 0.27, b: 0.32, a: 1}
+  _permanentGlintFloor: 0.24
+  _permanentGlintColor: {r: 0.78, g: 0.9, b: 1, a: 1}

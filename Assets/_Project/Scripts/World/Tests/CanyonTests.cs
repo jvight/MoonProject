@@ -18,10 +18,10 @@ namespace MoonProject.World.Tests
         private const float GridStep = 0.5f;
 
         // The rover climbs at most 45 degrees (RoverTuning.Ground's slope assist ends there); the climb-and-drop
-        // sweep covers the whole basin out past its rim at a coarser step.
+        // sweep covers the whole basin out past its rim and the rille's lava lip at a coarser step.
         private const float ClimbSlope = 45f;
         private const float ReachStep = 1f;
-        private const float ReachExtent = 420f;
+        private const float ReachExtent = 480f;
         private const float MinInteriorArea = 2500f;
 
         // Eye height of a view from the base pad, and how clear (m) the line of sight to the ledge's glow must be.
@@ -62,7 +62,7 @@ namespace MoonProject.World.Tests
                 for (float x = overlap.xMin; x <= overlap.xMax; x += 1f)
                 {
                     float world = _surface.SampleHeight(x, z);
-                    Assert.AreEqual(world, _canyon.Apply(x, z, world, out float floor, out float _), 0f,
+                    Assert.AreEqual(world, _canyon.Apply(x, z, world, out float floor, out float _, out float _), 0f,
                         $"the canyon reshapes PlayableArea at ({x}, {z})");
                     Assert.AreEqual(0f, floor);
                     Assert.IsNull(_canyon.IsDrivable(x, z), $"the canyon decides drivability at ({x}, {z})");
@@ -160,7 +160,8 @@ namespace MoonProject.World.Tests
         public void Gate_HasNoWayIn_ByClimbingTheRimAndDroppingOffIt()
         {
             // From the base pad, climbing what the rover can climb and dropping off any edge (however high): the
-            // basin's rim must hold the rover in, and nothing but the gap may lead into the canyon.
+            // basin's rim and the rille's lava lip must hold the rover in, and nothing but the gap may lead into the
+            // canyon.
             Rect bounds = _canyon.Bounds;
             Rect area = Rect.MinMaxRect(Mathf.Min(bounds.xMin, -ReachExtent), Mathf.Min(bounds.yMin, -ReachExtent),
                 Mathf.Max(bounds.xMax, ReachExtent), Mathf.Max(bounds.yMax, ReachExtent));
@@ -236,15 +237,16 @@ namespace MoonProject.World.Tests
 
                 bool r = reached[cell];
                 troughReached |= r && sample.Chasm > 0.99f;
-                if (!_canyon.TryFloor(p.x, p.y, out bool onMain, out float arc, out float _))
+                if (!_canyon.TryFloor(p.x, p.y, out CanyonCorridor corridor, out float arc, out float _))
                 {
                     continue;
                 }
 
+                bool onExit = corridor == CanyonCorridor.Exit;
                 bool belowStep = arc > 0f && arc < _canyon.ExitStepArc - Canyon.SlabHalfDepth - 1f;
-                exitFootReached |= r && !onMain && belowStep;
-                bool beyondFace = onMain && arc > _canyon.FarFaceArc + Canyon.SlabHalfDepth;
-                bool onShelf = !onMain && arc > _canyon.ExitStepArc + Canyon.SlabHalfDepth;
+                exitFootReached |= r && onExit && belowStep;
+                bool beyondFace = corridor == CanyonCorridor.Main && arc > _canyon.FarFaceArc + Canyon.SlabHalfDepth;
+                bool onShelf = onExit && arc > _canyon.ExitStepArc + Canyon.SlabHalfDepth;
                 if (beyondFace || onShelf)
                 {
                     inside++;

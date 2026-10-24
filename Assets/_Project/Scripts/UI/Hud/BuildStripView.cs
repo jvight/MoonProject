@@ -49,9 +49,28 @@ namespace MoonProject.UI
         private readonly BuildField _buildField;
         private readonly GlyphLabels _glyphs;
         private readonly GlyphView _placeGlyph;
+        private const int BoundsCorners = 8;
+
+        private readonly VisualElement[] _hudCards;
+        private readonly List<Rect> _shownCards = new List<Rect>(2);
+        private readonly List<Renderer> _ghostRenderers = new List<Renderer>(16);
+        private readonly Vector2[] _corners = new Vector2[BoundsCorners];
+        private readonly IViewCamera _view;
+        private readonly IRoverState _rover;
+        private readonly float _roverClearRadius;
+        private readonly float _roverClearHeight;
+        private readonly float _cardGap;
+        private readonly float _screenMargin;
+        private readonly float _followHalfLife;
+        private StructureView _renderersOf;
+        private Vector2 _costAt;
+        private Rect _ghostRect;
+        private Rect _roverRect;
         private readonly GlyphView _rotateGlyph;
         private InputDeviceKind _keysDevice;
         private bool _keysWritten;
+        private bool _keysRotate = true;
+        private string _keysFrame = string.Empty;
         private readonly IWeldEnergy _weldEnergy;
         private readonly EventBus _events;
         private readonly string[] _energyTexts = new string[WeldEnergyShare.MaxPercent + 1];
@@ -63,7 +82,6 @@ namespace MoonProject.UI
         private readonly Reveal _reticleReveal;
         private readonly WorldAnchor _reasonAnchor;
         private readonly Reveal _costReveal;
-        private readonly WorldAnchor _costAnchor;
         private readonly RecipeView _cost;
         private readonly RecipeView _recipe;
         private readonly Dictionary<string, Texture2D> _icons =
@@ -90,6 +108,7 @@ namespace MoonProject.UI
             IntText numbers,
             IMaterialStock stock,
             IViewCamera view,
+            IRoverState rover,
             GlyphLabels glyphs,
             EventBus events,
             BuildField buildField = null,
@@ -137,8 +156,17 @@ namespace MoonProject.UI
 
             _costReveal = new Reveal(layout.BuildCost, promptSettings.Reveal);
             _costReveal.Snap(false);
-            _costAnchor = new WorldAnchor(layout.BuildCostAnchor, view, promptSettings.ScreenMargin,
-                promptSettings.FollowHalfLife, true);
+            _view = view;
+            _rover = rover ?? throw new ArgumentNullException(nameof(rover));
+            _roverClearRadius = promptSettings.RoverClearRadius;
+            _roverClearHeight = promptSettings.RoverClearHeight;
+            // The chip is placed by its top-left corner (GhostChipPlacement), not hung from a world point.
+            layout.BuildCostAnchor.Q<VisualElement>("build-cost-center").style.translate =
+                new StyleTranslate(new Translate(0f, 0f));
+            _hudCards = new[] { layout.BatteryDial, layout.ControlsCard };
+            _cardGap = promptSettings.CardGap;
+            _screenMargin = promptSettings.ScreenMargin;
+            _followHalfLife = promptSettings.FollowHalfLife;
 
             _recipe = new RecipeView(layout.BuildStripRecipe, localization, numbers, haveNeed: false, names: false);
             _cost = new RecipeView(layout.BuildCostRecipe, localization, numbers);
@@ -247,27 +275,190 @@ namespace MoonProject.UI
         }
 
         /// <summary>
-        /// The ghost's controls under its cost rows, from the real bindings (rover's alternates included): written when
-        /// the device or the language changes, never per frame.
+        /// The ghost's controls under its cost rows, from the real bindings (rover's alternates included): the place
+        /// keys, then the rotate keys, or, for a ghost whose pose its frame fixes (the bank on its module), the frame it
+        /// is fixed to, so a wheel that does nothing is never offered. Written when the device, the language or the
+        /// ghost's freedom changes, never per frame.
         /// </summary>
-        private void WriteGhostKeys(InputDeviceKind device)
+        private void WriteGhostKeys(InputDeviceKind device, BuildModeController controller)
         {
-            if (_keysWritten && device == _keysDevice)
+            bool rotate = controller.CanRotateGhost;
+            string frame = rotate ? string.Empty : controller.FrameNounKey ?? string.Empty;
+            if (_keysWritten && device == _keysDevice && rotate == _keysRotate &&
+                string.Equals(frame, _keysFrame, StringComparison.Ordinal))
             {
                 return;
             }
 
             _keysWritten = true;
             _keysDevice = device;
+            _keysRotate = rotate;
+            _keysFrame = frame;
             _placeGlyph.Set(_glyphs.AllFor(RoverAction.Excavate, device), device);
-            _rotateGlyph.Set(_glyphs.AllFor(RoverAction.Winch, device), device);
             _layout.BuildPlaceWord.text = _localization.Get(UiKeys.BuildHintPlace);
-            _layout.BuildRotateWord.text = _localization.Get(UiKeys.BuildHintRotate);
+            _layout.BuildRotateGlyph.style.display = rotate ? DisplayStyle.Flex : DisplayStyle.None;
+            if (rotate)
+            {
+                _rotateGlyph.Set(_glyphs.AllFor(RoverAction.Winch, device), device);
+                _layout.BuildRotateWord.text = _localization.Get(UiKeys.BuildHintRotate);
+            }
+            else
+            {
+                _layout.BuildRotateWord.text = frame.Length > 0
+                    ? string.Format(_localization.Get(UiKeys.BuildHintFixedTo), _localization.Get(frame))
+                    : _localization.Get(UiKeys.BuildHintFixed);
+            }
+        }
+
+        /// <summary>
+        /// True while the ghost sits snapped on a valid spot with its chip up: then the chip (cost and keys) is the one
+        /// element and no line shows beside it. Until then the line keeps saying where the thing goes.
+        /// </summary>
+        public bool GhostSettled
+        {
+            get
+            {
+                BuildModeController controller = _buildField != null ? _buildField.Controller : null;
+                return IsCostShown && controller != null && controller.State == BuildModeState.Placing &&
+                       controller.CandidateSnapped && controller.CandidateReason == PlacementReason.Valid;
+            }
         }
 
         /// <summary>The ghost's controls as the player reads them (tests and captures).</summary>
         public string GhostKeys => _layout.BuildPlaceGlyphLabel.text + " " + _layout.BuildPlaceWord.text + " · " +
-                                  _layout.BuildRotateGlyphLabel.text + " " + _layout.BuildRotateWord.text;
+                                  (_layout.BuildRotateGlyph.resolvedStyle.display == DisplayStyle.None
+                                      ? string.Empty
+                                      : _layout.BuildRotateGlyphLabel.text + " ") + _layout.BuildRotateWord.text;
+
+        /// <summary>
+        /// Places the chip beside the ghost, never over it (the owner must see the whole thing being placed) and never
+        /// over the HUD's corner cards, easing as the ghost moves. False while the ghost is not on the screen.
+        /// </summary>
+        private bool PlaceCost(StructureView ghost, Vector2 panelSize, float deltaTime, bool snap)
+        {
+            Camera camera = _view.Camera;
+            float width = _layout.BuildCost.resolvedStyle.width;
+            float height = _layout.BuildCost.resolvedStyle.height;
+            if (camera == null || ghost == null || panelSize.x <= 0f || !TryGhostRect(ghost, camera, panelSize))
+            {
+                return false;
+            }
+
+            if (float.IsNaN(width) || float.IsNaN(height) || width <= 0f)
+            {
+                // A chip not laid out yet has no size: it shows once at the ghost's foot, then finds its place.
+                width = 0f;
+                height = 0f;
+            }
+
+            _shownCards.Clear();
+            for (int i = 0; i < _hudCards.Length; i++)
+            {
+                VisualElement card = _hudCards[i];
+                if (card.resolvedStyle.display != DisplayStyle.None && card.resolvedStyle.opacity > 0f)
+                {
+                    _shownCards.Add(card.worldBound);
+                }
+            }
+
+            var safe = Rect.MinMaxRect(_screenMargin, _screenMargin, panelSize.x - _screenMargin,
+                panelSize.y - _screenMargin);
+            Vector2 target = GhostChipPlacement.Place(_ghostRect, new Vector2(width, height), safe, _cardGap,
+                _shownCards, RoverRect(camera, panelSize));
+            _costAt = snap ? target : ScreenAnchor.Follow(_costAt, target, _followHalfLife, deltaTime);
+            _layout.BuildCostAnchor.style.left = _costAt.x;
+            _layout.BuildCostAnchor.style.top = _costAt.y;
+            return true;
+        }
+
+        /// <summary>
+        /// The ghost's renderers' bounds projected to the panel (<see cref="_ghostRect"/>); false when the ghost is
+        /// behind the camera or off the screen. Its renderers are gathered once per ghost, never per frame.
+        /// </summary>
+        private bool TryGhostRect(StructureView ghost, Camera camera, Vector2 panelSize)
+        {
+            if (ghost != _renderersOf)
+            {
+                _renderersOf = ghost;
+                // Inactive ones too: a stage or part may switch on after the ghost appears; each frame counts only
+                // the renderers showing.
+                ghost.GetComponentsInChildren(true, _ghostRenderers);
+            }
+
+            bool any = false;
+            var bounds = new Bounds();
+            for (int i = 0; i < _ghostRenderers.Count; i++)
+            {
+                Renderer renderer = _ghostRenderers[i];
+                if (renderer == null || !renderer.enabled || !renderer.gameObject.activeInHierarchy)
+                {
+                    continue;
+                }
+
+                if (any)
+                {
+                    bounds.Encapsulate(renderer.bounds);
+                }
+                else
+                {
+                    bounds = renderer.bounds;
+                    any = true;
+                }
+            }
+
+            if (!any)
+            {
+                return false;
+            }
+
+            Vector3 min = bounds.min;
+            Vector3 max = bounds.max;
+            for (int i = 0; i < BoundsCorners; i++)
+            {
+                var corner = new Vector3((i & 1) == 0 ? min.x : max.x, (i & 2) == 0 ? min.y : max.y,
+                    (i & 4) == 0 ? min.z : max.z);
+                if (!ScreenAnchor.TryToPanel(camera.WorldToViewportPoint(corner), panelSize, 0f, out _corners[i]))
+                {
+                    return false;
+                }
+            }
+
+            _ghostRect = GhostChipPlacement.Around(_corners, BoundsCorners);
+            return _ghostRect.xMax > 0f && _ghostRect.xMin < panelSize.x && _ghostRect.yMax > 0f &&
+                   _ghostRect.yMin < panelSize.y;
+        }
+
+        /// <summary>
+        /// 07's box on the screen (its clearance around its position, projected), or a zero rect when 07 is behind the
+        /// camera: the chip keeps off it when a side allows.
+        /// </summary>
+        private Rect RoverRect(Camera camera, Vector2 panelSize)
+        {
+            Vector3 at = _rover.Position;
+            for (int i = 0; i < BoundsCorners; i++)
+            {
+                var corner = new Vector3(
+                    at.x + ((i & 1) == 0 ? -_roverClearRadius : _roverClearRadius),
+                    at.y + ((i & 2) == 0 ? 0f : _roverClearHeight),
+                    at.z + ((i & 4) == 0 ? -_roverClearRadius : _roverClearRadius));
+                if (!ScreenAnchor.TryToPanel(camera.WorldToViewportPoint(corner), panelSize, 0f, out _corners[i]))
+                {
+                    return default;
+                }
+            }
+
+            _roverRect = GhostChipPlacement.Around(_corners, BoundsCorners);
+            return _roverRect;
+        }
+
+        /// <summary>07's box on the screen as the chip last avoided it (tests and captures).</summary>
+        public Rect RoverScreenRect => _roverRect;
+
+        /// <summary>The ghost's bounds on the screen, in panel coordinates (tests and captures).</summary>
+        public Rect GhostScreenRect => _ghostRect;
+
+        /// <summary>The cost chip's bounds on the screen (tests and captures).</summary>
+        public Rect CostScreenRect => _layout.BuildCost.worldBound;
 
         /// <summary>True while the ghost's cost chip is up (or easing).</summary>
         public bool IsCostShown => !_costReveal.IsHidden;
@@ -288,10 +479,8 @@ namespace MoonProject.UI
             if (wantsCost)
             {
                 _cost.Show(controller.SelectedStructure.BuildCost, _stock);
-                WriteGhostKeys(device);
-                // At the ghost's foot, under the reason chip above it, so the two never stack.
-                onScreen = _costAnchor.Track(controller.CandidatePose.Position, panelSize, deltaTime,
-                    _costReveal.IsHidden);
+                WriteGhostKeys(device, controller);
+                onScreen = PlaceCost(_buildField.GhostView, panelSize, deltaTime, _costReveal.IsHidden);
             }
 
             _costReveal.Set(wantsCost && onScreen);

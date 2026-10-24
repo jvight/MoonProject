@@ -58,6 +58,7 @@ namespace MoonProject.World.Tests
             {
                 WorldAnchorIds.CanyonMouth, WorldAnchorIds.CanyonLip, WorldAnchorIds.CanyonLanding,
                 WorldAnchorIds.CanyonLedge, WorldAnchorIds.CanyonTerminus, WorldAnchorIds.CanyonExit,
+                WorldAnchors.CanyonSlot, WorldAnchors.CanyonSupplyBay, WorldAnchors.GateRille,
             };
             for (int i = 0; i < _settings.Canyon.AlcoveCount; i++)
             {

@@ -130,6 +130,34 @@ namespace MoonProject.Rover.PlayModeTests
         [Timeout(300000)]
         [PrebuildSetup(typeof(RoverSessionScene))]
         [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator ADriveKeyAlreadyHeldWhenTheNudgeBegins_DoesNotEndIt()
+        {
+            _keyboard = InputSystem.AddDevice<Keyboard>();
+            yield return Boot();
+            Vector3 at = _scene.Rover.Position;
+            _scene.Context.Events.Publish(Step("relay.1", at + Bearing(Facing() + 100f) * TargetDistance));
+            yield return RealRoverScene.WaitSeconds(0.5f);
+
+            // The line arrives while another nudge has the camera, and the player is driving off: the first nudge ends
+            // on the fresh press, the held one is given back to the second, which must not be cut by the same key.
+            _scene.Context.Events.Publish(Step("apron", at + Bearing(Facing() - 100f) * TargetDistance));
+            Press(_keyboard.wKey);
+            float peak = 0f;
+            float until = Time.time + 2f * (NudgeSeconds + EaseBackSeconds);
+            while (Time.time < until)
+            {
+                yield return null;
+                peak = Mathf.Max(peak, _scene.CameraRig.MomentWeight);
+            }
+
+            Release(_keyboard.wKey);
+            Assert.Greater(peak, 0.9f, "the held key did not cut the nudge it began under");
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
         public IEnumerator AnyDriveInput_EndsTheNudgeAtOnce_WithASoftEaseBack()
         {
             _keyboard = InputSystem.AddDevice<Keyboard>();

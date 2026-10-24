@@ -370,6 +370,23 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void AKeyLine_LeadsWithItsKey_OnlyWhereTheKeyWouldAct()
+        {
+            _game.OutOfReach.Add(OpeningKeys.ScanLander);
+            _flow.Tick(1f);
+            _game.ReachedLander = true;
+            _flow.Tick(1f);
+            Assert.AreEqual(OpeningKeys.ScanLander, _flow.Shown);
+            Assert.AreEqual(RoverAction.Excavate, _changes[0].Key);
+            Assert.IsFalse(_changes[0].ShowsKey, "no scan target in reach: E would do nothing yet");
+
+            _game.OutOfReach.Clear();
+            Tick(NextLine + Stall);
+            Assert.AreEqual(NextLineReason.Reminder, _changes[_changes.Count - 1].Reason);
+            Assert.IsTrue(_changes[_changes.Count - 1].ShowsKey, "in reach and E never pressed: the reminder leads with E");
+        }
+
+        [Test]
         public void TheNextLine_LeadsWithItsKey_WhileTheKeyIsNewOrIdle()
         {
             _flow.Tick(1f);
@@ -583,6 +600,7 @@ namespace MoonProject.Gameplay.Tests
         {
             var hitch = new Vector3(14f, 0f, 22f);
             _game.Places[OpeningKeys.HookModule] = hitch;
+            _game.OutOfReach.Add(OpeningKeys.HookModule);
             _game.ReachedLander = true;
             _game.Known.Add(StructureIds.ChargingPad);
             _game.Known.Add(StructureIds.SolarArray);
@@ -601,7 +619,8 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(OpeningKeys.HookModule, hook.LineKey);
             Assert.AreEqual(NextLineReason.Next, hook.Reason);
             Assert.AreEqual(RoverAction.Tether, hook.Key);
-            Assert.IsTrue(hook.ShowsKey, "RMB has not been pressed yet");
+            Assert.IsFalse(hook.ShowsKey, "07 is far from the hitch: RMB would hook nothing, so the words and the " +
+                                          "module's mark alone; the hitch's own chip teaches RMB on arrival");
             Assert.IsTrue(hook.HasTarget);
             Assert.AreEqual(hitch, hook.TargetPosition);
 
@@ -671,6 +690,12 @@ namespace MoonProject.Gameplay.Tests
             public bool RackOut { get; set; }
             public bool HeadlampFitted { get; set; }
             public readonly Dictionary<string, Vector3> Places = new Dictionary<string, Vector3>();
+            public readonly HashSet<string> OutOfReach = new HashSet<string>();
+
+            public bool CanAct(string lineKey)
+            {
+                return !OutOfReach.Contains(lineKey);
+            }
 
             public bool TryGetPlace(string lineKey, out string placeId, out Vector3 position)
             {

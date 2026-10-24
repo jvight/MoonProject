@@ -28,6 +28,11 @@ namespace MoonProject.Gameplay.Editor
         private const float StatusLightIntensity = 0.8f;
         private const float StatusLightRange = 5.0f;
         private static readonly Color StatusLightColor = new Color(1.0f, 0.74f, 0.36f);
+        // The array's glow sits low on its post, under the cell glass and dimmer: a point beside mirror-smooth cells
+        // blooms them like a floodlight at night, and a soft sheen is all they should show.
+        private const float ArrayStatusLightHeight = 0.35f;
+        private const float ArrayStatusLightIntensity = 0.25f;
+        private const float ArrayStatusLightRange = 2.0f;
 
         public static readonly Entry[] All =
         {
@@ -297,16 +302,18 @@ namespace MoonProject.Gameplay.Editor
                 }
             }
 
+            bool array = string.Equals(structureId, StructureIds.SolarArray, StringComparison.Ordinal);
+            float statusIntensity = array ? ArrayStatusLightIntensity : StatusLightIntensity;
             GameObject lightGo = scratch.Create("StatusGlow", root.transform);
             lightGo.transform.localPosition = new Vector3(
                 bounds.center.x,
-                Mathf.Max(0.85f, bounds.max.y * 0.78f),
+                array ? ArrayStatusLightHeight : Mathf.Max(0.85f, bounds.max.y * 0.78f),
                 bounds.center.z);
             var statusLight = lightGo.AddComponent<Light>();
             statusLight.type = LightType.Point;
             statusLight.color = StatusLightColor;
-            statusLight.intensity = StatusLightIntensity;
-            statusLight.range = StatusLightRange;
+            statusLight.intensity = statusIntensity;
+            statusLight.range = array ? ArrayStatusLightRange : StatusLightRange;
             statusLight.shadows = LightShadows.None;
             statusLight.enabled = false;
 
@@ -329,7 +336,7 @@ namespace MoonProject.Gameplay.Editor
                 lampRenderers.ToArray(),
                 colliders,
                 statusLight,
-                StatusLightIntensity,
+                statusIntensity,
                 stageSeams);
             return root;
         }

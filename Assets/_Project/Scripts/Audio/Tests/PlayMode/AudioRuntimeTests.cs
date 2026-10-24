@@ -18,8 +18,9 @@ namespace MoonProject.Audio.PlayModeTests
         {
             _rig = new AudioTestRig();
             yield return null;
-            // A base that already has power: no hiss still clearing under the clarity these tests measure.
+            // A save past the answer: no hiss still clearing under the clarity these tests measure, and music.
             _rig.Milestone(OpeningMilestone.PowerOn, true);
+            _rig.Answer(true);
             _rig.Wake(true);
             float deadline = Time.realtimeSinceStartup + 3f;
             while (!_rig.Radio.MusicStarted && Time.realtimeSinceStartup < deadline)
@@ -27,7 +28,7 @@ namespace MoonProject.Audio.PlayModeTests
                 yield return null;
             }
 
-            Assert.IsTrue(_rig.Radio.MusicStarted, "the radio finds the music once the base has power");
+            Assert.IsTrue(_rig.Radio.MusicStarted, "the radio finds the music once relay.1 has answered");
         }
 
         [TearDown]

@@ -18,6 +18,28 @@ namespace MoonProject.Gameplay
         /// <summary>The habitat's power module's tow id: the battery bank's frame (OpeningTuning's tow loads).</summary>
         public const string PowerModule = "habitat.power_module";
 
+        /// <summary>The power module's display-noun localization key ("pickup.habitat.power_module").</summary>
+        public const string PowerModuleNoun = "pickup." + PowerModule;
+
+        /// <summary>
+        /// Localization key for the display noun of towable load <paramref name="towId"/>, or empty when none.
+        /// Allocation-free for known towable loads.
+        /// </summary>
+        public static string NounKey(string towId)
+        {
+            if (string.IsNullOrEmpty(towId))
+            {
+                return string.Empty;
+            }
+
+            if (string.Equals(towId, PowerModule, StringComparison.Ordinal))
+            {
+                return PowerModuleNoun;
+            }
+
+            return "pickup." + towId;
+        }
+
         /// <summary>Stands <paramref name="spot"/>'s load by <paramref name="frame"/>; throws when Art's prefab is wrong.</summary>
         public static TowableBody Stand(TowLoadSpot spot, Transform frame, Transform parent, ITerrainQuery terrain,
             TowSettings settings)

@@ -12,7 +12,7 @@ namespace MoonProject.Gameplay
     /// base's order, each easing up like an old lamp warming (<see cref="LampEase"/>) and raising
     /// <see cref="BaseLampLit"/>; once the Sun climbs back they ease off together. A piece built at dusk lights at once;
     /// one restored from a save starts as the sky says. The first few lamps in the order also throw a warm light
-    /// (<see cref="BaseTuning.LampLightBudget"/> at most, none with shadows; a spot pointing down for the pad) that
+    /// (<see cref="BaseTuning.LampLightBudget"/> at most, none with shadows; each a spot pointing down) that
     /// follows the lamp's glow. Allocation-free per frame.
     /// </summary>
     public sealed class BaseLamps : IDisposable
@@ -164,13 +164,12 @@ namespace MoonProject.Gameplay
                 ? Vector3.up * _tuning.PadSpotHeightMetres
                 : Vector3.up * (footprint.y * _tuning.LampLightHeightShare)
                   + Vector3.back * (footprint.z * 0.5f + _tuning.LampLightStandOff);
+            // Every light points down: a point light a stand-off from a piece shines square on its face and blooms it
+            // white at night, while a downward cone pools on the regolith and only grazes the piece.
             Light light = host.AddComponent<Light>();
-            light.type = pad ? LightType.Spot : LightType.Point;
-            if (pad)
-            {
-                host.transform.rotation = Quaternion.LookRotation(Vector3.down, Vector3.forward);
-                light.spotAngle = _tuning.PadSpotAngleDegrees;
-            }
+            light.type = LightType.Spot;
+            host.transform.rotation = Quaternion.LookRotation(Vector3.down, Vector3.forward);
+            light.spotAngle = pad ? _tuning.PadSpotAngleDegrees : _tuning.LampSpotAngleDegrees;
 
             light.color = _tuning.LampLightColor;
             light.range = _tuning.LampLightRange;

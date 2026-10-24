@@ -84,7 +84,10 @@ namespace MoonProject.Rover
         private NearPropFade _nearFade;
         private readonly GazePan _gazePan = new GazePan();
         private readonly GuidanceNudge _nudge = new GuidanceNudge();
+        private readonly BuildFraming _buildFraming = new BuildFraming();
         private readonly PendingNudge _pendingNudge = new PendingNudge();
+        private readonly TurnSettle _turnSettle = new TurnSettle();
+        private bool _driveCarriedIntoNudge;
         private WideShot _wide;
         private bool _wideSteersYaw;
         private bool _tethered;
@@ -184,6 +187,9 @@ namespace MoonProject.Rover
 
         /// <summary>The camera's move to show what 07 scans (for tests and tooling).</summary>
         public TargetFraming Framing => _framing;
+
+        /// <summary>The camera's move to frame 07 and the ground ghost in build mode (for tests and tooling).</summary>
+        public BuildFraming BuildFraming => _buildFraming;
 
         public float SkyLift => _stargaze != null ? _stargaze.Lift : 0f;
 
@@ -299,6 +305,7 @@ namespace MoonProject.Rover
                 context.Events.Subscribe<ChargingChanged>(OnChargingChanged),
                 context.Events.Subscribe<FacePageChanged>(OnFacePageChanged),
                 context.Events.Subscribe<RoverDockChanged>(OnDockChanged),
+                context.Events.Subscribe<BuildPlacingChanged>(OnBuildPlacingChanged),
             };
             context.Register<IViewCamera>(this);
             context.Register<ILookSettings>(this);
@@ -393,6 +400,7 @@ namespace MoonProject.Rover
         public void Snap()
         {
             _orbitState.Reset(RoverYaw());
+            _buildFraming.RecordOrbitBearing(_orbitState.Bearing);
             if (_stargaze.Reset())
             {
                 _events.Publish(new StargazingChanged(false));
@@ -512,7 +520,15 @@ namespace MoonProject.Rover
                 _beam.Framing.End(_tuning.CutFrameHandBackSeconds);
             }
 
-            if (driving && (IsTowerMoment || _gazePan.IsActive || IsDockMoment || IsLampFitMoment))
+            if (!driving)
+            {
+                _driveCarriedIntoNudge = false;
+            }
+
+            // A drive key already held when a nudge began (the player is driving off the pad as the line appears)
+            // must not end it before it has turned; the next press, or any look input, does.
+            bool carried = IsNudgeMoment && _driveCarriedIntoNudge;
+            if (driving && !carried && (IsTowerMoment || _gazePan.IsActive || IsDockMoment || IsLampFitMoment))
             {
                 _moment.Cancel(_tuning.MomentCancelEaseOut);
             }
@@ -526,6 +542,7 @@ namespace MoonProject.Rover
             ApplyCameraRadius(_tuning.CameraRadius);
             StepFaceInspect(deltaTime);
             StepReleasePan(deltaTime);
+            _turnSettle.Step(RoverYaw(), deltaTime, _tuning.NudgeTurnRate, _tuning.NudgeTurnSettleSeconds);
             StepPendingNudge();
             _moment.Step(deltaTime);
             StepWideShot(deltaTime);
@@ -534,7 +551,9 @@ namespace MoonProject.Rover
             StepTowLook(deltaTime);
             _beam.Framing.Step(deltaTime);
             StepReleaseCarry(deltaTime);
+            bool externalYaw = _buildFraming.DidBearingChangeExternally(_orbitState.Bearing);
             _orbitState.Step(OrbitInput(look, recenter), deltaTime);
+            StepBuildFraming(look, recenter, externalYaw, deltaTime);
             StepTargetFraming(look, deltaTime);
             StepWallCompression(deltaTime, false);
             StepFreeLookDamping(deltaTime);
@@ -637,7 +656,7 @@ namespace MoonProject.Rover
 
             bool mayRecenter = !_moment.IsActive && _wide.Weight <= 0f && _held.Weight <= 0f
                 && !_faceInspectOpen && _faceInspectWeight <= 0f && !_opening.IsActive && !_crawling
-                && (CursorLockOverride ?? Cursor.lockState == CursorLockMode.Locked);
+                && !_buildFraming.IsActive && _buildFraming.Weight <= 0f && (CursorLockOverride ?? Cursor.lockState == CursorLockMode.Locked);
             return new CameraOrbitInput(look, _input.LookRate.sqrMagnitude > 0f, recenter, roverYaw, forwardSpeed,
                 _rover.DriveInput.y, _rover.NormalizedSpeed, descent, _rover.IsGrounded, mayRecenter);
         }
@@ -904,7 +923,7 @@ namespace MoonProject.Rover
         private void PlaceTarget(float deltaTime = 0f, bool snap = true)
         {
             float targetHeight = _tuning.TargetHeight + _wallCompression * _tuning.WallMaxTargetLift;
-            Vector3 point = _rover.Position + Vector3.up * targetHeight + _momentShift + _framing.Shift + _towLook;
+            Vector3 point = _rover.Position + Vector3.up * targetHeight + _momentShift + _framing.Shift + _towLook + _buildFraming.LookShift;
             float cut = _beam.Framing.Weight;
             if (cut > 0f)
             {
@@ -938,7 +957,7 @@ namespace MoonProject.Rover
             }
 
             int targetCount = _focus != null ? _focus.CopyFocus(_focusPoints) : 0;
-            bool mayFrame = _wide.Weight <= 0f && _held.Weight <= 0f
+            bool mayFrame = _wide.Weight <= 0f && _held.Weight <= 0f && !_buildFraming.IsActive && _buildFraming.Weight <= 0f
                 && !_faceInspectOpen && _faceInspectWeight <= 0f && !_opening.IsActive && !_crawling;
             ChaseOrbit(out float yaw, out float elevation, out float radius);
             _framing.Step(new TargetFramingInput(_rover.Position, RoverYaw(), _focusPoints, targetCount,
@@ -963,12 +982,12 @@ namespace MoonProject.Rover
         {
             yaw = IsNudgeMoment ? _orbitState.YawOffset : _orbitState.YawOffset * (1f - _moment.Weight);
             elevation = _orbitState.Elevation + _momentLift + _wallCompression * _tuning.WallMaxPitchLift
-                - _crawl * _tuning.CrawlLower;
+                - _crawl * _tuning.CrawlLower + _buildFraming.ElevationOffset;
             if (IsNudgeMoment && elevation > _tuning.DefaultPitch)
             {
                 elevation = Mathf.Lerp(elevation, _tuning.DefaultPitch, _moment.Weight);
             }
-            radius = _tuning.Distance * (1f + _momentPullBack) * (1f + _crawl * _tuning.CrawlPullBack);
+            radius = _tuning.Distance * (1f + _momentPullBack) * (1f + _crawl * _tuning.CrawlPullBack) * (1f + _buildFraming.PullBack);
             if (_towT > 0f || _towYawT > 0f)
             {
                 BlendTowFraming(ref yaw, ref elevation, ref radius);
@@ -1094,6 +1113,10 @@ namespace MoonProject.Rover
             ChaseOrbit(out float yaw, out float elevation, out float radius);
             float fov = _orbitState.FieldOfView;
             Vector2 screen = _tuning.ScreenPosition;
+            if (_buildFraming.Weight > 0f)
+            {
+                screen.y = Mathf.Lerp(screen.y, _tuning.BuildFrameScreenY, _buildFraming.Weight);
+            }
             float wide = _wide.Weight;
             if (wide > 0f)
             {
@@ -1193,7 +1216,8 @@ namespace MoonProject.Rover
         private void StepWideShot(float deltaTime)
         {
             bool busy = _moment.IsActive || _tethered || _hopListOpen || _stargaze.LookUp > 0f
-                || _opening.IsActive || _held.IsOpen || _faceInspectOpen || _faceInspectWeight > 0f;
+                || _opening.IsActive || _held.IsOpen || _faceInspectOpen || _faceInspectWeight > 0f
+                || _buildFraming.IsActive || _buildFraming.Weight > 0f;
             _chargingSeconds = _charging ? _chargingSeconds + deltaTime : 0f;
             bool asked = _chargeAsks && _chargingSeconds >= _tuning.WideShot.ChargingDelay;
             switch (_wide.Step(_stillness.StillSeconds, busy, _paused, asked, deltaTime))
@@ -1592,6 +1616,7 @@ namespace MoonProject.Rover
             _momentPullBack = 0f;
             _momentShift = Vector3.zero;
             _beam.Framing.Reset();
+            _buildFraming.Reset();
             SetHeadHidden(false);
             Snap();
             if (wasWide)
@@ -1603,6 +1628,57 @@ namespace MoonProject.Rover
         private void OnPauseChanged(PauseChanged pause)
         {
             _paused = pause.Paused;
+        }
+
+        private void StepBuildFraming(Vector2 look, bool recenter, bool externalYaw, float deltaTime)
+        {
+            float bearing = _orbitState.Bearing;
+            float before = bearing;
+            _buildFraming.Step(
+                _rover.Position,
+                look,
+                recenter,
+                externalYaw,
+                ref bearing,
+                _orbitState.Elevation,
+                _tuning,
+                deltaTime);
+            if (Mathf.Abs(Mathf.DeltaAngle(before, bearing)) > LookEpsilon)
+            {
+                _orbitState.AdoptBearing(bearing);
+            }
+
+            _buildFraming.RecordOrbitBearing(_orbitState.Bearing);
+        }
+
+        private void OnBuildPlacingChanged(BuildPlacingChanged placing)
+        {
+            if (placing.Placing)
+            {
+                if (_wide.IsOpen)
+                {
+                    HandBackWideShot();
+                }
+
+                if (_moment.IsActive)
+                {
+                    _moment.Cancel(_tuning.MomentCancelEaseOut);
+                    _gazePan.End();
+                }
+
+                if (!_buildFraming.IsActive)
+                {
+                    _buildFraming.Begin(_rover.Position, placing.GhostPosition, placing.SnappedToApron, _orbitState.Bearing);
+                }
+                else
+                {
+                    _buildFraming.MoveGhost(_rover.Position, placing.GhostPosition, placing.SnappedToApron);
+                }
+            }
+            else
+            {
+                _buildFraming.End();
+            }
         }
 
         /// <summary>A card to read holds the wide shot back; holding an upgrade's confirm is an interaction.</summary>
@@ -1729,9 +1805,12 @@ namespace MoonProject.Rover
             TryNudge(step);
         }
 
-        private bool FreeForNudge => !_moment.IsActive && _wide.Weight <= 0f && _held.Weight <= 0f && !_tethered &&
-                                     !_towing && !_opening.IsActive && !_faceInspectOpen &&
-                                     _faceInspectWeight <= 0f && !_gazePan.IsActive;
+        // The dock's close frame is an ambient hold that lasts as long as 07 sits on the pad, not a shot to wait out: a
+        // line read on the pad (the charge has just ended) nudges over it, and the dock frame returns afterwards.
+        private bool FreeForNudge => (!_moment.IsActive || IsDockMoment) && _wide.Weight <= 0f &&
+                                     _held.Weight <= 0f && !_tethered && !_towing && !_opening.IsActive &&
+                                     !_faceInspectOpen && _faceInspectWeight <= 0f && !_gazePan.IsActive &&
+                                     !_buildFraming.IsActive && _buildFraming.Weight <= 0f && _turnSettle.IsSettled;
 
         /// <summary>
         /// A line that came while another shot had the camera (the charge's close shot, the dock) nudges as soon as
@@ -1748,7 +1827,9 @@ namespace MoonProject.Rover
 
         private void TryNudge(NextStepChanged step)
         {
-            float looking = RoverYaw() + _orbitState.YawOffset;
+            // Where the camera actually looks: the dock's close frame swings it round 07, so 07's heading and the
+            // orbit offset alone would call a target the frame has turned away from "near ahead".
+            float looking = _viewCamera.transform.eulerAngles.y;
             Vector3 viewport = _viewCamera.WorldToViewportPoint(step.TargetPosition);
             if (!GuidanceNudge.ShouldNudge(_rover.Position, step.TargetPosition, looking, viewport,
                     _tuning.NudgeScreenMargin, _tuning.NudgeMinDistance, _tuning.NudgeSlack, _tuning.NudgeMaxBearing) ||
@@ -1761,6 +1842,7 @@ namespace MoonProject.Rover
                 _tuning.NudgeHoldSeconds, _tuning.NudgeSweep, 0f, _tuning.ReleasePanHalfLife,
                 _tuning.NudgeSlack);
             _moment.Start(_tuning.NudgeMoment, _gazePan.Subject, true);
+            _driveCarriedIntoNudge = _rover.DriveInput.sqrMagnitude > DriveEpsilon * DriveEpsilon;
         }
 
         /// <summary>Moves the held release moment's subject along the pan, and lets it go once the pan has run its course.</summary>

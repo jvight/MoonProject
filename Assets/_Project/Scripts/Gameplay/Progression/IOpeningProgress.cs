@@ -75,7 +75,10 @@ namespace MoonProject.Gameplay
         /// <summary>07 has started transmitting from the mast (the answer's moment is under way, R8).</summary>
         bool AnswerStarted { get; }
 
-        /// <summary>07 has arrived at relay.1: the line that sends it there goes quiet (R10).</summary>
+        /// <summary>
+        /// 07 has arrived at relay.1 and its cabinet's or socket's chip is up: the line that sends it there goes quiet
+        /// (R10).
+        /// </summary>
         bool AtRelay { get; }
 
         /// <summary>relay.1's spare is fitted and it is lit (R10).</summary>
@@ -98,5 +101,11 @@ namespace MoonProject.Gameplay
         /// power module, the mast), by id and position; false when it has none (a field fit) or it is not there yet.
         /// </summary>
         bool TryGetPlace(string lineKey, out string placeId, out Vector3 position);
+
+        /// <summary>
+        /// The key of line <paramref name="lineKey"/> would act right now (the hitch in hook reach, a scan target or a
+        /// crate in reach of E, the mast ready): only then does the line lead with its key chip.
+        /// </summary>
+        bool CanAct(string lineKey);
     }
 }
