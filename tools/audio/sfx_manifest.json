@@ -45,7 +45,7 @@
         "cut_crack"
       ],
       "sha256": [
-        "2e865103c7133bce38c74b4f05f01faa53953013845a1ed9bf3056c4c96d2f23"
+        "a91ea8b76478346ada5212ad72f52fe077c06e42d6304429b5d2ad58f1c0484c"
       ],
       "volumeMin": 0.7,
       "volumeMax": 0.7,
@@ -56,7 +56,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "The piece breaks free: a soft high B pluck plus a felt thud."
+      "notes": "The piece breaks free: a dry snap, its weight dropping into the chassis with a low ring.",
+      "source": "sampled",
+      "pick": "cut_crack"
     },
     {
       "id": "strap_tuk",
@@ -817,7 +819,7 @@
         "charge_brace"
       ],
       "sha256": [
-        "4872eb081ef8b04da88153b5b44eb4dd8a102c31a2f13ba1a8c1649911c13fc6"
+        "a252dc400b03cb17a30d9139b468bc8610a4a8b4330203138a7c16157bd0d75c"
       ],
       "volumeMin": 0.6,
       "volumeMax": 0.6,
@@ -828,7 +830,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "0.5.5 E: 07 bracing before a fresh charge: servo chunk and wheel-lock clack."
+      "notes": "07 bracing before a fresh charge: a heavy servo, a padded wheel-lock clunk, a latch.",
+      "source": "sampled",
+      "pick": "charge_brace"
     },
     {
       "id": "charge_whine",
@@ -902,7 +906,7 @@
         "charge_detent"
       ],
       "sha256": [
-        "f3754dab845c66a6b1e5d4c27562b4ef84e9c7edc72c8e170d7b3af57eede313"
+        "af73424a69595e0f48f7f9361d63747ef5d137af633828064499a2728b367125"
       ],
       "volumeMin": 0.6,
       "volumeMax": 0.6,
@@ -913,7 +917,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "0.5.5 E: a charge stage locking: a cell sleeve slides, then the detent click."
+      "notes": "A charge stage locking: a capacitor cell seated with a dense latch and a small tick.",
+      "source": "sampled",
+      "pick": "charge_detent"
     },
     {
       "id": "charge_lock",
@@ -929,7 +935,7 @@
         "charge_lock"
       ],
       "sha256": [
-        "1ea7febb57fdcf7219a5839cbdda683679660a8ff2bca340b83dc12c02da1e9e"
+        "cff63a9fbcbb93be2e380c180ef089c1f772b36ba59d3a55f1b0613cf2ba8b97"
       ],
       "volumeMin": 0.6,
       "volumeMax": 0.6,
@@ -940,7 +946,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "0.5.5 E: the full lock: a firm clunk-click before the held breath."
+      "notes": "The full lock: a heavy clunk-latch and the chassis steel ringing on D2.",
+      "source": "sampled",
+      "pick": "charge_lock"
     },
     {
       "id": "hold_boot",
@@ -1160,7 +1168,7 @@
         "cut_undertone"
       ],
       "sha256": [
-        "36f6e83aeca752c0ad5af0474a4cb23c709caf23985367503955682643f5dd0b"
+        "76451077cc62f6e49f692424b82a6e4d713bd5161ae6d38439b14e37f84a80cb"
       ],
       "volumeMin": 0.6,
       "volumeMax": 0.6,
@@ -1171,7 +1179,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "The beam's deeper hum for higher tiers: D2 + A2, level by tier. 4 s seamless."
+      "notes": "The beam's deeper body for higher tiers: mains hum on D2 under a slowed arc, level by tier. 4 s.",
+      "source": "sampled",
+      "pick": "cut_undertone"
     },
     {
       "id": "segment_slide",
@@ -1391,6 +1401,64 @@
       "notes": "A character of the sender's name decoded (CallDecoded): one soft bowed-metal note climbing E4 F#4 A4 B4, landing on D5 when ARK IV is whole.",
       "source": "sampled",
       "pick": "call_decoded"
+    },
+    {
+      "id": "network_pulse",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/network_pulse.wav"
+      ],
+      "variantLabels": [
+        "network_pulse"
+      ],
+      "sha256": [
+        "925945ec17a996eac97838c208765667b7149ba3d9601ba7e543e6795721eae1"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "07's transmission leaving the mast (NetworkPulseLaunched): a contactor clunk, then the carrier swelling from D4 onto A5 and thinning out over the rim.",
+      "source": "sampled",
+      "pick": "network_pulse"
+    },
+    {
+      "id": "relay_ack",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/relay_ack.wav"
+      ],
+      "variantLabels": [
+        "relay_ack"
+      ],
+      "sha256": [
+        "3ab3edb5cb02fb13527bf2911566bc7fa1332d9a3cff6a16a1834ec27ea8db3b"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Relay.1 answering (RelayAcked), across the basin: a far dull clunk, its relay, one swell on E5.",
+      "source": "sampled",
+      "pick": "relay_ack"
     },
     {
       "id": "sky_dusk_swell",
@@ -2458,10 +2526,10 @@
         "boost_whine"
       ],
       "sha256": [
-        "63172fd4a589210b55691e097a4cda26213ad390d13b7b7135ff317c8a01842e"
+        "f1480feeabf542a822648a33f66b8111b3e857ab14ed63c8f6788204b1f974a4"
       ],
-      "volumeMin": 0.45,
-      "volumeMax": 0.45,
+      "volumeMin": 0.4,
+      "volumeMax": 0.4,
       "pitchMin": 1.0,
       "pitchMax": 1.0,
       "targetLufs": -22.0,
@@ -2469,7 +2537,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "The capacitor drums boosting: a soft whine on A. 2 s seamless."
+      "notes": "The capacitor drums boosting: a real small motor spinning on A4. 2 s seamless.",
+      "source": "sampled",
+      "pick": "boost_whine"
     },
     {
       "id": "boost_release",
@@ -2722,7 +2792,7 @@
         "rover_hum"
       ],
       "sha256": [
-        "c4491e9414b592a55b32381afd7fbcfc38d26f26bac6d0842649137904d0e9f7"
+        "da60814e65161003a121b0333da6a690ee87b962df8d4f655a62ace4df1ef22e"
       ],
       "volumeMin": 0.55,
       "volumeMax": 0.55,
@@ -2733,7 +2803,9 @@
       "hfCutoffHz": 6000.0,
       "hfMaxDb": -45.0,
       "tonal": true,
-      "notes": "D2 electric hum, 4 s seamless; content < 3 kHz so AudioSource.pitch 0.5..2 stays clean."
+      "notes": "07's drive motor: mains hum on D2, a slowed motor's gear whir and the crane gear for weight, 4 s seamless; content < 2.5 kHz so AudioSource.pitch 0.5..2 stays clean.",
+      "source": "sampled",
+      "pick": "rover_hum"
     },
     {
       "id": "dust_crunch",
@@ -3367,7 +3439,7 @@
         "dock_charge_hum"
       ],
       "sha256": [
-        "0fa8d14e61cf49107debbfb1b8c94013c7093f37f08f3513feeeef0631dbc977"
+        "bfb19468a3034d48a1a58156563a34b4d6b7c1d7cc22e914a61e7e3b8f9198a7"
       ],
       "volumeMin": 0.35,
       "volumeMax": 0.35,
@@ -3378,7 +3450,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": true,
-      "notes": "Charging: a very soft warm hum on D3 + octave, breathing slowly."
+      "notes": "Charging: the pad's transformer hum on D3 + octave, breathing slowly. 4 s seamless.",
+      "source": "sampled",
+      "pick": "dock_charge_hum"
     },
     {
       "id": "dock_full",

@@ -19,6 +19,8 @@ from synth.core import note_freq, samples
 from . import dsp, parts
 
 LAMP_S = 1.2
+DOCK_HUM_LOOP_S = 4.0
+LOOP_SEAM_S = 0.35
 # The hum's step for each lamp in the lighting order, as ratios of D3: D3, E3, F#3, A3 (D major pentatonic).
 LAMP_STEPS = (1.0, 2.0 ** (2.0 / 12.0), 2.0 ** (4.0 / 12.0), 2.0 ** (7.0 / 12.0))
 
@@ -120,6 +122,16 @@ def rack_outline(lib, gen, _variant: int) -> np.ndarray:
     return out
 
 
+def dock_charge_hum(lib, gen, _variant: int) -> np.ndarray:
+    """The pad charging 07: its transformer's warm hum on D3 and its octave, breathing slowly like a lamp keeping
+    watch. Seamless over 4 s."""
+    n = samples(DOCK_HUM_LOOP_S + LOOP_SEAM_S)
+    hum = parts.hum(lib, n, 1.0, float(gen.uniform(1.0, 6.0)))
+    t = np.arange(n) / (n - samples(LOOP_SEAM_S))
+    breath = 0.75 + 0.25 * np.sin(2.0 * np.pi * 2.0 * t)
+    return dsp.seamless(hum * breath, samples(DOCK_HUM_LOOP_S), samples(LOOP_SEAM_S))
+
+
 # Cue id -> (recipe, variants). Every variant ships: one per lamp in the lighting order, one each for the lock.
 SOUNDS = {
     "base_lamp_on": (lamp_on, len(LAMP_STEPS)),
@@ -129,4 +141,5 @@ SOUNDS = {
     "mast_settle": (mast_settle, 1),
     "rack_fill": (rack_fill, 1),
     "rack_outline": (rack_outline, 1),
+    "dock_charge_hum": (dock_charge_hum, 1),
 }

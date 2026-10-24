@@ -44,6 +44,19 @@ namespace MoonProject.Audio
         [Range(0f, 1f)]
         [SerializeField] private float _decodedVolume = 0.6f;
 
+        [Header("The transmission (NetworkPulseLaunched, RelayAcked)")]
+        [Tooltip("07's pulse leaving the mast (share of the cue volume).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _pulseVolume = 0.8f;
+
+        [Tooltip("The pulse running on from relay.1 to the Peak's dish, heard from far off (share of the cue volume).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _routePulseVolume = 0.45f;
+
+        [Tooltip("Relay.1's answer across the basin (share of the cue volume).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _ackVolume = 0.7f;
+
         [Header("Broken (on reserve)")]
         [Tooltip("Shortest dropout, seconds.")]
         [Range(0.02f, 1f)]
@@ -97,6 +110,9 @@ namespace MoonProject.Audio
         public float PlacementDistance => _placementDistance;
         public float SpatialBlend => _spatialBlend;
         public float DecodedVolume => _decodedVolume;
+        public float PulseVolume => _pulseVolume;
+        public float RoutePulseVolume => _routePulseVolume;
+        public float AckVolume => _ackVolume;
         public float DropoutMin => _dropoutMin;
         public float DropoutMax => Mathf.Max(_dropoutMax, _dropoutMin + MinSpan);
         public float HoldMin => _holdMin;
