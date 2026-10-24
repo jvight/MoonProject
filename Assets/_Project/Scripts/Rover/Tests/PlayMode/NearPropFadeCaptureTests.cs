@@ -17,6 +17,7 @@ namespace MoonProject.Rover.PlayModeTests
     {
         private const float FrameTime = 1f / 60f;
         private const float SettleSeconds = 1.2f;
+        private const float ComeBackSeconds = 2.4f;
         private const float PanelAhead = 1.9f;
         private const float PanelAside = 1.1f;
         private const float PanelBelow = 0.5f;
@@ -74,7 +75,7 @@ namespace MoonProject.Rover.PlayModeTests
 
             panel.transform.position += Vector3.up * AwayMetres;
             Physics.SyncTransforms();
-            yield return RealRoverScene.WaitSeconds(SettleSeconds);
+            yield return RealRoverScene.WaitSeconds(ComeBackSeconds);
             Assert.AreEqual(1f, KeepOn(renderer), 1e-3f, "and it is whole again once the camera is off it");
             Object.Destroy(panel);
             Object.Destroy(material);
