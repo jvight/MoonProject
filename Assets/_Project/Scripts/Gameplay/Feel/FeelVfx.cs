@@ -207,6 +207,7 @@ namespace MoonProject.Gameplay
             if (_scanBeam.Shown && _anchors.TryScanContact(scanEmitter, out Vector3 contact, out _))
             {
                 _scanBeam.Meet(contact);
+                _scanBeam.Aim(_anchors.ScanAxis);
             }
 
             _scanBeam.Step(deltaTime, scanEmitter);

@@ -41,6 +41,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Metres a beam's end may lie off its target's surface.</summary>
         private const float OnSurface = 0.03f;
 
+        /// <summary>By this share of a scan the head has turned onto the target, so its beam ends on the surface.</summary>
+        private const float AimedByProgress = 0.3f;
+
         // The scan beam leaves 07's cheek lens outward: past this first stretch at the lens it never crosses 07's body.
         private const float LensClearance = 0.05f;
 
@@ -247,6 +250,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             bool captured = false;
             int chaseShot = 0;
             int frame = 0;
+            int unaimed = 0;
 
             // The hold locks onto whatever the brackets are on as the key goes down, and the framing camera may still
             // be swinging a neighbour on the same host (another part of the set, a story panel) into that place, one
@@ -284,6 +288,17 @@ namespace MoonProject.Gameplay.PlayModeTests
                 }
 
                 Vector3 end = beam.WedgeTargetCenter;
+                if (beam.Aligned < 1f)
+                {
+                    Vector3 lensNow = _gameplay.Salvage.ScanEmitter;
+                    float axisOff = Vector3.Angle(_gameplay.Salvage.ScanAxis, end - lensNow);
+                    Assert.Less(fragment.Progress, AimedByProgress,
+                        $"frame {frame}: the head has aimed at {fragment.FragmentId} by {AimedByProgress:P0} of the scan "
+                        + $"(aligned {beam.Aligned:0.00}, beam end {axisOff:0.0} deg off the lens axis)");
+                    unaimed++;
+                    continue;
+                }
+
                 float off = DistanceToSurface(fragment, end);
                 worst = Mathf.Max(worst, off);
                 Assert.LessOrEqual(off, OnSurface,
@@ -312,7 +327,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Release(_keyboard.eKey);
             yield return FadesInPlace(lastContact, () => beam.Shown, () => beam.WedgeTargetCenter,
                 $"the scan beam on {fragment.FragmentId}", null);
-            Debug.Log($"[beam] {fragment.FragmentId}: worst {worst * 100f:F2} cm off its surface over {frame} frames");
+            Debug.Log($"[beam] {fragment.FragmentId}: worst {worst * 100f:F2} cm off its surface over {frame} frames ({unaimed} while the head was still turning)");
             yield return new WaitForSeconds(SettleSeconds);
         }
 

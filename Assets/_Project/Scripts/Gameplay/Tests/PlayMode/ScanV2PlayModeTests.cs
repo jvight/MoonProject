@@ -571,7 +571,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             float targetAlpha = colors[(rings - 1) * slices + centerSlice].a;
             Assert.Greater(lensAlpha, midAlpha * 3f, "ScanBeamWedge must be brightest at the lens.");
             Assert.Greater(targetAlpha, midAlpha * 2.5f, "ScanBeamWedge must brighten where it meets the target.");
-            Assert.LessOrEqual(midAlpha, 0.08f, "ScanBeamWedge must have very low alpha in the middle.");
+            Assert.LessOrEqual(midAlpha, 0.16f, "ScanBeamWedge stays soft in the middle, clear enough to read.");
 
             return targetCenter;
         }

@@ -15,6 +15,9 @@ namespace MoonProject.Gameplay
         /// <summary>07's scan lens emitter, the point the scan beam and ribbon connect to.</summary>
         Vector3 ScanEmitter { get; }
 
+        /// <summary>The direction 07's scan lens gazes along (world, +Z of the lens), the way its beam leaves.</summary>
+        Vector3 ScanAxis { get; }
+
         /// <summary>
         /// Where the scan beam from <paramref name="lens"/> meets its target's real surface now; false when no target
         /// is under the beam.

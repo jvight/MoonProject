@@ -140,10 +140,31 @@ namespace MoonProject.Gameplay
         [Range(0.05f, 0.85f)] [SerializeField] private float _beamLensPeakAlpha = 0.68f;
 
         [Tooltip("Very low additive alpha in the middle of the scan beam wedge (almost invisible in the middle).")]
-        [Range(0.005f, 0.15f)] [SerializeField] private float _beamMidAlpha = 0.06f;
+        [Range(0.005f, 0.4f)] [SerializeField] private float _beamMidAlpha = 0.14f;
 
         [Tooltip("Additive alpha where the far edge of the scan beam wedge meets the current surface scan line on the target.")]
         [Range(0.04f, 0.65f)] [SerializeField] private float _beamContactAlpha = 0.6f;
+
+        [Tooltip("Lens-axis error (deg) up to which the scan beam is fully on its target; past it the beam bends back to the lens axis.")]
+        [Range(1f, 30f)] [SerializeField] private float _beamAlignedDegrees = 20f;
+
+        [Tooltip("Lens-axis error (deg) from which the scan beam leaves the target entirely and runs short along the lens axis.")]
+        [Range(10f, 90f)] [SerializeField] private float _beamLostDegrees = 60f;
+
+        [Tooltip("Share of the distance to the target the scan beam reaches while the head is not aimed at it.")]
+        [Range(0.05f, 0.6f)] [SerializeField] private float _beamUnalignedReach = 0.2f;
+
+        [Tooltip("Seconds in which the scan beam closes half the way onto, or off, the target as the head aims.")]
+        [Range(0.02f, 0.5f)] [SerializeField] private float _beamAlignHalfLife = 0.05f;
+
+        [Tooltip("Diameter (m) of the calm patch of light where the scan beam meets the surface.")]
+        [Range(0.05f, 1f)] [SerializeField] private float _beamHitSize = 0.34f;
+
+        [Tooltip("Alpha of the scan beam's surface patch (capped below the bloom threshold).")]
+        [Range(0.02f, 0.5f)] [SerializeField] private float _beamHitAlpha = 0.22f;
+
+        [Tooltip("Metres the surface patch sits back toward the lens so it does not sink into the surface.")]
+        [Range(0f, 0.1f)] [SerializeField] private float _beamHitLift = 0.03f;
 
         [Tooltip("Fine scanline band density inside the scan beam wedge.")]
         [Range(12f, 120f)] [SerializeField] private float _beamScanlineDensity = 42f;
@@ -276,6 +297,13 @@ namespace MoonProject.Gameplay
         public float BeamTargetWidthShare => _beamTargetWidthShare;
         public float BeamLensPeakAlpha => _beamLensPeakAlpha;
         public float BeamMidAlpha => _beamMidAlpha;
+        public float BeamAlignedDegrees => _beamAlignedDegrees;
+        public float BeamLostDegrees => _beamLostDegrees;
+        public float BeamUnalignedReach => _beamUnalignedReach;
+        public float BeamAlignHalfLife => _beamAlignHalfLife;
+        public float BeamHitSize => _beamHitSize;
+        public float BeamHitAlpha => _beamHitAlpha;
+        public float BeamHitLift => _beamHitLift;
         public float BeamContactAlpha => _beamContactAlpha;
         public float BeamScanlineDensity => _beamScanlineDensity;
         public float BeamScanlineContrast => _beamScanlineContrast;
