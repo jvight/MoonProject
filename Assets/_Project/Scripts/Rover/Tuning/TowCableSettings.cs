@@ -60,10 +60,13 @@ namespace MoonProject.Rover
         [Range(0.06f, 0.9f)]
         [SerializeField] private float _ropeSheen = 0.55f;
 
-        [Tooltip("The faint pale thread in the rope (retroreflective, a catch of what light there is): what keeps it a line " +
-                 "against the night's regolith. A fraction of the rope's colour, nowhere near bloom.")]
-        [Range(0f, 0.6f)]
-        [SerializeField] private float _ropeThread = 0.28f;
+        [Tooltip("The pale thread laid along the rope (a chalky fibre, unlit): what keeps it a line against the night's " +
+                 "regolith, where the dark rubber alone is lost in shadow. Its colour; no glow, nowhere near bloom.")]
+        [SerializeField] private Color _threadColor = new Color(0.62f, 0.6f, 0.55f, 0.55f);
+
+        [Tooltip("How wide the thread is, as a share of the rope's drawn width.")]
+        [Range(0.2f, 1f)]
+        [SerializeField] private float _threadShare = 0.55f;
 
         [Header("Skid dust under the load")]
         [Tooltip("Grains a second kicked up under a load dragging at full speed (ballistic: no smoke).")]
@@ -104,7 +107,8 @@ namespace MoonProject.Rover
 
         public Color RopeColor => _ropeColor;
         public float RopeSheen => _ropeSheen;
-        public float RopeThread => _ropeThread;
+        public Color ThreadColor => _threadColor;
+        public float ThreadShare => _threadShare;
         public float MinPixels => _minPixels;
         public float HookMinPixels => _hookMinPixels;
         public float SkidMaxRate => _skidMaxRate;

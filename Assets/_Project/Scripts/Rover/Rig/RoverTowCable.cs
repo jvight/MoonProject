@@ -20,6 +20,9 @@ namespace MoonProject.Rover
         [Tooltip("The rope: a world-space line, dark matte rubber.")]
         [SerializeField] private LineRenderer _rope;
 
+        [Tooltip("A pale unlit thread laid along the rope so it reads as a line at night.")]
+        [SerializeField] private LineRenderer _thread;
+
         [Tooltip("The clamp at the load's end of the rope: a short, thicker line.")]
         [SerializeField] private LineRenderer _hook;
 
@@ -48,8 +51,6 @@ namespace MoonProject.Rover
 
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int SmoothnessMaxId = Shader.PropertyToID("_SmoothnessMax");
-        private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
-        private static readonly int EmissionStrengthId = Shader.PropertyToID("_EmissionStrength");
 
         /// <summary>Degrees the winch drum has turned for the rope's travel so far (out positive).</summary>
         public float SpoolDegrees { get; private set; }
@@ -77,7 +78,8 @@ namespace MoonProject.Rover
 
         public bool Initialize(GameContext context)
         {
-            if (_tuning == null || _rope == null || _hook == null || _winch == null || _skidDust == null)
+            if (_tuning == null || _rope == null || _thread == null || _hook == null || _winch == null ||
+                _skidDust == null)
             {
                 Debug.LogError($"{nameof(RoverTowCable)}: needs RoverRigTuning, the rope and the clamp lines, the " +
                                "skid dust emitter and the WinchOrigin node (run Rover/Rover).", this);
@@ -99,9 +101,11 @@ namespace MoonProject.Rover
             var look = new MaterialPropertyBlock();
             look.SetColor(BaseColorId, settings.RopeColor);
             look.SetFloat(SmoothnessMaxId, settings.RopeSheen);
-            look.SetColor(EmissionColorId, settings.RopeColor * settings.RopeThread);
-            look.SetFloat(EmissionStrengthId, 1f);
             _rope.SetPropertyBlock(look);
+            _thread.startColor = settings.ThreadColor;
+            _thread.endColor = settings.ThreadColor;
+            _thread.positionCount = _points.Length;
+            _thread.useWorldSpace = true;
             _hook.SetPropertyBlock(look);
             Show(false);
             return true;
@@ -243,6 +247,7 @@ namespace MoonProject.Rover
             }
 
             _rope.SetPositions(_points);
+            _thread.SetPositions(_points);
             SetWidths(winch, hitch, settings);
             Vector3 back = _points[_points.Length - 2];
             Vector3 along = hitch - back;
@@ -275,6 +280,8 @@ namespace MoonProject.Rover
             float fov = camera.fieldOfView;
             _rope.startWidth = RopeWidth.World(Distance(eye, winch), fov, settings.MinPixels, settings.Width);
             _rope.endWidth = RopeWidth.World(Distance(eye, hitch), fov, settings.MinPixels, settings.Width);
+            _thread.startWidth = _rope.startWidth * settings.ThreadShare;
+            _thread.endWidth = _rope.endWidth * settings.ThreadShare;
             float hook = RopeWidth.World(Distance(eye, hitch), fov, settings.HookMinPixels, settings.HookWidth);
             _hook.startWidth = hook;
             _hook.endWidth = hook;
@@ -283,6 +290,7 @@ namespace MoonProject.Rover
         private void Show(bool shown)
         {
             _rope.enabled = shown;
+            _thread.enabled = shown;
             _hook.enabled = shown;
         }
 
