@@ -48,6 +48,8 @@ namespace MoonProject.Rover
 
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int SmoothnessMaxId = Shader.PropertyToID("_SmoothnessMax");
+        private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
+        private static readonly int EmissionStrengthId = Shader.PropertyToID("_EmissionStrength");
 
         /// <summary>Degrees the winch drum has turned for the rope's travel so far (out positive).</summary>
         public float SpoolDegrees { get; private set; }
@@ -97,6 +99,8 @@ namespace MoonProject.Rover
             var look = new MaterialPropertyBlock();
             look.SetColor(BaseColorId, settings.RopeColor);
             look.SetFloat(SmoothnessMaxId, settings.RopeSheen);
+            look.SetColor(EmissionColorId, settings.RopeColor * settings.RopeThread);
+            look.SetFloat(EmissionStrengthId, 1f);
             _rope.SetPropertyBlock(look);
             _hook.SetPropertyBlock(look);
             Show(false);
