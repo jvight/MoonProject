@@ -289,7 +289,8 @@ namespace MoonProject.Gameplay
             ITerrainQuery terrain,
             bool propBlocked,
             bool snapEnabled = true,
-            bool frameMissing = false)
+            bool frameMissing = false,
+            bool apronSnapped = false)
         {
             if (State != BuildModeState.Placing || SelectedStructure == null || terrain == null)
             {
@@ -332,7 +333,7 @@ namespace MoonProject.Gameplay
             }
 
             CandidatePose = snappedPose;
-            CandidateSnapped = snapped;
+            CandidateSnapped = snapped || apronSnapped;
             CandidateReason = reason;
         }
 
