@@ -326,6 +326,12 @@ namespace MoonProject.Gameplay
 
         private static bool HoldsUntilDone(string key) => key == OpeningKeys.HookModule;
 
+        /// <summary>
+        /// A line whose key no line can show (Tab, the fit screen) is taught by its own chip on 07 instead: as a next
+        /// line it would only hold that chip back (it may still come back as a reminder).
+        /// </summary>
+        private static bool ChipTeaches(string key) => key == OpeningKeys.FitIgniter;
+
         /// <summary>A line with nothing to do (the base waits for the night) never comes back as a reminder.</summary>
         private static bool Reminds(string key) => key != OpeningKeys.AwaitNight;
 
@@ -347,6 +353,12 @@ namespace MoonProject.Gameplay
 
         private void Show(string key, NextLineReason reason, float seconds)
         {
+            if (reason == NextLineReason.Next && ChipTeaches(key))
+            {
+                Clear();
+                return;
+            }
+
             Shown = key;
             ShownReason = reason;
             _shownFor = 0f;

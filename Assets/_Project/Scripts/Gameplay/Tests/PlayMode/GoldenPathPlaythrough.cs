@@ -965,7 +965,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         {
             yield return Until(() => _gameplay.Opening.Flow.Current == key, FollowTimeout,
                 $"the opening stands at '{key}' ({why}), not '{_gameplay.Opening.Flow.Current}'");
-            if (key.Length > 0 && key != OpeningKeys.DriveToLander)
+            // The first line is the session's start, no success; the fit line leaves its key to the Tab chip on 07,
+            // which the verb's first use checks.
+            if (key.Length > 0 && key != OpeningKeys.DriveToLander && key != OpeningKeys.FitIgniter)
             {
                 Assert.Contains(key, _nextLines,
                     $"the success before '{key}' ({why}) named it as the next line (guidance audit G2)");
