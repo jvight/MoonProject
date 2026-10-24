@@ -98,5 +98,11 @@ namespace MoonProject.Gameplay
         /// power module, the mast), by id and position; false when it has none (a field fit) or it is not there yet.
         /// </summary>
         bool TryGetPlace(string lineKey, out string placeId, out Vector3 position);
+
+        /// <summary>
+        /// The key of line <paramref name="lineKey"/> would act right now (the hitch in hook reach, a scan target or a
+        /// crate in reach of E, the mast ready): only then does the line lead with its key chip.
+        /// </summary>
+        bool CanAct(string lineKey);
     }
 }
