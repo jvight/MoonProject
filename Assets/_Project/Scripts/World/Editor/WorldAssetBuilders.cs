@@ -260,6 +260,14 @@ namespace MoonProject.World.Editor
             sparkle.SetFloat("_CorePixels", glint.SparkleCorePixels);
             sparkle.SetFloat("_Intensity", 0f);
             GeneratedAssets.CreateOrReplace(sparkle, WorldPaths.ArrayGlintMaterial);
+            MastGlintSettings mastGlint = LoadSettings().Landmarks.MastGlint;
+            var mast = new Material(LoadShader(WorldPaths.GlintStarShader));
+            mast.SetColor("_Color", mastGlint.Color);
+            mast.SetFloat("_ArmPixels", mastGlint.ArmPixels);
+            mast.SetFloat("_WidthPixels", mastGlint.WidthPixels);
+            mast.SetFloat("_CorePixels", mastGlint.CorePixels);
+            mast.SetFloat("_Intensity", 0f);
+            GeneratedAssets.CreateOrReplace(mast, WorldPaths.MastGlintMaterial);
             var sheen = new Material(LoadShader(WorldPaths.GlintSheenShader));
             sheen.SetColor("_Color", glint.Color);
             sheen.SetFloat("_Intensity", 0f);

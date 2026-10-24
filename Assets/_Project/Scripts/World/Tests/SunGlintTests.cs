@@ -54,6 +54,17 @@ namespace MoonProject.World.Tests
         }
 
         [Test]
+        public void Earthshine_WaitsForTheSunToSet_ThenWakesAsTheSkyDarkens()
+        {
+            Vector3 up = Quaternion.AngleAxis(-5f, Vector3.right) * Vector3.forward;
+            Vector3 justUnder = Quaternion.AngleAxis(0.5f, Vector3.right) * Vector3.forward;
+            Vector3 deep = Quaternion.AngleAxis(4f, Vector3.right) * Vector3.forward;
+            Assert.AreEqual(0f, SunGlint.Night(up, 1f), "nothing while the Sun is up");
+            Assert.AreEqual(0.5f, SunGlint.Night(justUnder, 1f), 1e-3f, "half awake half-way under");
+            Assert.AreEqual(1f, SunGlint.Night(deep, 1f), 1e-5f, "full in the night");
+        }
+
+        [Test]
         public void TheShimmer_StaysWithinItsDepth()
         {
             for (float t = 0f; t < 10f; t += 0.05f)

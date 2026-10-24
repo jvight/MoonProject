@@ -564,7 +564,7 @@ MonoBehaviour:
       _haloColor: {r: 1, g: 0.68, b: 0.28, a: 1}
       _haloIntensity: 2
       _haloRadius: 0.12
-      _haloMinAngle: 0.25
+      _haloMinAngle: 0.6
       _haloLift: 0.08
       _lureRadius: 12
       _poweredLevel: 0.55

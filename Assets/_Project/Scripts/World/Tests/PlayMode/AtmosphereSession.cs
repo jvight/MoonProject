@@ -98,6 +98,24 @@ namespace MoonProject.World.PlayModeTests
         private const float SummitFov = 20f;
         private const float RelayNearDistance = 15f;
 
+        // The beats where the world should lead: where the naive bot's 07 stands as each step begins (n0ac9ae9ec's
+        // log), the targets, the habitat's module brought home before nightfall, the bot's screen and the dusk's lead.
+        private static readonly Vector2 BeatB8Spot = new Vector2(9f, 135.7f);
+        private const float BeatB8Heading = 345f;
+        private static readonly Vector2 BeatR5Spot = new Vector2(15f, 139.6f);
+        private const float BeatR5Heading = 263f;
+        private static readonly Vector2 BeatB10Spot = new Vector2(23.2f, 139.5f);
+        private const float BeatB10Heading = 340f;
+        private static readonly Vector2 BeatB12Spot = new Vector2(16f, 129.2f);
+        private const float BeatB12Heading = 351f;
+        private static readonly Vector2 BeatModuleHome = new Vector2(19f, 141f);
+        private const string BeatSeismicName = "Prop_SeismicStation";
+        private const string BeatHabitatName = "HabitatModules";
+        private const float BeatBotAspect = 3440f / 1440f;
+        private const float BeatSightSlack = 1f;
+        private const float BeatDuskTimeout = 180f;
+        private const string BeatMastGlintName = "MastGlint";
+
         // The first night filmed: the key light's node, a frame every so many seconds, for how long after the night is
         // made ready (its 75 s sunset and the answer's few minutes after).
         private const string NightKeyName = "Earthlight";
@@ -1194,6 +1212,177 @@ namespace MoonProject.World.PlayModeTests
             }
 
             Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        /// <summary>
+        /// The four beats where the world should lead (opening v3 B8 free choice, R5 the module at dusk, B10 nightfall to
+        /// the radio tower, B12 the drive to relay.1), on a real New Game at each beat's time of day, from where the
+        /// naive bot's 07 stands when the step begins: the game camera's own frame (beat-*.png) and, per target, its
+        /// distance, its bearing off the view at the bot's 21:9 and anything in the line of sight, in the log.
+        /// </summary>
+        [UnityTest]
+        [Timeout(600000)]
+        [PrebuildSetup(typeof(CanyonSessionScene))]
+        [PostBuildCleanup(typeof(CanyonSessionScene))]
+        public IEnumerator BeatTargets_AreFilmed_FromWhere07StandsAtEachStep()
+        {
+            BootstrapHarness.DeleteSaveFiles(CanyonSessionScene.SaveSlot);
+#if UNITY_EDITOR
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(CanyonSessionScene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            while (!loading.isDone)
+            {
+                yield return null;
+            }
+#else
+            throw new NotSupportedException("The atmosphere session loads the scene through the editor.");
+#endif
+            GameBootstrap bootstrap = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
+            {
+                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
+            }
+
+            Assert.IsNotNull(bootstrap, "the scene has its bootstrap");
+            GameContext context = bootstrap.Context;
+            _awoke = context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
+            float started = Time.time;
+            while (!_awake)
+            {
+                Assert.Less(Time.time - started, WakeTimeout, "07 wakes up");
+                yield return null;
+            }
+
+            Camera view = context.Get<IViewCamera>().Camera;
+            Assert.IsTrue(context.Get<ITowLine>().TryFindLoad(CueLampTowId, out Transform module),
+                "the towable power module stands beside the habitat");
+            var log = new StringBuilder("[beat-targets]");
+
+            context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.FirstCharge, true));
+            context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.PowerOn, true));
+            yield return StandForBeat(context, BeatB8Spot, BeatB8Heading);
+            Shoot(view, "beat-b8");
+            log.Append($"\nB8 sun {SunReport(context)}:");
+            ReportTarget(log, view, "seismic", FindNamed(BeatSeismicName));
+            ReportTarget(log, view, "habitat", FindNamed(BeatHabitatName));
+            yield return FaceTarget(context, view, BeatB8Spot, FindNamed(BeatSeismicName), "beat-b8-toward", log,
+                FindNamed(BeatSeismicName));
+
+            context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.NightReady, false));
+            started = Time.time;
+            while (context.Get<ISunlight>().Phase != SkyPhase.Sunset)
+            {
+                Assert.Less(Time.time - started, BeatDuskTimeout, "the first dusk begins");
+                yield return null;
+            }
+
+            yield return StandForBeat(context, BeatR5Spot, BeatR5Heading);
+            yield return WaitForLampPeak(FindNamed(CueLampName).GetComponent<ModuleStatusLamp>());
+            Shoot(view, "beat-r5");
+            log.Append($"\nR5 sun {SunReport(context)}:");
+            ReportTarget(log, view, "module lamp", FindNamed(CueLampLens));
+            ReportTarget(log, view, "habitat", FindNamed(BeatHabitatName));
+            log.Append($" lamp level {FindNamed(CueLampName).GetComponent<ModuleStatusLamp>().Level:F2};");
+            yield return FaceTarget(context, view, BeatR5Spot, FindNamed(CueLampLens), "beat-r5-toward", log,
+                FindNamed(CueLampName), FindNamed(CueLampName).GetComponent<ModuleStatusLamp>());
+
+            context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.NightReady, true));
+            module.position = OnGround(context.Get<ITerrainQuery>(), BeatModuleHome);
+            Physics.SyncTransforms();
+            yield return StandForBeat(context, BeatB10Spot, BeatB10Heading);
+            Shoot(view, "beat-b10");
+            log.Append($"\nB10 sun {SunReport(context)}:");
+            ReportTarget(log, view, "radio tower", FindNamed(CueTowerName));
+            var mast = FindNamed(BeatMastGlintName).GetComponent<MastGlint>();
+            log.Append($" mast glint {mast.Level:F2};");
+            yield return FaceTarget(context, view, BeatB10Spot, mast.transform, "beat-b10-toward", log, mast.transform);
+            log.Append($" mast glint {mast.Level:F2};");
+
+            context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.CallAnswered, true));
+            yield return StandForBeat(context, BeatB12Spot, BeatB12Heading);
+            yield return new WaitForSeconds(RelayAnsweredSignSeconds);
+            Shoot(view, "beat-b12");
+            log.Append($"\nB12 sun {SunReport(context)}:");
+            ReportTarget(log, view, "relay.1 lamp", FindNamed(RelayLampName));
+            yield return FaceTarget(context, view, BeatB12Spot, FindNamed(RelayLampName), "beat-b12-toward", log,
+                FindNamed(RelayLampName));
+
+            Debug.Log(log.ToString());
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        // 07 where the bot's stood, facing its heading, and the follow camera settled behind it.
+        private static IEnumerator StandForBeat(GameContext context, Vector2 spot, float heading)
+        {
+            context.Get<IRoverPlacement>().PlaceAt(OnGround(context.Get<ITerrainQuery>(), spot),
+                Quaternion.Euler(0f, heading, 0f));
+            yield return new WaitForSeconds(SettleSeconds);
+        }
+
+        // The same spot with 07 turned to the target, as a player who looks round would see it: the game camera's
+        // eye, aimed over 07 at the target, at a lamp's blink peak when there is one; where the cue lands goes in
+        // the log, for a crop.
+        private static IEnumerator FaceTarget(GameContext context, Camera view, Vector2 spot, Transform target,
+            string name, StringBuilder log, Transform cue, ModuleStatusLamp lamp = null)
+        {
+            Vector3 toward = new Vector3(target.position.x - spot.x, 0f, target.position.z - spot.y);
+            yield return StandForBeat(context, spot, Quaternion.LookRotation(toward, Vector3.up).eulerAngles.y);
+            if (lamp != null)
+            {
+                yield return WaitForLampPeak(lamp);
+            }
+
+            var host = new GameObject("BeatTowardCamera");
+            try
+            {
+                var camera = host.AddComponent<Camera>();
+                camera.CopyFrom(view);
+                camera.enabled = false;
+                CopyPipelineSettings(view, camera);
+                Place(camera, LookPose(name, view.transform.position, target.position, view.fieldOfView));
+                Shoot(camera, name);
+                Vector2 pixel = CapturePixel(camera, cue.position);
+                log.Append($" {name} cue at pixel ({pixel.x:F0}, {pixel.y:F0});");
+            }
+            finally
+            {
+                Object.Destroy(host);
+            }
+        }
+
+        // A target's distance, bearing and height off the view (its frame edge at the bot's 21:9) and what, if
+        // anything, stands in the line of sight to its renderers' centre.
+        private static void ReportTarget(StringBuilder log, Camera view, string label, Transform target)
+        {
+            Vector3 point = target.position;
+            Renderer[] renderers = target.GetComponentsInChildren<Renderer>();
+            if (renderers.Length > 0)
+            {
+                Bounds bounds = renderers[0].bounds;
+                foreach (Renderer renderer in renderers)
+                {
+                    bounds.Encapsulate(renderer.bounds);
+                }
+
+                point = bounds.center;
+            }
+
+            Transform eye = view.transform;
+            Vector3 toTarget = point - eye.position;
+            Vector3 local = eye.InverseTransformDirection(toTarget);
+            float bearing = Mathf.Atan2(local.x, local.z) * Mathf.Rad2Deg;
+            float pitch = Mathf.Atan2(local.y, new Vector2(local.x, local.z).magnitude) * Mathf.Rad2Deg;
+            float halfHorizontal = Mathf.Atan(Mathf.Tan(view.fieldOfView * 0.5f * Mathf.Deg2Rad) * BeatBotAspect)
+                * Mathf.Rad2Deg;
+            string blocker = "clear";
+            if (Physics.Linecast(eye.position, point - toTarget.normalized * BeatSightSlack, out RaycastHit hit)
+                && !hit.transform.IsChildOf(target))
+            {
+                blocker = "behind " + hit.collider.name + $" at {hit.distance:F0} m";
+            }
+
+            log.Append($" {label}: {toTarget.magnitude:F0} m, {bearing:F0} deg across (edge {halfHorizontal:F0}), " +
+                       $"{pitch:F1} deg up, {blocker};");
         }
 
         // Waits through one blink for the lamp's peak, so the lure shot shows it lit.
