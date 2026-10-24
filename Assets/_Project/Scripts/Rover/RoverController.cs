@@ -142,6 +142,7 @@ namespace MoonProject.Rover
         private MeshFilter[] _selfMeshes;
         private GameContext _context;
         private bool _docked;
+        private readonly DockReleaseTurn _releaseTurn = new DockReleaseTurn();
         private float _dockElapsed;
         private Vector3 _dockFrom;
         private Vector3 _dockTo;
@@ -643,6 +644,13 @@ namespace MoonProject.Rover
                 return;
             }
 
+            if (_releaseTurn.Active)
+            {
+                ReadInput(dt);
+                StepReleaseTurn(dt);
+                return;
+            }
+
             if (_recovering)
             {
                 ReadInput(dt);
@@ -734,6 +742,7 @@ namespace MoonProject.Rover
             _recovering = false;
             _recoveryElapsed = 0f;
             _docked = false;
+            _releaseTurn.Cancel();
             _headlamp.SetDocked(false);
             _body.isKinematic = false;
             _body.transform.SetPositionAndRotation(centre, Quaternion.identity);
@@ -826,6 +835,12 @@ namespace MoonProject.Rover
                 if (_docked)
                 {
                     _docked = false;
+                    if (_releaseTurn.Begin(_heading, RoverPlacementMath.Yaw(dock.Rotation),
+                            _tuning.Dock.ReleaseTurnThresholdDegrees))
+                    {
+                        return;
+                    }
+
                     Free();
                 }
 
@@ -840,6 +855,24 @@ namespace MoonProject.Rover
             _dockFromHeading = _heading;
             _dockToHeading = RoverPlacementMath.Yaw(dock.Rotation);
             Freeze();
+        }
+
+        /// <summary>Held on the pad while the heading eases round; the player's first push frees 07 at once.</summary>
+        private void StepReleaseTurn(float dt)
+        {
+            if (Mathf.Max(Mathf.Abs(_steer), Mathf.Abs(_throttle)) > _tuning.Dock.ReleaseInterruptInput)
+            {
+                _releaseTurn.Cancel();
+                Free();
+                return;
+            }
+
+            _previousHeading = _heading;
+            _heading = _releaseTurn.Step(dt, _tuning.Dock.ReleaseTurnSeconds);
+            if (!_releaseTurn.Active)
+            {
+                Free();
+            }
         }
 
         private void StepDock(float dt)
