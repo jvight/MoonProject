@@ -125,7 +125,7 @@ same composition in 2024, and pushes in to 07's face.
   as built); New Game only.
 - **Audio:** one stem, D-based, sparse.
 
-## 5. Recommendation: Variant C, "Site Cam 2"
+## 5. Recommendation: Variant C, "Site Cam 2" (superseded by §7.2 after the owner's review: make D, with C as the fallback)
 - **Show, don't tell** (owner rule; Journey, Outer Wilds, Inside): one frame, no words beyond a camera's stamp, and
   the sky does the talking.
 - **Solitude and calm** (pillar 6): a locked shot watching time pass is the purest form of "lonely but peaceful".
@@ -165,3 +165,111 @@ Style for all frames:
 7. **The call:** the same as 6, but 07's antenna tip lamp lit cyan for a moment; the sky point visibly brighter; the
    mood hushed.
 8. **The face:** a close-up of 07's dark CRT face (the inventory framing), a single amber power-on dot at its centre.
+
+## 7. Variant D: "The Long Night" (the Departure as awe), about 135 s *(recommended after the owner's review)*
+> The owner saw the Site Cam 2 storyboard and called it "too simple, not WOW enough". D keeps C's intimate frame as
+> a **recurring device** between huge shots: small ↔ vast is where the wow comes from.
+>
+> **Still true to the hard rules:**
+> - calm (no explosions, no shake);
+> - the people are lamps and work gestures only;
+> - no ice, no crew fate, no Return;
+> - it ends into the existing boot face;
+> - skippable after 2 s; New Game only.
+
+**Arc:** a world at work → everyone leaves → the lights go out → decades → one blink answers → a small machine wakes.
+
+**Music:** one D major pentatonic theme. It grows from a single note to **one big swell at the Departure (about
+0:58)**, falls to near-silence by 1:25, holds a lone D through the decades, and ends on silence plus one carrier
+pattern before the tube's whine.
+
+**Text:** only the Site Cam stamp in shots 4 and 7, plus nothing else. **VO:** none.
+
+| # | Time | Camera, lens, scale | On screen, light | Sound and music | Why it lands |
+|---|---|---|---|---|---|
+| 1 | 0:00–0:08 | black, then a **slow drift in low lunar orbit**: 35 mm, the Moon's limb across the lower third | the grey limb in hard, unscattered sunlight (vacuum: razor shadows, no haze); Earth rising **over the limb, alive**: a blue crescent, sparse city lights on its night side | silence → one low D, very soft | Interstellar scale: a hard vacuum and a tiny world |
+| 2 | 0:08–0:20 | **ride behind a VIS cargo lander** on its descent: 50 mm, the lander small in frame, the south pole below | the terminator line; a ring crater in shadow with **one cluster of warm lights** (Lumen) and a dotted chain of relay lamps along the rim | a second note (A); engine rumble felt, not heard | WALL-E's "something lives down there" |
+| 3 | 0:20–0:36 | **an aerial sweep over Lumen at its peak** (1987, night): 24 mm, a long dolly at 200 m altitude, banking | the habitat's windows lit; landers on pads; rovers' lamps crawling in lines; **the relay masts blink in sequence round the rim** (the network pulse) up to the Peak's lit Great Dish; 07 is one dot among many | the theme enters: pentatonic, warm, unhurried | Death Stranding's establishing grandeur; the network as a living thing |
+| 4 | 0:36–0:44 | **Site Cam 2**: locked, 1980s CCTV look | 07 rolling the last crate down the ramp; suit lamps at work | tape hiss; the theme quietly under | the intimate anchor: this one machine |
+| 5 | 0:44–1:06 | **from the basin floor, looking up**: 20 mm, low angle, 07 and the lander small in the foreground, Earth low over the rim | **THE DEPARTURE.** From Earth's limb, soft drive-flares rise one after another (dozens), curving up and away into **a slow river of light across the black sky** that gathers into a far cluster (the Ark halo). The camera cranes up and back until the basin, the rim and the river all fit, 07 a single pixel of warm light. | **the one big swell** at about 0:58: the full pentatonic chord, a choir-like pad, held | Journey's mountain plus Halo Reach / Destiny vistas: awe from scale and motion, with no violence |
+| 6 | 1:06–1:14 | **Site Cam 2** | white storm sparkles across the image; a gloved hand flips 07's switch, and `CONTINUE` shows on its screen; the lamp turns away, no pause | the swell cuts to the hiss; suit-radio clicks, **three short, one long** | the human gesture is work, not farewell |
+| 7 | 1:14–1:28 | **high aerial, straight down**: 35 mm from 600 m, the whole basin as a ring | **the network goes dark**: station lights and relay lamps go out **one by one in a sweep round the rim**, the Peak's dish last. Then only the lander's amber beacon remains. | the theme thins note by note to a lone D | the inverse of a BotW tower: the world's lights retreating |
+| 8 | 1:28–1:52 | **one continuous descent over decades**: from 600 m down toward 07 at the lander's lee, 35 → 50 mm, eased | **time as spectacle:** the low polar Sun circles the horizon again and again (shadows wheel around the Peak like a sundial); Earth turns through its phases; eclipses pass; meteors streak and puff new small craters; dust banks creep; **Site Cam 2's red tally light dies**; the lander's beacon fails. 07 stays the fixed point at the centre. | the lone D holds; one high note every few seconds, further apart | Outer Wilds' time and WALL-E's pull-back, reversed: decades in one breath |
+| 9 | 1:52–2:05 | close to the basin, 50 mm, still | **2024:** the eclipse, Earth dark with a copper ring. The far Ark cluster now **one point**, and it blinks **three short, one long**. A thin pulse of light runs across the dark basin, from relay.2 at the canyon mouth along a dead cable to the lander and into 07's post (06 relaying the carrier, wake-on-carrier). | silence → the carrier: the **same pattern** as shot 6's radio | the answer in total silence: the biggest small moment |
+| 10 | 2:05–2:15 | a slow push to 07's dark face (the inventory framing: the existing push-in) | 07's antenna lamp stutters; the face fills the frame → **CRT power-on → the boot face** | the tube's whine, then the boot sounds as built | one continuous move from the cosmic to one machine's face |
+
+**What makes the wow beats land:**
+1. **Scale contrast is the engine.** Every huge shot keeps 07 or the lander in frame as a tiny point (Interstellar's
+   docking, WALL-E).
+2. **One swell only.** Music saved for the Departure and spent once makes it unforgettable. Everything after it is
+   quieter (Journey).
+3. **Motion in stillness:** slow lights over a dead-still Moon. Vacuum clarity (hard edges, no haze) is our signature
+   look.
+4. **The network as a character:** it pulses alive, sweeps dark, then one pulse returns at the call.
+5. **The intimate frame** (Site Cam 2) between vast shots gives the eye a place to rest, and pays off in the ruins.
+
+**What the player learns:**
+- a station full of life;
+- everyone leaving, in lights across the sky;
+- the lights going out;
+- a very long time;
+- a call in the crew's own pattern, answered.
+
+**What stays a mystery:** who they were, why they left, where the river went, why the crew never came back out (the
+airlock), and what 07's queue is for.
+
+**Canon cautions:**
+- **The launches are stylised:** real launches seen from the Moon would be invisible. They read as drive-flares in a
+  long exposure. Keep them soft and slow.
+- **Earth's lights in 1987 are sparse** (the Long Dim began around 1978–83), and dark in 2024 (story v4 Decision 3).
+- **Intact Lumen is shown only from 200 m and above:** no interiors, no crew faces, so the ruins keep their stories.
+
+### 7.1 Production in our stack (Unity Timeline + Cinemachine)
+| Need | Have | New |
+|---|---|---|
+| The basin, the rim, the Peak, the lander, the post, 07, dust, the sky cycle with eclipse, Earth | yes | a **time-lapse driver** (Sun circles, Earth phases, dust, meteor puffs) over the existing sky |
+| Lumen alive at night | ruins only | lit variants of the habitat, pads and landers (emissive windows); **relay masts lit**; the Great Dish intact and lit; rover lamp "lines" (moving lights, no models) |
+| Orbit-scale shots (1–2) | terrain to about 660 m only | **a lunar globe LOD** with the south-pole basin decal, plus a **high-res Earth limb** (day, sparse city lights, crescent); or **agy matte paintings** in 2.5D parallax for shots 1–2 |
+| The VIS cargo lander in flight | the landed lander | flight pose plus a soft engine glow (vacuum: no plume smoke) |
+| The Departure river | — | a sky particle system: drive-flares rising off Earth's limb into a ribbon, gathering in a halo cluster |
+| The network sweep | the relay lamps | a sequencer that turns lights on and off across the basin |
+| The storm | — | CCTV sensor sparkles (post FX), already needed for C |
+| Site Cam 2 | C's VHS post FX | the cam prop in the scene (it stays in the ruins for play) |
+| Music | the boot sounds | **one composed stem** with a single swell (Audio, Sonniss textures) |
+
+- **Size:** in-engine **XL**; mixed (agy matte paintings for shots 1, 2 and 5's sky; in-engine for 3–10) **L**.
+  Recommend **mixed**.
+- **Risks:**
+  - the orbit-to-basin continuity (match lenses and Sun direction);
+  - the time-lapse must not strobe (ease the Sun's circles, cap flicker);
+  - the river must read as people leaving, not as a weapon or an attack (soft warm flares, slow);
+  - length: keep it at 2:15 or under, with an instant skip.
+
+### 7.2 Recommendation (updated)
+- **Make D**, built **mixed**: agy mattes for the cosmic shots, in-engine for everything on the Moon.
+- **C stays the fallback** if the cost doesn't fit, since D's shots 4, 6 and 10 *are* C.
+
+### 7.3 Key frames for agy (cinematic; for every frame: R1 stylized realism, the Lunarion palette, **vacuum look**: no haze, no atmospheric scattering, razor-hard shadows, black sky with stars only where the exposure allows; 2.39:1)
+1. **"Earthrise over the limb"** (orbit, 35 mm): the grey lunar limb across the lower third in hard white sunlight;
+   Earth a thin blue crescent rising beyond it with sparse warm city lights on its night side; a deep black sky.
+2. **"Descent"** (50 mm, behind the craft): a cream-and-coral VIS cargo lander small in the upper frame, a soft engine
+   glow, descending toward a ring crater half in shadow at the lunar south pole; one cluster of warm lights inside
+   it, and a dotted chain of amber relay lamps along the rim.
+3. **"Lumen at its peak"** (24 mm aerial, 200 m, banking): a night basin; a lit habitat, landers on pads, lines of
+   tiny rover lamps; amber relay masts blinking in a chain up to a lit dish on a sharp peak; warm points on a cold
+   grey floor.
+4. **"Last crate"** (CCTV, locked): a 1980s site-camera frame, scanlines, the stamp `SITE CAM 2 · LUMEN-04 · 28 OCT
+   1988`; a small cream rover with a CRT face rolling a crate down a lander ramp; two suit lamps.
+5. **"The Departure"** (20 mm, low angle from the basin floor): 07 and the lander tiny in the foreground; Earth low
+   over the crater rim; from Earth's limb, dozens of soft golden drive-flares rising and curving into a long slow
+   river of light across the black sky, gathering into a distant cluster; awe, no violence.
+6. **"Continue"** (CCTV): the same site-cam frame with white storm sparkles across it; a gloved hand at the rover's
+   flank switch; a small screen glowing `CONTINUE`; the suit lamp already turning away.
+7. **"The network goes dark"** (35 mm, straight down, 600 m): the whole crater as a ring; half its lights still on,
+   half out, the darkness sweeping round the rim toward the peak's last lit dish; one amber beacon at the centre.
+8. **"Decades"** (35 mm, mid-descent): a long-exposure feel; the low Sun's arcs as faint rings around the horizon;
+   shadows like sundial strokes around the peak; dust banks; a meteor streak; one tiny dark rover at the centre.
+9. **"The call"** (50 mm, still): a dark basin of ruins under an eclipsed Earth with a copper ring; one far point of
+   light beside Earth; a thin cyan pulse running across the black floor along a dead cable to a small dusty rover.
+10. **"The face"** (85 mm close-up): the rover's dark curved CRT face filling the frame, one amber power-on dot at its
+    centre, dust on the bezel.
