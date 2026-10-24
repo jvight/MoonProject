@@ -132,6 +132,13 @@ namespace MoonProject.Audio.PlayModeTests
             Events.Publish(new OpeningMilestoneReached(milestone, restored));
         }
 
+        /// <summary>Publishes <see cref="CallStateChanged"/> Answered (relay.1 answered: the radio's music returns).
+        /// </summary>
+        public void Answer(bool restored = false)
+        {
+            Events.Publish(new CallStateChanged(CallState.Answered, restored));
+        }
+
         /// <summary>Publishes <see cref="RoverAwoke"/> (07 starts waking: the radio and motor come on).</summary>
         public void Wake(bool byPlayer)
         {

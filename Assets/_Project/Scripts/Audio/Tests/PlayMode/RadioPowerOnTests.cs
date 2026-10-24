@@ -7,8 +7,9 @@ using MoonProject.Core.Events;
 namespace MoonProject.Audio.PlayModeTests
 {
     /// <summary>
-    /// The radio before and at Power on (opening v2 B0 and B8): only a faint signal hiss while the base is dark, then
-    /// the hiss clears and the first music fades in, low and warm; a save that already has power just plays.
+    /// The radio through the opening (opening v3 R4 and R8): only a faint signal hiss while the base is dark; Power on
+    /// clears the hiss but plays no music (a build is not a milestone); relay.1 answering 07's call is the milestone
+    /// where the first music fades in, low and warm; a save that is already answered just plays.
     /// </summary>
     public sealed class RadioPowerOnTests
     {
@@ -43,7 +44,7 @@ namespace MoonProject.Audio.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator PowerOn_ClearsTheHiss_AndTheFirstMusicFadesInSlowly()
+        public IEnumerator PowerOn_ClearsTheHiss_ButPlaysNoMusic()
         {
             _rig.Wake(true);
             yield return new WaitForSecondsRealtime(3f);
@@ -52,22 +53,38 @@ namespace MoonProject.Audio.PlayModeTests
 
             _rig.Milestone(OpeningMilestone.PowerOn);
             Assert.IsTrue(_rig.Radio.Powered);
+            yield return new WaitForSecondsRealtime(5f);
+
+            Assert.IsFalse(_rig.Radio.MusicStarted, "building the solar array is not a music moment");
+            Assert.IsFalse(_rig.Radio.Answered);
+            Assert.Less(_rig.Radio.HissFloor, 0.05f, "the hiss has cleared");
+            Assert.Less(hiss.volume, dark * 0.5f);
+        }
+
+        [UnityTest]
+        public IEnumerator TheAnswer_TunesTheDial_AndTheFirstMusicFadesInSlowly()
+        {
+            _rig.Wake(true);
+            _rig.Milestone(OpeningMilestone.PowerOn);
+            yield return new WaitForSecondsRealtime(3f);
+
+            _rig.Answer();
+            Assert.IsTrue(_rig.Radio.Answered);
             AudioSource swish = AudioTestRig.FindChildSource(_rig.Radio.transform, "TuningSwish");
-            Assert.IsTrue(swish.isPlaying, "the dial finds the station");
+            Assert.IsTrue(swish.isPlaying, "the dial finds the network");
             yield return new WaitForSecondsRealtime(1f);
             Assert.IsTrue(_rig.Radio.MusicStarted);
             float early = _rig.LoudestDeck().volume;
 
             yield return new WaitForSecondsRealtime(4f);
             Assert.Greater(_rig.LoudestDeck().volume, early, "the music is still swelling in seconds later");
-            Assert.Less(_rig.Radio.HissFloor, 0.05f, "the hiss has cleared");
-            Assert.Less(hiss.volume, dark * 0.5f);
         }
 
         [UnityTest]
-        public IEnumerator ARestoredPowerOn_JustPlays_WithoutTheSwish()
+        public IEnumerator ARestoredAnswer_JustPlays()
         {
             _rig.Milestone(OpeningMilestone.PowerOn, true);
+            _rig.Answer(true);
             Assert.AreEqual(0f, _rig.Radio.HissFloor, 1e-5f, "a load with power has no hiss to clear");
             _rig.Wake(false);
             float deadline = Time.realtimeSinceStartup + 6f;
@@ -79,13 +96,20 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.IsTrue(_rig.Radio.MusicStarted, "the wake-up starts the music");
         }
 
-        [Test]
-        public void OtherMilestones_LeaveTheRadioDark()
+        [UnityTest]
+        public IEnumerator BuildMilestonesAndEarlierCallStates_LeaveTheRadioSilent()
         {
             _rig.Wake(true);
             _rig.Milestone(OpeningMilestone.FirstCharge);
+            _rig.Milestone(OpeningMilestone.PowerOn);
             _rig.Milestone(OpeningMilestone.NightReady);
-            Assert.IsFalse(_rig.Radio.Powered);
+            _rig.Milestone(OpeningMilestone.SignalWest);
+            _rig.Events.Publish(new CallStateChanged(CallState.Locked, false));
+            _rig.Events.Publish(new CallStateChanged(CallState.Clear, false));
+            yield return new WaitForSecondsRealtime(3f);
+
+            Assert.IsFalse(_rig.Radio.Answered);
+            Assert.IsFalse(_rig.Radio.MusicStarted, "only the answer brings the music back");
         }
     }
 }
