@@ -140,6 +140,11 @@ namespace MoonProject.Gameplay
                  "lattice, so its pool lies on the ground and nothing of the piece burns white at the light.")]
         [Range(0f, 3f)] [SerializeField] private float _lampLightStandOff = 1.5f;
 
+        [Tooltip("Every other lamp's light is a spot pointing down at the regolith beside its piece: its cone, in " +
+                 "degrees. Narrow enough that the piece's own face, a stand-off away, stays outside it and never " +
+                 "blooms at night.")]
+        [Range(30f, 120f)] [SerializeField] private float _lampSpotAngleDegrees = 90f;
+
         [Tooltip("The charging pad's light is a spot pointing down at the pad: its cone, in degrees.")]
         [Range(40f, 160f)] [SerializeField] private float _padSpotAngleDegrees = 120f;
 
@@ -162,6 +167,7 @@ namespace MoonProject.Gameplay
         public float LampLightHeightShare => _lampLightHeightShare;
         public float LampLightStandOff => _lampLightStandOff;
         public float PadSpotAngleDegrees => _padSpotAngleDegrees;
+        public float LampSpotAngleDegrees => _lampSpotAngleDegrees;
         public float PadSpotHeightMetres => _padSpotHeightMetres;
         public int LampLightBudget => _lampLightBudget;
         public float LampDuskAboveLastLightDegrees => _lampDuskAboveLastLightDegrees;

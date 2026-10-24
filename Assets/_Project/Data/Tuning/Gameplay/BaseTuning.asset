@@ -61,6 +61,7 @@ MonoBehaviour:
   _lampLightIntensity: 3.5
   _lampLightHeightShare: 0.6
   _lampLightStandOff: 1.5
+  _lampSpotAngleDegrees: 90
   _padSpotAngleDegrees: 120
   _padSpotHeightMetres: 2.4
   _lampLightBudget: 4
