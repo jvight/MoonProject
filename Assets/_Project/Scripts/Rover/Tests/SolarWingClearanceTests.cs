@@ -125,7 +125,8 @@ namespace MoonProject.Rover.Tests
 
                         foreach (float liftDeg in liftAngles)
                         {
-                            neckLift.localRotation = neckLiftRest * Quaternion.AngleAxis(liftDeg, Vector3.right);
+                            float effectiveLift = RoverBodyLanguage.EffectiveNeckLift(liftDeg, yawDeg);
+                            neckLift.localRotation = neckLiftRest * Quaternion.AngleAxis(effectiveLift, Vector3.right);
 
                             foreach (float pitchDeg in pitchAngles)
                             {

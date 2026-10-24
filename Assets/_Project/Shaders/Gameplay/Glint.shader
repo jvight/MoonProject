@@ -10,6 +10,7 @@ Shader "MoonProject/Gameplay/Glint"
         _Core ("Core Radius", Range(0.05, 1)) = 0.45
         _Rays ("Ray Strength", Range(0, 1)) = 0.55
         _RayWidth ("Ray Width", Range(0.01, 0.4)) = 0.07
+        [Enum(UnityEngine.Rendering.CompareFunction)] _ZTest ("Depth Test", Float) = 4
     }
 
     SubShader
@@ -29,7 +30,7 @@ Shader "MoonProject/Gameplay/Glint"
 
             Blend One One
             ZWrite Off
-            ZTest LEqual
+            ZTest [_ZTest]
             Cull Off
 
             HLSLPROGRAM

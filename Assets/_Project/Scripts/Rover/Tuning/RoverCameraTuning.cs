@@ -524,6 +524,11 @@ namespace MoonProject.Rover
         [Range(30f, 180f)]
         [SerializeField] private float _nudgeMaxBearing = 150f;
 
+        [Tooltip("Seconds a nudge asked for while another shot has the camera waits for it to end, then fires; older than " +
+                 "this it is dropped (the player has moved on).")]
+        [Range(2f, 60f)]
+        [SerializeField] private float _nudgePendingSeconds = 15f;
+
         [Tooltip("Closest (m) an object may lie to 07 for the camera to nudge toward it; closer than this, 07's head look is enough.")]
         [Range(0f, 40f)]
         [SerializeField] private float _nudgeMinDistance = 12f;
@@ -1053,6 +1058,8 @@ namespace MoonProject.Rover
         public float NudgeSlack => _nudgeSlack;
 
         public float NudgeMaxBearing => _nudgeMaxBearing;
+
+        public float NudgePendingSeconds => _nudgePendingSeconds;
 
         public float NudgeMinDistance => _nudgeMinDistance;
 

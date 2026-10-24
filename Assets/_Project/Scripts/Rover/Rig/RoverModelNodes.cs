@@ -162,6 +162,29 @@ namespace MoonProject.Rover
         /// <summary>Where Cell Pack II's battery spine stands on the lid's right edge (docs/features/M3-20).</summary>
         public const string SpineSocket = "SpineSocket";
 
+        /// <summary>Above the screen under Head: where the SSR-3 headlamp pods mount (opening v3 5.2a).</summary>
+        public const string BrowSocket = "BrowSocket";
+        public const string HeadlampHousingLeft = "Housing_L";
+        public const string HeadlampHousingRight = "Housing_R";
+        public const string HeadlampLensLeft = "Lens_L";
+        public const string HeadlampLensRight = "Lens_R";
+
+        /// <summary>Left and right flanks of RoverModel where the cell pods mount.</summary>
+        public const string PodSocketLeft = "PodSocket_L";
+        public const string PodSocketRight = "PodSocket_R";
+        public const int CellPodBarCount = 2;
+
+        /// <summary>Charge bar <paramref name="index"/> (0..1) on a flank cell pod.</summary>
+        public static string CellPodBar(int index)
+        {
+            if (index < 0 || index >= CellPodBarCount)
+            {
+                throw new ArgumentOutOfRangeException(nameof(index), index, "Cell pod bar index is 0..1.");
+            }
+
+            return "ChargeBar_" + index;
+        }
+
         /// <summary>Where the old tape deck rides on the head's side slot (docs/features/M3-24 C).</summary>
         public const string DeckSocket = "DeckSocket";
 

@@ -8,8 +8,9 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// The answer's pulse of the old network, seen (<see cref="CallAnswer"/>): a bright streak that arcs from the top of
-    /// the antenna mast out to relay.1, and on to the Peak, where it glints on the dark dish. Each leg runs its own
-    /// seconds from <see cref="NetworkPulseLaunched"/>; the glint flares and fades from <see cref="PeakDishGlinted"/>.
+    /// the antenna mast out to relay.1, and on to the Peak, where it catches the light on the dark dish. Each leg runs its own
+    /// seconds from <see cref="NetworkPulseLaunched"/>; the glint (a small sharp star, <see cref="DishGlintFlare"/>) flares and fades
+    /// from <see cref="PeakDishGlinted"/>.
     /// Allocation-free per frame.
     /// </summary>
     public sealed class NetworkPulseView : IDisposable
@@ -17,10 +18,12 @@ namespace MoonProject.Gameplay
         private const int Points = 24;
         private const float FadeOutShare = 0.08f;
         private const float TailStartWidth = 0.2f;
+        private const int GlintCapacity = 4;
 
         private readonly CallAnswerSettings _settings;
         private readonly LineRenderer _line;
-        private readonly GlowFlashPool _flashes;
+        private readonly DishGlintFlare _glints;
+        private readonly IViewCamera _view;
         private readonly Vector3[] _points = new Vector3[Points];
         private readonly IDisposable[] _tokens;
         private Vector3 _from;
@@ -29,9 +32,10 @@ namespace MoonProject.Gameplay
         private float _age;
         private bool _running;
 
-        public NetworkPulseView(Transform parent, Material beam, Mesh sphere, Material flash, EventBus events,
+        public NetworkPulseView(Transform parent, Material beam, Material glint, IViewCamera view, EventBus events,
             CallAnswerSettings settings)
         {
+            _view = view ?? throw new ArgumentNullException(nameof(view));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             var host = new GameObject("NetworkPulse");
             host.transform.SetParent(parent, false);
@@ -45,24 +49,29 @@ namespace MoonProject.Gameplay
             _line.lightProbeUsage = LightProbeUsage.Off;
             _line.reflectionProbeUsage = ReflectionProbeUsage.Off;
             _line.enabled = false;
-            _flashes = new GlowFlashPool(host.transform, sphere, flash, 4, settings.GlintSeconds, settings.GlintRadius,
-                settings.GlintIntensity);
+            _glints = new DishGlintFlare(host.transform, glint, settings, GlintCapacity);
             _tokens = new[]
             {
                 events.Subscribe<NetworkPulseLaunched>(OnLaunched),
-                events.Subscribe<PeakDishGlinted>(glint => _flashes.Spawn(glint.Position, glint.Strength)),
+                events.Subscribe<PeakDishGlinted>(glint => _glints.Spawn(glint.Position, glint.Strength)),
             };
         }
 
         /// <summary>A leg of the pulse is running (tests).</summary>
         public bool IsRunning => _running;
 
+        /// <summary>Glints on the dish alive now (tests and captures).</summary>
+        public int GlintsAlive => _glints.Alive;
+
+        /// <summary>The brightest glint on the dish this frame (tests and captures).</summary>
+        public float GlintBrightest => _glints.Brightest;
+
         /// <summary>The pulse's head now (tests).</summary>
         public Vector3 Head { get; private set; }
 
         public void Step(float deltaTime)
         {
-            _flashes.Tick(deltaTime);
+            _glints.Step(deltaTime, _view.Camera.transform.position);
             if (!_running)
             {
                 return;
@@ -98,6 +107,8 @@ namespace MoonProject.Gameplay
             {
                 token.Dispose();
             }
+
+            _glints.Dispose();
         }
 
         private void OnLaunched(NetworkPulseLaunched launched)

@@ -329,6 +329,43 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
         }
 
+        [UnityTest]
+        public IEnumerator AHeldE_CarriesOnToTheNextPart_AfterAScanCompletes_WithNoRelease()
+        {
+            Boot(null);
+            yield return null;
+            yield return null;
+            ScanField scans = _fixture.Gameplay.Scans;
+            ScanFragment first = scans.Find("ruin." + ScanTuning.LanderCargoId + ".0");
+            ScanFragment second = scans.Find("ruin." + ScanTuning.LanderCargoId + ".1");
+            Assert.IsNotNull(first);
+            Assert.IsNotNull(second);
+
+            yield return Face(first);
+            Press(_keyboard.eKey);
+            yield return Waits.Until(() => first.Scanned, _fixture.ScanTuning.Seconds(first.Size) + PressTimeout);
+            Assert.IsTrue(first.Scanned, "the first part scans on a held E");
+
+            yield return Face(second);
+            float budget = _fixture.ScanTuning.RearmSeconds + _fixture.ScanTuning.Seconds(second.Size) + PressTimeout;
+            yield return Waits.Until(() => second.Scanned, budget);
+            Release(_keyboard.eKey);
+            Assert.IsTrue(second.Scanned, "E still held: the next part's scan starts after a beat, never a dead " +
+                                          $"chip (candidate {scans.Candidate?.FragmentId ?? "none"}, scanning " +
+                                          $"{scans.Scanning?.FragmentId ?? "none"})");
+        }
+
+        /// <summary>Parks 07 before <paramref name="fragment"/> with the view on it.</summary>
+        private IEnumerator Face(ScanFragment fragment)
+        {
+            Vector3 point = fragment.Point;
+            Vector3 park = point + Vector3.back * Park;
+            _fixture.Rover.Place(new Vector3(park.x, 0f, park.z), 0f);
+            _fixture.Rover.Aim(point + Vector3.back * (Park + 4f) + Vector3.up * 3f, point);
+            yield return null;
+            yield return null;
+        }
+
         private void Boot(string slot)
         {
             _milestoneToken?.Dispose();
