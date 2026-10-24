@@ -14,6 +14,9 @@ namespace MoonProject.Autoplay
     /// </summary>
     public sealed class VirtualInput : IDisposable
     {
+        /// <summary>The wheel reports 120 units to a notch on Windows.</summary>
+        private const float WheelNotch = 120f;
+
         private readonly Keyboard _keyboard;
         private readonly Mouse _mouse;
         private readonly HashSet<Key> _held = new HashSet<Key>();
@@ -98,6 +101,15 @@ namespace MoonProject.Autoplay
 
             _rightHeld = down;
             SendButtons();
+        }
+
+        /// <summary>Turns the wheel by <paramref name="notches"/> (positive: away from the player) in this frame.</summary>
+        public void Scroll(float notches)
+        {
+            if (notches != 0f)
+            {
+                InputSystem.QueueDeltaStateEvent(_mouse.scroll, new Vector2(0f, notches * WheelNotch));
+            }
         }
 
         public void MoveMouseTo(Vector2 screenPosition)

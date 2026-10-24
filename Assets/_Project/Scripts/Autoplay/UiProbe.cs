@@ -43,6 +43,26 @@ namespace MoonProject.Autoplay
             _face = face ?? _face;
         }
 
+        /// <summary>
+        /// Where build card <paramref name="index"/> is on screen, in Input System pixels (origin bottom left), or
+        /// false when the card is not there: what a mouse hand aims at.
+        /// </summary>
+        public bool TryGetBuildCard(int index, out Vector2 screenPoint)
+        {
+            screenPoint = Vector2.zero;
+            VisualElement card = _root.Q<VisualElement>("build-card-" + index);
+            if (card == null || !IsShown(card, GuidanceOpacity) || float.IsNaN(card.worldBound.center.x) ||
+                _root.layout.width <= 0f)
+            {
+                return false;
+            }
+
+            float scale = Screen.width / _root.layout.width;
+            Vector2 centre = card.worldBound.center;
+            screenPoint = new Vector2(centre.x * scale, Screen.height - centre.y * scale);
+            return true;
+        }
+
         /// <summary>True while the build strip (build mode's menu and placing) shows.</summary>
         public bool BuildStripShown()
         {

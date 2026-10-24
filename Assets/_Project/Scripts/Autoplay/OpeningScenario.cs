@@ -59,9 +59,12 @@ namespace MoonProject.Autoplay
         private readonly bool _linesExpected;
 
         private readonly NaiveGuard _naive;
+        private readonly bool _pointer;
 
-        public OpeningScenario(AutoplayBot bot, string untilBeat, bool linesExpected, NaiveGuard naive = null)
+        public OpeningScenario(AutoplayBot bot, string untilBeat, bool linesExpected, NaiveGuard naive = null,
+            bool pointer = false)
         {
+            _pointer = pointer;
             _naive = naive;
             DeclareNextActions();
             _bot = bot;
@@ -371,8 +374,16 @@ namespace MoonProject.Autoplay
         private IEnumerator BuildThePad()
         {
             Begin("B5", "Build the charging pad");
-            yield return _base.Build(StructureIds.ChargingPad, _base.Pad());
-            _bot.EndBeat("the pad was placed and welded with the build keys");
+            if (_pointer)
+            {
+                yield return _base.BuildWithThePointer(StructureIds.ChargingPad, _base.Pad());
+                _bot.EndBeat("the pad was placed and welded with the mouse alone: B, the card click, the wheel, left click");
+            }
+            else
+            {
+                yield return _base.Build(StructureIds.ChargingPad, _base.Pad());
+                _bot.EndBeat("the pad was placed and welded with the build keys");
+            }
         }
 
         private IEnumerator ChargeOnThePad()
