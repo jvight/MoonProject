@@ -48,8 +48,8 @@ namespace MoonProject.App
                  "straight into play on the save. Test runs in the editor always boot straight into play.")]
         [SerializeField] private bool _showTitle;
 
-        [Tooltip("New Game over a save: the longest (s) the reload waits for the picture to fade to black "
-                 + "(WakeBeat.FadedOut) before it reloads anyway.")]
+        [Tooltip("New Game over a save: the longest (game seconds, the clock the wake beat runs on) the reload waits "
+                 + "for the picture to fade to black (WakeBeat.FadedOut) before it reloads anyway.")]
         [Min(0.5f)]
         [SerializeField] private float _fadedOutTimeout = 6f;
 
@@ -261,12 +261,14 @@ namespace MoonProject.App
 
         private void Update()
         {
-            if (!_fadedOut.Step(Time.unscaledDeltaTime, _fadedOutTimeout))
+            // Game time gains at most maximumDeltaTime a frame, so on a loaded machine it falls behind the real clock,
+            // and the wake beat with it: counting the same clock keeps a push that is still on its way from timing out.
+            if (!_fadedOut.Step(Time.deltaTime, _fadedOutTimeout))
             {
                 return;
             }
 
-            Debug.LogError($"{nameof(GameBootstrap)}: New Game waited {_fadedOutTimeout} s for the camera to push " +
+            Debug.LogError($"{nameof(GameBootstrap)}: New Game waited {_fadedOutTimeout} game s for the camera to push " +
                            "into 07's lens (WakeBeat.FadedOut) and reloads without it.", this);
             ReloadForNewGame();
         }
