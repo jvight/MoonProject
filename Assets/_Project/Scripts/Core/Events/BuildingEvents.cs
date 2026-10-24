@@ -165,6 +165,25 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
+    /// A pulse of power reached the far end of a base cable: the solar array's while the Sun is up, the battery bank's
+    /// at dusk and through the night (base-home-and-crater-exits §3). Audio's soft pentatonic tick.
+    /// </summary>
+    public readonly struct PowerPulseArrived
+    {
+        public PowerPulseArrived(string structureId, Vector3 position)
+        {
+            StructureId = structureId;
+            Position = position;
+        }
+
+        /// <summary>The piece whose power the pulse carried (solar_array or battery_bank).</summary>
+        public string StructureId { get; }
+
+        /// <summary>Where it arrived: the far end of the cable, at the hub's port.</summary>
+        public Vector3 Position { get; }
+    }
+
+    /// <summary>
     /// Published by <c>BuildField</c> while 07 places a structure ghost (<see cref="Placing"/> = true, with its
     /// grounded <see cref="GhostPosition"/> and whether it is settled on the marked apron bay), and when leaving
     /// placement (<see cref="Placing"/> = false).
