@@ -1,0 +1,100 @@
+{
+  "model": "survey_drone",
+  "pivot_tolerance": 0.005,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_BareSteel",
+    "R1_Brass",
+    "R1_Copper",
+    "R1_DarkGlass",
+    "R1_GoldFoil",
+    "R1_GreyMetal",
+    "R1_LampAmber",
+    "R1_Rubber",
+    "R1_SilverFoil",
+    "R1_TealMark",
+    "R1_WhitePaint"
+  ],
+  "max_triangles": 8500,
+  "max_meshes": 8,
+  "max_draw_calls": 36,
+  "allow_rotation": [],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "bounds": {
+    "size": [
+      0.487,
+      0.501,
+      0.422
+    ],
+    "tolerance": 0.02,
+    "min_size": [
+      0.467,
+      0.481,
+      0.402
+    ],
+    "max_size": [
+      0.507,
+      0.521,
+      0.442
+    ]
+  },
+  "nodes": {
+    "SurveyDrone": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Body": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.22
+      ]
+    },
+    "Lamp": {
+      "pivot": [
+        0.0,
+        0.245,
+        0.215
+      ]
+    },
+    "Scanner": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.09
+      ]
+    },
+    "Nozzle_FL": {
+      "pivot": [
+        -0.185,
+        0.185,
+        0.16
+      ]
+    },
+    "Nozzle_FR": {
+      "pivot": [
+        0.185,
+        0.185,
+        0.16
+      ]
+    },
+    "Nozzle_RL": {
+      "pivot": [
+        -0.185,
+        -0.185,
+        0.16
+      ]
+    },
+    "Nozzle_RR": {
+      "pivot": [
+        0.185,
+        -0.185,
+        0.16
+      ]
+    }
+  }
+}

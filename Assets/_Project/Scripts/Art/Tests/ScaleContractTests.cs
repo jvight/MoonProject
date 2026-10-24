@@ -67,6 +67,10 @@ namespace MoonProject.Art.Tests
             ("solar_array.json", "Structures/SolarArray.fbx"),
             ("solar_wing.json", "Rover/SolarWing.fbx"),
             ("tape_deck.json", "Rover/Kit_TapeDeck.fbx"),
+            ("panel_mite.json", "Fauna/PanelMite.fbx"),
+            ("sweeper.json", "Fauna/Sweeper.fbx"),
+            ("survey_drone.json", "Fauna/SurveyDrone.fbx"),
+            ("trencher.json", "Fauna/Trencher.fbx"),
         };
 
         [Serializable]

@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60464c4bddfd85341b1404db8ea6c351, type: 3}
+  m_Name: FaunaMotionTuning
+  m_EditorClassIdentifier: 
+  _lampBaseEmissionStrength: 1
+  _lampMoveEmissionBoost: 0.28
+  _lampBreathAmplitude: 0.14
+  _lampBreathFrequencyHz: 0.36
+  _miteReferenceSpeed: 0.35
+  _miteCyclesPerMeter: 8
+  _miteLegSwingAmplitudeDeg: 18
+  _miteLegLiftAmplitudeDeg: 12
+  _miteIdleLegBreathDeg: 1.8
+  _miteWiperSweepAmplitudeDeg: 8.5
+  _miteWiperFrequencyHz: 1.4
+  _miteBodyBobAmplitudeMeters: 0.0035
+  _sweeperReferenceSpeed: 1.4
+  _sweeperWheelRadiusMeters: 0.28
+  _sweeperBrushSpinDegPerSecond: 260
+  _sweeperIdleBrushSpinDegPerSecond: 36
+  _sweeperBrushArmNodAmplitudeDeg: 2.6
+  _sweeperBrushArmNodFrequencyHz: 0.85
+  _sweeperChassisRockAmplitudeDeg: 1.1
+  _droneReferenceSpeed: 2.4
+  _droneHoverAltitudeMeters: 0.18
+  _droneHoverBobAmplitudeMeters: 0.036
+  _droneHoverBobFrequencyHz: 0.65
+  _droneHoverSwayAmplitudeDeg: 3.2
+  _droneForwardPitchAtRefSpeedDeg: 9.5
+  _droneNozzleGimbalAmplitudeDeg: 6.5
+  _droneNozzleGimbalFrequencyHz: 1.35
+  _droneScannerPanAmplitudeDeg: 28
+  _droneScannerPanFrequencyHz: 0.28
+  _trencherReferenceSpeed: 0.65
+  _trencherRollerRadiusMeters: 0.22
+  _trencherSpoolRadiusMeters: 0.36
+  _trencherCutterWheelSpinDegPerSecond: 115
+  _trencherIdleCutterSpinDegPerSecond: 18
+  _trencherBoomHeaveAmplitudeDeg: 1.6
+  _trencherBoomHeaveFrequencyHz: 0.75
+  _trencherChassisRumbleMeters: 0.005
