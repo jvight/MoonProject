@@ -73,6 +73,20 @@ namespace MoonProject.Gameplay
         public bool CanAffordSelected =>
             SelectedStructure != null && _stock.Has(SelectedStructure.BuildCost);
 
+        /// <summary>
+        /// False while the selected structure takes its pose from a frame (e.g. the battery bank on the power module),
+        /// or when no structure is selected; <see cref="RotateGhost"/> then does nothing.
+        /// </summary>
+        public bool CanRotateGhost =>
+            SelectedStructure != null && SelectedStructure.FrameLoad.Length == 0;
+
+        /// <summary>
+        /// Localization key of the selected structure's frame display noun (e.g. the power module's part-name key), or
+        /// <see cref="string.Empty"/> when the selected structure has no frame.
+        /// </summary>
+        public string FrameNounKey =>
+            SelectedStructure != null ? TowLoads.NounKey(SelectedStructure.FrameLoad) : string.Empty;
+
         public bool CanPlaceNow =>
             State == BuildModeState.Placing &&
             SelectedStructure != null &&
@@ -264,7 +278,7 @@ namespace MoonProject.Gameplay
         /// <summary>Rotates the ghost yaw in <see cref="BuildModeState.Placing"/> by <paramref name="winchInput"/> steps.</summary>
         public void RotateGhost(float winchInput)
         {
-            if (State != BuildModeState.Placing || Mathf.Abs(winchInput) <= 1e-4f)
+            if (State != BuildModeState.Placing || !CanRotateGhost || Mathf.Abs(winchInput) <= 1e-4f)
             {
                 return;
             }
@@ -289,7 +303,8 @@ namespace MoonProject.Gameplay
             ITerrainQuery terrain,
             bool propBlocked,
             bool snapEnabled = true,
-            bool frameMissing = false)
+            bool frameMissing = false,
+            bool apronSnapped = false)
         {
             if (State != BuildModeState.Placing || SelectedStructure == null || terrain == null)
             {
@@ -332,7 +347,7 @@ namespace MoonProject.Gameplay
             }
 
             CandidatePose = snappedPose;
-            CandidateSnapped = snapped;
+            CandidateSnapped = snapped || apronSnapped;
             CandidateReason = reason;
         }
 

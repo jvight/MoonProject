@@ -20,6 +20,9 @@ namespace MoonProject.Gameplay
     {
         private const float GhostGlideHalfLife = 0.045f;
         private const float GhostYawHalfLife = 0.04f;
+        private const float GhostSnapSeedOffsetMetres = 0.8f;
+        private const float LookAwayYawDegrees = 3f;
+        private const float OccupiedBayRadiusSq = 1f;
 
         /// <summary>Squared metres within which an aim point counts as the apron bay's centre.</summary>
         private const float ApronBayEpsilonSq = 0.01f;
@@ -107,6 +110,13 @@ namespace MoonProject.Gameplay
         private bool _gazing;
         private bool _initialized;
         private Vector3? _apronCentre;
+        private bool _apronLatched;
+        private bool _wasApronInReach;
+        private bool _aimFollowsView;
+        private float _minApronYawGap;
+        private bool _placingEventActive;
+        private Vector3 _lastPlacingGhostPosition;
+        private bool _lastPlacingOnApron;
 
         public BuildingTuning Tuning => _tuning;
 
@@ -360,6 +370,7 @@ namespace MoonProject.Gameplay
             }
 
             _controller.Close();
+            HideAllGhosts();
             _waitExcavateRelease = _input.ExcavateHeld;
         }
 
@@ -643,6 +654,11 @@ namespace MoonProject.Gameplay
             // A click on a menu card is the Excavate button too, and UI picks the card on that same press: the press that
             // entered placing is not also the one that places.
             bool enteredPlacing = _controller.State == BuildModeState.Placing && _lastStepState != BuildModeState.Placing;
+            if (enteredPlacing)
+            {
+                BeginPlacingSession();
+            }
+
             _lastStepState = _controller.State;
             if (!excavateHeld && !excavatePressed)
             {
@@ -783,13 +799,44 @@ namespace MoonProject.Gameplay
             if (picked)
             {
                 _events.Publish(new UiCue(UiCueKind.Confirm));
+                BeginPlacingSession();
             }
 
+            return picked;
+        }
+
+        private void BeginPlacingSession()
+        {
             _ghostPoseSeeded = false;
             _wasSnapped = false;
             _wasOnApron = false;
             _wasValid = true;
-            return picked;
+            _aimFollowsView = false;
+            _minApronYawGap = 180f;
+            Vector3? apron = ValidApronFor(_controller.SelectedStructure);
+            _wasApronInReach = _rover != null && GhostAim.IsApronInReach(_rover.Position, apron, _tuning);
+            _apronLatched = _wasApronInReach;
+        }
+
+        private Vector3? ValidApronFor(StructureDefinition selected)
+        {
+            if (selected == null || selected.Id != StructureIds.ChargingPad || !_apronCentre.HasValue)
+            {
+                return null;
+            }
+
+            Vector3 bay = _apronCentre.Value;
+            int count = _placedBase != null ? _placedBase.Count : 0;
+            for (int i = 0; i < count; i++)
+            {
+                PlacedStructure placed = _placedBase.StructureAt(i);
+                if (SurfaceRules.HorizontalDistanceSquared(placed.Pose.Position, bay) < OccupiedBayRadiusSq)
+                {
+                    return null;
+                }
+            }
+
+            return bay;
         }
 
         private void StepPlacingState(
@@ -800,7 +847,8 @@ namespace MoonProject.Gameplay
             float deltaTime)
         {
             _lastNavSign = 0;
-            if (Mathf.Abs(winch) > 0.05f && (now >= _nextWinchTime || Mathf.Sign(winch) != _lastWinchSign))
+            if (_controller.CanRotateGhost && Mathf.Abs(winch) > 0.05f &&
+                (now >= _nextWinchTime || Mathf.Sign(winch) != _lastWinchSign))
             {
                 _controller.RotateGhost(winch);
                 _events.Publish(new UiCue(UiCueKind.SliderStep));
@@ -854,7 +902,7 @@ namespace MoonProject.Gameplay
 
             bool propBlocked = IsPropBlocked(selected, snappedPose, frame);
             _controller.UpdateCandidate(groundPoint, roverPosition, _terrain, propBlocked, snapEnabled: frame == null,
-                frameMissing: frameMissing);
+                frameMissing: frameMissing, apronSnapped: onApron);
 
             bool snappedNow = _controller.CandidateSnapped;
             if (snappedNow && !_wasSnapped)
@@ -874,7 +922,8 @@ namespace MoonProject.Gameplay
 
             _wasValid = validNow;
 
-            StepGhost(selected, _controller.CandidatePose, deltaTime);
+            StepGhost(selected, _controller.CandidatePose, snappedNow, deltaTime);
+            StepPlacingEvent(true, _controller.CandidatePose.Position, onApron);
 
             if (excavatePressed && !_waitExcavateRelease)
             {
@@ -1043,11 +1092,80 @@ namespace MoonProject.Gameplay
             }
             else
             {
-                Vector3? apron = selected.Id == StructureIds.ChargingPad ? _apronCentre : null;
+                Vector3? apron = ValidApronFor(selected);
+                bool inReach = GhostAim.IsApronInReach(roverPosition, apron, _tuning);
+                if (inReach && !_wasApronInReach)
+                {
+                    _apronLatched = true;
+                    _minApronYawGap = 180f;
+                }
+
+                _wasApronInReach = inReach;
+                Vector3 roverHeading = _rover.Rotation * Vector3.forward;
                 Transform view = _view != null && _view.Camera != null ? _view.Camera.transform : null;
-                point = view != null
-                    ? GhostAim.PointFromView(_terrain, view.position, view.forward, roverPosition, apron, _tuning)
-                    : GhostAim.Point(roverPosition, _rover.Rotation * Vector3.forward, apron, _tuning);
+                if (view != null)
+                {
+                    float roverYaw = Mathf.Atan2(roverHeading.x, roverHeading.z) * Mathf.Rad2Deg;
+                    Vector3 flatView = new Vector3(view.forward.x, 0f, view.forward.z);
+                    float viewYaw = flatView.sqrMagnitude > 1e-6f
+                        ? Mathf.Atan2(flatView.x, flatView.z) * Mathf.Rad2Deg
+                        : roverYaw;
+                    float targetYaw = roverYaw;
+                    if (apron.HasValue && _apronLatched)
+                    {
+                        Vector3 toApron = apron.Value - roverPosition;
+                        if (toApron.x * toApron.x + toApron.z * toApron.z > 1e-4f)
+                        {
+                            targetYaw = Mathf.Atan2(toApron.x, toApron.z) * Mathf.Rad2Deg;
+                        }
+                    }
+
+                    float currGap = Mathf.Abs(Mathf.DeltaAngle(viewYaw, targetYaw));
+                    if (currGap < _minApronYawGap)
+                    {
+                        _minApronYawGap = currGap;
+                    }
+
+                    bool playerLooked = _input != null &&
+                        (_input.LookDelta.sqrMagnitude > 1e-4f || _input.LookRate.sqrMagnitude > 1e-4f);
+                    bool turnedAway = currGap > _minApronYawGap + LookAwayYawDegrees;
+                    bool lookedAway = playerLooked || turnedAway;
+                    if (lookedAway)
+                    {
+                        _aimFollowsView = true;
+                    }
+
+                    bool wasLatched = _apronLatched;
+                    point = GhostAim.ResolvePlacingPoint(
+                        _terrain,
+                        view.position,
+                        view.forward,
+                        roverPosition,
+                        roverHeading,
+                        apron,
+                        _tuning,
+                        _aimFollowsView,
+                        lookedAway,
+                        ref _apronLatched);
+                    if (!wasLatched && _apronLatched)
+                    {
+                        _minApronYawGap = currGap;
+                    }
+                }
+                else
+                {
+                    point = GhostAim.ResolvePlacingPoint(
+                        _terrain,
+                        roverPosition,
+                        roverHeading,
+                        roverPosition,
+                        roverHeading,
+                        apron,
+                        _tuning,
+                        false,
+                        false,
+                        ref _apronLatched);
+                }
             }
 
             return SurfaceRules.OnSurface(_terrain, point.x, point.z);
@@ -1187,7 +1305,7 @@ namespace MoonProject.Gameplay
             }
         }
 
-        private void StepGhost(StructureDefinition selected, StructurePose targetPose, float deltaTime)
+        private void StepGhost(StructureDefinition selected, StructurePose targetPose, bool snapped, float deltaTime)
         {
             if (!_ghostsById.TryGetValue(selected.Id, out StructureView ghost) || ghost == null)
             {
@@ -1209,18 +1327,36 @@ namespace MoonProject.Gameplay
                 _events.Publish(new BuildCue(BuildCueKind.Ghost, targetPose.Position));
             }
 
+            float halfLife = snapped ? GhostAim.SnapHalfLife(_tuning) : GhostGlideHalfLife;
             if (!_ghostPoseSeeded || deltaTime <= 0f)
             {
-                _ghostPosition = targetPose.Position;
+                if (snapped && deltaTime > 0f && !_aimPointOverride.HasValue)
+                {
+                    Vector3 ahead = GhostAim.Point(_rover.Position, _rover.Rotation * Vector3.forward, null, _tuning);
+                    Vector3 start = Vector3.MoveTowards(targetPose.Position, ahead, GhostSnapSeedOffsetMetres);
+                    _ghostPosition = _terrain != null
+                        ? SurfaceRules.OnSurface(_terrain, start.x, start.z)
+                        : targetPose.Position;
+                }
+                else
+                {
+                    _ghostPosition = targetPose.Position;
+                }
+
                 _ghostYaw = targetPose.Yaw;
                 _ghostPoseSeeded = true;
             }
             else
             {
-                _ghostPosition = Damp.Toward(_ghostPosition, targetPose.Position, GhostGlideHalfLife, deltaTime);
+                _ghostPosition = Damp.Toward(_ghostPosition, targetPose.Position, halfLife, deltaTime);
                 float yawDelta = Mathf.DeltaAngle(_ghostYaw, targetPose.Yaw);
                 _ghostYaw = StructurePose.NormalizeYaw(
                     Damp.Toward(_ghostYaw, _ghostYaw + yawDelta, GhostYawHalfLife, deltaTime));
+            }
+
+            if (_terrain != null)
+            {
+                _ghostPosition.y = _terrain.SampleHeight(_ghostPosition.x, _ghostPosition.z);
             }
 
             _activeGhost.transform.SetPositionAndRotation(_ghostPosition, Quaternion.Euler(0f, _ghostYaw, 0f));
@@ -1272,6 +1408,7 @@ namespace MoonProject.Gameplay
 
         private void HideAllGhosts()
         {
+            StepPlacingEvent(false, Vector3.zero, false);
             _gridLink.Hide();
             if (_activeGhost != null)
             {
@@ -1281,6 +1418,34 @@ namespace MoonProject.Gameplay
             }
 
             _ghostPoseSeeded = false;
+        }
+
+        private void StepPlacingEvent(bool placing, Vector3 ghostPosition, bool onApron)
+        {
+            if (_events == null)
+            {
+                return;
+            }
+
+            if (placing)
+            {
+                if (!_placingEventActive ||
+                    _lastPlacingOnApron != onApron ||
+                    (ghostPosition - _lastPlacingGhostPosition).sqrMagnitude > 1e-4f)
+                {
+                    _placingEventActive = true;
+                    _lastPlacingGhostPosition = ghostPosition;
+                    _lastPlacingOnApron = onApron;
+                    _events.Publish(new BuildPlacingChanged(true, ghostPosition, onApron));
+                }
+            }
+            else if (_placingEventActive)
+            {
+                _placingEventActive = false;
+                _lastPlacingGhostPosition = Vector3.zero;
+                _lastPlacingOnApron = false;
+                _events.Publish(new BuildPlacingChanged(false, Vector3.zero, false));
+            }
         }
 
         private void StepPlacedViews(float deltaTime)
@@ -1566,6 +1731,7 @@ namespace MoonProject.Gameplay
             }
 
             _input?.SetModeOwner(this, false);
+            StepPlacingEvent(false, Vector3.zero, false);
             StepWeldLoopAudio(false, Vector3.zero);
             SetHold(false);
             if (_gazing && _rig != null)
