@@ -931,6 +931,10 @@
             "text": "Fits the cutter on the pad."
         },
         {
+            "key": "pickup.habitat.power_module",
+            "text": "Power module"
+        },
+        {
             "key": "ui.system.column",
             "text": "16"
         },
@@ -1169,6 +1173,14 @@
         {
             "key": "build.hint.rotate",
             "text": "Rotate"
+        },
+        {
+            "key": "build.hint.fixed",
+            "text": "Fixed to its frame"
+        },
+        {
+            "key": "build.hint.fixed_to",
+            "text": "Fixed to: {0}"
         },
         {
             "key": "build.step.place",

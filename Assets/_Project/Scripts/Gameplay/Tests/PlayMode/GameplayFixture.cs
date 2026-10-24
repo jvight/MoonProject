@@ -327,7 +327,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 if (pieces[i].Id == "HabitatModules")
                 {
                     ShowsScans(Named(Block(piece, new Vector3(-1.6f, 1.1f, -1.25f), new Vector3(0.5f, 0.6f, 0.05f)),
-                        "AirlockPanel"));
+                        "AirlockReadout"));
                 }
 
                 for (int t = 1; t <= pieces[i].Targets; t++)

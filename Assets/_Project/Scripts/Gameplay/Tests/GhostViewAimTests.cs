@@ -97,6 +97,67 @@ namespace MoonProject.Gameplay.Tests
                 distant, _tuning), "a bay beyond 07's reach is not settled on");
         }
 
+        [Test]
+        public void EnteringPlacingNearTheApron_SnapsToItEvenWhenTheCameraLooksElsewhere_AndUnsnapsOnLookingAway()
+        {
+            Vector3 apron = new Vector3(0f, 0f, 4.5f);
+            Assert.IsTrue(GhostAim.IsApronInReach(Rover, apron, _tuning), "apron within snap radius is in reach");
+
+            bool latched = true;
+            Vector3 offAxisForward = Quaternion.Euler(6f, -65f, 0f) * Vector3.forward;
+            Vector3 snapped = GhostAim.ResolvePlacingPoint(
+                _ground,
+                Eye,
+                offAxisForward,
+                Rover,
+                Vector3.forward,
+                apron,
+                _tuning,
+                useViewAim: false,
+                lookedAwayFromApron: false,
+                ref latched);
+            Assert.AreEqual(apron, snapped, "ghost snaps onto the apron in reach even before the camera turns to it");
+            Assert.IsTrue(latched, "apron latch holds while no look-away input has occurred");
+
+            Vector3 lookAwayPoint = GhostAim.ResolvePlacingPoint(
+                _ground,
+                Eye,
+                offAxisForward,
+                Rover,
+                Vector3.forward,
+                apron,
+                _tuning,
+                useViewAim: true,
+                lookedAwayFromApron: true,
+                ref latched);
+            Assert.IsFalse(latched, "looking away from the apron releases the latch");
+            Assert.Greater(Vector3.Distance(Flat(lookAwayPoint), Flat(apron)), 1f, "ghost un-snaps from the apron");
+        }
+
+        [Test]
+        public void ResolvePlacingPoint_AlwaysGroundsTheGhostOnSlopedTerrain_AndSnapHalfLifeSettlesInAbout150Milliseconds()
+        {
+            var sloped = new SlopedGround(slopePerMetreZ: 0.25f, baseHeight: 2f);
+            bool latched = false;
+            Vector3 point = GhostAim.ResolvePlacingPoint(
+                sloped,
+                Eye + Vector3.up * 3f,
+                new Vector3(0f, -0.2f, 1f),
+                Rover,
+                Vector3.forward,
+                null,
+                _tuning,
+                useViewAim: false,
+                lookedAwayFromApron: false,
+                ref latched);
+            float expectedY = sloped.SampleHeight(point.x, point.z);
+            Assert.AreEqual(expectedY, point.y, 1e-4f, "ghost Y always sits on the terrain surface, never floating");
+
+            Assert.AreEqual(0.15f, _tuning.GhostSnapEaseSeconds, 1e-4f, "tuned snap ease is ~0.15 s");
+            float halfLife = GhostAim.SnapHalfLife(_tuning);
+            Assert.That(halfLife, Is.InRange(0.03f, 0.08f), "half-life settles the ~0.15 s snap ease in ~3 half-lives");
+        }
+
         private static Vector3 Flat(Vector3 v)
         {
             return new Vector3(v.x, 0f, v.z);
@@ -119,6 +180,35 @@ namespace MoonProject.Gameplay.Tests
             public Vector3 SampleNormal(float x, float z)
             {
                 return Vector3.up;
+            }
+        }
+
+        private sealed class SlopedGround : ITerrainQuery
+        {
+            private readonly float _slopePerMetreZ;
+            private readonly float _baseHeight;
+
+            public SlopedGround(float slopePerMetreZ, float baseHeight)
+            {
+                _slopePerMetreZ = slopePerMetreZ;
+                _baseHeight = baseHeight;
+            }
+
+            public Rect PlayableArea => new Rect(-500f, -500f, 1000f, 1000f);
+
+            public bool IsDrivable(float x, float z)
+            {
+                return true;
+            }
+
+            public float SampleHeight(float x, float z)
+            {
+                return _baseHeight + z * _slopePerMetreZ;
+            }
+
+            public Vector3 SampleNormal(float x, float z)
+            {
+                return new Vector3(0f, 1f, -_slopePerMetreZ).normalized;
             }
         }
     }

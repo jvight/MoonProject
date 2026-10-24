@@ -425,8 +425,8 @@ namespace MoonProject.UI
                 services.Catalog, services.Events, _roverDiagram);
             _salvageRing = new SalvageRing(_layout, _tuning.Salvage, _tuning.Prompts, services.Salvage, services.View);
             _buildStrip = new BuildStripView(_layout, _tuning.BuildStripReveal, _tuning.Prompts, _localization,
-                _numbers, services.Materials, services.View, _glyphs, services.Events, services.BuildField,
-                _structureIcons, services.WeldEnergy);
+                _numbers, services.Materials, services.View, services.Rover, _glyphs, services.Events,
+                services.BuildField, _structureIcons, services.WeldEnergy);
             _cargo = new CargoScreen(_layout, _tuning.Cargo, _localization, services.Hold, services.Systems,
                 _roverDiagram, _glyphs, _numbers, services.Events, _ledger);
             _postLog = new PostLog(_tuning.Post);
@@ -792,12 +792,16 @@ namespace MoonProject.UI
             _guidanceShown[(int)GuidanceKind.CallLine] = _replyOnFace || (_callView.IsVisible && _callAsLine);
             _guidanceWants[(int)GuidanceKind.CallStatus] = ObjectiveOpen(paused) && _call.WantsStill;
             _guidanceShown[(int)GuidanceKind.CallStatus] = _callView.IsVisible && !_callAsLine;
-            _guidanceWants[(int)GuidanceKind.BuildStep] = BuildStepOpen(paused) && _buildStrip.Step != BuildStep.None;
+            // While the ghost sits snapped on a valid spot, its chip (cost and keys) is the one element: no line beside
+            // it. Until then the line keeps saying where the thing goes.
+            bool costUp = _buildStrip.GhostSettled;
+            _guidanceWants[(int)GuidanceKind.BuildStep] = BuildStepOpen(paused) && !costUp &&
+                                                         _buildStrip.Step != BuildStep.None;
             _guidanceWants[(int)GuidanceKind.Prompt] = holder != PromptHolder.None;
-            _guidanceWants[(int)GuidanceKind.Battery] = ObjectiveOpen(paused) && _lowBattery.WantsShown;
-            _guidanceWants[(int)GuidanceKind.NextLine] = ObjectiveOpen(paused) && _objective.IsNext;
+            _guidanceWants[(int)GuidanceKind.Battery] = ObjectiveOpen(paused) && !costUp && _lowBattery.WantsShown;
+            _guidanceWants[(int)GuidanceKind.NextLine] = ObjectiveOpen(paused) && !costUp && _objective.IsNext;
             _guidanceWants[(int)GuidanceKind.Objective] =
-                ObjectiveOpen(paused) && _objective.WantsShown && !_objective.IsNext;
+                ObjectiveOpen(paused) && !costUp && _objective.WantsShown && !_objective.IsNext;
             _guidanceShown[(int)GuidanceKind.BuildStep] = _objectiveView.ShowsBuildStep;
             // Every chip in the bottom slot counts, the objective's own too, so a hand-over from the line ends.
             _guidanceShown[(int)GuidanceKind.Prompt] = chipUp || _lookUpChip.IsVisible || _unlockCard.IsVisible ||

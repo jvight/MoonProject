@@ -22,6 +22,8 @@ MonoBehaviour:
   _ghostAheadMetres: 4.5
   _apronPadYaw: 180
   _apronSnapRadius: 4
+  _apronSnapReachMargin: 0.5
+  _ghostSnapEaseSeconds: 0.15
   _settleThumpMeters: 0.042
   _settleDustRingCount: 18
   _linkHeight: 0.6

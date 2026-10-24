@@ -234,10 +234,11 @@ namespace MoonProject.Gameplay.PlayModeTests
                 Assert.Greater(light.color.r, light.color.b, "and is a warm amber");
             }
 
-            Light spot = lights.Find(light => light.type == LightType.Spot);
-            Assert.IsNotNull(spot, "the pad's light is a spot");
-            Assert.AreEqual(1, lights.FindAll(light => light.type == LightType.Spot).Count, "and only the pad's");
-            Assert.Less(spot.transform.forward.y, -0.9f, "pointing straight down at the pad");
+            foreach (Light light in lights)
+            {
+                Assert.AreEqual(LightType.Spot, light.type, "every lamp light is a cone, never a point on a face");
+                Assert.Less(light.transform.forward.y, -0.9f, "pointing straight down at the regolith");
+            }
         }
 
         [UnityTest]

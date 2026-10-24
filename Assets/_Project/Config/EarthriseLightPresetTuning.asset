@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b77ef413e164380499e60a05ea762688, type: 3}
+  m_Name: EarthriseLightPresetTuning
+  m_EditorClassIdentifier: 
+  _fadeInSeconds: 5
+  _holdSeconds: 15
+  _fadeOutSeconds: 6
+  _earthKeyColor: {r: 0.46, g: 0.69, b: 0.98, a: 1}
+  _earthKeyIntensity: 0.94
+  _startElevationDegrees: 4.5
+  _peakElevationDegrees: 14.5
+  _warmRimColor: {r: 0.96, g: 0.74, b: 0.52, a: 1}
+  _warmRimIntensity: 0.42
+  _ambientSkyColor: {r: 0.19, g: 0.29, b: 0.48, a: 1}
+  _ambientEquatorColor: {r: 0.22, g: 0.26, b: 0.38, a: 1}
+  _ambientGroundColor: {r: 0.08, g: 0.11, b: 0.18, a: 1}
+  _skyBackgroundColor: {r: 0.06, g: 0.1, b: 0.19, a: 1}
+  _horizonHazeColor: {r: 0.36, g: 0.56, b: 0.88, a: 0.45}
+  _gradeColorFilter: {r: 0.86, g: 0.93, b: 1, a: 1}

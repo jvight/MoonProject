@@ -931,6 +931,10 @@
             "text": "Lắp vào mỏ cắt khi đỗ trên bệ."
         },
         {
+            "key": "pickup.habitat.power_module",
+            "text": "Mô-đun nguồn"
+        },
+        {
             "key": "ui.system.column",
             "text": "17"
         },
@@ -1169,6 +1173,14 @@
         {
             "key": "build.hint.rotate",
             "text": "Xoay"
+        },
+        {
+            "key": "build.hint.fixed",
+            "text": "Khớp vào khung"
+        },
+        {
+            "key": "build.hint.fixed_to",
+            "text": "Khớp vào: {0}"
         },
         {
             "key": "build.step.place",

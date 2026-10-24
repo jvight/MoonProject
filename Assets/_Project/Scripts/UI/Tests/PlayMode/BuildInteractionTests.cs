@@ -74,18 +74,20 @@ namespace MoonProject.UI.PlayModeTests
             Assert.IsFalse(ui.BuildStrip.IsVisible, "the cards leave for placing");
             Assert.IsTrue(ui.BuildStrip.IsCostShown, "the ghost carries its cost rows (opening-v3 E7)");
             StringAssert.Contains("E/", ui.BuildStrip.GhostKeys, "both place controls are named: the key and the click");
-            StringAssert.Contains("Z/C", ui.BuildStrip.GhostKeys, "and the rotate keys, from the real bindings");
-            Assert.IsTrue(ui.Objective.ShowsBuildStep, "the one placing line takes the guidance slot");
-            StringAssert.Contains("E", ui.Layout.NextLineText.text, "it names the real place key");
-            string placing = ui.Layout.NextLineText.text;
+            Assert.IsFalse(build.Controller.CanRotateGhost, "the bank takes its pose from the power module");
+            StringAssert.Contains(string.Format(ui.Localization.Get(UiKeys.BuildHintFixedTo),
+                    ui.Localization.Get(build.Controller.FrameNounKey)), ui.BuildStrip.GhostKeys,
+                "so the chip names the frame it is fixed to, not a wheel that would do nothing");
+            StringAssert.DoesNotContain("Z/C", ui.BuildStrip.GhostKeys);
+            Assert.IsFalse(ui.BuildStrip.GhostSettled, "no module here to snap onto");
+            Assert.IsTrue(ui.Objective.ShowsBuildStep, "so the placing line still says where it goes");
 
             yield return Tap(keyboard.escapeKey);
             yield return Seconds(Settle);
             Assert.AreEqual(BuildModeState.Closed, build.State, "Esc leaves build mode");
             Assert.IsFalse(ui.Pause.IsOpen, "and does not also pause the game");
             Assert.AreEqual(CursorMode.Drive, ui.Cursor.Mode);
-            Assert.IsFalse(ui.Objective.ShowsBuildStep, "the placing line has gone");
-            Assert.AreNotEqual(placing, ui.Layout.NextLineText.text, "and its words are never read again");
+            Assert.IsFalse(ui.Objective.ShowsBuildStep, "no placing line after build mode");
         }
 
         [UnityTest]
