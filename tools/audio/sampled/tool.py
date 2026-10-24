@@ -7,11 +7,11 @@ ring of struck metal on that step, soft enough to sit inside the sweep instead o
 The cutter's charge, heavy rather than weightless: 07 braces on a real servo and a padded clunk, each stage seats a
 capacitor cell with a dense latch, the full lock rings the chassis steel on D2; the whine is a real small motor held
 on D5 (the runtime glides it D -> A -> D' up the stages) over the mains hum carried down to D2. The cut: a deeper
-hum-and-arc body for the higher tiers, and the piece breaking free with a snap and a low ring.
+hum-and-arc body for the higher tiers, the beam's servo sliding up a step to each next cut line, and the piece
+breaking free with a snap and a low ring.
 """
 import numpy as np
 
-from analyze_audio import dominant_pitch
 from synth import filters
 from synth.core import note_freq, samples
 
@@ -23,8 +23,7 @@ CHARGE_WHINE_LOOP_S = 2.0
 CHARGE_HUM_LOOP_S = 3.0
 LOOP_SEAM_S = 0.35
 CUT_UNDERTONE_LOOP_S = 4.0
-# Where the bow sits closest to its pitch (it drifts flat later, which the step measures and takes out).
-RING_OFFSET_S = 1.0
+SEGMENT_NOTES = ("D5", "E5", "F#5", "A5", "B5")
 
 
 def scan_sweep(lib, gen, _variant: int) -> np.ndarray:
@@ -41,22 +40,29 @@ def scan_sweep(lib, gen, _variant: int) -> np.ndarray:
 
 def scan_step(lib, _gen, variant: int) -> np.ndarray:
     """A quarter of a scan drawn: a light tap on the lens collar and a short ring of struck metal on the next step
-    (variant k: D5 E5 F#5 A5). A higher note reads further into the bow, where it drifts flat, so the step is measured
-    once and struck again with that drift taken out."""
+    (variant k: D5 E5 F#5 A5), kept in tune."""
     note = SCAN_STEP_NOTES[variant]
-    step = _step(lib, note, 0.0)
-    _, error, _ = dominant_pitch(step)
-    return _step(lib, note, -error) if abs(error) > 1.0 else step
+    tap = parts.clip(lib, "metal_tap", 2600.0, 300.0, 1.1)
+
+    def build(cents):
+        out = np.zeros(samples(0.7))
+        dsp.place(out, tap, 0.0, 0.25)
+        dsp.place(out, parts.ring(lib, note, 0.65, cents), 0.005, 0.6)
+        return out
+
+    return parts.in_tune(build, note)
 
 
-def _step(lib, note: str, cents: float) -> np.ndarray:
-    f = note_freq(note)
-    out = np.zeros(samples(0.7))
-    dsp.place(out, parts.clip(lib, "metal_tap", 2600.0, 300.0, 1.1), 0.0, 0.25)
-    ring_n = samples(0.65)
-    rate = dsp.ratio_for(note, lib.f0("bowed_metal"), np.full(ring_n, cents / 100.0))
-    ring = parts.band(dsp.varispeed(lib("bowed_metal"), rate, ring_n, RING_OFFSET_S), f * 0.7, f * 1.6)
-    dsp.place(out, ring * dsp.shape(ring_n, [(0.0, 0.0), (0.012, 1.0), (0.15, 0.45), (0.65, 0.0)]), 0.005, 0.6)
+def segment_slide(lib, gen, variant: int) -> np.ndarray:
+    """The beam moving to a piece's next cut line: the turret's latch letting go and its small servo sliding up onto
+    the next step (variant k: D5 E5 F#5 A5 B5), so a big plate reads as several small victories."""
+    note = SEGMENT_NOTES[variant]
+    n = samples(0.6)
+    out = np.zeros(n)
+    dsp.place(out, parts.clip(lib, "latch_thunk", 2400.0, 150.0, 1.15), 0.0, 0.4)
+    slide_n = samples(0.5)
+    slide = parts.servo(lib, gen, slide_n, note, [(0.0, -2.0), (0.12, 0.0), (0.5, 0.0)])
+    dsp.place(out, slide * dsp.shape(slide_n, [(0.0, 0.0), (0.03, 1.0), (0.2, 0.6), (0.5, 0.0)]), 0.02, 0.5)
     return out
 
 
@@ -146,4 +152,5 @@ SOUNDS = {
     "charge_lock": (charge_lock, 1),
     "cut_undertone": (cut_undertone, 1),
     "cut_crack": (cut_crack, 1),
+    "segment_slide": (segment_slide, len(SEGMENT_NOTES)),
 }

@@ -25,13 +25,22 @@ namespace MoonProject.Gameplay
         [Tooltip("A key unused for this long counts as new again: the line leads with its glyph (G2).")]
         [Range(30f, 1800f)] [SerializeField] private float _keyFreshSeconds = 300f;
 
+        [Tooltip("07 closing on the line's place at least this fast (m/s) is progress: no reminder while it drives there.")]
+        [Range(0.1f, 3f)] [SerializeField] private float _closingSpeed = 0.5f;
+
+        [Tooltip("Metres from a place within which 07 has arrived: a line that only sends 07 there goes quiet, and " +
+                 "the place's own chips lead.")]
+        [Range(2f, 40f)] [SerializeField] private float _arrivalReach = 15f;
+
         public GuidanceTiming()
         {
         }
 
         public GuidanceTiming(float nextLineSeconds, float stallSeconds, float againSeconds, float reminderSeconds,
-            float keyFreshSeconds)
+            float keyFreshSeconds, float closingSpeed, float arrivalReach)
         {
+            _closingSpeed = closingSpeed;
+            _arrivalReach = arrivalReach;
             _nextLineSeconds = nextLineSeconds;
             _stallSeconds = stallSeconds;
             _againSeconds = againSeconds;
@@ -44,5 +53,7 @@ namespace MoonProject.Gameplay
         public float AgainSeconds => _againSeconds;
         public float ReminderSeconds => _reminderSeconds;
         public float KeyFreshSeconds => _keyFreshSeconds;
+        public float ClosingSpeed => _closingSpeed;
+        public float ArrivalReach => _arrivalReach;
     }
 }

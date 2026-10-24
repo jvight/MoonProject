@@ -955,10 +955,6 @@
             "text": "DỰ TRỮ TÀU ĐỔ BỘ · {0}%"
         },
         {
-            "key": "ui.readout.sun",
-            "text": "MẶT TRỜI"
-        },
-        {
             "key": "story.airlock_panel",
             "text": "NIÊM PHONG NHÀ Ở · KHOÁ · 28/10/1988\nÁO VŨ TRỤ 01-04 · NGOẠI TUYẾN · 29/10/1988 · 04:12"
         },
@@ -1273,14 +1269,6 @@
         {
             "key": "post.antenna.receive_only",
             "text": "CHỈ NHẬN · TÍN HIỆU QUỸ ĐẠO"
-        },
-        {
-            "key": "ui.readout.sunset_in",
-            "text": "LẶN SAU {0} PHÚT"
-        },
-        {
-            "key": "ui.readout.sunset_soon",
-            "text": "SẮP LẶN"
         },
         {
             "key": "db.empty",

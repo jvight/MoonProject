@@ -289,16 +289,11 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
-        public void TheSunsTime_ShowsOnlyWhileItIsReallyGoingDown()
+        public void TheSunsArc_IsDoneOnlyOnceTheSunHasSet()
         {
-            Assert.IsFalse(SunArc.CountsDown(float.PositiveInfinity), "the opening holds the Sun: no countdown");
-            Assert.IsFalse(SunArc.HasSet(float.PositiveInfinity));
-            Assert.IsFalse(SunArc.CountsDown(0f), "set");
+            Assert.IsFalse(SunArc.HasSet(float.PositiveInfinity), "the opening holds the Sun");
+            Assert.IsFalse(SunArc.HasSet(90f), "still going down");
             Assert.IsTrue(SunArc.HasSet(0f));
-            Assert.IsTrue(SunArc.CountsDown(90f));
-            Assert.AreEqual(2, SunArc.MinutesLeft(61f), "rounded up");
-            Assert.AreEqual(1, SunArc.MinutesLeft(5f), "never 0 while it is still up");
-            Assert.AreEqual(12, SunArc.MinutesLeft(720f));
         }
 
         private void AssertSystems(string[] expected)

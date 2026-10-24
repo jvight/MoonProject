@@ -403,7 +403,7 @@ MonoBehaviour:
     _westMast: {x: -204.853, y: -74.56037}
     _elderSite: {x: 265.42465, y: 84.128975}
     _elderRadius: 4
-    _hutOffset: {x: -1.8, y: 0.2}
+    _hutOffset: {x: -2.2, y: 1.2}
     _hutRadius: 3
   _atmosphere:
     _lightColor: {r: 0.92, g: 0.94, b: 1, a: 1}
@@ -705,7 +705,7 @@ MonoBehaviour:
       _anchor: micro.06
       _id: Elder06
       _offset: {x: 0, y: 0}
-      _yaw: 0
+      _yaw: -90
       _sink: 0.08
     _elder06Slump: 9
     _elder01:

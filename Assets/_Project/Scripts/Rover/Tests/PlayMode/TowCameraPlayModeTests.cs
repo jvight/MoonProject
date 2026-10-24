@@ -164,6 +164,7 @@ namespace MoonProject.Rover.PlayModeTests
         private static void Capture(Camera view, string name)
         {
             FrameCapture.SavePng(view, 1920, 1080, Path.Combine(CaptureFolder, name + ".png"));
+            FrameCapture.SavePng(view, 3440, 1440, Path.Combine(CaptureFolder, name + "-21x9.png"));
         }
 
         private static Transform Find(Transform root, string name)

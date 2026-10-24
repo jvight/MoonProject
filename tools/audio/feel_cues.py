@@ -106,14 +106,6 @@ def save_tick(_variant, gen):
     return filters.lowpass(0.25 * _tick(gen, note_freq("D6"), 0.15), 5000.0)
 
 
-COUNT_TICK_NOTES = ("D5", "E5", "F#5", "A5", "B5", "D6")
-
-
-def count_tick(variant, gen):
-    """The stock counter rolling one unit (feel-pass CountTick): a soft rising pentatonic tick."""
-    return filters.lowpass(0.25 * _tick(gen, note_freq(COUNT_TICK_NOTES[variant]), 0.15), 5000.0)
-
-
 # ----------------------------------------------------------------------------------------- picking a part up (E)
 
 def pickup_lift(_variant, gen):
@@ -139,7 +131,6 @@ def pickup_clunk(_variant, gen):
 # ----------------------------------------------------------------------------- M3-26: the charge run and the tiers
 
 CUTTER_TIER_LABELS = ("tier0", "tier1", "tier2", "tier3")
-SEGMENT_NOTES = ("D5", "E5", "F#5", "A5", "B5")
 
 
 def cut_ignite_tier(variant, gen):
@@ -156,17 +147,6 @@ def cut_ignite_tier(variant, gen):
     return filters.lowpass(mix, 6000.0 + 1200.0 * variant)
 
 
-def segment_slide(variant, gen):
-    """The beam moving to a piece's next cut line: a soft tick and a short upward slide onto the next pentatonic
-    step, so a big plate reads as several small victories."""
-    n = samples(0.6)
-    target = note_freq(SEGMENT_NOTES[variant])
-    slide = osc.sine(n, osc.glide(n, target * 0.94, target, time_constant=0.04)) * envelope.ar(n, 0.005, 0.3)
-    mix = 0.3 * slide
-    place(mix, 0.2 * _tick(gen, target, 0.1), 0)
-    return filters.lowpass(mix, 5000.0)
-
-
 # ------------------------------------------------------------------------------------------ M3-25: cargo and storage
 
 def cargo_tok(_variant, gen):
@@ -179,9 +159,6 @@ def cargo_tok(_variant, gen):
 
 # ------------------------------------------------------------------------- 0.5.5 B: 07's hold boots
 
-HOLD_SLOT_NOTES = ("D5", "E5", "F#5", "A5", "B5", "D6", "E6", "F#6")
-
-
 def hold_boot(_variant, gen):
     """The first Tab press: 07's hold powering on in the dark, a soft rising D3 hum and a faint relay click."""
     n = samples(1.2)
@@ -191,11 +168,6 @@ def hold_boot(_variant, gen):
     mix = 0.15 * filters.lowpass(hum, 900.0)
     place(mix, 0.2 * _tick(gen, note_freq("A4"), 0.1), samples(0.02))
     return mix
-
-
-def hold_slot(variant, gen):
-    """A hold slot's outline lighting (60 ms apart, left to right): a soft tick on the next pentatonic step."""
-    return filters.lowpass(0.25 * _tick(gen, note_freq(HOLD_SLOT_NOTES[variant]), 0.15), 5000.0)
 
 
 def item_slide(_variant, gen):

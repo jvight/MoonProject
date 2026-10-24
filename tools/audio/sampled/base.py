@@ -20,6 +20,8 @@ from . import dsp, parts
 
 LAMP_S = 1.2
 DOCK_HUM_LOOP_S = 4.0
+# A cell filling at a charger, one step per cell: D E F# A B and up an octave.
+BATTERY_CELL_NOTES = ("D5", "E5", "F#5", "A5", "B5", "D6", "E6", "F#6")
 LOOP_SEAM_S = 0.35
 # The hum's step for each lamp in the lighting order, as ratios of D3: D3, E3, F#3, A3 (D major pentatonic).
 LAMP_STEPS = (1.0, 2.0 ** (2.0 / 12.0), 2.0 ** (4.0 / 12.0), 2.0 ** (7.0 / 12.0))
@@ -132,6 +134,22 @@ def dock_charge_hum(lib, gen, _variant: int) -> np.ndarray:
     return dsp.seamless(hum * breath, samples(DOCK_HUM_LOOP_S), samples(LOOP_SEAM_S))
 
 
+def battery_cell(lib, gen, variant: int) -> np.ndarray:
+    """A cell filling at a charger (also 07's lamps lighting one by one as it wakes): the cell's small contactor
+    closing and struck metal ringing on its step (variant k: D5 E5 F#5 A5 B5 D6 E6 F#6), short and soft so a whole
+    charge is a gentle rising run; kept in tune."""
+    note = BATTERY_CELL_NOTES[variant]
+    click = parts.clip(lib, "relay_click", 2400.0, 200.0, 0.9)
+
+    def build(cents):
+        out = np.zeros(samples(1.3))
+        dsp.place(out, click, 0.0, 0.25)
+        dsp.place(out, parts.ring(lib, note, 1.2, cents), 0.01, 0.6)
+        return out
+
+    return parts.in_tune(build, note)
+
+
 # Cue id -> (recipe, variants). Every variant ships: one per lamp in the lighting order, one each for the lock.
 SOUNDS = {
     "base_lamp_on": (lamp_on, len(LAMP_STEPS)),
@@ -142,4 +160,5 @@ SOUNDS = {
     "rack_fill": (rack_fill, 1),
     "rack_outline": (rack_outline, 1),
     "dock_charge_hum": (dock_charge_hum, 1),
+    "battery_cell": (battery_cell, len(BATTERY_CELL_NOTES)),
 }

@@ -58,6 +58,7 @@ namespace MoonProject.Rover.Editor
             BuildDustTexture();
             BuildDustMaterial();
             BuildMoteMaterial();
+            BuildThreadMaterial();
             BuildNozzleMeshes();
             AssetDatabase.SaveAssets();
         }
@@ -143,6 +144,14 @@ namespace MoonProject.Rover.Editor
             BaseShaderGUI.SetupMaterialBlendMode(material);
             MaterialValidation.Validate(material);
             GeneratedAssets.CreateOrReplace(material, RoverAssetPaths.DustMaterial);
+        }
+
+        private static void BuildThreadMaterial()
+        {
+            var shader = BuildWiring.Require<Shader>(RoverAssetPaths.UnlitShader, "the URP package");
+            var material = new Material(shader) { enableInstancing = true };
+            MaterialValidation.Validate(material);
+            GeneratedAssets.CreateOrReplace(material, RoverAssetPaths.ThreadMaterial);
         }
 
         private static void BuildMoteMaterial()

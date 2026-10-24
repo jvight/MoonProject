@@ -7,11 +7,11 @@ using MoonProject.Core.Events;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The range ring in play (<see cref="IRangeRing"/>): shown faint for a few seconds at the first charge, and in
-    /// full when asked (<see cref="Show"/>; the release's staggered order calls it). Each showing works the ring out
-    /// from 07's place and charge with <see cref="RangeRingModel"/>, holds that polygon for the showing (a ring that
-    /// follows 07 about would read as a radius, not as the world's edge), publishes <see cref="RangeRingShown"/> and
-    /// fades in and out. The charge points come from the built pads, and from whatever else adds them later.
+    /// The range ring in play (<see cref="IRangeRing"/>): shown only at its two moments — faint at the first charge, and
+    /// in full once at the release (<see cref="Show"/>; the release's staggered order calls it) — and never lingering on
+    /// load. Each showing works the ring out from 07's place and charge with <see cref="RangeRingModel"/>, holds that
+    /// polygon for the showing (a ring that follows 07 about would read as a radius, not as the world's edge), publishes
+    /// <see cref="RangeRingShown"/>, draws out over ~2 s, holds ~1.5 s, and eases out over ~3 s until gone.
     /// </summary>
     public sealed class RangeRingField : IRangeRing, IDisposable
     {
@@ -24,9 +24,12 @@ namespace MoonProject.Gameplay
         private readonly Vector3[] _polygon;
         private readonly List<Vector3> _chargePoints = new List<Vector3>();
         private readonly IDisposable _milestones;
+        private readonly IDisposable _releases;
+        private readonly IDisposable _relays;
         private float _seconds;
         private float _left;
         private Vector3 _centre;
+        private bool _fullShown;
 
         public RangeRingField(EventBus events, RangeRingSettings settings, RangeRingModel model, BatteryModel battery,
             IChargePointSource chargePointSource, IRoverState rover)
@@ -39,6 +42,8 @@ namespace MoonProject.Gameplay
             _rover = rover ?? throw new ArgumentNullException(nameof(rover));
             _polygon = new Vector3[settings.Points];
             _milestones = events.Subscribe<OpeningMilestoneReached>(OnMilestone);
+            _releases = events.Subscribe<ReleaseStageChanged>(OnReleaseStage);
+            _relays = events.Subscribe<RelayRelit>(OnRelayRelit);
         }
 
         public bool IsShown => _left > 0f;
@@ -92,9 +97,23 @@ namespace MoonProject.Gameplay
             return _polygon[index];
         }
 
-        /// <summary>Shows the ring in <paramref name="mode"/>, worked out from 07's place and charge now.</summary>
+        /// <summary>
+        /// Shows the ring in <paramref name="mode"/>, worked out from 07's place and charge now. The ring shows only at
+        /// its two moments (first charge faint, release full); once the full release ring has been shown, later calls do
+        /// not re-show it.
+        /// </summary>
         public void Show(RangeRingMode mode)
         {
+            if (_fullShown)
+            {
+                return;
+            }
+
+            if (mode == RangeRingMode.Full)
+            {
+                _fullShown = true;
+            }
+
             _chargePoints.Clear();
             _chargePointSource.CopyChargePoints(_chargePoints);
             _centre = _rover.Position;
@@ -116,13 +135,50 @@ namespace MoonProject.Gameplay
         public void Dispose()
         {
             _milestones.Dispose();
+            _releases.Dispose();
+            _relays.Dispose();
         }
 
         private void OnMilestone(OpeningMilestoneReached reached)
         {
-            if (reached.Milestone == OpeningMilestone.FirstCharge && !reached.Restored)
+            if (reached.Restored)
+            {
+                _left = 0f;
+                _seconds = 0f;
+                if (reached.Milestone == OpeningMilestone.CallAnswered)
+                {
+                    _fullShown = true;
+                }
+
+                return;
+            }
+
+            if (reached.Milestone == OpeningMilestone.FirstCharge)
             {
                 Show(RangeRingMode.Faint);
+            }
+        }
+
+        private void OnReleaseStage(ReleaseStageChanged changed)
+        {
+            if (changed.Restored)
+            {
+                _left = 0f;
+                _seconds = 0f;
+                if (changed.Stage != ReleaseStage.Waiting)
+                {
+                    _fullShown = true;
+                }
+            }
+        }
+
+        private void OnRelayRelit(RelayRelit relit)
+        {
+            if (relit.Restored)
+            {
+                _left = 0f;
+                _seconds = 0f;
+                _fullShown = true;
             }
         }
     }

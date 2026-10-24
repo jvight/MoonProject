@@ -12,7 +12,7 @@ import numpy as np
 
 from synth.core import note_freq
 
-from . import base, boot, build, call, drive, dsp, face, rover, sky, tool, ui, voice
+from . import base, boot, build, call, drive, dsp, face, hold, rover, sky, tool, ui, voice
 
 LIBRARY_ENV = "MOONPROJECT_SOUND_LIBRARY"
 
@@ -43,9 +43,10 @@ BUILD = {
 # 07's lamp switch (sampled/rover.py: on and off), 07's face booting (sampled/face.py: the owner's picks, with every
 # stroke, text tick and load step), the call (sampled/call.py: its two loops, each note of the name's climb, the
 # transmission and relay.1's answer), 07's tools (sampled/tool.py: the scan lens with each quarter's step, the
-# cutter's charge and cut) and its drive (sampled/drive.py: the motor and the boost).
+# cutter's charge and cut), its drive (sampled/drive.py: the motor and the boost) and its hold (sampled/hold.py: each
+# slot's tick and each unit counted).
 _EVERY_VARIANT = {**boot.SOUNDS, **base.SOUNDS, **rover.SOUNDS, **face.SOUNDS, **call.SOUNDS, **tool.SOUNDS,
-                  **drive.SOUNDS}
+                  **drive.SOUNDS, **hold.SOUNDS}
 
 # The self-test cutter's fault on its result: the short strain-and-choke, so it is 07's fault voice but quicker than
 # worried's.

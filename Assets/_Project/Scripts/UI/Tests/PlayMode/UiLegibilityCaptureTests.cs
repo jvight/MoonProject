@@ -8,6 +8,7 @@ using UnityEngine.TestTools;
 using UnityEngine.UIElements;
 using MoonProject.Core;
 using MoonProject.Core.Events;
+using MoonProject.Core.Input;
 using MoonProject.Gameplay;
 
 namespace MoonProject.UI.PlayModeTests
@@ -32,6 +33,8 @@ namespace MoonProject.UI.PlayModeTests
         private const int ResetTextPresses = 1;
         private const float DaySunIntensity = 1.35f;
         private const float NightSunIntensity = 0.06f;
+
+        private const float ChipWaitSeconds = 3f;
 
         /// <summary>
         /// The legibility captures (docs/design/first-hour-v2 6.2, M3-24 part A, and 0.5.7 Variant C CRT) at 1920x1080:
@@ -245,6 +248,132 @@ namespace MoonProject.UI.PlayModeTests
             Assert.Ignore("Captures need the editor.");
             yield break;
 #endif
+        }
+
+        /// <summary>
+        /// The guidance in its one style (docs/design/opening-v3-feel-audit.md row 4): the next line and a world chip,
+        /// each the one element, by day and by night, at 16:9 (1920x1080) and 21:9 (3440x1440), into
+        /// Logs/captures/guidance. Each text must reach 4.5:1 against its own plate composited over the brightest dune of
+        /// the scene (the worst backdrop a plate can hold, whatever the frame shows behind it), and the line must be at
+        /// full opacity a quarter second after it is given, never caught in a faded state while it is the active element.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator CaptureGuidance_ByDayAndByNight_At16x9And21x9_InOneFullStrengthStyle()
+        {
+#if UNITY_EDITOR
+            InputSystem.AddDevice<Keyboard>();
+            yield return LoadMain();
+            GameContext context = FindBootstrap().Context;
+            Camera camera = context.Get<IViewCamera>().Camera;
+            UISystem ui = BuildUi(context, out FakeGameServices fakes, out _);
+            FreezeWorld();
+            ui.Ledger.RecordLookTaught();
+            ui.Ledger.RecordDriveTaught();
+            ui.Ledger.RecordHoldChipShown();
+            ui.Ledger.RecordHoldBooted();
+            context.Events.Publish(new RoverAwoke(Vector3.zero, false));
+            yield return new WaitForSecondsRealtime(1f);
+            string folder = Path.GetFullPath(Path.Combine(CapturesFolder, "guidance"));
+            Directory.CreateDirectory(folder);
+            var report = new List<string>();
+            UiLayout layout = ui.Layout;
+            Transform view = camera.transform;
+            var skyBehaviour = context.TryGet(out ISunlight sunlight) ? sunlight as MonoBehaviour : null;
+            if (skyBehaviour != null)
+            {
+                skyBehaviour.enabled = false;
+            }
+
+            Light sun = RenderSettings.sun;
+            float savedIntensity = sun != null ? sun.intensity : 1f;
+            Color savedSky = RenderSettings.ambientSkyColor;
+            Color savedEquator = RenderSettings.ambientEquatorColor;
+            Color savedGround = RenderSettings.ambientGroundColor;
+            Vector4 savedSunColor = Shader.GetGlobalVector("_MoonSunColor");
+            Vector4 savedSunlitGround = Shader.GetGlobalVector("_MoonSunlitGround");
+            try
+            {
+                int shot = 0;
+                foreach (bool day in new[] { true, false })
+                {
+                    SetLighting(sun, day, savedSunColor);
+                    yield return new WaitForSecondsRealtime(1f);
+                    foreach (Vector2Int size in new[] { new Vector2Int(1920, 1080), new Vector2Int(3440, 1440) })
+                    {
+                        Reframe(size.x, size.y);
+                        string tag = (day ? "day_" : "night_") + size.x + "x" + size.y;
+                        context.Events.Publish(new NextStepChanged("next.v2.build_pad", NextLineReason.Next,
+                            RoverAction.Build, true, false, null, Vector3.zero));
+                        yield return new WaitForSecondsRealtime(_tuning.Guidance.Line.FadeIn + 0.05f);
+                        Assert.GreaterOrEqual(layout.NextLine.resolvedStyle.opacity, 0.99f,
+                            tag + ": the line is at full strength a quarter second after it is given");
+                        yield return LegibleShot(camera, folder, "line_" + tag, report, layout.NextLine);
+                        context.Events.Publish(new NextStepChanged(string.Empty));
+                        yield return new WaitForSecondsRealtime(_tuning.Guidance.Line.FadeOut + 0.3f);
+
+                        // A new spot per shot: a chip does not teach again where it just ended (its repeat radius).
+                        Vector3 ahead = Vector3.ProjectOnPlane(view.forward, Vector3.up).normalized;
+                        Vector3 side = Vector3.Cross(Vector3.up, ahead);
+                        Vector3 seal = view.position + ahead * (6f + 4f * (shot / 2)) +
+                                       side * (shot % 2 == 0 ? -1.8f : 1.8f) + Vector3.down * 1.2f;
+                        shot++;
+                        fakes.PrimaryHint = new InteractionHint(InteractionKind.Salvage, seal, true);
+                        // The first chip also waits out the prompts' start delay after the wake.
+                        float limit = Time.realtimeSinceStartup + _tuning.Prompts.StartDelay + ChipWaitSeconds;
+                        while (!ui.Prompt.IsVisible && Time.realtimeSinceStartup < limit)
+                        {
+                            yield return null;
+                        }
+
+                        yield return new WaitForSecondsRealtime(_tuning.Prompts.Reveal.FadeIn + 0.1f);
+                        Assert.IsTrue(ui.Prompt.IsVisible, tag + ": the world chip is up");
+                        yield return LegibleShot(camera, folder, "chip_" + tag, report, layout.Prompt);
+                        fakes.PrimaryHint = InteractionHint.None;
+                        yield return new WaitForSecondsRealtime(_tuning.Prompts.Reveal.FadeOut + 0.4f);
+                    }
+                }
+            }
+            finally
+            {
+                fakes.PrimaryHint = InteractionHint.None;
+                if (sun != null)
+                {
+                    sun.intensity = savedIntensity;
+                }
+
+                Shader.SetGlobalVector("_MoonSunColor", savedSunColor);
+                Shader.SetGlobalVector("_MoonSunlitGround", savedSunlitGround);
+                RenderSettings.ambientSkyColor = savedSky;
+                RenderSettings.ambientEquatorColor = savedEquator;
+                RenderSettings.ambientGroundColor = savedGround;
+                DynamicGI.UpdateEnvironment();
+                if (skyBehaviour != null)
+                {
+                    skyBehaviour.enabled = true;
+                }
+            }
+
+            Assert.IsEmpty(report, "guidance legibility:\n" + string.Join("\n", report));
+#else
+            Assert.Ignore("Captures need the editor.");
+            yield break;
+#endif
+        }
+
+        /// <summary>Lights the scene as the day captures do (a strong low Sun on the dunes) or as the night ones do.</summary>
+        private static void SetLighting(Light sun, bool day, Vector4 daySunColor)
+        {
+            if (sun != null)
+            {
+                sun.intensity = day ? DaySunIntensity : NightSunIntensity;
+            }
+
+            Shader.SetGlobalVector("_MoonSunColor", day ? daySunColor : Vector4.zero);
+            Shader.SetGlobalVector("_MoonSunlitGround", day ? new Vector4(1f, 0f, 0f, 0f) : Vector4.zero);
+            RenderSettings.ambientSkyColor = day ? new Color(0.28f, 0.28f, 0.34f) : new Color(0.03f, 0.04f, 0.07f);
+            RenderSettings.ambientEquatorColor = day ? new Color(0.20f, 0.20f, 0.25f) : new Color(0.02f, 0.03f, 0.05f);
+            RenderSettings.ambientGroundColor = day ? new Color(0.14f, 0.14f, 0.18f) : new Color(0.01f, 0.01f, 0.02f);
+            DynamicGI.UpdateEnvironment();
         }
 
         /// <summary>

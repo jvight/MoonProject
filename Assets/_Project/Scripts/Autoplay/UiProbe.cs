@@ -175,8 +175,22 @@ namespace MoonProject.Autoplay
         /// </summary>
         public bool ControlsCardInView(out string text)
         {
+            return WordsInView("controls-card", out text);
+        }
+
+        /// <summary>
+        /// True while the build mode's cost chip (the recipe and the keys: "E/LMB Place · Scroll/Z/C Rotate") is on
+        /// screen inside the view; <paramref name="text"/> is every word on it.
+        /// </summary>
+        public bool BuildCostInView(out string text)
+        {
+            return WordsInView("build-cost", out text);
+        }
+
+        private bool WordsInView(string name, out string text)
+        {
             text = string.Empty;
-            VisualElement card = _root.Q<VisualElement>("controls-card");
+            VisualElement card = _root.Q<VisualElement>(name);
             if (card == null || !IsShown(card, GuidanceOpacity) || !_root.worldBound.Contains(card.worldBound.center))
             {
                 return false;

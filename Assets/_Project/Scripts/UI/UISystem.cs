@@ -418,7 +418,7 @@ namespace MoonProject.UI
             _saveTick = new SaveTick(_layout, _tuning.SaveTick);
             _readout = new ReadoutView(_layout.Hud, _tuning.Guidance, _localization, services.Systems,
                 services.BuildField, _openingProtocol);
-            _sunArc = new SunArcView(_layout, _tuning.Guidance, _localization, services.Sun);
+            _sunArc = new SunArcView(_layout, _tuning.Guidance, services.Sun);
             _prompt = new ContextPrompt(_layout, _tuning.Prompts, _director, services.View, _glyphs, _localization,
                 services.Events, new[] { _layout.BuildStrip });
             _pickups = new PickupFeed(_layout, _tuning.PickupFeed, _numbers, _localization, services.Materials,
@@ -1858,7 +1858,6 @@ namespace MoonProject.UI
             _lowBattery.Relocalize();
             _objectiveView.Relocalize(_lowBattery);
             _readout.Relocalize();
-            _sunArc.Relocalize();
             _buildStrip?.Relocalize();
             _pickups.Relocalize();
             _callView.Relocalize();

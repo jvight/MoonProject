@@ -53,6 +53,9 @@ Shader "MoonProject/R1/Lit"
         _ScanProgress("Scan Progress", Range(0.0, 1.0)) = 0.0
         _Dissolve("Scan Dissolve", Range(0.0, 1.0)) = 0.0
 
+        [Header(Near Fade)]
+        _NearKeep("Near Keep (0 gone .. 1 whole; the camera dithers a prop out as it nears the lens)", Range(0.0, 1.0)) = 1.0
+
         [Header(Distance Fade)]
         _DistanceFade("Distance Fade (0 or 1)", Float) = 0.0
         _DistanceFadeRange("Distance Fade Range (x: start, y: gone, metres)", Vector) = (32, 40, 0, 0)

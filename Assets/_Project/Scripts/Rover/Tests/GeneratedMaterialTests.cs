@@ -14,6 +14,7 @@ namespace MoonProject.Rover.Tests
         [TestCase(RoverAssetPaths.DustMaterial)]
         [TestCase(RoverAssetPaths.TrackMaterial)]
         [TestCase(RoverAssetPaths.MoteMaterial)]
+        [TestCase(RoverAssetPaths.ThreadMaterial)]
         public void GeneratedMaterial_IsAlreadyValidated(string path)
         {
             var material = AssetDatabase.LoadAssetAtPath<Material>(path);

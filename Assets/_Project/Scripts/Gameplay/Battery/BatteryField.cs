@@ -36,6 +36,7 @@ namespace MoonProject.Gameplay
         private IRoverSystems _systems;
         private ITowLine _tow;
         private RelayRepair _relay;
+        private readonly List<Vector3> _relayPoints = new List<Vector3>();
         private StructureCatalog _structures;
         private bool _padFromReserve;
         private bool _chargingOnReserve;
@@ -228,6 +229,9 @@ namespace MoonProject.Gameplay
             bool onPad = _pads.Pads.TryFindUnder(position, out Vector3 padPosition, out _padFromReserve);
             bool onRelay = !onPad && _relay != null && _relay.TryFindUnder(position, out padPosition);
             _hasCharger = _pads.Pads.TryFindNearest(position, out _nearestCharger);
+            _relayPoints.Clear();
+            _relay?.CopyChargePoints(_relayPoints);
+            _hasCharger = Nearest(position, _hasCharger, _nearestCharger, _relayPoints, out _nearestCharger);
             return new BatteryStep
             {
                 GroundDistance = counted ? travel.magnitude : 0f,
@@ -248,6 +252,28 @@ namespace MoonProject.Gameplay
                 Position = position,
                 NearestLitCharger = _hasCharger ? _nearestCharger : position,
             };
+        }
+
+        /// <summary>
+        /// The nearest of the nearest lit pad (<paramref name="hasPad"/>) and every lit relay's pad: relay.1's pad is a
+        /// charger too, so the low line stays quiet beside it.
+        /// </summary>
+        internal static bool Nearest(Vector3 position, bool hasPad, Vector3 pad, List<Vector3> relays,
+            out Vector3 nearest)
+        {
+            nearest = pad;
+            float best = hasPad ? SurfaceRules.HorizontalDistanceSquared(position, pad) : float.MaxValue;
+            for (int i = 0; i < relays.Count; i++)
+            {
+                float distance = SurfaceRules.HorizontalDistanceSquared(position, relays[i]);
+                if (distance < best)
+                {
+                    best = distance;
+                    nearest = relays[i];
+                }
+            }
+
+            return best < float.MaxValue;
         }
 
         /// <summary>Slope (degrees) of the ground along <paramref name="travel"/>: + uphill, - downhill.</summary>

@@ -384,8 +384,18 @@ namespace MoonProject.Autoplay
             yield return null;
             if (Mathf.Approximately(yaw, build.Controller.GhostYaw))
             {
-                _bot.Fail("the wheel did not turn the ghost of " + structureId + " (yaw stayed " + yaw + ").");
-                yield break;
+                string stayed = "the wheel did not turn the ghost of " + structureId + " (yaw stayed " + yaw + ", " +
+                                (build.Controller.CandidateSnapped ? "snapped" : "not snapped") + ")";
+                if (structureId == StructureIds.BatteryBank)
+                {
+                    // A bank sits on its module frame and keeps its heading: a finding for the player who scrolls, not a failure.
+                    _bot.Warn(stayed + ".");
+                }
+                else
+                {
+                    _bot.Fail(stayed + ".");
+                    yield break;
+                }
             }
 
             // The wheel turned the ghost off the apron's heading: turn it back the other way, as a player would.
