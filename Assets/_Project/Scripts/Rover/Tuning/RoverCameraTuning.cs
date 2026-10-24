@@ -544,6 +544,21 @@ namespace MoonProject.Rover
         [SerializeField] private CameraMomentSettings _dockMoment =
             new CameraMomentSettings(2.4f, 0f, 2.4f, 0.1f, 0.6f, 1f, 32f, 32f, 5f, -0.35f, 100000f);
 
+        [Tooltip("The headlamp fitted live at the rack: the camera eases round to a calm front three-quarter frame of " +
+                 "07's head, so the pods clamping and the lenses warming read, then eases back. Any look or drive input " +
+                 "gives control back at once.")]
+        [SerializeField] private CameraMomentSettings _lampFitMoment =
+            new CameraMomentSettings(1.1f, 1.7f, 1.4f, 0f, 0f, 1f, 0f, 180f, -2f, -0.4f, 100000f);
+
+        [Tooltip("Degrees from straight behind 07 the lamp-fit frame's camera swings round to: 180 is dead in front, " +
+                 "145 a front three-quarter.")]
+        [Range(90f, 180f)]
+        [SerializeField] private float _lampFitSwingDegrees = 145f;
+
+        [Tooltip("Metres from 07 the lamp-fit frame's look direction is placed (only its bearing matters).")]
+        [Range(1f, 20f)]
+        [SerializeField] private float _lampFitSubjectMetres = 5f;
+
         [Tooltip("Metres to 07's side the dock frame looks toward: it sets which side the three-quarter frame sits on.")]
         [Range(1f, 20f)]
         [SerializeField] private float _dockSideMetres = 6f;
@@ -1064,6 +1079,12 @@ namespace MoonProject.Rover
         public float NudgeMinDistance => _nudgeMinDistance;
 
         public float NudgeScreenMargin => _nudgeScreenMargin;
+
+        public CameraMomentSettings LampFitMoment => _lampFitMoment;
+
+        public float LampFitSwingDegrees => _lampFitSwingDegrees;
+
+        public float LampFitSubjectMetres => _lampFitSubjectMetres;
 
         public CameraMomentSettings DockMoment => _dockMoment;
 

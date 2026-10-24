@@ -279,6 +279,7 @@ namespace MoonProject.Rover
                 context.Events.Subscribe<RelayRestored>(OnRelayRestored),
                 context.Events.Subscribe<ReleaseViewOpened>(OnReleaseViewOpened),
                 context.Events.Subscribe<NextStepChanged>(OnNextStepChanged),
+                context.Events.Subscribe<PartFitted>(OnPartFitted),
                 context.Events.Subscribe<LadderLookChanged>(OnLadderLookChanged),
                 context.Events.Subscribe<FeelBeat>(OnFeelBeat),
                 context.Events.Subscribe<CutChargeStaged>(OnChargeStaged),
@@ -508,7 +509,7 @@ namespace MoonProject.Rover
                 _beam.Framing.End(_tuning.CutFrameHandBackSeconds);
             }
 
-            if (driving && (IsTowerMoment || _gazePan.IsActive || IsDockMoment))
+            if (driving && (IsTowerMoment || _gazePan.IsActive || IsDockMoment || IsLampFitMoment))
             {
                 _moment.Cancel(_tuning.MomentCancelEaseOut);
             }
@@ -1527,6 +1528,8 @@ namespace MoonProject.Rover
         }
 
         /// <summary>The camera moment running now is the closer frame while 07 charges on its pad.</summary>
+        private bool IsLampFitMoment => _moment.IsActive && ReferenceEquals(_moment.Settings, _tuning.LampFitMoment);
+
         private bool IsDockMoment => _moment.IsActive && ReferenceEquals(_moment.Settings, _tuning.DockMoment);
 
         private void OnLowPowerChanged(LowPowerChanged lowPower)
@@ -1658,6 +1661,29 @@ namespace MoonProject.Rover
         /// shot has the camera (the wake included, so a loaded game's first line never nudges). 07's own head look
         /// toward the object is Story's chip.
         /// </summary>
+        /// <summary>
+        /// The headlamp fitted live at the rack: the camera swings round to a calm front three-quarter frame of 07's
+        /// head (the look direction placed behind 07, so the camera sits in front of it) while the pods clamp and the
+        /// lenses warm, and eases back. Never on load: a loaded rack fills without a <see cref="PartFitted"/>. Another
+        /// shot (the dock's close frame) gives way to it; the wake and face inspection do not.
+        /// </summary>
+        private void OnPartFitted(PartFitted fitted)
+        {
+            if (fitted.Socket != RoverSocket.Lamp && fitted.Part != RoverKitPiece.LampBar)
+            {
+                return;
+            }
+
+            if (_opening.IsActive || _faceInspectOpen || _faceInspectWeight > 0f || _tethered || _towing)
+            {
+                return;
+            }
+
+            float bearing = (RoverYaw() + _tuning.LampFitSwingDegrees) * Mathf.Deg2Rad;
+            var behind = new Vector3(Mathf.Sin(bearing), 0f, Mathf.Cos(bearing));
+            _moment.Start(_tuning.LampFitMoment, _rover.Position + behind * _tuning.LampFitSubjectMetres, false);
+        }
+
         private void OnNextStepChanged(NextStepChanged step)
         {
             _pendingNudge.Clear();
