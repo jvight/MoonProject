@@ -46,6 +46,7 @@ namespace MoonProject.Gameplay
         private bool _gazing;
         private readonly BlockNotice _blocked = new BlockNotice();
         private float _rearmAt;
+        private bool _heldForOther;
         private Transform _cachedScanOrigin;
         private Transform _headTransform;
         private Collider[] _roverColliders;
@@ -186,13 +187,11 @@ namespace MoonProject.Gameplay
             PayOwed();
             bool held = _input.ExcavateHeld;
             bool claimed = _othersClaim();
-            if (held && claimed && _scanning == null)
-            {
-                // Another verb has E: once it lets go, a still-held E carries on to the scan after a beat.
-                _rearmAt = now + _tuning.RearmSeconds;
-            }
 
-            Candidate = claimed ? null : Pick();
+            // A press that began on another verb (a cut, a pickup) stays that verb's until E is let go: no scan takes
+            // it, and no scan chip shows meanwhile, so the chip on screen always acts.
+            _heldForOther = held && (_heldForOther || claimed && _scanning == null);
+            Candidate = claimed || _heldForOther ? null : Pick();
             bool wants = held && now >= _rearmAt && Candidate != null;
             if (_scanning != null && (!wants || Candidate != _scanning))
             {
