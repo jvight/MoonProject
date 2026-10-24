@@ -101,7 +101,7 @@ namespace MoonProject.Rover.Tests
                 RoverTrackRenderer[] tracks = wheelFx.GetComponentsInChildren<RoverTrackRenderer>(true);
                 Assert.AreEqual(4, tracks.Length, "All 4 wheels must have track renderers.");
 
-                foreach (string name in new[] { "DustLeft", "DustRight", "TowSkidDust", "LandingDust" })
+                foreach (string name in new[] { "DustLeft", "DustRight", "LandingDust" })
                 {
                     ParticleSystem ps = BuildWiring.Node(wheelFx, name).GetComponent<ParticleSystem>();
                     Assert.IsFalse(ps.limitVelocityOverLifetime.enabled, $"{name} must not have atmospheric air drag.");

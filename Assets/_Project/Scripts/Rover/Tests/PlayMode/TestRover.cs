@@ -330,7 +330,6 @@ namespace MoonProject.Rover.PlayModeTests
                 ("_trackRight", Track("TrackRight", fxHost, material)),
                 ("_dustLeft", Particles("DustLeft", fxHost, material)),
                 ("_dustRight", Particles("DustRight", fxHost, material)),
-                ("_towDust", Particles("TowSkidDust", fxHost, material)),
                 ("_landingDust", Particles("LandingDust", fxHost, material)));
             Assign(lampMotes, ("_tuning", fxTuning), ("_motes", moteSystem), ("_headlamp", headlamp));
             Assign(flank, ("_tuning", rigTuning));

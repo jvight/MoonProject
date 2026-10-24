@@ -102,10 +102,6 @@ namespace MoonProject.Rover
         [Range(0f, 2f)]
         [SerializeField] private float _dustTurnBoost = 0.6f;
 
-        [Tooltip("Ballistic skid dust grains per second kicked up under a towed load at full speed.")]
-        [Range(0f, 100f)]
-        [SerializeField] private float _towSkidDustMaxRate = 38f;
-
         [Header("Landing ring")]
         [Tooltip("Impact speed (m/s) of the softest landing that still raises a splash ring.")]
         [Range(0f, 5f)]
@@ -287,7 +283,6 @@ namespace MoonProject.Rover
 
         public float DustTurnBoost => _dustTurnBoost;
 
-        public float TowSkidDustMaxRate => _towSkidDustMaxRate;
 
         public float LandingMinImpact => _landingMinImpact;
 

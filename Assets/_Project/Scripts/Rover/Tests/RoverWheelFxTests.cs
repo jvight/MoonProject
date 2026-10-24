@@ -7,9 +7,9 @@ using MoonProject.Rover.Editor;
 namespace MoonProject.Rover.Tests
 {
     /// <summary>
-    /// EditMode verification of 07's vacuum-physics wheel and tow skid dust particle settings (lunar gravity 1.62 m/s^2,
+    /// EditMode verification of 07's vacuum-physics wheel dust particle settings (lunar gravity 1.62 m/s^2,
     /// zero atmospheric drag, no upward drift, non-billowing size curve, short ballistic arc back to ground, warm grey
-    /// ground tint, and emission rate response to stillness, speed, acceleration, hard turns, and towing).
+    /// ground tint, and emission rate response to stillness, speed, acceleration, hard turns).
     /// </summary>
     public sealed class RoverWheelFxTests
     {
@@ -19,7 +19,6 @@ namespace MoonProject.Rover.Tests
         {
             "DustLeft",
             "DustRight",
-            "TowSkidDust",
             "LandingDust",
         };
 
@@ -112,7 +111,7 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void WheelAndTowDust_ShortLifetimeCompletesBallisticArcBackToGround()
+        public void WheelDust_ShortLifetimeCompletesBallisticArcBackToGround()
         {
             var tuning = AssetDatabase.LoadAssetAtPath<RoverFxTuning>(RoverAssetPaths.FxTuning);
             Assert.IsNotNull(tuning, $"{RoverAssetPaths.FxTuning} missing.");
@@ -123,7 +122,7 @@ namespace MoonProject.Rover.Tests
             {
                 GameObject rover = RoverPrefabBuilder.Assemble(scratch);
                 Transform wheelFx = BuildWiring.Node(rover.transform, "WheelFx");
-                foreach (string name in new[] { "DustLeft", "DustRight", "TowSkidDust" })
+                foreach (string name in new[] { "DustLeft", "DustRight" })
                 {
                     ParticleSystem ps = BuildWiring.Node(wheelFx, name).GetComponent<ParticleSystem>();
                     float elevationDeg = 180f + ps.shape.rotation.x;
@@ -167,30 +166,6 @@ namespace MoonProject.Rover.Tests
 
                 float pivotTurnRate = RoverWheelFx.ComputeWheelDustRate(tuning, true, 0f, 75f, 0f);
                 Assert.Greater(pivotTurnRate, 0f, "Hard pivot turn in place must kick up scrub dust.");
-            }
-            finally
-            {
-                Object.DestroyImmediate(tuning);
-            }
-        }
-
-        [Test]
-        public void ComputeTowSkidDustRate_ZeroWhenStillOrUntowed_ScalesWithSpeedAndAcceleration()
-        {
-            var tuning = ScriptableObject.CreateInstance<RoverFxTuning>();
-            try
-            {
-                Assert.AreEqual(0f, RoverWheelFx.ComputeTowSkidDustRate(tuning, false, 4f, 1.5f), 1e-5f,
-                    "No tow skid dust when not towing or not on ground.");
-                Assert.AreEqual(0f, RoverWheelFx.ComputeTowSkidDustRate(tuning, true, 0f, 1.5f), 1e-5f,
-                    "No tow skid dust when towed load is still.");
-
-                float steadyTow = RoverWheelFx.ComputeTowSkidDustRate(tuning, true, 3.5f, 0f);
-                Assert.Greater(steadyTow, 0f, "Sliding towed load must raise ballistic skid dust.");
-
-                float surgingTow = RoverWheelFx.ComputeTowSkidDustRate(tuning, true, 3.5f, tuning.DustAccelFull);
-                Assert.Greater(surgingTow, steadyTow * 1.25f,
-                    "Accelerating towed load must raise more skid dust than steady sliding.");
             }
             finally
             {

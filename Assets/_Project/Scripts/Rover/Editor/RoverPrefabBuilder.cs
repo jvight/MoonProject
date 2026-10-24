@@ -21,7 +21,7 @@ namespace MoonProject.Rover.Editor
     ///         HeadlampSocket
     ///           Headlamp
     ///             LampMotes  RoverLampMotes: world-space dust motes in a cone along the beam
-    ///   WheelFx        RoverWheelFx: TrackLeft/Right ribbons, DustLeft/Right, TowSkidDust, LandingDust
+    ///   WheelFx        RoverWheelFx: TrackLeft/Right ribbons, DustLeft/Right, LandingDust
     /// </code>
     /// Fails with a clear error when RoverModel.prefab does not exist yet: there is no placeholder model. Saved only
     /// when it changed (<see cref="PrefabWriter"/>), so a re-run leaves the file byte-identical.
@@ -145,7 +145,7 @@ namespace MoonProject.Rover.Editor
 
             RoverFlankLamps flankLamps = BuildFlankLamps(visual, m, rigTuning);
             RoverGrowth growth = BuildGrowth(visual, m, rigTuning);
-            RoverTowCable towCable = BuildTowCable(scratch, visual, m, rigTuning, dustMaterial);
+            RoverTowCable towCable = BuildTowCable(scratch, visual, m, rigTuning, fxTuning, dustMaterial);
             RoverWheelFx wheelFx = BuildWheelFx(scratch, root.transform, m, fxTuning, trackMaterial, dustMaterial);
             RoverLampMotes lampMotes = BuildLampMotes(scratch, headlamp, fxTuning, moteMaterial);
 
@@ -409,7 +409,7 @@ namespace MoonProject.Rover.Editor
         /// <see cref="RoverTowCable"/> from the winch to the load's hitch.
         /// </summary>
         private static RoverTowCable BuildTowCable(BuilderScratchScene scratch, GameObject host, Transform model,
-            RoverRigTuning tuning, Material dustMaterial)
+            RoverRigTuning tuning, RoverFxTuning fxTuning, Material dustMaterial)
         {
             var rubber = BuildWiring.Require<Material>(RoverAssetPaths.TowCableMaterial, "Art's rubber material");
             LineRenderer rope = TowLine(host, "TowRope", rubber);
@@ -419,7 +419,7 @@ namespace MoonProject.Rover.Editor
             var cable = host.AddComponent<RoverTowCable>();
             BuildWiring.Assign(cable, ("_tuning", tuning), ("_rope", rope), ("_thread", thread), ("_hook", hook),
                 ("_winch", BuildWiring.Node(model, RoverModelNodes.WinchOrigin)),
-                ("_skidDust", Dust(scratch, "TowSkidDust", host.transform, dustMaterial)));
+                ("_skidDust", Dust(scratch, "TowSkidDust", host.transform, fxTuning, dustMaterial)));
             return cable;
         }
 
@@ -552,7 +552,6 @@ namespace MoonProject.Rover.Editor
                 ("_trackRight", Track(scratch, "TrackRight", host.transform, trackMaterial)),
                 ("_dustLeft", Dust(scratch, "DustLeft", host.transform, tuning, dustMaterial)),
                 ("_dustRight", Dust(scratch, "DustRight", host.transform, tuning, dustMaterial)),
-                ("_towDust", Dust(scratch, "TowSkidDust", host.transform, tuning, dustMaterial)),
                 ("_landingDust", LandingRing(scratch, host.transform, tuning, dustMaterial)));
             return wheelFx;
         }
