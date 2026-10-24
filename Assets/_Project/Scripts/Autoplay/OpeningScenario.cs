@@ -171,6 +171,9 @@ namespace MoonProject.Autoplay
         /// <summary>The first free choice (B8, R5) is told by the world: the dead lamp's glance comes after 30 s.</summary>
         private const float FreeChoiceBudgetSeconds = 35f;
 
+        /// <summary>Tab opens and closes at B7's quiet end, for the hitch table (the first Tab was the igniter's fit).</summary>
+        private const int TabCycleCount = 4;
+
         private IEnumerator Sub(string id)
         {
             if (_naive != null && !_bot.Failed)
@@ -491,6 +494,7 @@ namespace MoonProject.Autoplay
             yield return _base.FitTheIgniter();
             yield return _base.ExpectStep(OpeningSteps.BuildSolar, OpeningKeys.CutOptics, "B7: the cutter works");
             yield return _base.CutTheCrates("FallenSolarArray");
+            yield return _base.TabCycles(TabCycleCount);
             _bot.EndBeat("the fallen array scanned, the airlock panel read, the cutter sputtered, the spare igniter " +
                          "taken from the rack and fitted, the array's panels and junction box cut");
         }

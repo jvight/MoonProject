@@ -6,6 +6,7 @@ using System.IO;
 using System.Text;
 using UnityEngine;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 using MoonProject.Gameplay;
 
 namespace MoonProject.Autoplay
@@ -33,6 +34,12 @@ namespace MoonProject.Autoplay
         private string _reminderWarned = string.Empty;
         private NaiveGuard _naive;
         private readonly FrameTimeLog _frames = new FrameTimeLog();
+        private readonly FrameTagger _tagger = new FrameTagger();
+        private readonly FrameTagLog _tagLog = new FrameTagLog();
+        private FrameProbe _probe;
+        private IRoverFaceScreen _face;
+        private IDisposable _dockWatch;
+        private bool _docked;
         private readonly List<string> _screenshots = new List<string>();
         private readonly List<string> _errors = new List<string>();
         private readonly Queue<string> _shotQueue = new Queue<string>();
@@ -70,6 +77,7 @@ namespace MoonProject.Autoplay
             _startedAt = Time.unscaledTime;
             _nextShotAt = _startedAt + _options.ShotSeconds;
             _world = new AutoplayWorld();
+            _probe = new FrameProbe();
             _input = new VirtualInput();
             _bot = new AutoplayBot(_world, _input, _beats, Shot);
             StartCoroutine(Play());
@@ -86,6 +94,7 @@ namespace MoonProject.Autoplay
             float milliseconds = Time.unscaledDeltaTime * 1000f;
             _frames.Record(Time.unscaledTime - _startedAt, milliseconds,
                 milliseconds > FrameTimeLog.ThresholdMilliseconds ? _bot.Where() : string.Empty);
+            RecordTags(milliseconds);
             if (Time.unscaledTime >= _nextShotAt)
             {
                 _nextShotAt = Time.unscaledTime + _options.ShotSeconds;
@@ -98,6 +107,30 @@ namespace MoonProject.Autoplay
                 _bot.Fail("the run exceeded its " + _options.TimeoutSeconds.ToString("0", CultureInfo.InvariantCulture) +
                           " s timeout. " + _bot.Where());
             }
+        }
+
+        /// <summary>
+        /// Files the frame under what the game was doing (the face screen, build mode, a scan, the dock) with the
+        /// profiler's counters, so a hitch can be put down to one of them.
+        /// </summary>
+        private void RecordTags(float milliseconds)
+        {
+            if (!_world.Refresh())
+            {
+                return;
+            }
+
+            if (_face == null)
+            {
+                _face = _world.Context.Get<IRoverFaceScreen>();
+                _dockWatch = _world.Context.Events.Subscribe<RoverDockChanged>(changed => _docked = changed.Docked);
+            }
+
+            float now = Time.unscaledTime - _startedAt;
+            FrameTag tags = _tagger.Step(now, _face.IsOpen, _world.Gameplay.Building.State != BuildModeState.Closed,
+                _world.Gameplay.Scans.Scanning != null, _docked);
+            _tagLog.Record(new FrameSample(now, milliseconds, tags, _probe.GcBytes, _probe.MainMilliseconds,
+                _probe.RenderMilliseconds), _tagger.Window);
         }
 
         /// <summary>
@@ -194,6 +227,7 @@ namespace MoonProject.Autoplay
                 }
             }
 
+            report += _tagLog.Render();
             report += ErrorSection();
             File.WriteAllText(Path.Combine(_options.OutDirectory, ReportFile), report, new UTF8Encoding(false));
             bool passed = _beats.Passed && string.IsNullOrEmpty(stop);
@@ -202,6 +236,8 @@ namespace MoonProject.Autoplay
             Application.logMessageReceived -= OnLog;
             _log.Dispose();
             _input.Dispose();
+            _probe.Dispose();
+            _dockWatch?.Dispose();
             Application.Quit(passed ? 0 : 1);
         }
 
