@@ -1589,6 +1589,7 @@ namespace MoonProject.UI
             }
 
             _databank = new DatabankPage(_tuning.Databank, archive, _events, _localization, _cargo.Panel);
+            _databank.Warm();
             _databankLaidOutAt = -1f;
             return true;
         }

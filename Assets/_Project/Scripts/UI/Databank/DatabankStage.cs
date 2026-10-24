@@ -106,6 +106,21 @@ namespace MoonProject.UI
         /// <summary>
         /// Turns the model to <paramref name="yaw"/> and tips it by <paramref name="pitch"/> (degrees).
         /// </summary>
+        /// <summary>
+        /// Films a stand-in cube once, in the wireframe look, so the stage's render texture, camera, lights and wire
+        /// shader have drawn before the first flip to the databank: that first flip used to pay for all of it in one
+        /// frame. The stand-in is inactive (the world camera never sees it) and gone after the frame.
+        /// </summary>
+        public void Warm()
+        {
+            GameObject stand = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            stand.SetActive(false);
+            Show(stand, null);
+            Object.Destroy(stand);
+            _camera.Render();
+            Show(null, null);
+        }
+
         public void Turn(float yaw, float pitch)
         {
             _pivot.localRotation = Quaternion.Euler(pitch, yaw, 0f);
