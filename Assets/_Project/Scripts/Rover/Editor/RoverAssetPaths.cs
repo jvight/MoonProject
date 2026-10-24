@@ -15,6 +15,12 @@ namespace MoonProject.Rover.Editor
         /// <summary>The art box's scan fan (0.5.5 §1.2), mounted on the eye's ScanFanSocket. Required.</summary>
         public const string ScanFan = "Assets/_Project/Generated/Art/R1/Models/Rover/ScanFan.prefab";
 
+        /// <summary>The art box's SSR-3 headlamp pods, mounted on Head/BrowSocket (opening v3 5.2a). Required.</summary>
+        public const string Ssr3Headlamp = "Assets/_Project/Generated/Art/R1/Models/Rover/Kit_SSR3Headlamp.prefab";
+
+        /// <summary>The art box's flank cell pod, mounted on PodSocket_L and PodSocket_R. Required.</summary>
+        public const string CellPod = "Assets/_Project/Generated/Art/R1/Models/Rover/Kit_CellPod.prefab";
+
         public const string GeneratedRoot = "Assets/_Project/Generated/Rover";
         public const string RoverPrefab = GeneratedRoot + "/Rover.prefab";
         public const string ScreenColliderMesh = GeneratedRoot + "/RoverScreenCollider.asset";

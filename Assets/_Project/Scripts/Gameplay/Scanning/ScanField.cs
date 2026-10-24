@@ -45,7 +45,8 @@ namespace MoonProject.Gameplay
         private bool _holding;
         private bool _gazing;
         private readonly BlockNotice _blocked = new BlockNotice();
-        private bool _waitRelease;
+        private float _rearmAt;
+        private bool _heldForOther;
         private Transform _cachedScanOrigin;
         private Transform _headTransform;
         private Collider[] _roverColliders;
@@ -186,9 +187,12 @@ namespace MoonProject.Gameplay
             PayOwed();
             bool held = _input.ExcavateHeld;
             bool claimed = _othersClaim();
-            _waitRelease = held && (_waitRelease || claimed && _scanning == null);
-            Candidate = claimed ? null : Pick();
-            bool wants = held && !_waitRelease && Candidate != null;
+
+            // A press that began on another verb (a cut, a pickup) stays that verb's until E is let go: no scan takes
+            // it, and no scan chip shows meanwhile, so the chip on screen always acts.
+            _heldForOther = held && (_heldForOther || claimed && _scanning == null);
+            Candidate = claimed || _heldForOther ? null : Pick();
+            bool wants = held && now >= _rearmAt && Candidate != null;
             if (_scanning != null && (!wants || Candidate != _scanning))
             {
                 Stop();
@@ -708,14 +712,14 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// Fully scanned: the dissolve begins and its set learns (a story is read). E must be let go before the next
-        /// scan.
+        /// Fully scanned: the dissolve begins and its set learns (a story is read). A still-held E starts the next scan
+        /// after a beat (never a dead chip).
         /// </summary>
         private void Complete(ScanFragment fragment, float now)
         {
             _scanning = null;
             _aiming = null;
-            _waitRelease = true;
+            _rearmAt = now + _tuning.RearmSeconds;
             if (_rig != null)
             {
                 Hold(false);

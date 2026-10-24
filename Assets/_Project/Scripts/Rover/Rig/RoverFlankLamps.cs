@@ -17,6 +17,7 @@ namespace MoonProject.Rover
     public sealed class RoverFlankLamps : MonoBehaviour
     {
         private const float FullEpsilon = 0.001f;
+        private const float LevelEpsilon = 1e-4f;
 
         private static readonly int EmissionStrengthId = Shader.PropertyToID("_EmissionStrength");
 
@@ -39,6 +40,7 @@ namespace MoonProject.Rover
         private int _wakeLit = RoverModelNodes.FlankLampCount;
         private MaterialPropertyBlock _block;
         private float[] _levels = Array.Empty<float>();
+        private float[] _appliedLevels = Array.Empty<float>();
         private int _shownCells = -1;
         private bool _onCharger;
         private bool _wasFull;
@@ -75,8 +77,10 @@ namespace MoonProject.Rover
             _charging = _events.Subscribe<ChargingChanged>(changed => _onCharger = changed.Charging);
             _block = new MaterialPropertyBlock();
             _levels = new float[RoverModelNodes.FlankLampCount];
+            _appliedLevels = new float[RoverModelNodes.FlankLampCount];
             for (int i = 0; i < RoverModelNodes.FlankLampCount; i++)
             {
+                _appliedLevels[i] = -1f;
                 Apply(i, 0f);
             }
 
@@ -194,7 +198,15 @@ namespace MoonProject.Rover
 
         private void Apply(int socket, float level)
         {
-            _block.SetFloat(EmissionStrengthId, Mathf.Clamp01(level));
+            float clamped = Mathf.Clamp01(level);
+            if (Mathf.Abs(clamped - _appliedLevels[socket]) < LevelEpsilon &&
+                (clamped > 0f || _appliedLevels[socket] == 0f))
+            {
+                return;
+            }
+
+            _appliedLevels[socket] = clamped;
+            _block.SetFloat(EmissionStrengthId, clamped);
             _glasses[socket].SetPropertyBlock(_block);
         }
     }

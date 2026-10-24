@@ -175,6 +175,8 @@ namespace MoonProject.Gameplay
         /// <summary>How the mast raises and the reply times (tests).</summary>
         public CallReplySettings MastRaiseSettings => _openingTuning.Reply;
 
+        public CallAnswerSettings AnswerSettings => _openingTuning.Answer;
+
         public RangeRingField RangeRing { get; private set; }
 
         public RangeRingLine RangeRingLine { get; private set; }
@@ -418,7 +420,7 @@ namespace MoonProject.Gameplay
             Release = new ReleaseSequence(context.Events, Call, RangeRing, RangeRing.Show, _openingTuning.Answer,
                 relay.Position + Vector3.up * _openingTuning.Answer.RelayLampHeight,
                 services.Layout.PeakPosition + Vector3.up * _openingTuning.Answer.DishHeight, kestrel.Position);
-            PulseView = new NetworkPulseView(transform, _visuals.BeamCore, services.Meshes.Sphere, _visuals.Flash,
+            PulseView = new NetworkPulseView(transform, _visuals.BeamCore, _visuals.PartGlint, services.View,
                 context.Events, _openingTuning.Answer);
             context.Register<IRangeRing>(RangeRing);
             context.Register<ITowLine>(Tow);

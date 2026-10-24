@@ -42,6 +42,10 @@ namespace MoonProject.Gameplay
         [Tooltip("07 eases to a stop before its lens opens: the scan runs below this speed (m/s).")]
         [Range(0.05f, 2f)] [SerializeField] private float _engageSpeed = 0.4f;
 
+        [Tooltip("Seconds after a scan completes before a still-held E starts the next scan: a held E carries on to " +
+                 "the next part after a beat, and the chip is never dead.")]
+        [Range(0f, 2f)] [SerializeField] private float _rearmSeconds = 0.5f;
+
         [Tooltip("Gaze priority requested on IRoverRig while aiming at or scanning a fragment (above ambient curious glances).")]
         [Range(5, 50)] [SerializeField] private int _gazePriority = 25;
 
@@ -241,6 +245,7 @@ namespace MoonProject.Gameplay
         public float LookStickiness => _lookStickiness;
         public float DistanceWeight => _distanceWeight;
         public float EngageSpeed => _engageSpeed;
+        public float RearmSeconds => _rearmSeconds;
         public int GazePriority => _gazePriority;
         public float AimToleranceDegrees => _aimToleranceDegrees;
         public float DissolveSeconds => _dissolveSeconds;

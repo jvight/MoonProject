@@ -47,11 +47,34 @@ namespace MoonProject.Rover.Tests
             return renderer;
         }
 
+        private Renderer SingleLens(float lampGlow)
+        {
+            var lens = new GameObject("Lens_L");
+            _made.Add(lens);
+            var renderer = lens.AddComponent<MeshRenderer>();
+            renderer.sharedMaterials = new[] { Lit(lampGlow) };
+            return renderer;
+        }
+
         private static float Strength(Renderer body, int slot)
         {
             var block = new MaterialPropertyBlock();
             body.GetPropertyBlock(block, slot);
             return block.GetFloat(EmissionStrengthId);
+        }
+
+        private static float RendererStrength(Renderer lens)
+        {
+            var block = new MaterialPropertyBlock();
+            lens.GetPropertyBlock(block);
+            return block.GetFloat(EmissionStrengthId);
+        }
+
+        private static void WriteSentinelStrength(Renderer lens, float sentinel)
+        {
+            var block = new MaterialPropertyBlock();
+            block.SetFloat(EmissionStrengthId, sentinel);
+            lens.SetPropertyBlock(block);
         }
 
         [Test]
@@ -72,6 +95,32 @@ namespace MoonProject.Rover.Tests
 
             glow.Apply(3f);
             Assert.AreEqual(1.5f, Strength(body, LampSlot), 1e-5f, "never brighter than its own glow");
+        }
+
+        [Test]
+        public void SingleMaterialLens_WritesRendererPropertyBlockOnce_AndSkipsUnchangedLevels()
+        {
+            Renderer lens = SingleLens(2.4f);
+            Assert.IsTrue(HeadlampGlass.TryCreate(lens, 0, out HeadlampGlass glow, out string problem), problem);
+
+            glow.Apply(1f);
+            Assert.AreEqual(2.4f, RendererStrength(lens), 1e-5f, "single-material lens writes renderer property block");
+
+            WriteSentinelStrength(lens, 99f);
+            glow.Apply(1f);
+            Assert.AreEqual(99f, RendererStrength(lens), 1e-5f,
+                "unchanged level skips SetPropertyBlock so steady frames pay no native property-block write");
+
+            glow.Apply(0.5f);
+            Assert.AreEqual(1.2f, RendererStrength(lens), 1e-5f, "changed level updates the renderer property block");
+
+            glow.Apply(0f);
+            Assert.AreEqual(0f, RendererStrength(lens), 1e-5f, "dark level writes zero once");
+
+            WriteSentinelStrength(lens, 77f);
+            glow.Apply(0f);
+            Assert.AreEqual(77f, RendererStrength(lens), 1e-5f,
+                "repeated zero level skips SetPropertyBlock while the pod or lamp stays off");
         }
 
         [Test]

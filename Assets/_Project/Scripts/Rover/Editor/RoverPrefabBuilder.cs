@@ -33,13 +33,10 @@ namespace MoonProject.Rover.Editor
 
         private const int DustMaxParticles = 160;
         private const int LandingMaxParticles = 240;
-        private const float DustConeAngle = 14f;
-        private const float DustConeRadius = 0.08f;
+        private const float DustConeAngle = 7f;
+        private const float DustConeRadius = 0.04f;
         private const float LandingRingRadius = 0.55f;
-        private const float LandingConeAngle = 72f;
-
-        /// <summary>How far the lighter half of the grains is lifted from the dust swatch toward white.</summary>
-        private const float DustHighlight = 0.2f;
+        private const float LandingConeAngle = 76f;
 
         /// <summary>Radius (m) of the lamp's lens, where the motes' cone starts.</summary>
         private const float MoteLensRadius = 0.05f;
@@ -50,8 +47,8 @@ namespace MoonProject.Rover.Editor
         /// <summary>How fast (per second) the curling air the motes wander on changes its pattern.</summary>
         private const float MoteNoiseScroll = 0.06f;
 
-        /// <summary>Kicks rolling dust up and back from the rear wheel contact at a 32-deg elevation arc.</summary>
-        private static readonly Vector3 DustConeRotation = new Vector3(-148f, 0f, 0f);
+        /// <summary>Kicks rolling regolith grains up and back from the wheel contact at a low 16-deg ballistic arc.</summary>
+        private static readonly Vector3 DustConeRotation = new Vector3(-164f, 0f, 0f);
 
         [MoonBuilder("Rover/Rover", 310)]
         public static void Build()
@@ -69,7 +66,9 @@ namespace MoonProject.Rover.Editor
         {
             var model = AssetDatabase.LoadAssetAtPath<GameObject>(RoverAssetPaths.RoverModel);
             if (model == null
-                || model.transform.Find(RoverModelNodes.SolarWing + "/" + RoverModelNodes.CellFilled) == null)
+                || model.transform.Find(RoverModelNodes.SolarWing + "/" + RoverModelNodes.CellFilled) == null
+                || AssetDatabase.LoadAssetAtPath<GameObject>(RoverAssetPaths.Ssr3Headlamp) == null
+                || AssetDatabase.LoadAssetAtPath<GameObject>(RoverAssetPaths.CellPod) == null)
             {
                 MoonProject.Art.Editor.R1ModelBuilder.Build();
             }
@@ -78,6 +77,9 @@ namespace MoonProject.Rover.Editor
             var lensGlass = BuildWiring.Require<GameObject>(RoverAssetPaths.LensGlass, "the Art box's glass builder");
             var focusLens = BuildWiring.Require<GameObject>(RoverAssetPaths.FocusLens, "the Art box's rover builder");
             var scanFan = BuildWiring.Require<GameObject>(RoverAssetPaths.ScanFan, "the Art box's rover builder");
+            var ssr3Headlamp =
+                BuildWiring.Require<GameObject>(RoverAssetPaths.Ssr3Headlamp, "the Art box's rover builder");
+            var cellPod = BuildWiring.Require<GameObject>(RoverAssetPaths.CellPod, "the Art box's rover builder");
 
             var tuning = BuildWiring.Require<RoverTuning>(RoverAssetPaths.RoverTuning, "Rover/Tuning");
             var rigTuning = BuildWiring.Require<RoverRigTuning>(RoverAssetPaths.RigTuning, "Rover/Tuning");
@@ -147,8 +149,8 @@ namespace MoonProject.Rover.Editor
             roadLightSettings.ApplyModifiedPropertiesWithoutUndo();
 
             RoverFlankLamps flankLamps = BuildFlankLamps(visual, m, rigTuning);
-            RoverGrowth growth = BuildGrowth(visual, m, rigTuning);
-            RoverTowCable towCable = BuildTowCable(scratch, visual, m, rigTuning, dustMaterial);
+            RoverGrowth growth = BuildGrowth(scratch, visual, m, rigTuning, roadLight, ssr3Headlamp, cellPod);
+            RoverTowCable towCable = BuildTowCable(scratch, visual, m, rigTuning, fxTuning, dustMaterial);
             RoverWheelFx wheelFx = BuildWheelFx(scratch, root.transform, m, fxTuning, trackMaterial, dustMaterial);
             RoverLampMotes lampMotes = BuildLampMotes(scratch, headlamp, fxTuning, moteMaterial);
 
@@ -412,7 +414,7 @@ namespace MoonProject.Rover.Editor
         /// <see cref="RoverTowCable"/> from the winch to the load's hitch.
         /// </summary>
         private static RoverTowCable BuildTowCable(BuilderScratchScene scratch, GameObject host, Transform model,
-            RoverRigTuning tuning, Material dustMaterial)
+            RoverRigTuning tuning, RoverFxTuning fxTuning, Material dustMaterial)
         {
             var rubber = BuildWiring.Require<Material>(RoverAssetPaths.TowCableMaterial, "Art's rubber material");
             LineRenderer rope = TowLine(host, "TowRope", rubber);
@@ -422,7 +424,7 @@ namespace MoonProject.Rover.Editor
             var cable = host.AddComponent<RoverTowCable>();
             BuildWiring.Assign(cable, ("_tuning", tuning), ("_rope", rope), ("_thread", thread), ("_hook", hook),
                 ("_winch", BuildWiring.Node(model, RoverModelNodes.WinchOrigin)),
-                ("_skidDust", Dust(scratch, "TowSkidDust", host.transform, dustMaterial)));
+                ("_skidDust", Dust(scratch, "TowSkidDust", host.transform, fxTuning, dustMaterial)));
             return cable;
         }
 
@@ -442,14 +444,44 @@ namespace MoonProject.Rover.Editor
             return line;
         }
 
-        /// <summary>The antenna's second segment and the igniter cartridge already in RoverModel, grown by events.</summary>
-        private static RoverGrowth BuildGrowth(GameObject host, Transform model, RoverRigTuning tuning)
+        /// <summary>
+        /// The antenna's second segment and the igniter cartridge already in RoverModel, plus the SSR-3 headlamp pods
+        /// on BrowSocket and the flank cell pods on PodSocket_L/R, grown by events.
+        /// </summary>
+        private static RoverGrowth BuildGrowth(BuilderScratchScene scratch, GameObject host, Transform model,
+            RoverRigTuning tuning, RoverHeadlamp roadLight, GameObject headlampPrefab, GameObject cellPodPrefab)
         {
+            Transform headlampPod = Mount(scratch, headlampPrefab, BuildWiring.Node(model, RoverModelNodes.BrowSocket));
+            Transform housingLeft = BuildWiring.Node(headlampPod, RoverModelNodes.HeadlampHousingLeft);
+            Transform housingRight = BuildWiring.Node(headlampPod, RoverModelNodes.HeadlampHousingRight);
+            Renderer lensLeft = BuildWiring.NodeComponent<MeshRenderer>(headlampPod, RoverModelNodes.HeadlampLensLeft);
+            Renderer lensRight = BuildWiring.NodeComponent<MeshRenderer>(headlampPod, RoverModelNodes.HeadlampLensRight);
+            BuildWiring.AssignArray(roadLight, "_podLenses", new Object[] { lensLeft, lensRight });
+
+            Transform cellPodLeft = Mount(scratch, cellPodPrefab, BuildWiring.Node(model, RoverModelNodes.PodSocketLeft));
+            cellPodLeft.localRotation = Quaternion.Euler(0f, 180f, 0f);
+            Transform cellPodRight =
+                Mount(scratch, cellPodPrefab, BuildWiring.Node(model, RoverModelNodes.PodSocketRight));
+            var cellBars = new Object[RoverModelNodes.CellPodBarCount * 2];
+            for (int i = 0; i < RoverModelNodes.CellPodBarCount; i++)
+            {
+                cellBars[i] = BuildWiring.NodeComponent<MeshRenderer>(cellPodLeft, RoverModelNodes.CellPodBar(i));
+                cellBars[RoverModelNodes.CellPodBarCount + i] =
+                    BuildWiring.NodeComponent<MeshRenderer>(cellPodRight, RoverModelNodes.CellPodBar(i));
+            }
+
             var growth = host.AddComponent<RoverGrowth>();
             BuildWiring.Assign(growth, ("_tuning", tuning),
                 ("_antennaSegment", BuildWiring.Node(model, RoverModelNodes.AntennaSegment2)),
                 ("_igniter", BuildWiring.Node(model, RoverModelNodes.CutterIgniter)),
-                ("_turret", BuildWiring.Node(model, RoverModelNodes.CutterTurret)));
+                ("_turret", BuildWiring.Node(model, RoverModelNodes.CutterTurret)),
+                ("_headlamp", roadLight),
+                ("_headlampPod", headlampPod),
+                ("_headlampHousingLeft", housingLeft),
+                ("_headlampHousingRight", housingRight),
+                ("_cellPodLeft", cellPodLeft),
+                ("_cellPodRight", cellPodRight));
+            BuildWiring.AssignArray(growth, "_cellPodBars", cellBars);
             return growth;
         }
 
@@ -553,9 +585,9 @@ namespace MoonProject.Rover.Editor
                 ("_trackFrontRight", Track(scratch, "TrackFrontRight", host.transform, trackMaterial)),
                 ("_trackLeft", Track(scratch, "TrackLeft", host.transform, trackMaterial)),
                 ("_trackRight", Track(scratch, "TrackRight", host.transform, trackMaterial)),
-                ("_dustLeft", Dust(scratch, "DustLeft", host.transform, dustMaterial)),
-                ("_dustRight", Dust(scratch, "DustRight", host.transform, dustMaterial)),
-                ("_landingDust", LandingRing(scratch, host.transform, dustMaterial)));
+                ("_dustLeft", Dust(scratch, "DustLeft", host.transform, tuning, dustMaterial)),
+                ("_dustRight", Dust(scratch, "DustRight", host.transform, tuning, dustMaterial)),
+                ("_landingDust", LandingRing(scratch, host.transform, tuning, dustMaterial)));
             return wheelFx;
         }
 
@@ -724,9 +756,10 @@ namespace MoonProject.Rover.Editor
 
         /// <summary>Rolling dust: ballistic grains kicked up and back in a clean lunar parabola (rate at runtime).</summary>
         private static ParticleSystem Dust(BuilderScratchScene scratch, string name, Transform parent,
-            Material material)
+            RoverFxTuning tuning, Material material)
         {
-            ParticleSystem dust = CreateSystem(scratch, name, parent, material, DustMaxParticles, true);
+            ParticleSystem dust = CreateSystem(scratch, name, parent, material, tuning, DustMaxParticles, true,
+                tuning.DustLifetime, tuning.DustSpeed, tuning.DustSize, tuning.DustOpacity);
 
             ParticleSystem.ShapeModule shape = dust.shape;
             shape.enabled = true;
@@ -741,10 +774,12 @@ namespace MoonProject.Rover.Editor
             return dust;
         }
 
-        /// <summary>Landing splash ring: grains sprayed outward along a shallow 18-deg cone and falling ballistically.</summary>
-        private static ParticleSystem LandingRing(BuilderScratchScene scratch, Transform parent, Material material)
+        /// <summary>Landing splash ring: grains sprayed outward along a shallow 14-deg cone and falling ballistically.</summary>
+        private static ParticleSystem LandingRing(BuilderScratchScene scratch, Transform parent, RoverFxTuning tuning,
+            Material material)
         {
-            ParticleSystem ring = CreateSystem(scratch, "LandingDust", parent, material, LandingMaxParticles, false);
+            ParticleSystem ring = CreateSystem(scratch, "LandingDust", parent, material, tuning, LandingMaxParticles,
+                false, tuning.LandingLifetime, tuning.LandingMaxSpeed, tuning.LandingMaxSize, tuning.LandingOpacity);
 
             ParticleSystem.ShapeModule shape = ring.shape;
             shape.enabled = true;
@@ -764,11 +799,12 @@ namespace MoonProject.Rover.Editor
         }
 
         /// <summary>
-        /// Shared particle setup. Start values are normalised ranges around 1; <see cref="RoverWheelFx"/> scales them
-        /// with the tuned lifetime, size, speed and gravity multipliers.
+        /// Shared vacuum ballistic particle setup: lunar gravity, zero air drag, no upward velocity drift, non-swelling
+        /// size curve, and warm grey regolith tint matching the lunar ground.
         /// </summary>
         private static ParticleSystem CreateSystem(BuilderScratchScene scratch, string name, Transform parent,
-            Material material, int maxParticles, bool looping)
+            Material material, RoverFxTuning tuning, int maxParticles, bool looping, float lifetime, float speed,
+            float size, float opacity)
         {
             GameObject host = Child(scratch, name, parent);
             var system = host.AddComponent<ParticleSystem>();
@@ -780,23 +816,39 @@ namespace MoonProject.Rover.Editor
             main.duration = 1f;
             main.maxParticles = maxParticles;
             main.simulationSpace = ParticleSystemSimulationSpace.World;
-            main.startLifetime = new ParticleSystem.MinMaxCurve(0.75f, 1.25f);
-            main.startSpeed = new ParticleSystem.MinMaxCurve(0.6f, 1.4f);
-            main.startSize = new ParticleSystem.MinMaxCurve(0.65f, 1.35f);
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.80f * lifetime, lifetime);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0.75f * speed, speed);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.70f * size, size);
             main.startRotation = new ParticleSystem.MinMaxCurve(0f, 2f * Mathf.PI);
-            Color dust = Palette.Get(PaletteSwatch.DustLight);
-            main.startColor = new ParticleSystem.MinMaxGradient(dust, Color.Lerp(dust, Color.white, DustHighlight));
-            main.gravityModifier = 1f;
+            Color shadow = tuning.DustShadowColor;
+            shadow.a = opacity;
+            Color highlight = tuning.DustColor;
+            highlight.a = opacity;
+            main.startColor = new ParticleSystem.MinMaxGradient(shadow, highlight);
+            main.gravityModifier = tuning.DustGravity;
 
             ParticleSystem.EmissionModule emission = system.emission;
             emission.enabled = true;
             emission.rateOverTime = 0f;
             emission.rateOverDistance = 0f;
 
-            ParticleSystem.SizeOverLifetimeModule size = system.sizeOverLifetime;
-            size.enabled = true;
-            size.size = new ParticleSystem.MinMaxCurve(1f,
-                new AnimationCurve(new Keyframe(0f, 0.95f), new Keyframe(0.7f, 1f), new Keyframe(1f, 0.65f)));
+            ParticleSystem.VelocityOverLifetimeModule velocity = system.velocityOverLifetime;
+            velocity.enabled = false;
+
+            ParticleSystem.LimitVelocityOverLifetimeModule limit = system.limitVelocityOverLifetime;
+            limit.enabled = false;
+            limit.drag = 0f;
+
+            ParticleSystem.NoiseModule noise = system.noise;
+            noise.enabled = false;
+
+            ParticleSystem.SizeOverLifetimeModule sizeOverLife = system.sizeOverLifetime;
+            sizeOverLife.enabled = true;
+            sizeOverLife.size = new ParticleSystem.MinMaxCurve(1f,
+                new AnimationCurve(
+                    new Keyframe(0f, 1f, 0f, -0.25f),
+                    new Keyframe(0.6f, 0.85f, -0.25f, -1f),
+                    new Keyframe(1f, 0.45f, -1f, 0f)));
 
             ParticleSystem.ColorOverLifetimeModule color = system.colorOverLifetime;
             color.enabled = true;
@@ -805,7 +857,9 @@ namespace MoonProject.Rover.Editor
                 new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
                 new[]
                 {
-                    new GradientAlphaKey(0f, 0f), new GradientAlphaKey(1f, 0.08f), new GradientAlphaKey(0.55f, 0.45f),
+                    new GradientAlphaKey(0f, 0f),
+                    new GradientAlphaKey(1f, 0.05f),
+                    new GradientAlphaKey(0.88f, 0.78f),
                     new GradientAlphaKey(0f, 1f),
                 });
             color.color = new ParticleSystem.MinMaxGradient(fade);

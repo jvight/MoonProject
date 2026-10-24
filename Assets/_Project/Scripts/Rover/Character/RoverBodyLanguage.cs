@@ -291,6 +291,17 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
+        /// Forward neck droop (<paramref name="liftDeg"/> &gt; 0) bows into the forward hemisphere (<c>|yaw| &lt; 90</c>)
+        /// and fades to zero as the neck turns over the rear deck (<c>|yaw| &gt;= 90</c>), so a turned head and its
+        /// brow-mounted headlamp pods never bow backward into the raised <c>SolarWing</c>. Alert perk lift
+        /// (<paramref name="liftDeg"/> &lt;= 0) is unchanged.
+        /// </summary>
+        public static float EffectiveNeckLift(float liftDeg, float yawDeg)
+        {
+            return liftDeg > 0f ? liftDeg * Mathf.Max(0f, Mathf.Cos(yawDeg * Mathf.Deg2Rad)) : liftDeg;
+        }
+
+        /// <summary>
         /// Enters or exits screen-inspect mode: lifts 07's head by <paramref name="targetPitchDeg"/> (+10 deg), turns
         /// the neck toward <paramref name="targetYawDeg"/> (clamped to +/-35 deg), eases the head roll toward level,
         /// suppresses idle head noise so the CRT screen is rock-steady for clicking, and switches
@@ -1151,9 +1162,9 @@ namespace MoonProject.Rover
             _neck.localRotation = _neckRest * Quaternion.AngleAxis(yaw, Vector3.up);
             if (_neckLift != null)
             {
-                float neckDroop = (_tuning.NeckSleepDroop * _mood.Wake.Sleep + _tuning.NeckTiredDroop * _tired
+                float neckDroop = EffectiveNeckLift((_tuning.NeckSleepDroop * _mood.Wake.Sleep + _tuning.NeckTiredDroop * _tired
                     + _tuning.NeckCrawlExtend * _crawl + _tuning.NeckCargoExtend * _cargoSag
-                    - _tuning.NeckAlertLift * Mathf.Clamp01(_mood.Perk) - _call.Reach * call.ReachNeckLift + _call.Dejection * call.DejectedNeckDroop) * idleScale;
+                    - _tuning.NeckAlertLift * Mathf.Clamp01(_mood.Perk) - _call.Reach * call.ReachNeckLift + _call.Dejection * call.DejectedNeckDroop) * idleScale, yaw);
                 _neckLift.localRotation = _neckLiftRest * Quaternion.AngleAxis(neckDroop, Vector3.right);
             }
 

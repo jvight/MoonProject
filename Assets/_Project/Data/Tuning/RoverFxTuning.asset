@@ -22,26 +22,33 @@ MonoBehaviour:
   _trackGroundProbe: 0.75
   _dustMinSpeed: 0.6
   _dustFullSpeed: 7
-  _dustMaxRate: 44
-  _dustLifetime: 0.95
-  _dustSize: 0.11
-  _dustSpeed: 2.4
+  _dustMaxRate: 52
+  _dustLifetime: 0.45
+  _dustSize: 0.055
+  _dustSpeed: 1.25
   _dustDrag: 0
-  _dustOpacity: 0.45
+  _dustOpacity: 0.62
   _dustGravity: 1
+  _dustColor: {r: 0.5, g: 0.46, b: 0.41, a: 1}
+  _dustShadowColor: {r: 0.38, g: 0.35, b: 0.31, a: 1}
+  _dustAccelFull: 2
+  _dustAccelBoost: 0.5
+  _dustTurnFullYawRate: 45
+  _dustTurnBoost: 0.6
+  _towSkidDustMaxRate: 38
   _landingMinImpact: 0.5
   _landingFullImpact: 4
   _landingRingAirTimeFrom: 1
   _landingRingAirTimeFull: 3.5
   _landingMinCount: 16
   _landingMaxCount: 42
-  _landingMinSpeed: 1.6
-  _landingMaxSpeed: 3.2
-  _landingMinSize: 0.09
-  _landingMaxSize: 0.16
-  _landingLifetime: 0.95
+  _landingMinSpeed: 0.9
+  _landingMaxSpeed: 1.7
+  _landingMinSize: 0.05
+  _landingMaxSize: 0.085
+  _landingLifetime: 0.5
   _landingDrag: 0
-  _landingOpacity: 0.52
+  _landingOpacity: 0.58
   _moteCount: 40
   _moteLifetime: 0.9
   _moteFade: 0.25
