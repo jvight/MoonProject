@@ -68,7 +68,13 @@ namespace MoonProject.Rover.Tests
 
             Assert.Greater(peak, _settings.ShudderMetres * 0.4f);
             Assert.AreEqual(0f, _motions.Lurch(0.2f), 1e-5f);
-            Assert.AreEqual(_settings.LurchMetres, _motions.Lurch(0.675f), 1e-3f, "the lurch peaks midway through its window");
+            float creep = 0f;
+            for (float p = 0f; p <= 1f; p += 0.005f)
+            {
+                creep = Mathf.Max(creep, _motions.Lurch(p));
+            }
+
+            Assert.AreEqual(_settings.LurchMetres, creep, 1e-3f, "the lurch reaches its full creep");
             Assert.AreEqual(0f, _motions.Lurch(1f), 1e-5f, "and 07 is back where it was");
         }
 
@@ -91,10 +97,98 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
+        public void TheServo_Steps_NeverGoesBack_HoldsBetweenSteps_AndFinishesWhereItShould()
+        {
+            const int steps = 3;
+            Assert.AreEqual(0f, PostMotions.ServoCurve(0f, steps, 0.2f, 0.4f, 0.1f), 1e-6f);
+            Assert.AreEqual(1f, PostMotions.ServoCurve(1f, steps, 0.2f, 0.4f, 0.1f), 1e-6f);
+            float last = 0f;
+            int flat = 0;
+            for (float u = 0.001f; u <= 1f; u += 0.001f)
+            {
+                float value = PostMotions.ServoCurve(u, steps, 0.2f, 0.4f, 0.1f);
+                Assert.GreaterOrEqual(value, last - 1e-6f, "a servo never runs backwards");
+                flat += value - last < 1e-6f ? 1 : 0;
+                last = value;
+            }
+
+            Assert.Greater(flat, 150, "it holds still between steps, a fifth of each");
+            for (int i = 1; i < steps; i++)
+            {
+                Assert.AreEqual((float)i / steps, PostMotions.ServoCurve((float)i / steps - 1e-4f, steps, 0.2f, 0.4f, 0.1f),
+                    2e-3f, "each step lands exactly where the next one starts");
+            }
+        }
+
+        [Test]
+        public void AStiffServo_CreepsThenCatchesThenFrees_NotOneSmoothMove()
+        {
+            const float catchLevel = 0.4f;
+            float early = PostMotions.ServoCurve(0.2f, 1, 0.2f, catchLevel, 0.1f);
+            float caught = PostMotions.ServoCurve(0.4f, 1, 0.2f, catchLevel, 0.1f);
+            float caughtLater = PostMotions.ServoCurve(0.44f, 1, 0.2f, catchLevel, 0.1f);
+            Assert.Less(early, catchLevel, "it creeps toward the catch");
+            Assert.AreEqual(catchLevel, caught, 1e-3f, "it catches there");
+            Assert.AreEqual(caught, caughtLater, 1e-3f, "and stays caught a moment");
+            Assert.Greater(PostMotions.ServoCurve(0.7f, 1, 0.2f, catchLevel, 0.1f), catchLevel + 0.2f, "then frees");
+        }
+
+        [Test]
+        public void TheDefaultBoot_IsSlow_NothingSnapsAndTheShudderIsNotABuzz()
+        {
+            var lines = new PostSettings();
+            float headSeconds = 0f;
+            float shudderSeconds = 0f;
+            for (int i = 0; i < lines.LineCount; i++)
+            {
+                BootCheckStep check = lines.LineStep(i);
+                float seconds = lines.LineSeconds(i);
+                if (check == BootCheckStep.Head)
+                {
+                    headSeconds = seconds;
+                }
+                else if (check == BootCheckStep.Motor)
+                {
+                    shudderSeconds = seconds;
+                }
+                else if (check == BootCheckStep.Wheels || check == BootCheckStep.SolarWing || check == BootCheckStep.Antenna)
+                {
+                    Assert.GreaterOrEqual(seconds, 1f, $"{check}: a part of an old machine takes its time");
+                }
+            }
+
+            Assert.GreaterOrEqual(headSeconds, 1.2f, "the head check has time to catch and free");
+            Assert.GreaterOrEqual(shudderSeconds, 1f, "the motor check has time for its bursts");
+
+            float fastest = 0f;
+            float previous = _motions.Head(0f).x;
+            const float step = 0.0005f;
+            for (float p = step; p <= 1f; p += step)
+            {
+                float yaw = _motions.Head(p).x;
+                fastest = Mathf.Max(fastest, Mathf.Abs(yaw - previous) / (step * headSeconds));
+                previous = yaw;
+            }
+
+            Assert.Less(fastest, 70f, "the neck never swings faster than 70 deg/s (the old sweep reached 200)");
+
+            int crossings = 0;
+            float before = 0f;
+            for (float p = step; p <= 1f; p += step)
+            {
+                float shake = _motions.Shudder(p);
+                crossings += before * shake < 0f ? 1 : 0;
+                before = Mathf.Abs(shake) > 1e-7f ? shake : before;
+            }
+
+            Assert.Less(crossings / shudderSeconds, 20f, "the shudder is a slow shake, not a buzz (the old one crossed zero 60 times a second)");
+        }
+
+        [Test]
         public void TheWing_JerksHalfOpen_StallsThere_ThenFoldsBack()
         {
             Assert.AreEqual(0f, _motions.Wing(0f), 1e-5f);
-            Assert.AreEqual(_settings.WingJerkOpen, _motions.Wing(0.2f), 1e-3f, "the jerk");
+            Assert.AreEqual(_settings.WingJerkOpen, _motions.Wing(0.3f), 1e-3f, "the jerk");
             Assert.AreEqual(_settings.WingJerkOpen, _motions.Wing(0.4f), 0.05f, "stuck half open");
             Assert.Less(_motions.Wing(0.85f), _settings.WingJerkOpen * 0.5f, "folding back");
             Assert.AreEqual(0f, _motions.Wing(1f), 1e-5f, "folded");
