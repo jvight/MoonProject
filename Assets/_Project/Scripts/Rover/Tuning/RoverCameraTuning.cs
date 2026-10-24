@@ -193,6 +193,11 @@ namespace MoonProject.Rover
         [Range(1f, 60f)]
         [SerializeField] private float _recenterPitchRate = 7f;
 
+        [Tooltip("Seconds after the dock lets go during which the view turns with 07 as it eases round on the pad; "
+                 + "longer than the release turn (DockSettings), so the view arrives with 07.")]
+        [Range(0.5f, 6f)]
+        [SerializeField] private float _releaseCarrySeconds = 2.5f;
+
         [Tooltip("Seconds the recenter button takes to ease the view behind 07 (eased in and out).")]
         [Range(0.2f, 3f)]
         [SerializeField] private float _recenterButtonSeconds = 1.4f;
@@ -528,6 +533,15 @@ namespace MoonProject.Rover
                  "this it is dropped (the player has moved on).")]
         [Range(2f, 60f)]
         [SerializeField] private float _nudgePendingSeconds = 15f;
+
+        [Tooltip("Degrees per second of 07's own turn under which it counts as still: while it turns faster (the in-place " +
+                 "turn on the pad that faces the array) a nudge waits, then looks again where the target is.")]
+        [Range(1f, 60f)]
+        [SerializeField] private float _nudgeTurnRate = 8f;
+
+        [Tooltip("Seconds 07's heading must stay still before a waiting nudge is looked at again.")]
+        [Range(0f, 2f)]
+        [SerializeField] private float _nudgeTurnSettleSeconds = 0.3f;
 
         [Tooltip("Closest (m) an object may lie to 07 for the camera to nudge toward it; closer than this, 07's head look is enough.")]
         [Range(0f, 40f)]
@@ -969,6 +983,8 @@ namespace MoonProject.Rover
 
         public float RecenterButtonSeconds => _recenterButtonSeconds;
 
+        public float ReleaseCarrySeconds => _releaseCarrySeconds;
+
         public float FramingMaxSpeed => _framingMaxSpeed;
 
         public float FramingRange => _framingRange;
@@ -1116,6 +1132,10 @@ namespace MoonProject.Rover
         public float NudgeMaxBearing => _nudgeMaxBearing;
 
         public float NudgePendingSeconds => _nudgePendingSeconds;
+
+        public float NudgeTurnRate => _nudgeTurnRate;
+
+        public float NudgeTurnSettleSeconds => _nudgeTurnSettleSeconds;
 
         public float NudgeMinDistance => _nudgeMinDistance;
 

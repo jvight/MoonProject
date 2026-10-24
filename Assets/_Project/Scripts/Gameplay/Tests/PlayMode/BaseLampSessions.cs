@@ -69,9 +69,14 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float MaxClippedShare = 0.0004f;
         private const float NightShotRise = 2.2f;
         private const float DawnWatchSeconds = 4f;
+
+        // Seconds past a pulse's interval and travel to wait for it before calling the cable still.
+        private const float PulseMargin = 1f;
         private const float WatchStep = 0.1f;
 
         private readonly List<BaseLampLit> _lit = new List<BaseLampLit>();
+        private readonly List<PowerPulseArrived> _pulses = new List<PowerPulseArrived>();
+        private IDisposable _pulseSubscription;
         private GameContext _context;
         private GameplaySystem _gameplay;
         private ISunlight _sunlight;
@@ -85,6 +90,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         {
             base.Setup();
             _lit.Clear();
+            _pulses.Clear();
             _awake = false;
             _gameplay = null;
         }
@@ -92,6 +98,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         public override void TearDown()
         {
             _litSubscription?.Dispose();
+            _pulseSubscription?.Dispose();
             Scene scene = SceneManager.GetSceneByPath(PlaythroughScene.ScenePath);
             if (scene.IsValid() && scene.isLoaded)
             {
@@ -325,6 +332,66 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
         }
 
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(PlaythroughScene))]
+        [PostBuildCleanup(typeof(PlaythroughScene))]
+        public IEnumerator ThePowerPulse_RunsFromTheArrayByDay_AndFromTheBankAtDusk_CapturedMidCable()
+        {
+            yield return Boot();
+            BuildCabledRow();
+            PowerPulse pulse = _gameplay.PowerPulse;
+            Camera lens = _context.Get<IViewCamera>().Camera;
+            var terrain = _context.Get<ITerrainQuery>();
+            _context.Get<IWorldAnchors>().TryGet("place.apron", out WorldAnchor apron);
+            Vector3 middle = SurfaceRules.OnSurface(terrain, apron.Position.x + CableRowSpacing * 1.5f,
+                                 apron.Position.z)
+                             + Vector3.up * CableShotLook;
+            Vector3 eye = middle + new Vector3(0f, CableShotRise, -CableShotMetres);
+            float wait = pulse.IntervalSeconds + pulse.TravelSeconds + PulseMargin;
+            foreach ((string name, float seconds, string source, string still) in new[]
+                     {
+                         ("day", _daySeconds, StructureIds.SolarArray, StructureIds.BatteryBank),
+                         ("dusk", _duskSeconds, StructureIds.BatteryBank, StructureIds.SolarArray),
+                     })
+            {
+                SetSky(seconds);
+                yield return new WaitForSeconds(DuskWatchSeconds);
+                _pulses.Clear();
+                yield return WaitForPulse(source, wait);
+                Assert.IsTrue(_pulses.Exists(p => p.StructureId == source), $"{name}: the {source}'s cable pulses");
+                _pulses.Clear();
+                yield return WaitForPulse(source, wait);
+                Assert.IsFalse(_pulses.Exists(p => p.StructureId == still), $"{name}: the {still}'s cable is still");
+                Assert.IsFalse(_pulses.Exists(p => p.StructureId == StructureIds.ChargingPad ||
+                                                   p.StructureId == StructureIds.AntennaMast),
+                    $"{name}: no power flows from the pad or the mast");
+
+                // The next pulse leaves an interval after this one did, a travel before it arrived: half way, it glows.
+                yield return new WaitForSeconds(pulse.IntervalSeconds - pulse.TravelSeconds * 0.5f);
+                Assert.AreEqual(1, pulse.InFlight, $"{name}: one pulse on the cables, mid-way along the {source}'s");
+                Vector3 position = lens.transform.position;
+                Quaternion rotation = lens.transform.rotation;
+                lens.transform.SetPositionAndRotation(eye, Quaternion.LookRotation(middle - eye, Vector3.up));
+                Texture2D frame = FrameCapture.Render(lens, 1920, 1080);
+                lens.transform.SetPositionAndRotation(position, rotation);
+                FrameCapture.WritePng(frame,
+                    Path.Combine(GameplayFixture.CaptureFolder, $"base-pulse-{name}-9m.png"));
+                float clipped = ClippedShare(frame);
+                Object.Destroy(frame);
+                Assert.LessOrEqual(clipped, MaxClippedShare, $"{name}: the pulse glows without blowing out");
+            }
+        }
+
+        private IEnumerator WaitForPulse(string source, float seconds)
+        {
+            float until = Time.time + seconds;
+            while (Time.time < until && !_pulses.Exists(p => p.StructureId == source))
+            {
+                yield return null;
+            }
+        }
+
         /// <summary>
         /// Every cable runs where the build preview says the piece's cable runs (same rule, same ports), and every
         /// piece the preview cables has its cable.
@@ -514,6 +581,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _context = bootstrap.Context;
             _sunlight = _context.Get<ISunlight>();
             _litSubscription = _context.Events.Subscribe<BaseLampLit>(_lit.Add);
+            _pulseSubscription = _context.Events.Subscribe<PowerPulseArrived>(_pulses.Add);
             using (_context.Events.Subscribe<RoverAwoke>(_ => _awake = true))
             {
                 float deadline = Time.time + WakeTimeout;

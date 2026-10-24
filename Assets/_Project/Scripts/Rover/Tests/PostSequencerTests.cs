@@ -308,13 +308,13 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void TheOpeningsLines_RunEveryCheck_FastAndDense_InUnderTenSeconds()
+        public void TheOpeningsLines_RunEveryCheck_AnOldMachineTakingItsTime()
         {
             foreach (PostSettings settings in new[] { new PostSettings(), Shipped() })
             {
                 Use(settings);
                 Assert.AreEqual(Full().LineCount, settings.LineCount, "every check prints its line");
-                Assert.That(_post.TotalSeconds, Is.InRange(8f, 10f), "a dense, fast run of lines");
+                Assert.That(_post.TotalSeconds, Is.InRange(12f, 14f), "an old machine waking: unhurried, but every check on its line");
             }
         }
 

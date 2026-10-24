@@ -101,5 +101,51 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.Greater(Vector3.Distance(controller.Position, anchor), 0.1f, "Driving away straight off.");
             Assert.Greater(_rover.Headlamp.intensity, dimmed, "The road light comes back up.");
         }
+
+        private IEnumerator DockThenReleaseFacing(float releaseYaw, Vector3 anchor)
+        {
+            yield return Wait(1f);
+            Quaternion facing = Quaternion.Euler(0f, AnchorYaw, 0f);
+            _rover.Context.Events.Publish(new RoverDockChanged(true, anchor, facing));
+            yield return Wait(1.5f);
+            _rover.Context.Events.Publish(new RoverDockChanged(false, anchor, Quaternion.Euler(0f, releaseYaw, 0f)));
+        }
+
+        [UnityTest]
+        public IEnumerator ReleasedFacingAnotherWay_07TurnsOnThePadEased_ThenIsFree()
+        {
+            RoverController controller = _rover.Controller;
+            Vector3 anchor = controller.Position + new Vector3(0.5f, 0f, 0.4f);
+            const float releaseYaw = 110f;
+            yield return DockThenReleaseFacing(releaseYaw, anchor);
+            float seconds = _rover.Tuning.Dock.ReleaseTurnSeconds;
+            Assert.IsFalse(controller.IsDocked, "the dock has let go");
+            yield return Wait(0.5f * seconds);
+            float midway = Mathf.Abs(Mathf.DeltaAngle(controller.Heading, releaseYaw));
+            Assert.That(midway, Is.InRange(5f, Mathf.Abs(Mathf.DeltaAngle(AnchorYaw, releaseYaw)) - 5f),
+                "half way through the turn it is neither where it began nor there");
+            Assert.Less(Vector3.Distance(controller.Position, anchor), 0.05f, "it turns in place, held on the pad");
+            yield return Wait(0.8f * seconds);
+            Assert.AreEqual(0f, Mathf.DeltaAngle(controller.Heading, releaseYaw), 1f, "it faces the release heading");
+            _rover.Drive.Drive = new Vector2(0f, 1f);
+            yield return Wait(0.6f);
+            _rover.Drive.Drive = Vector2.zero;
+            Assert.Greater(Vector3.Distance(controller.Position, anchor), 0.1f, "and is free to drive off");
+        }
+
+        [UnityTest]
+        public IEnumerator APushDuringTheReleaseTurn_FreesThe07AtOnce()
+        {
+            RoverController controller = _rover.Controller;
+            Vector3 anchor = controller.Position + new Vector3(0.5f, 0f, 0.4f);
+            yield return DockThenReleaseFacing(110f, anchor);
+            yield return Wait(0.2f);
+            _rover.Drive.Drive = new Vector2(0f, 1f);
+            yield return Wait(0.5f);
+            _rover.Drive.Drive = Vector2.zero;
+            Assert.Greater(Vector3.Distance(controller.Position, anchor), 0.1f, "the push is never fought");
+            Assert.Greater(Mathf.Abs(Mathf.DeltaAngle(controller.Heading, 110f)), 5f,
+                "and the turn did not run on past the push");
+        }
     }
 }

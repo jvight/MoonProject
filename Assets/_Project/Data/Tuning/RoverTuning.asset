@@ -123,5 +123,8 @@ MonoBehaviour:
     _fallHalfLife: 0.45
   _dock:
     _settleSeconds: 1
+    _releaseTurnSeconds: 1.2
+    _releaseTurnThresholdDegrees: 3
+    _releaseInterruptInput: 0.1
     _lampDim: 0.3
     _lampHalfLife: 0.5

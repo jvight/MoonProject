@@ -4,7 +4,8 @@ namespace MoonProject.Audio
 {
     /// <summary>
     /// The radio: how far the clear signal reaches from the base, how clarity maps to low-pass/static/volume/wobble,
-    /// how the playlist crossfades between tracks, and how the hiss clears into music when the base powers on. Created by the Audio/Tuning builder; runtime code only reads it.
+    /// how the playlist crossfades between tracks, how the hiss clears when the base powers on, and how the music
+    /// fades in when relay.1 answers. Created by the Audio/Tuning builder; runtime code only reads it.
     /// </summary>
     public sealed class RadioTuning : ScriptableObject
     {
@@ -111,7 +112,7 @@ namespace MoonProject.Audio
         [Tooltip("Extra static while the radio is still finding the station (melts away as the music resolves).")]
         [Range(0f, 1f)] [SerializeField] private float _wakeStaticBoost = 0.55f;
 
-        [Header("Power on (opening v2 B8): the hiss clears into the first music")]
+        [Header("Power on (opening v3 R4): the hiss clears, no music")]
         [Tooltip("Static level before the base has power, while the set hears only a faint signal (a fresh game " +
             "hears only this, 07's servos and the room tone).")]
         [Range(0f, 1f)] [SerializeField] private float _unpoweredStaticFloor = 0.3f;
@@ -119,8 +120,9 @@ namespace MoonProject.Audio
         [Tooltip("Time constant (s) of the hiss clearing once the base powers on.")]
         [Min(0.01f)] [SerializeField] private float _powerOnClearTime = 2.5f;
 
-        [Tooltip("Seconds the first track takes to fade in as the base powers on (low, warm).")]
-        [Min(0.01f)] [SerializeField] private float _powerOnMusicFade = 6f;
+        [Header("The answer (opening v3 R8): the music returns")]
+        [Tooltip("Seconds the first track takes to fade in as relay.1 answers 07's call (low, warm).")]
+        [Min(0.01f)] [SerializeField] private float _answerMusicFade = 6f;
 
         [Tooltip("Seconds of the quiet fade when the playlist starts or stops without a dial turn.")]
         [Range(0.05f, 3f)] [SerializeField] private float _silentSwitchFade = 0.6f;
@@ -161,6 +163,6 @@ namespace MoonProject.Audio
         public float WakeStaticBoost => _wakeStaticBoost;
         public float UnpoweredStaticFloor => _unpoweredStaticFloor;
         public float PowerOnClearTime => _powerOnClearTime;
-        public float PowerOnMusicFade => _powerOnMusicFade;
+        public float AnswerMusicFade => _answerMusicFade;
     }
 }

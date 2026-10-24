@@ -91,7 +91,7 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void NewGameOnAFreshTitle_PushesInWithNoBlack_ThenTheTubeWakesWithinASecond()
+        public void NewGameOnAFreshTitle_PushesInWithNoBlack_ThenTheTubeWakesSlowlyWithinTwoSeconds()
         {
             _script.BeginFull(OpeningStart.PushIn);
             TakeAll();
@@ -106,17 +106,17 @@ namespace MoonProject.Rover.Tests
             }
 
             Assert.AreEqual(OpeningPhase.PowerOn, _script.Phase, "the push-in ends on the face as the tube wakes");
-            Assert.LessOrEqual(elapsed, 1f + Frame, "within a second of the click");
+            Assert.LessOrEqual(elapsed, 1.7f + Frame, "the tube wakes slowly, but within two seconds of the click");
             CollectionAssert.DoesNotContain(_beats, WakeBeat.FadedOut, "no cover: nothing for App to reload under");
         }
 
         [Test]
-        public void NewGameOnAFreshTitle_HandsControlOverWithinTwentySixSeconds()
+        public void NewGameOnAFreshTitle_HandsControlOverWithinThirtyTwoSeconds()
         {
             _script.BeginFull(OpeningStart.PushIn);
             TakeAll();
             float seconds = RunToChase(60f);
-            Assert.LessOrEqual(seconds, 26f + Frame, "New Game click to control, untouched");
+            Assert.LessOrEqual(seconds, 32f + Frame, "New Game click to control, untouched");
             Assert.Greater(seconds, 15f, "not rushed");
         }
 

@@ -144,5 +144,33 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.Less(worstBearing, 2f, "07 turned under the view: its bearing held.");
             Assert.Less(worstView, 5f, "The rendered view keeps its heading too: 07 stays put on screen.");
         }
+
+        [UnityTest]
+        public IEnumerator TheDockLettingGoFacingAnotherWay_TurnsTheViewWith07_KeepingItsPlaceBehindIt()
+        {
+            yield return Wait(2f);
+            var gamepad = InputSystem.AddDevice<Gamepad>();
+            CameraOrbit orbit = _rover.CameraRig.Orbit;
+            Set(gamepad.rightStick, new Vector2(LookStick, 0f));
+            float until = Time.time + 5f;
+            while (Mathf.Abs(orbit.YawOffset) < 40f && Time.time < until)
+            {
+                yield return null;
+            }
+
+            Set(gamepad.rightStick, Vector2.zero);
+            yield return Wait(0.5f);
+            RoverController controller = _rover.Controller;
+            Vector3 anchor = controller.Position + new Vector3(0.5f, 0f, 0.4f);
+            _rover.Context.Events.Publish(new MoonProject.Core.Events.RoverDockChanged(true, anchor,
+                Quaternion.Euler(0f, 14f, 0f)));
+            yield return Wait(1.5f);
+            float offset = orbit.YawOffset;
+            _rover.Context.Events.Publish(new MoonProject.Core.Events.RoverDockChanged(false, anchor,
+                Quaternion.Euler(0f, 110f, 0f)));
+            yield return Wait(_rover.Tuning.Dock.ReleaseTurnSeconds + 0.5f);
+            Assert.AreEqual(0f, Mathf.DeltaAngle(controller.Heading, 110f), 1f, "07 faces the release heading");
+            Assert.AreEqual(offset, orbit.YawOffset, 3f, "and the view turned with it, keeping its place behind 07");
+        }
     }
 }

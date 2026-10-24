@@ -65,6 +65,12 @@ MonoBehaviour:
   _padSpotAngleDegrees: 120
   _padSpotHeightMetres: 2.4
   _lampLightBudget: 4
+  _pulseIntervalSeconds: 3.6
+  _pulseTravelSeconds: 2.4
+  _pulseSizeMetres: 0.32
+  _pulseLiftMetres: 0.08
+  _sunPulseColor: {r: 0.95, g: 0.82, b: 0.5, a: 1}
+  _bankPulseColor: {r: 0.9, g: 0.55, b: 0.24, a: 1}
   _lampDuskAboveLastLightDegrees: 4
   _lampDawnMarginDegrees: 1.5
   _lampStaggerSeconds: 0.9

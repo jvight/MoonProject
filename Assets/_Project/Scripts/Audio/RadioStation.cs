@@ -6,12 +6,14 @@ using MoonProject.Core.Events;
 namespace MoonProject.Audio
 {
     /// <summary>
-    /// 07's radio (docs/design/opening-v2.md B0 and B8). Silent until <see cref="RoverAwoke"/>: then it crackles on
-    /// with a tuning swish into a faint signal hiss, the only thing it hears while the base has no power. When the base
-    /// powers on (<see cref="OpeningMilestoneReached"/> <see cref="OpeningMilestone.PowerOn"/>) the hiss clears and the
-    /// first music fades in, low and warm; from then on it shuffles the playlist (no immediate repeats, a
-    /// swish-and-static crossfade between tracks) and names each new track on the ticker once per session. A load
-    /// that already has power (<c>Restored</c>) just plays. Clarity follows 07's distance from the base through
+    /// 07's radio (docs/design/opening-v2.md B0). Silent until <see cref="RoverAwoke"/>: then it crackles on with a
+    /// tuning swish into a faint signal hiss, the only thing it hears while the base has no power. When the base powers
+    /// on (<see cref="OpeningMilestoneReached"/> <see cref="OpeningMilestone.PowerOn"/>) the hiss clears, and the set
+    /// stays quiet: a build is not a milestone, so no music. Music returns only with the opening's milestone, relay.1
+    /// answering 07's call (<see cref="CallStateChanged"/> <see cref="CallState.Answered"/>, beat R8): the dial finds
+    /// the old network and the first track fades in, low and warm; from then on it shuffles the playlist (no immediate
+    /// repeats, a swish-and-static crossfade between tracks) and names each new track on the ticker once per session.
+    /// A load that is already answered (<c>Restored</c>) just plays. Clarity follows 07's distance from the base through
     /// <see cref="RadioSignal"/> (low-pass, static, wow/flutter); beyond the clear radius the set thins towards
     /// near-silence, and it pulls back when 07 is still (the <see cref="Soundscape"/>'s mix). Initialised by
     /// <see cref="AudioDirector"/>.
@@ -20,7 +22,7 @@ namespace MoonProject.Audio
     public sealed class RadioStation : MonoBehaviour
     {
         private const float MinPitch = 0.01f;
-        private const int SubscriptionCount = 5;
+        private const int SubscriptionCount = 6;
 
         [Tooltip("Assets/_Project/Data/Audio/RadioTuning.asset.")]
         [SerializeField] private RadioTuning _tuning;
@@ -39,6 +41,7 @@ namespace MoonProject.Audio
         private readonly IDisposable[] _subscriptions = new IDisposable[SubscriptionCount];
         private bool _openingHoldsRadio;
         private bool _powered;
+        private bool _answered;
         private IRoverState _listener;
         private IWorldLayout _layout;
         private EventBus _events;
@@ -55,8 +58,11 @@ namespace MoonProject.Audio
         /// <summary>True once 07 has started waking and the radio has come on.</summary>
         public bool IsOn => _wake.IsAwake;
 
-        /// <summary>True once the base has power: the radio plays music, not only the hiss.</summary>
+        /// <summary>True once the base has power: the signal hiss has cleared (still no music).</summary>
         public bool Powered => _powered;
+
+        /// <summary>True once relay.1 has answered 07's call: the radio plays the network's music.</summary>
+        public bool Answered => _answered;
 
         /// <summary>True while any music plays.</summary>
         public bool MusicStarted
@@ -150,6 +156,7 @@ namespace MoonProject.Audio
             _subscriptions[2] = context.Events.Subscribe<RoverPlaced>(OnRoverPlaced);
             _subscriptions[3] = context.Events.Subscribe<LowPowerChanged>(OnLowPowerChanged);
             _subscriptions[4] = context.Events.Subscribe<OpeningMilestoneReached>(OnMilestone);
+            _subscriptions[5] = context.Events.Subscribe<CallStateChanged>(OnCallStateChanged);
         }
 
         internal void Wire(RadioTuning tuning, RadioPlaylist playlist)
@@ -170,7 +177,7 @@ namespace MoonProject.Audio
             RadioMix mix = _signal.Mix;
             float wobble = _wowFlutter.Step(dt, _tuning.WowRate, _tuning.FlutterRate, _tuning.FlutterShare);
             float pitch = Mathf.Max(MinPitch, WowFlutter.PitchFactor(wobble, mix.WobbleCents));
-            if (_wake.Step(dt) && _powered)
+            if (_wake.Step(dt) && _answered)
             {
                 StartOn(_mixer.StartNow(0f));
             }
@@ -230,7 +237,7 @@ namespace MoonProject.Audio
         /// <summary>Starts the playlist's next track on <paramref name="deck"/> (it is the live deck now).</summary>
         private void StartOn(int deck)
         {
-            if (!_powered || _playlist.Count == 0)
+            if (!_answered || _playlist.Count == 0)
             {
                 return;
             }
@@ -256,7 +263,8 @@ namespace MoonProject.Audio
             _swish.Play();
         }
 
-        /// <summary>The base has power: the hiss clears and the first music fades in (at once for a load).</summary>
+        /// <summary>The base has power: the hiss clears (at once for a load). No music: the build is not a milestone.
+        /// </summary>
         private void OnMilestone(OpeningMilestoneReached reached)
         {
             if (reached.Milestone != OpeningMilestone.PowerOn || _powered)
@@ -269,16 +277,27 @@ namespace MoonProject.Audio
             {
                 _hissFloor.Snap(0f);
             }
+        }
 
+        /// <summary>Relay.1 answered: the dial finds the network and the first music fades in (at once for a load).
+        /// </summary>
+        private void OnCallStateChanged(CallStateChanged changed)
+        {
+            if (changed.State != CallState.Answered || _answered)
+            {
+                return;
+            }
+
+            _answered = true;
             if (!_wake.MusicStarted)
             {
                 // Before the radio comes on (a load, the title): the wake-up starts the music.
                 return;
             }
 
-            float fadeIn = reached.Restored ? _tuning.SilentSwitchFade : _tuning.PowerOnMusicFade;
+            float fadeIn = changed.Restored ? _tuning.SilentSwitchFade : _tuning.AnswerMusicFade;
             _mixer.Change(true, _tuning.SilentSwitchFade, 0f, fadeIn, 0f);
-            if (!reached.Restored)
+            if (!changed.Restored)
             {
                 PlaySwish();
             }

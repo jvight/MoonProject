@@ -25,7 +25,7 @@ namespace MoonProject.Rover
     /// <see cref="LandingDetector"/>); this component only wires them to physics.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class RoverController : MonoBehaviour, IGameSystem, IRoverState, IRoverRig, ICutterRig,
+    public sealed class RoverController : MonoBehaviour, IGameSystem, IRoverState, IRoverClimb, IRoverRig, ICutterRig,
         IRoverAbilities, IRoverPlacement, IRoverFaceScreen, IRoverCargoSeat
     {
         /// <summary>The probe starts this fraction of the radius above the centre, so slight sinking hits.</summary>
@@ -142,6 +142,7 @@ namespace MoonProject.Rover
         private MeshFilter[] _selfMeshes;
         private GameContext _context;
         private bool _docked;
+        private readonly DockReleaseTurn _releaseTurn = new DockReleaseTurn();
         private float _dockElapsed;
         private Vector3 _dockFrom;
         private Vector3 _dockTo;
@@ -381,6 +382,8 @@ namespace MoonProject.Rover
         /// <summary>True while the Boost Coils are engaged.</summary>
         public bool IsBoosting => _boost.Engaged;
 
+        public float ClimbLimitDegrees => _tuning.Ground.SlopeAssistZeroAngle;
+
         /// <summary>True while 07 rests on the charging dock (eased onto it, held there until it drives off).</summary>
         public bool IsDocked => _docked;
 
@@ -468,6 +471,7 @@ namespace MoonProject.Rover
             _visualHeading = _heading;
             context.Register<IRoverState>(this);
             context.Register<IRoverRig>(this);
+            context.Register<IRoverClimb>(this);
             context.Register<IRoverAbilities>(this);
             context.Register<IRoverStillness>(_stillness);
             context.Register<IRoverPlacement>(this);
@@ -643,6 +647,13 @@ namespace MoonProject.Rover
                 return;
             }
 
+            if (_releaseTurn.Active)
+            {
+                ReadInput(dt);
+                StepReleaseTurn(dt);
+                return;
+            }
+
             if (_recovering)
             {
                 ReadInput(dt);
@@ -734,6 +745,7 @@ namespace MoonProject.Rover
             _recovering = false;
             _recoveryElapsed = 0f;
             _docked = false;
+            _releaseTurn.Cancel();
             _headlamp.SetDocked(false);
             _body.isKinematic = false;
             _body.transform.SetPositionAndRotation(centre, Quaternion.identity);
@@ -826,6 +838,12 @@ namespace MoonProject.Rover
                 if (_docked)
                 {
                     _docked = false;
+                    if (_releaseTurn.Begin(_heading, RoverPlacementMath.Yaw(dock.Rotation),
+                            _tuning.Dock.ReleaseTurnThresholdDegrees))
+                    {
+                        return;
+                    }
+
                     Free();
                 }
 
@@ -840,6 +858,24 @@ namespace MoonProject.Rover
             _dockFromHeading = _heading;
             _dockToHeading = RoverPlacementMath.Yaw(dock.Rotation);
             Freeze();
+        }
+
+        /// <summary>Held on the pad while the heading eases round; the player's first push frees 07 at once.</summary>
+        private void StepReleaseTurn(float dt)
+        {
+            if (Mathf.Max(Mathf.Abs(_steer), Mathf.Abs(_throttle)) > _tuning.Dock.ReleaseInterruptInput)
+            {
+                _releaseTurn.Cancel();
+                Free();
+                return;
+            }
+
+            _previousHeading = _heading;
+            _heading = _releaseTurn.Step(dt, _tuning.Dock.ReleaseTurnSeconds);
+            if (!_releaseTurn.Active)
+            {
+                Free();
+            }
         }
 
         private void StepDock(float dt)
