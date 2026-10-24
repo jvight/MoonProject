@@ -1,0 +1,105 @@
+{
+  "model": "sweeper",
+  "pivot_tolerance": 0.005,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_BareSteel",
+    "R1_Brass",
+    "R1_Copper",
+    "R1_CreamEnamel",
+    "R1_DarkGlass",
+    "R1_GreyMetal",
+    "R1_LampAmber",
+    "R1_OrangeStripe",
+    "R1_Rubber"
+  ],
+  "max_triangles": 7000,
+  "max_meshes": 9,
+  "max_draw_calls": 32,
+  "allow_rotation": [],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "bounds": {
+    "size": [
+      1.88,
+      2.42,
+      1.18
+    ],
+    "tolerance": 0.04,
+    "min_size": [
+      1.84,
+      2.38,
+      1.14
+    ],
+    "max_size": [
+      1.92,
+      2.46,
+      1.22
+    ]
+  },
+  "nodes": {
+    "Sweeper": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Body": {
+      "pivot": [
+        0.0,
+        -0.18,
+        0.46
+      ]
+    },
+    "Lamp": {
+      "pivot": [
+        0.0,
+        0.53,
+        1.06
+      ]
+    },
+    "BrushArm": {
+      "pivot": [
+        0.0,
+        0.52,
+        0.36
+      ]
+    },
+    "Brush": {
+      "pivot": [
+        0.0,
+        0.98,
+        0.2
+      ]
+    },
+    "Wheel_FL": {
+      "pivot": [
+        -0.66,
+        0.26,
+        0.28
+      ]
+    },
+    "Wheel_FR": {
+      "pivot": [
+        0.66,
+        0.26,
+        0.28
+      ]
+    },
+    "Wheel_RL": {
+      "pivot": [
+        -0.66,
+        -0.76,
+        0.28
+      ]
+    },
+    "Wheel_RR": {
+      "pivot": [
+        0.66,
+        -0.76,
+        0.28
+      ]
+    }
+  }
+}
