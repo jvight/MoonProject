@@ -417,7 +417,8 @@ namespace MoonProject.Rover.Editor
             var rubber = BuildWiring.Require<Material>(RoverAssetPaths.TowCableMaterial, "Art's rubber material");
             LineRenderer rope = TowLine(host, "TowRope", rubber);
             LineRenderer hook = TowLine(host, "TowHook", rubber);
-            LineRenderer thread = TowLine(host, "TowThread", dustMaterial);
+            var threadMaterial = BuildWiring.Require<Material>(RoverAssetPaths.ThreadMaterial, "Rover/Materials");
+            LineRenderer thread = TowLine(host, "TowThread", threadMaterial);
             var cable = host.AddComponent<RoverTowCable>();
             BuildWiring.Assign(cable, ("_tuning", tuning), ("_rope", rope), ("_thread", thread), ("_hook", hook),
                 ("_winch", BuildWiring.Node(model, RoverModelNodes.WinchOrigin)),

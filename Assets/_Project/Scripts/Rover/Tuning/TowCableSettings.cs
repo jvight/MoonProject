@@ -62,7 +62,7 @@ namespace MoonProject.Rover
 
         [Tooltip("The pale thread laid along the rope (a chalky fibre, unlit): what keeps it a line against the night's " +
                  "regolith, where the dark rubber alone is lost in shadow. Its colour; no glow, nowhere near bloom.")]
-        [SerializeField] private Color _threadColor = new Color(0.62f, 0.6f, 0.55f, 0.55f);
+        [SerializeField] private Color _threadColor = new Color(0.5f, 0.48f, 0.43f, 1f);
 
         [Tooltip("How wide the thread is, as a share of the rope's drawn width.")]
         [Range(0.2f, 1f)]

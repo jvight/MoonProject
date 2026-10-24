@@ -102,8 +102,9 @@ namespace MoonProject.Rover
             look.SetColor(BaseColorId, settings.RopeColor);
             look.SetFloat(SmoothnessMaxId, settings.RopeSheen);
             _rope.SetPropertyBlock(look);
-            _thread.startColor = settings.ThreadColor;
-            _thread.endColor = settings.ThreadColor;
+            var threadLook = new MaterialPropertyBlock();
+            threadLook.SetColor(BaseColorId, settings.ThreadColor);
+            _thread.SetPropertyBlock(threadLook);
             _thread.positionCount = _points.Length;
             _thread.useWorldSpace = true;
             _hook.SetPropertyBlock(look);

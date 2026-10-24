@@ -279,7 +279,7 @@ namespace MoonProject.Rover.PlayModeTests
             var towRope = Node("TowRope", visual, Vector3.zero).gameObject.AddComponent<LineRenderer>();
             var towClamp = Node("TowClamp", visual, Vector3.zero).gameObject.AddComponent<LineRenderer>();
             var towThread = Node("TowThread", visual, Vector3.zero).gameObject.AddComponent<LineRenderer>();
-            towThread.sharedMaterial = material;
+            towThread.sharedMaterial = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
             towRope.sharedMaterial = material;
             towClamp.sharedMaterial = material;
             var towCable = visual.gameObject.AddComponent<RoverTowCable>();
