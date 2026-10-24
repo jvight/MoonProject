@@ -578,6 +578,15 @@ namespace MoonProject.UI
             InteractionHint primary = _services.Hints.Primary;
             _objectiveWord = _objectiveChip.Word(_objective.WantsShown && !_objective.IsNext && !_objective.ShowsKey,
                 primary.Ready ? primary.Kind : InteractionKind.None, HeldNow());
+            // A key the player needs now outranks a system's report: the "Tab Fit" chip once the igniter is in the hold
+            // must not wait behind the cutter's card (prompts stay closed while any card is up).
+            InteractionHint needed = _services.Hints.Primary;
+            PromptEntry neededEntry = _tuning.Prompts.Find(needed.Kind);
+            if (needed.Ready && neededEntry != null && neededEntry.PersistUntilUsed && _ledger.ShouldTeach(needed.Kind))
+            {
+                _readout.YieldSystemCards();
+            }
+
             PromptHolder holder = DecideGuidance(paused);
             _controlsView.Tick(deltaTime, holder == PromptHolder.Controls && _controlsCard.WantsShown && cardOpen,
                 device, _ledger.ControlsAdded, _controlsCard.Fresh);

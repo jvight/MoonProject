@@ -678,6 +678,7 @@ namespace MoonProject.Gameplay
             PulseView.Step(deltaTime);
             Release.Step(deltaTime);
             RackView.Step(deltaTime);
+            RackView.HoldRead(_input.ExcavateHeld && RackAssembly.Progress01 > 0f);
             RackAssembly.Step(deltaTime, RackView.TryGetRead(out _, out string readBay) ? readBay : null,
                 _input.ExcavateHeld);
             Answer.Step(deltaTime, Opening.NightFallen, _input.ExcavateHeld, _roverState.Position, _roverState.Speed);

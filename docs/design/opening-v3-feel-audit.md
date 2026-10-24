@@ -1,5 +1,7 @@
 # Opening v3: feel audit, feature by feature
 
+> Pass 1 below the Pass 2 table is kept as history.
+
 > **Author:** the game design session, 2026-10-24.
 >
 > **Owner:** "Những chức năng nào bạn đánh giá chưa ổn thì hãy sửa tiếp, khi nào feeling từng chức năng nhỏ ổn nhất
@@ -24,6 +26,21 @@
 > **Limit:** stills cannot show motion, timing or sound, so the scan beam, the cut, driving weight and sound, Tab fit,
 > transmit and the audio mix are marked **not rated** below. They need a short screen-and-sound capture each, or the
 > Director's listening pass. I did not guess.
+
+## Pass 2 (2026-10-24): main ee720a7e3, bot run n0ac9ae9ec (stall reminders 9 beats → 1)
+| Feature | Was | Now | What changed, from the frames | Still to watch |
+|---|---|---|---|---|
+| Tow | 2 | **4** | the rope reads as a line to the module at night (t0520); one skid-dust emitter; props near the lens thin away | the strain and release feel (motion) |
+| Range ring | 2 | **4** | a soft amber band that fades; no white line left in the world (B12) | — |
+| Sun HUD | 2 | **4** | a calm arc glyph, no minutes | — |
+| Guidance lines and chips | 3 | **4** | lines quiet once their verb starts; low-battery line quiet by relay.1; take line on the take; the Tab chip teaches the fit; 1 stall reminder in the whole run | **a reminder line is still too faint** on night sky (B12+5, R12a+5) |
+| Night look | 3 | **4** | a full-Earth night that never reads as day; the Sun is out of the B12 frame; relay.1 reads as a lamp | the solar array blooms white like a floodlight beside the pad (R12a) |
+| Driving dust | 3 | **4?** | ballistic regolith dust, now tested | it's motion: confirm in play |
+| Camera | 3 | **4** | the near-lens fade; the nudge retry after another shot | — |
+| Relay.1 / rack / headlamp | 3 | **3–4** | rack stickiness fixed; the lamp-visual pass landed | the headlamp pods on 07: confirm they read at chase distance once worn |
+| **Build ghost** | 3 | **3** | **unchanged:** the ghost floats above 07's head, the bay sits under the battery widget, the line and cost panel show together (B4b+5) | **the top open item** |
+| **Fallen-array glint** | — | **3** | still warned: not lit and on screen within 20 s at B7 | the moment power runs out |
+| Scan latch, cut pacing, audio passes 1–3 | n/r | n/r | landed (scan latch, the cut's stage-lock weight, real-source sounds) | motion and sound: the owner's ears decide |
 
 ## 0. Player experience
 The opening's hook (the call) and its far goal now read. What drags the feel down is a set of small **breaks of

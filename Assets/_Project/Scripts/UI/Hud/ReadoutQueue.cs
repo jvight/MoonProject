@@ -143,6 +143,25 @@ namespace MoonProject.UI
         }
 
         /// <summary>
+        /// A key the player needs now outranks a system's report: a system card on the screen starts its fade at once,
+        /// and system cards still waiting are dropped (they would only repeat a state the chip is about to fix).
+        /// </summary>
+        public void YieldSystemCards()
+        {
+            if (_phase == Phase.Showing && Current.Kind == ReadoutKind.System)
+            {
+                _phase = Phase.Fading;
+            }
+
+            _pending.RemoveAll(IsSystemCard);
+        }
+
+        private static bool IsSystemCard(ReadoutRequest request)
+        {
+            return request.Kind == ReadoutKind.System;
+        }
+
+        /// <summary>
         /// Steps the timeline; true when a card started on this step (the caller writes its lines).
         /// </summary>
         /// <param name="deltaTime">Unscaled seconds; 0 while paused.</param>

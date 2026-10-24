@@ -261,6 +261,38 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
+        public void TheCuttersFault_WithASpareIgniterInTheHold_SaysSo_NotThatItIsMissing()
+        {
+            Assert.AreEqual("CUTTER ········ FAULT · IGNITER IN HOLD",
+                _text.SystemLine(RoverSystem.Cutter, RoverSystemState.Fault, 0, true));
+            Assert.AreEqual("CUTTER ········ FAULT · NO IGNITER",
+                _text.SystemLine(RoverSystem.Cutter, RoverSystemState.Fault, 0, false));
+            Assert.AreEqual("CUTTER ········ OK", _text.SystemLine(RoverSystem.Cutter, RoverSystemState.Ok, 0, true),
+                "fitted, the cutter is simply OK");
+        }
+
+        [Test]
+        public void AFirstUseChip_EndsTheSystemCardOnScreen_AndDropsTheOnesWaiting_ButNotAStory()
+        {
+            var settings = new GuidanceSettings();
+            var queue = new ReadoutQueue(settings);
+            queue.Offer(new ReadoutRequest(ReadoutKind.System, RoverSystem.Cutter));
+            queue.Offer(new ReadoutRequest(ReadoutKind.System, RoverSystem.Lamps));
+            queue.Tick(Frame, true, true);
+            Assert.IsTrue(queue.IsShowing);
+            queue.YieldSystemCards();
+            Assert.IsFalse(queue.IsShowing, "the cutter's card starts its fade at once");
+            queue.Tick(Frame, true, true);
+            queue.Tick(Frame, true, true);
+            Assert.IsFalse(queue.Wants, "the lamps' card that waited is dropped too");
+
+            queue.Offer(new ReadoutRequest(ReadoutKind.Story, textKey: "story.airlock_panel"));
+            queue.Tick(Frame, true, true);
+            queue.YieldSystemCards();
+            Assert.IsTrue(queue.IsShowing, "a story card is not a system report: it keeps its hold");
+        }
+
+        [Test]
         public void ACardPausedBySlot_KeepsItsHold()
         {
             var settings = new GuidanceSettings();

@@ -40,5 +40,22 @@ namespace MoonProject.Autoplay.Tests
                 out AutoplayOptions naive, out _);
             Assert.IsTrue(naive.Naive);
         }
+
+        [Test]
+        public void ALineInItsFadeOut_IsNotSteady_AndOneHeldOrRisingIs()
+        {
+            var fade = new FadeWatch();
+            Assert.IsFalse(fade.Steady(1f, 1), "the first sample has no history");
+            Assert.IsTrue(fade.Steady(1f, 2));
+            Assert.IsTrue(fade.Steady(1f, 2), "one answer per frame");
+            Assert.IsFalse(fade.Steady(0.6f, 3), "the opacity fell: the line is leaving");
+            Assert.IsFalse(fade.Steady(0.6f, 3));
+            Assert.IsFalse(fade.Steady(0.2f, 4));
+
+            fade.Reset();
+            Assert.IsFalse(fade.Steady(0.2f, 10));
+            Assert.IsTrue(fade.Steady(0.7f, 11), "a rising line is showing");
+            Assert.IsTrue(fade.Steady(1f, 12));
+        }
     }
 }

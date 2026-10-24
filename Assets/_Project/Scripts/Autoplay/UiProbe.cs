@@ -29,6 +29,9 @@ namespace MoonProject.Autoplay
         public const string FaceDevicePrefix = "seven-device-";
 
         private readonly VisualElement _root;
+        private readonly FadeWatch _lineFade = new FadeWatch();
+        private readonly FadeWatch _promptFade = new FadeWatch();
+        private readonly FadeWatch _lookHintFade = new FadeWatch();
         private VisualElement _face;
 
         public UiProbe(VisualElement root, VisualElement face)
@@ -92,6 +95,22 @@ namespace MoonProject.Autoplay
         }
 
         /// <summary>
+        /// The objective line while it is shown or showing, else empty: a line in its fade-out is leaving, so it is
+        /// ignored. Read it once a frame; the first frame it is seen only starts the watch.
+        /// </summary>
+        public string ObjectiveLineSteady()
+        {
+            VisualElement shell = _root.Q<VisualElement>("next-line");
+            if (!IsShown(shell))
+            {
+                _lineFade.Reset();
+                return string.Empty;
+            }
+
+            return _lineFade.Steady(OpacityOf(shell), Time.frameCount) ? ObjectiveLine() : string.Empty;
+        }
+
+        /// <summary>
         /// Fills <paramref name="into"/> with the names of the guidance elements on screen now (an objective line only
         /// while it has words); elements the HUD does not have yet are not on screen.
         /// </summary>
@@ -148,25 +167,44 @@ namespace MoonProject.Autoplay
         /// </summary>
         public bool ChipInView(out string text)
         {
+            return ChipInView(false, out text);
+        }
+
+        /// <summary>
+        /// <see cref="ChipInView(out string)"/> for a chip that is shown or showing: one in its fade-out is leaving,
+        /// so it is ignored. Read it once a frame; the first frame a chip is seen only starts the watch.
+        /// </summary>
+        public bool ChipSteadyInView(out string text)
+        {
+            return ChipInView(true, out text);
+        }
+
+        private bool ChipInView(bool steady, out string text)
+        {
             Rect view = _root.worldBound;
-            foreach (string name in new[] { "prompt", "look-hint" })
+            text = string.Empty;
+            bool found = false;
+            for (int i = 0; i < 2; i++)
             {
+                string name = i == 0 ? "prompt" : LookHintName;
+                FadeWatch fade = i == 0 ? _promptFade : _lookHintFade;
                 VisualElement element = _root.Q<VisualElement>(name);
                 if (element == null || !IsShown(element, GuidanceOpacity))
                 {
+                    fade.Reset();
                     continue;
                 }
 
+                bool leaving = steady && !fade.Steady(OpacityOf(element), Time.frameCount);
                 string words = WordsOf(name);
-                if (!string.IsNullOrEmpty(words) && view.Contains(element.worldBound.center))
+                if (!found && !leaving && !string.IsNullOrEmpty(words) && view.Contains(element.worldBound.center))
                 {
                     text = words;
-                    return true;
+                    found = true;
                 }
             }
 
-            text = string.Empty;
-            return false;
+            return found;
         }
 
         /// <summary>
@@ -273,6 +311,17 @@ namespace MoonProject.Autoplay
             VisualElement shell = _root.Q<VisualElement>(container);
             Label text = _root.Q<Label>(label);
             return IsShown(shell) && text != null ? text.text ?? string.Empty : string.Empty;
+        }
+
+        private static float OpacityOf(VisualElement element)
+        {
+            float opacity = 1f;
+            for (VisualElement e = element; e != null; e = e.parent)
+            {
+                opacity *= e.resolvedStyle.opacity;
+            }
+
+            return opacity;
         }
 
         private static bool IsShown(VisualElement element)

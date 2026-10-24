@@ -835,6 +835,10 @@
             "text": "FAULT · NO IGNITER"
         },
         {
+            "key": "ui.system.state.igniter_in_hold",
+            "text": "FAULT · IGNITER IN HOLD"
+        },
+        {
             "key": "ui.system.state.jammed",
             "text": "JAMMED"
         },
