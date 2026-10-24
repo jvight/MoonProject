@@ -552,14 +552,15 @@ namespace MoonProject.Audio
 
         /// <summary>
         /// The next line arriving on 07's face: the same soft relay tick and faint D every time, only for a new line,
-        /// never a re-show of the same one.
+        /// never a re-show of the same one; a reminder of the step plays it softer.
         /// </summary>
         private void OnNextStepChanged(NextStepChanged changed)
         {
             string key = changed.LineKey ?? string.Empty;
             if (key.Length > 0 && !string.Equals(key, _lastStep, StringComparison.Ordinal))
             {
-                _director.Play2D(_nextLine);
+                _director.Play2D(_nextLine,
+                    changed.Reason == NextLineReason.Reminder ? _tuning.ReminderLineVolume : 1f);
             }
 
             _lastStep = key;

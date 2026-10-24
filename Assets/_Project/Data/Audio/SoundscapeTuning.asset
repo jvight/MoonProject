@@ -62,6 +62,9 @@ MonoBehaviour:
     _placementDistance: 5
     _spatialBlend: 0.8
     _decodedVolume: 0.6
+    _pulseVolume: 0.8
+    _routePulseVolume: 0.45
+    _ackVolume: 0.7
     _dropoutMin: 0.08
     _dropoutMax: 0.45
     _holdMin: 0.3

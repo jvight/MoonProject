@@ -407,14 +407,14 @@ MonoBehaviour:
     _hutRadius: 3
   _atmosphere:
     _lightColor: {r: 0.92, g: 0.94, b: 1, a: 1}
-    _lightIntensity: 1.95
+    _lightIntensity: 1.2
     _lightElevation: 19
     _lightBearingOffset: -60
     _shadowStrength: 0.78
     _shadowDepthBias: 1
     _shadowNormalBias: 0.5
     _fillColor: {r: 0.62, g: 0.7, b: 1, a: 1}
-    _fillIntensity: 0.45
+    _fillIntensity: 0.42
     _fillElevation: 6
     _fillBearingOffset: 232
     _ambientSky: {r: 0.075, g: 0.078, b: 0.092, a: 1}
@@ -571,7 +571,7 @@ MonoBehaviour:
       _purposeFadeSeconds: 1.5
     _relayLamp:
       _haloIntensity: 1.2
-      _haloRadius: 0.6
+      _haloRadius: 0.2
       _haloMinAngle: 0.9
       _haloMinFrom: 40
       _haloMinFull: 500
