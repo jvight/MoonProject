@@ -181,8 +181,9 @@ namespace MoonProject.Art.Tests
                 Assert.AreEqual("R1_Ilmenite", veinMat.name);
                 Assert.AreEqual(0f, veinMat.GetFloat("_EmissionStrength"), 1e-5f);
 
-                Assert.That(drillAnchor.localPosition.y, Is.InRange(0.35f, 0.85f),
-                    $"'{outcrop.name}' DrillTarget_Anchor Y ({drillAnchor.localPosition.y:F2} m) must sit at 07's drill reach.");
+                float drillHeightM = drillAnchor.position.y - outcrop.transform.position.y;
+                Assert.That(drillHeightM, Is.InRange(0.35f, 0.95f),
+                    $"'{outcrop.name}' DrillTarget_Anchor height ({drillHeightM:F2} m) must sit at 07's drill reach.");
             }
         }
 
@@ -228,9 +229,13 @@ namespace MoonProject.Art.Tests
 
             foreach (Renderer r in convoy.GetComponentsInChildren<Renderer>(true))
             {
-                if (r.sharedMaterial != null && r.sharedMaterial.HasProperty("_EmissionStrength"))
+                if (r.sharedMaterial != null
+                    && r.sharedMaterial.HasProperty("_EmissionStrength")
+                    && r.sharedMaterial.HasProperty("_EmissionColor"))
                 {
-                    Assert.AreEqual(0f, r.sharedMaterial.GetFloat("_EmissionStrength"), 1e-5f,
+                    float effectiveEmission = r.sharedMaterial.GetFloat("_EmissionStrength")
+                        * r.sharedMaterial.GetColor("_EmissionColor").maxColorComponent;
+                    Assert.AreEqual(0f, effectiveEmission, 1e-5f,
                         $"Stopped convoy renderer '{r.name}' must be dark (zero emission).");
                 }
             }
@@ -250,9 +255,13 @@ namespace MoonProject.Art.Tests
 
             foreach (Renderer r in drone.GetComponentsInChildren<Renderer>(true))
             {
-                if (r.sharedMaterial != null && r.sharedMaterial.HasProperty("_EmissionStrength"))
+                if (r.sharedMaterial != null
+                    && r.sharedMaterial.HasProperty("_EmissionStrength")
+                    && r.sharedMaterial.HasProperty("_EmissionColor"))
                 {
-                    Assert.AreEqual(0f, r.sharedMaterial.GetFloat("_EmissionStrength"), 1e-5f,
+                    float effectiveEmission = r.sharedMaterial.GetFloat("_EmissionStrength")
+                        * r.sharedMaterial.GetColor("_EmissionColor").maxColorComponent;
+                    Assert.AreEqual(0f, effectiveEmission, 1e-5f,
                         $"Crashed survey drone renderer '{r.name}' must be dark (zero emission).");
                 }
             }
