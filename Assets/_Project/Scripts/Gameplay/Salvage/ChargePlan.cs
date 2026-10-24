@@ -2,13 +2,15 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// How one cut's charge builds (docs/design/0.5.5-owner-feedback.md §5.1): the brace (skipped by a warm emitter),
-    /// then the stages the piece needs, each locking in turn, then the held breath before the beam fires.
+    /// then the stages the piece needs, each locking in turn and holding still a moment before the next builds, then the
+    /// held breath before the beam fires.
     /// </summary>
     public readonly struct ChargePlan
     {
-        public ChargePlan(float braceSeconds, float stageSeconds, int stages, float breathSeconds, bool warm,
-            float startFraction)
+        public ChargePlan(float braceSeconds, float stageSeconds, float holdSeconds, int stages, float breathSeconds,
+            bool warm, float startFraction)
         {
+            HoldSeconds = holdSeconds;
             StartFraction = startFraction;
             BraceSeconds = warm ? 0f : braceSeconds;
             StageSeconds = stageSeconds;
@@ -22,6 +24,9 @@ namespace MoonProject.Gameplay
 
         /// <summary>Seconds each stage takes to build.</summary>
         public float StageSeconds { get; }
+
+        /// <summary>Seconds a locked stage holds still before the next one builds (none after the last).</summary>
+        public float HoldSeconds { get; }
 
         /// <summary>Stages the piece needs: small 1, medium 2, large and hull 3.</summary>
         public int Stages { get; }
@@ -38,12 +43,12 @@ namespace MoonProject.Gameplay
         public float StartFraction { get; }
 
         /// <summary>The charge in all, press to ignition.</summary>
-        public float TotalSeconds => BraceSeconds + Stages * StageSeconds + BreathSeconds;
+        public float TotalSeconds => BraceSeconds + Stages * StageSeconds + (Stages - 1) * HoldSeconds + BreathSeconds;
 
         /// <summary>When stage <paramref name="stage"/> (1..<see cref="Stages"/>) locks, from the press.</summary>
         public float LockAt(int stage)
         {
-            return BraceSeconds + stage * StageSeconds;
+            return BraceSeconds + stage * StageSeconds + (stage - 1) * HoldSeconds;
         }
     }
 }
