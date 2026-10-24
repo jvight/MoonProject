@@ -168,9 +168,13 @@ namespace MoonProject.Gameplay
 
         public bool AnswerStarted => _answer != null && _answer.Phase >= AnswerPhase.Transmitting;
 
-        public bool AtRelay => _relay != null &&
+        // Near relay.1 is not enough: the line goes quiet only once the spare's pickup chip or the socket's chip is up
+        // to lead, or a stop short of their reach leaves nothing on screen.
+        public bool AtRelay => _relay != null && _hints != null &&
                                SurfaceRules.HorizontalDistance(_rover.Position, _relay.SocketPoint) <=
-                               _tuning.Guidance.ArrivalReach;
+                               _tuning.Guidance.ArrivalReach &&
+                               (_hints.TryGet(InteractionKind.Install, out _) ||
+                                _hints.TryGet(InteractionKind.PickUp, out _));
 
         public bool HeadlampUnlocked =>
             _understanding != null && _understanding.IsUnlocked(MakerUnderstandingSettings.Ssr3Headlamp);

@@ -75,7 +75,10 @@ namespace MoonProject.Gameplay
         /// <summary>07 has started transmitting from the mast (the answer's moment is under way, R8).</summary>
         bool AnswerStarted { get; }
 
-        /// <summary>07 has arrived at relay.1: the line that sends it there goes quiet (R10).</summary>
+        /// <summary>
+        /// 07 has arrived at relay.1 and its cabinet's or socket's chip is up: the line that sends it there goes quiet
+        /// (R10).
+        /// </summary>
         bool AtRelay { get; }
 
         /// <summary>relay.1's spare is fitted and it is lit (R10).</summary>
