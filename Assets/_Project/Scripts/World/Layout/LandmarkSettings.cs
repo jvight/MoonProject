@@ -175,22 +175,21 @@ namespace MoonProject.World
         [SerializeField] private PropPlacement _elder01 =
             new PropPlacement(WorldAnchors.PeakRoad, "Elder01", Vector2.zero, 30f, 0f);
 
-        [Tooltip("The rockfall that stopped 01 and closes the Peak road (base-home-and-crater-exits §4): Art's rocks " +
-            "a few metres ahead of it, and its big boulders heaped across the road where it starts to climb, so the " +
-            "closed way reads from the base at minute 1. Atlas lifts it (1.0).")]
+        [Tooltip("The rockfall that stopped 01 and closes the Peak road (base-home-and-crater-exits §4): Art's fresh " +
+            "talus slab across the road where it starts to climb, the big pale fresh-broken boulders on it, and a few " +
+            "old weathered rocks at its margins, under the scar it tore down the Peak's flank, so the closed way reads " +
+            "from the base at minute 1. Atlas lifts it (1.0).")]
         [SerializeField] private PropPlacement[] _rockfall =
         {
-            new PropPlacement(WorldAnchors.PeakRoad, "Rock_09", new Vector2(0.4f, 6.6f), 70f, 0.5f),
-            new PropPlacement(WorldAnchors.PeakRoad, "Rock_08", new Vector2(3.7f, 4.8f), 205f, 0.4f),
-            new PropPlacement(WorldAnchors.PeakRoad, "Rock_08", new Vector2(-2f, 9.1f), 320f, 0.45f),
-            new PropPlacement(WorldAnchors.PeakRoad, "Rock_13", new Vector2(1f, 15f), 40f, 0.9f),
-            new PropPlacement(WorldAnchors.PeakRoad, "Rock_12", new Vector2(-6.5f, 13f), 150f, 0.7f),
-            new PropPlacement(WorldAnchors.PeakRoad, "Rock_12", new Vector2(8f, 17.5f), 260f, 0.7f),
-            new PropPlacement(WorldAnchors.PeakRoad, "Rock_11", new Vector2(-1.5f, 22f), 95f, 0.6f),
-            new PropPlacement(WorldAnchors.PeakRoad, "Rock_10", new Vector2(4.5f, 24.5f), 330f, 0.5f),
-            new PropPlacement(WorldAnchors.PeakRoad, "Rock_10", new Vector2(-9f, 19f), 20f, 0.5f),
-            new PropPlacement(WorldAnchors.PeakRoad, "Rock_09", new Vector2(-4f, 10.5f), 190f, 0.4f),
-            new PropPlacement(WorldAnchors.PeakRoad, "Rock_08", new Vector2(6f, 11f), 120f, 0.35f),
+            new PropPlacement(WorldAnchors.PeakRoad, "Rockfall_TalusSlab", new Vector2(0f, 16.5f), 6f, 0.35f),
+            new PropPlacement(WorldAnchors.PeakRoad, "Rockfall_Boulder_00", new Vector2(-2.4f, 10.8f), -18f, 0.55f),
+            new PropPlacement(WorldAnchors.PeakRoad, "Rockfall_Boulder_01", new Vector2(9.6f, 14.5f), 48f, 0.65f),
+            new PropPlacement(WorldAnchors.PeakRoad, "Rockfall_Boulder_02", new Vector2(-8.2f, 15.8f), -32f, 0.75f),
+            new PropPlacement(WorldAnchors.PeakRoad, "Rockfall_Boulder_03", new Vector2(1.2f, 18.5f), 24f, 0.85f),
+            new PropPlacement(WorldAnchors.PeakRoad, "Rock_13", new Vector2(-14.5f, 19.5f), 40f, 0.35f),
+            new PropPlacement(WorldAnchors.PeakRoad, "Rock_12", new Vector2(15.2f, 20.2f), -35f, 0.35f),
+            new PropPlacement(WorldAnchors.PeakRoad, "Rock_11", new Vector2(-4.8f, 25f), 110f, 0.35f),
+            new PropPlacement(WorldAnchors.PeakRoad, "Rock_10", new Vector2(6.5f, 26.2f), -75f, 0.3f),
         };
 
         public RuinPlacement[] Ruins => _ruins;

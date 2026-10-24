@@ -716,60 +716,50 @@ MonoBehaviour:
       _sink: 0
     _rockfall:
     - _anchor: site.peakroad
-      _id: Rock_09
-      _offset: {x: 0.4, y: 6.6}
-      _yaw: 70
-      _sink: 0.5
+      _id: Rockfall_TalusSlab
+      _offset: {x: 0, y: 16.5}
+      _yaw: 6
+      _sink: 0.35
     - _anchor: site.peakroad
-      _id: Rock_08
-      _offset: {x: 3.7, y: 4.8}
-      _yaw: 205
-      _sink: 0.4
+      _id: Rockfall_Boulder_00
+      _offset: {x: -2.4, y: 10.8}
+      _yaw: -18
+      _sink: 0.55
     - _anchor: site.peakroad
-      _id: Rock_08
-      _offset: {x: -2, y: 9.1}
-      _yaw: 320
-      _sink: 0.45
+      _id: Rockfall_Boulder_01
+      _offset: {x: 9.6, y: 14.5}
+      _yaw: 48
+      _sink: 0.65
+    - _anchor: site.peakroad
+      _id: Rockfall_Boulder_02
+      _offset: {x: -8.2, y: 15.8}
+      _yaw: -32
+      _sink: 0.75
+    - _anchor: site.peakroad
+      _id: Rockfall_Boulder_03
+      _offset: {x: 1.2, y: 18.5}
+      _yaw: 24
+      _sink: 0.85
     - _anchor: site.peakroad
       _id: Rock_13
-      _offset: {x: 1, y: 15}
+      _offset: {x: -14.5, y: 19.5}
       _yaw: 40
-      _sink: 0.9
+      _sink: 0.35
     - _anchor: site.peakroad
       _id: Rock_12
-      _offset: {x: -6.5, y: 13}
-      _yaw: 150
-      _sink: 0.7
-    - _anchor: site.peakroad
-      _id: Rock_12
-      _offset: {x: 8, y: 17.5}
-      _yaw: 260
-      _sink: 0.7
+      _offset: {x: 15.2, y: 20.2}
+      _yaw: -35
+      _sink: 0.35
     - _anchor: site.peakroad
       _id: Rock_11
-      _offset: {x: -1.5, y: 22}
-      _yaw: 95
-      _sink: 0.6
-    - _anchor: site.peakroad
-      _id: Rock_10
-      _offset: {x: 4.5, y: 24.5}
-      _yaw: 330
-      _sink: 0.5
-    - _anchor: site.peakroad
-      _id: Rock_10
-      _offset: {x: -9, y: 19}
-      _yaw: 20
-      _sink: 0.5
-    - _anchor: site.peakroad
-      _id: Rock_09
-      _offset: {x: -4, y: 10.5}
-      _yaw: 190
-      _sink: 0.4
-    - _anchor: site.peakroad
-      _id: Rock_08
-      _offset: {x: 6, y: 11}
-      _yaw: 120
+      _offset: {x: -4.8, y: 25}
+      _yaw: 110
       _sink: 0.35
+    - _anchor: site.peakroad
+      _id: Rock_10
+      _offset: {x: 6.5, y: 26.2}
+      _yaw: -75
+      _sink: 0.3
   _skyCycle:
     _dayLengthSeconds: 7200
     _eclipseBreakoutLead: 1
