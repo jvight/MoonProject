@@ -72,6 +72,10 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         // Seconds past a pulse's interval and travel to wait for it before calling the cable still.
         private const float PulseMargin = 1f;
+
+        // Seconds after a pulse's arrival to watch the lamp it reached, and the least it breathes up by day.
+        private const float PulseLampWatchSeconds = 1f;
+        private const float PulseLampLifted = 0.1f;
         private const float WatchStep = 0.1f;
 
         private readonly List<BaseLampLit> _lit = new List<BaseLampLit>();
@@ -339,7 +343,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         public IEnumerator ThePowerPulse_RunsFromTheArrayByDay_AndFromTheBankAtDusk_CapturedMidCable()
         {
             yield return Boot();
-            BuildCabledRow();
+            int[] ids = BuildCabledRow();
             PowerPulse pulse = _gameplay.PowerPulse;
             Camera lens = _context.Get<IViewCamera>().Camera;
             var terrain = _context.Get<ITerrainQuery>();
@@ -360,6 +364,21 @@ namespace MoonProject.Gameplay.PlayModeTests
                 _pulses.Clear();
                 yield return WaitForPulse(source, wait);
                 Assert.IsTrue(_pulses.Exists(p => p.StructureId == source), $"{name}: the {source}'s cable pulses");
+                if (source == StructureIds.SolarArray)
+                {
+                    Assert.IsTrue(_gameplay.Building.TryGetView(ids[0], out StructureView pad), "the pad stands");
+                    float lifted = 0f;
+                    float until = Time.time + PulseLampWatchSeconds;
+                    while (Time.time < until)
+                    {
+                        lifted = Mathf.Max(lifted, pad.LampIntensity);
+                        yield return null;
+                    }
+
+                    Assert.Greater(lifted, PulseLampLifted, "the array's pulse reaches the pad: its lamp breathes");
+                    Assert.Less(lifted, 1f, "softly, never a flash");
+                }
+
                 _pulses.Clear();
                 yield return WaitForPulse(source, wait);
                 Assert.IsFalse(_pulses.Exists(p => p.StructureId == still), $"{name}: the {still}'s cable is still");

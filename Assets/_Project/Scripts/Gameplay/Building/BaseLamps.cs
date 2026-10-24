@@ -28,6 +28,7 @@ namespace MoonProject.Gameplay
         private readonly Comparison<Lamp> _byRank;
         private readonly IDisposable _builtSubscription;
         private readonly IDisposable _removedSubscription;
+        private readonly IDisposable _pulseSubscription;
         private bool _started;
         private bool _dusk;
 
@@ -40,6 +41,7 @@ namespace MoonProject.Gameplay
             _byRank = CompareRank;
             _builtSubscription = events.Subscribe<StructureBuilt>(OnBuilt);
             _removedSubscription = events.Subscribe<StructureRemoved>(OnRemoved);
+            _pulseSubscription = events.Subscribe<PowerPulseArrived>(OnPulseArrived);
         }
 
         /// <summary>It is dusk at the base: the lamps are lit or coming on.</summary>
@@ -72,6 +74,7 @@ namespace MoonProject.Gameplay
 
             _builtSubscription.Dispose();
             _removedSubscription.Dispose();
+            _pulseSubscription.Dispose();
         }
 
         public void Step(float deltaTime)
@@ -115,7 +118,8 @@ namespace MoonProject.Gameplay
                 bool hasView = _building.TryGetView(lamp.InstanceId, out StructureView view);
                 if (hasView)
                 {
-                    view.DriveLamps(lamp.Ease.Level * _tuning.LampEmissionGain);
+                    view.DriveLamps(lamp.Ease.Level * _tuning.LampEmissionGain +
+                                    lamp.Breath(deltaTime, _tuning.PulseLampSeconds) * _tuning.PulseLampLift);
                 }
 
                 if (hasView && i < _tuning.LampLightBudget)
@@ -190,6 +194,29 @@ namespace MoonProject.Gameplay
             float elevation = Mathf.Asin(Mathf.Clamp(_sunlight.SunDirection.y, -1f, 1f)) * Mathf.Rad2Deg;
             float threshold = _sunlight.LastLightElevationDegrees + _tuning.LampDuskAboveLastLightDegrees;
             return _dusk ? elevation <= threshold + _tuning.LampDawnMarginDegrees : elevation <= threshold;
+        }
+
+        /// <summary>A power pulse reached a cable's far end: the lamp of the piece there breathes once.</summary>
+        private void OnPulseArrived(PowerPulseArrived pulse)
+        {
+            float best = _tuning.PulseLampReachMetres * _tuning.PulseLampReachMetres;
+            Lamp reached = null;
+            for (int i = 0; i < _lamps.Count; i++)
+            {
+                if (!_building.TryGetView(_lamps[i].InstanceId, out StructureView view))
+                {
+                    continue;
+                }
+
+                float distance = SurfaceRules.HorizontalDistanceSquared(view.transform.position, pulse.Position);
+                if (distance <= best)
+                {
+                    best = distance;
+                    reached = _lamps[i];
+                }
+            }
+
+            reached?.Breathe();
         }
 
         private void OnBuilt(StructureBuilt built)
@@ -282,6 +309,32 @@ namespace MoonProject.Gameplay
             public int Rank { get; }
 
             public LampEase Ease { get; } = new LampEase();
+
+            private float _breath = -1f;
+
+            /// <summary>A pulse reached this lamp's piece: its breath starts again.</summary>
+            public void Breathe()
+            {
+                _breath = 0f;
+            }
+
+            /// <summary>The breath's lift now (0..1, up and back down over <paramref name="seconds"/>).</summary>
+            public float Breath(float deltaTime, float seconds)
+            {
+                if (_breath < 0f)
+                {
+                    return 0f;
+                }
+
+                _breath += deltaTime;
+                if (_breath >= seconds)
+                {
+                    _breath = -1f;
+                    return 0f;
+                }
+
+                return Mathf.Sin(_breath / seconds * Mathf.PI);
+            }
         }
     }
 }

@@ -71,6 +71,9 @@ MonoBehaviour:
   _pulseLiftMetres: 0.08
   _sunPulseColor: {r: 0.95, g: 0.82, b: 0.5, a: 1}
   _bankPulseColor: {r: 0.9, g: 0.55, b: 0.24, a: 1}
+  _pulseLampLift: 0.35
+  _pulseLampSeconds: 1.1
+  _pulseLampReachMetres: 4
   _lampDuskAboveLastLightDegrees: 4
   _lampDawnMarginDegrees: 1.5
   _lampStaggerSeconds: 0.9

@@ -178,6 +178,16 @@ namespace MoonProject.Gameplay
         [Tooltip("The pulse from the battery bank at dusk and through the night: the base lamps' warm amber.")]
         [SerializeField] private Color _bankPulseColor = new Color(0.9f, 0.55f, 0.24f, 1f);
 
+        [Tooltip("How much a pulse lifts the lamp of the piece it reaches (the pad, fed by the array), on top of its " +
+                 "glow: a soft breath of light, never a flash.")]
+        [Range(0f, 1f)] [SerializeField] private float _pulseLampLift = 0.35f;
+
+        [Tooltip("Seconds the lamp's breath takes, easing up and back down, from the pulse's arrival.")]
+        [Range(0.2f, 3f)] [SerializeField] private float _pulseLampSeconds = 1.1f;
+
+        [Tooltip("Metres from a cable's far end within which a piece's lamp counts as the one the pulse reached.")]
+        [Range(0.5f, 10f)] [SerializeField] private float _pulseLampReachMetres = 4f;
+
         public float ChockLockDegrees => _chockLockDegrees;
         public float ClampArmLockDegrees => _clampArmLockDegrees;
         public float ClampArmCloseSeconds => _clampArmCloseSeconds;
@@ -198,6 +208,9 @@ namespace MoonProject.Gameplay
         public float PulseLiftMetres => _pulseLiftMetres;
         public Color SunPulseColor => _sunPulseColor;
         public Color BankPulseColor => _bankPulseColor;
+        public float PulseLampLift => _pulseLampLift;
+        public float PulseLampSeconds => _pulseLampSeconds;
+        public float PulseLampReachMetres => _pulseLampReachMetres;
         public float LampDuskAboveLastLightDegrees => _lampDuskAboveLastLightDegrees;
         public float LampDawnMarginDegrees => _lampDawnMarginDegrees;
         public float LampStaggerSeconds => _lampStaggerSeconds;
