@@ -16,6 +16,7 @@ namespace MoonProject.Gameplay
         private const int RayRefineSteps = 8;
         private const float HalfLivesPerSettle = 3.32f;
         private const float ApronMatchEpsilonSq = 1e-3f;
+        private const float MinApronViewCos = 0.7f;
 
         /// <summary>The farthest the bay may stand from 07 for the ghost to settle onto it.</summary>
         public static float SnapReach(BuildingTuning tuning)
@@ -122,9 +123,11 @@ namespace MoonProject.Gameplay
             Vector3 direction = distance > 1e-4f ? away / distance : flatForward;
             Vector3 point = roverPosition + direction * Mathf.Clamp(distance, tuning.MinPlacementDistance,
                 tuning.MaxPlacementDistance);
-            Vector3 settled = LooksAt(eye, flatForward, apronCentre, roverPosition, tuning)
-                ? apronCentre.Value
-                : Settle(point, roverPosition, apronCentre, tuning);
+            Vector3 settled = LooksTowardApron(flatForward, apronCentre, roverPosition)
+                ? (LooksAt(eye, flatForward, apronCentre, roverPosition, tuning)
+                    ? apronCentre.Value
+                    : Settle(point, roverPosition, apronCentre, tuning))
+                : point;
             if (terrain != null)
             {
                 settled.y = terrain.SampleHeight(settled.x, settled.z);
@@ -138,6 +141,23 @@ namespace MoonProject.Gameplay
         /// centre, ahead of the eye) and the bay is within snap reach of 07: looking toward it is enough for the pad's
         /// ghost to settle there, whatever the pitch.
         /// </summary>
+        private static bool LooksTowardApron(Vector3 flatForward, Vector3? apronCentre, Vector3 roverPosition)
+        {
+            if (!apronCentre.HasValue)
+            {
+                return false;
+            }
+
+            Vector3 roverToBay = apronCentre.Value - roverPosition;
+            roverToBay.y = 0f;
+            if (roverToBay.sqrMagnitude <= 1e-4f)
+            {
+                return true;
+            }
+
+            return Vector3.Dot(roverToBay.normalized, flatForward) >= MinApronViewCos;
+        }
+
         private static bool LooksAt(Vector3 eye, Vector3 flatForward, Vector3? apronCentre, Vector3 roverPosition,
             BuildingTuning tuning)
         {

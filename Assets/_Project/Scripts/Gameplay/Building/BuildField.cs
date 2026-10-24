@@ -21,8 +21,7 @@ namespace MoonProject.Gameplay
         private const float GhostGlideHalfLife = 0.045f;
         private const float GhostYawHalfLife = 0.04f;
         private const float GhostSnapSeedOffsetMetres = 0.8f;
-        private const float ExternalYawRateLimit = 22f;
-        private const float ExternalYawTolerance = 0.6f;
+        private const float LookAwayYawDegrees = 3f;
         private const float OccupiedBayRadiusSq = 1f;
 
         /// <summary>Squared metres within which an aim point counts as the apron bay's centre.</summary>
@@ -114,8 +113,7 @@ namespace MoonProject.Gameplay
         private bool _apronLatched;
         private bool _wasApronInReach;
         private bool _aimFollowsView;
-        private bool _hasPrevViewYaw;
-        private float _prevViewYaw;
+        private float _minApronYawGap;
         private bool _placingEventActive;
         private Vector3 _lastPlacingGhostPosition;
         private bool _lastPlacingOnApron;
@@ -814,7 +812,7 @@ namespace MoonProject.Gameplay
             _wasOnApron = false;
             _wasValid = true;
             _aimFollowsView = false;
-            _hasPrevViewYaw = false;
+            _minApronYawGap = 180f;
             Vector3? apron = ValidApronFor(_controller.SelectedStructure);
             _wasApronInReach = _rover != null && GhostAim.IsApronInReach(_rover.Position, apron, _tuning);
             _apronLatched = _wasApronInReach;
@@ -883,7 +881,7 @@ namespace MoonProject.Gameplay
             }
             else
             {
-                groundPoint = SampleAimPoint(roverPosition, selected, deltaTime);
+                groundPoint = SampleAimPoint(roverPosition, selected);
             }
 
             bool onApron = selected.Id == StructureIds.ChargingPad && _apronCentre.HasValue &&
@@ -1084,7 +1082,7 @@ namespace MoonProject.Gameplay
         /// of 07, settling onto the apron's bay for the charging pad (see <see cref="GhostAim"/>; a test's aim point
         /// wins).
         /// </summary>
-        private Vector3 SampleAimPoint(Vector3 roverPosition, StructureDefinition selected, float deltaTime)
+        private Vector3 SampleAimPoint(Vector3 roverPosition, StructureDefinition selected)
         {
             Vector3 point;
             if (_aimPointOverride.HasValue)
@@ -1098,6 +1096,7 @@ namespace MoonProject.Gameplay
                 if (inReach && !_wasApronInReach)
                 {
                     _apronLatched = true;
+                    _minApronYawGap = 180f;
                 }
 
                 _wasApronInReach = inReach;
@@ -1120,27 +1119,22 @@ namespace MoonProject.Gameplay
                         }
                     }
 
-                    bool playerLooked = _input != null &&
-                        (_input.LookDelta.sqrMagnitude > 1e-4f || _input.LookRate.sqrMagnitude > 1e-4f);
-                    bool externalTurn = false;
-                    if (_hasPrevViewYaw)
+                    float currGap = Mathf.Abs(Mathf.DeltaAngle(viewYaw, targetYaw));
+                    if (currGap < _minApronYawGap)
                     {
-                        float yawDelta = Mathf.Abs(Mathf.DeltaAngle(_prevViewYaw, viewYaw));
-                        float prevGap = Mathf.Abs(Mathf.DeltaAngle(_prevViewYaw, targetYaw));
-                        float currGap = Mathf.Abs(Mathf.DeltaAngle(viewYaw, targetYaw));
-                        float maxAutoStep = ExternalYawRateLimit * Mathf.Max(deltaTime, 0.02f) + ExternalYawTolerance;
-                        externalTurn = yawDelta > maxAutoStep || currGap > prevGap + ExternalYawTolerance;
+                        _minApronYawGap = currGap;
                     }
 
-                    _prevViewYaw = viewYaw;
-                    _hasPrevViewYaw = true;
-
-                    bool lookedAway = playerLooked || externalTurn;
+                    bool playerLooked = _input != null &&
+                        (_input.LookDelta.sqrMagnitude > 1e-4f || _input.LookRate.sqrMagnitude > 1e-4f);
+                    bool turnedAway = currGap > _minApronYawGap + LookAwayYawDegrees;
+                    bool lookedAway = playerLooked || turnedAway;
                     if (lookedAway)
                     {
                         _aimFollowsView = true;
                     }
 
+                    bool wasLatched = _apronLatched;
                     point = GhostAim.ResolvePlacingPoint(
                         _terrain,
                         view.position,
@@ -1152,6 +1146,10 @@ namespace MoonProject.Gameplay
                         _aimFollowsView,
                         lookedAway,
                         ref _apronLatched);
+                    if (!wasLatched && _apronLatched)
+                    {
+                        _minApronYawGap = currGap;
+                    }
                 }
                 else
                 {
