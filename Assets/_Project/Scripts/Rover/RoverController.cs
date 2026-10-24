@@ -313,6 +313,13 @@ namespace MoonProject.Rover
 
         public void SetScreenOpen(bool open, Texture contentTexture)
         {
+            long __p = MoonProject.Core.HitchProbe.Start();
+            SetScreenOpenCore(open, contentTexture);
+            MoonProject.Core.HitchProbe.Stop("Rover.SetScreenOpen", __p);
+        }
+
+        public void SetScreenOpenCore(bool open, Texture contentTexture)
+        {
             if (this == null)
             {
                 return;
@@ -1011,6 +1018,13 @@ namespace MoonProject.Rover
         }
 
         private void Update()
+        {
+            long __p = MoonProject.Core.HitchProbe.Start();
+            UpdateCore();
+            MoonProject.Core.HitchProbe.Stop("RoverController.Update", __p);
+        }
+
+        private void UpdateCore()
         {
             if (!_initialized)
             {

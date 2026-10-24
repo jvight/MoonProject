@@ -478,6 +478,13 @@ namespace MoonProject.UI
 
         private void Update()
         {
+            long __p = MoonProject.Core.HitchProbe.Start();
+            UpdateCore();
+            MoonProject.Core.HitchProbe.Stop("UISystem.Update", __p);
+        }
+
+        private void UpdateCore()
+        {
             if (_bound)
             {
                 Tick(Time.captureDeltaTime > 0f ? Time.captureDeltaTime : Time.unscaledDeltaTime);
@@ -1329,6 +1336,13 @@ namespace MoonProject.UI
 
         private void OpenCargo()
         {
+            long __p = MoonProject.Core.HitchProbe.Start();
+            OpenCargoCore();
+            MoonProject.Core.HitchProbe.Stop("UISystem.OpenCargo", __p);
+        }
+
+        private void OpenCargoCore()
+        {
             _lastFaceMouseScreenPos = _services.Input.Menu.PointerPosition;
             _lastCargoNavDirection = NavigationMoveEvent.Direction.None;
             _cargoNavRepeatTimer = 0f;
@@ -1343,6 +1357,13 @@ namespace MoonProject.UI
         }
 
         private void CloseCargo()
+        {
+            long __p = MoonProject.Core.HitchProbe.Start();
+            CloseCargoCore();
+            MoonProject.Core.HitchProbe.Stop("UISystem.CloseCargo", __p);
+        }
+
+        private void CloseCargoCore()
         {
             _lastCargoNavDirection = NavigationMoveEvent.Direction.None;
             _cargoNavRepeatTimer = 0f;

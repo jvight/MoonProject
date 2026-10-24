@@ -145,6 +145,13 @@ namespace MoonProject.UI
 
         public void Open()
         {
+            long __p = MoonProject.Core.HitchProbe.Start();
+            OpenCore();
+            MoonProject.Core.HitchProbe.Stop("CargoScreen.Open", __p);
+        }
+
+        public void OpenCore()
+        {
             if (_reveal.Target)
             {
                 return;
@@ -201,6 +208,13 @@ namespace MoonProject.UI
         }
 
         public void Tick(float deltaTime, Vector2 panelSize, InputDeviceKind device)
+        {
+            long __p = MoonProject.Core.HitchProbe.Start();
+            TickCore(deltaTime, panelSize, device);
+            MoonProject.Core.HitchProbe.Stop("CargoScreen.Tick", __p);
+        }
+
+        public void TickCore(float deltaTime, Vector2 panelSize, InputDeviceKind device)
         {
             float step = Mathf.Min(deltaTime, 0.1f);
             _reveal.Tick(step);

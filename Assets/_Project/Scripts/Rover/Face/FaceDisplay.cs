@@ -122,6 +122,13 @@ namespace MoonProject.Rover
 
         private void Update()
         {
+            long __p = MoonProject.Core.HitchProbe.Start();
+            UpdateCore();
+            MoonProject.Core.HitchProbe.Stop("FaceDisplay.Update", __p);
+        }
+
+        private void UpdateCore()
+        {
             if (_externallyDriven || _state == null)
             {
                 return;

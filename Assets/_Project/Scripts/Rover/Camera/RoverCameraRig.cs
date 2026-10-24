@@ -496,6 +496,13 @@ namespace MoonProject.Rover
 
         private void Update()
         {
+            long __p = MoonProject.Core.HitchProbe.Start();
+            UpdateCore();
+            MoonProject.Core.HitchProbe.Stop("RigUpdate", __p);
+        }
+
+        private void UpdateCore()
+        {
             float deltaTime = Time.deltaTime;
             if (!_initialized || deltaTime <= 0f)
             {
@@ -723,6 +730,13 @@ namespace MoonProject.Rover
         /// toward the solved camera bearing while suppressing idle head noise.
         /// </summary>
         public void SetFaceInspect(bool open, RoverBodyLanguage bodyLanguage)
+        {
+            long __p = MoonProject.Core.HitchProbe.Start();
+            SetFaceInspectCore(open, bodyLanguage);
+            MoonProject.Core.HitchProbe.Stop("Rig.SetFaceInspect", __p);
+        }
+
+        public void SetFaceInspectCore(bool open, RoverBodyLanguage bodyLanguage)
         {
             _faceInspectOpen = open;
             if (bodyLanguage != null)
