@@ -251,7 +251,7 @@ namespace MoonProject.Art.Tests
             Assert.IsNotNull(drone.transform.Find("Eye_Dead"));
             Assert.IsNotNull(drone.transform.Find("CutPoint"));
             Assert.IsNotNull(drone.transform.Find("FragmentSocket_Spool_0"));
-            Assert.IsNotNull(drone.transform.Find("Decal_TYCHO_1"));
+            Assert.IsNotNull(drone.transform.Find("Decal_Tycho_1"));
 
             foreach (Renderer r in drone.GetComponentsInChildren<Renderer>(true))
             {

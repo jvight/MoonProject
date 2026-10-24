@@ -1129,7 +1129,9 @@ def build_derelict_mare_convoy(out_fbx: Path) -> None:
     r1kit.create_empty("FragmentSocket_CutterRibs_1", root, (-0.48, 0.56, 0.0))
     r1kit.create_empty("FragmentSocket_CutterRibs_2", root, (0.36, 0.56, -2.65))
 
-    # Maker decals (Kessler-Arai & ILC livery)
+    r1kit.apply_triplanar_uvs(root, texel_scale=0.75)
+
+    # Maker decals (Kessler-Arai & ILC livery — added after apply_triplanar_uvs to preserve atlas UVs)
     r1kit.add_maker_decal_node(
         parent=root,
         name="Decal_KA_1",
@@ -1161,7 +1163,6 @@ def build_derelict_mare_convoy(out_fbx: Path) -> None:
         height=0.16,
     )
 
-    r1kit.apply_triplanar_uvs(root, texel_scale=0.75)
     r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(root, footprint_radius=4.2)
     _ensure_non_uniform_vcol(root)
@@ -1358,9 +1359,11 @@ def build_derelict_mare_survey_drone(out_fbx: Path) -> None:
     r1kit.create_empty("CutPoint", root, _pose((0.12, 0.68, -0.08)))
     r1kit.create_empty("FragmentSocket_Spool_0", root, _pose((-0.32, 0.42, -0.18)))
 
+    r1kit.apply_triplanar_uvs(root, texel_scale=0.80)
+
     r1kit.add_maker_decal_node(
         parent=root,
-        name="Decal_TYCHO_1",
+        name="Decal_Tycho_1",
         cell_key="TYCHO",
         center_u=_pose((0.0, 0.62, 0.10)),
         normal_u=(0.0, 0.95, 0.31),
@@ -1369,7 +1372,6 @@ def build_derelict_mare_survey_drone(out_fbx: Path) -> None:
         height=0.18,
     )
 
-    r1kit.apply_triplanar_uvs(root, texel_scale=0.80)
     r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(root, footprint_radius=1.35)
     _ensure_non_uniform_vcol(root)
@@ -1528,6 +1530,8 @@ def build_derelict_tardigrade_capsule(out_fbx: Path) -> None:
     r1kit.create_empty("CarryGrip_Anchor", root, _pose((0.0, 0.32, 0.04)))
     r1kit.create_empty("Window_Anchor", root, _pose((0.0, 0.26, 0.31)))
 
+    r1kit.apply_triplanar_uvs(root, texel_scale=0.95)
+
     r1kit.add_maker_decal_node(
         parent=root,
         name="Decal_ILC_1",
@@ -1539,7 +1543,6 @@ def build_derelict_tardigrade_capsule(out_fbx: Path) -> None:
         height=0.11,
     )
 
-    r1kit.apply_triplanar_uvs(root, texel_scale=0.95)
     r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(root, footprint_radius=0.65)
     _ensure_non_uniform_vcol(root)
