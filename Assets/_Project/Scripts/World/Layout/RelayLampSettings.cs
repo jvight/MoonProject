@@ -16,9 +16,10 @@ namespace MoonProject.World
         [Range(0f, 8f)]
         [SerializeField] private float _haloIntensity = 1.2f;
 
-        [Tooltip("Radius of the lamp's halo up close, metres.")]
+        [Tooltip("Radius of the lamp's halo up close, metres: a lamp's own tight glow round its lens, never a ball of " +
+            "light (from afar the smallest angle below keeps it a point).")]
         [Range(0.05f, 3f)]
-        [SerializeField] private float _haloRadius = 0.6f;
+        [SerializeField] private float _haloRadius = 0.2f;
 
         [Tooltip("Smallest angular size of the halo, degrees: the first lure after the answer, so a warm point that " +
             "still stands out in the whole night frame from the base, 300 m off.")]
