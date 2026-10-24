@@ -86,6 +86,7 @@ namespace MoonProject.Rover
         private readonly GuidanceNudge _nudge = new GuidanceNudge();
         private readonly BuildFraming _buildFraming = new BuildFraming();
         private readonly PendingNudge _pendingNudge = new PendingNudge();
+        private readonly TurnSettle _turnSettle = new TurnSettle();
         private bool _driveCarriedIntoNudge;
         private WideShot _wide;
         private bool _wideSteersYaw;
@@ -538,6 +539,7 @@ namespace MoonProject.Rover
             ApplyCameraRadius(_tuning.CameraRadius);
             StepFaceInspect(deltaTime);
             StepReleasePan(deltaTime);
+            _turnSettle.Step(RoverYaw(), deltaTime, _tuning.NudgeTurnRate, _tuning.NudgeTurnSettleSeconds);
             StepPendingNudge();
             _moment.Step(deltaTime);
             StepWideShot(deltaTime);
@@ -1780,7 +1782,7 @@ namespace MoonProject.Rover
         private bool FreeForNudge => (!_moment.IsActive || IsDockMoment) && _wide.Weight <= 0f &&
                                      _held.Weight <= 0f && !_tethered && !_towing && !_opening.IsActive &&
                                      !_faceInspectOpen && _faceInspectWeight <= 0f && !_gazePan.IsActive &&
-                                     !_buildFraming.IsActive && _buildFraming.Weight <= 0f;
+                                     !_buildFraming.IsActive && _buildFraming.Weight <= 0f && _turnSettle.IsSettled;
 
         /// <summary>
         /// A line that came while another shot had the camera (the charge's close shot, the dock) nudges as soon as

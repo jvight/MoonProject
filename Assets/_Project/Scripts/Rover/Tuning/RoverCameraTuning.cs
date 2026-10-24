@@ -529,6 +529,15 @@ namespace MoonProject.Rover
         [Range(2f, 60f)]
         [SerializeField] private float _nudgePendingSeconds = 15f;
 
+        [Tooltip("Degrees per second of 07's own turn under which it counts as still: while it turns faster (the in-place " +
+                 "turn on the pad that faces the array) a nudge waits, then looks again where the target is.")]
+        [Range(1f, 60f)]
+        [SerializeField] private float _nudgeTurnRate = 8f;
+
+        [Tooltip("Seconds 07's heading must stay still before a waiting nudge is looked at again.")]
+        [Range(0f, 2f)]
+        [SerializeField] private float _nudgeTurnSettleSeconds = 0.3f;
+
         [Tooltip("Closest (m) an object may lie to 07 for the camera to nudge toward it; closer than this, 07's head look is enough.")]
         [Range(0f, 40f)]
         [SerializeField] private float _nudgeMinDistance = 12f;
@@ -1116,6 +1125,10 @@ namespace MoonProject.Rover
         public float NudgeMaxBearing => _nudgeMaxBearing;
 
         public float NudgePendingSeconds => _nudgePendingSeconds;
+
+        public float NudgeTurnRate => _nudgeTurnRate;
+
+        public float NudgeTurnSettleSeconds => _nudgeTurnSettleSeconds;
 
         public float NudgeMinDistance => _nudgeMinDistance;
 
