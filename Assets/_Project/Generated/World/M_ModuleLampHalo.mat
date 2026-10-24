@@ -28,7 +28,7 @@ Material:
     - _Intensity: 0
     - _MinAngleFrom: 60
     - _MinAngleFull: 80
-    - _MinAngleTan: 0.0043633506
+    - _MinAngleTan: 0.010472358
     - _Radius: 0.12
     m_Colors:
     - _Color: {r: 1, g: 0.68, b: 0.28, a: 1}
