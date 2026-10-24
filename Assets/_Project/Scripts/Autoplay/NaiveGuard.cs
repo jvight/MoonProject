@@ -141,6 +141,7 @@ namespace MoonProject.Autoplay
             float budget = _budgets.TryGetValue(beat, out float own) ? own : DefaultBudgetSeconds;
             _bot.Idle();
             _bot.World.Ui.ObjectiveLineSteady();
+            _bot.World.Ui.ChipSteadyInView(out _);
             string shotStart = "naive-" + beat + "-0s";
             _bot.Shot(shotStart);
             float start = Time.time;
@@ -179,7 +180,7 @@ namespace MoonProject.Autoplay
             other = null;
             UiProbe ui = _bot.World.Ui;
             ILocalization words = _bot.World.Context.Get<ILocalization>();
-            if (ui.ChipInView(out string chip))
+            if (ui.ChipSteadyInView(out string chip))
             {
                 if (action == null || ChipNames(action, chip, words) || Contains(chip, action.LineWords))
                 {
