@@ -339,8 +339,8 @@ MonoBehaviour:
     _bus: 2
     _spatial: 1
     _loop: 0
-    _volumeMin: 0.5
-    _volumeMax: 0.5
+    _volumeMin: 0.4
+    _volumeMax: 0.4
     _pitchMin: 1
     _pitchMax: 1
   - _id: scan_liftoff
@@ -375,8 +375,8 @@ MonoBehaviour:
     _bus: 2
     _spatial: 1
     _loop: 1
-    _volumeMin: 0.5
-    _volumeMax: 0.5
+    _volumeMin: 0.42
+    _volumeMax: 0.42
     _pitchMin: 1
     _pitchMax: 1
   - _id: charge_hum
@@ -683,8 +683,8 @@ MonoBehaviour:
     _bus: 2
     _spatial: 1
     _loop: 1
-    _volumeMin: 0.72
-    _volumeMax: 0.72
+    _volumeMin: 0.62
+    _volumeMax: 0.62
     _pitchMin: 1
     _pitchMax: 1
   - _id: build_structure_complete

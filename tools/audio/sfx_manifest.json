@@ -723,7 +723,7 @@
         "scan_sweep"
       ],
       "sha256": [
-        "81a9c79373c74733f114026757a49cb511603b186f7bd6cfcbfdf88889a8d56b"
+        "39325d2916c37358c34c42650b02340075df2cc6b77a07f9ec40bdbaba2c9564"
       ],
       "volumeMin": 0.5,
       "volumeMax": 0.5,
@@ -734,7 +734,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "0.5.5 D: the lens's fan sweeping a fragment; pitch steps D E F# A per 25%. 2 s loop."
+      "notes": "The lens's fan: a real small motor on D5 and a breath of air; pitch steps D E F# A per 25%. 2 s loop.",
+      "source": "sampled",
+      "pick": "scan_sweep"
     },
     {
       "id": "scan_step",
@@ -756,13 +758,13 @@
         "04"
       ],
       "sha256": [
-        "f4ed1d6b3afdcb218cfdd690758c0415397a20e3ab5964289ee28de83db554b0",
-        "4403b5896540146c2ad0af45bae1faeea2de816ff523cb7bd230d826a0824531",
-        "041ee82b93212c6dcea9f55b388eae56f3ded7be10c847815c9334127b119555",
-        "f56e7f33a445e0adb706da912b42b6c02e70a50a9876cf62cbc5ebaa08c8dfb9"
+        "4808b5008f0e3a14f962097ad4d7aaf55e928cbca20defddf0b41cabf7b7faf0",
+        "c63bfb2c4980ccd9fb57ffde673749a88b7ab11236bbd7d2b98bd15e64b79e3c",
+        "6c794af9ddd5f8f21ddbe2bbbf381bec68a0e72bf2f7799aba938eeb8c29e39b",
+        "7e717ba4fa99166bb531724951c40e41462fa0c7d5fe7422589cbdd224303f5a"
       ],
-      "volumeMin": 0.5,
-      "volumeMax": 0.5,
+      "volumeMin": 0.4,
+      "volumeMax": 0.4,
       "pitchMin": 1.0,
       "pitchMax": 1.0,
       "targetLufs": -18.0,
@@ -770,7 +772,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": true,
-      "notes": "0.5.5 D: a quarter of the scan drawn: a glass note D E F# A."
+      "notes": "A quarter of the scan drawn: a tap on the lens collar and struck metal ringing on D E F# A.",
+      "source": "sampled",
+      "pick": "scan_step"
     },
     {
       "id": "scan_liftoff",
@@ -840,10 +844,10 @@
         "charge_whine"
       ],
       "sha256": [
-        "f999aac05c0d069b35a1c552dced04585b9531b29b71f092b70c4cebcec73f7f"
+        "0c53d876b6bff101ed7ddfbf61e2e794ca54de4ec88757683476fe3930d92d72"
       ],
-      "volumeMin": 0.5,
-      "volumeMax": 0.5,
+      "volumeMin": 0.42,
+      "volumeMax": 0.42,
       "pitchMin": 1.0,
       "pitchMax": 1.0,
       "targetLufs": -22.0,
@@ -851,7 +855,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "0.5.5 E: the capacitor whine on D5; pitch glides D -> A -> D' at runtime. 2 s seamless."
+      "notes": "The capacitor whine: a real small motor held on D5; pitch glides D -> A -> D' at runtime. 2 s seamless.",
+      "source": "sampled",
+      "pick": "charge_whine"
     },
     {
       "id": "charge_hum",
@@ -867,7 +873,7 @@
         "charge_hum"
       ],
       "sha256": [
-        "e7d91cfeeef4fd2ea26312173eb83accb1c0bccb64a3a1e37077cd4cd83cf783"
+        "7398b94204af35d073cda019184bf109acb63e275efae6da23162a4a625d03ee"
       ],
       "volumeMin": 0.55,
       "volumeMax": 0.55,
@@ -878,7 +884,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "0.5.5 E: the low hum on D under the charge, level by stage. 3 s seamless."
+      "notes": "The low hum under the charge: the mains hum carried to D2, level by stage. 3 s seamless.",
+      "source": "sampled",
+      "pick": "charge_hum"
     },
     {
       "id": "charge_detent",
@@ -1514,10 +1522,10 @@
         "build_weld_loop"
       ],
       "sha256": [
-        "b1d913a9ba67e81556438cc85cce76d6a2d545a8601c755ef1f43d6673d3981a"
+        "36ac89aa09e79279172a93230b056576d858cd8882b5877a430ca23f515900cd"
       ],
-      "volumeMin": 0.72,
-      "volumeMax": 0.72,
+      "volumeMin": 0.62,
+      "volumeMax": 0.62,
       "pitchMin": 1.0,
       "pitchMax": 1.0,
       "targetLufs": -22.0,
@@ -1525,7 +1533,7 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "The weld: a real arc buzz slowed and warmed, sparse crackle, a low hum on D. 4 s seamless.",
+      "notes": "The weld: a real arc buzz slowed and warmed under 2.4 kHz, sparse crackle, a low hum on D. 4 s seamless.",
       "source": "sampled",
       "pick": "build_weld_loop v1"
     },
