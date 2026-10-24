@@ -399,7 +399,8 @@ namespace MoonProject.Gameplay
             FirstUsePointer = new FirstUsePointer(context.Events, hints, services.Rig,
                 _building.Tuning.FirstUseGazePriority, _building.Tuning.FirstUseAskIntensity);
             RangeRing = new RangeRingField(context.Events, _battery.Tuning.RangeRing,
-                new RangeRingModel(_battery.Tuning, _battery.Tuning.RangeRing, services.Terrain), _battery.Model,
+                new RangeRingModel(_battery.Tuning, _battery.Tuning.RangeRing, services.Terrain,
+                    context.Get<IRoverClimb>().ClimbLimitDegrees), _battery.Model,
                 new ChargePoints(Opening.Pads, Relay), services.Rover);
             _flowTokens.Add(context.Events.Subscribe<RelayRelit>(OnRelayRelit));
             RangeRingLine = new RangeRingLine(transform, _visuals.BeamCore, RangeRing, _battery.Tuning.RangeRing,
