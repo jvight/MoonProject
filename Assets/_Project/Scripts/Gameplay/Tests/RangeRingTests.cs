@@ -121,13 +121,12 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void ASlope07CanClimb_IsNoWall_ItOnlyCostsMore()
+        public void ASlope07CanClimb_IsNoWall()
         {
             _terrain.Height = (x, z) => Mathf.Max(0f, x) * Mathf.Tan(30f * Mathf.Deg2Rad);
             _model.Compute(Vector3.zero, 1f, new List<Vector3> { Vector3.zero }, _ring);
-            float uphill = Radius(East, Vector3.zero);
-            Assert.Greater(uphill, StepSlack * 4f, "a 30 degree climb is drivable: the ring goes up it");
-            Assert.Less(uphill, Radius(West, Vector3.zero), "and dearer than the flat");
+            Assert.AreEqual(Radius(West, Vector3.zero), Radius(East, Vector3.zero), StepSlack,
+                "a 30 degree climb is drivable: the ring goes up it as far as the charge takes it, out and back");
         }
 
         [Test]

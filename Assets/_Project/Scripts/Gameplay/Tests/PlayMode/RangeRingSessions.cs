@@ -20,8 +20,9 @@ namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
     /// The range ring in the real Main scene (opening v3, plan 4.2): the first charge shows it faint round 07 for a
-    /// few seconds, drawn on the ground, and working it out does not hitch the frame. A top-down capture is written to
-    /// Logs/gameplay-captures/range-ring.png.
+    /// few seconds, drawn on the ground, and working it out does not hitch the frame. With relay.1 lit and 07 full
+    /// beside it (R10), the ring runs into the rille notch's mouth but ends at ground 07 cannot climb, short of the
+    /// Mare. Top-down captures are written to Logs/gameplay-captures/range-ring.png and range-ring-r10-rille.png.
     /// </summary>
     [Category("RangeRing")]
     public sealed class RangeRingSessions
@@ -34,6 +35,13 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float CaptureHeight = 1000f;
         private const int CaptureWidth = 1280;
         private const int CaptureTall = 720;
+
+        // World's rille notch anchor (WorldAnchors.GateRille): the mouth of the pass on the basin side.
+        private const string RilleGate = "gate.rille";
+
+        // The R10 frame looks down from this high over the middle of relay.1 and the notch.
+        private const float RilleCaptureHeight = 420f;
+        private const float RevealWaitSeconds = 3f;
 
         private GameContext _context;
         private GameplaySystem _gameplay;
@@ -108,10 +116,59 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             yield return RealSeconds(1.5f);
             Assert.IsTrue(_gameplay.RangeRingLine.IsDrawn, "the ring is drawn on the ground");
-            Capture(rover.Position);
+            Capture(rover.Position, CaptureHeight, "range-ring.png");
             yield return RealSeconds(ring.Mode == RangeRingMode.Faint ? 3.5f : 1f);
             Assert.IsFalse(ring.IsShown, "and gone after its few seconds");
             Assert.IsFalse(_gameplay.RangeRingLine.IsDrawn);
+        }
+
+        [UnityTest]
+        [Timeout(200000)]
+        [PrebuildSetup(typeof(PlaythroughScene))]
+        [PostBuildCleanup(typeof(PlaythroughScene))]
+        public IEnumerator AtRelayOneLit_TheRingRunsIntoTheRilleNotch_AndEndsAtGround07CannotClimb()
+        {
+            yield return Boot();
+            var anchors = _context.Get<IWorldAnchors>();
+            Assert.IsTrue(anchors.TryGet(WorldAnchorIds.RelayPrefix + 1, out WorldAnchor relay), "relay.1 stands");
+            Assert.IsTrue(anchors.TryGet(RilleGate, out WorldAnchor gate), "the rille notch has its gate anchor");
+            _gameplay.Relay.Restore(new RelaySaveData { fitted = true });
+            _context.Get<IRoverPlacement>().PlaceAt(relay.Position, Quaternion.LookRotation(gate.Position -
+                                                                                             relay.Position));
+            BatteryModel battery = _gameplay.Battery.Model;
+            battery.Restore(new BatterySaveData { cells = battery.Cells, charge = battery.Cells });
+            yield return null;
+            var rover = _context.Get<IRoverState>();
+            var ring = _context.Get<IRangeRing>();
+            _gameplay.RangeRing.Show(RangeRingMode.Full);
+            Assert.IsTrue(ring.IsShown, "relay.1 lit: the full ring shows");
+
+            Vector3 toGate = gate.Position - rover.Position;
+            toGate.y = 0f;
+            float best = -1f;
+            float reach = 0f;
+            for (int i = 0; i < ring.Count; i++)
+            {
+                Vector3 offset = ring.Point(i) - rover.Position;
+                offset.y = 0f;
+                float along = Vector3.Dot(offset.normalized, toGate.normalized);
+                if (along > best)
+                {
+                    best = along;
+                    reach = offset.magnitude;
+                }
+            }
+
+            float cap = _gameplay.Battery.Tuning.RangeRing.MaxRangeMetres;
+            Debug.Log($"[range-ring] R10: toward the rille the ring reaches {reach:F0} m from relay.1; the notch's " +
+                      $"mouth is {toGate.magnitude:F0} m off; a full battery's open-ground reach is {cap:F0} m");
+            Assert.Greater(reach, toGate.magnitude, "the ring runs into the notch's mouth: the pass is there to try");
+            Assert.Less(reach, cap - _gameplay.Battery.Tuning.RangeRing.StepMetres,
+                "and ends at ground 07 cannot climb, short of the Mare, with charge to spare");
+
+            yield return RealSeconds(RevealWaitSeconds);
+            Capture(Vector3.Lerp(rover.Position, gate.Position, 0.5f), RilleCaptureHeight,
+                "range-ring-r10-rille.png");
         }
 
         private static IEnumerator RealSeconds(float seconds)
@@ -123,18 +180,18 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
         }
 
-        private void Capture(Vector3 centre)
+        private void Capture(Vector3 centre, float height, string file)
         {
             var host = new GameObject("RangeRingLens");
             Camera camera = host.AddComponent<Camera>();
             camera.enabled = false;
             camera.fieldOfView = 50f;
             camera.farClipPlane = 2000f;
-            host.transform.position = centre + Vector3.up * CaptureHeight;
+            host.transform.position = centre + Vector3.up * height;
             host.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
             string folder = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "gameplay-captures"));
             Directory.CreateDirectory(folder);
-            FrameCapture.SavePng(camera, CaptureWidth, CaptureTall, Path.Combine(folder, "range-ring.png"));
+            FrameCapture.SavePng(camera, CaptureWidth, CaptureTall, Path.Combine(folder, file));
             Object.Destroy(host);
         }
 
