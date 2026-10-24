@@ -246,8 +246,7 @@ namespace MoonProject.UI.PlayModeTests
             events.Publish(new StoryScanned("airlock_panel", "story.airlock_panel", Vector3.zero));
             yield return Seconds(3f);
             Assert.IsTrue(_rig.Ui.Readout.IsVisible, "the panel's card is up for the fit check");
-            Assert.IsTrue(_rig.Ui.SunArc.IsVisible, "and so is the Sun's arc");
-            Assert.AreEqual(25, _rig.Ui.SunArc.ShownMinutes, "with the time the Sun has left");
+            Assert.IsTrue(_rig.Ui.SunArc.IsVisible, "and so is the Sun's arc, a glyph with no countdown");
             foreach (ScreenShape shape in ScreenShapes.All)
             {
                 yield return Reframe(shape);
@@ -257,8 +256,6 @@ namespace MoonProject.UI.PlayModeTests
                     ScreenFit.CheckApart(_rig.Ui.Readout.Panel, layout.SunArc, label, found);
                     ScreenFit.CheckApart(_rig.Ui.Readout.Panel, layout.BatteryDial, label, found);
                     ScreenFit.CheckApart(layout.SunArc, layout.BatteryDial, label, found);
-                    ScreenFit.CheckApart(_rig.Ui.Readout.Panel, layout.SunArcTime, label, found);
-                    ScreenFit.CheckApart(layout.SunArcTime, layout.BatteryDial, label, found);
                 });
             }
 
