@@ -1399,8 +1399,8 @@ namespace MoonProject.World.PlayModeTests
         }
 
         /// <summary>
-        /// The crater's ways out (base-home-and-crater-exits §4) on a real New Game: by day, the Peak road's rockfall
-        /// from the base and the three gates from the ruins' rise (R9: the rille notch west, the canyon's slot east,
+        /// The crater's ways out (base-home-and-crater-exits §4) on a real New Game: the Peak road's rockfall and its
+        /// scar from 07's wake spot in the eclipse (minute 1); by day, the rockfall from the base and the three gates from the ruins' rise (R9: the rille notch west, the canyon's slot east,
         /// the rockfall north); relay.1's view of the rille by day and by night (R10); and the slot beside relay.2 at
         /// night, from its mouth and from the hut (R11). Logs/world-captures/gates-*.png.
         /// </summary>
@@ -1453,6 +1453,7 @@ namespace MoonProject.World.PlayModeTests
             WorldAnchor slotMouth = Anchor(anchors, WorldAnchors.CanyonSlot);
             Vector3 slotLook = slotMouth.Position + slotMouth.Forward * GateSlotLookIn + Vector3.up * GateLookHeight;
             Vector3 apron = Anchor(anchors, WorldAnchorIds.PlaceApron).Position + Vector3.up * OpeningEyeHeight;
+            Vector3 wake = Anchor(anchors, WorldAnchorIds.PlaceWake).Position + Vector3.up * OpeningEyeHeight;
             Vector3 rise = Anchor(anchors, WorldAnchorIds.PlaceRuins).Position + Vector3.up * GateRiseEyeHeight;
             Vector3 relay1 = Anchor(anchors, WorldAnchorIds.RelayPrefix + 1).Position + Vector3.up * GateRelayEyeHeight;
             Vector3 hut = Anchor(anchors, WorldAnchorIds.RelayPrefix + 2).Position + Vector3.up * GateRelayEyeHeight;
@@ -1467,6 +1468,7 @@ namespace MoonProject.World.PlayModeTests
                 camera.enabled = false;
                 CopyPipelineSettings(view, camera);
 
+                ShootAt(camera, "gates-wake-rockfall-eclipse", wake, rockfall, OpeningFov);
                 context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.FirstCharge, true));
                 context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.PowerOn, true));
                 yield return new WaitForSeconds(SettleSeconds);

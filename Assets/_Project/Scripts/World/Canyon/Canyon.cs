@@ -30,9 +30,10 @@ namespace MoonProject.World
         private const float SlotWallRamp = 4f;
         private const float SlotClimbEase = 4f;
 
-        // The slot's rock and dust darken over this many metres in from its mouth, so the cleft reads black from
-        // outside: the floor past its turn never sees the Sun, and the paint says so before the eye gets there.
-        private const float SlotShadeIn = 8f;
+        // The slot's rock and dust darken from this far outside its mouth to this far in, so the cleft reads black
+        // from outside: the floor past its turn never sees the Sun, and the paint says so before the eye gets there.
+        private const float SlotShadeOut = 4f;
+        private const float SlotShadeIn = 6f;
         private const float StepLength = 1f;
         private const float Rounding = 1f;
         private const float WallOvershoot = 40f;
@@ -231,7 +232,7 @@ namespace MoonProject.World
 
         /// <summary>
         /// Height at (x, z) given <paramref name="worldHeight"/> there, plus region weights: 1 on a corridor floor,
-        /// 1 in the chasm trough, and 1 on the slot's floor and walls a few metres in from its mouth.
+        /// 1 in the chasm trough, and 1 on the slot's floor and walls from a few metres in from its mouth.
         /// </summary>
         public float Apply(float x, float z, float worldHeight, out float floorWeight, out float chasmWeight,
             out float shadowWeight)
@@ -264,7 +265,7 @@ namespace MoonProject.World
                     out float floor);
                 floorWeight = Mathf.Max(floorWeight, floor);
                 float wallTop = HalfWidth(CanyonCorridor.Slot, arc, lateral) + _settings.WallRun;
-                shadowWeight = SmoothMath.Smootherstep(0f, SlotShadeIn, arc)
+                shadowWeight = SmoothMath.Smootherstep(-SlotShadeOut, SlotShadeIn, arc)
                     * (1f - SmoothMath.Smootherstep(wallTop, wallTop + _settings.FlankRun, Mathf.Abs(lateral)));
             }
 

@@ -141,6 +141,7 @@ namespace MoonProject.World
         private readonly KestrelImpact _kestrel;
         private readonly GroundShaping _shaping;
         private readonly RilleNotch _rille;
+        private readonly RockfallScar _scar;
 
         public MoonSurface(SurfaceSettings settings, int seed)
         {
@@ -256,6 +257,7 @@ namespace MoonProject.World
             float minCalmSpan = settings.DuneWavelength * MinCalmSpanInWavelengths;
             _kestrel = new KestrelImpact(settings.Sites.Kestrel, baseSeed, minCalmSpan);
             _rille = new RilleNotch(settings.Rille, _crestRadius, settings.OuterPlainHeight);
+            _scar = new RockfallScar(settings.RockfallScar, PeakRoadFoot, peakDirection, baseSeed);
             _craters = PlaceCraters(settings, baseSeed);
             _relief = new Relief(settings.Relief, settings.Sites, settings.PadRadius, _craters, baseSeed);
             int count = _craters.Length;
@@ -420,7 +422,7 @@ namespace MoonProject.World
 
             float height = Canyon.Apply(x, z, world.Height, out float floor, out float chasm, out float shadowed);
             return new SurfaceSample(height, world.CraterBowl, world.CraterRim, world.RimZone, floor, chasm,
-                world.Scorch, world.Mare, shadowed);
+                world.Scorch, world.Mare, shadowed, world.Scar);
         }
 
         /// <summary>The surface without Whispering Canyon.</summary>
@@ -428,7 +430,7 @@ namespace MoonProject.World
         {
             SurfaceSample natural = SampleNatural(x, z);
             return new SurfaceSample(_shaping.Apply(x, z, natural.Height), natural.CraterBowl, natural.CraterRim,
-                natural.RimZone, 0f, 0f, natural.Scorch, natural.Mare);
+                natural.RimZone, 0f, 0f, natural.Scorch, natural.Mare, 0f, natural.Scar);
         }
 
         /// <summary>The surface without Whispering Canyon and the shaped sites.</summary>
@@ -502,7 +504,7 @@ namespace MoonProject.World
             }
 
             return new SurfaceSample(height, craterBowl, craterRim, rimZone, 0f, 0f, scorch,
-                _rille.MareWeight(x, z));
+                _rille.MareWeight(x, z), 0f, _scar.Weight(x, z));
         }
 
         private float WarpedRadius(float x, float z, float r)

@@ -9,11 +9,11 @@ namespace MoonProject.World
     /// one flat palette tone per facet, two-toned by steepness, height, patches and facing. The dust is toned
     /// continuously from the palette's dust swatches by low-frequency patches, then shaded on crater walls and the
     /// highlands, lit on crater rims, cooled and darkened in Whispering Canyon and turned charcoal in its chasm; dust
-    /// and rock alike darken toward charcoal deep in the canyon's slot and on the mare beyond the rille notch; the
-    /// light and shadow sides of dunes come from the earthlight itself. The dust tone depends only on the position
-    /// (and the smooth region weights there), so every vertex shared by several triangles gets one colour: patches
-    /// change value gently, never as paper-cut shapes or isolated facets (design ruling 9). Immutable and
-    /// thread-safe.
+    /// and rock alike darken toward charcoal deep in the canyon's slot and on the mare beyond the rille notch, and pale
+    /// on the fresh scar above the Peak road's rockfall; the light and shadow sides of dunes come from the earthlight
+    /// itself. The dust tone depends only on the position (and the smooth region weights there), so every vertex
+    /// shared by several triangles gets one colour: patches change value gently, never as paper-cut shapes or isolated
+    /// facets (design ruling 9). Immutable and thread-safe.
     /// </summary>
     public sealed class TerrainPainter
     {
@@ -118,7 +118,7 @@ namespace MoonProject.World
             float rockWeight = SmoothMath.Smootherstep(rockSlopeThreshold - 9f, rockSlopeThreshold + 9f, slope);
             if (rockWeight <= 1e-4f && rimWeight <= 1e-4f)
             {
-                return Darken(ground32, region);
+                return Tint(ground32, region);
             }
 
             float faceFacing = normal.x * _lightX + normal.z * _lightZ;
@@ -145,14 +145,15 @@ namespace MoonProject.World
                 + rimWeight * (0.14f * terraceRiser + 0.16f * Mathf.Clamp01(-striation)));
             rockColor = Color.Lerp(rockColor, _charcoal, charcoalShade);
             float totalRock = Mathf.Clamp01(Mathf.Max(rockWeight, rimWeight * (0.34f + 0.28f * terraceRiser + 0.18f * Mathf.Clamp01(-striation))));
-            return Darken(Color.Lerp((Color)ground32, rockColor, totalRock), region);
+            return Tint(Color.Lerp((Color)ground32, rockColor, totalRock), region);
         }
 
-        // The dark mare's basalt and the slot's permanent shadow take dust and rock alike toward charcoal.
-        private Color32 Darken(Color color, SurfaceSample region)
+        // The dark mare's basalt and the slot's permanent shadow take dust and rock alike toward charcoal; the
+        // rockfall's fresh scar lifts them toward the light dust.
+        private Color32 Tint(Color color, SurfaceSample region)
         {
             float dark = Mathf.Max(region.Mare * _settings.MareShade, region.Shadowed * _settings.ShadowedShade);
-            return Color.Lerp(color, _charcoal, dark);
+            return Color.Lerp(Color.Lerp(color, _charcoal, dark), _lightDust, region.Scar * _settings.ScarLight);
         }
 
         /// <summary>The dust colour at a vertex.</summary>
