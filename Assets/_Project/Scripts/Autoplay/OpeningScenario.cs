@@ -53,6 +53,17 @@ namespace MoonProject.Autoplay
         /// <summary>Parts of a scan set this close together (flat metres) are told apart in a stuck-scan report.</summary>
         private const float CargoPartsApartMetres = 2f;
 
+        /// <summary>Presses of E, one after another, a scan may take to start before the bot gives up.</summary>
+        private const int ScanPresses = 4;
+
+        /// <summary>Game seconds one press of E is held waiting for the scan to start.</summary>
+        private const float ScanStartSeconds = 2.5f;
+
+        private const float ScanRepressPauseSeconds = 0.4f;
+
+        private const string ScanLatchNote =
+            "a player sees the chip, holds E and nothing happens, with no cue that letting go would help.";
+
         private readonly AutoplayBot _bot;
         private readonly string _untilBeat;
         private bool _awoke;
@@ -352,6 +363,30 @@ namespace MoonProject.Autoplay
             {
                 _bot.Fail("the prompt chip names a key the bot does not know: '" + glyph + "'.");
                 yield break;
+            }
+
+            // As a player does when E held on a chip does nothing: let go and press again. The game takes a press that
+            // another verb claimed for a moment as spent until E is released, so the first hold may never start.
+            for (int press = 0; press < ScanPresses && !_bot.Failed && !fragment.Scanned; press++)
+            {
+                yield return _bot.TryHold(key, () =>
+                    {
+                        _bot.KeepLookingAt(point);
+                        return scans.Scanning == fragment || fragment.Scanned;
+                    }, ScanStartSeconds);
+                if (_bot.HoldReached)
+                {
+                    if (press > 0)
+                    {
+                        _bot.Warn("FINDING: E held on the '" + ui.Chip() + "' chip did not start the scan of " +
+                                  fragment.FragmentId + " until it was released and pressed again (press " + (press + 1) +
+                                  "): " + ScanLatchNote);
+                    }
+
+                    break;
+                }
+
+                yield return _bot.Wait(ScanRepressPauseSeconds);
             }
 
             yield return _bot.Hold(key, () =>
