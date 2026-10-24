@@ -158,6 +158,8 @@ namespace MoonProject.Rover
         private Stargaze _stargaze;
         private WakeOpening _opening;
         private float _wakeYaw;
+        private float _carryRemaining;
+        private float _carryLastYaw;
         private LookSettings _look;
         private DampedSpring _bumpSpring;
         private IDisposable[] _subscriptions;
@@ -296,6 +298,7 @@ namespace MoonProject.Rover
                 context.Events.Subscribe<TowReleased>(_ => _towing = false),
                 context.Events.Subscribe<ChargingChanged>(OnChargingChanged),
                 context.Events.Subscribe<FacePageChanged>(OnFacePageChanged),
+                context.Events.Subscribe<RoverDockChanged>(OnDockChanged),
             };
             context.Register<IViewCamera>(this);
             context.Register<ILookSettings>(this);
@@ -530,6 +533,7 @@ namespace MoonProject.Rover
             StepMomentFraming(deltaTime);
             StepTowLook(deltaTime);
             _beam.Framing.Step(deltaTime);
+            StepReleaseCarry(deltaTime);
             _orbitState.Step(OrbitInput(look, recenter), deltaTime);
             StepTargetFraming(look, deltaTime);
             StepWallCompression(deltaTime, false);
@@ -1382,6 +1386,30 @@ namespace MoonProject.Rover
         /// 07 parked at its dock after a trip (M3-16 P6): the camera eases out behind 07 to a wide shot of home's newly
         /// lit lamps beyond it, holds, then eases back to the chase frame.
         /// </summary>
+        /// <summary>The dock let go: the view turns with 07 while it eases round on the pad.</summary>
+        private void OnDockChanged(RoverDockChanged dock)
+        {
+            if (dock.Docked)
+            {
+                return;
+            }
+
+            _carryRemaining = _tuning.ReleaseCarrySeconds;
+            _carryLastYaw = RoverYaw();
+        }
+
+        private void StepReleaseCarry(float deltaTime)
+        {
+            float yaw = RoverYaw();
+            if (_carryRemaining > 0f)
+            {
+                _carryRemaining -= deltaTime;
+                _orbitState.Carry(Mathf.DeltaAngle(_carryLastYaw, yaw));
+            }
+
+            _carryLastYaw = yaw;
+        }
+
         private void OnDockEveningOpened(DockEveningOpened evening)
         {
             Vector3 follow = _rover.Position + Vector3.up * _tuning.TargetHeight;

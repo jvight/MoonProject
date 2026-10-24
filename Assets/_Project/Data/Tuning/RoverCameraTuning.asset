@@ -54,6 +54,7 @@ MonoBehaviour:
   _recenterEaseAngle: 20
   _recenterPitchRate: 7
   _recenterButtonSeconds: 1.4
+  _releaseCarrySeconds: 2.5
   _followHalfLife: 0.27
   _followMaxRate: 45
   _framingMaxSpeed: 1
