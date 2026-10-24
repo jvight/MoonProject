@@ -42,6 +42,7 @@ namespace MoonProject.Rover
         private Vector3[] _wheelRestPositions;
         private Quaternion[] _wheelRestRotations;
         private float[] _wheelRadii;
+        private Vector3[] _wheelLastHubs;
         private float[] _wheelSteerFactors;
         private float[] _wheelTargets;
         private float[] _wheelSpin;
@@ -183,6 +184,7 @@ namespace MoonProject.Rover
             _wheelRestPositions = new Vector3[count];
             _wheelRestRotations = new Quaternion[count];
             _wheelRadii = new float[count];
+            _wheelLastHubs = new Vector3[count];
             _wheelSteerFactors = new float[count];
             _wheelTargets = new float[count];
             _wheelSpin = new float[count];
@@ -196,7 +198,7 @@ namespace MoonProject.Rover
             {
                 _wheelRestPositions[i] = _wheels[i].localPosition;
                 _wheelRestRotations[i] = _wheels[i].localRotation;
-                _wheelRadii[i] = _tuning.WheelRadius;
+                _wheelRadii[i] = WheelKinematics.Radius(_wheels[i]);
                 int row = RoverModelNodes.WheelRow(i);
                 _wheelSteerFactors[i] = row == 0 ? 1f : -_tuning.RearSteerFactor;
                 _armRestPositions[i] = _arms[i].localPosition;
@@ -276,7 +278,7 @@ namespace MoonProject.Rover
             }
 
             ApplyChassis();
-            ApplyWheels(0f, 0f);
+            ApplyWheels(true);
             ApplySuspensionLinks();
         }
 
@@ -334,7 +336,6 @@ namespace MoonProject.Rover
             rotation = heading * GroundPlaneFit.Tilt(_attitude.Pitch, _attitude.Roll);
             Vector3 position = sphere - rotation * Vector3.up * radius;
             Vector3 deltaPos = position - _lastPosition;
-            float travelled = Vector3.Dot(deltaPos, rotation * Vector3.forward);
             float planarMeters = new Vector2(deltaPos.x, deltaPos.z).magnitude;
             _lastPosition = position;
             transform.SetPositionAndRotation(position, rotation);
@@ -343,7 +344,7 @@ namespace MoonProject.Rover
             _sag = Smoothing.Damp(_sag, _sagTarget, _sagHalfLife, deltaTime);
             ApplyChassis();
             StepSuspension(deltaTime);
-            ApplyWheels(travelled, deltaTime);
+            ApplyWheels(false);
             ApplySuspensionLinks();
             StepLowerBodyDust(planarMeters, deltaTime);
             _antenna.localRotation =
@@ -500,26 +501,30 @@ namespace MoonProject.Rover
             }
         }
 
-        private void ApplyWheels(float travelled, float deltaTime)
+        /// <param name="settle">True when placing the model: the hubs' travel starts from where they now are.</param>
+        private void ApplyWheels(bool settle)
         {
-            float yawRadians = _rover.YawRate * Mathf.Deg2Rad * deltaTime;
             float steer = Mathf.Clamp(_rover.SteerInput + _rover.ScanTurnScrub * 0.45f, -1f, 1f)
                 * _tuning.FrontSteerAngle;
             bool braced = _brace != null && _brace.IsBraced;
 
             for (int i = 0; i < _wheels.Length; i++)
             {
-                Vector3 rest = _wheelRestPositions[i];
-                float degreesPerMetre = braced ? 0f : Mathf.Rad2Deg / _wheelRadii[i];
-
-                // Turning right moves the left wheels forward and the right wheels back (skid-steer pivot).
-                float sideX = i % 2 == 0 ? -0.61f : 0.61f;
-                float distance = travelled - yawRadians * sideX;
-                _wheelSpin[i] = Mathf.Repeat(_wheelSpin[i] + distance * degreesPerMetre, 360f);
-
                 Transform wheel = _wheels[i];
-                wheel.localPosition = rest + Vector3.up * _wheelSuspension[i].Value;
-                wheel.localRotation = Quaternion.AngleAxis(steer * _wheelSteerFactors[i], Vector3.up)
+                float steerAngle = steer * _wheelSteerFactors[i];
+                wheel.localPosition = _wheelRestPositions[i] + Vector3.up * _wheelSuspension[i].Value;
+                wheel.localRotation = Quaternion.AngleAxis(steerAngle, Vector3.up)
+                    * _wheelRestRotations[i]
+                    * Quaternion.AngleAxis(_wheelSpin[i] + _post.Wheel(i), Vector3.right);
+
+                // A rim rolls what its hub travels along the wheel's own heading (square to its axle, on the body's
+                // plane), so the spin follows what is drawn on any slope, in reverse and round any arc.
+                Vector3 hub = wheel.position;
+                Vector3 heading = Vector3.Cross(wheel.right, transform.up);
+                float distance = braced || settle ? 0f : Vector3.Dot(hub - _wheelLastHubs[i], heading);
+                _wheelLastHubs[i] = hub;
+                _wheelSpin[i] = Mathf.Repeat(_wheelSpin[i] + distance / _wheelRadii[i] * Mathf.Rad2Deg, 360f);
+                wheel.localRotation = Quaternion.AngleAxis(steerAngle, Vector3.up)
                     * _wheelRestRotations[i]
                     * Quaternion.AngleAxis(_wheelSpin[i] + _post.Wheel(i), Vector3.right);
             }

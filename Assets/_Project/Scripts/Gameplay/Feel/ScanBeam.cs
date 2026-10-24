@@ -19,7 +19,9 @@ namespace MoonProject.Gameplay
     /// </summary>
     public sealed class ScanBeam
     {
-        private const int CorePointCount = 3;
+        /// <summary>The beam reaches its least on-screen width this far along its length (it stays narrow at the lens).</summary>
+        private const float LegibleRampLengthShare = 0.25f;
+        private const int CorePointCount = 4;
         private const int IrisRingCount = 12;
         private const int IrisCaliperCount = 2;
         private const int MoteCount = 6;
@@ -109,7 +111,14 @@ namespace MoonProject.Gameplay
         private readonly Color[] _wedgeColors = new Color[TotalWedgeVerts];
         private readonly FeelSprites _points;
         private readonly FeelSprites _streaks;
+        private readonly ScanBeamReach _reach = new ScanBeamReach();
 
+        private Vector3 _axis;
+        private Vector3 _viewPosition;
+        private float _viewPixelsPerMetre;
+        private bool _hasView;
+        private bool _hasAxis;
+        private float _stepSeconds;
         private Vector3 _target;
         private Vector3 _span;
         private Vector3 _lastContactCenter;
@@ -151,6 +160,20 @@ namespace MoonProject.Gameplay
         /// <summary>True while the completion ping flash is active.</summary>
         public bool IsPinging => _pingRemaining > VisibleThreshold;
 
+        /// <summary>
+        /// The player's camera this frame (world position and pixels one metre covers at one metre): the beam keeps a
+        /// minimum width on screen and faces the camera so it reads from any chase angle.
+        /// </summary>
+        public void View(Vector3 position, float pixelsPerMetreAtOne)
+        {
+            _viewPosition = position;
+            _viewPixelsPerMetre = pixelsPerMetreAtOne;
+            _hasView = true;
+        }
+
+        /// <summary>How settled the beam is on its target (0..1): 1 once the head has aimed at it, or when no lens axis is given.</summary>
+        public float Aligned => _hasAxis ? _reach.Aligned : 1f;
+
         /// <summary>World-space center of the far edge of the scan beam wedge on the target's current scan line.</summary>
         public Vector3 WedgeTargetCenter => _lastContactCenter;
 
@@ -160,6 +183,9 @@ namespace MoonProject.Gameplay
             _target = target;
             _span = span;
             _hasContact = false;
+            _hasAxis = false;
+            _hasView = false;
+            _reach.Reset();
             _progress = Mathf.Clamp01(progress);
             _rate = remainingSeconds > MinFadeSeconds ? (1f - _progress) / remainingSeconds : 0f;
             _pingRemaining = 0f;
@@ -180,6 +206,16 @@ namespace MoonProject.Gameplay
 
             _contact = contact;
             _hasContact = true;
+        }
+
+        /// <summary>
+        /// The lens's gaze axis this frame (world). While it is given, the beam only reaches its contact as the head
+        /// aims at it; without it the beam draws straight to the contact.
+        /// </summary>
+        public void Aim(Vector3 axis)
+        {
+            _axis = axis;
+            _hasAxis = true;
         }
 
         /// <summary>Keeps progress in step with quarter beats.</summary>
@@ -205,6 +241,7 @@ namespace MoonProject.Gameplay
 
         public void Step(float deltaTime, Vector3 emitter)
         {
+            _stepSeconds = deltaTime;
             _elapsed += deltaTime;
             float fadeSeconds = _active ? _tuning.ScanEaseInSeconds : _tuning.ScanEaseOutSeconds;
             _level = Mathf.MoveTowards(_level, _active ? 1f : 0f, deltaTime / Mathf.Max(fadeSeconds, MinFadeSeconds));
@@ -292,7 +329,10 @@ namespace MoonProject.Gameplay
 
             float spanHeight = Mathf.Max(Mathf.Abs(_span.y), look.MinSpanHeight);
             Vector3 sweepSpanVec = _span.sqrMagnitude > MinDistance ? _span : new Vector3(0f, spanHeight, 0f);
-            Vector3 lineCentre = _hasContact ? _contact : _target + sweepSpanVec * (_progress - 0.5f);
+            Vector3 lineCentre = !_hasContact ? _target + sweepSpanVec * (_progress - 0.5f)
+                : !_hasAxis ? _contact
+                : _reach.End(_stepSeconds, emitter, _axis, _contact, _scanTuning.BeamAlignedDegrees,
+                    _scanTuning.BeamLostDegrees, _scanTuning.BeamUnalignedReach, _scanTuning.BeamAlignHalfLife);
 
             Vector3 toTarget = lineCentre - emitter;
             float dist = toTarget.magnitude;
@@ -392,6 +432,13 @@ namespace MoonProject.Gameplay
                 }
             }
 
+            // A calm patch of light where the beam meets the surface, in the scan colour; it fills as the beam settles.
+            float hitShare = _hasContact && _hasAxis ? _reach.Aligned : 1f;
+            Color hit = activeTint;
+            hit.a = Mathf.Min(_scanTuning.BeamHitAlpha, MaxBloomSafeHaloAlpha) * sweepLevel * hitShare;
+            Vector3 onSurface = contactCenter - forward * _scanTuning.BeamHitLift;
+            _points.Add(onSurface, _scanTuning.BeamHitSize * widthScale, hit, Vector3.zero);
+
             // 4. Small data ticks streaming along the beam from the target to the lens
             StepStreamingDataTicks(wedgeOrigin, contactCenter, right, orthoUp, cyanColor, pingColor, sweepLevel, widthScale);
 
@@ -442,6 +489,14 @@ namespace MoonProject.Gameplay
 
             float lensHalfW = lensWidth * 0.5f;
             float targetHalfW = targetWidth * 0.5f;
+            // The body faces the camera, so it never turns edge-on to a chase cam beside the beam.
+            Vector3 wide = right;
+            if (_hasView)
+            {
+                Vector3 facing = Vector3.Cross(beamDir, _viewPosition - (lensFront + contactCenter) * 0.5f);
+                wide = facing.sqrMagnitude > MinDistance ? facing.normalized : right;
+            }
+
             Vector2 wrapRange = look.WrapRadiusRange;
             float wrapRadius = Mathf.Min(Mathf.Clamp(spanHeight * look.WrapShare, wrapRange.x, wrapRange.y),
                 beamLen * look.WrapLengthShare);
@@ -456,6 +511,13 @@ namespace MoonProject.Gameplay
 
                 float widthT = Mathf.Lerp(u, u * u * (3f - 2f * u), look.WidthEase);
                 float halfW = Mathf.Lerp(lensHalfW, targetHalfW, widthT);
+                if (_hasView)
+                {
+                    float distanceToView = (ringCenter - _viewPosition).magnitude;
+                    float legible = 0.5f * ScreenWidth.Metres(_scanTuning.BeamMinPixels, distanceToView,
+                        _viewPixelsPerMetre) * widthScale * Mathf.SmoothStep(0f, 1f, u / LegibleRampLengthShare);
+                    halfW = Mathf.Max(halfW, legible);
+                }
 
                 // Keep the first couple of cm at the lens bright, dip to near-zero while passing 07's CRT screen,
                 // and carry the faint mid-beam wedge across open space to the target scan line.
@@ -472,7 +534,7 @@ namespace MoonProject.Gameplay
                 // Crossed fan sheets tilted in (right, orthoUp) so the wedge fans out visibly from low
                 // chase camera angles while spanning and wrapping the surface scan line on the target.
                 float verticalTilt = Mathf.Lerp(look.SheetTilt.x, look.SheetTilt.y, u);
-                Vector3 sheetDir0 = (right + orthoUp * verticalTilt).normalized;
+                Vector3 sheetDir0 = _hasView ? wide : (right + orthoUp * verticalTilt).normalized;
                 Vector3 sheetDir1 = (right - orthoUp * verticalTilt).normalized;
                 float sheet1AlphaShare = Mathf.Lerp(look.SecondSheetAlpha.x, look.SecondSheetAlpha.y, u);
                 float targetWrapShare = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(look.WrapStart, 1f, u));

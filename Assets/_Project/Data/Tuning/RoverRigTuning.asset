@@ -20,7 +20,6 @@ MonoBehaviour:
   _airPitchFullSpeed: 3
   _maxAirPitch: 14
   _maxTilt: 35
-  _wheelRadius: 0.35
   _suspensionCompression: 0.16
   _suspensionDroop: 0.22
   _suspensionCastHeight: 0.6

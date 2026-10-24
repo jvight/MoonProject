@@ -160,6 +160,10 @@ namespace MoonProject.Gameplay
         /// <summary>07's scan lens emitter: the scan beam and ribbon connect to it.</summary>
         public Vector3 ScanEmitter => _rig.ScanOrigin.position;
 
+        public Vector3 ScanAxis => _rig.ScanOrigin.forward;
+
+        public Camera Viewer => _view.Camera;
+
         public bool TryScanContact(Vector3 lens, out Vector3 point, out Vector3 normal)
         {
             if (_scans == null)
