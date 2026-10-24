@@ -52,6 +52,8 @@ namespace MoonProject.UI
         private readonly GlyphView _rotateGlyph;
         private InputDeviceKind _keysDevice;
         private bool _keysWritten;
+        private bool _keysRotate = true;
+        private string _keysFrame = string.Empty;
         private readonly IWeldEnergy _weldEnergy;
         private readonly EventBus _events;
         private readonly string[] _energyTexts = new string[WeldEnergyShare.MaxPercent + 1];
@@ -247,27 +249,60 @@ namespace MoonProject.UI
         }
 
         /// <summary>
-        /// The ghost's controls under its cost rows, from the real bindings (rover's alternates included): written when
-        /// the device or the language changes, never per frame.
+        /// The ghost's controls under its cost rows, from the real bindings (rover's alternates included): the place
+        /// keys, then the rotate keys, or, for a ghost whose pose its frame fixes (the bank on its module), the frame it
+        /// is fixed to, so a wheel that does nothing is never offered. Written when the device, the language or the
+        /// ghost's freedom changes, never per frame.
         /// </summary>
-        private void WriteGhostKeys(InputDeviceKind device)
+        private void WriteGhostKeys(InputDeviceKind device, BuildModeController controller)
         {
-            if (_keysWritten && device == _keysDevice)
+            bool rotate = controller.CanRotateGhost;
+            string frame = rotate ? string.Empty : controller.FrameNounKey ?? string.Empty;
+            if (_keysWritten && device == _keysDevice && rotate == _keysRotate &&
+                string.Equals(frame, _keysFrame, StringComparison.Ordinal))
             {
                 return;
             }
 
             _keysWritten = true;
             _keysDevice = device;
+            _keysRotate = rotate;
+            _keysFrame = frame;
             _placeGlyph.Set(_glyphs.AllFor(RoverAction.Excavate, device), device);
-            _rotateGlyph.Set(_glyphs.AllFor(RoverAction.Winch, device), device);
             _layout.BuildPlaceWord.text = _localization.Get(UiKeys.BuildHintPlace);
-            _layout.BuildRotateWord.text = _localization.Get(UiKeys.BuildHintRotate);
+            _layout.BuildRotateGlyph.style.display = rotate ? DisplayStyle.Flex : DisplayStyle.None;
+            if (rotate)
+            {
+                _rotateGlyph.Set(_glyphs.AllFor(RoverAction.Winch, device), device);
+                _layout.BuildRotateWord.text = _localization.Get(UiKeys.BuildHintRotate);
+            }
+            else
+            {
+                _layout.BuildRotateWord.text = frame.Length > 0
+                    ? string.Format(_localization.Get(UiKeys.BuildHintFixedTo), _localization.Get(frame))
+                    : _localization.Get(UiKeys.BuildHintFixed);
+            }
+        }
+
+        /// <summary>
+        /// True while the ghost sits snapped on a valid spot with its chip up: then the chip (cost and keys) is the one
+        /// element and no line shows beside it. Until then the line keeps saying where the thing goes.
+        /// </summary>
+        public bool GhostSettled
+        {
+            get
+            {
+                BuildModeController controller = _buildField != null ? _buildField.Controller : null;
+                return IsCostShown && controller != null && controller.State == BuildModeState.Placing &&
+                       controller.CandidateSnapped && controller.CandidateReason == PlacementReason.Valid;
+            }
         }
 
         /// <summary>The ghost's controls as the player reads them (tests and captures).</summary>
         public string GhostKeys => _layout.BuildPlaceGlyphLabel.text + " " + _layout.BuildPlaceWord.text + " · " +
-                                  _layout.BuildRotateGlyphLabel.text + " " + _layout.BuildRotateWord.text;
+                                  (_layout.BuildRotateGlyph.resolvedStyle.display == DisplayStyle.None
+                                      ? string.Empty
+                                      : _layout.BuildRotateGlyphLabel.text + " ") + _layout.BuildRotateWord.text;
 
         /// <summary>True while the ghost's cost chip is up (or easing).</summary>
         public bool IsCostShown => !_costReveal.IsHidden;
@@ -288,7 +323,7 @@ namespace MoonProject.UI
             if (wantsCost)
             {
                 _cost.Show(controller.SelectedStructure.BuildCost, _stock);
-                WriteGhostKeys(device);
+                WriteGhostKeys(device, controller);
                 // At the ghost's foot, under the reason chip above it, so the two never stack.
                 onScreen = _costAnchor.Track(controller.CandidatePose.Position, panelSize, deltaTime,
                     _costReveal.IsHidden);

@@ -422,8 +422,9 @@ namespace MoonProject.UI.PlayModeTests
             Assert.IsTrue(_ui.BuildStrip.Pick(1), "a click on the solar array's card picks it");
             yield return SettleUi(1.2f);
             Assert.AreEqual(BuildModeState.Placing, build.State);
-            Assert.IsTrue(_ui.Objective.ShowsBuildStep, "the one placing line shows");
-            Assert.AreEqual(BuildStep.Place, _ui.Objective.ShownStep);
+            Assert.IsTrue(_ui.BuildStrip.IsCostShown, "the ghost's chip names its cost and keys");
+            Assert.IsFalse(_ui.BuildStrip.GhostSettled, "free ground with no apron to snap onto");
+            Assert.IsTrue(_ui.Objective.ShowsBuildStep, "so the placing line still says where it goes");
             Assert.AreEqual(CursorMode.Drive, _ui.Cursor.Mode, "the camera aims the ghost");
             yield return CaptureComposite(viewCamera, "build-step-b-placing");
 

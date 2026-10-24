@@ -1171,6 +1171,14 @@
             "text": "Xoay"
         },
         {
+            "key": "build.hint.fixed",
+            "text": "Khớp vào khung"
+        },
+        {
+            "key": "build.hint.fixed_to",
+            "text": "Khớp vào: {0}"
+        },
+        {
             "key": "build.step.place",
             "text": "Lái đến vạch sáng trên sân rồi bấm {0} để đặt"
         },

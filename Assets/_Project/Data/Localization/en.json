@@ -1171,6 +1171,14 @@
             "text": "Rotate"
         },
         {
+            "key": "build.hint.fixed",
+            "text": "Fixed to its frame"
+        },
+        {
+            "key": "build.hint.fixed_to",
+            "text": "Fixed to: {0}"
+        },
+        {
             "key": "build.step.place",
             "text": "Drive to the glowing marks on the apron, then press {0} to place"
         },
