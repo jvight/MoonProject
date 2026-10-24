@@ -5,22 +5,24 @@ namespace MoonProject.Art.Editor
 {
     /// <summary>
     /// Procedural mesh generators for the 0.6 lunar phenomena VFX prefabs:
-    /// 1. Terminator horizon haze band and thin rising electrostatic mote columns.
-    /// 2. Fresh micrometeorite crater bowl, fused impact glass shards, and faceted flash star.
-    /// 3. Down-slope sheeting regolith ribbons, low vacuum toe settle veil, and faceted mineral grain shards.
+    /// 1. Continuous terminator horizon haze band and irregular, sparse drifting electrostatic mote wisps.
+    /// 2. Irregular soft-rimmed micrometeorite crater with feathered terrain-decal skirt, asymmetric impact glass
+    ///    shards/blebs, and compact low-profile bloom flash burst.
+    /// 3. Braided non-uniform down-slope sheeting regolith avalanche tongues, continuous vacuum toe settle apron,
+    ///    and faceted mineral grain shards.
     /// 4. Rising Earth disc preview mesh for the Earthrise stillness beat.
     /// </summary>
     public static class PhenomenaMeshes
     {
         /// <summary>
-        /// Builds a gently curved two-layer terminator horizon haze band mesh spanning <paramref name="width"/> metres
-        /// across and <paramref name="height"/> metres vertically.
+        /// Builds a gently curved, multi-layered continuous terminator horizon haze band mesh spanning
+        /// <paramref name="width"/> metres across and <paramref name="height"/> metres vertically.
         /// </summary>
-        public static Mesh CreateHorizonHazeBandMesh(float width, float height, int horizontalSegments = 24)
+        public static Mesh CreateHorizonHazeBandMesh(float width, float height, int horizontalSegments = 36)
         {
-            int segsX = Mathf.Max(4, horizontalSegments);
-            const int segsY = 4;
-            const int layers = 2;
+            int segsX = Mathf.Max(8, horizontalSegments);
+            const int segsY = 6;
+            const int layers = 3;
             int vertsPerLayer = (segsX + 1) * (segsY + 1);
             int trisPerLayer = segsX * segsY * 6;
 
@@ -34,31 +36,47 @@ namespace MoonProject.Art.Editor
             int t = 0;
             int stride = segsX + 1;
 
+            float[] widthScales = { 1.00f, 0.92f, 0.82f };
+            float[] heightScales = { 1.00f, 0.68f, 0.42f };
+            float[] zOffsets = { 0.55f, 0.0f, -0.35f };
+            float[] alphaScales = { 145f, 175f, 135f };
+
             for (int layer = 0; layer < layers; layer++)
             {
                 int layerBaseVert = v;
-                float layerWidth = width * (layer == 0 ? 1.0f : 0.86f);
-                float layerHeight = height * (layer == 0 ? 1.0f : 0.58f);
+                float layerWidth = width * widthScales[layer];
+                float layerHeight = height * heightScales[layer];
                 float halfWidth = layerWidth * 0.5f;
-                float arcDepth = layerWidth * 0.08f;
-                float zOffset = layer == 0 ? 0.45f : -0.15f;
+                float arcDepth = layerWidth * 0.085f;
+                float zOffset = zOffsets[layer];
 
                 for (int y = 0; y <= segsY; y++)
                 {
                     float vCoord = y / (float)segsY;
-                    float posY = vCoord * layerHeight;
-                    float verticalAlpha = Mathf.Clamp01(Mathf.Sin(vCoord * Mathf.PI) * 1.15f);
-                    byte alphaByte = (byte)Mathf.RoundToInt(verticalAlpha * (layer == 0 ? 235f : 255f));
+                    float verticalAlpha = Mathf.Clamp01(Mathf.Sin(vCoord * Mathf.PI) * 1.12f);
 
                     for (int x = 0; x <= segsX; x++)
                     {
                         float uCoord = x / (float)segsX;
                         float centeredX = (uCoord - 0.5f) * 2f;
                         float posX = centeredX * halfWidth;
+
+                        // Gentle organic height undulation along the horizon ridge
+                        float ridgeWave = 1.0f
+                            + 0.12f * Mathf.Sin(uCoord * 7.5f + layer * 1.3f)
+                            + 0.08f * Mathf.Cos(uCoord * 13.0f - layer * 0.9f);
+                        float posY = vCoord * layerHeight * ridgeWave;
                         float posZ = zOffset + (1f - centeredX * centeredX) * arcDepth;
 
+                        float lateralMod = 0.82f
+                            + 0.18f * Mathf.Sin(uCoord * 9.2f + 0.6f) * Mathf.Cos(uCoord * 4.7f - 0.4f);
+                        byte alphaByte = (byte)Mathf.Clamp(
+                            Mathf.RoundToInt(verticalAlpha * lateralMod * alphaScales[layer]),
+                            0,
+                            255);
+
                         vertices[v] = new Vector3(posX, posY, posZ);
-                        normals[v] = new Vector3(-centeredX * 0.2f, 0.15f, -1f).normalized;
+                        normals[v] = new Vector3(-centeredX * 0.18f, 0.15f, -1f).normalized;
                         uvs[v] = new Vector2(uCoord, vCoord);
                         colors[v] = new Color32(255, 250, 240, alphaByte);
                         v++;
@@ -96,70 +114,103 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// Builds thin vertical crossed-ribbon columns distributed non-uniformly along the terminator band to depict
-        /// electrostatically levitated mote filaments rising from the ridge.
+        /// Builds sparse, irregularly spaced, curved/tilted mote wisp veils of varying height, width, and brightness
+        /// emerging organically along the terminator glow band (zero evenly spaced vertical bars).
         /// </summary>
         public static Mesh CreateMoteColumnsMesh(int columnCount, float spanWidth, float columnRadius, float columnHeight)
         {
             int cols = Mathf.Max(2, columnCount);
-            var vertices = new List<Vector3>(cols * 16);
-            var normals = new List<Vector3>(cols * 16);
-            var uvs = new List<Vector2>(cols * 16);
-            var colors = new List<Color32>(cols * 16);
-            var triangles = new List<int>(cols * 24);
+            const int segsY = 6;
+
+            var vertices = new List<Vector3>(cols * (segsY + 1) * 4);
+            var normals = new List<Vector3>(cols * (segsY + 1) * 4);
+            var uvs = new List<Vector2>(cols * (segsY + 1) * 4);
+            var colors = new List<Color32>(cols * (segsY + 1) * 4);
+            var triangles = new List<int>(cols * segsY * 12);
+
+            // Asymmetric, non-periodic lateral anchor offsets within the visible horizon span, with natural clusters & wide gaps
+            float[] irregularAnchors =
+            {
+                -0.23f, -0.17f, -0.07f, 0.04f, 0.09f, 0.19f, 0.25f,
+                -0.12f, 0.14f, -0.27f, -0.02f, 0.28f, -0.20f, 0.11f, -0.15f, 0.22f,
+            };
+            float[] heightVariations =
+            {
+                0.52f, 1.08f, 0.68f, 1.18f, 0.44f, 0.92f, 0.58f,
+                0.76f, 0.46f, 0.94f, 0.60f, 0.70f, 1.10f, 0.50f, 0.82f, 0.64f,
+            };
+            float[] brightnessVariations =
+            {
+                0.68f, 1.00f, 0.80f, 1.00f, 0.58f, 0.94f, 0.64f,
+                0.76f, 0.60f, 0.86f, 0.72f, 0.82f, 0.96f, 0.62f, 0.84f, 0.70f,
+            };
 
             for (int c = 0; c < cols; c++)
             {
-                float tCol = cols == 1 ? 0f : (c / (float)(cols - 1)) - 0.5f;
                 float hash = Frac(Mathf.Sin((c + 1) * 19.73f) * 43758.5453f);
-                float centerX = tCol * (spanWidth * 0.72f) + (hash - 0.5f) * (spanWidth * 0.05f);
-                float centerZ = (Frac(hash * 7.13f) - 0.5f) * 1.15f;
-                float colH = columnHeight * Mathf.Lerp(0.82f, 1.18f, Frac(hash * 3.91f));
-                float colR = columnRadius * Mathf.Lerp(0.85f, 1.25f, Frac(hash * 5.47f));
-                byte seedByte = (byte)Mathf.RoundToInt(hash * 255f);
+                float anchorX = irregularAnchors[c % irregularAnchors.Length];
+                float centerX = anchorX * (spanWidth * 0.72f) + (hash - 0.5f) * (spanWidth * 0.022f);
+                float centerZ = (Frac(hash * 7.13f) - 0.5f) * 1.15f + (1f - anchorX * anchorX * 4f) * (spanWidth * 0.02f);
 
-                // Two crossed vertical ribbons per column (angled at 25 deg and 115 deg) with per-column 0..1 UVs
+                float heightRatio = heightVariations[c % heightVariations.Length];
+                float colH = columnHeight * heightRatio;
+                float colR = columnRadius * Mathf.Lerp(0.85f, 1.45f, Frac(hash * 5.47f));
+                float brightScale = brightnessVariations[c % brightnessVariations.Length];
+
+                // Gentle lateral tilt and S-curve drift so no wisp stands as a rigid vertical bar
+                float leanSign = (c % 2 == 0) ? 1f : -1f;
+                float lateralLean = leanSign * Mathf.Lerp(0.45f, 1.15f, Frac(hash * 9.1f));
+                float curveAmp = Mathf.Lerp(0.24f, 0.58f, Frac(hash * 11.3f));
+
+                byte seedByte = (byte)Mathf.RoundToInt(hash * 255f);
+                byte heightByte = (byte)Mathf.Clamp(Mathf.RoundToInt(Mathf.Clamp01(heightRatio / 1.15f) * 255f), 40, 255);
+
                 for (int plane = 0; plane < 2; plane++)
                 {
-                    float yawRad = ((plane * 90f) + 25f + hash * 20f) * Mathf.Deg2Rad;
-                    Vector3 right = new Vector3(Mathf.Cos(yawRad), 0f, Mathf.Sin(yawRad)) * colR;
-                    Vector3 normal = new Vector3(-Mathf.Sin(yawRad), 0f, Mathf.Cos(yawRad));
+                    float yawRad = ((plane * 82f) + 22f + hash * 35f) * Mathf.Deg2Rad;
+                    Vector3 rightDir = new Vector3(Mathf.Cos(yawRad), 0f, Mathf.Sin(yawRad));
+                    Vector3 normal = new Vector3(-Mathf.Sin(yawRad), 0.12f, Mathf.Cos(yawRad)).normalized;
 
                     int baseIdx = vertices.Count;
-
-                    vertices.Add(new Vector3(centerX - right.x, 0f, centerZ - right.z));
-                    vertices.Add(new Vector3(centerX + right.x, 0f, centerZ + right.z));
-                    vertices.Add(new Vector3(centerX - right.x * 0.72f, colH, centerZ - right.z * 0.72f));
-                    vertices.Add(new Vector3(centerX + right.x * 0.72f, colH, centerZ + right.z * 0.72f));
-
-                    for (int k = 0; k < 4; k++)
+                    for (int y = 0; y <= segsY; y++)
                     {
+                        float vCoord = y / (float)segsY;
+                        float py = vCoord * colH;
+                        float driftX = vCoord * lateralLean + Mathf.Sin(vCoord * Mathf.PI * 1.35f + hash * 6.28f) * curveAmp;
+                        float driftZ = Mathf.Cos(vCoord * Mathf.PI + hash * 4.1f) * (curveAmp * 0.45f);
+
+                        // Wider, softer base fanning gently and tapering at the top of the wisp
+                        float widthProfile = Mathf.Lerp(1.25f, 0.55f, vCoord) * (0.85f + 0.25f * Mathf.Sin(vCoord * Mathf.PI));
+                        Vector3 right = rightDir * (colR * widthProfile);
+
+                        float vertAlpha = Mathf.SmoothStep(0f, 0.18f, vCoord) * Mathf.Pow(1f - vCoord, 0.78f);
+                        byte alphaByte = (byte)Mathf.Clamp(Mathf.RoundToInt(vertAlpha * brightScale * 255f), 0, 255);
+
+                        vertices.Add(new Vector3(centerX + driftX - right.x, py, centerZ + driftZ - right.z));
+                        vertices.Add(new Vector3(centerX + driftX + right.x, py, centerZ + driftZ + right.z));
                         normals.Add(normal);
+                        normals.Add(normal);
+                        uvs.Add(new Vector2(0f, vCoord));
+                        uvs.Add(new Vector2(1f, vCoord));
+                        colors.Add(new Color32(64, heightByte, seedByte, alphaByte));
+                        colors.Add(new Color32(64, heightByte, seedByte, alphaByte));
                     }
 
-                    uvs.Add(new Vector2(0f, 0f));
-                    uvs.Add(new Vector2(1f, 0f));
-                    uvs.Add(new Vector2(0f, 1f));
-                    uvs.Add(new Vector2(1f, 1f));
+                    for (int y = 0; y < segsY; y++)
+                    {
+                        int i0 = baseIdx + y * 2;
+                        int i1 = i0 + 1;
+                        int i2 = i0 + 2;
+                        int i3 = i0 + 3;
 
-                    colors.Add(new Color32(255, 245, 225, 245));
-                    colors.Add(new Color32(255, 245, 225, 245));
-                    colors.Add(new Color32(235, 245, 255, 165));
-                    colors.Add(new Color32(235, 245, 255, 165));
+                        triangles.Add(i0);
+                        triangles.Add(i2);
+                        triangles.Add(i1);
 
-                    // Encode column seed in blue channel while preserving warm tint
-                    colors[baseIdx] = new Color32(255, 245, seedByte, 245);
-                    colors[baseIdx + 1] = new Color32(255, 245, seedByte, 245);
-                    colors[baseIdx + 2] = new Color32(235, 245, seedByte, 165);
-                    colors[baseIdx + 3] = new Color32(235, 245, seedByte, 165);
-
-                    triangles.Add(baseIdx);
-                    triangles.Add(baseIdx + 2);
-                    triangles.Add(baseIdx + 1);
-
-                    triangles.Add(baseIdx + 1);
-                    triangles.Add(baseIdx + 2);
-                    triangles.Add(baseIdx + 3);
+                        triangles.Add(i1);
+                        triangles.Add(i2);
+                        triangles.Add(i3);
+                    }
                 }
             }
 
@@ -213,109 +264,237 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// Builds the small fresh micrometeorite crater mesh and its central fused impact glass melt pool + jagged
-        /// vitreous glass shards. Vertex colors follow R1 convention: R=AO, G=EdgeWear, B=Cavity, A=GlassMeltMask.
+        /// Builds an irregular, soft-rimmed micrometeorite crater mesh with an alpha-feathered terrain-decal ejecta
+        /// skirt (blending seamlessly into the ground with zero hard octagon/polygon edge), small rim clod meshes, and
+        /// asymmetrically clustered, irregular glowing impact glass shards and melt blebs.
+        /// Vertex colors: R=AO, G=EdgeWear, B=Cavity, A=ShardHeatScale.
+        /// UVs: uv.x = GlassMask (0=regolith/decal, 1=impact glass), uv.y = DecalFeatherAlpha (1=core, 0=outer edge).
         /// </summary>
         public static Mesh CreateImpactCraterAndGlassMesh(float craterRadius)
         {
-            const int radialSectors = 14;
-            const int rings = 5;
+            const int radialSectors = 36;
+            const int rings = 8;
             float radius = Mathf.Max(0.25f, craterRadius);
 
-            var vertices = new List<Vector3>(320);
-            var normals = new List<Vector3>(320);
-            var uvs = new List<Vector2>(320);
-            var colors = new List<Color32>(320);
-            var triangles = new List<int>(640);
+            var vertices = new List<Vector3>(1400);
+            var normals = new List<Vector3>(1400);
+            var uvs = new List<Vector2>(1400);
+            var colors = new List<Color32>(1400);
+            var triangles = new List<int>(2400);
 
-            // Ring profile (normalized radius rFrac, height, AO, EdgeWear, Cavity, GlassMeltMask)
-            float[] ringRadii = { 0.0f, 0.28f, 0.56f, 0.88f, 1.15f, 1.48f };
-            float[] ringHeights = { 0.015f, 0.008f, -0.045f, 0.125f, 0.055f, 0.004f };
+            // Ring profile from center (r=0) out to feathered terrain-decal skirt (r=8)
+            float[] ringRadii = { 0.0f, 0.19f, 0.36f, 0.58f, 0.84f, 1.12f, 1.46f, 1.88f, 2.35f };
+            float[] ringHeights = { 0.010f, 0.006f, -0.022f, -0.048f, 0.062f, 0.024f, 0.006f, 0.002f, 0.0005f };
+            float[] ringGlassMask = { 1.0f, 0.96f, 0.42f, 0.05f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
+            float[] ringDecalAlpha = { 1.0f, 1.0f, 1.0f, 1.0f, 0.94f, 0.72f, 0.42f, 0.15f, 0.0f };
+
             Color32[] ringColors =
             {
-                new Color32(220, 245, 235, 255), // Center molten glass dome (A=255)
-                new Color32(205, 230, 215, 245), // Inner glass melt pool edge (A=245)
-                new Color32(175, 165, 175, 120), // Crater bowl floor/wall transition (A=120)
-                new Color32(248, 245, 250, 15),  // Raised fresh crater rim crest (A=15, high G edge wear)
-                new Color32(225, 190, 225, 0),   // Outer ejecta slope (A=0)
-                new Color32(210, 165, 215, 0),   // Outer regolith tie-in skirt (A=0)
+                new Color32(235, 245, 240, 255), // r0: Central molten glass puddle core
+                new Color32(210, 232, 220, 240), // r1: Irregular melt puddle lobe
+                new Color32(135, 195, 165, 210), // r2: Melt margin / dark pit floor
+                new Color32(85, 130, 110, 180),  // r3: Deep shadowed crater pit wall
+                new Color32(215, 215, 210, 180), // r4: Soft overturned crater rim crest
+                new Color32(190, 182, 190, 170), // r5: Outer rim flank
+                new Color32(175, 162, 175, 160), // r6: Inner terrain-decal ejecta apron
+                new Color32(168, 152, 168, 150), // r7: Mid terrain-decal feather skirt
+                new Color32(162, 148, 162, 140), // r8: Outer zero-alpha tie-in edge
             };
 
             var ringPoints = new Vector3[rings + 1, radialSectors];
+            var ringUvs = new Vector2[rings + 1, radialSectors];
+            var ringVertColors = new Color32[rings + 1, radialSectors];
+
             for (int r = 0; r <= rings; r++)
             {
                 for (int s = 0; s < radialSectors; s++)
                 {
                     float baseAngle = (s / (float)radialSectors) * Mathf.PI * 2f;
-                    float hash = Frac(Mathf.Sin((r * 19 + s * 37 + 5) * 41.23f) * 43758.5453f);
-                    float angleJitter = r == 0 ? 0f : (hash - 0.5f) * (Mathf.PI * 2f / radialSectors) * 0.28f;
-                    float radJitter = r == 0 ? 0f : Mathf.Lerp(0.86f, 1.14f, Frac(hash * 7.7f));
-                    float heightJitter = r == 0 ? 0f : (Frac(hash * 13.1f) - 0.5f) * 0.020f;
+                    float hash = Frac(Mathf.Sin((r * 23 + s * 41 + 7) * 37.89f) * 43758.5453f);
 
-                    float rr = ringRadii[r] * radius * radJitter;
+                    // Multi-harmonic organic asymmetry so the crater and melt pool are never circular or octagonal
+                    float harmonicShape = 1.0f
+                        + 0.15f * Mathf.Cos(baseAngle * 2f + 0.45f)
+                        + 0.11f * Mathf.Sin(baseAngle * 3f - 0.85f)
+                        + 0.08f * Mathf.Cos(baseAngle * 5f + 1.65f)
+                        + 0.05f * Mathf.Sin(baseAngle * 7f + 0.30f);
+
+                    float radJitter = r == 0 ? 0f : Mathf.Lerp(0.90f, 1.10f, Frac(hash * 7.7f));
+                    float angleJitter = r == 0 ? 0f : (hash - 0.5f) * (Mathf.PI * 2f / radialSectors) * 0.32f;
                     float angle = baseAngle + angleJitter;
+
+                    // Slight off-center shift for the inner melt puddle (oblique impact signature)
+                    Vector2 centerShift = r <= 2
+                        ? new Vector2(0.045f * radius * (1f - r * 0.3f), -0.03f * radius * (1f - r * 0.3f))
+                        : Vector2.zero;
+
+                    // Asymmetric rim height (higher on downrange northeast arc, lower/scoured on southwest arc)
+                    float rimAsym = 0.78f + 0.36f * Mathf.Cos(baseAngle - 0.55f) + 0.18f * Mathf.Sin(baseAngle * 3f + 1.1f);
+                    float heightScale = (r == 4 || r == 5) ? Mathf.Max(0.35f, rimAsym) : 1.0f;
+                    float heightJitter = (r == 0 || r >= 7) ? 0f : (Frac(hash * 13.1f) - 0.5f) * 0.012f * radius;
+
+                    float rr = ringRadii[r] * radius * harmonicShape * radJitter;
                     ringPoints[r, s] = new Vector3(
-                        Mathf.Cos(angle) * rr,
-                        ringHeights[r] * radius + heightJitter,
-                        Mathf.Sin(angle) * rr);
+                        centerShift.x + Mathf.Cos(angle) * rr,
+                        ringHeights[r] * radius * heightScale + heightJitter,
+                        centerShift.y + Mathf.Sin(angle) * rr);
+
+                    // Break up the outer melt margin (r=1..2) into irregular lobes
+                    float meltLobe = 0.65f + 0.35f * Mathf.Cos(baseAngle * 3f + 0.8f) * Mathf.Sin(baseAngle * 2f - 0.5f);
+                    float glassVal = ringGlassMask[r];
+                    if (r == 2)
+                    {
+                        glassVal *= Mathf.SmoothStep(0.35f, 0.85f, meltLobe);
+                    }
+
+                    // Vary outer decal alpha with angular ejecta rays
+                    float rayFactor = r >= 5
+                        ? Mathf.Lerp(0.68f, 1.15f, 0.5f + 0.5f * Mathf.Cos(baseAngle * 4f + 0.4f) * Mathf.Sin(baseAngle * 3f - 1.1f))
+                        : 1.0f;
+                    float decalVal = r == rings ? 0.0f : Mathf.Clamp01(ringDecalAlpha[r] * rayFactor);
+
+                    ringUvs[r, s] = new Vector2(glassVal, decalVal);
+                    ringVertColors[r, s] = ringColors[r];
                 }
             }
 
-            // Flat-shaded faceted triangles for crisp R1 low-poly crater + melt pool facets
+            // Smoothly shaded crater & terrain-decal surface so the soft rim and decal skirt blend naturally into ground
+            int[,] gridVertIndices = new int[rings + 1, radialSectors];
+            for (int r = 0; r <= rings; r++)
+            {
+                for (int s = 0; s < radialSectors; s++)
+                {
+                    int prevS = (s - 1 + radialSectors) % radialSectors;
+                    int nextS = (s + 1) % radialSectors;
+                    int innerR = Mathf.Max(0, r - 1);
+                    int outerR = Mathf.Min(rings, r + 1);
+
+                    Vector3 tangentTheta = ringPoints[r, nextS] - ringPoints[r, prevS];
+                    Vector3 tangentRad = ringPoints[outerR, s] - ringPoints[innerR, s];
+                    Vector3 smoothNormal = Vector3.Cross(tangentTheta, tangentRad).normalized;
+                    if (smoothNormal.y < 0f)
+                    {
+                        smoothNormal = -smoothNormal;
+                    }
+
+                    if (r == 0 || r >= 6)
+                    {
+                        smoothNormal = Vector3.Lerp(smoothNormal, Vector3.up, 0.75f).normalized;
+                    }
+
+                    gridVertIndices[r, s] = vertices.Count;
+                    vertices.Add(ringPoints[r, s]);
+                    normals.Add(smoothNormal);
+                    uvs.Add(ringUvs[r, s]);
+                    colors.Add(ringVertColors[r, s]);
+                }
+            }
+
             for (int r = 0; r < rings; r++)
             {
                 for (int s = 0; s < radialSectors; s++)
                 {
                     int nextS = (s + 1) % radialSectors;
-                    Vector3 p00 = ringPoints[r, s];
-                    Vector3 p01 = ringPoints[r, nextS];
-                    Vector3 p10 = ringPoints[r + 1, s];
-                    Vector3 p11 = ringPoints[r + 1, nextS];
-
-                    Color32 cInner = ringColors[r];
-                    Color32 cOuter = ringColors[r + 1];
+                    int i00 = gridVertIndices[r, s];
+                    int i01 = gridVertIndices[r, nextS];
+                    int i10 = gridVertIndices[r + 1, s];
+                    int i11 = gridVertIndices[r + 1, nextS];
 
                     if (r == 0)
                     {
-                        AddFacetTriangleWithColors(vertices, normals, uvs, colors, triangles,
-                            p00, p11, p10, cInner, cOuter, cOuter);
+                        triangles.Add(i00);
+                        triangles.Add(i11);
+                        triangles.Add(i10);
                     }
                     else
                     {
-                        AddFacetTriangleWithColors(vertices, normals, uvs, colors, triangles,
-                            p00, p11, p10, cInner, cOuter, cOuter);
-                        AddFacetTriangleWithColors(vertices, normals, uvs, colors, triangles,
-                            p00, p01, p11, cInner, cInner, cOuter);
+                        triangles.Add(i00);
+                        triangles.Add(i11);
+                        triangles.Add(i10);
+
+                        triangles.Add(i00);
+                        triangles.Add(i01);
+                        triangles.Add(i11);
                     }
                 }
             }
 
-            // Add 9 irregular angular vitreous impact glass shards protruding from the central melt pool
-            // (high G = EdgeWear and A = 255 so they glow white-amber when hot and keep a permanent glint when cooled)
-            const int glassShardCount = 9;
-            for (int i = 0; i < glassShardCount; i++)
+            // Add 6 small irregular overturned regolith clods tucked along the crater rim for small-mesh silhouette breakup
+            float[] clodAngles = { 0.25f, 0.95f, 1.85f, 3.10f, 4.35f, 5.40f };
+            for (int c = 0; c < clodAngles.Length; c++)
             {
+                float seed = Frac(Mathf.Sin((c + 1) * 47.19f) * 43758.5453f);
+                float angle = clodAngles[c] + (seed - 0.5f) * 0.22f;
+                int sector = Mathf.Clamp(Mathf.RoundToInt((angle / (Mathf.PI * 2f)) * radialSectors) % radialSectors, 0, radialSectors - 1);
+                Vector3 rimPos = Vector3.Lerp(ringPoints[4, sector], ringPoints[5, sector], Frac(seed * 3.7f));
+                float clodW = Mathf.Lerp(0.055f, 0.11f, Frac(seed * 5.3f)) * radius;
+                float clodH = Mathf.Lerp(0.025f, 0.055f, Frac(seed * 8.9f)) * radius;
+
+                AddIrregularShardOrClod(
+                    vertices,
+                    normals,
+                    uvs,
+                    colors,
+                    triangles,
+                    rimPos + new Vector3(0f, -0.008f * radius, 0f),
+                    clodW,
+                    clodH,
+                    new Vector3(Mathf.Cos(angle) * 0.25f, 1f, Mathf.Sin(angle) * 0.25f).normalized,
+                    seed,
+                    new Vector2(0f, 0.96f),
+                    new Color32(195, 210, 195, 160),
+                    new Color32(230, 235, 225, 180));
+            }
+
+            // Add 14 irregular, asymmetrically clustered vitreous impact glass shards, crags, and melt blebs
+            // spread unevenly across the pit floor and inner wall (never a circular ring of identical cones)
+            (Vector2 offset, float widthScale, float heightScale, float tiltX, float tiltZ, byte heatByte)[] glassSpecs =
+            {
+                // Primary off-center fused melt crag & splinter cluster
+                (new Vector2(0.08f, -0.04f), 0.17f, 0.20f, 0.32f, -0.20f, 255),
+                (new Vector2(0.21f, 0.06f), 0.14f, 0.14f, 0.48f, 0.25f, 245),
+                (new Vector2(-0.05f, -0.15f), 0.15f, 0.11f, -0.24f, -0.38f, 240),
+                (new Vector2(0.16f, -0.19f), 0.10f, 0.16f, 0.42f, -0.45f, 230),
+                (new Vector2(0.31f, -0.07f), 0.12f, 0.09f, 0.56f, -0.14f, 210),
+
+                // Secondary smaller cluster on northwest inner floor/wall
+                (new Vector2(-0.25f, 0.14f), 0.13f, 0.13f, -0.48f, 0.32f, 220),
+                (new Vector2(-0.16f, 0.24f), 0.09f, 0.15f, -0.30f, 0.52f, 200),
+                (new Vector2(-0.34f, 0.05f), 0.11f, 0.07f, -0.58f, 0.18f, 185),
+
+                // Irregular scattered melt splatters & droplets further out toward the inner rim
+                (new Vector2(0.03f, 0.32f), 0.08f, 0.06f, 0.15f, 0.56f, 170),
+                (new Vector2(0.38f, 0.18f), 0.09f, 0.09f, 0.62f, 0.30f, 180),
+                (new Vector2(-0.24f, -0.29f), 0.10f, 0.07f, -0.42f, -0.48f, 165),
+                (new Vector2(0.32f, -0.30f), 0.07f, 0.06f, 0.48f, -0.52f, 155),
+                (new Vector2(-0.41f, -0.12f), 0.08f, 0.08f, -0.64f, -0.24f, 160),
+                (new Vector2(-0.02f, 0.06f), 0.16f, 0.07f, 0.12f, 0.18f, 250),
+            };
+
+            for (int i = 0; i < glassSpecs.Length; i++)
+            {
+                (Vector2 offset, float widthScale, float heightScale, float tiltX, float tiltZ, byte heatByte) = glassSpecs[i];
                 float seed = Frac(Mathf.Sin((i + 1) * 63.71f) * 43758.5453f);
-                float angle = (i / (float)glassShardCount) * Mathf.PI * 2f + (seed - 0.5f) * 0.35f;
-                float dist = (i == 0 ? 0.03f : Mathf.Lerp(0.10f, 0.42f, Frac(seed * 5.3f))) * radius;
-                Vector3 center = new Vector3(Mathf.Cos(angle) * dist, 0.01f * radius, Mathf.Sin(angle) * dist);
+                Vector3 center = new Vector3(offset.x * radius, -0.006f * radius, offset.y * radius);
+                Vector3 tiltDir = new Vector3(tiltX, 1f, tiltZ).normalized;
 
-                float shardHeight = Mathf.Lerp(0.09f, 0.22f, Frac(seed * 9.1f)) * radius;
-                float shardWidth = Mathf.Lerp(0.06f, 0.14f, Frac(seed * 3.7f)) * radius;
-                Vector3 tiltDir = new Vector3(Mathf.Cos(angle) * 0.32f, 1f, Mathf.Sin(angle) * 0.32f).normalized;
-                Vector3 apex = center + tiltDir * shardHeight;
+                Color32 baseGlass = new Color32(195, 228, 215, heatByte);
+                Color32 tipGlass = new Color32(255, 255, 250, heatByte);
 
-                float baseYaw = seed * Mathf.PI * 2f;
-                Vector3 b0 = center + new Vector3(Mathf.Cos(baseYaw) * shardWidth, -0.02f, Mathf.Sin(baseYaw) * shardWidth);
-                Vector3 b1 = center + new Vector3(Mathf.Cos(baseYaw + 2.094f) * shardWidth, -0.02f, Mathf.Sin(baseYaw + 2.094f) * shardWidth);
-                Vector3 b2 = center + new Vector3(Mathf.Cos(baseYaw + 4.188f) * shardWidth, -0.02f, Mathf.Sin(baseYaw + 4.188f) * shardWidth);
-
-                Color32 baseGlass = new Color32(200, 230, 215, 255);
-                Color32 tipGlass = new Color32(255, 255, 250, 255);
-
-                AddFacetTriangleWithColors(vertices, normals, uvs, colors, triangles, apex, b1, b0, tipGlass, baseGlass, baseGlass);
-                AddFacetTriangleWithColors(vertices, normals, uvs, colors, triangles, apex, b2, b1, tipGlass, baseGlass, baseGlass);
-                AddFacetTriangleWithColors(vertices, normals, uvs, colors, triangles, apex, b0, b2, tipGlass, baseGlass, baseGlass);
+                AddIrregularShardOrClod(
+                    vertices,
+                    normals,
+                    uvs,
+                    colors,
+                    triangles,
+                    center,
+                    widthScale * radius,
+                    heightScale * radius,
+                    tiltDir,
+                    seed,
+                    new Vector2(1.0f, 1.0f),
+                    baseGlass,
+                    tipGlass);
             }
 
             var mesh = new Mesh { name = "Mesh_ImpactCraterAndGlass" };
@@ -329,7 +508,8 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// Builds a 3D crossed starlight burst mesh for the brief distant white micrometeorite impact flash.
+        /// Builds a compact, low-profile 3D starlight burst mesh for the brief micrometeorite impact flash
+        /// (flattened vertically and tilted so planes never sum along a vertical axis into a light pillar).
         /// </summary>
         public static Mesh CreateImpactFlashStarMesh()
         {
@@ -339,14 +519,23 @@ namespace MoonProject.Art.Editor
             var colors = new List<Color32>(36);
             var triangles = new List<int>(54);
 
-            // Three intersecting star planes (XY, ZY, and diagonal) so the flash reads from any camera angle
-            float[] planeYaws = { 0f, 60f, 120f };
-            for (int p = 0; p < planeYaws.Length; p++)
+            // Three low-pitched, tilted burst planes + one horizontal ground-skimming flash plane (no vertical pillar)
+            Quaternion[] planeRots =
             {
-                Quaternion rot = Quaternion.Euler(0f, planeYaws[p], 0f);
-                Vector3 right = rot * Vector3.right;
-                Vector3 up = Vector3.up;
-                Vector3 normal = rot * Vector3.forward;
+                Quaternion.Euler(58f, 15f, 0f),
+                Quaternion.Euler(52f, 135f, 12f),
+                Quaternion.Euler(62f, 255f, -10f),
+                Quaternion.Euler(86f, 45f, 0f),
+            };
+            float[] planeScales = { 1.00f, 0.88f, 0.82f, 0.95f };
+
+            for (int p = 0; p < planeRots.Length; p++)
+            {
+                Quaternion rot = planeRots[p];
+                float s = planeScales[p];
+                Vector3 right = (rot * Vector3.right) * s;
+                Vector3 up = (rot * Vector3.up) * (s * 0.68f);
+                Vector3 normal = (rot * Vector3.forward).normalized;
 
                 int baseIdx = vertices.Count;
                 vertices.Add(-right - up);
@@ -357,7 +546,7 @@ namespace MoonProject.Art.Editor
                 for (int k = 0; k < 4; k++)
                 {
                     normals.Add(normal);
-                    colors.Add(new Color32(255, 250, 240, 255));
+                    colors.Add(new Color32(255, 250, 240, 235));
                 }
 
                 uvs.Add(new Vector2(0f, 0f));
@@ -385,15 +574,16 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// Builds the down-slope sheeting regolith stream mesh for the gentle moonquake dust slide, including both
-        /// surface-skimming mineral streams and low parabolic vacuum saltation arc ribbons.
-        /// Local coordinates: crest at (Y = L*sin(theta), Z = 0) down to toe at (Y = 0, Z = L*cos(theta)).
+        /// Builds an organic, non-uniform down-slope sheeting regolith stream mesh for the gentle moonquake dust slide:
+        /// a continuous multi-lobed base avalanche sheet with asymmetric meandering chutes plus irregular overlapping
+        /// low parabolic vacuum saltation veils (zero evenly spaced parallel stripes).
         /// </summary>
         public static Mesh CreateSlopeSheetMesh(float width, float length, float slopeAngleDegrees)
         {
-            const int ribbonCount = 6;
-            const int arcRibbonCount = 7;
-            const int lengthSegments = 14;
+            const int baseSegsX = 28;
+            const int baseSegsY = 18;
+            const int arcVeilCount = 5;
+            const int arcSegsY = 14;
 
             float slopeRad = slopeAngleDegrees * Mathf.Deg2Rad;
             float sinSlope = Mathf.Sin(slopeRad);
@@ -401,51 +591,75 @@ namespace MoonProject.Art.Editor
             float topY = length * sinSlope;
             Vector3 slopeNormal = new Vector3(0f, cosSlope, sinSlope).normalized;
 
-            int totalRibbons = ribbonCount + arcRibbonCount;
-            var vertices = new List<Vector3>(totalRibbons * (lengthSegments + 1) * 2);
-            var normals = new List<Vector3>(totalRibbons * (lengthSegments + 1) * 2);
-            var uvs = new List<Vector2>(totalRibbons * (lengthSegments + 1) * 2);
-            var colors = new List<Color32>(totalRibbons * (lengthSegments + 1) * 2);
-            var triangles = new List<int>(totalRibbons * lengthSegments * 6);
+            var vertices = new List<Vector3>(1200);
+            var normals = new List<Vector3>(1200);
+            var uvs = new List<Vector2>(1200);
+            var colors = new List<Color32>(1200);
+            var triangles = new List<int>(3200);
 
-            // 1. Surface-skimming regolith sheet streams
-            for (int r = 0; r < ribbonCount; r++)
+            // 1. Continuous, asymmetric multi-tongue base regolith sheet across the slope
+            int baseStartVert = vertices.Count;
+            int stride = baseSegsX + 1;
+
+            for (int y = 0; y <= baseSegsY; y++)
             {
-                float tRibbon = (r / (float)(ribbonCount - 1)) - 0.5f;
-                float ribbonCenter = tRibbon * (width * 0.78f);
-                float ribbonHalfWidth = (width / ribbonCount) * 0.74f;
-                float skimLift = 0.06f + (r % 2) * 0.035f;
+                float vCoord = y / (float)baseSegsY;
+                float distAlong = vCoord * length;
+                float longitudinalFade = Mathf.SmoothStep(0f, 0.14f, vCoord) * Mathf.SmoothStep(1f, 0.82f, vCoord);
 
-                int baseVert = vertices.Count;
-                for (int s = 0; s <= lengthSegments; s++)
+                // Meandering chute centers down the slope (asymmetric primary, secondary, and minor forks)
+                float chute1Center = -0.22f + 0.08f * Mathf.Sin(vCoord * 4.2f + 0.4f) - 0.05f * vCoord;
+                float chute1Width = Mathf.Lerp(0.24f, 0.36f, vCoord);
+
+                float chute2Center = 0.24f - 0.07f * Mathf.Cos(vCoord * 3.6f - 0.5f) + 0.06f * vCoord;
+                float chute2Width = Mathf.Lerp(0.15f, 0.25f, vCoord);
+                float chute2Onset = Mathf.SmoothStep(0.08f, 0.32f, vCoord);
+
+                float chute3Center = 0.03f + 0.09f * Mathf.Sin(vCoord * 5.5f + 1.7f);
+                float chute3Width = 0.14f;
+                float chute3Fade = Mathf.SmoothStep(0.0f, 0.20f, vCoord) * Mathf.SmoothStep(0.88f, 0.48f, vCoord);
+
+                for (int x = 0; x <= baseSegsX; x++)
                 {
-                    float vCoord = s / (float)lengthSegments;
-                    float distAlong = vCoord * length;
-                    float y = topY - distAlong * sinSlope + skimLift * cosSlope;
-                    float z = distAlong * cosSlope + skimLift * sinSlope;
+                    float uCoord = x / (float)baseSegsX;
+                    float normX = uCoord - 0.5f;
 
-                    float widthScale = Mathf.Lerp(0.80f, 1.18f, vCoord);
-                    float halfW = ribbonHalfWidth * widthScale;
+                    float d1 = (normX - chute1Center) / chute1Width;
+                    float w1 = Mathf.Exp(-d1 * d1 * 2.1f);
 
-                    byte edgeAlpha = (byte)Mathf.RoundToInt(Mathf.Clamp01(Mathf.Sin(vCoord * Mathf.PI) * 1.2f) * 255f);
-                    Color32 col = new Color32(255, 252, 245, edgeAlpha);
+                    float d2 = (normX - chute2Center) / chute2Width;
+                    float w2 = Mathf.Exp(-d2 * d2 * 2.4f) * chute2Onset * 0.85f;
 
-                    vertices.Add(new Vector3(ribbonCenter - halfW, y, z));
-                    vertices.Add(new Vector3(ribbonCenter + halfW, y, z));
+                    float d3 = (normX - chute3Center) / chute3Width;
+                    float w3 = Mathf.Exp(-d3 * d3 * 2.6f) * chute3Fade * 0.58f;
+
+                    float combinedChute = Mathf.Clamp01(w1 + w2 + w3);
+                    float skimLift = 0.045f + 0.055f * combinedChute;
+
+                    float px = normX * width;
+                    float py = topY - distAlong * sinSlope + skimLift * cosSlope;
+                    float pz = distAlong * cosSlope + skimLift * sinSlope;
+
+                    byte alphaByte = (byte)Mathf.Clamp(
+                        Mathf.RoundToInt(longitudinalFade * combinedChute * 245f),
+                        0,
+                        255);
+
+                    vertices.Add(new Vector3(px, py, pz));
                     normals.Add(slopeNormal);
-                    normals.Add(slopeNormal);
-                    uvs.Add(new Vector2(0f, vCoord));
-                    uvs.Add(new Vector2(1f, vCoord));
-                    colors.Add(col);
-                    colors.Add(col);
+                    uvs.Add(new Vector2(uCoord, vCoord));
+                    colors.Add(new Color32(255, 252, 245, alphaByte));
                 }
+            }
 
-                for (int s = 0; s < lengthSegments; s++)
+            for (int y = 0; y < baseSegsY; y++)
+            {
+                for (int x = 0; x < baseSegsX; x++)
                 {
-                    int i0 = baseVert + s * 2;
+                    int i0 = baseStartVert + y * stride + x;
                     int i1 = i0 + 1;
-                    int i2 = i0 + 2;
-                    int i3 = i0 + 3;
+                    int i2 = i0 + stride;
+                    int i3 = i2 + 1;
 
                     triangles.Add(i0);
                     triangles.Add(i2);
@@ -457,33 +671,42 @@ namespace MoonProject.Art.Editor
                 }
             }
 
-            // 2. Low parabolic ballistic saltation arc ribbons skimming 8..28 cm above the slope in vacuum
-            for (int a = 0; a < arcRibbonCount; a++)
+            // 2. Five irregular, asymmetric low parabolic vacuum saltation veils of varied widths, lengths, and angles
+            (float xStart, float xEnd, float vStart, float vSpan, float halfWidthScale, float peakLift, byte seedByte)[] veilSpecs =
             {
-                float seed = Frac(Mathf.Sin((a + 1) * 37.91f) * 43758.5453f);
-                float laneX = ((a / (float)(arcRibbonCount - 1)) - 0.5f) * (width * 0.72f) + (seed - 0.5f) * 0.25f;
-                float startFrac = Mathf.Lerp(0.06f, 0.38f, Frac(seed * 3.1f));
-                float arcSpanFrac = Mathf.Lerp(0.45f, 0.58f, Frac(seed * 7.3f));
-                float peakArcLift = Mathf.Lerp(0.14f, 0.28f, Frac(seed * 5.7f));
-                float halfW = 0.22f;
+                (-0.26f, -0.32f, 0.04f, 0.78f, 0.22f, 0.24f, 37),
+                (-0.14f, -0.05f, 0.12f, 0.66f, 0.16f, 0.18f, 91),
+                (0.22f, 0.31f, 0.18f, 0.72f, 0.19f, 0.21f, 149),
+                (0.02f, -0.09f, 0.08f, 0.54f, 0.14f, 0.15f, 203),
+                (0.16f, 0.12f, 0.28f, 0.58f, 0.13f, 0.16f, 241),
+            };
 
+            for (int a = 0; a < arcVeilCount; a++)
+            {
+                (float xStart, float xEnd, float vStart, float vSpan, float halfWidthScale, float peakLift, byte seedByte) = veilSpecs[a];
                 int baseVert = vertices.Count;
-                for (int s = 0; s <= lengthSegments; s++)
+
+                for (int s = 0; s <= arcSegsY; s++)
                 {
-                    float uArc = s / (float)lengthSegments;
-                    float vCoord = Mathf.Clamp01(startFrac + uArc * arcSpanFrac);
+                    float uArc = s / (float)arcSegsY;
+                    float vCoord = Mathf.Clamp01(vStart + uArc * vSpan);
                     float distAlong = vCoord * length;
+
                     // Clean vacuum parabola: 4 * h_max * u * (1 - u)
-                    float parabolaLift = 0.05f + 4f * peakArcLift * uArc * (1f - uArc);
+                    float parabolaLift = 0.05f + 4f * peakLift * uArc * (1f - uArc);
+                    float centerNormX = Mathf.Lerp(xStart, xEnd, uArc)
+                        + 0.035f * Mathf.Sin(uArc * Mathf.PI * 1.5f + a * 1.7f);
+                    float centerX = centerNormX * width;
+                    float halfW = width * halfWidthScale * Mathf.Lerp(0.72f, 1.28f, uArc);
 
-                    float y = topY - distAlong * sinSlope + parabolaLift * cosSlope;
-                    float z = distAlong * cosSlope + parabolaLift * sinSlope;
+                    float py = topY - distAlong * sinSlope + parabolaLift * cosSlope;
+                    float pz = distAlong * cosSlope + parabolaLift * sinSlope;
 
-                    byte edgeAlpha = (byte)Mathf.RoundToInt(Mathf.Sin(uArc * Mathf.PI) * 235f);
-                    Color32 col = new Color32(255, 250, 240, edgeAlpha);
+                    byte edgeAlpha = (byte)Mathf.RoundToInt(Mathf.Sin(uArc * Mathf.PI) * 210f);
+                    Color32 col = new Color32(255, 252, 245, edgeAlpha);
 
-                    vertices.Add(new Vector3(laneX - halfW, y, z));
-                    vertices.Add(new Vector3(laneX + halfW, y, z));
+                    vertices.Add(new Vector3(centerX - halfW, py, pz));
+                    vertices.Add(new Vector3(centerX + halfW, py, pz));
                     normals.Add(slopeNormal);
                     normals.Add(slopeNormal);
                     uvs.Add(new Vector2(0f, uArc));
@@ -492,7 +715,7 @@ namespace MoonProject.Art.Editor
                     colors.Add(col);
                 }
 
-                for (int s = 0; s < lengthSegments; s++)
+                for (int s = 0; s < arcSegsY; s++)
                 {
                     int i0 = baseVert + s * 2;
                     int i1 = i0 + 1;
@@ -520,69 +743,90 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// Builds the low ground-skimming vacuum settle apron mesh at the toe of the moonquake dust slide
-        /// (Z = L*cos(theta), Y = 0..maxHeight).
+        /// Builds a continuous, organic fan-shaped vacuum settle apron mesh at the toe of the moonquake dust slide
+        /// (Z = L*cos(theta), Y = 0..maxHeight) with zero concentric ring stripes.
         /// </summary>
         public static Mesh CreateToeSettleApronMesh(float width, float length, float slopeAngleDegrees, float maxHeight)
         {
             float slopeRad = slopeAngleDegrees * Mathf.Deg2Rad;
             float toeZ = length * Mathf.Cos(slopeRad);
-            float halfWidth = width * 0.68f;
+            float halfWidth = width * 0.66f;
             float h = Mathf.Max(0.12f, maxHeight);
 
-            const int segsX = 14;
-            const int layers = 4;
-            var vertices = new List<Vector3>((segsX + 1) * layers * 2);
-            var normals = new List<Vector3>((segsX + 1) * layers * 2);
-            var uvs = new List<Vector2>((segsX + 1) * layers * 2);
-            var colors = new List<Color32>((segsX + 1) * layers * 2);
-            var triangles = new List<int>(segsX * layers * 6);
+            const int segsX = 24;
+            const int segsZ = 10;
+            const int lobes = 2;
 
-            // Four low ground-skimming ballistic settle arcs fanning out at the toe of the slope (never rising above maxHeight)
-            float[] zOffsets = { -0.10f, 0.25f, 0.65f, 1.05f };
-            float[] heightScales = { 0.85f, 1.00f, 0.82f, 0.58f };
+            var vertices = new List<Vector3>((segsX + 1) * (segsZ + 1) * lobes);
+            var normals = new List<Vector3>((segsX + 1) * (segsZ + 1) * lobes);
+            var uvs = new List<Vector2>((segsX + 1) * (segsZ + 1) * lobes);
+            var colors = new List<Color32>((segsX + 1) * (segsZ + 1) * lobes);
+            var triangles = new List<int>(segsX * segsZ * 6 * lobes);
 
-            for (int layer = 0; layer < layers; layer++)
+            int stride = segsX + 1;
+
+            for (int lobe = 0; lobe < lobes; lobe++)
             {
-                float zOffset = toeZ + zOffsets[layer];
-                float layerH = h * heightScales[layer];
-                int baseIdx = vertices.Count;
+                int baseVert = vertices.Count;
+                float lobeScaleX = lobe == 0 ? 1.0f : 0.82f;
+                float lobeShiftX = lobe == 0 ? -0.18f : 0.24f;
+                float lobeHeight = h * (lobe == 0 ? 1.0f : 0.72f);
+                byte seedByte = (byte)(lobe == 0 ? 64 : 178);
 
-                for (int x = 0; x <= segsX; x++)
+                for (int z = 0; z <= segsZ; z++)
                 {
-                    float u = x / (float)segsX;
-                    float centered = (u - 0.5f) * 2f;
-                    float px = centered * halfWidth * (1f + layer * 0.08f);
-                    float pz = zOffset + (1f - centered * centered) * 0.52f;
-                    float arch = Mathf.Sqrt(Mathf.Max(0f, 1f - centered * centered));
+                    float vCoord = z / (float)segsZ;
+                    // Radial profile from just inside the slope toe out onto the flat floor
+                    float radialDist = Mathf.Lerp(-0.22f, 1.45f, vCoord);
+                    // Low ballistic settle arch peaking near the toe (vCoord ~ 0.28) and dropping to ground at both ends
+                    float radialArch = Mathf.SmoothStep(0f, 0.28f, vCoord) * Mathf.Pow(1f - vCoord, 1.35f) * 1.45f;
 
-                    vertices.Add(new Vector3(px, 0.01f, pz));
-                    vertices.Add(new Vector3(px, layerH * arch, pz + 0.28f));
+                    for (int x = 0; x <= segsX; x++)
+                    {
+                        float uCoord = x / (float)segsX;
+                        float centered = (uCoord - 0.5f) * 2f;
 
-                    normals.Add(new Vector3(0f, 0.72f, 0.69f).normalized);
-                    normals.Add(new Vector3(0f, 0.72f, 0.69f).normalized);
+                        // Asymmetric lateral thickness matching the two main slope avalanche chutes
+                        float lobeShape = 0.65f
+                            + 0.35f * Mathf.Cos((centered - 0.15f) * 2.4f)
+                            + 0.22f * Mathf.Sin(centered * 4.1f + lobe * 1.5f);
+                        float lateralArch = Mathf.Clamp01(1f - centered * centered) * Mathf.Clamp01(lobeShape);
 
-                    uvs.Add(new Vector2(u, 0f));
-                    uvs.Add(new Vector2(u, 1f));
+                        float fanSpread = 1f + vCoord * 0.32f;
+                        float px = lobeShiftX + centered * halfWidth * lobeScaleX * fanSpread;
+                        float pz = toeZ + radialDist + (1f - centered * centered) * 0.48f * vCoord;
+                        float py = 0.008f + lobeHeight * Mathf.Clamp01(radialArch * lateralArch);
 
-                    colors.Add(new Color32(255, 252, 245, 245));
-                    colors.Add(new Color32(255, 252, 245, 75));
+                        Vector3 n = new Vector3(-centered * 0.22f, 0.82f, 0.52f).normalized;
+                        byte alphaByte = (byte)Mathf.Clamp(
+                            Mathf.RoundToInt(Mathf.Clamp01(radialArch * lateralArch * 1.25f) * (lobe == 0 ? 225f : 185f)),
+                            0,
+                            255);
+
+                        vertices.Add(new Vector3(px, py, pz));
+                        normals.Add(n);
+                        uvs.Add(new Vector2(uCoord, vCoord));
+                        colors.Add(new Color32(255, 252, 245, alphaByte));
+                    }
                 }
 
-                for (int x = 0; x < segsX; x++)
+                for (int z = 0; z < segsZ; z++)
                 {
-                    int i0 = baseIdx + x * 2;
-                    int i1 = i0 + 1;
-                    int i2 = i0 + 2;
-                    int i3 = i0 + 3;
+                    for (int x = 0; x < segsX; x++)
+                    {
+                        int i0 = baseVert + z * stride + x;
+                        int i1 = i0 + 1;
+                        int i2 = i0 + stride;
+                        int i3 = i2 + 1;
 
-                    triangles.Add(i0);
-                    triangles.Add(i2);
-                    triangles.Add(i1);
+                        triangles.Add(i0);
+                        triangles.Add(i2);
+                        triangles.Add(i1);
 
-                    triangles.Add(i1);
-                    triangles.Add(i2);
-                    triangles.Add(i3);
+                        triangles.Add(i1);
+                        triangles.Add(i2);
+                        triangles.Add(i3);
+                    }
                 }
             }
 
@@ -644,6 +888,50 @@ namespace MoonProject.Art.Editor
             return mesh;
         }
 
+        private static void AddIrregularShardOrClod(
+            List<Vector3> vertices,
+            List<Vector3> normals,
+            List<Vector2> uvs,
+            List<Color32> colors,
+            List<int> triangles,
+            Vector3 center,
+            float baseRadius,
+            float height,
+            Vector3 tiltDir,
+            float seed,
+            Vector2 uvValue,
+            Color32 baseColor,
+            Color32 apexColor)
+        {
+            // 4-sided asymmetric base polygon so shards read as irregular splinters/slabs, never uniform cones
+            float baseYaw = seed * Mathf.PI * 2f;
+            float[] cornerAngles =
+            {
+                baseYaw,
+                baseYaw + 1.35f + Frac(seed * 3.1f) * 0.35f,
+                baseYaw + 3.05f + Frac(seed * 5.7f) * 0.35f,
+                baseYaw + 4.75f + Frac(seed * 7.9f) * 0.35f,
+            };
+            float[] cornerScales =
+            {
+                Mathf.Lerp(0.65f, 1.35f, Frac(seed * 2.3f)),
+                Mathf.Lerp(0.55f, 1.15f, Frac(seed * 4.9f)),
+                Mathf.Lerp(0.70f, 1.40f, Frac(seed * 8.1f)),
+                Mathf.Lerp(0.50f, 1.10f, Frac(seed * 11.7f)),
+            };
+
+            Vector3 apex = center + tiltDir * height;
+            Vector3 b0 = center + new Vector3(Mathf.Cos(cornerAngles[0]) * baseRadius * cornerScales[0], -0.012f, Mathf.Sin(cornerAngles[0]) * baseRadius * cornerScales[0]);
+            Vector3 b1 = center + new Vector3(Mathf.Cos(cornerAngles[1]) * baseRadius * cornerScales[1], -0.012f, Mathf.Sin(cornerAngles[1]) * baseRadius * cornerScales[1]);
+            Vector3 b2 = center + new Vector3(Mathf.Cos(cornerAngles[2]) * baseRadius * cornerScales[2], -0.012f, Mathf.Sin(cornerAngles[2]) * baseRadius * cornerScales[2]);
+            Vector3 b3 = center + new Vector3(Mathf.Cos(cornerAngles[3]) * baseRadius * cornerScales[3], -0.012f, Mathf.Sin(cornerAngles[3]) * baseRadius * cornerScales[3]);
+
+            AddFacetTriangleWithUvAndColors(vertices, normals, uvs, colors, triangles, apex, b1, b0, uvValue, apexColor, baseColor, baseColor);
+            AddFacetTriangleWithUvAndColors(vertices, normals, uvs, colors, triangles, apex, b2, b1, uvValue, apexColor, baseColor, baseColor);
+            AddFacetTriangleWithUvAndColors(vertices, normals, uvs, colors, triangles, apex, b3, b2, uvValue, apexColor, baseColor, baseColor);
+            AddFacetTriangleWithUvAndColors(vertices, normals, uvs, colors, triangles, apex, b0, b3, uvValue, apexColor, baseColor, baseColor);
+        }
+
         private static void AddFacetTriangle(
             List<Vector3> vertices,
             List<Vector3> normals,
@@ -655,10 +943,22 @@ namespace MoonProject.Art.Editor
             Vector3 c,
             Color32 color)
         {
-            AddFacetTriangleWithColors(vertices, normals, uvs, colors, triangles, a, b, c, color, color, color);
+            AddFacetTriangleWithUvAndColors(
+                vertices,
+                normals,
+                uvs,
+                colors,
+                triangles,
+                a,
+                b,
+                c,
+                new Vector2(0.5f, 0.5f),
+                color,
+                color,
+                color);
         }
 
-        private static void AddFacetTriangleWithColors(
+        private static void AddFacetTriangleWithUvAndColors(
             List<Vector3> vertices,
             List<Vector3> normals,
             List<Vector2> uvs,
@@ -667,6 +967,7 @@ namespace MoonProject.Art.Editor
             Vector3 a,
             Vector3 b,
             Vector3 c,
+            Vector2 uvValue,
             Color32 ca,
             Color32 cb,
             Color32 cc)
@@ -679,9 +980,9 @@ namespace MoonProject.Art.Editor
             normals.Add(normal);
             normals.Add(normal);
             normals.Add(normal);
-            uvs.Add(new Vector2(0.5f, 1f));
-            uvs.Add(new Vector2(0f, 0f));
-            uvs.Add(new Vector2(1f, 0f));
+            uvs.Add(uvValue);
+            uvs.Add(uvValue);
+            uvs.Add(uvValue);
             colors.Add(ca);
             colors.Add(cb);
             colors.Add(cc);

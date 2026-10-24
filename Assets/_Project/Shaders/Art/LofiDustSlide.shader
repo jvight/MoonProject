@@ -73,6 +73,7 @@ Shader "MoonProject/Art/LofiDustSlide"
                 float3 positionWS : TEXCOORD0;
                 float3 normalWS : TEXCOORD1;
                 float2 uv : TEXCOORD2;
+                float3 positionOS : TEXCOORD3;
                 half4 vertexColor : COLOR;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
@@ -110,6 +111,7 @@ Shader "MoonProject/Art/LofiDustSlide"
                 output.positionWS = posInputs.positionWS;
                 output.normalWS = TransformObjectToWorldNormal(input.normalOS);
                 output.uv = input.uv;
+                output.positionOS = input.positionOS.xyz;
                 output.vertexColor = input.color;
                 return output;
             }
@@ -128,30 +130,39 @@ Shader "MoonProject/Art/LofiDustSlide"
 
                 if (_SlideMode < 0.5h)
                 {
-                    // Mode 0: Down-slope sheeting regolith streams (uv.x = across ribbon, uv.y = down slope)
-                    float edgeX = smoothstep(0.0, 0.16, uv.x) * smoothstep(1.0, 0.84, uv.x);
-                    float edgeY = smoothstep(0.0, 0.12, uv.y) * smoothstep(1.0, 0.85, uv.y);
+                    // Mode 0: Down-slope sheeting regolith streams (uv.x = across slope/lobe, uv.y = down slope)
+                    // Driven by object-space coordinates + domain-warped FBM noise so streaks are never evenly spaced
+                    float posSeed = input.positionOS.x * 0.85 + input.positionOS.y * 0.45;
+                    float edgeX = smoothstep(0.0, 0.18, uv.x) * smoothstep(1.0, 0.82, uv.x);
+                    float edgeY = smoothstep(0.0, 0.14, uv.y) * smoothstep(1.0, 0.82, uv.y);
 
-                    float2 flowUv = float2(uv.x * (float)_StreakDensity * 0.65, uv.y * 4.2 - _ScrollOffset);
-                    float s1 = StreakNoise(flowUv);
-                    float s2 = StreakNoise(flowUv * float2(2.4, 1.8) + float2(7.1, -_ScrollOffset * 0.55));
-                    // Angular saltating mineral grains embedded along the flowing streams (diamond metric, no round dots)
-                    float2 grainCell = frac(float2(uv.x * 8.0, uv.y * 14.0 - _ScrollOffset * 1.8)) * 2.0 - 1.0;
-                    float diamondGrain = saturate(1.0 - (abs(grainCell.x) * 1.8 + abs(grainCell.y) * 0.95));
+                    // Meandering lateral warp breaks up any straight parallel lanes
+                    float warp = (StreakNoise(float2(posSeed * 1.4, uv.y * 1.9 - _ScrollOffset * 0.28)) - 0.5) * 0.32;
+                    float warpedX = posSeed + warp * (0.35 + 0.65 * uv.y);
 
-                    float streamMask = saturate(0.42 + 0.58 * (s1 * 0.60 + s2 * 0.40) + diamondGrain * 0.45);
+                    // Three non-harmonic scales of longitudinal mineral streaks (no periodic grid or evenly spaced stripes)
+                    float sBroad = StreakNoise(float2(warpedX * 1.7 + 1.3, uv.y * 1.5 - _ScrollOffset * 0.45));
+                    float sMid = StreakNoise(float2(warpedX * 4.1 - 3.7, uv.y * 3.1 - _ScrollOffset * 0.82));
+                    float sFine = StreakNoise(float2(warpedX * 9.3 + sBroad * 1.9, uv.y * 5.6 - _ScrollOffset * 1.25));
+
+                    float braided = sBroad * 0.52 + sMid * 0.32 + sFine * 0.16;
+                    float streamMask = smoothstep(0.26, 0.78, braided);
                     mask = edgeX * edgeY * streamMask;
-                    grainFacet = (half)saturate(s1 * 0.65 + diamondGrain * 0.55);
+                    grainFacet = (half)saturate(sMid * 0.58 + sFine * 0.42);
                 }
                 else if (_SlideMode < 1.5h)
                 {
-                    // Mode 1: Low vacuum ballistic settle apron at the toe of the slope (hugs the ground, never billows up)
+                    // Mode 1: Continuous low vacuum ballistic settle apron at the toe of the slope (zero concentric stripes)
+                    float posSeed = input.positionOS.x * 0.75;
                     float radialX = abs(uv.x * 2.0 - 1.0);
-                    float spanMask = saturate(1.0 - radialX * radialX);
-                    float verticalSkim = smoothstep(0.0, 0.18, uv.y) * pow(saturate(1.0 - uv.y), 1.8);
-                    float ripple = StreakNoise(float2(uv.x * 9.0, uv.y * 4.5 - _ScrollOffset * 0.35));
-                    mask = spanMask * verticalSkim * (0.62 + 0.38 * ripple);
-                    grainFacet = (half)ripple;
+                    float warpSettle = (StreakNoise(float2(posSeed * 1.8, uv.y * 2.6 - _ScrollOffset * 0.22)) - 0.5) * 0.24;
+                    float lobedSpan = saturate(1.0 - pow(saturate(radialX + warpSettle * 0.45), 1.8));
+                    float verticalSkim = smoothstep(0.0, 0.22, uv.y) * pow(saturate(1.0 - uv.y), 1.65);
+                    float rippleA = StreakNoise(float2(posSeed * 2.9 + warpSettle, uv.y * 3.1 - _ScrollOffset * 0.32));
+                    float rippleB = StreakNoise(float2(posSeed * 6.7 - 2.1, uv.y * 6.2 - _ScrollOffset * 0.55));
+                    float settleTex = rippleA * 0.62 + rippleB * 0.38;
+                    mask = lobedSpan * verticalSkim * smoothstep(0.20, 0.84, settleTex);
+                    grainFacet = (half)settleTex;
                 }
                 else
                 {

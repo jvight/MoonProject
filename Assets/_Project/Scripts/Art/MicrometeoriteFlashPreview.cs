@@ -4,8 +4,8 @@ namespace MoonProject.Art
 {
     /// <summary>
     /// Thin playable-preview component for the 0.6 micrometeorite flash &amp; cooling impact glass lunar phenomenon
-    /// (docs/design/0.6-living-moon.md §2). Drives the initial white starlight flash burst, vacuum ballistic ejecta
-    /// shards, and the 10-minute (600 s) emissive cool-down curve of the fresh crater's impact glass down to its
+    /// (docs/design/0.6-living-moon.md §2). Drives the initial compact white bloom flash burst, vacuum ballistic
+    /// ejecta shards, and the 10-minute (600 s) emissive cool-down curve of the fresh crater's impact glass down to its
     /// permanent glint floor with zero per-frame garbage collection.
     /// </summary>
     public sealed class MicrometeoriteFlashPreview : MonoBehaviour
@@ -142,8 +142,9 @@ namespace MoonProject.Art
 
                 if (showFlash)
                 {
-                    float scale = _tuning.FlashRadiusMeters * Mathf.Lerp(0.35f, 1.15f, flashEnvelope);
-                    _flashBurstRenderer.transform.localScale = new Vector3(scale, scale, scale);
+                    float scale = _tuning.FlashRadiusMeters * Mathf.Lerp(0.38f, 1.05f, flashEnvelope);
+                    // Flattened low-profile scale so the flash reads as a compact bloom flash, never a vertical pillar
+                    _flashBurstRenderer.transform.localScale = new Vector3(scale, scale * 0.42f, scale);
                     _flashBlock.Clear();
                     _flashBlock.SetFloat(FlashIntensityId, flashEnvelope * _tuning.FlashPeakIntensity);
                     _flashBlock.SetColor(HotCoreColorId, _tuning.FlashColor);
@@ -154,7 +155,7 @@ namespace MoonProject.Art
 
             if (_impactLight != null)
             {
-                float lightFlash = flashEnvelope * _tuning.FlashPeakIntensity * 1.4f;
+                float lightFlash = flashEnvelope * _tuning.FlashPeakIntensity * 1.15f;
                 float lightHeat = normalizedHeat * 0.85f;
                 float totalLight = lightFlash + lightHeat;
                 _impactLight.enabled = totalLight > 0.01f;
@@ -162,7 +163,7 @@ namespace MoonProject.Art
                 {
                     _impactLight.intensity = totalLight;
                     _impactLight.color = Color.Lerp(_tuning.WarmAmberColor, _tuning.FlashColor, Mathf.Clamp01(flashEnvelope * 1.5f));
-                    _impactLight.range = Mathf.Lerp(2.4f, 6.5f, flashEnvelope);
+                    _impactLight.range = Mathf.Lerp(2.2f, 4.8f, flashEnvelope);
                 }
             }
 

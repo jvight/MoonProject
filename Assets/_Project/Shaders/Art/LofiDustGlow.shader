@@ -79,12 +79,24 @@ Shader "MoonProject/Art/LofiDustGlow"
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
-            // Non-periodic hash for fine electrostatic dust striation (no circular dots).
+            // Non-periodic hash and smooth 2D value noise for organic electrostatic haze and wisps (zero bars/stripes).
             float Hash21(float2 p)
             {
                 p = frac(p * float2(123.34, 456.21));
                 p += dot(p, p + 45.32);
                 return frac(p.x * p.y);
+            }
+
+            float GlowNoise(float2 p)
+            {
+                float2 i = floor(p);
+                float2 f = frac(p);
+                f = f * f * (3.0 - 2.0 * f);
+                float a = Hash21(i);
+                float b = Hash21(i + float2(1.0, 0.0));
+                float c = Hash21(i + float2(0.0, 1.0));
+                float d = Hash21(i + float2(1.0, 1.0));
+                return lerp(lerp(a, b, f.x), lerp(c, d, f.x), f.y);
             }
 
             Varyings Vert(Attributes input)
@@ -138,39 +150,56 @@ Shader "MoonProject/Art/LofiDustGlow"
                     return half4(max(earthRgb, 0.0h), alphaEarth);
                 }
 
-                // Horizontal span envelope (soft fade at left/right ends of the terminator band)
+                // Horizontal span envelope (soft continuous fade at far left/right ends of the terminator band)
                 float spanEdge = saturate(sin(saturate(uv.x) * 3.14159265));
-                spanEdge = smoothstep(0.0, 0.75, spanEdge);
+                spanEdge = smoothstep(0.0, 0.65, spanEdge);
 
-                // Vertical horizon haze profile: luminous band just above the horizon ridge, fading skyward
-                float bottomFade = smoothstep(0.0, 0.16, uv.y);
+                // Smooth organic multi-octave drift noise (no periodic horizontal or vertical sine bars)
+                float nLow = GlowNoise(float2(uv.x * 2.8 + _Phase * 0.07, uv.y * 1.6 - _Phase * 0.18));
+                float nMid = GlowNoise(float2(uv.x * 6.3 - _Phase * 0.11, uv.y * 3.1 - _Phase * 0.29));
+                float nFine = GlowNoise(float2(uv.x * 13.7 + _Phase * 0.16, uv.y * 5.8 - _Phase * 0.43));
+                float organicVeil = 0.64 + 0.36 * (nLow * 0.55 + nMid * 0.30 + nFine * 0.15);
+
+                // Gently undulating horizon ridge glow core + soft skyward exponential/power falloff
+                float ridgeCenterY = 0.19 + (nLow - 0.5) * 0.08;
+                float bottomFade = smoothstep(0.0, 0.18, uv.y);
                 float topFade = pow(saturate(1.0 - uv.y), max((float)_BandSoftness, 0.5));
-                float bandMask = bottomFade * topFade * spanEdge;
+                float bandMask = bottomFade * topFade * spanEdge * organicVeil * 0.82;
+                float coreBand = exp(-pow((uv.y - ridgeCenterY) * 4.2, 2.0)) * spanEdge * (0.36 + 0.24 * nMid);
 
-                // Fine stratified horizontal shear + slow upward electrostatic drift
-                float driftY = uv.y * (float)_StreakScale * 0.5 - _Phase * 0.45;
-                float strata = 0.75 + 0.25 * sin(driftY * 6.2831853 + uv.x * 11.0);
-                // Bright horizon core line near uv.y = 0.22
-                float coreBand = exp(-pow((uv.y - 0.22) * 5.5, 2.0)) * spanEdge * 0.55;
-
-                // Column & crystalline mote shard mask (uv.x is 0..1 across each column; never round dots)
+                // Mode 1: Irregular, sparse drifting mote wisps & crystalline mote glints (never uniform vertical bars)
                 float2 shardUv = uv * 2.0 - 1.0;
                 float colSeed = input.vertexColor.b;
-                float shaftProfile = saturate(1.0 - abs(shardUv.x) * 1.15);
-                shaftProfile = shaftProfile * shaftProfile;
+                float heightVar = max(0.35, (float)input.vertexColor.g);
 
-                // Rising column filament modulation + discrete rising diamond-spindle motes inside each column
-                float colWave = 0.55 + 0.45 * sin((uv.y * 3.5 - _Phase * (0.75 + colSeed * 0.45)) * 6.2831853 + colSeed * 6.28);
-                float moteCellY = frac(uv.y * 5.5 - _Phase * (0.55 + colSeed * 0.35) + colSeed * 4.13) * 2.0 - 1.0;
-                float moteCellX = (shardUv.x + sin(uv.y * 12.0 + colSeed * 6.28) * 0.22);
-                // Anisotropic diamond spindle: |x|*2.4 + |y|*1.1
-                float spindleDist = abs(moteCellX) * 2.4 + abs(moteCellY) * 1.1;
-                float spindleMote = saturate(1.0 - smoothstep(0.18, 0.88, spindleDist));
+                // Meandering lateral warp so wisps drift as soft curved veils instead of straight columns
+                float wispWarp = (GlowNoise(float2(uv.y * 1.8 - _Phase * 0.28, colSeed * 17.3)) - 0.5) * 0.42;
+                float warpedX = shardUv.x + wispWarp * (1.0 - abs(shardUv.x) * 0.5);
+                float lateralSoft = exp(-warpedX * warpedX * 2.4) * smoothstep(1.0, 0.06, abs(shardUv.x));
 
-                float columnMask = bottomFade * topFade * saturate(shaftProfile * 0.68 * colWave + spindleMote * 0.95);
+                // Sparse, non-periodic vertical puff modulation (1-2 soft wisps along the height, no repeating ladder)
+                float wispNoiseA = GlowNoise(float2(uv.y * 1.6 - _Phase * (0.34 + colSeed * 0.24), colSeed * 31.7));
+                float wispNoiseB = GlowNoise(float2(uv.y * 3.4 - _Phase * (0.48 + colSeed * 0.30), colSeed * 53.1 + 4.2));
+                float sparseWisp = smoothstep(0.12, 0.72, wispNoiseA * 0.65 + wispNoiseB * 0.35);
+
+                // Two sparse, irregularly spaced elongated mote glints drifting within the wisp
+                float glint1Y = frac(colSeed * 3.71 + _Phase * (0.18 + colSeed * 0.12)) * 0.70 + 0.15;
+                float glint2Y = frac(colSeed * 7.19 + 0.43 + _Phase * (0.24 + colSeed * 0.09)) * 0.64 + 0.18;
+                float d1 = abs(warpedX) * 1.65 + abs(uv.y - glint1Y) / max(0.18, 0.28 * heightVar);
+                float d2 = abs(warpedX - 0.08) * 1.85 + abs(uv.y - glint2Y) / max(0.15, 0.22 * heightVar);
+                float spindleMote = max(
+                    saturate(1.0 - smoothstep(0.08, 0.92, d1)),
+                    saturate(1.0 - smoothstep(0.08, 0.88, d2)) * 0.85);
+
+                float wispBottom = smoothstep(0.0, 0.12, uv.y);
+                float wispTopFade = pow(saturate(1.0 - uv.y), 0.78 + (1.0 - heightVar) * 0.65);
+                float ribbonWispMask = wispBottom * wispTopFade * lateralSoft * saturate(0.52 + sparseWisp * 0.85 + spindleMote * 1.15);
+                // Discrete 3D mote shard particles carry vertexColor.r >= 0.5 (from particle startColor), whereas wisp ribbons encode r < 0.5
+                float particleShardMask = saturate(1.0 - length(shardUv) * 0.75) * 0.95;
+                float columnMask = (input.vertexColor.r < 0.5h) ? ribbonWispMask : particleShardMask;
 
                 half mode = saturate(_ColumnMode);
-                float horizonShape = saturate(bandMask * strata + coreBand);
+                float horizonShape = saturate(bandMask + coreBand);
                 float shapeMask = lerp(horizonShape, columnMask, mode);
 
                 // Grazing view enhancement so the haze band reads like forward-scattered lunar terminator dust
@@ -179,16 +208,17 @@ Shader "MoonProject/Art/LofiDustGlow"
                 float3 viewDir = viewLenSq > 1e-6 ? viewRaw * rsqrt(viewLenSq) : float3(0.0, 0.0, 1.0);
                 float normLenSq = dot(input.normalWS, input.normalWS);
                 float3 normalWS = normLenSq > 1e-6 ? input.normalWS * rsqrt(normLenSq) : float3(0.0, 1.0, 0.0);
-                half grazing = (half)saturate(0.72 + 0.28 * abs(dot(normalWS, viewDir)));
+                half grazing = (half)saturate(0.82 + 0.18 * abs(dot(normalWS, viewDir)));
 
-                half shimmerMix = (half)saturate(0.28 * colWave + 0.48 * spindleMote * mode + coreBand * 0.45);
+                half shimmerMix = (half)saturate(0.32 * sparseWisp + 0.62 * spindleMote * mode + coreBand * 0.42);
                 half3 tint = lerp(baseTint.rgb, _RimColor.rgb, shimmerMix);
                 half intensity = max(_Intensity, 0.0h) * grazing;
 
-                // Note: Blend SrcAlpha One multiplies rgb * alpha in the output merger, so keep shapeMask in alpha
-                // and a gentle boost in rgb so the glow isn't quadratically attenuated.
-                half3 rgb = tint * intensity * (half)lerp(0.65, 1.15, shapeMask);
-                half alpha = saturate(baseTint.a * input.vertexColor.a * (half)shapeMask * saturate(_Intensity * 1.35h));
+                // Note: Blend SrcAlpha One multiplies rgb * alpha in the output merger, so boost wisp mode (mode=1)
+                // so sparse drifting mote wisps read clearly above the horizon glow band while respecting _BloomCeiling.
+                half modeBoost = lerp(1.0h, 1.55h, mode);
+                half3 rgb = tint * intensity * modeBoost * (half)lerp(0.75, 1.25, shapeMask);
+                half alpha = saturate(baseTint.a * input.vertexColor.a * (half)shapeMask * saturate(_Intensity * lerp(1.35h, 1.95h, mode)));
 
                 if (any(isnan(rgb)) || any(isinf(rgb)))
                 {

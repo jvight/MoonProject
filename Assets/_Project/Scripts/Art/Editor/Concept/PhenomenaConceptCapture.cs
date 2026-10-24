@@ -122,7 +122,7 @@ namespace MoonProject.Art.Editor.Concept
         {
             (string name, float time, bool night)[] frames =
             {
-                ("02_meteorite_t0_flash_nightA", 0.07f, true),
+                ("02_meteorite_t0_flash_nightA", 0.04f, true),
                 ("02_meteorite_t1_molten_nightA", 18.0f, true),
                 ("02_meteorite_t2_cooling3m_dayC", 180.0f, false),
                 ("02_meteorite_t3_glint10m_nightA", 600.0f, true),
@@ -360,16 +360,19 @@ namespace MoonProject.Art.Editor.Concept
         {
             Material basaltMat = R1MaterialLibrary.LoadMaterial(R1MaterialSlot.Basalt);
             // Heightfield slope aligned to FX_MoonquakeDustSlide at (0.5, 0.02, -2.5):
-            // crest at z = -2.5 (height 2.52m) sloping smoothly at 25 deg down to the toe at z = +3.12 (height 0.0m)
+            // crest at z = -2.5 (height ~2.52m) sloping at 25 deg down to the toe at z = +3.12 (height 0.0m)
+            // with natural geological ridge undulation along the crest and flanks.
             LowPolyMeshBuilder b = ConceptRegionMeshes.Heightfield(
                 new Vector3(0.5f, 0.0f, 0.0f),
-                12f,
-                18,
+                15f,
+                20,
                 (x, z) =>
                 {
-                    float lateralMask = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(5.8f, 3.2f, Mathf.Abs(x - 0.5f)));
+                    float flankWave = 0.65f * Mathf.Sin(x * 0.55f + 0.4f) + 0.35f * Mathf.Cos(z * 0.48f - 0.7f);
+                    float lateralMask = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(6.9f, 3.1f, Mathf.Abs(x - 0.5f + flankWave * 0.35f)));
                     float slopeT = Mathf.Clamp01((3.12f - z) / 5.62f);
-                    return slopeT * 2.52f * lateralMask;
+                    float crestUndulation = 1.0f + 0.08f * Mathf.Sin(x * 0.72f - 0.3f) + 0.05f * Mathf.Cos(x * 1.45f + 0.8f);
+                    return slopeT * 2.52f * crestUndulation * lateralMask;
                 },
                 (x, z, y) => y > 1.2f ? PaletteSwatch.RockLight : PaletteSwatch.RockDark);
             RockGenerator.Build(b, 401, 1.15f, RockStyle.Slab, Place.At(new Vector3(-3.3f, 0.0f, 1.2f)));
@@ -489,6 +492,8 @@ namespace MoonProject.Art.Editor.Concept
                 try
                 {
                     cam.targetTexture = rt;
+                    // First render warms up synchronous shader variants so Frame 0 never renders uninitialized materials
+                    cam.Render();
                     cam.Render();
                     cam.targetTexture = null;
 

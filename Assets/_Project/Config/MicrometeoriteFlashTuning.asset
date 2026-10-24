@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a94ed995c2b8f024f86af834c0c61b22, type: 3}
   m_Name: MicrometeoriteFlashTuning
   m_EditorClassIdentifier: 
-  _flashRiseSeconds: 0.06
-  _flashDecaySeconds: 0.48
-  _flashPeakIntensity: 2.4
-  _flashRadiusMeters: 1.35
+  _flashRiseSeconds: 0.03
+  _flashDecaySeconds: 0.22
+  _flashPeakIntensity: 2.15
+  _flashRadiusMeters: 0.92
   _flashColor: {r: 1, g: 0.96, b: 0.88, a: 1}
   _ejectaCount: 24
   _ejectaSpeedMetersPerSecond: 4.2
@@ -30,6 +30,6 @@ MonoBehaviour:
   _warmAmberColor: {r: 1, g: 0.46, b: 0.14, a: 1}
   _deepEmberColor: {r: 0.62, g: 0.16, b: 0.05, a: 1}
   _glassAlbedoColor: {r: 0.1, g: 0.13, b: 0.18, a: 1}
-  _craterRimAlbedoColor: {r: 0.34, g: 0.36, b: 0.4, a: 1}
+  _craterRimAlbedoColor: {r: 0.25, g: 0.27, b: 0.32, a: 1}
   _permanentGlintFloor: 0.24
   _permanentGlintColor: {r: 0.78, g: 0.9, b: 1, a: 1}

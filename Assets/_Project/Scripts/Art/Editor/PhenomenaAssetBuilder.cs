@@ -134,11 +134,11 @@ namespace MoonProject.Art.Editor
             mat.SetFloat("_FlashIntensity", 0f);
             mat.SetFloat("_FlashMode", 0f);
             mat.SetFloat("_SpecPower", 24f);
-            mat.SetFloat("_SrcBlend", (float)BlendMode.One);
-            mat.SetFloat("_DstBlend", (float)BlendMode.Zero);
+            mat.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+            mat.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
             mat.SetFloat("_Cull", (float)CullMode.Back);
             mat.SetFloat("_ZWrite", 1f);
-            mat.renderQueue = (int)RenderQueue.Geometry;
+            mat.renderQueue = (int)RenderQueue.Transparent - 10;
             return mat;
         }
 
@@ -229,7 +229,7 @@ namespace MoonProject.Art.Editor
 
             MeshRenderer craterRenderer = CreateChildMesh("CraterAndGlass", root.transform, craterMesh, glassMat);
             MeshRenderer flashRenderer = CreateChildMesh("FlashBurst", root.transform, flashStarMesh, flashMat);
-            flashRenderer.transform.localPosition = new Vector3(0f, 0.28f, 0f);
+            flashRenderer.transform.localPosition = new Vector3(0f, 0.12f, 0f);
 
             ParticleSystem ejectaParticles = CreateChildParticleSystem("EjectaParticles", root.transform, shardMesh, flashMat, tuning.EjectaCount);
 

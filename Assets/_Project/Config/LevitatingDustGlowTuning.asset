@@ -15,18 +15,18 @@ MonoBehaviour:
   _fadeInSeconds: 4
   _holdSeconds: 16
   _fadeOutSeconds: 6
-  _bandWidthMeters: 24
-  _bandHeightMeters: 3.4
+  _bandWidthMeters: 36
+  _bandHeightMeters: 3.6
   _dayBandColor: {r: 0.95, g: 0.83, b: 0.64, a: 0.78}
   _nightBandColor: {r: 0.64, g: 0.78, b: 0.98, a: 0.74}
   _shimmerRimColor: {r: 1, g: 0.92, b: 0.78, a: 1}
-  _bandMaxIntensity: 0.88
-  _columnCount: 9
-  _motesPerColumn: 12
-  _columnRadiusMeters: 0.42
+  _bandMaxIntensity: 0.8
+  _columnCount: 7
+  _motesPerColumn: 10
+  _columnRadiusMeters: 0.72
   _columnHeightMeters: 3.8
-  _riseSpeedMetersPerSecond: 0.24
-  _moteScaleMeters: 0.065
-  _moteMaxIntensity: 1.06
+  _riseSpeedMetersPerSecond: 0.22
+  _moteScaleMeters: 0.095
+  _moteMaxIntensity: 1.04
   _shimmerFrequencyHz: 0.35
   _bloomCeiling: 1.15

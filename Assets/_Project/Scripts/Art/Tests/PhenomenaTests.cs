@@ -54,7 +54,7 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
-        public void LevitatingDustGlow_HasEasedEnvelope_RisingColumns_AndStaysBelowBloomThreshold()
+        public void LevitatingDustGlow_HasEasedEnvelope_IrregularWisps_AndStaysBelowBloomThreshold()
         {
             var tuning = CreateTemp<LevitatingDustGlowTuning>();
             Assert.Less(tuning.BloomCeiling, Palette.BloomThreshold, "Dust glow ceiling must stay below BloomThreshold.");
@@ -72,26 +72,56 @@ namespace MoonProject.Art.Tests
             Assert.Less(midFall, 0.9f);
             Assert.AreEqual(0f, tuning.EvaluateEnvelope(tuning.TotalDurationSeconds + 0.1f), 1e-5f);
 
-            // Rising mote column positions advance upward over time
+            // Rising mote wisp positions advance over time and vary in height and brightness
             Vector3 pos0 = tuning.EvaluateMotePosition(0, 2, 1.0f, out float alpha0);
             Vector3 pos1 = tuning.EvaluateMotePosition(0, 2, 2.0f, out float alpha1);
-            Assert.AreNotEqual(pos0.y, pos1.y, "Motes must drift vertically along their column over time.");
+            Assert.AreNotEqual(pos0.y, pos1.y, "Motes must drift vertically over time.");
+            Assert.AreNotEqual(pos0.x, pos1.x, "Motes must drift gently sideways rather than rising in rigid vertical bars.");
             Assert.GreaterOrEqual(alpha0, 0f);
             Assert.LessOrEqual(alpha1, 1f);
         }
 
         [Test]
-        public void MicrometeoriteFlash_CoolsOverTenMinutes_ToNonZeroPermanentGlintFloor()
+        public void MicrometeoriteFlash_CoolsOverTenMinutes_ToNonZeroPermanentGlintFloor_WithSoftDecalRim()
         {
             var tuning = CreateTemp<MicrometeoriteFlashTuning>();
             Assert.AreEqual(600f, tuning.CoolDownDurationSeconds, 1e-3f, "Impact glass must cool over ~10 minutes (600 s).");
             Assert.Greater(tuning.PermanentGlintFloor, 0.05f, "Cooled impact glass must retain a permanent glint floor.");
             Assert.Less(tuning.PermanentGlintFloor, Palette.BloomThreshold, "Permanent glint floor must stay below BloomThreshold.");
 
-            // Brief white flash: 0 at t=0, peaks at FlashRiseSeconds, 0 after FlashTotalSeconds
+            // Brief white flash: 0 at t=0, peaks at FlashRiseSeconds, 0 after FlashTotalSeconds (< 0.5s total)
+            Assert.LessOrEqual(tuning.FlashTotalSeconds, 0.35f, "Impact flash must be a brief bloom flash.");
             Assert.AreEqual(0f, tuning.EvaluateFlashEnvelope(0f), 1e-5f);
             Assert.AreEqual(1f, tuning.EvaluateFlashEnvelope(tuning.FlashRiseSeconds), 1e-4f);
             Assert.AreEqual(0f, tuning.EvaluateFlashEnvelope(tuning.FlashTotalSeconds + 0.05f), 1e-5f);
+
+            // Flash star mesh is flattened vertically (no vertical light pillar)
+            Mesh flashMesh = PhenomenaMeshes.CreateImpactFlashStarMesh();
+            _tempObjects.Add(flashMesh);
+            Assert.Less(flashMesh.bounds.size.y, flashMesh.bounds.size.x * 0.85f, "Flash mesh must be low-profile, not a vertical beam.");
+
+            // Crater mesh has a soft terrain-decal skirt whose outer ring feathers to uv.y = 0
+            Mesh craterMesh = PhenomenaMeshes.CreateImpactCraterAndGlassMesh(tuning.CraterRadiusMeters);
+            _tempObjects.Add(craterMesh);
+            var craterUvs = new List<Vector2>();
+            craterMesh.GetUVs(0, craterUvs);
+            bool hasZeroSkirtEdge = false;
+            bool hasGlassCore = false;
+            for (int i = 0; i < craterUvs.Count; i++)
+            {
+                if (craterUvs[i].y <= 0.001f && craterUvs[i].x <= 0.001f)
+                {
+                    hasZeroSkirtEdge = true;
+                }
+
+                if (craterUvs[i].x >= 0.99f && craterUvs[i].y >= 0.99f)
+                {
+                    hasGlassCore = true;
+                }
+            }
+
+            Assert.IsTrue(hasZeroSkirtEdge, "Crater outer terrain-decal skirt must feather to zero alpha at its perimeter.");
+            Assert.IsTrue(hasGlassCore, "Crater interior must include irregular impact glass shards with full glass mask.");
 
             // Thermal cool-down curve over 600 seconds (10 minutes)
             float heat0 = tuning.EvaluateNormalizedHeat(0f);
@@ -223,7 +253,7 @@ namespace MoonProject.Art.Tests
             GameObject flashInstance = InstantiateTemp(ArtPaths.MicrometeoriteFlashPrefab);
             var flashPreview = flashInstance.GetComponent<MicrometeoriteFlashPreview>();
             Assert.IsNotNull(flashPreview);
-            flashPreview.Sample(0.06f);
+            flashPreview.Sample(flashPreview.Tuning.FlashRiseSeconds);
             Assert.AreEqual(1f, flashPreview.CurrentFlashEnvelope, 1e-3f);
             flashPreview.Sample(600f);
             Assert.AreEqual(0f, flashPreview.CurrentNormalizedHeat, 1e-4f);

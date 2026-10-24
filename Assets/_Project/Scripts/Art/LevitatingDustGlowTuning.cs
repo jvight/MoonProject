@@ -26,11 +26,11 @@ namespace MoonProject.Art
         [Header("Horizon Haze Band")]
         [Tooltip("Horizontal span of the terminator horizon haze band in metres.")]
         [Range(4f, 120f)]
-        [SerializeField] private float _bandWidthMeters = 24.0f;
+        [SerializeField] private float _bandWidthMeters = 36.0f;
 
         [Tooltip("Vertical height of the horizon haze band above the ridge in metres.")]
         [Range(0.5f, 12f)]
-        [SerializeField] private float _bandHeightMeters = 3.4f;
+        [SerializeField] private float _bandHeightMeters = 3.6f;
 
         [Tooltip("Day C (grazing golden terminator sun) colour and alpha of the horizon haze band.")]
         [SerializeField] private Color _dayBandColor = new Color(0.95f, 0.83f, 0.64f, 0.78f);
@@ -43,36 +43,36 @@ namespace MoonProject.Art
 
         [Tooltip("Peak linear intensity of the horizon haze band (kept strictly below Palette.BloomThreshold = 1.25).")]
         [Range(0.05f, 1.15f)]
-        [SerializeField] private float _bandMaxIntensity = 0.88f;
+        [SerializeField] private float _bandMaxIntensity = 0.80f;
 
         [Header("Rising Electrostatic Mote Columns")]
-        [Tooltip("Number of thin vertical mote columns distributed across the horizon haze span.")]
+        [Tooltip("Number of sparse, irregular mote wisp clusters distributed across the horizon haze span.")]
         [Range(2, 16)]
-        [SerializeField] private int _columnCount = 9;
+        [SerializeField] private int _columnCount = 7;
 
-        [Tooltip("Number of discrete faceted dust motes per vertical column.")]
+        [Tooltip("Number of discrete faceted dust motes per wisp cluster.")]
         [Range(4, 32)]
-        [SerializeField] private int _motesPerColumn = 12;
+        [SerializeField] private int _motesPerColumn = 10;
 
-        [Tooltip("Horizontal radius of each thin rising mote column in metres.")]
+        [Tooltip("Horizontal radius of each rising mote wisp veil in metres.")]
         [Range(0.08f, 1.5f)]
-        [SerializeField] private float _columnRadiusMeters = 0.42f;
+        [SerializeField] private float _columnRadiusMeters = 0.72f;
 
-        [Tooltip("Maximum height reached by the rising mote columns in metres.")]
+        [Tooltip("Maximum height reached by the tallest rising mote wisps in metres.")]
         [Range(0.8f, 8.0f)]
         [SerializeField] private float _columnHeightMeters = 3.8f;
 
         [Tooltip("Slow upward electrostatic drift velocity of the dust motes in metres per second.")]
         [Range(0.02f, 0.8f)]
-        [SerializeField] private float _riseSpeedMetersPerSecond = 0.24f;
+        [SerializeField] private float _riseSpeedMetersPerSecond = 0.22f;
 
         [Tooltip("Characteristic visual size of each elongated crystalline dust mote in metres.")]
         [Range(0.015f, 0.16f)]
-        [SerializeField] private float _moteScaleMeters = 0.065f;
+        [SerializeField] private float _moteScaleMeters = 0.095f;
 
-        [Tooltip("Peak linear intensity of the rising mote columns (strictly below Palette.BloomThreshold = 1.25).")]
+        [Tooltip("Peak linear intensity of the sparse drifting mote wisps (strictly below Palette.BloomThreshold = 1.25).")]
         [Range(0.1f, 1.2f)]
-        [SerializeField] private float _moteMaxIntensity = 1.06f;
+        [SerializeField] private float _moteMaxIntensity = 1.04f;
 
         [Tooltip("Slow electrostatic shimmer frequency in hertz.")]
         [Range(0.05f, 2.0f)]
@@ -138,39 +138,47 @@ namespace MoonProject.Art
 
         /// <summary>
         /// Computes the deterministic local position and eased alpha (0..1) of a single electrostatically levitated
-        /// mote in column <paramref name="columnIndex"/> and slot <paramref name="moteIndex"/> at
-        /// <paramref name="timeSeconds"/>.
+        /// mote wisp in cluster <paramref name="columnIndex"/> and slot <paramref name="moteIndex"/> at
+        /// <paramref name="timeSeconds"/>. Uses non-periodic golden-ratio dispersion and varied ceiling heights so
+        /// motes drift as sparse, irregular wisps rather than evenly spaced vertical bars.
         /// </summary>
         public Vector3 EvaluateMotePosition(int columnIndex, int moteIndex, float timeSeconds, out float moteAlpha)
         {
-            int columns = Mathf.Max(1, _columnCount);
             int motes = Mathf.Max(1, _motesPerColumn);
-            float normalizedColumn = columns == 1 ? 0f : (columnIndex / (float)(columns - 1)) - 0.5f;
+            int flatIdx = columnIndex * motes + moteIndex;
 
-            // Deterministic irregular column offset so columns never form a mechanical grid
-            float colHash = Frac(Mathf.Sin((columnIndex + 1) * 12.9898f) * 43758.5453f);
-            float xCenter = normalizedColumn * (_bandWidthMeters * 0.78f) + (colHash - 0.5f) * (_bandWidthMeters * 0.06f);
-            float zCenter = (Frac(colHash * 7.13f) - 0.5f) * 0.85f;
+            float colHash = Frac(Mathf.Sin((columnIndex + 1) * 19.731f) * 43758.5453f);
+            float moteSeed = Frac(Mathf.Sin((flatIdx + 1) * 78.233f) * 43758.5453f);
 
-            float moteSeed = Frac(Mathf.Sin((columnIndex * 31 + moteIndex + 1) * 78.233f) * 43758.5453f);
-            float angle = (moteSeed * 6.2831853f) + timeSeconds * 0.18f * (moteIndex % 2 == 0 ? 1f : -1f);
-            float radialFraction = 0.25f + 0.75f * Frac(moteSeed * 3.71f);
-            float radius = _columnRadiusMeters * radialFraction;
+            // Quasi-random golden-ratio horizontal placement across the terminator span with irregular clustering
+            float goldenU = Frac((flatIdx + 1) * 0.6180339887f + colHash * 0.29f) - 0.5f;
+            float clusterPull = Mathf.Sin(goldenU * 9.5f + 0.7f) * 0.045f;
+            float xBase = (goldenU + clusterPull) * (_bandWidthMeters * 0.74f);
+            float zBase = (Frac(moteSeed * 7.13f) - 0.5f) * 1.65f
+                + (1f - 4f * goldenU * goldenU) * (_bandWidthMeters * 0.03f);
 
-            float height = Mathf.Max(0.2f, _columnHeightMeters);
-            float basePhase = (moteIndex / (float)motes) + colHash * 0.37f;
-            float normalizedY = Frac(basePhase + (Mathf.Max(0f, timeSeconds) * _riseSpeedMetersPerSecond / height));
-            float y = normalizedY * height;
+            // Strongly varied ceiling height per mote wisp (from low 0.32x horizon wisps to tall 1.12x wisps)
+            float heightScale = Mathf.Lerp(0.32f, 1.12f, Mathf.Pow(Frac(moteSeed * 5.39f), 1.35f));
+            float wispCeiling = Mathf.Max(0.25f, _columnHeightMeters * heightScale);
 
-            // Smooth fade at bottom launch and top dispersion of the column
-            float verticalFade = Mathf.SmoothStep(0f, 0.22f, normalizedY) * Mathf.SmoothStep(1f, 0.68f, normalizedY);
-            float shimmer = 0.78f + 0.22f * Mathf.Sin((timeSeconds * _shimmerFrequencyHz + moteSeed) * 6.2831853f);
-            moteAlpha = Mathf.Clamp01(verticalFade * shimmer);
+            float speedScale = Mathf.Lerp(0.68f, 1.32f, Frac(moteSeed * 11.17f));
+            float basePhase = Frac(moteSeed * 3.91f + colHash * 0.41f);
+            float normalizedY = Frac(basePhase + (Mathf.Max(0f, timeSeconds) * _riseSpeedMetersPerSecond * speedScale / wispCeiling));
+            float y = normalizedY * wispCeiling;
 
-            return new Vector3(
-                xCenter + Mathf.Cos(angle) * radius,
-                y,
-                zCenter + Mathf.Sin(angle) * (radius * 0.45f));
+            // Gentle sideways S-curve drift as the mote rises
+            float leanDir = (flatIdx % 2 == 0) ? 1f : -1f;
+            float driftX = leanDir * normalizedY * _columnRadiusMeters * Mathf.Lerp(0.45f, 1.25f, Frac(moteSeed * 2.7f))
+                + Mathf.Sin(normalizedY * Mathf.PI * 1.4f + moteSeed * 6.28f) * (_columnRadiusMeters * 0.35f);
+            float driftZ = Mathf.Cos(normalizedY * Mathf.PI + moteSeed * 4.7f) * (_columnRadiusMeters * 0.28f);
+
+            // Varied brightness per mote (0.28 to 1.0) + smooth fade at launch and dispersion
+            float brightnessVar = Mathf.Lerp(0.28f, 1.0f, Mathf.Pow(Frac(moteSeed * 17.3f), 1.2f));
+            float verticalFade = Mathf.SmoothStep(0f, 0.24f, normalizedY) * Mathf.SmoothStep(1f, 0.58f, normalizedY);
+            float shimmer = 0.72f + 0.28f * Mathf.Sin((timeSeconds * _shimmerFrequencyHz + moteSeed) * 6.2831853f);
+            moteAlpha = Mathf.Clamp01(verticalFade * shimmer * brightnessVar);
+
+            return new Vector3(xBase + driftX, y, zBase + driftZ);
         }
 
         private static float Frac(float value)

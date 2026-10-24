@@ -4,9 +4,9 @@ namespace MoonProject.Art
 {
     /// <summary>
     /// Thin playable-preview component for the 0.6 levitating dust glow lunar phenomenon
-    /// (docs/design/0.6-living-moon.md §2). Drives the soft terminator horizon haze band, thin vertical mote-column
-    /// ribbons, and slowly rising electrostatic mote particles from a <see cref="LevitatingDustGlowTuning"/> asset
-    /// with zero per-frame garbage collection.
+    /// (docs/design/0.6-living-moon.md §2). Drives the soft continuous terminator horizon haze band, sparse irregular
+    /// mote-wisp veils, and slowly drifting electrostatic mote particles from a <see cref="LevitatingDustGlowTuning"/>
+    /// asset with zero per-frame garbage collection.
     /// </summary>
     public sealed class LevitatingDustGlowPreview : MonoBehaviour
     {
@@ -18,16 +18,16 @@ namespace MoonProject.Art
         private static readonly int PhaseId = Shader.PropertyToID("_Phase");
         private static readonly int BloomCeilingId = Shader.PropertyToID("_BloomCeiling");
 
-        [Tooltip("Tuning asset governing envelope timing, terminator haze dimensions, and rising mote columns.")]
+        [Tooltip("Tuning asset governing envelope timing, terminator haze dimensions, and rising mote wisps.")]
         [SerializeField] private LevitatingDustGlowTuning _tuning;
 
-        [Tooltip("MeshRenderer for the soft horizontal terminator haze band.")]
+        [Tooltip("MeshRenderer for the soft continuous horizontal terminator haze band.")]
         [SerializeField] private MeshRenderer _horizonBandRenderer;
 
-        [Tooltip("MeshRenderer for the thin vertical electrostatic mote column filaments.")]
+        [Tooltip("MeshRenderer for the sparse, irregular electrostatic mote wisp veils.")]
         [SerializeField] private MeshRenderer _moteColumnsRenderer;
 
-        [Tooltip("ParticleSystem emitting discrete elongated crystalline dust motes rising in columns.")]
+        [Tooltip("ParticleSystem emitting discrete elongated crystalline dust motes drifting across the band.")]
         [SerializeField] private ParticleSystem _moteParticleSystem;
 
         [Tooltip("Blend between Day C grazing sunlight (0) and Night A cool earthshine (1).")]
@@ -180,12 +180,17 @@ namespace MoonProject.Art
                     ParticleSystem.Particle particle = default;
                     particle.position = localPos;
                     particle.velocity = new Vector3(0f, _tuning.RiseSpeedMetersPerSecond, 0f);
-                    float scaleVariation = 0.75f + 0.50f * ((c * 7 + m * 13) % 5) * 0.25f;
+                    float scaleVariation = 0.55f + 0.95f * ((c * 7 + m * 13) % 7) * 0.16f;
+                    float aspectY = 1.45f + 1.15f * ((c * 11 + m * 5) % 5) * 0.25f;
                     particle.startSize3D = new Vector3(
                         baseScale * 0.55f * scaleVariation,
-                        baseScale * 2.10f * scaleVariation,
+                        baseScale * aspectY * scaleVariation,
                         baseScale * 0.55f * scaleVariation);
                     particle.startSize = baseScale * scaleVariation;
+                    particle.rotation3D = new Vector3(
+                        ((c * 19 + m * 23) % 15) - 7f,
+                        (c * 47 + m * 31) % 360,
+                        ((c * 17 + m * 29) % 29) - 14f);
                     particle.remainingLifetime = 10f;
                     particle.startLifetime = 10f;
 

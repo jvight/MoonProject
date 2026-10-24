@@ -4,9 +4,9 @@ namespace MoonProject.Art
 {
     /// <summary>
     /// Tuning parameters for the 0.6 micrometeorite flash lunar phenomenon (docs/design/0.6-living-moon.md §2):
-    /// a brief distant white starlight impact flash and clean ballistic ejecta spray, revealing a small fresh crater
-    /// whose molten impact glass cools over ~10 minutes (600 s) from white-amber incandescence down to a faint
-    /// permanent glint that stays collectable forever.
+    /// a brief distant white starlight bloom flash and clean ballistic ejecta spray, revealing an irregular soft-rimmed
+    /// small crater whose molten impact glass shards cool over ~10 minutes (600 s) from white-amber incandescence down
+    /// to a faint permanent glint that stays collectable forever.
     /// </summary>
     [CreateAssetMenu(menuName = "MoonProject/Art/Micrometeorite Flash Tuning", fileName = "MicrometeoriteFlashTuning")]
     public sealed class MicrometeoriteFlashTuning : ScriptableObject
@@ -14,19 +14,19 @@ namespace MoonProject.Art
         [Header("Impact Flash Burst")]
         [Tooltip("Eased rise duration of the initial white impact flash in seconds (prevents a harsh frame-zero snap).")]
         [Range(0.02f, 0.5f)]
-        [SerializeField] private float _flashRiseSeconds = 0.06f;
+        [SerializeField] private float _flashRiseSeconds = 0.03f;
 
         [Tooltip("Eased decay duration of the white impact flash in seconds.")]
         [Range(0.1f, 2.5f)]
-        [SerializeField] private float _flashDecaySeconds = 0.48f;
+        [SerializeField] private float _flashDecaySeconds = 0.22f;
 
-        [Tooltip("Peak HDR intensity of the brief white impact flash star.")]
+        [Tooltip("Peak HDR intensity of the brief white impact flash burst.")]
         [Range(0.5f, 4.0f)]
-        [SerializeField] private float _flashPeakIntensity = 2.40f;
+        [SerializeField] private float _flashPeakIntensity = 2.15f;
 
-        [Tooltip("Maximum visual radius of the impact flash star in metres.")]
+        [Tooltip("Maximum visual radius of the compact impact bloom flash in metres.")]
         [Range(0.2f, 4.0f)]
-        [SerializeField] private float _flashRadiusMeters = 1.35f;
+        [SerializeField] private float _flashRadiusMeters = 0.92f;
 
         [Tooltip("Warm-white starlight colour of the brief impact flash.")]
         [SerializeField] private Color _flashColor = new Color(1.00f, 0.96f, 0.88f, 1.00f);
@@ -81,8 +81,8 @@ namespace MoonProject.Art
         [Tooltip("Dark vitreous albedo of the cooled lunar impactite glass.")]
         [SerializeField] private Color _glassAlbedoColor = new Color(0.10f, 0.13f, 0.18f, 1.00f);
 
-        [Tooltip("Freshly overturned regolith albedo of the small crater bowl and rim.")]
-        [SerializeField] private Color _craterRimAlbedoColor = new Color(0.34f, 0.36f, 0.40f, 1.00f);
+        [Tooltip("Freshly overturned regolith albedo of the small crater bowl and terrain-decal rim.")]
+        [SerializeField] private Color _craterRimAlbedoColor = new Color(0.25f, 0.27f, 0.32f, 1.00f);
 
         [Tooltip("Permanent non-zero glint intensity floor remaining after the 10-minute cool-down (< BloomThreshold).")]
         [Range(0.05f, 0.8f)]
@@ -206,16 +206,15 @@ namespace MoonProject.Art
                 return Vector3.zero;
             }
 
-            int count = Mathf.Max(1, _ejectaCount);
             float seed = Frac(Mathf.Sin((shardIndex + 1) * 91.137f) * 43758.5453f);
-            float azimuth = ((shardIndex / (float)count) + (seed - 0.5f) * 0.08f) * 6.2831853f;
+            float azimuth = Frac((shardIndex + 1) * 0.6180339887f + seed * 0.21f) * 6.2831853f;
 
-            // Ejecta curtain angle in vacuum (~38..58 degrees above horizontal)
-            float elevationRad = Mathf.Lerp(36f, 58f, Frac(seed * 5.17f)) * Mathf.Deg2Rad;
-            float speed = _ejectaSpeedMetersPerSecond * Mathf.Lerp(0.42f, 1.0f, Frac(seed * 11.3f));
+            // Low-angle vacuum ejecta curtain (~20..44 degrees above horizontal, no vertical beam)
+            float elevationRad = Mathf.Lerp(20f, 44f, Frac(seed * 5.17f)) * Mathf.Deg2Rad;
+            float speed = _ejectaSpeedMetersPerSecond * Mathf.Lerp(0.38f, 0.96f, Frac(seed * 11.3f));
 
             Vector3 radialDir = new Vector3(Mathf.Cos(azimuth), 0f, Mathf.Sin(azimuth));
-            Vector3 startPos = radialDir * (_craterRadiusMeters * 0.28f) + new Vector3(0f, 0.02f, 0f);
+            Vector3 startPos = radialDir * (_craterRadiusMeters * 0.26f) + new Vector3(0f, 0.02f, 0f);
             Vector3 velocity = radialDir * (Mathf.Cos(elevationRad) * speed)
                 + new Vector3(0f, Mathf.Sin(elevationRad) * speed, 0f);
 

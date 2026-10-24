@@ -184,8 +184,10 @@ namespace MoonProject.Art
 
             int count = Mathf.Max(1, _grainCount);
             float seed = Frac(Mathf.Sin((grainIndex + 1) * 57.319f) * 43758.5453f);
-            float laneX = ((grainIndex / (float)count) - 0.5f) * (_slopeWidthMeters * 0.86f)
-                + (Frac(seed * 9.17f) - 0.5f) * 0.32f;
+            // Irregular non-periodic placement clustered around the asymmetric avalanche chutes (no even spacing)
+            float chuteAnchor = (grainIndex % 3 == 0) ? 0.24f : -0.21f;
+            float spread = (Frac((grainIndex + 1) * 0.6180339887f + seed * 0.37f) - 0.5f) * 0.48f;
+            float laneX = Mathf.Clamp(chuteAnchor + spread, -0.46f, 0.46f) * _slopeWidthMeters;
 
             float slopeRad = _slopeAngleDegrees * Mathf.Deg2Rad;
             float cosSlope = Mathf.Cos(slopeRad);
