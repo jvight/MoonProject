@@ -499,6 +499,7 @@ namespace MoonProject.Gameplay
                     _openingTuning.PortCableReach));
                 PadLock = new PadLock(context.Events, _baseTuning, _building, _battery.Model, services.Rover,
                     _openingTuning.PadChargeRadius, _openingTuning.PadPlateMargin);
+                PadLock.FaceOnRelease(opening);
                 BaseLamps = new BaseLamps(context.Events, _baseTuning, _building, sunlight);
                 PowerPulse = new PowerPulse(context.Events, _baseTuning, _building, BaseLamps,
                     services.Visuals.FeelSprite, transform);

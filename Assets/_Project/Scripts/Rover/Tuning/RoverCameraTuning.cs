@@ -193,6 +193,11 @@ namespace MoonProject.Rover
         [Range(1f, 60f)]
         [SerializeField] private float _recenterPitchRate = 7f;
 
+        [Tooltip("Seconds after the dock lets go during which the view turns with 07 as it eases round on the pad; "
+                 + "longer than the release turn (DockSettings), so the view arrives with 07.")]
+        [Range(0.5f, 6f)]
+        [SerializeField] private float _releaseCarrySeconds = 2.5f;
+
         [Tooltip("Seconds the recenter button takes to ease the view behind 07 (eased in and out).")]
         [Range(0.2f, 3f)]
         [SerializeField] private float _recenterButtonSeconds = 1.4f;
@@ -977,6 +982,8 @@ namespace MoonProject.Rover
         public float RecenterPitchRate => _recenterPitchRate;
 
         public float RecenterButtonSeconds => _recenterButtonSeconds;
+
+        public float ReleaseCarrySeconds => _releaseCarrySeconds;
 
         public float FramingMaxSpeed => _framingMaxSpeed;
 
