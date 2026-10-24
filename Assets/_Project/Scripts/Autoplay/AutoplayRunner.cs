@@ -129,7 +129,7 @@ namespace MoonProject.Autoplay
             float now = Time.unscaledTime - _startedAt;
             FrameTag tags = _tagger.Step(now, _face.IsOpen, _world.Gameplay.Building.State != BuildModeState.Closed,
                 _world.Gameplay.Scans.Scanning != null, _docked);
-            _tagLog.Record(new FrameSample(now, milliseconds, tags, _probe.GcBytes, _probe.MainMilliseconds,
+            _tagLog.Record(new FrameSample(now, milliseconds, tags, _probe.GcBytes(), _probe.MainMilliseconds,
                 _probe.RenderMilliseconds), _tagger.Window);
         }
 

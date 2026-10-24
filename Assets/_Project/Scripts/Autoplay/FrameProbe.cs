@@ -15,6 +15,8 @@ namespace MoonProject.Autoplay
         private ProfilerRecorder _gc;
         private ProfilerRecorder _main;
         private ProfilerRecorder _render;
+        private long _allocatedBefore = -1L;
+        private bool _allocationCounterWorks = true;
 
         public FrameProbe()
         {
@@ -23,8 +25,35 @@ namespace MoonProject.Autoplay
             _render = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "Render Thread", 1);
         }
 
-        /// <summary>Managed bytes allocated in the last whole frame, or -1.</summary>
-        public long GcBytes => _gc.Valid ? _gc.LastValue : -1L;
+        /// <summary>
+        /// Managed bytes allocated since the last read, or -1: the profiler's counter where the player has it, else the
+        /// runtime's own count for the main thread (a release player offers few profiler counters). Read once a frame.
+        /// </summary>
+        public long GcBytes()
+        {
+            if (_gc.Valid)
+            {
+                return _gc.LastValue;
+            }
+
+            if (!_allocationCounterWorks)
+            {
+                return -1L;
+            }
+
+            try
+            {
+                long now = GC.GetAllocatedBytesForCurrentThread();
+                long delta = _allocatedBefore < 0L ? 0L : now - _allocatedBefore;
+                _allocatedBefore = now;
+                return delta;
+            }
+            catch (PlatformNotSupportedException)
+            {
+                _allocationCounterWorks = false;
+                return -1L;
+            }
+        }
 
         /// <summary>The main thread's last whole frame (ms), or -1.</summary>
         public float MainMilliseconds => _main.Valid ? (float)(_main.LastValue / NanosecondsPerMillisecond) : -1f;
