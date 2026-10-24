@@ -130,8 +130,14 @@ namespace MoonProject.Rover
         /// <summary>Sets the brow headlamp pods' fit warmth (0 before fit, 0..1 during fit, 1 once fitted).</summary>
         public void SetPodWarmth(float warmth)
         {
-            _podWarmth = Mathf.Clamp01(warmth);
-            ApplyPodLevel(_lastPower);
+            float clamped = Mathf.Clamp01(warmth);
+            if (Mathf.Abs(clamped - _podWarmth) < LevelEpsilon && _appliedPodLevel >= 0f)
+            {
+                return;
+            }
+
+            _podWarmth = clamped;
+            ApplyPodLevel(_level * _lastPower * Mathf.SmoothStep(0f, 1f, _switch));
         }
 
         /// <param name="power">The lamp power the wake allows (1 normally; the flicker and ramp at wake).</param>
@@ -149,7 +155,7 @@ namespace MoonProject.Rover
         {
             _lastPower = power;
             float level = _level * power * Mathf.SmoothStep(0f, 1f, _switch);
-            ApplyPodLevel(power);
+            ApplyPodLevel(level);
             // A tiny step is not worth writing, except the last one to dark: switched off, the lamp goes fully out.
             if (Mathf.Abs(level - _appliedLevel) < LevelEpsilon && (level > 0f || _appliedLevel == 0f))
             {
@@ -161,14 +167,14 @@ namespace MoonProject.Rover
             _appliedLevel = level;
         }
 
-        private void ApplyPodLevel(float power)
+        private void ApplyPodLevel(float roadLevel)
         {
             if (_podGlows.Length == 0)
             {
                 return;
             }
 
-            float podLevel = _level * power * Mathf.SmoothStep(0f, 1f, _switch) * _podWarmth;
+            float podLevel = roadLevel * _podWarmth;
             if (Mathf.Abs(podLevel - _appliedPodLevel) < LevelEpsilon && (podLevel > 0f || _appliedPodLevel == 0f))
             {
                 return;

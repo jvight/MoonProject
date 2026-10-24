@@ -58,6 +58,8 @@ namespace MoonProject.Rover
         [Tooltip("The ChargeBar_0..1 renderers on the left and right flank cell pods.")]
         [SerializeField] private Renderer[] _cellPodBars = Array.Empty<Renderer>();
 
+        private const float WarmthEpsilon = 1e-4f;
+
         private GameContext _context;
         private IDisposable _milestones;
         private IDisposable _systems;
@@ -71,9 +73,12 @@ namespace MoonProject.Rover
         private Quaternion _housingRightRotRest;
         private Vector3 _cellPodLeftRest;
         private Quaternion _cellPodLeftRotRest;
+        private Vector3 _cellPodLeftOutDir;
         private Vector3 _cellPodRightRest;
         private Quaternion _cellPodRightRotRest;
+        private Vector3 _cellPodRightOutDir;
         private HeadlampGlass[] _cellBarGlows = Array.Empty<HeadlampGlass>();
+        private float _appliedCellWarmth = -1f;
         private bool _rackChecked;
         private bool _antennaOut;
         private float _antennaSeconds;
@@ -135,6 +140,7 @@ namespace MoonProject.Rover
                 _cellBarGlows[i].Apply(0f);
             }
 
+            _appliedCellWarmth = 0f;
             _context = context;
             _antennaRest = _antennaSegment.localPosition;
             _igniterRest = _igniter.localPosition;
@@ -144,8 +150,10 @@ namespace MoonProject.Rover
             _housingRightRotRest = _headlampHousingRight.localRotation;
             _cellPodLeftRest = _cellPodLeft.localPosition;
             _cellPodLeftRotRest = _cellPodLeft.localRotation;
+            _cellPodLeftOutDir = _cellPodLeftRotRest * Vector3.right;
             _cellPodRightRest = _cellPodRight.localPosition;
             _cellPodRightRotRest = _cellPodRight.localRotation;
+            _cellPodRightOutDir = _cellPodRightRotRest * Vector3.right;
             Vector3 pull = _turret.TransformDirection(_tuning.Growth.IgniterPullOut);
             _igniterPullLocal = _igniter.parent.InverseTransformDirection(pull).normalized;
             _igniter.gameObject.SetActive(false);
@@ -175,6 +183,11 @@ namespace MoonProject.Rover
             {
                 _rackChecked = true;
                 SyncRack();
+            }
+
+            if (!_antennaMoving && !_igniterMoving && !_headlampMoving && !_cellPodsMoving)
+            {
+                return;
             }
 
             GrowthSettings settings = _tuning.Growth;
@@ -404,10 +417,18 @@ namespace MoonProject.Rover
 
         private void PlaceCellPods(float outMetres, float openDegrees, float warmth)
         {
-            _cellPodLeft.localPosition = _cellPodLeftRest + (_cellPodLeftRotRest * Vector3.right) * outMetres;
+            _cellPodLeft.localPosition = _cellPodLeftRest + _cellPodLeftOutDir * outMetres;
             _cellPodLeft.localRotation = _cellPodLeftRotRest * Quaternion.Euler(0f, 0f, -openDegrees * 0.5f);
-            _cellPodRight.localPosition = _cellPodRightRest + (_cellPodRightRotRest * Vector3.right) * outMetres;
+            _cellPodRight.localPosition = _cellPodRightRest + _cellPodRightOutDir * outMetres;
             _cellPodRight.localRotation = _cellPodRightRotRest * Quaternion.Euler(0f, 0f, -openDegrees * 0.5f);
+            if (Mathf.Abs(warmth - _appliedCellWarmth) < WarmthEpsilon &&
+                (warmth > 0f || _appliedCellWarmth == 0f) &&
+                (warmth < 1f || _appliedCellWarmth == 1f))
+            {
+                return;
+            }
+
+            _appliedCellWarmth = warmth;
             for (int i = 0; i < _cellBarGlows.Length; i++)
             {
                 _cellBarGlows[i].Apply(warmth);

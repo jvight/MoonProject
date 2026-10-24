@@ -6,10 +6,12 @@ namespace MoonProject.Rover
     /// The glow of 07's headlamp glasses: the R1_LampAmber slot of its Body mesh (and the brow pod lenses), following
     /// the road light's level so the lamps visibly switch off and on with it (the wake's ready performance, the dock,
     /// the crawl). The slot keeps its material's own emission strength as "on"; the level scales it through one reused
-    /// property block, so the rest of the body is untouched and a frame allocates nothing.
+    /// property block, written only when the strength changes, so the rest of the body is untouched and a frame
+    /// allocates nothing.
     /// </summary>
     public sealed class HeadlampGlass
     {
+        private const float StrengthEpsilon = 1e-4f;
         private static readonly int EmissionStrengthId = Shader.PropertyToID("_EmissionStrength");
 
         private readonly Renderer _body;
@@ -17,6 +19,7 @@ namespace MoonProject.Rover
         private readonly float _onStrength;
         private readonly bool _singleMaterial;
         private readonly MaterialPropertyBlock _block = new MaterialPropertyBlock();
+        private float _appliedStrength = -1f;
 
         private HeadlampGlass(Renderer body, int slot, float onStrength, bool singleMaterial)
         {
@@ -55,15 +58,23 @@ namespace MoonProject.Rover
         public void Apply(float level)
         {
             float strength = _onStrength * Mathf.Clamp01(level);
-            _body.GetPropertyBlock(_block, _slot);
-            _block.SetFloat(EmissionStrengthId, strength);
-            _body.SetPropertyBlock(_block, _slot);
+            if (Mathf.Abs(strength - _appliedStrength) < StrengthEpsilon && (strength > 0f || _appliedStrength == 0f))
+            {
+                return;
+            }
+
+            _appliedStrength = strength;
             if (_slot == 0 && _singleMaterial)
             {
                 _body.GetPropertyBlock(_block);
                 _block.SetFloat(EmissionStrengthId, strength);
                 _body.SetPropertyBlock(_block);
+                return;
             }
+
+            _body.GetPropertyBlock(_block, _slot);
+            _block.SetFloat(EmissionStrengthId, strength);
+            _body.SetPropertyBlock(_block, _slot);
         }
     }
 }
