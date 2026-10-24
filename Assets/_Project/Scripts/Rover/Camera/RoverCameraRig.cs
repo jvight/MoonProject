@@ -1731,7 +1731,9 @@ namespace MoonProject.Rover
 
         private void TryNudge(NextStepChanged step)
         {
-            float looking = RoverYaw() + _orbitState.YawOffset;
+            // Where the camera actually looks: the dock's close frame swings it round 07, so 07's heading and the
+            // orbit offset alone would call a target the frame has turned away from "near ahead".
+            float looking = _viewCamera.transform.eulerAngles.y;
             Vector3 viewport = _viewCamera.WorldToViewportPoint(step.TargetPosition);
             if (!GuidanceNudge.ShouldNudge(_rover.Position, step.TargetPosition, looking, viewport,
                     _tuning.NudgeScreenMargin, _tuning.NudgeMinDistance, _tuning.NudgeSlack, _tuning.NudgeMaxBearing) ||
