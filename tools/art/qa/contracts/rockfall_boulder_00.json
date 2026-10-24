@@ -1,0 +1,32 @@
+{
+  "model": "Rockfall_Boulder_00",
+  "description": "R1 fresh-broken lunar rockfall boulder 00 (10.50 x 8.40 x 6.40 m, lighter-toned cleaved breccia with basal talus skirt)",
+  "bounds": {
+    "size": [10.50, 8.40, 6.40],
+    "tolerance": 0.12,
+    "min_size": [9.50, 7.40, 5.60],
+    "max_size": [11.50, 9.40, 7.20]
+  },
+  "grounding": {
+    "min_z": -1.024,
+    "tolerance": 0.18
+  },
+  "budgets": {
+    "max_triangles": 2600,
+    "max_vertices": 2200,
+    "max_materials": 1
+  },
+  "allowed_materials": [
+    "R1_Basalt"
+  ],
+  "required_objects": [
+    "Rockfall_Boulder_00"
+  ],
+  "vertex_colors": {
+    "required_attribute": "R1_Color",
+    "r_ao_min_max_below": 0.65,
+    "r_ao_max_min_above": 0.85,
+    "g_wear_max_min_above": 0.18,
+    "b_cavity_max_min_above": 0.45
+  }
+}

@@ -2843,6 +2843,364 @@ namespace MoonProject.Art.Editor
         /// (<c>Logs/captures/relay_hut_*.png</c>):
         /// <c>python tools/unity_batch.py exec --project . --method MoonProject.Art.Editor.R1StoryPropsCapture.CaptureRelayHut</c>
         /// </summary>
+        /// <summary>
+        /// Captures the Peak road fresh rockfall kit (<c>Rockfall_TalusSlab</c> + <c>Rockfall_Boulder_00..03</c> +
+        /// supporting boulders + <c>Elder01</c>) on the Peak's lower flank slope from ~310 m at the base apron's height
+        /// in Day C low sun and Earthlight night, plus approach and close-up slope views, and writes the 2x2 concept sheet
+        /// to <c>docs/art/concepts/rockfall/sheet.png</c>:
+        /// <c>python tools/unity_batch.py exec --project . --method MoonProject.Art.Editor.R1StoryPropsCapture.CaptureRockfallSheet</c>
+        /// </summary>
+        public static void CaptureRockfallSheet()
+        {
+            BatchRunner.Run(nameof(CaptureRockfallSheet), args =>
+            {
+                AssetDatabase.Refresh();
+                R1MaterialLibrary.BuildMaterials();
+                R1ModelBuilder.Build();
+                R1Ssr3Builder.Build();
+
+                string capturesDir = Path.GetFullPath("Logs/captures/rockfall");
+                Directory.CreateDirectory(capturesDir);
+                string conceptDir = Path.GetFullPath("docs/art/concepts/rockfall");
+                Directory.CreateDirectory(conceptDir);
+
+                bool prevAsync = ShaderUtil.allowAsyncCompilation;
+                ShaderUtil.allowAsyncCompilation = false;
+                try
+                {
+                    string day310Path = Path.Combine(capturesDir, "rockfall_310m_day_c.png");
+                    string night310Path = Path.Combine(capturesDir, "rockfall_310m_earthlight_night.png");
+                    string approachPath = Path.Combine(capturesDir, "rockfall_approach_85m_day_c.png");
+                    string closeupPath = Path.Combine(capturesDir, "rockfall_slope_closeup_day_c.png");
+
+                    CapturePeakRoadRockfallScene(day310Path, approachPath, closeupPath, false);
+                    CapturePeakRoadRockfallScene(night310Path, null, null, true);
+
+                    string sheetPath = Path.Combine(conceptDir, "sheet.png");
+                    Compose2x2Sheet(day310Path, night310Path, approachPath, closeupPath, sheetPath);
+                }
+                finally
+                {
+                    ShaderUtil.allowAsyncCompilation = prevAsync;
+                }
+
+                return true;
+            });
+        }
+
+        private static float EvaluatePeakRoadHeight(float x, float z)
+        {
+            // Base apron at z = -310 is at height 0.08 m; gentle basin floor rises to y = 3.28 m at z = 0 (PeakRoadFoot)
+            float bowlT = Mathf.Clamp01((z + 310f) / 310f);
+            float baseHeight = 0.08f + 3.20f * (bowlT * bowlT);
+
+            // From z = 0..28 m (290..318 m radius, up to FloorRadius = 320 m), gentle road-foot grade (~2.4 deg);
+            // above z = 28 m, the steep Peak flank rises sharply up toward the 150 m Peak summit.
+            float flankHeight = 0f;
+            if (z > -12f)
+            {
+                float uz = Mathf.Max(0f, z + 12f);
+                float gentleFoot = 0.042f * uz;
+                float steepFlank = uz > 40f ? 0.68f * Mathf.Pow(uz - 40f, 1.18f) : 0f;
+                float ridgeEnvelope = Mathf.Exp(-(x * x) / (2f * 92f * 92f));
+                float cragWave = 3.2f * Mathf.Sin(x * 0.085f + z * 0.04f) * Mathf.Clamp01((uz - 42f) / 55f);
+                flankHeight = (gentleFoot + steepFlank) * (0.45f + 0.55f * ridgeEnvelope) + cragWave;
+            }
+
+            // Slight graded road bench cut along the lower approach (|x| < 8 m, z < 26 m)
+            float roadMask = Mathf.Exp(-(x * x) / (2f * 7.5f * 7.5f)) * Mathf.Clamp01(1f - (z - 8f) / 28f);
+            return baseHeight + flankHeight - 0.18f * roadMask;
+        }
+
+        private static GameObject BuildPeakRoadSlopeMesh(ArtLightingPreview.TemporaryObjects temp)
+        {
+            const int cols = 84;
+            const int rows = 110;
+            const float minX = -150f;
+            const float maxX = 150f;
+            const float minZ = -330f;
+            const float maxZ = 145f;
+
+            var verts = new Vector3[(cols + 1) * (rows + 1)];
+            var uvs = new Vector2[verts.Length];
+            var colors = new Color[verts.Length];
+            int vIdx = 0;
+            for (int r = 0; r <= rows; r++)
+            {
+                float tz = (float)r / rows;
+                float z = Mathf.Lerp(minZ, maxZ, tz);
+                for (int c = 0; c <= cols; c++)
+                {
+                    float tx = (float)c / cols;
+                    float x = Mathf.Lerp(minX, maxX, tx);
+                    float y = EvaluatePeakRoadHeight(x, z);
+                    verts[vIdx] = new Vector3(x, y, z);
+                    uvs[vIdx] = new Vector2(x * 0.12f, z * 0.12f);
+                    colors[vIdx] = new Color(0.88f, 0.04f, 0.32f, 1f);
+                    vIdx++;
+                }
+            }
+
+            var tris = new int[cols * rows * 6];
+            int tIdx = 0;
+            for (int r = 0; r < rows; r++)
+            {
+                for (int c = 0; c < cols; c++)
+                {
+                    int i0 = r * (cols + 1) + c;
+                    int i1 = i0 + 1;
+                    int i2 = i0 + (cols + 1);
+                    int i3 = i2 + 1;
+                    tris[tIdx++] = i0;
+                    tris[tIdx++] = i2;
+                    tris[tIdx++] = i1;
+                    tris[tIdx++] = i1;
+                    tris[tIdx++] = i2;
+                    tris[tIdx++] = i3;
+                }
+            }
+
+            var mesh = new Mesh { name = "PeakRoadSlopePreviewMesh" };
+            mesh.indexFormat = IndexFormat.UInt32;
+            mesh.vertices = verts;
+            mesh.uv = uvs;
+            mesh.colors = colors;
+            mesh.triangles = tris;
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+            temp.Add(mesh);
+
+            var slopeObj = new GameObject("PeakRoadSlopeTerrain");
+            slopeObj.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var renderer = slopeObj.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = R1MaterialLibrary.LoadMaterial(R1MaterialSlot.Basalt);
+            temp.Add(slopeObj);
+
+            // Pale rockfall scar fan above the slide (z = +8 m to +118 m, 48 m wide at road tapering to 18 m up-slope)
+            const int scarCols = 36;
+            const int scarRows = 48;
+            var sVerts = new Vector3[(scarCols + 1) * (scarRows + 1)];
+            var sUvs = new Vector2[sVerts.Length];
+            var sColors = new Color[sVerts.Length];
+            int sv = 0;
+            for (int r = 0; r <= scarRows; r++)
+            {
+                float u = (float)r / scarRows;
+                float z = Mathf.Lerp(22f, 130f, u);
+                float halfW = Mathf.Lerp(24f, 9f, u) + 1.8f * Mathf.Sin(u * 14f);
+                for (int c = 0; c <= scarCols; c++)
+                {
+                    float vn = ((float)c / scarCols) * 2f - 1f;
+                    float x = vn * halfW;
+                    float edgeFade = Mathf.Clamp01((1f - Mathf.Abs(vn)) / 0.25f) * Mathf.Clamp01(u / 0.10f) * Mathf.Clamp01((1f - u) / 0.12f);
+                    float y = EvaluatePeakRoadHeight(x, z) + Mathf.Lerp(-0.18f, 0.08f, edgeFade);
+                    sVerts[sv] = new Vector3(x, y, z);
+                    sUvs[sv] = new Vector2(x * 0.18f, z * 0.18f);
+                    sColors[sv] = new Color(0.92f, 0.25f * edgeFade, 0.95f * edgeFade, 1f);
+                    sv++;
+                }
+            }
+
+            var sTris = new int[scarCols * scarRows * 6];
+            int st = 0;
+            for (int r = 0; r < scarRows; r++)
+            {
+                for (int c = 0; c < scarCols; c++)
+                {
+                    int i0 = r * (scarCols + 1) + c;
+                    int i1 = i0 + 1;
+                    int i2 = i0 + (scarCols + 1);
+                    int i3 = i2 + 1;
+                    sTris[st++] = i0;
+                    sTris[st++] = i2;
+                    sTris[st++] = i1;
+                    sTris[st++] = i1;
+                    sTris[st++] = i2;
+                    sTris[st++] = i3;
+                }
+            }
+
+            var scarMesh = new Mesh { name = "PeakRoadScarPreviewMesh" };
+            scarMesh.vertices = sVerts;
+            scarMesh.uv = sUvs;
+            scarMesh.colors = sColors;
+            scarMesh.triangles = sTris;
+            scarMesh.RecalculateNormals();
+            scarMesh.RecalculateBounds();
+            temp.Add(scarMesh);
+
+            var scarObj = new GameObject("PeakRoadScarSurface");
+            scarObj.AddComponent<MeshFilter>().sharedMesh = scarMesh;
+            scarObj.AddComponent<MeshRenderer>().sharedMaterial = R1MaterialLibrary.LoadRockfallTalusMaterial();
+            temp.Add(scarObj);
+
+            return slopeObj;
+        }
+
+        private static void CapturePeakRoadRockfallScene(
+            string shot310Path,
+            string approachPath,
+            string closeupPath,
+            bool earthlightNight)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(temp, earthlightNight);
+
+                if (!earthlightNight && RenderSettings.sun != null)
+                {
+                    // Day C low grazing sun (13 deg elevation) raking across the Peak road slope
+                    RenderSettings.sun.transform.rotation = Quaternion.Euler(13f, -58f, 0f);
+                    RenderSettings.sun.intensity = 1.55f;
+                    bg = new Color(0.05f, 0.06f, 0.09f, 1f);
+                }
+                else if (earthlightNight && RenderSettings.sun != null)
+                {
+                    // Earthlight night: cool blue-silver Earthshine illuminating the north Peak flank
+                    RenderSettings.sun.transform.rotation = Quaternion.Euler(32f, -35f, 0f);
+                    RenderSettings.sun.color = new Color(0.62f, 0.74f, 0.98f, 1f);
+                    RenderSettings.sun.intensity = 0.72f;
+                    RenderSettings.ambientSkyColor = new Color(0.14f, 0.18f, 0.28f, 1f);
+                    RenderSettings.ambientEquatorColor = new Color(0.10f, 0.13f, 0.20f, 1f);
+                    bg = new Color(0.025f, 0.035f, 0.065f, 1f);
+                }
+
+                BuildPeakRoadSlopeMesh(temp);
+
+                string rocksFolder = ArtPaths.R1ModelsFolder + "/Rocks/";
+
+                // Elder 01 ("The Surveyor") stopped at WorldAnchors.PeakRoad (0, 0)
+                SpawnProp(
+                    R1Ssr3Builder.Elder01PrefabPath,
+                    new Vector3(0f, EvaluatePeakRoadHeight(0f, 0f), 0f),
+                    30f,
+                    temp);
+
+                // Proposed World placement for LandmarkSettings._rockfall (WorldAnchors.PeakRoad)
+                (string Id, Vector2 Offset, float Yaw, float Sink)[] placements =
+                {
+                    ("Rockfall_TalusSlab", new Vector2(0.0f, 16.5f), 6f, 0.35f),
+                    ("Rockfall_Boulder_00", new Vector2(-2.4f, 10.8f), -18f, 0.55f),
+                    ("Rockfall_Boulder_01", new Vector2(9.6f, 14.5f), 48f, 0.65f),
+                    ("Rockfall_Boulder_02", new Vector2(-8.2f, 15.8f), -32f, 0.75f),
+                    ("Rockfall_Boulder_03", new Vector2(1.2f, 18.5f), 24f, 0.85f),
+                    ("Rock_13", new Vector2(-14.5f, 19.5f), 40f, 0.35f),
+                    ("Rock_12", new Vector2(15.2f, 20.2f), -35f, 0.35f),
+                    ("Rock_11", new Vector2(-4.8f, 25.0f), 110f, 0.35f),
+                    ("Rock_10", new Vector2(6.5f, 26.2f), -75f, 0.30f),
+                };
+
+                for (int i = 0; i < placements.Length; i++)
+                {
+                    (string id, Vector2 offset, float yaw, float sink) = placements[i];
+                    float groundY = EvaluatePeakRoadHeight(offset.x, offset.y);
+                    SpawnProp(
+                        rocksFolder + id + ".prefab",
+                        new Vector3(offset.x, groundY - sink, offset.y),
+                        yaw,
+                        temp);
+                }
+
+                // 1. Capture from ~310 m at the base apron's height (z = -310 m, y = 2.4 m above apron at y = 0)
+                if (!string.IsNullOrEmpty(shot310Path))
+                {
+                    RenderShot(
+                        new Vector3(0f, 2.4f, -310f),
+                        new Vector3(0f, EvaluatePeakRoadHeight(0f, 16.5f) + 5.5f, 16.5f),
+                        28f,
+                        bg,
+                        shot310Path);
+                }
+
+                // 2. Mid-range road approach (~85 m out along the road)
+                if (!string.IsNullOrEmpty(approachPath))
+                {
+                    RenderShot(
+                        new Vector3(3.5f, EvaluatePeakRoadHeight(3.5f, -85f) + 2.4f, -85f),
+                        new Vector3(0f, EvaluatePeakRoadHeight(0f, 15f) + 4.2f, 15f),
+                        38f,
+                        bg,
+                        approachPath);
+                }
+
+                // 3. Close 3/4 slope & scale inspection with Rover 07 beside Elder 01 at the toe of the slide
+                if (!string.IsNullOrEmpty(closeupPath))
+                {
+                    SpawnRover07(temp, new Vector3(4.2f, EvaluatePeakRoadHeight(4.2f, -3.5f), -3.5f), -16f, false);
+                    RenderShot(
+                        new Vector3(-16.5f, EvaluatePeakRoadHeight(-16.5f, -14f) + 4.8f, -14f),
+                        new Vector3(0.5f, EvaluatePeakRoadHeight(0f, 14f) + 3.6f, 14f),
+                        44f,
+                        bg,
+                        closeupPath);
+                }
+            }
+            finally
+            {
+                temp.Dispose();
+            }
+        }
+
+        private static void Compose2x2Sheet(
+            string topLeftPath,
+            string topRightPath,
+            string bottomLeftPath,
+            string bottomRightPath,
+            string outSheetPath)
+        {
+            Texture2D tl = LoadPngTexture(topLeftPath);
+            Texture2D tr = LoadPngTexture(topRightPath);
+            Texture2D bl = LoadPngTexture(bottomLeftPath);
+            Texture2D br = LoadPngTexture(bottomRightPath);
+            try
+            {
+                int w = tl.width;
+                int h = tl.height;
+                const int pad = 8;
+                int sheetW = w * 2 + pad;
+                int sheetH = h * 2 + pad;
+                var sheet = new Texture2D(sheetW, sheetH, TextureFormat.RGB24, false, false);
+                try
+                {
+                    var border = new Color32(12, 14, 20, 255);
+                    var fill = new Color32[sheetW * sheetH];
+                    for (int i = 0; i < fill.Length; i++)
+                    {
+                        fill[i] = border;
+                    }
+
+                    sheet.SetPixels32(fill);
+                    sheet.SetPixels(0, h + pad, w, h, tl.GetPixels());
+                    sheet.SetPixels(w + pad, h + pad, w, h, tr.GetPixels());
+                    sheet.SetPixels(0, 0, w, h, bl.GetPixels());
+                    sheet.SetPixels(w + pad, 0, w, h, br.GetPixels());
+                    sheet.Apply(false);
+                    File.WriteAllBytes(outSheetPath, sheet.EncodeToPNG());
+                    BatchRunner.Log($"capture {outSheetPath}");
+                }
+                finally
+                {
+                    UnityEngine.Object.DestroyImmediate(sheet);
+                }
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(tl);
+                UnityEngine.Object.DestroyImmediate(tr);
+                UnityEngine.Object.DestroyImmediate(bl);
+                UnityEngine.Object.DestroyImmediate(br);
+            }
+        }
+
+        private static Texture2D LoadPngTexture(string path)
+        {
+            var tex = new Texture2D(2, 2, TextureFormat.RGB24, false, false);
+            tex.LoadImage(File.ReadAllBytes(path));
+            return tex;
+        }
+
         public static void CaptureRelayHut()
         {
             BatchRunner.Run(nameof(CaptureRelayHut), args =>

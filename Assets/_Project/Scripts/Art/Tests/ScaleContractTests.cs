@@ -61,6 +61,11 @@ namespace MoonProject.Art.Tests
             ("rock_11.json", "Rocks/Rock_11.fbx"),
             ("rock_12.json", "Rocks/Rock_12.fbx"),
             ("rock_13.json", "Rocks/Rock_13.fbx"),
+            ("rockfall_boulder_00.json", "Rocks/Rockfall_Boulder_00.fbx"),
+            ("rockfall_boulder_01.json", "Rocks/Rockfall_Boulder_01.fbx"),
+            ("rockfall_boulder_02.json", "Rocks/Rockfall_Boulder_02.fbx"),
+            ("rockfall_boulder_03.json", "Rocks/Rockfall_Boulder_03.fbx"),
+            ("rockfall_talus_slab.json", "Rocks/Rockfall_TalusSlab.fbx"),
             ("rover.json", "Rover/RoverModel.fbx"),
             ("scan_fan.json", "Rover/ScanFan.fbx"),
             ("scatter_set.json", "Ruins/ScatterSet.fbx"),
@@ -170,6 +175,72 @@ namespace MoonProject.Art.Tests
                 Assert.IsNotNull(mesh, $"Missing sharedMesh on '{prefab.name}/{mf.name}'.");
                 Assert.AreEqual(mesh.vertexCount, mesh.colors.Length, $"Mesh '{mesh.name}' is missing baked vertex colors.");
             }
+        }
+
+        [Test]
+        public void RockfallKit_FreshBouldersAndTalusSlab_AreBiggerLighterTonedAndGrounded()
+        {
+            Material weatheredBasalt = R1MaterialLibrary.LoadMaterial(R1MaterialSlot.Basalt);
+            Material freshBasalt = R1MaterialLibrary.LoadFreshBasaltMaterial();
+            Material talusMat = R1MaterialLibrary.LoadRockfallTalusMaterial();
+            Assert.IsNotNull(freshBasalt, "Missing R1_FreshBasalt material.");
+            Assert.IsNotNull(talusMat, "Missing R1_RockfallTalus material.");
+
+            float weatheredBaseLuma = weatheredBasalt.GetColor("_BaseColor").grayscale;
+            float freshBaseLuma = freshBasalt.GetColor("_BaseColor").grayscale;
+            float talusBaseLuma = talusMat.GetColor("_BaseColor").grayscale;
+            Assert.Greater(freshBaseLuma, weatheredBaseLuma * 1.40f,
+                "Fresh rockfall boulders must have a lighter-toned _BaseColor than weathered R1_Basalt.");
+            Assert.Greater(talusBaseLuma, weatheredBaseLuma * 1.45f,
+                "Rockfall talus slab must have a lighter-toned _BaseColor than weathered R1_Basalt.");
+            Assert.Greater(
+                freshBasalt.GetColor("_EdgeWearColor").grayscale,
+                weatheredBasalt.GetColor("_EdgeWearColor").grayscale + 0.20f,
+                "Fresh rockfall cleavage faces (_EdgeWearColor) must be paler than weathered R1_Basalt.");
+            Assert.AreEqual(0f, freshBasalt.GetFloat("_EmissionStrength"), 1e-5f,
+                "Fresh rockfall boulders must never emit or bloom.");
+            Assert.AreEqual(0f, talusMat.GetFloat("_EmissionStrength"), 1e-5f,
+                "Rockfall talus slab must never emit or bloom.");
+
+            GameObject rock13Prefab = MeshChecks.LoadGeneratedPrefab(
+                R1ModelBuilder.GetGeneratedPrefabPath(R1MaterialRecipes.ModelsFolder + "/Rocks/Rock_13.fbx"));
+            Bounds rock13Bounds = MeshChecks.PrefabBounds(rock13Prefab, rock13Prefab.transform.localToWorldMatrix);
+
+            float prevWidth = 0f;
+            for (int i = 0; i < R1ModelBuilder.FreshRockfallBoulderFbxPaths.Length; i++)
+            {
+                string fbxPath = R1ModelBuilder.FreshRockfallBoulderFbxPaths[i];
+                GameObject boulderPrefab = MeshChecks.LoadGeneratedPrefab(R1ModelBuilder.GetGeneratedPrefabPath(fbxPath));
+                Bounds bounds = MeshChecks.PrefabBounds(boulderPrefab, boulderPrefab.transform.localToWorldMatrix);
+
+                Assert.GreaterOrEqual(bounds.size.x, 10.0f, $"{boulderPrefab.name} width must be >= 10 m.");
+                Assert.LessOrEqual(bounds.size.x, 16.5f, $"{boulderPrefab.name} width must be <= 16.5 m.");
+                Assert.Greater(bounds.size.x, rock13Bounds.size.x,
+                    $"{boulderPrefab.name} must be wider than weathered Rock_13 ({rock13Bounds.size.x:F2} m).");
+                Assert.Greater(bounds.size.y, rock13Bounds.size.y,
+                    $"{boulderPrefab.name} must be taller than weathered Rock_13 ({rock13Bounds.size.y:F2} m).");
+                Assert.Greater(bounds.size.x, prevWidth, "Fresh rockfall boulders must grow monotonically across 00..03.");
+                Assert.Less(bounds.min.y, -0.5f, $"{boulderPrefab.name} must have a buried base so it never floats on slopes.");
+                prevWidth = bounds.size.x;
+
+                Renderer renderer = boulderPrefab.GetComponentInChildren<Renderer>();
+                Assert.IsNotNull(renderer);
+                Assert.AreEqual(R1MaterialLibrary.FreshBasaltMaterialName, renderer.sharedMaterial.name);
+
+                Mesh mesh = boulderPrefab.GetComponentInChildren<MeshFilter>().sharedMesh;
+                Assert.AreEqual(mesh.vertexCount, mesh.colors.Length);
+            }
+
+            GameObject talusPrefab = MeshChecks.LoadGeneratedPrefab(
+                R1ModelBuilder.GetGeneratedPrefabPath(R1ModelBuilder.RockfallTalusSlabFbxPath));
+            Bounds talusBounds = MeshChecks.PrefabBounds(talusPrefab, talusPrefab.transform.localToWorldMatrix);
+            Assert.GreaterOrEqual(talusBounds.size.x, 40.0f, "Rockfall_TalusSlab must be at least 40 m wide.");
+            Assert.LessOrEqual(talusBounds.size.x, 50.0f, "Rockfall_TalusSlab must be at most 50 m wide.");
+            Assert.Less(talusBounds.min.y, -0.4f, "Rockfall_TalusSlab must have a buried root below ground.");
+
+            Renderer talusRenderer = talusPrefab.GetComponentInChildren<Renderer>();
+            Assert.IsNotNull(talusRenderer);
+            Assert.AreEqual(R1MaterialLibrary.RockfallTalusMaterialName, talusRenderer.sharedMaterial.name);
         }
 
         private static Bounds MeasureInstantiatedRendererBounds(GameObject prefab)

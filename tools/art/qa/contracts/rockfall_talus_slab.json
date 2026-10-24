@@ -1,0 +1,32 @@
+{
+  "model": "Rockfall_TalusSlab",
+  "description": "R1 landslide scree/talus fan tongue (46.00 x 30.00 x 4.50 m, hummocky broken rubble bed with feathered terrain-blending edges)",
+  "bounds": {
+    "size": [46.00, 30.00, 4.50],
+    "tolerance": 0.25,
+    "min_size": [40.00, 24.00, 3.20],
+    "max_size": [50.00, 35.00, 6.00]
+  },
+  "grounding": {
+    "min_z": -0.90,
+    "tolerance": 0.18
+  },
+  "budgets": {
+    "max_triangles": 3600,
+    "max_vertices": 2600,
+    "max_materials": 1
+  },
+  "allowed_materials": [
+    "R1_Basalt"
+  ],
+  "required_objects": [
+    "Rockfall_TalusSlab"
+  ],
+  "vertex_colors": {
+    "required_attribute": "R1_Color",
+    "r_ao_min_max_below": 0.65,
+    "r_ao_max_min_above": 0.85,
+    "g_wear_max_min_above": 0.18,
+    "b_cavity_max_min_above": 0.45
+  }
+}
