@@ -16,6 +16,7 @@ namespace MoonProject.UI
         public const string ScanSetKey = "ui.readout.scan_set";
         public const string ScanSetLearnedKey = "ui.readout.scan_set_learned";
         public const string WheelsNoteKey = "ui.system.note.wheels";
+        public const string IgniterInHoldKey = "ui.system.state.igniter_in_hold";
         public const string BlueprintsNoteKey = "ui.system.note.blueprints";
         public const string BlueprintOneNoteKey = "ui.system.note.blueprint_one";
 
@@ -33,10 +34,16 @@ namespace MoonProject.UI
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
         }
 
-        /// <summary>One system's line: <c>CUTTER ········ FAULT · NO IGNITER</c>.</summary>
-        public string SystemLine(RoverSystem system, RoverSystemState state, int blueprints)
+        /// <summary>
+        /// One system's line: <c>CUTTER ········ FAULT · NO IGNITER</c>, or, once a spare igniter waits in the hold, what
+        /// is true now: <c>CUTTER ········ FAULT · IGNITER IN HOLD</c>.
+        /// </summary>
+        /// <param name="igniterInHold">A spare igniter is in the hold and can be fitted (the cutter's fault only).</param>
+        public string SystemLine(RoverSystem system, RoverSystemState state, int blueprints, bool igniterInHold = false)
         {
-            string value = _localization.Get(SystemText.StateKey(system, state));
+            string value = _localization.Get(state == RoverSystemState.Fault && igniterInHold
+                ? IgniterInHoldKey
+                : SystemText.StateKey(system, state));
             if (state == RoverSystemState.Ok)
             {
                 if (system == RoverSystem.Wheels)

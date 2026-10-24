@@ -835,6 +835,10 @@
             "text": "LỖI · MẤT BỘ ĐÁNH LỬA"
         },
         {
+            "key": "ui.system.state.igniter_in_hold",
+            "text": "LỖI · BỘ ĐÁNH LỬA TRONG KHOANG"
+        },
+        {
             "key": "ui.system.state.jammed",
             "text": "KẸT"
         },

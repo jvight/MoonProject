@@ -117,6 +117,12 @@ namespace MoonProject.UI
             ShowSystem(system);
         }
 
+        /// <summary>A first-use chip wants the slot: any system card yields to it (<see cref="ReadoutQueue.YieldSystemCards"/>).</summary>
+        public void YieldSystemCards()
+        {
+            _queue.YieldSystemCards();
+        }
+
         /// <summary>The faulted cutter refused a cut: its line flashes.</summary>
         public void CutterRefused()
         {
@@ -177,7 +183,8 @@ namespace MoonProject.UI
                 case ReadoutKind.System:
                     RoverSystemState state = _systems.StateOf(request.System);
                     _content.Clear();
-                    _content.Add(_text.SystemLine(request.System, state, Blueprints()), ReadoutText.StyleOf(state));
+                    _content.Add(_text.SystemLine(request.System, state, Blueprints(),
+                        request.System == RoverSystem.Cutter && _systems.CanFitIgniter), ReadoutText.StyleOf(state));
                     break;
                 case ReadoutKind.Protocol:
                     _text.Protocol(_content, _protocol.Line);

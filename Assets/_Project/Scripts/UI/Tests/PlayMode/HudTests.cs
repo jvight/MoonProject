@@ -732,6 +732,39 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator WithTheIgniterInTheHold_TheFitChipComesWithinFiveSeconds_OverTheCuttersCard()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            _rig.Ui.Ledger.RecordLookTaught();
+            _rig.Ui.Ledger.RecordDriveTaught();
+            _rig.Ui.Ledger.RecordHoldChipShown();
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            yield return Seconds(_rig.Tuning.Prompts.StartDelay + 0.5f);
+            ReadoutView readout = _rig.Ui.Readout;
+            _rig.Fakes.Systems.CanFitIgniter = true;
+            Events.Publish(new CutterRefused(Vector3.zero));
+            yield return null;
+            Assert.AreEqual(ReadoutKind.System, readout.Showing, "B7c: the cutter's card is up");
+            StringAssert.EndsWith(Text("ui.system.state.igniter_in_hold"), readout.LineText(0),
+                "and says what is true now: the igniter is in the hold, not missing");
+
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.FitPart, new Vector3(0f, 0.5f, 4f), true);
+            float start = Time.realtimeSinceStartup;
+            float shownAfter = -1f;
+            while (Time.realtimeSinceStartup - start < 5f && shownAfter < 0f)
+            {
+                Assert.IsFalse(_rig.Ui.Prompt.IsVisible && readout.IsVisible, "never both on screen");
+                shownAfter = _rig.Ui.Prompt.IsVisible ? Time.realtimeSinceStartup - start : -1f;
+                yield return null;
+            }
+
+            Assert.GreaterOrEqual(shownAfter, 0f, "the Fit chip came within 5 s: the card gave way to it");
+            Assert.AreEqual(Text(UiKeys.Hint(InteractionKind.FitPart)), _rig.Ui.Layout.PromptWord.text);
+        }
+
+        [UnityTest]
         public IEnumerator Readout_ACutterChangeGetsItsOwnCard_AndOnlyAMilestoneReachedNowShowsTheProtocolLine()
         {
             Boot();
