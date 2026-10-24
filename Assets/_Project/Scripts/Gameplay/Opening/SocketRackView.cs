@@ -39,6 +39,8 @@ namespace MoonProject.Gameplay
         private bool _live;
         private bool _snap;
         private bool _failed;
+        private int _read = -1;
+        private bool _holding;
 
         public SocketRackView(EventBus events, IRackStatus rack, RackViewSettings settings, ITerrainQuery terrain,
             IViewCamera view, IRoverState rover, Transform parent)
@@ -96,6 +98,12 @@ namespace MoonProject.Gameplay
         /// <summary>
         /// The outline 07 reads now: a seen part's bay, within reach and in view, nearest the centre of the view.
         /// </summary>
+        /// <summary>E is held on the bay being assembled: the read stays on it (never switches mid-hold).</summary>
+        public void HoldRead(bool holding)
+        {
+            _holding = holding;
+        }
+
         public bool TryGetRead(out Vector3 point, out string bayId)
         {
             point = Vector3.zero;
@@ -113,7 +121,8 @@ namespace MoonProject.Gameplay
             }
 
             int bay = RackAim.Pick(_rack, _bayPoints, _viewPoints, _rover.Position, _settings.ReadReach,
-                _settings.ViewMargin);
+                _settings.ViewMargin, _read, _holding);
+            _read = bay;
             if (bay < 0)
             {
                 return false;

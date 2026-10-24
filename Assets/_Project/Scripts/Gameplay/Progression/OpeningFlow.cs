@@ -96,7 +96,7 @@ namespace MoonProject.Gameplay
                 events.Subscribe<StoryScanned>(_ => _progressed = true),
                 events.Subscribe<ContainerOpened>(_ => _progressed = true),
                 events.Subscribe<MaterialSalvaged>(_ => _progressed = true),
-                events.Subscribe<StoryPartCollected>(_ => _progressed = true),
+                events.Subscribe<StoryPartCollected>(_ => OnPartTaken()),
                 events.Subscribe<StructurePlaced>(_ => _progressed = true),
                 events.Subscribe<StructureBuilt>(_ => _progressed = true),
                 events.Subscribe<TowAttached>(_ => _progressed = true),
@@ -325,6 +325,19 @@ namespace MoonProject.Gameplay
         }
 
         private static bool HoldsUntilDone(string key) => key == OpeningKeys.HookModule;
+
+        /// <summary>
+        /// A part was taken: progress, and a line that only asked for the take (the spare igniter from the rack) goes
+        /// at once, on the take itself, so the next cue (the Tab chip on 07) never waits behind a stale line.
+        /// </summary>
+        private void OnPartTaken()
+        {
+            _progressed = true;
+            if (Shown == OpeningKeys.TakeIgniter)
+            {
+                Clear();
+            }
+        }
 
         /// <summary>
         /// A line whose key no line can show (Tab, the fit screen) is taught by its own chip on 07 instead: as a next
