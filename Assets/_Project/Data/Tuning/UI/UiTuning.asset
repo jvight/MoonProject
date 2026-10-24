@@ -422,7 +422,7 @@ MonoBehaviour:
       _scale: 1.35
   _prompts:
     _reveal:
-      _fadeIn: 0.35
+      _fadeIn: 0.25
       _fadeOut: 0.25
       _slide: 10
       _scaleFrom: 0.88
@@ -656,7 +656,7 @@ MonoBehaviour:
       _springFrequency: 1.4
       _springDamping: 0.6
     _hint:
-      _fadeIn: 0.6
+      _fadeIn: 0.25
       _fadeOut: 0.25
       _slide: 10
       _scaleFrom: 0.9
@@ -668,7 +668,7 @@ MonoBehaviour:
     _firstPromptStick: 0.2
   _guidance:
     _line:
-      _fadeIn: 0.9
+      _fadeIn: 0.25
       _fadeOut: 0.25
       _slide: 6
       _scaleFrom: 1
