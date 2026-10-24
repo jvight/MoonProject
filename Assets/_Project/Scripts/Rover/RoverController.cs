@@ -25,7 +25,7 @@ namespace MoonProject.Rover
     /// <see cref="LandingDetector"/>); this component only wires them to physics.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class RoverController : MonoBehaviour, IGameSystem, IRoverState, IRoverRig, ICutterRig,
+    public sealed class RoverController : MonoBehaviour, IGameSystem, IRoverState, IRoverClimb, IRoverRig, ICutterRig,
         IRoverAbilities, IRoverPlacement, IRoverFaceScreen, IRoverCargoSeat
     {
         /// <summary>The probe starts this fraction of the radius above the centre, so slight sinking hits.</summary>
@@ -382,6 +382,8 @@ namespace MoonProject.Rover
         /// <summary>True while the Boost Coils are engaged.</summary>
         public bool IsBoosting => _boost.Engaged;
 
+        public float ClimbLimitDegrees => _tuning.Ground.SlopeAssistZeroAngle;
+
         /// <summary>True while 07 rests on the charging dock (eased onto it, held there until it drives off).</summary>
         public bool IsDocked => _docked;
 
@@ -469,6 +471,7 @@ namespace MoonProject.Rover
             _visualHeading = _heading;
             context.Register<IRoverState>(this);
             context.Register<IRoverRig>(this);
+            context.Register<IRoverClimb>(this);
             context.Register<IRoverAbilities>(this);
             context.Register<IRoverStillness>(_stillness);
             context.Register<IRoverPlacement>(this);
