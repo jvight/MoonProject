@@ -3,13 +3,15 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.TestTools;
+using MoonProject.Core;
 using MoonProject.Core.Events;
 
 namespace MoonProject.Rover.PlayModeTests
 {
     /// <summary>
     /// 07's lights key (the owner's playtest): a press eases the lamps off in about a quarter second and says so for
-    /// the switch's click, a second press eases them back on, and the save remembers the switch.
+    /// the switch's click, a second press eases them back on, the SSR-3 headlamp pod lenses glow and switch with them
+    /// once fitted, and the save remembers the switch.
     /// </summary>
     public sealed class RoverLightsTests : InputTestFixture
     {
@@ -20,6 +22,8 @@ namespace MoonProject.Rover.PlayModeTests
 
         /// <summary>Frames the lamps may take after the key to show the first step of their ease off.</summary>
         private const int EaseStartFrames = 10;
+
+        private static readonly int EmissionStrengthId = Shader.PropertyToID("_EmissionStrength");
 
         private LunarTestPhysics _physics;
         private TestWorld _world;
@@ -47,8 +51,14 @@ namespace MoonProject.Rover.PlayModeTests
         public IEnumerator TheLightsKey_EasesTheLampsOffAndOn_AndTheSaveKeepsIt()
         {
             yield return Wait(1f);
+            _rover.Context.Events.Publish(new PartFitted(RoverSocket.Lamp, RoverKitPiece.LampBar, false, false, default, 0));
+            yield return Wait(_rover.RigTuning.Growth.HeadlampFitSeconds + 0.1f);
+
+            Renderer podLens = FindPodLens(_rover.Head, RoverModelNodes.HeadlampLensLeft);
             float lit = _rover.Headlamp.intensity;
+            float podLit = EmissionOf(podLens);
             Assert.Greater(lit, 0f, "07's lamps start on");
+            Assert.Greater(podLit, 0f, "the fitted SSR-3 pod lenses glow warm with 07's lamps");
             int switched = 0;
             bool lastOn = true;
             using (_rover.Context.Events.Subscribe<RoverLightsSwitched>(change =>
@@ -74,6 +84,7 @@ namespace MoonProject.Rover.PlayModeTests
                 Assert.Less(halfway, lit, $"the lamps begin to ease off within {EaseStartFrames} frames of the key");
                 Assert.Greater(halfway, 0f, "an ease, not a cut");
                 Assert.AreEqual(0f, _rover.Headlamp.intensity, 1e-3f, "and are dark within the switch time");
+                Assert.AreEqual(0f, EmissionOf(podLens), 1e-3f, "the brow pod lenses go dark with the road light");
                 StringAssert.Contains("\"lightsOff\":true", _rover.Save.Capture(LightsSaveKey), "the save keeps it");
 
                 yield return Toggle();
@@ -81,6 +92,7 @@ namespace MoonProject.Rover.PlayModeTests
                 Assert.AreEqual(2, switched);
                 Assert.IsTrue(lastOn);
                 Assert.AreEqual(lit, _rover.Headlamp.intensity, lit * 0.02f, "a second press brings them back");
+                Assert.AreEqual(podLit, EmissionOf(podLens), podLit * 0.02f, "and the brow pod lenses glow warm again");
                 StringAssert.Contains("\"lightsOff\":false", _rover.Save.Capture(LightsSaveKey));
             }
         }
@@ -93,6 +105,27 @@ namespace MoonProject.Rover.PlayModeTests
                 prepare: rover => rover.Save.Seed(LightsSaveKey, "{\"lightsOff\":true}"));
             yield return Wait(1f);
             Assert.AreEqual(0f, _rover.Headlamp.intensity, 1e-3f, "a save with the lights off loads dark");
+        }
+
+        private static Renderer FindPodLens(Transform root, string name)
+        {
+            foreach (Transform node in root.GetComponentsInChildren<Transform>(true))
+            {
+                if (node.name == name)
+                {
+                    return node.GetComponent<Renderer>();
+                }
+            }
+
+            Assert.Fail($"TestRover has no '{name}' renderer.");
+            return null;
+        }
+
+        private static float EmissionOf(Renderer renderer)
+        {
+            var block = new MaterialPropertyBlock();
+            renderer.GetPropertyBlock(block);
+            return block.GetFloat(EmissionStrengthId);
         }
 
         private IEnumerator Toggle()

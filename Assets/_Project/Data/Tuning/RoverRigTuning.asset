@@ -354,6 +354,20 @@ MonoBehaviour:
     _openingReserveGlow: 0.5
     _openingReserveHeadlamp: 0.55
     _wakeInterval: 0.4
+  _growth:
+    _antennaExtendMetres: 0.35
+    _antennaSeconds: 1.2
+    _antennaSettleSeconds: 0.5
+    _antennaSettleMetres: 0.012
+    _igniterSeatMetres: 0.05
+    _igniterPullOut: {x: 0, y: 0, z: 1}
+    _igniterSeatSeconds: 0.35
+    _igniterClickMetres: 0.006
+    _igniterClickSeconds: 0.16
+    _headlampFitSeconds: 0.6
+    _headlampClampMetres: 0.06
+    _headlampUnfoldDegrees: 28
+    _headlampClickMetres: 0.005
   _portrait:
     _yaw: 55
     _elevation: 14
