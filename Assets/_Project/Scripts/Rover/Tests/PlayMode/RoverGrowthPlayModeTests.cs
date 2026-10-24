@@ -91,7 +91,28 @@ namespace MoonProject.Rover.PlayModeTests
             Capture("new-game-retracted-antenna", _segment, new Vector3(0.9f, 0.3f, 1.4f));
             Capture("new-game-no-igniter", _igniter.parent, new Vector3(0.5f, 0.2f, 0.9f));
 
+            var roadLight = _scene.Rover.GetComponentInChildren<RoverHeadlamp>();
+            var firstChargeWatch = System.Diagnostics.Stopwatch.StartNew();
             _scene.Context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.FirstCharge, false));
+            firstChargeWatch.Stop();
+            double firstChargeMs = firstChargeWatch.Elapsed.TotalMilliseconds;
+
+            var tickWatch = System.Diagnostics.Stopwatch.StartNew();
+            for (int i = 0; i < 60; i++)
+            {
+                growth.Tick(0f);
+                roadLight.Tick(0f, 1f);
+            }
+
+            tickWatch.Stop();
+            double tick60Ms = tickWatch.Elapsed.TotalMilliseconds;
+            Debug.Log($"[lampvisual-perf] FirstCharge publish: {firstChargeMs:F3} ms; " +
+                      $"60x RoverGrowth.Tick+RoverHeadlamp.Tick: {tick60Ms:F3} ms");
+            Assert.Less(firstChargeMs, 25.0,
+                $"FirstCharge milestone handling must not hitch (took {firstChargeMs:F3} ms).");
+            Assert.Less(tick60Ms, 10.0,
+                $"60x RoverGrowth.Tick + RoverHeadlamp.Tick must stay sub-10ms (took {tick60Ms:F3} ms).");
+
             yield return RealRoverScene.WaitSeconds(settings.AntennaSeconds * 0.5f);
             float halfway = (_segment.localPosition - retracted).y;
             Assert.Greater(halfway, 0f, "the segment is on its way out");
@@ -145,7 +166,6 @@ namespace MoonProject.Rover.PlayModeTests
                 "Housing_R rests at its bracket pose");
             Assert.AreEqual(0f, Quaternion.Angle(_housingRight.localRotation, rightHousingRotRest), 0.05f,
                 "Housing_R rests folded shut");
-            var roadLight = _scene.Rover.GetComponentInChildren<RoverHeadlamp>();
             float materialGlow = _lensLeft.sharedMaterial.GetFloat(EmissionStrengthId);
             float fullLensGlow = EmissionOf(_lensLeft);
             Assert.Greater(fullLensGlow, 0.5f, "Lens_L glows at R1_LampAmber's warm emission strength");
