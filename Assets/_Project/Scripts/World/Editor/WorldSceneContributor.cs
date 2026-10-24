@@ -31,6 +31,9 @@ namespace MoonProject.World.Editor
         /// <summary>[World]/ArrayGlint: the fallen solar array's glints, beside the ruins.</summary>
         public const string ArrayGlintName = "ArrayGlint";
 
+        /// <summary>[World]/MastGlint: the radio tower's mast tip in the earthlight.</summary>
+        public const string MastGlintName = "MastGlint";
+
         /// <summary>The [World] child holding the habitat power module lamp's halo and its blink.</summary>
         public const string ModuleLampName = "ModuleLamp";
 
@@ -140,6 +143,11 @@ namespace MoonProject.World.Editor
                 {
                     StandArrayGlint(context, settings, instance, root);
                 }
+
+                if (piece.Id == settings.Landmarks.MastGlint.Tower)
+                {
+                    StandMastGlint(context, settings, instance, root);
+                }
             }
         }
 
@@ -242,6 +250,85 @@ namespace MoonProject.World.Editor
         }
 
         /// <summary>An unlit glow drawn on <paramref name="node"/>: <paramref name="mesh"/> in <paramref name="material"/>.</summary>
+        /// <summary>
+        /// The radio tower's mast tip in the earthlight under [World]/MastGlint: a sparkle at the top of Art's leaning
+        /// mast (all that shows of the tower over the habitat from the base) and the <see cref="MastGlint"/> that lights
+        /// it. Its normal is baked to throw Earth at the apron's eye, so it calls from the base, as the array's does.
+        /// </summary>
+        private static void StandMastGlint(SceneBuildContext context, WorldSettings settings, GameObject tower,
+            Transform root)
+        {
+            MastGlintSettings glint = settings.Landmarks.MastGlint;
+            Transform mast = null;
+            foreach (Transform node in tower.GetComponentsInChildren<Transform>(true))
+            {
+                if (node.name == glint.Mast)
+                {
+                    mast = node;
+                    break;
+                }
+            }
+
+            Renderer[] renderers = mast != null ? mast.GetComponentsInChildren<Renderer>(true) : null;
+            if (renderers == null || renderers.Length == 0)
+            {
+                throw new System.InvalidOperationException($"World scene build: Art's {glint.Tower} has no " +
+                    $"'{glint.Mast}' mesh for the mast's glint.");
+            }
+
+            Bounds bounds = renderers[0].bounds;
+            foreach (Renderer renderer in renderers)
+            {
+                bounds.Encapsulate(renderer.bounds);
+            }
+
+            // The leaning mast's highest point is its tip: the top of its bounds, over the side it leans to.
+            Vector3 tip = TopOf(renderers, bounds);
+            MoonSurface surface = settings.CreateSurface();
+            Vector2 apron = settings.Surface.Sites.ApronCenter;
+            var eye = new Vector3(apron.x, surface.SampleHeight(apron.x, apron.y) + settings.Landmarks.ReflectorEyeHeight,
+                apron.y);
+            Vector3 normal = (settings.Sky.EarthDirection + (eye - tip).normalized).normalized;
+            GameObject holder = context.CreateChild(MastGlintName, root);
+            holder.transform.SetPositionAndRotation(tip + normal * glint.Lift, Quaternion.identity);
+            Renderer sparkle = Glow(holder, context.LoadAsset<Mesh>(WorldPaths.BeaconHaloMesh),
+                context.LoadAsset<Material>(WorldPaths.MastGlintMaterial));
+            var component = holder.AddComponent<MastGlint>();
+            var serialized = new SerializedObject(component);
+            serialized.FindProperty("_settings").objectReferenceValue = settings;
+            serialized.FindProperty("_sparkle").objectReferenceValue = sparkle;
+            serialized.FindProperty("_normal").vector3Value = normal;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            context.AddSystem(component);
+        }
+
+        // The highest vertex of the meshes, in world space (the bounds' top when a mesh is unreadable).
+        private static Vector3 TopOf(Renderer[] renderers, Bounds bounds)
+        {
+            Vector3 top = bounds.center + Vector3.up * bounds.extents.y;
+            float highest = float.NegativeInfinity;
+            foreach (Renderer renderer in renderers)
+            {
+                var filter = renderer.GetComponent<MeshFilter>();
+                if (filter == null || filter.sharedMesh == null || !filter.sharedMesh.isReadable)
+                {
+                    continue;
+                }
+
+                foreach (Vector3 vertex in filter.sharedMesh.vertices)
+                {
+                    Vector3 world = renderer.transform.TransformPoint(vertex);
+                    if (world.y > highest)
+                    {
+                        highest = world.y;
+                        top = world;
+                    }
+                }
+            }
+
+            return top;
+        }
+
         private static Renderer Glow(GameObject node, Mesh mesh, Material material)
         {
             node.AddComponent<MeshFilter>().sharedMesh = mesh;

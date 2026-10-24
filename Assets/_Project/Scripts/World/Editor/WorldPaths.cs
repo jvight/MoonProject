@@ -36,6 +36,9 @@ namespace MoonProject.World.Editor
         /// <summary>The fallen solar array's four-point sparkle (LofiGlintStar).</summary>
         public const string ArrayGlintMaterial = GeneratedRoot + "/M_ArrayGlint.mat";
 
+        /// <summary>The radio tower's mast tip in the earthlight (LofiGlintStar).</summary>
+        public const string MastGlintMaterial = GeneratedRoot + "/M_MastGlint.mat";
+
         /// <summary>The sunlight laid on the fallen array's cells (LofiGlintSheen).</summary>
         public const string ArrayGlintSheenMaterial = GeneratedRoot + "/M_ArrayGlintSheen.mat";
 

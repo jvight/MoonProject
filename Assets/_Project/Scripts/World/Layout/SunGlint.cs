@@ -33,6 +33,16 @@ namespace MoonProject.World
             return Mathf.Clamp01(sunlit / Mathf.Max(fullAt, 1e-4f));
         }
 
+        /// <summary>
+        /// How dark the sky is for a glint of earthshine with the Sun at <paramref name="towardSun"/>: 0 while the Sun
+        /// is up, easing to 1 once it is <paramref name="fullBelowDegrees"/> under the horizon.
+        /// </summary>
+        public static float Night(Vector3 towardSun, float fullBelowDegrees)
+        {
+            float below = -Mathf.Asin(Mathf.Clamp(towardSun.y, -1f, 1f)) * Mathf.Rad2Deg;
+            return Mathf.Clamp01(below / Mathf.Max(fullBelowDegrees, 1e-3f));
+        }
+
         /// <summary>The glint's slow shimmer at <paramref name="time"/>: 1 - depth .. 1, never two wings alike.</summary>
         public static float Shimmer(float time, float hertz, float depth, float phase)
         {

@@ -42,6 +42,9 @@ namespace MoonProject.World
         [Tooltip("The fallen solar array's glint in the new sunlight (opening v3 R4).")]
         [SerializeField] private ArrayGlintSettings _arrayGlint = new ArrayGlintSettings();
 
+        [Tooltip("The radio tower's mast tip catching the earthlight, so nightfall leads to it (opening v3 B10).")]
+        [SerializeField] private MastGlintSettings _mastGlint = new MastGlintSettings();
+
         [Tooltip("The habitat's power module status lamp, blinking from dusk (opening v3 R4).")]
         [SerializeField] private ModuleLampSettings _moduleLamp = new ModuleLampSettings();
 
@@ -187,6 +190,7 @@ namespace MoonProject.World
         public LanderBeaconSettings LanderBeacon => _landerBeacon;
         public ArrayGlintSettings ArrayGlint => _arrayGlint;
         public ModuleLampSettings ModuleLamp => _moduleLamp;
+        public MastGlintSettings MastGlint => _mastGlint;
 
         public RelayLampSettings RelayLamp => _relayLamp;
         public Relay1SiteSettings Relay1Site => _relay1Site;
