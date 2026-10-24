@@ -730,6 +730,46 @@ MonoBehaviour:
       _offset: {x: -2, y: 9.1}
       _yaw: 320
       _sink: 0.45
+    - _anchor: site.peakroad
+      _id: Rock_13
+      _offset: {x: 1, y: 15}
+      _yaw: 40
+      _sink: 0.9
+    - _anchor: site.peakroad
+      _id: Rock_12
+      _offset: {x: -6.5, y: 13}
+      _yaw: 150
+      _sink: 0.7
+    - _anchor: site.peakroad
+      _id: Rock_12
+      _offset: {x: 8, y: 17.5}
+      _yaw: 260
+      _sink: 0.7
+    - _anchor: site.peakroad
+      _id: Rock_11
+      _offset: {x: -1.5, y: 22}
+      _yaw: 95
+      _sink: 0.6
+    - _anchor: site.peakroad
+      _id: Rock_10
+      _offset: {x: 4.5, y: 24.5}
+      _yaw: 330
+      _sink: 0.5
+    - _anchor: site.peakroad
+      _id: Rock_10
+      _offset: {x: -9, y: 19}
+      _yaw: 20
+      _sink: 0.5
+    - _anchor: site.peakroad
+      _id: Rock_09
+      _offset: {x: -4, y: 10.5}
+      _yaw: 190
+      _sink: 0.4
+    - _anchor: site.peakroad
+      _id: Rock_08
+      _offset: {x: 6, y: 11}
+      _yaw: 120
+      _sink: 0.35
   _skyCycle:
     _dayLengthSeconds: 7200
     _eclipseBreakoutLead: 1
