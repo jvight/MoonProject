@@ -49,6 +49,11 @@ namespace MoonProject.UI
         private readonly BuildField _buildField;
         private readonly GlyphLabels _glyphs;
         private readonly GlyphView _placeGlyph;
+        private readonly VisualElement[] _hudCards;
+        private readonly float _cardGap;
+        private readonly float _screenMargin;
+        private readonly float _followHalfLife;
+        private float _costLift;
         private readonly GlyphView _rotateGlyph;
         private InputDeviceKind _keysDevice;
         private bool _keysWritten;
@@ -141,6 +146,10 @@ namespace MoonProject.UI
             _costReveal.Snap(false);
             _costAnchor = new WorldAnchor(layout.BuildCostAnchor, view, promptSettings.ScreenMargin,
                 promptSettings.FollowHalfLife, true);
+            _hudCards = new[] { layout.BatteryDial, layout.ControlsCard };
+            _cardGap = promptSettings.CardGap;
+            _screenMargin = promptSettings.ScreenMargin;
+            _followHalfLife = promptSettings.FollowHalfLife;
 
             _recipe = new RecipeView(layout.BuildStripRecipe, localization, numbers, haveNeed: false, names: false);
             _cost = new RecipeView(layout.BuildCostRecipe, localization, numbers);
@@ -304,6 +313,45 @@ namespace MoonProject.UI
                                       ? string.Empty
                                       : _layout.BuildRotateGlyphLabel.text + " ") + _layout.BuildRotateWord.text;
 
+        /// <summary>
+        /// A ghost near the screen's corner (an apron at the bottom left) would put its chip over the battery dial or
+        /// the controls card: the chip rises clear of them, easing, as the world's own chip does.
+        /// </summary>
+        private void ClearHud(Vector2 panelSize, float deltaTime, bool snap)
+        {
+            float width = _layout.BuildCost.resolvedStyle.width;
+            float height = _layout.BuildCost.resolvedStyle.height;
+            if (float.IsNaN(width) || width <= 0f || float.IsNaN(height))
+            {
+                return;
+            }
+
+            Vector2 foot = _costAnchor.Screen;
+            var chip = new Rect(foot.x - width * 0.5f, foot.y - height, width, height);
+            var screen = new Rect(Vector2.zero, panelSize);
+            float target = 0f;
+            for (int i = 0; i < _hudCards.Length; i++)
+            {
+                VisualElement card = _hudCards[i];
+                if (card.resolvedStyle.display == DisplayStyle.None || card.resolvedStyle.opacity <= 0f)
+                {
+                    continue;
+                }
+
+                float lift = PromptClearance.Lift(chip, card.worldBound, _cardGap, screen, _screenMargin);
+                chip.y -= lift;
+                target += lift;
+            }
+
+            _costLift = snap ? target
+                : ScreenAnchor.Follow(new Vector2(0f, _costLift), new Vector2(0f, target), _followHalfLife,
+                    deltaTime).y;
+            _costAnchor.Lift = _costLift;
+        }
+
+        /// <summary>The cost chip's rise to clear the HUD's corner cards (tests and captures).</summary>
+        public float CostLift => _costLift;
+
         /// <summary>True while the ghost's cost chip is up (or easing).</summary>
         public bool IsCostShown => !_costReveal.IsHidden;
 
@@ -327,6 +375,10 @@ namespace MoonProject.UI
                 // At the ghost's foot, under the reason chip above it, so the two never stack.
                 onScreen = _costAnchor.Track(controller.CandidatePose.Position, panelSize, deltaTime,
                     _costReveal.IsHidden);
+                if (onScreen)
+                {
+                    ClearHud(panelSize, deltaTime, _costReveal.IsHidden);
+                }
             }
 
             _costReveal.Set(wantsCost && onScreen);
