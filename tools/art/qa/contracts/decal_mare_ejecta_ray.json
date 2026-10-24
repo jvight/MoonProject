@@ -6,7 +6,7 @@
     "R1_Basalt",
     "R1_CreamEnamel"
   ],
-  "max_triangles": 415,
+  "max_triangles": 1144,
   "max_meshes": 2,
   "max_draw_calls": 2,
   "allow_rotation": [],
@@ -58,20 +58,20 @@
   },
   "bounds": {
     "size": [
-      3.652,
-      17.8348,
-      0.02
+      3.6896,
+      17.8,
+      0.013
     ],
-    "tolerance": 0.8917,
+    "tolerance": 0.89,
     "min_size": [
-      2.7603,
-      16.9431,
+      2.7996,
+      16.91,
       0.01
     ],
     "max_size": [
-      4.5437,
-      18.7265,
-      0.9117
+      4.5796,
+      18.69,
+      0.903
     ]
   }
 }

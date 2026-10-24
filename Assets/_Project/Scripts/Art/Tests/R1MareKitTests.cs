@@ -91,7 +91,9 @@ namespace MoonProject.Art.Tests
                 "R1_MareBasalt must have world-space tiling-break detail (_ColorVarAmount >= 0.05).");
             Assert.AreEqual(0f, mareBasalt.GetFloat("_EmissionStrength"), 1e-5f);
 
-            // 2. MareSwirl & MareEjectaRay: zero emission (high-albedo dust only, never glowing)
+            // 2. MareSwirl & MareEjectaRay: feathered alpha-blended decal shader + zero emission (high-albedo dust only, never glowing)
+            Assert.AreEqual(R1MareKitBuilder.MareDecalShaderName, mareSwirl.shader.name);
+            Assert.AreEqual(R1MareKitBuilder.MareDecalShaderName, mareEjectaRay.shader.name);
             Assert.AreEqual(0f, mareSwirl.GetFloat("_EmissionStrength"), 1e-5f);
             Assert.AreEqual(0f, mareEjectaRay.GetFloat("_EmissionStrength"), 1e-5f);
 

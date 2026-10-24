@@ -5,7 +5,7 @@
   "slots": [
     "R1_Basalt"
   ],
-  "max_triangles": 400,
+  "max_triangles": 448,
   "max_meshes": 2,
   "max_draw_calls": 2,
   "allow_rotation": [],
@@ -50,20 +50,20 @@
   },
   "bounds": {
     "size": [
-      7.3161,
-      8.8589,
-      6.06
+      6.4033,
+      7.9563,
+      5.25
     ],
-    "tolerance": 0.4429,
+    "tolerance": 0.3978,
     "min_size": [
-      6.8732,
-      8.416,
-      5.6171
+      6.0055,
+      7.5585,
+      4.8522
     ],
     "max_size": [
-      7.759,
-      9.3018,
-      6.5029
+      6.8011,
+      8.3541,
+      5.6478
     ]
   }
 }

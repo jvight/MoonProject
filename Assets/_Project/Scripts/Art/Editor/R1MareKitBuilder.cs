@@ -73,7 +73,10 @@ namespace MoonProject.Art.Editor
         public const string DerelictMareSurveyDronePrefabPath = GeneratedMareModelsSubfolder + "/Derelict_MareSurveyDrone.prefab";
         public const string DerelictTardigradeCapsulePrefabPath = GeneratedMareModelsSubfolder + "/Derelict_TardigradeCapsule.prefab";
 
-        // Mare Material Asset Paths
+        // Mare Shader & Material Asset Paths
+        public const string MareDecalShaderName = "MoonProject/R1/MareDecal";
+        public const string MareDecalShaderPath = "Assets/_Project/Shaders/R1/R1MareDecal.shader";
+
         public const string MareBasaltMatPath = R1MaterialRecipes.GeneratedMaterialsFolder + "/R1_MareBasalt.mat";
         public const string MareSwirlMatPath = R1MaterialRecipes.GeneratedMaterialsFolder + "/R1_MareSwirl.mat";
         public const string MareEjectaRayMatPath = R1MaterialRecipes.GeneratedMaterialsFolder + "/R1_MareEjectaRay.mat";
@@ -106,6 +109,18 @@ namespace MoonProject.Art.Editor
             AssetDatabase.SaveAssets();
         }
 
+        public static Shader LoadMareDecalShader()
+        {
+            var shader = AssetDatabase.LoadAssetAtPath<Shader>(MareDecalShaderPath);
+            if (shader == null)
+            {
+                throw new InvalidOperationException(
+                    $"R1MareDecal shader is missing at '{MareDecalShaderPath}' ({MareDecalShaderName}).");
+            }
+
+            return shader;
+        }
+
         /// <summary>
         /// Builds all 5 Mare kit specialized materials (<c>R1_MareBasalt</c>, <c>R1_MareSwirl</c>,
         /// <c>R1_MareEjectaRay</c>, <c>R1_Ilmenite</c>, <c>R1_TardigradeWindow</c>) into
@@ -118,96 +133,88 @@ namespace MoonProject.Art.Editor
                 litShader = R1MaterialLibrary.LoadShader();
             }
 
-            // 1. R1_MareBasalt: dark black-blue flood-basalt regolith (#101420..#222B40) with tiling-break detail
+            Shader decalShader = LoadMareDecalShader();
+
+            // 1. R1_MareBasalt: dark blue-black flood-basalt (#1D2332..#2F384E) with subtle fine weathered texture (no checker grid)
             Material mareBasalt = CreateSurfaceMaterial(
                 litShader,
                 "R1_MareBasalt",
                 MareBasaltAlbedoPath,
                 MareBasaltNormalPath,
                 MareBasaltMaskPath,
-                bumpScale: 1.15f,
+                bumpScale: 0.58f,
                 metallicScale: 1.0f,
                 smoothnessScale: 1.0f,
-                smoothnessMin: 0.08f,
-                smoothnessMax: 0.24f,
-                edgeWearColor: new Color32(0x46, 0x52, 0x6C, 0xFF),
-                edgeWearAmount: 0.34f,
+                smoothnessMin: 0.14f,
+                smoothnessMax: 0.28f,
+                edgeWearColor: new Color32(0x7E, 0x8C, 0xAC, 0xFF),
+                edgeWearAmount: 0.50f,
                 edgeWearMetallic: 0.08f,
-                edgeWearSmoothness: 0.22f,
-                dustColor: new Color32(0x36, 0x40, 0x58, 0xFF),
-                dustAmount: 0.28f,
-                dustSmoothness: 0.10f,
-                colorVarScale: 0.62f,
-                colorVarAmount: 0.085f);
+                edgeWearSmoothness: 0.26f,
+                dustColor: new Color32(0x5E, 0x6A, 0x86, 0xFF),
+                dustAmount: 0.54f,
+                dustSmoothness: 0.14f,
+                colorVarScale: 0.55f,
+                colorVarAmount: 0.065f);
+            mareBasalt.SetColor("_BaseColor", new Color(1.78f, 1.84f, 1.98f, 1.0f));
             GeneratedAssets.CreateOrReplace(mareBasalt, MareBasaltMatPath);
 
-            // 2. R1_MareSwirl: high-albedo magnetically shielded lunar swirl ribbon (#D0D6E4), matte, zero emission
-            Material mareSwirl = CreateSurfaceMaterial(
-                litShader,
+            // 2. R1_MareSwirl: soft, sinuous, feathered pale swirl decal on dark basalt (alpha-blended, zero hard polygon edges)
+            Material mareSwirl = CreateDecalMaterial(
+                decalShader,
                 "R1_MareSwirl",
                 MareSwirlAlbedoPath,
                 MareSwirlNormalPath,
                 MareSwirlMaskPath,
-                bumpScale: 0.85f,
-                metallicScale: 0.0f,
-                smoothnessScale: 1.0f,
-                smoothnessMin: 0.04f,
-                smoothnessMax: 0.12f,
-                edgeWearColor: new Color32(0xD8, 0xDF, 0xEC, 0xFF),
-                edgeWearAmount: 0.18f,
-                edgeWearMetallic: 0.0f,
-                edgeWearSmoothness: 0.08f,
-                dustColor: new Color32(0xC8, 0xCE, 0xDC, 0xFF),
-                dustAmount: 0.32f,
-                dustSmoothness: 0.07f,
-                colorVarScale: 0.85f,
-                colorVarAmount: 0.045f);
+                baseColor: new Color(0.95f, 0.97f, 1.00f, 1.00f),
+                bumpScale: 0.35f,
+                smoothness: 0.06f,
+                dustColor: new Color32(0xA4, 0xAE, 0xC4, 0xFF),
+                dustAmount: 0.16f,
+                wearColor: new Color32(0xE8, 0xEE, 0xFA, 0xFF),
+                wearAmount: 0.14f,
+                opacity: 0.94f);
             GeneratedAssets.CreateOrReplace(mareSwirl, MareSwirlMatPath);
 
-            // 3. R1_MareEjectaRay: directional pale ejecta-ray wayfinding dust streaks (#4A5264..#686E82), zero emission
-            Material mareEjectaRay = CreateSurfaceMaterial(
-                litShader,
+            // 3. R1_MareEjectaRay: soft, streaky radial ejecta dust rays (alpha-blended, zero hard polygon edges)
+            Material mareEjectaRay = CreateDecalMaterial(
+                decalShader,
                 "R1_MareEjectaRay",
                 MareEjectaRayAlbedoPath,
                 MareEjectaRayNormalPath,
                 MareEjectaRayMaskPath,
-                bumpScale: 0.95f,
-                metallicScale: 0.25f,
-                smoothnessScale: 1.0f,
-                smoothnessMin: 0.06f,
-                smoothnessMax: 0.15f,
-                edgeWearColor: new Color32(0x68, 0x6E, 0x82, 0xFF),
-                edgeWearAmount: 0.20f,
-                edgeWearMetallic: 0.02f,
-                edgeWearSmoothness: 0.10f,
-                dustColor: new Color32(0x4A, 0x52, 0x64, 0xFF),
-                dustAmount: 0.28f,
-                dustSmoothness: 0.09f,
-                colorVarScale: 0.72f,
-                colorVarAmount: 0.055f);
+                baseColor: new Color(0.88f, 0.92f, 0.98f, 1.00f),
+                bumpScale: 0.30f,
+                smoothness: 0.06f,
+                dustColor: new Color32(0x58, 0x62, 0x78, 0xFF),
+                dustAmount: 0.18f,
+                wearColor: new Color32(0xA0, 0xAA, 0xC0, 0xFF),
+                wearAmount: 0.12f,
+                opacity: 0.85f);
             GeneratedAssets.CreateOrReplace(mareEjectaRay, MareEjectaRayMatPath);
 
-            // 4. R1_Ilmenite: stepped FeTiO3 drill-target ore (#181A22 base, warm bronze-black #6E5849 & gunmetal glint, non-emissive)
+            // 4. R1_Ilmenite: natural FeTiO3 drill-target ore (#232834 base, calm bronze-gunmetal metallic sheen, non-emissive)
             Material ilmenite = CreateSurfaceMaterial(
                 litShader,
                 "R1_Ilmenite",
                 IlmeniteAlbedoPath,
                 IlmeniteNormalPath,
                 IlmeniteMaskPath,
-                bumpScale: 1.25f,
+                bumpScale: 0.65f,
                 metallicScale: 1.0f,
                 smoothnessScale: 1.0f,
-                smoothnessMin: 0.28f,
-                smoothnessMax: 0.64f,
-                edgeWearColor: new Color32(0x8E, 0x74, 0x58, 0xFF),
-                edgeWearAmount: 0.64f,
-                edgeWearMetallic: 0.88f,
+                smoothnessMin: 0.35f,
+                smoothnessMax: 0.65f,
+                edgeWearColor: new Color32(0xAC, 0x92, 0x74, 0xFF),
+                edgeWearAmount: 0.54f,
+                edgeWearMetallic: 0.90f,
                 edgeWearSmoothness: 0.62f,
-                dustColor: new Color32(0x2E, 0x36, 0x4A, 0xFF),
-                dustAmount: 0.14f,
-                dustSmoothness: 0.10f,
-                colorVarScale: 1.40f,
+                dustColor: new Color32(0x46, 0x50, 0x66, 0xFF),
+                dustAmount: 0.24f,
+                dustSmoothness: 0.12f,
+                colorVarScale: 0.85f,
                 colorVarAmount: 0.035f);
+            ilmenite.SetColor("_BaseColor", new Color(1.58f, 1.52f, 1.46f, 1.0f));
             GeneratedAssets.CreateOrReplace(ilmenite, IlmeniteMatPath);
 
             // 5. R1_TardigradeWindow: tiny warm amber dormant life-support viewport (bloom-safe < Palette.BloomThreshold)
@@ -381,6 +388,55 @@ namespace MoonProject.Art.Editor
             mat.SetFloat("_ColorVarScale", colorVarScale);
             mat.SetFloat("_ColorVarAmount", colorVarAmount);
 
+            mat.SetColor("_EmissionColor", Color.black);
+            mat.SetFloat("_EmissionStrength", 0.0f);
+            return mat;
+        }
+
+        private static Material CreateDecalMaterial(
+            Shader decalShader,
+            string name,
+            string albedoPath,
+            string normalPath,
+            string maskPath,
+            Color baseColor,
+            float bumpScale,
+            float smoothness,
+            Color32 dustColor,
+            float dustAmount,
+            Color32 wearColor,
+            float wearAmount,
+            float opacity)
+        {
+            var albedo = AssetDatabase.LoadAssetAtPath<Texture2D>(albedoPath);
+            var normal = AssetDatabase.LoadAssetAtPath<Texture2D>(normalPath);
+            var mask = AssetDatabase.LoadAssetAtPath<Texture2D>(maskPath);
+            if (albedo == null || normal == null || mask == null)
+            {
+                throw new InvalidOperationException(
+                    $"R1MareKitBuilder: Missing required texture(s) for '{name}' at '{albedoPath}', '{normalPath}', or '{maskPath}'.");
+            }
+
+            var mat = new Material(decalShader)
+            {
+                name = name,
+                enableInstancing = true,
+            };
+
+            mat.SetTexture("_BaseMap", albedo);
+            mat.SetColor("_BaseColor", baseColor);
+            mat.SetTexture("_BumpMap", normal);
+            mat.SetFloat("_BumpScale", bumpScale);
+            mat.SetTexture("_MaskMap", mask);
+            mat.SetFloat("_Smoothness", smoothness);
+            mat.SetFloat("_Metallic", 0.0f);
+            mat.SetColor("_DustColor", dustColor);
+            mat.SetFloat("_DustAmount", dustAmount);
+            mat.SetColor("_WearColor", wearColor);
+            mat.SetFloat("_WearAmount", wearAmount);
+            mat.SetFloat("_AOStrength", 0.30f);
+            mat.SetFloat("_MicroVariation", 0.08f);
+            mat.SetFloat("_Opacity", opacity);
             mat.SetColor("_EmissionColor", Color.black);
             mat.SetFloat("_EmissionStrength", 0.0f);
             return mat;

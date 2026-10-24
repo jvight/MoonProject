@@ -12,7 +12,7 @@
     "R1_Signage",
     "R1_WhitePaint"
   ],
-  "max_triangles": 1155,
+  "max_triangles": 1224,
   "max_meshes": 5,
   "max_draw_calls": 9,
   "allow_rotation": [],
@@ -92,20 +92,20 @@
   },
   "bounds": {
     "size": [
-      1.0725,
-      1.0016,
-      0.5517
+      1.0213,
+      0.9541,
+      0.554
     ],
-    "tolerance": 0.0536,
+    "tolerance": 0.0511,
     "min_size": [
-      1.0189,
-      0.948,
-      0.4981
+      0.9702,
+      0.903,
+      0.5029
     ],
     "max_size": [
-      1.1261,
-      1.0552,
-      0.6053
+      1.0724,
+      1.0052,
+      0.6051
     ]
   }
 }

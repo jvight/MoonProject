@@ -14,7 +14,7 @@
     "R1_OrangeStripe",
     "R1_Signage"
   ],
-  "max_triangles": 1571,
+  "max_triangles": 2120,
   "max_meshes": 6,
   "max_draw_calls": 12,
   "allow_rotation": [],
@@ -94,20 +94,20 @@
   },
   "bounds": {
     "size": [
-      1.6496,
-      2.0837,
-      0.8997
+      1.6388,
+      2.0807,
+      0.8978
     ],
-    "tolerance": 0.1042,
+    "tolerance": 0.104,
     "min_size": [
-      1.5454,
-      1.9795,
-      0.7955
+      1.5348,
+      1.9767,
+      0.7938
     ],
     "max_size": [
-      1.7538,
-      2.1879,
-      1.0039
+      1.7428,
+      2.1847,
+      1.0018
     ]
   }
 }

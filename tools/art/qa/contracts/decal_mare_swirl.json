@@ -5,7 +5,7 @@
   "slots": [
     "R1_CreamEnamel"
   ],
-  "max_triangles": 1188,
+  "max_triangles": 2384,
   "max_meshes": 2,
   "max_draw_calls": 2,
   "allow_rotation": [],
@@ -57,20 +57,20 @@
   },
   "bounds": {
     "size": [
-      7.1728,
-      17.2628,
-      0.022
+      6.8874,
+      17.26,
+      0.014
     ],
-    "tolerance": 0.8631,
+    "tolerance": 0.863,
     "min_size": [
-      6.3097,
-      16.3997,
+      6.0244,
+      16.397,
       0.01
     ],
     "max_size": [
-      8.0359,
-      18.1259,
-      0.8851
+      7.7504,
+      18.123,
+      0.877
     ]
   }
 }
