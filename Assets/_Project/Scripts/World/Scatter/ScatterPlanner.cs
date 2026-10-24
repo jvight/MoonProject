@@ -164,7 +164,7 @@ namespace MoonProject.World
             }
 
             if (_surface.Canyon.Bounds.Contains(new Vector2(x, z))
-                && (_surface.Sample(x, z).Chasm > 0f || (_surface.Canyon.TryFloor(x, z, out bool _, out float _,
+                && (_surface.Sample(x, z).Chasm > 0f || (_surface.Canyon.TryFloor(x, z, out CanyonCorridor _, out float _,
                     out float centre) && centre < _settings.CanyonPebbleClear)))
             {
                 return 0f;
