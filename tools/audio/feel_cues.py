@@ -295,29 +295,6 @@ def charge_brace(_variant, gen):
     return filters.lowpass(mix, 3500.0)
 
 
-CHARGE_WHINE_LOOP_S = 2.0
-
-
-def charge_whine(_variant, _gen):
-    """The capacitor whine on D5: a soft sine with a filtered-saw edge, steady and seamless; the runtime glides its
-    pitch up the stages (D -> A -> D') and back down on a drain."""
-    n = samples(CHARGE_WHINE_LOOP_S)
-    d5 = loop_freq(note_freq("D5"), n)
-    edge = periodic(osc.saw(n, d5), lambda x: filters.lowpass(x, 1800.0))
-    tone = (osc.sine(n, d5) + 0.25 * edge) * envelope.lfo(n, 6.0 / CHARGE_WHINE_LOOP_S, 0.06, 0.94)
-    return periodic(0.12 * tone, lambda x: filters.lowpass(x, 3000.0))
-
-
-CHARGE_HUM_LOOP_S = 3.0
-
-
-def charge_hum(_variant, _gen):
-    """The low hum on D under the charge, swelling with the stages (the runtime sets its level). Seamless."""
-    n = samples(CHARGE_HUM_LOOP_S)
-    tone = osc.additive(n, loop_freq(note_freq("D2"), n), [(1, 1.0), (2, 0.45), (3, 0.12)])
-    return periodic(0.2 * tone, lambda x: filters.lowpass(x, 500.0))
-
-
 def charge_detent(_variant, gen):
     """A charge stage locking (the owner's "Cells" charge-up): a capacitor cell's glass sleeve sliding forward (a
     short, smooth glassy slide), then the discrete detent click, small and mechanical."""
@@ -347,27 +324,6 @@ def charge_lock(_variant, gen):
 
 
 # ------------------------------------------------------------------------------------- 0.5.5 D: scanning (section 1)
-
-SCAN_SWEEP_LOOP_S = 2.0
-SCAN_STEP_NOTES = ("D5", "E5", "F#5", "A5")
-
-
-def scan_sweep(_variant, gen):
-    """The lens's fan of light sweeping a fragment: a soft airy tone on D5 with a slow shimmer, quiet and calm. The
-    runtime steps its pitch up the pentatonic at each 25% (D -> E -> F# -> A). Seamless."""
-    n = samples(SCAN_SWEEP_LOOP_S)
-    d5 = loop_freq(note_freq("D5"), n)
-    tone = osc.sine(n, d5) + 0.2 * osc.sine(n, 2.0 * d5)
-    air = periodic(noise.white(n, gen), lambda x: filters.bandpass(noise.pink_filter(x), 2200.0, 1.2))
-    air = air / max(float(np.std(air)), 1e-9)
-    tone *= envelope.lfo(n, 4.0 / SCAN_SWEEP_LOOP_S, 0.15, 0.85)
-    return periodic(0.08 * tone + 0.01 * air, lambda x: filters.lowpass(x, 3500.0))
-
-
-def scan_step(variant, _gen):
-    """A quarter of a scan drawn: a small glass note on the next step (D E F# A)."""
-    return filters.lowpass(0.4 * _glass(note_freq(SCAN_STEP_NOTES[variant]), 0.5), 5500.0)
-
 
 def scan_liftoff(_variant, _gen):
     """The dissolve: the line drawing unthreads and streams into 07's lens. A soft rising shimmer (D5 -> D6 glide

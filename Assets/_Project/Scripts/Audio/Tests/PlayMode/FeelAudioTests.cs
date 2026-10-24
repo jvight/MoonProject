@@ -258,6 +258,19 @@ namespace MoonProject.Audio.PlayModeTests
         }
 
         [Test]
+        public void AReminder_ArrivesSofterThanANewLine()
+        {
+            _rig.Events.Publish(new NextStepChanged("test.step.next", NextLineReason.Next, default, false, false,
+                string.Empty, Vector3.zero));
+            float next = _rig.Director.LastVoice.volume;
+            _rig.Events.Publish(new NextStepChanged(string.Empty));
+            _rig.Events.Publish(new NextStepChanged("test.step.next", NextLineReason.Reminder, default, false, false,
+                string.Empty, Vector3.zero));
+            Assert.AreEqual("ui_next_line", LastClip);
+            Assert.Less(_rig.Director.LastVoice.volume, next, "a reminder is felt, never louder than a new line");
+        }
+
+        [Test]
         public void ABigHaul_RollsOnSoftly_AndItsLastUnitAlwaysTicks()
         {
             int plays = _rig.Director.PlayCount;

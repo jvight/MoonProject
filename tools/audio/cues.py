@@ -20,6 +20,7 @@ from sampled import boot as sampled_boot
 from sampled import call as sampled_call
 from sampled import face as sampled_face
 from sampled import rover as sampled_rover
+from sampled import tool as sampled_tool
 from sampled import picks
 import feel_cues as feel
 
@@ -785,18 +786,22 @@ CUES = (
                             "notch, like a tape head stepping."),
     Cue("sheet_complete", "stinger_2d", feel.sheet_complete, volume=(0.45, 0.45), milestone="M3", tonal=True,
         notes="0.5.5 D: a blueprint's sheet complete: a soft rising D major arpeggio on felt piano."),
-    Cue("scan_sweep", "loop_3d", feel.scan_sweep, loop=True, file_stem="scan_sweep_loop", volume=(0.5, 0.5),
-        milestone="M3", notes="0.5.5 D: the lens's fan sweeping a fragment; pitch steps D E F# A per 25%. 2 s loop."),
-    Cue("scan_step", "oneshot_3d", feel.scan_step, variants=len(feel.SCAN_STEP_NOTES), volume=(0.5, 0.5),
-        milestone="M3", tonal=True, notes="0.5.5 D: a quarter of the scan drawn: a glass note D E F# A."),
+    Cue("scan_sweep", "loop_3d", picks.renderer("scan_sweep"), loop=True, file_stem="scan_sweep_loop",
+        volume=(0.5, 0.5), milestone="M3", sampled=True,
+        notes="The lens's fan: a real small motor on D5 and a breath of air; pitch steps D E F# A per 25%. 2 s loop."),
+    Cue("scan_step", "oneshot_3d", picks.renderer("scan_step"), variants=len(sampled_tool.SCAN_STEP_NOTES),
+        volume=(0.4, 0.4), milestone="M3", tonal=True, sampled=True,
+        notes="A quarter of the scan drawn: a tap on the lens collar and struck metal ringing on D E F# A."),
     Cue("scan_liftoff", "oneshot_3d", feel.scan_liftoff, volume=(0.6, 0.6), milestone="M3",
         notes="0.5.5 D: the dissolve into the lens: a rising shimmer and a flare chime on F#6."),
     Cue("charge_brace", "oneshot_3d", feel.charge_brace, volume=(0.6, 0.6), milestone="M3",
         notes="0.5.5 E: 07 bracing before a fresh charge: servo chunk and wheel-lock clack."),
-    Cue("charge_whine", "loop_3d", feel.charge_whine, loop=True, file_stem="charge_whine_loop", volume=(0.5, 0.5),
-        milestone="M3", notes="0.5.5 E: the capacitor whine on D5; pitch glides D -> A -> D' at runtime. 2 s seamless."),
-    Cue("charge_hum", "loop_3d", feel.charge_hum, loop=True, file_stem="charge_hum_loop", volume=(0.55, 0.55),
-        milestone="M3", notes="0.5.5 E: the low hum on D under the charge, level by stage. 3 s seamless."),
+    Cue("charge_whine", "loop_3d", picks.renderer("charge_whine"), loop=True, file_stem="charge_whine_loop",
+        volume=(0.42, 0.42), milestone="M3", sampled=True,
+        notes="The capacitor whine: a real small motor held on D5; pitch glides D -> A -> D' at runtime. 2 s seamless."),
+    Cue("charge_hum", "loop_3d", picks.renderer("charge_hum"), loop=True, file_stem="charge_hum_loop",
+        volume=(0.55, 0.55), milestone="M3", sampled=True,
+        notes="The low hum under the charge: the mains hum carried to D2, level by stage. 3 s seamless."),
     Cue("charge_detent", "tick_3d", feel.charge_detent, volume=(0.6, 0.6), milestone="M3",
         notes="0.5.5 E: a charge stage locking: a cell sleeve slides, then the detent click."),
     Cue("charge_lock", "oneshot_3d", feel.charge_lock, volume=(0.6, 0.6), milestone="M3",
@@ -846,9 +851,9 @@ CUES = (
         notes="A frame set down on regolith: an instrument case dropped, a steel ring tuned to D2, the feet latching."),
     Cue("build_snap", "tick_3d", picks.renderer("build_snap"), volume=(0.9, 0.9), milestone="M3", sampled=True,
         notes="The ghost aligning: a latch button and a vintage click, a ball detent dropping into its seat."),
-    Cue("build_weld_loop", "loop_3d", picks.renderer("build_weld_loop"), loop=True, volume=(0.72, 0.72),
-        milestone="M3", sampled=True, notes="The weld: a real arc buzz slowed and warmed, sparse crackle, a low hum on "
-                                            "D. 4 s seamless."),
+    Cue("build_weld_loop", "loop_3d", picks.renderer("build_weld_loop"), loop=True, volume=(0.62, 0.62),
+        milestone="M3", sampled=True, notes="The weld: a real arc buzz slowed and warmed under 2.4 kHz, sparse "
+                                            "crackle, a low hum on D. 4 s seamless."),
     Cue("build_structure_complete", "oneshot_3d", picks.renderer("build_structure_complete"), volume=(0.71, 0.71),
         milestone="M3", sampled=True, notes="The last weld cools: a case latch, a relay and 07's done tone onto A."),
     Cue("structure_power_on", "oneshot_3d", picks.renderer("structure_power_on"), volume=(0.6, 0.6), milestone="M3",
