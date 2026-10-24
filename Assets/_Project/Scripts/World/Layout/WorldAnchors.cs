@@ -39,6 +39,10 @@ namespace MoonProject.World
         private const float ExitRadius = 2.5f;
         private const float ExitTopSetback = 4f;
 
+        // The slot's mouth anchor stands this far in, its clear ground this far short of the walls' feet.
+        private const float SlotMouthSetback = 2f;
+        private const float SlotWallClear = 1.5f;
+
         // The dead charging post's own footprint on the wake pad, kept clear of rocks and props.
         private const float WakeRadius = 1.5f;
 
@@ -51,6 +55,18 @@ namespace MoonProject.World
         /// The foot of the Peak road on the basin floor, facing up it toward The Peak (databank entry 3).
         /// </summary>
         public const string PeakRoad = WorldAnchorIds.SitePrefix + "peakroad";
+
+        /// <summary>
+        /// The shadowed slot's mouth on the basin floor beside relay.2, facing in: black to 07's stock lamps, the
+        /// headlamp's first purpose (base-home-and-crater-exits §4).
+        /// </summary>
+        public const string CanyonSlot = "canyon.slot";
+
+        /// <summary>
+        /// The round bay at the slot's dark end, facing on along it: kept empty for the crew's supply lander and its
+        /// Field Charge Pylon (Gameplay and Art, later).
+        /// </summary>
+        public const string CanyonSupplyBay = "canyon.supplybay";
 
         /// <summary>The fallen solar array's footprint off the ruins, facing away from the apron.</summary>
         public const string FallenArray = "place.fallenarray";
@@ -107,6 +123,12 @@ namespace MoonProject.World
             float exitTop = canyon.ExitStepArc + Canyon.SlabHalfDepth + ExitTopSetback;
             anchors.Add(Make(surface, WorldAnchorIds.CanyonExit, exit.PointAt(exitTop), -exit.TangentAt(exitTop),
                 ExitRadius));
+
+            CanyonPath slot = canyon.SlotPath;
+            anchors.Add(Make(surface, CanyonSlot, slot.PointAt(SlotMouthSetback), slot.TangentAt(SlotMouthSetback),
+                settings.SlotHalfWidth - SlotWallClear));
+            anchors.Add(Make(surface, CanyonSupplyBay, canyon.SlotBayCentre, slot.TangentAt(slot.EndArc),
+                settings.SlotBayRadius - TerminusWallGap));
 
             Vector2 westMast = relays.WestMast;
             anchors.Add(Make(surface, WorldAnchorIds.RelayPrefix + 1, westMast, -westMast, relays.PadRadius));
