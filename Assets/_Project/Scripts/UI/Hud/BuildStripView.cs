@@ -380,7 +380,9 @@ namespace MoonProject.UI
             if (ghost != _renderersOf)
             {
                 _renderersOf = ghost;
-                ghost.GetComponentsInChildren(false, _ghostRenderers);
+                // Inactive ones too: a stage or part may switch on after the ghost appears; each frame counts only
+                // the renderers showing.
+                ghost.GetComponentsInChildren(true, _ghostRenderers);
             }
 
             bool any = false;
