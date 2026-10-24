@@ -140,6 +140,7 @@ namespace MoonProject.Autoplay
 
             float budget = _budgets.TryGetValue(beat, out float own) ? own : DefaultBudgetSeconds;
             _bot.Idle();
+            _bot.World.Ui.ObjectiveLineSteady();
             string shotStart = "naive-" + beat + "-0s";
             _bot.Shot(shotStart);
             float start = Time.time;
@@ -210,7 +211,7 @@ namespace MoonProject.Autoplay
                 other = other ?? "build chip '" + cost + "'";
             }
 
-            string line = ui.ObjectiveLine();
+            string line = ui.ObjectiveLineSteady();
             if (line.Length > 0)
             {
                 if (action == null || Contains(line, action.LineWords))

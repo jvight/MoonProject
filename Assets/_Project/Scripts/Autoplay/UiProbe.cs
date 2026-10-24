@@ -29,6 +29,7 @@ namespace MoonProject.Autoplay
         public const string FaceDevicePrefix = "seven-device-";
 
         private readonly VisualElement _root;
+        private readonly FadeWatch _lineFade = new FadeWatch();
         private VisualElement _face;
 
         public UiProbe(VisualElement root, VisualElement face)
@@ -89,6 +90,22 @@ namespace MoonProject.Autoplay
         public string ObjectiveLine()
         {
             return TextOf("next-line", "next-line-text");
+        }
+
+        /// <summary>
+        /// The objective line while it is shown or showing, else empty: a line in its fade-out is leaving, so it is
+        /// ignored. Read it once a frame; the first frame it is seen only starts the watch.
+        /// </summary>
+        public string ObjectiveLineSteady()
+        {
+            VisualElement shell = _root.Q<VisualElement>("next-line");
+            if (!IsShown(shell))
+            {
+                _lineFade.Reset();
+                return string.Empty;
+            }
+
+            return _lineFade.Steady(OpacityOf(shell), Time.frameCount) ? ObjectiveLine() : string.Empty;
         }
 
         /// <summary>
@@ -273,6 +290,17 @@ namespace MoonProject.Autoplay
             VisualElement shell = _root.Q<VisualElement>(container);
             Label text = _root.Q<Label>(label);
             return IsShown(shell) && text != null ? text.text ?? string.Empty : string.Empty;
+        }
+
+        private static float OpacityOf(VisualElement element)
+        {
+            float opacity = 1f;
+            for (VisualElement e = element; e != null; e = e.parent)
+            {
+                opacity *= e.resolvedStyle.opacity;
+            }
+
+            return opacity;
         }
 
         private static bool IsShown(VisualElement element)
