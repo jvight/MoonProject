@@ -392,6 +392,7 @@ namespace MoonProject.Gameplay
             var hints = new InteractionHints(_salvage, Containers, Scans, _building, services.Beam, Cutter,
                 services.Pickups, firstUse, Tow, Relay, RackView, Answer, RackAssembly);
             Hints = hints;
+            Opening.ConnectHints(hints);
             FirstUsePointer = new FirstUsePointer(context.Events, hints, services.Rig,
                 _building.Tuning.FirstUseGazePriority, _building.Tuning.FirstUseAskIntensity);
             RangeRing = new RangeRingField(context.Events, _battery.Tuning.RangeRing,

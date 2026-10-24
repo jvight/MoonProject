@@ -377,7 +377,8 @@ namespace MoonProject.Gameplay
             _shownFor = 0f;
             _showSeconds = seconds;
             RoverAction action = OpeningKeys.KeyOf(key);
-            bool showsKey = action != default && !_keys.UsedWithin(action, _timing.KeyFreshSeconds);
+            bool showsKey = action != default && !_keys.UsedWithin(action, _timing.KeyFreshSeconds) &&
+                            _game.CanAct(key);
             bool hasTarget = _game.TryGetPlace(key, out string placeId, out Vector3 place);
             _events.Publish(new NextStepChanged(key, reason, action, showsKey, hasTarget, placeId, place));
         }
