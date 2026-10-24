@@ -7,8 +7,9 @@ namespace MoonProject.UI
     /// Where the build ghost's chip (its cost and keys) stands on the screen (pure, EditMode-tested): never over the
     /// ghost, so the thing being placed is always fully seen, and never over the HUD's corner cards. It tries below the
     /// ghost, then above it, then to its right, then to its left, each kept inside the safe area; the first spot that
-    /// meets neither the ghost nor a card wins. When none fits (a ghost that fills the view), the chip docks to a fixed
-    /// slot low in the middle of the screen.
+    /// meets neither the ghost, a card nor 07 wins. If every side meets 07, 07 gives way first: the first spot clear of
+    /// the ghost and the cards wins. When none fits (a ghost that fills the view), the chip docks to a fixed slot low in
+    /// the middle of the screen.
     /// </summary>
     internal static class GhostChipPlacement
     {
@@ -18,31 +19,37 @@ namespace MoonProject.UI
         /// <param name="safe">The area the chip must stay inside (the panel less its margin).</param>
         /// <param name="gap">Space kept between the chip and the ghost or a card.</param>
         /// <param name="cards">HUD cards the chip must not cover.</param>
-        public static Vector2 Place(Rect ghost, Vector2 chip, Rect safe, float gap, IReadOnlyList<Rect> cards)
+        /// <param name="rover">07 on the screen: kept clear when a side allows it (a zero-size rect when 07 is off it).</param>
+        public static Vector2 Place(Rect ghost, Vector2 chip, Rect safe, float gap, IReadOnlyList<Rect> cards,
+            Rect rover)
         {
-            float centreX = ghost.center.x - chip.x * 0.5f;
-            float centreY = ghost.center.y - chip.y * 0.5f;
-            if (TryAt(new Vector2(centreX, ghost.yMax + gap), ghost, chip, safe, gap, cards, out Vector2 below))
+            bool roverShown = rover.width > 0f && rover.height > 0f;
+            if (roverShown && TrySides(ghost, chip, safe, gap, cards, rover, true, out Vector2 clearOf07))
             {
-                return below;
+                return clearOf07;
             }
 
-            if (TryAt(new Vector2(centreX, ghost.yMin - gap - chip.y), ghost, chip, safe, gap, cards, out Vector2 above))
+            if (TrySides(ghost, chip, safe, gap, cards, rover, false, out Vector2 at))
             {
-                return above;
-            }
-
-            if (TryAt(new Vector2(ghost.xMax + gap, centreY), ghost, chip, safe, gap, cards, out Vector2 right))
-            {
-                return right;
-            }
-
-            if (TryAt(new Vector2(ghost.xMin - gap - chip.x, centreY), ghost, chip, safe, gap, cards, out Vector2 left))
-            {
-                return left;
+                return at;
             }
 
             return Clamp(new Vector2(safe.center.x - chip.x * 0.5f, safe.yMax - chip.y), chip, safe);
+        }
+
+        private static bool TrySides(Rect ghost, Vector2 chip, Rect safe, float gap, IReadOnlyList<Rect> cards,
+            Rect rover, bool avoidRover, out Vector2 at)
+        {
+            float centreX = ghost.center.x - chip.x * 0.5f;
+            float centreY = ghost.center.y - chip.y * 0.5f;
+            return TryAt(new Vector2(centreX, ghost.yMax + gap), ghost, chip, safe, gap, cards, rover, avoidRover,
+                       out at) ||
+                   TryAt(new Vector2(centreX, ghost.yMin - gap - chip.y), ghost, chip, safe, gap, cards, rover,
+                       avoidRover, out at) ||
+                   TryAt(new Vector2(ghost.xMax + gap, centreY), ghost, chip, safe, gap, cards, rover, avoidRover,
+                       out at) ||
+                   TryAt(new Vector2(ghost.xMin - gap - chip.x, centreY), ghost, chip, safe, gap, cards, rover,
+                       avoidRover, out at);
         }
 
         /// <summary>The smallest screen rect around <paramref name="points"/> (the ghost's projected corners).</summary>
@@ -60,11 +67,11 @@ namespace MoonProject.UI
         }
 
         private static bool TryAt(Vector2 wanted, Rect ghost, Vector2 chip, Rect safe, float gap,
-            IReadOnlyList<Rect> cards, out Vector2 at)
+            IReadOnlyList<Rect> cards, Rect rover, bool avoidRover, out Vector2 at)
         {
             at = Clamp(wanted, chip, safe);
             var rect = new Rect(at, chip);
-            if (Meets(rect, ghost, gap))
+            if (Meets(rect, ghost, gap) || (avoidRover && Meets(rect, rover, gap)))
             {
                 return false;
             }

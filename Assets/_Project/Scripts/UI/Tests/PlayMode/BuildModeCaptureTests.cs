@@ -421,6 +421,7 @@ namespace MoonProject.UI.PlayModeTests
                     yield return SettleUi(0.8f);
                     build.SetAimPointOverride(spot);
                     Assert.IsTrue(_ui.BuildStrip.Pick(card), "the card is picked");
+                    // Judged at rest: the chip eases to its place, so give it well over its follow half-life.
                     yield return SettleUi(1.2f);
                     string name = "ghost-chip-" + build.Controller.SelectedStructure.Id + "-" + size.x + "x" + size.y;
                     Assert.AreEqual(BuildModeState.Placing, build.State, name);
@@ -428,6 +429,9 @@ namespace MoonProject.UI.PlayModeTests
                     Assert.IsFalse(_ui.BuildStrip.CostScreenRect.Overlaps(_ui.BuildStrip.GhostScreenRect),
                         $"{name}: the chip {_ui.BuildStrip.CostScreenRect} covers the ghost " +
                         $"{_ui.BuildStrip.GhostScreenRect}");
+                    Assert.IsFalse(_ui.BuildStrip.CostScreenRect.Overlaps(_ui.BuildStrip.RoverScreenRect),
+                        $"{name}: with a side free, the settled chip {_ui.BuildStrip.CostScreenRect} keeps off 07 " +
+                        $"{_ui.BuildStrip.RoverScreenRect}");
                     yield return CaptureComposite(viewCamera, name);
                     yield return Tap(_keyboard.escapeKey);
                     yield return SettleUi(0.6f);

@@ -65,6 +65,14 @@ namespace MoonProject.UI
         [Range(0f, 100f)]
         [SerializeField] private float _cardGap = 18f;
 
+        [Tooltip("Metres around 07's centre (sideways) that the build ghost's chip keeps clear of when a side allows it.")]
+        [Range(0.3f, 3f)]
+        [SerializeField] private float _roverClearRadius = 1.1f;
+
+        [Tooltip("Metres of 07's height above the ground that the build ghost's chip keeps clear of.")]
+        [Range(0.5f, 3f)]
+        [SerializeField] private float _roverClearHeight = 1.7f;
+
         public RevealSettings Reveal => _reveal;
 
         public PromptEntry[] Entries => _entries;
@@ -84,6 +92,10 @@ namespace MoonProject.UI
         public float ScreenMargin => _screenMargin;
 
         public float CardGap => _cardGap;
+
+        public float RoverClearRadius => _roverClearRadius;
+
+        public float RoverClearHeight => _roverClearHeight;
 
         /// <summary>The entry teaching <paramref name="kind"/>, or null when that kind has no prompt.</summary>
         public PromptEntry Find(InteractionKind kind)

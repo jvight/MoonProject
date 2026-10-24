@@ -425,8 +425,8 @@ namespace MoonProject.UI
                 services.Catalog, services.Events, _roverDiagram);
             _salvageRing = new SalvageRing(_layout, _tuning.Salvage, _tuning.Prompts, services.Salvage, services.View);
             _buildStrip = new BuildStripView(_layout, _tuning.BuildStripReveal, _tuning.Prompts, _localization,
-                _numbers, services.Materials, services.View, _glyphs, services.Events, services.BuildField,
-                _structureIcons, services.WeldEnergy);
+                _numbers, services.Materials, services.View, services.Rover, _glyphs, services.Events,
+                services.BuildField, _structureIcons, services.WeldEnergy);
             _cargo = new CargoScreen(_layout, _tuning.Cargo, _localization, services.Hold, services.Systems,
                 _roverDiagram, _glyphs, _numbers, services.Events, _ledger);
             _postLog = new PostLog(_tuning.Post);
