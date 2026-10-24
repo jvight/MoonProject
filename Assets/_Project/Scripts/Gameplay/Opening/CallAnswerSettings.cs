@@ -76,16 +76,26 @@ namespace MoonProject.Gameplay
         [ColorUsage(false, true)]
         [SerializeField] private Color _pulseColor = new Color(0.5f, 0.95f, 1.6f, 1f);
 
-        [Tooltip("Radii (m) the glint on the Peak's dish grows from and to.")]
-        [SerializeField] private Vector2 _glintRadius = new Vector2(4f, 40f);
+        [Tooltip("Half-size (degrees of view) of the glint on the Peak's dish: a small star a few pixels across at any " +
+                 "distance, never a ball.")]
+        [Range(0.05f, 1f)]
+        [SerializeField] private float _glintHalfAngle = 0.3f;
 
-        [Tooltip("Brightness of the glint on the Peak's dish.")]
-        [Range(0.2f, 8f)]
-        [SerializeField] private float _glintIntensity = 3f;
+        [Tooltip("Brightness of the glint on the Peak's dish, capped near 1 so bloom never swells it into a sun.")]
+        [Range(0.2f, 1.5f)]
+        [SerializeField] private float _glintIntensity = 1.1f;
+
+        [Tooltip("The glint's colour: warm white, a catch of low sunlight on the dish rim.")]
+        [ColorUsage(false, true)]
+        [SerializeField] private Color _glintColor = new Color(1f, 0.93f, 0.8f, 1f);
 
         [Tooltip("Seconds the glint on the dish takes to flare and fade.")]
-        [Range(0.3f, 5f)]
-        [SerializeField] private float _glintSeconds = 1.8f;
+        [Range(0.15f, 1f)]
+        [SerializeField] private float _glintSeconds = 0.4f;
+
+        [Tooltip("Share of the glint's life it spends flaring up before it fades: sharp, a few frames.")]
+        [Range(0.02f, 0.5f)]
+        [SerializeField] private float _glintRiseShare = 0.12f;
 
         [Header("The release (R9)")]
         [Tooltip("Seconds 07 looks at each of the three lures from the rise: relay.1, the Peak's dish, Kestrel-3.")]
@@ -132,8 +142,10 @@ namespace MoonProject.Gameplay
         public float TailShare => _tailShare;
         public float PulseWidth => _pulseWidth;
         public Color PulseColor => _pulseColor;
-        public Vector2 GlintRadius => _glintRadius;
+        public float GlintHalfAngle => _glintHalfAngle;
         public float GlintIntensity => _glintIntensity;
+        public Color GlintColor => _glintColor;
+        public float GlintRiseShare => _glintRiseShare;
         public float GlintSeconds => _glintSeconds;
         public float StillSpeed => _stillSpeed;
         public float HoldSeconds => _holdSeconds;
