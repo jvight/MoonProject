@@ -374,6 +374,13 @@ namespace MoonProject.Autoplay
             text.Append(scans.Candidate != null ? scans.Candidate.FragmentId : "none").Append(", scanning ")
                 .Append(scans.Scanning != null ? scans.Scanning.FragmentId : "nothing").Append(", chip '")
                 .Append(_bot.World.Ui.Chip()).Append("'. View angle (deg) and aim score per part:");
+            Transform lens = _bot.World.Context.Get<IRoverRig>().ScanOrigin;
+            text.Append(" The lens points ").Append(Vector3.Angle(lens.forward, aimPoint - lens.position).ToString("0.0",
+                CultureInfo.InvariantCulture)).Append(" deg off the part (the scan needs <= ")
+                .Append(scans.Tuning.AimToleranceDegrees.ToString("0.0", CultureInfo.InvariantCulture))
+                .Append(" and a clear line past 07's own body), 07 turned ")
+                .Append(DriveSteering.HeadingError(_bot.World.Rover.Position, _bot.World.Rover.Rotation * Vector3.forward,
+                    aimPoint).ToString("0.0", CultureInfo.InvariantCulture)).Append(" deg off it.");
             foreach (ScanFragment part in scans.Fragments)
             {
                 if (part.Scanned || DriveSteering.FlatDistance(part.Point, aimPoint) > CargoPartsApartMetres)
