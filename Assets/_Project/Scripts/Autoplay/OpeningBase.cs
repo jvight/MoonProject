@@ -136,6 +136,9 @@ namespace MoonProject.Autoplay
         /// <summary>Seconds of calm after a Tab transition ends, before the next flip.</summary>
         private const float TabRestSeconds = 0.5f;
 
+        /// <summary>Tab cycles that also flip to the databank and back with Q (its first flip is a hitch to prove).</summary>
+        private const int PageFlipCycles = 2;
+
         /// <summary>Frames the pointer takes to travel to a card.</summary>
         private const int PointerSteps = 8;
         private const float PlaceDriftMetres = 2f;
@@ -1327,6 +1330,14 @@ namespace MoonProject.Autoplay
                 yield return _bot.Tap(Key.Tab);
                 yield return _bot.Until(() => face.IsOpen, FollowSeconds, "Tab to open the face screen (cycle " + (cycle + 1) + ")");
                 yield return _bot.Wait(FrameTagger.TransitionSeconds + TabRestSeconds);
+                if (cycle < PageFlipCycles)
+                {
+                    yield return _bot.Tap(Key.Q);
+                    yield return _bot.Wait(FrameTagger.TransitionSeconds + TabRestSeconds);
+                    yield return _bot.Tap(Key.Q);
+                    yield return _bot.Wait(FrameTagger.TransitionSeconds + TabRestSeconds);
+                }
+
                 yield return _bot.Tap(Key.Tab);
                 yield return _bot.Until(() => !face.IsOpen, FollowSeconds, "Tab to close the face screen (cycle " + (cycle + 1) + ")");
                 yield return _bot.Wait(FrameTagger.TransitionSeconds + TabRestSeconds);

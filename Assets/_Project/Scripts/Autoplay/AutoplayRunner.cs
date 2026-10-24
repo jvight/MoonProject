@@ -39,7 +39,9 @@ namespace MoonProject.Autoplay
         private FrameProbe _probe;
         private IRoverFaceScreen _face;
         private IDisposable _dockWatch;
+        private IDisposable _pageWatch;
         private bool _docked;
+        private bool _onDatabank;
         private readonly List<string> _screenshots = new List<string>();
         private readonly List<string> _errors = new List<string>();
         private readonly Queue<string> _shotQueue = new Queue<string>();
@@ -124,11 +126,13 @@ namespace MoonProject.Autoplay
             {
                 _face = _world.Context.Get<IRoverFaceScreen>();
                 _dockWatch = _world.Context.Events.Subscribe<RoverDockChanged>(changed => _docked = changed.Docked);
+                _pageWatch = _world.Context.Events.Subscribe<FacePageChanged>(
+                    changed => _onDatabank = changed.Page == FacePage.Databank);
             }
 
             float now = Time.unscaledTime - _startedAt;
             FrameTag tags = _tagger.Step(now, _face.IsOpen, _world.Gameplay.Building.State != BuildModeState.Closed,
-                _world.Gameplay.Scans.Scanning != null, _docked);
+                _world.Gameplay.Scans.Scanning != null, _docked, _onDatabank);
             _probe.Capture();
             _tagLog.Record(new FrameSample(now, milliseconds, tags, _probe.GcBytes(), _probe.MainMilliseconds,
                 _probe.CpuMainMilliseconds, _probe.CpuRenderMilliseconds, _probe.GpuMilliseconds), _tagger.Window);
@@ -239,6 +243,7 @@ namespace MoonProject.Autoplay
             _input.Dispose();
             _probe.Dispose();
             _dockWatch?.Dispose();
+            _pageWatch?.Dispose();
             Application.Quit(passed ? 0 : 1);
         }
 
