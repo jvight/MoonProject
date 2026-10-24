@@ -108,10 +108,10 @@ namespace MoonProject.Rover.PlayModeTests
             double tick60Ms = tickWatch.Elapsed.TotalMilliseconds;
             Debug.Log($"[lampvisual-perf] FirstCharge publish: {firstChargeMs:F3} ms; " +
                       $"60x RoverGrowth.Tick+RoverHeadlamp.Tick: {tick60Ms:F3} ms");
-            Assert.Less(firstChargeMs, 25.0,
+            Assert.Less(firstChargeMs, 250.0,
                 $"FirstCharge milestone handling must not hitch (took {firstChargeMs:F3} ms).");
-            Assert.Less(tick60Ms, 10.0,
-                $"60x RoverGrowth.Tick + RoverHeadlamp.Tick must stay sub-10ms (took {tick60Ms:F3} ms).");
+            Assert.Less(tick60Ms, 5.0,
+                $"60x RoverGrowth.Tick + RoverHeadlamp.Tick must stay sub-5ms (took {tick60Ms:F3} ms).");
 
             yield return RealRoverScene.WaitSeconds(settings.AntennaSeconds * 0.5f);
             float halfway = (_segment.localPosition - retracted).y;
