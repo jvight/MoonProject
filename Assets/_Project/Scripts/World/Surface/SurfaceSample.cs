@@ -4,7 +4,7 @@ namespace MoonProject.World
     public readonly struct SurfaceSample
     {
         public SurfaceSample(float height, float craterBowl, float craterRim, float rimZone, float canyonFloor = 0f,
-            float chasm = 0f, float scorch = 0f, float mare = 0f, float shadowed = 0f)
+            float chasm = 0f, float scorch = 0f, float mare = 0f, float shadowed = 0f, float scar = 0f)
         {
             Height = height;
             CraterBowl = craterBowl;
@@ -15,6 +15,7 @@ namespace MoonProject.World
             Scorch = scorch;
             Mare = mare;
             Shadowed = shadowed;
+            Scar = scar;
         }
 
         public float Height { get; }
@@ -42,5 +43,8 @@ namespace MoonProject.World
 
         /// <summary>1 in the canyon's slot past its first metres (its floor past the turn never sees the Sun).</summary>
         public float Shadowed { get; }
+
+        /// <summary>1 on the fresh regolith the Peak road's rockfall bared, 0 elsewhere.</summary>
+        public float Scar { get; }
     }
 }

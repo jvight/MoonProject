@@ -103,6 +103,11 @@ namespace MoonProject.World
         [Range(0f, 1f)]
         [SerializeField] private float _shadowedShade = 0.85f;
 
+        [Tooltip("How far the fresh ground the Peak road's rockfall bared goes toward the light dust (0..1): pale " +
+            "against the old grey, so the eye finds the closed road from the base, never white.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _scarLight = 0.8f;
+
         [Header("The dark mare")]
         [Tooltip("How far the mare beyond the rille notch goes toward charcoal (0..1): dark basalt plain, a step " +
             "darker than the highlands' grey, never black.")]
@@ -217,6 +222,7 @@ namespace MoonProject.World
         public float ChasmDark => _chasmDark;
         public float MareShade => _mareShade;
         public float ShadowedShade => _shadowedShade;
+        public float ScarLight => _scarLight;
         public float CraterShadow => _craterShadow;
         public float CraterFloor => _craterFloor;
         public float CraterWallShade => _craterWallShade;
