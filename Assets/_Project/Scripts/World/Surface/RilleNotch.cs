@@ -39,6 +39,9 @@ namespace MoonProject.World
         /// <summary>Unit XZ direction of the pass from the base.</summary>
         public Vector2 Direction => _direction;
 
+        /// <summary>Distance from the base where the pass begins to cut into the rim, metres.</summary>
+        public float MouthDistance => _settings.Start;
+
         /// <summary>Floor height of the pass <paramref name="along"/> metres out from the base on its bearing.</summary>
         public float Floor(float along)
         {
@@ -89,17 +92,20 @@ namespace MoonProject.World
         /// <summary>0 on the highlands, easing to 1 on the dark mare beyond the crest round the pass's bearing.</summary>
         public float MareWeight(float x, float z)
         {
-            float r = Mathf.Sqrt(x * x + z * z);
-            if (r <= 0f)
+            // Inside the sector and past the mare's start, the distance along the bearing is at least this: most of
+            // the world fails it with a dot product and no square root.
+            RilleSettings s = _settings;
+            float start = _crestRadius + s.MareStart;
+            float along = x * _direction.x + z * _direction.y;
+            if (along <= start * _cosMare)
             {
                 return 0f;
             }
 
-            RilleSettings s = _settings;
-            float cosine = (x * _direction.x + z * _direction.y) / r;
+            float r = Mathf.Sqrt(x * x + z * z);
+            float cosine = along / r;
             float edge = 1f - (1f - _cosMare) * (1f - s.MareEdge);
             float sector = SmoothMath.Smootherstep(_cosMare, edge, cosine);
-            float start = _crestRadius + s.MareStart;
             return sector * SmoothMath.Smootherstep(start, start + s.MareBlend, r);
         }
 

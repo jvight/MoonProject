@@ -43,6 +43,10 @@ namespace MoonProject.World
         private const float SlotMouthSetback = 2f;
         private const float SlotWallClear = 1.5f;
 
+        // The rille gate's clear ground, and how far inside the drivable floor's edge it stays.
+        private const float RilleGateRadius = 4f;
+        private const float RilleGateInset = 2f;
+
         // The dead charging post's own footprint on the wake pad, kept clear of rocks and props.
         private const float WakeRadius = 1.5f;
 
@@ -67,6 +71,12 @@ namespace MoonProject.World
         /// Field Charge Pylon (Gameplay and Art, later).
         /// </summary>
         public const string CanyonSupplyBay = "canyon.supplybay";
+
+        /// <summary>
+        /// The rille notch's mouth on the basin side, on its bearing past relay.1, facing out through the pass: the 0.6
+        /// way to the mare, which the range ring must stop short of in the opening.
+        /// </summary>
+        public const string GateRille = "gate.rille";
 
         /// <summary>The fallen solar array's footprint off the ruins, facing away from the apron.</summary>
         public const string FallenArray = "place.fallenarray";
@@ -129,6 +139,10 @@ namespace MoonProject.World
                 settings.SlotHalfWidth - SlotWallClear));
             anchors.Add(Make(surface, CanyonSupplyBay, canyon.SlotBayCentre, slot.TangentAt(slot.EndArc),
                 settings.SlotBayRadius - TerminusWallGap));
+
+            RilleNotch rille = surface.Rille;
+            float mouth = Mathf.Min(rille.MouthDistance, surface.DrivableRadius - RilleGateRadius - RilleGateInset);
+            anchors.Add(Make(surface, GateRille, rille.Direction * mouth, rille.Direction, RilleGateRadius));
 
             Vector2 westMast = relays.WestMast;
             anchors.Add(Make(surface, WorldAnchorIds.RelayPrefix + 1, westMast, -westMast, relays.PadRadius));
