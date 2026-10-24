@@ -139,6 +139,12 @@ namespace MoonProject.Audio.PlayModeTests
             Events.Publish(new CallStateChanged(CallState.Answered, restored));
         }
 
+        /// <summary>Publishes <see cref="MusicMomentRequested"/> (the radio plays one track, then falls silent).</summary>
+        public void RequestMusic()
+        {
+            Events.Publish(new MusicMomentRequested());
+        }
+
         /// <summary>Publishes <see cref="RoverAwoke"/> (07 starts waking: the radio and motor come on).</summary>
         public void Wake(bool byPlayer)
         {

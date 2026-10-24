@@ -4,8 +4,8 @@ namespace MoonProject.Audio
 {
     /// <summary>
     /// The radio: how far the clear signal reaches from the base, how clarity maps to low-pass/static/volume/wobble,
-    /// how the playlist crossfades between tracks, how the hiss clears when the base powers on, and how the music
-    /// fades in when relay.1 answers. Created by the Audio/Tuning builder; runtime code only reads it.
+    /// how a music moment tunes in, plays one track and fades out to silence, and how the hiss clears when the base
+    /// powers on. Created by the Audio/Tuning builder; runtime code only reads it.
     /// </summary>
     public sealed class RadioTuning : ScriptableObject
     {
@@ -64,24 +64,28 @@ namespace MoonProject.Audio
         [Tooltip("Share of flutter in the wobble (0 = only wow).")]
         [Range(0f, 1f)] [SerializeField] private float _flutterShare = 0.3f;
 
-        [Header("Playlist")]
-        [Tooltip("Seconds of the dial-tuning crossfade between tracks.")]
-        [Range(0.5f, 6f)] [SerializeField] private float _crossfadeDuration = 2.4f;
+        [Header("Music moments: one track, then silence")]
+        [Tooltip("Seconds of the static swell as the dial finds the station when a music moment begins.")]
+        [Range(0.5f, 6f)] [SerializeField] private float _tuneSwellDuration = 2.4f;
 
-        [Tooltip("Seconds before a track ends that the crossfade begins.")]
-        [Range(0f, 6f)] [SerializeField] private float _crossfadeLead = 1.4f;
+        [Tooltip("Seconds from the dial's swish to the track starting (inside the swell).")]
+        [Range(0f, 6f)] [SerializeField] private float _momentStartDelay = 1.1f;
 
-        [Tooltip("Fraction of the crossfade over which the outgoing track fades out.")]
-        [Range(0.1f, 1f)] [SerializeField] private float _outgoingFadeEnd = 0.55f;
+        [Tooltip("Seconds the track takes to fade in (low, warm).")]
+        [Min(0.01f)] [SerializeField] private float _momentFadeIn = 6f;
 
-        [Tooltip("Fraction of the crossfade at which the incoming track starts and fades in.")]
-        [Range(0f, 0.9f)] [SerializeField] private float _incomingStart = 0.45f;
+        [Tooltip("Seconds before the track ends that it starts fading out to silence (at most half a short track).")]
+        [Range(0.5f, 15f)] [SerializeField] private float _momentFadeOut = 5f;
 
-        [Tooltip("Extra static at the middle of a crossfade (the dial passes between stations).")]
+        [Tooltip("Extra static at the middle of the swell (the dial passes between stations).")]
         [Range(0f, 1f)] [SerializeField] private float _tuneStaticBoost = 0.35f;
 
         [Tooltip("Volume scale of the dial-tuning swish.")]
         [Range(0f, 1f)] [SerializeField] private float _tuneSwishVolume = 0.8f;
+
+        [Tooltip("Share of the clarity static left while no music plays: the set is quiet between moments, only a " +
+            "faint presence (the unpowered hiss floor still applies before the base has power).")]
+        [Range(0f, 1f)] [SerializeField] private float _idleStaticGain = 0.15f;
 
         [Header("Paused: listening in the cabin")]
         [Tooltip("Low-pass (Hz) the radio eases to while paused: a subtly closer, warmer set (22 kHz = unchanged).")]
@@ -120,13 +124,6 @@ namespace MoonProject.Audio
         [Tooltip("Time constant (s) of the hiss clearing once the base powers on.")]
         [Min(0.01f)] [SerializeField] private float _powerOnClearTime = 2.5f;
 
-        [Header("The answer (opening v3 R8): the music returns")]
-        [Tooltip("Seconds the first track takes to fade in as relay.1 answers 07's call (low, warm).")]
-        [Min(0.01f)] [SerializeField] private float _answerMusicFade = 6f;
-
-        [Tooltip("Seconds of the quiet fade when the playlist starts or stops without a dial turn.")]
-        [Range(0.05f, 3f)] [SerializeField] private float _silentSwitchFade = 0.6f;
-
         public float SignalRadius => _signalRadius;
         public float FalloffWidth => _falloffWidth;
 
@@ -145,13 +142,13 @@ namespace MoonProject.Audio
         public float WowRate => _wowRate;
         public float FlutterRate => _flutterRate;
         public float FlutterShare => _flutterShare;
-        public float CrossfadeDuration => _crossfadeDuration;
-        public float CrossfadeLead => _crossfadeLead;
-        public float OutgoingFadeEnd => _outgoingFadeEnd;
-        public float IncomingStart => _incomingStart;
+        public float TuneSwellDuration => _tuneSwellDuration;
+        public float MomentStartDelay => _momentStartDelay;
+        public float MomentFadeIn => _momentFadeIn;
+        public float MomentFadeOut => _momentFadeOut;
         public float TuneStaticBoost => _tuneStaticBoost;
         public float TuneSwishVolume => _tuneSwishVolume;
-        public float SilentSwitchFade => _silentSwitchFade;
+        public float IdleStaticGain => _idleStaticGain;
         public float CabinCutoff => _cabinCutoff;
         public float CabinMusicGain => _cabinMusicGain;
         public float CabinStaticGain => _cabinStaticGain;
@@ -163,6 +160,5 @@ namespace MoonProject.Audio
         public float WakeStaticBoost => _wakeStaticBoost;
         public float UnpoweredStaticFloor => _unpoweredStaticFloor;
         public float PowerOnClearTime => _powerOnClearTime;
-        public float AnswerMusicFade => _answerMusicFade;
     }
 }

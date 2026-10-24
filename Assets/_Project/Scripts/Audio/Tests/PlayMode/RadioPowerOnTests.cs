@@ -9,7 +9,7 @@ namespace MoonProject.Audio.PlayModeTests
     /// <summary>
     /// The radio through the opening (opening v3 R4 and R8): only a faint signal hiss while the base is dark; Power on
     /// clears the hiss but plays no music (a build is not a milestone); relay.1 answering 07's call is the milestone
-    /// where the first music fades in, low and warm; a save that is already answered just plays.
+    /// where one track fades in, low and warm; a save that is already answered stays silent.
     /// </summary>
     public sealed class RadioPowerOnTests
     {
@@ -72,7 +72,7 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.IsTrue(_rig.Radio.Answered);
             AudioSource swish = AudioTestRig.FindChildSource(_rig.Radio.transform, "TuningSwish");
             Assert.IsTrue(swish.isPlaying, "the dial finds the network");
-            yield return new WaitForSecondsRealtime(1f);
+            yield return new WaitForSecondsRealtime(2f);
             Assert.IsTrue(_rig.Radio.MusicStarted);
             float early = _rig.LoudestDeck().volume;
 
@@ -81,19 +81,17 @@ namespace MoonProject.Audio.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator ARestoredAnswer_JustPlays()
+        public IEnumerator ARestoredAnswer_StaysSilent()
         {
             _rig.Milestone(OpeningMilestone.PowerOn, true);
             _rig.Answer(true);
             Assert.AreEqual(0f, _rig.Radio.HissFloor, 1e-5f, "a load with power has no hiss to clear");
-            _rig.Wake(false);
-            float deadline = Time.realtimeSinceStartup + 6f;
-            while (!_rig.Radio.MusicStarted && Time.realtimeSinceStartup < deadline)
-            {
-                yield return null;
-            }
+            _rig.Wake(true);
+            yield return new WaitForSecondsRealtime(4f);
 
-            Assert.IsTrue(_rig.Radio.MusicStarted, "the wake-up starts the music");
+            Assert.IsTrue(_rig.Radio.Answered);
+            Assert.IsFalse(_rig.Radio.MomentPending);
+            Assert.IsFalse(_rig.Radio.MusicStarted, "a load past the answer does not replay its music");
         }
 
         [UnityTest]

@@ -144,7 +144,7 @@ namespace MoonProject.Audio.PlayModeTests
         public IEnumerator Pause_DucksTheWorldLoops_KeepsRadioAndAmbience_AndRestoresOnResume()
         {
             _rig.Milestone(OpeningMilestone.PowerOn, true);
-            _rig.Answer(true);
+            _rig.RequestMusic();
             _rig.Wake(true);
             _rig.Rover.NormalizedSpeed = 0.8f;
             _rig.Rover.DriveInput = new Vector2(0f, 1f);
@@ -188,7 +188,7 @@ namespace MoonProject.Audio.PlayModeTests
         public IEnumerator RoverFaceCues_And_SkyPhaseTransitions_PlayTheirR1CuesAndCrossfadeAmbience()
         {
             _rig.Milestone(OpeningMilestone.PowerOn, true);
-            _rig.Answer(true);
+            _rig.RequestMusic();
             _rig.Wake(true);
             yield return null;
 

@@ -48,7 +48,7 @@ namespace MoonProject.Audio.PlayModeTests
         public IEnumerator WakingOnItsOwn_TunesIn_ThroughStatic_ThenResolvesIntoMusic()
         {
             _rig.Milestone(OpeningMilestone.PowerOn, true);
-            _rig.Answer(true);
+            _rig.RequestMusic();
             _rig.Wake(false);
             yield return null;
             Assert.IsTrue(_rig.Radio.IsOn);
@@ -77,7 +77,7 @@ namespace MoonProject.Audio.PlayModeTests
         public IEnumerator WokenByThePlayer_TheMusicArrivesSooner()
         {
             _rig.Milestone(OpeningMilestone.PowerOn, true);
-            _rig.Answer(true);
+            _rig.RequestMusic();
             _rig.Wake(true);
             float start = Time.realtimeSinceStartup;
             while (!_rig.Radio.MusicStarted && Time.realtimeSinceStartup - start < 3f)
@@ -93,7 +93,6 @@ namespace MoonProject.Audio.PlayModeTests
         public IEnumerator Waking_PowersUpTheMotorHum()
         {
             _rig.Milestone(OpeningMilestone.PowerOn, true);
-            _rig.Answer(true);
             _rig.Wake(false);
             yield return null;
             AudioSource hum = _rig.RoverAudio.HumSource;
