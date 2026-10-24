@@ -3,6 +3,8 @@
 
 Writes, into the output folder, one OGG per variant (``<cue>_v<k>.ogg``), all levelled to their group's loudness so
 only the sound differs, and ``index.json`` (every cue: its group, description and variants) for a listening page.
+Candidates for a cue the game already ships from elsewhere (group ``ui_bench``, against R1's UI cues) also get the
+shipped file, levelled the same, as ``<cue>_current.ogg``, so the page can play the current one beside them.
 
 Usage:
   python tools/audio/sampled/render_audition.py --library <Sonniss GDC 2026 folder> --out <folder>
@@ -18,7 +20,9 @@ sys.path.insert(0, str(AUDIO_TOOLS))
 from synth import io  # noqa: E402
 from synth.core import rng  # noqa: E402
 
-from sampled import base, boot, build, call, dsp, face, rover, sky, ui, voice  # noqa: E402
+from sampled import base, boot, build, call, dsp, face, rover, sky, ui, ui_bench, voice  # noqa: E402
+
+REPO = AUDIO_TOOLS.parents[1]
 
 VOICE_LUFS = -22.0
 BOOT_LUFS = -22.0
@@ -54,6 +58,8 @@ def _entries():
         yield cue, "face", (fn.__doc__ or "").strip(), fn, count, FACE_LUFS.get(cue, FACE_DEFAULT_LUFS), False
     for cue, (fn, count) in ui.SOUNDS.items():
         yield cue, "ui", (fn.__doc__ or "").strip(), fn, count, UI_LUFS, False
+    for cue, (fn, count) in ui_bench.SOUNDS.items():
+        yield cue, "ui_bench", (fn.__doc__ or "").strip(), fn, count, UI_LUFS, False
     for cue, (fn, count) in build.SOUNDS.items():
         yield cue, "build", (fn.__doc__ or "").strip(), fn, count, TARGETS[cue], cue == "build_weld_loop"
 
@@ -62,7 +68,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--library", required=True, help="the extracted Sonniss GDC 2026 folder (read only)")
     parser.add_argument("--out", required=True, help="where the OGGs and index.json go")
-    parser.add_argument("--group", help="only this group (voice, boot, sky, build, base, rover, face, call, ui)")
+    parser.add_argument("--group", help="only this group (voice, boot, sky, build, base, rover, face, call, ui, "
+                                        "ui_bench)")
     args = parser.parse_args()
     lib = dsp.Library(args.library)
     out = Path(args.out)
@@ -77,8 +84,13 @@ def main() -> int:
             name = f"{cue}_v{variant + 1}.ogg"
             io.write_ogg(out / name, signal)
             files.append(name)
-        index.append({"cue": cue, "group": group, "description": " ".join(description.split()), "variants": files,
-                      "loop": loop, "targetLufs": target})
+        entry = {"cue": cue, "group": group, "description": " ".join(description.split()), "variants": files,
+                 "loop": loop, "targetLufs": target}
+        if group == "ui_bench":
+            shipped, _ = io.read_audio(REPO / ui_bench.SHIPPED.format(cue=cue))
+            entry["current"] = f"{cue}_current.ogg"
+            io.write_ogg(out / entry["current"], dsp.finish(shipped, target, loop=loop))
+        index.append(entry)
         print(f"{cue:28} {variants} variant(s)", flush=True)
     (out / "index.json").write_text(json.dumps({"cues": index}, indent=2) + "\n", encoding="utf-8")
     print(f"wrote {sum(len(e['variants']) for e in index)} files to {out}")
