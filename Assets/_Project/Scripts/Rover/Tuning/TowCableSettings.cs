@@ -47,14 +47,14 @@ namespace MoonProject.Rover
         [Tooltip("Fewest pixels (at a 1440p screen) the rope is drawn across at any distance: its real width up close, " +
                  "wider far off, so the load is seen to be towed by a line, not following by magic.")]
         [Range(1f, 8f)]
-        [SerializeField] private float _minPixels = 3f;
+        [SerializeField] private float _minPixels = 4f;
 
         [Tooltip("Fewest pixels (at a 1440p screen) the clamp at the hitch is drawn across.")]
         [Range(2f, 14f)]
         [SerializeField] private float _hookMinPixels = 6f;
 
-        [Tooltip("The rope's colour: dark weathered rubber, lifted off the night's regolith so it reads as a line.")]
-        [SerializeField] private Color _ropeColor = new Color(0.4f, 0.36f, 0.31f, 1f);
+        [Tooltip("The rope's colour: weathered rubber, lifted well off the night regolith so it reads as a line.")]
+        [SerializeField] private Color _ropeColor = new Color(0.78f, 0.72f, 0.62f, 1f);
 
         [Tooltip("How much the rubber's sheen catches the light (its top smoothness): a faint gleam along the rope, no glow.")]
         [Range(0.06f, 0.9f)]

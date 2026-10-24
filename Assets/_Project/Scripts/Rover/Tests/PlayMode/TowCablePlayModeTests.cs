@@ -16,7 +16,7 @@ namespace MoonProject.Rover.PlayModeTests
     {
         private const float CableLength = 6f;
         private const float FarHitchScale = 2.5f;
-        private const float MinRopePixels = 3f;
+        private const float MinRopePixels = 4f;
         private const float DragMetresPerSecond = 4.5f;
         private const float Tolerance = 0.02f;
 
