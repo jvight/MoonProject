@@ -88,6 +88,10 @@ namespace MoonProject.Rover
         private bool _igniterMoving;
         private Vector3 _igniterPullLocal;
         private bool _headlampFitted;
+        private bool _fitBeatRunning;
+        private bool _fitChirped;
+        private float _fitBeatSeconds;
+        private IRoverRig _rig;
         private float _headlampSeconds;
         private bool _headlampMoving;
         private bool _cellPodsFitted;
@@ -185,12 +189,17 @@ namespace MoonProject.Rover
                 SyncRack();
             }
 
+            GrowthSettings settings = _tuning.Growth;
+            if (_fitBeatRunning)
+            {
+                StepFitBeat(settings, deltaTime);
+            }
+
             if (!_antennaMoving && !_igniterMoving && !_headlampMoving && !_cellPodsMoving)
             {
                 return;
             }
 
-            GrowthSettings settings = _tuning.Growth;
             if (_antennaMoving)
             {
                 _antennaSeconds += deltaTime;
@@ -296,11 +305,59 @@ namespace MoonProject.Rover
         {
             if (fitted.Part == RoverKitPiece.LampBar || fitted.Socket == RoverSocket.Lamp)
             {
+                bool first = !_headlampFitted;
                 FitHeadlamp(restored: false);
+                if (first)
+                {
+                    BeginFitBeat();
+                }
             }
             else if (fitted.Part == RoverKitPiece.BatterySpine)
             {
                 FitCellPods(restored: false);
+            }
+        }
+
+        /// <summary>
+        /// 07 tries its new eyes after a live headlamp fit: a small happy chirp once the pods are home, then its head
+        /// looks out across the ground to one side and the other, so the lamp's first beam sweeps once. Never on load.
+        /// </summary>
+        private void BeginFitBeat()
+        {
+            if (_rig == null && _context != null)
+            {
+                _context.TryGet(out _rig);
+            }
+
+            _fitBeatRunning = true;
+            _fitChirped = false;
+            _fitBeatSeconds = 0f;
+        }
+
+        private void StepFitBeat(GrowthSettings settings, float deltaTime)
+        {
+            _fitBeatSeconds += deltaTime;
+            if (!_fitChirped && LampFitBeat.ChirpDue(settings, _fitBeatSeconds))
+            {
+                _fitChirped = true;
+                _context.Events.Publish(new RoverChirpRequested(ChirpMood.Happy, 1f));
+            }
+
+            int side = LampFitBeat.LookSide(settings, _fitBeatSeconds);
+            if (side != 0 && _rig != null)
+            {
+                Vector3 ahead = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
+                Vector3 toward = Quaternion.Euler(0f, side * settings.FitLookDegrees, 0f) * ahead;
+                _rig.SetGazeTarget(this, transform.position + toward * settings.FitLookMetres, settings.FitLookPriority);
+            }
+            else if (_rig != null)
+            {
+                _rig.ClearGazeTarget(this);
+            }
+
+            if (LampFitBeat.Done(settings, _fitBeatSeconds))
+            {
+                _fitBeatRunning = false;
             }
         }
 
