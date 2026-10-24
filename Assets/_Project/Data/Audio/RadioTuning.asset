@@ -46,5 +46,5 @@ MonoBehaviour:
   _wakeStaticBoost: 0.55
   _unpoweredStaticFloor: 0.3
   _powerOnClearTime: 2.5
-  _powerOnMusicFade: 6
+  _answerMusicFade: 6
   _silentSwitchFade: 0.6

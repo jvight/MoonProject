@@ -36,7 +36,7 @@ namespace MoonProject.Audio.PlayModeTests
         public IEnumerator EachTrack_IsAnnouncedOncePerSession()
         {
             _rig.Wake(true);
-            _rig.Milestone(OpeningMilestone.PowerOn);
+            _rig.Answer();
             yield return new WaitForSecondsRealtime(3f * AudioTestRig.ShortTrackSeconds + 1f);
             Assert.AreEqual(2, _lines.Count, "both tracks announced once, however often they come round");
             var arguments = new HashSet<string>();
