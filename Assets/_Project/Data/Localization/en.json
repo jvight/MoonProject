@@ -927,6 +927,10 @@
             "text": "Fits the cutter on the pad."
         },
         {
+            "key": "pickup.habitat.power_module",
+            "text": "Power module"
+        },
+        {
             "key": "ui.system.column",
             "text": "16"
         },

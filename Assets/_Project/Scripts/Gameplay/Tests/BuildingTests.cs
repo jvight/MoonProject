@@ -1276,5 +1276,45 @@ namespace MoonProject.Gameplay.Tests
                 Object.DestroyImmediate(invalidHolo);
             }
         }
+
+        [Test]
+        public void BuildModeController_CanRotateGhost_IsFalseForFramedStructure_AndFrameNounKeyNamesTheFrame()
+        {
+            var known = new KnownStructures(_catalog, _events);
+            var placedBase = new PlacedBase(_catalog, _tuning, _events, known);
+            MaterialCatalog matCatalog = CargoFixtures.Catalog();
+            try
+            {
+                MaterialStock stock = CargoFixtures.Stock(_events, matCatalog);
+                var controller = new BuildModeController(_catalog, known, placedBase, stock, _tuning);
+
+                Assert.IsFalse(controller.CanRotateGhost, "No structure selected before opening build mode.");
+                Assert.AreEqual(string.Empty, controller.FrameNounKey);
+
+                known.Learn(StructureIds.ChargingPad);
+                known.Learn(StructureIds.BatteryBank);
+
+                Assert.IsTrue(controller.PickStructure(StructureIds.ChargingPad));
+                Assert.IsTrue(controller.CanRotateGhost, "Charging pad has no frame load and rotates freely.");
+                Assert.AreEqual(string.Empty, controller.FrameNounKey);
+                controller.SetGhostYaw(0f);
+                controller.RotateGhost(1f);
+                Assert.AreEqual(BuildModeController.DefaultYawStepDegrees, controller.GhostYaw, 1e-4f);
+
+                Assert.IsTrue(controller.PickStructure(StructureIds.BatteryBank));
+                Assert.IsFalse(controller.CanRotateGhost,
+                    "Battery bank takes its pose from the power module frame and cannot rotate.");
+                Assert.AreEqual(TowLoads.PowerModuleNoun, controller.FrameNounKey);
+                controller.SetGhostYaw(42f);
+                controller.RotateGhost(1f);
+                Assert.AreEqual(42f, controller.GhostYaw, 1e-4f, "RotateGhost(+1) does nothing when CanRotateGhost is false.");
+                controller.RotateGhost(-1f);
+                Assert.AreEqual(42f, controller.GhostYaw, 1e-4f, "RotateGhost(-1) does nothing when CanRotateGhost is false.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(matCatalog);
+            }
+        }
     }
 }

@@ -927,6 +927,10 @@
             "text": "Lắp vào mỏ cắt khi đỗ trên bệ."
         },
         {
+            "key": "pickup.habitat.power_module",
+            "text": "Mô-đun nguồn"
+        },
+        {
             "key": "ui.system.column",
             "text": "17"
         },

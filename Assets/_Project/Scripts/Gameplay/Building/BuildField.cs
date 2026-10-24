@@ -847,7 +847,8 @@ namespace MoonProject.Gameplay
             float deltaTime)
         {
             _lastNavSign = 0;
-            if (Mathf.Abs(winch) > 0.05f && (now >= _nextWinchTime || Mathf.Sign(winch) != _lastWinchSign))
+            if (_controller.CanRotateGhost && Mathf.Abs(winch) > 0.05f &&
+                (now >= _nextWinchTime || Mathf.Sign(winch) != _lastWinchSign))
             {
                 _controller.RotateGhost(winch);
                 _events.Publish(new UiCue(UiCueKind.SliderStep));
