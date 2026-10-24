@@ -206,8 +206,11 @@ namespace MoonProject.World.Editor
                 Quaternion.Euler(0f, keeper.Yaw, 0f) * towardMast, false);
             SeatCellPacks(context, six);
             BlockOut(six);
-            six.transform.rotation = Quaternion.AngleAxis(landmarks.Elder06Slump, six.transform.up)
-                                     * six.transform.rotation;
+            // 06 slumps over toward relay.2's hut, its top come to rest against the hut's wall.
+            Vector3 towardHut = Flat(Require(anchors, WorldAnchorIds.RelayPrefix + 2).Position - rest);
+            float slump = landmarks.Elder06Slump * Mathf.Deg2Rad;
+            Vector3 leant = Vector3.up * Mathf.Cos(slump) + towardHut * Mathf.Sin(slump);
+            six.transform.rotation = Quaternion.FromToRotation(Vector3.up, leant) * six.transform.rotation;
 
             PropPlacement surveyor = landmarks.Elder01;
             BlockOut(Stand(context, parent, surveyor.Id, WorldPaths.ElderPrefab(surveyor.Id),

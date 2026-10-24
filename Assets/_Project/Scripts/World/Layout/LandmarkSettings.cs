@@ -162,7 +162,7 @@ namespace MoonProject.World
         [SerializeField] private PropPlacement _elder06 =
             new PropPlacement(WorldAnchorIds.Micro06, "Elder06", Vector2.zero, -90f, 0.08f);
 
-        [Tooltip("How far 06 slumps over onto its left side, degrees: its cell ran dry and it settled where a wheel " +
+        [Tooltip("How far 06 slumps over toward relay.2's hut, degrees: its cell ran dry and it settled where a wheel " +
             "sank into the dust, its top come to rest against relay.2's hut.")]
         [Range(0f, 20f)]
         [SerializeField] private float _elder06Slump = 9f;
