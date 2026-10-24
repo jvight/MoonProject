@@ -1710,9 +1710,11 @@ namespace MoonProject.Rover
             TryNudge(step);
         }
 
-        private bool FreeForNudge => !_moment.IsActive && _wide.Weight <= 0f && _held.Weight <= 0f && !_tethered &&
-                                     !_towing && !_opening.IsActive && !_faceInspectOpen &&
-                                     _faceInspectWeight <= 0f && !_gazePan.IsActive;
+        // The dock's close frame is an ambient hold that lasts as long as 07 sits on the pad, not a shot to wait out: a
+        // line read on the pad (the charge has just ended) nudges over it, and the dock frame returns afterwards.
+        private bool FreeForNudge => (!_moment.IsActive || IsDockMoment) && _wide.Weight <= 0f &&
+                                     _held.Weight <= 0f && !_tethered && !_towing && !_opening.IsActive &&
+                                     !_faceInspectOpen && _faceInspectWeight <= 0f && !_gazePan.IsActive;
 
         /// <summary>
         /// A line that came while another shot had the camera (the charge's close shot, the dock) nudges as soon as
