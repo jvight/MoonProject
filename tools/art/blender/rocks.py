@@ -497,6 +497,278 @@ ROCK_SPECS: tuple[dict[str, object], ...] = (
             },
         ],
     },
+    # Fresh Rockfall Boulder 0 (Rockfall_Boulder_00): 10.50 x 8.40 x 6.40 m fresh-cleaved lunar breccia mass
+    {
+        "name": "Rockfall_Boulder_00",
+        "fresh_rockfall": True,
+        "target_size_u": (10.50, 6.40, 8.40),
+        "burial_frac": 0.16,
+        "footprint_radius": 5.80,
+        "skirt_height_frac": 0.22,
+        "shells": [
+            {
+                "center_u": (0.0, 0.0, 0.0),
+                "size_u": (8.60, 6.40, 7.20),
+                "seed": 2101,
+                "lon_segs": 22,
+                "lat_rings": 11,
+                "skirt_flare": 0.18,
+                "burial_frac": 0.16,
+                "rot_deg_u": (4.0, -12.0, 3.0),
+                "fractures_u": [
+                    ((0.52, 0.68, -0.51), 0.44, 0.58),
+                    ((-0.64, 0.56, 0.52), 0.48, 0.54),
+                    ((0.18, 0.62, 0.76), 0.50, 0.50),
+                    ((-0.42, 0.74, -0.52), 0.52, 0.46),
+                ],
+                "pits_u": [],
+                "crevices_u": [
+                    ((0.68, 0.22, 0.70), 0.03, 0.18, 0.14),
+                    ((-0.55, 0.26, -0.79), -0.05, 0.16, 0.13),
+                ],
+            },
+            {
+                "center_u": (2.95, -0.25, -1.10),
+                "size_u": (4.80, 3.85, 4.40),
+                "seed": 2113,
+                "lon_segs": 14,
+                "lat_rings": 7,
+                "skirt_flare": 0.16,
+                "burial_frac": 0.20,
+                "rot_deg_u": (-5.0, 18.0, 6.0),
+                "fractures_u": [
+                    ((0.62, 0.64, -0.45), 0.46, 0.54),
+                    ((-0.48, 0.70, 0.52), 0.50, 0.48),
+                ],
+                "pits_u": [],
+                "crevices_u": [],
+            },
+            {
+                "center_u": (-2.80, -0.35, 1.25),
+                "size_u": (4.30, 3.20, 3.90),
+                "seed": 2129,
+                "lon_segs": 14,
+                "lat_rings": 7,
+                "skirt_flare": 0.16,
+                "burial_frac": 0.22,
+                "rot_deg_u": (3.0, -24.0, -4.0),
+                "fractures_u": [
+                    ((-0.58, 0.68, 0.44), 0.48, 0.52),
+                ],
+                "pits_u": [],
+                "crevices_u": [],
+            },
+        ],
+    },
+    # Fresh Rockfall Boulder 1 (Rockfall_Boulder_01): 12.20 x 9.80 x 7.60 m stepped shear-face boulder
+    {
+        "name": "Rockfall_Boulder_01",
+        "fresh_rockfall": True,
+        "target_size_u": (12.20, 7.60, 9.80),
+        "burial_frac": 0.16,
+        "footprint_radius": 6.80,
+        "skirt_height_frac": 0.22,
+        "shells": [
+            {
+                "center_u": (-0.25, 0.0, 0.15),
+                "size_u": (9.80, 7.60, 8.20),
+                "seed": 2203,
+                "lon_segs": 22,
+                "lat_rings": 11,
+                "skirt_flare": 0.18,
+                "burial_frac": 0.16,
+                "rot_deg_u": (-3.0, 14.0, -4.0),
+                "fractures_u": [
+                    ((-0.56, 0.64, -0.52), 0.44, 0.58),
+                    ((0.60, 0.58, 0.55), 0.46, 0.54),
+                    ((-0.24, 0.72, 0.65), 0.50, 0.50),
+                    ((0.48, 0.68, -0.55), 0.52, 0.48),
+                ],
+                "pits_u": [],
+                "crevices_u": [
+                    ((-0.62, 0.24, 0.74), 0.04, 0.19, 0.15),
+                    ((0.52, 0.20, -0.83), -0.04, 0.17, 0.13),
+                ],
+            },
+            {
+                "center_u": (3.45, -0.30, 1.35),
+                "size_u": (5.60, 4.50, 4.90),
+                "seed": 2219,
+                "lon_segs": 14,
+                "lat_rings": 7,
+                "skirt_flare": 0.16,
+                "burial_frac": 0.20,
+                "rot_deg_u": (6.0, -22.0, 5.0),
+                "fractures_u": [
+                    ((0.58, 0.66, 0.47), 0.46, 0.54),
+                    ((-0.52, 0.68, -0.51), 0.50, 0.48),
+                ],
+                "pits_u": [],
+                "crevices_u": [],
+            },
+            {
+                "center_u": (-3.30, -0.45, -1.45),
+                "size_u": (5.10, 3.80, 4.50),
+                "seed": 2237,
+                "lon_segs": 14,
+                "lat_rings": 7,
+                "skirt_flare": 0.16,
+                "burial_frac": 0.22,
+                "rot_deg_u": (-4.0, 28.0, -6.0),
+                "fractures_u": [
+                    ((-0.60, 0.64, -0.48), 0.48, 0.52),
+                ],
+                "pits_u": [],
+                "crevices_u": [],
+            },
+        ],
+    },
+    # Fresh Rockfall Boulder 2 (Rockfall_Boulder_02): 14.00 x 11.20 x 8.80 m multi-lobe avalanche block
+    {
+        "name": "Rockfall_Boulder_02",
+        "fresh_rockfall": True,
+        "target_size_u": (14.00, 8.80, 11.20),
+        "burial_frac": 0.16,
+        "footprint_radius": 7.80,
+        "skirt_height_frac": 0.22,
+        "shells": [
+            {
+                "center_u": (0.20, 0.0, -0.15),
+                "size_u": (11.20, 8.80, 9.40),
+                "seed": 2309,
+                "lon_segs": 22,
+                "lat_rings": 11,
+                "skirt_flare": 0.19,
+                "burial_frac": 0.16,
+                "rot_deg_u": (5.0, -16.0, 4.0),
+                "fractures_u": [
+                    ((0.48, 0.66, -0.57), 0.43, 0.58),
+                    ((-0.62, 0.58, 0.52), 0.46, 0.55),
+                    ((0.32, 0.70, 0.64), 0.49, 0.50),
+                    ((-0.46, 0.68, -0.57), 0.52, 0.48),
+                ],
+                "pits_u": [],
+                "crevices_u": [
+                    ((0.58, 0.22, 0.78), 0.05, 0.20, 0.15),
+                    ((-0.66, 0.20, -0.72), -0.06, 0.18, 0.14),
+                ],
+            },
+            {
+                "center_u": (-3.95, -0.35, 1.50),
+                "size_u": (6.40, 5.20, 5.60),
+                "seed": 2327,
+                "lon_segs": 14,
+                "lat_rings": 7,
+                "skirt_flare": 0.16,
+                "burial_frac": 0.20,
+                "rot_deg_u": (-6.0, 24.0, -5.0),
+                "fractures_u": [
+                    ((-0.56, 0.66, 0.50), 0.46, 0.54),
+                    ((0.52, 0.68, -0.51), 0.50, 0.48),
+                ],
+                "pits_u": [],
+                "crevices_u": [],
+            },
+            {
+                "center_u": (3.85, -0.50, -1.65),
+                "size_u": (5.80, 4.40, 5.10),
+                "seed": 2341,
+                "lon_segs": 14,
+                "lat_rings": 7,
+                "skirt_flare": 0.16,
+                "burial_frac": 0.22,
+                "rot_deg_u": (4.0, -26.0, 5.0),
+                "fractures_u": [
+                    ((0.60, 0.64, -0.48), 0.48, 0.52),
+                ],
+                "pits_u": [],
+                "crevices_u": [],
+            },
+        ],
+    },
+    # Fresh Rockfall Boulder 3 (Rockfall_Boulder_03): 15.80 x 12.60 x 10.20 m Anchor Megalith of the Peak slide
+    {
+        "name": "Rockfall_Boulder_03",
+        "fresh_rockfall": True,
+        "target_size_u": (15.80, 10.20, 12.60),
+        "burial_frac": 0.16,
+        "footprint_radius": 8.90,
+        "skirt_height_frac": 0.22,
+        "shells": [
+            {
+                "center_u": (0.0, 0.0, 0.0),
+                "size_u": (12.60, 10.20, 10.60),
+                "seed": 2411,
+                "lon_segs": 24,
+                "lat_rings": 12,
+                "skirt_flare": 0.19,
+                "burial_frac": 0.16,
+                "rot_deg_u": (-4.0, 10.0, 3.0),
+                "fractures_u": [
+                    ((-0.52, 0.66, -0.54), 0.42, 0.60),
+                    ((0.60, 0.58, 0.55), 0.45, 0.56),
+                    ((-0.28, 0.68, 0.67), 0.48, 0.52),
+                    ((0.46, 0.70, -0.54), 0.51, 0.48),
+                ],
+                "pits_u": [],
+                "crevices_u": [
+                    ((0.55, 0.22, -0.80), -0.04, 0.20, 0.16),
+                    ((-0.70, 0.20, 0.68), 0.05, 0.19, 0.15),
+                ],
+            },
+            {
+                "center_u": (4.45, -0.40, -1.75),
+                "size_u": (7.20, 5.90, 6.30),
+                "seed": 2423,
+                "lon_segs": 14,
+                "lat_rings": 7,
+                "skirt_flare": 0.16,
+                "burial_frac": 0.20,
+                "rot_deg_u": (5.0, -20.0, 6.0),
+                "fractures_u": [
+                    ((0.58, 0.66, -0.47), 0.46, 0.54),
+                    ((-0.50, 0.70, 0.51), 0.50, 0.48),
+                ],
+                "pits_u": [],
+                "crevices_u": [],
+            },
+            {
+                "center_u": (-4.30, -0.55, 1.85),
+                "size_u": (6.60, 5.10, 5.80),
+                "seed": 2437,
+                "lon_segs": 14,
+                "lat_rings": 7,
+                "skirt_flare": 0.16,
+                "burial_frac": 0.22,
+                "rot_deg_u": (-4.0, 26.0, -5.0),
+                "fractures_u": [
+                    ((-0.58, 0.68, 0.44), 0.48, 0.52),
+                ],
+                "pits_u": [],
+                "crevices_u": [],
+            },
+        ],
+    },
+    # Landslide Scree/Talus Slab (Rockfall_TalusSlab): 46.00 x 30.00 x 4.50 m rubble tongue with feathered edges and embedded broken slabs
+    {
+        "name": "Rockfall_TalusSlab",
+        "talus_slab": True,
+        "target_size_u": (46.00, 4.50, 30.00),
+        "burial_frac": 0.20,
+        "seed": 2503,
+        "radial_rings": 15,
+        "lon_segs": 48,
+        "rubble_shells": [
+            {"center_u": (-12.5, 0.85, -5.2), "size_u": (5.4, 2.1, 4.2), "seed": 2511, "rot_deg_u": (8.0, 24.0, -6.0)},
+            {"center_u": (11.8, 0.90, -4.6), "size_u": (5.8, 2.2, 4.5), "seed": 2521, "rot_deg_u": (-6.0, -32.0, 9.0)},
+            {"center_u": (-5.4, 1.35, -7.8), "size_u": (4.8, 1.9, 3.9), "seed": 2531, "rot_deg_u": (11.0, 15.0, -8.0)},
+            {"center_u": (5.2, 1.30, -8.2), "size_u": (4.6, 1.8, 3.8), "seed": 2543, "rot_deg_u": (-9.0, -18.0, 7.0)},
+            {"center_u": (-15.2, 0.95, 2.8), "size_u": (6.2, 2.3, 4.8), "seed": 2551, "rot_deg_u": (5.0, 42.0, -5.0)},
+            {"center_u": (14.6, 1.05, 3.4), "size_u": (6.0, 2.2, 4.6), "seed": 2557, "rot_deg_u": (-7.0, -38.0, 6.0)},
+            {"center_u": (-7.2, 1.65, 5.6), "size_u": (6.4, 2.4, 5.0), "seed": 2579, "rot_deg_u": (9.0, -22.0, 8.0)},
+            {"center_u": (7.8, 1.60, 6.2), "size_u": (6.2, 2.3, 4.9), "seed": 2591, "rot_deg_u": (-8.0, 28.0, -7.0)},
+        ],
+    },
     # Big Boulder 3 (Rock_13): ~7.6 m towering crater-ejecta landmark megalith with twin talus spurs
     {
         "name": "Rock_13",
@@ -571,6 +843,97 @@ ROCK_SPECS: tuple[dict[str, object], ...] = (
 def build_rock(spec: dict[str, object]) -> bpy.types.Object:
     """Build a single R1 weathered lunar basalt/breccia rock mesh object with UVs and baked vertex colours."""
     name = str(spec["name"])
+    mb = r1kit.MeshBuilder(name, pivot_u=(0.0, 0.0, 0.0))
+    if spec.get("talus_slab"):
+        wx, hy, dz = spec["target_size_u"]
+        burial_frac = float(spec["burial_frac"])
+        mb.add_talus_slab(
+            center_u=(0.0, 0.0, 0.0),
+            size_u=(float(wx), float(hy), float(dz)),
+            seed=int(spec["seed"]),
+            radial_rings=int(spec["radial_rings"]),
+            lon_segs=int(spec["lon_segs"]),
+            burial_frac=burial_frac,
+            mat="R1_Basalt",
+        )
+        min_z_bound = -float(hy) * burial_frac
+        max_z_bound = float(hy) * (1.0 - burial_frac)
+        base_vert_count = len(mb.bm.verts)
+        for rshell in spec.get("rubble_shells", []):
+            mb.add_weathered_rock(
+                center_u=rshell["center_u"],
+                size_u=rshell["size_u"],
+                seed=int(rshell["seed"]),
+                lon_segs=10,
+                lat_rings=5,
+                fractures_u=[
+                    ((-0.52, 0.72, -0.45), 0.48, 0.52),
+                    ((0.58, 0.65, 0.48), 0.50, 0.48),
+                ],
+                pits_u=[],
+                crevices_u=[],
+                skirt_flare=0.14,
+                burial_frac=0.35,
+                rot_deg_u=rshell["rot_deg_u"],
+                mat="R1_Basalt",
+            )
+        all_verts = list(mb.bm.verts)
+        for v in all_verts[base_vert_count:]:
+            v.co.z = max(min_z_bound + 0.05, min(max_z_bound - 0.05, v.co.z))
+        obj = mb.build_object(smooth_angle_deg=42.0)
+        r1kit.apply_triplanar_uvs(obj, texel_scale=0.65)
+        bpy.context.view_layer.update()
+        r1kit.bake_talus_slab_vertex_colors(
+            obj,
+            half_width=float(wx) * 0.5,
+            half_depth=float(dz) * 0.5,
+        )
+        return obj
+
+    if spec.get("fresh_rockfall"):
+        for shell in spec["shells"]:
+            mb.add_weathered_rock(
+                center_u=shell["center_u"],
+                size_u=shell["size_u"],
+                seed=int(shell["seed"]),
+                lon_segs=int(shell["lon_segs"]),
+                lat_rings=int(shell["lat_rings"]),
+                fractures_u=shell["fractures_u"],
+                pits_u=shell["pits_u"],
+                crevices_u=shell["crevices_u"],
+                skirt_flare=float(shell["skirt_flare"]),
+                burial_frac=float(shell["burial_frac"]),
+                rot_deg_u=shell["rot_deg_u"],
+                mat="R1_Basalt",
+            )
+        wx, hy, dz = spec["target_size_u"]
+        burial_frac = float(spec["burial_frac"])
+        verts = list(mb.bm.verts)
+        xs = [v.co.x for v in verts]
+        ys = [v.co.y for v in verts]
+        zs = [v.co.z for v in verts]
+        min_x, max_x = min(xs), max(xs)
+        min_y, max_y = min(ys), max(ys)
+        min_z, max_z = min(zs), max(zs)
+        span_x = max(1e-4, max_x - min_x)
+        span_y = max(1e-4, max_y - min_y)
+        span_z = max(1e-4, max_z - min_z)
+        cx = 0.5 * (min_x + max_x)
+        cy = 0.5 * (min_y + max_y)
+        burial_z = float(hy) * burial_frac
+        for v in verts:
+            v.co.x = ((v.co.x - cx) / span_x) * float(wx)
+            v.co.y = ((v.co.y - cy) / span_y) * float(dz)
+            v.co.z = ((v.co.z - min_z) / span_z) * float(hy) - burial_z
+        obj = mb.build_object(smooth_angle_deg=44.0)
+        r1kit.apply_triplanar_uvs(obj, texel_scale=0.75)
+        bpy.context.view_layer.update()
+        r1kit.bake_fresh_rockfall_vertex_colors(
+            obj,
+            footprint_radius=float(spec["footprint_radius"]),
+            skirt_height_frac=float(spec["skirt_height_frac"]),
+        )
+        return obj
     mb = r1kit.MeshBuilder(name, pivot_u=(0.0, 0.0, 0.0))
     for shell in spec["shells"]:
         mb.add_weathered_rock(
@@ -660,11 +1023,19 @@ def main(argv: list[str] | None = None) -> None:
         default=Path("Assets/_Project/Art/R1/Models/Rocks"),
     )
     parser.add_argument("--only-big", action="store_true", help="Only build and export Rock_10..Rock_13.")
+    parser.add_argument("--only-rockfall", action="store_true", help="Only build and export Rockfall_Boulder_00..03 and Rockfall_TalusSlab.")
     parser.add_argument("--render-scale", action="store_true", help="Render boulders_scale_dawn/night.png with 07.")
     args = parser.parse_args(argv)
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
-    specs_to_build = (
+    if args.only_rockfall:
+        specs_to_build = [s for s in ROCK_SPECS if s.get("fresh_rockfall") or s.get("talus_slab")]
+    elif args.only_big:
+        specs_to_build = [s for s in ROCK_SPECS if str(s["name"]) in ("Rock_10", "Rock_11", "Rock_12", "Rock_13")]
+    else:
+        specs_to_build = list(ROCK_SPECS)
+    if False:
+        specs_to_build = (
         [s for s in ROCK_SPECS if str(s["name"]) in ("Rock_10", "Rock_11", "Rock_12", "Rock_13")]
         if args.only_big
         else ROCK_SPECS

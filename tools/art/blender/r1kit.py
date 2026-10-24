@@ -2507,6 +2507,144 @@ class MeshBuilder:
         bmesh.ops.translate(self.bm, verts=bm_verts, vec=self._to_local_b(center_u))
         return faces
 
+    def add_talus_slab(
+        self,
+        center_u: tuple[float, float, float],
+        size_u: tuple[float, float, float],
+        seed: int = 901,
+        radial_rings: int = 18,
+        lon_segs: int = 56,
+        burial_frac: float = 0.20,
+        mat: str = "R1_Basalt",
+    ) -> list[bmesh.types.BMFace]:
+        """Add a closed, manifold landslide scree/talus fan tongue with embedded rubble clasts and feathered terrain-blending edges."""
+        wx, hy, dz = size_u
+        rng = np.random.default_rng(seed)
+
+        n_clasts = 24
+        clasts: list[tuple[float, float, float, float, float, float]] = []
+        for c_idx in range(n_clasts):
+            c_rad = 0.10 + 0.64 * ((c_idx + 0.5) / n_clasts) ** 0.72
+            c_ang = c_idx * 2.3999632 + float(rng.uniform(-0.22, 0.22))
+            cx = c_rad * math.cos(c_ang)
+            cz = c_rad * math.sin(c_ang)
+            crx = float(rng.uniform(0.11, 0.22))
+            crz = float(rng.uniform(0.09, 0.19))
+            ch = float(rng.uniform(0.22, 0.48)) * (1.0 - 0.35 * c_rad)
+            cyaw = float(rng.uniform(0.0, math.pi))
+            clasts.append((cx, cz, crx, crz, ch, cyaw))
+
+        def _eval_point(r_frac: float, phi: float) -> list[float]:
+            cos_p = math.cos(phi)
+            sin_p = math.sin(phi)
+            throat_narrow = 1.0 - 0.18 * max(0.0, sin_p) * (0.35 + 0.65 * r_frac)
+            toe_lobes = (
+                1.0
+                + 0.08 * math.cos(3.0 * phi + 0.4)
+                + 0.055 * math.sin(5.0 * phi - 0.7)
+                + 0.035 * math.cos(7.0 * phi + 1.2)
+            )
+            r_eff = r_frac * (0.25 + 0.75 * toe_lobes)
+            px = r_eff * cos_p * throat_narrow
+            pz = r_eff * sin_p
+
+            feather = max(0.0, 1.0 - (r_frac ** 1.65)) ** 1.25
+            spine_lift = (1.0 + 0.28 * sin_p * (1.0 - 0.45 * r_frac)) * (1.0 - 0.24 * (cos_p * r_frac) ** 2)
+            terrace_wave = 0.12 * math.sin(pz * 7.5 + 0.55 * math.cos(px * 4.2)) * feather
+            radial_furrow = 0.08 * math.cos(6.0 * phi + r_frac * 3.5) * (r_frac * (1.0 - r_frac))
+
+            clast_lift = 0.0
+            for cx, cz, crx, crz, ch, cyaw in clasts:
+                dx = px - cx
+                dz_c = pz - cz
+                ca = math.cos(cyaw)
+                sa = math.sin(cyaw)
+                lx = (dx * ca + dz_c * sa) / crx
+                lz = (-dx * sa + dz_c * ca) / crz
+                d2 = lx * lx + lz * lz
+                if d2 < 2.6:
+                    slab = math.exp(-(d2 ** 1.55)) * ch
+                    if slab > clast_lift:
+                        clast_lift = slab + 0.28 * clast_lift
+
+            # Natural down-slope drape (+Z uphill higher, -Z downhill lower) + undulating rubble margin
+            slope_drape = 0.08 * pz + 0.02 * math.sin(4.0 * phi + 0.5) * r_frac
+            rim_tuck = 0.14 * max(0.0, (r_frac - 0.68) / 0.32) ** 1.4
+            py = 0.16 + slope_drape + feather * (0.82 * spine_lift + terrace_wave + radial_furrow) + clast_lift * feather - rim_tuck
+            return [px, py, pz]
+
+        raw_pts: list[list[float]] = []
+        raw_pts.append(_eval_point(0.0, 0.0))
+        top_rings: list[list[int]] = []
+        for r_idx in range(1, radial_rings + 1):
+            r_frac = (r_idx / radial_rings) ** 0.92
+            ring: list[int] = []
+            for s in range(lon_segs):
+                phi = (2.0 * math.pi * s) / lon_segs
+                ring.append(len(raw_pts))
+                raw_pts.append(_eval_point(r_frac, phi))
+            top_rings.append(ring)
+
+        min_rim_y = min(raw_pts[idx][1] for idx in top_rings[-1])
+        bot_rings: list[list[int]] = []
+        for b_frac, drop_y in ((0.94, 0.03), (0.68, 0.06), (0.34, 0.08)):
+            ring = []
+            for s in range(lon_segs):
+                rim_pt = raw_pts[top_rings[-1][s]]
+                ring.append(len(raw_pts))
+                by = min_rim_y - drop_y
+                raw_pts.append([rim_pt[0] * b_frac, by, rim_pt[2] * b_frac])
+            bot_rings.append(ring)
+
+        bot_pole_idx = len(raw_pts)
+        raw_pts.append([0.0, min_rim_y - 0.09, 0.0])
+
+        xs = [p[0] for p in raw_pts]
+        ys = [p[1] for p in raw_pts]
+        zs = [p[2] for p in raw_pts]
+        min_x, max_x = min(xs), max(xs)
+        min_y, max_y = min(ys), max(ys)
+        min_z, max_z = min(zs), max(zs)
+        span_x = max(1e-4, max_x - min_x)
+        span_y = max(1e-4, max_y - min_y)
+        span_z = max(1e-4, max_z - min_z)
+        cx0 = 0.5 * (min_x + max_x)
+        cz0 = 0.5 * (min_z + max_z)
+        burial_y = hy * burial_frac
+
+        for p in raw_pts:
+            p[0] = ((p[0] - cx0) / span_x) * wx
+            p[1] = ((p[1] - min_y) / span_y) * hy - burial_y
+            p[2] = ((p[2] - cz0) / span_z) * dz
+
+        bm_verts = [self.bm.verts.new(u_pos(p[0], p[1], p[2])) for p in raw_pts]
+        faces: list[bmesh.types.BMFace] = []
+
+        first_ring = top_rings[0]
+        for s in range(lon_segs):
+            sn = (s + 1) % lon_segs
+            faces.append(self.bm.faces.new([bm_verts[0], bm_verts[first_ring[s]], bm_verts[first_ring[sn]]]))
+
+        all_rings = top_rings + bot_rings
+        for r_idx in range(len(all_rings) - 1):
+            r0 = all_rings[r_idx]
+            r1 = all_rings[r_idx + 1]
+            for s in range(lon_segs):
+                sn = (s + 1) % lon_segs
+                faces.append(
+                    self.bm.faces.new([bm_verts[r0[s]], bm_verts[r1[s]], bm_verts[r1[sn]], bm_verts[r0[sn]]])
+                )
+
+        last_ring = all_rings[-1]
+        for s in range(lon_segs):
+            sn = (s + 1) % lon_segs
+            faces.append(self.bm.faces.new([bm_verts[bot_pole_idx], bm_verts[last_ring[sn]], bm_verts[last_ring[s]]]))
+
+        bmesh.ops.recalc_face_normals(self.bm, faces=faces)
+        self._assign_faces(faces, mat)
+        bmesh.ops.translate(self.bm, verts=bm_verts, vec=self._to_local_b(center_u))
+        return faces
+
     def add_torus(
         self,
         center_u: tuple[float, float, float],
@@ -4002,6 +4140,335 @@ def bake_rock_vertex_colors(
                 # Ensure deep side/overhanging crevices have zero dust so they stay dark in sunlight
                 if n_w.z < 0.12 and skirt_factor < 0.15:
                     b_chan *= max(0.0, (n_w.z + 0.05) / 0.17) * (1.0 - crevice_occ)
+
+                if b_chan < 0.03:
+                    b_chan = 0.0
+                if g_chan < 0.03:
+                    g_chan = 0.0
+
+                rgba[loop_idx, 0] = r_chan
+                rgba[loop_idx, 1] = g_chan
+                rgba[loop_idx, 2] = b_chan
+                rgba[loop_idx, 3] = 1.0
+                loop_idx += 1
+
+        bm.free()
+        ca.data.foreach_set("color", rgba.reshape(-1))
+        me.update()
+
+
+def bake_fresh_rockfall_vertex_colors(
+    root: bpy.types.Object,
+    footprint_radius: float = 6.0,
+    skirt_height_frac: float = 0.22,
+) -> None:
+    """Bake vertex colours for fresh-broken rockfall boulders: R = deep inter-lobe crevice AO, G = broad fresh-cleaved facet & ridge mask, B = rock-flour pockets & basal talus skirt."""
+    mesh_objs = [o for o in collect_hierarchy(root) if o.type == "MESH" and len(o.data.polygons) > 0]
+    if not mesh_objs:
+        return
+
+    bpy.ops.mesh.primitive_circle_add(
+        vertices=32,
+        radius=footprint_radius * 1.75,
+        fill_type="NGON",
+        location=(0.0, 0.0, -0.015),
+    )
+    ground_obj = bpy.context.active_object
+    ground_obj.name = "_TempFreshRockGroundAO"
+
+    for obj in mesh_objs + [ground_obj]:
+        me = obj.data
+        while len(me.color_attributes) > 0:
+            me.color_attributes.remove(me.color_attributes[0])
+        ca = me.color_attributes.new(
+            name=VCOL_ATTRIBUTE_NAME,
+            type="FLOAT_COLOR",
+            domain="CORNER",
+        )
+        me.color_attributes.active_color = ca
+        me.color_attributes.render_color_index = 0
+
+    scene = bpy.context.scene
+    scene.render.engine = "CYCLES"
+    scene.cycles.device = "CPU"
+    scene.cycles.samples = 48
+    scene.cycles.seed = 0
+    scene.cycles.use_animated_seed = False
+
+    if scene.world is None:
+        scene.world = bpy.data.worlds.new("R1_BakeWorld")
+    scene.world.light_settings.distance = 0.55
+
+    scene.render.bake.target = "VERTEX_COLORS"
+    bpy.ops.object.select_all(action="DESELECT")
+    for obj in mesh_objs:
+        obj.select_set(True)
+    bpy.context.view_layer.objects.active = mesh_objs[0]
+    bpy.ops.object.bake(type="AO")
+
+    ground_mesh = ground_obj.data
+    bpy.data.objects.remove(ground_obj, do_unlink=True)
+    bpy.data.meshes.remove(ground_mesh)
+
+    for obj in mesh_objs:
+        me = obj.data
+        num_loops = len(me.loops)
+        rgba = np.ones(num_loops * 4, dtype=np.float32)
+        ca = me.color_attributes[VCOL_ATTRIBUTE_NAME]
+        ca.data.foreach_get("color", rgba)
+        rgba = rgba.reshape(-1, 4)
+        ao_loop = np.clip(rgba[:, 0].copy(), 0.0, 1.0)
+
+        bm = bmesh.new()
+        bm.from_mesh(me)
+        bm.verts.ensure_lookup_table()
+        bm.edges.ensure_lookup_table()
+        bm.faces.ensure_lookup_table()
+        bm.normal_update()
+
+        world_mat = obj.matrix_world
+        rot_mat = world_mat.to_3x3()
+
+        w_coords = [world_mat @ v.co for v in bm.verts]
+        zs = [p.z for p in w_coords]
+        min_z = min(zs) if zs else -0.5
+        max_z = max(zs) if zs else 5.0
+        above_span = max(0.10, max_z)
+        skirt_top_z = above_span * skirt_height_frac
+
+        cx = float(np.mean([p.x for p in w_coords]))
+        cy = float(np.mean([p.y for p in w_coords]))
+        cz = float(np.mean([p.z for p in w_coords]))
+        center_w = Vector((cx, cy, cz))
+        vert_radii = np.array([(p - center_w).length for p in w_coords], dtype=np.float32)
+        avg_radius = max(0.10, float(np.mean(vert_radii)))
+
+        n_verts = len(bm.verts)
+        v_convex = np.zeros(n_verts, dtype=np.float32)
+        v_concave = np.zeros(n_verts, dtype=np.float32)
+        v_inward = np.zeros(n_verts, dtype=np.float32)
+
+        for e in bm.edges:
+            if not e.is_manifold:
+                continue
+            signed_ang = e.calc_face_angle_signed()
+            v0, v1 = e.verts[0].index, e.verts[1].index
+            if signed_ang > 0.11:
+                val = min(1.0, (signed_ang - 0.11) / 0.58)
+                if val > v_convex[v0]:
+                    v_convex[v0] = val
+                if val > v_convex[v1]:
+                    v_convex[v1] = val
+            elif signed_ang < -0.025:
+                val = min(1.0, (-signed_ang - 0.025) / 0.35)
+                if val > v_concave[v0]:
+                    v_concave[v0] = val
+                if val > v_concave[v1]:
+                    v_concave[v1] = val
+
+        for v in bm.verts:
+            vi = v.index
+            nbrs = [e.other_vert(v).index for e in v.link_edges]
+            if nbrs:
+                mean_nbr_r = float(np.mean(vert_radii[nbrs]))
+                inward_diff = (mean_nbr_r - float(vert_radii[vi])) / avg_radius
+                if inward_diff > 0.004:
+                    v_inward[vi] = min(1.0, inward_diff * 11.0)
+
+        v_convex_smooth = v_convex.copy()
+        v_concave_smooth = np.maximum(v_concave, v_inward)
+        for v in bm.verts:
+            vi = v.index
+            nbrs = [e.other_vert(v).index for e in v.link_edges]
+            if nbrs:
+                v_convex_smooth[vi] = max(v_convex[vi], 0.72 * float(np.mean(v_convex[nbrs])))
+                v_concave_smooth[vi] = max(
+                    v_concave_smooth[vi],
+                    0.72 * float(np.mean(v_concave_smooth[nbrs])),
+                )
+
+        loop_idx = 0
+        for f in bm.faces:
+            f_norm_w = (rot_mat @ f.normal).normalized()
+            for l in f.loops:
+                vi = l.vert.index
+                w_pos = w_coords[vi]
+                v_norm_w = (rot_mat @ l.vert.normal).normalized()
+                n_w = (f_norm_w * 0.52 + v_norm_w * 0.48).normalized()
+
+                ao_val = float(ao_loop[loop_idx])
+                h_above = float(w_pos.z)
+                h_01 = float(np.clip((h_above - min_z) / max(0.10, max_z - min_z), 0.0, 1.0))
+
+                if h_above <= skirt_top_z and n_w.z > -0.25:
+                    skirt_t = float(np.clip(1.0 - (max(0.0, h_above) / max(0.05, skirt_top_z)), 0.0, 1.0))
+                    skirt_factor = skirt_t * skirt_t * (3.0 - 2.0 * skirt_t)
+                else:
+                    skirt_factor = 0.0
+
+                crevice_occ = float(np.clip(v_concave_smooth[vi] * 0.90, 0.0, 0.88))
+                overhang_occ = float(np.clip((-n_w.z - 0.10) * 0.65, 0.0, 0.54))
+
+                raw_ao = (0.14 + 0.86 * (ao_val ** 1.10)) * (1.0 - crevice_occ) * (1.0 - overhang_occ)
+                r_chan = float(np.clip(max(raw_ao, skirt_factor * 0.84 * (1.0 - 0.45 * crevice_occ)), 0.08, 1.0))
+
+                # Fresh-broken cleavage facets and stepped ridges expose paler, un-darkened rock (G)
+                chip_hash = 0.5 + 0.5 * math.sin(w_pos.x * 2.8 + w_pos.y * 2.3 + w_pos.z * 3.1)
+                steep_cleave = float(np.clip(1.0 - abs(n_w.z - 0.15) * 1.45, 0.0, 1.0))
+                if h_01 > 0.22 and skirt_factor < 0.30 and crevice_occ < 0.26:
+                    ridge_wear = v_convex_smooth[vi] * (0.52 + 0.48 * chip_hash)
+                    facet_fresh = steep_cleave * (0.24 + 0.22 * chip_hash) * (1.0 - crevice_occ * 2.5)
+                    g_chan = float(np.clip((ridge_wear + facet_fresh) * r_chan, 0.0, 0.88))
+                else:
+                    g_chan = 0.0
+
+                # Pale rock-flour & regolith skirt (B): strong on basal skirt and concave pockets, lighter on fresh faces
+                top_up = float(np.clip((n_w.z - 0.28) / 0.58, 0.0, 1.0))
+                top_height = float(np.clip((h_01 - 0.42) / 0.40, 0.0, 1.0))
+                dust_mod = 0.84 + 0.16 * math.cos(w_pos.x * 1.9 - w_pos.y * 1.7 + w_pos.z * 1.4)
+                top_dust = (top_up ** 1.25) * top_height * dust_mod * 0.58 * (1.0 - 0.65 * crevice_occ)
+                pocket_dust = (
+                    float(np.clip(v_concave_smooth[vi] * 0.72, 0.0, 0.68))
+                    * float(np.clip((n_w.z - 0.22) / 0.50, 0.0, 1.0))
+                )
+                skirt_dust = skirt_factor * (0.88 + 0.12 * dust_mod) * (1.0 - 0.35 * crevice_occ)
+
+                b_chan = float(np.clip(max(top_dust, skirt_dust, pocket_dust) * (1.0 - 0.55 * g_chan), 0.0, 1.0))
+                if n_w.z < 0.08 and skirt_factor < 0.15:
+                    b_chan *= max(0.0, (n_w.z + 0.05) / 0.13) * (1.0 - crevice_occ)
+
+                if b_chan < 0.03:
+                    b_chan = 0.0
+                if g_chan < 0.03:
+                    g_chan = 0.0
+
+                rgba[loop_idx, 0] = r_chan
+                rgba[loop_idx, 1] = g_chan
+                rgba[loop_idx, 2] = b_chan
+                rgba[loop_idx, 3] = 1.0
+                loop_idx += 1
+
+        bm.free()
+        ca.data.foreach_set("color", rgba.reshape(-1))
+        me.update()
+
+
+def bake_talus_slab_vertex_colors(
+    root: bpy.types.Object,
+    half_width: float = 23.0,
+    half_depth: float = 15.0,
+) -> None:
+    """Bake vertex colours for the landslide scree/talus slab: R = rubble pocket AO with un-darkened feathered rim, G = fresh broken rubble clast crests, B = pale regolith edge blend."""
+    mesh_objs = [o for o in collect_hierarchy(root) if o.type == "MESH" and len(o.data.polygons) > 0]
+    if not mesh_objs:
+        return
+
+    for obj in mesh_objs:
+        me = obj.data
+        while len(me.color_attributes) > 0:
+            me.color_attributes.remove(me.color_attributes[0])
+        ca = me.color_attributes.new(
+            name=VCOL_ATTRIBUTE_NAME,
+            type="FLOAT_COLOR",
+            domain="CORNER",
+        )
+        me.color_attributes.active_color = ca
+        me.color_attributes.render_color_index = 0
+
+        bm = bmesh.new()
+        bm.from_mesh(me)
+        bm.verts.ensure_lookup_table()
+        bm.edges.ensure_lookup_table()
+        bm.faces.ensure_lookup_table()
+        bm.normal_update()
+
+        world_mat = obj.matrix_world
+        rot_mat = world_mat.to_3x3()
+        w_coords = [world_mat @ v.co for v in bm.verts]
+        zs = [p.z for p in w_coords]
+        min_z = min(zs) if zs else -0.9
+        max_z = max(zs) if zs else 3.6
+
+        n_verts = len(bm.verts)
+        v_convex = np.zeros(n_verts, dtype=np.float32)
+        v_concave = np.zeros(n_verts, dtype=np.float32)
+        v_local_dip = np.zeros(n_verts, dtype=np.float32)
+
+        for e in bm.edges:
+            if not e.is_manifold:
+                continue
+            signed_ang = e.calc_face_angle_signed()
+            v0, v1 = e.verts[0].index, e.verts[1].index
+            if signed_ang > 0.06:
+                val = min(1.0, (signed_ang - 0.06) / 0.36)
+                if val > v_convex[v0]:
+                    v_convex[v0] = val
+                if val > v_convex[v1]:
+                    v_convex[v1] = val
+            elif signed_ang < -0.02:
+                val = min(1.0, (-signed_ang - 0.02) / 0.24)
+                if val > v_concave[v0]:
+                    v_concave[v0] = val
+                if val > v_concave[v1]:
+                    v_concave[v1] = val
+
+        for v in bm.verts:
+            vi = v.index
+            nbrs = [e.other_vert(v).index for e in v.link_edges]
+            if nbrs:
+                mean_nbr_z = float(np.mean([w_coords[ni].z for ni in nbrs]))
+                dip = mean_nbr_z - float(w_coords[vi].z)
+                if dip > 0.01:
+                    v_local_dip[vi] = min(1.0, dip * 2.2)
+
+        v_convex_smooth = v_convex.copy()
+        v_concave_smooth = np.maximum(v_concave, v_local_dip)
+        for v in bm.verts:
+            vi = v.index
+            nbrs = [e.other_vert(v).index for e in v.link_edges]
+            if nbrs:
+                v_convex_smooth[vi] = max(v_convex[vi], 0.72 * float(np.mean(v_convex[nbrs])))
+                v_concave_smooth[vi] = max(v_concave_smooth[vi], 0.72 * float(np.mean(v_concave_smooth[nbrs])))
+
+        num_loops = len(me.loops)
+        rgba = np.ones((num_loops, 4), dtype=np.float32)
+        loop_idx = 0
+        for f in bm.faces:
+            f_norm_w = (rot_mat @ f.normal).normalized()
+            for l in f.loops:
+                vi = l.vert.index
+                w_pos = w_coords[vi]
+                v_norm_w = (rot_mat @ l.vert.normal).normalized()
+                n_w = (f_norm_w * 0.5 + v_norm_w * 0.5).normalized()
+
+                rx = float(w_pos.x) / max(1.0, half_width)
+                ry = float(w_pos.y) / max(1.0, half_depth)
+                r_norm = math.sqrt(rx * rx + ry * ry)
+                h_01 = float(np.clip((float(w_pos.z) - min_z) / max(0.1, max_z - min_z), 0.0, 1.0))
+
+                # Feather zone near outer perimeter (r_norm > 0.64) blends smoothly into terrain with no dark AO ring
+                edge_blend = float(np.clip((r_norm - 0.64) / 0.34, 0.0, 1.0))
+                edge_blend = edge_blend * edge_blend * (3.0 - 2.0 * edge_blend)
+
+                pocket_occ = float(np.clip(v_concave_smooth[vi] * 0.85, 0.0, 0.82)) * (1.0 - 0.85 * edge_blend)
+                base_ao = 0.22 + 0.76 * (0.35 + 0.65 * h_01) * (1.0 - pocket_occ)
+                if n_w.z < -0.15:
+                    base_ao *= 0.45
+                r_chan = float(np.clip(base_ao * (1.0 - edge_blend) + 0.92 * edge_blend, 0.12, 0.98))
+
+                # Fresh rubble clast crests & stepped shear edges (G)
+                clast_wave = 0.5 + 0.5 * math.sin(w_pos.x * 1.4 + w_pos.y * 1.7 + w_pos.z * 2.3)
+                if n_w.z > -0.05 and edge_blend < 0.85:
+                    g_raw = (v_convex_smooth[vi] * 0.82 + max(0.0, h_01 - 0.42) * 0.45 * clast_wave) * (1.0 - edge_blend)
+                    g_chan = float(np.clip(g_raw * r_chan, 0.0, 0.82))
+                else:
+                    g_chan = 0.0
+
+                # Pale scree dust & feathered terrain skirt (B)
+                trough_dust = pocket_occ * 0.78
+                slope_dust = float(np.clip((n_w.z - 0.35) / 0.55, 0.0, 1.0)) * (0.45 + 0.35 * (1.0 - h_01))
+                b_raw = max(edge_blend * 0.96, trough_dust, slope_dust * (1.0 - 0.65 * g_chan))
+                b_chan = float(np.clip(b_raw, 0.0, 0.98))
 
                 if b_chan < 0.03:
                     b_chan = 0.0

@@ -56,6 +56,7 @@ namespace MoonProject.Art.Editor
                     R1StoryPropsBuilder.ApplyStoryPropOverrides(instance, modelPath);
                     R1MareKitBuilder.ApplyMareKitOverrides(instance, modelPath);
                     R1FaunaBuilder.ApplyFaunaOverrides(instance, modelPath);
+                    ApplyRockfallOverrides(instance, modelPath);
                 }
                 catch
                 {
@@ -152,6 +153,67 @@ namespace MoonProject.Art.Editor
             }
 
             R1ModelPostprocessor.DisableCollisionProxyRenderers(root);
+        }
+
+        /// <summary>FBX asset paths for the 4 fresh-broken Peak road rockfall boulders (10-16 m).</summary>
+        public static readonly string[] FreshRockfallBoulderFbxPaths =
+        {
+            R1MaterialRecipes.ModelsFolder + "/Rocks/Rockfall_Boulder_00.fbx",
+            R1MaterialRecipes.ModelsFolder + "/Rocks/Rockfall_Boulder_01.fbx",
+            R1MaterialRecipes.ModelsFolder + "/Rocks/Rockfall_Boulder_02.fbx",
+            R1MaterialRecipes.ModelsFolder + "/Rocks/Rockfall_Boulder_03.fbx",
+        };
+
+        /// <summary>FBX asset path for the 46 m wide Peak road scree/talus landslide tongue slab.</summary>
+        public const string RockfallTalusSlabFbxPath =
+            R1MaterialRecipes.ModelsFolder + "/Rocks/Rockfall_TalusSlab.fbx";
+
+        /// <summary>
+        /// Applies lighter-toned fresh rockfall materials (<c>R1_FreshBasalt.mat</c> and <c>R1_RockfallTalus.mat</c>)
+        /// to the fresh rockfall boulders and scree/talus slab prefabs.
+        /// </summary>
+        public static void ApplyRockfallOverrides(GameObject root, string modelPath)
+        {
+            if (root == null || string.IsNullOrEmpty(modelPath))
+            {
+                return;
+            }
+
+            string normalized = NormalizePath(modelPath);
+            Material overrideMat = null;
+            if (string.Equals(normalized, RockfallTalusSlabFbxPath, StringComparison.Ordinal))
+            {
+                overrideMat = R1MaterialLibrary.LoadRockfallTalusMaterial();
+            }
+            else
+            {
+                for (int i = 0; i < FreshRockfallBoulderFbxPaths.Length; i++)
+                {
+                    if (string.Equals(normalized, FreshRockfallBoulderFbxPaths[i], StringComparison.Ordinal))
+                    {
+                        overrideMat = R1MaterialLibrary.LoadFreshBasaltMaterial();
+                        break;
+                    }
+                }
+            }
+
+            if (overrideMat == null)
+            {
+                return;
+            }
+
+            Renderer[] renderers = root.GetComponentsInChildren<Renderer>(true);
+            for (int r = 0; r < renderers.Length; r++)
+            {
+                Renderer renderer = renderers[r];
+                Material[] mats = renderer.sharedMaterials;
+                for (int m = 0; m < mats.Length; m++)
+                {
+                    mats[m] = overrideMat;
+                }
+
+                renderer.sharedMaterials = mats;
+            }
         }
 
         private static string NormalizePath(string path)
