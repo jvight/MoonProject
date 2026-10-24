@@ -29,6 +29,7 @@ namespace MoonProject.Art.Editor
         public const string AirlockReadoutMaterialName = "R1_AirlockReadout";
         public const string SignalPillarMaterialName = "R1_SignalPillar";
         public const string PeakBeaconRedMaterialName = "R1_PeakBeaconRed";
+        public const string RelayLampDarkMaterialName = "R1_RelayLampDark";
         public const string IceCoreLabelMaterialName = "R1_IceCoreLabel";
         public const string IceCoreFrostMaterialName = "R1_IceCoreFrost";
         public const string IceCoreWindowMaterialName = "R1_IceCoreWindow";
@@ -48,6 +49,7 @@ namespace MoonProject.Art.Editor
         public const string AirlockReadoutMaterialPath = ArtPaths.R1MaterialsFolder + "/" + AirlockReadoutMaterialName + ".mat";
         public const string SignalPillarMaterialPath = ArtPaths.R1MaterialsFolder + "/" + SignalPillarMaterialName + ".mat";
         public const string PeakBeaconRedMaterialPath = ArtPaths.R1MaterialsFolder + "/" + PeakBeaconRedMaterialName + ".mat";
+        public const string RelayLampDarkMaterialPath = ArtPaths.R1MaterialsFolder + "/" + RelayLampDarkMaterialName + ".mat";
         public const string IceCoreLabelMaterialPath = ArtPaths.R1MaterialsFolder + "/" + IceCoreLabelMaterialName + ".mat";
         public const string IceCoreFrostMaterialPath = ArtPaths.R1MaterialsFolder + "/" + IceCoreFrostMaterialName + ".mat";
         public const string IceCoreWindowMaterialPath = ArtPaths.R1MaterialsFolder + "/" + IceCoreWindowMaterialName + ".mat";
@@ -233,6 +235,13 @@ namespace MoonProject.Art.Editor
             peakBeaconRedMat.SetFloat("_HotCoreThreshold", 0.88f);
             peakBeaconRedMat.SetFloat("_HotCorePeak", 1.48f);
             GeneratedAssets.CreateOrReplace(peakBeaconRedMat, PeakBeaconRedMaterialPath);
+
+            // 7b. R1_RelayLampDark: the amber relay lens with its emission keyed off, so relay.2's lamp is dark until
+            //     Gameplay lights it through _EmissionColor / _EmissionStrength (the glow modulation contract)
+            Material relayLampDarkMat = R1MaterialLibrary.CreateMaterial(r1Lit, lampSpec);
+            relayLampDarkMat.name = RelayLampDarkMaterialName;
+            relayLampDarkMat.SetColor("_EmissionColor", Color.black);
+            GeneratedAssets.CreateOrReplace(relayLampDarkMat, RelayLampDarkMaterialPath);
 
             // 8. R1_CrateRimGlowAmber: soft, even, matte warm line on open crate rim (no speckles, well below bloom threshold)
             Material crateRimGlowMat = R1MaterialLibrary.CreateMaterial(r1Lit, lampSpec);
@@ -501,6 +510,11 @@ namespace MoonProject.Art.Editor
             {
                 ReplaceRendererSlotMaterial(root, "PillarBeam", R1MaterialRecipes.DarkGlassSlot, LoadOrBuildMaterial(SignalPillarMaterialPath));
                 DisableShadowCastingOnHierarchy(root);
+            }
+            else if (modelPath.EndsWith("/RelayHut.fbx", StringComparison.Ordinal))
+            {
+                ReplaceRendererSlotMaterial(root, "MastStub/RelayLamp", R1MaterialRecipes.LampAmberSlot,
+                    LoadOrBuildMaterial(RelayLampDarkMaterialPath));
             }
             else if (modelPath.EndsWith("/PeakBeacon.fbx", StringComparison.Ordinal))
             {
