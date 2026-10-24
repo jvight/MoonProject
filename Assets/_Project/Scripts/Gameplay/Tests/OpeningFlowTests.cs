@@ -497,6 +497,27 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void TheFitLine_LeavesTheTabChipToTeachIt_ButStillReminds()
+        {
+            _game.ReachedLander = true;
+            _game.Known.Add(StructureIds.ChargingPad);
+            _game.Covered.Add(StructureIds.ChargingPad);
+            _game.BuiltIds.Add(StructureIds.ChargingPad);
+            _game.FirstCharge = true;
+            _game.ReserveSpent = true;
+            _game.Known.Add(StructureIds.SolarArray);
+            _flow.Tick(1f);
+            _game.CarriesIgniter = true;
+            _game.CanFitIgniter = true;
+            _flow.Tick(1f);
+            Assert.AreEqual(OpeningKeys.FitIgniter, _flow.Current);
+            Assert.AreEqual(string.Empty, _flow.Shown, "no next line over the Tab chip on 07, which shows the key");
+            Tick(Stall);
+            Assert.AreEqual(OpeningKeys.FitIgniter, _flow.Shown, "a stalled player still gets the reminder");
+            Assert.AreEqual(NextLineReason.Reminder, _flow.ShownReason);
+        }
+
+        [Test]
         public void TheWaitForTheNight_IsNeverReminded()
         {
             _game.ReachedLander = true;
