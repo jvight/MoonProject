@@ -87,6 +87,14 @@ namespace MoonProject.World.PlayModeTests
 
         // The key level the chase shot of relay.1 waits for.
         private const float RelayChaseKey = 0.9f;
+        private const float SummitFov = 20f;
+        private const float RelayNearDistance = 15f;
+
+        // The first night filmed: the key light's node, a frame every so many seconds, for how long after the night is
+        // made ready (its 75 s sunset and the answer's few minutes after).
+        private const string NightKeyName = "Earthlight";
+        private const int NightStepSeconds = 30;
+        private const int NightWatchSeconds = 330;
 
         // relay.1's repair site: its cabinet and the spare inside, and how far in front of the cabinet the near eye
         // stands.
@@ -806,6 +814,56 @@ namespace MoonProject.World.PlayModeTests
 
             Shoot(view, "relay-lamp-chase");
             Debug.Log($"[relay-lamp] chase view toward relay.1: level {lamp.Level:F2}");
+
+            // relay.1 up close: 15 m out on the base's side, at the top of a key.
+            Vector3 near = lamp.transform.position - west * RelayNearDistance;
+            near = OnGround(context.Get<ITerrainQuery>(), new Vector2(near.x, near.z)) + Vector3.up * CueLowEyeHeight;
+            var nearHost = new GameObject("RelayLampNearCamera");
+            try
+            {
+                var camera = nearHost.AddComponent<Camera>();
+                camera.CopyFrom(view);
+                camera.enabled = false;
+                CopyPipelineSettings(view, camera);
+                started = Time.time;
+                while (lamp.Level < RelayChaseKey && Time.time - started < RelayAnsweredSignSeconds)
+                {
+                    yield return null;
+                }
+
+                Place(camera, LookPose("relay-lamp-15m", near, lamp.transform.position, OpeningFov));
+                Shoot(camera, "relay-lamp-15m");
+            }
+            finally
+            {
+                Object.Destroy(nearHost);
+            }
+
+            // The answer's moment toward the Peak, the way 07's camera faces it at B12: the summit's light and the Sun.
+            Transform summit = FindNamed(PeakBeacon.NodeName);
+            Vector3 toSummit = Vector3.ProjectOnPlane(summit.position - apron, Vector3.up).normalized;
+            context.Get<IRoverPlacement>().PlaceAt(OnGround(context.Get<ITerrainQuery>(),
+                new Vector2(apron.x, apron.z)), Quaternion.LookRotation(toSummit, Vector3.up));
+            yield return new WaitForSeconds(SettleSeconds);
+            Shoot(view, "answer-view-peak");
+            Vector3 toSun = context.Get<ISunlight>().SunDirection;
+            Vector3 toPeak = (summit.position - view.transform.position).normalized;
+            Debug.Log($"[answer] sun {SunReport(context)}, {context.Get<ISunlight>().Phase}; " +
+                      $"{Vector3.Angle(toSun, toPeak):F1} deg from the summit's light");
+            var summitHost = new GameObject("SummitCamera");
+            try
+            {
+                var camera = summitHost.AddComponent<Camera>();
+                camera.CopyFrom(view);
+                camera.enabled = false;
+                CopyPipelineSettings(view, camera);
+                Place(camera, LookPose("answer-summit", view.transform.position, summit.position, SummitFov));
+                Shoot(camera, "answer-summit");
+            }
+            finally
+            {
+                Object.Destroy(summitHost);
+            }
             Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
         }
 
@@ -1095,6 +1153,77 @@ namespace MoonProject.World.PlayModeTests
             {
                 yield return null;
             }
+        }
+
+        /// <summary>
+        /// The first night as it is played (opening v3 B10 to B12), on a real New Game: the night made ready live, so the
+        /// first sunset runs into nightfall and on, filmed from the apron toward the Peak every
+        /// <see cref="NightStepSeconds"/> with the Sun, the phase, the Earth's phase and the key light in the log.
+        /// Logs/world-captures/first-night-NNN.png.
+        /// </summary>
+        [UnityTest]
+        [Timeout(600000)]
+        [PrebuildSetup(typeof(CanyonSessionScene))]
+        [PostBuildCleanup(typeof(CanyonSessionScene))]
+        public IEnumerator FirstNight_IsFilmed_FromSunsetThroughTheAnswer()
+        {
+            BootstrapHarness.DeleteSaveFiles(CanyonSessionScene.SaveSlot);
+#if UNITY_EDITOR
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(CanyonSessionScene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            while (!loading.isDone)
+            {
+                yield return null;
+            }
+#else
+            throw new NotSupportedException("The atmosphere session loads the scene through the editor.");
+#endif
+            GameBootstrap bootstrap = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
+            {
+                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
+            }
+
+            Assert.IsNotNull(bootstrap, "the scene has its bootstrap");
+            GameContext context = bootstrap.Context;
+            _awoke = context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
+            float started = Time.time;
+            while (!_awake)
+            {
+                Assert.Less(Time.time - started, WakeTimeout, "07 wakes up");
+                yield return null;
+            }
+
+            context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.PowerOn, true));
+            yield return new WaitForSeconds(SettleSeconds);
+            context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.NightReady, false));
+            Transform summit = FindNamed(PeakBeacon.NodeName);
+            Light key = FindNamed(NightKeyName).GetComponent<Light>();
+            Vector3 apron = Anchor(context.Get<IWorldAnchors>(), WorldAnchorIds.PlaceApron).Position;
+            Vector3 toSummit = Vector3.ProjectOnPlane(summit.position - apron, Vector3.up).normalized;
+            context.Get<IRoverPlacement>().PlaceAt(OnGround(context.Get<ITerrainQuery>(),
+                new Vector2(apron.x, apron.z)), Quaternion.LookRotation(toSummit, Vector3.up));
+            Camera view = context.Get<IViewCamera>().Camera;
+            var sunlight = context.Get<ISunlight>();
+            var log = new StringBuilder("[first-night] seconds: sun, phase, earth phase, key:");
+            started = Time.time;
+            for (int step = 0; step * NightStepSeconds <= NightWatchSeconds; step++)
+            {
+                Shoot(view, $"first-night-{step * NightStepSeconds:000}");
+                log.Append($" {Time.time - started:F0} s: {SunReport(context)}, {sunlight.Phase}, " +
+                           $"{sunlight.EarthPhase:F2}, {key.intensity:F2};");
+                yield return new WaitForSeconds(NightStepSeconds);
+            }
+
+            Debug.Log(log.ToString());
+
+            // The same night toward Earth (B10's view): the plain backlit, Earth over the rim.
+            Vector3 toEarth = Vector3.ProjectOnPlane(context.Get<IWorldLayout>().EarthDirection, Vector3.up).normalized;
+            context.Get<IRoverPlacement>().PlaceAt(OnGround(context.Get<ITerrainQuery>(),
+                new Vector2(apron.x, apron.z)), Quaternion.LookRotation(toEarth, Vector3.up));
+            yield return new WaitForSeconds(SettleSeconds);
+            Shoot(view, "first-night-toward-earth");
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
         }
 
         /// <summary>
