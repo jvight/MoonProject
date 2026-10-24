@@ -1,6 +1,7 @@
 """07's own small switches and gaps from recorded sources. The lamps' switch when the player turns them on or off
 (L / L3, RoverLightsSwitched), at the headlamp. On: a small relay ticking closed and a faint breath of the filament's
 hum on D3 as the lamps ease up. Off: a softer, lower tick and nothing after. Close and quiet; no tone of its own.
+While they burn, the ballast's tiny hum on D3 with a whisper of filament buzz.
 
 The cutter's sputter (CutterSputtered, the first cut tried without an igniter): a spark gap that will not catch, two
 dry clicks of the contact and a short fizzle dying away. Dry and physical, no tone. Every other refused cut
@@ -21,6 +22,7 @@ TOW_RELEASE_LABELS = ("release", "snap")
 STRAIN_LOOP_S = 4.0
 LOOP_SEAM_S = 0.35
 LABELS = ("on", "off")
+LAMP_HUM_LOOP_S = 4.0
 
 
 def lights_switch(lib, gen, variant: int) -> np.ndarray:
@@ -124,8 +126,20 @@ def tow_release(lib, gen, variant: int) -> np.ndarray:
 
 
 # Cue id -> (recipe, variants). Every variant ships: on and off, the one sputter and the refusal tick.
+def lamp_hum(lib, gen, _variant: int) -> np.ndarray:
+    """07's lamp burning: its ballast's tiny warm hum on D3 and its octave, a whisper of the filament's buzz, a slow
+    breath as the current settles. Very soft; heard mostly when everything else is quiet. Seamless over 4 s."""
+    n = samples(LAMP_HUM_LOOP_S + LOOP_SEAM_S)
+    hum = parts.hum(lib, n, 1.0, float(gen.uniform(1.0, 6.0)))
+    buzz = parts.band(dsp.varispeed(lib("fridge_buzz"), 1.0, n, float(gen.uniform(0.0, 3.0))), 400.0, 2200.0)
+    t = np.arange(n) / (n - samples(LOOP_SEAM_S))
+    breath = 0.85 + 0.15 * np.sin(2.0 * np.pi * 3.0 * t)
+    return dsp.seamless((0.8 * hum + 0.1 * buzz) * breath, samples(LAMP_HUM_LOOP_S), samples(LOOP_SEAM_S))
+
+
 SOUNDS = {
     "rover_lights_switch": (lights_switch, len(LABELS)),
+    "rover_lamp_hum": (lamp_hum, 1),
     "cutter_sputter": (cutter_sputter, 1),
     "cutter_refuse": (cutter_refuse, 1),
     "tow_spool": (tow_spool, 1),
