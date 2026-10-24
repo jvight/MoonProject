@@ -83,6 +83,7 @@ namespace MoonProject.Rover
         private readonly CameraMoment _moment = new CameraMoment();
         private readonly GazePan _gazePan = new GazePan();
         private readonly GuidanceNudge _nudge = new GuidanceNudge();
+        private readonly PendingNudge _pendingNudge = new PendingNudge();
         private WideShot _wide;
         private bool _wideSteersYaw;
         private bool _tethered;
@@ -519,6 +520,7 @@ namespace MoonProject.Rover
             ApplyCameraRadius(_tuning.CameraRadius);
             StepFaceInspect(deltaTime);
             StepReleasePan(deltaTime);
+            StepPendingNudge();
             _moment.Step(deltaTime);
             StepWideShot(deltaTime);
             StepHeldShot(viewInput, deltaTime);
@@ -1639,16 +1641,43 @@ namespace MoonProject.Rover
         /// </summary>
         private void OnNextStepChanged(NextStepChanged step)
         {
+            _pendingNudge.Clear();
             if (!step.HasTarget || step.Reason != NextLineReason.Next)
             {
                 return;
             }
 
-            bool free = !_moment.IsActive && _wide.Weight <= 0f && _held.Weight <= 0f && !_tethered && !_towing &&
-                        !_opening.IsActive && !_faceInspectOpen && _faceInspectWeight <= 0f && !_gazePan.IsActive;
+            if (!FreeForNudge)
+            {
+                _pendingNudge.Hold(step, Time.time);
+                return;
+            }
+
+            TryNudge(step);
+        }
+
+        private bool FreeForNudge => !_moment.IsActive && _wide.Weight <= 0f && _held.Weight <= 0f && !_tethered &&
+                                     !_towing && !_opening.IsActive && !_faceInspectOpen &&
+                                     _faceInspectWeight <= 0f && !_gazePan.IsActive;
+
+        /// <summary>
+        /// A line that came while another shot had the camera (the charge's close shot, the dock) nudges as soon as
+        /// that shot lets go, instead of never.
+        /// </summary>
+        private void StepPendingNudge()
+        {
+            if (_pendingNudge.TryRelease(FreeForNudge, Time.time, _tuning.NudgePendingSeconds,
+                    out NextStepChanged step))
+            {
+                TryNudge(step);
+            }
+        }
+
+        private void TryNudge(NextStepChanged step)
+        {
             float looking = RoverYaw() + _orbitState.YawOffset;
             Vector3 viewport = _viewCamera.WorldToViewportPoint(step.TargetPosition);
-            if (!free || !GuidanceNudge.ShouldNudge(_rover.Position, step.TargetPosition, looking, viewport,
+            if (!GuidanceNudge.ShouldNudge(_rover.Position, step.TargetPosition, looking, viewport,
                     _tuning.NudgeScreenMargin, _tuning.NudgeMinDistance, _tuning.NudgeSlack, _tuning.NudgeMaxBearing) ||
                 !_nudge.TryTake(step.TargetId))
             {

@@ -95,6 +95,41 @@ namespace MoonProject.Rover.PlayModeTests
         [Timeout(300000)]
         [PrebuildSetup(typeof(RoverSessionScene))]
         [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator ALineShownWhileAnotherShotHasTheCamera_NudgesOnceThatShotEnds_NotNever()
+        {
+            yield return Boot();
+            Vector3 at = _scene.Rover.Position;
+            Vector3 first = at + Bearing(Facing() + 100f) * TargetDistance;
+            Vector3 second = at + Bearing(Facing() - 100f) * TargetDistance;
+            _scene.Context.Events.Publish(Step("relay.1", first));
+            yield return RealRoverScene.WaitSeconds(0.5f);
+            Assert.Greater(_scene.CameraRig.MomentWeight, 0.1f, "the first nudge has the camera");
+
+            _scene.Context.Events.Publish(Step("apron", second));
+            float lowest = 1f;
+            float secondPeak = 0f;
+            bool ended = false;
+            float until = Time.time + 2f * (NudgeSeconds + EaseBackSeconds);
+            while (Time.time < until)
+            {
+                yield return null;
+                float weight = _scene.CameraRig.MomentWeight;
+                lowest = Mathf.Min(lowest, weight);
+                ended |= weight < 0.05f;
+                if (ended)
+                {
+                    secondPeak = Mathf.Max(secondPeak, weight);
+                }
+            }
+
+            Assert.Less(lowest, 0.05f, "the first nudge ended");
+            Assert.Greater(secondPeak, 0.5f, "and the line that came during it nudged once it had");
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
         public IEnumerator AnyDriveInput_EndsTheNudgeAtOnce_WithASoftEaseBack()
         {
             _keyboard = InputSystem.AddDevice<Keyboard>();
