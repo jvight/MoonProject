@@ -1482,7 +1482,7 @@ Label {
     background-color: var(--moon-cream-glow);
 }
 
-/* The Sun's arc at the top right: what is left of the Sun over the rim, the world's only clock */
+/* The Sun's arc at the top right: a small glyph of what is left of the Sun over the rim, no words, no minutes */
 
 .sun-arc {
     position: absolute;
@@ -1498,27 +1498,6 @@ Label {
     --track-color: var(--moon-track);
     --fill-color: var(--moon-warm-lamp);
     --ring-width: 6;
-}
-
-/* How long the Sun has left, under its arc: shown only while it is really going down. */
-.sun-arc__time {
-    display: none;
-    margin-top: 2px;
-    font-size: 18px;
-    white-space: nowrap;
-    -unity-text-align: upper-right;
-    color: var(--moon-text);
-    text-shadow: 0 2px 12px var(--moon-shadow);
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
-}
-
-.sun-arc__label {
-    margin-top: 4px;
-    font-size: 16px;
-    letter-spacing: 2px;
-    color: var(--moon-text-dim);
-    text-shadow: 0 2px 12px var(--moon-shadow);
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
 /*

@@ -11,7 +11,7 @@ namespace MoonProject.UI
     public sealed class GuidanceSettings
     {
         [Tooltip("The objective line easing in and out.")]
-        [SerializeField] private RevealSettings _line = new RevealSettings(0.9f, 0.25f, 6f, 1f, 1.4f, 0.6f);
+        [SerializeField] private RevealSettings _line = new RevealSettings(0.25f, 0.25f, 6f, 1f, 1.4f, 0.6f);
 
         [Tooltip("Seconds the low-battery hint rests on screen before it goes (it also goes when a charger starts).")]
         [Range(2f, 20f)]

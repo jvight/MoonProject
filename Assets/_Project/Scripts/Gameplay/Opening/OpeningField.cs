@@ -164,6 +164,12 @@ namespace MoonProject.Gameplay
 
         public bool RelayRelit => _relay != null && _relay.Fitted;
 
+        public bool AnswerStarted => _answer != null && _answer.Phase >= AnswerPhase.Transmitting;
+
+        public bool AtRelay => _relay != null &&
+                               SurfaceRules.HorizontalDistance(_rover.Position, _relay.SocketPoint) <=
+                               _tuning.Guidance.ArrivalReach;
+
         public bool HeadlampUnlocked =>
             _understanding != null && _understanding.IsUnlocked(MakerUnderstandingSettings.Ssr3Headlamp);
 
@@ -400,7 +406,7 @@ namespace MoonProject.Gameplay
             Caches.Step(deltaTime);
             Dusk.Step(PowerOn, _rover.Position, Knows(StructureIds.BatteryBank));
             Keys.Step(deltaTime);
-            Flow.Tick(deltaTime);
+            Flow.Tick(deltaTime, _rover.Position);
         }
 
         public OpeningSaveData Capture()

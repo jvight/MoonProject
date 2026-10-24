@@ -50,6 +50,20 @@ namespace MoonProject.Autoplay
         /// <summary>The lander cargo set's fragment ids start with this; a story scan standing nearby is not part of it.</summary>
         private static readonly string CargoPrefix = "ruin." + ScanTuning.LanderCargoId + ".";
 
+        /// <summary>Parts of a scan set this close together (flat metres) are told apart in a stuck-scan report.</summary>
+        private const float CargoPartsApartMetres = 2f;
+
+        /// <summary>Presses of E, one after another, a scan may take to start before the bot gives up.</summary>
+        private const int ScanPresses = 4;
+
+        /// <summary>Game seconds one press of E is held waiting for the scan to start.</summary>
+        private const float ScanStartSeconds = 2.5f;
+
+        private const float ScanRepressPauseSeconds = 0.4f;
+
+        private const string ScanLatchNote =
+            "a player sees the chip, holds E and nothing happens, with no cue that letting go would help.";
+
         private readonly AutoplayBot _bot;
         private readonly string _untilBeat;
         private bool _awoke;
@@ -59,9 +73,12 @@ namespace MoonProject.Autoplay
         private readonly bool _linesExpected;
 
         private readonly NaiveGuard _naive;
+        private readonly bool _pointer;
 
-        public OpeningScenario(AutoplayBot bot, string untilBeat, bool linesExpected, NaiveGuard naive = null)
+        public OpeningScenario(AutoplayBot bot, string untilBeat, bool linesExpected, NaiveGuard naive = null,
+            bool pointer = false)
         {
+            _pointer = pointer;
             _naive = naive;
             DeclareNextActions();
             _bot = bot;
@@ -348,12 +365,72 @@ namespace MoonProject.Autoplay
                 yield break;
             }
 
+            // As a player does when E held on a chip does nothing: let go and press again. The game takes a press that
+            // another verb claimed for a moment as spent until E is released, so the first hold may never start.
+            for (int press = 0; press < ScanPresses && !_bot.Failed && !fragment.Scanned; press++)
+            {
+                yield return _bot.TryHold(key, () =>
+                    {
+                        _bot.KeepLookingAt(point);
+                        return scans.Scanning == fragment || fragment.Scanned;
+                    }, ScanStartSeconds);
+                if (_bot.HoldReached)
+                {
+                    if (press > 0)
+                    {
+                        _bot.Warn("FINDING: E held on the '" + ui.Chip() + "' chip did not start the scan of " +
+                                  fragment.FragmentId + " until it was released and pressed again (press " + (press + 1) +
+                                  "): " + ScanLatchNote);
+                    }
+
+                    break;
+                }
+
+                yield return _bot.Wait(ScanRepressPauseSeconds);
+            }
+
             yield return _bot.Hold(key, () =>
                 {
                     _bot.KeepLookingAt(point);
                     return fragment.Scanned;
                 }, scans.Tuning.Seconds(fragment.Size) + ScanAllowanceSeconds,
-                "held " + key + " to scan " + fragment.FragmentId);
+                "held " + key + " to scan " + fragment.FragmentId, () => WhatTheViewHolds(scans, fragment, point));
+        }
+
+        /// <summary>
+        /// A scan that never starts, told as a player would meet it: what the chip names (the game's candidate) against
+        /// the part the bot aims the view at, and the view's angle and aim score to each part of the set. A candidate that
+        /// is not the part in the middle of the view is a finding.
+        /// </summary>
+        private string WhatTheViewHolds(ScanField scans, ScanFragment aimedAt, Vector3 aimPoint)
+        {
+            Transform view = _bot.World.View.Camera.transform;
+            var text = new System.Text.StringBuilder("The bot aims at " + aimedAt.FragmentId + "; the game's candidate is ");
+            text.Append(scans.Candidate != null ? scans.Candidate.FragmentId : "none").Append(", scanning ")
+                .Append(scans.Scanning != null ? scans.Scanning.FragmentId : "nothing").Append(", chip '")
+                .Append(_bot.World.Ui.Chip()).Append("'. View angle (deg) and aim score per part:");
+            Transform lens = _bot.World.Context.Get<IRoverRig>().ScanOrigin;
+            text.Append(" The lens points ").Append(Vector3.Angle(lens.forward, aimPoint - lens.position).ToString("0.0",
+                CultureInfo.InvariantCulture)).Append(" deg off the part (the scan needs <= ")
+                .Append(scans.Tuning.AimToleranceDegrees.ToString("0.0", CultureInfo.InvariantCulture))
+                .Append(" and a clear line past 07's own body), 07 turned ")
+                .Append(DriveSteering.HeadingError(_bot.World.Rover.Position, _bot.World.Rover.Rotation * Vector3.forward,
+                    aimPoint).ToString("0.0", CultureInfo.InvariantCulture)).Append(" deg off it.");
+            foreach (ScanFragment part in scans.Fragments)
+            {
+                if (part.Scanned || DriveSteering.FlatDistance(part.Point, aimPoint) > CargoPartsApartMetres)
+                {
+                    continue;
+                }
+
+                bool inCone = scans.InView(part.Point, out float score);
+                text.Append(' ').Append(part.FragmentId).Append(" angle ")
+                    .Append(Vector3.Angle(view.forward, part.Point - view.position).ToString("0.0",
+                        CultureInfo.InvariantCulture)).Append(inCone ? ", score " + score.ToString("0.00",
+                        CultureInfo.InvariantCulture) : ", out of the cone").Append(';');
+            }
+
+            return text.ToString();
         }
 
         private IEnumerator CollectParts()
@@ -368,11 +445,19 @@ namespace MoonProject.Autoplay
             _bot.EndBeat("07 took the charger kit's parts from the open crate");
         }
 
+        /// <summary>A build by the keys, or with the pointer alone when the run asks for it (every build then).</summary>
+        private IEnumerator BuildBy(string structureId, Vector3 at)
+        {
+            return _pointer ? _base.BuildWithThePointer(structureId, at) : _base.Build(structureId, at);
+        }
+
         private IEnumerator BuildThePad()
         {
             Begin("B5", "Build the charging pad");
-            yield return _base.Build(StructureIds.ChargingPad, _base.Pad());
-            _bot.EndBeat("the pad was placed and welded with the build keys");
+            yield return BuildBy(StructureIds.ChargingPad, _base.Pad());
+            _bot.EndBeat(_pointer
+                ? "the pad was placed and welded with the mouse alone: B, the card click, the wheel, left click"
+                : "the pad was placed and welded with the build keys");
         }
 
         private IEnumerator ChargeOnThePad()
@@ -417,7 +502,7 @@ namespace MoonProject.Autoplay
                 "B8: the array's cost is covered");
             yield return _base.DriveToTheRuinsGate("out of the Lumen ruins");
             // West of the pad: the ruins side stays open for the power module towed home at R6.
-            yield return _base.Build(StructureIds.SolarArray, _base.Pad() + Vector3.left * OpeningBase.Spacing);
+            yield return BuildBy(StructureIds.SolarArray, _base.Pad() + Vector3.left * OpeningBase.Spacing);
             yield return _base.UntilReached(OpeningMilestone.PowerOn, "the PowerOn milestone");
             _bot.EndBeat("the array stands and the base has power");
         }
@@ -446,7 +531,7 @@ namespace MoonProject.Autoplay
             yield return Sub("B9b");
             yield return _base.ExpectStep(OpeningSteps.BuildBatteryBank, OpeningKeys.BuildBatteryBank,
                 "B9: the module is home");
-            yield return _base.Build(StructureIds.BatteryBank, _base.ModulePosition());
+            yield return BuildBy(StructureIds.BatteryBank, _base.ModulePosition());
             yield return _base.UntilReached(OpeningMilestone.NightReady, "the NightReady milestone",
                 NightReadySeconds);
             if (!_bot.Failed)
@@ -482,7 +567,7 @@ namespace MoonProject.Autoplay
             yield return Sub("B11a");
             yield return _base.ExpectStep(OpeningSteps.BuildMast, OpeningKeys.BuildMast, "B11");
             yield return _base.DriveToTheRuinsGate("out of the Lumen ruins");
-            yield return _base.Build(StructureIds.AntennaMast, _base.Pad() + Vector3.back * OpeningBase.Spacing);
+            yield return BuildBy(StructureIds.AntennaMast, _base.Pad() + Vector3.back * OpeningBase.Spacing);
             yield return _base.UntilReached(OpeningMilestone.SignalWest, "the SignalWest milestone");
             _bot.EndBeat("the mast stands and the west signal answered");
         }

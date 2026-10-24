@@ -91,6 +91,29 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.AreEqual(plays + 2, _rig.Director.PlayCount, "a loaded name is shown silently");
         }
 
+        [Test]
+        public void TheTransmission_Sounds_AndAFarAnswerIsHeardFromItsWay()
+        {
+            int plays = _rig.Director.PlayCount;
+            Vector3 mast = _rig.Rover.Position + Vector3.up * 4f;
+            Vector3 relay = _rig.Rover.Position + new Vector3(-400f, 20f, 0f);
+            _rig.Events.Publish(new NetworkPulseLaunched(mast, relay, 5f, 0));
+            Assert.AreEqual(plays + 1, _rig.Director.PlayCount, "the pulse leaving the mast sounds");
+            Assert.AreEqual("network_pulse", _rig.Director.LastClip.name);
+            Assert.AreEqual(mast, _rig.Director.LastVoice.transform.position, "from the mast itself");
+            float leaving = _rig.Director.LastVoice.volume;
+
+            _rig.Events.Publish(new RelayAcked(relay));
+            Assert.AreEqual("relay_ack", _rig.Director.LastClip.name, "relay.1 answers");
+            Vector3 heard = _rig.Director.LastVoice.transform.position;
+            Assert.Less(Vector3.Distance(heard, _rig.Rover.Position), 10f, "a relay across the basin is still heard");
+            Assert.Less(heard.x, _rig.Rover.Position.x, "from relay.1's way");
+
+            _rig.Events.Publish(new NetworkPulseLaunched(relay, relay + Vector3.forward * 300f, 5f, 1));
+            Assert.AreEqual("network_pulse", _rig.Director.LastClip.name, "the run on to the Peak");
+            Assert.Less(_rig.Director.LastVoice.volume, leaving, "far off, softer than leaving the mast");
+        }
+
         [UnityTest]
         public IEnumerator TheKeying_IsRegistered_AndFollowsTheCarriersPlayhead()
         {

@@ -15,7 +15,7 @@ namespace MoonProject.UI
         [SerializeField] private RevealSettings _hud = new RevealSettings(0.8f, 2f, 0f, 1f, 1.4f, 0.6f);
 
         [Tooltip("The low chip (first prompt, Tab) easing in and out.")]
-        [SerializeField] private RevealSettings _hint = new RevealSettings(0.6f, 0.25f, 10f, 0.9f, 1.4f, 0.6f);
+        [SerializeField] private RevealSettings _hint = new RevealSettings(0.25f, 0.25f, 10f, 0.9f, 1.4f, 0.6f);
 
         [Tooltip("Seconds the Tab chip stays at most; opening the hold sends it sooner.")]
         [Range(1f, 20f)]

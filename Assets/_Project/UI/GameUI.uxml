@@ -86,8 +86,6 @@
                 </ui:VisualElement>
                 <ui:VisualElement name="sun-arc" class="sun-arc" picking-mode="Ignore">
                     <ui:VisualElement name="sun-arc-face" class="sun-arc__face" picking-mode="Ignore" />
-                    <ui:Label name="sun-arc-label" class="sun-arc__label" picking-mode="Ignore" />
-                    <ui:Label name="sun-arc-time" class="sun-arc__time" picking-mode="Ignore" />
                 </ui:VisualElement>
                 <ui:VisualElement name="pickup-feed" class="pickup-feed" picking-mode="Ignore" />
                 <ui:VisualElement name="look-hint" class="look-hint" picking-mode="Ignore">

@@ -49,8 +49,13 @@ namespace MoonProject.Gameplay
         private float _stalled;
         private float _shownFor;
         private float _showSeconds;
+        private readonly IDisposable[] _subscriptions;
         private bool _woke;
-        private readonly IDisposable _wake;
+        private bool _progressed;
+        private bool _docked;
+        private int _dockShownIndex = -1;
+        private Vector3 _rover;
+        private float _placeDistance = -1f;
 
         /// <param name="keys">The action keys the player has pressed lately (the line's glyph).</param>
         /// <param name="timing">When the next line and the reminders speak.</param>
@@ -77,16 +82,35 @@ namespace MoonProject.Gameplay
             _steps.Add(() => _game.NightFallen ? OpeningKeys.ScanTower : OpeningKeys.AwaitNight,
                 () => _game.Knows(StructureIds.AntennaMast));
             _steps.Add(OpeningKeys.BuildMast, () => _game.Built(StructureIds.AntennaMast));
-            _steps.Add(OpeningKeys.Transmit, () => _game.AnswerDone);
-            _steps.Add(OpeningKeys.GoToRelay, () => _game.RelayRelit);
+            // The transmit line goes as 07 starts transmitting; the answer's moment says nothing, and relay.1 is named
+            // once it is over, until 07 arrives there (its cabinet's and socket's chips lead from then on).
+            _steps.Add(OpeningKeys.Transmit, () => _game.AnswerStarted || _game.AnswerDone);
+            _steps.Add(() => _game.AnswerDone && !_game.AtRelay ? OpeningKeys.GoToRelay : string.Empty,
+                () => _game.RelayRelit);
             _steps.Add(OpeningKeys.ScanElder06, () => _game.HeadlampUnlocked || _game.HeadlampFitted);
             _steps.Add(HeadlampLine, () => _game.HeadlampFitted);
-            _wake = events.Subscribe<BootCheckFinished>(_ => _woke = true);
+            _subscriptions = new[]
+            {
+                events.Subscribe<BootCheckFinished>(_ => _woke = true),
+                events.Subscribe<FragmentScanned>(_ => _progressed = true),
+                events.Subscribe<StoryScanned>(_ => _progressed = true),
+                events.Subscribe<ContainerOpened>(_ => _progressed = true),
+                events.Subscribe<MaterialSalvaged>(_ => _progressed = true),
+                events.Subscribe<StoryPartCollected>(_ => _progressed = true),
+                events.Subscribe<StructurePlaced>(_ => _progressed = true),
+                events.Subscribe<StructureBuilt>(_ => _progressed = true),
+                events.Subscribe<TowAttached>(_ => _progressed = true),
+                events.Subscribe<PartFitted>(_ => _progressed = true),
+                events.Subscribe<ChargingChanged>(changed => _docked |= changed.Charging),
+            };
         }
 
         public void Dispose()
         {
-            _wake.Dispose();
+            for (int i = 0; i < _subscriptions.Length; i++)
+            {
+                _subscriptions[i].Dispose();
+            }
         }
 
         /// <summary>
@@ -177,6 +201,14 @@ namespace MoonProject.Gameplay
         /// <param name="deltaTime">Seconds since the last tick.</param>
         public void Tick(float deltaTime)
         {
+            Tick(deltaTime, _rover);
+        }
+
+        /// <param name="deltaTime">Seconds since the last tick.</param>
+        /// <param name="rover">07's position: closing on the line's place is progress.</param>
+        public void Tick(float deltaTime, Vector3 rover)
+        {
+            _rover = rover;
             if (!_announced)
             {
                 Announce();
@@ -211,6 +243,18 @@ namespace MoonProject.Gameplay
         {
             int index = _steps.CurrentIndex;
             string key = _steps.Current;
+            if (_docked && _watching && index == _watchedIndex && key == _watchedKey)
+            {
+                // 07 rests on a charger: a natural pause, so the step's line is said once more (once per step).
+                _docked = false;
+                if (key.Length > 0 && Shown != key && index != _dockShownIndex)
+                {
+                    _dockShownIndex = index;
+                    Show(key, NextLineReason.Next, _timing.NextLineSeconds);
+                    return;
+                }
+            }
+
             if (_woke && _watching && index == _watchedIndex && key == _watchedKey)
             {
                 _woke = false;
@@ -229,6 +273,8 @@ namespace MoonProject.Gameplay
                 _watchedKey = key;
                 _stalled = 0f;
                 _reminders = 0;
+                _progressed = false;
+                _placeDistance = -1f;
                 if (progress && key.Length > 0)
                 {
                     Show(key, NextLineReason.Next, _timing.NextLineSeconds);
@@ -257,8 +303,15 @@ namespace MoonProject.Gameplay
                 return;
             }
 
-            if (key.Length == 0 || _reminders >= MaxReminders)
+            if (key.Length == 0 || _reminders >= MaxReminders || !Reminds(key))
             {
+                return;
+            }
+
+            if (_progressed | Closing(key, deltaTime))
+            {
+                _progressed = false;
+                _stalled = 0f;
                 return;
             }
 
@@ -272,6 +325,25 @@ namespace MoonProject.Gameplay
         }
 
         private static bool HoldsUntilDone(string key) => key == OpeningKeys.HookModule;
+
+        /// <summary>A line with nothing to do (the base waits for the night) never comes back as a reminder.</summary>
+        private static bool Reminds(string key) => key != OpeningKeys.AwaitNight;
+
+        /// <summary>07 closes on the place of line <paramref name="key"/>: it is on its way, not stuck.</summary>
+        private bool Closing(string key, float deltaTime)
+        {
+            if (!_game.TryGetPlace(key, out _, out Vector3 place))
+            {
+                _placeDistance = -1f;
+                return false;
+            }
+
+            float distance = SurfaceRules.HorizontalDistance(_rover, place);
+            bool closing = _placeDistance >= 0f && deltaTime > 0f &&
+                           _placeDistance - distance >= _timing.ClosingSpeed * deltaTime;
+            _placeDistance = distance;
+            return closing;
+        }
 
         private void Show(string key, NextLineReason reason, float seconds)
         {

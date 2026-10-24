@@ -167,6 +167,37 @@ namespace MoonProject.Autoplay
             yield return null;
         }
 
+        /// <summary>Puts the mouse pointer on <paramref name="screenPosition"/> (Input System screen pixels).</summary>
+        public void MoveMouse(Vector2 screenPosition)
+        {
+            _input.MoveMouseTo(screenPosition);
+        }
+
+        /// <summary>Turns the mouse wheel by <paramref name="notches"/> for one frame.</summary>
+        public IEnumerator Scroll(float notches)
+        {
+            _input.Scroll(notches);
+            yield return Wait(KeyTapSeconds);
+        }
+
+        /// <summary>Clicks the left mouse button: down for a tap, then up.</summary>
+        public IEnumerator ClickLeft()
+        {
+            _input.SetLeftButton(true);
+            yield return Wait(KeyTapSeconds);
+            _input.SetLeftButton(false);
+            yield return null;
+        }
+
+        /// <summary>Holds the left mouse button until <paramref name="done"/> holds (a place-and-weld by the pointer).</summary>
+        public IEnumerator HoldLeft(Func<bool> done, float timeoutSeconds, string what, Func<string> detail = null)
+        {
+            _input.SetLeftButton(true);
+            yield return Until(done, timeoutSeconds, what, detail);
+            _input.SetLeftButton(false);
+            yield return null;
+        }
+
         /// <summary>Taps the right mouse button: the tether key, which hooks a towable load and lets it go.</summary>
         public IEnumerator TapRightButton()
         {
@@ -177,6 +208,25 @@ namespace MoonProject.Autoplay
         }
 
         /// <summary>Holds <paramref name="key"/> until <paramref name="done"/> holds, then lets go.</summary>
+        /// <summary>True when the last <see cref="TryHold"/> saw its condition before its time ran out.</summary>
+        public bool HoldReached { get; private set; }
+
+        /// <summary>Holds <paramref name="key"/> for at most <paramref name="seconds"/> (game time) or until <paramref name="done"/>;
+        /// a miss is not a failure: <see cref="HoldReached"/> says which it was, and the key is let go.</summary>
+        public IEnumerator TryHold(Key key, Func<bool> done, float seconds)
+        {
+            _input.Set(key, true);
+            float until = Time.time + seconds;
+            HoldReached = false;
+            while (!Failed && Time.time < until && !(HoldReached = done()))
+            {
+                yield return null;
+            }
+
+            _input.Set(key, false);
+            yield return null;
+        }
+
         public IEnumerator Hold(Key key, Func<bool> done, float timeoutSeconds, string what,
             Func<string> detail = null)
         {

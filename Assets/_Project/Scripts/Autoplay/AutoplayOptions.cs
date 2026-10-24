@@ -20,6 +20,7 @@ namespace MoonProject.Autoplay
         public const string UntilFlag = "-autoplay-until";
         public const string LinesFlag = "-autoplay-lines";
         public const string NaiveFlag = "-autoplay-naive";
+        public const string PointerFlag = "-autoplay-pointer";
         public const string StrictGuidanceFlag = "-autoplay-strict-guidance";
         public const string MuteFlag = "-autoplay-mute";
 
@@ -27,7 +28,7 @@ namespace MoonProject.Autoplay
         public const float DefaultTimeoutSeconds = 900f;
 
         private AutoplayOptions(string scenario, string outDirectory, float shotSeconds, float timeoutSeconds,
-            string untilBeat, bool linesExpected, bool strictGuidance, bool naive, bool mute)
+            string untilBeat, bool linesExpected, bool strictGuidance, bool naive, bool mute, bool pointer)
         {
             Scenario = scenario;
             OutDirectory = outDirectory;
@@ -38,6 +39,7 @@ namespace MoonProject.Autoplay
             StrictGuidance = strictGuidance;
             Naive = naive;
             Mute = mute;
+            Pointer = pointer;
         }
 
         /// <summary>The scenario to play; today only "opening".</summary>
@@ -58,6 +60,12 @@ namespace MoonProject.Autoplay
         /// Two guidance elements on screen together fail the run (the default); off, the run only warns.
         /// </summary>
         public bool StrictGuidance { get; }
+
+        /// <summary>
+        /// The first build (B5, the pad) is made with the mouse alone: B, a click on the card, the wheel to turn the
+        /// ghost, a left click to place and weld (the pointer-only player, opening-v3 audit row 5).
+        /// </summary>
+        public bool Pointer { get; }
 
         /// <summary>
         /// After every beat the bot stands passive and measures how long a first-time player waits for a readable
@@ -106,7 +114,8 @@ namespace MoonProject.Autoplay
 
             options = new AutoplayOptions(scenario, outDirectory, shotSeconds, timeout,
                 Value(args, UntilFlag) ?? string.Empty, Value(args, LinesFlag) == "1",
-                Value(args, StrictGuidanceFlag) != "0", Value(args, NaiveFlag) == "1", HasFlag(args, MuteFlag));
+                Value(args, StrictGuidanceFlag) != "0", Value(args, NaiveFlag) == "1", HasFlag(args, MuteFlag),
+                Value(args, PointerFlag) == "1");
             return true;
         }
 

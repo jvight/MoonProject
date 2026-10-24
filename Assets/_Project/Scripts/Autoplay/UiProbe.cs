@@ -43,6 +43,26 @@ namespace MoonProject.Autoplay
             _face = face ?? _face;
         }
 
+        /// <summary>
+        /// Where build card <paramref name="index"/> is on screen, in Input System pixels (origin bottom left), or
+        /// false when the card is not there: what a mouse hand aims at.
+        /// </summary>
+        public bool TryGetBuildCard(int index, out Vector2 screenPoint)
+        {
+            screenPoint = Vector2.zero;
+            VisualElement card = _root.Q<VisualElement>("build-card-" + index);
+            if (card == null || !IsShown(card, GuidanceOpacity) || float.IsNaN(card.worldBound.center.x) ||
+                _root.layout.width <= 0f)
+            {
+                return false;
+            }
+
+            float scale = Screen.width / _root.layout.width;
+            Vector2 centre = card.worldBound.center;
+            screenPoint = new Vector2(centre.x * scale, Screen.height - centre.y * scale);
+            return true;
+        }
+
         /// <summary>True while the build strip (build mode's menu and placing) shows.</summary>
         public bool BuildStripShown()
         {
@@ -155,8 +175,22 @@ namespace MoonProject.Autoplay
         /// </summary>
         public bool ControlsCardInView(out string text)
         {
+            return WordsInView("controls-card", out text);
+        }
+
+        /// <summary>
+        /// True while the build mode's cost chip (the recipe and the keys: "E/LMB Place · Scroll/Z/C Rotate") is on
+        /// screen inside the view; <paramref name="text"/> is every word on it.
+        /// </summary>
+        public bool BuildCostInView(out string text)
+        {
+            return WordsInView("build-cost", out text);
+        }
+
+        private bool WordsInView(string name, out string text)
+        {
             text = string.Empty;
-            VisualElement card = _root.Q<VisualElement>("controls-card");
+            VisualElement card = _root.Q<VisualElement>(name);
             if (card == null || !IsShown(card, GuidanceOpacity) || !_root.worldBound.Contains(card.worldBound.center))
             {
                 return false;

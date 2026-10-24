@@ -9,13 +9,16 @@ namespace MoonProject.Gameplay.Tests
 {
     /// <summary>
     /// The range ring (opening v3, plan 4.2): the energy out and back, on flat ground, with a slope's cost, and with
-    /// an extra charge point; and the ring's showing (faint at the first charge, full when asked, fading).
+    /// an extra charge point; and the ring's showing (only at its two moments — faint at the first charge, full once at
+    /// the release — drawing out over ~2 s, holding ~1.5 s, easing out over ~3 s until gone, and never lingering on load).
     /// </summary>
     public sealed class RangeRingTests
     {
         private const float StepSlack = 8f;
         private const int East = 18;
         private const int West = 54;
+        private const float BloomThreshold = 1.25f;
+        private const float RelayLampSteadyIntensity = 1.02f;
 
         private sealed class FakeTerrain : ITerrainQuery
         {
@@ -230,6 +233,63 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(2, shown.Count);
             Assert.AreEqual(_settings.FullSeconds, shown[1].Seconds);
             field.Dispose();
+        }
+
+        [Test]
+        public void TheRing_IsWarmMoonlitAmber_DrawsTwoHoldsOneAndAHalfEasesThree_ShowsOnlyAtTwoMoments_AndNeverLingersOnLoad()
+        {
+            Color color = _settings.Color;
+            Assert.Greater(color.r, color.g, "warm moonlit-amber: red leads green");
+            Assert.Greater(color.g, color.b, "warm moonlit-amber: green leads blue (never cool white)");
+            Assert.Greater(color.r - color.b, 0.35f, "distinctly warm amber, not white");
+            float maxChannel = Mathf.Max(color.r, Mathf.Max(color.g, color.b));
+            Assert.Less(maxChannel * _settings.ShaderIntensity, RelayLampSteadyIntensity,
+                "below relay.1's steady lamp in brightness");
+            Assert.Less(maxChannel * _settings.ShaderIntensity, BloomThreshold, "strictly under bloom (< 1.25)");
+
+            Assert.AreEqual(2f, _settings.RevealSeconds, 1e-3f, "draws out from 07 over ~2 s");
+            Assert.AreEqual(1.5f, _settings.HoldSeconds, 1e-3f, "holds ~1.5 s");
+            Assert.AreEqual(3f, _settings.FadeOutSeconds, 1e-3f, "eases out over ~3 s");
+            Assert.AreEqual(6.5f, _settings.FullSeconds, 1e-3f, "2 s draw + 1.5 s hold + 3 s fade = 6.5 s");
+
+            var events = new EventBus();
+            var shown = new List<RangeRingShown>();
+            events.Subscribe<RangeRingShown>(shown.Add);
+            var rover = new FakeRover();
+            var battery = new BatteryModel(_battery, events);
+            var field = new RangeRingField(events, _settings, _model, battery, new FakePoints(), rover);
+
+            field.Show(RangeRingMode.Full);
+            Assert.IsTrue(field.IsShown);
+            field.Step(2f);
+            Assert.AreEqual(1f, field.Reveal01, 1e-3f, "finished drawing out at 2 s");
+            Assert.AreEqual(1f, field.Visibility01, 1e-3f, "at full visibility during hold");
+            field.Step(1.5f);
+            Assert.AreEqual(1f, field.Reveal01, 1e-3f, "still at full reach at the end of the 1.5 s hold");
+            Assert.AreEqual(1f, field.Visibility01, 1e-3f, "begins its 3 s ease-out at 3.5 s");
+            field.Step(1.5f);
+            Assert.AreEqual(0.5f, field.Visibility01, 0.05f, "halfway through the 3 s ease-out at 5 s");
+            field.Step(1.5f);
+            Assert.IsFalse(field.IsShown, "completely gone after the 3 s ease-out");
+            Assert.AreEqual(0f, field.Visibility01, 1e-5f);
+            Assert.AreEqual(0f, field.Strength, 1e-5f);
+
+            field.Show(RangeRingMode.Full);
+            Assert.IsFalse(field.IsShown, "never shows a second full ring (e.g. at relay relight)");
+            field.Show(RangeRingMode.Faint);
+            Assert.IsFalse(field.IsShown, "never shows after the release moment");
+            Assert.AreEqual(1, shown.Count);
+            field.Dispose();
+
+            var loadField = new RangeRingField(events, _settings, _model, battery, new FakePoints(), rover);
+            events.Publish(new OpeningMilestoneReached(OpeningMilestone.FirstCharge, false));
+            Assert.IsTrue(loadField.IsShown);
+            events.Publish(new OpeningMilestoneReached(OpeningMilestone.FirstCharge, true));
+            Assert.IsFalse(loadField.IsShown, "never lingers when a save is restored");
+            events.Publish(new OpeningMilestoneReached(OpeningMilestone.CallAnswered, true));
+            loadField.Show(RangeRingMode.Full);
+            Assert.IsFalse(loadField.IsShown, "a loaded game past the answer does not re-show the release ring");
+            loadField.Dispose();
         }
     }
 }
