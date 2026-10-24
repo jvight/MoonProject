@@ -518,6 +518,34 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void TakingTheIgniter_ClearsTheTakeLine_AtOnce_WhetherItIsANextLineOrAReminder()
+        {
+            ReachTheArray();
+            _flow.Tick(1f);
+            _game.CutterSputtered = true;
+            _flow.Tick(1f);
+            Assert.AreEqual(OpeningKeys.TakeIgniter, _flow.Shown, "the sputter names the rack");
+            _game.CarriesIgniter = true;
+            _game.CanFitIgniter = true;
+            _flow.Tick(1f);
+            Assert.AreEqual(string.Empty, _flow.Shown, "taken: the take line goes at once, the Tab chip leads");
+            Assert.AreEqual(string.Empty, _lines[_lines.Count - 1], "and the screen is told so");
+
+            _game.CarriesIgniter = false;
+            _flow.Tick(1f);
+            Tick(NextLine);
+            _game.CutterSputtered = true;
+            _events.Publish(new StoryPartCollected("part.igniter", Vector3.zero));
+            Assert.AreEqual(string.Empty, _flow.Shown, "the take event alone clears the line, whatever the hold says");
+            Tick(NextLine + Stall);
+            Assert.AreEqual(OpeningKeys.TakeIgniter, _flow.Shown, "dropped back: the take line, reminded");
+            _game.CarriesIgniter = true;
+            _flow.Tick(1f);
+            Assert.AreEqual(string.Empty, _flow.Shown, "a reminder goes on the pickup too");
+            Assert.AreEqual(string.Empty, _lines[_lines.Count - 1]);
+        }
+
+        [Test]
         public void TheWaitForTheNight_IsNeverReminded()
         {
             _game.ReachedLander = true;
