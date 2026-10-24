@@ -81,6 +81,7 @@ namespace MoonProject.Rover
         [SerializeField] private RoverCameraBump _bump;
 
         private readonly CameraMoment _moment = new CameraMoment();
+        private NearPropFade _nearFade;
         private readonly GazePan _gazePan = new GazePan();
         private readonly GuidanceNudge _nudge = new GuidanceNudge();
         private WideShot _wide;
@@ -245,6 +246,7 @@ namespace MoonProject.Rover
             }
 
             _context = context;
+            _nearFade = new NearPropFade();
             _rover = context.Get<IRoverState>();
             _world = context.Get<IWorldLayout>();
             context.TryGet(out _anchors);
@@ -537,6 +539,23 @@ namespace MoonProject.Rover
             _towT = Mathf.MoveTowards(_towT, _towing ? 1f : 0f, deltaTime / _tuning.TowEaseSeconds);
             _towYawT = Mathf.MoveTowards(_towYawT, _towing ? 1f : 0f, deltaTime / _tuning.TowYawEaseSeconds);
             ApplyOrbit();
+            StepNearFade(deltaTime);
+        }
+
+        /// <summary>
+        /// Props near the lens thin away by dither and come back as the camera moves off, so a cut panel or a crate
+        /// between the lens and 07 never fills the frame. The tow's load is never thinned: it is the subject.
+        /// </summary>
+        private void StepNearFade(float deltaTime)
+        {
+            if (_faceInspectOpen || _opening.IsActive)
+            {
+                _nearFade.Reset();
+                return;
+            }
+
+            _nearFade.Step(_viewCamera.transform.position, _tuning.NearFadeGoneMetres, _tuning.NearFadeFullMetres,
+                _tuning.NearFadeHalfLife, deltaTime, _towRenderers);
         }
 
         /// <summary>

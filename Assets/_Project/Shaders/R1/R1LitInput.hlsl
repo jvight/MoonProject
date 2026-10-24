@@ -58,6 +58,7 @@ CBUFFER_START(UnityPerMaterial)
     float4 _BuildSeamPointWS;
     half   _DistanceFade;
     float4 _DistanceFadeRange;
+    half   _NearKeep;
 CBUFFER_END
 
 // Where the distance fade measures from (World sets it to the view camera every frame), so shadow and depth passes
@@ -68,6 +69,13 @@ float4 _MoonDistanceFadeOrigin;
 // the view, in every pass, so its far edge thins away instead of popping.
 void R1DistanceFadeClip(float3 positionWS, float4 positionCS)
 {
+    // A prop the camera is passing close to dithers out (the rig sets _NearKeep per renderer) and back as it leaves,
+    // so a panel at the lens never fills the foreground.
+    if (_NearKeep < 0.999h)
+    {
+        clip(_NearKeep - InterleavedGradientNoise(positionCS.xy, 0));
+    }
+
     if (_DistanceFade > 0.5h)
     {
         float span = max(_DistanceFadeRange.y - _DistanceFadeRange.x, 1e-3);

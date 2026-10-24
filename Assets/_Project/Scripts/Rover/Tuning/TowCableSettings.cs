@@ -43,6 +43,64 @@ namespace MoonProject.Rover
         [Range(0.2f, 3f)]
         [SerializeField] private float _retractSeconds = 0.9f;
 
+        [Header("Seen from far")]
+        [Tooltip("Fewest pixels (at a 1440p screen) the rope is drawn across at any distance: its real width up close, " +
+                 "wider far off, so the load is seen to be towed by a line, not following by magic.")]
+        [Range(1f, 8f)]
+        [SerializeField] private float _minPixels = 3f;
+
+        [Tooltip("Fewest pixels (at a 1440p screen) the clamp at the hitch is drawn across.")]
+        [Range(2f, 14f)]
+        [SerializeField] private float _hookMinPixels = 6f;
+
+        [Header("Skid dust under the load")]
+        [Tooltip("Grains a second kicked up under a load dragging at full speed (ballistic: no smoke).")]
+        [Range(0f, 200f)]
+        [SerializeField] private float _skidMaxRate = 70f;
+
+        [Tooltip("Speed (m/s) under which the load kicks up no dust.")]
+        [Range(0f, 3f)]
+        [SerializeField] private float _skidMinSpeed = 0.6f;
+
+        [Tooltip("Speed (m/s) at which the load's dust is at its full rate.")]
+        [Range(1f, 10f)]
+        [SerializeField] private float _skidFullSpeed = 4f;
+
+        [Tooltip("How far (m) past the hitch, along the rope, the dust leaves the ground: under the load's middle.")]
+        [Range(0f, 4f)]
+        [SerializeField] private float _skidPastHitch = 1.2f;
+
+        [Tooltip("Seconds a grain of the load's dust flies.")]
+        [Range(0.3f, 4f)]
+        [SerializeField] private float _skidLifetime = 1.4f;
+
+        [Tooltip("Size (m) of a grain.")]
+        [Range(0.02f, 0.6f)]
+        [SerializeField] private float _skidSize = 0.18f;
+
+        [Tooltip("Speed (m/s) the grains leave at.")]
+        [Range(0.2f, 6f)]
+        [SerializeField] private float _skidSpeed = 1.6f;
+
+        [Tooltip("Opacity of a grain.")]
+        [Range(0.05f, 1f)]
+        [SerializeField] private float _skidOpacity = 0.55f;
+
+        [Tooltip("Gravity multiplier on the grains: the Moon's pull, so they fly in clean parabolas.")]
+        [Range(0.2f, 3f)]
+        [SerializeField] private float _skidGravity = 1f;
+
+        public float MinPixels => _minPixels;
+        public float HookMinPixels => _hookMinPixels;
+        public float SkidMaxRate => _skidMaxRate;
+        public float SkidMinSpeed => _skidMinSpeed;
+        public float SkidFullSpeed => _skidFullSpeed;
+        public float SkidPastHitch => _skidPastHitch;
+        public float SkidLifetime => _skidLifetime;
+        public float SkidSize => _skidSize;
+        public float SkidSpeed => _skidSpeed;
+        public float SkidOpacity => _skidOpacity;
+        public float SkidGravity => _skidGravity;
         public int Points => _points;
         public float Width => _width;
         public float HookLength => _hookLength;

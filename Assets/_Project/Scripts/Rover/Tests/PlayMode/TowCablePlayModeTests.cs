@@ -15,6 +15,9 @@ namespace MoonProject.Rover.PlayModeTests
     public sealed class TowCablePlayModeTests : InputTestFixture
     {
         private const float CableLength = 6f;
+        private const float FarHitchScale = 2.5f;
+        private const float MinRopePixels = 3f;
+        private const float DragMetresPerSecond = 4.5f;
         private const float Tolerance = 0.02f;
 
         /// <summary>How far past the rope's length the taut test's hitch stands: more than the winch's sway.</summary>
@@ -119,6 +122,41 @@ namespace MoonProject.Rover.PlayModeTests
             yield return new WaitForFixedUpdate();
             Assert.Less(Cable.Sag, TautSagMetres, "taut, it runs straight");
             Assert.AreEqual(0.7f, Cable.Strain01, Tolerance);
+        }
+
+        [UnityTest]
+        public IEnumerator FarFromTheLens_TheRopeIsAtLeastAFewPixelsWideAt1440p()
+        {
+            yield return Wait(0.2f);
+            _line.Hitch = Winch + new Vector3(0f, 0f, -CableLength * FarHitchScale);
+            _line.Strain = 0.5f;
+            _line.Towing = true;
+            yield return Wait(0.3f);
+            Camera lens = _rover.Context.Get<IViewCamera>().Camera;
+            float distance = Vector3.Distance(lens.transform.position, _line.Hitch);
+            float visibleHeight = 2f * distance * Mathf.Tan(lens.fieldOfView * Mathf.Deg2Rad * 0.5f);
+            float pixels = Cable.HitchWidth / visibleHeight * RopeWidth.ReferenceHeight;
+            Assert.GreaterOrEqual(pixels, MinRopePixels - 0.05f, $"{distance:0} m from the lens the rope is {pixels:0.0} px at 1440p");
+        }
+
+        [UnityTest]
+        public IEnumerator ADraggedLoad_KicksUpDust_AndAStandingOneKicksNone()
+        {
+            yield return Wait(0.2f);
+            _line.Hitch = Winch + new Vector3(0f, 0f, -CableLength);
+            _line.Towing = true;
+            float fastest = 0f;
+            float until = Time.time + 1f;
+            while (Time.time < until)
+            {
+                _line.Hitch += new Vector3(0f, 0f, -DragMetresPerSecond * Time.deltaTime);
+                yield return null;
+                fastest = Mathf.Max(fastest, Cable.SkidRate);
+            }
+
+            Assert.Greater(fastest, 1f, "a load dragged along kicks up dust");
+            yield return Wait(0.8f);
+            Assert.AreEqual(0f, Cable.SkidRate, 1e-3f, "a load that stands kicks up none");
         }
 
         [UnityTest]
