@@ -7,12 +7,18 @@ namespace MoonProject.Rover
 {
     /// <summary>
     /// Tire tracks and ballistic regolith dust. All four wheel sockets sample the ground for track ribbons while rear
-    /// dust sockets drive the rooster-tail emitters; dust rate follows speed while grounded. A ring of dust bursts out
-    /// on every announced <see cref="RoverLanded"/>, scaled by impact. Ticked by <see cref="RoverController"/>.
+    /// dust sockets drive the rooster-tail emitters; dust rate follows speed while grounded, boosting when accelerating
+    /// or turning hard and dropping to zero when still. A ring of dust bursts out on every
+    /// announced <see cref="RoverLanded"/>, scaled by impact. Ticked by <see cref="RoverController"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class RoverWheelFx : MonoBehaviour
     {
+        private const float WheelTrackHalfWidth = 0.64f;
+        private const float LifetimeMinFactor = 0.80f;
+        private const float SpeedMinFactor = 0.75f;
+        private const float SizeMinFactor = 0.70f;
+
         [Tooltip("Wheel effects tuning (Assets/_Project/Data/Tuning/RoverFxTuning.asset).")]
         [SerializeField] private RoverFxTuning _tuning;
 
@@ -50,6 +56,32 @@ namespace MoonProject.Rover
         public RoverTrackRenderer TrackLeft => _trackLeft;
         public RoverTrackRenderer TrackRight => _trackRight;
 
+        /// <summary>
+        /// Pure calculation of per-side wheel dust emission rate (grains/s): zero when ungrounded or still, scaling
+        /// with speed or pivot scrub and boosted by longitudinal acceleration and hard turning.
+        /// </summary>
+        public static float ComputeWheelDustRate(RoverFxTuning tuning, bool rolling, float speed,
+            float yawRateDegPerSec, float longitudinalAcceleration)
+        {
+            if (tuning == null || !rolling)
+            {
+                return 0f;
+            }
+
+            float scrubSpeed = Mathf.Abs(yawRateDegPerSec) * Mathf.Deg2Rad * WheelTrackHalfWidth;
+            float effectiveSpeed = Mathf.Max(speed, scrubSpeed);
+            float baseFactor = Smoothing.SmoothStep(tuning.DustMinSpeed, tuning.DustFullSpeed, effectiveSpeed);
+            if (baseFactor <= 0f)
+            {
+                return 0f;
+            }
+
+            float accel01 = Smoothing.SmoothStep(0f, tuning.DustAccelFull, Mathf.Abs(longitudinalAcceleration));
+            float turn01 = Smoothing.SmoothStep(0f, tuning.DustTurnFullYawRate, Mathf.Abs(yawRateDegPerSec));
+            float boost = 1f + tuning.DustAccelBoost * accel01 + tuning.DustTurnBoost * turn01;
+            return tuning.DustMaxRate * baseFactor * boost;
+        }
+
         /// <summary>Validates the wiring and subscribes to landings. Returns false (and logs) when broken.</summary>
         public bool Initialize(GameContext context, RoverController rover)
         {
@@ -64,15 +96,10 @@ namespace MoonProject.Rover
             _trackFrontRight.Initialize(_tuning);
             _trackLeft.Initialize(_tuning);
             _trackRight.Initialize(_tuning);
-            Configure(_dustLeft, _tuning.DustLifetime, _tuning.DustDrag, _tuning.DustOpacity);
-            Configure(_dustRight, _tuning.DustLifetime, _tuning.DustDrag, _tuning.DustOpacity);
+            ConfigureRolling(_dustLeft);
+            ConfigureRolling(_dustRight);
+
             Configure(_landingDust, _tuning.LandingLifetime, _tuning.LandingDrag, _tuning.LandingOpacity);
-            ParticleSystem.MainModule dustLeft = _dustLeft.main;
-            dustLeft.startSizeMultiplier = _tuning.DustSize;
-            dustLeft.startSpeedMultiplier = _tuning.DustSpeed;
-            ParticleSystem.MainModule dustRight = _dustRight.main;
-            dustRight.startSizeMultiplier = _tuning.DustSize;
-            dustRight.startSpeedMultiplier = _tuning.DustSpeed;
             _landedSubscription = context.Events.Subscribe<RoverLanded>(OnLanded);
             return true;
         }
@@ -98,19 +125,34 @@ namespace MoonProject.Rover
             return condition;
         }
 
-        /// <summary>Applies the tuned lifetime, drag, opacity and gravity (once, at start-up).</summary>
+        private void ConfigureRolling(ParticleSystem system)
+        {
+            Configure(system, _tuning.DustLifetime, _tuning.DustDrag, _tuning.DustOpacity);
+            ParticleSystem.MainModule main = system.main;
+            main.startSize = new ParticleSystem.MinMaxCurve(SizeMinFactor * _tuning.DustSize, _tuning.DustSize);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(SpeedMinFactor * _tuning.DustSpeed, _tuning.DustSpeed);
+        }
+
+        /// <summary>Applies the tuned lifetime, drag, warm-grey ground tint, opacity and lunar gravity.</summary>
         private void Configure(ParticleSystem system, float lifetime, float drag, float opacity)
         {
             ParticleSystem.MainModule main = system.main;
-            main.startLifetimeMultiplier = lifetime;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(LifetimeMinFactor * lifetime, lifetime);
             main.gravityModifierMultiplier = _tuning.DustGravity;
-            ParticleSystem.MinMaxGradient color = main.startColor;
-            color.colorMin = WithAlpha(color.colorMin, opacity);
-            color.colorMax = WithAlpha(color.colorMax, opacity);
-            main.startColor = color;
+            main.startColor = new ParticleSystem.MinMaxGradient(
+                WithAlpha(_tuning.DustShadowColor, opacity),
+                WithAlpha(_tuning.DustColor, opacity));
+
+            ParticleSystem.VelocityOverLifetimeModule velocity = system.velocityOverLifetime;
+            velocity.enabled = false;
+
             ParticleSystem.LimitVelocityOverLifetimeModule limit = system.limitVelocityOverLifetime;
             limit.enabled = drag > 0f;
             limit.dragMultiplier = drag;
+
+            ParticleSystem.NoiseModule noise = system.noise;
+            noise.enabled = false;
+
             ParticleSystem.EmissionModule emission = system.emission;
             emission.rateOverTimeMultiplier = 0f;
         }
@@ -124,11 +166,12 @@ namespace MoonProject.Rover
         public void Tick()
         {
             bool rolling = _rover.IsGrounded && _rover.HasGroundContact;
-            float scrubSpeed = Mathf.Abs(_rover.YawRate) * Mathf.Deg2Rad * 0.64f;
-            float effectiveSpeed = Mathf.Max(_rover.Speed, scrubSpeed);
-            float rate = rolling
-                ? _tuning.DustMaxRate * Smoothing.SmoothStep(_tuning.DustMinSpeed, _tuning.DustFullSpeed, effectiveSpeed)
-                : 0f;
+            float rate = ComputeWheelDustRate(
+                _tuning,
+                rolling,
+                _rover.Speed,
+                _rover.YawRate,
+                _rover.LocalAcceleration.z);
             float time = Time.time;
             Quaternion rotation = _rover.Rotation;
 

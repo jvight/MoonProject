@@ -7,11 +7,11 @@ namespace MoonProject.Rover.Editor
 {
     /// <summary>
     /// Physics and effect assets the rover prefab uses: the frictionless sphere material (all traction is done in
-    /// code), the multiply-blended track material, and the soft dust puff: a round, feathered texture on a lit,
-    /// alpha-blended particle material (dust catches the Earthlight and 07's headlamp) that fades where it meets the
-    /// ground and near the camera, so it reads as fine lunar dust rather than floating rocks. The lamp motes share the
-    /// puff texture on an unlit, additive particle material: they are only ever as bright as the beam they hang in
-    /// (set per mote at runtime), with an HDR tint for a whisper of bloom. Colours come from the palette.
+    /// code), the multiply-blended track material, and the ballistic regolith grain spray texture on a lit,
+    /// alpha-blended particle material (dust catches the Earthlight and 07's headlamp) with a tight ground fade so
+    /// low parabolic grain arcs stay visible right down to the regolith surface. The lamp motes share the grain
+    /// texture on an unlit, additive particle material: they are only ever as bright as the beam they hang in
+    /// (set per mote at runtime), with an HDR tint for a whisper of bloom.
     /// </summary>
     public static class RoverFxAssetBuilder
     {
@@ -28,13 +28,13 @@ namespace MoonProject.Rover.Editor
 
         private const int DustTextureSize = 64;
 
-        /// <summary>Fraction of the puff radius that stays fully opaque before the feathered edge begins.</summary>
-        private const float DustSolidCore = 0.15f;
+        /// <summary>Fraction of each individual regolith grain's radius that stays fully opaque before its antialiased rim.</summary>
+        private const float DustGrainCore = 0.55f;
 
-        /// <summary>Distance (m) over which a puff fades where it intersects the ground (soft particles).</summary>
-        private const float DustGroundFade = 0.25f;
+        /// <summary>Distance (m) over which a grain cluster softens right as its billboard touches the ground mesh.</summary>
+        private const float DustGroundFade = 0.03f;
 
-        /// <summary>Puffs nearer the camera than this vanish, fading in fully by the far distance (m).</summary>
+        /// <summary>Grains nearer the camera than this vanish, fading in fully by the far distance (m).</summary>
         private const float DustCameraFadeNear = 0.4f;
 
         private const float DustCameraFadeFar = 1.6f;
@@ -49,6 +49,27 @@ namespace MoonProject.Rover.Editor
         private const float NozzleBladeWidth = 0.016f;
         private const float NozzleBladeThickness = 0.004f;
         private const float NozzleBladeEdgeWear = 0.25f;
+
+        /// <summary>
+        /// Deterministic cluster of discrete regolith grain specks in normalized [-1, 1] UV space:
+        /// (x, y, radius, peakAlpha). Zero foggy haze between grains so each particle renders as crisp regolith specks.
+        /// </summary>
+        private static readonly Vector4[] DustGrainSpecks =
+        {
+            new Vector4(0.00f, 0.00f, 0.14f, 1.00f),
+            new Vector4(-0.34f, -0.18f, 0.10f, 0.95f),
+            new Vector4(0.32f, -0.22f, 0.11f, 0.92f),
+            new Vector4(-0.14f, 0.36f, 0.10f, 0.90f),
+            new Vector4(0.28f, 0.30f, 0.09f, 0.88f),
+            new Vector4(-0.56f, 0.14f, 0.09f, 0.85f),
+            new Vector4(0.58f, 0.04f, 0.09f, 0.84f),
+            new Vector4(-0.22f, -0.54f, 0.09f, 0.82f),
+            new Vector4(0.18f, -0.58f, 0.08f, 0.80f),
+            new Vector4(-0.48f, -0.44f, 0.08f, 0.78f),
+            new Vector4(0.50f, -0.42f, 0.08f, 0.76f),
+            new Vector4(-0.42f, 0.52f, 0.08f, 0.75f),
+            new Vector4(0.46f, 0.48f, 0.08f, 0.74f),
+        };
 
         [MoonBuilder("Rover/Materials", 305)]
         public static void Build()
@@ -96,7 +117,7 @@ namespace MoonProject.Rover.Editor
             GeneratedAssets.CreateOrReplace(material, RoverAssetPaths.TrackMaterial);
         }
 
-        /// <summary>White disc whose alpha eases from the centre to nothing at the rim (no hard edge).</summary>
+        /// <summary>Cluster of crisp regolith grain specks with transparent vacuum between them (no smoky cloud halo).</summary>
         private static void BuildDustTexture()
         {
             var texture = new Texture2D(DustTextureSize, DustTextureSize, TextureFormat.RGBA32, true, false)
@@ -112,9 +133,8 @@ namespace MoonProject.Rover.Editor
                 {
                     float dx = (x + 0.5f - half) / half;
                     float dy = (y + 0.5f - half) / half;
-                    float r = Mathf.Sqrt(dx * dx + dy * dy);
-                    float feather = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(DustSolidCore, 1f, r));
-                    byte alpha = (byte)Mathf.RoundToInt(feather * 255f);
+                    float alpha01 = SampleGrainCluster(dx, dy);
+                    byte alpha = (byte)Mathf.RoundToInt(alpha01 * 255f);
                     pixels[y * DustTextureSize + x] = new Color32(255, 255, 255, alpha);
                 }
             }
@@ -122,6 +142,33 @@ namespace MoonProject.Rover.Editor
             texture.SetPixels32(pixels);
             texture.Apply(true, false);
             GeneratedAssets.CreateOrReplace(texture, RoverAssetPaths.DustTexture);
+        }
+
+        private static float SampleGrainCluster(float dx, float dy)
+        {
+            float best = 0f;
+            for (int i = 0; i < DustGrainSpecks.Length; i++)
+            {
+                Vector4 speck = DustGrainSpecks[i];
+                float gx = dx - speck.x;
+                float gy = dy - speck.y;
+                float radius = speck.z;
+                float distSq = gx * gx + gy * gy;
+                if (distSq >= radius * radius)
+                {
+                    continue;
+                }
+
+                float dist = Mathf.Sqrt(distSq);
+                float rimT = Mathf.InverseLerp(DustGrainCore * radius, radius, dist);
+                float grainAlpha = speck.w * (1f - Mathf.SmoothStep(0f, 1f, rimT));
+                if (grainAlpha > best)
+                {
+                    best = grainAlpha;
+                }
+            }
+
+            return best;
         }
 
         private static void BuildDustMaterial()

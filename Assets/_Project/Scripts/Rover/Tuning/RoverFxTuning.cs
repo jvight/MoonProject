@@ -54,19 +54,19 @@ namespace MoonProject.Rover
 
         [Tooltip("Dust grains per second per side at full rate.")]
         [Range(0f, 100f)]
-        [SerializeField] private float _dustMaxRate = 44f;
+        [SerializeField] private float _dustMaxRate = 52f;
 
         [Tooltip("Seconds each kicked-up dust grain stays in flight before hitting the ground.")]
         [Range(0.2f, 6f)]
-        [SerializeField] private float _dustLifetime = 0.95f;
+        [SerializeField] private float _dustLifetime = 0.45f;
 
         [Tooltip("Size (m) of a kicked-up dust grain spray cluster; never swells in vacuum.")]
         [Range(0.02f, 1f)]
-        [SerializeField] private float _dustSize = 0.11f;
+        [SerializeField] private float _dustSize = 0.055f;
 
         [Tooltip("Initial speed (m/s) of a ballistic dust spray kicked up by the wheel.")]
         [Range(0f, 5f)]
-        [SerializeField] private float _dustSpeed = 2.4f;
+        [SerializeField] private float _dustSpeed = 1.25f;
 
         [Tooltip("Atmospheric drag on dust (1/s): zero in lunar vacuum so grains fly a clean parabola.")]
         [Range(0f, 10f)]
@@ -74,11 +74,33 @@ namespace MoonProject.Rover
 
         [Tooltip("Peak opacity of a dust spray (lunar regolith is fine and crisp).")]
         [Range(0f, 1f)]
-        [SerializeField] private float _dustOpacity = 0.45f;
+        [SerializeField] private float _dustOpacity = 0.62f;
 
         [Tooltip("Fraction of world (lunar, 1.62 m/s^2) gravity acting on dust: 1.0 for true ballistic arcs.")]
         [Range(0f, 2f)]
         [SerializeField] private float _dustGravity = 1f;
+
+        [Tooltip("Warm grey regolith tint matching the sunlit lunar ground (lighter grain shade).")]
+        [SerializeField] private Color _dustColor = new Color(0.50f, 0.46f, 0.41f, 1f);
+
+        [Tooltip("Darker warm grey regolith tint for grain-to-grain shade variation.")]
+        [SerializeField] private Color _dustShadowColor = new Color(0.38f, 0.35f, 0.31f, 1f);
+
+        [Tooltip("Longitudinal acceleration (m/s^2) at which wheel slip adds the full acceleration dust boost.")]
+        [Range(0.2f, 10f)]
+        [SerializeField] private float _dustAccelFull = 2f;
+
+        [Tooltip("Extra fraction of dust emission added when accelerating or braking at full slip.")]
+        [Range(0f, 2f)]
+        [SerializeField] private float _dustAccelBoost = 0.5f;
+
+        [Tooltip("Yaw rate (deg/s) at which hard-turning wheel scrub adds the full turn dust boost.")]
+        [Range(5f, 180f)]
+        [SerializeField] private float _dustTurnFullYawRate = 45f;
+
+        [Tooltip("Extra fraction of dust emission added when turning hard.")]
+        [Range(0f, 2f)]
+        [SerializeField] private float _dustTurnBoost = 0.6f;
 
         [Header("Landing ring")]
         [Tooltip("Impact speed (m/s) of the softest landing that still raises a splash ring.")]
@@ -107,23 +129,23 @@ namespace MoonProject.Rover
 
         [Tooltip("Outward ballistic speed (m/s) of the softest landing splash ring.")]
         [Range(0f, 10f)]
-        [SerializeField] private float _landingMinSpeed = 1.6f;
+        [SerializeField] private float _landingMinSpeed = 0.9f;
 
         [Tooltip("Outward ballistic speed (m/s) of the biggest landing splash ring.")]
         [Range(0f, 10f)]
-        [SerializeField] private float _landingMaxSpeed = 3.2f;
+        [SerializeField] private float _landingMaxSpeed = 1.7f;
 
         [Tooltip("Grain cluster size (m) in the softest landing splash ring.")]
         [Range(0.02f, 2f)]
-        [SerializeField] private float _landingMinSize = 0.09f;
+        [SerializeField] private float _landingMinSize = 0.05f;
 
         [Tooltip("Grain cluster size (m) in the biggest landing splash ring.")]
         [Range(0.02f, 2f)]
-        [SerializeField] private float _landingMaxSize = 0.16f;
+        [SerializeField] private float _landingMaxSize = 0.085f;
 
         [Tooltip("Seconds a landing grain arc stays in flight before landing.")]
         [Range(0.2f, 6f)]
-        [SerializeField] private float _landingLifetime = 0.95f;
+        [SerializeField] private float _landingLifetime = 0.5f;
 
         [Tooltip("Drag on the landing splash ring (1/s): zero in lunar vacuum.")]
         [Range(0f, 10f)]
@@ -131,7 +153,7 @@ namespace MoonProject.Rover
 
         [Tooltip("Peak opacity of a landing grain cluster.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _landingOpacity = 0.52f;
+        [SerializeField] private float _landingOpacity = 0.58f;
 
         [Header("Lamp motes")]
         [Tooltip("Maximum dust motes alive at once in the headlamp's beam while driving.")]
@@ -248,6 +270,19 @@ namespace MoonProject.Rover
         public float DustOpacity => _dustOpacity;
 
         public float DustGravity => _dustGravity;
+
+        public Color DustColor => _dustColor;
+
+        public Color DustShadowColor => _dustShadowColor;
+
+        public float DustAccelFull => _dustAccelFull;
+
+        public float DustAccelBoost => _dustAccelBoost;
+
+        public float DustTurnFullYawRate => _dustTurnFullYawRate;
+
+        public float DustTurnBoost => _dustTurnBoost;
+
 
         public float LandingMinImpact => _landingMinImpact;
 
