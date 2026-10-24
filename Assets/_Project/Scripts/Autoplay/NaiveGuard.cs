@@ -199,6 +199,17 @@ namespace MoonProject.Autoplay
                 other = other ?? "controls card '" + card + "'";
             }
 
+            if (ui.BuildCostInView(out string cost))
+            {
+                // The build mode's chip names the keys of placing and turning: it counts for the action it names.
+                if (action == null || Contains(cost, new[] { action.Key }) || Contains(cost, action.LineWords))
+                {
+                    return "build chip '" + cost + "'";
+                }
+
+                other = other ?? "build chip '" + cost + "'";
+            }
+
             string line = ui.ObjectiveLine();
             if (line.Length > 0)
             {

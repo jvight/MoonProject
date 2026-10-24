@@ -22,10 +22,11 @@ namespace MoonProject.World
             "blue-green. Much brighter than the dim grey-blue ambient, so lit faces and shade faces split.")]
         [SerializeField] private Color _lightColor = new Color(0.92f, 0.94f, 1f);
 
-        [Tooltip("Intensity of the earthlight. Square-on with the sky's ambient it stays under Art's reference light " +
-            "scaled by the bloom threshold, so lit cream and dust never glow like lamps.")]
+        [Tooltip("Intensity of the earthlight, under a full Earth. Low enough that the plain it front-lights (the " +
+            "view away from Earth) still reads as night, the moon-grey of look A, never as day; square-on with the " +
+            "sky's ambient it stays under Art's reference light, so lit cream and dust never glow like lamps.")]
         [Range(0f, 4f)]
-        [SerializeField] private float _lightIntensity = 1.95f;
+        [SerializeField] private float _lightIntensity = 1.2f;
 
         [Tooltip("Elevation the earthlight shines from, degrees. Low light rakes long shadows across the dunes and " +
             "craters and makes the facets read.")]
@@ -60,7 +61,7 @@ namespace MoonProject.World
         [Tooltip("Intensity of the fill (it casts no shadows). Soft: the faces the earthlight leaves dark show their " +
             "paint, rust and dust instead of a flat violet, while staying far darker than the lit faces.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _fillIntensity = 0.45f;
+        [SerializeField] private float _fillIntensity = 0.42f;
 
         [Tooltip("Elevation the fill shines from, degrees. Near the horizon it lifts walls and leaves top faces " +
             "(and their dust caps) to the earthlight.")]

@@ -77,6 +77,15 @@ def fit(x: np.ndarray, n: int) -> np.ndarray:
     return x[:n] if len(x) >= n else np.concatenate((x, np.zeros(n - len(x))))
 
 
+def seamless(raw: np.ndarray, loop_n: int, seam_n: int) -> np.ndarray:
+    """The first ``loop_n`` samples of ``raw`` as a seamless loop: its head equal-power crossfaded with the ``seam_n``
+    samples that follow the loop, so the end runs straight back into the start."""
+    body = raw[:loop_n].copy()
+    fade = np.sin(np.linspace(0.0, np.pi / 2.0, seam_n))
+    body[:seam_n] = body[:seam_n] * fade + raw[loop_n:loop_n + seam_n] * fade[::-1]
+    return body
+
+
 def speaker_rattle(x: np.ndarray, rate: float, depth: float, drive: float = 1.6) -> np.ndarray:
     """A small speaker cone buzzing against its frame: a fast amplitude flutter and a soft overdrive."""
     return effects.saturate(effects.tremolo(x, rate, depth), drive) / max(1.0, drive * 0.6)

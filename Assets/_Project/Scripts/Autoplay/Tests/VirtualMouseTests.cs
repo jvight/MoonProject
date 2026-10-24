@@ -44,6 +44,21 @@ namespace MoonProject.Autoplay.Tests
             }
         }
 
+        [Test]
+        public void TheWheel_TurnsByWholeNotches()
+        {
+            using (var input = new VirtualInput())
+            {
+                Mouse mouse = Find();
+                input.Scroll(1f);
+                InputSystem.Update();
+                Assert.AreEqual(120f, mouse.scroll.ReadValue().y, 1e-3f, "one notch away from the player");
+                input.Scroll(-2f);
+                InputSystem.Update();
+                Assert.AreEqual(-240f, mouse.scroll.ReadValue().y, 1e-3f, "two notches back");
+            }
+        }
+
         private static Mouse Find()
         {
             foreach (InputDevice device in InputSystem.devices)

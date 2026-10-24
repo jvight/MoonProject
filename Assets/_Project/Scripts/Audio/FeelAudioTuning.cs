@@ -57,6 +57,10 @@ namespace MoonProject.Audio
         [Tooltip("Volume scale of the charging hum (very soft).")]
         [Range(0f, 1f)] [SerializeField] private float _chargeVolume = 0.5f;
 
+        [Tooltip("Volume scale of the next-line sound when the line comes back as a reminder (never above a new line's " +
+                 "1): felt, not nagging.")]
+        [Range(0f, 1f)] [SerializeField] private float _reminderLineVolume = 0.6f;
+
         [Tooltip("The first dusk: semitones the pad's charging hum slows by as the light goes (a pentatonic step down " +
                  "from D: -3 is B).")]
         [Range(-7f, 0f)] [SerializeField] private float _duskChargeSemitones = -3f;
@@ -110,6 +114,7 @@ namespace MoonProject.Audio
         public float ChargeFadeIn => _chargeFadeIn;
         public float ChargeFadeOut => _chargeFadeOut;
         public float ChargeVolume => _chargeVolume;
+        public float ReminderLineVolume => _reminderLineVolume;
         public float DuskChargeSemitones => _duskChargeSemitones;
         public float DuskChargeSeconds => _duskChargeSeconds;
         public float ScanVolume => _scanVolume;

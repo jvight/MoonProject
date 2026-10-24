@@ -41,6 +41,17 @@ class LaunchArgumentTests(unittest.TestCase):
         pairs = dict(zip(naive[::2], naive[1::2]))
         self.assertEqual(pairs["-autoplay-naive"], "1")
 
+    def test_the_pointer_flag_and_the_window_size_are_sent_only_when_asked_for(self):
+        plain = autoplay.launch_arguments("autoplay-slot", Path("out"), Path("out/player.log"), "opening", "", 600, 20)
+        self.assertNotIn("-autoplay-pointer", plain)
+        self.assertEqual(plain[plain.index("-screen-width") + 1], str(autoplay.WINDOW_WIDTH))
+        asked = autoplay.launch_arguments("autoplay-slot", Path("out"), Path("out/player.log"), "opening", "", 600, 20,
+                                          pointer=True, size=autoplay.parse_size("1260x540"))
+        pairs = dict(zip(asked[::2], asked[1::2]))
+        self.assertEqual(pairs["-autoplay-pointer"], "1")
+        self.assertEqual((pairs["-screen-width"], pairs["-screen-height"]), ("1260", "540"))
+        self.assertIsNone(autoplay.parse_size(None))
+
     def test_guidance_is_strict_unless_made_lenient(self):
         strict = autoplay.launch_arguments("autoplay-slot", Path("out"), Path("out/player.log"), "opening", "", 600, 20)
         self.assertNotIn("-autoplay-strict-guidance", strict)

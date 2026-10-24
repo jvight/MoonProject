@@ -60,9 +60,6 @@ namespace MoonProject.World.Editor
         public const string BasaltMaskTexture = "Assets/_Project/Art/R1/Textures/T_R1_Basalt_Mask.png";
         public const string R1BasaltMaterial = "Assets/_Project/Generated/Art/R1/Materials/R1_Basalt.mat";
 
-        /// <summary>One of Art's R1 materials by its slot name (e.g. R1_GreyMetal).</summary>
-        public static string R1Material(string slot) => "Assets/_Project/Generated/Art/R1/Materials/" + slot + ".mat";
-
         public const string R1RocksFolder = "Assets/_Project/Art/R1/Models/Rocks";
         /// <summary>R1 basalt rocks (Art/R1/Models/Rocks) used as pebbles: 5 irregular rounded cobble and lump shapes.</summary>
         public static readonly string[] PebbleRocks = { "Rock_00", "Rock_01", "Rock_02", "Rock_03", "Rock_04" };
@@ -86,6 +83,10 @@ namespace MoonProject.World.Editor
         public const string ServiceCabinetPrefab = R1StructuresFolder + "ServiceCabinet.prefab";
         public const string FeedUnitSparePrefab = R1PropsFolder + "FeedUnitSpare.prefab";
         public const string RelayContactPadPrefab = R1StructuresFolder + "RelayContactPad.prefab";
+
+        /// <summary>relay.2's hut by the canyon mouth (opening v3 5.2b).</summary>
+        public const string RelayHutPrefab = R1StructuresFolder + "RelayHut.prefab";
+
         public const string DeadChargingPostPrefab = R1PropsFolder + "DeadChargingPost.prefab";
         public const string CableStraightPrefab = R1PropsFolder + "Cable_Straight_2m.prefab";
         public const string CableBend45Prefab = R1PropsFolder + "Cable_Bend_45.prefab";
@@ -112,6 +113,10 @@ namespace MoonProject.World.Editor
 
         /// <summary>Art's R1 SSR-3 elders, the station's earlier units (Generated/Art/R1/Models/Rover).</summary>
         public static string ElderPrefab(string id) => "Assets/_Project/Generated/Art/R1/Models/Rover/" + id + ".prefab";
+
+        /// <summary>Art's cell-pack fragments seated in 06's open battery bay (Generated/Art/Fragments).</summary>
+        public static string CellPackFragmentPrefab(int index) =>
+            "Assets/_Project/Generated/Art/Fragments/Fragment_CellPack_" + index + ".prefab";
 
         /// <summary>Art's R1 rock prefabs (Generated/Art/R1/Models/Rocks), the big boulders among them.</summary>
         public static string R1RockPrefab(string id) => "Assets/_Project/Generated/Art/R1/Models/Rocks/" + id + ".prefab";
