@@ -148,12 +148,12 @@ something is calling 07. The limit chain (§3) works the same under either hook.
 
 The genre doc's `EARTHRISE` example can't happen here: from a fixed site on the Moon, Earth never rises.
 
-## 6. 0.6's end beat (ruling 6)
-1. The route reaches the Peak.
-2. 07 wakes the Great Dish. It slews toward Earth and **jams at 14%** (story v4).
-3. 07 sends **one fragment of the survey**: Kestrel-3's buffer.
-4. The far carrier **stops sweeping and holds on Lumen**: `CARRIER · LOCKED`. Someone heard.
-5. The Peak's view opens the 0.7 regions.
+## 6. 0.6's end beat (ruling 6, revised 2026-10-24 for region adjacency: `base-home-and-crater-exits.md` §3)
+1. The route crosses the rille pass into the Long Mare (0.6). The caravan brings the moveable base modules to the
+   Mare's sunlit swell.
+2. 07 lights the crew's **comms dish** there and sends **one fragment of the survey**: Kestrel-3's buffer.
+3. The far carrier **stops sweeping and holds on Lumen**: `CARRIER · LOCKED`. Someone heard.
+4. The Great Dish on the Peak stays the 1.0 finale (it jams at 14% there, per story v4).
 
 The game's ending is untouched: freeing the dish, the full survey, and the Arks' light.
 

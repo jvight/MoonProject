@@ -4,6 +4,8 @@
 > base is built there. Isn't that too confining? And why do the four opening structures (the pad, the solar array,
 > the battery bank, the mast) matter? Do we build them and leave, or is this home?
 >
+> **Status: final** (Director-accepted, 2026-10-24; reconciled with 0.6 = the Long Mare).
+>
 > **Author:** the game design session. It builds on `opening-v3-purpose.md`, `research/caravan-tow.md` ("move to the
 > light", deferred), `research/genre-survival-craft.md` (C2 gates, keys and lures), `0.6-world-regions.md`, and
 > `ice-and-vehicles.md`. No code.
@@ -11,10 +13,10 @@
 ## 0. Player experience first
 | | The answer |
 |---|---|
-| **Hook** | The crater is a **cradle**: sheltered, warm-lit and small enough to learn. From the first night, three ways out are *visible and closed*: a dark tube mouth, a switchback road up the Peak, a slumped wall in the west. |
+| **Hook** | The crater is a **cradle**: sheltered, warm-lit and small enough to learn. From hour two, its ways out are *visible and closed*: the rille notch to the black Mare behind relay.1, a shadowed slot in the canyon, and the Peak road's rockfall. |
 | **Pull** | Each closed way out is a question: "what's past it, and what do I need?" Each one is answered by a part on 07's body (C2: gates before keys). |
 | **Hold** | What you built **keeps working for you**: the crater camp becomes a waystation that charges 07 on every pass. Nothing is wasted. |
-| **Finish** | The 0.6 arc ends with **the caravan arriving on the Peak's sunlit shoulder**: the base unfolds beside the Great Dish, which wakes on that power. Leaving the crater is the emotional milestone, and it is chosen. |
+| **Finish** | The 0.6 arc ends with **the caravan arriving on the Mare's sunlit swell**: the base unfolds beside the crew's comms dish, which wakes on that power. The Peak stays the 1.0 finale. Leaving the crater is the emotional milestone, and it is chosen. |
 | **Feeling** | "Outgrowing the nest": calm pride, never loss. |
 
 ## 1. Research: first home and real home, enclosed starts
@@ -69,82 +71,99 @@ read-only; please verify in play.
 
 **Conclusion:** the owner is right. The crater is closed on every side, and nothing tells the player it will open.
 
-## 3. Recommendation: A + B, timed for 0.6, not the end of the opening
-- **The crater is "the first camp"** (the lifepod pattern). Its purpose is to get 07 strong enough to leave.
-- **B, now (opening and hour two):** every charger 07 lights becomes a **waystation**: the crater pad, then the lit
-  relays (they already charge 07). Home is wherever 07 can charge. The range ring is drawn from *all* of them, so the
-  map grows as the network grows (Valheim portals, NMS bases, in a calm, vehicle-scale form).
-- **A, as the 0.6 spine ("Move to the light", caravan research §2):**
-  - **Why move:** the crater floor is a polar cold trap with long nights, while the Peak's shoulder gets near-constant
-    sun ("peaks of eternal light", real lunar science). Only that power can wake the Great Dish.
-  - **How:** 07 packs the **moveable** modules (the solar array, the bank and the mast) onto skids and tows them up the
-    Peak road as a caravan.
-  - **What stays:** the **pad stays rooted** as the crater waystation.
-  - **The 0.6 end beat:** the caravan arrives, the base unfolds on the shoulder, and the dish wakes on its power, jams
-    at 14%, and the carrier locks.
-- **Why not leave at the end of the opening?** At minute 60 it would erase the base just built and its "reason to
-  return" (P13). Leaving must be **chosen and earned**, after the player has a stake in the place (BotW's lesson).
+## 3. Decision: A + B, the move at the end of 0.6, to the Mare's sunlit swell
+> **Accepted by the Director** (2026-10-24, owner-delegated): A + B, plus the three opening additions.
+>
+> **Reconciled with the fixed constraints:**
+> - 0.6 is the Long Mare (`0.6-world-regions.md` §3.1, concept r2);
+> - regions keep their adjacency order (0.7 Terraces, 0.8 Shadowed Crater and lava tube, 1.0 the Peak road).
 
-**How the four structures' purpose reads in the world, with no text** (the owner's "why do these matter"). They are
-**07's life support**, and the player must *see* the dependence:
+**B, from the opening on.** Every charger 07 lights is a **waystation**: the crater pad, the lit relays, and later the
+Mare's Field Charge Pylons. Home is wherever 07 can charge. The range ring is drawn from *all* of them, so the map
+grows as the network grows.
+
+**A, the move: "Đi tìm ánh sáng" (Move to the light), at the end of 0.6, to the Mare's sunlit swell.**
+- **Why there (lunar logic):**
+  - At a polar site the Sun circles low. **The crater floor loses it behind its own rim** for much of each lunar day:
+    long nights, and a cold trap.
+  - Out on the open Mare, a broad swell near the crew's comms dish has **no rim to hide the Sun**, so it gets the long,
+    low light. The region doc already gives it "a low sun, mile-long shadows".
+  - The Peak gets the most light of all, but it is **1.0** content, and adjacency holds.
+- **Why at the end of 0.6, not at minute 60 or in 0.7:**
+  - By then the player has a stake in the crater (the opening, plus a whole region's errands), so leaving is a chosen
+    milestone, not a loss.
+  - **The Mare's keys are exactly the caravan's enablers.** The Field Charge Pylon chain (chargers ≤ 300 m apart) and
+    Cell Pack III are what make a slow, heavy haul across about 1 km of open basalt possible. The infrastructure the
+    player built is what lowers the friction (Death Stranding's lesson, caravan research §1).
+  - It answers the owner's "too confining" in the **next** version, not at the game's end.
+- **What moves:** the moveable modules (the solar array, the bank and the mast), packed onto skids. **The crater pad
+  stays** as the crater waystation, so nothing is lost.
+- **The 0.6 end beat** (it replaces `opening-v3-purpose.md` §6's Peak version, so that adjacency holds):
+  1. The caravan arrives on the swell, and the base unfolds beside **the crew's comms dish** (the Mare's mast).
+  2. Lighting the dish sends **one fragment of the survey** (Kestrel-3's buffer).
+  3. The far carrier **stops sweeping and holds on Lumen**: `CARRIER · LOCKED`.
+- **1.0 callback:** the Great Dish on the Peak stays the finale. Its last act is a small **dish caravan** up the Peak
+  road, carrying only the kit the dish needs: "move to the light" one last time, to the place that never goes dark.
+
+**How the four structures' purpose reads in the world, with no text.** They are **07's life support**; the player must
+*see* the dependence:
 | Structure | What it does for 07 | What the world shows |
 |---|---|---|
-| **Pad** | 07 lives on it | 07's range ring is centred on it; 07 docks, the walls lock, the cells fill (exists) |
-| **Solar array** | it feeds the pad | **a warm pulse runs along the cable from the panels to the pad** while the sun is up; the pad's lamp brightens with the panels' sunlight |
-| **Battery bank** | it keeps the lights through the night | at dusk the cable pulse **reverses: bank → pad**, and the base lights stay on while the crater goes dark (first nightfall, exists) |
+| **Pad** | 07 lives on it | the range ring is centred on it; 07 docks, the walls lock, the cells fill (exists) |
+| **Solar array** | it feeds the pad | **a warm pulse runs along the cable from the panels to the pad** while the Sun is up; the pad's lamp brightens with it |
+| **Battery bank** | it keeps the lights through the night | at dusk **the pulse reverses: bank → pad**, and the base lights stay on while the crater goes dark (first nightfall, exists) |
 | **Mast** | 07's voice | its lamp blinks back with relay.1; the decode ticker grows on each dock (exists) |
 
-**Fix for the owner's confusion: one power-flow cue on the existing cables**, a slow pulse moving the way the power
-flows. That makes "this is my life support" readable at a glance. When the caravan later packs these modules, the
-player is taking **their life support** with them. That is why they pack, and why it feels like moving home rather
-than leaving junk.
+When the caravan packs these modules, the player is taking **their life support** with them. That is why they pack,
+and why it feels like moving home.
 
-## 4. Exits: three gates, three parts, in order
-| Order | Exit | The gate the player sees | Key: a part on 07 | Leads to | Real-world logic |
-|---|---|---|---|---|---|
-| **1** (hour two) | **East: the lava tube** at Whispering Canyon's terminus, past relay.2 and 06 | a black tube mouth with a pale skylight shaft far inside; 07's stock lamps die in its dark (the darkness gate) | **the SSR-3 headlamp** (R11, from 06's lamp, Kessler–Arai understanding) | out through the rim to the **eastern outer plain**, the edge of the Long Mare (0.6 region) | lunar lava tubes with skylights are real (the Marius Hills pit) |
-| **2** (0.6 spine) | **North: the Peak road**, switchbacks from `site.peakroad` up the Peak's shoulder | a crew-staked road whose second switchback is too steep: 07's wheels spin and slide back (a soft gate, Dredge-style) | **grip rings** (Kessler–Arai level 2), plus **range** (06's cell pack, or the Kestrel hex adapter for a forward charge) | the **sunlit shoulder and the Great Dish**: the caravan's destination and 0.6's end | rim peaks of near-eternal light; Lumen's road to its dish |
-| **3** (0.6 late or 0.7) | **West: the slump** beyond relay.1, where the rim wall slid into a rubble ramp | a rock and regolith slope, loose and too soft to climb | **the dig scoop kit** (07's native Dig verb, a kit socket) to cut a track. Later, the anchor winch for its steep top. | the far relay chain and the routes to the cold traps (the ice ladder, `ice-and-vehicles.md`) | slumped crater walls are common |
+## 4. The ways out: two exits and one dark pocket
+| Version | Way out | The gate seen before (readable from the start) | Key: a part on 07 | Leads to |
+|---|---|---|---|---|
+| **0.5 (hour two)** | **East: Whispering Canyon's dark slot**, with relay.2 and 06 at its mouth (72°, 280 m). A pocket, not a region exit: it loops back to the basin, as built. | a narrow inner section **in permanent rim shadow** (the low polar Sun never reaches it). 07's stock lamps fall short and the way ahead reads black. | **the SSR-3 headlamp** (R11, from 06's lamp) | the canyon's terminus and the **Canyon Supply Lander's bay**, holding the **Field Charge Pylon** flat-pack and fragments: the first key to the Mare |
+| **0.6** | **West: the rille pass** (255°, 420–520 m), **right behind relay.1** (250°, 218 m) | from relay.1 (R10): the rille's notch with the black Mare beyond, and at dusk the comms dish's slow amber blink far out. **The range ring stops short of it.** You *can* drive in, and the battery shows why you turn back: an honest, soft gate. | **Cell Pack III** (Back socket, 6 → 8 cells) **+ the Field Charge Pylon** (M3-22) | **the Long Mare** (0.6): the region, the comms dish and the relocation site |
+| **1.0** | **North: the Peak road** (12°; the foot at `site.peakroad`, 308 m) | visible since minute 1: the staked road, with a **rockfall across the first switchback** (closed, and readable as closed) | as in the region doc: **Atlas** lifts the rockfall and **Long Leap** crosses the rifts. The road is properly reached from the terraces' top. | the Peak, the Great Dish, the finale |
 
-**Why this order:**
-- **The headlamp is the first part 07 earns,** so the first exit is the first thing it's *for*. That strengthens R11's
-  purpose.
-- **The Peak is the long goal,** visible since minute 1, so it comes second, as the caravan journey.
-- **The west slump** opens the ice story later.
+**Kept from `0.6-world-regions.md`, with no region moved:** the Terraces (0.7) open from the Mare's north shore, and
+the Shadowed Crater and the lava tube (0.8) open from the Mare. The real lava tube stays 0.8. The headlamp's early
+purpose uses only the canyon's **existing** inner section as a short shadowed slot, which is 0.5 content, so nothing
+is pulled forward from 0.8.
 
-Each exit is **visible from the base or from a site the player already visits**, so every gate is seen before its key
-(C2).
+**Is two exits plus a pocket too confining?** No.
+- The pocket gives the first part a purpose in hour two.
+- The west exit opens a 1.2 × 0.9 km plain in the very next version.
+- The Peak road is seen, closed and promised from minute 1. BotW's plateau shows the walls are fine when the way out
+  is visible and earned.
 
-## 5. Impact on opening v3 and the 0.6 plan
+## 5. Impact on opening v3 and 0.6, with roadmap tasks
 **Opening v3:**
-- **R4/R6 (purpose):** add the **power-flow pulse** on the base cables: sun → array → pad, and at dusk bank → pad.
-  This answers the owner's "why".
-- **R9 (release):** the view from the rise names the gates, not just lures:
-  - the tube mouth's skylight glint (east);
-  - the Peak road's stakes (north);
-  - the dust slump (west).
+- **R4 and R6:** the power-flow pulse on the base cables, sun → array → pad, and at dusk bank → pad. This answers the
+  owner's "why".
+- **R9, the release:** the view from the rise names the gates:
+  - the rille notch past relay.1 (west, the Mare);
+  - the canyon mouth at relay.2 (east);
+  - the Peak road's rockfall (north).
 
-  The range ring is drawn from every charger.
-- **R10:** relay.1's repair makes it a **waystation**: the ring grows, and the west slump is in view from it.
-- **R11:** at relay.2, 06 rests at the canyon mouth. **The tube mouth is visible from there and stays black until the
-  headlamp is worn.** That gives the headlamp an immediate purpose.
-- **Session end:** unchanged (the decode ticker, the bank filling).
+  The range ring is drawn from every charger and visibly stops short of the rille.
+- **R10:** relay.1, relit, becomes a waystation. From it the rille notch and the black Mare are in plain view (0.6's
+  lure).
+- **R11:** at relay.2 the canyon's shadowed slot is right there, black to the stock lamps. **Once the headlamp is
+  worn, that slot is the first thing to try** (its purpose). The Canyon Supply Lander's bay rewards it with the Field
+  Charge Pylon, a direct link to 0.6.
 
-**0.6 plan:**
-- **Spine:** gate 1 (the tube → the eastern Mare edge) → keys (the cell pack, grip rings, couplers) → **the caravan up
-  the Peak road** → arrival → the dish wakes. This is "Move to the light".
-- **First:** C0 "Train feel" in the Showcase build (caravan research §5), once opening v3 is done (owner ruling).
+**The 0.6 plan:** the rille pass leads into the Long Mare, with Cell Pack III and the Field Charge Pylon chain as its
+keys. The spine ends with **the caravan to the sunlit swell** and the comms dish lighting (`CARRIER · LOCKED`). C0
+"Train feel" (in the Showcase build) is the caravan's first slice, once opening v3 is done.
 
-**Proposed roadmap tasks, by domain** (each one goes to the roadmap, no code here):
 | Domain | Task |
 |---|---|
-| **World** | Turn the canyon terminus into a lava-tube exit with a skylight (darkness-gated). Make the Peak road drivable, with a slope gate at switchback 2. Add the west slump rubble ramp. Keep the three exits visible from the base, R10 and R11. |
-| **Gameplay** | A charger network as waystations (the ring from all chargers); the three gate rules (dark / grade / soft ground); packed and unpacked states for array, bank and mast; the caravan C0 then couplers (caravan §3) |
-| **Rover** | The grip rings mount; the dig scoop kit; the coupler rack; a headlamp beam long enough to read in the tube |
-| **Art (Argon)** | The tube mouth and skylight; switchback road stakes (Lumen era); the slump; skids and packed shapes for the three modules (vacuum shapes) |
-| **UI** | The ring drawn from every charger; the CRT map marking the three exits as gates (no text list) |
-| **Audio** | The power-flow pulse (a soft pentatonic tick); in the tube, **structure-borne sound only** (no air): wheel rumble through 07's frame |
-| **Story** | Why the dish needs the shoulder (peaks of eternal light); crew stakes and logs along the Peak road; Lumen's survey of the tube |
+| **World** | The canyon's inner section in permanent rim shadow as a readable dark slot (0.5). The Peak road's first-switchback rockfall, visible from the base. The rille notch readable from relay.1. The Mare swell as the relocation site near the comms dish (with the Mare kit). Base cable routes for the power pulse. |
+| **Gameplay** | The charger network as waystations (the ring from all chargers); the power-flow pulse states (sun and dusk); the Field Charge Pylon reward at the Canyon Supply Lander's bay; packed and unpacked states for the array, bank and mast; caravan C0, then couplers (caravan §3); the 0.6 end beat at the comms dish. |
+| **Rover** | A headlamp beam long enough to read in the slot; the coupler rack; Cell Pack III's spine module (0.6). |
+| **Art (Argon)** | The slot's shadow edge; the rockfall; skids and packed shapes for the three modules (vacuum shapes); the swell site. |
+| **UI** | The ring from every charger; the CRT map marking the rille, the slot and the rockfall as gates (no text list). |
+| **Audio** | The power pulse (a soft pentatonic tick); the caravan's skids and strain; in the slot, structure-borne sound only (no air). |
+| **Story** | Why the swell gets the light; why the crew left the Field Charge Pylons in the canyon lander; the comms dish's lock line. |
 
 ## 6. Playtest signal
 - At R9, a first-time player points at one exit and says what might open it.
