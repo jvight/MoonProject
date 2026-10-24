@@ -19,6 +19,7 @@ from sampled import base as sampled_base
 from sampled import boot as sampled_boot
 from sampled import call as sampled_call
 from sampled import face as sampled_face
+from sampled import hold as sampled_hold
 from sampled import rover as sampled_rover
 from sampled import tool as sampled_tool
 from sampled import picks
@@ -342,24 +343,6 @@ def room_tone(_variant, gen):
     return np.stack(sides, axis=1)
 
 
-LAMP_HUM_LOOP_S = 4.0
-
-
-def rover_lamp_hum(_variant, gen):
-    """07's lamp: a tiny warm electrical hum on D3 with its octave and fifth, a whisper of filament buzz and a
-    slow shimmer as the current breathes. Seamless, very soft; heard mostly when everything else is quiet."""
-    n = samples(LAMP_HUM_LOOP_S)
-    step = SAMPLE_RATE / n
-    d3 = loop_freq(note_freq("D3"), n)
-    hum = osc.additive(n, d3, [(1, 1.0), (2, 0.45), (3, 0.18), (4, 0.06)])
-    hum += 0.3 * osc.sine(n, 2.0 * d3 + step, phase=0.25)
-    shimmer = envelope.lfo(n, 3.0 / LAMP_HUM_LOOP_S, 0.15, 0.85)
-    buzz = periodic(noise.white(n, gen), lambda x: filters.bandpass(x, 2.0 * d3 * 4.0, 6.0), warmup=samples(0.5))
-    buzz = buzz / max(float(np.std(buzz)), 1e-9) * 0.015 * envelope.lfo(n, 2.0 * d3, 0.5, 0.5) ** 4
-    mix = 0.3 * hum * shimmer + buzz
-    return periodic(mix, lambda x: filters.highpass(filters.lowpass(x, 2500.0), 80.0))
-
-
 SERVO_LOOP_S = 2.0
 
 
@@ -526,21 +509,6 @@ def dock_full(_variant, gen):
 
 
 # --------------------------------------------------------------------------------------------------- the battery
-
-BATTERY_CELL_NOTES = ("D5", "E5", "F#5", "A5", "B5", "D6", "E6", "F#6")
-
-
-def battery_cell(variant, _gen):
-    """A cell filling at a charger (M3-20): a small warm chime on the next note of D E F# A B, then up an octave,
-    short and soft so a whole charge is a gentle rising run; also the lamps lighting one by one as 07 wakes."""
-    freq = note_freq(BATTERY_CELL_NOTES[variant])
-    n = samples(1.3)
-    chime = (instruments.partial(n, freq, 1.0, 0.004, 0.9)
-             + instruments.partial(n, freq, 0.35, 0.004, 0.8, detune_cents=4.0)
-             + instruments.partial(n, 2.0 * freq, 0.1, 0.003, 0.35)
-             + instruments.partial(n, 3.0 * freq, 0.03, 0.002, 0.18))
-    return _mono_reverb(filters.lowpass(chime, 5200.0), room=0.4, damping=0.6, wet=0.2, dry=1.0)
-
 
 def battery_low(_variant, _gen):
     """The Low warning (30%): one soft falling two-note, A4 then F#4, a round slow-attack bell - a gentle
@@ -774,8 +742,9 @@ CUES = (
         sampled=True, notes="The full lock: a heavy clunk-latch and the chassis steel ringing on D2."),
     Cue("hold_boot", "ui_2d", feel.hold_boot, volume=(0.6, 0.6), milestone="M3",
         notes="0.5.5 B: the first Tab press, 07's hold powering on in the dark."),
-    Cue("hold_slot", "tick_2d", feel.hold_slot, variants=len(feel.HOLD_SLOT_NOTES), volume=(0.45, 0.45),
-        milestone="M3", notes="0.5.5 B: a hold slot lighting, a rising pentatonic tick (D5 .. F#6)."),
+    Cue("hold_slot", "tick_2d", picks.renderer("hold_slot"), variants=len(sampled_hold.HOLD_SLOT_NOTES),
+        volume=(0.45, 0.45), milestone="M3", sampled=True,
+        notes="A hold slot lighting: a mechanism tick with a tiny ring, rising D5 .. F#6."),
     Cue("item_slide", "tick_2d", feel.item_slide, volume=(0.45, 0.45), milestone="M3",
         notes="0.5.5 B: a starter item sliding into its slot."),
     Cue("seal_cut", "oneshot_3d", feel.seal_cut, volume=(0.6, 0.6), milestone="M3",
@@ -789,8 +758,9 @@ CUES = (
     Cue("cut_undertone", "loop_3d", picks.renderer("cut_undertone"), loop=True, file_stem="cut_undertone_loop",
         volume=(0.6, 0.6), milestone="M3", sampled=True,
         notes="The beam's deeper body for higher tiers: mains hum on D2 under a slowed arc, level by tier. 4 s."),
-    Cue("segment_slide", "oneshot_3d", feel.segment_slide, variants=len(feel.SEGMENT_NOTES), volume=(0.5, 0.5),
-        milestone="M3", notes="The beam moving to the next cut line: a tick and a slide onto the next step."),
+    Cue("segment_slide", "oneshot_3d", picks.renderer("segment_slide"), variants=len(sampled_tool.SEGMENT_NOTES),
+        volume=(0.5, 0.5), milestone="M3", sampled=True,
+        notes="The beam moving to the next cut line: a latch and its servo sliding up onto the next step."),
     Cue("cargo_tok", "tick_3d", feel.cargo_tok, volume=(0.7, 0.7), milestone="M3",
         notes="The cargo hold full (M3-25): a soft tok on the lid."),
     Cue("pickup_lift", "oneshot_3d", feel.pickup_lift, volume=(0.6, 0.6), milestone="M3",
@@ -918,8 +888,9 @@ CUES = (
         notes="The drums emptying: a felt fff and a tick on D."),
     Cue("save_tick", "tick_2d", feel.save_tick, volume=(0.4, 0.4), milestone="M3",
         notes="The game saved: a tiny soft tick on D, once per burst."),
-    Cue("count_tick", "tick_2d", feel.count_tick, variants=len(feel.COUNT_TICK_NOTES), volume=(0.45, 0.45),
-        milestone="M3", notes="The stock counter rolling one unit: a rising pentatonic tick."),
+    Cue("count_tick", "tick_2d", picks.renderer("count_tick"), variants=len(sampled_hold.COUNT_TICK_NOTES),
+        volume=(0.45, 0.45), milestone="M3", sampled=True,
+        notes="The stock counter rolling one unit: a mechanism tick with a tiny ring on the next step."),
     Cue("asleep_static", "radio_2d", asleep_static, loop=True, file_stem="asleep_static_loop", volume=(0.6, 0.6),
         milestone="M3", notes="The radio asleep, out of tune (title, 07's opening): narrow-band hiss, a faint "
                               "wandering A5 whistle, odd crackle pops. 8 s seamless."),
@@ -966,8 +937,9 @@ CUES = (
         notes="UiCue HoldComplete: soft resolved D major felt-piano chord + music-box D6."),
     Cue("room_tone", "ambience_2d", room_tone, loop=True, file_stem="room_tone_loop", volume=(0.8, 0.8),
         milestone="M3", notes="Solitude room tone: wide, very soft dark air + faint D2/A2, 24 s seamless stereo."),
-    Cue("rover_lamp_hum", "loop_3d", rover_lamp_hum, loop=True, file_stem="rover_lamp_hum_loop", volume=(0.5, 0.5),
-        milestone="M3", tonal=True, notes="07's lamp: tiny warm hum on D3 + filament buzz, 4 s seamless."),
+    Cue("rover_lamp_hum", "loop_3d", picks.renderer("rover_lamp_hum"), loop=True, file_stem="rover_lamp_hum_loop",
+        volume=(0.5, 0.5), milestone="M3", tonal=True, sampled=True,
+        notes="07's lamp: the ballast's tiny hum on D3 + a whisper of filament buzz, 4 s seamless."),
     Cue("rover_servo", "loop_3d", rover_servo, loop=True, file_stem="rover_servo_loop", volume=(0.5, 0.5),
         milestone="M3", notes="07's servos (steering, neck): soft gear whirr + faint whine, 2 s seamless."),
     Cue("rover_metal_tick", "tick_3d", rover_metal_tick, variants=len(METAL_TICK_NOTES), volume=(0.4, 0.55),
@@ -992,10 +964,12 @@ CUES = (
         notes="Charging: the pad's transformer hum on D3 + octave, breathing slowly. 4 s seamless."),
     Cue("dock_full", "oneshot_3d", dock_full, volume=(0.5, 0.5), fade_out=0.2, milestone="M3", tonal=True,
         notes="Charged: soft bell on D5 with A5 blooming above it."),
-    Cue("battery_cell", "oneshot_3d", battery_cell, variants=len(BATTERY_CELL_NOTES),
-        variant_labels=tuple(note.replace("#", "s") for note in BATTERY_CELL_NOTES), volume=(0.45, 0.45),
-        fade_out=0.2, milestone="M3", tonal=True,
-        notes="A cell filling (and a flank lamp waking): a small warm chime, D5 E5 F#5 A5 B5 then up an octave."),
+    Cue("battery_cell", "oneshot_3d", picks.renderer("battery_cell"),
+        variants=len(sampled_base.BATTERY_CELL_NOTES),
+        variant_labels=tuple(note.replace("#", "s") for note in sampled_base.BATTERY_CELL_NOTES), volume=(0.45, 0.45),
+        fade_out=0.2, milestone="M3", tonal=True, sampled=True,
+        notes="A cell filling (and a flank lamp waking): a contactor and struck metal on D5 E5 F#5 A5 B5, then up an "
+              "octave."),
     Cue("battery_low", "oneshot_3d", battery_low, volume=(0.5, 0.5), fade_out=0.25, milestone="M3", tonal=True,
         notes="The Low warning (30%): one soft falling two-note A4 -> F#4, round bells, never an alarm."),
     Cue("battery_sigh", "oneshot_3d", battery_sigh, volume=(0.5, 0.5), fade_out=0.25, milestone="M3",
