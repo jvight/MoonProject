@@ -1121,6 +1121,62 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void EachShippedStoryOnARuin_StandsApartFromItsScanTargets_AndOneOnATargetIsRefused()
+        {
+            var scanTuningAsset = AssetDatabase.LoadAssetAtPath<ScanTuning>(GameplayAssetPaths.ScanTuning);
+            Assert.IsNotNull(scanTuningAsset);
+            MaterialCatalog matCatalog = CargoFixtures.Catalog();
+            var ruinInstances = new List<GameObject>();
+            try
+            {
+                MaterialStock stock = CargoFixtures.Stock(_events, matCatalog);
+                var save = new SaveService(_tempSaveDir, "story_spacing_slot", SaveService.OldestCompatibleContent);
+                save.Load();
+                var scans = new ScanField(scanTuningAsset, _events, save, stock, new KnownStructures(_catalog, _events));
+                int stories = 0;
+                for (int i = 0; i < scanTuningAsset.Ruins.Count; i++)
+                {
+                    RuinScanSet set = scanTuningAsset.Ruins[i];
+                    GameObject instance = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(
+                        "Assets/_Project/Generated/Art/R1/Models/Ruins/" + set.RuinId + ".prefab"));
+                    instance.name = set.RuinId;
+                    ruinInstances.Add(instance);
+                    Assert.IsNull(scans.AddRuin(set, instance.transform));
+                    foreach (StoryScan story in scanTuningAsset.Stories)
+                    {
+                        if (story.HostId == set.RuinId)
+                        {
+                            Assert.IsNull(scans.AddStory(story, instance.transform),
+                                "the habitat's airlock readout is its own scan, not a second scan of Scan_1's panel");
+                            stories++;
+                        }
+                    }
+                }
+
+                Assert.Greater(stories, 0, "the airlock readout is a story on a ruin");
+
+                GameObject host = ruinInstances[0];
+                Transform first = Array.Find(host.GetComponentsInChildren<Transform>(),
+                    node => node.name == ScanFragment.RuinScanPrefix + "1");
+                var onTarget = new StoryScan("on_target", host.name, ScanFragment.RuinScanPrefix + "1", "k",
+                    ScanSize.Small, Vector3.zero);
+                GameObject plate = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                plate.transform.SetParent(first, false);
+                plate.transform.localScale = Vector3.one * 0.1f;
+                StringAssert.Contains("two scans", scans.AddStory(onTarget, host.transform));
+            }
+            finally
+            {
+                for (int i = 0; i < ruinInstances.Count; i++)
+                {
+                    Object.DestroyImmediate(ruinInstances[i]);
+                }
+
+                Object.DestroyImmediate(matCatalog);
+            }
+        }
+
+        [Test]
         public void BuildModeController_TapPlaceStaysInWeldingAtZeroProgress_AndClosingAtZeroRefundsWithoutOrphanFrame()
         {
             var known = new KnownStructures(_catalog, _events);
