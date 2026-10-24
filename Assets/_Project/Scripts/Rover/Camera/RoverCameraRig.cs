@@ -85,6 +85,7 @@ namespace MoonProject.Rover
         private readonly GazePan _gazePan = new GazePan();
         private readonly GuidanceNudge _nudge = new GuidanceNudge();
         private readonly PendingNudge _pendingNudge = new PendingNudge();
+        private bool _driveCarriedIntoNudge;
         private WideShot _wide;
         private bool _wideSteersYaw;
         private bool _tethered;
@@ -508,7 +509,15 @@ namespace MoonProject.Rover
                 _beam.Framing.End(_tuning.CutFrameHandBackSeconds);
             }
 
-            if (driving && (IsTowerMoment || _gazePan.IsActive || IsDockMoment))
+            if (!driving)
+            {
+                _driveCarriedIntoNudge = false;
+            }
+
+            // A drive key already held when a nudge began (the player is driving off the pad as the line appears)
+            // must not end it before it has turned; the next press, or any look input, does.
+            bool carried = IsNudgeMoment && _driveCarriedIntoNudge;
+            if (driving && !carried && (IsTowerMoment || _gazePan.IsActive || IsDockMoment))
             {
                 _moment.Cancel(_tuning.MomentCancelEaseOut);
             }
@@ -1707,6 +1716,7 @@ namespace MoonProject.Rover
                 _tuning.NudgeHoldSeconds, _tuning.NudgeSweep, 0f, _tuning.ReleasePanHalfLife,
                 _tuning.NudgeSlack);
             _moment.Start(_tuning.NudgeMoment, _gazePan.Subject, true);
+            _driveCarriedIntoNudge = _rover.DriveInput.sqrMagnitude > DriveEpsilon * DriveEpsilon;
         }
 
         /// <summary>Moves the held release moment's subject along the pan, and lets it go once the pan has run its course.</summary>
