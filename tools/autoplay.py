@@ -55,9 +55,18 @@ def slot_for(root):
     return f"{SLOT_PREFIX}-{hashlib.sha1(str(root).lower().encode()).hexdigest()[:8]}"
 
 
-def launch_arguments(slot, out_dir, log_path, scenario, until, timeout, shot_seconds, lines=False, strict_guidance=True, naive=False, sound=False):
+def parse_size(text):
+    """(width, height) from "WIDTHxHEIGHT", or None when no size was asked for."""
+    if not text:
+        return None
+    width, _, height = text.lower().partition("x")
+    return int(width), int(height)
+
+
+def launch_arguments(slot, out_dir, log_path, scenario, until, timeout, shot_seconds, lines=False, strict_guidance=True, naive=False, sound=False, pointer=False, size=None):
     """The player's command line: window size, own save slot, own log, and the bot's flags."""
-    args = ["-screen-width", str(WINDOW_WIDTH), "-screen-height", str(WINDOW_HEIGHT), "-screen-fullscreen", "0",
+    width, height = size if size else (WINDOW_WIDTH, WINDOW_HEIGHT)
+    args = ["-screen-width", str(width), "-screen-height", str(height), "-screen-fullscreen", "0",
             "-saveSlot", slot, "-logFile", str(log_path), "-autoplay", scenario, "-autoplay-out", str(out_dir),
             "-autoplay-timeout", str(timeout), "-autoplay-shot-seconds", str(shot_seconds)]
     if until:
@@ -68,6 +77,8 @@ def launch_arguments(slot, out_dir, log_path, scenario, until, timeout, shot_sec
         args += ["-autoplay-strict-guidance", "0"]
     if naive:
         args += ["-autoplay-naive", "1"]
+    if pointer:
+        args += ["-autoplay-pointer", "1"]
     if not sound:
         args.append("-autoplay-mute")
     return args
@@ -133,6 +144,9 @@ def main():
     ap.add_argument("--naive", action="store_true",
                     help="first-time player check: after each beat the bot stands passive and a readable next-action "
                          "cue must be on screen within 5 s of game time, or the run fails")
+    ap.add_argument("--pointer", action="store_true",
+                    help="build the pad with the mouse alone: B, a click on its card, the wheel, a left click")
+    ap.add_argument("--size", help="window size WIDTHxHEIGHT (default 960x540, 16:9; 1260x540 is 21:9)")
     ap.add_argument("--lines", action="store_true",
                     help="the opening shows objective lines and the bot checks them on screen (default: it shows "
                          "none, and a line on screen is a stall reminder that fails the run)")
@@ -163,7 +177,7 @@ def main():
     build_player.delete_slot_files(saves_dir, slot)
     command = [str(exe)] + launch_arguments(slot, out_dir, out_dir / "player.log", args.scenario, args.until, args.timeout,
                                             args.shot_seconds, args.lines, not args.lenient_guidance, args.naive,
-                                            args.sound)
+                                            args.sound, args.pointer, parse_size(args.size))
     say(f"launching {exe.name} on save slot '{slot}', output {out_dir}")
     guard = procutil.ProcessTreeGuard()
     # The window shows without taking focus, so a run never jumps in front of what the owner is doing.

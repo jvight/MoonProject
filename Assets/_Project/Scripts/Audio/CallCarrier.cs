@@ -12,14 +12,17 @@ namespace MoonProject.Audio
     /// while Locked, clean when Clear, and the call-and-response with relay.1 once Answered
     /// (<see cref="CallStateChanged"/>). Each newly decoded character of the sender's name plays one soft note from the
     /// same point, climbing to D as the name completes (<see cref="CallDecoded"/>); a restored state or name stays
-    /// silent. It registers <see cref="ICallSignal"/>: the sign's keying read off the playing loop's own playhead
+    /// silent. 07's transmission sounds too: the pulse leaving the mast (<see cref="NetworkPulseLaunched"/> leg 0, at the
+    /// mast), its run on to the Peak heard from relay.1's way, and relay.1's answer (<see cref="RelayAcked"/>); the
+    /// far ones are placed just off 07 toward their source, like the call, so a relay across the basin is still heard.
+    /// It registers <see cref="ICallSignal"/>: the sign's keying read off the playing loop's own playhead
     /// (<see cref="CallKeying"/>) times the dropouts, so the light beside Earth keys in phase with what is heard. Logic
     /// lives in <see cref="CallCarrierModel"/>. Initialised by <see cref="AudioDirector"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CallCarrier : MonoBehaviour, ICallSignal
     {
-        private const int SubscriptionCount = 2;
+        private const int SubscriptionCount = 4;
         private const uint Seed = 0x0CA11u;
 
         [Tooltip("Assets/_Project/Data/Audio/SoundscapeTuning.asset; the call is its Call block.")]
@@ -33,6 +36,8 @@ namespace MoonProject.Audio
         private CallCarrierSettings _settings;
         private CallCarrierModel _model;
         private CueHandle _decoded;
+        private CueHandle _pulse;
+        private CueHandle _ack;
         private AudioSource _carrier;
         private AudioSource _answered;
         private AudioSource _static;
@@ -78,7 +83,10 @@ namespace MoonProject.Audio
             CueHandle answered = director.Resolve(AudioCueIds.CallAnswered);
             CueHandle hiss = director.Resolve(AudioCueIds.RadioCarrier);
             _decoded = director.Resolve(AudioCueIds.CallDecoded);
-            if (!(carrier.IsValid && answered.IsValid && hiss.IsValid && _decoded.IsValid))
+            _pulse = director.Resolve(AudioCueIds.NetworkPulse);
+            _ack = director.Resolve(AudioCueIds.RelayAck);
+            if (!(carrier.IsValid && answered.IsValid && hiss.IsValid && _decoded.IsValid && _pulse.IsValid &&
+                  _ack.IsValid))
             {
                 enabled = false;
                 return;
@@ -103,6 +111,8 @@ namespace MoonProject.Audio
             _static.Play();
             _subscriptions[0] = context.Events.Subscribe<CallStateChanged>(OnCallStateChanged);
             _subscriptions[1] = context.Events.Subscribe<CallDecoded>(OnCallDecoded);
+            _subscriptions[2] = context.Events.Subscribe<NetworkPulseLaunched>(OnNetworkPulseLaunched);
+            _subscriptions[3] = context.Events.Subscribe<RelayAcked>(OnRelayAcked);
             context.Register<ICallSignal>(this);
         }
 
@@ -146,6 +156,35 @@ namespace MoonProject.Audio
 
             int step = CallCarrierModel.DecodeStep(decoded.CharactersDecoded, decoded.CharactersTotal, _decodeNotes);
             _director.PlayVariantAt(_decoded, step, SkyPoint, _settings.DecodedVolume);
+        }
+
+        /// <summary>The pulse leaving: from the mast beside 07, or (leg 1) on from relay.1, softer and from its way.
+        /// </summary>
+        private void OnNetworkPulseLaunched(NetworkPulseLaunched launched)
+        {
+            if (launched.Leg == 0)
+            {
+                _director.PlayAt(_pulse, launched.From, _settings.PulseVolume);
+                return;
+            }
+
+            _director.PlayAt(_pulse, Toward(launched.From), _settings.RoutePulseVolume);
+        }
+
+        private void OnRelayAcked(RelayAcked acked)
+        {
+            _director.PlayAt(_ack, Toward(acked.Position), _settings.AckVolume);
+        }
+
+        /// <summary>Just off 07 toward <paramref name="source"/> (the source itself when nearer): a far sound keeps its
+        /// direction but stays inside the rolloff's near distance.</summary>
+        private Vector3 Toward(Vector3 source)
+        {
+            Vector3 offset = source - _rover.Position;
+            float distance = offset.magnitude;
+            return distance <= _settings.PlacementDistance
+                ? source
+                : _rover.Position + offset * (_settings.PlacementDistance / distance);
         }
 
         private void OnDestroy()

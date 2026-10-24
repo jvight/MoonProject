@@ -39,19 +39,15 @@ def snap(lib, gen, variant: int) -> np.ndarray:
 
 
 def weld_loop(lib, gen, variant: int) -> np.ndarray:
-    """The weld: a warm arc buzz with sparse crackle over a low hum on D, seamless over 4 s."""
+    """The weld: a warm arc buzz with sparse crackle over a low hum on D, seamless over 4 s. Both the arc and the
+    crackle stop under 2.4 kHz: the opening's mix pass found the brighter weld the harshest sound in it."""
     n = samples(WELD_LOOP_S + LOOP_SEAM_S)
     arc = dsp.varispeed(lib("arc_buzz"), (0.6, 0.5)[variant], n, float(gen.uniform(0.0, 2.0)))
-    arc = dsp.peak_normalize(filters.lowpass(filters.highpass(arc, 300.0), 3200.0))
+    arc = dsp.peak_normalize(filters.butter(filters.highpass(arc, 300.0), "lowpass", 2400.0, order=4))
     crackle = dsp.fit(dsp.varispeed(lib("crackle"), 0.8, n), n)
-    crackle = dsp.peak_normalize(filters.lowpass(filters.highpass(crackle, 900.0), 3600.0))
+    crackle = dsp.peak_normalize(filters.butter(filters.highpass(crackle, 700.0), "lowpass", 2400.0, order=4))
     hum = parts.hum(lib, n, 0.5)
-    raw = 0.7 * arc + 0.25 * crackle + 0.35 * hum
-    seam = samples(LOOP_SEAM_S)
-    body = raw[:samples(WELD_LOOP_S)].copy()
-    fade = np.sin(np.linspace(0.0, np.pi / 2.0, seam))
-    body[:seam] = body[:seam] * fade + raw[samples(WELD_LOOP_S):samples(WELD_LOOP_S) + seam] * fade[::-1]
-    return body
+    return dsp.seamless(0.7 * arc + 0.15 * crackle + 0.45 * hum, samples(WELD_LOOP_S), samples(LOOP_SEAM_S))
 
 
 def structure_complete(lib, gen, variant: int) -> np.ndarray:

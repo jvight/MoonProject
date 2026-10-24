@@ -45,7 +45,7 @@
         "cut_crack"
       ],
       "sha256": [
-        "2e865103c7133bce38c74b4f05f01faa53953013845a1ed9bf3056c4c96d2f23"
+        "a91ea8b76478346ada5212ad72f52fe077c06e42d6304429b5d2ad58f1c0484c"
       ],
       "volumeMin": 0.7,
       "volumeMax": 0.7,
@@ -56,7 +56,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "The piece breaks free: a soft high B pluck plus a felt thud."
+      "notes": "The piece breaks free: a dry snap, its weight dropping into the chassis with a low ring.",
+      "source": "sampled",
+      "pick": "cut_crack"
     },
     {
       "id": "strap_tuk",
@@ -723,7 +725,7 @@
         "scan_sweep"
       ],
       "sha256": [
-        "81a9c79373c74733f114026757a49cb511603b186f7bd6cfcbfdf88889a8d56b"
+        "39325d2916c37358c34c42650b02340075df2cc6b77a07f9ec40bdbaba2c9564"
       ],
       "volumeMin": 0.5,
       "volumeMax": 0.5,
@@ -734,7 +736,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "0.5.5 D: the lens's fan sweeping a fragment; pitch steps D E F# A per 25%. 2 s loop."
+      "notes": "The lens's fan: a real small motor on D5 and a breath of air; pitch steps D E F# A per 25%. 2 s loop.",
+      "source": "sampled",
+      "pick": "scan_sweep"
     },
     {
       "id": "scan_step",
@@ -756,13 +760,13 @@
         "04"
       ],
       "sha256": [
-        "f4ed1d6b3afdcb218cfdd690758c0415397a20e3ab5964289ee28de83db554b0",
-        "4403b5896540146c2ad0af45bae1faeea2de816ff523cb7bd230d826a0824531",
-        "041ee82b93212c6dcea9f55b388eae56f3ded7be10c847815c9334127b119555",
-        "f56e7f33a445e0adb706da912b42b6c02e70a50a9876cf62cbc5ebaa08c8dfb9"
+        "7db7d30ed35e32da8c7c56d790ef02c1218a0aaa83ac826455d5f796e912bd96",
+        "398147b48aa82a3303cae2a713c4b41385c1bfb94a30a0323a8a5e903bf9c764",
+        "b57e896902256d1b08af1a702351615e399ade14876f77b2723d000a95095fbd",
+        "38a3c88f79ce6be0cc1d602add92231fe1955e54bdb2847a391ad12076a04fc2"
       ],
-      "volumeMin": 0.5,
-      "volumeMax": 0.5,
+      "volumeMin": 0.4,
+      "volumeMax": 0.4,
       "pitchMin": 1.0,
       "pitchMax": 1.0,
       "targetLufs": -18.0,
@@ -770,7 +774,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": true,
-      "notes": "0.5.5 D: a quarter of the scan drawn: a glass note D E F# A."
+      "notes": "A quarter of the scan drawn: a tap on the lens collar and struck metal ringing on D E F# A.",
+      "source": "sampled",
+      "pick": "scan_step"
     },
     {
       "id": "scan_liftoff",
@@ -813,7 +819,7 @@
         "charge_brace"
       ],
       "sha256": [
-        "4872eb081ef8b04da88153b5b44eb4dd8a102c31a2f13ba1a8c1649911c13fc6"
+        "a252dc400b03cb17a30d9139b468bc8610a4a8b4330203138a7c16157bd0d75c"
       ],
       "volumeMin": 0.6,
       "volumeMax": 0.6,
@@ -824,7 +830,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "0.5.5 E: 07 bracing before a fresh charge: servo chunk and wheel-lock clack."
+      "notes": "07 bracing before a fresh charge: a heavy servo, a padded wheel-lock clunk, a latch.",
+      "source": "sampled",
+      "pick": "charge_brace"
     },
     {
       "id": "charge_whine",
@@ -840,10 +848,10 @@
         "charge_whine"
       ],
       "sha256": [
-        "f999aac05c0d069b35a1c552dced04585b9531b29b71f092b70c4cebcec73f7f"
+        "0c53d876b6bff101ed7ddfbf61e2e794ca54de4ec88757683476fe3930d92d72"
       ],
-      "volumeMin": 0.5,
-      "volumeMax": 0.5,
+      "volumeMin": 0.42,
+      "volumeMax": 0.42,
       "pitchMin": 1.0,
       "pitchMax": 1.0,
       "targetLufs": -22.0,
@@ -851,7 +859,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "0.5.5 E: the capacitor whine on D5; pitch glides D -> A -> D' at runtime. 2 s seamless."
+      "notes": "The capacitor whine: a real small motor held on D5; pitch glides D -> A -> D' at runtime. 2 s seamless.",
+      "source": "sampled",
+      "pick": "charge_whine"
     },
     {
       "id": "charge_hum",
@@ -867,7 +877,7 @@
         "charge_hum"
       ],
       "sha256": [
-        "e7d91cfeeef4fd2ea26312173eb83accb1c0bccb64a3a1e37077cd4cd83cf783"
+        "7398b94204af35d073cda019184bf109acb63e275efae6da23162a4a625d03ee"
       ],
       "volumeMin": 0.55,
       "volumeMax": 0.55,
@@ -878,7 +888,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "0.5.5 E: the low hum on D under the charge, level by stage. 3 s seamless."
+      "notes": "The low hum under the charge: the mains hum carried to D2, level by stage. 3 s seamless.",
+      "source": "sampled",
+      "pick": "charge_hum"
     },
     {
       "id": "charge_detent",
@@ -894,7 +906,7 @@
         "charge_detent"
       ],
       "sha256": [
-        "f3754dab845c66a6b1e5d4c27562b4ef84e9c7edc72c8e170d7b3af57eede313"
+        "af73424a69595e0f48f7f9361d63747ef5d137af633828064499a2728b367125"
       ],
       "volumeMin": 0.6,
       "volumeMax": 0.6,
@@ -905,7 +917,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "0.5.5 E: a charge stage locking: a cell sleeve slides, then the detent click."
+      "notes": "A charge stage locking: a capacitor cell seated with a dense latch and a small tick.",
+      "source": "sampled",
+      "pick": "charge_detent"
     },
     {
       "id": "charge_lock",
@@ -921,7 +935,7 @@
         "charge_lock"
       ],
       "sha256": [
-        "1ea7febb57fdcf7219a5839cbdda683679660a8ff2bca340b83dc12c02da1e9e"
+        "cff63a9fbcbb93be2e380c180ef089c1f772b36ba59d3a55f1b0613cf2ba8b97"
       ],
       "volumeMin": 0.6,
       "volumeMax": 0.6,
@@ -932,7 +946,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "0.5.5 E: the full lock: a firm clunk-click before the held breath."
+      "notes": "The full lock: a heavy clunk-latch and the chassis steel ringing on D2.",
+      "source": "sampled",
+      "pick": "charge_lock"
     },
     {
       "id": "hold_boot",
@@ -989,14 +1005,14 @@
         "08"
       ],
       "sha256": [
-        "39742abe7d1268a08ad622b56a9ecd4c8dcd92db05f20b5d75982b31c205f8cf",
-        "1a4ff371449786e9f624206b9a7d8d17f41886c851a53ef892bdff8a25814b9f",
-        "e26b280694adf3c49501dc5bb26bfe72992a4611f54e7c1935e7aeb9f414bc77",
-        "6c6a50a5e805284e9ed049cce6dba44580f4f98478cac63a2e5176ad91896479",
-        "03458d0d7c47774cc7f492ac98daa23033dbd76cb1117fe5d49f03eecca561de",
-        "007861c3c0acb323fadd852d14808c8e93ae253e3fb1aabd1bbccb6661789486",
-        "2bd90dbe75238813033c50beca7f06c8e691e46251ab87dd3d90ae2a1834b122",
-        "659202419da307048f27a3eed23691e627a6a846055ca963358cfa5eead71f0b"
+        "4d08fd2f87a249f80ac872aa9595fc3824fc2252567556f0be6fc167806e6f93",
+        "36df66ce885d1448e392de47f3ed30d9f70e05de88eeaeae4ddd9a4abf7b2447",
+        "77123eda00128ac3e191c9c9f7710a53aac8f044ada6bdd0fcda6982be8e3dcb",
+        "a5d31d6931c2f8194a9c4b86da68fd99bef5a1c9c56fd660e7122cc4379ad088",
+        "5569a4673ba758040d3285c65aba0eb7fa58daa2e0476eafbea110eed31d8dbd",
+        "b8aeb3ca39ead18c3f6875bd9d75f6f577c6927f0117a1a00573ed19614466fc",
+        "9f37b48e0f3bcc9bb1303c58daf234cdaf41284c3fc4f5f14c16b676160113ba",
+        "6cef75146210a5eab74da58486de2433265d6757caeef195a81e68124e5f7eb2"
       ],
       "volumeMin": 0.45,
       "volumeMax": 0.45,
@@ -1007,7 +1023,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "0.5.5 B: a hold slot lighting, a rising pentatonic tick (D5 .. F#6)."
+      "notes": "A hold slot lighting: a mechanism tick with a tiny ring, rising D5 .. F#6.",
+      "source": "sampled",
+      "pick": "hold_slot"
     },
     {
       "id": "item_slide",
@@ -1152,7 +1170,7 @@
         "cut_undertone"
       ],
       "sha256": [
-        "36f6e83aeca752c0ad5af0474a4cb23c709caf23985367503955682643f5dd0b"
+        "76451077cc62f6e49f692424b82a6e4d713bd5161ae6d38439b14e37f84a80cb"
       ],
       "volumeMin": 0.6,
       "volumeMax": 0.6,
@@ -1163,7 +1181,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "The beam's deeper hum for higher tiers: D2 + A2, level by tier. 4 s seamless."
+      "notes": "The beam's deeper body for higher tiers: mains hum on D2 under a slowed arc, level by tier. 4 s.",
+      "source": "sampled",
+      "pick": "cut_undertone"
     },
     {
       "id": "segment_slide",
@@ -1187,11 +1207,11 @@
         "05"
       ],
       "sha256": [
-        "4ed39f8a2cc2b32063bdef7e39c4b1b9ffa704f49e82eb0dbd0d03e0de0e2423",
-        "fb474143787198b926bf8b78b84cb6da70c20cc103a65d782bf8eacc68a33323",
-        "5bfa09854003f0544e872532182e49365c7a08ffc611c2e33bf398b2827a0d85",
-        "2e35bb96ccb9ab6e6189724e31b84d6d7dcc1063db90aeb8d98f93ecc7ebed99",
-        "cc1ab2651fba188024937394ad2ed23c790534fb5d662e9724bf12bc2a5cb2e1"
+        "3328152cc58e77de2cd6c5039c1cf3d1f187d5c8e06eb2e5739c96d5fa1b4269",
+        "3411fe86e7140b773ad872fc44355557d6dc09a5e4a3916e5b062fa665720de0",
+        "aed124df739a0b99072dd73e2867acae238da831749e99bf5ad810bba3febac8",
+        "b73067e05066f0be60b0335ed7ea97a586cd06ad619a868daaa75d2339fbb584",
+        "38363cc1ce439419f51aee139f2f35edbecb9b9a7f75851bb9072bf5f2754388"
       ],
       "volumeMin": 0.5,
       "volumeMax": 0.5,
@@ -1202,7 +1222,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "The beam moving to the next cut line: a tick and a slide onto the next step."
+      "notes": "The beam moving to the next cut line: a latch and its servo sliding up onto the next step.",
+      "source": "sampled",
+      "pick": "segment_slide"
     },
     {
       "id": "cargo_tok",
@@ -1385,6 +1407,64 @@
       "pick": "call_decoded"
     },
     {
+      "id": "network_pulse",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/network_pulse.wav"
+      ],
+      "variantLabels": [
+        "network_pulse"
+      ],
+      "sha256": [
+        "925945ec17a996eac97838c208765667b7149ba3d9601ba7e543e6795721eae1"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "07's transmission leaving the mast (NetworkPulseLaunched): a contactor clunk, then the carrier swelling from D4 onto A5 and thinning out over the rim.",
+      "source": "sampled",
+      "pick": "network_pulse"
+    },
+    {
+      "id": "relay_ack",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/relay_ack.wav"
+      ],
+      "variantLabels": [
+        "relay_ack"
+      ],
+      "sha256": [
+        "3ab3edb5cb02fb13527bf2911566bc7fa1332d9a3cff6a16a1834ec27ea8db3b"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Relay.1 answering (RelayAcked), across the basin: a far dull clunk, its relay, one swell on E5.",
+      "source": "sampled",
+      "pick": "relay_ack"
+    },
+    {
       "id": "sky_dusk_swell",
       "category": "stinger_2d",
       "milestone": "M3",
@@ -1514,10 +1594,10 @@
         "build_weld_loop"
       ],
       "sha256": [
-        "b1d913a9ba67e81556438cc85cce76d6a2d545a8601c755ef1f43d6673d3981a"
+        "36ac89aa09e79279172a93230b056576d858cd8882b5877a430ca23f515900cd"
       ],
-      "volumeMin": 0.72,
-      "volumeMax": 0.72,
+      "volumeMin": 0.62,
+      "volumeMax": 0.62,
       "pitchMin": 1.0,
       "pitchMax": 1.0,
       "targetLufs": -22.0,
@@ -1525,7 +1605,7 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "The weld: a real arc buzz slowed and warmed, sparse crackle, a low hum on D. 4 s seamless.",
+      "notes": "The weld: a real arc buzz slowed and warmed under 2.4 kHz, sparse crackle, a low hum on D. 4 s seamless.",
       "source": "sampled",
       "pick": "build_weld_loop v1"
     },
@@ -2450,10 +2530,10 @@
         "boost_whine"
       ],
       "sha256": [
-        "63172fd4a589210b55691e097a4cda26213ad390d13b7b7135ff317c8a01842e"
+        "f1480feeabf542a822648a33f66b8111b3e857ab14ed63c8f6788204b1f974a4"
       ],
-      "volumeMin": 0.45,
-      "volumeMax": 0.45,
+      "volumeMin": 0.4,
+      "volumeMax": 0.4,
       "pitchMin": 1.0,
       "pitchMax": 1.0,
       "targetLufs": -22.0,
@@ -2461,7 +2541,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "The capacitor drums boosting: a soft whine on A. 2 s seamless."
+      "notes": "The capacitor drums boosting: a real small motor spinning on A4. 2 s seamless.",
+      "source": "sampled",
+      "pick": "boost_whine"
     },
     {
       "id": "boost_release",
@@ -2541,12 +2623,12 @@
         "06"
       ],
       "sha256": [
-        "6d2c47eca8a980e87673d869cec1a8b1afe036527160dbf58ec7a8452a1bea1a",
-        "71b4566e765363716196f0e3390763a328a6f3ddfc267e10ecf23607ea306e61",
-        "6466aec949691ab033115656057e5d40413b76e04ce45a2acff53b2ca6628233",
-        "76692be4a0adf4c18f664f50e4fa9813d86da90421dcbb1f31d6a2e4ebcc9142",
-        "3ba0216f7bc3abb18cf856a71d0aeab6eb80ea17bac4039b5b07ac270e7cfe36",
-        "0d8e71b0241c8ece3a4ebb77053fe527045e7b177828344d1f940c6032e5d80f"
+        "4d08fd2f87a249f80ac872aa9595fc3824fc2252567556f0be6fc167806e6f93",
+        "36df66ce885d1448e392de47f3ed30d9f70e05de88eeaeae4ddd9a4abf7b2447",
+        "77123eda00128ac3e191c9c9f7710a53aac8f044ada6bdd0fcda6982be8e3dcb",
+        "a5d31d6931c2f8194a9c4b86da68fd99bef5a1c9c56fd660e7122cc4379ad088",
+        "5569a4673ba758040d3285c65aba0eb7fa58daa2e0476eafbea110eed31d8dbd",
+        "b8aeb3ca39ead18c3f6875bd9d75f6f577c6927f0117a1a00573ed19614466fc"
       ],
       "volumeMin": 0.45,
       "volumeMax": 0.45,
@@ -2557,7 +2639,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "The stock counter rolling one unit: a rising pentatonic tick."
+      "notes": "The stock counter rolling one unit: a mechanism tick with a tiny ring on the next step.",
+      "source": "sampled",
+      "pick": "count_tick"
     },
     {
       "id": "asleep_static",
@@ -2714,7 +2798,7 @@
         "rover_hum"
       ],
       "sha256": [
-        "c4491e9414b592a55b32381afd7fbcfc38d26f26bac6d0842649137904d0e9f7"
+        "da60814e65161003a121b0333da6a690ee87b962df8d4f655a62ace4df1ef22e"
       ],
       "volumeMin": 0.55,
       "volumeMax": 0.55,
@@ -2725,7 +2809,9 @@
       "hfCutoffHz": 6000.0,
       "hfMaxDb": -45.0,
       "tonal": true,
-      "notes": "D2 electric hum, 4 s seamless; content < 3 kHz so AudioSource.pitch 0.5..2 stays clean."
+      "notes": "07's drive motor: mains hum on D2, a slowed motor's gear whir and the crane gear for weight, 4 s seamless; content < 2.5 kHz so AudioSource.pitch 0.5..2 stays clean.",
+      "source": "sampled",
+      "pick": "rover_hum"
     },
     {
       "id": "dust_crunch",
@@ -3098,7 +3184,7 @@
         "rover_lamp_hum"
       ],
       "sha256": [
-        "6306f1871dc07e00622134d665fe4a0a9a741be3631c1c56761e86856527ae7e"
+        "32319808120ec16d23685c923c15353d21d982d828eb0363aa649bf019a24901"
       ],
       "volumeMin": 0.5,
       "volumeMax": 0.5,
@@ -3109,7 +3195,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": true,
-      "notes": "07's lamp: tiny warm hum on D3 + filament buzz, 4 s seamless."
+      "notes": "07's lamp: the ballast's tiny hum on D3 + a whisper of filament buzz, 4 s seamless.",
+      "source": "sampled",
+      "pick": "rover_lamp_hum"
     },
     {
       "id": "rover_servo",
@@ -3359,7 +3447,7 @@
         "dock_charge_hum"
       ],
       "sha256": [
-        "0fa8d14e61cf49107debbfb1b8c94013c7093f37f08f3513feeeef0631dbc977"
+        "bfb19468a3034d48a1a58156563a34b4d6b7c1d7cc22e914a61e7e3b8f9198a7"
       ],
       "volumeMin": 0.35,
       "volumeMax": 0.35,
@@ -3370,7 +3458,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": true,
-      "notes": "Charging: a very soft warm hum on D3 + octave, breathing slowly."
+      "notes": "Charging: the pad's transformer hum on D3 + octave, breathing slowly. 4 s seamless.",
+      "source": "sampled",
+      "pick": "dock_charge_hum"
     },
     {
       "id": "dock_full",
@@ -3427,14 +3517,14 @@
         "Fs6"
       ],
       "sha256": [
-        "3ce469d21ead2bdef9a54dee7dc0c88a3f6819e89f0d64bc27c55dc12bd4502d",
-        "aa5cbb748f7046d1e0da3c1ad4e37c4077679c8804cdca1c7f5a8690a40293d6",
-        "73c56f399ff3b3bcbe7d10b7e7ab6aee6a7c2e59423897046f16a46a0c102c07",
-        "a25ece81bb578b277883dadc54cf68b178aad01af9d24c50ab7d9ec8ded607a5",
-        "b7764b2febb146087373e7116e823f5c2cace8d576fad241dc2cd4a0c1afde92",
-        "e8ff41344c7760797b0737c5e712e4fa5338b8585e35972598c7bec5ef2f1c79",
-        "f16307a11a80c64aed8c32c8e151961a2f92ac44f75c683066f1fa9e95f8b95f",
-        "f3ee94f324bd4bfc00f73d67691e4de7aaef5fd33a8fb9a9cf2621c756fe736e"
+        "bfcf7c76f81ee0e18f2bffef7c759629e4a7aacff9da30ea41b147f5e78228b1",
+        "54fdfa1c45ce371a809a875e4a0b1970bac7b50b8308f412abc35711816ed977",
+        "0aabb5225eda2a6806ad489cee8908495e348bf8f2c840ece564ea1f581d07ba",
+        "37b70ee955ab80b692f7140071b412c9ec04f7e7d9d0546a8818e021d5a13cd6",
+        "a829dea03685362f6e1a2373657da5dc59631baf77fa6ac29deb8ead0d06e060",
+        "ecdd1fb437c6e3edaf6f6fe4d31fee4410b141bea67996dd65f9b798d846ba8d",
+        "655c5f2b6d80cec1b328a213c4fbc86885feaec29d917f795afb583aac8c00a9",
+        "6d528c52daabc0558edf00a5e615db25d5c3232e9af8eff8fed5297fab8b5a37"
       ],
       "volumeMin": 0.45,
       "volumeMax": 0.45,
@@ -3445,7 +3535,9 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": true,
-      "notes": "A cell filling (and a flank lamp waking): a small warm chime, D5 E5 F#5 A5 B5 then up an octave."
+      "notes": "A cell filling (and a flank lamp waking): a contactor and struck metal on D5 E5 F#5 A5 B5, then up an octave.",
+      "source": "sampled",
+      "pick": "battery_cell"
     },
     {
       "id": "battery_low",

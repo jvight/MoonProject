@@ -26,6 +26,7 @@ MonoBehaviour:
   _chargeFadeIn: 1.5
   _chargeFadeOut: 2
   _chargeVolume: 0.5
+  _reminderLineVolume: 0.6
   _duskChargeSemitones: -3
   _duskChargeSeconds: 20
   _chirpVolume: 0.8

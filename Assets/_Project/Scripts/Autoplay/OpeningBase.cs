@@ -132,6 +132,9 @@ namespace MoonProject.Autoplay
         private const float ClearRadius = 1.1f;
         private const int ApproachSides = 8;
         private const int MaxMenuSteps = 12;
+
+        /// <summary>Frames the pointer takes to travel to a card.</summary>
+        private const int PointerSteps = 8;
         private const float PlaceDriftMetres = 2f;
         private const int PlaceBearings = 6;
         private const float PlaceBearingStepDegrees = 60f;
@@ -313,6 +316,100 @@ namespace MoonProject.Autoplay
         }
 
         /// <summary>B5, B8, B9, B11: B opens the menu, arrows pick, E takes up, 07's look finds a spot, E places and welds.</summary>
+        /// <summary>
+        /// The pointer-only build: B opens the menu, a click on the structure's card takes it up, the wheel turns the
+        /// ghost, and a left click places it (held, it welds). No arrow, no E: what a player with a mouse does.
+        /// </summary>
+        public IEnumerator BuildWithThePointer(string structureId, Vector3 at)
+        {
+            BuildField build = G.Building;
+            StructureDefinition definition = build.Catalog.Find(structureId);
+            yield return _bot.Until(() => G.KnownStructures.IsKnown(structureId), FollowSeconds,
+                structureId + "'s blueprint to be learned");
+            float ahead = build.Tuning.GhostAheadMetres;
+            yield return _bot.DriveTo(Flat(at) + Vector3.back * ahead, PlaceStandArrive, "the build spot's stand",
+                DriveSeconds);
+            yield return _bot.TurnToward(at, "the build spot");
+            if (_bot.Failed)
+            {
+                yield break;
+            }
+
+            yield return _bot.Tap(Key.B);
+            yield return _bot.Until(() => build.State == BuildModeState.Menu, FollowSeconds, "B to open the build menu");
+            yield return _bot.Until(() => _bot.World.Ui.BuildStripShown(), FollowSeconds, "the build strip to show");
+            int card = -1;
+            for (int i = 0; i < build.Controller.AvailableStructures.Count; i++)
+            {
+                if (build.Controller.AvailableStructures[i].Id == structureId)
+                {
+                    card = i;
+                }
+            }
+
+            Vector2 point = Vector2.zero;
+            yield return _bot.Until(() => card >= 0 && _bot.World.Ui.TryGetBuildCard(card, out point), FollowSeconds,
+                "the card of " + structureId + " to show on screen");
+            if (_bot.Failed)
+            {
+                yield break;
+            }
+
+            // The pointer travels to the card in a few steps, as a hand does, then rests on it before the click.
+            Vector2 from = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
+            for (int step = 1; step <= PointerSteps; step++)
+            {
+                _bot.MoveMouse(Vector2.Lerp(from, point, step / (float)PointerSteps));
+                yield return null;
+            }
+
+            yield return _bot.Until(() => build.Controller.SelectedStructure?.Id == structureId, FollowSeconds,
+                "the pointer over the card to select " + structureId);
+            yield return _bot.ClickLeft();
+            yield return _bot.Until(() => build.State == BuildModeState.Placing, FollowSeconds,
+                "a click on the card to take " + structureId + " up to place");
+            if (_bot.Failed)
+            {
+                yield break;
+            }
+
+            yield return PutTheGhostOn(build, at, structureId);
+            if (_bot.Failed)
+            {
+                yield break;
+            }
+
+            float yaw = build.Controller.GhostYaw;
+            yield return _bot.Scroll(1f);
+            yield return null;
+            if (Mathf.Approximately(yaw, build.Controller.GhostYaw))
+            {
+                _bot.Fail("the wheel did not turn the ghost of " + structureId + " (yaw stayed " + yaw + ").");
+                yield break;
+            }
+
+            // The wheel turned the ghost off the apron's heading: turn it back the other way, as a player would.
+            yield return _bot.Scroll(-1f);
+            yield return null;
+            int before = G.PlacedBase.Count;
+            yield return _bot.HoldLeft(() => G.PlacedBase.Count > before, FollowSeconds,
+                "a left click to place " + structureId,
+                () => "State " + build.State + ", reason " + build.Controller.CandidateReason + ".");
+            if (!_bot.Failed)
+            {
+                PlacedStructure frame = LastPlaced();
+                Vector3 weldPoint = frame.Pose.Position;
+                yield return _bot.HoldLeft(() =>
+                    {
+                        _bot.KeepLookingAt(weldPoint);
+                        return G.PlacedBase.TryGetStructure(frame.InstanceId, out PlacedStructure built) && built.IsBuilt;
+                    }, definition.BuildSeconds + FollowSeconds, "a held left click to weld " + structureId);
+            }
+
+            yield return _bot.Until(() => build.State == BuildModeState.Closed, FollowSeconds,
+                "a finished weld to close build mode");
+        }
+
         public IEnumerator Build(string structureId, Vector3 at)
         {
             BuildField build = G.Building;
