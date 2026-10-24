@@ -30,6 +30,9 @@ namespace MoonProject.Rover.PlayModeTests
         private const float RelayWithinReach = 60f;
         private const float RelayBehind = 170f;
         private const int MaxGlintShots = 14;
+        private const int MaxAimedShots = 3;
+        private const float AimedShotShare = 0.7f;
+        private const float AimedFieldOfView = 20f;
 
         private static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "captures", "release-view"));
@@ -110,11 +113,23 @@ namespace MoonProject.Rover.PlayModeTests
             float aliveFor = 0f;
             float longest = 0f;
             int shots = 0;
+            int aimed = 0;
+            var aim = new GameObject("GlintAim").AddComponent<Camera>();
+            aim.CopyFrom(_scene.View);
+            aim.enabled = false;
+            aim.fieldOfView = AimedFieldOfView;
             float start = Time.time;
             while (Time.time - start < ViewSeconds)
             {
                 yield return null;
                 brightest = Mathf.Max(brightest, gameplay.PulseView.GlintBrightest);
+                if (gameplay.PulseView.GlintBrightest >= cap * AimedShotShare && aimed < MaxAimedShots)
+                {
+                    aim.transform.position = _scene.View.transform.position;
+                    aim.transform.rotation = Quaternion.LookRotation(_view.Dish - aim.transform.position);
+                    FrameCapture.SavePng(aim, 1920, 1080, Path.Combine(CaptureFolder, $"glint-aimed-{aimed++}.png"));
+                }
+
                 if (gameplay.PulseView.GlintsAlive > 0)
                 {
                     aliveFor += Time.deltaTime;
@@ -131,6 +146,7 @@ namespace MoonProject.Rover.PlayModeTests
                 }
             }
 
+            Object.Destroy(aim.gameObject);
             Debug.Log($"[releasecap] glint: brightest {brightest:F2} (cap {cap:F2}), longest life {longest:F2} s, " +
                       $"{shots} shots");
             Assert.Greater(brightest, 0.1f, "the dish glinted in view");
