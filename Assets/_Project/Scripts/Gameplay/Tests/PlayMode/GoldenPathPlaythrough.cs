@@ -607,6 +607,17 @@ namespace MoonProject.Gameplay.PlayModeTests
                 ScanFragment panel = _gameplay.Scans.Find(StoryScan.IdPrefix + "airlock");
                 Assert.IsNotNull(panel, "the habitat has its airlock panel to read");
                 Vector3 outward = Flat(panel.Point - Ruin("HabitatModules").position).normalized;
+
+                // The habitat's first fragment is the sign over the airlock door, beside and above the readout: from
+                // the readout's stand-off the chase view frames it more squarely, so a player scans it first, then the
+                // readout once the brackets move on to it.
+                ScanFragment door = _gameplay.Scans.Find(ScanField.FragmentId("ruin.HabitatModules", 0));
+                Assert.IsNotNull(door, "the habitat's first fragment is over the airlock door");
+                if (!door.Scanned)
+                {
+                    yield return Scan(door, "the sign over the airlock door", outward, PanelStandOff);
+                }
+
                 yield return Scan(panel, "the airlock panel", outward, PanelStandOff);
                 Assert.AreEqual(1, read.Count, "the panel's readout shows once");
                 Assert.AreEqual(panel.FragmentId, read[0].StoryId, "it is the airlock panel that was read");
@@ -644,7 +655,11 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             yield return DriveTo(Flat(fragment.Point), standOff, $"the spot facing {what}", ApproachThrottle);
             Look(fragment.Point);
-            yield return Until(() => OnSetCandidate(scans, fragment), ScanLookTimeout,
+
+            // The candidate the brackets rested on, kept: the next frame's candidate may already have moved on.
+            ScanFragment framed = null;
+            yield return Until(() => (framed = OnSetCandidate(scans, fragment) ? scans.Candidate : framed) != null,
+                ScanLookTimeout,
                 $"07's view rests on {fragment.FragmentId}: its brackets and the Scan chip show",
                 () => $"scan candidate {scans.Candidate?.FragmentId ?? "none"} (scanned " +
                       $"{scans.Candidate?.Scanned}, airlock scanned {scans.Find("story.airlock")?.Scanned}), primary hint " +
@@ -654,7 +669,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                       $"{ViewOff(fragment.Point):F0} deg off it ({View(fragment.Point)}), " +
                       $"{Vector3.Distance(Flat(fragment.Point), Flat(_rover.Position)):F2} m flat, " +
                       $"{HeadingOff(fragment.Point):F0} deg off");
-            fragment = scans.Candidate;
+            fragment = framed;
             if (HeadingOff(fragment.Point) > LensFacing)
             {
                 // 07 came to rest side-on (the stand sidesteps round the ruins): its cheek lens only scans what lies
