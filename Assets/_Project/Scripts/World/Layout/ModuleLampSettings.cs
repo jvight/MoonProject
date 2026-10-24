@@ -45,9 +45,10 @@ namespace MoonProject.World
         [Range(0.02f, 1f)]
         [SerializeField] private float _haloRadius = 0.12f;
 
-        [Tooltip("Smallest angular size of the halo, degrees: a point that still reads from the base at night.")]
+        [Tooltip("Smallest angular size of the halo, degrees: a point that still reads from the base at dusk, 80 m " +
+            "off across the plain, yet no bigger than a far lamp.")]
         [Range(0f, 2f)]
-        [SerializeField] private float _haloMinAngle = 0.25f;
+        [SerializeField] private float _haloMinAngle = 0.6f;
 
         [Tooltip("How far the halo floats out in front of the lens, metres, so the bulkhead never cuts it.")]
         [Range(0f, 0.5f)]
