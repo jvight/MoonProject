@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a94ed995c2b8f024f86af834c0c61b22, type: 3}
+  m_Script: {fileID: 11500000, guid: ac7367e1dbb7fb846a62856d70edadf0, type: 3}
   m_Name: MicrometeoriteFlashTuning
   m_EditorClassIdentifier: 
   _flashRiseSeconds: 0.03

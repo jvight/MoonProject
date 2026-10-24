@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d7f7dcb5b4fe08347b4a8a11d999aa17, type: 3}
+  m_Script: {fileID: 11500000, guid: d49c561620bfa6542a47a2fb8dd2dab9, type: 3}
   m_Name: LevitatingDustGlowTuning
   m_EditorClassIdentifier: 
   _fadeInSeconds: 4
