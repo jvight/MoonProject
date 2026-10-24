@@ -77,6 +77,10 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float WatchSeconds = 4f;
         private const float SettleSeconds = 0.6f;
 
+        // The next place 07 is asked to face on its own release: a quarter turn right of the dock, a way off.
+        private const float UndockTurnDegrees = 70f;
+        private const float UndockFacingMetres = 40f;
+
         /// <summary>Seconds after the dock takes 07 the chase view is captured: walls up, 07 settled.</summary>
         private const float ShotSeconds = 1.5f;
         private const float TouchThrottle = 0.6f;
@@ -412,6 +416,85 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             Assert.Less(ArmAngle(0), 0.5f, "the arms lie flat");
+        }
+
+        [UnityTest]
+        [Timeout(200000)]
+        [PrebuildSetup(typeof(PlaythroughScene))]
+        [PostBuildCleanup(typeof(PlaythroughScene))]
+        public IEnumerator LetGoOnItsOwn_07IsAskedToFaceTheNextPlace()
+        {
+            List<RoverDockChanged> releases = null;
+            yield return ReleaseFacingTheNextPlace(false, list => releases = list);
+            float toward = Quaternion.LookRotation(Quaternion.Euler(0f, UndockTurnDegrees, 0f) * _dockHeading)
+                .eulerAngles.y;
+            Assert.AreEqual(0f, Mathf.DeltaAngle(releases[0].Rotation.eulerAngles.y, toward), PoseDegrees,
+                "full, the pad lets 07 go on its own and asks it to face the next place");
+        }
+
+        [UnityTest]
+        [Timeout(200000)]
+        [PrebuildSetup(typeof(PlaythroughScene))]
+        [PostBuildCleanup(typeof(PlaythroughScene))]
+        public IEnumerator ADriveOff_KeepsTheDocksHeading()
+        {
+            List<RoverDockChanged> releases = null;
+            yield return ReleaseFacingTheNextPlace(true, list => releases = list);
+            Assert.AreEqual(0f, Mathf.DeltaAngle(releases[0].Rotation.eulerAngles.y,
+                    Quaternion.LookRotation(_dockHeading).eulerAngles.y), PoseDegrees,
+                "a push on the throttle keeps the dock's heading: the player's hand turns 07, not the pad");
+        }
+
+        /// <summary>
+        /// 07 docks with the next place a quarter turn right of the dock, then is let go: by a push on the throttle
+        /// (<paramref name="driveOff"/>) or, full, by the pad on its own. Hands over the releases seen.
+        /// </summary>
+        private IEnumerator ReleaseFacingTheNextPlace(bool driveOff, Action<List<RoverDockChanged>> seen)
+        {
+            yield return Stage(0f);
+            FindLockParts();
+            Vector3 right = Quaternion.Euler(0f, UndockTurnDegrees, 0f) * _dockHeading;
+            _gameplay.PadLock.FaceOnRelease(new FixedFacing(_centre + right * UndockFacingMetres));
+            var releases = new List<RoverDockChanged>();
+            seen(releases);
+            using (_context.Events.Subscribe<RoverDockChanged>(change =>
+                   {
+                       if (!change.Docked)
+                       {
+                           releases.Add(change);
+                       }
+                   }))
+            {
+                BatteryModel battery = _gameplay.Battery.Model;
+                float charge = driveOff ? battery.Cells * HalfCharge : battery.Cells - NearlyFullCells;
+                battery.Restore(new BatterySaveData { cells = battery.Cells, charge = charge });
+                _pilot.Target = _centre;
+                yield return Until(() => _closed.Count == 1, DriveTimeout, "the lock closes");
+                if (driveOff)
+                {
+                    _pilot.Target = null;
+                    _pilot.Reverse = TouchThrottle;
+                }
+
+                yield return Until(() => releases.Count == 1, DriveTimeout, "the pad lets 07 go");
+                _pilot.Reverse = 0f;
+            }
+        }
+
+        private sealed class FixedFacing : IUndockFacing
+        {
+            private readonly Vector3 _point;
+
+            public FixedFacing(Vector3 point)
+            {
+                _point = point;
+            }
+
+            public bool TryGetUndockFacing(out Vector3 point)
+            {
+                point = _point;
+                return true;
+            }
         }
 
         private sealed class SteerOnly : IRoverDriveSource

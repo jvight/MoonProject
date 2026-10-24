@@ -56,12 +56,16 @@ namespace MoonProject.UI
         private readonly List<Renderer> _ghostRenderers = new List<Renderer>(16);
         private readonly Vector2[] _corners = new Vector2[BoundsCorners];
         private readonly IViewCamera _view;
+        private readonly IRoverState _rover;
+        private readonly float _roverClearRadius;
+        private readonly float _roverClearHeight;
         private readonly float _cardGap;
         private readonly float _screenMargin;
         private readonly float _followHalfLife;
         private StructureView _renderersOf;
         private Vector2 _costAt;
         private Rect _ghostRect;
+        private Rect _roverRect;
         private readonly GlyphView _rotateGlyph;
         private InputDeviceKind _keysDevice;
         private bool _keysWritten;
@@ -104,6 +108,7 @@ namespace MoonProject.UI
             IntText numbers,
             IMaterialStock stock,
             IViewCamera view,
+            IRoverState rover,
             GlyphLabels glyphs,
             EventBus events,
             BuildField buildField = null,
@@ -152,6 +157,9 @@ namespace MoonProject.UI
             _costReveal = new Reveal(layout.BuildCost, promptSettings.Reveal);
             _costReveal.Snap(false);
             _view = view;
+            _rover = rover ?? throw new ArgumentNullException(nameof(rover));
+            _roverClearRadius = promptSettings.RoverClearRadius;
+            _roverClearHeight = promptSettings.RoverClearHeight;
             // The chip is placed by its top-left corner (GhostChipPlacement), not hung from a world point.
             layout.BuildCostAnchor.Q<VisualElement>("build-cost-center").style.translate =
                 new StyleTranslate(new Translate(0f, 0f));
@@ -356,7 +364,7 @@ namespace MoonProject.UI
             var safe = Rect.MinMaxRect(_screenMargin, _screenMargin, panelSize.x - _screenMargin,
                 panelSize.y - _screenMargin);
             Vector2 target = GhostChipPlacement.Place(_ghostRect, new Vector2(width, height), safe, _cardGap,
-                _shownCards);
+                _shownCards, RoverRect(camera, panelSize));
             _costAt = snap ? target : ScreenAnchor.Follow(_costAt, target, _followHalfLife, deltaTime);
             _layout.BuildCostAnchor.style.left = _costAt.x;
             _layout.BuildCostAnchor.style.top = _costAt.y;
@@ -372,7 +380,9 @@ namespace MoonProject.UI
             if (ghost != _renderersOf)
             {
                 _renderersOf = ghost;
-                ghost.GetComponentsInChildren(false, _ghostRenderers);
+                // Inactive ones too: a stage or part may switch on after the ghost appears; each frame counts only
+                // the renderers showing.
+                ghost.GetComponentsInChildren(true, _ghostRenderers);
             }
 
             bool any = false;
@@ -417,6 +427,32 @@ namespace MoonProject.UI
             return _ghostRect.xMax > 0f && _ghostRect.xMin < panelSize.x && _ghostRect.yMax > 0f &&
                    _ghostRect.yMin < panelSize.y;
         }
+
+        /// <summary>
+        /// 07's box on the screen (its clearance around its position, projected), or a zero rect when 07 is behind the
+        /// camera: the chip keeps off it when a side allows.
+        /// </summary>
+        private Rect RoverRect(Camera camera, Vector2 panelSize)
+        {
+            Vector3 at = _rover.Position;
+            for (int i = 0; i < BoundsCorners; i++)
+            {
+                var corner = new Vector3(
+                    at.x + ((i & 1) == 0 ? -_roverClearRadius : _roverClearRadius),
+                    at.y + ((i & 2) == 0 ? 0f : _roverClearHeight),
+                    at.z + ((i & 4) == 0 ? -_roverClearRadius : _roverClearRadius));
+                if (!ScreenAnchor.TryToPanel(camera.WorldToViewportPoint(corner), panelSize, 0f, out _corners[i]))
+                {
+                    return default;
+                }
+            }
+
+            _roverRect = GhostChipPlacement.Around(_corners, BoundsCorners);
+            return _roverRect;
+        }
+
+        /// <summary>07's box on the screen as the chip last avoided it (tests and captures).</summary>
+        public Rect RoverScreenRect => _roverRect;
 
         /// <summary>The ghost's bounds on the screen, in panel coordinates (tests and captures).</summary>
         public Rect GhostScreenRect => _ghostRect;

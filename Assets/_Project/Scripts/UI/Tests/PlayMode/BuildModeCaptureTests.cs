@@ -43,6 +43,7 @@ namespace MoonProject.UI.PlayModeTests
         private const float SunlitDaySeconds = 210f;
         private const float ClearEastOffset = 18f;
         private const float ClearNorthOffset = 14f;
+        private const int PadCard = 0;
         private const int SolarCard = 1;
         private const int BankCard = 2;
 
@@ -382,15 +383,15 @@ namespace MoonProject.UI.PlayModeTests
         /// and <c>build-step-c-weld.png</c> (the weld line with its bar part-way).
         /// </summary>
         /// <summary>
-        /// Owner playtest (build f3d1ff265): the cost chip sat on the ghost and hid it. With the solar array and the
-        /// battery bank ghosts out, at 16:9 and 21:9, the chip stands beside the ghost and never meets its screen
-        /// bounds, so the whole thing being placed is seen.
+        /// Owner playtest (build f3d1ff265): the cost chip sat on the ghost and hid it. With the charging pad (its tall
+        /// fin), the solar array and the battery bank ghosts out, at 16:9 and 21:9, the chip stands beside the ghost and
+        /// never meets its screen bounds, so the whole thing being placed is seen.
         /// </summary>
         [UnityTest]
         [Timeout(300000)]
         [PrebuildSetup(typeof(BuildCaptureScene))]
         [PostBuildCleanup(typeof(BuildCaptureScene))]
-        public IEnumerator TheGhostsChip_NeverCoversTheGhost_SolarAndBank_At16x9And21x9()
+        public IEnumerator TheGhostsChip_NeverCoversTheGhost_PadSolarAndBank_At16x9And21x9()
         {
             Directory.CreateDirectory(CaptureFolder);
             yield return BootMainScene();
@@ -415,12 +416,13 @@ namespace MoonProject.UI.PlayModeTests
             {
                 ResizeUiTarget(size.x, size.y);
                 FrameBehindRover(viewCamera, roverPos, Vector3.forward, distance: 4.8f, height: 1.95f, pitchDeg: 13f);
-                foreach (int card in new[] { SolarCard, BankCard })
+                foreach (int card in new[] { PadCard, SolarCard, BankCard })
                 {
                     yield return Tap(_keyboard.bKey);
                     yield return SettleUi(0.8f);
                     build.SetAimPointOverride(spot);
                     Assert.IsTrue(_ui.BuildStrip.Pick(card), "the card is picked");
+                    // Judged at rest: the chip eases to its place, so give it well over its follow half-life.
                     yield return SettleUi(1.2f);
                     string name = "ghost-chip-" + build.Controller.SelectedStructure.Id + "-" + size.x + "x" + size.y;
                     Assert.AreEqual(BuildModeState.Placing, build.State, name);
@@ -428,6 +430,9 @@ namespace MoonProject.UI.PlayModeTests
                     Assert.IsFalse(_ui.BuildStrip.CostScreenRect.Overlaps(_ui.BuildStrip.GhostScreenRect),
                         $"{name}: the chip {_ui.BuildStrip.CostScreenRect} covers the ghost " +
                         $"{_ui.BuildStrip.GhostScreenRect}");
+                    Assert.IsFalse(_ui.BuildStrip.CostScreenRect.Overlaps(_ui.BuildStrip.RoverScreenRect),
+                        $"{name}: with a side free, the settled chip {_ui.BuildStrip.CostScreenRect} keeps off 07 " +
+                        $"{_ui.BuildStrip.RoverScreenRect}");
                     yield return CaptureComposite(viewCamera, name);
                     yield return Tap(_keyboard.escapeKey);
                     yield return SettleUi(0.6f);

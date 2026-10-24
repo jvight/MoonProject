@@ -1,0 +1,55 @@
+{
+  "model": "mare_ground_patch",
+  "pivot_tolerance": 0.02,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_Basalt"
+  ],
+  "max_triangles": 400,
+  "max_meshes": 1,
+  "max_draw_calls": 1,
+  "allow_rotation": [],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "Center_Anchor": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "MareGround_Patch": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "MareSurface": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      12.0,
+      12.0,
+      0.16
+    ],
+    "tolerance": 0.6,
+    "min_size": [
+      11.4,
+      11.4,
+      0.01
+    ],
+    "max_size": [
+      12.6,
+      12.6,
+      0.76
+    ]
+  }
+}

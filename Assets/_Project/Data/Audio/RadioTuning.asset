@@ -29,12 +29,13 @@ MonoBehaviour:
   _wowRate: 0.55
   _flutterRate: 6.3
   _flutterShare: 0.3
-  _crossfadeDuration: 2.4
-  _crossfadeLead: 1.4
-  _outgoingFadeEnd: 0.55
-  _incomingStart: 0.45
+  _tuneSwellDuration: 2.4
+  _momentStartDelay: 1.1
+  _momentFadeIn: 6
+  _momentFadeOut: 5
   _tuneStaticBoost: 0.35
   _tuneSwishVolume: 0.8
+  _idleStaticGain: 0.15
   _cabinCutoff: 7000
   _cabinMusicGain: 0.7
   _cabinStaticGain: 0.7
@@ -46,5 +47,3 @@ MonoBehaviour:
   _wakeStaticBoost: 0.55
   _unpoweredStaticFloor: 0.3
   _powerOnClearTime: 2.5
-  _powerOnMusicFade: 6
-  _silentSwitchFade: 0.6

@@ -15,7 +15,7 @@ namespace MoonProject.Gameplay
     /// night-ready base, and the objective flow that reads all of it (<see cref="OpeningFlow"/>, through
     /// <see cref="IOpeningProgress"/>). Saved as "gameplay.opening". Allocation-free per frame.
     /// </summary>
-    public sealed class OpeningField : IOpeningProgress, IDisposable
+    public sealed class OpeningField : IOpeningProgress, IUndockFacing, IDisposable
     {
         /// <summary>The frame of World's service port on the lander, where the apron cable ends (B4's crate).</summary>
         public const string LanderPortFrame = "lander.port";
@@ -168,9 +168,13 @@ namespace MoonProject.Gameplay
 
         public bool AnswerStarted => _answer != null && _answer.Phase >= AnswerPhase.Transmitting;
 
-        public bool AtRelay => _relay != null &&
+        // Near relay.1 is not enough: the line goes quiet only once the spare's pickup chip or the socket's chip is up
+        // to lead, or a stop short of their reach leaves nothing on screen.
+        public bool AtRelay => _relay != null && _hints != null &&
                                SurfaceRules.HorizontalDistance(_rover.Position, _relay.SocketPoint) <=
-                               _tuning.Guidance.ArrivalReach;
+                               _tuning.Guidance.ArrivalReach &&
+                               (_hints.TryGet(InteractionKind.Install, out _) ||
+                                _hints.TryGet(InteractionKind.PickUp, out _));
 
         public bool HeadlampUnlocked =>
             _understanding != null && _understanding.IsUnlocked(MakerUnderstandingSettings.Ssr3Headlamp);
@@ -363,6 +367,16 @@ namespace MoonProject.Gameplay
         public void ConnectHints(IInteractionHints hints)
         {
             _hints = hints ?? throw new ArgumentNullException(nameof(hints));
+        }
+
+        /// <summary>
+        /// Off the pad after the first charge, with the fallen array still to find (B7), 07 turns to face it: its glint
+        /// lies well to the right of the dock's heading, out of the chase camera's frame.
+        /// </summary>
+        public bool TryGetUndockFacing(out Vector3 point)
+        {
+            point = Vector3.zero;
+            return Flow.CurrentIndex == OpeningSteps.FindSolar && Frame(SolarRuin, out _, out point);
         }
 
         public bool CanAct(string lineKey)

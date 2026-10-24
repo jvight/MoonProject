@@ -69,6 +69,7 @@ namespace MoonProject.Gameplay
         private bool _settled;
         private Vector3 _dockPoint;
         private float _dockYaw;
+        private IUndockFacing _facing;
 
         /// <param name="radius">Metres around a pad's centre within which the dock takes hold of 07.</param>
         /// <param name="plateMargin">Metres past a pad's plate 07 may stand and still be on the pad.</param>
@@ -83,6 +84,12 @@ namespace MoonProject.Gameplay
             _plateMargin = plateMargin;
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _lock = new DockLock(events, tuning);
+        }
+
+        /// <summary>Where 07 faces as the pad lets it go on its own (the opening's next place).</summary>
+        public void FaceOnRelease(IUndockFacing facing)
+        {
+            _facing = facing ?? throw new ArgumentNullException(nameof(facing));
         }
 
         /// <summary>07 stands on the plate of a pad it built (powered or not), as a player sees it.</summary>
@@ -110,7 +117,7 @@ namespace MoonProject.Gameplay
 
             if (pad != _pad && !_lock.Raised)
             {
-                Release();
+                Release(false);
                 Rest();
                 _pad = pad >= 0 && Read(pad) ? pad : -1;
             }
@@ -139,7 +146,7 @@ namespace MoonProject.Gameplay
                 _fullDone = true;
             }
 
-            StepDock(hold && !driveOff, pose);
+            StepDock(hold && !driveOff, driveOff, pose);
             _lock.Step(pad == _pad, hold && !driveOff && (_settled || _lock.Raised), _battery.Charge,
                 _battery.Cells, centre, deltaTime);
             _settledFrames = _docked && _settled ? _settledFrames + 1 : 0;
@@ -220,11 +227,11 @@ namespace MoonProject.Gameplay
         /// Holds 07 on the pad while it charges: asks the rover to ease it onto the pad's centre line and heading, then
         /// notes when it has settled there; lets it go when charging stops or the wheel is touched.
         /// </summary>
-        private void StepDock(bool dock, StructurePose pose)
+        private void StepDock(bool dock, bool driveOff, StructurePose pose)
         {
             if (!dock)
             {
-                Release();
+                Release(!driveOff);
                 return;
             }
 
@@ -246,8 +253,12 @@ namespace MoonProject.Gameplay
             _settled = off.magnitude <= _tuning.DockSettledMetres && turned <= _tuning.DockSettledDegrees;
         }
 
-        /// <summary>07 goes free of the dock (when it held it).</summary>
-        private void Release()
+        /// <summary>
+        /// 07 goes free of the dock (when it held it). Let go on its own (<paramref name="byItself"/>: the charge done,
+        /// no hand on the wheel), it is asked to face the opening's next place, which the rover eases round to on the
+        /// pad; otherwise it keeps the dock's heading.
+        /// </summary>
+        private void Release(bool byItself)
         {
             if (!_docked)
             {
@@ -256,7 +267,15 @@ namespace MoonProject.Gameplay
 
             _docked = false;
             _settled = false;
-            _events.Publish(new RoverDockChanged(false, _dockPoint, Quaternion.Euler(0f, _dockYaw, 0f)));
+            float yaw = _dockYaw;
+            if (byItself && _facing != null && _facing.TryGetUndockFacing(out Vector3 point))
+            {
+                Vector3 toward = point - _dockPoint;
+                toward.y = 0f;
+                yaw = toward.sqrMagnitude > 1e-4f ? Quaternion.LookRotation(toward).eulerAngles.y : _dockYaw;
+            }
+
+            _events.Publish(new RoverDockChanged(false, _dockPoint, Quaternion.Euler(0f, yaw, 0f)));
         }
 
         /// <summary>The top of the pad at its centre, where 07's pivot rests; false (logged) when there is none.</summary>

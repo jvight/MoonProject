@@ -17,12 +17,12 @@ namespace MoonProject.Rover
         [Tooltip("New Game on a fresh title: the one eased move from the title's shot onto 07's dark face while the " +
                  "title fades and 07 lifts its head. Unhurried: the wake's beginning has to breathe.")]
         [Range(0.3f, 3f)]
-        [SerializeField] private float _pushInSeconds = 1f;
+        [SerializeField] private float _pushInSeconds = 1.6f;
 
         [Tooltip("After the reload a New Game over a save needs: on 07's dark face while the cover opens (UI's " +
                  "vignette) and 07 lifts its head.")]
         [Range(0.3f, 3f)]
-        [SerializeField] private float _darkSeconds = 0.5f;
+        [SerializeField] private float _darkSeconds = 0.8f;
 
         [Tooltip("The tube wakes on 07's face: a dot, a line, then the full raster with a warm bloom, a couple of " +
                  "irregular flickers as the tube catches.")]
@@ -83,11 +83,11 @@ namespace MoonProject.Rover
         [Header("The motions")]
         [Tooltip("How far (deg) the neck sweeps to each side in the head check: small, so the face stays toward the close-up.")]
         [Range(2f, 45f)]
-        [SerializeField] private float _headSweepDegrees = 10f;
+        [SerializeField] private float _headSweepDegrees = 6f;
 
         [Tooltip("How far (deg) the head nods down.")]
         [Range(2f, 25f)]
-        [SerializeField] private float _headNodDegrees = 5f;
+        [SerializeField] private float _headNodDegrees = 4f;
 
         [Tooltip("How far (deg) each wheel twitches forward and back.")]
         [Range(2f, 40f)]
@@ -117,6 +117,23 @@ namespace MoonProject.Rover
         [Range(0.1f, 1f)]
         [SerializeField] private float _batteryFill = 0.5f;
 
+        [Header("The old servo (every motion that moves a part: head, wheels, wing, antenna, lurch, wake)")]
+        [Tooltip("Steps a stiff servo takes over one stroke: it moves, holds, moves again, never one smooth sweep.")]
+        [Range(1, 6)]
+        [SerializeField] private int _servoSteps = 2;
+
+        [Tooltip("The share of each step the servo holds still before the next.")]
+        [Range(0f, 0.7f)]
+        [SerializeField] private float _servoHoldShare = 0.2f;
+
+        [Tooltip("How far (share of a step) the servo creeps before it catches.")]
+        [Range(0.05f, 0.8f)]
+        [SerializeField] private float _servoCatchLevel = 0.4f;
+
+        [Tooltip("The share of each move the servo stays caught before it frees and finishes the step.")]
+        [Range(0f, 0.5f)]
+        [SerializeField] private float _servoCatchShare = 0.1f;
+
         public PostSettings()
         {
         }
@@ -126,6 +143,14 @@ namespace MoonProject.Rover
         {
             _lines = lines ?? throw new ArgumentNullException(nameof(lines));
         }
+
+        public int ServoSteps => _servoSteps;
+
+        public float ServoHoldShare => _servoHoldShare;
+
+        public float ServoCatchLevel => _servoCatchLevel;
+
+        public float ServoCatchShare => _servoCatchShare;
 
         public float HeadSweepDegrees => _headSweepDegrees;
 
@@ -404,12 +429,12 @@ namespace MoonProject.Rover
                 new PostLine(BootCheckStep.Agenda, 1f),
                 new PostLine(BootCheckStep.Lens, 0.4f),
                 new PostLine(BootCheckStep.Lamps, 1.2f),
-                new PostLine(BootCheckStep.Head, 0.5f),
-                new PostLine(BootCheckStep.Wheels, 0.6f),
-                new PostLine(BootCheckStep.Motor, 0.5f),
+                new PostLine(BootCheckStep.Head, 1.5f),
+                new PostLine(BootCheckStep.Wheels, 1.4f),
+                new PostLine(BootCheckStep.Motor, 1.2f),
                 new PostLine(BootCheckStep.Cutter, 1.2f),
-                new PostLine(BootCheckStep.SolarWing, 0.6f),
-                new PostLine(BootCheckStep.Antenna, 0.6f),
+                new PostLine(BootCheckStep.SolarWing, 1.3f),
+                new PostLine(BootCheckStep.Antenna, 1.1f),
                 new PostLine(BootCheckStep.Battery, 0.6f),
                 new PostLine(BootCheckStep.Assembly, 0.4f),
                 new PostLine(BootCheckStep.Begin, 0.4f),

@@ -187,6 +187,9 @@ namespace MoonProject.Gameplay
         /// <summary>The base's lamps, which follow the Sun (null while the opening could not be built).</summary>
         public BaseLamps BaseLamps { get; private set; }
 
+        /// <summary>The power-flow pulses on the base cables (sun, array, hub by day; bank, hub at dusk).</summary>
+        public PowerPulse PowerPulse { get; private set; }
+
         /// <summary>relay.1's repair (opening v3 R10): its spare taken, fitted, the relay lit.</summary>
         public RelayRepair Relay { get; private set; }
 
@@ -496,7 +499,10 @@ namespace MoonProject.Gameplay
                     _openingTuning.PortCableReach));
                 PadLock = new PadLock(context.Events, _baseTuning, _building, _battery.Model, services.Rover,
                     _openingTuning.PadChargeRadius, _openingTuning.PadPlateMargin);
+                PadLock.FaceOnRelease(opening);
                 BaseLamps = new BaseLamps(context.Events, _baseTuning, _building, sunlight);
+                PowerPulse = new PowerPulse(context.Events, _baseTuning, _building, BaseLamps,
+                    services.Visuals.FeelSprite, transform);
                 return opening;
             }
             catch (InvalidOperationException exception)
@@ -687,6 +693,7 @@ namespace MoonProject.Gameplay
             RangeRingLine.Step();
             PadLock.Step(deltaTime);
             BaseLamps.Step(deltaTime);
+            PowerPulse.Step(deltaTime);
             ApronGlow.Step(_building.State != BuildModeState.Closed, deltaTime);
             ApronGuide.Step(_building.State != BuildModeState.Closed && !AnyPadStands(), deltaTime);
             Recovery.Refresh();

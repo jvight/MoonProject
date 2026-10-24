@@ -206,6 +206,40 @@ namespace MoonProject.World
         [Range(4f, 30f)]
         [SerializeField] private float _exitFootLength = 9f;
 
+        [Header("The shadowed slot (base-home-and-crater-exits §4)")]
+        [Tooltip("How far to the right of the canyon's mouth the slot opens on the basin floor, metres: beside relay.2, " +
+            "far enough that a thick fin of rock stands between it and the chasm.")]
+        [Range(20f, 80f)]
+        [SerializeField] private float _slotOffset = 42f;
+
+        [Tooltip("Half width of the slot, metres: narrow, so its walls keep the low polar Sun off its floor.")]
+        [Range(2.5f, 8f)]
+        [SerializeField] private float _slotHalfWidth = 3.5f;
+
+        [Tooltip("Length of the slot's first, straight leg from its mouth, metres.")]
+        [Range(5f, 60f)]
+        [SerializeField] private float _slotFirstLeg = 18f;
+
+        [Tooltip("How far the slot turns right after its first leg, degrees: round the corner no sunlight follows.")]
+        [Range(30f, 120f)]
+        [SerializeField] private float _slotTurnAngle = 80f;
+
+        [Tooltip("Radius of the slot's turn, metres.")]
+        [Range(4f, 40f)]
+        [SerializeField] private float _slotTurnRadius = 10f;
+
+        [Tooltip("Length of the slot's second leg past the turn, metres: deeper than 07's stock lamps reach.")]
+        [Range(5f, 80f)]
+        [SerializeField] private float _slotSecondLeg = 28f;
+
+        [Tooltip("Radius of the round bay the slot ends in, metres: an empty site for the crew's supply lander (later).")]
+        [Range(4f, 20f)]
+        [SerializeField] private float _slotBayRadius = 8f;
+
+        [Tooltip("How far the slot's floor climbs from its mouth to the bay, metres: a gentle drive in.")]
+        [Range(0f, 8f)]
+        [SerializeField] private float _slotClimb = 2f;
+
         public float Bearing => _bearing;
         public float MouthDistance => _mouthDistance;
         public float ApproachLength => _approachLength;
@@ -250,6 +284,14 @@ namespace MoonProject.World
         public float ExitHalfWidth => _exitHalfWidth;
         public float ExitStepHeight => _exitStepHeight;
         public float ExitFootLength => _exitFootLength;
+        public float SlotOffset => _slotOffset;
+        public float SlotHalfWidth => _slotHalfWidth;
+        public float SlotFirstLeg => _slotFirstLeg;
+        public float SlotTurnAngle => _slotTurnAngle;
+        public float SlotTurnRadius => _slotTurnRadius;
+        public float SlotSecondLeg => _slotSecondLeg;
+        public float SlotBayRadius => _slotBayRadius;
+        public float SlotClimb => _slotClimb;
 
         /// <summary>Returns null when the canyon is consistent, otherwise the problem.</summary>
         public string Validate()
@@ -281,6 +323,16 @@ namespace MoonProject.World
                 || _landerBayArc + _landerBayHalfLength > _bendStart)
             {
                 return "Canyon: the lander's bay must open past the chasm's far face and before the bend.";
+            }
+
+            if (_slotOffset < _mouthHalfWidth + _slotHalfWidth + 2f * _wallRun + 2f)
+            {
+                return "Canyon: the slot opens too close to the canyon's mouth; widen its offset.";
+            }
+
+            if (_slotBayRadius <= _slotHalfWidth)
+            {
+                return "Canyon: the slot's bay must be wider than the slot.";
             }
 
             float side = _troughDepth / Mathf.Tan(_troughSideSlope * Mathf.Deg2Rad) + TroughSideEase;

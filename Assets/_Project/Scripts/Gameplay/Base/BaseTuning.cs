@@ -140,6 +140,11 @@ namespace MoonProject.Gameplay
                  "lattice, so its pool lies on the ground and nothing of the piece burns white at the light.")]
         [Range(0f, 3f)] [SerializeField] private float _lampLightStandOff = 1.5f;
 
+        [Tooltip("Every other lamp's light is a spot pointing down at the regolith beside its piece: its cone, in " +
+                 "degrees. Narrow enough that the piece's own face, a stand-off away, stays outside it and never " +
+                 "blooms at night.")]
+        [Range(30f, 120f)] [SerializeField] private float _lampSpotAngleDegrees = 90f;
+
         [Tooltip("The charging pad's light is a spot pointing down at the pad: its cone, in degrees.")]
         [Range(40f, 160f)] [SerializeField] private float _padSpotAngleDegrees = 120f;
 
@@ -150,6 +155,28 @@ namespace MoonProject.Gameplay
         [Tooltip("The most lamp lights the base burns at once (none casts a shadow); the first lamps in the lighting " +
                  "order get them, the rest only glow.")]
         [Range(0, 8)] [SerializeField] private int _lampLightBudget = 4;
+
+        [Header("Power pulse (base-home-and-crater-exits §3)")]
+        [Tooltip("Seconds from one pulse leaving a cable's source to the next: slow enough to read as a calm heartbeat " +
+                 "of power, never a stream.")]
+        [Range(1f, 10f)] [SerializeField] private float _pulseIntervalSeconds = 3.6f;
+
+        [Tooltip("Seconds a pulse takes from the source's port to the far end of its cable, eased out of the port and " +
+                 "into the far end. Shorter than the interval: one pulse on a cable at a time.")]
+        [Range(0.5f, 6f)] [SerializeField] private float _pulseTravelSeconds = 2.4f;
+
+        [Tooltip("Metres across a pulse's soft glow at its brightest, mid-cable.")]
+        [Range(0.05f, 1f)] [SerializeField] private float _pulseSizeMetres = 0.32f;
+
+        [Tooltip("Metres above the cable the pulse rides, so the cable never hides it.")]
+        [Range(0f, 0.5f)] [SerializeField] private float _pulseLiftMetres = 0.08f;
+
+        [Tooltip("The pulse from the solar array while the Sun is up: pale sunlit gold (additive; under 1 so it never " +
+                 "clips).")]
+        [SerializeField] private Color _sunPulseColor = new Color(0.95f, 0.82f, 0.5f, 1f);
+
+        [Tooltip("The pulse from the battery bank at dusk and through the night: the base lamps' warm amber.")]
+        [SerializeField] private Color _bankPulseColor = new Color(0.9f, 0.55f, 0.24f, 1f);
 
         public float ChockLockDegrees => _chockLockDegrees;
         public float ClampArmLockDegrees => _clampArmLockDegrees;
@@ -162,8 +189,15 @@ namespace MoonProject.Gameplay
         public float LampLightHeightShare => _lampLightHeightShare;
         public float LampLightStandOff => _lampLightStandOff;
         public float PadSpotAngleDegrees => _padSpotAngleDegrees;
+        public float LampSpotAngleDegrees => _lampSpotAngleDegrees;
         public float PadSpotHeightMetres => _padSpotHeightMetres;
         public int LampLightBudget => _lampLightBudget;
+        public float PulseIntervalSeconds => _pulseIntervalSeconds;
+        public float PulseTravelSeconds => _pulseTravelSeconds;
+        public float PulseSizeMetres => _pulseSizeMetres;
+        public float PulseLiftMetres => _pulseLiftMetres;
+        public Color SunPulseColor => _sunPulseColor;
+        public Color BankPulseColor => _bankPulseColor;
         public float LampDuskAboveLastLightDegrees => _lampDuskAboveLastLightDegrees;
         public float LampDawnMarginDegrees => _lampDawnMarginDegrees;
         public float LampStaggerSeconds => _lampStaggerSeconds;

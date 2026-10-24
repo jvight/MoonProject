@@ -132,7 +132,7 @@ namespace MoonProject.World.Tests
                 }
 
                 Assert.AreEqual(0f, sample.Chasm, $"pebble in the chasm at {rock.Position}");
-                if (canyon.TryFloor(rock.Position.x, rock.Position.z, out bool _, out float _, out float centre))
+                if (canyon.TryFloor(rock.Position.x, rock.Position.z, out CanyonCorridor _, out float _, out float centre))
                 {
                     Assert.GreaterOrEqual(centre, _settings.CanyonPebbleClear,
                         $"pebble on the canyon's driving line at {rock.Position}");

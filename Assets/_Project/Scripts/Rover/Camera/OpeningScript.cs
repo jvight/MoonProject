@@ -499,7 +499,7 @@ namespace MoonProject.Rover
                     break;
                 case OpeningPhase.PushIn:
                 case OpeningPhase.Dark:
-                    float lift = WakeOpening.SmoothStepC2(0f, 1f, u);
+                    float lift = Motions.Servo(u);
                     sleep = 1f - lift;
                     lid = _settings.LidRest * lift;
                     break;

@@ -15,12 +15,13 @@ namespace MoonProject.UI.Tests
         private static readonly Rect Safe = Rect.MinMaxRect(24f, 24f, 1896f, 1056f);
         private static readonly Vector2 Chip = new Vector2(300f, 110f);
         private static readonly IReadOnlyList<Rect> NoCards = Array.Empty<Rect>();
+        private static readonly Rect NoRover = default;
 
         [Test]
         public void WithRoomBelow_TheChipHangsUnderTheGhost_Centred()
         {
             var ghost = Rect.MinMaxRect(800f, 300f, 1100f, 600f);
-            Vector2 at = GhostChipPlacement.Place(ghost, Chip, Safe, Gap, NoCards);
+            Vector2 at = GhostChipPlacement.Place(ghost, Chip, Safe, Gap, NoCards, NoRover);
             Assert.AreEqual(ghost.yMax + Gap, at.y, 1e-3f);
             Assert.AreEqual(ghost.center.x, at.x + Chip.x * 0.5f, 1e-3f);
             AssertApart(at, ghost);
@@ -30,7 +31,7 @@ namespace MoonProject.UI.Tests
         public void AGhostLowOnTheScreen_PutsTheChipAboveIt()
         {
             var ghost = Rect.MinMaxRect(800f, 800f, 1100f, 1040f);
-            Vector2 at = GhostChipPlacement.Place(ghost, Chip, Safe, Gap, NoCards);
+            Vector2 at = GhostChipPlacement.Place(ghost, Chip, Safe, Gap, NoCards, NoRover);
             Assert.AreEqual(ghost.yMin - Gap - Chip.y, at.y, 1e-3f);
             AssertApart(at, ghost);
         }
@@ -39,12 +40,12 @@ namespace MoonProject.UI.Tests
         public void ATallGhost_PutsTheChipBesideIt()
         {
             var ghost = Rect.MinMaxRect(600f, 60f, 900f, 1030f);
-            Vector2 at = GhostChipPlacement.Place(ghost, Chip, Safe, Gap, NoCards);
+            Vector2 at = GhostChipPlacement.Place(ghost, Chip, Safe, Gap, NoCards, NoRover);
             Assert.AreEqual(ghost.xMax + Gap, at.x, 1e-3f, "to its right first");
             AssertApart(at, ghost);
 
             var atTheRightEdge = Rect.MinMaxRect(1500f, 60f, 1890f, 1030f);
-            Vector2 left = GhostChipPlacement.Place(atTheRightEdge, Chip, Safe, Gap, NoCards);
+            Vector2 left = GhostChipPlacement.Place(atTheRightEdge, Chip, Safe, Gap, NoCards, NoRover);
             Assert.AreEqual(atTheRightEdge.xMin - Gap - Chip.x, left.x, 1e-3f, "then to its left");
             AssertApart(left, atTheRightEdge);
         }
@@ -54,16 +55,36 @@ namespace MoonProject.UI.Tests
         {
             var dial = Rect.MinMaxRect(24f, 900f, 180f, 1056f);
             var ghost = Rect.MinMaxRect(30f, 700f, 400f, 1050f);
-            Vector2 at = GhostChipPlacement.Place(ghost, Chip, Safe, Gap, new[] { dial });
+            Vector2 at = GhostChipPlacement.Place(ghost, Chip, Safe, Gap, new[] { dial }, NoRover);
             AssertApart(at, ghost);
             AssertApart(at, dial);
+        }
+
+        [Test]
+        public void WhenASideIsClearOfBothTheGhostAnd07_TheChipTakesIt_Not07()
+        {
+            var ghost = Rect.MinMaxRect(800f, 300f, 1100f, 600f);
+            var rover = Rect.MinMaxRect(780f, 620f, 1120f, 900f);
+            Vector2 at = GhostChipPlacement.Place(ghost, Chip, Safe, Gap, NoCards, rover);
+            AssertApart(at, ghost);
+            AssertApart(at, rover);
+            Assert.AreEqual(ghost.yMin - Gap - Chip.y, at.y, 1e-3f, "below is 07: above the ghost instead");
+        }
+
+        [Test]
+        public void When07IsOnEverySide_07GivesWay_ButTheGhostNever()
+        {
+            var ghost = Rect.MinMaxRect(800f, 300f, 1100f, 600f);
+            var rover = Rect.MinMaxRect(0f, 0f, 1920f, 1080f);
+            Vector2 at = GhostChipPlacement.Place(ghost, Chip, Safe, Gap, NoCards, rover);
+            AssertApart(at, ghost);
         }
 
         [Test]
         public void AGhostThatFillsTheView_DocksTheChipLowInTheMiddle_InsideTheSafeArea()
         {
             var ghost = Rect.MinMaxRect(0f, 0f, 1920f, 1080f);
-            Vector2 at = GhostChipPlacement.Place(ghost, Chip, Safe, Gap, NoCards);
+            Vector2 at = GhostChipPlacement.Place(ghost, Chip, Safe, Gap, NoCards, NoRover);
             Assert.AreEqual(Safe.center.x, at.x + Chip.x * 0.5f, 1e-3f);
             Assert.AreEqual(Safe.yMax - Chip.y, at.y, 1e-3f);
         }

@@ -44,10 +44,6 @@ namespace MoonProject.Rover
         [SerializeField] private float _maxTilt = 35f;
 
         [Header("Wheels & suspension")]
-        [Tooltip("Wheel radius (m) of the RoverModel wheels (rig contract: 0.35).")]
-        [Range(0.1f, 1f)]
-        [SerializeField] private float _wheelRadius = 0.35f;
-
         [Tooltip("How far (m) a wheel can travel up into the body over a bump.")]
         [Range(0f, 0.5f)]
         [SerializeField] private float _suspensionCompression = 0.16f;
@@ -230,8 +226,6 @@ namespace MoonProject.Rover
         public float MaxAirPitch => _maxAirPitch;
 
         public float MaxTilt => _maxTilt;
-
-        public float WheelRadius => _wheelRadius;
 
         public float SuspensionCompression => _suspensionCompression;
 

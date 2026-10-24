@@ -10,6 +10,9 @@ namespace MoonProject.World.Tests
         private const float MaxDrivableSlopeDegrees = 20f;
         private const float RimClearanceAboveFloor = 40f;
 
+        // Half width at the crest of the bearings the rille's pass lowers, metres.
+        private const float RillePassReach = 60f;
+
         // Kestrel-3's impact and the flat site footprints erase the few seeded craters beneath them (M3-13).
         private const int MaxCratersErasedBySites = 4;
         // The Scout's crater (basin dressing §2) is placed after the seeded craters and the bowls.
@@ -129,7 +132,7 @@ namespace MoonProject.World.Tests
         }
 
         [Test]
-        public void Rim_RisesFarAboveTheFloor_InEveryDirection()
+        public void Rim_RisesFarAboveTheFloor_InEveryDirection_ButTheRillePass()
         {
             float highestFloor = float.MinValue;
             for (float z = -_surface.DrivableRadius; z <= _surface.DrivableRadius; z += 5f)
@@ -146,6 +149,14 @@ namespace MoonProject.World.Tests
             for (int bearing = 0; bearing < 360; bearing += 5)
             {
                 Vector2 direction = MoonSurface.BearingToDirection(bearing);
+                if (Vector2.Dot(direction, _surface.Rille.Direction) * _settings.CrestRadius
+                    > Mathf.Sqrt(_settings.CrestRadius * _settings.CrestRadius
+                        - RillePassReach * RillePassReach))
+                {
+                    // The rille's low pass, held by its lava lip (RilleNotchTests).
+                    continue;
+                }
+
                 float highestRim = float.MinValue;
                 for (float r = _settings.FloorRadius; r <= _settings.CrestRadius + 60f; r += 2f)
                 {

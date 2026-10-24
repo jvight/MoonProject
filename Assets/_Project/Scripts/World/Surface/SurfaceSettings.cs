@@ -248,6 +248,14 @@ namespace MoonProject.World
         [Tooltip("The canyon cut through the rim, gated by a chasm (docs/features/M3-04).")]
         [SerializeField] private CanyonSettings _canyon = new CanyonSettings();
 
+        [Header("The rille notch")]
+        [Tooltip("The pass cut through the rim past relay.1 onto the dark mare (base-home-and-crater-exits §4).")]
+        [SerializeField] private RilleSettings _rille = new RilleSettings();
+
+        [Header("The Peak road's rockfall scar")]
+        [Tooltip("The pale fresh ground the rockfall bared down the Peak's flank, above the boulders across the road.")]
+        [SerializeField] private RockfallScarSettings _rockfallScar = new RockfallScarSettings();
+
         [Header("Sites")]
         [Tooltip("Ground shaped for the opening's places and Kestrel-3's impact (M3-13).")]
         [SerializeField] private SiteSettings _sites = new SiteSettings();
@@ -334,6 +342,8 @@ namespace MoonProject.World
         public RampPlacement[] Ramps => _ramps;
         public BowlPlacement[] Bowls => _bowls;
         public CanyonSettings Canyon => _canyon;
+        public RilleSettings Rille => _rille;
+        public RockfallScarSettings RockfallScar => _rockfallScar;
         public SiteSettings Sites => _sites;
         public CraterFieldSettings CraterField => _craterField;
         public ReliefSettings Relief => _relief;
@@ -393,7 +403,8 @@ namespace MoonProject.World
                 return "Rim mountains, gullies, crags or far ranges could rise above The Peak; lower them or raise it.";
             }
 
-            return _canyon.Validate() ?? _sites.Validate() ?? _craterField.Validate();
+            return _canyon.Validate() ?? _rille.Validate(_floorRadius, _crestRadius) ?? _sites.Validate()
+                ?? _craterField.Validate();
         }
     }
 }

@@ -6,7 +6,9 @@ namespace MoonProject.Rover
 {
     /// <summary>
     /// What 07 does in each check of its power-on self-test, as pure functions of the check's progress (0..1) so each
-    /// motion's shape is testable: the head's sweep and nod, each wheel's twitch, the motor's shudder and lurch, the
+    /// motion's shape is testable. 07 wakes like an old machine after a long sleep (owner playtest f3d1ff265): every
+    /// moving part is a stiff servo that creeps, catches, holds and frees in steps (<see cref="Servo"/>), the shudder
+    /// comes in a few slow, hesitant bursts, and nothing snaps: the head's sweep and nod, each wheel's twitch, the motor's shudder and lurch, the
     /// cutter's failed ignitions with the turret's kicks, the wing's jerk-stall-fold, the antenna's rise, the cells'
     /// fill, and the ready performance after the checks (a double blink, the headlamps clicked off and on, the last
     /// dust settling off, the glance at the beacon). The same tables say when each <c>BootCheckPulse</c> fires, so the
@@ -28,19 +30,31 @@ namespace MoonProject.Rover
             public int Index { get; }
         }
 
-        // Head: the sweep takes the first part, the nod the rest.
-        private const float SweepShare = 0.62f;
-        private const float NodStart = 0.66f;
+        // Head: the sweep takes the first part (right, left, back to centre, in a quarter, a half and a quarter of
+        // it), the nod the rest: down in steps, held, then a slow return.
+        private const float SweepShare = 0.72f;
+        private const float NodStart = 0.76f;
+        private const float NodDownShare = 0.6f;
+        private const float StrokeFirst = 0.25f;
+        private const float StrokeSecond = 0.5f;
 
         // Wheels: each twitches in its own window.
         private const float WheelFirst = 0.05f;
         private const float WheelStride = 0.2f;
         private const float WheelWindow = 0.22f;
 
-        // Motor.
+        // Wheels: out in steps, then released slowly.
+        private const float WheelOutShare = 0.6f;
+
+        // Motor: three slow bursts of shudder (each a pause apart, growing), then the creep forward in steps.
         private const float ShudderEnd = 0.7f;
+        private const float BurstWindow = 0.2f;
+        private const float BurstCycles = 1.5f;
         private const float LurchStart = 0.45f;
         private const float LurchEnd = 0.9f;
+        private const float LurchOutShare = 0.6f;
+        private static readonly float[] BurstStarts = { 0.04f, 0.27f, 0.5f };
+        private static readonly float[] BurstPeaks = { 0.5f, 0.8f, 1f };
 
         // Cutter: three attempts, each weaker, then it dies.
         private const float AttemptWindow = 0.18f;
@@ -48,7 +62,7 @@ namespace MoonProject.Rover
         private const int BeaconPulseOffset = 3;
 
         // Wing: jerk, stall, fold.
-        private const float JerkEnd = 0.2f;
+        private const float JerkEnd = 0.3f;
         private const float FoldStart = 0.6f;
         private const float StallTremble = 0.03f;
         private const float StallWobbles = 9f;
@@ -151,7 +165,45 @@ namespace MoonProject.Rover
             return Mathf.Max(near, far);
         }
 
-        /// <summary>The neck's yaw and pitch offsets (deg) in the head check: a sweep to both sides, then a nod.</summary>
+        /// <summary>
+        /// A stiff old servo's move from 0 to 1 over <paramref name="u"/> (0..1), never decreasing: <paramref name="steps"/>
+        /// steps, each holding still for <paramref name="hold"/> of its length and otherwise creeping to
+        /// <paramref name="catchLevel"/> of the step, catching (stalled for <paramref name="catchShare"/> of the move),
+        /// then freeing and finishing it, eased throughout.
+        /// </summary>
+        public static float ServoCurve(float u, int steps, float hold, float catchLevel, float catchShare)
+        {
+            int count = Mathf.Max(1, steps);
+            float scaled = Mathf.Clamp01(u) * count;
+            int index = Mathf.Min((int)scaled, count - 1);
+            float move = Mathf.Clamp01((scaled - index) / Mathf.Max(1e-4f, 1f - hold));
+            float creepEnd = 0.5f * (1f - catchShare);
+            float freeStart = creepEnd + catchShare;
+            float within;
+            if (move < creepEnd)
+            {
+                within = catchLevel * Smoothing.SmoothStep(0f, creepEnd, move);
+            }
+            else if (move < freeStart)
+            {
+                within = catchLevel;
+            }
+            else
+            {
+                within = catchLevel + (1f - catchLevel) * Smoothing.SmoothStep(freeStart, 1f, move);
+            }
+
+            return (index + within) / count;
+        }
+
+        /// <summary>The settings' servo: 0 to 1 over <paramref name="u"/> (see <see cref="ServoCurve"/>).</summary>
+        public float Servo(float u)
+        {
+            return ServoCurve(u, _settings.ServoSteps, _settings.ServoHoldShare, _settings.ServoCatchLevel,
+                _settings.ServoCatchShare);
+        }
+
+        /// <summary>The neck's yaw and pitch offsets (deg) in the head check: a stepped sweep to both sides, then a nod.</summary>
         public Vector2 Head(float p)
         {
             float yaw = 0f;
@@ -159,12 +211,27 @@ namespace MoonProject.Rover
             if (p < SweepShare)
             {
                 float u = p / SweepShare;
-                yaw = _settings.HeadSweepDegrees * Mathf.Sin(2f * Mathf.PI * u) * Mathf.Sin(Mathf.PI * u);
+                float reach = _settings.HeadSweepDegrees;
+                if (u < StrokeFirst)
+                {
+                    yaw = reach * Servo(u / StrokeFirst);
+                }
+                else if (u < StrokeFirst + StrokeSecond)
+                {
+                    yaw = reach * (1f - 2f * Servo((u - StrokeFirst) / StrokeSecond));
+                }
+                else
+                {
+                    yaw = -reach * (1f - Servo((u - StrokeFirst - StrokeSecond) / (1f - StrokeFirst - StrokeSecond)));
+                }
             }
             else if (p > NodStart)
             {
                 float u = Mathf.Clamp01((p - NodStart) / (1f - NodStart));
-                pitch = -_settings.HeadNodDegrees * Mathf.Sin(Mathf.PI * u);
+                float down = u < NodDownShare
+                    ? Servo(u / NodDownShare)
+                    : 1f - Smoothing.SmoothStep(NodDownShare, 1f, u);
+                pitch = -_settings.HeadNodDegrees * down;
             }
 
             return new Vector2(yaw, pitch);
@@ -180,10 +247,16 @@ namespace MoonProject.Rover
             }
 
             float sign = wheel % 2 == 0 ? 1f : -1f;
-            return sign * _settings.WheelTwitchDegrees * Mathf.Sin(2f * Mathf.PI * u) * Mathf.Sin(Mathf.PI * u);
+            float turned = u < WheelOutShare
+                ? Servo(u / WheelOutShare)
+                : 1f - Smoothing.SmoothStep(WheelOutShare, 1f, u);
+            return sign * _settings.WheelTwitchDegrees * turned;
         }
 
-        /// <summary>The motor's vertical shudder (m) at progress <paramref name="p"/>: fast, building then settling.</summary>
+        /// <summary>
+        /// The motor's vertical shudder (m) at progress <paramref name="p"/>: three slow bursts a pause apart, each
+        /// stronger than the last, as a cold motor tries to catch.
+        /// </summary>
         public float Shudder(float p)
         {
             if (p >= ShudderEnd)
@@ -191,11 +264,20 @@ namespace MoonProject.Rover
                 return 0f;
             }
 
-            float u = p / ShudderEnd;
-            return _settings.ShudderMetres * Mathf.Sin(Mathf.PI * u) * Mathf.Sin(2f * Mathf.PI * 11f * u);
+            float shake = 0f;
+            for (int i = 0; i < BurstStarts.Length; i++)
+            {
+                float v = (p - BurstStarts[i]) / BurstWindow;
+                if (v > 0f && v < 1f)
+                {
+                    shake += BurstPeaks[i] * Mathf.Sin(Mathf.PI * v) * Mathf.Sin(2f * Mathf.PI * BurstCycles * v);
+                }
+            }
+
+            return _settings.ShudderMetres * shake;
         }
 
-        /// <summary>The motor's creep (m forward) at progress <paramref name="p"/>: a lurch out and back.</summary>
+        /// <summary>The motor's creep (m forward) at progress <paramref name="p"/>: out in steps, then back slowly.</summary>
         public float Lurch(float p)
         {
             if (p <= LurchStart || p >= LurchEnd)
@@ -204,7 +286,10 @@ namespace MoonProject.Rover
             }
 
             float u = (p - LurchStart) / (LurchEnd - LurchStart);
-            return _settings.LurchMetres * Mathf.Sin(Mathf.PI * u);
+            float creep = u < LurchOutShare
+                ? Servo(u / LurchOutShare)
+                : 1f - Smoothing.SmoothStep(LurchOutShare, 1f, u);
+            return _settings.LurchMetres * creep;
         }
 
         /// <summary>The nozzle's flash (0..1) at progress <paramref name="p"/> of the cutter check: three failed ignitions.</summary>
@@ -247,7 +332,7 @@ namespace MoonProject.Rover
             float open = _settings.WingJerkOpen;
             if (p < JerkEnd)
             {
-                return open * Smoothing.SmoothStep(0f, JerkEnd, p);
+                return open * Servo(p / JerkEnd);
             }
 
             if (p < FoldStart)
@@ -262,7 +347,7 @@ namespace MoonProject.Rover
         /// <summary>The antenna's rise (m) at progress <paramref name="p"/>: up, then held.</summary>
         public float Antenna(float p)
         {
-            return _settings.AntennaRiseMetres * Smoothing.SmoothStep(0f, AntennaRiseShare, p);
+            return _settings.AntennaRiseMetres * Servo(p / AntennaRiseShare);
         }
 
         /// <summary>The cell lamps' fill (0..1 of full) at progress <paramref name="p"/>: up to the battery's share.</summary>

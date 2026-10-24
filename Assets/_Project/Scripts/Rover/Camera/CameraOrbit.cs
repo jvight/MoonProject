@@ -123,6 +123,15 @@ namespace MoonProject.Rover
             _buttonEasing = false;
         }
 
+        /// <summary>
+        /// Turns the view <paramref name="degrees"/> with 07 when something other than the player turns it (the dock
+        /// letting go facing another way), so the view keeps its place behind 07 instead of staying on the old bearing.
+        /// </summary>
+        public void Carry(float degrees)
+        {
+            Bearing = Mathf.DeltaAngle(0f, Bearing + degrees);
+        }
+
         public void Step(in CameraOrbitInput input, float deltaTime)
         {
             if (deltaTime <= 0f)

@@ -80,6 +80,8 @@ namespace MoonProject.Art.Editor
             }
 
             R1StoryPropsBuilder.BuildStoryPropMaterials(litShader);
+            R1MareKitBuilder.BuildMareMaterials(litShader);
+            BuildRockfallMaterials(litShader);
             AssetDatabase.SaveAssets();
         }
 
@@ -87,6 +89,93 @@ namespace MoonProject.Art.Editor
         /// Loads the R1 <c>MoonProject/R1/Lit</c> shader strictly from <see cref="R1MaterialRecipes.ShaderPath"/>.
         /// Throws <see cref="InvalidOperationException"/> if the shader asset is missing.
         /// </summary>
+        /// <summary>Material asset name for the lighter-toned fresh-broken lunar rockfall boulders.</summary>
+        public const string FreshBasaltMaterialName = "R1_FreshBasalt";
+
+        /// <summary>Generated asset path for <see cref="FreshBasaltMaterialName"/>.</summary>
+        public const string FreshBasaltMaterialPath =
+            R1MaterialRecipes.GeneratedMaterialsFolder + "/" + FreshBasaltMaterialName + ".mat";
+
+        /// <summary>Material asset name for the 40-50 m wide landslide scree/talus tongue slab.</summary>
+        public const string RockfallTalusMaterialName = "R1_RockfallTalus";
+
+        /// <summary>Generated asset path for <see cref="RockfallTalusMaterialName"/>.</summary>
+        public const string RockfallTalusMaterialPath =
+            R1MaterialRecipes.GeneratedMaterialsFolder + "/" + RockfallTalusMaterialName + ".mat";
+
+        /// <summary>
+        /// Builds the lighter-toned fresh rockfall materials (<c>R1_FreshBasalt.mat</c> and <c>R1_RockfallTalus.mat</c>)
+        /// into <c>Assets/_Project/Generated/Art/R1/Materials/</c>. Freshly broken lunar breccia/anorthosite-basalt has
+        /// higher albedo than ancient space-weathered basalt and blends with the pale <c>DustLight</c> rockfall scar.
+        /// </summary>
+        public static void BuildRockfallMaterials(Shader litShader = null)
+        {
+            if (litShader == null)
+            {
+                litShader = LoadShader();
+            }
+
+            R1MaterialSpec basaltSpec = R1MaterialRecipes.Get(R1MaterialSlot.Basalt);
+
+            Material freshBasalt = CreateMaterial(litShader, basaltSpec);
+            freshBasalt.name = FreshBasaltMaterialName;
+            freshBasalt.SetColor("_BaseColor", new Color(1.56f, 1.58f, 1.62f, 1f));
+            freshBasalt.SetColor("_EdgeWearColor", new Color(0.76f, 0.77f, 0.80f, 1f));
+            freshBasalt.SetFloat("_EdgeWearAmount", 0.74f);
+            freshBasalt.SetFloat("_EdgeWearThreshold", 0.16f);
+            freshBasalt.SetFloat("_EdgeWearSharpness", 2.8f);
+            freshBasalt.SetFloat("_EdgeWearSmoothness", 0.18f);
+            freshBasalt.SetColor("_DustColor", new Color(0.66f, 0.67f, 0.69f, 1f));
+            freshBasalt.SetFloat("_DustAmount", 0.62f);
+            freshBasalt.SetFloat("_DustSharpness", 2.0f);
+            freshBasalt.SetFloat("_DustUpThreshold", 0.15f);
+            freshBasalt.SetFloat("_DustOcclusionWeight", 0.45f);
+            freshBasalt.SetFloat("_OcclusionStrength", 0.85f);
+            GeneratedAssets.CreateOrReplace(freshBasalt, FreshBasaltMaterialPath);
+
+            Material rockfallTalus = CreateMaterial(litShader, basaltSpec);
+            rockfallTalus.name = RockfallTalusMaterialName;
+            rockfallTalus.SetColor("_BaseColor", new Color(1.62f, 1.64f, 1.68f, 1f));
+            rockfallTalus.SetColor("_EdgeWearColor", new Color(0.74f, 0.75f, 0.78f, 1f));
+            rockfallTalus.SetFloat("_EdgeWearAmount", 0.68f);
+            rockfallTalus.SetFloat("_EdgeWearThreshold", 0.18f);
+            rockfallTalus.SetFloat("_EdgeWearSharpness", 2.4f);
+            rockfallTalus.SetFloat("_EdgeWearSmoothness", 0.16f);
+            rockfallTalus.SetColor("_DustColor", new Color(0.651f, 0.655f, 0.671f, 1f));
+            rockfallTalus.SetFloat("_DustAmount", 0.84f);
+            rockfallTalus.SetFloat("_DustSharpness", 1.6f);
+            rockfallTalus.SetFloat("_DustUpThreshold", -0.05f);
+            rockfallTalus.SetFloat("_DustOcclusionWeight", 0.25f);
+            rockfallTalus.SetFloat("_OcclusionStrength", 0.78f);
+            GeneratedAssets.CreateOrReplace(rockfallTalus, RockfallTalusMaterialPath);
+        }
+
+        /// <summary>Loads or builds <c>R1_FreshBasalt.mat</c> for fresh-broken rockfall boulders.</summary>
+        public static Material LoadFreshBasaltMaterial()
+        {
+            var mat = AssetDatabase.LoadAssetAtPath<Material>(FreshBasaltMaterialPath);
+            if (mat == null)
+            {
+                BuildRockfallMaterials();
+                mat = AssetDatabase.LoadAssetAtPath<Material>(FreshBasaltMaterialPath);
+            }
+
+            return mat;
+        }
+
+        /// <summary>Loads or builds <c>R1_RockfallTalus.mat</c> for the landslide scree/talus tongue slab.</summary>
+        public static Material LoadRockfallTalusMaterial()
+        {
+            var mat = AssetDatabase.LoadAssetAtPath<Material>(RockfallTalusMaterialPath);
+            if (mat == null)
+            {
+                BuildRockfallMaterials();
+                mat = AssetDatabase.LoadAssetAtPath<Material>(RockfallTalusMaterialPath);
+            }
+
+            return mat;
+        }
+
         public static Shader LoadShader()
         {
             var shader = AssetDatabase.LoadAssetAtPath<Shader>(R1MaterialRecipes.ShaderPath);

@@ -6,8 +6,9 @@ namespace MoonProject.World
 {
     /// <summary>
     /// Whispering Canyon carved into the moon surface: the main corridor (mouth, take-off ramp, chasm, landing apron,
-    /// a winding climb to the terminus, alcoves and the glinting ledge) and the one-way exit corridor (a shelf ending
-    /// in a step down to the basin). Each corridor is a trench (floor plus sheer walls) unioned with the world by a
+    /// a winding climb to the terminus, alcoves and the glinting ledge), the one-way exit corridor (a shelf ending
+    /// in a step down to the basin) and the shadowed slot beside the mouth (a narrow, doglegged cleft, open to the
+    /// basin, whose floor the low polar Sun never reaches, ending in a round bay). Each corridor is a trench (floor plus sheer walls) unioned with the world by a
     /// smooth minimum, and banks that raise the walls where the rim is low, by a smooth maximum; both fade in over
     /// the mouths, so the surface stays C1. Immutable and thread-safe.
     /// </summary>
@@ -26,6 +27,13 @@ namespace MoonProject.World
         // Walls start rising just after the floor has switched in, and reach full height this far into the corridor.
         private const float MainWallRamp = 14f;
         private const float ExitWallRamp = 6f;
+        private const float SlotWallRamp = 4f;
+        private const float SlotClimbEase = 4f;
+
+        // The slot's rock and dust darken from this far outside its mouth to this far in, so the cleft reads black
+        // from outside: the floor past its turn never sees the Sun, and the paint says so before the eye gets there.
+        private const float SlotShadeOut = 4f;
+        private const float SlotShadeIn = 6f;
         private const float StepLength = 1f;
         private const float Rounding = 1f;
         private const float WallOvershoot = 40f;
@@ -64,9 +72,12 @@ namespace MoonProject.World
         private readonly CanyonSettings _settings;
         private readonly CanyonPath _main;
         private readonly CanyonPath _exit;
+        private readonly CanyonPath _slot;
         private readonly GradientNoise _roughness;
         private readonly float _mainBase;
         private readonly float _exitBase;
+        private readonly float _slotBase;
+        private readonly float _slotLength;
         private readonly float _lip;
         private readonly float _far;
         private readonly float _apronEnd;
@@ -82,6 +93,7 @@ namespace MoonProject.World
         private readonly float[] _alcoveSides;
         private readonly float _mainReach;
         private readonly float _exitReach;
+        private readonly float _slotReach;
 
         /// <param name="baseHeight">The world height without the canyon (sets the floor height at the mouths).</param>
         public Canyon(CanyonSettings settings, uint seed, Func<float, float, float> baseHeight)
@@ -104,6 +116,7 @@ namespace MoonProject.World
                 settings.CanyonHalfWidth + Mathf.Max(BayWidth, settings.AlcoveDepth), settings.TerminusRadius);
             _mainReach = widest + settings.WallRun + settings.FlankRun + ReachMargin;
             _exitReach = ExitMouthHalfWidth + settings.WallRun + settings.FlankRun + ReachMargin;
+            _slotReach = settings.SlotBayRadius + settings.WallRun + settings.FlankRun + ReachMargin;
 
             Vector2 outward = MoonSurface.BearingToDirection(settings.Bearing);
             Vector2 mouth = outward * settings.MouthDistance;
@@ -115,6 +128,9 @@ namespace MoonProject.World
             _exitLength = _exit.EndArc;
             _exitBase = MouthHeight(_exit, ExitMouthHalfWidth, baseHeight);
             _exitFoot = settings.ExitFootLength;
+            _slot = new CanyonPath(SlotLine(settings, mouth, outward), -Lead, _slotReach);
+            _slotLength = _slot.EndArc;
+            _slotBase = MouthHeight(_slot, settings.SlotHalfWidth, baseHeight);
 
             _ledgeSide = settings.BendAngle >= 0f ? -1f : 1f;
             _ledgeArc = SightArc(outward);
@@ -143,8 +159,9 @@ namespace MoonProject.World
 
             Rect a = _main.Bounds;
             Rect b = _exit.Bounds;
-            Bounds = Rect.MinMaxRect(Mathf.Min(a.xMin, b.xMin), Mathf.Min(a.yMin, b.yMin), Mathf.Max(a.xMax, b.xMax),
-                Mathf.Max(a.yMax, b.yMax));
+            Rect c = _slot.Bounds;
+            Bounds = Rect.MinMaxRect(Mathf.Min(a.xMin, b.xMin, c.xMin), Mathf.Min(a.yMin, b.yMin, c.yMin),
+                Mathf.Max(a.xMax, b.xMax, c.xMax), Mathf.Max(a.yMax, b.yMax, c.yMax));
         }
 
         /// <summary>The tuning this canyon was carved from.</summary>
@@ -166,6 +183,15 @@ namespace MoonProject.World
         public CanyonPath MainPath => _main;
 
         public CanyonPath ExitPath => _exit;
+
+        /// <summary>The shadowed slot's centre line, from its mouth on the basin floor to the middle of its bay.</summary>
+        public CanyonPath SlotPath => _slot;
+
+        /// <summary>Arc length along the slot's path where its turn ends and the dark second leg begins.</summary>
+        public float SlotTurnEndArc => _settings.SlotFirstLeg + SlotTurnLength(_settings);
+
+        /// <summary>Centre of the slot's round bay, where the crew's supply lander will stand.</summary>
+        public Vector2 SlotBayCentre => _slot.PointAt(_slotLength);
 
         /// <summary>Arc length of the lip crest along the main path.</summary>
         public float LipArc => _lip;
@@ -206,18 +232,21 @@ namespace MoonProject.World
 
         /// <summary>
         /// Height at (x, z) given <paramref name="worldHeight"/> there, plus region weights: 1 on a corridor floor,
-        /// and 1 in the chasm trough.
+        /// 1 in the chasm trough, and 1 on the slot's floor and walls from a few metres in from its mouth.
         /// </summary>
-        public float Apply(float x, float z, float worldHeight, out float floorWeight, out float chasmWeight)
+        public float Apply(float x, float z, float worldHeight, out float floorWeight, out float chasmWeight,
+            out float shadowWeight)
         {
             floorWeight = 0f;
             chasmWeight = 0f;
+            shadowWeight = 0f;
             float trench = float.MaxValue;
             float bank = float.MinValue;
             float rounding = 0f;
             if (_main.TryProject(x, z, out float arc, out float lateral))
             {
-                Corridor(true, x, z, arc, lateral, worldHeight, ref trench, ref bank, ref rounding, out float floor);
+                Corridor(CanyonCorridor.Main, x, z, arc, lateral, worldHeight, ref trench, ref bank, ref rounding,
+                    out float floor);
                 floorWeight = floor;
                 chasmWeight = floor * SmoothMath.Smootherstep(_lip + 1f, _lip + 4f, arc)
                     * (1f - SmoothMath.Smootherstep(_far - SlabHalfDepth - 1f, _far - SlabHalfDepth, arc));
@@ -225,8 +254,19 @@ namespace MoonProject.World
 
             if (_exit.TryProject(x, z, out arc, out lateral))
             {
-                Corridor(false, x, z, arc, lateral, worldHeight, ref trench, ref bank, ref rounding, out float floor);
+                Corridor(CanyonCorridor.Exit, x, z, arc, lateral, worldHeight, ref trench, ref bank, ref rounding,
+                    out float floor);
                 floorWeight = Mathf.Max(floorWeight, floor);
+            }
+
+            if (_slot.TryProject(x, z, out arc, out lateral))
+            {
+                Corridor(CanyonCorridor.Slot, x, z, arc, lateral, worldHeight, ref trench, ref bank, ref rounding,
+                    out float floor);
+                floorWeight = Mathf.Max(floorWeight, floor);
+                float wallTop = HalfWidth(CanyonCorridor.Slot, arc, lateral) + _settings.WallRun;
+                shadowWeight = SmoothMath.Smootherstep(-SlotShadeOut, SlotShadeIn, arc)
+                    * (1f - SmoothMath.Smootherstep(wallTop, wallTop + _settings.FlankRun, Mathf.Abs(lateral)));
             }
 
             if (trench == float.MaxValue)
@@ -251,51 +291,48 @@ namespace MoonProject.World
             bool? result = null;
             if (_main.TryProject(x, z, out float arc, out float lateral))
             {
-                result = Decide(arc, Mathf.Abs(lateral), HalfWidth(true, arc, lateral), _settings.WallRun,
-                    Mathf.Abs(arc - _far) <= SlabHalfDepth + 0.5f);
+                result = Decide(arc, Mathf.Abs(lateral), HalfWidth(CanyonCorridor.Main, arc, lateral),
+                    _settings.WallRun, Mathf.Abs(arc - _far) <= SlabHalfDepth + 0.5f);
             }
 
             if (result != true && _exit.TryProject(x, z, out arc, out lateral))
             {
-                bool? exit = Decide(arc, Mathf.Abs(lateral), HalfWidth(false, arc, lateral), _settings.WallRun,
-                    Mathf.Abs(arc - _exitFoot) <= SlabHalfDepth + 0.5f);
+                bool? exit = Decide(arc, Mathf.Abs(lateral), HalfWidth(CanyonCorridor.Exit, arc, lateral),
+                    _settings.WallRun, Mathf.Abs(arc - _exitFoot) <= SlabHalfDepth + 0.5f);
                 result = exit == true ? true : result ?? exit;
+            }
+
+            if (result != true && _slot.TryProject(x, z, out arc, out lateral))
+            {
+                bool? slot = Decide(arc, Mathf.Abs(lateral), HalfWidth(CanyonCorridor.Slot, arc, lateral),
+                    _settings.WallRun, false);
+                result = slot == true ? true : result ?? slot;
             }
 
             return result;
         }
 
         /// <summary>
-        /// True when (x, z) lies on a corridor's floor; <paramref name="mainCorridor"/> tells which corridor (the main
-        /// one wins where they meet), <paramref name="arc"/> how far along it, and <paramref name="centre"/> how close
-        /// to its centre line (0 on the line, 1 at the foot of the walls).
+        /// True when (x, z) lies on a corridor's floor; <paramref name="corridor"/> tells which one (the main one wins
+        /// where they meet, then the exit), <paramref name="arc"/> how far along it, and <paramref name="centre"/> how
+        /// close to its centre line (0 on the line, 1 at the foot of the walls).
         /// </summary>
-        public bool TryFloor(float x, float z, out bool mainCorridor, out float arc, out float centre)
+        public bool TryFloor(float x, float z, out CanyonCorridor corridor, out float arc, out float centre)
         {
-            mainCorridor = true;
-            if (_main.TryProject(x, z, out arc, out float lateral))
+            corridor = CanyonCorridor.Main;
+            if (OnFloor(_main, corridor, x, z, out arc, out centre))
             {
-                float halfWidth = HalfWidth(true, arc, lateral);
-                if (Mathf.Abs(lateral) < halfWidth)
-                {
-                    centre = Mathf.Abs(lateral) / halfWidth;
-                    return true;
-                }
+                return true;
             }
 
-            mainCorridor = false;
-            if (_exit.TryProject(x, z, out arc, out lateral))
+            corridor = CanyonCorridor.Exit;
+            if (OnFloor(_exit, corridor, x, z, out arc, out centre))
             {
-                float halfWidth = HalfWidth(false, arc, lateral);
-                if (Mathf.Abs(lateral) < halfWidth)
-                {
-                    centre = Mathf.Abs(lateral) / halfWidth;
-                    return true;
-                }
+                return true;
             }
 
-            centre = 1f;
-            return false;
+            corridor = CanyonCorridor.Slot;
+            return OnFloor(_slot, corridor, x, z, out arc, out centre);
         }
 
         /// <summary>
@@ -305,7 +342,8 @@ namespace MoonProject.World
         {
             float wallReach = _settings.WallRun + ReachMargin;
             return Touches(_main, _mainReach - _settings.FlankRun - ReachMargin + wallReach, area)
-                || Touches(_exit, _exitReach - _settings.FlankRun - ReachMargin + wallReach, area);
+                || Touches(_exit, _exitReach - _settings.FlankRun - ReachMargin + wallReach, area)
+                || Touches(_slot, _slotReach - _settings.FlankRun - ReachMargin + wallReach, area);
         }
 
         /// <summary>
@@ -331,6 +369,31 @@ namespace MoonProject.World
                     _exitLength - _exitFoot - SlabHalfDepth, ExitEase);
         }
 
+        /// <summary>Floor height of the shadowed slot at arc length <paramref name="arc"/> from its mouth.</summary>
+        public float SlotFloor(float arc)
+        {
+            return _slotBase + _settings.SlotClimb * SmoothMath.SmoothRamp(arc, _slotLength, SlotClimbEase);
+        }
+
+        private bool OnFloor(CanyonPath path, CanyonCorridor corridor, float x, float z, out float arc,
+            out float centre)
+        {
+            centre = 1f;
+            if (!path.TryProject(x, z, out arc, out float lateral))
+            {
+                return false;
+            }
+
+            float halfWidth = HalfWidth(corridor, arc, lateral);
+            if (Mathf.Abs(lateral) >= halfWidth)
+            {
+                return false;
+            }
+
+            centre = Mathf.Abs(lateral) / halfWidth;
+            return true;
+        }
+
         private bool? Decide(float arc, float distance, float halfWidth, float wallRun, bool onFace)
         {
             if (arc < -MouthBlend || distance >= halfWidth + wallRun + _settings.FlankRun)
@@ -352,24 +415,44 @@ namespace MoonProject.World
         /// included: at weight 0 trench, bank and world are equal and the union returns the world exactly. The bank
         /// always stands two roundings above the floor, so the rounding never dents the floor.
         /// </summary>
-        private void Corridor(bool main, float x, float z, float arc, float lateral, float worldHeight,
+        private void Corridor(CanyonCorridor corridor, float x, float z, float arc, float lateral, float worldHeight,
             ref float trench, ref float bank, ref float rounding, out float floorWeight)
         {
             float distance = Mathf.Abs(lateral);
-            float halfWidth = HalfWidth(main, arc, lateral);
+            float halfWidth = HalfWidth(corridor, arc, lateral);
             float mouth = SmoothMath.Smootherstep(-MouthBlend, 0f, arc);
             float ownRounding = Rounding * mouth;
-            float floor = main ? MainFloor(arc) + Ledge(x, z) : ExitFloor(arc);
+            float floor;
+            float wallRamp;
+            float reach;
+            switch (corridor)
+            {
+                case CanyonCorridor.Main:
+                    floor = MainFloor(arc) + Ledge(x, z);
+                    wallRamp = MainWallRamp;
+                    reach = _mainReach;
+                    break;
+                case CanyonCorridor.Exit:
+                    floor = ExitFloor(arc);
+                    wallRamp = ExitWallRamp;
+                    reach = _exitReach;
+                    break;
+                default:
+                    floor = SlotFloor(arc);
+                    wallRamp = SlotWallRamp;
+                    reach = _slotReach;
+                    break;
+            }
+
             float flooring = worldHeight + (floor - worldHeight) * mouth;
             float rising = (_settings.WallHeight + _settings.WallRoughness
                     * _roughness.Fractal(x / RoughnessWavelength, z / RoughnessWavelength, 2, 2f, 0.5f))
-                * SmoothMath.Smootherstep(-1f, main ? MainWallRamp : ExitWallRamp, arc);
+                * SmoothMath.Smootherstep(-1f, wallRamp, arc);
             float walls = ownRounding > 0f
                 ? SmoothMath.SmoothMax(rising, 2f * ownRounding, ownRounding)
                 : Mathf.Max(rising, 0f);
             float wallEnd = halfWidth + _settings.WallRun;
             float flankEnd = wallEnd + _settings.FlankRun;
-            float reach = main ? _mainReach : _exitReach;
             float rise = SmoothMath.Smootherstep(halfWidth, wallEnd, distance);
             float edge = distance < halfWidth ? EdgeRise * Mathf.Pow(distance / halfWidth, 4f) : EdgeRise;
 
@@ -388,15 +471,21 @@ namespace MoonProject.World
             floorWeight = mouth * (1f - rise);
         }
 
-        private float HalfWidth(bool main, float arc, float lateral)
+        private float HalfWidth(CanyonCorridor corridor, float arc, float lateral)
         {
-            if (!main)
+            CanyonSettings s = _settings;
+            if (corridor == CanyonCorridor.Exit)
             {
-                return _settings.ExitHalfWidth + (ExitMouthHalfWidth - _settings.ExitHalfWidth)
+                return s.ExitHalfWidth + (ExitMouthHalfWidth - s.ExitHalfWidth)
                     * (1f - SmoothMath.Smootherstep(-MouthBlend, _exitFoot - SlabHalfDepth, arc));
             }
 
-            CanyonSettings s = _settings;
+            if (corridor == CanyonCorridor.Slot)
+            {
+                return s.SlotHalfWidth + (s.SlotBayRadius - s.SlotHalfWidth)
+                    * SmoothMath.Smootherstep(_slotLength - 2f * s.SlotBayRadius, _slotLength, arc);
+            }
+
             float flare = 1f - SmoothMath.Smootherstep(-6f, s.ApproachLength + 4f, arc);
             float narrowing = SmoothMath.Smootherstep(_apronEnd, _apronEnd + NarrowLength, arc);
             float width = s.ChasmHalfWidth
@@ -534,6 +623,40 @@ namespace MoonProject.World
                     * SmoothMath.Smootherstep(bendEnd, bendEnd + settings.WindWavelength * 0.5f, middle);
                 double heading = (settings.Bearing
                     + settings.BendAngle * SmoothMath.Smootherstep(settings.BendStart, bendEnd, middle) + wind)
+                    * (Math.PI / 180.0);
+                x += Math.Sin(heading) * StepLength;
+                z += Math.Cos(heading) * StepLength;
+            }
+
+            points.Add(new Vector2((float)x, (float)z));
+            return points;
+        }
+
+        private static float SlotTurnLength(CanyonSettings settings)
+        {
+            return settings.SlotTurnRadius * settings.SlotTurnAngle * Mathf.Deg2Rad;
+        }
+
+        /// <summary>
+        /// The slot's centre line, from its mouth on the basin floor to the right of the canyon's mouth: straight out
+        /// along the canyon's bearing, a turn to the right, away from the chasm, then straight on to its bay's centre.
+        /// </summary>
+        private static List<Vector2> SlotLine(CanyonSettings settings, Vector2 mainMouth, Vector2 outward)
+        {
+            var right = new Vector2(outward.y, -outward.x);
+            Vector2 mouth = mainMouth + right * settings.SlotOffset;
+            double x = mouth.x - outward.x * Lead;
+            double z = mouth.y - outward.y * Lead;
+            float turn = SlotTurnLength(settings);
+            float length = settings.SlotFirstLeg + turn + settings.SlotSecondLeg;
+            int steps = Mathf.RoundToInt((length + Lead) / StepLength);
+            var points = new List<Vector2>();
+            for (int step = 0; step < steps; step++)
+            {
+                points.Add(new Vector2((float)x, (float)z));
+                float middle = -Lead + (step + 0.5f) * StepLength;
+                double heading = (settings.Bearing
+                    + settings.SlotTurnAngle * Mathf.Clamp01((middle - settings.SlotFirstLeg) / turn))
                     * (Math.PI / 180.0);
                 x += Math.Sin(heading) * StepLength;
                 z += Math.Cos(heading) * StepLength;

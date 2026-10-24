@@ -54,6 +54,7 @@ MonoBehaviour:
   _recenterEaseAngle: 20
   _recenterPitchRate: 7
   _recenterButtonSeconds: 1.4
+  _releaseCarrySeconds: 2.5
   _followHalfLife: 0.27
   _followMaxRate: 45
   _framingMaxSpeed: 1
@@ -181,8 +182,8 @@ MonoBehaviour:
     _blinkLow: 0.25
     _blinkSigh: 0.5
     _post:
-      _pushInSeconds: 1
-      _darkSeconds: 0.5
+      _pushInSeconds: 1.6
+      _darkSeconds: 0.8
       _powerOnSeconds: 1.2
       _logoSeconds: 5
       _loadSeconds: 2.4
@@ -203,17 +204,17 @@ MonoBehaviour:
       - _step: 4
         _seconds: 1.2
       - _step: 5
-        _seconds: 0.5
+        _seconds: 1.5
       - _step: 6
-        _seconds: 0.6
+        _seconds: 1.4
       - _step: 7
-        _seconds: 0.5
+        _seconds: 1.2
       - _step: 8
         _seconds: 1.2
       - _step: 9
-        _seconds: 0.6
+        _seconds: 1.3
       - _step: 10
-        _seconds: 0.6
+        _seconds: 1.1
       - _step: 11
         _seconds: 0.6
       - _step: 12
@@ -222,8 +223,8 @@ MonoBehaviour:
         _seconds: 0.4
       _fastForwardAfterSeconds: 0.6
       _fastForwardScale: 6
-      _headSweepDegrees: 10
-      _headNodDegrees: 5
+      _headSweepDegrees: 6
+      _headNodDegrees: 4
       _wheelTwitchDegrees: 14
       _shudderMetres: 0.012
       _lurchMetres: 0.06
@@ -231,6 +232,10 @@ MonoBehaviour:
       _wingJerkOpen: 0.5
       _antennaRiseMetres: 0.12
       _batteryFill: 0.5
+      _servoSteps: 2
+      _servoHoldShare: 0.2
+      _servoCatchLevel: 0.4
+      _servoCatchShare: 0.1
       _dustCoatAmount: 4
       _dustPuffStep: 0.15
       _dustPuffGrains: 6

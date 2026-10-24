@@ -1,0 +1,111 @@
+{
+  "model": "derelict_tardigrade_capsule",
+  "pivot_tolerance": 0.02,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_BareSteel",
+    "R1_Basalt",
+    "R1_Brass",
+    "R1_Copper",
+    "R1_GoldFoil",
+    "R1_LampAmber",
+    "R1_Signage",
+    "R1_WhitePaint"
+  ],
+  "max_triangles": 1224,
+  "max_meshes": 5,
+  "max_draw_calls": 9,
+  "allow_rotation": [],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "ArchivePlaque": {
+      "pivot": [
+        -0.0328,
+        0.1037,
+        0.3742
+      ]
+    },
+    "Base_Anchor": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "BurialMound": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "CapsuleBody": {
+      "pivot": [
+        0.0,
+        0.04,
+        0.22
+      ]
+    },
+    "CarryGrip_Anchor": {
+      "pivot": [
+        -0.0193,
+        0.0775,
+        0.3107
+      ]
+    },
+    "Decal_ILC_1": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Derelict_TardigradeCapsule": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "ScanTarget_Anchor": {
+      "pivot": [
+        -0.0366,
+        0.1112,
+        0.3923
+      ]
+    },
+    "TinyWindow": {
+      "pivot": [
+        0.0127,
+        0.2979,
+        0.1603
+      ]
+    },
+    "Window_Anchor": {
+      "pivot": [
+        0.0133,
+        0.3053,
+        0.1573
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      1.0213,
+      0.9541,
+      0.554
+    ],
+    "tolerance": 0.0511,
+    "min_size": [
+      0.9702,
+      0.903,
+      0.5029
+    ],
+    "max_size": [
+      1.0724,
+      1.0052,
+      0.6051
+    ]
+  }
+}

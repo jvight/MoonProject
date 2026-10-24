@@ -98,6 +98,19 @@ namespace MoonProject.World.PlayModeTests
         private const float SummitFov = 20f;
         private const float RelayNearDistance = 15f;
 
+        // The crater's gates filmed: eye heights at the ruins' rise, relay.1 and the hut, and before the slot's mouth;
+        // what each view looks at (above the ground there, the notch's floor, the rockfall up the road, into the slot)
+        // and the close crop of the rockfall from the base.
+        private const float GateRiseEyeHeight = 6f;
+        private const float GateRelayEyeHeight = 2.5f;
+        private const float GateSlotStandOff = 14f;
+        private const float GateSlotEyeHeight = 2f;
+        private const float GateLookHeight = 2f;
+        private const float GateNotchLook = 12f;
+        private const float GateRockfallAhead = 17f;
+        private const float GateSlotLookIn = 16f;
+        private const float GateZoomFov = 12f;
+
         // The beats where the world should lead: where the naive bot's 07 stands as each step begins (n0ac9ae9ec's
         // log), the targets, the habitat's module brought home before nightfall, the bot's screen and the dusk's lead.
         private static readonly Vector2 BeatB8Spot = new Vector2(9f, 135.7f);
@@ -1383,6 +1396,118 @@ namespace MoonProject.World.PlayModeTests
 
             log.Append($" {label}: {toTarget.magnitude:F0} m, {bearing:F0} deg across (edge {halfHorizontal:F0}), " +
                        $"{pitch:F1} deg up, {blocker};");
+        }
+
+        /// <summary>
+        /// The crater's ways out (base-home-and-crater-exits §4) on a real New Game: the Peak road's rockfall and its
+        /// scar from 07's wake spot in the eclipse (minute 1); by day, the rockfall from the base and the three gates from the ruins' rise (R9: the rille notch west, the canyon's slot east,
+        /// the rockfall north); relay.1's view of the rille by day and by night (R10); and the slot beside relay.2 at
+        /// night, from its mouth and from the hut (R11). Logs/world-captures/gates-*.png.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(CanyonSessionScene))]
+        [PostBuildCleanup(typeof(CanyonSessionScene))]
+        public IEnumerator CraterGates_AreFilmed_FromTheBaseTheRiseRelay1AndTheSlot()
+        {
+            BootstrapHarness.DeleteSaveFiles(CanyonSessionScene.SaveSlot);
+#if UNITY_EDITOR
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(CanyonSessionScene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            while (!loading.isDone)
+            {
+                yield return null;
+            }
+
+            WorldSettings settings = AssetDatabase.LoadAssetAtPath<WorldSettings>(OpeningSettingsPath);
+#else
+            throw new NotSupportedException("The atmosphere session loads the scene through the editor.");
+#endif
+            GameBootstrap bootstrap = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
+            {
+                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
+            }
+
+            Assert.IsNotNull(bootstrap, "the scene has its bootstrap");
+            GameContext context = bootstrap.Context;
+            _awoke = context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
+            float started = Time.time;
+            while (!_awake)
+            {
+                Assert.Less(Time.time - started, WakeTimeout, "07 wakes up");
+                yield return null;
+            }
+
+            var anchors = context.Get<IWorldAnchors>();
+            var terrain = context.Get<ITerrainQuery>();
+            SurfaceSettings surface = settings.Surface;
+            Vector2 rilleDirection = MoonSurface.BearingToDirection(surface.Rille.Bearing);
+            Vector2 mare2 = rilleDirection * (surface.CrestRadius + surface.Rille.RiseEnd);
+            Vector3 mare = OnGround(terrain, mare2) + Vector3.up * GateLookHeight;
+            Vector2 notch2 = rilleDirection * surface.CrestRadius;
+            Vector3 notch = OnGround(terrain, notch2) + Vector3.up * GateNotchLook;
+            Vector3 road = Anchor(anchors, WorldAnchors.PeakRoad).Position;
+            Vector3 rockfall = OnGround(terrain, new Vector2(road.x, road.z) + new Vector2(road.x, road.z).normalized
+                * GateRockfallAhead) + Vector3.up * GateLookHeight;
+            WorldAnchor slotMouth = Anchor(anchors, WorldAnchors.CanyonSlot);
+            Vector3 slotLook = slotMouth.Position + slotMouth.Forward * GateSlotLookIn + Vector3.up * GateLookHeight;
+            Vector3 apron = Anchor(anchors, WorldAnchorIds.PlaceApron).Position + Vector3.up * OpeningEyeHeight;
+            Vector3 wake = Anchor(anchors, WorldAnchorIds.PlaceWake).Position + Vector3.up * OpeningEyeHeight;
+            Vector3 rise = Anchor(anchors, WorldAnchorIds.PlaceRuins).Position + Vector3.up * GateRiseEyeHeight;
+            Vector3 relay1 = Anchor(anchors, WorldAnchorIds.RelayPrefix + 1).Position + Vector3.up * GateRelayEyeHeight;
+            Vector3 hut = Anchor(anchors, WorldAnchorIds.RelayPrefix + 2).Position + Vector3.up * GateRelayEyeHeight;
+            Vector3 slotEye = slotMouth.Position - slotMouth.Forward * GateSlotStandOff + Vector3.up * GateSlotEyeHeight;
+
+            Camera view = context.Get<IViewCamera>().Camera;
+            var host = new GameObject("GatesCamera");
+            try
+            {
+                var camera = host.AddComponent<Camera>();
+                camera.CopyFrom(view);
+                camera.enabled = false;
+                CopyPipelineSettings(view, camera);
+
+                ShootAt(camera, "gates-wake-rockfall-eclipse", wake, rockfall, OpeningFov);
+                context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.FirstCharge, true));
+                context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.PowerOn, true));
+                yield return new WaitForSeconds(SettleSeconds);
+                Debug.Log($"[gates] day: sun {SunReport(context)}");
+                ShootAt(camera, "gates-base-rockfall", apron, rockfall, OpeningFov);
+                ShootAt(camera, "gates-base-rockfall-zoom", apron, rockfall, GateZoomFov);
+                ShootAt(camera, "gates-rise-rille", rise, notch, OpeningFov);
+                ShootAt(camera, "gates-rise-slot", rise, slotLook, OpeningFov);
+                ShootAt(camera, "gates-rise-rockfall", rise, rockfall, OpeningFov);
+                ShootAt(camera, "gates-relay1-rille", relay1, mare, OpeningFov);
+                ShootAt(camera, "gates-slot-day", slotEye, slotLook, OpeningFov);
+
+                foreach (OpeningMilestone milestone in new[]
+                    {
+                        OpeningMilestone.NightReady, OpeningMilestone.CallAnswered,
+                    })
+                {
+                    context.Events.Publish(new OpeningMilestoneReached(milestone, true));
+                }
+
+                yield return new WaitForSeconds(SettleSeconds);
+                Debug.Log($"[gates] night: sun {SunReport(context)}");
+                ShootAt(camera, "gates-relay1-rille-night", relay1, mare, OpeningFov);
+                ShootAt(camera, "gates-slot-night", slotEye, slotLook, OpeningFov);
+                ShootAt(camera, "gates-slot-from-hut-night", hut, slotLook, OpeningFov);
+                ShootAt(camera, "gates-base-rockfall-night", apron, rockfall, OpeningFov);
+            }
+            finally
+            {
+                Object.Destroy(host);
+            }
+
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        private static void ShootAt(Camera camera, string name, Vector3 eye, Vector3 look, float fov)
+        {
+            Place(camera, LookPose(name, eye, look, fov));
+            Shoot(camera, name);
         }
 
         // Waits through one blink for the lamp's peak, so the lure shot shows it lit.
