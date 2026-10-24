@@ -133,6 +133,9 @@ namespace MoonProject.Autoplay
         private const int ApproachSides = 8;
         private const int MaxMenuSteps = 12;
 
+        /// <summary>Seconds of calm after a Tab transition ends, before the next flip.</summary>
+        private const float TabRestSeconds = 0.5f;
+
         /// <summary>Frames the pointer takes to travel to a card.</summary>
         private const int PointerSteps = 8;
         private const float PlaceDriftMetres = 2f;
@@ -1309,6 +1312,25 @@ namespace MoonProject.Autoplay
             yield return _bot.Tap(Key.Tab);
             var face = _bot.World.Context.Get<IRoverFaceScreen>();
             yield return _bot.Until(() => !face.IsOpen, FollowSeconds, "Tab to close the face screen");
+        }
+
+        /// <summary>
+        /// Opens and closes 07's face screen <paramref name="times"/> times with the bot standing still, resting after
+        /// each flip until its transition has passed: a quiet stretch whose frames the hitch table can attribute to Tab.
+        /// </summary>
+        public IEnumerator TabCycles(int times)
+        {
+            var face = _bot.World.Context.Get<IRoverFaceScreen>();
+            for (int cycle = 0; cycle < times && !_bot.Failed; cycle++)
+            {
+                _bot.Idle();
+                yield return _bot.Tap(Key.Tab);
+                yield return _bot.Until(() => face.IsOpen, FollowSeconds, "Tab to open the face screen (cycle " + (cycle + 1) + ")");
+                yield return _bot.Wait(FrameTagger.TransitionSeconds + TabRestSeconds);
+                yield return _bot.Tap(Key.Tab);
+                yield return _bot.Until(() => !face.IsOpen, FollowSeconds, "Tab to close the face screen (cycle " + (cycle + 1) + ")");
+                yield return _bot.Wait(FrameTagger.TransitionSeconds + TabRestSeconds);
+            }
         }
 
         private static Vector3 ClearSide(Vector3 point, Vector3 preferred, float standOff, Transform own)
