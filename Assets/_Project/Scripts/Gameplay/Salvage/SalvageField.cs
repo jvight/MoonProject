@@ -162,6 +162,8 @@ namespace MoonProject.Gameplay
 
         public Vector3 ScanAxis => _rig.ScanOrigin.forward;
 
+        public Camera Viewer => _view.Camera;
+
         public bool TryScanContact(Vector3 lens, out Vector3 point, out Vector3 normal)
         {
             if (_scans == null)

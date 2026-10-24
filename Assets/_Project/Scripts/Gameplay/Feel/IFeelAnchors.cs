@@ -15,6 +15,9 @@ namespace MoonProject.Gameplay
         /// <summary>07's scan lens emitter, the point the scan beam and ribbon connect to.</summary>
         Vector3 ScanEmitter { get; }
 
+        /// <summary>The camera the player sees through; null where no view exists (captures, tests), then the beam takes no account of it.</summary>
+        Camera Viewer { get; }
+
         /// <summary>The direction 07's scan lens gazes along (world, +Z of the lens), the way its beam leaves.</summary>
         Vector3 ScanAxis { get; }
 

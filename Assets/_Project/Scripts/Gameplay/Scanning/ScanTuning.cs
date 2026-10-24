@@ -140,10 +140,13 @@ namespace MoonProject.Gameplay
         [Range(0.05f, 0.85f)] [SerializeField] private float _beamLensPeakAlpha = 0.68f;
 
         [Tooltip("Very low additive alpha in the middle of the scan beam wedge (almost invisible in the middle).")]
-        [Range(0.005f, 0.4f)] [SerializeField] private float _beamMidAlpha = 0.14f;
+        [Range(0.005f, 0.4f)] [SerializeField] private float _beamMidAlpha = 0.18f;
 
         [Tooltip("Additive alpha where the far edge of the scan beam wedge meets the current surface scan line on the target.")]
         [Range(0.04f, 0.65f)] [SerializeField] private float _beamContactAlpha = 0.6f;
+
+        [Tooltip("Least width, in screen pixels, the scan beam keeps along its length (grows with camera distance), so it reads from the chase camera.")]
+        [Range(1f, 12f)] [SerializeField] private float _beamMinPixels = 6f;
 
         [Tooltip("Lens-axis error (deg) up to which the scan beam is fully on its target; past it the beam bends back to the lens axis.")]
         [Range(1f, 30f)] [SerializeField] private float _beamAlignedDegrees = 20f;
@@ -297,6 +300,7 @@ namespace MoonProject.Gameplay
         public float BeamTargetWidthShare => _beamTargetWidthShare;
         public float BeamLensPeakAlpha => _beamLensPeakAlpha;
         public float BeamMidAlpha => _beamMidAlpha;
+        public float BeamMinPixels => _beamMinPixels;
         public float BeamAlignedDegrees => _beamAlignedDegrees;
         public float BeamLostDegrees => _beamLostDegrees;
         public float BeamUnalignedReach => _beamUnalignedReach;

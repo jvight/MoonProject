@@ -19,6 +19,8 @@ namespace MoonProject.Gameplay
     /// </summary>
     public sealed class ScanBeam
     {
+        /// <summary>The beam reaches its least on-screen width this far along its length (it stays narrow at the lens).</summary>
+        private const float LegibleRampLengthShare = 0.25f;
         private const int CorePointCount = 4;
         private const int IrisRingCount = 12;
         private const int IrisCaliperCount = 2;
@@ -112,6 +114,9 @@ namespace MoonProject.Gameplay
         private readonly ScanBeamReach _reach = new ScanBeamReach();
 
         private Vector3 _axis;
+        private Vector3 _viewPosition;
+        private float _viewPixelsPerMetre;
+        private bool _hasView;
         private bool _hasAxis;
         private float _stepSeconds;
         private Vector3 _target;
@@ -155,6 +160,17 @@ namespace MoonProject.Gameplay
         /// <summary>True while the completion ping flash is active.</summary>
         public bool IsPinging => _pingRemaining > VisibleThreshold;
 
+        /// <summary>
+        /// The player's camera this frame (world position and pixels one metre covers at one metre): the beam keeps a
+        /// minimum width on screen and faces the camera so it reads from any chase angle.
+        /// </summary>
+        public void View(Vector3 position, float pixelsPerMetreAtOne)
+        {
+            _viewPosition = position;
+            _viewPixelsPerMetre = pixelsPerMetreAtOne;
+            _hasView = true;
+        }
+
         /// <summary>How settled the beam is on its target (0..1): 1 once the head has aimed at it, or when no lens axis is given.</summary>
         public float Aligned => _hasAxis ? _reach.Aligned : 1f;
 
@@ -168,6 +184,7 @@ namespace MoonProject.Gameplay
             _span = span;
             _hasContact = false;
             _hasAxis = false;
+            _hasView = false;
             _reach.Reset();
             _progress = Mathf.Clamp01(progress);
             _rate = remainingSeconds > MinFadeSeconds ? (1f - _progress) / remainingSeconds : 0f;
@@ -472,6 +489,14 @@ namespace MoonProject.Gameplay
 
             float lensHalfW = lensWidth * 0.5f;
             float targetHalfW = targetWidth * 0.5f;
+            // The body faces the camera, so it never turns edge-on to a chase cam beside the beam.
+            Vector3 wide = right;
+            if (_hasView)
+            {
+                Vector3 facing = Vector3.Cross(beamDir, _viewPosition - (lensFront + contactCenter) * 0.5f);
+                wide = facing.sqrMagnitude > MinDistance ? facing.normalized : right;
+            }
+
             Vector2 wrapRange = look.WrapRadiusRange;
             float wrapRadius = Mathf.Min(Mathf.Clamp(spanHeight * look.WrapShare, wrapRange.x, wrapRange.y),
                 beamLen * look.WrapLengthShare);
@@ -486,6 +511,13 @@ namespace MoonProject.Gameplay
 
                 float widthT = Mathf.Lerp(u, u * u * (3f - 2f * u), look.WidthEase);
                 float halfW = Mathf.Lerp(lensHalfW, targetHalfW, widthT);
+                if (_hasView)
+                {
+                    float distanceToView = (ringCenter - _viewPosition).magnitude;
+                    float legible = 0.5f * ScreenWidth.Metres(_scanTuning.BeamMinPixels, distanceToView,
+                        _viewPixelsPerMetre) * widthScale * Mathf.SmoothStep(0f, 1f, u / LegibleRampLengthShare);
+                    halfW = Mathf.Max(halfW, legible);
+                }
 
                 // Keep the first couple of cm at the lens bright, dip to near-zero while passing 07's CRT screen,
                 // and carry the faint mid-beam wedge across open space to the target scan line.
@@ -502,7 +534,7 @@ namespace MoonProject.Gameplay
                 // Crossed fan sheets tilted in (right, orthoUp) so the wedge fans out visibly from low
                 // chase camera angles while spanning and wrapping the surface scan line on the target.
                 float verticalTilt = Mathf.Lerp(look.SheetTilt.x, look.SheetTilt.y, u);
-                Vector3 sheetDir0 = (right + orthoUp * verticalTilt).normalized;
+                Vector3 sheetDir0 = _hasView ? wide : (right + orthoUp * verticalTilt).normalized;
                 Vector3 sheetDir1 = (right - orthoUp * verticalTilt).normalized;
                 float sheet1AlphaShare = Mathf.Lerp(look.SecondSheetAlpha.x, look.SecondSheetAlpha.y, u);
                 float targetWrapShare = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(look.WrapStart, 1f, u));

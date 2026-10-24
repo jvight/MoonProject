@@ -219,6 +219,8 @@ namespace MoonProject.Gameplay.Feel.Tests
 
             public Vector3 ScanAxis => _emitter.forward;
 
+            public Camera Viewer => null;
+
             public bool TryScanContact(Vector3 lens, out Vector3 point, out Vector3 normal)
             {
                 point = lens;

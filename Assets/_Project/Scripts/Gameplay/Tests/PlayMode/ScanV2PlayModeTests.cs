@@ -30,8 +30,8 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// </summary>
     public sealed class ScanV2PlayModeTests : InputTestFixture
     {
-        // The scan beam's widest at the target (m): a thin crisp line, never a fan.
-        private const float ThinBeamMaxWidth = 0.15f;
+        // The scan beam's widest at the target (m): a thin ribbon, never a fan. It keeps six screen pixels at the chase camera, which is 0.15-0.2 m at the far end of a long scan.
+        private const float ThinBeamMaxWidth = 0.25f;
 
         private const int CaptureWidth = 1920;
         private const int CaptureHeight = 1080;
@@ -571,7 +571,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             float targetAlpha = colors[(rings - 1) * slices + centerSlice].a;
             Assert.Greater(lensAlpha, midAlpha * 3f, "ScanBeamWedge must be brightest at the lens.");
             Assert.Greater(targetAlpha, midAlpha * 2.5f, "ScanBeamWedge must brighten where it meets the target.");
-            Assert.LessOrEqual(midAlpha, 0.16f, "ScanBeamWedge stays soft in the middle, clear enough to read.");
+            Assert.LessOrEqual(midAlpha, 0.2f, "ScanBeamWedge stays soft in the middle: it is an additive ribbon at least 6 px wide, facing the camera, so 0.2 reads as a calm line without bloom.");
 
             return targetCenter;
         }

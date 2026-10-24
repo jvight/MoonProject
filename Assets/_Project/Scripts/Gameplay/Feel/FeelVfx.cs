@@ -208,6 +208,12 @@ namespace MoonProject.Gameplay
             {
                 _scanBeam.Meet(contact);
                 _scanBeam.Aim(_anchors.ScanAxis);
+                Camera viewer = _anchors.Viewer;
+                if (viewer != null)
+                {
+                    _scanBeam.View(viewer.transform.position,
+                        viewer.pixelHeight / (2f * Mathf.Tan(viewer.fieldOfView * 0.5f * Mathf.Deg2Rad)));
+                }
             }
 
             _scanBeam.Step(deltaTime, scanEmitter);
