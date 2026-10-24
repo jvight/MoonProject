@@ -627,6 +627,30 @@ MonoBehaviour:
     _volumeMax: 0.35
     _pitchMin: 1
     _pitchMax: 1
+  - _id: network_pulse
+    _clips:
+    - {fileID: 8300000, guid: 1b4fda97eec7bd94d99509972cfe5054, type: 3}
+    _variantLabels:
+    - network_pulse
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.55
+    _volumeMax: 0.55
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: relay_ack
+    _clips:
+    - {fileID: 8300000, guid: bc7dfa97fb6693a45b2e720148222536, type: 3}
+    _variantLabels:
+    - relay_ack
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.45
+    _volumeMax: 0.45
+    _pitchMin: 1
+    _pitchMax: 1
   - _id: sky_dusk_swell
     _clips:
     - {fileID: 8300000, guid: c1ca6e009bb6f864eb2eaae338f21ac7, type: 3}
@@ -1087,8 +1111,8 @@ MonoBehaviour:
     _bus: 2
     _spatial: 1
     _loop: 1
-    _volumeMin: 0.45
-    _volumeMax: 0.45
+    _volumeMin: 0.4
+    _volumeMax: 0.4
     _pitchMin: 1
     _pitchMax: 1
   - _id: boost_release
