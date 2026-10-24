@@ -26,24 +26,12 @@ namespace MoonProject.UI
         }
 
         /// <summary>
-        /// True while the Sun is really going down (<see cref="Core.ISunlight.SecondsToSunset"/> finite and above
-        /// zero): only then is there a time to show. Infinity means the opening holds it; zero means it has set.
+        /// True once the Sun has set (<see cref="Core.ISunlight.SecondsToSunset"/> zero; infinity means the opening
+        /// holds it): the arc has nothing left to show.
         /// </summary>
-        public static bool CountsDown(float secondsToSunset)
-        {
-            return !float.IsInfinity(secondsToSunset) && secondsToSunset > 0f;
-        }
-
-        /// <summary>True once the Sun has set: the arc has nothing left to show.</summary>
         public static bool HasSet(float secondsToSunset)
         {
             return secondsToSunset <= 0f;
-        }
-
-        /// <summary>Whole minutes left, rounded up so the readout never says 0 while the Sun is still up.</summary>
-        public static int MinutesLeft(float secondsToSunset)
-        {
-            return Mathf.Max(1, Mathf.CeilToInt(secondsToSunset / 60f));
         }
     }
 }

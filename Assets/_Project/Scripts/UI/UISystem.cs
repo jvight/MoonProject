@@ -418,7 +418,7 @@ namespace MoonProject.UI
             _saveTick = new SaveTick(_layout, _tuning.SaveTick);
             _readout = new ReadoutView(_layout.Hud, _tuning.Guidance, _localization, services.Systems,
                 services.BuildField, _openingProtocol);
-            _sunArc = new SunArcView(_layout, _tuning.Guidance, _localization, services.Sun);
+            _sunArc = new SunArcView(_layout, _tuning.Guidance, services.Sun);
             _prompt = new ContextPrompt(_layout, _tuning.Prompts, _director, services.View, _glyphs, _localization,
                 services.Events, new[] { _layout.BuildStrip });
             _pickups = new PickupFeed(_layout, _tuning.PickupFeed, _numbers, _localization, services.Materials,
@@ -783,12 +783,15 @@ namespace MoonProject.UI
             _guidanceShown[(int)GuidanceKind.CallLine] = _replyOnFace || (_callView.IsVisible && _callAsLine);
             _guidanceWants[(int)GuidanceKind.CallStatus] = ObjectiveOpen(paused) && _call.WantsStill;
             _guidanceShown[(int)GuidanceKind.CallStatus] = _callView.IsVisible && !_callAsLine;
-            _guidanceWants[(int)GuidanceKind.BuildStep] = BuildStepOpen(paused) && _buildStrip.Step != BuildStep.None;
+            // While the ghost's cost chip (with its place and rotate keys) is up, it is the one element: no line beside it.
+            bool costUp = _buildStrip.IsCostShown;
+            _guidanceWants[(int)GuidanceKind.BuildStep] = BuildStepOpen(paused) && !costUp &&
+                                                         _buildStrip.Step != BuildStep.None;
             _guidanceWants[(int)GuidanceKind.Prompt] = holder != PromptHolder.None;
-            _guidanceWants[(int)GuidanceKind.Battery] = ObjectiveOpen(paused) && _lowBattery.WantsShown;
-            _guidanceWants[(int)GuidanceKind.NextLine] = ObjectiveOpen(paused) && _objective.IsNext;
+            _guidanceWants[(int)GuidanceKind.Battery] = ObjectiveOpen(paused) && !costUp && _lowBattery.WantsShown;
+            _guidanceWants[(int)GuidanceKind.NextLine] = ObjectiveOpen(paused) && !costUp && _objective.IsNext;
             _guidanceWants[(int)GuidanceKind.Objective] =
-                ObjectiveOpen(paused) && _objective.WantsShown && !_objective.IsNext;
+                ObjectiveOpen(paused) && !costUp && _objective.WantsShown && !_objective.IsNext;
             _guidanceShown[(int)GuidanceKind.BuildStep] = _objectiveView.ShowsBuildStep;
             // Every chip in the bottom slot counts, the objective's own too, so a hand-over from the line ends.
             _guidanceShown[(int)GuidanceKind.Prompt] = chipUp || _lookUpChip.IsVisible || _unlockCard.IsVisible ||
@@ -1858,7 +1861,6 @@ namespace MoonProject.UI
             _lowBattery.Relocalize();
             _objectiveView.Relocalize(_lowBattery);
             _readout.Relocalize();
-            _sunArc.Relocalize();
             _buildStrip?.Relocalize();
             _pickups.Relocalize();
             _callView.Relocalize();
