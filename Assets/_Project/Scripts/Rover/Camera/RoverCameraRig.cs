@@ -86,6 +86,7 @@ namespace MoonProject.Rover
         private readonly GuidanceNudge _nudge = new GuidanceNudge();
         private readonly BuildFraming _buildFraming = new BuildFraming();
         private readonly PendingNudge _pendingNudge = new PendingNudge();
+        private bool _driveCarriedIntoNudge;
         private WideShot _wide;
         private bool _wideSteersYaw;
         private bool _tethered;
@@ -515,7 +516,15 @@ namespace MoonProject.Rover
                 _beam.Framing.End(_tuning.CutFrameHandBackSeconds);
             }
 
-            if (driving && (IsTowerMoment || _gazePan.IsActive || IsDockMoment || IsLampFitMoment))
+            if (!driving)
+            {
+                _driveCarriedIntoNudge = false;
+            }
+
+            // A drive key already held when a nudge began (the player is driving off the pad as the line appears)
+            // must not end it before it has turned; the next press, or any look input, does.
+            bool carried = IsNudgeMoment && _driveCarriedIntoNudge;
+            if (driving && !carried && (IsTowerMoment || _gazePan.IsActive || IsDockMoment || IsLampFitMoment))
             {
                 _moment.Cancel(_tuning.MomentCancelEaseOut);
             }
@@ -1766,9 +1775,11 @@ namespace MoonProject.Rover
             TryNudge(step);
         }
 
-        private bool FreeForNudge => !_moment.IsActive && _wide.Weight <= 0f && _held.Weight <= 0f && !_tethered &&
-                                     !_towing && !_opening.IsActive && !_faceInspectOpen &&
-                                     _faceInspectWeight <= 0f && !_gazePan.IsActive &&
+        // The dock's close frame is an ambient hold that lasts as long as 07 sits on the pad, not a shot to wait out: a
+        // line read on the pad (the charge has just ended) nudges over it, and the dock frame returns afterwards.
+        private bool FreeForNudge => (!_moment.IsActive || IsDockMoment) && _wide.Weight <= 0f &&
+                                     _held.Weight <= 0f && !_tethered && !_towing && !_opening.IsActive &&
+                                     !_faceInspectOpen && _faceInspectWeight <= 0f && !_gazePan.IsActive &&
                                      !_buildFraming.IsActive && _buildFraming.Weight <= 0f;
 
         /// <summary>
@@ -1786,7 +1797,9 @@ namespace MoonProject.Rover
 
         private void TryNudge(NextStepChanged step)
         {
-            float looking = RoverYaw() + _orbitState.YawOffset;
+            // Where the camera actually looks: the dock's close frame swings it round 07, so 07's heading and the
+            // orbit offset alone would call a target the frame has turned away from "near ahead".
+            float looking = _viewCamera.transform.eulerAngles.y;
             Vector3 viewport = _viewCamera.WorldToViewportPoint(step.TargetPosition);
             if (!GuidanceNudge.ShouldNudge(_rover.Position, step.TargetPosition, looking, viewport,
                     _tuning.NudgeScreenMargin, _tuning.NudgeMinDistance, _tuning.NudgeSlack, _tuning.NudgeMaxBearing) ||
@@ -1799,6 +1812,7 @@ namespace MoonProject.Rover
                 _tuning.NudgeHoldSeconds, _tuning.NudgeSweep, 0f, _tuning.ReleasePanHalfLife,
                 _tuning.NudgeSlack);
             _moment.Start(_tuning.NudgeMoment, _gazePan.Subject, true);
+            _driveCarriedIntoNudge = _rover.DriveInput.sqrMagnitude > DriveEpsilon * DriveEpsilon;
         }
 
         /// <summary>Moves the held release moment's subject along the pan, and lets it go once the pan has run its course.</summary>
