@@ -382,7 +382,8 @@ namespace MoonProject.Autoplay
             float yaw = build.Controller.GhostYaw;
             yield return _bot.Scroll(1f);
             yield return null;
-            if (Mathf.Approximately(yaw, build.Controller.GhostYaw))
+            // A ghost snapped onto a frame (the bank on its module) keeps the frame's heading: the wheel is not for it.
+            if (Mathf.Approximately(yaw, build.Controller.GhostYaw) && !build.Controller.CandidateSnapped)
             {
                 _bot.Fail("the wheel did not turn the ghost of " + structureId + " (yaw stayed " + yaw + ").");
                 yield break;
