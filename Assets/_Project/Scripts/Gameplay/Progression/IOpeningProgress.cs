@@ -85,6 +85,12 @@ namespace MoonProject.Gameplay
         bool RelayRelit { get; }
 
         /// <summary>
+        /// 07's charge covers the drive to relay.1 with the margin to spare (<see cref="RelayTrip"/>), or its cells are
+        /// full; once it has, it stays so for the trip (R9).
+        /// </summary>
+        bool RelayTripCovered { get; }
+
+        /// <summary>
         /// The place in the world where the action of line <paramref name="lineKey"/> happens (the apron, a crate, the
         /// power module, the mast), by id and position; false when it has none (a field fit) or it is not there yet.
         /// </summary>

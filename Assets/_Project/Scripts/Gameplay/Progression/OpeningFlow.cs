@@ -56,6 +56,7 @@ namespace MoonProject.Gameplay
         private bool _progressed;
         private bool _snaggedThisTow;
         private bool _docked;
+        private bool _charging;
         private int _dockShownIndex = -1;
         private Vector3 _rover;
         private float _placeDistance = -1f;
@@ -88,8 +89,7 @@ namespace MoonProject.Gameplay
             // The transmit line goes as 07 starts transmitting; the answer's moment says nothing, and relay.1 is named
             // once it is over, until 07 arrives there (its cabinet's and socket's chips lead from then on).
             _steps.Add(OpeningKeys.Transmit, () => _game.AnswerStarted || _game.AnswerDone);
-            _steps.Add(() => _game.AnswerDone && !_game.AtRelay ? OpeningKeys.GoToRelay : string.Empty,
-                () => _game.RelayRelit);
+            _steps.Add(RelayLine, () => _game.RelayRelit);
             _subscriptions = new[]
             {
                 events.Subscribe<RoverWakeBeatReached>(OnWakeBeat),
@@ -103,7 +103,7 @@ namespace MoonProject.Gameplay
                 events.Subscribe<StructureBuilt>(_ => _progressed = true),
                 events.Subscribe<TowAttached>(_ => _progressed = true),
                 events.Subscribe<PartFitted>(_ => _progressed = true),
-                events.Subscribe<ChargingChanged>(changed => _docked |= changed.Charging),
+                events.Subscribe<ChargingChanged>(OnChargingChanged),
             };
         }
 
@@ -129,6 +129,20 @@ namespace MoonProject.Gameplay
             }
 
             return _game.CutterSputtered ? OpeningKeys.TakeIgniter : SolarLine();
+        }
+
+        /// <summary>
+        /// R9: once relay.1 has answered, the line sends 07 there, or first to the pad while its charge would not make
+        /// the trip with a margin; it goes quiet once 07 arrives.
+        /// </summary>
+        private string RelayLine()
+        {
+            if (!_game.AnswerDone || _game.AtRelay)
+            {
+                return string.Empty;
+            }
+
+            return _game.RelayTripCovered ? OpeningKeys.GoToRelay : OpeningKeys.ChargeForRelay;
         }
 
         private string SolarLine()
@@ -250,7 +264,7 @@ namespace MoonProject.Gameplay
             {
                 // 07 rests on a charger: a natural pause, so the step's line is said once more (once per step).
                 _docked = false;
-                if (key.Length > 0 && Shown != key && index != _dockShownIndex)
+                if (key.Length > 0 && Shown != key && index != _dockShownIndex && !AsksToCharge(key))
                 {
                     _dockShownIndex = index;
                     Show(key, NextLineReason.Next, _timing.NextLineSeconds);
@@ -311,7 +325,7 @@ namespace MoonProject.Gameplay
                 return;
             }
 
-            if (_progressed | Closing(key, deltaTime))
+            if (_progressed | Closing(key, deltaTime) | (_charging && AsksToCharge(key)))
             {
                 _progressed = false;
                 _stalled = 0f;
@@ -340,6 +354,18 @@ namespace MoonProject.Gameplay
             _waking = false;
             _stalled = 0f;
         }
+
+        private void OnChargingChanged(ChargingChanged changed)
+        {
+            _docked |= changed.Charging;
+            _charging = changed.Charging;
+        }
+
+        /// <summary>
+        /// A line that asks 07 to charge is being done while 07 charges: it is neither said again on the dock nor
+        /// brought back as a reminder then.
+        /// </summary>
+        private static bool AsksToCharge(string key) => key == OpeningKeys.ChargeForRelay;
 
         private static bool HoldsUntilDone(string key) =>
             key == OpeningKeys.HookModule || key == OpeningKeys.FreeCable;

@@ -763,6 +763,10 @@
             "text": "Relay 1 is fading. Go fix it"
         },
         {
+            "key": "next.v3.charge_for_relay",
+            "text": "Charge up at the pad first."
+        },
+        {
             "key": "battery.low.lander",
             "text": "Battery low. Build a pad by the lander"
         },

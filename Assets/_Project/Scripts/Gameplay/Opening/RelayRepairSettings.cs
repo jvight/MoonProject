@@ -47,11 +47,18 @@ namespace MoonProject.Gameplay
         [Range(0.5f, 4f)]
         [SerializeField] private float _liveAfter = 1.6f;
 
+        [Tooltip("Share of a full battery 07 should still hold on arriving at the relay, by the range ring's own " +
+                 "costing of the drive there. With less, the line first sends 07 to charge at the pad (full cells " +
+                 "always do).")]
+        [Range(0f, 0.6f)]
+        [SerializeField] private float _tripMargin01 = 0.2f;
+
         public string RelayId => _relayId ?? string.Empty;
         public string FeedPart => _feedPart ?? string.Empty;
         public float TakeReach => _takeReach;
         public float FitReach => _fitReach;
         public float PadRadius => _padRadius;
+        public float TripMargin01 => _tripMargin01;
 
         /// <summary>Seconds after the latch at which <paramref name="stage"/> comes.</summary>
         public float StageAt(RelayStage stage)

@@ -218,6 +218,36 @@ namespace MoonProject.Gameplay.Tests
             CollectionAssert.DoesNotContain(_lines, OpeningKeys.FitIgniter);
         }
 
+        [Test]
+        public void ShortOfTheRelayTrip_TheLineSendsToThePadFirst_KeyLess_ThenToTheRelayOnceCharged()
+        {
+            _game.RelayTripCovered = false;
+            ReachTheArray();
+            _game.IgniterFitted = true;
+            _game.PowerOn = true;
+            _game.NightReady = true;
+            _game.NightFallen = true;
+            _game.Known.Add(StructureIds.AntennaMast);
+            _game.BuiltIds.Add(StructureIds.AntennaMast);
+            _game.AnswerStarted = true;
+            _game.AnswerDone = true;
+            _flow.Tick(1f);
+            Assert.AreEqual(OpeningSteps.GoToRelay, _flow.CurrentIndex);
+            Assert.AreEqual(OpeningKeys.ChargeForRelay, _flow.Current, "relay.1 answered, but 07 would arrive too low");
+            Assert.AreEqual(OpeningKeys.ChargeForRelay, _flow.Shown);
+            Assert.AreEqual(default(RoverAction), _changes[_changes.Count - 1].Key, "one element: no key chip");
+            Tick(NextLine);
+            int said = _lines.Count;
+            _events.Publish(new ChargingChanged(true, ChargerKind.Pad, Vector3.zero));
+            Tick(Stall + Again + Reminder * 2);
+            Assert.AreEqual(said, _lines.Count, "07 charges as asked: the line is not said again, nor as a reminder");
+
+            _game.RelayTripCovered = true;
+            _flow.Tick(1f);
+            Assert.AreEqual(OpeningKeys.GoToRelay, _flow.Shown, "charged enough: the relay line comes as the next line");
+            Assert.AreEqual(NextLineReason.Next, _flow.ShownReason);
+        }
+
         /// <summary>B7: the reserve spent and the array scanned; the cutter still has no igniter.</summary>
         private void ReachTheArray()
         {
@@ -746,6 +776,7 @@ namespace MoonProject.Gameplay.Tests
             public bool AnswerStarted { get; set; }
             public bool AtRelay { get; set; }
             public bool RelayRelit { get; set; }
+            public bool RelayTripCovered { get; set; } = true;
             public readonly Dictionary<string, Vector3> Places = new Dictionary<string, Vector3>();
             public readonly HashSet<string> OutOfReach = new HashSet<string>();
 

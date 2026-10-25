@@ -85,6 +85,11 @@ namespace MoonProject.Gameplay
         public const string GoToRelay = "next.v3.go_relay";
 
         /// <summary>
+        /// R9, relay.1 answered but 07's charge would not make it there with a margin: "Charge up at the pad first."
+        /// </summary>
+        public const string ChargeForRelay = "next.v3.charge_for_relay";
+
+        /// <summary>
         /// The key a line's action takes, for its glyph (guidance audit G2); 0 when it takes none of 07's action keys
         /// (a drive, a dock, the Tab screen).
         /// </summary>

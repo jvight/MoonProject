@@ -13,8 +13,9 @@ namespace MoonProject.Gameplay
     /// polygon for the showing (a ring that follows 07 about would read as a radius, not as the world's edge), publishes
     /// <see cref="RangeRingShown"/>, draws out over ~2 s, holds ~1.5 s, and eases out over ~3 s until gone. When a node
     /// of 07's network becomes a charge point the ring grows (<see cref="Grow"/>, its own moment): the ring as it was
-    /// reaches out to the ring as it is now, and <see cref="RingGrew"/> says by how much. The network's link
-    /// (<see cref="IRingLink"/>) shows with the ring.
+    /// reaches out to the ring as it is now, and <see cref="RingGrew"/> says by how much. When the line asks 07 to
+    /// charge before a trip this charge would not cover, the ring shows again (<see cref="ShowShortfall"/>, its own
+    /// moment). The network's link (<see cref="IRingLink"/>) shows with the ring.
     /// </summary>
     public sealed class RangeRingField : IRangeRing, IDisposable
     {
@@ -140,6 +141,21 @@ namespace MoonProject.Gameplay
                 _fullShown = true;
             }
 
+            Present(mode);
+        }
+
+        /// <summary>
+        /// 07 is asked to charge before a trip this charge would not cover: the ring shows in full once more, worked out
+        /// from 07's place and charge now, so the place it falls short of reads as outside it. Its own moment.
+        /// </summary>
+        public void ShowShortfall()
+        {
+            _fullShown = true;
+            Present(RangeRingMode.Full);
+        }
+
+        private void Present(RangeRingMode mode)
+        {
             _chargePoints.Clear();
             _chargePointSource.CopyChargePoints(_chargePoints);
             _centre = _rover.Position;
