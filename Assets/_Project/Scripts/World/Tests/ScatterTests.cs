@@ -226,7 +226,7 @@ namespace MoonProject.World.Tests
                 };
 
                 ScatterBuildReport report = builder.Build(parent.transform, instances, _settings, 64f,
-                    new[] { cubeMesh }, new[] { cubeMesh }, mat, HideFlags.None);
+                    new[] { cubeMesh }, new[] { cubeMesh }, new[] { cubeMesh }, mat, mat, HideFlags.None);
                 Assert.AreEqual(2, report.Pebbles);
                 Assert.AreEqual(1, report.SolidCobbles, "medium cobble >= 0.48 m gets a SphereCollider");
                 Assert.AreEqual(1, report.Boulders);
