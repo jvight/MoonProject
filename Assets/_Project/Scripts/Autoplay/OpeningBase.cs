@@ -587,8 +587,21 @@ namespace MoonProject.Autoplay
                 yield break;
             }
 
+            // The panel is a free read: no brackets, no chip and no E. 07 stands close, faces it and the view holds it
+            // for a moment, and the readout comes.
             Vector3 outward = Flat(panel.Point - Ruin("HabitatModules").position).normalized;
-            yield return Scan(panel, outward, PanelStandOff);
+            yield return StandFacing(panel, outward, PanelStandOff);
+            if (_bot.Failed)
+            {
+                yield break;
+            }
+
+            yield return _bot.Until(() =>
+                {
+                    _bot.KeepLookingAt(panel.Point);
+                    return panel.Scanned;
+                }, ScanLookSeconds, "the airlock panel to read itself with the view on it",
+                () => "Candidate " + (G.Scans.Candidate != null ? G.Scans.Candidate.FragmentId : "none") + ".");
         }
 
         /// <summary>Cuts every sealed crate standing by <paramref name="frame"/> (an anchor or a ruin piece).</summary>
@@ -1057,25 +1070,12 @@ namespace MoonProject.Autoplay
         private IEnumerator Scan(ScanFragment fragment, Vector3 preferred, float standOff)
         {
             ScanField scans = G.Scans;
-            Vector3 away = ClearSide(fragment.Point, preferred, standOff, null);
-            if (Clear(fragment.Point + away * (standOff + ScanLineUp), null))
+            yield return StandFacing(fragment, preferred, standOff);
+            if (_bot.Failed)
             {
-                yield return _bot.DriveTo(Flat(fragment.Point + away * (standOff + ScanLineUp)), LineUpArrive,
-                    "a line-up for a scan", DriveSeconds);
+                yield break;
             }
 
-            yield return _bot.DriveTo(Flat(fragment.Point), standOff, "the spot facing " + fragment.FragmentId,
-                DriveSeconds);
-            if (DriveSteering.FlatDistance(fragment.Point, _bot.World.Rover.Position) < standOff * ScanTooCloseShare)
-            {
-                // Rolled in over the piece: the scan lens cannot see it past 07's own body, so back off and face it
-                // again, as a player would.
-                Vector3 point = fragment.Point;
-                yield return _bot.BackOff(() => DriveSteering.FlatDistance(point, _bot.World.Rover.Position) >=
-                                                standOff * ScanBackOffShare, DriveSeconds, fragment.FragmentId);
-            }
-
-            yield return _bot.TurnToward(fragment.Point, fragment.FragmentId);
             UiProbe ui = _bot.World.Ui;
             float deadline = Time.unscaledTime + ScanLookSeconds;
             while (!_bot.Failed && !(_bot.KeepLookingAt(fragment.Point) && OnSetCandidate(scans, fragment)))
@@ -1099,6 +1099,30 @@ namespace MoonProject.Autoplay
                     return fragment.Scanned;
                 }, scans.Tuning.Seconds(fragment.Size) + ScanAllowanceSeconds, "a held E to scan " + fragment.FragmentId,
                 () => "Chip '" + ui.Chip() + "'.");
+        }
+
+        /// <summary>Drives to <paramref name="standOff"/> from <paramref name="fragment"/>, backs off if it rolled in too close, and turns to face it.</summary>
+        private IEnumerator StandFacing(ScanFragment fragment, Vector3 preferred, float standOff)
+        {
+            Vector3 away = ClearSide(fragment.Point, preferred, standOff, null);
+            if (Clear(fragment.Point + away * (standOff + ScanLineUp), null))
+            {
+                yield return _bot.DriveTo(Flat(fragment.Point + away * (standOff + ScanLineUp)), LineUpArrive,
+                    "a line-up for a scan", DriveSeconds);
+            }
+
+            yield return _bot.DriveTo(Flat(fragment.Point), standOff, "the spot facing " + fragment.FragmentId,
+                DriveSeconds);
+            if (DriveSteering.FlatDistance(fragment.Point, _bot.World.Rover.Position) < standOff * ScanTooCloseShare)
+            {
+                // Rolled in over the piece: the scan lens cannot see it past 07's own body, so back off and face it
+                // again, as a player would.
+                Vector3 point = fragment.Point;
+                yield return _bot.BackOff(() => DriveSteering.FlatDistance(point, _bot.World.Rover.Position) >=
+                                                standOff * ScanBackOffShare, DriveSeconds, fragment.FragmentId);
+            }
+
+            yield return _bot.TurnToward(fragment.Point, fragment.FragmentId);
         }
 
         /// <summary>The brackets are on this part or another unscanned part of its set: a player scans what they frame.</summary>
