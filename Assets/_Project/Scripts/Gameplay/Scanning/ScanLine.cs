@@ -19,6 +19,32 @@ namespace MoonProject.Gameplay
         /// <summary>Share of the target's height the beam's aim keeps clear of its very top and bottom.</summary>
         public const float AimInset = 0.04f;
 
+        /// <summary>
+        /// The diameter (m) of the beam's patch of light on a target <paramref name="objectHeight"/> tall: the most it may
+        /// be, and no more than <paramref name="objectShare"/> of the target's height, so a small target is never swamped.
+        /// </summary>
+        public static float PatchSize(float objectHeight, float maxMetres, float objectShare)
+        {
+            return Mathf.Min(maxMetres, objectHeight * objectShare);
+        }
+
+        /// <summary>
+        /// <paramref name="point"/> pulled inside <paramref name="bounds"/>, at least <paramref name="inset"/> from its
+        /// faces on each axis it is deep enough for (else at its middle): a point there, and a patch of that radius
+        /// round it, never leave the target's projected bounds on any camera.
+        /// </summary>
+        public static Vector3 ClampInside(Bounds bounds, float inset, Vector3 point)
+        {
+            return new Vector3(ClampAxis(point.x, bounds.min.x, bounds.max.x, inset),
+                ClampAxis(point.y, bounds.min.y, bounds.max.y, inset),
+                ClampAxis(point.z, bounds.min.z, bounds.max.z, inset));
+        }
+
+        private static float ClampAxis(float value, float min, float max, float inset)
+        {
+            return min + inset >= max - inset ? 0.5f * (min + max) : Mathf.Clamp(value, min + inset, max - inset);
+        }
+
         /// <summary>The flat direction from <paramref name="centre"/> toward <paramref name="camera"/>.</summary>
         public static Vector2 TowardCamera(Vector3 centre, Vector3 camera)
         {

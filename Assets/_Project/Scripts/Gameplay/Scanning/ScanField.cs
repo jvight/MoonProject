@@ -255,7 +255,11 @@ namespace MoonProject.Gameplay
                 return false;
             }
 
-            return _beamOn.TryContact(lens, _view.Camera.transform.position, out point, out normal);
+            Renderer solid = _beamOn.Solid;
+            float patch = solid != null
+                ? ScanLine.PatchSize(solid.bounds.size.y, _tuning.BeamHitSize, _tuning.BeamHitObjectShare)
+                : 0f;
+            return _beamOn.TryContact(lens, _view.Camera.transform.position, out point, out normal, patch);
         }
 
         public ScansSaveData Capture()

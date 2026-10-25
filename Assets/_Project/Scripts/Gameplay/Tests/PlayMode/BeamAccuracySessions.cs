@@ -95,6 +95,18 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Metres from a scan target 07 stands to scan it.</summary>
         private const float ScanStandOff = 3f;
 
+        /// <summary>Degrees round the first side a stand is tried at, and the distances (m) tried, when the first sees
+        /// nothing; and the seconds each is given.</summary>
+        private static readonly float[] StandAngles = { 0f, 90f, -90f, 180f };
+
+        private static readonly float[] StandOffs = { ScanStandOff, 2f, 4.5f };
+
+        private const float StandLookSeconds = 1.5f;
+
+        /// <summary>Scan targets this session cannot put 07 in sight of (the old Kestrel hull lies in a pit below a rim),
+        /// named so nothing else is ever skipped quietly.</summary>
+        private static readonly string[] OutOfReach = { StoryScan.IdPrefix + "kestrel3" };
+
         /// <summary>Degrees round a target a stand spot is tried at until the ground there is clear.</summary>
         private const float SpotStep = 15f;
 
@@ -141,6 +153,8 @@ namespace MoonProject.Gameplay.PlayModeTests
         private bool _awake;
         private string _atLine = string.Empty;
         private float _goldenSeconds;
+        private readonly System.Collections.Generic.List<string> _containmentMisses =
+            new System.Collections.Generic.List<string>();
 
         public override void Setup()
         {
@@ -207,6 +221,41 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
         }
 
+        /// <summary>
+        /// Every scan target in the world, scanned as the player scans it: from the chase camera the beam's end and its
+        /// surface patch lie inside the target's own projected renderer bounds (owner build 2c1ea201d: the beam
+        /// ended outside small objects). One capture per target is the contact sheet.
+        /// </summary>
+        [UnityTest]
+        [Timeout(3000000)]
+        [PrebuildSetup(typeof(PlaythroughScene))]
+        [PostBuildCleanup(typeof(PlaythroughScene))]
+        public IEnumerator EveryScannable_TheBeamEndsInsideItsProjectedBounds_OnTheChaseCamera()
+        {
+            BootstrapHarness.DeleteSaveFiles(PlaythroughScene.SaveSlot);
+            yield return Boot();
+            _gameplay.StartKit.Restore(new StartKitSaveData { igniterFitted = true });
+            _goldenSeconds = GoldenHour(_context.Get<IWorldLayout>().BasePosition);
+            var ids = new System.Collections.Generic.List<string>();
+            foreach (ScanFragment fragment in _gameplay.Scans.Fragments)
+            {
+                ids.Add(fragment.FragmentId);
+            }
+
+            Debug.Log($"[beam-screen] {ids.Count} scan targets: {string.Join(", ", ids)}");
+            foreach (string id in ids)
+            {
+                if (_gameplay.Scans.Find(id).Scanned)
+                {
+                    continue;
+                }
+
+                yield return ScanWhole(id, 0f, "sheet-" + id);
+            }
+
+            AssertNoContainmentMisses("every scannable");
+        }
+
         [UnityTest]
         [Timeout(400000)]
         [PrebuildSetup(typeof(PlaythroughScene))]
@@ -239,17 +288,39 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsNotNull(solid, $"{fragment.FragmentId} shows on a renderer");
             Vector3 outward = Flat(fragment.Point - solid.bounds.center);
             outward = outward.sqrMagnitude > 1e-4f ? outward.normalized : Vector3.back;
-            yield return StandFacing(fragment.Point, Quaternion.Euler(0f, angle, 0f) * outward, ScanStandOff);
             ScanField scans = _gameplay.Scans;
             string host = fragment.HostId;
-            yield return Until(() => scans.Candidate != null && scans.Candidate.HostId == host, CandidateTimeout,
-                () => $"07's view rests on a scan target on {host} (candidate " +
-                      $"{scans.Candidate?.FragmentId ?? "none"}, 07 at {_context.Get<IRoverState>().Position}, the " +
-                      $"fragment at {fragment.Point})");
+            // A player walks round a target to a place that sees it: each side and distance is tried until 07's view rests
+            // on a scan target of its host.
+            for (int tried = 0; tried < StandAngles.Length * StandOffs.Length
+                 && (scans.Candidate == null || scans.Candidate.HostId != host); tried++)
+            {
+                float side = angle + StandAngles[tried % StandAngles.Length];
+                yield return StandFacing(fragment.Point, Quaternion.Euler(0f, side, 0f) * outward,
+                    StandOffs[tried / StandAngles.Length]);
+                float seen = Time.time + StandLookSeconds;
+                while ((scans.Candidate == null || scans.Candidate.HostId != host) && Time.time < seen)
+                {
+                    yield return null;
+                }
+            }
+
+            if ((scans.Candidate == null || scans.Candidate.HostId != host) && Array.IndexOf(OutOfReach, fragmentId) >= 0)
+            {
+                Debug.Log($"[beam-screen] {fragmentId}: not scanned, 07 cannot be driven to a place that sees it here");
+                yield break;
+            }
+
+            Assert.IsTrue(scans.Candidate != null && scans.Candidate.HostId == host,
+                $"07's view rests on a scan target on {host} (candidate {scans.Candidate?.FragmentId ?? "none"}, 07 at " +
+                $"{_context.Get<IRoverState>().Position}, the fragment at {fragment.Point})");
 
             ScanBeam beam = _gameplay.Salvage.Feel.ScanBeam;
             Vector3 lastContact = Vector3.zero;
             float worst = 0f;
+            float worstOutside = 0f;
+            float worstPatchOver = 0f;
+            int seenOnScreen = 0;
             bool captured = false;
             int chaseShot = 0;
             int frame = 0;
@@ -304,7 +375,10 @@ namespace MoonProject.Gameplay.PlayModeTests
 
                 float off = DistanceToSurface(fragment, end);
                 worst = Mathf.Max(worst, off);
-                Assert.LessOrEqual(off, OnSurface,
+                MeasureOnScreen(fragment, end, beam.HitSize, ref worstOutside, ref worstPatchOver, ref seenOnScreen);
+                // The end is kept a patch's radius inside the target's bounds (so the patch never spills past it on
+                // screen), which on a thin, round or open target is off the exact surface by up to the patch.
+                Assert.LessOrEqual(off, OnSurface + beam.HitSize,
                     $"frame {frame} ({fragment.Progress:P0}): the scan beam ends {off * 100f:F1} cm off " +
                     $"{fragment.FragmentId} at {end} ({fragment.Surface.Count} collider(s))");
                 Vector3 lens = _gameplay.Salvage.ScanEmitter;
@@ -330,6 +404,15 @@ namespace MoonProject.Gameplay.PlayModeTests
             Release(_keyboard.eKey);
             yield return FadesInPlace(lastContact, () => beam.Shown, () => beam.WedgeTargetCenter,
                 $"the scan beam on {fragment.FragmentId}", null);
+            Rect last = ScreenRect(_context.Get<IViewCamera>().Camera, fragment.Solid.bounds);
+            Debug.Log($"[beam-screen] {fragment.FragmentId}: object {last.width:0}x{last.height:0} px, end outside its bounds by "
+                + $"up to {worstOutside:0.0} px, patch over its edge by up to {worstPatchOver:0.0} px ({seenOnScreen} frames on screen)");
+            if (worstOutside > 0f || worstPatchOver > 0f)
+            {
+                _containmentMisses.Add($"{fragment.FragmentId} ({last.width:0}x{last.height:0} px): end {worstOutside:0.0} px outside, "
+                    + $"patch {worstPatchOver:0.0} px over");
+            }
+
             Debug.Log($"[beam] {fragment.FragmentId}: worst {worst * 100f:F2} cm off its surface over {frame} frames ({unaimed} while the head was still turning)");
             yield return new WaitForSeconds(SettleSeconds);
         }
@@ -600,6 +683,82 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>Metres from <paramref name="point"/> to the scan target's surface.</summary>
+        private static bool BehindCamera(Camera camera, Bounds box)
+        {
+            for (int i = 0; i < 8; i++)
+            {
+                Vector3 corner = box.center + Vector3.Scale(box.extents,
+                    new Vector3((i & 1) == 0 ? -1f : 1f, (i & 2) == 0 ? -1f : 1f, (i & 4) == 0 ? -1f : 1f));
+                if (camera.WorldToScreenPoint(corner).z <= 0f)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>The screen rectangle (px) of a world box seen through <paramref name="camera"/>.</summary>
+        private static Rect ScreenRect(Camera camera, Bounds box)
+        {
+            float minX = float.MaxValue;
+            float minY = float.MaxValue;
+            float maxX = float.MinValue;
+            float maxY = float.MinValue;
+            for (int i = 0; i < 8; i++)
+            {
+                Vector3 corner = box.center + Vector3.Scale(box.extents,
+                    new Vector3((i & 1) == 0 ? -1f : 1f, (i & 2) == 0 ? -1f : 1f, (i & 4) == 0 ? -1f : 1f));
+                Vector3 screen = camera.WorldToScreenPoint(corner);
+                minX = Mathf.Min(minX, screen.x);
+                maxX = Mathf.Max(maxX, screen.x);
+                minY = Mathf.Min(minY, screen.y);
+                maxY = Mathf.Max(maxY, screen.y);
+            }
+
+            return Rect.MinMaxRect(minX, minY, maxX, maxY);
+        }
+
+        /// <summary>
+        /// What the player sees: the beam's end and its surface patch against the target's renderer bounds projected
+        /// through the chase camera. Records the worst overshoot (px) of each while the target is in front of it.
+        /// </summary>
+        private void MeasureOnScreen(ScanFragment fragment, Vector3 end, float patchMetres, ref float worstOutside,
+            ref float worstPatchOver, ref int seen)
+        {
+            Camera camera = _context.Get<IViewCamera>().Camera;
+            Vector3 screenEnd = camera.WorldToScreenPoint(end);
+            if (screenEnd.z <= 0f)
+            {
+                return;
+            }
+
+            seen++;
+            Bounds world = fragment.Solid.bounds;
+            if (BehindCamera(camera, world))
+            {
+                // Standing in or against it, its projection is meaningless: the end must be inside the box itself.
+                worstOutside = Mathf.Max(worstOutside, Mathf.Sqrt(world.SqrDistance(end)) * camera.pixelHeight);
+                return;
+            }
+
+            Rect box = ScreenRect(camera, world);
+            float outside = Mathf.Max(box.xMin - screenEnd.x, screenEnd.x - box.xMax, box.yMin - screenEnd.y,
+                screenEnd.y - box.yMax, 0f);
+            worstOutside = Mathf.Max(worstOutside, outside);
+            float pixelsPerMetre = camera.pixelHeight / (2f * Mathf.Tan(camera.fieldOfView * 0.5f * Mathf.Deg2Rad));
+            float patchRadius = 0.5f * patchMetres * pixelsPerMetre / screenEnd.z;
+            float over = Mathf.Max(box.xMin - (screenEnd.x - patchRadius), screenEnd.x + patchRadius - box.xMax,
+                box.yMin - (screenEnd.y - patchRadius), screenEnd.y + patchRadius - box.yMax, 0f);
+            worstPatchOver = Mathf.Max(worstPatchOver, over);
+        }
+
+        private void AssertNoContainmentMisses(string what)
+        {
+            Assert.IsEmpty(_containmentMisses, $"{what}: the beam's end and patch lie inside the target on screen:\n  "
+                + string.Join("\n  ", _containmentMisses));
+        }
+
         private static float DistanceToSurface(ScanFragment fragment, Vector3 point)
         {
             if (fragment.Surface.Count == 0)

@@ -28,11 +28,12 @@ namespace MoonProject.Gameplay
         /// <summary>
         /// The beam's far end this frame. <paramref name="alignedDegrees"/> is the lens-axis error up to which the beam
         /// is fully on the target, <paramref name="lostDegrees"/> the error from which it is fully off it (a short
-        /// beam of <paramref name="unalignedReach"/> of the distance along the axis); <paramref name="halfLife"/> eases
-        /// the change.
+        /// beam of <paramref name="unalignedReach"/> of the distance along the axis), both widened by
+        /// <paramref name="targetHalfAngle"/>, the angle the target itself covers (the head aims at its scan node, the
+        /// beam meets the surface anywhere on it); <paramref name="halfLife"/> eases the change.
         /// </summary>
         public Vector3 End(float deltaTime, Vector3 lens, Vector3 axis, Vector3 contact, float alignedDegrees,
-            float lostDegrees, float unalignedReach, float halfLife)
+            float lostDegrees, float unalignedReach, float halfLife, float targetHalfAngle = 0f)
         {
             Vector3 toContact = contact - lens;
             float distance = toContact.magnitude;
@@ -43,7 +44,7 @@ namespace MoonProject.Gameplay
 
             Vector3 direction = toContact / distance;
             float error = Vector3.Angle(axis, direction);
-            float target = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(alignedDegrees, lostDegrees, error));
+            float target = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(alignedDegrees + targetHalfAngle, lostDegrees + targetHalfAngle, error));
             _aligned += (target - _aligned) * (1f - Mathf.Pow(0.5f, deltaTime / Mathf.Max(halfLife, MinHalfLife)));
             if (target >= 1f && _aligned >= Settled)
             {
