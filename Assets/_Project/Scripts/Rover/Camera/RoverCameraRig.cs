@@ -107,6 +107,7 @@ namespace MoonProject.Rover
         private float _scanYaw;
         private float _scanYawVelocity;
         private float _scanSide;
+        private bool _scanSideClear;
         private Bounds _towBounds;
         private bool _towBoundsKnown;
         private Vector3 _towLook;
@@ -1066,6 +1067,7 @@ namespace MoonProject.Rover
             _scanning = true;
             _scanPoint = started.Point;
             _scanSide = 0f;
+            _scanSideClear = true;
         }
 
         /// <summary>
@@ -1112,7 +1114,9 @@ namespace MoonProject.Rover
             }
 
             yaw += _scanYaw;
-            elevation += weight * (_tuning.ScanLiftDegrees * close + _tuning.ScanOverheadLiftDegrees * overhead);
+            // Hard against a wall, where neither side is clear, the view looks down from higher instead.
+            float blocked = _scanSideClear ? 0f : _tuning.ScanBlockedLiftDegrees * close;
+            elevation += weight * (_tuning.ScanLiftDegrees * close + _tuning.ScanOverheadLiftDegrees * overhead + blocked);
             radius *= 1f + weight * _tuning.ScanOverheadPullBack * overhead;
         }
 
@@ -1131,6 +1135,7 @@ namespace MoonProject.Rover
             float reachB = SightReach(follow, eyeB, _tuning.CameraRadius);
             bool aClear = reachA >= distance;
             bool bClear = reachB >= distance;
+            _scanSideClear = aClear || bClear;
             if (aClear != bClear)
             {
                 return aClear ? 1f : -1f;

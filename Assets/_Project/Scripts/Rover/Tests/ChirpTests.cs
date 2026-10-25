@@ -92,7 +92,6 @@ namespace MoonProject.Rover.Tests
                 (() => _events.Publish(new LowPowerChanged(true, false)), ChirpMood.Tired),
                 (() => _events.Publish(new SiteAnswered("site.depot", Vector3.zero, 10f, true)), ChirpMood.Curious),
                 (() => _events.Publish(new FriendGreeted("bell")), ChirpMood.Greeting),
-                (() => _events.Publish(new CallReplyFailed()), ChirpMood.Ask),
                 (() => _events.Publish(new TowReleased("habitat.power_module", Vector3.zero, TowRelease.Arrived)),
                     ChirpMood.Happy),
                 (() => _events.Publish(new TowReleased("habitat.power_module", Vector3.zero, TowRelease.Snapped)),
