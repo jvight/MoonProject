@@ -13,12 +13,14 @@ namespace MoonProject.World
     [Serializable]
     public sealed class Relay1SiteSettings
     {
-        [Tooltip("Where the service cabinet stands, metres in the anchor's frame: beside the mast, on the base's side.")]
-        [SerializeField] private Vector2 _cabinetOffset = new Vector2(2.2f, 0.8f);
+        [Tooltip("Where the service cabinet stands, metres in the anchor's frame: beside the mast on the base's side, " +
+            "on the far side from its feed socket, so 07's way to the socket never runs between them, and far enough out " +
+            "that 07 circling the mast never wedges between them either.")]
+        [SerializeField] private Vector2 _cabinetOffset = new Vector2(-4.2f, 0.8f);
 
         [Tooltip("Degrees the cabinet's open front turns from facing the base: angled so its inside shows on the way in.")]
         [Range(-90f, 90f)]
-        [SerializeField] private float _cabinetYaw = -25f;
+        [SerializeField] private float _cabinetYaw = 25f;
 
         [Tooltip("How far in front of the mast the contact pad lies, metres, toward the base.")]
         [Range(1f, 8f)]

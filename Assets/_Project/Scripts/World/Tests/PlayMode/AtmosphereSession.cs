@@ -161,6 +161,13 @@ namespace MoonProject.World.PlayModeTests
         private const string RelaySiteCabinet = "ServiceCabinet";
         private const string RelaySiteSpare = "ServiceCabinet/FeedUnitSpare_Slot/FeedUnitSpare";
         private const string RelaySiteFitted = "FeedSocket/FeedUnitFitted";
+        private const string RelaySiteSocket = "FeedSocket";
+        private const string RelaySiteMast = "WestMast";
+
+        // 07 is 1.47 m wide: the least gap it may be driven through toward the socket, and the view from above it.
+        private const float RelaySiteMinGap = 3f;
+        private const float RelaySiteTopHeight = 14f;
+        private const float RelaySiteTopBack = 6f;
 
         // The repair's power-up as Gameplay times it after the fit (RelayRepairSettings' defaults), and how long after
         // each stage its frame is shot.
@@ -997,6 +1004,17 @@ namespace MoonProject.World.PlayModeTests
             Assert.IsNotNull(cabinet, "relay.1's site has its cabinet");
             Assert.IsNotNull(spare, "the cabinet holds the spare");
 
+            // The socket's approach: the clear gap between the cabinet and the mast, where 07 must never wedge.
+            Bounds cabinetBounds = ColliderBounds(cabinet);
+            Bounds mastBounds = ColliderBounds(FindNamed(RelaySiteMast));
+            float gap = HorizontalGap(cabinetBounds, mastBounds);
+            Vector3 socket = site.InverseTransformPoint(site.Find(RelaySiteSocket).position);
+            Debug.Log($"[relay-site] cabinet to mast gap {gap:F2} m; socket at {socket} in the site's frame (x right, " +
+                      $"z toward the base); cabinet at {site.InverseTransformPoint(cabinet.position)}");
+            bool farSide = Mathf.Sign(site.InverseTransformPoint(cabinet.position).x) != Mathf.Sign(socket.x);
+            Assert.IsTrue(farSide, "07's way to the socket never runs between the cabinet and the mast");
+            Assert.GreaterOrEqual(gap, RelaySiteMinGap, "07 circling the mast fits between it and the cabinet with room");
+
             // The cabinet's open front: the site's facing (toward the base) turned by the cabinet's tuned yaw.
             Vector3 front = Quaternion.Euler(0f, settings.Landmarks.Relay1Site.CabinetYaw, 0f) * site.forward;
             Vector3 near = OnGround(context.Get<ITerrainQuery>(),
@@ -1013,6 +1031,9 @@ namespace MoonProject.World.PlayModeTests
                 camera.CopyFrom(view);
                 camera.enabled = false;
                 CopyPipelineSettings(view, camera);
+                Vector3 above = site.position + Vector3.up * RelaySiteTopHeight + site.forward * RelaySiteTopBack;
+                Place(camera, LookPose("relay-site-top", above, site.position, OpeningFov));
+                Shoot(camera, "relay-site-top");
                 Place(camera, LookPose("relay-site-15m-before", near, spare.position, OpeningFov));
                 Shoot(camera, "relay-site-15m-before");
                 Place(camera, LookPose("relay-site-apron-before", apronEye, cabinet.position, OpeningFov));
@@ -1644,6 +1665,28 @@ namespace MoonProject.World.PlayModeTests
             }
 
             Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        // The world bounds of every collider under root.
+        private static Bounds ColliderBounds(Transform root)
+        {
+            Collider[] colliders = root.GetComponentsInChildren<Collider>();
+            Assert.IsNotEmpty(colliders, $"{root.name} is solid");
+            Bounds bounds = colliders[0].bounds;
+            foreach (Collider collider in colliders)
+            {
+                bounds.Encapsulate(collider.bounds);
+            }
+
+            return bounds;
+        }
+
+        // The clear distance between two boxes on the ground plane (0 when they overlap).
+        private static float HorizontalGap(Bounds a, Bounds b)
+        {
+            float dx = Mathf.Max(0f, Mathf.Max(a.min.x - b.max.x, b.min.x - a.max.x));
+            float dz = Mathf.Max(0f, Mathf.Max(a.min.z - b.max.z, b.min.z - a.max.z));
+            return Mathf.Sqrt(dx * dx + dz * dz);
         }
 
         // A point on the ground on a bearing from the base, raised by a height.
