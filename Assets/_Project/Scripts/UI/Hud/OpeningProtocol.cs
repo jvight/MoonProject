@@ -5,7 +5,7 @@ namespace MoonProject.UI
     /// <summary>The protocol line 07's readout shows (docs/design/opening-v2.md §2 B1, B8, B11).</summary>
     internal enum ProtocolLine
     {
-        /// <summary>Before the base has power: <c>POWER · OFFLINE</c>.</summary>
+        /// <summary>Before the base has power: <c>POWER · OFF</c>.</summary>
         PowerOffline = 0,
 
         /// <summary>A built solar array powers the pad: <c>POWER · ON</c>.</summary>

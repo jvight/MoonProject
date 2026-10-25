@@ -8,7 +8,7 @@ namespace MoonProject.UI
 {
     /// <summary>
     /// The reward beat of a scan (docs/design/opening-v2.md §3, §5): when 07 learns a blueprint a glass card stays up
-    /// for a few seconds and says "Blueprint learned: Charging Pad". Cards wait their turn behind one another and
+    /// for a few seconds and says "New blueprint: Charging Pad". Cards wait their turn behind one another and
     /// behind whatever else holds the guidance slot; it is a card, so it is part of the one guidance slot.
     /// </summary>
     internal sealed class UnlockCard
