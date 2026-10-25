@@ -151,7 +151,8 @@ namespace MoonProject.Gameplay
             _restTime = OnPad && _rover.Speed <= _tuning.DockRestSpeed ? _restTime + deltaTime : 0f;
             bool full = _battery.CellsFull && pad == _pad && !_fullDone &&
                         (_restTime >= _tuning.DockRestSeconds || _lock.Raised || _docked);
-            bool hold = charging || full;
+            // A day-end beat keeps 07 docked whatever the charge does from frame to frame.
+            bool hold = charging || full || (Keep && _docked);
             bool driveOff = !Keep && _settled && Mathf.Abs(_rover.DriveInput.y) > _tuning.DockDriveOff;
             if (driveOff && _battery.CellsFull)
             {
