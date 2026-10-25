@@ -98,6 +98,13 @@ namespace MoonProject.Rover
         private bool _towing;
         private float _towT;
         private bool _towSolved;
+        private IRoverRig _lens;
+        private bool _scanning;
+        private Vector3 _scanPoint;
+        private float _scanT;
+        private float _scanYaw;
+        private float _scanYawVelocity;
+        private float _scanSide;
         private Bounds _towBounds;
         private bool _towBoundsKnown;
         private Vector3 _towLook;
@@ -260,6 +267,7 @@ namespace MoonProject.Rover
             _context = context;
             _nearFade = new NearPropFade();
             _rover = context.Get<IRoverState>();
+            _lens = context.Get<IRoverRig>();
             _world = context.Get<IWorldLayout>();
             context.TryGet(out _anchors);
             _stillness = context.Get<IRoverStillness>();
@@ -308,6 +316,9 @@ namespace MoonProject.Rover
                 context.Events.Subscribe<ChargingChanged>(OnChargingChanged),
                 context.Events.Subscribe<FacePageChanged>(OnFacePageChanged),
                 context.Events.Subscribe<RoverDockChanged>(OnDockChanged),
+                context.Events.Subscribe<ScanStarted>(OnScanStarted),
+                context.Events.Subscribe<ScanStopped>(_ => _scanning = false),
+                context.Events.Subscribe<FragmentScanned>(_ => _scanning = false),
                 context.Events.Subscribe<BuildPlacingChanged>(OnBuildPlacingChanged),
             };
             context.Register<IViewCamera>(this);
@@ -552,6 +563,7 @@ namespace MoonProject.Rover
             StepHeldShot(viewInput, deltaTime);
             StepMomentFraming(deltaTime);
             StepTowBounds(deltaTime);
+            _scanT = Mathf.MoveTowards(_scanT, _scanning ? 1f : 0f, deltaTime / _tuning.ScanFramingEaseSeconds);
             StepTowLook(deltaTime);
             _beam.Framing.Step(deltaTime);
             StepReleaseCarry(deltaTime);
@@ -997,11 +1009,97 @@ namespace MoonProject.Rover
                 BlendTowFraming(ref yaw, ref elevation, ref radius);
             }
 
+            if (_scanT > 0f || _scanYaw != 0f)
+            {
+                BlendScanFraming(ref yaw, ref elevation, ref radius);
+            }
+
             float cutFrame = _beam.Framing.Weight;
             if (cutFrame > 0f)
             {
                 BlendCutFraming(cutFrame, ref yaw, ref elevation, ref radius);
             }
+        }
+
+        private void OnScanStarted(ScanStarted started)
+        {
+            _scanning = true;
+            _scanPoint = started.Point;
+            _scanSide = 0f;
+        }
+
+        /// <summary>
+        /// While 07 scans, the view swings round to look across the beam instead of down it from behind 07 (whose body
+        /// hides it), rises a little, and for a target overhead draws back and lifts so it is seen and never looked up
+        /// into from inside its frame. Only for a close target: a far one is framed by the plain chase view.
+        /// </summary>
+        private void BlendScanFraming(ref float yaw, ref float elevation, ref float radius)
+        {
+            float weight = Smoothing.SmoothStep(0f, 1f, _scanT);
+            Vector3 across = _scanPoint - _lens.ScanOrigin.position;
+            float above = across.y;
+            across.y = 0f;
+            float distance = across.magnitude;
+            float close = 1f - Smoothing.SmoothStep(_tuning.ScanCloseMetres, _tuning.ScanCloseMetres * 2f, distance);
+            float overhead = Smoothing.SmoothStep(0f, _tuning.ScanOverheadDegrees,
+                Mathf.Atan2(above, Mathf.Max(distance, 0.01f)) * Mathf.Rad2Deg);
+
+            float lookYaw = _targetYaw + yaw;
+            float beamYaw = Mathf.Atan2(across.x, across.z) * Mathf.Rad2Deg;
+            float sideA = beamYaw + 90f;
+            float sideB = beamYaw - 90f;
+            if (_scanSide == 0f)
+            {
+                _scanSide = ChooseScanSide(lookYaw, sideA, sideB);
+            }
+
+            float toSide = Mathf.DeltaAngle(lookYaw, _scanSide > 0f ? sideA : sideB);
+            float swing = _scanning && distance > 0.01f
+                ? Mathf.Clamp(toSide, -_tuning.ScanMaxYawSwing, _tuning.ScanMaxYawSwing) * close
+                : 0f;
+            if (Time.deltaTime > 0f)
+            {
+                _scanYaw = Mathf.SmoothDampAngle(_scanYaw, swing, ref _scanYawVelocity,
+                    _tuning.ScanFramingEaseSeconds, _tuning.ScanYawMaxSpeed, Time.deltaTime);
+            }
+
+            if (_scanT <= 0f && Mathf.Abs(_scanYaw) < 0.01f)
+            {
+                _scanYaw = 0f;
+                _scanYawVelocity = 0f;
+            }
+
+            yaw += _scanYaw;
+            elevation += weight * (_tuning.ScanLiftDegrees * close + _tuning.ScanOverheadLiftDegrees * overhead);
+            radius *= 1f + weight * _tuning.ScanOverheadPullBack * overhead;
+        }
+
+        /// <summary>
+        /// The side of the beam the view looks across from: the one whose eye has the clearer sight line to 07 (the
+        /// target is often against a wall, and a view swung into it would be pulled straight back behind 07), the
+        /// nearer to the view's bearing when both are clear. Chosen once per scan so it never flips.
+        /// </summary>
+        private float ChooseScanSide(float lookYaw, float sideA, float sideB)
+        {
+            float distance = _tuning.Distance;
+            Vector3 follow = _target.position;
+            Vector3 eyeA = follow - Quaternion.Euler(0f, sideA, 0f) * Vector3.forward * distance;
+            Vector3 eyeB = follow - Quaternion.Euler(0f, sideB, 0f) * Vector3.forward * distance;
+            float reachA = SightReach(follow, eyeA, _tuning.CameraRadius);
+            float reachB = SightReach(follow, eyeB, _tuning.CameraRadius);
+            bool aClear = reachA >= distance;
+            bool bClear = reachB >= distance;
+            if (aClear != bClear)
+            {
+                return aClear ? 1f : -1f;
+            }
+
+            if (!aClear && !bClear)
+            {
+                return reachA >= reachB ? 1f : -1f;
+            }
+
+            return Mathf.Abs(Mathf.DeltaAngle(lookYaw, sideA)) <= Mathf.Abs(Mathf.DeltaAngle(lookYaw, sideB)) ? 1f : -1f;
         }
 
         /// <summary>07 hooked a load: its renderers are the obstacle the chase camera keeps clear of.</summary>

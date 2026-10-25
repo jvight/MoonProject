@@ -433,6 +433,39 @@ namespace MoonProject.Rover
         [Range(0.6f, 4f)]
         [SerializeField] private float _towYawEaseSeconds = 1.8f;
 
+        [Header("Scanning a target")]
+        [Tooltip("Seconds the view takes to ease into, and out of, its scan framing (to the side of the beam, a little higher).")]
+        [Range(0.2f, 3f)]
+        [SerializeField] private float _scanFramingEaseSeconds = 0.9f;
+
+        [Tooltip("Widest (deg) the view swings round to look across the scan beam instead of down it from behind 07.")]
+        [Range(0f, 80f)]
+        [SerializeField] private float _scanMaxYawSwing = 40f;
+
+        [Tooltip("Fastest (deg/s) the view swings into its scan framing.")]
+        [Range(5f, 90f)]
+        [SerializeField] private float _scanYawMaxSpeed = 45f;
+
+        [Tooltip("Degrees the view rises while scanning a close target, so 07's body is not in the beam's way.")]
+        [Range(0f, 30f)]
+        [SerializeField] private float _scanLiftDegrees = 18f;
+
+        [Tooltip("Distance (m) from the lens within which a target is close enough for the scan framing in full; it fades out by twice this.")]
+        [Range(1f, 20f)]
+        [SerializeField] private float _scanCloseMetres = 6f;
+
+        [Tooltip("Angle (deg) the target stands above the lens at which the overhead framing (lift and pull back) is in full.")]
+        [Range(10f, 80f)]
+        [SerializeField] private float _scanOverheadDegrees = 35f;
+
+        [Tooltip("Extra degrees the view rises when the target is overhead, so it looks at the target and not up into it.")]
+        [Range(0f, 40f)]
+        [SerializeField] private float _scanOverheadLiftDegrees = 14f;
+
+        [Tooltip("Extra distance, as a share, the view draws back when the target is overhead, so it stays outside the target's frame.")]
+        [Range(0f, 1.5f)]
+        [SerializeField] private float _scanOverheadPullBack = 0.5f;
+
         [Tooltip("Fastest (deg/s) the camera swings round a load it tows, whatever the framing asks for.")]
         [Range(5f, 90f)]
         [SerializeField] private float _towYawMaxSpeed = 30f;
@@ -1112,6 +1145,22 @@ namespace MoonProject.Rover
         public float TowYawEaseSeconds => _towYawEaseSeconds;
 
         public float TowYawMaxSpeed => _towYawMaxSpeed;
+
+        public float ScanFramingEaseSeconds => _scanFramingEaseSeconds;
+
+        public float ScanMaxYawSwing => _scanMaxYawSwing;
+
+        public float ScanYawMaxSpeed => _scanYawMaxSpeed;
+
+        public float ScanLiftDegrees => _scanLiftDegrees;
+
+        public float ScanCloseMetres => _scanCloseMetres;
+
+        public float ScanOverheadDegrees => _scanOverheadDegrees;
+
+        public float ScanOverheadLiftDegrees => _scanOverheadLiftDegrees;
+
+        public float ScanOverheadPullBack => _scanOverheadPullBack;
 
         public CameraMomentSettings DigMoment => _digMoment;
 
