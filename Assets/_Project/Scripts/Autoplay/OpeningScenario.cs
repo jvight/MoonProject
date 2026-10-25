@@ -19,7 +19,6 @@ namespace MoonProject.Autoplay
     {
         private const float BootTimeoutSeconds = 60f;
         private const float TitleAttemptSeconds = 1.5f;
-        private const int TitleAttempts = 12;
         private const float WakeTimeoutSeconds = 90f;
         private const float LookAroundSeconds = 4f;
         private const float LineTimeoutSeconds = 30f;
@@ -222,7 +221,11 @@ namespace MoonProject.Autoplay
             using (_bot.World.Context.Events.Subscribe<RoverWakeBeatReached>(
                        reached => chaseFrame |= reached.Beat == WakeBeat.ChaseFrame))
             {
-                for (int attempt = 0; attempt < TitleAttempts && _bot.World.Flow.State == GameFlowState.Title; attempt++)
+                // The first boot opens on the language step, then the title: Enter answers each in turn, and one that
+                // lands before the menu is up is lost, so it is pressed again until play starts (a slow boot has no fixed
+                // count of presses).
+                float titleDeadline = Time.unscaledTime + BootTimeoutSeconds;
+                while (_bot.World.Flow.State == GameFlowState.Title && Time.unscaledTime < titleDeadline)
                 {
                     yield return _bot.Tap(Key.Enter);
                     yield return _bot.Wait(TitleAttemptSeconds);
