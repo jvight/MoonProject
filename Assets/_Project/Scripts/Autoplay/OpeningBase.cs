@@ -140,8 +140,8 @@ namespace MoonProject.Autoplay
         private const int PageFlipCycles = 2;
 
         /// <summary>Frames shot before and after the press that closes the last Tab cycle: the owner sees one broken frame.</summary>
-        private const int CloseShotsBefore = 6;
-        private const int CloseShotsAfter = 50;
+        private const int CloseShotsBefore = 0;
+        private const int CloseShotsAfter = 0;
 
         /// <summary>Frames the pointer takes to travel to a card.</summary>
         private const int PointerSteps = 8;

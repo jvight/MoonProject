@@ -570,7 +570,7 @@ namespace MoonProject.Rover
             {
                 _dbgFrames--;
                 Transform lens = _viewCamera.transform;
-                Debug.Log($"[CAMDBG] f{Time.frameCount} open={_faceInspectOpen} fw={_faceInspectWeight:F2} wide={_wide.IsOpen}/{_wide.Weight:F2} " +
+                Debug.Log($"[CAMDBG] f{Time.frameCount} dt={deltaTime * 1000f:F0} open={_faceInspectOpen} fw={_faceInspectWeight:F2} wide={_wide.IsOpen}/{_wide.Weight:F2} " +
                           $"held={_held.IsOpen}/{_held.Weight:F2} moment={_moment.IsActive}/{_moment.Weight:F2}/{(_moment.Settings == _tuning.DockMoment ? "dock" : _moment.Settings == _tuning.NudgeMoment ? "nudge" : _moment.Settings == _tuning.LampFitMoment ? "lamp" : "other")} " +
                           $"build={_buildFraming.IsActive}/{_buildFraming.Weight:F2} charging={_charging} tether={_tethered} tow={_towing} open={_opening.IsActive} " +
                           $"pos={lens.position:F1} rot={lens.eulerAngles:F0} fov={_viewCamera.fieldOfView:F0} rover={_rover.Position:F1}");
