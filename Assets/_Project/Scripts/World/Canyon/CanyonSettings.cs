@@ -122,9 +122,9 @@ namespace MoonProject.World
         [Range(4f, 40f)]
         [SerializeField] private float _flankRun = 10f;
 
-        [Tooltip("Height of the jagged ridges along the wall tops.")]
+        [Tooltip("Height of the rise and fall along the wall tops, metres: an uneven crest, never a level slab top.")]
         [Range(0f, 20f)]
-        [SerializeField] private float _wallRoughness = 7f;
+        [SerializeField] private float _wallRoughness = 11f;
 
         [Header("Alcoves and the glinting ledge")]
         [Tooltip("Number of side alcoves along the canyon, alternating sides.")]

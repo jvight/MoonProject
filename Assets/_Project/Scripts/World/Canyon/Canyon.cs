@@ -52,7 +52,7 @@ namespace MoonProject.World
         private const float RelayLedgeRun = 28f;
         private const float ExitMouthHalfWidth = 9f;
         private const float ExitEase = 4f;
-        private const float RoughnessWavelength = 18f;
+        private const float RoughnessWavelength = 36f;
         private const uint RoughnessSalt = 0x4A7C15F3u;
 
         // Gate slabs: one piece per gate (seams between pieces read as masonry), buried this far below the low side,

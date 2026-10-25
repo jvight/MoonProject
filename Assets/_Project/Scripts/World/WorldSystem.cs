@@ -167,7 +167,9 @@ namespace MoonProject.World
             Vector3 toLight = WorldAtmosphere.LightSourceDirection(_settings.Atmosphere, _settings.Sky);
             LastBuild = _terrainBuilder.Build(_generatedRoot.transform, Surface, _settings.Mesh, _settings.Paint,
                 toLight, _groundMaterial, hideFlags);
-            _gateBuilder.Build(_generatedRoot.transform, surface.Canyon.Slabs, _paletteMaterial, hideFlags);
+            var gatePainter = new TerrainPainter(_settings.Paint, surface.Seed, toLight, surface.PadRadius);
+            _gateBuilder.Build(_generatedRoot.transform, surface.Canyon.Slabs, surface, gatePainter, _groundMaterial,
+                hideFlags);
             List<ScatterInstance> scatterInstances = scatterPlan.GetAwaiter().GetResult();
             var aprons = new List<RubbleApron>();
             planner.CollectRubbleAprons(scatterInstances, aprons);

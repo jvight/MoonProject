@@ -43,6 +43,7 @@ namespace MoonProject.World
         private const uint FarRangeSalt = 0xB55A4F09u;
         private const uint GullySalt = 0x94D049BBu;
         private const uint GrainSalt = 0x3243F6A9u;
+        private const uint TerraceSalt = 0x6A09E667u;
 
         // The gullies rib the wall between this fraction of the foothills and the crest.
         private const float GullyStartInFoothills = 0.4f;
@@ -64,6 +65,7 @@ namespace MoonProject.World
         private readonly GradientNoise _farRangeNoise;
         private readonly GradientNoise _gullyNoise;
         private readonly GradientNoise _grainNoise;
+        private readonly GradientNoise _terraceNoise;
         private readonly Relief _relief;
 
         private readonly float _padRadius;
@@ -92,10 +94,12 @@ namespace MoonProject.World
         private readonly float _gullyHalfWidth;
         private readonly float _gullyAngularScale;
         private readonly float _invGullyRadial;
-        private readonly float _strataSpacing;
-        private readonly float _invStrataSpacing;
-        private readonly float _strataStrength;
-        private readonly float _strataRiser;
+        private readonly float _terraceSpacing;
+        private readonly float _invTerraceSpacing;
+        private readonly float _terraceStrength;
+        private readonly float _terraceRiser;
+        private readonly float _terraceWarp;
+        private readonly float _invTerraceWarpWavelength;
         private CraterField _craterField;
         private readonly float _peakX;
         private readonly float _peakZ;
@@ -168,6 +172,7 @@ namespace MoonProject.World
             _farRangeNoise = new GradientNoise(Hashing.Mix(baseSeed ^ FarRangeSalt));
             _gullyNoise = new GradientNoise(Hashing.Mix(baseSeed ^ GullySalt));
             _grainNoise = new GradientNoise(Hashing.Mix(baseSeed ^ GrainSalt));
+            _terraceNoise = new GradientNoise(Hashing.Mix(baseSeed ^ TerraceSalt));
 
             _padRadius = settings.PadRadius;
             _padRadiusSq = _padRadius * _padRadius;
@@ -198,10 +203,12 @@ namespace MoonProject.World
             _gullyHalfWidth = (_crestRadius - gullyStart) * 0.5f;
             _gullyAngularScale = settings.WallGullyCount / TwoPi;
             _invGullyRadial = settings.WallGullyCount / (TwoPi * _crestRadius * GullyRadialDrift);
-            _strataSpacing = settings.StrataSpacing;
-            _invStrataSpacing = 1f / settings.StrataSpacing;
-            _strataStrength = settings.StrataStrength;
-            _strataRiser = settings.StrataRiser;
+            _terraceSpacing = settings.TerraceSpacing;
+            _invTerraceSpacing = 1f / settings.TerraceSpacing;
+            _terraceStrength = settings.TerraceStrength;
+            _terraceRiser = settings.TerraceRiser;
+            _terraceWarp = settings.TerraceWarp;
+            _invTerraceWarpWavelength = 1f / settings.TerraceWarpWavelength;
 
             Vector2 peakDirection = BearingToDirection(settings.PeakBearing);
             _peakX = peakDirection.x * settings.PeakDistance;
@@ -452,7 +459,7 @@ namespace MoonProject.World
                 height += RimProfile(rw);
                 height += Mountains(x, z, rw);
                 height += WallGullies(x, z, r, rw);
-                height = Strata(height, rw);
+                height = SlumpTerraces(x, z, height, rw);
             }
 
             if (r > _farRangeStart)
@@ -543,8 +550,9 @@ namespace MoonProject.World
         }
 
         /// <summary>
-        /// Radial gullies and buttresses ribbing the inner wall. Sampled on the direction from the base (like The
-        /// Peak's crags) so they run down the wall; zero on the floor, so the drivable area is untouched.
+        /// Soft radial gullies and buttresses folding the inner wall, mantled by regolith (smooth noise, never ridged
+        /// fins). Sampled on the direction from the base (like The Peak's crags) so they run down the wall; zero on the
+        /// floor, so the drivable area is untouched.
         /// </summary>
         private float WallGullies(float x, float z, float r, float rw)
         {
@@ -555,17 +563,17 @@ namespace MoonProject.World
             }
 
             float inverse = 1f / r;
-            float ridges = _gullyNoise.Ridged(x * inverse * _gullyAngularScale + rw * _invGullyRadial,
-                z * inverse * _gullyAngularScale, 2, 2f, 0.5f, _ridgeSoftness);
-            return _gullyHeight * mask * (2f * ridges - 1f);
+            float folds = _gullyNoise.Fractal(x * inverse * _gullyAngularScale + rw * _invGullyRadial,
+                z * inverse * _gullyAngularScale, 2, 2f, 0.5f);
+            return _gullyHeight * mask * folds;
         }
 
         /// <summary>
-        /// Horizontal strata on the inner wall: the height is pulled toward a flat bench every strata spacing, with a
-        /// short steep riser between benches, strongest mid-wall and gone at the floor and the crest, so the wall reads
-        /// as stacked layers of rock under a natural crest.
+        /// Slump terraces on the inner wall: the height is pulled toward a bench every terrace spacing, with a short
+        /// steep riser between benches, strongest mid-wall and gone at the floor and the crest. The benches' levels
+        /// rise and fall along the rim by a slow noise, so the wall reads as slumped blocks, never level stripes.
         /// </summary>
-        private float Strata(float height, float rw)
+        private float SlumpTerraces(float x, float z, float height, float rw)
         {
             float mask = SmoothMath.Bump((rw - _gullyCenter) / _gullyHalfWidth);
             if (mask <= 0f)
@@ -573,10 +581,13 @@ namespace MoonProject.World
                 return height;
             }
 
-            float layers = height * _invStrataSpacing;
+            float warp = _terraceWarp * _terraceNoise.Fractal(x * _invTerraceWarpWavelength,
+                z * _invTerraceWarpWavelength, 2, 2f, 0.5f);
+            float layers = (height + warp) * _invTerraceSpacing;
             float bench = (float)Math.Floor(layers);
-            float stepped = (bench + SmoothMath.Smootherstep(1f - _strataRiser, 1f, layers - bench)) * _strataSpacing;
-            return height + (stepped - height) * _strataStrength * mask;
+            float stepped = (bench + SmoothMath.Smootherstep(1f - _terraceRiser, 1f, layers - bench)) * _terraceSpacing
+                - warp;
+            return height + (stepped - height) * _terraceStrength * mask;
         }
 
         private float CraterHeights(float x, float z, ref float calm, ref float bowl, ref float rim)

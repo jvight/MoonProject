@@ -7,10 +7,11 @@ using MoonProject.Core;
 namespace MoonProject.World
 {
     /// <summary>
-    /// Builds Whispering Canyon's gate slabs and the exit's gate posts: bevelled R1 basalt rock slabs with smooth
-    /// bevel normals, world-scale UVs, and R1 vertex colours (AO, bevel edge wear, and top-cap dust) plus a box
-    /// collider each on <see cref="Layers.Ground"/>, so the chasm's far face and the exit's step are truly vertical to
-    /// the rover (design ruling 10: never climbable) while their tops are flat ground to land and drive on.
+    /// Builds Whispering Canyon's gate slabs and the exit's gate posts: bevelled rock slabs with smooth bevel normals,
+    /// drawn in the terrain's own material and coloured by the terrain's painter where each vertex stands (so they
+    /// read as the canyon's rock, never as boxes of another stone), plus a box collider each on
+    /// <see cref="Layers.Ground"/>, so the chasm's far face and the exit's step are truly vertical to the rover (design
+    /// ruling 10: never climbable) while their tops are flat ground to land and drive on.
     /// </summary>
     public sealed class CanyonGateBuilder
     {
@@ -49,9 +50,10 @@ namespace MoonProject.World
 
         private readonly List<Mesh> _meshes = new List<Mesh>();
 
-        public void Build(Transform parent, IReadOnlyList<CanyonSlab> slabs, Material material, HideFlags hideFlags)
+        public void Build(Transform parent, IReadOnlyList<CanyonSlab> slabs, MoonSurface surface,
+            TerrainPainter painter, Material material, HideFlags hideFlags)
         {
-            if (parent == null || slabs == null || material == null)
+            if (parent == null || slabs == null || surface == null || painter == null || material == null)
             {
                 throw new ArgumentNullException(nameof(parent), "Gate build inputs must all be provided.");
             }
@@ -61,13 +63,18 @@ namespace MoonProject.World
             for (int i = 0; i < slabs.Count; i++)
             {
                 CanyonSlab slab = slabs[i];
-                Mesh mesh = BuildSlabMesh($"CanyonGate_{i}", slab.Size, Chamfer);
+                Quaternion turn = Quaternion.Euler(0f, slab.YawDegrees, 0f);
+                Mesh mesh = BuildSlabMesh($"CanyonGate_{i}", slab.Size, Chamfer, (position, normal) =>
+                {
+                    Vector3 world = slab.Centre + turn * position;
+                    return painter.PaintVertex(world, turn * normal, surface.Sample(world.x, world.z));
+                });
                 mesh.hideFlags = hideFlags;
                 _meshes.Add(mesh);
 
                 var piece = new GameObject($"CanyonGate_{i}") { hideFlags = hideFlags, layer = Layers.Ground };
                 piece.transform.SetParent(root.transform, false);
-                piece.transform.SetPositionAndRotation(slab.Centre, Quaternion.Euler(0f, slab.YawDegrees, 0f));
+                piece.transform.SetPositionAndRotation(slab.Centre, turn);
                 piece.AddComponent<MeshFilter>().sharedMesh = mesh;
                 var meshRenderer = piece.AddComponent<MeshRenderer>();
                 meshRenderer.sharedMaterial = material;
@@ -99,7 +106,9 @@ namespace MoonProject.World
             _meshes.Clear();
         }
 
-        private static Mesh BuildSlabMesh(string name, Vector3 size, float chamfer)
+        // colourAt gives a vertex its colour from its position and normal in the slab's own space.
+        private static Mesh BuildSlabMesh(string name, Vector3 size, float chamfer,
+            Func<Vector3, Vector3, Color32> colourAt)
         {
             Vector3 half = size * 0.5f;
             float minHalf = Mathf.Min(half.x, Mathf.Min(half.y, half.z));
@@ -152,27 +161,10 @@ namespace MoonProject.World
                         Vector3 normal = delta.sqrMagnitude > 1e-6f ? delta.normalized : n;
                         Vector3 pos = corePt + normal * bevel;
 
-                        float bx = Mathf.Clamp01((Mathf.Abs(px) - innerU) / bevel);
-                        float by = Mathf.Clamp01((Mathf.Abs(py) - innerV) / bevel);
-                        float bevelEdge = Mathf.Max(bx, by);
-                        float edgeWearG = bevelEdge > 0f
-                            ? Mathf.Clamp01(Mathf.SmoothStep(0.08f, 0.92f, bevelEdge) * 0.85f)
-                            : 0f;
-
-                        float height01 = Mathf.Clamp01((pos.y + half.y) / Mathf.Max(0.01f, size.y));
-                        float aoR = Mathf.Lerp(0.68f, 0.98f, Mathf.SmoothStep(0f, 0.45f, height01));
-                        float topDust = Mathf.Clamp01((normal.y - 0.25f) / 0.75f) * 0.65f;
-                        float baseDust = (1f - edgeWearG) * Mathf.Lerp(0.35f, 0f, Mathf.SmoothStep(0f, 0.28f, height01));
-                        float dustB = Mathf.Clamp01(Mathf.Max(topDust, baseDust));
-
                         vertices.Add(pos);
                         normals.Add(normal);
                         uvs.Add(new Vector2((px + halfU) / TextureWorldMeters, (py + halfV) / TextureWorldMeters));
-                        colors.Add(new Color32(
-                            (byte)Mathf.RoundToInt(aoR * 255f),
-                            (byte)Mathf.RoundToInt(edgeWearG * 255f),
-                            (byte)Mathf.RoundToInt(dustB * 255f),
-                            255));
+                        colors.Add(colourAt(pos, normal));
                     }
                 }
 
