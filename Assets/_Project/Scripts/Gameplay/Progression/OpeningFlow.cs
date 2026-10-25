@@ -88,8 +88,7 @@ namespace MoonProject.Gameplay
             // The transmit line goes as 07 starts transmitting; the answer's moment says nothing, and relay.1 is named
             // once it is over, until 07 arrives there (its cabinet's and socket's chips lead from then on).
             _steps.Add(OpeningKeys.Transmit, () => _game.AnswerStarted || _game.AnswerDone);
-            _steps.Add(() => _game.AnswerDone && !_game.AtRelay ? OpeningKeys.GoToRelay : string.Empty,
-                () => _game.RelayRelit);
+            _steps.Add(RelayLine, () => _game.RelayRelit);
             _subscriptions = new[]
             {
                 events.Subscribe<RoverWakeBeatReached>(OnWakeBeat),
@@ -129,6 +128,20 @@ namespace MoonProject.Gameplay
             }
 
             return _game.CutterSputtered ? OpeningKeys.TakeIgniter : SolarLine();
+        }
+
+        /// <summary>
+        /// R9: once relay.1 has answered, the line sends 07 there, or first to the pad while its charge would not make
+        /// the trip with a margin; it goes quiet once 07 arrives.
+        /// </summary>
+        private string RelayLine()
+        {
+            if (!_game.AnswerDone || _game.AtRelay)
+            {
+                return string.Empty;
+            }
+
+            return _game.RelayTripCovered ? OpeningKeys.GoToRelay : OpeningKeys.ChargeForRelay;
         }
 
         private string SolarLine()

@@ -395,11 +395,13 @@ namespace MoonProject.Gameplay
             Opening.ConnectHints(hints);
             FirstUsePointer = new FirstUsePointer(context.Events, hints, services.Rig,
                 _building.Tuning.FirstUseGazePriority, _building.Tuning.FirstUseAskIntensity);
-            RangeRing = new RangeRingField(context.Events, _battery.Tuning.RangeRing,
-                new RangeRingModel(_battery.Tuning, _battery.Tuning.RangeRing, services.Terrain,
-                    context.Get<IRoverClimb>().ClimbLimitDegrees), _battery.Model,
+            var ringModel = new RangeRingModel(_battery.Tuning, _battery.Tuning.RangeRing, services.Terrain,
+                context.Get<IRoverClimb>().ClimbLimitDegrees);
+            RangeRing = new RangeRingField(context.Events, _battery.Tuning.RangeRing, ringModel, _battery.Model,
                 new ChargePoints(Opening.Pads, Relay), services.Rover, new RelayLink(Answer, Relay));
+            Opening.ConnectTrip(ringModel, _battery.Tuning.RangeRing.PathStepMetres, _battery.Model);
             _flowTokens.Add(context.Events.Subscribe<RelayRelit>(OnRelayRelit));
+            _flowTokens.Add(context.Events.Subscribe<NextStepChanged>(OnNextStep));
             RangeRingLine = new RangeRingLine(transform, _visuals.BeamCore, RangeRing, _battery.Tuning.RangeRing,
                 services.Terrain, context.Get<IViewCamera>());
             _flowTokens.Add(context.Events.Subscribe<ChargingChanged>(OnChargingChanged));
@@ -701,6 +703,18 @@ namespace MoonProject.Gameplay
             if (!relit.Restored)
             {
                 RangeRing.Grow(relit.RelayId, Relay.PadPoint);
+            }
+        }
+
+        /// <summary>
+        /// The line asks 07 to charge before the relay.1 trip: the ring shows with it, so relay.1 reads as outside what
+        /// this charge reaches.
+        /// </summary>
+        private void OnNextStep(NextStepChanged changed)
+        {
+            if (changed.LineKey == OpeningKeys.ChargeForRelay)
+            {
+                RangeRing.ShowShortfall();
             }
         }
 

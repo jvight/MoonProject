@@ -763,6 +763,10 @@
             "text": "Trạm tiếp sóng 1 đang yếu dần. Tới sửa nó"
         },
         {
+            "key": "next.v3.charge_for_relay",
+            "text": "Về bệ sạc nạp đầy trước"
+        },
+        {
             "key": "battery.low.lander",
             "text": "Pin yếu. Xây bệ sạc cạnh tàu đổ bộ"
         },

@@ -67,6 +67,14 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void TheTripToTheRelay_IsCovered_WithTheMarginToSpare_OrOnFullCells()
+        {
+            Assert.IsTrue(RelayTrip.Covered(3f, 4, false, 2f, 0.2f), "a cell of four left on arrival: 25% to spare");
+            Assert.IsFalse(RelayTrip.Covered(2.5f, 4, false, 2f, 0.2f), "half a cell left: 12.5%, under the margin");
+            Assert.IsTrue(RelayTrip.Covered(4f, 4, true, 5f, 0.2f), "full cells set out: charging gives no more");
+        }
+
+        [Test]
         public void BeforeTheAnswer_TheCabinetAndTheSocketOfferNothing()
         {
             RelayRepair silent = NewRelay();

@@ -45,6 +45,10 @@ namespace MoonProject.Gameplay
         private readonly PlacedBase _placed;
         private TowLine _tow;
         private RelayRepair _relay;
+        private RangeRingModel _ring;
+        private BatteryModel _battery;
+        private float _pathStepMetres;
+        private bool _tripCovered;
         private readonly Dictionary<string, Transform> _frames =
             new Dictionary<string, Transform>(StringComparer.Ordinal);
 
@@ -170,6 +174,31 @@ namespace MoonProject.Gameplay
                                (_hints.TryGet(InteractionKind.Install, out _) ||
                                 _hints.TryGet(InteractionKind.PickUp, out _));
 
+        public bool RelayTripCovered
+        {
+            get
+            {
+                if (!_tripCovered && _relay != null && _ring != null)
+                {
+                    float cost = _ring.PathCost(_rover.Position, _relay.SocketPoint, _pathStepMetres);
+                    _tripCovered = RelayTrip.Covered(_battery.Charge, _battery.Cells, _battery.CellsFull, cost,
+                        _tuning.Relay.TripMargin01);
+                }
+
+                return _tripCovered;
+            }
+        }
+
+        /// <summary>
+        /// The range ring's costing and 07's battery, made after the opening: what <see cref="RelayTripCovered"/> reads.
+        /// </summary>
+        public void ConnectTrip(RangeRingModel ring, float pathStepMetres, BatteryModel battery)
+        {
+            _ring = ring ?? throw new ArgumentNullException(nameof(ring));
+            _battery = battery ?? throw new ArgumentNullException(nameof(battery));
+            _pathStepMetres = pathStepMetres;
+        }
+
         /// <summary>relay.1's repair, made after the opening: what <see cref="RelayRelit"/> reads.</summary>
         public void ConnectRelay(RelayRepair relay)
         {
@@ -222,6 +251,7 @@ namespace MoonProject.Gameplay
                 case OpeningKeys.DockForDusk:
                 case OpeningKeys.MoveBatteryBank:
                 case OpeningKeys.AwaitNight:
+                case OpeningKeys.ChargeForRelay:
                 case OpeningKeys.BuildMast:
                     return Place(_tuning.ApronAnchor, _apron, out placeId, out position);
                 default:
