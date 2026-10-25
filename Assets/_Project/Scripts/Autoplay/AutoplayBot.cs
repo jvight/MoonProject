@@ -50,6 +50,7 @@ namespace MoonProject.Autoplay
         private readonly VirtualInput _input;
         private readonly BeatLog _beats;
         private readonly Action<string> _screenshot;
+        private readonly Action<string, int> _record;
         private readonly ThrottleGate _gate = new ThrottleGate();
         private readonly System.Collections.Generic.List<string> _warnings = new System.Collections.Generic.List<string>();
         private readonly System.Collections.Generic.List<Vector2> _points = new System.Collections.Generic.List<Vector2>();
@@ -61,8 +62,10 @@ namespace MoonProject.Autoplay
         private string _beatTitle;
         private float _beatStart;
 
-        public AutoplayBot(AutoplayWorld world, VirtualInput input, BeatLog beats, Action<string> screenshot)
+        public AutoplayBot(AutoplayWorld world, VirtualInput input, BeatLog beats, Action<string> screenshot,
+            Action<string, int> record)
         {
+            _record = record;
             _world = world;
             _input = input;
             _beats = beats;
@@ -70,6 +73,15 @@ namespace MoonProject.Autoplay
         }
 
         public AutoplayWorld World => _world;
+
+        /// <summary>
+        /// Records the next <paramref name="count"/> frames as they are displayed, small, one per frame, without
+        /// slowing the frames (the PNGs are written once the last is read back).
+        /// </summary>
+        public void RecordFrames(string label, int count)
+        {
+            _record(label, count);
+        }
 
         /// <summary>Takes a screenshot labelled <paramref name="label"/>.</summary>
         public void Shot(string label)

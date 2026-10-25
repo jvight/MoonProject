@@ -12,6 +12,10 @@ namespace MoonProject.Rover.Tests
     {
         private const float CalmestFaceMoveSeconds = 1.4f;
         private const float FastestFaceMoveSeconds = 1.0f;
+
+        // Closing the screen swings the camera about 175 degrees round 07 (from its face to behind it); at 1.1 s that
+        // whirled at a peak of 240 deg/s (the owner saw it as a broken frame), so the close may take longer than the open.
+        private const float CalmestFaceCloseSeconds = 2.4f;
         private const float FastestRecenterDegreesPerSecond = 20f;
         private const float SlowestRecenterButtonSeconds = 1.2f;
         private const float ShortestOpeningMoveSeconds = 2f;
@@ -30,7 +34,7 @@ namespace MoonProject.Rover.Tests
         public void TheFaceShot_OpensAndCloses_InAboutOneToOneAndAHalfSeconds()
         {
             Assert.That(_tuning.FaceInspectOpenSeconds, Is.InRange(FastestFaceMoveSeconds, CalmestFaceMoveSeconds));
-            Assert.That(_tuning.FaceInspectCloseSeconds, Is.InRange(FastestFaceMoveSeconds, CalmestFaceMoveSeconds));
+            Assert.That(_tuning.FaceInspectCloseSeconds, Is.InRange(FastestFaceMoveSeconds, CalmestFaceCloseSeconds));
         }
 
         [Test]

@@ -402,7 +402,7 @@ MonoBehaviour:
   _headFadeHysteresis: 0.15
   _faceInspectSettleSpeed: 0.05
   _faceInspectOpenSeconds: 1.2
-  _faceInspectCloseSeconds: 1.1
+  _faceInspectCloseSeconds: 1.8
   _faceInspectScreenHeight: 0.3687
   _faceInspectHeightFill: 0.75
   _faceInspectDistance: 0.67

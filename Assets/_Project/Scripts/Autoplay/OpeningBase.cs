@@ -140,8 +140,8 @@ namespace MoonProject.Autoplay
         private const int PageFlipCycles = 2;
 
         /// <summary>Frames shot before and after the press that closes the last Tab cycle: the owner sees one broken frame.</summary>
-        private const int CloseShotsBefore = 6;
-        private const int CloseShotsAfter = 50;
+        private const int CloseFramesBefore = 8;
+        private const int CloseFramesRecorded = 110;
 
         /// <summary>Frames the pointer takes to travel to a card.</summary>
         private const int PointerSteps = 8;
@@ -1325,16 +1325,6 @@ namespace MoonProject.Autoplay
         /// Opens and closes 07's face screen <paramref name="times"/> times with the bot standing still, resting after
         /// each flip until its transition has passed: a quiet stretch whose frames the hitch table can attribute to Tab.
         /// </summary>
-        /// <summary>One screenshot a frame for <paramref name="count"/> frames, numbered under <paramref name="label"/>.</summary>
-        private IEnumerator ShotFrames(string label, int count)
-        {
-            for (int i = 0; i < count; i++)
-            {
-                _bot.Shot(label + "-" + i.ToString("00", System.Globalization.CultureInfo.InvariantCulture));
-                yield return null;
-            }
-        }
-
         public IEnumerator TabCycles(int times)
         {
             var face = _bot.World.Context.Get<IRoverFaceScreen>();
@@ -1352,17 +1342,16 @@ namespace MoonProject.Autoplay
                     yield return _bot.Wait(FrameTagger.TransitionSeconds + TabRestSeconds);
                 }
 
-                bool recording = cycle == times - 1;
-                if (recording)
+                if (cycle == times - 1)
                 {
-                    yield return ShotFrames("tabclose-before", CloseShotsBefore);
+                    _bot.RecordFrames("tabclose", CloseFramesRecorded);
+                    for (int i = 0; i < CloseFramesBefore; i++)
+                    {
+                        yield return null;
+                    }
                 }
 
                 yield return _bot.Tap(Key.Tab);
-                if (recording)
-                {
-                    yield return ShotFrames("tabclose", CloseShotsAfter);
-                }
 
                 yield return _bot.Until(() => !face.IsOpen, FollowSeconds, "Tab to close the face screen (cycle " + (cycle + 1) + ")");
                 yield return _bot.Wait(FrameTagger.TransitionSeconds + TabRestSeconds);

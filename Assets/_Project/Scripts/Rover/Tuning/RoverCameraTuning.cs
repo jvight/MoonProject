@@ -795,8 +795,13 @@ namespace MoonProject.Rover
         [SerializeField] private float _faceInspectOpenSeconds = 1.2f;
 
         [Tooltip("Seconds the camera takes to ease back to the chase camera when closing the screen UI.")]
-        [Range(0.15f, 2f)]
-        [SerializeField] private float _faceInspectCloseSeconds = 1.1f;
+        [Range(0.15f, 4f)]
+        [SerializeField] private float _faceInspectCloseSeconds = 1.8f;
+
+        [Tooltip("Share of the face screen's camera move that is its soft start, and again its soft stop; between them it " +
+                 "moves at a steady speed. Less than a smoothstep's peak speed, so the half-orbit round 07 never whirls.")]
+        [Range(0.1f, 0.49f)]
+        [SerializeField] private float _faceInspectEaseRamp = 0.3f;
 
         [Tooltip("World-space height (m) of 07's CRT Screen and inner bezel framed in face-inspect mode.")]
         [Range(0.10f, 0.60f)]
@@ -1248,6 +1253,8 @@ namespace MoonProject.Rover
         public float FaceInspectSettleSpeed => _faceInspectSettleSpeed;
 
         public float FaceInspectCloseSeconds => _faceInspectCloseSeconds;
+
+        public float FaceInspectEaseRamp => _faceInspectEaseRamp;
 
         public float FaceInspectScreenHeight => _faceInspectScreenHeight;
 

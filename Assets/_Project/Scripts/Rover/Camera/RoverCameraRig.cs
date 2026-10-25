@@ -870,7 +870,7 @@ namespace MoonProject.Rover
                 : Mathf.Max(0.05f, duration);
             bool easeIn = _faceInspectOpen && _faceInspectSettled;
             _faceInspectEase = Mathf.MoveTowards(_faceInspectEase, easeIn ? 1f : 0f, deltaTime / seconds);
-            _faceInspectWeight = Smoothing.SmoothStep(0f, 1f, _faceInspectEase);
+            _faceInspectWeight = FaceInspectEase.Weight(_faceInspectEase, _tuning.FaceInspectEaseRamp);
 
             bool cineAvoidance = !_faceInspectOpen && _faceInspectWeight < ShotWeightEpsilon && !_opening.IsActive;
             if (_decollider.TerrainResolution.Enabled != cineAvoidance)
