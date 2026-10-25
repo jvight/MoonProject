@@ -11,9 +11,10 @@ namespace MoonProject.World.Tests
 {
     /// <summary>
     /// The Lumen ruins' colliders come from Art's authored collision proxies (docs/art/collision-proxies.md): every
-    /// UCX_* child becomes one hidden convex collider and nothing else collides; 07's body cannot pass the workshop's
-    /// walls or the habitat's modules, while it fits through the workshop's doorway onto its floor and up to the
-    /// habitat's airlock panel.
+    /// UCX_* child becomes one hidden convex collider and nothing else collides but the few drawn parts made solid by
+    /// their own hull (the radio tower's dish, so the chase camera keeps out of it); 07's body cannot pass the
+    /// workshop's walls or the habitat's modules, while it fits through the workshop's doorway onto its floor and up
+    /// to the habitat's airlock panel.
     /// </summary>
     public sealed class RuinColliderTests
     {
@@ -36,6 +37,15 @@ namespace MoonProject.World.Tests
         private const string Workshop = "KenjiWorkshop";
         private const string Habitat = "HabitatModules";
         private const string AirlockPanel = "AirlockPanel";
+        private const string RadioTower = "RadioTower";
+        private const string TowerDish = "Dish";
+
+        // A drawn vertex this close to a proxy counts as inside it; the share of a part's vertices that must be.
+        private const float CoverSlack = 0.15f;
+        private const float MinCoveredShare = 0.9f;
+
+        // How far a proxy may stand out past the drawn part it stands for, metres, on any side.
+        private const float MaxProxyOverhang = 0.5f;
 
         private readonly List<GameObject> _spawned = new List<GameObject>();
 
@@ -62,17 +72,25 @@ namespace MoonProject.World.Tests
                     proxies += IsProxy(filter) ? 1 : 0;
                 }
 
+                int hulls = 0;
+                foreach (string part in new LandmarkSettings().HullParts)
+                {
+                    hulls += part.StartsWith(piece.Id + "/", StringComparison.Ordinal) ? 1 : 0;
+                }
+
                 Collider[] colliders = ruin.GetComponentsInChildren<Collider>(true);
                 Assert.That(proxies, Is.GreaterThan(0), $"{piece.Id} has no collision proxies");
-                Assert.AreEqual(proxies, colliders.Length, $"{piece.Id}: one collider per proxy, nothing else");
+                Assert.AreEqual(proxies + hulls, colliders.Length,
+                    $"{piece.Id}: one collider per proxy and hull part, nothing else");
                 foreach (Collider collider in colliders)
                 {
                     var mesh = collider as MeshCollider;
                     Assert.IsNotNull(mesh, $"{collider.name} is a mesh collider");
                     Assert.IsTrue(mesh.convex, $"{collider.name} is convex");
-                    Assert.IsTrue(IsProxy(collider.GetComponent<MeshFilter>()), $"{collider.name} is a proxy");
                     Assert.AreEqual(Layers.Prop, collider.gameObject.layer, $"{collider.name} is on the Prop layer");
-                    Assert.IsFalse(collider.GetComponent<Renderer>().enabled, $"{collider.name} is drawn");
+                    bool proxy = IsProxy(collider.GetComponent<MeshFilter>());
+                    Assert.AreEqual(!proxy, collider.GetComponent<Renderer>().enabled,
+                        $"{collider.name}: a proxy is hidden, a hull part stays drawn");
                 }
             }
         }
@@ -121,6 +139,82 @@ namespace MoonProject.World.Tests
                 "07 can stop nose-on at the airlock panel");
         }
 
+        [Test]
+        public void TheRadioTowersDish_LiesInsideColliders_SoTheCameraKeepsOutOfIt()
+        {
+            GameObject tower = Spawn(RadioTower);
+            Collider[] proxies = tower.GetComponentsInChildren<Collider>(true);
+            var report = new System.Text.StringBuilder(
+                "[tower-cover] share of each drawn part's vertices inside a collider:");
+            float dish = 0f;
+            foreach (MeshFilter filter in tower.GetComponentsInChildren<MeshFilter>(true))
+            {
+                if (IsProxy(filter) || filter.sharedMesh == null)
+                {
+                    continue;
+                }
+
+                int inside = 0;
+                Vector3[] vertices = filter.sharedMesh.vertices;
+                foreach (Vector3 vertex in vertices)
+                {
+                    Vector3 world = filter.transform.TransformPoint(vertex);
+                    foreach (Collider proxy in proxies)
+                    {
+                        if (Vector3.Distance(proxy.ClosestPoint(world), world) <= CoverSlack)
+                        {
+                            inside++;
+                            break;
+                        }
+                    }
+                }
+
+                float share = vertices.Length > 0 ? inside / (float)vertices.Length : 1f;
+                report.Append($" {filter.name} {share:P0};");
+                dish = filter.name == TowerDish ? share : dish;
+            }
+
+            TestContext.WriteLine(report.ToString());
+            Assert.GreaterOrEqual(dish, MinCoveredShare, "the tower's dish frame reaches out of its colliders: the " +
+                "chase camera's deoccluder cannot see it");
+        }
+
+        [Test]
+        public void TheHabitatsProxies_HugTheModulesTheyStandFor()
+        {
+            GameObject habitat = Spawn(Habitat);
+            var drawn = new Dictionary<string, Bounds>(StringComparer.Ordinal);
+            foreach (Renderer renderer in habitat.GetComponentsInChildren<Renderer>())
+            {
+                if (renderer.enabled)
+                {
+                    drawn[renderer.name] = renderer.bounds;
+                }
+            }
+
+            var report = new System.Text.StringBuilder("[habitat-proxies] proxy overhang past its part, metres:");
+            float worst = 0f;
+            string worstProxy = null;
+            foreach (Collider proxy in habitat.GetComponentsInChildren<Collider>(true))
+            {
+                string name = proxy.name.Substring(R1ModelPostprocessor.CollisionProxyPrefix.Length);
+                string part = name.Substring(0, name.LastIndexOf('_'));
+                Assert.IsTrue(drawn.TryGetValue(part, out Bounds shape), $"{proxy.name} stands for a drawn {part}");
+                Vector3 over = Vector3.Max(proxy.bounds.max - shape.max, shape.min - proxy.bounds.min);
+                float most = Mathf.Max(over.x, over.y, over.z);
+                report.Append($" {proxy.name} {most:F2};");
+                if (most > worst)
+                {
+                    worst = most;
+                    worstProxy = proxy.name;
+                }
+            }
+
+            TestContext.WriteLine(report.ToString());
+            Assert.LessOrEqual(worst, MaxProxyOverhang, $"{worstProxy} stands out past its module: the scan camera " +
+                "pulls back from empty space");
+        }
+
         private GameObject Spawn(string id)
         {
             string path = WorldPaths.RuinPrefab(id);
@@ -129,7 +223,7 @@ namespace MoonProject.World.Tests
             GameObject ruin = UnityEngine.Object.Instantiate(prefab, TestSite, prefab.transform.localRotation);
             ruin.name = id;
             _spawned.Add(ruin);
-            RuinColliderBuilder.Fit(ruin);
+            RuinColliderBuilder.Fit(ruin, new LandmarkSettings().HullParts);
             Physics.SyncTransforms();
             return ruin;
         }
