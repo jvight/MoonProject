@@ -2027,9 +2027,9 @@ Label {
     min-width: 36px;
     height: 26px;
     padding: 0 8px;
-    border-width: 1.5px;
+    border-width: 2px;
     border-radius: 5px;
-    border-color: rgb(182, 168, 143);
+    border-color: rgb(192, 177, 150);
     font-size: 18px;
     color: rgb(224, 210, 182);
     -unity-text-align: middle-center;
