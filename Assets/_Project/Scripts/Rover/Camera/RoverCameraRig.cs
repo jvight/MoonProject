@@ -1866,6 +1866,13 @@ namespace MoonProject.Rover
                     HandBackWideShot();
                 }
 
+                // Placing is the player taking the wheel: a held shot (the dock's evening) would keep the view where it
+                // stands, and the build framing never brings the ghost into it.
+                if (_held.IsOpen)
+                {
+                    CloseHeldShot();
+                }
+
                 if (_moment.IsActive)
                 {
                     _moment.Cancel(_tuning.MomentCancelEaseOut);
