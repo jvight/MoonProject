@@ -44,9 +44,10 @@ namespace MoonProject.World
         [SerializeField] private float _nightfallElevation = -1.5f;
 
         [Tooltip("Real seconds the first sunset takes once the night is ready: from wherever the Sun stands then (on " +
-            "its sink, or held at last light) to nightfall, a watched beat rather than a wait.")]
-        [Range(30f, 600f)]
-        [SerializeField] private float _firstSunsetSeconds = 75f;
+            "its sink, or held at last light) to nightfall, a watched beat rather than a wait. 07 watches it locked " +
+            "on its pad, so it stays about as long as the pad takes to fill.")]
+        [Range(8f, 600f)]
+        [SerializeField] private float _firstSunsetSeconds = 14f;
 
         [Tooltip("Clock time (seconds into Day 1) used when loading an older save that has no world.sky section: " +
             "starts after the opening eclipse in full low sunlight.")]
