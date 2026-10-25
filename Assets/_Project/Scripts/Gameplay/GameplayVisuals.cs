@@ -41,6 +41,10 @@ namespace MoonProject.Gameplay
                  "prefab: the opening's supply crates (opening-v2 §4).")]
         [SerializeField] private GameObject[] _containers = Array.Empty<GameObject>();
 
+        [Tooltip("Art's R1 story-part props (Generated/Art/R1/Models/Props: Prop_SpareIgniter), each named as its " +
+                 "prefab: what a supply crate's parts look like while they wait in it.")]
+        [SerializeField] private GameObject[] _partProps = Array.Empty<GameObject>();
+
         [Tooltip("Valid placement / un-welded stage hologram material (Generated/Art/Palette/M_Hologram.mat).")]
         [SerializeField] private Material _hologramValid;
 
@@ -74,6 +78,20 @@ namespace MoonProject.Gameplay
             return null;
         }
 
+        /// <summary>Art's part prop named <paramref name="name"/> (its prefab name), or null.</summary>
+        public GameObject PartProp(string name)
+        {
+            for (int i = 0; i < _partProps.Length; i++)
+            {
+                if (_partProps[i] != null && _partProps[i].name == name)
+                {
+                    return _partProps[i];
+                }
+            }
+
+            return null;
+        }
+
         /// <summary>Null when every material and prefab is assigned, else the first missing one.</summary>
         public string Validate()
         {
@@ -82,6 +100,8 @@ namespace MoonProject.Gameplay
                 : _partGlint == null ? "part glint material is missing"
                 : _containers == null || _containers.Length == 0 || Array.IndexOf(_containers, null) >= 0
                     ? "Art's crates are missing (run Gameplay/Materials)"
+                : _partProps == null || _partProps.Length == 0 || Array.IndexOf(_partProps, null) >= 0
+                    ? "Art's part props are missing (run Gameplay/Materials)"
                 : _feelSprite == null ? "feel sprite material is missing (run Gameplay/FeelVfx)"
                 : _beamCore == null ? "beam core material is missing (run Gameplay/FeelVfx)"
                 : _beamSheath == null ? "beam sheath material is missing (run Gameplay/FeelVfx)"
@@ -114,6 +134,11 @@ namespace MoonProject.Gameplay
         internal void PopulateContainers(GameObject[] containers)
         {
             _containers = containers ?? throw new ArgumentNullException(nameof(containers));
+        }
+
+        internal void PopulatePartProps(GameObject[] props)
+        {
+            _partProps = props ?? throw new ArgumentNullException(nameof(props));
         }
 
         internal void PopulateHologram(Material valid, Material invalid)

@@ -70,6 +70,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const string ChargerKit = "supply.lander.open";
         private const string SparesRack = "supply.array.spares";
 
+        // Metres a Pick up chip may stand from the part it offers (the chip's own lift aside).
+        private const float PropChipSlack = 0.05f;
+
         /// <summary>The habitat's towable power module (opening v3 R6), and how far from the habitat it stands.</summary>
         private const string PowerModule = TowLoads.PowerModule;
 
@@ -762,11 +765,42 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             yield return Until(() => _gameplay.Hints.TryGet(InteractionKind.PickUp, out _), FollowTimeout,
                 cacheId + " offers what it holds (Pick up)");
+            Transform prop = PropOf(cacheId);
+            if (prop != null)
+            {
+                // What 07 picks up is seen: the part lies in the crate's mouth and the chip stands on it.
+                Assert.IsTrue(prop.gameObject.activeInHierarchy, $"{cacheId}'s part lies in its open mouth");
+                _gameplay.Hints.TryGet(InteractionKind.PickUp, out InteractionHint offer);
+                Assert.Less(Vector3.Distance(offer.Position, prop.position), PropChipSlack,
+                    $"the Pick up chip stands on {cacheId}'s part ({offer.Position} vs {prop.position})");
+                Capture("07-the-spare-igniter-in-the-rack");
+            }
+
             Press(_keyboard.eKey);
             yield return Until(() => Taken(cacheId), FollowTimeout, "held E takes what " + cacheId + " holds");
             Release(_keyboard.eKey);
+            if (prop != null)
+            {
+                yield return Until(() => !prop.gameObject.activeInHierarchy, FollowTimeout,
+                    $"{cacheId}'s part flies into 07 and is gone from the crate");
+            }
             Capture(cacheId == ChargerKit ? "04-the-open-crate" : "07-the-spares-rack");
             End(what, $"igniter in the hold {_gameplay.StartKit.CarriesIgniter}; hold {Hold()}");
+        }
+
+        /// <summary>Open crate <paramref name="cacheId"/>'s part prop, or null when it holds no part.</summary>
+        private Transform PropOf(string cacheId)
+        {
+            SupplyCaches caches = _gameplay.Opening.Caches;
+            for (int i = 0; i < caches.Count; i++)
+            {
+                if (caches.Get(i).Id == cacheId)
+                {
+                    return caches.PropOf(i);
+                }
+            }
+
+            return null;
         }
 
         /// <summary>Open crate <paramref name="cacheId"/> has given everything it held to 07's hold.</summary>

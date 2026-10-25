@@ -16,7 +16,9 @@ namespace MoonProject.Gameplay
     /// igniter). As a crate stands open its yield goes into 07's hold, each material with the salvage note: an open
     /// one offers it within the collect reach and gives it on a held E (Pick up), a cut-open one gives it once 07 is
     /// within the beam's reach. What the hold has no room for stays in the crate and comes out the same way; a story part (the spare igniter) comes out with
-    /// <see cref="StoryPartCollected"/>. Allocation-free per frame.
+    /// <see cref="StoryPartCollected"/>. A crate's parts are seen while they wait: Art's prop lies in its open mouth, the
+    /// Pick up chip stands on it, and once taken it flies into 07's cargo socket as a cut piece does. Allocation-free
+    /// per frame.
     /// </summary>
     public sealed class SupplyCaches : IDisposable, ISupplyPurposes
     {
@@ -45,17 +47,26 @@ namespace MoonProject.Gameplay
         private readonly InputReader _input;
         private readonly PickupReach _pickups;
         private readonly float _reach;
+        private readonly SalvageTuning _flight;
+        private readonly IRoverRig _rig;
+        private readonly Transform[] _props;
+        private readonly Vector3[] _propScales;
+        private readonly Vector3[] _flightFrom;
+        private readonly Quaternion[] _flightTurn;
+        private readonly float[] _flightTime;
+        private readonly float[] _flightSeconds;
         private readonly float _collectReach;
         private readonly IDisposable _opened;
         private readonly CrateRimGlow[] _rims;
 
         /// <param name="frames">A crate's frame by its anchor id: a world anchor or a ruin piece.</param>
-        /// <param name="reach">Metres within which a cut-open crate still holding something gives the rest.</param>
+        /// <param name="salvage">The reach within which a cut-open crate still holding something gives the rest, and
+        /// the flight a part takes into 07.</param>
         /// <param name="tuning">The crates, the open ones' collect reach and their rim glow's reach.</param>
         public SupplyCaches(OpeningTuning tuning, Func<string, Transform> frames, Transform parent,
-            GameplayServices services, SealedContainers containers, float reach)
+            GameplayServices services, SealedContainers containers, SalvageTuning salvage)
         {
-            if (tuning == null || frames == null || services == null || containers == null)
+            if (tuning == null || frames == null || services == null || containers == null || salvage == null)
             {
                 throw new ArgumentNullException(nameof(tuning), "The supply crates are missing an input.");
             }
@@ -69,7 +80,9 @@ namespace MoonProject.Gameplay
             _save = services.Save;
             _input = services.Input;
             _pickups = services.Pickups;
-            _reach = reach;
+            _reach = salvage.ReachRadius;
+            _flight = salvage;
+            _rig = services.Rig;
             _collectReach = collectReach;
             foreach (SupplyCache cache in caches)
             {
@@ -99,8 +112,17 @@ namespace MoonProject.Gameplay
             _rims = new CrateRimGlow[_caches.Count];
             _heldBack = new Func<bool>[_caches.Count];
             _partLeft = new bool[_caches.Count];
+            _props = new Transform[_caches.Count];
+            _propScales = new Vector3[_caches.Count];
+            _flightFrom = new Vector3[_caches.Count];
+            _flightTurn = new Quaternion[_caches.Count];
+            _flightTime = new float[_caches.Count];
+            _flightSeconds = new float[_caches.Count];
             for (int i = 0; i < _caches.Count; i++)
             {
+                _flightTime[i] = -1f;
+                _props[i] = PlaceProp(_caches[i], _containers[i], services.Visuals);
+                _propScales[i] = _props[i] != null ? _props[i].localScale : Vector3.one;
                 if (_caches[i].StartsOpen)
                 {
                     containers.StandOpen(_caches[i].Id);
@@ -108,6 +130,7 @@ namespace MoonProject.Gameplay
                     _partLeft[i] = _caches[i].Parts.Count > 0;
                 }
 
+                ShowProp(i);
                 Transform root = _containers[i].Root;
                 GameObject rim = Child(root, RimGlowName);
                 _rims[i] = rim != null ? new CrateRimGlow(rim, RimLight(rim, root, tuning), tuning) : null;
@@ -148,6 +171,12 @@ namespace MoonProject.Gameplay
         public bool PartLeft(int index)
         {
             return _partLeft[index];
+        }
+
+        /// <summary>Crate <paramref name="index"/>'s part prop, or null (tests and captures).</summary>
+        internal Transform PropOf(int index)
+        {
+            return _props[index];
         }
 
         /// <summary>
@@ -194,6 +223,8 @@ namespace MoonProject.Gameplay
                     holds = !IsEmpty(_left[i]) || _partLeft[i];
                 }
 
+                StepFlight(i, deltaTime);
+
                 // The rim glows only near: the owner could not find the lander's crate at B3/B4, and loot never
                 // glows across the basin.
                 _rims[i]?.Step(holds, SurfaceRules.HorizontalDistance(_rover.Position, _containers[i].Root.position),
@@ -208,7 +239,9 @@ namespace MoonProject.Gameplay
         /// </summary>
         private bool Takes(int index)
         {
-            Vector3 at = _containers[index].CutPoint.position;
+            Vector3 at = _partLeft[index] && _props[index] != null
+                ? _props[index].position
+                : _containers[index].CutPoint.position;
             if (!_caches[index].StartsOpen)
             {
                 return SurfaceRules.HorizontalDistanceSquared(_rover.Position, at) <= _reach * _reach;
@@ -269,6 +302,12 @@ namespace MoonProject.Gameplay
                 {
                     _partLeft[index] = _caches[index].Parts.Count > 0;
                 }
+            }
+
+            for (int i = 0; i < _caches.Count; i++)
+            {
+                _flightTime[i] = -1f;
+                ShowProp(i);
             }
 
             string[] ids = data.leftIds ?? Array.Empty<string>();
@@ -368,6 +407,86 @@ namespace MoonProject.Gameplay
 
             _events.Publish(new FeelBeat(FeelKind.Collect, FeelPhase.Reward, at, Vector3.up, 1f, 0f));
             _partLeft[index] = false;
+            Launch(index);
+        }
+
+        /// <summary>
+        /// Art's prop for <paramref name="cache"/>'s parts, lying in its crate's open mouth over the item socket (the
+        /// height of the lid's hinge), or null when the crate has none.
+        /// </summary>
+        private static Transform PlaceProp(SupplyCache cache, SealedContainer container, GameplayVisuals visuals)
+        {
+            if (cache.PartProp.Length == 0)
+            {
+                return null;
+            }
+
+            GameObject prefab = visuals.PartProp(cache.PartProp) ?? throw new InvalidOperationException(
+                $"Art's part prop '{cache.PartProp}' for supply crate '{cache.Id}' is not in GameplayVisuals " +
+                "(run Gameplay/Materials).");
+            Transform socket = container.ItemSocket;
+            Transform prop = Object.Instantiate(prefab, socket).transform;
+            prop.name = cache.PartProp;
+            Vector3 mouth = socket.position;
+            mouth.y = container.Lid.position.y;
+            prop.SetPositionAndRotation(mouth, socket.rotation * prefab.transform.localRotation);
+            return prop;
+        }
+
+        /// <summary>Crate <paramref name="index"/>'s prop shows exactly while its parts wait in it.</summary>
+        private void ShowProp(int index)
+        {
+            Transform prop = _props[index];
+            if (prop != null && prop.gameObject.activeSelf != _partLeft[index])
+            {
+                prop.gameObject.SetActive(_partLeft[index]);
+            }
+        }
+
+        /// <summary>The parts are taken: their prop lifts off and flies into 07's cargo socket, the hatch opening.</summary>
+        private void Launch(int index)
+        {
+            Transform prop = _props[index];
+            if (prop == null)
+            {
+                return;
+            }
+
+            prop.gameObject.SetActive(true);
+            prop.SetParent(null, true);
+            _flightFrom[index] = prop.position;
+            _flightTurn[index] = prop.rotation;
+            _flightTime[index] = 0f;
+            Vector3 socket = _rig.CargoSocket.position;
+            _flightSeconds[index] = PickupFlight.Duration(Vector3.Distance(_flightFrom[index], socket),
+                _flight.FlightDuration, _flight.FlightPerMetre);
+            _events.Publish(new FeelBeat(FeelKind.Collect, FeelPhase.Anticipate, _flightFrom[index], Vector3.up, 1f,
+                _flightSeconds[index]));
+        }
+
+        private void StepFlight(int index, float deltaTime)
+        {
+            if (_flightTime[index] < 0f)
+            {
+                return;
+            }
+
+            Transform prop = _props[index];
+            _flightTime[index] += deltaTime;
+            float progress = _flightTime[index] / _flightSeconds[index];
+            if (progress >= 1f)
+            {
+                _flightTime[index] = -1f;
+                prop.gameObject.SetActive(false);
+                return;
+            }
+
+            prop.SetPositionAndRotation(
+                PickupFlight.Evaluate(_flightFrom[index], _rig.CargoSocket.position, progress, index, 1f,
+                    _flight.FlightLift, _flight.SpiralRadius, _flight.SpiralTurns),
+                Quaternion.Euler(0f, _flightTime[index] * _flight.FlightSpin, 0f) * _flightTurn[index]);
+            prop.localScale = _propScales[index] *
+                              Mathf.Lerp(1f, _flight.ArrivalScale, Ease.InOutSine(Mathf.Clamp01(progress)));
         }
 
         /// <summary>

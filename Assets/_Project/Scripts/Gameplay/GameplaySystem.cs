@@ -389,7 +389,7 @@ namespace MoonProject.Gameplay
             MastRaise = new MastRaise(context.Events, _openingTuning.Reply);
             MastRaiseView = new MastRaiseView(context.Events, _building, MastRaise, _openingTuning.Reply);
             services.Anchors.TryGet(WorldAnchorIds.RelayPrefix + "1", out WorldAnchor relay);
-            Answer = new CallAnswer(context.Events, Call, Reply, MastRaise, _openingTuning.Answer, relay.Position,
+            Answer = new CallAnswer(context.Events, Call, MastRaise, _openingTuning.Answer, relay.Position,
                 services.Layout.PeakPosition);
             Opening.ConnectAnswer(Answer);
             var hints = new InteractionHints(_salvage, Containers, Scans, _building, services.Beam, Cutter,
@@ -493,7 +493,7 @@ namespace MoonProject.Gameplay
             try
             {
                 var opening = new OpeningField(_openingTuning, services, _building, sunlight, Containers, _ruins,
-                    _storyProps, _landerPort, transform, _salvage.Tuning.ReachRadius, StartKit);
+                    _storyProps, _landerPort, transform, _salvage.Tuning, StartKit);
                 _battery.ConnectPads(opening);
                 services.Anchors.TryGet(_openingTuning.ApronAnchor, out WorldAnchor apron);
                 _building.SetApronCable(new ApronCable(_apronCableChannel.position, apron.Position,
@@ -678,6 +678,7 @@ namespace MoonProject.Gameplay
             NoteKeys(Opening.Keys);
             Opening.Step(deltaTime);
             Relay.Step(Time.frameCount, _input.ExcavateHeld);
+            Relay.StepPowerUp(deltaTime);
             FirstUsePointer.Step();
             Tow.Step(_input.TetherPressed);
             Reply.Step(deltaTime, Opening.NightFallen, _roverState.Speed);
@@ -689,7 +690,7 @@ namespace MoonProject.Gameplay
             RackView.HoldRead(_input.ExcavateHeld && RackAssembly.Progress01 > 0f);
             RackAssembly.Step(deltaTime, RackView.TryGetRead(out _, out string readBay) ? readBay : null,
                 _input.ExcavateHeld);
-            Answer.Step(deltaTime, Opening.NightFallen, _input.ExcavateHeld, _roverState.Position, _roverState.Speed);
+            Answer.Step(deltaTime, _input.ExcavateHeld, _roverState.Position, _roverState.Speed);
             RangeRing.Step(deltaTime);
             RangeRingLine.Step();
             PadLock.Step(deltaTime);

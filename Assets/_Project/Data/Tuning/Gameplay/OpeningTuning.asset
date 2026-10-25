@@ -145,7 +145,7 @@ MonoBehaviour:
   - _id: supply.array.spares
     _anchorId: FallenSolarArray
     _offset: {x: 4.4, y: 0, z: 3.6}
-    _yaw: 90
+    _yaw: -90
     _container: Crate_M
     _yield:
       _metal: 0
@@ -155,6 +155,7 @@ MonoBehaviour:
     _startsOpen: 1
     _parts:
     - part.igniter
+    _partProp: Prop_SpareIgniter
   - _id: supply.habitat.reel
     _anchorId: HabitatModules
     _offset: {x: -3.3, y: 0, z: -6.5}
