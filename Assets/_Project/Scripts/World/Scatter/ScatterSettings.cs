@@ -95,6 +95,10 @@ namespace MoonProject.World
         [Range(0f, 1f)]
         [SerializeField] private float _boulderDensity = 0.025f;
 
+        [Header("Rim talus")]
+        [Tooltip("Art's rim talus kit heaped at the walls' feet, and the smallest of it along the canyon's walls.")]
+        [SerializeField] private RimTalusSettings _rimTalus = new RimTalusSettings();
+
         [Header("Rubble")]
         [Tooltip("Grid cell of the near-field rubble, metres: at most one clod or stone per cell (owner's Apollo 11 " +
             "reference: the ground near the camera is full of small rocks and clods).")]
@@ -239,6 +243,7 @@ namespace MoonProject.World
         public float RubbleLaneHalfWidth => _rubbleLaneHalfWidth;
         public Vector2 RubbleFadeRange => _rubbleFadeRange;
         public float RubbleChunkSize => _rubbleChunkSize;
+        public RimTalusSettings RimTalus => _rimTalus;
         public float RubbleStreamRadius => _rubbleStreamRadius;
         public float RubbleStreamHysteresis => _rubbleStreamHysteresis;
         public int RubbleCellsPerFrame => _rubbleCellsPerFrame;
@@ -271,6 +276,12 @@ namespace MoonProject.World
             if (_boulderSize.y > _boulderSpacing)
             {
                 return "Boulders must be smaller than their spacing or they would overlap.";
+            }
+
+            string talus = _rimTalus.Validate();
+            if (talus != null)
+            {
+                return talus;
             }
 
             return null;

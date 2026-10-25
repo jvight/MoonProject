@@ -84,21 +84,6 @@ namespace MoonProject.Gameplay
         /// <summary>R9, relay.1 answered: "relay.1 answered from the west rim. Drive to it."</summary>
         public const string GoToRelay = "next.v3.go_relay";
 
-        /// <summary>5.2, relay.1 lit: "06 is slumped at relay.2 by the canyon mouth. Drive there and scan it."</summary>
-        public const string ScanElder06 = "next.v3.scan_elder06";
-
-        /// <summary>
-        /// 5.2, the headlamp unlocked and 06's crate still holding its parts: "Cut the crate by 06 for the headlamp's
-        /// parts."
-        /// </summary>
-        public const string CutHeadlampCrate = "next.v3.cut_headlamp_crate";
-
-        /// <summary>5.2, the SSR-3 headlamp unlocked: "Assemble the SSR-3 headlamp at the rack by the pad."</summary>
-        public const string AssembleHeadlamp = "next.v3.assemble_headlamp";
-
-        /// <summary>5.2, the headlamp unlocked but the rack not out yet: "Park on the pad to bring out the rack."</summary>
-        public const string DockForRack = "next.v3.dock_for_rack";
-
         /// <summary>
         /// The key a line's action takes, for its glyph (guidance audit G2); 0 when it takes none of 07's action keys
         /// (a drive, a dock, the Tab screen).
@@ -114,9 +99,6 @@ namespace MoonProject.Gameplay
                 case ScanModule:
                 case ScanTower:
                 case Transmit:
-                case ScanElder06:
-                case CutHeadlampCrate:
-                case AssembleHeadlamp:
                     return RoverAction.Excavate;
                 case BuildPad:
                 case BuildSolar:

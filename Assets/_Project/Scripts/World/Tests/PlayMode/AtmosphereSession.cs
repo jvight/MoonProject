@@ -125,6 +125,11 @@ namespace MoonProject.World.PlayModeTests
         private const float RimLookDistance = 370f;
         private const float RimLookHeight = 15f;
 
+        // The wall's foot up close, where its talus lies: the eye on the floor, looking at the foot and just above.
+        private const float RimFootEyeDistance = 300f;
+        private const float RimFootLookDistance = 336f;
+        private const float RimFootLookHeight = 4f;
+
         // The beats where the world should lead: where the naive bot's 07 stands as each step begins (n0ac9ae9ec's
         // log), the targets, the habitat's module brought home before nightfall, the bot's screen and the dusk's lead.
         private static readonly Vector2 BeatB8Spot = new Vector2(9f, 135.7f);
@@ -1558,7 +1563,8 @@ namespace MoonProject.World.PlayModeTests
         /// <summary>
         /// The crater's rim as the owner sees it (its look against real lunar walls): from the basin floor toward the
         /// canyon's mouth and toward the south rim, from the ruins' rise and from the pad, by day (the low golden-hour
-        /// Sun, look C) and by night (earthlight, look A). Logs/world-captures/rim-*.png.
+        /// Sun, look C) and by night (earthlight, look A), and the south wall's foot up close where its talus lies.
+        /// Logs/world-captures/rim-*.png.
         /// </summary>
         [UnityTest]
         [Timeout(300000)]
@@ -1605,6 +1611,8 @@ namespace MoonProject.World.PlayModeTests
                     look: RimSpot(terrain, RimFloorSouthBearing, RimLookDistance, RimLookHeight)),
                 (name: "rise", eye: rise, look: RimSpot(terrain, RimRiseBearing, RimLookDistance, RimLookHeight)),
                 (name: "pad", eye: apron, look: RimSpot(terrain, RimPadBearing, RimLookDistance, RimLookHeight)),
+                (name: "foot-south", eye: RimSpot(terrain, RimFloorSouthBearing, RimFootEyeDistance, OpeningEyeHeight),
+                    look: RimSpot(terrain, RimFloorSouthBearing, RimFootLookDistance, RimFootLookHeight)),
             };
 
             Camera view = context.Get<IViewCamera>().Camera;

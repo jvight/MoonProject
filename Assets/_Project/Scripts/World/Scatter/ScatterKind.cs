@@ -13,5 +13,11 @@ namespace MoonProject.World
         /// A small clod or stone of the near-field rubble: no collider, seen only close to the camera.
         /// </summary>
         Rubble = 2,
+
+        /// <summary>
+        /// A fallen block or stone of the talus at the walls' feet (Art's rim talus kit): the big ones carry a convex
+        /// collider on Layers.Prop.
+        /// </summary>
+        Talus = 3,
     }
 }
