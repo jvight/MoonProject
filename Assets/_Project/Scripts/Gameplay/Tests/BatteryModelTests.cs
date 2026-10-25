@@ -92,6 +92,20 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void TheLowLine_KeepsQuietNearARelayStillWaitingForItsPart_OnlyThere()
+        {
+            var socket = new Vector3(-70f, 0f, 46f);
+            Assert.IsTrue(BatteryField.QuietNearRelay(true, false, socket + new Vector3(50f, 0f, 0f), socket, 60f),
+                "answered, unfixed, 50 m off: the fix is at hand, no line");
+            Assert.IsFalse(BatteryField.QuietNearRelay(true, false, socket + new Vector3(70f, 0f, 0f), socket, 60f),
+                "70 m off: the line may speak");
+            Assert.IsFalse(BatteryField.QuietNearRelay(false, false, socket, socket, 60f),
+                "a relay that has not answered is no fix yet");
+            Assert.IsFalse(BatteryField.QuietNearRelay(true, true, socket, socket, 60f),
+                "a fixed relay charges: the pad line says so instead");
+        }
+
+        [Test]
         public void TheNearestCharger_CountsRelayOnesPad_SoTheLowLineStaysQuietBesideIt()
         {
             var relays = new System.Collections.Generic.List<Vector3> { new Vector3(-70f, 0f, 46f) };

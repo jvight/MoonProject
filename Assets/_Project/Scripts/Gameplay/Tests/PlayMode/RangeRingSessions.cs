@@ -51,6 +51,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         // Share of 07's cells left as it fits relay.1's part, after the drive out from the base.
         private const float ArrivalCharge = 0.6f;
 
+        // The least the lit relay must push the ring toward the rille notch (the payoff audit's grow, made to read).
+        private const float GrowTowardNotch = 60f;
+
         // The needs-part frame looks down from this high over the middle of the mast and relay.1.
         private const float LinkCaptureHeight = 300f;
 
@@ -147,6 +150,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(anchors.TryGet("place.apron", out WorldAnchor apron), "the base's apron");
             var terrain = _context.Get<ITerrainQuery>();
             Vector3 foot = SurfaceRules.OnSurface(terrain, apron.Position.x + MastOffApron, apron.Position.z);
+            _gameplay.PlacedBase.PlaceUnchecked(_gameplay.Building.Catalog.Find(StructureIds.ChargingPad),
+                new StructurePose(SurfaceRules.OnSurface(terrain, apron.Position.x, apron.Position.z), 0f), 1f);
             _gameplay.PlacedBase.PlaceUnchecked(_gameplay.Building.Catalog.Find(StructureIds.AntennaMast),
                 new StructurePose(foot, 0f), 1f);
             _context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.CallAnswered, false));
@@ -179,7 +184,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             Assert.AreEqual(1, grew.Count, "the ring grew");
-            Debug.Log($"[range-ring] R10 grew: {grew[0].OldReach:F0} m to {grew[0].NewReach:F0} m round 07");
+            float before = ReachToward(_gameplay.RangeRing.From, gate.Position, rover.Position);
+            float after = ReachToward(_gameplay.RangeRing.Point, gate.Position, rover.Position);
+            Debug.Log($"[range-ring] R10 grew: {grew[0].OldReach:F0} m to {grew[0].NewReach:F0} m round 07; toward " +
+                      $"the rille notch {before:F0} m to {after:F0} m");
+            Assert.GreaterOrEqual(after - before, GrowTowardNotch,
+                "lit, relay.1 pushes the ring visibly further toward the notch");
             Assert.IsTrue(_gameplay.RangeRing.TryGetLink(out _, out _, out needsPart));
             Assert.IsFalse(needsPart, "relay.1 lit: the link is whole");
             yield return RealSeconds(_gameplay.Battery.Tuning.RangeRing.RevealSeconds * 0.5f);
@@ -212,6 +222,29 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return RealSeconds(RevealWaitSeconds);
             Capture(Vector3.Lerp(rover.Position, gate.Position, 0.5f), RilleCaptureHeight,
                 "range-ring-r10-rille.png");
+        }
+
+        /// <summary>How far a ring (its points by index) reaches from <paramref name="from"/> on the bearing to
+        /// <paramref name="toward"/>.</summary>
+        private float ReachToward(Func<int, Vector3> point, Vector3 toward, Vector3 from)
+        {
+            Vector3 bearing = toward - from;
+            bearing.y = 0f;
+            float best = -1f;
+            float reach = 0f;
+            for (int i = 0; i < _gameplay.RangeRing.Count; i++)
+            {
+                Vector3 offset = point(i) - from;
+                offset.y = 0f;
+                float along = Vector3.Dot(offset.normalized, bearing.normalized);
+                if (along > best)
+                {
+                    best = along;
+                    reach = offset.magnitude;
+                }
+            }
+
+            return reach;
         }
 
         private static IEnumerator RealSeconds(float seconds)
