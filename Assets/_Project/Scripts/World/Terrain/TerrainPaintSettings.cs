@@ -101,7 +101,7 @@ namespace MoonProject.World
         [Tooltip("How far the canyon slot's rock and dust go toward charcoal where the Sun never reaches (0..1): a " +
             "black cleft to 07's stock lamps, read through darkness as the chasm is.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _shadowedShade = 0.85f;
+        [SerializeField] private float _shadowedShade = 0.92f;
 
         [Tooltip("How far the fresh ground the Peak road's rockfall bared goes toward the light dust (0..1): pale " +
             "against the old grey, so the eye finds the closed road from the base, never white.")]
