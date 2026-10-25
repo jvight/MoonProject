@@ -63,9 +63,6 @@ namespace MoonProject.UI
         [Range(0.5f, 5f)]
         [SerializeField] private float _blockedFaceSeconds = 1.8f;
 
-        [Tooltip("Seconds 07's face shows the failed reply's line (TX · NO RANGE) as the one element on screen.")]
-        [Range(1f, 6f)]
-        [SerializeField] private float _replyFaceSeconds = 3f;
 
         [Tooltip("Seconds 07's face shows TX · READY when the answer first becomes possible.")]
         [Range(1f, 10f)]
@@ -113,8 +110,6 @@ namespace MoonProject.UI
         public float BlockedShakeHertz => _blockedShakeHertz;
 
         public float BlockedFaceSeconds => _blockedFaceSeconds;
-
-        public float ReplyFaceSeconds => _replyFaceSeconds;
 
         public float TxReadySeconds => _txReadySeconds;
 

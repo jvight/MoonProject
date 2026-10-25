@@ -303,8 +303,6 @@ namespace MoonProject.UI
             EventBus events = services.Events;
             _events = events;
             _tokens.Add(events.Subscribe<RoverAwoke>(OnRoverAwoke));
-            _tokens.Add(events.Subscribe<CallReplyFailed>(_ => ShowFaceLine(UiKeys.FaceTxNoRange,
-                _tuning.Guidance.ReplyFaceSeconds)));
             _tokens.Add(events.Subscribe<CallAnswerPhaseChanged>(changed =>
             {
                 if (changed.Phase == AnswerPhase.Ready && !changed.Restored)
@@ -1682,7 +1680,7 @@ namespace MoonProject.UI
         }
 
         /// <summary>
-        /// 07's face says "no line of sight" while the cue lasts (or the failed reply's line, or a databank toast), and
+        /// 07's face says "no line of sight" while the cue lasts (or a story moment's line, or a databank toast), and
         /// otherwise shows the call when the guidance slot grants it, unless the self-test or the hold already has the
         /// face; a line cuts the call at once rather than overlapping it. The face is handed back only if nothing else
         /// took it meanwhile.
