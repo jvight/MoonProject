@@ -743,6 +743,10 @@
             "text": "Kéo mô-đun về bãi xây: nó là khung của bộ tích điện"
         },
         {
+            "key": "next.v3.free_cable",
+            "text": "Lùi lại để gỡ cáp"
+        },
+        {
             "key": "next.v3.dock_for_dusk",
             "text": "Về bệ sạc nghỉ qua đêm"
         },

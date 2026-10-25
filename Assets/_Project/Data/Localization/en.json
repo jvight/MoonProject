@@ -743,6 +743,10 @@
             "text": "Tow it to the build site: it's the battery bank's frame"
         },
         {
+            "key": "next.v3.free_cable",
+            "text": "Back up to free the cable"
+        },
+        {
             "key": "next.v3.dock_for_dusk",
             "text": "Dock on the pad for the night"
         },
