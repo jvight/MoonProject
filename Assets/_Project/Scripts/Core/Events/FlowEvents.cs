@@ -83,6 +83,12 @@ namespace MoonProject.Core.Events
         /// 4.1); the opening's objective flow does not derive it.
         /// </summary>
         CallAnswered = 4,
+
+        /// <summary>
+        /// relay.1 is fixed and lit, a charge point of 07's network, and the range ring has grown to it: the opening's
+        /// end (docs/design/opening-v3-payoff-audit.md §4, R10). Derived by the opening's flow.
+        /// </summary>
+        OpeningComplete = 5,
     }
 
     /// <summary>

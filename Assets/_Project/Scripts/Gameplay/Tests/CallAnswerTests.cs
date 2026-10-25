@@ -107,6 +107,23 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void TheMastRaised_LightsTheNetwork_APulseOutToRelayOne_OnceAndNeverOnALoad()
+        {
+            _events.Publish(new StructureBuilt(1, StructureIds.AntennaMast, Mast, 0f));
+            _raise.Step(MastRaise.TotalSeconds(_replySettings) * 0.5f);
+            Assert.IsEmpty(_pulses, "still raising: nothing yet");
+            _raise.Step(MastRaise.TotalSeconds(_replySettings));
+            Assert.AreEqual(1, _pulses.Count, "the top segment locks: the mast lights the network");
+            Assert.AreEqual(0, _pulses[0].Leg);
+            Assert.AreEqual(Mast, _pulses[0].From);
+            Assert.AreEqual(Relay, _pulses[0].To);
+
+            _pulses.Clear();
+            _events.Publish(new MastSegmentRaised(2, 3, Mast, true));
+            Assert.IsEmpty(_pulses, "a loaded game's standing mast pulses nothing");
+        }
+
+        [Test]
         public void HoldingAtTheMast_FillsTheRing_LettingGoDrainsIt_AndTheFarOrMovingCannotTransmit()
         {
             Stand();
