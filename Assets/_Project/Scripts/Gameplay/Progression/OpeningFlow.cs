@@ -12,7 +12,8 @@ namespace MoonProject.Gameplay
     /// step's line speaks through <see cref="NextStepChanged"/> only as the next line, right after progress gives the
     /// player a new line (a step done, or a step's line changing), held for
     /// <see cref="GuidanceTiming.NextLineSeconds"/> (G2), never for the line a session starts on; and as a reminder,
-    /// after <see cref="GuidanceTiming.StallSeconds"/> with no progress, moving or still, and once more
+    /// after <see cref="GuidanceTiming.StallSeconds"/> with no progress, moving or still (counted from the hand-over:
+    /// watching a new game's wake is no stall), and once more
     /// <see cref="GuidanceTiming.AgainSeconds"/> later, then never again for that line (G4). The line leads with its
     /// key's glyph while that key is new or has not been pressed for <see cref="GuidanceTiming.KeyFreshSeconds"/>. A
     /// step whose line would say something the world has not set up yet has no line (B7's for the spent lander
@@ -51,6 +52,7 @@ namespace MoonProject.Gameplay
         private float _showSeconds;
         private readonly IDisposable[] _subscriptions;
         private bool _woke;
+        private bool _waking;
         private bool _progressed;
         private bool _snaggedThisTow;
         private bool _docked;
@@ -92,7 +94,8 @@ namespace MoonProject.Gameplay
             _steps.Add(HeadlampLine, () => _game.HeadlampFitted);
             _subscriptions = new[]
             {
-                events.Subscribe<BootCheckFinished>(_ => _woke = true),
+                events.Subscribe<RoverWakeBeatReached>(OnWakeBeat),
+                events.Subscribe<BootCheckFinished>(_ => OnWoke()),
                 events.Subscribe<FragmentScanned>(_ => _progressed = true),
                 events.Subscribe<StoryScanned>(_ => _progressed = true),
                 events.Subscribe<ContainerOpened>(_ => _progressed = true),
@@ -316,7 +319,7 @@ namespace MoonProject.Gameplay
                 return;
             }
 
-            if (key.Length == 0 || _reminders >= MaxReminders || !Reminds(key))
+            if (_waking || key.Length == 0 || _reminders >= MaxReminders || !Reminds(key))
             {
                 return;
             }
@@ -335,6 +338,20 @@ namespace MoonProject.Gameplay
                 _reminders++;
                 Show(key, NextLineReason.Reminder, _timing.ReminderSeconds);
             }
+        }
+
+        /// <summary>A new game's wake has begun: the player has no control yet, so no wait counts as a stall.</summary>
+        private void OnWakeBeat(RoverWakeBeatReached reached)
+        {
+            _waking |= reached.Beat <= WakeBeat.ChecksBegin;
+        }
+
+        /// <summary>The self-test is over and control is the player's: the first line shows, and stalls count.</summary>
+        private void OnWoke()
+        {
+            _woke = true;
+            _waking = false;
+            _stalled = 0f;
         }
 
         private static bool HoldsUntilDone(string key) =>

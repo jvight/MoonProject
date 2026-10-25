@@ -386,6 +386,25 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void WatchingANewGamesWake_IsNoStall_TheReminderCountsFromTheHandOver()
+        {
+            _events.Publish(new RoverWakeBeatReached(WakeBeat.FadedOut));
+            _flow.Tick(1f);
+            _events.Publish(new RoverWakeBeatReached(WakeBeat.ChecksBegin));
+            Tick(Stall + Again);
+            Assert.IsEmpty(_lines, "the wake plays: no line nags a player who only watches it");
+
+            _events.Publish(new BootCheckFinished());
+            _flow.Tick(1f);
+            Tick(NextLine);
+            CollectionAssert.AreEqual(new[] { OpeningKeys.DriveToLander, string.Empty }, _lines, "the hand-over line");
+            Tick(Stall - 2);
+            Assert.AreEqual(2, _lines.Count, "the stall counts from the hand-over, not from the wake");
+            Tick(2);
+            Assert.AreEqual(NextLineReason.Reminder, _changes[_changes.Count - 1].Reason);
+        }
+
+        [Test]
         public void AKeyLine_LeadsWithItsKey_OnlyWhereTheKeyWouldAct()
         {
             _game.OutOfReach.Add(OpeningKeys.ScanLander);
