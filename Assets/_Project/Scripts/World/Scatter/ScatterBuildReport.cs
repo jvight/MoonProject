@@ -4,8 +4,9 @@ namespace MoonProject.World
     public readonly struct ScatterBuildReport
     {
         public ScatterBuildReport(int pebbles, int boulders, int triangles, int drawGroups, double buildMs,
-            int solidCobbles)
+            int solidCobbles, int talus)
         {
+            Talus = talus;
             Pebbles = pebbles;
             SolidCobbles = solidCobbles;
             Boulders = boulders;
@@ -15,6 +16,9 @@ namespace MoonProject.World
         }
 
         public int Pebbles { get; }
+
+        /// <summary>Pieces of the rim talus.</summary>
+        public int Talus { get; }
 
         /// <summary>Medium cobbles (ScatterKind.Pebble at or above CobbleColliderMinSize) given a SphereCollider.</summary>
         public int SolidCobbles { get; }

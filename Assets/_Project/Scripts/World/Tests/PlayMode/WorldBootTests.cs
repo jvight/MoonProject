@@ -32,6 +32,13 @@ namespace MoonProject.World.PlayModeTests
         private const string RockFolder = "Assets/_Project/Art/R1/Models/Rocks/";
         private static readonly string[] PebbleRocks = { "Rock_00", "Rock_01", "Rock_02", "Rock_03", "Rock_04" };
         private static readonly string[] BoulderRocks = { "Rock_05", "Rock_06", "Rock_07", "Rock_08", "Rock_09" };
+        private static readonly string[] TalusRocks =
+        {
+            "RimTalus_00", "RimTalus_01", "RimTalus_02", "RimTalus_03", "RimTalus_04", "RimTalus_05", "RimTalus_06",
+            "RimTalus_07",
+        };
+
+        private const string TalusMaterialPath = "Assets/_Project/Generated/Art/R1/Materials/R1_RimTalus.mat";
 
         private const int BootRuns = 3;
         // The boot's work in CPU milliseconds across all threads (16 cores, 2026-10-19: 4.06-4.11 s once the
@@ -84,6 +91,8 @@ namespace MoonProject.World.PlayModeTests
             serialized.FindProperty("_peakBeacon").objectReferenceValue = _beacon;
             AssignRocks(serialized.FindProperty("_pebbleRocks"), PebbleRocks);
             AssignRocks(serialized.FindProperty("_boulderRocks"), BoulderRocks);
+            AssignRocks(serialized.FindProperty("_talusRocks"), TalusRocks);
+            serialized.FindProperty("_talusMaterial").objectReferenceValue = Load<Material>(TalusMaterialPath);
             serialized.ApplyModifiedPropertiesWithoutUndo();
             _host.SetActive(true);
             Assert.IsFalse(world.HasGeneratedWorld, "play mode must not build anything before Initialize");

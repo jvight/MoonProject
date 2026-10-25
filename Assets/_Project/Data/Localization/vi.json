@@ -763,22 +763,6 @@
             "text": "Trạm tiếp sóng 1 đang yếu dần. Tới sửa nó"
         },
         {
-            "key": "next.v3.scan_elder06",
-            "text": "Trạm 2 im lặng. Tìm 06 ở cửa hẻm"
-        },
-        {
-            "key": "next.v3.cut_headlamp_crate",
-            "text": "Cắt thùng cạnh 06 lấy linh kiện đèn pha"
-        },
-        {
-            "key": "next.v3.assemble_headlamp",
-            "text": "Lắp đèn pha ở giá lắp"
-        },
-        {
-            "key": "next.v3.dock_for_rack",
-            "text": "Đỗ lên bệ sạc để mở giá lắp"
-        },
-        {
             "key": "battery.low.lander",
             "text": "Pin yếu. Xây bệ sạc cạnh tàu đổ bộ"
         },

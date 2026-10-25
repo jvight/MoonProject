@@ -763,22 +763,6 @@
             "text": "Relay 1 is fading. Go fix it"
         },
         {
-            "key": "next.v3.scan_elder06",
-            "text": "Relay 2 went quiet. Find 06 at the canyon mouth"
-        },
-        {
-            "key": "next.v3.cut_headlamp_crate",
-            "text": "Cut the crate by 06 for headlamp parts"
-        },
-        {
-            "key": "next.v3.assemble_headlamp",
-            "text": "Assemble the headlamp at the rack"
-        },
-        {
-            "key": "next.v3.dock_for_rack",
-            "text": "Dock on the pad to open the rack"
-        },
-        {
             "key": "battery.low.lander",
             "text": "Battery low. Build a pad by the lander"
         },
