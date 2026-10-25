@@ -110,7 +110,6 @@ namespace MoonProject.UI
 
         public float BlockedFaceSeconds => _blockedFaceSeconds;
 
-
         public float TxReadySeconds => _txReadySeconds;
 
         public float TxPromptSeconds => _txPromptSeconds;

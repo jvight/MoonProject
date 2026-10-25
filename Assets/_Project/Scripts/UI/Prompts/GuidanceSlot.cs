@@ -6,8 +6,9 @@ namespace MoonProject.UI
     internal enum GuidanceKind
     {
         /// <summary>
-        /// A line 07 puts on its own CRT face at a story moment (the failed reply's <c>TX · NO RANGE</c>, the call's
-        /// display for a few seconds when its state changes or a letter decodes): the moment is the whole screen's, so it takes the slot from everything else, which fades first and returns after it.
+        /// A line 07 puts on its own CRT face at a story moment (the relay's <c>ACK</c>, the mast's <c>TX · READY</c>,
+        /// the call's display for a few seconds when its state changes or a letter decodes): the moment is the whole
+        /// screen's, so it takes the slot from everything else, which fades first and returns after it.
         /// </summary>
         CallLine = 0,
 
