@@ -429,10 +429,30 @@ namespace MoonProject.Autoplay
             yield return Until(() => Rover().Speed < 0.3f, 4f, "07 to stop backing off");
         }
 
-        /// <summary>Moves the mouse until the view's centre is on <paramref name="point"/>.</summary>
+        /// <summary>Moves the mouse until the view's centre is on <paramref name="point"/>; the run fails when it cannot.</summary>
         public IEnumerator LookAt(Vector3 point, string what)
         {
+            yield return TryLookAt(point, what);
+            if (!LookSettled)
+            {
+                Fail(LookMiss + " " + Where());
+            }
+        }
+
+        /// <summary>True when the last <see cref="TryLookAt"/> brought the view onto its point.</summary>
+        public bool LookSettled { get; private set; }
+
+        /// <summary>What the last <see cref="TryLookAt"/> that did not settle left off: how far the view was still.</summary>
+        public string LookMiss { get; private set; } = string.Empty;
+
+        /// <summary>
+        /// Like <see cref="LookAt"/> but leaves the run alive when the view will not settle (<see cref="LookSettled"/>
+        /// false, <see cref="LookMiss"/> says how far off): the caller can stand somewhere else and look again.
+        /// </summary>
+        public IEnumerator TryLookAt(Vector3 point, string what)
+        {
             Activity = "looking at " + what;
+            LookSettled = false;
             float deadline = Time.unscaledTime + LookTimeoutSeconds;
             while (!Failed)
             {
@@ -441,14 +461,15 @@ namespace MoonProject.Autoplay
                 float pitch = LookSteering.PitchError(view.position, view.forward, point);
                 if (Mathf.Abs(yaw) <= LookSteering.ToleranceDegrees && Mathf.Abs(pitch) <= LookSteering.ToleranceDegrees)
                 {
-                    break;
+                    LookSettled = true;
+                    yield break;
                 }
 
                 if (Time.unscaledTime > deadline)
                 {
-                    Fail($"the view could not settle on {what} within {LookTimeoutSeconds.ToString("0", CultureInfo.InvariantCulture)} s " +
-                         $"(yaw {yaw.ToString("0", CultureInfo.InvariantCulture)}, pitch {pitch.ToString("0", CultureInfo.InvariantCulture)} deg off). {Where()}");
-                    break;
+                    LookMiss = $"the view could not settle on {what} within {LookTimeoutSeconds.ToString("0", CultureInfo.InvariantCulture)} s " +
+                               $"(yaw {yaw.ToString("0", CultureInfo.InvariantCulture)}, pitch {pitch.ToString("0", CultureInfo.InvariantCulture)} deg off).";
+                    yield break;
                 }
 
                 _input.Look(new Vector2(LookSteering.Pixels(yaw), LookSteering.Pixels(pitch)));
