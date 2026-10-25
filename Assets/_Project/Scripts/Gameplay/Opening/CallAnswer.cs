@@ -7,8 +7,8 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// The answer to the call from the sky (docs/design/opening-v3-purpose.md R8, EditMode-tested). Once the antenna
-    /// mast stands raised, the night has fallen, the call is clear and 07 has tried and failed its reply, 07 may
-    /// transmit: it holds at the mast, the transmission goes out as a pulse of the old network to relay.1 on the west
+    /// mast stands raised and the call is clear, by day or night, 07 may transmit (opening-v3-payoff-audit §4: the
+    /// network is gameplay; no waiting on the dark, no failed reply first): it holds at the mast, the transmission goes out as a pulse of the old network to relay.1 on the west
     /// rim, relay.1 answers (<see cref="RelayAcked"/>, and the call is <see cref="OpeningMilestone.CallAnswered"/>),
     /// and the pulse runs on to glint on the Peak's dark dish. It happens once, and what makes it happen is saved by the
     /// call itself: a loaded game whose call is already answered is done and silent. Allocation-free per frame.
@@ -17,7 +17,6 @@ namespace MoonProject.Gameplay
     {
         private readonly EventBus _events;
         private readonly ICallSource _call;
-        private readonly CallReply _reply;
         private readonly MastRaise _mast;
         private readonly CallAnswerSettings _settings;
         private readonly Vector3 _relay;
@@ -32,12 +31,11 @@ namespace MoonProject.Gameplay
         private float _legSeconds;
         private float _routeLegSeconds;
 
-        public CallAnswer(EventBus events, ICallSource call, CallReply reply, MastRaise mast,
-            CallAnswerSettings settings, Vector3 relay, Vector3 peakPosition)
+        public CallAnswer(EventBus events, ICallSource call, MastRaise mast, CallAnswerSettings settings,
+            Vector3 relay, Vector3 peakPosition)
         {
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _call = call ?? throw new ArgumentNullException(nameof(call));
-            _reply = reply ?? throw new ArgumentNullException(nameof(reply));
             _mast = mast ?? throw new ArgumentNullException(nameof(mast));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _relay = relay;
@@ -54,14 +52,13 @@ namespace MoonProject.Gameplay
         public Vector3 MastPoint => _mastPoint;
 
         /// <summary>Whether the opening can reach the answer: everything R8 needs has come.</summary>
-        private bool Ready(bool nightFallen)
+        private bool Ready()
         {
-            return _mastKnown && _mast.Done && _reply.Tried && nightFallen && _call.State == CallState.Clear;
+            return _mastKnown && _mast.Done && _call.State == CallState.Clear;
         }
 
-        /// <param name="nightFallen">The first night has fallen over the night-ready base.</param>
         /// <param name="held">The transmit key (E) is held.</param>
-        public void Step(float deltaTime, bool nightFallen, bool held, Vector3 rover, float speed)
+        public void Step(float deltaTime, bool held, Vector3 rover, float speed)
         {
             if (Phase == AnswerPhase.Done)
             {
@@ -77,7 +74,7 @@ namespace MoonProject.Gameplay
             switch (Phase)
             {
                 case AnswerPhase.NotReady:
-                    if (Ready(nightFallen))
+                    if (Ready())
                     {
                         SetPhase(AnswerPhase.Ready, false);
                     }
