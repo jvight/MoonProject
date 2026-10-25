@@ -57,6 +57,7 @@ namespace MoonProject.Art.Tests
             ("service_cabinet.json", "Structures/ServiceCabinet.fbx"),
             ("feed_unit_spare.json", "Props/FeedUnitSpare.fbx"),
             ("relay_contact_pad.json", "Structures/RelayContactPad.fbx"),
+            ("prop_spare_igniter.json", "Props/Prop_SpareIgniter.fbx"),
         };
 
         [Serializable]
@@ -1235,6 +1236,68 @@ namespace MoonProject.Art.Tests
             Assert.Greater(box.size.x, 1.35f, "PowerModule BoxCollider width must span the module body.");
             Assert.Greater(box.size.y, 0.85f, "PowerModule BoxCollider depth/height must span the module body.");
             Assert.Greater(box.size.z, 0.80f, "PowerModule BoxCollider height/depth must span the module body.");
+        }
+
+        [Test]
+        public void PropSpareIgniter_MatchesCutterIgniter_HasBaseCentrePivot_WarmBrassGlintMaterial_AndNoColliders()
+        {
+            GameObject prefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.PropSpareIgniterPrefabPath);
+            Assert.IsNotNull(prefab, "Prop_SpareIgniter prefab must exist at Generated/Art/R1/Models/Props/Prop_SpareIgniter.prefab.");
+
+            // MeshRenderer + mesh only, NO colliders
+            Assert.AreEqual(0, prefab.GetComponentsInChildren<Collider>(true).Length,
+                "Prop_SpareIgniter must have no Colliders.");
+            MeshRenderer[] renderers = prefab.GetComponentsInChildren<MeshRenderer>(true);
+            MeshFilter[] filters = prefab.GetComponentsInChildren<MeshFilter>(true);
+            Assert.AreEqual(1, renderers.Length, "Prop_SpareIgniter must have a single MeshRenderer.");
+            Assert.AreEqual(1, filters.Length, "Prop_SpareIgniter must have a single MeshFilter.");
+            Assert.IsNotNull(filters[0].sharedMesh, "Prop_SpareIgniter MeshFilter must reference a valid Mesh.");
+
+            // ~0.25 m long at 07's scale, lying on its side, with pivot at its base centre
+            Bounds meshBounds = MeshChecks.PrefabBounds(prefab, prefab.transform.localToWorldMatrix);
+            Assert.AreEqual(0.25f, meshBounds.size.x, 0.01f, "Prop_SpareIgniter length along X must be ~0.25 m.");
+            Assert.Greater(meshBounds.size.x, meshBounds.size.y * 2.2f, "Prop_SpareIgniter must lie horizontally on its side.");
+            Assert.AreEqual(0.0f, meshBounds.min.y, 0.005f, "Prop_SpareIgniter pivot must sit at base Y = 0.");
+            Assert.AreEqual(0.0f, meshBounds.center.x, 0.005f, "Prop_SpareIgniter pivot must sit at horizontal X centre.");
+            Assert.AreEqual(0.0f, meshBounds.center.z, 0.005f, "Prop_SpareIgniter pivot must sit at horizontal Z centre.");
+
+            // Ceramic insulator body (R1_WhitePaint), warm brass glint electrode/collar (R1_SpareIgniterBrass, emissive <= 1), small stencil tag (R1_Signage)
+            Material[] mats = renderers[0].sharedMaterials;
+            Material whiteMat = null;
+            Material brassMat = null;
+            Material signageMat = null;
+            for (int i = 0; i < mats.Length; i++)
+            {
+                if (mats[i] == null)
+                {
+                    continue;
+                }
+
+                if (mats[i].name == R1MaterialRecipes.WhitePaintSlot)
+                {
+                    whiteMat = mats[i];
+                }
+                else if (mats[i].name == R1StoryPropsBuilder.SpareIgniterBrassMaterialName)
+                {
+                    brassMat = mats[i];
+                }
+                else if (mats[i].name == R1MaterialRecipes.SignageSlot)
+                {
+                    signageMat = mats[i];
+                }
+            }
+
+            Assert.IsNotNull(whiteMat, "Prop_SpareIgniter must use R1_WhitePaint for its ceramic insulator body.");
+            Assert.IsNotNull(brassMat, "Prop_SpareIgniter must use R1_SpareIgniterBrass for its warm brass glint collar & electrode tip.");
+            Assert.IsNotNull(signageMat, "Prop_SpareIgniter must use R1_Signage for its small stencil tag.");
+
+            float emissionStrength = brassMat.GetFloat("_EmissionStrength");
+            float bloomSafeMax = brassMat.GetFloat("_BloomSafeMax");
+            float hotCorePeak = brassMat.GetFloat("_HotCorePeak");
+            Assert.Greater(emissionStrength, 0.0f, "R1_SpareIgniterBrass must have warm glint emission > 0.");
+            Assert.LessOrEqual(emissionStrength, 1.0f, "R1_SpareIgniterBrass _EmissionStrength must be <= 1 (no bloom).");
+            Assert.LessOrEqual(bloomSafeMax, 1.0f, "R1_SpareIgniterBrass _BloomSafeMax must be <= 1 (no bloom).");
+            Assert.LessOrEqual(hotCorePeak, 1.0f, "R1_SpareIgniterBrass _HotCorePeak must be <= 1 (no bloom).");
         }
 
         private static Bounds MeasureInstantiatedRendererBounds(GameObject prefab)
