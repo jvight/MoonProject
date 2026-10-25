@@ -5,7 +5,6 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using UnityEngine;
-using UnityEngine.Rendering;
 using MoonProject.Core;
 using MoonProject.Core.Events;
 using MoonProject.Gameplay;
@@ -22,8 +21,6 @@ namespace MoonProject.Autoplay
         private const string ReportFile = "report.md";
         private const string LogFile = "autoplay.log";
         private const string ScreenshotFolder = "screenshots";
-        private const int RecordWidth = 640;
-        private const int RecordHeight = 360;
         private const int SettleFrames = 3;
         private const int KeptErrors = 20;
 
@@ -84,7 +81,7 @@ namespace MoonProject.Autoplay
             _world = new AutoplayWorld();
             _probe = new FrameProbe();
             _input = new VirtualInput();
-            _bot = new AutoplayBot(_world, _input, _beats, Shot, RecordFrames);
+            _bot = new AutoplayBot(_world, _input, _beats, Shot);
             StartCoroutine(Play());
         }
 
@@ -254,62 +251,6 @@ namespace MoonProject.Autoplay
         private void Shot(string label)
         {
             _shotQueue.Enqueue(label);
-        }
-
-        private void RecordFrames(string label, int count)
-        {
-            StartCoroutine(RecordFramesRoutine(label, count));
-        }
-
-        /// <summary>
-        /// The next frames as displayed, at <see cref="RecordWidth"/> wide, read back without stalling the frame; the
-        /// PNGs are written afterwards. Full-size screenshots every frame made each frame hundreds of milliseconds long.
-        /// </summary>
-        private IEnumerator RecordFramesRoutine(string label, int count)
-        {
-            var target = new RenderTexture(RecordWidth, RecordHeight, 0, RenderTextureFormat.ARGB32);
-            var frames = new byte[count][];
-            int read = 0;
-            for (int i = 0; i < count; i++)
-            {
-                yield return new WaitForEndOfFrame();
-                ScreenCapture.CaptureScreenshotIntoRenderTexture(target);
-                int slot = i;
-                AsyncGPUReadback.Request(target, 0, TextureFormat.RGBA32, request =>
-                {
-                    if (!request.hasError)
-                    {
-                        frames[slot] = request.GetData<byte>().ToArray();
-                    }
-
-                    read++;
-                });
-            }
-
-            while (read < count)
-            {
-                yield return null;
-            }
-
-            string folder = Path.Combine(_options.OutDirectory, ScreenshotFolder);
-            var texture = new Texture2D(RecordWidth, RecordHeight, TextureFormat.RGBA32, false);
-            for (int i = 0; i < count; i++)
-            {
-                if (frames[i] == null)
-                {
-                    continue;
-                }
-
-                texture.LoadRawTextureData(frames[i]);
-                texture.Apply();
-                string name = "rec-" + label + "-" + i.ToString("000", CultureInfo.InvariantCulture) + ".png";
-                File.WriteAllBytes(Path.Combine(folder, name), texture.EncodeToPNG());
-                yield return null;
-            }
-
-            Destroy(texture);
-            target.Release();
-            Destroy(target);
         }
 
         private void TakeQueuedShot()
