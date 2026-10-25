@@ -970,11 +970,13 @@ namespace MoonProject.Autoplay
             RelayRepair relay = G.Relay;
             yield return _bot.Until(() => relay.Open, FollowSeconds, "relay.1 to have answered the call");
             Vector3 spare = relay.SparePoint;
-            yield return _bot.DriveTo(Flat(spare), RelayArrive, "relay.1's open cabinet", DriveSeconds);
+            yield return _bot.DriveTo(Flat(spare), RelayArrive, "relay.1's open cabinet", DriveSeconds,
+                () => G.Hints.TryGet(InteractionKind.PickUp, out _));
             yield return _bot.Until(() => G.Hints.TryGet(InteractionKind.PickUp, out _), FollowSeconds,
                 "the cabinet to offer its spare (Pick up)");
             yield return _bot.Hold(Key.E, () => relay.SpareTaken, FollowSeconds, "E to take relay.1's spare");
-            yield return _bot.DriveTo(Flat(relay.SocketPoint), RelayArrive, "relay.1's feed socket", DriveSeconds);
+            yield return _bot.DriveTo(Flat(relay.SocketPoint), RelayArrive, "relay.1's feed socket", DriveSeconds,
+                () => G.Hints.TryGet(InteractionKind.Install, out _));
             yield return _bot.Until(() => G.Hints.TryGet(InteractionKind.Install, out _), FollowSeconds,
                 "the feed socket to offer the spare (Fit)");
             yield return _bot.Hold(Key.E, () => relay.Fitted, FollowSeconds, "E to fit the spare");
