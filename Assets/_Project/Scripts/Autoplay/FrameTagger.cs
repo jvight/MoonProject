@@ -13,13 +13,25 @@ namespace MoonProject.Autoplay
         private float _transitionEnd;
         private int _opens;
         private int _closes;
+        private bool _databank;
+        private int _flipsToDatabank;
+        private int _flipsBack;
         private string _flipName = string.Empty;
 
         /// <summary>The open or close window the last step fell in ("Tab open #2"), or empty outside one.</summary>
         public string Window { get; private set; } = string.Empty;
 
-        public FrameTag Step(float now, bool faceOpen, bool building, bool scanning, bool docked)
+        /// <param name="databank">The face screen is on its databank page (a flip of it starts a window too).</param>
+        public FrameTag Step(float now, bool faceOpen, bool building, bool scanning, bool docked,
+            bool databank = false)
         {
+            if (databank != _databank)
+            {
+                _databank = databank;
+                _transitionEnd = now + TransitionSeconds;
+                _flipName = databank ? "Databank flip #" + ++_flipsToDatabank : "Hold flip #" + ++_flipsBack;
+            }
+
             if (faceOpen != _face)
             {
                 _face = faceOpen;

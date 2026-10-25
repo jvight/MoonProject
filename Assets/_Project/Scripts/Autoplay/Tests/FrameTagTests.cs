@@ -27,6 +27,19 @@ namespace MoonProject.Autoplay.Tests
         }
 
         [Test]
+        public void ThePageFlips_StartNamedWindowsToo()
+        {
+            var tagger = new FrameTagger();
+            tagger.Step(0f, true, false, false, false, false);
+            tagger.Step(5f, true, false, false, false, true);
+            Assert.AreEqual("Databank flip #1", tagger.Window);
+            tagger.Step(5f + FrameTagger.TransitionSeconds + 0.1f, true, false, false, false, true);
+            Assert.AreEqual(string.Empty, tagger.Window);
+            tagger.Step(9f, true, false, false, false, false);
+            Assert.AreEqual("Hold flip #1", tagger.Window);
+        }
+
+        [Test]
         public void BuildScanAndDock_TagTheFrame()
         {
             var tagger = new FrameTagger();
