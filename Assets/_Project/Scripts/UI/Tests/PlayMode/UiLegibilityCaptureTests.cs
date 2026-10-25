@@ -302,8 +302,8 @@ namespace MoonProject.UI.PlayModeTests
         private static readonly string[] RewrittenLines =
         {
             "next.v2.build_pad", "next.v3.tow_module", "next.v2.scan_tower", "next.v3.go_relay",
-            "next.v3.scan_elder06", "next.v2.find_solar", "next.v2.cut_optics", "next.v3.visit_site",
-            "next.v3.dock_for_dusk", "next.v3.assemble_headlamp",
+            "next.v3.hook_module", "next.v2.find_solar", "next.v2.cut_optics", "next.v3.visit_site",
+            "next.v3.dock_for_dusk", "next.v2.build_solar",
         };
 
         /// <summary>
