@@ -139,6 +139,10 @@ namespace MoonProject.Autoplay
         /// <summary>Tab cycles that also flip to the databank and back with Q (its first flip is a hitch to prove).</summary>
         private const int PageFlipCycles = 2;
 
+        /// <summary>Frames shot before and after the press that closes the last Tab cycle: the owner sees one broken frame.</summary>
+        private const int CloseShotsBefore = 6;
+        private const int CloseShotsAfter = 50;
+
         /// <summary>Frames the pointer takes to travel to a card.</summary>
         private const int PointerSteps = 8;
         private const float PlaceDriftMetres = 2f;
@@ -562,7 +566,7 @@ namespace MoonProject.Autoplay
         /// <summary>B7: the habitat's airlock panel, read from square on.</summary>
         /// <summary>
         /// R5, the first free choice: out to the 1971 seismic station, one of the two near sites, to read its dead
-        /// station box (its curiosity scan).
+        /// station box (its curiosity scan). The visit is optional: the dock after PowerOn begins the dusk either way.
         /// </summary>
         public IEnumerator VisitTheSeismicStation()
         {
@@ -575,10 +579,6 @@ namespace MoonProject.Autoplay
 
             Vector3 home = Flat(Pad() - station.Point).normalized;
             yield return Scan(station, home, PanelStandOff);
-            if (!_bot.Failed && !G.Opening.Dusk.Visited)
-            {
-                _bot.Fail("07 read the seismic station but the opening never counted the visit.");
-            }
         }
 
         /// <summary>R6: back onto the pad; the dock after the visit begins the first dusk.</summary>
@@ -978,7 +978,8 @@ namespace MoonProject.Autoplay
             yield return _bot.DriveTo(Flat(relay.SocketPoint), RelayArrive, "relay.1's feed socket", DriveSeconds);
             yield return _bot.Until(() => G.Hints.TryGet(InteractionKind.Install, out _), FollowSeconds,
                 "the feed socket to offer the spare (Fit)");
-            yield return _bot.Hold(Key.E, () => relay.Fitted, FollowSeconds, "E to fit the spare: relay.1 lit");
+            yield return _bot.Hold(Key.E, () => relay.Fitted, FollowSeconds, "E to fit the spare");
+            yield return _bot.Until(() => relay.Lit, FollowSeconds, "relay.1 to finish powering up (about 5 s)");
             BatteryModel battery = G.Battery.Model;
             yield return _bot.DriveTo(Flat(relay.PadPoint), ApproachThrottleRadius, "relay.1's contact pad",
                 DriveSeconds);
@@ -1321,6 +1322,16 @@ namespace MoonProject.Autoplay
         /// Opens and closes 07's face screen <paramref name="times"/> times with the bot standing still, resting after
         /// each flip until its transition has passed: a quiet stretch whose frames the hitch table can attribute to Tab.
         /// </summary>
+        /// <summary>One screenshot a frame for <paramref name="count"/> frames, numbered under <paramref name="label"/>.</summary>
+        private IEnumerator ShotFrames(string label, int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                _bot.Shot(label + "-" + i.ToString("00", System.Globalization.CultureInfo.InvariantCulture));
+                yield return null;
+            }
+        }
+
         public IEnumerator TabCycles(int times)
         {
             var face = _bot.World.Context.Get<IRoverFaceScreen>();
@@ -1338,7 +1349,18 @@ namespace MoonProject.Autoplay
                     yield return _bot.Wait(FrameTagger.TransitionSeconds + TabRestSeconds);
                 }
 
+                bool recording = cycle == times - 1;
+                if (recording)
+                {
+                    yield return ShotFrames("tabclose-before", CloseShotsBefore);
+                }
+
                 yield return _bot.Tap(Key.Tab);
+                if (recording)
+                {
+                    yield return ShotFrames("tabclose", CloseShotsAfter);
+                }
+
                 yield return _bot.Until(() => !face.IsOpen, FollowSeconds, "Tab to close the face screen (cycle " + (cycle + 1) + ")");
                 yield return _bot.Wait(FrameTagger.TransitionSeconds + TabRestSeconds);
             }

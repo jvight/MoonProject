@@ -755,10 +755,6 @@
             "text": "Transmit from the antenna mast"
         },
         {
-            "key": "next.v3.visit_site",
-            "text": "Power's on. Visit the seismic station or the habitat"
-        },
-        {
             "key": "next.v3.await_night",
             "text": "The base is ready for night"
         },
@@ -1057,10 +1053,6 @@
         {
             "key": "ui.face.no_line",
             "text": "CAN'T SEE AHEAD"
-        },
-        {
-            "key": "ui.face.tx_no_range",
-            "text": "TX · NO RANGE"
         },
         {
             "key": "ui.face.tx_ready",

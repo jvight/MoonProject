@@ -59,6 +59,9 @@ CBUFFER_START(UnityPerMaterial)
     half   _DistanceFade;
     float4 _DistanceFadeRange;
     half   _NearKeep;
+    half   _TriplanarMapping;
+    half   _TriplanarScale;
+    half   _SteepRockDarkening;
 CBUFFER_END
 
 // Where the distance fade measures from (World sets it to the view camera every frame), so shadow and depth passes

@@ -31,6 +31,10 @@ namespace MoonProject.Rover.PlayModeTests
         // much that step may change in a frame (a snap shows as a step change of metres; a smooth blend peaks near 0.2).
         private const float MaxStepMetres = 1.0f;
         private const float MaxTurnDegrees = 14f;
+
+        // The close puts the camera back on the chase pose in one step, under a full dip to dark (the owner saw the old
+        // half-orbit as a broken frame); only a step taken in the dark is exempt from the smoothness rules.
+        private const float DarkEnoughToHideACut = 0.85f;
         private const float MaxStepChangeMetres = 0.3f;
         private const float MaxTurnChangeDegrees = 3f;
 
@@ -154,6 +158,13 @@ namespace MoonProject.Rover.PlayModeTests
                 float step = Vector3.Distance(rows[i].CameraPosition, rows[i - 1].CameraPosition);
                 float turn = Quaternion.Angle(rows[i].CameraRotation, rows[i - 1].CameraRotation);
                 string where = $"{what}, frame {i} ({rows[i].Phase}, face weight {rows[i].FaceWeight:F2}, speed {rows[i].Speed:F2})";
+                if (rows[i].Dark >= DarkEnoughToHideACut || rows[i - 1].Dark >= DarkEnoughToHideACut)
+                {
+                    previousStep = 0f;
+                    previousTurn = 0f;
+                    continue;
+                }
+
                 Assert.LessOrEqual(step, MaxStepMetres, "the camera never moves more than a tuned step in one frame: " + where);
                 Assert.LessOrEqual(turn, MaxTurnDegrees, "nor turns more than a tuned angle in one frame: " + where);
                 if (i > 2)
@@ -181,6 +192,7 @@ namespace MoonProject.Rover.PlayModeTests
                 RoverPosition = rover.Position,
                 Speed = rover.Speed,
                 FaceWeight = rig.FaceInspectWeight,
+                Dark = rig.FaceCloseDark,
                 YawOffset = rig.Orbit.YawOffset,
                 Held = rover.IsHeldStill,
                 FaceOpen = rig.IsFaceInspectOpen,
@@ -243,6 +255,7 @@ namespace MoonProject.Rover.PlayModeTests
             public Vector3 RoverPosition;
             public float Speed;
             public float FaceWeight;
+            public float Dark;
             public float YawOffset;
             public bool Held;
             public bool FaceOpen;

@@ -17,6 +17,8 @@ namespace MoonProject.Gameplay.Editor
         public const int BuilderOrder = 505;
 
         /// <summary>Art's R1 crates (opening-v2 §4), each named as its prefab: the supply crates' models.</summary>
+        private static readonly string[] PartPropNames = { "Prop_SpareIgniter" };
+
         private static readonly string[] CrateNames =
         {
             ContainerKinds.CrateM, ContainerKinds.CrateL, ContainerKinds.CrateCargoOpen,
@@ -32,6 +34,7 @@ namespace MoonProject.Gameplay.Editor
             visuals.Populate(Write(shader, GlowRole.Flash), Write(shader, GlowRole.PieceHalo),
                 GeneratedAssets.CreateOrReplace(GlintMaterials.CreatePart(glint), GameplayAssetPaths.PartGlintMaterial));
             visuals.PopulateContainers(CrateModels());
+            visuals.PopulatePartProps(PartProps());
             visuals.PopulateCable(LoadCable());
             visuals.PopulateHologram(HologramMaterialBuilder.LoadMaterial(false),
                 HologramMaterialBuilder.LoadMaterial(true));
@@ -39,6 +42,22 @@ namespace MoonProject.Gameplay.Editor
             AssetDatabase.SaveAssets();
             Debug.Log($"{BuilderPath}: wrote {Enum.GetValues(typeof(GlowRole)).Length + 1} materials and " +
                       GameplayAssetPaths.Visuals);
+        }
+
+        private static GameObject[] PartProps()
+        {
+            var props = new GameObject[PartPropNames.Length];
+            for (int i = 0; i < props.Length; i++)
+            {
+                string path = GameplayAssetPaths.PropPrefab(PartPropNames[i]);
+                props[i] = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                if (props[i] == null)
+                {
+                    throw new InvalidOperationException($"{BuilderPath}: Art's part prop {path} is missing.");
+                }
+            }
+
+            return props;
         }
 
         private static GameObject[] CrateModels()

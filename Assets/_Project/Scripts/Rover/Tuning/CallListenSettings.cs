@@ -77,25 +77,6 @@ namespace MoonProject.Rover
         [Range(0f, 2f)]
         [SerializeField] private float _clearGlow = 0.5f;
 
-        [Tooltip("Seconds 07's head stays lowered after its reply fails (the face shows its line this long).")]
-        [Range(0.5f, 8f)]
-        [SerializeField] private float _dejectedHoldSeconds = 3.2f;
-
-        [Tooltip("Half-life (s) of the head lowering and of lifting again.")]
-        [Range(0.1f, 3f)]
-        [SerializeField] private float _dejectedHalfLife = 0.6f;
-
-        [Tooltip("Degrees the head lowers when the reply fails.")]
-        [Range(0f, 40f)]
-        [SerializeField] private float _dejectedHeadPitch = 16f;
-
-        [Tooltip("Degrees the neck droops when the reply fails.")]
-        [Range(0f, 20f)]
-        [SerializeField] private float _dejectedNeckDroop = 7f;
-
-        [Tooltip("Seconds the antenna lamp stays dark after the reply fails, before it relights softly.")]
-        [Range(0.5f, 20f)]
-        [SerializeField] private float _lampDarkSeconds = 6f;
 
         [Header("The locked call: the lamp keys the pattern back, in phase with the sign")]
         [Tooltip("Lamp glow at the sign's full keying (linear fraction of authored); the keying itself comes from Audio's carrier.")]
@@ -124,10 +105,5 @@ namespace MoonProject.Rover
         public float KeyGlow => _keyGlow;
         public float LampHalfLife => _lampHalfLife;
         public float ClearGlow => _clearGlow;
-        public float DejectedHoldSeconds => _dejectedHoldSeconds;
-        public float DejectedHalfLife => _dejectedHalfLife;
-        public float DejectedHeadPitch => _dejectedHeadPitch;
-        public float DejectedNeckDroop => _dejectedNeckDroop;
-        public float LampDarkSeconds => _lampDarkSeconds;
     }
 }

@@ -22,22 +22,24 @@ MonoBehaviour:
     _rimWarpWavelength: 300
     _foothillHeight: 12
     _foothillWidth: 55
-    _wallStartOffset: 30
+    _wallStartOffset: 15
     _crestRadius: 420
     _crestHeight: 46
     _outerPlainRadius: 660
     _outerPlainHeight: 26
-    _mountainHeight: 62
+    _mountainHeight: 50
     _mountainWavelength: 150
     _mountainOctaves: 3
-    _ridgeSoftness: 0.08
+    _ridgeSoftness: 0.22
     _saddleDepth: 0.6
     _saddleWavelength: 330
-    _wallGullyHeight: 6.5
+    _wallGullyHeight: 4
     _wallGullyCount: 70
-    _strataSpacing: 14
-    _strataStrength: 0.24
-    _strataRiser: 0.4
+    _terraceSpacing: 18
+    _terraceStrength: 0.45
+    _terraceRiser: 0.4
+    _terraceWarp: 10
+    _terraceWarpWavelength: 130
     _peakBearing: 12
     _peakDistance: 440
     _peakHeight: 150
@@ -119,7 +121,7 @@ MonoBehaviour:
       _wallHeight: 26
       _wallRun: 7
       _flankRun: 10
-      _wallRoughness: 7
+      _wallRoughness: 11
       _alcoveCount: 3
       _alcoveDepth: 8
       _alcoveLength: 20

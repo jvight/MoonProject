@@ -111,6 +111,16 @@ namespace MoonProject.World.PlayModeTests
         private const float GateSlotLookIn = 16f;
         private const float GateZoomFov = 12f;
 
+        // The rim filmed: the floor views stand this far out on their bearings, and every view looks at the wall this
+        // far out and this high (the foot of the wall up to its middle).
+        private const float RimFloorEastBearing = 60f;
+        private const float RimFloorSouthBearing = 200f;
+        private const float RimRiseBearing = 30f;
+        private const float RimPadBearing = 160f;
+        private const float RimFloorDistance = 170f;
+        private const float RimLookDistance = 370f;
+        private const float RimLookHeight = 15f;
+
         // The beats where the world should lead: where the naive bot's 07 stands as each step begins (n0ac9ae9ec's
         // log), the targets, the habitat's module brought home before nightfall, the bot's screen and the dusk's lead.
         private static readonly Vector2 BeatB8Spot = new Vector2(9f, 135.7f);
@@ -141,6 +151,20 @@ namespace MoonProject.World.PlayModeTests
         private const string RelaySiteRelayId = WorldAnchorIds.RelayPrefix + "1";
         private const string RelaySiteCabinet = "ServiceCabinet";
         private const string RelaySiteSpare = "ServiceCabinet/FeedUnitSpare_Slot/FeedUnitSpare";
+        private const string RelaySiteFitted = "FeedSocket/FeedUnitFitted";
+
+        // The repair's power-up as Gameplay times it after the fit (RelayRepairSettings' defaults), and how long after
+        // each stage its frame is shot.
+        private static readonly RelayStage[] RepairStages =
+        {
+            RelayStage.Latch, RelayStage.Wake, RelayStage.Align, RelayStage.Reply, RelayStage.Live,
+        };
+
+        private static readonly float[] RepairStageSeconds = { 0f, 0.8f, 1.6f, 3.4f, 5f };
+        private const float RepairShotLead = 0.4f;
+
+        // The repair frames look between the cabinet's spare and the relay lamp, so the socket, the dish and the pad show.
+        private const float RepairLookShare = 0.5f;
         private const float RelaySiteStandOff = 15f;
 
         // The call's point of light: when the face shot holds, one sign's length, how near its brightest a shot waits
@@ -988,12 +1012,35 @@ namespace MoonProject.World.PlayModeTests
                           $"{Vector3.Distance(apronEye, cabinet.position):F0} m from the apron; sun {SunReport(context)}, " +
                           $"{context.Get<ISunlight>().Phase}");
 
-                // Relit: the lamp warms up and holds steady, the cabinet goes dark, the pad and the lens come on.
+                // The repair's power-up, as Gameplay times it after the fit: the unit seats, the lens and dial wake,
+                // the dish turns to the Peak, the lamp blinks the reply, the pad goes live; a frame at each stage.
                 var lamp = FindNamed(RelayLampName).GetComponent<RelayAnswerLamp>();
                 var lights = site.GetComponentInChildren<Relay1SiteLights>();
-                context.Events.Publish(new RelayRelit(RelaySiteRelayId, false));
-                yield return new WaitForSeconds(settings.Landmarks.RelayLamp.WarmUpSeconds + SettleSeconds);
+                site.Find(RelaySiteFitted).gameObject.SetActive(true);
+                started = Time.time;
+                for (int i = 0; i < RepairStages.Length; i++)
+                {
+                    while (Time.time - started < RepairStageSeconds[i])
+                    {
+                        yield return null;
+                    }
+
+                    context.Events.Publish(new RelayPowerStage(RelaySiteRelayId, RepairStages[i], false));
+                    if (RepairStages[i] == RelayStage.Live)
+                    {
+                        context.Events.Publish(new RelayRelit(RelaySiteRelayId, false));
+                    }
+
+                    yield return new WaitForSeconds(RepairShotLead);
+                    Place(camera, LookPose("relay-beat", near, Vector3.Lerp(spare.position, lamp.transform.position,
+                        RepairLookShare), OpeningFov));
+                    Shoot(camera, $"relay-beat-{i}-{RepairStages[i]}");
+                    Debug.Log($"[relay-beat] {RepairStages[i]}: lamp {lamp.Level:F2}, dish {lights.DishAligned:F2}");
+                }
+
+                yield return new WaitForSeconds(SettleSeconds);
                 Assert.IsTrue(lights.Relit, "the site shows the relay relit");
+                Assert.AreEqual(1f, lights.DishAligned, 1e-4f, "the dish has turned to the Peak and settled");
                 Assert.AreEqual(settings.Landmarks.RelayLamp.RelitLevel, lamp.Level, 1e-4f, "the lamp holds steady");
                 Place(camera, LookPose("relay-site-15m-after", near, spare.position, OpeningFov));
                 Shoot(camera, "relay-site-15m-after");
@@ -1502,6 +1549,95 @@ namespace MoonProject.World.PlayModeTests
             }
 
             Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        /// <summary>
+        /// The crater's rim as the owner sees it (its look against real lunar walls): from the basin floor toward the
+        /// canyon's mouth and toward the south rim, from the ruins' rise and from the pad, by day (the low golden-hour
+        /// Sun, look C) and by night (earthlight, look A). Logs/world-captures/rim-*.png.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(CanyonSessionScene))]
+        [PostBuildCleanup(typeof(CanyonSessionScene))]
+        public IEnumerator Rim_IsFilmed_FromTheFloorTheRiseAndThePad()
+        {
+            BootstrapHarness.DeleteSaveFiles(CanyonSessionScene.SaveSlot);
+#if UNITY_EDITOR
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(CanyonSessionScene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            while (!loading.isDone)
+            {
+                yield return null;
+            }
+#else
+            throw new NotSupportedException("The atmosphere session loads the scene through the editor.");
+#endif
+            GameBootstrap bootstrap = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
+            {
+                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
+            }
+
+            Assert.IsNotNull(bootstrap, "the scene has its bootstrap");
+            GameContext context = bootstrap.Context;
+            _awoke = context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
+            float started = Time.time;
+            while (!_awake)
+            {
+                Assert.Less(Time.time - started, WakeTimeout, "07 wakes up");
+                yield return null;
+            }
+
+            var anchors = context.Get<IWorldAnchors>();
+            var terrain = context.Get<ITerrainQuery>();
+            Vector3 apron = Anchor(anchors, WorldAnchorIds.PlaceApron).Position + Vector3.up * OpeningEyeHeight;
+            Vector3 rise = Anchor(anchors, WorldAnchorIds.PlaceRuins).Position + Vector3.up * GateRiseEyeHeight;
+            var views = new[]
+            {
+                (name: "floor-east", eye: RimSpot(terrain, RimFloorEastBearing, RimFloorDistance, OpeningEyeHeight),
+                    look: RimSpot(terrain, RimFloorEastBearing, RimLookDistance, RimLookHeight)),
+                (name: "floor-south", eye: RimSpot(terrain, RimFloorSouthBearing, RimFloorDistance, OpeningEyeHeight),
+                    look: RimSpot(terrain, RimFloorSouthBearing, RimLookDistance, RimLookHeight)),
+                (name: "rise", eye: rise, look: RimSpot(terrain, RimRiseBearing, RimLookDistance, RimLookHeight)),
+                (name: "pad", eye: apron, look: RimSpot(terrain, RimPadBearing, RimLookDistance, RimLookHeight)),
+            };
+
+            Camera view = context.Get<IViewCamera>().Camera;
+            var host = new GameObject("RimCamera");
+            try
+            {
+                var camera = host.AddComponent<Camera>();
+                camera.CopyFrom(view);
+                camera.enabled = false;
+                CopyPipelineSettings(view, camera);
+                context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.FirstCharge, true));
+                context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.PowerOn, true));
+                yield return new WaitForSeconds(SettleSeconds);
+                foreach (var shot in views)
+                {
+                    ShootAt(camera, "rim-" + shot.name + "-day", shot.eye, shot.look, OpeningFov);
+                }
+
+                context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.NightReady, true));
+                yield return new WaitForSeconds(SettleSeconds);
+                foreach (var shot in views)
+                {
+                    ShootAt(camera, "rim-" + shot.name + "-night", shot.eye, shot.look, OpeningFov);
+                }
+            }
+            finally
+            {
+                Object.Destroy(host);
+            }
+
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        // A point on the ground on a bearing from the base, raised by a height.
+        private static Vector3 RimSpot(ITerrainQuery terrain, float bearing, float distance, float height)
+        {
+            return OnGround(terrain, MoonSurface.BearingToDirection(bearing) * distance) + Vector3.up * height;
         }
 
         private static void ShootAt(Camera camera, string name, Vector3 eye, Vector3 look, float fov)

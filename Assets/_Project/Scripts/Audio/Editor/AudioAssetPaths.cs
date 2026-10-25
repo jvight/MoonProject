@@ -8,7 +8,6 @@ namespace MoonProject.Audio.Editor
     {
         public const string DataFolder = "Assets/_Project/Data/Audio";
         public const string Library = DataFolder + "/AudioLibrary.asset";
-        public const string Playlist = DataFolder + "/RadioPlaylist.asset";
         public const string TitleMusic = DataFolder + "/TitleMusicLibrary.asset";
         public const string FeelTuning = DataFolder + "/FeelAudioTuning.asset";
         public const string Chirps = DataFolder + "/ChirpBank.asset";
@@ -22,9 +21,6 @@ namespace MoonProject.Audio.Editor
 
         /// <summary>Written by tools/audio/build_sfx.py (project-relative).</summary>
         public const string SfxManifest = "tools/audio/sfx_manifest.json";
-
-        /// <summary>Written by the music box's tools/music (project-relative).</summary>
-        public const string MusicPlaylist = "tools/music/playlist.json";
 
         /// <summary>Title screen theme variants, written by tools/music (project-relative).</summary>
         public const string MusicTitle = "tools/music/title.json";

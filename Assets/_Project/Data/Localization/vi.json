@@ -755,10 +755,6 @@
             "text": "Phát sóng từ cột ăng-ten"
         },
         {
-            "key": "next.v3.visit_site",
-            "text": "Đã có điện. Ghé trạm địa chấn hoặc khu nhà ở"
-        },
-        {
             "key": "next.v3.await_night",
             "text": "Căn cứ đã sẵn sàng qua đêm"
         },
@@ -1057,10 +1053,6 @@
         {
             "key": "ui.face.no_line",
             "text": "KHÔNG THẤY ĐƯỜNG"
-        },
-        {
-            "key": "ui.face.tx_no_range",
-            "text": "TX · NGOÀI TẦM"
         },
         {
             "key": "ui.face.tx_ready",

@@ -84,39 +84,6 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void AFailedReply_LowersTheHead_ThenLiftsItAgain_AndDarkensTheLampForAWhile()
-        {
-            Run(5f, CallState.Clear, true);
-            Assert.AreEqual(0f, _call.Dejection, 0.01f);
-            Assert.AreEqual(_settings.ClearGlow, _call.LampGlow, 0.02f);
-            _call.ReplyFailed();
-            Run(2f, CallState.Clear, true);
-            Assert.Greater(_call.Dejection, 0.9f, "the head hangs");
-            Assert.Less(_call.LampGlow, 0.02f, "and the lamp has dropped");
-            Run(_settings.DejectedHoldSeconds + 3f, CallState.Clear, true);
-            Assert.Less(_call.Dejection, 0.05f, "it lifts after the hold");
-            Run(_settings.LampDarkSeconds, CallState.Clear, true);
-            Assert.AreEqual(_settings.ClearGlow, _call.LampGlow, 0.05f, "and the lamp relights, softly, in the end");
-        }
-
-        [Test]
-        public void AFailedReply_NeverMakesTheHeadJump()
-        {
-            Run(5f, CallState.Clear, true);
-            _call.ReplyFailed();
-            float previous = _call.Dejection;
-            float fastest = 0f;
-            for (float t = 0f; t < 10f; t += Step)
-            {
-                _call.Step(Step, CallState.Clear, true, 0f);
-                fastest = System.Math.Max(fastest, System.Math.Abs(_call.Dejection - previous));
-                previous = _call.Dejection;
-            }
-
-            Assert.Less(fastest, 0.03f, "eased both ways");
-        }
-
-        [Test]
         public void TheLockedLamp_FollowsTheSignsKeying_InPhase_ToItsGlow()
         {
             Run(5f, CallState.Broken, true);

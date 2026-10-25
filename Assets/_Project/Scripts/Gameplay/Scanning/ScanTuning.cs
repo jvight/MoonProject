@@ -144,7 +144,7 @@ namespace MoonProject.Gameplay
         [Range(0.05f, 0.85f)] [SerializeField] private float _beamLensPeakAlpha = 0.68f;
 
         [Tooltip("Very low additive alpha in the middle of the scan beam wedge (almost invisible in the middle).")]
-        [Range(0.005f, 0.4f)] [SerializeField] private float _beamMidAlpha = 0.18f;
+        [Range(0.005f, 0.4f)] [SerializeField] private float _beamMidAlpha = 0.12f;
 
         [Tooltip("Additive alpha where the far edge of the scan beam wedge meets the current surface scan line on the target.")]
         [Range(0.04f, 0.65f)] [SerializeField] private float _beamContactAlpha = 0.6f;
@@ -166,6 +166,9 @@ namespace MoonProject.Gameplay
 
         [Tooltip("Diameter (m) of the calm patch of light where the scan beam meets the surface.")]
         [Range(0.05f, 1f)] [SerializeField] private float _beamHitSize = 0.34f;
+
+        [Tooltip("Largest share of the target's height the surface patch may cover, so a small target is never swamped by it.")]
+        [Range(0.1f, 1f)] [SerializeField] private float _beamHitObjectShare = 0.5f;
 
         [Tooltip("Alpha of the scan beam's surface patch (capped below the bloom threshold).")]
         [Range(0.02f, 0.5f)] [SerializeField] private float _beamHitAlpha = 0.22f;
@@ -312,6 +315,7 @@ namespace MoonProject.Gameplay
         public float BeamAlignHalfLife => _beamAlignHalfLife;
         public float BeamHitSize => _beamHitSize;
         public float BeamHitAlpha => _beamHitAlpha;
+        public float BeamHitObjectShare => _beamHitObjectShare;
         public float BeamHitLift => _beamHitLift;
         public float BeamContactAlpha => _beamContactAlpha;
         public float BeamScanlineDensity => _beamScanlineDensity;

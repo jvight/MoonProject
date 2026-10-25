@@ -66,8 +66,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         public IEnumerator ABuiltMast_RaisesThreeSegmentsInOrder_ThenIsDone()
         {
             yield return Boot();
-            Assert.IsFalse(_gameplay.Reply.Tried, "a new game has not tried its reply");
-            Assert.IsFalse(_gameplay.MastRaise.Done, "and has no mast raised");
+            Assert.IsFalse(_gameplay.MastRaise.Done, "a new game has no mast raised");
 
             var terrain = _context.Get<ITerrainQuery>();
             Assert.IsTrue(_context.Get<IWorldAnchors>().TryGet("place.apron", out WorldAnchor apron));
@@ -112,7 +111,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             int id = _gameplay.PlacedBase.PlaceUnchecked(_gameplay.Building.Catalog.Find(StructureIds.AntennaMast),
                 new StructurePose(foot, 0f), 1f);
             Assert.IsTrue(_gameplay.Building.TryGetView(id, out StructureView view));
-            CallReplySettings settings = _gameplay.MastRaiseSettings;
+            MastRaiseSettings settings = _gameplay.MastRaiseSettings;
             Assert.IsTrue(_gameplay.MastRaiseView.IsBound, "the raise has the segments");
             for (int i = 0; i < 3; i++)
             {

@@ -60,13 +60,14 @@ namespace MoonProject.Gameplay
         /// crates.</param>
         /// <param name="landerPort">World's service port on the lander ([World]/Lander/ServicePort): the open crate's
         /// frame.</param>
-        /// <param name="crateReach">Metres within which an open crate still holding something gives the rest.</param>
+        /// <param name="salvage">Salvage tuning: the reach within which an open crate still holding something gives the
+        /// rest, and the flight a part takes into 07.</param>
         /// <param name="storyProps">World's story props in the basin ([World]/BasinProps/&lt;id&gt;): frames for the
         /// near sites of R5.</param>
         /// <param name="kit">07's start kit: the spare igniter carried and fitted (B7).</param>
         public OpeningField(OpeningTuning tuning, GameplayServices services, BuildField building, ISunlight sunlight,
             SealedContainers containers, IReadOnlyList<Transform> ruins, IReadOnlyList<Transform> storyProps,
-            Transform landerPort, Transform parent, float crateReach, RoverStartKit kit)
+            Transform landerPort, Transform parent, SalvageTuning salvage, RoverStartKit kit)
         {
             _kit = kit ?? throw new ArgumentNullException(nameof(kit));
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
@@ -108,9 +109,9 @@ namespace MoonProject.Gameplay
                 _frames[anchor.Id] = Frame(anchor, frames);
             }
 
-            Caches = new SupplyCaches(tuning, FrameOf, parent, services, containers, crateReach);
+            Caches = new SupplyCaches(tuning, FrameOf, parent, services, containers, salvage);
             LanderCargo = CargoBay(Caches.RootOf(tuning.CargoCrate), Caches.LevelOf(tuning.CargoCrate));
-            Dusk = new DuskCue(services.Events, DuskSites(tuning), tuning.DuskSiteReach);
+            Dusk = new DuskCue(services.Events);
             Flow = new OpeningFlow(services.Events, this, Keys, tuning.Guidance);
         }
 
@@ -156,7 +157,6 @@ namespace MoonProject.Gameplay
 
         public bool NightFallen => NightFallenSaved;
 
-        public bool DuskVisited => Dusk.Visited;
 
         public bool ModuleHooked => _tow != null && _tow.TowingId == TowLoads.PowerModule;
 
@@ -166,7 +166,7 @@ namespace MoonProject.Gameplay
 
         public bool AnswerDone => _answer != null && _answer.Phase == AnswerPhase.Done;
 
-        public bool RelayRelit => _relay != null && _relay.Fitted;
+        public bool RelayRelit => _relay != null && _relay.Lit;
 
         public bool AnswerStarted => _answer != null && _answer.Phase >= AnswerPhase.Transmitting;
 
@@ -276,9 +276,6 @@ namespace MoonProject.Gameplay
                         out placeId, out position);
                 case OpeningKeys.Transmit:
                     return Structure(StructureIds.AntennaMast, out placeId, out position);
-                case OpeningKeys.VisitSite:
-                    return Frame(_tuning.DuskSites.Count > 0 ? _tuning.DuskSites[0] : string.Empty, out placeId,
-                        out position);
                 case OpeningKeys.ScanElder06:
                     return Frame(Elder06Host, out placeId, out position);
                 case OpeningKeys.CutHeadlampCrate:
@@ -451,7 +448,7 @@ namespace MoonProject.Gameplay
             }
 
             Caches.Step(deltaTime);
-            Dusk.Step(PowerOn, _rover.Position, Knows(StructureIds.BatteryBank));
+            Dusk.Step(PowerOn, Knows(StructureIds.BatteryBank));
             Keys.Step(deltaTime);
             Flow.Tick(deltaTime, _rover.Position);
         }
@@ -502,21 +499,6 @@ namespace MoonProject.Gameplay
         internal Transform FrameOf(string id)
         {
             return _frames.TryGetValue(id, out Transform frame) ? frame : null;
-        }
-
-        /// <summary>Where the near sites of R5 stand, each by its frame (a ruin piece or a story prop).</summary>
-        private Vector3[] DuskSites(OpeningTuning tuning)
-        {
-            IReadOnlyList<string> ids = tuning.DuskSites;
-            var sites = new Vector3[ids.Count];
-            for (int i = 0; i < ids.Count; i++)
-            {
-                Transform frame = FrameOf(ids[i]) ?? throw new InvalidOperationException(
-                    $"The first dusk's site '{ids[i]}' is no ruin piece or story prop in the world (OpeningTuning).");
-                sites[i] = frame.position;
-            }
-
-            return sites;
         }
 
         private static WorldAnchor Anchor(IWorldAnchors anchors, string id)

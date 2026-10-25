@@ -46,6 +46,12 @@ namespace MoonProject.Gameplay.Editor
             return ArtPaths.SitesFolder + "/Site_" + name + ".prefab";
         }
 
+        /// <summary>Art's R1 prop prefab (Prop_SpareIgniter).</summary>
+        public static string PropPrefab(string name)
+        {
+            return ArtPaths.R1ModelsFolder + "/Props/" + name + ".prefab";
+        }
+
         /// <summary>Art's R1 crate prefab (Crate_M, Crate_L, Crate_Cargo_Open).</summary>
         public static string CratePrefab(string name)
         {

@@ -4,8 +4,7 @@ using UnityEngine;
 namespace MoonProject.Audio
 {
     /// <summary>
-    /// One radio track: a track of the <see cref="RadioPlaylist"/> (tools/music/playlist.json) or a title theme of the
-    /// <see cref="TitleMusicLibrary"/> (tools/music/title.json).
+    /// One music track: a title theme of the <see cref="TitleMusicLibrary"/> (tools/music/title.json).
     /// </summary>
     [Serializable]
     public sealed class RadioTrack

@@ -3252,5 +3252,125 @@ namespace MoonProject.Art.Editor
                 return true;
             });
         }
+
+        /// <summary>
+        /// Captures <c>Prop_SpareIgniter</c> lying in an open <c>Crate_M</c> mouth (<c>PresentPoint</c>) beside Rover 07
+        /// from the chase camera in Day C and Night lighting (plus close-up inspection alongside 07's <c>CutterTurret</c>),
+        /// and writes the 2x2 proof sheet to <c>docs/art/concepts/igniter/sheet.png</c>:
+        /// <c>python tools/unity_batch.py exec --project . --method MoonProject.Art.Editor.R1StoryPropsCapture.CaptureSpareIgniterSheet</c>
+        /// </summary>
+        public static void CaptureSpareIgniterSheet()
+        {
+            BatchRunner.Run(nameof(CaptureSpareIgniterSheet), args =>
+            {
+                AssetDatabase.Refresh();
+                R1MaterialLibrary.BuildMaterials();
+                R1StoryPropsBuilder.BuildStoryPropMaterials();
+                R1ModelBuilder.Build();
+
+                string capturesDir = Path.GetFullPath("Logs/captures/igniter");
+                Directory.CreateDirectory(capturesDir);
+                string conceptDir = Path.GetFullPath("docs/art/concepts/igniter");
+                Directory.CreateDirectory(conceptDir);
+
+                bool prevAsync = ShaderUtil.allowAsyncCompilation;
+                ShaderUtil.allowAsyncCompilation = false;
+                try
+                {
+                    string chaseDayPath = Path.Combine(capturesDir, "igniter_chase_dayC.png");
+                    string chaseNightPath = Path.Combine(capturesDir, "igniter_chase_night.png");
+                    string closeDayPath = Path.Combine(capturesDir, "igniter_mouth_close_dayC.png");
+                    string closeNightPath = Path.Combine(capturesDir, "igniter_mouth_close_night.png");
+
+                    CaptureSpareIgniterScene(chaseDayPath, closeDayPath, false);
+                    CaptureSpareIgniterScene(chaseNightPath, closeNightPath, true);
+
+                    string sheetPath = Path.Combine(conceptDir, "sheet.png");
+                    Compose2x2Sheet(chaseDayPath, chaseNightPath, closeDayPath, closeNightPath, sheetPath);
+                }
+                finally
+                {
+                    ShaderUtil.allowAsyncCompilation = prevAsync;
+                }
+
+                return true;
+            });
+        }
+
+        private static void CaptureSpareIgniterScene(string chasePath, string closePath, bool night)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(temp, night);
+
+                // Rover 07 parked beside Kenji's open CUTTER SPARES crate (Crate_M with StartsOpen = true)
+                GameObject rover = SpawnRover07(temp, Vector3.zero, -12f, night);
+                Vector3 cratePos = new Vector3(1.02f, 0f, 1.12f);
+                const float crateYaw = 158f;
+                GameObject crate = SpawnProp(ArtPaths.R1ModelsFolder + "/Crates/Crate_M.prefab", cratePos, crateYaw, temp);
+
+                // Swing Crate_M's Lid open 110 deg on its rear hinge, matching SealedContainers (StartsOpen = true)
+                Transform lid = crate.transform.Find("Lid");
+                Transform cutPoint = lid != null ? lid.Find("CutPoint") : null;
+                if (lid != null)
+                {
+                    Quaternion baseRot = lid.localRotation;
+                    lid.localRotation = baseRot * Quaternion.AngleAxis(-110f, Vector3.right);
+                    if (cutPoint != null && cutPoint.position.y < lid.position.y)
+                    {
+                        lid.localRotation = baseRot * Quaternion.AngleAxis(110f, Vector3.right);
+                    }
+
+                    Transform seal = lid.Find("Seal");
+                    if (seal != null)
+                    {
+                        SetEmission(seal, Color.black);
+                    }
+                }
+
+                // Place Prop_SpareIgniter at SealedContainer.PresentPoint (ItemSocket X/Z at Lid hinge height Y)
+                Transform itemSocket = crate.transform.Find("ItemSocket");
+                Vector3 presentPoint = itemSocket != null ? itemSocket.position : crate.transform.position;
+                if (lid != null)
+                {
+                    presentPoint.y = lid.position.y;
+                }
+
+                SpawnProp(R1StoryPropsBuilder.PropSpareIgniterPrefabPath, presentPoint, crateYaw, temp);
+
+                if (!night && RenderSettings.sun != null)
+                {
+                    RenderSettings.sun.transform.rotation = Quaternion.Euler(26f, 24f, 0f);
+                    RenderSettings.sun.intensity = 1.55f;
+                }
+                else if (night)
+                {
+                    if (RenderSettings.sun != null)
+                    {
+                        RenderSettings.sun.transform.rotation = Quaternion.Euler(28f, 22f, 0f);
+                        RenderSettings.sun.intensity = 0.62f;
+                    }
+
+                    AddRoverHeadlamps(rover.transform, presentPoint, temp);
+                }
+
+                // 1. Chase camera view (16 deg down pitch behind 07, framing 07 and the open Crate_M mouth beside it)
+                Vector3 chaseTarget = new Vector3(0.46f, 0.52f, 0.65f);
+                Vector3 chaseDir = Quaternion.Euler(18f, -8f, 0f) * Vector3.back;
+                Vector3 chaseCam = chaseTarget + chaseDir * 3.75f;
+                RenderShot(chaseCam, chaseTarget, 46f, bg, chasePath);
+
+                // 2. Closer chase-angle inspection of the open Crate_M mouth beside 07's CutterTurret (showing Cutter_Igniter + Prop_SpareIgniter)
+                Vector3 closeTarget = presentPoint + new Vector3(-0.22f, 0.08f, -0.06f);
+                Vector3 closeCam = closeTarget + Quaternion.Euler(22f, -12f, 0f) * Vector3.back * 1.15f;
+                RenderShot(closeCam, closeTarget, 34f, bg, closePath);
+            }
+            finally
+            {
+                temp.Dispose();
+            }
+        }
     }
 }

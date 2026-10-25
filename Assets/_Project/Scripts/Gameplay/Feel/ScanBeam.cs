@@ -119,6 +119,7 @@ namespace MoonProject.Gameplay
         private bool _hasView;
         private bool _hasAxis;
         private float _stepSeconds;
+        private float _hitSize;
         private Vector3 _target;
         private Vector3 _span;
         private Vector3 _lastContactCenter;
@@ -170,6 +171,9 @@ namespace MoonProject.Gameplay
             _viewPixelsPerMetre = pixelsPerMetreAtOne;
             _hasView = true;
         }
+
+        /// <summary>Diameter (m) of the patch of light where the beam meets the target, scaled down to small targets.</summary>
+        public float HitSize => _hitSize;
 
         /// <summary>How settled the beam is on its target (0..1): 1 once the head has aimed at it, or when no lens axis is given.</summary>
         public float Aligned => _hasAxis ? _reach.Aligned : 1f;
@@ -301,6 +305,15 @@ namespace MoonProject.Gameplay
             return Mathf.Clamp01(_scanTuning.BeamMidAlpha + lensTerm + contactTerm);
         }
 
+        /// <summary>Half the angle (deg) the target covers seen from the lens.</summary>
+        private float TargetHalfAngle(Vector3 emitter)
+        {
+            float distance = Vector3.Distance(emitter, _target);
+            return distance > MinDistance
+                ? Mathf.Atan2(0.5f * Mathf.Abs(_span.y), distance) * Mathf.Rad2Deg
+                : 0f;
+        }
+
         private void StepScanVisuals(Vector3 emitter)
         {
             ScanBeamLook look = _look;
@@ -332,7 +345,8 @@ namespace MoonProject.Gameplay
             Vector3 lineCentre = !_hasContact ? _target + sweepSpanVec * (_progress - 0.5f)
                 : !_hasAxis ? _contact
                 : _reach.End(_stepSeconds, emitter, _axis, _contact, _scanTuning.BeamAlignedDegrees,
-                    _scanTuning.BeamLostDegrees, _scanTuning.BeamUnalignedReach, _scanTuning.BeamAlignHalfLife);
+                    _scanTuning.BeamLostDegrees, _scanTuning.BeamUnalignedReach, _scanTuning.BeamAlignHalfLife,
+                    TargetHalfAngle(emitter));
 
             Vector3 toTarget = lineCentre - emitter;
             float dist = toTarget.magnitude;
@@ -351,7 +365,9 @@ namespace MoonProject.Gameplay
             _lastContactCenter = contactCenter;
 
             // 1. Stylised narrow scan beam wedge from 07's cheek lens to the current surface scan line on the target
-            StepWedgeMesh(wedgeOrigin, contactCenter, right, orthoUp, spanHeight, cyanColor, pingColor, sweepLevel, widthScale);
+            // The beam body shows only as the head comes round onto the target: it never lies in the air.
+            float beamLevel = sweepLevel * (_hasContact && _hasAxis ? Mathf.SmoothStep(0f, 1f, _reach.Aligned) : 1f);
+            StepWedgeMesh(wedgeOrigin, contactCenter, right, orthoUp, spanHeight, cyanColor, pingColor, beamLevel, widthScale);
 
             // 2. No point light: a light at the lens would tint 07's cream body and head cyan during a scan
             Color activeTint = _pingRemaining > 0f ? pingColor : Color.Lerp(cyanColor, pingColor, BeamPingShare);
@@ -435,16 +451,18 @@ namespace MoonProject.Gameplay
             // A calm patch of light where the beam meets the surface, in the scan colour; it fills as the beam settles.
             float hitShare = _hasContact && _hasAxis ? _reach.Aligned : 1f;
             Color hit = activeTint;
-            hit.a = Mathf.Min(_scanTuning.BeamHitAlpha, MaxBloomSafeHaloAlpha) * sweepLevel * hitShare;
+            hit.a = Mathf.Min(_scanTuning.BeamHitAlpha, MaxBloomSafeHaloAlpha) * beamLevel * hitShare;
+            float objectHeight = _span.sqrMagnitude > MinDistance ? Mathf.Abs(_span.y) : spanHeight;
+            _hitSize = ScanLine.PatchSize(objectHeight, _scanTuning.BeamHitSize, _scanTuning.BeamHitObjectShare);
             Vector3 onSurface = contactCenter - forward * _scanTuning.BeamHitLift;
-            _points.Add(onSurface, _scanTuning.BeamHitSize * widthScale, hit, Vector3.zero);
+            _points.Add(onSurface, _hitSize * widthScale, hit, Vector3.zero);
 
             // 4. Small data ticks streaming along the beam from the target to the lens
-            StepStreamingDataTicks(wedgeOrigin, contactCenter, right, orthoUp, cyanColor, pingColor, sweepLevel, widthScale);
+            StepStreamingDataTicks(wedgeOrigin, contactCenter, right, orthoUp, cyanColor, pingColor, beamLevel, widthScale);
 
             // 5. Sparse, brief tiny dust sparkles strictly within a thin band of the beam wedge, capped well below
             //    the bloom threshold
-            StepBallisticPathGlints(wedgeOrigin, contactCenter, right, orthoUp, activeTint, sweepLevel, widthScale);
+            StepBallisticPathGlints(wedgeOrigin, contactCenter, right, orthoUp, activeTint, beamLevel, widthScale);
         }
 
         private void StepWedgeMesh(

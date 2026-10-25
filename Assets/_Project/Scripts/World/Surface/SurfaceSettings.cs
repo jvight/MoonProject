@@ -47,7 +47,7 @@ namespace MoonProject.World
 
         [Tooltip("Distance past the floor radius where the steep inner wall starts climbing.")]
         [Range(0f, 150f)]
-        [SerializeField] private float _wallStartOffset = 30f;
+        [SerializeField] private float _wallStartOffset = 15f;
 
         [Tooltip("Radius of the rim crest, metres.")]
         [Range(150f, 1500f)]
@@ -68,7 +68,7 @@ namespace MoonProject.World
         [Header("Rim mountains")]
         [Tooltip("Height of the jagged ridges stacked on the rim crest.")]
         [Range(0f, 120f)]
-        [SerializeField] private float _mountainHeight = 62f;
+        [SerializeField] private float _mountainHeight = 50f;
 
         [Tooltip("Wavelength of the largest ridges, metres.")]
         [Range(20f, 500f)]
@@ -78,9 +78,10 @@ namespace MoonProject.World
         [Range(1, 6)]
         [SerializeField] private int _mountainOctaves = 3;
 
-        [Tooltip("Rounding of each ridge crest in noise units. Smaller = sharper crests.")]
+        [Tooltip("Rounding of each ridge crest in noise units. Smaller = sharper crests; regolith mantles a lunar rim, " +
+            "so its crests are soft shoulders, never knife edges.")]
         [Range(0.01f, 0.5f)]
-        [SerializeField] private float _ridgeSoftness = 0.08f;
+        [SerializeField] private float _ridgeSoftness = 0.22f;
 
         [Tooltip("How deep the saddles between summits are, as a fraction of the mountain height.")]
         [Range(0f, 1f)]
@@ -90,26 +91,36 @@ namespace MoonProject.World
         [Range(50f, 1500f)]
         [SerializeField] private float _saddleWavelength = 330f;
 
-        [Tooltip("Depth of the gullies and buttresses ribbing the inner rim wall, metres.")]
+        [Tooltip("Depth of the soft gullies and buttresses folding the inner rim wall, metres: shallow, mantled by " +
+            "regolith, never fins.")]
         [Range(0f, 30f)]
-        [SerializeField] private float _wallGullyHeight = 6.5f;
+        [SerializeField] private float _wallGullyHeight = 4f;
 
         [Tooltip("Approximate number of gullies around the whole rim.")]
         [Range(8f, 200f)]
         [SerializeField] private float _wallGullyCount = 70f;
 
-        [Tooltip("Height of one rock layer on the inner rim wall, metres: the wall steps in flat benches and short " +
-            "risers, so it reads as horizontal strata.")]
-        [Range(2f, 30f)]
-        [SerializeField] private float _strataSpacing = 14f;
+        [Tooltip("Height of one slump terrace on the inner rim wall, metres: the wall slumped into benches and short " +
+            "risers, as real crater walls do.")]
+        [Range(2f, 40f)]
+        [SerializeField] private float _terraceSpacing = 18f;
 
-        [Tooltip("How far the wall is pulled onto its strata (0 = smooth wall, 1 = hard terraces).")]
+        [Tooltip("How far the wall is pulled onto its terraces (0 = smooth wall, 1 = hard steps).")]
         [Range(0f, 1f)]
-        [SerializeField] private float _strataStrength = 0.24f;
+        [SerializeField] private float _terraceStrength = 0.45f;
 
-        [Tooltip("Share of each layer's height that is the steep riser (the rest is the bench).")]
+        [Tooltip("Share of each terrace's height that is the steep riser (the rest is the bench).")]
         [Range(0.05f, 1f)]
-        [SerializeField] private float _strataRiser = 0.40f;
+        [SerializeField] private float _terraceRiser = 0.40f;
+
+        [Tooltip("How far the terraces' levels rise and fall along the rim, metres: slumped blocks, never level " +
+            "stripes round the crater.")]
+        [Range(0f, 40f)]
+        [SerializeField] private float _terraceWarp = 10f;
+
+        [Tooltip("Wavelength of the terraces' rise and fall along the rim, metres.")]
+        [Range(20f, 600f)]
+        [SerializeField] private float _terraceWarpWavelength = 130f;
 
         [Header("The Peak")]
         [Tooltip("Bearing of The Peak from the base, degrees clockwise from +Z. The rover starts facing +Z.")]
@@ -306,9 +317,11 @@ namespace MoonProject.World
         public float SaddleDepth => _saddleDepth;
         public float SaddleWavelength => _saddleWavelength;
         public float WallGullyHeight => _wallGullyHeight;
-        public float StrataSpacing => _strataSpacing;
-        public float StrataStrength => _strataStrength;
-        public float StrataRiser => _strataRiser;
+        public float TerraceSpacing => _terraceSpacing;
+        public float TerraceStrength => _terraceStrength;
+        public float TerraceWarp => _terraceWarp;
+        public float TerraceWarpWavelength => _terraceWarpWavelength;
+        public float TerraceRiser => _terraceRiser;
         public float WallGullyCount => _wallGullyCount;
         public float PeakBearing => _peakBearing;
         public float PeakDistance => _peakDistance;

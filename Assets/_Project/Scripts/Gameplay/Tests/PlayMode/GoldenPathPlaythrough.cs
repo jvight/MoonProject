@@ -25,7 +25,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
     /// The opening v2 through the real game (docs/design/opening-v2.md §2, B0–B11), as a regression and a pacing
-    /// measurement: the built Main scene (on its own save slot) boots, 07 wakes at half charge, and a calm autopilot
+    /// measurement: the built Main scene (on its own save slot) boots, 07 wakes at 60% charge, and a calm autopilot
     /// holds the wheel while every verb goes through the keys a player presses: held E scans and cuts; B opens the
     /// build menu, the arrows pick, E takes the structure up, E places it where 07 looks and a held E welds it; Tab
     /// opens 07's face screen, the arrows reach the cutter's socket and Enter fits the igniter. Each beat starts at
@@ -69,6 +69,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>The lander's open charger kit (B4) and the CUTTER SPARES rack by the fallen array (B7).</summary>
         private const string ChargerKit = "supply.lander.open";
         private const string SparesRack = "supply.array.spares";
+
+        // Metres a Pick up chip may stand from the part it offers (the chip's own lift aside).
+        private const float PropChipSlack = 0.05f;
 
         /// <summary>The habitat's towable power module (opening v3 R6), and how far from the habitat it stands.</summary>
         private const string PowerModule = TowLoads.PowerModule;
@@ -323,7 +326,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             float started = Time.time;
             yield return Boot();
             yield return WakeUp();
-            yield return ExpectStep(OpeningKeys.DriveToLander, "B1: woken half empty, the lander's beacon ahead");
+            yield return ExpectStep(OpeningKeys.DriveToLander, "B1: woken short of full, the lander's beacon ahead");
             yield return DriveToTheLander();
             yield return ExpectStep(OpeningKeys.ScanLander, "B3: at the lander");
             yield return ScanTheSet("ruin." + ScanTuning.LanderCargoId, "the lander's cargo bay");
@@ -352,7 +355,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             // West of the pad: the ruins side stays open for the power module towed home at R6.
             yield return Build(StructureIds.SolarArray, pad + Vector3.left * BaseSpacing, "B8: the solar array");
             yield return UntilReached(OpeningMilestone.PowerOn, "Power on: the array powers the pad");
-            yield return ExpectStep(OpeningKeys.VisitSite, "R5: the first free choice names the near sites");
+            yield return ExpectStep(OpeningKeys.DockForDusk, "B8: power on, the dock that ends the day is named");
             yield return VisitTheSeismicStation();
             yield return DockForTheDusk(pad);
             yield return ExpectStep(OpeningKeys.ScanModule, "B9: night is coming, the power module can store it");
@@ -443,7 +446,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             });
             _pilot = new Autopilot(_rover);
             _rover.SetDriveSource(_pilot);
-            Assert.AreEqual(0.5f, _gameplay.Battery.Model.Charge01, 0.02f, "a new game wakes at half charge");
+            Assert.AreEqual(0.6f, _gameplay.Battery.Model.Charge01, 0.02f,
+                "a new game wakes a little over half charge");
             End("Boot the real Main scene", $"{_gameplay.Opening.Caches.Count} supply crates; hold {Hold()}");
         }
 
@@ -504,8 +508,8 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>B7: the habitat's airlock panel, read as 07 passes it; its readout shows on the CRT.</summary>
         /// <summary>
-        /// R5, the first free choice: out to the 1971 seismic station, one of the two near sites, to read its dead
-        /// station box (its curiosity scan); the sky holds in the afternoon the whole way.
+        /// An optional look round on the way to the dock: out to the 1971 seismic station to read its dead station box
+        /// (its curiosity scan); the sky holds in the afternoon the whole way.
         /// </summary>
         private IEnumerator VisitTheSeismicStation()
         {
@@ -515,7 +519,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             float held = _context.Get<ISunlight>().TimeSeconds;
             Vector3 home = Flat(Anchor("place.apron").Position - station.Point).normalized;
             yield return Scan(station, "the seismic station", home, PanelStandOff);
-            Assert.IsTrue(_gameplay.Opening.Dusk.Visited, "R5: 07 visited a near site");
             Assert.IsFalse(_gameplay.Opening.DuskBegun, "the afternoon holds until 07 docks");
             Assert.AreEqual(held, _context.Get<ISunlight>().TimeSeconds, 1f, "the Sun held while 07 looked round");
             Capture("08-the-seismic-station");
@@ -762,11 +765,42 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             yield return Until(() => _gameplay.Hints.TryGet(InteractionKind.PickUp, out _), FollowTimeout,
                 cacheId + " offers what it holds (Pick up)");
+            Transform prop = PropOf(cacheId);
+            if (prop != null)
+            {
+                // What 07 picks up is seen: the part lies in the crate's mouth and the chip stands on it.
+                Assert.IsTrue(prop.gameObject.activeInHierarchy, $"{cacheId}'s part lies in its open mouth");
+                _gameplay.Hints.TryGet(InteractionKind.PickUp, out InteractionHint offer);
+                Assert.Less(Vector3.Distance(offer.Position, prop.position), PropChipSlack,
+                    $"the Pick up chip stands on {cacheId}'s part ({offer.Position} vs {prop.position})");
+                Capture("07-the-spare-igniter-in-the-rack");
+            }
+
             Press(_keyboard.eKey);
             yield return Until(() => Taken(cacheId), FollowTimeout, "held E takes what " + cacheId + " holds");
             Release(_keyboard.eKey);
+            if (prop != null)
+            {
+                yield return Until(() => !prop.gameObject.activeInHierarchy, FollowTimeout,
+                    $"{cacheId}'s part flies into 07 and is gone from the crate");
+            }
             Capture(cacheId == ChargerKit ? "04-the-open-crate" : "07-the-spares-rack");
             End(what, $"igniter in the hold {_gameplay.StartKit.CarriesIgniter}; hold {Hold()}");
+        }
+
+        /// <summary>Open crate <paramref name="cacheId"/>'s part prop, or null when it holds no part.</summary>
+        private Transform PropOf(string cacheId)
+        {
+            SupplyCaches caches = _gameplay.Opening.Caches;
+            for (int i = 0; i < caches.Count; i++)
+            {
+                if (caches.Get(i).Id == cacheId)
+                {
+                    return caches.PropOf(i);
+                }
+            }
+
+            return null;
         }
 
         /// <summary>Open crate <paramref name="cacheId"/> has given everything it held to 07's hold.</summary>

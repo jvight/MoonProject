@@ -409,6 +409,16 @@ namespace MoonProject.Rover
         [Range(1f, 3f)]
         [SerializeField] private float _towMaxRadiusScale = 1.8f;
 
+        [Tooltip("Half-life (s) of the load's bounds the framing solves against: a tow's body moves at the physics rate, "
+                 + "and an unsmoothed box would make the framing step with it.")]
+        [Range(0.02f, 1f)]
+        [SerializeField] private float _towBoundsHalfLife = 0.2f;
+
+        [Tooltip("Extra clearance (m) round the load before the framing eases back toward the plain chase view, so a view "
+                 + "that has just cleared the load does not flip between two framings.")]
+        [Range(0f, 2f)]
+        [SerializeField] private float _towRelaxMargin = 0.6f;
+
         [Tooltip("Half-life (s) of the solved framing following a swing of the player's view, so it never jumps.")]
         [Range(0.02f, 1f)]
         [SerializeField] private float _towSolveHalfLife = 0.15f;
@@ -422,6 +432,47 @@ namespace MoonProject.Rover
                  "the rise, so the turn is a gentle drift, never a whip.")]
         [Range(0.6f, 4f)]
         [SerializeField] private float _towYawEaseSeconds = 1.8f;
+
+        [Header("Scanning a target")]
+        [Tooltip("Seconds the view takes to ease into, and out of, its scan framing (to the side of the beam, a little higher).")]
+        [Range(0.2f, 3f)]
+        [SerializeField] private float _scanFramingEaseSeconds = 0.9f;
+
+        [Tooltip("Widest (deg) the view swings round to look across the scan beam instead of down it from behind 07.")]
+        [Range(0f, 80f)]
+        [SerializeField] private float _scanMaxYawSwing = 40f;
+
+        [Tooltip("Fastest (deg/s) the view swings into its scan framing.")]
+        [Range(5f, 90f)]
+        [SerializeField] private float _scanYawMaxSpeed = 45f;
+
+        [Tooltip("Degrees the view rises while scanning a close target, so 07's body is not in the beam's way.")]
+        [Range(0f, 30f)]
+        [SerializeField] private float _scanLiftDegrees = 18f;
+
+        [Tooltip("Extra degrees the view rises when neither side of the beam is clear (07 is hard against a wall), so it looks down on the beam.")]
+        [Range(0f, 40f)]
+        [SerializeField] private float _scanBlockedLiftDegrees = 18f;
+
+        [Tooltip("Distance (m) from the lens within which a target is close enough for the scan framing in full; it fades out by twice this.")]
+        [Range(1f, 20f)]
+        [SerializeField] private float _scanCloseMetres = 6f;
+
+        [Tooltip("Angle (deg) the target stands above the lens at which the overhead framing (lift and pull back) is in full.")]
+        [Range(10f, 80f)]
+        [SerializeField] private float _scanOverheadDegrees = 35f;
+
+        [Tooltip("Extra degrees the view rises when the target is overhead, so it looks at the target and not up into it.")]
+        [Range(0f, 40f)]
+        [SerializeField] private float _scanOverheadLiftDegrees = 14f;
+
+        [Tooltip("Extra distance, as a share, the view draws back when the target is overhead, so it stays outside the target's frame.")]
+        [Range(0f, 1.5f)]
+        [SerializeField] private float _scanOverheadPullBack = 0.5f;
+
+        [Tooltip("Fastest (deg/s) the camera swings round a load it tows, whatever the framing asks for.")]
+        [Range(5f, 90f)]
+        [SerializeField] private float _towYawMaxSpeed = 30f;
 
         [Tooltip("How far the camera's look point moves from 07 toward the load while towing (a share of the way), so the " +
                  "load and the rope stay in frame with 07: a tow reads as 07, the rope and the load together.")]
@@ -794,6 +845,28 @@ namespace MoonProject.Rover
         [Range(0.15f, 2f)]
         [SerializeField] private float _faceInspectOpenSeconds = 1.2f;
 
+        [Tooltip("Closing the screen: seconds the camera stays on 07's face while the CRT powers off, before the view dips " +
+                 "to dark.")]
+        [Range(0f, 1.5f)]
+        [SerializeField] private float _faceCloseHoldSeconds = 0.55f;
+
+        [Tooltip("Seconds the view takes to go dark; the camera is put back on the chase pose at full dark.")]
+        [Range(0.05f, 0.6f)]
+        [SerializeField] private float _faceCloseDipOutSeconds = 0.14f;
+
+        [Tooltip("Seconds the view takes to come back up on the chase pose.")]
+        [Range(0.05f, 0.8f)]
+        [SerializeField] private float _faceCloseDipInSeconds = 0.22f;
+
+        [Tooltip("Exposure (EV) at full dark: far enough down that nothing of the camera's move shows.")]
+        [Range(-20f, -4f)]
+        [SerializeField] private float _faceCloseDarkExposure = -10f;
+
+        [Tooltip("Face-screen weight at or above which closing dips to dark; a screen closed while it is still opening " +
+                 "just eases back.")]
+        [Range(0.1f, 1f)]
+        [SerializeField] private float _faceCloseDipMinWeight = 0.5f;
+
         [Tooltip("Seconds the camera takes to ease back to the chase camera when closing the screen UI.")]
         [Range(0.15f, 2f)]
         [SerializeField] private float _faceInspectCloseSeconds = 1.1f;
@@ -1087,11 +1160,35 @@ namespace MoonProject.Rover
 
         public float TowSolveHalfLife => _towSolveHalfLife;
 
+        public float TowBoundsHalfLife => _towBoundsHalfLife;
+
+        public float TowRelaxMargin => _towRelaxMargin;
+
         public float TowLookShare => _towLookShare;
 
         public float TowMaxYawSwing => _towMaxYawSwing;
 
         public float TowYawEaseSeconds => _towYawEaseSeconds;
+
+        public float TowYawMaxSpeed => _towYawMaxSpeed;
+
+        public float ScanFramingEaseSeconds => _scanFramingEaseSeconds;
+
+        public float ScanMaxYawSwing => _scanMaxYawSwing;
+
+        public float ScanYawMaxSpeed => _scanYawMaxSpeed;
+
+        public float ScanLiftDegrees => _scanLiftDegrees;
+
+        public float ScanBlockedLiftDegrees => _scanBlockedLiftDegrees;
+
+        public float ScanCloseMetres => _scanCloseMetres;
+
+        public float ScanOverheadDegrees => _scanOverheadDegrees;
+
+        public float ScanOverheadLiftDegrees => _scanOverheadLiftDegrees;
+
+        public float ScanOverheadPullBack => _scanOverheadPullBack;
 
         public CameraMomentSettings DigMoment => _digMoment;
 
@@ -1248,6 +1345,16 @@ namespace MoonProject.Rover
         public float FaceInspectSettleSpeed => _faceInspectSettleSpeed;
 
         public float FaceInspectCloseSeconds => _faceInspectCloseSeconds;
+
+        public float FaceCloseHoldSeconds => _faceCloseHoldSeconds;
+
+        public float FaceCloseDipOutSeconds => _faceCloseDipOutSeconds;
+
+        public float FaceCloseDipInSeconds => _faceCloseDipInSeconds;
+
+        public float FaceCloseDarkExposure => _faceCloseDarkExposure;
+
+        public float FaceCloseDipMinWeight => _faceCloseDipMinWeight;
 
         public float FaceInspectScreenHeight => _faceInspectScreenHeight;
 

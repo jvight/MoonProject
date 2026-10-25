@@ -19,7 +19,6 @@ namespace MoonProject.Audio.Editor
         public void Contribute(SceneBuildContext context)
         {
             var library = context.LoadAsset<AudioLibrary>(AudioAssetPaths.Library);
-            var playlist = context.LoadAsset<RadioPlaylist>(AudioAssetPaths.Playlist);
             var titleMusicLibrary = context.LoadAsset<TitleMusicLibrary>(AudioAssetPaths.TitleMusic);
             var mixTuning = context.LoadAsset<AudioMixTuning>(AudioAssetPaths.MixTuning);
             var roverTuning = context.LoadAsset<RoverAudioTuning>(AudioAssetPaths.RoverTuning);
@@ -49,7 +48,7 @@ namespace MoonProject.Audio.Editor
             rover.Wire(roverTuning);
             gameplay.Wire(gameplayTuning);
             ui.Wire(uiTuning);
-            radio.Wire(radioTuning, playlist);
+            radio.Wire(radioTuning);
             titleMusic.Wire(titleMusicLibrary);
             feel.Wire(feelTuning);
             chirps.Wire(feelTuning, context.LoadAsset<ChirpBank>(AudioAssetPaths.Chirps));

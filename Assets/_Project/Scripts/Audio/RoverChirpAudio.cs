@@ -8,7 +8,7 @@ namespace MoonProject.Audio
     /// <summary>
     /// 07 speaks machine (docs/design/feel-pass.md section 7.2): plays the chirp 07's character asks for
     /// (<see cref="RoverChirpRequested"/>) from 07 itself, one at a time (a request made while one speaks waits a moment,
-    /// then lets the chirp go: <see cref="ChirpScheduler"/>), a little under the radio's music, and
+    /// then lets the chirp go: <see cref="ChirpScheduler"/>), and
     /// publishes <see cref="RoverChirpSyllable"/> at each syllable's onset so 07's eye and antenna move in time.
     /// Zero allocation per frame. Initialised by <see cref="AudioDirector"/>.
     /// </summary>
@@ -107,7 +107,7 @@ namespace MoonProject.Audio
         private void Speak(ChirpMood mood)
         {
             int variant = _scheduler.PickVariant(mood, _bank.VariantCount(mood));
-            float level = _tuning.ChirpVolume * (_director.Radio.MusicStarted ? _tuning.ChirpUnderRadio : 1f);
+            float level = _tuning.ChirpVolume;
             _director.PlayOn(_source, _cues[(int)mood], level, variant);
             _speaking = _bank.GetVariant(mood, variant);
             _speakingMood = mood;

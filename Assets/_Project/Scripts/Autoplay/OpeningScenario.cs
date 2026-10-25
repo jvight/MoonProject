@@ -19,7 +19,6 @@ namespace MoonProject.Autoplay
     {
         private const float BootTimeoutSeconds = 60f;
         private const float TitleAttemptSeconds = 1.5f;
-        private const int TitleAttempts = 12;
         private const float WakeTimeoutSeconds = 90f;
         private const float LookAroundSeconds = 4f;
         private const float LineTimeoutSeconds = 30f;
@@ -150,11 +149,9 @@ namespace MoonProject.Autoplay
                 new[] { "rack" }));
             _naive.Declare("B7c", new NextAction("Tab", new[] { "hint.fitpart" }, new[] { "fit", "cutter" }, null));
             _naive.Declare("B7", new NextAction("B", new[] { "hint.openbuild" }, new[] { "solar", "array" }, null));
-            // R5's free choice is told by the world only: no line is expected, and the dead lamp's glance comes
-            // after 30 s with no site visited.
-            _naive.Declare("B8", new NextAction("WASD", new string[0], new[] { "seismic", "habitat" },
-                new[] { "seismic", "module" }));
-            _naive.SetBudget("B8", FreeChoiceBudgetSeconds);
+            // After PowerOn the line says to park on the pad to end the day: the dusk begins at the next dock wherever
+            // 07 has been, and the near sites are optional.
+            _naive.Declare("B8", new NextAction("WASD", new string[0], new[] { "park", "pad", "end the day" }, null));
             _naive.Declare("R5", new NextAction("WASD", new[] { drive }, new[] { "night", "module", "habitat", "store" },
                 new[] { "lamp" }));
             _naive.Declare("B9a", new NextAction("RMB", new string[0], new[] { "tow", "home", "frame", "hook" }, null));
@@ -185,9 +182,6 @@ namespace MoonProject.Autoplay
                 null));
             _naive.Skip("R12");
         }
-
-        /// <summary>The first free choice (B8, R5) is told by the world: the dead lamp's glance comes after 30 s.</summary>
-        private const float FreeChoiceBudgetSeconds = 35f;
 
         /// <summary>Tab opens and closes at the ruins, once B7 is checked, for the hitch table (the first Tab was the igniter's fit).</summary>
         private const int TabCycleCount = 4;
@@ -227,7 +221,11 @@ namespace MoonProject.Autoplay
             using (_bot.World.Context.Events.Subscribe<RoverWakeBeatReached>(
                        reached => chaseFrame |= reached.Beat == WakeBeat.ChaseFrame))
             {
-                for (int attempt = 0; attempt < TitleAttempts && _bot.World.Flow.State == GameFlowState.Title; attempt++)
+                // The first boot opens on the language step, then the title: Enter answers each in turn, and one that
+                // lands before the menu is up is lost, so it is pressed again until play starts (a slow boot has no fixed
+                // count of presses).
+                float titleDeadline = Time.unscaledTime + BootTimeoutSeconds;
+                while (_bot.World.Flow.State == GameFlowState.Title && Time.unscaledTime < titleDeadline)
                 {
                     yield return _bot.Tap(Key.Enter);
                     yield return _bot.Wait(TitleAttemptSeconds);
@@ -533,8 +531,6 @@ namespace MoonProject.Autoplay
         private IEnumerator TheFirstChoice()
         {
             Begin("R5", "The first free choice: visit the seismic station, dock, and the first dusk begins");
-            yield return _base.ExpectStep(OpeningSteps.BuildBatteryBank, OpeningKeys.VisitSite,
-                "R5: the afternoon names the near sites");
             yield return _base.VisitTheSeismicStation();
             yield return _base.DockForTheDusk(StructureIds.ChargingPad);
             _bot.EndBeat("07 read the 1971 seismic station, docked, and the first dusk began");

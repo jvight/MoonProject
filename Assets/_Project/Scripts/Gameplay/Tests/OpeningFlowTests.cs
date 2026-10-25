@@ -80,9 +80,7 @@ namespace MoonProject.Gameplay.Tests
             _game.Covered.Add(StructureIds.SolarArray);
             Expect(OpeningKeys.BuildSolar);
             _game.PowerOn = true;
-            Expect(OpeningKeys.VisitSite, "R5, the first free choice: the near sites are named");
-            _game.DuskVisited = true;
-            Expect(OpeningKeys.DockForDusk, "a site visited: the dock that ends the day is named (G6)");
+            Expect(OpeningKeys.DockForDusk, "power on: the dock that ends the day is named, wherever 07 roams (payoff audit §4)");
             _game.DuskBegun = true;
             Expect(OpeningKeys.ScanModule, "night is coming: the habitat's power module can store it");
             _game.Known.Add(StructureIds.BatteryBank);
@@ -312,12 +310,30 @@ namespace MoonProject.Gameplay.Tests
             _game.PowerOn = true;
             _game.NightReady = true;
             _game.BuiltIds.Add(StructureIds.AntennaMast);
+            _game.RelayRelit = true;
             Assert.DoesNotThrow(() => _flow.Announce(), "every milestone the enum has is safe to replay past");
-            Assert.AreEqual(4, _milestones.Count);
+            Assert.AreEqual(5, _milestones.Count);
             foreach (OpeningMilestoneReached reached in _milestones)
             {
                 Assert.AreNotEqual(OpeningMilestone.CallAnswered, reached.Milestone);
             }
+
+            Assert.AreEqual(OpeningMilestone.OpeningComplete, _milestones[4].Milestone);
+            Assert.IsTrue(_milestones[4].Restored);
+        }
+
+        [Test]
+        public void RelayOneLit_CompletesTheOpening_Once()
+        {
+            _flow.Tick(1f);
+            Assert.IsFalse(_flow.HasReached(OpeningMilestone.OpeningComplete));
+            _game.RelayRelit = true;
+            _flow.Tick(1f);
+            Assert.IsTrue(_flow.HasReached(OpeningMilestone.OpeningComplete), "relay.1 fixed and the ring grown: the end");
+            Assert.AreEqual(1, _milestones.FindAll(m => m.Milestone == OpeningMilestone.OpeningComplete).Count);
+            _flow.Tick(1f);
+            Assert.AreEqual(1, _milestones.FindAll(m => m.Milestone == OpeningMilestone.OpeningComplete).Count,
+                "once");
         }
 
         [Test]
@@ -718,7 +734,6 @@ namespace MoonProject.Gameplay.Tests
             public bool DuskBegun { get; set; }
             public bool NightReady { get; set; }
             public bool NightFallen { get; set; }
-            public bool DuskVisited { get; set; }
             public bool ModuleHooked { get; set; }
             public bool ModuleSnagged { get; set; }
             public bool ModuleHome { get; set; }

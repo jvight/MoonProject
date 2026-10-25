@@ -53,7 +53,6 @@ namespace MoonProject.Rover
                 events.Subscribe<TowReleased>(OnTowReleased),
                 events.Subscribe<CutterTierChanged>(changed => _upgradedCutPending |= !changed.Restored),
                 events.Subscribe<FriendRepaired>(_ => Say(ChirpMood.Happy, Gentle)),
-                events.Subscribe<CallReplyFailed>(_ => Say(ChirpMood.Ask, 1f)),
                 events.Subscribe<ReleaseViewOpened>(_ => Say(ChirpMood.Ask, Gentle)),
                 events.Subscribe<FriendGreeted>(_ => Say(ChirpMood.Greeting, Gentle)),
                 events.Subscribe<SonarPinged>(_ =>

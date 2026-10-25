@@ -72,9 +72,6 @@ namespace MoonProject.Audio
         [Tooltip("Level of 07's chirps (mezzo-piano).")]
         [Range(0f, 1f)] [SerializeField] private float _chirpVolume = 0.8f;
 
-        [Tooltip("Share of the chirp level while the radio plays music: the chirps sit under the radio.")]
-        [Range(0f, 1f)] [SerializeField] private float _chirpUnderRadio = 0.7f;
-
         [Tooltip("Seconds a chirp asked for while another chirp speaks waits before it is dropped.")]
         [Min(0f)] [SerializeField] private float _chirpHoldSeconds = 3f;
 
@@ -141,7 +138,6 @@ namespace MoonProject.Audio
         public float SizzleMin => Mathf.Min(_sizzleMin, _sizzleMax);
         public float SizzleEase => _sizzleEase;
         public float ChirpVolume => _chirpVolume;
-        public float ChirpUnderRadio => _chirpUnderRadio;
         public float ChirpHoldSeconds => _chirpHoldSeconds;
         public float CountTickInterval => _countTickInterval;
         public float SaveTickInterval => _saveTickInterval;

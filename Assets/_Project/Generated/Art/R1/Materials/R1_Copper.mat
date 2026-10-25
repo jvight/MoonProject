@@ -71,6 +71,9 @@ Material:
     - _SmoothnessMax: 0.8
     - _SmoothnessMin: 0.28
     - _SmoothnessScale: 1
+    - _SteepRockDarkening: 0
+    - _TriplanarMapping: 0
+    - _TriplanarScale: 0.42
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _BuildBoundsY: {r: 0, g: 2, b: 0, a: 0}

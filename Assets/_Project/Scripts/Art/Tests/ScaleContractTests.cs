@@ -94,6 +94,15 @@ namespace MoonProject.Art.Tests
             ("sweeper.json", "Fauna/Sweeper.fbx"),
             ("survey_drone.json", "Fauna/SurveyDrone.fbx"),
             ("trencher.json", "Fauna/Trencher.fbx"),
+            ("prop_spare_igniter.json", "Props/Prop_SpareIgniter.fbx"),
+            ("rim_talus_00.json", "Rocks/RimTalus_00.fbx"),
+            ("rim_talus_01.json", "Rocks/RimTalus_01.fbx"),
+            ("rim_talus_02.json", "Rocks/RimTalus_02.fbx"),
+            ("rim_talus_03.json", "Rocks/RimTalus_03.fbx"),
+            ("rim_talus_04.json", "Rocks/RimTalus_04.fbx"),
+            ("rim_talus_05.json", "Rocks/RimTalus_05.fbx"),
+            ("rim_talus_06.json", "Rocks/RimTalus_06.fbx"),
+            ("rim_talus_07.json", "Rocks/RimTalus_07.fbx"),
         };
 
         [Serializable]
@@ -241,6 +250,58 @@ namespace MoonProject.Art.Tests
             Renderer talusRenderer = talusPrefab.GetComponentInChildren<Renderer>();
             Assert.IsNotNull(talusRenderer);
             Assert.AreEqual(R1MaterialLibrary.RockfallTalusMaterialName, talusRenderer.sharedMaterial.name);
+        }
+
+        [Test]
+        public void CraterRimSlopeMaterial_AndTalusScatterKit_AreTriplanarBandFreeAndGrounded()
+        {
+            Material rimSlope = R1MaterialLibrary.LoadRimSlopeMaterial();
+            Material rimTalus = R1MaterialLibrary.LoadRimTalusMaterial();
+            Assert.IsNotNull(rimSlope, "Missing R1_RimSlope material.");
+            Assert.IsNotNull(rimTalus, "Missing R1_RimTalus material.");
+            Assert.AreEqual("MoonProject/World/R1Terrain", rimSlope.shader.name);
+            Assert.AreEqual(R1MaterialRecipes.ShaderName, rimTalus.shader.name);
+
+            Assert.AreEqual(0f, rimSlope.GetFloat("_LegacyBandedRim"), 1e-5f,
+                "R1_RimSlope must have legacy horizontal stripe banding disabled (_LegacyBandedRim == 0).");
+            Assert.IsNotNull(rimSlope.GetTexture("_BaseMap"), "R1_RimSlope must bind _BaseMap (regolith albedo).");
+            Assert.IsNotNull(rimSlope.GetTexture("_BumpMap"), "R1_RimSlope must bind _BumpMap (regolith normal).");
+            Assert.IsNotNull(rimSlope.GetTexture("_MaskMap"), "R1_RimSlope must bind _MaskMap (regolith mask).");
+            Assert.IsNotNull(rimSlope.GetTexture("_RockMap"), "R1_RimSlope must bind _RockMap (triplanar basalt rock).");
+            Assert.IsNotNull(rimSlope.GetTexture("_RockBumpMap"), "R1_RimSlope must bind _RockBumpMap (triplanar basalt normal).");
+
+            Assert.AreEqual(1f, rimTalus.GetFloat("_TriplanarMapping"), 1e-5f,
+                "R1_RimTalus must enable world-space triplanar mapping (_TriplanarMapping == 1).");
+            Assert.Greater(rimTalus.GetFloat("_SteepRockDarkening"), 0.15f,
+                "R1_RimTalus must darken steep faces to match fresh-rock exposures.");
+            Assert.Greater(rimTalus.GetFloat("_ColorVarAmount"), 0.10f,
+                "R1_RimTalus must have strong 3D macro variation to break tiling.");
+            Assert.AreEqual(0f, rimTalus.GetFloat("_EmissionStrength"), 1e-5f,
+                "R1_RimTalus must never emit or bloom.");
+
+            Assert.AreEqual(8, R1ModelBuilder.RimTalusFbxPaths.Length, "Rim talus scatter kit must have 8 pieces (RimTalus_00..07).");
+            float prevWidth = 0.45f;
+            for (int i = 0; i < R1ModelBuilder.RimTalusFbxPaths.Length; i++)
+            {
+                string fbxPath = R1ModelBuilder.RimTalusFbxPaths[i];
+                GameObject talusPiece = MeshChecks.LoadGeneratedPrefab(R1ModelBuilder.GetGeneratedPrefabPath(fbxPath));
+                Bounds bounds = MeshChecks.PrefabBounds(talusPiece, talusPiece.transform.localToWorldMatrix);
+
+                Assert.GreaterOrEqual(bounds.size.x, 0.50f, $"{talusPiece.name} width must be >= 0.50 m.");
+                Assert.LessOrEqual(bounds.size.x, 4.00f, $"{talusPiece.name} width must be <= 4.00 m.");
+                Assert.Greater(bounds.size.x, prevWidth, $"RimTalus pieces must grow monotonically in width ({talusPiece.name}).");
+                Assert.Less(bounds.min.y, -0.05f, $"{talusPiece.name} must have a buried base so it never floats on slopes.");
+                prevWidth = bounds.size.x;
+
+                Renderer renderer = talusPiece.GetComponentInChildren<Renderer>();
+                Assert.IsNotNull(renderer, $"Missing Renderer on {talusPiece.name}.");
+                Assert.AreEqual(R1MaterialLibrary.RimTalusMaterialName, renderer.sharedMaterial.name);
+
+                Mesh mesh = talusPiece.GetComponentInChildren<MeshFilter>().sharedMesh;
+                Assert.IsNotNull(mesh, $"Missing sharedMesh on {talusPiece.name}.");
+                Assert.IsTrue(mesh.isReadable, $"{talusPiece.name} mesh must be CPU-readable for World scatter.");
+                Assert.AreEqual(mesh.vertexCount, mesh.colors.Length, $"{talusPiece.name} must have baked R1 vertex colors.");
+            }
         }
 
         private static Bounds MeasureInstantiatedRendererBounds(GameObject prefab)
