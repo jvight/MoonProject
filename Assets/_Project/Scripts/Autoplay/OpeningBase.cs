@@ -1012,8 +1012,7 @@ namespace MoonProject.Autoplay
             MakerUnderstanding understanding = G.Understanding;
             yield return _bot.Until(() => understanding.IsUnlocked(MakerUnderstandingSettings.Ssr3Headlamp),
                 FollowSeconds, "Kessler–Arai level 1 to unlock the SSR-3 headlamp",
-                () => "Kessler–Arai points " + understanding.PointsOf(DatabankMaker.KesslerArai) + ", released " +
-                      understanding.Released + ".");
+                () => "Kessler–Arai points " + understanding.PointsOf(DatabankMaker.KesslerArai) + ".");
         }
 
         /// <summary>R12: back onto the pad; the first dock after the release brings out the socket rack.</summary>
