@@ -89,6 +89,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float ScanTimeout = 30f;
         private const float WeldTimeout = 40f;
 
+        /// <summary>Game seconds the build mode is given to turn a placing press into a weld.</summary>
+        private const float PlaceTimeout = 4f;
+
         /// <summary>Metres from a scan target 07 stands to scan it.</summary>
         private const float ScanStandOff = 3f;
 
@@ -366,7 +369,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Tap(_keyboard.eKey);
             Assert.AreEqual(BuildModeState.Placing, build.State);
             yield return null;
-            yield return Tap(_keyboard.eKey);
+            yield return HoldToPlace(build);
             Assert.AreEqual(BuildModeState.Welding, build.State,
                 $"E places {structureId} (reason {build.Controller.CandidateReason})");
             int id = build.Controller.ActiveWeldInstanceId;
@@ -545,7 +548,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Tap(_keyboard.eKey);
             Assert.AreEqual(BuildModeState.Placing, build.State);
             yield return null;
-            yield return Tap(_keyboard.eKey);
+            yield return HoldToPlace(build);
             Assert.AreEqual(BuildModeState.Welding, build.State, $"E places {structureId}");
             int id = build.Controller.ActiveWeldInstanceId;
             Assert.IsTrue(build.TryGetView(id, out StructureView view));
@@ -769,6 +772,21 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             Assert.IsTrue(condition(), "timed out waiting until " + (condition() ? string.Empty : what()));
+        }
+
+        /// <summary>
+        /// Presses E and keeps it down until the build mode has placed the structure and begun to weld, as a player
+        /// holds it from the placing press into the weld. A tap would let go while the weld had already advanced, and a
+        /// weld let go with progress is cancelled and closes the mode: on a slow frame that race lost the weld.
+        /// </summary>
+        private IEnumerator HoldToPlace(BuildField build)
+        {
+            Press(_keyboard.eKey);
+            float deadline = Time.time + PlaceTimeout;
+            while (build.State == BuildModeState.Placing && Time.time < deadline)
+            {
+                yield return null;
+            }
         }
 
         private IEnumerator Tap(ButtonControl key)
