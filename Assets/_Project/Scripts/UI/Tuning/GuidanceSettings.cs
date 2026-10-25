@@ -63,7 +63,6 @@ namespace MoonProject.UI
         [Range(0.5f, 5f)]
         [SerializeField] private float _blockedFaceSeconds = 1.8f;
 
-
         [Tooltip("Seconds 07's face shows TX · READY when the answer first becomes possible.")]
         [Range(1f, 10f)]
         [SerializeField] private float _txReadySeconds = 5f;

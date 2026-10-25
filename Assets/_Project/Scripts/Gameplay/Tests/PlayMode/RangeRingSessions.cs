@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using NUnit.Framework;
@@ -42,6 +43,19 @@ namespace MoonProject.Gameplay.PlayModeTests
         // The R10 frame looks down from this high over the middle of relay.1 and the notch.
         private const float RilleCaptureHeight = 420f;
         private const float RevealWaitSeconds = 3f;
+
+        // The test mast stands this far east of the apron's middle; the link's hub lies within the slack of its foot.
+        private const float MastOffApron = 6f;
+        private const float HubSlack = 1f;
+
+        // Share of 07's cells left as it fits relay.1's part, after the drive out from the base.
+        private const float ArrivalCharge = 0.6f;
+
+        // The least the lit relay must push the ring toward the rille notch (the payoff audit's grow, made to read).
+        private const float GrowTowardNotch = 60f;
+
+        // The needs-part frame looks down from this high over the middle of the mast and relay.1.
+        private const float LinkCaptureHeight = 300f;
 
         private GameContext _context;
         private GameplaySystem _gameplay;
@@ -127,13 +141,20 @@ namespace MoonProject.Gameplay.PlayModeTests
         [Timeout(200000)]
         [PrebuildSetup(typeof(PlaythroughScene))]
         [PostBuildCleanup(typeof(PlaythroughScene))]
-        public IEnumerator AtRelayOneLit_TheRingRunsIntoTheRilleNotch_AndEndsAtGround07CannotClimb()
+        public IEnumerator RelayOne_LinksToTheMastNeedingAPart_ThenLitGrowsTheRingIntoTheRilleNotch_AndNoFurther()
         {
             yield return Boot();
             var anchors = _context.Get<IWorldAnchors>();
             Assert.IsTrue(anchors.TryGet(WorldAnchorIds.RelayPrefix + 1, out WorldAnchor relay), "relay.1 stands");
             Assert.IsTrue(anchors.TryGet(RilleGate, out WorldAnchor gate), "the rille notch has its gate anchor");
-            _gameplay.Relay.Restore(new RelaySaveData { fitted = true });
+            Assert.IsTrue(anchors.TryGet("place.apron", out WorldAnchor apron), "the base's apron");
+            var terrain = _context.Get<ITerrainQuery>();
+            Vector3 foot = SurfaceRules.OnSurface(terrain, apron.Position.x + MastOffApron, apron.Position.z);
+            _gameplay.PlacedBase.PlaceUnchecked(_gameplay.Building.Catalog.Find(StructureIds.ChargingPad),
+                new StructurePose(SurfaceRules.OnSurface(terrain, apron.Position.x, apron.Position.z), 0f), 1f);
+            _gameplay.PlacedBase.PlaceUnchecked(_gameplay.Building.Catalog.Find(StructureIds.AntennaMast),
+                new StructurePose(foot, 0f), 1f);
+            _context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.CallAnswered, false));
             _context.Get<IRoverPlacement>().PlaceAt(relay.Position, Quaternion.LookRotation(gate.Position -
                                                                                              relay.Position));
             BatteryModel battery = _gameplay.Battery.Model;
@@ -141,8 +162,39 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return null;
             var rover = _context.Get<IRoverState>();
             var ring = _context.Get<IRangeRing>();
+
+            // Answered, not yet fixed: relay.1 is a node of the network that needs a part, dashed to the mast.
             _gameplay.RangeRing.Show(RangeRingMode.Full);
-            Assert.IsTrue(ring.IsShown, "relay.1 lit: the full ring shows");
+            Assert.IsTrue(_gameplay.RangeRing.TryGetLink(out Vector3 hub, out Vector3 node, out bool needsPart),
+                "relay.1 answered: it shows linked to the mast");
+            Assert.IsTrue(needsPart, "and needs a part: the link is dashed");
+            Assert.Less(SurfaceRules.HorizontalDistance(hub, foot), HubSlack, "from the mast, the hub");
+            yield return RealSeconds(RevealWaitSeconds);
+            Capture(Vector3.Lerp(foot, relay.Position, 0.5f), LinkCaptureHeight, "range-ring-r10-needs-part.png");
+            yield return RealSeconds(_gameplay.Battery.Tuning.RangeRing.FullSeconds);
+
+            // Fixed and lit: the ring grows from what 07 could reach without relay.1 to what it reaches with it.
+            var grew = new List<RingGrew>();
+            using (_context.Events.Subscribe<RingGrew>(grew.Add))
+            {
+                // 07 reaches relay.1 with the drive out spent: the ring grows from what that charge reached.
+                battery.Restore(new BatterySaveData { cells = battery.Cells, charge = battery.Cells * ArrivalCharge });
+                _gameplay.Relay.Restore(new RelaySaveData { fitted = true });
+                _gameplay.RangeRing.Grow("relay.1", _gameplay.Relay.PadPoint);
+            }
+
+            Assert.AreEqual(1, grew.Count, "the ring grew");
+            float before = ReachToward(_gameplay.RangeRing.From, gate.Position, rover.Position);
+            float after = ReachToward(_gameplay.RangeRing.Point, gate.Position, rover.Position);
+            Debug.Log($"[range-ring] R10 grew: {grew[0].OldReach:F0} m to {grew[0].NewReach:F0} m round 07; toward " +
+                      $"the rille notch {before:F0} m to {after:F0} m");
+            Assert.GreaterOrEqual(after - before, GrowTowardNotch,
+                "lit, relay.1 pushes the ring visibly further toward the notch");
+            Assert.IsTrue(_gameplay.RangeRing.TryGetLink(out _, out _, out needsPart));
+            Assert.IsFalse(needsPart, "relay.1 lit: the link is whole");
+            yield return RealSeconds(_gameplay.Battery.Tuning.RangeRing.RevealSeconds * 0.5f);
+            Capture(Vector3.Lerp(rover.Position, gate.Position, 0.5f), RilleCaptureHeight,
+                "range-ring-r10-growing.png");
 
             Vector3 toGate = gate.Position - rover.Position;
             toGate.y = 0f;
@@ -170,6 +222,29 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return RealSeconds(RevealWaitSeconds);
             Capture(Vector3.Lerp(rover.Position, gate.Position, 0.5f), RilleCaptureHeight,
                 "range-ring-r10-rille.png");
+        }
+
+        /// <summary>How far a ring (its points by index) reaches from <paramref name="from"/> on the bearing to
+        /// <paramref name="toward"/>.</summary>
+        private float ReachToward(Func<int, Vector3> point, Vector3 toward, Vector3 from)
+        {
+            Vector3 bearing = toward - from;
+            bearing.y = 0f;
+            float best = -1f;
+            float reach = 0f;
+            for (int i = 0; i < _gameplay.RangeRing.Count; i++)
+            {
+                Vector3 offset = point(i) - from;
+                offset.y = 0f;
+                float along = Vector3.Dot(offset.normalized, bearing.normalized);
+                if (along > best)
+                {
+                    best = along;
+                    reach = offset.magnitude;
+                }
+            }
+
+            return reach;
         }
 
         private static IEnumerator RealSeconds(float seconds)

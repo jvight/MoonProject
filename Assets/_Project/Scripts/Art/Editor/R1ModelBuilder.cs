@@ -57,6 +57,7 @@ namespace MoonProject.Art.Editor
                     R1MareKitBuilder.ApplyMareKitOverrides(instance, modelPath);
                     R1FaunaBuilder.ApplyFaunaOverrides(instance, modelPath);
                     ApplyRockfallOverrides(instance, modelPath);
+                    ApplyRimTalusOverrides(instance, modelPath);
                 }
                 catch
                 {
@@ -197,6 +198,66 @@ namespace MoonProject.Art.Editor
                 }
             }
 
+            if (overrideMat == null)
+            {
+                return;
+            }
+
+            Renderer[] renderers = root.GetComponentsInChildren<Renderer>(true);
+            for (int r = 0; r < renderers.Length; r++)
+            {
+                Renderer renderer = renderers[r];
+                Material[] mats = renderer.sharedMaterials;
+                for (int m = 0; m < mats.Length; m++)
+                {
+                    mats[m] = overrideMat;
+                }
+
+                renderer.sharedMaterials = mats;
+            }
+        }
+
+        /// <summary>FBX asset paths for the 8 crater-rim talus/scree scatter kit pieces (0.56-3.86 m).</summary>
+        public static readonly string[] RimTalusFbxPaths =
+        {
+            R1MaterialRecipes.ModelsFolder + "/Rocks/RimTalus_00.fbx",
+            R1MaterialRecipes.ModelsFolder + "/Rocks/RimTalus_01.fbx",
+            R1MaterialRecipes.ModelsFolder + "/Rocks/RimTalus_02.fbx",
+            R1MaterialRecipes.ModelsFolder + "/Rocks/RimTalus_03.fbx",
+            R1MaterialRecipes.ModelsFolder + "/Rocks/RimTalus_04.fbx",
+            R1MaterialRecipes.ModelsFolder + "/Rocks/RimTalus_05.fbx",
+            R1MaterialRecipes.ModelsFolder + "/Rocks/RimTalus_06.fbx",
+            R1MaterialRecipes.ModelsFolder + "/Rocks/RimTalus_07.fbx",
+        };
+
+        /// <summary>
+        /// Applies the triplanar regolith-mantled <c>R1_RimTalus.mat</c> material to the crater-rim talus/scree
+        /// scatter kit prefabs (<c>RimTalus_00..07</c>).
+        /// </summary>
+        public static void ApplyRimTalusOverrides(GameObject root, string modelPath)
+        {
+            if (root == null || string.IsNullOrEmpty(modelPath))
+            {
+                return;
+            }
+
+            string normalized = NormalizePath(modelPath);
+            bool isRimTalus = false;
+            for (int i = 0; i < RimTalusFbxPaths.Length; i++)
+            {
+                if (string.Equals(normalized, RimTalusFbxPaths[i], StringComparison.Ordinal))
+                {
+                    isRimTalus = true;
+                    break;
+                }
+            }
+
+            if (!isRimTalus)
+            {
+                return;
+            }
+
+            Material overrideMat = R1MaterialLibrary.LoadRimTalusMaterial();
             if (overrideMat == null)
             {
                 return;

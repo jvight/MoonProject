@@ -25,7 +25,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
     /// The opening v2 through the real game (docs/design/opening-v2.md §2, B0–B11), as a regression and a pacing
-    /// measurement: the built Main scene (on its own save slot) boots, 07 wakes at half charge, and a calm autopilot
+    /// measurement: the built Main scene (on its own save slot) boots, 07 wakes at 60% charge, and a calm autopilot
     /// holds the wheel while every verb goes through the keys a player presses: held E scans and cuts; B opens the
     /// build menu, the arrows pick, E takes the structure up, E places it where 07 looks and a held E welds it; Tab
     /// opens 07's face screen, the arrows reach the cutter's socket and Enter fits the igniter. Each beat starts at
@@ -326,7 +326,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             float started = Time.time;
             yield return Boot();
             yield return WakeUp();
-            yield return ExpectStep(OpeningKeys.DriveToLander, "B1: woken half empty, the lander's beacon ahead");
+            yield return ExpectStep(OpeningKeys.DriveToLander, "B1: woken short of full, the lander's beacon ahead");
             yield return DriveToTheLander();
             yield return ExpectStep(OpeningKeys.ScanLander, "B3: at the lander");
             yield return ScanTheSet("ruin." + ScanTuning.LanderCargoId, "the lander's cargo bay");
@@ -446,7 +446,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             });
             _pilot = new Autopilot(_rover);
             _rover.SetDriveSource(_pilot);
-            Assert.AreEqual(0.5f, _gameplay.Battery.Model.Charge01, 0.02f, "a new game wakes at half charge");
+            Assert.AreEqual(0.6f, _gameplay.Battery.Model.Charge01, 0.02f,
+                "a new game wakes a little over half charge");
             End("Boot the real Main scene", $"{_gameplay.Opening.Caches.Count} supply crates; hold {Hold()}");
         }
 

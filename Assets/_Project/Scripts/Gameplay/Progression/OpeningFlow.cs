@@ -32,7 +32,7 @@ namespace MoonProject.Gameplay
         private static readonly OpeningMilestone[] Derived =
         {
             OpeningMilestone.FirstCharge, OpeningMilestone.PowerOn, OpeningMilestone.NightReady,
-            OpeningMilestone.SignalWest,
+            OpeningMilestone.SignalWest, OpeningMilestone.OpeningComplete,
         };
 
         private readonly EventBus _events;
@@ -420,6 +420,8 @@ namespace MoonProject.Gameplay
                     return _game.NightReady;
                 case OpeningMilestone.SignalWest:
                     return _game.Built(StructureIds.AntennaMast);
+                case OpeningMilestone.OpeningComplete:
+                    return _game.RelayRelit;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(milestone), milestone,
                         "Not a milestone the opening derives.");

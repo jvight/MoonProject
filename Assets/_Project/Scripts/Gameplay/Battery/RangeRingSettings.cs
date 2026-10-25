@@ -96,6 +96,15 @@ namespace MoonProject.Gameplay
         [Range(1, 8)]
         [SerializeField] private int _subdivisions = 4;
 
+        [Tooltip("Metres between the points of the network link drawn with the ring (the mast to relay.1), so it lies " +
+                 "on the ground's rises and dips.")]
+        [Range(1f, 20f)]
+        [SerializeField] private float _linkStepMetres = 4f;
+
+        [Tooltip("Metres of one dash and its gap along a link whose node still needs its part.")]
+        [Range(0.5f, 20f)]
+        [SerializeField] private float _linkDashMetres = 4f;
+
         [Tooltip("Metres the line floats above the ground, so it never sinks into it.")]
         [Range(0.02f, 1f)]
         [SerializeField] private float _lineLift = 0.25f;
@@ -131,6 +140,8 @@ namespace MoonProject.Gameplay
         public float FullPixelDistance => _fullPixelDistance;
         public float LineLift => _lineLift;
         public int Subdivisions => _subdivisions;
+        public float LinkStepMetres => _linkStepMetres;
+        public float LinkDashMetres => _linkDashMetres;
         public float LiftPerMetre => _liftPerMetre;
         public Color Color => _color;
     }

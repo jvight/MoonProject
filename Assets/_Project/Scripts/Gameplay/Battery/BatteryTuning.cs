@@ -13,13 +13,13 @@ namespace MoonProject.Gameplay
         [Tooltip("Cells 07 starts with (four amber flank lamps).")]
         [Range(1, BatteryModel.MaxCells)] [SerializeField] private int _startingCells = 4;
 
-        [Tooltip("How full 07's cells are when a new game starts (opening-v2 B1: half empty, so it needs a charger).")]
-        [Range(0.05f, 1f)] [SerializeField] private float _startingCharge01 = 0.5f;
+        [Tooltip("How full 07's cells are when a new game starts (opening-v2 B1: a little over half, so the walk to the lander and the pad still needs a charger).")]
+        [Range(0.05f, 1f)] [SerializeField] private float _startingCharge01 = 0.6f;
 
         [Header("Driving")]
         [Tooltip("Metres driven on the ground at cruise, on the flat, that one cell pays for. Airborne metres are " +
                  "free.")]
-        [Range(30f, 600f)] [SerializeField] private float _metresPerCell = 350f;
+        [Range(30f, 600f)] [SerializeField] private float _metresPerCell = 200f;
 
         [Tooltip("Driving cost multiplier on an uphill at or steeper than the full slope.")]
         [Range(1f, 3f)] [SerializeField] private float _uphillMultiplier = 1.5f;
@@ -156,6 +156,15 @@ namespace MoonProject.Gameplay
                  "carry it.")]
         [Range(0, 10)] [SerializeField] private int _lowLines = 3;
 
+        [Tooltip("Metres (flat) from a relay that has answered but still waits for its part within which the Low line " +
+                 "stays quiet: the fix is right there and the relay's pad charges once it is in (the sound and the " +
+                 "glance still tell 07 is low).")]
+        [Range(0f, 200f)] [SerializeField] private float _relayQuietMetres = 60f;
+
+        [Tooltip("Metres of driving short of full within which the cells still count as full: 07 settling a few " +
+                 "centimetres on a pad after a charge is still full, and the pad takes it in as full.")]
+        [Range(0f, 5f)] [SerializeField] private float _fullSlackMetres = 1f;
+
         public int StartingCells => _startingCells;
         public float StartingCharge01 => _startingCharge01;
         public float MetresPerCell => _metresPerCell;
@@ -214,5 +223,7 @@ namespace MoonProject.Gameplay
         public float VeryLowThreshold => _veryLowThreshold;
         public float ArcReveal => _arcReveal;
         public int LowLines => _lowLines;
+        public float RelayQuietMetres => _relayQuietMetres;
+        public float FullSlackMetres => _fullSlackMetres;
     }
 }

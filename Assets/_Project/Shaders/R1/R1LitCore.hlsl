@@ -216,15 +216,80 @@ half4 R1LitFrag(R1LitVaryings input) : SV_Target
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
     R1DistanceFadeClip(input.positionWS, input.positionCS);
 
-    float2 uv = input.uv;
+    float normLenSq = dot(input.normalWS, input.normalWS);
+    float3 normalWS = normLenSq > 1e-6 ? input.normalWS * rsqrt(normLenSq) : float3(0.0, 1.0, 0.0);
 
-    half4 baseSample = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uv);
+    float2 uv = input.uv;
+    half4 baseSample;
+    half4 maskSample;
+    half3 normalTS;
+    float3 finalNormalWS = normalWS;
+
+    if (_TriplanarMapping > 0.5h)
+    {
+        float3 triW = pow(max(abs(normalWS), 1e-4), 4.0);
+        triW /= max(triW.x + triW.y + triW.z, 1e-4);
+
+        float3 wpWarp = float3(
+            R1ValueNoise3D(input.positionWS * 0.16 + float3(3.7, 11.2, 7.9)) - 0.5,
+            R1ValueNoise3D(input.positionWS * 0.16 + float3(19.3, 5.1, 23.4)) - 0.5,
+            R1ValueNoise3D(input.positionWS * 0.16 + float3(13.1, 29.7, 2.8)) - 0.5) * 0.38;
+        float3 triCoord = (input.positionWS + wpWarp) * max((float)_TriplanarScale, 0.05);
+
+        half4 baseX = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, triCoord.zy);
+        half4 baseY = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, triCoord.xz);
+        half4 baseZ = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, triCoord.xy);
+        baseSample = baseX * (half)triW.x + baseY * (half)triW.y + baseZ * (half)triW.z;
+
+        half4 maskX = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, triCoord.zy);
+        half4 maskY = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, triCoord.xz);
+        half4 maskZ = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, triCoord.xy);
+        maskSample = maskX * (half)triW.x + maskY * (half)triW.y + maskZ * (half)triW.z;
+
+        half3 nX = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, triCoord.zy), _BumpScale);
+        half3 nY = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, triCoord.xz), _BumpScale);
+        half3 nZ = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, triCoord.xy), _BumpScale);
+        normalTS = nX * (half)triW.x + nY * (half)triW.y + nZ * (half)triW.z;
+
+        float3 worldPerturb =
+            float3(0.0, nX.y, nX.x) * triW.x +
+            float3(nY.x, 0.0, nY.y) * triW.y +
+            float3(nZ.x, nZ.y, 0.0) * triW.z;
+        worldPerturb -= normalWS * dot(worldPerturb, normalWS);
+        finalNormalWS = normalize(normalWS + worldPerturb);
+    }
+    else
+    {
+        baseSample = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uv);
+        maskSample = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, uv);
+        half4 packedNormal = SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, uv);
+        normalTS = UnpackNormalScale(packedNormal, _BumpScale);
+
+        float tanLenSq = dot(input.tangentWS.xyz, input.tangentWS.xyz);
+        if (tanLenSq > 1e-6)
+        {
+            float3 tangentWS = input.tangentWS.xyz * rsqrt(tanLenSq);
+            float3 bitanRaw = cross(normalWS, tangentWS) * input.tangentWS.w;
+            float bitanLenSq = dot(bitanRaw, bitanRaw);
+            if (bitanLenSq > 1e-6)
+            {
+                float3 bitangentWS = bitanRaw * rsqrt(bitanLenSq);
+                float3x3 tangentToWorld = float3x3(tangentWS, bitangentWS, normalWS);
+                float3 mapped = mul(normalTS, tangentToWorld);
+                float mappedLenSq = dot(mapped, mapped);
+                if (mappedLenSq > 1e-6)
+                {
+                    finalNormalWS = mapped * rsqrt(mappedLenSq);
+                }
+            }
+        }
+    }
+
     half3 albedo = baseSample.rgb * _BaseColor.rgb;
     half alpha = baseSample.a * _BaseColor.a;
 
     // Per-material MaskMap: R = Metallic, G = Micro-AO, B = Micro-Detail, A = Smoothness.
     // Per-model Vertex Colour: R = Ambient Occlusion (1=open), G = Convex Edge Wear (0=none), B = Crease/Cavity (0=none).
-    half4 maskSample = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, uv);
     half4 vcol = saturate(input.vertexColor);
     half metallic = saturate(maskSample.r * _MetallicScale);
     half microAo = lerp(1.0h, maskSample.g, 0.35h);
@@ -232,30 +297,13 @@ half4 R1LitFrag(R1LitVaryings input) : SV_Target
     half microDetail = maskSample.b;
     half smoothness = lerp(_SmoothnessMin, _SmoothnessMax, saturate(maskSample.a * _SmoothnessScale));
 
-    // Normal mapping in world space
-    half4 packedNormal = SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, uv);
-    half3 normalTS = UnpackNormalScale(packedNormal, _BumpScale);
-
-    float normLenSq = dot(input.normalWS, input.normalWS);
-    float3 normalWS = normLenSq > 1e-6 ? input.normalWS * rsqrt(normLenSq) : float3(0.0, 1.0, 0.0);
-    float tanLenSq = dot(input.tangentWS.xyz, input.tangentWS.xyz);
-    float3 finalNormalWS = normalWS;
-    if (tanLenSq > 1e-6)
+    // Optional steepest-part fresh-rock darkening for crater-rim slope and talus materials
+    if (_SteepRockDarkening > 0.001h)
     {
-        float3 tangentWS = input.tangentWS.xyz * rsqrt(tanLenSq);
-        float3 bitanRaw = cross(normalWS, tangentWS) * input.tangentWS.w;
-        float bitanLenSq = dot(bitanRaw, bitanRaw);
-        if (bitanLenSq > 1e-6)
-        {
-            float3 bitangentWS = bitanRaw * rsqrt(bitanLenSq);
-            float3x3 tangentToWorld = float3x3(tangentWS, bitangentWS, normalWS);
-            float3 mapped = mul(normalTS, tangentToWorld);
-            float mappedLenSq = dot(mapped, mapped);
-            if (mappedLenSq > 1e-6)
-            {
-                finalNormalWS = mapped * rsqrt(mappedLenSq);
-            }
-        }
+        float steepNoise = R1Fbm3D(input.positionWS * 0.24 + float3(11.3, 27.1, 5.9));
+        half steepSlope = 1.0h - (half)smoothstep(0.22, 0.68, normalWS.y);
+        half steepPatch = saturate(steepSlope * (0.45h + 0.55h * (half)smoothstep(0.28, 0.72, steepNoise)));
+        albedo *= lerp(1.0h, 1.0h - _SteepRockDarkening, steepPatch);
     }
 
     // 1. Subtle large-scale world-space colour variation + subtle cavity/AO grounding

@@ -92,6 +92,31 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void AFullBattery_StaysFull_ForTheFewCentimetresASettleRolls_NotForAMetreOrMore()
+        {
+            var full = new BatteryModel(_tuning, _events);
+            full.Restore(new BatterySaveData { cells = full.Cells, charge = full.Cells });
+            Drive(full, _tuning.FullSlackMetres * 0.3f);
+            Assert.IsTrue(full.CellsFull, "settled a few centimetres on the pad: still full, the pad takes it in");
+            Drive(full, _tuning.FullSlackMetres * 1.5f);
+            Assert.IsFalse(full.CellsFull, "driven past the slack: no longer full");
+        }
+
+        [Test]
+        public void TheLowLine_KeepsQuietNearARelayStillWaitingForItsPart_OnlyThere()
+        {
+            var socket = new Vector3(-70f, 0f, 46f);
+            Assert.IsTrue(BatteryField.QuietNearRelay(true, false, socket + new Vector3(50f, 0f, 0f), socket, 60f),
+                "answered, unfixed, 50 m off: the fix is at hand, no line");
+            Assert.IsFalse(BatteryField.QuietNearRelay(true, false, socket + new Vector3(70f, 0f, 0f), socket, 60f),
+                "70 m off: the line may speak");
+            Assert.IsFalse(BatteryField.QuietNearRelay(false, false, socket, socket, 60f),
+                "a relay that has not answered is no fix yet");
+            Assert.IsFalse(BatteryField.QuietNearRelay(true, true, socket, socket, 60f),
+                "a fixed relay charges: the pad line says so instead");
+        }
+
+        [Test]
         public void TheNearestCharger_CountsRelayOnesPad_SoTheLowLineStaysQuietBesideIt()
         {
             var relays = new System.Collections.Generic.List<Vector3> { new Vector3(-70f, 0f, 46f) };
@@ -331,12 +356,12 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void TheOpening_FromTheHalfFullWake_LeavesAQuarterToAThird_AfterThePadWeld()
+        public void TheOpening_FromTheWake_LeavesAQuarterToAThird_AfterThePadWeld()
         {
             var shipping = AssetDatabase.LoadAssetAtPath<BatteryTuning>(GameplayAssetPaths.BatteryTuning);
             Assert.IsNotNull(shipping, "the shipped battery tuning (run Gameplay/Tuning)");
             var fresh = new BatteryModel(shipping, _events);
-            Assert.AreEqual(0.5f, fresh.Charge01, 1e-5f, "07 wakes half full");
+            Assert.AreEqual(0.6f, fresh.Charge01, 1e-5f, "07 wakes a little over half full");
             Drive(fresh, OpeningDriveMetres);
             Step(fresh, new BatteryStep { ScanSeconds = Dt }, 5f);
             Step(fresh, new BatteryStep { WeldSeconds = Dt }, 3f);

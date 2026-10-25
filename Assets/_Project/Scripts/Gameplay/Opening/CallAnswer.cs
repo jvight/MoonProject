@@ -22,6 +22,7 @@ namespace MoonProject.Gameplay
         private readonly Vector3 _relay;
         private readonly Vector3 _dish;
         private readonly IDisposable _built;
+        private readonly IDisposable _raised;
         private Vector3 _mastPoint;
         private bool _mastKnown;
         private bool _prompted;
@@ -41,6 +42,7 @@ namespace MoonProject.Gameplay
             _relay = relay;
             _dish = peakPosition + Vector3.up * settings.DishHeight;
             _built = events.Subscribe<StructureBuilt>(OnBuilt);
+            _raised = events.Subscribe<MastSegmentRaised>(OnMastRaised);
         }
 
         public AnswerPhase Phase { get; private set; }
@@ -93,6 +95,7 @@ namespace MoonProject.Gameplay
         public void Dispose()
         {
             _built.Dispose();
+            _raised.Dispose();
         }
 
         private void StepReady(float deltaTime, bool held, Vector3 rover, float speed)
@@ -167,6 +170,19 @@ namespace MoonProject.Gameplay
         {
             Phase = phase;
             _events.Publish(new CallAnswerPhaseChanged(phase, restored));
+        }
+
+        /// <summary>
+        /// The mast's top segment locks home: it lights the network at once, a pulse out to relay.1 (the payoff audit's
+        /// "the mast lights the network"), before anything is transmitted. Not on a loaded game.
+        /// </summary>
+        private void OnMastRaised(MastSegmentRaised raised)
+        {
+            if (!raised.Restored && _mastKnown && raised.Index == raised.Count - 1)
+            {
+                _events.Publish(new NetworkPulseLaunched(_mastPoint, _relay,
+                    _settings.LegSeconds(Vector3.Distance(_mastPoint, _relay)), 0));
+            }
         }
 
         private void OnBuilt(StructureBuilt built)

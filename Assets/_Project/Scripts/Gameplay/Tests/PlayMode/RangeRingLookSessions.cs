@@ -21,7 +21,8 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// How the range ring looks (opening v3 4.2 look, agy-ringfade): a soft moonlit-amber glow line on the ground (never
     /// white, never dots or dashes), with a soft gradient falloff across its width, under bloom and below relay.1's lamp
     /// in brightness. It draws out from 07 over ~2 s, holds ~1.5 s, eases out over ~3 s and is completely gone (zero
-    /// vertices, zero width, zero alpha, renderer disabled), showing only at its two moments and never lingering on load.
+    /// vertices, zero width, zero alpha, renderer disabled), showing at its moments (and growing when relay.1 relights)
+    /// and never lingering on load.
     /// Before/after captures from the apron at night and from the chase camera are written to Logs/captures/ringfade_*.png.
     /// </summary>
     [Category("RangeRing")]
@@ -209,7 +210,15 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             _context.Events.Publish(new RelayRelit("relay.1", false));
             yield return null;
-            Assert.IsFalse(ring.IsShown, "shows only at its two moments: never re-shown when relay.1 relights");
+            Assert.IsTrue(ring.IsShown, "relay.1 relit: the ring grows, a moment of its own");
+            Assert.IsTrue(_gameplay.RangeRing.Growing, "out from the ring it was, not from 07");
+            float until = Time.time + _gameplay.Battery.Tuning.RangeRing.FullSeconds + 0.5f;
+            while (ring.IsShown && Time.time < until)
+            {
+                yield return null;
+            }
+
+            yield return null;
             AssertGone(line);
         }
 

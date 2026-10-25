@@ -65,6 +65,22 @@ namespace MoonProject.Gameplay.Tests
             }
         }
 
+        private sealed class FakeLink : IRingLink
+        {
+            public bool Shown;
+            public bool NeedsPart = true;
+            public Vector3 Hub;
+            public Vector3 Node = new Vector3(200f, 0f, 0f);
+
+            public bool TryGetLink(out Vector3 hub, out Vector3 node, out bool needsPart)
+            {
+                hub = Hub;
+                node = Node;
+                needsPart = NeedsPart;
+                return Shown;
+            }
+        }
+
         private BatteryTuning _battery;
         private RangeRingSettings _settings;
         private FakeTerrain _terrain;
@@ -208,6 +224,64 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void ANodeBecomingAChargePoint_GrowsTheRingFromWhatItWas_AfterTheReleaseRingToo()
+        {
+            var events = new EventBus();
+            var shown = new List<RangeRingShown>();
+            var grew = new List<RingGrew>();
+            events.Subscribe<RangeRingShown>(shown.Add);
+            events.Subscribe<RingGrew>(grew.Add);
+            var relay = new Vector3(300f, 0f, 0f);
+            var rover = new FakeRover { Position = relay };
+            var battery = new BatteryModel(_battery, events);
+            battery.Restore(new BatterySaveData { cells = battery.Cells, charge = 1f });
+            var points = new FakePoints();
+            var link = new FakeLink { Shown = true, Node = relay };
+            var field = new RangeRingField(events, _settings, _model, battery, points, rover, link);
+            field.Show(RangeRingMode.Full);
+            field.Step(_settings.FullSeconds + 1f);
+
+            points.Points.Add(relay);
+            field.Grow("relay.1", relay);
+            Assert.IsTrue(field.IsShown, "the grow shows even after the release's full ring");
+            Assert.IsTrue(field.Growing);
+            Assert.AreEqual(RangeRingMode.Full, field.Mode);
+            Assert.AreEqual(1, grew.Count);
+            Assert.AreEqual("relay.1", grew[0].NodeId);
+            Assert.AreEqual(relay, grew[0].Node);
+            Assert.Greater(grew[0].NewReach, grew[0].OldReach + StepSlack * 4f,
+                "300 m out on one cell, home was out of reach; relay.1's pad brings the ring out round it");
+            Assert.AreEqual(2, shown.Count, "a moment of its own");
+            float reachedFrom = 0f;
+            float reachedTo = 0f;
+            for (int i = 0; i < field.Count; i++)
+            {
+                reachedFrom += Radius(field.From(i), relay) / field.Count;
+                reachedTo += Radius(field.Point(i), relay) / field.Count;
+            }
+
+            Assert.AreEqual(grew[0].OldReach, reachedFrom, 0.01f, "From is the ring as it was");
+            Assert.AreEqual(grew[0].NewReach, reachedTo, 0.01f, "and Point the ring as it is now");
+
+            link.NeedsPart = false;
+            Assert.IsTrue(field.TryGetLink(out Vector3 hub, out Vector3 node, out bool needsPart));
+            Assert.AreEqual(relay, node);
+            Assert.IsFalse(needsPart, "relay.1 lit: its link is whole");
+
+            field.Step(_settings.FullSeconds + 1f);
+            field.Show(RangeRingMode.Full);
+            Assert.IsFalse(field.IsShown, "the release ring still shows only once");
+            field.Dispose();
+        }
+
+        private static float Radius(Vector3 point, Vector3 centre)
+        {
+            Vector3 flat = point - centre;
+            flat.y = 0f;
+            return flat.magnitude;
+        }
+
+        [Test]
         public void TheRing_ShowsFaintAtTheFirstCharge_FullWhenAsked_AndFadesInAndOut()
         {
             var events = new EventBus();
@@ -215,7 +289,7 @@ namespace MoonProject.Gameplay.Tests
             events.Subscribe<RangeRingShown>(shown.Add);
             var rover = new FakeRover();
             var model = new BatteryModel(_battery, events);
-            var field = new RangeRingField(events, _settings, _model, model, new FakePoints(), rover);
+            var field = new RangeRingField(events, _settings, _model, model, new FakePoints(), rover, new FakeLink());
             Assert.IsFalse(field.IsShown);
 
             events.Publish(new OpeningMilestoneReached(OpeningMilestone.FirstCharge, true));
@@ -282,7 +356,7 @@ namespace MoonProject.Gameplay.Tests
             events.Subscribe<RangeRingShown>(shown.Add);
             var rover = new FakeRover();
             var battery = new BatteryModel(_battery, events);
-            var field = new RangeRingField(events, _settings, _model, battery, new FakePoints(), rover);
+            var field = new RangeRingField(events, _settings, _model, battery, new FakePoints(), rover, new FakeLink());
 
             field.Show(RangeRingMode.Full);
             Assert.IsTrue(field.IsShown);
@@ -306,7 +380,7 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(1, shown.Count);
             field.Dispose();
 
-            var loadField = new RangeRingField(events, _settings, _model, battery, new FakePoints(), rover);
+            var loadField = new RangeRingField(events, _settings, _model, battery, new FakePoints(), rover, new FakeLink());
             events.Publish(new OpeningMilestoneReached(OpeningMilestone.FirstCharge, false));
             Assert.IsTrue(loadField.IsShown);
             events.Publish(new OpeningMilestoneReached(OpeningMilestone.FirstCharge, true));
