@@ -135,5 +135,24 @@ namespace MoonProject.Autoplay.Tests
             StringAssert.Contains("stuck at the ridge", report);
             StringAssert.Contains("screenshots/00-B0.png", report);
         }
+
+        [Test]
+        public void ABeatTrip_CountsTheLowestCellsAndTheMetresDriven_AndTheReportListsThem()
+        {
+            var trip = new BeatTrip();
+            trip.Begin(0.8f, new Vector3(0f, 5f, 0f));
+            trip.Step(0.5f, new Vector3(3f, 9f, 4f));
+            trip.Step(0.2f, new Vector3(3f, 0f, 4f));
+            trip.Step(0.4f, new Vector3(3f, 0f, 14f));
+            Assert.AreEqual(0.8f, trip.StartCharge, 1e-4f);
+            Assert.AreEqual(0.2f, trip.MinCharge, 1e-4f);
+            Assert.AreEqual(0.4f, trip.EndCharge, 1e-4f);
+            Assert.AreEqual(15f, trip.Metres, 1e-3f, "5 m, then 0 m flat, then 10 m: height is not driven distance");
+
+            var beats = new BeatLog();
+            beats.Add(new BeatResult("R10", "Relay", true, "lit", 55f, string.Empty, string.Empty, "Earthlit", trip));
+            string report = beats.Render("opening", "build 1", 60f, new FrameTimeLog(), new string[0], string.Empty);
+            StringAssert.Contains("| R10 | 80 | 20 | 40 | 15 |", report);
+        }
     }
 }

@@ -96,6 +96,7 @@ namespace MoonProject.Autoplay
             float milliseconds = Time.unscaledDeltaTime * 1000f;
             _frames.Record(Time.unscaledTime - _startedAt, milliseconds,
                 milliseconds > FrameTimeLog.ThresholdMilliseconds ? _bot.Where() : string.Empty);
+            _bot.SampleTrip();
             RecordTags(milliseconds);
             if (Time.unscaledTime >= _nextShotAt)
             {

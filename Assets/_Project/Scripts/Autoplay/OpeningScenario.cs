@@ -19,6 +19,9 @@ namespace MoonProject.Autoplay
     {
         private const float BootTimeoutSeconds = 60f;
         private const float TitleAttemptSeconds = 1.5f;
+
+        /// <summary>The most the title and its language step may take to start play on a slow, loaded boot.</summary>
+        private const float TitleTimeoutSeconds = 180f;
         private const float WakeTimeoutSeconds = 90f;
         private const float LookAroundSeconds = 4f;
         private const float LineTimeoutSeconds = 30f;
@@ -200,11 +203,17 @@ namespace MoonProject.Autoplay
                 // The first boot opens on the language step, then the title: Enter answers each in turn, and one that
                 // lands before the menu is up is lost, so it is pressed again until play starts (a slow boot has no fixed
                 // count of presses).
-                float titleDeadline = Time.unscaledTime + BootTimeoutSeconds;
-                while (_bot.World.Flow.State == GameFlowState.Title && Time.unscaledTime < titleDeadline)
+                float titleFrom = Time.unscaledTime;
+                while (_bot.World.Flow.State == GameFlowState.Title && Time.unscaledTime < titleFrom + TitleTimeoutSeconds)
                 {
                     yield return _bot.Tap(Key.Enter);
                     yield return _bot.Wait(TitleAttemptSeconds);
+                }
+
+                if (Time.unscaledTime - titleFrom > BootTimeoutSeconds)
+                {
+                    _bot.Warn("FINDING: the title took " + (Time.unscaledTime - titleFrom).ToString("0") + " s to start play " +
+                              "(a slow boot or a loaded machine); " + _bot.Where());
                 }
 
                 yield return _bot.Until(() => _bot.World.Flow.State == GameFlowState.Playing, BootTimeoutSeconds,

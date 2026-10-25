@@ -113,6 +113,12 @@ namespace MoonProject.Autoplay
         /// <summary>...and stays until they are back to this share.</summary>
         private const float TopUpTo = 0.85f;
 
+        /// <summary>
+        /// The cells the trip to relay.1 asks for: about 300 m across the crater cost 38% of them (the measured
+        /// run), with margin for the detours a long drive takes.
+        /// </summary>
+        private const float RelayTripNeed = 0.6f;
+
         private const float TopUpSeconds = 300f;
         private const float ClearHeight = 0.9f;
         private const float ClearRadius = 1.1f;
@@ -604,12 +610,12 @@ namespace MoonProject.Autoplay
                 () => "Candidate " + (G.Scans.Candidate != null ? G.Scans.Candidate.FragmentId : "none") + ".");
         }
 
-        /// <summary>Cuts every sealed crate standing by <paramref name="frame"/> (an anchor or a ruin piece).</summary>
         /// <summary>
-        /// Like a player who reads "Battery low. Head back to a pad": when the cells run low and a pad stands, drive
-        /// back and charge before going on (the routes round the props are longer than a straight line).
+        /// Like a player who reads "Battery low. Head back to a pad": when the cells fall to <paramref name="below"/>
+        /// and a pad stands, drive back and charge before going on (the routes round the props are longer than a
+        /// straight line). A long trip asks for more cells than the default.
         /// </summary>
-        public IEnumerator TopUpIfLow()
+        public IEnumerator TopUpIfLow(float below = TopUpBelow)
         {
             BatteryModel battery = G.Battery.Model;
             if (!_bot.Failed && battery.IsCharging && battery.Charge01 < TopUpTo)
@@ -627,7 +633,7 @@ namespace MoonProject.Autoplay
                 }
             }
 
-            if (_bot.Failed || !pad.HasValue || battery.Charge01 > TopUpBelow)
+            if (_bot.Failed || !pad.HasValue || battery.Charge01 > below)
             {
                 yield break;
             }
@@ -969,12 +975,15 @@ namespace MoonProject.Autoplay
         {
             RelayRepair relay = G.Relay;
             yield return _bot.Until(() => relay.Open, FollowSeconds, "relay.1 to have answered the call");
+            yield return TopUpIfLow(RelayTripNeed);
             Vector3 spare = relay.SparePoint;
-            yield return _bot.DriveTo(Flat(spare), RelayArrive, "relay.1's open cabinet", DriveSeconds);
+            yield return _bot.DriveTo(Flat(spare), RelayArrive, "relay.1's open cabinet", DriveSeconds,
+                () => G.Hints.TryGet(InteractionKind.PickUp, out _));
             yield return _bot.Until(() => G.Hints.TryGet(InteractionKind.PickUp, out _), FollowSeconds,
                 "the cabinet to offer its spare (Pick up)");
             yield return _bot.Hold(Key.E, () => relay.SpareTaken, FollowSeconds, "E to take relay.1's spare");
-            yield return _bot.DriveTo(Flat(relay.SocketPoint), RelayArrive, "relay.1's feed socket", DriveSeconds);
+            yield return _bot.DriveTo(Flat(relay.SocketPoint), RelayArrive, "relay.1's feed socket", DriveSeconds,
+                () => G.Hints.TryGet(InteractionKind.Install, out _));
             yield return _bot.Until(() => G.Hints.TryGet(InteractionKind.Install, out _), FollowSeconds,
                 "the feed socket to offer the spare (Fit)");
             yield return _bot.Hold(Key.E, () => relay.Fitted, FollowSeconds, "E to fit the spare");

@@ -8,8 +8,13 @@ namespace MoonProject.Autoplay
     public sealed class BeatResult
     {
         public BeatResult(string id, string title, bool passed, string reason, float seconds, string objective,
-            string chip, string sky)
+            string chip, string sky, BeatTrip trip = null)
         {
+            HasTrip = trip != null;
+            StartCharge = trip?.StartCharge ?? 0f;
+            MinCharge = trip?.MinCharge ?? 0f;
+            EndCharge = trip?.EndCharge ?? 0f;
+            Metres = trip?.Metres ?? 0f;
             Sky = sky;
             Id = id;
             Title = title;
@@ -21,6 +26,21 @@ namespace MoonProject.Autoplay
         }
 
         public string Id { get; }
+
+        /// <summary>True when the beat's cells and distance were counted.</summary>
+        public bool HasTrip { get; }
+
+        /// <summary>07's cells (0..1) when the beat began.</summary>
+        public float StartCharge { get; }
+
+        /// <summary>The lowest cells (0..1) during the beat.</summary>
+        public float MinCharge { get; }
+
+        /// <summary>The cells (0..1) when the beat ended.</summary>
+        public float EndCharge { get; }
+
+        /// <summary>Metres 07 drove during the beat.</summary>
+        public float Metres { get; }
 
         /// <summary>The sky's phase when the beat ended (the day is the opening's clock: the base must be night-ready by sunset).</summary>
         public string Sky { get; }
@@ -97,6 +117,20 @@ namespace MoonProject.Autoplay
                     .Append(" | ").Append(Cell(beat.Chip)).Append(" |\n");
             }
 
+            text.Append("\n## Cells and distance per beat\n\n| Beat | Cells at start (%) | Lowest (%) | At end (%) | Driven (m) |\n");
+            text.Append("|---|---|---|---|---|\n");
+            foreach (BeatResult beat in _beats)
+            {
+                if (!beat.HasTrip)
+                {
+                    continue;
+                }
+
+                text.Append("| ").Append(beat.Id).Append(" | ").Append(Percent(beat.StartCharge)).Append(" | ")
+                    .Append(Percent(beat.MinCharge)).Append(" | ").Append(Percent(beat.EndCharge)).Append(" | ")
+                    .Append(Number(beat.Metres, "0")).Append(" |\n");
+            }
+
             text.Append("\n## Frame times\n\n");
             text.Append("- Frames: ").Append(frames.Frames.ToString(CultureInfo.InvariantCulture)).Append('\n');
             text.Append("- Mean: ").Append(Number(frames.MeanMilliseconds, "0.0")).Append(" ms, worst ")
@@ -121,6 +155,11 @@ namespace MoonProject.Autoplay
             }
 
             return text.ToString();
+        }
+
+        private static string Percent(float charge01)
+        {
+            return Number(charge01 * 100f, "0");
         }
 
         private static string Number(float value, string format)

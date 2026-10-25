@@ -57,6 +57,9 @@ namespace MoonProject.Autoplay
         private readonly System.Collections.Generic.List<Vector2> _stuckAt = new System.Collections.Generic.List<Vector2>();
         private bool _replan;
         private bool _mayReplan;
+        private readonly BeatTrip _trip = new BeatTrip();
+        private bool _tripCounted;
+        private Func<bool> _inReach;
         private string _beatId;
         private string _beatTitle;
         private float _beatStart;
@@ -108,7 +111,22 @@ namespace MoonProject.Autoplay
             _beatTitle = title;
             _beatStart = Time.unscaledTime;
             _warnings.Clear();
+            _tripCounted = _world.Refresh();
+            if (_tripCounted)
+            {
+                _trip.Begin(_world.Gameplay.Battery.Model.Charge01, _world.Rover.Position);
+            }
+
             Activity = id + " " + title;
+        }
+
+        /// <summary>Counts this frame's cells and distance into the current beat; called once a frame.</summary>
+        public void SampleTrip()
+        {
+            if (_tripCounted && _world.Refresh())
+            {
+                _trip.Step(_world.Gameplay.Battery.Model.Charge01, _world.Rover.Position);
+            }
         }
 
         /// <summary>Closes the current beat as passed, or as failed with the run's failure; takes its screenshot.</summary>
@@ -125,7 +143,7 @@ namespace MoonProject.Autoplay
             }
 
             _beats.Add(new BeatResult(_beatId, _beatTitle, passed, note,
-                Time.unscaledTime - _beatStart, objective, chip, sky));
+                Time.unscaledTime - _beatStart, objective, chip, sky, _tripCounted ? _trip : null));
             _screenshot(_beatId + (passed ? "-done" : "-failed"));
         }
 
@@ -251,9 +269,13 @@ namespace MoonProject.Autoplay
         /// <summary>
         /// Drives 07 to within <paramref name="arriveRadius"/> metres of <paramref name="target"/>, round the props
         /// that stand between (a coarse route over their colliders, so it never drives into a lander or a crate).
+        /// <paramref name="inReach"/>, when given, ends the last leg as soon as it holds: the game's own chip says 07 is
+        /// close enough, whatever the radius.
         /// </summary>
-        public IEnumerator DriveTo(Vector3 target, float arriveRadius, string what, float timeoutSeconds)
+        public IEnumerator DriveTo(Vector3 target, float arriveRadius, string what, float timeoutSeconds,
+            Func<bool> inReach = null)
         {
+            _inReach = inReach;
             _stuckAt.Clear();
             for (int attempt = 0; attempt <= MaxReplans && !Failed; attempt++)
             {
@@ -341,7 +363,7 @@ namespace MoonProject.Autoplay
             {
                 RoverPose rover = Rover();
                 DriveSteering.Command command = DriveSteering.Decide(rover.Position, rover.Forward, target, arriveRadius);
-                if (command.Arrived)
+                if (command.Arrived || (settle && _inReach != null && _inReach()))
                 {
                     break;
                 }
