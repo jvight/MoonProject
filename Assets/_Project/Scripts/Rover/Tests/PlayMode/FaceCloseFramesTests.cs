@@ -20,7 +20,7 @@ namespace MoonProject.Rover.PlayModeTests
         private const float OpenTimeout = 8f;
         private const float SettleSeconds = 2.5f;
         private const int FramesBefore = 6;
-        private const int FramesAfter = 45;
+        private const int FramesAfter = 80;
         private const int Cycles = 2;
         private const int Width = 960;
         private const int Height = 540;
