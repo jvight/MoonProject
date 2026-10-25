@@ -109,6 +109,28 @@ namespace MoonProject.World.Editor
         }
 
         /// <summary>
+        /// A dead cable along <paramref name="waypoints"/> (world XZ, two or more), straights joint to joint on the ground
+        /// with no halos: a line the eye follows, never a light.
+        /// </summary>
+        public static void LayTrail(SceneBuildContext context, Transform parent, MoonSurface surface, string name,
+            Vector2[] waypoints, float wander, float bends)
+        {
+            if (waypoints == null || waypoints.Length < 2)
+            {
+                throw new System.ArgumentException("A cable trail needs two or more waypoints.", nameof(waypoints));
+            }
+
+            Kit kit = Kit.Load(context);
+            Transform cable = context.CreateChild(name, parent).transform;
+            Vector2 from = waypoints[0];
+            for (int i = 1; i < waypoints.Length; i++)
+            {
+                from = Flat2(LayRun(context, cable, surface, kit, from, waypoints[i], wander, bends, null, null,
+                    null));
+            }
+        }
+
+        /// <summary>
         /// Straights joint to joint from <paramref name="from"/> to <paramref name="to"/>, each stretched to its span;
         /// each one's clip halo goes into <paramref name="clips"/> in order (none when it is null). Returns the last
         /// joint, on the ground.
