@@ -40,6 +40,11 @@ Shader "MoonProject/R1/Lit"
         _ColorVarScale("World Color Var Scale", Range(0.1, 16.0)) = 1.8
         _ColorVarAmount("World Color Var Amount", Range(0.0, 0.25)) = 0.035
 
+        [Header(World Space Triplanar And Slope)]
+        _TriplanarMapping("World Triplanar Mapping (0 or 1)", Float) = 0.0
+        _TriplanarScale("World Triplanar Scale (uv/m)", Range(0.05, 4.0)) = 0.42
+        _SteepRockDarkening("Steep Fresh-Rock Darkening", Range(0.0, 0.6)) = 0.0
+
         [Header(Bloom Safe Emission)]
         [NoScaleOffset] _EmissionMap("Emission Map (RGB)", 2D) = "black" {}
         [HDR] _EmissionColor("Emission Color", Color) = (0, 0, 0, 1)
