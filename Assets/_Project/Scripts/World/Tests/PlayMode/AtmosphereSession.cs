@@ -141,6 +141,20 @@ namespace MoonProject.World.PlayModeTests
         private const string RelaySiteRelayId = WorldAnchorIds.RelayPrefix + "1";
         private const string RelaySiteCabinet = "ServiceCabinet";
         private const string RelaySiteSpare = "ServiceCabinet/FeedUnitSpare_Slot/FeedUnitSpare";
+        private const string RelaySiteFitted = "FeedSocket/FeedUnitFitted";
+
+        // The repair's power-up as Gameplay times it after the fit (RelayRepairSettings' defaults), and how long after
+        // each stage its frame is shot.
+        private static readonly RelayStage[] RepairStages =
+        {
+            RelayStage.Latch, RelayStage.Wake, RelayStage.Align, RelayStage.Reply, RelayStage.Live,
+        };
+
+        private static readonly float[] RepairStageSeconds = { 0f, 0.8f, 1.6f, 3.4f, 5f };
+        private const float RepairShotLead = 0.4f;
+
+        // The repair frames look between the cabinet's spare and the relay lamp, so the socket, the dish and the pad show.
+        private const float RepairLookShare = 0.5f;
         private const float RelaySiteStandOff = 15f;
 
         // The call's point of light: when the face shot holds, one sign's length, how near its brightest a shot waits
@@ -988,12 +1002,35 @@ namespace MoonProject.World.PlayModeTests
                           $"{Vector3.Distance(apronEye, cabinet.position):F0} m from the apron; sun {SunReport(context)}, " +
                           $"{context.Get<ISunlight>().Phase}");
 
-                // Relit: the lamp warms up and holds steady, the cabinet goes dark, the pad and the lens come on.
+                // The repair's power-up, as Gameplay times it after the fit: the unit seats, the lens and dial wake,
+                // the dish turns to the Peak, the lamp blinks the reply, the pad goes live; a frame at each stage.
                 var lamp = FindNamed(RelayLampName).GetComponent<RelayAnswerLamp>();
                 var lights = site.GetComponentInChildren<Relay1SiteLights>();
-                context.Events.Publish(new RelayRelit(RelaySiteRelayId, false));
-                yield return new WaitForSeconds(settings.Landmarks.RelayLamp.WarmUpSeconds + SettleSeconds);
+                site.Find(RelaySiteFitted).gameObject.SetActive(true);
+                started = Time.time;
+                for (int i = 0; i < RepairStages.Length; i++)
+                {
+                    while (Time.time - started < RepairStageSeconds[i])
+                    {
+                        yield return null;
+                    }
+
+                    context.Events.Publish(new RelayPowerStage(RelaySiteRelayId, RepairStages[i], false));
+                    if (RepairStages[i] == RelayStage.Live)
+                    {
+                        context.Events.Publish(new RelayRelit(RelaySiteRelayId, false));
+                    }
+
+                    yield return new WaitForSeconds(RepairShotLead);
+                    Place(camera, LookPose("relay-beat", near, Vector3.Lerp(spare.position, lamp.transform.position,
+                        RepairLookShare), OpeningFov));
+                    Shoot(camera, $"relay-beat-{i}-{RepairStages[i]}");
+                    Debug.Log($"[relay-beat] {RepairStages[i]}: lamp {lamp.Level:F2}, dish {lights.DishAligned:F2}");
+                }
+
+                yield return new WaitForSeconds(SettleSeconds);
                 Assert.IsTrue(lights.Relit, "the site shows the relay relit");
+                Assert.AreEqual(1f, lights.DishAligned, 1e-4f, "the dish has turned to the Peak and settled");
                 Assert.AreEqual(settings.Landmarks.RelayLamp.RelitLevel, lamp.Level, 1e-4f, "the lamp holds steady");
                 Place(camera, LookPose("relay-site-15m-after", near, spare.position, OpeningFov));
                 Shoot(camera, "relay-site-15m-after");

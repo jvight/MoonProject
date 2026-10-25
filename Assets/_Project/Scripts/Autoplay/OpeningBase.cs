@@ -974,7 +974,8 @@ namespace MoonProject.Autoplay
             yield return _bot.DriveTo(Flat(relay.SocketPoint), RelayArrive, "relay.1's feed socket", DriveSeconds);
             yield return _bot.Until(() => G.Hints.TryGet(InteractionKind.Install, out _), FollowSeconds,
                 "the feed socket to offer the spare (Fit)");
-            yield return _bot.Hold(Key.E, () => relay.Fitted, FollowSeconds, "E to fit the spare: relay.1 lit");
+            yield return _bot.Hold(Key.E, () => relay.Fitted, FollowSeconds, "E to fit the spare");
+            yield return _bot.Until(() => relay.Lit, FollowSeconds, "relay.1 to finish powering up (about 5 s)");
             BatteryModel battery = G.Battery.Model;
             yield return _bot.DriveTo(Flat(relay.PadPoint), ApproachThrottleRadius, "relay.1's contact pad",
                 DriveSeconds);
