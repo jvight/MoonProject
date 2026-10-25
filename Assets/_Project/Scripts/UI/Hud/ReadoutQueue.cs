@@ -25,19 +25,37 @@ namespace MoonProject.UI
         /// A piece of a structure's scan set is done: its blueprint's progress (<c>Solar Array · blueprint 1/3</c>).
         /// </summary>
         ScanSet = 6,
+
+        /// <summary>
+        /// A maker scan with no card of its own: only its maker bar (<c>KESSLER–ARAI █░ · next: SSR-3 Headlamp</c>).
+        /// </summary>
+        Maker = 7,
     }
 
     /// <summary>One card the readout is asked to show.</summary>
     internal readonly struct ReadoutRequest
     {
         public ReadoutRequest(ReadoutKind kind, RoverSystem system = RoverSystem.Wheels, string textKey = null,
-            int step = 0, int of = 0)
+            int step = 0, int of = 0, string makerLine = null)
         {
             Kind = kind;
             System = system;
             TextKey = textKey ?? string.Empty;
             Step = step;
             Of = of;
+            MakerLine = makerLine ?? string.Empty;
+        }
+
+        /// <summary>The maker bar the scan of this card earned, shown as its last line; empty for none.</summary>
+        public string MakerLine { get; }
+
+        /// <summary>True for a card a maker bar may ride on: the scan's own card.</summary>
+        public bool TakesMakerLine => Kind == ReadoutKind.Story || Kind == ReadoutKind.ScanSet;
+
+        /// <summary>This card with <paramref name="line"/> as its maker bar.</summary>
+        public ReadoutRequest WithMakerLine(string line)
+        {
+            return new ReadoutRequest(Kind, System, TextKey, Step, Of, line);
         }
 
         public ReadoutKind Kind { get; }
@@ -140,6 +158,32 @@ namespace MoonProject.UI
             _pending.Add(request);
 
             return false;
+        }
+
+        /// <summary>
+        /// Puts <paramref name="line"/> on the newest scan card (the one asked for last, waiting or on the screen):
+        /// returns <see cref="MakerAttach.Shown"/> when it landed on the card on the screen (the caller rewrites it),
+        /// <see cref="MakerAttach.Waiting"/> when on a card still waiting, <see cref="MakerAttach.None"/> when there is
+        /// no scan card to carry it.
+        /// </summary>
+        public MakerAttach AttachMakerLine(string line)
+        {
+            for (int i = _pending.Count - 1; i >= 0; i--)
+            {
+                if (_pending[i].TakesMakerLine)
+                {
+                    _pending[i] = _pending[i].WithMakerLine(line);
+                    return MakerAttach.Waiting;
+                }
+            }
+
+            if (_phase == Phase.Showing && Current.TakesMakerLine)
+            {
+                Current = Current.WithMakerLine(line);
+                return MakerAttach.Shown;
+            }
+
+            return MakerAttach.None;
         }
 
         /// <summary>

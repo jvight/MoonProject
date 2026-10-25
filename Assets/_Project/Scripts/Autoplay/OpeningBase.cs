@@ -611,7 +611,7 @@ namespace MoonProject.Autoplay
         }
 
         /// <summary>
-        /// Like a player who reads "Battery low. Return to your pad.": when the cells fall to <paramref name="below"/>
+        /// Like a player who reads "Battery low. Head back to a pad": when the cells fall to <paramref name="below"/>
         /// and a pad stands, drive back and charge before going on (the routes round the props are longer than a
         /// straight line). A long trip asks for more cells than the default.
         /// </summary>

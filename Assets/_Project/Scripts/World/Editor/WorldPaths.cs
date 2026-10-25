@@ -70,6 +70,16 @@ namespace MoonProject.World.Editor
         /// <summary>R1 basalt rocks used as boulders: 5 weathered lunar breccia and basalt boulder shapes.</summary>
         public static readonly string[] BoulderRocks = { "Rock_05", "Rock_06", "Rock_07", "Rock_08", "Rock_09" };
 
+        /// <summary>Art's rim talus kit, small to large.</summary>
+        public static readonly string[] TalusRocks =
+        {
+            "RimTalus_00", "RimTalus_01", "RimTalus_02", "RimTalus_03", "RimTalus_04", "RimTalus_05", "RimTalus_06",
+            "RimTalus_07",
+        };
+
+        /// <summary>The rim talus's material.</summary>
+        public const string RimTalusMaterial = "Assets/_Project/Generated/Art/R1/Materials/R1_RimTalus.mat";
+
         /// <summary>Art's warm light-decal disc (1 m radius, additive) for the disc light pools.</summary>
         public const string LightPoolPrefab = "Assets/_Project/Generated/Art/Props/LightPool.prefab";
 

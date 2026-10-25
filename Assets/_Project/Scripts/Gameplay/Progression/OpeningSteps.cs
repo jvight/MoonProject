@@ -24,16 +24,13 @@ namespace MoonProject.Gameplay
         /// <summary>R8: transmit from the mast until relay.1 answers.</summary>
         public const int Transmit = 11;
 
-        /// <summary>R9 to R10: drive to relay.1 until its spare is fitted and it is lit.</summary>
+        /// <summary>
+        /// R9 to R10, the last step: drive to relay.1 until its spare is fitted and it is lit (opening-v3-payoff-audit
+        /// §4: the opening ends there; 06 and the headlamp are a pull off the spine, with no line).
+        /// </summary>
         public const int GoToRelay = 12;
 
-        /// <summary>5.2: drive to 06 at relay.2 and scan it, until Kessler–Arai understanding unlocks the headlamp.</summary>
-        public const int ScanElder06 = 13;
-
-        /// <summary>5.2: assemble the SSR-3 headlamp at the rack until its bay is filled.</summary>
-        public const int AssembleHeadlamp = 14;
-
         /// <summary>The number of steps; the index once the opening is over.</summary>
-        public const int Count = 15;
+        public const int Count = 13;
     }
 }

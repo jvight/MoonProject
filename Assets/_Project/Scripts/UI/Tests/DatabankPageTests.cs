@@ -205,7 +205,7 @@ namespace MoonProject.UI.Tests
                 "a whole entry has no set line");
             Assert.AreEqual("Added to databank: Solar Array", text.Toast(array));
             _localization.SetLanguage("vi");
-            Assert.AreEqual("Đã thêm vào dữ liệu: Giàn pin mặt trời", text.Toast(array));
+            Assert.AreEqual("Đã thêm vào dữ liệu: Dàn pin mặt trời", text.Toast(array));
         }
 
         private static DatabankEntryInfo Entry(string id, DatabankCategory category, DatabankEra era,

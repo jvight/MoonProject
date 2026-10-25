@@ -765,6 +765,70 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator AMakerScan_PutsItsBarOnItsOwnCard_AndTheUnlockingScanShowsTheBlueprintCardAtOnce()
+        {
+            Boot();
+            _rig.Tune("_guidance._storyHoldSeconds", 1.5f);
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            ReadoutView readout = _rig.Ui.Readout;
+            string bar = string.Format(Text(UiKeys.MakerBar), Text("db.maker.kessler_arai"), "█░",
+                Text("adapted.ssr3_lamp.name"));
+
+            Events.Publish(new UnderstandingGained(DatabankMaker.KesslerArai, 1, 0, 2, string.Empty,
+                "adapted.ssr3_lamp", true));
+            Events.Publish(new StoryScanned("trickle_post", "story.airlock_panel", Vector3.zero));
+            yield return Seconds(_rig.Tuning.Guidance.Readout.FadeIn + 0.4f);
+            Assert.AreEqual(ReadoutKind.Story, readout.Showing, "the scan's own card");
+            Assert.AreEqual(bar, readout.LineText(readout.LineCount - 1), "with the maker bar as its last line");
+            yield return Seconds(_rig.Tuning.Guidance.StoryHoldSeconds + _rig.Tuning.Guidance.Readout.FadeOut + 0.6f);
+
+            Events.Publish(new StoryScanned("elder06", "story.airlock_panel", Vector3.zero));
+            Events.Publish(new UnderstandingGained(DatabankMaker.KesslerArai, 2, 1, 0, "adapted.ssr3_lamp",
+                string.Empty, false));
+            float limit = Time.realtimeSinceStartup + 12f;
+            while (_rig.Ui.UnlockCard.Shown != "adapted.ssr3_lamp" && Time.realtimeSinceStartup < limit)
+            {
+                yield return null;
+            }
+
+            Assert.AreEqual("adapted.ssr3_lamp", _rig.Ui.UnlockCard.Shown, "the headlamp's blueprint card, earned now");
+            Assert.AreEqual(string.Format(Text(UiKeys.BlueprintLearned), Text("adapted.ssr3_lamp.name")),
+                _rig.Ui.Layout.UnlockCard.Q<Label>("unlock-card-verb").text);
+
+            // The scan's own card waits its turn behind the blueprint card, and carries no bar: the last step is the card.
+            limit = Time.realtimeSinceStartup + 20f;
+            while (!(readout.IsVisible && readout.Showing == ReadoutKind.Story) && Time.realtimeSinceStartup < limit)
+            {
+                yield return null;
+            }
+
+            Assert.AreEqual(ReadoutKind.Story, readout.Showing, "06's own card follows the blueprint card");
+            for (int i = 0; i < readout.LineCount; i++)
+            {
+                StringAssert.DoesNotContain("█", readout.LineText(i), "the last step shows no bar");
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator AMakerWithNoNamedNextUnlock_AddsNoBar()
+        {
+            Boot();
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            ReadoutView readout = _rig.Ui.Readout;
+            Events.Publish(new StoryScanned("seismic", "story.airlock_panel", Vector3.zero));
+            Events.Publish(new UnderstandingGained(DatabankMaker.ILC, 1, 0, 3, string.Empty,
+                "adapted.reflector_beacon", true));
+            yield return Seconds(_rig.Tuning.Guidance.Readout.FadeIn + 0.4f);
+            Assert.AreEqual(ReadoutKind.Story, readout.Showing);
+            for (int i = 0; i < readout.LineCount; i++)
+            {
+                StringAssert.DoesNotContain("█", readout.LineText(i), "no bar for an unlock with no name yet");
+            }
+        }
+
+        [UnityTest]
         public IEnumerator Readout_ACutterChangeGetsItsOwnCard_AndOnlyAMilestoneReachedNowShowsTheProtocolLine()
         {
             Boot();

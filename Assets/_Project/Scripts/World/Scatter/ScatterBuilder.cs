@@ -13,7 +13,8 @@ namespace MoonProject.World
     /// (Art/R1/Models/Rocks): every instance copies one indexed source rock, scaled to its size, into one combined
     /// smooth-shaded mesh per terrain chunk and rock class (built in parallel). Pebble chunks are shadowless and
     /// distance-culled by a LODGroup; boulder chunks cast shadows, and every boulder gets a convex MeshCollider on
-    /// <see cref="Layers.Prop"/>. The near-field rubble is not built here: <see cref="RubbleStream"/> streams it in
+    /// <see cref="Layers.Prop"/>. The rim talus (Art's kit, in its own material) is built the same way, its big blocks
+    /// solid. The near-field rubble is not built here: <see cref="RubbleStream"/> streams it in
     /// round the camera.
     /// </summary>
     public sealed class ScatterBuilder
@@ -44,12 +45,15 @@ namespace MoonProject.World
 
         /// <param name="pebbleRocks">Readable source meshes for pebbles (origin at the ground contact point).</param>
         /// <param name="boulderRocks">Readable source meshes for boulders; also used as their convex colliders.</param>
+        /// <param name="talusRocks">Readable source meshes of the rim talus kit, small to large; the big blocks' are
+        /// also their convex colliders.</param>
         public ScatterBuildReport Build(Transform parent, IReadOnlyList<ScatterInstance> instances,
             ScatterSettings settings, float chunkSize, IReadOnlyList<Mesh> pebbleRocks,
-            IReadOnlyList<Mesh> boulderRocks, Material material, HideFlags hideFlags)
+            IReadOnlyList<Mesh> boulderRocks, IReadOnlyList<Mesh> talusRocks, Material material, Material talusMaterial,
+            HideFlags hideFlags)
         {
             if (parent == null || instances == null || settings == null || pebbleRocks == null || boulderRocks == null
-                || material == null)
+                || talusRocks == null || material == null || talusMaterial == null)
             {
                 throw new ArgumentNullException(nameof(parent), "Scatter build inputs must all be provided.");
             }
@@ -57,8 +61,11 @@ namespace MoonProject.World
             var watch = Stopwatch.StartNew();
             RockShape[] pebbleShapes = ReadShapes(pebbleRocks);
             RockShape[] boulderShapes = ReadShapes(boulderRocks);
-            RockShape[][] shapesOf = { pebbleShapes, boulderShapes };
-            float[] chunkOf = { chunkSize, chunkSize };
+            RockShape[] talusShapes = ReadShapes(talusRocks);
+
+            // By ScatterKind; the rubble is streamed round the camera (RubbleStream), never built here.
+            RockShape[][] shapesOf = { pebbleShapes, boulderShapes, Array.Empty<RockShape>(), talusShapes };
+            float[] chunkOf = { chunkSize, chunkSize, chunkSize, chunkSize };
 
             // Group by (class, chunk) in plan order, so every combined mesh is deterministic.
             var groups = new List<ChunkGroup>();
@@ -98,27 +105,27 @@ namespace MoonProject.World
 
             int triangles = 0;
             float tan = Mathf.Tan(ReferenceFieldOfView * 0.5f * Mathf.Deg2Rad);
-            float[] cullOf = { settings.PebbleCullDistance, 0f };
+            float cull = settings.PebbleCullDistance;
             for (int g = 0; g < groups.Count; g++)
             {
                 ChunkGroup group = groups[g];
                 float size = chunkOf[(int)group.Kind];
                 MeshRenderer chunkRenderer = CreateChunk(parent, group, vertices[g], indices[g], bounds[g], size,
-                    material, hideFlags);
+                    group.Kind == ScatterKind.Talus ? talusMaterial : material, hideFlags);
                 triangles += indices[g].Length / 3;
-                if (group.Kind != ScatterKind.Boulder)
+                if (group.Kind == ScatterKind.Pebble)
                 {
                     var lodGroup = chunkRenderer.gameObject.AddComponent<LODGroup>();
                     lodGroup.localReferencePoint = new Vector3(size * 0.5f, 0f, size * 0.5f);
-                    lodGroup.size = PebbleCullScreenHeight * 2f * cullOf[(int)group.Kind] * tan;
+                    lodGroup.size = PebbleCullScreenHeight * 2f * cull * tan;
                     lodGroup.SetLODs(new[] { new LOD(PebbleCullScreenHeight, new Renderer[] { chunkRenderer }) });
                 }
             }
 
             int solidCobbles = AddRockColliders(parent, instances, settings, pebbleShapes, boulderRocks, boulderShapes,
-                hideFlags);
+                talusRocks, talusShapes, hideFlags);
             return new ScatterBuildReport(counts[(int)ScatterKind.Pebble], counts[(int)ScatterKind.Boulder], triangles,
-                groups.Count, watch.Elapsed.TotalMilliseconds, solidCobbles);
+                groups.Count, watch.Elapsed.TotalMilliseconds, solidCobbles, counts[(int)ScatterKind.Talus]);
         }
 
         public void DestroyMeshes()
@@ -268,26 +275,26 @@ namespace MoonProject.World
 
         private static int AddRockColliders(Transform parent, IReadOnlyList<ScatterInstance> instances,
             ScatterSettings settings, RockShape[] pebbleShapes, IReadOnlyList<Mesh> boulderRocks,
-            RockShape[] boulderShapes, HideFlags hideFlags)
+            RockShape[] boulderShapes, IReadOnlyList<Mesh> talusRocks, RockShape[] talusShapes, HideFlags hideFlags)
         {
             var colliders = new GameObject("BoulderColliders") { hideFlags = hideFlags };
             colliders.transform.SetParent(parent, false);
             float cobbleCutoff = settings.CobbleColliderMinSize;
+            float solidTalus = settings.RimTalus.SolidFromSize;
             int solidCobbles = 0;
             foreach (ScatterInstance instance in instances)
             {
                 if (instance.Kind == ScatterKind.Boulder)
                 {
                     int variant = instance.Variant % boulderShapes.Length;
-                    var collider = new GameObject("Boulder") { hideFlags = hideFlags, layer = Layers.Prop };
-                    collider.transform.SetParent(colliders.transform, false);
-                    Vector3 buriedPosition = instance.Position - instance.Normal * instance.BurialDepth;
-                    collider.transform.SetPositionAndRotation(buriedPosition, Orientation(instance));
-                    float baseScale = instance.Size / boulderShapes[variant].HorizontalExtent;
-                    collider.transform.localScale = instance.ScaleAspect * baseScale;
-                    var meshCollider = collider.AddComponent<MeshCollider>();
-                    meshCollider.convex = true;
-                    meshCollider.sharedMesh = boulderRocks[variant];
+                    AddHull(colliders.transform, "Boulder", instance, boulderRocks[variant], boulderShapes[variant],
+                        hideFlags);
+                }
+                else if (instance.Kind == ScatterKind.Talus && instance.Size >= solidTalus)
+                {
+                    int variant = instance.Variant % talusShapes.Length;
+                    AddHull(colliders.transform, "Talus", instance, talusRocks[variant], talusShapes[variant],
+                        hideFlags);
                 }
                 else if (instance.Kind == ScatterKind.Pebble && instance.Size >= cobbleCutoff)
                 {
@@ -308,6 +315,20 @@ namespace MoonProject.World
             }
 
             return solidCobbles;
+        }
+
+        // A rock's own mesh as its convex collider, placed, turned, scaled and buried as the rock is drawn.
+        private static void AddHull(Transform parent, string name, ScatterInstance instance, Mesh mesh,
+            RockShape shape, HideFlags hideFlags)
+        {
+            var collider = new GameObject(name) { hideFlags = hideFlags, layer = Layers.Prop };
+            collider.transform.SetParent(parent, false);
+            Vector3 buriedPosition = instance.Position - instance.Normal * instance.BurialDepth;
+            collider.transform.SetPositionAndRotation(buriedPosition, Orientation(instance));
+            collider.transform.localScale = instance.ScaleAspect * (instance.Size / shape.HorizontalExtent);
+            var meshCollider = collider.AddComponent<MeshCollider>();
+            meshCollider.convex = true;
+            meshCollider.sharedMesh = mesh;
         }
 
         /// <summary>An indexed source rock read once on the main thread.</summary>

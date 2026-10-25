@@ -33,8 +33,7 @@ namespace MoonProject.World
         [Tooltip("Material drawing the terrain (Generated/World/M_Ground.mat, shader MoonProject/World/R1Terrain).")]
         [SerializeField] private Material _groundMaterial;
 
-        [Tooltip("Shared R1 basalt material for the scatter rocks and gate slabs " +
-            "(Generated/Art/R1/Materials/R1_Basalt.mat).")]
+        [Tooltip("Shared R1 basalt material for the scatter rocks (Generated/Art/R1/Materials/R1_Basalt.mat).")]
         [SerializeField] private Material _paletteMaterial;
 
         [Tooltip("R1 rock meshes the pebbles are made of (Art/R1/Models/Rocks, CPU-readable).")]
@@ -42,6 +41,13 @@ namespace MoonProject.World
 
         [Tooltip("R1 rock meshes the boulders are made of; also their convex colliders.")]
         [SerializeField] private Mesh[] _boulderRocks = new Mesh[0];
+
+        [Tooltip("Art's rim talus kit, small to large (Art/R1/Models/Rocks/RimTalus_00..07, CPU-readable); the big " +
+            "blocks' meshes are also their convex colliders.")]
+        [SerializeField] private Mesh[] _talusRocks = new Mesh[0];
+
+        [Tooltip("Material of the rim talus (Generated/Art/R1/Materials/R1_RimTalus.mat).")]
+        [SerializeField] private Material _talusMaterial;
 
         [Tooltip("Material drawing Earth (Generated/World/M_Earth.mat, shader MoonProject/World/LofiEarth).")]
         [SerializeField] private Material _earthMaterial;
@@ -158,6 +164,8 @@ namespace MoonProject.World
             ScatterSettings scatterSettings = _settings.Scatter;
             var planner = new ScatterPlanner(surface, scatterSettings, Anchors);
             Task<List<ScatterInstance>> scatterPlan = Task.Run(planner.Plan);
+            var talusPlanner = new RimTalusPlanner(surface, scatterSettings.RimTalus, Anchors, TalusPieces());
+            Task<List<ScatterInstance>> talusPlan = Task.Run(talusPlanner.Plan);
             WorldAtmosphere.Apply(_settings.Atmosphere, _settings.Sky, _earthlight, _fillLight);
             SkyShaderGlobals.Apply(_settings.Sky);
             BlastZoneShaderGlobals.Apply(surface.Shaping.Blast);
@@ -174,8 +182,10 @@ namespace MoonProject.World
             var aprons = new List<RubbleApron>();
             planner.CollectRubbleAprons(scatterInstances, aprons);
             AddHomeApronStones(scatterInstances, surface);
-            LastScatter = _scatterBuilder.Build(_generatedRoot.transform, scatterInstances,
-                scatterSettings, _settings.Mesh.ChunkSize, _pebbleRocks, _boulderRocks, _paletteMaterial, hideFlags);
+            scatterInstances.AddRange(talusPlan.GetAwaiter().GetResult());
+            LastScatter = _scatterBuilder.Build(_generatedRoot.transform, scatterInstances, scatterSettings,
+                _settings.Mesh.ChunkSize, _pebbleRocks, _boulderRocks, _talusRocks, _paletteMaterial, _talusMaterial,
+                hideFlags);
             if (Application.isPlaying)
             {
                 StartRubble(planner, aprons, surface, hideFlags);
@@ -514,6 +524,19 @@ namespace MoonProject.World
             return problem == null;
         }
 
+        // Each talus piece's horizontal extent and height, read from its mesh as the scatter builder reads it.
+        private Vector2[] TalusPieces()
+        {
+            var pieces = new Vector2[_talusRocks.Length];
+            for (int i = 0; i < pieces.Length; i++)
+            {
+                Vector3 size = _talusRocks[i].bounds.size;
+                pieces[i] = new Vector2(Mathf.Max(size.x, size.z), size.y);
+            }
+
+            return pieces;
+        }
+
         private string SetupProblem()
         {
             if (_settings == null)
@@ -522,12 +545,13 @@ namespace MoonProject.World
             }
 
             if (_groundMaterial == null || _paletteMaterial == null || _earthMaterial == null
-                || _groundMarkMaterial == null)
+                || _groundMarkMaterial == null || _talusMaterial == null)
             {
-                return "Ground, Palette, Earth and Ground Mark materials must be assigned.";
+                return "Ground, Palette, Earth, Ground Mark and Talus materials must be assigned.";
             }
 
-            string rocks = RockProblem(_pebbleRocks, "Pebble Rocks") ?? RockProblem(_boulderRocks, "Boulder Rocks");
+            string rocks = RockProblem(_pebbleRocks, "Pebble Rocks") ?? RockProblem(_boulderRocks, "Boulder Rocks")
+                ?? RockProblem(_talusRocks, "Talus Rocks");
             if (rocks != null)
             {
                 return rocks;

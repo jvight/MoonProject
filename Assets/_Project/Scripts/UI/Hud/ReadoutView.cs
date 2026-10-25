@@ -30,6 +30,7 @@ namespace MoonProject.UI
         private readonly ReadoutContent _content = new ReadoutContent();
         private readonly Reveal _reveal;
         private readonly Label[] _lines = new Label[ReadoutContent.MaxLines];
+        private string _heldMakerLine;
         private readonly float[] _flash = new float[ReadoutContent.MaxLines];
         private int _reservePercent;
 
@@ -117,6 +118,16 @@ namespace MoonProject.UI
             ShowSystem(system);
         }
 
+        /// <summary>
+        /// A maker scan earned <paramref name="line"/> (its maker bar): it rides on that scan's own card, whichever of
+        /// the two events came first in the frame, so it is placed on the next step; with no scan card to carry it, it
+        /// shows on a short card of its own.
+        /// </summary>
+        public void MakerStep(string line)
+        {
+            _heldMakerLine = line;
+        }
+
         /// <summary>A first-use chip wants the slot: any system card yields to it (<see cref="ReadoutQueue.YieldSystemCards"/>).</summary>
         public void YieldSystemCards()
         {
@@ -133,6 +144,7 @@ namespace MoonProject.UI
         /// <param name="allowed">The guidance slot lets a card show now.</param>
         public void Tick(float deltaTime, bool allowed)
         {
+            PlaceMakerLine();
             if (_queue.Tick(deltaTime, allowed, _reveal.IsHidden))
             {
                 Write(_queue.Current);
@@ -163,6 +175,26 @@ namespace MoonProject.UI
             if (_queue.Current.Kind != ReadoutKind.None)
             {
                 Write(_queue.Current);
+            }
+        }
+
+        private void PlaceMakerLine()
+        {
+            if (_heldMakerLine == null)
+            {
+                return;
+            }
+
+            string line = _heldMakerLine;
+            _heldMakerLine = null;
+            switch (_queue.AttachMakerLine(line))
+            {
+                case MakerAttach.Shown:
+                    Write(_queue.Current);
+                    break;
+                case MakerAttach.None:
+                    _queue.Offer(new ReadoutRequest(ReadoutKind.Maker, makerLine: line));
+                    break;
             }
         }
 
@@ -198,6 +230,14 @@ namespace MoonProject.UI
                 case ReadoutKind.ScanSet:
                     _text.ScanSet(_content, request.TextKey, request.Step, request.Of);
                     break;
+                case ReadoutKind.Maker:
+                    _content.Clear();
+                    break;
+            }
+
+            if (request.MakerLine.Length > 0)
+            {
+                _content.Add(request.MakerLine, ReadoutLineStyle.Plain);
             }
 
             for (int i = 0; i < _lines.Length; i++)
