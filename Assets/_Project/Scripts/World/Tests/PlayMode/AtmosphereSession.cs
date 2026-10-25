@@ -110,6 +110,7 @@ namespace MoonProject.World.PlayModeTests
         private const float GateRockfallAhead = 17f;
         private const float GateSlotLookIn = 16f;
         private const float GateZoomFov = 12f;
+        private const float GateLineStandOff = 6f;
 
         // The beats where the world should lead: where the naive bot's 07 stands as each step begins (n0ac9ae9ec's
         // log), the targets, the habitat's module brought home before nightfall, the bot's screen and the dusk's lead.
@@ -1459,6 +1460,13 @@ namespace MoonProject.World.PlayModeTests
             Vector3 hut = Anchor(anchors, WorldAnchorIds.RelayPrefix + 2).Position + Vector3.up * GateRelayEyeHeight;
             Vector3 slotEye = slotMouth.Position - slotMouth.Forward * GateSlotStandOff + Vector3.up * GateSlotEyeHeight;
 
+            // relay.2's power line as 07 follows it: from beside the hut toward the slot, and at the slot's mouth.
+            Vector3 hutGround = Anchor(anchors, WorldAnchorIds.RelayPrefix + 2).Position;
+            Vector3 towardSlot = Vector3.ProjectOnPlane(slotMouth.Position - hutGround, Vector3.up).normalized;
+            Vector3 lineEye = hutGround + towardSlot * GateLineStandOff + Vector3.up * GateSlotEyeHeight;
+            Vector3 mouthEye = slotMouth.Position - slotMouth.Forward * GateLineStandOff
+                + Vector3.up * GateSlotEyeHeight;
+
             Camera view = context.Get<IViewCamera>().Camera;
             var host = new GameObject("GatesCamera");
             try
@@ -1494,6 +1502,8 @@ namespace MoonProject.World.PlayModeTests
                 ShootAt(camera, "gates-relay1-rille-night", relay1, mare, OpeningFov);
                 ShootAt(camera, "gates-slot-night", slotEye, slotLook, OpeningFov);
                 ShootAt(camera, "gates-slot-from-hut-night", hut, slotLook, OpeningFov);
+                ShootAt(camera, "why-line-from-hut-night", lineEye, slotMouth.Position, OpeningFov);
+                ShootAt(camera, "why-line-at-mouth-night", mouthEye, slotLook, OpeningFov);
                 ShootAt(camera, "gates-base-rockfall-night", apron, rockfall, OpeningFov);
             }
             finally
