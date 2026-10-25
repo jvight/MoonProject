@@ -381,7 +381,6 @@ namespace MoonProject.Gameplay
                 _relaySpare.gameObject, _relayFitted.gameObject);
             _battery.ConnectRelay(Relay);
             Opening.ConnectRelay(Relay);
-            Opening.ConnectHeadlamp(Understanding, Rack);
             Recovery = new RecoveryProgress(context.Events, PowerLamps, PowerSteps, _openingTuning.RecoveryLamps);
             Call = new CallProgress(context.Events, _openingTuning.Call, services.Layout);
             MastRaise = new MastRaise(context.Events, _openingTuning.MastRaise);
