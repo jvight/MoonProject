@@ -167,8 +167,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsFalse(_dusk[0].Restored);
             Assert.AreEqual(OpeningKeys.ScanModule, opening.Flow.Current, "night is coming: the power module");
 
-            Build(StructureIds.BatteryBank, apron + new Vector3(-6f, 0f, 0f));
             yield return PlaceAt(GameplayFixture.SeismicStation);
+            Build(StructureIds.BatteryBank, apron + new Vector3(-6f, 0f, 0f));
             yield return Waits.Until(() => opening.NightReady, 3f);
             Assert.AreEqual(OpeningKeys.DockForNight, opening.Flow.Current, "night-ready off the pad: dock for the night");
             Assert.IsFalse(Reached(OpeningMilestone.NightReady), "the night waits for the dock");

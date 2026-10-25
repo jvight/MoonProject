@@ -1011,8 +1011,14 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return DriveTo(Flat(pad), 0.5f, "the pad", ApproachThrottle);
             yield return UntilReached(OpeningMilestone.NightReady, "docked on the night-ready base: the nightfall begins");
             Assert.IsTrue(_gameplay.DayEnd.Keep, "the pad keeps 07 through the nightfall");
-            yield return Until(() => sunlight.Phase == SkyPhase.Earthlit, SunsetTimeout, "the first night falls");
-            Assert.IsTrue(_gameplay.PadLock.Docked, "the night fell with 07 on the pad");
+            bool leftEarly = false;
+            yield return Until(() =>
+            {
+                bool fallen = sunlight.Phase == SkyPhase.Earthlit;
+                leftEarly |= !fallen && !_gameplay.PadLock.Docked;
+                return fallen;
+            }, SunsetTimeout, "the first night falls");
+            Assert.IsFalse(leftEarly, "the night fell with 07 on the pad");
             BatteryModel battery = _gameplay.Battery.Model;
             yield return Until(() => !_gameplay.DayEnd.Keep, battery.Cells * 6f, "the pad lets 07 go, full");
             Assert.IsTrue(battery.CellsFull, "07 leaves the night's dock full");
