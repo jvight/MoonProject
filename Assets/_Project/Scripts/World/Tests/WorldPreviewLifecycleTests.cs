@@ -97,6 +97,9 @@ namespace MoonProject.World.Tests
             serialized.FindProperty("_peakBeacon").objectReferenceValue = CreateBeaconHost(BeaconName);
             AssignRocks(serialized.FindProperty("_pebbleRocks"), WorldPaths.PebbleRocks);
             AssignRocks(serialized.FindProperty("_boulderRocks"), WorldPaths.BoulderRocks);
+            AssignRocks(serialized.FindProperty("_talusRocks"), WorldPaths.TalusRocks);
+            serialized.FindProperty("_talusMaterial").objectReferenceValue =
+                Load<Material>(WorldPaths.RimTalusMaterial);
             serialized.ApplyModifiedPropertiesWithoutUndo();
             host.SetActive(true);
         }
