@@ -65,6 +65,12 @@ namespace MoonProject.Autoplay
             "a player sees the chip, holds E and nothing happens, with no cue that letting go would help.";
 
         private readonly AutoplayBot _bot;
+        /// <summary>The opening ends here: Relay 1 relit and the ring grown (payoff audit section 4).</summary>
+        private const string OpeningEndBeat = "R10";
+
+        /// <summary>Beats of hour two: they run only when a run asks to stop at one of them.</summary>
+        private static readonly string[] HourTwoBeats = { "R11", "R12" };
+
         private readonly string _untilBeat;
         private bool _awoke;
         private OpeningBase _base;
@@ -75,14 +81,18 @@ namespace MoonProject.Autoplay
         private readonly NaiveGuard _naive;
         private readonly bool _pointer;
 
+        /// <summary>True when the run goes on past the opening's end into hour two (it was asked to stop at R11 or R12).</summary>
+        private readonly bool _hourTwo;
+
         public OpeningScenario(AutoplayBot bot, string untilBeat, bool linesExpected, NaiveGuard naive = null,
             bool pointer = false)
         {
             _pointer = pointer;
             _naive = naive;
-            DeclareNextActions();
             _bot = bot;
             _untilBeat = untilBeat;
+            _hourTwo = Array.Exists(HourTwoBeats, beat => string.Equals(beat, untilBeat, StringComparison.OrdinalIgnoreCase));
+            DeclareNextActions();
             _linesExpected = linesExpected;
         }
 
@@ -98,7 +108,7 @@ namespace MoonProject.Autoplay
                          KesslerArai, Headlamp,
                      })
             {
-                if (_bot.Failed || Reached(_lastBeat))
+                if (_bot.Failed || Reached(_lastBeat) || (!_hourTwo && _lastBeat == OpeningEndBeat))
                 {
                     break;
                 }
@@ -159,7 +169,15 @@ namespace MoonProject.Autoplay
             _naive.Declare("B11", new NextAction("E", new[] { "hint.transmit" }, new[] { "transmit", "answer" },
                 new[] { "foot", "TX" }));
             _naive.Declare("B12", new NextAction("WASD", new[] { drive }, new[] { "relay", "west" }, new[] { "relay" }));
-            _naive.Declare("R10", new NextAction("WASD", new[] { drive }, new[] { "06", "relay.2", "scan" }, null));
+            if (_hourTwo)
+            {
+                _naive.Declare("R10", new NextAction("WASD", new[] { drive }, new[] { "06", "relay.2", "scan" }, null));
+            }
+            else
+            {
+                _naive.Skip("R10");
+            }
+
             _naive.Declare("R11a", new NextAction("E", new[] { "hint.salvage" }, new[] { "cut", "crate", "headlamp" },
                 null));
             _naive.Declare("R11", new NextAction("WASD", new[] { drive }, new[] { "pad", "park" }, null));
