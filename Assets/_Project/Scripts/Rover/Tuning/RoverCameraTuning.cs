@@ -794,6 +794,28 @@ namespace MoonProject.Rover
         [Range(0.15f, 2f)]
         [SerializeField] private float _faceInspectOpenSeconds = 1.2f;
 
+        [Tooltip("Closing the screen: seconds the camera stays on 07's face while the CRT powers off, before the view dips " +
+                 "to dark.")]
+        [Range(0f, 1.5f)]
+        [SerializeField] private float _faceCloseHoldSeconds = 0.55f;
+
+        [Tooltip("Seconds the view takes to go dark; the camera is put back on the chase pose at full dark.")]
+        [Range(0.05f, 0.6f)]
+        [SerializeField] private float _faceCloseDipOutSeconds = 0.14f;
+
+        [Tooltip("Seconds the view takes to come back up on the chase pose.")]
+        [Range(0.05f, 0.8f)]
+        [SerializeField] private float _faceCloseDipInSeconds = 0.22f;
+
+        [Tooltip("Exposure (EV) at full dark: far enough down that nothing of the camera's move shows.")]
+        [Range(-20f, -4f)]
+        [SerializeField] private float _faceCloseDarkExposure = -10f;
+
+        [Tooltip("Face-screen weight at or above which closing dips to dark; a screen closed while it is still opening " +
+                 "just eases back.")]
+        [Range(0.1f, 1f)]
+        [SerializeField] private float _faceCloseDipMinWeight = 0.5f;
+
         [Tooltip("Seconds the camera takes to ease back to the chase camera when closing the screen UI.")]
         [Range(0.15f, 2f)]
         [SerializeField] private float _faceInspectCloseSeconds = 1.1f;
@@ -1248,6 +1270,16 @@ namespace MoonProject.Rover
         public float FaceInspectSettleSpeed => _faceInspectSettleSpeed;
 
         public float FaceInspectCloseSeconds => _faceInspectCloseSeconds;
+
+        public float FaceCloseHoldSeconds => _faceCloseHoldSeconds;
+
+        public float FaceCloseDipOutSeconds => _faceCloseDipOutSeconds;
+
+        public float FaceCloseDipInSeconds => _faceCloseDipInSeconds;
+
+        public float FaceCloseDarkExposure => _faceCloseDarkExposure;
+
+        public float FaceCloseDipMinWeight => _faceCloseDipMinWeight;
 
         public float FaceInspectScreenHeight => _faceInspectScreenHeight;
 
