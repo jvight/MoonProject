@@ -32,6 +32,12 @@ namespace MoonProject.Gameplay
                  "one thing scanned twice.")]
         [Range(0.2f, 3f)] [SerializeField] private float _storySpacing = 0.75f;
 
+        [Tooltip("Metres from a free read within which 07, slow and facing it, reads it (no scan verb).")]
+        [Range(1f, 12f)] [SerializeField] private float _freeReadReach = 6f;
+
+        [Tooltip("Seconds 07 stands facing a free read before its text shows: a glance, not a hold.")]
+        [Range(0.1f, 3f)] [SerializeField] private float _freeReadSeconds = 0.8f;
+
         [Tooltip("Degrees off 07's view a fragment may lie and still be the one it looks at.")]
         [Range(5f, 90f)] [SerializeField] private float _cone = 25f;
 
@@ -239,7 +245,7 @@ namespace MoonProject.Gameplay
         [SerializeField] private StoryScan[] _stories =
         {
             new StoryScan("airlock", "HabitatModules", "AirlockReadout", "story.airlock_panel", ScanSize.Small,
-                Vector3.zero),
+                Vector3.zero, true),
             new StoryScan("scout3", "Prop_OldLander", "Spaceframe", "scan.scout3.manifest", ScanSize.Medium,
                 Vector3.zero),
             new StoryScan("seismic", "Prop_SeismicStation", "CentralBox", "db.seismic_station.readout",
@@ -273,6 +279,8 @@ namespace MoonProject.Gameplay
         public MakerUnderstandingSettings Understanding => _understanding;
         public float Reach => _reach;
         public float StorySpacing => _storySpacing;
+        public float FreeReadReach => _freeReadReach;
+        public float FreeReadSeconds => _freeReadSeconds;
         public float Cone => _cone;
         public float LookStickiness => _lookStickiness;
         public float DistanceWeight => _distanceWeight;
