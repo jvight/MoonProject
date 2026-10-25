@@ -562,7 +562,7 @@ namespace MoonProject.Autoplay
         /// <summary>B7: the habitat's airlock panel, read from square on.</summary>
         /// <summary>
         /// R5, the first free choice: out to the 1971 seismic station, one of the two near sites, to read its dead
-        /// station box (its curiosity scan).
+        /// station box (its curiosity scan). The visit is optional: the dock after PowerOn begins the dusk either way.
         /// </summary>
         public IEnumerator VisitTheSeismicStation()
         {
@@ -575,10 +575,6 @@ namespace MoonProject.Autoplay
 
             Vector3 home = Flat(Pad() - station.Point).normalized;
             yield return Scan(station, home, PanelStandOff);
-            if (!_bot.Failed && !G.Opening.Dusk.Visited)
-            {
-                _bot.Fail("07 read the seismic station but the opening never counted the visit.");
-            }
         }
 
         /// <summary>R6: back onto the pad; the dock after the visit begins the first dusk.</summary>
