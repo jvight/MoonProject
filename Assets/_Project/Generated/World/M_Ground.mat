@@ -50,7 +50,6 @@ Material:
     m_Ints: []
     m_Floats:
     - _DetailAlbedoStrength: 0.36
-    - _LegacyBandedRim: 0
     - _MacroBumpScale: 0.5
     - _MacroTiling: 0.16
     - _NearBumpScale: 0.78
