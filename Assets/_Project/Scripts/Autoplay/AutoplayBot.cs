@@ -57,6 +57,8 @@ namespace MoonProject.Autoplay
         private readonly System.Collections.Generic.List<Vector2> _stuckAt = new System.Collections.Generic.List<Vector2>();
         private bool _replan;
         private bool _mayReplan;
+        private readonly BeatTrip _trip = new BeatTrip();
+        private bool _tripCounted;
         private Func<bool> _inReach;
         private string _beatId;
         private string _beatTitle;
@@ -109,7 +111,22 @@ namespace MoonProject.Autoplay
             _beatTitle = title;
             _beatStart = Time.unscaledTime;
             _warnings.Clear();
+            _tripCounted = _world.Refresh();
+            if (_tripCounted)
+            {
+                _trip.Begin(_world.Gameplay.Battery.Model.Charge01, _world.Rover.Position);
+            }
+
             Activity = id + " " + title;
+        }
+
+        /// <summary>Counts this frame's cells and distance into the current beat; called once a frame.</summary>
+        public void SampleTrip()
+        {
+            if (_tripCounted && _world.Refresh())
+            {
+                _trip.Step(_world.Gameplay.Battery.Model.Charge01, _world.Rover.Position);
+            }
         }
 
         /// <summary>Closes the current beat as passed, or as failed with the run's failure; takes its screenshot.</summary>
@@ -126,7 +143,7 @@ namespace MoonProject.Autoplay
             }
 
             _beats.Add(new BeatResult(_beatId, _beatTitle, passed, note,
-                Time.unscaledTime - _beatStart, objective, chip, sky));
+                Time.unscaledTime - _beatStart, objective, chip, sky, _tripCounted ? _trip : null));
             _screenshot(_beatId + (passed ? "-done" : "-failed"));
         }
 
