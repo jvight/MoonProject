@@ -1,0 +1,86 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: R1_RimTalus
+  m_Shader: {fileID: 4800000, guid: 299163e709bb15d4989f6dd70ac04ab5, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 1
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 2800000, guid: e27890dca5f42c44cb16f34b2b5d2127, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BumpMap:
+        m_Texture: {fileID: 2800000, guid: 618823076462d494a9674706b752040f, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MaskMap:
+        m_Texture: {fileID: 2800000, guid: 20b3741c47ca34c4eaf4e14faed18bc5, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _BloomSafeMax: 1.06
+    - _BuildModeGlow: 0
+    - _BuildPrint: 0
+    - _BuildRevealProgress: 1
+    - _BuildStageHeat: 0
+    - _BumpScale: 1.35
+    - _ColorVarAmount: 0.16
+    - _ColorVarScale: 0.36
+    - _Dissolve: 0
+    - _DistanceFade: 0
+    - _DustAmount: 0.88
+    - _DustOcclusionWeight: 0.28
+    - _DustSharpness: 1.35
+    - _DustSmoothness: 0.05
+    - _DustUpThreshold: -0.12
+    - _EdgeWearAmount: 0.36
+    - _EdgeWearMetallic: 0.02
+    - _EdgeWearSharpness: 1.75
+    - _EdgeWearSmoothness: 0.09
+    - _EdgeWearThreshold: 0.26
+    - _EmissionStrength: 0
+    - _HotCorePeak: 1.65
+    - _HotCoreThreshold: 0.85
+    - _MetallicScale: 0.04
+    - _NearKeep: 1
+    - _OcclusionStrength: 0.88
+    - _ScanProgress: 0
+    - _SmoothnessMax: 0.18
+    - _SmoothnessMin: 0.04
+    - _SmoothnessScale: 1
+    - _SteepRockDarkening: 0.34
+    - _TriplanarMapping: 1
+    - _TriplanarScale: 0.42
+    m_Colors:
+    - _BaseColor: {r: 0.84, g: 0.86, b: 0.89, a: 1}
+    - _BuildBoundsY: {r: 0, g: 2, b: 0, a: 0}
+    - _BuildSeamPointWS: {r: 0, g: 0, b: 0, a: 0.6}
+    - _DistanceFadeRange: {r: 32, g: 40, b: 0, a: 0}
+    - _DustColor: {r: 0.34, g: 0.35, b: 0.38, a: 1}
+    - _EdgeWearColor: {r: 0.38, g: 0.4, b: 0.43, a: 1}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
