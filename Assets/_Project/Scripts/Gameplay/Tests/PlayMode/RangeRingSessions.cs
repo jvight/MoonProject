@@ -97,6 +97,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             System.Array.Sort(timings);
             long fastest = timings[0];
+            Debug.Log($"[range-ring] worked out in {fastest} ms (fastest of {TimedRuns}; slowest {timings[TimedRuns - 1]} ms)");
             Assert.Less(fastest, WorkedOutWithinMilliseconds,
                 $"working the ring out took {fastest} ms (fastest of {TimedRuns}): no hitch");
             Assert.IsTrue(ring.IsShown);

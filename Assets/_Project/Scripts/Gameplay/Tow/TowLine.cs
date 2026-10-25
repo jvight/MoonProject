@@ -53,6 +53,9 @@ namespace MoonProject.Gameplay
         /// <summary>Times the winch has lifted the load on the cable free (it caught on the ground).</summary>
         public int Lifts => _snag.Lifts;
 
+        /// <summary>The load on the cable is caught with all the slack out: 07 has to back up to free it.</summary>
+        public bool Snagged => _load != null && _snag.Stuck;
+
         /// <summary>A load the cable may hook; its tow id is its own.</summary>
         internal void Add(ITowable load)
         {
