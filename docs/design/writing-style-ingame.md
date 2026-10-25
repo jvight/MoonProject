@@ -88,7 +88,8 @@ translation, or like a novel.
 | `next.v3.dock_for_dusk` | (sample 7) | Về bệ sạc nghỉ qua đêm | (sample 7) | Dock on the pad for the night |
 | `next.v3.transmit` | Phát sóng từ cột ăng-ten. | Phát sóng từ cột ăng-ten | Transmit from the antenna mast. | Transmit from the antenna mast |
 | `next.v3.visit_site` | (sample 8) | Đã có điện. Ghé trạm địa chấn hoặc khu nhà ở | (sample 8) | Power's on. Visit the seismic station or the habitat |
-| `next.v3.await_night` | Căn cứ đã sẵn sàng cho đêm. | Căn cứ đã sẵn sàng qua đêm | The base is ready for the night. | The base is ready for night |
+| `next.v3.await_night` *(replaced by `next.v3.dock_for_night` in cl-v3-dayend)* | Căn cứ đã sẵn sàng cho đêm. | — | The base is ready for the night. | — |
+| `next.v3.dock_for_night` | — | Căn cứ đã sẵn sàng. Về bệ sạc đón đêm | — | The base is ready. Dock on the pad for nightfall |
 | `next.v3.go_relay` | (sample 4) | Trạm tiếp sóng 1 đang yếu dần. Tới sửa nó | (sample 4) | Relay 1 is fading. Go fix it |
 | `next.v3.scan_elder06` *(removed in S4: 06, the headlamp and the rack are an optional pull)* | (sample 5) | Trạm 2 im lặng. Tìm 06 ở cửa hẻm | (sample 5) | Relay 2 went quiet. Find 06 at the canyon mouth |
 | `next.v3.cut_headlamp_crate` *(removed in S4: 06, the headlamp and the rack are an optional pull)* | Cắt thùng hàng cạnh 06 để lấy linh kiện đèn pha. | Cắt thùng cạnh 06 lấy linh kiện đèn pha | Cut the crate by 06 for the headlamp's parts. | Cut the crate by 06 for headlamp parts |
