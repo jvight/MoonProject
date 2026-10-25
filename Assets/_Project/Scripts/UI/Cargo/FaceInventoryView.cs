@@ -190,6 +190,9 @@ namespace MoonProject.UI
         public int HoldPage => _holdPage;
 
         /// <summary>The page count words on the hold's heading row ("1/2"), empty while the hold fits one page.</summary>
+        /// <summary>Where 07's line drawing stands on the face, in the face panel's own coordinates (tests).</summary>
+        public Rect ArtBound => _art.worldBound;
+
         public string PageText => _page.style.display == DisplayStyle.Flex ? _page.text : string.Empty;
 
         /// <summary>The currently focused or hovered device index (0..3, see <see cref="FaceDevices"/>), or -1.</summary>

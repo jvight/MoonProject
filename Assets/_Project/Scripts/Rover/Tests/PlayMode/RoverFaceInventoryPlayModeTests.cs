@@ -48,6 +48,12 @@ namespace MoonProject.Rover.PlayModeTests
         private const float BodyContrast = 7f;
         private const float MetaContrast = 4.5f;
 
+        // Contrast policy (WCAG 2.x): words and icons are text and keep the floors above. 07's line drawing on the face
+        // is a graphic, not text: WCAG 1.4.11 asks 3:1 of it; it is held to 3.5:1, a margin over that and over its
+        // thinnest strokes with SMAA on (3.75:1 at golden hour). A stroke inside the drawing's rectangle that is not at
+        // body level is judged as the drawing; body-level strokes (words, icons, the accent) are text wherever they are.
+        private const float ArtContrast = 3.5f;
+
         private static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "captures"));
         private static readonly string R2CaptureFolder =
@@ -962,6 +968,8 @@ namespace MoonProject.Rover.PlayModeTests
                 var bgLuminances = new List<float>(8192);
                 var strokeCheckCoords = new List<Vector2Int>(1024);
                 var strokeIsBody = new List<bool>(1024);
+                var strokeIsArt = new List<bool>(1024);
+                Rect artBound = _uiSystem.Cargo.View.ArtBound;
                 float maxBgSat = 0f;
                 float sumBgR = 0f;
                 float sumBgG = 0f;
@@ -1026,7 +1034,9 @@ namespace MoonProject.Rover.PlayModeTests
                             {
                                 strokeCheckCoords.Add(new Vector2Int(x, y));
                                 Color core = uiPixels[uiY * uiW + uiX];
-                                strokeIsBody.Add(Mathf.Max(core.r, Mathf.Max(core.g, core.b)) >= BodyStrokeLevel);
+                                bool body = Mathf.Max(core.r, Mathf.Max(core.g, core.b)) >= BodyStrokeLevel;
+                                strokeIsBody.Add(body);
+                                strokeIsArt.Add(!body && artBound.Contains(new Vector2(panelPos.x, panelSize.y - panelPos.y)));
                             }
                         }
                     }
@@ -1070,11 +1080,12 @@ namespace MoonProject.Rover.PlayModeTests
                     float fgLum = MaxCaptureLuminanceInWindow(capturePixels, width, height, pt.x, pt.y, 2);
                     float localBgLum = MinCaptureLuminanceInWindow(capturePixels, width, height, pt.x, pt.y, 14, medianBgLum);
                     float contrast = ContrastRatio(fgLum, localBgLum);
-                    float floor = strokeIsBody[i] ? BodyContrast : MetaContrast;
+                    float floor = strokeIsBody[i] ? BodyContrast : strokeIsArt[i] ? ArtContrast : MetaContrast;
+                    string kind = strokeIsBody[i] ? "Body" : strokeIsArt[i] ? "Art" : "Meta";
                     Assert.GreaterOrEqual(
                         contrast,
                         floor,
-                        $"[{lightingTag}] {(strokeIsBody[i] ? "Body" : "Meta")} stroke at capture ({pt.x},{pt.y}) must have >= {floor}:1 contrast against local background (got {contrast:F2}:1, fgLum={fgLum:F4}, bgLum={localBgLum:F5}).");
+                        $"[{lightingTag}] {kind} stroke at capture ({pt.x},{pt.y}) must have >= {floor}:1 contrast against local background (got {contrast:F2}:1, fgLum={fgLum:F4}, bgLum={localBgLum:F5}).");
                 }
             }
             finally
