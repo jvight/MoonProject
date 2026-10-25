@@ -30,7 +30,6 @@ MonoBehaviour:
   _duskChargeSemitones: -3
   _duskChargeSeconds: 20
   _chirpVolume: 0.8
-  _chirpUnderRadio: 0.7
   _chirpHoldSeconds: 3
   _countTickInterval: 0.07
   _saveTickInterval: 3

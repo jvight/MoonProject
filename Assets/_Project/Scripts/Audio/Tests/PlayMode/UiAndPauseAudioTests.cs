@@ -144,7 +144,6 @@ namespace MoonProject.Audio.PlayModeTests
         public IEnumerator Pause_DucksTheWorldLoops_KeepsRadioAndAmbience_AndRestoresOnResume()
         {
             _rig.Milestone(OpeningMilestone.PowerOn, true);
-            _rig.RequestMusic();
             _rig.Wake(true);
             _rig.Rover.NormalizedSpeed = 0.8f;
             _rig.Rover.DriveInput = new Vector2(0f, 1f);
@@ -153,11 +152,11 @@ namespace MoonProject.Audio.PlayModeTests
             AudioSource hum = _rig.RoverAudio.HumSource;
             AudioSource crunch = AudioTestRig.FindChildSource(_rig.RoverAudio.transform, "DustCrunch");
             AudioSource ambience = AudioTestRig.FindChildSource(_rig.Ambience.transform, "AmbienceLoop");
-            AudioLowPassFilter radioFilter = _rig.Radio.GetComponentInChildren<AudioLowPassFilter>();
+            AudioSource radioStatic = AudioTestRig.FindChildSource(_rig.Radio.transform, "Static");
             Assert.Greater(hum.volume, 0f);
             Assert.Greater(crunch.volume, 0f);
-            float music = LoudestDeckVolume();
-            Assert.Greater(radioFilter.cutoffFrequency, 20000f);
+            float hiss = radioStatic.volume;
+            Assert.Greater(hiss, 0f);
 
             _rig.Events.Publish(new PauseChanged(true));
             Time.timeScale = 0f;
@@ -166,9 +165,10 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.IsTrue(_rig.Director.IsPaused);
             Assert.AreEqual(0f, hum.volume, 1e-4f, "the frozen motor hum is ducked away");
             Assert.AreEqual(0f, crunch.volume, 1e-4f);
-            Assert.IsTrue(_rig.Radio.MusicStarted, "the radio keeps playing");
-            Assert.Less(radioFilter.cutoffFrequency, 8000f, "warmer, as if listening in the cabin");
-            Assert.Less(LoudestDeckVolume(), music, "the radio steps back under the pause menu");
+            Assert.IsTrue(radioStatic.isPlaying, "the radio keeps hissing");
+            float pausedHiss = radioStatic.volume;
+            Assert.Greater(pausedHiss, 0f);
+            Assert.Less(pausedHiss, hiss, "the radio steps back under the pause menu, as if in the cabin");
             Assert.IsTrue(ambience.isPlaying);
             Assert.Greater(ambience.volume, 0f);
 
@@ -181,14 +181,13 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.IsFalse(_rig.Director.IsPaused);
             Assert.Greater(hum.volume, 0f);
             Assert.Greater(crunch.volume, 0f);
-            Assert.Greater(radioFilter.cutoffFrequency, 20000f);
+            Assert.Greater(radioStatic.volume, pausedHiss);
         }
 
         [UnityTest]
         public IEnumerator RoverFaceCues_And_SkyPhaseTransitions_PlayTheirR1CuesAndCrossfadeAmbience()
         {
             _rig.Milestone(OpeningMilestone.PowerOn, true);
-            _rig.RequestMusic();
             _rig.Wake(true);
             yield return null;
 
@@ -251,11 +250,6 @@ namespace MoonProject.Audio.PlayModeTests
             }
 
             return count;
-        }
-
-        private float LoudestDeckVolume()
-        {
-            return _rig.LoudestDeck().volume;
         }
     }
 }

@@ -41,7 +41,7 @@ namespace MoonProject.Audio
         [Tooltip("UI touches (menus, focus, sliders, cards, prompts, hold-to-buy).")]
         [SerializeField] private UiAudio _ui;
 
-        [Tooltip("The radio: the signal hiss, then the playlist once the base powers on.")]
+        [Tooltip("The radio: the signal hiss and static (no music in-game).")]
         [SerializeField] private RadioStation _radio;
 
 
@@ -85,9 +85,6 @@ namespace MoonProject.Audio
         public AudioBusMixer Buses => _buses;
 
         public AudioLibrary Library => _library;
-
-        /// <summary>The base radio (the chirps sit under its music).</summary>
-        internal RadioStation Radio => _radio;
 
         /// <summary>The dedicated title screen theme.</summary>
         internal TitleMusic TitleMusic => _titleMusic;

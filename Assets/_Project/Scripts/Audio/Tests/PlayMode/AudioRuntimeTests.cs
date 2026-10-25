@@ -18,17 +18,11 @@ namespace MoonProject.Audio.PlayModeTests
         {
             _rig = new AudioTestRig();
             yield return null;
-            // A powered base (no hiss still clearing under the clarity these tests measure) and a music moment.
+            // A powered base: no hiss still clearing under the clarity these tests measure.
             _rig.Milestone(OpeningMilestone.PowerOn, true);
-            _rig.RequestMusic();
             _rig.Wake(true);
-            float deadline = Time.realtimeSinceStartup + 3f;
-            while (!_rig.Radio.MusicStarted && Time.realtimeSinceStartup < deadline)
-            {
-                yield return null;
-            }
-
-            Assert.IsTrue(_rig.Radio.MusicStarted, "the radio plays the requested music moment");
+            yield return null;
+            Assert.IsTrue(_rig.Radio.IsOn);
         }
 
         [TearDown]
@@ -116,14 +110,12 @@ namespace MoonProject.Audio.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator Radio_ClosesTheLowPassAndRaisesStatic_AwayFromBase()
+        public IEnumerator Radio_RaisesStatic_AwayFromBase()
         {
-            // Let the wake-up crackle melt away first: the baseline is the settled, clear station.
+            // Let the wake-up crackle melt away first: the baseline is the settled, clear signal.
             yield return new WaitForSecondsRealtime(2f);
-            AudioLowPassFilter filter = _rig.Radio.GetComponentInChildren<AudioLowPassFilter>();
             AudioSource staticLoop = AudioTestRig.FindChildSource(_rig.Radio.transform, "Static");
             Assert.Greater(_rig.Radio.Clarity, 0.99f);
-            Assert.Greater(filter.cutoffFrequency, 20000f);
             float nearStatic = staticLoop.volume;
 
             // Just inside the signal's edge: all static, before the soundscape fades the set out past it.
@@ -131,7 +123,6 @@ namespace MoonProject.Audio.PlayModeTests
             yield return new WaitForSecondsRealtime(4f);
 
             Assert.Less(_rig.Radio.Clarity, 0.05f);
-            Assert.Less(filter.cutoffFrequency, 1200f);
             float edgeStatic = staticLoop.volume;
             Assert.Greater(edgeStatic, nearStatic * 5f);
 
