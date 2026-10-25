@@ -81,7 +81,7 @@ blueprint card follows at once.
 | Kessler–Arai | `KESSLER–ARAI` | `KESSLER–ARAI` | SSR-3 Headlamp → Grip Rings → Third Kit Socket → Cutter Ribs | Đèn pha SSR-3 → Vành bám → Ổ lắp thứ ba → Gân mỏ cắt | the trickle post (1/2), 06 (2/2 → **SSR-3 Headlamp**) |
 | VIS | `VIS` | `VIS` | Crate Rack → Module Storehouse → Tall Pylon → Hangar Module | Giá thùng hàng → Kho mô-đun → Cột điện cao → Mô-đun nhà chứa | the lander (1/4), the fallen array (2/4), the habitat (3/4), the tower (4/4 → **Crate Rack**, near the opening's end) |
 | ILC | `ILC` | `ILC` | Reflector Beacon → Seismic Bell → Survey Stakes | Cột phản quang → Chuông địa chấn → Cọc khảo sát | the airlock read (1/3), the seismic station (2/3), the retroreflector (3/3 → **Reflector Beacon**); the flag counts too |
-| Tycho | `TYCHO` | `TYCHO` | Hex Charge Adapter (key) → Power Bridge → Remote Harvester → Flock Relay Drones | Bộ sạc lục giác → Cầu nối nguồn → Máy thu hoạch từ xa → Đàn drone chuyển tiếp | Kestrel-3 (1/3; the adapter comes from Kestrel's fragment hunt, hour two) |
+| Tycho | `TYCHO` | `TYCHO` | Power Bridge → Remote Harvester → Flock Relay Drones (the Hex Charge Adapter is a **fragment** blueprint from Kestrel-3's hunt, not a bar unlock; `opening-unlocks-spec.md` §3) | Cầu nối nguồn → Máy thu hoạch từ xa → Đàn drone chuyển tiếp | Kestrel-3 (1/3) |
 
 **Card lines:**
 | | en | vi |
