@@ -303,8 +303,6 @@ namespace MoonProject.UI
             EventBus events = services.Events;
             _events = events;
             _tokens.Add(events.Subscribe<RoverAwoke>(OnRoverAwoke));
-            _tokens.Add(events.Subscribe<CallReplyFailed>(_ => ShowFaceLine(UiKeys.FaceTxNoRange,
-                _tuning.Guidance.ReplyFaceSeconds)));
             _tokens.Add(events.Subscribe<CallAnswerPhaseChanged>(changed =>
             {
                 if (changed.Phase == AnswerPhase.Ready && !changed.Restored)
