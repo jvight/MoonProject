@@ -19,7 +19,6 @@ namespace MoonProject.Autoplay
     {
         private const float BootTimeoutSeconds = 60f;
         private const float TitleAttemptSeconds = 1.5f;
-        private const int TitleAttempts = 12;
         private const float WakeTimeoutSeconds = 90f;
         private const float LookAroundSeconds = 4f;
         private const float LineTimeoutSeconds = 30f;
@@ -65,12 +64,6 @@ namespace MoonProject.Autoplay
             "a player sees the chip, holds E and nothing happens, with no cue that letting go would help.";
 
         private readonly AutoplayBot _bot;
-        /// <summary>The opening ends here: Relay 1 relit and the ring grown (payoff audit section 4).</summary>
-        private const string OpeningEndBeat = "R10";
-
-        /// <summary>Beats of hour two: they run only when a run asks to stop at one of them.</summary>
-        private static readonly string[] HourTwoBeats = { "R11", "R12" };
-
         private readonly string _untilBeat;
         private bool _awoke;
         private OpeningBase _base;
@@ -81,9 +74,6 @@ namespace MoonProject.Autoplay
         private readonly NaiveGuard _naive;
         private readonly bool _pointer;
 
-        /// <summary>True when the run goes on past the opening's end into hour two (it was asked to stop at R11 or R12).</summary>
-        private readonly bool _hourTwo;
-
         public OpeningScenario(AutoplayBot bot, string untilBeat, bool linesExpected, NaiveGuard naive = null,
             bool pointer = false)
         {
@@ -91,7 +81,6 @@ namespace MoonProject.Autoplay
             _naive = naive;
             _bot = bot;
             _untilBeat = untilBeat;
-            _hourTwo = Array.Exists(HourTwoBeats, beat => string.Equals(beat, untilBeat, StringComparison.OrdinalIgnoreCase));
             DeclareNextActions();
             _linesExpected = linesExpected;
         }
@@ -105,10 +94,9 @@ namespace MoonProject.Autoplay
                      {
                          Drive, Scan, CollectParts, BuildThePad, ChargeOnThePad, TheRuins, BuildTheArray,
                          TheFirstChoice, TheHabitat, Nightfall, TheTower, TheAnswer, TheRelay,
-                         KesslerArai, Headlamp,
                      })
             {
-                if (_bot.Failed || Reached(_lastBeat) || (!_hourTwo && _lastBeat == OpeningEndBeat))
+                if (_bot.Failed || Reached(_lastBeat))
                 {
                     break;
                 }
@@ -167,21 +155,8 @@ namespace MoonProject.Autoplay
             _naive.Declare("B11", new NextAction("E", new[] { "hint.transmit" }, new[] { "transmit", "answer" },
                 new[] { "foot", "TX" }));
             _naive.Declare("B12", new NextAction("WASD", new[] { drive }, new[] { "relay", "west" }, new[] { "relay" }));
-            if (_hourTwo)
-            {
-                _naive.Declare("R10", new NextAction("WASD", new[] { drive }, new[] { "06", "relay.2", "scan" }, null));
-            }
-            else
-            {
-                _naive.Skip("R10");
-            }
-
-            _naive.Declare("R11a", new NextAction("E", new[] { "hint.salvage" }, new[] { "cut", "crate", "headlamp" },
-                null));
-            _naive.Declare("R11", new NextAction("WASD", new[] { drive }, new[] { "pad", "park" }, null));
-            _naive.Declare("R12a", new NextAction("E", new[] { "hint.rack" }, new[] { "headlamp", "assemble" },
-                null));
-            _naive.Skip("R12");
+            // R10 ends the opening: nothing is asked of the player after Relay 1 is relit.
+            _naive.Skip("R10");
         }
 
         /// <summary>Tab opens and closes at the ruins, once B7 is checked, for the hitch table (the first Tab was the igniter's fit).</summary>
@@ -222,7 +197,11 @@ namespace MoonProject.Autoplay
             using (_bot.World.Context.Events.Subscribe<RoverWakeBeatReached>(
                        reached => chaseFrame |= reached.Beat == WakeBeat.ChaseFrame))
             {
-                for (int attempt = 0; attempt < TitleAttempts && _bot.World.Flow.State == GameFlowState.Title; attempt++)
+                // The first boot opens on the language step, then the title: Enter answers each in turn, and one that
+                // lands before the menu is up is lost, so it is pressed again until play starts (a slow boot has no fixed
+                // count of presses).
+                float titleDeadline = Time.unscaledTime + BootTimeoutSeconds;
+                while (_bot.World.Flow.State == GameFlowState.Title && Time.unscaledTime < titleDeadline)
                 {
                     yield return _bot.Tap(Key.Enter);
                     yield return _bot.Wait(TitleAttemptSeconds);
@@ -600,31 +579,6 @@ namespace MoonProject.Autoplay
             Begin("R10", "relay.1's repair: take the spare from its cabinet, fit it, charge on its pad");
             yield return _base.RepairTheRelay();
             _bot.EndBeat("relay.1 relit: its spare fitted at the feed socket, and its pad charges 07");
-        }
-
-        private IEnumerator KesslerArai()
-        {
-            Begin("R11", "Kessler–Arai: 07 woke on its trickle post; read 06 at relay.2, cut its crate and the SSR-3 headlamp unlocks");
-            yield return _base.ExpectStep(OpeningSteps.ScanElder06, OpeningKeys.ScanElder06, "R11: 06 at relay.2");
-            yield return _base.LearnKesslerArai();
-            yield return Sub("R11a");
-            yield return _base.ExpectStep(OpeningSteps.AssembleHeadlamp, OpeningKeys.CutHeadlampCrate,
-                "R11: 06's crate holds the headlamp's parts");
-            yield return _base.CutTheCrates(WorldAnchorIds.Micro06);
-            _bot.EndBeat("07 read 06 after its trickle post and cut its crate: Kessler–Arai level 1, the SSR-3 headlamp unlocked");
-        }
-
-        private IEnumerator Headlamp()
-        {
-            Begin("R12", "The SSR-3 headlamp: dock on the pad to bring out the rack, then assemble the headlamp at its bay with a held E");
-            yield return _base.ExpectStep(OpeningSteps.AssembleHeadlamp, OpeningKeys.DockForRack,
-                "R12: dock to bring out the rack");
-            yield return _base.DockForTheRack();
-            yield return Sub("R12a");
-            yield return _base.ExpectStep(OpeningSteps.AssembleHeadlamp, OpeningKeys.AssembleHeadlamp,
-                "R12: the rack stands out");
-            yield return _base.AssembleTheHeadlamp();
-            _bot.EndBeat("the SSR-3 headlamp assembled at the rack: its bay is filled and 07 wears it");
         }
 
         /// <summary>The next unscanned fragment of the lander's cargo, in the order the blueprint numbers them.</summary>

@@ -1830,7 +1830,7 @@ Label {
     position: absolute;
     font-size: 18px;
     -unity-text-align: middle-right;
-    color: rgb(182, 168, 143);
+    color: rgb(192, 177, 150);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
@@ -1853,7 +1853,7 @@ Label {
     right: 4px;
     bottom: 0;
     font-size: 18px;
-    color: rgb(182, 168, 143);
+    color: rgb(192, 177, 150);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
@@ -1884,7 +1884,7 @@ Label {
     padding: 0;
     font-size: 18px;
     -unity-text-align: upper-center;
-    color: rgb(182, 168, 143);
+    color: rgb(192, 177, 150);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
@@ -1910,7 +1910,7 @@ Label {
     font-size: 18px;
     white-space: normal;
     -unity-text-align: upper-left;
-    color: rgb(182, 168, 143);
+    color: rgb(192, 177, 150);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
@@ -1940,7 +1940,7 @@ Label {
 }
 
 .cargo__release--quiet {
-    color: rgb(182, 168, 143);
+    color: rgb(192, 177, 150);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
@@ -1974,7 +1974,7 @@ Label {
 .cargo__tooltip-use-label {
     margin-right: 12px;
     font-size: 18px;
-    color: rgb(182, 168, 143);
+    color: rgb(192, 177, 150);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
@@ -2007,7 +2007,7 @@ Label {
     position: absolute;
     font-size: 18px;
     -unity-text-align: middle-left;
-    color: rgb(182, 168, 143);
+    color: rgb(192, 177, 150);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
@@ -2027,9 +2027,9 @@ Label {
     min-width: 36px;
     height: 26px;
     padding: 0 8px;
-    border-width: 1.5px;
+    border-width: 2px;
     border-radius: 5px;
-    border-color: rgb(182, 168, 143);
+    border-color: rgb(192, 177, 150);
     font-size: 18px;
     color: rgb(224, 210, 182);
     -unity-text-align: middle-center;
@@ -2039,7 +2039,7 @@ Label {
 .cargo__key-word {
     margin-left: 10px;
     font-size: 18px;
-    color: rgb(182, 168, 143);
+    color: rgb(192, 177, 150);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
@@ -2060,7 +2060,7 @@ Label {
     font-size: 18px;
     letter-spacing: 1px;
     -unity-text-align: middle-center;
-    color: rgb(182, 168, 143);
+    color: rgb(192, 177, 150);
     border-bottom-width: 2px;
     border-color: rgba(0, 0, 0, 0);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");

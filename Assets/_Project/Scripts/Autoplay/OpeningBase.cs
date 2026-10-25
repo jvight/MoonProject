@@ -107,20 +107,6 @@ namespace MoonProject.Autoplay
         /// <summary>The 1971 seismic station's story scan (R5's curiosity scan).</summary>
         private const string SeismicStory = "seismic";
 
-        /// <summary>06 at relay.2, Kessler–Arai's second point after the trickle post 07 read as it woke (R11).</summary>
-        private const string Elder06Story = "elder06";
-
-        private const string TricklePostEntry = "db.trickle_post";
-
-        /// <summary>The rack's headlamp bay: its id and Art's outline node (R12).</summary>
-        private const string HeadlampBayId = "rack.headlamp";
-
-        private const string HeadlampOutlineNode = "Outline_0";
-        /// <summary>Seconds 07 may take on the pad to turn its view onto the bay and read it.</summary>
-        private const float RackReadSeconds = 8f;
-
-        private static readonly Recipe HeadlampCost = new Recipe(2, 1, 0);
-
         /// <summary>The bot heads back to the pad to charge when 07's cells fall to this share.</summary>
         private const float TopUpBelow = 0.3f;
 
@@ -601,8 +587,21 @@ namespace MoonProject.Autoplay
                 yield break;
             }
 
+            // The panel is a free read: no brackets, no chip and no E. 07 stands close, faces it and the view holds it
+            // for a moment, and the readout comes.
             Vector3 outward = Flat(panel.Point - Ruin("HabitatModules").position).normalized;
-            yield return Scan(panel, outward, PanelStandOff);
+            yield return StandFacing(panel, outward, PanelStandOff);
+            if (_bot.Failed)
+            {
+                yield break;
+            }
+
+            yield return _bot.Until(() =>
+                {
+                    _bot.KeepLookingAt(panel.Point);
+                    return panel.Scanned;
+                }, ScanLookSeconds, "the airlock panel to read itself with the view on it",
+                () => "Candidate " + (G.Scans.Candidate != null ? G.Scans.Candidate.FragmentId : "none") + ".");
         }
 
         /// <summary>Cuts every sealed crate standing by <paramref name="frame"/> (an anchor or a ruin piece).</summary>
@@ -987,111 +986,6 @@ namespace MoonProject.Autoplay
                 ChargeSeconds, "relay.1's pad to charge 07");
         }
 
-        /// <summary>
-        /// R11, Kessler–Arai's standards: 07 read the trickle post it slept on as it woke; now it drives out to 06
-        /// slumped at relay.2 and reads it. Two completed entries of its own maker reach understanding level 1, which
-        /// (past the west signal) unlocks the adapted SSR-3 headlamp.
-        /// </summary>
-        public IEnumerator LearnKesslerArai()
-        {
-            ScanFragment six = G.Scans.Find(StoryScan.IdPrefix + Elder06Story);
-            if (six == null)
-            {
-                _bot.Fail("06 has no story scan.");
-                yield break;
-            }
-
-            if (!G.Databank.Progress(TricklePostEntry).IsComplete)
-            {
-                _bot.Fail("07 woke without reading its trickle post into the databank.");
-                yield break;
-            }
-
-            yield return TopUpIfLow();
-            yield return Scan(six, Flat(Pad() - six.Point).normalized, ScanStandOff);
-            MakerUnderstanding understanding = G.Understanding;
-            yield return _bot.Until(() => understanding.IsUnlocked(MakerUnderstandingSettings.Ssr3Headlamp),
-                FollowSeconds, "Kessler–Arai level 1 to unlock the SSR-3 headlamp",
-                () => "Kessler–Arai points " + understanding.PointsOf(DatabankMaker.KesslerArai) + ".");
-        }
-
-        /// <summary>R12: back onto the pad; the first dock after the release brings out the socket rack.</summary>
-        public IEnumerator DockForTheRack()
-        {
-            IRackStatus rack = G.Rack;
-            if (rack.Shown)
-            {
-                yield break;
-            }
-
-            Vector3 pad = PlacedPosition(StructureIds.ChargingPad);
-            yield return _bot.DriveTo(Flat(pad), ApproachThrottleRadius, "the pad, to bring out the rack",
-                DriveSeconds);
-            yield return _bot.Until(() => rack.Shown && G.RackView.Instance != null, FollowSeconds,
-                "the dock to bring out the socket rack");
-        }
-
-        /// <summary>
-        /// R12, the SSR-3 headlamp: back at the pad, 07 faces the rack's headlamp bay (Art's Bay_0) until it reads it,
-        /// and holds E until the part is assembled and the bay fills. It costs Metal 2 + Wiring 1 from the hold.
-        /// </summary>
-        public IEnumerator AssembleTheHeadlamp()
-        {
-            yield return DockForTheRack();
-            if (_bot.Failed)
-            {
-                yield break;
-            }
-
-            Transform bay = Descendant(G.RackView.Instance.transform, HeadlampOutlineNode);
-            Renderer outline = bay != null ? bay.GetComponent<Renderer>() : null;
-            if (outline == null)
-            {
-                _bot.Fail("the socket rack has no " + HeadlampOutlineNode + " outline.");
-                yield break;
-            }
-
-            if (!G.Materials.Has(HeadlampCost))
-            {
-                _bot.Fail("the hold lacks the headlamp's Metal 2 + Wiring 1 (metal " + G.Materials.Metal +
-                          ", wiring " + G.Materials.Wiring + ").");
-                yield break;
-            }
-
-            // Where a player stands: on the pad the rack faces, looking at the bay.
-            yield return _bot.DriveTo(Flat(PlacedPosition(StructureIds.ChargingPad)), ApproachThrottleRadius,
-                "the pad, facing the rack", DriveSeconds);
-            yield return _bot.Until(() => _bot.KeepLookingAt(outline.bounds.center) && ReadsHeadlampBay(),
-                RackReadSeconds, "07 to read the rack's headlamp bay from the pad",
-                () => "Bay at " + outline.bounds.center + ", in the view at " +
-                      _bot.World.Context.Get<IViewCamera>().Camera.WorldToViewportPoint(outline.bounds.center) + ", " +
-                      DriveSteering.FlatDistance(outline.bounds.center, _bot.World.Rover.Position)
-                          .ToString("0.0", CultureInfo.InvariantCulture) + " m from 07. " + _bot.Where());
-            yield return _bot.Hold(Key.E, () =>
-                {
-                    _bot.KeepLookingAt(outline.bounds.center);
-                    return G.Opening.HeadlampFitted;
-                }, FollowSeconds, "a held E to assemble the SSR-3 headlamp");
-        }
-
-        private bool ReadsHeadlampBay()
-        {
-            return G.Hints.TryGet(InteractionKind.Rack, out InteractionHint hint) && hint.NounKey == HeadlampBayId;
-        }
-
-        private static Transform Descendant(Transform root, string name)
-        {
-            foreach (Transform node in root.GetComponentsInChildren<Transform>(true))
-            {
-                if (node.name == name)
-                {
-                    return node;
-                }
-            }
-
-            return null;
-        }
-
         /// <summary>Where the module stands now: the battery bank is built on it.</summary>
         public Vector3 ModulePosition()
         {
@@ -1176,25 +1070,12 @@ namespace MoonProject.Autoplay
         private IEnumerator Scan(ScanFragment fragment, Vector3 preferred, float standOff)
         {
             ScanField scans = G.Scans;
-            Vector3 away = ClearSide(fragment.Point, preferred, standOff, null);
-            if (Clear(fragment.Point + away * (standOff + ScanLineUp), null))
+            yield return StandFacing(fragment, preferred, standOff);
+            if (_bot.Failed)
             {
-                yield return _bot.DriveTo(Flat(fragment.Point + away * (standOff + ScanLineUp)), LineUpArrive,
-                    "a line-up for a scan", DriveSeconds);
+                yield break;
             }
 
-            yield return _bot.DriveTo(Flat(fragment.Point), standOff, "the spot facing " + fragment.FragmentId,
-                DriveSeconds);
-            if (DriveSteering.FlatDistance(fragment.Point, _bot.World.Rover.Position) < standOff * ScanTooCloseShare)
-            {
-                // Rolled in over the piece: the scan lens cannot see it past 07's own body, so back off and face it
-                // again, as a player would.
-                Vector3 point = fragment.Point;
-                yield return _bot.BackOff(() => DriveSteering.FlatDistance(point, _bot.World.Rover.Position) >=
-                                                standOff * ScanBackOffShare, DriveSeconds, fragment.FragmentId);
-            }
-
-            yield return _bot.TurnToward(fragment.Point, fragment.FragmentId);
             UiProbe ui = _bot.World.Ui;
             float deadline = Time.unscaledTime + ScanLookSeconds;
             while (!_bot.Failed && !(_bot.KeepLookingAt(fragment.Point) && OnSetCandidate(scans, fragment)))
@@ -1218,6 +1099,30 @@ namespace MoonProject.Autoplay
                     return fragment.Scanned;
                 }, scans.Tuning.Seconds(fragment.Size) + ScanAllowanceSeconds, "a held E to scan " + fragment.FragmentId,
                 () => "Chip '" + ui.Chip() + "'.");
+        }
+
+        /// <summary>Drives to <paramref name="standOff"/> from <paramref name="fragment"/>, backs off if it rolled in too close, and turns to face it.</summary>
+        private IEnumerator StandFacing(ScanFragment fragment, Vector3 preferred, float standOff)
+        {
+            Vector3 away = ClearSide(fragment.Point, preferred, standOff, null);
+            if (Clear(fragment.Point + away * (standOff + ScanLineUp), null))
+            {
+                yield return _bot.DriveTo(Flat(fragment.Point + away * (standOff + ScanLineUp)), LineUpArrive,
+                    "a line-up for a scan", DriveSeconds);
+            }
+
+            yield return _bot.DriveTo(Flat(fragment.Point), standOff, "the spot facing " + fragment.FragmentId,
+                DriveSeconds);
+            if (DriveSteering.FlatDistance(fragment.Point, _bot.World.Rover.Position) < standOff * ScanTooCloseShare)
+            {
+                // Rolled in over the piece: the scan lens cannot see it past 07's own body, so back off and face it
+                // again, as a player would.
+                Vector3 point = fragment.Point;
+                yield return _bot.BackOff(() => DriveSteering.FlatDistance(point, _bot.World.Rover.Position) >=
+                                                standOff * ScanBackOffShare, DriveSeconds, fragment.FragmentId);
+            }
+
+            yield return _bot.TurnToward(fragment.Point, fragment.FragmentId);
         }
 
         /// <summary>The brackets are on this part or another unscanned part of its set: a player scans what they frame.</summary>
@@ -1261,7 +1166,15 @@ namespace MoonProject.Autoplay
                 // The ghost follows the camera's aim: a player looks at the ground where the structure should stand.
                 var terrain = _bot.World.Context.Get<ITerrainQuery>();
                 Vector3 ground = new Vector3(at.x, terrain.SampleHeight(at.x, at.z), at.z);
-                yield return _bot.LookAt(ground, "the build spot on the ground");
+                yield return _bot.TryLookAt(ground, "the build spot on the ground");
+                if (!_bot.LookSettled)
+                {
+                    // The camera will not come onto the spot from here (its framing eases the view toward the ghost):
+                    // a player would step aside and look again, so the next bearing is tried and the miss is reported.
+                    _bot.Warn("FINDING: from this side of the build spot " + _bot.LookMiss + " " + _bot.Where());
+                    continue;
+                }
+
                 for (int frame = 0; frame < SettledFrames; frame++)
                 {
                     _bot.KeepLookingAt(ground);

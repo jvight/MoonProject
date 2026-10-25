@@ -98,7 +98,8 @@ namespace MoonProject.Rover.PlayModeTests
             var cameraData = _scene.View.GetComponent<UniversalAdditionalCameraData>();
             Texture content = _scene.Body.FaceDirector.Display.ContentTexture;
             _report.AppendLine($"# CRT face sharpness (content texture {content.width}x{content.height}, " +
-                               $"filter {content.filterMode}, mips {(content is RenderTexture rt && rt.useMipMap)})");
+                               $"filter {content.filterMode}, mips {(content is RenderTexture rt && rt.useMipMap)}, " +
+                               $"camera AA {cameraData.antialiasing} {cameraData.antialiasingQuality})");
             _report.AppendLine();
             _report.AppendLine("| screen | variant | texels/px | sharpness | foot row WCAG | cell name WCAG |");
             _report.AppendLine("|---|---|---|---|---|---|");

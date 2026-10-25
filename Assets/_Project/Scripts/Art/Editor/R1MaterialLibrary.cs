@@ -82,6 +82,7 @@ namespace MoonProject.Art.Editor
             R1StoryPropsBuilder.BuildStoryPropMaterials(litShader);
             R1MareKitBuilder.BuildMareMaterials(litShader);
             BuildRockfallMaterials(litShader);
+            BuildRimMaterials(litShader);
             AssetDatabase.SaveAssets();
         }
 
@@ -171,6 +172,134 @@ namespace MoonProject.Art.Editor
             {
                 BuildRockfallMaterials();
                 mat = AssetDatabase.LoadAssetAtPath<Material>(RockfallTalusMaterialPath);
+            }
+
+            return mat;
+        }
+
+        /// <summary>Material asset name for the triplanar crater-rim slope material (no horizontal stripe banding).</summary>
+        public const string RimSlopeMaterialName = "R1_RimSlope";
+
+        /// <summary>Generated asset path for <see cref="RimSlopeMaterialName"/>.</summary>
+        public const string RimSlopeMaterialPath =
+            R1MaterialRecipes.GeneratedMaterialsFolder + "/" + RimSlopeMaterialName + ".mat";
+
+        /// <summary>Material asset name for the crater-rim talus/scree scatter kit (<c>RimTalus_00..07</c>).</summary>
+        public const string RimTalusMaterialName = "R1_RimTalus";
+
+        /// <summary>Generated asset path for <see cref="RimTalusMaterialName"/>.</summary>
+        public const string RimTalusMaterialPath =
+            R1MaterialRecipes.GeneratedMaterialsFolder + "/" + RimTalusMaterialName + ".mat";
+
+        /// <summary>Shader path for the triplanar terrain/rim slope shader (<c>MoonProject/World/R1Terrain</c>).</summary>
+        public const string TerrainShaderPath = "Assets/_Project/Shaders/World/R1Terrain.shader";
+
+        /// <summary>Regolith detail texture paths shared by <see cref="RimSlopeMaterialName"/>.</summary>
+        public const string RegolithAlbedoTexturePath = R1MaterialRecipes.TexturesFolder + "/T_R1_Regolith_Albedo.png";
+        public const string RegolithNormalTexturePath = R1MaterialRecipes.TexturesFolder + "/T_R1_Regolith_Normal.png";
+        public const string RegolithMaskTexturePath = R1MaterialRecipes.TexturesFolder + "/T_R1_Regolith_Mask.png";
+
+        /// <summary>
+        /// Builds the crater-rim slope material (<c>R1_RimSlope.mat</c>) and the talus/scree scatter kit material
+        /// (<c>R1_RimTalus.mat</c>) into <c>Assets/_Project/Generated/Art/R1/Materials/</c>. Both use world-space
+        /// triplanar projection and 3D macro noise so steep crater-rim faces and wall-base debris have zero horizontal
+        /// stripe banding and zero UV stretching, with regolith-mantled grey on 25-35 deg slopes and subtle darker
+        /// fresh-rock exposures only on the steepest parts.
+        /// </summary>
+        public static void BuildRimMaterials(Shader litShader = null)
+        {
+            if (litShader == null)
+            {
+                litShader = LoadShader();
+            }
+
+            var terrainShader = AssetDatabase.LoadAssetAtPath<Shader>(TerrainShaderPath);
+            if (terrainShader == null)
+            {
+                throw new InvalidOperationException(
+                    $"R1Terrain shader is missing at '{TerrainShaderPath}' (MoonProject/World/R1Terrain).");
+            }
+
+            R1MaterialSpec basaltSpec = R1MaterialRecipes.Get(R1MaterialSlot.Basalt);
+            var regolithAlbedo = AssetDatabase.LoadAssetAtPath<Texture2D>(RegolithAlbedoTexturePath);
+            var regolithNormal = AssetDatabase.LoadAssetAtPath<Texture2D>(RegolithNormalTexturePath);
+            var regolithMask = AssetDatabase.LoadAssetAtPath<Texture2D>(RegolithMaskTexturePath);
+            var rockAlbedo = AssetDatabase.LoadAssetAtPath<Texture2D>(R1MaterialRecipes.GetAlbedoTexturePath(basaltSpec));
+            var rockNormal = AssetDatabase.LoadAssetAtPath<Texture2D>(R1MaterialRecipes.GetNormalTexturePath(basaltSpec));
+            var rockMask = AssetDatabase.LoadAssetAtPath<Texture2D>(R1MaterialRecipes.GetMaskTexturePath(basaltSpec));
+
+            var rimSlope = new Material(terrainShader)
+            {
+                name = RimSlopeMaterialName,
+                enableInstancing = true,
+            };
+            rimSlope.SetColor("_BaseColor", Color.white);
+            rimSlope.SetTexture("_BaseMap", regolithAlbedo);
+            rimSlope.SetTexture("_BumpMap", regolithNormal);
+            rimSlope.SetTexture("_MaskMap", regolithMask);
+            rimSlope.SetTexture("_RockMap", rockAlbedo);
+            rimSlope.SetTexture("_RockBumpMap", rockNormal);
+            rimSlope.SetTexture("_RockMaskMap", rockMask);
+            rimSlope.SetFloat("_NearTiling", 0.56f);
+            rimSlope.SetFloat("_MacroTiling", 0.16f);
+            rimSlope.SetFloat("_RockTiling", 0.14f);
+            rimSlope.SetFloat("_NearBumpScale", 0.72f);
+            rimSlope.SetFloat("_MacroBumpScale", 0.48f);
+            rimSlope.SetFloat("_RockBumpScale", 0.78f);
+            rimSlope.SetFloat("_NearFadeStart", 38.0f);
+            rimSlope.SetFloat("_NearFadeEnd", 120.0f);
+            rimSlope.SetFloat("_DetailAlbedoStrength", 0.34f);
+            rimSlope.SetFloat("_SmoothnessScale", 0.045f);
+            rimSlope.SetFloat("_OcclusionStrength", 0.72f);
+            rimSlope.SetFloat("_SlopeThreshold", 0.88f);
+            rimSlope.SetFloat("_SlopeBlendRange", 0.10f);
+            rimSlope.SetFloat("_LegacyBandedRim", 0.0f);
+            GeneratedAssets.CreateOrReplace(rimSlope, RimSlopeMaterialPath);
+
+            Material rimTalus = CreateMaterial(litShader, basaltSpec);
+            rimTalus.name = RimTalusMaterialName;
+            rimTalus.SetColor("_BaseColor", new Color(0.84f, 0.86f, 0.89f, 1f));
+            rimTalus.SetColor("_EdgeWearColor", new Color(0.38f, 0.40f, 0.43f, 1f));
+            rimTalus.SetFloat("_EdgeWearAmount", 0.36f);
+            rimTalus.SetFloat("_EdgeWearThreshold", 0.26f);
+            rimTalus.SetFloat("_EdgeWearSharpness", 1.75f);
+            rimTalus.SetFloat("_EdgeWearSmoothness", 0.09f);
+            rimTalus.SetColor("_DustColor", new Color(0.34f, 0.35f, 0.38f, 1f));
+            rimTalus.SetFloat("_DustAmount", 0.88f);
+            rimTalus.SetFloat("_DustSharpness", 1.35f);
+            rimTalus.SetFloat("_DustUpThreshold", -0.12f);
+            rimTalus.SetFloat("_DustOcclusionWeight", 0.28f);
+            rimTalus.SetFloat("_DustSmoothness", 0.05f);
+            rimTalus.SetFloat("_OcclusionStrength", 0.88f);
+            rimTalus.SetFloat("_ColorVarScale", 0.36f);
+            rimTalus.SetFloat("_ColorVarAmount", 0.16f);
+            rimTalus.SetFloat("_TriplanarMapping", 1.0f);
+            rimTalus.SetFloat("_TriplanarScale", 0.42f);
+            rimTalus.SetFloat("_SteepRockDarkening", 0.34f);
+            GeneratedAssets.CreateOrReplace(rimTalus, RimTalusMaterialPath);
+        }
+
+        /// <summary>Loads or builds <c>R1_RimSlope.mat</c> for steep crater-rim slopes and slumps.</summary>
+        public static Material LoadRimSlopeMaterial()
+        {
+            var mat = AssetDatabase.LoadAssetAtPath<Material>(RimSlopeMaterialPath);
+            if (mat == null)
+            {
+                BuildRimMaterials();
+                mat = AssetDatabase.LoadAssetAtPath<Material>(RimSlopeMaterialPath);
+            }
+
+            return mat;
+        }
+
+        /// <summary>Loads or builds <c>R1_RimTalus.mat</c> for the crater-rim talus/scree scatter kit (<c>RimTalus_00..07</c>).</summary>
+        public static Material LoadRimTalusMaterial()
+        {
+            var mat = AssetDatabase.LoadAssetAtPath<Material>(RimTalusMaterialPath);
+            if (mat == null)
+            {
+                BuildRimMaterials();
+                mat = AssetDatabase.LoadAssetAtPath<Material>(RimTalusMaterialPath);
             }
 
             return mat;
@@ -371,6 +500,9 @@ namespace MoonProject.Art.Editor
 
             material.SetFloat("_ColorVarScale", isBasalt ? 0.65f : 1.8f);
             material.SetFloat("_ColorVarAmount", isBasalt ? 0.085f : 0.025f);
+            material.SetFloat("_TriplanarMapping", 0.0f);
+            material.SetFloat("_TriplanarScale", 0.42f);
+            material.SetFloat("_SteepRockDarkening", 0.0f);
 
             material.SetTexture("_EmissionMap", emissionMap);
             material.SetColor("_EmissionColor", spec.EmissionColor);

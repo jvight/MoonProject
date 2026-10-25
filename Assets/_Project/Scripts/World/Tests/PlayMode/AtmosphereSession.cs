@@ -111,6 +111,10 @@ namespace MoonProject.World.PlayModeTests
         private const float GateSlotLookIn = 16f;
         private const float GateZoomFov = 12f;
 
+        // The radio tower's dish scan (ruin.RadioTower.1): Art's scan node and 07's stand-offs from it.
+        private const string TowerScanTarget = "Scan_1";
+        private static readonly float[] TowerScanStandOffs = { 7f, 4f };
+
         // The rim filmed: the floor views stand this far out on their bearings, and every view looks at the wall this
         // far out and this high (the foot of the wall up to its middle).
         private const float RimFloorEastBearing = 60f;
@@ -1638,6 +1642,78 @@ namespace MoonProject.World.PlayModeTests
         private static Vector3 RimSpot(ITerrainQuery terrain, float bearing, float distance, float height)
         {
             return OnGround(terrain, MoonSurface.BearingToDirection(bearing) * distance) + Vector3.up * height;
+        }
+
+        /// <summary>
+        /// 07 at the radio tower's dish scan (ruin.RadioTower.1), the chase camera as it settles there: from its stand
+        /// off toward the base and from close in, so a camera caught under the dish frame shows.
+        /// Logs/world-captures/tower-scan-*.png.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(CanyonSessionScene))]
+        [PostBuildCleanup(typeof(CanyonSessionScene))]
+        public IEnumerator TowerScan_IsFilmed_FromTheChaseCamera()
+        {
+            BootstrapHarness.DeleteSaveFiles(CanyonSessionScene.SaveSlot);
+#if UNITY_EDITOR
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(CanyonSessionScene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            while (!loading.isDone)
+            {
+                yield return null;
+            }
+#else
+            throw new NotSupportedException("The atmosphere session loads the scene through the editor.");
+#endif
+            GameBootstrap bootstrap = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
+            {
+                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
+            }
+
+            Assert.IsNotNull(bootstrap, "the scene has its bootstrap");
+            GameContext context = bootstrap.Context;
+            _awoke = context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
+            float started = Time.time;
+            while (!_awake)
+            {
+                Assert.Less(Time.time - started, WakeTimeout, "07 wakes up");
+                yield return null;
+            }
+
+            context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.FirstCharge, true));
+            context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.PowerOn, true));
+            Transform target = FindIn(FindNamed(CueTowerName), TowerScanTarget);
+            Vector3 apron = Anchor(context.Get<IWorldAnchors>(), WorldAnchorIds.PlaceApron).Position;
+            Vector3 toBase = Vector3.ProjectOnPlane(apron - target.position, Vector3.up).normalized;
+            Camera view = context.Get<IViewCamera>().Camera;
+            foreach (float standOff in TowerScanStandOffs)
+            {
+                Vector3 spot = target.position + toBase * standOff;
+                context.Get<IRoverPlacement>().PlaceAt(OnGround(context.Get<ITerrainQuery>(),
+                    new Vector2(spot.x, spot.z)), Quaternion.LookRotation(-toBase, Vector3.up));
+                yield return new WaitForSeconds(SettleSeconds);
+                Shoot(view, $"tower-scan-{standOff:F0}m");
+                Debug.Log($"[tower-scan] {standOff:F0} m: camera at {view.transform.position}, " +
+                          $"{Vector3.Distance(view.transform.position, target.position):F1} m from the dish's scan");
+            }
+
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        // A node anywhere under root, by name.
+        private static Transform FindIn(Transform root, string name)
+        {
+            foreach (Transform node in root.GetComponentsInChildren<Transform>(true))
+            {
+                if (node.name == name)
+                {
+                    return node;
+                }
+            }
+
+            throw new InvalidOperationException($"{root.name} has no '{name}'.");
         }
 
         private static void ShootAt(Camera camera, string name, Vector3 eye, Vector3 look, float fov)

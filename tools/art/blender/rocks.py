@@ -837,6 +837,316 @@ ROCK_SPECS: tuple[dict[str, object], ...] = (
             },
         ],
     },
+    # Crater-Rim Talus 0 (RimTalus_00): 0.56 x 0.46 x 0.34 m rounded regolith-mantled cobble clast
+    {
+        "name": "RimTalus_00",
+        "rim_talus": True,
+        "target_size_u": (0.56, 0.34, 0.46),
+        "burial_frac": 0.22,
+        "footprint_radius": 0.34,
+        "skirt_height_frac": 0.28,
+        "shells": [
+            {
+                "center_u": (0.0, 0.0, 0.0),
+                "size_u": (0.56, 0.34, 0.46),
+                "seed": 3101,
+                "lon_segs": 14,
+                "lat_rings": 6,
+                "skirt_flare": 0.22,
+                "burial_frac": 0.22,
+                "rot_deg_u": (2.0, -8.0, 3.0),
+                "fractures_u": [
+                    ((0.58, 0.72, 0.38), 0.62, 0.32),
+                    ((-0.62, 0.64, -0.45), 0.64, 0.28),
+                ],
+                "pits_u": [],
+                "crevices_u": [],
+            },
+        ],
+    },
+    # Crater-Rim Talus 1 (RimTalus_01): 0.86 x 0.68 x 0.48 m low weathered scree wedge
+    {
+        "name": "RimTalus_01",
+        "rim_talus": True,
+        "target_size_u": (0.86, 0.48, 0.68),
+        "burial_frac": 0.22,
+        "footprint_radius": 0.52,
+        "skirt_height_frac": 0.28,
+        "shells": [
+            {
+                "center_u": (0.0, 0.0, 0.0),
+                "size_u": (0.86, 0.48, 0.68),
+                "seed": 3119,
+                "lon_segs": 14,
+                "lat_rings": 6,
+                "skirt_flare": 0.24,
+                "burial_frac": 0.22,
+                "rot_deg_u": (-4.0, 14.0, -3.0),
+                "fractures_u": [
+                    ((0.46, 0.78, -0.42), 0.58, 0.36),
+                    ((-0.66, 0.58, 0.48), 0.62, 0.32),
+                ],
+                "pits_u": [],
+                "crevices_u": [],
+            },
+        ],
+    },
+    # Crater-Rim Talus 2 (RimTalus_02): 1.22 x 0.94 x 0.62 m gently tilted rounded talus slab
+    {
+        "name": "RimTalus_02",
+        "rim_talus": True,
+        "target_size_u": (1.22, 0.62, 0.94),
+        "burial_frac": 0.20,
+        "footprint_radius": 0.74,
+        "skirt_height_frac": 0.28,
+        "shells": [
+            {
+                "center_u": (0.0, 0.0, 0.0),
+                "size_u": (1.22, 0.62, 0.94),
+                "seed": 3137,
+                "lon_segs": 16,
+                "lat_rings": 7,
+                "skirt_flare": 0.25,
+                "burial_frac": 0.20,
+                "rot_deg_u": (5.0, -18.0, 4.0),
+                "fractures_u": [
+                    ((0.28, 0.88, 0.38), 0.58, 0.36),
+                    ((-0.64, 0.62, -0.45), 0.62, 0.32),
+                    ((0.62, 0.60, -0.50), 0.64, 0.28),
+                ],
+                "pits_u": [],
+                "crevices_u": [],
+            },
+        ],
+    },
+    # Crater-Rim Talus 3 (RimTalus_03): 1.64 x 1.32 x 0.92 m pillowed hummock boulder with companion clast
+    {
+        "name": "RimTalus_03",
+        "rim_talus": True,
+        "target_size_u": (1.64, 0.92, 1.32),
+        "burial_frac": 0.20,
+        "footprint_radius": 0.98,
+        "skirt_height_frac": 0.26,
+        "shells": [
+            {
+                "center_u": (-0.12, 0.0, 0.04),
+                "size_u": (1.38, 0.92, 1.18),
+                "seed": 3163,
+                "lon_segs": 16,
+                "lat_rings": 8,
+                "skirt_flare": 0.24,
+                "burial_frac": 0.20,
+                "rot_deg_u": (-3.0, 12.0, -2.0),
+                "fractures_u": [
+                    ((0.56, 0.72, 0.41), 0.60, 0.34),
+                    ((-0.58, 0.68, -0.45), 0.62, 0.30),
+                ],
+                "pits_u": [],
+                "crevices_u": [],
+            },
+            {
+                "center_u": (0.46, -0.08, -0.18),
+                "size_u": (0.72, 0.48, 0.64),
+                "seed": 3181,
+                "lon_segs": 12,
+                "lat_rings": 5,
+                "skirt_flare": 0.22,
+                "burial_frac": 0.24,
+                "rot_deg_u": (4.0, -22.0, 5.0),
+                "fractures_u": [
+                    ((0.60, 0.70, 0.38), 0.62, 0.30),
+                ],
+                "pits_u": [],
+                "crevices_u": [],
+            },
+        ],
+    },
+    # Crater-Rim Talus 4 (RimTalus_04): 2.12 x 1.56 x 1.05 m elongated slump block with rounded ridge crest
+    {
+        "name": "RimTalus_04",
+        "rim_talus": True,
+        "target_size_u": (2.12, 1.05, 1.56),
+        "burial_frac": 0.20,
+        "footprint_radius": 1.24,
+        "skirt_height_frac": 0.26,
+        "shells": [
+            {
+                "center_u": (0.0, 0.0, 0.0),
+                "size_u": (2.12, 1.05, 1.56),
+                "seed": 3203,
+                "lon_segs": 18,
+                "lat_rings": 8,
+                "skirt_flare": 0.25,
+                "burial_frac": 0.20,
+                "rot_deg_u": (3.0, -14.0, -3.0),
+                "fractures_u": [
+                    ((-0.52, 0.74, 0.42), 0.58, 0.36),
+                    ((0.58, 0.68, -0.45), 0.60, 0.34),
+                    ((0.24, 0.76, 0.60), 0.64, 0.28),
+                ],
+                "pits_u": [],
+                "crevices_u": [],
+            },
+        ],
+    },
+    # Crater-Rim Talus 5 (RimTalus_05): 2.68 x 2.08 x 1.24 m multi-lobe rounded scree cluster
+    {
+        "name": "RimTalus_05",
+        "rim_talus": True,
+        "target_size_u": (2.68, 1.24, 2.08),
+        "burial_frac": 0.20,
+        "footprint_radius": 1.58,
+        "skirt_height_frac": 0.27,
+        "shells": [
+            {
+                "center_u": (-0.18, 0.0, 0.08),
+                "size_u": (2.05, 1.24, 1.72),
+                "seed": 3229,
+                "lon_segs": 18,
+                "lat_rings": 8,
+                "skirt_flare": 0.25,
+                "burial_frac": 0.20,
+                "rot_deg_u": (-2.0, 16.0, 3.0),
+                "fractures_u": [
+                    ((0.56, 0.70, 0.44), 0.60, 0.34),
+                    ((-0.60, 0.66, -0.45), 0.62, 0.32),
+                ],
+                "pits_u": [],
+                "crevices_u": [],
+            },
+            {
+                "center_u": (0.78, -0.10, -0.32),
+                "size_u": (1.18, 0.74, 1.04),
+                "seed": 3251,
+                "lon_segs": 12,
+                "lat_rings": 6,
+                "skirt_flare": 0.22,
+                "burial_frac": 0.24,
+                "rot_deg_u": (5.0, -24.0, -4.0),
+                "fractures_u": [
+                    ((0.58, 0.72, -0.38), 0.62, 0.30),
+                ],
+                "pits_u": [],
+                "crevices_u": [],
+            },
+            {
+                "center_u": (-0.72, -0.14, -0.42),
+                "size_u": (0.96, 0.58, 0.86),
+                "seed": 3259,
+                "lon_segs": 12,
+                "lat_rings": 5,
+                "skirt_flare": 0.22,
+                "burial_frac": 0.25,
+                "rot_deg_u": (-4.0, 28.0, 5.0),
+                "fractures_u": [
+                    ((-0.56, 0.74, 0.37), 0.64, 0.28),
+                ],
+                "pits_u": [],
+                "crevices_u": [],
+            },
+        ],
+    },
+    # Crater-Rim Talus 6 (RimTalus_06): 3.28 x 2.46 x 1.48 m broad weathered rim-shoulder block
+    {
+        "name": "RimTalus_06",
+        "rim_talus": True,
+        "target_size_u": (3.28, 1.48, 2.46),
+        "burial_frac": 0.18,
+        "footprint_radius": 1.92,
+        "skirt_height_frac": 0.26,
+        "shells": [
+            {
+                "center_u": (0.12, 0.0, -0.06),
+                "size_u": (2.76, 1.48, 2.18),
+                "seed": 3299,
+                "lon_segs": 18,
+                "lat_rings": 9,
+                "skirt_flare": 0.25,
+                "burial_frac": 0.18,
+                "rot_deg_u": (3.0, -12.0, 2.0),
+                "fractures_u": [
+                    ((0.52, 0.72, -0.46), 0.58, 0.36),
+                    ((-0.62, 0.64, 0.45), 0.60, 0.34),
+                    ((0.28, 0.74, 0.61), 0.64, 0.30),
+                ],
+                "pits_u": [],
+                "crevices_u": [],
+            },
+            {
+                "center_u": (-0.98, -0.12, 0.44),
+                "size_u": (1.46, 0.88, 1.28),
+                "seed": 3313,
+                "lon_segs": 12,
+                "lat_rings": 6,
+                "skirt_flare": 0.22,
+                "burial_frac": 0.22,
+                "rot_deg_u": (-4.0, 22.0, -5.0),
+                "fractures_u": [
+                    ((-0.58, 0.70, 0.42), 0.62, 0.32),
+                ],
+                "pits_u": [],
+                "crevices_u": [],
+            },
+        ],
+    },
+    # Crater-Rim Talus 7 (RimTalus_07): 3.86 x 2.92 x 1.76 m large wall-base talus anchor boulder with scree apron
+    {
+        "name": "RimTalus_07",
+        "rim_talus": True,
+        "target_size_u": (3.86, 1.76, 2.92),
+        "burial_frac": 0.18,
+        "footprint_radius": 2.26,
+        "skirt_height_frac": 0.27,
+        "shells": [
+            {
+                "center_u": (0.0, 0.0, 0.0),
+                "size_u": (3.10, 1.76, 2.46),
+                "seed": 3343,
+                "lon_segs": 20,
+                "lat_rings": 9,
+                "skirt_flare": 0.26,
+                "burial_frac": 0.18,
+                "rot_deg_u": (-3.0, 10.0, 2.0),
+                "fractures_u": [
+                    ((-0.54, 0.70, -0.47), 0.58, 0.36),
+                    ((0.60, 0.64, 0.48), 0.60, 0.34),
+                    ((-0.26, 0.74, 0.62), 0.62, 0.32),
+                ],
+                "pits_u": [],
+                "crevices_u": [],
+            },
+            {
+                "center_u": (1.12, -0.14, -0.46),
+                "size_u": (1.68, 1.04, 1.44),
+                "seed": 3359,
+                "lon_segs": 12,
+                "lat_rings": 6,
+                "skirt_flare": 0.22,
+                "burial_frac": 0.22,
+                "rot_deg_u": (5.0, -20.0, 4.0),
+                "fractures_u": [
+                    ((0.58, 0.70, -0.42), 0.62, 0.32),
+                ],
+                "pits_u": [],
+                "crevices_u": [],
+            },
+            {
+                "center_u": (-1.08, -0.18, 0.48),
+                "size_u": (1.52, 0.92, 1.32),
+                "seed": 3371,
+                "lon_segs": 12,
+                "lat_rings": 6,
+                "skirt_flare": 0.22,
+                "burial_frac": 0.24,
+                "rot_deg_u": (-4.0, 24.0, -5.0),
+                "fractures_u": [
+                    ((-0.58, 0.72, 0.38), 0.62, 0.30),
+                ],
+                "pits_u": [],
+                "crevices_u": [],
+            },
+        ],
+    },
 )
 
 
@@ -887,6 +1197,51 @@ def build_rock(spec: dict[str, object]) -> bpy.types.Object:
             obj,
             half_width=float(wx) * 0.5,
             half_depth=float(dz) * 0.5,
+        )
+        return obj
+
+    if spec.get("rim_talus"):
+        for shell in spec["shells"]:
+            mb.add_weathered_rock(
+                center_u=shell["center_u"],
+                size_u=shell["size_u"],
+                seed=int(shell["seed"]),
+                lon_segs=int(shell["lon_segs"]),
+                lat_rings=int(shell["lat_rings"]),
+                fractures_u=shell["fractures_u"],
+                pits_u=shell["pits_u"],
+                crevices_u=shell["crevices_u"],
+                skirt_flare=float(shell["skirt_flare"]),
+                burial_frac=float(shell["burial_frac"]),
+                rot_deg_u=shell["rot_deg_u"],
+                mat="R1_Basalt",
+            )
+        wx, hy, dz = spec["target_size_u"]
+        burial_frac = float(spec["burial_frac"])
+        verts = list(mb.bm.verts)
+        xs = [v.co.x for v in verts]
+        ys = [v.co.y for v in verts]
+        zs = [v.co.z for v in verts]
+        min_x, max_x = min(xs), max(xs)
+        min_y, max_y = min(ys), max(ys)
+        min_z, max_z = min(zs), max(zs)
+        span_x = max(1e-4, max_x - min_x)
+        span_y = max(1e-4, max_y - min_y)
+        span_z = max(1e-4, max_z - min_z)
+        cx = 0.5 * (min_x + max_x)
+        cy = 0.5 * (min_y + max_y)
+        burial_z = float(hy) * burial_frac
+        for v in verts:
+            v.co.x = ((v.co.x - cx) / span_x) * float(wx)
+            v.co.y = ((v.co.y - cy) / span_y) * float(dz)
+            v.co.z = ((v.co.z - min_z) / span_z) * float(hy) - burial_z
+        obj = mb.build_object(smooth_angle_deg=52.0)
+        r1kit.apply_triplanar_uvs(obj, texel_scale=0.80)
+        bpy.context.view_layer.update()
+        r1kit.bake_rock_vertex_colors(
+            obj,
+            footprint_radius=float(spec["footprint_radius"]),
+            skirt_height_frac=float(spec["skirt_height_frac"]),
         )
         return obj
 
@@ -1024,11 +1379,14 @@ def main(argv: list[str] | None = None) -> None:
     )
     parser.add_argument("--only-big", action="store_true", help="Only build and export Rock_10..Rock_13.")
     parser.add_argument("--only-rockfall", action="store_true", help="Only build and export Rockfall_Boulder_00..03 and Rockfall_TalusSlab.")
+    parser.add_argument("--only-rim-talus", action="store_true", help="Only build and export RimTalus_00..07.")
     parser.add_argument("--render-scale", action="store_true", help="Render boulders_scale_dawn/night.png with 07.")
     args = parser.parse_args(argv)
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
-    if args.only_rockfall:
+    if args.only_rim_talus:
+        specs_to_build = [s for s in ROCK_SPECS if s.get("rim_talus")]
+    elif args.only_rockfall:
         specs_to_build = [s for s in ROCK_SPECS if s.get("fresh_rockfall") or s.get("talus_slab")]
     elif args.only_big:
         specs_to_build = [s for s in ROCK_SPECS if str(s["name"]) in ("Rock_10", "Rock_11", "Rock_12", "Rock_13")]
