@@ -27,6 +27,11 @@ namespace MoonProject.World
             new RuinPlacement("ScatterSet", new Vector2(-5.2f, -5.2f), -18f, 2.6f),
         };
 
+        [Tooltip("Drawn parts of the ruins ('Ruin/Node') that Art's collision proxies leave partly open, made solid " +
+            "by the convex hull of their own mesh as well, so the chase camera keeps out of them: the radio tower's " +
+            "dish frame, high on its mast, out of 07's way.")]
+        [SerializeField] private string[] _hullParts = { "RadioTower/Dish" };
+
         [Header("The landed cargo lander (opening v2 §4)")]
         [Tooltip("How far the landed lander leans off level, degrees, about the axis from its port side to the far " +
             "side: a hard landing on uneven ground, slightly tilted.")]
@@ -193,6 +198,7 @@ namespace MoonProject.World
         };
 
         public RuinPlacement[] Ruins => _ruins;
+        public string[] HullParts => _hullParts;
         public float LanderTilt => _landerTilt;
         public GroundCableSettings WakeCable => _wakeCable;
         public LanderBeaconSettings LanderBeacon => _landerBeacon;

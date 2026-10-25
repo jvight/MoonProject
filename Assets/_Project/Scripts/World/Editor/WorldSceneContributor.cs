@@ -138,7 +138,7 @@ namespace MoonProject.World.Editor
                 Quaternion rotation = Quaternion.Euler(0f, piece.Yaw, 0f) * prefab.transform.localRotation;
                 GameObject instance = context.InstantiatePrefab(prefab, ruinsRoot, position, rotation);
                 instance.name = piece.Id;
-                RuinColliderBuilder.Fit(instance);
+                RuinColliderBuilder.Fit(instance, settings.Landmarks.HullParts);
                 if (piece.Id == FallenSolarArrayName)
                 {
                     StandArrayGlint(context, settings, instance, root);

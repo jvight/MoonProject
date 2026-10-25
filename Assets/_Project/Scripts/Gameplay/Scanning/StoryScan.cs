@@ -34,8 +34,14 @@ namespace MoonProject.Gameplay
                  "targets, so looking at the panel picks the panel.")]
         [SerializeField] private Vector3 _offset;
 
-        public StoryScan(string storyId, string ruinId, string node, string textKey, ScanSize size, Vector3 offset)
+        [Tooltip("A free read (opening-v3-payoff-audit §3): no scan verb, no brackets, no chip; its text shows when 07 " +
+                 "stands facing it within reach. For a story that pays nothing but its words.")]
+        [SerializeField] private bool _freeRead;
+
+        public StoryScan(string storyId, string ruinId, string node, string textKey, ScanSize size, Vector3 offset,
+            bool freeRead = false)
         {
+            _freeRead = freeRead;
             _offset = offset;
             _storyId = storyId;
             _ruinId = ruinId;
@@ -53,6 +59,8 @@ namespace MoonProject.Gameplay
         public ScanSize Size => _size;
 
         public Vector3 Offset => _offset;
+
+        public bool FreeRead => _freeRead;
 
         /// <summary>"story.&lt;id&gt;": its fragment's saved id.</summary>
         public string FragmentId => IdPrefix + _storyId;

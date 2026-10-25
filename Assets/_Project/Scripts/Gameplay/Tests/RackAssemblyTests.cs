@@ -8,7 +8,7 @@ namespace MoonProject.Gameplay.Tests
 {
     /// <summary>
     /// The SSR-3 headlamp assembled at the rack (opening v3 5.2): only while its bay is read, only once Kessler–Arai
-    /// understanding has unlocked it (past the west signal), only with its cost in the hold; a held E fills the
+    /// understanding has unlocked it, only with its cost in the hold; a held E fills the
     /// progress, letting go starts again, and full it spends Metal 2 + Wiring 1 and fits the lamp bar in the lamp
     /// socket, once.
     /// </summary>
@@ -74,15 +74,12 @@ namespace MoonProject.Gameplay.Tests
             HoldFor(Hold * 2f);
             Assert.IsEmpty(_fitted);
 
-            Learn();
-            Assert.IsFalse(_assembly.CanAssemble(Bay, out _), "understood, but the opening holds the unlock");
         }
 
         [Test]
         public void UnlockedAndCovered_AHeldE_FitsTheLampBarInTheLampSocket_AndSpendsItsCost()
         {
             Learn();
-            Release();
             _stock.Stow(new Recipe(3, 2, 0));
             Assert.IsTrue(_assembly.CanAssemble(Bay, out bool covered));
             Assert.IsTrue(covered);
@@ -108,7 +105,6 @@ namespace MoonProject.Gameplay.Tests
         public void WithoutItsCost_TheBayIsAGoalButTheHoldDoesNothing()
         {
             Learn();
-            Release();
             _stock.Stow(new Recipe(1, 1, 0));
             Assert.IsTrue(_assembly.CanAssemble(Bay, out bool covered), "the part is unlocked");
             Assert.IsFalse(covered, "one Metal short");
@@ -121,7 +117,6 @@ namespace MoonProject.Gameplay.Tests
         public void LettingGo_OrReadingAnotherBay_StartsTheHoldAgain()
         {
             Learn();
-            Release();
             _stock.Stow(new Recipe(2, 1, 0));
             HoldFor(Hold * 0.8f);
             _assembly.Step(0.1f, Bay, false);
@@ -149,11 +144,6 @@ namespace MoonProject.Gameplay.Tests
             _events.Publish(new BootCheckFinished());
             _events.Publish(new StoryScanned(StoryScan.IdPrefix + "six", "k", Vector3.zero));
             _understanding.Announce();
-        }
-
-        private void Release()
-        {
-            _events.Publish(new OpeningMilestoneReached(OpeningMilestone.SignalWest, false));
         }
 
         private static DatabankEntry Entry(string id, DatabankUnlock unlock)

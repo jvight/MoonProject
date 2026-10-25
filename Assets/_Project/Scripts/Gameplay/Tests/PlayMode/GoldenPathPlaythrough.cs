@@ -179,8 +179,8 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Metres from a panel on a wall 07 scans it from, square to it: the panel fills the view.</summary>
         private const float PanelStandOff = 2.5f;
 
-        // The airlock's door sign and readout, scanned in whichever order the view frames them, with a spare look.
-        private const int AirlockScans = 3;
+        // Seconds 07, standing facing the airlock panel, may take to read it (a free read: no E).
+        private const float FreeReadTimeout = 5f;
 
         /// <summary>Metres from a line-up spot that count as there: it only turns 07 roughly to its target.</summary>
         private const float LineUpArrive = 3f;
@@ -614,20 +614,17 @@ namespace MoonProject.Gameplay.PlayModeTests
                 Assert.IsNotNull(panel, "the habitat has its airlock panel to read");
                 Vector3 outward = Flat(panel.Point - Ruin("HabitatModules").position).normalized;
 
-                // The habitat's first fragment is the sign over the airlock door, beside and above the readout: from
-                // the readout's stand-off the brackets rest on whichever of the two the view frames more squarely, so
-                // a player scans that one, then the other, until the readout is read.
-                ScanFragment door = _gameplay.Scans.Find(ScanField.FragmentId("ruin.HabitatModules", 0));
-                Assert.IsNotNull(door, "the habitat's first fragment is over the airlock door");
-                for (int scan = 0; scan < AirlockScans && !panel.Scanned; scan++)
-                {
-                    ScanFragment aim = door.Scanned ? panel : door;
-                    ScanFragment beside = aim == door ? panel : null;
-                    yield return Scan(aim, "the airlock door and its readout", outward, PanelStandOff, beside);
-                }
+                // A free read (payoff audit §3): no brackets, no chip, no E; 07 stands facing it and its words show.
+                Assert.IsTrue(panel.FreeRead, "the airlock panel is a free read");
+                yield return DriveTo(Flat(panel.Point), PanelStandOff, "the spot facing the airlock panel",
+                    ApproachThrottle);
+                Look(panel.Point);
+                yield return Until(() => panel.Scanned, FreeReadTimeout, "07 facing the airlock panel reads it",
+                    () => $"the view {ViewOff(panel.Point):F0} deg off it, {_rover.Speed:F2} m/s");
+                Assert.AreNotEqual(panel, _gameplay.Scans.Candidate, "a free read is never a scan candidate");
                 Assert.AreEqual(1, read.Count, "the panel's readout shows once");
                 Assert.AreEqual(panel.FragmentId, read[0].StoryId, "it is the airlock panel that was read");
-                Assert.IsTrue(panel.Scanned, "the airlock panel is scanned");
+                Assert.IsTrue(panel.Scanned, "the airlock panel is read");
             }
 
             Capture("07-the-airlock-panel");
@@ -651,16 +648,6 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// </summary>
         private IEnumerator Scan(ScanFragment fragment, string what, Vector3 preferred, float standOff)
         {
-            yield return Scan(fragment, what, preferred, standOff, null);
-        }
-
-        /// <summary>
-        /// As the scan coming in along <paramref name="preferred"/>, where the brackets may rest on
-        /// <paramref name="beside"/> instead (a neighbour on the same face): whichever the view frames is scanned.
-        /// </summary>
-        private IEnumerator Scan(ScanFragment fragment, string what, Vector3 preferred, float standOff,
-            ScanFragment beside)
-        {
             ScanField scans = _gameplay.Scans;
             Vector3 away = ClearSide(fragment.Point, preferred, standOff, fragment.FragmentId, null);
             if (Clear(fragment.Point + away * (standOff + ScanLineUp), null))
@@ -674,10 +661,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             // The candidate the brackets rested on, kept: the next frame's candidate may already have moved on.
             ScanFragment framed = null;
-            yield return Until(() => (framed = OnSetCandidate(scans, fragment) ||
-                                               (beside != null && !beside.Scanned && scans.Candidate == beside)
-                    ? scans.Candidate
-                    : framed) != null,
+            yield return Until(() => (framed = OnSetCandidate(scans, fragment) ? scans.Candidate : framed) != null,
                 ScanLookTimeout,
                 $"07's view rests on {fragment.FragmentId}: its brackets and the Scan chip show",
                 () => $"scan candidate {scans.Candidate?.FragmentId ?? "none"} (scanned " +
