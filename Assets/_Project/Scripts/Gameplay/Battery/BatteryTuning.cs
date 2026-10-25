@@ -13,8 +13,8 @@ namespace MoonProject.Gameplay
         [Tooltip("Cells 07 starts with (four amber flank lamps).")]
         [Range(1, BatteryModel.MaxCells)] [SerializeField] private int _startingCells = 4;
 
-        [Tooltip("How full 07's cells are when a new game starts (opening-v2 B1: half empty, so it needs a charger).")]
-        [Range(0.05f, 1f)] [SerializeField] private float _startingCharge01 = 0.5f;
+        [Tooltip("How full 07's cells are when a new game starts (opening-v2 B1: a little over half, so the walk to the lander and the pad still needs a charger).")]
+        [Range(0.05f, 1f)] [SerializeField] private float _startingCharge01 = 0.6f;
 
         [Header("Driving")]
         [Tooltip("Metres driven on the ground at cruise, on the flat, that one cell pays for. Airborne metres are " +

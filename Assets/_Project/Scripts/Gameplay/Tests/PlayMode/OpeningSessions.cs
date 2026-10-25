@@ -72,7 +72,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return null;
             OpeningField opening = _fixture.Gameplay.Opening;
             KnownStructures known = _fixture.Gameplay.KnownStructures;
-            Assert.AreEqual(0.5f, _fixture.Gameplay.Battery.Model.Charge01, 0.01f, "a new game wakes half empty");
+            Assert.AreEqual(0.6f, _fixture.Gameplay.Battery.Model.Charge01, 0.01f, "a new game wakes a little over half full");
             Assert.IsFalse(known.IsKnown(StructureIds.ChargingPad), "no blueprint is known from the start");
             Assert.AreEqual(OpeningKeys.DriveToLander, opening.Flow.Current);
 

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: BatteryTuning
   m_EditorClassIdentifier: 
   _startingCells: 4
-  _startingCharge01: 0.5
+  _startingCharge01: 0.6
   _metresPerCell: 200
   _uphillMultiplier: 1.5
   _downhillMultiplier: 0.5

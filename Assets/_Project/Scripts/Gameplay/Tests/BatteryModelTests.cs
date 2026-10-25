@@ -345,12 +345,12 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void TheOpening_FromTheHalfFullWake_LeavesAQuarterToAThird_AfterThePadWeld()
+        public void TheOpening_FromTheWake_LeavesAQuarterToAThird_AfterThePadWeld()
         {
             var shipping = AssetDatabase.LoadAssetAtPath<BatteryTuning>(GameplayAssetPaths.BatteryTuning);
             Assert.IsNotNull(shipping, "the shipped battery tuning (run Gameplay/Tuning)");
             var fresh = new BatteryModel(shipping, _events);
-            Assert.AreEqual(0.5f, fresh.Charge01, 1e-5f, "07 wakes half full");
+            Assert.AreEqual(0.6f, fresh.Charge01, 1e-5f, "07 wakes a little over half full");
             Drive(fresh, OpeningDriveMetres);
             Step(fresh, new BatteryStep { ScanSeconds = Dt }, 5f);
             Step(fresh, new BatteryStep { WeldSeconds = Dt }, 3f);
