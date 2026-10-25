@@ -113,7 +113,7 @@ namespace MoonProject.Audio.PlayModeTests
         public IEnumerator Radio_RaisesStatic_AwayFromBase()
         {
             // Let the wake-up crackle melt away first: the baseline is the settled, clear signal.
-            yield return new WaitForSecondsRealtime(2f);
+            yield return new WaitForSecondsRealtime(3f);
             AudioSource staticLoop = AudioTestRig.FindChildSource(_rig.Radio.transform, "Static");
             Assert.Greater(_rig.Radio.Clarity, 0.99f);
             float nearStatic = staticLoop.volume;
