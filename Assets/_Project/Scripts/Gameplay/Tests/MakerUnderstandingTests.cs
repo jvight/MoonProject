@@ -8,8 +8,8 @@ namespace MoonProject.Gameplay.Tests
 {
     /// <summary>
     /// Maker understanding (docs/design/maker-understanding.md §1, §2): points derived from completed, non-seeded
-    /// databank entries per maker; levels at rising thresholds unlock adapted blueprints; gains held through the
-    /// opening until the west signal (rule 6); a loaded game past the signal starts silent; the tracks validate.
+    /// databank entries per maker; levels at rising thresholds unlock adapted blueprints at once, each gain naming its
+    /// next unlock (opening-v3-payoff-audit §3); a loaded game starts silent; the tracks validate.
     /// </summary>
     public sealed class MakerUnderstandingTests
     {
@@ -106,48 +106,23 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void ThroughTheOpening_GainsAreHeld_ThenTheWestSignalAnnouncesEachOnce()
+        public void EachGain_IsAnnouncedAtOnce_NamingThePartItUnlocksAndTheNext()
         {
             Story("post");
-            Story("six");
-
-            Assert.AreEqual(1, _understanding.LevelOf(DatabankMaker.KesslerArai));
-            Assert.IsFalse(_understanding.IsUnlocked(Lamp), "Rule 6: the opening holds the unlock.");
-            Assert.IsEmpty(_gained);
-
-            Signal(false);
-
-            Assert.IsTrue(_understanding.IsUnlocked(Lamp));
-            Assert.AreEqual(1, _gained.Count, "One line per maker, not one per point.");
-            UnderstandingGained gain = _gained[0];
-            Assert.AreEqual(DatabankMaker.KesslerArai, gain.Maker);
-            Assert.AreEqual(2, gain.Points);
-            Assert.AreEqual(1, gain.Level);
-            Assert.AreEqual(4, gain.NextThreshold);
-            Assert.AreEqual(Lamp, gain.AdaptedId);
-            Assert.IsTrue(gain.First);
-
-            Signal(false);
-            Assert.AreEqual(1, _gained.Count, "The signal releases once.");
-        }
-
-        [Test]
-        public void AfterTheSignal_EachGainIsAnnounced_AndALevelNamesItsPartOnce()
-        {
-            Signal(false);
-
-            Story("six");
-            Assert.AreEqual(1, _gained.Count);
+            Assert.AreEqual(1, _gained.Count, "the gain shows on the scan that earned it");
             Assert.AreEqual(1, _gained[0].Points);
             Assert.AreEqual(0, _gained[0].Level);
             Assert.AreEqual(2, _gained[0].NextThreshold);
             Assert.AreEqual(string.Empty, _gained[0].AdaptedId);
+            Assert.AreEqual(Lamp, _gained[0].NextAdaptedId, "the bar names its next unlock");
             Assert.IsTrue(_gained[0].First);
             Assert.IsFalse(_understanding.IsUnlocked(Lamp));
 
-            Story("post");
-            Assert.AreEqual(Lamp, _gained[1].AdaptedId);
+            Story("six");
+            Assert.AreEqual(Lamp, _gained[1].AdaptedId, "the level's part, unlocked at once (no hold to the signal)");
+            Assert.AreEqual(Rings, _gained[1].NextAdaptedId);
             Assert.IsFalse(_gained[1].First);
+            Assert.IsTrue(_understanding.IsUnlocked(Lamp));
 
             Story("one");
             Assert.AreEqual(string.Empty, _gained[2].AdaptedId);
@@ -155,19 +130,21 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(Rings, _gained[3].AdaptedId);
             Assert.AreEqual(2, _gained[3].Level);
             Assert.AreEqual(0, _gained[3].NextThreshold, "Past the last level there is no next.");
+            Assert.AreEqual(string.Empty, _gained[3].NextAdaptedId);
             Assert.IsTrue(_understanding.IsUnlocked(Rings));
             Assert.AreEqual(4, _gained.Count);
+
+            Story("six");
+            Assert.AreEqual(4, _gained.Count, "a re-scan announces nothing");
         }
 
         [Test]
-        public void ALoadedGamePastTheSignal_StartsSilent_WithItsUnlocks()
+        public void ALoadedGame_StartsSilent_WithItsUnlocks()
         {
             _sources.Stories.Add("six");
             _sources.Stories.Add("post");
             _databank.Restore(new DatabankSaveData());
             _understanding.Announce();
-
-            Signal(true);
 
             Assert.IsEmpty(_gained, "Nothing new to say.");
             Assert.AreEqual(2, _understanding.PointsOf(DatabankMaker.KesslerArai));
@@ -180,23 +157,8 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void ALoadedGameBeforeTheSignal_StillAnnouncesItsHeldGainAtTheSignal()
-        {
-            _sources.Stories.Add("six");
-            _databank.Restore(new DatabankSaveData());
-            _understanding.Announce();
-
-            Signal(false);
-
-            Assert.AreEqual(1, _gained.Count);
-            Assert.AreEqual(1, _gained[0].Points);
-            Assert.IsTrue(_gained[0].First);
-        }
-
-        [Test]
         public void AnUnknownBlueprint_IsNeverUnlocked()
         {
-            Signal(false);
             Story("six");
             Story("post");
 
@@ -242,11 +204,6 @@ namespace MoonProject.Gameplay.Tests
         private void Fragment(string fragmentId, int before)
         {
             _events.Publish(new FragmentScanned(fragmentId, "structure", before, 2, false, 0));
-        }
-
-        private void Signal(bool restored)
-        {
-            _events.Publish(new OpeningMilestoneReached(OpeningMilestone.SignalWest, restored));
         }
 
         private static DatabankEntry Entry(string id, DatabankMaker maker, DatabankUnlock unlock)
