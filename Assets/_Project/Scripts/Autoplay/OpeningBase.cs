@@ -576,12 +576,35 @@ namespace MoonProject.Autoplay
         /// <summary>R6: back onto the pad; the dock after the visit begins the first dusk.</summary>
         public IEnumerator DockForTheDusk(string structureId)
         {
+            yield return DriveOntoThePad(structureId);
+            yield return _bot.Until(() => G.Opening.DuskBegun, DuskSeconds,
+                "the dock after power-on to begin the first dusk",
+                () => "On the pad " + G.PadLock.OnPad + ", lock raised " + G.PadLock.Raised + ".");
+            yield return UntilThePadLetsGo("the dusk");
+        }
+
+        /// <summary>
+        /// B9's end: the bank stands and the base is ready, but the first night falls only with 07 docked: onto the
+        /// pad, then the NightReady milestone follows the dock.
+        /// </summary>
+        public IEnumerator DockForTheNight(string structureId, float seconds)
+        {
+            yield return DriveOntoThePad(structureId);
+            yield return UntilReached(OpeningMilestone.NightReady, "the NightReady milestone", seconds);
+        }
+
+        private IEnumerator DriveOntoThePad(string structureId)
+        {
             Vector3 pad = PlacedPosition(structureId);
             yield return _bot.DriveTo(Flat(pad) + Vector3.back * 6f, 2f, "a line-up for the pad", DriveSeconds);
             yield return _bot.DriveTo(Flat(pad), ApproachThrottleRadius, "the pad", DriveSeconds);
-            yield return _bot.Until(() => G.Opening.DuskBegun, DuskSeconds,
-                "the dock after the visit to begin the first dusk",
-                () => "On the pad " + G.PadLock.OnPad + ", lock raised " + G.PadLock.Raised + ".");
+        }
+
+        /// <summary>The pad keeps 07 through a day-end beat until its cells are full: driving does nothing before then.</summary>
+        private IEnumerator UntilThePadLetsGo(string beat)
+        {
+            yield return _bot.Until(() => !G.DayEnd.Keep, TopUpSeconds, "the pad to let 07 go after " + beat,
+                () => "On the pad " + G.PadLock.OnPad + ", cells " + G.Battery.Model.Charge01 + ".");
         }
 
         public IEnumerator ReadTheAirlockPanel()
@@ -808,6 +831,7 @@ namespace MoonProject.Autoplay
         {
             var sunlight = _bot.World.Context.Get<ISunlight>();
             yield return _bot.Until(() => sunlight.Phase == SkyPhase.Earthlit, SunsetSeconds, "the first night to fall");
+            yield return UntilThePadLetsGo("the night");
         }
 
         /// <summary>

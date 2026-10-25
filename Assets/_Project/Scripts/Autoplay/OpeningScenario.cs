@@ -151,6 +151,8 @@ namespace MoonProject.Autoplay
                 null));
             // The first nightfall plays by itself (B10): nothing is asked of the player after the bank.
             _naive.Skip("B9");
+            // The base is ready and the line says to dock on the pad for nightfall: a drive to the pad.
+            _naive.Declare("B9c", new NextAction("WASD", new[] { drive }, new[] { "dock", "pad", "night" }, null));
             _naive.Declare("B10", new NextAction("WASD", new[] { drive }, new[] { "tower", "antenna", "transmit" },
                 new[] { "tower" }));
             _naive.Declare("B11a", new NextAction("B", new[] { "hint.openbuild" }, new[] { "mast", "antenna", "build" },
@@ -538,8 +540,8 @@ namespace MoonProject.Autoplay
             yield return _base.ExpectStep(OpeningSteps.BuildBatteryBank, OpeningKeys.BuildBatteryBank,
                 "B9: the module is home");
             yield return BuildBy(StructureIds.BatteryBank, _base.ModulePosition());
-            yield return _base.UntilReached(OpeningMilestone.NightReady, "the NightReady milestone",
-                NightReadySeconds);
+            yield return Sub("B9c");
+            yield return _base.DockForTheNight(StructureIds.ChargingPad, NightReadySeconds);
             if (!_bot.Failed)
             {
                 var sunlight = _bot.World.Context.Get<ISunlight>();
