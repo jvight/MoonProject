@@ -165,6 +165,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(opening.DuskBegun, "the first dock after power-on begins the first dusk");
             Assert.AreEqual(1, _dusk.Count, "published once");
             Assert.IsFalse(_dusk[0].Restored);
+            yield return Waits.Until(() => !_fixture.Gameplay.DayEnd.Keep, 30f);
+            Assert.IsFalse(_fixture.Gameplay.DayEnd.Keep, "the pad keeps 07 through the dusk until it is full");
             Assert.AreEqual(OpeningKeys.ScanModule, opening.Flow.Current, "night is coming: the power module");
 
             yield return PlaceAt(GameplayFixture.SeismicStation);
@@ -175,6 +177,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return PlaceAt(apron);
             yield return Waits.Until(() => Reached(OpeningMilestone.NightReady), 5f);
             Assert.IsTrue(Reached(OpeningMilestone.NightReady), "docked: the nightfall plays on the pad");
+            yield return null;
             Assert.AreEqual(string.Empty, opening.Flow.Current, "the night falls with nothing said");
             _fixture.World.Phase = SkyPhase.Earthlit;
             yield return null;

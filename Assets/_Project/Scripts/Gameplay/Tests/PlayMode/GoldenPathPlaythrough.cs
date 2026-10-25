@@ -1007,7 +1007,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         {
             Begin();
             var sunlight = _context.Get<ISunlight>();
-            yield return DriveTo(Flat(pad) + Vector3.back * 6f, 2f, "a line-up for the pad");
+            // The module came home a metre off the pad and the bank stands on it: 07 is beside the pad already.
             yield return DriveTo(Flat(pad), 0.5f, "the pad", ApproachThrottle);
             yield return UntilReached(OpeningMilestone.NightReady, "docked on the night-ready base: the nightfall begins");
             Assert.IsTrue(_gameplay.DayEnd.Keep, "the pad keeps 07 through the nightfall");
