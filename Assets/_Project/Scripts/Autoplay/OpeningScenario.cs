@@ -157,7 +157,9 @@ namespace MoonProject.Autoplay
                 null));
             _naive.Declare("B11", new NextAction("E", new[] { "hint.transmit" }, new[] { "transmit", "answer" },
                 new[] { "foot", "TX" }));
-            _naive.Declare("B12", new NextAction("WASD", new[] { drive }, new[] { "relay", "west" }, new[] { "relay" }));
+            // With the cells too low to arrive, the line says to charge at the pad first: still a drive, to the pad.
+            _naive.Declare("B12", new NextAction("WASD", new[] { drive }, new[] { "relay", "west", "charge", "pad" },
+                new[] { "relay" }));
             // R10 ends the opening: nothing is asked of the player after Relay 1 is relit.
             _naive.Skip("R10");
         }
