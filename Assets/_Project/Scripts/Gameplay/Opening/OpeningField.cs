@@ -250,7 +250,7 @@ namespace MoonProject.Gameplay
                 case OpeningKeys.BuildSolar:
                 case OpeningKeys.DockForDusk:
                 case OpeningKeys.MoveBatteryBank:
-                case OpeningKeys.AwaitNight:
+                case OpeningKeys.DockForNight:
                 case OpeningKeys.ChargeForRelay:
                 case OpeningKeys.BuildMast:
                     return Place(_tuning.ApronAnchor, _apron, out placeId, out position);
@@ -403,7 +403,7 @@ namespace MoonProject.Gameplay
             }
 
             Caches.Step(deltaTime);
-            Dusk.Step(PowerOn, Knows(StructureIds.BatteryBank));
+            Dusk.Step(PowerOn);
             Keys.Step(deltaTime);
             Flow.Tick(deltaTime, _rover.Position);
         }

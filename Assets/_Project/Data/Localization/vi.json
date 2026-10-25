@@ -755,8 +755,8 @@
             "text": "Phát sóng từ cột ăng-ten"
         },
         {
-            "key": "next.v3.await_night",
-            "text": "Căn cứ đã sẵn sàng qua đêm"
+            "key": "next.v3.dock_for_night",
+            "text": "Căn cứ đã sẵn sàng. Về bệ sạc đón đêm"
         },
         {
             "key": "next.v3.go_relay",

@@ -91,7 +91,7 @@ namespace MoonProject.Gameplay.Tests
             _game.ModuleHome = true;
             Expect(OpeningKeys.BuildBatteryBank, "home: build the bank on it");
             _game.NightReady = true;
-            Expect(OpeningKeys.AwaitNight, "night-ready: the base waits for the night");
+            Expect(OpeningKeys.DockForNight, "night-ready: dock on the pad for the night");
             _game.NightFallen = true;
             Expect(OpeningKeys.ScanTower);
             _game.Known.Add(StructureIds.AntennaMast);
@@ -307,6 +307,9 @@ namespace MoonProject.Gameplay.Tests
             _flow.Tick();
             _game.NightReady = true;
             _flow.Tick();
+            Assert.AreEqual(2, _milestones.Count, "the base night-ready, 07 off the pad: the night waits for the dock");
+            _events.Publish(new RoverDockChanged(true, Vector3.zero, Quaternion.identity));
+            _flow.Tick();
             _game.BuiltIds.Add(StructureIds.AntennaMast);
             _flow.Tick();
             Assert.AreEqual(4, _milestones.Count, "once each");
@@ -325,6 +328,7 @@ namespace MoonProject.Gameplay.Tests
             _game.FirstCharge = true;
             _game.PowerOn = true;
             _game.NightReady = true;
+            _game.NightFallen = true;
             _game.BuiltIds.Add(StructureIds.AntennaMast);
             _game.RelayRelit = true;
             Assert.DoesNotThrow(() => _flow.Announce(), "every milestone the enum has is safe to replay past");
@@ -370,7 +374,7 @@ namespace MoonProject.Gameplay.Tests
             _game.BuiltIds.Add(StructureIds.BatteryBank);
             Expect(OpeningKeys.MoveBatteryBank, "built, but the grid does not reach it");
             _game.NightReady = true;
-            Expect(OpeningKeys.AwaitNight, "moved within reach: the base waits for the night");
+            Expect(OpeningKeys.DockForNight, "moved within reach: dock on the pad for the night");
         }
 
         [Test]
@@ -614,7 +618,7 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void TheWaitForTheNight_IsNeverReminded()
+        public void TheNightfall_PlaysOnThePad_WithNothingSaid()
         {
             _game.ReachedLander = true;
             _game.Known.Add(StructureIds.ChargingPad);
@@ -627,9 +631,15 @@ namespace MoonProject.Gameplay.Tests
             _game.DuskBegun = true;
             _game.NightReady = true;
             _flow.Tick(1f);
-            Assert.AreEqual(OpeningKeys.AwaitNight, _flow.Current);
+            Assert.AreEqual(OpeningKeys.DockForNight, _flow.Current);
+            _events.Publish(new RoverDockChanged(true, Vector3.zero, Quaternion.identity));
+            _events.Publish(new ChargingChanged(true, ChargerKind.Pad, Vector3.zero));
+            _flow.Tick(1f);
+            _flow.Tick(1f);
+            Assert.IsTrue(_flow.HasReached(OpeningMilestone.NightReady), "docked: the nightfall begins");
+            Assert.AreEqual(string.Empty, _flow.Current, "the night falls with nothing said");
             Tick(Stall * 10);
-            Assert.IsEmpty(_lines, "nothing to do but wait: no reminder");
+            Assert.IsEmpty(_lines, "nothing to do but watch: no line, no reminder");
         }
 
         [Test]

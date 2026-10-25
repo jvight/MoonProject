@@ -183,6 +183,9 @@ namespace MoonProject.Gameplay
         /// <summary>The dock lock on the built pad 07 charges on (opening-v2 §5).</summary>
         public PadLock PadLock { get; private set; }
 
+        /// <summary>Keeps 07 on the pad through the opening's dusk and nightfall until it is full.</summary>
+        public DayEndHold DayEnd { get; private set; }
+
         /// <summary>The base's lamps, which follow the Sun (null while the opening could not be built).</summary>
         public BaseLamps BaseLamps { get; private set; }
 
@@ -498,6 +501,7 @@ namespace MoonProject.Gameplay
                 PadLock = new PadLock(context.Events, _baseTuning, _building, _battery.Model, services.Rover,
                     _openingTuning.PadChargeRadius, _openingTuning.PadPlateMargin);
                 PadLock.FaceOnRelease(opening);
+                DayEnd = new DayEndHold(context.Events);
                 BaseLamps = new BaseLamps(context.Events, _baseTuning, _building, sunlight);
                 PowerPulse = new PowerPulse(context.Events, _baseTuning, _building, BaseLamps,
                     services.Visuals.FeelSprite, transform);
@@ -689,6 +693,8 @@ namespace MoonProject.Gameplay
             Answer.Step(deltaTime, _input.ExcavateHeld, _roverState.Position, _roverState.Speed);
             RangeRing.Step(deltaTime);
             RangeRingLine.Step();
+            DayEnd.Step(PadLock.Docked, _battery.Model.CellsFull, Opening.NightFallen);
+            PadLock.Keep = DayEnd.Keep;
             PadLock.Step(deltaTime);
             BaseLamps.Step(deltaTime);
             PowerPulse.Step(deltaTime);
@@ -881,6 +887,7 @@ namespace MoonProject.Gameplay
         private void OnDestroy()
         {
             ApronGuide?.Dispose();
+            DayEnd?.Dispose();
             ScanMark?.Dispose();
             foreach (IDisposable token in _saveTokens)
             {

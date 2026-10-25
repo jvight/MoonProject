@@ -755,8 +755,8 @@
             "text": "Transmit from the antenna mast"
         },
         {
-            "key": "next.v3.await_night",
-            "text": "The base is ready for night"
+            "key": "next.v3.dock_for_night",
+            "text": "The base is ready. Dock on the pad for nightfall"
         },
         {
             "key": "next.v3.go_relay",

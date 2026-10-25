@@ -57,6 +57,7 @@ namespace MoonProject.Gameplay
         private bool _snaggedThisTow;
         private bool _docked;
         private bool _charging;
+        private bool _padDocked;
         private int _dockShownIndex = -1;
         private Vector3 _rover;
         private float _placeDistance = -1f;
@@ -83,7 +84,7 @@ namespace MoonProject.Gameplay
             _steps.Add(IgniterLine, () => _game.IgniterFitted);
             _steps.Add(SolarLine, () => _game.PowerOn);
             _steps.Add(NightLine, () => _game.NightReady);
-            _steps.Add(() => _game.NightFallen ? OpeningKeys.ScanTower : OpeningKeys.AwaitNight,
+            _steps.Add(NightfallLine,
                 () => _game.Knows(StructureIds.AntennaMast));
             _steps.Add(OpeningKeys.BuildMast, () => _game.Built(StructureIds.AntennaMast));
             // The transmit line goes as 07 starts transmitting; the answer's moment says nothing, and relay.1 is named
@@ -104,6 +105,7 @@ namespace MoonProject.Gameplay
                 events.Subscribe<TowAttached>(_ => _progressed = true),
                 events.Subscribe<PartFitted>(_ => _progressed = true),
                 events.Subscribe<ChargingChanged>(OnChargingChanged),
+                events.Subscribe<RoverDockChanged>(changed => _padDocked = changed.Docked),
             };
         }
 
@@ -113,6 +115,17 @@ namespace MoonProject.Gameplay
             {
                 _subscriptions[i].Dispose();
             }
+        }
+
+        /// <summary>
+        /// B10: the base night-ready, the line asks 07 to dock for the night; docked, the nightfall plays with nothing
+        /// said; once the night has fallen, the tower is next.
+        /// </summary>
+        private string NightfallLine()
+        {
+            return _game.NightFallen ? OpeningKeys.ScanTower
+                : HasReached(OpeningMilestone.NightReady) ? string.Empty
+                : OpeningKeys.DockForNight;
         }
 
         /// <summary>
@@ -264,7 +277,7 @@ namespace MoonProject.Gameplay
             {
                 // 07 rests on a charger: a natural pause, so the step's line is said once more (once per step).
                 _docked = false;
-                if (key.Length > 0 && Shown != key && index != _dockShownIndex && !AsksToCharge(key))
+                if (key.Length > 0 && Shown != key && index != _dockShownIndex && !AsksForThePad(key))
                 {
                     _dockShownIndex = index;
                     Show(key, NextLineReason.Next, _timing.NextLineSeconds);
@@ -320,12 +333,12 @@ namespace MoonProject.Gameplay
                 return;
             }
 
-            if (_waking || key.Length == 0 || _reminders >= MaxReminders || !Reminds(key))
+            if (_waking || key.Length == 0 || _reminders >= MaxReminders)
             {
                 return;
             }
 
-            if (_progressed | Closing(key, deltaTime) | (_charging && AsksToCharge(key)))
+            if (_progressed | Closing(key, deltaTime) | (_charging && AsksForThePad(key)))
             {
                 _progressed = false;
                 _stalled = 0f;
@@ -362,10 +375,11 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// A line that asks 07 to charge is being done while 07 charges: it is neither said again on the dock nor
-        /// brought back as a reminder then.
+        /// A line that asks 07 onto the pad (to charge, to end the day, for the night) is being done while 07 charges
+        /// there: it is neither said again on the dock nor brought back as a reminder then.
         /// </summary>
-        private static bool AsksToCharge(string key) => key == OpeningKeys.ChargeForRelay;
+        private static bool AsksForThePad(string key) =>
+            key == OpeningKeys.ChargeForRelay || key == OpeningKeys.DockForDusk || key == OpeningKeys.DockForNight;
 
         private static bool HoldsUntilDone(string key) =>
             key == OpeningKeys.HookModule || key == OpeningKeys.FreeCable;
@@ -388,9 +402,6 @@ namespace MoonProject.Gameplay
         /// line it would only hold that chip back (it may still come back as a reminder).
         /// </summary>
         private static bool ChipTeaches(string key) => key == OpeningKeys.FitIgniter;
-
-        /// <summary>A line with nothing to do (the base waits for the night) never comes back as a reminder.</summary>
-        private static bool Reminds(string key) => key != OpeningKeys.AwaitNight;
 
         /// <summary>07 closes on the place of line <paramref name="key"/>: it is on its way, not stuck.</summary>
         private bool Closing(string key, float deltaTime)
@@ -447,7 +458,8 @@ namespace MoonProject.Gameplay
                 case OpeningMilestone.PowerOn:
                     return _game.PowerOn;
                 case OpeningMilestone.NightReady:
-                    return _game.NightReady;
+                    // The nightfall plays on the pad: the base night-ready and 07 docked (or a loaded night).
+                    return _game.NightReady && (_padDocked || _game.NightFallen);
                 case OpeningMilestone.SignalWest:
                     return _game.Built(StructureIds.AntennaMast);
                 case OpeningMilestone.OpeningComplete:
