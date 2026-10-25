@@ -1,5 +1,9 @@
 # Opening v3, R8–R11: the "why" chain
 
+> **Superseded for R8–R12** by `opening-v3-payoff-audit.md` (owner-approved 2026-10-25): the network is
+> about range, the opening ends at Relay 1, and 06, the headlamp and the dark slot move off the spine. The
+> audit (§1) and the slot idea (§2, R11) stay as input for hour two.
+
 > **The owner** (playtest 2c1ea201d): "Why, after repairing the antenna, do we know where 06 is broken? And why go
 > find it? The game is extremely hard to understand."
 >

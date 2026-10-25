@@ -66,6 +66,14 @@ A letter means someone is sending.
 something is calling 07. The limit chain (§3) works the same under either hook.
 
 ## 3. Canonical beat table
+> **Changed by the payoff audit** (`opening-v3-payoff-audit.md`, owner-approved 2026-10-25). It overrides the
+> table below where they differ:
+> - R5 merges into R4/R6: dusk starts on the next dock after `PowerOn`, and the seismic station is optional;
+> - R7's failed reply is cut: the ring stopping short of Relay 1 is the felt limit;
+> - R7 + R8 become **the network** (the mast hub; transmit wakes Relay 1 as a node);
+> - the opening ends at **R10, Relay 1 relit**, with the ring growing (§5);
+> - R11 moves off the spine.
+
 **The rules:**
 - Each beat shows **one** guidance element.
 - Each beat's "why" is said once, by the world.
@@ -89,7 +97,8 @@ something is calling 07. The limit chain (§3) works the same under either hook.
 
 - **Milestones** (Core `OpeningMilestoneReached`): `FirstCharge` (R3), `PowerOn` (R4), `NightReady` (R6) and
   `SignalWest` (R7) stand. Add `CallAnswered` (R8).
-- **Held unlocks** release after `SignalWest` (maker-understanding §1 rule 6).
+- **Unlocks show the moment they are earned** (maker-understanding §1 rule 6, revised 2026-10-25). Nothing is
+  held.
 
 ## 4. Items (first 60 minutes)
 **Rules:**
@@ -111,44 +120,44 @@ something is calling 07. The limit chain (§3) works the same under either hook.
 | Battery bank | **the towed module** · Wiring 3 | the habitat's power module, towed home as the bank's frame (it stands in for v2's Metal 3); its labelled cable-reel crate (Wiring 3) |
 | Antenna mast | Metal 4 · Wiring 3 · Optics 2 | the tower ruin: mast sections, feed cable, dish panels |
 
-## 5. The free hour (R10–R11) and the session end
+## 5. The network, the end of the opening, and hour two (revised 2026-10-25, payoff audit)
 **The gates (C2):**
-- **Range** is the main gate. The ring shows energy out and back, and it counts lit relays as charge points.
-- **Darkness** is the second gate: Kestrel-3's interior, and a shadowed crater floor where 07's lamps visibly fall
-  short.
+- **Range** is the main gate. The ring shows energy out and back, and it is drawn from **every charge point**.
+- **Darkness** is the second gate, from hour two on.
 
-**R10, the player's choice:**
-- **relay.1 (inside the ring).** Its cabinet holds the labelled spare (`RELAY SPARE · FEED UNIT`). Fitting it relights
-  the relay, and its pad charges 07 there (lit relays charge, as in GDD v3). That puts a charge point on the map, so
-  **the ring grows**, and the network map on 07's face reveals relay.2 with `SSR-3 · UNIT 06 · HOLD RELAY.2 LINK ·
-  CELL 0%`.
-- **Kestrel-3, the first two-site fragment hunt** (C3.3):
-  - **The limit:** its solar boom still makes power, but its contact is a Tycho hex plate. 07 parks on it and reads
-    `CONTACT · HEX · NO ADAPTER`.
-  - **The fragments:** 2 in the wreck and 1 on the boom piece at the debris field (`-40, 90`).
-  - **The key:** the **Hex Charge Adapter**, a socket kit (story v4 §7 Q7: Tycho's hex dock teaches it). Kestrel-3
-    becomes a forward charge point toward the Peak.
-  - **The darkness gate:** its interior is dark, and the best find, **Kestrel-3's data buffer**, waits there until 07
-    has the headlamp.
+**The network replaces the old "answer" as the payoff:**
+- **The felt limit:** at night the ring stops short of **Relay 1's dark mast on the west rim**.
+- **The mast** (scan the tower, cut, build) is the **network hub**: building it sends a pulse toward the rim.
+- **Transmit** (hold E at the mast): **Relay 1 answers. Its lamp lights, and a new node appears on the ring**, linked
+  by a dashed line marked as needing a part. The call, the ACK and the decode stay as short CRT seasoning.
+- **R10, Relay 1 (the opening's end beat):**
+  1. Take the labelled spare from its cabinet (`RELAY SPARE · FEED UNIT`) and fit it.
+  2. Its pad charges 07, and **the ring grows outward from the new charge point** (one animated expansion).
+  3. The ring now reaches **the rille notch, with the black Mare beyond it**: 0.6's goal, in view.
+  4. **Relay 2** (east) appears as the next dashed node: optional, more range.
 
-**R11, relay.2 and elder 06:**
-- Scanning 06 reaches Kessler–Arai understanding level 1 together with the trickle post scan at the wake (07-identity
-  B2 readout). That unlocks the **SSR-3 headlamp**, adapted from 06's own lamp (maker-understanding §2).
-- 06's battery bay holds the **cell pack** fragments (blueprint-fit).
-- Both fit at the pad's socket rack, and their outlines fill as they are fitted. **The headlamp** opens the darkness
-  gate. **The cell pack, or the Kestrel-3 adapter,** brings the Peak inside the ring. That gives two routes to the
-  same gate, so the player chooses (C2 rule 4).
+**Hour two (off the spine, all optional):**
+- **Kestrel-3:**
+  - the hex plate limit, `CONTACT · HEX · NO ADAPTER`;
+  - a two-site fragment hunt (2 fragments in the wreck, 1 at the debris field `-40, 90`);
+  - the **Hex Charge Adapter**, which makes Kestrel-3 a charge point (the ring grows again).
+- **06 at Relay 2:**
+  - scanning it shows the **Kessler–Arai bar 2/2**, and the **SSR-3 Headlamp card at once**;
+  - 06's crate holds the parts;
+  - it is **assembled at the rack once the canyon's dark slot exists** (`base-home-and-crater-exits.md` §4), so the
+    tool arrives together with its need;
+  - until then the scan card shows `next: SSR-3 Headlamp` as a pull.
+- **Optional scans:** each shows its maker bar step and next unlock (`maker-understanding.md` §2.1).
 
 **Session end** (P13, C6):
 - 07 docks;
-- one more character of the call decodes;
 - the bank's level lamp shows its charge;
+- one more character of the call decodes (seasoning);
 - 07's face shows a gentle appointment for the next night: `METEORS · NEXT NIGHT` (an awe hook, never a fail
   timer).
 
-The genre doc's `EARTHRISE` example can't happen here: from a fixed site on the Moon, Earth never rises.
-
 ## 6. 0.6's end beat (ruling 6, revised 2026-10-24 for region adjacency: `base-home-and-crater-exits.md` §3)
+0. **0.6 begins where the opening ends:** Relay 1 relit, the ring at the rille notch, and the Mare beyond it.
 1. The route crosses the rille pass into the Long Mare (0.6). The caravan brings the moveable base modules to the
    Mare's sunlit swell.
 2. 07 lights the crew's **comms dish** there and sends **one fragment of the survey**: Kestrel-3's buffer.
