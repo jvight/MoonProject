@@ -56,6 +56,7 @@ namespace MoonProject.Gameplay
         private bool _progressed;
         private bool _snaggedThisTow;
         private bool _docked;
+        private bool _charging;
         private int _dockShownIndex = -1;
         private Vector3 _rover;
         private float _placeDistance = -1f;
@@ -102,7 +103,7 @@ namespace MoonProject.Gameplay
                 events.Subscribe<StructureBuilt>(_ => _progressed = true),
                 events.Subscribe<TowAttached>(_ => _progressed = true),
                 events.Subscribe<PartFitted>(_ => _progressed = true),
-                events.Subscribe<ChargingChanged>(changed => _docked |= changed.Charging),
+                events.Subscribe<ChargingChanged>(OnChargingChanged),
             };
         }
 
@@ -263,7 +264,7 @@ namespace MoonProject.Gameplay
             {
                 // 07 rests on a charger: a natural pause, so the step's line is said once more (once per step).
                 _docked = false;
-                if (key.Length > 0 && Shown != key && index != _dockShownIndex)
+                if (key.Length > 0 && Shown != key && index != _dockShownIndex && !AsksToCharge(key))
                 {
                     _dockShownIndex = index;
                     Show(key, NextLineReason.Next, _timing.NextLineSeconds);
@@ -324,7 +325,7 @@ namespace MoonProject.Gameplay
                 return;
             }
 
-            if (_progressed | Closing(key, deltaTime))
+            if (_progressed | Closing(key, deltaTime) | (_charging && AsksToCharge(key)))
             {
                 _progressed = false;
                 _stalled = 0f;
@@ -353,6 +354,18 @@ namespace MoonProject.Gameplay
             _waking = false;
             _stalled = 0f;
         }
+
+        private void OnChargingChanged(ChargingChanged changed)
+        {
+            _docked |= changed.Charging;
+            _charging = changed.Charging;
+        }
+
+        /// <summary>
+        /// A line that asks 07 to charge is being done while 07 charges: it is neither said again on the dock nor
+        /// brought back as a reminder then.
+        /// </summary>
+        private static bool AsksToCharge(string key) => key == OpeningKeys.ChargeForRelay;
 
         private static bool HoldsUntilDone(string key) =>
             key == OpeningKeys.HookModule || key == OpeningKeys.FreeCable;

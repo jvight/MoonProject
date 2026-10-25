@@ -236,6 +236,11 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(OpeningKeys.ChargeForRelay, _flow.Current, "relay.1 answered, but 07 would arrive too low");
             Assert.AreEqual(OpeningKeys.ChargeForRelay, _flow.Shown);
             Assert.AreEqual(default(RoverAction), _changes[_changes.Count - 1].Key, "one element: no key chip");
+            Tick(NextLine);
+            int said = _lines.Count;
+            _events.Publish(new ChargingChanged(true, ChargerKind.Pad, Vector3.zero));
+            Tick(Stall + Again + Reminder * 2);
+            Assert.AreEqual(said, _lines.Count, "07 charges as asked: the line is not said again, nor as a reminder");
 
             _game.RelayTripCovered = true;
             _flow.Tick(1f);
