@@ -147,15 +147,14 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// R5 to B9: the first free choice names the near sites, then, once one is visited, the dock that ends the day;
-        /// at dusk, the power module to scan, then its hitch to hook, then the module to tow home, then the bank to
+        /// B8 to B9: power on, the dock that ends the day (the near sites are free to visit, never asked for); at dusk, the power module to scan, then its hitch to hook, then the module to tow home, then the bank to
         /// build on it, or the bank to move into the grid's reach.
         /// </summary>
         private string NightLine()
         {
             if (!_game.DuskBegun)
             {
-                return _game.DuskVisited ? OpeningKeys.DockForDusk : OpeningKeys.VisitSite;
+                return OpeningKeys.DockForDusk;
             }
 
             return !_game.Knows(StructureIds.BatteryBank) ? OpeningKeys.ScanModule

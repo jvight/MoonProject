@@ -101,10 +101,6 @@ MonoBehaviour:
     _yaw: -141
     _prefab: {fileID: 9037060669980301910, guid: cd660088da276e64b839a0488ccaaddf, type: 3}
     _mass: 250
-  _duskSites:
-  - Prop_SeismicStation
-  - HabitatModules
-  _duskSiteReach: 12
   _caches:
   - _id: supply.lander.open
     _anchorId: lander.port

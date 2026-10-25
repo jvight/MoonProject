@@ -80,9 +80,7 @@ namespace MoonProject.Gameplay.Tests
             _game.Covered.Add(StructureIds.SolarArray);
             Expect(OpeningKeys.BuildSolar);
             _game.PowerOn = true;
-            Expect(OpeningKeys.VisitSite, "R5, the first free choice: the near sites are named");
-            _game.DuskVisited = true;
-            Expect(OpeningKeys.DockForDusk, "a site visited: the dock that ends the day is named (G6)");
+            Expect(OpeningKeys.DockForDusk, "power on: the dock that ends the day is named, wherever 07 roams (payoff audit §4)");
             _game.DuskBegun = true;
             Expect(OpeningKeys.ScanModule, "night is coming: the habitat's power module can store it");
             _game.Known.Add(StructureIds.BatteryBank);
@@ -718,7 +716,6 @@ namespace MoonProject.Gameplay.Tests
             public bool DuskBegun { get; set; }
             public bool NightReady { get; set; }
             public bool NightFallen { get; set; }
-            public bool DuskVisited { get; set; }
             public bool ModuleHooked { get; set; }
             public bool ModuleSnagged { get; set; }
             public bool ModuleHome { get; set; }

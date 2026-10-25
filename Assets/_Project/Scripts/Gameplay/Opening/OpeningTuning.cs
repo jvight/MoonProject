@@ -117,9 +117,9 @@ namespace MoonProject.Gameplay
         [Tooltip("The rack in the world: Art's prefab beside the dock, its rise, its bays' glow and jaws, its reading.")]
         [SerializeField] private RackViewSettings _rackView = new RackViewSettings();
 
-        [Header("The failed reply and the raised mast (opening v3 R7)")]
-        [Tooltip("When 07 tries to answer the call, and how the antenna mast's segments lift and lock.")]
-        [SerializeField] private CallReplySettings _reply = new CallReplySettings();
+        [Header("The raised mast (opening v3 R7)")]
+        [Tooltip("How the antenna mast's segments lift and lock.")]
+        [SerializeField] private MastRaiseSettings _mastRaise = new MastRaiseSettings();
 
         [Header("The tow (opening v3 R6, ruling 4)")]
         [Tooltip("07's winch cable: its reach, its rope's pull, how a caught load is lifted free and where a load " +
@@ -137,15 +137,6 @@ namespace MoonProject.Gameplay
         [Header("The answer (opening v3 R8)")]
         [Tooltip("Where and how long 07 holds to transmit, and how the pulse of the old network runs to relay.1 and the Peak.")]
         [SerializeField] private CallAnswerSettings _answer = new CallAnswerSettings();
-
-        [Header("The first free choice and dusk (opening v3 R5–R6)")]
-        [Tooltip("The near sites 07 is free to visit after power-on, either order, by their frames: a Lumen ruin " +
-                 "piece ([World]/Ruins/<id>) or a story prop ([World]/BasinProps/<id>). The sky holds in the " +
-                 "afternoon until 07 docks after visiting one of them (or learns the battery bank), then dusk begins.")]
-        [SerializeField] private string[] _duskSites = { "Prop_SeismicStation", "HabitatModules" };
-
-        [Tooltip("Metres (flat) from a site's frame within which 07 has visited it.")]
-        [Range(2f, 30f)] [SerializeField] private float _duskSiteReach = 12f;
 
         /// <summary>06's field crate at relay.2: the SSR-3 headlamp's Metal 2 + Wiring 1 (opening v3 5.2).</summary>
         public const string SixCrate = "supply.six.field";
@@ -235,7 +226,7 @@ namespace MoonProject.Gameplay
 
         public CallSettings Call => _call;
 
-        public CallReplySettings Reply => _reply;
+        public MastRaiseSettings MastRaise => _mastRaise;
 
         public TowSettings Tow => _tow;
 
@@ -245,9 +236,7 @@ namespace MoonProject.Gameplay
 
         public CallAnswerSettings Answer => _answer;
 
-        public IReadOnlyList<string> DuskSites => _duskSites ?? Array.Empty<string>();
 
-        public float DuskSiteReach => _duskSiteReach;
 
         public IReadOnlyList<RackBaySettings> RackBays => _rackBays;
 

@@ -242,7 +242,6 @@ namespace MoonProject.Rover.PlayModeTests
             context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.FirstCharge, false));
             context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.NightReady, false));
             gameplay.Opening.Restore(new OpeningSaveData { nightFallen = true });
-            gameplay.Reply.Restore(new CallSaveData { replyTried = true });
             yield return RealRoverScene.WaitSeconds(MastRaise.TotalSeconds(gameplay.MastRaiseSettings) + 1.5f);
 
             Assert.AreEqual(AnswerPhase.Ready, context.Get<IAnswerStatus>().Phase);

@@ -33,7 +33,7 @@ namespace MoonProject.Gameplay.Tests
 
         private EventBus _events;
         private FakeCall _call;
-        private CallReplySettings _replySettings;
+        private MastRaiseSettings _replySettings;
         private CallAnswerSettings _settings;
         private MastRaise _raise;
         private CallAnswer _answer;
@@ -47,7 +47,7 @@ namespace MoonProject.Gameplay.Tests
         {
             _events = new EventBus();
             _call = new FakeCall();
-            _replySettings = new CallReplySettings();
+            _replySettings = new MastRaiseSettings();
             _settings = new CallAnswerSettings();
             _raise = new MastRaise(_events, _replySettings);
             _answer = new CallAnswer(_events, _call, _raise, _settings, Relay, Peak);

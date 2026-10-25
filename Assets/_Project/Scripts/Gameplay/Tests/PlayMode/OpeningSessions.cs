@@ -155,16 +155,13 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(Reached(OpeningMilestone.PowerOn), "B8: a connected solar array powers the pad");
             Assert.AreEqual(2, _fixture.Gameplay.Recovery.LitLamps(RecoveryTarget.Power),
                 "the Power row: the pad and solar lit");
-            Assert.AreEqual(OpeningKeys.VisitSite, opening.Flow.Current, "R5, the first free choice: the sites");
+            Assert.AreEqual(OpeningKeys.DockForDusk, opening.Flow.Current, "power on: the dock ends the day");
 
             yield return PlaceAt(GameplayFixture.SeismicStation);
-            Assert.IsTrue(opening.Dusk.Visited, "R5: 07 visited the 1971 seismic station");
-            Assert.IsFalse(opening.DuskBegun, "the afternoon holds until 07 docks");
-            yield return null;
-            Assert.AreEqual(OpeningKeys.DockForDusk, opening.Flow.Current, "a site visited: the dock ends the day");
+            Assert.IsFalse(opening.DuskBegun, "a look round holds the afternoon: only a dock ends it");
             yield return PlaceAt(apron);
             yield return Waits.Until(() => opening.DuskBegun, 5f);
-            Assert.IsTrue(opening.DuskBegun, "R6: the dock after the visit begins the first dusk");
+            Assert.IsTrue(opening.DuskBegun, "the first dock after power-on begins the first dusk");
             Assert.AreEqual(1, _dusk.Count, "published once");
             Assert.IsFalse(_dusk[0].Restored);
             Assert.AreEqual(OpeningKeys.ScanModule, opening.Flow.Current, "night is coming: the power module");
