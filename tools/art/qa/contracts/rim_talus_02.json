@@ -1,0 +1,41 @@
+{
+  "model": "rim_talus_02",
+  "pivot_tolerance": 0.01,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_Basalt"
+  ],
+  "max_triangles": 500,
+  "max_meshes": 1,
+  "max_draw_calls": 1,
+  "allow_rotation": [],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "RimTalus_02": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      1.22,
+      0.94,
+      0.62
+    ],
+    "tolerance": 0.06,
+    "min_size": [
+      1.16,
+      0.88,
+      0.56
+    ],
+    "max_size": [
+      1.28,
+      1.00,
+      0.68
+    ]
+  }
+}
