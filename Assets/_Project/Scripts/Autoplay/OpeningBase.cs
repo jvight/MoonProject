@@ -1262,7 +1262,15 @@ namespace MoonProject.Autoplay
                 // The ghost follows the camera's aim: a player looks at the ground where the structure should stand.
                 var terrain = _bot.World.Context.Get<ITerrainQuery>();
                 Vector3 ground = new Vector3(at.x, terrain.SampleHeight(at.x, at.z), at.z);
-                yield return _bot.LookAt(ground, "the build spot on the ground");
+                yield return _bot.TryLookAt(ground, "the build spot on the ground");
+                if (!_bot.LookSettled)
+                {
+                    // The camera will not come onto the spot from here (its framing eases the view toward the ghost):
+                    // a player would step aside and look again, so the next bearing is tried and the miss is reported.
+                    _bot.Warn("FINDING: from this side of the build spot " + _bot.LookMiss + " " + _bot.Where());
+                    continue;
+                }
+
                 for (int frame = 0; frame < SettledFrames; frame++)
                 {
                     _bot.KeepLookingAt(ground);
