@@ -18,7 +18,9 @@ namespace MoonProject.UI
         private readonly Reveal _reveal;
         private readonly Label _verb;
         private readonly Queue<string> _waiting = new Queue<string>();
+        private readonly Queue<string> _waitingNames = new Queue<string>();
         private string _shown = string.Empty;
+        private string _shownName = string.Empty;
         private bool _showing;
         private bool _leaving;
         private float _timer;
@@ -44,7 +46,7 @@ namespace MoonProject.UI
         /// <summary>True while a card waits its turn.</summary>
         public bool IsWaiting => _waiting.Count > 0;
 
-        /// <summary>The structure of the card on screen, or empty (tests and captures).</summary>
+        /// <summary>The structure (or adapted blueprint) of the card on screen, or empty (tests and captures).</summary>
         public string Shown => _shown;
 
         /// <summary>Queues the card of the structure <paramref name="structureId"/> that 07 just learned.</summary>
@@ -56,6 +58,22 @@ namespace MoonProject.UI
             }
 
             _waiting.Enqueue(structureId);
+            _waitingNames.Enqueue(StructureIds.NameKey(structureId));
+        }
+
+        /// <summary>
+        /// Queues the card of the adapted blueprint <paramref name="adaptedId"/> (named by <paramref name="nameKey"/>)
+        /// that a maker's understanding just unlocked: shown at once, not held for a later beat.
+        /// </summary>
+        public void LearnedAdapted(string adaptedId, string nameKey)
+        {
+            if (string.IsNullOrEmpty(adaptedId) || string.IsNullOrEmpty(nameKey))
+            {
+                throw new ArgumentException("An adapted blueprint needs its id and name key.", nameof(adaptedId));
+            }
+
+            _waiting.Enqueue(adaptedId);
+            _waitingNames.Enqueue(nameKey);
         }
 
         /// <summary>Re-reads the words in the new language.</summary>
@@ -84,6 +102,7 @@ namespace MoonProject.UI
             if (!_showing && !_leaving && open && _waiting.Count > 0)
             {
                 _shown = _waiting.Dequeue();
+                _shownName = _waitingNames.Dequeue();
                 Write();
                 _showing = true;
                 _timer = 0f;
@@ -106,13 +125,13 @@ namespace MoonProject.UI
             {
                 _leaving = false;
                 _shown = string.Empty;
+                _shownName = string.Empty;
             }
         }
 
         private void Write()
         {
-            _verb.text = string.Format(_localization.Get(UiKeys.BlueprintLearned),
-                _localization.Get(StructureIds.NameKey(_shown)));
+            _verb.text = string.Format(_localization.Get(UiKeys.BlueprintLearned), _localization.Get(_shownName));
         }
 
         private static T Require<T>(VisualElement root, string name) where T : VisualElement
