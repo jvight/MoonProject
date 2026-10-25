@@ -150,11 +150,9 @@ namespace MoonProject.Autoplay
                 new[] { "rack" }));
             _naive.Declare("B7c", new NextAction("Tab", new[] { "hint.fitpart" }, new[] { "fit", "cutter" }, null));
             _naive.Declare("B7", new NextAction("B", new[] { "hint.openbuild" }, new[] { "solar", "array" }, null));
-            // R5's free choice is told by the world only: no line is expected, and the dead lamp's glance comes
-            // after 30 s with no site visited.
-            _naive.Declare("B8", new NextAction("WASD", new string[0], new[] { "seismic", "habitat" },
-                new[] { "seismic", "module" }));
-            _naive.SetBudget("B8", FreeChoiceBudgetSeconds);
+            // After PowerOn the line says to park on the pad to end the day: the dusk begins at the next dock wherever
+            // 07 has been, and the near sites are optional.
+            _naive.Declare("B8", new NextAction("WASD", new string[0], new[] { "park", "pad", "end the day" }, null));
             _naive.Declare("R5", new NextAction("WASD", new[] { drive }, new[] { "night", "module", "habitat", "store" },
                 new[] { "lamp" }));
             _naive.Declare("B9a", new NextAction("RMB", new string[0], new[] { "tow", "home", "frame", "hook" }, null));
@@ -185,9 +183,6 @@ namespace MoonProject.Autoplay
                 null));
             _naive.Skip("R12");
         }
-
-        /// <summary>The first free choice (B8, R5) is told by the world: the dead lamp's glance comes after 30 s.</summary>
-        private const float FreeChoiceBudgetSeconds = 35f;
 
         /// <summary>Tab opens and closes at the ruins, once B7 is checked, for the hitch table (the first Tab was the igniter's fit).</summary>
         private const int TabCycleCount = 4;
