@@ -60,13 +60,14 @@ namespace MoonProject.Gameplay
         /// crates.</param>
         /// <param name="landerPort">World's service port on the lander ([World]/Lander/ServicePort): the open crate's
         /// frame.</param>
-        /// <param name="crateReach">Metres within which an open crate still holding something gives the rest.</param>
+        /// <param name="salvage">Salvage tuning: the reach within which an open crate still holding something gives the
+        /// rest, and the flight a part takes into 07.</param>
         /// <param name="storyProps">World's story props in the basin ([World]/BasinProps/&lt;id&gt;): frames for the
         /// near sites of R5.</param>
         /// <param name="kit">07's start kit: the spare igniter carried and fitted (B7).</param>
         public OpeningField(OpeningTuning tuning, GameplayServices services, BuildField building, ISunlight sunlight,
             SealedContainers containers, IReadOnlyList<Transform> ruins, IReadOnlyList<Transform> storyProps,
-            Transform landerPort, Transform parent, float crateReach, RoverStartKit kit)
+            Transform landerPort, Transform parent, SalvageTuning salvage, RoverStartKit kit)
         {
             _kit = kit ?? throw new ArgumentNullException(nameof(kit));
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
@@ -108,7 +109,7 @@ namespace MoonProject.Gameplay
                 _frames[anchor.Id] = Frame(anchor, frames);
             }
 
-            Caches = new SupplyCaches(tuning, FrameOf, parent, services, containers, crateReach);
+            Caches = new SupplyCaches(tuning, FrameOf, parent, services, containers, salvage);
             LanderCargo = CargoBay(Caches.RootOf(tuning.CargoCrate), Caches.LevelOf(tuning.CargoCrate));
             Dusk = new DuskCue(services.Events, DuskSites(tuning), tuning.DuskSiteReach);
             Flow = new OpeningFlow(services.Events, this, Keys, tuning.Guidance);

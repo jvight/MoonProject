@@ -172,7 +172,7 @@ namespace MoonProject.Gameplay
                 ContainerKinds.CrateM, new Recipe(0, 2, 0), StructureIds.SolarArray),
             new SupplyCache("supply.array.spares", "FallenSolarArray", new Vector3(4.4f, 0f, 3.6f), 90f,
                 ContainerKinds.CrateM, new Recipe(0, 0, 0), StructureIds.SolarArray, true,
-                new[] { "part.igniter" }),
+                new[] { "part.igniter" }, "Prop_SpareIgniter"),
             new SupplyCache("supply.habitat.reel", "HabitatModules", new Vector3(-3.3f, 0f, -6.5f), 207f,
                 ContainerKinds.CrateM, new Recipe(0, 3, 0), StructureIds.BatteryBank),
             new SupplyCache("supply.tower.mast", "RadioTower", new Vector3(-6.5f, 0f, 0f), -100f,

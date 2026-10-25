@@ -155,6 +155,7 @@ MonoBehaviour:
     _startsOpen: 1
     _parts:
     - part.igniter
+    _partProp: Prop_SpareIgniter
   - _id: supply.habitat.reel
     _anchorId: HabitatModules
     _offset: {x: -3.3, y: 0, z: -6.5}
