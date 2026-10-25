@@ -1031,11 +1031,13 @@ namespace MoonProject.Rover
         /// <summary>
         /// While 07 scans, the view swings round to look across the beam instead of down it from behind 07 (whose body
         /// hides it), rises a little, and for a target overhead draws back and lifts so it is seen and never looked up
-        /// into from inside its frame. Only for a close target: a far one is framed by the plain chase view.
+        /// into from inside its frame. Only for a close target (a far one is framed by the plain chase view) and not
+        /// for the Gentle camera.
         /// </summary>
         private void BlendScanFraming(ref float yaw, ref float elevation, ref float radius)
         {
-            float weight = Smoothing.SmoothStep(0f, 1f, _scanT);
+            // The player's Gentle camera keeps the view where it is: no swing, no lift, no draw back.
+            float weight = _look != null && _look.GentleCamera ? 0f : Smoothing.SmoothStep(0f, 1f, _scanT);
             Vector3 across = _scanPoint - _lens.ScanOrigin.position;
             float above = across.y;
             across.y = 0f;
@@ -1054,7 +1056,7 @@ namespace MoonProject.Rover
             }
 
             float toSide = Mathf.DeltaAngle(lookYaw, _scanSide > 0f ? sideA : sideB);
-            float swing = _scanning && distance > 0.01f
+            float swing = _scanning && weight > 0f && distance > 0.01f
                 ? Mathf.Clamp(toSide, -_tuning.ScanMaxYawSwing, _tuning.ScanMaxYawSwing) * close
                 : 0f;
             if (Time.deltaTime > 0f)

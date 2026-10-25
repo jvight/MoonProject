@@ -144,7 +144,7 @@ namespace MoonProject.Gameplay
         [Range(0.05f, 0.85f)] [SerializeField] private float _beamLensPeakAlpha = 0.68f;
 
         [Tooltip("Very low additive alpha in the middle of the scan beam wedge (almost invisible in the middle).")]
-        [Range(0.005f, 0.4f)] [SerializeField] private float _beamMidAlpha = 0.18f;
+        [Range(0.005f, 0.4f)] [SerializeField] private float _beamMidAlpha = 0.12f;
 
         [Tooltip("Additive alpha where the far edge of the scan beam wedge meets the current surface scan line on the target.")]
         [Range(0.04f, 0.65f)] [SerializeField] private float _beamContactAlpha = 0.6f;
