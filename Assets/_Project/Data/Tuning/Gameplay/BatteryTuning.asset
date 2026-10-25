@@ -51,3 +51,4 @@ MonoBehaviour:
   _arcReveal: 0.7
   _lowLines: 3
   _relayQuietMetres: 60
+  _fullSlackMetres: 1

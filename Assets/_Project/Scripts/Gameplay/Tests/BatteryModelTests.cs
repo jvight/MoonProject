@@ -92,6 +92,17 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void AFullBattery_StaysFull_ForTheFewCentimetresASettleRolls_NotForAMetreOrMore()
+        {
+            var full = new BatteryModel(_tuning, _events);
+            full.Restore(new BatterySaveData { cells = full.Cells, charge = full.Cells });
+            Drive(full, _tuning.FullSlackMetres * 0.3f);
+            Assert.IsTrue(full.CellsFull, "settled a few centimetres on the pad: still full, the pad takes it in");
+            Drive(full, _tuning.FullSlackMetres * 1.5f);
+            Assert.IsFalse(full.CellsFull, "driven past the slack: no longer full");
+        }
+
+        [Test]
         public void TheLowLine_KeepsQuietNearARelayStillWaitingForItsPart_OnlyThere()
         {
             var socket = new Vector3(-70f, 0f, 46f);

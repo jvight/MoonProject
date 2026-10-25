@@ -161,6 +161,10 @@ namespace MoonProject.Gameplay
                  "glance still tell 07 is low).")]
         [Range(0f, 200f)] [SerializeField] private float _relayQuietMetres = 60f;
 
+        [Tooltip("Metres of driving short of full within which the cells still count as full: 07 settling a few " +
+                 "centimetres on a pad after a charge is still full, and the pad takes it in as full.")]
+        [Range(0f, 5f)] [SerializeField] private float _fullSlackMetres = 1f;
+
         public int StartingCells => _startingCells;
         public float StartingCharge01 => _startingCharge01;
         public float MetresPerCell => _metresPerCell;
@@ -220,5 +224,6 @@ namespace MoonProject.Gameplay
         public float ArcReveal => _arcReveal;
         public int LowLines => _lowLines;
         public float RelayQuietMetres => _relayQuietMetres;
+        public float FullSlackMetres => _fullSlackMetres;
     }
 }
