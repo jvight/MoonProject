@@ -861,6 +861,48 @@ namespace MoonProject.Core.Events
         public Vector3 Position { get; }
     }
 
+    /// <summary>The steps of a relay's power-up once its feed unit is fitted, in order (RelayPowerStage).</summary>
+    public enum RelayStage
+    {
+        /// <summary>The fitted unit seats home in the feed socket: the thunk.</summary>
+        Latch = 0,
+
+        /// <summary>The relay's lens flickers on: its first light.</summary>
+        Wake = 1,
+
+        /// <summary>The relay's dish turns to its bearing on the network and settles.</summary>
+        Align = 2,
+
+        /// <summary>The lamp blinks the network's reply.</summary>
+        Reply = 3,
+
+        /// <summary>The contact pad goes live; <see cref="RelayRelit"/> follows on the same step.</summary>
+        Live = 4,
+    }
+
+    /// <summary>
+    /// A relay's power-up reached <see cref="Stage"/> (opening v3 R10: the repair's payoff, one mechanical step at a
+    /// time). Gameplay times the steps; World moves the relay's props. A loaded lit relay replays only Live, with
+    /// <see cref="Restored"/> true: every prop at its end state at once.
+    /// </summary>
+    public readonly struct RelayPowerStage
+    {
+        public RelayPowerStage(string relayId, RelayStage stage, bool restored)
+        {
+            RelayId = relayId;
+            Stage = stage;
+            Restored = restored;
+        }
+
+        /// <summary>The relay's id, its world anchor (relay.1).</summary>
+        public string RelayId { get; }
+
+        public RelayStage Stage { get; }
+
+        /// <summary>Replayed from a loaded game: jump to the end state, no motion.</summary>
+        public bool Restored { get; }
+    }
+
     /// <summary>
     /// A relay of the old network is lit again (docs/design/opening-v3-purpose.md R10: relay.1, its feed unit fitted
     /// from the spare in its cabinet): its lamp burns steady, its contact pad charges 07 and the range ring counts it.

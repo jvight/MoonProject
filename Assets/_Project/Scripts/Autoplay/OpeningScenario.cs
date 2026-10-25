@@ -65,6 +65,12 @@ namespace MoonProject.Autoplay
             "a player sees the chip, holds E and nothing happens, with no cue that letting go would help.";
 
         private readonly AutoplayBot _bot;
+        /// <summary>The opening ends here: Relay 1 relit and the ring grown (payoff audit section 4).</summary>
+        private const string OpeningEndBeat = "R10";
+
+        /// <summary>Beats of hour two: they run only when a run asks to stop at one of them.</summary>
+        private static readonly string[] HourTwoBeats = { "R11", "R12" };
+
         private readonly string _untilBeat;
         private bool _awoke;
         private OpeningBase _base;
@@ -75,14 +81,18 @@ namespace MoonProject.Autoplay
         private readonly NaiveGuard _naive;
         private readonly bool _pointer;
 
+        /// <summary>True when the run goes on past the opening's end into hour two (it was asked to stop at R11 or R12).</summary>
+        private readonly bool _hourTwo;
+
         public OpeningScenario(AutoplayBot bot, string untilBeat, bool linesExpected, NaiveGuard naive = null,
             bool pointer = false)
         {
             _pointer = pointer;
             _naive = naive;
-            DeclareNextActions();
             _bot = bot;
             _untilBeat = untilBeat;
+            _hourTwo = Array.Exists(HourTwoBeats, beat => string.Equals(beat, untilBeat, StringComparison.OrdinalIgnoreCase));
+            DeclareNextActions();
             _linesExpected = linesExpected;
         }
 
@@ -98,7 +108,7 @@ namespace MoonProject.Autoplay
                          KesslerArai, Headlamp,
                      })
             {
-                if (_bot.Failed || Reached(_lastBeat))
+                if (_bot.Failed || Reached(_lastBeat) || (!_hourTwo && _lastBeat == OpeningEndBeat))
                 {
                     break;
                 }
@@ -140,11 +150,9 @@ namespace MoonProject.Autoplay
                 new[] { "rack" }));
             _naive.Declare("B7c", new NextAction("Tab", new[] { "hint.fitpart" }, new[] { "fit", "cutter" }, null));
             _naive.Declare("B7", new NextAction("B", new[] { "hint.openbuild" }, new[] { "solar", "array" }, null));
-            // R5's free choice is told by the world only: no line is expected, and the dead lamp's glance comes
-            // after 30 s with no site visited.
-            _naive.Declare("B8", new NextAction("WASD", new string[0], new[] { "seismic", "habitat" },
-                new[] { "seismic", "module" }));
-            _naive.SetBudget("B8", FreeChoiceBudgetSeconds);
+            // After PowerOn the line says to park on the pad to end the day: the dusk begins at the next dock wherever
+            // 07 has been, and the near sites are optional.
+            _naive.Declare("B8", new NextAction("WASD", new string[0], new[] { "park", "pad", "end the day" }, null));
             _naive.Declare("R5", new NextAction("WASD", new[] { drive }, new[] { "night", "module", "habitat", "store" },
                 new[] { "lamp" }));
             _naive.Declare("B9a", new NextAction("RMB", new string[0], new[] { "tow", "home", "frame", "hook" }, null));
@@ -159,7 +167,15 @@ namespace MoonProject.Autoplay
             _naive.Declare("B11", new NextAction("E", new[] { "hint.transmit" }, new[] { "transmit", "answer" },
                 new[] { "foot", "TX" }));
             _naive.Declare("B12", new NextAction("WASD", new[] { drive }, new[] { "relay", "west" }, new[] { "relay" }));
-            _naive.Declare("R10", new NextAction("WASD", new[] { drive }, new[] { "06", "relay.2", "scan" }, null));
+            if (_hourTwo)
+            {
+                _naive.Declare("R10", new NextAction("WASD", new[] { drive }, new[] { "06", "relay.2", "scan" }, null));
+            }
+            else
+            {
+                _naive.Skip("R10");
+            }
+
             _naive.Declare("R11a", new NextAction("E", new[] { "hint.salvage" }, new[] { "cut", "crate", "headlamp" },
                 null));
             _naive.Declare("R11", new NextAction("WASD", new[] { drive }, new[] { "pad", "park" }, null));
@@ -167,9 +183,6 @@ namespace MoonProject.Autoplay
                 null));
             _naive.Skip("R12");
         }
-
-        /// <summary>The first free choice (B8, R5) is told by the world: the dead lamp's glance comes after 30 s.</summary>
-        private const float FreeChoiceBudgetSeconds = 35f;
 
         /// <summary>Tab opens and closes at the ruins, once B7 is checked, for the hitch table (the first Tab was the igniter's fit).</summary>
         private const int TabCycleCount = 4;
@@ -515,8 +528,6 @@ namespace MoonProject.Autoplay
         private IEnumerator TheFirstChoice()
         {
             Begin("R5", "The first free choice: visit the seismic station, dock, and the first dusk begins");
-            yield return _base.ExpectStep(OpeningSteps.BuildBatteryBank, OpeningKeys.VisitSite,
-                "R5: the afternoon names the near sites");
             yield return _base.VisitTheSeismicStation();
             yield return _base.DockForTheDusk(StructureIds.ChargingPad);
             _bot.EndBeat("07 read the 1971 seismic station, docked, and the first dusk began");

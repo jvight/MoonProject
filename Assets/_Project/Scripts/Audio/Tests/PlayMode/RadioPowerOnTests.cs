@@ -7,9 +7,9 @@ using MoonProject.Core.Events;
 namespace MoonProject.Audio.PlayModeTests
 {
     /// <summary>
-    /// The radio through the opening (opening v3 R4 and R8): only a faint signal hiss while the base is dark; Power on
-    /// clears the hiss but plays no music (a build is not a milestone); relay.1 answering 07's call is the milestone
-    /// where one track fades in, low and warm; a save that is already answered stays silent.
+    /// The radio through the opening (opening v3 R4): only a faint signal hiss while the base is dark; Power on clears
+    /// the hiss. No milestone, not even relay.1's answer, and no music request brings music: the lofi radio never
+    /// plays in-game.
     /// </summary>
     public sealed class RadioPowerOnTests
     {
@@ -29,14 +29,13 @@ namespace MoonProject.Audio.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator UnpoweredBase_TheRadioWakesToAFaintHiss_AndNoMusic()
+        public IEnumerator UnpoweredBase_TheRadioWakesToAFaintHiss()
         {
             _rig.Wake(true);
             yield return new WaitForSecondsRealtime(3f);
 
             Assert.IsTrue(_rig.Radio.IsOn);
             Assert.IsFalse(_rig.Radio.Powered);
-            Assert.IsFalse(_rig.Radio.MusicStarted, "no music before the base has power");
             AudioSource hiss = AudioTestRig.FindChildSource(_rig.Radio.transform, "Static");
             Assert.IsTrue(hiss.isPlaying);
             Assert.Greater(hiss.volume, 0f, "the signal hiss is the only thing it hears");
@@ -44,7 +43,7 @@ namespace MoonProject.Audio.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator PowerOn_ClearsTheHiss_ButPlaysNoMusic()
+        public IEnumerator PowerOn_ClearsTheHiss()
         {
             _rig.Wake(true);
             yield return new WaitForSecondsRealtime(3f);
@@ -55,59 +54,39 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.IsTrue(_rig.Radio.Powered);
             yield return new WaitForSecondsRealtime(5f);
 
-            Assert.IsFalse(_rig.Radio.MusicStarted, "building the solar array is not a music moment");
-            Assert.IsFalse(_rig.Radio.Answered);
             Assert.Less(_rig.Radio.HissFloor, 0.05f, "the hiss has cleared");
             Assert.Less(hiss.volume, dark * 0.5f);
         }
 
         [UnityTest]
-        public IEnumerator TheAnswer_TunesTheDial_AndTheFirstMusicFadesInSlowly()
-        {
-            _rig.Wake(true);
-            _rig.Milestone(OpeningMilestone.PowerOn);
-            yield return new WaitForSecondsRealtime(3f);
-
-            _rig.Answer();
-            Assert.IsTrue(_rig.Radio.Answered);
-            AudioSource swish = AudioTestRig.FindChildSource(_rig.Radio.transform, "TuningSwish");
-            Assert.IsTrue(swish.isPlaying, "the dial finds the network");
-            yield return new WaitForSecondsRealtime(2f);
-            Assert.IsTrue(_rig.Radio.MusicStarted);
-            float early = _rig.LoudestDeck().volume;
-
-            yield return new WaitForSecondsRealtime(4f);
-            Assert.Greater(_rig.LoudestDeck().volume, early, "the music is still swelling in seconds later");
-        }
-
-        [UnityTest]
-        public IEnumerator ARestoredAnswer_StaysSilent()
+        public IEnumerator ARestoredPowerOn_HasNoHissToClear()
         {
             _rig.Milestone(OpeningMilestone.PowerOn, true);
-            _rig.Answer(true);
             Assert.AreEqual(0f, _rig.Radio.HissFloor, 1e-5f, "a load with power has no hiss to clear");
             _rig.Wake(true);
-            yield return new WaitForSecondsRealtime(4f);
-
-            Assert.IsTrue(_rig.Radio.Answered);
-            Assert.IsFalse(_rig.Radio.MomentPending);
-            Assert.IsFalse(_rig.Radio.MusicStarted, "a load past the answer does not replay its music");
+            yield return new WaitForSecondsRealtime(1f);
+            Assert.IsTrue(AudioTestRig.FindChildSource(_rig.Radio.transform, "Static").isPlaying);
         }
 
         [UnityTest]
-        public IEnumerator BuildMilestonesAndEarlierCallStates_LeaveTheRadioSilent()
+        public IEnumerator NoMilestoneAnswerOrMusicRequest_BringsMusic()
         {
             _rig.Wake(true);
             _rig.Milestone(OpeningMilestone.FirstCharge);
             _rig.Milestone(OpeningMilestone.PowerOn);
             _rig.Milestone(OpeningMilestone.NightReady);
             _rig.Milestone(OpeningMilestone.SignalWest);
-            _rig.Events.Publish(new CallStateChanged(CallState.Locked, false));
-            _rig.Events.Publish(new CallStateChanged(CallState.Clear, false));
+            _rig.Milestone(OpeningMilestone.CallAnswered);
+            _rig.Events.Publish(new CallStateChanged(CallState.Answered, false));
+            _rig.Events.Publish(new MusicMomentRequested());
             yield return new WaitForSecondsRealtime(3f);
 
-            Assert.IsFalse(_rig.Radio.Answered);
-            Assert.IsFalse(_rig.Radio.MusicStarted, "only the answer brings the music back");
+            AudioSource[] sources = _rig.Radio.GetComponentsInChildren<AudioSource>();
+            Assert.AreEqual(2, sources.Length, "the set carries only its static and swish");
+            foreach (AudioSource source in sources)
+            {
+                Assert.IsTrue(source.name == "Static" || source.name == "TuningSwish", source.name);
+            }
         }
     }
 }

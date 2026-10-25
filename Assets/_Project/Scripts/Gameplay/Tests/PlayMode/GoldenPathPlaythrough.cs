@@ -70,6 +70,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const string ChargerKit = "supply.lander.open";
         private const string SparesRack = "supply.array.spares";
 
+        // Metres a Pick up chip may stand from the part it offers (the chip's own lift aside).
+        private const float PropChipSlack = 0.05f;
+
         /// <summary>The habitat's towable power module (opening v3 R6), and how far from the habitat it stands.</summary>
         private const string PowerModule = TowLoads.PowerModule;
 
@@ -175,6 +178,9 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>Metres from a panel on a wall 07 scans it from, square to it: the panel fills the view.</summary>
         private const float PanelStandOff = 2.5f;
+
+        // The airlock's door sign and readout, scanned in whichever order the view frames them, with a spare look.
+        private const int AirlockScans = 3;
 
         /// <summary>Metres from a line-up spot that count as there: it only turns 07 roughly to its target.</summary>
         private const float LineUpArrive = 3f;
@@ -349,7 +355,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             // West of the pad: the ruins side stays open for the power module towed home at R6.
             yield return Build(StructureIds.SolarArray, pad + Vector3.left * BaseSpacing, "B8: the solar array");
             yield return UntilReached(OpeningMilestone.PowerOn, "Power on: the array powers the pad");
-            yield return ExpectStep(OpeningKeys.VisitSite, "R5: the first free choice names the near sites");
+            yield return ExpectStep(OpeningKeys.DockForDusk, "B8: power on, the dock that ends the day is named");
             yield return VisitTheSeismicStation();
             yield return DockForTheDusk(pad);
             yield return ExpectStep(OpeningKeys.ScanModule, "B9: night is coming, the power module can store it");
@@ -501,8 +507,8 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>B7: the habitat's airlock panel, read as 07 passes it; its readout shows on the CRT.</summary>
         /// <summary>
-        /// R5, the first free choice: out to the 1971 seismic station, one of the two near sites, to read its dead
-        /// station box (its curiosity scan); the sky holds in the afternoon the whole way.
+        /// An optional look round on the way to the dock: out to the 1971 seismic station to read its dead station box
+        /// (its curiosity scan); the sky holds in the afternoon the whole way.
         /// </summary>
         private IEnumerator VisitTheSeismicStation()
         {
@@ -512,7 +518,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             float held = _context.Get<ISunlight>().TimeSeconds;
             Vector3 home = Flat(Anchor("place.apron").Position - station.Point).normalized;
             yield return Scan(station, "the seismic station", home, PanelStandOff);
-            Assert.IsTrue(_gameplay.Opening.Dusk.Visited, "R5: 07 visited a near site");
             Assert.IsFalse(_gameplay.Opening.DuskBegun, "the afternoon holds until 07 docks");
             Assert.AreEqual(held, _context.Get<ISunlight>().TimeSeconds, 1f, "the Sun held while 07 looked round");
             Capture("08-the-seismic-station");
@@ -609,16 +614,16 @@ namespace MoonProject.Gameplay.PlayModeTests
                 Vector3 outward = Flat(panel.Point - Ruin("HabitatModules").position).normalized;
 
                 // The habitat's first fragment is the sign over the airlock door, beside and above the readout: from
-                // the readout's stand-off the chase view frames it more squarely, so a player scans it first, then the
-                // readout once the brackets move on to it.
+                // the readout's stand-off the brackets rest on whichever of the two the view frames more squarely, so
+                // a player scans that one, then the other, until the readout is read.
                 ScanFragment door = _gameplay.Scans.Find(ScanField.FragmentId("ruin.HabitatModules", 0));
                 Assert.IsNotNull(door, "the habitat's first fragment is over the airlock door");
-                if (!door.Scanned)
+                for (int scan = 0; scan < AirlockScans && !panel.Scanned; scan++)
                 {
-                    yield return Scan(door, "the sign over the airlock door", outward, PanelStandOff);
+                    ScanFragment aim = door.Scanned ? panel : door;
+                    ScanFragment beside = aim == door ? panel : null;
+                    yield return Scan(aim, "the airlock door and its readout", outward, PanelStandOff, beside);
                 }
-
-                yield return Scan(panel, "the airlock panel", outward, PanelStandOff);
                 Assert.AreEqual(1, read.Count, "the panel's readout shows once");
                 Assert.AreEqual(panel.FragmentId, read[0].StoryId, "it is the airlock panel that was read");
                 Assert.IsTrue(panel.Scanned, "the airlock panel is scanned");
@@ -645,6 +650,16 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// </summary>
         private IEnumerator Scan(ScanFragment fragment, string what, Vector3 preferred, float standOff)
         {
+            yield return Scan(fragment, what, preferred, standOff, null);
+        }
+
+        /// <summary>
+        /// As the scan coming in along <paramref name="preferred"/>, where the brackets may rest on
+        /// <paramref name="beside"/> instead (a neighbour on the same face): whichever the view frames is scanned.
+        /// </summary>
+        private IEnumerator Scan(ScanFragment fragment, string what, Vector3 preferred, float standOff,
+            ScanFragment beside)
+        {
             ScanField scans = _gameplay.Scans;
             Vector3 away = ClearSide(fragment.Point, preferred, standOff, fragment.FragmentId, null);
             if (Clear(fragment.Point + away * (standOff + ScanLineUp), null))
@@ -658,7 +673,10 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             // The candidate the brackets rested on, kept: the next frame's candidate may already have moved on.
             ScanFragment framed = null;
-            yield return Until(() => (framed = OnSetCandidate(scans, fragment) ? scans.Candidate : framed) != null,
+            yield return Until(() => (framed = OnSetCandidate(scans, fragment) ||
+                                               (beside != null && !beside.Scanned && scans.Candidate == beside)
+                    ? scans.Candidate
+                    : framed) != null,
                 ScanLookTimeout,
                 $"07's view rests on {fragment.FragmentId}: its brackets and the Scan chip show",
                 () => $"scan candidate {scans.Candidate?.FragmentId ?? "none"} (scanned " +
@@ -746,11 +764,42 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             yield return Until(() => _gameplay.Hints.TryGet(InteractionKind.PickUp, out _), FollowTimeout,
                 cacheId + " offers what it holds (Pick up)");
+            Transform prop = PropOf(cacheId);
+            if (prop != null)
+            {
+                // What 07 picks up is seen: the part lies in the crate's mouth and the chip stands on it.
+                Assert.IsTrue(prop.gameObject.activeInHierarchy, $"{cacheId}'s part lies in its open mouth");
+                _gameplay.Hints.TryGet(InteractionKind.PickUp, out InteractionHint offer);
+                Assert.Less(Vector3.Distance(offer.Position, prop.position), PropChipSlack,
+                    $"the Pick up chip stands on {cacheId}'s part ({offer.Position} vs {prop.position})");
+                Capture("07-the-spare-igniter-in-the-rack");
+            }
+
             Press(_keyboard.eKey);
             yield return Until(() => Taken(cacheId), FollowTimeout, "held E takes what " + cacheId + " holds");
             Release(_keyboard.eKey);
+            if (prop != null)
+            {
+                yield return Until(() => !prop.gameObject.activeInHierarchy, FollowTimeout,
+                    $"{cacheId}'s part flies into 07 and is gone from the crate");
+            }
             Capture(cacheId == ChargerKit ? "04-the-open-crate" : "07-the-spares-rack");
             End(what, $"igniter in the hold {_gameplay.StartKit.CarriesIgniter}; hold {Hold()}");
+        }
+
+        /// <summary>Open crate <paramref name="cacheId"/>'s part prop, or null when it holds no part.</summary>
+        private Transform PropOf(string cacheId)
+        {
+            SupplyCaches caches = _gameplay.Opening.Caches;
+            for (int i = 0; i < caches.Count; i++)
+            {
+                if (caches.Get(i).Id == cacheId)
+                {
+                    return caches.PropOf(i);
+                }
+            }
+
+            return null;
         }
 
         /// <summary>Open crate <paramref name="cacheId"/> has given everything it held to 07's hold.</summary>

@@ -69,14 +69,14 @@ namespace MoonProject.Gameplay
         /// </summary>
         public const string TowModuleHome = "next.v3.tow_module";
 
+        /// <summary>B9, the power module caught with the winch's slack all out: "Back up to free the cable."</summary>
+        public const string FreeCable = "next.v3.free_cable";
+
         /// <summary>R5, a near site visited: "Park on the pad to end the day." (the dock begins the dusk).</summary>
         public const string DockForDusk = "next.v3.dock_for_dusk";
 
         /// <summary>R8, the mast up: "Transmit from the antenna mast."</summary>
         public const string Transmit = "next.v3.transmit";
-
-        /// <summary>R5, power on: "Power is on. Visit the seismic station or the habitat before dusk."</summary>
-        public const string VisitSite = "next.v3.visit_site";
 
         /// <summary>B9 to B10, the base night-ready: "The base is ready for the night."</summary>
         public const string AwaitNight = "next.v3.await_night";

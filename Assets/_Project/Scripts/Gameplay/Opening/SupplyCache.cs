@@ -42,9 +42,14 @@ namespace MoonProject.Gameplay
         [Tooltip("Story parts the crate also holds (their ids in 07's hold, e.g. the spare igniter), taken together.")]
         [SerializeField] private string[] _parts;
 
+        [Tooltip("Art's prop for those parts (its prefab name in GameplayVisuals, e.g. Prop_SpareIgniter), shown in the " +
+                 "open crate's mouth until 07 takes them: what it picks up must be seen. Empty for no parts.")]
+        [SerializeField] private string _partProp;
+
         public SupplyCache(string id, string anchorId, Vector3 offset, float yaw, string container, Recipe yield,
-            string forStructure, bool startsOpen = false, string[] parts = null)
+            string forStructure, bool startsOpen = false, string[] parts = null, string partProp = null)
         {
+            _partProp = partProp;
             _forStructure = forStructure;
             _startsOpen = startsOpen;
             _parts = parts;
@@ -75,6 +80,9 @@ namespace MoonProject.Gameplay
         public bool StartsOpen => _startsOpen;
 
         public IReadOnlyList<string> Parts => _parts ?? Array.Empty<string>();
+
+        /// <summary>Art's prop shown for the parts while they wait in the crate, or empty.</summary>
+        public string PartProp => _partProp ?? string.Empty;
 
     }
 }

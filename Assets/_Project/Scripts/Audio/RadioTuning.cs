@@ -3,14 +3,14 @@ using UnityEngine;
 namespace MoonProject.Audio
 {
     /// <summary>
-    /// The radio: how far the clear signal reaches from the base, how clarity maps to low-pass/static/volume/wobble,
-    /// how a music moment tunes in, plays one track and fades out to silence, and how the hiss clears when the base
-    /// powers on. Created by the Audio/Tuning builder; runtime code only reads it.
+    /// The radio's static: how far the clear signal reaches from the base, how clarity maps to the static's level, how
+    /// the set crackles on when 07 wakes, and how the hiss clears when the base powers on. Created by the Audio/Tuning
+    /// builder; runtime code only reads it.
     /// </summary>
     public sealed class RadioTuning : ScriptableObject
     {
         [Header("Signal field")]
-        [Tooltip("Metres from the base where the music is perfectly clear.")]
+        [Tooltip("Metres from the base where the signal is perfectly clear.")]
         [Min(0f)] [SerializeField] private float _signalRadius = 60f;
 
         [Tooltip("Metres over which the signal fades from clear to gone beyond the radius.")]
@@ -19,104 +19,47 @@ namespace MoonProject.Audio
         [Tooltip("Seconds (time constant) smoothing the clarity the player hears.")]
         [Min(0f)] [SerializeField] private float _claritySmoothing = 0.8f;
 
-        [Tooltip("Metres the radio sounds farther from home while 07 crawls on its reserve (docs/features/M3-20): it "
-            + "thins a little, and comes back as 07 charges.")]
+        [Tooltip("Metres the radio sounds farther from home while 07 crawls on its reserve (docs/features/M3-20): the "
+            + "static thickens a little, and settles as 07 charges.")]
         [Range(0f, 200f)] [SerializeField] private float _crawlDistance = 60f;
 
-        [Header("Clarity -> sound")]
-        [Tooltip("Low-pass cutoff (Hz) with no signal: warm, muffled haze.")]
-        [Range(200f, 4000f)] [SerializeField] private float _minCutoff = 800f;
+        [Header("Clarity -> static")]
+        [Tooltip("Static volume with no signal (scales the static cue): a quiet hiss, never a wall of noise.")]
+        [Range(0f, 1f)] [SerializeField] private float _staticMaxVolume = 0.11f;
 
-        [Tooltip("Low-pass cutoff (Hz) with a perfect signal (22 kHz = open).")]
-        [Range(4000f, 22000f)] [SerializeField] private float _maxCutoff = 22000f;
-
-        [Tooltip("Clarity exponent before the logarithmic cutoff sweep (above 1 keeps the haze longer).")]
-        [Range(0.2f, 4f)] [SerializeField] private float _cutoffCurve = 1.2f;
-
-        [Tooltip("Resonance (Q) of the radio low-pass; 1 is neutral, a touch more sounds like an old speaker.")]
-        [Range(1f, 3f)] [SerializeField] private float _lowpassResonance = 1.1f;
-
-        [Tooltip("Static volume with no signal (scales the static cue).")]
-        [Range(0f, 1f)] [SerializeField] private float _staticMaxVolume = 0.75f;
-
-        [Tooltip("Static volume with a perfect signal (a faint vinyl presence).")]
-        [Range(0f, 1f)] [SerializeField] private float _staticFloorVolume = 0.05f;
+        [Tooltip("Static volume with a perfect signal (a barely-there presence).")]
+        [Range(0f, 1f)] [SerializeField] private float _staticFloorVolume = 0.0075f;
 
         [Tooltip("Shape of clarity -> static (above 1 drops the static faster as the signal improves).")]
         [Range(0.2f, 4f)] [SerializeField] private float _staticCurve = 1.3f;
 
-        [Tooltip("Music volume with no signal (the music never vanishes, it sinks into the haze).")]
-        [Range(0f, 1f)] [SerializeField] private float _musicVolumeAtNoSignal = 0.45f;
-
-        [Header("Wow / flutter")]
-        [Tooltip("Pitch wobble (cents) with no signal; the tracks already carry their own gentle tape wow.")]
-        [Range(0f, 50f)] [SerializeField] private float _maxWobbleCents = 18f;
-
-        [Tooltip("Pitch wobble (cents) with a perfect signal.")]
-        [Range(0f, 10f)] [SerializeField] private float _baseWobbleCents = 1f;
-
-        [Tooltip("Slow wow rate (Hz).")]
-        [Range(0.05f, 3f)] [SerializeField] private float _wowRate = 0.55f;
-
-        [Tooltip("Fast flutter rate (Hz).")]
-        [Range(2f, 15f)] [SerializeField] private float _flutterRate = 6.3f;
-
-        [Tooltip("Share of flutter in the wobble (0 = only wow).")]
-        [Range(0f, 1f)] [SerializeField] private float _flutterShare = 0.3f;
-
-        [Header("Music moments: one track, then silence")]
-        [Tooltip("Seconds of the static swell as the dial finds the station when a music moment begins.")]
-        [Range(0.5f, 6f)] [SerializeField] private float _tuneSwellDuration = 2.4f;
-
-        [Tooltip("Seconds from the dial's swish to the track starting (inside the swell).")]
-        [Range(0f, 6f)] [SerializeField] private float _momentStartDelay = 1.1f;
-
-        [Tooltip("Seconds the track takes to fade in (low, warm).")]
-        [Min(0.01f)] [SerializeField] private float _momentFadeIn = 6f;
-
-        [Tooltip("Seconds before the track ends that it starts fading out to silence (at most half a short track).")]
-        [Range(0.5f, 15f)] [SerializeField] private float _momentFadeOut = 5f;
-
-        [Tooltip("Extra static at the middle of the swell (the dial passes between stations).")]
-        [Range(0f, 1f)] [SerializeField] private float _tuneStaticBoost = 0.35f;
-
-        [Tooltip("Volume scale of the dial-tuning swish.")]
+        [Tooltip("Volume scale of the tuning swish as the set powers on.")]
         [Range(0f, 1f)] [SerializeField] private float _tuneSwishVolume = 0.8f;
 
-        [Tooltip("Share of the clarity static left while no music plays: the set is quiet between moments, only a " +
-            "faint presence (the unpowered hiss floor still applies before the base has power).")]
-        [Range(0f, 1f)] [SerializeField] private float _idleStaticGain = 0.15f;
-
         [Header("Paused: listening in the cabin")]
-        [Tooltip("Low-pass (Hz) the radio eases to while paused: a subtly closer, warmer set (22 kHz = unchanged).")]
-        [Range(2000f, 22000f)] [SerializeField] private float _cabinCutoff = 7000f;
-
-        [Tooltip("Music volume scale while paused: the radio steps back under the pause menu (0.7 is about -3 dB).")]
-        [Range(0f, 1.5f)] [SerializeField] private float _cabinMusicGain = 0.7f;
-
         [Tooltip("Static volume scale while paused (the cabin shelters the set a little).")]
         [Range(0f, 1f)] [SerializeField] private float _cabinStaticGain = 0.7f;
 
         [Header("Wake-up (the radio crackles on when 07 wakes)")]
-        [Tooltip("Seconds of static after 07 starts waking on its own before the music begins.")]
-        [Min(0f)] [SerializeField] private float _wakeMusicDelay = 1.6f;
+        [Tooltip("Seconds of full wake-up crackle after 07 starts waking on its own before it starts to settle.")]
+        [Min(0f)] [SerializeField] private float _wakeSettleDelay = 1.6f;
 
-        [Tooltip("Seconds over which the music then resolves out of the static.")]
-        [Min(0.01f)] [SerializeField] private float _wakeMusicFade = 4f;
+        [Tooltip("Seconds over which the crackle then settles into the plain hiss.")]
+        [Min(0.01f)] [SerializeField] private float _wakeSettleTime = 4f;
 
-        [Tooltip("Static before the music when the player woke 07 by driving (quicker wake-up).")]
-        [Min(0f)] [SerializeField] private float _playerWakeMusicDelay = 0.6f;
+        [Tooltip("Crackle delay when the player woke 07 by driving (quicker wake-up).")]
+        [Min(0f)] [SerializeField] private float _playerWakeSettleDelay = 0.6f;
 
-        [Tooltip("Music resolve time when the player woke 07 by driving.")]
-        [Min(0.01f)] [SerializeField] private float _playerWakeMusicFade = 1.8f;
+        [Tooltip("Crackle settle time when the player woke 07 by driving.")]
+        [Min(0.01f)] [SerializeField] private float _playerWakeSettleTime = 1.8f;
 
         [Tooltip("Seconds for the set to power on (static and swish swell in instead of switching on).")]
         [Min(0.01f)] [SerializeField] private float _wakePowerTime = 0.3f;
 
-        [Tooltip("Extra static while the radio is still finding the station (melts away as the music resolves).")]
+        [Tooltip("Extra static while the set is still crackling on (melts away as it settles).")]
         [Range(0f, 1f)] [SerializeField] private float _wakeStaticBoost = 0.55f;
 
-        [Header("Power on (opening v3 R4): the hiss clears, no music")]
+        [Header("Power on (opening v3 R4): the hiss clears")]
         [Tooltip("Static level before the base has power, while the set hears only a faint signal (a fresh game " +
             "hears only this, 07's servos and the room tone).")]
         [Range(0f, 1f)] [SerializeField] private float _unpoweredStaticFloor = 0.3f;
@@ -129,33 +72,15 @@ namespace MoonProject.Audio
 
         public float CrawlDistance => _crawlDistance;
         public float ClaritySmoothing => _claritySmoothing;
-        public float MinCutoff => _minCutoff;
-        public float MaxCutoff => Mathf.Max(_maxCutoff, _minCutoff);
-        public float CutoffCurve => _cutoffCurve;
-        public float LowpassResonance => _lowpassResonance;
         public float StaticMaxVolume => _staticMaxVolume;
         public float StaticFloorVolume => _staticFloorVolume;
         public float StaticCurve => _staticCurve;
-        public float MusicVolumeAtNoSignal => _musicVolumeAtNoSignal;
-        public float MaxWobbleCents => _maxWobbleCents;
-        public float BaseWobbleCents => _baseWobbleCents;
-        public float WowRate => _wowRate;
-        public float FlutterRate => _flutterRate;
-        public float FlutterShare => _flutterShare;
-        public float TuneSwellDuration => _tuneSwellDuration;
-        public float MomentStartDelay => _momentStartDelay;
-        public float MomentFadeIn => _momentFadeIn;
-        public float MomentFadeOut => _momentFadeOut;
-        public float TuneStaticBoost => _tuneStaticBoost;
         public float TuneSwishVolume => _tuneSwishVolume;
-        public float IdleStaticGain => _idleStaticGain;
-        public float CabinCutoff => _cabinCutoff;
-        public float CabinMusicGain => _cabinMusicGain;
         public float CabinStaticGain => _cabinStaticGain;
-        public float WakeMusicDelay => _wakeMusicDelay;
-        public float WakeMusicFade => _wakeMusicFade;
-        public float PlayerWakeMusicDelay => _playerWakeMusicDelay;
-        public float PlayerWakeMusicFade => _playerWakeMusicFade;
+        public float WakeSettleDelay => _wakeSettleDelay;
+        public float WakeSettleTime => _wakeSettleTime;
+        public float PlayerWakeSettleDelay => _playerWakeSettleDelay;
+        public float PlayerWakeSettleTime => _playerWakeSettleTime;
         public float WakePowerTime => _wakePowerTime;
         public float WakeStaticBoost => _wakeStaticBoost;
         public float UnpoweredStaticFloor => _unpoweredStaticFloor;

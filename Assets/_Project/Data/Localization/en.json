@@ -743,16 +743,16 @@
             "text": "The power module is the bank's frame. Tow it home to the apron."
         },
         {
+            "key": "next.v3.free_cable",
+            "text": "Back up to free the cable."
+        },
+        {
             "key": "next.v3.dock_for_dusk",
             "text": "Park on the pad to end the day."
         },
         {
             "key": "next.v3.transmit",
             "text": "Transmit from the antenna mast."
-        },
-        {
-            "key": "next.v3.visit_site",
-            "text": "Power is on. Visit the seismic station or the habitat before dusk."
         },
         {
             "key": "next.v3.await_night",

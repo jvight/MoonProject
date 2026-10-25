@@ -23,7 +23,7 @@ namespace MoonProject.Audio
                  "never snaps.")]
         [Range(0.1f, 10f)] [SerializeField] private float _farnessEase = 1.5f;
 
-        [Tooltip("Radio level (music and static) once fully past the signal (dB): near-silence.")]
+        [Tooltip("Radio level (its static) once fully past the signal (dB): near-silence.")]
         [Range(-60f, 0f)] [SerializeField] private float _farRadioDb = -30f;
 
         [Tooltip("The basin's ambience bed far from home (dB): it recedes as the room tone takes over.")]
@@ -68,18 +68,6 @@ namespace MoonProject.Audio
         [Range(0.1f, 5f)] [SerializeField] private float _wideReleaseTime = 1f;
 
         [Header("Stargazing: 07 looks up at the sky (the beds stay)")]
-        [Tooltip("Seconds for the music to thin out once the stargazing beat begins.")]
-        [Range(0.1f, 10f)] [SerializeField] private float _stargazeThinTime = 2.5f;
-
-        [Tooltip("Seconds for the music to come back when 07 drives on.")]
-        [Range(0.1f, 10f)] [SerializeField] private float _stargazeReturnTime = 1.5f;
-
-        [Tooltip("dB the music drops to while stargazing: a few notes over the basin's hush.")]
-        [Range(-40f, 0f)] [SerializeField] private float _stargazeMusicDb = -12f;
-
-        [Tooltip("The music's low-pass while stargazing (Hz): only its soft low notes carry.")]
-        [Range(200f, 8000f)] [SerializeField] private float _stargazeCutoff = 1200f;
-
         [Tooltip("Volume scale of the soft airy swell as the beat begins.")]
         [Range(0f, 1f)] [SerializeField] private float _stargazeSwellVolume = 0.8f;
 
@@ -172,10 +160,6 @@ namespace MoonProject.Audio
         public float WideRoomToneDb => _wideRoomToneDb;
         public float WideOpenTime => _wideOpenTime;
         public float WideReleaseTime => _wideReleaseTime;
-        public float StargazeThinTime => _stargazeThinTime;
-        public float StargazeReturnTime => _stargazeReturnTime;
-        public float StargazeMusicDb => _stargazeMusicDb;
-        public float StargazeCutoff => _stargazeCutoff;
         public float StargazeSwellVolume => _stargazeSwellVolume;
         public float StargazeSwellRest => _stargazeSwellRest;
         public float LampVolume => _lampVolume;

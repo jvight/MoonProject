@@ -148,7 +148,6 @@ namespace MoonProject.Gameplay
         /// <summary>The call from the sky (opening v3 §2): its state, its decode and its point of light.</summary>
         public CallProgress Call { get; private set; }
 
-        public CallReply Reply { get; private set; }
 
         /// <summary>The socket rack at the pad (opening v3 4.3): held until the west signal, then out at a dock.</summary>
         public SocketRackField Rack { get; private set; }
@@ -173,7 +172,7 @@ namespace MoonProject.Gameplay
         public float HoldSecondsForTests => _openingTuning.Answer.HoldSeconds;
 
         /// <summary>How the mast raises and the reply times (tests).</summary>
-        public CallReplySettings MastRaiseSettings => _openingTuning.Reply;
+        public MastRaiseSettings MastRaiseSettings => _openingTuning.MastRaise;
 
         public CallAnswerSettings AnswerSettings => _openingTuning.Answer;
 
@@ -385,11 +384,10 @@ namespace MoonProject.Gameplay
             Opening.ConnectHeadlamp(Understanding, Rack);
             Recovery = new RecoveryProgress(context.Events, PowerLamps, PowerSteps, _openingTuning.RecoveryLamps);
             Call = new CallProgress(context.Events, _openingTuning.Call, services.Layout);
-            Reply = new CallReply(context.Events, Call, _openingTuning.Reply);
-            MastRaise = new MastRaise(context.Events, _openingTuning.Reply);
-            MastRaiseView = new MastRaiseView(context.Events, _building, MastRaise, _openingTuning.Reply);
+            MastRaise = new MastRaise(context.Events, _openingTuning.MastRaise);
+            MastRaiseView = new MastRaiseView(context.Events, _building, MastRaise, _openingTuning.MastRaise);
             services.Anchors.TryGet(WorldAnchorIds.RelayPrefix + "1", out WorldAnchor relay);
-            Answer = new CallAnswer(context.Events, Call, Reply, MastRaise, _openingTuning.Answer, relay.Position,
+            Answer = new CallAnswer(context.Events, Call, MastRaise, _openingTuning.Answer, relay.Position,
                 services.Layout.PeakPosition);
             Opening.ConnectAnswer(Answer);
             var hints = new InteractionHints(_salvage, Containers, Scans, _building, services.Beam, Cutter,
@@ -437,7 +435,6 @@ namespace MoonProject.Gameplay
         private CallSaveData CaptureCall()
         {
             CallSaveData data = Call.Capture();
-            Reply.Capture(data);
             Release.Capture(data);
             return data;
         }
@@ -445,7 +442,6 @@ namespace MoonProject.Gameplay
         private void RestoreCall(CallSaveData data)
         {
             Call.Restore(data);
-            Reply.Restore(data);
             Release.Restore(data);
         }
 
@@ -493,7 +489,7 @@ namespace MoonProject.Gameplay
             try
             {
                 var opening = new OpeningField(_openingTuning, services, _building, sunlight, Containers, _ruins,
-                    _storyProps, _landerPort, transform, _salvage.Tuning.ReachRadius, StartKit);
+                    _storyProps, _landerPort, transform, _salvage.Tuning, StartKit);
                 _battery.ConnectPads(opening);
                 services.Anchors.TryGet(_openingTuning.ApronAnchor, out WorldAnchor apron);
                 _building.SetApronCable(new ApronCable(_apronCableChannel.position, apron.Position,
@@ -678,9 +674,9 @@ namespace MoonProject.Gameplay
             NoteKeys(Opening.Keys);
             Opening.Step(deltaTime);
             Relay.Step(Time.frameCount, _input.ExcavateHeld);
+            Relay.StepPowerUp(deltaTime);
             FirstUsePointer.Step();
             Tow.Step(_input.TetherPressed);
-            Reply.Step(deltaTime, Opening.NightFallen, _roverState.Speed);
             MastRaise.Step(deltaTime);
             MastRaiseView.Step();
             PulseView.Step(deltaTime);
@@ -689,7 +685,7 @@ namespace MoonProject.Gameplay
             RackView.HoldRead(_input.ExcavateHeld && RackAssembly.Progress01 > 0f);
             RackAssembly.Step(deltaTime, RackView.TryGetRead(out _, out string readBay) ? readBay : null,
                 _input.ExcavateHeld);
-            Answer.Step(deltaTime, Opening.NightFallen, _input.ExcavateHeld, _roverState.Position, _roverState.Speed);
+            Answer.Step(deltaTime, _input.ExcavateHeld, _roverState.Position, _roverState.Speed);
             RangeRing.Step(deltaTime);
             RangeRingLine.Step();
             PadLock.Step(deltaTime);

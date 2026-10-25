@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace MoonProject.Audio
 {
@@ -23,7 +24,9 @@ namespace MoonProject.Audio
         /// <summary>Smoothed clarity, 0 (no signal) .. 1 (perfect).</summary>
         public float Clarity => _clarity.Value;
 
-        public RadioMix Mix => RadioMix.Evaluate(_clarity.Value, _tuning);
+        /// <summary>The static level for the current clarity: the floor when clear, the maximum when lost.</summary>
+        public float StaticVolume => Mathf.Lerp(_tuning.StaticFloorVolume, _tuning.StaticMaxVolume,
+            Mathf.Pow(1f - _clarity.Value, _tuning.StaticCurve));
 
         /// <summary>Jumps straight to the clarity at <paramref name="distance"/> (first frame, no fade from
         /// 1).</summary>

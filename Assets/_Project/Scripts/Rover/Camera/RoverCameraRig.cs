@@ -86,6 +86,8 @@ namespace MoonProject.Rover
         private readonly GuidanceNudge _nudge = new GuidanceNudge();
         private readonly BuildFraming _buildFraming = new BuildFraming();
         private readonly PendingNudge _pendingNudge = new PendingNudge();
+        private readonly FaceCloseSequence _faceClose = new FaceCloseSequence();
+        private FaceCloseDip _faceCloseDip;
         private readonly TurnSettle _turnSettle = new TurnSettle();
         private bool _driveCarriedIntoNudge;
         private WideShot _wide;
@@ -215,6 +217,9 @@ namespace MoonProject.Rover
         /// <summary>True while the CRT face-inspect camera mode is open.</summary>
         public bool IsFaceInspectOpen => _faceInspectOpen;
 
+        /// <summary>How dark the face screen's close has the view now (0 clear, 1 dark; tests).</summary>
+        public float FaceCloseDark => _faceCloseDip != null ? _faceCloseDip.Dark01 : 0f;
+
         /// <summary>The close shot composed for 07's CRT face screen, if any (for tests and tooling).</summary>
         public bool TryGetFaceInspectShot(out FaceInspectShot shot)
         {
@@ -266,6 +271,7 @@ namespace MoonProject.Rover
 
             _context = context;
             _nearFade = new NearPropFade();
+            _faceCloseDip = new FaceCloseDip(transform, _tuning.FaceCloseDarkExposure);
             _rover = context.Get<IRoverState>();
             _lens = context.Get<IRoverRig>();
             _world = context.Get<IWorldLayout>();
@@ -744,11 +750,23 @@ namespace MoonProject.Rover
         /// </summary>
         public void SetFaceInspect(bool open, RoverBodyLanguage bodyLanguage)
         {
+            bool wasOpen = _faceInspectOpen;
             _faceInspectOpen = open;
             if (bodyLanguage != null)
             {
                 _faceInspectBody = bodyLanguage;
                 CacheHeadRenderers();
+            }
+
+            if (open)
+            {
+                _faceClose.Cancel();
+                _faceCloseDip?.Set(0f);
+            }
+            else if (wasOpen && _faceInspectWeight >= _tuning.FaceCloseDipMinWeight)
+            {
+                _faceClose.Begin(_tuning.FaceCloseHoldSeconds, _tuning.FaceCloseDipOutSeconds,
+                    _tuning.FaceCloseDipInSeconds);
             }
 
             if (open)
@@ -880,12 +898,34 @@ namespace MoonProject.Rover
                 }
             }
 
+            // Closing with the screen fully up does not swing the camera round 07: it stays on the face while the CRT
+            // powers off, the view dips to dark, the camera is put back on the chase pose under it and the view comes up.
+            bool holdFace = false;
+            if (_faceClose.IsActive)
+            {
+                _faceClose.Step(deltaTime);
+                holdFace = !_faceClose.IsSwapped && !_faceClose.SwapNow;
+                if (_faceClose.SwapNow)
+                {
+                    _faceInspectEase = 0f;
+                    _faceInspectWeight = 0f;
+                    StepWallCompression(0f, true);
+                    _camera.PreviousStateIsValid = false;
+                }
+            }
+
+            _faceCloseDip?.Set(_faceClose.Dark01);
+
             float duration = _faceInspectOpen ? _tuning.FaceInspectOpenSeconds : _tuning.FaceInspectCloseSeconds;
             float seconds = _look != null && _look.GentleCamera
                 ? Mathf.Max(duration * 1.35f, 0.75f)
                 : Mathf.Max(0.05f, duration);
             bool easeIn = _faceInspectOpen && _faceInspectSettled;
-            _faceInspectEase = Mathf.MoveTowards(_faceInspectEase, easeIn ? 1f : 0f, deltaTime / seconds);
+            if (!holdFace)
+            {
+                _faceInspectEase = Mathf.MoveTowards(_faceInspectEase, easeIn ? 1f : 0f, deltaTime / seconds);
+            }
+
             _faceInspectWeight = Smoothing.SmoothStep(0f, 1f, _faceInspectEase);
 
             bool cineAvoidance = !_faceInspectOpen && _faceInspectWeight < ShotWeightEpsilon && !_opening.IsActive;
@@ -2154,6 +2194,7 @@ namespace MoonProject.Rover
         private void OnDestroy()
         {
             SetHeadHidden(false);
+            _faceCloseDip?.Dispose();
             if (_subscriptions == null)
             {
                 return;

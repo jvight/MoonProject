@@ -9,9 +9,10 @@ namespace MoonProject.World
     /// relay.1's lamp (opening v3 R8): the dead west mast stays dark until the call is answered; from then on, in this
     /// session and every later one, its halo keys with <see cref="ICallSignal.Keying"/> (the answered loop's own sign,
     /// so the lamp and the sound agree). With no signal it stays dark: no error. The scene build stands the halo at the
-    /// mast's lamp node and wires it. Once the relay is relit (<see cref="RelayRelit"/>) it stops keying, warms up with a
-    /// short flicker and holds a calm steady glow (<see cref="RelayLampState"/>); a relit relay loaded from a save is
-    /// steady at once. Allocation-free per frame.
+    /// mast's lamp node and wires it. Through the repair's power-up (<see cref="RelayPowerStage"/>) it stops keying and
+    /// warms up with a short flicker at Wake, blinks the network's reply (3 short, 1 long) at Reply, and holds a calm
+    /// steady glow (<see cref="RelayLampState"/>); a relit relay loaded from a save is steady at once. Allocation-free
+    /// per frame.
     /// </summary>
     public sealed class RelayAnswerLamp : MonoBehaviour, IGameSystem
     {
@@ -33,7 +34,7 @@ namespace MoonProject.World
         private readonly RelayLampState _state = new RelayLampState();
         private GameContext _context;
         private ICallSource _call;
-        private IDisposable _relit;
+        private IDisposable _stages;
         private ICallSignal _signal;
         private MaterialPropertyBlock _block;
 
@@ -57,7 +58,7 @@ namespace MoonProject.World
             _block.SetFloat(MinAngleFullId, lamp.HaloMinFull);
             _block.SetFloat(IntensityId, 0f);
             _halo.SetPropertyBlock(_block);
-            _relit = context.Events.Subscribe<RelayRelit>(OnRelit);
+            _stages = context.Events.Subscribe<RelayPowerStage>(OnStage);
         }
 
         /// <summary>The lamp's level (0..1) on the last frame.</summary>
@@ -90,18 +91,31 @@ namespace MoonProject.World
             _halo.SetPropertyBlock(_block);
         }
 
-        private void OnRelit(RelayRelit relit)
+        private void OnStage(RelayPowerStage stage)
         {
-            if (relit.RelayId == RelayId)
+            if (stage.RelayId != RelayId)
             {
-                _state.OnRelit(relit.Restored);
+                return;
+            }
+
+            switch (stage.Stage)
+            {
+                case RelayStage.Wake:
+                    _state.OnRelit(stage.Restored);
+                    break;
+                case RelayStage.Reply:
+                    _state.OnReply(stage.Restored);
+                    break;
+                case RelayStage.Live when !_state.Relit:
+                    _state.OnRelit(true);
+                    break;
             }
         }
 
         private void OnDestroy()
         {
-            _relit?.Dispose();
-            _relit = null;
+            _stages?.Dispose();
+            _stages = null;
         }
     }
 }

@@ -743,16 +743,16 @@
             "text": "Mô-đun điện là khung của cụm pin. Kéo nó về sân."
         },
         {
+            "key": "next.v3.free_cable",
+            "text": "Lùi lại để gỡ cáp."
+        },
+        {
             "key": "next.v3.dock_for_dusk",
             "text": "Đỗ vào bệ để kết thúc ngày."
         },
         {
             "key": "next.v3.transmit",
             "text": "Phát sóng từ cột ăng-ten."
-        },
-        {
-            "key": "next.v3.visit_site",
-            "text": "Đã có điện. Hãy ghé trạm địa chấn hoặc khu nhà ở trước khi chiều xuống."
         },
         {
             "key": "next.v3.await_night",

@@ -94,6 +94,7 @@ namespace MoonProject.Art.Tests
             ("sweeper.json", "Fauna/Sweeper.fbx"),
             ("survey_drone.json", "Fauna/SurveyDrone.fbx"),
             ("trencher.json", "Fauna/Trencher.fbx"),
+            ("prop_spare_igniter.json", "Props/Prop_SpareIgniter.fbx"),
         };
 
         [Serializable]

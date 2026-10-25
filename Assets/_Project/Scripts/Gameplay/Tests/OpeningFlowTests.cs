@@ -80,9 +80,7 @@ namespace MoonProject.Gameplay.Tests
             _game.Covered.Add(StructureIds.SolarArray);
             Expect(OpeningKeys.BuildSolar);
             _game.PowerOn = true;
-            Expect(OpeningKeys.VisitSite, "R5, the first free choice: the near sites are named");
-            _game.DuskVisited = true;
-            Expect(OpeningKeys.DockForDusk, "a site visited: the dock that ends the day is named (G6)");
+            Expect(OpeningKeys.DockForDusk, "power on: the dock that ends the day is named, wherever 07 roams (payoff audit §4)");
             _game.DuskBegun = true;
             Expect(OpeningKeys.ScanModule, "night is coming: the habitat's power module can store it");
             _game.Known.Add(StructureIds.BatteryBank);
@@ -641,6 +639,46 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(OpeningKeys.BuildBatteryBank, _flow.Shown);
         }
 
+        [Test]
+        public void TheModuleCaughtPastTheSlack_SaysBackUpToFreeTheCable_AndOnceFreeTheTowSaysNothingMore()
+        {
+            _game.ReachedLander = true;
+            _game.Known.Add(StructureIds.ChargingPad);
+            _game.Known.Add(StructureIds.SolarArray);
+            _game.BuiltIds.Add(StructureIds.ChargingPad);
+            _game.FirstCharge = true;
+            _game.IgniterFitted = true;
+            _game.ReserveSpent = true;
+            _game.PowerOn = true;
+            _game.DuskBegun = true;
+            _game.Known.Add(StructureIds.BatteryBank);
+            _game.ModuleHooked = true;
+            _flow.Tick(1f);
+            Tick(NextLine);
+            Assert.AreEqual(string.Empty, _flow.Shown, "towing home, the tow line has had its say");
+
+            _game.ModuleSnagged = true;
+            _flow.Tick(1f);
+            Assert.AreEqual(OpeningKeys.FreeCable, _flow.Shown, "caught past the slack: back up to free the cable");
+            Assert.AreEqual(NextLineReason.Next, _changes[_changes.Count - 1].Reason);
+            Assert.AreEqual(default(RoverAction), _changes[_changes.Count - 1].Key, "plain words, no key chip");
+            Tick(NextLine * 3);
+            Assert.AreEqual(OpeningKeys.FreeCable, _flow.Shown, "it holds while the module is still caught");
+
+            int lines = _lines.Count;
+            _game.ModuleSnagged = false;
+            _flow.Tick(1f);
+            Assert.AreEqual(string.Empty, _flow.Shown, "freed: the line goes");
+            Tick(Again + Stall);
+            Assert.IsFalse(_lines.GetRange(lines, _lines.Count - lines).Contains(OpeningKeys.TowModuleHome),
+                "and the tow-home line is never said again on this tow");
+
+            _game.ModuleHooked = false;
+            _game.ModuleHome = true;
+            _flow.Tick(1f);
+            Assert.AreEqual(OpeningKeys.BuildBatteryBank, _flow.Shown, "home: the next step speaks as usual");
+        }
+
         private void Tick(int seconds)
         {
             for (int i = 0; i < seconds; i++)
@@ -678,8 +716,8 @@ namespace MoonProject.Gameplay.Tests
             public bool DuskBegun { get; set; }
             public bool NightReady { get; set; }
             public bool NightFallen { get; set; }
-            public bool DuskVisited { get; set; }
             public bool ModuleHooked { get; set; }
+            public bool ModuleSnagged { get; set; }
             public bool ModuleHome { get; set; }
             public bool AnswerDone { get; set; }
             public bool AnswerStarted { get; set; }

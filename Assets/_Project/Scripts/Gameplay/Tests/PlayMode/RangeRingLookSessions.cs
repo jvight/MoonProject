@@ -167,7 +167,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             _context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.FirstCharge, false));
             _context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.NightReady, false));
             _gameplay.Opening.Restore(new OpeningSaveData { nightFallen = true });
-            _gameplay.Reply.Restore(new CallSaveData { replyTried = true });
             yield return Wait(MastRaise.TotalSeconds(_gameplay.MastRaiseSettings) + RaiseSlack);
             _context.Get<IRoverPlacement>().PlaceAt(foot + new Vector3(3f, 0f, 0f),
                 Quaternion.LookRotation(-Vector3.right, Vector3.up));

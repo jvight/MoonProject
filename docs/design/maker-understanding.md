@@ -35,7 +35,10 @@
 5. **No grind:** thresholds are small. A region's **on-path** entries reach each due level by the region's end, and
    optional finds only get there sooner. Every maker's supply runs **≥ 30% above** its thresholds, and nothing can be
    farmed.
-6. **The opening is protected:** an unlock during B0–B11 is held, and shows after `SignalWest`.
+6. **Shown at once** (revised 2026-10-25, payoff audit; this replaces "the opening is protected"): every
+   scan that adds points shows **the maker bar on the scan card** (`MAKER ▮▯ · next: X`), and an unlock's
+   **blueprint card shows the moment it is earned**. Its build may still need a bay or materials, but the
+   player always sees the reward and what comes next.
 7. **Speed matches the story:** Kessler–Arai is fastest (07 is theirs) and Tycho slowest (foreign).
 
 ## 2. Thresholds and unlocks
@@ -67,7 +70,26 @@ entries of `text/databank-entries.md`, plus 2 new small scans). For 0.6 the coun
   at Meridian (0.7).
 - **Due levels** are the ones the on-path entries reach. The rest are early rewards for curiosity.
 - **Rhythm:** 2–4 unlocks per region (about one every 20–30 minutes), on top of the catalogue's 6–8-minute blueprint rhythm, and never in
-  the same minute: a held unlock waits 60 s after a fragment blueprint.
+  the same minute: an unlock card waits 60 s after a fragment blueprint's card.
+
+### 2.1 The maker bar on the scan card (for story & flow; payoff audit §3)
+**Format:** `MAKER ▮▮▯ · next: Unlock`. The bar has one cell per point up to the next level. At the level, the
+blueprint card follows at once.
+
+| Maker | Bar name (en) | Bar name (vi) | Next unlocks in order (en) | Next unlocks in order (vi) | Opening scans that step it |
+|---|---|---|---|---|---|
+| Kessler–Arai | `KESSLER–ARAI` | `KESSLER–ARAI` | SSR-3 Headlamp → Grip Rings → Third Kit Socket → Cutter Ribs | Đèn pha SSR-3 → Vành bám → Ổ lắp thứ ba → Gân mỏ cắt | the trickle post (1/2), 06 (2/2 → **SSR-3 Headlamp**) |
+| VIS | `VIS` | `VIS` | Crate Rack → Module Storehouse → Tall Pylon → Hangar Module | Giá thùng hàng → Kho mô-đun → Cột điện cao → Mô-đun nhà chứa | the lander (1/4), the fallen array (2/4), the habitat (3/4), the tower (4/4 → **Crate Rack**, near the opening's end) |
+| ILC | `ILC` | `ILC` | Reflector Beacon → Seismic Bell → Survey Stakes | Cột phản quang → Chuông địa chấn → Cọc khảo sát | the airlock read (1/3), the seismic station (2/3), the retroreflector (3/3 → **Reflector Beacon**); the flag counts too |
+| Tycho | `TYCHO` | `TYCHO` | Hex Charge Adapter (key) → Power Bridge → Remote Harvester → Flock Relay Drones | Bộ sạc lục giác → Cầu nối nguồn → Máy thu hoạch từ xa → Đàn drone chuyển tiếp | Kestrel-3 (1/3; the adapter comes from Kestrel's fragment hunt, hour two) |
+
+**Card lines:**
+| | en | vi |
+|---|---|---|
+| a step | `{MAKER} {bar} · next: {unlock}` | `{MAKER} {bar} · tiếp theo: {unlock}` |
+| a level | `New blueprint: {unlock}` | `Bản vẽ mới: {unlock}` |
+
+The vi strings follow `writing-style-ingame.md` (glossary §2; no closing full stop).
 
 ## 3. Fit with the catalogue and blueprint-fit
 - **Standards:** adapted Kessler–Arai items are **B**, VIS and ILC items are **A**, and Tycho's adapter is the **key

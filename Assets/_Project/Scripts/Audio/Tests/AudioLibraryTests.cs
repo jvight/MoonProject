@@ -92,26 +92,5 @@ namespace MoonProject.Audio.Tests
                 StringAssert.Contains($"\"id\": \"{id}\"", manifest, $"{field.Name} = '{id}' is not in the manifest");
             }
         }
-
-        [Test]
-        public void Playlist_ReportsEmptyAndMissingClips()
-        {
-            var playlist = ScriptableObject.CreateInstance<RadioPlaylist>();
-            try
-            {
-                StringAssert.Contains("empty", playlist.FindProblem());
-                playlist.Populate(new[]
-                {
-                    new RadioTrack("01", "One", _clip, 76f), new RadioTrack("02", "Two", null, 80f),
-                });
-                StringAssert.Contains("track 1", playlist.FindProblem());
-                playlist.Populate(new[] { new RadioTrack("01", "One", _clip, 76f) });
-                Assert.IsNull(playlist.FindProblem());
-            }
-            finally
-            {
-                Object.DestroyImmediate(playlist);
-            }
-        }
     }
 }

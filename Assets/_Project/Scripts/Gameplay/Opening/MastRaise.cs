@@ -7,21 +7,21 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// The antenna mast's raise (docs/design/opening-v3-plan.md 3.3): once the mast is built it rises in segments,
-    /// base, middle, top, each lifting for <see cref="CallReplySettings.SegmentLiftSeconds"/> (eased) and locking with
+    /// base, middle, top, each lifting for <see cref="MastRaiseSettings.SegmentLiftSeconds"/> (eased) and locking with
     /// <see cref="MastSegmentRaised"/>, the last settling before the raise is done. A mast built in an earlier session
     /// stands raised: it is done at once and publishes nothing. EditMode-tested; allocation-free per frame.
     /// </summary>
     public sealed class MastRaise : IDisposable
     {
         private readonly EventBus _events;
-        private readonly CallReplySettings _settings;
+        private readonly MastRaiseSettings _settings;
         private readonly IDisposable _built;
         private float _seconds;
         private int _locked;
         private Vector3 _position;
         private bool _active;
 
-        public MastRaise(EventBus events, CallReplySettings settings)
+        public MastRaise(EventBus events, MastRaiseSettings settings)
         {
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
@@ -103,19 +103,19 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>Seconds after the build when segment <paramref name="index"/> locks home.</summary>
-        public static float LockTime(CallReplySettings settings, int index)
+        public static float LockTime(MastRaiseSettings settings, int index)
         {
             return (index + 1) * settings.SegmentLiftSeconds + index * settings.SegmentGapSeconds;
         }
 
         /// <summary>Seconds the whole raise takes: every segment, then the settle.</summary>
-        public static float TotalSeconds(CallReplySettings settings)
+        public static float TotalSeconds(MastRaiseSettings settings)
         {
             return LockTime(settings, settings.Segments - 1) + settings.SettleSeconds;
         }
 
         /// <summary>Segment <paramref name="index"/>'s lift 0..1 at <paramref name="seconds"/> after the build.</summary>
-        public static float Lift(CallReplySettings settings, int index, float seconds)
+        public static float Lift(MastRaiseSettings settings, int index, float seconds)
         {
             float start = LockTime(settings, index) - settings.SegmentLiftSeconds;
             return Smoothing01(Mathf.Clamp01((seconds - start) / settings.SegmentLiftSeconds));

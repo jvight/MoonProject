@@ -27,10 +27,6 @@ MonoBehaviour:
   _wideRoomToneDb: 1.5
   _wideOpenTime: 8
   _wideReleaseTime: 1
-  _stargazeThinTime: 2.5
-  _stargazeReturnTime: 1.5
-  _stargazeMusicDb: -12
-  _stargazeCutoff: 1200
   _stargazeSwellVolume: 0.8
   _stargazeSwellRest: 20
   _lampVolume: 0.35

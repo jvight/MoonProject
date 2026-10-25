@@ -3,8 +3,8 @@ using System;
 namespace MoonProject.Audio.Editor
 {
     /// <summary>
-    /// JsonUtility mirror of the music box's tools/music/playlist.json and title.json (only the keys the radio needs;
-    /// extra keys are ignored). Field names must equal the JSON keys, hence the public camelCase fields.
+    /// JsonUtility mirror of the music box's tools/music/title.json (only the keys the title music needs; extra keys
+    /// are ignored). Field names must equal the JSON keys, hence the public camelCase fields.
     /// </summary>
     [Serializable]
     internal sealed class MusicPlaylistManifest
