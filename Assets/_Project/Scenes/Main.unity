@@ -26738,7 +26738,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _tuning: {fileID: 11400000, guid: abdd9f4cf2e60f74eb961587730beb18, type: 2}
-  _playlist: {fileID: 11400000, guid: 467f94e8178962f468a2becdc2533dcd, type: 2}
 --- !u!1001 &4390972307987262237
 PrefabInstance:
   m_ObjectHideFlags: 0
