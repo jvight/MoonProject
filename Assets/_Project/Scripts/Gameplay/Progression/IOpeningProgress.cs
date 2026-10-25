@@ -66,9 +66,6 @@ namespace MoonProject.Gameplay
         /// <summary>The habitat's power module stands home on the apron, off the cable: a battery bank can stand on it.</summary>
         bool ModuleHome { get; }
 
-        /// <summary>Since power-on 07 has visited a near site, so docking now begins the first dusk (R5).</summary>
-        bool DuskVisited { get; }
-
         /// <summary>
         /// 07 transmitted from the mast, relay.1 answered, and the answer's moment is over (the pulse, the Peak's
         /// glint): the next action may be named (R8).

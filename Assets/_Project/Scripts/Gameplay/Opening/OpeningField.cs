@@ -111,7 +111,7 @@ namespace MoonProject.Gameplay
 
             Caches = new SupplyCaches(tuning, FrameOf, parent, services, containers, salvage);
             LanderCargo = CargoBay(Caches.RootOf(tuning.CargoCrate), Caches.LevelOf(tuning.CargoCrate));
-            Dusk = new DuskCue(services.Events, DuskSites(tuning), tuning.DuskSiteReach);
+            Dusk = new DuskCue(services.Events);
             Flow = new OpeningFlow(services.Events, this, Keys, tuning.Guidance);
         }
 
@@ -157,7 +157,6 @@ namespace MoonProject.Gameplay
 
         public bool NightFallen => NightFallenSaved;
 
-        public bool DuskVisited => Dusk.Visited;
 
         public bool ModuleHooked => _tow != null && _tow.TowingId == TowLoads.PowerModule;
 
@@ -277,9 +276,6 @@ namespace MoonProject.Gameplay
                         out placeId, out position);
                 case OpeningKeys.Transmit:
                     return Structure(StructureIds.AntennaMast, out placeId, out position);
-                case OpeningKeys.VisitSite:
-                    return Frame(_tuning.DuskSites.Count > 0 ? _tuning.DuskSites[0] : string.Empty, out placeId,
-                        out position);
                 case OpeningKeys.ScanElder06:
                     return Frame(Elder06Host, out placeId, out position);
                 case OpeningKeys.CutHeadlampCrate:
@@ -452,7 +448,7 @@ namespace MoonProject.Gameplay
             }
 
             Caches.Step(deltaTime);
-            Dusk.Step(PowerOn, _rover.Position, Knows(StructureIds.BatteryBank));
+            Dusk.Step(PowerOn, Knows(StructureIds.BatteryBank));
             Keys.Step(deltaTime);
             Flow.Tick(deltaTime, _rover.Position);
         }
@@ -503,21 +499,6 @@ namespace MoonProject.Gameplay
         internal Transform FrameOf(string id)
         {
             return _frames.TryGetValue(id, out Transform frame) ? frame : null;
-        }
-
-        /// <summary>Where the near sites of R5 stand, each by its frame (a ruin piece or a story prop).</summary>
-        private Vector3[] DuskSites(OpeningTuning tuning)
-        {
-            IReadOnlyList<string> ids = tuning.DuskSites;
-            var sites = new Vector3[ids.Count];
-            for (int i = 0; i < ids.Count; i++)
-            {
-                Transform frame = FrameOf(ids[i]) ?? throw new InvalidOperationException(
-                    $"The first dusk's site '{ids[i]}' is no ruin piece or story prop in the world (OpeningTuning).");
-                sites[i] = frame.position;
-            }
-
-            return sites;
         }
 
         private static WorldAnchor Anchor(IWorldAnchors anchors, string id)

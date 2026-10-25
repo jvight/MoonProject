@@ -78,9 +78,6 @@ namespace MoonProject.Gameplay
         /// <summary>R8, the mast up: "Transmit from the antenna mast."</summary>
         public const string Transmit = "next.v3.transmit";
 
-        /// <summary>R5, power on: "Power is on. Visit the seismic station or the habitat before dusk."</summary>
-        public const string VisitSite = "next.v3.visit_site";
-
         /// <summary>B9 to B10, the base night-ready: "The base is ready for the night."</summary>
         public const string AwaitNight = "next.v3.await_night";
 

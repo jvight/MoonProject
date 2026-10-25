@@ -18,14 +18,14 @@ namespace MoonProject.Gameplay
 
         private readonly BuildField _building;
         private readonly MastRaise _raise;
-        private readonly CallReplySettings _settings;
+        private readonly MastRaiseSettings _settings;
         private readonly IDisposable _built;
         private Transform[] _segments = Array.Empty<Transform>();
         private Vector3[] _rest = Array.Empty<Vector3>();
         private Vector3[] _lift = Array.Empty<Vector3>();
         private bool _bound;
 
-        public MastRaiseView(EventBus events, BuildField building, MastRaise raise, CallReplySettings settings)
+        public MastRaiseView(EventBus events, BuildField building, MastRaise raise, MastRaiseSettings settings)
         {
             _building = building != null ? building : throw new ArgumentNullException(nameof(building));
             _raise = raise ?? throw new ArgumentNullException(nameof(raise));

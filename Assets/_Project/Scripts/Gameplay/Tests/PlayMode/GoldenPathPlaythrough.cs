@@ -355,7 +355,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             // West of the pad: the ruins side stays open for the power module towed home at R6.
             yield return Build(StructureIds.SolarArray, pad + Vector3.left * BaseSpacing, "B8: the solar array");
             yield return UntilReached(OpeningMilestone.PowerOn, "Power on: the array powers the pad");
-            yield return ExpectStep(OpeningKeys.VisitSite, "R5: the first free choice names the near sites");
+            yield return ExpectStep(OpeningKeys.DockForDusk, "B8: power on, the dock that ends the day is named");
             yield return VisitTheSeismicStation();
             yield return DockForTheDusk(pad);
             yield return ExpectStep(OpeningKeys.ScanModule, "B9: night is coming, the power module can store it");
@@ -507,8 +507,8 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>B7: the habitat's airlock panel, read as 07 passes it; its readout shows on the CRT.</summary>
         /// <summary>
-        /// R5, the first free choice: out to the 1971 seismic station, one of the two near sites, to read its dead
-        /// station box (its curiosity scan); the sky holds in the afternoon the whole way.
+        /// An optional look round on the way to the dock: out to the 1971 seismic station to read its dead station box
+        /// (its curiosity scan); the sky holds in the afternoon the whole way.
         /// </summary>
         private IEnumerator VisitTheSeismicStation()
         {
@@ -518,7 +518,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             float held = _context.Get<ISunlight>().TimeSeconds;
             Vector3 home = Flat(Anchor("place.apron").Position - station.Point).normalized;
             yield return Scan(station, "the seismic station", home, PanelStandOff);
-            Assert.IsTrue(_gameplay.Opening.Dusk.Visited, "R5: 07 visited a near site");
             Assert.IsFalse(_gameplay.Opening.DuskBegun, "the afternoon holds until 07 docks");
             Assert.AreEqual(held, _context.Get<ISunlight>().TimeSeconds, 1f, "the Sun held while 07 looked round");
             Capture("08-the-seismic-station");

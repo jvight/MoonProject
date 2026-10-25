@@ -15,9 +15,6 @@ namespace MoonProject.Gameplay
         /// <summary>Characters of the sender's identity decoded so far.</summary>
         public int decoded;
 
-        /// <summary>07 has tried its one failed reply (<see cref="CallReply"/>).</summary>
-        public bool replyTried;
-
         /// <summary>The release's socket rack has been shown (<see cref="ReleaseSequence"/>).</summary>
         public bool rackShown;
     }

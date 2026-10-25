@@ -755,10 +755,6 @@
             "text": "Transmit from the antenna mast."
         },
         {
-            "key": "next.v3.visit_site",
-            "text": "Power is on. Visit the seismic station or the habitat before dusk."
-        },
-        {
             "key": "next.v3.await_night",
             "text": "The base is ready for the night."
         },
