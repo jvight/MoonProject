@@ -1681,7 +1681,7 @@ namespace MoonProject.UI
         }
 
         /// <summary>
-        /// 07's face says "no line of sight" while the cue lasts (or the failed reply's line, or a databank toast), and
+        /// 07's face says "no line of sight" while the cue lasts (or a story moment's line, or a databank toast), and
         /// otherwise shows the call when the guidance slot grants it, unless the self-test or the hold already has the
         /// face; a line cuts the call at once rather than overlapping it. The face is handed back only if nothing else
         /// took it meanwhile.
