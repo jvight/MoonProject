@@ -41,15 +41,17 @@ namespace MoonProject.Core.Events
     /// 07 understands <see cref="Maker"/> better (docs/design/maker-understanding.md §4): it now holds
     /// <see cref="Points"/> of that maker's completed entries, which is understanding <see cref="Level"/>; the next
     /// level needs <see cref="NextThreshold"/> (0 past the last). <see cref="AdaptedId"/> names the adapted blueprint
-    /// this gain unlocked ("adapted.ssr3_lamp"), empty when it unlocked none; <see cref="First"/> marks the maker's
-    /// first announced gain (its standards are logged). Held through the opening until the west signal, then
-    /// announced once.
+    /// this gain unlocked ("adapted.ssr3_lamp"), empty when it unlocked none; <see cref="NextAdaptedId"/> the one the
+    /// next level unlocks, empty past the last; <see cref="First"/> marks the maker's first announced gain (its
+    /// standards are logged). Announced at once, on the frame of the scan that earned it (opening-v3-payoff-audit §3:
+    /// the maker bar rides on the scan's own card).
     /// </summary>
     public readonly struct UnderstandingGained
     {
         public UnderstandingGained(DatabankMaker maker, int points, int level, int nextThreshold, string adaptedId,
-            bool first)
+            string nextAdaptedId, bool first)
         {
+            NextAdaptedId = nextAdaptedId ?? string.Empty;
             Maker = maker;
             Points = points;
             Level = level;
@@ -67,6 +69,8 @@ namespace MoonProject.Core.Events
         public int NextThreshold { get; }
 
         public string AdaptedId { get; }
+
+        public string NextAdaptedId { get; }
 
         public bool First { get; }
     }
