@@ -33,7 +33,9 @@ namespace MoonProject.Gameplay.PlayModeTests
     [Category("RuinsBasinCaptureSession")]
     public sealed class RuinsBasinCaptureSession : InputTestFixture
     {
-        private const string FallenArrayFirstFragmentId = "ruin.FallenSolarArray.0";
+        private const string FallenArraySetId = "ruin.FallenSolarArray";
+        private const string FallenArrayFirstFragmentId = FallenArraySetId + ".0";
+        private const int FallenArrayFragments = 3;
         private const int CaptureWidth = 1920;
         private const int CaptureHeight = 1080;
         private const float FrameTime = 1f / 60f;
@@ -137,6 +139,17 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             ScanFragment fallenArrayFrag = scans.Find(FallenArrayFirstFragmentId);
             Assert.IsNotNull(fallenArrayFrag, "FallenSolarArray's Scan_1 target must be registered in ScanField.");
+
+            // A set teaches only when whole (opening-v2 §1): its other fragments are read first, so the scan on camera
+            // is the one that completes the set and brings the learned toast.
+            for (int i = 1; i < FallenArrayFragments; i++)
+            {
+                ScanFragment other = scans.Find(ScanField.FragmentId(FallenArraySetId, i));
+                Assert.IsNotNull(other, $"FallenSolarArray's Scan_{i + 1} target must be registered in ScanField.");
+                scans.CompleteTarget(other, Time.time);
+            }
+
+            Assert.IsFalse(build.Known.IsKnown(StructureIds.SolarArray), "two of three fragments teach nothing yet");
 
             var terrain = _context.Get<ITerrainQuery>();
             var placement = _context.Get<IRoverPlacement>();
@@ -261,7 +274,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                     tickerLines.Exists(t => t.Key == "scan.complete" && t.Argument == StructureIds.NameKey(StructureIds.SolarArray)),
                     "Scan completion publishes the scan.complete toast with SolarArray's localized name key.");
 
-                // Return 07 to the open start apron and clear wide-shot look hints so the toast ticker holds the guidance slot.
+                // Return 07 to the open start apron and clear wide-shot look hints so the unlock card holds the guidance slot.
                 placement.PlaceAt(startApronSpot, lookTowardRuins);
                 _context.Events.Publish(new RoverWideShotChanged(false));
                 _context.Events.Publish(new NextStepChanged(string.Empty));
@@ -270,17 +283,17 @@ namespace MoonProject.Gameplay.PlayModeTests
                     Quaternion.LookRotation(startCamLook - startCamEye, Vector3.up));
                 _view.fieldOfView = 46f;
 
-                VisualElement ticker = _document.rootVisualElement.Q<VisualElement>("ticker");
-                Label tickerText = _document.rootVisualElement.Q<Label>("ticker-text");
-                Assert.IsNotNull(ticker, "HUD has #ticker element.");
-                Assert.IsNotNull(tickerText, "HUD has #ticker-text label.");
+                VisualElement card = _document.rootVisualElement.Q<VisualElement>("unlock-card");
+                Label cardText = _document.rootVisualElement.Q<Label>("unlock-card-verb");
+                Assert.IsNotNull(card, "HUD has the #unlock-card, the scan's reward beat.");
+                Assert.IsNotNull(cardText, "HUD has the #unlock-card-verb label.");
 
                 yield return Until(
-                    () => ticker.resolvedStyle.opacity >= 0.98f &&
-                          !string.IsNullOrEmpty(tickerText.text) &&
-                          tickerText.text.IndexOf("Solar Array", StringComparison.OrdinalIgnoreCase) >= 0,
+                    () => card.resolvedStyle.opacity >= 0.98f &&
+                          !string.IsNullOrEmpty(cardText.text) &&
+                          cardText.text.IndexOf("Solar Array", StringComparison.OrdinalIgnoreCase) >= 0,
                     8f,
-                    "blueprint learned toast reaches full opacity on #ticker");
+                    "the blueprint-learned card reaches full opacity, naming the Solar Array");
 
                 yield return CaptureComposite(_view, "03-learned-toast");
             }
