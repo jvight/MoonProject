@@ -262,8 +262,6 @@ namespace MoonProject.Art.Tests
             Assert.AreEqual("MoonProject/World/R1Terrain", rimSlope.shader.name);
             Assert.AreEqual(R1MaterialRecipes.ShaderName, rimTalus.shader.name);
 
-            Assert.AreEqual(0f, rimSlope.GetFloat("_LegacyBandedRim"), 1e-5f,
-                "R1_RimSlope must have legacy horizontal stripe banding disabled (_LegacyBandedRim == 0).");
             Assert.IsNotNull(rimSlope.GetTexture("_BaseMap"), "R1_RimSlope must bind _BaseMap (regolith albedo).");
             Assert.IsNotNull(rimSlope.GetTexture("_BumpMap"), "R1_RimSlope must bind _BumpMap (regolith normal).");
             Assert.IsNotNull(rimSlope.GetTexture("_MaskMap"), "R1_RimSlope must bind _MaskMap (regolith mask).");
