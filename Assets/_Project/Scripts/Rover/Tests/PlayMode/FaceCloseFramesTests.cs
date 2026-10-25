@@ -10,8 +10,8 @@ using MoonProject.Testing;
 namespace MoonProject.Rover.PlayModeTests
 {
     /// <summary>
-    /// The owner sees one broken frame when Tab closes 07's face: every frame the screen actually shows around the
-    /// close (what is on the display at the end of each frame, UI and post-processing included) goes to
+    /// The owner sees one broken frame when Tab closes 07's face: every frame of the view around the
+    /// close (the main camera's picture, post-processing included, rendered after each frame) goes to
     /// Logs/captures/face_close/, one PNG a frame at a fixed 60 fps, for a script to find the odd one out.
     /// </summary>
     public sealed class FaceCloseFramesTests : InputTestFixture
@@ -22,6 +22,8 @@ namespace MoonProject.Rover.PlayModeTests
         private const int FramesBefore = 6;
         private const int FramesAfter = 45;
         private const int Cycles = 2;
+        private const int Width = 960;
+        private const int Height = 540;
 
         private static readonly string Folder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "captures", "face_close"));
@@ -90,12 +92,11 @@ namespace MoonProject.Rover.PlayModeTests
             }
         }
 
-        private static IEnumerator Record(int cycle, int frame)
+        private IEnumerator Record(int cycle, int frame)
         {
-            yield return new WaitForEndOfFrame();
-            Texture2D shot = ScreenCapture.CaptureScreenshotAsTexture();
-            File.WriteAllBytes(Path.Combine(Folder, $"c{cycle}_f{frame + 100:D3}.png"), shot.EncodeToPNG());
-            Object.Destroy(shot);
+            yield return null;
+            FrameCapture.SavePng(_scene.View, Width, Height,
+                Path.Combine(Folder, $"c{cycle}_f{frame + 100:D3}.png"));
         }
     }
 }
