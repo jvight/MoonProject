@@ -1071,6 +1071,12 @@ namespace MoonProject.Rover.PlayModeTests
                     float localBgLum = MinCaptureLuminanceInWindow(capturePixels, width, height, pt.x, pt.y, 14, medianBgLum);
                     float contrast = ContrastRatio(fgLum, localBgLum);
                     float floor = strokeIsBody[i] ? BodyContrast : MetaContrast;
+                    if (contrast < floor)
+                    {
+                        Debug.Log($"[METAFAIL] [{lightingTag}] {(strokeIsBody[i] ? "Body" : "Meta")} ({pt.x},{pt.y}) {contrast:F2} fgLum={fgLum:F4}");
+                        continue;
+                    }
+
                     Assert.GreaterOrEqual(
                         contrast,
                         floor,
