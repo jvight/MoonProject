@@ -40,6 +40,7 @@ namespace MoonProject.Art.Editor
         public const string MissionFlagStripeMaterialName = "R1_MissionFlagStripe";
         public const string BootprintTrailMaterialName = "R1_BootprintTrail";
         public const string MakerDecalMaterialName = "M_R1_MakerDecal";
+        public const string SpareIgniterBrassMaterialName = "R1_SpareIgniterBrass";
 
         public const string CableMarkerAmberMaterialPath = ArtPaths.R1MaterialsFolder + "/" + CableMarkerAmberMaterialName + ".mat";
         public const string CrateRimGlowAmberMaterialPath = ArtPaths.R1MaterialsFolder + "/" + CrateRimGlowAmberMaterialName + ".mat";
@@ -60,6 +61,7 @@ namespace MoonProject.Art.Editor
         public const string MissionFlagStripeMaterialPath = ArtPaths.R1MaterialsFolder + "/" + MissionFlagStripeMaterialName + ".mat";
         public const string BootprintTrailMaterialPath = ArtPaths.R1MaterialsFolder + "/" + BootprintTrailMaterialName + ".mat";
         public const string MakerDecalMaterialPath = ArtPaths.R1MaterialsFolder + "/" + MakerDecalMaterialName + ".mat";
+        public const string SpareIgniterBrassMaterialPath = ArtPaths.R1MaterialsFolder + "/" + SpareIgniterBrassMaterialName + ".mat";
 
         public const string LanderReserveAlbedoPath = R1MaterialRecipes.TexturesFolder + "/T_R1_LanderReserve_Albedo.png";
         public const string LanderReserveEmissionPath = R1MaterialRecipes.TexturesFolder + "/T_R1_LanderReserve_Emission.png";
@@ -109,6 +111,7 @@ namespace MoonProject.Art.Editor
         public const string GeophoneRibbon10mPrefabPath = PropsModelsFolder + "/Geophone_Ribbon_10m.prefab";
         public const string GeophonePlugPrefabPath = PropsModelsFolder + "/Geophone_Plug.prefab";
         public const string PropGeophoneLinePrefabPath = PropsModelsFolder + "/Prop_GeophoneLine.prefab";
+        public const string PropSpareIgniterPrefabPath = PropsModelsFolder + "/Prop_SpareIgniter.prefab";
 
         /// <summary>Loads the <c>MoonProject/R1/SignalPillar</c> shader asset.</summary>
         public static Shader LoadSignalPillarShader()
@@ -450,6 +453,30 @@ namespace MoonProject.Art.Editor
             makerDecalMat.enableInstancing = true;
             BaseShaderGUI.SetMaterialKeywords(makerDecalMat, LitGUI.SetMaterialKeywords);
             GeneratedAssets.CreateOrReplace(makerDecalMat, MakerDecalMaterialPath);
+
+            // 18. R1_SpareIgniterBrass: warm machined brass glint with bloom-safe self-glint (emissive <= 1, no bloom)
+            R1MaterialSpec brassSpec = R1MaterialRecipes.Get(R1MaterialSlot.Brass);
+            Material spareIgniterBrass = R1MaterialLibrary.CreateMaterial(r1Lit, brassSpec);
+            spareIgniterBrass.name = SpareIgniterBrassMaterialName;
+            spareIgniterBrass.SetColor("_BaseColor", new Color(1.06f, 0.98f, 0.84f, 1f));
+            spareIgniterBrass.SetFloat("_MetallicScale", 1.00f);
+            spareIgniterBrass.SetFloat("_SmoothnessMin", 0.52f);
+            spareIgniterBrass.SetFloat("_SmoothnessMax", 0.94f);
+            spareIgniterBrass.SetColor("_EdgeWearColor", new Color(1.00f, 0.92f, 0.64f, 1f));
+            spareIgniterBrass.SetFloat("_EdgeWearAmount", 0.78f);
+            spareIgniterBrass.SetFloat("_EdgeWearThreshold", 0.36f);
+            spareIgniterBrass.SetFloat("_EdgeWearSharpness", 2.4f);
+            spareIgniterBrass.SetFloat("_EdgeWearMetallic", 0.98f);
+            spareIgniterBrass.SetFloat("_EdgeWearSmoothness", 0.92f);
+            spareIgniterBrass.SetFloat("_DustAmount", 0.05f);
+            spareIgniterBrass.SetTexture("_EmissionMap", Texture2D.whiteTexture);
+            spareIgniterBrass.SetColor("_EmissionColor", new Color(0.98f, 0.78f, 0.36f, 1f));
+            spareIgniterBrass.SetFloat("_EmissionStrength", 0.88f);
+            spareIgniterBrass.SetFloat("_BloomSafeMax", 0.96f);
+            spareIgniterBrass.SetFloat("_HotCoreThreshold", 0.99f);
+            spareIgniterBrass.SetFloat("_HotCorePeak", 0.96f);
+            spareIgniterBrass.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+            GeneratedAssets.CreateOrReplace(spareIgniterBrass, SpareIgniterBrassMaterialPath);
         }
 
         /// <summary>
@@ -578,6 +605,24 @@ namespace MoonProject.Art.Editor
             else if (modelPath.EndsWith("/PowerModule.fbx", StringComparison.Ordinal))
             {
                 EnsureSimpleBoxCollider(root);
+            }
+            else if (modelPath.EndsWith("/Prop_SpareIgniter.fbx", StringComparison.Ordinal))
+            {
+                Material brassGlintMat = LoadOrBuildMaterial(SpareIgniterBrassMaterialPath);
+                Renderer[] renderers = root.GetComponentsInChildren<Renderer>(true);
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    Material[] mats = renderers[i].sharedMaterials;
+                    for (int m = 0; m < mats.Length; m++)
+                    {
+                        if (mats[m] != null && R1MaterialRecipes.NormalizeSlotName(mats[m].name) == R1MaterialRecipes.BrassSlot)
+                        {
+                            mats[m] = brassGlintMat;
+                        }
+                    }
+
+                    renderers[i].sharedMaterials = mats;
+                }
             }
 
             ApplyMakerDecalOverrides(root);
