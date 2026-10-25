@@ -566,6 +566,15 @@ namespace MoonProject.Rover
             _towYawT = Mathf.MoveTowards(_towYawT, _towing ? 1f : 0f, deltaTime / _tuning.TowYawEaseSeconds);
             ApplyOrbit();
             StepNearFade(deltaTime);
+            if (_dbgFrames > 0)
+            {
+                _dbgFrames--;
+                Transform lens = _viewCamera.transform;
+                Debug.Log($"[CAMDBG] f{Time.frameCount} open={_faceInspectOpen} fw={_faceInspectWeight:F2} wide={_wide.IsOpen}/{_wide.Weight:F2} " +
+                          $"held={_held.IsOpen}/{_held.Weight:F2} moment={_moment.IsActive}/{_moment.Weight:F2}/{(_moment.Settings == _tuning.DockMoment ? "dock" : _moment.Settings == _tuning.NudgeMoment ? "nudge" : _moment.Settings == _tuning.LampFitMoment ? "lamp" : "other")} " +
+                          $"build={_buildFraming.IsActive}/{_buildFraming.Weight:F2} charging={_charging} tether={_tethered} tow={_towing} open={_opening.IsActive} " +
+                          $"pos={lens.position:F1} rot={lens.eulerAngles:F0} fov={_viewCamera.fieldOfView:F0} rover={_rover.Position:F1}");
+            }
         }
 
         /// <summary>
@@ -726,8 +735,11 @@ namespace MoonProject.Rover
         /// <paramref name="bodyLanguage"/> to lift 07's head (<c>+10 deg</c>) and turn its neck (<c>+-35 deg</c> max)
         /// toward the solved camera bearing while suppressing idle head noise.
         /// </summary>
+        private int _dbgFrames;
+
         public void SetFaceInspect(bool open, RoverBodyLanguage bodyLanguage)
         {
+            _dbgFrames = open ? 0 : 80;
             _faceInspectOpen = open;
             if (bodyLanguage != null)
             {
