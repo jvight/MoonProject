@@ -183,6 +183,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 CrateTemplate(ContainerKinds.CrateM, 0.9f), CrateTemplate(ContainerKinds.CrateL, 1.2f),
                 CargoCrateTemplate(),
             });
+            visuals.PopulatePartProps(new[] { Template("Prop_SpareIgniter", new Vector3(0.1f, 0.1f, 0.27f)) });
             OpeningTuning.PopulateCargoFragments(new[]
             {
                 FragmentTemplate("CoilPlate"), FragmentTemplate("GuideRail"),
