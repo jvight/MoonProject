@@ -37,45 +37,50 @@ namespace MoonProject.Gameplay.Tests
         [Test]
         public void TheFirstDockAfterPowerOn_BeginsTheDusk_Once()
         {
-            _cue.Step(true, false);
+            _cue.Step(true);
             Assert.IsFalse(_cue.Begun, "power on, 07 out roaming: the afternoon holds");
 
             Dock();
-            _cue.Step(true, false);
+            _cue.Step(true);
             Assert.IsTrue(_cue.Begun, "the next dock ends the day");
             Assert.AreEqual(1, _began.Count);
             Assert.IsFalse(_began[0].Restored, "begun now, not replayed");
 
             Dock();
-            _cue.Step(true, true);
+            _cue.Step(true);
             Assert.AreEqual(1, _began.Count, "only once");
         }
 
         [Test]
-        public void ScanningThePowerModule_BeginsTheDuskAtOnce_WithNoDock()
+        public void WithNoDock_TheDuskNeverBegins_TheDayEndsOnThePad()
         {
-            _cue.Step(true, true);
-            Assert.IsTrue(_cue.Begun, "the battery bank learned: night is the next goal");
-            Assert.AreEqual(1, _began.Count);
+            for (int i = 0; i < 3; i++)
+            {
+                _cue.Step(true);
+            }
+
+            Assert.IsFalse(_cue.Begun, "power on and the bank known, 07 off the pad: the afternoon holds");
+            Assert.IsEmpty(_began);
         }
 
         [Test]
-        public void ADockOrTheBankLearned_BeforePowerOn_BeginsNothing_TheBankBeginsItTheMomentThePowerComesOn()
+        public void ADockBeforePowerOn_BeginsNothing_AndDoesNotCarryOver()
         {
             Dock();
-            _cue.Step(false, true);
+            _cue.Step(false);
             Assert.IsFalse(_cue.Begun, "before power-on the afternoon comes first");
-            _cue.Step(true, false);
+            _cue.Step(true);
             Assert.IsFalse(_cue.Begun, "a dock before power-on does not carry over");
-            _cue.Step(true, true);
-            Assert.IsTrue(_cue.Begun, "the bank already known begins the dusk the moment the base is powered");
+            Dock();
+            _cue.Step(true);
+            Assert.IsTrue(_cue.Begun, "the next dock with the power on ends the day");
         }
 
         [Test]
         public void ALoadedGame_ReplaysABegunDuskAsRestored_AndNeverBeginsItAgain()
         {
             Dock();
-            _cue.Step(true, false);
+            _cue.Step(true);
             var begun = new OpeningSaveData();
             _cue.Capture(begun);
 
@@ -86,7 +91,7 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(1, _began.Count, "a begun dusk is stated at the session start");
             Assert.IsTrue(_began[0].Restored, "replayed, so the sky snaps to it");
             Dock();
-            reloaded.Step(true, true);
+            reloaded.Step(true);
             Assert.AreEqual(1, _began.Count, "and never begins again");
             reloaded.Dispose();
 

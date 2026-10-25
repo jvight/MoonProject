@@ -95,6 +95,19 @@ namespace MoonProject.Gameplay
         /// <summary>07 stands on the plate of a pad it built (powered or not), as a player sees it.</summary>
         public bool OnPad { get; private set; }
 
+        /// <summary>07 rests docked on the pad: eased onto it and held there.</summary>
+        public bool Docked => _docked;
+
+        /// <summary>
+        /// The pad keeps 07 through a day-end beat (<see cref="DayEndHold"/>): the walls stay locked and a push on the
+        /// throttle does not let it go.
+        /// </summary>
+        public bool Keep
+        {
+            get => _lock.Keep;
+            set => _lock.Keep = value;
+        }
+
         /// <summary>The lock's walls are up (rising, locked or lowering) on the pad 07 is on.</summary>
         public bool Raised => _lock.Raised;
 
@@ -139,7 +152,7 @@ namespace MoonProject.Gameplay
             bool full = _battery.CellsFull && pad == _pad && !_fullDone &&
                         (_restTime >= _tuning.DockRestSeconds || _lock.Raised || _docked);
             bool hold = charging || full;
-            bool driveOff = _settled && Mathf.Abs(_rover.DriveInput.y) > _tuning.DockDriveOff;
+            bool driveOff = !Keep && _settled && Mathf.Abs(_rover.DriveInput.y) > _tuning.DockDriveOff;
             if (driveOff && _battery.CellsFull)
             {
                 // 07 pushed off a full pad: it is not taken in again until it has left the plate.

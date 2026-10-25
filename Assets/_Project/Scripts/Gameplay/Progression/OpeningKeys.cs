@@ -78,8 +78,11 @@ namespace MoonProject.Gameplay
         /// <summary>R8, the mast up: "Transmit from the antenna mast."</summary>
         public const string Transmit = "next.v3.transmit";
 
-        /// <summary>B9 to B10, the base night-ready: "The base is ready for the night."</summary>
-        public const string AwaitNight = "next.v3.await_night";
+        /// <summary>
+        /// B9 to B10, the base night-ready: "The base is ready. Dock on the pad for nightfall." (the night falls with
+        /// 07 locked on the pad).
+        /// </summary>
+        public const string DockForNight = "next.v3.dock_for_night";
 
         /// <summary>R9, relay.1 answered: "relay.1 answered from the west rim. Drive to it."</summary>
         public const string GoToRelay = "next.v3.go_relay";

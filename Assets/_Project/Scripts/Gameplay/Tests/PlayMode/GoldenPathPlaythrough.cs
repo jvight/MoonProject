@@ -365,8 +365,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return TowTheModuleHome(pad);
             yield return ExpectStep(OpeningKeys.BuildBatteryBank, "B9: the module is home, build the bank on it");
             yield return Build(StructureIds.BatteryBank, ModulePosition(), "B9: the battery bank on the module");
-            yield return UntilReached(OpeningMilestone.NightReady, "night-ready: the bank is built and wired to the pad");
-            yield return TheFirstNightfall();
+            yield return ExpectStep(OpeningKeys.DockForNight, "B10: the base night-ready, dock on the pad for the night");
+            yield return TheFirstNightfall(pad);
             yield return ExpectStep(OpeningKeys.ScanTower, "B11: after nightfall");
             yield return CutTheCrates("RadioTower", "the tower's mast sections, feed cable and dish panels");
             yield return ScanTheSet("ruin.RadioTower", "the radio tower ruin");
@@ -601,7 +601,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Until(() => _gameplay.Opening.DuskBegun, DuskTimeout,
                 "the dock after the visit begins the first dusk",
                 () => $"on the pad {_gameplay.PadLock.OnPad}, lock raised {_gameplay.PadLock.Raised}");
-            End("R6: dock, and the first dusk begins", $"{_gameplay.Battery.Model.Charge01:P0}");
+            BatteryModel battery = _gameplay.Battery.Model;
+            yield return Until(() => !_gameplay.DayEnd.Keep, battery.Cells * 6f, "the pad keeps 07 until it is full");
+            Assert.IsTrue(battery.CellsFull, "07 leaves the day's last dock full");
+            End("R6: dock, and the first dusk begins", $"{battery.Charge01:P0}");
         }
 
         private IEnumerator ReadTheAirlockPanel()
@@ -996,12 +999,23 @@ namespace MoonProject.Gameplay.PlayModeTests
             End("B6: charge on the pad", $"{battery.Charge01:P0}, LANDER RESERVE · 0%");
         }
 
-        /// <summary>B10: the night-ready base lets the first sunset run; the first night falls on a lit base.</summary>
-        private IEnumerator TheFirstNightfall()
+        /// <summary>
+        /// B10: with the base night-ready, 07 docks; the first sunset runs with 07 locked on the pad, and the first night
+        /// falls on a lit base; the pad lets 07 go once the night has fallen and its cells are full.
+        /// </summary>
+        private IEnumerator TheFirstNightfall(Vector3 pad)
         {
             Begin();
             var sunlight = _context.Get<ISunlight>();
+            yield return DriveTo(Flat(pad) + Vector3.back * 6f, 2f, "a line-up for the pad");
+            yield return DriveTo(Flat(pad), 0.5f, "the pad", ApproachThrottle);
+            yield return UntilReached(OpeningMilestone.NightReady, "docked on the night-ready base: the nightfall begins");
+            Assert.IsTrue(_gameplay.DayEnd.Keep, "the pad keeps 07 through the nightfall");
             yield return Until(() => sunlight.Phase == SkyPhase.Earthlit, SunsetTimeout, "the first night falls");
+            Assert.IsTrue(_gameplay.PadLock.Docked, "the night fell with 07 on the pad");
+            BatteryModel battery = _gameplay.Battery.Model;
+            yield return Until(() => !_gameplay.DayEnd.Keep, battery.Cells * 6f, "the pad lets 07 go, full");
+            Assert.IsTrue(battery.CellsFull, "07 leaves the night's dock full");
             Capture("10-first-nightfall");
             End("B10: the first nightfall", "the base's lights over a dark basin");
         }

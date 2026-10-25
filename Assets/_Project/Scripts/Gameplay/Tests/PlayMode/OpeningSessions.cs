@@ -168,9 +168,14 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(OpeningKeys.ScanModule, opening.Flow.Current, "night is coming: the power module");
 
             Build(StructureIds.BatteryBank, apron + new Vector3(-6f, 0f, 0f));
-            yield return Waits.Until(() => Reached(OpeningMilestone.NightReady), 3f);
-            Assert.IsTrue(Reached(OpeningMilestone.NightReady));
-            Assert.AreEqual(OpeningKeys.AwaitNight, opening.Flow.Current, "night-ready: the base waits");
+            yield return PlaceAt(GameplayFixture.SeismicStation);
+            yield return Waits.Until(() => opening.NightReady, 3f);
+            Assert.AreEqual(OpeningKeys.DockForNight, opening.Flow.Current, "night-ready off the pad: dock for the night");
+            Assert.IsFalse(Reached(OpeningMilestone.NightReady), "the night waits for the dock");
+            yield return PlaceAt(apron);
+            yield return Waits.Until(() => Reached(OpeningMilestone.NightReady), 5f);
+            Assert.IsTrue(Reached(OpeningMilestone.NightReady), "docked: the nightfall plays on the pad");
+            Assert.AreEqual(string.Empty, opening.Flow.Current, "the night falls with nothing said");
             _fixture.World.Phase = SkyPhase.Earthlit;
             yield return null;
             yield return null;
