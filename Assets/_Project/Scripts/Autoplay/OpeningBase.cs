@@ -606,7 +606,7 @@ namespace MoonProject.Autoplay
 
         /// <summary>Cuts every sealed crate standing by <paramref name="frame"/> (an anchor or a ruin piece).</summary>
         /// <summary>
-        /// Like a player who reads "Battery low. Return to your pad.": when the cells run low and a pad stands, drive
+        /// Like a player who reads "Battery low. Head back to a pad": when the cells run low and a pad stands, drive
         /// back and charge before going on (the routes round the props are longer than a straight line).
         /// </summary>
         public IEnumerator TopUpIfLow()

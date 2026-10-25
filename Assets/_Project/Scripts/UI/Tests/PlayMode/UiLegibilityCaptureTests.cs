@@ -306,6 +306,62 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         /// <summary>
+        /// GD's in-game text pass (docs/design/writing-style-ingame.md): ten of the rewritten opening lines in Vietnamese,
+        /// each the one element on screen, at 16:9 (1920x1080) and 21:9 (3440x1440), into Logs/captures/text. Each must
+        /// reach 4.5:1 against its plate over the brightest dune and no text may be under 18 px.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator CaptureTheRewrittenLines_InVietnamese_At16x9And21x9()
+        {
+#if UNITY_EDITOR
+            InputSystem.AddDevice<Keyboard>();
+            yield return LoadMain();
+            GameContext context = FindBootstrap().Context;
+            Camera camera = context.Get<IViewCamera>().Camera;
+            UISystem ui = BuildUi(context, out _, out _);
+            FreezeWorld();
+            ui.Ledger.RecordLookTaught();
+            ui.Ledger.RecordDriveTaught();
+            ui.Ledger.RecordHoldChipShown();
+            ui.Ledger.RecordHoldBooted();
+            context.Events.Publish(new RoverAwoke(Vector3.zero, false));
+            yield return new WaitForSecondsRealtime(1f);
+            string language = ui.Localization.Language;
+            ui.Localization.SetLanguage("vi");
+            string folder = Path.GetFullPath(Path.Combine(CapturesFolder, "text"));
+            Directory.CreateDirectory(folder);
+            var report = new List<string>();
+            foreach (Vector2Int size in new[] { new Vector2Int(1920, 1080), new Vector2Int(3440, 1440) })
+            {
+                Reframe(size.x, size.y);
+                foreach (string key in RewrittenLines)
+                {
+                    context.Events.Publish(new NextStepChanged(key, NextLineReason.Reminder, default, false, false,
+                        null, Vector3.zero));
+                    yield return new WaitForSecondsRealtime(_tuning.Guidance.Line.FadeIn + 0.2f);
+                    yield return LegibleShot(camera, folder, key.Substring(key.LastIndexOf('.') + 1) + "_" + size.x,
+                        report, ui.Layout.NextLine);
+                    context.Events.Publish(new NextStepChanged(string.Empty));
+                    yield return new WaitForSecondsRealtime(_tuning.Guidance.Line.FadeOut + 0.2f);
+                }
+            }
+
+            ui.Localization.SetLanguage(language);
+            Assert.IsEmpty(report, "rewritten lines legibility:\n" + string.Join("\n", report));
+#else
+            Assert.Ignore("Captures need the editor.");
+            yield break;
+#endif
+        }
+
+        private static readonly string[] RewrittenLines =
+        {
+            "next.v2.build_pad", "next.v3.tow_module", "next.v2.scan_tower", "next.v3.go_relay",
+            "next.v3.hook_module", "next.v2.find_solar", "next.v2.cut_optics", "next.v3.visit_site",
+            "next.v3.dock_for_dusk", "next.v2.build_solar",
+        };
+
+        /// <summary>
         /// The guidance in its one style (docs/design/opening-v3-feel-audit.md row 4): the next line and a world chip,
         /// each the one element, by day and by night, at 16:9 (1920x1080) and 21:9 (3440x1440), into
         /// Logs/captures/guidance. Each text must reach 4.5:1 against its own plate composited over the brightest dune of

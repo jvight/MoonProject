@@ -7,7 +7,7 @@ namespace MoonProject.UI.Tests
 {
     /// <summary>
     /// Every bay of the socket rack (opening v3 4.3) has its words in every language: the part and where 07 saw it, one
-    /// short line for the aim chip ("SSR-3 headlamp · from unit 06").
+    /// short line for the aim chip ("SSR-3 headlamp · from 06").
     /// </summary>
     public sealed class RackWordsTests
     {

@@ -87,7 +87,7 @@ namespace MoonProject.UI.Tests
         [Test]
         public void TheProtocolLines_ReadAsDesigned_InBothLanguages()
         {
-            Assert.AreEqual("POWER · OFFLINE", _localization.Get(OpeningProtocol.KeyOf(ProtocolLine.PowerOffline)));
+            Assert.AreEqual("POWER · OFF", _localization.Get(OpeningProtocol.KeyOf(ProtocolLine.PowerOffline)));
             Assert.AreEqual("POWER · ON", _localization.Get(OpeningProtocol.KeyOf(ProtocolLine.PowerOn)));
             Assert.AreEqual("LINK · 0/1 · SIGNAL WEST",
                 _localization.Get(OpeningProtocol.KeyOf(ProtocolLine.LinkSignalWest)));
@@ -137,8 +137,8 @@ namespace MoonProject.UI.Tests
 
         [TestCase("en", 1, "Solar Array · blueprint 1/3")]
         [TestCase("en", 3, "Solar Array · blueprint 3/3 · learned")]
-        [TestCase("vi", 1, "Giàn pin mặt trời · bản vẽ 1/3")]
-        [TestCase("vi", 3, "Giàn pin mặt trời · bản vẽ 3/3 · đã học")]
+        [TestCase("vi", 1, "Dàn pin mặt trời · bản vẽ 1/3")]
+        [TestCase("vi", 3, "Dàn pin mặt trời · bản vẽ 3/3 · đã học")]
         public void AScanSetsProgress_ReadsPlainly_AndFitsThePlate(string language, int step, string expected)
         {
             const int plateCharacters = 52;

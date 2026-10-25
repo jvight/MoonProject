@@ -26,7 +26,7 @@ namespace MoonProject.UI.Tests
             _localization = TestTables.Localization(new EventBus(),
                 LowBatteryHint.LanderKey, "Battery low. The lander's port can charge you once a pad stands there.",
                 "Pin yếu. Cổng của tàu đổ bộ sạc được khi đã có bệ.",
-                LowBatteryHint.PadKey, "Battery low. Return to your pad.", "Pin yếu. Hãy về bệ sạc.");
+                LowBatteryHint.PadKey, "Battery low. Head back to a pad", "Pin yếu. Về bệ sạc");
             _hint = new LowBatteryHint(_settings, _battery, _localization);
         }
 
@@ -47,7 +47,7 @@ namespace MoonProject.UI.Tests
             _hint.Offer(new TickerLine(LowBatteryHint.PadKey));
             _hint.Tick(Frame, false);
             Assert.IsTrue(_hint.WantsShown);
-            Assert.AreEqual("Battery low. Return to your pad.", _hint.Text);
+            Assert.AreEqual("Battery low. Head back to a pad", _hint.Text);
 
             _hint.Tick(_settings.LowBatteryHoldSeconds + 1f, true);
             Assert.IsFalse(_hint.WantsShown, "said once, for a short while");
