@@ -14,10 +14,10 @@ namespace MoonProject.Art.Editor
 {
     /// <summary>
     /// Batch Editor capture runner for the crater-rim slope material (<c>R1_RimSlope.mat</c> / <c>R1Terrain.shader</c>)
-    /// and wall-base talus scatter kit (<c>RimTalus_00..07</c> with <c>R1_RimTalus.mat</c>), rendering a 2x2 proof
-    /// sheet to <c>docs/art/concepts/rim/sheet.png</c> comparing BEFORE (legacy horizontal stripe-banded slope material)
-    /// vs AFTER (triplanar world-space regolith-mantled slope material + darker steep fresh-rock exposures + talus kit)
-    /// on both a 25-35 deg test slope and a near-vertical crater-rim face under Day C low sun and Night A earthlight.
+    /// and wall-base talus scatter kit (<c>RimTalus_00..07</c> with <c>R1_RimTalus.mat</c>): the triplanar world-space
+    /// regolith-mantled slope with its darker steep fresh-rock exposures and the talus kit, on a 25-35 deg test slope and
+    /// a near-vertical crater-rim face, under Day C low sun and Night A earthlight, side by side in
+    /// <c>Logs/captures/rim_sheet.png</c>. (The archived banded-vs-triplanar proof is <c>docs/art/concepts/rim/sheet.png</c>.)
     /// </summary>
     public static class R1RimMaterialCapture
     {
@@ -37,7 +37,6 @@ namespace MoonProject.Art.Editor
         private static readonly int MoonBlastHaloId = Shader.PropertyToID("_MoonBlastHalo");
         private static readonly int MoonBlastRaysId = Shader.PropertyToID("_MoonBlastRays");
         private static readonly int MoonReachRingId = Shader.PropertyToID("_MoonReachRing");
-        private static readonly int LegacyBandedRimId = Shader.PropertyToID("_LegacyBandedRim");
 
         private static readonly int MoonEarthDirectionId = Shader.PropertyToID("_MoonEarthDirection");
         private static readonly int MoonEarthAxisXId = Shader.PropertyToID("_MoonEarthAxisX");
@@ -83,44 +82,29 @@ namespace MoonProject.Art.Editor
                 string capturesDir = Path.GetFullPath("Logs/captures");
                 Directory.CreateDirectory(capturesDir);
 
-                string rimDocsDir = Path.GetFullPath("docs/art/concepts/rim");
-                Directory.CreateDirectory(rimDocsDir);
-
-                string beforeDayPath = Path.Combine(capturesDir, "rim_before_dayC.png");
-                string afterDayPath = Path.Combine(capturesDir, "rim_after_dayC.png");
-                string beforeNightPath = Path.Combine(capturesDir, "rim_before_nightA.png");
-                string afterNightPath = Path.Combine(capturesDir, "rim_after_nightA.png");
+                string dayPath = Path.Combine(capturesDir, "rim_dayC.png");
+                string nightPath = Path.Combine(capturesDir, "rim_nightA.png");
 
                 bool prevAsync = ShaderUtil.allowAsyncCompilation;
                 ShaderUtil.allowAsyncCompilation = false;
                 try
                 {
-                    CaptureRimStage(beforeDayPath, nightMode: false, legacyBeforeMode: true);
-                    CaptureRimStage(afterDayPath, nightMode: false, legacyBeforeMode: false);
-                    CaptureRimStage(beforeNightPath, nightMode: true, legacyBeforeMode: true);
-                    CaptureRimStage(afterNightPath, nightMode: true, legacyBeforeMode: false);
+                    CaptureRimStage(dayPath, nightMode: false);
+                    CaptureRimStage(nightPath, nightMode: true);
                 }
                 finally
                 {
                     ShaderUtil.allowAsyncCompilation = prevAsync;
                 }
 
-                string sheetOutPath = Path.Combine(rimDocsDir, "sheet.png");
-                ComposeTwoByTwoSheet(
-                    beforeDayPath,
-                    afterDayPath,
-                    beforeNightPath,
-                    afterNightPath,
-                    sheetOutPath);
-
-                string logSheetCopy = Path.Combine(capturesDir, "rim_sheet.png");
-                File.Copy(sheetOutPath, logSheetCopy, true);
+                string sheetOutPath = Path.Combine(capturesDir, "rim_sheet.png");
+                ComposeSideBySideSheet(dayPath, nightPath, sheetOutPath);
                 BatchRunner.Log($"capture {sheetOutPath}");
                 return true;
             });
         }
 
-        private static void CaptureRimStage(string outputPath, bool nightMode, bool legacyBeforeMode)
+        private static void CaptureRimStage(string outputPath, bool nightMode)
         {
             EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var temp = new ArtLightingPreview.TemporaryObjects();
@@ -137,8 +121,7 @@ namespace MoonProject.Art.Editor
                 }
 
                 Material activeRimMat = UnityEngine.Object.Instantiate(rimSlopeAsset);
-                activeRimMat.name = legacyBeforeMode ? "R1_RimSlope_LegacyBefore" : "R1_RimSlope_TriplanarAfter";
-                activeRimMat.SetFloat(LegacyBandedRimId, legacyBeforeMode ? 1.0f : 0.0f);
+                activeRimMat.name = "R1_RimSlope_Capture";
                 temp.Add(activeRimMat);
 
                 // Build deterministic test terrain featuring:
@@ -157,10 +140,7 @@ namespace MoonProject.Art.Editor
                 mr.receiveShadows = true;
                 temp.Add(stageObj);
 
-                if (!legacyBeforeMode)
-                {
-                    ScatterWallBaseTalusKit(temp);
-                }
+                ScatterWallBaseTalusKit(temp);
 
                 // Rover 07 (1.59 m tall scale reference) on the flat regolith floor in front of the slope & wall base
                 float roverY = EvaluateRimStageHeight(-3.4f, -0.8f);
@@ -172,11 +152,8 @@ namespace MoonProject.Art.Editor
                     50f,
                     bg,
                     outputPath,
-                    legacyBeforeMode
-                        ? (nightMode ? "BEFORE: NIGHT A EARTHLIGHT (BANDED 25-35 DEG SLOPE + VERTICAL FACE)"
-                                     : "BEFORE: DAY C LOW SUN (BANDED 25-35 DEG SLOPE + VERTICAL FACE)")
-                        : (nightMode ? "AFTER: NIGHT A EARTHLIGHT (TRIPLANAR R1_RIMSLOPE + RIMTALUS_00..07)"
-                                     : "AFTER: DAY C LOW SUN (TRIPLANAR R1_RIMSLOPE + RIMTALUS_00..07)"));
+                    nightMode ? "NIGHT A EARTHLIGHT (TRIPLANAR R1_RIMSLOPE + RIMTALUS_00..07)"
+                              : "DAY C LOW SUN (TRIPLANAR R1_RIMSLOPE + RIMTALUS_00..07)");
             }
             finally
             {
@@ -297,9 +274,8 @@ namespace MoonProject.Art.Editor
                     Vector3 n = new Vector3(-(hx1 - hx0) / (2f * eps), 1f, -(hz1 - hz0) / (2f * eps)).normalized;
                     normals[idx] = n;
 
-                    // Compute vertex colors matching TerrainPainter.PaintVertex's periodic elevation terrace bands
-                    // so the BEFORE panel reproduces the legacy horizontal stripe banding and the AFTER panel proves
-                    // that vertex-color and shader banding are completely eliminated.
+                    // Vertex colours carry TerrainPainter.PaintVertex's periodic elevation terrace bands, as the real
+                    // terrain does, so the capture proves the slope material shows none of that banding.
                     float slopeDeg = Mathf.Acos(Mathf.Clamp(n.y, -1f, 1f)) * Mathf.Rad2Deg;
                     float slopeWeight = Mathf.SmoothStep(14f, 34f, slopeDeg);
                     float patch = Mathf.Sin(x * 0.08f + z * 0.06f) * 0.35f + Mathf.Cos(x * 0.05f - z * 0.09f) * 0.25f;
@@ -828,25 +804,17 @@ namespace MoonProject.Art.Editor
             }
         }
 
-        private static void ComposeTwoByTwoSheet(
-            string topLeftPath,
-            string topRightPath,
-            string bottomLeftPath,
-            string bottomRightPath,
-            string outPath)
+        private static void ComposeSideBySideSheet(string leftPath, string rightPath, string outPath)
         {
-            Texture2D tl = LoadPng(topLeftPath);
-            Texture2D tr = LoadPng(topRightPath);
-            Texture2D bl = LoadPng(bottomLeftPath);
-            Texture2D br = LoadPng(bottomRightPath);
+            Texture2D left = LoadPng(leftPath);
+            Texture2D right = LoadPng(rightPath);
             try
             {
                 int totalW = PanelWidth * 2 + DividerPx;
-                int totalH = PanelHeight * 2 + DividerPx;
-                var canvas = new Texture2D(totalW, totalH, TextureFormat.RGB24, false, false);
+                var canvas = new Texture2D(totalW, PanelHeight, TextureFormat.RGB24, false, false);
                 try
                 {
-                    var bgPixels = new Color32[totalW * totalH];
+                    var bgPixels = new Color32[totalW * PanelHeight];
                     var dividerColor = new Color32(12, 15, 24, 255);
                     for (int i = 0; i < bgPixels.Length; i++)
                     {
@@ -854,15 +822,8 @@ namespace MoonProject.Art.Editor
                     }
 
                     canvas.SetPixels32(bgPixels);
-
-                    // Top row: Day C Low Sun (Left = BEFORE banded, Right = AFTER triplanar + talus kit)
-                    canvas.SetPixels(0, PanelHeight + DividerPx, PanelWidth, PanelHeight, tl.GetPixels());
-                    canvas.SetPixels(PanelWidth + DividerPx, PanelHeight + DividerPx, PanelWidth, PanelHeight, tr.GetPixels());
-
-                    // Bottom row: Night A Earthlight (Left = BEFORE banded, Right = AFTER triplanar + talus kit)
-                    canvas.SetPixels(0, 0, PanelWidth, PanelHeight, bl.GetPixels());
-                    canvas.SetPixels(PanelWidth + DividerPx, 0, PanelWidth, PanelHeight, br.GetPixels());
-
+                    canvas.SetPixels(0, 0, PanelWidth, PanelHeight, left.GetPixels());
+                    canvas.SetPixels(PanelWidth + DividerPx, 0, PanelWidth, PanelHeight, right.GetPixels());
                     canvas.Apply(false);
                     File.WriteAllBytes(outPath, canvas.EncodeToPNG());
                 }
@@ -873,10 +834,8 @@ namespace MoonProject.Art.Editor
             }
             finally
             {
-                UnityEngine.Object.DestroyImmediate(tl);
-                UnityEngine.Object.DestroyImmediate(tr);
-                UnityEngine.Object.DestroyImmediate(bl);
-                UnityEngine.Object.DestroyImmediate(br);
+                UnityEngine.Object.DestroyImmediate(left);
+                UnityEngine.Object.DestroyImmediate(right);
             }
         }
 
