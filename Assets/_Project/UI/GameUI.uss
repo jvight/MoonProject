@@ -2060,7 +2060,7 @@ Label {
     font-size: 18px;
     letter-spacing: 1px;
     -unity-text-align: middle-center;
-    color: rgb(182, 168, 143);
+    color: rgb(192, 177, 150);
     border-bottom-width: 2px;
     border-color: rgba(0, 0, 0, 0);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
