@@ -743,6 +743,10 @@
             "text": "Mô-đun điện là khung của cụm pin. Kéo nó về sân."
         },
         {
+            "key": "next.v3.free_cable",
+            "text": "Lùi lại để gỡ cáp."
+        },
+        {
             "key": "next.v3.dock_for_dusk",
             "text": "Đỗ vào bệ để kết thúc ngày."
         },

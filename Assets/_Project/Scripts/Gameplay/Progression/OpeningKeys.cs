@@ -69,6 +69,9 @@ namespace MoonProject.Gameplay
         /// </summary>
         public const string TowModuleHome = "next.v3.tow_module";
 
+        /// <summary>B9, the power module caught with the winch's slack all out: "Back up to free the cable."</summary>
+        public const string FreeCable = "next.v3.free_cable";
+
         /// <summary>R5, a near site visited: "Park on the pad to end the day." (the dock begins the dusk).</summary>
         public const string DockForDusk = "next.v3.dock_for_dusk";
 

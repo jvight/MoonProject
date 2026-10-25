@@ -743,6 +743,10 @@
             "text": "The power module is the bank's frame. Tow it home to the apron."
         },
         {
+            "key": "next.v3.free_cable",
+            "text": "Back up to free the cable."
+        },
+        {
             "key": "next.v3.dock_for_dusk",
             "text": "Park on the pad to end the day."
         },

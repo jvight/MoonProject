@@ -160,6 +160,8 @@ namespace MoonProject.Gameplay
 
         public bool ModuleHooked => _tow != null && _tow.TowingId == TowLoads.PowerModule;
 
+        public bool ModuleSnagged => ModuleHooked && _tow.Snagged;
+
         public bool ModuleHome => _tow != null && _tow.TryFindHome(TowLoads.PowerModule, out _);
 
         public bool AnswerDone => _answer != null && _answer.Phase == AnswerPhase.Done;

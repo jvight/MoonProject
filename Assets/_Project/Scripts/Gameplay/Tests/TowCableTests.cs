@@ -137,6 +137,31 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void ACaughtLoad_IsStuckOnlyOnceTheSlackIsAllOut_AndFreeAfterASnagTimeComing()
+        {
+            var snag = new TowSnag();
+            float full = _settings.CableLength + _settings.MaxSlack;
+            float shortOfFull = full - _settings.SlackStep;
+            Assert.AreEqual(TowSnagAction.LiftFree, snag.Step(shortOfFull + _settings.SnagStretch + 0.1f, shortOfFull,
+                0f, _settings.SnagSeconds * 1.5f, _settings));
+            Assert.IsFalse(snag.Stuck, "slack still to pay out: the winch is still working on it");
+
+            Assert.AreEqual(TowSnagAction.LiftFree,
+                snag.Step(full + _settings.SnagStretch + 0.1f, full, 0f, _settings.SnagSeconds * 1.5f, _settings));
+            Assert.IsTrue(snag.Stuck, "caught with all the slack out: only 07 backing up frees it");
+
+            snag.Step(full, full, _settings.SnagSpeed + 0.5f, _settings.SnagSeconds * 0.5f, _settings);
+            Assert.IsTrue(snag.Stuck, "the lift's own jolt toward the winch is not yet free");
+            snag.Step(full, full, _settings.SnagSpeed + 0.5f, _settings.SnagSeconds * 0.6f, _settings);
+            Assert.IsFalse(snag.Stuck, "coming for a whole snag time: free");
+
+            snag.Step(full + _settings.SnagStretch + 0.1f, full, 0f, _settings.SnagSeconds * 1.5f, _settings);
+            snag.Reset();
+            Assert.IsFalse(snag.Stuck, "a new tow starts free");
+            Assert.AreEqual(0, snag.Lifts);
+        }
+
+        [Test]
         public void AStretchedLoadStillComing_OnlyLags_AndIsNeverCaught()
         {
             var snag = new TowSnag();
