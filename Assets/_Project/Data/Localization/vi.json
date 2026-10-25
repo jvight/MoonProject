@@ -1363,6 +1363,14 @@
             "text": "TYCHO"
         },
         {
+            "key": "ui.maker.bar",
+            "text": "{0} {1} · tiếp theo: {2}"
+        },
+        {
+            "key": "adapted.ssr3_lamp.name",
+            "text": "Đèn pha SSR-3"
+        },
+        {
             "key": "db.no_record",
             "text": "KHÔNG CÓ HỒ SƠ LUMEN"
         },

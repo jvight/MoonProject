@@ -293,6 +293,30 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
+        public void AMakerBar_RidesOnItsScansOwnCard_WaitingOrShown_ElseItsOwn()
+        {
+            var settings = new GuidanceSettings();
+            var queue = new ReadoutQueue(settings);
+            queue.Offer(new ReadoutRequest(ReadoutKind.Story, textKey: "story.airlock_panel"));
+            Assert.AreEqual(MakerAttach.Waiting, queue.AttachMakerLine("KESSLER–ARAI █░ · next: SSR-3 Headlamp"));
+            queue.Tick(Frame, true, true);
+            Assert.AreEqual(ReadoutKind.Story, queue.Current.Kind);
+            Assert.AreEqual("KESSLER–ARAI █░ · next: SSR-3 Headlamp", queue.Current.MakerLine,
+                "the bar came first in the frame: the story card carries it");
+
+            Assert.AreEqual(MakerAttach.Shown, queue.AttachMakerLine("ILC █░░ · next: Reflector Beacon"),
+                "on the card on the screen: the caller rewrites it");
+            Assert.AreEqual("ILC █░░ · next: Reflector Beacon", queue.Current.MakerLine);
+
+            var idle = new ReadoutQueue(settings);
+            Assert.AreEqual(MakerAttach.None, idle.AttachMakerLine("KESSLER–ARAI █░ · next: SSR-3 Headlamp"),
+                "no scan card: the caller gives the bar a card of its own");
+            idle.Offer(new ReadoutRequest(ReadoutKind.System, RoverSystem.Cutter));
+            Assert.AreEqual(MakerAttach.None, idle.AttachMakerLine("KESSLER–ARAI █░ · next: SSR-3 Headlamp"),
+                "a system card is not a scan's card");
+        }
+
+        [Test]
         public void ACardPausedBySlot_KeepsItsHold()
         {
             var settings = new GuidanceSettings();

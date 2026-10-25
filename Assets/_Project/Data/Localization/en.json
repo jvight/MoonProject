@@ -1363,6 +1363,14 @@
             "text": "TYCHO"
         },
         {
+            "key": "ui.maker.bar",
+            "text": "{0} {1} · next: {2}"
+        },
+        {
+            "key": "adapted.ssr3_lamp.name",
+            "text": "SSR-3 Headlamp"
+        },
+        {
             "key": "db.no_record",
             "text": "NO LUMEN RECORD"
         },

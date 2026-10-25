@@ -251,6 +251,61 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         /// <summary>
+        /// The per-maker bar on a maker scan's own card and the adapted blueprint's card shown at once
+        /// (opening-v3-payoff-audit §3), in English and Vietnamese at 1920x1080, into Logs/captures/maker: every line at
+        /// 4.5:1 against its plate over the brightest dune and no text under 18 px.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator CaptureTheMakerBar_AndTheHeadlampCard_InEnglishAndVietnamese()
+        {
+#if UNITY_EDITOR
+            InputSystem.AddDevice<Keyboard>();
+            yield return LoadMain();
+            GameContext context = FindBootstrap().Context;
+            Camera camera = context.Get<IViewCamera>().Camera;
+            UISystem ui = BuildUi(context, out _, out _);
+            FreezeWorld();
+            context.Events.Publish(new RoverAwoke(Vector3.zero, false));
+            yield return new WaitForSecondsRealtime(1f);
+            string language = ui.Localization.Language;
+            string folder = Path.GetFullPath(Path.Combine(CapturesFolder, "maker"));
+            Directory.CreateDirectory(folder);
+            var report = new List<string>();
+            Reframe(LegibleWidth, LegibleHeight);
+            foreach (string lang in new[] { "en", "vi" })
+            {
+                ui.Localization.SetLanguage(lang);
+                context.Events.Publish(new UnderstandingGained(DatabankMaker.KesslerArai, 1, 0, 2, string.Empty,
+                    "adapted.ssr3_lamp", true));
+                context.Events.Publish(new StoryScanned("trickle_post", "story.airlock_panel", Vector3.zero));
+                yield return new WaitForSecondsRealtime(_tuning.Guidance.Readout.FadeIn + 0.6f);
+                yield return LegibleShot(camera, folder, "maker_bar_" + lang, report, ui.Readout.Panel);
+                yield return new WaitForSecondsRealtime(_tuning.Guidance.StoryHoldSeconds +
+                                                        _tuning.Guidance.Readout.FadeOut + 0.6f);
+
+                context.Events.Publish(new UnderstandingGained(DatabankMaker.KesslerArai, 2, 1, 0,
+                    "adapted.ssr3_lamp", string.Empty, false));
+                float limit = Time.realtimeSinceStartup + 10f;
+                while (!ui.UnlockCard.IsVisible && Time.realtimeSinceStartup < limit)
+                {
+                    yield return null;
+                }
+
+                yield return new WaitForSecondsRealtime(1f);
+                yield return LegibleShot(camera, folder, "headlamp_card_" + lang, report, ui.Layout.UnlockCard);
+                yield return new WaitForSecondsRealtime(8f);
+            }
+
+            ui.Localization.SetLanguage(language);
+            Assert.IsEmpty(report, "maker bar legibility:" + System.Environment.NewLine +
+                                   string.Join(System.Environment.NewLine, report));
+#else
+            Assert.Ignore("Captures need the editor.");
+            yield break;
+#endif
+        }
+
+        /// <summary>
         /// GD's in-game text pass (docs/design/writing-style-ingame.md): ten of the rewritten opening lines in Vietnamese,
         /// each the one element on screen, at 16:9 (1920x1080) and 21:9 (3440x1440), into Logs/captures/text. Each must
         /// reach 4.5:1 against its plate over the brightest dune and no text may be under 18 px.
