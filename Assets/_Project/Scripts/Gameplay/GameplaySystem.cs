@@ -399,7 +399,7 @@ namespace MoonProject.Gameplay
             RangeRing = new RangeRingField(context.Events, _battery.Tuning.RangeRing,
                 new RangeRingModel(_battery.Tuning, _battery.Tuning.RangeRing, services.Terrain,
                     context.Get<IRoverClimb>().ClimbLimitDegrees), _battery.Model,
-                new ChargePoints(Opening.Pads, Relay), services.Rover);
+                new ChargePoints(Opening.Pads, Relay), services.Rover, new RelayLink(Answer, Relay));
             _flowTokens.Add(context.Events.Subscribe<RelayRelit>(OnRelayRelit));
             RangeRingLine = new RangeRingLine(transform, _visuals.BeamCore, RangeRing, _battery.Tuning.RangeRing,
                 services.Terrain, context.Get<IViewCamera>());
@@ -701,7 +701,7 @@ namespace MoonProject.Gameplay
         {
             if (!relit.Restored)
             {
-                RangeRing.Show(RangeRingMode.Full);
+                RangeRing.Grow(relit.RelayId, Relay.PadPoint);
             }
         }
 

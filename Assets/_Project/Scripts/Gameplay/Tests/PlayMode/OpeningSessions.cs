@@ -14,7 +14,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
     /// The opening v2 on the real gameplay components behind the fake rover (docs/design/opening-v2.md §2–§4): a new
-    /// game at half charge, every objective line in order as the world moves on, the lander cargo bay's two scans
+    /// game at 60% charge, every objective line in order as the world moves on, the lander cargo bay's two scans
     /// teaching the pad (and a ruin's set teaching only when whole), the first charge on a built pad drawing the
     /// lander's reserve until it gives out, the faulted cutter sputtering at the fallen array and the spare igniter
     /// taken from the rack beside it and fitted where 07 stands, the first dusk begun by the dock after a visit to the
@@ -72,7 +72,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return null;
             OpeningField opening = _fixture.Gameplay.Opening;
             KnownStructures known = _fixture.Gameplay.KnownStructures;
-            Assert.AreEqual(0.5f, _fixture.Gameplay.Battery.Model.Charge01, 0.01f, "a new game wakes half empty");
+            Assert.AreEqual(0.6f, _fixture.Gameplay.Battery.Model.Charge01, 0.01f,
+                "a new game wakes a little over half full");
             Assert.IsFalse(known.IsKnown(StructureIds.ChargingPad), "no blueprint is known from the start");
             Assert.AreEqual(OpeningKeys.DriveToLander, opening.Flow.Current);
 
