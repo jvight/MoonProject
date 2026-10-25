@@ -586,8 +586,8 @@ MonoBehaviour:
       _flickerRiseFrom: 0.5
       _flickerOffShare: 0.08
     _relay1Site:
-      _cabinetOffset: {x: 2.2, y: 0.8}
-      _cabinetYaw: -25
+      _cabinetOffset: {x: -4.2, y: 0.8}
+      _cabinetYaw: 25
       _padDistance: 2.8
       _spareOnShelf: {x: -0.04, y: 0, z: 0}
       _spareYaw: 90
