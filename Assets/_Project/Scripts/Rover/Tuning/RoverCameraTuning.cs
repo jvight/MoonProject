@@ -409,6 +409,16 @@ namespace MoonProject.Rover
         [Range(1f, 3f)]
         [SerializeField] private float _towMaxRadiusScale = 1.8f;
 
+        [Tooltip("Half-life (s) of the load's bounds the framing solves against: a tow's body moves at the physics rate, "
+                 + "and an unsmoothed box would make the framing step with it.")]
+        [Range(0.02f, 1f)]
+        [SerializeField] private float _towBoundsHalfLife = 0.2f;
+
+        [Tooltip("Extra clearance (m) round the load before the framing eases back toward the plain chase view, so a view "
+                 + "that has just cleared the load does not flip between two framings.")]
+        [Range(0f, 2f)]
+        [SerializeField] private float _towRelaxMargin = 0.6f;
+
         [Tooltip("Half-life (s) of the solved framing following a swing of the player's view, so it never jumps.")]
         [Range(0.02f, 1f)]
         [SerializeField] private float _towSolveHalfLife = 0.15f;
@@ -422,6 +432,10 @@ namespace MoonProject.Rover
                  "the rise, so the turn is a gentle drift, never a whip.")]
         [Range(0.6f, 4f)]
         [SerializeField] private float _towYawEaseSeconds = 1.8f;
+
+        [Tooltip("Fastest (deg/s) the camera swings round a load it tows, whatever the framing asks for.")]
+        [Range(5f, 90f)]
+        [SerializeField] private float _towYawMaxSpeed = 30f;
 
         [Tooltip("How far the camera's look point moves from 07 toward the load while towing (a share of the way), so the " +
                  "load and the rope stay in frame with 07: a tow reads as 07, the rope and the load together.")]
@@ -1087,11 +1101,17 @@ namespace MoonProject.Rover
 
         public float TowSolveHalfLife => _towSolveHalfLife;
 
+        public float TowBoundsHalfLife => _towBoundsHalfLife;
+
+        public float TowRelaxMargin => _towRelaxMargin;
+
         public float TowLookShare => _towLookShare;
 
         public float TowMaxYawSwing => _towMaxYawSwing;
 
         public float TowYawEaseSeconds => _towYawEaseSeconds;
+
+        public float TowYawMaxSpeed => _towYawMaxSpeed;
 
         public CameraMomentSettings DigMoment => _digMoment;
 

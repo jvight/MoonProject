@@ -98,10 +98,13 @@ namespace MoonProject.Rover
         private bool _towing;
         private float _towT;
         private bool _towSolved;
+        private Bounds _towBounds;
+        private bool _towBoundsKnown;
         private Vector3 _towLook;
         private float _towElevation;
         private float _towScale = 1f;
         private float _towYaw;
+        private float _towYawVelocity;
         private float _towYawT;
         private float _towSide = 1f;
         private ITowLine _towLine;
@@ -548,6 +551,7 @@ namespace MoonProject.Rover
             StepWideShot(deltaTime);
             StepHeldShot(viewInput, deltaTime);
             StepMomentFraming(deltaTime);
+            StepTowBounds(deltaTime);
             StepTowLook(deltaTime);
             _beam.Framing.Step(deltaTime);
             StepReleaseCarry(deltaTime);
@@ -1013,6 +1017,7 @@ namespace MoonProject.Rover
                 : System.Array.Empty<Renderer>();
             _towing = _towRenderers.Length > 0;
             _towSolved = false;
+            _towBoundsKnown = false;
         }
 
         /// <summary>
@@ -1031,8 +1036,37 @@ namespace MoonProject.Rover
             _towLook = Smoothing.Damp(_towLook, wanted, _tuning.TowSolveHalfLife, deltaTime);
         }
 
-        /// <summary>The bounds of everything the tow holds; false when it holds nothing.</summary>
+        /// <summary>
+        /// Follows the load's bounds with a damped copy: the load is a body stepped at the physics rate, and both the
+        /// look point and the clearance solve would step with it frame by frame.
+        /// </summary>
+        private void StepTowBounds(float deltaTime)
+        {
+            if (!RawTowLoadBounds(out Bounds raw))
+            {
+                _towBoundsKnown = false;
+                return;
+            }
+
+            if (!_towBoundsKnown)
+            {
+                _towBounds = raw;
+                _towBoundsKnown = true;
+                return;
+            }
+
+            _towBounds.center = Smoothing.Damp(_towBounds.center, raw.center, _tuning.TowBoundsHalfLife, deltaTime);
+            _towBounds.extents = Smoothing.Damp(_towBounds.extents, raw.extents, _tuning.TowBoundsHalfLife, deltaTime);
+        }
+
+        /// <summary>The smoothed bounds of everything the tow holds; false when it holds nothing.</summary>
         private bool TowLoadBounds(out Bounds load)
+        {
+            load = _towBounds;
+            return _towBoundsKnown;
+        }
+
+        private bool RawTowLoadBounds(out Bounds load)
         {
             load = default;
             bool hasLoad = false;
@@ -1070,12 +1104,34 @@ namespace MoonProject.Rover
             float solvedYaw = 0f;
             if (TowLoadBounds(out Bounds load))
             {
-                TowFraming.SolveSide(_target.position, _targetYaw + yaw, elevation, radius, load, _tuning.TowMargin,
-                    _tuning.TowMaxElevation, _tuning.TowMaxRadiusScale, _tuning.TowMaxYawSwing, _towSide,
-                    out solvedElevation, out solvedScale, out solvedYaw);
-                if (solvedYaw != 0f)
+                // One framing holds while it still clears the load: the grid solve picks the cheapest of many near-equal
+                // framings, and a load that shifts a few centimetres a frame would flip it between them (the view jerking
+                // back and forth). The plain chase view returns only once it clears with room to spare.
+                float cameraYaw = _targetYaw + yaw;
+                Bounds roomy = load;
+                roomy.Expand((_tuning.TowMargin + _tuning.TowRelaxMargin) * 2f);
+                Bounds snug = load;
+                snug.Expand(_tuning.TowMargin * 2f);
+                if (TowFraming.Clear(_target.position, cameraYaw, elevation, radius, roomy))
                 {
-                    _towSide = Mathf.Sign(solvedYaw);
+                    solvedElevation = elevation;
+                }
+                else if (_towSolved && TowFraming.Clear(_target.position, cameraYaw + _towYaw, _towElevation,
+                             radius * _towScale, snug))
+                {
+                    solvedElevation = _towElevation;
+                    solvedScale = _towScale;
+                    solvedYaw = _towYaw;
+                }
+                else
+                {
+                    TowFraming.SolveSide(_target.position, cameraYaw, elevation, radius, load, _tuning.TowMargin,
+                        _tuning.TowMaxElevation, _tuning.TowMaxRadiusScale, _tuning.TowMaxYawSwing, _towSide,
+                        out solvedElevation, out solvedScale, out solvedYaw);
+                    if (solvedYaw != 0f)
+                    {
+                        _towSide = Mathf.Sign(solvedYaw);
+                    }
                 }
             }
 
@@ -1087,16 +1143,21 @@ namespace MoonProject.Rover
                 _towElevation = solvedElevation;
                 _towScale = solvedScale;
                 _towYaw = solvedYaw;
+                _towYawVelocity = 0f;
                 _towSolved = true;
             }
             else
             {
                 _towElevation = Mathf.Lerp(_towElevation, solvedElevation, follow);
                 _towScale = Mathf.Lerp(_towScale, solvedScale, follow);
-                float yawFollow = Time.deltaTime > 0f
-                    ? Smoothing.Damp(0f, 1f, _tuning.TowYawEaseSeconds / TowYawHalfLivesPerEase, Time.deltaTime)
-                    : 1f;
-                _towYaw = Mathf.Lerp(_towYaw, solvedYaw, yawFollow);
+                // A critically damped, speed-limited follow: a framing that flips to the load's other side is a step in
+                // the target, and an exponential lerp to a step changes the swing's speed at once (a kick); this
+                // keeps the speed continuous and never fast.
+                if (Time.deltaTime > 0f)
+                {
+                    _towYaw = Mathf.SmoothDampAngle(_towYaw, solvedYaw, ref _towYawVelocity,
+                        _tuning.TowYawEaseSeconds / TowYawHalfLivesPerEase, _tuning.TowYawMaxSpeed, Time.deltaTime);
+                }
             }
 
             elevation = Mathf.Lerp(elevation, _towElevation, weight);
