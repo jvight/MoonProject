@@ -458,8 +458,14 @@ namespace MoonProject.World
             {
                 height += RimProfile(rw);
                 height += Mountains(x, z, rw);
-                height += WallGullies(x, z, r, rw);
-                height = SlumpTerraces(x, z, height, rw);
+
+                // The wall's band: its gullies and terraces share one mask, and skip their noise off the wall.
+                float wall = SmoothMath.Bump((rw - _gullyCenter) / _gullyHalfWidth);
+                if (wall > 0f)
+                {
+                    height += WallGullies(x, z, r, rw, wall);
+                    height = SlumpTerraces(x, z, height, wall);
+                }
             }
 
             if (r > _farRangeStart)
@@ -554,14 +560,8 @@ namespace MoonProject.World
         /// fins). Sampled on the direction from the base (like The Peak's crags) so they run down the wall; zero on the
         /// floor, so the drivable area is untouched.
         /// </summary>
-        private float WallGullies(float x, float z, float r, float rw)
+        private float WallGullies(float x, float z, float r, float rw, float mask)
         {
-            float mask = SmoothMath.Bump((rw - _gullyCenter) / _gullyHalfWidth);
-            if (mask <= 0f)
-            {
-                return 0f;
-            }
-
             float inverse = 1f / r;
             float folds = _gullyNoise.Fractal(x * inverse * _gullyAngularScale + rw * _invGullyRadial,
                 z * inverse * _gullyAngularScale, 2, 2f, 0.5f);
@@ -571,18 +571,13 @@ namespace MoonProject.World
         /// <summary>
         /// Slump terraces on the inner wall: the height is pulled toward a bench every terrace spacing, with a short
         /// steep riser between benches, strongest mid-wall and gone at the floor and the crest. The benches' levels
-        /// rise and fall along the rim by a slow noise, so the wall reads as slumped blocks, never level stripes.
+        /// rise and fall along the rim by a slow noise (one octave: the wave is long and soft), so the wall reads as
+        /// slumped blocks, never level stripes.
         /// </summary>
-        private float SlumpTerraces(float x, float z, float height, float rw)
+        private float SlumpTerraces(float x, float z, float height, float mask)
         {
-            float mask = SmoothMath.Bump((rw - _gullyCenter) / _gullyHalfWidth);
-            if (mask <= 0f)
-            {
-                return height;
-            }
-
-            float warp = _terraceWarp * _terraceNoise.Fractal(x * _invTerraceWarpWavelength,
-                z * _invTerraceWarpWavelength, 2, 2f, 0.5f);
+            float warp = _terraceWarp * _terraceNoise.Sample(x * _invTerraceWarpWavelength,
+                z * _invTerraceWarpWavelength);
             float layers = (height + warp) * _invTerraceSpacing;
             float bench = (float)Math.Floor(layers);
             float stepped = (bench + SmoothMath.Smootherstep(1f - _terraceRiser, 1f, layers - bench)) * _terraceSpacing
