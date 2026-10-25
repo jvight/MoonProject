@@ -92,6 +92,48 @@ namespace MoonProject.World
         public float OutlineNeedsPart => _outlineNeedsPart;
         public float OutlineFitted => _outlineFitted;
         public float PadLampGlow => _padLampGlow;
+        [Header("The power-up (the repair's stages)")]
+        [Tooltip("How far the fitted feed unit stands out of its socket before it seats, metres: its last push home.")]
+        [Range(0f, 0.3f)]
+        [SerializeField] private float _seatDepth = 0.06f;
+
+        [Tooltip("Seconds the feed unit takes to seat home (Latch): quick, a thunk.")]
+        [Range(0.05f, 2f)]
+        [SerializeField] private float _seatSeconds = 0.3f;
+
+        [Tooltip("How far past home the unit and the dish run before they settle, as a share of their travel.")]
+        [Range(0f, 0.3f)]
+        [SerializeField] private float _overshoot = 0.08f;
+
+        [Tooltip("Share of a motion's time it takes to reach its overshoot; the rest settles it back to rest.")]
+        [Range(0.5f, 0.95f)]
+        [SerializeField] private float _settleFrom = 0.8f;
+
+        [Tooltip("Seconds the relay lens and the dial lamp take to come up (Wake).")]
+        [Range(0.05f, 3f)]
+        [SerializeField] private float _wakeSeconds = 0.6f;
+
+        [Tooltip("Emission strength of the mast's dial lamp once the relay wakes: a soft instrument glow.")]
+        [Range(0f, 4f)]
+        [SerializeField] private float _dialLampGlow = 0.6f;
+
+        [Tooltip("Seconds the dish takes to turn to the Peak's Great Dish and settle (Align): unhurried.")]
+        [Range(0.2f, 6f)]
+        [SerializeField] private float _alignSeconds = 1.5f;
+
         public float RelayLensGlow => _relayLensGlow;
+        public float SeatDepth => _seatDepth;
+        public float SeatSeconds => _seatSeconds;
+        public float Overshoot => _overshoot;
+        public float SettleFrom => _settleFrom;
+        public float WakeSeconds => _wakeSeconds;
+        public float DialLampGlow => _dialLampGlow;
+        [Tooltip("How far the dead relay's dish stands slewed off its bearing to the Peak's Great Dish, degrees: the " +
+            "turn it makes at Align, wide enough to read from the pad.")]
+        [Range(10f, 150f)]
+        [SerializeField] private float _dishParkedOff = 70f;
+
+        public float AlignSeconds => _alignSeconds;
+        public float DishParkedOff => _dishParkedOff;
     }
 }

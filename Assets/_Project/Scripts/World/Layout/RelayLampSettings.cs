@@ -68,7 +68,33 @@ namespace MoonProject.World
         [SerializeField] private float _flickerOffShare = 0.08f;
 
         public float HaloIntensity => _haloIntensity;
+        [Header("The network's reply (the repair's Reply stage)")]
+        [Tooltip("Short blinks before the long one in the network's reply: 3 short, 1 long.")]
+        [Range(1, 6)]
+        [SerializeField] private int _replyShorts = 3;
+
+        [Tooltip("Seconds a short blink of the reply is lit.")]
+        [Range(0.05f, 1f)]
+        [SerializeField] private float _replyShortSeconds = 0.16f;
+
+        [Tooltip("Seconds the long blink of the reply is lit.")]
+        [Range(0.1f, 3f)]
+        [SerializeField] private float _replyLongSeconds = 0.6f;
+
+        [Tooltip("Seconds dark between the reply's blinks.")]
+        [Range(0.05f, 1f)]
+        [SerializeField] private float _replyGapSeconds = 0.2f;
+
+        [Tooltip("Share of the steady glow the lamp keeps between the reply's blinks: low, never fully out.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _replyLowShare = 0.12f;
+
         public float RelitLevel => _relitLevel;
+        public int ReplyShorts => _replyShorts;
+        public float ReplyShortSeconds => _replyShortSeconds;
+        public float ReplyLongSeconds => _replyLongSeconds;
+        public float ReplyGapSeconds => _replyGapSeconds;
+        public float ReplyLowShare => _replyLowShare;
         public float WarmUpSeconds => _warmUpSeconds;
         public float FlickerStepSeconds => _flickerStepSeconds;
         public float FlickerOnFrom => _flickerOnFrom;

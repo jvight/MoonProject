@@ -33,6 +33,12 @@ namespace MoonProject.World.Editor
         private const string SocketOutline = "FeedSocket_Outline";
         private const string PadLamp = "PadLamp";
         private const string RelayLens = "RelayLamp_Lens";
+        private const string DialLamp = "DialLamp";
+        private const string DishPivot = "DishAzimuth";
+        private const string DishBowl = "Dish";
+
+        // A dish whose averaged face normals lie this flat (or less) gives no facing to turn from.
+        private const float MinDishFacing = 0.1f;
 
         public static void Stand(SceneBuildContext context, WorldSettings settings, Transform root, MoonSurface surface,
             WorldAnchor anchor, GameObject mast)
@@ -79,6 +85,16 @@ namespace MoonProject.World.Editor
             serialized.FindProperty("_padLamp").objectReferenceValue = RendererOf(pad.transform, PadLamp);
             serialized.FindProperty("_interiorLight").objectReferenceValue = interior;
             serialized.FindProperty("_relayLens").objectReferenceValue = RendererOf(mast.transform, RelayLens);
+            serialized.FindProperty("_dialLamp").objectReferenceValue = RendererOf(mast.transform, DialLamp);
+            serialized.FindProperty("_fitted").objectReferenceValue = fitted.transform;
+            Vector3 intoMast = Vector3.ProjectOnPlane(mast.transform.position - fitted.transform.position, Vector3.up);
+            serialized.FindProperty("_seatIn").vector3Value = socket.InverseTransformDirection(intoMast.normalized);
+            Transform pivot = Find(mast.transform, DishPivot);
+            serialized.FindProperty("_dish").objectReferenceValue = pivot;
+            // The dead dish stands slewed off its bearing; at Align it turns back onto the Peak's Great Dish.
+            float toPeak = TurnToward(Find(mast.transform, DishBowl), pivot, surface.PeakSummit);
+            pivot.rotation = Quaternion.AngleAxis(toPeak - site.DishParkedOff, Vector3.up) * pivot.rotation;
+            serialized.FindProperty("_dishTurn").floatValue = site.DishParkedOff;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             context.AddSystem(lights);
         }
@@ -132,6 +148,32 @@ namespace MoonProject.World.Editor
             light.range = site.LampRange;
             light.shadows = LightShadows.None;
             return light;
+        }
+
+        /// <summary>
+        /// Degrees about the vertical that turn <paramref name="bowl"/>'s facing (its averaged face normals, the way the
+        /// dish looks) to <paramref name="target"/>, as seen from <paramref name="pivot"/>.
+        /// </summary>
+        private static float TurnToward(Transform bowl, Transform pivot, Vector3 target)
+        {
+            Vector3 facing = Vector3.zero;
+            foreach (MeshFilter filter in bowl.GetComponentsInChildren<MeshFilter>(true))
+            {
+                foreach (Vector3 normal in filter.sharedMesh.normals)
+                {
+                    facing += filter.transform.TransformDirection(normal);
+                }
+            }
+
+            Vector3 flat = Vector3.ProjectOnPlane(facing.normalized, Vector3.up);
+            if (flat.magnitude < MinDishFacing)
+            {
+                throw new System.InvalidOperationException($"relay.1's '{bowl.name}' has no readable facing to turn " +
+                    "toward the Peak (Art's R1 contract: a dish's bowl faces one way).");
+            }
+
+            Vector3 toTarget = Vector3.ProjectOnPlane(target - pivot.position, Vector3.up);
+            return Vector3.SignedAngle(flat, toTarget, Vector3.up);
         }
 
         private static Renderer RendererOf(Transform root, string node)
