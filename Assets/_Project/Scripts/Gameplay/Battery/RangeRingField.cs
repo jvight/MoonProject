@@ -11,7 +11,10 @@ namespace MoonProject.Gameplay
     /// in full once at the release (<see cref="Show"/>; the release's staggered order calls it) — and never lingering on
     /// load. Each showing works the ring out from 07's place and charge with <see cref="RangeRingModel"/>, holds that
     /// polygon for the showing (a ring that follows 07 about would read as a radius, not as the world's edge), publishes
-    /// <see cref="RangeRingShown"/>, draws out over ~2 s, holds ~1.5 s, and eases out over ~3 s until gone.
+    /// <see cref="RangeRingShown"/>, draws out over ~2 s, holds ~1.5 s, and eases out over ~3 s until gone. When a node
+    /// of 07's network becomes a charge point the ring grows (<see cref="Grow"/>, its own moment): the ring as it was
+    /// reaches out to the ring as it is now, and <see cref="RingGrew"/> says by how much. The network's link
+    /// (<see cref="IRingLink"/>) shows with the ring.
     /// </summary>
     public sealed class RangeRingField : IRangeRing, IDisposable
     {
@@ -22,18 +25,24 @@ namespace MoonProject.Gameplay
         private readonly IChargePointSource _chargePointSource;
         private readonly IRoverState _rover;
         private readonly Vector3[] _polygon;
+        private readonly Vector3[] _from;
+        private readonly IRingLink _link;
         private readonly List<Vector3> _chargePoints = new List<Vector3>();
         private readonly IDisposable _milestones;
         private readonly IDisposable _releases;
         private readonly IDisposable _relays;
+        // Two charge points this close (flat) are the same node.
+        private const float SameNodeMetres = 0.5f;
+
         private float _seconds;
         private float _left;
         private Vector3 _centre;
         private bool _fullShown;
 
         public RangeRingField(EventBus events, RangeRingSettings settings, RangeRingModel model, BatteryModel battery,
-            IChargePointSource chargePointSource, IRoverState rover)
+            IChargePointSource chargePointSource, IRoverState rover, IRingLink link)
         {
+            _link = link ?? throw new ArgumentNullException(nameof(link));
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _model = model ?? throw new ArgumentNullException(nameof(model));
@@ -41,6 +50,7 @@ namespace MoonProject.Gameplay
             _chargePointSource = chargePointSource ?? throw new ArgumentNullException(nameof(chargePointSource));
             _rover = rover ?? throw new ArgumentNullException(nameof(rover));
             _polygon = new Vector3[settings.Points];
+            _from = new Vector3[settings.Points];
             _milestones = events.Subscribe<OpeningMilestoneReached>(OnMilestone);
             _releases = events.Subscribe<ReleaseStageChanged>(OnReleaseStage);
             _relays = events.Subscribe<RelayRelit>(OnRelayRelit);
@@ -92,6 +102,22 @@ namespace MoonProject.Gameplay
 
         public int Count => _polygon.Length;
 
+        /// <summary>The ring is growing out from the ring it was (<see cref="From"/>), not drawing out from 07.</summary>
+        public bool Growing { get; private set; }
+
+        /// <summary>Point <paramref name="index"/> of the ring before it grew (meaningful while
+        /// <see cref="Growing"/>).</summary>
+        public Vector3 From(int index)
+        {
+            return _from[index];
+        }
+
+        /// <summary>The network link to draw with the ring now, from its hub to its node.</summary>
+        public bool TryGetLink(out Vector3 hub, out Vector3 node, out bool needsPart)
+        {
+            return _link.TryGetLink(out hub, out node, out needsPart);
+        }
+
         public Vector3 Point(int index)
         {
             return _polygon[index];
@@ -118,10 +144,55 @@ namespace MoonProject.Gameplay
             _chargePointSource.CopyChargePoints(_chargePoints);
             _centre = _rover.Position;
             _model.Compute(_centre, _battery.Charge, _chargePoints, _polygon);
+            Growing = false;
             Mode = mode;
             _seconds = mode == RangeRingMode.Full ? _settings.FullSeconds : _settings.FaintSeconds;
             _left = _seconds;
             _events.Publish(new RangeRingShown(mode, _seconds));
+        }
+
+        /// <summary>
+        /// The node <paramref name="nodeId"/> at <paramref name="node"/> has just become a charge point: the ring, worked
+        /// out from 07's place and charge, grows from what it reached without the node to what it reaches with it. Its
+        /// own moment: shown whatever the ring has shown before.
+        /// </summary>
+        public void Grow(string nodeId, Vector3 node)
+        {
+            _centre = _rover.Position;
+            _chargePoints.Clear();
+            _chargePointSource.CopyChargePoints(_chargePoints);
+            _model.Compute(_centre, _battery.Charge, _chargePoints, _polygon);
+            for (int i = _chargePoints.Count - 1; i >= 0; i--)
+            {
+                if (SurfaceRules.HorizontalDistanceSquared(_chargePoints[i], node) < SameNodeMetres * SameNodeMetres)
+                {
+                    _chargePoints.RemoveAt(i);
+                }
+            }
+
+            _model.Compute(_centre, _battery.Charge, _chargePoints, _from);
+            _fullShown = true;
+            Growing = true;
+            Mode = RangeRingMode.Full;
+            _seconds = _settings.FullSeconds;
+            _left = _seconds;
+            _events.Publish(new RangeRingShown(Mode, _seconds));
+            _events.Publish(new RingGrew(nodeId, node, Reach(_from), Reach(_polygon)));
+        }
+
+        /// <summary>
+        /// How far <paramref name="ring"/> stands from where it was worked out, on average round it: a ring held to one
+        /// side by the way home grows on every other bearing, which its furthest point would not show.
+        /// </summary>
+        private float Reach(Vector3[] ring)
+        {
+            float sum = 0f;
+            for (int i = 0; i < ring.Length; i++)
+            {
+                sum += SurfaceRules.HorizontalDistance(_centre, ring[i]);
+            }
+
+            return sum / ring.Length;
         }
 
         public void Step(float deltaTime)

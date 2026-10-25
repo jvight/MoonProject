@@ -64,8 +64,9 @@ namespace MoonProject.Gameplay
         /// <summary>07 has stood still on a charger long enough for it to charge, charging or not.</summary>
         public bool RestsOnCharger { get; private set; }
 
-        /// <summary>Every cell is full (the drums apart).</summary>
-        public bool CellsFull => Charge >= Cells - CellEpsilon;
+        /// <summary>Every cell is full (the drums apart), short of it by no more than the full slack's metres.</summary>
+        public bool CellsFull =>
+            Charge >= Cells - Mathf.Max(CellEpsilon, _tuning.FullSlackMetres / _tuning.MetresPerCell);
 
         public int FullCells => Mathf.Min(Cells, Mathf.FloorToInt(Charge + CellEpsilon));
 

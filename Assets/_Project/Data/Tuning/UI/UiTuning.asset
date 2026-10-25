@@ -694,7 +694,6 @@ MonoBehaviour:
     _blockedShakePixels: 5
     _blockedShakeHertz: 5
     _blockedFaceSeconds: 1.8
-    _replyFaceSeconds: 3
     _txReadySeconds: 5
     _txPromptSeconds: 3
     _ackSeconds: 3

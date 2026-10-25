@@ -291,10 +291,22 @@ namespace MoonProject.Gameplay
 
         private void OnWarned(BatteryWarned warned)
         {
-            if (warned.Warning == BatteryWarning.Low && Model.TakeLowLine())
+            bool relayToFix = _relay != null && QuietNearRelay(_relay.Open, _relay.Fitted, _rover.Position,
+                _relay.SocketPoint, _tuning.RelayQuietMetres);
+            if (warned.Warning == BatteryWarning.Low && !relayToFix && Model.TakeLowLine())
             {
                 _events.Publish(new TickerLine(_hasCharger ? LowPadLine : LowLanderLine));
             }
+        }
+
+        /// <summary>
+        /// True when 07, at <paramref name="rover"/>, is within <paramref name="metres"/> of a relay's socket while the
+        /// relay has answered (<paramref name="open"/>) and still waits for its part (not <paramref name="fitted"/>):
+        /// the Low line keeps quiet there, the fix being at hand.
+        /// </summary>
+        internal static bool QuietNearRelay(bool open, bool fitted, Vector3 rover, Vector3 socket, float metres)
+        {
+            return open && !fitted && SurfaceRules.HorizontalDistanceSquared(rover, socket) <= metres * metres;
         }
 
         /// <summary>A finished charge keeps the day.</summary>

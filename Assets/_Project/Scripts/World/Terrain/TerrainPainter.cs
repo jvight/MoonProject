@@ -126,25 +126,19 @@ namespace MoonProject.World
             float angle = Mathf.Atan2(position.x, position.z);
             float patch = Patch(position);
             float striation = _detailPatchNoise.Fractal(angle * 24f + patch * 1.6f, position.y * 0.018f + r * 0.012f, 2, 2f, 0.5f);
-            float slumpPocket = SmoothMath.Smootherstep(-0.02f, 0.22f,
-                _patchNoise.Fractal(angle * 5.5f + position.y * 0.010f, r * 0.014f, 2, 2f, 0.5f));
-            float terracePhase = position.y / 22f + 1.45f * patch + 0.52f * striation;
-            float terraceFrac = terracePhase - Mathf.Floor(terracePhase);
-            float terraceRiser = slumpPocket * SmoothMath.Smootherstep(0.50f, 0.74f, terraceFrac)
-                * (1f - SmoothMath.Smootherstep(0.80f, 0.95f, terraceFrac));
             float rockTone = (_settings.RockLightSlope - slope) / (_settings.RockSlopeBlend * 1.35f)
                 + (position.y - _settings.RockLightHeight) / _settings.RockHeightBlend
-                + patch * _settings.RockMottle + striation * 0.58f
-                - terraceRiser * 0.45f + faceFacing * (_settings.RockFacing * 0.45f);
+                + patch * _settings.RockMottle + striation * 0.58f + faceFacing * (_settings.RockFacing * 0.45f);
             float lightMix = SmoothMath.Smootherstep(-1.05f, 1.05f, rockTone);
             Color rockColor = Color.Lerp(_rockDark, _rockLight, lightMix);
             float face = rimWeight
                 * (1f - SmoothMath.Smootherstep(_settings.CrestZone - _settings.CrestBlend * 1.6f,
                     _settings.CrestZone + _settings.CrestBlend * 1.6f, region.RimZone));
             float charcoalShade = Mathf.Clamp01(_settings.RimFaceShade * face * (0.45f + 0.55f * rockWeight)
-                + rimWeight * (0.14f * terraceRiser + 0.16f * Mathf.Clamp01(-striation)));
+                + rimWeight * 0.16f * Mathf.Clamp01(-striation));
             rockColor = Color.Lerp(rockColor, _charcoal, charcoalShade);
-            float totalRock = Mathf.Clamp01(Mathf.Max(rockWeight, rimWeight * (0.34f + 0.28f * terraceRiser + 0.18f * Mathf.Clamp01(-striation))));
+            float totalRock = Mathf.Clamp01(Mathf.Max(rockWeight,
+                rimWeight * (0.34f + 0.18f * Mathf.Clamp01(-striation))));
             return Tint(Color.Lerp((Color)ground32, rockColor, totalRock), region);
         }
 
