@@ -268,7 +268,7 @@ namespace MoonProject.UI
 
         /// <summary>
         /// The verb's word, then what it acts on when the hint names one ("Pick up Tower Coil"); the rack's chip, only
-        /// its part ("SSR-3 headlamp · from unit 06").
+        /// its part ("SSR-3 headlamp · from 06").
         /// </summary>
         private void WriteWord(PromptEntry entry)
         {

@@ -127,8 +127,8 @@ namespace MoonProject.Autoplay
             _naive.Declare("B2", new NextAction("E", new[] { "hint.scan" }, new[] { "scan", "crate" }, null));
             _naive.Declare("B3", new NextAction("E", new[] { "hint.pickup" }, new[] { "take", "parts", "crate" }, null));
             _naive.Declare("B4", new NextAction("B", new[] { "hint.openbuild" },
-                new[] { "pad", "apron", "build", "charging" }, null));
-            _naive.Declare("B4b", new NextAction("E", new string[0], new[] { "place", "apron", "marks" }, null));
+                new[] { "pad", "site", "build", "charging" }, null));
+            _naive.Declare("B4b", new NextAction("E", new string[0], new[] { "place", "site", "marks" }, null));
             _naive.Declare("B5", new NextAction("WASD", new[] { drive }, new[] { "pad", "park" }, null));
             _naive.Declare("B6", new NextAction("WASD", new[] { drive }, new[] { "Lumen", "solar", "ruins", "array" },
                 new[] { "glint" }));
