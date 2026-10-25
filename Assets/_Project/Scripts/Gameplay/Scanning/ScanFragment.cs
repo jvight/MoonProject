@@ -156,7 +156,19 @@ namespace MoonProject.Gameplay
         /// shader draws the sweep line at its progress as seen from <paramref name="camera"/>. False when nothing shows
         /// it.
         /// </summary>
-        public bool TryContact(Vector3 lens, Vector3 camera, out Vector3 point, out Vector3 normal)
+        public bool TryContact(Vector3 lens, Vector3 camera, out Vector3 point, out Vector3 normal,
+            float patchMetres = 0f)
+        {
+            bool met = TryContactOnSurface(lens, camera, out point, out normal);
+            if (met)
+            {
+                point = ScanLine.ClampInside(ResolveSolid().bounds, 0.5f * patchMetres, point);
+            }
+
+            return met;
+        }
+
+        private bool TryContactOnSurface(Vector3 lens, Vector3 camera, out Vector3 point, out Vector3 normal)
         {
             point = Point;
             normal = Vector3.up;
