@@ -450,6 +450,10 @@ namespace MoonProject.Rover
         [Range(0f, 30f)]
         [SerializeField] private float _scanLiftDegrees = 18f;
 
+        [Tooltip("Extra degrees the view rises when neither side of the beam is clear (07 is hard against a wall), so it looks down on the beam.")]
+        [Range(0f, 40f)]
+        [SerializeField] private float _scanBlockedLiftDegrees = 18f;
+
         [Tooltip("Distance (m) from the lens within which a target is close enough for the scan framing in full; it fades out by twice this.")]
         [Range(1f, 20f)]
         [SerializeField] private float _scanCloseMetres = 6f;
@@ -1175,6 +1179,8 @@ namespace MoonProject.Rover
         public float ScanYawMaxSpeed => _scanYawMaxSpeed;
 
         public float ScanLiftDegrees => _scanLiftDegrees;
+
+        public float ScanBlockedLiftDegrees => _scanBlockedLiftDegrees;
 
         public float ScanCloseMetres => _scanCloseMetres;
 
