@@ -253,7 +253,6 @@ namespace MoonProject.Art.Editor
             rimSlope.SetFloat("_OcclusionStrength", 0.72f);
             rimSlope.SetFloat("_SlopeThreshold", 0.88f);
             rimSlope.SetFloat("_SlopeBlendRange", 0.10f);
-            rimSlope.SetFloat("_LegacyBandedRim", 0.0f);
             GeneratedAssets.CreateOrReplace(rimSlope, RimSlopeMaterialPath);
 
             Material rimTalus = CreateMaterial(litShader, basaltSpec);

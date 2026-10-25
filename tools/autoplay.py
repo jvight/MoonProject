@@ -133,7 +133,7 @@ def park_window(pid):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--scenario", default="opening")
-    ap.add_argument("--until", default="", help="last beat to play (for example B3); default: the opening's end, R10; R11 and R12 are hour two and play only when named")
+    ap.add_argument("--until", default="", help="last beat to play (for example B3); default: the opening's end, R10")
     ap.add_argument("--build", action="store_true", help="build the autoplay variant first (python tools/build_player.py --autoplay)")
     ap.add_argument("--exe", help="the autoplay exe (default: Builds/Lunarion-Autoplay of this worktree)")
     ap.add_argument("--out", help="output folder (default Logs/autoplay/<timestamp>)")
