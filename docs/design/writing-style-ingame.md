@@ -91,7 +91,7 @@ translation, or like a novel.
 | `next.v3.await_night` | Căn cứ đã sẵn sàng cho đêm. | Căn cứ đã sẵn sàng qua đêm | The base is ready for the night. | The base is ready for night |
 | `next.v3.go_relay` | (sample 4) | Trạm tiếp sóng 1 đang yếu dần. Tới sửa nó | (sample 4) | Relay 1 is fading. Go fix it |
 | `next.v3.scan_elder06` *(removed in S4: 06, the headlamp and the rack are an optional pull)* | (sample 5) | Trạm 2 im lặng. Tìm 06 ở cửa hẻm | (sample 5) | Relay 2 went quiet. Find 06 at the canyon mouth |
-| `next.v3.cut_headlamp_crate` | Cắt thùng hàng cạnh 06 để lấy linh kiện đèn pha. | Cắt thùng cạnh 06 lấy linh kiện đèn pha | Cut the crate by 06 for the headlamp's parts. | Cut the crate by 06 for headlamp parts |
+| `next.v3.cut_headlamp_crate` *(removed in S4: 06, the headlamp and the rack are an optional pull)* | Cắt thùng hàng cạnh 06 để lấy linh kiện đèn pha. | Cắt thùng cạnh 06 lấy linh kiện đèn pha | Cut the crate by 06 for the headlamp's parts. | Cut the crate by 06 for headlamp parts |
 | `next.v3.assemble_headlamp` *(removed in S4: 06, the headlamp and the rack are an optional pull)* | Lắp đèn pha SSR-3 ở giá cạnh bệ sạc. | Lắp đèn pha ở giá lắp | Assemble the SSR-3 headlamp at the rack by the pad. | Assemble the headlamp at the rack |
 | `next.v3.dock_for_rack` *(removed in S4: 06, the headlamp and the rack are an optional pull)* | (sample 13) | Đỗ lên bệ sạc để mở giá lắp | (sample 13) | Dock on the pad to open the rack |
 | `battery.low.lander` | Pin yếu. Xây bệ sạc cạnh tàu đổ bộ để sạc. | Pin yếu. Xây bệ sạc cạnh tàu đổ bộ | Battery low. Build a pad at the lander to charge. | Battery low. Build a pad by the lander |
