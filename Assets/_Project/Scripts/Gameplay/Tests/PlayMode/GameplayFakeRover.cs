@@ -13,8 +13,11 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// attention. A dock the gameplay asks for (<see cref="RoverDockChanged"/>) puts it on the dock's pose at once.
     /// </summary>
     public sealed class GameplayFakeRover : MonoBehaviour, IGameSystem, IRoverState, IRoverRig, IViewCamera,
-        IRoverAbilities, IRoverPlacement
+        IRoverAbilities, IRoverPlacement, IRoverClimb
     {
+        // The real rover's slope-assist limit (Rover GroundSettings), so the range ring stops where it would in play.
+        private const float FakeClimbLimitDegrees = 45f;
+
         private readonly Dictionary<object, GazeRequest> _gaze = new Dictionary<object, GazeRequest>();
         private readonly HashSet<object> _holders = new HashSet<object>();
         private readonly HashSet<RoverAbility> _abilities = new HashSet<RoverAbility>();
@@ -60,6 +63,8 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public Camera Camera => _camera;
 
+        public float ClimbLimitDegrees => FakeClimbLimitDegrees;
+
         /// <summary>Owners currently asking 07 to hold still.</summary>
         public int HoldStillCount => _holders.Count;
 
@@ -75,6 +80,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         public void Initialize(GameContext context)
         {
             context.Register<IRoverState>(this);
+            context.Register<IRoverClimb>(this);
             context.Register<IRoverRig>(this);
             context.Register<IViewCamera>(this);
             context.Register<IRoverAbilities>(this);

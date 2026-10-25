@@ -11,17 +11,29 @@ namespace MoonProject.Gameplay
     /// the way out and the way back are each costed in cells, on the real ground (the battery's metres per cell and its
     /// slope multipliers, uphill dearer and downhill cheaper), straight line by straight line, and the way back runs to
     /// the cheapest charge point, so another pad or a lit relay nearer to a place pulls the ring out toward it. With no
-    /// charge point at all, 07's own place is the only way home. The ring is the polygon of the furthest point on each
-    /// bearing round 07 that is still inside, found going outward until the first that is not.
+    /// charge point at all, 07's own place is the only way home. Ground steeper than 07 can climb (up, or down and so
+    /// not back up) is a wall: a bearing ends at it, so the ring stops at a cliff or a lava lip however much charge is
+    /// left (base-home-and-crater-exits §5, the rille). The ring is the polygon of the furthest point on each bearing
+    /// round 07 that is still inside, found going outward until the first that is not.
     /// </summary>
     public sealed class RangeRingModel
     {
         private readonly BatteryTuning _battery;
         private readonly RangeRingSettings _settings;
         private readonly ITerrainQuery _terrain;
+        private readonly float _wallTangent;
 
-        public RangeRingModel(BatteryTuning battery, RangeRingSettings settings, ITerrainQuery terrain)
+        /// <param name="climbLimitDegrees">The steepest ground 07 can drive up (the rover's own limit).</param>
+        public RangeRingModel(BatteryTuning battery, RangeRingSettings settings, ITerrainQuery terrain,
+            float climbLimitDegrees)
         {
+            if (climbLimitDegrees <= 0f || climbLimitDegrees >= 90f)
+            {
+                throw new ArgumentOutOfRangeException(nameof(climbLimitDegrees), climbLimitDegrees,
+                    "07's climb limit is an angle between flat and sheer.");
+            }
+
+            _wallTangent = Mathf.Tan(climbLimitDegrees * Mathf.Deg2Rad);
             _battery = battery != null ? battery : throw new ArgumentNullException(nameof(battery));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _terrain = terrain ?? throw new ArgumentNullException(nameof(terrain));
@@ -95,6 +107,15 @@ namespace MoonProject.Gameplay
             {
                 Vector3 at = origin + direction * distance;
                 float next = _terrain.SampleHeight(at.x, at.z);
+
+                // Only a step that rises or falls by more than one probe's climb can hide a wall: gentle ground is
+                // never probed finely.
+                if (Mathf.Abs(next - height) > _wallTangent * _settings.WallProbeMetres &&
+                    Walled(origin, direction, distance - step, step))
+                {
+                    break;
+                }
+
                 outCost += SegmentCost(height, next, step);
                 height = next;
                 at.y = next;
@@ -108,6 +129,31 @@ namespace MoonProject.Gameplay
             }
 
             return last;
+        }
+
+        /// <summary>
+        /// True when the ground along <paramref name="direction"/> from <paramref name="from"/> metres out to
+        /// <paramref name="length"/> further rises or falls anywhere more steeply than 07 can climb.
+        /// </summary>
+        private bool Walled(Vector3 origin, Vector3 direction, float from, float length)
+        {
+            int probes = Mathf.Max(1, Mathf.CeilToInt(length / _settings.WallProbeMetres));
+            float spacing = length / probes;
+            Vector3 at = origin + direction * from;
+            float height = _terrain.SampleHeight(at.x, at.z);
+            for (int i = 1; i <= probes; i++)
+            {
+                at = origin + direction * (from + spacing * i);
+                float next = _terrain.SampleHeight(at.x, at.z);
+                if (Mathf.Abs(next - height) > _wallTangent * spacing)
+                {
+                    return true;
+                }
+
+                height = next;
+            }
+
+            return false;
         }
 
         /// <summary>Cells to the cheapest way back to a charge point (07's own place when there is none).</summary>

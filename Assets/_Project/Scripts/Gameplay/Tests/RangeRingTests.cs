@@ -15,6 +15,7 @@ namespace MoonProject.Gameplay.Tests
     public sealed class RangeRingTests
     {
         private const float StepSlack = 8f;
+        private const float ClimbLimit = 45f;
         private const int East = 18;
         private const int West = 54;
         private const float BloomThreshold = 1.25f;
@@ -76,7 +77,7 @@ namespace MoonProject.Gameplay.Tests
             _battery = ScriptableObject.CreateInstance<BatteryTuning>();
             _settings = _battery.RangeRing;
             _terrain = new FakeTerrain();
-            _model = new RangeRingModel(_battery, _settings, _terrain);
+            _model = new RangeRingModel(_battery, _settings, _terrain, ClimbLimit);
             _ring = new Vector3[_settings.Points];
         }
 
@@ -102,6 +103,30 @@ namespace MoonProject.Gameplay.Tests
             {
                 Assert.AreEqual(half, Radius(k, Vector3.zero), StepSlack, $"bearing {k}: out and back is one cell");
             }
+        }
+
+        [Test]
+        public void ACliffSteeperThan07CanClimb_EndsTheRingThere_UpOrDown_WhateverTheCharge()
+        {
+            const float Cliff = 60f;
+            const float LipHeight = 6f;
+            _terrain.Height = (x, z) => x >= Cliff ? LipHeight : 0f;
+            _model.Compute(Vector3.zero, 4f, new List<Vector3> { Vector3.zero }, _ring);
+            Assert.LessOrEqual(Radius(East, Vector3.zero), Cliff, "east, a 6 m lip at 60 m: the ring stops short of it");
+            Assert.Greater(Radius(West, Vector3.zero), Cliff * 4f, "west, open ground: four cells reach far");
+
+            _terrain.Height = (x, z) => x >= Cliff ? -LipHeight : 0f;
+            _model.Compute(Vector3.zero, 4f, new List<Vector3> { Vector3.zero }, _ring);
+            Assert.LessOrEqual(Radius(East, Vector3.zero), Cliff, "down a lip is a wall too: 07 could not come back up");
+        }
+
+        [Test]
+        public void ASlope07CanClimb_IsNoWall()
+        {
+            _terrain.Height = (x, z) => Mathf.Max(0f, x) * Mathf.Tan(30f * Mathf.Deg2Rad);
+            _model.Compute(Vector3.zero, 1f, new List<Vector3> { Vector3.zero }, _ring);
+            Assert.AreEqual(Radius(West, Vector3.zero), Radius(East, Vector3.zero), StepSlack,
+                "a 30 degree climb is drivable: the ring goes up it as far as the charge takes it, out and back");
         }
 
         [Test]

@@ -22,6 +22,11 @@ namespace MoonProject.Gameplay
         [Range(4f, 40f)]
         [SerializeField] private float _pathStepMetres = 12f;
 
+        [Tooltip("Metres between the terrain probes that look for a wall on each step outward: fine enough that a short " +
+                 "cliff or a lava lip is not smoothed into a slope 07 could climb.")]
+        [Range(0.25f, 6f)]
+        [SerializeField] private float _wallProbeMetres = 1f;
+
         [Tooltip("The furthest the ring looks from 07 (m), so a full battery on open ground ends somewhere.")]
         [Range(50f, 2000f)]
         [SerializeField] private float _maxRangeMetres = 700f;
@@ -108,6 +113,7 @@ namespace MoonProject.Gameplay
         public float StepMetres => _stepMetres;
         public float PathStepMetres => _pathStepMetres;
         public float MaxRangeMetres => _maxRangeMetres;
+        public float WallProbeMetres => _wallProbeMetres;
         public float FaintSeconds => _faintSeconds;
         public float FullSeconds => _fullSeconds;
         public float FadeInSeconds => _fadeInSeconds;
