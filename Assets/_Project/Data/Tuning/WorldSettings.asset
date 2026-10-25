@@ -769,7 +769,7 @@ MonoBehaviour:
     _lastLightElevation: 3
     _lastLightSinkSeconds: 200
     _nightfallElevation: -1.5
-    _firstSunsetSeconds: 75
+    _firstSunsetSeconds: 14
     _fallbackSunlitTimeSeconds: 900
     _sunDiameter: 0.8
     _startBearingOffset: 6.2
