@@ -8,39 +8,31 @@ namespace MoonProject.Audio.Tests
         private const float Frame = 1f / 60f;
 
         [Test]
-        public void RadioWakeUp_IsSilentAsleep_CracklesOn_ThenResolvesIntoMusic()
+        public void RadioWakeUp_IsSilentAsleep_CracklesOn_ThenSettles()
         {
             var wake = new RadioWakeUp();
             Assert.IsFalse(wake.IsAwake);
             Assert.AreEqual(0f, wake.Power);
-            Assert.AreEqual(0f, wake.MusicGain);
+            Assert.AreEqual(0f, wake.Settled);
             Assert.AreEqual(0f, wake.CrackleBoost);
-            Assert.IsFalse(wake.Step(10f), "nothing starts while asleep");
+            wake.Step(10f);
+            Assert.IsFalse(wake.IsAwake, "nothing happens while asleep");
 
             wake.Begin(1f, 2f, 0.3f);
-            int starts = 0;
             float t = 0f;
-            float musicStartTime = -1f;
             while (t < 4f)
             {
-                if (wake.Step(Frame))
-                {
-                    starts++;
-                    musicStartTime = t;
-                }
-
+                wake.Step(Frame);
                 t += Frame;
                 if (t > 0.35f && t < 0.95f)
                 {
                     Assert.AreEqual(1f, wake.Power, 1e-5f, "powered on");
-                    Assert.AreEqual(0f, wake.MusicGain, "static only before the music");
+                    Assert.AreEqual(0f, wake.Settled, "full crackle before the delay");
                     Assert.AreEqual(1f, wake.CrackleBoost, 1e-5f);
                 }
             }
 
-            Assert.AreEqual(1, starts);
-            Assert.AreEqual(1f, musicStartTime, 2f * Frame);
-            Assert.AreEqual(1f, wake.MusicGain, 1e-5f);
+            Assert.AreEqual(1f, wake.Settled, 1e-5f);
             Assert.AreEqual(0f, wake.CrackleBoost, 1e-5f);
         }
 
@@ -55,7 +47,7 @@ namespace MoonProject.Audio.Tests
             }
 
             wake.Begin(5f, 5f, 5f);
-            Assert.AreEqual(1f, wake.MusicGain, 1e-5f, "a second wake does not restart the radio");
+            Assert.AreEqual(1f, wake.Settled, 1e-5f, "a second wake does not restart the radio");
             Assert.AreEqual(1f, wake.Power, 1e-5f);
         }
 

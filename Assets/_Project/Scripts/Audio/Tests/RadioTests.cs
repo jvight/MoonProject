@@ -47,29 +47,21 @@ namespace MoonProject.Audio.Tests
         }
 
         [Test]
-        public void Mix_ClearSignal_IsOpenAndQuiet_LostSignal_IsHazyAndStatic()
+        public void Signal_StaticIsFaintWhenClear_FullWhenLost_AndFallsWithClarity()
         {
-            RadioMix clear = RadioMix.Evaluate(1f, _tuning);
-            RadioMix lost = RadioMix.Evaluate(0f, _tuning);
+            var signal = new RadioSignal(_tuning);
+            float edge = _tuning.SignalRadius + _tuning.FalloffWidth;
+            signal.Snap(0f);
+            Assert.AreEqual(_tuning.StaticFloorVolume, signal.StaticVolume, 1e-6f);
+            signal.Snap(edge);
+            Assert.AreEqual(_tuning.StaticMaxVolume, signal.StaticVolume, 1e-6f);
 
-            Assert.AreEqual(_tuning.MaxCutoff, clear.CutoffHz, 1f);
-            Assert.AreEqual(_tuning.MinCutoff, lost.CutoffHz, 1e-3f);
-            Assert.AreEqual(_tuning.StaticFloorVolume, clear.StaticVolume, 1e-6f);
-            Assert.AreEqual(_tuning.StaticMaxVolume, lost.StaticVolume, 1e-6f);
-            Assert.AreEqual(1f, clear.MusicVolume, 1e-6f);
-            Assert.Greater(lost.WobbleCents, clear.WobbleCents);
-        }
-
-        [Test]
-        public void Mix_CutoffRisesAndStaticFallsWithClarity()
-        {
-            RadioMix previous = RadioMix.Evaluate(0f, _tuning);
-            for (float c = 0.05f; c <= 1f; c += 0.05f)
+            float previous = _tuning.StaticMaxVolume;
+            for (float distance = edge; distance >= 0f; distance -= 5f)
             {
-                RadioMix mix = RadioMix.Evaluate(c, _tuning);
-                Assert.Greater(mix.CutoffHz, previous.CutoffHz);
-                Assert.LessOrEqual(mix.StaticVolume, previous.StaticVolume);
-                previous = mix;
+                signal.Snap(distance);
+                Assert.LessOrEqual(signal.StaticVolume, previous + 1e-6f);
+                previous = signal.StaticVolume;
             }
         }
 
@@ -93,20 +85,6 @@ namespace MoonProject.Audio.Tests
             Assert.AreEqual(1f, signal.Clarity, 0.01f);
             signal.Snap(lost);
             Assert.AreEqual(0f, signal.Clarity, 1e-5f);
-        }
-
-        [Test]
-        public void WowFlutter_StaysInRange_AndMapsCentsToPitch()
-        {
-            var wobble = new WowFlutter();
-            for (int i = 0; i < 1000; i++)
-            {
-                float v = wobble.Step(0.016f, 0.55f, 6.3f, 0.3f);
-                Assert.LessOrEqual(Mathf.Abs(v), 1f + 1e-5f);
-            }
-
-            Assert.AreEqual(2f, WowFlutter.PitchFactor(1f, 1200f), 1e-5f);
-            Assert.AreEqual(1f, WowFlutter.PitchFactor(0f, 50f), 1e-6f);
         }
     }
 }

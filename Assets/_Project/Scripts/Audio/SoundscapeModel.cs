@@ -10,7 +10,7 @@ namespace MoonProject.Audio
     /// <item><b>Farness</b> 0..1 eases in over the silence width past the signal's edge, measured from the base; it
     /// follows with a short time constant.</item>
     /// <item><b>Solitude</b> 0..1 is how alone 07 is (its farness).</item>
-    /// <item><b>Radio</b> (music and static): fades to near-silence with farness.</item>
+    /// <item><b>Radio</b> (its static): fades to near-silence with farness.</item>
     /// <item><b>Basin bed</b>: recedes with farness.</item>
     /// <item><b>Room tone</b>: from barely there at the base to the main bed when alone.</item>
     /// <item><b>07's small sounds</b>: come forward with solitude.</item>
@@ -46,7 +46,7 @@ namespace MoonProject.Audio
         /// <summary>The camera's wide shot, 0 closed .. 1 fully open (eased by the caller).</summary>
         public float Wide { get; private set; }
 
-        /// <summary>Radio music and static gain.</summary>
+        /// <summary>Radio static gain.</summary>
         public float RadioGain { get; private set; }
 
         /// <summary>The basin's ambience bed gain.</summary>

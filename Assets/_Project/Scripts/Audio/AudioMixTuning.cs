@@ -15,7 +15,7 @@ namespace MoonProject.Audio
         [Tooltip("Master volume multiplied into every bus.")]
         [Range(0f, 1f)] [SerializeField] private float _masterVolume = 1f;
 
-        [Tooltip("Radio: music, static and the tuning swish.")]
+        [Tooltip("Music bus: the title music, and the radio's static and tuning swish.")]
         [Range(0f, 1f)] [SerializeField] private float _musicVolume = 0.8f;
 
         [Tooltip("One-shots and rover/tether loops.")]

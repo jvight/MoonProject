@@ -60,7 +60,6 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.AreEqual(1f, _rig.TitleMusic.EnvelopeLevel, 1e-3f, "fade-in completes at ~2 s");
             Assert.AreEqual(fullExpected, _rig.TitleMusic.Source.volume, 1e-3f);
             Assert.IsFalse(_rig.Radio.IsOn, "the radio never turns on under the title");
-            Assert.IsFalse(_rig.AnyDeckPlaying(), "no radio deck plays under the title");
             Assert.AreEqual(0f, radioStatic.volume, "no radio static under the title");
             Assert.IsFalse(radioSwish.isPlaying, "no tuning swish under the title");
             Assert.AreEqual(0f, _wakeAudio.StaticSource.volume, "WakeAudio AsleepStatic never plays under the title");
@@ -104,7 +103,6 @@ namespace MoonProject.Audio.PlayModeTests
             // Player selects Continue: SessionStarted(false) fires and 07 wakes.
             _rig.Events.Publish(new SessionStarted(false));
             _rig.Milestone(OpeningMilestone.PowerOn, true);
-            _rig.RequestMusic();
             _rig.Wake(true);
 
             yield return new WaitForSecondsRealtime(0.4f);
@@ -116,7 +114,8 @@ namespace MoonProject.Audio.PlayModeTests
             yield return new WaitForSecondsRealtime(0.6f);
             Assert.AreEqual(0f, _rig.TitleMusic.EnvelopeLevel, 1e-4f);
             Assert.IsFalse(_rig.TitleMusic.IsPlaying, "title theme is silent once the 0.8 s duck finishes");
-            Assert.IsTrue(_rig.Radio.MusicStarted, "the game's radio station is now playing");
+            Assert.IsTrue(AudioTestRig.FindChildSource(_rig.Radio.transform, "Static").isPlaying,
+                "the game's radio hiss is now playing");
         }
 
         [UnityTest]

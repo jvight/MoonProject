@@ -31,10 +31,9 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
-    /// Asks 07's radio for one music moment: the dial finds the station, one track fades in, plays through and fades
-    /// out, then the set falls back to silence. The owner's rule: music only for a major milestone, arriving in a new
-    /// region, or danger; never for an ordinary build. Ignored while a moment is already starting or playing; one
-    /// asked for before 07's radio is on plays when it comes on.
+    /// The entry point for in-game music: a major milestone, arriving in a new region, or danger asks for a music
+    /// moment (the owner's rule; never an ordinary build, and never the old lofi radio playlist). Audio has no
+    /// listener and no track yet: the request does nothing until a bespoke calm score exists.
     /// </summary>
     public readonly struct MusicMomentRequested
     {

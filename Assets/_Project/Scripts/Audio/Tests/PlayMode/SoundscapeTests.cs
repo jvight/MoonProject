@@ -22,15 +22,9 @@ namespace MoonProject.Audio.PlayModeTests
             _rig = new AudioTestRig();
             yield return null;
             _rig.Milestone(OpeningMilestone.PowerOn, true);
-            _rig.RequestMusic();
             _rig.Wake(true);
-            float deadline = Time.realtimeSinceStartup + 3f;
-            while (!_rig.Radio.MusicStarted && Time.realtimeSinceStartup < deadline)
-            {
-                yield return null;
-            }
-
-            Assert.IsTrue(_rig.Radio.MusicStarted, "the radio finds the music after 07 wakes");
+            yield return null;
+            Assert.IsTrue(_rig.Radio.IsOn, "the radio comes on as 07 wakes");
         }
 
         [TearDown]

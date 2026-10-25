@@ -35,7 +35,6 @@ namespace MoonProject.Audio.PlayModeTests
             yield return new WaitForSecondsRealtime(1f);
 
             Assert.IsFalse(_rig.Radio.IsOn);
-            Assert.IsFalse(_rig.AnyDeckPlaying(), "no music before 07 wakes, not even silently");
             Assert.IsFalse(Deck("Static").isPlaying);
             Assert.IsFalse(Deck("TuningSwish").isPlaying);
             Assert.AreEqual(0f, _rig.RoverAudio.HumSource.volume, "07 sleeps: no motor hum");
@@ -45,48 +44,37 @@ namespace MoonProject.Audio.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator WakingOnItsOwn_TunesIn_ThroughStatic_ThenResolvesIntoMusic()
+        public IEnumerator WakingOnItsOwn_CracklesOn_ThenSettlesIntoTheHiss_WithNoMusic()
         {
             _rig.Milestone(OpeningMilestone.PowerOn, true);
-            _rig.RequestMusic();
             _rig.Wake(false);
             yield return null;
             Assert.IsTrue(_rig.Radio.IsOn);
-            Assert.IsTrue(Deck("TuningSwish").isPlaying, "the dial-tuning swish starts at once");
+            Assert.IsTrue(Deck("TuningSwish").isPlaying, "the tuning swish starts at once");
             Assert.IsTrue(Deck("Static").isPlaying);
+            Assert.AreEqual(2, _rig.Radio.GetComponentsInChildren<AudioSource>().Length,
+                "the set carries only its static and swish: no music in-game");
 
             yield return new WaitForSecondsRealtime(0.8f);
-            Assert.IsFalse(_rig.Radio.MusicStarted, "static first, music after the wake delay");
             float crackle = Deck("Static").volume;
             Assert.Greater(crackle, 0f);
 
-            float deadline = Time.realtimeSinceStartup + 3f;
-            while (!_rig.Radio.MusicStarted && Time.realtimeSinceStartup < deadline)
-            {
-                yield return null;
-            }
-
-            Assert.IsTrue(_rig.Radio.MusicStarted);
-            yield return new WaitForSecondsRealtime(5f);
-            float music = _rig.LoudestDeck().volume;
-            Assert.Greater(music, 0.3f, "the music has resolved");
-            Assert.Less(Deck("Static").volume, crackle * 0.5f, "the wake-up static melted away");
+            yield return new WaitForSecondsRealtime(6f);
+            Assert.Less(Deck("Static").volume, crackle * 0.5f, "the wake-up crackle melted away");
+            Assert.IsTrue(Deck("Static").isPlaying, "the plain hiss stays");
         }
 
         [UnityTest]
-        public IEnumerator WokenByThePlayer_TheMusicArrivesSooner()
+        public IEnumerator WokenByThePlayer_TheCrackleSettlesSooner()
         {
             _rig.Milestone(OpeningMilestone.PowerOn, true);
-            _rig.RequestMusic();
             _rig.Wake(true);
-            float start = Time.realtimeSinceStartup;
-            while (!_rig.Radio.MusicStarted && Time.realtimeSinceStartup - start < 3f)
-            {
-                yield return null;
-            }
+            yield return new WaitForSecondsRealtime(0.45f);
+            float crackle = Deck("Static").volume;
+            Assert.Greater(crackle, 0f);
 
-            Assert.IsTrue(_rig.Radio.MusicStarted);
-            Assert.Less(Time.realtimeSinceStartup - start, 1.2f);
+            yield return new WaitForSecondsRealtime(2.5f);
+            Assert.Less(Deck("Static").volume, crackle * 0.5f, "settled within about two and a half seconds");
         }
 
         [UnityTest]

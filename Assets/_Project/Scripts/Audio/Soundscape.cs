@@ -10,8 +10,8 @@ namespace MoonProject.Audio
     /// edge, 07's stillness (the Rover's <see cref="IRoverStillness"/>) and the camera's wide shot
     /// (<see cref="RoverWideShotChanged"/>), and turns them into one coherent mix through
     /// <see cref="SoundscapeModel"/>. The radio, the basin bed and 07's small sounds read their gains here; the room
-    /// tone, the space around 07, is played here. While 07 stargazes (<see cref="StargazingChanged"/>) the music thins
-    /// and a soft swell plays (<see cref="StargazeMix"/>). Initialised by <see cref="AudioDirector"/> after the radio.
+    /// tone, the space around 07, is played here. As 07 starts stargazing (<see cref="StargazingChanged"/>) a soft
+    /// swell plays (<see cref="StargazeMix"/>). Initialised by <see cref="AudioDirector"/> after the radio.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class Soundscape : MonoBehaviour
@@ -52,24 +52,11 @@ namespace MoonProject.Audio
 
         public float RadioGain => _model != null ? _model.RadioGain : 1f;
 
-        /// <summary>The music's own gain on top of <see cref="RadioGain"/>: thinned while 07 stargazes.</summary>
-        public float StargazeMusicGain => _stargaze != null ? _stargaze.MusicGain : 1f;
-
-        /// <summary>0 normal .. 1 the music fully thinned for stargazing (eased).</summary>
-        public float Stargaze => _stargaze != null ? _stargaze.Amount : 0f;
-
         public float BasinBedGain => _model != null ? _model.BasinBedGain : 1f;
 
         public float SmallSoundsGain => _model != null ? _model.SmallSoundsGain : 1f;
 
         internal AudioSource RoomToneSource => _roomTone;
-
-        /// <summary>The radio's low-pass from its open <paramref name="cutoffHz"/> (thinner while 07 stargazes).
-        /// </summary>
-        public float RadioCutoff(float cutoffHz)
-        {
-            return _stargaze != null ? _stargaze.MusicCutoff(cutoffHz) : cutoffHz;
-        }
 
         internal void Initialize(GameContext context, AudioDirector director, RadioStation radio, float fadeInSeconds)
         {
