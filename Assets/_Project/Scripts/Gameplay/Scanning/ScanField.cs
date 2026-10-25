@@ -196,6 +196,7 @@ namespace MoonProject.Gameplay
             }
 
             PayOwed();
+            StepFreeReads(now, deltaTime);
             bool held = _input.ExcavateHeld;
             bool claimed = _othersClaim();
 
@@ -463,7 +464,8 @@ namespace MoonProject.Gameplay
             for (int i = 0; i < _fragments.Count; i++)
             {
                 ScanFragment fragment = _fragments[i];
-                if (fragment.Scanned || (fragment.Point - _rover.Position).sqrMagnitude > reachSq)
+                if (fragment.Scanned || fragment.FreeRead ||
+                    (fragment.Point - _rover.Position).sqrMagnitude > reachSq)
                 {
                     continue;
                 }
@@ -488,7 +490,8 @@ namespace MoonProject.Gameplay
             for (int i = 0; i < _fragments.Count && count < points.Length; i++)
             {
                 ScanFragment fragment = _fragments[i];
-                if (!fragment.Scanned && (fragment.Point - _rover.Position).sqrMagnitude <= reachSq)
+                if (!fragment.Scanned && !fragment.FreeRead &&
+                    (fragment.Point - _rover.Position).sqrMagnitude <= reachSq)
                 {
                     points[count++] = fragment.Point;
                 }
@@ -511,7 +514,8 @@ namespace MoonProject.Gameplay
             for (int i = 0; i < _fragments.Count; i++)
             {
                 ScanFragment fragment = _fragments[i];
-                if (fragment.Scanned || (fragment.Point - _rover.Position).sqrMagnitude > reachSq)
+                if (fragment.Scanned || fragment.FreeRead ||
+                    (fragment.Point - _rover.Position).sqrMagnitude > reachSq)
                 {
                     continue;
                 }
@@ -789,8 +793,46 @@ namespace MoonProject.Gameplay
             fragment.Scanned = true;
             fragment.ScannedAt = now;
             _events.Publish(new StoryScanned(fragment.FragmentId, fragment.StoryKey, fragment.Point));
-            _events.Publish(new FeelBeat(FeelKind.Scan, FeelPhase.Reward, fragment.Point, fragment.SweepSpan, 1f, 0f));
+            if (fragment.FreeRead)
+            {
+                // Read, not scanned: no sweep closes on it and no scan reward plays; its words are the payoff.
+                fragment.Gone = true;
+            }
+            else
+            {
+                _events.Publish(new FeelBeat(FeelKind.Scan, FeelPhase.Reward, fragment.Point, fragment.SweepSpan, 1f,
+                    0f));
+            }
+
             _save.SaveNow();
+        }
+
+        /// <summary>
+        /// Free reads (opening-v3-payoff-audit §3): one is read once 07 has stood slow within its reach, the view on
+        /// it, for its seconds, never while a scan is under way.
+        /// </summary>
+        private void StepFreeReads(float now, float deltaTime)
+        {
+            Transform view = _view.Camera.transform;
+            float reachSq = _tuning.FreeReadReach * _tuning.FreeReadReach;
+            for (int i = 0; i < _fragments.Count; i++)
+            {
+                ScanFragment fragment = _fragments[i];
+                if (!fragment.FreeRead || fragment.Scanned)
+                {
+                    continue;
+                }
+
+                bool facing = _scanning == null && _rover.Speed <= _tuning.EngageSpeed &&
+                              (fragment.Point - _rover.Position).sqrMagnitude <= reachSq &&
+                              AimScore.TryScore(view.position, view.forward, fragment.Point, _tuning.Cone,
+                                  float.MaxValue, _tuning.DistanceWeight, out _);
+                fragment.ReadSeconds = facing ? fragment.ReadSeconds + deltaTime : 0f;
+                if (fragment.ReadSeconds >= _tuning.FreeReadSeconds)
+                {
+                    Complete(fragment, now);
+                }
+            }
         }
 
         private string NextUnlearnedStructure(IReadOnlyList<string> structureIds)
