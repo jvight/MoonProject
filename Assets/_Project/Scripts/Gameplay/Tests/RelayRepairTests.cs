@@ -115,13 +115,53 @@ namespace MoonProject.Gameplay.Tests
             Assert.IsTrue(_relay.Fitted, "let go and held again: fitted");
             Assert.IsFalse(_hold.HasPart(_settings.FeedPart), "it left the hold");
             Assert.IsTrue(_fittedProp.activeSelf, "the unit shows in the socket");
+            Assert.IsEmpty(_relit, "fitted, it powers up first");
+            PowerUp();
             Assert.AreEqual(1, _relit.Count, "the relay is lit, once");
             Assert.AreEqual("relay.1", _relit[0].RelayId);
             Assert.IsFalse(_relit[0].Restored);
             Assert.IsFalse(_relay.TryGetInstall(out _), "nothing more to fit");
 
             Hold(true, 3);
+            PowerUp();
             Assert.AreEqual(1, _relit.Count, "only once");
+        }
+
+        [Test]
+        public void Fitted_TheRelayPowersUpStepByStep_ThenItsPadGoesLive_With07sChirp()
+        {
+            var stages = new List<RelayPowerStage>();
+            var chirps = new List<RoverChirpRequested>();
+            _events.Subscribe<RelayPowerStage>(stages.Add);
+            _events.Subscribe<RoverChirpRequested>(chirps.Add);
+            Repair();
+            _relay.StepPowerUp(0f);
+            Assert.AreEqual(1, stages.Count, "the unit seats home at once: the latch");
+            Assert.AreEqual(RelayStage.Latch, stages[0].Stage);
+            Assert.AreEqual("relay.1", stages[0].RelayId);
+
+            const float Step = 0.05f;
+            float liveAt = _settings.StageAt(RelayStage.Live);
+            for (float t = 0f; t < liveAt - Step * 2f; t += Step)
+            {
+                _relay.StepPowerUp(Step);
+            }
+
+            Assert.IsFalse(_relay.Lit, "still powering up");
+            Assert.IsFalse(_relay.TryFindUnder(Pad, out _), "its pad is not live yet");
+            Assert.IsEmpty(_relit);
+            Assert.AreEqual(new[] { RelayStage.Latch, RelayStage.Wake, RelayStage.Align, RelayStage.Reply },
+                stages.ConvertAll(stage => stage.Stage).ToArray(), "seat, wake, align, reply, in order, once each");
+
+            PowerUp();
+            Assert.AreEqual(RelayStage.Live, stages[stages.Count - 1].Stage);
+            Assert.IsTrue(_relay.Lit);
+            Assert.IsTrue(_relay.TryFindUnder(Pad, out _), "live: its pad charges");
+            Assert.AreEqual(1, _relit.Count, "and the relay is relit with it");
+            Assert.AreEqual(1, chirps.Count, "07 chirps, proud");
+            Assert.AreEqual(ChirpMood.Proud, chirps[0].Mood);
+            PowerUp();
+            Assert.AreEqual(5, stages.Count, "the power-up runs once");
         }
 
         [Test]
@@ -133,6 +173,9 @@ namespace MoonProject.Gameplay.Tests
             Assert.IsFalse(_relay.TryFindUnder(Pad, out _), "nor does its pad charge");
 
             Repair();
+            _relay.CopyChargePoints(points);
+            Assert.IsEmpty(points, "fitted but still powering up: not yet");
+            PowerUp();
             _relay.CopyChargePoints(points);
             Assert.AreEqual(new[] { Pad }, points.ToArray(), "lit: the ring counts its pad");
             Assert.IsTrue(_relay.TryFindUnder(Pad + new Vector3(_settings.PadRadius - 0.2f, 0f, 0f), out Vector3 pad));
@@ -188,6 +231,12 @@ namespace MoonProject.Gameplay.Tests
             Hold(false, 1);
             Hold(true, 1);
             Assert.IsTrue(_relay.Fitted);
+        }
+
+        /// <summary>The fitted relay's whole power-up, to its live pad.</summary>
+        private void PowerUp()
+        {
+            _relay.StepPowerUp(_settings.StageAt(RelayStage.Live) + 1f);
         }
 
         private void Hold(bool held, int frames)

@@ -10,10 +10,11 @@ namespace MoonProject.Gameplay
     /// relay.1's repair (docs/design/opening-v3-purpose.md R10), open once relay.1 has answered the call (R8,
     /// <see cref="OpeningMilestone.CallAnswered"/>, replayed for a loaded game): its open service cabinet holds the
     /// labelled spare (RELAY SPARE · FEED UNIT), offered with a held E within reach; the mast box's empty feed socket
-    /// takes it from the hold with a held E within reach (<see cref="InteractionKind.Install"/>). Fitted, the relay is
-    /// lit (<see cref="RelayRelit"/>, once, and replayed as Restored at each session start of a game where it is): its
-    /// contact pad charges 07 like a pad (<see cref="ChargerKind.Mast"/>) and it counts as a charge point, so the range
-    /// ring grows. The props are World's: the spare in the cabinet hides once taken, the fitted unit in the socket
+    /// takes it from the hold with a held E within reach (<see cref="InteractionKind.Install"/>). Fitted, the relay
+    /// powers up one mechanical step at a time (<see cref="RelayPowerStage"/>: the unit seats, the lens wakes, the dish
+    /// aligns, the lamp blinks the reply), then is lit (<see cref="RelayRelit"/>, once, with 07's proud chirp, and
+    /// replayed as Restored at each session start of a game where it is): its contact pad charges 07 like a pad
+    /// (<see cref="ChargerKind.Mast"/>) and it counts as a charge point, so the range ring grows. The props are World's: the spare in the cabinet hides once taken, the fitted unit in the socket
     /// shows once fitted. Allocation-free per step.
     /// </summary>
     public sealed class RelayRepair : IChargePointSource, IDisposable
@@ -35,6 +36,9 @@ namespace MoonProject.Gameplay
 
         // The E held to take the spare must be let go before it fits it: one press, one act.
         private bool _awaitRelease;
+
+        private float _powerUp = -1f;
+        private RelayStage _nextStage;
 
         /// <param name="spare">Where the spare lies in the open cabinet.</param>
         /// <param name="socket">The mast box's feed socket.</param>
@@ -74,8 +78,11 @@ namespace MoonProject.Gameplay
         /// <summary>07 took the spare from the cabinet.</summary>
         public bool SpareTaken { get; private set; }
 
-        /// <summary>The spare is fitted: the relay is lit.</summary>
+        /// <summary>The spare is fitted: the relay powers up.</summary>
         public bool Fitted { get; private set; }
+
+        /// <summary>The power-up is done: the relay is lit, its pad charges and the ring counts it.</summary>
+        public bool Lit { get; private set; }
 
         /// <summary>The relay's id (relay.1).</summary>
         public string RelayId => _settings.RelayId;
@@ -111,7 +118,34 @@ namespace MoonProject.Gameplay
                 _hold.RemovePart(_settings.FeedPart);
                 Fitted = true;
                 ShowProps();
-                _events.Publish(new RelayRelit(_settings.RelayId, false));
+                _powerUp = 0f;
+                _nextStage = RelayStage.Latch;
+            }
+        }
+
+        /// <summary>The fitted relay's power-up over <paramref name="deltaTime"/>: each step as its time comes.</summary>
+        public void StepPowerUp(float deltaTime)
+        {
+            if (_powerUp < 0f)
+            {
+                return;
+            }
+
+            _powerUp += deltaTime;
+            while (_powerUp >= 0f && _powerUp >= _settings.StageAt(_nextStage))
+            {
+                RelayStage stage = _nextStage;
+                _events.Publish(new RelayPowerStage(_settings.RelayId, stage, false));
+                if (stage == RelayStage.Live)
+                {
+                    _powerUp = -1f;
+                    Lit = true;
+                    _events.Publish(new RelayRelit(_settings.RelayId, false));
+                    _events.Publish(new RoverChirpRequested(ChirpMood.Proud, 1f));
+                    return;
+                }
+
+                _nextStage = stage + 1;
             }
         }
 
@@ -128,13 +162,13 @@ namespace MoonProject.Gameplay
         public bool TryFindUnder(Vector3 rover, out Vector3 position)
         {
             position = _pad;
-            return Fitted &&
+            return Lit &&
                    SurfaceRules.HorizontalDistanceSquared(rover, _pad) <= _settings.PadRadius * _settings.PadRadius;
         }
 
         public void CopyChargePoints(List<Vector3> points)
         {
-            if (Fitted)
+            if (Lit)
             {
                 points.Add(_pad);
             }
@@ -152,8 +186,9 @@ namespace MoonProject.Gameplay
             }
 
             _carriedAtLoad = false;
-            if (Fitted)
+            if (Lit)
             {
+                _events.Publish(new RelayPowerStage(_settings.RelayId, RelayStage.Live, true));
                 _events.Publish(new RelayRelit(_settings.RelayId, true));
             }
         }
@@ -176,6 +211,8 @@ namespace MoonProject.Gameplay
             }
 
             Fitted = data.fitted;
+            Lit = data.fitted;
+            _powerUp = -1f;
             SpareTaken = data.spareTaken || data.fitted;
             _carriedAtLoad = data.spareCarried && !data.fitted;
             ShowProps();

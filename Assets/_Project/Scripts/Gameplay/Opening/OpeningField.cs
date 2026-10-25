@@ -166,7 +166,7 @@ namespace MoonProject.Gameplay
 
         public bool AnswerDone => _answer != null && _answer.Phase == AnswerPhase.Done;
 
-        public bool RelayRelit => _relay != null && _relay.Fitted;
+        public bool RelayRelit => _relay != null && _relay.Lit;
 
         public bool AnswerStarted => _answer != null && _answer.Phase >= AnswerPhase.Transmitting;
 

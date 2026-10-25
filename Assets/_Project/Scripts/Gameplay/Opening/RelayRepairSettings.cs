@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using MoonProject.Core.Events;
 
 namespace MoonProject.Gameplay
 {
@@ -30,10 +31,37 @@ namespace MoonProject.Gameplay
         [Range(0.5f, 5f)]
         [SerializeField] private float _padRadius = 2f;
 
+        [Tooltip("Seconds from the unit seating home (Latch) to the relay's lens flickering on (Wake).")]
+        [Range(0.2f, 3f)]
+        [SerializeField] private float _wakeAfter = 0.8f;
+
+        [Tooltip("Seconds from Wake to the dish starting to turn to its bearing (Align).")]
+        [Range(0.2f, 3f)]
+        [SerializeField] private float _alignAfter = 0.8f;
+
+        [Tooltip("Seconds from Align to the reply blink (Reply): long enough for the dish to settle.")]
+        [Range(0.5f, 4f)]
+        [SerializeField] private float _replyAfter = 1.8f;
+
+        [Tooltip("Seconds from Reply to the contact pad going live (Live, the relay relit): the blink's length.")]
+        [Range(0.5f, 4f)]
+        [SerializeField] private float _liveAfter = 1.6f;
+
         public string RelayId => _relayId ?? string.Empty;
         public string FeedPart => _feedPart ?? string.Empty;
         public float TakeReach => _takeReach;
         public float FitReach => _fitReach;
         public float PadRadius => _padRadius;
+
+        /// <summary>Seconds after the latch at which <paramref name="stage"/> comes.</summary>
+        public float StageAt(RelayStage stage)
+        {
+            float at = 0f;
+            at += stage >= RelayStage.Wake ? _wakeAfter : 0f;
+            at += stage >= RelayStage.Align ? _alignAfter : 0f;
+            at += stage >= RelayStage.Reply ? _replyAfter : 0f;
+            at += stage >= RelayStage.Live ? _liveAfter : 0f;
+            return at;
+        }
     }
 }
