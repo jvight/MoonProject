@@ -1,0 +1,26 @@
+{
+    "name": "MoonProject.Art.PlayModeTests",
+    "rootNamespace": "MoonProject.Art.PlayModeTests",
+    "references": [
+        "MoonProject.Core",
+        "MoonProject.App",
+        "MoonProject.World",
+        "MoonProject.Testing",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "UnityEngine.TestRunner"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
