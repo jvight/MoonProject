@@ -9,6 +9,15 @@ namespace MoonProject.Rover
     public static class WheelKinematics
     {
         /// <summary>
+        /// A wheel's drawn turn rate for its true one: the same up to a fraction of <paramref name="softCap"/>, then
+        /// easing toward it (a tanh), so a fast wheel never turns frantically on screen. Odd about zero.
+        /// </summary>
+        public static float SoftCap(float degreesPerSecond, float softCap)
+        {
+            return softCap * (float)System.Math.Tanh(degreesPerSecond / softCap);
+        }
+
+        /// <summary>
         /// The wheel's radius (m): how far its mesh reaches from the hub across the axle (<paramref name="wheel"/>'s
         /// local X), measured in the world as the farthest the mesh's box extends up or forward of the hub. Zero when it
         /// has no mesh.

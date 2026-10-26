@@ -64,6 +64,12 @@ namespace MoonProject.Rover
         [Range(0.1f, 2f)]
         [SerializeField] private float _suspensionDamping = 0.5f;
 
+        [Tooltip("Turn rate (deg/s) the drawn wheels never exceed by much: past it the spin eases toward this ceiling "
+                 + "(tanh), so a fast wheel does not strobe or look frantic against slow scenery. Well under it the spin "
+                 + "is exact: 07 at a crawl rolls its wheels the true distance.")]
+        [Range(150f, 3000f)]
+        [SerializeField] private float _wheelSpinSoftCap = 600f;
+
         [Tooltip("Front wheel steering angle (deg) at full steering input.")]
         [Range(0f, 45f)]
         [SerializeField] private float _frontSteerAngle = 28f;
@@ -236,6 +242,8 @@ namespace MoonProject.Rover
         public float SuspensionFrequency => _suspensionFrequency;
 
         public float SuspensionDamping => _suspensionDamping;
+
+        public float WheelSpinSoftCap => _wheelSpinSoftCap;
 
         public float FrontSteerAngle => _frontSteerAngle;
 

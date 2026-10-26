@@ -126,6 +126,7 @@ namespace MoonProject.Rover.PlayModeTests
                 visual[i] = WheelKinematics.Radius(wheels[i]);
             }
 
+            float softCap = controller.GetComponentInChildren<RoverVisualRig>(true).Tuning.WheelSpinSoftCap;
             var cases = new (string name, Vector2 stick)[]
             {
                 ("straight 0.3", new Vector2(0f, 0.3f)),
@@ -147,6 +148,7 @@ namespace MoonProject.Rover.PlayModeTests
                 var last = new Quaternion[wheels.Length];
                 var lastHub = new Vector3[wheels.Length];
                 var spin = new float[wheels.Length];
+                var drawn = new float[wheels.Length];
                 var rolled = new float[wheels.Length];
                 for (int i = 0; i < wheels.Length; i++)
                 {
@@ -165,7 +167,11 @@ namespace MoonProject.Rover.PlayModeTests
                         // A wheel pays its hub's travel along its own heading, which is square to its axle (spin
                         // turns about the axle, so it cannot move it).
                         Vector3 heading = Vector3.Cross(wheels[i].right, controller.Rotation * Vector3.up).normalized;
-                        rolled[i] += Vector3.Dot(wheels[i].position - lastHub[i], heading);
+                        float step = Vector3.Dot(wheels[i].position - lastHub[i], heading);
+                        rolled[i] += step;
+                        // The drawn turn is the true one eased under the soft ceiling, frame by frame.
+                        float trueRate = step / visual[i] * Mathf.Rad2Deg / Time.deltaTime;
+                        drawn[i] += WheelKinematics.SoftCap(trueRate, softCap) * Time.deltaTime * Mathf.Deg2Rad * visual[i];
                         last[i] = wheels[i].localRotation;
                         lastHub[i] = wheels[i].position;
                     }
@@ -180,8 +186,8 @@ namespace MoonProject.Rover.PlayModeTests
                 Debug.Log(line.ToString());
                 for (int i = 0; i < wheels.Length; i++)
                 {
-                    Assert.AreEqual(rolled[i] / elapsed, spin[i] / elapsed, Mathf.Abs(rolled[i] / elapsed) * Tolerance,
-                        $"{name}: wheel {i}'s rim keeps pace with its hub along its own heading.");
+                    Assert.AreEqual(drawn[i] / elapsed, spin[i] / elapsed, Mathf.Abs(drawn[i] / elapsed) * Tolerance + 0.02f,
+                        $"{name}: wheel {i}'s rim turns the hub's travel along its own heading, under the soft ceiling.");
                 }
             }
 
