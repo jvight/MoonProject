@@ -158,6 +158,8 @@ namespace MoonProject.Gameplay
 
         public bool ModuleSnagged => ModuleHooked && _tow.Snagged;
 
+        public bool ModuleAtHome => ModuleHooked && _tow.LoadAtHome;
+
         public bool ModuleHome => _tow != null && _tow.TryFindHome(TowLoads.PowerModule, out _);
 
         public bool AnswerDone => _answer != null && _answer.Phase == AnswerPhase.Done;
@@ -230,6 +232,7 @@ namespace MoonProject.Gameplay
                 case OpeningKeys.ScanTower:
                     return Frame(TowerRuin, out placeId, out position);
                 case OpeningKeys.HookModule:
+                case OpeningKeys.UnhookModule:
                     Vector3 hitch = Vector3.zero;
                     bool hasHitch = _tow != null && _tow.TryFindHitch(TowLoads.PowerModule, out hitch);
                     return Place(hasHitch ? TowLoads.PowerModule : string.Empty, hitch, out placeId, out position);
@@ -345,7 +348,8 @@ namespace MoonProject.Gameplay
             switch (lineKey)
             {
                 case OpeningKeys.HookModule:
-                    return _hints.TryGet(InteractionKind.Tether, out _);
+                case OpeningKeys.UnhookModule:
+                    return _hints.TryGet(InteractionKind.Tether, out InteractionHint tether) && tether.Ready;
                 case OpeningKeys.Transmit:
                     return _hints.TryGet(InteractionKind.Transmit, out _);
                 default:

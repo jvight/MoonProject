@@ -93,8 +93,11 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Seconds 07 may take to reverse its winch up to the hitch.</summary>
         private const float HookBackSeconds = 8f;
 
-        /// <summary>Metres short of the apron's centre 07 stops towing: the module trails onto the apron behind it.</summary>
-        private const float HomeStop = 1f;
+        /// <summary>
+        /// Metres short of the apron's centre 07 stops towing, just off the pad: the module trails home behind it and is
+        /// let go there, clear of the pad, as a player stops when the line says to let the cable go.
+        /// </summary>
+        private const float HomeStop = 3.5f;
 
         /// <summary>Metres from that stop point 07 counts as there: close, so the module trails onto the apron.</summary>
         private const float HomeArrive = 1f;
@@ -553,9 +556,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return DriveTo(RuinsGate(), 3f, "out of the Lumen ruins, towing");
             Vector3 fromHome = Flat(module.position - pad).normalized;
             yield return DriveTo(Flat(pad) + fromHome * HomeStop, HomeArrive, "home to the apron, towing");
-            yield return Until(() => !_gameplay.Tow.IsTowing, HomeLetGoSeconds,
-                "the winch lets the module go on the apron",
+            yield return Until(() => _gameplay.Tow.LoadAtHome, HomeLetGoSeconds, "the module trails onto the apron",
                 () => $"the module {SurfaceRules.HorizontalDistance(module.position, pad):F1} m from the apron");
+            Assert.IsTrue(_gameplay.Tow.IsTowing, "home, the cable still holds it: only the key lets it go");
+            yield return ExpectStep(OpeningKeys.UnhookModule, "R6: home, let the cable go");
+            yield return Tap(_mouse.rightButton);
+            yield return Until(() => !_gameplay.Tow.IsTowing, FollowTimeout, "the tether key lets the module go");
             Assert.AreEqual(0, _towLetGo, "the cable never let the module go on the way");
             Capture("09-the-module-home");
             End("R6: tow the power module home", $"{_gameplay.Tow.Lifts} lift(s) free on the way");

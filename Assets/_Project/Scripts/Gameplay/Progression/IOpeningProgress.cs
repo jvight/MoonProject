@@ -60,6 +60,9 @@ namespace MoonProject.Gameplay
         /// <summary>The habitat's power module is on 07's winch cable (B9).</summary>
         bool ModuleHooked { get; }
 
+        /// <summary>The power module on the cable has come within the apron's home radius: let go, it is home.</summary>
+        bool ModuleAtHome { get; }
+
         /// <summary>The power module on the cable is caught and the winch has no slack left: 07 has to back up.</summary>
         bool ModuleSnagged { get; }
 

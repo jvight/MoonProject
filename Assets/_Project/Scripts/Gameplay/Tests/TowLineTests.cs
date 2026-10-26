@@ -102,30 +102,37 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void ALoadTowedHome_IsUnhookedAtTheApron()
+        public void ALoadTowedHome_StaysOnTheCable_UntilTheKeyLetsItGo_AndHasArrived_ThenCanBeTowedAgain()
         {
             TowableBody load = Load("module", new Vector3(0f, 0f, -1f));
             _tow.Step(true);
             load.Body.transform.position = Home + new Vector3(_settings.HomeRadius - 0.5f, 0f, 0f);
             _tow.Step(false);
+            Assert.IsTrue(_tow.IsTowing, "home, but the cable never lets go on its own");
+            Assert.IsTrue(_tow.LoadAtHome);
+            _tow.Step(true);
             Assert.IsFalse(_tow.IsTowing);
-            Assert.AreEqual(TowRelease.Arrived, _released[0].Reason);
+            Assert.AreEqual(TowRelease.Arrived, _released[0].Reason, "let go at home: it has arrived");
+
+            load.Body.transform.position = new Vector3(0f, 0f, -1f);
+            _tow.Step(true);
+            Assert.IsTrue(_tow.IsTowing, "a load let go can be hooked and moved again");
         }
 
         [Test]
-        public void TheWinchLetsGo_OnlyOnceTheLoadItself_IsHome_SoALoadLetGoCanBeBuiltOn()
+        public void ALoadIsHome_OnlyOnceTheLoadItself_IsOnTheApron_SoALoadLetGoThereCanBeBuiltOn()
         {
             TowableBody load = Load("module", new Vector3(0f, 0f, -1f));
             load.Root.GetChild(0).localPosition = Vector3.forward;
             _tow.Step(true);
             load.Root.position = Home + new Vector3(0f, 0f, -(_settings.HomeRadius + 0.5f));
-            _tow.Step(false);
-            Assert.IsTrue(_tow.IsTowing, "its hitch is on the apron, the module not yet");
+            Assert.IsFalse(_tow.LoadAtHome, "its hitch is on the apron, the module not yet");
+            _tow.Step(true);
+            Assert.AreEqual(TowRelease.Player, _released[0].Reason, "let go short of home");
+            Assert.IsFalse(_tow.TryFindHome("module", out _));
 
             load.Root.position = Home + new Vector3(0f, 0f, -(_settings.HomeRadius - 0.5f));
-            _tow.Step(false);
-            Assert.IsFalse(_tow.IsTowing);
-            Assert.IsTrue(_tow.TryFindHome("module", out _), "let go home: a structure may stand on it");
+            Assert.IsTrue(_tow.TryFindHome("module", out _), "standing home off the cable: a structure may stand on it");
         }
 
         [Test]
@@ -170,19 +177,30 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void TheLoadToHook_IsTheNearestInReach_AndNoneWhileTowing()
+        public void TheTetherChip_ShowsDimFromAfar_BrightInHookReach_AndAtHomeToLetGo()
         {
-            Assert.IsFalse(_tow.TryGetHookable(out _), "no load stands");
-            Load("module.far", new Vector3(0f, 0f, -(_settings.HookReach + 1f)));
-            Assert.IsFalse(_tow.TryGetHookable(out _), "out of hook reach");
+            Assert.IsFalse(_tow.TryGetTetherSpot(out _, out _), "no load stands");
+            TowableBody far = Load("module.far", new Vector3(0f, 0f, -(_settings.HintReach + 1f)));
+            Assert.IsFalse(_tow.TryGetTetherSpot(out _, out _), "past the hint reach: nothing yet");
+
+            far.Root.position = new Vector3(0f, 0f, -(_settings.HookReach + 2f));
+            Assert.IsTrue(_tow.TryGetTetherSpot(out Vector3 hitch, out bool inReach), "near: the key is shown");
+            Assert.IsFalse(inReach, "dim: 07 has to get closer");
+            Assert.AreEqual(far.Hitch, hitch);
+            _tow.Step(true);
+            Assert.IsFalse(_tow.IsTowing, "out of hook reach the key hooks nothing");
 
             TowableBody near = Load("module.near", new Vector3(0.5f, 0f, -1f));
-            Assert.IsTrue(_tow.TryGetHookable(out Vector3 hitch), "a load in reach is where the tether key is taught");
-            Assert.AreEqual(near.Hitch, hitch);
+            Assert.IsTrue(_tow.TryGetTetherSpot(out hitch, out inReach));
+            Assert.IsTrue(inReach, "in reach: bright");
+            Assert.AreEqual(near.Hitch, hitch, "the nearest load");
 
             _tow.Step(true);
             Assert.IsTrue(_tow.IsTowing);
-            Assert.IsFalse(_tow.TryGetHookable(out _), "nothing to hook while the cable holds a load");
+            Assert.IsFalse(_tow.TryGetTetherSpot(out _, out _), "on the way home the cable holds it: no chip");
+            near.Root.position = Home + new Vector3(_settings.HomeRadius - 0.5f, 0f, 0f);
+            Assert.IsTrue(_tow.TryGetTetherSpot(out _, out inReach), "home: the chip lets it go");
+            Assert.IsTrue(inReach);
         }
 
         [Test]

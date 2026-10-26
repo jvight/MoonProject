@@ -89,6 +89,7 @@ MonoBehaviour:
     _unsnagLift: 1.6
     _letGoDistance: 20
     _homeRadius: 9
+    _hintReach: 12
     _skidFriction: 0.45
     _loadDrag: 0.1
     _loadAngularDrag: 3
