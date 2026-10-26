@@ -25,7 +25,9 @@ MonoBehaviour:
   _suspensionCastHeight: 0.6
   _suspensionFrequency: 5.5
   _suspensionDamping: 0.5
-  _wheelSpinSoftCap: 100000
+  _wheelSpinKnee: 450
+  _wheelSpinCeiling: 700
+  _wheelSpinHalfLife: 0.06
   _frontSteerAngle: 28
   _rearSteerFactor: 0
   _dustFullMeters: 180

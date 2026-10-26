@@ -8,17 +8,24 @@ namespace MoonProject.Rover.Tests
     public sealed class WheelKinematicsTests
     {
         [Test]
-        public void TheSoftCap_IsExactAtACrawl_EasesTowardItsCeiling_AndIsOddAboutZero()
+        public void TheSoftCap_IsExactUpToItsKnee_EasesTowardItsCeiling_AndIsOddAboutZero()
         {
-            const float cap = 600f;
-            Assert.AreEqual(128f, WheelKinematics.SoftCap(128f, cap), 128f * 0.03f, "a crawl turns the true amount");
-            Assert.Less(WheelKinematics.SoftCap(1300f, cap), cap, "a fast wheel stays under the ceiling");
-            Assert.Greater(WheelKinematics.SoftCap(1300f, cap), 0.9f * cap, "and close to it");
-            Assert.AreEqual(-WheelKinematics.SoftCap(400f, cap), WheelKinematics.SoftCap(-400f, cap), 1e-4f);
-            float last = 0f;
-            for (float v = 0f; v < 3000f; v += 50f)
+            const float knee = 450f;
+            const float ceiling = 700f;
+            foreach (float rate in new[] { 0f, 128f, 300f, 390f, 450f })
             {
-                float capped = WheelKinematics.SoftCap(v, cap);
+                Assert.AreEqual(rate, WheelKinematics.SoftCap(rate, knee, ceiling), 1e-4f,
+                    "ordinary driving turns the true amount");
+            }
+
+            Assert.Less(WheelKinematics.SoftCap(1300f, knee, ceiling), ceiling, "a fast wheel stays under the ceiling");
+            Assert.Greater(WheelKinematics.SoftCap(1300f, knee, ceiling), 0.97f * ceiling, "and close to it");
+            Assert.AreEqual(-WheelKinematics.SoftCap(800f, knee, ceiling), WheelKinematics.SoftCap(-800f, knee, ceiling),
+                1e-4f);
+            float last = 0f;
+            for (float v = 25f; v < 3000f; v += 25f)
+            {
+                float capped = WheelKinematics.SoftCap(v, knee, ceiling);
                 Assert.GreaterOrEqual(capped, last, "faster never turns slower");
                 last = capped;
             }

@@ -100,17 +100,35 @@ namespace MoonProject.Rover.PlayModeTests
             yield return _scene.Boot();
             string tag = System.Environment.GetEnvironmentVariable("MOON_WHEEL_TAG") ?? "after";
 #if UNITY_EDITOR
-            string cap = System.Environment.GetEnvironmentVariable("MOON_WHEEL_CAP");
-            if (!string.IsNullOrEmpty(cap))
-            {
-                var tuning = new UnityEditor.SerializedObject(_scene.Rover.GetComponentInChildren<RoverVisualRig>(true).Tuning);
-                tuning.FindProperty("_wheelSpinSoftCap").floatValue =
-                    float.Parse(cap, System.Globalization.CultureInfo.InvariantCulture);
-                tuning.ApplyModifiedPropertiesWithoutUndo();
-            }
+            var tuning = new UnityEditor.SerializedObject(_scene.Rover.GetComponentInChildren<RoverVisualRig>(true).Tuning);
+            UnityEditor.SerializedProperty knee = tuning.FindProperty("_wheelSpinKnee");
+            UnityEditor.SerializedProperty ceiling = tuning.FindProperty("_wheelSpinCeiling");
+            float shippedKnee = knee.floatValue;
+            float shippedCeiling = ceiling.floatValue;
 #endif
-            yield return Strip("wheel_" + tag + "_1mps", 0.13f);
-            yield return Strip("wheel_" + tag + "_full", 1f);
+            try
+            {
+#if UNITY_EDITOR
+                string cap = System.Environment.GetEnvironmentVariable("MOON_WHEEL_CAP");
+                if (!string.IsNullOrEmpty(cap))
+                {
+                    knee.floatValue = float.Parse(cap, System.Globalization.CultureInfo.InvariantCulture);
+                    ceiling.floatValue = knee.floatValue + 1f;
+                    tuning.ApplyModifiedPropertiesWithoutUndo();
+                }
+#endif
+                yield return Strip("wheel_" + tag + "_1mps", 0.13f);
+                yield return Strip("wheel_" + tag + "_full", 1f);
+            }
+            finally
+            {
+#if UNITY_EDITOR
+                // The strips are measured on the shipped asset: put it back exactly as it was.
+                knee.floatValue = shippedKnee;
+                ceiling.floatValue = shippedCeiling;
+                tuning.ApplyModifiedPropertiesWithoutUndo();
+#endif
+            }
         }
     }
 }

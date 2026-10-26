@@ -64,11 +64,20 @@ namespace MoonProject.Rover
         [Range(0.1f, 2f)]
         [SerializeField] private float _suspensionDamping = 0.5f;
 
-        [Tooltip("Turn rate (deg/s) the drawn wheels never exceed by much: past it the spin eases toward this ceiling "
-                 + "(tanh), so a fast wheel does not strobe or look frantic against slow scenery. Well under it the spin "
-                 + "is exact: 07 at a crawl rolls its wheels the true distance.")]
-        [Range(150f, 3000f)]
-        [SerializeField] private float _wheelSpinSoftCap = 600f;
+        [Tooltip("Turn rate (deg/s) up to which the drawn wheels turn exactly the ground's distance: ordinary driving "
+                 + "(about 2.5 m/s) stays true; past it the spin eases toward the ceiling.")]
+        [Range(100f, 2000f)]
+        [SerializeField] private float _wheelSpinKnee = 450f;
+
+        [Tooltip("Turn rate (deg/s) the drawn wheels approach at top speed, so a fast wheel does not strobe or look "
+                 + "frantic against slow scenery.")]
+        [Range(200f, 3000f)]
+        [SerializeField] private float _wheelSpinCeiling = 700f;
+
+        [Tooltip("Half-life (s) of the eased turn rate the drawn wheels follow the hub's travel with: it irons out the "
+                 + "hub's uneven frame-to-frame steps, so a wheel turns exactly the ground's distance on average.")]
+        [Range(0.01f, 0.3f)]
+        [SerializeField] private float _wheelSpinHalfLife = 0.06f;
 
         [Tooltip("Front wheel steering angle (deg) at full steering input.")]
         [Range(0f, 45f)]
@@ -243,7 +252,11 @@ namespace MoonProject.Rover
 
         public float SuspensionDamping => _suspensionDamping;
 
-        public float WheelSpinSoftCap => _wheelSpinSoftCap;
+        public float WheelSpinKnee => _wheelSpinKnee;
+
+        public float WheelSpinCeiling => Mathf.Max(_wheelSpinCeiling, _wheelSpinKnee + 1f);
+
+        public float WheelSpinHalfLife => _wheelSpinHalfLife;
 
         public float FrontSteerAngle => _frontSteerAngle;
 

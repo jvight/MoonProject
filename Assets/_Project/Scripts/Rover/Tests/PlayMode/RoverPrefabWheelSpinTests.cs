@@ -126,7 +126,7 @@ namespace MoonProject.Rover.PlayModeTests
                 visual[i] = WheelKinematics.Radius(wheels[i]);
             }
 
-            float softCap = controller.GetComponentInChildren<RoverVisualRig>(true).Tuning.WheelSpinSoftCap;
+            RoverRigTuning rigTuning = controller.GetComponentInChildren<RoverVisualRig>(true).Tuning;
             var cases = new (string name, Vector2 stick)[]
             {
                 ("straight 0.3", new Vector2(0f, 0.3f)),
@@ -171,7 +171,7 @@ namespace MoonProject.Rover.PlayModeTests
                         rolled[i] += step;
                         // The drawn turn is the true one eased under the soft ceiling, frame by frame.
                         float trueRate = step / visual[i] * Mathf.Rad2Deg / Time.deltaTime;
-                        drawn[i] += WheelKinematics.SoftCap(trueRate, softCap) * Time.deltaTime * Mathf.Deg2Rad * visual[i];
+                        drawn[i] += WheelKinematics.SoftCap(trueRate, rigTuning.WheelSpinKnee, rigTuning.WheelSpinCeiling) * Time.deltaTime * Mathf.Deg2Rad * visual[i];
                         last[i] = wheels[i].localRotation;
                         lastHub[i] = wheels[i].position;
                     }
