@@ -205,6 +205,7 @@ namespace MoonProject.Art.PlayModeTests
                     try
                     {
                         sky.SetClockTime(vista.dayClock);
+                        profile.FollowSun();
                         foreach (LookMaxVista.Pose pose in vista.poses)
                         {
                             vista.Aim(camera, pose, Ground);
@@ -217,6 +218,7 @@ namespace MoonProject.Art.PlayModeTests
                         timing.AppendLine($"{profileName}: {shots.TimingSummary}");
 
                         sky.SetClockTime(vista.nightClock);
+                        profile.FollowSun();
                         foreach (LookMaxVista.Pose pose in vista.poses)
                         {
                             if (Array.IndexOf(vista.night, pose.name) < 0)

@@ -8,8 +8,9 @@ namespace MoonProject.Art.PlayModeTests
     /// <summary>
     /// One render profile of the look spike, applied at runtime only: "shipped" leaves the game's pipeline as it is;
     /// "max" swaps in a clone of the URP asset (8K main-light shadows packed into a shorter, near-weighted cascade
-    /// range, tighter biases, a 64-bit colour buffer) and gives the capture camera high-quality TAA; "stp" is "max"
-    /// rendered at a lower scale and upscaled by STP. Nothing is saved: <see cref="Dispose"/> puts the original asset
+    /// range, tighter biases), gives the capture camera high-quality sharpened TAA, screen-space contact shadows
+    /// (<see cref="LookMaxContactShadows"/>) and a regolith bounce fill (<see cref="LookMaxBounceLight"/>); "stp" is
+    /// "max" rendered at a lower scale and upscaled by STP. Nothing is saved: <see cref="Dispose"/> puts the original asset
     /// back.
     /// </summary>
     public sealed class LookMaxProfile : System.IDisposable
@@ -24,9 +25,12 @@ namespace MoonProject.Art.PlayModeTests
         private const float MaxDepthBias = 0.06f;
         private const float MaxNormalBias = 0.3f;
         private const float StpRenderScale = 0.67f;
+        private const float TaaSharpening = 0.5f;
 
         private readonly RenderPipelineAsset _original;
         private readonly UniversalRenderPipelineAsset _clone;
+        private readonly LookMaxContactShadows _contactShadows;
+        private readonly LookMaxBounceLight _bounce;
 
         public LookMaxProfile(string name, Camera camera)
         {
@@ -62,12 +66,21 @@ namespace MoonProject.Art.PlayModeTests
             QualitySettings.renderPipeline = _clone;
             data.antialiasing = AntialiasingMode.TemporalAntiAliasing;
             data.taaSettings.quality = TemporalAAQuality.VeryHigh;
+            data.taaSettings.contrastAdaptiveSharpening = TaaSharpening;
+            _contactShadows = new LookMaxContactShadows(camera);
+            _bounce = LookMaxBounceLight.Create();
         }
 
         public string Name { get; }
 
-        /// <summary>Whether the profile needs consecutive frames to converge (TAA or STP history).</summary>
-        public bool IsTemporal => Name != Shipped;
+        /// <summary>Matches the profile's sun-driven extras to the sun; call after moving the clock.</summary>
+        public void FollowSun()
+        {
+            if (_bounce != null)
+            {
+                _bounce.Follow();
+            }
+        }
 
         public void Dispose()
         {
@@ -78,6 +91,8 @@ namespace MoonProject.Art.PlayModeTests
 
             QualitySettings.renderPipeline = _original;
             Object.Destroy(_clone);
+            _contactShadows.Dispose();
+            Object.Destroy(_bounce.gameObject);
         }
     }
 }
