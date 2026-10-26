@@ -599,6 +599,10 @@
             "text": "Vướng chỗ"
         },
         {
+            "key": "build.reason.overlaps_by",
+            "text": "Vướng: {0}"
+        },
+        {
             "key": "build.reason.close",
             "text": "Quá gần"
         },

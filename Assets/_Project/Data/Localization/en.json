@@ -599,6 +599,10 @@
             "text": "Something's in the way"
         },
         {
+            "key": "build.reason.overlaps_by",
+            "text": "Blocked by: {0}"
+        },
+        {
             "key": "build.reason.close",
             "text": "Too close"
         },

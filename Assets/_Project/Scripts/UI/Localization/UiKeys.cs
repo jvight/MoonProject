@@ -81,6 +81,9 @@ namespace MoonProject.UI
         public const string BuildCostShort = "build.cost.short";
         public const string BuildReasonSteep = "build.reason.steep";
         public const string BuildReasonOverlaps = "build.reason.overlaps";
+
+        /// <summary>"Blocked by: {0}": a real overlap names the structure in the way.</summary>
+        public const string BuildReasonOverlapsBy = "build.reason.overlaps_by";
         public const string BuildReasonClose = "build.reason.close";
         public const string BuildReasonFar = "build.reason.far";
         public const string BuildReasonOutside = "build.reason.outside";
