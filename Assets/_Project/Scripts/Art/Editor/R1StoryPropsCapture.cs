@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -3370,6 +3371,161 @@ namespace MoonProject.Art.Editor
             finally
             {
                 temp.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Captures the cable pulse (R1Lit's _PulseAlong/_PulseWidth/_PulseColor, set through a property block the way
+        /// Gameplay's power pulse sets it) on a 6 m rubber lead lying on regolith in the day C sun: a pale gold pulse,
+        /// an amber dusk pulse, the pulse at the plug (the sleeve, vertex alpha 0, must stay dark) and the pulse off.
+        /// <c>python tools/unity_batch.py exec --project . --method MoonProject.Art.Editor.R1StoryPropsCapture.CaptureCablePulse</c>
+        /// </summary>
+        public static void CaptureCablePulse()
+        {
+            BatchRunner.Run(nameof(CaptureCablePulse), args =>
+            {
+                AssetDatabase.Refresh();
+                R1MaterialLibrary.BuildMaterials();
+                var rubber = AssetDatabase.LoadAssetAtPath<Material>(
+                    ArtPaths.R1MaterialsFolder + "/" + R1MaterialRecipes.RubberSlot + ".mat");
+                if (rubber == null)
+                {
+                    throw new InvalidOperationException($"{nameof(CaptureCablePulse)}: {R1MaterialRecipes.RubberSlot} " +
+                        "was not built.");
+                }
+
+                string capturesDir = Path.GetFullPath("Logs/captures");
+                Directory.CreateDirectory(capturesDir);
+                bool prevAsync = ShaderUtil.allowAsyncCompilation;
+                ShaderUtil.allowAsyncCompilation = false;
+                try
+                {
+                    foreach ((string shot, float along, Color color) in new[]
+                    {
+                        ("day", 2.2f, new Color(1.05f, 0.86f, 0.52f)), ("dusk", 3.6f, new Color(1.10f, 0.58f, 0.22f)),
+                        ("plug", 0.15f, new Color(1.05f, 0.86f, 0.52f)), ("off", 2.2f, Color.black),
+                    })
+                    {
+                        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+                        var temp = new ArtLightingPreview.TemporaryObjects();
+                        try
+                        {
+                            Color bg = SetupEnvironment(temp, false);
+                            AimDayCSunAtSurface(new Vector3(0.4f, 0f, 0.9f));
+                            Mesh mesh = PulseTestCable();
+                            temp.Add(mesh);
+                            var cable = new GameObject("PulseTestCable");
+                            temp.Add(cable);
+                            cable.AddComponent<MeshFilter>().sharedMesh = mesh;
+                            var renderer = cable.AddComponent<MeshRenderer>();
+                            renderer.sharedMaterial = rubber;
+                            var block = new MaterialPropertyBlock();
+                            block.SetFloat("_PulseAlong", along);
+                            block.SetFloat("_PulseWidth", 0.8f);
+                            block.SetColor("_PulseColor", color);
+                            renderer.SetPropertyBlock(block);
+
+                            var target = new Vector3(shot == "plug" ? 0.6f : 2.6f, 0.05f, 0f);
+                            RenderShot(target + new Vector3(-0.6f, 1.1f, -1.7f), target, 46f, bg,
+                                Path.Combine(capturesDir, $"cable_pulse_{shot}.png"));
+                        }
+                        finally
+                        {
+                            temp.Dispose();
+                        }
+                    }
+                }
+                finally
+                {
+                    ShaderUtil.allowAsyncCompilation = prevAsync;
+                }
+
+                return true;
+            });
+        }
+
+        // A lead laid the way BaseCableMesh writes one (uv0.x metres from the port, vertex colour open and unworn, alpha
+        // 1) in a lazy curve along +X, with a plug sleeve at the port in vertex alpha 0.
+        private static Mesh PulseTestCable()
+        {
+            const int Rings = 48;
+            const int Sides = 6;
+            const int SleeveSides = 8;
+            const float Length = 6f;
+            const float Radius = 0.022f;
+            var positions = new List<Vector3>();
+            var normals = new List<Vector3>();
+            var uvs = new List<Vector2>();
+            var colors = new List<Color32>();
+            var triangles = new List<int>();
+            float along = 0f;
+            Vector3 previous = Vector3.zero;
+            for (int i = 0; i < Rings; i++)
+            {
+                float x = Length * i / (Rings - 1);
+                var centre = new Vector3(x, Radius, 0.35f * Mathf.Sin(x * 0.9f));
+                along += i > 0 ? Vector3.Distance(centre, previous) : 0f;
+                previous = centre;
+                Vector3 forward = new Vector3(1f, 0f, 0.315f * Mathf.Cos(x * 0.9f)).normalized;
+                Vector3 side = Vector3.Cross(Vector3.up, forward).normalized;
+                Vector3 up = Vector3.Cross(forward, side);
+                for (int k = 0; k < Sides; k++)
+                {
+                    float angle = k * Mathf.PI * 2f / Sides;
+                    Vector3 normal = side * Mathf.Cos(angle) + up * Mathf.Sin(angle);
+                    positions.Add(centre + normal * Radius);
+                    normals.Add(normal);
+                    uvs.Add(new Vector2(along, k / (float)Sides));
+                    colors.Add(new Color32(255, 0, 0, 255));
+                }
+            }
+
+            int sleeve = positions.Count;
+            for (int r = 0; r < 2; r++)
+            {
+                float x = r == 0 ? -0.06f : 0.06f;
+                for (int k = 0; k < SleeveSides; k++)
+                {
+                    float angle = k * Mathf.PI * 2f / SleeveSides;
+                    var normal = new Vector3(0f, Mathf.Sin(angle), Mathf.Cos(angle));
+                    positions.Add(new Vector3(x, Radius, 0f) + normal * 0.04f);
+                    normals.Add(normal);
+                    uvs.Add(new Vector2(r, k / (float)SleeveSides));
+                    colors.Add(new Color32(255, 0, 0, 0));
+                }
+            }
+
+            for (int i = 0; i < Rings - 1; i++)
+            {
+                PulseTestBand(triangles, i * Sides, (i + 1) * Sides, Sides);
+            }
+
+            PulseTestBand(triangles, sleeve, sleeve + SleeveSides, SleeveSides);
+            var mesh = new Mesh { name = "PulseTestCable" };
+            mesh.SetVertices(positions);
+            mesh.SetNormals(normals);
+            mesh.SetUVs(0, uvs);
+            mesh.SetColors(colors);
+            mesh.SetTriangles(triangles, 0);
+            mesh.RecalculateTangents();
+            mesh.RecalculateBounds();
+            return mesh;
+        }
+
+        private static void PulseTestBand(List<int> triangles, int from, int to, int sides)
+        {
+            for (int k = 0; k < sides; k++)
+            {
+                int a = from + k;
+                int b = from + (k + 1) % sides;
+                int c = to + k;
+                int d = to + (k + 1) % sides;
+                triangles.Add(a);
+                triangles.Add(c);
+                triangles.Add(b);
+                triangles.Add(b);
+                triangles.Add(c);
+                triangles.Add(d);
             }
         }
     }
