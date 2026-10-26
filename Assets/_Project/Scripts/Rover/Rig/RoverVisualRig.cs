@@ -278,7 +278,7 @@ namespace MoonProject.Rover
             }
 
             ApplyChassis();
-            ApplyWheels(true);
+            ApplyWheels(true, 0f);
             ApplySuspensionLinks();
         }
 
@@ -344,7 +344,7 @@ namespace MoonProject.Rover
             _sag = Smoothing.Damp(_sag, _sagTarget, _sagHalfLife, deltaTime);
             ApplyChassis();
             StepSuspension(deltaTime);
-            ApplyWheels(false);
+            ApplyWheels(false, deltaTime);
             ApplySuspensionLinks();
             StepLowerBodyDust(planarMeters, deltaTime);
             _antenna.localRotation =
@@ -502,7 +502,7 @@ namespace MoonProject.Rover
         }
 
         /// <param name="settle">True when placing the model: the hubs' travel starts from where they now are.</param>
-        private void ApplyWheels(bool settle)
+        private void ApplyWheels(bool settle, float deltaTime)
         {
             float steer = Mathf.Clamp(_rover.SteerInput + _rover.ScanTurnScrub * 0.45f, -1f, 1f)
                 * _tuning.FrontSteerAngle;
@@ -523,7 +523,13 @@ namespace MoonProject.Rover
                 Vector3 heading = Vector3.Cross(wheel.right, transform.up);
                 float distance = braced || settle ? 0f : Vector3.Dot(hub - _wheelLastHubs[i], heading);
                 _wheelLastHubs[i] = hub;
-                _wheelSpin[i] = Mathf.Repeat(_wheelSpin[i] + distance / _wheelRadii[i] * Mathf.Rad2Deg, 360f);
+                float degrees = distance / _wheelRadii[i] * Mathf.Rad2Deg;
+                if (deltaTime > 0f)
+                {
+                    degrees = WheelKinematics.SoftCap(degrees / deltaTime, _tuning.WheelSpinSoftCap) * deltaTime;
+                }
+
+                _wheelSpin[i] = Mathf.Repeat(_wheelSpin[i] + degrees, 360f);
                 wheel.localRotation = Quaternion.AngleAxis(steerAngle, Vector3.up)
                     * _wheelRestRotations[i]
                     * Quaternion.AngleAxis(_wheelSpin[i] + _post.Wheel(i), Vector3.right);

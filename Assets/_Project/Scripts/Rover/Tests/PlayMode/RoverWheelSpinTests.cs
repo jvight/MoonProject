@@ -8,8 +8,8 @@ namespace MoonProject.Rover.PlayModeTests
 {
     /// <summary>
     /// 07's wheels turn with the ground (owner playtest f3d1ff265: "wheels spin much faster than 07 travels"): at any
-    /// speed the wheel's rim speed (spin rate times its radius) equals the distance 07 actually covers, so nothing
-    /// reads fake. Driven straight at three speeds in the real rig; the numbers are logged.
+    /// speed the wheel's rim speed (spin rate times its radius) equals the distance 07 actually covers (up to the soft
+    /// ceiling on a fast wheel's drawn turn), so nothing reads fake. Driven straight at three speeds in the real rig; the numbers are logged.
     /// </summary>
     public sealed class RoverWheelSpinTests : InputTestFixture
     {
@@ -99,7 +99,10 @@ namespace MoonProject.Rover.PlayModeTests
                 Debug.Log($"[rover-wheelspin] stick {stick:0.0}: ground {ground:0.000} m/s, rim {rim:0.000} m/s, "
                     + $"ratio {rim / ground:0.000}");
                 Assert.Greater(ground, 0.5f, "07 is moving.");
-                Assert.AreEqual(ground, rim, ground * Tolerance, $"At stick {stick}: the rim keeps pace with the ground.");
+                float softCap = _rover.Rig.Tuning.WheelSpinSoftCap;
+                float expected = WheelKinematics.SoftCap(ground / radius * Mathf.Rad2Deg, softCap) * Mathf.Deg2Rad * radius;
+                Assert.AreEqual(expected, rim, expected * Tolerance,
+                    $"At stick {stick}: the rim keeps pace with the ground, under the soft ceiling.");
             }
 
             _rover.Drive.Drive = Vector2.zero;
