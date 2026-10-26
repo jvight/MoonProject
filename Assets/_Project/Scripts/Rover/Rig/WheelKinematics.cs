@@ -9,12 +9,22 @@ namespace MoonProject.Rover
     public static class WheelKinematics
     {
         /// <summary>
-        /// A wheel's drawn turn rate for its true one: the same up to a fraction of <paramref name="softCap"/>, then
-        /// easing toward it (a tanh), so a fast wheel never turns frantically on screen. Odd about zero.
+        /// A wheel's drawn turn rate for its true one: exactly the same up to <paramref name="knee"/> (deg/s), then
+        /// easing toward <paramref name="ceiling"/> (a tanh over the span between them, its slope 1 at the knee so there
+        /// is no corner), so ordinary driving turns the wheels the true amount and only a fast wheel is tamed, never
+        /// frantic on screen. Odd about zero.
         /// </summary>
-        public static float SoftCap(float degreesPerSecond, float softCap)
+        public static float SoftCap(float degreesPerSecond, float knee, float ceiling)
         {
-            return softCap * (float)System.Math.Tanh(degreesPerSecond / softCap);
+            float magnitude = Mathf.Abs(degreesPerSecond);
+            if (magnitude <= knee)
+            {
+                return degreesPerSecond;
+            }
+
+            float span = Mathf.Max(ceiling - knee, 1e-3f);
+            float capped = knee + span * (float)System.Math.Tanh((magnitude - knee) / span);
+            return Mathf.Sign(degreesPerSecond) * capped;
         }
 
         /// <summary>

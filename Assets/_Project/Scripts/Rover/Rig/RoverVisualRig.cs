@@ -46,6 +46,7 @@ namespace MoonProject.Rover
         private float[] _wheelSteerFactors;
         private float[] _wheelTargets;
         private float[] _wheelSpin;
+        private float[] _wheelRates;
         private DampedSpring[] _wheelSuspension;
         private Vector3[] _armRestPositions;
         private Quaternion[] _armRestRotations;
@@ -188,6 +189,7 @@ namespace MoonProject.Rover
             _wheelSteerFactors = new float[count];
             _wheelTargets = new float[count];
             _wheelSpin = new float[count];
+            _wheelRates = new float[count];
             _wheelSuspension = new DampedSpring[count];
             _armRestPositions = new Vector3[count];
             _armRestRotations = new Quaternion[count];
@@ -523,10 +525,19 @@ namespace MoonProject.Rover
                 Vector3 heading = Vector3.Cross(wheel.right, transform.up);
                 float distance = braced || settle ? 0f : Vector3.Dot(hub - _wheelLastHubs[i], heading);
                 _wheelLastHubs[i] = hub;
-                float degrees = distance / _wheelRadii[i] * Mathf.Rad2Deg;
-                if (deltaTime > 0f)
+                // The turn rate is the hub's travel rate eased a little (the hub's frame-to-frame steps are uneven: the
+                // physics steps and the frame steps do not line up), then eased under the soft ceiling: a bumpy rate
+                // squeezed through the ceiling's curve would turn the wheel slower than the ground it covers.
+                float degrees = 0f;
+                if (deltaTime > 0f && !braced && !settle)
                 {
-                    degrees = WheelKinematics.SoftCap(degrees / deltaTime, _tuning.WheelSpinSoftCap) * deltaTime;
+                    float raw = distance / _wheelRadii[i] * Mathf.Rad2Deg / deltaTime;
+                    _wheelRates[i] = Smoothing.Damp(_wheelRates[i], raw, _tuning.WheelSpinHalfLife, deltaTime);
+                    degrees = WheelKinematics.SoftCap(_wheelRates[i], _tuning.WheelSpinKnee, _tuning.WheelSpinCeiling) * deltaTime;
+                }
+                else
+                {
+                    _wheelRates[i] = 0f;
                 }
 
                 _wheelSpin[i] = Mathf.Repeat(_wheelSpin[i] + degrees, 360f);

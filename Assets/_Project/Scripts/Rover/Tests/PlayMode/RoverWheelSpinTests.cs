@@ -99,8 +99,9 @@ namespace MoonProject.Rover.PlayModeTests
                 Debug.Log($"[rover-wheelspin] stick {stick:0.0}: ground {ground:0.000} m/s, rim {rim:0.000} m/s, "
                     + $"ratio {rim / ground:0.000}");
                 Assert.Greater(ground, 0.5f, "07 is moving.");
-                float softCap = _rover.Rig.Tuning.WheelSpinSoftCap;
-                float expected = WheelKinematics.SoftCap(ground / radius * Mathf.Rad2Deg, softCap) * Mathf.Deg2Rad * radius;
+                RoverRigTuning rigTuning = _rover.Rig.Tuning;
+                float expected = WheelKinematics.SoftCap(ground / radius * Mathf.Rad2Deg, rigTuning.WheelSpinKnee,
+                    rigTuning.WheelSpinCeiling) * Mathf.Deg2Rad * radius;
                 Assert.AreEqual(expected, rim, expected * Tolerance,
                     $"At stick {stick}: the rim keeps pace with the ground, under the soft ceiling.");
             }
