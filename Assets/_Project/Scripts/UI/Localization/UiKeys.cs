@@ -93,6 +93,12 @@ namespace MoonProject.UI
         public const string BuildHintLeave = "build.hint.leave";
         public const string BuildHintPlace = "build.hint.place";
 
+        /// <summary>"Get closer": a standing chip's word while its target is out of reach.</summary>
+        public const string HintGetCloser = "ui.hint.get_closer";
+
+        /// <summary>"Release cable": the hitch chip's word while 07 tows a load home.</summary>
+        public const string HintTetherRelease = "hint.tether.release";
+
         /// <summary>"KESSLER–ARAI █░ · next: SSR-3 Headlamp": a maker's name, its bar and its next unlock.</summary>
         public const string MakerBar = "ui.maker.bar";
         public const string BuildHintRotate = "build.hint.rotate";

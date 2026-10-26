@@ -51,6 +51,10 @@
             "text": "Drive"
         },
         {
+            "key": "ui.hint.get_closer",
+            "text": "Get closer"
+        },
+        {
             "key": "ui.controls.look",
             "text": "Look"
         },
@@ -993,6 +997,10 @@
         {
             "key": "hint.tether",
             "text": "Hook cable"
+        },
+        {
+            "key": "hint.tether.release",
+            "text": "Release cable"
         },
         {
             "key": "hint.install",

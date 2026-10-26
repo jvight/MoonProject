@@ -477,6 +477,7 @@ MonoBehaviour:
       _liftMetres: 1.2
       _usesToRetire: 1
       _persistUntilUsed: 1
+      _standing: 1
     - _kind: 21
       _action: 1
       _dwellSeconds: 0.6
@@ -499,6 +500,7 @@ MonoBehaviour:
     _cardGap: 18
     _roverClearRadius: 1.1
     _roverClearHeight: 1.7
+    _notReadyOpacity: 0.55
   _pickupFeed:
     _reveal:
       _fadeIn: 0.35

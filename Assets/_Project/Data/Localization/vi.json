@@ -51,6 +51,10 @@
             "text": "Lái"
         },
         {
+            "key": "ui.hint.get_closer",
+            "text": "Lại gần"
+        },
+        {
             "key": "ui.controls.look",
             "text": "Nhìn quanh"
         },
@@ -993,6 +997,10 @@
         {
             "key": "hint.tether",
             "text": "Móc cáp"
+        },
+        {
+            "key": "hint.tether.release",
+            "text": "Thả cáp"
         },
         {
             "key": "hint.install",

@@ -14,6 +14,8 @@ namespace MoonProject.UI
     /// <item>One at a time: a new prompt waits until the old one has fully faded out.</item>
     /// <item>A showing ends when the action is done, when it stops being available, or after a few seconds; the same
     /// prompt then rests for a cooldown before it may return.</item>
+    /// <item>A standing entry (<see cref="PromptEntry.Standing"/>) is the exception: never retired, shown whenever
+    /// its hint is offered, ready or not (the view dims it), and its use does not end it.</item>
     /// </list>
     /// The view reports whether the chip is fully hidden and shows <see cref="Displayed"/> while
     /// <see cref="WantsShown"/>.
@@ -94,9 +96,9 @@ namespace MoonProject.UI
                 // Out of reach for a moment keeps the prompt; another target in reach replaces it at once.
                 _shownAway = desired == Displayed && slotGranted ? 0f : _shownAway + deltaTime;
                 bool otherTarget = primary.Kind != InteractionKind.None && primary.Kind != Displayed;
-                // A first-use key's chip has no time limit: only its key's use (NotifyUsed) or the target leaving
-                // ends it.
-                bool timedOut = !Entry.PersistUntilUsed && _showTime >= _settings.MaxShowSeconds;
+                // A first-use key's chip and a standing chip have no time limit: only the key's use (NotifyUsed, for a
+                // first-use chip) or the target leaving ends them.
+                bool timedOut = !Entry.Untimed && _showTime >= _settings.MaxShowSeconds;
                 if (otherTarget || _shownAway > _settings.DwellGraceSeconds || timedOut)
                 {
                     EndShowing();
@@ -151,11 +153,14 @@ namespace MoonProject.UI
             _cooldownUntil[(int)kind] = 0f;
         }
 
-        /// <summary>The player did <paramref name="kind"/>: it counts as learned, and its prompt bows out.</summary>
+        /// <summary>
+        /// The player did <paramref name="kind"/>: it counts as learned, and its prompt bows out (a standing chip stays,
+        /// its hint says what comes next).
+        /// </summary>
         public void NotifyUsed(InteractionKind kind)
         {
             _ledger.RecordUsed(kind);
-            if (kind == Displayed && !_ending)
+            if (kind == Displayed && !_ending && !Entry.Standing)
             {
                 EndShowing();
             }
@@ -173,14 +178,23 @@ namespace MoonProject.UI
             }
 
             if (_candidate != InteractionKind.None && _candidateAway <= _settings.DwellGraceSeconds &&
-                _ledger.ShouldTeach(_candidate))
+                (_settings.Find(_candidate).Standing || _ledger.ShouldTeach(_candidate)))
             {
                 return true;
             }
 
-            InteractionKind kind = primary.Kind;
-            return kind != InteractionKind.None && primary.Ready && _settings.Find(kind) != null &&
-                   _ledger.ShouldTeach(kind) && !CoolingDown(kind, primary.Position);
+            PromptEntry entry = Offered(primary);
+            return entry != null && (entry.Standing || _ledger.ShouldTeach(entry.Kind) &&
+                !CoolingDown(entry.Kind, primary.Position));
+        }
+
+        /// <summary>
+        /// The entry for <paramref name="primary"/> when it may show: its kind has one, and it is ready or standing.
+        /// </summary>
+        private PromptEntry Offered(InteractionHint primary)
+        {
+            PromptEntry entry = primary.Kind == InteractionKind.None ? null : _settings.Find(primary.Kind);
+            return entry != null && (primary.Ready || entry.Standing) ? entry : null;
         }
 
         /// <summary>
@@ -189,7 +203,7 @@ namespace MoonProject.UI
         /// </summary>
         private bool CoolingDown(InteractionKind kind, Vector3 target)
         {
-            if (_settings.Find(kind).PersistUntilUsed)
+            if (_settings.Find(kind).Untimed)
             {
                 return false;
             }
@@ -201,20 +215,19 @@ namespace MoonProject.UI
 
         private InteractionKind Desire(float deltaTime, bool gateOpen, InteractionHint primary)
         {
-            InteractionKind kind = primary.Kind;
-            bool available = gateOpen && kind != InteractionKind.None && primary.Ready &&
-                             _settings.Find(kind) != null;
-            if (!available)
+            PromptEntry entry = gateOpen ? Offered(primary) : null;
+            if (entry == null)
             {
                 return Away(deltaTime);
             }
 
+            InteractionKind kind = entry.Kind;
             if (kind == Displayed && !_ending)
             {
                 return kind;
             }
 
-            if (!_ledger.ShouldTeach(kind) || CoolingDown(kind, primary.Position))
+            if (!entry.Standing && (!_ledger.ShouldTeach(kind) || CoolingDown(kind, primary.Position)))
             {
                 return Away(deltaTime);
             }
@@ -227,7 +240,7 @@ namespace MoonProject.UI
 
             _candidateAway = 0f;
             _candidateTime += deltaTime;
-            return _candidateTime >= _settings.Find(kind).DwellSeconds ? kind : InteractionKind.None;
+            return _candidateTime >= entry.DwellSeconds ? kind : InteractionKind.None;
         }
 
         /// <summary>

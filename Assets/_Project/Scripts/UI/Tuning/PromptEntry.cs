@@ -37,6 +37,10 @@ namespace MoonProject.UI
                  "with no time limit and no rest after it leaves (opening v3 guidance audit, G3).")]
         [SerializeField] private bool _persistUntilUsed;
 
+        [Tooltip("A standing chip (the hitch of a tow load): never retired, it shows whenever its hint is offered, " +
+                 "dim with \"Get closer\" while out of reach, its key once in reach (and its release while towing).")]
+        [SerializeField] private bool _standing;
+
         public PromptEntry()
         {
         }
@@ -47,7 +51,7 @@ namespace MoonProject.UI
         }
 
         public PromptEntry(InteractionKind kind, RoverAction action, float dwellSeconds, float liftMetres,
-            int usesToRetire, bool persistUntilUsed = false)
+            int usesToRetire, bool persistUntilUsed = false, bool standing = false)
         {
             _kind = kind;
             _action = action;
@@ -55,6 +59,7 @@ namespace MoonProject.UI
             _liftMetres = liftMetres;
             _usesToRetire = usesToRetire;
             _persistUntilUsed = persistUntilUsed;
+            _standing = standing;
         }
 
         public InteractionKind Kind => _kind;
@@ -68,5 +73,10 @@ namespace MoonProject.UI
         public int UsesToRetire => _usesToRetire;
 
         public bool PersistUntilUsed => _persistUntilUsed;
+
+        public bool Standing => _standing;
+
+        /// <summary>True for a chip with no time limit and no rest after it leaves: first-use and standing chips.</summary>
+        public bool Untimed => _persistUntilUsed || _standing;
     }
 }
