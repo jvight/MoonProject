@@ -166,11 +166,11 @@ namespace MoonProject.Gameplay
         [Range(0.5f, 6f)] [SerializeField] private float _pulseTravelSeconds = 2.4f;
 
         [Tooltip("Metres along the cable a pulse's glow spreads, softly, inside the rubber lead.")]
-        [Range(0.3f, 2f)] [SerializeField] private float _pulseWidthMetres = 0.8f;
+        [Range(0.3f, 2f)] [SerializeField] private float _pulseWidthMetres = 1.1f;
 
-        [Tooltip("The pulse from the solar array while the Sun is up: pale sunlit gold, glowing from inside the lead " +
-                 "(the shader keeps it under bloom).")]
-        [ColorUsage(false, true)] [SerializeField] private Color _sunPulseColor = new Color(1.05f, 0.86f, 0.52f, 1f);
+        [Tooltip("The pulse from the solar array while the Sun is up: pale sunlit gold, glowing from inside the lead, " +
+                 "bright enough to read on a sunlit cable (the shader keeps it under bloom).")]
+        [ColorUsage(false, true)] [SerializeField] private Color _sunPulseColor = new Color(1.68f, 1.376f, 0.832f, 1f);
 
         [Tooltip("The pulse from the battery bank at dusk and through the night: the base lamps' warm amber.")]
         [ColorUsage(false, true)] [SerializeField] private Color _bankPulseColor = new Color(1.1f, 0.58f, 0.22f, 1f);
