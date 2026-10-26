@@ -17,7 +17,6 @@ namespace MoonProject.Rover.PlayModeTests
     public sealed class RoverPlacementTests : InputTestFixture
     {
         /// <summary>A shortened rest before the wide shot opens (s).</summary>
-        private const float WideShotDelay = 1.5f;
 
         /// <summary>On the test slope, well up from its foot (local x).</summary>
         private const float SlopeSpotX = -75f;
@@ -40,7 +39,7 @@ namespace MoonProject.Rover.PlayModeTests
             base.Setup();
             _physics = new LunarTestPhysics();
             _world = new TestWorld();
-            _rover = TestRover.Spawn(_world, TestWorld.Point(0f, -150f), 0f, wideShotDelay: WideShotDelay);
+            _rover = TestRover.Spawn(_world, TestWorld.Point(0f, -150f), 0f);
         }
 
         public override void TearDown()
@@ -114,37 +113,30 @@ namespace MoonProject.Rover.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator Placed_TheCameraIsBehind07AtOnce_AndTheWideShotIsGone()
+        public IEnumerator Placed_TheCameraIsBehind07AtOnce()
         {
-            var changes = new List<bool>();
-            using (_rover.Context.Events.Subscribe<RoverWideShotChanged>(changed => changes.Add(changed.Wide)))
+            yield return Wait(1f);
+            Placement.PlaceAt(TestWorld.Point(FarSpotX, FarSpotZ), Quaternion.Euler(0f, ArrivalYaw, 0f));
+
+            Transform camera = _rover.Camera.transform;
+            float chase = _rover.CameraTuning.Distance;
+            float farthest = 0f;
+            float until = Time.time + 1.5f;
+            while (Time.time < until)
             {
-                yield return Wait(WideShotDelay + _rover.CameraTuning.WideShot.OpenSeconds);
-                Assert.IsTrue(_rover.CameraRig.WideShot.IsOpen, "The wide shot was open.");
-
-                Placement.PlaceAt(TestWorld.Point(FarSpotX, FarSpotZ), Quaternion.Euler(0f, ArrivalYaw, 0f));
-                Assert.AreEqual(0f, _rover.CameraRig.WideShot.Weight, "Gone at once, no 0.65 s ease.");
-                CollectionAssert.AreEqual(new[] { true, false }, changes, "Its hand-back was announced.");
-
-                Transform camera = _rover.Camera.transform;
-                float chase = _rover.CameraTuning.Distance;
-                float farthest = 0f;
-                float until = Time.time + 1.5f;
-                while (Time.time < until)
-                {
-                    yield return null;
-                    Vector3 body = _rover.Controller.Position + Vector3.up * _rover.CameraTuning.TargetHeight;
-                    farthest = Mathf.Max(farthest, Vector3.Distance(camera.position, body));
-                }
-
-                Vector3 behind = Quaternion.Euler(0f, ArrivalYaw, 0f) * Vector3.back;
-                Vector3 toCamera = Vector3.ProjectOnPlane(camera.position - _rover.Controller.Position, Vector3.up);
-                float off = Vector3.Angle(behind, toCamera);
-                Debug.Log($"[rover-place] camera at most {farthest:0.00} m from 07 after the placement (chase "
-                    + $"{chase} m), {off:0.0} deg off straight behind");
-                Assert.Less(farthest, 1.2f * chase, "No lerp across from the old spot, ever.");
-                Assert.Less(off, 10f, "Straight behind 07, facing out.");
+                yield return null;
+                Vector3 body = _rover.Controller.Position + Vector3.up * _rover.CameraTuning.TargetHeight;
+                farthest = Mathf.Max(farthest, Vector3.Distance(camera.position, body));
             }
+
+            Vector3 behind = Quaternion.Euler(0f, ArrivalYaw, 0f) * Vector3.back;
+            Vector3 toCamera = Vector3.ProjectOnPlane(camera.position - _rover.Controller.Position, Vector3.up);
+            float off = Vector3.Angle(behind, toCamera);
+            Debug.Log($"[rover-place] camera at most {farthest:0.00} m from 07 after the placement (chase "
+                + $"{chase} m), {off:0.0} deg off straight behind");
+            Assert.Less(farthest, 1.2f * chase, "No lerp across from the old spot, ever.");
+            Assert.Less(off, 10f, "Straight behind 07, facing out.");
+        
         }
     }
 }

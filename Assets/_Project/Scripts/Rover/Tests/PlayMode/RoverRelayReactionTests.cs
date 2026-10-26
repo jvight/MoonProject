@@ -24,7 +24,6 @@ namespace MoonProject.Rover.PlayModeTests
         private const float FarSignal = 420f;
 
         /// <summary>A shortened rest before the wide shot opens (s).</summary>
-        private const float WideShotDelay = 1.5f;
 
         private LunarTestPhysics _physics;
         private TestWorld _world;
@@ -35,7 +34,7 @@ namespace MoonProject.Rover.PlayModeTests
             base.Setup();
             _physics = new LunarTestPhysics();
             _world = new TestWorld();
-            _rover = TestRover.Spawn(_world, TestWorld.Point(0f, -150f), 0f, wideShotDelay: WideShotDelay);
+            _rover = TestRover.Spawn(_world, TestWorld.Point(0f, -150f), 0f);
         }
 
         public override void TearDown()
@@ -175,20 +174,5 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.Less(Mathf.Abs(NeckYaw), 5f, "Then settles ahead.");
         }
 
-        [UnityTest]
-        public IEnumerator HopListOpen_KeepsTheWideShotClosed()
-        {
-            _rover.Context.Events.Publish(new RadioHopListChanged(true));
-            yield return Wait(WideShotDelay + 2f);
-            Assert.IsFalse(_rover.CameraRig.WideShot.IsOpen, "Choosing where to hop: the camera stays close.");
-
-            _rover.Context.Events.Publish(new RadioHopListChanged(false));
-            yield return Wait(WideShotDelay + 0.5f);
-            Assert.IsTrue(_rover.CameraRig.WideShot.IsOpen, "List closed and left alone: the frame opens.");
-
-            _rover.Context.Events.Publish(new RadioHopListChanged(true));
-            yield return null;
-            Assert.IsFalse(_rover.CameraRig.WideShot.IsOpen, "Opening the list hands the view back.");
-        }
     }
 }

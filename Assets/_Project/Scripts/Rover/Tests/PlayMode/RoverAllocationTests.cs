@@ -20,6 +20,7 @@ namespace MoonProject.Rover.PlayModeTests
     /// </summary>
     public sealed class RoverAllocationTests : InputTestFixture
     {
+        private const float RestSeconds = 3f;
         private const int WarmUpCalls = 120;
         private const int MeasuredCalls = 600;
         private const int BaselineFrames = 5;
@@ -34,7 +35,6 @@ namespace MoonProject.Rover.PlayModeTests
         private const string AllocatedInFrame = "GC Allocated In Frame";
 
         /// <summary>A shortened rest before the wide shot opens (s).</summary>
-        private const float WideShotDelay = 1f;
 
         private LunarTestPhysics _physics;
         private TestWorld _world;
@@ -74,21 +74,19 @@ namespace MoonProject.Rover.PlayModeTests
         }
 
         /// <summary>
-        /// 07 resting: the stillness count, the lonely wide shot opening and breathing, the daydream and its sigh, and
-        /// the lamp motes all live.
+        /// 07 resting: the stillness count, the daydream and its sigh, and the lamp motes all live.
         /// </summary>
         [UnityTest]
-        public IEnumerator PerFrameMethods_WhileResting_InTheWideShot_DoNotAllocate()
+        public IEnumerator PerFrameMethods_WhileResting_DoNotAllocate()
         {
             _world = new TestWorld();
-            _rover = TestRover.Spawn(_world, TestWorld.Point(0f, -100f), 0f, wideShotDelay: WideShotDelay);
-            float until = Time.time + WideShotDelay + 2f;
+            _rover = TestRover.Spawn(_world, TestWorld.Point(0f, -100f), 0f);
+            float until = Time.time + RestSeconds;
             while (Time.time < until)
             {
                 yield return null;
             }
 
-            Assert.IsTrue(_rover.CameraRig.WideShot.IsOpen, "Measure while the wide shot opens.");
             Assert.AreEqual(0, _rover.LampMotes.System.particleCount, "No floating motes while parked in vacuum.");
             yield return MeasurePerFrameMethods(_rover);
         }

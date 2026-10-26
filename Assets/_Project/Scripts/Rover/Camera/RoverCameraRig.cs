@@ -17,11 +17,9 @@ namespace MoonProject.Rover
     /// dips softly on landings; the player's Gentle camera stills both and slows every blend. Reads the rover only
     /// through <see cref="IRoverState"/>, so it must initialise after the rover.
     /// Slow, skippable camera moments frame 07 with the beam while digging, a surfacing relic or a relay mast's lamp
-    /// as it lights. When 07 has
-    /// rested a while (<see cref="IRoverStillness"/>) with nothing going on, the camera drifts out to the lonely
-    /// <see cref="WideShot"/>, composed against the analytic terrain (<see cref="ITerrainQuery"/>), and publishes
-    /// <see cref="RoverWideShotChanged"/> as it opens and hands back. Camera moments, the tether, the radio-hop
-    /// list and interactions take precedence over it. When 07 is placed somewhere else
+    /// as it lights, always ended by the player's own look input. The dock's evening is a held wide frame, composed
+    /// against the analytic terrain (<see cref="ITerrainQuery"/>), published as <see cref="RoverWideShotChanged"/>.
+    /// When 07 is placed somewhere else
     /// (<see cref="RoverPlaced"/>) everything snaps behind it, no ease. Registers itself as <see cref="IViewCamera"/>
     /// (gameplay aims from its centre ray, UI projects with it) and <see cref="ILookSettings"/> (the UI applies the
     /// player's sensitivity and invert-Y).
@@ -48,7 +46,6 @@ namespace MoonProject.Rover
         /// <summary>The tow's sideways swing follows its solution with a half-life this many times shorter than its ease.</summary>
 
         /// <summary>The dock frame looks toward 07's right (deg from its heading): the camera sits behind-left of it.</summary>
-        private const float DockSideDegrees = 90f;
 
         /// <summary>Blend weight below this is settled enough to treat a framed shot or face-inspect mode as inactive.</summary>
         private const float ShotWeightEpsilon = 0.01f;
@@ -85,11 +82,7 @@ namespace MoonProject.Rover
         private readonly BuildFraming _buildFraming = new BuildFraming();
         private readonly FaceCloseSequence _faceClose = new FaceCloseSequence();
         private FaceCloseDip _faceCloseDip;
-        private WideShot _wide;
-        private bool _wideSteersYaw;
         private bool _tethered;
-        private bool _hopListOpen;
-        private bool _paused;
         private bool _crawling;
         private float _crawl;
         private bool _towing;
@@ -120,8 +113,6 @@ namespace MoonProject.Rover
         private bool _evening;
         private BeamFraming _beam;
         private bool _charging;
-        private float _chargingSeconds;
-        private bool _chargeAsks;
         private readonly FaceInspectSightLine _faceSight = new FaceInspectSightLine();
         private RoverBodyLanguage _faceInspectBody;
         private FaceInspectShot _faceInspectShot;
@@ -183,7 +174,6 @@ namespace MoonProject.Rover
         public float SkyLift => _stargaze != null ? _stargaze.Lift : 0f;
 
         /// <summary>The lonely wide shot's state (quiet time, weight, frame), for tests and tooling.</summary>
-        public WideShot WideShot => _wide;
 
         /// <summary>How far the current camera moment has eased in, 0..1 (for tests and tooling).</summary>
         public float MomentWeight => _moment.Weight;
@@ -260,7 +250,6 @@ namespace MoonProject.Rover
             _framing = new TargetFraming(_tuning);
             _stargaze = new Stargaze(_tuning);
             _opening = new WakeOpening(_tuning);
-            _wide = new WideShot(_tuning.WideShot);
             _look = new LookSettings(_tuning);
             _beam = new BeamFraming(_tuning);
             if (_faceInspectBody == null && _rover is Component roverComponent)
@@ -286,10 +275,6 @@ namespace MoonProject.Rover
                 context.Events.Subscribe<DockEveningOpened>(OnDockEveningOpened),
                 context.Events.Subscribe<TetherAttached>(OnTetherAttached),
                 context.Events.Subscribe<TetherReleased>(OnTetherReleased),
-                context.Events.Subscribe<PauseChanged>(OnPauseChanged),
-                context.Events.Subscribe<UiCue>(OnUiCue),
-                context.Events.Subscribe<BellCued>(OnBellCued),
-                context.Events.Subscribe<RadioHopListChanged>(OnHopListChanged),
                 context.Events.Subscribe<RoverPlaced>(OnPlaced),
                 context.Events.Subscribe<LowPowerChanged>(OnLowPowerChanged),
                 context.Events.Subscribe<TowAttached>(OnTowAttached),
@@ -383,9 +368,7 @@ namespace MoonProject.Rover
             float blend = gentle ? _tuning.GentleMinShotBlend : _tuning.MinShotBlend;
             _orbitState.Gentle = gentle;
             _moment.MinBlend = blend;
-            _wide.MinBlend = blend;
             _held.MinBlend = blend;
-            _wide.BreathRate = gentle ? _tuning.GentleBreathRate : 1f;
         }
 
         /// <summary>Puts the camera straight behind the rover with no damping (spawn, placement).</summary>
@@ -444,7 +427,7 @@ namespace MoonProject.Rover
         private void StepWallCompression(float deltaTime, bool snap)
         {
             bool suppress = _faceInspectOpen || _faceInspectWeight > ShotWeightEpsilon || _opening.IsActive
-                || _wide.Weight > ShotWeightEpsilon || _held.Weight > ShotWeightEpsilon;
+                || _held.Weight > ShotWeightEpsilon;
             if (suppress)
             {
                 _wallCompressionTarget = snap ? 0f : Smoothing.Damp(_wallCompressionTarget, 0f, _tuning.WallLiftHalfLife, deltaTime);
@@ -512,14 +495,9 @@ namespace MoonProject.Rover
                 _beam.Framing.End(_tuning.CutFrameHandBackSeconds);
             }
 
-            if (driving && (IsTowerMoment || _gazePan.IsActive || IsDockMoment || IsLampFitMoment))
+            if (driving && (IsTowerMoment || _gazePan.IsActive || IsLampFitMoment))
             {
                 _moment.Cancel(_tuning.MomentCancelEaseOut);
-            }
-
-            if (recenter && _wide.IsOpen)
-            {
-                HandBackWideShot();
             }
 
             _opening.Step(deltaTime);
@@ -527,7 +505,6 @@ namespace MoonProject.Rover
             StepFaceInspect(deltaTime);
             StepReleasePan(deltaTime);
             _moment.Step(deltaTime);
-            StepWideShot(deltaTime);
             StepHeldShot(viewInput, deltaTime);
             StepMomentFraming(deltaTime);
             _beam.Framing.Step(deltaTime);
@@ -633,7 +610,7 @@ namespace MoonProject.Rover
                 descent = Mathf.Atan2(-velocity.y, airSpeed) * Mathf.Rad2Deg;
             }
 
-            bool mayRecenter = !_moment.IsActive && _wide.Weight <= 0f && _held.Weight <= 0f
+            bool mayRecenter = !_moment.IsActive && _held.Weight <= 0f
                 && !_faceInspectOpen && _faceInspectWeight <= 0f && !_opening.IsActive && !_crawling
                 && !_buildFraming.IsActive && _buildFraming.Weight <= 0f && (CursorLockOverride ?? Cursor.lockState == CursorLockMode.Locked);
             return new CameraOrbitInput(look, _input.LookRate.sqrMagnitude > 0f, recenter, roverYaw, forwardSpeed,
@@ -728,11 +705,6 @@ namespace MoonProject.Rover
             if (open)
             {
                 SetHeadHidden(false);
-                if (_wide != null && _wide.IsOpen)
-                {
-                    HandBackWideShot();
-                }
-
                 _moment.Clear();
                 _gazePan.End();
                 SolveFaceInspectShot();
@@ -969,7 +941,7 @@ namespace MoonProject.Rover
             }
 
             int targetCount = _focus != null ? _focus.CopyFocus(_focusPoints) : 0;
-            bool mayFrame = _wide.Weight <= 0f && _held.Weight <= 0f && !_buildFraming.IsActive && _buildFraming.Weight <= 0f
+            bool mayFrame = _held.Weight <= 0f && !_buildFraming.IsActive && _buildFraming.Weight <= 0f
                 && !_faceInspectOpen && _faceInspectWeight <= 0f && !_opening.IsActive && !_crawling;
             ChaseOrbit(out float yaw, out float elevation, out float radius);
             _framing.Step(new TargetFramingInput(_rover.Position, RoverYaw(), _focusPoints, targetCount,
@@ -1028,27 +1000,6 @@ namespace MoonProject.Rover
             {
                 screen.y = Mathf.Lerp(screen.y, _tuning.BuildFrameScreenY, _buildFraming.Weight);
             }
-            float wide = _wide.Weight;
-            if (wide > 0f)
-            {
-                WideShotSettings settings = _tuning.WideShot;
-                WideShotFrame frame = _wide.Frame;
-                float time = _wide.BreathSeconds;
-                if (_wideSteersYaw)
-                {
-                    float sway = WideShotComposer.Breath(settings.BreathYaw, settings.BreathYawPeriod, time);
-                    float wideYaw = Mathf.DeltaAngle(RoverYaw() + _momentYaw, frame.Yaw + sway);
-                    yaw += Mathf.DeltaAngle(yaw, wideYaw) * wide;
-                }
-
-                float rise = WideShotComposer.Breath(settings.BreathElevation, settings.BreathElevationPeriod, time);
-                float drift = WideShotComposer.Breath(settings.BreathDistance, settings.BreathDistancePeriod, time);
-                elevation = Mathf.Lerp(elevation, frame.Elevation + rise, wide);
-                radius = Mathf.Lerp(radius, frame.Distance * (1f + drift), wide);
-                fov = Mathf.Lerp(fov, _tuning.BaseFov + settings.FovWiden, wide);
-                screen.y = Mathf.Lerp(screen.y, frame.ScreenY, wide);
-            }
-
             float framed = _held.Weight;
             if (framed > 0f)
             {
@@ -1118,29 +1069,6 @@ namespace MoonProject.Rover
                 : _faceInspectShot.Focus + (_faceInspectShot.Eye - _faceInspectShot.Focus) * _pageShare;
             _bump.FaceInspectRotation = _faceInspectShot.Rotation;
             _bump.FaceInspectUp = _faceInspectShot.ScreenUp;
-        }
-
-        /// <summary>
-        /// Counts 07's rest toward the wide shot (a moment, a leap or the tether keep it closed; the pause menu only
-        /// delays it) and opens or hands it back when it says so. A charge asks for it once, after its charging delay.
-        /// </summary>
-        private void StepWideShot(float deltaTime)
-        {
-            bool busy = _moment.IsActive || _tethered || _hopListOpen || _stargaze.LookUp > 0f
-                || _opening.IsActive || _held.IsOpen || _faceInspectOpen || _faceInspectWeight > 0f
-                || _buildFraming.IsActive || _buildFraming.Weight > 0f;
-            _chargingSeconds = _charging ? _chargingSeconds + deltaTime : 0f;
-            bool asked = _chargeAsks && _chargingSeconds >= _tuning.WideShot.ChargingDelay;
-            switch (_wide.Step(_stillness.StillSeconds, busy, _paused, asked, deltaTime))
-            {
-                case WideShotCue.Open:
-                    _chargeAsks = false;
-                    OpenWideShot();
-                    break;
-                case WideShotCue.HandBack:
-                    HandBackWideShot();
-                    break;
-            }
         }
 
         /// <summary>
@@ -1236,47 +1164,12 @@ namespace MoonProject.Rover
         {
             bool moving = _rover.DriveInput.sqrMagnitude > DriveEpsilon * DriveEpsilon
                 || _rover.Speed > _tuning.StargazeMaxSpeed;
-            bool free = !_moment.IsActive && _wide.Weight <= 0f && !_tethered
+            bool free = !_moment.IsActive && !_tethered
                 && !_opening.IsActive && _held.Weight <= 0f && !_faceInspectOpen && _faceInspectWeight <= 0f;
             if (_stargaze.Step(_orbitState.Elevation, _stillness.StillSeconds, moving, free, deltaTime))
             {
                 _events.Publish(new StargazingChanged(_stargaze.IsActive));
             }
-        }
-
-        /// <summary>
-        /// Composes the wide frame from where the camera looks now, turned gently toward Earth or The Peak (or, shut in
-        /// by a canyon, closer and looking along the way) and fitted to the terrain. 07 is resting, so the frame is
-        /// solved once and holds.
-        /// </summary>
-        private void OpenWideShot()
-        {
-            WideShotSettings settings = _tuning.WideShot;
-            Vector3 follow = _rover.Position + Vector3.up * _tuning.TargetHeight;
-            float viewYaw = WideShotComposer.Bearing(_viewCamera.transform.forward);
-            float earthYaw = WideShotComposer.Bearing(_world.EarthDirection);
-            float peakYaw = WideShotComposer.Bearing(_world.PeakPosition - follow);
-            float swing = WideShotComposer.SubjectSwing(settings, viewYaw, earthYaw, peakYaw);
-            float shutIn = WideShotComposer.ShutIn(settings, _terrain, follow);
-            _wide.Open(WideShotComposer.Solve(settings, _terrain, follow, viewYaw, swing, shutIn));
-            _wideSteersYaw = true;
-            _events.Publish(new RoverWideShotChanged(true));
-        }
-
-        /// <summary>
-        /// Eases back to the chase camera. The view keeps the bearing the wide shot turned to (the orbit adopts it),
-        /// so only distance, height and lens come back: the quickest return that never swings the world round.
-        /// </summary>
-        private void HandBackWideShot()
-        {
-            if (_wideSteersYaw)
-            {
-                AdoptViewBearing();
-                _wideSteersYaw = false;
-            }
-
-            _wide.HandBack();
-            _events.Publish(new RoverWideShotChanged(false));
         }
 
         /// <summary>
@@ -1359,13 +1252,7 @@ namespace MoonProject.Rover
         /// </summary>
         private void OpenHeldShot(WideShotSettings settings, Vector3 follow, float yaw, float holdSeconds)
         {
-            if (_wide.IsOpen)
-            {
-                HandBackWideShot();
-            }
-
             bool wasOpen = _held.IsOpen;
-            _chargeAsks = false;
             _held.Open(settings, ClearHeldFrame(settings, follow, yaw), holdSeconds);
             _evening = false;
             if (!wasOpen)
@@ -1457,11 +1344,6 @@ namespace MoonProject.Rover
             _tethered = false;
         }
 
-        private void OnHopListChanged(RadioHopListChanged list)
-        {
-            _hopListOpen = list.Open;
-        }
-
         /// <summary>
         /// 07 jumped somewhere else while the view was dark: the wide shot and any moment end at once and the camera
         /// snaps behind 07, so nothing lerps across from the old spot.
@@ -1471,29 +1353,15 @@ namespace MoonProject.Rover
         /// a loaded crawl starts framed.
         /// </summary>
         /// <summary>
-        /// A charge starting asks for the wide shot after its delay, unless a held shot (the dock's evening) already
-        /// has the view.
+        /// Whether 07 is charging, which lengthens the dock's evening while the fill runs.
         /// </summary>
         private void OnChargingChanged(ChargingChanged charging)
         {
             _charging = charging.Charging;
-            bool pad = charging.Charger == ChargerKind.Pad;
-            _chargeAsks = _charging && !_held.IsOpen && !pad;
-            if (pad && _charging && !_moment.IsActive && !_held.IsOpen && !_opening.IsActive)
-            {
-                Vector3 side = Quaternion.Euler(0f, RoverYaw() + DockSideDegrees, 0f) * Vector3.forward;
-                _moment.Start(_tuning.DockMoment, _rover.Position + side * _tuning.DockSideMetres, true);
-            }
-            else if (!_charging && IsDockMoment)
-            {
-                _moment.Release();
-            }
         }
 
         /// <summary>The camera moment running now is the closer frame while 07 charges on its pad.</summary>
         private bool IsLampFitMoment => _moment.IsActive && ReferenceEquals(_moment.Settings, _tuning.LampFitMoment);
-
-        private bool IsDockMoment => _moment.IsActive && ReferenceEquals(_moment.Settings, _tuning.DockMoment);
 
         private void OnLowPowerChanged(LowPowerChanged lowPower)
         {
@@ -1506,11 +1374,9 @@ namespace MoonProject.Rover
 
         private void OnPlaced(RoverPlaced placed)
         {
-            bool wasWide = _wide.IsOpen || _held.IsOpen;
-            _wide.Close();
+            bool wasWide = _held.IsOpen;
             _held.Reset();
             _evening = false;
-            _wideSteersYaw = false;
             _moment.Clear();
             _gazePan.End();
             _faceInspectOpen = false;
@@ -1534,11 +1400,6 @@ namespace MoonProject.Rover
             {
                 _events.Publish(new RoverWideShotChanged(false));
             }
-        }
-
-        private void OnPauseChanged(PauseChanged pause)
-        {
-            _paused = pause.Paused;
         }
 
         private void StepBuildFraming(Vector2 look, bool recenter, bool externalYaw, float deltaTime)
@@ -1566,11 +1427,6 @@ namespace MoonProject.Rover
         {
             if (placing.Placing)
             {
-                if (_wide.IsOpen)
-                {
-                    HandBackWideShot();
-                }
-
                 // Placing is the player taking the wheel: a held shot (the dock's evening) would keep the view where it
                 // stands, and the build framing never brings the ghost into it.
                 if (_held.IsOpen)
@@ -1596,37 +1452,6 @@ namespace MoonProject.Rover
             else
             {
                 _buildFraming.End();
-            }
-        }
-
-        /// <summary>A card to read holds the wide shot back; holding an upgrade's confirm is an interaction.</summary>
-        private void OnUiCue(UiCue cue)
-        {
-            if (cue.Kind == UiCueKind.CardShown)
-            {
-                _wide.HoldBack(_tuning.WideShot.CardQuietSeconds);
-            }
-            else if (cue.Kind == UiCueKind.HoldFill)
-            {
-                Interact();
-            }
-        }
-
-        private void OnBellCued(BellCued cue)
-        {
-            if (cue.Cue == BellCue.DialTurned)
-            {
-                Interact();
-            }
-        }
-
-        /// <summary>The player did something at a station or at Bell: hand back and stay close for a while.</summary>
-        private void Interact()
-        {
-            _wide.HoldBack(_tuning.WideShot.InteractionQuietSeconds);
-            if (_wide.IsOpen)
-            {
-                HandBackWideShot();
             }
         }
 

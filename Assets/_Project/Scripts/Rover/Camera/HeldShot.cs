@@ -15,6 +15,9 @@ namespace MoonProject.Rover
     /// </summary>
     public sealed class HeldShot
     {
+        /// <summary>A critically damped spring from rest covers 95% of the way once omega * t reaches this.</summary>
+        private const float SettleOmegaTime = 4.744f;
+
         private const float CriticalDamping = 1f;
 
         /// <summary>A closing frame this near the chase camera is back (the spring would only creep).</summary>
@@ -67,6 +70,12 @@ namespace MoonProject.Rover
             _weight.Reset(0f);
         }
 
+        /// <summary>Spring frequency (Hz) that covers 95% of the way in <paramref name="settleSeconds"/>.</summary>
+        public static float Frequency(float settleSeconds)
+        {
+            return SettleOmegaTime / (2f * Mathf.PI * Mathf.Max(settleSeconds, 1e-3f));
+        }
+
         public void Step(float deltaTime)
         {
             if (Settings == null)
@@ -77,7 +86,7 @@ namespace MoonProject.Rover
             float step = Mathf.Max(deltaTime, 0f);
             Seconds += step;
             float settle = Mathf.Max(IsOpen ? Settings.OpenSeconds : Settings.HandBackSeconds, MinBlend);
-            _weight.Step(IsOpen ? 1f : 0f, WideShot.Frequency(settle), CriticalDamping, step);
+            _weight.Step(IsOpen ? 1f : 0f, Frequency(settle), CriticalDamping, step);
             _weight.Clamp(0f, 1f);
             if (!IsOpen && _weight.Value < RestWeight)
             {

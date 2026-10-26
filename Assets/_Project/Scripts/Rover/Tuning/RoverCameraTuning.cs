@@ -464,12 +464,6 @@ namespace MoonProject.Rover
         [Range(0.1f, 1.5f)]
         [SerializeField] private float _gazePanHalfLife = 0.5f;
 
-        [Tooltip("07 charging on its pad: the camera eases (calm, about 20 deg/s) to a closer three-quarter rear frame " +
-                 "where the lamp bar and the clamps read, instead of pulling out to the wide shot, and eases back when " +
-                 "the charge ends. Any look or drive input gives control back at once.")]
-        [SerializeField] private CameraMomentSettings _dockMoment =
-            new CameraMomentSettings(2.4f, 0f, 2.4f, 0.1f, 0.6f, 1f, 32f, 32f, 5f, -0.35f, 100000f);
-
         [Tooltip("The headlamp fitted live at the rack: the camera eases round to a calm front three-quarter frame of " +
                  "07's head, so the pods clamping and the lenses warming read, then eases back. Any look or drive input " +
                  "gives control back at once.")]
@@ -484,10 +478,6 @@ namespace MoonProject.Rover
         [Tooltip("Metres from 07 the lamp-fit frame's look direction is placed (only its bearing matters).")]
         [Range(1f, 20f)]
         [SerializeField] private float _lampFitSubjectMetres = 5f;
-
-        [Tooltip("Metres to 07's side the dock frame looks toward: it sets which side the three-quarter frame sits on.")]
-        [Range(1f, 20f)]
-        [SerializeField] private float _dockSideMetres = 6f;
 
         [Tooltip("07's first look up the crew's ladder, then at the lift: the camera eases low and a little back, "
             + "looking up past 07 at the ladder to the deck, follows the gaze across to the lift, and returns once "
@@ -513,10 +503,6 @@ namespace MoonProject.Rover
         [Range(2f, 6f)]
         [SerializeField] private float _gentleMinShotBlend = 2f;
 
-        [Tooltip("Speed of the wide shot's slow breathing while the Gentle camera is on (1 = as tuned).")]
-        [Range(0.1f, 1f)]
-        [SerializeField] private float _gentleBreathRate = 0.5f;
-
         [Tooltip("Lowest look sensitivity multiplier the settings menu can choose while the Gentle camera is on.")]
         [Range(0.05f, 1f)]
         [SerializeField] private float _gentleMinSensitivity = 0.15f;
@@ -525,11 +511,6 @@ namespace MoonProject.Rover
         [Tooltip("The fresh game's wake through 07's own eye (cutscenes §1), the short wake and the title's frames "
             + "(M3-09 Part A).")]
         [SerializeField] private OpeningSettings _opening = new OpeningSettings();
-
-        [Header("Wide shot")]
-        [Tooltip("Resting a while: the camera drifts out to a wide, lonely frame with 07 small against the land and "
-            + "the sky (VISION pillar 6), and hands back on any drive or look input.")]
-        [SerializeField] private WideShotSettings _wideShot = new WideShotSettings();
 
         [Header("The dock's evening")]
         [Tooltip("07 parked at its dock after a trip: the camera eases out to a wide shot from the dock looking at "
@@ -1043,10 +1024,6 @@ namespace MoonProject.Rover
 
         public float LampFitSubjectMetres => _lampFitSubjectMetres;
 
-        public CameraMomentSettings DockMoment => _dockMoment;
-
-        public float DockSideMetres => _dockSideMetres;
-
         public CameraMomentSettings LadderMoment => _ladderMoment;
 
         public float MomentCancelEaseOut => _momentCancelEaseOut;
@@ -1056,10 +1033,6 @@ namespace MoonProject.Rover
         public float MinShotBlend => _minShotBlend;
 
         public float GentleMinShotBlend => Mathf.Max(_gentleMinShotBlend, _minShotBlend);
-
-        public float GentleBreathRate => _gentleBreathRate;
-
-        public WideShotSettings WideShot => _wideShot;
 
         public WideShotSettings EveningShot => _eveningShot;
 
