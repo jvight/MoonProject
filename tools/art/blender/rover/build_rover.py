@@ -15,7 +15,7 @@ for _p in (BLENDER_DIR, SCRIPT_DIR):
         sys.path.insert(0, str(_p))
 sys.dont_write_bytecode = True
 
-from r1kit import bake_vertex_colors, count_model_stats, export_fbx, reset_scene
+from r1kit import bake_vertex_colors, count_model_stats, export_fbx, reset_scene, separate_coplanar_faces
 from render_suite import (
     enhance_materials_with_vertex_color_for_render,
     render_orthographic_views_and_turnaround,
@@ -385,6 +385,7 @@ def main(argv=None):
     rv_objs = list(bpy.data.objects)
     rv_meshes = [o for o in rv_objs if o.type == "MESH"]
     rv_bake_meshes = [o for o in rv_meshes if not o.name.startswith("Decal_KA_")]
+    separate_coplanar_faces(rv_meshes)
     seg2_obj = bpy.data.objects.get("Antenna_Segment2")
     if seg2_obj is not None:
         seg2_obj.location.z += 0.35

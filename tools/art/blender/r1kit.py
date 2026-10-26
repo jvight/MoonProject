@@ -3467,6 +3467,7 @@ def prune_unused_materials(mesh_objects: Iterable[bpy.types.Object]) -> None:
 
 COPLANAR_PLANE_EPS = 0.0006
 COPLANAR_OFFSET = 0.0015
+COPLANAR_CANDIDATE_EPS = 0.01
 
 
 def _coplanar_overlap_2d(a: list[tuple[float, float]], b: list[tuple[float, float]]) -> bool:
@@ -3484,10 +3485,30 @@ def _coplanar_overlap_2d(a: list[tuple[float, float]], b: list[tuple[float, floa
     return True
 
 
+def _coplanar_triangles_overlap(ta: list[Vector], tb: list[Vector]) -> bool:
+    """True when two world-space triangles face the same way, lie in the same plane and overlap."""
+    na = (ta[1] - ta[0]).cross(ta[2] - ta[0])
+    nb = (tb[1] - tb[0]).cross(tb[2] - tb[0])
+    if na.length < 1e-9 or nb.length < 1e-9:
+        return False
+    na.normalize()
+    nb.normalize()
+    # A small face leaning a hair off a big one stays within the depth tolerance of the big one's plane, though not
+    # the other way round
+    if (na - nb).length > 0.02 or min(
+        max(abs(na.dot(p - ta[0])) for p in tb), max(abs(nb.dot(p - tb[0])) for p in ta)
+    ) > COPLANAR_PLANE_EPS:
+        return False
+    axis = Vector((1.0, 0.0, 0.0)) if abs(na.x) < 0.9 else Vector((0.0, 1.0, 0.0))
+    u = na.cross(axis).normalized()
+    v = na.cross(u)
+    return _coplanar_overlap_2d([(p.dot(u), p.dot(v)) for p in ta], [(p.dot(u), p.dot(v)) for p in tb])
+
+
 def separate_coplanar_faces(objects: Sequence[bpy.types.Object], offset: float = COPLANAR_OFFSET,
-                            max_passes: int = 4) -> int:
-    """Run `_separate_coplanar_pass` until no face moves (a pushed face can land in a third face's plane) or
-    `max_passes` is reached; returns the total number of faces moved."""
+                            max_passes: int = 12) -> int:
+    """Run `_separate_coplanar_pass` until no surface moves (a pushed surface can land in a third one's plane) or
+    `max_passes` is reached; returns the total number of surfaces moved."""
     total = 0
     for _ in range(max_passes):
         moved = _separate_coplanar_pass(objects, offset)
@@ -3497,18 +3518,48 @@ def separate_coplanar_faces(objects: Sequence[bpy.types.Object], offset: float =
     return total
 
 
+def _coplanar_patches(bm: bmesh.types.BMesh, normals: dict[int, Vector], planes: dict[int, float]) -> dict[int, int]:
+    """Group a mesh's faces into flat surfaces: edge-connected faces with the same normal and plane share a patch id."""
+    patch_of: dict[int, int] = {}
+    for seed in bm.faces:
+        if seed.index in patch_of or seed.index not in normals:
+            continue
+        patch_of[seed.index] = seed.index
+        stack = [seed]
+        while stack:
+            face = stack.pop()
+            for edge in face.edges:
+                for other in edge.link_faces:
+                    k = other.index
+                    if k in patch_of or k not in normals:
+                        continue
+                    if (normals[k] - normals[seed.index]).length > 0.02:
+                        continue
+                    if abs(planes[k] - planes[seed.index]) > COPLANAR_PLANE_EPS:
+                        continue
+                    patch_of[k] = seed.index
+                    stack.append(other)
+    return patch_of
+
+
 def _separate_coplanar_pass(objects: Sequence[bpy.types.Object], offset: float) -> int:
-    """Push apart faces that face the same way in the same plane and overlap (they z-fight in the depth buffer):
-    within each such pair, the smaller face moves `offset` metres out along its normal, so a flush trim, plate or
-    end cap stands a hair proud of the surface it shares. Works in world space across `objects` and returns the
-    number of faces moved. Call after the meshes are built and placed, before baking vertex colours."""
-    meshes = [o for o in objects if o.type == "MESH" and o.data is not None]
+    """Push apart surfaces that face the same way in the same plane and overlap (they z-fight in the depth buffer):
+    of each such pair, the smaller flat surface (all its edge-connected faces in that plane, so a fan-triangulated cap
+    moves as one) moves `offset` metres out along its normal, so a flush trim, plate or end cap stands a hair proud of
+    the surface it shares. Works in world space across `objects` and returns the number of surfaces moved. Call after
+    the meshes are built and placed, before baking vertex colours."""
+    # UCX_ collision hulls are never drawn, so they cannot z-fight and must keep their shape
+    meshes = [o for o in objects if o.type == "MESH" and o.data is not None and not o.name.startswith("UCX_")]
     entries = []
     bms = {}
+    patch_faces: dict[tuple[str, int], list[int]] = {}
+    patch_area: dict[tuple[str, int], float] = {}
+    patch_normal: dict[tuple[str, int], Vector] = {}
     for obj in meshes:
         bm = bmesh.new()
         bm.from_mesh(obj.data)
         bm.normal_update()
+        bm.faces.ensure_lookup_table()
         bms[obj.name] = (obj, bm)
         world = obj.matrix_world
         normal_matrix = world.to_3x3().inverted_safe().transposed()
@@ -3516,49 +3567,64 @@ def _separate_coplanar_pass(objects: Sequence[bpy.types.Object], offset: float) 
         tris_by_face: dict[int, list] = {}
         for loops in bm.calc_loop_triangles():
             tris_by_face.setdefault(loops[0].face.index, []).append([world @ l.vert.co for l in loops])
+        normals: dict[int, Vector] = {}
+        planes: dict[int, float] = {}
         for face in bm.faces:
-            area = face.calc_area()
-            if area < 1e-6:
+            if face.calc_area() < 1e-6:
                 continue
             n = (normal_matrix @ face.normal).normalized()
-            pts = [world @ v.co for v in face.verts]
-            entries.append((obj.name, face.index, n, pts, area, tris_by_face.get(face.index, [])))
+            normals[face.index] = n
+            planes[face.index] = n.dot(world @ face.verts[0].co)
+        patch_of = _coplanar_patches(bm, normals, planes)
+        for index, n in normals.items():
+            key = (obj.name, patch_of[index])
+            patch_faces.setdefault(key, []).append(index)
+            patch_area[key] = patch_area.get(key, 0.0) + bm.faces[index].calc_area()
+            patch_normal.setdefault(key, n)
+            entries.append((key, n, planes[index], tris_by_face.get(index, []), index, bm.faces[index].calc_area()))
 
-    # Bucket by the normal's dominant axis and sign only, then walk each bucket sorted by plane distance: no
-    # quantisation boundary can split a coplanar pair
+    # Bucket by the normal's dominant axis and sign, then walk each bucket sorted by plane distance: no quantisation
+    # boundary can split a coplanar pair. A face whose normal sits near a tie between axes (a 45-degree bevel or brace)
+    # goes in every near-dominant axis's bucket, so its twin cannot land in the other one unseen.
     buckets: dict[tuple[int, bool], list] = {}
     for entry in entries:
-        n = entry[2]
-        axis = max(range(3), key=lambda k: abs(n[k]))
-        buckets.setdefault((axis, n[axis] > 0.0), []).append((n.dot(entry[3][0]), entry))
+        n = entry[1]
+        top = max(abs(n[k]) for k in range(3))
+        for axis in range(3):
+            if abs(n[axis]) >= top - 0.1:
+                buckets.setdefault((axis, n[axis] > 0.0), []).append(entry)
 
-    to_move: dict[tuple[str, int], Vector] = {}
+    to_move: set[tuple[str, int]] = set()
     for group in buckets.values():
-        group.sort(key=lambda item: item[0])
+        group.sort(key=lambda item: item[2])
         for i in range(len(group)):
             j = i + 1
-            while j < len(group) and group[j][0] - group[i][0] <= COPLANAR_PLANE_EPS:
-                a, b = group[i][1], group[j][1]
+            # Plane distances of slightly tilted faces drift with distance from the origin, so gather loosely and
+            # decide on the triangles themselves below
+            while j < len(group) and group[j][2] - group[i][2] <= COPLANAR_CANDIDATE_EPS:
+                a, b = group[i], group[j]
                 j += 1
-                if (a[2] - b[2]).length > 0.02 or abs(a[2].dot(a[3][0]) - a[2].dot(b[3][0])) > COPLANAR_PLANE_EPS:
+                # Two faces folded over each other inside one surface move alone, not with the whole surface
+                unit_a, unit_b = a[0], b[0]
+                if unit_a == unit_b:
+                    unit_a, unit_b = (a[0][0], -1 - a[4]), (b[0][0], -1 - b[4])
+                    for unit, entry in ((unit_a, a), (unit_b, b)):
+                        patch_faces[unit] = [entry[4]]
+                        patch_area[unit] = entry[5]
+                        patch_normal[unit] = entry[1]
+                # A surface already moving this pass has left the plane; the next pass re-checks its new one
+                if unit_a in to_move or unit_b in to_move or (a[1] - b[1]).length > 0.2:
                     continue
-                n = a[2]
-                axis = Vector((1.0, 0.0, 0.0)) if abs(n.x) < 0.9 else Vector((0.0, 1.0, 0.0))
-                u = n.cross(axis).normalized()
-                v = n.cross(u)
-                if not any(
-                    _coplanar_overlap_2d([(p.dot(u), p.dot(v)) for p in ta], [(p.dot(u), p.dot(v)) for p in tb])
-                    for ta in a[5] for tb in b[5]
-                ):
+                # A quad that is not quite flat has triangles leaning off its face normal; compare triangle to triangle
+                if not any(_coplanar_triangles_overlap(ta, tb) for ta in a[3] for tb in b[3]):
                     continue
-                small = a if a[4] <= b[4] else b
-                to_move[(small[0], small[1])] = small[2]
+                to_move.add(unit_a if patch_area[unit_a] <= patch_area[unit_b] else unit_b)
 
-    for (name, index), world_normal in to_move.items():
-        obj, bm = bms[name]
-        bm.faces.ensure_lookup_table()
-        local_offset = obj.matrix_world.inverted_safe().to_3x3() @ (world_normal * offset)
-        for vert in bm.faces[index].verts:
+    for key in to_move:
+        obj, bm = bms[key[0]]
+        local_offset = obj.matrix_world.inverted_safe().to_3x3() @ (patch_normal[key] * offset)
+        verts = {vert for index in patch_faces[key] for vert in bm.faces[index].verts}
+        for vert in verts:
             vert.co += local_offset
 
     for obj, bm in bms.values():

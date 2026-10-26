@@ -721,6 +721,7 @@ def build_battery_bank() -> bpy.types.Object:
     _build_stage_4(root)
     pose_battery_bank_rest(root)
     bpy.context.view_layer.update()
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(root, footprint_radius=0.82)
     return root
 
