@@ -63,7 +63,7 @@ def parse_size(text):
     return int(width), int(height)
 
 
-def launch_arguments(slot, out_dir, log_path, scenario, until, timeout, shot_seconds, lines=False, strict_guidance=True, naive=False, sound=False, pointer=False, size=None):
+def launch_arguments(slot, out_dir, log_path, scenario, until, timeout, shot_seconds, lines=False, strict_guidance=True, naive=False, sound=False, pointer=False, size=None, bank_edge=False):
     """The player's command line: window size, own save slot, own log, and the bot's flags."""
     width, height = size if size else (WINDOW_WIDTH, WINDOW_HEIGHT)
     args = ["-screen-width", str(width), "-screen-height", str(height), "-screen-fullscreen", "0",
@@ -79,6 +79,8 @@ def launch_arguments(slot, out_dir, log_path, scenario, until, timeout, shot_sec
         args += ["-autoplay-naive", "1"]
     if pointer:
         args += ["-autoplay-pointer", "1"]
+    if bank_edge:
+        args += ["-autoplay-bank-edge", "1"]
     if not sound:
         args.append("-autoplay-mute")
     return args
@@ -146,6 +148,9 @@ def main():
                          "cue must be on screen within 5 s of game time, or the run fails")
     ap.add_argument("--pointer", action="store_true",
                     help="build the pad with the mouse alone: B, a click on its card, the wheel, a left click")
+    ap.add_argument("--bank-edge", action="store_true",
+                    help="set the power module down about 0.2 m off the pad's edge before the bank is built on it "
+                         "(the owner's softlock case)")
     ap.add_argument("--size", help="window size WIDTHxHEIGHT (default 960x540, 16:9; 1260x540 is 21:9)")
     ap.add_argument("--lines", action="store_true",
                     help="the opening shows objective lines and the bot checks them on screen (default: it shows "
@@ -177,7 +182,7 @@ def main():
     build_player.delete_slot_files(saves_dir, slot)
     command = [str(exe)] + launch_arguments(slot, out_dir, out_dir / "player.log", args.scenario, args.until, args.timeout,
                                             args.shot_seconds, args.lines, not args.lenient_guidance, args.naive,
-                                            args.sound, args.pointer, parse_size(args.size))
+                                            args.sound, args.pointer, parse_size(args.size), args.bank_edge)
     say(f"launching {exe.name} on save slot '{slot}', output {out_dir}")
     guard = procutil.ProcessTreeGuard()
     # The window shows without taking focus, so a run never jumps in front of what the owner is doing.

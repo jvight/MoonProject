@@ -188,7 +188,8 @@ namespace MoonProject.Autoplay
         private IEnumerator Play()
         {
             _naive = _options.Naive ? new NaiveGuard(_bot) : null;
-            var scenario = new OpeningScenario(_bot, _options.UntilBeat, _options.LinesExpected, _naive, _options.Pointer);
+            var scenario = new OpeningScenario(_bot, _options.UntilBeat, _options.LinesExpected, _naive, _options.Pointer,
+                _options.BankEdge);
             IEnumerator run = scenario.Run();
             while (!_bot.Failed && run.MoveNext())
             {
