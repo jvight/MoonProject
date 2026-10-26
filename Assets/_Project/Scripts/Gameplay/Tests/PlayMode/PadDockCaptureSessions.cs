@@ -41,8 +41,6 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float WeldTimeout = 30f;
         private const float MaxTurnDegreesPerSecond = 22f;
         private const float TurnWindowSeconds = 1f;
-        private const float DockFrameSeconds = 3.2f;
-        private const float EaseBackSeconds = 2.5f;
         private const int Width = 1600;
         private const int Tall = 900;
 
@@ -175,53 +173,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             Line("charge now " + _gameplay.Battery.Model.Charge.ToString("0.00") + ", raised " + _gameplay.PadLock.Raised);
             File.WriteAllText(Path.Combine(Folder, "dock-timeline.md"), _timeline.ToString());
             Line($"camera: peak moment weight while charging {peakWeight:0.00}, fastest turn {fastestTurn:0} deg/s");
-            Assert.Greater(peakWeight, 0.9f, "the camera eased to the closer three-quarter frame while it charged");
+            Assert.AreEqual(0f, peakWeight, 1e-3f, "the camera stays the player's while it charges: no closer frame");
             Assert.LessOrEqual(fastestTurn, MaxTurnDegreesPerSecond, "calmly");
             Assert.IsFalse(_wideShot, "and did not pull out to the wide shot");
             Assert.IsTrue(_closedAt >= 0f, "the lock's clamp closed on 07");
             Assert.IsTrue(_fullBeat, "the charge filled");
             Assert.IsTrue(_fullChirp, "07 chirps Happy when the charge is full, though the build's Happy was just before");
-        }
-
-        [UnityTest]
-        [Timeout(300000)]
-        [PrebuildSetup(typeof(PlaythroughScene))]
-        [PostBuildCleanup(typeof(PlaythroughScene))]
-        public IEnumerator DrivingOffTheCharging07_GivesTheCameraBackAtOnce_WithASoftEase()
-        {
-            yield return Prepare();
-            var rig = (MoonProject.Rover.RoverCameraRig)_context.Get<IViewCamera>();
-            Press(_keyboard.wKey);
-            float deadline = Time.time + DriveTimeout;
-            while (!_gameplay.PadLock.OnPad && Time.time < deadline)
-            {
-                yield return null;
-            }
-
-            Release(_keyboard.wKey);
-            while (!_gameplay.Battery.Model.IsCharging && Time.time < deadline)
-            {
-                yield return null;
-            }
-
-            Assert.IsTrue(_gameplay.Battery.Model.IsCharging, "07 charges on the pad");
-            yield return Wait(DockFrameSeconds);
-            float before = rig.MomentWeight;
-            Assert.Greater(before, 0.5f, "the closer frame is in");
-            Press(_keyboard.wKey);
-            float last = before;
-            float biggestDrop = 0f;
-            float until = Time.time + EaseBackSeconds;
-            while (Time.time < until)
-            {
-                yield return null;
-                biggestDrop = Mathf.Max(biggestDrop, last - rig.MomentWeight);
-                last = rig.MomentWeight;
-            }
-
-            Release(_keyboard.wKey);
-            Assert.Less(last, 0.1f, "driving gave the camera back");
-            Assert.Less(biggestDrop, 0.1f, "with a soft ease, not a cut");
         }
 
         /// <summary>Boots, welds the pad at the apron, fills the battery to a part, and sets 07 down a drive away.</summary>
